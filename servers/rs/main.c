@@ -299,10 +299,7 @@ static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
       /*
        * Set dev properties.
        */
-      rpub->dev_flags = boot_image_dev->flags;        /* device flags */
       rpub->dev_nr = boot_image_dev->dev_nr;          /* major device number */
-      rpub->dev_style = boot_image_dev->dev_style;    /* device style */
-      rpub->dev_style2 = boot_image_dev->dev_style2;  /* device style 2 */
 
       /* Build command settings. This will also set the process name. */
       strlcpy(rp->r_cmd, ip->proc_name, sizeof(rp->r_cmd));

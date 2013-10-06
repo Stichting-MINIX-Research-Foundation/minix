@@ -149,9 +149,6 @@
 #define LU_SYS_PROC     0x400   /* this is a live updated sys proc instance */
 #define RST_SYS_PROC    0x800   /* this is a restarted sys proc instance */
 
-/* Bits for device driver flags managed by RS and VFS. */
-#define DRV_FORCED      0x01    /* driver is mapped even if not alive yet */
-
 /* Values for the "verbose" boot monitor variable */
 #define VERBOSEBOOT_QUIET 0
 #define VERBOSEBOOT_BASIC 1

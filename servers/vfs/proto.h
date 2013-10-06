@@ -39,32 +39,18 @@ int bdev_open(dev_t dev, int access);
 int bdev_close(dev_t dev);
 void bdev_reply(void);
 void bdev_up(int major);
-int gen_opcl(int op, dev_t dev, endpoint_t task_nr, int flags);
-int gen_io(endpoint_t drv_e, message *mess_ptr);
-int no_dev(int op, dev_t dev, endpoint_t proc, int flags);
-int no_dev_io(endpoint_t, message *);
-int tty_opcl(int op, dev_t dev, endpoint_t proc, int flags);
-int ctty_opcl(int op, dev_t dev, endpoint_t proc, int flags);
-int clone_opcl(int op, dev_t dev, endpoint_t proc, int flags);
-int ctty_io(endpoint_t task_nr, message *mess_ptr);
 int do_ioctl(message *m_out);
-void pm_setsid(endpoint_t proc_e);
 
 /* dmap.c */
 void lock_dmap(struct dmap *dp);
 void unlock_dmap(struct dmap *dp);
 int do_mapdriver(message *m_out);
 void init_dmap(void);
-void init_dmap_locks(void);
 int dmap_driver_match(endpoint_t proc, int major);
 void dmap_endpt_up(endpoint_t proc_nr, int is_blk);
-void dmap_unmap_by_endpt(endpoint_t proc_nr);
 struct dmap *get_dmap(endpoint_t proc_e);
 struct dmap *get_dmap_by_major(int major);
-int map_service(struct rprocpub *rpub);
 void dmap_unmap_by_endpt(endpoint_t proc_nr);
-int map_driver(const char *label, int major, endpoint_t proc_nr, int
-	dev_style, int flags);
 int map_service(struct rprocpub *rpub);
 
 /* elf_core_dump.c */
@@ -124,6 +110,7 @@ void pm_fork(endpoint_t pproc, endpoint_t cproc, pid_t cpid);
 void pm_setgid(endpoint_t proc_e, int egid, int rgid);
 void pm_setuid(endpoint_t proc_e, int euid, int ruid);
 void pm_setgroups(endpoint_t proc_e, int ngroups, gid_t *addr);
+void pm_setsid(endpoint_t proc_e);
 int do_sync(message *m_out);
 int do_fsync(message *m_out);
 void pm_reboot(void);
@@ -296,7 +283,7 @@ long conv4(int norm, long x);
 int copy_name(size_t len, char *dest);
 int fetch_name(vir_bytes path, size_t len, char *dest);
 int no_sys(message *);
-int isokendpt_f(char *f, int l, endpoint_t e, int *p, int ft);
+int isokendpt_f(const char *f, int l, endpoint_t e, int *p, int ft);
 int in_group(struct fproc *rfp, gid_t grp);
 
 #define okendpt(e, p) isokendpt_f(__FILE__, __LINE__, (e), (p), 1)

@@ -86,7 +86,6 @@ static char *known_requests[] = {
 #define ARG_ARGS	"-args"		/* list of arguments to be passed */
 #define ARG_DEV		"-dev"		/* major device number for drivers */
 #define ARG_MAJOR	"-major"	/* major number */
-#define ARG_DEVSTYLE	"-devstyle"	/* device style */
 #define ARG_PERIOD	"-period"	/* heartbeat period in ticks */
 #define ARG_SCRIPT	"-script"	/* name of the script to restart a
 					 * system service
@@ -113,7 +112,6 @@ static char *req_path_self = SELF_REQ_PATH;
 static char *req_args = "";
 static int req_major = 0;
 static int devman_id = 0;
-static int req_dev_style = STYLE_NDEV;
 static long req_period = 0;
 static char *req_script = NULL;
 static char *req_config = PATH_CONFIG;
@@ -131,9 +129,9 @@ static void print_usage(char *app_name, char *problem)
   fprintf(stderr, "Warning, %s\n", problem);
   fprintf(stderr, "Usage:\n");
   fprintf(stderr,
-  "    %s [%s %s %s %s] (up|run|edit|update) <binary|%s> [%s <args>] [%s <special>] [%s <style>] [%s <major_nr>] [%s <dev_id>] [%s <ticks>] [%s <path>] [%s <name>] [%s <path>] [%s <state>] [%s <time>]\n", 
+  "    %s [%s %s %s %s] (up|run|edit|update) <binary|%s> [%s <args>] [%s <special>] [%s <major_nr>] [%s <dev_id>] [%s <ticks>] [%s <path>] [%s <name>] [%s <path>] [%s <state>] [%s <time>]\n", 
 	app_name, OPT_COPY, OPT_REUSE, OPT_NOBLOCK, OPT_REPLICA, SELF_BINARY,
-	ARG_ARGS, ARG_DEV, ARG_DEVSTYLE, ARG_MAJOR, ARG_DEVMANID, ARG_PERIOD, ARG_SCRIPT,
+	ARG_ARGS, ARG_DEV, ARG_MAJOR, ARG_DEVMANID, ARG_PERIOD, ARG_SCRIPT,
 	ARG_LABELNAME, ARG_CONFIG, ARG_LU_STATE, ARG_LU_MAXTIME);
   fprintf(stderr, "    %s down <label>\n", app_name);
   fprintf(stderr, "    %s refresh <label>\n", app_name);
@@ -315,9 +313,6 @@ static int parse_arguments(int argc, char **argv, u32_t *rss_flags)
 				  exit(EINVAL);
 			  }
               req_major = major(stat_buf.st_rdev);
-              if(req_dev_style == STYLE_NDEV) {
-                  req_dev_style = STYLE_DEV;
-              }
           }
 		  else if (strcmp(argv[i], ARG_MAJOR)==0) {
 			  if (req_major != 0) {
@@ -329,26 +324,7 @@ static int parse_arguments(int argc, char **argv, u32_t *rss_flags)
 			 } else {
 				 exit(EINVAL);
 			 }
-			 if(req_dev_style == STYLE_NDEV) {
-                  req_dev_style = STYLE_DEV;
-              }
 		  }
-          else if (strcmp(argv[i], ARG_DEVSTYLE)==0) {
-              char* dev_style_keys[] = { "STYLE_DEV", "STYLE_TTY",
-                  "STYLE_CTTY", NULL };
-              int dev_style_values[] = { STYLE_DEV, STYLE_TTY,
-                  STYLE_CTTY };
-              for(j=0;dev_style_keys[j]!=NULL;j++) {
-                  if(!strcmp(dev_style_keys[j], argv[i+1])) {
-                      break;
-                  }
-              }
-              if(dev_style_keys[j] == NULL) {
-                  print_usage(argv[ARG_NAME], "bad device style");
-                  exit(EINVAL);
-              }
-              req_dev_style = dev_style_values[j];
-          }
           else if (strcmp(argv[i], ARG_SCRIPT)==0) {
               req_script = argv[i+1];
           }
@@ -466,7 +442,6 @@ int main(int argc, char **argv)
       config.rs_start.rss_cmd= command;
       config.rs_start.rss_cmdlen= strlen(command);
       config.rs_start.rss_major= req_major;
-      config.rs_start.rss_dev_style= req_dev_style;
       config.rs_start.rss_period= req_period;
       config.rs_start.rss_script= req_script;
       config.rs_start.devman_id= devman_id;

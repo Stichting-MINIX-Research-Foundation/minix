@@ -14,18 +14,14 @@
  */
 
 extern struct dmap {
-  int(*dmap_opcl) (int, dev_t, endpoint_t, int);
-  int(*dmap_io) (endpoint_t, message *);
   endpoint_t dmap_driver;
   char dmap_label[LABEL_MAX];
-  int dmap_flags;
-  int dmap_style;
   int dmap_sel_busy;
   struct filp *dmap_sel_filp;
   thread_t dmap_servicing;
   mutex_t dmap_lock;
-  mutex_t *dmap_lock_ref;
   int dmap_recovering;
+  int dmap_seen_tty;
 } dmap[];
 
 #endif

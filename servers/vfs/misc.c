@@ -6,6 +6,7 @@
  *   do_fcntl:	  perform the FCNTL system call
  *   do_sync:	  perform the SYNC system call
  *   do_fsync:	  perform the FSYNC system call
+ *   pm_setsid:	  perform VFS's side of setsid system call
  *   pm_reboot:	  sync disks and prepare for shutdown
  *   pm_fork:	  adjust the tables after PM has performed a FORK system call
  *   do_exec:	  handle files with FD_CLOEXEC on after PM has done an EXEC
@@ -743,6 +744,24 @@ int ruid;
 
   tfp->fp_effuid =  euid;
   tfp->fp_realuid = ruid;
+}
+
+/*===========================================================================*
+ *				pm_setsid				     *
+ *===========================================================================*/
+void pm_setsid(endpoint_t proc_e)
+{
+/* Perform the VFS side of the SETSID call, i.e. get rid of the controlling
+ * terminal of a process, and make the process a session leader.
+ */
+  struct fproc *rfp;
+  int slot;
+
+  /* Make the process a session leader with no controlling tty. */
+  okendpt(proc_e, &slot);
+  rfp = &fproc[slot];
+  rfp->fp_flags |= FP_SESLDR;
+  rfp->fp_tty = 0;
 }
 
 /*===========================================================================*

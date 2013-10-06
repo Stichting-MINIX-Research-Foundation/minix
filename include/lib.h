@@ -40,7 +40,7 @@ int getprocnr(void);
 int getnprocnr(pid_t pid);
 int getpprocnr(void);
 int _pm_findproc(char *proc_name, int *proc_nr);
-int mapdriver(char *label, int major, int style, int flags);
+int mapdriver(char *label, int major);
 pid_t getnpid(endpoint_t proc_ep);
 uid_t getnuid(endpoint_t proc_ep);
 gid_t getngid(endpoint_t proc_ep);
