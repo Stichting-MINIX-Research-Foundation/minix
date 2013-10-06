@@ -4,13 +4,8 @@
 #include <minix/timers.h>
 
 /* First minor numbers for the various classes of TTY devices. */
-#define CONS_MINOR	   0
-#define LOG_MINOR	  15
-#define RS232_MINOR	  16
-#define VIDEO_MINOR	 125
-
-#define CONS_ARG	  30	/* console= boot param length (incl. nul) */
-#define LINEWRAP	   1	/* console.c - wrap lines at column 80 */
+#define TTYPX_MINOR	 128
+#define PTYPX_MINOR	 192
 
 #define TTY_IN_BYTES     256	/* tty input queue size */
 #define TAB_SIZE           8	/* distance between tab stops */
@@ -35,7 +30,7 @@ typedef struct tty {
   devfun_t tty_devread;		/* routine to read from low level buffers */
   devfun_t tty_icancel;		/* cancel any device input */
   int tty_min;			/* minimum requested #chars in input queue */
-  minix_timer_t tty_tmr;		/* the timer for this tty */
+  minix_timer_t tty_tmr;	/* the timer for this tty */
 
   /* Output section. */
   devfun_t tty_devwrite;	/* routine to start actual device output */
@@ -74,7 +69,7 @@ typedef struct tty {
 
   /* Miscellaneous. */
   devfun_t tty_ioctl;		/* set line speed, etc. at the device level */
-  devfun_t tty_open;		/* tell the device that the tty is opened */ 
+  devfun_t tty_open;		/* tell the device that the tty is opened */
   devfun_t tty_close;		/* tell the device that the tty is closed */
   void *tty_priv;		/* pointer to per device private data */
   struct termios tty_termios;	/* terminal attributes */
@@ -85,12 +80,8 @@ typedef struct tty {
 } tty_t;
 
 /* Memory allocated in tty.c, so extern here. */
-extern tty_t tty_table[NR_CONS+NR_RS_LINES];
-extern int ccurrent;		/* currently visible console */
+extern tty_t tty_table[NR_PTYS];
 extern u32_t system_hz;		/* system clock frequency */
-
-extern unsigned long kbd_irq_set;
-extern unsigned long rs_irq_set;
 
 /* Values for the fields. */
 #define NOT_ESCAPED        0	/* previous character is not LNEXT (^V) */
@@ -106,20 +97,11 @@ extern unsigned long rs_irq_set;
 #define IN_EOF        0x2000	/* char is EOF (^D), do not return to user */
 #define IN_ESC        0x4000	/* escaped by LNEXT (^V), no interpretation */
 
-/* Times and timeouts. */
-#define force_timeout()	((void) (0))
-
 /* Number of elements and limit of a buffer. */
 #define buflen(buf)	(sizeof(buf) / sizeof((buf)[0]))
 #define bufend(buf)	((buf) + buflen(buf))
 
-/* Memory allocated in tty.c, so extern here. */
-extern struct machine machine;	/* machine information (a.o.: pc_at, ega) */
-
-/* The tty outputs diagnostic messages in a circular buffer. */
-extern struct kmessages kmess;
-
-/* Function prototypes for TTY driver. */
+/* Function prototypes for PTY driver. */
 /* tty.c */
 void handle_events(struct tty *tp);
 void sigchar(struct tty *tp, int sig, int mayflush);
@@ -132,23 +114,7 @@ void tty_wakeup(clock_t now);
 int select_try(struct tty *tp, int ops);
 int select_retry(struct tty *tp);
 
-/* rs232.c */
-void rs_init(struct tty *tp);
-void rs_interrupt(message *m);
-
-/* console.c */
-void kputc(int c);
-void cons_stop(void);
-void scr_init(struct tty *tp);
-void toggle_scroll(void);
-int con_loadfont(endpoint_t endpt, cp_grant_id_t grant);
-void select_console(int cons_line);
-void beep_x( unsigned freq, clock_t dur);
-void do_video(message *m, int ipc_status);
-
-/* keyboard.c */
-void kb_init(struct tty *tp);
-void kb_init_once(void);
-int kbd_loadmap(endpoint_t endpt, cp_grant_id_t grant);
-void do_fkey_ctl(message *m);
-void do_input(message *m);
+/* pty.c */
+void do_pty(message *m_ptr, int ipc_status);
+void pty_init(struct tty *tp);
+void select_retry_pty(struct tty *tp);

@@ -21,8 +21,6 @@
 #include <signal.h>
 #include "tty.h"
 
-#if NR_PTYS > 0
-
 /* PTY bookkeeping structure, one per pty/tty pair. */
 typedef struct pty {
   tty_t		*tty;		/* associated TTY structure */
@@ -350,7 +348,7 @@ static int pty_slave_write(tty_t *tp, int try)
 
   /* PTY closed down? */
   if (pp->state & PTY_CLOSED) {
-  	if (try) return 1;
+	if (try) return 1;
 	if (tp->tty_outleft > 0) {
 		chardriver_reply_task(tp->tty_outcaller, tp->tty_outid, EIO);
 		tp->tty_outleft = tp->tty_outcum = 0;
@@ -441,7 +439,7 @@ static void pty_start(pty_t *pp)
 
   /* While there are things to do. */
   for (;;) {
-  	int s;
+	int s;
 	count = bufend(pp->obuf) - pp->otail;
 	if (count > pp->ocount) count = pp->ocount;
 	if (count > pp->rdleft) count = pp->rdleft;
@@ -451,7 +449,7 @@ static void pty_start(pty_t *pp)
 	if((s = sys_safecopyto(pp->rdcaller, pp->rdgrant, pp->rdcum,
 		(vir_bytes) pp->otail, count)) != OK) {
 		break;
- 	}
+	}
 
 	/* Bookkeeping. */
 	pp->ocount -= count;
@@ -500,13 +498,13 @@ static int pty_slave_read(tty_t *tp, int try)
   }
 
   if (try) {
-  	if (pp->wrleft > 0)
-  		return 1;
-  	return 0;
+	if (pp->wrleft > 0)
+		return 1;
+	return 0;
   }
 
   while (pp->wrleft > 0) {
-  	int s;
+	int s;
 
 	/* Transfer one character to 'c'. */
 	if ((s = sys_safecopyfrom(pp->wrcaller, pp->wrgrant, pp->wrcum,
@@ -616,7 +614,7 @@ void pty_init(tty_t *tp)
   int line;
 
   /* Associate PTY and TTY structures. */
-  line = tp - &tty_table[NR_CONS + NR_RS_LINES];
+  line = tp - tty_table;
   pp = tp->tty_priv = &pty_table[line];
   pp->tty = tp;
   pp->select_ops = 0;
@@ -636,5 +634,3 @@ void pty_init(tty_t *tp)
   tp->tty_close = pty_slave_close;
   tp->tty_select_ops = 0;
 }
-
-#endif /* NR_PTYS > 0 */

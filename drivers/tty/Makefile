@@ -4,7 +4,7 @@ PROG=	tty
 
 .include "arch/${MACHINE_ARCH}/Makefile.inc"
 
-SRCS +=	tty.c pty.c
+SRCS +=	tty.c
 
 DPADD+=	${LIBCHARDRIVER} ${LIBSYS} ${LIBTIMERS}
 LDADD+=	-lchardriver -lsys -ltimers

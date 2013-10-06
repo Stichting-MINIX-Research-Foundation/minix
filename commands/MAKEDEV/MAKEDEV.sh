@@ -233,8 +233,8 @@ do
 	[a-f])	n=1`/bin/echo $n | tr 'abcdef' '012345'`
 	esac
 
-	$e mknod tty$dev c 4 `expr $g '*' 16 + $n + 128`
-	$e mknod pty$dev c 4 `expr $g '*' 16 + $n + 192`
+	$e mknod tty$dev c 9 `expr $g '*' 16 + $n + 128`
+	$e mknod pty$dev c 9 `expr $g '*' 16 + $n + 192`
 	$e chgrp tty tty$dev pty$dev
 	$e chmod 666 tty$dev pty$dev
 	;;

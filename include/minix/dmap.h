@@ -18,7 +18,7 @@
 #define PRINTER_MAJOR		   6	/*  6 = /dev/lp     (printer driver)  */
 #define INET_MAJOR		   7	/*  7 = /dev/ip     (inet)            */
 					/*  8 = /dev/c1                       */
-					/*  9 = not used                      */
+#define PTY_MAJOR		   9	/*  9 = /dev/ptyp0  (pty driver)      */
 					/* 10 = /dev/c2                       */
 #define FILTER_MAJOR		  11	/* 11 = /dev/filter (filter driver)   */
 					/* 12 = /dev/c3                       */
