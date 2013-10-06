@@ -49,8 +49,6 @@
 #define md_label	m2_p1
 #define md_label_len	m2_l1
 #define md_major	m2_i1
-#define md_style	m2_i2
-#define md_flags	m2_i3
 
 /* The following names are synonyms for the variables in the output message. */
 #define reply_type    m_type
