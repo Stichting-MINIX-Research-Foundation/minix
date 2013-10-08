@@ -454,7 +454,8 @@ parsedev(char *arg)
 			if (*ep != '\0')
 				mtree_err("invalid number `%s'",
 				    p);
-			if (argc > MAX_PACK_ARGS)
+			/* MINIX: 03 warns for above array bounds*/
+			if (argc >= MAX_PACK_ARGS)
 				mtree_err("too many arguments");
 		}
 		if (argc < 2)
