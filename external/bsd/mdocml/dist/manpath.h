@@ -1,6 +1,7 @@
-/*	$Vendor-Id: man_argv.c,v 1.5 2011/01/03 22:42:37 schwarze Exp $ */
+/*	$Vendor-Id: manpath.h,v 1.5 2011/12/13 20:56:46 kristaps Exp $ */
 /*
  * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -14,31 +15,24 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#ifndef MANPATH_H
+#define MANPATH_H
 
-#include <sys/types.h>
+/*
+ * Unsorted list of unique, absolute paths to be searched for manual
+ * databases.
+ */
+struct	manpaths {
+	int	  sz;
+	char	**paths;
+};
 
-#include <assert.h>
+__BEGIN_DECLS
 
-#include "mandoc.h"
-#include "libman.h"
-#include "libmandoc.h"
+void	 manpath_manconf(struct manpaths *, const char *);
+void	 manpath_parse(struct manpaths *, const char *, char *, char *);
+void	 manpath_free(struct manpaths *);
 
+__END_DECLS
 
-int
-man_args(struct man *m, int line, int *pos, char *buf, char **v)
-{
-	char	 *start;
-
-	assert(*pos);
-	*v = start = buf + *pos;
-	assert(' ' != *start);
-
-	if ('\0' == *start)
-		return(ARGS_EOLN);
-
-	*v = mandoc_getarg(v, m->msg, m->data, line, pos);
-	return('"' == *start ? ARGS_QWORD : ARGS_WORD);
-}
+#endif /*!MANPATH_H*/

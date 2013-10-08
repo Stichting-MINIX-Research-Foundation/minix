@@ -1,4 +1,4 @@
-/*	$Vendor-Id: lib.c,v 1.8 2010/06/19 20:46:27 kristaps Exp $ */
+/*	$Vendor-Id: lib.c,v 1.9 2011/03/22 14:33:05 kristaps Exp $ */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -22,6 +22,7 @@
 #include <string.h>
 #include <time.h>
 
+#include "mdoc.h"
 #include "mandoc.h"
 #include "libmdoc.h"
 

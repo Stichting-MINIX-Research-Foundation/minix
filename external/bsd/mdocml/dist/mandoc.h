@@ -1,4 +1,4 @@
-/*	$Vendor-Id: mandoc.h,v 1.49 2011/01/06 13:45:47 kristaps Exp $ */
+/*	$Vendor-Id: mandoc.h,v 1.99 2012/02/16 20:51:31 joerg Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -50,7 +50,8 @@ enum	mandocerr {
 	MANDOCERR_NOTITLE, /* no title in document */
 	MANDOCERR_UPPERCASE, /* document title should be all caps */
 	MANDOCERR_BADMSEC, /* unknown manual section */
-	MANDOCERR_BADDATE, /* cannot parse date argument */
+	MANDOCERR_NODATE, /* date missing, using today's date */
+	MANDOCERR_BADDATE, /* cannot parse date, using it verbatim */
 	MANDOCERR_PROLOGOOO, /* prologue macros out of order */
 	MANDOCERR_PROLOGREP, /* duplicate prologue macro */
 	MANDOCERR_BADPROLOG, /* macro not allowed in prologue */
@@ -68,10 +69,12 @@ enum	mandocerr {
 	/* related to macros and nesting */
 	MANDOCERR_MACROOBS, /* skipping obsolete macro */
 	MANDOCERR_IGNPAR, /* skipping paragraph macro */
+	MANDOCERR_IGNNS, /* skipping no-space macro */
 	MANDOCERR_SCOPENEST, /* blocks badly nested */
 	MANDOCERR_CHILD, /* child violates parent syntax */
 	MANDOCERR_NESTEDDISP, /* nested displays are not portable */
 	MANDOCERR_SCOPEREP, /* already in literal mode */
+	MANDOCERR_LINESCOPE, /* line scope broken */
 
 	/* related to missing macro arguments */
 	MANDOCERR_MACROEMPTY, /* skipping empty macro */
@@ -80,6 +83,7 @@ enum	mandocerr {
 	MANDOCERR_LISTFIRST, /* list type must come first */
 	MANDOCERR_NOWIDTHARG, /* tag lists require a width argument */
 	MANDOCERR_FONTTYPE, /* missing font type */
+	MANDOCERR_WNOSCOPE, /* skipping end of block that is not open */
 
 	/* related to bad macro arguments */
 	MANDOCERR_IGNARGV, /* skipping argument */
@@ -100,10 +104,17 @@ enum	mandocerr {
 	MANDOCERR_BADESCAPE, /* unknown escape sequence */
 	MANDOCERR_BADQUOTE, /* unterminated quoted string */
 
-	/* related to tables */
-	MANDOCERR_TBLEXTRADAT, /* extra data cells */
+	/* related to equations */
+	MANDOCERR_EQNQUOTE, /* unexpected literal in equation */
 
 	MANDOCERR_ERROR, /* ===== start of errors ===== */
+
+	/* related to equations */
+	MANDOCERR_EQNNSCOPE, /* unexpected equation scope closure*/
+	MANDOCERR_EQNSCOPE, /* equation scope open on exit */
+	MANDOCERR_EQNBADSCOPE, /* overlapping equation scopes */
+	MANDOCERR_EQNEOF, /* unexpected end of equation */
+	MANDOCERR_EQNSYNT, /* equation syntax error */
 
 	/* related to tables */
 	MANDOCERR_TBL, /* bad table syntax */
@@ -113,13 +124,14 @@ enum	mandocerr {
 	MANDOCERR_TBLNODATA, /* no table data cells specified */
 	MANDOCERR_TBLIGNDATA, /* ignore data in cell */
 	MANDOCERR_TBLBLOCK, /* data block still open */
+	MANDOCERR_TBLEXTRADAT, /* ignoring extra data cells */
 
 	MANDOCERR_ROFFLOOP, /* input stack limit exceeded, infinite loop? */
 	MANDOCERR_BADCHAR, /* skipping bad character */
+	MANDOCERR_NAMESC, /* escaped character not allowed in a name */
 	MANDOCERR_NOTEXT, /* skipping text before the first section header */
 	MANDOCERR_MACRO, /* skipping unknown macro */
 	MANDOCERR_REQUEST, /* NOT IMPLEMENTED: skipping request */
-	MANDOCERR_LINESCOPE, /* line scope broken */
 	MANDOCERR_ARGCOUNT, /* argument count wrong */
 	MANDOCERR_NOSCOPE, /* skipping end of block that is not open */
 	MANDOCERR_SCOPEBROKEN, /* missing end of block */
@@ -135,9 +147,9 @@ enum	mandocerr {
 
 	MANDOCERR_FATAL, /* ===== start of fatal errors ===== */
 
+	MANDOCERR_NOTMANUAL, /* manual isn't really a manual */
 	MANDOCERR_COLUMNS, /* column syntax is inconsistent */
 	MANDOCERR_BADDISP, /* NOT IMPLEMENTED: .Bd -file */
-	MANDOCERR_SYNTLINESCOPE, /* line scope broken, syntax violated */
 	MANDOCERR_SYNTARGVCOUNT, /* argument count wrong, violates syntax */
 	MANDOCERR_SYNTCHILD, /* child violates parent syntax */
 	MANDOCERR_SYNTARGCOUNT, /* argument count wrong, violates syntax */
@@ -202,7 +214,7 @@ enum	tbl_cellt {
 struct	tbl_cell {
 	struct tbl_cell	 *next;
 	enum tbl_cellt	  pos;
-	int		  spacing;
+	size_t		  spacing;
 	int		  flags;
 #define	TBL_CELL_TALIGN	 (1 << 0) /* t, T */
 #define	TBL_CELL_BALIGN	 (1 << 1) /* d, D */
@@ -224,12 +236,12 @@ struct	tbl_row {
 };
 
 enum	tbl_datt {
-	TBL_DATA_NONE,
-	TBL_DATA_DATA,
-	TBL_DATA_HORIZ,
-	TBL_DATA_DHORIZ,
-	TBL_DATA_NHORIZ,
-	TBL_DATA_NDHORIZ
+	TBL_DATA_NONE, /* has no data */
+	TBL_DATA_DATA, /* consists of data/string */
+	TBL_DATA_HORIZ, /* horizontal line */
+	TBL_DATA_DHORIZ, /* double-horizontal line */
+	TBL_DATA_NHORIZ, /* squeezed horizontal line */
+	TBL_DATA_NDHORIZ /* squeezed double-horizontal line */
 };
 
 /*
@@ -237,9 +249,10 @@ enum	tbl_datt {
  * string value that's in the cell.  The rest is layout.
  */
 struct	tbl_dat {
-	struct tbl_cell	 *layout; /* layout cell: CAN BE NULL */
+	struct tbl_cell	 *layout; /* layout cell */
+	int		  spans; /* how many spans follow */
 	struct tbl_dat	 *next;
-	char		 *string;
+	char		 *string; /* data (NULL if not TBL_DATA_DATA) */
 	enum tbl_datt	  pos;
 };
 
@@ -255,9 +268,10 @@ enum	tbl_spant {
 struct	tbl_span {
 	struct tbl	 *tbl;
 	struct tbl_head	 *head;
-	struct tbl_row	 *layout; /* layout row: CAN BE NULL */
+	struct tbl_row	 *layout; /* layout row */
 	struct tbl_dat	 *first;
 	struct tbl_dat	 *last;
+	int		  line; /* parse line */
 	int		  flags;
 #define	TBL_SPAN_FIRST	 (1 << 0)
 #define	TBL_SPAN_LAST	 (1 << 1)
@@ -265,50 +279,153 @@ struct	tbl_span {
 	struct tbl_span	 *next;
 };
 
-/*
- * Available registers (set in libroff, accessed elsewhere).
+enum	eqn_boxt {
+	EQN_ROOT, /* root of parse tree */
+	EQN_TEXT, /* text (number, variable, whatever) */
+	EQN_SUBEXPR, /* nested `eqn' subexpression */
+	EQN_LIST, /* subexpressions list */
+	EQN_MATRIX /* matrix subexpression */
+};
+
+enum	eqn_markt {
+	EQNMARK_NONE = 0,
+	EQNMARK_DOT,
+	EQNMARK_DOTDOT,
+	EQNMARK_HAT,
+	EQNMARK_TILDE,
+	EQNMARK_VEC,
+	EQNMARK_DYAD,
+	EQNMARK_BAR,
+	EQNMARK_UNDER,
+	EQNMARK__MAX
+};
+
+enum	eqn_fontt {
+	EQNFONT_NONE = 0,
+	EQNFONT_ROMAN,
+	EQNFONT_BOLD,
+	EQNFONT_FAT,
+	EQNFONT_ITALIC,
+	EQNFONT__MAX
+};
+
+enum	eqn_post {
+	EQNPOS_NONE = 0,
+	EQNPOS_OVER,
+	EQNPOS_SUP,
+	EQNPOS_SUB,
+	EQNPOS_TO,
+	EQNPOS_FROM,
+	EQNPOS__MAX
+};
+
+enum	eqn_pilet {
+	EQNPILE_NONE = 0,
+	EQNPILE_PILE,
+	EQNPILE_CPILE,
+	EQNPILE_RPILE,
+	EQNPILE_LPILE,
+	EQNPILE_COL,
+	EQNPILE_CCOL,
+	EQNPILE_RCOL,
+	EQNPILE_LCOL,
+	EQNPILE__MAX
+};
+
+ /*
+ * A "box" is a parsed mathematical expression as defined by the eqn.7
+ * grammar.
  */
-enum	regs {
-	REG_nS = 0,
-	REG__MAX
+struct	eqn_box {
+	int		  size; /* font size of expression */
+#define	EQN_DEFSIZE	  INT_MIN
+	enum eqn_boxt	  type; /* type of node */
+	struct eqn_box	 *first; /* first child node */
+	struct eqn_box	 *last; /* last child node */
+	struct eqn_box	 *next; /* node sibling */
+	struct eqn_box	 *parent; /* node sibling */
+	char		 *text; /* text (or NULL) */
+	char		 *left;
+	char		 *right;
+	enum eqn_post	  pos; /* position of next box */
+	enum eqn_markt	  mark; /* a mark about the box */
+	enum eqn_fontt	  font; /* font of box */
+	enum eqn_pilet	  pile; /* equation piling */
 };
 
 /*
- * A register (struct reg) can consist of many types: this consists of
- * normalised types from the original string form.
+ * An equation consists of a tree of expressions starting at a given
+ * line and position. 
  */
-union	regval {
-	unsigned  u; /* unsigned integer */
+struct	eqn {
+	char		 *name; /* identifier (or NULL) */
+	struct eqn_box	 *root; /* root mathematical expression */
+	int		  ln; /* invocation line */
+	int		  pos; /* invocation position */
 };
 
 /*
- * A single register entity.  If "set" is zero, the value of the
- * register should be the default one, which is per-register.  It's
- * assumed that callers know which type in "v" corresponds to which
- * register value.
+ * The type of parse sequence.  This value is usually passed via the
+ * mandoc(1) command line of -man and -mdoc.  It's almost exclusively
+ * -mandoc but the others have been retained for compatibility.
  */
-struct	reg {
-	int		  set; /* whether set or not */
-	union regval	  v; /* parsed data */
+enum	mparset {
+	MPARSE_AUTO, /* magically determine the document type */
+	MPARSE_MDOC, /* assume -mdoc */
+	MPARSE_MAN /* assume -man */
 };
 
-/*
- * The primary interface to setting register values is in libroff,
- * although libmdoc and libman from time to time will manipulate
- * registers (such as `.Sh SYNOPSIS' enabling REG_nS).
- */
-struct	regset {
-	struct reg	  regs[REG__MAX];
+enum	mandoc_esc {
+	ESCAPE_ERROR = 0, /* bail! unparsable escape */
+	ESCAPE_IGNORE, /* escape to be ignored */
+	ESCAPE_SPECIAL, /* a regular special character */
+	ESCAPE_FONT, /* a generic font mode */
+	ESCAPE_FONTBOLD, /* bold font mode */
+	ESCAPE_FONTITALIC, /* italic font mode */
+	ESCAPE_FONTROMAN, /* roman font mode */
+	ESCAPE_FONTPREV, /* previous font mode */
+	ESCAPE_NUMBERED, /* a numbered glyph */
+	ESCAPE_UNICODE, /* a unicode codepoint */
+	ESCAPE_NOSPACE /* suppress space if the last on a line */
 };
+
+typedef	void	(*mandocmsg)(enum mandocerr, enum mandoclevel,
+			const char *, int, int, const char *);
+
+struct	mparse;
+struct	mchars;
+struct	mdoc;
+struct	man;
 
 __BEGIN_DECLS
 
-/*
- * Callback function for warnings, errors, and fatal errors as they
- * occur in the compilers libroff, libmdoc, and libman.
- */
-typedef	int		(*mandocmsg)(enum mandocerr, void *,
-				int, int, const char *);
+void		 *mandoc_calloc(size_t, size_t);
+enum mandoc_esc	  mandoc_escape(const char **, const char **, int *);
+void		 *mandoc_malloc(size_t);
+void		 *mandoc_realloc(void *, size_t);
+char		 *mandoc_strdup(const char *);
+char		 *mandoc_strndup(const char *, size_t);
+struct mchars	 *mchars_alloc(void);
+void		  mchars_free(struct mchars *);
+char	 	  mchars_num2char(const char *, size_t);
+int		  mchars_num2uc(const char *, size_t);
+int		  mchars_spec2cp(const struct mchars *, 
+			const char *, size_t);
+const char	 *mchars_spec2str(const struct mchars *, 
+			const char *, size_t, size_t *);
+struct mparse	 *mparse_alloc(enum mparset, 
+			enum mandoclevel, mandocmsg, void *);
+void		  mparse_free(struct mparse *);
+void		  mparse_keep(struct mparse *);
+enum mandoclevel  mparse_readfd(struct mparse *, int, const char *);
+enum mandoclevel  mparse_readmem(struct mparse *, const void *, size_t,
+			const char *);
+void		  mparse_reset(struct mparse *);
+void		  mparse_result(struct mparse *, 
+			struct mdoc **, struct man **);
+const char	 *mparse_getkeep(const struct mparse *);
+const char	 *mparse_strerror(enum mandocerr);
+const char	 *mparse_strlevel(enum mandoclevel);
 
 __END_DECLS
 
