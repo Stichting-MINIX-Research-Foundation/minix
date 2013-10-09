@@ -1,0 +1,53 @@
+.TH MAKEDEV 8
+.SH NAME
+MAKEDEV, DESCRIBE \- make/describe device files
+.SH SYNOPSIS
+.B MAKEDEV
+.RB [ \-n ]
+.IR key " ..."
+.br
+.B DESCRIBE
+.RI [ device "] ..."
+.SH DESCRIPTION
+.B MAKEDEV
+may be used to create the device files normally found in the
+.B /dev
+directory.  The
+.I key
+arguments are simply the names of the devices you want.
+.B MAKEDEV
+knows about all supported devices and will create them in the current
+directory with the proper owner and mode.  For many devices
+.B MAKEDEV
+will not only create the device you want, but also the devices related
+to it that you will probably want too.  Naming one floppy device will
+create all floppy devices for the same drive for instance.
+.PP
+Call
+.B MAKEDEV
+without arguments to see a list of keys that it understands.  Then use
+the
+.B \-n
+flag to make the script echo the commands it will execute the next time
+when you call it without that flag.
+.PP
+The special key
+.B std
+must be given alone to
+.BR MAKEDEV .
+This key will create all standard devices.
+.PP
+The command
+.B DESCRIBE
+will give you a one-line description of a given device.  It will by
+default list all devices in
+.BR /dev .
+.SH "SEE ALSO"
+.BR dev (4),
+.BR mknod (8).
+.SH BUGS
+.BR MAKEDEV "'s"
+eagerness to create devices may cause many "File exists" errors from
+.BR mknod .
+.SH AUTHOR
+Kees J. Bot (kjb@cs.vu.nl)

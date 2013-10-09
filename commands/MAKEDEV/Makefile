@@ -1,4 +1,4 @@
 SCRIPTS= MAKEDEV.sh
-MAN= MAKEDEV.8
+MAN=
 
 .include <bsd.prog.mk>

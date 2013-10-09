@@ -196,7 +196,8 @@ MAKEDEV: ${.CURDIR}/MAKEDEV.awk ${.CURDIR}/MAKEDEV.tmpl \
 .else
 MAKEDEV:
 	if [ ${MKUNPRIVED} != "yes" ]; then \
-		cd ${DESTDIR}/dev && sh ${NETBSDSRCDIR}/commands/MAKEDEV/MAKEDEV.sh -s  2>/dev/null ;\
+		cd ${DESTDIR}/dev && sh ${NETBSDSRCDIR}/commands/MAKEDEV/MAKEDEV.sh null ;\
+		cd ${DESTDIR}/dev && sh ${NETBSDSRCDIR}/commands/MAKEDEV/MAKEDEV.sh std  2>/dev/null ;\
 	fi
 .endif # !defined(__MINIX)
 
