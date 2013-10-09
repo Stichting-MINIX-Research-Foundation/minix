@@ -192,7 +192,7 @@ void kmain(kinfo_t *local_cbi)
 	    /* Assign privilege structure. Force a static privilege id. */
             (void) get_priv(rp, static_priv_id(proc_nr));
 
-            /* Priviliges for kernel tasks. */
+            /* Privileges for kernel tasks. */
 	    if(proc_nr == VM_PROC_NR) {
                 priv(rp)->s_flags = VM_F;
                 priv(rp)->s_trap_mask = SRV_T;
@@ -211,7 +211,7 @@ void kmain(kinfo_t *local_cbi)
                 ipc_to_m = TSK_M;                  /* allowed targets */
                 kcalls = TSK_KC;                   /* allowed kernel calls */
             }
-            /* Priviliges for the root system process. */
+            /* Privileges for the root system process. */
             else {
 	    	assert(isrootsysn(proc_nr));
                 priv(rp)->s_flags= RSYS_F;        /* privilege flags */

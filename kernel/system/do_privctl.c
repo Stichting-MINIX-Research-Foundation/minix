@@ -38,7 +38,7 @@ int do_privctl(struct proc * caller, message * m_ptr)
   struct priv priv;
   int irq;
 
-  /* Check whether caller is allowed to make this call. Privileged proceses 
+  /* Check whether caller is allowed to make this call. Privileged processes 
    * can only update the privileges of processes that are inhibited from 
    * running by the RTS_NO_PRIV flag. This flag is set when a privileged process
    * forks. 
@@ -221,7 +221,7 @@ int do_privctl(struct proc * caller, message * m_ptr)
 		return r;
 	priv(rp)->s_flags |= CHECK_MEM;	/* Check memory mappings */
 
-	/* When restarting a driver, check if it already has the premission */
+	/* When restarting a driver, check if it already has the permission */
 	for (i = 0; i < priv(rp)->s_nr_mem_range; i++) {
 		if (priv(rp)->s_mem_tab[i].mr_base == mem_range.mr_base &&
 			priv(rp)->s_mem_tab[i].mr_limit == mem_range.mr_limit)
@@ -253,7 +253,7 @@ int do_privctl(struct proc * caller, message * m_ptr)
 		KERNEL, (vir_bytes) &irq, sizeof(irq));
 	priv(rp)->s_flags |= CHECK_IRQ;	/* Check IRQs */
 
-	/* When restarting a driver, check if it already has the premission */
+	/* When restarting a driver, check if it already has the permission */
 	for (i = 0; i < priv(rp)->s_nr_irq; i++) {
 		if (priv(rp)->s_irq_tab[i] == irq)
 			return OK;
