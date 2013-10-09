@@ -15,9 +15,11 @@
 #include <minix/type.h>
 #include <minix/dmap.h>
 
+#include <lib.h>
 #include <limits.h>
 #include <errno.h>
 
+#include <minix/vfsif.h>
 #include <minix/syslib.h>
 #include <minix/sysutil.h>
 

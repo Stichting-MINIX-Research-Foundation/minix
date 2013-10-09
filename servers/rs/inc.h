@@ -26,7 +26,6 @@
 #include <minix/syslib.h>
 #include <minix/sysinfo.h>
 #include <minix/sysutil.h>
-#include <minix/keymap.h>
 #include <minix/bitmap.h>
 #include <minix/rs.h>
 #include <minix/dmap.h>
@@ -38,7 +37,7 @@
 #include <minix/priv.h>
 
 #include <machine/archtypes.h>
-#include <timers.h>				/* For priv.h */
+#include <minix/timers.h>				/* For priv.h */
 #include "kernel/priv.h"
 #include "kernel/ipc.h"
 

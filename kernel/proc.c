@@ -117,7 +117,7 @@ void proc_init(void)
 	struct priv *sp;
 	int i;
 
-	/* Clear the process table. Anounce each slot as empty and set up
+	/* Clear the process table. Announce each slot as empty and set up
 	 * mappings for proc_addr() and proc_nr() macros. Do the same for the
 	 * table with privilege structures for the system processes. 
 	 */
@@ -175,7 +175,7 @@ static void idle(void)
 	/* This function is called whenever there is no work to do.
 	 * Halt the CPU, and measure how many timestamp counter ticks are
 	 * spent not doing anything. This allows test setups to measure
-	 * the CPU utiliziation of certain workloads with high precision.
+	 * the CPU utilization of certain workloads with high precision.
 	 */
 
 	p = get_cpulocal_var(proc_ptr) = get_cpulocal_var_ptr(idle_proc);
@@ -637,7 +637,7 @@ endpoint_t src_dst_e;				/* src or dst process */
 {
 /* Check for deadlock. This can happen if 'caller_ptr' and 'src_dst' have
  * a cyclic dependency of blocking send and receive calls. The only cyclic 
- * depency that is not fatal is if the caller and target directly SEND(REC)
+ * dependency that is not fatal is if the caller and target directly SEND(REC)
  * and RECEIVE to each other. If a deadlock is found, the group size is 
  * returned. Otherwise zero is returned. 
  */
@@ -993,7 +993,7 @@ static int mini_receive(struct proc * caller_ptr,
 	    IPC_STATUS_ADD_CALL(caller_ptr, call);
 
 	    /*
-	     * if the message is originaly from the kernel on behalf of this
+	     * if the message is originally from the kernel on behalf of this
 	     * process, we must send the status flags accordingly
 	     */
 	    if (sender->p_misc_flags & MF_SENDING_FROM_KERNEL) {

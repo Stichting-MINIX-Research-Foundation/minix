@@ -14,7 +14,7 @@ int (*fs_call_vec[])(void) = {
 	do_noop,	/*  7	inhibread	*/
 	fs_stat,	/*  8	stat		*/
 	no_sys,		/*  9	utime		*/
-	fs_fstatfs,	/* 10	fstatfs		*/
+	fs_statvfs,	/* 10	statvfs		*/
 	no_sys,		/* 11	bread		*/
 	no_sys,		/* 12	bwrite		*/
 	no_sys,		/* 13	unlink		*/
@@ -36,9 +36,8 @@ int (*fs_call_vec[])(void) = {
 	no_sys,		/* 29	newnode		*/
 	fs_rdlink,	/* 30	rdlink		*/
 	fs_getdents,	/* 31	getdents	*/
-	fs_statvfs,	/* 32	statvfs		*/
-	no_sys,		/* 33   peek            */
-	no_sys,		/* 34   bpeek           */
+	no_sys,		/* 32   peek            */
+	no_sys,		/* 33   bpeek           */
 };
 
 /* This should not fail with "array size is negative": */

@@ -6,8 +6,9 @@
 # Timestamp in UTC,minixpath,netbsdpath
 # minixpath:  path in Minix source tree (starting from /usr/src/)
 # netbsdpath: path in BSD source tree (starting from src/)
-2012/01/16 18:47:57,bin/cat
+2012/10/17 12:00:00,bin/cat
 2011/08/27 12:55:09,bin/date
+2013/08/19 12:00:00,bin/df
 2012/10/17 12:00:00,bin/echo
 2012/01/16 18:47:57,bin/ed
 2012/10/17 12:00:00,bin/expr
@@ -110,6 +111,7 @@
 2013/04/23 12:00:00,sys/dev/i2c/Makefile
 2013/04/23 12:00:00,sys/dev/i2c/i2c_io.h
 2013/07/22 12:00:00,sys/dev/videomode
+2013/07/31 12:00:00,sys/dev/vndvar.h
 2012/01/16 18:47:57,sys/lib/libsa
 2012/10/17 12:00:00,sys/lib/libz
 2012/10/17 12:00:00,sys/Makefile
@@ -187,12 +189,14 @@
 2010/05/27 08:40:19,usr.bin/seq
 2013/06/02 12:00:00,usr.bin/shuffle
 2012/10/17 12:00:00,usr.bin/sort
-2011/01/15 22:54:10,usr.bin/stat
+2012/10/17 12:00:00,usr.bin/stat
 2012/02/10 16:16:12,usr.bin/su
+2013/10/06 12:00:00,usr.bin/tee
 2012/06/01 12:08:40,usr.bin/tic
 2012/10/17 12:00:00,usr.bin/tput
 2012/10/17 12:00:00,usr.bin/tr
 2012/10/17 12:00:00,usr.bin/tsort
+2013/09/06 12:00:00,usr.bin/uname
 2010/10/06 07:59:18,usr.bin/uniq
 2012/10/17 12:00:00,usr.bin/wc
 2013/03/22 12:00:00,usr.bin/whatis
@@ -210,4 +214,5 @@
 2013/04/05 12:00:00,usr.sbin/rdate
 2011/01/04 10:30:21,usr.sbin/user
 2009/04/19 00:44:49,usr.sbin/vipw
+2013/07/31 12:00:00,usr.sbin/vnconfig
 2009/04/22 15:23:10,usr.sbin/zic

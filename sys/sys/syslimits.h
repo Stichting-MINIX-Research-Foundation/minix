@@ -41,6 +41,7 @@
 #if defined(_STANDALONE)
 /* LSC: In NetBSD this gets pulled in through libkern.h */
 #include <sys/null.h>
+uint32_t crc32(uint32_t, const uint8_t *, size_t);
 #endif /* defined(_STANDALONE) */
 #endif /* defined(__minix) */
 

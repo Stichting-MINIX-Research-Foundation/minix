@@ -8,6 +8,7 @@ SRCS+= 	accept.c access.c adjtime.c bind.c brk.c sbrk.c m_closefrom.c getsid.c \
 	getgroups.c getitimer.c setitimer.c __getlogin.c getpeername.c \
 	getpgrp.c getpid.c getppid.c priority.c getrlimit.c getsockname.c \
 	getsockopt.c setsockopt.c gettimeofday.c geteuid.c getuid.c \
+	getvfsstat.c \
 	ioctl.c issetugid.c kill.c link.c listen.c loadname.c lseek.c \
 	minix_rs.c mkdir.c mkfifo.c mknod.c mmap.c mount.c nanosleep.c \
 	open.c pathconf.c pipe.c poll.c pread.c ptrace.c pwrite.c \

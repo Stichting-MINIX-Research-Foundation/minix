@@ -9,11 +9,11 @@
  */
 int getpeereid(int sd, uid_t *euid, gid_t *egid) {
 	int rc;
-	struct ucred cred;
+	struct uucred cred;
 	socklen_t ucred_length;
 
 	/* Initialize Data Structures */
-	ucred_length = sizeof(struct ucred);
+	ucred_length = sizeof(struct uucred);
 	memset(&cred, '\0', ucred_length);
 
 	/* Validate Input Parameters */
@@ -26,8 +26,8 @@ int getpeereid(int sd, uid_t *euid, gid_t *egid) {
 	rc = getsockopt(sd, SOL_SOCKET, SO_PEERCRED, &cred, &ucred_length);
 	if (rc == 0) {
 		/* Success - return the results */
-		*euid = cred.uid;
-		*egid = cred.gid;
+		*euid = cred.cr_uid;
+		*egid = cred.cr_gid;
 		return 0;
 	} else {
 		/* Failure - getsockopt takes care of setting errno */

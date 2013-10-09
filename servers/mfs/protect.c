@@ -14,12 +14,12 @@ int fs_chmod()
 /* Perform the chmod(name, mode) system call. */
 
   register struct inode *rip;
-  mode_t mode;
+  pmode_t mode;
 
-  mode = (mode_t) fs_m_in.REQ_MODE;
+  mode = (pmode_t) fs_m_in.REQ_MODE;
   
   /* Temporarily open the file. */
-  if( (rip = get_inode(fs_dev, (ino_t) fs_m_in.REQ_INODE_NR)) == NULL)
+  if( (rip = get_inode(fs_dev, (pino_t) fs_m_in.REQ_INODE_NR)) == NULL)
 	  return(EINVAL);
  
   if(rip->i_sp->s_rd_only) {
@@ -49,7 +49,7 @@ int fs_chown()
   register int r;
 
   /* Temporarily open the file. */
-  if( (rip = get_inode(fs_dev, (ino_t) fs_m_in.REQ_INODE_NR)) == NULL)
+  if( (rip = get_inode(fs_dev, (pino_t) fs_m_in.REQ_INODE_NR)) == NULL)
 	  return(EINVAL);
 
   /* Not permitted to change the owner of a file on a read-only file sys. */
@@ -73,7 +73,7 @@ int fs_chown()
 /*===========================================================================*
  *				forbidden				     *
  *===========================================================================*/
-int forbidden(register struct inode *rip, mode_t access_desired)
+int forbidden(register struct inode *rip, pmode_t access_desired)
 {
 /* Given a pointer to an inode, 'rip', and the access desired, determine
  * if the access is allowed, and if not why not.  The routine looks up the
@@ -82,7 +82,7 @@ int forbidden(register struct inode *rip, mode_t access_desired)
  */
 
   register struct inode *old_rip = rip;
-  register mode_t bits, perm_bits;
+  register pmode_t bits, perm_bits;
   int r, shift;
 
   /* Isolate the relevant rwx bits from the mode. */

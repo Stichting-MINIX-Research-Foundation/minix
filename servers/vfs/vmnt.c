@@ -3,11 +3,9 @@
  */
 
 #include "fs.h"
-#include "threads.h"
 #include "vmnt.h"
 #include <assert.h>
 #include <string.h>
-#include "fproc.h"
 
 static int is_vmnt_locked(struct vmnt *vmp);
 static void clear_vmnt(struct vmnt *vmp);

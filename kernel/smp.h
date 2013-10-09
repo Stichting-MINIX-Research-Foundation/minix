@@ -13,7 +13,7 @@
 EXTERN unsigned ncpus;
 /* Number of virtual strands per physical core */
 EXTERN unsigned ht_per_core;
-/* which cpu is bootstraping */
+/* which cpu is bootstrapping */
 EXTERN unsigned bsp_cpu_id;
 
 #define cpu_is_bsp(cpu)	(bsp_cpu_id == cpu)
@@ -62,7 +62,7 @@ void smp_ipi_sched_handler(void);
 void smp_schedule(unsigned cpu);
 /* stop a processes on a different cpu */
 void smp_schedule_stop_proc(struct proc * p);
-/* stop a process on a different cpu because its adress space is being changed */
+/* stop a process on a different cpu because its address space is being changed */
 void smp_schedule_vminhibit(struct proc * p);
 /* stop the process and for saving its full context */
 void smp_schedule_stop_proc_save_ctx(struct proc * p);

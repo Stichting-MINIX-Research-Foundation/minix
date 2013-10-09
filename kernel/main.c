@@ -192,7 +192,7 @@ void kmain(kinfo_t *local_cbi)
 	    /* Assign privilege structure. Force a static privilege id. */
             (void) get_priv(rp, static_priv_id(proc_nr));
 
-            /* Priviliges for kernel tasks. */
+            /* Privileges for kernel tasks. */
 	    if(proc_nr == VM_PROC_NR) {
                 priv(rp)->s_flags = VM_F;
                 priv(rp)->s_trap_mask = SRV_T;
@@ -211,7 +211,7 @@ void kmain(kinfo_t *local_cbi)
                 ipc_to_m = TSK_M;                  /* allowed targets */
                 kcalls = TSK_KC;                   /* allowed kernel calls */
             }
-            /* Priviliges for the root system process. */
+            /* Privileges for the root system process. */
             else {
 	    	assert(isrootsysn(proc_nr));
                 priv(rp)->s_flags= RSYS_F;        /* privilege flags */
@@ -323,12 +323,12 @@ void kmain(kinfo_t *local_cbi)
 static void announce(void)
 {
   /* Display the MINIX startup banner. */
-  printf("\nMINIX %s.%s. "
+  printf("\nMINIX %s. "
 #ifdef _VCS_REVISION
 	"(" _VCS_REVISION ")\n"
 #endif
       "Copyright 2012, Vrije Universiteit, Amsterdam, The Netherlands\n",
-      OS_RELEASE, OS_VERSION);
+      OS_RELEASE);
   printf("MINIX is open source software, see http://www.minix3.org\n");
 }
 
@@ -338,7 +338,7 @@ static void announce(void)
 void prepare_shutdown(const int how)
 {
 /* This function prepares to shutdown MINIX. */
-  static timer_t shutdown_timer;
+  static minix_timer_t shutdown_timer;
 
   /* Continue after 1 second, to give processes a chance to get scheduled to 
    * do shutdown work.  Set a watchog timer to call shutdown(). The timer 
@@ -346,13 +346,13 @@ void prepare_shutdown(const int how)
    */
   printf("MINIX will now be shut down ...\n");
   tmr_arg(&shutdown_timer)->ta_int = how;
-  set_timer(&shutdown_timer, get_monotonic() + system_hz, minix_shutdown);
+  set_kernel_timer(&shutdown_timer, get_monotonic() + system_hz, minix_shutdown);
 }
 
 /*===========================================================================*
  *				shutdown 				     *
  *===========================================================================*/
-void minix_shutdown(timer_t *tp)
+void minix_shutdown(minix_timer_t *tp)
 {
 /* This function is called from prepare_shutdown or stop_sequence to bring 
  * down MINIX. How to shutdown is in the argument: RBT_HALT (return to the

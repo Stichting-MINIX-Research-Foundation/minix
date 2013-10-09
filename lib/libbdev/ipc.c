@@ -36,9 +36,17 @@ static int bdev_recover(dev_t dev, int update_endpt)
  */
   bdev_call_t *call, *next;
   endpoint_t endpt;
-  int r, nr_tries;
+  int r, active, nr_tries;
 
-  printf("bdev: recovering from a driver restart on major %d\n", major(dev));
+  /* Only print output if there is something to recover. Some drivers may be
+   * shut down and later restarted legitimately, and if they were not in use
+   * while that happened, there is no need to flood the console with messages.
+   */
+  active = bdev_minor_is_open(dev) || bdev_call_iter_maj(dev, NULL, &next);
+
+  if (active)
+	printf("bdev: recovering from a driver restart on major %d\n",
+		major(dev));
 
   for (nr_tries = 0; nr_tries < RECOVER_TRIES; nr_tries++) {
 	/* First update the endpoint, if necessary. */
@@ -79,7 +87,8 @@ static int bdev_recover(dev_t dev, int update_endpt)
 	/* Recovery seems successful. We can now reissue the current
 	 * synchronous request (if any), and continue normal operation.
 	 */
-	printf("bdev: recovery successful, new driver is at %d\n", endpt);
+	if (active)
+		printf("bdev: recovery successful, new driver at %d\n", endpt);
 
 	return TRUE;
   }

@@ -44,6 +44,7 @@
  */
 
 #include <minix/sysutil.h>
+#include <minix/netsock.h>
 
 #include "lwip/opt.h"
 

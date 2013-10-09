@@ -54,7 +54,7 @@ EXTERN int verboseflags;
 #endif
 
 #ifdef USE_APIC
-EXTERN int config_no_apic; /* optionaly turn off apic */
+EXTERN int config_no_apic; /* optionally turn off apic */
 EXTERN int config_apic_timer_x; /* apic timer slowdown factor */
 #endif
 
@@ -64,7 +64,7 @@ EXTERN u64_t cpu_hz[CONFIG_MAX_CPUS];
 #define cpu_get_freq(cpu)	cpu_hz[cpu]
 
 #ifdef CONFIG_SMP
-EXTERN int config_no_smp; /* optionaly turn off SMP */
+EXTERN int config_no_smp; /* optionally turn off SMP */
 #endif
 
 /* VM */

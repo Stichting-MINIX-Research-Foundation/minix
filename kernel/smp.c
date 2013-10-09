@@ -44,7 +44,7 @@ void wait_for_APs_to_finish_booting(void)
 	BKL_UNLOCK();
 	while (ap_cpus_booted != (n - 1))
 		arch_pause();
-	/* now we have to take the lock again as we continu execution */
+	/* now we have to take the lock again as we continue execution */
 	BKL_LOCK();
 }
 

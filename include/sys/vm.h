@@ -18,7 +18,7 @@ struct mapreq
 struct mapreqvm
 {
 	int	flags;		/* reserved, must be 0 */
-	off_t	phys_offset;	
+	phys_bytes phys_offset;
 	size_t	size;
 	int	readonly;
 	char	reserved[36];	/* reserved, must be 0 */

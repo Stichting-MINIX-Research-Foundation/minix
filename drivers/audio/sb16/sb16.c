@@ -13,7 +13,7 @@
 
 static void dsp_dma_setup(phys_bytes address, int count, int sub_dev);
 
-static int dsp_ioctl(int request, void *val, int *len);
+static int dsp_ioctl(unsigned long request, void *val, int *len);
 static int dsp_set_size(unsigned int size);
 static int dsp_set_speed(unsigned int speed);
 static int dsp_set_stereo(unsigned int stereo);
@@ -141,7 +141,7 @@ int drv_start(int channel, int DmaMode) {
 	dsp_set_speed(DspSpeed);
 
 	/* Put the speaker on */
-	if(DmaMode == DEV_WRITE_S) {
+	if(DmaMode == WRITE_DMA) {
 		dsp_command (DSP_CMD_SPKON); /* put speaker on */
 
 		/* Program DSP with dma mode */
@@ -232,8 +232,9 @@ int drv_resume(int UNUSED(chan)) {
 
 
 
-int drv_io_ctl(int request, void *val, int *len, int sub_dev) {
-	Dprint(("dsp_ioctl: got ioctl %d, argument: %d sub_dev: %d\n", request, val, sub_dev));
+int drv_io_ctl(unsigned long request, void *val, int *len, int sub_dev) {
+	Dprint(("dsp_ioctl: got ioctl %lu, argument: %d sub_dev: %d\n",
+		request, val, sub_dev));
 
 	if(sub_dev == AUDIO) {
 		return dsp_ioctl(request, val, len);
@@ -262,7 +263,7 @@ int drv_get_frag_size(u32_t *frag_size, int UNUSED(sub_dev)) {
 
 
 
-static int dsp_ioctl(int request, void *val, int *len) {
+static int dsp_ioctl(unsigned long request, void *val, int *len) {
 	int status;
 	
 	switch(request) {
@@ -293,7 +294,7 @@ static void dsp_dma_setup(phys_bytes address, int count, int DmaMode) {
 		pv_set(pvb[1], DMA8_CLEAR, 0x00);		       /* Clear flip flop */
 
 		/* set DMA mode */
-		pv_set(pvb[2], DMA8_MODE, (DmaMode == DEV_WRITE_S ? DMA8_AUTO_PLAY : DMA8_AUTO_REC)); 
+		pv_set(pvb[2], DMA8_MODE, (DmaMode == WRITE_DMA ? DMA8_AUTO_PLAY : DMA8_AUTO_REC)); 
 
 		pv_set(pvb[3], DMA8_ADDR, (u8_t)(address >>  0)); /* Low_byte of address */
 		pv_set(pvb[4], DMA8_ADDR, (u8_t)(address >>  8)); /* High byte of address */
@@ -311,7 +312,7 @@ static void dsp_dma_setup(phys_bytes address, int count, int DmaMode) {
 		pv_set(pvb[1], DMA16_CLEAR, 0x00);                  /* Clear flip flop */
 
 		/* Set dma mode */
-		pv_set(pvb[2], DMA16_MODE, (DmaMode == DEV_WRITE_S ? DMA16_AUTO_PLAY : DMA16_AUTO_REC));        
+		pv_set(pvb[2], DMA16_MODE, (DmaMode == WRITE_DMA ? DMA16_AUTO_PLAY : DMA16_AUTO_REC));        
 
 		pv_set(pvb[3], DMA16_ADDR, (address >> 1) & 0xFF);  /* Low_byte of address */
 		pv_set(pvb[4], DMA16_ADDR, (address >> 9) & 0xFF);  /* High byte of address */

@@ -23,7 +23,7 @@
  */
 
 enum entry_type
-{ ENTRY_DIR, ENTRY_FILE, ENTRY_LINK };
+{ ENTRY_DIR, ENTRY_FILE, ENTRY_LINK, ENTRY_BLOCK, ENTRY_CHAR };
 
 
 struct entry
@@ -37,6 +37,9 @@ struct entry
 	char *time;		/* time 1365836670.000000000 */
 	char *size;
 	char *link;
+	/* Can't use devmajor_t/devminor_t on linux systems :( */
+	dev_t dev_major;
+	dev_t dev_minor;
 
 	/* just internal variables used to create a tree */
 	int depth;
@@ -96,6 +99,10 @@ convert_to_entry(char *line, struct entry *entry)
 					entry->type = ENTRY_FILE;
 				} else if (strncmp(value, "link", 5) == 0) {
 					entry->type = ENTRY_LINK;
+				} else if (strncmp(value, "block", 6) == 0) {
+					entry->type = ENTRY_BLOCK;
+				} else if (strncmp(value, "char", 5) == 0) {
+					entry->type = ENTRY_CHAR;
 				} else {
 					fprintf(stderr,
 					    "\tunknown type %s -> '%s'\n", key,
@@ -113,6 +120,11 @@ convert_to_entry(char *line, struct entry *entry)
 				entry->size = strndup(value, MAX_LINE_SIZE);
 			} else if (strncmp(key, "link", 5) == 0) {
 				entry->link = strndup(value, MAX_LINE_SIZE);
+			} else if (strncmp(key, "device", 7) == 0) {
+				long int dev_id;
+				dev_id = strtoul(value, NULL, 16);
+				entry->dev_major = major(dev_id);
+				entry->dev_minor = minor(dev_id);
 			} else {
 				fprintf(stderr,
 				    "\tunknown attribute %s -> %s\n", key,
@@ -289,6 +301,12 @@ static char * parse_mode(int mode){
 	return m;
 }
 
+static char *parse_filename(char *path)
+{
+	/* Skipping the first . in the path */
+	return &path[1];
+}
+
 static int
 dump_entry(FILE * out, int mindex, const char *base_dir)
 {
@@ -297,10 +315,11 @@ dump_entry(FILE * out, int mindex, const char *base_dir)
 	int i;
 	struct entry *entry = &entries[mindex];
 
+	/* Indent the line */
+	for (space = 0; space < entries[mindex].depth; space++) {
+		fprintf(out, " ");
+	}
 	if (entry->type == ENTRY_DIR) {
-		for (space = 0; space < entries[mindex].depth; space++) {
-			fprintf(out, " ");
-		}
 		if (entries[mindex].depth > 0) {
 			fprintf(out, "%s ", entry->filename);
 		}
@@ -318,26 +337,24 @@ dump_entry(FILE * out, int mindex, const char *base_dir)
 		}
 		fprintf(out, "$\n");
 	} else if (entry->type == ENTRY_FILE) {
-		for (space = 0; space < entries[mindex].depth; space++) {
-			fprintf(out, " ");
-		}
-		/* hack skipping the first . in the path */
 		fprintf(out, "%s -%s %s %s %s%s\n", entry->filename,
-		    parse_mode(entry->mode), entry->uid, entry->gid, base_dir,
-		    &entry->path[1]);
+			parse_mode(entry->mode), entry->uid, entry->gid,
+			base_dir, parse_filename(entry->path));
 	} else if (entry->type == ENTRY_LINK) {
-		for (space = 0; space < entries[mindex].depth; space++) {
-			fprintf(out, " ");
-		}
-		/* hack skipping the first . in the path */
-		fprintf(out, "%s s%s 0 0 %s\n", entry->filename, parse_mode(entry->mode),
-		    entry->link);
+		fprintf(out, "%s s%s %s %s %s\n", entry->filename,
+			parse_mode(entry->mode), entry->uid, entry->gid,
+			entry->link);
+	} else if (entry->type == ENTRY_CHAR) {
+		fprintf(out, "%s c%s %s %s %d %d\n", entry->filename,
+			parse_mode(entry->mode), entry->uid, entry->gid,
+			entry->dev_major, entry->dev_minor);
+	} else if (entry->type == ENTRY_BLOCK) {
+		fprintf(out, "%s b%s %s %s %d %d\n", entry->filename,
+			parse_mode(entry->mode), entry->uid, entry->gid,
+			entry->dev_major, entry->dev_minor);
 	} else {
-		/* missing "b" and "c" for block and char device? */
-		fprintf(out, "# ");
-		for (space = 1; space < entries[mindex].depth; space++) {
-			fprintf(out, " ");
-		}
+		/* Unknown line type.  */
+		fprintf(out, "#");
 		fprintf(out, "%i %s\n", entry->type, entry->path);
 		exit(1);
 		return 1;

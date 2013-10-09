@@ -1,7 +1,6 @@
 #ifndef __VFS_WORKERS_H__
 #define __VFS_WORKERS_H__
 #include <minix/mthread.h>
-#include "job.h"
 
 #define thread_t	mthread_thread_t
 #define mutex_t		mthread_mutex_t
@@ -23,12 +22,15 @@
 #define cond_wait	mthread_cond_wait
 #define cond_signal	mthread_cond_signal
 
+struct fproc;
+
 struct worker_thread {
   thread_t w_tid;
   mutex_t w_event_mutex;
   cond_t w_event;
-  struct job w_job;
   struct fproc *w_fp;
+  message w_msg;
+  int w_err_code;
   message *w_fs_sendrec;
   message *w_drv_sendrec;
   endpoint_t w_task;
