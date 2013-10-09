@@ -8,7 +8,6 @@
 #include <minix/callnr.h>
 #include <minix/com.h>
 #include "file.h"
-#include "fproc.h"
 #include "lock.h"
 #include "scratchpad.h"
 #include "vnode.h"
@@ -23,7 +22,7 @@ int (*call_vec[])(message *m_out) = {
 	do_open,	/*  5 = open	*/
 	do_close,	/*  6 = close	*/
 	no_sys,		/*  7 = wait	*/
-	no_sys,		/*  8 = unused (was creat) */
+	no_sys,		/*  8 = unused */
 	do_link,	/*  9 = link	*/
 	do_unlink,	/* 10 = unlink	*/
 	no_sys,		/* 11 = waitpid	*/
@@ -34,7 +33,7 @@ int (*call_vec[])(message *m_out) = {
 	do_chown,	/* 16 = chown	*/
 	no_sys,		/* 17 = break	*/
 	no_sys,		/* 18 = unused (was old stat)*/
-	do_lseek,	/* 19 = lseek	*/
+	do_lseek,	/* 19 = unused (was lseek_321)*/
 	no_sys,		/* 20 = getpid	*/
 	do_mount,	/* 21 = mount	*/
 	do_umount,	/* 22 = umount	*/
@@ -56,7 +55,7 @@ int (*call_vec[])(message *m_out) = {
 	do_rename,	/* 38 = rename	*/
 	do_mkdir,	/* 39 = mkdir	*/
 	do_unlink,	/* 40 = rmdir	*/
-	no_sys,		/* 41 = unused (was dup) */
+	no_sys,		/* 41 = unused  */
 	do_pipe,	/* 42 = pipe	*/
 	no_sys,		/* 43 = times	*/
 	no_sys,		/* 44 = (prof)	*/
@@ -71,7 +70,7 @@ int (*call_vec[])(message *m_out) = {
 	do_lstat,	/* 53 = lstat	*/
 	do_ioctl,	/* 54 = ioctl	*/
 	do_fcntl,	/* 55 = fcntl	*/
-	no_sys,		/* 56 = (mpx)	*/
+	do_dupfrom,	/* 56 = dupfrom	*/
 	do_fsready,	/* 57 = FS proc ready */
 	do_pipe2,	/* 58 = pipe2	*/
 	no_sys,		/* 59 = (execve)*/
@@ -84,8 +83,8 @@ int (*call_vec[])(message *m_out) = {
 	do_fstat, 	/* 66 = fstat - badly numbered, being phased out */
 	do_lstat,	/* 67 = lstat - badly numbered, being phased out */
 	no_sys,		/* 68 = (setmcontext) */
-	no_sys,		/* 69 = unused  */
-	no_sys,		/* 70 = unused  */
+	do_getdents,	/* 69 = getdents */
+	do_ftruncate,	/* 70 = ftruncate  */
 	no_sys,		/* 71 = (sigaction) */
 	no_sys,		/* 72 = (sigsuspend) */
 	no_sys,		/* 73 = (sigpending) */
@@ -95,11 +94,11 @@ int (*call_vec[])(message *m_out) = {
 	do_svrctl,	/* 77 = svrctl */
 	no_sys,		/* 78 = (sysuname) */
 	no_sys,		/* 79 = unused */
-	do_getdents,	/* 80 = getdents */
+	do_getdents,	/* 80 = getdents_321 (to be phased out) */
 	do_llseek,	/* 81 = llseek */
-	do_fstatfs,	/* 82 = fstatfs */
-	do_statvfs,		/* 83 = fstatvfs */
-	do_fstatvfs,		/* 84 = statvfs */
+	no_sys,		/* 82 = getvfsstat (3.3.0) */
+	no_sys,		/* 83 = fstatvfs (3.3.0) */
+	no_sys,		/* 84 = statvfs (3.3.0) */
 	do_select,	/* 85 = select */
 	do_fchdir,	/* 86 = fchdir */
 	do_fsync,	/* 87 = fsync */
@@ -108,11 +107,11 @@ int (*call_vec[])(message *m_out) = {
 	no_sys,		/* 90 = (gettimeofday) */
 	no_sys,		/* 91 = (seteuid) */
 	no_sys,		/* 92 = (setegid) */
-	do_truncate,	/* 93 = truncate */
-	do_ftruncate,	/* 94 = truncate */
+	do_truncate,	/* 93 = unused */
+	do_ftruncate,	/* 94 = unused */
 	do_chmod,	/* 95 = fchmod */
 	do_chown,	/* 96 = fchown */
-	no_sys,		/* 97 = unused */
+	do_lseek,	/* 97 = lseek */
 	no_sys,		/* 98 = (sprofile) */
 	no_sys,		/* 99 = (cprofile) */
 	no_sys,		/* 100 = (newexec) */
@@ -124,8 +123,8 @@ int (*call_vec[])(message *m_out) = {
 	no_sys,		/* 106 = unused */
 	no_sys,		/* 107 = (getepinfo) */
 	do_utimens,	/* 108 = utimens */
-	no_sys,		/* 109 = unused */
-	no_sys,		/* 110 = unused */
+	do_fcntl,	/* 109 = fcntl */
+	do_truncate,	/* 110 = unused */
 	no_sys,		/* 111 = (srv_kill) */
 	do_gcov_flush,	/* 112 = gcov_flush */
 	no_sys,		/* 113 = (getsid) */
@@ -133,23 +132,18 @@ int (*call_vec[])(message *m_out) = {
 	no_sys,		/* 115 = (clock_gettime) */
 	no_sys,		/* 116 = (clock_settime) */
 	do_vm_call,	/* 117 = call from vm */
-	no_sys,		/* 118 = unsused */
-	no_sys,		/* 119 = unsused */
-	no_sys,		/* 120 = unsused */
+	do_getvfsstat,	/* 118 = getvfsstat (3.2.1 non-ABI-break numbering!) */
+	do_statvfs,	/* 119 = fstatvfs (3.2.1 non-ABI-break numbering!) */
+	do_fstatvfs,	/* 120 = statvfs (3.2.1 non-ABI-break numbering!) */
 	no_sys,		/* 121 = (task reply) */
-	no_sys,		/* 122 = (map driver ) */
+	do_mapdriver,	/* 122 = mapdriver */
 	do_getrusage,	/* 123 = getrusage */
+	do_check_perms,	/* 124 = from PFS: check_perms */
+	do_verify_fd,	/* 125 = from PFS: verify_fd */
+	do_set_filp,	/* 126 = from PFS: set_filp */
+	do_copy_filp,	/* 127 = from PFS: copy_filp */
+	do_put_filp,	/* 128 = from PFS: put_filp */
+	do_cancel_fd,	/* 129 = from PFS: cancel_fd */
 };
 /* This should not fail with "array size is negative": */
 extern int dummy[sizeof(call_vec) == NCALLS * sizeof(call_vec[0]) ? 1 : -1];
-
-int (*pfs_call_vec[])(message *m_out) = {
-
-	no_sys,		/* 0 */
-	do_check_perms,	/* 1 */
-	do_verify_fd,	/* 2 */
-	do_set_filp,	/* 3 */
-	do_copy_filp,	/* 4 */
-	do_put_filp,	/* 5 */
-	do_cancel_fd	/* 6 */
-};

@@ -2,9 +2,8 @@ MAN=	ash.1 at.1 \
 	bsfilt.1 cawf.1 chgrp.1 \
 	chmod.1 cmp.1 comm.1 compress.1 \
 	cp.1 crc.1 crontab.1 dd.1 \
-	df.1 dhrystone.1 dosdir.1 dosread.1 doswrite.1 \
-	dumpcore.1 eject.1 \
-	env.1 factor.1 \
+	dhrystone.1 dosdir.1 dosread.1 doswrite.1 \
+	eject.1 env.1 factor.1 \
 	flexdoc.1 fold.1 format.1 fortune.1 \
 	fsck.mfs.1 host.1 hostaddr.1 ifdef.1 \
 	isodir.1 isoinfo.1 isoread.1 \
@@ -17,9 +16,9 @@ MAN=	ash.1 at.1 \
 	remsync.1 rget.1 rlogin.1 rsh.1 rz.1 \
 	shar.1 sleep.1 spell.1 \
 	split.1 stty.1 svc.1 svrctl.1 \
-	synctree.1 sysenv.1 sz.1 tail.1 tee.1 telnet.1 template.1 \
+	synctree.1 sysenv.1 sz.1 tail.1 telnet.1 template.1 \
 	term.1 termcap.1 tget.1 time.1 true.1 \
-	truncate.1 tty.1 umount.1 uname.1 \
+	truncate.1 tty.1 umount.1 \
 	uud.1 uue.1 vol.1 whereis.1 which.1 \
 	write.1 yap.1 linkfarm.1 pkg_view.1
 

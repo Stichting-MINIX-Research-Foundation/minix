@@ -9,10 +9,8 @@
  */
 
 #include "fs.h"
-#include "threads.h"
 #include "vnode.h"
 #include "vmnt.h"
-#include "fproc.h"
 #include "file.h"
 #include <minix/vfsif.h>
 #include <assert.h>

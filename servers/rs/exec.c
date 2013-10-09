@@ -7,7 +7,7 @@ static int do_exec(int proc_e, char *exec, size_t exec_len, char *progname,
 	char *frame, int frame_len);
 static int exec_restart(int proc_e, int result, vir_bytes pc);
 static int read_seg(struct exec_info *execi, off_t off,
-        off_t seg_addr, size_t seg_bytes);
+        vir_bytes seg_addr, size_t seg_bytes);
 static int exec_restart(int proc_e, int result, vir_bytes pc);
 
 /* Array of loaders for different object formats */
@@ -191,7 +191,7 @@ static int exec_restart(int proc_e, int result, vir_bytes pc)
 static int read_seg(
 struct exec_info *execi,       /* various data needed for exec */
 off_t off,                     /* offset in file */
-off_t seg_addr,            /* address to load segment */
+vir_bytes seg_addr,            /* address to load segment */
 size_t seg_bytes           /* how much is to be transferred? */
 )
 {
@@ -206,7 +206,7 @@ size_t seg_bytes           /* how much is to be transferred? */
   if (off+seg_bytes > execi->hdr_len) return ENOEXEC;
   if((r= sys_vircopy(SELF, ((vir_bytes)execi->hdr)+off,
   	execi->proc_e, seg_addr, seg_bytes)) != OK) {
-	printf("RS: exec read_seg: copy 0x%x bytes into %i at 0x%08x failed: %i\n",
+	printf("RS: exec read_seg: copy 0x%x bytes into %i at 0x%08lx failed: %i\n",
 		seg_bytes, execi->proc_e, seg_addr, r);
   }
   return r;

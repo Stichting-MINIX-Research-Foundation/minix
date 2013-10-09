@@ -797,7 +797,7 @@ atf_error_t
 atf_fs_mkdtemp(atf_fs_path_t *p)
 {
     atf_error_t err;
-    char *buf;
+    char *buf = NULL;
 
     if (!check_umask(S_IRWXU, S_IRWXU)) {
         err = invalid_umask_error(p, atf_fs_stat_dir_type, current_umask());
@@ -825,7 +825,7 @@ atf_error_t
 atf_fs_mkstemp(atf_fs_path_t *p, int *fdout)
 {
     atf_error_t err;
-    char *buf;
+    char *buf = NULL;
     int fd;
 
     if (!check_umask(S_IRWXU, S_IRWXU)) {

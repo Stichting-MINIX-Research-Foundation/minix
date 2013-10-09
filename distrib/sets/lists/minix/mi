@@ -18,6 +18,7 @@
 ./bin/cpio				minix-sys
 ./bin/date				minix-sys
 ./bin/dev2name				minix-sys	obsolete
+./bin/df				minix-sys
 ./bin/echo				minix-sys
 ./bin/ed				minix-sys
 ./bin/expr				minix-sys
@@ -71,7 +72,6 @@
 ./boot/minix/.temp/mod06_memory		minix-sys
 ./boot/minix_default			minix-sys
 ./dev					minix-sys
-./dev/mouse				minix-sys
 ./etc					minix-sys
 ./etc/atf				minix-sys	atf
 ./etc/boot.cfg.default			minix-sys
@@ -152,6 +152,7 @@
 ./sbin/fsck.ext2			minix-sys
 ./sbin/fsck_ext2fs			minix-sys
 ./sbin/fsck.mfs				minix-sys
+./sbin/input				minix-sys
 ./sbin/is				minix-sys
 ./sbin/isofs				minix-sys
 ./sbin/mfs				minix-sys
@@ -280,7 +281,7 @@
 ./usr/bin/DESCRIBE			minix-sys
 ./usr/bin/devmand			minix-sys
 ./usr/bin/devsize			minix-sys
-./usr/bin/df				minix-sys
+./usr/bin/df				minix-sys	obsolete
 ./usr/bin/dhcpd				minix-sys
 ./usr/bin/dhrystone			minix-sys
 ./usr/bin/diff				minix-sys
@@ -290,7 +291,7 @@
 ./usr/bin/dosread                       minix-sys
 ./usr/bin/doswrite                      minix-sys
 ./usr/bin/du				minix-sys
-./usr/bin/dumpcore			minix-sys
+./usr/bin/dumpcore			minix-sys	obsolete
 ./usr/bin/egrep				minix-sys
 ./usr/bin/eject				minix-sys
 ./usr/bin/elfedit			minix-sys	binutils
@@ -320,7 +321,7 @@
 ./usr/bin/ftp				minix-sys
 ./usr/bin/g++				minix-sys	gcccmds
 ./usr/bin/gcc				minix-sys	gcccmds
-./usr/bin/gcore				minix-sys
+./usr/bin/gcore				minix-sys	obsolete
 ./usr/bin/gcov				minix-sys	gcccmds
 ./usr/bin/gcov-pull			minix-sys
 ./usr/bin/gcpp				minix-sys	gcccmds
@@ -631,6 +632,7 @@
 ./usr/include/dev			minix-sys
 ./usr/include/dev/i2c			minix-sys
 ./usr/include/dev/i2c/i2c_io.h		minix-sys
+./usr/include/dev/vndvar.h		minix-sys
 ./usr/include/dirent.h			minix-sys
 ./usr/include/disktab.h			minix-sys
 ./usr/include/dlfcn.h			minix-sys
@@ -1143,6 +1145,7 @@
 ./usr/include/minix/i2cdriver.h		minix-sys
 ./usr/include/minix/i2c.h		minix-sys
 ./usr/include/minix/input.h		minix-sys
+./usr/include/minix/inputdriver.h	minix-sys
 ./usr/include/minix/ioctl.h		minix-sys
 ./usr/include/minix/ipcconst.h		minix-sys
 ./usr/include/minix/ipc.h		minix-sys
@@ -1180,7 +1183,7 @@
 ./usr/include/minix/sysutil.h		minix-sys
 ./usr/include/minix/termios.h		minix-sys
 ./usr/include/minix/timers.h		minix-sys
-./usr/include/minix/tty.h		minix-sys
+./usr/include/minix/tty.h		minix-sys	obsolete
 ./usr/include/minix/type.h		minix-sys
 ./usr/include/minix/types.h		minix-sys	obsolete
 ./usr/include/minix/u64.h		minix-sys
@@ -1445,7 +1448,7 @@
 ./usr/include/term.h			minix-sys
 ./usr/include/termios.h			minix-sys
 ./usr/include/time.h			minix-sys
-./usr/include/timers.h			minix-sys
+./usr/include/timers.h			minix-sys	obsolete
 ./usr/include/tools.h			minix-sys	obsolete
 ./usr/include/ttyent.h			minix-sys
 ./usr/include/tzfile.h			minix-sys
@@ -1538,7 +1541,7 @@
 ./usr/lib/keymaps/italian.map		minix-sys
 ./usr/lib/keymaps/japanese.map		minix-sys
 ./usr/lib/keymaps/latin-america.map	minix-sys
-./usr/lib/keymaps/olivetti.map		minix-sys
+./usr/lib/keymaps/norwegian.map		minix-sys
 ./usr/lib/keymaps/polish.map		minix-sys
 ./usr/lib/keymaps/portuguese.map	minix-sys
 ./usr/lib/keymaps/russian-cp1251.map	minix-sys
@@ -1548,7 +1551,6 @@
 ./usr/lib/keymaps/spanish.map		minix-sys
 ./usr/lib/keymaps/uk.map		minix-sys
 ./usr/lib/keymaps/ukraine-koi8-u.map	minix-sys
-./usr/lib/keymaps/us-std-esc.map	minix-sys
 ./usr/lib/keymaps/us-std.map		minix-sys
 ./usr/lib/keymaps/us-swap.map		minix-sys
 ./usr/lib/libarchive.a			minix-sys
@@ -1631,6 +1633,8 @@
 ./usr/lib/libgcc_s.so			minix-sys	gcccmds
 ./usr/lib/libgcc_s.so.1.0		minix-sys	gcccmds
 ./usr/lib/libgcc_s.so.1			minix-sys	gcccmds
+./usr/lib/libinputdriver.a		minix-sys
+./usr/lib/libinputdriver_pic.a		minix-sys
 ./usr/lib/libl.a			minix-sys
 ./usr/lib/liblua.a			minix-sys
 ./usr/lib/liblua_pic.a			minix-sys
@@ -1842,7 +1846,7 @@
 ./usr/man/man1/dosread.1		minix-sys
 ./usr/man/man1/doswrite.1		minix-sys
 ./usr/man/man1/du.1			minix-sys
-./usr/man/man1/dumpcore.1		minix-sys
+./usr/man/man1/dumpcore.1		minix-sys	obsolete
 ./usr/man/man1/echo.1			minix-sys
 ./usr/man/man1/ed.1			minix-sys
 ./usr/man/man1/egrep.1			minix-sys
@@ -2130,6 +2134,7 @@
 ./usr/man/man2/FD_SET.2			minix-sys
 ./usr/man/man2/fork.2			minix-sys
 ./usr/man/man2/fstatvfs.2		minix-sys
+./usr/man/man2/fstatvfs1.2		minix-sys
 ./usr/man/man2/getgid.2			minix-sys
 ./usr/man/man2/getitimer.2		minix-sys
 ./usr/man/man2/getnucred.2		minix-sys
@@ -2142,6 +2147,7 @@
 ./usr/man/man2/getsockopt.2		minix-sys
 ./usr/man/man2/gettimeofday.2		minix-sys
 ./usr/man/man2/getuid.2			minix-sys
+./usr/man/man2/getvfsstat.2		minix-sys
 ./usr/man/man2/intro.2			minix-sys
 ./usr/man/man2/ioctl.2			minix-sys
 ./usr/man/man2/kill.2			minix-sys
@@ -2181,6 +2187,7 @@
 ./usr/man/man2/socket.2			minix-sys
 ./usr/man/man2/socketpair.2		minix-sys
 ./usr/man/man2/statvfs.2		minix-sys
+./usr/man/man2/statvfs1.2		minix-sys
 ./usr/man/man2/svrctl.2			minix-sys
 ./usr/man/man2/symlink.2		minix-sys
 ./usr/man/man2/sync.2			minix-sys
@@ -3977,6 +3984,7 @@
 ./usr/man/man3/strnvis.3			minix-sys
 ./usr/man/man3/strnvisx.3			minix-sys
 ./usr/man/man3/strpbrk.3					minix-sys
+./usr/man/man3/strpct.3				minix-sys
 ./usr/man/man3/strptime.3					minix-sys
 ./usr/man/man3/strrchr.3					minix-sys
 ./usr/man/man3/strsep.3					minix-sys
@@ -4452,6 +4460,8 @@
 ./usr/man/man8/usermod.8					minix-sys
 ./usr/man/man8/vbfs.8					minix-sys
 ./usr/man/man8/vipw.8					minix-sys
+./usr/man/man8/vnconfig.8				minix-sys
+./usr/man/man8/vndconfig.8				minix-sys
 ./usr/man/man8/zdump.8					minix-sys
 ./usr/man/man8/zic.8					minix-sys
 ./usr/man/man9					minix-sys
@@ -4504,6 +4514,9 @@
 ./usr/sbin/vfs				minix-sys
 ./usr/sbin/vipw				minix-sys
 ./usr/sbin/vm				minix-sys
+./usr/sbin/vnconfig			minix-sys
+./usr/sbin/vndconfig			minix-sys
+./usr/sbin/vnd				minix-sys
 ./usr/sbin/zic				minix-sys
 ./usr/share				minix-sys
 ./usr/share/atf				minix-sys	atf
@@ -5305,6 +5318,7 @@
 ./usr/tests/minix-posix/t40d		minix-sys
 ./usr/tests/minix-posix/t40e		minix-sys
 ./usr/tests/minix-posix/t40f		minix-sys
+./usr/tests/minix-posix/t40g		minix-sys
 ./usr/tests/minix-posix/t60a		minix-sys
 ./usr/tests/minix-posix/t60b		minix-sys
 ./usr/tests/minix-posix/t67a		minix-sys
@@ -5380,6 +5394,8 @@
 ./usr/tests/minix-posix/test73		minix-sys
 ./usr/tests/minix-posix/test74		minix-sys
 ./usr/tests/minix-posix/test75		minix-sys
+./usr/tests/minix-posix/test76		minix-sys
+./usr/tests/minix-posix/test77		minix-sys
 ./usr/tests/minix-posix/test8		minix-sys
 ./usr/tests/minix-posix/test9		minix-sys
 ./usr/tests/minix-posix/testinterp	minix-sys
@@ -5387,6 +5403,14 @@
 ./usr/tests/minix-posix/testsh2		minix-sys
 ./usr/tests/minix-posix/testvm		minix-sys
 ./usr/tests/minix-posix/testvm.conf	minix-sys
+./usr/tests/minix-posix/testvnd		minix-sys
+./usr/tests/minix-posix/tvnd		minix-sys
+./usr/tests/minix-posix/blocktest		minix-sys
+./usr/tests/minix-posix/blocktest/README	minix-sys
+./usr/tests/minix-posix/blocktest/blocktest	minix-sys
+./usr/tests/minix-posix/blocktest/support.sh	minix-sys
+./usr/tests/minix-posix/blocktest/system.conf	minix-sys
+./usr/tests/minix-posix/blocktest/test.sh	minix-sys
 ./usr/tests/usr.bin/jot/Atffile		minix-sys	atf
 ./usr/tests/usr.bin/jot/d_basic.out	minix-sys	atf
 ./usr/tests/usr.bin/jot/t_jot		minix-sys	atf

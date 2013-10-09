@@ -140,7 +140,7 @@ int fs_unlink()
   NUL(string, len, sizeof(string));
 
   /* Temporarily open the dir. */
-  if( (rldirp = get_inode(fs_dev, (ino_t) fs_m_in.REQ_INODE_NR)) == NULL)
+  if( (rldirp = get_inode(fs_dev, (pino_t) fs_m_in.REQ_INODE_NR)) == NULL)
 	  return(EINVAL);
 
   /* The last directory exists.  Does the file also exist? */
@@ -191,7 +191,7 @@ int fs_rdlink()
   copylen = min( (size_t) fs_m_in.REQ_MEM_SIZE, UMAX_FILE_POS);
 
   /* Temporarily open the file. */
-  if( (rip = get_inode(fs_dev, (ino_t) fs_m_in.REQ_INODE_NR)) == NULL)
+  if( (rip = get_inode(fs_dev, (pino_t) fs_m_in.REQ_INODE_NR)) == NULL)
 	  return(EINVAL);
 
   if (rip->i_size >= MAX_FAST_SYMLINK_LENGTH) {
@@ -271,7 +271,7 @@ char file_name[NAME_MAX + 1]; /* name of file to be removed */
 {
 /* Unlink 'file_name'; rip must be the inode of 'file_name' or NULL. */
 
-  ino_t numb;			/* inode number */
+  pino_t numb;			/* inode number */
   int	r;
 
   /* If rip is not NULL, it is used to get faster access to the inode. */
@@ -310,7 +310,7 @@ int fs_rename()
   int odir, ndir;			/* TRUE iff {old|new} file is dir */
   int same_pdir = 0;			/* TRUE iff parent dirs are the same */
   char old_name[NAME_MAX + 1], new_name[NAME_MAX + 1];
-  ino_t numb;
+  pino_t numb;
   phys_bytes len;
 
   /* Copy the last component of the old name */
@@ -334,7 +334,7 @@ int fs_rename()
   NUL(new_name, len, sizeof(new_name));
 
   /* Get old dir inode */
-  if( (old_dirp = get_inode(fs_dev, (ino_t) fs_m_in.REQ_REN_OLD_DIR)) == NULL)
+  if( (old_dirp = get_inode(fs_dev, (pino_t) fs_m_in.REQ_REN_OLD_DIR)) == NULL)
 	return(err_code);
 
   old_ip = advance(old_dirp, old_name, IGN_PERM);
@@ -350,12 +350,12 @@ int fs_rename()
   }
 
   /* Get new dir inode */
-  if( (new_dirp = get_inode(fs_dev, (ino_t) fs_m_in.REQ_REN_NEW_DIR)) == NULL) {
+  if ((new_dirp = get_inode(fs_dev, (pino_t) fs_m_in.REQ_REN_NEW_DIR)) == NULL){
 	put_inode(old_ip);
 	put_inode(old_dirp);
 	return(err_code);
   } else {
-	if (new_dirp->i_links_count == NO_LINK) { /* Dir does not actually exist */
+	if (new_dirp->i_links_count == NO_LINK) { /* Dir does not exist */
 		put_inode(old_ip);
 		put_inode(old_dirp);
 		put_inode(new_dirp);
@@ -482,9 +482,10 @@ int fs_rename()
 	} else {
 		r = search_dir(new_dirp, new_name, &numb, ENTER, IGN_PERM,
 					old_ip->i_mode & I_TYPE);
-		if(r == OK)
-			(void) search_dir(old_dirp, old_name, (ino_t *) 0, DELETE,
-					  IGN_PERM, 0);
+		if(r == OK) {
+			(void) search_dir(old_dirp, old_name, (pino_t *) 0,
+					  DELETE, IGN_PERM, 0);
+		}
 	}
   }
   /* If r is OK, the ctime and mtime of old_dirp and new_dirp have been marked
@@ -519,7 +520,7 @@ int fs_ftrunc(void)
   off_t start, end;
   int r;
 
-  if( (rip = find_inode(fs_dev, (ino_t) fs_m_in.REQ_INODE_NR)) == NULL)
+  if( (rip = find_inode(fs_dev, (pino_t) fs_m_in.REQ_INODE_NR)) == NULL)
 	  return(EINVAL);
 
   start = fs_m_in.REQ_TRC_START_LO;
@@ -550,7 +551,7 @@ off_t newsize;			/* inode must become this size */
  * writing is done.
  */
   int r;
-  mode_t file_type;
+  pmode_t file_type;
 
   discard_preallocated_blocks(rip);
 

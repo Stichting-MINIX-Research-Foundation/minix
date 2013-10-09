@@ -20,7 +20,6 @@
 #include <dirent.h>
 #include <assert.h>
 #include "file.h"
-#include "fproc.h"
 #include "path.h"
 #include "vnode.h"
 #include "param.h"
@@ -343,6 +342,7 @@ int do_ftruncate(message *UNUSED(m_out))
   off_t length;
 
   scratch(fp).file.fd_nr = job_m_in.fd;
+
   length = (off_t) job_m_in.flength;
 
   if (length < 0) return(EINVAL);

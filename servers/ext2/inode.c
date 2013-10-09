@@ -38,11 +38,11 @@ int fs_putnode(void)
   struct inode *rip;
   int count;
 
-  rip = find_inode(fs_dev, (ino_t) fs_m_in.REQ_INODE_NR);
+  rip = find_inode(fs_dev, (pino_t) fs_m_in.REQ_INODE_NR);
 
   if (!rip) {
 	printf("%s:%d put_inode: inode #%u dev: %d not found\n", __FILE__,
-		__LINE__, (unsigned int) fs_m_in.REQ_INODE_NR, fs_dev);
+		__LINE__, (pino_t) fs_m_in.REQ_INODE_NR, fs_dev);
 	panic("fs_putnode failed");
   }
 
@@ -120,7 +120,7 @@ static void unhash_inode(struct inode *node)
  *===========================================================================*/
 struct inode *get_inode(
   dev_t dev,          /* device on which inode resides */
-  ino_t numb            /* inode number (ANSI: may not be unshort) */
+  pino_t numb         /* inode number (ANSI: may not be unshort) */
 )
 {
 /* Find the inode in the hash table. If it is not there, get a free inode
@@ -198,7 +198,7 @@ struct inode *get_inode(
  *===========================================================================*/
 struct inode *find_inode(
   dev_t dev,          /* device on which inode resides */
-  ino_t numb            /* inode number (ANSI: may not be unshort) */
+  pino_t numb         /* inode number (ANSI: may not be unshort) */
 )
 {
 /* Find the inode specified by the inode and device number. */

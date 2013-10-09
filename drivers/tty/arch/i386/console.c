@@ -18,16 +18,10 @@
 
 #include <minix/drivers.h>
 #include <termios.h>
-#include <assert.h>
 #include <sys/ioctl.h>
 #include <sys/vm.h>
 #include <sys/video.h>
 #include <sys/mman.h>
-#include <minix/tty.h>
-#include <minix/callnr.h>
-#include <minix/com.h>
-#include <minix/sys_config.h>
-#include <minix/vm.h>
 #include "tty.h"
 
 /* Set this to 1 if you want console output duplicated on the first
@@ -129,7 +123,7 @@ static void flush(console_t *cons);
 static void parse_escape(console_t *cons, int c);
 static void scroll_screen(console_t *cons, int dir);
 static void set_6845(int reg, unsigned val);
-static void stop_beep(timer_t *tmrp);
+static void stop_beep(minix_timer_t *tmrp);
 static void cons_org0(void);
 static void disable_console(void);
 static void reenable_console(void);
@@ -141,6 +135,18 @@ static void vid_vid_copy(int src, int dst, int count);
 #if 0
 static void get_6845(int reg, unsigned *val);
 #endif
+
+static int video_open(devminor_t minor, int access, endpoint_t user_endpt);
+static int video_close(devminor_t minor);
+static int video_ioctl(devminor_t minor, unsigned long request,
+	endpoint_t endpt, cp_grant_id_t grant, int flags,
+	endpoint_t user_endpt, cdev_id_t id);
+
+static struct chardriver video_tab = {
+  .cdr_open	= video_open,
+  .cdr_close	= video_close,
+  .cdr_ioctl	= video_ioctl
+};
 
 /*===========================================================================*
  *				cons_write				     *
@@ -174,16 +180,14 @@ int try;
 	if (count > sizeof(buf)) count = sizeof(buf);
 	if (tp->tty_outcaller == KERNEL) {
 		/* We're trying to print on kernel's behalf */
-		memcpy(buf, (void *) tp->tty_outgrant + tp->tty_outoffset,
-			count);
+		memcpy(buf, (char *) tp->tty_outgrant + tp->tty_outcum, count);
 	} else {
 		if ((result = sys_safecopyfrom(tp->tty_outcaller,
-				tp->tty_outgrant, tp->tty_outoffset,
+				tp->tty_outgrant, tp->tty_outcum,
 				(vir_bytes) buf, count)) != OK) {
 			break;
 		}
 	}
-	tp->tty_outoffset += count;
 	tbuf = buf;
 
 	/* Update terminal data structure. */
@@ -215,14 +219,10 @@ int try;
 
   /* Reply to the writer if all output is finished or if an error occured. */
   if (tp->tty_outleft == 0 || result != OK) {
-	if(tp->tty_outrepcode == TTY_REVIVE) {
-		notify(tp->tty_outcaller);
-		tp->tty_outrevived = 1;
-	} else {
-		tty_reply(tp->tty_outrepcode, tp->tty_outcaller,
-			tp->tty_outproc, tp->tty_outcum);
-		tp->tty_outcum = 0;
-	}
+	chardriver_reply_task(tp->tty_outcaller, tp->tty_outid,
+		result != OK ? result : tp->tty_outcum);
+	tp->tty_outcum = tp->tty_outleft = 0;
+	tp->tty_outcaller = NONE;
   }
 
   return 0;
@@ -789,7 +789,7 @@ static void beep()
  * This routine works by turning on the bits 0 and 1 in port B of the 8255
  * chip that drive the speaker.
  */
-  static timer_t tmr_stop_beep;
+  static minix_timer_t tmr_stop_beep;
   pvb_pair_t char_out[3];
   u32_t port_b_val;
   
@@ -811,81 +811,68 @@ static void beep()
   }
 }
 
+/*===========================================================================*
+ *				video_open				     *
+ *===========================================================================*/
+static int video_open(devminor_t minor, int UNUSED(access),
+	endpoint_t UNUSED(user_endpt))
+{
+  /* Should grant IOPL */
+  disable_console();
+  return OK;
+}
+
+/*===========================================================================*
+ *				video_close				     *
+ *===========================================================================*/
+static int video_close(devminor_t minor)
+{
+  reenable_console();
+  return OK;
+}
+
+/*===========================================================================*
+ *				video_ioctl				     *
+ *===========================================================================*/
+static int video_ioctl(devminor_t minor, unsigned long request,
+	endpoint_t endpt, cp_grant_id_t grant, int flags,
+	endpoint_t user_endpt, cdev_id_t id)
+{
+  struct mapreqvm mapreqvm;
+  int r, do_map;
+
+  switch (request) {
+  case TIOCMAPMEM:
+  case TIOCUNMAPMEM:
+	do_map = (request == TIOCMAPMEM);	/* else unmap */
+
+	if ((r = sys_safecopyfrom(endpt, grant, 0, (vir_bytes) &mapreqvm,
+		sizeof(mapreqvm))) != OK)
+		return r;
+
+	if (do_map) {
+		mapreqvm.vaddr_ret = vm_map_phys(user_endpt,
+			(void *) mapreqvm.phys_offset, mapreqvm.size);
+		r = sys_safecopyto(endpt, grant, 0, (vir_bytes) &mapreqvm,
+			sizeof(mapreqvm));
+	} else {
+		r = vm_unmap_phys(user_endpt, mapreqvm.vaddr, mapreqvm.size);
+	}
+
+	return r;
+
+  default:
+	return ENOTTY;
+  }
+}
 
 /*===========================================================================*
  *				do_video				     *
  *===========================================================================*/
-void do_video(message *m)
+void do_video(message *m, int ipc_status)
 {
-	int r;
-
-	/* Execute the requested device driver function. */
-	r= EINVAL;	/* just in case */
-	switch (m->m_type) {
-	    case DEV_OPEN:
-		/* Should grant IOPL */
-		disable_console();
-		r= OK;
-		break;
-	    case DEV_CLOSE:
-		reenable_console();
-		r= OK;
-		break;
-	    case DEV_IOCTL_S:
-		switch(m->TTY_REQUEST) {
-		  case TIOCMAPMEM:
-		  case TIOCUNMAPMEM: {
-			int r, do_map;
-			struct mapreqvm mapreqvm;
-
-			do_map= (m->REQUEST == TIOCMAPMEM);	/* else unmap */
-
-	   		r = sys_safecopyfrom(m->m_source,
-				(cp_grant_id_t) m->IO_GRANT, 0,
-				(vir_bytes) &mapreqvm, sizeof(mapreqvm));
-
-			if (r != OK)
-			{
-				printf("tty: sys_safecopyfrom failed\n");
-				tty_reply(TASK_REPLY, m->m_source,
-					m->USER_ENDPT, r);
-				return;
-			}
-
-			/* In safe ioctl mode, the POSITION field contains
-			 * the endpt number of the original requestor.
-			 * USER_ENDPT is always FS.
-			 */
-
-			if(do_map) {
-				mapreqvm.vaddr_ret = vm_map_phys(m->POSITION,
-				(void *) mapreqvm.phys_offset, mapreqvm.size);
-	   			if((r = sys_safecopyto(m->m_source,
-				  (cp_grant_id_t) m->IO_GRANT, 0,
-				  (vir_bytes) &mapreqvm,
-				  sizeof(mapreqvm))) != OK) {
-				  printf("tty: sys_safecopyto failed\n");
-				}
-			} else {
-				r = vm_unmap_phys(m->POSITION, 
-					mapreqvm.vaddr, mapreqvm.size);
-			}
-			tty_reply(TASK_REPLY, m->m_source, m->USER_ENDPT, r);
-			return;
-		   }
-		}
-		r= ENOTTY;
-		break;
-
-	    default:		
-		printf(
-		"Warning, TTY(video) got unexpected request %d from %d\n",
-			m->m_type, m->m_source);
-		r= EINVAL;
-	}
-	tty_reply(TASK_REPLY, m->m_source, m->USER_ENDPT, r);
+  chardriver_process(&video_tab, m, ipc_status);
 }
-
 
 /*===========================================================================*
  *				beep_x					     *
@@ -898,7 +885,7 @@ clock_t dur;
  * This routine works by turning on the bits 0 and 1 in port B of the 8255
  * chip that drive the speaker.
  */
-  static timer_t tmr_stop_beep;
+  static minix_timer_t tmr_stop_beep;
   pvb_pair_t char_out[3];
   u32_t port_b_val;
 
@@ -927,7 +914,7 @@ clock_t dur;
 /*===========================================================================*
  *				stop_beep				     *
  *===========================================================================*/
-static void stop_beep(timer_t *UNUSED(tmrp))
+static void stop_beep(minix_timer_t *UNUSED(tmrp))
 {
 /* Turn off the beeper by turning off bits 0 and 1 in PORT_B. */
   u32_t port_b_val;
@@ -1139,12 +1126,11 @@ void select_console(int cons_line)
 /*===========================================================================*
  *				con_loadfont				     *
  *===========================================================================*/
-int con_loadfont(m)
-message *m;
+int con_loadfont(endpoint_t endpt, cp_grant_id_t grant)
 {
   
 /* Load a font into the EGA or VGA adapter. */
-  int result;
+  int r, r2;
   static struct sequence seq1[7] = {
 	{ GA_SEQUENCER_INDEX, 0x00, 0x01 },
 	{ GA_SEQUENCER_INDEX, 0x02, 0x04 },
@@ -1166,17 +1152,14 @@ message *m;
 
   seq2[6].value= color ? 0x0E : 0x0A;
 
-  result = ga_program(seq1);	/* bring font memory into view */
+  r = ga_program(seq1);		/* bring font memory into view */
+  if (r != OK) return r;
 
-  if(sys_safecopyfrom(m->m_source, (cp_grant_id_t) m->IO_GRANT, 0,
-	(vir_bytes) font_memory, GA_FONT_SIZE) != OK) {
-	printf("tty: copying from %d failed\n", m->m_source);
-	return EFAULT;
-  }
+  r = sys_safecopyfrom(endpt, grant, 0, (vir_bytes) font_memory, GA_FONT_SIZE);
 
-  result = ga_program(seq2);	/* restore */
+  r2 = ga_program(seq2);	/* restore */
 
-  return(result);
+  return(r != OK ? r : r2);
 }
 
 /*===========================================================================*

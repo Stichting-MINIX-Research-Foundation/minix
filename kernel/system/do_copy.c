@@ -58,7 +58,7 @@ int do_copy(struct proc * caller, message * m_ptr)
    */
   for (i=_SRC_; i<=_DST_; i++) {
 	int p;
-      /* Check if process number was given implictly with SELF and is valid. */
+      /* Check if process number was given implicitly with SELF and is valid. */
       if (vir_addr[i].proc_nr_e == SELF)
 	vir_addr[i].proc_nr_e = caller->p_endpoint;
       if (vir_addr[i].proc_nr_e != NONE) {

@@ -684,8 +684,8 @@ GNode *
 Suff_AddTransform(char *line)
 {
     GNode         *gn;		/* GNode of transformation rule */
-    Suff          *s,		/* source suffix */
-                  *t;		/* target suffix */
+    Suff          *s = NULL,	/* source suffix */
+                  *t = NULL;	/* target suffix */
     LstNode 	  ln;	    	/* Node for existing transformation */
 
     ln = Lst_Find(transforms, line, SuffGNHasNameP);

@@ -957,7 +957,7 @@ assert (conf_acc->acc_length == sizeof(*io_tcp_conf));
 
 	default:
 		tcp_fd->tf_flags &= ~TFF_IOCTL_IP;
-		reply_thr_get(tcp_fd, EBADIOCTL, TRUE);
+		reply_thr_get(tcp_fd, ENOTTY, TRUE);
 		result= NW_OK;
 		break;
 	}

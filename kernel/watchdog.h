@@ -35,9 +35,9 @@ void arch_watchdog_stop(void);
 /* if the watchdog detects lockup, let the arch code to handle it */
 void arch_watchdog_lockup(const struct nmi_frame * frame);
 
-/* generic NMI handler. Takes one agument which points to where the arch
+/* generic NMI handler. Takes one argument which points to where the arch
  * specific low level handler dumped CPU information and can be inspected by the
- * arch specific code of the watchdog implementaion */
+ * arch specific code of the watchdog implementation */
 void nmi_watchdog_handler(struct nmi_frame * frame);
 #endif
 
