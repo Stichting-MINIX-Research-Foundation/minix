@@ -8,7 +8,7 @@
  *   rm_irq_handler:  deregister an interrupt handler.
  *   irq_handle:     handle a hardware interrupt.
  *                    called by the system dependent part when an
- *                    external interrupt occures.                     
+ *                    external interrupt occurs.
  *   enable_irq:      enable hook for IRQ.
  *   disable_irq:     disable hook for IRQ.
  */

@@ -288,7 +288,7 @@ kinfo_t *pre_init(u32_t magic, u32_t ebx)
 }
 
 /* pre_init gets executed at the memory location where the kernel was loaded by the boot loader.
- * at that stage we only have a minium set of functionality present (all symbols gets renamed to
+ * at that stage we only have a minimum set of functionality present (all symbols gets renamed to
  * ensure this). The following methods are used in that context. Once we jump to kmain they are no
  * longer used and the "real" implementations are visible
  */

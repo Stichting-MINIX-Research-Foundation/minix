@@ -28,7 +28,7 @@ int do_vdevio(struct proc * caller, message * m_ptr)
 /* Perform a series of device I/O on behalf of a non-kernel process. The 
  * I/O addresses and I/O values are fetched from and returned to some buffer
  * in user space. The actual I/O is wrapped by lock() and unlock() to prevent
- * that I/O batch from being interrrupted.
+ * that I/O batch from being interrupted.
  * This is the counterpart of do_devio, which performs a single device I/O. 
  */ 
   int vec_size;               /* size of vector */

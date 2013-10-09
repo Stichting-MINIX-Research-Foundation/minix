@@ -60,7 +60,7 @@ typedef int (*kern_phys_map_mapped)(vir_bytes id, vir_bytes new_addr );
 
 /*
  * struct used internally by memory.c to keep a list of
- * items to map. These should be staticaly allocated 
+ * items to map. These should be statically allocated
  * in the individual files and passed as argument. 
  * The data doesn't need to be initialized. See omap_serial for
  * and example usage.
@@ -108,7 +108,7 @@ int kern_req_phys_map( phys_bytes base_address, vir_bytes io_size,
 
 /*
  * Request a physical mapping and put the result in the given prt
- * Note that ptr will only be valid once the callback happend.
+ * Note that ptr will only be valid once the callback happened.
  */
 int kern_phys_map_ptr( phys_bytes base_address, vir_bytes io_size, 
 	kern_phys_map * priv, vir_bytes ptr);

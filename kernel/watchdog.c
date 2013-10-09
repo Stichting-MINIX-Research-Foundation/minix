@@ -1,5 +1,5 @@
 /*
- * This is arch independent NMI watchdog implementaion part. It is used to
+ * This is arch independent NMI watchdog implementation part. It is used to
  * detect kernel lockups and help debugging. each architecture must add its own
  * low level code that triggers periodic checks
  */

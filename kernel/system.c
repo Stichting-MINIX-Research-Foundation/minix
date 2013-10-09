@@ -180,7 +180,7 @@ void system_init(void)
   }
 
   /* Initialize the call vector to a safe default handler. Some system calls 
-   * may be disabled or nonexistant. Then explicitely map known calls to their
+   * may be disabled or nonexistant. Then explicitly map known calls to their
    * handler functions. This is done with a macro that gives a compile error
    * if an illegal call number is used. The ordering is not important here.
    */

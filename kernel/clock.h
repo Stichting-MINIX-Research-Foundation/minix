@@ -10,7 +10,7 @@ int app_cpu_init_timer(unsigned freq);
 int timer_int_handler(void);
 
 int init_local_timer(unsigned freq);
-/* sto p the local timer ticking */
+/* stop the local timer ticking */
 void stop_local_timer(void);
 /* let the time tick again with the original settings after it was stopped */
 void restart_local_timer(void);
