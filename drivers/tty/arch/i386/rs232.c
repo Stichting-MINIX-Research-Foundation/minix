@@ -246,10 +246,11 @@ static int rs_write(register tty_t *tp, int try)
 	/* Copy from user space to the RS232 output buffer. */
 	if (tp->tty_outcaller == KERNEL) {
 		/* We're trying to print on kernel's behalf */
-		memcpy(rs->ohead, (void *) tp->tty_outgrant + tp->tty_outoffset, count);
+		memcpy(rs->ohead, (char *) tp->tty_outgrant + tp->tty_outcum,
+			count);
 	} else {
 		if ((r = sys_safecopyfrom(tp->tty_outcaller, tp->tty_outgrant,
-			tp->tty_outoffset, (vir_bytes) rs->ohead, count)) != OK)
+			tp->tty_outcum, (vir_bytes) rs->ohead, count)) != OK)
 				printf("TTY: sys_safecopyfrom() failed: %d", r);
 	}
 
@@ -265,30 +266,20 @@ static int rs_write(register tty_t *tp, int try)
 	rs_ostart(rs);
 	if ((rs->ohead += ocount) >= bufend(rs->obuf))
 		rs->ohead -= buflen(rs->obuf);
-	tp->tty_outoffset += count;
 	tp->tty_outcum += count;
 	if ((tp->tty_outleft -= count) == 0) {
 		/* Output is finished, reply to the writer. */
-		if(tp->tty_outrepcode == TTY_REVIVE) {
-			notify(tp->tty_outcaller);
-			tp->tty_outrevived = 1;
-		} else {
-			tty_reply(tp->tty_outrepcode, tp->tty_outcaller,
-					tp->tty_outproc, tp->tty_outcum);
-			tp->tty_outcum = 0;
-		}
+		chardriver_reply_task(tp->tty_outcaller, tp->tty_outid,
+			tp->tty_outcum);
+		tp->tty_outcum = 0;
+		tp->tty_outcaller = NONE;
 	}
   }
   if (tp->tty_outleft > 0 && tp->tty_termios.c_ospeed == B0) {
 	/* Oops, the line has hung up. */
-	if(tp->tty_outrepcode == TTY_REVIVE) {
-		notify(tp->tty_outcaller);
-		tp->tty_outrevived = 1;
-	} else {
-		tty_reply(tp->tty_outrepcode, tp->tty_outcaller,
-			tp->tty_outproc, EIO);
-		tp->tty_outleft = tp->tty_outcum = 0;
-	}
+	chardriver_reply_task(tp->tty_outcaller, tp->tty_outid, EIO);
+	tp->tty_outleft = tp->tty_outcum = 0;
+	tp->tty_outcaller = NONE;
   }
 
   return 1;
@@ -597,7 +588,7 @@ static int rs_read(tty_t *tp, int try)
 	if (count > icount) count = icount;
 
 	/* Perform input processing on (part of) the input buffer. */
-	if ((count = in_process(tp, rs->itail, count, -1)) == 0) break;
+	if ((count = in_process(tp, rs->itail, count)) == 0) break;
 
 	rs->icount -= count;
 	if (!rs->idevready && rs->icount < RS_ILOWWATER) istart(rs);

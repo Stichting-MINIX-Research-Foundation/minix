@@ -42,8 +42,10 @@ struct priv {
   irq_id_t s_int_pending;	/* pending hardware interrupts */
   sigset_t s_sig_pending;	/* pending signals */
 
-  timer_t s_alarm_timer;	/* synchronous alarm timer */ 
+  minix_timer_t s_alarm_timer;	/* synchronous alarm timer */
   reg_t *s_stack_guard;		/* stack guard word for kernel tasks */
+
+  char s_diag_sig;		/* send a SIGKMESS when diagnostics arrive? */
 
   int s_nr_io_range;		/* allowed I/O ports */
   struct io_range s_io_tab[NR_IO_RANGE];

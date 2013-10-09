@@ -59,7 +59,7 @@ void mem_clear_mapcache(void)
  * The target (i.e. in-kernel) mapping area is one of the freepdes[]
  * VM has earlier already told the kernel about that is available. It is
  * identified as the 'pde' parameter. This value can be chosen freely
- * by the caller, as long as it is in range (i.e. 0 or higher and corresonds
+ * by the caller, as long as it is in range (i.e. 0 or higher and corresponds
  * to a known freepde slot). It is up to the caller to keep track of which
  * freepde's are in use, and to determine which ones are free to use.
  *

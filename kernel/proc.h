@@ -34,7 +34,7 @@ struct proc {
   struct proc *p_scheduler;	/* who should get out of quantum msg */
   unsigned p_cpu;		/* what CPU is the process running on */
 #ifdef CONFIG_SMP
-  bitchunk_t p_cpu_mask[BITMAP_CHUNKS(CONFIG_MAX_CPUS)]; /* what CPUs is hte
+  bitchunk_t p_cpu_mask[BITMAP_CHUNKS(CONFIG_MAX_CPUS)]; /* what CPUs is the
 							    process allowed to
 							    run on */
   bitchunk_t p_stale_tlb[BITMAP_CHUNKS(CONFIG_MAX_CPUS)]; /* On which cpu are
@@ -84,7 +84,7 @@ struct proc {
    * memory that isn't present, VM has to fix it. Until it has asked
    * what needs to be done and fixed it, save necessary state here.
    *
-   * The requestor gets a copy of its request message in reqmsg and gets
+   * The requester gets a copy of its request message in reqmsg and gets
    * VMREQUEST set.
    */
   struct {

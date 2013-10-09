@@ -151,7 +151,7 @@ void exception_handler(int is_nested, reg_t *saved_lr, int vector)
    */
   if (is_nested) {
 	/*
-	 * if a problem occured while copying a message from userspace because
+	 * if a problem occurred while copying a message from userspace because
 	 * of a wrong pointer supplied by userland, handle it the only way we
 	 * can handle it ...
 	 */

@@ -54,6 +54,14 @@ __opendisk(const char *path, int flags, char *buf, size_t buflen, int iscooked,
 	int f;
 #endif 
 
+#ifdef __minix
+	/*
+	 * MINIX does not have the cooked/raw distinction.  Do not prepend 'r'
+	 * to the device name when generating a full path.
+	 */
+	iscooked = 1;
+#endif
+
 	if (buf == NULL) {
 		errno = EFAULT;
 		return (-1);
@@ -80,6 +88,7 @@ __opendisk(const char *path, int flags, char *buf, size_t buflen, int iscooked,
 	f = ofn(buf, flags, 0);
 	if (f != -1 || errno != ENOENT)
 		return (f);
+#endif
 
 	if (strchr(path, '/') != NULL)
 		return (-1);
@@ -89,6 +98,7 @@ __opendisk(const char *path, int flags, char *buf, size_t buflen, int iscooked,
 	if (f != -1 || errno != ENOENT)
 		return (f);
 
+#ifndef __minix
 	snprintf(buf, buflen, "%s%s%s%c", _PATH_DEV, iscooked ? "" : "r", path,
 	    'a' + rawpart);
 	f = ofn(buf, flags, 0);

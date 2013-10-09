@@ -33,7 +33,10 @@ case $#:$1 in
 	eepromb3s54 eepromb3s55 eepromb3s56 eepromb3s57 \
 	tsl2550b1s39 tsl2550b2s39 tsl2550b3s39 \
 	sht21b1s40 sht21b2s40 sht21b3s40 \
-	bmp085b1s77 bmp085b2s77 bmp085b3s77
+	bmp085b1s77 bmp085b2s77 bmp085b3s77 \
+	vnd0 vnd0p0 vnd0p0s0 vnd1 vnd1p0 vnd1p0s0 \
+	vnd2 vnd3 vnd4 vnd5 vnd6 vnd7 \
+	input
     ;;
 0:|1:-\?)
     cat >&2 <<EOF
@@ -61,12 +64,12 @@ Where key is one of the following:
   klog                    # Make /dev/klog
   random                  # Make /dev/random, /dev/urandom
   uds                     # Make /dev/uds
-  kbd                     # Make /dev/kbd
-  kbdaux                  # Make /dev/kbdaux
   filter                  # Make /dev/filter
   fbd                     # Make /dev/fbd
   hello                   # Make /dev/hello
   video                   # Make /dev/video
+  vnd0 vnd0p0 vnd0p0s0 .. # Make vnode disks /dev/vnd[0-7] and (sub)partitions
+  input                   # Make /dev/kbdmux, /dev/kbd[0-3], idem /dev/mouse~
   std			  # All standard devices
 EOF
     exit 1
@@ -186,9 +189,8 @@ do
 	$e mknod ${n} c $maj `expr $m + 1`
 	$e chmod 660 ${n}n ${n}
 	;;
-    console|lp|tty|log|kbd|kbdaux|video)
-	# Console, line printer, anonymous tty, diagnostics device,
-	# raw keyboard, ps/2 mouse, video.
+    console|lp|tty|log|video)
+	# Console, line printer, anonymous tty, diagnostics device, video.
 	$e mknod console c 4 0
 	$e chmod 600 console
 	$e chgrp tty console
@@ -200,10 +202,6 @@ do
 	$e chmod 200 lp
 	$e mknod log c 4 15
 	$e chmod 222 log
-	$e mknod kbd c 4 127
-	$e mknod kbdaux c 4 126
-	$e chmod 660 kbd kbdaux
-	$e chgrp operator kbd kbdaux
 	$e mknod video c 4 125
 	$e chmod 600 video
 	$e chgrp operator video
@@ -330,6 +328,60 @@ do
 	m=`expr ${b} + 52`
 	$e mknod bmp085b${b}s77 c ${m} 0
 	$e chmod 444 bmp085b${b}s77
+	;;
+    vnd[0-7])
+	# Whole vnode disk devices.
+	d=`expr $dev : 'vnd\\(.\\)'`	# Disk number.
+	maj=`expr $d + 56`		# Major device number.
+	$e mknod $dev b $maj 0
+	$e chmod 600 $dev
+	;;
+    vnd[0-7]p[0-3])
+	# Vnode disk primary partitions.
+	n=`expr $dev : '\\(.*\\).'`	# Name prefix.
+	d=`expr $dev : 'vnd\\(.\\)'`	# Disk number.
+	maj=`expr $d + 56`		# Major device number.
+	alldev=
+
+	for p in 0 1 2 3
+	do
+	    m=`expr 1 + $p`		# Minor device number.
+	    $e mknod $n$p b $maj $m
+	    alldev="$alldev $n$p"
+	done
+	echo $alldev | xargs $e chmod 600
+	;;
+    vnd[0-7]p[0-3]s[0-3])
+	# Vnode disk subpartition.
+	n=`expr $dev : '\\(.*\\)...'`	# Name prefix.
+	d=`expr $dev : 'vnd\\(.\\)'`	# Disk number.
+	maj=`expr $d + 56`		# Major device number.
+	alldev=
+
+	for p in 0 1 2 3
+	do
+	    for s in 0 1 2 3
+	    do
+		m=`expr 128 + $p '*' 4 + $s`  # Minor device number.
+		$e mknod ${n}${p}s${s} b $maj $m
+		alldev="$alldev ${n}${p}s${s}"
+	    done
+	done
+	echo $alldev | xargs $e chmod 600
+	;;
+    input)
+	$e mknod kbdmux c 64 0
+	$e mknod mousemux c 64 64
+	alldev="kbdmux mousemux"
+	for n in 0 1 2 3
+	do
+	    k=`expr $n + 1`
+	    m=`expr $n + 65`
+	    $e mknod kbd$n c 64 $k
+	    $e mknod mouse$n c 64 $m
+	    alldev="$alldev kbd$n mouse$n"
+	done
+	echo $alldev | xargs $e chmod 600
 	;;
     *)
 	echo "$0: don't know about $dev" >&2

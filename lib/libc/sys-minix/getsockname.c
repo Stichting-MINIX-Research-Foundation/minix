@@ -43,7 +43,7 @@ int getsockname(int fd, struct sockaddr *__restrict address,
 #endif
 
 	r= ioctl(fd, NWIOGTCPCONF, &tcpconf);
-	if (r != -1 || (errno != ENOTTY && errno != EBADIOCTL))
+	if (r != -1 || errno != ENOTTY)
 	{
 		if (r == -1)
 		{
@@ -55,7 +55,7 @@ int getsockname(int fd, struct sockaddr *__restrict address,
 	}
 
 	r= ioctl(fd, NWIOGUDSADDR, &uds_addr);
-	if (r != -1 || (errno != ENOTTY && errno != EBADIOCTL))
+	if (r != -1 || errno != ENOTTY)
 	{
 		if (r == -1)
 		{

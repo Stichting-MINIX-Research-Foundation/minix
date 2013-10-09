@@ -518,7 +518,7 @@ kyua_fs_make_absolute(const char* original, char** const output)
         strcpy(*output, original);
         return kyua_error_ok();
     } else {
-        char* current_path;
+        char* current_path= NULL;
         kyua_error_t error;
 
         error = kyua_fs_current_path(&current_path);

@@ -161,6 +161,7 @@ static void adjust_priv_slot(struct priv *privp, struct priv *from_privp)
   privp->s_int_pending = from_privp->s_int_pending;
   privp->s_sig_pending = from_privp->s_sig_pending;
   privp->s_alarm_timer = from_privp->s_alarm_timer;
+  privp->s_diag_sig = from_privp->s_diag_sig;
 }
 
 /*===========================================================================*

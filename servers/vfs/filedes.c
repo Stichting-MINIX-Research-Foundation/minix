@@ -13,6 +13,7 @@
  *   do_put_filp:   marks a filp as not in-flight anymore.
  *   do_cancel_fd:  cancel the transaction when something goes wrong for
  *                  the receiver.
+ *   do_dupfrom:    copies a filp from another endpoint.
  */
 
 #include <sys/select.h>
@@ -22,7 +23,6 @@
 #include <sys/stat.h>
 #include "fs.h"
 #include "file.h"
-#include "fproc.h"
 #include "vnode.h"
 
 
@@ -77,60 +77,7 @@ void check_filp_locks(void)
 }
 
 /*===========================================================================*
- *				do_filp_gc					     *
- *===========================================================================*/
-void *do_filp_gc(void *UNUSED(arg))
-{
-  struct filp *f;
-  struct vnode *vp;
-
-  for (f = &filp[0]; f < &filp[NR_FILPS]; f++) {
-	if (!(f->filp_state & FS_INVALIDATED)) continue;
-
-	if (f->filp_mode == FILP_CLOSED || f->filp_vno == NULL) {
-		/* File was already closed before gc could kick in */
-		assert(f->filp_count <= 0);
-		f->filp_state &= ~FS_INVALIDATED;
-		f->filp_count = 0;
-		continue;
-	}
-
-	assert(f->filp_vno != NULL);
-	vp = f->filp_vno;
-
-	/* Synchronize with worker thread that might hold a lock on the vp */
-	lock_vnode(vp, VNODE_OPCL);
-	unlock_vnode(vp);
-
-	/* If garbage collection was invoked due to a failed device open
-	 * request, then common_open has already cleaned up and we have
-	 * nothing to do.
-	 */
-	if (!(f->filp_state & FS_INVALIDATED)) {
-		continue;
-	}
-
-	/* If garbage collection was invoked due to a failed device close
-	 * request, the close_filp has already cleaned up and we have nothing
-	 * to do.
-	 */
-	if (f->filp_mode != FILP_CLOSED) {
-		assert(f->filp_count == 0);
-		f->filp_count = 1;	/* So lock_filp and close_filp will do
-					 * their job */
-		lock_filp(f, VNODE_READ);
-		close_filp(f);
-	}
-
-	f->filp_state &= ~FS_INVALIDATED;
-  }
-
-  thread_cleanup(NULL);
-  return(NULL);
-}
-
-/*===========================================================================*
- *				init_filps					     *
+ *				init_filps				     *
  *===========================================================================*/
 void init_filps(void)
 {
@@ -159,7 +106,7 @@ int get_fd(struct fproc *rfp, int start, mode_t bits, int *k, struct filp **fpt)
 
   /* Search the fproc fp_filp table for a free file descriptor. */
   for (i = start; i < OPEN_MAX; i++) {
-	if (rfp->fp_filp[i] == NULL && !FD_ISSET(i, &rfp->fp_filp_inuse)) {
+	if (rfp->fp_filp[i] == NULL) {
 		/* A file descriptor has been located. */
 		*k = i;
 		break;
@@ -177,12 +124,11 @@ int get_fd(struct fproc *rfp, int start, mode_t bits, int *k, struct filp **fpt)
 	assert(f->filp_count >= 0);
 	if (f->filp_count == 0 && mutex_trylock(&f->filp_lock) == 0) {
 		f->filp_mode = bits;
-		f->filp_pos = ((u64_t)(0));
+		f->filp_pos = 0;
 		f->filp_selectors = 0;
 		f->filp_select_ops = 0;
 		f->filp_pipe_select_ops = 0;
 		f->filp_flags = 0;
-		f->filp_state = FS_NORMAL;
 		f->filp_select_flags = 0;
 		f->filp_softlock = NULL;
 		*fpt = f;
@@ -222,12 +168,12 @@ tll_access_t locktype;
   filp = NULL;
   if (fild < 0 || fild >= OPEN_MAX)
 	err_code = EBADF;
-  else if (rfp->fp_filp[fild] == NULL && FD_ISSET(fild, &rfp->fp_filp_inuse))
-	err_code = EIO;	/* The filedes is not there, but is not closed either.
-			 */
+  else if (locktype != VNODE_OPCL && rfp->fp_filp[fild] != NULL &&
+		rfp->fp_filp[fild]->filp_mode == FILP_CLOSED)
+	err_code = EIO; /* disallow all use except close(2) */
   else if ((filp = rfp->fp_filp[fild]) == NULL)
 	err_code = EBADF;
-  else
+  else if (locktype != VNODE_NONE)	/* Only lock the filp if requested */
 	lock_filp(filp, locktype);	/* All is fine */
 
   return(filp);	/* may also be NULL */
@@ -261,24 +207,11 @@ struct filp *find_filp(struct vnode *vp, mode_t bits)
 /*===========================================================================*
  *				invalidate_filp				     *
  *===========================================================================*/
-int invalidate_filp(struct filp *rfilp)
+void invalidate_filp(struct filp *rfilp)
 {
-/* Invalidate filp. fp_filp_inuse is not cleared, so filp can't be reused
-   until it is closed first. */
+/* Invalidate filp. */
 
-  int f, fd, n = 0;
-  for (f = 0; f < NR_PROCS; f++) {
-	if (fproc[f].fp_pid == PID_FREE) continue;
-	for (fd = 0; fd < OPEN_MAX; fd++) {
-		if(fproc[f].fp_filp[fd] && fproc[f].fp_filp[fd] == rfilp) {
-			fproc[f].fp_filp[fd] = NULL;
-			n++;
-		}
-	}
-  }
-
-  rfilp->filp_state |= FS_INVALIDATED;
-  return(n);	/* Report back how often this filp has been invalidated. */
+  rfilp->filp_mode = FILP_CLOSED;
 }
 
 /*===========================================================================*
@@ -292,7 +225,7 @@ void invalidate_filp_by_char_major(int major)
 	if (f->filp_count != 0 && f->filp_vno != NULL) {
 		if (major(f->filp_vno->v_sdev) == major &&
 		    S_ISCHR(f->filp_vno->v_mode)) {
-			(void) invalidate_filp(f);
+			invalidate_filp(f);
 		}
 	}
   }
@@ -308,7 +241,7 @@ void invalidate_filp_by_endpt(endpoint_t proc_e)
   for (f = &filp[0]; f < &filp[NR_FILPS]; f++) {
 	if (f->filp_count != 0 && f->filp_vno != NULL) {
 		if (f->filp_vno->v_fs_e == proc_e)
-			(void) invalidate_filp(f);
+			invalidate_filp(f);
 	}
   }
 }
@@ -320,7 +253,6 @@ void lock_filp(filp, locktype)
 struct filp *filp;
 tll_access_t locktype;
 {
-  struct fproc *org_fp;
   struct worker_thread *org_self;
   struct vnode *vp;
 
@@ -350,14 +282,12 @@ tll_access_t locktype;
   if (mutex_trylock(&filp->filp_lock) != 0) {
 
 	/* Already in use, let's wait for our turn */
-	org_fp = fp;
-	org_self = self;
+	org_self = worker_suspend();
 
 	if (mutex_lock(&filp->filp_lock) != 0)
 		panic("unable to obtain lock on filp");
 
-	fp = org_fp;
-	self = org_self;
+	worker_resume(org_self);
   }
 }
 
@@ -371,7 +301,7 @@ struct filp *filp;
   if (filp->filp_softlock != NULL)
 	assert(filp->filp_softlock == fp);
 
-  if (filp->filp_count > 0 || filp->filp_state & FS_INVALIDATED) {
+  if (filp->filp_count > 0) {
 	/* Only unlock vnode if filp is still in use */
 
 	/* and if we don't hold a soft lock */
@@ -449,11 +379,14 @@ int do_verify_fd(message *m_out)
   endpoint_t proc_e;
   int fd;
 
-  proc_e = job_m_in.USER_ENDPT;
-  fd = job_m_in.COUNT;
+  /* This should be replaced with an ACL check. */
+  if (who_e != PFS_PROC_NR) return EPERM;
+
+  proc_e = job_m_in.VFS_PFS_ENDPT;
+  fd = job_m_in.VFS_PFS_FD;
 
   rfilp = (struct filp *) verify_fd(proc_e, fd);
-  m_out->ADDRESS = (void *) rfilp;
+  m_out->VFS_PFS_FILP = (void *) rfilp;
   if (rfilp != NULL) unlock_filp(rfilp);
   return (rfilp != NULL) ? OK : EINVAL;
 }
@@ -479,7 +412,11 @@ filp_id_t sfilp;
 int do_set_filp(message *UNUSED(m_out))
 {
   filp_id_t f;
-  f = (filp_id_t) job_m_in.ADDRESS;
+
+  /* This should be replaced with an ACL check. */
+  if (who_e != PFS_PROC_NR) return EPERM;
+
+  f = (filp_id_t) job_m_in.VFS_PFS_FILP;
   return set_filp(f);
 }
 
@@ -499,11 +436,8 @@ filp_id_t cfilp;
 
   /* Find an open slot in fp_filp */
   for (fd = 0; fd < OPEN_MAX; fd++) {
-	if (rfp->fp_filp[fd] == NULL &&
-	    !FD_ISSET(fd, &rfp->fp_filp_inuse)) {
-
+	if (rfp->fp_filp[fd] == NULL) {
 		/* Found a free slot, add descriptor */
-		FD_SET(fd, &rfp->fp_filp_inuse);
 		rfp->fp_filp[fd] = cfilp;
 		rfp->fp_filp[fd]->filp_count++;
 		return(fd);
@@ -522,8 +456,11 @@ int do_copy_filp(message *UNUSED(m_out))
   endpoint_t proc_e;
   filp_id_t f;
 
-  proc_e = job_m_in.USER_ENDPT;
-  f = (filp_id_t) job_m_in.ADDRESS;
+  /* This should be replaced with an ACL check. */
+  if (who_e != PFS_PROC_NR) return EPERM;
+
+  proc_e = job_m_in.VFS_PFS_ENDPT;
+  f = (filp_id_t) job_m_in.VFS_PFS_FILP;
 
   return copy_filp(proc_e, f);
 }
@@ -549,7 +486,11 @@ filp_id_t pfilp;
 int do_put_filp(message *UNUSED(m_out))
 {
   filp_id_t f;
-  f = (filp_id_t) job_m_in.ADDRESS;
+
+  /* This should be replaced with an ACL check. */
+  if (who_e != PFS_PROC_NR) return EPERM;
+
+  f = (filp_id_t) job_m_in.VFS_PFS_FILP;
   return put_filp(f);
 }
 
@@ -571,7 +512,6 @@ int fd;
   rfilp = (struct filp *) verify_fd(ep, fd);
   if (rfilp != NULL) {
 	/* Found a valid descriptor, remove it */
-	FD_CLR(fd, &rfp->fp_filp_inuse);
 	if (rfp->fp_filp[fd]->filp_count == 0) {
 		unlock_filp(rfilp);
 		printf("VFS: filp_count for slot %d fd %d already zero", slot,
@@ -596,8 +536,11 @@ int do_cancel_fd(message *UNUSED(m_out))
   endpoint_t proc_e;
   int fd;
 
-  proc_e = job_m_in.USER_ENDPT;
-  fd = job_m_in.COUNT;
+  /* This should be replaced with an ACL check. */
+  if (who_e != PFS_PROC_NR) return EPERM;
+
+  proc_e = job_m_in.VFS_PFS_ENDPT;
+  fd = job_m_in.VFS_PFS_FD;
 
   return cancel_fd(proc_e, fd);
 }
@@ -635,15 +578,9 @@ struct filp *f;
 			}
 			unlock_bsf();
 
-			/* Attempt to close only when feasible */
-			if (!(f->filp_state & FS_INVALIDATED)) {
-				(void) bdev_close(dev);	/* Ignore errors */
-			}
+			(void) bdev_close(dev);	/* Ignore errors */
 		} else {
-			/* Attempt to close only when feasible */
-			if (!(f->filp_state & FS_INVALIDATED)) {
-				(void) dev_close(dev, f-filp);/*Ignore errors*/
-			}
+			(void) cdev_close(dev);	/* Ignore errors */
 		}
 
 		f->filp_mode = FILP_CLOSED;
@@ -656,10 +593,7 @@ struct filp *f;
 	release(vp, rw, susp_count);
   }
 
-  f->filp_count--;	/* If filp got invalidated at device closure, the
-			 * count might've become negative now */
-  if (f->filp_count == 0 ||
-      (f->filp_count < 0 && f->filp_state & FS_INVALIDATED)) {
+  if (--f->filp_count == 0) {
 	if (S_ISFIFO(vp->v_mode)) {
 		/* Last reader or writer is going. Tell PFS about latest
 		 * pipe size.
@@ -680,4 +614,59 @@ struct filp *f;
   }
 
   mutex_unlock(&f->filp_lock);
+}
+
+/*===========================================================================*
+ *				do_dupfrom				     *
+ *===========================================================================*/
+int do_dupfrom(message *UNUSED(m_out))
+{
+/* Duplicate a file descriptor from another process into the calling process.
+ * The other process is identified by a magic grant created for it to make the
+ * initial (IOCTL) request to the calling process. This call has been added
+ * specifically for the VND driver.
+ */
+  struct fproc *rfp;
+  struct filp *rfilp;
+  struct vnode *vp;
+  endpoint_t endpt;
+  int r, fd, slot;
+
+  /* This should be replaced with an ACL check. */
+  if (!super_user) return(EPERM);
+
+  endpt = (endpoint_t) job_m_in.VFS_DUPFROM_ENDPT;
+  fd = job_m_in.VFS_DUPFROM_FD;
+
+  if (isokendpt(endpt, &slot) != OK) return(EINVAL);
+  rfp = &fproc[slot];
+
+  /* Obtain the filp, but do not lock it yet: we first need to make sure that
+   * locking it will not result in a deadlock.
+   */
+  if ((rfilp = get_filp2(rfp, fd, VNODE_NONE)) == NULL)
+	return(err_code);
+
+  /* For now, we do not allow remote duplication of device nodes.  In practice,
+   * only a block-special file can cause a deadlock for the caller (currently
+   * only the VND driver).  This would happen if a user process passes in the
+   * file descriptor to the device node on which it is performing the IOCTL.
+   * This would cause two VFS threads to deadlock on the same filp.  Since the
+   * VND driver does not allow device nodes to be used anyway, this somewhat
+   * rudimentary check eliminates such deadlocks.  A better solution would be
+   * to check if the given endpoint holds a lock to the target filp, but we
+   * currently do not have this information within VFS.
+   */
+  vp = rfilp->filp_vno;
+  if (S_ISCHR(vp->v_mode) || S_ISBLK(vp->v_mode))
+	return(EINVAL);
+
+  /* Now we can safely lock the filp, copy it, and unlock it again. */
+  lock_filp(rfilp, VNODE_READ);
+
+  r = copy_filp(who_e, (filp_id_t) rfilp);
+
+  unlock_filp(rfilp);
+
+  return(r);
 }

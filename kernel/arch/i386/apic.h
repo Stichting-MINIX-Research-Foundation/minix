@@ -110,8 +110,8 @@ EXTERN int ioapic_enabled;
 struct io_apic {
 	unsigned	id;
 	vir_bytes	addr; /* presently used address */
-	phys_bytes	paddr; /* where is it inphys space */
-	vir_bytes	vaddr; /* adress after paging s on */
+	phys_bytes	paddr; /* where is it in phys space */
+	vir_bytes	vaddr; /* address after paging is on */
 	unsigned	pins;
 	unsigned	gsi_base;
 };

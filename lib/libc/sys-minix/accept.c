@@ -33,11 +33,11 @@ int accept(int sock, struct sockaddr *__restrict address,
 	nwio_udpopt_t udpopt;
 
 	r= _tcp_accept(sock, address, address_len);
-	if (r != -1 || (errno != ENOTTY && errno != EBADIOCTL))
+	if (r != -1 || errno != ENOTTY)
 		return r;
 
 	r= _uds_accept(sock, address, address_len);
-	if (r != -1 || (errno != ENOTTY && errno != EBADIOCTL))
+	if (r != -1 || errno != ENOTTY)
 		return r;
 
 	/* Unfortunately, we have to return EOPNOTSUPP for a socket that
@@ -51,7 +51,7 @@ int accept(int sock, struct sockaddr *__restrict address,
 		errno= EOPNOTSUPP;
 		return -1;
 	}
-	if ((errno == ENOTTY || errno == EBADIOCTL))
+	if (errno == ENOTTY)
 	{
 		errno= ENOTSOCK;
 		return -1;

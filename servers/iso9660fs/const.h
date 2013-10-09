@@ -1,5 +1,5 @@
 
-#define GETDENTS_BUFSIZ	257
+#define GETDENTS_BUFSIZ	261
 
 #define ISO9660_STANDARD_ID "CD001" /* Standard code for ISO9660 filesystems */
 

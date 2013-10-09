@@ -136,7 +136,6 @@ static void pid_psinfo(int i)
 		case FP_BLOCKED_ON_LOCK:	f_state = FSTATE_LOCK; break;
 		case FP_BLOCKED_ON_POPEN:	f_state = FSTATE_POPEN; break;
 		case FP_BLOCKED_ON_SELECT:	f_state = FSTATE_SELECT; break;
-		case FP_BLOCKED_ON_DOPEN:	f_state = FSTATE_DOPEN; break;
 		case FP_BLOCKED_ON_OTHER:	f_state = FSTATE_TASK; break;
 		default:			f_state = FSTATE_UNKNOWN;
 		}

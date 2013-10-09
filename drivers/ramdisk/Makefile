@@ -32,7 +32,7 @@ EXTRA=		rc
 PROTO_FILES=	proto.common.etc proto.common.dynamic proto.dev
 PROG_DRIVERS=
 PROG_COMMANDS=	mount umount grep fsck.mfs sh service loadramdisk sysenv
-PROG_SERVERS=	mfs procfs
+PROG_SERVERS=	input mfs procfs
 PROG_BIN=
 PROG_SBIN=
 PROG_USR.BIN=
@@ -45,7 +45,7 @@ RAMDISK_SMALL=	1
 .if ${MACHINE_ARCH} == "i386"
 ETC+=		rs.single
 EXTRA+=		
-PROG_DRIVERS+=	at_wini floppy pci
+PROG_DRIVERS+=	at_wini floppy pci pckbd
 PROG_COMMANDS+=	cdprobe 
 PROG_USR.SBIN+=	pwd_mkdb
 

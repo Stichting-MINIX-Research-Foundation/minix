@@ -13,7 +13,7 @@
 #include <machine/pci.h>
 #include <minix/ds.h>
 #include <minix/vm.h>
-#include <timers.h>
+#include <minix/timers.h>
 #include <sys/mman.h>
 #include "assert.h"
 #include "e1000.h"

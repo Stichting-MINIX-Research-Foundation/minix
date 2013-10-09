@@ -32,7 +32,7 @@ int fs_readsuper() {
   bdev_driver(fs_dev, fs_dev_label);
 
   /* Open the device the file system lives on in read only mode */
-  if (bdev_open(fs_dev, R_BIT) != OK) {
+  if (bdev_open(fs_dev, BDEV_R_BIT) != OK) {
         return(EINVAL);
   }
 
@@ -51,8 +51,7 @@ int fs_readsuper() {
   fs_m_out.RES_FILE_SIZE_LO = v_pri.dir_rec_root->d_file_size;
   fs_m_out.RES_UID = SYS_UID; /* Always root */
   fs_m_out.RES_GID = SYS_GID; /* operator */
-
-  fs_m_out.RES_CONREQS = 1;	/* We can handle only 1 request at a time */
+  fs_m_out.RES_FLAGS = RES_NOFLAGS;
 
   return(r);
 }

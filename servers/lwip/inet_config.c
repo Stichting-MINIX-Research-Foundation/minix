@@ -22,11 +22,10 @@ Copyright 1995 Philip Homburg
 #include <minix/type.h>
 #include <minix/sysutil.h>
 #include <minix/syslib.h>
+#include <minix/netsock.h>
 #include "inet_config.h"
 
 #include "proto.h"
-#include <minix/netsock.h>
-
 
 struct eth_conf eth_conf[IP_PORT_MAX];
 struct psip_conf psip_conf[IP_PORT_MAX];

@@ -39,7 +39,7 @@
 	movl	tmp, STREG(pptr)
 
 /*
- * restore kernel segments. %cs is aready set and %fs, %gs are not used */
+ * restore kernel segments. %cs is already set and %fs, %gs are not used */
 #define RESTORE_KERNEL_SEGS	\
 	mov	$KERN_DS_SELECTOR, %si	;\
 	mov	%si, %ds	;\

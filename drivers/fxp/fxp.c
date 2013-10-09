@@ -18,7 +18,7 @@
 #include <minix/ds.h>
 #include <minix/endpoint.h>
 
-#include <timers.h>
+#include <minix/timers.h>
 
 #define debug			0
 #define RAND_UPDATE		/**/
@@ -141,7 +141,7 @@ static int fxp_instance;
 
 static fxp_t *fxp_state;
 
-static timer_t fxp_watchdog;
+static minix_timer_t fxp_watchdog;
 
 static u32_t system_hz;
 
@@ -170,7 +170,7 @@ static void fxp_restart_ru(fxp_t *fp);
 static void fxp_getstat_s(message *mp);
 static void fxp_handler(fxp_t *fp);
 static void fxp_check_ints(fxp_t *fp);
-static void fxp_watchdog_f(timer_t *tp);
+static void fxp_watchdog_f(minix_timer_t *tp);
 static int fxp_link_changed(fxp_t *fp);
 static void fxp_report_link(fxp_t *fp);
 static void reply(fxp_t *fp);
@@ -1627,7 +1627,7 @@ static void fxp_check_ints(fxp_t *fp)
  *				fxp_watchdog_f				     *
  *===========================================================================*/
 static void fxp_watchdog_f(tp)
-timer_t *tp;
+minix_timer_t *tp;
 {
 	fxp_t *fp;
 
