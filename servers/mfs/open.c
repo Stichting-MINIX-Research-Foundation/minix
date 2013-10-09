@@ -7,7 +7,7 @@
 #include "super.h"
 #include <minix/vfsif.h>
 
-static struct inode *new_node(struct inode *ldirp, char *string, mode_t
+static struct inode *new_node(struct inode *ldirp, char *string, pmode_t
 	bits, zone_t z0);
 
 /*===========================================================================*
@@ -19,11 +19,11 @@ int fs_create()
   int r;
   struct inode *ldirp;
   struct inode *rip;
-  mode_t omode;
+  pmode_t omode;
   char lastc[MFS_NAME_MAX];
   
   /* Read request message */
-  omode = (mode_t) fs_m_in.REQ_MODE;
+  omode = (pmode_t) fs_m_in.REQ_MODE;
   caller_uid = (uid_t) fs_m_in.REQ_UID;
   caller_gid = (gid_t) fs_m_in.REQ_GID;
   
@@ -37,7 +37,7 @@ int fs_create()
   NUL(lastc, len, sizeof(lastc));
 
   /* Get last directory inode (i.e., directory that will hold the new inode) */
-  if ((ldirp = get_inode(fs_dev, (ino_t) fs_m_in.REQ_INODE_NR)) == NULL)
+  if ((ldirp = get_inode(fs_dev, (pino_t) fs_m_in.REQ_INODE_NR)) == NULL)
 	  return(ENOENT);
 
   /* Create a new inode by calling new_node(). */
@@ -87,11 +87,11 @@ int fs_mknod()
   caller_gid = (gid_t) fs_m_in.REQ_GID;
   
   /* Get last directory inode */
-  if((ldirp = get_inode(fs_dev, (ino_t) fs_m_in.REQ_INODE_NR)) == NULL)
+  if((ldirp = get_inode(fs_dev, (pino_t) fs_m_in.REQ_INODE_NR)) == NULL)
 	  return(ENOENT);
 
   /* Try to create the new node */
-  ip = new_node(ldirp, lastc, (mode_t) fs_m_in.REQ_MODE,
+  ip = new_node(ldirp, lastc, (pmode_t) fs_m_in.REQ_MODE,
   		(zone_t) fs_m_in.REQ_DEV);
 
   put_inode(ip);
@@ -106,7 +106,7 @@ int fs_mknod()
 int fs_mkdir()
 {
   int r1, r2;			/* status codes */
-  ino_t dot, dotdot;		/* inode numbers for . and .. */
+  pino_t dot, dotdot;		/* inode numbers for . and .. */
   struct inode *rip, *ldirp;
   char lastc[MFS_NAME_MAX];         /* last component */
   phys_bytes len;
@@ -122,11 +122,11 @@ int fs_mkdir()
   caller_gid = (gid_t) fs_m_in.REQ_GID;
   
   /* Get last directory inode */
-  if((ldirp = get_inode(fs_dev, (ino_t) fs_m_in.REQ_INODE_NR)) == NULL)
+  if((ldirp = get_inode(fs_dev, (pino_t) fs_m_in.REQ_INODE_NR)) == NULL)
       return(ENOENT);
   
   /* Next make the inode. If that fails, return error code. */
-  rip = new_node(ldirp, lastc, (mode_t) fs_m_in.REQ_MODE, (zone_t) 0);
+  rip = new_node(ldirp, lastc, (pmode_t) fs_m_in.REQ_MODE, (zone_t) 0);
   
   if(rip == NULL || err_code == EEXIST) {
 	  put_inode(rip);		/* can't make dir: it already exists */
@@ -140,7 +140,7 @@ int fs_mkdir()
 
   /* Now make dir entries for . and .. unless the disk is completely full. */
   /* Use dot1 and dot2, so the mode of the directory isn't important. */
-  rip->i_mode = (mode_t) fs_m_in.REQ_MODE;	/* set mode */
+  rip->i_mode = (pmode_t) fs_m_in.REQ_MODE;	/* set mode */
   r1 = search_dir(rip, dot1, &dot, ENTER, IGN_PERM);/* enter . in the new dir*/
   r2 = search_dir(rip, dot2, &dotdot, ENTER, IGN_PERM); /* enter .. in the new
 							 dir */
@@ -189,11 +189,11 @@ int fs_slink()
   NUL(string, len, sizeof(string));
   
   /* Temporarily open the dir. */
-  if( (ldirp = get_inode(fs_dev, (ino_t) fs_m_in.REQ_INODE_NR)) == NULL)
+  if( (ldirp = get_inode(fs_dev, (pino_t) fs_m_in.REQ_INODE_NR)) == NULL)
 	  return(EINVAL);
 
   /* Create the inode for the symlink. */
-  sip = new_node(ldirp, string, (mode_t) (I_SYMBOLIC_LINK | RWX_MODES),
+  sip = new_node(ldirp, string, (pmode_t) (I_SYMBOLIC_LINK | RWX_MODES),
 		   (zone_t) 0);
 
   /* Allocate a disk block for the contents of the symlink.
@@ -244,7 +244,7 @@ int fs_slink()
  *				new_node				     *
  *===========================================================================*/
 static struct inode *new_node(struct inode *ldirp,
-	char *string, mode_t bits, zone_t z0)
+	char *string, pmode_t bits, zone_t z0)
 {
 /* New_node() is called by fs_open(), fs_mknod(), and fs_mkdir().  
  * In all cases it allocates a new inode, makes a directory entry for it in
@@ -322,7 +322,7 @@ int fs_inhibread()
 {
   struct inode *rip;
   
-  if((rip = find_inode(fs_dev, (ino_t) fs_m_in.REQ_INODE_NR)) == NULL)
+  if((rip = find_inode(fs_dev, (pino_t) fs_m_in.REQ_INODE_NR)) == NULL)
 	  return(EINVAL);
 
   /* inhibit read ahead */

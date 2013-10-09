@@ -6,11 +6,11 @@ SUBDIR=	add_route arp ash at backup btrace \
 	cawf cd cdprobe cpp \
 	chmod chown ci cleantmp cmp co \
 	comm compress cp crc cron crontab cut \
-	dd decomp16 DESCRIBE devmand devsize df dhcpd \
-	dhrystone diff diskctl dumpcore \
+	dd decomp16 DESCRIBE devmand devsize dhcpd \
+	dhrystone diff diskctl \
 	eject env factor fbdctl \
 	find fix fold format fortune fsck.mfs \
-	gcore gcov-pull getty grep hexdump host \
+	gcov-pull getty grep hexdump host \
 	hostaddr id ifconfig ifdef \
 	intr ipcrm ipcs irdpd isoread last \
 	less loadkeys loadramdisk logger look lp \
@@ -27,7 +27,7 @@ SUBDIR=	add_route arp ash at backup btrace \
 	stty svclog svrctl swifi synctree sysenv \
 	syslogd tail tcpd tcpdp tcpstat tee telnet \
 	telnetd term termcap tget time touch \
-	truncate tty udpstat umount uname \
+	truncate tty udpstat umount \
 	unstack update uud uue version vol \
 	whereis which write writeisofs fetch \
 	zdump zmodem pkgin_cd pkgin_all \

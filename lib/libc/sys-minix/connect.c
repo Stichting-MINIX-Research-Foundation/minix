@@ -39,7 +39,7 @@ int connect(int sock, const struct sockaddr *address,
 	nwio_udpopt_t udpopt;
 
 	r= ioctl(sock, NWIOGTCPCONF, &tcpconf);
-	if (r != -1 || (errno != ENOTTY && errno != EBADIOCTL))
+	if (r != -1 || errno != ENOTTY)
 	{
 		if (r == -1)
 		{
@@ -50,7 +50,7 @@ int connect(int sock, const struct sockaddr *address,
 	}
 
 	r= ioctl(sock, NWIOGUDPOPT, &udpopt);
-	if (r != -1 || (errno != ENOTTY && errno != EBADIOCTL))
+	if (r != -1 || errno != ENOTTY)
 	{
 		if (r == -1)
 		{
@@ -61,9 +61,7 @@ int connect(int sock, const struct sockaddr *address,
 	}
 
 	r= _uds_connect(sock, address, address_len);
-	if (r != -1 ||
-		(errno != ENOTTY && errno != EBADIOCTL &&
-		 errno != EAFNOSUPPORT))
+	if (r != -1 || (errno != ENOTTY && errno != EAFNOSUPPORT))
 	{
 		if (r == -1)
 		{

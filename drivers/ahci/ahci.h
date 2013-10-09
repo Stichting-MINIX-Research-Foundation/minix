@@ -264,7 +264,6 @@ typedef struct vumap_phys prd_t;
  */
 #define MAX_DRIVES		8
 #define NR_MINORS		(MAX_DRIVES * DEV_PER_DRIVE)
-#define SUB_PER_DRIVE		(NR_PARTITIONS * NR_PARTITIONS)
 #define NR_SUBDEVS		(MAX_DRIVES * SUB_PER_DRIVE)
 
 /* Port states. */

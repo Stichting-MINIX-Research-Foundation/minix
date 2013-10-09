@@ -77,7 +77,7 @@ typedef struct arp_port
 
 	struct arp_req
 	{
-		timer_t ar_timer;
+		minix_timer_t ar_timer;
 		int ar_entry;
 		int ar_req_count;
 	} ap_req[AP_REQ_NR];
@@ -139,7 +139,7 @@ static acc_t *arp_getdata ARGS(( int fd, size_t offset,
 static int arp_putdata ARGS(( int fd, size_t offset,
 	acc_t *data, int for_ioctl ));
 static void arp_main ARGS(( arp_port_t *arp_port ));
-static void arp_timeout ARGS(( int ref, timer_t *timer ));
+static void arp_timeout ARGS(( int ref, minix_timer_t *timer ));
 static void setup_write ARGS(( arp_port_t *arp_port ));
 static void setup_read ARGS(( arp_port_t *arp_port ));
 static void do_reclist ARGS(( event_t *ev, ev_arg_t ev_arg ));
@@ -1193,7 +1193,7 @@ put_userdata_t put_userdata;
 
 static void arp_timeout (ref, timer)
 int ref;
-timer_t *timer;
+minix_timer_t *timer;
 {
 	int i, port, reqind, acind;
 	arp_port_t *arp_port;

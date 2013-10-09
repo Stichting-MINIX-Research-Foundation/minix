@@ -380,7 +380,7 @@ int ksig;			/* non-zero means signal comes from kernel  */
 
   	/* Print stacktrace if necessary. */
   	if(SIGS_IS_STACKTRACE(signo)) {
- 		sys_sysctl_stacktrace(rmp->mp_endpoint);
+		sys_diagctl_stacktrace(rmp->mp_endpoint);
   	}
 
   	if(!SIGS_IS_TERMINATION(signo)) {
@@ -475,7 +475,7 @@ int signo;			/* signal that caused termination */
 	if(!(rmp->mp_flags & PRIV_PROC)) {
 		printf("PM: coredump signal %d for %d / %s\n", signo,
 			rmp->mp_pid, rmp->mp_name);
-		sys_sysctl_stacktrace(rmp->mp_endpoint);
+		sys_diagctl_stacktrace(rmp->mp_endpoint);
 	}
 	exit_proc(rmp, 0, TRUE /*dump_core*/);
   }

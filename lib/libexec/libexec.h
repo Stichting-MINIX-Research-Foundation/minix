@@ -6,13 +6,13 @@
 struct exec_info;
 
 typedef int (*libexec_loadfunc_t)(struct exec_info *execi,
-	off_t offset, off_t vaddr, size_t len);
+	off_t offset, vir_bytes vaddr, size_t len);
 
 typedef int (*libexec_clearfunc_t)(struct exec_info *execi,
-	off_t vaddr, size_t len);
+	vir_bytes vaddr, size_t len);
 
 typedef int (*libexec_allocfunc_t)(struct exec_info *execi,
-	off_t vaddr, size_t len);
+	vir_bytes vaddr, size_t len);
 
 typedef int (*libexec_procclearfunc_t)(struct exec_info *execi);
 
@@ -61,12 +61,15 @@ int libexec_pm_newexec(endpoint_t proc_e, struct exec_info *execi);
 typedef int (*libexec_exec_loadfunc_t)(struct exec_info *execi);
 int libexec_load_elf(struct exec_info *execi);
 
-int libexec_copy_memcpy(struct exec_info *execi, off_t offset, off_t vaddr, size_t len);
-int libexec_clear_memset(struct exec_info *execi, off_t vaddr, size_t len);
-int libexec_alloc_mmap_prealloc_cleared(struct exec_info *execi, off_t vaddr, size_t len);
-int libexec_alloc_mmap_prealloc_junk(struct exec_info *execi, off_t vaddr, size_t len);
-int libexec_alloc_mmap_ondemand(struct exec_info *execi, off_t vaddr, size_t len);
+/* Default callbacks for kernel. */
+int libexec_copy_memcpy(struct exec_info *execi, off_t offset, vir_bytes vaddr, size_t len);
+int libexec_clear_memset(struct exec_info *execi, vir_bytes vaddr, size_t len);
+
+/* Default callbacks. */
+int libexec_alloc_mmap_prealloc_cleared(struct exec_info *execi, vir_bytes vaddr, size_t len);
+int libexec_alloc_mmap_prealloc_junk(struct exec_info *execi, vir_bytes vaddr, size_t len);
+int libexec_alloc_mmap_ondemand(struct exec_info *execi, vir_bytes vaddr, size_t len);
 int libexec_clearproc_vm_procctl(struct exec_info *execi);
-int libexec_clear_sys_memset(struct exec_info *execi, off_t vaddr, size_t len);
+int libexec_clear_sys_memset(struct exec_info *execi, vir_bytes vaddr, size_t len);
 
 #endif /* !_LIBEXEC_H_ */

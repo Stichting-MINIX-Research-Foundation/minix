@@ -376,7 +376,7 @@ void arch_post_init(void)
   pg_info(&vm->p_seg.p_cr3, &vm->p_seg.p_cr3_v);
 }
 
-int libexec_pg_alloc(struct exec_info *execi, off_t vaddr, size_t len)
+static int libexec_pg_alloc(struct exec_info *execi, vir_bytes vaddr, size_t len)
 {
         pg_map(PG_ALLOCATEME, vaddr, vaddr+len, &kinfo);
   	pg_load();

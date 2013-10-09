@@ -1,4 +1,4 @@
-#define NCALLS		 124	/* number of system calls allowed */
+#define NCALLS		 130	/* number of system calls allowed */
 
 /* In case it isn't obvious enough: this list is sorted numerically. */
 #define EXIT		   1 
@@ -49,6 +49,7 @@
 #define LSTAT		  53
 #define IOCTL		  54
 #define FCNTL		  55
+#define DUPFROM		  56
 #define FS_READY	  57
 #define PIPE2		  58
 #define EXEC		  59
@@ -59,6 +60,8 @@
 #define ITIMER		  64
 #define GETMCONTEXT       67
 #define SETMCONTEXT       68
+#define GETDENTS_330	  69
+#define FTRUNCATE_330	  70
 
 /* Posix signal handling. */
 #define SIGACTION	  71
@@ -72,9 +75,9 @@
 #define SYSUNAME	  78
 #define GETDENTS	  80	/* to VFS */
 #define LLSEEK		  81	/* to VFS */
-#define FSTATFS	 	  82	/* to VFS */
-#define STATVFS 	  83	/* to VFS */
-#define FSTATVFS 	  84	/* to VFS */
+#define GETVFSSTAT	  82	/* to VFS */
+#define STATVFS1 	  83	/* to VFS */
+#define FSTATVFS1 	  84	/* to VFS */
 #define SELECT            85	/* to VFS */
 #define FCHDIR            86	/* to VFS */
 #define FSYNC             87	/* to VFS */
@@ -87,10 +90,10 @@
 #define FTRUNCATE	  94	/* to VFS */
 #define FCHMOD		  95	/* to VFS */
 #define FCHOWN		  96	/* to VFS */
+#define LSEEK_330	  97
 #define SPROF             98    /* to PM */
 #define CPROF             99    /* to PM */
 
-/* Calls provided by PM and FS that are not part of the API */
 #define PM_NEWEXEC	100	/* from VFS or RS to PM: new exec */
 #define SRV_FORK  	101	/* to PM: special fork call for RS */
 #define EXEC_RESTART	102	/* to PM: final part of exec for RS */
@@ -98,6 +101,8 @@
 #define ISSETUGID	106	/* to PM: ask if process is tainted */
 #define GETEPINFO_O	107	/* to PM: get pid/uid/gid of an endpoint */
 #define UTIMENS		108	/* to FS: [f]utimens(); also [fl]utimes */
+#define FCNTL_330	109	/* to VFS */
+#define TRUNCATE_330	110	/* to VFS */
 #define SRV_KILL  	111	/* to PM: special kill call for RS */
 
 #define GCOV_FLUSH	112	/* flush gcov data from server to gcov files */
@@ -109,8 +114,12 @@
 
 #define VFS_VMCALL	117
 
-#define TASK_REPLY	121	/* to VFS: reply code from drivers, not 
-				 * really a standalone call.
-				 */
 #define MAPDRIVER      122     /* to VFS, map a device */
 #define GETRUSAGE      123	/* to PM, VFS */
+
+#define VFS_PFS_CHECK_PERMS	124	/* to VFS */
+#define VFS_PFS_VERIFY_FD	125	/* to VFS */
+#define VFS_PFS_SET_FILP	126	/* to VFS */
+#define VFS_PFS_COPY_FILP	127	/* to VFS */
+#define VFS_PFS_PUT_FILP	128	/* to VFS */
+#define VFS_PFS_CANCEL_FD	129	/* to VFS */

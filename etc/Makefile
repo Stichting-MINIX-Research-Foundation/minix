@@ -303,7 +303,6 @@ CONFIGSYMLINKS+=	\
 			/usr/tmp		/var/tmp \
 			/usr/pkg/bin/clang	/usr/bin/cc \
 			/usr/pkg/bin/strip	/usr/bin/strip \
-			/dev/kbdaux		/dev/mouse \
 			/proc/mounts		/etc/mtab
 
 .endif # !defined(__MINIX)
