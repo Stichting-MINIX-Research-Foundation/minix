@@ -31,8 +31,6 @@ struct buf {
 
 int fs_lookup_credentials(vfs_ucred_t *credentials,
         uid_t *caller_uid, gid_t *caller_gid, cp_grant_id_t grant2, size_t cred_size);
-u32_t fs_bufs_heuristic(int minbufs, u32_t btotal, u32_t bfree,
-	int blocksize, dev_t majordev);
 
 void lmfs_markdirty(struct buf *bp);
 void lmfs_markclean(struct buf *bp);
@@ -60,7 +58,7 @@ void lmfs_cache_reevaluate(dev_t dev);
 void lmfs_blockschange(dev_t dev, int delta);
 
 /* calls that libminixfs does into fs */
-void fs_blockstats(u32_t *blocks, u32_t *free, u32_t *used);
+void fs_blockstats(u64_t *blocks, u64_t *free, u64_t *used);
 int fs_sync(void);
 
 /* get_block arguments */

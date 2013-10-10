@@ -11,7 +11,6 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include "file.h"
-#include "fproc.h"
 #include "scratchpad.h"
 #include "lock.h"
 #include "vnode.h"
@@ -147,8 +146,8 @@ int req;			/* either F_SETLK or F_SETLKW */
 	}
 
 	/* Copy the flock structure back to the caller. */
-	r = sys_datacopy(VFS_PROC_NR, (vir_bytes) &flock,
-		who_e, (vir_bytes) scratch(fp).io.io_buffer, sizeof(flock));
+	r = sys_datacopy(VFS_PROC_NR, (vir_bytes) &flock, who_e,
+		(vir_bytes) scratch(fp).io.io_buffer, sizeof(flock));
 	return(r);
   }
 

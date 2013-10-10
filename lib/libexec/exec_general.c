@@ -18,7 +18,7 @@
 #include <sys/mman.h>
 #include <machine/elf.h>
 
-int libexec_alloc_mmap_prealloc_junk(struct exec_info *execi, off_t vaddr, size_t len)
+int libexec_alloc_mmap_prealloc_junk(struct exec_info *execi, vir_bytes vaddr, size_t len)
 {
 	if(minix_mmap_for(execi->proc_e, (void *) vaddr, len,
 		PROT_READ|PROT_WRITE|PROT_EXEC,
@@ -29,7 +29,7 @@ int libexec_alloc_mmap_prealloc_junk(struct exec_info *execi, off_t vaddr, size_
 	return OK;
 }
 
-int libexec_alloc_mmap_prealloc_cleared(struct exec_info *execi, off_t vaddr, size_t len)
+int libexec_alloc_mmap_prealloc_cleared(struct exec_info *execi, vir_bytes vaddr, size_t len)
 {
 	if(minix_mmap_for(execi->proc_e, (void *) vaddr, len,
 		PROT_READ|PROT_WRITE|PROT_EXEC,
@@ -40,7 +40,7 @@ int libexec_alloc_mmap_prealloc_cleared(struct exec_info *execi, off_t vaddr, si
 	return OK;
 }
 
-int libexec_alloc_mmap_ondemand(struct exec_info *execi, off_t vaddr, size_t len)
+int libexec_alloc_mmap_ondemand(struct exec_info *execi, vir_bytes vaddr, size_t len)
 {
 	if(minix_mmap_for(execi->proc_e, (void *) vaddr, len,
 		PROT_READ|PROT_WRITE|PROT_EXEC,
@@ -56,20 +56,20 @@ int libexec_clearproc_vm_procctl(struct exec_info *execi)
 	return vm_procctl(execi->proc_e, VMPPARAM_CLEAR);
 }
 
-int libexec_clear_sys_memset(struct exec_info *execi, off_t vaddr, size_t len)
+int libexec_clear_sys_memset(struct exec_info *execi, vir_bytes vaddr, size_t len)
 {
 	return sys_memset(execi->proc_e, 0, vaddr, len);
 }
 
 int libexec_copy_memcpy(struct exec_info *execi,
-	off_t off, off_t vaddr, size_t len)
+	off_t off, vir_bytes vaddr, size_t len)
 {
 	assert(off + len <= execi->hdr_len);
 	memcpy((char *) vaddr, (char *) execi->hdr + off, len);
 	return OK;
 }
 
-int libexec_clear_memset(struct exec_info *execi, off_t vaddr, size_t len)
+int libexec_clear_memset(struct exec_info *execi, vir_bytes vaddr, size_t len)
 {
 	memset((char *) vaddr, 0, len);
 	return OK;

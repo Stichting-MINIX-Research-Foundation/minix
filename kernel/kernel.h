@@ -29,7 +29,7 @@
 #include <minix/type.h>		/* MINIX specific types, e.g. message */
 #include <minix/ipc.h>		/* MINIX run-time system */
 #include <minix/sysutil.h>	/* MINIX utility library functions */
-#include <timers.h>		/* watchdog timer management */
+#include <minix/timers.h>		/* watchdog timer management */
 #include <errno.h>		/* return codes and error numbers */
 #include <sys/param.h>
 #include <minix/param.h>

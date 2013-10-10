@@ -144,6 +144,7 @@ size_t	 wcstombs(char * __restrict, const wchar_t * __restrict, size_t);
 int	 rand_r(unsigned int *);
 #endif
 
+
 /*
  * X/Open Portability Guide >= Issue 4
  */
@@ -271,12 +272,10 @@ int	 cgetustr(char *, const char *, char **);
 void	 csetexpandtc(int);
 
 int	 daemon(int, int);
-#ifndef __minix
 int	 devname_r(dev_t, mode_t, char *, size_t);
 #ifndef __LIBC12_SOURCE__
 __aconst char *devname(dev_t, mode_t) __RENAME(__devname50);
 #endif
-#endif /* !__minix */
 
 #define	HN_DECIMAL		0x01
 #define	HN_NOSPACE		0x02

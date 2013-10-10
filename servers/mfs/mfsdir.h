@@ -13,7 +13,7 @@
 #define MFS_DIRSIZ	60
 
 struct direct {
-  ino_t mfs_d_ino;
+  pino_t mfs_d_ino;
   char mfs_d_name[MFS_DIRSIZ];
 } __packed;
 
