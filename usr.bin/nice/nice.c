@@ -1,6 +1,8 @@
+/*	$NetBSD: nice.c,v 1.15 2008/07/21 14:19:24 lukem Exp $	*/
+
 /*
- * Copyright (c) 1989, 1993, 1994
- *	The Regents of the University of California.  All rights reserved.
+ * Copyright (c) 1989 The Regents of the University of California.
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -10,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -31,50 +29,67 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/types.h>
+#include <sys/cdefs.h>
+#ifndef lint
+__COPYRIGHT("@(#) Copyright (c) 1989\
+ The Regents of the University of California.  All rights reserved.");
+#endif /* not lint */
+
+#ifndef lint
+#if 0
+static char sccsid[] = "@(#)nice.c	5.4 (Berkeley) 6/1/90";
+#endif
+__RCSID("$NetBSD: nice.c,v 1.15 2008/07/21 14:19:24 lukem Exp $");
+#endif /* not lint */
+
 #include <sys/time.h>
 #include <sys/resource.h>
 
-#include <ctype.h>
-#include <errno.h>
-#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <string.h>
+#include <limits.h>
+#include <locale.h>
+#include <ctype.h>
+#include <errno.h>
+#include <err.h>
+#include <unistd.h>
 
 #define	DEFNICE	10
 
-void usage(void);
+static void usage(void) __dead;
 
 int
-main(int argc, char *argv[])
+main(int argc, char **argv)
 {
-	long niceness = DEFNICE;
-	int ch;
 	char *ep;
-	char arg1[10];
+	int niceness = DEFNICE;
+	int c;
+	long tmp;
 
-	/* Obsolescent syntax: -number, --number */
-	if (argc >= 2 && argv[1][0] == '-' && (argv[1][1] == '-' ||
-	    isdigit((unsigned char)argv[1][1])) && strcmp(argv[1], "--") != 0) {
-		snprintf(arg1, sizeof(arg1), "-n%s", argv[1] + 1);
-		argv[1] = arg1;
-	}
+	setprogname(argv[0]);
+	(void)setlocale(LC_ALL, "");
 
-	while ((ch = getopt(argc, argv, "n:")) != -1) {
-		switch (ch) {
+        /* handle obsolete -number syntax */
+        if (argc > 1 && argv[1][0] == '-' &&
+	    isdigit((unsigned char)argv[1][1])) {
+		niceness = atoi (argv[1] + 1);
+                argc--; argv++;
+        }
+
+	while ((c = getopt (argc, argv, "n:")) != -1) {
+		switch (c) {
 		case 'n':
 			errno = 0;
-			niceness = strtol(optarg, &ep, 10);
-			if (ep == optarg || *ep != '\0' || errno ||
-			    niceness < INT_MIN || niceness > INT_MAX) {
-				fprintf(stderr, "%s: invalid nice value", optarg);
-				return 1;
-			}
+			tmp = strtol(optarg, &ep, 10);
+			if (*ep != '\0' || tmp < INT_MIN || tmp > INT_MAX)
+				errx(EXIT_FAILURE, "invalid argument: `%s'",
+				    optarg);
+			niceness = (int)tmp;
 			break;
 		default:
 			usage();
+			break;
 		}
 	}
 	argc -= optind;
@@ -86,23 +101,23 @@ main(int argc, char *argv[])
 	errno = 0;
 	niceness += getpriority(PRIO_PROCESS, 0);
 	if (errno) {
-		perror("getpriority");
-		return 1;
+		err(EXIT_FAILURE, "getpriority");
+		/* NOTREACHED */
 	}
-	if (setpriority(PRIO_PROCESS, 0, (int)niceness)) {
-		perror("setpriority");
-		return 1;
+	if (setpriority(PRIO_PROCESS, 0, niceness) == -1) {
+		warn("setpriority");
 	}
-	errno = 0;
-	execvp(*argv, argv);
-	perror("execvp");
-	return 1;
+
+	(void)execvp(argv[0], &argv[0]);
+	err((errno == ENOENT || errno == ENOTDIR) ? 127 : 126, "%s", argv[0]);
+	/* NOTREACHED */
 }
 
-void
+static void
 usage(void)
 {
-
-	(void)fprintf(stderr, "usage: nice [-n incr] utility [arguments]\n");
-	exit(1);
+	(void)fprintf(stderr,
+	    "Usage: %s [ -n increment ] utility [ argument ...]\n",
+	    getprogname());
+	exit(EXIT_FAILURE);
 }
