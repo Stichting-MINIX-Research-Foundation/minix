@@ -246,9 +246,22 @@
 #ifndef howmany
 #define	howmany(x, y)	(((x)+((y)-1))/(y))
 #endif
-#define	roundup(x, y)	((((x)+((y)-1))/(y))*(y))
+/*
+ * Integer round x up to a multiple of y
+ */
+#define	roundup(x, y)	  ((((x)+((y)-1))/(y))*(y))
+/*
+ * Integer round x down to a multiple of y
+ */
 #define	rounddown(x,y)	(((x)/(y))*(y))
+/*
+ * Integer round x up to a multiple of m assuming
+ * m is a power of two
+ */
 #define	roundup2(x, m)	(((x) + (m) - 1) & ~((m) - 1))
+/*
+ * determine if x is a power of two
+ */
 #define	powerof2(x)	((((x)-1)&(x))==0)
 
 /* Macros for min/max. */
