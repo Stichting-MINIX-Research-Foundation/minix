@@ -394,7 +394,7 @@ int do_semctl(message *m)
 		if (r != OK)
 			return EINVAL;
 #ifdef DEBUG_SEM
-		printf("SEMCTL: SETALL: opt: %p\n");
+		printf("SEMCTL: SETALL: opt: %lu\n", (vir_bytes) opt);
 		for (i = 0; i < sem->semid_ds.sem_nsems; i++)
 			printf("SEMCTL: SETALL val: [%d] %d\n", i, buf[i]);
 #endif
