@@ -24,7 +24,8 @@
 		em(1, #field " of " #rusage1 " doesn't equal to " \
 			#field " of " #rusage2);
 
-static void spin()
+static void
+spin(void)
 {
 	struct timeval start_time;
 	struct timeval end_time;
@@ -33,7 +34,7 @@ static void spin()
 		e(1);
 		exit(1);
 	}
-	memset(&end_time, 0, sizeof(end_time));
+	end_time = start_time;
 	do {
 		if ((++loop % 3000000000) == 0) {
 			if (gettimeofday(&end_time, NULL) == -1) {
@@ -74,8 +75,6 @@ main(int argc, char *argv[])
 		e(1);
 		exit(1);
 	}
-	CHECK_ZERO_FIELD(r_usage2, ru_utime.tv_sec);
-	CHECK_ZERO_FIELD(r_usage2, ru_utime.tv_usec);
 	CHECK_NOT_ZERO_FIELD(r_usage2, ru_maxrss);
 	CHECK_NOT_ZERO_FIELD(r_usage2, ru_ixrss);
 	CHECK_NOT_ZERO_FIELD(r_usage2, ru_idrss);
@@ -83,7 +82,20 @@ main(int argc, char *argv[])
 	CHECK_EQUAL_FIELD(r_usage1, r_usage2, ru_ixrss);
 	CHECK_EQUAL_FIELD(r_usage1, r_usage2, ru_idrss);
 	CHECK_EQUAL_FIELD(r_usage1, r_usage2, ru_isrss);
-	if ((child = fork()) != 0) {
+	if ((child = fork()) == 0) {
+		/*
+		 * We cannot do this part of the test in the parent, since
+		 * start() calls system() which spawns a child process.
+		 */
+		if (getrusage(RUSAGE_CHILDREN, &r_usage1) != 0) {
+			e(1);
+			exit(1);
+		}
+		CHECK_ZERO_FIELD(r_usage1, ru_utime.tv_sec);
+		CHECK_ZERO_FIELD(r_usage1, ru_utime.tv_usec);
+		spin();
+		exit(0);
+	} else {
 		if (child != waitpid(child, &status, 0)) {
 			e(1);
 			exit(1);
@@ -104,9 +116,6 @@ main(int argc, char *argv[])
 		CHECK_EQUAL_FIELD(r_usage1, r_usage3, ru_ixrss);
 		CHECK_EQUAL_FIELD(r_usage1, r_usage3, ru_idrss);
 		CHECK_EQUAL_FIELD(r_usage1, r_usage3, ru_isrss);
-	} else {
-		spin();
-		exit(0);
 	}
 	quit();
 
