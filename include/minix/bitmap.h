@@ -19,7 +19,7 @@
 
 #if defined(CONFIG_SMP) && defined(__GNUC__)
 #ifndef __ASSEMBLY__
-static inline bits_fill(bitchunk_t * chunks, unsigned bits)
+static inline void bits_fill(bitchunk_t * chunks, unsigned bits)
 {
 	unsigned c, cnt;
 
