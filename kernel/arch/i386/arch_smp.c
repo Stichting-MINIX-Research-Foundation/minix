@@ -22,7 +22,7 @@
 #include "kernel/smp.h"
 #include "apic.h"
 #include "acpi.h"
-#include "clock.h"
+#include "kernel/clock.h"
 
 #include "glo.h"
 
