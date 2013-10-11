@@ -75,11 +75,11 @@ fi
 
 FILENAMEOUT=""
 
-while getopts "b:j:ls:pmMch?f:L:e:" c
+while getopts "b:j:lpmMch?f:L:e:" c
 do
 	case "$c" in
 	\?)
-		echo "Usage: $0 [-l] [-p] [-c] [-m] [-M] [-f <filename>] [-s <username>] -j<jaildir> [-L <packageurl>] [-e <extras-path>]" >&2
+		echo "Usage: $0 [-l] [-p] [-c] [-m] [-M] [-f <filename>] -j<jaildir> [-L <packageurl>] [-e <extras-path>]" >&2
 		exit 1
 	;;
 	b)
@@ -98,8 +98,6 @@ do
 		;;
 	f)
 		FILENAMEOUT="$OPTARG"
-		;;
-	s)	USERNAME="--username=$OPTARG"
 		;;
 	m)	MINIMAL=1
 		PACKAGES=0
@@ -194,10 +192,9 @@ else
 	( cd .. && make cleandir >/dev/null )
 	echo "Copying contents from current src dir."
 	srcdir=/usr/$SRC
-	( cd $srcdir && tar --exclude .svn -cf - .  ) | ( cd $RELEASEDIR/usr && mkdir $SRC && cd $SRC && tar xf - )
+	( cd $srcdir && tar --exclude .git -cf - .  ) | ( cd $RELEASEDIR/usr && mkdir $SRC && cd $SRC && tar xf - )
 	echo "Copying done."
 	REVTAG=copy
-	REVISION=unknown
 	IMG=${IMG_BASE}_copy.iso
 fi
 
@@ -244,7 +241,7 @@ echo " * Removing bootstrap files"
 chown -R root $RELEASEDIR/usr/src*
 cp issue.install $RELEASEDIR/etc/issue
 
-echo $version_pretty, SVN revision $REVISION, generated `date` >$RELEASEDIR/etc/version
+echo $version_pretty, GIT revision $REVTAG, generated `date` >$RELEASEDIR/etc/version
 rm -rf $RELEASEDIR/tmp/*
 
 if [ $MINIMAL -ne 0 ]
