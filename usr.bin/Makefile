@@ -18,7 +18,7 @@ SUBDIR= \
 	machine make man \
 	mkdep mktemp \
 	\
-	nbperf newgrp nice nvi \
+	nbperf newgrp nice nohup nvi \
 	passwd \
 	printf \
 	rev \

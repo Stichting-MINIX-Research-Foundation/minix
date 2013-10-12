@@ -16,7 +16,7 @@ SUBDIR=	add_route arp ash at backup btrace \
 	less loadkeys loadramdisk logger look lp \
 	lpd lspci mail MAKEDEV \
 	mesg mined mkfifo \
-	mount mt netconf nohup \
+	mount mt netconf \
 	nonamed od paste patch \
 	ping postinstall poweroff pr prep printroot \
 	profile progressbar pr_routes ps pwdauth \
