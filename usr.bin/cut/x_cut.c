@@ -58,7 +58,7 @@
 
 
 /* ARGSUSED */
-static void
+void
 CUT_FN(FILE *fp, const char *fname __unused)
 {
 	CUT_CH_T ch;
