@@ -204,5 +204,6 @@
 #define _SC_TZNAME_MAX    10
 #define _SC_PAGESIZE	  11
 #define _SC_PAGE_SIZE	  _SC_PAGESIZE
+#define _SC_LINE_MAX	  15
 
 #endif /* !_SYS_UNISTD_H_ */

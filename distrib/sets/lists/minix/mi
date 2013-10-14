@@ -406,6 +406,7 @@
 ./usr/bin/nbperf			minix-sys
 ./usr/bin/newgrp			minix-sys
 ./usr/bin/nice				minix-sys
+./usr/bin/nl				minix-sys
 ./usr/bin/nm				minix-sys	binutils
 ./usr/bin/nohup				minix-sys
 ./usr/bin/nonamed			minix-sys
@@ -1975,6 +1976,7 @@
 ./usr/man/man1/nbperf.1			minix-sys
 ./usr/man/man1/newgrp.1			minix-sys
 ./usr/man/man1/nice.1			minix-sys
+./usr/man/man1/nl.1			minix-sys
 ./usr/man/man1/nm.1			minix-sys	obsolete
 ./usr/man/man1/nohup.1			minix-sys
 ./usr/man/man1/objcopy.1		minix-sys	binutils

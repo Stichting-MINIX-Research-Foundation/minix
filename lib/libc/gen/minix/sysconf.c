@@ -75,6 +75,9 @@ int name;			/* property being inspected */
 	case _SC_PAGESIZE:
 		return getpagesize();
 
+	case _SC_LINE_MAX:
+		return (long) LINE_MAX;
+
 	default:
 		errno = EINVAL;
 		return -1L;
