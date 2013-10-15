@@ -520,6 +520,7 @@
 ./usr/bin/unzip				minix-sys
 ./usr/bin/update			minix-sys
 ./usr/bin/uptime			minix-sys
+./usr/bin/users				minix-sys
 ./usr/bin/uud				minix-sys
 ./usr/bin/uudecode			minix-sys
 ./usr/bin/uue				minix-sys
@@ -2073,6 +2074,7 @@
 ./usr/man/man1/unset.1			minix-sys
 ./usr/man/man1/unxz.1			minix-sys
 ./usr/man/man1/unzip.1			minix-sys
+./usr/man/man1/users.1			minix-sys
 ./usr/man/man1/uud.1			minix-sys
 ./usr/man/man1/uue.1			minix-sys
 ./usr/man/man1/vi.1			minix-sys
