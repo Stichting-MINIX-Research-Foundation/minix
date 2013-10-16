@@ -50,7 +50,7 @@ mkdir -p ${IMG_DIR} ${CDFILES}
 # Call build.sh using a sloppy file list so we don't need to remove the installed /etc/fstag
 #
 export CPPFLAGS=${FLAG}
-sh ${BUILDSH} -V SLOPPY_FLIST=yes -V MKBINUTILS=yes -V MKGCCCMDS=yes -j ${JOBS} -m ${ARCH} -O ${OBJ} -D ${DESTDIR} ${BUILDVARS} -U -u distribution
+sh ${BUILDSH} -V SLOPPY_FLIST=yes -j ${JOBS} -m ${ARCH} -O ${OBJ} -D ${DESTDIR} ${BUILDVARS} -U -u distribution
 
 if [ "x${ISOMODE}" = "x1" ]
 then

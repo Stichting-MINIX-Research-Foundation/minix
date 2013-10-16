@@ -58,7 +58,8 @@ then
 fi
 
 if [ ! -f ${BUILDSH} ]
-then	echo "Please invoke me from the root source dir, where ${BUILDSH} is."
+then
+	echo "Please invoke me from the root source dir, where ${BUILDSH} is."
 	exit 1
 fi
 
@@ -89,7 +90,7 @@ cp ${RELEASETOOLSDIR}/u-boot/${U_BOOT_BIN_DIR}/MLO ${IMG_DIR}/
 # Call build.sh using a sloppy file list so we don't need to remove the installed /etc/fstag
 #
 export CPPFLAGS=${FLAG}
-sh ${BUILDSH} -V SLOPPY_FLIST=yes -V MKBINUTILS=yes -V MKGCCCMDS=yes -j ${JOBS} -m ${ARCH} -O ${OBJ} -D ${DESTDIR} ${BUILDVARS} -U -u distribution
+sh ${BUILDSH} -V SLOPPY_FLIST=yes -j ${JOBS} -m ${ARCH} -O ${OBJ} -D ${DESTDIR} ${BUILDVARS} -U -u distribution
 
 #
 # This script creates a bootable image and should at some point in the future
