@@ -308,6 +308,7 @@
 #define SCR_SD_BUS_WIDTHS(scr)		MMC_RSP_BITS((scr), 48, 4)
 #define  SCR_SD_BUS_WIDTHS_1BIT		(1 << 0) /* 1bit (DAT0) */
 #define  SCR_SD_BUS_WIDTHS_4BIT		(1 << 2) /* 4bit (DAT0-3) */
+#define SCR_SD_SPEC3(scr)		MMC_RSP_BITS((scr), 47, 1)
 #define SCR_RESERVED(scr)		MMC_RSP_BITS((scr), 32, 16)
 #define SCR_RESERVED2(scr)		MMC_RSP_BITS((scr), 0, 32)
 
