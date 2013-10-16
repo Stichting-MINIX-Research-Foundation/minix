@@ -43,6 +43,11 @@ static int hook_id = 1;
 
 #define SANE_TIMEOUT 500000	/* 500 ms */
 
+/* Integer divide x by y and ensure that the result z is
+ * such that x / z is smaller or equal y
+ */
+#define	div_roundup(x, y) (((x)+((y)-1))/(y))
+
 /*
  * Define a structure to be used for logging
  */
@@ -52,7 +57,32 @@ static struct log log = {
 	.log_func = default_log
 };
 
+/**
+ * MMC use memory mapped IO and base_address is the
+ * base address for the controller in use.
+ */
 static uint32_t base_address;
+
+#define HSMMCSD_0_IN_FREQ    96000000 /* 96MHz */
+#define HSMMCSD_0_INIT_FREQ  400000   /* 400kHz */
+#define HSMMCSD_0_FREQ_25MHZ  25000000   /* 25MHz */
+#define HSMMCSD_0_FREQ_50MHZ  50000000   /* 50MHz */
+
+int
+mmchs_set_bus_freq(u32_t freq)
+{
+	u32_t freq_in = HSMMCSD_0_IN_FREQ;
+	u32_t freq_out = freq;
+
+	/* Calculate and program the divisor */
+	u32_t clkd = div_roundup(freq_in,freq_out);
+	clkd = (clkd < 2) ? 2 : clkd;
+	clkd = (clkd > 1023) ? 1023 : clkd;
+
+	log_debug(&log,"Setting divider to %d\n",clkd);
+	set32(base_address + MMCHS_SD_SYSCTL, MMCHS_SD_SYSCTL_CLKD,
+			(clkd << 6));
+}
 
 /*
  * Initialize the MMC controller given a certain
@@ -69,19 +99,24 @@ mmchs_init(uint32_t instance)
 	spin_t spin;
 
 	mr.mr_base = MMCHS1_REG_BASE;
-	mr.mr_limit = MMCHS1_REG_BASE + 0x400;
+	mr.mr_limit = MMCHS1_REG_BASE + MMCHS1_REG_BASE_SIZE;
 
+	/* grant ourself rights to map the register memory */
 	if (sys_privctl(SELF, SYS_PRIV_ADD_MEM, &mr) != 0) {
 		panic("Unable to request permission to map memory");
 	}
 
 	/* Set the base address to use */
 	base_address =
-	    (uint32_t) vm_map_phys(SELF, (void *) MMCHS1_REG_BASE, 0x400);
+	    (uint32_t) vm_map_phys(SELF, (void *) MMCHS1_REG_BASE, MMCHS1_REG_BASE_SIZE);
+
 	if (base_address == (uint32_t) MAP_FAILED)
 		panic("Unable to map MMC memory");
 
 #ifdef DM37XX
+	/* DM and AM have the same register but shifted by 0x100. instead of redefining the registers
+	 * we simply move the start offset
+	 */
 	base_address = (unsigned long) base_address - 0x100;
 #endif
 
@@ -139,7 +174,8 @@ mmchs_init(uint32_t instance)
 	 * MMC host and bus configuration
 	 */
 
-	/* Configure data and command transfer (1 bit mode) */
+	/* Configure data and command transfer (1 bit mode) switching
+	 * to higher bit modes happens after a card is detected */
 	set32(base_address + MMCHS_SD_CON, MMCHS_SD_CON_DW8,
 	    MMCHS_SD_CON_DW8_1BIT);
 	set32(base_address + MMCHS_SD_HCTL, MMCHS_SD_HCTL_DTW,
@@ -154,7 +190,6 @@ mmchs_init(uint32_t instance)
 	set32(base_address + MMCHS_SD_HCTL, MMCHS_SD_HCTL_SDBP,
 	    MMCHS_SD_HCTL_SDBP_ON);
 
-	// /* TODO: Add padconf/pinmux stuff here as documented in the TRM */
 	spin_init(&spin, SANE_TIMEOUT);
 	while ((read32(base_address + MMCHS_SD_HCTL) & MMCHS_SD_HCTL_SDBP)
 	    != MMCHS_SD_HCTL_SDBP_ON) {
@@ -168,12 +203,8 @@ mmchs_init(uint32_t instance)
 	set32(base_address + MMCHS_SD_SYSCTL, MMCHS_SD_SYSCTL_ICE,
 	    MMCHS_SD_SYSCTL_ICE_EN);
 
-	// @TODO Fix external clock enable , this one is very slow
-	// but we first need faster context switching
-	// set32(base_address + MMCHS_SD_SYSCTL, MMCHS_SD_SYSCTL_CLKD,
-	// (0x20 << 6));
-	set32(base_address + MMCHS_SD_SYSCTL, MMCHS_SD_SYSCTL_CLKD,
-	    (0x2 << 6));
+	mmchs_set_bus_freq(HSMMCSD_0_INIT_FREQ);
+
 
 	set32(base_address + MMCHS_SD_SYSCTL, MMCHS_SD_SYSCTL_CEN,
 	    MMCHS_SD_SYSCTL_CEN_EN);
@@ -247,7 +278,7 @@ mmchs_init(uint32_t instance)
 #ifdef USE_INTR
 	hook_id = 1;
 	if (sys_irqsetpolicy(OMAP3_MMC1_IRQ, 0, &hook_id) != OK) {
-		printf("mmc: couldn't set IRQ policy %d\n", OMAP3_MMC1_IRQ);
+		log_warn(&log,"mmc: couldn't set IRQ policy %d\n", OMAP3_MMC1_IRQ);
 		return 1;
 	}
 	/* enable signaling from MMC controller towards interrupt controller */
@@ -280,7 +311,7 @@ handle_bwr()
 	/* handle buffer write ready interrupts. These happen in a non
 	 * predictable way (eg. we send a request but don't know if we are
 	 * first doing to get a request completed before we are allowed to
-	 * send the data to the harware or not */
+	 * send the data to the hardware or not */
 	uint32_t value;
 	uint32_t count;
 	assert(read32(base_address +
@@ -392,7 +423,7 @@ intr_wait(int mask)
 						/* this is the normal return
 						 * path, the mask given
 						 * matches the pending
-						 * interrupt. canel the alarm
+						 * interrupt. cancel the alarm
 						 * and return */
 						sys_setalarm(0, 0);
 						return 0;
@@ -415,14 +446,14 @@ intr_wait(int mask)
 				break;
 			default:
 				/* 
-				 * unhandled message.  queue it and
+				 * unhandled notify message. Queue it and
 				 * handle it in the blockdriver loop.
 				 */
 				blockdriver_mq_queue(&m, ipc_status);
 			}
 		} else {
 			/* 
-			 * unhandled message.  queue it and handle it in the
+			 * unhandled message. Queue it and handle it in the
 			 * blockdriver loop.
 			 */
 			blockdriver_mq_queue(&m, ipc_status);
@@ -698,7 +729,7 @@ card_query_voltage_and_type(struct sd_card_regs *card)
 	if (mmc_send_app_cmd(card, &command)) {
 		return 1;
 	}
-	/* @todo wait for max 1 ms */
+
 	spin_init(&spin, SANE_TIMEOUT);
 	while (!(command.resp[0] & MMC_OCR_MEM_READY)) {
 
@@ -790,9 +821,6 @@ card_csd(struct sd_card_regs *card)
 		return 1;
 	}
 
-	/* sanity check */
-	// log_warn(&log,"size = %llu bytes\n", (long long
-	// unsigned)SD_CSD_V2_CAPACITY( card->csd) * 512);
 	return 0;
 }
 
@@ -836,7 +864,7 @@ card_scr(struct sd_card_regs *card)
 
 	p = (uint8_t *) card->scr;
 
-	/* hussle */
+	/* copy the data to card->scr */
 	for (c = 7; c >= 0; c--) {
 		*p++ = buffer[c];
 	}
@@ -875,7 +903,35 @@ enable_4bit_mode(struct sd_card_regs *card)
 		/* now configure the controller to use 4 bit access */
 		set32(base_address + MMCHS_SD_HCTL, MMCHS_SD_HCTL_DTW,
 		    MMCHS_SD_HCTL_DTW_4BIT);
+		return 0;
 	}
+	return 1; /* expect 4 bits mode to work so having a card
+	that doesn't support 4 bits mode */
+}
+
+int
+enable_high_speed_mode(struct sd_card_regs *card)
+{
+	/* MMC cards using version 4.0 or higher of the specs can work
+	 * at higher bus rates. After setting the bus width one can
+	 * send the HS_TIMING command to set the card in high speed
+	 * mode after witch one can higher up the frequency
+	 */
+	log_info(&log,
+				    "Enabling high speed mode\n");
+
+	if (SD_CSD_SPEED(card->csd) == SD_CSD_SPEED_25_MHZ) {
+		log_trace(&log,
+					    "Using 25MHz clock\n");
+		mmchs_set_bus_freq(HSMMCSD_0_FREQ_25MHZ);
+	} else if (SD_CSD_SPEED(card->csd) == SD_CSD_SPEED_50_MHZ) {
+		log_trace(&log,
+					    "Using 50MHz clock\n");
+		mmchs_set_bus_freq(HSMMCSD_0_FREQ_50MHZ);
+	} else {
+		log_warn(&log,"Unknown speed 0x%x in CSD register\n",SD_CSD_SPEED(card->csd));
+	}
+
 	return 0;
 }
 
@@ -983,6 +1039,7 @@ mmchs_card_initialize(struct sd_slot *slot)
 		log_warn(&log, "Failed to do card_query_voltage_and_type\n");
 		return NULL;
 	}
+
 	if (card_identify(&slot->card.regs)) {
 		log_warn(&log, "Failed to identify card\n");
 		return NULL;
@@ -1009,6 +1066,11 @@ mmchs_card_initialize(struct sd_slot *slot)
 		return NULL;
 	}
 
+	if(enable_high_speed_mode(&slot->card.regs)){
+		log_warn(&log, "failed to configure high speed mode mode\n");
+		return NULL;
+	}
+
 	if (SD_CSD_READ_BL_LEN(slot->card.regs.csd) != 0x09) {
 		/* for CSD version 2.0 the value is fixed to 0x09 and means a
 		 * block size of 512 */
@@ -1020,6 +1082,7 @@ mmchs_card_initialize(struct sd_slot *slot)
 	slot->card.blk_count = SD_CSD_V2_CAPACITY(slot->card.regs.csd);
 	slot->card.state = SD_MODE_DATA_TRANSFER_MODE;
 
+	/* MINIX related stuff to keep track of partitions */
 	memset(slot->card.part, 0, sizeof(slot->card.part));
 	memset(slot->card.subpart, 0, sizeof(slot->card.subpart));
 	slot->card.part[0].dv_base = 0;
