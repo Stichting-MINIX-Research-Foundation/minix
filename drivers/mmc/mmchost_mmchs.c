@@ -33,15 +33,34 @@
 
 #ifdef USE_INTR
 static int hook_id = 1;
-#ifdef DM37XX
-#define OMAP3_MMC1_IRQ      83	/* MMC/SD module 1 */
-#endif
-#ifdef AM335X
-#define OMAP3_MMC1_IRQ     64	/* MMC/SD module 1 */
-#endif
 #endif
 
+#define USE_DMA
+
 #define SANE_TIMEOUT 500000	/* 500 ms */
+
+struct omap_mmchs *mmchs;	/* pointer to the current mmchs */
+
+struct omap_mmchs bone_sdcard = {
+	.io_base = 0,
+	.io_size = 0x2ff,
+	.hw_base = 0x48060000,
+	.irq_nr = 64,		/* MMC/SD module 1 */
+	.regs = &regs_v1,
+};
+
+struct omap_mmchs bbxm_sdcard = {
+	.io_base = 0,
+	.io_size = 0x2ff,
+	.hw_base = 0x4809C000,
+	.irq_nr = 83,		/* MMC/SD module 1 */
+	.regs = &regs_v0,
+};
+
+/* Integer divide x by y and ensure that the result z is
+ * such that x / z is smaller or equal y
+ */
+#define	div_roundup(x, y) (((x)+((y)-1))/(y))
 
 /*
  * Define a structure to be used for logging
@@ -52,7 +71,46 @@ static struct log log = {
 	.log_func = default_log
 };
 
-static uint32_t base_address;
+#define HSMMCSD_0_IN_FREQ    96000000	/* 96MHz */
+#define HSMMCSD_0_INIT_FREQ  400000	/* 400kHz */
+#define HSMMCSD_0_FREQ_25MHZ  25000000	/* 25MHz */
+#define HSMMCSD_0_FREQ_50MHZ  50000000	/* 50MHz */
+
+void
+mmc_set32(vir_bytes reg, u32_t mask, u32_t value)
+{
+	assert(reg >= 0 && reg <= mmchs->io_size);
+	set32(mmchs->io_base + reg, mask, value);
+}
+
+u32_t
+mmc_read32(vir_bytes reg)
+{
+	assert(reg >= 0 && reg <= mmchs->io_size);
+	return read32(mmchs->io_base + reg);
+}
+
+void
+mmc_write32(vir_bytes reg, u32_t value)
+{
+	assert(reg >= 0 && reg <= mmchs->io_size);
+	write32(mmchs->io_base + reg, value);
+}
+
+int
+mmchs_set_bus_freq(u32_t freq)
+{
+	u32_t freq_in = HSMMCSD_0_IN_FREQ;
+	u32_t freq_out = freq;
+
+	/* Calculate and program the divisor */
+	u32_t clkd = div_roundup(freq_in, freq_out);
+	clkd = (clkd < 2) ? 2 : clkd;
+	clkd = (clkd > 1023) ? 1023 : clkd;
+
+	log_debug(&log, "Setting divider to %d\n", clkd);
+	mmc_set32(mmchs->regs->SYSCTL, MMCHS_SD_SYSCTL_CLKD, (clkd << 6));
+}
 
 /*
  * Initialize the MMC controller given a certain
@@ -67,35 +125,35 @@ mmchs_init(uint32_t instance)
 	value = 0;
 	struct minix_mem_range mr;
 	spin_t spin;
+	assert(mmchs);
 
-	mr.mr_base = MMCHS1_REG_BASE;
-	mr.mr_limit = MMCHS1_REG_BASE + 0x400;
+	mr.mr_base = mmchs->hw_base;
+	mr.mr_limit = mmchs->hw_base + mmchs->io_size;
 
+	/* grant ourself rights to map the register memory */
 	if (sys_privctl(SELF, SYS_PRIV_ADD_MEM, &mr) != 0) {
 		panic("Unable to request permission to map memory");
 	}
 
 	/* Set the base address to use */
-	base_address =
-	    (uint32_t) vm_map_phys(SELF, (void *) MMCHS1_REG_BASE, 0x400);
-	if (base_address == (uint32_t) MAP_FAILED)
-		panic("Unable to map MMC memory");
+	mmchs->io_base =
+	    (uint32_t) vm_map_phys(SELF, (void *) mmchs->hw_base,
+	    mmchs->io_size);
 
-#ifdef DM37XX
-	base_address = (unsigned long) base_address - 0x100;
-#endif
+	if (mmchs->io_base == (uint32_t) MAP_FAILED)
+		panic("Unable to map MMC memory");
 
 	/* Soft reset of the controller. This section is documented in the TRM 
 	 */
 
 	/* Write 1 to sysconfig[0] to trigger a reset */
-	set32(base_address + MMCHS_SD_SYSCONFIG, MMCHS_SD_SYSCONFIG_SOFTRESET,
+	mmc_set32(mmchs->regs->SYSCONFIG, MMCHS_SD_SYSCONFIG_SOFTRESET,
 	    MMCHS_SD_SYSCONFIG_SOFTRESET);
 
 	/* Read sysstatus to know when it's done */
 
 	spin_init(&spin, SANE_TIMEOUT);
-	while (!(read32(base_address + MMCHS_SD_SYSSTATUS)
+	while (!(mmc_read32(mmchs->regs->SYSSTATUS)
 		& MMCHS_SD_SYSSTATUS_RESETDONE)) {
 		if (spin_check(&spin) == FALSE) {
 			log_warn(&log, "mmc init timeout\n");
@@ -104,7 +162,7 @@ mmchs_init(uint32_t instance)
 	}
 
 	/* Set SD default capabilities */
-	set32(base_address + MMCHS_SD_CAPA, MMCHS_SD_CAPA_VS_MASK,
+	mmc_set32(mmchs->regs->CAPA, MMCHS_SD_CAPA_VS_MASK,
 	    MMCHS_SD_CAPA_VS18 | MMCHS_SD_CAPA_VS30);
 
 	/* TRM mentions MMCHS_SD_CUR_CAPA but does not describe how to limit
@@ -129,34 +187,32 @@ mmchs_init(uint32_t instance)
 	/* 
 	 * wake-up configuration
 	 */
-	set32(base_address + MMCHS_SD_SYSCONFIG, mask, value);
+	mmc_set32(mmchs->regs->SYSCONFIG, mask, value);
 
 	/* Wake-up on sd interrupt for SDIO */
-	set32(base_address + MMCHS_SD_HCTL, MMCHS_SD_HCTL_IWE,
-	    MMCHS_SD_HCTL_IWE_EN);
+	mmc_set32(mmchs->regs->HCTL, MMCHS_SD_HCTL_IWE, MMCHS_SD_HCTL_IWE_EN);
 
 	/* 
 	 * MMC host and bus configuration
 	 */
 
-	/* Configure data and command transfer (1 bit mode) */
-	set32(base_address + MMCHS_SD_CON, MMCHS_SD_CON_DW8,
-	    MMCHS_SD_CON_DW8_1BIT);
-	set32(base_address + MMCHS_SD_HCTL, MMCHS_SD_HCTL_DTW,
+	/* Configure data and command transfer (1 bit mode) switching to
+	 * higher bit modes happens after a card is detected */
+	mmc_set32(mmchs->regs->CON, MMCHS_SD_CON_DW8, MMCHS_SD_CON_DW8_1BIT);
+	mmc_set32(mmchs->regs->HCTL, MMCHS_SD_HCTL_DTW,
 	    MMCHS_SD_HCTL_DTW_1BIT);
 
 	/* Configure card voltage to 3.0 volt */
-	set32(base_address + MMCHS_SD_HCTL, MMCHS_SD_HCTL_SDVS,
+	mmc_set32(mmchs->regs->HCTL, MMCHS_SD_HCTL_SDVS,
 	    MMCHS_SD_HCTL_SDVS_VS30);
 
 	/* Power on the host controller and wait for the
 	 * MMCHS_SD_HCTL_SDBP_POWER_ON to be set */
-	set32(base_address + MMCHS_SD_HCTL, MMCHS_SD_HCTL_SDBP,
+	mmc_set32(mmchs->regs->HCTL, MMCHS_SD_HCTL_SDBP,
 	    MMCHS_SD_HCTL_SDBP_ON);
 
-	// /* TODO: Add padconf/pinmux stuff here as documented in the TRM */
 	spin_init(&spin, SANE_TIMEOUT);
-	while ((read32(base_address + MMCHS_SD_HCTL) & MMCHS_SD_HCTL_SDBP)
+	while ((mmc_read32(mmchs->regs->HCTL) & MMCHS_SD_HCTL_SDBP)
 	    != MMCHS_SD_HCTL_SDBP_ON) {
 		if (spin_check(&spin) == FALSE) {
 			log_warn(&log, "mmc init timeout SDBP not set\n");
@@ -165,21 +221,16 @@ mmchs_init(uint32_t instance)
 	}
 
 	/* Enable internal clock and clock to the card */
-	set32(base_address + MMCHS_SD_SYSCTL, MMCHS_SD_SYSCTL_ICE,
+	mmc_set32(mmchs->regs->SYSCTL, MMCHS_SD_SYSCTL_ICE,
 	    MMCHS_SD_SYSCTL_ICE_EN);
 
-	// @TODO Fix external clock enable , this one is very slow
-	// but we first need faster context switching
-	// set32(base_address + MMCHS_SD_SYSCTL, MMCHS_SD_SYSCTL_CLKD,
-	// (0x20 << 6));
-	set32(base_address + MMCHS_SD_SYSCTL, MMCHS_SD_SYSCTL_CLKD,
-	    (0x2 << 6));
+	mmchs_set_bus_freq(HSMMCSD_0_INIT_FREQ);
 
-	set32(base_address + MMCHS_SD_SYSCTL, MMCHS_SD_SYSCTL_CEN,
+	mmc_set32(mmchs->regs->SYSCTL, MMCHS_SD_SYSCTL_CEN,
 	    MMCHS_SD_SYSCTL_CEN_EN);
 
 	spin_init(&spin, SANE_TIMEOUT);
-	while ((read32(base_address + MMCHS_SD_SYSCTL) & MMCHS_SD_SYSCTL_ICS)
+	while ((mmc_read32(mmchs->regs->SYSCTL) & MMCHS_SD_SYSCTL_ICS)
 	    != MMCHS_SD_SYSCTL_ICS_STABLE) {
 		if (spin_check(&spin) == FALSE) {
 			log_warn(&log, "clock not stable\n");
@@ -192,33 +243,30 @@ mmchs_init(uint32_t instance)
 	 */
 
 	/* Enable command interrupt */
-	set32(base_address + MMCHS_SD_IE, MMCHS_SD_IE_CC_ENABLE,
+	mmc_set32(mmchs->regs->IE, MMCHS_SD_IE_CC_ENABLE,
 	    MMCHS_SD_IE_CC_ENABLE_ENABLE);
 	/* Enable transfer complete interrupt */
-	set32(base_address + MMCHS_SD_IE, MMCHS_SD_IE_TC_ENABLE,
+	mmc_set32(mmchs->regs->IE, MMCHS_SD_IE_TC_ENABLE,
 	    MMCHS_SD_IE_TC_ENABLE_ENABLE);
 
 	/* enable error interrupts */
-	set32(base_address + MMCHS_SD_IE, MMCHS_SD_IE_ERROR_MASK, 0xffffffffu);
+	mmc_set32(mmchs->regs->IE, MMCHS_SD_IE_ERROR_MASK, 0xffffffffu);
 
 	/* clear the error interrupts */
-	set32(base_address + MMCHS_SD_STAT, MMCHS_SD_STAT_ERROR_MASK,
-	    0xffffffffu);
+	mmc_set32(mmchs->regs->SD_STAT, MMCHS_SD_STAT_ERROR_MASK, 0xffffffffu);
 
 	/* send a init signal to the host controller. This does not actually
 	 * send a command to a card manner */
-	set32(base_address + MMCHS_SD_CON, MMCHS_SD_CON_INIT,
-	    MMCHS_SD_CON_INIT_INIT);
+	mmc_set32(mmchs->regs->CON, MMCHS_SD_CON_INIT, MMCHS_SD_CON_INIT_INIT);
 	/* command 0 , type other commands not response etc) */
-	write32(base_address + MMCHS_SD_CMD, 0x00);
+	mmc_write32(mmchs->regs->CMD, 0x00);
 
 	spin_init(&spin, SANE_TIMEOUT);
-	while ((read32(base_address + MMCHS_SD_STAT) & MMCHS_SD_STAT_CC)
+	while ((mmc_read32(mmchs->regs->SD_STAT) & MMCHS_SD_STAT_CC)
 	    != MMCHS_SD_STAT_CC_RAISED) {
-		if (read32(base_address + MMCHS_SD_STAT) & 0x8000) {
+		if (mmc_read32(mmchs->regs->SD_STAT) & 0x8000) {
 			log_warn(&log, "%s, error stat  %x\n",
-			    __FUNCTION__,
-			    read32(base_address + MMCHS_SD_STAT));
+			    __FUNCTION__, mmc_read32(mmchs->regs->SD_STAT));
 			return 1;
 		}
 
@@ -229,29 +277,30 @@ mmchs_init(uint32_t instance)
 	}
 
 	/* clear the cc interrupt status */
-	set32(base_address + MMCHS_SD_STAT, MMCHS_SD_IE_CC_ENABLE,
+	mmc_set32(mmchs->regs->SD_STAT, MMCHS_SD_IE_CC_ENABLE,
 	    MMCHS_SD_IE_CC_ENABLE_ENABLE);
 
 	/* 
 	 * Set Set SD_CON[1] INIT bit to 0x0 to end the initialization sequence
 	 */
-	set32(base_address + MMCHS_SD_CON, MMCHS_SD_CON_INIT,
+	mmc_set32(mmchs->regs->CON, MMCHS_SD_CON_INIT,
 	    MMCHS_SD_CON_INIT_NOINIT);
 
 	/* Set timeout */
-	set32(base_address + MMCHS_SD_SYSCTL, MMCHS_SD_SYSCTL_DTO,
+	mmc_set32(mmchs->regs->SYSCTL, MMCHS_SD_SYSCTL_DTO,
 	    MMCHS_SD_SYSCTL_DTO_2POW27);
 
 	/* Clean the MMCHS_SD_STAT register */
-	write32(base_address + MMCHS_SD_STAT, 0xffffffffu);
+	mmc_write32(mmchs->regs->SD_STAT, 0xffffffffu);
 #ifdef USE_INTR
 	hook_id = 1;
-	if (sys_irqsetpolicy(OMAP3_MMC1_IRQ, 0, &hook_id) != OK) {
-		printf("mmc: couldn't set IRQ policy %d\n", OMAP3_MMC1_IRQ);
+	if (sys_irqsetpolicy(mmchs->irq_nr, 0, &hook_id) != OK) {
+		log_warn(&log, "mmc: couldn't set IRQ policy %d\n",
+		    mmchs->irq_nr);
 		return 1;
 	}
 	/* enable signaling from MMC controller towards interrupt controller */
-	write32(base_address + MMCHS_SD_ISE, 0xffffffffu);
+	mmc_write32(mmchs->regs->ISE, 0xffffffffu);
 #endif
 
 	return 0;
@@ -260,13 +309,13 @@ mmchs_init(uint32_t instance)
 void
 intr_deassert(int mask)
 {
-	if (read32(base_address + MMCHS_SD_STAT) & 0x8000) {
+	if (mmc_read32(mmchs->regs->SD_STAT) & 0x8000) {
 		log_warn(&log, "%s, error stat  %08x\n", __FUNCTION__,
-		    read32(base_address + MMCHS_SD_STAT));
-		set32(base_address + MMCHS_SD_STAT, MMCHS_SD_STAT_ERROR_MASK,
+		    mmc_read32(mmchs->regs->SD_STAT));
+		mmc_set32(mmchs->regs->SD_STAT, MMCHS_SD_STAT_ERROR_MASK,
 		    0xffffffffu);
 	} else {
-		write32(base_address + MMCHS_SD_STAT, mask);
+		mmc_write32(mmchs->regs->SD_STAT, mask);
 	}
 }
 
@@ -280,16 +329,15 @@ handle_bwr()
 	/* handle buffer write ready interrupts. These happen in a non
 	 * predictable way (eg. we send a request but don't know if we are
 	 * first doing to get a request completed before we are allowed to
-	 * send the data to the harware or not */
+	 * send the data to the hardware or not */
 	uint32_t value;
 	uint32_t count;
-	assert(read32(base_address +
-		MMCHS_SD_PSTATE) & MMCHS_SD_PSTATE_BWE_EN);
+	assert(mmc_read32(mmchs->regs->PSTATE) & MMCHS_SD_PSTATE_BWE_EN);
 	assert(io_data != NULL);
 
 	for (count = 0; count < io_len; count += 4) {
-		while (!(read32(base_address +
-			    MMCHS_SD_PSTATE) & MMCHS_SD_PSTATE_BWE_EN)) {
+		while (!(mmc_read32(mmchs->regs->
+			    PSTATE) & MMCHS_SD_PSTATE_BWE_EN)) {
 			log_warn(&log,
 			    "Error expected Buffer to be write enabled(%d)\n",
 			    count);
@@ -298,7 +346,7 @@ handle_bwr()
 		*((char *) &value + 1) = io_data[count + 1];
 		*((char *) &value + 2) = io_data[count + 2];
 		*((char *) &value + 3) = io_data[count + 3];
-		write32(base_address + MMCHS_SD_DATA, value);
+		mmc_write32(mmchs->regs->DATA, value);
 	}
 	intr_deassert(MMCHS_SD_IE_BWR_ENABLE);
 	/* expect buffer to be write enabled */
@@ -315,13 +363,12 @@ handle_brr()
 	uint32_t count;
 
 	/* Problem BRE should be true */
-	assert(read32(base_address +
-		MMCHS_SD_PSTATE) & MMCHS_SD_PSTATE_BRE_EN);
+	assert(mmc_read32(mmchs->regs->PSTATE) & MMCHS_SD_PSTATE_BRE_EN);
 
 	assert(io_data != NULL);
 
 	for (count = 0; count < io_len; count += 4) {
-		value = read32(base_address + MMCHS_SD_DATA);
+		value = mmc_read32(mmchs->regs->DATA);
 		io_data[count] = *((char *) &value);
 		io_data[count + 1] = *((char *) &value + 1);
 		io_data[count + 2] = *((char *) &value + 2);
@@ -336,7 +383,7 @@ static void
 mmchs_hw_intr(unsigned int irqs)
 {
 	log_warn(&log, "Hardware interrupt left over (0x%08lx)\n",
-	    read32(base_address + MMCHS_SD_STAT));
+	    mmc_read32(mmchs->regs->SD_STAT));
 
 #ifdef USE_INTR
 	if (sys_irqenable(&hook_id) != OK)
@@ -377,8 +424,8 @@ intr_wait(int mask)
 				break;
 			case HARDWARE:
 				while ((v =
-					read32(base_address +
-					    MMCHS_SD_STAT)) != 0) {
+					mmc_read32(mmchs->regs->SD_STAT)) !=
+				    0) {
 					if (v & MMCHS_SD_IE_BWR_ENABLE) {
 						handle_bwr();
 						continue;
@@ -392,7 +439,7 @@ intr_wait(int mask)
 						/* this is the normal return
 						 * path, the mask given
 						 * matches the pending
-						 * interrupt. canel the alarm
+						 * interrupt. cancel the alarm
 						 * and return */
 						sys_setalarm(0, 0);
 						return 0;
@@ -415,14 +462,14 @@ intr_wait(int mask)
 				break;
 			default:
 				/* 
-				 * unhandled message.  queue it and
+				 * unhandled notify message. Queue it and
 				 * handle it in the blockdriver loop.
 				 */
 				blockdriver_mq_queue(&m, ipc_status);
 			}
 		} else {
 			/* 
-			 * unhandled message.  queue it and handle it in the
+			 * unhandled message. Queue it and handle it in the
 			 * blockdriver loop.
 			 */
 			blockdriver_mq_queue(&m, ipc_status);
@@ -437,7 +484,7 @@ intr_wait(int mask)
 	int counter = 0;
 	while (1 == 1) {
 		counter++;
-		v = read32(base_address + MMCHS_SD_STAT);
+		v = mmc_read32(mmchs->regs->SD_STAT);
 		if (spin_check(&spin) == FALSE) {
 			log_warn(&log,
 			    "Timeout waiting for interrupt (%d) value 0x%08x mask 0x%08x\n",
@@ -471,15 +518,15 @@ mmchs_send_cmd(uint32_t command, uint32_t arg)
 
 	/* Read current interrupt status and fail it an interrupt is already
 	 * asserted */
-	assert(read32(base_address + MMCHS_SD_STAT) == 0);
+	assert(mmc_read32(mmchs->regs->SD_STAT) == 0);
 
 	/* Set arguments */
-	write32(base_address + MMCHS_SD_ARG, arg);
+	mmc_write32(mmchs->regs->ARG, arg);
 	/* Set command */
-	set32(base_address + MMCHS_SD_CMD, MMCHS_SD_CMD_MASK, command);
+	mmc_set32(mmchs->regs->CMD, MMCHS_SD_CMD_MASK, command);
 
 	if (intr_wait(MMCHS_SD_STAT_CC)) {
-		uint32_t v = read32(base_address + MMCHS_SD_STAT);
+		uint32_t v = mmc_read32(mmchs->regs->SD_STAT);
 		intr_deassert(MMCHS_SD_STAT_CC);
 		log_warn(&log, "Failure waiting for interrupt 0x%lx\n", v);
 		return 1;
@@ -491,7 +538,7 @@ mmchs_send_cmd(uint32_t command, uint32_t arg)
 		/* 
 		 * Command with busy response *CAN* also set the TC bit if they exit busy
 		 */
-		if ((read32(base_address + MMCHS_SD_STAT)
+		if ((mmc_read32(mmchs->regs->SD_STAT)
 			& MMCHS_SD_IE_TC_ENABLE_ENABLE) == 0) {
 			log_warn(&log, "TC should be raised\n");
 		}
@@ -509,6 +556,8 @@ mmc_send_cmd(struct mmc_command *c)
 	uint32_t cmd, arg;
 	cmd = MMCHS_SD_CMD_INDX_CMD(c->cmd);
 	arg = c->args;
+	assert(c->data_type == DATA_NONE || c->data_type == DATA_READ
+	    || c->data_type == DATA_WRITE);
 
 	switch (c->resp_type) {
 	case RESP_LEN_48_CHK_BUSY:
@@ -520,7 +569,7 @@ mmc_send_cmd(struct mmc_command *c)
 	case RESP_LEN_136:
 		cmd |= MMCHS_SD_CMD_RSP_TYPE_136B;
 		break;
-	case NO_RESPONSE:
+	case RESP_NO_RESPONSE:
 		cmd |= MMCHS_SD_CMD_RSP_TYPE_NO_RESP;
 		break;
 	default:
@@ -528,36 +577,35 @@ mmc_send_cmd(struct mmc_command *c)
 	}
 
 	/* read single block */
-	if ((c->cmd == MMC_READ_BLOCK_SINGLE) || (c->cmd == SD_APP_SEND_SCR)) {
+	if (c->data_type == DATA_READ) {
 		cmd |= MMCHS_SD_CMD_DP_DATA;	/* Command with data transfer */
 		cmd |= MMCHS_SD_CMD_MSBS_SINGLE;	/* single block */
 		cmd |= MMCHS_SD_CMD_DDIR_READ;	/* read data from card */
 	}
 
 	/* write single block */
-	if (c->cmd == MMC_WRITE_BLOCK_SINGLE) {
+	if (c->data_type == DATA_WRITE) {
 		cmd |= MMCHS_SD_CMD_DP_DATA;	/* Command with data transfer */
 		cmd |= MMCHS_SD_CMD_MSBS_SINGLE;	/* single block */
 		cmd |= MMCHS_SD_CMD_DDIR_WRITE;	/* write to the card */
 	}
 
 	/* check we are in a sane state */
-	if ((read32(base_address + MMCHS_SD_STAT) & 0xffffu)) {
+	if ((mmc_read32(mmchs->regs->SD_STAT) & 0xffffu)) {
 		log_warn(&log, "%s, interrupt already raised stat  %08x\n",
-		    __FUNCTION__, read32(base_address + MMCHS_SD_STAT));
-		write32(base_address + MMCHS_SD_STAT,
-		    MMCHS_SD_IE_CC_ENABLE_CLEAR);
+		    __FUNCTION__, mmc_read32(mmchs->regs->SD_STAT));
+		mmc_write32(mmchs->regs->SD_STAT, MMCHS_SD_IE_CC_ENABLE_CLEAR);
 	}
 
 	if (cmd & MMCHS_SD_CMD_DP_DATA) {
 		if (cmd & MMCHS_SD_CMD_DDIR_READ) {
 			/* if we are going to read enable the buffer ready
 			 * interrupt */
-			set32(base_address + MMCHS_SD_IE,
+			mmc_set32(mmchs->regs->IE,
 			    MMCHS_SD_IE_BRR_ENABLE,
 			    MMCHS_SD_IE_BRR_ENABLE_ENABLE);
 		} else {
-			set32(base_address + MMCHS_SD_IE,
+			mmc_set32(mmchs->regs->IE,
 			    MMCHS_SD_IE_BWR_ENABLE,
 			    MMCHS_SD_IE_BWR_ENABLE_ENABLE);
 		}
@@ -565,7 +613,7 @@ mmc_send_cmd(struct mmc_command *c)
 		io_len = c->data_len;
 		assert(io_len <= 0xFFF);	/* only 12 bits */
 		assert(io_data != NULL);
-		set32(base_address + MMCHS_SD_BLK, MMCHS_SD_BLK_BLEN, io_len);
+		mmc_set32(mmchs->regs->BLK, MMCHS_SD_BLK_BLEN, io_len);
 	}
 
 	ret = mmchs_send_cmd(cmd, arg);
@@ -581,11 +629,11 @@ mmc_send_cmd(struct mmc_command *c)
 				return 1;
 			}
 
-			write32(base_address + MMCHS_SD_STAT,
+			mmc_write32(mmchs->regs->SD_STAT,
 			    MMCHS_SD_IE_TC_ENABLE_CLEAR);
 
 			/* disable the bbr interrupt */
-			set32(base_address + MMCHS_SD_IE,
+			mmc_set32(mmchs->regs->IE,
 			    MMCHS_SD_IE_BRR_ENABLE,
 			    MMCHS_SD_IE_BRR_ENABLE_DISABLE);
 		} else {
@@ -598,7 +646,7 @@ mmc_send_cmd(struct mmc_command *c)
 			}
 			intr_deassert(MMCHS_SD_IE_TC_ENABLE_CLEAR);
 
-			set32(base_address + MMCHS_SD_IE,
+			mmc_set32(mmchs->regs->IE,
 			    MMCHS_SD_IE_BWR_ENABLE,
 			    MMCHS_SD_IE_BWR_ENABLE_DISABLE);
 
@@ -609,15 +657,15 @@ mmc_send_cmd(struct mmc_command *c)
 	switch (c->resp_type) {
 	case RESP_LEN_48_CHK_BUSY:
 	case RESP_LEN_48:
-		c->resp[0] = read32(base_address + MMCHS_SD_RSP10);
+		c->resp[0] = mmc_read32(mmchs->regs->RSP10);
 		break;
 	case RESP_LEN_136:
-		c->resp[0] = read32(base_address + MMCHS_SD_RSP10);
-		c->resp[1] = read32(base_address + MMCHS_SD_RSP32);
-		c->resp[2] = read32(base_address + MMCHS_SD_RSP54);
-		c->resp[3] = read32(base_address + MMCHS_SD_RSP76);
+		c->resp[0] = mmc_read32(mmchs->regs->RSP10);
+		c->resp[1] = mmc_read32(mmchs->regs->RSP32);
+		c->resp[2] = mmc_read32(mmchs->regs->RSP54);
+		c->resp[3] = mmc_read32(mmchs->regs->RSP76);
 		break;
-	case NO_RESPONSE:
+	case RESP_NO_RESPONSE:
 		break;
 	default:
 		return 1;
@@ -632,12 +680,11 @@ mmc_send_app_cmd(struct sd_card_regs *card, struct mmc_command *c)
 	struct mmc_command command;
 	command.cmd = MMC_APP_CMD;
 	command.resp_type = RESP_LEN_48;
+	command.data_type = DATA_NONE;
 	command.args = MMC_ARG_RCA(card->rca);
-
 	if (mmc_send_cmd(&command)) {
 		return 1;
 	}
-
 	return mmc_send_cmd(c);
 }
 
@@ -646,7 +693,8 @@ card_goto_idle_state()
 {
 	struct mmc_command command;
 	command.cmd = MMC_GO_IDLE_STATE;
-	command.resp_type = NO_RESPONSE;
+	command.resp_type = RESP_NO_RESPONSE;
+	command.data_type = DATA_NONE;
 	command.args = 0x00;
 	if (mmc_send_cmd(&command)) {
 		// Failure
@@ -659,8 +707,9 @@ int
 card_identification()
 {
 	struct mmc_command command;
-	command.cmd = MMC_SEND_EXT_CSD;
+	command.cmd = SD_SEND_IF_COND;	/* Send CMD8 */
 	command.resp_type = RESP_LEN_48;
+	command.data_type = DATA_NONE;
 	command.args = MMCHS_SD_ARG_CMD8_VHS | MMCHS_SD_ARG_CMD8_CHECK_PATTERN;
 
 	if (mmc_send_cmd(&command)) {
@@ -687,6 +736,7 @@ card_query_voltage_and_type(struct sd_card_regs *card)
 
 	command.cmd = SD_APP_OP_COND;
 	command.resp_type = RESP_LEN_48;
+	command.data_type = DATA_NONE;
 
 	/* 0x1 << 30 == send HCS (Host capacity support) and get OCR register */
 	command.args =
@@ -698,7 +748,7 @@ card_query_voltage_and_type(struct sd_card_regs *card)
 	if (mmc_send_app_cmd(card, &command)) {
 		return 1;
 	}
-	/* @todo wait for max 1 ms */
+
 	spin_init(&spin, SANE_TIMEOUT);
 	while (!(command.resp[0] & MMC_OCR_MEM_READY)) {
 
@@ -707,6 +757,7 @@ card_query_voltage_and_type(struct sd_card_regs *card)
 		 * register */
 		command.cmd = SD_APP_OP_COND;
 		command.resp_type = RESP_LEN_48;
+		command.data_type = DATA_NONE;
 		/* 0x1 << 30 == send HCS (Host capacity support) */
 		command.args = MMC_OCR_3_3V_3_4V | MMC_OCR_3_2V_3_3V
 		    | MMC_OCR_3_1V_3_2V | MMC_OCR_3_0V_3_1V | MMC_OCR_2_9V_3_0V
@@ -737,6 +788,7 @@ card_identify(struct sd_card_regs *card)
 	/* Send cmd 2 (all_send_cid) and expect 136 bits response */
 	command.cmd = MMC_ALL_SEND_CID;
 	command.resp_type = RESP_LEN_136;
+	command.data_type = DATA_NONE;
 	command.args = MMC_ARG_RCA(0x0);	/* RCA=0000 */
 
 	if (mmc_send_cmd(&command)) {
@@ -750,6 +802,7 @@ card_identify(struct sd_card_regs *card)
 
 	command.cmd = MMC_SET_RELATIVE_ADDR;
 	command.resp_type = RESP_LEN_48;
+	command.data_type = DATA_NONE;
 	command.args = 0x0;	/* RCA=0000 */
 
 	/* R6 response */
@@ -774,6 +827,7 @@ card_csd(struct sd_card_regs *card)
 	/* send_csd -> r2 response */
 	command.cmd = MMC_SEND_CSD;
 	command.resp_type = RESP_LEN_136;
+	command.data_type = DATA_NONE;
 	command.args = MMC_ARG_RCA(card->rca);	/* card rca */
 
 	if (mmc_send_cmd(&command)) {
@@ -785,14 +839,12 @@ card_csd(struct sd_card_regs *card)
 	card->csd[2] = command.resp[2];
 	card->csd[3] = command.resp[3];
 
+	log_trace(&log, "CSD version %d\n", SD_CSD_CSDVER(card->csd));
 	if (SD_CSD_CSDVER(card->csd) != SD_CSD_CSDVER_2_0) {
 		log_warn(&log, "Version 2.0 of CSD register expected\n");
 		return 1;
 	}
 
-	/* sanity check */
-	// log_warn(&log,"size = %llu bytes\n", (long long
-	// unsigned)SD_CSD_V2_CAPACITY( card->csd) * 512);
 	return 0;
 }
 
@@ -803,6 +855,7 @@ select_card(struct sd_card_regs *card)
 
 	command.cmd = MMC_SELECT_CARD;
 	command.resp_type = RESP_LEN_48_CHK_BUSY;
+	command.data_type = DATA_NONE;
 	command.args = MMC_ARG_RCA(card->rca);	/* card rca */
 
 	if (mmc_send_cmd(&command)) {
@@ -826,6 +879,7 @@ card_scr(struct sd_card_regs *card)
 	/* send_csd -> r2 response */
 	command.cmd = SD_APP_SEND_SCR;
 	command.resp_type = RESP_LEN_48;
+	command.data_type = DATA_READ;
 	command.args = 0xaaaaaaaa;
 	command.data = buffer;
 	command.data_len = 8;
@@ -836,7 +890,7 @@ card_scr(struct sd_card_regs *card)
 
 	p = (uint8_t *) card->scr;
 
-	/* hussle */
+	/* copy the data to card->scr */
 	for (c = 7; c >= 0; c--) {
 		*p++ = buffer[c];
 	}
@@ -865,6 +919,7 @@ enable_4bit_mode(struct sd_card_regs *card)
 		/* set transfer width */
 		command.cmd = SD_APP_SET_BUS_WIDTH;
 		command.resp_type = RESP_LEN_48;
+		command.data_type = DATA_NONE;
 		command.args = 2;	/* 4 bits */
 
 		if (mmc_send_app_cmd(card, &command)) {
@@ -873,9 +928,100 @@ enable_4bit_mode(struct sd_card_regs *card)
 			return 1;
 		}
 		/* now configure the controller to use 4 bit access */
-		set32(base_address + MMCHS_SD_HCTL, MMCHS_SD_HCTL_DTW,
+		mmc_set32(mmchs->regs->HCTL, MMCHS_SD_HCTL_DTW,
 		    MMCHS_SD_HCTL_DTW_4BIT);
+		return 0;
 	}
+	return 1;		/* expect 4 bits mode to work so having a card
+				 * that doesn't support 4 bits mode */
+}
+
+void
+dump_char(char *out, char in)
+{
+	int i;
+	memset(out, 0, 9);
+	for (i = 0; i < 8; i++) {
+		out[i] = ((in >> i) & 0x1) ? '1' : '0';
+	}
+
+}
+
+void
+dump(uint8_t * data, int len)
+{
+	int c;
+	char digit[4][9];
+	char *p = data;
+
+	for (c = 0; c < len;) {
+		memset(digit, 0, sizeof(digit));
+		if (c++ < len)
+			dump_char(digit[0], *data++);
+		if (c++ < len)
+			dump_char(digit[1], *data++);
+		if (c++ < len)
+			dump_char(digit[2], *data++);
+		if (c++ < len)
+			dump_char(digit[3], *data++);
+		printf("%x %s %s %s %s\n", c, digit[0], digit[1], digit[2],
+		    digit[3]);
+	}
+}
+
+int
+mmc_switch(int function, int value, uint8_t * data)
+{
+	struct mmc_command command;
+
+	/* function index */
+	int findex, fshift;
+	findex = function - 1;
+	fshift = findex << 2;	/* bits used per function */
+
+	command.cmd = MMC_SWITCH;
+	command.resp_type = RESP_LEN_48;
+	command.data_type = DATA_READ;
+	command.data = data;
+	command.data_len = 64;
+	command.args = (1 << 31) | (0x00ffffff & ~(0xf << fshift));
+	command.args |= (value << fshift);
+	if (mmc_send_cmd(&command)) {
+		log_warn(&log, "Failed to set device in high speed mode\n");
+		return 1;
+	}
+	// dump(data,64);
+}
+
+int
+enable_high_speed_mode(struct sd_card_regs *card)
+{
+	/* MMC cards using version 4.0 or higher of the specs can work at
+	 * higher bus rates. After setting the bus width one can send the
+	 * HS_TIMING command to set the card in high speed mode after witch
+	 * one can higher up the frequency */
+
+	uint8_t buffer[64];	/* 512 bits */
+	log_info(&log, "Enabling high speed mode\n");
+#if 0
+	Doesnt currently work
+	    if (SCR_SD_SPEC(&card->scr[0]) >= SCR_SD_SPEC_VER_1_10)
+	{
+		mmc_switch(1, 1, buffer);
+	}
+#endif
+
+	if (SD_CSD_SPEED(card->csd) == SD_CSD_SPEED_25_MHZ) {
+		log_trace(&log, "Using 25MHz clock\n");
+		mmchs_set_bus_freq(HSMMCSD_0_FREQ_25MHZ);
+	} else if (SD_CSD_SPEED(card->csd) == SD_CSD_SPEED_50_MHZ) {
+		log_trace(&log, "Using 50MHz clock\n");
+		mmchs_set_bus_freq(HSMMCSD_0_FREQ_50MHZ);
+	} else {
+		log_warn(&log, "Unknown speed 0x%x in CSD register\n",
+		    SD_CSD_SPEED(card->csd));
+	}
+
 	return 0;
 }
 
@@ -888,6 +1034,7 @@ read_single_block(struct sd_card_regs *card,
 	command.cmd = MMC_READ_BLOCK_SINGLE;
 	command.args = blknr;
 	command.resp_type = RESP_LEN_48;
+	command.data_type = DATA_READ;
 	command.data = buf;
 	command.data_len = 512;
 
@@ -908,6 +1055,7 @@ write_single_block(struct sd_card_regs *card,
 	command.cmd = MMC_WRITE_BLOCK_SINGLE;
 	command.args = blknr;
 	command.resp_type = RESP_LEN_48;
+	command.data_type = DATA_WRITE;
 	command.data = buf;
 	command.data_len = 512;
 
@@ -983,6 +1131,7 @@ mmchs_card_initialize(struct sd_slot *slot)
 		log_warn(&log, "Failed to do card_query_voltage_and_type\n");
 		return NULL;
 	}
+
 	if (card_identify(&slot->card.regs)) {
 		log_warn(&log, "Failed to identify card\n");
 		return NULL;
@@ -1009,6 +1158,11 @@ mmchs_card_initialize(struct sd_slot *slot)
 		return NULL;
 	}
 
+	if (enable_high_speed_mode(&slot->card.regs)) {
+		log_warn(&log, "failed to configure high speed mode mode\n");
+		return NULL;
+	}
+
 	if (SD_CSD_READ_BL_LEN(slot->card.regs.csd) != 0x09) {
 		/* for CSD version 2.0 the value is fixed to 0x09 and means a
 		 * block size of 512 */
@@ -1020,6 +1174,7 @@ mmchs_card_initialize(struct sd_slot *slot)
 	slot->card.blk_count = SD_CSD_V2_CAPACITY(slot->card.regs.csd);
 	slot->card.state = SD_MODE_DATA_TRANSFER_MODE;
 
+	/* MINIX related stuff to keep track of partitions */
 	memset(slot->card.part, 0, sizeof(slot->card.part));
 	memset(slot->card.subpart, 0, sizeof(slot->card.subpart));
 	slot->card.part[0].dv_base = 0;
@@ -1067,7 +1222,7 @@ mmchs_card_release(struct sd_card *card)
 	/* TODO:Set card state */
 
 	/* now configure the controller to use 4 bit access */
-	set32(base_address + MMCHS_SD_HCTL, MMCHS_SD_HCTL_DTW,
+	mmc_set32(mmchs->regs->HCTL, MMCHS_SD_HCTL_DTW,
 	    MMCHS_SD_HCTL_DTW_1BIT);
 
 	return OK;
@@ -1079,6 +1234,12 @@ host_initialize_host_structure_mmchs(struct mmc_host *host)
 	/* Initialize the basic data structures host slots and cards */
 	int i;
 
+#ifdef AM335X
+	mmchs = &bone_sdcard;
+#endif
+#ifdef DM37XX
+	mmchs = &bbxm_sdcard;
+#endif
 	host->host_set_instance = mmchs_host_set_instance;
 	host->host_init = mmchs_host_init;
 	host->set_log_level = mmchs_set_log_level;
