@@ -8,6 +8,9 @@
 #ifdef DM37XX
 #define MMCHS1_REG_BASE 0x4809C000
 #endif
+
+/* The size of the memory mapped register */
+#define MMCHS1_REG_BASE_SIZE 0x2ff
 //#define MMCHS2_REG_BASE 0x480B4000
 //#define MMCHS3_REG_BASE 0x480AD000
 //#endif
