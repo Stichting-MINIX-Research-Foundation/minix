@@ -49,18 +49,22 @@ struct sd_card_regs
 	uint32_t csr;		/* Card status */
 };
 
+#define  RESP_LEN_48_CHK_BUSY (3<<0)
+#define  RESP_LEN_48		  (2<<0)
+#define  RESP_LEN_136		  (1<<0)
+#define  RESP_NO_RESPONSE	  (0<<0)
+
+#define  DATA_NONE	  (0)
+#define  DATA_READ	  (1)
+#define  DATA_WRITE	  (2)
+
 /* struct representing an mmc command */
 struct mmc_command
 {
 	uint32_t cmd;
 	uint32_t args;
 	uint32_t resp_type;
-
-#define  RESP_LEN_48_CHK_BUSY (3<<0)
-#define  RESP_LEN_48		  (2<<0)
-#define  RESP_LEN_136		  (1<<0)
-#define  NO_RESPONSE		  (0<<0)
-
+	uint32_t data_type;
 	uint32_t resp[4];
 	unsigned char *data;
 	uint32_t data_len;
