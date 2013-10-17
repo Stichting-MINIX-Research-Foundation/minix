@@ -98,6 +98,7 @@
 2012/10/17 12:00:00,sbin/Makefile.inc
 2012/10/10 16:16:12,sbin/mknod
 2010/09/10 15:51:20,sbin/newfs_ext2fs
+2013/10/16 12:00:00,sbin/nologin
 2012/10/17 12:00:00,share/Makefile
 2012/10/17 12:00:00,share/Makefile.inc
 2012/02/10 16:16:12,share/misc
