@@ -187,6 +187,7 @@
 2012/10/17 12:00:00,usr.bin/nvi
 2010/05/14 17:28:23,usr.bin/newgrp
 2012/10/17 12:00:00,usr.bin/passwd
+2013/10/17 12:00:00,usr.bin/printenv
 2012/10/17 12:00:00,usr.bin/printf
 2013/09/28 12:00:00,usr.bin/rev
 2010/02/19 16:35:27,usr.bin/sed

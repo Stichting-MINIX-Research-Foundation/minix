@@ -1997,6 +1997,7 @@
 ./usr/man/man1/playwave.1		minix-sys
 ./usr/man/man1/pr.1			minix-sys
 ./usr/man/man1/prep.1			minix-sys
+./usr/man/man1/printenv.1		minix-sys
 ./usr/man/man1/printf.1			minix-sys
 ./usr/man/man1/profile.1		minix-sys
 ./usr/man/man1/ps.1			minix-sys
