@@ -13,7 +13,7 @@ SUBDIR= \
 	finger from \
 	ftp genassym getopt \
 	head indent infocmp join \
-	ldd \
+	ldd leave \
 	login logname lorder m4 \
 	machine make man \
 	mkdep mktemp \
