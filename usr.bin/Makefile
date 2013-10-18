@@ -9,7 +9,7 @@ SUBDIR= \
 	cal chpass cksum \
 	col column ctags cut \
 	dirname du \
-	expand \
+	env expand \
 	finger from \
 	ftp genassym getopt \
 	head indent infocmp join \
