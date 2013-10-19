@@ -1,6 +1,6 @@
 MAN=	ash.1 at.1 \
 	bsfilt.1 cawf.1 chgrp.1 \
-	chmod.1 cmp.1 comm.1 compress.1 \
+	chmod.1 cmp.1 comm.1 \
 	cp.1 crc.1 crontab.1 dd.1 \
 	df.1 dhrystone.1 dosdir.1 dosread.1 doswrite.1 \
 	dumpcore.1 eject.1 \
@@ -50,7 +50,6 @@ MLINKS += ash.1 trap.1
 MLINKS += ash.1 umask.1
 MLINKS += ash.1 unset.1
 MLINKS += ash.1 wait.1
-MLINKS += compress.1 uncompress.1
 MLINKS += cp.1 mv.1
 MLINKS += cp.1 cpdir.1
 MLINKS += svc.1 ci.1
