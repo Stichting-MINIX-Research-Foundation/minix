@@ -7,7 +7,7 @@ SUBDIR= \
 	banner basename bdes \
 	bzip2 bzip2recover \
 	cal chpass cksum \
-	col column ctags cut \
+	col column compress ctags cut \
 	dirname du \
 	env expand \
 	finger from \
