@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <assert.h>
 
 #define ITERATIONS 2
 #define SIGS 14
@@ -130,6 +131,7 @@ void test37a()
   if (sigismember(&s, SIGPIPE) != 0) e(15);
   if (sigismember(&s, SIGALRM) != 0) e(16);
   if (sigismember(&s, SIGTERM) != 0) e(17);
+  if (sigismember(&s, SIGPWR) != 0) e(17);
 
   /* Create a full set and see if any bits are off. */
   if (sigfillset(&s) != 0) e(19);
@@ -150,6 +152,7 @@ void test37a()
   if (sigismember(&s, SIGPIPE) != 1) e(35);
   if (sigismember(&s, SIGALRM) != 1) e(36);
   if (sigismember(&s, SIGTERM) != 1) e(37);
+  if (sigismember(&s, SIGPWR) != 1) e(37);
 
   /* Create an empty set, then turn on bits individually. */
   if (sigemptyset(&s) != 0) e(39);
@@ -158,6 +161,7 @@ void test37a()
   if (sigaddset(&s, SIGQUIT) != 0) e(42);
   if (sigaddset(&s, SIGILL) != 0) e(43);
   if (sigaddset(&s, SIGTRAP) != 0) e(44);
+  if (sigaddset(&s, SIGPWR) != 0) e(44);
 
   /* See if the bits just turned on are indeed on. */
   if (sigismember(&s, SIGHUP) != 1) e(45);
@@ -165,6 +169,7 @@ void test37a()
   if (sigismember(&s, SIGQUIT) != 1) e(47);
   if (sigismember(&s, SIGILL) != 1) e(48);
   if (sigismember(&s, SIGTRAP) != 1) e(49);
+  if (sigismember(&s, SIGPWR) != 1) e(49);
 
   /* The others should be turned off. */
   if (sigismember(&s, SIGABRT) != 0) e(50);
@@ -184,6 +189,7 @@ void test37a()
   if (sigdelset(&s, SIGQUIT) != 0) e(64);
   if (sigdelset(&s, SIGILL) != 0) e(65);
   if (sigdelset(&s, SIGTRAP) != 0) e(66);
+  if (sigdelset(&s, SIGPWR) != 0) e(66);
 
   if (sigismember(&s, SIGHUP) != 0) e(67);
   if (sigismember(&s, SIGINT) != 0) e(68);
@@ -200,6 +206,7 @@ void test37a()
   if (sigismember(&s, SIGPIPE) != 0) e(80);
   if (sigismember(&s, SIGALRM) != 0) e(81);
   if (sigismember(&s, SIGTERM) != 0) e(82);
+  if (sigismember(&s, SIGPWR) != 0) e(82);
 }
 
 void func1(sig)
@@ -212,6 +219,26 @@ void func2(sig)
 int sig;
 {
   sig2++;
+}
+
+
+int sigmemcmp(sigset_t *s1, sigset_t *s2, int size)
+{
+	int i;
+	int mismatch = 0;
+	assert(size == sizeof(sigset_t));
+	for(i = 1; i < _NSIG; i++) {
+		if(sigismember(s1, i) && !sigismember(s2, i)) {
+			fprintf(stderr, "sig %d set in first but not in 2nd\n", i);
+			mismatch = 1;
+		}
+		if(!sigismember(s1, i) && sigismember(s2, i)) {
+			fprintf(stderr, "sig %d not set in first but is in 2nd\n", i);
+			mismatch = 1;
+		}
+	}
+
+	return mismatch;
 }
 
 void test37b()
@@ -260,8 +287,8 @@ void test37b()
   osa.sa_flags = 0;
   if (sigaction(SIGHUP, &sa, &osa) != 0) e(9);
   if (osa.sa_handler != SIG_DFL) e(10);
-  if (osa.sa_mask != 0) e(11);
-  if (osa.sa_flags != s_empty) e(12);
+  if (sigmemcmp(&osa.sa_mask, &s_empty, sizeof(s_empty))) e(11);
+  if (osa.sa_flags != 0) e(12);
 
   /* Replace action and see if old value is read back correctly. */
   sa.sa_handler = func2;
@@ -272,7 +299,7 @@ void test37b()
   osa.sa_flags = 0;
   if (sigaction(SIGHUP, &sa, &osa) != 0) e(13);
   if (osa.sa_handler != func1) e(14);
-  if (osa.sa_mask != s_ill) e(15);
+  if (sigmemcmp(&osa.sa_mask, &s_ill, sizeof(s_ill))) e(15);
   if (osa.sa_flags != SA_NODEFER
       && osa.sa_flags != (SA_NODEFER | SA_NOCLDSTOP)) e(16);
 
@@ -284,7 +311,7 @@ void test37b()
   osa.sa_flags = 0;
   if (sigaction(SIGHUP, &sa, &osa) != 0) e(17);
   if (osa.sa_handler != func2) e(18);
-  if (osa.sa_mask != s_ill_pip) e(19);
+  if (sigmemcmp(&osa.sa_mask, &s_ill_pip, sizeof(s_ill_pip))) e(19);
   if (osa.sa_flags != (SA_RESETHAND | SA_NODEFER)) e(20);
 
   /* Test sigprocmask(SIG_SETMASK, ...). */
@@ -292,65 +319,65 @@ void test37b()
   if (sigemptyset(&s1) != 0) e(19);
   errno = 0;
   if (sigprocmask(SIG_SETMASK, &s_empty, &s1) != 0) e(20);   /* block none */
-  if (s1 != s_nokill_stop) e(21);
+  if (sigmemcmp(&s1, &s_nokill_stop, sizeof(s1))) e(21);
   if (sigprocmask(SIG_SETMASK, &s_ill, &s1) != 0) e(22);     /* block SIGILL */
   errno = 0;
-  if (s1 != s_empty) e(23);
+  if (sigmemcmp(&s1, &s_empty, sizeof(s1))) e(23);
   if (sigprocmask(SIG_SETMASK, &s_ill_pip, &s1) != 0) e(24); /* SIGILL+PIP */
-  if (s1 != s_ill) e(25);
+  if (sigmemcmp(&s1, &s_ill, sizeof(s1))) e(25);
   if (sigprocmask(SIG_SETMASK, &s_full, &s1) != 0) e(26);    /* block all */
-  if (s1 != s_ill_pip) e(27);
+  if (sigmemcmp(&s1, &s_ill_pip, sizeof(s1))) e(27);
 
   /* Test sigprocmask(SIG_UNBLOCK, ...) */
   if (sigprocmask(SIG_UNBLOCK, &s_ill, &s1) != 0) e(28);
-  if (s1 != s_nokill_stop) e(29);
+  if (sigmemcmp(&s1, &s_nokill_stop, sizeof(s1))) e(29);
   if (sigprocmask(SIG_UNBLOCK, &s_ill_pip, &s1) != 0) e(30);
   s = s_nokill_stop;
   if (sigdelset(&s, SIGILL) != 0) e(31);
-  if (s != s1) e(32);
+  if (sigmemcmp(&s, &s1, sizeof(s))) e(32);
   if (sigprocmask(SIG_UNBLOCK, &s_empty, &s1) != 0) e(33);
   s = s_nokill_stop;
   if (sigdelset(&s, SIGILL) != 0) e(34);
   if (sigdelset(&s, SIGPIPE) != 0) e(35);
-  if (s != s1) e(36);
+  if (sigmemcmp(&s, &s1, sizeof(s))) e(36);
   s1 = s_nokill_stop;
   if (sigprocmask(SIG_SETMASK, &s_empty, &s1) != 0) e(37);
-  if (s != s1) e(38);
+  if (sigmemcmp(&s, &s1, sizeof(s))) e(38);
 
   /* Test sigprocmask(SIG_BLOCK, ...) */
   if (sigprocmask(SIG_BLOCK, &s_ill, &s1) != 0) e(39);
-  if (s1 != s_empty) e(40);
+  if (sigmemcmp(&s1, &s_empty, sizeof(s1))) e(40);
   if (sigprocmask(SIG_BLOCK, &s_ill_pip, &s1) != 0) e(41);
-  if (s1 != s_ill) e(42);
+  if (sigmemcmp(&s1, &s_ill, sizeof(s1))) e(42);
   if (sigprocmask(SIG_SETMASK, &s_full, &s1) != 0) e(43);
-  if (s1 != s_ill_pip) e(44);
+  if (sigmemcmp(&s1, &s_ill_pip, sizeof(s1))) e(44);
 
   /* Check error condition. */
   errno = 0;
   if (sigprocmask(20000, &s_full, &s1) != -1) e(45);
   if (errno != EINVAL) e(46);
   if (sigprocmask(SIG_SETMASK, &s_full, &s1) != 0) e(47);
-  if (s1 != s_nokill_stop) e(48);
+  if (sigmemcmp(&s1, &s_nokill_stop, sizeof(s1))) e(48);
 
   /* If second arg is 0, nothing is set. */
   if (sigprocmask(SIG_SETMASK, (sigset_t *) NULL, &s1) != 0) e(49);
-  if (s1 != s_nokill_stop) e(50);
+  if (sigmemcmp(&s1, &s_nokill_stop, sizeof(s1))) e(50);
   if (sigprocmask(SIG_SETMASK, &s_ill_pip, &s1) != 0) e(51);
-  if (s1 != s_nokill_stop) e(52);
+  if (sigmemcmp(&s1, &s_nokill_stop, sizeof(s1))) e(52);
   if (sigprocmask(SIG_SETMASK, (sigset_t *) NULL, &s1) != 0) e(53);
-  if (s1 != s_ill_pip) e(54);
+  if (sigmemcmp(&s1, &s_ill_pip, sizeof(s1))) e(54);
   if (sigprocmask(SIG_BLOCK, (sigset_t *) NULL, &s1) != 0) e(55);
-  if (s1 != s_ill_pip) e(56);
+  if (sigmemcmp(&s1, &s_ill_pip, sizeof(s1))) e(56);
   if (sigprocmask(SIG_UNBLOCK, (sigset_t *) NULL, &s1) != 0) e(57);
-  if (s1 != s_ill_pip) e(58);
+  if (sigmemcmp(&s1, &s_ill_pip, sizeof(s1))) e(58);
 
   /* Trying to block SIGKILL is not allowed, but is not an error, either. */
   s = s_empty;
   if (sigaddset(&s, SIGKILL) != 0) e(59);
   if (sigprocmask(SIG_BLOCK, &s, &s1) != 0) e(60);
-  if (s1 != s_ill_pip) e(61);
+  if (sigmemcmp(&s1, &s_ill_pip, sizeof(s1))) e(61);
   if (sigprocmask(SIG_SETMASK, &s_full, &s1) != 0) e(62);
-  if (s1 != s_ill_pip) e(63);
+  if (sigmemcmp(&s1, &s_ill_pip, sizeof(s1))) e(63);
 
   /* Test sigpending. At this moment, all signals are blocked. */
   sa.sa_handler = func2;
@@ -361,11 +388,11 @@ void test37b()
   if (sigpending(&s) != 0) e(65);
   if (sigemptyset(&s1) != 0) e(66);
   if (sigaddset(&s1, SIGHUP) != 0) e(67);
-  if (s != s1) e(68);
+  if (sigmemcmp(&s, &s1, sizeof(s))) e(68);
   sa.sa_handler = SIG_IGN;
   if (sigaction(SIGHUP, &sa, &osa) != 0) e(69);
   if (sigpending(&s) != 0) e(70);
-  if (s != s_empty) e(71);
+  if (sigmemcmp(&s, &s_empty, sizeof(s))) e(71);
 }
 
 /*---------------------------------------------------------------------------*/
@@ -489,7 +516,7 @@ void test37d()
   z = 0;
 
   act.sa_handler = catch3;
-  act.sa_mask = 0;
+  sigemptyset(&act.sa_mask);
   act.sa_flags = SA_NODEFER;	/* Otherwise, nested occurence of
 				 * SIGINT is blocked. */
   if (sigaction(SIGHUP, &act, (struct sigaction *) NULL) != 0) e(2);
@@ -509,6 +536,7 @@ int signo;
 {
   sigset_t oset;
   sigset_t set;
+  int i;
 
   if (sigemptyset(&set) == -1) e(5001);
   if (sigaddset(&set, SIGTERM) == -1) e(5002);
@@ -516,7 +544,7 @@ int signo;
   if (sigaddset(&set, SIGINT) == -1) e(5004);
   if (sigaddset(&set, SIGPIPE) == -1) e(5005);
   if (sigprocmask(SIG_BLOCK, (sigset_t *)NULL, &oset) != 0) e(5006);
-  if (oset != set) e(5007);
+  if (sigmemcmp(&oset, &set, sizeof(set))) e(5007);
 }
 
 void test37e()
@@ -541,7 +569,7 @@ void test37e()
   if (sigprocmask(SIG_BLOCK, (sigset_t *)NULL, &oset) == -1) e(7);
   if (sigemptyset(&set) == -1) e(8);
   if (sigaddset(&set, SIGPIPE) == -1) e(9);
-  if (set != oset) e(10);
+  if (sigmemcmp(&set, &oset, sizeof(set))) e(10);
 }
 
 /*---------------------------------------------------------------------------*/
@@ -844,11 +872,11 @@ void test37j()
   if (sigpending(&set) == -1) e(8);
   if (sigemptyset(&set2) == -1) e(9);
   if (sigaddset(&set2, SIGHUP) == -1) e(10);
-  if (set2 != set) e(11);
+  if (sigmemcmp(&set2, &set, sizeof(set))) e(11);
   alarm(6);
   sleep(7);
   if (sigpending(&set) == -1) e(12);
-  if (set != set2) e(13);
+  if (sigmemcmp(&set, &set2, sizeof(set))) e(13);
   if (y != 0) e(14);
   if (z != 1) e(15);
 }
@@ -874,20 +902,25 @@ void test37l()
 void _name(void)							\
 {									\
   _type jb;								\
-  sigset_t ss, ssexp;							\
+  sigset_t ss, ss2, ss_orig;						\
 									\
   subtest = _subtest;							\
   clearsigstate();							\
 									\
-  ss = 0x32;								\
+  sigemptyset(&ss); sigemptyset(&ss2);					\
+  sigaddset(&ss,   2); sigaddset(&ss,   4); sigaddset(&ss,   5);	\
+  sigaddset(&ss2, 20); sigaddset(&ss2, 22); sigaddset(&ss2, 65);	\
+  memcpy(&ss_orig, &ss, sizeof(ss));					\
   if (sigprocmask(SIG_SETMASK, &ss, (sigset_t *)NULL) == -1) e(1);	\
   if (_setjmp) {							\
+	sigset_t ssexp;							\
 	if (sigprocmask(SIG_BLOCK, (sigset_t *)NULL, &ss) == -1) e(2);	\
-	ssexp = _save ? 0x32 : 0x3abc;					\
-	if ((ss ^ ssexp) & ~(1 << SIGKILL)) e(388);			\
+	ssexp = _save ? ss_orig : ss2;					\
+	sigdelset(&ssexp, SIGKILL);					\
+	if (sigmemcmp(&ss, &ssexp, sizeof(ss))) e(388);			\
 	return;								\
   }									\
-  ss = 0x3abc;								\
+  ss = ss2;								\
   if (sigprocmask(SIG_SETMASK, &ss, (sigset_t *)NULL) == -1) e(4);	\
   _longjmp;								\
 }
@@ -936,7 +969,7 @@ void test37n()
   y = 0;
 
   act.sa_flags = 0;
-  act.sa_mask = 0;
+  sigemptyset(&act.sa_mask);
   act.sa_handler = (sighandler_t) catch14;	/* fudge */
   if (sigaction(SIGSEGV, &act, (struct sigaction *) NULL) == -1) e(3);
   if (kill(getpid(), SIGSEGV) == -1) e(4);
@@ -972,7 +1005,7 @@ void test37o()
   z = 0;
 
   act.sa_flags = 0;
-  act.sa_mask = 0;
+  sigemptyset(&act.sa_mask);
   act.sa_handler = catch15;
   if (sigaction(SIGALRM, &act, (struct sigaction *) NULL) == -1) e(2);
 

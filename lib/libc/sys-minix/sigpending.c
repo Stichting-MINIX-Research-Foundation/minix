@@ -10,7 +10,7 @@ sigset_t *set;
   message m;
 
   if (_syscall(PM_PROC_NR, SIGPENDING, &m) < 0) return(-1);
-  *set = (sigset_t) m.m2_l1;
+  memcpy(set, &m.SIG_MAP, sizeof(*set));
   return(m.m_type);
 }
 
