@@ -42,92 +42,75 @@
 #include <sys/featuretest.h>
 #include <sys/sigtypes.h>
 
-#define _NSIG		27
+#define _NSIG		64
+
+#if defined(_NETBSD_SOURCE)
 #define NSIG _NSIG
 
+#endif /* _NETBSD_SOURCE */
 
-/* Regular signals. */
-#define SIGHUP             1	/* hangup */
-#define SIGINT             2	/* interrupt (DEL) */
-#define SIGQUIT            3	/* quit (ASCII FS) */
-#define SIGILL             4	/* illegal instruction */
-#define SIGTRAP            5	/* trace trap (not reset when caught) */
-#define SIGABRT            6	/* IOT instruction */
-#define SIGBUS             7	/* bus error */
-#define SIGFPE             8	/* floating point exception */
-#define SIGKILL            9	/* kill (cannot be caught or ignored) */
-#define SIGUSR1           10	/* user defined signal # 1 */
-#define SIGSEGV           11	/* segmentation violation */
-#define SIGUSR2           12	/* user defined signal # 2 */
-#define SIGPIPE           13	/* write on a pipe with no one to read it */
-#define SIGALRM           14	/* alarm clock */
-#define SIGTERM           15	/* software termination signal from kill */
-#define SIGEMT		  16	/* EMT instruction */
-#define SIGCHLD           17	/* child process terminated or stopped */
-#define SIGWINCH    	  21	/* window size has changed */
-#define SIGVTALRM         24	/* virtual alarm */
-#define SIGPROF           25	/* profiler alarm */
-#define SIGINFO           26    /* information request */
+#define	SIGHUP		1	/* hangup */
+#define	SIGINT		2	/* interrupt */
+#define	SIGQUIT		3	/* quit */
+#define	SIGILL		4	/* illegal instruction (not reset when caught) */
+#define	SIGTRAP		5	/* trace trap (not reset when caught) */
+#define	SIGABRT		6	/* abort() */
+#define	SIGIOT		SIGABRT	/* compatibility */
+#define	SIGEMT		7	/* EMT instruction */
+#define	SIGFPE		8	/* floating point exception */
+#define	SIGKILL		9	/* kill (cannot be caught or ignored) */
+#define	SIGBUS		10	/* bus error */
+#define	SIGSEGV		11	/* segmentation violation */
+#define	SIGSYS		12	/* bad argument to system call */
+#define	SIGPIPE		13	/* write on a pipe with no one to read it */
+#define	SIGALRM		14	/* alarm clock */
+#define	SIGTERM		15	/* software termination signal from kill */
+#define	SIGURG		16	/* urgent condition on IO channel */
+#define	SIGSTOP		17	/* sendable stop signal not from tty */
+#define	SIGTSTP		18	/* stop signal from tty */
+#define	SIGCONT		19	/* continue a stopped process */
+#define	SIGCHLD		20	/* to parent on child stop or exit */
+#define	SIGTTIN		21	/* to readers pgrp upon background tty read */
+#define	SIGTTOU		22	/* like TTIN for output if (tp->t_local&LTOSTOP) */
+#define	SIGIO		23	/* input/output possible signal */
+#define	SIGXCPU		24	/* exceeded CPU time limit */
+#define	SIGXFSZ		25	/* exceeded file size limit */
+#define	SIGVTALRM	26	/* virtual time alarm */
+#define	SIGPROF		27	/* profiling time alarm */
+#define	SIGWINCH	28	/* window size changes */
+#define	SIGINFO		29	/* information request */
+#define	SIGUSR1		30	/* user defined signal 1 */
+#define	SIGUSR2		31	/* user defined signal 2 */
+#define	SIGPWR		32	/* power fail/restart (not reset when caught) */
 
-/* POSIX requires the following signals to be defined, even if they are
- * not supported.  Here are the definitions, but they are not supported.
- */
-#define SIGCONT           18	/* continue if stopped */
-#define SIGSTOP           19	/* stop signal */
-#define SIGTSTP           20	/* interactive stop signal */
-#define SIGTTIN           22	/* background process wants to read */
-#define SIGTTOU           23	/* background process wants to write */
-
-#if defined(__minix) && defined(_NETBSD_SOURCE)
-#define SIGIOT             SIGABRT /* for people who speak PDP-11 */
-
-/* MINIX specific signals. These signals are not used by user proceses, 
- * but meant to inform system processes, like the PM, about system events.
- * The order here determines the order signals are processed by system
- * processes in user-space. Higher-priority signals should be first.
- */
-/* Signals delivered by a signal manager. */
-#define SIGSNDELAY	  27	/* end of delay for signal delivery */
-
-#define SIGS_FIRST	  SIGHUP      /* first system signal */
-#define SIGS_LAST	  SIGSNDELAY   /* last system signal */
-#define IS_SIGS(signo)    (signo>=SIGS_FIRST && signo<=SIGS_LAST)
-
-/* Signals delivered by the kernel. */
-#define SIGKMEM		  28	/* kernel memory request pending */
-#define SIGKMESS   	  29	/* new kernel message */
-#define SIGKSIGSM    	  30	/* kernel signal pending for signal manager */
-#define SIGKSIG    	  31	/* kernel signal pending */
-
-#define SIGK_FIRST	  SIGKMEM      /* first kernel signal */
-#define SIGK_LAST	  SIGKSIG     /* last kernel signal */
-#define IS_SIGK(signo)    (signo>=SIGK_FIRST && signo<=SIGK_LAST)
-
-/* Termination signals for Minix system processes. */
-#define SIGS_IS_LETHAL(sig) \
-    (sig == SIGILL || sig == SIGBUS || sig == SIGFPE || sig == SIGSEGV \
-    || sig == SIGEMT || sig == SIGABRT)
-#define SIGS_IS_TERMINATION(sig) (SIGS_IS_LETHAL(sig) \
-    || (sig == SIGKILL || sig == SIGPIPE))
-#define SIGS_IS_STACKTRACE(sig) (SIGS_IS_LETHAL(sig) && sig != SIGABRT)
-
-#endif /* defined(__minix) && deinfed(_NETBSD_SOURCE) */
+#ifndef __minix
+#ifdef _KERNEL
+#define	SIGRTMIN	33	/* Kernel only; not exposed to userland yet */
+#define	SIGRTMAX	63	/* Kernel only; not exposed to userland yet */
+#endif
+#endif
 
 #ifndef _KERNEL
 #include <sys/cdefs.h>
 #endif
 
-typedef void (*__sighandler_t)(int);
-
-/* Macros used as function pointers. */
-#define SIG_ERR    ((__sighandler_t) -1)	/* error return */
-#define SIG_DFL	   ((__sighandler_t)  0)	/* default signal handling */
-#define SIG_IGN	   ((__sighandler_t)  1)	/* ignore signal */
-#define SIG_HOLD   ((__sighandler_t)  2)	/* block signal */
-#define SIG_CATCH  ((__sighandler_t)  3)	/* catch signal */
+#define	SIG_DFL		((void (*)(int))  0)
+#define	SIG_IGN		((void (*)(int))  1)
+#define	SIG_ERR		((void (*)(int)) -1)
+#define	SIG_HOLD	((void (*)(int))  3)
 
 #if defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE) || \
     defined(_NETBSD_SOURCE)
+
+#if defined(_KERNEL)
+#define	sigaddset(s, n)		__sigaddset(s, n)
+#define	sigdelset(s, n)		__sigdelset(s, n)
+#define	sigismember(s, n)	__sigismember(s, n)
+#define	sigemptyset(s)		__sigemptyset(s)
+#define	sigfillset(s)		__sigfillset(s)
+#define sigplusset(s, t)	__sigplusset(s, t)
+#define sigminusset(s, t)	__sigminusset(s, t)
+#endif /* _KERNEL */
 
 #if (_POSIX_C_SOURCE - 0) >= 199309L || (_XOPEN_SOURCE - 0) >= 500 || \
     defined(_NETBSD_SOURCE)
@@ -162,20 +145,39 @@ struct	sigaction {
 
 #include <machine/signal.h>	/* sigcontext; codes for SIGILL, SIGFPE */
 
-/* Fields for sa_flags. */
-#define SA_ONSTACK   0x0001	/* deliver signal on alternate stack */
-#define SA_RESETHAND 0x0002	/* reset signal handler when signal caught */
-#define SA_NODEFER   0x0004	/* don't block signal while catching it */
-#define SA_RESTART   0x0008	/* automatic system call restart */
-#define SA_SIGINFO   0x0010	/* extended signal handling */
-#define SA_NOCLDWAIT 0x0020	/* don't create zombies */
-#define SA_NOCLDSTOP 0x0040	/* don't receive SIGCHLD when child stops */
+#if (defined(_XOPEN_SOURCE) && defined(_XOPEN_SOURCE_EXTENDED)) || \
+    (_XOPEN_SOURCE - 0) >= 500 || defined(_NETBSD_SOURCE)
+#define SA_ONSTACK	0x0001	/* take signal on signal stack */
+#define SA_RESTART	0x0002	/* restart system call on signal return */
+#define SA_RESETHAND	0x0004	/* reset to SIG_DFL when taking signal */
+#define SA_NODEFER	0x0010	/* don't mask the signal we're delivering */
+#endif /* _XOPEN_SOURCE_EXTENDED || XOPEN_SOURCE >= 500 || _NETBSD_SOURCE */
+/* Only valid for SIGCHLD. */
+#define SA_NOCLDSTOP	0x0008	/* do not generate SIGCHLD on child stop */
+#define SA_NOCLDWAIT	0x0020	/* do not generate zombies on unwaited child */
+#if (_POSIX_C_SOURCE - 0) >= 199309L || (_XOPEN_SOURCE - 0) >= 500 || \
+    defined(_NETBSD_SOURCE)
+#ifndef __minix
+#define SA_SIGINFO	0x0040	/* take sa_sigaction handler */
+#endif
+#endif /* (_POSIX_C_SOURCE - 0) >= 199309L || ... */
+#if defined(_NETBSD_SOURCE)
+#define	SA_NOKERNINFO	0x0080	/* siginfo does not print kernel info on tty */
+#endif /*_NETBSD_SOURCE */
+#ifdef _KERNEL
+#define	SA_ALLBITS	0x00ff
+#endif
 
-/* POSIX requires these values for use with sigprocmask(2). */
-#define SIG_BLOCK          0	/* for blocking signals */
-#define SIG_UNBLOCK        1	/* for unblocking signals */
-#define SIG_SETMASK        2	/* for setting the signal mask */
-#define SIG_INQUIRE        4	/* for internal use only */
+/*
+ * Flags for sigprocmask():
+ */
+#define	SIG_BLOCK	1	/* block specified signal set */
+#define	SIG_UNBLOCK	2	/* unblock specified signal set */
+#define	SIG_SETMASK	3	/* set specified signal set */
+
+#ifdef __minix
+#define SIG_INQUIRE    10	/* for internal use only */
+#endif
 
 #if defined(_NETBSD_SOURCE)
 typedef	void (*sig_t)(int);	/* type of signal function */
@@ -186,10 +188,12 @@ typedef	void (*sig_t)(int);	/* type of signal function */
 /*
  * Flags used with stack_t/struct sigaltstack.
  */
-#define SS_ONSTACK      1      /* Process is executing on an alternate stack */
-#define SS_DISABLE      2      /* Alternate stack is disabled */
-
-#define MINSIGSTKSZ	2048	/* Minimal stack size is 2k */
+#define SS_ONSTACK	0x0001	/* take signals on alternate stack */
+#define SS_DISABLE	0x0004	/* disable taking signals on alternate stack */
+#ifdef _KERNEL
+#define	SS_ALLBITS	0x0005
+#endif
+#define	MINSIGSTKSZ	8192			/* minimum allowable stack */
 #define	SIGSTKSZ	(MINSIGSTKSZ + 32768)	/* recommended stack size */
 #endif /* _XOPEN_SOURCE_EXTENDED || _XOPEN_SOURCE >= 500 || _NETBSD_SOURCE */
 
@@ -240,5 +244,47 @@ struct	sigevent {
  */
 __BEGIN_DECLS
 void	(*signal(int, void (*)(int)))(int);
+#if (_POSIX_C_SOURCE - 0) >= 200112L || defined(_NETBSD_SOURCE)
+int	sigqueue(pid_t, int, const union sigval);
+#endif
+#if defined(_NETBSD_SOURCE)
+int	sigqueueinfo(pid_t, const siginfo_t *);
+#endif
 __END_DECLS
+
+#if defined(__minix) && defined(_NETBSD_SOURCE)
+
+/* MINIX specific signals. These signals are not used by user proceses, 
+ * but meant to inform system processes, like the PM, about system events.
+ * The order here determines the order signals are processed by system
+ * processes in user-space. Higher-priority signals should be first.
+ */
+/* Signals delivered by a signal manager. */
+
+#define SIGSNDELAY      70    /* end of delay for signal delivery */
+
+#define SIGS_FIRST       SIGHUP      /* first system signal */
+#define SIGS_LAST        SIGSNDELAY   /* last system signal */
+#define IS_SIGS(signo)    (signo>=SIGS_FIRST && signo<=SIGS_LAST)
+
+/* Signals delivered by the kernel. */
+#define SIGKMEM          71    /* kernel memory request pending */
+#define SIGKMESS         72    /* new kernel message */
+#define SIGKSIGSM        73    /* kernel signal pending for signal manager */
+#define SIGKSIG          74    /* kernel signal pending */
+ 
+#define SIGK_FIRST       SIGKMEM /* first kernel signal */
+#define SIGK_LAST        SIGKSIG /* last kernel signal; _NSIG must cover it! */
+#define IS_SIGK(signo)    (signo>=SIGK_FIRST && signo<=SIGK_LAST)
+
+/* Termination signals for Minix system processes. */
+#define SIGS_IS_LETHAL(sig) \
+    (sig == SIGILL || sig == SIGBUS || sig == SIGFPE || sig == SIGSEGV \
+    || sig == SIGEMT || sig == SIGABRT)
+#define SIGS_IS_TERMINATION(sig) (SIGS_IS_LETHAL(sig) \
+    || (sig == SIGKILL || sig == SIGPIPE))
+#define SIGS_IS_STACKTRACE(sig) (SIGS_IS_LETHAL(sig) && sig != SIGABRT)
+
+#endif /* __minix && _NETBSD_SOURCE */
+
 #endif	/* !_SYS_SIGNAL_H_ */

@@ -4,6 +4,7 @@
 #include <minix/ipcconst.h>
 #include <minix/type.h>
 #include <minix/const.h>
+#include <sys/signal.h>
 
 /*==========================================================================* 
  * Types relating to messages. 						    *
@@ -17,7 +18,9 @@
 
 typedef struct {int m1i1, m1i2, m1i3; char *m1p1, *m1p2, *m1p3, *m1p4;} mess_1;
 typedef struct {int m2i1, m2i2, m2i3; long m2l1, m2l2; char *m2p1; 
-        short m2s1;} mess_2;
+        short m2s1; sigset_t sigset; } mess_2;
+typedef struct {endpoint_t ep; int sig; u32_t flags; sigset_t sigs; 
+	void *sigctx; int how; } mess_sigcalls;
 typedef struct {int m3i1, m3i2; char *m3p1; char m3ca1[M3_LONG_STRING];} mess_3;
 typedef struct {long m4l1, m4l2, m4l3, m4l4, m4l5;} mess_4;
 typedef struct {short m5s1, m5s2; int m5i1, m5i2; long m5l1, m5l2, m5l3;}mess_5;
@@ -42,6 +45,12 @@ typedef struct {
 	u8_t pages;
 	u8_t flags;
 } mess_vmmcp;
+
+typedef struct {
+	u64_t timestamp;	/* valid for every notify msg */
+	u64_t interrupts;	/* raised interrupts; valid if from HARDWARE */
+	sigset_t sigset;	/* raised signals; valid if from SYSTEM */
+} mess_notify;
 
 typedef struct {
 	endpoint_t who;
@@ -74,6 +83,8 @@ typedef struct {
 	mess_vmmcp m_vmmcp;
 	mess_vmmcp_reply m_vmmcp_reply;
 	mess_vm_vfs_mmap m_vm_vfs;
+	mess_notify m_notify;	/* notify messages */
+	mess_sigcalls m_sigcalls; /* SYS_{GETKSIG,ENDKSIG,KILL,SIGSEND,SIGRETURN} */
 	u32_t size[14];		/* message payload may have 14 longs at most */
   } m_u;
 } message __aligned(16);
@@ -93,6 +104,7 @@ typedef struct {
 #define m2_l1  m_u.m_m2.m2l1
 #define m2_l2  m_u.m_m2.m2l2
 #define m2_p1  m_u.m_m2.m2p1
+#define m2_sigset  m_u.m_m2.sigset
 
 #define m2_s1  m_u.m_m2.m2s1
 

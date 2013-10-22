@@ -391,7 +391,7 @@ void blockdriver_process_on_thread(struct blockdriver *bdp, message *m_ptr,
 	switch (_ENDPOINT_P(m_ptr->m_source)) {
 	case HARDWARE:
 		if (bdp->bdr_intr)
-			(*bdp->bdr_intr)(m_ptr->NOTIFY_ARG);
+			(*bdp->bdr_intr)(m_ptr->NOTIFY_INTMASK);
 		break;
 
 	case CLOCK:

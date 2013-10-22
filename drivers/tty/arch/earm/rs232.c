@@ -589,7 +589,7 @@ rs_interrupt(message *m)
 	int line;
 	rs232_t *rs;
 
-	irq_set = m->NOTIFY_ARG;
+	irq_set = m->NOTIFY_INTMASK;
 	for (line = 0, rs = rs_lines; line < NR_RS_LINES; line++, rs++) {
 		if (irq_set & (1 << rs->irq_hook_id)) {
 			rs232_handler(rs);

@@ -1,5 +1,8 @@
 #include <sys/cdefs.h>
+#include <sys/signal.h>
+#include <sys/sigtypes.h>
 #include <lib.h>
+#include <string.h>
 #include "namespace.h"
 
 #include <string.h>
@@ -15,13 +18,14 @@ sigset_t *oset;
   memset(&m, 0, sizeof(m));
   if (set == (sigset_t *) NULL) {
 	m.PM_SIG_HOW = SIG_INQUIRE;
-	m.PM_SIG_SET = 0;
+	sigemptyset(&m.PM_SIG_SET);
   } else {
 	m.PM_SIG_HOW = how;
-	m.PM_SIG_SET = (long) *set;
+	m.PM_SIG_SET = *set;
   }
   if (_syscall(PM_PROC_NR, PM_SIGPROCMASK, &m) < 0) return(-1);
-  if (oset != (sigset_t *) NULL) *oset = (sigset_t) (m.PM_SIG_SET);
+  if (oset != (sigset_t *) NULL) *oset = m.PM_SIG_SET;
+
   return(m.m_type);
 }
 

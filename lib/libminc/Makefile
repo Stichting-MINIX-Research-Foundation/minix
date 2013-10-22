@@ -99,7 +99,7 @@ CLEANFILES+=	errlist.c
 	isnanf_ieee754.c isnand_ieee754.c \
 	isfinitef_ieee754.c isfinited_ieee754.c \
 	signbitf_ieee754.c signbitd_ieee754.c \
-	nanf.c
+	nanf.c sigsetops.c
 .PATH.c .PATH.S: ${ARCHDIR}/gen ${LIBCDIR}/gen/minix \
 	${LIBCDIR}/gen ${LIBCDIR}
 SRCS+= ${i}

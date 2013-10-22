@@ -17,7 +17,7 @@ int max_error = 3;
 
 int subtest;
 int zero[1024];
-int sigmap[5] = {9, 10, 11};
+int sigmap[5] = {SIGKILL, SIGUSR1, SIGSEGV};
 
 
 int main(int argc, char *argv[]);
@@ -73,8 +73,8 @@ void test5a()
   for (zp = &zero[0]; zp < &zero[1024]; zp++)
 	if (*zp != 0) flag = 1;
   if (flag) e(0);		/* check if bss is cleared to 0 */
-  if (signal(1, func1) ==  SIG_ERR) e(1);
-  if (signal(10, func10) == SIG_ERR) e(2);
+  if (signal(SIGHUP, func1) ==  SIG_ERR) e(1);
+  if (signal(SIGUSR1, func10) == SIG_ERR) e(2);
   parpid = getpid();
   if ((childpid = fork()) != 0) {
 	if (childpid < 0) ex();
@@ -82,8 +82,8 @@ void test5a()
   } else {
 	child(parpid);
   }
-  if (signal(1, SIG_DFL) == SIG_ERR) e(4);
-  if (signal(10, SIG_DFL) == SIG_ERR) e(5);
+  if (signal(SIGHUP, SIG_DFL) == SIG_ERR) e(4);
+  if (signal(SIGUSR1, SIG_DFL) == SIG_ERR) e(5);
 }
 
 void parent(childpid)
@@ -92,7 +92,7 @@ int childpid;
   int i, pid;
 
   for (i = 0; i < 3; i++) {
-	if (kill(childpid, 1) < 0) e(6);
+	if (kill(childpid, SIGHUP) < 0) e(6);
 	while (parsigs == 0);
 	parsigs--;
   }
@@ -109,7 +109,7 @@ int parpid;
   for (i = 0; i < 3; i++) {
 	while (childsigs == 0);
 	childsigs--;
-	if (kill(parpid, 10) < 0) e(9);
+	if (kill(parpid, SIGUSR1) < 0) e(9);
   }
   exit(6);
 }
@@ -117,7 +117,7 @@ int parpid;
 void func1(s)
 int s;				/* for ANSI */
 {
-  if (signal(1, func1) == SIG_ERR) e(10);
+  if (signal(SIGHUP, func1) == SIG_ERR) e(10);
   childsigs++;
 }
 
@@ -129,7 +129,7 @@ int s;
 void func10(s)
 int s;				/* for ANSI */
 {
-  if (signal(10, func10) == SIG_ERR) e(11);
+  if (signal(SIGUSR1, func10) == SIG_ERR) e(11);
   parsigs++;
 }
 
@@ -150,7 +150,7 @@ void test5b()
 		if (pid < 0) ex();
 		if ((cpid = fork()) != 0) {
 			if (cpid < 0) ex();
-			if (kill(cpid, 9) < 0) e(12);
+			if (kill(cpid, SIGKILL) < 0) e(12);
 			if (wait(&n) < 0) e(13);
 			if (wait(&n) < 0) e(14);
 			if (wait(&n) < 0) e(15);
@@ -214,14 +214,14 @@ void test5e()
   int n;
 
   subtest = 5;
-  if (signal(8, func8) == SIG_ERR) e(25);
+  if (signal(SIGFPE, func8) == SIG_ERR) e(25);
   if ((n = fork()) != 0) {
 	/* Parent must delay to give child a chance to pause. */
 	if (n < 0) ex();
 	sleep(1);
-	if (kill(n, 8) < 0) e(26);
+	if (kill(n, SIGFPE) < 0) e(26);
 	if (wait(&n) < 0) e(27);
-	if (signal(8, SIG_DFL) == SIG_ERR) e(28);
+	if (signal(SIGFPE, SIG_DFL) == SIG_ERR) e(28);
   } else {
 	(void) pause();
 	if (errno != EINTR && -errno != EINTR) e(29);
@@ -265,11 +265,11 @@ void test5g()
   int n;
 
   subtest = 7;
-  signal(11, func11);
-  signal(11, SIG_IGN);
+  signal(SIGSEGV, func11);
+  signal(SIGSEGV, SIG_IGN);
   n = getpid();
-  if (kill(n, 11) != 0) e(1);
-  signal(11, SIG_DFL);
+  if (kill(n, SIGSEGV) != 0) e(1);
+  signal(SIGSEGV, SIG_DFL);
 }
 
 void funcalrm(s)
@@ -287,7 +287,7 @@ void test5h()
 
   subtest = 8;
   unlink("XXX.test5");
-  if (signal(8, func8) == SIG_ERR) e(1);
+  if (signal(SIGFPE, func8) == SIG_ERR) e(1);
   pipe(fd);
   if ((n = fork()) != 0) {
 	/* Parent must delay to give child a chance to pause. */
@@ -295,9 +295,9 @@ void test5h()
 	while (access("XXX.test5", 0) != 0) /* just wait */ ;
 	sleep(1);
  	unlink("XXX.test5");
-	if (kill(n, 8) < 0) e(2);
+	if (kill(n, SIGFPE) < 0) e(2);
 	if (wait(&n) < 0) e(3);
-	if (signal(8, SIG_DFL) == SIG_ERR) e(4);
+	if (signal(SIGFPE, SIG_DFL) == SIG_ERR) e(4);
 	if (close(fd[0]) != 0) e(5);
 	if (close(fd[1]) != 0) e(6);
   } else {

@@ -108,8 +108,9 @@
     (is_ipc_notify(ipc_status) || IPC_STATUS_CALL(ipc_status) == SENDA)
 
 /* Shorthands for message parameters passed with notifications. */
-#define NOTIFY_ARG		m2_l1
-#define NOTIFY_TIMESTAMP	m2_l2
+#define NOTIFY_TIMESTAMP       m_u.m_notify.timestamp
+#define NOTIFY_INTMASK         m_u.m_notify.interrupts
+#define NOTIFY_SIGSET          m_u.m_notify.sigset
 
 /*===========================================================================*
  *                Messages for BUS controller drivers 			     *
@@ -475,11 +476,12 @@
 #define SG_SIZE		m2_i2	/* no. of entries */
 
 /* Field names for SYS_GETKSIG, _ENDKSIG, _KILL, _SIGSEND, _SIGRETURN. */
-#define SIG_ENDPT      m2_i1	/* process number for inform */
-#define SIG_NUMBER     m2_i2	/* signal number to send */
-#define SIG_FLAGS      m2_i3	/* signal flags field */
-#define SIG_MAP        m2_l1	/* used by kernel to pass signal bit map */
-#define SIG_CTXT_PTR   m2_p1	/* pointer to info to restore signal context */
+#define SYS_SIG_ENDPT      m_u.m_sigcalls.ep     /* process number for inform */
+#define SYS_SIG_NUMBER     m_u.m_sigcalls.sig    /* signal number to send */
+#define SYS_SIG_FLAGS      m_u.m_sigcalls.flags  /* signal flags field */
+#define SYS_SIG_MAP        m_u.m_sigcalls.sigs   /* used to pass signal bit map */
+#define SYS_SIG_CTXT_PTR   m_u.m_sigcalls.sigctx /* pointer to signal context */
+#define SYS_SIG_HOW        m_u.m_sigcalls.how   /* used to pass signal bit map */
 
 /* Field names for SYS_FORK, _EXEC, _EXIT, GETMCONTEXT, SETMCONTEXT.*/
 #define PR_ENDPT        m1_i1	/* indicates a process */

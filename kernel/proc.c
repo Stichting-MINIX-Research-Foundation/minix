@@ -34,6 +34,7 @@
 #include <stddef.h>
 #include <signal.h>
 #include <assert.h>
+#include <string.h>
 
 #include "kernel/kernel.h"
 #include "vm.h"
@@ -98,16 +99,19 @@ static void set_idle_name(char * name, int n)
 #define PICK_HIGHERONLY	2
 
 #define BuildNotifyMessage(m_ptr, src, dst_ptr) \
+	memset((m_ptr), 0, sizeof(*(m_ptr)));				\
 	(m_ptr)->m_type = NOTIFY_MESSAGE;				\
 	(m_ptr)->NOTIFY_TIMESTAMP = get_monotonic();			\
 	switch (src) {							\
 	case HARDWARE:							\
-		(m_ptr)->NOTIFY_ARG = priv(dst_ptr)->s_int_pending;	\
+		(m_ptr)->NOTIFY_INTMASK = priv(dst_ptr)->s_int_pending; \
 		priv(dst_ptr)->s_int_pending = 0;			\
 		break;							\
 	case SYSTEM:							\
-		(m_ptr)->NOTIFY_ARG = priv(dst_ptr)->s_sig_pending;	\
-		priv(dst_ptr)->s_sig_pending = 0;			\
+		memcpy(&(m_ptr)->NOTIFY_SIGSET,				\
+			&priv(dst_ptr)->s_sig_pending,			\
+			sizeof(sigset_t));				\
+		sigemptyset(&priv(dst_ptr)->s_sig_pending);		\
 		break;							\
 	}
 

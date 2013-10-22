@@ -10,8 +10,8 @@ struct sigmsg *sig_ctxt;		/* POSIX style handling */
     message m;
     int result;
 
-    m.SIG_ENDPT = proc_ep;
-    m.SIG_CTXT_PTR = (char *) sig_ctxt;
+    m.SYS_SIG_ENDPT = proc_ep;
+    m.SYS_SIG_CTXT_PTR = (char *) sig_ctxt;
     result = _kernel_call(SYS_SIGRETURN, &m);
     return(result);
 }

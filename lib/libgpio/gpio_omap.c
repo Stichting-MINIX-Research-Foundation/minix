@@ -349,8 +349,8 @@ omap_message_hook(message * m)
 	switch (_ENDPOINT_P(m->m_source)) {
 	case HARDWARE:
 		/* Hardware interrupt return a "set" if pending interrupts */
-		irq_set = m->NOTIFY_ARG;
-		log_debug(&log, "HW message 0X%08x\n", m->NOTIFY_ARG);
+		irq_set = m->NOTIFY_INTMASK;
+		log_debug(&log, "HW message 0X%08llx\n", m->NOTIFY_INTMASK);
 		bank = &omap_gpio_banks[0];
 		for (i = 0; omap_gpio_banks[i].name != NULL; i++) {
 			bank = &omap_gpio_banks[i];

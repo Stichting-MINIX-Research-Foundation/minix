@@ -121,7 +121,7 @@
  * sigsuspend(2) calls.
  */
 #define PM_SIG_HOW		m2_i1	/* int */
-#define PM_SIG_SET		m2_l1	/* sigset_t */
+#define PM_SIG_SET		m2_sigset /* sigset_t */
 #define PM_SIG_CTX		m2_p1	/* struct sigcontext * */
 
 /* Field names for the srv_fork(2) call. */

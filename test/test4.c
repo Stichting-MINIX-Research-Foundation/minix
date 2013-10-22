@@ -55,9 +55,9 @@ void subr()
 				/* Parent 3 */
 				if (pid3 < 0) nofork();
 				for (i = 0; i < 10000; i++);
-				kill(pid2, 9);
-				kill(pid1, 9);
-				kill(pid0, 9);
+				kill(pid2, SIGKILL);
+				kill(pid1, SIGKILL);
+				kill(pid0, SIGKILL);
 				wait(&s);
 				wait(&s);
 				wait(&s);

@@ -1,17 +1,19 @@
+#include "namespace.h"
+
 #include <sys/cdefs.h>
 #include <lib.h>
-#include "namespace.h"
 
 #include <string.h>
 #include <signal.h>
+#include <string.h>
 #include <sys/signal.h>
+#include <machine/signal.h>
 
 #ifdef __weak_alias
 __weak_alias(sigreturn, _sigreturn)
 #endif
 
-int sigreturn(scp)
-register struct sigcontext *scp;
+int sigreturn(struct sigcontext *scp)
 {
   sigset_t set;
 

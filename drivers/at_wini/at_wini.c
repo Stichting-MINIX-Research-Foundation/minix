@@ -1598,7 +1598,7 @@ static void w_intr_wait(void)
 					if (r != 0)
 						panic("sys_inb failed: %d", r);
 					w_wn->w_status= w_status;
-					w_hw_int(m.NOTIFY_ARG);
+					w_hw_int(m.NOTIFY_INTMASK);
 					break;
 				default:
 					/* 

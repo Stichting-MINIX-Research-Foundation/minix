@@ -92,7 +92,7 @@ int do_sigpending(void)
 {
   assert(!(mp->mp_flags & (PROC_STOPPED | VFS_CALL | UNPAUSED)));
 
-  mp->mp_reply.PM_SIG_SET = (long) mp->mp_sigpending;
+  mp->mp_reply.PM_SIG_SET = mp->mp_sigpending;
   return OK;
 }
 
@@ -117,7 +117,7 @@ int do_sigprocmask(void)
   assert(!(mp->mp_flags & (PROC_STOPPED | VFS_CALL | UNPAUSED)));
 
   set = m_in.PM_SIG_SET;
-  mp->mp_reply.PM_SIG_SET = (long) mp->mp_sigmask;
+  mp->mp_reply.PM_SIG_SET = mp->mp_sigmask;
 
   switch (m_in.PM_SIG_HOW) {
       case SIG_BLOCK:
@@ -162,7 +162,7 @@ int do_sigsuspend(void)
   assert(!(mp->mp_flags & (PROC_STOPPED | VFS_CALL | UNPAUSED)));
 
   mp->mp_sigmask2 = mp->mp_sigmask;	/* save the old mask */
-  mp->mp_sigmask = (sigset_t) m_in.PM_SIG_SET;
+  mp->mp_sigmask = m_in.PM_SIG_SET;
   sigdelset(&mp->mp_sigmask, SIGKILL);
   sigdelset(&mp->mp_sigmask, SIGSTOP);
   mp->mp_flags |= SIGSUSPENDED;
@@ -182,7 +182,7 @@ int do_sigreturn(void)
 
   assert(!(mp->mp_flags & (PROC_STOPPED | VFS_CALL | UNPAUSED)));
 
-  mp->mp_sigmask = (sigset_t) m_in.PM_SIG_SET;
+  mp->mp_sigmask = m_in.PM_SIG_SET;
   sigdelset(&mp->mp_sigmask, SIGKILL);
   sigdelset(&mp->mp_sigmask, SIGSTOP);
 
@@ -772,7 +772,7 @@ int signo;			/* signal to send to process (1 to _NSIG-1) */
  * Return TRUE if this succeeded, FALSE otherwise.
  */
   struct sigmsg sigmsg;
-  int r, sigflags, slot;
+  int i, r, sigflags, slot;
 
   assert(rmp->mp_flags & PROC_STOPPED);
 
@@ -787,7 +787,10 @@ int signo;			/* signal to send to process (1 to _NSIG-1) */
   sigmsg.sm_sighandler =
 	(vir_bytes) rmp->mp_sigact[signo].sa_handler;
   sigmsg.sm_sigreturn = rmp->mp_sigreturn;
-  rmp->mp_sigmask |= rmp->mp_sigact[signo].sa_mask;
+  for (i = 1; i < _NSIG; i++) {
+	if (sigismember(&rmp->mp_sigact[signo].sa_mask, i))
+		sigaddset(&rmp->mp_sigmask, i);
+  }
 
   if (sigflags & SA_NODEFER)
 	sigdelset(&rmp->mp_sigmask, signo);

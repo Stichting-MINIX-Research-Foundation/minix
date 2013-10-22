@@ -90,9 +90,10 @@ void sigaction_dmp()
   	if (mp->mp_pid == 0 && i != PM_PROC_NR) continue;
   	if (++n > 22) break;
   	printf("%8.8s  %3d  ", mp->mp_name, i);
-  	printf(" %08lx %08lx %08lx ", 
-  		mp->mp_ignore, mp->mp_catch, mp->mp_sigmask); 
-  	printf("%08lx  ", mp->mp_sigpending);
+	printf(" %08x %08x %08x ",
+		mp->mp_ignore.__bits[0], mp->mp_catch.__bits[0],
+		mp->mp_sigmask.__bits[0]);
+	printf("%08x  ", mp->mp_sigpending.__bits[0]);
   	if (mp->mp_flags & ALARM_ON) printf("%8lu", mp->mp_timer.tmr_exp_time-uptime);
   	else printf("       -");
   	printf("\n");
