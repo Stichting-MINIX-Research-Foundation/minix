@@ -193,7 +193,7 @@ int main(void)
 
 #if NR_RS_LINES > 0
 				/* serial I/O */
-				if (tty_mess.NOTIFY_ARG & rs_irq_set)
+				if (tty_mess.m_u.m_notify.interrupts & rs_irq_set)
 					rs_interrupt(&tty_mess);
 #endif
 				/* run watchdogs of expired timers */
