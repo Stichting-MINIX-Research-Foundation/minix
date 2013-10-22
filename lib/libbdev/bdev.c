@@ -323,8 +323,8 @@ static int bdev_ioctl_setup(dev_t dev, int request, void *buf, message *m)
 	size = _MINIX_IOCTL_SIZE(request);
 
   access = 0;
-  if (_MINIX_IOCTL_IOR(access)) access |= CPF_WRITE;
-  if (_MINIX_IOCTL_IOW(access)) access |= CPF_READ;
+  if (_MINIX_IOCTL_IOR(request)) access |= CPF_WRITE;
+  if (_MINIX_IOCTL_IOW(request)) access |= CPF_READ;
 
   /* The size may be 0, in which case 'buf' need not be a valid pointer. */
   grant = cpf_grant_direct(endpt, (vir_bytes) buf, size, access);
