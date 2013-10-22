@@ -559,7 +559,8 @@ static int ata_id_check(struct port_state *ps, u16_t *buf)
 	/* Get number of LBA blocks, and sector size. */
 	ps->lba_count = ((u64_t) buf[ATA_ID_LBA3] << 48) |
 			((u64_t) buf[ATA_ID_LBA2] << 32) |
-			(buf[ATA_ID_LBA1] << 16) | buf[ATA_ID_LBA0];
+			((u64_t) buf[ATA_ID_LBA1] << 16) |
+			 (u64_t) buf[ATA_ID_LBA0];
 
 	/* Determine the queue depth of the device. */
 	if (hba_state.has_ncq &&
