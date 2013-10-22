@@ -449,7 +449,7 @@ void chardriver_process(struct chardriver *cdp, message *m_ptr, int ipc_status)
 	switch (_ENDPOINT_P(m_ptr->m_source)) {
 	case HARDWARE:
 		if (cdp->cdr_intr)
-			cdp->cdr_intr(m_ptr->NOTIFY_ARG);
+			cdp->cdr_intr(m_ptr->m_u.m_notify.interrupts);
 		break;
 
 	case CLOCK:
