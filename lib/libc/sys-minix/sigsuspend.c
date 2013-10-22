@@ -8,8 +8,8 @@ int sigsuspend(set)
 const sigset_t *set;
 {
   message m;
-
-  m.m2_l1 = (long) *set;
+  memset(&m, 0, sizeof(m));
+  memcpy(&m.SIG_MAP, set, sizeof(*set));
   return(_syscall(PM_PROC_NR, SIGSUSPEND, &m));
 }
 

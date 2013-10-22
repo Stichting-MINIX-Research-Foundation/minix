@@ -146,7 +146,7 @@ inputdriver_process(struct inputdriver *idp, message *m_ptr, int ipc_status)
 		switch (_ENDPOINT_P(m_ptr->m_source)) {
 		case HARDWARE:
 			if (idp->idr_intr)
-				idp->idr_intr(m_ptr->NOTIFY_ARG);
+				idp->idr_intr(m_ptr->NOTIFY_INTMASK);
 			break;
 
 		case CLOCK:

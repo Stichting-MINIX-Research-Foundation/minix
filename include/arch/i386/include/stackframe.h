@@ -1,6 +1,8 @@
 #ifndef STACK_FRAME_H
 #define STACK_FRAME_H
 
+#include <sys/types.h>
+
 typedef unsigned reg_t;         /* machine register */
 typedef reg_t segdesc_t;
 

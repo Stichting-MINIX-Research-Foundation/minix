@@ -534,7 +534,7 @@ void rs_interrupt(message *m)
 	int i;
 	rs232_t *rs;
 
-	irq_set= m->NOTIFY_ARG;
+	irq_set= m->NOTIFY_INTMASK;
 	for (i= 0, rs = rs_lines; i<NR_RS_LINES; i++, rs++)
 	{
 		if (irq_set & (1 << rs->irq))

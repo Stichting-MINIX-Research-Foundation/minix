@@ -85,11 +85,7 @@ ENTRY(__siglongjmp14)
 	PIC_PROLOGUE
 	pushl	$0
 	pushl	%edx
-#ifdef __minix
-	pushl	$2			/* SIG_SETMASK */
-#else
 	pushl	$3			/* SIG_SETMASK */
-#endif
 #ifdef PIC
 	call	PIC_PLT(_C_LABEL(__sigprocmask14))
 #else
