@@ -408,6 +408,7 @@ int sig_nr;			/* signal to be sent */
   register struct proc *rp, *sig_mgr_rp;
   endpoint_t sig_mgr;
   int sig_mgr_proc_nr;
+  int s;
 
   /* Lookup signal manager. */
   rp = proc_addr(proc_nr);
@@ -438,8 +439,10 @@ int sig_nr;			/* signal to be sent */
        return;
   }
 
+  if((s = sigismember(&rp->p_pending, sig_nr)) < 0)
+	panic("sigismember failed");
   /* Check if the signal is already pending. Process it otherwise. */
-  if (! sigismember(&rp->p_pending, sig_nr)) {
+  if (!s) {
       sigaddset(&rp->p_pending, sig_nr);
 	increase_proc_signals(rp);
       if (! (RTS_ISSET(rp, RTS_SIGNALED))) {		/* other pending */

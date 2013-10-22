@@ -89,7 +89,7 @@ int do_sigaction()
  *===========================================================================*/
 int do_sigpending()
 {
-  mp->mp_reply.reply_mask = (long) mp->mp_sigpending;
+  memcpy(&mp->mp_reply.SIG_MAP, &mp->mp_sigpending, sizeof(sigset_t));
   return OK;
 }
 
@@ -111,30 +111,30 @@ int do_sigprocmask()
 
   int i;
 
-  mp->mp_reply.reply_mask = (long) mp->mp_sigmask;
+  memcpy(&mp->mp_reply.SIG_MAP, &mp->mp_sigmask, sizeof(mp->mp_sigmask));
 
-  switch (m_in.sig_how) {
+  switch (m_in.SIG_HOW) {
       case SIG_BLOCK:
-	sigdelset((sigset_t *)&m_in.sig_set, SIGKILL);
-	sigdelset((sigset_t *)&m_in.sig_set, SIGSTOP);
+	sigdelset(&m_in.SIG_MAP, SIGKILL);
+	sigdelset(&m_in.SIG_MAP, SIGSTOP);
 	for (i = 1; i < _NSIG; i++) {
-		if (sigismember((sigset_t *)&m_in.sig_set, i))
+		if (sigismember(&m_in.SIG_MAP, i))
 			sigaddset(&mp->mp_sigmask, i);
 	}
 	break;
 
       case SIG_UNBLOCK:
 	for (i = 1; i < _NSIG; i++) {
-		if (sigismember((sigset_t *)&m_in.sig_set, i))
+		if (sigismember(&m_in.SIG_MAP, i))
 			sigdelset(&mp->mp_sigmask, i);
 	}
 	check_pending(mp);
 	break;
 
       case SIG_SETMASK:
-	sigdelset((sigset_t *) &m_in.sig_set, SIGKILL);
-	sigdelset((sigset_t *) &m_in.sig_set, SIGSTOP);
-	mp->mp_sigmask = (sigset_t) m_in.sig_set;
+	sigdelset(&m_in.SIG_MAP, SIGKILL);
+	sigdelset(&m_in.SIG_MAP, SIGSTOP);
+	mp->mp_sigmask = m_in.SIG_MAP;
 	check_pending(mp);
 	break;
 
@@ -154,7 +154,7 @@ int do_sigprocmask()
 int do_sigsuspend()
 {
   mp->mp_sigmask2 = mp->mp_sigmask;	/* save the old mask */
-  mp->mp_sigmask = (sigset_t) m_in.sig_set;
+  mp->mp_sigmask = m_in.SIG_MAP;
   sigdelset(&mp->mp_sigmask, SIGKILL);
   sigdelset(&mp->mp_sigmask, SIGSTOP);
   mp->mp_flags |= SIGSUSPENDED;
@@ -173,11 +173,11 @@ int do_sigreturn()
 
   int r;
 
-  mp->mp_sigmask = (sigset_t) m_in.sig_set;
+  mp->mp_sigmask = m_in.SIG_MAP;
   sigdelset(&mp->mp_sigmask, SIGKILL);
   sigdelset(&mp->mp_sigmask, SIGSTOP);
 
-  r = sys_sigreturn(who_e, (struct sigmsg *) m_in.sig_context);
+  r = sys_sigreturn(who_e, (struct sigmsg *) m_in.SIG_CTXT_PTR);
   check_pending(mp);
   return(r);
 }
@@ -706,7 +706,7 @@ int signo;			/* signal to send to process (1 to _NSIG-1) */
  * Return TRUE if this succeeded, FALSE otherwise.
  */
   struct sigmsg sigmsg;
-  int r, sigflags, slot;
+  int i, r, sigflags, slot;
 
   if (!(rmp->mp_flags & UNPAUSED))
 	panic("sig_send: process not unpaused");
@@ -722,7 +722,10 @@ int signo;			/* signal to send to process (1 to _NSIG-1) */
   sigmsg.sm_sighandler =
 	(vir_bytes) rmp->mp_sigact[signo].sa_handler;
   sigmsg.sm_sigreturn = rmp->mp_sigreturn;
-  rmp->mp_sigmask |= rmp->mp_sigact[signo].sa_mask;
+  for (i = 1; i < _NSIG; i++) {
+	if (sigismember(&rmp->mp_sigact[signo].sa_mask, i))
+		sigaddset(&rmp->mp_sigmask, i);
+  }
 
   if (sigflags & SA_NODEFER)
 	sigdelset(&rmp->mp_sigmask, signo);

@@ -1,16 +1,18 @@
-#include <sys/cdefs.h>
-#include <lib.h>
 #include "namespace.h"
 
+#include <sys/cdefs.h>
+#include <lib.h>
+
 #include <signal.h>
+#include <string.h>
 #include <sys/signal.h>
+#include <machine/signal.h>
 
 #ifdef __weak_alias
 __weak_alias(sigreturn, _sigreturn)
 #endif
 
-int sigreturn(scp)
-register struct sigcontext *scp;
+int sigreturn(struct sigcontext *scp)
 {
   sigset_t set;
 
@@ -25,8 +27,8 @@ register struct sigcontext *scp;
   sigfillset(&set);		/* splhi */
   sigprocmask(SIG_SETMASK, &set, (sigset_t *) NULL);
 
-  m.m2_l1 = scp->sc_mask;
-  m.m2_i2 = scp->sc_flags;
-  m.m2_p1 = (char *) scp;
+  m.SIG_MAP = scp->sc_mask;
+  m.SIG_FLAGS = scp->sc_flags;
+  m.SIG_CTXT_PTR = (char *) scp;
   return(_syscall(PM_PROC_NR, SIGRETURN, &m));	/* normally this doesn't return */
 }

@@ -23,9 +23,6 @@
 #define sig_osa		m1_p2
 #define sig_ret		m1_p3
 #define stat_nr		m2_i1
-#define sig_set		m2_l1
-#define sig_how		m2_i1
-#define sig_context	m2_p1
 #define reboot_flag	m1_i1
 #define svrctl_req	m2_i1
 #define svrctl_argp	m2_p1
