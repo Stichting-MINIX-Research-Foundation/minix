@@ -1616,12 +1616,12 @@ static void enqueue_head(struct proc *rp)
 
   /* Now add the process to the queue. */
   if (!rdy_head[q]) {		/* add to empty queue */
-      rdy_head[q] = rdy_tail[q] = rp; 		/* create a new queue */
-      rp->p_nextready = NULL;		/* mark new end */
+	rdy_head[q] = rdy_tail[q] = rp; 	/* create a new queue */
+	rp->p_nextready = NULL;			/* mark new end */
+  } else {					/* add to head of queue */
+	rp->p_nextready = rdy_head[q];		/* chain head of queue */
+	rdy_head[q] = rp;			/* set new queue head */
   }
-  else						/* add to head of queue */
-      rp->p_nextready = rdy_head[q];		/* chain head of queue */
-      rdy_head[q] = rp;				/* set new queue head */
 
   /* Make note of when this process was added to queue */
   read_tsc_64(&(get_cpulocal_var(proc_ptr->p_accounting.enter_queue)));
