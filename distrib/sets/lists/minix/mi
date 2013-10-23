@@ -517,6 +517,7 @@
 ./usr/bin/uncompress			minix-sys
 ./usr/bin/unexpand			minix-sys
 ./usr/bin/uniq				minix-sys
+./usr/bin/units				minix-sys
 ./usr/bin/unlzma			minix-sys
 ./usr/bin/unstack			minix-sys
 ./usr/bin/unxz				minix-sys
@@ -2076,6 +2077,7 @@
 ./usr/man/man1/uncompress.1		minix-sys
 ./usr/man/man1/unexpand.1		minix-sys
 ./usr/man/man1/uniq.1			minix-sys
+./usr/man/man1/units.1			minix-sys
 ./usr/man/man1/unlzma.1			minix-sys
 ./usr/man/man1/unset.1			minix-sys
 ./usr/man/man1/unxz.1			minix-sys
@@ -4636,6 +4638,7 @@
 ./usr/share/misc/texinfo.dtd		minix-sys
 ./usr/share/misc/texinfo.tex		minix-sys
 ./usr/share/misc/texinfo.xsl		minix-sys
+./usr/share/misc/units.lib		minix-sys
 ./usr/share/misc/zipcodes		minix-sys
 ./usr/share/mk				minix-sys
 ./usr/share/mk/bsd.clang-analyze.mk	minix-sys

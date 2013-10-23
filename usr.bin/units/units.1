@@ -1,0 +1,229 @@
+.\"	$NetBSD: units.1,v 1.21 2013/07/20 21:40:01 wiz Exp $
+.Dd January 6, 2013
+.Dt UNITS 1
+.Os
+.Sh NAME
+.Nm units
+.Nd conversion program
+.Sh SYNOPSIS
+.Nm
+.Op Fl Llqv
+.Op Fl f Ar filename
+.Oo
+.Op Ar count
+.Ar from-unit to-unit
+.Oc
+.Sh DESCRIPTION
+.Nm
+converts quantities expression in various scales to
+their equivalents in other scales.
+.Nm
+can only handle multiplicative scale changes.
+It cannot convert Centigrade to Fahrenheit, for example.
+.Pp
+The following options and arguments are supported:
+.Bl -tag -width "-fXfilenameX" -offset indent
+.It Fl f Ar filename
+Specifies the name of the units data file to load.
+.It Fl l No or Fl L
+List all unit definitions to the standard output,
+instead of performing any conversions.
+The result may include error messages and comments, beginning with
+.Ql \&/ .
+.Pp
+With the
+.Fl l
+option, unit definitions will be listed in a format
+almost identical to the the units data file that was loaded,
+except that comments will be removed, spacing may be changed,
+and lines may be re-ordered.
+.Pp
+With the
+.Fl L
+option, all unit definitions will be reduced to a form that
+depends on only a few primitive units (such as
+.Sy m , kg , sec ) .
+.It Fl q
+Suppresses prompting of the user for units and the display of statistics
+about the number of units loaded.
+.It Fl v
+Prints the version number.
+.It Oo Ar count Oc Ar from-unit Ar to-unit
+Allows a single unit conversion to be done directly from the command
+line.
+No prompting will occur.
+.Nm
+will print out only the result of this single conversion.
+Specifying
+.Ar count
+and
+.Ar from-unit
+as two separate arguments is equivalent to embedding both parts
+inside a single
+.Ar from-unit
+argument, with the parts separated by a space.
+.El
+.Pp
+.Nm
+works interactively by prompting the user for input:
+.Bd -literal
+    You have: meters
+    You want: feet
+            * 3.2808399
+            / 0.3048
+
+    You have: cm^3
+    You want: gallons
+            * 0.00026417205
+            / 3785.4118
+.Ed
+.Pp
+Powers of units can be specified using the
+.Dq \&^
+character as shown in the example, or by simple concatenation:
+.Dq cm3
+is equivalent to
+.Dq cm^3 .
+Multiplication of units can be specified by using spaces, a dash or
+an asterisk.
+Division of units is indicated by the slash
+.Pq Sq \&/ .
+Note that multiplication has a higher precedence than division,
+so
+.Dq m/s/s
+is the same as
+.Dq m/s^2
+or
+.Dq "m/s s" .
+If the user enters incompatible unit types, the
+.Nm
+program will print a message indicating that the units are not
+conformable and it will display the reduced form for each unit:
+.Bd -literal
+    You have: ergs/hour
+    You want: fathoms kg^2 / day
+    conformability error
+            2.7777778e-11 kg m^2 / sec^3
+            2.1166667e-05 kg^2 m / sec
+.Ed
+.Pp
+The conversion information is read from a units data file.
+The default
+file includes definitions for most familiar units, abbreviations and
+metric prefixes.
+Some constants of nature included are:
+.Bl -tag -width mercury -compact -offset indent
+.It pi
+ratio of circumference to diameter
+.It c
+speed of light
+.It e
+charge on an electron
+.It g
+acceleration of gravity
+.It force
+same as g
+.It mole
+Avogadro's number
+.It water
+pressure per unit height of water
+.It mercury
+pressure per unit height of mercury
+.It au
+astronomical unit
+.El
+.Pp
+.Dq pound
+is a unit of mass.
+Compound names are run together
+so
+.Dq poundforce
+is a unit of force.
+British units that differ from their
+US counterparts are prefixed with
+.Dq br ,
+and currency is prefixed with
+its country name:
+.Dq belgiumfranc ,
+.Dq britainpound .
+When searching for
+a unit, if the specified string does not appear exactly as a unit
+name, then the
+.Nm
+program will try to remove a trailing
+.Dq s
+or a trailing
+.Dq es
+and check again for a match.
+.Pp
+All of these definitions can be read in the standard units file, or you
+can supply your own file.
+A unit is specified on a single line by
+giving its name and an equivalence.
+One should be careful to define
+new units in terms of old ones so that a reduction leads to the
+primitive units which are marked with
+.Sq \&!
+characters.
+.Nm
+will not detect infinite loops that could be caused
+by careless unit definitions.
+.Pp
+Prefixes are defined in the same way as standard units, but with
+a trailing dash at the end of the prefix name.
+.Sh FILES
+.Bl -tag -width /usr/share/misc/units.lib -compact
+.It Pa /usr/share/misc/units.lib
+the standard units library
+.El
+.Sh AUTHORS
+.An Adrian Mariano Aq Mt adrian@cam.cornell.edu
+or
+.Aq mariano@geom.umn.edu
+.Sh CAVEATS
+While
+.Nm
+can be used as a calculator for many unit-related computations,
+caution is required: many computations require additional constant
+factors deriving from the physics (or chemistry or whatever) of the
+situation.
+As these factors are dimensionless,
+.Nm
+cannot itself either provide them or warn the user when they have been
+forgotten.
+For example, one joule is one kilogram meter squared per second
+squared, by definition; however, the kinetic energy of a one-kilogram
+object moving at one meter per second is half a joule, not one joule,
+because of a dimensionless factor that arises from integration.
+.Pp
+Also, some pairs of units that have the same dimensionality are
+nonetheless used to measure different things and attempting to convert
+between them may require additional fudge factors or be entirely
+meaningless.
+For example, torque and energy have the same dimensionality, but
+attempting to convert torque in newton-meters to energy in joules is
+nonsensical.
+There is no practical way for
+.Nm
+to warn about these issues either.
+.Sh BUGS
+The effect of including a
+.Sq \&/
+in a prefix is surprising.
+.Pp
+Exponents entered by the user can be only one digit.
+You can work around this by multiplying several terms.
+.Pp
+The user must use
+.Sq \&|
+to indicate division of numbers and
+.Sq \&/
+to indicate division of symbols.
+This distinction should not be necessary.
+.Pp
+The program contains various arbitrary limits on the length
+of the units converted and on the length of the data file.
+.Pp
+The program should use a hash table to store units so that
+it doesn't take so long to load the units list and check
+for duplication.
