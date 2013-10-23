@@ -239,8 +239,8 @@ ENTRY(copy_msg_from_user)
 	/* load the destination pointer */
 	mov	8(%esp), %edx
 
-/*	mov	0*4(%ecx), %eax
-	mov	%eax, 0*4(%edx) */ 
+	mov	0*4(%ecx), %eax
+	mov	%eax, 0*4(%edx) 
 	mov	1*4(%ecx), %eax
 	mov	%eax, 1*4(%edx)
 	mov	2*4(%ecx), %eax
@@ -257,6 +257,21 @@ ENTRY(copy_msg_from_user)
 	mov	%eax, 7*4(%edx)
 	mov	8*4(%ecx), %eax
 	mov	%eax, 8*4(%edx)
+
+	mov	 9*4(%ecx), %eax
+	mov	%eax,  9*4(%edx) 
+	mov	10*4(%ecx), %eax
+	mov	%eax, 10*4(%edx)
+	mov	11*4(%ecx), %eax
+	mov	%eax, 11*4(%edx)
+	mov	12*4(%ecx), %eax
+	mov	%eax, 12*4(%edx)
+	mov	13*4(%ecx), %eax
+	mov	%eax, 13*4(%edx)
+	mov	14*4(%ecx), %eax
+	mov	%eax, 14*4(%edx)
+	mov	15*4(%ecx), %eax
+	mov	%eax, 15*4(%edx)
 
 LABEL(__copy_msg_from_user_end)
 	movl	$0, %eax
@@ -296,6 +311,22 @@ ENTRY(copy_msg_to_user)
 	mov	%eax, 7*4(%edx)
 	mov	8*4(%ecx), %eax
 	mov	%eax, 8*4(%edx)
+
+
+	mov	9*4(%ecx), %eax
+	mov	%eax, 9*4(%edx)
+	mov	10*4(%ecx), %eax
+	mov	%eax, 10*4(%edx)
+	mov	11*4(%ecx), %eax
+	mov	%eax, 11*4(%edx)
+	mov	12*4(%ecx), %eax
+	mov	%eax, 12*4(%edx)
+	mov	13*4(%ecx), %eax
+	mov	%eax, 13*4(%edx)
+	mov	14*4(%ecx), %eax
+	mov	%eax, 14*4(%edx)
+	mov	15*4(%ecx), %eax
+	mov	%eax, 15*4(%edx)
 
 LABEL(__copy_msg_to_user_end)
 	movl	$0, %eax

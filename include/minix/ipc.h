@@ -12,8 +12,8 @@
 #define M1                 1
 #define M3                 3
 #define M4                 4
-#define M3_STRING         16	/* legacy m3_ca1 size (must not be changed) */
-#define M3_LONG_STRING    16	/* current m3_ca1 size (may be increased) */
+#define M3_STRING         44	/* legacy m3_ca1 size (must not be changed) */
+#define M3_LONG_STRING    44	/* current m3_ca1 size (may be increased) */
 
 typedef struct {int m1i1, m1i2, m1i3; char *m1p1, *m1p2, *m1p3, *m1p4;} mess_1;
 typedef struct {int m2i1, m2i2, m2i3; long m2l1, m2l2; char *m2p1; 
@@ -57,8 +57,6 @@ typedef struct {
 typedef struct { u8_t flags; void *addr; } mess_vmmcp_reply;
 
 typedef struct {
-  endpoint_t m_source;		/* who sent the message */
-  int m_type;			/* what kind of message is it */
   union {
 	mess_1 m_m1;
 	mess_2 m_m2;
@@ -74,7 +72,10 @@ typedef struct {
 	mess_vmmcp m_vmmcp;
 	mess_vmmcp_reply m_vmmcp_reply;
 	mess_vm_vfs_mmap m_vm_vfs;
+	u32_t size[14];		/* message payload may have 14 longs at most */
   } m_u;
+  int m_type;			/* what kind of message is it */
+  endpoint_t m_source;		/* who sent the message */
 } message __aligned(16);
 
 /* The following defines provide names for useful members. */
