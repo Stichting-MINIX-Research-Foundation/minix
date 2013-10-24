@@ -1,0 +1,361 @@
+.\"	$NetBSD: pr.1,v 1.22 2012/08/01 02:36:17 ginsbach Exp $
+.\"
+.\" Copyright (c) 1991 Keith Muller.
+.\" Copyright (c) 1993
+.\"	The Regents of the University of California.  All rights reserved.
+.\" Copyright (c) 1994-1995, 1997, 1999-2003, 2009, 2012
+.\"	The NetBSD Foundation, Inc.
+.\"
+.\" This code is derived from software contributed to Berkeley by
+.\" Keith Muller of the University of California, San Diego.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"     from: @(#)pr.1	8.1 (Berkeley) 6/6/93
+.\"
+.Dd July 31, 2012
+.Dt PR 1
+.Os
+.Sh NAME
+.Nm pr
+.Nd print files
+.Sh SYNOPSIS
+.Nm
+.Op Ar \&+page
+.Op Fl Ar column
+.Op Fl adFfmprt
+.Oo
+.Fl e Ns Oo Ar char Oc Ns Op Ar gap
+.Oc
+.Op Fl h Ar header
+.Oo
+.Fl i Ns Oo Ar char Oc Ns Op Ar gap
+.Oc
+.Op Fl l Ar lines
+.Oo
+.Fl n Ns Oo Ar char Oc Ns Op Ar width
+.Oc
+.Op Fl o Ar offset
+.Oo
+.Fl s Ns Op Ar char
+.Oc
+.Op Fl T Ar timefmt
+.Op Fl w Ar width
+.Op -
+.Op Ar file ...
+.Sh DESCRIPTION
+The
+.Nm
+utility is a printing and pagination filter for text files.
+When multiple input files are specified, each is read, formatted,
+and written to standard output.
+By default, the input is separated into 66-line pages, each with
+.Bl -bullet
+.It
+A 5-line header with the page number, date, time, and
+the pathname of the file.
+.It
+A 5-line trailer consisting of blank lines.
+.El
+.Pp
+If standard output is associated with a terminal,
+diagnostic messages are suppressed until the
+.Nm
+utility has completed processing.
+.Pp
+When multiple column output is specified,
+text columns are of equal width.
+By default text columns are separated by at least one
+.Aq Em blank .
+Input lines that do not fit into a text column are truncated.
+Lines are not truncated under single column output.
+.Sh OPTIONS
+In the following option descriptions, column, lines, offset, page, and
+width are positive decimal integers and gap is a nonnegative decimal integer.
+.Bl -tag -width 4n
+.It Ar \&+page
+Begin output at page number
+.Ar page
+of the formatted input.
+.It Fl Ar column
+Produce output that is
+.Ar columns
+wide (default is 1) that is written vertically
+down each column in the order in which the text
+is received from the input file.
+The options
+.Fl e
+and
+.Fl i
+are assumed.
+This option should not be used with
+.Fl m .
+When used with
+.Fl t ,
+the minimum number of lines is used to display the output.
+.It Fl a
+Modify the effect of the
+.Fl column
+option so that the columns are filled across the page in a round-robin order
+(e.g., when column is 2, the first input line heads column
+1, the second heads column 2, the third is the second line
+in column 1, etc.).
+This option requires the use of the
+.Fl column
+option.
+.It Fl d
+Produce output that is double spaced.
+An extra
+.Aq Em newline
+character is output following every
+.Aq newline
+found in the input.
+.It Fl e Ns Oo Ar char Oc Ns Op Ar gap
+Expand each input
+.Aq tab
+to the next greater column
+position specified by the formula
+.Ar n*gap+1 ,
+where
+.Em n
+is an integer \*[Gt] 0.
+If
+.Ar gap
+is zero or is omitted the default is 8.
+All
+.Aq Em tab
+characters in the input are expanded into the appropriate
+number of
+.Ao Em space Ac Ns s .
+If any nondigit character,
+.Ar char ,
+is specified, it is used as the input tab character.
+If the first character of
+.Ar char
+is a digit then
+.Ar char
+is treated as
+.Ar gap .
+.It Fl F
+Use a
+.Aq Em form-feed
+character for new pages,
+instead of the default behavior that uses a
+sequence of
+.Aq Em newline
+characters.
+.It Fl f
+Same as
+.Fl F .
+Additionally pause before beginning the first page
+if the standard output is associated with a terminal.
+.It Fl h Ar header
+Use the string
+.Ar header
+to replace the
+.Ar file name
+in the header line.
+.It Fl i Ns Oo Ar char Oc Ns Op Ar gap
+In output, replace multiple
+.Ao space Ac Ns s
+with
+.Ao tab Ac Ns s
+whenever two or more
+adjacent
+.Ao space Ac Ns s
+reach column positions
+.Ar gap+1 ,
+.Ar 2*gap+1 ,
+etc.
+If
+.Ar gap
+is zero or omitted, default
+.Aq Em tab
+settings at every eighth column position
+is used.
+If any nondigit character,
+.Ar char ,
+is specified, it is used as the output
+.Aq Em tab
+character.
+If the first character of
+.Ar char
+is a digit then
+.Ar char
+is treated as
+.Ar gap .
+.It Fl l Ar lines
+Override the 66 line default and reset the page length to
+.Ar lines .
+If
+.Ar lines
+is not greater than the sum of both the header and trailer
+depths (in lines), the
+.Nm
+utility suppresses output of both the header and trailer, as if the
+.Fl t
+option were in effect.
+.It Fl m
+Merge the contents of multiple files.
+One line from each file specified by a file operand is
+written side by side into text columns of equal fixed widths, in
+terms of the number of column positions.
+The number of text columns depends on the number of
+file operands successfully opened.
+The maximum number of files merged depends on page width and the
+per process open file limit.
+The options
+.Fl e
+and
+.Fl i
+are assumed.
+.It Fl n Ns Oo Ar char Oc Ns Op Ar width
+Provide
+.Ar width
+digit line numbering.
+The default for
+.Ar width ,
+if not specified, is 5.
+The number occupies the first
+.Ar width
+column positions of each text column or each line of
+.Fl m
+output.
+If
+.Ar char
+(any nondigit character) is given, it is appended to the line number to
+separate it from whatever follows.
+The default for
+.Ar char
+is a
+.Aq Em tab .
+Line numbers longer than
+.Ar width
+columns are truncated.
+.It Fl o Ar offset
+Each line of output is preceded by
+.Ar offset
+.Ao Em space Ac Ns s .
+If the
+.Fl o
+option is not specified, the default is zero.
+The space taken is in addition to the output line width.
+.It Fl p
+Pause before beginning each page if the
+standard output is associated with a terminal.
+.Nm
+will write an
+.Aq Em alert
+to standard error and wait for a
+.Aq Em carriage-return
+to be read on
+.Pa /dev/tty .
+.It Fl r
+Write no diagnostic reports on failure to open a file.
+.It Fl s Ns Op Ar char
+Separate text columns by the single character
+.Ar char
+instead of by the appropriate number of
+.Ao Em space Ac Ns s
+(default for
+.Ar char
+is the
+.Aq Em tab
+character).
+.It Fl T
+Specify an
+.Xr strftime 3
+format string to be used to format the date and time information in the page
+header.
+.It Fl t
+Print neither the five-line identifying
+header nor the five-line trailer usually supplied for each page.
+Quit printing after the last line of each file without spacing to the
+end of the page.
+.It Fl w Ar width
+Set the width of the line to
+.Ar width
+column positions for multiple text-column output only.
+If the
+.Fl w
+option is not specified and the
+.Fl s
+option is not specified, the default width is 72.
+If the
+.Fl w
+option is not specified and the
+.Fl s
+option is specified, the default width is 512.
+.It Ar file
+A pathname of a file to be printed.
+If no
+.Ar file
+operands are specified, or if a
+.Ar file
+operand is
+.Sq Fl ,
+the standard input is used.
+The standard input is used only if no
+.Ar file
+operands are specified, or if a
+.Ar file
+operand is
+.Sq Fl .
+.El
+.Pp
+The
+.Fl s
+option does not allow the option letter to be separated from its
+argument, and the options
+.Fl e ,
+.Fl i ,
+and
+.Fl n
+require that both arguments, if present, not be separated from the option
+letter.
+.Sh ERRORS
+If
+.Nm
+receives an interrupt while printing to a terminal, it
+flushes all accumulated error messages to the screen before
+terminating.
+.Pp
+The
+.Nm
+utility exits 0 on success, and 1 if an error occurs.
+.Pp
+Error messages are written to standard error during the printing
+process (if output is redirected) or after all successful
+file printing is complete (when printing to a terminal).
+.Sh SEE ALSO
+.Xr cat 1 ,
+.Xr more 1 ,
+.Xr strftime 3
+.Sh STANDARDS
+The
+.Nm
+utility is
+.St -p1003.1-2008
+compatible.

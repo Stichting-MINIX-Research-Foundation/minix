@@ -19,7 +19,7 @@ SUBDIR= \
 	mkdep mktemp \
 	\
 	nbperf newgrp nice nl nohup nvi \
-	passwd \
+	passwd pr \
 	printenv printf \
 	rev \
 	\

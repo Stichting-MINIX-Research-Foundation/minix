@@ -18,7 +18,7 @@ SUBDIR=	add_route arp ash at backup btrace \
 	mesg mined mkfifo \
 	mount mt netconf \
 	nonamed od paste patch \
-	ping postinstall poweroff pr prep printroot \
+	ping postinstall poweroff prep printroot \
 	profile progressbar pr_routes ps pwdauth \
 	ramdisk rarpd rawspeed rcp readclock \
 	reboot remsync rget rlogin \
