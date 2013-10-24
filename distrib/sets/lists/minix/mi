@@ -529,6 +529,7 @@
 ./usr/bin/uudecode			minix-sys
 ./usr/bin/uue				minix-sys
 ./usr/bin/uuencode			minix-sys
+./usr/bin/uuidgen			minix-sys
 ./usr/bin/version			minix-sys
 ./usr/bin/vi				minix-sys
 ./usr/bin/view				minix-sys
@@ -2085,6 +2086,7 @@
 ./usr/man/man1/users.1			minix-sys
 ./usr/man/man1/uud.1			minix-sys
 ./usr/man/man1/uue.1			minix-sys
+./usr/man/man1/uuidgen.1		minix-sys
 ./usr/man/man1/vi.1			minix-sys
 ./usr/man/man1/view.1			minix-sys
 ./usr/man/man1/vol.1			minix-sys
