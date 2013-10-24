@@ -20,7 +20,7 @@ SUBDIR= \
 	\
 	nbperf newgrp nice nl nohup nvi \
 	passwd pr \
-	printenv printf \
+	printenv printf pwhash \
 	rev \
 	\
 	shuffle sed seq \

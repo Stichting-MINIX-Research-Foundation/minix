@@ -438,6 +438,7 @@
 ./usr/bin/progressbar			minix-sys
 ./usr/bin/pr_routes			minix-sys
 ./usr/bin/ps				minix-sys
+./usr/bin/pwhash			minix-sys
 ./usr/bin/ramdisk			minix-sys
 ./usr/bin/ranlib			minix-sys	binutils
 ./usr/bin/rarpd				minix-sys
@@ -2006,6 +2007,7 @@
 ./usr/man/man1/profile.1		minix-sys
 ./usr/man/man1/ps.1			minix-sys
 ./usr/man/man1/pwd.1			minix-sys
+./usr/man/man1/pwhash.1			minix-sys
 ./usr/man/man1/ranlib.1			minix-sys	binutils
 ./usr/man/man1/rcp.1			minix-sys
 ./usr/man/man1/read.1			minix-sys

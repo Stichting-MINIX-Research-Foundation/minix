@@ -1,0 +1,96 @@
+.\"	$NetBSD: pwhash.1,v 1.7 2009/10/16 08:09:12 wiz Exp $
+.\"	$OpenBSD: encrypt.1,v 1.16 2000/11/09 17:52:07 aaron Exp $
+.\"
+.\" Copyright (c) 1996, Jason Downs.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR(S) ``AS IS'' AND ANY EXPRESS
+.\" OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+.\" WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+.\" DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR(S) BE LIABLE FOR ANY DIRECT,
+.\" INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+.\" (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+.\" SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+.\" CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.Dd October 16, 2009
+.Dt PWHASH 1
+.Os
+.Sh NAME
+.Nm pwhash
+.Nd hashes passwords from the command line or standard input
+.Sh SYNOPSIS
+.Nm pwhash
+.Op Fl km
+.Op Fl b Ar rounds
+.Op Fl S Ar rounds
+.Op Fl s Ar salt
+.Op Fl p | Ar string
+.Sh DESCRIPTION
+.Nm
+prints the encrypted form of
+.Ar string
+to the standard output.
+This is mostly useful for encrypting passwords from within scripts.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl b Ar rounds
+Encrypt the string using Blowfish hashing with the specified
+.Ar rounds .
+.It Fl k
+Run in
+.Xr makekey 8
+compatible mode.
+A single combined key (eight chars) and salt (two chars) with no
+intermediate space are read from standard input and the DES encrypted
+result is written to standard output without a terminating newline.
+.It Fl m
+Encrypt the string using MD5.
+.It Fl p
+Prompt for a single string with echo turned off.
+.It Fl S Ar rounds
+Encrypt the salt with HMAC-SHA1 using the password as key and the specified
+.Ar rounds
+as a hint for the number of iterations.
+.It Fl s Ar salt
+Encrypt the string using DES, with the specified
+.Ar salt .
+.El
+.Pp
+If no
+.Ar string
+is specified,
+.Nm
+reads one string per line from standard input, encrypting each one
+with the chosen algorithm from above.
+In the event that no specific algorithm is given as a command line option,
+the algorithm specified in the default class in
+.Pa /etc/passwd.conf
+will be used.
+.Pp
+For MD5 and Blowfish a new random salt is automatically generated for each
+password.
+.Pp
+Specifying the
+.Ar string
+on the command line should be discouraged; using the
+standard input is more secure.
+.Sh FILES
+.Bl -tag -width /etc/passwd.conf -compact
+.It Pa /etc/passwd.conf
+.El
+.Sh SEE ALSO
+.Xr crypt 3 ,
+.Xr passwd.conf 5
