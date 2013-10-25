@@ -29,7 +29,7 @@ SUBDIR=	add_route arp ash at backup btrace \
 	telnetd term termcap tget time touch \
 	truncate tty udpstat umount uname \
 	unstack update uud uue version vol \
-	whereis which write writeisofs fetch \
+	whereis which writeisofs fetch \
 	zdump zmodem pkgin_cd pkgin_all \
 	worldstone updateboot update_bootcfg \
 	atnormalize dosread fdisk loadfont \

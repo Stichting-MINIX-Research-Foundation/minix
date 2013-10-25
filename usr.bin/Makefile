@@ -32,7 +32,7 @@ SUBDIR= \
 	uuidgen \
 	\
 	wc whatis who \
-	xargs xinstall yes
+	write xargs xinstall yes
 
 .if !defined(__MINIX)
 SUBDIR+= ../external/zlib/pigz/bin/pigz
