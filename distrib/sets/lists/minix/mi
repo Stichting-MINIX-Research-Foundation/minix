@@ -454,6 +454,7 @@
 ./usr/bin/remsync			minix-sys
 ./usr/bin/repartition                   minix-sys
 ./usr/bin/restore			minix-sys
+./usr/bin/renice			minix-sys
 ./usr/bin/rev				minix-sys
 ./usr/bin/rget				minix-sys
 ./usr/bin/rlogin			minix-sys
@@ -4449,6 +4450,7 @@
 ./usr/man/man8/rdate.8					minix-sys
 ./usr/man/man8/readclock.8					minix-sys
 ./usr/man/man8/reboot.8					minix-sys
+./usr/man/man8/renice.8					minix-sys
 ./usr/man/man8/repartition.8					minix-sys
 ./usr/man/man8/rshd.8					minix-sys
 ./usr/man/man8/screendump.8					minix-sys

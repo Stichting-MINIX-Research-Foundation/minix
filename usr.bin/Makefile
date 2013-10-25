@@ -21,7 +21,7 @@ SUBDIR= \
 	nbperf newgrp nice nl nohup nvi \
 	passwd pr \
 	printenv printf pwhash \
-	rev \
+	renice rev \
 	\
 	shuffle sed seq \
 	sort stat su \
