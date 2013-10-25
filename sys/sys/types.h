@@ -183,7 +183,9 @@ typedef	__daddr_t	daddr_t;	/* disk address */
 typedef	int64_t		daddr_t;	/* disk address */
 #endif
 
+#if defined(__minix) /* LSC: Wait until bigger message to enlarge the data type. */
 typedef	uint32_t	dev_t;		/* device number */
+#endif /* defined(__minix) */
 typedef	uint32_t	fixpt_t;	/* fixed point number */
 
 #ifndef	gid_t
@@ -289,12 +291,11 @@ typedef int32_t __devmajor_t, __devminor_t;
 #define devmajor_t __devmajor_t
 #define devminor_t __devminor_t
 #define NODEVMAJOR (-1)
-/* LSC Our major / minor numbering scheme is not the exactly the same, to be updated? */
-#define	major(x)	((devmajor_t)(((uint32_t)(x) & 0x0000ff00) >>  8))
-#define	minor(x)	((devminor_t)( \
+#define	major(x)	((devmajor_t)(((uint32_t)(x) & 0x000fff00) >>  8))
+#define	minor(x)	((devminor_t)((((uint32_t)(x) & 0xfff00000) >> 12) | \
 				   (((uint32_t)(x) & 0x000000ff) >>  0)))
-#define	makedev(x,y)	((dev_t)((((x) <<  8) & 0x0000ff00) | \
-				  \
+#define	makedev(x,y)	((dev_t)((((x) <<  8) & 0x000fff00) | \
+				 (((y) << 12) & 0xfff00000) | \
 				 (((y) <<  0) & 0x000000ff)))
 #endif
 
