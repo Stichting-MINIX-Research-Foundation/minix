@@ -51,9 +51,3 @@
 #define reply_time      m2_l1
 #define reply_utime     m2_l2
 #define reply_ntime	m2_l2
-#define reply_t1 	m4_l1
-#define reply_t2 	m4_l2
-#define reply_t3 	m4_l3
-#define reply_t4 	m4_l4
-#define reply_t5 	m4_l5
-

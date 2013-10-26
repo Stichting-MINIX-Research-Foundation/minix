@@ -25,7 +25,6 @@
 
 /* PM sleep states. */
 #define PSTATE_NONE	'-'
-#define PSTATE_PAUSED	'P'
 #define PSTATE_WAITING	'W'
 #define PSTATE_SIGSUSP	'S'
 

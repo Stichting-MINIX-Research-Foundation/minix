@@ -11,7 +11,6 @@
  *   do_sigreturn:	perform the SIGRETURN system call
  *   do_sigsuspend:	perform the SIGSUSPEND system call
  *   do_kill:		perform the KILL system call
- *   do_pause:		perform the PAUSE system call
  *   process_ksig:	process a signal an behalf of the kernel
  *   sig_proc:		interrupt or terminate a signaled process
  *   check_sig:		check which processes to signal with sig_proc()
@@ -288,17 +287,6 @@ int process_ksig(endpoint_t proc_nr_e, int signo)
   else {
       return EDEADEPT; /* process is gone */
   }
-}
-
-/*===========================================================================*
- *				do_pause				     *
- *===========================================================================*/
-int do_pause()
-{
-/* Perform the pause() system call. */
-
-  mp->mp_flags |= PAUSED;
-  return(SUSPEND);
 }
 
 /*===========================================================================*
@@ -636,10 +624,9 @@ static void unpause(rmp)
 struct mproc *rmp;		/* which process */
 {
 /* A signal is to be sent to a process.  If that process is hanging on a
- * system call, the system call must be terminated with EINTR.  Possible
- * calls are PAUSE, WAIT, READ and WRITE, the latter two for pipes and ttys.
- * First check if the process is hanging on an PM call.  If not, tell VFS,
- * so it can check for READs and WRITEs from pipes, ttys and the like.
+ * system call, the system call must be terminated with EINTR.  First check if
+ * the process is hanging on an PM call.  If not, tell VFS, so it can check for
+ * interruptible calls such as READs and WRITEs from pipes, ttys and the like.
  */
   message m;
   int r;
@@ -648,8 +635,8 @@ struct mproc *rmp;		/* which process */
   if (rmp->mp_flags & DELAY_CALL)
 	return;
 
-  /* Check to see if process is hanging on a PAUSE, WAIT or SIGSUSPEND call. */
-  if (rmp->mp_flags & (PAUSED | WAITING | SIGSUSPENDED)) {
+  /* Check to see if process is hanging on a WAIT or SIGSUSPEND call. */
+  if (rmp->mp_flags & (WAITING | SIGSUSPENDED)) {
 	/* Stop process from running. No delay calls: it called us. */
 	if ((r = sys_stop(rmp->mp_endpoint)) != OK)
 		panic("sys_stop failed: %d", r);
@@ -743,8 +730,8 @@ int signo;			/* signal to send to process (1 to _NSIG-1) */
   }
 
   /* Was the process suspended in PM? Then interrupt the blocking call. */
-  if (rmp->mp_flags & (PAUSED | WAITING | SIGSUSPENDED)) {
-	rmp->mp_flags &= ~(PAUSED | WAITING | SIGSUSPENDED);
+  if (rmp->mp_flags & (WAITING | SIGSUSPENDED)) {
+	rmp->mp_flags &= ~(WAITING | SIGSUSPENDED);
 
 	setreply(slot, EINTR);
   }
