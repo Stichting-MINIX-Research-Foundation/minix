@@ -41,7 +41,8 @@ int do_gettime()
   }
 
   mp->mp_reply.reply_time = (time_t) (boottime + (clock / system_hz));
-  mp->mp_reply.reply_ntime = (clock % system_hz) * 1000000000 / system_hz;
+  mp->mp_reply.reply_ntime =
+	(long) ((clock % system_hz) * 1000000000ULL / system_hz);
 
   return(OK);
 }
@@ -103,7 +104,8 @@ int do_time()
   	panic("do_time couldn't get uptime: %d", s);
 
   mp->mp_reply.reply_time = (time_t) (boottime + (realtime / system_hz));
-  mp->mp_reply.reply_utime = (realtime % system_hz) * 1000000 / system_hz;
+  mp->mp_reply.reply_utime =
+	(long) ((realtime % system_hz) * 1000000ULL / system_hz);
   return(OK);
 }
 
