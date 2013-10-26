@@ -53,11 +53,6 @@ SRCS+= watchdog.c
 CPPFLAGS+= -DUSE_WATCHDOG
 .endif
 
-.if ${USE_MCONTEXT} != "no"
-SRCS+= do_mcontext.c
-CPPFLAGS+= -DUSE_MCONTEXT
-.endif
-
 # Extra debugging routines
 .if ${USE_SYSDEBUG} != "no"
 SRCS+= 	debug.c
@@ -69,14 +64,6 @@ SRCS+= profile.c do_sprofile.c
 
 .if ${USE_LIVEUPDATE} != "no"
 CPPFLAGS+= -DUSE_UPDATE
-.endif
-
-.if ${USE_STATECTL} != "no"
-CPPFLAGS+= -DUSE_STATECTL
-.endif
-
-.if ${USE_TRACE} != "no"
-CPPFLAGS+= -DUSE_TRACE
 .endif
 
 CLEANFILES+=extracted-errno.h extracted-mfield.h extracted-mtype.h procoffsets.h

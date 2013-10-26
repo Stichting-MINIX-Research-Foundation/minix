@@ -21,11 +21,9 @@ i2cdriver_announce(uint32_t bus)
 	 * For this reason, there may blocked callers when a driver restarts.
 	 * Ask the kernel to unblock them (if any).
 	 */
-#if USE_STATECTL
 	if ((r = sys_statectl(SYS_STATE_CLEAR_IPC_REFS)) != OK) {
 		panic("chardriver_init: sys_statectl failed: %d", r);
 	}
-#endif
 
 	/* Publish a driver up event. */
 	r = ds_retrieve_label_name(label, getprocnr());

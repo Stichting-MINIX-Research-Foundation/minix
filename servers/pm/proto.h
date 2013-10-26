@@ -43,10 +43,6 @@ void setreply(int proc_nr, int result);
 /* mcontext.c */
 int do_getmcontext(void);
 int do_setmcontext(void);
-#if ! USE_MCONTEXT
-#define do_getmcontext no_sys
-#define do_setmcontext no_sys
-#endif
 
 /* misc.c */
 int do_reboot(void);
@@ -95,10 +91,6 @@ int do_settime(void);
 /* trace.c */
 int do_trace(void);
 void stop_proc(struct mproc *rmp, int sig_nr);
-#if ! USE_TRACE
-#define do_trace no_sys
-#define stop_proc no_sys
-#endif
 
 /* utility.c */
 pid_t get_free_pid(void);
