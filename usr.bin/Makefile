@@ -14,7 +14,7 @@ SUBDIR= asa \
 	fsplit ftp genassym getopt \
 	head indent infocmp join \
 	ldd leave \
-	login logname lorder m4 \
+	lock login logname lorder m4 \
 	machine make man mesg \
 	mkdep mktemp \
 	\

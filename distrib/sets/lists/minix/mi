@@ -374,6 +374,7 @@
 ./usr/bin/lex				minix-sys
 ./usr/bin/loadfont                      minix-sys
 ./usr/bin/loadramdisk			minix-sys
+./usr/bin/lock				minix-sys
 ./usr/bin/logger			minix-sys
 ./usr/bin/login				minix-sys
 ./usr/bin/logname			minix-sys
@@ -1954,6 +1955,7 @@
 ./usr/man/man1/loadfont.1		minix-sys
 ./usr/man/man1/loadkeys.1		minix-sys
 ./usr/man/man1/local.1			minix-sys
+./usr/man/man1/lock.1			minix-sys
 ./usr/man/man1/logger.1			minix-sys
 ./usr/man/man1/login.1			minix-sys
 ./usr/man/man1/logname.1		minix-sys
