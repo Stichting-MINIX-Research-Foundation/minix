@@ -3,7 +3,7 @@
 
 .include <bsd.own.mk>
 
-SUBDIR= \
+SUBDIR= asa \
 	banner basename bdes \
 	bzip2 bzip2recover \
 	cal chpass cksum \
