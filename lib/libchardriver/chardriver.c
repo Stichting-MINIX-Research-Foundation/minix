@@ -106,10 +106,8 @@ void chardriver_announce(void)
    * For this reason, there may blocked callers when a driver restarts.
    * Ask the kernel to unblock them (if any).
    */
-#if USE_STATECTL
   if ((r = sys_statectl(SYS_STATE_CLEAR_IPC_REFS)) != OK)
 	panic("chardriver_announce: sys_statectl failed: %d", r);
-#endif
 
   /* Publish a driver up event. */
   if ((r = ds_retrieve_label_name(label, getprocnr())) != OK)

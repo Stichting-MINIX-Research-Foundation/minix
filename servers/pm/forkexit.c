@@ -122,11 +122,9 @@ int do_fork()
 
   tell_vfs(rmc, &m);
 
-#if USE_TRACE
   /* Tell the tracer, if any, about the new child */
   if (rmc->mp_tracer != NO_TRACER)
 	sig_proc(rmc, SIGSTOP, TRUE /*trace*/, FALSE /* ksig */);
-#endif /* USE_TRACE */
 
   /* Do not reply until VFS is ready to process the fork
   * request
@@ -215,11 +213,9 @@ int do_srv_fork()
 
   tell_vfs(rmc, &m);
 
-#if USE_TRACE
   /* Tell the tracer, if any, about the new child */
   if (rmc->mp_tracer != NO_TRACER)
 	sig_proc(rmc, SIGSTOP, TRUE /*trace*/, FALSE /* ksig */);
-#endif /* USE_TRACE */
 
   /* Wakeup the newly created process */
   setreply(rmc-mproc, OK);
@@ -357,12 +353,10 @@ int dump_core;			/* flag indicating whether to dump core */
   /* If the process has children, disinherit them.  INIT is the new parent. */
   for (rmp = &mproc[0]; rmp < &mproc[NR_PROCS]; rmp++) {
 	if (!(rmp->mp_flags & IN_USE)) continue;
-#if USE_TRACE
 	if (rmp->mp_tracer == proc_nr) {
 		/* This child's tracer died. Do something sensible. */
 		tracer_died(rmp);
 	}
-#endif /* USE_TRACE */
 	if (rmp->mp_parent == proc_nr) {
 		/* 'rmp' now points to a child to be disinherited. */
 		rmp->mp_parent = INIT_PROC_NR;
@@ -423,14 +417,12 @@ int dump_core;			/* flag indicating whether to dump core */
   	panic("exit_restart: vm_exit failed: %d", r);
   }
 
-#if USE_TRACE
   if (rmp->mp_flags & TRACE_EXIT)
   {
 	/* Wake up the tracer, completing the ptrace(T_EXIT) call */
 	mproc[rmp->mp_tracer].mp_reply.reply_trace = 0;
 	setreply(rmp->mp_tracer, OK);
   }
-#endif /* USE_TRACE */
 
   /* Clean up if the parent has collected the exit status */
   if (rmp->mp_flags & TOLD_PARENT)
@@ -476,7 +468,6 @@ int do_waitpid()
 
 	children++;			/* this child is acceptable */
 
-#if USE_TRACE
 	if (rp->mp_tracer == who_p) {
 		if (rp->mp_flags & TRACE_ZOMBIE) {
 			/* Traced child meets the pid test and has exited. */
@@ -499,7 +490,6 @@ int do_waitpid()
 			}
 		}
 	}
-#endif /* USE_TRACE */
 
 	if (rp->mp_parent == who_p) {
 		if (rp->mp_flags & ZOMBIE) {
@@ -567,7 +557,6 @@ struct mproc *rmp;
 
   /* See if we have to notify a tracer process first. */
   if (rmp->mp_tracer != NO_TRACER && rmp->mp_tracer != rmp->mp_parent) {
-#if USE_TRACE
 	rmp->mp_flags |= TRACE_ZOMBIE;
 
 	t_mp = &mproc[rmp->mp_tracer];
@@ -577,7 +566,6 @@ struct mproc *rmp;
 		return;
 
 	tell_tracer(rmp);
-#endif /* USE_TRACE */
   }
   else {
 	rmp->mp_flags |= ZOMBIE;
@@ -652,7 +640,6 @@ register struct mproc *child;	/* tells which process is exiting */
   child->mp_flags |= TOLD_PARENT;	/* avoid informing parent twice */
 }
 
-#if USE_TRACE
 /*===========================================================================*
  *				tell_tracer				     *
  *===========================================================================*/
@@ -710,7 +697,6 @@ struct mproc *child;			/* process being traced */
 	check_parent(child, TRUE /*try_cleanup*/);
   }
 }
-#endif /* USE_TRACE */
 
 /*===========================================================================*
  *				cleanup					     *

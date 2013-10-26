@@ -106,10 +106,8 @@ void blockdriver_announce(int type)
    * will not restart statefully, and thus will skip this code.
    */
   if (type == SEF_INIT_RESTART) {
-#if USE_STATECTL
 	if ((r = sys_statectl(SYS_STATE_CLEAR_IPC_REFS)) != OK)
 		panic("blockdriver_init: sys_statectl failed: %d", r);
-#endif
   }
 
   /* Publish a driver up event. */
