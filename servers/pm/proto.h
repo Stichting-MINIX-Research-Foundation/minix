@@ -8,7 +8,6 @@ struct memory;
 #include <minix/timers.h>
 
 /* alarm.c */
-int do_alarm(void);
 int do_itimer(void);
 void set_alarm(struct mproc *rmp, clock_t ticks);
 void check_vtimer(int proc_nr, int sig);
@@ -68,7 +67,6 @@ int do_cprofile(void);
 int do_kill(void);
 int do_srv_kill(void);
 int process_ksig(endpoint_t proc_nr_e, int signo);
-int do_pause(void);
 int check_sig(pid_t proc_id, int signo, int ksig);
 void sig_proc(struct mproc *rmp, int signo, int trace, int ksig);
 int do_sigaction(void);
@@ -83,7 +81,6 @@ void vm_notify_sig_wrapper(endpoint_t ep);
 /* time.c */
 int do_stime(void);
 int do_time(void);
-int do_times(void);
 int do_getres(void);
 int do_gettime(void);
 int do_settime(void);

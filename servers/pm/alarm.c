@@ -4,7 +4,6 @@
  *
  * The entry points into this file are:
  *   do_itimer: perform the ITIMER system call
- *   do_alarm: perform the ALARM system call
  *   set_alarm: tell the timer interface to start or stop a process timer
  *   check_vtimer: check if one of the virtual timers needs to be restarted
  */
@@ -151,30 +150,6 @@ int do_itimer()
   }
 
   return(r);
-}
-
-/*===========================================================================*
- *				do_alarm				     *
- *===========================================================================*/
-int do_alarm()
-{
-  struct itimerval value, ovalue;
-  int remaining;		/* previous time left in seconds */
-
-  /* retrieve the old timer value, in seconds (rounded up) */
-  get_realtimer(mp, &ovalue);
-  
-  remaining = ovalue.it_value.tv_sec;
-  if (ovalue.it_value.tv_usec > 0) remaining++;
-
-  /* set the new timer value */
-  memset(&value, 0, sizeof(value));
-  value.it_value.tv_sec = m_in.seconds;
-
-  set_realtimer(mp, &value);
-
-  /* and return the old timer value */
-  return(remaining);
 }
 
 /*===========================================================================*

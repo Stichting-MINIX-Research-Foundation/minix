@@ -2323,7 +2323,7 @@
 ./usr/man/man2/accept.2			minix-sys
 ./usr/man/man2/access.2			minix-sys
 ./usr/man/man2/adjtime.2		minix-sys
-./usr/man/man2/alarm.2			minix-sys
+./usr/man/man2/alarm.2			minix-sys	obsolete
 ./usr/man/man2/bind.2			minix-sys
 ./usr/man/man2/brk.2			minix-sys
 ./usr/man/man2/chdir.2			minix-sys
@@ -2369,7 +2369,7 @@
 ./usr/man/man2/mknod.2			minix-sys
 ./usr/man/man2/mount.2			minix-sys
 ./usr/man/man2/open.2			minix-sys
-./usr/man/man2/pause.2			minix-sys
+./usr/man/man2/pause.2			minix-sys	obsolete
 ./usr/man/man2/pipe.2			minix-sys
 ./usr/man/man2/pipe2.2			minix-sys
 ./usr/man/man2/ptrace.2			minix-sys
@@ -2403,7 +2403,7 @@
 ./usr/man/man2/symlink.2		minix-sys
 ./usr/man/man2/sync.2			minix-sys
 ./usr/man/man2/time.2			minix-sys
-./usr/man/man2/times.2			minix-sys
+./usr/man/man2/times.2			minix-sys	obsolete
 ./usr/man/man2/truncate.2		minix-sys
 ./usr/man/man2/umask.2			minix-sys
 ./usr/man/man2/uname.2			minix-sys

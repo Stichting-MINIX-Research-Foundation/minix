@@ -193,7 +193,6 @@ static char *prrecv(struct pstat *ps)
   blkstr = "?";
   if (ps->ps_recv == PM_PROC_NR) {
 	switch (ps->ps_pstate) {
-	case PSTATE_PAUSED: blkstr = "pause"; break;
 	case PSTATE_WAITING: blkstr = "wait"; break;
 	case PSTATE_SIGSUSP: blkstr = "sigsusp"; break;
 	}

@@ -76,7 +76,6 @@ EXTERN struct mproc {
 #define IN_USE		0x00001	/* set when 'mproc' slot in use */
 #define WAITING		0x00002	/* set by WAIT system call */
 #define ZOMBIE		0x00004	/* waiting for parent to issue WAIT call */
-#define PAUSED		0x00008	/* set by PAUSE system call */
 #define ALARM_ON	0x00010	/* set when SIGALRM timer started */
 #define EXITING		0x00020	/* set by EXIT, process is now exiting */
 #define TOLD_PARENT	0x00040	/* parent wait() completed, ZOMBIE off */

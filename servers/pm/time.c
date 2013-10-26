@@ -6,7 +6,6 @@
  *   do_settime:	perform the CLOCK_SETTIME system call
  *   do_time:		perform the TIME system call
  *   do_stime:		perform the STIME system call
- *   do_times:		perform the TIMES system call
  */
 
 #include "pm.h"
@@ -134,25 +133,3 @@ int do_stime()
 
   return(OK);
 }
-
-/*===========================================================================*
- *				do_times				     *
- *===========================================================================*/
-int do_times()
-{
-/* Perform the times(buffer) system call. */
-  register struct mproc *rmp = mp;
-  clock_t user_time, sys_time, uptime;
-  int s;
-
-  if (OK != (s=sys_times(who_e, &user_time, &sys_time, &uptime, NULL)))
-      panic("do_times couldn't get times: %d", s);
-  rmp->mp_reply.reply_t1 = user_time;		/* user time */
-  rmp->mp_reply.reply_t2 = sys_time;		/* system time */
-  rmp->mp_reply.reply_t3 = rmp->mp_child_utime;	/* child user time */
-  rmp->mp_reply.reply_t4 = rmp->mp_child_stime;	/* child system time */
-  rmp->mp_reply.reply_t5 = uptime;		/* uptime since boot */
-
-  return(OK);
-}
-

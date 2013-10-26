@@ -24,8 +24,6 @@
 #define GETUID		  24
 #define STIME		  25
 #define PTRACE		  26
-#define ALARM		  27
-#define PAUSE		  29
 #define UTIME		  30 
 #define GETEPINFO	  31
 #define SETGROUPS	  32
@@ -37,7 +35,6 @@
 #define MKDIR		  39
 #define RMDIR		  40
 #define PIPE		  42 
-#define TIMES		  43
 #define SYMLINK		  45
 #define SETGID		  46
 #define GETGID		  47

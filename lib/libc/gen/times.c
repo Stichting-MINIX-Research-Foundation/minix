@@ -90,3 +90,7 @@ times(struct tms *tp)
 		return ((clock_t)-1);
 	return ((clock_t)(CONVTCK(t)));
 }
+
+#if defined(__minix) && defined(__weak_alias)
+__weak_alias(times, _times)
+#endif
