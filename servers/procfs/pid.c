@@ -73,8 +73,8 @@ static void pid_psinfo(int i)
 	if (!task) {
 		if (is_zombie(i))
 			state = STATE_ZOMBIE;	/* zombie */
-		else if (mproc[pi].mp_flags & STOPPED)
-			state = STATE_STOP;	/* stopped (traced) */
+		else if (mproc[pi].mp_flags & TRACE_STOPPED)
+			state = STATE_STOP;	/* stopped */
 		else if (proc[i].p_rts_flags == 0)
 			state = STATE_RUN;	/* in run-queue */
 		else if (fp_is_blocked(&fproc[pi]) ||
