@@ -168,7 +168,7 @@ void exec_restart(struct mproc *rmp, int result, vir_bytes pc, vir_bytes sp,
 			sys_kill(rmp->mp_endpoint, SIGKILL);
 			return;
 		}
-		setreply(rmp-mproc, result);
+		reply(rmp-mproc, result);
 		return;
 	}
 

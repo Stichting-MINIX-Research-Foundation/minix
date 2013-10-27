@@ -37,7 +37,7 @@ int do_set(void);
 
 /* main.c */
 int main(void);
-void setreply(int proc_nr, int result);
+void reply(int proc_nr, int result);
 
 /* mcontext.c */
 int do_getmcontext(void);

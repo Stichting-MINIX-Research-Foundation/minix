@@ -6,7 +6,7 @@
  *
  * The entry points into this file are:
  *   main:	starts PM running
- *   setreply:	set the reply to be sent to process making an PM system call
+ *   reply:	send a reply to a process making a PM system call
  */
 
 #include "pm.h"
@@ -38,7 +38,6 @@
 EXTERN unsigned long calls_stats[NCALLS];
 #endif
 
-static void sendreply(void);
 static int get_nice_value(int queue);
 static void handle_vfs_reply(void);
 
@@ -48,7 +47,6 @@ static void handle_vfs_reply(void);
 /* SEF functions and variables. */
 static void sef_local_startup(void);
 static int sef_cb_init_fresh(int type, sef_init_info_t *info);
-static int sef_cb_signal_manager(endpoint_t target, int signo);
 
 /*===========================================================================*
  *				main					     *
@@ -93,8 +91,7 @@ int main()
 			expire_timers(m_in.NOTIFY_TIMESTAMP);
 		}
 
-		/* done, send reply and continue */
-		sendreply();
+		/* done, continue */
 		continue;
 	}
 
@@ -140,8 +137,7 @@ int main()
 	}
 
 	/* Send reply. */
-	if (result != SUSPEND) setreply(who_p, result);
-	sendreply();
+	if (result != SUSPEND) reply(who_p, result);
   }
   return(OK);
 }
@@ -158,7 +154,7 @@ static void sef_local_startup()
   /* No live update support for now. */
 
   /* Register signal callbacks. */
-  sef_setcb_signal_manager(sef_cb_signal_manager);
+  sef_setcb_signal_manager(process_ksig);
 
   /* Let SEF perform startup. */
   sef_startup();
@@ -296,67 +292,27 @@ static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 }
 
 /*===========================================================================*
- *		            sef_cb_signal_manager                            *
+ *				reply					     *
  *===========================================================================*/
-static int sef_cb_signal_manager(endpoint_t target, int signo)
-{
-/* Process signal on behalf of the kernel. */
-  int r;
-
-  r = process_ksig(target, signo);
-  sendreply();
-
-  return r;
-}
-
-/*===========================================================================*
- *				setreply				     *
- *===========================================================================*/
-void setreply(proc_nr, result)
+void reply(proc_nr, result)
 int proc_nr;			/* process to reply to */
 int result;			/* result of call (usually OK or error #) */
 {
-/* Fill in a reply message to be sent later to a user process.  System calls
- * may occasionally fill in other fields, this is only for the main return
- * value, and for setting the "must send reply" flag.
+/* Send a reply to a user process.  System calls may occasionally fill in other
+ * fields, this is only for the main return value and for sending the reply.
  */
-  register struct mproc *rmp = &mproc[proc_nr];
+  struct mproc *rmp;
+  int r;
 
   if(proc_nr < 0 || proc_nr >= NR_PROCS)
-      panic("setreply arg out of range: %d", proc_nr);
+      panic("reply arg out of range: %d", proc_nr);
 
+  rmp = &mproc[proc_nr];
   rmp->mp_reply.reply_res = result;
-  rmp->mp_flags |= REPLY;	/* reply pending */
-}
 
-/*===========================================================================*
- *				sendreply				     *
- *===========================================================================*/
-static void sendreply()
-{
-  int proc_nr;
-  int s;
-  struct mproc *rmp;
-
-  /* Send out all pending reply messages, including the answer to
-   * the call just made above.
-   */
-  for (proc_nr=0, rmp=mproc; proc_nr < NR_PROCS; proc_nr++, rmp++) {
-      /* In the meantime, the process may have been killed by a
-       * signal (e.g. if a lethal pending signal was unblocked)
-       * without the PM realizing it. If the slot is no longer in
-       * use or the process is exiting, don't try to reply.
-       */
-      if ((rmp->mp_flags & (REPLY | IN_USE | EXITING)) ==
-          (REPLY | IN_USE)) {
-          s=sendnb(rmp->mp_endpoint, &rmp->mp_reply);
-          if (s != OK) {
-              printf("PM can't reply to %d (%s): %d\n",
-                  rmp->mp_endpoint, rmp->mp_name, s);
-          }
-          rmp->mp_flags &= ~REPLY;
-      }
-  }
+  if ((r = sendnb(rmp->mp_endpoint, &rmp->mp_reply)) != OK)
+	printf("PM can't reply to %d (%s): %d\n", rmp->mp_endpoint,
+		rmp->mp_name, r);
 }
 
 /*===========================================================================*
@@ -423,13 +379,13 @@ static void handle_vfs_reply()
   case PM_SETGID_REPLY:
   case PM_SETGROUPS_REPLY:
 	/* Wake up the original caller */
-	setreply(rmp-mproc, OK);
+	reply(rmp-mproc, OK);
 
 	break;
 
   case PM_SETSID_REPLY:
 	/* Wake up the original caller */
-	setreply(rmp-mproc, rmp->mp_procgrp);
+	reply(rmp-mproc, rmp->mp_procgrp);
 
 	break;
 
@@ -468,15 +424,15 @@ static void handle_vfs_reply()
 
 		/* Wake up the parent with a failed fork (unless dead) */
 		if (!new_parent)
-			setreply(rmp->mp_parent, -1);
+			reply(rmp->mp_parent, -1);
 	}
 	else {
 		/* Wake up the child */
-		setreply(proc_n, OK);
+		reply(proc_n, OK);
 
 		/* Wake up the parent, unless the parent is already dead */
 		if (!new_parent)
-			setreply(rmp->mp_parent, rmp->mp_pid);
+			reply(rmp->mp_parent, rmp->mp_pid);
 	}
 
 	break;
