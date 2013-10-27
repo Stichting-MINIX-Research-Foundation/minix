@@ -24,7 +24,7 @@ SUBDIR= asa \
 	renice rev \
 	\
 	shuffle sed seq \
-	sort stat su \
+	sort split stat su \
 	tee tic tput \
 	tr tsort unexpand \
 	toproto \

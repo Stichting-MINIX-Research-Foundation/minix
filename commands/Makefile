@@ -23,7 +23,7 @@ SUBDIR=	add_route arp ash at backup btrace \
 	ramdisk rarpd rawspeed rcp readclock \
 	reboot remsync rget rlogin \
 	rotate rsh rshd service setup shar \
-	sleep slip spell split sprofalyze sprofdiff srccrc \
+	sleep slip spell sprofalyze sprofdiff srccrc \
 	stty svclog svrctl swifi synctree sysenv \
 	syslogd tail tcpd tcpdp tcpstat telnet \
 	telnetd term termcap tget time touch \

@@ -1,0 +1,132 @@
+.\"	$NetBSD: split.1,v 1.15 2007/05/31 01:35:35 jschauma Exp $
+.\"
+.\" Copyright (c) 1990, 1991, 1993, 1994
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"	@(#)split.1	8.3 (Berkeley) 4/16/94
+.\"
+.Dd May 28, 2007
+.Dt SPLIT 1
+.Os
+.Sh NAME
+.Nm split
+.Nd split a file into pieces
+.Sh SYNOPSIS
+.Nm
+.Op Fl a Ar suffix_length
+.Oo
+.Fl b Ar byte_count Ns Oo Li k|m Oc |
+.Fl l Ar line_count
+.Fl n Ar chunk_count
+.Oc
+.Op Ar file Op Ar name
+.Sh DESCRIPTION
+The
+.Nm
+utility reads the given
+.Ar file
+and breaks it up into files of 1000 lines each.
+If
+.Ar file
+is a single dash or absent,
+.Nm
+reads from the standard input.
+.Ar file
+itself is not altered.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl a
+Use
+.Ar suffix_length
+letters to form the suffix of the file name.
+.It Fl b
+Create smaller files
+.Ar byte_count
+bytes in length.
+If
+.Ql k
+is appended to the number, the file is split into
+.Ar byte_count
+kilobyte pieces.
+If
+.Ql m
+is appended to the number, the file is split into
+.Ar byte_count
+megabyte pieces.
+.It Fl l
+Create smaller files
+.Ar line_count
+lines in length.
+.It Fl n
+Split file into
+.Ar chunk_count
+smaller files.
+.El
+.Pp
+If additional arguments are specified, the first is used as the name
+of the input file which is to be split.
+If a second additional argument is specified, it is used as a prefix
+for the names of the files into which the file is split.
+In this case, each file into which the file is split is named by the
+prefix followed by a lexically ordered suffix using
+.Ar suffix_length
+characters in the range
+.Dq Li a-z .
+If
+.Fl a
+is not specified, two letters are used as the suffix.
+.Pp
+If the
+.Ar name
+argument is not specified,
+.Ql x
+is used.
+.Sh STANDARDS
+The
+.Nm
+utility conforms to
+.St -p1003.1-2001 .
+.Sh HISTORY
+A
+.Nm
+command appeared in
+.At v6 .
+.Pp
+The
+.Fl a
+option was introduced in
+.Nx 2.0 .
+Before that, if
+.Ar name
+was not specified,
+.Nm
+would vary the first letter of the filename
+to increase the number of possible output files.
+The
+.Fl a
+option makes this unnecessary.
