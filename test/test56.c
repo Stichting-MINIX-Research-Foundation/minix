@@ -3039,6 +3039,9 @@ test_nonblock(void)
 
 		close(server_sd);
 
+		/* Let the socket become writable in the parent process. */
+		sleep(1);
+
 		if (write(client_sd, buf, 1) != 1)
 			test_fail("write() should have succeeded");
 
