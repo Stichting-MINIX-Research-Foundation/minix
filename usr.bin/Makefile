@@ -19,7 +19,7 @@ SUBDIR= asa \
 	mkdep mktemp \
 	\
 	nbperf newgrp nice nl nohup nvi \
-	passwd pr \
+	passwd paste pr \
 	printenv printf pwhash \
 	renice rev \
 	\
