@@ -169,7 +169,7 @@ vir_bytes vfs_newsp;
 			sys_kill(rmp->mp_endpoint, SIGKILL);
 			return;
 		}
-		setreply(rmp-mproc, result);
+		reply(rmp-mproc, result);
 		return;
 	}
 

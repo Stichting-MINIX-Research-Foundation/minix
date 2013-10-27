@@ -20,20 +20,19 @@ struct mproc mproc[NR_PROCS];
  *===========================================================================*/
 static char *flags_str(int flags)
 {
-	static char str[13];
+	static char str[12];
 	str[0] = (flags & WAITING) ? 'W' : '-';
 	str[1] = (flags & ZOMBIE)  ? 'Z' : '-';
 	str[2] = (flags & ALARM_ON)  ? 'A' : '-';
 	str[3] = (flags & EXITING) ? 'E' : '-';
 	str[4] = (flags & TRACE_STOPPED)  ? 'T' : '-';
 	str[5] = (flags & SIGSUSPENDED)  ? 'U' : '-';
-	str[6] = (flags & REPLY)  ? 'R' : '-';
-	str[7] = (flags & VFS_CALL) ? 'F' : '-';
-	str[8] = (flags & PROC_STOPPED) ? 's' : '-';
-	str[9] = (flags & PRIV_PROC)  ? 'p' : '-';
-	str[10] = (flags & PARTIAL_EXEC) ? 'x' : '-';
-	str[11] = (flags & DELAY_CALL) ? 'd' : '-';
-	str[12] = '\0';
+	str[6] = (flags & VFS_CALL) ? 'F' : '-';
+	str[7] = (flags & PROC_STOPPED) ? 's' : '-';
+	str[8] = (flags & PRIV_PROC)  ? 'p' : '-';
+	str[9] = (flags & PARTIAL_EXEC) ? 'x' : '-';
+	str[10] = (flags & DELAY_CALL) ? 'd' : '-';
+	str[11] = '\0';
 
 	return str;
 }
@@ -50,7 +49,7 @@ void mproc_dmp()
   }
 
   printf("Process manager (PM) process table dump\n");
-  printf("-process- -nr-pnr-tnr- --pid--ppid--pgrp- -uid--  -gid--  -nice- -flags------\n");
+  printf("-process- -nr-pnr-tnr- --pid--ppid--pgrp- -uid--  -gid--  -nice- -flags-----\n");
   for (i=prev_i; i<NR_PROCS; i++) {
   	mp = &mproc[i];
   	if (mp->mp_pid == 0 && i != PM_PROC_NR) continue;

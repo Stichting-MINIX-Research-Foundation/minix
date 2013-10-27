@@ -816,7 +816,7 @@ int signo;			/* signal to send to process (1 to _NSIG-1) */
   if (rmp->mp_flags & (WAITING | SIGSUSPENDED)) {
 	rmp->mp_flags &= ~(WAITING | SIGSUSPENDED);
 
-	setreply(slot, EINTR);
+	reply(slot, EINTR);
 
 	/* The process must just have been stopped by unpause(), which means
 	 * that the UNPAUSE flag is not set.
