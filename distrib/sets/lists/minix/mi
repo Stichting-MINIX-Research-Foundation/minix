@@ -320,6 +320,7 @@
 ./usr/bin/format			minix-sys
 ./usr/bin/fortune			minix-sys
 ./usr/bin/from				minix-sys
+./usr/bin/fsplit			minix-sys
 ./usr/bin/fstat				minix-sys
 ./usr/bin/ftp				minix-sys
 ./usr/bin/g++				minix-sys	gcccmds
@@ -1889,6 +1890,7 @@
 ./usr/man/man1/fortune.1		minix-sys
 ./usr/man/man1/from.1			minix-sys
 ./usr/man/man1/fsck.mfs.1		minix-sys
+./usr/man/man1/fsplit.1			minix-sys
 ./usr/man/man1/ftp.1			minix-sys
 ./usr/man/man1/g++.1			minix-sys	gcccmds
 ./usr/man/man1/gcc.1			minix-sys	gcccmds

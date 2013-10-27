@@ -11,7 +11,7 @@ SUBDIR= asa \
 	dirname du \
 	env expand \
 	finger from \
-	ftp genassym getopt \
+	fsplit ftp genassym getopt \
 	head indent infocmp join \
 	ldd leave \
 	login logname lorder m4 \
