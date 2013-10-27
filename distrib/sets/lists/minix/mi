@@ -274,6 +274,7 @@
 ./usr/bin/crc				minix-sys
 ./usr/bin/cron				minix-sys
 ./usr/bin/crontab			minix-sys
+./usr/bin/csplit			minix-sys
 ./usr/bin/ctags				minix-sys
 ./usr/bin/cut				minix-sys
 ./usr/bin/datasizes			minix-sys
@@ -1843,6 +1844,7 @@
 ./usr/man/man1/cpp.1			minix-sys	gcccmds
 ./usr/man/man1/crc.1			minix-sys
 ./usr/man/man1/crontab.1		minix-sys
+./usr/man/man1/csplit.1			minix-sys
 ./usr/man/man1/ctags.1			minix-sys
 ./usr/man/man1/cut.1			minix-sys
 ./usr/man/man1/date.1			minix-sys
