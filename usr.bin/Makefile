@@ -31,7 +31,7 @@ SUBDIR= asa \
 	uniq units unzip users \
 	uuidgen \
 	\
-	wc whatis who \
+	wc whatis who whois \
 	write xargs xinstall yes
 
 .if !defined(__MINIX)

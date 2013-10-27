@@ -543,6 +543,7 @@
 ./usr/bin/which				minix-sys
 ./usr/bin/who				minix-sys
 ./usr/bin/whoami			minix-sys
+./usr/bin/whois				minix-sys
 ./usr/bin/worldstone			minix-sys
 ./usr/bin/write				minix-sys
 ./usr/bin/writeisofs			minix-sys
@@ -2102,6 +2103,7 @@
 ./usr/man/man1/which.1			minix-sys
 ./usr/man/man1/who.1			minix-sys
 ./usr/man/man1/whoami.1			minix-sys
+./usr/man/man1/whois.1			minix-sys
 ./usr/man/man1/worldstone.1		minix-sys
 ./usr/man/man1/write.1			minix-sys
 ./usr/man/man1/xargs.1			minix-sys
