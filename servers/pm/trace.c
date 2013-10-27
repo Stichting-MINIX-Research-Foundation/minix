@@ -262,6 +262,6 @@ int signo;
 
 	rpmp->mp_flags &= ~WAITING;	/* parent is no longer waiting */
 	rpmp->mp_reply.reply_res2 = 0177 | (signo << 8);
-	setreply(rmp->mp_tracer, rmp->mp_pid);
+	reply(rmp->mp_tracer, rmp->mp_pid);
   }
 }

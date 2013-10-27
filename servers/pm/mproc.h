@@ -82,7 +82,6 @@ EXTERN struct mproc {
 #define TOLD_PARENT	0x00040	/* parent wait() completed, ZOMBIE off */
 #define TRACE_STOPPED	0x00080	/* set if process stopped for tracing */
 #define SIGSUSPENDED	0x00100	/* set by SIGSUSPEND system call */
-#define REPLY		0x00200	/* set if a reply message is pending */
 #define VFS_CALL       	0x00400	/* set if waiting for VFS (normal calls) */
 #define NEW_PARENT	0x00800	/* process's parent changed during VFS call */
 #define UNPAUSED	0x01000	/* VFS has replied to unpause request */

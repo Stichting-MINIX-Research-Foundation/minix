@@ -218,7 +218,7 @@ int do_srv_fork()
 	sig_proc(rmc, SIGSTOP, TRUE /*trace*/, FALSE /* ksig */);
 
   /* Wakeup the newly created process */
-  setreply(rmc-mproc, OK);
+  reply(rmc-mproc, OK);
 
   return rmc->mp_pid;
 }
@@ -435,7 +435,7 @@ int dump_core;			/* flag indicating whether to dump core */
   {
 	/* Wake up the tracer, completing the ptrace(T_EXIT) call */
 	mproc[rmp->mp_tracer].mp_reply.reply_trace = 0;
-	setreply(rmp->mp_tracer, OK);
+	reply(rmp->mp_tracer, OK);
   }
 
   /* Clean up if the parent has collected the exit status */
@@ -648,7 +648,7 @@ register struct mproc *child;	/* tells which process is exiting */
   /* Wake up the parent by sending the reply message. */
   exitstatus = (child->mp_exitstatus << 8) | (child->mp_sigstatus & 0377);
   parent->mp_reply.reply_res2 = exitstatus;
-  setreply(child->mp_parent, child->mp_pid);
+  reply(child->mp_parent, child->mp_pid);
   parent->mp_flags &= ~WAITING;		/* parent no longer waiting */
   child->mp_flags &= ~ZOMBIE;		/* child no longer a zombie */
   child->mp_flags |= TOLD_PARENT;	/* avoid informing parent twice */
@@ -672,7 +672,7 @@ struct mproc *child;			/* tells which process is exiting */
 
   exitstatus = (child->mp_exitstatus << 8) | (child->mp_sigstatus & 0377);
   tracer->mp_reply.reply_res2 = exitstatus;
-  setreply(child->mp_tracer, child->mp_pid);
+  reply(child->mp_tracer, child->mp_pid);
   tracer->mp_flags &= ~WAITING;		/* tracer no longer waiting */
   child->mp_flags &= ~TRACE_ZOMBIE;	/* child no longer zombie to tracer */
   child->mp_flags |= ZOMBIE;		/* child is now zombie to parent */
