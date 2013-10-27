@@ -76,15 +76,15 @@ EXTERN struct mproc {
 #define IN_USE		0x00001	/* set when 'mproc' slot in use */
 #define WAITING		0x00002	/* set by WAIT system call */
 #define ZOMBIE		0x00004	/* waiting for parent to issue WAIT call */
+#define PROC_STOPPED	0x00008	/* process is stopped in the kernel */
 #define ALARM_ON	0x00010	/* set when SIGALRM timer started */
 #define EXITING		0x00020	/* set by EXIT, process is now exiting */
 #define TOLD_PARENT	0x00040	/* parent wait() completed, ZOMBIE off */
-#define STOPPED		0x00080	/* set if process stopped for tracing */
+#define TRACE_STOPPED	0x00080	/* set if process stopped for tracing */
 #define SIGSUSPENDED	0x00100	/* set by SIGSUSPEND system call */
 #define REPLY		0x00200	/* set if a reply message is pending */
 #define VFS_CALL       	0x00400	/* set if waiting for VFS (normal calls) */
-#define PM_SIG_PENDING	0x00800	/* process got a signal while waiting for VFS */
-#define UNPAUSED	0x01000	/* process is not in a blocking call */
+#define UNPAUSED	0x01000	/* VFS has replied to unpause request */
 #define PRIV_PROC	0x02000	/* system process, special privileges */
 #define PARTIAL_EXEC	0x04000	/* process got a new map but no content */
 #define TRACE_EXIT	0x08000	/* tracer is forcing this process to exit */
