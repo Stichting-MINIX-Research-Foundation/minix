@@ -296,8 +296,15 @@ int dump_core;			/* flag indicating whether to dump core */
    * This order is important so that VFS can tell drivers to cancel requests
    * such as copying to/ from the exiting process, before it is gone.
    */
-  if ((r = sys_stop(proc_nr_e)) != OK)		/* stop the process */
-  	panic("sys_stop failed: %d", r);
+  /* If the process is not yet stopped, we force a stop here. This means that
+   * the process may still have a delay call pending. For this reason, the main
+   * message loop discards requests from exiting processes.
+   */
+  if (!(rmp->mp_flags & PROC_STOPPED)) {
+	if ((r = sys_stop(proc_nr_e)) != OK)		/* stop the process */
+		panic("sys_stop failed: %d", r);
+	rmp->mp_flags |= PROC_STOPPED;
+  }
 
   if((r=vm_willexit(proc_nr_e)) != OK) {
 	panic("exit_proc: vm_willexit failed: %d", r);
@@ -337,7 +344,7 @@ int dump_core;			/* flag indicating whether to dump core */
   /* Clean up most of the flags describing the process's state before the exit,
    * and mark it as exiting.
    */
-  rmp->mp_flags &= (IN_USE|VFS_CALL|PRIV_PROC|TRACE_EXIT);
+  rmp->mp_flags &= (IN_USE|VFS_CALL|PRIV_PROC|TRACE_EXIT|PROC_STOPPED);
   rmp->mp_flags |= EXITING;
 
   /* Keep the process around until VFS is finished with it. */
@@ -475,7 +482,7 @@ int do_waitpid()
 			check_parent(rp, TRUE /*try_cleanup*/);
 			return(SUSPEND);
 		}
-		if (rp->mp_flags & STOPPED) {
+		if (rp->mp_flags & TRACE_STOPPED) {
 			/* This child meets the pid test and is being traced.
 			 * Deliver a signal to the tracer, if any.
 			 */

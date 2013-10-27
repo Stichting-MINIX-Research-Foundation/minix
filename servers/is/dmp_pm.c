@@ -25,11 +25,11 @@ static char *flags_str(int flags)
 	str[1] = (flags & ZOMBIE)  ? 'Z' : '-';
 	str[2] = (flags & ALARM_ON)  ? 'A' : '-';
 	str[3] = (flags & EXITING) ? 'E' : '-';
-	str[4] = (flags & STOPPED)  ? 'S' : '-';
+	str[4] = (flags & TRACE_STOPPED)  ? 'T' : '-';
 	str[5] = (flags & SIGSUSPENDED)  ? 'U' : '-';
 	str[6] = (flags & REPLY)  ? 'R' : '-';
 	str[7] = (flags & VFS_CALL) ? 'F' : '-';
-	str[8] = (flags & PM_SIG_PENDING) ? 's' : '-';
+	str[8] = (flags & PROC_STOPPED) ? 's' : '-';
 	str[9] = (flags & PRIV_PROC)  ? 'p' : '-';
 	str[10] = (flags & PARTIAL_EXEC) ? 'x' : '-';
 	str[11] = (flags & DELAY_CALL) ? 'd' : '-';

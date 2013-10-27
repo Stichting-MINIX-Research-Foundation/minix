@@ -26,6 +26,7 @@
 #include <string.h>
 #include <machine/archtypes.h>
 #include <env.h>
+#include <assert.h>
 #include "mproc.h"
 #include "param.h"
 
@@ -484,6 +485,11 @@ static void handle_vfs_reply()
 	break;
 
   case PM_UNPAUSE_REPLY:
+	/* The target process must always be stopped while unpausing; otherwise
+	 * it could just end up pausing itself on a new call afterwards.
+	 */
+	assert(rmp->mp_flags & PROC_STOPPED);
+
 	/* Process is now unpaused */
 	rmp->mp_flags |= UNPAUSED;
 

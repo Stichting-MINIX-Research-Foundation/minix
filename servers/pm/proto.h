@@ -87,7 +87,7 @@ int do_settime(void);
 
 /* trace.c */
 int do_trace(void);
-void stop_proc(struct mproc *rmp, int sig_nr);
+void trace_stop(struct mproc *rmp, int sig_nr);
 
 /* utility.c */
 pid_t get_free_pid(void);
