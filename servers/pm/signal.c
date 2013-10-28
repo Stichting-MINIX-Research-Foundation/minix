@@ -27,7 +27,6 @@
 #include <minix/vm.h>
 #include <signal.h>
 #include <sys/resource.h>
-#include <string.h>
 #include <assert.h>
 #include "mproc.h"
 #include "param.h"
@@ -293,7 +292,7 @@ int process_ksig(endpoint_t proc_nr_e, int signo)
   int proc_nr;
   pid_t proc_id, id;
 
-  if(pm_isokendpt(proc_nr_e, &proc_nr) != OK || proc_nr < 0) {
+  if(pm_isokendpt(proc_nr_e, &proc_nr) != OK) {
 	printf("PM: process_ksig: %d?? not ok\n", proc_nr_e);
 	return EDEADEPT; /* process is gone. */
   }
@@ -747,8 +746,9 @@ struct mproc *rmp;		/* which process */
   if (!(rmp->mp_flags & PROC_STOPPED) && !stop_proc(rmp, TRUE /*may_delay*/))
 	return FALSE;
 
-  m.m_type = PM_UNPAUSE;
-  m.PM_PROC = rmp->mp_endpoint;
+  memset(&m, 0, sizeof(m));
+  m.m_type = VFS_PM_UNPAUSE;
+  m.VFS_PM_ENDPT = rmp->mp_endpoint;
 
   tell_vfs(rmp, &m);
 

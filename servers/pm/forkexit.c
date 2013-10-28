@@ -113,12 +113,13 @@ int do_fork()
   new_pid = get_free_pid();
   rmc->mp_pid = new_pid;	/* assign pid to child */
 
-  m.m_type = PM_FORK;
-  m.PM_PROC = rmc->mp_endpoint;
-  m.PM_PPROC = rmp->mp_endpoint;
-  m.PM_CPID = rmc->mp_pid;
-  m.PM_REUID = -1;	/* Not used by PM_FORK */
-  m.PM_REGID = -1;	/* Not used by PM_FORK */
+  memset(&m, 0, sizeof(m));
+  m.m_type = VFS_PM_FORK;
+  m.VFS_PM_ENDPT = rmc->mp_endpoint;
+  m.VFS_PM_PENDPT = rmp->mp_endpoint;
+  m.VFS_PM_CPID = rmc->mp_pid;
+  m.VFS_PM_REUID = -1;	/* Not used by VFS_PM_FORK */
+  m.VFS_PM_REGID = -1;	/* Not used by VFS_PM_FORK */
 
   tell_vfs(rmc, &m);
 
@@ -204,12 +205,13 @@ int do_srv_fork()
   new_pid = get_free_pid();
   rmc->mp_pid = new_pid;	/* assign pid to child */
 
-  m.m_type = PM_SRV_FORK;
-  m.PM_PROC = rmc->mp_endpoint;
-  m.PM_PPROC = rmp->mp_endpoint;
-  m.PM_CPID = rmc->mp_pid;
-  m.PM_REUID = m_in.m1_i1;
-  m.PM_REGID = m_in.m1_i2;
+  memset(&m, 0, sizeof(m));
+  m.m_type = VFS_PM_SRV_FORK;
+  m.VFS_PM_ENDPT = rmc->mp_endpoint;
+  m.VFS_PM_PENDPT = rmp->mp_endpoint;
+  m.VFS_PM_CPID = rmc->mp_pid;
+  m.VFS_PM_REUID = m_in.m1_i1;
+  m.VFS_PM_REGID = m_in.m1_i2;
 
   tell_vfs(rmc, &m);
 
@@ -321,12 +323,13 @@ int dump_core;			/* flag indicating whether to dump core */
   }
 
   /* Tell VFS about the exiting process. */
-  m.m_type = dump_core ? PM_DUMPCORE : PM_EXIT;
-  m.PM_PROC = rmp->mp_endpoint;
+  memset(&m, 0, sizeof(m));
+  m.m_type = dump_core ? VFS_PM_DUMPCORE : VFS_PM_EXIT;
+  m.VFS_PM_ENDPT = rmp->mp_endpoint;
 
   if (dump_core) {
-	m.PM_TERM_SIG = rmp->mp_sigstatus;
-	m.PM_PATH = rmp->mp_name;
+	m.VFS_PM_TERM_SIG = rmp->mp_sigstatus;
+	m.VFS_PM_PATH = rmp->mp_name;
   }
 
   tell_vfs(rmp, &m);

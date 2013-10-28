@@ -102,6 +102,8 @@ int do_set()
   int r, i;
   int ngroups;
 
+  memset(&m, 0, sizeof(m));
+
   switch(call_nr) {
 	case SETUID:
 	case SETEUID:
@@ -111,10 +113,10 @@ int do_set()
 		if(call_nr == SETUID) rmp->mp_realuid = (uid_t) m_in.usr_id;
 		rmp->mp_effuid = (uid_t) m_in.usr_id;
 
-		m.m_type = PM_SETUID;
-		m.PM_PROC = rmp->mp_endpoint;
-		m.PM_EID = rmp->mp_effuid;
-		m.PM_RID = rmp->mp_realuid;
+		m.m_type = VFS_PM_SETUID;
+		m.VFS_PM_ENDPT = rmp->mp_endpoint;
+		m.VFS_PM_EID = rmp->mp_effuid;
+		m.VFS_PM_RID = rmp->mp_realuid;
 
 		break;
 
@@ -126,10 +128,10 @@ int do_set()
 		if(call_nr == SETGID) rmp->mp_realgid = (gid_t) m_in.grp_id;
 		rmp->mp_effgid = (gid_t) m_in.grp_id;
 
-		m.m_type = PM_SETGID;
-		m.PM_PROC = rmp->mp_endpoint;
-		m.PM_EID = rmp->mp_effgid;
-		m.PM_RID = rmp->mp_realgid;
+		m.m_type = VFS_PM_SETGID;
+		m.VFS_PM_ENDPT = rmp->mp_endpoint;
+		m.VFS_PM_EID = rmp->mp_effgid;
+		m.VFS_PM_RID = rmp->mp_realgid;
 
 		break;
 	case SETGROUPS:
@@ -159,18 +161,18 @@ int do_set()
 		}
 		rmp->mp_ngroups = ngroups;
 
-		m.m_type = PM_SETGROUPS;
-		m.PM_PROC = rmp->mp_endpoint;
-		m.PM_GROUP_NO = rmp->mp_ngroups;
-		m.PM_GROUP_ADDR = (char *) rmp->mp_sgroups;
+		m.m_type = VFS_PM_SETGROUPS;
+		m.VFS_PM_ENDPT = rmp->mp_endpoint;
+		m.VFS_PM_GROUP_NO = rmp->mp_ngroups;
+		m.VFS_PM_GROUP_ADDR = (char *) rmp->mp_sgroups;
 
 		break;
 	case SETSID:
 		if (rmp->mp_procgrp == rmp->mp_pid) return(EPERM);
 		rmp->mp_procgrp = rmp->mp_pid;
 
-		m.m_type = PM_SETSID;
-		m.PM_PROC = rmp->mp_endpoint;
+		m.m_type = VFS_PM_SETSID;
+		m.VFS_PM_ENDPT = rmp->mp_endpoint;
 
 		break;
 

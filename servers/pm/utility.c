@@ -23,7 +23,6 @@
 
 #include <minix/config.h>
 #include <minix/timers.h>
-#include <string.h>
 #include <machine/archtypes.h>
 #include "kernel/const.h"
 #include "kernel/config.h"
@@ -120,11 +119,11 @@ int nice_to_priority(int nice, unsigned* new_q)
 int pm_isokendpt(int endpoint, int *proc)
 {
 	*proc = _ENDPOINT_P(endpoint);
-	if(*proc < -NR_TASKS || *proc >= NR_PROCS)
+	if (*proc < 0 || *proc >= NR_PROCS)
 		return EINVAL;
-	if(*proc >= 0 && endpoint != mproc[*proc].mp_endpoint)
+	if (endpoint != mproc[*proc].mp_endpoint)
 		return EDEADEPT;
-	if(*proc >= 0 && !(mproc[*proc].mp_flags & IN_USE))
+	if (!(mproc[*proc].mp_flags & IN_USE))
 		return EDEADEPT;
 	return OK;
 }

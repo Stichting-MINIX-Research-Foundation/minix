@@ -11,7 +11,6 @@
 #include "pm.h"
 #include <signal.h>
 #include <sys/time.h>
-#include <string.h>
 #include <minix/com.h>
 #include "mproc.h"
 #include "param.h"
