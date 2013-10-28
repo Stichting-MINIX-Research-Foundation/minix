@@ -29,7 +29,7 @@ SUBDIR= asa \
 	tr tsort unexpand \
 	toproto \
 	uniq units unzip users \
-	uuidgen \
+	uuidgen vis \
 	\
 	wc whatis who whois \
 	write xargs xinstall yes

@@ -539,6 +539,7 @@
 ./usr/bin/version			minix-sys
 ./usr/bin/vi				minix-sys
 ./usr/bin/view				minix-sys
+./usr/bin/vis				minix-sys
 ./usr/bin/vol				minix-sys
 ./usr/bin/wc				minix-sys
 ./usr/bin/whatis			minix-sys
@@ -2101,6 +2102,7 @@
 ./usr/man/man1/uuidgen.1		minix-sys
 ./usr/man/man1/vi.1			minix-sys
 ./usr/man/man1/view.1			minix-sys
+./usr/man/man1/vis.1			minix-sys
 ./usr/man/man1/vol.1			minix-sys
 ./usr/man/man1/wait.1			minix-sys
 ./usr/man/man1/wc.1			minix-sys
