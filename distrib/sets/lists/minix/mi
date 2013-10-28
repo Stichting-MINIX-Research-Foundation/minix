@@ -427,6 +427,7 @@
 ./usr/bin/passwd			minix-sys
 ./usr/bin/paste				minix-sys
 ./usr/bin/patch				minix-sys
+./usr/bin/pathchk			minix-sys
 ./usr/bin/pax				minix-sys	obsolete
 ./usr/bin/ping				minix-sys
 ./usr/bin/pkgin_all			minix-sys
@@ -2008,6 +2009,7 @@
 ./usr/man/man1/passwd.1			minix-sys
 ./usr/man/man1/paste.1			minix-sys
 ./usr/man/man1/patch.1			minix-sys
+./usr/man/man1/pathchk.1		minix-sys
 ./usr/man/man1/pax.1			minix-sys
 ./usr/man/man1/ping.1			minix-sys
 ./usr/man/man1/pkg_view.1		minix-sys

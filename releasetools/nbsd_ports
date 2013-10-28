@@ -196,6 +196,7 @@
 2010/05/14 17:28:23,usr.bin/newgrp
 2012/10/17 12:00:00,usr.bin/passwd
 2012/10/17 12:00:00,usr.bin/paste
+2012/10/17 12:00:00,usr.bin/pathchk
 2013/10/24 12:00:00,usr.bin/pr
 2013/10/17 12:00:00,usr.bin/printenv
 2012/10/17 12:00:00,usr.bin/printf
