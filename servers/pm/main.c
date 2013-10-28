@@ -23,7 +23,6 @@
 #include <fcntl.h>
 #include <sys/resource.h>
 #include <sys/utsname.h>
-#include <string.h>
 #include <machine/archtypes.h>
 #include <env.h>
 #include <assert.h>
@@ -95,19 +94,7 @@ int main()
 		continue;
 	}
 
-	switch(call_nr)
-	{
-	case PM_SETUID_REPLY:
-	case PM_SETGID_REPLY:
-	case PM_SETSID_REPLY:
-	case PM_EXEC_REPLY:
-	case PM_EXIT_REPLY:
-	case PM_CORE_REPLY:
-	case PM_FORK_REPLY:
-	case PM_SRV_FORK_REPLY:
-	case PM_UNPAUSE_REPLY:
-	case PM_REBOOT_REPLY:
-	case PM_SETGROUPS_REPLY:
+	if (IS_VFS_PM_RS(call_nr)) {
 		if (who_e == VFS_PROC_NR)
 		{
 			handle_vfs_reply();
@@ -115,11 +102,8 @@ int main()
 		}
 		else
 			result= ENOSYS;
-		break;
-	default:
-		/* Else, if the system call number is valid, perform the
-		 * call.
-		 */
+	} else {
+		/* If the system call number is valid, perform the call. */
 		if ((unsigned) call_nr >= NCALLS) {
 			result = ENOSYS;
 		} else {
@@ -259,10 +243,11 @@ static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 		rmp->mp_endpoint = ip->endpoint;
 
 		/* Tell VFS about this system process. */
-		mess.m_type = PM_INIT;
-		mess.PM_SLOT = ip->proc_nr;
-		mess.PM_PID = rmp->mp_pid;
-		mess.PM_PROC = rmp->mp_endpoint;
+		memset(&mess, 0, sizeof(mess));
+		mess.m_type = VFS_PM_INIT;
+		mess.VFS_PM_SLOT = ip->proc_nr;
+		mess.VFS_PM_PID = rmp->mp_pid;
+		mess.VFS_PM_PROC = rmp->mp_endpoint;
   		if (OK != (s=send(VFS_PROC_NR, &mess)))
 			panic("can't sync up with VFS: %d", s);
   	}
@@ -338,10 +323,10 @@ static void handle_vfs_reply()
   endpoint_t proc_e;
   int r, proc_n, new_parent;
 
-  /* PM_REBOOT is the only request not associated with a process.
+  /* VFS_PM_REBOOT is the only request not associated with a process.
    * Handle its reply first.
    */
-  if (call_nr == PM_REBOOT_REPLY) {
+  if (call_nr == VFS_PM_REBOOT_REPLY) {
 	/* Ask the kernel to abort. All system services, including
 	 * the PM, will get a HARD_STOP notification. Await the
 	 * notification in the main loop.
@@ -352,7 +337,7 @@ static void handle_vfs_reply()
   }
 
   /* Get the process associated with this call */
-  proc_e = m_in.PM_PROC;
+  proc_e = m_in.VFS_PM_PROC;
 
   if (pm_isokendpt(proc_e, &proc_n) != OK) {
 	panic("handle_vfs_reply: got bad endpoint from VFS: %d", proc_e);
@@ -372,40 +357,40 @@ static void handle_vfs_reply()
 
   /* Call-specific handler code */
   switch (call_nr) {
-  case PM_SETUID_REPLY:
-  case PM_SETGID_REPLY:
-  case PM_SETGROUPS_REPLY:
+  case VFS_PM_SETUID_REPLY:
+  case VFS_PM_SETGID_REPLY:
+  case VFS_PM_SETGROUPS_REPLY:
 	/* Wake up the original caller */
 	reply(rmp-mproc, OK);
 
 	break;
 
-  case PM_SETSID_REPLY:
+  case VFS_PM_SETSID_REPLY:
 	/* Wake up the original caller */
 	reply(rmp-mproc, rmp->mp_procgrp);
 
 	break;
 
-  case PM_EXEC_REPLY:
-	exec_restart(rmp, m_in.PM_STATUS, (vir_bytes)m_in.PM_PC,
-		(vir_bytes)m_in.PM_NEWSP);
+  case VFS_PM_EXEC_REPLY:
+	exec_restart(rmp, m_in.VFS_PM_STATUS, (vir_bytes)m_in.VFS_PM_PC,
+		(vir_bytes)m_in.VFS_PM_NEWSP);
 
 	break;
 
-  case PM_EXIT_REPLY:
+  case VFS_PM_EXIT_REPLY:
 	exit_restart(rmp, FALSE /*dump_core*/);
 
 	break;
 
-  case PM_CORE_REPLY:
-	if (m_in.PM_STATUS == OK)
+  case VFS_PM_CORE_REPLY:
+	if (m_in.VFS_PM_STATUS == OK)
 		rmp->mp_sigstatus |= DUMPED;
 
 	exit_restart(rmp, TRUE /*dump_core*/);
 
 	break;
 
-  case PM_FORK_REPLY:
+  case VFS_PM_FORK_REPLY:
 	/* Schedule the newly created process ... */
 	r = OK;
 	if (rmp->mp_scheduler != KERNEL && rmp->mp_scheduler != NONE) {
@@ -434,12 +419,12 @@ static void handle_vfs_reply()
 
 	break;
 
-  case PM_SRV_FORK_REPLY:
+  case VFS_PM_SRV_FORK_REPLY:
 	/* Nothing to do */
 
 	break;
 
-  case PM_UNPAUSE_REPLY:
+  case VFS_PM_UNPAUSE_REPLY:
 	/* The target process must always be stopped while unpausing; otherwise
 	 * it could just end up pausing itself on a new call afterwards.
 	 */

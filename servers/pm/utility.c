@@ -23,7 +23,6 @@
 
 #include <minix/config.h>
 #include <minix/timers.h>
-#include <string.h>
 #include <machine/archtypes.h>
 #include "kernel/const.h"
 #include "kernel/config.h"

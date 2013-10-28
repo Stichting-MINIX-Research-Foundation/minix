@@ -27,7 +27,6 @@
 #include <minix/vm.h>
 #include <signal.h>
 #include <sys/resource.h>
-#include <string.h>
 #include <assert.h>
 #include "mproc.h"
 #include "param.h"
@@ -747,8 +746,9 @@ struct mproc *rmp;		/* which process */
   if (!(rmp->mp_flags & PROC_STOPPED) && !stop_proc(rmp, TRUE /*may_delay*/))
 	return FALSE;
 
-  m.m_type = PM_UNPAUSE;
-  m.PM_PROC = rmp->mp_endpoint;
+  memset(&m, 0, sizeof(m));
+  m.m_type = VFS_PM_UNPAUSE;
+  m.VFS_PM_PROC = rmp->mp_endpoint;
 
   tell_vfs(rmp, &m);
 
