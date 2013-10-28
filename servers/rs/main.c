@@ -93,15 +93,6 @@ int main(void)
        * Handle the request and send a reply to the caller. 
        */
       else {
-	  if (call_nr != COMMON_GETSYSINFO && 
-	  	(call_nr < RS_RQ_BASE || call_nr >= RS_RQ_BASE+0x100))
-	  {
-		/* Ignore invalid requests. Do not try to reply. */
-		printf("RS: warning: got invalid request %d from endpoint %d\n",
-			call_nr, m.m_source);
-		continue;
-	  }
-
           /* Handler functions are responsible for permission checking. */
           switch(call_nr) {
           /* User requests. */
@@ -113,8 +104,7 @@ int main(void)
           case RS_UPDATE: 	result = do_update(&m); 	break;
           case RS_CLONE: 	result = do_clone(&m); 		break;
           case RS_EDIT: 	result = do_edit(&m); 		break;
-          case COMMON_GETSYSINFO: 
-         			result = do_getsysinfo(&m); 	break;
+          case RS_GETSYSINFO:	result = do_getsysinfo(&m); 	break;
 	  case RS_LOOKUP:	result = do_lookup(&m);		break;
 	  /* Ready messages. */
 	  case RS_INIT: 	result = do_init_ready(&m); 	break;
@@ -122,7 +112,7 @@ int main(void)
           default: 
               printf("RS: warning: got unexpected request %d from %d\n",
                   m.m_type, m.m_source);
-              result = EINVAL;
+              result = ENOSYS;
           }
 
           /* Finally send reply message, unless disabled. */

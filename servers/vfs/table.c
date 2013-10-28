@@ -91,7 +91,7 @@ int (*call_vec[])(message *m_out) = {
 	no_sys,		/* 74 = (sigprocmask) */
 	no_sys,		/* 75 = (sigreturn) */
 	no_sys,		/* 76 = (reboot) */
-	do_svrctl,	/* 77 = svrctl */
+	no_sys,		/* 77 = (pm_svrctl) */
 	no_sys,		/* 78 = (sysuname) */
 	no_sys,		/* 79 = unused */
 	do_getdents,	/* 80 = getdents_321 (to be phased out) */
@@ -137,8 +137,12 @@ int (*call_vec[])(message *m_out) = {
 	do_fstatvfs,	/* 120 = statvfs (3.2.1 non-ABI-break numbering!) */
 	no_sys,		/* 121 = (task reply) */
 	do_mapdriver,	/* 122 = mapdriver */
-	do_getrusage,	/* 123 = getrusage */
+	no_sys,		/* 123 = (pm_getrusage) */
 	do_checkperms,	/* 124 = checkperms */
+	no_sys,		/* 125 = (pm_getsysinfo) */
+	do_getsysinfo,	/* 126 = vfs_getsysinfo */
+	do_getrusage,	/* 127 = vfs_getrusage */
+	do_svrctl,	/* 128 = vfs_svrctl */
 };
 /* This should not fail with "array size is negative": */
 extern int dummy[sizeof(call_vec) == NCALLS * sizeof(call_vec[0]) ? 1 : -1];
