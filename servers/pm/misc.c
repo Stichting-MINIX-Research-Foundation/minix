@@ -24,7 +24,6 @@
 #include <minix/type.h>
 #include <minix/vm.h>
 #include <minix/ds.h>
-#include <string.h>
 #include <machine/archtypes.h>
 #include <lib.h>
 #include <assert.h>
@@ -239,7 +238,8 @@ int do_reboot()
   sys_stop(INIT_PROC_NR);		   /* stop init, but keep it around */
 
   /* Tell VFS to reboot */
-  m.m_type = PM_REBOOT;
+  memset(&m, 0, sizeof(m));
+  m.m_type = VFS_PM_REBOOT;
 
   tell_vfs(&mproc[VFS_PROC_NR], &m);
 

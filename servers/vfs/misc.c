@@ -531,7 +531,7 @@ void pm_reboot()
   /* Reply to PM for synchronization */
   memset(&m_out, 0, sizeof(m_out));
 
-  m_out.m_type = PM_REBOOT_REPLY;
+  m_out.m_type = VFS_PM_REBOOT_REPLY;
 
   if ((r = send(PM_PROC_NR, &m_out)) != OK)
 	panic("pm_reboot: send failed: %d", r);

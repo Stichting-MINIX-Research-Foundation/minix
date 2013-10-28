@@ -701,75 +701,78 @@
  *                Messages used between PM and VFS			     *
  *===========================================================================*/
 
-#define PM_RQ_BASE	0x900
-#define PM_RS_BASE	0x980
+#define VFS_PM_RQ_BASE	0x900
+#define VFS_PM_RS_BASE	0x980
 
-/* Requests from PM to VFS */
-#define PM_INIT		(PM_RQ_BASE + 0)	/* Process table exchange */
-#define PM_SETUID	(PM_RQ_BASE + 1)	/* Set new user ID */
-#define PM_SETGID	(PM_RQ_BASE + 2)	/* Set group ID */
-#define PM_SETSID	(PM_RQ_BASE + 3)	/* Set session leader */
-#define PM_EXIT		(PM_RQ_BASE + 4)	/* Process exits */
-#define PM_DUMPCORE	(PM_RQ_BASE + 5)	/* Process is to dump core */
-#define PM_EXEC		(PM_RQ_BASE + 6)	/* Forwarded exec call */
-#define PM_FORK		(PM_RQ_BASE + 7)	/* Newly forked process */
-#define PM_SRV_FORK	(PM_RQ_BASE + 8)	/* fork for system services */
-#define PM_UNPAUSE	(PM_RQ_BASE + 9)	/* Interrupt process call */
-#define PM_REBOOT	(PM_RQ_BASE + 10)	/* System reboot */
-#define PM_SETGROUPS	(PM_RQ_BASE + 11)	/* Tell VFS about setgroups */
+#define IS_VFS_PM_RQ(type) (((type) & ~0x7f) == VFS_PM_RQ_BASE)
+#define IS_VFS_PM_RS(type) (((type) & ~0x7f) == VFS_PM_RS_BASE)
+
+/* Requests from PM to VFS. */
+#define VFS_PM_INIT	(VFS_PM_RQ_BASE + 0)	/* Process table exchange */
+#define VFS_PM_SETUID	(VFS_PM_RQ_BASE + 1)	/* Set new user ID */
+#define VFS_PM_SETGID	(VFS_PM_RQ_BASE + 2)	/* Set group ID */
+#define VFS_PM_SETSID	(VFS_PM_RQ_BASE + 3)	/* Set session leader */
+#define VFS_PM_EXIT	(VFS_PM_RQ_BASE + 4)	/* Process exits */
+#define VFS_PM_DUMPCORE	(VFS_PM_RQ_BASE + 5)	/* Process is to dump core */
+#define VFS_PM_EXEC	(VFS_PM_RQ_BASE + 6)	/* Forwarded exec call */
+#define VFS_PM_FORK	(VFS_PM_RQ_BASE + 7)	/* Newly forked process */
+#define VFS_PM_SRV_FORK	(VFS_PM_RQ_BASE + 8)	/* fork for system services */
+#define VFS_PM_UNPAUSE	(VFS_PM_RQ_BASE + 9)	/* Interrupt process call */
+#define VFS_PM_REBOOT	(VFS_PM_RQ_BASE + 10)	/* System reboot */
+#define VFS_PM_SETGROUPS	(VFS_PM_RQ_BASE + 11)	/* Set groups */
 
 /* Replies from VFS to PM */
-#define PM_SETUID_REPLY	(PM_RS_BASE + 1)
-#define PM_SETGID_REPLY	(PM_RS_BASE + 2)
-#define PM_SETSID_REPLY	(PM_RS_BASE + 3)
-#define PM_EXIT_REPLY	(PM_RS_BASE + 4)
-#define PM_CORE_REPLY	(PM_RS_BASE + 5)
-#define PM_EXEC_REPLY	(PM_RS_BASE + 6)
-#define PM_FORK_REPLY	(PM_RS_BASE + 7)
-#define PM_SRV_FORK_REPLY	(PM_RS_BASE + 8)
-#define PM_UNPAUSE_REPLY	(PM_RS_BASE + 9)
-#define PM_REBOOT_REPLY	(PM_RS_BASE + 10)
-#define PM_SETGROUPS_REPLY	(PM_RS_BASE + 11)
+#define VFS_PM_SETUID_REPLY	(VFS_PM_RS_BASE + 1)
+#define VFS_PM_SETGID_REPLY	(VFS_PM_RS_BASE + 2)
+#define VFS_PM_SETSID_REPLY	(VFS_PM_RS_BASE + 3)
+#define VFS_PM_EXIT_REPLY	(VFS_PM_RS_BASE + 4)
+#define VFS_PM_CORE_REPLY	(VFS_PM_RS_BASE + 5)
+#define VFS_PM_EXEC_REPLY	(VFS_PM_RS_BASE + 6)
+#define VFS_PM_FORK_REPLY	(VFS_PM_RS_BASE + 7)
+#define VFS_PM_SRV_FORK_REPLY	(VFS_PM_RS_BASE + 8)
+#define VFS_PM_UNPAUSE_REPLY	(VFS_PM_RS_BASE + 9)
+#define VFS_PM_REBOOT_REPLY	(VFS_PM_RS_BASE + 10)
+#define VFS_PM_SETGROUPS_REPLY	(VFS_PM_RS_BASE + 11)
 
 /* Standard parameters for all requests and replies, except PM_REBOOT */
-#  define PM_PROC		m7_i1	/* process endpoint */
+#  define VFS_PM_ENDPT		m7_i1	/* process endpoint */
 
 /* Additional parameters for PM_INIT */
-#  define PM_SLOT		m7_i2	/* process slot number */
-#  define PM_PID		m7_i3	/* process pid */
+#  define VFS_PM_SLOT		m7_i2	/* process slot number */
+#  define VFS_PM_PID		m7_i3	/* process pid */
 
 /* Additional parameters for PM_SETUID and PM_SETGID */
-#  define PM_EID		m7_i2	/* effective user/group id */
-#  define PM_RID		m7_i3	/* real user/group id */
+#  define VFS_PM_EID		m7_i2	/* effective user/group id */
+#  define VFS_PM_RID		m7_i3	/* real user/group id */
 
 /* Additional parameter for PM_SETGROUPS */
-#  define PM_GROUP_NO		m7_i2	/* number of groups */
-#  define PM_GROUP_ADDR		m7_p1	/* struct holding group data */
+#  define VFS_PM_GROUP_NO	m7_i2	/* number of groups */
+#  define VFS_PM_GROUP_ADDR	m7_p1	/* struct holding group data */
 
 /* Additional parameters for PM_EXEC */
-#  define PM_PATH		m7_p1	/* executable */
-#  define PM_PATH_LEN		m7_i2	/* length of path including
+#  define VFS_PM_PATH		m7_p1	/* executable */
+#  define VFS_PM_PATH_LEN	m7_i2	/* length of path including
 					 * terminating null character
 					 */
-#  define PM_FRAME		m7_p2	/* arguments and environment */
-#  define PM_FRAME_LEN		m7_i3	/* size of frame */
-#  define PM_EXECFLAGS		m7_i4	/* PMEXEC_FLAGS */
-#  define PM_PS_STR		m7_i5	/* ps_strings pointer */
+#  define VFS_PM_FRAME		m7_p2	/* arguments and environment */
+#  define VFS_PM_FRAME_LEN	m7_i3	/* size of frame */
+#  define VFS_PM_EXECFLAGS	m7_i4	/* PMEXEC_FLAGS */
+#  define VFS_PM_PS_STR		m7_i5	/* ps_strings pointer */
 
 /* Additional parameters for PM_EXEC_REPLY and PM_CORE_REPLY */
-#  define PM_STATUS		m7_i2	/* OK or failure */
-#  define PM_PC			m7_p1	/* program counter */
-#  define PM_NEWSP		m7_p2	/* possibly-changed stack ptr */
-#  define PM_NEWPS_STR		m7_i5	/* possibly-changed ps_strings ptr */
+#  define VFS_PM_STATUS		m7_i2	/* OK or failure */
+#  define VFS_PM_PC		m7_p1	/* program counter */
+#  define VFS_PM_NEWSP		m7_p2	/* possibly-changed stack ptr */
+#  define VFS_PM_NEWPS_STR	m7_i5	/* possibly-changed ps_strings ptr */
 
 /* Additional parameters for PM_FORK and PM_SRV_FORK */
-#  define PM_PPROC		m7_i2	/* parent process endpoint */
-#  define PM_CPID		m7_i3	/* child pid */
-#  define PM_REUID		m7_i4	/* real and effective uid */
-#  define PM_REGID		m7_i5	/* real and effective gid */
+#  define VFS_PM_PENDPT		m7_i2	/* parent process endpoint */
+#  define VFS_PM_CPID		m7_i3	/* child pid */
+#  define VFS_PM_REUID		m7_i4	/* real and effective uid */
+#  define VFS_PM_REGID		m7_i5	/* real and effective gid */
 
 /* Additional parameters for PM_DUMPCORE */
-#  define PM_TERM_SIG		m7_i2	/* process's termination signal */
+#  define VFS_PM_TERM_SIG	m7_i2	/* process's termination signal */
 
 /* Parameters for the EXEC_NEWMEM call */
 #define EXC_NM_PROC	m1_i1		/* process that needs new map */

@@ -24,7 +24,6 @@
 #include <minix/com.h>
 #include <minix/vm.h>
 #include <signal.h>
-#include <string.h>
 #include <libexec.h>
 #include <sys/ptrace.h>
 #include "mproc.h"
@@ -41,14 +40,15 @@ int do_exec()
 	message m;
 
 	/* Forward call to VFS */
-	m.m_type = PM_EXEC;
-	m.PM_PROC = mp->mp_endpoint;
-	m.PM_PATH = m_in.exec_name;
-	m.PM_PATH_LEN = m_in.exec_len;
-	m.PM_FRAME = m_in.frame_ptr;
-	m.PM_FRAME_LEN = m_in.msg_frame_len;
-	m.PM_EXECFLAGS = m_in.PMEXEC_FLAGS;
-	m.PM_PS_STR = (vir_bytes)m_in.m1_p4; /* ps_strings pointer into the frame. */
+	memset(&m, 0, sizeof(m));
+	m.m_type = VFS_PM_EXEC;
+	m.VFS_PM_ENDPT = mp->mp_endpoint;
+	m.VFS_PM_PATH = m_in.exec_name;
+	m.VFS_PM_PATH_LEN = m_in.exec_len;
+	m.VFS_PM_FRAME = m_in.frame_ptr;
+	m.VFS_PM_FRAME_LEN = m_in.msg_frame_len;
+	m.VFS_PM_EXECFLAGS = m_in.PMEXEC_FLAGS;
+	m.VFS_PM_PS_STR = (vir_bytes) m_in.m1_p4; /* strings ptr into frame */
 
 	tell_vfs(mp, &m);
 

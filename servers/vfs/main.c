@@ -301,15 +301,15 @@ static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *info)
 	if ((s = sef_receive(PM_PROC_NR, &mess)) != OK)
 		panic("VFS: couldn't receive from PM: %d", s);
 
-	if (mess.m_type != PM_INIT)
+	if (mess.m_type != VFS_PM_INIT)
 		panic("unexpected message from PM: %d", mess.m_type);
 
-	if (NONE == mess.PM_PROC) break;
+	if (NONE == mess.VFS_PM_ENDPT) break;
 
-	rfp = &fproc[mess.PM_SLOT];
+	rfp = &fproc[mess.VFS_PM_SLOT];
 	rfp->fp_flags = FP_NOFLAGS;
-	rfp->fp_pid = mess.PM_PID;
-	rfp->fp_endpoint = mess.PM_PROC;
+	rfp->fp_pid = mess.VFS_PM_PID;
+	rfp->fp_endpoint = mess.VFS_PM_ENDPT;
 	rfp->fp_grant = GRANT_INVALID;
 	rfp->fp_blocked_on = FP_BLOCKED_ON_NONE;
 	rfp->fp_realuid = (uid_t) SYS_UID;
@@ -569,67 +569,67 @@ void service_pm_postponed(void)
   memset(&m_out, 0, sizeof(m_out));
 
   switch(job_call_nr) {
-  case PM_EXEC:
-	proc_e = job_m_in.PM_PROC;
-	exec_path = (vir_bytes)job_m_in.PM_PATH;
-	exec_path_len = (size_t)job_m_in.PM_PATH_LEN;
-	stack_frame = (vir_bytes)job_m_in.PM_FRAME;
-	stack_frame_len = (size_t)job_m_in.PM_FRAME_LEN;
-	ps_str = (vir_bytes)job_m_in.PM_PS_STR;
+  case VFS_PM_EXEC:
+	proc_e = job_m_in.VFS_PM_ENDPT;
+	exec_path = (vir_bytes) job_m_in.VFS_PM_PATH;
+	exec_path_len = (size_t) job_m_in.VFS_PM_PATH_LEN;
+	stack_frame = (vir_bytes) job_m_in.VFS_PM_FRAME;
+	stack_frame_len = (size_t) job_m_in.VFS_PM_FRAME_LEN;
+	ps_str = (vir_bytes) job_m_in.VFS_PM_PS_STR;
 
 	assert(proc_e == fp->fp_endpoint);
 
 	r = pm_exec(exec_path, exec_path_len, stack_frame, stack_frame_len,
-		&pc, &newsp, &ps_str, job_m_in.PM_EXECFLAGS);
+		&pc, &newsp, &ps_str, job_m_in.VFS_PM_EXECFLAGS);
 
 	/* Reply status to PM */
-	m_out.m_type = PM_EXEC_REPLY;
-	m_out.PM_PROC = proc_e;
-	m_out.PM_PC = (void *)pc;
-	m_out.PM_STATUS = r;
-	m_out.PM_NEWSP = (void *)newsp;
-	m_out.PM_NEWPS_STR = ps_str;
+	m_out.m_type = VFS_PM_EXEC_REPLY;
+	m_out.VFS_PM_ENDPT = proc_e;
+	m_out.VFS_PM_PC = (void *) pc;
+	m_out.VFS_PM_STATUS = r;
+	m_out.VFS_PM_NEWSP = (void *) newsp;
+	m_out.VFS_PM_NEWPS_STR = ps_str;
 
 	break;
 
-  case PM_EXIT:
-	proc_e = job_m_in.PM_PROC;
+  case VFS_PM_EXIT:
+	proc_e = job_m_in.VFS_PM_ENDPT;
 
 	assert(proc_e == fp->fp_endpoint);
 
 	pm_exit();
 
 	/* Reply dummy status to PM for synchronization */
-	m_out.m_type = PM_EXIT_REPLY;
-	m_out.PM_PROC = proc_e;
+	m_out.m_type = VFS_PM_EXIT_REPLY;
+	m_out.VFS_PM_ENDPT = proc_e;
 
 	break;
 
-  case PM_DUMPCORE:
-	proc_e = job_m_in.PM_PROC;
-	term_signal = job_m_in.PM_TERM_SIG;
-	core_path = (vir_bytes) job_m_in.PM_PATH;
+  case VFS_PM_DUMPCORE:
+	proc_e = job_m_in.VFS_PM_ENDPT;
+	term_signal = job_m_in.VFS_PM_TERM_SIG;
+	core_path = (vir_bytes) job_m_in.VFS_PM_PATH;
 
 	assert(proc_e == fp->fp_endpoint);
 
 	r = pm_dumpcore(term_signal, core_path);
 
 	/* Reply status to PM */
-	m_out.m_type = PM_CORE_REPLY;
-	m_out.PM_PROC = proc_e;
-	m_out.PM_STATUS = r;
+	m_out.m_type = VFS_PM_CORE_REPLY;
+	m_out.VFS_PM_ENDPT = proc_e;
+	m_out.VFS_PM_STATUS = r;
 
 	break;
 
-  case PM_UNPAUSE:
-	proc_e = job_m_in.PM_PROC;
+  case VFS_PM_UNPAUSE:
+	proc_e = job_m_in.VFS_PM_ENDPT;
 
 	assert(proc_e == fp->fp_endpoint);
 
 	unpause();
 
-	m_out.m_type = PM_UNPAUSE_REPLY;
-	m_out.PM_PROC = proc_e;
+	m_out.m_type = VFS_PM_UNPAUSE_REPLY;
+	m_out.VFS_PM_ENDPT = proc_e;
 
 	break;
 
@@ -649,7 +649,7 @@ static void service_pm(void)
 {
 /* Process a request from PM. This function is called from the main thread, and
  * may therefore not block. Any requests that may require blocking the calling
- * thread must be executed in a separate thread. Aside from PM_REBOOT, all
+ * thread must be executed in a separate thread. Aside from VFS_PM_REBOOT, all
  * requests from PM involve another, target process: for example, PM tells VFS
  * that a process is performing a setuid() call. For some requests however,
  * that other process may not be idle, and in that case VFS must serialize the
@@ -665,56 +665,56 @@ static void service_pm(void)
   memset(&m_out, 0, sizeof(m_out));
 
   switch (call_nr) {
-    case PM_SETUID:
+  case VFS_PM_SETUID:
 	{
 		endpoint_t proc_e;
 		uid_t euid, ruid;
 
-		proc_e = m_in.PM_PROC;
-		euid = m_in.PM_EID;
-		ruid = m_in.PM_RID;
+		proc_e = m_in.VFS_PM_ENDPT;
+		euid = m_in.VFS_PM_EID;
+		ruid = m_in.VFS_PM_RID;
 
 		pm_setuid(proc_e, euid, ruid);
 
-		m_out.m_type = PM_SETUID_REPLY;
-		m_out.PM_PROC = proc_e;
+		m_out.m_type = VFS_PM_SETUID_REPLY;
+		m_out.VFS_PM_ENDPT = proc_e;
 	}
 	break;
 
-    case PM_SETGID:
+  case VFS_PM_SETGID:
 	{
 		endpoint_t proc_e;
 		gid_t egid, rgid;
 
-		proc_e = m_in.PM_PROC;
-		egid = m_in.PM_EID;
-		rgid = m_in.PM_RID;
+		proc_e = m_in.VFS_PM_ENDPT;
+		egid = m_in.VFS_PM_EID;
+		rgid = m_in.VFS_PM_RID;
 
 		pm_setgid(proc_e, egid, rgid);
 
-		m_out.m_type = PM_SETGID_REPLY;
-		m_out.PM_PROC = proc_e;
+		m_out.m_type = VFS_PM_SETGID_REPLY;
+		m_out.VFS_PM_ENDPT = proc_e;
 	}
 	break;
 
-    case PM_SETSID:
+  case VFS_PM_SETSID:
 	{
 		endpoint_t proc_e;
 
-		proc_e = m_in.PM_PROC;
+		proc_e = m_in.VFS_PM_ENDPT;
 		pm_setsid(proc_e);
 
-		m_out.m_type = PM_SETSID_REPLY;
-		m_out.PM_PROC = proc_e;
+		m_out.m_type = VFS_PM_SETSID_REPLY;
+		m_out.VFS_PM_ENDPT = proc_e;
 	}
 	break;
 
-    case PM_EXEC:
-    case PM_EXIT:
-    case PM_DUMPCORE:
-    case PM_UNPAUSE:
+  case VFS_PM_EXEC:
+  case VFS_PM_EXIT:
+  case VFS_PM_DUMPCORE:
+  case VFS_PM_UNPAUSE:
 	{
-		endpoint_t proc_e = m_in.PM_PROC;
+		endpoint_t proc_e = m_in.VFS_PM_ENDPT;
 
 		if(isokendpt(proc_e, &slot) != OK) {
 			printf("VFS: proc ep %d not ok\n", proc_e);
@@ -731,56 +731,56 @@ static void service_pm(void)
 
 		return;
 	}
-    case PM_FORK:
-    case PM_SRV_FORK:
+  case VFS_PM_FORK:
+  case VFS_PM_SRV_FORK:
 	{
 		endpoint_t pproc_e, proc_e;
 		pid_t child_pid;
 		uid_t reuid;
 		gid_t regid;
 
-		pproc_e = m_in.PM_PPROC;
-		proc_e = m_in.PM_PROC;
-		child_pid = m_in.PM_CPID;
-		reuid = m_in.PM_REUID;
-		regid = m_in.PM_REGID;
+		pproc_e = m_in.VFS_PM_PENDPT;
+		proc_e = m_in.VFS_PM_ENDPT;
+		child_pid = m_in.VFS_PM_CPID;
+		reuid = m_in.VFS_PM_REUID;
+		regid = m_in.VFS_PM_REGID;
 
 		pm_fork(pproc_e, proc_e, child_pid);
-		m_out.m_type = PM_FORK_REPLY;
+		m_out.m_type = VFS_PM_FORK_REPLY;
 
-		if (call_nr == PM_SRV_FORK) {
-			m_out.m_type = PM_SRV_FORK_REPLY;
+		if (call_nr == VFS_PM_SRV_FORK) {
+			m_out.m_type = VFS_PM_SRV_FORK_REPLY;
 			pm_setuid(proc_e, reuid, reuid);
 			pm_setgid(proc_e, regid, regid);
 		}
 
-		m_out.PM_PROC = proc_e;
+		m_out.VFS_PM_ENDPT = proc_e;
 	}
 	break;
-    case PM_SETGROUPS:
+  case VFS_PM_SETGROUPS:
 	{
 		endpoint_t proc_e;
 		int group_no;
 		gid_t *group_addr;
 
-		proc_e = m_in.PM_PROC;
-		group_no = m_in.PM_GROUP_NO;
-		group_addr = (gid_t *) m_in.PM_GROUP_ADDR;
+		proc_e = m_in.VFS_PM_ENDPT;
+		group_no = m_in.VFS_PM_GROUP_NO;
+		group_addr = (gid_t *) m_in.VFS_PM_GROUP_ADDR;
 
 		pm_setgroups(proc_e, group_no, group_addr);
 
-		m_out.m_type = PM_SETGROUPS_REPLY;
-		m_out.PM_PROC = proc_e;
+		m_out.m_type = VFS_PM_SETGROUPS_REPLY;
+		m_out.VFS_PM_ENDPT = proc_e;
 	}
 	break;
 
-    case PM_REBOOT:
+  case VFS_PM_REBOOT:
 	/* Reboot requests are not considered postponed PM work and are instead
 	 * handled from a separate worker thread that is associated with PM's
 	 * process. PM makes no regular VFS calls, and thus, from VFS's
 	 * perspective, PM is always idle. Therefore, we can safely do this.
-	 * We do assume that PM sends us only one PM_REBOOT message at once,
-	 * or ever for that matter. :)
+	 * We do assume that PM sends us only one VFS_PM_REBOOT message at
+	 * once, or ever for that matter. :)
 	 */
 	worker_start(fproc_addr(PM_PROC_NR), pm_reboot, &m_in,
 		FALSE /*use_spare*/);

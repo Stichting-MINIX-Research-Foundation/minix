@@ -23,7 +23,6 @@
 #include <fcntl.h>
 #include <sys/resource.h>
 #include <sys/utsname.h>
-#include <string.h>
 #include <machine/archtypes.h>
 #include <env.h>
 #include <assert.h>
@@ -54,60 +53,38 @@ static int sef_cb_init_fresh(int type, sef_init_info_t *info);
 int main()
 {
 /* Main routine of the process manager. */
-  int result;
+  int ipc_status, result;
 
   /* SEF local startup. */
   sef_local_startup();
 
   /* This is PM's main loop-  get work and do it, forever and forever. */
   while (TRUE) {
-	  int ipc_status;
-
-	  /* Wait for the next message and extract useful information from it. */
-	  if (sef_receive_status(ANY, &m_in, &ipc_status) != OK)
-		  panic("PM sef_receive_status error");
-	  who_e = m_in.m_source;	/* who sent the message */
-	  if(pm_isokendpt(who_e, &who_p) != OK)
-		  panic("PM got message from invalid endpoint: %d", who_e);
-	  call_nr = m_in.m_type;	/* system call number */
-
-	  /* Process slot of caller. Misuse PM's own process slot if the kernel is
-	   * calling. This can happen in case of synchronous alarms (CLOCK) or or
-	   * event like pending kernel signals (SYSTEM).
-	   */
-	  mp = &mproc[who_p < 0 ? PM_PROC_NR : who_p];
-	  if(who_p >= 0 && mp->mp_endpoint != who_e) {
-		  panic("PM endpoint number out of sync with source: %d",
-				  			mp->mp_endpoint);
-	  }
-
-	/* Drop delayed calls from exiting processes. */
-	if (mp->mp_flags & EXITING)
-		continue;
+	/* Wait for the next message. */
+	if (sef_receive_status(ANY, &m_in, &ipc_status) != OK)
+		panic("PM sef_receive_status error");
 
 	/* Check for system notifications first. Special cases. */
 	if (is_ipc_notify(ipc_status)) {
-		if (who_p == CLOCK) {
+		if (_ENDPOINT_P(m_in.m_source) == CLOCK)
 			expire_timers(m_in.NOTIFY_TIMESTAMP);
-		}
 
 		/* done, continue */
 		continue;
 	}
 
-	switch(call_nr)
-	{
-	case PM_SETUID_REPLY:
-	case PM_SETGID_REPLY:
-	case PM_SETSID_REPLY:
-	case PM_EXEC_REPLY:
-	case PM_EXIT_REPLY:
-	case PM_CORE_REPLY:
-	case PM_FORK_REPLY:
-	case PM_SRV_FORK_REPLY:
-	case PM_UNPAUSE_REPLY:
-	case PM_REBOOT_REPLY:
-	case PM_SETGROUPS_REPLY:
+	/* Extract useful information from the message. */
+	who_e = m_in.m_source;	/* who sent the message */
+	if (pm_isokendpt(who_e, &who_p) != OK)
+		panic("PM got message from invalid endpoint: %d", who_e);
+	mp = &mproc[who_p];	/* process slot of caller */
+	call_nr = m_in.m_type;	/* system call number */
+
+	/* Drop delayed calls from exiting processes. */
+	if (mp->mp_flags & EXITING)
+		continue;
+
+	if (IS_VFS_PM_RS(call_nr)) {
 		if (who_e == VFS_PROC_NR)
 		{
 			handle_vfs_reply();
@@ -115,11 +92,8 @@ int main()
 		}
 		else
 			result= ENOSYS;
-		break;
-	default:
-		/* Else, if the system call number is valid, perform the
-		 * call.
-		 */
+	} else {
+		/* If the system call number is valid, perform the call. */
 		if ((unsigned) call_nr >= NCALLS) {
 			result = ENOSYS;
 		} else {
@@ -130,7 +104,6 @@ int main()
 			result = (*call_vec[call_nr])();
 
 		}
-		break;
 	}
 
 	/* Send reply. */
@@ -259,17 +232,20 @@ static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 		rmp->mp_endpoint = ip->endpoint;
 
 		/* Tell VFS about this system process. */
-		mess.m_type = PM_INIT;
-		mess.PM_SLOT = ip->proc_nr;
-		mess.PM_PID = rmp->mp_pid;
-		mess.PM_PROC = rmp->mp_endpoint;
+		memset(&mess, 0, sizeof(mess));
+		mess.m_type = VFS_PM_INIT;
+		mess.VFS_PM_SLOT = ip->proc_nr;
+		mess.VFS_PM_PID = rmp->mp_pid;
+		mess.VFS_PM_ENDPT = rmp->mp_endpoint;
   		if (OK != (s=send(VFS_PROC_NR, &mess)))
 			panic("can't sync up with VFS: %d", s);
   	}
   }
 
   /* Tell VFS that no more system processes follow and synchronize. */
-  mess.PR_ENDPT = NONE;
+  memset(&mess, 0, sizeof(mess));
+  mess.m_type = VFS_PM_INIT;
+  mess.VFS_PM_ENDPT = NONE;
   if (sendrec(VFS_PROC_NR, &mess) != OK || mess.m_type != OK)
 	panic("can't sync up with VFS");
 
@@ -338,10 +314,10 @@ static void handle_vfs_reply()
   endpoint_t proc_e;
   int r, proc_n, new_parent;
 
-  /* PM_REBOOT is the only request not associated with a process.
+  /* VFS_PM_REBOOT is the only request not associated with a process.
    * Handle its reply first.
    */
-  if (call_nr == PM_REBOOT_REPLY) {
+  if (call_nr == VFS_PM_REBOOT_REPLY) {
 	/* Ask the kernel to abort. All system services, including
 	 * the PM, will get a HARD_STOP notification. Await the
 	 * notification in the main loop.
@@ -352,7 +328,7 @@ static void handle_vfs_reply()
   }
 
   /* Get the process associated with this call */
-  proc_e = m_in.PM_PROC;
+  proc_e = m_in.VFS_PM_ENDPT;
 
   if (pm_isokendpt(proc_e, &proc_n) != OK) {
 	panic("handle_vfs_reply: got bad endpoint from VFS: %d", proc_e);
@@ -372,40 +348,41 @@ static void handle_vfs_reply()
 
   /* Call-specific handler code */
   switch (call_nr) {
-  case PM_SETUID_REPLY:
-  case PM_SETGID_REPLY:
-  case PM_SETGROUPS_REPLY:
+  case VFS_PM_SETUID_REPLY:
+  case VFS_PM_SETGID_REPLY:
+  case VFS_PM_SETGROUPS_REPLY:
 	/* Wake up the original caller */
 	reply(rmp-mproc, OK);
 
 	break;
 
-  case PM_SETSID_REPLY:
+  case VFS_PM_SETSID_REPLY:
 	/* Wake up the original caller */
 	reply(rmp-mproc, rmp->mp_procgrp);
 
 	break;
 
-  case PM_EXEC_REPLY:
-	exec_restart(rmp, m_in.PM_STATUS, (vir_bytes)m_in.PM_PC,
-		(vir_bytes)m_in.PM_NEWSP, (vir_bytes)m_in.PM_NEWPS_STR);
+  case VFS_PM_EXEC_REPLY:
+	exec_restart(rmp, m_in.VFS_PM_STATUS, (vir_bytes)m_in.VFS_PM_PC,
+		(vir_bytes)m_in.VFS_PM_NEWSP,
+		(vir_bytes)m_in.VFS_PM_NEWPS_STR);
 
 	break;
 
-  case PM_EXIT_REPLY:
+  case VFS_PM_EXIT_REPLY:
 	exit_restart(rmp, FALSE /*dump_core*/);
 
 	break;
 
-  case PM_CORE_REPLY:
-	if (m_in.PM_STATUS == OK)
+  case VFS_PM_CORE_REPLY:
+	if (m_in.VFS_PM_STATUS == OK)
 		rmp->mp_sigstatus |= DUMPED;
 
 	exit_restart(rmp, TRUE /*dump_core*/);
 
 	break;
 
-  case PM_FORK_REPLY:
+  case VFS_PM_FORK_REPLY:
 	/* Schedule the newly created process ... */
 	r = OK;
 	if (rmp->mp_scheduler != KERNEL && rmp->mp_scheduler != NONE) {
@@ -434,12 +411,12 @@ static void handle_vfs_reply()
 
 	break;
 
-  case PM_SRV_FORK_REPLY:
+  case VFS_PM_SRV_FORK_REPLY:
 	/* Nothing to do */
 
 	break;
 
-  case PM_UNPAUSE_REPLY:
+  case VFS_PM_UNPAUSE_REPLY:
 	/* The target process must always be stopped while unpausing; otherwise
 	 * it could just end up pausing itself on a new call afterwards.
 	 */
