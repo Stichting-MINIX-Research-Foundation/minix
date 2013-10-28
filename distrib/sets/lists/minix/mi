@@ -526,6 +526,7 @@
 ./usr/bin/units				minix-sys
 ./usr/bin/unlzma			minix-sys
 ./usr/bin/unstack			minix-sys
+./usr/bin/unvis				minix-sys
 ./usr/bin/unxz				minix-sys
 ./usr/bin/unzip				minix-sys
 ./usr/bin/update			minix-sys
@@ -2094,6 +2095,7 @@
 ./usr/man/man1/units.1			minix-sys
 ./usr/man/man1/unlzma.1			minix-sys
 ./usr/man/man1/unset.1			minix-sys
+./usr/man/man1/unvis.1			minix-sys
 ./usr/man/man1/unxz.1			minix-sys
 ./usr/man/man1/unzip.1			minix-sys
 ./usr/man/man1/users.1			minix-sys
