@@ -1,4 +1,4 @@
-#define NCALLS		 125	/* number of system calls allowed */
+#define NCALLS		 129	/* number of system calls allowed */
 
 /* In case it isn't obvious enough: this list is sorted numerically. */
 #define EXIT		   1 
@@ -66,7 +66,7 @@
 #define SIGRETURN	  75
 
 #define REBOOT		  76
-#define SVRCTL		  77
+#define PM_SVRCTL	  77	/* to PM */
 #define SYSUNAME	  78
 #define LLSEEK		  81	/* to VFS */
 #define GETVFSSTAT	  82	/* to VFS */
@@ -106,6 +106,11 @@
 #define VFS_VMCALL	117
 
 #define MAPDRIVER      122     /* to VFS, map a device */
-#define GETRUSAGE      123	/* to PM, VFS */
+#define PM_GETRUSAGE	123	/* to PM */
 
 #define VFS_CHECKPERMS	124	/* to VFS */
+
+#define PM_GETSYSINFO	125	/* to PM */
+#define VFS_GETSYSINFO	126	/* to VFS */
+#define VFS_GETRUSAGE	127	/* to VFS */
+#define VFS_SVRCTL	128	/* to VFS */

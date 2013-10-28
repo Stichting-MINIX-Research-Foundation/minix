@@ -115,7 +115,7 @@ int do_sync(message *m_out);
 int do_fsync(message *m_out);
 void pm_reboot(void);
 int do_svrctl(message *m_out);
-int do_getsysinfo(void);
+int do_getsysinfo(message *m_out);
 int do_vm_call(message *m_out);
 int pm_dumpcore(int sig, vir_bytes exe_name);
 void ds_event(void);

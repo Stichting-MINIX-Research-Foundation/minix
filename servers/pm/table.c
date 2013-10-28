@@ -88,7 +88,7 @@ int (*call_vec[])(void) = {
 	do_sigprocmask,	/* 74 = sigprocmask */
 	do_sigreturn,	/* 75 = sigreturn   */
 	do_reboot,	/* 76 = reboot	*/
-	do_svrctl,	/* 77 = svrctl	*/
+	do_svrctl,	/* 77 = pm_svrctl */
 	do_sysuname,	/* 78 = sysuname */
 	no_sys,		/* 79 = unused */
 	no_sys,		/* 80 = (getdents) */
@@ -134,8 +134,12 @@ int (*call_vec[])(void) = {
 	no_sys,		/* 120 = unsused */
 	no_sys,		/* 121 = (task reply) */
 	no_sys,		/* 122 = (map driver ) */
-	do_getrusage,	/* 123 = getrusage */
+	do_getrusage,	/* 123 = pm_getrusage */
 	no_sys,		/* 124 = (checkperms) */
+	do_getsysinfo,	/* 125 = pm_getsysinfo */
+	no_sys,		/* 126 = (vfs_getsysinfo) */
+	no_sys,		/* 127 = (vfs_getrusage) */
+	no_sys,		/* 128 = (vfs_svrctl) */
 };
 /* This should not fail with "array size is negative": */
 extern int dummy[sizeof(call_vec) == NCALLS * sizeof(call_vec[0]) ? 1 : -1];

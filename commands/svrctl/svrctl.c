@@ -18,10 +18,9 @@ static char *bin_name;
 
 int main (int argc, char *argv[])
 {
-  int r, param;
+  int param;
   endpoint_t proc_e = NONE;
   struct sysgetenv sysgetenv;
-  message m;
   char *to_whom, *operation, *what, *value;
   unsigned i;
 
@@ -60,10 +59,7 @@ int main (int argc, char *argv[])
 	else
 		usage();
 
-	m.m2_i1 = param;
-	m.m2_p1 = (char *) &sysgetenv;
-	r = _syscall(proc_e, SVRCTL, &m);
-	if (r != 0) {
+	if (svrctl(param, &sysgetenv) != 0) {
 		if (errno == ESRCH)
 			fprintf(stderr, "invalid parameter: %s\n", what);
 		else if (errno == EINVAL)
@@ -87,10 +83,7 @@ int main (int argc, char *argv[])
 	else
 		usage();
 
-	m.m2_i1 = param;
-	m.m2_p1 = (char *) &sysgetenv;
-	r = _syscall(proc_e, SVRCTL, &m);
-	if (r != 0) {
+	if (svrctl(param, &sysgetenv) != 0) {
 		if (errno == ESRCH)
 			fprintf(stderr, "invalid parameter: %s\n", what);
 		else

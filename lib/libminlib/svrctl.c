@@ -16,11 +16,11 @@ int svrctl(int request, void *argp)
 	case 'M':
 	case 'S':
 		/* PM handles calls for itself and the kernel. */
-		return _syscall(PM_PROC_NR, SVRCTL, &m);
+		return _syscall(PM_PROC_NR, PM_SVRCTL, &m);
 	case 'F':
 	case 'I':
 		/* VFS handles calls for itself and inet. */
-		return _syscall(VFS_PROC_NR, SVRCTL, &m);
+		return _syscall(VFS_PROC_NR, VFS_SVRCTL, &m);
 	default:
 		errno = EINVAL;
 		return -1;

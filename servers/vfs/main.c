@@ -233,27 +233,23 @@ static void do_work(void)
 
   memset(&m_out, 0, sizeof(m_out));
 
-  if (job_call_nr == COMMON_GETSYSINFO) {
-	error = do_getsysinfo();
+  /* At this point we assume that we're dealing with a call that has been
+   * made specifically to VFS. Typically it will be a POSIX call from a
+   * normal process, but we also handle a few calls made by drivers such
+   * such as UDS and VND through here. Call the internal function that
+   * does the work.
+   */
+  if (job_call_nr < 0 || job_call_nr >= NCALLS) {
+	error = ENOSYS;
+  } else if (fp->fp_pid == PID_FREE) {
+	/* Process vanished before we were able to handle request.
+	 * Replying has no use. Just drop it. */
+	error = SUSPEND;
   } else {
-	/* At this point we assume that we're dealing with a call that has been
-	 * made specifically to VFS. Typically it will be a POSIX call from a
-	 * normal process, but we also handle a few calls made by drivers such
-	 * such as UDS and VND through here. Call the internal function that
-	 * does the work.
-	 */
-	if (job_call_nr < 0 || job_call_nr >= NCALLS) {
-		error = ENOSYS;
-	} else if (fp->fp_pid == PID_FREE) {
-		/* Process vanished before we were able to handle request.
-		 * Replying has no use. Just drop it. */
-		error = SUSPEND;
-	} else {
 #if ENABLE_SYSCALL_STATS
-		calls_stats[job_call_nr]++;
+	calls_stats[job_call_nr]++;
 #endif
-		error = (*call_vec[job_call_nr])(&m_out);
-	}
+	error = (*call_vec[job_call_nr])(&m_out);
   }
 
   /* Copy the results back to the user and send reply. */

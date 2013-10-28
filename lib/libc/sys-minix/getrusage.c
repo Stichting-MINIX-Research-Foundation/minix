@@ -22,10 +22,10 @@ int getrusage(int who, struct rusage *r_usage)
 	}
 
 	memset(r_usage, 0, sizeof(struct rusage));
-	if ((rc = _syscall(PM_PROC_NR, GETRUSAGE, &m)) < 0)
+	if ((rc = _syscall(PM_PROC_NR, PM_GETRUSAGE, &m)) < 0)
 		return rc;
 	m.RU_RUSAGE_ADDR = r_usage;
-	if ((rc = _syscall(VFS_PROC_NR, GETRUSAGE, &m)) < 0)
+	if ((rc = _syscall(VFS_PROC_NR, VFS_GETRUSAGE, &m)) < 0)
 		return rc;
 	m.RU_RUSAGE_ADDR = r_usage;
 	return _syscall(VM_PROC_NR, VM_GETRUSAGE, &m);

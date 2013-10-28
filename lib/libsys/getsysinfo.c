@@ -1,5 +1,6 @@
 
 #include "syslib.h"
+
 #include <string.h>
 #include <minix/sysinfo.h>
 #include <minix/com.h>
@@ -12,9 +13,20 @@ int getsysinfo(
 )
 {
   message m;
+  int call_nr;
+
+  switch (who) {
+  case PM_PROC_NR: call_nr = PM_GETSYSINFO; break;
+  case VFS_PROC_NR: call_nr = VFS_GETSYSINFO; break;
+  case RS_PROC_NR: call_nr = RS_GETSYSINFO; break;
+  case DS_PROC_NR: call_nr = DS_GETSYSINFO; break;
+  default:
+	return ENOSYS;
+  }
+
   memset(&m, 0, sizeof(m));
   m.SI_WHAT = what;
   m.SI_WHERE = where;
   m.SI_SIZE = size;
-  return _taskcall(who, COMMON_GETSYSINFO, &m);
+  return _taskcall(who, call_nr, &m);
 }

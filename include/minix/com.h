@@ -648,6 +648,8 @@
 
 #define RS_LOOKUP	(RS_RQ_BASE + 8)	/* lookup server name */
 
+#define RS_GETSYSINFO	(RS_RQ_BASE + 9)	/* get system information */
+
 #define RS_INIT 	(RS_RQ_BASE + 20)	/* service init message */
 #define RS_LU_PREPARE	(RS_RQ_BASE + 21)	/* prepare to update message */
 
@@ -683,6 +685,7 @@
 #define DS_DELETE	(DS_RQ_BASE + 4)	/* delete data */
 #define DS_SNAPSHOT	(DS_RQ_BASE + 5)	/* take a snapshot */
 #define DS_RETRIEVE_LABEL  (DS_RQ_BASE + 6)	/* retrieve label's name */
+#define DS_GETSYSINFO	(DS_RQ_BASE + 7)	/* get system information */
 
 /* DS field names */
 #  define DS_KEY_GRANT		m2_i1		/* key for the data */
@@ -816,11 +819,10 @@
 #	define GCOV_BUFF_P  m1_p1
 #	define GCOV_BUFF_SZ m1_i1
 
-/* Common request to several system servers: retrieve system information. */
-#define COMMON_GETSYSINFO	(COMMON_RQ_BASE+2)
-#	define SI_WHAT		m1_i1
-#	define SI_WHERE		m1_p1
-#	define SI_SIZE		m1_i2
+/* Field names for the getsysinfo(2) call. */
+#define SI_WHAT			m1_i1
+#define SI_WHERE		m1_p1
+#define SI_SIZE			m1_i2
 
 /* PM field names */
 /* BRK */
