@@ -51,7 +51,7 @@ static void free_proc(int flags);
 /*===========================================================================*
  *				do_getsysinfo				     *
  *===========================================================================*/
-int do_getsysinfo()
+int do_getsysinfo(message *UNUSED(m_out))
 {
   vir_bytes src_addr, dst_addr;
   size_t len, buf_size;
