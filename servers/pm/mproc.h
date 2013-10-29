@@ -84,6 +84,7 @@ EXTERN struct mproc {
 #define SIGSUSPENDED	0x00100	/* set by SIGSUSPEND system call */
 #define REPLY		0x00200	/* set if a reply message is pending */
 #define VFS_CALL       	0x00400	/* set if waiting for VFS (normal calls) */
+#define NEW_PARENT	0x00800	/* process's parent changed during VFS call */
 #define UNPAUSED	0x01000	/* VFS has replied to unpause request */
 #define PRIV_PROC	0x02000	/* system process, special privileges */
 #define PARTIAL_EXEC	0x04000	/* process got a new map but no content */
