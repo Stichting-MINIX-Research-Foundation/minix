@@ -554,6 +554,7 @@
 ./usr/bin/write				minix-sys
 ./usr/bin/writeisofs			minix-sys
 ./usr/bin/xargs				minix-sys
+./usr/bin/xstr				minix-sys
 ./usr/bin/xz				minix-sys
 ./usr/bin/xzcat				minix-sys
 ./usr/bin/yacc				minix-sys
@@ -2119,6 +2120,7 @@
 ./usr/man/man1/worldstone.1		minix-sys
 ./usr/man/man1/write.1			minix-sys
 ./usr/man/man1/xargs.1			minix-sys
+./usr/man/man1/xstr.1			minix-sys
 ./usr/man/man1/xz.1			minix-sys
 ./usr/man/man1/xzcat.1			minix-sys
 ./usr/man/man1/yacc.1			minix-sys

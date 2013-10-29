@@ -32,7 +32,7 @@ SUBDIR= asa \
 	uuidgen vis \
 	\
 	wc whatis who whois \
-	write xargs xinstall yes
+	write xargs xinstall xstr yes
 
 .if !defined(__MINIX)
 SUBDIR+= ../external/zlib/pigz/bin/pigz
