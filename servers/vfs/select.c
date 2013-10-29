@@ -80,7 +80,7 @@ static struct fdtype {
 /*===========================================================================*
  *				do_select				     *
  *===========================================================================*/
-int do_select(message *UNUSED(m_out))
+int do_select(void)
 {
 /* Implement the select(nfds, readfds, writefds, errorfds, timeout) system
  * call. First we copy the arguments and verify their sanity. Then we check

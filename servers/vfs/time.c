@@ -25,7 +25,7 @@
 /*===========================================================================*
  *				do_utime				     *
  *===========================================================================*/
-int do_utime(message *UNUSED(m_out))
+int do_utime(void)
 {
 /* Perform the utime(name, timep) system call. */
   int r;
@@ -83,7 +83,7 @@ int do_utime(message *UNUSED(m_out))
 /*===========================================================================*
  *				do_utimens				     *
  *===========================================================================*/
-int do_utimens(message *UNUSED(m_out))
+int do_utimens(void)
 {
 /* Perform the utimens(name, times, flag) system call, and its friends.
  * Implement a very large but not complete subset of the utimensat()

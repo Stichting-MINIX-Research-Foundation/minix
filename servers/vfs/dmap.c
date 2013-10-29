@@ -106,7 +106,7 @@ endpoint_t proc_nr_e;		/* process number of the driver */
 /*===========================================================================*
  *				do_mapdriver		 		     *
  *===========================================================================*/
-int do_mapdriver(message *UNUSED(m_out))
+int do_mapdriver(void)
 {
 /* Create a device->driver mapping. RS will tell us which major is driven by
  * this driver, what type of device it is (regular, TTY, asynchronous, clone,

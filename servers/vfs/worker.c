@@ -122,7 +122,7 @@ static void *worker_main(void *arg)
 
 	/* Perform normal work, if any. */
 	if (fp->fp_func != NULL) {
-		self->w_msg = fp->fp_msg;
+		self->w_m_in = fp->fp_msg;
 		err_code = OK;
 
 		fp->fp_func();
@@ -132,7 +132,7 @@ static void *worker_main(void *arg)
 
 	/* Perform postponed PM work, if any. */
 	if (fp->fp_flags & FP_PM_WORK) {
-		self->w_msg = fp->fp_pm_msg;
+		self->w_m_in = fp->fp_pm_msg;
 
 		service_pm_postponed();
 

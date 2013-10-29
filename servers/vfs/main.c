@@ -40,6 +40,7 @@ static void do_fs_reply(struct worker_thread *wp);
 static void do_work(void);
 static void do_init_root(void);
 static void handle_work(void (*func)(void));
+static void reply(message *m_out, endpoint_t whom, int result);
 
 static void get_work(void);
 static void service_pm(void);
@@ -229,9 +230,8 @@ static void do_pending_pipe(void)
 static void do_work(void)
 {
   int error;
-  message m_out;
 
-  memset(&m_out, 0, sizeof(m_out));
+  memset(&job_m_out, 0, sizeof(job_m_out));
 
   /* At this point we assume that we're dealing with a call that has been
    * made specifically to VFS. Typically it will be a POSIX call from a
@@ -249,11 +249,11 @@ static void do_work(void)
 #if ENABLE_SYSCALL_STATS
 	calls_stats[job_call_nr]++;
 #endif
-	error = (*call_vec[job_call_nr])(&m_out);
+	error = (*call_vec[job_call_nr])();
   }
 
   /* Copy the results back to the user and send reply. */
-  if (error != SUSPEND) reply(&m_out, fp->fp_endpoint, error);
+  if (error != SUSPEND) reply(&job_m_out, fp->fp_endpoint, error);
 }
 
 /*===========================================================================*
@@ -520,7 +520,7 @@ static void get_work()
 /*===========================================================================*
  *				reply					     *
  *===========================================================================*/
-void reply(message *m_out, endpoint_t whom, int result)
+static void reply(message *m_out, endpoint_t whom, int result)
 {
 /* Send a reply to a user process.  If the send fails, just ignore it. */
   int r;
@@ -540,18 +540,11 @@ void reply(message *m_out, endpoint_t whom, int result)
 void replycode(endpoint_t whom, int result)
 {
 /* Send a reply to a user process.  If the send fails, just ignore it. */
-  int r;
   message m_out;
 
   memset(&m_out, 0, sizeof(m_out));
 
-  m_out.reply_type = result;
-  r = sendnb(whom, &m_out);
-  if (r != OK) {
-	printf("VFS: %d couldn't send reply %d to %d: %d\n", mthread_self(),
-		result, whom, r);
-	util_stacktrace();
-  }
+  reply(&m_out, whom, result);
 }
 
 /*===========================================================================*

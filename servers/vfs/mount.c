@@ -83,7 +83,7 @@ static void update_bspec(dev_t dev, endpoint_t fs_e, int send_drv_e)
 /*===========================================================================*
  *                              do_fsready                                   *
  *===========================================================================*/
-int do_fsready(message *UNUSED(m_out))
+int do_fsready(void)
 {
   /* deprecated */
   return(SUSPEND);
@@ -92,7 +92,7 @@ int do_fsready(message *UNUSED(m_out))
 /*===========================================================================*
  *                              do_mount                                     *
  *===========================================================================*/
-int do_mount(message *UNUSED(m_out))
+int do_mount(void)
 {
 /* Perform the mount(name, mfile, mount_flags) system call. */
   endpoint_t fs_e;
@@ -425,7 +425,7 @@ void mount_pfs(void)
 /*===========================================================================*
  *                              do_umount                                    *
  *===========================================================================*/
-int do_umount(message *UNUSED(m_out))
+int do_umount(void)
 {
 /* Perform the umount(name) system call.  Return the label of the FS service.
  */

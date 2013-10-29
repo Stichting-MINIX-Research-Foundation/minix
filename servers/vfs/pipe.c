@@ -38,7 +38,7 @@ static int create_pipe(int fil_des[2], int flags);
 /*===========================================================================*
  *				do_pipe					     *
  *===========================================================================*/
-int do_pipe(message *m_out)
+int do_pipe(void)
 {
 /* Perform the pipe(fil_des[2]) system call. */
 
@@ -47,8 +47,8 @@ int do_pipe(message *m_out)
 
   r = create_pipe(fil_des, 0 /* no flags */);
   if (r == OK) {
-	m_out->reply_i1 = fil_des[0];
-	m_out->reply_i2 = fil_des[1];
+	job_m_out.reply_i1 = fil_des[0];
+	job_m_out.reply_i2 = fil_des[1];
   }
 
   return r;
@@ -57,7 +57,7 @@ int do_pipe(message *m_out)
 /*===========================================================================*
  *				do_pipe2				     *
  *===========================================================================*/
-int do_pipe2(message *m_out)
+int do_pipe2(void)
 {
 /* Perform the pipe2(fil_des[2], flags) system call. */
   int r, flags;
@@ -67,8 +67,8 @@ int do_pipe2(message *m_out)
 
   r = create_pipe(fil_des, flags);
   if (r == OK) {
-	m_out->reply_i1 = fil_des[0];
-	m_out->reply_i2 = fil_des[1];
+	job_m_out.reply_i1 = fil_des[0];
+	job_m_out.reply_i2 = fil_des[1];
   }
 
   return r;
