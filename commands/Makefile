@@ -10,14 +10,14 @@ SUBDIR=	add_route arp ash at backup btrace \
 	dhrystone diff diskctl dumpcore \
 	eject factor fbdctl \
 	find fix format fortune fsck.mfs \
-	gcore gcov-pull getty grep hexdump host \
+	gcore gcov-pull getty grep host \
 	hostaddr id ifconfig ifdef \
 	intr ipcrm ipcs irdpd isoread last \
 	less loadkeys loadramdisk logger look lp \
 	lpd lspci mail MAKEDEV \
 	mined mkfifo \
 	mount mt netconf \
-	nonamed od patch \
+	nonamed patch \
 	ping postinstall poweroff prep printroot \
 	profile progressbar pr_routes ps pwdauth \
 	ramdisk rarpd rawspeed rcp readclock \

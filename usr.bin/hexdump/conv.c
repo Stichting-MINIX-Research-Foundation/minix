@@ -1,4 +1,4 @@
-/*	$NetBSD: hexdump.c,v 1.15 2010/02/09 14:06:37 drochner Exp $	*/
+/*	$NetBSD: conv.c,v 1.13 2010/02/09 14:06:37 drochner Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,59 +34,99 @@
 #endif
 
 #include <sys/cdefs.h>
-#if 0
 #if !defined(lint)
-__COPYRIGHT("@(#) Copyright (c) 1989, 1993\
- The Regents of the University of California.  All rights reserved.");
 #if 0
-static char sccsid[] = "@(#)hexdump.c	8.1 (Berkeley) 6/6/93";
+static char sccsid[] = "@(#)conv.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: hexdump.c,v 1.15 2010/02/09 14:06:37 drochner Exp $");
+__RCSID("$NetBSD: conv.c,v 1.13 2010/02/09 14:06:37 drochner Exp $");
 #endif
 #endif /* not lint */
-#endif
 
 #include <sys/types.h>
 
-#include <errno.h>
-#include <locale.h>
-#include <stdlib.h>
 #include <stdio.h>
-#include <string.h>
+#include <ctype.h>
 
 #include "hexdump.h"
 
-FS *fshead;				/* head of format strings */
-int blocksize;				/* data block size */
-int exitval;				/* final exit value */
-int length = -1;			/* max bytes to read */
-
-int	main(int, char **);
-
-int
-main(int argc, char *argv[])
+void
+conv_c(PR *pr, u_char *p)
 {
-	FS *tfs;
-	char *p;
+	char buf[10];
+	char const *str;
 
-	setlocale(LC_ALL, "");
-
-	if (!(p = strrchr(argv[0], 'o')) || strcmp(p, "od"))
-		newsyntax(argc, &argv);
-	else
-		odsyntax(argc, &argv);
-
-	/* figure out the data block size */
-	for (blocksize = 0, tfs = fshead; tfs; tfs = tfs->nextfs) {
-		tfs->bcnt = size(tfs);
-		if (blocksize < tfs->bcnt)
-			blocksize = tfs->bcnt;
+	switch(*p) {
+	case '\0':
+		str = "\\0";
+		goto strpr;
+	/* case '\a': */
+	case '\007':
+		if (odmode)		/* od doesn't know about \a */
+			break;
+		str = "\\a";
+		goto strpr;
+	case '\b':
+		str = "\\b";
+		goto strpr;
+	case '\f':
+		str = "\\f";
+		goto strpr;
+	case '\n':
+		str = "\\n";
+		goto strpr;
+	case '\r':
+		str = "\\r";
+		goto strpr;
+	case '\t':
+		str = "\\t";
+		goto strpr;
+	case '\v':
+		if (odmode)
+			break;
+		str = "\\v";
+		goto strpr;
+	default:
+		break;
 	}
-	/* rewrite the rules, do syntax checking */
-	for (tfs = fshead; tfs; tfs = tfs->nextfs)
-		rewrite(tfs);
+	if (isprint(*p)) {
+		*pr->cchar = 'c';
+		(void)printf(pr->fmt, *p);
+	} else {
+		(void)sprintf(buf, "%03o", (int)*p);
+		str = buf;
+strpr:		*pr->cchar = 's';
+		(void)printf(pr->fmt, str);
+	}
+}
 
-	(void)next(argv);
-	display();
-	exit(exitval);
+void
+conv_u(PR *pr, u_char *p)
+{
+	static const char *list[] = {
+		"nul", "soh", "stx", "etx", "eot", "enq", "ack", "bel",
+		 "bs",  "ht",  "lf",  "vt",  "ff",  "cr",  "so",  "si",
+		"dle", "dcl", "dc2", "dc3", "dc4", "nak", "syn", "etb",
+		"can",  "em", "sub", "esc",  "fs",  "gs",  "rs",  "us",
+	};
+
+						/* od used nl, not lf */
+	if (*p <= 0x1f) {
+		*pr->cchar = 's';
+		if (odmode && *p == 0x0a)
+			(void)printf(pr->fmt, "nl");
+		else
+			(void)printf(pr->fmt, list[*p]);
+	} else if (*p == 0x7f) {
+		*pr->cchar = 's';
+		(void)printf(pr->fmt, "del");
+	} else if (odmode && *p == 0x20) {	/* od replaces space with sp */
+		*pr->cchar = 's';
+		(void)printf(pr->fmt, " sp");
+	} else if (isprint(*p)) {
+		*pr->cchar = 'c';
+		(void)printf(pr->fmt, *p);
+	} else {
+		*pr->cchar = 'x';
+		(void)printf(pr->fmt, (int)*p);
+	}
 }

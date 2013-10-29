@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.26 2009/01/18 21:34:32 apb Exp $	*/
+/*	$NetBSD: parse.c,v 1.27 2011/09/04 20:27:27 joerg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,15 +34,13 @@
 #endif
 
 #include <sys/cdefs.h>
-#if 0
 #if !defined(lint)
 #if 0
 static char sccsid[] = "@(#)parse.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: parse.c,v 1.26 2009/01/18 21:34:32 apb Exp $");
+__RCSID("$NetBSD: parse.c,v 1.27 2011/09/04 20:27:27 joerg Exp $");
 #endif
 #endif /* not lint */
-#endif
 
 #include <sys/types.h>
 #include <sys/file.h>
@@ -58,6 +56,11 @@ __RCSID("$NetBSD: parse.c,v 1.26 2009/01/18 21:34:32 apb Exp $");
 #include <util.h>
 
 #include "hexdump.h"
+
+__dead static void	 badcnt(char *);
+__dead static void	 badconv(char *);
+__dead static void	 badfmt(const char *);
+__dead static void	 badsfmt(void);
 
 FU *endfu;					/* format at end-of-data */
 
@@ -520,25 +523,25 @@ escape(char *p1)
 	}
 }
 
-void
+static void
 badcnt(char *s)
 {
 	errx(1, "%s: bad byte count", s);
 }
 
-void
+static void
 badsfmt(void)
 {
 	errx(1, "%%s: requires a precision or a byte count");
 }
 
-void
+static void
 badfmt(const char *fmt)
 {
 	errx(1, "\"%s\": bad format", fmt);
 }
 
-void
+static void
 badconv(char *ch)
 {
 	errx(1, "%%%s: bad conversion character", ch);

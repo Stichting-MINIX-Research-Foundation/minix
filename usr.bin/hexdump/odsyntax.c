@@ -1,4 +1,4 @@
-/*	$NetBSD: odsyntax.c,v 1.26 2010/02/09 14:06:37 drochner Exp $	*/
+/*	$NetBSD: odsyntax.c,v 1.28 2010/11/27 20:46:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -34,15 +34,13 @@
 #endif
 
 #include <sys/cdefs.h>
-#if 0
 #if !defined(lint)
 #if 0
 static char sccsid[] = "@(#)odsyntax.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: odsyntax.c,v 1.26 2010/02/09 14:06:37 drochner Exp $");
+__RCSID("$NetBSD: odsyntax.c,v 1.28 2010/11/27 20:46:38 christos Exp $");
 #endif
 #endif /* not lint */
-#endif
 
 #include <sys/types.h>
 
