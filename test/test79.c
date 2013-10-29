@@ -36,6 +36,7 @@ enum {
 	JOB_BLOCK_PM,
 	JOB_BLOCK_VFS,
 	JOB_CALL_PM_VFS,
+	JOB_FORK,
 	NR_JOBS
 };
 
@@ -295,6 +296,27 @@ worker_proc(struct link *parent)
 		uid = getuid();
 		for (;;)
 			setuid(uid);
+		break;
+	case JOB_FORK:
+		/*
+		 * The child exits immediately; the parent kills the child
+		 * immediately.  The outcome mostly depends on scheduling.
+		 * Varying process priorities may yield different tests.
+		 */
+		for (;;) {
+			pid_t pid = fork();
+			switch (pid) {
+			case 0:
+				exit(0);
+			case -1:
+				e(1);
+				break;
+			default:
+				kill(pid, SIGKILL);
+				if (wait(NULL) != pid) e(0);
+			}
+		}
+		break;
 	default:
 		e(0);
 		exit(1);

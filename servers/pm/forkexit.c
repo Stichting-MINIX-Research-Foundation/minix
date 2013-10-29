@@ -368,6 +368,13 @@ int dump_core;			/* flag indicating whether to dump core */
 		/* 'rmp' now points to a child to be disinherited. */
 		rmp->mp_parent = INIT_PROC_NR;
 
+		/* If the process is making a VFS call, remember that we set
+		 * a new parent. This prevents FORK from replying to the wrong
+		 * parent upon completion.
+		 */
+		if (rmp->mp_flags & VFS_CALL)
+			rmp->mp_flags |= NEW_PARENT;
+
 		/* Notify new parent. */
 		if (rmp->mp_flags & ZOMBIE)
 			check_parent(rmp, TRUE /*try_cleanup*/);
