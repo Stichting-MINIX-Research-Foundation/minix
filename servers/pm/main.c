@@ -383,7 +383,7 @@ static void handle_vfs_reply()
 {
   struct mproc *rmp;
   endpoint_t proc_e;
-  int r, proc_n;
+  int r, proc_n, new_parent;
 
   /* PM_REBOOT is the only request not associated with a process.
    * Handle its reply first.
@@ -411,7 +411,8 @@ static void handle_vfs_reply()
   if (!(rmp->mp_flags & VFS_CALL))
 	panic("handle_vfs_reply: reply without request: %d", call_nr);
 
-  rmp->mp_flags &= ~VFS_CALL;
+  new_parent = rmp->mp_flags & NEW_PARENT;
+  rmp->mp_flags &= ~(VFS_CALL | NEW_PARENT);
 
   if (rmp->mp_flags & UNPAUSED)
   	panic("handle_vfs_reply: UNPAUSED set on entry: %d", call_nr);
@@ -453,28 +454,29 @@ static void handle_vfs_reply()
 
   case PM_FORK_REPLY:
 	/* Schedule the newly created process ... */
-	r = (OK);
+	r = OK;
 	if (rmp->mp_scheduler != KERNEL && rmp->mp_scheduler != NONE) {
 		r = sched_start_user(rmp->mp_scheduler, rmp);
 	}
 
 	/* If scheduling the process failed, we want to tear down the process
 	 * and fail the fork */
-	if (r != (OK)) {
+	if (r != OK) {
 		/* Tear down the newly created process */
 		rmp->mp_scheduler = NONE; /* don't try to stop scheduling */
 		exit_proc(rmp, -1, FALSE /*dump_core*/);
 
-		/* Wake up the parent with a failed fork */
-		setreply(rmp->mp_parent, -1);
-
+		/* Wake up the parent with a failed fork (unless dead) */
+		if (!new_parent)
+			setreply(rmp->mp_parent, -1);
 	}
 	else {
 		/* Wake up the child */
 		setreply(proc_n, OK);
 
-		/* Wake up the parent */
-		setreply(rmp->mp_parent, rmp->mp_pid);
+		/* Wake up the parent, unless the parent is already dead */
+		if (!new_parent)
+			setreply(rmp->mp_parent, rmp->mp_pid);
 	}
 
 	break;
