@@ -51,7 +51,7 @@ static void free_proc(int flags);
 /*===========================================================================*
  *				do_getsysinfo				     *
  *===========================================================================*/
-int do_getsysinfo(message *UNUSED(m_out))
+int do_getsysinfo(void)
 {
   vir_bytes src_addr, dst_addr;
   size_t len, buf_size;
@@ -96,7 +96,7 @@ int do_getsysinfo(message *UNUSED(m_out))
 /*===========================================================================*
  *				do_fcntl				     *
  *===========================================================================*/
-int do_fcntl(message *UNUSED(m_out))
+int do_fcntl(void)
 {
 /* Perform the fcntl(fd, request, ...) system call. */
 
@@ -232,8 +232,10 @@ int do_fcntl(message *UNUSED(m_out))
   return(r);
 }
 
-static int
-sync_fses(void)
+/*===========================================================================*
+ *				do_sync					     *
+ *===========================================================================*/
+int do_sync(void)
 {
   struct vmnt *vmp;
   int r = OK;
@@ -252,17 +254,9 @@ sync_fses(void)
 }
 
 /*===========================================================================*
- *				do_sync					     *
- *===========================================================================*/
-int do_sync(message *UNUSED(m_out))
-{
-  return sync_fses();
-}
-
-/*===========================================================================*
  *				do_fsync				     *
  *===========================================================================*/
-int do_fsync(message *UNUSED(m_out))
+int do_fsync(void)
 {
 /* Perform the fsync() system call. */
   struct filp *rfilp;
@@ -345,7 +339,7 @@ int dupvm(struct fproc *rfp, int pfd, int *vmfd, struct filp **newfilp)
 /*===========================================================================*
  *				do_vm_call				     *
  *===========================================================================*/
-int do_vm_call(message *m_out)
+int do_vm_call(void)
 {
 /* A call that VM does to VFS.
  * We must reply with the fixed type VM_VFS_REPLY (and put our result info
@@ -397,18 +391,18 @@ int do_vm_call(message *m_out)
 
 			if(S_ISBLK(f->filp_vno->v_mode)) {
 				assert(f->filp_vno->v_sdev != NO_DEV);
-				m_out->VMV_DEV = f->filp_vno->v_sdev;
-				m_out->VMV_INO = VMC_NO_INODE;
-				m_out->VMV_SIZE_PAGES = LONG_MAX;
+				job_m_out.VMV_DEV = f->filp_vno->v_sdev;
+				job_m_out.VMV_INO = VMC_NO_INODE;
+				job_m_out.VMV_SIZE_PAGES = LONG_MAX;
 			} else {
-				m_out->VMV_DEV = f->filp_vno->v_dev;
-				m_out->VMV_INO = f->filp_vno->v_inode_nr;
-				m_out->VMV_SIZE_PAGES =
+				job_m_out.VMV_DEV = f->filp_vno->v_dev;
+				job_m_out.VMV_INO = f->filp_vno->v_inode_nr;
+				job_m_out.VMV_SIZE_PAGES =
 					roundup(f->filp_vno->v_size,
 						PAGE_SIZE)/PAGE_SIZE;
 			}
 
-			m_out->VMV_FD = procfd;
+			job_m_out.VMV_FD = procfd;
 
 			result = OK;
 
@@ -425,10 +419,8 @@ int do_vm_call(message *m_out)
 		}
 		case VMVFSREQ_FDIO:
 		{
-			message dummy_out;
-
-			result = actual_llseek(fp, &dummy_out, req_fd,
-				SEEK_SET, offset);
+			result = actual_llseek(fp, req_fd, SEEK_SET, offset,
+				NULL);
 
 			if(result == OK) {
 				result = actual_read_write_peek(fp, PEEKING,
@@ -448,16 +440,15 @@ reqdone:
 
 	/* fp is VM still. */
 	assert(fp == vmf);
-	m_out->VMV_ENDPOINT = ep;
-	m_out->VMV_RESULT = result;
-	m_out->VMV_REQID = req_id;
+	job_m_out.VMV_ENDPOINT = ep;
+	job_m_out.VMV_RESULT = result;
+	job_m_out.VMV_REQID = req_id;
 
 	/* reply asynchronously as VM may not be able to receive
 	 * a sendnb() message
 	 */
-
-	m_out->m_type = VM_VFS_REPLY;
-	r = asynsend3(VM_PROC_NR, m_out, 0);
+	job_m_out.m_type = VM_VFS_REPLY;
+	r = asynsend3(VM_PROC_NR, &job_m_out, 0);
 	if(r != OK) printf("VFS: couldn't asynsend3() to VM\n");
 
 	/* VFS does not reply any further */
@@ -478,7 +469,7 @@ void pm_reboot()
 
   pmfp = fp;
 
-  sync_fses();
+  do_sync();
 
   /* Do exit processing for all leftover processes and servers, but don't
    * actually exit them (if they were really gone, PM will tell us about it).
@@ -507,7 +498,7 @@ void pm_reboot()
 	if (rfp != fp) unlock_proc(rfp);
   }
 
-  sync_fses();
+  do_sync();
   unmount_all(0 /* Don't force */);
 
   /* Try to exit all processes again including File Servers */
@@ -525,7 +516,7 @@ void pm_reboot()
 	if (rfp != fp) unlock_proc(rfp);
   }
 
-  sync_fses();
+  do_sync();
   unmount_all(1 /* Force */);
 
   /* Reply to PM for synchronization */
@@ -767,7 +758,7 @@ void pm_setsid(endpoint_t proc_e)
 /*===========================================================================*
  *				do_svrctl				     *
  *===========================================================================*/
-int do_svrctl(message *UNUSED(m_out))
+int do_svrctl(void)
 {
   unsigned int svrctl;
   vir_bytes ptr;
@@ -949,7 +940,7 @@ void panic_hook(void)
 /*===========================================================================*
  *				do_getrusage				     *
  *===========================================================================*/
-int do_getrusage(message *UNUSED(m_out))
+int do_getrusage(void)
 {
 	int res;
 	struct rusage r_usage;

@@ -28,7 +28,8 @@ EXTERN message m_in;		/* the input message itself */
 # define fproc_addr(e)	(&fproc[_ENDPOINT_P(e)])
 # define who_e		(self != NULL ? fp->fp_endpoint : m_in.m_source)
 # define call_nr	(m_in.m_type)
-# define job_m_in	(self->w_msg)
+# define job_m_in	(self->w_m_in)
+# define job_m_out	(self->w_m_out)
 # define job_call_nr	(job_m_in.m_type)
 # define super_user	(fp->fp_effuid == SU_UID ? 1 : 0)
 # define scratch(p)		(scratchpad[((int) ((p) - fproc))])
@@ -42,8 +43,7 @@ EXTERN char mount_label[LABEL_MAX];	/* label of file system to mount */
 EXTERN int err_code;		/* temporary storage for error number */
 
 /* Data initialized elsewhere. */
-extern int(*call_vec[]) (message *);
-extern int(*pfs_call_vec[]) (message *m_out);
+extern int (*call_vec[])(void);
 
 EXTERN struct kinfo kinfo;     /* kernel information */
 

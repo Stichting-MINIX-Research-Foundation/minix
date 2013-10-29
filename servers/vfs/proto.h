@@ -39,12 +39,12 @@ int bdev_open(dev_t dev, int access);
 int bdev_close(dev_t dev);
 void bdev_reply(void);
 void bdev_up(int major);
-int do_ioctl(message *m_out);
+int do_ioctl(void);
 
 /* dmap.c */
 void lock_dmap(struct dmap *dp);
 void unlock_dmap(struct dmap *dp);
-int do_mapdriver(message *m_out);
+int do_mapdriver(void);
 void init_dmap(void);
 int dmap_driver_match(endpoint_t proc, int major);
 void dmap_endpt_up(endpoint_t proc_nr, int is_blk);
@@ -76,17 +76,17 @@ void invalidate_filp(struct filp *);
 void invalidate_filp_by_endpt(endpoint_t proc_e);
 void invalidate_filp_by_char_major(int major);
 void close_filp(struct filp *fp);
-int do_copyfd(message *m_out);
+int do_copyfd(void);
 
 /* fscall.c */
 void nested_fs_call(message *m);
 
 /* link.c */
-int do_link(message *m_out);
-int do_unlink(message *m_out);
-int do_rename(message *m_out);
-int do_truncate(message *m_out);
-int do_ftruncate(message *m_out);
+int do_link(void);
+int do_unlink(void);
+int do_rename(void);
+int do_truncate(void);
+int do_ftruncate(void);
 int truncate_vnode(struct vnode *vp, off_t newsize);
 int rdlink_direct(char *orig_path, char *link_path, struct fproc *rfp);
 
@@ -98,34 +98,33 @@ void lock_revive(void);
 int main(void);
 void lock_proc(struct fproc *rfp);
 void unlock_proc(struct fproc *rfp);
-void reply(message *m_out, endpoint_t whom, int result);
 void replycode(endpoint_t whom, int result);
 void service_pm_postponed(void);
 void thread_cleanup(void);
 
 /* misc.c */
 void pm_exit(void);
-int do_fcntl(message *m_out);
+int do_fcntl(void);
 void pm_fork(endpoint_t pproc, endpoint_t cproc, pid_t cpid);
 void pm_setgid(endpoint_t proc_e, int egid, int rgid);
 void pm_setuid(endpoint_t proc_e, int euid, int ruid);
 void pm_setgroups(endpoint_t proc_e, int ngroups, gid_t *addr);
 void pm_setsid(endpoint_t proc_e);
-int do_sync(message *m_out);
-int do_fsync(message *m_out);
+int do_sync(void);
+int do_fsync(void);
 void pm_reboot(void);
-int do_svrctl(message *m_out);
-int do_getsysinfo(message *m_out);
-int do_vm_call(message *m_out);
+int do_svrctl(void);
+int do_getsysinfo(void);
+int do_vm_call(void);
 int pm_dumpcore(int sig, vir_bytes exe_name);
 void ds_event(void);
 int dupvm(struct fproc *fp, int pfd, int *vmfd, struct filp **f);
-int do_getrusage(message *m_out);
+int do_getrusage(void);
 
 /* mount.c */
-int do_fsready(message *m_out);
-int do_mount(message *m_out);
-int do_umount(message *m_out);
+int do_fsready(void);
+int do_mount(void);
+int do_umount(void);
 int is_nonedev(dev_t dev);
 void mount_pfs(void);
 int mount_fs(dev_t dev, char mount_dev[PATH_MAX], char mount_path[PATH_MAX],
@@ -135,19 +134,17 @@ int unmount(dev_t dev, char label[LABEL_MAX]);
 void unmount_all(int force);
 
 /* open.c */
-int do_close(message *m_out);
+int do_close(void);
 int close_fd(struct fproc *rfp, int fd_nr);
 int common_open(char path[PATH_MAX], int oflags, mode_t omode);
 int do_creat(void);
-int do_lseek(message *m_out);
-int do_mknod(message *m_out);
-int do_mkdir(message *m_out);
-int do_open(message *m_out);
-int do_slink(message *m_out);
-int actual_llseek(struct fproc *rfp, message *m_out, int seekfd,
-	int seekwhence, off_t offset);
-int do_vm_open(void);
-int do_vm_close(void);
+int do_lseek(void);
+int do_mknod(void);
+int do_mkdir(void);
+int do_open(void);
+int do_slink(void);
+int actual_llseek(struct fproc *rfp, int seekfd, int seekwhence, off_t offset,
+	off_t *newposp);
 
 /* path.c */
 struct vnode *advance(struct vnode *dirp, struct lookup *resolve, struct
@@ -158,11 +155,11 @@ void lookup_init(struct lookup *resolve, char *path, int flags, struct
 	vmnt **vmp, struct vnode **vp);
 int get_name(struct vnode *dirp, struct vnode *entry, char *_name);
 int canonical_path(char *orig_path, struct fproc *rfp);
-int do_checkperms(message *m_out);
+int do_checkperms(void);
 
 /* pipe.c */
-int do_pipe(message *m_out);
-int do_pipe2(message *m_out);
+int do_pipe(void);
+int do_pipe2(void);
 int map_vnode(struct vnode *vp, endpoint_t fs_e);
 void unpause(void);
 int pipe_check(struct filp *filp, int rw_flag, int oflags, int bytes,
@@ -175,17 +172,17 @@ void unsuspend_by_endpt(endpoint_t proc_e);
 void wait_for(endpoint_t proc_e);
 
 /* protect.c */
-int do_access(message *m_out);
-int do_chmod(message *m_out);
-int do_chown(message *m_out);
-int do_umask(message *m_out);
+int do_access(void);
+int do_chmod(void);
+int do_chown(void);
+int do_umask(void);
 int forbidden(struct fproc *rfp, struct vnode *vp, mode_t
 	access_desired);
 int read_only(struct vnode *vp);
 
 /* read.c */
-int do_read(message *m_out);
-int do_getdents(message *m_out);
+int do_read(void);
+int do_getdents(void);
 void lock_bsf(void);
 void unlock_bsf(void);
 void check_bsf_lock(void);
@@ -249,21 +246,21 @@ int req_utime(endpoint_t fs_e, ino_t inode_nr, struct timespec * actv,
 int req_newdriver(endpoint_t fs_e, dev_t dev, char *label);
 
 /* stadir.c */
-int do_chdir(message *m_out);
-int do_fchdir(message *m_out);
-int do_chroot(message *m_out);
-int do_fstat(message *m_out);
-int do_stat(message *m_out);
-int do_statvfs(message *m_out);
-int do_fstatvfs(message *m_out);
-int do_getvfsstat(message *m_out);
-int do_rdlink(message *m_out);
-int do_lstat(message *m_out);
+int do_chdir(void);
+int do_fchdir(void);
+int do_chroot(void);
+int do_fstat(void);
+int do_stat(void);
+int do_statvfs(void);
+int do_fstatvfs(void);
+int do_getvfsstat(void);
+int do_rdlink(void);
+int do_lstat(void);
 int update_statvfs(struct vmnt *vmp, struct statvfs *buf);
 
 /* time.c */
-int do_utime(message *);
-int do_utimens(message *);
+int do_utime(void);
+int do_utimens(void);
 
 /* tll.c */
 void tll_downgrade(tll_t *tllp);
@@ -282,7 +279,7 @@ unsigned conv2(int norm, int w);
 long conv4(int norm, long x);
 int copy_name(size_t len, char *dest);
 int fetch_name(vir_bytes path, size_t len, char *dest);
-int no_sys(message *);
+int no_sys(void);
 int isokendpt_f(const char *f, int l, endpoint_t e, int *p, int ft);
 int in_group(struct fproc *rfp, gid_t grp);
 
@@ -319,7 +316,7 @@ void vnode_clean_refs(struct vnode *vp);
 void upgrade_vnode_lock(struct vnode *vp);
 
 /* write.c */
-int do_write(message *m_out);
+int do_write(void);
 
 /* gcov.c */
 int do_gcov_flush(void);
@@ -328,7 +325,7 @@ int do_gcov_flush(void);
 #endif
 
 /* select.c */
-int do_select(message *m_out);
+int do_select(void);
 void init_select(void);
 void select_callback(struct filp *, int ops);
 void select_forget(void);

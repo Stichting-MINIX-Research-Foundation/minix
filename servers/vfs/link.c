@@ -28,7 +28,7 @@
 /*===========================================================================*
  *				do_link					     *
  *===========================================================================*/
-int do_link(message *UNUSED(m_out))
+int do_link(void)
 {
 /* Perform the link(name1, name2) system call. */
   int r = OK;
@@ -90,7 +90,7 @@ int do_link(message *UNUSED(m_out))
 /*===========================================================================*
  *				do_unlink				     *
  *===========================================================================*/
-int do_unlink(message *UNUSED(m_out))
+int do_unlink(void)
 {
 /* Perform the unlink(name) or rmdir(name) system call. The code for these two
  * is almost the same.  They differ only in some condition testing.  Unlink()
@@ -175,7 +175,7 @@ int do_unlink(message *UNUSED(m_out))
 /*===========================================================================*
  *				do_rename				     *
  *===========================================================================*/
-int do_rename(message *UNUSED(m_out))
+int do_rename(void)
 {
 /* Perform the rename(name1, name2) system call. */
   int r = OK, r1;
@@ -282,7 +282,7 @@ int do_rename(message *UNUSED(m_out))
 /*===========================================================================*
  *				do_truncate				     *
  *===========================================================================*/
-int do_truncate(message *UNUSED(m_out))
+int do_truncate(void)
 {
 /* truncate_vnode() does the actual work of do_truncate() and do_ftruncate().
  * do_truncate() and do_ftruncate() have to get hold of the inode, either
@@ -333,7 +333,7 @@ int do_truncate(message *UNUSED(m_out))
 /*===========================================================================*
  *				do_ftruncate				     *
  *===========================================================================*/
-int do_ftruncate(message *UNUSED(m_out))
+int do_ftruncate(void)
 {
 /* As with do_truncate(), truncate_vnode() does the actual work. */
   struct filp *rfilp;
@@ -394,7 +394,7 @@ off_t newsize;
 /*===========================================================================*
  *                             do_slink					     *
  *===========================================================================*/
-int do_slink(message *UNUSED(m_out))
+int do_slink(void)
 {
 /* Perform the symlink(name1, name2) system call. */
   int r;
@@ -476,7 +476,7 @@ struct fproc *rfp;
 /*===========================================================================*
  *                             do_rdlink				     *
  *===========================================================================*/
-int do_rdlink(message *UNUSED(m_out))
+int do_rdlink(void)
 {
 /* Perform the readlink(name, buf, bufsize) system call. */
   int r;

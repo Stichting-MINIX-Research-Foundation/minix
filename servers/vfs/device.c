@@ -476,7 +476,7 @@ int cdev_close(dev_t dev)
 /*===========================================================================*
  *				do_ioctl				     *
  *===========================================================================*/
-int do_ioctl(message *UNUSED(m_out))
+int do_ioctl(void)
 {
 /* Perform the ioctl(ls_fd, request, argx) system call */
   unsigned long ioctlrequest;

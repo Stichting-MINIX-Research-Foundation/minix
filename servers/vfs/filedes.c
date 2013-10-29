@@ -414,7 +414,7 @@ struct filp *f;
 /*===========================================================================*
  *				do_copyfd				     *
  *===========================================================================*/
-int do_copyfd(message *UNUSED(m_out))
+int do_copyfd(void)
 {
 /* Copy a file descriptor between processes, or close a remote file descriptor.
  * This call is used as back-call by device drivers (UDS, VND), and is expected

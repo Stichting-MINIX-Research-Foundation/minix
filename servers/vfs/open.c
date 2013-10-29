@@ -37,7 +37,7 @@ static int pipe_open(struct vnode *vp, mode_t bits, int oflags);
 /*===========================================================================*
  *				do_open					     *
  *===========================================================================*/
-int do_open(message *UNUSED(m_out))
+int do_open(void)
 {
 /* Perform the open(name, flags,...) system call.
  * syscall might provide 'name' embedded in message when not creating file */
@@ -495,7 +495,7 @@ static int pipe_open(struct vnode *vp, mode_t bits, int oflags)
 /*===========================================================================*
  *				do_mknod				     *
  *===========================================================================*/
-int do_mknod(message *UNUSED(m_out))
+int do_mknod(void)
 {
 /* Perform the mknod(name, mode, addr) system call. */
   register mode_t bits, mode_bits;
@@ -544,7 +544,7 @@ int do_mknod(message *UNUSED(m_out))
 /*===========================================================================*
  *				do_mkdir				     *
  *===========================================================================*/
-int do_mkdir(message *UNUSED(m_out))
+int do_mkdir(void)
 {
 /* Perform the mkdir(name, mode) system call. */
   mode_t bits;			/* mode bits for the new inode */
@@ -586,8 +586,8 @@ int do_mkdir(message *UNUSED(m_out))
 /*===========================================================================*
  *				actual_llseek				     *
  *===========================================================================*/
-int actual_llseek(struct fproc *rfp, message *m_out, int seekfd, int seekwhence,
-	off_t offset)
+int actual_llseek(struct fproc *rfp, int seekfd, int seekwhence, off_t offset,
+	off_t *newposp)
 {
 /* Perform the llseek(ls_fd, offset, whence) system call. */
   register struct filp *rfilp;
@@ -621,9 +621,7 @@ int actual_llseek(struct fproc *rfp, message *m_out, int seekfd, int seekwhence,
   } else if ((offset < 0) && (newpos >= pos)) {
 	r = EOVERFLOW;
   } else {
-	/* insert the new position into the output message */
-	m_out->reply_l1 = ex64lo(newpos);
-	m_out->reply_l2 = ex64hi(newpos);
+	if (newposp != NULL) *newposp = newpos;
 
 	if (newpos != rfilp->filp_pos) {
 		rfilp->filp_pos = newpos;
@@ -641,16 +639,26 @@ int actual_llseek(struct fproc *rfp, message *m_out, int seekfd, int seekwhence,
 /*===========================================================================*
  *				do_lseek				     *
  *===========================================================================*/
-int do_lseek(message *m_out)
+int do_lseek(void)
 {
-	return actual_llseek(fp, m_out, job_m_in.ls_fd, job_m_in.whence,
-		make64(job_m_in.offset_lo, job_m_in.offset_high));
+	off_t newpos;
+	int r;
+
+	if ((r = actual_llseek(fp, job_m_in.ls_fd, job_m_in.whence,
+			make64(job_m_in.offset_lo, job_m_in.offset_high),
+			&newpos)) != OK)
+		return r;
+
+	/* insert the new position into the output message */
+	job_m_out.reply_l1 = ex64lo(newpos);
+	job_m_out.reply_l2 = ex64hi(newpos);
+	return OK;
 }
 
 /*===========================================================================*
  *				do_close				     *
  *===========================================================================*/
-int do_close(message *UNUSED(m_out))
+int do_close(void)
 {
 /* Perform the close(fd) system call. */
   int thefd = job_m_in.fd;

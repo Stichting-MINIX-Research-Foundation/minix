@@ -13,7 +13,7 @@
 #include "vnode.h"
 #include "vmnt.h"
 
-int (*call_vec[])(message *m_out) = {
+int (*call_vec[])(void) = {
 	no_sys,		/*  0 = unused	*/
 	no_sys,		/*  1 = (exit)	*/
 	no_sys,		/*  2 = (fork)	*/
