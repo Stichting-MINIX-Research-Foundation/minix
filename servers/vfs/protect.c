@@ -23,7 +23,7 @@
 /*===========================================================================*
  *				do_chmod				     *
  *===========================================================================*/
-int do_chmod(message *UNUSED(m_out))
+int do_chmod(void)
 {
 /* Perform the chmod(name, mode) and fchmod(fd, mode) system calls.
  * syscall might provide 'name' embedded in the message.
@@ -102,7 +102,7 @@ int do_chmod(message *UNUSED(m_out))
 /*===========================================================================*
  *				do_chown				     *
  *===========================================================================*/
-int do_chown(message *UNUSED(m_out))
+int do_chown(void)
 {
 /* Perform the chown(path, owner, group) and fchmod(fd, owner, group) system
  * calls. */
@@ -184,7 +184,7 @@ int do_chown(message *UNUSED(m_out))
 /*===========================================================================*
  *				do_umask				     *
  *===========================================================================*/
-int do_umask(message *UNUSED(m_out))
+int do_umask(void)
 {
 /* Perform the umask(co_mode) system call. */
   mode_t complement, new_umask;
@@ -200,7 +200,7 @@ int do_umask(message *UNUSED(m_out))
 /*===========================================================================*
  *				do_access				     *
  *===========================================================================*/
-int do_access(message *UNUSED(m_out))
+int do_access(void)
 {
 /* Perform the access(name, mode) system call.
  * syscall might provide 'name' embedded in the message.

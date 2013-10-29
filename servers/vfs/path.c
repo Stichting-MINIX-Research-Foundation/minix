@@ -867,7 +867,7 @@ size_t pathlen;
 /*===========================================================================*
  *				do_checkperms				     *
  *===========================================================================*/
-int do_checkperms(message *UNUSED(m_out))
+int do_checkperms(void)
 {
   /* This should be replaced by an ACL check. */
   if (!super_user) return EPERM;

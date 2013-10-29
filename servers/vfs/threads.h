@@ -29,7 +29,8 @@ struct worker_thread {
   mutex_t w_event_mutex;
   cond_t w_event;
   struct fproc *w_fp;
-  message w_msg;
+  message w_m_in;
+  message w_m_out;
   int w_err_code;
   message *w_fs_sendrec;
   message *w_drv_sendrec;
