@@ -119,11 +119,9 @@
 ./etc/utmp				minix-sys
 ./home					minix-sys
 ./home/ast				minix-sys
-./home/ast/.ashrc			minix-sys
 ./home/ast/.exrc			minix-sys
 ./home/ast/.profile			minix-sys
 ./home/bin				minix-sys
-./home/bin/.ashrc			minix-sys
 ./home/bin/.exrc			minix-sys
 ./home/bin/.profile			minix-sys
 ./lib					minix-sys
@@ -138,7 +136,6 @@
 ./multiboot/mod06_memory		minix-sys
 ./proc					minix-sys
 ./root					minix-sys
-./root/.ashrc				minix-sys
 ./root/.exrc				minix-sys
 ./root/.profile				minix-sys
 ./sbin					minix-sys
@@ -166,7 +163,6 @@
 ./usr/adm				minix-sys
 ./usr/adm/old				minix-sys
 ./usr/ast				minix-sys
-./usr/ast/.ashrc			minix-sys
 ./usr/ast/.exrc				minix-sys
 ./usr/ast/.profile			minix-sys
 ./usr/benchmarks					minix-sys

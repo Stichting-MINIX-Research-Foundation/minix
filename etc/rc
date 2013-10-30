@@ -5,21 +5,19 @@ exec 2>/dev/log
 exec </dev/null
 
 umask 022
-FSTAB=/etc/fstab
-TERM="${TERM-minix}"
-PATH=/usr/local/bin:/bin:/usr/bin:/usr/sbin:/usr/pkg/bin:/usr/pkg/sbin:/sbin
+
+# Same settings as in the default /etc/profile. We do not source this file
+# as the system administrator may decide to change those values for his users.
 RC_TZ=/etc/rc.timezone
+PATH=/usr/local/sbin:/usr/pkg/sbin:/usr/sbin:/sbin:/usr/local/bin:/usr/pkg/bin:/usr/bin:/bin
+
+# Set TERM to minix if not present.
+TERM="${TERM-minix}"
+
 export TERM PATH
 
+# Local variables
 ARCH="`sysenv arch`"
-
-if [ ! "$ARCH" ]
-then	# Older kernels do not provide an arch sysenv variable.
-	# We assume we are on x86 then, as existing systems with
-	# kernel and userland (i.e. this script) unsynchronized
-	# will be x86.
-	ARCH=i386
-fi
 
 usage()
 {
@@ -58,28 +56,6 @@ edit()
 
     # Assume binaries are always in /usr/sbin
     service $opt edit /usr/sbin/$service -label $service "$@" 
-}
-
-# This function parses the deprecated minix shellscript-style 
-# /etc/fstab, and fscks and mounts its filesystems.
-mountfstab_poorman()
-{
-    echo "WARNING: old fstab format, please upgrade!"
-
-    # /etc/fstab lists the root, home, and usr devices.
-    . $FSTAB
-
-    intr fsck.mfs $fsckopts $usr
-    if [ ! -z "$home" ]
-    then intr fsck.mfs $fsckopts $home
-    fi
-
-    # mount /usr
-    mount $bin_img $usr /usr
-
-    if [ ! -z "$home" ]
-    then mount $bin_img $home /home || echo "WARNING: couldn't mount $home on /home"
-    fi
 }
 
 while getopts 'saf' opt
@@ -148,12 +124,8 @@ start)
 		mount -r $usrdev /usr
     else	
     # If we're not booting from CD, fsck + mount using /etc/fstab.
-		read <$FSTAB fstabline
-		if [ "$fstabline" = "# Poor man's File System Table." ]
-		then	mountfstab_poorman	# Old minix /etc/fstab
-		else	fsck -x / $fflag $fsckopts
-			mount -a
-		fi
+		fsck -x / $fflag $fsckopts
+		mount -a
     fi
 
     # Unmount and free now defunct ramdisk

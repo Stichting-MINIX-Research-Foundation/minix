@@ -68,9 +68,9 @@ INODES=6000
 dd if=/dev/zero seek=$BLOCKS of=$fsimage count=1 bs=$BS >/dev/null 2>&1
 
 # -s keeps modes
-mkproto -s -b $BLOCKS -i $INODES $testdir >$protofile
+/usr/sbin/mkproto -s -b $BLOCKS -i $INODES $testdir >$protofile
 
-mkfs.mfs -T 1 -b $BLOCKS -i $INODES  $fsimage $protofile >/dev/null 2>&1
+/sbin/mkfs.mfs -T 1 -b $BLOCKS -i $INODES  $fsimage $protofile >/dev/null 2>&1
 sum="`sha1 $fsimage | awk '{ print $4 }'`"
 
 if [ $sum != $expect ]
