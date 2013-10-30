@@ -264,6 +264,7 @@
 ./usr/bin/cmp				minix-sys
 ./usr/bin/co				minix-sys
 ./usr/bin/col				minix-sys
+./usr/bin/colrm				minix-sys
 ./usr/bin/column			minix-sys
 ./usr/bin/colcrt			minix-sys
 ./usr/bin/comm				minix-sys
@@ -1846,6 +1847,7 @@
 ./usr/man/man1/cmp.1			minix-sys
 ./usr/man/man1/co.1			minix-sys
 ./usr/man/man1/col.1			minix-sys
+./usr/man/man1/colrm.1			minix-sys
 ./usr/man/man1/column.1			minix-sys
 ./usr/man/man1/comm.1			minix-sys
 ./usr/man/man1/command.1		minix-sys

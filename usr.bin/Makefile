@@ -6,8 +6,8 @@
 SUBDIR= asa \
 	banner basename bdes \
 	bzip2 bzip2recover \
-	cal chpass cksum \
-	col column comm csplit ctags cut \
+	cal chpass cksum col colrm \
+	column comm csplit ctags cut \
 	dirname du \
 	env expand \
 	finger fold from \
