@@ -474,6 +474,7 @@
 ./usr/bin/seq				minix-sys
 ./usr/bin/sha1				minix-sys
 ./usr/bin/shar				minix-sys
+./usr/bin/shlock			minix-sys
 ./usr/bin/shuffle			minix-sys
 ./usr/bin/shutdown			minix-sys
 ./usr/bin/size				minix-sys	binutils
@@ -2054,6 +2055,7 @@
 ./usr/man/man1/sha1.1			minix-sys
 ./usr/man/man1/shar.1			minix-sys
 ./usr/man/man1/shift.1			minix-sys
+./usr/man/man1/shlock.1			minix-sys
 ./usr/man/man1/shuffle.1		minix-sys
 ./usr/man/man1/size.1			minix-sys	binutils
 ./usr/man/man1/sleep.1			minix-sys
