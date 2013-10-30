@@ -550,6 +550,7 @@
 ./usr/bin/vis				minix-sys
 ./usr/bin/vol				minix-sys
 ./usr/bin/wc				minix-sys
+./usr/bin/what				minix-sys
 ./usr/bin/whatis			minix-sys
 ./usr/bin/whereis			minix-sys
 ./usr/bin/which				minix-sys
@@ -2123,6 +2124,7 @@
 ./usr/man/man1/vol.1			minix-sys
 ./usr/man/man1/wait.1			minix-sys
 ./usr/man/man1/wc.1			minix-sys
+./usr/man/man1/what.1			minix-sys
 ./usr/man/man1/whatis.1			minix-sys
 ./usr/man/man1/whereis.1		minix-sys
 ./usr/man/man1/which.1			minix-sys
