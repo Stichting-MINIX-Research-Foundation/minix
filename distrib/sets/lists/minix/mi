@@ -470,6 +470,7 @@
 ./usr/bin/rsh				minix-sys
 ./usr/bin/rz				minix-sys
 ./usr/bin/screendump                    minix-sys
+./usr/bin/sdiff				minix-sys
 ./usr/bin/sed				minix-sys
 ./usr/bin/seq				minix-sys
 ./usr/bin/sha1				minix-sys
@@ -2047,6 +2048,7 @@
 ./usr/man/man1/rmdir.1			minix-sys
 ./usr/man/man1/rsh.1			minix-sys
 ./usr/man/man1/rz.1			minix-sys
+./usr/man/man1/sdiff.1			minix-sys
 ./usr/man/man1/sed.1			minix-sys
 ./usr/man/man1/seq.1			minix-sys
 ./usr/man/man1/set.1			minix-sys

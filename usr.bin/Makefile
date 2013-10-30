@@ -23,7 +23,7 @@ SUBDIR= asa \
 	printenv printf pwhash \
 	renice rev \
 	\
-	sed seq shlock \
+	sdiff sed seq shlock \
 	shuffle sort split stat su \
 	tee tic tput \
 	tr tsort tty unexpand unifdef \
