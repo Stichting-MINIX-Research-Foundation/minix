@@ -13,7 +13,7 @@ SUBDIR= asa \
 	finger fold from \
 	fsplit ftp genassym getopt \
 	head hexdump indent infocmp join \
-	ldd leave \
+	lam ldd leave \
 	lock login logname lorder m4 \
 	machine make man mesg \
 	mkdep mkstr mktemp \
