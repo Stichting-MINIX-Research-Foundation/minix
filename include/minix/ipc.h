@@ -57,8 +57,6 @@ typedef struct {
 typedef struct { u8_t flags; void *addr; } mess_vmmcp_reply;
 
 typedef struct {
-  endpoint_t m_source;		/* who sent the message */
-  int m_type;			/* what kind of message is it */
   union {
 	mess_1 m_m1;
 	mess_2 m_m2;
@@ -74,7 +72,10 @@ typedef struct {
 	mess_vmmcp m_vmmcp;
 	mess_vmmcp_reply m_vmmcp_reply;
 	mess_vm_vfs_mmap m_vm_vfs;
+	u32_t size[14];		/* message payload may have 14 longs at most */
   } m_u;
+  int m_type;			/* what kind of message is it */
+  endpoint_t m_source;		/* who sent the message */
 } message __aligned(16);
 
 /* The following defines provide names for useful members. */
