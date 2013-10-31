@@ -135,6 +135,10 @@ SRCS+= ${i}
 SRCS += __aeabi_ldivmod.S __aeabi_uldivmod.S
 .endif
 
+.if (${MACHINE_ARCH} == "i386")
+SRCS += setjmp.S
+.endif
+
 # Import from locale
 .for i in _def_time.c
 .PATH.c: ${LIBCDIR}/locale
