@@ -29,7 +29,7 @@
 #include "region.h"
 #include "sanitycheck.h"
 
-#define STATELEN 50
+#define STATELEN 70
 
 static struct vfs_request_node {
 	message			reqmsg;
