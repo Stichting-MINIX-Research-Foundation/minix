@@ -32,7 +32,7 @@ char *pci_dev_name(u16_t vid, u16_t did)
 	m.m7_i3= sizeof(name);
 	m.m7_i4= gid;
 
-	r= sendrec(pci_procnr, &m);
+	r= ipc_sendrec(pci_procnr, &m);
 	cpf_revoke(gid);
 	if (r != 0)
 		panic("pci_dev_name: can't talk to PCI: %d", r);

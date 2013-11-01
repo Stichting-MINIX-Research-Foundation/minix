@@ -17,7 +17,7 @@ i2cdriver_announce(uint32_t bus)
 	char label[DS_MAX_KEYLEN];
 	char *driver_prefix = "drv.i2c.";
 
-	/* Callers are allowed to use sendrec to communicate with drivers.
+	/* Callers are allowed to use ipc_sendrec to communicate with drivers.
 	 * For this reason, there may blocked callers when a driver restarts.
 	 * Ask the kernel to unblock them (if any).
 	 */
@@ -161,7 +161,7 @@ i2cdriver_reserve_device(endpoint_t bus_endpoint, i2c_addr_t address)
 	m.m_type = BUSC_I2C_RESERVE;
 	m.BUSC_I2C_ADDR = address;
 
-	r = sendrec(bus_endpoint, &m);
+	r = ipc_sendrec(bus_endpoint, &m);
 	if (r != OK) {
 		return EIO;
 	}
@@ -184,7 +184,7 @@ i2cdriver_exec(endpoint_t bus_endpoint, minix_i2c_ioctl_exec_t * ioctl_exec)
 	m.m_type = BUSC_I2C_EXEC;
 	m.BUSC_I2C_GRANT = grant_nr;
 
-	r = sendrec(bus_endpoint, &m);
+	r = ipc_sendrec(bus_endpoint, &m);
 	cpf_revoke(grant_nr);
 	if (r != OK) {
 		return EIO;

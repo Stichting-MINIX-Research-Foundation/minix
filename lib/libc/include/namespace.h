@@ -545,13 +545,7 @@
 #define seed48			_seed48
 #define seekdir			_seekdir
 #define select			_select
-#ifdef __minix
-/* '_send' unfortunately collides with Minix IPC's _send function.
- * This solution is fragile, a proper renaming of Minix IPCs should 
- * be done insted. */
-#else /* !__minix */
 #define send			_send
-#endif /* !__minix */
 #define setdomainname		_setdomainname
 #define setenv			_setenv
 #define setfsent		_setfsent

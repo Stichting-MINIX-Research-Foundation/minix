@@ -178,7 +178,7 @@ struct proc {
 /* Macro to return: on which process is a certain process blocked?
  * return endpoint number (can be ANY) or NONE. It's important to
  * check RTS_SENDING first, and then RTS_RECEIVING, as they could
- * both be on (if a sendrec() blocks on sending), and p_getfrom_e
+ * both be on (if a ipc_sendrec() blocks on sending), and p_getfrom_e
  * could be nonsense even though RTS_RECEIVING is on.
  */
 #define P_BLOCKEDON(p)							\

@@ -124,7 +124,7 @@ static void reply(
   message *m_ptr			/* message buffer */
 )
 {
-    int s = send(who_e, m_ptr);    /* send the message */
+    int s = ipc_send(who_e, m_ptr);    /* send the message */
     if (OK != s)
         printf("DS: unable to send reply to %d: %d\n", who_e, s);
 }

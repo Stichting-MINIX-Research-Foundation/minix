@@ -99,8 +99,8 @@ int transid;
 	/* If a transaction ID was set, reset it */
 	m_out.m_type = TRNS_ADD_ID(m_out.m_type, transid);
   }
-  if ((r = send(m_in.m_source, &m_out)) != OK)
-	printf("%s: send failed (%d)\n", sffs_name, r);
+  if ((r = ipc_send(m_in.m_source, &m_out)) != OK)
+	printf("%s: ipc_send failed (%d)\n", sffs_name, r);
 }
 
 /*===========================================================================*

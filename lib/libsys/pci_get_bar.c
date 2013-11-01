@@ -23,7 +23,7 @@ int *ioflag;
 	m.BUSC_PGB_DEVIND= devind;
 	m.BUSC_PGB_PORT= port;
 
-	r= sendrec(pci_procnr, &m);
+	r= ipc_sendrec(pci_procnr, &m);
 	if (r != 0)
 		panic("pci_get_bar: can't talk to PCI: %d", r);
 

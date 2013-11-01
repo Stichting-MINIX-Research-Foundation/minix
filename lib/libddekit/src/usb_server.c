@@ -198,11 +198,11 @@ static void register_driver(message *msg)
 	if ( (drv = find_driver(ep)) != NULL) {
 		msg->m_type = USB_REPLY;
 		msg->USB_RESULT = OK;
-		send(ep,msg);
+		ipc_send(ep,msg);
 	} else {
 		msg->m_type = USB_REPLY;
 		msg->USB_RESULT = EPERM;
-		send(ep,msg);
+		ipc_send(ep,msg);
 		return; 
 	}
 	
@@ -216,7 +216,7 @@ static void register_driver(message *msg)
 	msg->m_type = USB_ANNOUCE_DEV;
 	msg->USB_DEV_ID     = drv->dev;
 	msg->USB_INTERFACES = drv->interfaces;
-	send(ep, msg);
+	ipc_send(ep, msg);
 }
 
 /*****************************************************************************
@@ -397,7 +397,7 @@ out:
 		}
 
 		/* send reply */
-		send(ep, msg);
+		ipc_send(ep, msg);
 	}
 }
 
@@ -437,7 +437,7 @@ static void cancle_urb(message *msg)
 		}
 	}
 
-	send(ep, msg);
+	ipc_send(ep, msg);
 }
 
 

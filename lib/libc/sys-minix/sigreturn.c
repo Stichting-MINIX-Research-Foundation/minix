@@ -16,7 +16,7 @@ register struct sigcontext *scp;
   sigset_t set;
 
   /* The message can't be on the stack, because the stack will vanish out
-   * from under us.  The send part of sendrec will succeed, but when
+   * from under us.  The send part of ipc_sendrec will succeed, but when
    * a message is sent to restart the current process, who knows what will
    * be in the place formerly occupied by the message?
    */

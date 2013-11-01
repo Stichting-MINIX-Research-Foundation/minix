@@ -221,7 +221,7 @@ static void do_reply(message *msg, int res)
 {
 	msg->m_type = DEVMAN_REPLY;
 	msg->DEVMAN_RESULT = res;
-	send(msg->m_source, msg);
+	ipc_send(msg->m_source, msg);
 }
 
 /*===========================================================================*

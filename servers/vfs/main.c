@@ -93,7 +93,7 @@ int main(void)
 		service_pm();
 		continue;
 	} else if (is_notify(call_nr)) {
-		/* A task notify()ed us */
+		/* A task ipc_notify()ed us */
 		switch (who_e) {
 		case DS_PROC_NR:
 			/* Start a thread to handle DS events, if no thread
@@ -117,7 +117,7 @@ int main(void)
 		continue;
 	} else if (who_p < 0) { /* i.e., message comes from a task */
 		/* We're going to ignore this message. Tasks should
-		 * send notify()s only.
+		 * send ipc_notify()s only.
 		 */
 		 printf("VFS: ignoring message from %d (%d)\n", who_e, call_nr);
 		 continue;
@@ -326,7 +326,7 @@ static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *info)
 	rfp->fp_umask = ~0;
   } while (TRUE);			/* continue until process NONE */
   mess.m_type = OK;			/* tell PM that we succeeded */
-  s = send(PM_PROC_NR, &mess);		/* send synchronization message */
+  s = ipc_send(PM_PROC_NR, &mess);		/* send synchronization message */
 
   system_hz = sys_hz();
 
@@ -495,8 +495,8 @@ static void get_work()
 	else fp = &fproc[proc_p];
 
 	if (m_in.m_type == EDEADSRCDST) {
-		printf("VFS: failed sendrec\n");
-		return;	/* Failed 'sendrec' */
+		printf("VFS: failed ipc_sendrec\n");
+		return;	/* Failed 'ipc_sendrec' */
 	}
 
 	/* Negative who_p is never used to access the fproc array. Negative
@@ -533,7 +533,7 @@ static void reply(message *m_out, endpoint_t whom, int result)
   int r;
 
   m_out->m_type = result;
-  r = sendnb(whom, m_out);
+  r = ipc_sendnb(whom, m_out);
   if (r != OK) {
 	printf("VFS: %d couldn't send reply %d to %d: %d\n", mthread_self(),
 		result, whom, r);
@@ -637,9 +637,9 @@ void service_pm_postponed(void)
 	panic("Unhandled postponed PM call %d", job_m_in.m_type);
   }
 
-  r = send(PM_PROC_NR, &m_out);
+  r = ipc_send(PM_PROC_NR, &m_out);
   if (r != OK)
-	panic("service_pm_postponed: send failed: %d", r);
+	panic("service_pm_postponed: ipc_send failed: %d", r);
 }
 
 /*===========================================================================*
@@ -793,9 +793,9 @@ static void service_pm(void)
 	return;
   }
 
-  r = send(PM_PROC_NR, &m_out);
+  r = ipc_send(PM_PROC_NR, &m_out);
   if (r != OK)
-	panic("service_pm: send failed: %d", r);
+	panic("service_pm: ipc_send failed: %d", r);
 }
 
 

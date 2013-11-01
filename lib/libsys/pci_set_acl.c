@@ -43,7 +43,7 @@ struct rs_pci *rs_pci;
 	m.m_type= BUSC_PCI_SET_ACL;
 	m.m1_i1= gid;
 
-	r= sendrec(pci_procnr, &m);
+	r= ipc_sendrec(pci_procnr, &m);
 	cpf_revoke(gid);
 	if (r != 0)
 		panic("pci_set_acl: can't talk to PCI: %d", r);

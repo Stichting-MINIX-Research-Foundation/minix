@@ -793,8 +793,8 @@ message *mp;
     sys_safecopyto(mp->m_source, mp->DL_GRANT, 0, (vir_bytes)&stats,
                    sizeof(stats));
     mp->m_type  = DL_STAT_REPLY;
-    if((r=send(mp->m_source, mp)) != OK)
-	panic("e1000_getstat: send() failed: %d", r);
+    if((r=ipc_send(mp->m_source, mp)) != OK)
+	panic("e1000_getstat: ipc_send() failed: %d", r);
 }
 
 /*===========================================================================*
@@ -1183,9 +1183,9 @@ e1000_t *e;
     }
 
     /* Acknowledge to INET. */
-    if ((r = send(e->client, &msg)) != OK)
+    if ((r = ipc_send(e->client, &msg)) != OK)
     {
-        panic("send() failed: %d", r);
+        panic("ipc_send() failed: %d", r);
     }
 }
 
@@ -1196,7 +1196,7 @@ static void mess_reply(req, reply_mess)
 message *req;
 message *reply_mess;
 {
-    if (send(req->m_source, reply_mess) != OK)
+    if (ipc_send(req->m_source, reply_mess) != OK)
     {
         panic("unable to send reply message");
     }

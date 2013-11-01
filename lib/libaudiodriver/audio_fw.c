@@ -859,10 +859,10 @@ int pci_func;
 	m.m2_l1= buf;
 	m.m2_l2= size;
 
-	r= sendrec(dev_e, &m);
+	r= ipc_sendrec(dev_e, &m);
 	if (r != OK)
 	{
-		printf("tell_dev: sendrec to %d failed: %d\n", dev_e, r);
+		printf("tell_dev: ipc_sendrec to %d failed: %d\n", dev_e, r);
 		return;
 	}
 	if (m.m_type != OK)

@@ -400,7 +400,7 @@ static void or_dump (message *m)
 
 	m->m_type = TTY_FKEY_CONTROL;
 	m->FKEY_REQUEST = FKEY_EVENTS;
-	if(OK!=(sendrec(TTY_PROC_NR,m)) )
+	if(OK!=(ipc_sendrec(TTY_PROC_NR,m)) )
 		printf("Contacting the TTY failed\n");
 		
 	if(bit_isset(m->FKEY_SFKEYS, 11)) {
@@ -1131,7 +1131,7 @@ static void or_watchdog_f(minix_timer_t *tp)
  *****************************************************************************/
 static void mess_reply (message * req, message * reply_mess)
 {
-	if (send (req->m_source, reply_mess) != 0)
+	if (ipc_send(req->m_source, reply_mess) != 0)
 		panic("orinoco: unable to mess_reply");
 
 }
@@ -1346,7 +1346,7 @@ static void reply (t_or * orp) {
 	reply.DL_FLAGS = flags;
 	reply.DL_COUNT = orp->or_read_s;
 
-	r = send (orp->or_client, &reply);
+	r = ipc_send(orp->or_client, &reply);
 
 	if (r < 0)
 		panic("orinoco: send failed: %d", r);
@@ -1786,7 +1786,7 @@ static void or_getstat_s (message * mp) {
 
 	mp->m_type = DL_STAT_REPLY;
 
-	r = send(mp->m_source, mp);
+	r = ipc_send(mp->m_source, mp);
 	if(r != OK)
 		panic("orinoco: getstat_s failed: %d", r);
 }

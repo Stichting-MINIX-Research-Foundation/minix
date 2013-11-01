@@ -102,7 +102,7 @@ void chardriver_announce(void)
   char label[DS_MAX_KEYLEN];
   char *driver_prefix = "drv.chr.";
 
-  /* Callers are allowed to use sendrec to communicate with drivers.
+  /* Callers are allowed to use ipc_sendrec to communicate with drivers.
    * For this reason, there may blocked callers when a driver restarts.
    * Ask the kernel to unblock them (if any).
    */
@@ -179,7 +179,7 @@ static void send_reply(endpoint_t endpt, message *m_ptr, int ipc_status)
 
   /* If we would block sending the message, send it asynchronously. */
   if (IPC_STATUS_CALL(ipc_status) == SENDREC)
-	r = sendnb(endpt, m_ptr);
+	r = ipc_sendnb(endpt, m_ptr);
   else
 	r = asynsend3(endpt, m_ptr, AMF_NOREPLY);
 

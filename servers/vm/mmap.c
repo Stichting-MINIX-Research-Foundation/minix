@@ -199,8 +199,8 @@ static void mmap_file_cont(struct vmproc *vmp, message *replymsg, void *cbarg,
 	mmap_reply.m_type = result;
 	mmap_reply.VMM_ADDR = v;
 
-	if(send(vmp->vm_endpoint, &mmap_reply) != OK)
-		panic("VM: mmap_file_cont: send() failed");
+	if(ipc_send(vmp->vm_endpoint, &mmap_reply) != OK)
+		panic("VM: mmap_file_cont: ipc_send() failed");
 }
 
 /*===========================================================================*

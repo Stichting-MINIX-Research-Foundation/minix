@@ -46,7 +46,7 @@ int bdev_minor_reopen(dev_t dev)
 		m.BDEV_ACCESS = open_dev[i].access;
 		m.BDEV_ID = NO_ID;
 
-		if ((r = sendrec(endpt, &m)) != OK) {
+		if ((r = ipc_sendrec(endpt, &m)) != OK) {
 			printf("bdev: IPC to driver (%d) failed (%d)\n",
 				endpt, r);
 			return r;

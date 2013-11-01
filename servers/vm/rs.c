@@ -111,9 +111,9 @@ int do_rs_update(message *m_ptr)
 	if(reply_e == src_e) reply_e = dst_e;
 	else if(reply_e == dst_e) reply_e = src_e;
 	m_ptr->m_type = OK;
-	r = send(reply_e, m_ptr);
+	r = ipc_send(reply_e, m_ptr);
 	if(r != OK) {
-		panic("send() error");
+		panic("ipc_send() error");
 	}
 
 	return SUSPEND;

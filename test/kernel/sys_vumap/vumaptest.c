@@ -253,7 +253,7 @@ static int relay_vumap(struct vumap_vir *vvec, int vcount, size_t offset,
 	m.VTR_PGRANT = pgrant;
 	m.VTR_PCOUNT = *pcount;
 
-	r = sendrec(endpt, &m);
+	r = ipc_sendrec(endpt, &m);
 
 	cpf_revoke(pgrant);
 	cpf_revoke(vgrant);

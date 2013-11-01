@@ -19,8 +19,8 @@ static int problem_stats[BD_LAST] = { 0 };
 static int driver_open(int which)
 {
 	/* Perform an open or close operation on the driver. This is
-	 * unfinished code: we should never be doing a blocking sendrec() to
-	 * the driver.
+	 * unfinished code: we should never be doing a blocking ipc_sendrec()
+         * to the driver.
 	 */
 	message msg;
 	cp_grant_id_t gid;
@@ -33,17 +33,17 @@ static int driver_open(int which)
 	msg.BDEV_MINOR = driver[which].minor;
 	msg.BDEV_ACCESS = BDEV_R_BIT | BDEV_W_BIT;
 	msg.BDEV_ID = 0;
-	r = sendrec(driver[which].endpt, &msg);
+	r = ipc_sendrec(driver[which].endpt, &msg);
 
 	if (r != OK) {
 		/* Should we restart the driver now? */
-		printf("Filter: driver_open: sendrec returned %d\n", r);
+		printf("Filter: driver_open: ipc_sendrec returned %d\n", r);
 
 		return RET_REDO;
 	}
 
 	if(msg.m_type != BDEV_REPLY || msg.BDEV_STATUS != OK) {
-		printf("Filter: driver_open: sendrec returned %d, %d\n",
+		printf("Filter: driver_open: ipc_sendrec returned %d, %d\n",
 			msg.m_type, msg.BDEV_STATUS);
 
 		return RET_REDO;
@@ -63,7 +63,7 @@ static int driver_open(int which)
 	msg.BDEV_USER = NONE;
 	msg.BDEV_ID = 0;
 
-	r = sendrec(driver[which].endpt, &msg);
+	r = ipc_sendrec(driver[which].endpt, &msg);
 
 	cpf_revoke(gid);
 
@@ -113,17 +113,17 @@ static int driver_close(int which)
 	msg.m_type = BDEV_CLOSE;
 	msg.BDEV_MINOR = driver[which].minor;
 	msg.BDEV_ID = 0;
-	r = sendrec(driver[which].endpt, &msg);
+	r = ipc_sendrec(driver[which].endpt, &msg);
 
 	if (r != OK) {
 		/* Should we restart the driver now? */
-		printf("Filter: driver_close: sendrec returned %d\n", r);
+		printf("Filter: driver_close: ipc_sendrec returned %d\n", r);
 
 		return RET_REDO;
 	}
 
 	if(msg.m_type != BDEV_REPLY || msg.BDEV_STATUS != OK) {
-		printf("Filter: driver_close: sendrec returned %d, %d\n",
+		printf("Filter: driver_close: ipc_sendrec returned %d, %d\n",
 			msg.m_type, msg.BDEV_STATUS);
 
 		return RET_REDO;
@@ -435,7 +435,7 @@ static void restart_driver(int which, int tell_rs)
 			driver[which].label);
 #endif
 
-		r = sendrec(RS_PROC_NR, &msg);
+		r = ipc_sendrec(RS_PROC_NR, &msg);
 
 		if (r != OK || msg.m_type != OK)
 			panic("RS request failed: %d", r);
@@ -531,10 +531,10 @@ static int flt_senda(message *mess, int which)
 	amp->dst = driver[which].endpt;
 	amp->msg = *mess;
 	amp->flags = AMF_VALID;
-	r = senda(amsgtable, 2);
+	r = ipc_senda(amsgtable, 2);
 
 	if(r != OK)
-		panic("senda returned error: %d", r);
+		panic("ipc_senda returned error: %d", r);
 
 	return r;
 }

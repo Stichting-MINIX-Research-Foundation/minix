@@ -642,7 +642,7 @@ struct rproc *rp;				/* pointer to service slot */
   /* If the service is a driver, map it. */
   if (rpub->dev_nr > 0) {
       /* The purpose of non-blocking forks is to avoid involving VFS in the
-       * forking process, because VFS may be blocked on a sendrec() to a MFS
+       * forking process, because VFS may be blocked on a ipc_sendrec() to a MFS
        * that is waiting for a endpoint update for a dead driver. We have just
        * published that update, but VFS may still be blocked. As a result, VFS
        * may not yet have received PM's fork message. Hence, if we call
@@ -682,7 +682,7 @@ struct rproc *rp;				/* pointer to service slot */
 	  m.m_type = DEVMAN_BIND;
 	  m.DEVMAN_ENDPOINT  = rpub->endpoint;
 	  m.DEVMAN_DEVICE_ID = rpub->devman_id;
-	  r = sendrec(ep, &m);
+	  r = ipc_sendrec(ep, &m);
 	  if (r != OK || m.DEVMAN_RESULT != OK) {
 		 return kill_service(rp, "devman bind device failed", r);
 	  }
@@ -739,7 +739,7 @@ struct rproc *rp;				/* pointer to service slot */
 		m.m_type = DEVMAN_UNBIND;
 		m.DEVMAN_ENDPOINT  = rpub->endpoint;
 		m.DEVMAN_DEVICE_ID = rpub->devman_id;
-		r = sendrec(ep, &m);
+		r = ipc_sendrec(ep, &m);
 
 		if (r != OK || m.DEVMAN_RESULT != OK) {
 			 printf("RS: devman unbind device failed");

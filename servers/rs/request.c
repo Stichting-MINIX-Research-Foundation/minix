@@ -808,7 +808,7 @@ message *m_ptr;
 	       * check and, if so request the system service's status.
 	       */
 	      else if (now - rp->r_check_tm > rp->r_period) {
-  		  notify(rpub->endpoint);		/* request status */
+  		  ipc_notify(rpub->endpoint);		/* request status */
 		  rp->r_check_tm = now;			/* mark time */
               }
           }

@@ -76,8 +76,8 @@ int fl;
   /* Can the table handle one more message? */
   if (next_slot >= ASYN_NR) {
 	/* We're full; tell the kernel to stop processing for now */
-	if ((r = senda(NULL, 0)) != OK)
-		panic("asynsend: senda failed: %d", r);
+	if ((r = ipc_senda(NULL, 0)) != OK)
+		panic("asynsend: ipc_senda failed: %d", r);
 
 	/* Move all unprocessed messages to the beginning */
 	dst_ind = 0;
@@ -139,7 +139,7 @@ int fl;
   inside = 0;
 
   /* Tell the kernel to rescan the table */
-  return senda(&msgtable[first_slot], len);
+  return ipc_senda(&msgtable[first_slot], len);
 }
 
 /*===========================================================================*

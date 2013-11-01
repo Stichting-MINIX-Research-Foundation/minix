@@ -735,7 +735,7 @@ static void atl2_reply(void)
 	ATL2_DEBUG(("ATL2: sending reply, flags %x count %d\n", flags,
 		m.DL_COUNT));
 
-	if ((r = send(state.task_endpt, &m)) != OK)
+	if ((r = ipc_send(state.task_endpt, &m)) != OK)
 		panic("unable to reply: %d", r);
 
 	state.flags &= ~(ATL2_FLAG_PACK_SENT | ATL2_FLAG_PACK_RCVD);
@@ -1042,7 +1042,7 @@ static void atl2_conf(message *m)
 	m->m_type = DL_CONF_REPLY;
 	m->DL_STAT = OK;
 
-	if ((r = send(m->m_source, m)) != OK)
+	if ((r = ipc_send(m->m_source, m)) != OK)
 		printf("ATL2: unable to send reply (%d)\n", r);
 }
 
@@ -1060,7 +1060,7 @@ static void atl2_getstat(message *m)
 
 	m->m_type = DL_STAT_REPLY;
 
-	if ((r = send(m->m_source, m)) != OK)
+	if ((r = ipc_send(m->m_source, m)) != OK)
 		printf("ATL2: unable to send reply (%d)\n", r);
 }
 

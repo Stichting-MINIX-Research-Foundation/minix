@@ -312,8 +312,8 @@ virtio_net_check_pending(void)
 
 	/* Only reply if a pending request was handled */
 	if (reply.DL_FLAGS != DL_NOFLAGS)
-		if ((r = send(dst, &reply)) != OK)
-			panic("%s: send to %d failed (%d)", name, dst, r);
+		if ((r = ipc_send(dst, &reply)) != OK)
+			panic("%s: ipc_send to %d failed (%d)", name, dst, r);
 }
 
 static void
@@ -486,8 +486,8 @@ virtio_net_write(message *m)
 		tx_pending = 1;
 	}
 
-	if ((r = send(m->m_source, &reply)) != OK)
-		panic("%s: send to %d failed (%d)", name, m->m_source, r);
+	if ((r = ipc_send(m->m_source, &reply)) != OK)
+		panic("%s: ipc_send to %d failed (%d)", name, m->m_source, r);
 }
 
 static void
@@ -509,8 +509,8 @@ virtio_net_read(message *m)
 		pending_rx_msg = *m;
 	}
 
-	if ((r = send(m->m_source, &reply)) != OK)
-		panic("%s: send to %d failed (%d)", name, m->m_source, r);
+	if ((r = ipc_send(m->m_source, &reply)) != OK)
+		panic("%s: ipc_send to %d failed (%d)", name, m->m_source, r);
 }
 
 static void
@@ -538,8 +538,8 @@ virtio_net_conf(message *m)
 	reply.DL_STAT = OK;
 	reply.DL_COUNT = 0;
 
-	if ((r = send(m->m_source, &reply)) != OK)
-		panic("%s: send to %d failed (%d)", name, m->m_source, r);
+	if ((r = ipc_send(m->m_source, &reply)) != OK)
+		panic("%s: ipc_send to %d failed (%d)", name, m->m_source, r);
 }
 
 static void
@@ -560,8 +560,8 @@ virtio_net_getstat(message *m)
 	if (r != OK)
 		panic("%s: copy to %d failed (%d)", name, m->m_source, r);
 
-	if ((r = send(m->m_source, &reply)) != OK)
-		panic("%s: send to %d failed (%d)", name, m->m_source, r);
+	if ((r = ipc_send(m->m_source, &reply)) != OK)
+		panic("%s: ipc_send to %d failed (%d)", name, m->m_source, r);
 }
 
 static void

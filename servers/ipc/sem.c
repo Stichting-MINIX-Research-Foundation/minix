@@ -103,7 +103,7 @@ static void send_message_to_process(endpoint_t who, int ret, int ignore)
 	message m;
 
 	m.m_type = ret;
-	sendnb(who, &m);
+	ipc_sendnb(who, &m);
 }
 
 static void remove_semaphore(struct sem_struct *sem)
@@ -576,7 +576,7 @@ out:
 	if (r != OK || !no_reply) {
 		m->m_type = r;
 
-		sendnb(who_e, m);
+		ipc_sendnb(who_e, m);
 	}
 
 	/* awaken process if possible */

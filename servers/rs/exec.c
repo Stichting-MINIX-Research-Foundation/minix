@@ -134,7 +134,7 @@ static int exec_restart(int proc_e, int result, vir_bytes pc, vir_bytes ps_str)
 	m.PM_EXEC_RESTART_PC = (void *)pc;
 	m.PM_EXEC_RESTART_PS_STR = (void *)ps_str;
 
-	r = sendrec(PM_PROC_NR, &m);
+	r = ipc_sendrec(PM_PROC_NR, &m);
 	if (r != OK)
 		return r;
 

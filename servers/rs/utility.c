@@ -167,7 +167,7 @@ message *m_ptr;                         /* reply message */
   if(rs_verbose && rp)
       printf("RS: %s being replied to\n", srv_to_string(rp));
 
-  r = sendnb(who, m_ptr);		/* send the message */
+  r = ipc_sendnb(who, m_ptr);		/* send the message */
   if (r != OK)
       printf("RS: unable to send reply to %d: %d\n", who, r);
 }

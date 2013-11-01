@@ -134,7 +134,7 @@ static void send_reply(int err, int transid)
 		fs_m_out.m_type = TRNS_ADD_ID(fs_m_out.m_type, transid);
 	}
 
-	if ((r = send(fs_m_in.m_source, &fs_m_out)) != OK)
+	if ((r = ipc_send(fs_m_in.m_source, &fs_m_out)) != OK)
 		panic("unable to send reply: %d", r);
 }
 

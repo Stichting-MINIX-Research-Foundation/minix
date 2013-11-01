@@ -96,9 +96,9 @@ void sef_startup()
        * these messages and block till a proper initialization request arrives.
        */
       do {
-          r = receive(RS_PROC_NR, &m, &status);
+          r = ipc_receive(RS_PROC_NR, &m, &status);
           if(r != OK) {
-              panic("unable to receive from RS: %d", r);
+              panic("unable to ipc_receive from RS: %d", r);
           }
       } while(!IS_SEF_INIT_REQUEST(&m));
 
@@ -137,7 +137,7 @@ int sef_receive_status(endpoint_t src, message *m_ptr, int *status_ptr)
 #endif
 
       /* Receive and return in case of error. */
-      r = receive(src, m_ptr, &status);
+      r = ipc_receive(src, m_ptr, &status);
       if(status_ptr) *status_ptr = status;
       if(!sef_self_first_receive_done) sef_self_first_receive_done = TRUE;
       if(r != OK) {

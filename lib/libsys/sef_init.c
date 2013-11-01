@@ -210,7 +210,7 @@ int sef_cb_init_response_rs_reply(message *m_ptr)
   int r;
 
   /* Inform RS that we completed initialization with the given result. */
-  r = sendrec(RS_PROC_NR, m_ptr);
+  r = ipc_sendrec(RS_PROC_NR, m_ptr);
 
   return r;
 }

@@ -99,7 +99,7 @@ int main(int argc, char *argv[])
 					printf("IPC: error for %d: %d\n",
 						call_type, result);
 
-				if ((r = sendnb(who_e, &m)) != OK)
+				if ((r = ipc_sendnb(who_e, &m)) != OK)
 					printf("IPC send error %d.\n", r);
 			}
 		} else {

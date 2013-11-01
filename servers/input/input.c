@@ -408,7 +408,7 @@ input_event(message *m)
 	else {
 		m->m_type = TTY_INPUT_EVENT;
 
-		if ((r = send(TTY_PROC_NR, m)) != OK)
+		if ((r = ipc_send(TTY_PROC_NR, m)) != OK)
 			printf("INPUT: send to TTY failed (%d)\n", r);
 	}
 }
@@ -665,7 +665,7 @@ input_init(int UNUSED(type), sef_init_info_t *UNUSED(info))
 
 	m.m_type = TTY_INPUT_UP;
 
-	if ((r = send(TTY_PROC_NR, &m)) != OK)
+	if ((r = ipc_send(TTY_PROC_NR, &m)) != OK)
 		printf("INPUT: send to TTY failed (%d)\n", r);
 
 	return OK;

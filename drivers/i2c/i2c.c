@@ -341,8 +341,8 @@ i2c_other(message * m, int ipc_status)
 	memset(&m_reply, 0, sizeof(m_reply));
 	m_reply.m_type = r;
 
-	if ((r = send(m->m_source, &m_reply)) != OK)
-		log_warn(&log, "send() to %d failed: %d\n", m->m_source, r);
+	if ((r = ipc_send(m->m_source, &m_reply)) != OK)
+		log_warn(&log, "ipc_send() to %d failed: %d\n", m->m_source, r);
 }
 
 /*

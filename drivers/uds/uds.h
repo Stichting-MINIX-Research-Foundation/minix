@@ -172,7 +172,7 @@ struct uds_fd {
 
 /* select() */
 
-	/* when a select is in progress, we notify() this endpoint
+	/* when a select is in progress, we notify this endpoint
 	 * of new data.
 	 */
 	endpoint_t sel_endpt;

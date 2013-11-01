@@ -142,6 +142,6 @@ void reply(who, m_out)
 int who;	
 message *m_out;                       	/* report result */
 {
-  if (OK != send(who, m_out))    /* send the message */
+  if (OK != ipc_send(who, m_out))    /* send the message */
     printf("ISOFS(%d) was unable to send reply\n", sef_self());
 }

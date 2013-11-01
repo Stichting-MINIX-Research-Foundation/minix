@@ -84,7 +84,7 @@ int libexec_pm_newexec(endpoint_t proc_e, struct exec_info *e)
   m.m_type = PM_EXEC_NEW;
   m.PM_EXEC_NEW_ENDPT = proc_e;
   m.PM_EXEC_NEW_PTR = (char *)e;
-  if ((r = sendrec(PM_PROC_NR, &m)) != OK) return(r);
+  if ((r = ipc_sendrec(PM_PROC_NR, &m)) != OK) return(r);
 
   e->allow_setuid = !!m.PM_EXEC_NEW_SUID;
 

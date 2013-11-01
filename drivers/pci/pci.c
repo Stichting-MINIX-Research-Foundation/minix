@@ -960,7 +960,7 @@ static int acpi_get_irq(unsigned bus, unsigned dev, unsigned pin)
 	((struct acpi_get_irq_req *)&m)->dev = dev;
 	((struct acpi_get_irq_req *)&m)->pin = pin;
 
-	if ((err = sendrec(acpi_ep, &m)) != OK)
+	if ((err = ipc_sendrec(acpi_ep, &m)) != OK)
 		panic("PCI: error %d while receiveing from ACPI\n", err);
 
 	return ((struct acpi_get_irq_resp *)&m)->irq;
@@ -1831,7 +1831,7 @@ static void acpi_map_bridge(unsigned pbnr, unsigned dev, unsigned sbnr)
 	((struct acpi_map_bridge_req *)&m)->secondary_bus = sbnr;
 	((struct acpi_map_bridge_req *)&m)->device = dev;
 
-	if ((err = sendrec(acpi_ep, &m)) != OK)
+	if ((err = ipc_sendrec(acpi_ep, &m)) != OK)
 		panic("PCI: error %d while receiveing from ACPI\n", err);
 
 	if (((struct acpi_map_bridge_resp *)&m)->err != OK)

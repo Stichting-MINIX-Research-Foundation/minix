@@ -107,9 +107,9 @@ out:
 	 * and bypass the process to be signal is IPC itself.
 	 */
 	if (ipc_ep != 0 && ep != ipc_ep) {
-		r = notify(ipc_ep);
+		r = ipc_notify(ipc_ep);
 		if (r != OK)
-			printf("VM: notify IPC error!\n");
+			printf("VM: ipc_notify error!\n");
 	}
 	return OK;
 }

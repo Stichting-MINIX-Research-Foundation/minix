@@ -172,7 +172,7 @@ static void got_result(result_t *res, char *desc)
 		output("- driver died\n");
 		break;
 	case RESULT_COMMFAIL:
-		output("- communication failed; sendrec returned %d\n",
+		output("- communication failed; ipc_sendrec returned %d\n",
 			res->value);
 		break;
 	case RESULT_BADTYPE:
@@ -229,7 +229,7 @@ static void reopen_device(dev_t minor)
 	m.BDEV_ACCESS = (may_write) ? (BDEV_R_BIT | BDEV_W_BIT) : BDEV_R_BIT;
 	m.BDEV_ID = 0;
 
-	(void) sendrec(driver_endpt, &m);
+	(void) ipc_sendrec(driver_endpt, &m);
 }
 
 static int sendrec_driver(message *m_ptr, ssize_t exp, result_t *res)
@@ -245,7 +245,7 @@ static int sendrec_driver(message *m_ptr, ssize_t exp, result_t *res)
 
 	m_orig = *m_ptr;
 
-	r = sendrec(driver_endpt, m_ptr);
+	r = ipc_sendrec(driver_endpt, m_ptr);
 
 	if (r == EDEADSRCDST) {
 		/* The driver has died. Find its new endpoint, and reopen all

@@ -101,8 +101,8 @@ int main(void)
 		panic("sef_receive_status() error: %d", r);
 
 	if (is_ipc_notify(rcv_sts)) {
-		/* Unexpected notify(). */
-		printf("VM: ignoring notify() from %d\n", msg.m_source);
+		/* Unexpected ipc_notify(). */
+		printf("VM: ignoring ipc_notify() from %d\n", msg.m_source);
 		continue;
 	}
 	who_e = msg.m_source;
@@ -147,10 +147,10 @@ int main(void)
 	 */
 	if(result != SUSPEND) {
 		msg.m_type = result;
-		if((r=send(who_e, &msg)) != OK) {
+		if((r=ipc_send(who_e, &msg)) != OK) {
 			printf("VM: couldn't send %d to %d (err %d)\n",
 				msg.m_type, who_e, r);
-			panic("send() error");
+			panic("ipc_send() error");
 		}
 	}
   }
@@ -178,7 +178,7 @@ static int do_rs_init(message *m)
 
 	/* RS expects this response that it then again wants to reply to: */
 	m->RS_INIT_RESULT = OK;
-	sendrec(RS_PROC_NR, m);
+	ipc_sendrec(RS_PROC_NR, m);
 
 	return(SUSPEND);
 }

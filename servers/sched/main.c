@@ -106,7 +106,7 @@ sendreply:
  *===========================================================================*/
 static void reply(endpoint_t who_e, message *m_ptr)
 {
-	int s = send(who_e, m_ptr);    /* send the message */
+	int s = ipc_send(who_e, m_ptr);    /* send the message */
 	if (OK != s)
 		printf("SCHED: unable to send reply to %d: %d\n", who_e, s);
 }

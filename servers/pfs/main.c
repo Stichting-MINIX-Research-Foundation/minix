@@ -167,6 +167,6 @@ message *m_out;                       	/* report result */
 {
   int r;
 
-  if (OK != (r = send(who, m_out)))	/* send the message */
+  if (OK != (r = ipc_send(who, m_out)))	/* send the message */
 	printf("PFS: unable to send reply: %d\n", r);
 }

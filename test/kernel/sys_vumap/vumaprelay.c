@@ -70,7 +70,7 @@ int main(int argc, char **argv)
 
 		m.m_type = do_request(&m);
 
-		send(m.m_source, &m);
+		ipc_send(m.m_source, &m);
 	}
 
 	return 0;

@@ -140,7 +140,7 @@ int result;                           	/* report result to replyee */
 {
     int send_status;
     m_out.m_type = result;  		/* build reply message */
-    send_status = send(who, &m_out);    /* send the message */
+    send_status = ipc_send(who, &m_out);    /* send the message */
     if (OK != send_status)
         panic("unable to send reply!: %d", send_status);
 }

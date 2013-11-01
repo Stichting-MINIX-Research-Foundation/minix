@@ -443,8 +443,8 @@ reqdone:
 	job_m_out.VMV_RESULT = result;
 	job_m_out.VMV_REQID = req_id;
 
-	/* reply asynchronously as VM may not be able to receive
-	 * a sendnb() message
+	/* Reply asynchronously as VM may not be able to receive
+	 * an ipc_sendnb() message.
 	 */
 	job_m_out.m_type = VM_VFS_REPLY;
 	r = asynsend3(VM_PROC_NR, &job_m_out, 0);
@@ -523,8 +523,8 @@ void pm_reboot()
 
   m_out.m_type = VFS_PM_REBOOT_REPLY;
 
-  if ((r = send(PM_PROC_NR, &m_out)) != OK)
-	panic("pm_reboot: send failed: %d", r);
+  if ((r = ipc_send(PM_PROC_NR, &m_out)) != OK)
+	panic("pm_reboot: ipc_send failed: %d", r);
 }
 
 /*===========================================================================*

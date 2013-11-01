@@ -69,7 +69,7 @@ inputdriver_send_event(int mouse, unsigned short page, unsigned short code,
 	 * the input server has crashed, in which case we should stop sending
 	 * more messages to it.
 	 */
-	if (send(input_endpt, &m) != OK)
+	if (ipc_send(input_endpt, &m) != OK)
 		input_endpt = NONE;
 }
 

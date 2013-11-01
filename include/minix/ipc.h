@@ -192,24 +192,27 @@ typedef struct asynmsg
 #define AMF_NOTIFY_ERR	020	/* Send a notification when AMF_DONE is set and
 				 * delivery of the message failed */
 
-int _send_orig(endpoint_t dest, message *m_ptr);
-int _receive_orig(endpoint_t src, message *m_ptr, int *status_ptr);
-int _sendrec_orig(endpoint_t src_dest, message *m_ptr);
-int _sendnb_orig(endpoint_t dest, message *m_ptr);
-int _notify_orig(endpoint_t dest);
-int _senda_orig(asynmsg_t *table, size_t count);
-int _do_kernel_call_orig(message *m_ptr);
+int _ipc_send_intr(endpoint_t dest, message *m_ptr);
+int _ipc_receive_intr(endpoint_t src, message *m_ptr, int *status_ptr);
+int _ipc_sendrec_intr(endpoint_t src_dest, message *m_ptr);
+int _ipc_sendnb_intr(endpoint_t dest, message *m_ptr);
+int _ipc_notify_intr(endpoint_t dest);
+int _ipc_senda_intr(asynmsg_t *table, size_t count);
 
-int _minix_kernel_info_struct(struct minix_kerninfo **);
+int _do_kernel_call_intr(message *m_ptr);
+
+int get_minix_kerninfo(struct minix_kerninfo **);
 
 /* Hide names to avoid name space pollution. */
-#define notify          _notify
-#define sendrec         _sendrec
-#define receive         _receive
-#define receivenb       _receivenb
-#define send            _send
-#define sendnb          _sendnb
-#define senda           _senda
+#define ipc_notify	_ipc_notify
+#define ipc_sendrec	_ipc_sendrec
+#define ipc_receive	_ipc_receive
+#define ipc_receivenb	_ipc_receivenb
+#define ipc_send	_ipc_send
+#define ipc_sendnb	_ipc_sendnb
+#define ipc_senda	_ipc_senda
+
+#define do_kernel_call	_do_kernel_call
 
 struct minix_ipcvecs {
 	int (*send)(endpoint_t dest, message *m_ptr);
@@ -224,37 +227,37 @@ struct minix_ipcvecs {
 /* kernel-set IPC vectors retrieved by a constructor in libc/sys-minix/init.c */
 extern struct minix_ipcvecs _minix_ipcvecs;
 
-static inline int _send(endpoint_t dest, message *m_ptr)
+static inline int _ipc_send(endpoint_t dest, message *m_ptr)
 {
 	return _minix_ipcvecs.send(dest, m_ptr);
 }
 
-static inline int _receive(endpoint_t src, message *m_ptr, int *st)
+static inline int _ipc_receive(endpoint_t src, message *m_ptr, int *st)
 {
 	return _minix_ipcvecs.receive(src, m_ptr, st);
 }
 
-static inline int _sendrec(endpoint_t src_dest, message *m_ptr)
+static inline int _ipc_sendrec(endpoint_t src_dest, message *m_ptr)
 {
 	return _minix_ipcvecs.sendrec(src_dest, m_ptr);
 }
 
-static inline int _sendnb(endpoint_t dest, message *m_ptr)
+static inline int _ipc_sendnb(endpoint_t dest, message *m_ptr)
 {
 	return _minix_ipcvecs.sendnb(dest, m_ptr);
 }
 
-static inline int _notify(endpoint_t dest)
+static inline int _ipc_notify(endpoint_t dest)
 {
 	return _minix_ipcvecs.notify(dest);
 }
 
-static inline int do_kernel_call(message *m_ptr)
+static inline int _do_kernel_call(message *m_ptr)
 {
 	return _minix_ipcvecs.do_kernel_call(m_ptr);
 }
 
-static inline int _senda(asynmsg_t *table, size_t count)
+static inline int _ipc_senda(asynmsg_t *table, size_t count)
 {
 	return _minix_ipcvecs.senda(table, count);
 }

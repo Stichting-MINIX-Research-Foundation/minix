@@ -96,9 +96,9 @@ do_read(endpoint_t driver_endpt, uint8_t *buf, size_t bufsize)
 	m.BDEV_ID = 0;
 	m.BDEV_MINOR = 0;
 
-	r = sendrec(driver_endpt, &m);
+	r = ipc_sendrec(driver_endpt, &m);
 	if (r != OK) {
-		log_debug(&log, "sendrec(BDEV_OPEN) failed (r=%d)\n", r);
+		log_debug(&log, "ipc_sendrec(BDEV_OPEN) failed (r=%d)\n", r);
 		return r;
 	}
 
@@ -116,16 +116,16 @@ do_read(endpoint_t driver_endpt, uint8_t *buf, size_t bufsize)
 	m.BDEV_POS_LO = 0;
 	m.BDEV_POS_HI = 0;
 
-	r = sendrec(driver_endpt, &m);
+	r = ipc_sendrec(driver_endpt, &m);
 	cpf_revoke(grant_nr);
 	if (r != OK) {
-		log_debug(&log, "sendrec(BDEV_READ) failed (r=%d)\n", r);
+		log_debug(&log, "ipc_sendrec(BDEV_READ) failed (r=%d)\n", r);
 		/* Clean-up: try to close the device */
 		memset(&m, '\0', sizeof(message));
 		m.m_type = BDEV_CLOSE;
 		m.BDEV_MINOR = 0;
 		m.BDEV_ID = 0;
-		sendrec(driver_endpt, &m);
+		ipc_sendrec(driver_endpt, &m);
 		return r;
 	}
 
@@ -134,9 +134,9 @@ do_read(endpoint_t driver_endpt, uint8_t *buf, size_t bufsize)
 	m.m_type = BDEV_CLOSE;
 	m.BDEV_MINOR = 0;
 	m.BDEV_ID = 0;
-	r = sendrec(driver_endpt, &m);
+	r = ipc_sendrec(driver_endpt, &m);
 	if (r != OK) {
-		log_debug(&log, "sendrec(BDEV_CLOSE) failed (r=%d)\n", r);
+		log_debug(&log, "ipc_sendrec(BDEV_CLOSE) failed (r=%d)\n", r);
 		return r;
 	}
 

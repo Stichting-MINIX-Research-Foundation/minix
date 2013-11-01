@@ -58,6 +58,6 @@ void sef_cb_ping_reply_null(endpoint_t UNUSED(source))
  *===========================================================================*/
 void sef_cb_ping_reply_pong(endpoint_t source)
 {
-  notify(source);
+  ipc_notify(source);
 }
 

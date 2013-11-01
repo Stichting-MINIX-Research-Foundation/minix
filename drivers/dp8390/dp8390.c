@@ -582,9 +582,9 @@ message *mp;
 			(vir_bytes) sizeof(dep->de_stat), &dep->de_stat);
 
 		mp->m_type= DL_STAT_REPLY;
-		r= send(mp->m_source, mp);
+		r= ipc_send(mp->m_source, mp);
 		if (r != OK)
-			panic("do_getstat: send failed: %d", r);
+			panic("do_getstat: ipc_send failed: %d", r);
 		return;
 	}
 	assert(dep->de_mode == DEM_ENABLED);
@@ -598,9 +598,9 @@ message *mp;
 		sizeof(dep->de_stat), &dep->de_stat);
 
 	mp->m_type= DL_STAT_REPLY;
-	r= send(mp->m_source, mp);
+	r= ipc_send(mp->m_source, mp);
 	if (r != OK)
-		panic("do_getstat: send failed: %d", r);
+		panic("do_getstat: ipc_send failed: %d", r);
 }
 
 /*===========================================================================*
@@ -1741,10 +1741,10 @@ dpeth_t *dep;
 	reply.m_type = DL_TASK_REPLY;
 	reply.DL_FLAGS = flags;
 	reply.DL_COUNT = dep->de_read_s;
-	r= send(dep->de_client, &reply);
+	r= ipc_send(dep->de_client, &reply);
 
 	if (r < 0)
-		panic("dp8390: send failed: %d", r);
+		panic("dp8390: ipc_send failed: %d", r);
 	
 	dep->de_read_s = 0;
 	dep->de_flags &= ~(DEF_PACK_SEND | DEF_PACK_RECV);
@@ -1757,7 +1757,7 @@ static void mess_reply(req, reply_mess)
 message *req;
 message *reply_mess;
 {
-	if (send(req->m_source, reply_mess) != OK)
+	if (ipc_send(req->m_source, reply_mess) != OK)
 		panic("dp8390: unable to mess_reply");
 }
 

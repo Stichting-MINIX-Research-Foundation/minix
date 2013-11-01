@@ -767,7 +767,7 @@ static void reply(
   message *m_out                       	/* report result */
 )
 {
-  if (OK != send(who, m_out))    /* send the message */
+  if (OK != ipc_send(who, m_out))    /* send the message */
 	lpuffs_debug("libpuffs(%d) was unable to send reply\n", sef_self());
 
   last_request_transid = 0;

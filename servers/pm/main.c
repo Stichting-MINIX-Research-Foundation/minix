@@ -220,7 +220,7 @@ static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 		mess.VFS_PM_SLOT = ip->proc_nr;
 		mess.VFS_PM_PID = rmp->mp_pid;
 		mess.VFS_PM_ENDPT = rmp->mp_endpoint;
-  		if (OK != (s=send(VFS_PROC_NR, &mess)))
+  		if (OK != (s=ipc_send(VFS_PROC_NR, &mess)))
 			panic("can't sync up with VFS: %d", s);
   	}
   }
@@ -229,7 +229,7 @@ static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
   memset(&mess, 0, sizeof(mess));
   mess.m_type = VFS_PM_INIT;
   mess.VFS_PM_ENDPT = NONE;
-  if (sendrec(VFS_PROC_NR, &mess) != OK || mess.m_type != OK)
+  if (ipc_sendrec(VFS_PROC_NR, &mess) != OK || mess.m_type != OK)
 	panic("can't sync up with VFS");
 
 #if defined(__i386__)
@@ -266,7 +266,7 @@ int result;			/* result of call (usually OK or error #) */
   rmp = &mproc[proc_nr];
   rmp->mp_reply.m_type = result;
 
-  if ((r = sendnb(rmp->mp_endpoint, &rmp->mp_reply)) != OK)
+  if ((r = ipc_sendnb(rmp->mp_endpoint, &rmp->mp_reply)) != OK)
 	printf("PM can't reply to %d (%s): %d\n", rmp->mp_endpoint,
 		rmp->mp_name, r);
 }

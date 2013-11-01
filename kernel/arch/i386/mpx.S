@@ -29,6 +29,7 @@
 #include "kernel/kernel.h"
 #include <minix/config.h>
 #include <minix/const.h>
+#include <minix/ipcconst.h>
 #include <minix/com.h>
 #include <machine/asm.h>
 #include <machine/interrupt.h>

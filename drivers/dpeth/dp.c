@@ -67,7 +67,7 @@ static void reply(dpeth_t * dep)
 
   DEBUG(printf("\t reply %d (%lx)\n", reply.m_type, reply.DL_FLAGS));
 
-  if ((r = send(dep->de_client, &reply)) != OK)
+  if ((r = ipc_send(dep->de_client, &reply)) != OK)
 	panic(SendErrMsg, r);
 
   dep->de_read_s = 0;
@@ -299,7 +299,7 @@ static void do_init(const message * mp)
   if (r == OK)
 	*(ether_addr_t *) reply_mess.DL_HWADDR = dep->de_address;
   DEBUG(printf("\t reply %d\n", reply_mess.m_type));
-  if (send(mp->m_source, &reply_mess) != OK)	/* Can't send */
+  if (ipc_send(mp->m_source, &reply_mess) != OK)	/* Can't send */
 	panic(SendErrMsg, mp->m_source);
 
   return;
@@ -437,9 +437,9 @@ static void do_getstat_s(const message * mp)
         panic(CopyErrMsg, rc);
 
   reply_mess.m_type = DL_STAT_REPLY;
-  rc= send(mp->m_source, &reply_mess);
+  rc= ipc_send(mp->m_source, &reply_mess);
   if (rc != OK)
-	panic("do_getname: send failed: %d", rc);
+	panic("do_getname: ipc_send failed: %d", rc);
   return;
 }
 

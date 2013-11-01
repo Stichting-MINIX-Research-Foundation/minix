@@ -158,7 +158,7 @@ int bdev_sendrec(dev_t dev, const message *m_orig)
   m = *m_orig;
   m.BDEV_ID = NO_ID;
 
-  r = sendrec(endpt, &m);
+  r = ipc_sendrec(endpt, &m);
 
   /* If communication failed, the driver has died. We assume it will be
    * restarted soon after, so we attempt recovery. Upon success, we let the

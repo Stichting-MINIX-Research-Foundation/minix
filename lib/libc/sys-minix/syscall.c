@@ -11,9 +11,9 @@ int _syscall(endpoint_t who, int syscallnr, message *msgptr)
   int status;
 
   msgptr->m_type = syscallnr;
-  status = sendrec(who, msgptr);
+  status = ipc_sendrec(who, msgptr);
   if (status != 0) {
-	/* 'sendrec' itself failed. */
+	/* 'ipc_sendrec' itself failed. */
 	/* XXX - strerror doesn't know all the codes */
 	msgptr->m_type = status;
   }

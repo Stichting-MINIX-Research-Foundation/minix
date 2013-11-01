@@ -521,7 +521,7 @@ message *m_ptr;			/* pointer to the request message */
 
   /* Almost done, return result to caller. */
   m_ptr->m_type = result;
-  if ((s = sendnb(m_ptr->m_source, m_ptr)) != OK)
+  if ((s = ipc_sendnb(m_ptr->m_source, m_ptr)) != OK)
 	printf("TTY: unable to reply to %d: %d", m_ptr->m_source, s);
 }
 
@@ -565,7 +565,7 @@ int scode;			/* scan code for a function key */
 
   /* See if an observer is registered and send it a message. */
   if (proc_nr != NONE) { 
-      notify(proc_nr);
+      ipc_notify(proc_nr);
   }
   return(TRUE);
 }

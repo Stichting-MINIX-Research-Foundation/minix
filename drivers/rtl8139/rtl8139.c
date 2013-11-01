@@ -1536,9 +1536,9 @@ message *mp;
 		panic("rl_getstat_s: sys_safecopyto failed: %d", r);
 
 	mp->m_type= DL_STAT_REPLY;
-	r= send(mp->m_source, mp);
+	r= ipc_send(mp->m_source, mp);
 	if (r != OK)
-		panic("rl_getstat_s: send failed: %d", r);
+		panic("rl_getstat_s: ipc_send failed: %d", r);
 }
 
 /*===========================================================================*
@@ -1561,12 +1561,12 @@ re_t *rep;
 	reply.DL_FLAGS = flags;
 	reply.DL_COUNT = rep->re_read_s;
 
-	r= send(rep->re_client, &reply);
+	r= ipc_send(rep->re_client, &reply);
 
 	if (r < 0) {
 		printf("RTL8139 tried sending to %d, type %d\n",
 			rep->re_client, reply.m_type);
-		panic("send failed: %d", r);
+		panic("ipc_send failed: %d", r);
 	}
 	
 	rep->re_read_s = 0;
@@ -1580,7 +1580,7 @@ static void mess_reply(req, reply_mess)
 message *req;
 message *reply_mess;
 {
-	if (send(req->m_source, reply_mess) != OK)
+	if (ipc_send(req->m_source, reply_mess) != OK)
 		panic("unable to mess_reply");
 }
 
@@ -2262,10 +2262,10 @@ int pci_func;
 	m.m2_l1= buf;
 	m.m2_l2= size;
 
-	r= sendrec(dev_e, &m);
+	r= ipc_sendrec(dev_e, &m);
 	if (r != OK)
 	{
-		printf("rtl8139`tell_dev: sendrec to %d failed: %d\n",
+		printf("rtl8139`tell_dev: ipc_sendrec to %d failed: %d\n",
 			dev_e, r);
 		return;
 	}

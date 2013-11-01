@@ -120,9 +120,9 @@ main(int argc, char **argv)
 
 		log_debug(&log, "Sending Reply");
 
-		r = sendnb(caller, &m);
+		r = ipc_sendnb(caller, &m);
 		if (r != OK) {
-			log_warn(&log, "sendnb() failed\n");
+			log_warn(&log, "ipc_sendnb() failed\n");
 			continue;
 		}
 	}

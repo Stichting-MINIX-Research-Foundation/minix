@@ -177,9 +177,9 @@ ENTRY(svc_entry)
 	/* save the pointer to the current process */
 	ldr	fp, [sp]
 
-	cmp	r3, #KERVEC
+	cmp	r3, #KERVEC_INTR
 	beq	kernel_call_entry
-	cmp	r3, #IPCVEC
+	cmp	r3, #IPCVEC_INTR
 	beq	ipc_entry
 
 	/* return -1 to the current process as an invalid SWI was called .*/

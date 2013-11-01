@@ -153,8 +153,8 @@ static int fbd_open(devminor_t UNUSED(minor), int access)
 	m.BDEV_ACCESS = access;
 	m.BDEV_ID = 0;
 
-	if ((r = sendrec(driver_endpt, &m)) != OK)
-		panic("sendrec to driver failed (%d)\n", r);
+	if ((r = ipc_sendrec(driver_endpt, &m)) != OK)
+		panic("ipc_sendrec to driver failed (%d)\n", r);
 
 	if (m.m_type != BDEV_REPLY)
 		panic("invalid reply from driver (%d)\n", m.m_type);
@@ -177,8 +177,8 @@ static int fbd_close(devminor_t UNUSED(minor))
 	m.BDEV_MINOR = driver_minor;
 	m.BDEV_ID = 0;
 
-	if ((r = sendrec(driver_endpt, &m)) != OK)
-		panic("sendrec to driver failed (%d)\n", r);
+	if ((r = ipc_sendrec(driver_endpt, &m)) != OK)
+		panic("ipc_sendrec to driver failed (%d)\n", r);
 
 	if (m.m_type != BDEV_REPLY)
 		panic("invalid reply from driver (%d)\n", m.m_type);
@@ -218,8 +218,8 @@ static int fbd_ioctl(devminor_t UNUSED(minor), unsigned long request,
 	m.BDEV_USER = NONE;
 	m.BDEV_ID = 0;
 
-	if ((r = sendrec(driver_endpt, &m)) != OK)
-		panic("sendrec to driver failed (%d)\n", r);
+	if ((r = ipc_sendrec(driver_endpt, &m)) != OK)
+		panic("ipc_sendrec to driver failed (%d)\n", r);
 
 	if (m.m_type != BDEV_REPLY)
 		panic("invalid reply from driver (%d)\n", m.m_type);
@@ -261,8 +261,8 @@ static ssize_t fbd_transfer_direct(int do_write, u64_t position,
 	m.BDEV_POS_LO = ex64lo(position);
 	m.BDEV_POS_HI = ex64hi(position);
 
-	if ((r = sendrec(driver_endpt, &m)) != OK)
-		panic("sendrec to driver failed (%d)\n", r);
+	if ((r = ipc_sendrec(driver_endpt, &m)) != OK)
+		panic("ipc_sendrec to driver failed (%d)\n", r);
 
 	if (m.m_type != BDEV_REPLY)
 		panic("invalid reply from driver (%d)\n", m.m_type);
@@ -354,8 +354,8 @@ static ssize_t fbd_transfer_copy(int do_write, u64_t position,
 	m.BDEV_POS_LO = ex64lo(position);
 	m.BDEV_POS_HI = ex64hi(position);
 
-	if ((r = sendrec(driver_endpt, &m)) != OK)
-		panic("sendrec to driver failed (%d)\n", r);
+	if ((r = ipc_sendrec(driver_endpt, &m)) != OK)
+		panic("ipc_sendrec to driver failed (%d)\n", r);
 
 	if (m.m_type != BDEV_REPLY)
 		panic("invalid reply from driver (%d)\n", m.m_type);
