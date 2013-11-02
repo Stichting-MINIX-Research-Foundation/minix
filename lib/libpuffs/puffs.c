@@ -425,11 +425,11 @@ puffs_mount(struct puffs_usermount *pu, const char *dir, int mntflags,
         caller_gid = INVAL_GID;
         req_nr = fs_m_in.m_type;
 
-        if (req_nr < VFS_BASE) {
-                fs_m_in.m_type += VFS_BASE;
+        if (req_nr < FS_BASE) {
+                fs_m_in.m_type += FS_BASE;
                 req_nr = fs_m_in.m_type;
         }
-        ind = req_nr - VFS_BASE;
+        ind = req_nr - FS_BASE;
 
         assert(ind == REQ_READ_SUPER);
 
@@ -601,11 +601,11 @@ puffs__theloop(struct puffs_cc *pcc)
 		caller_gid = INVAL_GID;
 		req_nr = fs_m_in.m_type;
 
-		if (req_nr < VFS_BASE) {
-			fs_m_in.m_type += VFS_BASE;
+		if (req_nr < FS_BASE) {
+			fs_m_in.m_type += FS_BASE;
 			req_nr = fs_m_in.m_type;
 		}
-		ind = req_nr - VFS_BASE;
+		ind = req_nr - FS_BASE;
 
 		if (ind < 0 || ind >= NREQS) {
 			error = EINVAL;
