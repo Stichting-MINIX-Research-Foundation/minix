@@ -52,8 +52,8 @@ int main(int argc, char *argv[])
 	src = pfs_m_in.m_source;
 	req_nr = pfs_m_in.m_type;
 
-	if (IS_VFS_RQ(req_nr)) {
-		ind = req_nr - VFS_BASE;
+	if (IS_FS_RQ(req_nr)) {
+		ind = req_nr - FS_BASE;
 		if (ind < 0 || ind >= FS_CALL_VEC_SIZE) {
 			printf("pfs: bad FS request %d\n", req_nr);
 			pfs_m_out.m_type = EINVAL;
@@ -66,7 +66,7 @@ int main(int argc, char *argv[])
 		pfs_m_out.m_type = EINVAL;
 	}
 
-	if (IS_VFS_RQ(req_nr) && IS_VFS_FS_TRANSID(transid)) {
+	if (IS_FS_RQ(req_nr) && IS_VFS_FS_TRANSID(transid)) {
 		pfs_m_out.m_type = TRNS_ADD_ID(pfs_m_out.m_type, transid);
 	}
 	reply(src, &pfs_m_out);
