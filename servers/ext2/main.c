@@ -76,11 +76,11 @@ int main(int argc, char *argv[])
 	caller_gid = INVAL_GID;
 	req_nr = fs_m_in.m_type;
 
-	if (req_nr < VFS_BASE) {
-		fs_m_in.m_type += VFS_BASE;
+	if (req_nr < FS_BASE) {
+		fs_m_in.m_type += FS_BASE;
 		req_nr = fs_m_in.m_type;
 	}
-	ind = req_nr - VFS_BASE;
+	ind = req_nr - FS_BASE;
 
 	if (ind < 0 || ind >= NREQS) {
 		printf("mfs: bad request %d\n", req_nr);

@@ -801,7 +801,7 @@
  *                Messages used from VFS to file servers		     *
  *===========================================================================*/
 
-#define VFS_BASE	0xA00		/* Requests sent by VFS to filesystem
+#define FS_BASE		0xA00		/* Requests sent by VFS to filesystem
 					 * implementations. See <minix/vfsif.h>
 					 */
 

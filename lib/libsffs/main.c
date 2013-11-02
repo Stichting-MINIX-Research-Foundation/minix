@@ -135,7 +135,7 @@ void sffs_loop(void)
 	}
 
 	if (state.s_mounted || call_nr == REQ_READSUPER) {
-		call_nr -= VFS_BASE;
+		call_nr -= FS_BASE;
 
 		dprintf(("%s: call %d\n", sffs_name, call_nr));
 
