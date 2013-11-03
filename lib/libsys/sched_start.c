@@ -2,6 +2,7 @@
 #include <assert.h>
 #include <machine/archtypes.h>
 #include <minix/timers.h>
+#include <string.h>
 
 #include "kernel/config.h"
 #include "kernel/const.h"
@@ -23,7 +24,8 @@ int sched_inherit(endpoint_t scheduler_e,
 	assert(_ENDPOINT_P(parent_e) >= 0);
 	assert(maxprio < NR_SCHED_QUEUES);
 	assert(newscheduler_e);
-	
+
+	memset(&m, 0, sizeof(m));
 	m.SCHEDULING_ENDPOINT	= schedulee_e;
 	m.SCHEDULING_PARENT	= parent_e;
 	m.SCHEDULING_MAXPRIO	= (int) maxprio;
@@ -79,6 +81,7 @@ int sched_start(endpoint_t scheduler_e,
 	}
 
 	/* A user-space scheduler must schedule this process. */
+	memset(&m, 0, sizeof(m));
 	m.SCHEDULING_ENDPOINT	= schedulee_e;
 	m.SCHEDULING_PARENT	= parent_e;
 	m.SCHEDULING_MAXPRIO	= (int) maxprio;

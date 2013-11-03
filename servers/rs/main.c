@@ -413,8 +413,8 @@ static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 
       /* Get pid from PM. */
       rp->r_pid = getnpid(rpub->endpoint);
-      if(rp->r_pid == -1) {
-          panic("unable to get pid");
+      if(rp->r_pid < 0) {
+          panic("unable to get pid: %d", rp->r_pid);
       }
   }
 
@@ -433,11 +433,12 @@ static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 
   /* Fork a new RS instance with root:operator. */
   pid = srv_fork(0, 0);
-  if(pid == -1) {
-      panic("unable to fork a new RS instance");
+  if(pid < 0) {
+      panic("unable to fork a new RS instance: %d", pid);
   }
   replica_pid = pid ? pid : getpid();
-  replica_endpoint = getnprocnr(replica_pid);
+  if ((s = getprocnr(replica_pid, &replica_endpoint)) != 0)
+	panic("unable to get replica endpoint: %d", s);
   replica_rp->r_pid = replica_pid;
   replica_rp->r_pub->endpoint = replica_endpoint;
 

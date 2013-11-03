@@ -1,6 +1,7 @@
 
 #include "syslib.h"
 
+#include <string.h>
 #include <minix/vm.h>
 
 /*===========================================================================*
@@ -10,6 +11,7 @@ int vm_info_stats(struct vm_stats_info *vsi)
 {
     message m;
 
+    memset(&m, 0, sizeof(m));
     m.VMI_WHAT = VMIW_STATS;
     m.VMI_PTR = (void *) vsi;
 
@@ -23,6 +25,7 @@ int vm_info_usage(endpoint_t who, struct vm_usage_info *vui)
 {
     message m;
 
+    memset(&m, 0, sizeof(m));
     m.VMI_WHAT = VMIW_USAGE;
     m.VMI_EP = who;
     m.VMI_PTR = (void *) vui;
@@ -39,6 +42,7 @@ int vm_info_region(endpoint_t who, struct vm_region_info *vri,
     message m;
     int result;
 
+    memset(&m, 0, sizeof(m));
     m.VMI_WHAT = VMIW_REGION;
     m.VMI_EP = who;
     m.VMI_COUNT = count;

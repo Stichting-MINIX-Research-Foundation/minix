@@ -102,8 +102,6 @@ static int sef_cb_init_fresh(int type, sef_init_info_t *info)
 {
 /* Initialize the iso9660fs server. */
 
-   /* SELF_E will contain the id of this process */
-   SELF_E = getprocnr();
 /*    hash_init(); */			/* Init the table with the ids */
    setenv("TZ","",1);		/* Used to calculate the time */
 
@@ -145,5 +143,5 @@ int who;
 message *m_out;                       	/* report result */
 {
   if (OK != send(who, m_out))    /* send the message */
-    printf("ISOFS(%d) was unable to send reply\n", SELF_E);
+    printf("ISOFS(%d) was unable to send reply\n", sef_self());
 }

@@ -26,7 +26,6 @@ struct rusage;
  *==========================================================================*/ 
 int _taskcall(endpoint_t who, int syscallnr, message *msgptr);
 int _kernel_call(int syscallnr, message *msgptr);
-int _sendcall(endpoint_t who, int type, message *msgptr);
 
 int sys_abort(int how);
 int sys_enable_iop(endpoint_t proc_ep);
@@ -260,6 +259,17 @@ int sys_setmcontext(endpoint_t proc, mcontext_t *mcp);
 
 /* input */
 int tty_input_inject(int type, int code, int val);
+
+/* Miscellaneous calls from servers and drivers. */
+pid_t srv_fork(uid_t reuid, gid_t regid);
+int srv_kill(pid_t pid, int sig);
+int getprocnr(pid_t pid, endpoint_t *proc_ep);
+int mapdriver(char *label, devmajor_t major);
+pid_t getnpid(endpoint_t proc_ep);
+uid_t getnuid(endpoint_t proc_ep);
+gid_t getngid(endpoint_t proc_ep);
+int checkperms(endpoint_t endpt, char *path, size_t size);
+int copyfd(endpoint_t endpt, int fd, int what);
 
 #endif /* _SYSLIB_H */
 

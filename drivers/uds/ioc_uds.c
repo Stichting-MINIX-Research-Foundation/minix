@@ -166,9 +166,9 @@ do_connect(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 	    sizeof(struct sockaddr_un))) != OK)
 		return rc;
 
-	if (checkperms(uds_fd_table[minor].owner, addr.sun_path,
-	    UNIX_PATH_MAX) != OK)
-		return -errno;
+	if ((rc = checkperms(uds_fd_table[minor].owner, addr.sun_path,
+	    UNIX_PATH_MAX)) != OK)
+		return rc;
 
 	/*
 	 * Look for a socket of the same type that is listening on the
@@ -355,9 +355,9 @@ do_bind(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 	if (addr.sun_path[0] == '\0')
 		return ENOENT;
 
-	if (checkperms(uds_fd_table[minor].owner, addr.sun_path,
-	    UNIX_PATH_MAX) != OK)
-		return -errno;
+	if ((rc = checkperms(uds_fd_table[minor].owner, addr.sun_path,
+	    UNIX_PATH_MAX)) != OK)
+		return rc;
 
 	/* Make sure the address isn't already in use by another socket. */
 	for (i = 0; i < NR_FDS; i++) {
@@ -523,7 +523,7 @@ do_getsockopt_peercred(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 
 	/* Obtain the peer's credentials and copy them out. */
 	if ((rc = getnucred(uds_fd_table[peer_minor].owner, &cred)) < 0)
-		return -errno;
+		return rc;
 
 	return sys_safecopyto(endpt, grant, 0, (vir_bytes) &cred,
 	    sizeof(struct uucred));
@@ -611,9 +611,9 @@ do_sendto(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 	if (addr.sun_family != AF_UNIX || addr.sun_path[0] == '\0')
 		return EINVAL;
 
-	if (checkperms(uds_fd_table[minor].owner, addr.sun_path,
-	    UNIX_PATH_MAX) != OK)
-		return -errno;
+	if ((rc = checkperms(uds_fd_table[minor].owner, addr.sun_path,
+	    UNIX_PATH_MAX)) != OK)
+		return rc;
 
 	memcpy(&uds_fd_table[minor].target, &addr, sizeof(struct sockaddr_un));
 
@@ -645,7 +645,7 @@ send_fds(devminor_t minor, struct msg_control *msg_ctrl,
 
 	/* Obtain this socket's credentials. */
 	if ((rc = getnucred(from_ep, &data->cred)) < 0)
-		return -errno;
+		return rc;
 
 	dprintf(("UDS: minor=%d cred={%d,%d,%d}\n", minor, data->cred.pid,
 	    data->cred.uid, data->cred.gid));
@@ -677,8 +677,6 @@ send_fds(devminor_t minor, struct msg_control *msg_ctrl,
 
 	for (i = data->nfiledes; i < totalfds; i++) {
 		if ((rc = copyfd(from_ep, data->fds[i], COPYFD_FROM)) < 0) {
-			rc = -errno;
-
 			printf("UDS: copyfd(COPYFD_FROM) failed: %d\n", rc);
 
 			/* Revert the successful copyfd() calls made so far. */
@@ -747,8 +745,6 @@ recv_fds(devminor_t minor, struct ancillary *data,
 	/* Copy to the target endpoint. */
 	for (i = 0; i < data->nfiledes; i++) {
 		if ((rc = copyfd(to_ep, data->fds[i], COPYFD_TO)) < 0) {
-			rc = -errno;
-
 			printf("UDS: copyfd(COPYFD_TO) failed: %d\n", rc);
 
 			/* Revert the successful copyfd() calls made so far. */

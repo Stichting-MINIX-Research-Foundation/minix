@@ -9,7 +9,7 @@
 /* Self variables. */
 #define SEF_SELF_NAME_MAXLEN 20
 char sef_self_name[SEF_SELF_NAME_MAXLEN];
-endpoint_t sef_self_endpoint;
+endpoint_t sef_self_endpoint = NONE;
 int sef_self_priv_flags;
 int sef_self_first_receive_done;
 int sef_self_receiving;
@@ -68,8 +68,8 @@ void sef_startup()
   if((sef_self_priv_flags & ROOT_SYS_PROC) && sef_self_endpoint != RS_PROC_NR) {
       r = vm_update(RS_PROC_NR, sef_self_endpoint);
       if(r != OK) {
-          panic("unable to update RS from instance %d to %d",
-              RS_PROC_NR, sef_self_endpoint);
+          panic("unable to update RS from instance %d to %d: %d",
+              RS_PROC_NR, sef_self_endpoint, r);
       }
       old_endpoint = sef_self_endpoint;
       sef_self_endpoint = RS_PROC_NR;
@@ -188,6 +188,19 @@ int sef_receive_status(endpoint_t src, message *m_ptr, int *status_ptr)
   }
 
   return r;
+}
+
+/*===========================================================================*
+ *				sef_self				     *
+ *===========================================================================*/
+endpoint_t sef_self(void)
+{
+/* Return the process's own endpoint number. */
+
+  if (sef_self_endpoint == NONE)
+	panic("sef_self called before initialization");
+
+  return sef_self_endpoint;
 }
 
 /*===========================================================================*

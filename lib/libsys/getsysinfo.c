@@ -1,5 +1,6 @@
 
-#include <lib.h>
+#include "syslib.h"
+#include <string.h>
 #include <minix/sysinfo.h>
 #include <minix/com.h>
 
@@ -11,9 +12,9 @@ int getsysinfo(
 )
 {
   message m;
+  memset(&m, 0, sizeof(m));
   m.SI_WHAT = what;
   m.SI_WHERE = where;
   m.SI_SIZE = size;
-  if (_syscall(who, COMMON_GETSYSINFO, &m) < 0) return(-1);
-  return(0);
+  return _taskcall(who, COMMON_GETSYSINFO, &m);
 }

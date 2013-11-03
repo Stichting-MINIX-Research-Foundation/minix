@@ -1,6 +1,7 @@
 
 #include "syslib.h"
 
+#include <string.h>
 #include <minix/vm.h>
 
 /*===========================================================================*
@@ -11,6 +12,7 @@ int vm_umap(int seg, vir_bytes offset, vir_bytes len, phys_bytes *addr)
     message m;
     int result;
 
+    memset(&m, 0, sizeof(m));
     m.VMU_SEG = seg;
     m.VMU_OFFSET = (char *) offset;
     m.VMU_LENGTH = (char *) len;

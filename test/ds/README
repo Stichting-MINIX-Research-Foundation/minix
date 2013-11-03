@@ -10,8 +10,8 @@ How the test works
 ==================
 
 `dstest` tests the new DS API (excluding ds_subscribe() and ds_check()).
-test_u32, test_str, test_mem, test_label, and test_map test U32, STR, MEM, LABEL
-and MAP type respectively.
+test_u32, test_str, test_mem, and test_label test U32, STR, MEM, and LABEL
+type respectively.
 
 Invalid invokation is tested as well. Erroneous conditions are tested only once.
 For example, publishing an entry with same label name, but without 
