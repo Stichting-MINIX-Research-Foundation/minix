@@ -152,8 +152,6 @@ static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 
   init_inode_cache();
 
-  SELF_E = getprocnr();
-
   /* just a small number before we find out the block size at mount time */
   lmfs_buf_pool(10);
 
@@ -214,5 +212,5 @@ static void reply(
 )
 {
   if (OK != send(who, m_out))    /* send the message */
-	printf("ext2(%d) was unable to send reply\n", SELF_E);
+	printf("ext2(%d) was unable to send reply\n", sef_self());
 }

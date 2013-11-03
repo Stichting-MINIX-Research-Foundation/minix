@@ -895,6 +895,20 @@
 #  define COPYFD_TO	1	/* copy file descriptor to remote process */
 #  define COPYFD_CLOSE	2	/* close file descriptor in remote process */
 
+/* Field names for the getprocnr(2) call. */
+#define PM_GETPROCNR_PID	m1_i1
+#define PM_GETPROCNR_ENDPT	m1_i1
+
+/* Field names for the getepinfo(2) call. */
+#define PM_GETEPINFO_ENDPT	m1_i1
+#define PM_GETEPINFO_UID	m1_i1
+#define PM_GETEPINFO_GID	m1_i2
+
+/* Field names for the mapdriver(2) call. */
+#define VFS_MAPDRIVER_MAJOR	m1_i1
+#define VFS_MAPDRIVER_LABELLEN	m1_i2
+#define VFS_MAPDRIVER_LABEL	m1_p1
+
 /* Field names for GETRUSAGE related calls */
 #define RU_ENDPT	m1_i1	/* indicates a process for sys_getrusage */
 #define RU_WHO		m1_i1	/* who argument in getrusage call */

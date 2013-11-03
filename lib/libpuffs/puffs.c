@@ -694,7 +694,6 @@ static void sef_local_startup()
 static int sef_cb_init_fresh(int type, sef_init_info_t *info)
 {
 /* Initialize the Minix file server. */
-  SELF_E = getprocnr();
   return(OK);
 }
 
@@ -769,7 +768,7 @@ static void reply(
 )
 {
   if (OK != send(who, m_out))    /* send the message */
-	lpuffs_debug("libpuffs(%d) was unable to send reply\n", SELF_E);
+	lpuffs_debug("libpuffs(%d) was unable to send reply\n", sef_self());
 
   last_request_transid = 0;
 }

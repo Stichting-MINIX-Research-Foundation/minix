@@ -21,8 +21,6 @@ EXTERN gid_t caller_gid;
 
 EXTERN int req_nr;		/* request number to the server */
 
-EXTERN int SELF_E;		/* process number */
-
 EXTERN short path_processed;      /* number of characters processed */
 EXTERN char user_path[PATH_MAX+1];  /* pathname to be processed */
 EXTERN char *vfs_slink_storage;

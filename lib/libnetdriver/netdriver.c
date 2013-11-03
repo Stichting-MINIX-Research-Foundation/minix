@@ -28,7 +28,7 @@ void netdriver_announce()
   char *driver_prefix = "drv.net.";
 
   /* Publish a driver up event. */
-  r = ds_retrieve_label_name(label, getprocnr());
+  r = ds_retrieve_label_name(label, sef_self());
   if (r != OK) {
 	panic("driver_announce: unable to get own label: %d\n", r);
   }

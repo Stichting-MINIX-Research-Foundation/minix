@@ -3,7 +3,7 @@
  * The entry points into this file are:
  *   do_reboot: kill all processes, then reboot system
  *   do_getsysinfo: request copy of PM data structure  (Jorrit N. Herder)
- *   do_getprocnr: lookup process slot number  (Jorrit N. Herder)
+ *   do_getprocnr: lookup endpoint by process ID
  *   do_getepinfo: get the pid/uid/gid of a process given its endpoint
  *   do_getsetpriority: get/set process priority
  *   do_svrctl: process manager control
@@ -171,118 +171,40 @@ int do_getsysinfo()
 /*===========================================================================*
  *				do_getprocnr			             *
  *===========================================================================*/
-int do_getprocnr()
+int do_getprocnr(void)
 {
   register struct mproc *rmp;
-  static char search_key[PROC_NAME_LEN+1];
-  int key_len;
-  int s;
 
-  /* This call should be moved to DS. */
-  if (mp->mp_effuid != 0)
-  {
-	/* For now, allow non-root processes to request their own endpoint. */
-	if (m_in.pid < 0 && m_in.namelen == 0) {
-		mp->mp_reply.PM_ENDPT = who_e;
-		mp->mp_reply.PM_PENDPT = NONE;
-		return OK;
-	}
-
-	printf("PM: unauthorized call of do_getprocnr by proc %d\n",
-		mp->mp_endpoint);
-	sys_diagctl_stacktrace(mp->mp_endpoint);
+  /* This check should be replaced by per-call ACL checks. */
+  if (who_e != RS_PROC_NR) {
+	printf("PM: unauthorized call of do_getprocnr by %d\n", who_e);
 	return EPERM;
   }
 
-#if 0
-  printf("PM: do_getprocnr(%d) call from endpoint %d, %s\n",
-	m_in.pid, mp->mp_endpoint, mp->mp_name);
-#endif
+  if ((rmp = find_proc(m_in.PM_GETPROCNR_PID)) == NULL)
+	return(ESRCH);
 
-  if (m_in.pid >= 0) {			/* lookup process by pid */
-	if ((rmp = find_proc(m_in.pid)) != NULL) {
-		mp->mp_reply.PM_ENDPT = rmp->mp_endpoint;
-#if 0
-		printf("PM: pid result: %d\n", rmp->mp_endpoint);
-#endif
-		return(OK);
-	}
-  	return(ESRCH);			
-  } else if (m_in.namelen > 0) {	/* lookup process by name */
-  	key_len = MIN(m_in.namelen, PROC_NAME_LEN);
- 	if (OK != (s=sys_datacopy(who_e, (vir_bytes) m_in.PMBRK_ADDR, 
- 			SELF, (vir_bytes) search_key, key_len))) 
- 		return(s);
- 	search_key[key_len] = '\0';	/* terminate for safety */
-  	for (rmp = &mproc[0]; rmp < &mproc[NR_PROCS]; rmp++) {
-		if (((rmp->mp_flags & (IN_USE | EXITING)) == IN_USE) && 
-			strncmp(rmp->mp_name, search_key, key_len)==0) {
-  			mp->mp_reply.PM_ENDPT = rmp->mp_endpoint;
-  			return(OK);
-		} 
-	}
-  	return(ESRCH);			
-  } else {			/* return own/parent process number */
-#if 0
-	printf("PM: endpt result: %d\n", mp->mp_reply.PM_ENDPT);
-#endif
-  	mp->mp_reply.PM_ENDPT = who_e;
-	mp->mp_reply.PM_PENDPT = mproc[mp->mp_parent].mp_endpoint;
-  }
-
+  mp->mp_reply.PM_GETPROCNR_ENDPT = rmp->mp_endpoint;
   return(OK);
 }
 
 /*===========================================================================*
  *				do_getepinfo			             *
  *===========================================================================*/
-int do_getepinfo()
+int do_getepinfo(void)
 {
-  register struct mproc *rmp;
+  struct mproc *rmp;
   endpoint_t ep;
+  int slot;
 
-  ep = m_in.PM_ENDPT;
+  ep = m_in.PM_GETEPINFO_ENDPT;
+  if (pm_isokendpt(ep, &slot) != OK)
+	return(ESRCH);
 
-  for (rmp = &mproc[0]; rmp < &mproc[NR_PROCS]; rmp++) {
-	if ((rmp->mp_flags & IN_USE) && (rmp->mp_endpoint == ep)) {
-		mp->mp_reply.reply_res2 = rmp->mp_effuid;
-		mp->mp_reply.reply_res3 = rmp->mp_effgid;
-		return(rmp->mp_pid);
-	}
-  }
-
-  /* Process not found */
-  return(ESRCH);
-}
-
-/*===========================================================================*
- *				do_getepinfo_o			             *
- *===========================================================================*/
-int do_getepinfo_o()
-{
-  register struct mproc *rmp;
-  endpoint_t ep;
-
-  /* This call should be moved to DS. */
-  if (mp->mp_effuid != 0) {
-	printf("PM: unauthorized call of do_getepinfo_o by proc %d\n",
-		mp->mp_endpoint);
-	sys_diagctl_stacktrace(mp->mp_endpoint);
-	return EPERM;
-  }
-
-  ep = m_in.PM_ENDPT;
-
-  for (rmp = &mproc[0]; rmp < &mproc[NR_PROCS]; rmp++) {
-	if ((rmp->mp_flags & IN_USE) && (rmp->mp_endpoint == ep)) {
-		mp->mp_reply.reply_res2 = (short) rmp->mp_effuid;
-		mp->mp_reply.reply_res3 = (char) rmp->mp_effgid;
-		return(rmp->mp_pid);
-	}
-  }
-
-  /* Process not found */
-  return(ESRCH);
+  rmp = &mproc[slot];
+  mp->mp_reply.PM_GETEPINFO_UID = rmp->mp_effuid;
+  mp->mp_reply.PM_GETEPINFO_GID = rmp->mp_effgid;
+  return(rmp->mp_pid);
 }
 
 /*===========================================================================*

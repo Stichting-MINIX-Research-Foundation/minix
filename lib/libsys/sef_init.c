@@ -2,6 +2,7 @@
 #include <assert.h>
 #include <unistd.h>
 #include <minix/sysutil.h>
+#include <string.h>
 
 /* SEF Init callbacks. */
 static struct sef_cbs {
@@ -62,6 +63,7 @@ static int process_init(int type, sef_init_info_t *info)
       break;
   }
 
+  memset(&m, 0, sizeof(m));
   m.m_source = sef_self_endpoint;
   m.m_type = RS_INIT;
   m.RS_INIT_RESULT = result;

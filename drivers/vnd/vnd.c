@@ -384,9 +384,10 @@ vnd_ioctl(devminor_t UNUSED(minor), unsigned long request, endpoint_t endpt,
 		 * making the IOCTL call.  The result is either a newly
 		 * allocated file descriptor or an error.
 		 */
-		if ((state.fd = copyfd(user_endpt, vnd.vnd_fildes,
-		    COPYFD_FROM)) == -1)
-			return -errno;
+		if ((r = copyfd(user_endpt, vnd.vnd_fildes, COPYFD_FROM)) < 0)
+			return r;
+
+		state.fd = r;
 
 		/* The target file must be regular. */
 		if (fstat(state.fd, &st) == -1) {

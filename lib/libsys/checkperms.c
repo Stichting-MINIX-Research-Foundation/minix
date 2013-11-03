@@ -1,4 +1,5 @@
-#include <lib.h>
+#include "syslib.h"
+
 #include <unistd.h>
 #include <string.h>
 #include <minix/safecopies.h>
@@ -12,16 +13,16 @@ checkperms(endpoint_t endpt, char *path, size_t size)
 
 	if ((grant = cpf_grant_direct(VFS_PROC_NR, (vir_bytes) path, size,
 	    CPF_READ | CPF_WRITE)) == GRANT_INVALID)
-		return -1;	/* called function sets errno */
+		return ENOMEM;
 
 	memset(&m, 0, sizeof(m));
 	m.VFS_CHECKPERMS_ENDPT = endpt;
 	m.VFS_CHECKPERMS_GRANT = grant;
 	m.VFS_CHECKPERMS_COUNT = size;
 
-	r = _syscall(VFS_PROC_NR, VFS_CHECKPERMS, &m);
+	r = _taskcall(VFS_PROC_NR, VFS_CHECKPERMS, &m);
 
-	cpf_revoke(grant);	/* does not touch errno */
+	cpf_revoke(grant);
 
 	return r;
 }

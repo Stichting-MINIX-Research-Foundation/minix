@@ -111,7 +111,7 @@ void blockdriver_announce(int type)
   }
 
   /* Publish a driver up event. */
-  if ((r = ds_retrieve_label_name(label, getprocnr())) != OK)
+  if ((r = ds_retrieve_label_name(label, sef_self())) != OK)
 	panic("blockdriver_init: unable to get own label: %d", r);
 
   snprintf(key, DS_MAX_KEYLEN, "%s%s", driver_prefix, label);

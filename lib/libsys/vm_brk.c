@@ -1,6 +1,7 @@
 
 #include "syslib.h"
 
+#include <string.h>
 #include <minix/vm.h>
 
 /*===========================================================================*
@@ -10,6 +11,7 @@ int vm_brk(endpoint_t ep, char *addr)
 {
     message m;
 
+    memset(&m, 0, sizeof(m));
     m.VMB_ENDPOINT = ep;
     m.VMB_ADDR = (void *) addr;
 

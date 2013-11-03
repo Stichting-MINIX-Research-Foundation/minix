@@ -123,12 +123,12 @@ int do_mapdriver(message *UNUSED(m_out))
   /* Only RS can map drivers. */
   if (who_e != RS_PROC_NR) return(EPERM);
 
-  label_vir = (vir_bytes) job_m_in.md_label;
-  label_len = (size_t) job_m_in.md_label_len;
-  major = job_m_in.md_major;
+  label_vir = (vir_bytes) job_m_in.VFS_MAPDRIVER_LABEL;
+  label_len = (size_t) job_m_in.VFS_MAPDRIVER_LABELLEN;
+  major = job_m_in.VFS_MAPDRIVER_MAJOR;
 
   /* Get the label */
-  if (label_len+1 > sizeof(label)) { /* Can we store this label? */
+  if (label_len > sizeof(label)) { /* Can we store this label? */
 	printf("VFS: do_mapdriver: label too long\n");
 	return(EINVAL);
   }
@@ -137,7 +137,10 @@ int do_mapdriver(message *UNUSED(m_out))
 	printf("VFS: do_mapdriver: sys_vircopy failed: %d\n", r);
 	return(EINVAL);
   }
-  label[label_len] = '\0';	/* Terminate label */
+  if (label[label_len-1] != '\0') {
+	printf("VFS: do_mapdriver: label not null-terminated\n");
+	return(EINVAL);
+  }
 
   /* Now we know how the driver is called, fetch its endpoint */
   r = ds_retrieve_label_endpt(label, &endpoint);

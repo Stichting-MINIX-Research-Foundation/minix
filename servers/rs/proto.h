@@ -34,8 +34,6 @@ int copy_rs_start(endpoint_t src_e, char *src_rs_start, struct rs_start
 int copy_label(endpoint_t src_e, char *src_label, size_t src_len, char
 	*dst_label, size_t dst_len);
 void build_cmd_dep(struct rproc *rp);
-int srv_fork(uid_t reuid, gid_t regid);
-int srv_kill(pid_t pid, int sig);
 int srv_update(endpoint_t src_e, endpoint_t dst_e);
 #define kill_service(rp, errstr, err) \
 	kill_service_debug(__FILE__, __LINE__, rp, errstr, err)

@@ -72,8 +72,6 @@ int main(void)
 			if(r != OK)
 				printf("error in ds_retrieve_mem.\n");
 			break;
-		case DSF_TYPE_MAP:
-			break;
 		default:
 			printf("error in type! %d\n", type);
 		}

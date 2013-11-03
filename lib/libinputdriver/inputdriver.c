@@ -26,7 +26,7 @@ inputdriver_announce(unsigned int type)
 	int r;
 
 	/* Publish a driver up event. */
-	if ((r = ds_retrieve_label_name(label, getprocnr())) != OK)
+	if ((r = ds_retrieve_label_name(label, sef_self())) != OK)
 		panic("libinputdriver: unable to retrieve own label: %d", r);
 
 	snprintf(key, sizeof(key), "%s%s", driver_prefix, label);

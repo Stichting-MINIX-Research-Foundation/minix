@@ -36,16 +36,6 @@ void _loadname(const char *_name, message *_msgptr);
 int _len(const char *_s);
 void _begsig(int _dummy);
 
-int getprocnr(void);
-int getnprocnr(pid_t pid);
-int getpprocnr(void);
-int _pm_findproc(char *proc_name, int *proc_nr);
-int mapdriver(char *label, int major);
-pid_t getnpid(endpoint_t proc_ep);
-uid_t getnuid(endpoint_t proc_ep);
-gid_t getngid(endpoint_t proc_ep);
-int checkperms(endpoint_t endpt, char *path, size_t size);
-int copyfd(endpoint_t endpt, int fd, int what);
 ssize_t pread64(int fd, void *buf, size_t count, u64_t where);
 ssize_t pwrite64(int fd, const void *buf, size_t count, u64_t where);
 
