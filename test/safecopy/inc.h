@@ -17,6 +17,7 @@
 #include <minix/safecopies.h>
 #include <minix/syslib.h>
 #include <minix/sysutil.h>
+#include <minix/minlib.h>
 #include <errno.h>
 
 /* TEST_PAGE_SHIFT =
@@ -44,8 +45,8 @@
 
 #define DEBUG 0
 #if DEBUG
-#	define dprint printf
+#	define dprint(x) printf x
 #else
-#	define dprint (void)
+#	define dprint(x)
 #endif
 

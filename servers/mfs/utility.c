@@ -101,7 +101,6 @@ unsigned int maxlen)
  *===========================================================================*/
 void sanitycheck(char *file, int line)
 {
-	MYASSERT(SELF_E > 0);
 	if(superblock.s_dev != NO_DEV) {
 		MYASSERT(superblock.s_dev == fs_dev);
 		MYASSERT(superblock.s_block_size == lmfs_fs_block_size());

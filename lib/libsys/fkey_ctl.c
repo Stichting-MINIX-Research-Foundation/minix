@@ -1,4 +1,5 @@
 #include "sysutil.h" 
+#include <string.h>
 
 /*===========================================================================*
  *				fkey_ctl				     *
@@ -15,6 +16,7 @@ int *sfkeys;				/* bit masks for Shift F1-F12 keys */
  */ 
     message m;
     int s;
+    memset(&m, 0, sizeof(m));
     m.FKEY_REQUEST = request;
     m.FKEY_FKEYS = (fkeys) ? *fkeys : 0;
     m.FKEY_SFKEYS = (sfkeys) ? *sfkeys : 0;

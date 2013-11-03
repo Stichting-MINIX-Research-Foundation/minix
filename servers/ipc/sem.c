@@ -312,7 +312,7 @@ int do_semctl(message *m)
 		ds = (struct semid_ds *) opt;
 		if (!ds)
 			return EFAULT;
-		r = sys_datacopy(SELF_E, (vir_bytes) &sem->semid_ds,
+		r = sys_datacopy(SELF, (vir_bytes) &sem->semid_ds,
 			who_e, (vir_bytes) ds, sizeof(struct semid_ds));
 		if (r != OK)
 			return EINVAL;
@@ -325,7 +325,7 @@ int do_semctl(message *m)
 			return EPERM;
 		ds = (struct semid_ds *) opt;
 		r = sys_datacopy(who_e, (vir_bytes) ds,
-			SELF_E, (vir_bytes) &tmp_ds, sizeof(struct semid_ds));
+			SELF, (vir_bytes) &tmp_ds, sizeof(struct semid_ds));
 		if (r != OK)
 			return EINVAL;
 		sem->semid_ds.sem_perm.uid = tmp_ds.sem_perm.uid;
@@ -357,7 +357,7 @@ int do_semctl(message *m)
 			return ENOMEM;
 		for (i = 0; i < sem->semid_ds.sem_nsems; i++)
 			buf[i] = sem->sems[i].semval;
-		r = sys_datacopy(SELF_E, (vir_bytes) buf,
+		r = sys_datacopy(SELF, (vir_bytes) buf,
 			who_e, (vir_bytes) opt,
 			sizeof(unsigned short) * sem->semid_ds.sem_nsems);
 		if (r != OK)
@@ -389,7 +389,7 @@ int do_semctl(message *m)
 		if (!buf)
 			return ENOMEM;
 		r = sys_datacopy(who_e, (vir_bytes) opt,
-			SELF_E, (vir_bytes) buf,
+			SELF, (vir_bytes) buf,
 			sizeof(unsigned short) * sem->semid_ds.sem_nsems);
 		if (r != OK)
 			return EINVAL;
@@ -470,7 +470,7 @@ int do_semop(message *m)
 	if (!sops)
 		goto out_free;
 	r = sys_datacopy(who_e, (vir_bytes) m->SEMOP_OPS,
-			SELF_E, (vir_bytes) sops,
+			SELF, (vir_bytes) sops,
 			sizeof(struct sembuf) * nsops);
 	if (r != OK) {
 		r = EINVAL;

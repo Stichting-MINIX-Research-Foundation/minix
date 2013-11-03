@@ -211,30 +211,6 @@ void build_cmd_dep(struct rproc *rp)
 }
 
 /*===========================================================================*
- *				 srv_fork				     *
- *===========================================================================*/
-pid_t srv_fork(uid_t reuid, gid_t regid)
-{
-  message m;
-
-  m.m1_i1 = (int) reuid;
-  m.m1_i2 = (int) regid;
-  return _syscall(PM_PROC_NR, SRV_FORK, &m);
-}
-
-/*===========================================================================*
- *				 srv_kill				     *
- *===========================================================================*/
-int srv_kill(pid_t pid, int sig)
-{
-  message m;
-
-  m.m1_i1 = pid;
-  m.m1_i2 = sig;
-  return(_syscall(PM_PROC_NR, SRV_KILL, &m));
-}
-
-/*===========================================================================*
  *				 srv_update				     *
  *===========================================================================*/
 int srv_update(endpoint_t src_e, endpoint_t dst_e)
@@ -481,14 +457,15 @@ struct rproc *rp;
   if(rs_verbose)
       printf("RS: forking child with srv_fork()...\n");
   child_pid= srv_fork(rp->r_uid, 0);	/* Force group to operator for now */
-  if(child_pid == -1) {
-      printf("RS: srv_fork() failed (error %d)\n", errno);
+  if(child_pid < 0) {
+      printf("RS: srv_fork() failed (error %d)\n", child_pid);
       free_slot(rp);
-      return(errno);
+      return(child_pid);
   }
 
   /* Get endpoint of the child. */
-  child_proc_nr_e = getnprocnr(child_pid);
+  if ((s = getprocnr(child_pid, &child_proc_nr_e)) != 0)
+	panic("unable to get child endpoint: %d", s);
 
   /* There is now a child process. Update the system process table. */
   child_proc_nr_n = _ENDPOINT_P(child_proc_nr_e);
@@ -677,8 +654,8 @@ struct rproc *rp;				/* pointer to service slot */
        */
       setuid(0);
 
-      if (mapdriver(rpub->label, rpub->dev_nr) != OK) {
-          return kill_service(rp, "couldn't map driver", errno);
+      if ((r = mapdriver(rpub->label, rpub->dev_nr)) != OK) {
+          return kill_service(rp, "couldn't map driver", r);
       }
   }
 
@@ -1133,7 +1110,8 @@ static int run_script(struct rproc *rp)
 		exit(1);
 	default:
 		/* Set the privilege structure for the child process. */
-		endpoint = getnprocnr(pid);
+		if ((r = getprocnr(pid, &endpoint)) != 0)
+			panic("unable to get child endpoint: %d", r);
 		if ((r = sys_privctl(endpoint, SYS_PRIV_SET_USER, NULL))
 			!= OK) {
 			return kill_service(rp,"can't set script privileges",r);

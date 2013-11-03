@@ -26,7 +26,7 @@ i2cdriver_announce(uint32_t bus)
 	}
 
 	/* Publish a driver up event. */
-	r = ds_retrieve_label_name(label, getprocnr());
+	r = ds_retrieve_label_name(label, sef_self());
 	if (r != OK) {
 		panic("unable to get own label: %d\n", r);
 	}

@@ -16,8 +16,6 @@ static message m_out;		/* the output message used for reply */
 static endpoint_t who_e;	/* caller's proc number */
 static int callnr;		/* system call number */
 
-extern int errno;	/* error number set by system library */
-
 /* Declare some local functions. */
 static void get_work(void);
 static void reply(int whom, int result);

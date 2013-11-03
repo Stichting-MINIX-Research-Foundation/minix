@@ -76,7 +76,7 @@ int do_shmget(message *m)
 					PROT_READ|PROT_WRITE, MAP_ANON, -1, 0);
 		if (shm->page == (vir_bytes) MAP_FAILED)
 			return ENOMEM;
-		shm->vm_id = vm_getphys(SELF_E, (void *) shm->page);
+		shm->vm_id = vm_getphys(sef_self(), (void *) shm->page);
 		memset((void *)shm->page, 0, size);
 
 		shm->shmid_ds.shm_perm.cuid =
@@ -132,7 +132,7 @@ int do_shmat(message *m)
 	if (!check_perm(&shm->shmid_ds.shm_perm, who_e, flag))
 		return EACCES;
 
-	ret = vm_remap(who_e, SELF_E, (void *)addr, (void *)shm->page,
+	ret = vm_remap(who_e, sef_self(), (void *)addr, (void *)shm->page,
 			shm->shmid_ds.shm_segsz);
 	if (ret == MAP_FAILED)
 		return ENOMEM;
@@ -155,7 +155,7 @@ void update_refcount_and_destroy(void)
 	for (i = 0, j = 0; i < shm_list_nr; i++) {
 		u8_t rc;
 
-		rc = vm_getrefcount(SELF_E, (void *) shm_list[i].page);
+		rc = vm_getrefcount(sef_self(), (void *) shm_list[i].page);
 		if (rc == (u8_t) -1) {
 			printf("IPC: can't find physical region.\n");
 			continue;
@@ -243,7 +243,7 @@ int do_shmctl(message *m)
 		/* check whether it has read permission */
 		if (!check_perm(&shm->shmid_ds.shm_perm, who_e, 0444))
 			return EACCES;
-		r = sys_datacopy(SELF_E, (vir_bytes)&shm->shmid_ds,
+		r = sys_datacopy(SELF, (vir_bytes)&shm->shmid_ds,
 			who_e, (vir_bytes)ds, sizeof(struct shmid_ds));
 		if (r != OK)
 			return EFAULT;
@@ -255,7 +255,7 @@ int do_shmctl(message *m)
 			uid != 0)
 			return EPERM;
 		r = sys_datacopy(who_e, (vir_bytes)ds,
-			SELF_E, (vir_bytes)&tmp_ds, sizeof(struct shmid_ds));
+			SELF, (vir_bytes)&tmp_ds, sizeof(struct shmid_ds));
 		if (r != OK)
 			return EFAULT;
 		shm->shmid_ds.shm_perm.uid = tmp_ds.shm_perm.uid;
@@ -282,7 +282,7 @@ int do_shmctl(message *m)
 		sinfo.shmmni = MAX_SHM_NR;
 		sinfo.shmseg = (unsigned long) -1;
 		sinfo.shmall = (unsigned long) -1;
-		r = sys_datacopy(SELF_E, (vir_bytes)&sinfo,
+		r = sys_datacopy(SELF, (vir_bytes)&sinfo,
 			who_e, (vir_bytes)ds, sizeof(struct shminfo));
 		if (r != OK)
 			return EFAULT;
@@ -302,7 +302,7 @@ int do_shmctl(message *m)
 		s_info.shm_swp = 0;
 		s_info.swap_attempts = 0;
 		s_info.swap_successes = 0;
-		r = sys_datacopy(SELF_E, (vir_bytes)&s_info,
+		r = sys_datacopy(SELF, (vir_bytes)&s_info,
 			who_e, (vir_bytes)ds, sizeof(struct shm_info));
 		if (r != OK)
 			return EFAULT;
@@ -314,7 +314,7 @@ int do_shmctl(message *m)
 		if (id < 0 || id >= shm_list_nr)
 			return EINVAL;
 		shm = &shm_list[id];
-		r = sys_datacopy(SELF_E, (vir_bytes)&shm->shmid_ds,
+		r = sys_datacopy(SELF, (vir_bytes)&shm->shmid_ds,
 			who_e, (vir_bytes)ds, sizeof(struct shmid_ds));
 		if (r != OK)
 			return EFAULT;

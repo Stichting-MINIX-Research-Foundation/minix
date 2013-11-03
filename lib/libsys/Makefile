@@ -9,12 +9,16 @@ SRCS+=  \
 	alloc_util.c \
 	assert.c \
 	asynsend.c \
+	checkperms.c \
+	copyfd.c \
 	ds.c	\
 	env_get_prm.c \
 	env_panic.c \
 	env_parse.c \
 	env_prefix.c \
 	fkey_ctl.c \
+	getepinfo.c \
+	getprocnr.c \
 	getticks.c \
 	getsysinfo.c \
 	getuptime.c \
@@ -22,6 +26,7 @@ SRCS+=  \
 	kprintf.c \
 	kputc.c \
 	kputs.c \
+	mapdriver.c \
 	optset.c \
 	panic.c \
 	safecopies.c \
@@ -33,6 +38,8 @@ SRCS+=  \
 	sef_ping.c \
 	sef_signal.c \
 	sqrt_approx.c \
+	srv_fork.c \
+	srv_kill.c \
 	stacktrace.c \
 	sys_abort.c \
 	sys_clear.c \
@@ -84,9 +91,13 @@ SRCS+=  \
 	vm_fork.c \
 	vm_info.c \
 	vm_map_phys.c \
+	vm_memctl.c \
 	vm_notify_sig.c \
 	vm_umap.c \
 	vm_procctl.c \
+	vm_query_exit.c \
+	vm_set_priv.c \
+	vm_update.c \
 	vprintf.c
 
 .if ${MKPCI} != "no"
