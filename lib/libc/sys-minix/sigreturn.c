@@ -2,6 +2,7 @@
 #include <lib.h>
 #include "namespace.h"
 
+#include <string.h>
 #include <signal.h>
 #include <sys/signal.h>
 
@@ -25,8 +26,8 @@ register struct sigcontext *scp;
   sigfillset(&set);		/* splhi */
   sigprocmask(SIG_SETMASK, &set, (sigset_t *) NULL);
 
-  m.m2_l1 = scp->sc_mask;
-  m.m2_i2 = scp->sc_flags;
-  m.m2_p1 = (char *) scp;
-  return(_syscall(PM_PROC_NR, SIGRETURN, &m));	/* normally this doesn't return */
+  memset(&m, 0, sizeof(m));
+  m.PM_SIG_SET = scp->sc_mask;
+  m.PM_SIG_CTX = (char *) scp;
+  return(_syscall(PM_PROC_NR, PM_SIGRETURN, &m)); /* normally doesn't return */
 }

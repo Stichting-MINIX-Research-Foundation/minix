@@ -19,7 +19,7 @@
 #include <sys/time.h>
 #include <sys/select.h>
 #include <sys/stat.h>
-#include <minix/com.h>
+#include <minix/callnr.h>
 #include <minix/u64.h>
 #include <string.h>
 #include <assert.h>
@@ -97,8 +97,8 @@ int do_select(void)
   struct selectentry *se;
   vir_bytes vtimeout;
 
-  nfds = job_m_in.SEL_NFDS;
-  vtimeout = (vir_bytes) job_m_in.SEL_TIMEOUT;
+  nfds = job_m_in.VFS_SELECT_NFDS;
+  vtimeout = (vir_bytes) job_m_in.VFS_SELECT_TIMEOUT;
 
   /* Sane amount of file descriptors? */
   if (nfds < 0 || nfds > OPEN_MAX) return(EINVAL);
@@ -113,9 +113,9 @@ int do_select(void)
   wipe_select(se);	/* Clear results of previous usage */
   se->requestor = fp;
   se->req_endpt = who_e;
-  se->vir_readfds = (fd_set *) job_m_in.SEL_READFDS;
-  se->vir_writefds = (fd_set *) job_m_in.SEL_WRITEFDS;
-  se->vir_errorfds = (fd_set *) job_m_in.SEL_ERRORFDS;
+  se->vir_readfds = (fd_set *) job_m_in.VFS_SELECT_READFDS;
+  se->vir_writefds = (fd_set *) job_m_in.VFS_SELECT_WRITEFDS;
+  se->vir_errorfds = (fd_set *) job_m_in.VFS_SELECT_ERRORFDS;
 
   /* Copy fdsets from the process */
   if ((r = copy_fdsets(se, nfds, FROM_PROC)) != OK) {

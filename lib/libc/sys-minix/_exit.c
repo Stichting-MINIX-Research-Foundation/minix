@@ -2,6 +2,7 @@
 #include "namespace.h"
 #include <lib.h>
 
+#include <string.h>
 #include <unistd.h>
 
 #ifdef __weak_alias
@@ -14,8 +15,9 @@ int status;
   void (*suicide)(void);
   message m;
 
-  m.m1_i1 = status;
-  _syscall(PM_PROC_NR, EXIT, &m);
+  memset(&m, 0, sizeof(m));
+  m.PM_EXIT_STATUS = status;
+  _syscall(PM_PROC_NR, PM_EXIT, &m);
 
   /* If exiting nicely through PM fails for some reason, try to
    * commit suicide. E.g., message to PM might fail due to deadlock.

@@ -148,6 +148,7 @@ int mountflags, srvflags;
   }
   
   /* Now perform mount(). */
+  memset(&m, 0, sizeof(m));
   m.VFS_MOUNT_FLAGS = mountflags;
   m.VFS_MOUNT_DEVLEN = special ? strlen(special) + 1 : 0;
   m.VFS_MOUNT_PATHLEN = strlen(name) + 1;
@@ -157,7 +158,7 @@ int mountflags, srvflags;
   m.VFS_MOUNT_PATH = name;
   m.VFS_MOUNT_TYPE = type;
   m.VFS_MOUNT_LABEL = label;
-  r = _syscall(VFS_PROC_NR, MOUNT, &m);
+  r = _syscall(VFS_PROC_NR, VFS_MOUNT, &m);
 
   if (r != OK && !use_existing) {
 	/* If mount() failed, tell RS to shutdown FS process.
@@ -177,11 +178,12 @@ int srvflags;
   message m;
   int r;
 
+  memset(&m, 0, sizeof(m));
   m.VFS_UMOUNT_NAME = __UNCONST(name);
   m.VFS_UMOUNT_NAMELEN = strlen(name) + 1;
   m.VFS_UMOUNT_LABEL = label;
   m.VFS_UMOUNT_LABELLEN = sizeof(label);
-  r = _syscall(VFS_PROC_NR, UMOUNT, &m);
+  r = _syscall(VFS_PROC_NR, VFS_UMOUNT, &m);
 
   /* don't shut down the driver when exist flag is set */	
   if (!(srvflags & MS_EXISTING)) {

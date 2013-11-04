@@ -112,7 +112,7 @@ int libexec_pm_newexec(endpoint_t proc_e, struct exec_info *e)
   m.EXC_NM_PTR = (char *)e;
   if ((r = sendrec(PM_PROC_NR, &m)) != OK) return(r);
 
-  e->allow_setuid = !!(m.m1_i2 & EXC_NM_RF_ALLOW_SETUID);
+  e->allow_setuid = !!(m.EXC_NM_RF & EXC_NM_RF_ALLOW_SETUID);
 
   return(m.m_type);
 }

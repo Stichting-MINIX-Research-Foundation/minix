@@ -29,7 +29,6 @@
 #include <sys/resource.h>
 #include <assert.h>
 #include "mproc.h"
-#include "param.h"
 
 static int unpause(struct mproc *rmp);
 static int sig_send(struct mproc *rmp, int signo);
@@ -40,48 +39,49 @@ static void sig_proc_exit(struct mproc *rmp, int signo);
  *===========================================================================*/
 int do_sigaction(void)
 {
-  int r;
+  int r, sig_nr;
   struct sigaction svec;
   struct sigaction *svp;
 
   assert(!(mp->mp_flags & (PROC_STOPPED | VFS_CALL | UNPAUSED)));
 
-  if (m_in.sig_nr == SIGKILL) return(OK);
-  if (m_in.sig_nr < 1 || m_in.sig_nr >= _NSIG) return(EINVAL);
+  sig_nr = m_in.PM_SIG_NR;
+  if (sig_nr == SIGKILL) return(OK);
+  if (sig_nr < 1 || sig_nr >= _NSIG) return(EINVAL);
 
-  svp = &mp->mp_sigact[m_in.sig_nr];
-  if ((struct sigaction *) m_in.sig_osa != (struct sigaction *) NULL) {
-	r = sys_datacopy(PM_PROC_NR,(vir_bytes) svp,
-		who_e, (vir_bytes) m_in.sig_osa, (phys_bytes) sizeof(svec));
+  svp = &mp->mp_sigact[sig_nr];
+  if ((struct sigaction *) m_in.PM_SIG_OACT != (struct sigaction *) NULL) {
+	r = sys_datacopy(PM_PROC_NR,(vir_bytes) svp, who_e,
+		(vir_bytes) m_in.PM_SIG_OACT, (phys_bytes) sizeof(svec));
 	if (r != OK) return(r);
   }
 
-  if ((struct sigaction *) m_in.sig_nsa == (struct sigaction *) NULL) 
+  if ((struct sigaction *) m_in.PM_SIG_ACT == (struct sigaction *) NULL)
   	return(OK);
 
   /* Read in the sigaction structure. */
-  r = sys_datacopy(who_e, (vir_bytes) m_in.sig_nsa,
+  r = sys_datacopy(who_e, (vir_bytes) m_in.PM_SIG_ACT,
 		PM_PROC_NR, (vir_bytes) &svec, (phys_bytes) sizeof(svec));
   if (r != OK) return(r);
 
   if (svec.sa_handler == SIG_IGN) {
-	sigaddset(&mp->mp_ignore, m_in.sig_nr);
-	sigdelset(&mp->mp_sigpending, m_in.sig_nr);
-	sigdelset(&mp->mp_ksigpending, m_in.sig_nr);
-	sigdelset(&mp->mp_catch, m_in.sig_nr);
+	sigaddset(&mp->mp_ignore, sig_nr);
+	sigdelset(&mp->mp_sigpending, sig_nr);
+	sigdelset(&mp->mp_ksigpending, sig_nr);
+	sigdelset(&mp->mp_catch, sig_nr);
   } else if (svec.sa_handler == SIG_DFL) {
-	sigdelset(&mp->mp_ignore, m_in.sig_nr);
-	sigdelset(&mp->mp_catch, m_in.sig_nr);
+	sigdelset(&mp->mp_ignore, sig_nr);
+	sigdelset(&mp->mp_catch, sig_nr);
   } else {
-	sigdelset(&mp->mp_ignore, m_in.sig_nr);
-	sigaddset(&mp->mp_catch, m_in.sig_nr);
+	sigdelset(&mp->mp_ignore, sig_nr);
+	sigaddset(&mp->mp_catch, sig_nr);
   }
-  mp->mp_sigact[m_in.sig_nr].sa_handler = svec.sa_handler;
+  mp->mp_sigact[sig_nr].sa_handler = svec.sa_handler;
   sigdelset(&svec.sa_mask, SIGKILL);
   sigdelset(&svec.sa_mask, SIGSTOP);
-  mp->mp_sigact[m_in.sig_nr].sa_mask = svec.sa_mask;
-  mp->mp_sigact[m_in.sig_nr].sa_flags = svec.sa_flags;
-  mp->mp_sigreturn = (vir_bytes) m_in.sig_ret;
+  mp->mp_sigact[sig_nr].sa_mask = svec.sa_mask;
+  mp->mp_sigact[sig_nr].sa_flags = svec.sa_flags;
+  mp->mp_sigreturn = (vir_bytes) m_in.PM_SIG_RET;
   return(OK);
 }
 
@@ -92,7 +92,7 @@ int do_sigpending(void)
 {
   assert(!(mp->mp_flags & (PROC_STOPPED | VFS_CALL | UNPAUSED)));
 
-  mp->mp_reply.reply_mask = (long) mp->mp_sigpending;
+  mp->mp_reply.PM_SIG_SET = (long) mp->mp_sigpending;
   return OK;
 }
 
@@ -111,34 +111,36 @@ int do_sigprocmask(void)
  *
  * KILL and STOP can't be masked.
  */
+  sigset_t set;
   int i;
 
   assert(!(mp->mp_flags & (PROC_STOPPED | VFS_CALL | UNPAUSED)));
 
-  mp->mp_reply.reply_mask = (long) mp->mp_sigmask;
+  set = m_in.PM_SIG_SET;
+  mp->mp_reply.PM_SIG_SET = (long) mp->mp_sigmask;
 
-  switch (m_in.sig_how) {
+  switch (m_in.PM_SIG_HOW) {
       case SIG_BLOCK:
-	sigdelset((sigset_t *)&m_in.sig_set, SIGKILL);
-	sigdelset((sigset_t *)&m_in.sig_set, SIGSTOP);
+	sigdelset(&set, SIGKILL);
+	sigdelset(&set, SIGSTOP);
 	for (i = 1; i < _NSIG; i++) {
-		if (sigismember((sigset_t *)&m_in.sig_set, i))
+		if (sigismember(&set, i))
 			sigaddset(&mp->mp_sigmask, i);
 	}
 	break;
 
       case SIG_UNBLOCK:
 	for (i = 1; i < _NSIG; i++) {
-		if (sigismember((sigset_t *)&m_in.sig_set, i))
+		if (sigismember(&set, i))
 			sigdelset(&mp->mp_sigmask, i);
 	}
 	check_pending(mp);
 	break;
 
       case SIG_SETMASK:
-	sigdelset((sigset_t *) &m_in.sig_set, SIGKILL);
-	sigdelset((sigset_t *) &m_in.sig_set, SIGSTOP);
-	mp->mp_sigmask = (sigset_t) m_in.sig_set;
+	sigdelset(&set, SIGKILL);
+	sigdelset(&set, SIGSTOP);
+	mp->mp_sigmask = set;
 	check_pending(mp);
 	break;
 
@@ -160,7 +162,7 @@ int do_sigsuspend(void)
   assert(!(mp->mp_flags & (PROC_STOPPED | VFS_CALL | UNPAUSED)));
 
   mp->mp_sigmask2 = mp->mp_sigmask;	/* save the old mask */
-  mp->mp_sigmask = (sigset_t) m_in.sig_set;
+  mp->mp_sigmask = (sigset_t) m_in.PM_SIG_SET;
   sigdelset(&mp->mp_sigmask, SIGKILL);
   sigdelset(&mp->mp_sigmask, SIGSTOP);
   mp->mp_flags |= SIGSUSPENDED;
@@ -180,11 +182,11 @@ int do_sigreturn(void)
 
   assert(!(mp->mp_flags & (PROC_STOPPED | VFS_CALL | UNPAUSED)));
 
-  mp->mp_sigmask = (sigset_t) m_in.sig_set;
+  mp->mp_sigmask = (sigset_t) m_in.PM_SIG_SET;
   sigdelset(&mp->mp_sigmask, SIGKILL);
   sigdelset(&mp->mp_sigmask, SIGSTOP);
 
-  r = sys_sigreturn(who_e, (struct sigmsg *) m_in.sig_context);
+  r = sys_sigreturn(who_e, (struct sigmsg *) m_in.PM_SIG_CTX);
   check_pending(mp);
   return(r);
 }
@@ -196,7 +198,7 @@ int do_kill(void)
 {
 /* Perform the kill(pid, signo) system call. */
 
-  return check_sig(m_in.pid, m_in.sig_nr, FALSE /* ksig */);
+  return check_sig(m_in.PM_SIG_PID, m_in.PM_SIG_NR, FALSE /* ksig */);
 }
 
 /*===========================================================================*
@@ -214,7 +216,7 @@ int do_srv_kill(void)
    * to a system process. RS sends a SIGKILL when it wants to perform cleanup.
    * In that case, ksig == TRUE forces PM to exit the process immediately.
    */
-  return check_sig(m_in.pid, m_in.sig_nr, TRUE /* ksig */);
+  return check_sig(m_in.PM_SIG_PID, m_in.PM_SIG_NR, TRUE /* ksig */);
 }
 
 /*===========================================================================*

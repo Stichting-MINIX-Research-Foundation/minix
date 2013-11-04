@@ -27,7 +27,6 @@
 #include <libexec.h>
 #include <sys/ptrace.h>
 #include "mproc.h"
-#include "param.h"
 
 #define ESCRIPT	(-2000)	/* Returned by read_header for a #! script. */
 #define PTRSIZE	sizeof(char *) /* Size of pointers in argv[] and envp[]. */
@@ -43,12 +42,12 @@ int do_exec()
 	memset(&m, 0, sizeof(m));
 	m.m_type = VFS_PM_EXEC;
 	m.VFS_PM_PROC = mp->mp_endpoint;
-	m.VFS_PM_PATH = m_in.exec_name;
-	m.VFS_PM_PATH_LEN = m_in.exec_len;
-	m.VFS_PM_FRAME = m_in.frame_ptr;
-	m.VFS_PM_FRAME_LEN = m_in.msg_frame_len;
-	m.VFS_PM_EXECFLAGS = m_in.PMEXEC_FLAGS;
-	/*m.VFS_PM_PS_STR_PTR = ... */
+	m.VFS_PM_PATH = m_in.PM_EXEC_NAME;
+	m.VFS_PM_PATH_LEN = m_in.PM_EXEC_NAMELEN;
+	m.VFS_PM_FRAME = m_in.PM_EXEC_FRAME;
+	m.VFS_PM_FRAME_LEN = m_in.PM_EXEC_FRAMELEN;
+	m.VFS_PM_EXECFLAGS = m_in.PM_EXEC_FLAGS;
+	/*m.VFS_PM_PS_STR_PTR = m_in.PM_EXEC_PS_STR;*/
 
 	tell_vfs(mp, &m);
 
@@ -66,7 +65,7 @@ int do_newexec()
 	char *ptr;
 	struct mproc *rmp;
 	struct exec_info args;
-	int r, flags = 0;
+	int r;
 
 	if (who_e != VFS_PROC_NR && who_e != RS_PROC_NR)
 		return EPERM;
@@ -117,10 +116,9 @@ int do_newexec()
 	/* Kill process if something goes wrong after this point. */
 	rmp->mp_flags |= PARTIAL_EXEC;
 
-	mp->mp_reply.reply_res2= (vir_bytes) rmp->mp_frame_addr;
-	mp->mp_reply.reply_res3= flags;
+	mp->mp_reply.EXC_NM_RF = 0;
 	if (allow_setuid && args.allow_setuid)
-		mp->mp_reply.reply_res3 |= EXC_NM_RF_ALLOW_SETUID;
+		mp->mp_reply.EXC_NM_RF |= EXC_NM_RF_ALLOW_SETUID;
 
 	return r;
 }

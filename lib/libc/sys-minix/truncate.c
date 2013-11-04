@@ -13,9 +13,11 @@ __weak_alias(truncate, _truncate)
 int truncate(const char *_path, off_t _length)
 {
   message m;
-  m.m2_p1 = (char *) __UNCONST(_path);
-  m.m2_i1 = strlen(_path)+1;
-  m.m2_l1 = _length;
 
-  return(_syscall(VFS_PROC_NR, TRUNCATE, &m));
+  memset(&m, 0, sizeof(m));
+  m.VFS_TRUNCATE_NAME = (char *) __UNCONST(_path);
+  m.VFS_TRUNCATE_LEN = strlen(_path)+1;
+  m.VFS_TRUNCATE_OFF_LO = _length;
+
+  return(_syscall(VFS_PROC_NR, VFS_TRUNCATE, &m));
 }

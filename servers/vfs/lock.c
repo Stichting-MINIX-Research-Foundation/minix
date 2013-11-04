@@ -14,7 +14,6 @@
 #include "scratchpad.h"
 #include "lock.h"
 #include "vnode.h"
-#include "param.h"
 
 /*===========================================================================*
  *				lock_op					     *

@@ -2,6 +2,7 @@
 #include "namespace.h"
 #include <lib.h>
 
+#include <string.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 
@@ -13,19 +14,20 @@ int futimes(int fd, const struct timeval tv[2])
 {
   message m;
 
-  m.m2_i1 = fd;
+  memset(&m, 0, sizeof(m));
+  m.VFS_UTIMENS_FD = fd;
   if (tv == NULL) {
-	m.m2_l1 = m.m2_l2 = 0;
-	m.m2_i2 = m.m2_i3 = UTIME_NOW;
+	m.VFS_UTIMENS_ATIME = m.VFS_UTIMENS_MTIME = 0;
+	m.VFS_UTIMENS_ANSEC = m.VFS_UTIMENS_MNSEC = UTIME_NOW;
   }
   else {
-	m.m2_l1 = tv[0].tv_sec;
-	m.m2_l2 = tv[1].tv_sec;
-	m.m2_i2 = tv[0].tv_usec * 1000;
-	m.m2_i3 = tv[1].tv_usec * 1000;
+	m.VFS_UTIMENS_ATIME = tv[0].tv_sec;
+	m.VFS_UTIMENS_MTIME = tv[1].tv_sec;
+	m.VFS_UTIMENS_ANSEC = tv[0].tv_usec * 1000;
+	m.VFS_UTIMENS_MNSEC = tv[1].tv_usec * 1000;
   }
-  m.m2_p1 = NULL;
-  m.m2_s1 = 0;
+  m.VFS_UTIMENS_NAME = NULL;
+  m.VFS_UTIMENS_FLAGS = 0;
 
-  return(_syscall(VFS_PROC_NR, UTIMENS, &m));
+  return(_syscall(VFS_PROC_NR, VFS_UTIMENS, &m));
 }

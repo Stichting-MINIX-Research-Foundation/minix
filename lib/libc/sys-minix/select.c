@@ -2,6 +2,7 @@
 #include <lib.h>
 #include "namespace.h"
 
+#include <string.h>
 #include <sys/time.h>
 #include <sys/select.h>
 
@@ -11,13 +12,14 @@ int select(int nfds,
 {
   message m;
 
-  m.SEL_NFDS = nfds;
-  m.SEL_READFDS = (char *) readfds;
-  m.SEL_WRITEFDS = (char *) writefds;
-  m.SEL_ERRORFDS = (char *) errorfds;
-  m.SEL_TIMEOUT = (char *) timeout;
+  memset(&m, 0, sizeof(m));
+  m.VFS_SELECT_NFDS = nfds;
+  m.VFS_SELECT_READFDS = (char *) readfds;
+  m.VFS_SELECT_WRITEFDS = (char *) writefds;
+  m.VFS_SELECT_ERRORFDS = (char *) errorfds;
+  m.VFS_SELECT_TIMEOUT = (char *) timeout;
 
-  return (_syscall(VFS_PROC_NR, SELECT, &m));
+  return (_syscall(VFS_PROC_NR, VFS_SELECT, &m));
 }
 
 

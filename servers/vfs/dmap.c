@@ -9,9 +9,8 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <unistd.h>
-#include <minix/com.h>
+#include <minix/callnr.h>
 #include <minix/ds.h>
-#include "param.h"
 
 /* The order of the entries in the table determines the mapping between major
  * device numbers and device drivers. Character and block devices

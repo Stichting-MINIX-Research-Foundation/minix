@@ -231,8 +231,9 @@ void sef_exit(int status)
   sys_exit();
 
   /* If sys_exit() fails, this is not a system service. Exit through PM. */
-  m.m1_i1 = status;
-  _syscall(PM_PROC_NR, EXIT, &m);
+  memset(&m, 0, sizeof(m));
+  m.PM_EXIT_STATUS = status;
+  _syscall(PM_PROC_NR, PM_EXIT, &m);
 
   /* If everything else fails, hang. */
   printf("Warning: system service %d couldn't exit\n", sef_self_endpoint);

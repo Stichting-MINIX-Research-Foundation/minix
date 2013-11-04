@@ -27,7 +27,6 @@
 #include <dirent.h>
 #include <sys/param.h>
 #include "path.h"
-#include "param.h"
 #include "vnode.h"
 #include "file.h"
 #include <minix/vfsif.h>

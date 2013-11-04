@@ -122,7 +122,6 @@ int dupvm(struct fproc *fp, int pfd, int *vmfd, struct filp **f);
 int do_getrusage(void);
 
 /* mount.c */
-int do_fsready(void);
 int do_mount(void);
 int do_umount(void);
 int is_nonedev(dev_t dev);
@@ -141,8 +140,10 @@ int do_creat(void);
 int do_lseek(void);
 int do_llseek(void);
 int do_mknod(void);
+int do_mkdir_321(void); /* XXX OBSOLETE AS OF 3.2.1 */
 int do_mkdir(void);
 int do_open(void);
+int do_creat(void);
 int do_slink(void);
 int actual_llseek(struct fproc *rfp, int seekfd, int seekwhence, u64_t offset,
 	u64_t *newposp);
@@ -262,7 +263,7 @@ int do_lstat(void);
 int update_statvfs(struct vmnt *vmp, struct statvfs *buf);
 
 /* time.c */
-int do_utime(void);
+int do_utime(void); /* XXX OBSOLETE AS OF 3.3.0 */
 int do_utimens(void);
 
 /* tll.c */
@@ -278,11 +279,8 @@ void tll_upgrade(tll_t *tllp);
 
 /* utility.c */
 struct timespec clock_timespec(void);
-unsigned conv2(int norm, int w);
-long conv4(int norm, long x);
-int copy_name(size_t len, char *dest);
+int copy_path(char *dest, size_t size);
 int fetch_name(vir_bytes path, size_t len, char *dest);
-int no_sys(void);
 int isokendpt_f(const char *f, int l, endpoint_t e, int *p, int ft);
 int in_group(struct fproc *rfp, gid_t grp);
 
@@ -324,7 +322,7 @@ int do_write(void);
 /* gcov.c */
 int do_gcov_flush(void);
 #if ! USE_COVERAGE
-#define do_gcov_flush no_sys
+#define do_gcov_flush NULL
 #endif
 
 /* select.c */

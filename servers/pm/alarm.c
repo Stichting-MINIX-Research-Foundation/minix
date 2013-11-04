@@ -12,8 +12,8 @@
 #include <signal.h>
 #include <sys/time.h>
 #include <minix/com.h>
+#include <minix/callnr.h>
 #include "mproc.h"
-#include "param.h"
 
 #define US 1000000UL	/* shortcut for microseconds per second */
 
@@ -92,18 +92,18 @@ int do_itimer()
 {
   struct itimerval ovalue, value;	/* old and new interval timers */
   int setval, getval;			/* set and/or retrieve the values? */
-  int r;
+  int r, which;
 
   /* Make sure 'which' is one of the defined timers. */
-  if (m_in.which_timer < 0 || m_in.which_timer >= NR_ITIMERS)
-  	return(EINVAL);
+  which = m_in.PM_ITIMER_WHICH;
+  if (which < 0 || which >= NR_ITIMERS) return(EINVAL);
 
   /* Determine whether to set and/or return the given timer value, based on
-   * which of the new_val and old_val parameters are nonzero. At least one of
+   * which of the value and ovalue parameters are nonzero. At least one of
    * them must be nonzero.
    */
-  setval = (m_in.new_val != NULL);
-  getval = (m_in.old_val != NULL);
+  setval = (m_in.PM_ITIMER_VALUE != NULL);
+  getval = (m_in.PM_ITIMER_OVALUE != NULL);
 
   if (!setval && !getval) return(EINVAL);
 
@@ -111,8 +111,8 @@ int do_itimer()
    * Also, make sure its fields have sane values.
    */
   if (setval) {
-  	r = sys_datacopy(who_e, (vir_bytes) m_in.new_val,
-  		PM_PROC_NR, (vir_bytes) &value, (phys_bytes) sizeof(value));
+	r = sys_datacopy(who_e, (vir_bytes) m_in.PM_ITIMER_VALUE,
+		PM_PROC_NR, (vir_bytes) &value, (phys_bytes) sizeof(value));
   	if (r != OK) return(r);
 
   	if (!is_sane_timeval(&value.it_value) ||
@@ -120,7 +120,7 @@ int do_itimer()
   		return(EINVAL);
   }
 
-  switch (m_in.which_timer) {
+  switch (which) {
   	case ITIMER_REAL :
   		if (getval) get_realtimer(mp, &ovalue);
 
@@ -131,21 +131,21 @@ int do_itimer()
 
   	case ITIMER_VIRTUAL :
   	case ITIMER_PROF :
-  		getset_vtimer(mp, m_in.which_timer,
-  				(setval) ? &value : NULL,
-  				(getval) ? &ovalue : NULL);
+		getset_vtimer(mp, which, (setval) ? &value : NULL,
+			(getval) ? &ovalue : NULL);
 
   		r = OK;
   		break;
 
 	default:
-		panic("invalid timer type: %d", m_in.which_timer);
+		panic("invalid timer type: %d", which);
   }
 
   /* If requested, copy the old interval timer to user space. */
   if (r == OK && getval) {
-  	r = sys_datacopy(PM_PROC_NR, (vir_bytes) &ovalue,
-  		who_e, (vir_bytes) m_in.old_val, (phys_bytes) sizeof(ovalue));
+	r = sys_datacopy(PM_PROC_NR, (vir_bytes) &ovalue,
+		who_e, (vir_bytes) m_in.PM_ITIMER_OVALUE,
+		(phys_bytes) sizeof(ovalue));
   }
 
   return(r);
