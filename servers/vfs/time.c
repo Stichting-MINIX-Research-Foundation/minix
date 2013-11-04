@@ -1,7 +1,6 @@
 /* This file takes care of those system calls that deal with time.
  *
  * The entry points into this file are
- *   do_utime:		perform the UTIME system call
  *   do_utimens:	perform the UTIMENS system call
  */
 
@@ -14,7 +13,6 @@
 #include <fcntl.h>
 #include "file.h"
 #include "path.h"
-#include "param.h"
 #include "vnode.h"
 #include <minix/vfsif.h>
 #include "vmnt.h"
@@ -22,6 +20,7 @@
 #define	UTIMENS_STYLE	0	/* utimes(2)/utimensat(2) style, named file */
 #define	FUTIMENS_STYLE	1	/* futimens(2)/futimes(2) style, file desc. */
 
+/* XXX OBSOLETE AS OF 3.3.0 */
 /*===========================================================================*
  *				do_utime				     *
  *===========================================================================*/
@@ -37,16 +36,16 @@ int do_utime(void)
   vir_bytes vname;
   size_t vname_length, len;
 
-  vname = (vir_bytes) job_m_in.utime_file;
-  vname_length = (size_t) job_m_in.utime_length;
-  actim.tv_sec = job_m_in.utime_actime;
-  modtim.tv_sec = job_m_in.utime_modtime;
+  vname = (vir_bytes) job_m_in.m2_p1;
+  vname_length = (size_t) job_m_in.m2_i1;
+  actim.tv_sec = job_m_in.m2_l1;
+  modtim.tv_sec = job_m_in.m2_l2;
   actim.tv_nsec = modtim.tv_nsec = 0;
 
   /* Adjust for case of 'timep' being NULL;
-   * utime_strlen then holds the actual size: strlen(name)+1 */
+   * m2_i2 then holds the actual size: strlen(name)+1 */
   len = vname_length;
-  if (len == 0) len = (size_t) job_m_in.utime_strlen;
+  if (len == 0) len = (size_t) job_m_in.m2_i2;
 
   lookup_init(&resolve, fullpath, PATH_NOFLAGS, &vmp, &vp);
   resolve.l_vmnt_lock = VMNT_READ;
@@ -78,7 +77,7 @@ int do_utime(void)
   put_vnode(vp);
   return(r);
 }
-
+/* XXX END OF OBSOLETE CODE */
 
 /*===========================================================================*
  *				do_utimens				     *
@@ -111,19 +110,19 @@ int do_utimens(void)
   memset(&now, 0, sizeof(now));
 
   /* The case times==NULL is handled by the caller, replaced with UTIME_NOW */
-  actim.tv_sec = job_m_in.utime_actime;
-  actim.tv_nsec = job_m_in.utimens_ansec;
-  modtim.tv_sec = job_m_in.utime_modtime;
-  modtim.tv_nsec = job_m_in.utimens_mnsec;
+  actim.tv_sec = job_m_in.VFS_UTIMENS_ATIME;
+  actim.tv_nsec = job_m_in.VFS_UTIMENS_ANSEC;
+  modtim.tv_sec = job_m_in.VFS_UTIMENS_MTIME;
+  modtim.tv_nsec = job_m_in.VFS_UTIMENS_MNSEC;
 
-  if (job_m_in.utime_file != NULL) {
+  if (job_m_in.VFS_UTIMENS_NAME != NULL) {
 	kind = UTIMENS_STYLE;
-	if (job_m_in.utimens_flags & ~AT_SYMLINK_NOFOLLOW)
+	if (job_m_in.VFS_UTIMENS_FLAGS & ~AT_SYMLINK_NOFOLLOW)
 		return EINVAL; /* unknown flag */
 	/* Temporarily open the file */
-	vname = (vir_bytes) job_m_in.utime_file;
-	vname_length = (size_t) job_m_in.utime_length;
-	if (job_m_in.utimens_flags & AT_SYMLINK_NOFOLLOW)
+	vname = (vir_bytes) job_m_in.VFS_UTIMENS_NAME;
+	vname_length = (size_t) job_m_in.VFS_UTIMENS_LEN;
+	if (job_m_in.VFS_UTIMENS_FLAGS & AT_SYMLINK_NOFOLLOW)
 		lookup_flags = PATH_RET_SYMLINK;
 	else
 		lookup_flags = PATH_NOFLAGS;
@@ -137,9 +136,9 @@ int do_utimens(void)
   else {
 	kind = FUTIMENS_STYLE;
 	/* Change timestamps on already-opened fd. Is it valid? */
-	if (job_m_in.utimens_flags != 0)
+	if (job_m_in.VFS_UTIMENS_FLAGS != 0)
 		return EINVAL; /* unknown flag */
-	if ((filp = get_filp(job_m_in.utimens_fd, VNODE_READ)) == NULL)
+	if ((filp = get_filp(job_m_in.VFS_UTIMENS_FD, VNODE_READ)) == NULL)
 		return err_code;
 	vp = filp->filp_vno;
   }

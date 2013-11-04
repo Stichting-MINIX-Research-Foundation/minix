@@ -5,6 +5,7 @@
 #include <lib.h>
 #include <namespace.h>
 
+#include <string.h>
 #include <ucontext.h>
 #include <unistd.h>
 
@@ -12,9 +13,10 @@ int setmcontext(const mcontext_t *mcp)
 {
   message m;
 
-  m.m1_p1 = (char *) __UNCONST(mcp);
+  memset(&m, 0, sizeof(m));
+  m.PM_MCONTEXT_CTX = (char *) __UNCONST(mcp);
 
-  return(_syscall(PM_PROC_NR, SETMCONTEXT, &m));
+  return(_syscall(PM_PROC_NR, PM_SETMCONTEXT, &m));
 }
 
 
@@ -22,8 +24,9 @@ int getmcontext(mcontext_t *mcp)
 {
   message m;
 
-  m.m1_p1 = (char *) mcp;
+  memset(&m, 0, sizeof(m));
+  m.PM_MCONTEXT_CTX = (char *) mcp;
 
-  return(_syscall(PM_PROC_NR, GETMCONTEXT, &m));
+  return(_syscall(PM_PROC_NR, PM_GETMCONTEXT, &m));
 }
 

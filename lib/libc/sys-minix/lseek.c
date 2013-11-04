@@ -2,6 +2,7 @@
 #include "namespace.h"
 #include <lib.h>
 
+#include <string.h>
 #include <unistd.h>
 
 #ifdef __weak_alias
@@ -15,9 +16,10 @@ int whence;
 {
   message m;
 
-  m.m2_i1 = fd;
-  m.m2_l1 = offset;
-  m.m2_i2 = whence;
-  if (_syscall(VFS_PROC_NR, LSEEK, &m) < 0) return( (off_t) -1);
-  return( (off_t) m.m2_l1);
+  memset(&m, 0, sizeof(m));
+  m.VFS_LSEEK_FD = fd;
+  m.VFS_LSEEK_OFF_LO = offset;
+  m.VFS_LSEEK_WHENCE = whence;
+  if (_syscall(VFS_PROC_NR, VFS_LSEEK, &m) < 0) return( (off_t) -1);
+  return( (off_t) m.VFS_LSEEK_OFF_LO);
 }

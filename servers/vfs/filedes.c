@@ -384,7 +384,7 @@ struct filp *f;
 
   /* If the inode being closed is a pipe, release everyone hanging on it. */
   if (S_ISFIFO(vp->v_mode)) {
-	rw = (f->filp_mode & R_BIT ? WRITE : READ);
+	rw = (f->filp_mode & R_BIT ? VFS_WRITE : VFS_READ);
 	release(vp, rw, susp_count);
   }
 

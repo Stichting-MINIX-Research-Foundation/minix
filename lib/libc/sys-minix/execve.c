@@ -112,17 +112,17 @@ int execve(const char *path, char * const *argv, char * const *envp)
 	memset(&m, 0, sizeof(m));
 
 	/* We can finally make the system call. */
-	m.m1_i1 = strlen(path) + 1;
-	m.m1_i2 = frame_size;
-	m.m1_p1 = (char *) __UNCONST(path);
-	m.m1_p2 = frame;
+	m.PM_EXEC_NAME = (char *) __UNCONST(path);
+	m.PM_EXEC_NAMELEN = strlen(path) + 1;
+	m.PM_EXEC_FRAME = frame;
+	m.PM_EXEC_FRAMELEN = frame_size;
 
 	/* Tell PM/VFS we have left space for the aux vectors
 	 * and executable name
 	 */
-	m.PMEXEC_FLAGS = PMEF_AUXVECTORSPACE | PMEF_EXECNAMESPACE1;
+	m.PM_EXEC_FLAGS = PMEF_AUXVECTORSPACE | PMEF_EXECNAMESPACE1;
 
-	(void) _syscall(PM_PROC_NR, EXEC, &m);
+	(void) _syscall(PM_PROC_NR, PM_EXEC, &m);
 
 	/* Failure, return the memory used for the frame and exit. */
 	(void) sbrk(-frame_size);

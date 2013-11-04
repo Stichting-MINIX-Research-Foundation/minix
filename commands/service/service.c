@@ -416,6 +416,7 @@ int main(int argc, char **argv)
    * should end up here. The default is used for not yet supported requests. 
    */
   result = OK;
+  memset(&m, 0, sizeof(m));
   switch(request) {
   case RS_UPDATE:
       m.RS_LU_STATE = req_lu_state;

@@ -2,7 +2,6 @@
  *
  * The entry points are:
  *   get_free_pid:	get a free process or group id
- *   no_sys:		called for invalid system call numbers
  *   find_param:	look up a boot monitor parameter
  *   find_proc:		return process pointer from pid number
  *   nice_to_priority	convert nice level to priority queue
@@ -19,7 +18,6 @@
 #include <fcntl.h>
 #include <signal.h>		/* needed only because mproc.h needs it */
 #include "mproc.h"
-#include "param.h"
 
 #include <minix/config.h>
 #include <minix/timers.h>
@@ -49,16 +47,6 @@ pid_t get_free_pid()
 		}
   } while (t);					/* 't' = 0 means pid free */
   return(next_pid);
-}
-
-
-/*===========================================================================*
- *				no_sys					     *
- *===========================================================================*/
-int no_sys()
-{
-/* A system call number not implemented by PM has been requested. */
-  return(ENOSYS);
 }
 
 /*===========================================================================*

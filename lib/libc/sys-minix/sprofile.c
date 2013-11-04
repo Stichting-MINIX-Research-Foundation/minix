@@ -7,6 +7,7 @@ __weak_alias(sprofile, _sprofile)
 #endif
 
 #include <lib.h>
+#include <string.h>
 #include <minix/profile.h>
 
 int sprofile(int action,
@@ -18,6 +19,7 @@ int sprofile(int action,
 {
   message m;
 
+  memset(&m, 0, sizeof(m));
   m.PROF_ACTION         = action;
   m.PROF_MEM_SIZE       = size;
   m.PROF_FREQ           = freq;
@@ -25,6 +27,6 @@ int sprofile(int action,
   m.PROF_CTL_PTR        = (void *) ctl_ptr;
   m.PROF_MEM_PTR        = (void *) mem_ptr;
 
-  return _syscall(PM_PROC_NR, SPROF, &m);
+  return _syscall(PM_PROC_NR, PM_SPROF, &m);
 }
 

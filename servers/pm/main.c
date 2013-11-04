@@ -27,21 +27,17 @@
 #include <env.h>
 #include <assert.h>
 #include "mproc.h"
-#include "param.h"
 
 #include "kernel/const.h"
 #include "kernel/config.h"
 #include "kernel/proc.h"
 
 #if ENABLE_SYSCALL_STATS
-EXTERN unsigned long calls_stats[NCALLS];
+EXTERN unsigned long calls_stats[NR_PM_CALLS];
 #endif
 
 static int get_nice_value(int queue);
 static void handle_vfs_reply(void);
-
-#define click_to_round_k(n) \
-	((unsigned) ((((unsigned long) (n) << CLICK_SHIFT) + 512) / 1024))
 
 /* SEF functions and variables. */
 static void sef_local_startup(void);
@@ -53,6 +49,7 @@ static int sef_cb_init_fresh(int type, sef_init_info_t *info);
 int main()
 {
 /* Main routine of the process manager. */
+  unsigned int call_index;
   int ipc_status, result;
 
   /* SEF local startup. */
@@ -84,27 +81,24 @@ int main()
 	if (mp->mp_flags & EXITING)
 		continue;
 
-	if (IS_VFS_PM_RS(call_nr)) {
-		if (who_e == VFS_PROC_NR)
-		{
-			handle_vfs_reply();
-			result= SUSPEND;		/* don't reply */
-		}
-		else
-			result= ENOSYS;
-	} else {
+	if (IS_VFS_PM_RS(call_nr) && who_e == VFS_PROC_NR) {
+		handle_vfs_reply();
+
+		result = SUSPEND;		/* don't reply */
+	} else if (IS_PM_CALL(call_nr)) {
 		/* If the system call number is valid, perform the call. */
-		if ((unsigned) call_nr >= NCALLS) {
-			result = ENOSYS;
-		} else {
+		call_index = (unsigned int) (call_nr - PM_BASE);
+
+		if (call_index < NR_PM_CALLS && call_vec[call_index] != NULL) {
 #if ENABLE_SYSCALL_STATS
-			calls_stats[call_nr]++;
+			calls_stats[call_index]++;
 #endif
 
-			result = (*call_vec[call_nr])();
-
-		}
-	}
+			result = (*call_vec[call_index])();
+		} else
+			result = ENOSYS;
+	} else
+		result = ENOSYS;
 
 	/* Send reply. */
 	if (result != SUSPEND) reply(who_p, result);
@@ -135,18 +129,7 @@ static void sef_local_startup()
  *===========================================================================*/
 static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 {
-/* Initialize the process manager. 
- * Memory use info is collected from the boot monitor, the kernel, and
- * all processes compiled into the system image. Initially this information
- * is put into an array mem_chunks. Elements of mem_chunks are struct memory,
- * and hold base, size pairs in units of clicks. This array is small, there
- * should be no more than 8 chunks. After the array of chunks has been built
- * the contents are used to initialize the hole list. Space for the hole list
- * is reserved as an array with twice as many elements as the maximum number
- * of processes allowed. It is managed as a linked list, and elements of the
- * array are struct hole, which, in addition to storage for a base and size in 
- * click units also contain space for a link, a pointer to another element.
-*/
+/* Initialize the process manager. */
   int s;
   static struct boot_image image[NR_BOOT_PROCS];
   register struct boot_image *ip;
@@ -281,7 +264,7 @@ int result;			/* result of call (usually OK or error #) */
       panic("reply arg out of range: %d", proc_nr);
 
   rmp = &mproc[proc_nr];
-  rmp->mp_reply.reply_res = result;
+  rmp->mp_reply.m_type = result;
 
   if ((r = sendnb(rmp->mp_endpoint, &rmp->mp_reply)) != OK)
 	printf("PM can't reply to %d (%s): %d\n", rmp->mp_endpoint,

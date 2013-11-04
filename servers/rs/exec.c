@@ -175,7 +175,7 @@ static int exec_restart(int proc_e, int result, vir_bytes pc)
 	int r;
 	message m;
 
-	m.m_type= EXEC_RESTART;
+	m.m_type= PM_EXEC_RESTART;
 	m.EXC_RS_PROC= proc_e;
 	m.EXC_RS_RESULT= result;
 	m.EXC_RS_PC= (void*)pc;

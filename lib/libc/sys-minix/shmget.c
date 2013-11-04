@@ -10,7 +10,7 @@
 #include <sys/shm.h>
 #include <stdlib.h>
 #include <errno.h>
-
+#include <string.h>
 
 #ifdef __weak_alias
 __weak_alias(shmget, _shmget)
@@ -33,6 +33,7 @@ int shmget(key_t key, size_t size, int shmflg)
 		return -1;
 	}
 
+	memset(&m, 0, sizeof(m));
 	m.SHMGET_KEY = key;
 	m.SHMGET_SIZE = size;
 	m.SHMGET_FLAG = shmflg;

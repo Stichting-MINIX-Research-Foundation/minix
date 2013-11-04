@@ -2,6 +2,7 @@
 #include <lib.h>
 #include "namespace.h"
 
+#include <string.h>
 #include <unistd.h>
 
 #ifdef __weak_alias
@@ -13,14 +14,16 @@ int setuid(uid_t usr)
 {
   message m;
 
-  m.m1_i1 = usr;
-  return(_syscall(PM_PROC_NR, SETUID, &m));
+  memset(&m, 0, sizeof(m));
+  m.PM_SETUID_UID = usr;
+  return(_syscall(PM_PROC_NR, PM_SETUID, &m));
 }
 
 int seteuid(uid_t usr)
 {
   message m;
 
-  m.m1_i1 = usr;
-  return(_syscall(PM_PROC_NR, SETEUID, &m));
+  memset(&m, 0, sizeof(m));
+  m.PM_SETUID_UID = usr;
+  return(_syscall(PM_PROC_NR, PM_SETEUID, &m));
 }

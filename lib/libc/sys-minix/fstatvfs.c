@@ -2,6 +2,7 @@
 #include "namespace.h"
 #include <lib.h>
 
+#include <string.h>
 #include <sys/statvfs.h>
 
 #ifdef __weak_alias
@@ -13,10 +14,11 @@ int fstatvfs1(int fd, struct statvfs *buffer, int flags)
 {
   message m;
 
-  m.VFS_FSTATVFS1_FD = fd;
-  m.VFS_FSTATVFS1_BUF = (char *) buffer;
-  m.VFS_FSTATVFS1_FLAGS = flags;
-  return(_syscall(VFS_PROC_NR, FSTATVFS1, &m));
+  memset(&m, 0, sizeof(m));
+  m.VFS_STATVFS1_FD = fd;
+  m.VFS_STATVFS1_BUF = (char *) buffer;
+  m.VFS_STATVFS1_FLAGS = flags;
+  return(_syscall(VFS_PROC_NR, VFS_FSTATVFS1, &m));
 }
 
 int fstatvfs(int fd, struct statvfs *buffer)

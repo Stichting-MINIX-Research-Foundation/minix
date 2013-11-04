@@ -1,4 +1,6 @@
-
+/*
+ * XXX OBSOLETE AS OF 3.3.0, REMOVE
+ */
 #include "syslib.h"
 
 #include <string.h>

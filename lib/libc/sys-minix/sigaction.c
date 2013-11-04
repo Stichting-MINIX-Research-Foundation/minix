@@ -2,6 +2,7 @@
 #include <lib.h>
 #include "namespace.h"
 
+#include <string.h>
 #include <signal.h>
 
 int __sigreturn(void);
@@ -10,13 +11,13 @@ int sigaction(int sig, const struct sigaction *act, struct sigaction *oact)
 {
   message m;
 
-  m.m1_i2 = sig;
+  memset(&m, 0, sizeof(m));
+  m.PM_SIG_NR = sig;
+  m.PM_SIG_ACT = (char *) __UNCONST(act);
+  m.PM_SIG_OACT = (char *) oact;
+  m.PM_SIG_RET = (char *) __sigreturn;
 
-  m.m1_p1 = (char *) __UNCONST(act);
-  m.m1_p2 = (char *) oact;
-  m.m1_p3 = (char *) __sigreturn;
-
-  return(_syscall(PM_PROC_NR, SIGACTION, &m));
+  return(_syscall(PM_PROC_NR, PM_SIGACTION, &m));
 }
 
 #if defined(__minix) && defined(__weak_alias)
