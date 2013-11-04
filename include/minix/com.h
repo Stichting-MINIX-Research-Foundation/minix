@@ -5,29 +5,29 @@
  * debugging purposes, each protocol is assigned its own unique number range.
  * The following such message type ranges have been allocated:
  *
- *        1 -   0xFF	POSIX requests (see callnr.h)
+ *     0x00 -   0xFF	Process Manager (PM) requests (see callnr.h)
+ *    0x100 -  0x1FF	Virtual File System (VFS) requests (see callnr.h)
  *    0x200 -  0x2FF	Data link layer requests and responses
  *    0x300 -  0x3FF	Bus controller requests and responses
  *    0x400 -  0x4FF	Character device requests and responses
  *    0x500 -  0x5FF	Block device requests and responses
- *    0x600 -  0x6FF	Kernel calls to SYSTEM task
+ *    0x600 -  0x6FF	Kernel calls
  *    0x700 -  0x7FF	Reincarnation Server (RS) requests
  *    0x800 -  0x8FF	Data Store (DS) requests
  *    0x900 -  0x9FF	Requests from PM to VFS, and responses
  *    0xA00 -  0xAFF	Requests from VFS to file systems (see vfsif.h)
- *    0xB00 -  0xBFF	Requests from VM to VFS
+ *    0xB00 -  0xBFF	Transaction IDs from VFS to file systems (see vfsif.h)
  *    0xC00 -  0xCFF	Virtual Memory (VM) requests
  *    0xD00 -  0xDFF	IPC server requests
  *    0xE00 -  0xEFF	Common system messages (e.g. system signals)
- *    0xF00 -  0xFFF    Scheduling messages
+ *    0xF00 -  0xFFF	Scheduling messages
  *   0x1000 - 0x10FF	Notify messages
  *   0x1100 - 0x11FF	USB  
- *   0x1200 - 0x12FF    Devman
+ *   0x1200 - 0x12FF	Devman
  *   0x1300 - 0x13FF	TTY requests
- *   0x1400 - 0x14FF	VFS-FS transaction IDs
+ *   0x1400 - 0x14FF	Real Time Clock requests and responses
  *   0x1500 - 0x15FF	Input server messages
  *   0x1600 - 0x16FF	VirtualBox (VBOX) requests (see vboxif.h)
- *   0x1700 - 0x17FF	Real Time Clock requests and responses
  *
  * Zero and negative values are widely used for OK and error responses.
  */
@@ -493,9 +493,7 @@
 #define PR_FORK_MSGADDR m1_p1	/* reply message address of forked child */
 #define PR_CTX_PTR	m1_p1	/* pointer to mcontext_t structure */
 
-/* Field names for EXEC sent from userland to PM. */
-#define PMEXEC_FLAGS	m1_i3	/* PMEF_* */
-
+/* Constants for exec. FIXME: these do not belong here. */
 #define PMEF_AUXVECTORS	20
 #define PMEF_EXECNAMELEN1 PATH_MAX
 
@@ -756,7 +754,6 @@
 					 */
 #  define VFS_PM_FRAME		m7_p2	/* arguments and environment */
 #  define VFS_PM_FRAME_LEN	m7_i3	/* size of frame */
-#  define VFS_PM_EXECFLAGS	m7_i4	/* PMEXEC_FLAGS */
 #  define VFS_PM_PS_STR		m7_i5	/* ps_strings pointer */
 
 /* Additional parameters for PM_EXEC_REPLY and PM_CORE_REPLY */
@@ -773,29 +770,6 @@
 
 /* Additional parameters for PM_DUMPCORE */
 #  define VFS_PM_TERM_SIG	m7_i2	/* process's termination signal */
-
-/* Parameters for the EXEC_NEWMEM call */
-#define EXC_NM_PROC	m1_i1		/* process that needs new map */
-#define EXC_NM_PTR	m1_p1		/* parameters in struct exec_info */
-/* Results:
- * the status will be in m_type.
- * the top of the stack will be in m1_i1.
- * the following flags will be in m1_i2:
- */
-#define EXC_NM_RF_LOAD_TEXT	1	/* Load text segment (otherwise the
-					 * text segment is already present)
-					 */
-#define EXC_NM_RF_ALLOW_SETUID	2	/* Setuid execution is allowed (tells
-					 * FS to update its uid and gid 
-					 * fields.
-					 */
-#define EXC_NM_RF_FULLVM	4	
-
-/* Parameters for the EXEC_RESTART call */
-#define EXC_RS_PROC	m1_i1		/* process that needs to be restarted */
-#define EXC_RS_RESULT	m1_i2		/* result of the exec */
-#define EXC_RS_PC	m1_p1		/* program counter */
-#define EXC_RS_PS_STR	m1_p2		/* ps_strings pointer */
 
 /*===========================================================================*
  *                Messages used from VFS to file servers		     *
@@ -822,103 +796,6 @@
 #	define GCOV_BUFF_P  m1_p1
 #	define GCOV_BUFF_SZ m1_i1
 
-/* Field names for the getsysinfo(2) call. */
-#define SI_WHAT			m1_i1
-#define SI_WHERE		m1_p1
-#define SI_SIZE			m1_i2
-
-/* PM field names */
-/* BRK */
-#define PMBRK_ADDR				m1_p1
-
-/* TRACE */
-#define PMTRACE_ADDR				m2_l1
-
-#define PM_ENDPT				m1_i1
-#define PM_PENDPT				m1_i2
-
-#define PM_NUID					m2_i1
-#define PM_NGID					m2_i2
-
-#define PM_GETSID_PID				m1_i1
-
-/* Field names for SELECT (FS). */
-#define SEL_NFDS       m8_i1
-#define SEL_READFDS    m8_p1
-#define SEL_WRITEFDS   m8_p2
-#define SEL_ERRORFDS   m8_p3
-#define SEL_TIMEOUT    m8_p4
-
-/* Field names for the getvfsstat(2) call. */
-#define VFS_GETVFSSTAT_BUF	m1_p1
-#define VFS_GETVFSSTAT_SIZE	m1_i1
-#define VFS_GETVFSSTAT_FLAGS	m1_i2
-
-/* Field names for the fstatvfs1(2) call. */
-#define VFS_FSTATVFS1_FD	m1_i1
-#define VFS_FSTATVFS1_BUF	m1_p1
-#define VFS_FSTATVFS1_FLAGS	m1_i2
-
-/* Field names for the statvfs1(2) call. */
-#define VFS_STATVFS1_LEN	m1_i1
-#define VFS_STATVFS1_NAME	m1_p1
-#define VFS_STATVFS1_BUF	m1_p2
-#define VFS_STATVFS1_FLAGS	m1_i2
-
-/* Field names for the mount(2) call. */
-#define VFS_MOUNT_FLAGS		m11_i1
-#define VFS_MOUNT_DEVLEN	m11_s1
-#define VFS_MOUNT_PATHLEN	m11_s2
-#define VFS_MOUNT_TYPELEN	m11_s3
-#define VFS_MOUNT_LABELLEN	m11_s4
-#define VFS_MOUNT_DEV		m11_p1
-#define VFS_MOUNT_PATH		m11_p2
-#define VFS_MOUNT_TYPE		m11_p3
-#define VFS_MOUNT_LABEL		m11_p4
-
-/* Field names for the umount(2) call. */
-#define VFS_UMOUNT_NAME		m1_p1
-#define VFS_UMOUNT_NAMELEN	m1_i1
-#define VFS_UMOUNT_LABEL	m1_p2
-#define VFS_UMOUNT_LABELLEN	m1_i2
-
-/* Field names for the ioctl(2) call. */
-#define VFS_IOCTL_FD		m2_i1
-#define VFS_IOCTL_REQ		m2_i3
-#define VFS_IOCTL_ARG		m2_p1
-
-/* Field names for the checkperms(2) call. */
-#define VFS_CHECKPERMS_ENDPT	m2_i1
-#define VFS_CHECKPERMS_GRANT	m2_i2
-#define VFS_CHECKPERMS_COUNT	m2_i3
-
-/* Field names for the copyfd(2) call. */
-#define VFS_COPYFD_ENDPT	m1_i1
-#define VFS_COPYFD_FD		m1_i2
-#define VFS_COPYFD_WHAT		m1_i3
-#  define COPYFD_FROM	0	/* copy file descriptor from remote process */
-#  define COPYFD_TO	1	/* copy file descriptor to remote process */
-#  define COPYFD_CLOSE	2	/* close file descriptor in remote process */
-
-/* Field names for the getprocnr(2) call. */
-#define PM_GETPROCNR_PID	m1_i1
-#define PM_GETPROCNR_ENDPT	m1_i1
-
-/* Field names for the getepinfo(2) call. */
-#define PM_GETEPINFO_ENDPT	m1_i1
-#define PM_GETEPINFO_UID	m1_i1
-#define PM_GETEPINFO_GID	m1_i2
-
-/* Field names for the mapdriver(2) call. */
-#define VFS_MAPDRIVER_MAJOR	m1_i1
-#define VFS_MAPDRIVER_LABELLEN	m1_i2
-#define VFS_MAPDRIVER_LABEL	m1_p1
-
-/* Field names for GETRUSAGE related calls */
-#define RU_ENDPT	m1_i1	/* indicates a process for sys_getrusage */
-#define RU_WHO		m1_i1	/* who argument in getrusage call */
-#define RU_RUSAGE_ADDR	m1_p1	/* pointer to struct rusage */
-
 /*===========================================================================*
  *                Messages for VM server				     *
  *===========================================================================*/
@@ -932,9 +809,7 @@
 #	define VMF_SLOTNO		m1_i2
 #	define VMF_CHILD_ENDPOINT	m1_i3	/* result */
 #define VM_BRK			(VM_RQ_BASE+2)
-#	define VMB_ENDPOINT		m1_i1
 #	define VMB_ADDR			m1_p1
-#	define VMB_RETADDR		m1_p2	/* result */
 #define VM_EXEC_NEWMEM		(VM_RQ_BASE+3)
 #	define VMEN_ENDPOINT		m1_i1
 #	define VMEN_ARGSPTR		m1_p1
@@ -1117,7 +992,8 @@
 
 /* Basic vm calls allowed to every process. */
 #define VM_BASIC_CALLS \
-    VM_MMAP, VM_MUNMAP, VM_MAP_PHYS, VM_UNMAP_PHYS, VM_INFO, VM_GETRUSAGE
+    VM_BRK, VM_MMAP, VM_MUNMAP, VM_MAP_PHYS, VM_UNMAP_PHYS, VM_INFO, \
+    VM_GETRUSAGE
 
 /*===========================================================================*
  *                Messages for IPC server				     *
@@ -1297,7 +1173,7 @@
  *			VFS-FS TRANSACTION IDs				     *
  *===========================================================================*/
 
-#define VFS_TRANSACTION_BASE 0x1400
+#define VFS_TRANSACTION_BASE 0xB00
 
 #define VFS_TRANSID	(VFS_TRANSACTION_BASE + 1)
 #define IS_VFS_FS_TRANSID(type) (((type) & ~0xff) == VFS_TRANSACTION_BASE)
@@ -1410,8 +1286,8 @@
  *===========================================================================*/
 
 /* Base type for real time clock requests and responses. */
-#define RTCDEV_RQ_BASE	0x1700
-#define RTCDEV_RS_BASE	0x1780
+#define RTCDEV_RQ_BASE	0x1400
+#define RTCDEV_RS_BASE	0x1480
 
 #define IS_RTCDEV_RQ(type) (((type) & ~0x7f) == RTCDEV_RQ_BASE)
 #define IS_RTCDEV_RS(type) (((type) & ~0x7f) == RTCDEV_RS_BASE)
@@ -1438,6 +1314,24 @@
 #define RTCDEV_NOFLAGS	0x00	/* no flags are set */
 #define RTCDEV_Y2KBUG	0x01	/* Interpret 1980 as 2000 for RTC w/Y2K bug */
 #define RTCDEV_CMOSREG	0x02	/* Also set the CMOS clock register bits. */
+
+/*===========================================================================*
+ *		Field names shared across several call codes		     *
+ *===========================================================================*/
+
+/* Field names for the getsysinfo(2) call. */
+#define SI_WHAT			m1_i1	/* int */
+#define SI_WHERE		m1_p1	/* void */
+#define SI_SIZE			m1_i2	/* size_t */
+
+/* Field names for the svrctl(2) call. */
+#define SVRCTL_REQ		m2_i1	/* int */
+#define SVRCTL_ARG		m2_p1	/* void * */
+
+/* Field names for the getrusage(2) call. */
+#define RU_ENDPT		m1_i1	/* endpoint_t */
+#define RU_WHO			m1_i1	/* int */
+#define RU_RUSAGE_ADDR		m1_p1	/* struct rusage * */
 
 /*===========================================================================*
  *		Internal codes used by several services			     *

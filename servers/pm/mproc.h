@@ -74,8 +74,8 @@ EXTERN struct mproc {
 
 /* Flag values */
 #define IN_USE		0x00001	/* set when 'mproc' slot in use */
-#define WAITING		0x00002	/* set by WAIT system call */
-#define ZOMBIE		0x00004	/* waiting for parent to issue WAIT call */
+#define WAITING		0x00002	/* set by WAITPID system call */
+#define ZOMBIE		0x00004	/* waiting for parent to issue WAITPID call */
 #define PROC_STOPPED	0x00008	/* process is stopped in the kernel */
 #define ALARM_ON	0x00010	/* set when SIGALRM timer started */
 #define EXITING		0x00020	/* set by EXIT, process is now exiting */
@@ -88,7 +88,7 @@ EXTERN struct mproc {
 #define PRIV_PROC	0x02000	/* system process, special privileges */
 #define PARTIAL_EXEC	0x04000	/* process got a new map but no content */
 #define TRACE_EXIT	0x08000	/* tracer is forcing this process to exit */
-#define TRACE_ZOMBIE	0x10000	/* waiting for tracer to issue WAIT call */
+#define TRACE_ZOMBIE	0x10000	/* waiting for tracer to issue WAITPID call */
 #define DELAY_CALL	0x20000	/* waiting for call before sending signal */
 #define TAINTED		0x40000 /* process is 'tainted' */
 

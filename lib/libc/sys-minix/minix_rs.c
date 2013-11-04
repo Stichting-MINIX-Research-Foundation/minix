@@ -2,7 +2,6 @@
 
 #include <sys/cdefs.h>
 
-#include <minix/callnr.h>
 #include <minix/com.h>
 #include <minix/config.h>
 #include <minix/ipc.h>
@@ -27,6 +26,7 @@ int minix_rs_lookup(const char *name, endpoint_t *value)
 
 	len_key = strlen(name)+1;
 
+	memset(&m, 0, sizeof(m));
 	m.RS_NAME = (char *) __UNCONST(name);
 	m.RS_NAME_LEN = len_key;
 

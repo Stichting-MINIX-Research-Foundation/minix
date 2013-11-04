@@ -22,7 +22,6 @@
 #include "file.h"
 #include "path.h"
 #include "vnode.h"
-#include "param.h"
 #include "scratchpad.h"
 
 /*===========================================================================*
@@ -39,10 +38,10 @@ int do_link(void)
   vir_bytes vname1, vname2;
   size_t vname1_length, vname2_length;
 
-  vname1 = (vir_bytes) job_m_in.name1;
-  vname1_length = job_m_in.name1_length;
-  vname2 = (vir_bytes) job_m_in.name2;
-  vname2_length = job_m_in.name2_length;
+  vname1 = (vir_bytes) job_m_in.VFS_LINK_NAME1;
+  vname1_length = job_m_in.VFS_LINK_LEN1;
+  vname2 = (vir_bytes) job_m_in.VFS_LINK_NAME2;
+  vname2_length = job_m_in.VFS_LINK_LEN2;
 
   lookup_init(&resolve, fullpath, PATH_NOFLAGS, &vmp1, &vp);
   resolve.l_vmnt_lock = VMNT_WRITE;
@@ -102,16 +101,9 @@ int do_unlink(void)
   int r;
   char fullpath[PATH_MAX];
   struct lookup resolve, stickycheck;
-  vir_bytes vname;
-  size_t vname_length;
 
-  vname = (vir_bytes) job_m_in.name;
-  vname_length = job_m_in.name_length;
-  if (copy_name(vname_length, fullpath) != OK) {
-	/* Direct copy failed, try fetching from user space */
-	if (fetch_name(vname, vname_length, fullpath) != OK)
-		return(err_code);
-  }
+  if (copy_path(fullpath, sizeof(fullpath)) != OK)
+	return(err_code);
 
   lookup_init(&resolve, fullpath, PATH_RET_SYMLINK, &vmp, &dirp_l);
   resolve.l_vmnt_lock = VMNT_WRITE;
@@ -162,7 +154,7 @@ int do_unlink(void)
 
   upgrade_vmnt_lock(vmp);
 
-  if (job_call_nr == UNLINK)
+  if (job_call_nr == VFS_UNLINK)
 	  r = req_unlink(dirp->v_fs_e, dirp->v_inode_nr, fullpath);
   else
 	  r = req_rmdir(dirp->v_fs_e, dirp->v_inode_nr, fullpath);
@@ -187,10 +179,10 @@ int do_rename(void)
   vir_bytes vname1, vname2;
   size_t vname1_length, vname2_length;
 
-  vname1 = (vir_bytes) job_m_in.name1;
-  vname1_length = job_m_in.name1_length;
-  vname2 = (vir_bytes) job_m_in.name2;
-  vname2_length = job_m_in.name2_length;
+  vname1 = (vir_bytes) job_m_in.VFS_LINK_NAME1;
+  vname1_length = job_m_in.VFS_LINK_LEN1;
+  vname2 = (vir_bytes) job_m_in.VFS_LINK_NAME2;
+  vname2_length = job_m_in.VFS_LINK_LEN2;
 
   lookup_init(&resolve, fullpath, PATH_RET_SYMLINK, &oldvmp, &old_dirp);
   /* Do not yet request exclusive lock on vmnt to prevent deadlocks later on */
@@ -298,14 +290,15 @@ int do_truncate(void)
   vir_bytes vname;
   size_t vname_length;
 
-  vname = (vir_bytes) job_m_in.m2_p1;
-  vname_length = job_m_in.m2_i1;
+  vname = (vir_bytes) job_m_in.VFS_TRUNCATE_NAME;
+  vname_length = job_m_in.VFS_TRUNCATE_LEN;
 
   lookup_init(&resolve, fullpath, PATH_NOFLAGS, &vmp, &vp);
   resolve.l_vmnt_lock = VMNT_READ;
   resolve.l_vnode_lock = VNODE_WRITE;
 
-  length = (off_t) make64(job_m_in.m2_l1, job_m_in.m2_l2);
+  length = (off_t) make64(job_m_in.VFS_TRUNCATE_OFF_LO,
+	job_m_in.VFS_TRUNCATE_OFF_HI);
   if (length < 0) return(EINVAL);
 
   /* Temporarily open file */
@@ -341,9 +334,10 @@ int do_ftruncate(void)
   int r;
   off_t length;
 
-  scratch(fp).file.fd_nr = job_m_in.fd;
+  scratch(fp).file.fd_nr = job_m_in.VFS_TRUNCATE_FD;
 
-  length = (off_t) make64(job_m_in.m2_l1, job_m_in.m2_l2);
+  length = (off_t) make64(job_m_in.VFS_TRUNCATE_OFF_LO,
+	job_m_in.VFS_TRUNCATE_OFF_HI);
   if (length < 0) return(EINVAL);
 
   /* File is already opened; get a vnode pointer from filp */
@@ -409,10 +403,10 @@ int do_slink(void)
   resolve.l_vmnt_lock = VMNT_WRITE;
   resolve.l_vnode_lock = VNODE_WRITE;
 
-  vname1 = (vir_bytes) job_m_in.name1;
-  vname1_length = job_m_in.name1_length;
-  vname2 = (vir_bytes) job_m_in.name2;
-  vname2_length = job_m_in.name2_length;
+  vname1 = (vir_bytes) job_m_in.VFS_LINK_NAME1;
+  vname1_length = job_m_in.VFS_LINK_LEN1;
+  vname2 = (vir_bytes) job_m_in.VFS_LINK_NAME2;
+  vname2_length = job_m_in.VFS_LINK_LEN2;
 
   if (vname1_length <= 1) return(ENOENT);
   if (vname1_length >= SYMLINK_MAX) return(ENAMETOOLONG);
@@ -488,10 +482,10 @@ int do_rdlink(void)
   size_t vname_length, buf_size;
   vir_bytes buf;
 
-  vname = (vir_bytes) job_m_in.name1;
-  vname_length = job_m_in.name1_length;
-  buf = (vir_bytes) job_m_in.name2;
-  buf_size = (size_t) job_m_in.nbytes;
+  vname = (vir_bytes) job_m_in.VFS_READLINK_NAME;
+  vname_length = job_m_in.VFS_READLINK_NAMELEN;
+  buf = (vir_bytes) job_m_in.VFS_READLINK_BUF;
+  buf_size = (size_t) job_m_in.VFS_READLINK_BUFSIZE;
   if (buf_size > SSIZE_MAX) return(EINVAL);
 
   lookup_init(&resolve, fullpath, PATH_RET_SYMLINK, &vmp, &vp);

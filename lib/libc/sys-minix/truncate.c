@@ -14,10 +14,11 @@ int truncate(const char *_path, off_t _length)
 {
   message m;
 
-  m.m2_p1 = (char *) __UNCONST(_path);
-  m.m2_i1 = strlen(_path)+1;
-  m.m2_l1 = ex64lo(_length);
-  m.m2_l2 = ex64hi(_length);
+  memset(&m, 0, sizeof(m));
+  m.VFS_TRUNCATE_NAME = (char *) __UNCONST(_path);
+  m.VFS_TRUNCATE_LEN = strlen(_path)+1;
+  m.VFS_TRUNCATE_OFF_LO = ex64lo(_length);
+  m.VFS_TRUNCATE_OFF_HI = ex64hi(_length);
 
-  return(_syscall(VFS_PROC_NR, TRUNCATE, &m));
+  return(_syscall(VFS_PROC_NR, VFS_TRUNCATE, &m));
 }

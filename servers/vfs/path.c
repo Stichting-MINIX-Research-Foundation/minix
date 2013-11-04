@@ -20,7 +20,6 @@
 #include "vmnt.h"
 #include "vnode.h"
 #include "path.h"
-#include "param.h"
 
 /* Set to following define to 1 if you really want to use the POSIX definition
  * (IEEE Std 1003.1, 2004) of pathname resolution. POSIX requires pathnames
@@ -437,8 +436,8 @@ struct fproc *rfp;
 	root_ino = 0;
 
   /* Set user and group ids according to the system call */
-  uid = (job_call_nr == ACCESS ? rfp->fp_realuid : rfp->fp_effuid);
-  gid = (job_call_nr == ACCESS ? rfp->fp_realgid : rfp->fp_effgid);
+  uid = (job_call_nr == VFS_ACCESS ? rfp->fp_realuid : rfp->fp_effuid);
+  gid = (job_call_nr == VFS_ACCESS ? rfp->fp_realgid : rfp->fp_effgid);
 
   symloop = 0;	/* Number of symlinks seen so far */
 

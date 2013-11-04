@@ -1,10 +1,11 @@
 /* This file deals with creating processes (via FORK) and deleting them (via
- * EXIT/WAIT).  When a process forks, a new slot in the 'mproc' table is
+ * EXIT/WAITPID).  When a process forks, a new slot in the 'mproc' table is
  * allocated for it, and a copy of the parent's core image is made for the
  * child.  Then the kernel and file system are informed.  A process is removed
  * from the 'mproc' table when two events have occurred: (1) it has exited or
- * been killed by a signal, and (2) the parent has done a WAIT.  If the process
- * exits first, it continues to occupy a slot until the parent does a WAIT.
+ * been killed by a signal, and (2) the parent has done a WAITPID.  If the
+ * process exits first, it continues to occupy a slot until the parent does a
+ * WAITPID.
  *
  * The entry points into this file are:
  *   do_fork:		perform the FORK system call
@@ -12,7 +13,7 @@
  *   do_exit:		perform the EXIT system call (by calling exit_proc())
  *   exit_proc:		actually do the exiting, and tell VFS about it
  *   exit_restart:	continue exiting a process after VFS has replied
- *   do_waitpid:	perform the WAITPID or WAIT system call
+ *   do_waitpid:	perform the WAITPID system call
  *   wait_test:		check whether a parent is waiting for a child
  */
 
@@ -27,7 +28,6 @@
 #include <sys/resource.h>
 #include <signal.h>
 #include "mproc.h"
-#include "param.h"
 
 #define LAST_FEW            2	/* last few slots reserved for superuser */
 
@@ -194,10 +194,10 @@ int do_srv_fork()
   rmc->mp_exitstatus = 0;
   rmc->mp_sigstatus = 0;
   rmc->mp_endpoint = child_ep;		/* passed back by VM */
-  rmc->mp_realuid = (uid_t) m_in.m1_i1;
-  rmc->mp_effuid = (uid_t) m_in.m1_i1;
-  rmc->mp_realgid = (uid_t) m_in.m1_i2;
-  rmc->mp_effgid = (uid_t) m_in.m1_i2;
+  rmc->mp_realuid = (uid_t) m_in.PM_SRV_FORK_UID;
+  rmc->mp_effuid = (uid_t) m_in.PM_SRV_FORK_UID;
+  rmc->mp_realgid = (uid_t) m_in.PM_SRV_FORK_GID;
+  rmc->mp_effgid = (uid_t) m_in.PM_SRV_FORK_GID;
   for (i = 0; i < NR_ITIMERS; i++)
 	rmc->mp_interval[i] = 0;	/* reset timer intervals */
 
@@ -210,8 +210,8 @@ int do_srv_fork()
   m.VFS_PM_ENDPT = rmc->mp_endpoint;
   m.VFS_PM_PENDPT = rmp->mp_endpoint;
   m.VFS_PM_CPID = rmc->mp_pid;
-  m.VFS_PM_REUID = m_in.m1_i1;
-  m.VFS_PM_REGID = m_in.m1_i2;
+  m.VFS_PM_REUID = m_in.PM_SRV_FORK_UID;
+  m.VFS_PM_REGID = m_in.PM_SRV_FORK_GID;
 
   tell_vfs(rmc, &m);
 
@@ -241,7 +241,7 @@ int do_exit()
       sys_kill(mp->mp_endpoint, SIGKILL);
   }
   else {
-      exit_proc(mp, m_in.status, FALSE /*dump_core*/);
+      exit_proc(mp, m_in.PM_EXIT_STATUS, FALSE /*dump_core*/);
   }
   return(SUSPEND);		/* can't communicate from beyond the grave */
 }
@@ -437,7 +437,7 @@ int dump_core;			/* flag indicating whether to dump core */
   if (rmp->mp_flags & TRACE_EXIT)
   {
 	/* Wake up the tracer, completing the ptrace(T_EXIT) call */
-	mproc[rmp->mp_tracer].mp_reply.reply_trace = 0;
+	mproc[rmp->mp_tracer].mp_reply.PM_PTRACE_DATA = 0;
 	reply(rmp->mp_tracer, OK);
   }
 
@@ -452,20 +452,19 @@ int dump_core;			/* flag indicating whether to dump core */
 int do_waitpid()
 {
 /* A process wants to wait for a child to terminate. If a child is already 
- * waiting, go clean it up and let this WAIT call terminate.  Otherwise, 
+ * waiting, go clean it up and let this WAITPID call terminate.  Otherwise,
  * really wait. 
- * A process calling WAIT never gets a reply in the usual way at the end
+ * A process calling WAITPID never gets a reply in the usual way at the end
  * of the main loop (unless WNOHANG is set or no qualifying child exists).
  * If a child has already exited, the routine tell_parent() sends the reply
  * to awaken the caller.
- * Both WAIT and WAITPID are handled by this code.
  */
   register struct mproc *rp;
   int i, pidarg, options, children;
 
-  /* Set internal variables, depending on whether this is WAIT or WAITPID. */
-  pidarg  = (call_nr == WAIT ? -1 : m_in.pid);	   /* 1st param of waitpid */
-  options = (call_nr == WAIT ?  0 : m_in.sig_nr);  /* 3rd param of waitpid */
+  /* Set internal variables. */
+  pidarg  = m_in.PM_WAITPID_PID;		/* 1st param */
+  options = m_in.PM_WAITPID_OPTIONS;		/* 3rd param */
   if (pidarg == 0) pidarg = -mp->mp_procgrp;	/* pidarg < 0 ==> proc grp */
 
   /* Is there a child waiting to be collected? At this point, pidarg != 0:
@@ -500,7 +499,7 @@ int do_waitpid()
 				if (sigismember(&rp->mp_sigtrace, i)) {
 					sigdelset(&rp->mp_sigtrace, i);
 
-					mp->mp_reply.reply_res2 =
+					mp->mp_reply.PM_WAITPID_STATUS =
 						0177 | (i << 8);
 					return(rp->mp_pid);
 				}
@@ -636,7 +635,7 @@ int try_cleanup;			/* clean up the child when done? */
 static void tell_parent(child)
 register struct mproc *child;	/* tells which process is exiting */
 {
-  int exitstatus, mp_parent;
+  int mp_parent;
   struct mproc *parent;
 
   mp_parent= child->mp_parent;
@@ -649,8 +648,8 @@ register struct mproc *child;	/* tells which process is exiting */
   parent = &mproc[mp_parent];
 
   /* Wake up the parent by sending the reply message. */
-  exitstatus = (child->mp_exitstatus << 8) | (child->mp_sigstatus & 0377);
-  parent->mp_reply.reply_res2 = exitstatus;
+  parent->mp_reply.PM_WAITPID_STATUS =
+	(child->mp_exitstatus << 8) | (child->mp_sigstatus & 0377);
   reply(child->mp_parent, child->mp_pid);
   parent->mp_flags &= ~WAITING;		/* parent no longer waiting */
   child->mp_flags &= ~ZOMBIE;		/* child no longer a zombie */
@@ -673,8 +672,8 @@ struct mproc *child;			/* tells which process is exiting */
   	panic("tell_tracer: child not a zombie");
   tracer = &mproc[mp_tracer];
 
-  exitstatus = (child->mp_exitstatus << 8) | (child->mp_sigstatus & 0377);
-  tracer->mp_reply.reply_res2 = exitstatus;
+  tracer->mp_reply.PM_WAITPID_STATUS =
+	(child->mp_exitstatus << 8) | (child->mp_sigstatus & 0377);
   reply(child->mp_tracer, child->mp_pid);
   tracer->mp_flags &= ~WAITING;		/* tracer no longer waiting */
   child->mp_flags &= ~TRACE_ZOMBIE;	/* child no longer zombie to tracer */

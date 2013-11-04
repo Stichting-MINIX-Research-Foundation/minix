@@ -12,5 +12,5 @@ copyfd(endpoint_t endpt, int fd, int what)
 	m.VFS_COPYFD_FD = fd;
 	m.VFS_COPYFD_WHAT = what;
 
-	return _taskcall(VFS_PROC_NR, COPYFD, &m);
+	return _taskcall(VFS_PROC_NR, VFS_COPYFD, &m);
 }

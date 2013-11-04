@@ -20,7 +20,6 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include "file.h"
-#include "param.h"
 #include "scratchpad.h"
 #include "vnode.h"
 #include "vmnt.h"
@@ -31,8 +30,8 @@
  *===========================================================================*/
 int do_read(void)
 {
-  return(do_read_write_peek(READING, job_m_in.fd,
-          job_m_in.buffer, (size_t) job_m_in.nbytes));
+  return(do_read_write_peek(READING, job_m_in.VFS_READWRITE_FD,
+          job_m_in.VFS_READWRITE_BUF, (size_t) job_m_in.VFS_READWRITE_LEN));
 }
 
 
@@ -274,9 +273,9 @@ int do_getdents(void)
   off_t new_pos;
   register struct filp *rfilp;
 
-  scratch(fp).file.fd_nr = job_m_in.fd;
-  scratch(fp).io.io_buffer = job_m_in.buffer;
-  scratch(fp).io.io_nbytes = (size_t) job_m_in.nbytes;
+  scratch(fp).file.fd_nr = job_m_in.VFS_READWRITE_FD;
+  scratch(fp).io.io_buffer = job_m_in.VFS_READWRITE_BUF;
+  scratch(fp).io.io_nbytes = (size_t) job_m_in.VFS_READWRITE_LEN;
 
   /* Is the file descriptor valid? */
   if ( (rfilp = get_filp(scratch(fp).file.fd_nr, VNODE_READ)) == NULL)

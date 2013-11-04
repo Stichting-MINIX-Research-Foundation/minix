@@ -37,13 +37,12 @@
 #include <minix/vfsif.h>
 #include "vnode.h"
 #include "vmnt.h"
-#include "param.h"
 
 #define CORE_NAME	"core"
 #define CORE_MODE	0777	/* mode to use on core image files */
 
 #if ENABLE_SYSCALL_STATS
-unsigned long calls_stats[NCALLS];
+unsigned long calls_stats[NR_VFS_CALLS];
 #endif
 
 static void free_proc(int flags);
@@ -98,17 +97,17 @@ int do_getsysinfo(void)
  *===========================================================================*/
 int do_fcntl(void)
 {
-/* Perform the fcntl(fd, request, ...) system call. */
+/* Perform the fcntl(fd, cmd, ...) system call. */
 
   register struct filp *f;
   int new_fd, fl, r = OK, fcntl_req, fcntl_argx;
   tll_access_t locktype;
 
-  scratch(fp).file.fd_nr = job_m_in.fd;
-  scratch(fp).io.io_buffer = job_m_in.buffer;
-  scratch(fp).io.io_nbytes = job_m_in.nbytes;	/* a.k.a. m_in.request */
-  fcntl_req = job_m_in.request;
-  fcntl_argx = job_m_in.addr;
+  scratch(fp).file.fd_nr = job_m_in.VFS_FCNTL_FD;
+  scratch(fp).io.io_buffer = job_m_in.VFS_FCNTL_ARG_PTR;
+  scratch(fp).io.io_nbytes = job_m_in.VFS_FCNTL_CMD;
+  fcntl_req = job_m_in.VFS_FCNTL_CMD;
+  fcntl_argx = job_m_in.VFS_FCNTL_ARG_INT;
 
   /* Is the file descriptor valid? */
   locktype = (fcntl_req == F_FREESP) ? VNODE_WRITE : VNODE_READ;
@@ -264,7 +263,7 @@ int do_fsync(void)
   dev_t dev;
   int r = OK;
 
-  scratch(fp).file.fd_nr = job_m_in.fd;
+  scratch(fp).file.fd_nr = job_m_in.VFS_FSYNC_FD;
 
   if ((rfilp = get_filp(scratch(fp).file.fd_nr, VNODE_READ)) == NULL)
 	return(err_code);
@@ -419,7 +418,7 @@ int do_vm_call(void)
 		}
 		case VMVFSREQ_FDIO:
 		{
-			result = actual_llseek(fp, req_fd, SEEK_SET, offset,
+			result = actual_lseek(fp, req_fd, SEEK_SET, offset,
 				NULL);
 
 			if(result == OK) {
@@ -763,8 +762,8 @@ int do_svrctl(void)
   unsigned int svrctl;
   vir_bytes ptr;
 
-  svrctl = job_m_in.svrctl_req;
-  ptr = (vir_bytes) job_m_in.svrctl_argp;
+  svrctl = job_m_in.SVRCTL_REQ;
+  ptr = (vir_bytes) job_m_in.SVRCTL_ARG;
   if (((svrctl >> 8) & 0xFF) != 'M') return(EINVAL);
 
   switch (svrctl) {

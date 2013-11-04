@@ -2,6 +2,7 @@
 #include <lib.h>
 #include "namespace.h"
 
+#include <string.h>
 #include <signal.h>
 
 int sigprocmask(how, set, oset)
@@ -11,15 +12,16 @@ sigset_t *oset;
 {
   message m;
 
+  memset(&m, 0, sizeof(m));
   if (set == (sigset_t *) NULL) {
-	m.m2_i1 = SIG_INQUIRE;
-	m.m2_l1 = 0;
+	m.PM_SIG_HOW = SIG_INQUIRE;
+	m.PM_SIG_SET = 0;
   } else {
-	m.m2_i1 = how;
-	m.m2_l1 = (long) *set;
+	m.PM_SIG_HOW = how;
+	m.PM_SIG_SET = (long) *set;
   }
-  if (_syscall(PM_PROC_NR, SIGPROCMASK, &m) < 0) return(-1);
-  if (oset != (sigset_t *) NULL) *oset = (sigset_t) (m.m2_l1);
+  if (_syscall(PM_PROC_NR, PM_SIGPROCMASK, &m) < 0) return(-1);
+  if (oset != (sigset_t *) NULL) *oset = (sigset_t) (m.PM_SIG_SET);
   return(m.m_type);
 }
 

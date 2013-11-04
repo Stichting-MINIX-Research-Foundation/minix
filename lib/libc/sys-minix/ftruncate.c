@@ -14,9 +14,10 @@ int ftruncate(int _fd, off_t _length)
 {
   message m;
 
-  m.m2_l1 = ex64lo(_length);
-  m.m2_l2 = ex64hi(_length);
-  m.m2_i1 = _fd;
+  memset(&m, 0, sizeof(m));
+  m.VFS_TRUNCATE_OFF_LO = ex64lo(_length);
+  m.VFS_TRUNCATE_OFF_HI = ex64hi(_length);
+  m.VFS_TRUNCATE_FD = _fd;
 
-  return(_syscall(VFS_PROC_NR, FTRUNCATE, &m));
+  return(_syscall(VFS_PROC_NR, VFS_FTRUNCATE, &m));
 }

@@ -13,7 +13,7 @@ getepinfo(endpoint_t proc_ep, uid_t *uid, gid_t *gid)
 	memset(&m, 0, sizeof(m));
 	m.PM_GETEPINFO_ENDPT = proc_ep;
 
-	if ((r = _taskcall(PM_PROC_NR, GETEPINFO, &m)) < 0)
+	if ((r = _taskcall(PM_PROC_NR, PM_GETEPINFO, &m)) < 0)
 		return r;
 
 	if (uid != NULL)

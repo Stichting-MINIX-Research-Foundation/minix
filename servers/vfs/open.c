@@ -20,7 +20,6 @@
 #include "file.h"
 #include "scratchpad.h"
 #include "lock.h"
-#include "param.h"
 #include <sys/dirent.h>
 #include <assert.h>
 #include <minix/vfsif.h>
@@ -39,39 +38,45 @@ static int pipe_open(struct vnode *vp, mode_t bits, int oflags);
  *===========================================================================*/
 int do_open(void)
 {
-/* Perform the open(name, flags,...) system call.
- * syscall might provide 'name' embedded in message when not creating file */
+/* Perform the open(name, flags) system call with O_CREAT *not* set. */
+  int open_flags;
+  char fullpath[PATH_MAX];
 
-  int create_mode;		/* is really mode_t but this gives problems */
-  int open_mode = 0;		/* is really mode_t but this gives problems */
-  int r = OK;
+  open_flags = job_m_in.VFS_PATH_FLAGS;
+
+  if (open_flags & O_CREAT)
+	return EINVAL;
+
+  if (copy_path(fullpath, sizeof(fullpath)) != OK)
+	return(err_code);
+
+  return common_open(fullpath, open_flags, 0 /*omode*/);
+}
+
+/*===========================================================================*
+ *				do_creat				     *
+ *===========================================================================*/
+int do_creat(void)
+{
+/* Perform the open(name, flags, mode) system call with O_CREAT set. */
+  int open_flags, create_mode;
   char fullpath[PATH_MAX];
   vir_bytes vname;
   size_t vname_length;
 
-  open_mode = (mode_t) job_m_in.mode;
-  create_mode = job_m_in.c_mode;
+  vname = (vir_bytes) job_m_in.VFS_CREAT_NAME;
+  vname_length = (size_t) job_m_in.VFS_CREAT_LEN;
+  open_flags = job_m_in.VFS_CREAT_FLAGS;
+  create_mode = job_m_in.VFS_CREAT_MODE;
 
-  /* If O_CREAT is set, open has three parameters, otherwise two. */
-  if (open_mode & O_CREAT) {
-	vname = (vir_bytes) job_m_in.name1;
-	vname_length = (size_t) job_m_in.name1_length;
-	r = fetch_name(vname, vname_length, fullpath);
-  } else {
-	vname = (vir_bytes) job_m_in.name;
-	vname_length = (size_t) job_m_in.name_length;
-	create_mode = 0;
-	if (copy_name(vname_length, fullpath) != OK) {
-		/* Direct copy failed, try fetching from user space */
-		if (fetch_name(vname, vname_length, fullpath) != OK)
-			r = err_code;
-	}
-  }
+  if (!(open_flags & O_CREAT))
+	return(EINVAL);
 
-  if (r != OK) return(err_code); /* name was bad */
-  return common_open(fullpath, open_mode, create_mode);
+  if (fetch_name(vname, vname_length, fullpath) != OK)
+	return(err_code);
+
+  return common_open(fullpath, open_flags, create_mode);
 }
-
 
 /*===========================================================================*
  *				common_open				     *
@@ -486,7 +491,7 @@ static int pipe_open(struct vnode *vp, mode_t bits, int oflags)
 		return(SUSPEND);
 	}
   } else if (susp_count > 0) { /* revive blocked processes */
-	release(vp, OPEN, susp_count);
+	release(vp, VFS_OPEN, susp_count);
   }
   return(OK);
 }
@@ -508,10 +513,10 @@ int do_mknod(void)
   size_t vname1_length;
   dev_t dev;
 
-  vname1 = (vir_bytes) job_m_in.name1;
-  vname1_length = (size_t) job_m_in.name1_length;
-  mode_bits = (mode_t) job_m_in.mk_mode;		/* mode of the inode */
-  dev = job_m_in.m1_i3;
+  vname1 = (vir_bytes) job_m_in.VFS_MKNOD_NAME;
+  vname1_length = (size_t) job_m_in.VFS_MKNOD_LEN;
+  mode_bits = (mode_t) job_m_in.VFS_MKNOD_MODE;
+  dev = job_m_in.VFS_MKNOD_DEV;
 
   lookup_init(&resolve, fullpath, PATH_NOFLAGS, &vmp, &vp);
   resolve.l_vmnt_lock = VMNT_WRITE;
@@ -553,19 +558,16 @@ int do_mkdir(void)
   struct vmnt *vmp;
   char fullpath[PATH_MAX];
   struct lookup resolve;
-  vir_bytes vname1;
-  size_t vname1_length;
   mode_t dirmode;
 
-  vname1 = (vir_bytes) job_m_in.name1;
-  vname1_length = (size_t) job_m_in.name1_length;
-  dirmode = (mode_t) job_m_in.mode;
+  if (copy_path(fullpath, sizeof(fullpath)) != OK)
+	return(err_code);
+  dirmode = (mode_t) job_m_in.VFS_PATH_MODE;
 
   lookup_init(&resolve, fullpath, PATH_NOFLAGS, &vmp, &vp);
   resolve.l_vmnt_lock = VMNT_WRITE;
   resolve.l_vnode_lock = VNODE_WRITE;
 
-  if (fetch_name(vname1, vname1_length, fullpath) != OK) return(err_code);
   bits = I_DIRECTORY | (dirmode & RWX_MODES & fp->fp_umask);
   if ((vp = last_dir(&resolve, fp)) == NULL) return(err_code);
 
@@ -584,12 +586,11 @@ int do_mkdir(void)
 }
 
 /*===========================================================================*
- *				actual_llseek				     *
+ *				actual_lseek				     *
  *===========================================================================*/
-int actual_llseek(struct fproc *rfp, int seekfd, int seekwhence, off_t offset,
+int actual_lseek(struct fproc *rfp, int seekfd, int seekwhence, off_t offset,
 	off_t *newposp)
 {
-/* Perform the llseek(ls_fd, offset, whence) system call. */
   register struct filp *rfilp;
   int r = OK;
   off_t pos, newpos;
@@ -641,18 +642,19 @@ int actual_llseek(struct fproc *rfp, int seekfd, int seekwhence, off_t offset,
  *===========================================================================*/
 int do_lseek(void)
 {
-	off_t newpos;
-	int r;
+  /* Perform the lseek(2) system call. */
+  off_t newpos;
+  int r;
 
-	if ((r = actual_llseek(fp, job_m_in.ls_fd, job_m_in.whence,
-			make64(job_m_in.offset_lo, job_m_in.offset_high),
-			&newpos)) != OK)
-		return r;
+  if ((r = actual_lseek(fp, job_m_in.VFS_LSEEK_FD,
+		job_m_in.VFS_LSEEK_WHENCE, make64(job_m_in.VFS_LSEEK_OFF_LO,
+		job_m_in.VFS_LSEEK_OFF_HI), &newpos)) != OK)
+	return r;
 
-	/* insert the new position into the output message */
-	job_m_out.reply_l1 = ex64lo(newpos);
-	job_m_out.reply_l2 = ex64hi(newpos);
-	return OK;
+  /* insert the new position into the output message */
+  job_m_out.VFS_LSEEK_OFF_LO = ex64lo(newpos);
+  job_m_out.VFS_LSEEK_OFF_HI = ex64hi(newpos);
+  return OK;
 }
 
 /*===========================================================================*
@@ -661,7 +663,7 @@ int do_lseek(void)
 int do_close(void)
 {
 /* Perform the close(fd) system call. */
-  int thefd = job_m_in.fd;
+  int thefd = job_m_in.VFS_CLOSE_FD;
   return close_fd(fp, thefd);
 }
 

@@ -29,10 +29,9 @@
 #include "scratchpad.h"
 #include "vmnt.h"
 #include "vnode.h"
-#include "param.h"
 
 #if ENABLE_SYSCALL_STATS
-EXTERN unsigned long calls_stats[NCALLS];
+EXTERN unsigned long calls_stats[NR_VFS_CALLS];
 #endif
 
 /* Thread related prototypes */
@@ -212,8 +211,8 @@ static void do_pending_pipe(void)
   assert(f != NULL);
   scratch(fp).file.filp = NULL;
 
-  locktype = (job_call_nr == READ) ? VNODE_READ : VNODE_WRITE;
-  op = (job_call_nr == READ) ? READING : WRITING;
+  locktype = (job_call_nr == VFS_READ) ? VNODE_READ : VNODE_WRITE;
+  op = (job_call_nr == VFS_READ) ? READING : WRITING;
   lock_filp(f, locktype);
 
   r = rw_pipe(op, who_e, f, scratch(fp).io.io_buffer, scratch(fp).io.io_nbytes);
@@ -229,7 +228,15 @@ static void do_pending_pipe(void)
  *===========================================================================*/
 static void do_work(void)
 {
+  unsigned int call_index;
   int error;
+
+  if (fp->fp_pid == PID_FREE) {
+	/* Process vanished before we were able to handle request.
+	 * Replying has no use. Just drop it.
+	 */
+	return;
+  }
 
   memset(&job_m_out, 0, sizeof(job_m_out));
 
@@ -239,18 +246,18 @@ static void do_work(void)
    * such as UDS and VND through here. Call the internal function that
    * does the work.
    */
-  if (job_call_nr < 0 || job_call_nr >= NCALLS) {
-	error = ENOSYS;
-  } else if (fp->fp_pid == PID_FREE) {
-	/* Process vanished before we were able to handle request.
-	 * Replying has no use. Just drop it. */
-	error = SUSPEND;
-  } else {
+  if (IS_VFS_CALL(job_call_nr)) {
+	call_index = (unsigned int) (job_call_nr - VFS_BASE);
+
+	if (call_index < NR_VFS_CALLS && call_vec[call_index] != NULL) {
 #if ENABLE_SYSCALL_STATS
-	calls_stats[job_call_nr]++;
+		calls_stats[call_index]++;
 #endif
-	error = (*call_vec[job_call_nr])();
-  }
+		error = (*call_vec[call_index])();
+	} else
+		error = ENOSYS;
+  } else
+	error = ENOSYS;
 
   /* Copy the results back to the user and send reply. */
   if (error != SUSPEND) reply(&job_m_out, fp->fp_endpoint, error);
@@ -525,7 +532,7 @@ static void reply(message *m_out, endpoint_t whom, int result)
 /* Send a reply to a user process.  If the send fails, just ignore it. */
   int r;
 
-  m_out->reply_type = result;
+  m_out->m_type = result;
   r = sendnb(whom, m_out);
   if (r != OK) {
 	printf("VFS: %d couldn't send reply %d to %d: %d\n", mthread_self(),
@@ -573,7 +580,7 @@ void service_pm_postponed(void)
 	assert(proc_e == fp->fp_endpoint);
 
 	r = pm_exec(exec_path, exec_path_len, stack_frame, stack_frame_len,
-		&pc, &newsp, &ps_str, job_m_in.VFS_PM_EXECFLAGS);
+		&pc, &newsp, &ps_str);
 
 	/* Reply status to PM */
 	m_out.m_type = VFS_PM_EXEC_REPLY;
@@ -807,14 +814,28 @@ struct fproc *rfp;
 
   blocked_on = rfp->fp_blocked_on;
 
-  assert(blocked_on == FP_BLOCKED_ON_PIPE || blocked_on == FP_BLOCKED_ON_LOCK);
-
-  /* READ, WRITE, FCNTL requests all use the same message layout. */
+  /* Reconstruct the original request from the saved data. */
+  memset(&m_in, 0, sizeof(m_in));
   m_in.m_source = rfp->fp_endpoint;
   m_in.m_type = rfp->fp_block_callnr;
-  m_in.fd = scratch(rfp).file.fd_nr;
-  m_in.buffer = scratch(rfp).io.io_buffer;
-  m_in.nbytes = scratch(rfp).io.io_nbytes;
+  switch (m_in.m_type) {
+  case VFS_READ:
+  case VFS_WRITE:
+	assert(blocked_on == FP_BLOCKED_ON_PIPE);
+	m_in.VFS_READWRITE_FD = scratch(rfp).file.fd_nr;
+	m_in.VFS_READWRITE_BUF = scratch(rfp).io.io_buffer;
+	m_in.VFS_READWRITE_LEN = scratch(rfp).io.io_nbytes;
+	break;
+  case VFS_FCNTL:
+	assert(blocked_on == FP_BLOCKED_ON_LOCK);
+	m_in.VFS_FCNTL_FD = scratch(rfp).file.fd_nr;
+	m_in.VFS_FCNTL_CMD = scratch(rfp).io.io_nbytes;
+	m_in.VFS_FCNTL_ARG_PTR = scratch(rfp).io.io_buffer;
+	assert(m_in.VFS_FCNTL_CMD == F_SETLKW);
+	break;
+  default:
+	panic("unblocking call %d blocked on %d ??", m_in.m_type, blocked_on);
+  }
 
   rfp->fp_blocked_on = FP_BLOCKED_ON_NONE;	/* no longer blocked */
   rfp->fp_flags &= ~FP_REVIVED;

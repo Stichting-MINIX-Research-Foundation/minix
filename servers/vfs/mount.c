@@ -1,7 +1,6 @@
 /* This file performs the MOUNT and UMOUNT system calls.
  *
  * The entry points into this file are
- *   do_fsready:	perform the FS_READY system call
  *   do_mount:		perform the MOUNT system call
  *   do_umount:		perform the UMOUNT system call
  *   unmount:		unmount a file system
@@ -27,7 +26,6 @@
 #include "vnode.h"
 #include "vmnt.h"
 #include "path.h"
-#include "param.h"
 
 /* Allow the root to be replaced before the first 'real' mount. */
 static int have_root = 0;
@@ -78,15 +76,6 @@ static void update_bspec(dev_t dev, endpoint_t fs_e, int send_drv_e)
 			}
 		}
 	}
-}
-
-/*===========================================================================*
- *                              do_fsready                                   *
- *===========================================================================*/
-int do_fsready(void)
-{
-  /* deprecated */
-  return(SUSPEND);
 }
 
 /*===========================================================================*

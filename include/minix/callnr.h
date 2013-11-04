@@ -1,116 +1,395 @@
-#define NCALLS		 129	/* number of system calls allowed */
+/* This header file defines the calls to PM and VFS. */
+#ifndef _MINIX_CALLNR_H
+#define _MINIX_CALLNR_H
 
-/* In case it isn't obvious enough: this list is sorted numerically. */
-#define EXIT		   1 
-#define FORK		   2 
-#define READ		   3 
-#define WRITE		   4 
-#define OPEN		   5 
-#define CLOSE		   6 
-#define WAIT		   7
-#define LINK		   9 
-#define UNLINK		  10 
-#define WAITPID		  11
-#define CHDIR		  12 
-#define TIME		  13
-#define MKNOD		  14 
-#define CHMOD		  15 
-#define CHOWN		  16 
-#define BRK		  17
-#define MINIX_GETPID	  20
-#define MOUNT		  21 
-#define UMOUNT		  22 
-#define SETUID		  23
-#define GETUID		  24
-#define STIME		  25
-#define PTRACE		  26
-#define UTIME		  30 
-#define GETEPINFO	  31
-#define SETGROUPS	  32
-#define ACCESS		  33 
-#define GETGROUPS	  34
-#define SYNC		  36 
-#define KILL		  37
-#define RENAME		  38
-#define MKDIR		  39
-#define RMDIR		  40
-#define PIPE		  42 
-#define SYMLINK		  45
-#define SETGID		  46
-#define GETGID		  47
-#define SIGNAL		  48
-#define RDLNK		  49
-#define STAT		  51
-#define FSTAT		  52
-#define LSTAT		  53
-#define IOCTL		  54
-#define COPYFD		  56
-#define FS_READY	  57
-#define PIPE2		  58
-#define EXEC		  59
-#define UMASK		  60 
-#define CHROOT		  61 
-#define SETSID		  62
-#define GETPGRP		  63
-#define ITIMER		  64
-#define GETMCONTEXT       67
-#define SETMCONTEXT       68
-#define GETDENTS	  69
-#define FTRUNCATE	  70
+/*===========================================================================*
+ *				Calls to PM				     *
+ *===========================================================================*/
 
-/* Posix signal handling. */
-#define SIGACTION	  71
-#define SIGSUSPEND	  72
-#define SIGPENDING	  73
-#define SIGPROCMASK	  74
-#define SIGRETURN	  75
+#define PM_BASE			0x000
 
-#define REBOOT		  76
-#define PM_SVRCTL	  77	/* to PM */
-#define SYSUNAME	  78
-#define LLSEEK		  81	/* to VFS */
-#define GETVFSSTAT	  82	/* to VFS */
-#define STATVFS1 	  83	/* to VFS */
-#define FSTATVFS1 	  84	/* to VFS */
-#define SELECT            85	/* to VFS */
-#define FCHDIR            86	/* to VFS */
-#define FSYNC             87	/* to VFS */
-#define GETPRIORITY       88	/* to PM */
-#define SETPRIORITY       89	/* to PM */
-#define GETTIMEOFDAY      90	/* to PM */
-#define SETEUID		  91	/* to PM */
-#define SETEGID		  92	/* to PM */
-#define FCHMOD		  95	/* to VFS */
-#define FCHOWN		  96	/* to VFS */
-#define LSEEK		  97
-#define SPROF             98    /* to PM */
-#define CPROF             99    /* to PM */
+#define IS_PM_CALL(type)	(((type) & ~0xff) == PM_BASE)
 
-#define PM_NEWEXEC	100	/* from VFS or RS to PM: new exec */
-#define SRV_FORK  	101	/* to PM: special fork call for RS */
-#define EXEC_RESTART	102	/* to PM: final part of exec for RS */
-#define GETPROCNR	104	/* to PM */
-#define ISSETUGID	106	/* to PM: ask if process is tainted */
-#define UTIMENS		108	/* to FS: [f]utimens(); also [fl]utimes */
-#define FCNTL		109	/* to VFS */
-#define TRUNCATE	110	/* to VFS */
-#define SRV_KILL  	111	/* to PM: special kill call for RS */
+/* Message type 0 is traditionally reserved. */
+#define PM_EXIT			(PM_BASE + 1)
+#define PM_FORK			(PM_BASE + 2)
+#define PM_WAITPID		(PM_BASE + 3)
+#define PM_GETPID		(PM_BASE + 4)
+#define PM_SETUID		(PM_BASE + 5)
+#define PM_GETUID		(PM_BASE + 6)
+#define PM_STIME		(PM_BASE + 7)
+#define PM_PTRACE		(PM_BASE + 8)
+#define PM_SETGROUPS		(PM_BASE + 9)
+#define PM_GETGROUPS		(PM_BASE + 10)
+#define PM_KILL			(PM_BASE + 11)
+#define PM_SETGID		(PM_BASE + 12)
+#define PM_GETGID		(PM_BASE + 13)
+#define PM_EXEC			(PM_BASE + 14)
+#define PM_SETSID		(PM_BASE + 15)
+#define PM_GETPGRP		(PM_BASE + 16)
+#define PM_ITIMER		(PM_BASE + 17)
+#define PM_GETMCONTEXT		(PM_BASE + 18)
+#define PM_SETMCONTEXT		(PM_BASE + 19)
+#define PM_SIGACTION		(PM_BASE + 20)
+#define PM_SIGSUSPEND		(PM_BASE + 21)
+#define PM_SIGPENDING		(PM_BASE + 22)
+#define PM_SIGPROCMASK		(PM_BASE + 23)
+#define PM_SIGRETURN		(PM_BASE + 24)
+#define PM_SYSUNAME		(PM_BASE + 25)
+#define PM_GETPRIORITY		(PM_BASE + 26)
+#define PM_SETPRIORITY		(PM_BASE + 27)
+#define PM_GETTIMEOFDAY		(PM_BASE + 28)
+#define PM_SETEUID		(PM_BASE + 29)
+#define PM_SETEGID		(PM_BASE + 30)
+#define PM_ISSETUGID		(PM_BASE + 31)
+#define PM_GETSID		(PM_BASE + 32)
+#define PM_CLOCK_GETRES		(PM_BASE + 33)
+#define PM_CLOCK_GETTIME	(PM_BASE + 34)
+#define PM_CLOCK_SETTIME	(PM_BASE + 35)
+#define PM_GETRUSAGE		(PM_BASE + 36)
+#define PM_REBOOT		(PM_BASE + 37)
+#define PM_SVRCTL		(PM_BASE + 38)
+#define PM_SPROF		(PM_BASE + 39)
+#define PM_CPROF		(PM_BASE + 40)
+#define PM_SRV_FORK		(PM_BASE + 41)
+#define PM_SRV_KILL		(PM_BASE + 42)
+#define PM_EXEC_NEW		(PM_BASE + 43)
+#define PM_EXEC_RESTART		(PM_BASE + 44)
+#define PM_GETEPINFO		(PM_BASE + 45)
+#define PM_GETPROCNR		(PM_BASE + 46)
+#define PM_GETSYSINFO		(PM_BASE + 47)
 
-#define GCOV_FLUSH	112	/* flush gcov data from server to gcov files */
+#define NR_PM_CALLS		48	/* highest number from base plus one */
 
-#define PM_GETSID	113	/* PM getsid() */
-#define CLOCK_GETRES	114	/* clock_getres() */
-#define CLOCK_GETTIME	115	/* clock_gettime() */
-#define CLOCK_SETTIME	116	/* clock_settime() */
+/* Field names for the getprocnr(2) call. */
+#define PM_GETPROCNR_PID	m1_i1	/* pid_t */
+#define PM_GETPROCNR_ENDPT	m1_i1	/* endpoint_t */
 
-#define VFS_VMCALL	117
+/* Field names for the getepinfo(2) call. */
+#define PM_GETEPINFO_ENDPT	m1_i1	/* endpoint_t */
+#define PM_GETEPINFO_UID	m1_i1	/* uid_t */
+#define PM_GETEPINFO_GID	m1_i2	/* gid_t */
 
-#define MAPDRIVER      122     /* to VFS, map a device */
-#define PM_GETRUSAGE	123	/* to PM */
+/* Field names for the exit(2) call. */
+#define PM_EXIT_STATUS		m1_i1	/* int */
 
-#define VFS_CHECKPERMS	124	/* to VFS */
+/* Field names for the waitpid(2) call. */
+#define PM_WAITPID_PID		m1_i1	/* pid_t */
+#define PM_WAITPID_OPTIONS	m1_i2	/* int */
+#define PM_WAITPID_STATUS	m2_i1	/* int */
 
-#define PM_GETSYSINFO	125	/* to PM */
-#define VFS_GETSYSINFO	126	/* to VFS */
-#define VFS_GETRUSAGE	127	/* to VFS */
-#define VFS_SVRCTL	128	/* to VFS */
+/* Field names for the gettimeofday(2), clock_*(2), adjtime(2), stime(2) calls.
+ */
+#define PM_TIME_CLK_ID		m2_i1	/* clockid_t */
+#define PM_TIME_NOW		m2_i2	/* int */
+#define PM_TIME_SEC		m2_l1	/* time_t */
+#define PM_TIME_USEC		m2_l2	/* long */
+#define PM_TIME_NSEC		m2_l2	/* long */
+
+/* Field names for the ptrace(2) call. */
+#define PM_PTRACE_PID		m2_i1	/* pid_t */
+#define PM_PTRACE_REQ		m2_i2	/* int */
+#define PM_PTRACE_ADDR		m2_l1	/* long */
+#define PM_PTRACE_DATA		m2_l2	/* long */
+
+/* Field names for the sysuname(2) call. */
+#define PM_SYSUNAME_REQ		m1_i1	/* int */
+#define PM_SYSUNAME_FIELD	m1_i2	/* int */
+#define PM_SYSUNAME_LEN		m1_i3	/* char * */
+#define PM_SYSUNAME_VALUE	m1_p1	/* size_t */
+
+/* Field names for the getitimer(2)/setitimer(2) calls. */
+#define PM_ITIMER_WHICH		m1_i1	/* int */
+#define PM_ITIMER_VALUE		m1_p1	/* const struct itimerval * */
+#define PM_ITIMER_OVALUE	m1_p2	/* struct itimerval * */
+
+/* Field names for the execve(2) call. */
+#define PM_EXEC_NAME		m1_p1	/* const char * */
+#define PM_EXEC_NAMELEN		m1_i1	/* size_t */
+#define PM_EXEC_FRAME		m1_p2	/* char * */
+#define PM_EXEC_FRAMELEN	m1_i2	/* size_t */
+#define PM_EXEC_PS_STR		m1_p3	/* char * */
+
+/* Field names for the kill(2), srv_kill(2), and sigaction(2) calls. */
+#define PM_SIG_PID		m1_i1	/* pid_t */
+#define PM_SIG_NR		m1_i2	/* int */
+#define PM_SIG_ACT		m1_p1	/* const struct sigaction * */
+#define PM_SIG_OACT		m1_p2	/* struct sigaction * */
+#define PM_SIG_RET		m1_p3	/* int (*)(void) */
+
+/* Field names for the remaining sigpending(2), sigprocmask(2), sigreturn(2),
+ * sigsuspend(2) calls.
+ */
+#define PM_SIG_HOW		m2_i1	/* int */
+#define PM_SIG_SET		m2_l1	/* sigset_t */
+#define PM_SIG_CTX		m2_p1	/* struct sigcontext * */
+
+/* Field names for the srv_fork(2) call. */
+#define PM_SRV_FORK_UID		m1_i1	/* uid_t */
+#define PM_SRV_FORK_GID		m1_i2	/* gid_t */
+
+/* Field names for the getuid(2) call. */
+#define PM_GETUID_EUID		m1_i1	/* uid_t */
+
+/* Field names for the getgid(2) call. */
+#define PM_GETGID_EGID		m1_i1	/* gid_t */
+
+/* Field names for the setuid(2)/seteuid(2) calls. */
+#define PM_SETUID_UID		m1_i1	/* uid_t */
+
+/* Field names for the setgid(2)/setegid(2) calls. */
+#define PM_SETGID_GID		m1_i1	/* gid_t */
+
+/* Field names for the getppid(2) call. */
+#define PM_GETPID_PARENT	m2_i1	/* pid_t */
+
+/* Field names for the setsid(2) call. */
+#define PM_GETSID_PID		m1_i1	/* pid_t */
+
+/* Field names for the setgroups(2)/setgroups(2) calls. */
+#define PM_GROUPS_NUM		m1_i1	/* int */
+#define PM_GROUPS_PTR		m1_p1	/* gid_t * */
+
+/* Field names for the getpriority(2)/setpriority(2) calls. */
+#define PM_PRIORITY_WHICH	m1_i1	/* int */
+#define PM_PRIORITY_WHO		m1_i2	/* int */
+#define PM_PRIORITY_PRIO	m1_i3	/* int */
+
+/* Field names for the getmcontext(2)/setmcontext(2) calls. */
+#define PM_MCONTEXT_CTX		m1_p1	/* mcontext_t * */
+
+/* Field names for the reboot(2) call. */
+#define PM_REBOOT_HOW		m1_i1	/* int */
+
+/* Field names for the PM_EXEC_NEW call. */
+#define PM_EXEC_NEW_ENDPT	m1_i1	/* endpoint_t */
+#define PM_EXEC_NEW_PTR		m1_p1	/* struct exec_info * */
+#define PM_EXEC_NEW_SUID	m1_i2	/* int */
+
+/* Field names for the PM_EXEC_RESTART call. */
+#define PM_EXEC_RESTART_ENDPT	m1_i1	/* endpoint_t */
+#define PM_EXEC_RESTART_RESULT	m1_i2	/* int */
+#define PM_EXEC_RESTART_PC	m1_p1	/* vir_bytes */
+#define PM_EXEC_RESTART_PS_STR	m1_p2	/* vir_bytes */
+
+/*===========================================================================*
+ *				Calls to VFS				     *
+ *===========================================================================*/
+
+#define VFS_BASE		0x100
+
+#define IS_VFS_CALL(type)	(((type) & ~0xff) == VFS_BASE)
+
+#define VFS_READ		(VFS_BASE + 0)
+#define VFS_WRITE		(VFS_BASE + 1)
+#define VFS_LSEEK		(VFS_BASE + 2)
+#define VFS_OPEN		(VFS_BASE + 3)
+#define VFS_CREAT		(VFS_BASE + 4)
+#define VFS_CLOSE		(VFS_BASE + 5)
+#define VFS_LINK		(VFS_BASE + 6)
+#define VFS_UNLINK		(VFS_BASE + 7)
+#define VFS_CHDIR		(VFS_BASE + 8)
+#define VFS_MKDIR		(VFS_BASE + 9)
+#define VFS_MKNOD		(VFS_BASE + 10)
+#define VFS_CHMOD		(VFS_BASE + 11)
+#define VFS_CHOWN		(VFS_BASE + 12)
+#define VFS_MOUNT		(VFS_BASE + 13)
+#define VFS_UMOUNT		(VFS_BASE + 14)
+#define VFS_ACCESS		(VFS_BASE + 15)
+#define VFS_SYNC		(VFS_BASE + 16)
+#define VFS_RENAME		(VFS_BASE + 17)
+#define VFS_RMDIR		(VFS_BASE + 18)
+#define VFS_SYMLINK		(VFS_BASE + 19)
+#define VFS_READLINK		(VFS_BASE + 20)
+#define VFS_STAT		(VFS_BASE + 21)
+#define VFS_FSTAT		(VFS_BASE + 22)
+#define VFS_LSTAT		(VFS_BASE + 23)
+#define VFS_IOCTL		(VFS_BASE + 24)
+#define VFS_FCNTL		(VFS_BASE + 25)
+#define VFS_PIPE2		(VFS_BASE + 26)
+#define VFS_UMASK		(VFS_BASE + 27)
+#define VFS_CHROOT		(VFS_BASE + 28)
+#define VFS_GETDENTS		(VFS_BASE + 29)
+#define VFS_SELECT		(VFS_BASE + 30)
+#define VFS_FCHDIR		(VFS_BASE + 31)
+#define VFS_FSYNC		(VFS_BASE + 32)
+#define VFS_TRUNCATE		(VFS_BASE + 33)
+#define VFS_FTRUNCATE		(VFS_BASE + 34)
+#define VFS_FCHMOD		(VFS_BASE + 35)
+#define VFS_FCHOWN		(VFS_BASE + 36)
+#define VFS_UTIMENS		(VFS_BASE + 37)
+#define VFS_VMCALL		(VFS_BASE + 38)
+#define VFS_GETVFSSTAT		(VFS_BASE + 39)
+#define VFS_STATVFS1 	 	(VFS_BASE + 40)
+#define VFS_FSTATVFS1		(VFS_BASE + 41)
+#define VFS_GETRUSAGE		(VFS_BASE + 42)
+#define VFS_SVRCTL		(VFS_BASE + 43)
+#define VFS_GCOV_FLUSH		(VFS_BASE + 44)
+#define VFS_MAPDRIVER		(VFS_BASE + 45)
+#define VFS_COPYFD		(VFS_BASE + 46)
+#define VFS_CHECKPERMS		(VFS_BASE + 47)
+#define VFS_GETSYSINFO		(VFS_BASE + 48)
+
+#define NR_VFS_CALLS		49	/* highest number from base plus one */
+
+/* Field names for the select(2) call. */
+#define VFS_SELECT_NFDS		m8_i1	/* int */
+#define VFS_SELECT_READFDS	m8_p1	/* fd_set * */
+#define VFS_SELECT_WRITEFDS	m8_p2	/* fd_set * */
+#define VFS_SELECT_ERRORFDS	m8_p3	/* fd_set * */
+#define VFS_SELECT_TIMEOUT	m8_p4	/* struct timeval * */
+
+/* Field names for the getvfsstat(2) call. */
+#define VFS_GETVFSSTAT_BUF	m1_p1	/* struct statvfs * */
+#define VFS_GETVFSSTAT_LEN	m1_i1	/* size_t */
+#define VFS_GETVFSSTAT_FLAGS	m1_i2	/* int */
+
+/* Field names for the statvfs1(2) and fstatvfs1(2) calls. */
+#define VFS_STATVFS1_LEN	m1_i1	/* size_t */
+#define VFS_STATVFS1_NAME	m1_p1	/* const char * */
+#define VFS_STATVFS1_FD		m1_i1	/* int */
+#define VFS_STATVFS1_BUF	m1_p2	/* struct statvfs * */
+#define VFS_STATVFS1_FLAGS	m1_i2	/* int */
+
+/* Field names for the mount(2) call. */
+#define VFS_MOUNT_FLAGS		m11_i1	/* int */
+#define VFS_MOUNT_DEVLEN	m11_s1	/* size_t */
+#define VFS_MOUNT_PATHLEN	m11_s2	/* size_t */
+#define VFS_MOUNT_TYPELEN	m11_s3	/* size_t */
+#define VFS_MOUNT_LABELLEN	m11_s4	/* size_t */
+#define VFS_MOUNT_DEV		m11_p1	/* char * */
+#define VFS_MOUNT_PATH		m11_p2	/* char * */
+#define VFS_MOUNT_TYPE		m11_p3	/* char * */
+#define VFS_MOUNT_LABEL		m11_p4	/* char * */
+
+/* Field names for the umount(2) call. */
+#define VFS_UMOUNT_NAME		m1_p1	/* char * */
+#define VFS_UMOUNT_NAMELEN	m1_i1	/* size_t */
+#define VFS_UMOUNT_LABEL	m1_p2	/* char * */
+#define VFS_UMOUNT_LABELLEN	m1_i2	/* size_t */
+
+/* Field names for the ioctl(2) call. */
+#define VFS_IOCTL_FD		m2_i1	/* int */
+#define VFS_IOCTL_REQ		m2_i3	/* unsigned long */
+#define VFS_IOCTL_ARG		m2_p1	/* void * */
+
+/* Field names for the checkperms(2) call. */
+#define VFS_CHECKPERMS_ENDPT	m2_i1	/* endpoint_t */
+#define VFS_CHECKPERMS_GRANT	m2_i2	/* cp_grant_id_t */
+#define VFS_CHECKPERMS_COUNT	m2_i3	/* size_t */
+
+/* Field names for the copyfd(2) call. */
+#define VFS_COPYFD_ENDPT	m1_i1	/* endpoint_t */
+#define VFS_COPYFD_FD		m1_i2	/* int */
+#define VFS_COPYFD_WHAT		m1_i3	/* int */
+
+/* Field names for the mapdriver(2) call. */
+#define VFS_MAPDRIVER_MAJOR	m1_i1	/* devmajor_t */
+#define VFS_MAPDRIVER_LABELLEN	m1_i2	/* size_t */
+#define VFS_MAPDRIVER_LABEL	m1_p1	/* char * */
+
+/* Field names for the utimens(2) call. */
+#define VFS_UTIMENS_FD		m2_i1	/* int */
+#define VFS_UTIMENS_NAME	m2_p1	/* const char * */
+#define VFS_UTIMENS_LEN		m2_i1	/* size_t */
+#define VFS_UTIMENS_ATIME	m2_l1	/* time_t */
+#define VFS_UTIMENS_ANSEC	m2_i2	/* long */
+#define VFS_UTIMENS_MTIME	m2_l2	/* time_t */
+#define VFS_UTIMENS_MNSEC	m2_i3	/* long */
+#define VFS_UTIMENS_FLAGS	m2_s1	/* int */
+
+/* Field names for the fsync(2) call. */
+#define VFS_FSYNC_FD		m1_i1	/* int */
+
+/* Field names for the lseek(2) call. */
+#define VFS_LSEEK_FD		m2_i1	/* int */
+#define VFS_LSEEK_OFF_LO	m2_l1	/* off_t (low 32 bits) */
+#define VFS_LSEEK_OFF_HI	m2_l2	/* off_t (high 32 bits) */
+#define VFS_LSEEK_WHENCE	m2_i2	/* int */
+
+/* Field names for the truncate(2) and ftruncate(2) calls. */
+#define VFS_TRUNCATE_FD		m2_i1	/* int */
+#define VFS_TRUNCATE_NAME	m2_p1	/* const char * */
+#define VFS_TRUNCATE_LEN	m2_i1	/* size_t */
+#define VFS_TRUNCATE_OFF_LO	m2_l1	/* off_t (low 32 bits) */
+#define VFS_TRUNCATE_OFF_HI	m2_l2	/* off_t (high 32 bits) */
+
+/* Field names for the pipe2(2) call. */
+#define VFS_PIPE2_FD0		m1_i1	/* int */
+#define VFS_PIPE2_FD1		m1_i2	/* int */
+#define VFS_PIPE2_FLAGS		m1_i3	/* int */
+
+/* Field names for the umask(2) call. */
+#define VFS_UMASK_MASK		m1_i1	/* mode_t */
+
+/* Field names for the link(2), symlink(2), and rename(2) call. */
+#define VFS_LINK_NAME1		m1_p1	/* const char * */
+#define VFS_LINK_LEN1		m1_i1	/* size_t */
+#define VFS_LINK_NAME2		m1_p2	/* const char * */
+#define VFS_LINK_LEN2		m1_i2	/* size_t */
+
+/* Field names for the readlink(2) call. */
+#define VFS_READLINK_NAME	m1_p1	/* const char * */
+#define VFS_READLINK_NAMELEN	m1_i1	/* size_t */
+#define VFS_READLINK_BUF	m1_p2	/* char * */
+#define VFS_READLINK_BUFSIZE	m1_i2	/* size_t */
+
+/* Field names for the stat(2) and lstat(2) calls. */
+#define VFS_STAT_NAME		m1_p1	/* const char * */
+#define VFS_STAT_LEN		m1_i1	/* size_t */
+#define VFS_STAT_BUF		m1_p2	/* struct stat * */
+
+/* Field names for the fstat(2) call. */
+#define VFS_FSTAT_FD		m1_i1	/* int */
+#define VFS_FSTAT_BUF		m1_p1	/* struct stat * */
+
+/* Field names for the fcntl(2) call. */
+#define VFS_FCNTL_FD		m1_i1	/* int */
+#define VFS_FCNTL_CMD		m1_i2	/* int */
+#define VFS_FCNTL_ARG_INT	m1_i3	/* int */
+#define VFS_FCNTL_ARG_PTR	m1_p1	/* struct flock * */
+
+/* Field names for the mknod(2) call. */
+#define VFS_MKNOD_NAME		m1_p1	/* const char * */
+#define VFS_MKNOD_LEN		m1_i1	/* size_t */
+#define VFS_MKNOD_MODE		m1_i2	/* mode_t */
+#define VFS_MKNOD_DEV		m1_i3	/* dev_t */
+
+/* Field names for the open(2), chdir(2), chmod(2), chroot(2), rmdir(2), and
+ * unlink(2) calls.
+ */
+#define VFS_PATH_NAME		m3_p1	/* const char * */
+#define VFS_PATH_LEN		m3_i1	/* size_t */
+#define VFS_PATH_FLAGS		m3_i2	/* int */
+#define VFS_PATH_MODE		m3_i2	/* mode_t */
+#define VFS_PATH_BUF		m3_ca1	/* char[M3_STRING] */
+
+/* Field names for the creat(2) call. */
+#define VFS_CREAT_NAME		m1_p1	/* const char * */
+#define VFS_CREAT_LEN		m1_i1	/* size_t */
+#define VFS_CREAT_FLAGS		m1_i2	/* int */
+#define VFS_CREAT_MODE		m1_i3	/* mode_t */
+
+/* Field names for the chown(2) and fchown(2) calls. */
+#define VFS_CHOWN_NAME		m1_p1	/* const char * */
+#define VFS_CHOWN_LEN		m1_i1	/* size_t */
+#define VFS_CHOWN_FD		m1_i1	/* int */
+#define VFS_CHOWN_OWNER		m1_i2	/* uid_t */
+#define VFS_CHOWN_GROUP		m1_i3	/* gid_t */
+
+/* Field names for the fchdir(2) call. */
+#define VFS_FCHDIR_FD		m1_i1	/* int */
+
+/* Field names for the fchmod(2) call. */
+#define VFS_FCHMOD_FD		m1_i1	/* int */
+#define VFS_FCHMOD_MODE		m1_i2	/* mode_t */
+
+/* Field names for the close(2) call. */
+#define VFS_CLOSE_FD		m1_i1	/* int */
+
+/* Field names for the read(2), write(2), and getdents(2) calls. */
+#define VFS_READWRITE_FD	m1_i1	/* int */
+#define VFS_READWRITE_BUF	m1_p1	/* char * */
+#define VFS_READWRITE_LEN	m1_i2	/* size_t */
+
+#endif /* !_MINIX_CALLNR_H */

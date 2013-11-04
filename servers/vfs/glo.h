@@ -43,7 +43,7 @@ EXTERN char mount_label[LABEL_MAX];	/* label of file system to mount */
 EXTERN int err_code;		/* temporary storage for error number */
 
 /* Data initialized elsewhere. */
-extern int (*call_vec[])(void);
+extern int (* const call_vec[])(void);
 
 EXTERN struct kinfo kinfo;     /* kernel information */
 

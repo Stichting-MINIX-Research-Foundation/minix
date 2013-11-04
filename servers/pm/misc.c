@@ -9,8 +9,6 @@
  *   do_svrctl: process manager control
  */
 
-#define brk _brk
-
 #include "pm.h"
 #include <minix/callnr.h>
 #include <signal.h>
@@ -22,13 +20,11 @@
 #include <minix/reboot.h>
 #include <minix/sysinfo.h>
 #include <minix/type.h>
-#include <minix/vm.h>
 #include <minix/ds.h>
 #include <machine/archtypes.h>
 #include <lib.h>
 #include <assert.h>
 #include "mproc.h"
-#include "param.h"
 #include "kernel/proc.h"
 
 struct utsname uts_val = {
@@ -59,7 +55,7 @@ static char *uts_tbl[] = {
 };
 
 #if ENABLE_SYSCALL_STATS
-unsigned long calls_stats[NCALLS];
+unsigned long calls_stats[NR_PM_CALLS];
 #endif
 
 /*===========================================================================*
@@ -68,7 +64,6 @@ unsigned long calls_stats[NCALLS];
 int do_sysuname()
 {
 /* Set or get uname strings. */
-
   int r;
   size_t n;
   char *string;
@@ -86,19 +81,19 @@ int do_sysuname()
   };
 #endif
 
-  if ((unsigned) m_in.sysuname_field >= _UTS_MAX) return(EINVAL);
+  if ((unsigned) m_in.PM_SYSUNAME_FIELD >= _UTS_MAX) return(EINVAL);
 
-  string = uts_tbl[m_in.sysuname_field];
+  string = uts_tbl[m_in.PM_SYSUNAME_FIELD];
   if (string == NULL)
 	return EINVAL;	/* Unsupported field */
 
-  switch (m_in.sysuname_req) {
+  switch (m_in.PM_SYSUNAME_REQ) {
   case _UTS_GET:
 	/* Copy an uname string to the user. */
 	n = strlen(string) + 1;
-	if (n > m_in.sysuname_len) n = m_in.sysuname_len;
+	if (n > m_in.PM_SYSUNAME_LEN) n = m_in.PM_SYSUNAME_LEN;
 	r = sys_vircopy(SELF, (phys_bytes) string, 
-		mp->mp_endpoint, (phys_bytes) m_in.sysuname_value,
+		mp->mp_endpoint, (phys_bytes) m_in.PM_SYSUNAME_VALUE,
 		(phys_bytes) n);
 	if (r < 0) return(r);
 	break;
@@ -106,11 +101,11 @@ int do_sysuname()
 #if 0	/* no updates yet */
   case _UTS_SET:
 	/* Set an uname string, needs root power. */
-	len = sizes[m_in.sysuname_field];
+	len = sizes[m_in.PM_SYSUNAME_FIELD];
 	if (mp->mp_effuid != 0 || len == 0) return(EPERM);
-	n = len < m_in.sysuname_len ? len : m_in.sysuname_len;
+	n = len < m_in.PM_SYSUNAME_LEN ? len : m_in.PM_SYSUNAME_LEN;
 	if (n <= 0) return(EINVAL);
-	r = sys_vircopy(mp->mp_endpoint, (phys_bytes) m_in.sysuname_value,
+	r = sys_vircopy(mp->mp_endpoint, (phys_bytes) m_in.PM_SYSUNAME_VALUE,
 		SELF, (phys_bytes) tmp, (phys_bytes) n);
 	if (r < 0) return(r);
 	tmp[n-1] = 0;
@@ -217,7 +212,7 @@ int do_reboot()
   if (mp->mp_effuid != SUPER_USER) return(EPERM);
 
   /* See how the system should be aborted. */
-  abort_flag = (unsigned) m_in.reboot_flag;
+  abort_flag = (unsigned) m_in.PM_REBOOT_HOW;
   if (abort_flag >= RBT_INVALID) return(EINVAL); 
 
   /* notify readclock (some arm systems power off via RTC alarms) */
@@ -254,9 +249,9 @@ int do_getsetpriority()
 	int r, arg_which, arg_who, arg_pri;
 	struct mproc *rmp;
 
-	arg_which = m_in.m1_i1;
-	arg_who = m_in.m1_i2;
-	arg_pri = m_in.m1_i3;	/* for SETPRIORITY */
+	arg_which = m_in.PM_PRIORITY_WHICH;
+	arg_who = m_in.PM_PRIORITY_WHO;
+	arg_pri = m_in.PM_PRIORITY_PRIO;	/* for SETPRIORITY */
 
 	/* Code common to GETPRIORITY and SETPRIORITY. */
 
@@ -275,7 +270,7 @@ int do_getsetpriority()
 		return EPERM;
 
 	/* If GET, that's it. */
-	if (call_nr == GETPRIORITY) {
+	if (call_nr == PM_GETPRIORITY) {
 		return(rmp->mp_nice - PRIO_MIN);
 	}
 
@@ -312,8 +307,8 @@ int do_svrctl()
   } local_param_overrides[MAX_LOCAL_PARAMS];
   static int local_params = 0;
 
-  req = m_in.svrctl_req;
-  ptr = (vir_bytes) m_in.svrctl_argp;
+  req = m_in.SVRCTL_REQ;
+  ptr = (vir_bytes) m_in.SVRCTL_ARG;
 
   /* Is the request indeed for the PM? */
   if (((req >> 8) & 0xFF) != 'M') return(EINVAL);
@@ -402,27 +397,6 @@ int do_svrctl()
   default:
 	return(EINVAL);
   }
-}
-
-/*===========================================================================*
- *				_brk				             *
- *===========================================================================*/
-
-extern char *_brksize;
-int brk(brk_addr)
-void *brk_addr;
-{
-	int r;
-/* PM wants to call brk() itself. */
-	if((r=vm_brk(PM_PROC_NR, brk_addr)) != OK) {
-#if 0
-		printf("PM: own brk(%p) failed: vm_brk() returned %d\n",
-			brk_addr, r);
-#endif
-		return -1;
-	}
-	_brksize = brk_addr;
-	return 0;
 }
 
 /*===========================================================================*

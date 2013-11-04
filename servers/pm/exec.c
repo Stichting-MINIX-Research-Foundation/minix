@@ -27,7 +27,6 @@
 #include <libexec.h>
 #include <sys/ptrace.h>
 #include "mproc.h"
-#include "param.h"
 
 #define ESCRIPT	(-2000)	/* Returned by read_header for a #! script. */
 #define PTRSIZE	sizeof(char *) /* Size of pointers in argv[] and envp[]. */
@@ -43,12 +42,11 @@ int do_exec()
 	memset(&m, 0, sizeof(m));
 	m.m_type = VFS_PM_EXEC;
 	m.VFS_PM_ENDPT = mp->mp_endpoint;
-	m.VFS_PM_PATH = m_in.exec_name;
-	m.VFS_PM_PATH_LEN = m_in.exec_len;
-	m.VFS_PM_FRAME = m_in.frame_ptr;
-	m.VFS_PM_FRAME_LEN = m_in.msg_frame_len;
-	m.VFS_PM_EXECFLAGS = m_in.PMEXEC_FLAGS;
-	m.VFS_PM_PS_STR = (vir_bytes) m_in.m1_p4; /* strings ptr into frame */
+	m.VFS_PM_PATH = m_in.PM_EXEC_NAME;
+	m.VFS_PM_PATH_LEN = m_in.PM_EXEC_NAMELEN;
+	m.VFS_PM_FRAME = m_in.PM_EXEC_FRAME;
+	m.VFS_PM_FRAME_LEN = m_in.PM_EXEC_FRAMELEN;
+	m.VFS_PM_PS_STR = (vir_bytes) m_in.PM_EXEC_PS_STR;
 
 	tell_vfs(mp, &m);
 
@@ -66,17 +64,17 @@ int do_newexec(void)
 	char *ptr;
 	struct mproc *rmp;
 	struct exec_info args;
-	int r, flags = 0;
+	int r;
 
 	if (who_e != VFS_PROC_NR && who_e != RS_PROC_NR)
 		return EPERM;
 
-	proc_e= m_in.EXC_NM_PROC;
+	proc_e= m_in.PM_EXEC_NEW_ENDPT;
 	if (pm_isokendpt(proc_e, &proc_n) != OK) {
 		panic("do_newexec: got bad endpoint: %d", proc_e);
 	}
 	rmp= &mproc[proc_n];
-	ptr= m_in.EXC_NM_PTR;
+	ptr= m_in.PM_EXEC_NEW_PTR;
 	r= sys_datacopy(who_e, (vir_bytes)ptr,
 		SELF, (vir_bytes)&args, sizeof(args));
 	if (r != OK)
@@ -117,10 +115,7 @@ int do_newexec(void)
 	/* Kill process if something goes wrong after this point. */
 	rmp->mp_flags |= PARTIAL_EXEC;
 
-	mp->mp_reply.reply_res2= (vir_bytes) rmp->mp_frame_addr;
-	mp->mp_reply.reply_res3= flags;
-	if (allow_setuid && args.allow_setuid)
-		mp->mp_reply.reply_res3 |= EXC_NM_RF_ALLOW_SETUID;
+	mp->mp_reply.PM_EXEC_NEW_SUID = (allow_setuid && args.allow_setuid);
 
 	return r;
 }
@@ -137,20 +132,19 @@ int do_execrestart(void)
 	if (who_e != RS_PROC_NR)
 		return EPERM;
 
-	proc_e = m_in.EXC_RS_PROC;
+	proc_e = m_in.PM_EXEC_RESTART_ENDPT;
 	if (pm_isokendpt(proc_e, &proc_n) != OK) {
 		panic("do_execrestart: got bad endpoint: %d", proc_e);
 	}
 	rmp = &mproc[proc_n];
-	result = m_in.EXC_RS_RESULT;
-	pc = (vir_bytes)m_in.EXC_RS_PC;
-	ps_str = (vir_bytes)m_in.EXC_RS_PS_STR;
+	result = m_in.PM_EXEC_RESTART_RESULT;
+	pc = (vir_bytes)m_in.PM_EXEC_RESTART_PC;
+	ps_str = (vir_bytes)m_in.PM_EXEC_RESTART_PS_STR;
 
 	exec_restart(rmp, result, pc, rmp->mp_frame_addr, ps_str);
 
 	return OK;
 }
-
 
 /*===========================================================================*
  *				exec_restart				     *

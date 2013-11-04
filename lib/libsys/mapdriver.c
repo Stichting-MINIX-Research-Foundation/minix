@@ -13,5 +13,5 @@ mapdriver(char *label, devmajor_t major)
 	m.VFS_MAPDRIVER_LABELLEN = strlen(label) + 1;
 	m.VFS_MAPDRIVER_MAJOR = major;
 
-	return _taskcall(VFS_PROC_NR, MAPDRIVER, &m);
+	return _taskcall(VFS_PROC_NR, VFS_MAPDRIVER, &m);
 }

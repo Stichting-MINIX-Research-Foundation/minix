@@ -5,7 +5,7 @@
  * to continue.
  *
  * The entry points into this file are
- *   do_pipe:	  perform the PIPE system call
+ *   do_pipe2:	  perform the PIPE2 system call
  *   pipe_check:  check to see that a read or write on a pipe is feasible now
  *   suspend:	  suspend a process that cannot do a requested read or write
  *   release:	  check to see if a suspended process can be released and do
@@ -28,31 +28,11 @@
 #include <sys/time.h>
 #include "file.h"
 #include "scratchpad.h"
-#include "param.h"
 #include <minix/vfsif.h>
 #include "vnode.h"
 #include "vmnt.h"
 
 static int create_pipe(int fil_des[2], int flags);
-
-/*===========================================================================*
- *				do_pipe					     *
- *===========================================================================*/
-int do_pipe(void)
-{
-/* Perform the pipe(fil_des[2]) system call. */
-
-  int r;
-  int fil_des[2];		/* reply goes here */
-
-  r = create_pipe(fil_des, 0 /* no flags */);
-  if (r == OK) {
-	job_m_out.reply_i1 = fil_des[0];
-	job_m_out.reply_i2 = fil_des[1];
-  }
-
-  return r;
-}
 
 /*===========================================================================*
  *				do_pipe2				     *
@@ -63,12 +43,12 @@ int do_pipe2(void)
   int r, flags;
   int fil_des[2];		/* reply goes here */
 
-  flags = job_m_in.pipe_flags;
+  flags = job_m_in.VFS_PIPE2_FLAGS;
 
   r = create_pipe(fil_des, flags);
   if (r == OK) {
-	job_m_out.reply_i1 = fil_des[0];
-	job_m_out.reply_i2 = fil_des[1];
+	job_m_out.VFS_PIPE2_FD0 = fil_des[0];
+	job_m_out.VFS_PIPE2_FD1 = fil_des[1];
   }
 
   return r;
@@ -247,7 +227,7 @@ int notouch		/* check only */
 
 			/* If need be, activate sleeping writers. */
 			if (susp_count > 0)
-				release(vp, WRITE, susp_count);
+				release(vp, VFS_WRITE, susp_count);
 		}
 		return(r);
 	}
@@ -273,7 +253,7 @@ int notouch		/* check only */
 		if (bytes > 0)  {
 			/* Do a partial write. Need to wakeup reader */
 			if (!notouch)
-				release(vp, READ, susp_count);
+				release(vp, VFS_READ, susp_count);
 			return(bytes);
 		} else {
 			/* Pipe is full */
@@ -290,7 +270,7 @@ int notouch		/* check only */
 			 * since we'll suspend ourself in read_write()
 			 */
 			if (!notouch)
-				release(vp, READ, susp_count);
+				release(vp, VFS_READ, susp_count);
 			return(bytes);
 		}
 	}
@@ -301,7 +281,7 @@ int notouch		/* check only */
 
   /* Writing to an empty pipe.  Search for suspended reader. */
   if (pos == 0 && !notouch)
-	release(vp, READ, susp_count);
+	release(vp, VFS_READ, susp_count);
 
   /* Requested amount fits */
   return(bytes);
@@ -388,11 +368,11 @@ void unsuspend_by_endpt(endpoint_t proc_e)
  *===========================================================================*/
 void release(vp, op, count)
 register struct vnode *vp;	/* inode of pipe */
-int op;				/* READ, WRITE, or OPEN */
+int op;				/* VFS_READ, VFS_WRITE, or VFS_OPEN */
 int count;			/* max number of processes to release */
 {
 /* Check to see if any process is hanging on vnode 'vp'. If one is, and it
- * was trying to perform the call indicated by 'call_nr', release it.
+ * was trying to perform the call indicated by 'op', release it.
  */
 
   register struct fproc *rp;
@@ -402,8 +382,8 @@ int count;			/* max number of processes to release */
   /* Trying to perform the call also includes SELECTing on it with that
    * operation.
    */
-  if (op == READ || op == WRITE) {
-	if (op == READ)
+  if (op == VFS_READ || op == VFS_WRITE) {
+	if (op == VFS_READ)
 		selop = SEL_RD;
 	else
 		selop = SEL_WR;

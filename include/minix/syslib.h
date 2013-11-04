@@ -270,6 +270,9 @@ uid_t getnuid(endpoint_t proc_ep);
 gid_t getngid(endpoint_t proc_ep);
 int checkperms(endpoint_t endpt, char *path, size_t size);
 int copyfd(endpoint_t endpt, int fd, int what);
+#define COPYFD_FROM	0	/* copy file descriptor from remote process */
+#define COPYFD_TO	1	/* copy file descriptor to remote process */
+#define COPYFD_CLOSE	2	/* close file descriptor in remote process */
 
 #endif /* _SYSLIB_H */
 

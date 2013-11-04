@@ -28,7 +28,6 @@
 #include <sys/exec.h>
 #include <sys/param.h>
 #include "path.h"
-#include "param.h"
 #include "vnode.h"
 #include "file.h"
 #include <minix/vfsif.h>
@@ -183,8 +182,7 @@ static int vfs_memmap(struct exec_info *execi,
  *				pm_exec					     *
  *===========================================================================*/
 int pm_exec(vir_bytes path, size_t path_len, vir_bytes frame, size_t frame_len,
-	vir_bytes *pc, vir_bytes *newsp, vir_bytes *UNUSED(ps_str),
-	int user_exec_flags)
+	vir_bytes *pc, vir_bytes *newsp, vir_bytes *UNUSED(ps_str))
 {
 /* Perform the execve(name, argv, envp) call.  The user library builds a
  * complete stack image, including pointers, args, environ, etc.  The stack
@@ -214,7 +212,7 @@ int pm_exec(vir_bytes path, size_t path_len, vir_bytes frame, size_t frame_len,
   execi.vmfd = -1;
 
   /* passed from exec() libc code */
-  execi.userflags = user_exec_flags;
+  execi.userflags = 0;
   execi.args.stack_high = kinfo.user_sp;
   execi.args.stack_size = DEFAULT_STACK_LIMIT;
 

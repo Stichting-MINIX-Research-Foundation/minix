@@ -80,12 +80,13 @@ int libexec_pm_newexec(endpoint_t proc_e, struct exec_info *e)
   int r;
   message m;
 
-  m.m_type = PM_NEWEXEC;
-  m.EXC_NM_PROC = proc_e;
-  m.EXC_NM_PTR = (char *)e;
+  memset(&m, 0, sizeof(m));
+  m.m_type = PM_EXEC_NEW;
+  m.PM_EXEC_NEW_ENDPT = proc_e;
+  m.PM_EXEC_NEW_PTR = (char *)e;
   if ((r = sendrec(PM_PROC_NR, &m)) != OK) return(r);
 
-  e->allow_setuid = !!(m.m1_i2 & EXC_NM_RF_ALLOW_SETUID);
+  e->allow_setuid = !!m.PM_EXEC_NEW_SUID;
 
   return(m.m_type);
 }

@@ -1,9 +1,6 @@
 /* Function prototypes. */
 
 struct mproc;
-struct stat;
-struct mem_map;
-struct memory;
 
 #include <minix/timers.h>
 
@@ -11,9 +8,6 @@ struct memory;
 int do_itimer(void);
 void set_alarm(struct mproc *rmp, clock_t ticks);
 void check_vtimer(int proc_nr, int sig);
-
-/* break.c */
-int do_brk(void);
 
 /* exec.c */
 int do_exec(void);
@@ -86,11 +80,10 @@ int do_settime(void);
 
 /* trace.c */
 int do_trace(void);
-void trace_stop(struct mproc *rmp, int sig_nr);
+void trace_stop(struct mproc *rmp, int signo);
 
 /* utility.c */
 pid_t get_free_pid(void);
-int no_sys(void);
 char *find_param(const char *key);
 struct mproc *find_proc(pid_t lpid);
 int nice_to_priority(int nice, unsigned *new_q);

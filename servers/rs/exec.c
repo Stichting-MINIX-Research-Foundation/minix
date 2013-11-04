@@ -127,11 +127,12 @@ static int exec_restart(int proc_e, int result, vir_bytes pc, vir_bytes ps_str)
 	int r;
 	message m;
 
-	m.m_type = EXEC_RESTART;
-	m.EXC_RS_PROC = proc_e;
-	m.EXC_RS_RESULT = result;
-	m.EXC_RS_PC = (void *)pc;
-	m.EXC_RS_PS_STR = (void *)ps_str;
+	memset(&m, 0, sizeof(m));
+	m.m_type = PM_EXEC_RESTART;
+	m.PM_EXEC_RESTART_ENDPT = proc_e;
+	m.PM_EXEC_RESTART_RESULT = result;
+	m.PM_EXEC_RESTART_PC = (void *)pc;
+	m.PM_EXEC_RESTART_PS_STR = (void *)ps_str;
 
 	r = sendrec(PM_PROC_NR, &m);
 	if (r != OK)

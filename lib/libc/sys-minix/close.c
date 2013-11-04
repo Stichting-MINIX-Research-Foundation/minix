@@ -2,6 +2,7 @@
 #include "namespace.h"
 #include <lib.h>
 
+#include <string.h>
 #include <unistd.h>
 
 #ifdef __weak_alias
@@ -13,6 +14,7 @@ int fd;
 {
   message m;
 
-  m.m1_i1 = fd;
-  return(_syscall(VFS_PROC_NR, CLOSE, &m));
+  memset(&m, 0, sizeof(m));
+  m.VFS_CLOSE_FD = fd;
+  return(_syscall(VFS_PROC_NR, VFS_CLOSE, &m));
 }

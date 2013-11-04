@@ -38,9 +38,9 @@ it supports a few calls necessary for libc. The following system calls are
 handled by VFS:
 
 access, chdir, chmod, chown, chroot, close, creat, fchdir, fcntl, fstat,
-fstatvfs, fsync, ftruncate, getdents, getvfsstat, ioctl, link, llseek, lseek,
-lstat, mkdir, mknod, mount, open, pipe, read, readlink, rename, rmdir, select,
-stat, statvfs, symlink, sync, truncate, umask, umount, unlink, utime, write.
+fstatvfs, fsync, ftruncate, getdents, getvfsstat, ioctl, link, lseek,
+lstat, mkdir, mknod, mount, open, pipe2, read, readlink, rename, rmdir, select,
+stat, statvfs, symlink, sync, truncate, umask, umount, unlink, utimes, write.
 
 Second, it maintains part of the state belonging to a process (process state is
 spread out over the kernel, VM, PM, and VFS). For example, it maintains state
@@ -373,7 +373,7 @@ requests) do need a vmnt lock.
 |                   | unlink, utime                                           |
 +-------------------+---------------------------------------------------------+
 | System calls with | close, fchdir, fcntl, fstat, fstatvfs, ftruncate,       |
-| a file descriptor | getdents, ioctl, llseek, pipe, read, select, write      |
+| a file descriptor | getdents, ioctl, lseek, pipe, read, select, write       |
 | argument          |                                                         |
 +-------------------+---------------------------------------------------------+
 | System calls with | fsync++, getvfsstat, sync, umask                        |

@@ -14,6 +14,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <errno.h>
+#include <string.h>
 
 static int get_ipc_endpt(endpoint_t *pt)
 {
@@ -32,6 +33,7 @@ int semget(key_t key, int nsems, int semflag)
 		return -1;
 	}
 
+	memset(&m, 0, sizeof(m));
 	m.SEMGET_KEY = key;
 	m.SEMGET_NR = nsems;
 	m.SEMGET_FLAG = semflag;
@@ -56,6 +58,7 @@ int semctl(int semid, int semnum, int cmd, ...)
 		return -1;
 	}
 
+	memset(&m, 0, sizeof(m));
 	m.SEMCTL_ID = semid;
 	m.SEMCTL_NUM = semnum;
 	m.SEMCTL_CMD = cmd;
@@ -85,6 +88,7 @@ int semop(int semid, struct sembuf *sops, size_t nsops)
 		return -1;
 	}
 
+	memset(&m, 0, sizeof(m));
 	m.SEMOP_ID = semid;
 	m.SEMOP_OPS = (long) sops;
 	m.SEMOP_SIZE = nsops;
