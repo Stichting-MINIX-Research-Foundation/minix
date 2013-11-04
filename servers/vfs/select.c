@@ -26,6 +26,10 @@
 #define FROM_PROC 0
 #define TO_PROC   1
 
+#define SEL_BLOCK		001 /* block until timeout or reslt */
+#define SEL_INIT		002 /* initializing select call */
+#define SEL_IS_CANCELED		004 /* select has been canceled */
+
 static struct selectentry {
   struct fproc *requestor;	/* slot is free iff this is NULL */
   endpoint_t req_endpt;
@@ -36,9 +40,9 @@ static struct selectentry {
   int type[OPEN_MAX];
   int nfds, nreadyfds;
   int error;
-  char block;
   clock_t expiry;
   timer_t timer;	/* if expiry > 0 */
+  int flags;
 } selecttab[MAXSELECTS];
 
 static int copy_fdsets(struct selectentry *se, int nfds, int
@@ -114,6 +118,7 @@ int do_select(message *UNUSED(m_out))
   se = &selecttab[s];
   wipe_select(se);	/* Clear results of previous usage */
   se->requestor = fp;
+  se->flags |= SEL_INIT;
   se->req_endpt = who_e;
   se->vir_readfds = (fd_set *) job_m_in.SEL_READFDS;
   se->vir_writefds = (fd_set *) job_m_in.SEL_WRITEFDS;
@@ -146,11 +151,11 @@ int do_select(message *UNUSED(m_out))
    * specified time interval.
    */
   if (!do_timeout)	/* No timeout value set */
-	se->block = 1;
+	se->flags |= SEL_BLOCK;
   else if (do_timeout && (timeout.tv_sec > 0 || timeout.tv_usec > 0))
-	se->block = 1;
+	se->flags |= SEL_BLOCK;
   else			/* timeout set as (0,0) - this effects a poll */
-	se->block = 0;
+	se->flags &= ~SEL_BLOCK;
   se->expiry = 0;	/* no timer set (yet) */
 
   /* Verify that file descriptors are okay to select on */
@@ -213,6 +218,8 @@ int do_select(message *UNUSED(m_out))
 	int ops, r;
 	struct filp *f;
 
+	if (se->flags & SEL_IS_CANCELED) break;
+
 	/* Again, check for involuntarily selected fd's */
 	if (!(ops = tab2ops(fd, se)))
 		continue; /* No operations set; nothing to do for this fd */
@@ -236,7 +243,7 @@ int do_select(message *UNUSED(m_out))
 	}
   }
 
-  if ((se->nreadyfds > 0 || !se->block) && !is_deferred(se)) {
+  if ((se->nreadyfds > 0 || !(se->flags & SEL_BLOCK)) && !is_deferred(se)) {
 	/* fd's were found that were ready to go right away, and/or
 	 * we were instructed not to block at all. Must return
 	 * immediately.
@@ -277,6 +284,7 @@ int do_select(message *UNUSED(m_out))
   }
 
   /* process now blocked */
+  se->flags &= ~SEL_INIT;
   suspend(FP_BLOCKED_ON_SELECT);
   return(SUSPEND);
 }
@@ -594,6 +602,8 @@ static void select_cancel_all(struct selectentry *se)
   int fd;
   struct filp *f;
 
+  se->flags |= SEL_IS_CANCELED;
+
   for (fd = 0; fd < se->nfds; fd++) {
 	if ((f = se->filps[fd]) == NULL) continue;
 	se->filps[fd] = NULL;
@@ -605,7 +615,7 @@ static void select_cancel_all(struct selectentry *se)
 	se->expiry = 0;
   }
 
-  se->requestor = NULL;
+  if (!(se->flags & SEL_INIT)) se->requestor = NULL;
 }
 
 /*===========================================================================*
@@ -671,8 +681,10 @@ void init_select(void)
 {
   int s;
 
-  for (s = 0; s < MAXSELECTS; s++)
+  for (s = 0; s < MAXSELECTS; s++) {
+	selecttab[s].requestor = NULL;
 	init_timer(&selecttab[s].timer);
+  }	
 }
 
 
@@ -981,11 +993,11 @@ int *ops;
   type = se->type[fd];
   f = se->filps[fd];
   select_lock_filp(f, *ops);
-  r = fdtypes[type].select_request(f, ops, se->block);
+  r = fdtypes[type].select_request(f, ops, se->flags & SEL_BLOCK);
   unlock_filp(f);
   if (r != OK && r != SUSPEND) {
 	se->error = EINTR;
-	se->block = 0;	/* Stop blocking to return asap */
+	se->flags &= ~SEL_BLOCK;	/* Stop blocking to return asap */
 	if (!is_deferred(se)) select_cancel_all(se);
   }
 
@@ -1027,7 +1039,7 @@ struct selectentry *se;
 /* Tell process about select results (if any) unless there are still results
  * pending. */
 
-  if ((se->nreadyfds > 0 || !se->block) && !is_deferred(se))
+  if ((se->nreadyfds > 0 || !(se->flags & SEL_BLOCK)) && !is_deferred(se))
 	select_return(se);
 }
 
@@ -1039,7 +1051,7 @@ static void wipe_select(struct selectentry *se)
   se->nfds = 0;
   se->nreadyfds = 0;
   se->error = OK;
-  se->block = 0;
+  se->flags = 0;
   memset(se->filps, 0, sizeof(se->filps));
 
   FD_ZERO(&se->readfds);
