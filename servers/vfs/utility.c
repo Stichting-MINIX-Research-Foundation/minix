@@ -2,17 +2,14 @@
  *
  * The entry points into this file are
  *   clock_timespec: ask the clock task for the real time
- *   copy:	  copy a block of data
+ *   copy_path:	  copy a path name from a path request from userland
  *   fetch_name:  go get a path name from user space
- *   no_sys:      reject a system call that FS does not handle
  *   panic:       something awful has occurred;  MINIX cannot continue
- *   conv2:	  do byte swapping on a 16-bit int
- *   conv4:	  do byte swapping on a 32-bit long
  *   in_group:    determines if group 'grp' is in rfp->fp_sgroups[]
  */
 
 #include "fs.h"
-#include <minix/com.h>
+#include <minix/callnr.h>
 #include <minix/endpoint.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -20,35 +17,35 @@
 #include <assert.h>
 #include <time.h>
 #include "file.h"
-#include "param.h"
 #include "vmnt.h"
 
 /*===========================================================================*
- *				copy_name				     *
+ *				copy_path				     *
  *===========================================================================*/
-inline int copy_name( size_t len, char *dest)
+int copy_path(char *dest, size_t size)
 {
-/* Go get path and put it in 'dest'.
+/* Go get the path for a path request. Put the result in in 'dest', which
+ * should be at least PATH_MAX in size.
  */
-  if (len > PATH_MAX) {	/* 'len' includes terminating-nul */
+  vir_bytes name;
+  size_t len;
+
+  assert(size >= PATH_MAX);
+
+  name = (vir_bytes) job_m_in.VFS_PATH_NAME;
+  len = job_m_in.VFS_PATH_LEN;
+
+  if (len > size) {	/* 'len' includes terminating-nul */
 	err_code = ENAMETOOLONG;
 	return(EGENERIC);
   }
 
-  /* Check name length for validity. */
-  if (len > SSIZE_MAX) {
-	err_code = EINVAL;
-	return(EGENERIC);
-  }
+  /* Is the string contained in the message? If not, perform a normal copy. */
+  if (len > M3_STRING)
+	return fetch_name(name, len, dest);
 
-  if (len <= M3_STRING) {
-	/* Just copy the path from the message */
-	strncpy(dest, job_m_in.pathname, len);
-  } else {
-	/* String is not contained in the message. */
-	err_code = EINVAL;
-	return(EGENERIC);
-  }
+  /* Just copy the path from the message */
+  strncpy(dest, job_m_in.VFS_PATH_BUF, len);
 
   if (dest[len - 1] != '\0') {
 	err_code = ENAMETOOLONG;
@@ -91,17 +88,6 @@ int fetch_name(vir_bytes path, size_t len, char *dest)
 
   return(OK);
 }
-
-
-/*===========================================================================*
- *				no_sys					     *
- *===========================================================================*/
-int no_sys(void)
-{
-/* Somebody has used an illegal system call number */
-  return(ENOSYS);
-}
-
 
 /*===========================================================================*
  *				isokendpt_f				     *

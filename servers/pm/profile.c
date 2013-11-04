@@ -16,7 +16,6 @@
 #include <minix/com.h>
 #include <signal.h>
 #include "mproc.h"
-#include "param.h"
 
 /*===========================================================================*
  *				do_sprofile				     *

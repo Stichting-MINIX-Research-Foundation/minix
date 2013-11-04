@@ -2,6 +2,7 @@
 #include <lib.h>
 #include "namespace.h"
 
+#include <string.h>
 #include <time.h>
 
 #ifdef __weak_alias
@@ -12,6 +13,7 @@ int stime(time_t *top)
 {
   message m;
 
-  m.m2_l1 = (long)*top;
-  return(_syscall(PM_PROC_NR, STIME, &m));
+  memset(&m, 0, sizeof(m));
+  m.PM_TIME_SEC = (long)*top;
+  return(_syscall(PM_PROC_NR, PM_STIME, &m));
 }

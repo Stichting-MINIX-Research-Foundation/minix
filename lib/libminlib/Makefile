@@ -21,9 +21,6 @@ SRCS+= gcov.c gcov_flush.c
 # Various utils
 SRCS+= itoa.c u64util.c read_tsc_64.c
 
-# svrctl
-SRCS+= svrctl.c
-
 # servxcheck
 SRCS+= servxcheck.c
 

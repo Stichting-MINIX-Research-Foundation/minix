@@ -19,7 +19,6 @@
 #include <string.h>
 #include "file.h"
 #include "path.h"
-#include "param.h"
 #include <minix/vfsif.h>
 #include <minix/callnr.h>
 #include "vnode.h"
@@ -36,7 +35,7 @@ int do_fchdir(void)
   struct filp *rfilp;
   int r, rfd;
 
-  rfd = job_m_in.fd;
+  rfd = job_m_in.VFS_FCHDIR_FD;
 
   /* Is the file descriptor valid? */
   if ((rfilp = get_filp(rfd, VNODE_READ)) == NULL) return(err_code);
@@ -59,17 +58,9 @@ int do_chdir(void)
   struct vmnt *vmp;
   char fullpath[PATH_MAX];
   struct lookup resolve;
-  vir_bytes vname;
-  size_t vname_length;
 
-  vname = (vir_bytes) job_m_in.name;
-  vname_length = (size_t) job_m_in.name_length;
-
-  if (copy_name(vname_length, fullpath) != OK) {
-	/* Direct copy failed, try fetching from user space */
-	if (fetch_name(vname, vname_length, fullpath) != OK)
-		return(err_code);
-  }
+  if (copy_path(fullpath, sizeof(fullpath)) != OK)
+	return(err_code);
 
   /* Try to open the directory */
   lookup_init(&resolve, fullpath, PATH_NOFLAGS, &vmp, &vp);
@@ -99,19 +90,11 @@ int do_chroot(void)
   struct vmnt *vmp;
   char fullpath[PATH_MAX];
   struct lookup resolve;
-  vir_bytes vname;
-  size_t vname_length;
-
-  vname = (vir_bytes) job_m_in.name;
-  vname_length = (size_t) job_m_in.name_length;
 
   if (!super_user) return(EPERM);	/* only su may chroot() */
 
-  if (copy_name(vname_length, fullpath) != OK) {
-	/* Direct copy failed, try fetching from user space */
-	if (fetch_name(vname, vname_length, fullpath) != OK)
-		return(err_code);
-  }
+  if (copy_path(fullpath, sizeof(fullpath)) != OK)
+	return(err_code);
 
   /* Try to open the directory */
   lookup_init(&resolve, fullpath, PATH_NOFLAGS, &vmp, &vp);
@@ -165,9 +148,9 @@ int do_stat(void)
   vir_bytes vname1, statbuf;
   size_t vname1_length;
 
-  vname1 = (vir_bytes) job_m_in.name1;
-  vname1_length = (size_t) job_m_in.name1_length;
-  statbuf = (vir_bytes) job_m_in.m1_p2;
+  vname1 = (vir_bytes) job_m_in.VFS_STAT_NAME;
+  vname1_length = (size_t) job_m_in.VFS_STAT_LEN;
+  statbuf = (vir_bytes) job_m_in.VFS_STAT_BUF;
 
   lookup_init(&resolve, fullpath, PATH_NOFLAGS, &vmp, &vp);
   resolve.l_vmnt_lock = VMNT_READ;
@@ -194,8 +177,8 @@ int do_fstat(void)
   int r, rfd;
   vir_bytes statbuf;
 
-  statbuf = (vir_bytes) job_m_in.buffer;
-  rfd = job_m_in.fd;
+  statbuf = (vir_bytes) job_m_in.VFS_FSTAT_BUF;
+  rfd = job_m_in.VFS_FSTAT_FD;
 
   /* Is the file descriptor valid? */
   if ((rfilp = get_filp(rfd, VNODE_READ)) == NULL) return(err_code);
@@ -348,9 +331,9 @@ int do_fstatvfs(void)
   int r, rfd, flags;
   vir_bytes statbuf;
 
-  rfd = job_m_in.VFS_FSTATVFS1_FD;
-  statbuf = (vir_bytes) job_m_in.VFS_FSTATVFS1_BUF;
-  flags = job_m_in.VFS_FSTATVFS1_FLAGS;
+  rfd = job_m_in.VFS_STATVFS1_FD;
+  statbuf = (vir_bytes) job_m_in.VFS_STATVFS1_BUF;
+  flags = job_m_in.VFS_STATVFS1_FLAGS;
 
   /* Is the file descriptor valid? */
   if ((rfilp = get_filp(rfd, VNODE_READ)) == NULL) return(err_code);
@@ -373,7 +356,7 @@ int do_getvfsstat(void)
   int r, flags, count, do_lock;
 
   buf = (vir_bytes) job_m_in.VFS_GETVFSSTAT_BUF;
-  bufsize = job_m_in.VFS_GETVFSSTAT_SIZE;
+  bufsize = job_m_in.VFS_GETVFSSTAT_LEN;
   flags = job_m_in.VFS_GETVFSSTAT_FLAGS;
 
   count = 0;
@@ -442,9 +425,9 @@ int do_lstat(void)
   vir_bytes vname1, statbuf;
   size_t vname1_length;
 
-  vname1 = (vir_bytes) job_m_in.name1;
-  vname1_length = (size_t) job_m_in.name1_length;
-  statbuf = (vir_bytes) job_m_in.name2;
+  vname1 = (vir_bytes) job_m_in.VFS_STAT_NAME;
+  vname1_length = (size_t) job_m_in.VFS_STAT_LEN;
+  statbuf = (vir_bytes) job_m_in.VFS_STAT_BUF;
 
   lookup_init(&resolve, fullpath, PATH_RET_SYMLINK, &vmp, &vp);
   resolve.l_vmnt_lock = VMNT_READ;

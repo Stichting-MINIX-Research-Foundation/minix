@@ -25,19 +25,32 @@ int utimensat(int fd, const char *name, const struct timespec tv[2],
 
   if (tv == NULL) tv = now;
 
-  if (name == NULL) return EINVAL;
-  if (name[0] == '\0') return ENOENT; /* POSIX requirement */
-  if (fd != AT_FDCWD && name[0] != '/') return EINVAL; /* Not supported */
-  m.m2_i1 = strlen(name) + 1;
-  m.m2_p1 = (char *) __UNCONST(name);
-  m.m2_l1 = tv[0].tv_sec;
-  m.m2_l2 = tv[1].tv_sec;
-  m.m2_i2 = tv[0].tv_nsec;
-  m.m2_i3 = tv[1].tv_nsec;
-  if ((unsigned)flags > SHRT_MAX)
-	return EINVAL;
-  else
-	m.m2_s1 = flags;
+  if (name == NULL) {
+	errno = EINVAL;
+	return -1;
+  }
+  if (name[0] == '\0') { /* POSIX requirement */
+	errno = ENOENT;
+	return -1;
+  }
+  if (fd != AT_FDCWD && name[0] != '/') { /* Not supported */
+	errno = EINVAL;
+	return -1;
+  }
 
-  return(_syscall(VFS_PROC_NR, UTIMENS, &m));
+  if ((unsigned)flags > SHRT_MAX) {
+	errno = EINVAL;
+	return -1;
+  }
+
+  memset(&m, 0, sizeof(m));
+  m.VFS_UTIMENS_LEN = strlen(name) + 1;
+  m.VFS_UTIMENS_NAME = (char *) __UNCONST(name);
+  m.VFS_UTIMENS_ATIME = tv[0].tv_sec;
+  m.VFS_UTIMENS_MTIME = tv[1].tv_sec;
+  m.VFS_UTIMENS_ANSEC = tv[0].tv_nsec;
+  m.VFS_UTIMENS_MNSEC = tv[1].tv_nsec;
+  m.VFS_UTIMENS_FLAGS = flags;
+
+  return(_syscall(VFS_PROC_NR, VFS_UTIMENS, &m));
 }

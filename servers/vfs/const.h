@@ -45,4 +45,11 @@
 /* special driver endpoint for CTTY_MAJOR; must be able to pass isokendpt() */
 #define CTTY_ENDPT	VFS_PROC_NR
 
+/* operations for release() */
+enum {
+	OP_OPEN,
+	OP_READ,
+	OP_WRITE
+};
+
 #endif

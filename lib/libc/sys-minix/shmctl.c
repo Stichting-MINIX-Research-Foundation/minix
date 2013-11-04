@@ -11,6 +11,7 @@
 #include <sys/shm.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <string.h>
 
 static int get_ipc_endpt(endpoint_t *pt)
 {
@@ -29,6 +30,7 @@ int shmctl(int shmid, int cmd, struct shmid_ds *buf)
 		return -1;
 	}
 
+	memset(&m, 0, sizeof(m));
 	m.SHMCTL_ID = shmid;
 	m.SHMCTL_CMD = cmd;
 	m.SHMCTL_BUF = (long) buf;

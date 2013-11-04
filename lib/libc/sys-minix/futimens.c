@@ -2,6 +2,7 @@
 #include "namespace.h"
 #include <lib.h>
 
+#include <string.h>
 #include <sys/stat.h>
 
 int futimens(int fd, const struct timespec tv[2])
@@ -11,13 +12,14 @@ int futimens(int fd, const struct timespec tv[2])
 
   if (tv == NULL) tv = now;
 
-  m.m2_i1 = fd;
-  m.m2_l1 = tv[0].tv_sec;
-  m.m2_l2 = tv[1].tv_sec;
-  m.m2_i2 = tv[0].tv_nsec;
-  m.m2_i3 = tv[1].tv_nsec;
-  m.m2_p1 = NULL;
-  m.m2_s1 = 0;
+  memset(&m, 0, sizeof(m));
+  m.VFS_UTIMENS_FD = fd;
+  m.VFS_UTIMENS_ATIME = tv[0].tv_sec;
+  m.VFS_UTIMENS_MTIME = tv[1].tv_sec;
+  m.VFS_UTIMENS_ANSEC = tv[0].tv_nsec;
+  m.VFS_UTIMENS_MNSEC = tv[1].tv_nsec;
+  m.VFS_UTIMENS_NAME = NULL;
+  m.VFS_UTIMENS_FLAGS = 0;
 
-  return(_syscall(VFS_PROC_NR, UTIMENS, &m));
+  return(_syscall(VFS_PROC_NR, VFS_UTIMENS, &m));
 }

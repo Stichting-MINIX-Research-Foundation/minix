@@ -2,6 +2,7 @@
 #include "namespace.h"
 #include <lib.h>
 
+#include <string.h>
 #include <unistd.h>
 
 #ifdef __weak_alias
@@ -14,7 +15,8 @@ int mode;
 {
   message m;
 
-  m.m3_i2 = mode;
+  memset(&m, 0, sizeof(m));
+  m.VFS_PATH_MODE = mode;
   _loadname(name, &m);
-  return(_syscall(VFS_PROC_NR, ACCESS, &m));
+  return(_syscall(VFS_PROC_NR, VFS_ACCESS, &m));
 }

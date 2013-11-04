@@ -3,14 +3,16 @@
  */
 #include <lib.h>
 #include <stdio.h>
+#include <string.h>
 #include <sys/svrctl.h>
 
 int svrctl(int request, void *argp)
 {
 	message m;
 
-	m.m2_i1 = request;
-	m.m2_p1 = argp;
+	memset(&m, 0, sizeof(m));
+	m.SVRCTL_REQ = request;
+	m.SVRCTL_ARG = argp;
 
 	switch ((request >> 8) & 0xFF) {
 	case 'M':

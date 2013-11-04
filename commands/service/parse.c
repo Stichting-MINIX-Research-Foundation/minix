@@ -727,7 +727,6 @@ struct
 {
 	{ "EXIT",		VM_EXIT },
 	{ "FORK",		VM_FORK },
-	{ "BRK",		VM_BRK },
 	{ "EXEC_NEWMEM",	VM_EXEC_NEWMEM },
 	{ "PUSH_SIG",		0 },
 	{ "WILLEXIT",		VM_WILLEXIT },

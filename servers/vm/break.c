@@ -49,8 +49,13 @@ int do_brk(message *msg)
  */
 	int proc;
 
-	if(vm_isokendpt(msg->VMB_ENDPOINT, &proc) != OK) {
-		printf("VM: bogus endpoint VM_BRK %d\n", msg->VMB_ENDPOINT);
+	/* XXX LEGACY SUPPORT, OBSOLETE AS OF 3.3.0 */
+	endpoint_t ep;
+	ep = msg->m_source == PM_PROC_NR ? msg->VMB_ENDPOINT : msg->m_source;
+	/* XXX END OF LEGACY SUPPORT */
+
+	if(vm_isokendpt(ep, &proc) != OK) {
+		printf("VM: bogus endpoint VM_BRK %d\n", ep);
 		return EINVAL;
 	}
 

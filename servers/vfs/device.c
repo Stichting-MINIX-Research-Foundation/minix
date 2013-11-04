@@ -31,7 +31,6 @@
 #include <minix/vfsif.h>
 #include "vnode.h"
 #include "vmnt.h"
-#include "param.h"
 
 static int cdev_opcl(int op, dev_t dev, int flags);
 static int block_io(endpoint_t driver_e, message *mess_ptr);
@@ -478,7 +477,7 @@ int cdev_close(dev_t dev)
  *===========================================================================*/
 int do_ioctl(void)
 {
-/* Perform the ioctl(ls_fd, request, argx) system call */
+/* Perform the ioctl(2) system call. */
   unsigned long ioctlrequest;
   int r = OK;
   struct filp *f;
