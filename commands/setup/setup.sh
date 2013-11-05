@@ -13,40 +13,20 @@ MYLOCALRC=/mnt/etc/rc.local
 ROOTMB=64
 ROOTSECTS="`expr $ROOTMB '*' 1024 '*' 2`"
 BOOTXXSECTS=32
-USRKBFILE=/.usrkb
-if [ ! -f "$USRKBFILE" ]
-then	echo "Are you really running from CD?"
-	echo "No $USRKBFILE file."
-	exit 1
-fi
-USRKB="`cat /.usrkb`"
+USRKB="`du -sxk /usr | awk '{ print $1 }'`"
 TOTALMB="`expr 3 + $USRKB / 1024 + $ROOTMB`"
-ROOTFILES="`cat /.rootfiles`"
-USRFILES="`cat /.usrfiles`"
+ROOTFILES="`find -x / | wc -l`"
+USRFILES="`find -x /usr | wc -l`"
+
+# /usr/install isn't copied onto the new system; compensate
+INSTALLDIR=/usr/install
+if [ -d $INSTALLDIR ]
+then	$USRFILES=$(($USRFILES - `find -x $INSTALLDIR | wc -l`))
+	$USRKB=$(($USRKB - `du -sxk $INSTALLDIR | awk '{ print $1 }'`))
+fi
 
 if [ -z "$FSTYPE" ]
 then	FSTYPE=mfs
-fi
-
-if [ "$TOTALMB" -lt 1 ]
-then	 
-	echo "Are you really running from CD?"
-	echo "Something wrong with size estimate on CD."
-	exit 1
-fi
-
-if [ "$ROOTFILES" -lt 1 ]
-then	 
-	echo "Are you really running from CD?"
-	echo "Something wrong with root files count on CD."
-	exit 1
-fi
-
-if [ "$USRFILES" -lt 1 ]
-then	 
-	echo "Are you really running from CD?"
-	echo "Something wrong with usr files count on CD."
-	exit 1
 fi
 
 PATH=/bin:/sbin:/usr/bin:/usr/sbin
@@ -729,6 +709,7 @@ cpdir -vx / /mnt | progressbar "$ROOTFILES" || exit
 chmod o-w /mnt/usr
 cp /mnt/etc/motd.install /mnt/etc/motd
 
+
 # Fix /var/log
 rm /mnt/var/log
 ln -s /usr/log /mnt/var/log
@@ -748,7 +729,16 @@ mount /dev/$usr /mnt/usr >/dev/null || exit
 # XXX we have to use "-f" here, because installboot worries about BPB, which
 # we don't have...
 installboot_nbsd -f /dev/$primary /usr/mdec/bootxx_minixfs3 >/dev/null || exit
-cp /mnt/etc/boot.cfg.default /mnt/boot.cfg
+# give the install the boot loader
+cp /usr/mdec/boot_monitor /mnt/
+minixdir=/mnt/boot/minix_default
+if [ ! -f $minixdir/kernel ]
+then	rm -rf $minixdir
+	cp -r /mnt/multiboot $minixdir
+fi
+if [ ! -e /mnt/boot/minix_latest ]
+then	ln -sf minix_default /mnt/boot/minix_latest
+fi
 chroot /mnt update_bootcfg
 
 # Save name of CD drive
