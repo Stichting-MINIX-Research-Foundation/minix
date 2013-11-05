@@ -297,7 +297,7 @@ int *completed;			/* number of bytes copied */
   }
 
   /* In all cases, bp now points to a valid buffer. */
-  assert(bp);
+  assert(bp != NULL);
   
   if (rw_flag == WRITING && chunk != block_size && !block_spec &&
       (off_t) ex64lo(position) >= rip->i_size && off == 0) {
@@ -477,6 +477,7 @@ unsigned bytes_ahead;		/* bytes beyond position for immediate use */
   static unsigned int readqsize = 0;
   static struct buf **read_q;
   u64_t position_running;
+  int inuse_before = lmfs_bufs_in_use();
 
   if(readqsize != nr_bufs) {
 	if(readqsize > 0) {
@@ -512,6 +513,7 @@ unsigned bytes_ahead;		/* bytes beyond position for immediate use */
 	  bp = lmfs_get_block_ino(dev, block, PREFETCH, rip->i_num, position);
 
   assert(bp != NULL);
+  assert(bp->lmfs_count > 0);
   if (lmfs_dev(bp) != NO_DEV) return(bp);
 
   /* The best guess for the number of blocks to prefetch:  A lot.
@@ -567,6 +569,7 @@ unsigned bytes_ahead;		/* bytes beyond position for immediate use */
   /* Acquire block buffers. */
   for (;;) {
   	block_t thisblock;
+	assert(bp->lmfs_count > 0);
 	read_q[read_q_size++] = bp;
 
 	if (--blocks_ahead == 0) break;
@@ -583,6 +586,8 @@ unsigned bytes_ahead;		/* bytes beyond position for immediate use */
 	} else {
 		bp = get_block(dev, block, PREFETCH);
 	}
+	assert(bp);
+	assert(bp->lmfs_count > 0);
 	if (lmfs_dev(bp) != NO_DEV) {
 		/* Oops, block already in the cache, get out. */
 		put_block(bp, FULL_DATA_BLOCK);
@@ -590,6 +595,8 @@ unsigned bytes_ahead;		/* bytes beyond position for immediate use */
 	}
   }
   lmfs_rw_scattered(dev, read_q, read_q_size, READING);
+
+  assert(inuse_before == lmfs_bufs_in_use());
 
   if(block_spec)
 	  return get_block(dev, baseblock, NORMAL);

@@ -619,6 +619,23 @@ void lmfs_rw_scattered(
   static iovec_t iovec[NR_IOREQS];
   u64_t pos;
   int iov_per_block;
+  int start_in_use = bufs_in_use, start_bufqsize = bufqsize;
+
+  assert(bufqsize >= 0);
+  if(bufqsize == 0) return;
+
+  /* for READING, check all buffers on the list are obtained and held
+   * (count > 0)
+   */
+  if (rw_flag == READING) {
+	for(i = 0; i < bufqsize; i++) {
+		assert(bufq[i] != NULL);
+		assert(bufq[i]->lmfs_count > 0);
+  	}
+
+  	/* therefore they are all 'in use' and must be at least this many */
+	  assert(start_in_use >= start_bufqsize);
+  }
 
   assert(dev != NO_DEV);
   assert(!(fs_block_size % PAGE_SIZE));
@@ -700,8 +717,10 @@ void lmfs_rw_scattered(
 		}
 		r -= fs_block_size;
 	}
-	bufq += nblocks;
-	bufqsize -= nblocks;
+
+	bufq += i;
+	bufqsize -= i;
+
 	if (rw_flag == READING) {
 		/* Don't bother reading more than the device is willing to
 		 * give at this time.  Don't forget to release those extras.
@@ -719,6 +738,13 @@ void lmfs_rw_scattered(
 		 */
 		break;
 	}
+  }
+
+  if(rw_flag == READING) {
+  	assert(start_in_use >= start_bufqsize);
+
+	/* READING callers assume all bufs are released. */
+	assert(start_in_use - start_bufqsize == bufs_in_use);
   }
 }
 
