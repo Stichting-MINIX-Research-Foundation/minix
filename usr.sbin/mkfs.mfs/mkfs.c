@@ -494,8 +494,7 @@ sizeup_dir(struct fs_size * fssize)
 		fssize->zonecount++; /* Symlink contents is always stored a block */
 	} else {
 		if ((f = fopen(token[4], "rb")) == NULL) {
-			pexit("dynamic size detection failed: can't open %s",
-			    token[4]);
+			warn("dynamic sizing: can't open %s", token[4]);
 		} else if (fseek(f, 0, SEEK_END) < 0) {
 			pexit("dynamic size detection failed: seek to end of %s",
 			    token[4]);

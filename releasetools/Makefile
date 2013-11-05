@@ -93,7 +93,8 @@ do-hdboot:
 	n=`expr $$n + 1`;					\
 	[ "$$n" -ge 10 ] && prefix="mod" || prefix="mod0";	\
 	newname="${DESTDIR}/boot/minix/.temp/$${prefix}$${n}_`basename $$i`"; \
-	${INSTALL} $$i $$newname;				\
+	${INSTALL_FILE} $$i $$newname;				\
+	echo ${INSTALL_FILE} $$i $$newname;			\
 	done
 	@cp ${PROGROOT}/kernel/kernel ${DESTDIR}/boot/minix/.temp/
 	@if [ "${MKINSTALLBOOT:Uno}" != "no" ] ; then		\
@@ -103,7 +104,7 @@ do-hdboot:
 	${HOST_SH} ../commands/update_bootcfg/update_bootcfg.sh;\
 	else							\
 	${INSTALL_DIR} ${DESTDIR}/multiboot;			\
-	${INSTALL} ${DESTDIR}/boot/minix/.temp/* ${DESTDIR}/multiboot;	\
+	${INSTALL_FILE} ${DESTDIR}/boot/minix/.temp/* ${DESTDIR}/multiboot; \
 	fi
 
 # download and update NetBSD reference sources.
