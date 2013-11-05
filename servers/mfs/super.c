@@ -274,7 +274,7 @@ int read_super(struct super_block *sp)
 
   /* If the super block has the wrong byte order, swap the fields; the magic
    * number doesn't need conversion. */
-  sp->s_ninodes =           (ino_t) conv4(native, (int) sp->s_ninodes);
+  sp->s_ninodes =          (pino_t) conv4(native, (int) sp->s_ninodes);
   sp->s_nzones =          (zone1_t) conv2(native, (int) sp->s_nzones);
   sp->s_imap_blocks =       (short) conv2(native, (int) sp->s_imap_blocks);
   sp->s_zmap_blocks =       (short) conv2(native, (int) sp->s_zmap_blocks);

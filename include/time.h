@@ -65,12 +65,10 @@ typedef	_BSD_CLOCKID_T_	clockid_t;
 #undef	_BSD_CLOCKID_T_
 #endif
 
-#ifndef __minix
 #ifdef	_BSD_TIMER_T_
 typedef	_BSD_TIMER_T_	timer_t;
 #undef	_BSD_TIMER_T_
 #endif
-#endif /* !__minix */
 
 #ifdef __minix
 #define CLOCKS_PER_SEC	60

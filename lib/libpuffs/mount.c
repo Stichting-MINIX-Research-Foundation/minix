@@ -33,7 +33,7 @@ int fs_readsuper()
   fs_m_out.RES_FILE_SIZE_LO = root_va->va_size;
   fs_m_out.RES_UID = root_va->va_uid;
   fs_m_out.RES_GID = root_va->va_gid;
-  fs_m_out.RES_CONREQS = 1;
+  fs_m_out.RES_FLAGS = RES_NOFLAGS;
 
   return(OK);
 }
@@ -49,7 +49,7 @@ int fs_mountpoint()
  */
   int r = OK;
   struct puffs_node *pn;
-  mode_t bits;
+  pmode_t bits;
 
   /*
    * XXX: we assume that lookup was done first, so pnode can be found with

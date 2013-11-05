@@ -21,7 +21,7 @@ int fs_create()
   int r;
   struct puffs_node *pn_dir;
   struct puffs_node *pn;
-  mode_t omode;
+  pmode_t omode;
   struct puffs_newinfo pni;
   struct puffs_kcn pkcnp;
   PUFFS_MAKECRED(pcr, &global_kcred);
@@ -36,7 +36,7 @@ int fs_create()
   }
 
   /* Read request message */
-  omode = (mode_t) fs_m_in.REQ_MODE;
+  omode = (pmode_t) fs_m_in.REQ_MODE;
   caller_uid = (uid_t) fs_m_in.REQ_UID;
   caller_gid = (gid_t) fs_m_in.REQ_GID;
 
@@ -63,7 +63,7 @@ int fs_create()
   
   memset(&va, 0, sizeof(va));
   va.va_type = VREG;
-  va.va_mode = omode;
+  va.va_mode = (mode_t) omode;
   va.va_uid = caller_uid;
   va.va_gid = caller_gid;
   va.va_atime = va.va_mtime = va.va_ctime = cur_time;
@@ -318,7 +318,7 @@ int fs_slink()
   if (r != OK) return(r);
   target[fs_m_in.REQ_MEM_SIZE] = '\0';
 
-  if (strlen(target) != fs_m_in.REQ_MEM_SIZE) {
+  if (strlen(target) != (size_t) fs_m_in.REQ_MEM_SIZE) {
 	/* This can happen if the user provides a buffer
 	 * with a \0 in it. This can cause a lot of trouble
 	 * when the symlink is used later. We could just use

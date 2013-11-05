@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-static struct buf *new_block(dev_t dev, ino_t inum);
+static struct buf *new_block(dev_t dev, pino_t inum);
 
 /*===========================================================================*
  *                              buf_pool                                     *
@@ -23,7 +23,7 @@ void buf_pool(void)
 /*===========================================================================*
  *				get_block				     *
  *===========================================================================*/
-struct buf *get_block(dev_t dev, ino_t inum)
+struct buf *get_block(dev_t dev, pino_t inum)
 {
   struct buf *bp = front;
 
@@ -43,7 +43,7 @@ struct buf *get_block(dev_t dev, ino_t inum)
 /*===========================================================================*
  *				new_block				     *
  *===========================================================================*/
-static struct buf *new_block(dev_t dev, ino_t inum)
+static struct buf *new_block(dev_t dev, pino_t inum)
 {
 /* Allocate a new buffer and add it to the double linked buffer list */
   struct buf *bp;
@@ -77,7 +77,7 @@ static struct buf *new_block(dev_t dev, ino_t inum)
 /*===========================================================================*
  *				put_block				     *
  *===========================================================================*/
-void put_block(dev_t dev, ino_t inum)
+void put_block(dev_t dev, pino_t inum)
 {
   struct buf *bp;
 

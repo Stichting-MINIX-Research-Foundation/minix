@@ -171,8 +171,7 @@ start)
 	edit ds
 	edit tty
 	edit memory
-	edit -p log
-	edit -c pfs
+	edit pfs
 	edit init
     fi
 

@@ -14,7 +14,6 @@
 #include <assert.h>
 #include <minix/callnr.h>
 #include "file.h"
-#include "fproc.h"
 #include "path.h"
 #include "param.h"
 #include <minix/vfsif.h>

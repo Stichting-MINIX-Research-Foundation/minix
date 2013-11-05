@@ -17,7 +17,7 @@ int drv_int_sum(void);
 int drv_int(int sub_dev);
 int drv_pause(int chan);
 int drv_resume(int chan);
-int drv_io_ctl(int request, void * val, int * len, int sub_dev);
+int drv_io_ctl(unsigned long request, void * val, int * len, int sub_dev);
 int drv_get_irq(char *irq);
 int drv_get_frag_size(u32_t *frag_size, int sub_dev);
 
@@ -42,11 +42,9 @@ typedef struct {
 	int BufFillNext;                          /* end of extra circular buffer */
 	int BufLength;
 	int RevivePending;                        /* process waiting for this dev? */
-	int ReviveStatus;                         /* return val when proc unblocked */
 	endpoint_t ReviveProcNr;                  /* the process to unblock */
+	cdev_id_t ReviveId;                       /* request ID */
 	cp_grant_id_t ReviveGrant;		  /* grant id associated with io */
-	void *UserBuf;                            /* address of user's data buffer */
-	int ReadyToRevive;                        /* are we ready to revive process?*/
 	endpoint_t SourceProcNr;                  /* process to send notify to (FS) */
 	u32_t FragSize;                           /* dma fragment size */
 	char *DmaBuf;        /* the dma buffer; extra space for 
@@ -82,9 +80,8 @@ EXTERN special_file_t special_file[];
 
 #define NO_CHANNEL -1
 
-#define TRUE 1
-#define FALSE 0
 #define NO_DMA 0
-
+#define READ_DMA 1
+#define WRITE_DMA 2
 
 #endif /* AUDIO_FW_H */

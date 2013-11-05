@@ -1,6 +1,6 @@
-/*	$Vendor-Id: mandoc.c,v 1.36 2011/01/03 22:42:37 schwarze Exp $ */
+/*	$Vendor-Id: mandoc.c,v 1.62 2011/12/03 16:08:51 schwarze Exp $ */
 /*
- * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -23,6 +23,8 @@
 
 #include <assert.h>
 #include <ctype.h>
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -31,200 +33,384 @@
 #include "mandoc.h"
 #include "libmandoc.h"
 
+#define DATESIZE 32
+
 static	int	 a2time(time_t *, const char *, const char *);
+static	char	*time2a(time_t);
+static	int	 numescape(const char *);
 
-
-int
-mandoc_special(char *p)
+/*
+ * Pass over recursive numerical expressions.  This context of this
+ * function is important: it's only called within character-terminating
+ * escapes (e.g., \s[xxxyyy]), so all we need to do is handle initial
+ * recursion: we don't care about what's in these blocks. 
+ * This returns the number of characters skipped or -1 if an error
+ * occurs (the caller should bail).
+ */
+static int
+numescape(const char *start)
 {
-	int		 len, i;
-	char		 term;
-	char		*sv;
-	
-	len = 0;
-	term = '\0';
-	sv = p;
+	int		 i;
+	size_t		 sz;
+	const char	*cp;
 
-	assert('\\' == *p);
-	p++;
+	i = 0;
 
-	switch (*p++) {
-#if 0
-	case ('Z'):
-		/* FALLTHROUGH */
-	case ('X'):
-		/* FALLTHROUGH */
-	case ('x'):
-		/* FALLTHROUGH */
-	case ('S'):
-		/* FALLTHROUGH */
-	case ('R'):
-		/* FALLTHROUGH */
-	case ('N'):
-		/* FALLTHROUGH */
-	case ('l'):
-		/* FALLTHROUGH */
-	case ('L'):
-		/* FALLTHROUGH */
-	case ('H'):
-		/* FALLTHROUGH */
-	case ('h'):
-		/* FALLTHROUGH */
-	case ('D'):
-		/* FALLTHROUGH */
+	/* The expression consists of a subexpression. */
+
+	if ('\\' == start[i]) {
+		cp = &start[++i];
+		/*
+		 * Read past the end of the subexpression.
+		 * Bail immediately on errors.
+		 */
+		if (ESCAPE_ERROR == mandoc_escape(&cp, NULL, NULL))
+			return(-1);
+		return(i + cp - &start[i]);
+	} 
+
+	if ('(' != start[i++])
+		return(0);
+
+	/*
+	 * A parenthesised subexpression.  Read until the closing
+	 * parenthesis, making sure to handle any nested subexpressions
+	 * that might ruin our parse.
+	 */
+
+	while (')' != start[i]) {
+		sz = strcspn(&start[i], ")\\");
+		i += (int)sz;
+
+		if ('\0' == start[i])
+			return(-1);
+		else if ('\\' != start[i])
+			continue;
+
+		cp = &start[++i];
+		if (ESCAPE_ERROR == mandoc_escape(&cp, NULL, NULL))
+			return(-1);
+		i += cp - &start[i];
+	}
+
+	/* Read past the terminating ')'. */
+	return(++i);
+}
+
+enum mandoc_esc
+mandoc_escape(const char **end, const char **start, int *sz)
+{
+	char		 c, term, numeric;
+	int		 i, lim, ssz, rlim;
+	const char	*cp, *rstart;
+	enum mandoc_esc	 gly; 
+
+	cp = *end;
+	rstart = cp;
+	if (start)
+		*start = rstart;
+	i = lim = 0;
+	gly = ESCAPE_ERROR;
+	term = numeric = '\0';
+
+	switch ((c = cp[i++])) {
+	/*
+	 * First the glyphs.  There are several different forms of
+	 * these, but each eventually returns a substring of the glyph
+	 * name.
+	 */
+	case ('('):
+		gly = ESCAPE_SPECIAL;
+		lim = 2;
+		break;
+	case ('['):
+		gly = ESCAPE_SPECIAL;
+		/*
+		 * Unicode escapes are defined in groff as \[uXXXX] to
+		 * \[u10FFFF], where the contained value must be a valid
+		 * Unicode codepoint.  Here, however, only check whether
+		 * it's not a zero-width escape.
+		 */
+		if ('u' == cp[i] && ']' != cp[i + 1])
+			gly = ESCAPE_UNICODE;
+		term = ']';
+		break;
 	case ('C'):
-		/* FALLTHROUGH */
-	case ('b'):
-		/* FALLTHROUGH */
-	case ('B'):
-		/* FALLTHROUGH */
-	case ('a'):
-		/* FALLTHROUGH */
-	case ('A'):
-		if (*p++ != '\'')
-			return(0);
+		if ('\'' != cp[i])
+			return(ESCAPE_ERROR);
+		gly = ESCAPE_SPECIAL;
 		term = '\'';
 		break;
-#endif
-	case ('h'):
+
+	/*
+	 * Handle all triggers matching \X(xy, \Xx, and \X[xxxx], where
+	 * 'X' is the trigger.  These have opaque sub-strings.
+	 */
+	case ('F'):
 		/* FALLTHROUGH */
-	case ('v'):
+	case ('g'):
 		/* FALLTHROUGH */
-	case ('s'):
-		if (ASCII_HYPH == *p)
-			*p = '-';
-
-		i = 0;
-		if ('+' == *p || '-' == *p) {
-			p++;
-			i = 1;
-		}
-
-		switch (*p++) {
-		case ('('):
-			len = 2;
-			break;
-		case ('['):
-			term = ']';
-			break;
-		case ('\''):
-			term = '\'';
-			break;
-		case ('0'):
-			i = 1;
-			/* FALLTHROUGH */
-		default:
-			len = 1;
-			p--;
-			break;
-		}
-
-		if (ASCII_HYPH == *p)
-			*p = '-';
-		if ('+' == *p || '-' == *p) {
-			if (i)
-				return(0);
-			p++;
-		} 
-		
-		/* Handle embedded numerical subexp or escape. */
-
-		if ('(' == *p) {
-			while (*p && ')' != *p)
-				if ('\\' == *p++) {
-					i = mandoc_special(--p);
-					if (0 == i)
-						return(0);
-					p += i;
-				}
-
-			if (')' == *p++)
-				break;
-
-			return(0);
-		} else if ('\\' == *p) {
-			if (0 == (i = mandoc_special(p)))
-				return(0);
-			p += i;
-		}
-
-		break;
-#if 0
-	case ('Y'):
-		/* FALLTHROUGH */
-	case ('V'):
-		/* FALLTHROUGH */
-	case ('$'):
-		/* FALLTHROUGH */
-	case ('n'):
-		/* FALLTHROUGH */
-#endif
 	case ('k'):
 		/* FALLTHROUGH */
 	case ('M'):
 		/* FALLTHROUGH */
 	case ('m'):
 		/* FALLTHROUGH */
+	case ('n'):
+		/* FALLTHROUGH */
+	case ('V'):
+		/* FALLTHROUGH */
+	case ('Y'):
+		gly = ESCAPE_IGNORE;
+		/* FALLTHROUGH */
 	case ('f'):
-		/* FALLTHROUGH */
-	case ('F'):
-		/* FALLTHROUGH */
-	case ('*'):
-		switch (*p++) {
+		if (ESCAPE_ERROR == gly)
+			gly = ESCAPE_FONT;
+
+		rstart= &cp[i];
+		if (start) 
+			*start = rstart;
+
+		switch (cp[i++]) {
 		case ('('):
-			len = 2;
+			lim = 2;
 			break;
 		case ('['):
 			term = ']';
 			break;
 		default:
-			len = 1;
-			p--;
+			lim = 1;
+			i--;
 			break;
 		}
 		break;
-	case ('('):
-		len = 2;
-		break;
-	case ('['):
-		term = ']';
-		break;
-	case ('z'):
-		len = 1;
-		if ('\\' == *p) {
-			if (0 == (i = mandoc_special(p)))
-				return(0);
-			p += i;
-			return(*p ? (int)(p - sv) : 0);
-		}
-		break;
+
+	/*
+	 * These escapes are of the form \X'Y', where 'X' is the trigger
+	 * and 'Y' is any string.  These have opaque sub-strings.
+	 */
+	case ('A'):
+		/* FALLTHROUGH */
+	case ('b'):
+		/* FALLTHROUGH */
+	case ('D'):
+		/* FALLTHROUGH */
 	case ('o'):
 		/* FALLTHROUGH */
+	case ('R'):
+		/* FALLTHROUGH */
+	case ('X'):
+		/* FALLTHROUGH */
+	case ('Z'):
+		if ('\'' != cp[i++])
+			return(ESCAPE_ERROR);
+		gly = ESCAPE_IGNORE;
+		term = '\'';
+		break;
+
+	/*
+	 * These escapes are of the form \X'N', where 'X' is the trigger
+	 * and 'N' resolves to a numerical expression.
+	 */
+	case ('B'):
+		/* FALLTHROUGH */
+	case ('h'):
+		/* FALLTHROUGH */
+	case ('H'):
+		/* FALLTHROUGH */
+	case ('L'):
+		/* FALLTHROUGH */
+	case ('l'):
+		gly = ESCAPE_NUMBERED;
+		/* FALLTHROUGH */
+	case ('S'):
+		/* FALLTHROUGH */
+	case ('v'):
+		/* FALLTHROUGH */
 	case ('w'):
-		if ('\'' == *p++) {
-			term = '\'';
+		/* FALLTHROUGH */
+	case ('x'):
+		if (ESCAPE_ERROR == gly)
+			gly = ESCAPE_IGNORE;
+		if ('\'' != cp[i++])
+			return(ESCAPE_ERROR);
+		term = numeric = '\'';
+		break;
+
+	/*
+	 * Special handling for the numbered character escape.
+	 * XXX Do any other escapes need similar handling?
+	 */
+	case ('N'):
+		if ('\0' == cp[i])
+			return(ESCAPE_ERROR);
+		*end = &cp[++i];
+		if (isdigit((unsigned char)cp[i-1]))
+			return(ESCAPE_IGNORE);
+		while (isdigit((unsigned char)**end))
+			(*end)++;
+		if (start)
+			*start = &cp[i];
+		if (sz)
+			*sz = *end - &cp[i];
+		if ('\0' != **end)
+			(*end)++;
+		return(ESCAPE_NUMBERED);
+
+	/* 
+	 * Sizes get a special category of their own.
+	 */
+	case ('s'):
+		gly = ESCAPE_IGNORE;
+
+		rstart = &cp[i];
+		if (start) 
+			*start = rstart;
+
+		/* See +/- counts as a sign. */
+		c = cp[i];
+		if ('+' == c || '-' == c || ASCII_HYPH == c)
+			++i;
+
+		switch (cp[i++]) {
+		case ('('):
+			lim = 2;
+			break;
+		case ('['):
+			term = numeric = ']';
+			break;
+		case ('\''):
+			term = numeric = '\'';
+			break;
+		default:
+			lim = 1;
+			i--;
 			break;
 		}
-		/* FALLTHROUGH */
+
+		/* See +/- counts as a sign. */
+		c = cp[i];
+		if ('+' == c || '-' == c || ASCII_HYPH == c)
+			++i;
+
+		break;
+
+	/*
+	 * Anything else is assumed to be a glyph.
+	 */
 	default:
-		len = 1;
-		p--;
+		gly = ESCAPE_SPECIAL;
+		lim = 1;
+		i--;
 		break;
 	}
 
-	if (term) {
-		for ( ; *p && term != *p; p++)
-			if (ASCII_HYPH == *p)
-				*p = '-';
-		return(*p ? (int)(p - sv) : 0);
+	assert(ESCAPE_ERROR != gly);
+
+	rstart = &cp[i];
+	if (start)
+		*start = rstart;
+
+	/*
+	 * If a terminating block has been specified, we need to
+	 * handle the case of recursion, which could have their
+	 * own terminating blocks that mess up our parse.  This, by the
+	 * way, means that the "start" and "size" values will be
+	 * effectively meaningless.
+	 */
+
+	ssz = 0;
+	if (numeric && -1 == (ssz = numescape(&cp[i])))
+		return(ESCAPE_ERROR);
+
+	i += ssz;
+	rlim = -1;
+
+	/*
+	 * We have a character terminator.  Try to read up to that
+	 * character.  If we can't (i.e., we hit the nil), then return
+	 * an error; if we can, calculate our length, read past the
+	 * terminating character, and exit.
+	 */
+
+	if ('\0' != term) {
+		*end = strchr(&cp[i], term);
+		if ('\0' == *end)
+			return(ESCAPE_ERROR);
+
+		rlim = *end - &cp[i];
+		if (sz)
+			*sz = rlim;
+		(*end)++;
+		goto out;
 	}
 
-	for (i = 0; *p && i < len; i++, p++)
-		if (ASCII_HYPH == *p)
-			*p = '-';
-	return(i == len ? (int)(p - sv) : 0);
-}
+	assert(lim > 0);
 
+	/*
+	 * We have a numeric limit.  If the string is shorter than that,
+	 * stop and return an error.  Else adjust our endpoint, length,
+	 * and return the current glyph.
+	 */
+
+	if ((size_t)lim > strlen(&cp[i]))
+		return(ESCAPE_ERROR);
+
+	rlim = lim;
+	if (sz)
+		*sz = rlim;
+
+	*end = &cp[i] + lim;
+
+out:
+	assert(rlim >= 0 && rstart);
+
+	/* Run post-processors. */
+
+	switch (gly) {
+	case (ESCAPE_FONT):
+		/*
+		 * Pretend that the constant-width font modes are the
+		 * same as the regular font modes.
+		 */
+		if (2 == rlim && 'C' == *rstart)
+			rstart++;
+		else if (1 != rlim)
+			break;
+
+		switch (*rstart) {
+		case ('3'):
+			/* FALLTHROUGH */
+		case ('B'):
+			gly = ESCAPE_FONTBOLD;
+			break;
+		case ('2'):
+			/* FALLTHROUGH */
+		case ('I'):
+			gly = ESCAPE_FONTITALIC;
+			break;
+		case ('P'):
+			gly = ESCAPE_FONTPREV;
+			break;
+		case ('1'):
+			/* FALLTHROUGH */
+		case ('R'):
+			gly = ESCAPE_FONTROMAN;
+			break;
+		}
+		break;
+	case (ESCAPE_SPECIAL):
+		if (1 != rlim)
+			break;
+		if ('c' == *rstart)
+			gly = ESCAPE_NOSPACE;
+		break;
+	default:
+		break;
+	}
+
+	return(gly);
+}
 
 void *
 mandoc_calloc(size_t num, size_t size)
@@ -269,6 +455,16 @@ mandoc_realloc(void *ptr, size_t size)
 	return(ptr);
 }
 
+char *
+mandoc_strndup(const char *ptr, size_t sz)
+{
+	char		*p;
+
+	p = mandoc_malloc(sz + 1);
+	memcpy(p, ptr, sz);
+	p[(int)sz] = '\0';
+	return(p);
+}
 
 char *
 mandoc_strdup(const char *ptr)
@@ -294,18 +490,18 @@ mandoc_strdup(const char *ptr)
  * or to the null byte terminating the argument line.
  */
 char *
-mandoc_getarg(char **cpp, mandocmsg msg, void *data, int ln, int *pos)
+mandoc_getarg(struct mparse *parse, char **cpp, int ln, int *pos)
 {
 	char	 *start, *cp;
 	int	  quoted, pairs, white;
 
 	/* Quoting can only start with a new word. */
 	start = *cpp;
+	quoted = 0;
 	if ('"' == *start) {
 		quoted = 1;
 		start++;
-	} else
-		quoted = 0;
+	} 
 
 	pairs = 0;
 	white = 0;
@@ -341,8 +537,8 @@ mandoc_getarg(char **cpp, mandocmsg msg, void *data, int ln, int *pos)
 	}
 
 	/* Quoted argument without a closing quote. */
-	if (1 == quoted && msg)
-		(*msg)(MANDOCERR_BADQUOTE, data, ln, *pos, NULL);
+	if (1 == quoted)
+		mandoc_msg(MANDOCERR_BADQUOTE, parse, ln, *pos, NULL);
 
 	/* Null-terminate this argument and move to the next one. */
 	if (pairs)
@@ -352,15 +548,14 @@ mandoc_getarg(char **cpp, mandocmsg msg, void *data, int ln, int *pos)
 		while (' ' == *cp)
 			cp++;
 	}
-	*pos += (cp - start) + (quoted ? 1 : 0);
+	*pos += (int)(cp - start) + (quoted ? 1 : 0);
 	*cpp = cp;
 
-	if ('\0' == *cp && msg && (white || ' ' == cp[-1]))
-		(*msg)(MANDOCERR_EOLNSPACE, data, ln, *pos, NULL);
+	if ('\0' == *cp && (white || ' ' == cp[-1]))
+		mandoc_msg(MANDOCERR_EOLNSPACE, parse, ln, *pos, NULL);
 
 	return(start);
 }
-
 
 static int
 a2time(time_t *t, const char *fmt, const char *p)
@@ -370,7 +565,10 @@ a2time(time_t *t, const char *fmt, const char *p)
 
 	memset(&tm, 0, sizeof(struct tm));
 
+	pp = NULL;
+#ifdef	HAVE_STRPTIME
 	pp = strptime(p, fmt, &tm);
+#endif
 	if (NULL != pp && '\0' == *pp) {
 		*t = mktime(&tm);
 		return(1);
@@ -379,41 +577,62 @@ a2time(time_t *t, const char *fmt, const char *p)
 	return(0);
 }
 
-
-/*
- * Convert from a manual date string (see mdoc(7) and man(7)) into a
- * date according to the stipulated date type.
- */
-time_t
-mandoc_a2time(int flags, const char *p)
+static char *
+time2a(time_t t)
 {
-	time_t		 t;
+	struct tm	*tm;
+	char		*buf, *p;
+	size_t		 ssz;
+	int		 isz;
 
-	if (MTIME_MDOCDATE & flags) {
-		if (0 == strcmp(p, "$" "Mdocdate$"))
-			return(time(NULL));
-		if (a2time(&t, "$" "Mdocdate: %b %d %Y $", p))
-			return(t);
-	}
+	tm = localtime(&t);
 
-	if (MTIME_CANONICAL & flags || MTIME_REDUCED & flags) 
-		if (a2time(&t, "%b %d, %Y", p))
-			return(t);
+	/*
+	 * Reserve space:
+	 * up to 9 characters for the month (September) + blank
+	 * up to 2 characters for the day + comma + blank
+	 * 4 characters for the year and a terminating '\0'
+	 */
+	p = buf = mandoc_malloc(10 + 4 + 4 + 1);
 
-	if (MTIME_ISO_8601 & flags) 
-		if (a2time(&t, "%Y-%m-%d", p))
-			return(t);
+	if (0 == (ssz = strftime(p, 10 + 1, "%B ", tm)))
+		goto fail;
+	p += (int)ssz;
 
-	if (MTIME_REDUCED & flags) {
-		if (a2time(&t, "%d, %Y", p))
-			return(t);
-		if (a2time(&t, "%Y", p))
-			return(t);
-	}
+	if (-1 == (isz = snprintf(p, 4 + 1, "%d, ", tm->tm_mday)))
+		goto fail;
+	p += isz;
 
-	return(0);
+	if (0 == strftime(p, 4 + 1, "%Y", tm))
+		goto fail;
+	return(buf);
+
+fail:
+	free(buf);
+	return(NULL);
 }
 
+char *
+mandoc_normdate(struct mparse *parse, char *in, int ln, int pos)
+{
+	char		*out;
+	time_t		 t;
+
+	if (NULL == in || '\0' == *in ||
+	    0 == strcmp(in, "$" "Mdocdate$")) {
+		mandoc_msg(MANDOCERR_NODATE, parse, ln, pos, NULL);
+		time(&t);
+	}
+	else if (a2time(&t, "%Y-%m-%d", in))
+		t = 0;
+	else if (!a2time(&t, "$" "Mdocdate: %b %d %Y $", in) &&
+	    !a2time(&t, "%b %d, %Y", in)) {
+		mandoc_msg(MANDOCERR_BADDATE, parse, ln, pos, NULL);
+		t = 0;
+	}
+	out = t ? time2a(t) : NULL;
+	return(out ? out : mandoc_strdup(in));
+}
 
 int
 mandoc_eos(const char *p, size_t sz, int enclosed)
@@ -427,7 +646,7 @@ mandoc_eos(const char *p, size_t sz, int enclosed)
 	/*
 	 * End-of-sentence recognition must include situations where
 	 * some symbols, such as `)', allow prior EOS punctuation to
-	 * propogate outward.
+	 * propagate outward.
 	 */
 
 	found = 0;
@@ -458,30 +677,59 @@ mandoc_eos(const char *p, size_t sz, int enclosed)
 	return(found && !enclosed);
 }
 
-
+/*
+ * Find out whether a line is a macro line or not.  If it is, adjust the
+ * current position and return one; if it isn't, return zero and don't
+ * change the current position.
+ */
 int
-mandoc_hyph(const char *start, const char *c)
+mandoc_getcontrol(const char *cp, int *ppos)
 {
+	int		pos;
 
-	/*
-	 * Choose whether to break at a hyphenated character.  We only
-	 * do this if it's free-standing within a word.
-	 */
+	pos = *ppos;
 
-	/* Skip first/last character of buffer. */
-	if (c == start || '\0' == *(c + 1))
-		return(0);
-	/* Skip first/last character of word. */
-	if ('\t' == *(c + 1) || '\t' == *(c - 1))
-		return(0);
-	if (' ' == *(c + 1) || ' ' == *(c - 1))
-		return(0);
-	/* Skip double invocations. */
-	if ('-' == *(c + 1) || '-' == *(c - 1))
-		return(0);
-	/* Skip escapes. */
-	if ('\\' == *(c - 1))
+	if ('\\' == cp[pos] && '.' == cp[pos + 1])
+		pos += 2;
+	else if ('.' == cp[pos] || '\'' == cp[pos])
+		pos++;
+	else
 		return(0);
 
+	while (' ' == cp[pos] || '\t' == cp[pos])
+		pos++;
+
+	*ppos = pos;
 	return(1);
+}
+
+/*
+ * Convert a string to a long that may not be <0.
+ * If the string is invalid, or is less than 0, return -1.
+ */
+int
+mandoc_strntoi(const char *p, size_t sz, int base)
+{
+	char		 buf[32];
+	char		*ep;
+	long		 v;
+
+	if (sz > 31)
+		return(-1);
+
+	memcpy(buf, p, sz);
+	buf[(int)sz] = '\0';
+
+	errno = 0;
+	v = strtol(buf, &ep, base);
+
+	if (buf[0] == '\0' || *ep != '\0')
+		return(-1);
+
+	if (v > INT_MAX)
+		v = INT_MAX;
+	if (v < INT_MIN)
+		v = INT_MIN;
+
+	return((int)v);
 }

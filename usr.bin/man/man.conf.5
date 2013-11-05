@@ -1,4 +1,4 @@
-.\"	$NetBSD: man.conf.5,v 1.20 2007/02/10 19:27:39 reed Exp $
+.\"	$NetBSD: man.conf.5,v 1.22 2012/04/29 03:46:43 christos Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)man.conf.5	8.5 (Berkeley) 1/2/94
 .\"
-.Dd April 10, 2006
+.Dd April 28, 2012
 .Dt MAN.CONF 5
 .Os
 .Sh NAME
@@ -98,9 +98,9 @@ The suffix specification may contain the normal shell globbing characters
 The rest of the _build line is a shell command line whose standard
 output is a formatted manual page that can be directly displayed to
 the user.
-Any occurrences of the string
+There should be exactly one occurrence of the string
 .Dq %s
-in the shell command line will
+in the shell command line, and it will
 be replaced by the name of the file which is being formatted.
 .It _crunch
 used by
@@ -110,6 +110,10 @@ which originally were compressed man pages: The first field lists a suffix
 which indicates what kind of compression were used to compress the man page.
 The rest of the line must be a shell command line, used to compress the
 formatted pages.
+There should be exactly one occurrence of the string
+.Dq %s
+in the shell command line, and it will
+be replaced by the name of the output file.
 .It _default
 contains the system-wide default man path used to search for man pages.
 .It _subdir
@@ -152,6 +156,16 @@ including curly braces
 to escape a shell globbing character,
 precede it with a backslash
 .Pq Dq \e .
+.It _\*[Lt]machine\*[Gt]
+The defines additional paths to be searched for the particular
+.Dv machine
+whose literal value is taken from
+.Xr uname 1
+.Fl m .
+For example on an
+.Dv amd64 ,
+.Dv _amd64
+is used.
 .El
 .Pp
 Section configuration lines in
@@ -219,6 +233,7 @@ _subdir		cat[123]
 _suffix		.0
 _build		.[1-9]	nroff -man %s
 _build		.tbl	tbl %s | nroff -man
+_i386		x86
 _default	/usr/share/man/
 sect3		/usr/share/man/{old/,}cat3
 .Ed

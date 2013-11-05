@@ -6,10 +6,10 @@ getnucred \- obtain the credentials that correspond to the given endpoint.
 #include <sys/socket.h>
 .in +5
 .ti -5
-#include <unistd.h>
+#include <sys/ucred.h>
 
 .ti -5
-int getnucred(endpoint_t \fIproc_ep\fP,  struct ucred * \fIucred\fP);
+int getnucred(endpoint_t \fIproc_ep\fP,  struct uucred * \fIucred\fP);
 .br
 .ft P
 .SH DESCRIPTION

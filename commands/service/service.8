@@ -5,7 +5,7 @@ service \- Manage an operating system service.
 .PP
 \fBservice [-b -c -n -p -r] (up|run|edit|update)\fR \fI<binary|self>\fR
 [\fB-args\fR \fI<args>\fR] [\fB-dev\fR \fI<special>\fR]
-[\fB-devstyle\fR \fI<style>\fR] [\fB-period\fR \fI<ticks>\fR]
+[\fB-period\fR \fI<ticks>\fR]
 [\fB-script\fR \fI<path>\fR] [\fB-label\fR \fI<name>\fR]
 [\fB-config\fR \fI<path>\fR] [\fB-state\fR \fI<state>\fR]
 [\fB-maxtime\fR \fI<time>\fR]
@@ -103,12 +103,6 @@ given by \fI<binary>\fR. The default is to use no arguments.
 specifies the device file to associate to the system service (used only for
 device drivers). The default is to associate no device file to the service.
 .TP
-.BI \-devstyle " <style>"
-specifies the device style to associate to the system service (used only for
-device drivers). The list of supported device styles is available in
-the header file \fB<minix/dmap.h>\fR.
-The default is to associate no device style (\fBSTYLE_NDEV\fR) to the service.
-.TP
 .BI \-period " <ticks>"
 specifies the period to use for the system service.
 When a period is specified, \fBRS\fR sends a ping request to
@@ -160,7 +154,7 @@ label \fI<name>\fR. This action can be used to dynamically update the
 properties of any system service, including those contained in the
 boot image (e.g. \fBVM\fR). There are a few exceptions to the properties
 that can be actually overridden dynamically. For example, the device file
-and the device style associated to the service will no be updated. This
+associated to the service will no be updated. This
 action takes the same options supported by the \fBup\fR action.
 .PP
 .SS

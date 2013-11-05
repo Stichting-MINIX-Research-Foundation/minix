@@ -15,7 +15,7 @@
 /*===========================================================================*
  *				get_mode				     *
  *===========================================================================*/
-mode_t get_mode(ino, mode)
+pmode_t get_mode(ino, mode)
 struct inode *ino;
 int mode;
 {
@@ -47,7 +47,7 @@ int do_stat()
   struct sffs_attr attr;
   struct stat stat;
   char path[PATH_MAX];
-  ino_t ino_nr;
+  pino_t ino_nr;
   int r;
 
   ino_nr = m_in.REQ_INODE_NR;
