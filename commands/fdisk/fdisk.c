@@ -75,7 +75,7 @@ char *secbuf;
 int badbases;
 int badsizes;
 int badorders;
-char *devname;
+char *dev_name;
 int nhead;
 int nsec;
 int ncyl = 1024;
@@ -161,9 +161,9 @@ int main(int argc, char *argv[])
   }
 
   if (argn == argc)
-	devname = DEFAULT_DEV;
+	dev_name = DEFAULT_DEV;
   else if (argn == argc - 1)
-	devname = argv[argn];
+	dev_name = argv[argn];
   else
 	usage();
 
@@ -232,7 +232,7 @@ void getgeom(void)
 
   if (override) return;
 
-  if ((fd= open(devname, O_RDONLY)) < 0) return;
+  if ((fd= open(dev_name, O_RDONLY)) < 0) return;
 
   r = ioctl(fd, DIOCGETP, &geom);
   close(fd);
@@ -242,21 +242,21 @@ void getgeom(void)
   nsec = geom.sectors;
   ncyl = geom.cylinders;
 
-  printf("Geometry of %s: %dx%dx%d\n", devname, ncyl, nhead, nsec);
+  printf("Geometry of %s: %dx%dx%d\n", dev_name, ncyl, nhead, nsec);
 }
 
 static int devfd;
 
 void getboot(char *buffer)
 {
-  devfd = open(devname, 2);
+  devfd = open(dev_name, 2);
   if (devfd < 0) {
-	printf("No write permission on %s\n", devname);
+	printf("No write permission on %s\n", dev_name);
 	readonly = 1;
-	devfd = open(devname, 0);
+	devfd = open(dev_name, 0);
   }
   if (devfd < 0) {
-	printf("Cannot open device %s\n", devname);
+	printf("Cannot open device %s\n", dev_name);
 	exit(1);
   }
   if (read(devfd, buffer, SECSIZE) != SECSIZE) {
@@ -264,7 +264,7 @@ void getboot(char *buffer)
 	exit(1);
   }
   if (* (unsigned short *) &buffer[510] != 0xAA55) {
-	printf("Invalid boot sector on %s.\n", devname);
+	printf("Invalid boot sector on %s.\n", dev_name);
 	printf("Partition table reset and boot code installed.\n");
 	memset(buffer, 0, 512);
 	memcpy(buffer, bootstrap, sizeof(bootstrap));
@@ -514,8 +514,8 @@ int chk_table(void)
 		printf(
 	"Disk appears to have mis-specified number of heads or sectors.\n");
 		printf("Try  fdisk -h%d -s%d %s  instead of\n",
-			maxhead + 1, maxsec, devname);
-		printf("     fdisk -h%d -s%d %s\n", nhead, nsec, devname);
+			maxhead + 1, maxsec, dev_name);
+		printf("     fdisk -h%d -s%d %s\n", nhead, nsec, dev_name);
 		seenpart = 0;
 	}
   } else {
@@ -695,12 +695,12 @@ void getboot(char *buffer)
 
   segread(&sregs);		/* get ds */
 
-  if (devname[1] != ':') {
-	printf("Invalid drive %s\n", devname);
+  if (dev_name[1] != ':') {
+	printf("Invalid drive %s\n", dev_name);
 	exit(1);
   }
-  if (*devname >= 'a') *devname += 'A' - 'a';
-  drivenum = (*devname - 'C') & 0xff;
+  if (*dev_name >= 'a') *dev_name += 'A' - 'a';
+  drivenum = (*dev_name - 'C') & 0xff;
   if (drivenum < 0 || drivenum > 7) {
 	printf("Funny drive number %d\n", drivenum);
 	exit(1);

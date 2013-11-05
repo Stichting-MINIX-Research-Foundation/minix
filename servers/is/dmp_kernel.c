@@ -1,7 +1,7 @@
 /* Debugging dump procedures for the kernel. */
 
 #include "inc.h"
-#include <timers.h>
+#include <minix/timers.h>
 #include <assert.h>
 #include <machine/interrupt.h>
 #include <minix/endpoint.h>
@@ -330,7 +330,7 @@ void proctab_dmp(void)
 
   PROCLOOP(rp, oldrp)
 	printf(" %5d %10d ", _ENDPOINT_G(rp->p_endpoint), rp->p_endpoint);
-	printf("%-8.8s %5u %5u %6u %6u ",
+	printf("%-8.8s %5u %5u %6lu %6lu ",
 	       rp->p_name,
 	       rp->p_priority,
 	       rp->p_quantum_size_ms,
@@ -370,7 +370,7 @@ void procstack_dmp()
   PROCLOOP(rp, oldrp)
 	PRINTRTS(rp);
 	printf("\n"); pagelines++;
-	sys_sysctl_stacktrace(rp->p_endpoint);
+	sys_diagctl_stacktrace(rp->p_endpoint);
   }
 }
 

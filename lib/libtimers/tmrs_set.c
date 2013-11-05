@@ -4,8 +4,8 @@
  *				tmrs_settimer				     *
  *===========================================================================*/
 clock_t tmrs_settimer(tmrs, tp, exp_time, watchdog, new_head)
-timer_t **tmrs;				/* pointer to timers queue */
-timer_t *tp;				/* the timer to be added */
+minix_timer_t **tmrs;				/* pointer to timers queue */
+minix_timer_t *tp;				/* the timer to be added */
 clock_t exp_time;			/* its expiration time */
 tmr_func_t watchdog;			/* watchdog function to be run */
 clock_t *new_head;			/* new earliest timer, if non NULL */
@@ -15,7 +15,7 @@ clock_t *new_head;			/* new earliest timer, if non NULL */
  * in the list of active timers with the first to expire in front.
  * The caller responsible for scheduling a new alarm for the timer if needed. 
  */
-  timer_t **atp;
+  minix_timer_t **atp;
   clock_t old_head = 0;
 
   if(*tmrs)

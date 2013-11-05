@@ -177,6 +177,8 @@ main(int argc, char *argv[])
 
 	writepipe(&info);
 
+	vm_clear_cache(MYDEV);
+
 	return 0;
 }
 
