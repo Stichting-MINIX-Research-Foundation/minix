@@ -43,7 +43,7 @@ SUBDIR+= libcompat_minix libblockdriver libchardriver     \
        libexec libdevman libusb libasyn librmt \
        libddekit libminixfs libbdev libelf libminc libcrypt libterminfo \
        libutil libbz2 libprop \
-       libpuffs libsffs
+       libpuffs libsffs libinputdriver
 
 .if (${MKLWIP} == "yes")
 SUBDIR += liblwip libnetsock

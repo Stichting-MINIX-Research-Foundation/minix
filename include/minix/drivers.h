@@ -11,18 +11,19 @@
 
 /* The following are so basic, all the *.c files get them automatically. */
 #include <minix/config.h>	/* MUST be first */
-#include <minix/type.h>
-#include <minix/com.h>
-#include <minix/dmap.h>
+#include <minix/bitmap.h>
 #include <minix/callnr.h>
-#include <sys/types.h>
+#include <minix/com.h>
 #include <minix/const.h>
 #include <minix/devio.h>
+#include <minix/dmap.h>
+#include <minix/spin.h>
 #include <minix/syslib.h>
 #include <minix/sysutil.h>
 #include <minix/timers.h>
-#include <minix/spin.h>
-#include <minix/bitmap.h>
+#include <minix/type.h>
+#include <sys/param.h>
+#include <sys/types.h>
 
 #include <machine/interrupt.h>	/* IRQ vectors and miscellaneous ports */
 #if defined(__i386__)
@@ -30,13 +31,13 @@
 #include <machine/ports.h>	/* Well-known ports */
 #endif
 
-#include <string.h>
-#include <signal.h>
-#include <stdlib.h>
-#include <limits.h>
-#include <stddef.h>
 #include <errno.h>
+#include <lib.h>
+#include <limits.h>
+#include <signal.h>
+#include <stddef.h>
+#include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
-#include <sys/param.h>
 
 #endif

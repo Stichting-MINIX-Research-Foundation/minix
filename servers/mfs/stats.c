@@ -92,7 +92,7 @@ int map;			/* IMAP (inode map) or ZMAP (zone map) */
 /*===========================================================================*
  *				blockstats				     *
  *===========================================================================*/
-void fs_blockstats(u32_t *blocks, u32_t *free, u32_t *used)
+void fs_blockstats(u64_t *blocks, u64_t *free, u64_t *used)
 {
   struct super_block *sp;
 

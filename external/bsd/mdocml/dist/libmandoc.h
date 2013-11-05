@@ -1,6 +1,6 @@
-/*	$Vendor-Id: libmandoc.h,v 1.10 2011/01/03 22:42:37 schwarze Exp $ */
+/*	$Vendor-Id: libmandoc.h,v 1.29 2011/12/02 01:37:14 schwarze Exp $ */
 /*
- * Copyright (c) 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -17,21 +17,75 @@
 #ifndef LIBMANDOC_H
 #define LIBMANDOC_H
 
+enum	rofferr {
+	ROFF_CONT, /* continue processing line */
+	ROFF_RERUN, /* re-run roff interpreter with offset */
+	ROFF_APPEND, /* re-run main parser, appending next line */
+	ROFF_REPARSE, /* re-run main parser on the result */
+	ROFF_SO, /* include another file */
+	ROFF_IGN, /* ignore current line */
+	ROFF_TBL, /* a table row was successfully parsed */
+	ROFF_EQN, /* an equation was successfully parsed */
+	ROFF_ERR /* badness: puke and stop */
+};
+
+enum	regs {
+	REG_nS = 0, /* nS register */
+	REG__MAX
+};
+
 __BEGIN_DECLS
 
-int		 mandoc_special(char *);
-void		*mandoc_calloc(size_t, size_t);
-char		*mandoc_strdup(const char *);
-void		*mandoc_malloc(size_t);
-void		*mandoc_realloc(void *, size_t);
-char		*mandoc_getarg(char **, mandocmsg, void *, int, int *);
-time_t		 mandoc_a2time(int, const char *);
-#define		 MTIME_CANONICAL	(1 << 0)
-#define		 MTIME_REDUCED		(1 << 1)
-#define		 MTIME_MDOCDATE		(1 << 2)
-#define		 MTIME_ISO_8601		(1 << 3)
+struct	roff;
+struct	mdoc;
+struct	man;
+
+void		 mandoc_msg(enum mandocerr, struct mparse *, 
+			int, int, const char *);
+void		 mandoc_vmsg(enum mandocerr, struct mparse *, 
+			int, int, const char *, ...);
+char		*mandoc_getarg(struct mparse *, char **, int, int *);
+char		*mandoc_normdate(struct mparse *, char *, int, int);
 int		 mandoc_eos(const char *, size_t, int);
-int		 mandoc_hyph(const char *, const char *);
+int		 mandoc_getcontrol(const char *, int *);
+int		 mandoc_strntoi(const char *, size_t, int);
+const char	*mandoc_a2msec(const char*);
+
+void	 	 mdoc_free(struct mdoc *);
+struct	mdoc	*mdoc_alloc(struct roff *, struct mparse *);
+void		 mdoc_reset(struct mdoc *);
+int	 	 mdoc_parseln(struct mdoc *, int, char *, int);
+int		 mdoc_endparse(struct mdoc *);
+int		 mdoc_addspan(struct mdoc *, const struct tbl_span *);
+int		 mdoc_addeqn(struct mdoc *, const struct eqn *);
+
+void	 	 man_free(struct man *);
+struct	man	*man_alloc(struct roff *, struct mparse *);
+void		 man_reset(struct man *);
+int	 	 man_parseln(struct man *, int, char *, int);
+int		 man_endparse(struct man *);
+int		 man_addspan(struct man *, const struct tbl_span *);
+int		 man_addeqn(struct man *, const struct eqn *);
+
+void	 	 roff_free(struct roff *);
+struct roff	*roff_alloc(struct mparse *);
+void		 roff_reset(struct roff *);
+enum rofferr	 roff_parseln(struct roff *, int, 
+			char **, size_t *, int, int *);
+void		 roff_endparse(struct roff *);
+int		 roff_regisset(const struct roff *, enum regs);
+unsigned int	 roff_regget(const struct roff *, enum regs);
+void		 roff_regunset(struct roff *, enum regs);
+char		*roff_strdup(const struct roff *, const char *);
+#if 0
+char		 roff_eqndelim(const struct roff *);
+void		 roff_openeqn(struct roff *, const char *, 
+			int, int, const char *);
+int		 roff_closeeqn(struct roff *);
+#endif
+
+const struct tbl_span	*roff_span(const struct roff *);
+const struct eqn	*roff_eqn(const struct roff *);
 
 __END_DECLS
 

@@ -33,10 +33,10 @@
 #include "kernel/proc.h"
 
 struct utsname uts_val = {
-  "Minix",		/* system name */
+  OS_NAME,		/* system name */
   "noname",		/* node/network name */
-  OS_RELEASE,		/* O.S. release (e.g. 1.5) */
-  OS_VERSION,		/* O.S. version (e.g. 10) */
+  OS_RELEASE,		/* O.S. release (e.g. 3.3.0) */
+  OS_VERSION,		/* O.S. version (e.g. Minix 3.3.0 (GENERIC)) */
   "xyzzy",		/* machine (cpu) type (filled in later) */
 #if defined(__i386__)
   "i386",		/* architecture */
@@ -142,7 +142,7 @@ int do_getsysinfo()
   {
 	printf("PM: unauthorized call of do_getsysinfo by proc %d '%s'\n",
 		mp->mp_endpoint, mp->mp_name);
-	sys_sysctl_stacktrace(mp->mp_endpoint);
+	sys_diagctl_stacktrace(mp->mp_endpoint);
 	return EPERM;
   }
 
@@ -190,7 +190,7 @@ int do_getprocnr()
 
 	printf("PM: unauthorized call of do_getprocnr by proc %d\n",
 		mp->mp_endpoint);
-	sys_sysctl_stacktrace(mp->mp_endpoint);
+	sys_diagctl_stacktrace(mp->mp_endpoint);
 	return EPERM;
   }
 
@@ -267,7 +267,7 @@ int do_getepinfo_o()
   if (mp->mp_effuid != 0) {
 	printf("PM: unauthorized call of do_getepinfo_o by proc %d\n",
 		mp->mp_endpoint);
-	sys_sysctl_stacktrace(mp->mp_endpoint);
+	sys_diagctl_stacktrace(mp->mp_endpoint);
 	return EPERM;
   }
 

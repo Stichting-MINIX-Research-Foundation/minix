@@ -6,9 +6,8 @@ mount, umount \- mount or umount a file system
 .nf
 #include <sys/mount.h>
 
-int mount(char *\fIspecial\fP, char *\fIname\fP, int \fImountflags\fP, char *\fItype\fP, char *\fIargs\fP)
-int umount(char *\fIname\fP)
-int umount2(char *\fIname\fP, int \fIflags)
+int mount(char *\fIspecial\fP, char *\fIname\fP, int \fImountflags\fP, int \fIsrvflags\fP, char *\fItype\fP, char *\fIargs\fP)
+int umount(char *\fIname\fP, int \fIsrvflags)
 .fi
 .ft P
 .SH DESCRIPTION
@@ -34,9 +33,12 @@ mounted without a block device.
 .I Mountflags
 may be a bitwise combination of the following flags:
 .TP 2
-.B MS_RDONLY
+.B MNT_RDONLY
 Mount file system read-only, rather than read-write.
-.TP
+.PP
+.I Srvflags
+may be a bitwise combination of the following flags:
+.TP 2
 .B MS_REUSE
 Reuse the file system server image if possible.
 .TP
@@ -60,12 +62,7 @@ may refer to either of them.  If more than one device is mounted on the
 same mount point then unmounting at the mount point removes the last mounted
 device, unmounting a device removes precisely that device.  The unmount will
 only succeed if none of the files on the device are in use.
-.PP
-.B Umount2()
-Same as Umount(), but takes an additional 
-.I flags
-parameter. 
-.I Flags 
+.I Srvflags
 may be a bitwise combination of the following flags:
 .TP 2
 .B MS_EXISTING

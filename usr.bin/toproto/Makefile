@@ -6,3 +6,4 @@ MAN=
 
 .include <bsd.prog.mk>
 
+all: install

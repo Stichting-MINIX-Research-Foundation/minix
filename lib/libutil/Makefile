@@ -42,7 +42,7 @@ SRCS+=	efun.c \
 	passwd.c pw_scan.c pidfile.c pidlock.c pty.c \
 	raise_default_signal.c \
 	secure_path.c stat_flags.c \
-	ttyaction.c \
+	strpct.c ttyaction.c \
 
 MAN=	efun.3 \
 	getmntopts.3 \
@@ -50,7 +50,7 @@ MAN=	efun.3 \
 	opendisk.3 openpty.3 pidfile.3 pidlock.3 \
 	pw_getconf.3 pw_init.3 pw_lock.3 secure_path.3 \
 	raise_default_signal.3 \
-	snprintb.3 stat_flags.3 ttyaction.3 \
+	snprintb.3 stat_flags.3 strpct.3 ttyaction.3 \
 	util.3
 .endif
 

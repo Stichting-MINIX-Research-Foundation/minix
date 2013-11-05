@@ -28,7 +28,7 @@ SUBDIR= asa \
 	tee tic tput \
 	tr tsort tty unexpand unifdef \
 	toproto \
-	uniq units unvis unzip users \
+	uname uniq units unvis unzip users \
 	uuidgen vis \
 	\
 	wc what whatis who whois \

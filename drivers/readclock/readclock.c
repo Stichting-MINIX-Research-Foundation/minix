@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <time.h>
 #include <errno.h>
+#include <lib.h>
 #include <minix/type.h>
 #include <minix/const.h>
 #include <minix/callnr.h>
