@@ -11,7 +11,7 @@
 #include <dirent.h>
 #include <assert.h>
 #include <ctype.h>
-#include <machine/partition.h>
+#include <partition.h>
 
 #include <sys/stat.h>
 
