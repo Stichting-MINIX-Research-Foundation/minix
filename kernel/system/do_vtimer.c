@@ -53,8 +53,6 @@ int do_vtimer(struct proc * caller, message * m_ptr)
   /* Retrieve the old value. */
   if (rp->p_misc_flags & pt_flag) {
       old_value = *pt_left;
-
-      if (old_value < 0) old_value = 0;
   } else {
       old_value = 0;
   }
@@ -91,14 +89,14 @@ struct proc *rp;			/* pointer to the process */
    */
 
   /* Check if the virtual timer expired. If so, send a SIGVTALRM signal. */
-  if ((rp->p_misc_flags & MF_VIRT_TIMER) && rp->p_virt_left <= 0) {
+  if ((rp->p_misc_flags & MF_VIRT_TIMER) && rp->p_virt_left == 0) {
       rp->p_misc_flags &= ~MF_VIRT_TIMER;
       rp->p_virt_left = 0;
       cause_sig(rp->p_nr, SIGVTALRM);
   }
 
   /* Check if the profile timer expired. If so, send a SIGPROF signal. */
-  if ((rp->p_misc_flags & MF_PROF_TIMER) && rp->p_prof_left <= 0) {
+  if ((rp->p_misc_flags & MF_PROF_TIMER) && rp->p_prof_left == 0) {
       rp->p_misc_flags &= ~MF_PROF_TIMER;
       rp->p_prof_left = 0;
       cause_sig(rp->p_nr, SIGPROF);

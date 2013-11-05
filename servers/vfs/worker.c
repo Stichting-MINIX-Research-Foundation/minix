@@ -1,18 +1,10 @@
 #include "fs.h"
-#include "glo.h"
-#include "fproc.h"
-#include "threads.h"
-#include "job.h"
 #include <assert.h>
 
-static void append_job(struct job *job, void *(*func)(void *arg));
-static void get_work(struct worker_thread *worker);
+static void worker_get_work(void);
 static void *worker_main(void *arg);
-static void worker_sleep(struct worker_thread *worker);
+static void worker_sleep(void);
 static void worker_wake(struct worker_thread *worker);
-static int worker_waiting_for(struct worker_thread *worker, endpoint_t
-	proc_e);
-static int init = 0;
 static mthread_attr_t tattr;
 
 #ifdef MKCOVERAGE
@@ -21,66 +13,60 @@ static mthread_attr_t tattr;
 # define TH_STACKSIZE (28 * 1024)
 #endif
 
-#define ASSERTW(w) assert((w) == &sys_worker || (w) == &dl_worker || \
-		   ((w) >= &workers[0] && (w) < &workers[NR_WTHREADS]));
+#define ASSERTW(w) assert((w) >= &workers[0] && (w) < &workers[NR_WTHREADS])
 
 /*===========================================================================*
  *				worker_init				     *
  *===========================================================================*/
-void worker_init(struct worker_thread *wp)
+void worker_init(void)
 {
 /* Initialize worker thread */
-  if (!init) {
-	threads_init();
-	if (mthread_attr_init(&tattr) != 0)
-		panic("failed to initialize attribute");
-	if (mthread_attr_setstacksize(&tattr, TH_STACKSIZE) != 0)
-		panic("couldn't set default thread stack size");
-	if (mthread_attr_setdetachstate(&tattr, MTHREAD_CREATE_DETACHED) != 0)
-		panic("couldn't set default thread detach state");
-	invalid_thread_id = mthread_self(); /* Assuming we're the main thread*/
-	pending = 0;
-	init = 1;
+  struct worker_thread *wp;
+  int i;
+
+  threads_init();
+  if (mthread_attr_init(&tattr) != 0)
+	panic("failed to initialize attribute");
+  if (mthread_attr_setstacksize(&tattr, TH_STACKSIZE) != 0)
+	panic("couldn't set default thread stack size");
+  if (mthread_attr_setdetachstate(&tattr, MTHREAD_CREATE_DETACHED) != 0)
+	panic("couldn't set default thread detach state");
+  pending = 0;
+
+  for (i = 0; i < NR_WTHREADS; i++) {
+	wp = &workers[i];
+
+	wp->w_fp = NULL;		/* Mark not in use */
+	wp->w_next = NULL;
+	if (mutex_init(&wp->w_event_mutex, NULL) != 0)
+		panic("failed to initialize mutex");
+	if (cond_init(&wp->w_event, NULL) != 0)
+		panic("failed to initialize conditional variable");
+	if (mthread_create(&wp->w_tid, &tattr, worker_main, (void *) wp) != 0)
+		panic("unable to start thread");
   }
 
-  ASSERTW(wp);
-
-  wp->w_job.j_func = NULL;		/* Mark not in use */
-  wp->w_next = NULL;
-  if (mutex_init(&wp->w_event_mutex, NULL) != 0)
-	panic("failed to initialize mutex");
-  if (cond_init(&wp->w_event, NULL) != 0)
-	panic("failed to initialize conditional variable");
-  if (mthread_create(&wp->w_tid, &tattr, worker_main, (void *) wp) != 0)
-	panic("unable to start thread");
-  yield();
+  /* Let all threads get ready to accept work. */
+  yield_all();
 }
 
 /*===========================================================================*
- *				get_work				     *
+ *				worker_get_work				     *
  *===========================================================================*/
-static void get_work(struct worker_thread *worker)
+static void worker_get_work(void)
 {
 /* Find new work to do. Work can be 'queued', 'pending', or absent. In the
- * latter case wait for new work to come in. */
-
-  struct job *new_job;
+ * latter case wait for new work to come in.
+ */
   struct fproc *rfp;
 
-  ASSERTW(worker);
-  self = worker;
-
   /* Do we have queued work to do? */
-  if ((new_job = worker->w_job.j_next) != NULL) {
-	worker->w_job = *new_job;
-	free(new_job);
-	return;
-  } else if (worker != &sys_worker && worker != &dl_worker && pending > 0) {
+  if (pending > 0) {
 	/* Find pending work */
 	for (rfp = &fproc[0]; rfp < &fproc[NR_PROCS]; rfp++) {
 		if (rfp->fp_flags & FP_PENDING) {
-			worker->w_job = rfp->fp_job;
-			rfp->fp_job.j_func = NULL;
+			self->w_fp = rfp;
+			rfp->fp_worker = self;
 			rfp->fp_flags &= ~FP_PENDING; /* No longer pending */
 			pending--;
 			assert(pending >= 0);
@@ -91,11 +77,11 @@ static void get_work(struct worker_thread *worker)
   }
 
   /* Wait for work to come to us */
-  worker_sleep(worker);
+  worker_sleep();
 }
 
 /*===========================================================================*
- *				worker_available				     *
+ *				worker_available			     *
  *===========================================================================*/
 int worker_available(void)
 {
@@ -103,7 +89,7 @@ int worker_available(void)
 
   busy = 0;
   for (i = 0; i < NR_WTHREADS; i++) {
-	if (workers[i].w_job.j_func != NULL)
+	if (workers[i].w_fp != NULL)
 		busy++;
   }
 
@@ -116,151 +102,207 @@ int worker_available(void)
 static void *worker_main(void *arg)
 {
 /* Worker thread main loop */
-  struct worker_thread *me;
 
-  me = (struct worker_thread *) arg;
-  ASSERTW(me);
+  self = (struct worker_thread *) arg;
+  ASSERTW(self);
 
   while(TRUE) {
-	get_work(me);
+	worker_get_work();
 
-	/* Register ourselves in fproc table if possible */
-	if (me->w_job.j_fp != NULL) {
-		me->w_job.j_fp->fp_wtid = me->w_tid;
+	fp = self->w_fp;
+	assert(fp->fp_worker == self);
+
+	/* Lock the process. */
+	lock_proc(fp);
+
+	/* The following two blocks could be run in a loop until both the
+	 * conditions are no longer met, but it is currently impossible that
+	 * more normal work is present after postponed PM work has been done.
+	 */
+
+	/* Perform normal work, if any. */
+	if (fp->fp_func != NULL) {
+		self->w_msg = fp->fp_msg;
+		err_code = OK;
+
+		fp->fp_func();
+
+		fp->fp_func = NULL;	/* deliberately unset AFTER the call */
 	}
 
-	/* Carry out work */
-	me->w_job.j_func(&me->w_job);
+	/* Perform postponed PM work, if any. */
+	if (fp->fp_flags & FP_PM_WORK) {
+		self->w_msg = fp->fp_pm_msg;
 
-	/* Deregister if possible */
-	if (me->w_job.j_fp != NULL) {
-		me->w_job.j_fp->fp_wtid = invalid_thread_id;
+		service_pm_postponed();
+
+		fp->fp_flags &= ~FP_PM_WORK;
 	}
 
-	/* Mark ourselves as done */
-	me->w_job.j_func = NULL;
-	me->w_job.j_fp = NULL;
+	/* Perform cleanup actions. */
+	thread_cleanup();
+
+	unlock_proc(fp);
+
+	fp->fp_worker = NULL;
+	self->w_fp = NULL;
   }
 
   return(NULL);	/* Unreachable */
 }
 
 /*===========================================================================*
- *				dl_worker_start				     *
+ *				worker_can_start			     *
  *===========================================================================*/
-void dl_worker_start(void *(*func)(void *arg))
+int worker_can_start(struct fproc *rfp)
 {
-/* Start the deadlock resolving worker. This worker is reserved to run in case
- * all other workers are busy and we have to have an additional worker to come
- * to the rescue. */
-  assert(dl_worker.w_job.j_func == NULL);
+/* Return whether normal (non-PM) work can be started for the given process.
+ * This function is used to serialize invocation of "special" procedures, and
+ * not entirely safe for other cases, as explained in the comments below.
+ */
+  int is_pending, is_active, has_normal_work, has_pm_work;
 
-  if (dl_worker.w_job.j_func == NULL) {
-	dl_worker.w_job.j_fp = fp;
-	dl_worker.w_job.j_m_in = m_in;
-	dl_worker.w_job.j_func = func;
-	worker_wake(&dl_worker);
-  }
+  is_pending = (rfp->fp_flags & FP_PENDING);
+  is_active = (rfp->fp_worker != NULL);
+  has_normal_work = (rfp->fp_func != NULL);
+  has_pm_work = (rfp->fp_flags & FP_PM_WORK);
+
+  /* If there is no work scheduled for the process, we can start work. */
+  if (!is_pending && !is_active) return TRUE;
+
+  /* If there is already normal work scheduled for the process, we cannot add
+   * more, since we support only one normal job per process.
+   */
+  if (has_normal_work) return FALSE;
+
+  /* If this process has pending PM work but no normal work, we can add the
+   * normal work for execution before the worker will start.
+   */
+  if (is_pending) return TRUE;
+
+  /* However, if a worker is active for PM work, we cannot add normal work
+   * either, because the work will not be considered. For this reason, we can
+   * not use this function for processes that can possibly get postponed PM
+   * work. It is still safe for core system processes, though.
+   */
+  return FALSE;
 }
 
 /*===========================================================================*
- *				sys_worker_start			     *
+ *				worker_try_activate			     *
  *===========================================================================*/
-void sys_worker_start(void *(*func)(void *arg))
+static void worker_try_activate(struct fproc *rfp, int use_spare)
 {
-/* Carry out work for the system (i.e., kernel or PM). If this thread is idle
- * do it right away, else create new job and append it to the queue. */
-
-  if (sys_worker.w_job.j_func == NULL) {
-	sys_worker.w_job.j_fp = fp;
-	sys_worker.w_job.j_m_in = m_in;
-	sys_worker.w_job.j_func = func;
-	worker_wake(&sys_worker);
-  } else {
-	append_job(&sys_worker.w_job, func);
-  }
-}
-
-/*===========================================================================*
- *				append_job				     *
- *===========================================================================*/
-static void append_job(struct job *job, void *(*func)(void *arg))
-{
-/* Append a job */
-
-  struct job *new_job, *tail;
-
-  /* Create new job */
-  new_job = calloc(1, sizeof(struct job));
-  assert(new_job != NULL);
-  new_job->j_fp = fp;
-  new_job->j_m_in = m_in;
-  new_job->j_func = func;
-  new_job->j_next = NULL;
-  new_job->j_err_code = OK;
-
-  /* Append to queue */
-  tail = job;
-  while (tail->j_next != NULL) tail = tail->j_next;
-  tail->j_next = new_job;
-}
-
-/*===========================================================================*
- *				worker_start				     *
- *===========================================================================*/
-void worker_start(void *(*func)(void *arg))
-{
-/* Find an available worker or wait for one */
-  int i;
+/* See if we can wake up a thread to do the work scheduled for the given
+ * process. If not, mark the process as having pending work for later.
+ */
+  int i, available, needed;
   struct worker_thread *worker;
 
-  if (fp->fp_flags & FP_DROP_WORK) {
-	return;	/* This process is not allowed to accept new work */
-  }
+  /* Use the last available thread only if requested. Otherwise, leave at least
+   * one spare thread for deadlock resolution.
+   */
+  needed = use_spare ? 1 : 2;
 
   worker = NULL;
-  for (i = 0; i < NR_WTHREADS; i++) {
-	if (workers[i].w_job.j_func == NULL) {
-		worker = &workers[i];
-		break;
+  for (i = available = 0; i < NR_WTHREADS; i++) {
+	if (workers[i].w_fp == NULL) {
+		if (worker == NULL)
+			worker = &workers[i];
+		if (++available >= needed)
+			break;
 	}
   }
 
-  if (worker != NULL) {
-	worker->w_job.j_fp = fp;
-	worker->w_job.j_m_in = m_in;
-	worker->w_job.j_func = func;
-	worker->w_job.j_next = NULL;
-	worker->w_job.j_err_code = OK;
+  if (available >= needed) {
+	assert(worker != NULL);
+	rfp->fp_worker = worker;
+	worker->w_fp = rfp;
 	worker_wake(worker);
-	return;
-  }
-
-  /* No worker threads available, let's wait for one to finish. */
-  /* If this process already has a job scheduled, forget about this new
-   * job;
-   *  - the new job is do_dummy and we have already scheduled an actual job
-   *  - the new job is an actual job and we have already scheduled do_dummy in
-   *    order to exit this proc, so doing the new job is pointless. */
-  if (fp->fp_job.j_func == NULL) {
-	assert(!(fp->fp_flags & FP_PENDING));
-	fp->fp_job.j_fp = fp;
-	fp->fp_job.j_m_in = m_in;
-	fp->fp_job.j_func = func;
-	fp->fp_job.j_next = NULL;
-	fp->fp_job.j_err_code = OK;
-	fp->fp_flags |= FP_PENDING;
+  } else {
+	rfp->fp_flags |= FP_PENDING;
 	pending++;
   }
 }
 
 /*===========================================================================*
+ *				worker_start				     *
+ *===========================================================================*/
+void worker_start(struct fproc *rfp, void (*func)(void), message *m_ptr,
+	int use_spare)
+{
+/* Schedule work to be done by a worker thread. The work is bound to the given
+ * process. If a function pointer is given, the work is considered normal work,
+ * and the function will be called to handle it. If the function pointer is
+ * NULL, the work is considered postponed PM work, and service_pm_postponed
+ * will be called to handle it. The input message will be a copy of the given
+ * message. Optionally, the last spare (deadlock-resolving) thread may be used
+ * to execute the work immediately.
+ */
+  int is_pm_work, is_pending, is_active, has_normal_work, has_pm_work;
+
+  assert(rfp != NULL);
+
+  is_pm_work = (func == NULL);
+  is_pending = (rfp->fp_flags & FP_PENDING);
+  is_active = (rfp->fp_worker != NULL);
+  has_normal_work = (rfp->fp_func != NULL);
+  has_pm_work = (rfp->fp_flags & FP_PM_WORK);
+
+  /* Sanity checks. If any of these trigger, someone messed up badly! */
+  if (is_pending || is_active) {
+	if (is_pending && is_active)
+		panic("work cannot be both pending and active");
+
+	/* The process cannot make more than one call at once. */
+	if (!is_pm_work && has_normal_work)
+		panic("process has two calls (%x, %x)",
+			rfp->fp_msg.m_type, m_ptr->m_type);
+
+	/* PM will not send more than one job per process to us at once. */
+	if (is_pm_work && has_pm_work)
+		panic("got two calls from PM (%x, %x)",
+			rfp->fp_pm_msg.m_type, m_ptr->m_type);
+
+	/* Despite PM's sys_delay_stop() system, it is possible that normal
+	 * work (in particular, do_pending_pipe) arrives after postponed PM
+	 * work has been scheduled for execution, so we don't check for that.
+	 */
+#if 0
+	printf("VFS: adding %s work to %s thread\n",
+		is_pm_work ? "PM" : "normal",
+		is_pending ? "pending" : "active");
+#endif
+  } else {
+	/* Some cleanup step forgotten somewhere? */
+	if (has_normal_work || has_pm_work)
+		panic("worker administration error");
+  }
+
+  /* Save the work to be performed. */
+  if (!is_pm_work) {
+	rfp->fp_msg = *m_ptr;
+	rfp->fp_func = func;
+  } else {
+	rfp->fp_pm_msg = *m_ptr;
+	rfp->fp_flags |= FP_PM_WORK;
+  }
+
+  /* If we have not only added to existing work, go look for a free thread.
+   * Note that we won't be using the spare thread for normal work if there is
+   * already PM work pending, but that situation will never occur in practice.
+   */
+  if (!is_pending && !is_active)
+	worker_try_activate(rfp, use_spare);
+}
+
+/*===========================================================================*
  *				worker_sleep				     *
  *===========================================================================*/
-static void worker_sleep(struct worker_thread *worker)
+static void worker_sleep(void)
 {
+  struct worker_thread *worker = self;
   ASSERTW(worker);
-  assert(self == worker);
   if (mutex_lock(&worker->w_event_mutex) != 0)
 	panic("unable to lock event mutex");
   if (cond_wait(&worker->w_event, &worker->w_event_mutex) != 0)
@@ -286,15 +328,54 @@ static void worker_wake(struct worker_thread *worker)
 }
 
 /*===========================================================================*
+ *				worker_suspend				     *
+ *===========================================================================*/
+struct worker_thread *worker_suspend(void)
+{
+/* Suspend the current thread, saving certain thread variables. Return a
+ * pointer to the thread's worker structure for later resumption.
+ */
+
+  ASSERTW(self);
+  assert(fp != NULL);
+  assert(self->w_fp == fp);
+  assert(fp->fp_worker == self);
+
+  self->w_err_code = err_code;
+
+  return self;
+}
+
+/*===========================================================================*
+ *				worker_resume				     *
+ *===========================================================================*/
+void worker_resume(struct worker_thread *org_self)
+{
+/* Resume the current thread after suspension, restoring thread variables. */
+
+  ASSERTW(org_self);
+
+  self = org_self;
+
+  fp = self->w_fp;
+  assert(fp != NULL);
+
+  err_code = self->w_err_code;
+}
+
+/*===========================================================================*
  *				worker_wait				     *
  *===========================================================================*/
 void worker_wait(void)
 {
-  self->w_job.j_err_code = err_code;
-  worker_sleep(self);
+/* Put the current thread to sleep until woken up by the main thread. */
+
+  (void) worker_suspend(); /* worker_sleep already saves and restores 'self' */
+
+  worker_sleep();
+
   /* We continue here after waking up */
-  fp = self->w_job.j_fp;	/* Restore global data */
-  err_code = self->w_job.j_err_code;
+  worker_resume(self);
   assert(self->w_next == NULL);
 }
 
@@ -323,7 +404,9 @@ void worker_stop(struct worker_thread *worker)
 		panic("reply storage consistency error");	/* Oh dear */
 	}
   } else {
-	worker->w_job.j_m_in.m_type = EIO;
+	/* This shouldn't happen at all... */
+	printf("VFS: stopping worker not blocked on any task?\n");
+	util_stacktrace();
   }
   worker_wake(worker);
 }
@@ -338,12 +421,9 @@ void worker_stop_by_endpt(endpoint_t proc_e)
 
   if (proc_e == NONE) return;
 
-  if (worker_waiting_for(&sys_worker, proc_e)) worker_stop(&sys_worker);
-  if (worker_waiting_for(&dl_worker, proc_e)) worker_stop(&dl_worker);
-
   for (i = 0; i < NR_WTHREADS; i++) {
 	worker = &workers[i];
-	if (worker_waiting_for(worker, proc_e))
+	if (worker->w_fp != NULL && worker->w_task == proc_e)
 		worker_stop(worker);
   }
 }
@@ -354,52 +434,36 @@ void worker_stop_by_endpt(endpoint_t proc_e)
 struct worker_thread *worker_get(thread_t worker_tid)
 {
   int i;
-  struct worker_thread *worker;
 
-  worker = NULL;
-  if (worker_tid == sys_worker.w_tid)
-	worker = &sys_worker;
-  else if (worker_tid == dl_worker.w_tid)
-	worker = &dl_worker;
-  else {
-	for (i = 0; i < NR_WTHREADS; i++) {
-		if (workers[i].w_tid == worker_tid) {
-			worker = &workers[i];
-			break;
-		}
-	}
-  }
-
-  return(worker);
-}
-
-/*===========================================================================*
- *				worker_getjob				     *
- *===========================================================================*/
-struct job *worker_getjob(thread_t worker_tid)
-{
-  struct worker_thread *worker;
-
-  if ((worker = worker_get(worker_tid)) != NULL)
-	return(&worker->w_job);
+  for (i = 0; i < NR_WTHREADS; i++)
+	if (workers[i].w_tid == worker_tid)
+		return(&workers[i]);
 
   return(NULL);
 }
 
 /*===========================================================================*
- *				worker_waiting_for			     *
+ *				worker_set_proc				     *
  *===========================================================================*/
-static int worker_waiting_for(struct worker_thread *worker, endpoint_t proc_e)
+void worker_set_proc(struct fproc *rfp)
 {
-  ASSERTW(worker);		/* Make sure we have a valid thread */
+/* Perform an incredibly ugly action that completely violates the threading
+ * model: change the current working thread's process context to another
+ * process. The caller is expected to hold the lock to both the calling and the
+ * target process, and neither process is expected to continue regular
+ * operation when done. This code is here *only* and *strictly* for the reboot
+ * code, and *must not* be used for anything else.
+ */
 
-  if (worker->w_job.j_func != NULL) {
-	if (worker->w_task != NONE)
-		return(worker->w_task == proc_e);
-	else if (worker->w_job.j_fp != NULL) {
-		return(worker->w_job.j_fp->fp_task == proc_e);
-	}
-  }
+  if (fp == rfp) return;
 
-  return(0);
+  if (rfp->fp_worker != NULL)
+	panic("worker_set_proc: target process not idle");
+
+  fp->fp_worker = NULL;
+
+  fp = rfp;
+
+  self->w_fp = rfp;
+  fp->fp_worker = self;
 }

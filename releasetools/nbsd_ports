@@ -6,8 +6,9 @@
 # Timestamp in UTC,minixpath,netbsdpath
 # minixpath:  path in Minix source tree (starting from /usr/src/)
 # netbsdpath: path in BSD source tree (starting from src/)
-2012/01/16 18:47:57,bin/cat
+2012/10/17 12:00:00,bin/cat
 2011/08/27 12:55:09,bin/date
+2013/08/19 12:00:00,bin/df
 2012/10/17 12:00:00,bin/echo
 2012/01/16 18:47:57,bin/ed
 2012/10/17 12:00:00,bin/expr
@@ -51,7 +52,7 @@
 2012/10/17 12:00:00,external/bsd/libarchive
 2013/07/15 12:00:00,external/bsd/lutok
 2012/10/17 12:00:00,external/bsd/Makefile
-2011/01/12 23:02:22,external/bsd/mdocml
+2012/10/17 12:00:00,external/bsd/mdocml
 2012/10/17 12:00:00,external/gpl3/binutils
 2012/10/17 12:00:00,external/gpl3/gcc
 2012/10/17 12:00:00,external/gpl3/Makefile
@@ -111,6 +112,7 @@
 2013/04/23 12:00:00,sys/dev/i2c/Makefile
 2013/04/23 12:00:00,sys/dev/i2c/i2c_io.h
 2013/07/22 12:00:00,sys/dev/videomode
+2013/07/31 12:00:00,sys/dev/vndvar.h
 2012/01/16 18:47:57,sys/lib/libsa
 2012/10/17 12:00:00,sys/lib/libz
 2012/10/17 12:00:00,sys/Makefile
@@ -188,7 +190,7 @@
 2012/10/17 12:00:00,usr.bin/make
 2012/10/17 12:00:00,usr.bin/Makefile
 2012/10/17 12:00:00,usr.bin/Makefile.inc
-2010/07/07 21:24:34,usr.bin/man
+2012/10/17 12:00:00,usr.bin/man
 2013/10/25 12:00:00,usr.bin/mesg
 2010/10/15 05:46:48,usr.bin/mkdep
 2012/10/17 12:00:00,usr.bin/mkstr
@@ -215,7 +217,7 @@
 2013/06/02 12:00:00,usr.bin/shuffle
 2012/10/17 12:00:00,usr.bin/sort
 2012/10/17 12:00:00,usr.bin/split
-2011/01/15 22:54:10,usr.bin/stat
+2012/10/17 12:00:00,usr.bin/stat
 2012/02/10 16:16:12,usr.bin/su
 2013/10/06 12:00:00,usr.bin/tee
 2012/06/01 12:08:40,usr.bin/tic
@@ -223,6 +225,7 @@
 2012/10/17 12:00:00,usr.bin/tr
 2012/10/17 12:00:00,usr.bin/tsort
 2012/10/17 12:00:00,usr.bin/tty
+2013/09/06 12:00:00,usr.bin/uname
 2012/10/17 12:00:00,usr.bin/unifdef
 2010/10/06 07:59:18,usr.bin/uniq
 2013/10/23 12:00:00,usr.bin/units
@@ -251,4 +254,5 @@
 2013/04/05 12:00:00,usr.sbin/rdate
 2011/01/04 10:30:21,usr.sbin/user
 2009/04/19 00:44:49,usr.sbin/vipw
+2013/07/31 12:00:00,usr.sbin/vnconfig
 2009/04/22 15:23:10,usr.sbin/zic

@@ -35,7 +35,7 @@ int getpeername(int sock, struct sockaddr *__restrict address,
 	struct sockaddr_un uds_addr;
 
 	r= ioctl(sock, NWIOGTCPCONF, &tcpconf);
-	if (r != -1 || (errno != ENOTTY && errno != EBADIOCTL))
+	if (r != -1 || errno != ENOTTY)
 	{
 		if (r == -1)
 		{
@@ -47,7 +47,7 @@ int getpeername(int sock, struct sockaddr *__restrict address,
 	}
 
 	r= ioctl(sock, NWIOGUDPOPT, &udpopt);
-	if (r != -1 || (errno != ENOTTY && errno != EBADIOCTL))
+	if (r != -1 || errno != ENOTTY)
 	{
 		if (r == -1)
 		{
@@ -59,7 +59,7 @@ int getpeername(int sock, struct sockaddr *__restrict address,
 	}
 
 	r= ioctl(sock, NWIOGUDSPADDR, &uds_addr);
-	if (r != -1 || (errno != ENOTTY && errno != EBADIOCTL))
+	if (r != -1 || errno != ENOTTY)
 	{
 		if (r == -1)
 		{

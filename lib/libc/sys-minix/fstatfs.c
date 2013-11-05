@@ -4,6 +4,7 @@
 
 #include <sys/stat.h>
 #include <sys/statfs.h>
+#include <sys/statvfs.h>
 
 #ifdef __weak_alias
 __weak_alias(fstatfs, _fstatfs)
@@ -11,9 +12,13 @@ __weak_alias(fstatfs, _fstatfs)
 
 int fstatfs(int fd, struct statfs *buffer)
 {
-  message m;
+  struct statvfs svbuffer;
+  int r;
 
-  m.m1_i1 = fd;
-  m.m1_p1 = (char *) buffer;
-  return(_syscall(VFS_PROC_NR, FSTATFS, &m));
+  if ((r = fstatvfs(fd, &svbuffer)) != 0)
+	return r;
+
+  buffer->f_bsize = svbuffer.f_bsize;
+
+  return 0;
 }

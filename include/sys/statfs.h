@@ -7,7 +7,7 @@
 #include <sys/types.h>
 
 struct statfs {
-  off_t f_bsize;		/* file system block size */
+  int f_bsize;		/* file system block size */
 };
 
 int fstatfs(int fd, struct statfs *st);

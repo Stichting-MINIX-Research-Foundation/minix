@@ -7,7 +7,6 @@
 #include <minix/const.h>
 #include <minix/ds.h>
 #include <minix/endpoint.h>
-#include <minix/keymap.h>
 #include <minix/minlib.h>
 #include <minix/type.h>
 #include <minix/ipc.h>
@@ -214,7 +213,7 @@ struct vm_exec_info {
 };
 
 static int libexec_copy_physcopy(struct exec_info *execi,
-        off_t off, off_t vaddr, size_t len)
+        off_t off, vir_bytes vaddr, size_t len)
 {
 	vir_bytes end;
 	struct vm_exec_info *ei = execi->opaque;
@@ -237,14 +236,14 @@ static void boot_alloc(struct exec_info *execi, off_t vaddr,
 }
 
 static int libexec_alloc_vm_prealloc(struct exec_info *execi,
-	off_t vaddr, size_t len)
+	vir_bytes vaddr, size_t len)
 {
 	boot_alloc(execi, vaddr, len, MF_PREALLOC);
 	return OK;
 }
 
 static int libexec_alloc_vm_ondemand(struct exec_info *execi,
-	off_t vaddr, size_t len)
+	vir_bytes vaddr, size_t len)
 {
 	boot_alloc(execi, vaddr, len, 0);
 	return OK;
@@ -444,6 +443,7 @@ void init_vm(void)
 	/* Cache blocks. */
 	CALLMAP(VM_MAPCACHEPAGE, do_mapcache);
 	CALLMAP(VM_SETCACHEPAGE, do_setcache);
+	CALLMAP(VM_CLEARCACHE, do_clearcache);
 
 	/* getrusage */
 	CALLMAP(VM_GETRUSAGE, do_getrusage);

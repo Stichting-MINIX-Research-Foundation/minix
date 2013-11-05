@@ -11,15 +11,14 @@
 
 /* Struct declarations. */
 struct proc;
-struct timer;
 
 /* clock.c */
 clock_t get_realtime(void);
 void set_realtime(clock_t);
-void set_adjtime_delta(clock_t);
+void set_adjtime_delta(int32_t);
 clock_t get_monotonic(void);
-void set_timer(struct timer *tp, clock_t t, tmr_func_t f);
-void reset_timer(struct timer *tp);
+void set_kernel_timer(minix_timer_t *tp, clock_t t, tmr_func_t f);
+void reset_kernel_timer(minix_timer_t *tp);
 void ser_dump_proc(void);
 
 void cycles_accounting_init(void);
@@ -45,7 +44,7 @@ void fpu_sigcontext(struct proc *, struct sigframe *fr, struct
 #endif
 void kmain(kinfo_t *cbi);
 void prepare_shutdown(int how);
-__dead void minix_shutdown(struct timer *tp);
+__dead void minix_shutdown(minix_timer_t *tp);
 void bsp_finish_booting(void);
 
 /* proc.c */
@@ -92,6 +91,7 @@ void fill_sendto_mask(const struct proc *rc, sys_map_t *map);
 int send_sig(endpoint_t proc_nr, int sig_nr);
 void cause_sig(proc_nr_t proc_nr, int sig_nr);
 void sig_delay_done(struct proc *rp);
+void send_diag_sig(void);
 void kernel_call(message *m_user, struct proc * caller);
 void system_init(void);
 void clear_endpoint(struct proc *rc);
@@ -138,8 +138,8 @@ void hook_ipc_clear(struct proc *proc);
 int verify_grant(endpoint_t, endpoint_t, cp_grant_id_t, vir_bytes, int,
 	vir_bytes, vir_bytes *, endpoint_t *);
 
-/* system/do_sysctl.c */
-int do_sysctl(struct proc * caller, message *m);
+/* system/do_diagctl.c */
+int do_diagctl(struct proc * caller, message *m);
 
 #if SPROFILE
 /* profile.c */
