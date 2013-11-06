@@ -208,7 +208,7 @@ void test5d()
 
 void test5e()
 {
-/* When a signal knocks a processes out of WAIT or PAUSE, it is supposed to
+/* When a signal knocks a processes out of WAITPID or PAUSE, it is supposed to
  * get EINTR as error status.  Check that.
  */
   int n;

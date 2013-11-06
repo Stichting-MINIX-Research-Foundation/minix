@@ -93,15 +93,6 @@ int main(void)
        * Handle the request and send a reply to the caller. 
        */
       else {
-	  if (call_nr != COMMON_GETSYSINFO && 
-	  	(call_nr < RS_RQ_BASE || call_nr >= RS_RQ_BASE+0x100))
-	  {
-		/* Ignore invalid requests. Do not try to reply. */
-		printf("RS: warning: got invalid request %d from endpoint %d\n",
-			call_nr, m.m_source);
-		continue;
-	  }
-
           /* Handler functions are responsible for permission checking. */
           switch(call_nr) {
           /* User requests. */
@@ -113,8 +104,7 @@ int main(void)
           case RS_UPDATE: 	result = do_update(&m); 	break;
           case RS_CLONE: 	result = do_clone(&m); 		break;
           case RS_EDIT: 	result = do_edit(&m); 		break;
-          case COMMON_GETSYSINFO: 
-         			result = do_getsysinfo(&m); 	break;
+          case RS_GETSYSINFO:	result = do_getsysinfo(&m); 	break;
 	  case RS_LOOKUP:	result = do_lookup(&m);		break;
 	  /* Ready messages. */
 	  case RS_INIT: 	result = do_init_ready(&m); 	break;
@@ -122,7 +112,7 @@ int main(void)
           default: 
               printf("RS: warning: got unexpected request %d from %d\n",
                   m.m_type, m.m_source);
-              result = EINVAL;
+              result = ENOSYS;
           }
 
           /* Finally send reply message, unless disabled. */
@@ -299,10 +289,7 @@ static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
       /*
        * Set dev properties.
        */
-      rpub->dev_flags = boot_image_dev->flags;        /* device flags */
       rpub->dev_nr = boot_image_dev->dev_nr;          /* major device number */
-      rpub->dev_style = boot_image_dev->dev_style;    /* device style */
-      rpub->dev_style2 = boot_image_dev->dev_style2;  /* device style 2 */
 
       /* Build command settings. This will also set the process name. */
       strlcpy(rp->r_cmd, ip->proc_name, sizeof(rp->r_cmd));
@@ -416,8 +403,8 @@ static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 
       /* Get pid from PM. */
       rp->r_pid = getnpid(rpub->endpoint);
-      if(rp->r_pid == -1) {
-          panic("unable to get pid");
+      if(rp->r_pid < 0) {
+          panic("unable to get pid: %d", rp->r_pid);
       }
   }
 
@@ -436,11 +423,12 @@ static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 
   /* Fork a new RS instance with root:operator. */
   pid = srv_fork(0, 0);
-  if(pid == -1) {
-      panic("unable to fork a new RS instance");
+  if(pid < 0) {
+      panic("unable to fork a new RS instance: %d", pid);
   }
   replica_pid = pid ? pid : getpid();
-  replica_endpoint = getnprocnr(replica_pid);
+  if ((s = getprocnr(replica_pid, &replica_endpoint)) != 0)
+	panic("unable to get replica endpoint: %d", s);
   replica_rp->r_pid = replica_pid;
   replica_rp->r_pub->endpoint = replica_endpoint;
 
@@ -540,7 +528,7 @@ static int sef_cb_signal_manager(endpoint_t target, int signo)
 
   /* Print stacktrace if necessary. */
   if(SIGS_IS_STACKTRACE(signo)) {
-       sys_sysctl_stacktrace(target);
+       sys_diagctl_stacktrace(target);
   }
 
   /* In case of termination signal handle the event. */

@@ -1,8 +1,14 @@
-# $NetBSD: Makefile,v 1.6 2011/01/12 23:02:22 joerg Exp $
+# $NetBSD: Makefile,v 1.7 2011/10/11 19:20:14 joerg Exp $
 
-MAN=	mandoc_man.7 mandoc_char.7 mandoc_mdoc.7 mandoc_roff.7 mandoc_tbl.7
+MAN=	mandoc_man.7 mandoc_char.7 mandoc_eqn.7 mandoc_mdoc.7 \
+	mandoc_roff.7 mandoc_tbl.7
 
 .include <bsd.init.mk>
+
+mandoc_eqn.7: ${DISTDIR}/eqn.7
+	${_MKTARGET_CREATE}
+	rm -f ${.TARGET}
+	${TOOL_CAT} ${DISTDIR}/eqn.7 > ${.TARGET}
 
 mandoc_man.7: ${DISTDIR}/man.7
 	${_MKTARGET_CREATE}
@@ -24,7 +30,8 @@ mandoc_tbl.7: ${DISTDIR}/tbl.7
 	rm -f ${.TARGET}
 	${TOOL_CAT} ${DISTDIR}/tbl.7 > ${.TARGET}
 
-CLEANFILES+=	mandoc_man.7 mandoc_mdoc.7 mandoc_roff.7 mandoc_tbl.7
+CLEANFILES+=	mandoc_eqn.7 mandoc_man.7 mandoc_mdoc.7 \
+		mandoc_roff.7 mandoc_tbl.7
 
 .if (${MKHTML} != "no") && (${MKMAN} != "no")
 FILES=		${DISTDIR}/example.style.css

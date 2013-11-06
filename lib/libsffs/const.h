@@ -8,8 +8,8 @@
 /* Number of entries in the name hashtable. */
 #define NUM_HASH_SLOTS	1023
 
-/* Arbitrary block size constant returned by fstatfs and statvfs.
- * Also used by getdents. This is not the underlying data transfer unit size.
+/* Arbitrary block size constant returned by statvfs. Also used by getdents.
+ * This is not the underlying data transfer unit size.
  */
 #define BLOCK_SIZE	4096
 

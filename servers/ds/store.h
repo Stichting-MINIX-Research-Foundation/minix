@@ -11,7 +11,6 @@
 
 #define NR_DS_KEYS	(2*NR_SYS_PROCS)	/* number of entries */
 #define NR_DS_SUBS	(4*NR_SYS_PROCS)	/* number of subscriptions */
-#define NR_DS_SNAPSHOT	5	/* number of snapshots */
 
 /* Base 'class' for the following 3 structs. */
 struct data_store {
@@ -26,13 +25,6 @@ struct data_store {
 			size_t length;
 			size_t reallen;
 		} mem;
-		struct dsi_map {
-			void *data;
-			size_t length;
-			void *realpointer;
-			void *snapshots[NR_DS_SNAPSHOT];
-			int sindex;
-		} map;
 	} u;
 };
 

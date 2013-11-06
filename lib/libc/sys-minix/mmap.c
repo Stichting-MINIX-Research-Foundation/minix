@@ -28,6 +28,7 @@ void *minix_mmap_for(endpoint_t forwhom,
 	message m;
 	int r;
 
+	memset(&m, 0, sizeof(m));
 	m.VMM_ADDR = (vir_bytes) addr;
 	m.VMM_LEN = len;
 	m.VMM_PROT = prot;
@@ -87,6 +88,7 @@ int minix_munmap(void *addr, size_t len)
 {
 	message m;
 
+	memset(&m, 0, sizeof(m));
 	m.VMUM_ADDR = addr;
 	m.VMUM_LEN = len;
 
@@ -103,6 +105,7 @@ void *vm_remap(endpoint_t d,
 	message m;
 	int r;
 
+	memset(&m, 0, sizeof(m));
 	m.VMRE_D = d;
 	m.VMRE_S = s;
 	m.VMRE_DA = (char *) da;
@@ -124,6 +127,7 @@ void *vm_remap_ro(endpoint_t d,
 	message m;
 	int r;
 
+	memset(&m, 0, sizeof(m));
 	m.VMRE_D = d;
 	m.VMRE_S = s;
 	m.VMRE_DA = (char *) da;
@@ -140,6 +144,7 @@ int vm_unmap(endpoint_t endpt, void *addr)
 {
 	message m;
 
+	memset(&m, 0, sizeof(m));
 	m.VMUN_ENDPT = endpt;
 	m.VMUN_ADDR = (long) addr;
 
@@ -151,6 +156,7 @@ unsigned long vm_getphys(endpoint_t endpt, void *addr)
 	message m;
 	int r;
 
+	memset(&m, 0, sizeof(m));
 	m.VMPHYS_ENDPT = endpt;
 	m.VMPHYS_ADDR = (long) addr;
 
@@ -165,6 +171,7 @@ u8_t vm_getrefcount(endpoint_t endpt, void *addr)
 	message m;
 	int r;
 
+	memset(&m, 0, sizeof(m));
 	m.VMREFCNT_ENDPT = endpt;
 	m.VMREFCNT_ADDR = (long) addr;
 

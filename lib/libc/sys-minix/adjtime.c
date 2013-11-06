@@ -2,6 +2,7 @@
 #include <lib.h>
 #include "namespace.h"
 
+#include <string.h>
 #include <sys/time.h>
 #include <time.h>
 
@@ -13,12 +14,13 @@ int adjtime(const struct timeval *delta, struct timeval *olddelta)
 {
   message m;
 
-  m.m2_i2 = 0; /* use adjtime() method to slowly adjust the clock. */
-  m.m2_i1 = (clockid_t) CLOCK_REALTIME;
-  m.m2_l1 = (time_t) delta->tv_sec;
-  m.m2_l2 = (long) delta->tv_usec * 1000; /* convert usec to nsec */
+  memset(&m, 0, sizeof(m));
+  m.PM_TIME_CLK_ID = (clockid_t) CLOCK_REALTIME;
+  m.PM_TIME_NOW = 0; /* use adjtime() method to slowly adjust the clock. */
+  m.PM_TIME_SEC = (time_t) delta->tv_sec;
+  m.PM_TIME_NSEC = (long) delta->tv_usec * 1000; /* convert usec to nsec */
 
-  if (_syscall(PM_PROC_NR, CLOCK_SETTIME, &m) < 0)
+  if (_syscall(PM_PROC_NR, PM_CLOCK_SETTIME, &m) < 0)
   	return -1;
 
   if (olddelta != NULL) {

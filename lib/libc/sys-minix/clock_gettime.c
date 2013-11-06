@@ -2,6 +2,7 @@
 #include <lib.h>
 #include "namespace.h"
 
+#include <string.h>
 #include <sys/time.h>
 
 #ifdef __weak_alias
@@ -12,13 +13,14 @@ int clock_gettime(clockid_t clock_id, struct timespec *res)
 {
   message m;
 
-  m.m2_i1 = (clockid_t) clock_id;
+  memset(&m, 0, sizeof(m));
+  m.PM_TIME_CLK_ID = (clockid_t) clock_id;
 
-  if (_syscall(PM_PROC_NR, CLOCK_GETTIME, &m) < 0)
+  if (_syscall(PM_PROC_NR, PM_CLOCK_GETTIME, &m) < 0)
   	return -1;
 
-  res->tv_sec = (time_t) m.m2_l1;
-  res->tv_nsec = (long) m.m2_l2;
+  res->tv_sec = (time_t) m.PM_TIME_SEC;
+  res->tv_nsec = (long) m.PM_TIME_USEC;
 
   return 0;
 }

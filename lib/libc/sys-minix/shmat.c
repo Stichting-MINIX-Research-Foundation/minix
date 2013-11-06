@@ -12,6 +12,7 @@
 #include <sys/shm.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <string.h>
 
 #ifdef __weak_alias
 __weak_alias(shmat, _shmat)
@@ -36,6 +37,7 @@ void *shmat(int shmid, const void *shmaddr, int shmflg)
 		return NULL;
 	}
 
+	memset(&m, 0, sizeof(m));
 	m.SHMAT_ID = shmid;
 	m.SHMAT_ADDR = (long) shmaddr;
 	m.SHMAT_FLAG = shmflg;
@@ -57,6 +59,7 @@ int shmdt(const void *shmaddr)
 		return -1;
 	}
 
+	memset(&m, 0, sizeof(m));
 	m.SHMDT_ADDR = (long) shmaddr;
 
 	return _syscall(ipc_pt, IPC_SHMDT, &m);

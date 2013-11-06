@@ -8,6 +8,7 @@
 #include "inode.h"
 #include "super.h"
 #include <minix/vfsif.h>
+#include <minix/minlib.h>
 #include <sys/param.h>
 #include <assert.h>
 
@@ -29,7 +30,7 @@ int fs_readwrite(void)
   cp_grant_id_t gid;
   off_t position, f_size, bytes_left;
   unsigned int off, cum_io, block_size, chunk;
-  mode_t mode_word;
+  pmode_t mode_word;
   int completed;
   struct inode *rip;
   size_t nrbytes;
@@ -37,7 +38,7 @@ int fs_readwrite(void)
   r = OK;
   
   /* Find the inode referred */
-  if ((rip = find_inode(fs_dev, (ino_t) fs_m_in.REQ_INODE_NR)) == NULL)
+  if ((rip = find_inode(fs_dev, (pino_t) fs_m_in.REQ_INODE_NR)) == NULL)
 	return(EINVAL);
 
   mode_word = rip->i_mode & I_TYPE;
@@ -420,13 +421,8 @@ zone_t rd_indir(bp, index)
 struct buf *bp;			/* pointer to indirect block */
 int index;			/* index into *bp */
 {
-/* Given a pointer to an indirect block, read one entry.  The reason for
- * making a separate routine out of this is that there are four cases:
- * V1 (IBM and 68000), and V2 (IBM and 68000).
- */
-
   struct super_block *sp;
-  zone_t zone;			/* V2 zones are longs (shorts in V1) */
+  zone_t zone;
 
   if(bp == NULL)
 	panic("rd_indir() on NULL");
@@ -434,10 +430,8 @@ int index;			/* index into *bp */
   sp = get_super(lmfs_dev(bp));	/* need super block to find file sys type */
 
   /* read a zone from an indirect block */
-  if (sp->s_version == V1)
-	zone = (zone_t) conv2(sp->s_native, (int)  b_v1_ind(bp)[index]);
-  else
-	zone = (zone_t) conv4(sp->s_native, (long) b_v2_ind(bp)[index]);
+  assert(sp->s_version == V3);
+  zone = (zone_t) conv4(sp->s_native, (long) b_v2_ind(bp)[index]);
 
   if (zone != NO_ZONE &&
 		(zone < (zone_t) sp->s_firstdatazone || zone >= sp->s_zones)) {
@@ -608,7 +602,7 @@ int fs_getdents(void)
   register struct inode *rip;
   int o, r, done;
   unsigned int block_size, len, reclen;
-  ino_t ino;
+  pino_t ino;
   cp_grant_id_t gid;
   size_t size, tmpbuf_off, userbuf_off;
   off_t pos, off, block_pos, new_pos, ent_pos;
@@ -617,8 +611,8 @@ int fs_getdents(void)
   struct dirent *dep;
   char *cp;
 
-  ino = (ino_t) fs_m_in.REQ_INODE_NR;
-  gid = (gid_t) fs_m_in.REQ_GRANT;
+  ino = (pino_t) fs_m_in.REQ_INODE_NR;
+  gid = (cp_grant_id_t) fs_m_in.REQ_GRANT;
   size = (size_t) fs_m_in.REQ_MEM_SIZE;
   pos = (off_t) fs_m_in.REQ_SEEK_POS_LO;
 
@@ -663,11 +657,8 @@ int fs_getdents(void)
 		  else
 			  len = cp - (dp->mfs_d_name);
 		
-		  /* Compute record length */
-		  reclen = offsetof(struct dirent, d_name) + len + 1;
-		  o = (reclen % sizeof(long));
-		  if (o != 0)
-			  reclen += sizeof(long) - o;
+		  /* Compute record length; also does alignment. */
+		  reclen = _DIRENT_RECLEN(dep, len);
 
 		  /* Need the position of this entry in the directory */
 		  ent_pos = block_pos + ((char *) dp - (char *) bp->data);
@@ -699,10 +690,17 @@ int fs_getdents(void)
 		}
 
 		dep = (struct dirent *) &getdents_buf[tmpbuf_off];
-		dep->d_ino = dp->mfs_d_ino;
-		dep->d_off = ent_pos;
+		dep->d_fileno = (ino_t) dp->mfs_d_ino;
 		dep->d_reclen = (unsigned short) reclen;
+		dep->d_namlen = len;
 		memcpy(dep->d_name, dp->mfs_d_name, len);
+		{
+			struct inode *entrip;
+			if(!(entrip = get_inode(fs_dev, dep->d_fileno)))
+				panic("unexpected get_inode failure");
+			dep->d_type = fs_mode_to_type(entrip->i_mode);
+			put_inode(entrip);
+		}
 		dep->d_name[len] = '\0';
 		tmpbuf_off += reclen;
 	}

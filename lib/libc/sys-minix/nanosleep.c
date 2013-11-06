@@ -26,13 +26,17 @@ int nanosleep(const struct timespec *rqtp, struct timespec *rmtp)
 	struct timespec rqt;
 
 	/* check parameters */
-	if (!rqtp)
-		return EFAULT;
+	if (!rqtp) {
+		errno = EFAULT;
+		return -1;
+	}
 
 	if (rqtp->tv_sec < 0 || 
 		rqtp->tv_nsec < 0 ||
-		rqtp->tv_nsec >= NSEC_PER_SEC)
-		return EINVAL;
+		rqtp->tv_nsec >= NSEC_PER_SEC) {
+		errno = EINVAL;
+		return -1;
+	}
 
 	/* store *rqtp to make sure it is not overwritten */
 	rqt = *rqtp;

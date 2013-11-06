@@ -2,6 +2,7 @@
 #include "namespace.h"
 #include <lib.h>
 
+#include <string.h>
 #include <sys/time.h>
 
 /*
@@ -16,13 +17,17 @@ int setitimer(int which, const struct itimerval *__restrict value,
   /* A null pointer for 'value' would make setitimer behave like getitimer,
    * which is not according to the specification, so disallow null pointers.
    */
-  if (value == NULL) return(EINVAL);
+  if (value == NULL) {
+	errno = EINVAL;
+	return -1;
+  }
 
-  m.m1_i1 = which;
-  m.m1_p1 = (char *) __UNCONST(value);
-  m.m1_p2 = (char *) ovalue;
+  memset(&m, 0, sizeof(m));
+  m.PM_ITIMER_WHICH = which;
+  m.PM_ITIMER_VALUE = (char *) __UNCONST(value);
+  m.PM_ITIMER_OVALUE = (char *) ovalue;
 
-  return _syscall(PM_PROC_NR, ITIMER, &m);
+  return _syscall(PM_PROC_NR, PM_ITIMER, &m);
 }
 
 #if defined(__minix) && defined(__weak_alias)

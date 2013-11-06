@@ -25,7 +25,7 @@ SRCS+= 	\
 	do_privctl.c \
 	do_safecopy.c \
 	do_safememset.c \
-	do_sysctl.c \
+	do_diagctl.c \
 	do_getksig.c \
 	do_endksig.c \
 	do_kill.c \
@@ -36,6 +36,7 @@ SRCS+= 	\
 	do_cprofile.c \
 	do_profbuf.c \
 	do_vmctl.c \
+	do_mcontext.c \
 	do_schedule.c \
 	do_schedctl.c \
 	do_statectl.c

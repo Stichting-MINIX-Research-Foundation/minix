@@ -24,10 +24,39 @@ INFOGRP?=	operator
 DOCGRP?=	operator
 
 MKBINUTILS?=	no
-MKGDB:=		no
 MKGCC?=		no
 MKGCCCMDS?=	no
+MKPROFILE?=	no
 MKSLJIT?=	no
+
+#MINIX-specific variables
+MKCOVERAGE?=	no
+
+# LSC MINIX does not support these features ATM.
+USE_FORT:=	no
+USE_SSP:=	no
+MKCRYPTO:=	no
+MKGDB:=		no
+MKGROFF:=	no
+MKHESIOD:=	no
+MKHTML:=	no
+MKINET6:=	no
+MKIPFILTER:=	no
+MKISCSI:=	no
+MKKERBEROS:=	no
+MKKMOD:=	no
+MKLDAP:=	no
+MKLINT:=	no
+MKLVM:=		no
+MKMDNS:=	no
+MKNLS:=		no
+MKNPF:=		no
+MKPAM:=		no
+MKPF:=		no
+MKPOSTFIX:=	no
+MKRUMP:=	no
+MKSKEY:=	no
+MKYP:=		no
 
 # LSC MINIX SMP Support?
 .ifdef CONFIG_SMP
@@ -63,6 +92,17 @@ USETOOLS?=	never
           MKBITCODE:=no
 .      endif
 .    endif # ${_HAVE_GOLD:U} == ""
+
+# If DESTDIR was specified, and we are not using the tools, then make sure to
+# build out-of-tree and to refer only DESTDIR for target binaries
+# The case when using tools is already handled below.
+.    if ${DESTDIR:U} != ""
+        CPPFLAGS+= --sysroot=${DESTDIR}
+        LDFLAGS+= --sysroot=${DESTDIR}
+.	if defined(HAVE_LLVM)
+          LDFLAGS+= -L${DESTDIR}/usr/lib
+.	endif
+.    endif # ${DESTDIR:U} != ""
 .  endif # ${USETOOLS:Uno} != "yes"
 
 .  if !defined(HOSTPROG) && !defined(HOSTLIB)
@@ -441,6 +481,7 @@ TOOL_STRFILE=		${TOOLDIR}/bin/${_TOOL_PREFIX}strfile
 TOOL_SUNLABEL=		${TOOLDIR}/bin/${_TOOL_PREFIX}sunlabel
 TOOL_TBL=		${TOOLDIR}/bin/${_TOOL_PREFIX}tbl
 TOOL_TIC=		${TOOLDIR}/bin/${_TOOL_PREFIX}tic
+TOOL_TOPROTO=		${TOOLDIR}/bin/${_TOOL_PREFIX}toproto
 TOOL_UUDECODE=		${TOOLDIR}/bin/${_TOOL_PREFIX}uudecode
 TOOL_VGRIND=		${TOOLDIR}/bin/${_TOOL_PREFIX}vgrind -f
 TOOL_ZIC=		${TOOLDIR}/bin/${_TOOL_PREFIX}zic
@@ -540,6 +581,7 @@ TOOL_STRFILE=		strfile
 TOOL_SUNLABEL=		sunlabel
 TOOL_TBL=		tbl
 TOOL_TIC=		tic
+TOOL_TOPROTO=		toproto
 TOOL_UUDECODE=		uudecode
 TOOL_VGRIND=		vgrind -f
 TOOL_ZIC=		zic
@@ -933,36 +975,8 @@ MKBINUTILS?=	${MKBFD}
 MKZFS?=		yes
 .endif
 
-# Some tough Minix defaults
-MKCOVERAGE?=	no
-MKPROFILE?=	no
+# LSC: MINIX: Has to be here, otherwise libgcc_s.a is not found!?
 MKSTATICLIB:=	yes
-MKLINT:=	no
-
-# LSC MINIX does not support these features ATM.
-USE_FORT:=	no
-USE_SSP:=	no
-MKYP:=		no
-MKPF:=		no
-MKNLS:=		no
-MKHESIOD:=	no
-MKPOSTFIX:=	no
-MKKMOD:=	no
-MKEXTSRC:=	no
-MKRUMP:=	no
-MKSKEY:=	no
-MKCRYPTO:=	no
-MKMDNS:=	no
-MKNPF:=		no
-MKISCSI:=	no
-MKLVM:=		no
-MKKERBEROS:=	no
-MKLDAP:=	no
-MKPAM:=		no
-MKIPFILTER:=	no
-MKINET6:=	no
-MKGROFF:=	no
-MKHTML:=	no
 
 #
 # MK* options which default to "yes".
@@ -993,7 +1007,7 @@ _MKVARS.yes= \
 
 #MINIX-specific vars
 _MKVARS.yes+= \
-	MKMCONTEXT MKSYSDEBUG MKLIVEUPDATE MKSTATECTL MKTRACE MKLWIP
+	MKSYSDEBUG MKLIVEUPDATE MKLWIP
 .if (${MACHINE_ARCH} == "i386")
 _MKVARS.yes+= \
 	MKWATCHDOG MKACPI MKAPIC MKDEBUGREG MKINSTALLBOOT MKPCI
@@ -1112,12 +1126,9 @@ MKNLS:=		no
 MKWATCHDOG:=	no
 MKACPI:=	no
 MKAPIC:=	no
-MKMCONTEXT:=	no
 MKDEBUGREG:=	no
 MKSYSDEBUG:=	no
 MKLIVEUPDATE:=	no
-MKSTATECTL:=	no
-MKTRACE:=	no
 .endif
 
 #
@@ -1185,8 +1196,8 @@ ${var}?= yes
 
 #MINIX-specific vars
 .for var in \
-	USE_WATCHDOG USE_ACPI USE_APIC USE_MCONTEXT USE_DEBUGREG USE_SYSDEBUG \
-	USE_LIVEUPDATE USE_STATECTL USE_TRACE USE_PCI USE_BITCODE
+	USE_WATCHDOG USE_ACPI USE_APIC USE_DEBUGREG USE_SYSDEBUG \
+	USE_LIVEUPDATE USE_PCI USE_BITCODE
 .if (${${var:S/USE_/MK/}} == "no")
 ${var}:= no
 .else

@@ -1,4 +1,4 @@
-#include <dirent.h>
+#include <sys/dirent.h>
 
 #define b_data(bp) ((char *) (bp->data))
 

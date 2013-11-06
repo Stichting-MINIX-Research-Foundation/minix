@@ -21,14 +21,12 @@ i2cdriver_announce(uint32_t bus)
 	 * For this reason, there may blocked callers when a driver restarts.
 	 * Ask the kernel to unblock them (if any).
 	 */
-#if USE_STATECTL
 	if ((r = sys_statectl(SYS_STATE_CLEAR_IPC_REFS)) != OK) {
 		panic("chardriver_init: sys_statectl failed: %d", r);
 	}
-#endif
 
 	/* Publish a driver up event. */
-	r = ds_retrieve_label_name(label, getprocnr());
+	r = ds_retrieve_label_name(label, sef_self());
 	if (r != OK) {
 		panic("unable to get own label: %d\n", r);
 	}
@@ -161,14 +159,14 @@ i2cdriver_reserve_device(endpoint_t bus_endpoint, i2c_addr_t address)
 	message m;
 
 	m.m_type = BUSC_I2C_RESERVE;
-	m.DEVICE = address;
+	m.BUSC_I2C_ADDR = address;
 
 	r = sendrec(bus_endpoint, &m);
 	if (r != OK) {
 		return EIO;
 	}
 
-	return m.REP_STATUS;	/* return reply code OK, EBUSY, EINVAL, etc. */
+	return m.m_type;	/* return reply code OK, EBUSY, EINVAL, etc. */
 }
 
 int
@@ -184,7 +182,7 @@ i2cdriver_exec(endpoint_t bus_endpoint, minix_i2c_ioctl_exec_t * ioctl_exec)
 	memset(&m, '\0', sizeof(message));
 
 	m.m_type = BUSC_I2C_EXEC;
-	m.IO_GRANT = (char *) grant_nr;
+	m.BUSC_I2C_GRANT = grant_nr;
 
 	r = sendrec(bus_endpoint, &m);
 	cpf_revoke(grant_nr);
@@ -192,7 +190,7 @@ i2cdriver_exec(endpoint_t bus_endpoint, minix_i2c_ioctl_exec_t * ioctl_exec)
 		return EIO;
 	}
 
-	return m.REP_STATUS;
+	return m.m_type;
 }
 
 static int

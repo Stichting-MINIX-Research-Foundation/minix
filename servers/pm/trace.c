@@ -29,10 +29,10 @@
 
 #include "pm.h"
 #include <minix/com.h>
+#include <minix/callnr.h>
 #include <sys/ptrace.h>
 #include <signal.h>
 #include "mproc.h"
-#include "param.h"
 
 /*===========================================================================*
  *				do_trace  				     *
@@ -42,9 +42,8 @@ int do_trace()
   register struct mproc *child;
   struct ptrace_range pr;
   int i, r, req;
-  message m;
 
-  req = m_in.request;
+  req = m_in.PM_PTRACE_REQ;
 
   /* The T_OK call is made by the child fork of the debugger before it execs
    * the process to be traced. The T_ATTACH call is made by the debugger itself
@@ -55,11 +54,11 @@ int do_trace()
 	if (mp->mp_tracer != NO_TRACER) return(EBUSY);
 
 	mp->mp_tracer = mp->mp_parent;
-	mp->mp_reply.reply_trace = 0;
+	mp->mp_reply.PM_PTRACE_DATA = 0;
 	return(OK);
 
   case T_ATTACH:	/* attach to an existing process */
-	if ((child = find_proc(m_in.pid)) == NULL) return(ESRCH);
+	if ((child = find_proc(m_in.PM_PTRACE_PID)) == NULL) return(ESRCH);
 	if (child->mp_flags & EXITING) return(ESRCH);
 
 	/* For non-root processes, user and group ID must match. */
@@ -88,29 +87,8 @@ int do_trace()
 
 	sig_proc(child, SIGSTOP, TRUE /*trace*/, FALSE /* ksig */);
 
-	mp->mp_reply.reply_trace = 0;
+	mp->mp_reply.PM_PTRACE_DATA = 0;
 	return(OK);
-
-  case T_DUMPCORE:
-	if ((child = find_proc(m_in.pid)) == NULL) return(ESRCH);
-
-	/* Allow dumpcore only if traced! */
-	if (child->mp_tracer != who_p) return(EPERM);
-
-	/* Tell VFS to dump the core. */
-	m.m_type = PM_DUMPCORE;
-	m.PM_PROC = mp->mp_endpoint;
-	m.PM_TRACED_PROC = child->mp_endpoint;
-	/* Note that m.PM_PROC != m.PM_TRACED_PROC
-	 * (we use this to differentiate between a VFS core dump reply for a
-	 * an exiting process and the one for a traced process) */
-
-	m.PM_TERM_SIG = child->mp_sigstatus;
-	m.PM_PATH = child->mp_name;
-
-	tell_vfs(mp, &m);
-
-	return(SUSPEND); /* Suspend the process until we receive reply from VFS */
 
   case T_STOP:		/* stop the process */
 	/* This call is not exposed to user programs, because its effect can be
@@ -120,18 +98,19 @@ int do_trace()
 
   case T_READB_INS:	/* special hack for reading text segments */
 	if (mp->mp_effuid != SUPER_USER) return(EPERM);
-	if ((child = find_proc(m_in.pid)) == NULL) return(ESRCH);
+	if ((child = find_proc(m_in.PM_PTRACE_PID)) == NULL) return(ESRCH);
 	if (child->mp_flags & EXITING) return(ESRCH);
 
-	r = sys_trace(req, child->mp_endpoint, m_in.PMTRACE_ADDR, &m_in.data);
+	r = sys_trace(req, child->mp_endpoint, m_in.PM_PTRACE_ADDR,
+		&m_in.PM_PTRACE_DATA);
 	if (r != OK) return(r);
 
-	mp->mp_reply.reply_trace = m_in.data;
+	mp->mp_reply.PM_PTRACE_DATA = m_in.PM_PTRACE_DATA;
 	return(OK);
 
   case T_WRITEB_INS:	/* special hack for patching text segments */
 	if (mp->mp_effuid != SUPER_USER) return(EPERM);
-	if ((child = find_proc(m_in.pid)) == NULL) return(ESRCH);
+	if ((child = find_proc(m_in.PM_PTRACE_PID)) == NULL) return(ESRCH);
 	if (child->mp_flags & EXITING) return(ESRCH);
 
 #if 0
@@ -145,20 +124,21 @@ int do_trace()
 	child->mp_ctime = 0;
 #endif
 
-	r = sys_trace(req, child->mp_endpoint, m_in.PMTRACE_ADDR, &m_in.data);
+	r = sys_trace(req, child->mp_endpoint, m_in.PM_PTRACE_ADDR,
+		&m_in.PM_PTRACE_DATA);
 	if (r != OK) return(r);
 
-	mp->mp_reply.reply_trace = m_in.data;
+	mp->mp_reply.PM_PTRACE_DATA = m_in.PM_PTRACE_DATA;
 	return(OK);
   }
 
   /* All the other calls are made by the tracing process to control execution
    * of the child. For all these calls, the child must be stopped.
    */
-  if ((child = find_proc(m_in.pid)) == NULL) return(ESRCH);
+  if ((child = find_proc(m_in.PM_PTRACE_PID)) == NULL) return(ESRCH);
   if (child->mp_flags & EXITING) return(ESRCH);
   if (child->mp_tracer != who_p) return(ESRCH);
-  if (!(child->mp_flags & STOPPED)) return(EBUSY);
+  if (!(child->mp_flags & TRACE_STOPPED)) return(EBUSY);
 
   switch (req) {
   case T_EXIT:		/* exit */
@@ -166,9 +146,10 @@ int do_trace()
 
 	/* Defer the exit if the traced process has an VFS call pending. */
 	if (child->mp_flags & VFS_CALL)
-		child->mp_exitstatus = (int) m_in.data;	/* save for later */
+		child->mp_exitstatus = (int) m_in.PM_PTRACE_DATA; /* save it */
 	else
-		exit_proc(child, (int) m_in.data, FALSE /*dump_core*/);
+		exit_proc(child, (int) m_in.PM_PTRACE_DATA,
+			FALSE /*dump_core*/);
 
 	/* Do not reply to the caller until VFS has processed the exit
 	 * request.
@@ -176,14 +157,14 @@ int do_trace()
 	return(SUSPEND);
 
   case T_SETOPT:	/* set trace options */
-	child->mp_trace_flags = m_in.data;
+	child->mp_trace_flags = m_in.PM_PTRACE_DATA;
 
-	mp->mp_reply.reply_trace = 0;
+	mp->mp_reply.PM_PTRACE_DATA = 0;
 	return(OK);
 
   case T_GETRANGE:
   case T_SETRANGE:	/* get/set range of values */
-	r = sys_datacopy(who_e, (vir_bytes) m_in.PMTRACE_ADDR,
+	r = sys_datacopy(who_e, (vir_bytes) m_in.PM_PTRACE_ADDR,
 			SELF, (vir_bytes) &pr, (phys_bytes) sizeof(pr));
 	if (r != OK) return(r);
 
@@ -201,11 +182,12 @@ int do_trace()
 
 	if (r != OK) return(r);
 
-	mp->mp_reply.reply_trace = 0;
+	mp->mp_reply.PM_PTRACE_DATA = 0;
 	return(OK);
 
   case T_DETACH:	/* detach from traced process */
-	if (m_in.data < 0 || m_in.data >= _NSIG) return(EINVAL);
+	if (m_in.PM_PTRACE_DATA < 0 || m_in.PM_PTRACE_DATA >= _NSIG)
+		return(EINVAL);
 
 	child->mp_tracer = NO_TRACER;
 
@@ -217,13 +199,13 @@ int do_trace()
 		}
 	}
 
-	if (m_in.data > 0) {		/* issue signal */
-		sig_proc(child, (int) m_in.data, TRUE /*trace*/, 
+	if (m_in.PM_PTRACE_DATA > 0) {		/* issue signal */
+		sig_proc(child, (int) m_in.PM_PTRACE_DATA, TRUE /*trace*/,
 			FALSE /* ksig */);
 	}
 
 	/* Resume the child as if nothing ever happened. */ 
-	child->mp_flags &= ~STOPPED;
+	child->mp_flags &= ~TRACE_STOPPED;
 	child->mp_trace_flags = 0;
 
 	check_pending(child);
@@ -233,10 +215,11 @@ int do_trace()
   case T_RESUME: 
   case T_STEP:
   case T_SYSCALL:	/* resume execution */
-	if (m_in.data < 0 || m_in.data >= _NSIG) return(EINVAL);
+	if (m_in.PM_PTRACE_DATA < 0 || m_in.PM_PTRACE_DATA >= _NSIG)
+		return(EINVAL);
 
-	if (m_in.data > 0) {		/* issue signal */
-		sig_proc(child, (int) m_in.data, FALSE /*trace*/,
+	if (m_in.PM_PTRACE_DATA > 0) {		/* issue signal */
+		sig_proc(child, (int) m_in.PM_PTRACE_DATA, FALSE /*trace*/,
 			FALSE /* ksig */);
 	}
 
@@ -245,28 +228,29 @@ int do_trace()
 	 */
 	for (i = 1; i < _NSIG; i++) {
 		if (sigismember(&child->mp_sigtrace, i)) {
-			mp->mp_reply.reply_trace = 0;
+			mp->mp_reply.PM_PTRACE_DATA = 0;
 			return(OK);
 		}
 	}
 
-	child->mp_flags &= ~STOPPED;
+	child->mp_flags &= ~TRACE_STOPPED;
 
 	check_pending(child);
 
 	break;
   }
-  r = sys_trace(req, child->mp_endpoint, m_in.PMTRACE_ADDR, &m_in.data);
+  r = sys_trace(req, child->mp_endpoint, m_in.PM_PTRACE_ADDR,
+	&m_in.PM_PTRACE_DATA);
   if (r != OK) return(r);
 
-  mp->mp_reply.reply_trace = m_in.data;
+  mp->mp_reply.PM_PTRACE_DATA = m_in.PM_PTRACE_DATA;
   return(OK);
 }
 
 /*===========================================================================*
- *				stop_proc				     *
+ *				trace_stop				     *
  *===========================================================================*/
-void stop_proc(rmp, signo)
+void trace_stop(rmp, signo)
 register struct mproc *rmp;
 int signo;
 {
@@ -278,12 +262,12 @@ int signo;
   r = sys_trace(T_STOP, rmp->mp_endpoint, 0L, (long *) 0);
   if (r != OK) panic("sys_trace failed: %d", r);
  
-  rmp->mp_flags |= STOPPED;
+  rmp->mp_flags |= TRACE_STOPPED;
   if (wait_test(rpmp, rmp)) {
 	sigdelset(&rmp->mp_sigtrace, signo);
 
 	rpmp->mp_flags &= ~WAITING;	/* parent is no longer waiting */
-	rpmp->mp_reply.reply_res2 = 0177 | (signo << 8);
-	setreply(rmp->mp_tracer, rmp->mp_pid);
+	rpmp->mp_reply.PM_WAITPID_STATUS = 0177 | (signo << 8);
+	reply(rmp->mp_tracer, rmp->mp_pid);
   }
 }

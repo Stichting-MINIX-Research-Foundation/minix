@@ -11,6 +11,7 @@
 
 #include <fcntl.h>
 #include <unistd.h>
+#include <string.h>
 #include <minix/syslib.h>
 #include <minix/sysutil.h>
 #include <minix/timers.h>

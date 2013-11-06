@@ -1,4 +1,4 @@
-/*	$NetBSD: fd_set.h,v 1.2 2005/12/11 12:25:20 christos Exp $	*/
+/*	$NetBSD: fd_set.h,v 1.5 2010/07/08 18:56:17 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -36,48 +36,53 @@
 
 #include <sys/cdefs.h>
 #include <sys/featuretest.h>
-#include <sys/syslimits.h>
 #include <machine/int_types.h>
 
 /*
- * Implementation dependent defines, hidden from user space. X/Open does not
- * specify them.
+ * Implementation dependent defines, hidden from user space.
+ * POSIX does not specify them.
  */
-#define	__NBBY		8		/* number of bits in a byte */
-typedef __int32_t	__fd_mask;
 
-/* bits per mask */
-#define __NFDBITS	((unsigned int)sizeof(__fd_mask) * __NBBY)
+typedef	__uint32_t	__fd_mask;
 
-#define	__howmany(x, y)	(((x) + ((y) - 1)) / (y))
+/* 32 = 2 ^ 5 */
+#define	__NFDBITS	(32)
+#define	__NFDSHIFT	(5)
+#define	__NFDMASK	(__NFDBITS - 1)
 
 /*
- * Select uses bit masks of file descriptors in longs.  These macros
- * manipulate such bit fields (the filesystem macros use chars).
- * FD_SETSIZE may be defined by the user, but the default here should
- * be enough for most uses.
+ * Select uses bit fields of file descriptors.  These macros manipulate
+ * such bit fields.  Note: FD_SETSIZE may be defined by the user.
  */
+
 #ifndef	FD_SETSIZE
+#ifdef __minix
+#include <sys/syslimits.h>
 #define	FD_SETSIZE	__MINIX_OPEN_MAX
+#else
+#define	FD_SETSIZE	256
+#endif
 #endif
 
+#define	__NFD_SIZE	(((FD_SETSIZE) + (__NFDBITS - 1)) / __NFDBITS)
+
 typedef	struct fd_set {
-	__fd_mask	fds_bits[__howmany(FD_SETSIZE, __NFDBITS)];
+	__fd_mask	fds_bits[__NFD_SIZE];
 } fd_set;
 
 #define	FD_SET(n, p)	\
-    ((p)->fds_bits[(n)/__NFDBITS] |= (1 << ((n) % __NFDBITS)))
+    ((p)->fds_bits[(unsigned)(n) >> __NFDSHIFT] |= (1 << ((n) & __NFDMASK)))
 #define	FD_CLR(n, p)	\
-    ((p)->fds_bits[(n)/__NFDBITS] &= ~(1 << ((n) % __NFDBITS)))
+    ((p)->fds_bits[(unsigned)(n) >> __NFDSHIFT] &= ~(1 << ((n) & __NFDMASK)))
 #define	FD_ISSET(n, p)	\
-    ((p)->fds_bits[(n)/__NFDBITS] & (1 << ((n) % __NFDBITS)))
+    ((p)->fds_bits[(unsigned)(n) >> __NFDSHIFT] & (1 << ((n) & __NFDMASK)))
 #if __GNUC_PREREQ__(2, 95)
 #define	FD_ZERO(p)	(void)__builtin_memset((p), 0, sizeof(*(p)))
 #else
 #define	FD_ZERO(p)	do {						\
 	fd_set *__fds = (p);						\
 	unsigned int __i;						\
-	for (__i = 0; __i < __howmany(FD_SETSIZE, __NFDBITS); __i++)	\
+	for (__i = 0; __i < __NFD_SIZE; __i++)				\
 		__fds->fds_bits[__i] = 0;				\
 	} while (/* CONSTCOND */ 0)
 #endif /* GCC 2.95 */
@@ -87,11 +92,8 @@ typedef	struct fd_set {
  */
 #if defined(_NETBSD_SOURCE)
 
-#define fd_mask __fd_mask
-#define NFDBITS __NFDBITS
-#ifndef howmany
-#define howmany(a, b) __howmany(a, b)
-#endif
+#define	fd_mask		__fd_mask
+#define	NFDBITS		__NFDBITS
 
 #if __GNUC_PREREQ__(2, 95)
 #define	FD_COPY(f, t)	(void)__builtin_memcpy((t), (f), sizeof(*(f)))
@@ -99,7 +101,7 @@ typedef	struct fd_set {
 #define	FD_COPY(f, t)	do {						\
 	fd_set *__f = (f), *__t = (t);					\
 	unsigned int __i;						\
-	for (__i = 0; __i < __howmany(FD_SETSIZE, __NFDBITS); __i++)	\
+	for (__i = 0; __i < __NFD_SIZE; __i++)				\
 		__t->fds_bits[__i] = __f->fds_bits[__i];		\
 	} while (/* CONSTCOND */ 0)
 #endif /* GCC 2.95 */

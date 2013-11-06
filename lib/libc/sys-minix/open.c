@@ -14,20 +14,24 @@ int open(const char *name, int flags, ...)
 {
   va_list argp;
   message m;
+  int call;
 
+  memset(&m, 0, sizeof(m));
   va_start(argp, flags);
+  /* Depending on whether O_CREAT is set, a different message layout is used,
+   * and therefore a different call number as well.
+   */
   if (flags & O_CREAT) {
-	m.m1_i1 = strlen(name) + 1;
-	m.m1_i2 = flags;
-	/* Since it's a vararg parameter that is smaller than
-	 * an int, the mode was passed as an int.
-	 */
-	m.m1_i3 = va_arg(argp, int);
-	m.m1_p1 = (char *) __UNCONST(name);
+	m.VFS_CREAT_LEN = strlen(name) + 1;
+	m.VFS_CREAT_FLAGS = flags;
+	m.VFS_CREAT_MODE = va_arg(argp, int);
+	m.VFS_CREAT_NAME = (char *) __UNCONST(name);
+	call = VFS_CREAT;
   } else {
 	_loadname(name, &m);
-	m.m3_i2 = flags;
+	m.VFS_PATH_FLAGS = flags;
+	call = VFS_OPEN;
   }
   va_end(argp);
-  return (_syscall(VFS_PROC_NR, OPEN, &m));
+  return (_syscall(VFS_PROC_NR, call, &m));
 }

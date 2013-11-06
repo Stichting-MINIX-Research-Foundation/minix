@@ -13,12 +13,7 @@
 EXTERN int err_code;		/* temporary storage for error number */
 
 EXTERN int(*fs_call_vec[]) (message *fs_m_in, message *fs_m_out);
-EXTERN int(*dev_call_vec[]) (message *fs_m_in, message *fs_m_out);
 
-EXTERN uid_t caller_uid;
-EXTERN gid_t caller_gid;
-EXTERN int req_nr;
-EXTERN int SELF_E;
 EXTERN int exitsignaled;
 EXTERN int busy;
 EXTERN int unmountdone;

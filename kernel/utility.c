@@ -55,7 +55,7 @@ void kputc(c)
 int c;					/* character to append */
 {
 /* Accumulate a single character for a kernel message. Send a notification
- * to the output driver if an END_OF_KMESS is encountered. 
+ * to the output drivers if an END_OF_KMESS is encountered.
  */
   if (c != END_OF_KMESS) {
       int maxblpos = sizeof(kmess.kmess_buf) - 2;
@@ -75,18 +75,9 @@ int c;					/* character to append */
       	memmove(kmess.kmess_buf,
 		kmess.kmess_buf+1, sizeof(kmess.kmess_buf)-1);
       } else kmess.blpos++;
-  } else {
-      int p;
-      endpoint_t outprocs[] = OUTPUT_PROCS_ARRAY;
-      if(!(kinfo.minix_panicing || kinfo.do_serial_debug)) {
-	      for(p = 0; outprocs[p] != NONE; p++) {
-		 if(isokprocn(outprocs[p])) {
-       	    send_sig(outprocs[p], SIGKMESS);
-		 }
-      	}
-     }
+  } else if (!(kinfo.minix_panicing || kinfo.do_serial_debug)) {
+	send_diag_sig();
   }
-  return;
 }
 
 /*===========================================================================*

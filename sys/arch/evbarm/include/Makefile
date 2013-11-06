@@ -13,7 +13,7 @@ INCS=	ansi.h asm.h \
 	\
 	limits.h lock.h \
 	math.h mcontext.h mutex.h \
-	param.h profile.h \
+	param.h proc.h profile.h \
 	rwlock.h \
 	setjmp.h signal.h \
 	types.h \

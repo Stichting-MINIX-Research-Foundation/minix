@@ -32,13 +32,13 @@ int main(int argc, char **argv)
 
 	/* Get the requestor's endpoint. */
 	read(fid_get, &ep_requestor, sizeof(ep_requestor));
-	dprint("GRANTOR: getting requestor's endpoint: %d\n", ep_requestor);
+	dprint(("GRANTOR: getting requestor's endpoint: %d\n", ep_requestor));
 
 	/* Grant. */
 	gid = cpf_grant_direct(ep_requestor, (long)buf, BUF_SIZE,
 		CPF_READ | CPF_WRITE);
-	ep_self = getprocnr();
-	dprint("GRANTOR: sending my endpoint %d and gid %d\n", ep_self, gid);
+	ep_self = sef_self();
+	dprint(("GRANTOR: sending my endpoint %d and gid %d\n", ep_self, gid));
 	write(fid_send, &ep_self, sizeof(ep_self));
 	write(fid_send, &gid, sizeof(gid));
 

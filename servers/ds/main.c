@@ -69,7 +69,7 @@ int main(int argc, char **argv)
       case DS_CHECK:
 	  result = do_check(&m);
 	  break;
-      case COMMON_GETSYSINFO:
+      case DS_GETSYSINFO:
 	  result = do_getsysinfo(&m);
 	  break;
       default: 

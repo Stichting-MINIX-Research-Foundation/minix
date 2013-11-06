@@ -2,6 +2,7 @@
 #include "namespace.h"
 #include <lib.h>
 
+#include <string.h>
 #include <unistd.h>
 
 #ifdef __weak_alias
@@ -12,7 +13,8 @@ int fsync(int fd)
 {
   message m;
 
-  m.m1_i1 = fd;
+  memset(&m, 0, sizeof(m));
+  m.VFS_FSYNC_FD = fd;
 
-  return(_syscall(VFS_PROC_NR, FSYNC, &m));
+  return(_syscall(VFS_PROC_NR, VFS_FSYNC, &m));
 }

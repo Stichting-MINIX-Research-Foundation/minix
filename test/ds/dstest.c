@@ -3,7 +3,6 @@
 char *key_u32 = "test_u32";
 char *key_str = "test_str";
 char *key_mem = "test_mem";
-char *key_map = "test_map";
 char *key_label = "test_label";
 
 /*===========================================================================*
@@ -128,10 +127,10 @@ void test_label(void)
 	endpoint_t endpoint;
 
 	/* Retrieve own label and endpoint. */
-	r = ds_retrieve_label_name(label, getprocnr());
+	r = ds_retrieve_label_name(label, sef_self());
 	assert(r == OK);
 	r = ds_retrieve_label_endpt(label, &endpoint);
-	assert(r == OK && endpoint == getprocnr());
+	assert(r == OK && endpoint == sef_self());
 
 	/* Publish and delete. */
 	r = ds_publish_label(label, endpoint, 0);
@@ -143,65 +142,6 @@ void test_label(void)
 }
 
 /*===========================================================================*
- *				test_map				     *
- *===========================================================================*/
-void test_map(void)
-{
-	char buf_buf[CLICK_SIZE * 2];
-	char buf_buf2[CLICK_SIZE * 2];
-	char *buf, *buf2;
-	char get_buf[CLICK_SIZE];
-	int *p;
-	volatile int *p2;
-	int *get_p;
-	size_t get_len;
-	int is;
-	int r;
-
-	buf = (char*) CLICK_CEIL(buf_buf);
-	buf2 = (char*) CLICK_CEIL(buf_buf2);
-
-	p = (int *)buf;
-	p2 = (int *)buf2;
-	get_p = (int *)get_buf;
-
-	*p = 1;
-	r = ds_publish_map(key_map, buf, CLICK_SIZE, 0);
-	assert(r == OK);
-
-	r = ds_snapshot_map(key_map, &is);
-	assert(r == OK);
-
-	/* Copy the mapped memory range.
-	 * Set *p=2, then the mapped memory range should change too
-	 * and *get_p should be 2.
-	 */
-	*p = 2;
-	get_len = CLICK_SIZE;
-	r = ds_retrieve_map(key_map, get_buf, &get_len, 0, DSMF_COPY_MAPPED);
-	assert(r == OK && get_len == CLICK_SIZE && *get_p == 2);
-
-	/* Copy snapshot, where *get_p should still be 1. */
-	get_len = CLICK_SIZE;
-	r = ds_retrieve_map(key_map, get_buf, &get_len, is, DSMF_COPY_SNAPSHOT);
-	assert(r == OK && get_len == CLICK_SIZE && *get_p == 1);
-
-	/* Map the mapped memory range to @buf2, then set *p=3, which
-	 * in turn should let *p2=3.
-	 */
-	get_len = CLICK_SIZE;
-	r = ds_retrieve_map(key_map, buf2, &get_len, 0, DSMF_MAP_MAPPED);
-	assert(r == OK && get_len == CLICK_SIZE);
-	*p = 3;
-	assert(*p2 == 3);
-
-	r = ds_delete_map(key_map);
-	assert(r == OK);
-
-	printf("DSTEST: MAP test successful!\n");
-}
-
-/*===========================================================================*
  *			       sef_cb_init_fresh			     *
  *===========================================================================*/
 static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
@@ -210,7 +150,6 @@ static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 	test_u32();
 	test_str();
 	test_mem();
-	test_map();
 	test_label();
 
 	return OK;

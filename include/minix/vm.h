@@ -8,7 +8,6 @@
 
 int vm_exit(endpoint_t ep);
 int vm_fork(endpoint_t ep, int slotno, endpoint_t *child_ep);
-int vm_brk(endpoint_t ep, char *newaddr);
 int vm_willexit(endpoint_t ep);
 int vm_adddma(endpoint_t proc_e, phys_bytes start, phys_bytes size);
 int vm_deldma(endpoint_t proc_e, phys_bytes start, phys_bytes size);
@@ -71,6 +70,8 @@ int vm_set_cacheblock(void *block, u32_t dev, u64_t dev_offset,
 
 void *vm_map_cacheblock(u32_t dev, u64_t dev_offset,
         u64_t ino, u64_t ino_offset, u32_t *flags, int blocksize);
+
+int vm_clear_cache(u32_t dev);
 
 /* flags for vm cache functions */
 #define VMMC_FLAGS_LOCKED	0x01	/* someone is updating the flags; don't read/write */

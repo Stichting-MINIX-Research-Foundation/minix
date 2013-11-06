@@ -1,0 +1,90 @@
+Development notes regarding VND. Original document by David van Moolenbroek.
+
+
+DESIGN DECISIONS
+
+As simple as the VND driver implementation looks, several important decisions
+had to be made in the design process. These decisions are listed here.
+
+Multiple instances instead of a single instance: The decision to spawn a
+separate driver instance for each VND unit was not ideologically inspired, but
+rather based on a practical issue. Namely, users may reasonably expect to be
+able to set up a VND using a backing file that resides on a file system hosted
+on another VND. If one single driver instance were to host both VND units, its
+implementation would have to perform all its backcalls to VFS asynchronously,
+so as to be able to process another incoming request that was initiated as part
+of such an ongoing backcall. As of writing, MINIX3 does not support any form of
+asynchronous I/O, but this would not even be sufficient: the asynchrony would
+have to extend even to the close(2) call that takes place during device
+unconfiguration, as this call could spark I/O to another VND device.
+Ultimately, using one driver instance per VND unit avoids these complications
+altogether, thus making nesting possible with a maximum depth of the number of
+VFS threads. Of course, this comes at the cost of having more VND driver
+processes; in order to avoid this cost in the common case, driver instances are
+dynamically started and stopped by vndconfig(8).
+
+copyfd(2) instead of openas(2): Compared to the NetBSD interface, the MINIX3
+VND API requires that the user program configuring a device pass in a file
+descriptor in the vnd_ioctl structure instead of a pointer to a path name.
+While binary compatibility with NetBSD would be impossible anyway (MINIX3 can
+not support pointers in IOCTL data structures), providing a path name buffer
+would be closer to what NetBSD does. There are two reasons behind the choice to
+pass in a file descriptor instead. First, performing an open(2)-like call as
+a driver backcall is tricky in terms of avoiding deadlocks in VFS, since it
+would by nature violate the VFS locking order. On top of that, special
+provisions would have to be added to support opening a file in the context of
+another process so that chrooted processes would be supported, for example.
+In contrast, copying a file descriptor to a remote process is relatively easy
+because there is only one potential deadlock case to cover - that of the given
+file descriptor identifying the VFS filp object used to control the very same
+device - and VFS need only implement a procedure that very much resembles
+sending a file descriptor across a UNIX domain socket. Second, since passing a
+file descriptor is effectively passing an object capability, it is easier to
+improve the isolation of the VND drivers in the future, as described below.
+
+No separate control device: The driver uses the same minor (block) device for
+configuration and for actual (whole-disk) I/O, instead of exposing a separate
+device that exists only for the purpose of configuring the device. The reason
+for this is that such a control device simply does not fit the NetBSD
+opendisk(3) API. While MINIX3 may at some point implement support for NetBSD's
+notion of raw devices, such raw devices are still expected to support I/O, and
+that means they cannot be control-only. In this regard, it should be mentioned
+that the entire VND infrastructure relies on block caches being invalidated
+properly upon (un)configuration of VND units, and that such invalidation
+(through the REQ_FLUSH file system request) is currently initiated only by
+closing block devices. Support for configuration or I/O through character
+devices would thus require more work on that side first. In any case, the
+primary downside of not having a separate control device is that handling
+access permissions on device open is a bit of a hack in order to keep the
+MINIX3 userland happy.
+
+
+FUTURE IMPROVEMENTS
+
+Currently, the VND driver instances are run as root just and only because the
+copyfd(2) call requires root. Obviously, nonroot user processes should never
+be able to copy file descriptors from arbitrary processes, and thus, some
+security check is required there. However, an access control list for VFS calls
+would be a much better solution: in that case, VND driver processes can be
+given exclusive rights to the use of the copyfd(2) call, while they can be
+given a normal driver UID at the same time.
+
+In MINIX3's dependability model, drivers are generally not considered to be
+malicious. However, the VND case is interesting because it is possible to
+isolate individual driver instances to the point of actual "least authority".
+The copyfd(2) call currently allows any file descriptor to be copied, but it
+would be possible to extend the scheme to let user processes (and vndconfig(8)
+in particular) mark the file descriptors that may be the target of a copyfd(2)
+call. One of several schemes may be implemented in VFS for this purpose. For
+example, each process could be allowed to mark one of its file descriptors as
+"copyable" using a new VFS call, and VFS would then allow copyfd(2) only on a
+"copyable" file descriptor from a process blocked on a call to the driver that
+invoked copyfd(2). This approach precludes hiding a VND driver behind a RAID
+or FBD (etc) driver, but more sophisticated approaches can solve that as well.
+Regardless of the scheme, the end result would be a situation where the VND
+drivers are strictly limited to operating on the resources given to them.
+
+Note that copyfd(2) was originally called dupfrom(2), and then extended to copy
+file descriptors *to* remote processes as well. The latter is not as security
+sensitive, but may have to be restricted in a similar way. If this is not
+possible, copyfd(2) can always be split into multiple calls.

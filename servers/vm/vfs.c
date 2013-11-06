@@ -80,6 +80,7 @@ int vfs_request(int reqno, int fd, struct vmproc *vmp, u64_t offset, u32_t len,
 	}
 
 	m = &reqnode->reqmsg;
+	memset(m, 0, sizeof(*m));
 	m->m_type = VFS_VMCALL;
 	m->VFS_VMCALL_REQ = reqno;
 	m->VFS_VMCALL_FD = fd;

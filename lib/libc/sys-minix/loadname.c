@@ -10,11 +10,10 @@ void _loadname(const char *name, message *msgptr)
  * string fits in the message, it is copied there.  If not, a pointer to
  * it is passed.
  */
-
   register size_t k;
 
   k = strlen(name) + 1;
-  msgptr->m3_i1 = k;
-  msgptr->m3_p1 = (char *) __UNCONST(name);
-  if (k <= M3_STRING) strcpy(msgptr->m3_ca1, name);
+  msgptr->VFS_PATH_LEN = k;
+  msgptr->VFS_PATH_NAME = (char *) __UNCONST(name);
+  if (k <= M3_STRING) strcpy(msgptr->VFS_PATH_BUF, name);
 }

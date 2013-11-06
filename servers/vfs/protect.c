@@ -14,9 +14,7 @@
 #include <assert.h>
 #include <minix/callnr.h>
 #include "file.h"
-#include "fproc.h"
 #include "path.h"
-#include "param.h"
 #include <minix/vfsif.h>
 #include "vnode.h"
 #include "vmnt.h"
@@ -24,7 +22,7 @@
 /*===========================================================================*
  *				do_chmod				     *
  *===========================================================================*/
-int do_chmod(message *UNUSED(m_out))
+int do_chmod(void)
 {
 /* Perform the chmod(name, mode) and fchmod(fd, mode) system calls.
  * syscall might provide 'name' embedded in the message.
@@ -37,29 +35,23 @@ int do_chmod(message *UNUSED(m_out))
   mode_t result_mode;
   char fullpath[PATH_MAX];
   struct lookup resolve;
-  vir_bytes vname;
-  size_t vname_length;
   mode_t new_mode;
 
   flp = NULL;
-  vname = (vir_bytes) job_m_in.name;
-  vname_length = (size_t) job_m_in.name_length;
-  rfd = job_m_in.fd;
-  new_mode = (mode_t) job_m_in.mode;
 
   lookup_init(&resolve, fullpath, PATH_NOFLAGS, &vmp, &vp);
   resolve.l_vmnt_lock = VMNT_READ;
   resolve.l_vnode_lock = VNODE_WRITE;
 
-  if (job_call_nr == CHMOD) {
+  if (job_call_nr == VFS_CHMOD) {
+	new_mode = job_m_in.VFS_PATH_MODE;
 	/* Temporarily open the file */
-	if (copy_name(vname_length, fullpath) != OK) {
-		/* Direct copy failed, try fetching from user space */
-		if (fetch_name(vname, vname_length, fullpath) != OK)
-			return(err_code);
-	}
+	if (copy_path(fullpath, sizeof(fullpath)) != OK)
+		return(err_code);
 	if ((vp = eat_path(&resolve, fp)) == NULL) return(err_code);
-  } else {	/* call_nr == FCHMOD */
+  } else {	/* call_nr == VFS_FCHMOD */
+	rfd = job_m_in.VFS_FCHMOD_FD;
+	new_mode = (mode_t) job_m_in.VFS_FCHMOD_MODE;
 	/* File is already opened; get a pointer to vnode from filp. */
 	if ((flp = get_filp(rfd, VNODE_WRITE)) == NULL) return(err_code);
 	vp = flp->filp_vno;
@@ -88,10 +80,10 @@ int do_chmod(message *UNUSED(m_out))
 		vp->v_mode = result_mode;
   }
 
-  if (job_call_nr == CHMOD) {
+  if (job_call_nr == VFS_CHMOD) {
 	unlock_vnode(vp);
 	unlock_vmnt(vmp);
-  } else {	/* FCHMOD */
+  } else {	/* VFS_FCHMOD */
 	unlock_filp(flp);
   }
 
@@ -103,7 +95,7 @@ int do_chmod(message *UNUSED(m_out))
 /*===========================================================================*
  *				do_chown				     *
  *===========================================================================*/
-int do_chown(message *UNUSED(m_out))
+int do_chown(void)
 {
 /* Perform the chown(path, owner, group) and fchmod(fd, owner, group) system
  * calls. */
@@ -120,22 +112,24 @@ int do_chown(message *UNUSED(m_out))
   size_t vname1_length;
 
   flp = NULL;
-  vname1 = (vir_bytes) job_m_in.name1;
-  vname1_length = (size_t) job_m_in.name1_length;
-  rfd = job_m_in.fd;
-  uid = job_m_in.owner;
-  gid = job_m_in.group;
+  uid = job_m_in.VFS_CHOWN_OWNER;
+  gid = job_m_in.VFS_CHOWN_GROUP;
 
-  lookup_init(&resolve, fullpath, PATH_NOFLAGS, &vmp, &vp);
-  resolve.l_vmnt_lock = VMNT_READ;
-  resolve.l_vnode_lock = VNODE_WRITE;
+  if (job_call_nr == VFS_CHOWN) {
+	vname1 = (vir_bytes) job_m_in.VFS_CHOWN_NAME;
+	vname1_length = (size_t) job_m_in.VFS_CHOWN_LEN;
 
-  if (job_call_nr == CHOWN) {
+	lookup_init(&resolve, fullpath, PATH_NOFLAGS, &vmp, &vp);
+	resolve.l_vmnt_lock = VMNT_READ;
+	resolve.l_vnode_lock = VNODE_WRITE;
+
 	/* Temporarily open the file. */
 	if (fetch_name(vname1, vname1_length, fullpath) != OK)
 		return(err_code);
 	if ((vp = eat_path(&resolve, fp)) == NULL) return(err_code);
-  } else {	/* call_nr == FCHOWN */
+  } else {	/* call_nr == VFS_FCHOWN */
+	rfd = job_m_in.VFS_CHOWN_FD;
+
 	/* File is already opened; get a pointer to the vnode from filp. */
 	if ((flp = get_filp(rfd, VNODE_WRITE)) == NULL)
 		return(err_code);
@@ -171,10 +165,10 @@ int do_chown(message *UNUSED(m_out))
 	}
   }
 
-  if (job_call_nr == CHOWN) {
+  if (job_call_nr == VFS_CHOWN) {
 	unlock_vnode(vp);
 	unlock_vmnt(vmp);
-  } else {	/* FCHOWN */
+  } else {	/* VFS_FCHOWN */
 	unlock_filp(flp);
   }
 
@@ -185,12 +179,12 @@ int do_chown(message *UNUSED(m_out))
 /*===========================================================================*
  *				do_umask				     *
  *===========================================================================*/
-int do_umask(message *UNUSED(m_out))
+int do_umask(void)
 {
-/* Perform the umask(co_mode) system call. */
+/* Perform the umask(2) system call. */
   mode_t complement, new_umask;
 
-  new_umask = job_m_in.co_mode;
+  new_umask = job_m_in.VFS_UMASK_MASK;
 
   complement = ~fp->fp_umask;	/* set 'r' to complement of old mask */
   fp->fp_umask = ~(new_umask & RWX_MODES);
@@ -201,7 +195,7 @@ int do_umask(message *UNUSED(m_out))
 /*===========================================================================*
  *				do_access				     *
  *===========================================================================*/
-int do_access(message *UNUSED(m_out))
+int do_access(void)
 {
 /* Perform the access(name, mode) system call.
  * syscall might provide 'name' embedded in the message.
@@ -211,13 +205,9 @@ int do_access(message *UNUSED(m_out))
   struct vmnt *vmp;
   char fullpath[PATH_MAX];
   struct lookup resolve;
-  vir_bytes vname;
-  size_t vname_length;
   mode_t access;
 
-  vname = (vir_bytes) job_m_in.name;
-  vname_length = (size_t) job_m_in.name_length;
-  access = job_m_in.mode;
+  access = job_m_in.VFS_PATH_MODE;
 
   lookup_init(&resolve, fullpath, PATH_NOFLAGS, &vmp, &vp);
   resolve.l_vmnt_lock = VMNT_READ;
@@ -228,11 +218,8 @@ int do_access(message *UNUSED(m_out))
 	return(EINVAL);
 
   /* Temporarily open the file. */
-  if (copy_name(vname_length, fullpath) != OK) {
-	/* Direct copy failed, try fetching from user space */
-	if (fetch_name(vname, vname_length, fullpath) != OK)
-		return(err_code);
-  }
+  if (copy_path(fullpath, sizeof(fullpath)) != OK)
+	return(err_code);
   if ((vp = eat_path(&resolve, fp)) == NULL) return(err_code);
 
   r = forbidden(fp, vp, access);
@@ -265,8 +252,8 @@ int forbidden(struct fproc *rfp, struct vnode *vp, mode_t access_desired)
 
   /* Isolate the relevant rwx bits from the mode. */
   bits = vp->v_mode;
-  uid = (job_call_nr == ACCESS ? rfp->fp_realuid : rfp->fp_effuid);
-  gid = (job_call_nr == ACCESS ? rfp->fp_realgid : rfp->fp_effgid);
+  uid = (job_call_nr == VFS_ACCESS ? rfp->fp_realuid : rfp->fp_effuid);
+  gid = (job_call_nr == VFS_ACCESS ? rfp->fp_realgid : rfp->fp_effgid);
 
   if (uid == SU_UID) {
 	/* Grant read and write permission.  Grant search permission for

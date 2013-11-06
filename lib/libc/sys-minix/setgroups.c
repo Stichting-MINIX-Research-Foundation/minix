@@ -2,6 +2,8 @@
 #include <lib.h>
 #include "namespace.h"
 
+#include <string.h>
+
 #ifdef __weak_alias
 __weak_alias(setgroups, _setgroups)
 #endif
@@ -12,10 +14,9 @@ int setgroups(int ngroups, const gid_t *gidset)
 {
   message m;
 
-  m.m1_p1 = (char *) __UNCONST(gidset);
-  m.m1_i1 = ngroups;
+  memset(&m, 0, sizeof(m));
+  m.PM_GROUPS_PTR = (char *) __UNCONST(gidset);
+  m.PM_GROUPS_NUM = ngroups;
 
-  return(_syscall(PM_PROC_NR, SETGROUPS, &m));
+  return(_syscall(PM_PROC_NR, PM_SETGROUPS, &m));
 }
-
-
