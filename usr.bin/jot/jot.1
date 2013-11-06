@@ -1,0 +1,203 @@
+.\"	$NetBSD: jot.1,v 1.12 2012/04/08 22:00:39 wiz Exp $
+.\"
+.\" Copyright (c) 1993
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"	@(#)jot.1	8.1 (Berkeley) 6/6/93
+.\"
+.Dd January 5, 2010
+.Dt JOT 1
+.Os
+.Sh NAME
+.Nm jot
+.Nd print sequential or random data
+.Sh SYNOPSIS
+.Nm
+.Op Fl cnr
+.Op Fl b Ar word
+.Op Fl p Ar precision
+.Op Fl s Ar string
+.Op Fl w Ar word
+.Oo Ar reps
+.Oo Ar begin
+.Oo Ar end
+.Op Ar s
+.Oc
+.Oc
+.Oc
+.Sh DESCRIPTION
+The
+.Nm jot
+utility is used to print out increasing, decreasing, random,
+or redundant data (usually numbers) one per line.
+.Pp
+The following options are available:
+.Bl -tag -width indent
+.It Fl b Ar word
+Just print
+.Ar word
+repetitively.
+.It Fl c
+This is an abbreviation for
+.Fl w Ar %c .
+.It Fl n
+Do not print the final newline normally appended to the output.
+.It Fl p Ar precision
+Print only as many digits or characters of the data
+as indicated by the integer
+.Ar precision .
+In the absence of
+.Fl p ,
+the precision is the greater of the precisions of
+.Ar begin
+and
+.Ar end .
+The
+.Fl p
+option is overridden by whatever appears in a
+.Xr printf 3
+conversion following
+.Fl w .
+.It Fl r
+Generate random data instead of sequential data, the default.
+.It Fl s Ar string
+Print data separated by
+.Ar string .
+Normally, newlines separate data.
+.It Fl w Ar word
+Print
+.Ar word
+with the generated data appended to it.
+Octal, hexadecimal, exponential, ASCII, zero padded,
+and right-adjusted representations
+are possible by using the appropriate
+.Xr printf 3
+conversion specification inside
+.Ar word ,
+in which case the data are inserted rather than appended.
+.El
+.Pp
+The last four arguments indicate, respectively,
+the number of data, the lower bound, the upper bound,
+and the step size or, for random data, the seed.
+While at least one of them must appear,
+any of the other three may be omitted, and
+will be considered as such if given as
+.Dq - .
+Any three of these arguments determines the fourth.
+If four are specified and the given and computed values of
+.Ar reps
+conflict, the lower value is used.
+If fewer than three are specified, defaults are assigned
+left to right, except for
+.Ar s ,
+which assumes its default unless both
+.Ar begin
+and
+.Ar end
+are given.
+.Pp
+Defaults for the four arguments are, respectively,
+100, 1, 100, and 1, except that when random data are requested,
+.Ar s
+defaults to a seed depending upon the time of day.
+.Ar reps
+is expected to be an unsigned integer,
+and if given as zero is taken to be infinite.
+.Ar begin
+and
+.Ar end
+may be given as real numbers or as characters
+representing the corresponding value in ASCII.
+The last argument must be a real number.
+.Pp
+Random numbers are obtained through
+.Xr random 3 .
+The name
+.Nm jot
+derives in part from
+.Nm iota ,
+a function in APL.
+.Sh EXAMPLES
+The command:
+.Dl "jot - 42 87 1"
+prints the integers from 42 to 87, inclusive.
+.Pp
+The command:
+.Dl "jot 21 \-1 1.00"
+prints 21 evenly spaced numbers increasing from \-1 to 1.
+.Pp
+The command:
+.Dl "jot \-c 128 0"
+prints the ASCII character set.
+.Pp
+The command:
+.Dl "jot \-w xa%c 26 a"
+prints the strings
+.Dq xaa
+through
+.Dq xaz .
+.Pp
+The command:
+.Dl "jot \-r \-c 160 a z | rs \-g 0 8"
+prints 20 random 8-letter strings.
+.Pp
+The command:
+.Dl "jot \-b y 0"
+is equivalent to
+.Xr yes 1 .
+.Pp
+The command:
+.Dl "jot \-w %ds/old/new/ 30 2 \- 5"
+prints thirty
+.Xr ed 1
+substitution commands applying to lines 2, 7, 12, etc.
+.Pp
+The command:
+.Dl "jot 0 9 \- \-.5"
+prints the stuttering sequence 9, 8, 8, 7, etc.
+.Pp
+The command:
+.Dl "jot \-b x 512 \*[Gt] block"
+creates a file containing exactly 1024 bytes.
+.Pp
+The command:
+.Dl "expand \-\`jot \-s, \- 10 132 4\`"
+sets tabs four spaces apart starting
+from column 10 and ending in column 132.
+.Pp
+The command:
+.Dl "grep \`jot \-s """" \-b . 80\`"
+prints all lines 80 characters or longer.
+.Sh SEE ALSO
+.Xr ed 1 ,
+.Xr expand 1 ,
+.Xr rs 1 ,
+.Xr seq 1 ,
+.Xr yes 1 ,
+.Xr printf 3 ,
+.Xr random 3
