@@ -6,7 +6,6 @@
  * The entry points into this file are:
  *   blockdriver_task:		the main message loop of the driver
  *   blockdriver_terminate:	break out of the main message loop
- *   blockdriver_handle_msg:	handle a single received message
  *   blockdriver_receive_mq:	message receive interface with message queueing
  *   blockdriver_mq_queue:	queue an incoming message for later processing
  */
@@ -43,6 +42,8 @@ void blockdriver_terminate(void)
 /* Break out of the main driver loop after finishing the current request. */
 
   running = FALSE;
+
+  sef_cancel();
 }
 
 /*===========================================================================*
@@ -60,8 +61,12 @@ void blockdriver_task(struct blockdriver *bdp)
    * it out, and sends a reply.
    */
   while (running) {
-	if ((r = blockdriver_receive_mq(&mess, &ipc_status)) != OK)
+	if ((r = blockdriver_receive_mq(&mess, &ipc_status)) != OK) {
+		if (r == EINTR && !running)
+			break;
+
 		panic("blockdriver_receive_mq failed: %d", r);
+	}
 
 	blockdriver_process(bdp, &mess, ipc_status);
   }
@@ -74,18 +79,8 @@ void blockdriver_process(struct blockdriver *bdp, message *m_ptr,
   int ipc_status)
 {
 /* Handle the given received message. */
-  int r;
 
-  /* Process the notification or request. */
-  if (is_ipc_notify(ipc_status)) {
-	blockdriver_handle_notify(bdp, m_ptr);
-
-	/* Do not reply to notifications. */
-  } else {
-	r = blockdriver_handle_request(bdp, m_ptr, SINGLE_THREAD);
-
-	blockdriver_reply(m_ptr, ipc_status, r);
-  }
+  blockdriver_process_on_thread(bdp, m_ptr, ipc_status, SINGLE_THREAD);
 }
 
 /*===========================================================================*

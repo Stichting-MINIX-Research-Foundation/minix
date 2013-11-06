@@ -24,11 +24,12 @@ int main(argc, argv)
 int argc;
 char *argv[];
 {
-  int all = 0, i, v = 0, mountflags;
+  int all = 0, i, v = 0, mountflags, srvflags;
   char **ap, *opt, *err, *type, *args, *device;
 
   if (argc == 1) list();	/* just list /etc/mtab */
   mountflags = 0;
+  srvflags = 0;
   type = NULL;
   args = NULL;
   ap = argv+1;
@@ -36,12 +37,12 @@ char *argv[];
 	if (argv[i][0] == '-') {
 		opt = argv[i]+1;
 		while (*opt != 0) switch (*opt++) {
-		case 'r':	mountflags |= MS_RDONLY;	break;
+		case 'r':	mountflags |= MNT_RDONLY;	break;
 		case 't':	if (++i == argc) usage();
 				type = argv[i];
 				break;
-		case 'i':	mountflags |= MS_REUSE;		break;
-		case 'e':	mountflags |= MS_EXISTING;		break;
+		case 'i':	srvflags |= MS_REUSE;		break;
+		case 'e':	srvflags |= MS_EXISTING;		break;
 		case 'n':	write_mtab = 0;			break;
 		case 'o':	if (++i == argc) usage();
 				args = argv[i];
@@ -75,7 +76,7 @@ char *argv[];
 	}
   }
   
-  if (mount(device, argv[2], mountflags, type, args) < 0) {
+  if (mount(device, argv[2], mountflags, srvflags, type, args) < 0) {
 	err = strerror(errno);
 	fprintf(stderr, "mount: Can't mount %s on %s: %s\n",
 		argv[1], argv[2], err);
@@ -141,7 +142,7 @@ mount_all()
 		if (has_opt(fs->fs_mntops, "ro"))
 			ro = 1;
 		if (ro) {
-			mountflags |= MS_RDONLY;
+			mountflags |= MNT_RDONLY;
 		}
 
 		device = fs->fs_spec;
@@ -152,7 +153,7 @@ mount_all()
 		if (!strcmp(device, "none")) 
 			device = NULL;
 
-		if (mount(device, mountpoint, mountflags, fs->fs_vfstype,
+		if (mount(device, mountpoint, mountflags, 0, fs->fs_vfstype,
 		    fs->fs_mntops) != 0) {
 			err = strerror(errno);
 			fprintf(stderr, "mount: Can't mount %s on %s: %s\n",

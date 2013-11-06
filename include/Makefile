@@ -39,7 +39,7 @@ INCS+=	ieeefp.h
 
 .if defined(__MINIX)
 # MINIX Specific headers.
-INCS+=  env.h fetch.h lib.h libutil.h timers.h varargs.h 
+INCS+=  env.h fetch.h lib.h libutil.h varargs.h
 .endif
 
 

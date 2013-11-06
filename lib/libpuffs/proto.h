@@ -57,7 +57,6 @@ int fs_breadwrite(void);
 int fs_readwrite(void);
 
 /* stadir.c */
-int fs_fstatfs(void);
 int fs_stat(void);
 int fs_statvfs(void);
 

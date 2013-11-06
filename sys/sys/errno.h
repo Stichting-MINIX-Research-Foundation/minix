@@ -79,7 +79,6 @@
 /* The following errors relate to networking. */
 #define EPACKSIZE     (_SIGN 50 )  /* invalid packet size for some protocol */
 #define ENOBUFS       (_SIGN 51 )  /* not enough buffers left */
-#define EBADIOCTL     (_SIGN 52 )  /* illegal ioctl for device */
 #define EBADMODE      (_SIGN 53 )  /* badmode in ioctl */
 #define EWOULDBLOCK   (_SIGN 54 )  /* call would block on nonblocking socket */
 #define ENETUNREACH   (_SIGN 55 )  /* network unreachable */

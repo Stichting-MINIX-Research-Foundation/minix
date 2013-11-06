@@ -14,13 +14,13 @@
 #include <machine/archtypes.h>
 #include "kernel/proc.h" /* for queue constants */
 
-static timer_t sched_timer;
+static minix_timer_t sched_timer;
 static unsigned balance_timeout;
 
 #define BALANCE_TIMEOUT	5 /* how often to balance queues in seconds */
 
 static int schedule_process(struct schedproc * rmp, unsigned flags);
-static void balance_queues(struct timer *tp);
+static void balance_queues(minix_timer_t *tp);
 
 #define SCHEDULE_CHANGE_PRIO	0x1
 #define SCHEDULE_CHANGE_QUANTUM	0x2
@@ -348,7 +348,7 @@ void init_scheduling(void)
  * quantum. This function will find all proccesses that have been bumped down,
  * and pulls them back up. This default policy will soon be changed.
  */
-static void balance_queues(struct timer *tp)
+static void balance_queues(minix_timer_t *tp)
 {
 	struct schedproc *rmp;
 	int proc_nr;

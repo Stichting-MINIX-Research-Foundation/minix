@@ -169,7 +169,7 @@ fillvnopmask(struct puffs_ops *pops, uint8_t *opmask)
 
 
 /*ARGSUSED*/
-static void
+__dead static void
 puffs_defaulterror(struct puffs_usermount *pu, uint8_t type,
 	int error, const char *str, puffs_cookie_t cookie)
 {
@@ -190,7 +190,8 @@ puffs_getstate(struct puffs_usermount *pu)
 void
 puffs_setstacksize(struct puffs_usermount *pu, size_t ss)
 {
-	long psize, minsize;
+	size_t minsize;
+	int psize;
 	int stackshift;
 	int bonus;
 

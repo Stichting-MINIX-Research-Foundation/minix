@@ -3,21 +3,31 @@
 #ifndef _SYS__KEYMAP_H
 #define _SYS__KEYMAP_H
 
+#define K(k)	[INPUT_KEY_ ## k]	/* Map to key entry */
+
 #define	C(c)	((c) & 0x1F)	/* Map to control code		*/
 #define A(c)	((c) | 0x80)	/* Set eight bit (ALT)		*/
 #define CA(c)	A(C(c))		/* Control-Alt			*/
+#define	N(c)	((c) | HASNUM)	/* Add "Num Lock has effect" attribute */
 #define	L(c)	((c) | HASCAPS)	/* Add "Caps Lock has effect" attribute */
 
 #define EXT	0x0100		/* Normal function keys		*/
 #define CTRL	0x0200		/* Control key			*/
 #define SHIFT	0x0400		/* Shift key			*/
 #define ALT	0x0800		/* Alternate key		*/
-#define EXTKEY	0x1000		/* extended keycode		*/
+#define HASNUM	0x4000		/* Num Lock has effect		*/
 #define HASCAPS	0x8000		/* Caps Lock has effect		*/
 
-/* Scan code conversion. */
-#define KEY_RELEASE 	0200
-#define ASCII_MASK	0177
+/* The left and right versions for the actual keys in the keymap. */
+#define LCTRL	CTRL
+#define RCTRL	(CTRL | EXT)
+#define LSHIFT	SHIFT
+#define RSHIFT	(SHIFT | EXT)
+#define LALT	ALT
+#define RALT	(ALT | EXT)
+
+/* Delete key */
+#define DEL	0177
 
 /* Numeric keypad */
 #define HOME	(0x01 + EXT)
@@ -29,9 +39,22 @@
 #define PGUP	(0x07 + EXT)
 #define PGDN	(0x08 + EXT)
 #define MID	(0x09 + EXT)
-#define NMIN	(0x0A + EXT)
-#define PLUS	(0x0B + EXT)
+/* UNUSED	(0x0A + EXT) */
+/* UNUSED	(0x0B + EXT) */
 #define INSRT	(0x0C + EXT)
+
+/* Keys affected by Num Lock */
+#define NHOME	N(HOME)
+#define NEND	N(END)
+#define NUP	N(UP)
+#define NDOWN	N(DOWN)
+#define NLEFT	N(LEFT)
+#define NRIGHT	N(RIGHT)
+#define NPGUP	N(PGUP)
+#define NPGDN	N(PGDN)
+#define NMID	N(MID)
+#define NINSRT	N(INSRT)
+#define NDEL	N(DEL)
 
 /* Alt + Numeric keypad */
 #define AHOME	(0x01 + ALT)
@@ -43,7 +66,7 @@
 #define APGUP	(0x07 + ALT)
 #define APGDN	(0x08 + ALT)
 #define AMID	(0x09 + ALT)
-#define ANMIN	(0x0A + ALT)
+#define AMIN	(0x0A + ALT)
 #define APLUS	(0x0B + ALT)
 #define AINSRT	(0x0C + ALT)
 
@@ -57,7 +80,7 @@
 #define CPGUP	(0x07 + CTRL)
 #define CPGDN	(0x08 + CTRL)
 #define CMID	(0x09 + CTRL)
-#define CNMIN	(0x0A + CTRL)
+#define CMIN	(0x0A + CTRL)
 #define CPLUS	(0x0B + CTRL)
 #define CINSRT	(0x0C + CTRL)
 
@@ -137,9 +160,9 @@
 #define ASF12	(0x1B + ALT + SHIFT)
 
 #define MAP_COLS	6	/* Number of columns in keymap */
-#define NR_SCAN_CODES	0x80	/* Number of scan codes (rows in keymap) */
+#define NR_SCAN_CODES	0xE8	/* Number of scan codes (rows in keymap) */
 
-typedef unsigned short keymap_t[NR_SCAN_CODES * MAP_COLS];
+typedef uint16_t keymap_t[NR_SCAN_CODES][MAP_COLS];
 
 #define KEY_MAGIC	"KMAZ"	/* Magic number of keymap file */
 

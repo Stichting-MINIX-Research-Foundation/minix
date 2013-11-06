@@ -16,7 +16,6 @@
 #ifdef __weak_alias
 __weak_alias(mount, _mount)
 __weak_alias(umount, _umount)
-__weak_alias(umount2, _umount2)
 #endif
 
 #define FSDEFAULT "mfs"
@@ -33,9 +32,9 @@ static int rs_down(char *label)
 }
 
 char *find_rslabel(char *args_line);
-int mount(special, name, mountflags, type, args)
+int mount(special, name, mountflags, srvflags, type, args)
 char *name, *special, *type, *args;
-int mountflags;
+int mountflags, srvflags;
 {
   int r;
   message m;
@@ -54,16 +53,12 @@ int mountflags;
   reuse = 0;
   memset(path, '\0', sizeof(path));
 
-  /* Check mount flags */
-  if(mountflags & MS_REUSE) {
+  /* Check service flags. */
+  if(srvflags & MS_REUSE)
 	reuse = 1;
-	mountflags &= ~MS_REUSE; /* Temporary: turn off to not confuse VFS */
-  }
   
-  if(mountflags & MS_EXISTING) {
+  if(srvflags & MS_EXISTING)
 	use_existing = 1;
-	mountflags &= ~MS_EXISTING; /* Temporary: turn off to not confuse VFS */
-  }
 
   /* Make a label for the file system process. This label must be unique and
    * may currently not exceed 16 characters including terminating null. For
@@ -103,9 +98,6 @@ int mountflags;
 			return -1;
 		}
   }
-
-  /* Tell VFS that we are passing in a 16-byte label. */
-  mountflags |= MS_LABEL16;
 
   /* Sanity check on user input. */
   if(strchr(args, '\'')) {
@@ -156,12 +148,15 @@ int mountflags;
   }
   
   /* Now perform mount(). */
-  m.m1_i1 = special ? strlen(special) + 1 : 0;
-  m.m1_i2 = strlen(name) + 1;
-  m.m1_i3 = mountflags;
-  m.m1_p1 = special;
-  m.m1_p2 = name;
-  m.m1_p3 = label;
+  m.VFS_MOUNT_FLAGS = mountflags;
+  m.VFS_MOUNT_DEVLEN = special ? strlen(special) + 1 : 0;
+  m.VFS_MOUNT_PATHLEN = strlen(name) + 1;
+  m.VFS_MOUNT_TYPELEN = strlen(type) + 1;
+  m.VFS_MOUNT_LABELLEN = strlen(label) + 1;
+  m.VFS_MOUNT_DEV = special;
+  m.VFS_MOUNT_PATH = name;
+  m.VFS_MOUNT_TYPE = type;
+  m.VFS_MOUNT_LABEL = label;
   r = _syscall(VFS_PROC_NR, MOUNT, &m);
 
   if (r != OK && !use_existing) {
@@ -174,30 +169,25 @@ int mountflags;
   return r;
 }
 
-int umount(name)
+int umount(name, srvflags)
 const char *name;
+int srvflags;
 {
-	return umount2(name, 0);
-}
-
-int umount2(name, flags)
-const char *name;
-int flags;
-{
+  char label[16];
   message m;
   int r;
 
-
-  _loadname(name, &m);
+  m.VFS_UMOUNT_NAME = __UNCONST(name);
+  m.VFS_UMOUNT_NAMELEN = strlen(name) + 1;
+  m.VFS_UMOUNT_LABEL = label;
+  m.VFS_UMOUNT_LABELLEN = sizeof(label);
   r = _syscall(VFS_PROC_NR, UMOUNT, &m);
 
   /* don't shut down the driver when exist flag is set */	
-  if (!(flags & MS_EXISTING)) {
+  if (!(srvflags & MS_EXISTING)) {
 	  if (r == OK) {
-		/* VFS returns the label of the unmounted file system in the reply.
-		* As of writing, the size of the m3_ca1 field is 16 bytes.
-		*/
-		rs_down(m.m3_ca1);
+		/* VFS returns the label of the unmounted file system to us. */
+		rs_down(label);
 	}
   }
 

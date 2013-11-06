@@ -20,7 +20,6 @@
 #include <assert.h>
 #include <time.h>
 #include "file.h"
-#include "fproc.h"
 #include "param.h"
 #include "vmnt.h"
 
@@ -107,7 +106,7 @@ int no_sys(message *UNUSED(m_out))
 /*===========================================================================*
  *				isokendpt_f				     *
  *===========================================================================*/
-int isokendpt_f(char *file, int line, endpoint_t endpoint, int *proc,
+int isokendpt_f(const char *file, int line, endpoint_t endpoint, int *proc,
        int fatal)
 {
   int failed = 0;
