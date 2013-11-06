@@ -1,0 +1,211 @@
+.\"	$NetBSD: msgc.1,v 1.26 2012/03/06 16:26:01 mbalmer Exp $
+.\"
+.\" Copyright 1997 Piermont Information Systems Inc.
+.\" All rights reserved.
+.\"
+.\" Written by Philip A. Nelson for Piermont Information Systems Inc.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. The name of Piermont Information Systems Inc. may not be used to endorse
+.\"    or promote products derived from this software without specific prior
+.\"    written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY PIERMONT INFORMATION SYSTEMS INC. ``AS IS''
+.\" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED. IN NO EVENT SHALL PIERMONT INFORMATION SYSTEMS INC. BE
+.\" LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+.\" THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd March 3, 2012
+.Dt MSGC 1
+.Os
+.Sh NAME
+.Nm msgc ,
+.Nm msg_window ,
+.Nm msg_string ,
+.Nm msg_clear ,
+.Nm msg_standout ,
+.Nm msg_standend ,
+.Nm msg_display ,
+.Nm msg_display_add ,
+.Nm msg_printf ,
+.Nm msg_prompt ,
+.Nm msg_prompt_add ,
+.Nm msg_prompt_win ,
+.Nm msg_prompt_noecho ,
+.Nm msg_row ,
+.Nm msg_table_add
+.Nd simple message list compiler
+.Sh SYNOPSIS
+msgc
+.Op Fl o Ar name
+.Ar file
+.Pp
+.Fd #include \&"msg_defs.h"
+.Ft void
+.Fn msg_window "WINDOW *window"
+.Ft const char *
+.Fn msg_string "msg msg_no"
+.Ft void
+.Fn msg_clear "void"
+.Ft void
+.Fn msg_standout "void"
+.Ft void
+.Fn msg_standend "void"
+.Ft void
+.Fn msg_display "msg msg_no" ...
+.Ft void
+.Fn msg_display_add "msg msg_no" ...
+.Ft void
+.Fn msg_printf "fmt" ...
+.Ft void
+.Fn msg_prompt  "msg msg_no" "const char *def" "char *val" "int max_chars" ...
+.Ft void
+.Fn msg_prompt_add  "msg msg_no" "const char *def" "char *val" "int max_chars" ...
+.Ft void
+.Fn msg_prompt_win  "msg msg_no" "WINDOW *win" "const char *def" "char *val" "int max_chars" ...
+.Ft void
+.Fn msg_prompt_noecho  "msg msg_no" "const char *def" "char *val" "int max_chars" ...
+.Ft int
+.Fn msg_row "void"
+.Ft void
+.Fn msg_table_add "msg msg_no" ...
+.Sh DESCRIPTION
+This implements a curses based message display system.
+A source file that lists messages with associated names is given to
+.Nm
+and produces both a .c and a .h file that implement the menu system.
+The standard root name of the files is
+.Pa msg_defs .
+The
+.Fl o Ar name
+can be used to specify a different root name.
+.Sh ENVIRONMENT
+.Bl -tag -width MSGDEF
+.It Ev MSGDEF
+Can be set to point to a different set of
+definition files for
+.Nm msgc .
+The current location defaults to
+.Pa /usr/share/misc .
+.El
+.Sh FILES
+.Bl -item
+.It
+.Pa /usr/share/misc/msg_sys.def
+.El
+.Sh SOURCE DESCRIPTION
+The format is very simple.
+Each message is started with the word
+.Sq message
+followed by the name of the message.
+The body of the message is next and is started by a { and closed by a }.
+The braces are not part of the message.
+Everything, including newlines between the braces are part of the message.
+.Sh MESSAGE FUNCTIONS
+The defined messages are used through calls routines that manipulate
+the messages.
+You first need to set the
+.Xr curses 3
+environment up and then tell the message system which window to use
+for displaying message by calling the function
+.Fn msg_window .
+.Pp
+All variable argument lists in the functions are used as
+are arguments to
+.Xr sprintf 3 .
+The messages may have
+.Xr sprintf 3
+conversions in them and the corresponding parameters should match.
+Messages are identified by name using the notation
+.Sq MSG_name
+where
+.Dq name
+is the name in the message source file.
+(The definitions are accessed by including the generated .h file into a
+source file wanting to use the message routines.)
+.Pp
+The function
+.Fn msg_string
+just returns a pointer to the actual message string.
+The functions
+.Fn msg_clear ,
+.Fn msg_standout
+and
+.Fn msg_standend
+respectively clear the message window, set standout mode and clear standout
+mode.
+.Pp
+The functions
+.Fn msg_display
+and
+.Fn msg_display_add
+cause a defined message to be displayed in the message window and does
+the requested conversions before printing.
+The difference is that
+.Fn msg_display
+clears the window before displaying the message.
+These functions fill paragraphs for readability.
+The
+.Fn msg_table_add
+function behaves like
+.Fn msg_display_add
+but does not fill text.
+.Pp
+The function
+.Fn msg_printf
+allows to display a raw message without going through the message catalog.
+.Pp
+The remaining functions deal with a prompt facility.
+A prompt message is either taken from the message directory or from a
+given string.
+The message is processed with
+.Xr sprintf 3
+and then displayed.
+If the parameter
+.Ar def
+is
+.No non- Ns Dv NULL
+and not a string of zero length, a default value is printed
+in brackets.
+The user is allowed to type in a response.
+If the user types just the newline character, the default is returned
+in the value.
+The parameter
+.Ar max_chars
+is the length of the parameter
+.Ar val ,
+where the results are stored.
+The parameters
+.Ar def
+and
+.Ar val
+may point to the same character array.
+If the default is chosen, the character array is not changed.
+The functions
+.Fn msg_echo
+and
+.Fn msg_noecho
+control whether the prompt routine echo or don't echo the input that
+is typed by the user.
+.Pp
+.Fn msg_prompt_win
+uses the specified curses window instead of the default one.
+.Pp
+.Fn msg_row
+return the current row - i.e.: getcury(msg_win) + getbegy(msg_win).
+.Sh AUTHORS
+Philip A. Nelson for Piermont Information Systems Inc.

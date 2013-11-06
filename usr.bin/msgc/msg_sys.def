@@ -1,0 +1,612 @@
+/*	$NetBSD: msg_sys.def,v 1.41 2012/03/06 16:26:01 mbalmer Exp $	*/
+
+/*
+ * Copyright 1997 Piermont Information Systems Inc.
+ * All rights reserved.
+ *
+ * Written by Philip A. Nelson for Piermont Information Systems Inc.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. The name of Piermont Information Systems Inc. may not be used to endorse
+ *    or promote products derived from this software without specific prior
+ *    written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY PIERMONT INFORMATION SYSTEMS INC. ``AS IS''
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL PIERMONT INFORMATION SYSTEMS INC. BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+ * THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ */
+
+static WINDOW *msg_win = NULL;
+static char *cbuffer;
+static size_t cbuffersize;
+
+static int last_i_was_nl, last_i_was_space;
+static int last_o_was_punct, last_o_was_space;
+
+static void	_msg_beep(void);
+static int	_msg_vprintf(int, const char *, va_list);
+#define MSG_PROMPT_ECHO		1
+#define MSG_PROMPT_HIDE_DFLT	2
+static void	_msg_vprompt(const char *, int, const char *, char *,
+			size_t, va_list);
+
+static char *msgmap = MAP_FAILED;
+static size_t msgmapsz;
+static unsigned int msgmapcount;
+
+/* Routines */
+
+static void
+_msg_beep(void)
+{
+
+	fprintf(stderr, "\a");
+}
+
+WINDOW *
+msg_window(WINDOW *window)
+{
+	size_t ncbuffersize;
+	char *ncbuffer;
+	WINDOW *old;
+
+	old = msg_win;
+	if (!window)
+		return old;
+	msg_win = window;
+
+	ncbuffersize = getmaxx(window) * getmaxy(window) + 1;
+	while (ncbuffersize > cbuffersize) {
+		ncbuffer = malloc(ncbuffersize);
+		if (ncbuffer == NULL) {
+			/* we might get truncated messages... */
+			ncbuffersize <<= 1;
+			continue;
+		}
+		if (cbuffer != NULL)
+			free(cbuffer);
+		cbuffer = ncbuffer;
+		cbuffersize = ncbuffersize;
+		break;
+	}
+	last_o_was_punct = 0;
+	last_o_was_space = 1;
+	return old;
+}
+
+int
+msg_file(const char *file)
+{
+	int fd;
+
+	if (msgmap != MAP_FAILED)
+#ifdef __minix
+		minix_munmap(msgmap, msgmapsz);
+#else /* ! __minix */
+		munmap(msgmap, msgmapsz);
+#endif /* ! __minix */
+	msgmap = MAP_FAILED;
+	if (!file)
+		return 0;
+	fd = open(file, O_RDONLY, 0);
+	if (fd == -1)
+		return -1;
+	msgmapsz = lseek(fd, 0, SEEK_END);
+#ifdef __minix
+	msgmap = minix_mmap(0, msgmapsz, PROT_READ, MAP_PRIVATE, fd, 0);
+#else /* ! __minix */
+	msgmap = mmap(0, msgmapsz, PROT_READ, MAP_SHARED, fd, 0);
+#endif /* ! __minix */
+	close(fd);
+	if (msgmap == MAP_FAILED)
+		return -1;
+	/* check_magic */
+	if (strcmp(msgmap, "MSGTXTS") != 0) {
+		msg_file(NULL);
+		return -1;
+	}
+	msgmapcount = atoi(msgmap + 8);
+	return 0;
+}
+
+const char *
+msg_string(msg msg_no)
+{
+	uintptr_t m = (uintptr_t)msg_no;
+
+	if (m > sizeof msg_list / sizeof msg_list[0])
+		/* guess that we were passed a text string */
+		return msg_no;
+
+	if (msgmap != MAP_FAILED && m != 0 && m <= msgmapcount) {
+		unsigned int offset = atoi(msgmap + 8 + 8 * m);
+		if (offset != 0 && offset < msgmapsz)
+			return msgmap + offset;
+	}
+
+	return msg_list[m];
+}
+
+void
+msg_clear(void)
+{
+
+	wclear(msg_win);
+	last_o_was_punct = 0;
+	last_o_was_space = 1;
+}
+
+void
+msg_standout(void)
+{
+
+	wstandout(msg_win);
+}
+
+void
+msg_standend(void)
+{
+
+	wstandend(msg_win);
+}
+
+static int
+_msg_vprintf(int auto_fill, const char *fmt, va_list ap)
+{
+	const char *wstart, *afterw;
+	int wordlen, nspaces;
+	int ret;
+
+	ret = vsnprintf(cbuffer, cbuffersize, fmt, ap);
+
+	if (!auto_fill) {
+		waddstr(msg_win, cbuffer);
+
+		/*
+		 * nothing is perfect if they flow text after a table,
+		 * but this may be decent.
+		 */
+		last_i_was_nl = last_i_was_space = 1;
+		last_o_was_punct = 0;
+		last_o_was_space = 1;
+		goto out;
+	}
+
+	for (wstart = afterw = cbuffer; *wstart; wstart = afterw) {
+
+		/* eat one space, or a whole word of non-spaces */
+		if (isspace((unsigned char)*afterw))
+			afterw++;
+		else
+			while (*afterw && !isspace((unsigned char)*afterw))
+				afterw++;
+
+		/* this is an nl: special formatting necessary */
+		if (*wstart == '\n') {
+			if (last_i_was_nl || last_i_was_space) {
+
+				if (getcurx(msg_win) != 0)
+					waddch(msg_win, '\n');
+				if (last_i_was_nl) {
+					/* last was an nl: paragraph break */
+					waddch(msg_win, '\n');
+				} else {
+					/* last was space: line break */
+				}
+				last_o_was_punct = 0;
+				last_o_was_space = 1;
+			} else {
+				/* last_o_was_punct unchanged */
+				/* last_o_was_space unchanged */
+			}
+			last_i_was_space = 1;
+			last_i_was_nl = 1;
+			continue;
+		}
+
+		/* this is a tab: special formatting necessary. */
+		if (*wstart == '\t') {
+			if (last_i_was_nl) {
+				/* last was an nl: list indent */
+				if (getcurx(msg_win) != 0)
+					waddch(msg_win, '\n');
+			} else {
+				/* last was not an nl: columns */
+			}
+			waddch(msg_win, '\t');
+			last_i_was_nl = 0;
+			last_i_was_space = 1;
+			last_o_was_punct = 0;
+			last_o_was_space = 1;
+			continue;
+		}
+
+		/* this is a space: ignore it but set flags */
+		last_i_was_nl = 0;	/* all newlines handled above */
+		last_i_was_space = isspace((unsigned char)*wstart);
+		if (last_i_was_space)
+			continue;
+
+		/*
+		 * we have a real "word," i.e. a sequence of non-space
+		 * characters.  wstart is now the start of the word,
+		 * afterw is the next character after the end.
+		 */
+		wordlen = afterw - wstart;
+		nspaces = last_o_was_space ? 0 : (last_o_was_punct ? 2 : 1);
+		if ((getcurx(msg_win) + nspaces + wordlen) >=
+		      getmaxx(msg_win) &&
+		    wordlen < (getmaxx(msg_win) / 3)) {
+			/* wrap the line */
+			waddch(msg_win, '\n');
+			nspaces = 0;
+		}
+
+		/* output the word, preceded by spaces if necessary */
+		while (nspaces-- > 0)
+			waddch(msg_win, ' ');
+		waddbytes(msg_win, wstart, wordlen);
+
+		/* set up the 'last' state for the next time around */
+		switch (afterw[-1]) {
+		case '.':
+		case '?':
+		case '!':
+			last_o_was_punct = 1;
+			break;
+		default:
+			last_o_was_punct = 0;
+			break;
+		}
+		last_o_was_space = 0;
+
+		/* ... and do it all again! */
+	}
+
+	/* String ended with a newline.  They really want a line break. */
+	if (last_i_was_nl) {
+		if (getcurx(msg_win) != 0)
+			waddch(msg_win, '\n');
+		last_o_was_punct = 0;
+		last_o_was_space = 1;
+	}
+
+out:
+	wrefresh(msg_win);
+	return ret;
+}
+
+void
+msg_display(msg msg_no, ...)
+{
+	va_list ap;
+
+	msg_clear();
+
+	va_start(ap, msg_no);
+	(void)_msg_vprintf(1, msg_string(msg_no), ap);
+	va_end(ap);
+}
+
+void
+msg_display_add(msg msg_no, ...)
+{
+	va_list ap;
+
+	va_start(ap, msg_no);
+	(void)_msg_vprintf(1, msg_string(msg_no), ap);
+	va_end(ap);
+}
+
+void
+msg_printf(const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	(void)_msg_vprintf(1, fmt, ap);
+	va_end(ap);
+}
+
+static void
+_msg_vprompt(const char *fmt, int flags, const char *def, char *val,
+    size_t val_buf_len, va_list ap)
+{
+	int ch;
+	int len, pos, npos, off;
+	int first;
+	int txt_y, txt_x;
+	char *ibuf;
+	int maxx;
+
+	if (val == NULL || val_buf_len == 0) {
+		/* No answer wanted */
+		val = NULL;
+		val_buf_len = 1;
+	}
+
+	ibuf = malloc(val_buf_len);
+
+	keypad(msg_win, TRUE);
+	_msg_vprintf(0, fmt, ap);
+	ibuf[0] = 0;
+	if (def != NULL && *def) {
+		if (flags & MSG_PROMPT_HIDE_DFLT)
+			strlcpy(ibuf, def, val_buf_len);
+		else {
+			waddstr(msg_win, " [");
+			waddstr(msg_win, def);
+			waddstr(msg_win, "]");
+		}
+	}
+	waddstr(msg_win, ": ");
+	len = strlen(ibuf);
+	pos = len;
+	getyx(msg_win, txt_y, txt_x);
+	maxx = getmaxx(msg_win) - txt_x - 1;
+	off = 0;
+
+	for (first = 1; ; first = 0) {
+
+		if (flags & MSG_PROMPT_ECHO) {
+			/* shift text right as we near the buffer start */
+			if (pos - off < 4)
+				off = pos - 4;
+			/* keep offset to a minimum if we are at the end */
+			if (pos == len)
+				off = pos - maxx;
+			if (off < 0 || len <= maxx)
+				off = 0;
+			/* shift text left as we near the buffer end */
+			npos = pos + 4;
+			if (npos > len)
+				npos = len;
+			if (npos - off > maxx)
+				off = npos - maxx;
+			/* calc. length to display */
+			npos = len - off;
+			if (npos > maxx)
+				npos = maxx;
+			mvwaddnstr(msg_win, txt_y, txt_x, ibuf + off, npos);
+			wclrtoeol(msg_win);
+			if (off != 0)
+				mvwaddstr(msg_win, txt_y, txt_x, "+");
+			wmove(msg_win, txt_y, txt_x + pos - off);
+			wrefresh(msg_win);
+		}
+
+		ch = wgetch(msg_win);
+		if (ch == '\n')
+			break;
+
+		switch (ch) {
+		case KEY_BACKSPACE:
+		case 'h' & 0x1f: case 0x7f:  /* bs or del - delete left */
+			if (first) {
+				/* delete all of default string */
+				len = pos = 0;
+				break;
+			}
+			if (pos > 0) {
+				memmove(ibuf + pos - 1, ibuf + pos, len - pos);
+				len--;
+				pos--;
+			} else
+				_msg_beep();
+			break;
+		case 'u' & 0x1f:	/* ^U; line kill */
+			/* kill line */
+			len = pos = 0;
+			break;
+		case 'w' & 0x1f:        /* ^W; word kill */
+			/*
+			 * word kill kills the spaces and the 'word'
+			 * (non-spaces) last typed.  the spaces before
+			 * the 'word' aren't killed.
+			 */
+			npos = pos;
+			while (npos > 0 && isspace((unsigned char)ibuf[npos - 1]))
+				npos--;
+			while (npos > 0 && !isspace((unsigned char)ibuf[npos - 1]))
+				npos--;
+			memmove(ibuf + npos, ibuf + pos, len - pos);
+			len -= pos - npos;
+			pos = npos;
+			break;
+		case KEY_LEFT:
+			if (pos > 0)
+				pos--;
+			break;
+		case KEY_RIGHT:
+			if (len == 0 && pos == 0 && def != NULL) {
+				/* restore default! */
+				strlcpy(ibuf, def, val_buf_len);
+				len = pos = strlen(ibuf);
+				break;
+			}
+			if (pos < len)
+				pos++;
+			break;
+		default:
+			if (len < (int)(val_buf_len - 1) && isprint(ch)) {
+				memmove(ibuf + pos + 1, ibuf + pos, len - pos);
+				ibuf[pos++] = ch;
+				len++;
+			} else
+				_msg_beep();
+			break;
+		}
+	}
+
+	if (flags & MSG_PROMPT_ECHO) {
+		mvwaddch(msg_win, txt_y, txt_x + len - off, '\n');
+		last_o_was_punct = 0;
+		last_o_was_space = 1;
+	}
+
+	if (val != NULL) {
+		/* copy the appropriate string to the output */
+		if (len != 0 || flags & MSG_PROMPT_HIDE_DFLT) {
+			ibuf[len] = '\0';
+			strlcpy(val, ibuf, val_buf_len);
+		} else if (def != NULL && val != def) {
+			strlcpy(val, def, val_buf_len);
+		}
+	}
+	free(ibuf);
+}
+
+void
+msg_prompt(msg msg_no, const char *def, char *val, size_t val_buf_len, ...)
+{
+	va_list ap;
+
+	msg_clear();
+
+	va_start(ap, val_buf_len);
+	_msg_vprompt(msg_string(msg_no), MSG_PROMPT_ECHO,
+		def, val, val_buf_len, ap);
+	va_end(ap);
+}
+
+void
+msg_prompt_win(msg msg_no, int x, int y, int w, int h,
+	const char *def, char *val, size_t val_buf_len, ...)
+{
+	va_list ap;
+	WINDOW *win;
+	WINDOW *svmsg = NULL, *sv_win = NULL; /* XXX -Wuninitialized [many] */
+	int maxx, maxy;
+	int msg_flags = MSG_PROMPT_ECHO | MSG_PROMPT_HIDE_DFLT;
+
+	maxx = getmaxx(msg_win);
+	maxy = getmaxy(msg_win);
+	if (w == 0) {
+		va_start(ap, val_buf_len);
+		w = vsnprintf(NULL, 0, msg_string(msg_no), ap);
+		va_end(ap);
+		if (def != NULL && *def != 0 && w + (int)val_buf_len * 2 < maxx) {
+			w += 2 + strlen(def) + 1;
+			msg_flags &= ~MSG_PROMPT_HIDE_DFLT;
+		}
+		w += 1 + 2 + val_buf_len + 1;
+		if (w > maxx) {
+			if (!(msg_flags & MSG_PROMPT_HIDE_DFLT)) {
+				w -= 2 + strlen(def) + 1;
+				msg_flags |= MSG_PROMPT_HIDE_DFLT;
+			}
+			w = maxx;
+		}
+	}
+
+	if (x == -1)
+		x = (maxx - w) / 2 + 1;
+	if (h < 3)
+		h = 3;
+	if (y < 3)
+		y = (maxy - h) / 2;
+	if (y + h > maxy)
+		y = maxy - h;
+
+	win = subwin(msg_win, h, w, y, x);
+	if (win == NULL)
+		wprintw(msg_win, "msg_prompt_win: "
+			"newwin(%d, %d, %d, %d) failed\n",
+			h, w, y, x);
+	else {
+		/*
+		 * Save screen contents from under our window
+		 * Due to a mis-feature of NetBSD curses, curscr contains
+		 * the data processed by doupdate() not that by wnoutrefresh().
+		 * We must call doupdate() here to ensure we save the correct
+		 * data.  See PR 26660
+		 */
+		doupdate();
+		sv_win = dupwin(win);
+		if (sv_win)
+			overwrite(curscr, sv_win);
+		wbkgd(win, getbkgd(msg_win));
+		wattrset(win, getattrs(msg_win));
+		box(win, 0, 0);
+		wrefresh(win);
+
+		/* Change message window to be our little box */
+		svmsg = msg_window(subwin(msg_win, h - 2, w - 2, y + 1, x + 1));
+		wbkgd(msg_win, getbkgd(win));
+		wattrset(msg_win, getattrs(win));
+
+		msg_clear();
+	}
+
+	va_start(ap, val_buf_len);
+	_msg_vprompt(msg_string(msg_no), msg_flags, def, val, val_buf_len, ap);
+	va_end(ap);
+
+	if (win != NULL) {
+		wclear(win);
+		if (sv_win) {
+			/* Restore original screen contents */
+			overwrite(sv_win, win);
+			delwin(sv_win);
+		}
+		wnoutrefresh(win);
+		/* Restore normal message window */
+		delwin(msg_window(svmsg));
+		delwin(win);
+	}
+}
+
+void
+msg_prompt_add(msg msg_no, const char *def, char *val, size_t val_buf_len, ...)
+{
+	va_list ap;
+
+	va_start(ap, val_buf_len);
+	_msg_vprompt(msg_string(msg_no), MSG_PROMPT_ECHO, def, val, val_buf_len, ap);
+	va_end(ap);
+}
+
+void
+msg_prompt_noecho(msg msg_no, const char *def, char *val, size_t val_buf_len, ...)
+{
+	va_list ap;
+
+	msg_clear();
+
+	va_start(ap, val_buf_len);
+	_msg_vprompt(msg_string(msg_no), 0, def, val, val_buf_len, ap);
+	va_end(ap);
+}
+
+void
+msg_table_add(msg msg_no, ...)
+{
+	va_list ap;
+
+	va_start(ap, msg_no);
+	(void)_msg_vprintf(0, msg_string(msg_no), ap);
+	va_end(ap);
+}
+
+int
+msg_row(void)
+{
+
+	return getcury(msg_win) + getbegy(msg_win);
+}
