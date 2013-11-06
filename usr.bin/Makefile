@@ -15,7 +15,7 @@ SUBDIR= asa \
 	head hexdump indent infocmp join \
 	lam ldd leave \
 	lock login logname lorder m4 \
-	machine make man mesg \
+	machine make man menuc mesg \
 	mkdep mkstr mktemp \
 	\
 	nbperf newgrp nice nl nohup nvi \

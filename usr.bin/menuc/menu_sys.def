@@ -1,0 +1,827 @@
+/*	$NetBSD: menu_sys.def,v 1.59 2012/03/06 16:55:18 mbalmer Exp $	*/
+
+/*
+ * Copyright 1997 Piermont Information Systems Inc.
+ * All rights reserved.
+ *
+ * Written by Philip A. Nelson for Piermont Information Systems Inc.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. The name of Piermont Information Systems Inc. may not be used to endorse
+ *    or promote products derived from this software without specific prior
+ *    written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY PIERMONT INFORMATION SYSTEMS INC. ``AS IS''
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL PIERMONT INFORMATION SYSTEMS INC. BE 
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF 
+ * THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ */
+
+/* menu_sys.defs -- Menu system standard routines. */
+
+#include <string.h>
+#include <ctype.h>
+
+#define REQ_EXECUTE    1000
+#define REQ_NEXT_ITEM  1001
+#define REQ_PREV_ITEM  1002
+#define REQ_REDISPLAY  1003
+#define REQ_SCROLLDOWN 1004
+#define REQ_SCROLLUP   1005
+#define REQ_HELP       1006
+
+/* Macros */
+#define MAX(x,y) ((x)>(y)?(x):(y))
+#define MIN(x,y) ((x)<(y)?(x):(y))
+
+/* Initialization state. */
+static int __menu_init = 0;
+static int max_lines = 0, max_cols = 0;
+#ifndef scrolltext
+static const char *scrolltext = " <: page up, >: page down";
+#endif
+
+#ifdef DYNAMIC_MENUS
+static int num_menus  = 0;
+#define DYN_INIT_NUM 32
+static menudesc **menu_list;
+#define MENUS(n) (*(menu_list[n]))
+#else
+#define MENUS(n) (menu_def[n])
+#endif
+
+/* prototypes for in here! */
+static void init_menu(menudesc *m);
+static char opt_ch(menudesc *m, int op_no);
+static void draw_menu(menudesc *m, void *arg);
+static void process_help(menudesc *m);
+static void process_req(menudesc *m, void *arg, int req);
+static int menucmd(WINDOW *w);
+
+#ifndef NULL
+#define NULL 0
+#endif
+
+/* menu system processing routines */
+#define mbeep() (void)fputc('\a', stderr)
+
+static int
+menucmd(WINDOW *w)
+{
+	int ch;
+
+	while (TRUE) {
+		ch = wgetch(w);
+		
+		switch (ch) {
+		case '\n':
+			return REQ_EXECUTE;
+		case '\016':  /* Control-P */
+		case KEY_DOWN:
+			return REQ_NEXT_ITEM;
+		case '\020':  /* Control-N */
+		case KEY_UP:
+			return REQ_PREV_ITEM;
+		case '\014':  /* Control-L */
+			return REQ_REDISPLAY;
+		case '<':
+		case '\010':  /* Control-H (backspace) */
+		case KEY_PPAGE:
+		case KEY_LEFT:
+			return REQ_SCROLLUP;
+		case '\026':  /* Control-V */
+		case '>':
+		case ' ':
+		case KEY_NPAGE:
+		case KEY_RIGHT:
+			return REQ_SCROLLDOWN;
+		case '?':
+			return REQ_HELP;
+		case '\033': /* esc-v is scroll down */
+			ch = wgetch(w);
+			if (ch == 'v')
+				return REQ_SCROLLUP;
+			else
+				ch = 0; /* zap char so we beep */
+		}
+		
+		if (isalpha(ch)) 
+			return ch;
+
+		mbeep();
+		wrefresh(w);
+	}
+}
+
+static void
+init_menu(menudesc *m)
+{
+	int wmax;
+	int hadd, wadd, exithadd;
+	int i;
+	int x, y, w;
+	const char *title, *tp, *ep;
+
+	x = m->x;
+	y = m->y;
+	w = m->w;
+	wmax = 0;
+	hadd = ((m->mopt & MC_NOBOX) ? 0 : 2);
+	wadd = ((m->mopt & MC_NOBOX) ? 2 : 4);
+	if (!(m->mopt & MC_NOSHORTCUT))
+		wadd += 3;
+
+	if (m->title && *(title = MSG_XLAT(m->title)) != 0) {
+		/* Allow multiple line titles */
+		for (tp = title; (ep = strchr(tp, '\n')); tp = ep + 1) {
+			i = ep - tp;
+			wmax = MAX(wmax, i);
+			hadd++;
+		}
+		hadd++;
+		i = strlen(tp);
+		wmax = MAX(wmax, i);
+		if (i != 0)
+			hadd++;
+	} else {
+		m->title = NULL;
+		title = "untitled";
+	}
+	exithadd = ((m->mopt & MC_NOEXITOPT) ? 0 : 1);
+
+#ifdef MSG_DEFS_H
+	if (y < 0) {
+		/* put menu box below message text */
+		y = -y;
+		i = msg_row();
+		if (i > y)
+		    y = i;
+	}
+#endif
+
+	/* Calculate h? h == number of visible options. */
+	if (m->h == 0)
+		m->h = m->numopts + exithadd;
+
+	if (m->h > max_lines - y - hadd) {
+		/* Not enough space for all the options */
+		if (m->h <= 4 || !(m->mopt & (MC_SCROLL | MC_ALWAYS_SCROLL))) {
+			/* move menu up screen */
+			y = max_lines - hadd - m->h;
+			if (y < 0)
+				y = 0;
+		}
+		m->h = max_lines - y - hadd;
+	}
+
+	if (m->h < m->numopts + exithadd || m->mopt & MC_ALWAYS_SCROLL) {
+		/* We need to add the scroll text... 
+		 * The used to be a check for MC_SCROLL here, but it is
+		 * fairly pointless - you just don't want the program
+		 * to exit on this sort of error.
+		 */
+		if (m->h < 3) {
+			endwin();
+			(void)fprintf(stderr,
+				"Window too short (m->h %d, m->numopts %d, exithadd %d, y %d, max_lines %d, hadd %d) for menu \"%.30s\"\n",
+				m->h, m->numopts, exithadd, y, max_lines, hadd,
+				title);
+			exit(1);
+		}
+		hadd++;
+		m->h = MIN(m->h, max_lines - y - hadd);
+		i = strlen(scrolltext);
+		wmax = MAX(wmax, i);
+	}
+
+	/* Calculate w? */
+	if (w == 0) {
+		int l;
+		for (i = 0; i < m->numopts; i++) {
+			tp = MSG_XLAT(m->opts[i].opt_name);
+			if (tp == NULL)
+				continue;
+			l = strlen(tp);
+			wmax = MAX(wmax, l);
+		}
+		w = wmax;
+	}
+
+	/* check and adjust for screen fit */
+	if (w + wadd > max_cols) {
+		endwin();
+		(void)fprintf(stderr,
+			"Screen too narrow (%d + %d > %d) for menu \"%s\"\n",
+				w, wadd, max_cols, title);
+		exit(1);
+
+	}
+
+	if (x == -1)
+		x = (max_cols - (w + wadd)) / 2;	/* center */
+	else if (x + w + wadd > max_cols)
+		x = max_cols - (w + wadd);	/* right align */
+
+	if (y == 0) {
+		/* Center - rather than top */
+		y = (max_lines - hadd - m->h) / 2;
+	}
+
+	/* Get the windows. */
+	m->mw = newwin(m->h + hadd, w + wadd, y, x);
+
+	if (m->mw == NULL) {
+		endwin();
+		(void)fprintf(stderr,
+			"Could not create window (%d + %d, %d + %d, %d, %d) for menu \"%s\"\n",
+			m->h, hadd, w, wadd, y, x, title);
+		exit(1);
+	}
+	keypad(m->mw, TRUE); /* enable multi-key assembling for win */
+
+	/* XXX is it even worth doing this right? */
+	if (has_colors()) {
+		wbkgd(m->mw, COLOR_PAIR(1));
+		wattrset(m->mw, COLOR_PAIR(1));
+	}
+
+	if (m->mopt & MC_SUBMENU) {
+		/* Keep a copy of what is on the screen under the window */
+		m->sv_mw = newwin(m->h + hadd, w + wadd, y, x);
+		/*
+		 * cursrc contains post-doupdate() data, not post-refresh()
+		 * data so we must call doupdate to ensure we save the
+		 * correct data.  Avoids PR 26660.
+		 */
+		doupdate();
+		if (m->sv_mw)
+			overwrite(curscr, m->sv_mw);
+	}
+}
+
+static char
+opt_ch(menudesc *m, int op_no)
+{
+	char c;
+
+	if (op_no == m->numopts)
+		return 'x';
+
+	if (op_no < 25) {
+		c = 'a' + op_no;
+		if (c >= 'x')
+			c++;
+	} else 
+		c = 'A' + op_no - 25;
+	return c;
+}
+
+static void
+draw_menu_line(menudesc *m, int opt, int cury, void *arg, const char *text)
+{
+	int hasbox = m->mopt & MC_NOBOX ? 0 : 1;
+
+	if (m->cursel == opt) {
+		mvwaddstr(m->mw, cury, hasbox, ">");
+		wstandout(m->mw);
+	} else
+		mvwaddstr(m->mw, cury, hasbox, " ");
+	if (!(m->mopt & MC_NOSHORTCUT))
+		wprintw(m->mw, "%c: ", opt_ch(m, opt));
+
+	if (!text && m->draw_line)
+		m->draw_line(m, opt, arg);
+	else
+		waddstr(m->mw, MSG_XLAT(text));
+	if (m->cursel == opt)
+		wstandend(m->mw);
+}
+
+static void
+draw_menu(menudesc *m, void *arg)
+{
+	int opt;
+	int hasbox, cury, maxy;
+	int tadd;
+	int hasexit = (m->mopt & MC_NOEXITOPT ? 0 : 1);
+	const char *tp, *ep;
+	
+	hasbox = (m->mopt & MC_NOBOX ? 0 : 1);
+
+	/* Clear the window */
+	wclear(m->mw);
+
+	tadd = hasbox;
+	if (m->title) {
+		for (tp = MSG_XLAT(m->title); ; tp = ep + 1) {
+			ep = strchr(tp , '\n');
+			mvwaddnstr(m->mw, tadd++, hasbox + 1, tp,
+			    ep ? ep - tp : -1);
+			if (ep == NULL || *ep == 0)
+				break;
+		}
+		tadd++;
+	}
+
+	cury = tadd;
+	maxy = getmaxy(m->mw) - hasbox;
+	if (m->numopts + hasexit > m->h)
+		/* allow for scroll text */
+		maxy--;
+
+	if (m->cursel == -1) {
+		m->cursel = m->numopts;
+		if (m->h <= m->numopts)
+			m->topline = m->numopts + 1 - m->h;
+	}
+
+	while (m->cursel >= m->topline + m->h)
+		m->topline = MIN(m->topline + m->h,
+				 m->numopts + hasexit - m->h);
+	while (m->cursel < m->topline)
+		m->topline = MAX(0, m->topline - m->h);
+
+	for (opt = m->topline; opt < m->numopts; opt++) {
+		if (cury >= maxy)
+			break;
+		draw_menu_line(m, opt, cury++, arg, m->opts[opt].opt_name);
+	}
+
+	/* Add the exit option. */
+	if (!(m->mopt & MC_NOEXITOPT)) {
+		if (cury < maxy)
+			draw_menu_line(m, m->numopts, cury++, arg, m->exitstr);
+		else
+			opt = 0;
+	}
+
+	/* Add the scroll line */
+	if (opt != m->numopts || m->topline != 0)
+		mvwaddstr(m->mw, cury, hasbox, scrolltext);
+
+	/* Add the box. */
+	if (!(m->mopt & MC_NOBOX))
+		box(m->mw, 0, 0);
+
+	wmove(m->mw, tadd + m->cursel - m->topline, hasbox);
+	wrefresh(m->mw);
+}
+
+
+static void
+/*ARGSUSED*/
+process_help(menudesc *m)
+{
+	const char *help = m->helpstr;
+	WINDOW *sv_curscr;
+	int lineoff = 0;
+	int curoff = 0;
+	int again;
+	int winin;
+
+	/* Is there help? */
+	if (!help) {
+		mbeep();
+		return;
+	}
+	sv_curscr = newwin(getmaxy(curscr), getmaxx(curscr), 0, 0);
+	if (!sv_curscr) {
+		mbeep();
+		return;
+	}
+	/*
+	 * Save screen contents so we can restore before returning.
+	 * cursrc contains post-doupdate() data, not post-refresh()
+	 * data so we must call doupdate to ensure we save the
+	 * correct data.  Avoids PR 26660.
+	 */
+	doupdate();
+	overwrite(curscr, sv_curscr);
+	touchwin(stdscr);
+
+	help = MSG_XLAT(help);
+	/* Display the help information. */
+	do {
+		if (lineoff < curoff) {
+			help = MSG_XLAT(m->helpstr);
+			curoff = 0;
+		}
+		while (*help && curoff < lineoff) {
+			if (*help == '\n')
+				curoff++;
+			help++;
+		}
+	
+		wclear(stdscr);
+		mvwaddstr(stdscr, 0, 0, 
+			"Help: exit: x,  page up: u <, page down: d >");
+		mvwaddstr(stdscr, 2, 0, help);
+		wmove(stdscr, 1, 0);
+		wrefresh(stdscr);
+
+		do {
+			winin = wgetch(stdscr);
+			if (winin < KEY_MIN)
+				winin = tolower(winin);
+			again = 0;
+			switch (winin) {
+				case '<':
+				case 'u':
+				case KEY_UP:
+				case KEY_LEFT:
+				case KEY_PPAGE:
+					if (lineoff)
+						lineoff -= max_lines - 2;
+					else
+						again = 1;
+					break;
+				case '>':
+				case 'd':
+				case KEY_DOWN:
+				case KEY_RIGHT:
+				case KEY_NPAGE:
+					if (*help)
+						lineoff += max_lines - 2;
+					else
+						again = 1;
+					break;
+				case 'q':
+					break;
+				case 'x':
+					winin = 'q';
+					break;
+				default:
+					again = 1;
+			}
+			if (again)
+				mbeep();
+		} while (again);
+	} while (winin != 'q');
+
+	/* Restore the original screen contents */
+	touchwin(sv_curscr);
+	wnoutrefresh(sv_curscr);
+	delwin(sv_curscr);
+
+	/* Some code thinks that wrefresh(stdout) is a good idea... */
+	wclear(stdscr);
+}
+
+static void
+process_req(menudesc *m, void *arg, int req)
+{
+	int ch;
+	int hasexit = (m->mopt & MC_NOEXITOPT ? 0 : 1);
+
+	switch(req) {
+
+	case REQ_EXECUTE:
+		return;
+
+	case REQ_NEXT_ITEM:
+		ch = m->cursel;
+		for (;;) {
+			ch++;
+			if (ch >= m->numopts + hasexit) {
+				mbeep();
+				return;
+			}
+			if (hasexit && ch == m->numopts)
+				break;
+			if (!(m->opts[ch].opt_flags & OPT_IGNORE))
+				break;
+		}
+		m->cursel = ch;
+		if (m->cursel >= m->topline + m->h)
+			m->topline = m->cursel - m->h + 1;
+		break;
+
+	case REQ_PREV_ITEM:
+		ch = m->cursel;
+		for (;;) {
+			if (ch <= 0) {
+				mbeep();
+				return;
+			}
+			ch--;
+			if (!(m->opts[ch].opt_flags & OPT_IGNORE))
+				break;
+		}
+		m->cursel = ch;
+		if (m->cursel < m->topline)
+			m->topline = m->cursel;
+		break;
+
+	case REQ_HELP:
+		process_help(m);
+		break;
+
+	case REQ_REDISPLAY:
+		endwin();
+		doupdate();
+		break;
+
+	case REQ_SCROLLUP:
+		if (m->cursel == 0) {
+			mbeep();
+			return;
+		}
+		m->topline = MAX(0, m->topline - m->h);
+		m->cursel = MAX(0, m->cursel - m->h);
+		wclear(m->mw);
+		break;
+
+	case REQ_SCROLLDOWN:
+		if (m->cursel >= m->numopts + hasexit - 1) {
+			mbeep();
+			return;
+		}
+		m->topline = MIN(m->topline + m->h,
+				 MAX(m->numopts + hasexit - m->h, 0));
+		m->cursel = MIN(m->numopts + hasexit - 1, m->cursel + m->h);
+		wclear(m->mw);
+		break;
+
+	default:
+		ch = req;
+		if (ch == 'x' && hasexit) {
+			m->cursel = m->numopts;
+			break;
+		}
+		if (m->mopt & MC_NOSHORTCUT) {
+			mbeep();
+			return;
+		}
+		if (ch > 'z')
+			ch = 255;
+		if (ch >= 'a') {
+			if (ch > 'x')
+				ch--;
+			ch = ch - 'a';
+		} else
+			ch = 25 + ch - 'A';
+		if (ch < 0 || ch >= m->numopts) {
+			mbeep();
+			return;
+		}
+		if (m->opts[ch].opt_flags & OPT_IGNORE) {
+			mbeep();
+			return;
+		}
+		m->cursel = ch;
+	}
+
+	draw_menu(m, arg);
+}
+
+int
+menu_init(void)
+{
+	int i;
+
+	if (__menu_init)
+		return 0;
+
+#ifdef	USER_MENU_INIT
+	if (USER_MENU_INIT)
+		return 1;
+#endif
+
+	if (initscr() == NULL)
+		return 1;
+
+	cbreak();
+	noecho();
+
+	/* XXX Should be configurable but it almost isn't worth it. */
+	if (has_colors()) {
+		start_color();
+		init_pair(1, COLOR_WHITE, COLOR_BLUE);
+		bkgd(COLOR_PAIR(1));
+		attrset(COLOR_PAIR(1));
+	}
+
+	max_lines = getmaxy(stdscr);
+	max_cols = getmaxx(stdscr);
+	keypad(stdscr, TRUE);
+#ifdef DYNAMIC_MENUS
+	num_menus = DYN_INIT_NUM;
+	while (num_menus < DYN_MENU_START)
+		num_menus *= 2;
+	menu_list = malloc(sizeof *menu_list * num_menus);
+	if (menu_list == NULL)
+		return 2;
+	(void)memset(menu_list, 0, sizeof *menu_list * num_menus);
+	for (i = 0; i < DYN_MENU_START; i++)
+		menu_list[i] = &menu_def[i];
+#endif
+
+	__menu_init = 1;
+	return 0;
+}
+
+void
+process_menu(int num, void *arg)
+{
+	int sel = 0;
+	int req;
+	menu_ent *opt;
+
+	menudesc *m;
+
+	/* Initialize? */
+	if (menu_init()) {
+		__menu_initerror();
+		return;
+	}
+
+	if (num < 0 || num >= num_menus)
+		return;
+	m = &MENUS(num);
+	if (m == NULL)
+		return;
+
+	/* Default to select option 0 and display from 0 */
+	m->topline = 0;
+	if ((m->mopt & (MC_DFLTEXIT | MC_NOEXITOPT)) == MC_DFLTEXIT)
+		m->cursel = -1;
+	else
+		m->cursel = 0;
+
+	for (;;) {
+		if (isendwin())
+			/* I'm not sure this is needed with netbsd's curses */
+			doupdate();
+		/* Process the display action */
+		if (m->post_act)
+			(*m->post_act)(m, arg);
+		if (m->mw == NULL)
+			init_menu(m);
+		draw_menu(m, arg);
+
+		while ((req = menucmd(m->mw)) != REQ_EXECUTE)
+			process_req(m, arg, req);
+
+		sel = m->cursel;
+		if (!(m->mopt & MC_NOCLEAR)) {
+			wclear(m->mw);
+			if (m->sv_mw)
+				overwrite(m->sv_mw, m->mw);
+			wnoutrefresh(m->mw);
+		}
+
+		/* Process the items */
+		if (sel >= m->numopts)
+			/* exit option */
+			break;
+
+		opt = &m->opts[sel];
+		if (opt->opt_flags & OPT_IGNORE)
+			continue;
+		if (opt->opt_flags & OPT_ENDWIN)
+			endwin();
+		if (opt->opt_action && (*opt->opt_action)(m, arg))
+			break;
+
+		if (opt->opt_menu != -1) {
+			if (!(opt->opt_flags & OPT_SUB)) {
+				num = opt->opt_menu;
+				wclear(m->mw);
+				if (m->sv_mw) {
+					overwrite(m->sv_mw, m->mw);
+					delwin(m->sv_mw);
+					m->sv_mw = NULL;
+				}
+				wnoutrefresh(m->mw);
+				delwin(m->mw);
+				m->mw = NULL;
+				m = &MENUS(num);
+				continue;
+			}
+			process_menu(opt->opt_menu, arg);
+		}
+		if (opt->opt_flags & OPT_EXIT)
+			break;
+	}
+
+	if (m->mopt & MC_NOCLEAR) {
+		wclear(m->mw);
+		if (m->sv_mw)
+			overwrite(m->sv_mw, m->mw);
+		wnoutrefresh(m->mw);
+	}
+
+	/* Process the exit action */
+	if (m->exit_act)
+		(*m->exit_act)(m, arg);
+	delwin(m->mw);
+	m->mw = NULL;
+	if (m->sv_mw) {
+		delwin(m->sv_mw);
+		m->sv_mw = NULL;
+	}
+}
+
+
+void
+set_menu_numopts(int menu, int numopts)
+{
+
+	MENUS(menu).numopts = numopts;
+}
+
+/* Control L is end of standard routines, remaining only for dynamic. */
+
+/* Beginning of routines for dynamic menus. */
+
+static int 
+double_menus(void)
+{
+	menudesc **temp;
+	int sz = sizeof *menu_list * num_menus;
+
+	temp  = realloc(menu_list, sz * 2);
+	if (temp == NULL)
+		return 0;
+	(void)memset(temp + num_menus, 0, sz);
+	menu_list = temp;
+	num_menus *= 2;
+
+	return 1;
+}
+
+int
+new_menu(const char *title, menu_ent *opts, int numopts, 
+	int x, int y, int h, int w, int mopt,
+	void (*post_act)(menudesc *, void *),
+	void (*draw_line)(menudesc *, int, void *),
+	void (*exit_act)(menudesc *, void *),
+	const char *help, const char *exit_str)
+{
+	int ix;
+	menudesc *m;
+
+	/* Find free menu entry. */
+	for (ix = DYN_MENU_START; ; ix++) {
+		if (ix >= num_menus && !double_menus())
+			return -1;
+		m = menu_list[ix];
+		if (m == NULL) {
+			m = calloc(sizeof *m, 1);
+			if (m == NULL)
+				return -1;
+			menu_list[ix] = m;
+			break;
+		}
+		if (!(m->mopt & MC_VALID))
+			break;
+	}
+
+	/* Set Entries */
+	m->title = title;
+	m->opts = opts;
+	m->numopts = numopts;
+	m->x = x;
+	m->y = y;
+	m->h = h;
+	m->w = w;
+	m->mopt = mopt | MC_VALID;
+	m->post_act = post_act;
+	m->draw_line = draw_line;
+	m->exit_act = exit_act;
+	m->helpstr  = help;
+	m->exitstr  = exit_str ? exit_str : "Exit";
+
+	return ix;
+}
+
+void
+free_menu(int menu_no)
+{
+	menudesc *m;
+
+	if (menu_no < 0 || menu_no >= num_menus)
+		return;
+
+	m = menu_list[menu_no];
+	if (!(m->mopt & MC_VALID))
+		return;
+	if (m->mw != NULL)
+		delwin(m->mw);
+	memset(m, 0, sizeof *m);
+}
