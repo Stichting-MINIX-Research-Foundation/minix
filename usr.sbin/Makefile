@@ -6,6 +6,7 @@
 SUBDIR= \
 	chroot \
 	i2cscan installboot \
+	link \
 	mtree \
 	pwd_mkdb postinstall \
 	rdate user \
