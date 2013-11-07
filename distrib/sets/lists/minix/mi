@@ -4467,6 +4467,7 @@
 ./usr/man/man8/installboot_nbsd.8		minix-sys
 ./usr/man/man8/intr.8				minix-sys
 ./usr/man/man8/irdpd.8				minix-sys
+./usr/man/man8/link.8				minix-sys
 ./usr/man/man8/loadramdisk.8			minix-sys
 ./usr/man/man8/MAKEDEV.8			minix-sys
 ./usr/man/man8/makewhatis.8			minix-sys
@@ -4542,6 +4543,7 @@
 ./usr/sbin/installboot_nbsd		minix-sys
 ./usr/sbin/ipc				minix-sys
 ./usr/sbin/kernel			minix-sys
+./usr/sbin/link				minix-sys
 ./usr/sbin/log				minix-sys
 ./usr/sbin/lwip				minix-sys
 ./usr/sbin/memory			minix-sys
