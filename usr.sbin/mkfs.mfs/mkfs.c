@@ -52,7 +52,6 @@
 
 #if !defined(__minix)
 #define mul64u(a,b)	((uint64_t)(a) * (b))
-#define lseek64(a,b,c,d) lseek(a,b,c)
 #endif
 
 /* some Minix specific types that do not conflict with Posix */
@@ -88,6 +87,7 @@ int lct = 0, fd, print = 0;
 int simple = 0, dflag = 0, verbose = 0;
 int donttest;			/* skip test if it fits on medium */
 char *progname;
+uint64_t fs_offset_bytes, fs_offset_blocks, written_fs_size = 0;
 
 time_t current_time;
 char *zero;
@@ -128,11 +128,13 @@ __dead void pexit(char const *s, ...) __printflike(1,2);
 void *alloc_block(void);
 void print_fs(void);
 int read_and_set(block_t n);
-void special(char *string);
+void special(char *string, int insertmode);
 __dead void usage(void);
 void get_block(block_t n, void *buf);
 void get_super_block(void *buf);
 void put_block(block_t n, void *buf);
+static uint64_t mkfs_seek(uint64_t pos, int whence);
+static ssize_t mkfs_write(void * buf, size_t count);
 
 /*================================================================
  *                    mkfs  -  make filesystem
@@ -145,6 +147,7 @@ main(int argc, char *argv[])
   ino_t inodes, root_inum;
   char *token[MAX_TOKENS], line[LINE_LEN], *sfx;
   struct fs_size fssize;
+  int insertmode = 0;
 
   progname = argv[0];
 
@@ -157,7 +160,7 @@ main(int argc, char *argv[])
 #endif
   zone_shift = 0;
   extra_space_percent = 0;
-  while ((ch = getopt(argc, argv, "B:b:di:ltvx:z:")) != EOF)
+  while ((ch = getopt(argc, argv, "B:b:di:ltvx:z:I:")) != EOF)
 	switch (ch) {
 #ifndef MFS_STATIC_BLOCK_SIZE
 	    case 'B':
@@ -179,6 +182,10 @@ main(int argc, char *argv[])
 		break;
 		(void)sfx;	/* shut up warnings about unused variable...*/
 #endif
+	    case 'I':
+		fs_offset_bytes = strtoul(optarg, (char **) NULL, 0);
+		insertmode = 1;
+		break;
 	    case 'b':
 		blocks = bblocks = strtoul(optarg, (char **) NULL, 0);
 		break;
@@ -253,9 +260,11 @@ main(int argc, char *argv[])
    */
   zero = alloc_block();
 
+  fs_offset_blocks = roundup(fs_offset_bytes, block_size) / block_size;
+
   /* Determine the size of the device if not specified as -b or proto. */
   maxblocks = sizeup(argv[optind]);
-  if (bblocks != 0 && bblocks > maxblocks){
+  if (bblocks != 0 && bblocks + fs_offset_blocks > maxblocks && !insertmode) {
 	errx(4, "Given size -b %d exeeds device capacity(%d)\n", bblocks, maxblocks);
   }
 
@@ -274,7 +283,7 @@ main(int argc, char *argv[])
    */
   if (argc - optind != 2 && (argc - optind != 1 || blocks == 0)) usage();
 
-  if (maxblocks && blocks > maxblocks) {
+  if (maxblocks && blocks > maxblocks && !insertmode) {
  	errx(1, "%s: number of blocks too large for device.", argv[optind]);
   }
 
@@ -315,7 +324,7 @@ main(int argc, char *argv[])
 		blocks += blocks*extra_space_percent/100;
 		inodes += inodes*extra_space_percent/100;
 /* XXX is it OK to write on stdout? Use warn() instead? Also consider using verbose */
-		printf("dynamically sized filesystem: %u blocks, %u inodes\n",
+		fprintf(stderr, "dynamically sized filesystem: %u blocks, %u inodes\n",
 		    (unsigned int) blocks, (unsigned int) inodes);
 	}
   } else {
@@ -362,7 +371,7 @@ main(int argc, char *argv[])
 		(unsigned)umap_array_elements);
 
   /* Open special. */
-  special(argv[--optind]);
+  special(argv[--optind], insertmode);
 
   if (!donttest) {
 	uint16_t *testb;
@@ -371,19 +380,13 @@ main(int argc, char *argv[])
 	testb = alloc_block();
 
 	/* Try writing the last block of partition or diskette. */
-	if(lseek64(fd, mul64u(blocks - 1, block_size), SEEK_SET, NULL) < 0) {
-		err(1, "couldn't seek to last block to test size (1)");
-	}
+	mkfs_seek(mul64u(blocks - 1, block_size), SEEK_SET);
 	testb[0] = 0x3245;
 	testb[1] = 0x11FF;
 	testb[block_size/2-1] = 0x1F2F;
-	if ((w=write(fd, testb, block_size)) != block_size)
-		err(1, "File system is too big for minor device (write1 %d/%u)",
-		    w, block_size);
+	w=mkfs_write(testb, block_size);
 	sync();			/* flush write, so if error next read fails */
-	if(lseek64(fd, mul64u(blocks - 1, block_size), SEEK_SET, NULL) < 0) {
-		err(1, "couldn't seek to last block to test size (2)");
-	}
+	mkfs_seek(mul64u(blocks - 1, block_size), SEEK_SET);
 	testb[0] = 0;
 	testb[1] = 0;
 	testb[block_size/2-1] = 0;
@@ -395,13 +398,12 @@ main(int argc, char *argv[])
 		    testb[0], testb[1], testb[block_size-1]);
 		errx(1, "File system is too big for minor device (read)");
 	}
-	lseek64(fd, mul64u(blocks - 1, block_size), SEEK_SET, NULL);
+	mkfs_seek(mul64u(blocks - 1, block_size), SEEK_SET);
 	testb[0] = 0;
 	testb[1] = 0;
 	testb[block_size/2-1] = 0;
-	if (write(fd, testb, block_size) != block_size)
-		err(1, "File system is too big for minor device (write2)");
-	lseek(fd, 0L, SEEK_SET);
+	mkfs_write(testb, block_size);
+	mkfs_seek(0L, SEEK_SET);
 	free(testb);
   }
 
@@ -425,6 +427,8 @@ main(int argc, char *argv[])
 		fprintf(stderr, "%d inodes used.     %u zones used.\n",
 		    (int)next_inode-1, next_zone);
   }
+
+  if(insertmode) printf("%ld\n", written_fs_size);
 
   return(0);
 
@@ -560,9 +564,7 @@ sizeup(char * device)
 		progname, (unsigned long)d);
   }
 #else
-  size = lseek(fd, 0, SEEK_END);
-  if (size == (off_t) -1)
-	  err(1, "cannot get device size fd=%d: %s", fd, device);
+  size = mkfs_seek(0, SEEK_END);
   /* Assume block_t is unsigned */
   if (size / block_size > (block_t)(-1ul)) {
 	d = (block_t)(-1ul);
@@ -691,10 +693,8 @@ super(zone_t zones, ino_t inodes)
 #endif
   }
 
-  if (lseek(fd, (off_t) SUPER_BLOCK_BYTES, SEEK_SET) == (off_t) -1)
-	err(1, "super() couldn't seek");
-  if (write(fd, buf, SUPER_BLOCK_BYTES) != SUPER_BLOCK_BYTES)
-	err(1, "super() couldn't write");
+  mkfs_seek((off_t) SUPER_BLOCK_BYTES, SEEK_SET);
+  mkfs_write(buf, SUPER_BLOCK_BYTES);
 
   /* Clear maps and inodes. */
   for (i = START_BLOCK; i < initblks; i++) put_block((block_t) i, zero);
@@ -1541,19 +1541,20 @@ read_and_set(block_t n)
 __dead void
 usage(void)
 {
-  fprintf(stderr, "Usage: %s [-dltv] [-b blocks] [-i inodes] [-z zone_shift]\n"
-      "\t[-x extra] [-B blocksize] special [proto]\n",
+  fprintf(stderr, "Usage: %s [-dltv] [-b blocks] [-i inodes]\n"
+	"\t[-z zone_shift] [-I offset] [-x extra] [-B blocksize] special [proto]\n",
       progname);
   exit(4);
 }
 
 void
-special(char * string)
+special(char * string, int insertmode)
 {
-  fd = creat(string, 0777);
-  close(fd);
-  fd = open(string, O_RDWR);
+  int openmode = O_RDWR;
+  if(!insertmode) openmode |= O_TRUNC;
+  fd = open(string, O_RDWR | O_CREAT, 0644);
   if (fd < 0) err(1, "Can't open special file %s", string);
+  mkfs_seek(0, SEEK_SET);
 }
 
 
@@ -1569,8 +1570,7 @@ get_block(block_t n, void *buf)
 	memcpy(buf, zero, block_size);
 	return;
   }
-  if (lseek64(fd, mul64u(n, block_size), SEEK_SET, NULL) == (off_t)(-1))
-	pexit("get_block couldn't seek");
+  mkfs_seek(mul64u(n, block_size), SEEK_SET);
   k = read(fd, buf, block_size);
   if (k != block_size)
 	pexit("get_block couldn't read block #%u", (unsigned)n);
@@ -1582,8 +1582,7 @@ get_super_block(void *buf)
 {
   ssize_t k;
 
-  if(lseek(fd, (off_t) SUPER_BLOCK_BYTES, SEEK_SET) == (off_t) -1)
-  	err(1, "seek for superblock failed");
+  mkfs_seek((off_t) SUPER_BLOCK_BYTES, SEEK_SET);
   k = read(fd, buf, SUPER_BLOCK_BYTES);
   if (k != SUPER_BLOCK_BYTES)
 	err(1, "get_super_block couldn't read super block");
@@ -1596,8 +1595,49 @@ put_block(block_t n, void *buf)
 
   (void) read_and_set(n);
 
-  if (lseek64(fd, mul64u(n, block_size), SEEK_SET, NULL) == (off_t) -1)
-	pexit("put_block couldn't seek");
-  if (write(fd, buf, block_size)!= block_size)
-	pexit("put_block couldn't write block #%u", (unsigned)n);
+  mkfs_seek(mul64u(n, block_size), SEEK_SET);
+  mkfs_write(buf, block_size);
+}
+
+static ssize_t
+mkfs_write(void * buf, size_t count)
+{
+	uint64_t fssize;
+	ssize_t w;
+
+	/* Perform & check write */
+	w = write(fd, buf, count);
+	if(w < 0)
+		err(1, "mkfs_write: write failed");
+	if(w != count)
+		errx(1, "mkfs_write: short write: %ld != %ld", w, count);
+
+	/* Check if this has made the FS any bigger; count bytes after offset */
+	fssize = mkfs_seek(0, SEEK_CUR);
+
+	assert(fssize >= fs_offset_bytes);
+	fssize -= fs_offset_bytes;
+	fssize = roundup(fssize, block_size);
+	if(fssize > written_fs_size)
+		written_fs_size = fssize;
+
+	return w;
+}
+
+/* Seek to position in FS we're creating. */
+static uint64_t
+mkfs_seek(uint64_t pos, int whence)
+{
+	if(whence == SEEK_SET) pos += fs_offset_bytes;
+#ifdef __minix
+	uint64_t newpos;
+	if((lseek64(fd, pos, whence, &newpos)) < 0)
+		err(1, "mkfs_seek: lseek64 failed");
+	return newpos;
+#else
+	off_t newpos;
+	if((newpos=lseek(fd, pos, whence)) == (off_t) -1)
+		err(1, "mkfs_seek: lseek failed");
+	return newpos;
+#endif
 }
