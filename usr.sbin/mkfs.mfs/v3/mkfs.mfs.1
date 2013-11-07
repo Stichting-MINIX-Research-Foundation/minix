@@ -12,6 +12,7 @@
 .Op Fl b Ar blocks
 .Op Fl z Ar zone_shift
 .Op Fl x Ar extra_space
+.Op Fl I Ar fs_offset
 .Ar special
 .Op Ar prototype
 .Sh OPTIONS
@@ -35,6 +36,8 @@ Number of i-nodes (files)
 Filesystem block size (in bytes)
 .It Fl b Ar blocks
 Filesystem size (in blocks)
+.It Fl I Ar fs_offset
+Write filesystem starting at offset (in bytes)
 .It Fl x Ar extra_space
 Extra space after dynamic sizing (blocks and inodes)
 .It Fl z Ar zone_shift
