@@ -9,7 +9,8 @@ SUBDIR= \
 	link \
 	mtree \
 	pwd_mkdb postinstall \
-	rdate user \
+	rdate \
+	unlink user \
 	vipw \
 	zic
 
