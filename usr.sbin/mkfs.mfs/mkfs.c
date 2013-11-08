@@ -142,7 +142,7 @@ static ssize_t mkfs_write(void * buf, size_t count);
 int
 main(int argc, char *argv[])
 {
-  int nread, mode, usrid, grpid, ch, extra_space_percent;
+  int nread, mode, usrid, grpid, ch, extra_space_percent, Tflag = 0;
   block_t blocks, maxblocks, bblocks;
   ino_t inodes, root_inum;
   char *token[MAX_TOKENS], line[LINE_LEN], *sfx;
@@ -160,7 +160,7 @@ main(int argc, char *argv[])
 #endif
   zone_shift = 0;
   extra_space_percent = 0;
-  while ((ch = getopt(argc, argv, "B:b:di:ltvx:z:I:")) != EOF)
+  while ((ch = getopt(argc, argv, "B:b:di:ltvx:z:I:T:")) != EOF)
 	switch (ch) {
 #ifndef MFS_STATIC_BLOCK_SIZE
 	    case 'B':
@@ -189,6 +189,10 @@ main(int argc, char *argv[])
 	    case 'b':
 		blocks = bblocks = strtoul(optarg, (char **) NULL, 0);
 		break;
+	    case 'T':
+		Tflag = 1;
+		current_time = strtoul(optarg, (char **) NULL, 0);
+		break;
 	    case 'd':
 		dflag = 1;
 		break;
@@ -212,12 +216,17 @@ main(int argc, char *argv[])
    * identical. First you set the time of the mkfs binary to what you
    * want, then go.
    */
-  current_time = time((time_t *) 0);	/* time mkfs is being run */
-  if(dflag) {
+  if(Tflag) {
+    if(dflag)
+	errx(1, "-T and -d both specify a time and so are mutually exclusive");
+  } else if(dflag) {
 	struct stat statbuf;
 	if (stat(progname, &statbuf)) {
-		perror("stat of itself");
-	} else	current_time = statbuf.st_mtime;
+		err(1, "stat of itself");
+	}
+	current_time = statbuf.st_mtime;
+  } else {
+	  current_time = time((time_t *) 0);	/* time mkfs is being run */
   }
 
   /* Percentage of extra size must be nonnegative.

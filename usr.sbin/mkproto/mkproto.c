@@ -10,6 +10,8 @@
 #include <string.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <assert.h>
+#include <err.h>
 
 /* The default values for the prototype file */
 #define DEF_UID		2	/* bin */
@@ -40,6 +42,12 @@ void descend(char *dirname);
 void display_attrib(const char *name, struct stat *st);
 void usage(char *binname);
 void open_outfile(void);
+
+#define MAXNAME 256
+
+struct mkproto_dirent {
+	char d_name[MAXNAME];
+};
 
 int main(argc, argv)
 int argc;
@@ -127,16 +135,27 @@ char *argv[];
   return(0);
 }
 
+/* Compare dirent objects for order */
+static int cmp_dirent(const void *d1, const void *d2)
+{
+	struct mkproto_dirent *dp1 = (struct mkproto_dirent *) d1,
+		*dp2 = (struct mkproto_dirent *) d2;
+	return strcmp(dp1->d_name, dp2->d_name);
+}
+
 /* Output the prototype spec for this directory. */
 void descend(dirname)
 char *dirname;
 {
-  struct dirent *dp;
+  struct dirent *rdp;
+  struct mkproto_dirent *dirents = NULL, *dp;
+  int reserved_dirents = 0;
   DIR *dirp;
   char *name, *temp, *tempend;
   int i;
   struct stat st;
   mode_t mode;
+  int entries = 0;
 
   dirp = opendir(dirname);
   if (dirp == NULL) {
@@ -148,8 +167,29 @@ char *dirname;
   strcpy(temp, dirname);
   strcat(temp, "/");
   tempend = &temp[strlen(temp)];
+   
+  /* read all directory entries */
+  for (rdp = readdir(dirp); rdp != NULL; rdp = readdir(dirp)) {
+	if(entries >= reserved_dirents) {
+		int newreserved = (2*(reserved_dirents+1));
+		if(!(dirents = realloc(dirents, newreserved *
+		  sizeof(*dirents)))) {
+			errx(1, "realloc failed on dirents");
+		}
+		reserved_dirents = newreserved;
+	}
+	assert(entries < reserved_dirents);
+	assert(strlen(rdp->d_name) < sizeof(dp->d_name));
+	dp = &dirents[entries];
+	strcpy(dp->d_name, rdp->d_name);
+	entries++;
+  }
+  closedir(dirp);
 
-  for (dp = readdir(dirp); dp != NULL; dp = readdir(dirp)) {
+  /* normalize (sort) them */
+  qsort(dirents, entries, sizeof(*dp), cmp_dirent);
+
+  for (dp = dirents; entries > 0; dp++, entries--) {
 	name = dp->d_name;
 
 	count++;
@@ -202,8 +242,8 @@ char *dirname;
 	fprintf(outfile, " /dev/null");
 	fprintf(stderr,"File\n\t%s\n has an invalid mode, made empty.\n",temp);
   }
-  closedir(dirp);
   free(temp);
+  free(dirents);
   tabs--;
 }
 
@@ -221,7 +261,7 @@ struct stat *st;
   if (same_prot)
 	prot = st->st_mode & 0777;	/***** This one is a bit shady *****/
   for (i = 0; i < tabs; i++) fprintf(outfile, "%s", indentstr);
-  fprintf(outfile, "%s%s%c%c%c%3o %d %d",
+  fprintf(outfile, "%s%s%c%c%c%03o %d %d",
 	name,
 	*name == '\0' ? "" : indentstr,	/* stop the tab for a null name */
 	(st->st_mode & S_IFMT) == S_IFDIR ? 'd' :
