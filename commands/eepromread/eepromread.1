@@ -43,6 +43,10 @@ number is sent with the memory address. Use this when reading EDID.
 .TP 20
 .B eepromread -f /dev/i2c-3 -n
 # read the EDID info from the display on I2C bus 3 on the BeagleBoard-xM.
+.TP 20
+.B eepromread -f /dev/eepromb1s50 -i
+# access the EEPROM through the /dev/eeprom interface once the
+cat24c256 driver has been started.
 .SH DESCRIPTION
 .PP
 \fIeepromread\fR is a simple tool for viewing the contents of an EEPROM.
@@ -51,5 +55,5 @@ detect, \fIeepromread\fR can properly format each of the fields and display
 the information via the \fI-i\fR command line option.
 .SH NOTES
 If the \fIcat24c256\fR driver has claimed the EEPROM device that this
-program is attempting to read from, then this program will fail. Once
-a driver claims an I2C device, the driver has exclusive access.
+program is attempting to read from, then you must access it through
+the /dev/eeprom interface rather than the /dev/i2c interface.

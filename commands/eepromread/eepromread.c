@@ -15,8 +15,9 @@
 #include "eepromread.h"
 
 static int __eeprom_read128(int fd, i2c_addr_t addr, uint16_t memaddr,
-    void *buf, size_t buflen, int flags);
-static int eeprom_dump(int fd, i2c_addr_t addr, int flags);
+    void *buf, size_t buflen, int flags, enum device_types device_type);
+static int eeprom_dump(int fd, i2c_addr_t addr, int flags,
+    enum device_types device_type);
 
 #define DEFAULT_I2C_DEVICE "/dev/i2c-1"
 #define DEFAULT_I2C_ADDRESS 0x50
@@ -26,16 +27,11 @@ static int eeprom_dump(int fd, i2c_addr_t addr, int flags);
  * larger, so to read the whole EEPROM, the task is broken down into 128 byte
  * chunks in eeprom_read(). __eeprom_read128() does the actual ioctl() to do
  * the read.
- *
- * A future enhancement might be to add support for the /dev/eeprom interface
- * and if one way fails, fall back to the other. /dev/eeprom can fail if the
- * eeprom driver isn't running and /dev/i2c can fail if the eeprom driver
- * claimed the eeprom device.
  */
 
 static int
 __eeprom_read128(int fd, i2c_addr_t addr, uint16_t memaddr, void *buf,
-    size_t buflen, int flags)
+    size_t buflen, int flags, enum device_types device_type)
 {
 	int r;
 	minix_i2c_ioctl_exec_t ioctl_exec;
@@ -46,6 +42,20 @@ __eeprom_read128(int fd, i2c_addr_t addr, uint16_t memaddr, void *buf,
 		return -1;
 	}
 
+	/* if /dev/eeprom, then use read() */
+	if (device_type == EEPROM_DEVICE) {
+
+		off_t offset;
+
+		offset = lseek(fd, memaddr, SEEK_SET);
+		if (offset != memaddr) {
+			return -1;
+		}
+
+		return read(fd, buf, buflen);
+
+	}
+	/* else /dev/i2c, use i2c_ioctl_exec_t interface */
 	memset(&ioctl_exec, '\0', sizeof(minix_i2c_ioctl_exec_t));
 
 	ioctl_exec.iie_op = I2C_OP_READ_WITH_STOP;
@@ -77,7 +87,7 @@ __eeprom_read128(int fd, i2c_addr_t addr, uint16_t memaddr, void *buf,
 
 int
 eeprom_read(int fd, i2c_addr_t addr, uint16_t memaddr, void *buf,
-    size_t buflen, int flags)
+    size_t buflen, int flags, enum device_types device_type)
 {
 	int r;
 	uint16_t i;
@@ -87,11 +97,11 @@ eeprom_read(int fd, i2c_addr_t addr, uint16_t memaddr, void *buf,
 		return -1;
 	}
 
-
 	for (i = 0; i < buflen; i += 128) {
 
 		r = __eeprom_read128(fd, addr, memaddr + i, buf + i,
-		    ((buflen - i) < 128) ? (buflen - i) : 128, flags);
+		    ((buflen - i) < 128) ? (buflen - i) : 128, flags,
+		    device_type);
 		if (r == -1) {
 			return -1;
 		}
@@ -104,14 +114,14 @@ eeprom_read(int fd, i2c_addr_t addr, uint16_t memaddr, void *buf,
  * Read 256 bytes and print it to the screen in HEX and ASCII.
  */
 static int
-eeprom_dump(int fd, i2c_addr_t addr, int flags)
+eeprom_dump(int fd, i2c_addr_t addr, int flags, enum device_types device_type)
 {
 	int i, j, r;
 	uint8_t buf[256];
 
 	memset(buf, '\0', 256);
 
-	r = eeprom_read(fd, addr, 0x0000, buf, 256, flags);
+	r = eeprom_read(fd, addr, 0x0000, buf, 256, flags, device_type);
 	if (r == -1) {
 		return r;
 	}
@@ -163,6 +173,7 @@ main(int argc, char *argv[])
 	int ch, iflag = 0, read_flags = 0;
 	char *device = DEFAULT_I2C_DEVICE;
 	i2c_addr_t address = DEFAULT_I2C_ADDRESS;
+	enum device_types device_type = DEFAULT_DEVICE;
 
 	setprogname(*argv);
 
@@ -185,6 +196,10 @@ main(int argc, char *argv[])
 		}
 	}
 
+	/* determine whether to use /dev/i2c or /dev/eeprom interface */
+	device_type =
+	    strstr(device, "i2c") == NULL ? EEPROM_DEVICE : I2C_DEVICE;
+
 	fd = open(device, O_RDWR);
 	if (fd == -1) {
 		fprintf(stderr, "open(): %s\n", strerror(errno));
@@ -192,15 +207,16 @@ main(int argc, char *argv[])
 	}
 
 	if (iflag == 1) {
-		r = board_info(fd, address, read_flags);
+		r = board_info(fd, address, read_flags, device_type);
 		if (r == -1) {
 			fprintf(stderr, "board_info(): %s\n", strerror(errno));
 			return 1;
 		}
 	} else {
-		r = eeprom_dump(fd, address, read_flags);
+		r = eeprom_dump(fd, address, read_flags, device_type);
 		if (r == -1) {
-			fprintf(stderr, "eeprom_dump(): %s\n", strerror(errno));
+			fprintf(stderr, "eeprom_dump(): %s\n",
+			    strerror(errno));
 			return 1;
 		}
 	}
@@ -213,4 +229,3 @@ main(int argc, char *argv[])
 
 	return 0;
 }
-

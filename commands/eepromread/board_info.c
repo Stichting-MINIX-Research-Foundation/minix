@@ -16,9 +16,12 @@
  * Attempt to read the board info from an eeprom on this board.
  */
 
-static int board_info_beaglebone(int fd, i2c_addr_t address, int flags);
-static int board_info_cape_a0(int fd, i2c_addr_t address, int flags);
-static int board_info_cape_a1(int fd, i2c_addr_t address, int flags);
+static int board_info_beaglebone(int fd, i2c_addr_t address, int flags,
+    enum device_types device_type);
+static int board_info_cape_a0(int fd, i2c_addr_t address, int flags,
+    enum device_types device_type);
+static int board_info_cape_a1(int fd, i2c_addr_t address, int flags,
+    enum device_types device_type);
 
 /* Memory Layout of the BeagleBone and BeagleBone Black EEPROM */
 typedef struct beaglebone_info
@@ -68,7 +71,8 @@ typedef struct cape_info_a1
 } cape_info_a1_t;
 
 static int
-board_info_beaglebone(int fd, i2c_addr_t address, int flags)
+board_info_beaglebone(int fd, i2c_addr_t address, int flags,
+    enum device_types device_type)
 {
 	int r;
 	int i, j;
@@ -76,7 +80,7 @@ board_info_beaglebone(int fd, i2c_addr_t address, int flags)
 	beaglebone_info_t boneinfo;
 
 	r = eeprom_read(fd, address, 0x0000, &boneinfo,
-	    sizeof(beaglebone_info_t), flags);
+	    sizeof(beaglebone_info_t), flags, device_type);
 	if (r == -1) {
 		fprintf(stderr, "Failed to read BeagleBone info r=%d\n", r);
 		return -1;
@@ -102,7 +106,8 @@ board_info_beaglebone(int fd, i2c_addr_t address, int flags)
 }
 
 static int
-board_info_cape_a0(int fd, i2c_addr_t address, int flags)
+board_info_cape_a0(int fd, i2c_addr_t address, int flags,
+    enum device_types device_type)
 {
 	int r;
 	int i, j;
@@ -110,7 +115,7 @@ board_info_cape_a0(int fd, i2c_addr_t address, int flags)
 	cape_info_a0_t capeinfo;
 
 	r = eeprom_read(fd, address, 0x0000, &capeinfo,
-	    sizeof(cape_info_a0_t), flags);
+	    sizeof(cape_info_a0_t), flags, device_type);
 	if (r == -1) {
 		fprintf(stderr, "failed to read cape A0 info r=%d\n", r);
 		return -1;
@@ -148,7 +153,8 @@ board_info_cape_a0(int fd, i2c_addr_t address, int flags)
 }
 
 static int
-board_info_cape_a1(int fd, i2c_addr_t address, int flags)
+board_info_cape_a1(int fd, i2c_addr_t address, int flags,
+    enum device_types device_type)
 {
 	int r;
 	int i, j;
@@ -156,7 +162,7 @@ board_info_cape_a1(int fd, i2c_addr_t address, int flags)
 	cape_info_a1_t capeinfo;
 
 	r = eeprom_read(fd, address, 0x0000, &capeinfo,
-	    sizeof(cape_info_a1_t), flags);
+	    sizeof(cape_info_a1_t), flags, device_type);
 	if (r == -1) {
 		fprintf(stderr, "failed to read cape A0 info r=%d\n", r);
 		return -1;
@@ -194,12 +200,14 @@ board_info_cape_a1(int fd, i2c_addr_t address, int flags)
 }
 
 int
-board_info(int fd, i2c_addr_t address, int flags)
+board_info(int fd, i2c_addr_t address, int flags,
+    enum device_types device_type)
 {
 	int r;
 	uint8_t magic_number[6];
 
-	r = eeprom_read(fd, address, 0x0000, &magic_number, 6, flags);
+	r = eeprom_read(fd, address, 0x0000, &magic_number, 6, flags,
+	    device_type);
 	if (r == -1) {
 		printf("%-16s: %s\n", "BOARD_NAME", "UNKNOWN");
 		return 0;
@@ -211,11 +219,11 @@ board_info(int fd, i2c_addr_t address, int flags)
 
 		/* Check if Cape Rev A0, Cape Rev A1, or on-board EEPROM */
 		if (magic_number[4] == 'A' && magic_number[5] == '0') {
-			board_info_cape_a0(fd, address, flags);
+			board_info_cape_a0(fd, address, flags, device_type);
 		} else if (magic_number[4] == 'A' && magic_number[5] == '1') {
-			board_info_cape_a1(fd, address, flags);
+			board_info_cape_a1(fd, address, flags, device_type);
 		} else {
-			board_info_beaglebone(fd, address, flags);
+			board_info_beaglebone(fd, address, flags, device_type);
 		}
 	} else {
 		printf("%-16s: %s\n", "BOARD_NAME", "UNKNOWN");
