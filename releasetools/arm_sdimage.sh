@@ -119,13 +119,11 @@ ${CROSS_TOOLS}/nbpwd_mkdb -V 0 -p -d ${DESTDIR} ${DESTDIR}/etc/master.passwd
 # the partitions we are going to use.
 #
 dd if=/dev/zero of=${IMG_DIR}/fat.img bs=512 count=1 seek=$(($FAT_SIZE -1)) 2>/dev/null
-dd if=/dev/zero of=${IMG_DIR}/root.img bs=512 count=1 seek=$(($ROOT_SIZE -1)) 2>/dev/null
-dd if=/dev/zero of=${IMG_DIR}/home.img bs=512 count=1 seek=$(($HOME_SIZE -1)) 2>/dev/null
-dd if=/dev/zero of=${IMG_DIR}/usr.img bs=512 count=1 seek=$(($USR_SIZE -1)) 2>/dev/null
 
 #
-# Create the empty image where we later will but the partitions in
+# Create the empty image where we later will put the partitions in.
 #
+rm -f ${IMG}
 dd if=/dev/zero of=${IMG} bs=512 count=1 seek=$(($IMG_SIZE -1))
 
 # Do some math to determine the start addresses of the partitions.
@@ -235,17 +233,14 @@ cat ${IMG_DIR}/input  | grep  "^\./home/\|^. "  | sed "s,\./home,\.,g" | ${CROSS
 # Generate /root, /usr and /home partition images.
 #
 echo " - ROOT"
-${CROSS_TOOLS}/nbmkfs.mfs -b $((${ROOT_SIZE} / 8)) ${IMG_DIR}/root.img ${IMG_DIR}/root.proto
+${CROSS_TOOLS}/nbmkfs.mfs -I $((${ROOT_START} * 512)) -b $((${ROOT_SIZE} / 8)) ${IMG} ${IMG_DIR}/root.proto
 echo " - USR"
-${CROSS_TOOLS}/nbmkfs.mfs -b $((${USR_SIZE} / 8))  ${IMG_DIR}/usr.img  ${IMG_DIR}/usr.proto
+${CROSS_TOOLS}/nbmkfs.mfs -I $((${USR_START} * 512)) -b $((${USR_SIZE} / 8))  ${IMG}  ${IMG_DIR}/usr.proto
 echo " - HOME"
-${CROSS_TOOLS}/nbmkfs.mfs -b $((${HOME_SIZE} / 8)) ${IMG_DIR}/home.img ${IMG_DIR}/home.proto
+${CROSS_TOOLS}/nbmkfs.mfs -I $((${HOME_START} * 512)) -b $((${HOME_SIZE} / 8)) ${IMG} ${IMG_DIR}/home.proto
 
 #
 # Merge the partitions into a single image.
 #
 echo "Merging file systems"
 dd if=${IMG_DIR}/fat.img of=${IMG} seek=$FAT_START conv=notrunc
-dd if=${IMG_DIR}/root.img of=${IMG} seek=$ROOT_START conv=notrunc
-dd if=${IMG_DIR}/home.img of=${IMG} seek=$HOME_START conv=notrunc
-dd if=${IMG_DIR}/usr.img of=${IMG} seek=$USR_START conv=notrunc
