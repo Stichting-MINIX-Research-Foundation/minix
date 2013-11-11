@@ -5,8 +5,8 @@
 
 SUBDIR= asa \
 	banner basename bdes \
-	bzip2 bzip2recover \
-	cal chpass cksum col colrm \
+	bzip2 bzip2recover cal calendar \
+	chpass cksum col colrm \
 	column comm csplit ctags cut \
 	dirname du \
 	env expand \

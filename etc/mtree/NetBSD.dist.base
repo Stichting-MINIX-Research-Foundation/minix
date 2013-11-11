@@ -98,6 +98,7 @@
 ./usr/run
 ./usr/sbin
 ./usr/share
+./usr/share/calendar
 ./usr/share/doc
 ./usr/share/doc/html
 ./usr/share/doc/html/bzip2

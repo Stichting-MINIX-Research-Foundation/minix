@@ -243,6 +243,7 @@
 ./usr/bin/bzip2recover			minix-sys
 ./usr/bin/c++				minix-sys	gcccmds
 ./usr/bin/cal				minix-sys
+./usr/bin/calendar			minix-sys
 ./usr/bin/cawf				minix-sys
 ./usr/bin/cc				minix-sys
 ./usr/bin/cc1				minix-sys	gcccmds
@@ -1832,6 +1833,7 @@
 ./usr/man/man1/bzip2recover.1		minix-sys
 ./usr/man/man1/c++.1			minix-sys	gcccmds
 ./usr/man/man1/cal.1			minix-sys
+./usr/man/man1/calendar.1		minix-sys
 ./usr/man/man1/case.1			minix-sys
 ./usr/man/man1/cat.1			minix-sys
 ./usr/man/man1/cawf.1			minix-sys
@@ -4574,6 +4576,17 @@
 ./usr/share/atf				minix-sys	atf
 ./usr/share/atf/atf-run.hooks		minix-sys	atf,!kyua
 ./usr/share/atf/libatf-sh.subr		minix-sys	atf
+./usr/share/calendar			minix-sys
+./usr/share/calendar/calendar.birthday	minix-sys
+./usr/share/calendar/calendar.christian	minix-sys
+./usr/share/calendar/calendar.computer	minix-sys
+./usr/share/calendar/calendar.history	minix-sys
+./usr/share/calendar/calendar.holiday	minix-sys
+./usr/share/calendar/calendar.judaic	minix-sys
+./usr/share/calendar/calendar.lotr	minix-sys
+./usr/share/calendar/calendar.music	minix-sys
+./usr/share/calendar/calendar.netbsd	minix-sys
+./usr/share/calendar/calendar.usholiday	minix-sys
 ./usr/share/doc				minix-sys
 ./usr/share/doc/atf			minix-sys	atf
 ./usr/share/doc/atf/AUTHORS		minix-sys	atf

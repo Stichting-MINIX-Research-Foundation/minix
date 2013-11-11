@@ -1,0 +1,241 @@
+.\"	$NetBSD: calendar.1,v 1.25 2010/06/08 03:08:47 riz Exp $
+.\"
+.\" Copyright (c) 1989, 1990, 1993
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"     @(#)calendar.1	8.1 (Berkeley) 6/29/93
+.\"
+.Dd August 27, 2009
+.Dt CALENDAR 1
+.Os
+.Sh NAME
+.Nm calendar
+.Nd reminder service
+.Sh SYNOPSIS
+.Nm
+.Op Fl ax
+.Op Fl d Ar MMDD[[YY]YY]
+.Op Fl f Ar file
+.Op Fl l Ar days
+.Op Fl w Ar days
+.Sh DESCRIPTION
+The
+.Nm
+utility processes text files and displays lines that match certain dates.
+.Pp
+The following options are available:
+.Bl -tag -width Ds
+.It Fl a
+Process the
+.Dq calendar
+files of all users and mail the results to them.
+This requires super-user privileges.
+.It Fl d Ar MMDD[[YY]YY]
+Display lines for the given date.
+By default, the current date is used.
+The year, which may be given in either two or four digit format, is used
+only for purposes of determining whether the given date falls on a Friday
+in that year (see below).
+If the year is not specified, the current year is assumed.
+.It Fl f Ar file
+Display matching calendar files from the given filename.
+By default, the following filenames are checked for:
+.Bl -item -compact -offset indent
+.It
+.Pa ~/calendar
+.It
+.Pa ~/.calendar
+.It
+.Pa /etc/calendar
+.El
+and the first which is found is used.
+The filename may be absolute.
+If not absolute, it is taken relative to the
+directory specified by the
+.Ev CALENDAR_DIR
+environment variable, if set; otherwise, it is taken relative to the
+user's home directory.
+Or, if the
+.Fl a
+flag is given, a non-absolute filename is taken relative to each user's
+home directory in turn.
+.It Fl l Ar days
+Causes the program to
+.Dq look ahead
+a given number of days (default one) from the specified date and
+display their entries as well.
+.It Fl w Ar days
+Causes the program to add the specified number of days to the
+.Dq look ahead
+number if and only if the day specified is a Friday.
+The default value is two, which causes
+.Nm
+to print entries through the weekend on Fridays.
+.It Fl x
+Causes
+.Nm
+not to set the
+.Ev CPP_RESTRICTED
+environment variable.
+Passing this flag allows users the (somewhat obscure) option of
+including a named pipe via
+.Xr cpp 1 Ns No 's
+.Li #include
+syntax, but opens up the possibility of
+.Nm
+hanging indefinitely if users do so incorrectly.
+For this reason, the
+.Fl x
+flag should never be used with
+.Nm
+.Fl a .
+.El
+.Pp
+Lines should begin with a month and day.
+They may be entered in almost any format, either numeric or as character
+strings.
+A single asterisk
+.Pq Sq *
+matches every month, or every day if a month has been provided.
+This means that two asterisks
+.Pq Sq **
+matches every day of the year, and is thus useful for ToDo tasks.
+A day without a month matches that day of every week.
+A month without a day matches the first of that month.
+Two numbers default to the month followed by the day.
+Lines with leading tabs default to the last entered date, allowing
+multiple line specifications for a single date.
+By convention, dates followed by an asterisk are not fixed, i.e., change
+from year to year.
+.Pp
+The
+.Dq calendar
+file is preprocessed by
+.Xr cpp 1 ,
+allowing the inclusion of shared files such as company holidays or
+meetings.
+If the shared file is not referenced by a full pathname,
+.Xr cpp 1
+searches in the current (or home) directory first, and then in the
+directory
+.Pa /usr/share/calendar .
+Empty lines and lines protected by the C commenting syntax
+.Pq Li /* ... */
+are ignored.
+.Pp
+Some possible calendar entries:
+.Bd -literal -offset indent
+#include	\*[Lt]calendar.usholiday\*[Gt]
+#include	\*[Lt]calendar.birthday\*[Gt]
+
+6/15		... June 15 (if ambiguous, will default to month/day).
+Jun. 15		... June 15.
+15 June		... June 15.
+Thursday	... Every Thursday.
+June		... Every June 1st.
+15 *		... 15th of every month.
+*15		... 15th of every month.
+June*		... Every day of June.
+**		... Every day
+.Ed
+.Sh FILES
+The following default calendar files are provided:
+.Pp
+.Bl -tag -width calendar.christian -compact
+.It Pa calendar.birthday
+Births and deaths of famous (and not-so-famous) people.
+.It Pa calendar.christian
+Christian holidays.
+This calendar should be updated yearly by the local system administrator
+so that roving holidays are set correctly for the current year.
+.It Pa calendar.computer
+Days of special significance to computer people.
+.It Pa calendar.history
+Everything else, mostly U.S. historical events.
+.It Pa calendar.holiday
+Other holidays, including the not-well-known, obscure, and
+.Em really
+obscure.
+.It Pa calendar.judaic
+Jewish holidays.
+This calendar should be updated yearly by the local system administrator
+so that roving holidays are set correctly for the current year.
+.It Pa calendar.lotr
+Important dates in the Lord of the Rings series.
+.It Pa calendar.music
+Musical events, births, and deaths.
+Strongly oriented toward rock 'n' roll.
+.It Pa calendar.netbsd
+Important dates in the history of the
+.Nx
+project.
+Mostly releases and port additions.
+.It Pa calendar.usholiday
+U.S. holidays.
+This calendar should be updated yearly by the local system administrator
+so that roving holidays are set correctly for the current year.
+.El
+.Sh COMPATIBILITY
+The
+.Nm
+program previously selected lines which had the correct date anywhere
+in the line.
+This is no longer true, the date is only recognized when it occurs
+first on the line.
+.Pp
+In
+.Nx 3.0 ,
+the
+.Nm
+command was modified to search the user's home directory instead of the current
+directory by default.
+Users desiring the historical behavior should set the
+.Ev CALENDAR_DIR
+environment variable to
+.Pa \&. ,
+or use the
+.Fl f
+flag.
+.Sh SEE ALSO
+.Xr at 1 ,
+.Xr cpp 1 ,
+.Xr cron 8
+.Sh HISTORY
+A
+.Nm
+command appeared in
+.At v7 .
+.Sh BUGS
+.Nm
+doesn't handle events that move around from year to year, i.e.,
+.Dq the last Monday in April .
+.Pp
+The
+.Fl a
+option ignores the user's
+.Ev CALENDAR_DIR
+environment variable.
