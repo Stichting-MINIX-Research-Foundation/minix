@@ -28,11 +28,11 @@ u64_t *total;
 
   lo = RPC_NEXT32;
   hi = RPC_NEXT32;
-  *free = make64(lo, hi);
+  *free = (u64_t)lo | ((u64_t)hi << 32);
 
   lo = RPC_NEXT32;
   hi = RPC_NEXT32;
-  *total = make64(lo, hi);
+  *total = (u64_t)lo | ((u64_t)hi << 32);
 
   return OK;
 }

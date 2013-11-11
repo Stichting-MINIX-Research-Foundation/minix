@@ -75,7 +75,7 @@ void cache_lru_touch(struct cached_page *hb)
 
 static __inline u32_t makehash(u32_t p1, u64_t p2)
 {
-	u32_t offlo = ex64lo(p2), offhi = ex64hi(p2),
+	u32_t offlo = (unsigned long)(p2), offhi = (unsigned long)(p2>>32),
 		v = 0x12345678;
 	hash_mix(p1, offlo, offhi);
 	hash_final(offlo, offhi, v);

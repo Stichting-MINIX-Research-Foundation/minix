@@ -3,7 +3,6 @@
 #include <time.h>
 #include <sys/times.h>
 #include <sys/types.h>
-#include <minix/u64.h>
 #include <minix/config.h>
 #include <minix/const.h>
 #include <minix/minlib.h>
@@ -30,6 +29,6 @@ u32_t tsc_64_to_micros(u64_t tsc)
 
 u32_t tsc_to_micros(u32_t low, u32_t high)
 {
-	return tsc_64_to_micros(make64(low, high));
+	return tsc_64_to_micros((u64_t)low | ((u64_t)high<<32));
 }
 

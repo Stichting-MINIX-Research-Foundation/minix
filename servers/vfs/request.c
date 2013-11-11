@@ -15,7 +15,6 @@
 #include <minix/com.h>
 #include <minix/const.h>
 #include <minix/endpoint.h>
-#include <minix/u64.h>
 #include <unistd.h>
 #include <time.h>
 #include "fproc.h"
@@ -53,8 +52,8 @@ int req_breadwrite(
   m.m_type = rw_flag == READING ? REQ_BREAD : REQ_BWRITE;
   m.REQ_DEV2 = dev;
   m.REQ_GRANT = grant_id;
-  m.REQ_SEEK_POS_LO = ex64lo(pos);
-  m.REQ_SEEK_POS_HI = ex64hi(pos);
+  m.REQ_SEEK_POS_LO = (unsigned long)(pos);
+  m.REQ_SEEK_POS_HI = (unsigned long)(pos>>32);
   m.REQ_NBYTES = num_of_bytes;
 
   /* Send/rec request */
@@ -63,7 +62,7 @@ int req_breadwrite(
   if (r != OK) return(r);
 
   /* Fill in response structure */
-  *new_posp = make64(m.RES_SEEK_POS_LO, m.RES_SEEK_POS_HI);
+  *new_posp = (u64_t)m.RES_SEEK_POS_LO | ((u64_t)m.RES_SEEK_POS_HI<<32);
   *cum_iop = m.RES_NBYTES;
 
   return(OK);
@@ -81,8 +80,8 @@ int req_bpeek(endpoint_t fs_e, dev_t dev, u64_t pos, unsigned int num_of_bytes)
   /* Fill in request message */
   m.m_type = REQ_BPEEK;
   m.REQ_DEV2 = dev;
-  m.REQ_SEEK_POS_LO = ex64lo(pos);
-  m.REQ_SEEK_POS_HI = ex64hi(pos);
+  m.REQ_SEEK_POS_LO = (unsigned long)(pos);
+  m.REQ_SEEK_POS_HI = (unsigned long)(pos>>32);
   m.REQ_NBYTES = num_of_bytes;
 
   /* Send/rec request */
@@ -323,7 +322,7 @@ int req_getdents(
   m.REQ_INODE_NR = inode_nr;
   m.REQ_GRANT = grant_id;
   m.REQ_MEM_SIZE = size;
-  m.REQ_SEEK_POS_LO = ex64lo(pos);
+  m.REQ_SEEK_POS_LO = (unsigned long)(pos);
   m.REQ_SEEK_POS_HI = 0;	/* Not used for now, so clear it. */
 
   r = fs_sendrec(fs_e, &m);
@@ -786,7 +785,7 @@ unsigned int *cum_iop;
   cp_grant_id_t grant_id;
   message m;
 
-  if (ex64hi(pos) != 0)
+  if ((unsigned long)(pos>>32) != 0)
 	  panic("req_readwrite: pos too large");
 
   grant_id = cpf_grant_magic(fs_e, user_e, (vir_bytes) user_addr, num_of_bytes,
@@ -798,7 +797,7 @@ unsigned int *cum_iop;
   m.m_type = rw_flag == READING ? REQ_READ : REQ_WRITE;
   m.REQ_INODE_NR = inode_nr;
   m.REQ_GRANT = grant_id;
-  m.REQ_SEEK_POS_LO = ex64lo(pos);
+  m.REQ_SEEK_POS_LO = (unsigned long)(pos);
   m.REQ_SEEK_POS_HI = 0;	/* Not used for now, so clear it. */
   m.REQ_NBYTES = num_of_bytes;
 
@@ -824,14 +823,14 @@ int req_peek(endpoint_t fs_e, ino_t inode_nr, u64_t pos, unsigned int bytes)
 
   memset(&m, 0, sizeof(m));
 
-  if (ex64hi(pos) != 0)
+  if ((unsigned long)(pos>>32) != 0)
 	  panic("req_peek: pos too large");
 
   /* Fill in request message */
   m.m_type = REQ_PEEK;
   m.REQ_INODE_NR = inode_nr;
   m.REQ_GRANT = -1;
-  m.REQ_SEEK_POS_LO = ex64lo(pos);
+  m.REQ_SEEK_POS_LO = (unsigned long)(pos);
   m.REQ_SEEK_POS_HI = 0;	/* Not used for now, so clear it. */
   m.REQ_NBYTES = bytes;
 

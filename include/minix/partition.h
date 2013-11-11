@@ -8,8 +8,6 @@
 
 #include <sys/types.h>
 
-#include <minix/u64.h>
-
 int minix_sizeup(char *name, u64_t *bytes);
 
 struct part_geom {

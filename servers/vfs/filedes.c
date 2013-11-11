@@ -17,7 +17,6 @@
 
 #include <sys/select.h>
 #include <minix/callnr.h>
-#include <minix/u64.h>
 #include <assert.h>
 #include <sys/stat.h>
 #include "fs.h"

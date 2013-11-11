@@ -97,7 +97,7 @@ static int mmap_file(struct vmproc *vmp,
 	if(flags & MAP_THIRDPARTY) {
 		file_offset = off_lo;
 	} else {
-		file_offset = make64(off_lo, off_hi);
+		file_offset = (u64_t)off_lo | ((u64_t)off_hi << 32);
 		if(off_hi && !off_lo) {
 			/* XXX clang compatability hack */
 			off_hi = file_offset = 0;

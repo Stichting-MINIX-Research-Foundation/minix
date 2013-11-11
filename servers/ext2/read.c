@@ -7,7 +7,6 @@
 #include <string.h>
 #include <stdlib.h>
 #include <minix/com.h>
-#include <minix/u64.h>
 #include "buf.h"
 #include "inode.h"
 #include "super.h"
@@ -159,8 +158,8 @@ int fs_breadwrite(void)
   /* Get the values from the request message */
   rw_flag = (fs_m_in.m_type == REQ_BREAD ? READING : WRITING);
   gid = (cp_grant_id_t) fs_m_in.REQ_GRANT;
-  position = make64((unsigned long) fs_m_in.REQ_SEEK_POS_LO,
-                    (unsigned long) fs_m_in.REQ_SEEK_POS_HI);
+  position = (u64_t)fs_m_in.REQ_SEEK_POS_LO |
+            ((u64_t)fs_m_in.REQ_SEEK_POS_HI<<32);
   nrbytes = (size_t) fs_m_in.REQ_NBYTES;
 
   block_size = get_block_size( (dev_t) fs_m_in.REQ_DEV2);
@@ -174,7 +173,7 @@ int fs_breadwrite(void)
   cum_io = 0;
   /* Split the transfer into chunks that don't span two blocks. */
   while (nrbytes > 0) {
-	  off = rem64u(position, block_size);	/* offset in blk*/
+	  off = (unsigned)(position % block_size);	/* offset in blk*/
 	  chunk = min(nrbytes, block_size - off);
 
 	  /* Read or write 'chunk' bytes. */
@@ -190,8 +189,8 @@ int fs_breadwrite(void)
 	  position += chunk;	/* position within the file */
   }
 
-  fs_m_out.RES_SEEK_POS_LO = ex64lo(position);
-  fs_m_out.RES_SEEK_POS_HI = ex64hi(position);
+  fs_m_out.RES_SEEK_POS_LO = (unsigned long)(position);
+  fs_m_out.RES_SEEK_POS_HI = (unsigned long)(position>>32);
 
   if (rdwt_err != OK) r = rdwt_err;     /* check for disk error */
   if (rdwt_err == END_OF_FILE) r = OK;
@@ -239,12 +238,12 @@ int *completed;                 /* number of bytes copied */
   block_spec = (rip->i_mode & I_TYPE) == I_BLOCK_SPECIAL;
 
   if (block_spec) {
-	b = div64u(position, block_size);
+	b = (unsigned long)(position / block_size);
 	dev = (dev_t) rip->i_block[0];
   } else {
-	if (ex64hi(position) != 0)
+	if ((unsigned long)(position>>32) != 0)
 		panic("rw_chunk: position too high");
-	b = read_map(rip, (off_t) ex64lo(position), 0);
+	b = read_map(rip, (off_t) (unsigned long)(position), 0);
 	dev = rip->i_dev;
 	ino = rip->i_num;
 	assert(ino != VMC_NO_INODE);
@@ -263,7 +262,7 @@ int *completed;                 /* number of bytes copied */
                /* Writing to or peeking a nonexistent block.
                 * Create and enter in inode.
                 */
-		if ((bp = new_block(rip, (off_t) ex64lo(position))) == NULL)
+		if ((bp = new_block(rip, (off_t) (unsigned long)(position))) == NULL)
 			return(err_code);
         }
   } else if (rw_flag == READING || rw_flag == PEEKING) {
@@ -275,7 +274,7 @@ int *completed;                 /* number of bytes copied */
 	 * the cache, acquire it, otherwise just acquire a free buffer.
          */
 	n = (chunk == block_size ? NO_READ : NORMAL);
-	if (!block_spec && off == 0 && (off_t) ex64lo(position) >= rip->i_size)
+	if (!block_spec && off == 0 && (off_t) (unsigned long)(position) >= rip->i_size)
 		n = NO_READ;
 	if(block_spec) {
 		assert(ino == VMC_NO_INODE);
@@ -292,7 +291,7 @@ int *completed;                 /* number of bytes copied */
 	panic("bp not valid in rw_chunk, this can't happen");
 
   if (rw_flag == WRITING && chunk != block_size && !block_spec &&
-      (off_t) ex64lo(position) >= rip->i_size && off == 0) {
+      (off_t) (unsigned long)(position) >= rip->i_size && off == 0) {
 	zero_block(bp);
   }
 
@@ -552,13 +551,13 @@ unsigned bytes_ahead;           /* bytes beyond position for immediate use */
   if (block_spec && rip->i_size == 0) {
 	blocks_left = (block_t) NR_IOREQS;
   } else {
-	blocks_left = (block_t) (rip->i_size-ex64lo(position)+(block_size-1)) /
+	blocks_left = (block_t) (rip->i_size-(unsigned long)(position)+(block_size-1)) /
                                                                 block_size;
 
 	/* Go for the first indirect block if we are in its neighborhood. */
 	if (!block_spec) {
 		ind1_pos = (EXT2_NDIR_BLOCKS) * block_size;
-		if ((off_t) ex64lo(position) <= ind1_pos && rip->i_size > ind1_pos) {
+		if ((off_t) (unsigned long)(position) <= ind1_pos && rip->i_size > ind1_pos) {
 			blocks_ahead++;
 			blocks_left++;
 		}
@@ -591,7 +590,7 @@ unsigned bytes_ahead;           /* bytes beyond position for immediate use */
 	position_running += block_size;
 
 	if(!block_spec && 
-	  (thisblock = read_map(rip, (off_t) ex64lo(position_running), 1)) != NO_BLOCK) {
+	  (thisblock = read_map(rip, (off_t) (unsigned long)(position_running), 1)) != NO_BLOCK) {
 	  	bp = lmfs_get_block_ino(dev, thisblock, PREFETCH, rip->i_num, position_running);
 	} else {
 		bp = get_block(dev, block, PREFETCH);

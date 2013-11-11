@@ -14,8 +14,6 @@
 #include <signal.h>
 #include <machine/vm.h>
 
-#include <minix/u64.h>
-
 #include "archconst.h"
 #include "arch_proto.h"
 #include "serial.h"
@@ -347,10 +345,10 @@ static void dump_bkl_usage(void)
 	printf("--- BKL usage ---\n");
 	for (cpu = 0; cpu < ncpus; cpu++) {
 		printf("cpu %3d kernel ticks 0x%x%08x bkl ticks 0x%x%08x succ %d tries %d\n", cpu,
-				ex64hi(kernel_ticks[cpu]),
-				ex64lo(kernel_ticks[cpu]),
-				ex64hi(bkl_ticks[cpu]),
-				ex64lo(bkl_ticks[cpu]),
+				(unsigned long)(kernel_ticks[cpu]>>32),
+				(unsigned long)(kernel_ticks[cpu]),
+				(unsigned long)(bkl_ticks[cpu]>>32),
+				(unsigned long)(bkl_ticks[cpu]),
 				bkl_succ[cpu], bkl_tries[cpu]);
 	}
 }

@@ -251,8 +251,8 @@ static void raw_xfer(dev_t minor, u64_t pos, iovec_s_t *iovec, int nr_req,
 	memset(&m, 0, sizeof(m));
 	m.m_type = write ? BDEV_SCATTER : BDEV_GATHER;
 	m.BDEV_MINOR = minor;
-	m.BDEV_POS_LO = ex64lo(pos);
-	m.BDEV_POS_HI = ex64hi(pos);
+	m.BDEV_POS_LO = (unsigned long)(pos);
+	m.BDEV_POS_HI = (unsigned long)(pos>>32);
 	m.BDEV_COUNT = nr_req;
 	m.BDEV_GRANT = grant;
 	m.BDEV_ID = lrand48();
@@ -1541,7 +1541,7 @@ static void real_limits(dev_t sub0_minor, dev_t sub1_minor, int part_secs)
 
 	if (res.type == RESULT_OK && subpart.size != 0) {
 		res.type = RESULT_BADVALUE;
-		res.value = ex64lo(subpart.size);
+		res.value = (unsigned long)(subpart.size);
 	}
 
 	got_result(&res, "ioctl to get first subpartition");
@@ -1550,7 +1550,7 @@ static void real_limits(dev_t sub0_minor, dev_t sub1_minor, int part_secs)
 
 	if (res.type == RESULT_OK && subpart.size != 0) {
 		res.type = RESULT_BADVALUE;
-		res.value = ex64lo(subpart.size);
+		res.value = (unsigned long)(subpart.size);
 	}
 
 	got_result(&res, "ioctl to get second subpartition");

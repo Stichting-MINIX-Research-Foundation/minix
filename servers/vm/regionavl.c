@@ -1,6 +1,5 @@
 
 #include <stddef.h>
-#include <minix/u64.h>
 
 #include "proto.h"
 #include "sanitycheck.h"

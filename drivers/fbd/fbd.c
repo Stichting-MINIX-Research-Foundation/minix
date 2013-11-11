@@ -264,8 +264,8 @@ static ssize_t fbd_transfer_direct(int do_write, u64_t position,
 	m.BDEV_GRANT = grant;
 	m.BDEV_FLAGS = flags;
 	m.BDEV_ID = 0;
-	m.BDEV_POS_LO = ex64lo(position);
-	m.BDEV_POS_HI = ex64hi(position);
+	m.BDEV_POS_LO = (unsigned long)(position);
+	m.BDEV_POS_HI = (unsigned long)(position>>32);
 
 	if ((r = sendrec(driver_endpt, &m)) != OK)
 		panic("sendrec to driver failed (%d)\n", r);
@@ -357,8 +357,8 @@ static ssize_t fbd_transfer_copy(int do_write, u64_t position,
 	m.BDEV_GRANT = grant;
 	m.BDEV_FLAGS = flags;
 	m.BDEV_ID = 0;
-	m.BDEV_POS_LO = ex64lo(position);
-	m.BDEV_POS_HI = ex64hi(position);
+	m.BDEV_POS_LO = (unsigned long)(position);
+	m.BDEV_POS_HI = (unsigned long)(position>>32);
 
 	if ((r = sendrec(driver_endpt, &m)) != OK)
 		panic("sendrec to driver failed (%d)\n", r);

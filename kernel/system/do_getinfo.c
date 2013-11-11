@@ -16,7 +16,6 @@
 
 #if USE_GETINFO
 
-#include <minix/u64.h>
 #include <sys/resource.h>
 
 /*===========================================================================*
@@ -27,7 +26,7 @@ static void update_idle_time(void)
 	int i;
 	struct proc * idl = proc_addr(IDLE);
 
-	idl->p_cycles = make64(0, 0);
+	idl->p_cycles = (u64_t)0;
 
 	for (i = 0; i < CONFIG_MAX_CPUS ; i++) {
 		idl->p_cycles += get_cpu_var(i, idle_proc).p_cycles;

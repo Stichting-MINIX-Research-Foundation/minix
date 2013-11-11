@@ -4,7 +4,6 @@
 #include "inc.h"
 #include <string.h>
 #include <minix/com.h>
-#include <minix/u64.h>
 #include <minix/bdev.h>
 
 /* This function is called when the filesystem is umounted. It releases the 

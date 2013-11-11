@@ -10,14 +10,13 @@ __weak_alias(pread, _pread)
 
 #include <lib.h>
 #include <unistd.h>
-#include <minix/u64.h>
 
 ssize_t pread64(int fd, void *buffer, size_t nbytes, u64_t where)
 {
 	u64_t here;
 	ssize_t r;
 
-	if (lseek64(fd, make64(0,0), SEEK_CUR, &here) < 0) return(-1);
+	if (lseek64(fd, (u64_t)0, SEEK_CUR, &here) < 0) return(-1);
 	if (lseek64(fd, where, SEEK_SET, NULL) < 0) return(-1);
 	if ((r = read(fd, buffer, nbytes)) < 0) {
 		int e = errno;

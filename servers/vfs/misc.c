@@ -27,7 +27,6 @@
 #include <minix/endpoint.h>
 #include <minix/com.h>
 #include <minix/sysinfo.h>
-#include <minix/u64.h>
 #include <sys/ptrace.h>
 #include <sys/svrctl.h>
 #include <sys/resource.h>
@@ -199,9 +198,9 @@ int do_fcntl(message *UNUSED(m_out))
 	switch(flock_arg.l_whence) {
 	  case SEEK_SET: start = 0; break;
 	  case SEEK_CUR:
-		if (ex64hi(f->filp_pos) != 0)
+		if ((unsigned long)(f->filp_pos>>32) != 0)
 			panic("do_fcntl: position in file too high");
-		start = ex64lo(f->filp_pos);
+		start = (unsigned long)(f->filp_pos);
 		break;
 	  case SEEK_END: start = f->filp_vno->v_size; break;
 	  default: r = EINVAL;
@@ -376,8 +375,8 @@ int do_vm_call(message *m_out)
 	int req_fd = job_m_in.VFS_VMCALL_FD;
 	u32_t req_id = job_m_in.VFS_VMCALL_REQID;
 	endpoint_t ep = job_m_in.VFS_VMCALL_ENDPOINT;
-	u64_t offset = make64(job_m_in.VFS_VMCALL_OFFSET_LO,
-		job_m_in.VFS_VMCALL_OFFSET_HI);
+	u64_t offset = (u64_t)job_m_in.VFS_VMCALL_OFFSET_LO |
+		      ((u64_t)job_m_in.VFS_VMCALL_OFFSET_HI<<32);
 	u32_t length = job_m_in.VFS_VMCALL_LENGTH;
 	int result = OK;
 	int slot;

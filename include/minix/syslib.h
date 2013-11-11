@@ -7,7 +7,6 @@
 #include <sys/sigtypes.h>
 
 #include <minix/ipc.h>
-#include <minix/u64.h>
 #include <minix/devio.h>
 
 #include <minix/safecopies.h>

@@ -8,7 +8,6 @@
 #include <stdlib.h>
 #include <dirent.h>
 #include <minix/com.h>
-#include <minix/u64.h>
 #include <minix/vfsif.h>
 #include <assert.h>
 #include <sys/param.h>

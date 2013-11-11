@@ -204,7 +204,7 @@ static int do_rdwt(struct blockdriver *bdp, message *mp)
 
   /* Transfer bytes from/to the device. */
   do_write = (mp->m_type == BDEV_WRITE);
-  position = make64(mp->BDEV_POS_LO, mp->BDEV_POS_HI);
+  position = (u64_t)mp->BDEV_POS_LO | ((u64_t)mp->BDEV_POS_HI<<32);
 
   r = (*bdp->bdr_transfer)(mp->BDEV_MINOR, do_write, position, mp->m_source,
 	&iovec1, 1, mp->BDEV_FLAGS);
@@ -245,7 +245,7 @@ static int do_vrdwt(struct blockdriver *bdp, message *mp, thread_id_t id)
 
   /* Transfer bytes from/to the device. */
   do_write = (mp->m_type == BDEV_SCATTER);
-  position = make64(mp->BDEV_POS_LO, mp->BDEV_POS_HI);
+  position = (u64_t)mp->BDEV_POS_LO | ((u64_t)mp->BDEV_POS_HI<<32);
 
   r = (*bdp->bdr_transfer)(mp->BDEV_MINOR, do_write, position, mp->m_source,
 	iovec, nr_req, mp->BDEV_FLAGS);
@@ -290,7 +290,7 @@ static int do_dioctl(struct blockdriver *bdp, dev_t minor,
 		(*bdp->bdr_geometry)(minor, &entry);
 	} else {
 		/* The driver doesn't care -- make up fake geometry. */
-		entry.cylinders = div64u(entry.size, SECTOR_SIZE);
+		entry.cylinders = (unsigned long)(entry.size / SECTOR_SIZE);
 		entry.heads = 64;
 		entry.sectors = 32;
 	}

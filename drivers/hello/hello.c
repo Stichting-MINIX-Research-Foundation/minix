@@ -56,8 +56,8 @@ static int hello_close(message *UNUSED(m))
 
 static struct device * hello_prepare(dev_t UNUSED(dev))
 {
-    hello_device.dv_base = make64(0, 0);
-    hello_device.dv_size = make64(strlen(HELLO_MESSAGE), 0);
+    hello_device.dv_base = (u64_t)0;
+    hello_device.dv_size = (u64_t)(strlen(HELLO_MESSAGE));
     return &hello_device;
 }
 
@@ -75,8 +75,8 @@ static int hello_transfer(endpoint_t endpt, int opcode, u64_t position,
         printf("HELLO: vectored transfer request, using first element only\n");
     }
 
-    bytes = strlen(HELLO_MESSAGE) - ex64lo(position) < iov->iov_size ?
-            strlen(HELLO_MESSAGE) - ex64lo(position) : iov->iov_size;
+    bytes = strlen(HELLO_MESSAGE) - (unsigned long)(position) < iov->iov_size ?
+            strlen(HELLO_MESSAGE) - (unsigned long)(position) : iov->iov_size;
 
     if (bytes <= 0)
     {
@@ -86,8 +86,8 @@ static int hello_transfer(endpoint_t endpt, int opcode, u64_t position,
     {
         case DEV_GATHER_S:
             ret = sys_safecopyto(endpt, (cp_grant_id_t) iov->iov_addr, 0,
-                                (vir_bytes) (HELLO_MESSAGE + ex64lo(position)),
-                                 bytes);
+			(vir_bytes) (HELLO_MESSAGE + (unsigned long)(position)),
+			bytes);
             iov->iov_size -= bytes;
             break;
 

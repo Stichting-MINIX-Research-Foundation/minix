@@ -1,4 +1,3 @@
-#include <minix/u64.h>
 #include <sys/types.h>
 
 /* malloc-debug.c */

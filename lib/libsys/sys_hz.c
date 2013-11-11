@@ -2,7 +2,6 @@
 #include <stdio.h>
 #include <sys/time.h>
 #include <sys/types.h>
-#include <minix/u64.h>
 #include <minix/config.h>
 #include <minix/const.h>
 
@@ -31,7 +30,7 @@ micros_to_ticks(u32_t micros)
 {
         u32_t ticks;
 
-        ticks = div64u(mul64u(micros, sys_hz()), 1000000);
+        ticks = (unsigned long)(((u64_t)micros * sys_hz()) / 1000000);
         if(ticks < 1) ticks = 1;
 
         return ticks;

@@ -62,8 +62,8 @@ u64_t off;			/* file offset */
 
   RPC_REQUEST(HGFS_REQ_READ);
   RPC_NEXT32 = (u32_t)handle;
-  RPC_NEXT32 = ex64lo(off);
-  RPC_NEXT32 = ex64hi(off);
+  RPC_NEXT32 = (unsigned long)(off);
+  RPC_NEXT32 = (unsigned long)(off>>32);
 
   max = RPC_BUF_SIZE - RPC_LEN - sizeof(u32_t);
   RPC_NEXT32 = (size < max) ? size : max;
@@ -97,8 +97,8 @@ u64_t off;			/* file offset */
   RPC_REQUEST(HGFS_REQ_WRITE);
   RPC_NEXT32 = (u32_t)handle;
   RPC_NEXT8 = 0;		/* append flag */
-  RPC_NEXT32 = ex64lo(off);
-  RPC_NEXT32 = ex64hi(off);
+  RPC_NEXT32 = (unsigned long)(off);
+  RPC_NEXT32 = (unsigned long)(off>>32);
   RPC_NEXT32 = len;
 
   /* Only copy in data if we're not operating directly on the RPC buffer. */

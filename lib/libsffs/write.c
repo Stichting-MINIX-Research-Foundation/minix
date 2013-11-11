@@ -97,7 +97,7 @@ int do_write()
 
   if (IS_DIR(ino)) return EISDIR;
 
-  pos = make64(m_in.REQ_SEEK_POS_LO, m_in.REQ_SEEK_POS_HI);
+  pos = (u64_t)m_in.REQ_SEEK_POS_LO | ((u64_t)m_in.REQ_SEEK_POS_HI<<32);
   count = m_in.REQ_NBYTES;
   grant = m_in.REQ_GRANT;
 
@@ -106,8 +106,8 @@ int do_write()
   if ((r = write_file(ino, &pos, &count, &grant)) != OK)
 	return r;
 
-  m_out.RES_SEEK_POS_HI = ex64hi(pos);
-  m_out.RES_SEEK_POS_LO = ex64lo(pos);
+  m_out.RES_SEEK_POS_HI = (unsigned long)(pos>>32);
+  m_out.RES_SEEK_POS_LO = (unsigned long)(pos);
   m_out.RES_NBYTES = count;
 
   return OK;
@@ -135,10 +135,10 @@ int do_ftrunc()
 
   if (IS_DIR(ino)) return EISDIR;
 
-  start = make64(m_in.REQ_TRC_START_LO, m_in.REQ_TRC_START_HI);
-  end = make64(m_in.REQ_TRC_END_LO, m_in.REQ_TRC_END_HI);
+  start = (u64_t)m_in.REQ_TRC_START_LO | ((u64_t)m_in.REQ_TRC_START_HI<<32);
+  end = (u64_t)m_in.REQ_TRC_END_LO | ((u64_t)m_in.REQ_TRC_END_HI<<32);
 
-  if (cmp64u(end, 0) == 0) {
+  if (end == (u64_t)(0)) {
 	/* Truncate or expand the file. */
 	if ((r = verify_inode(ino, path, NULL)) != OK)
 		return r;
@@ -149,13 +149,13 @@ int do_ftrunc()
 	r = sffs_table->t_setattr(path, &attr);
   } else {
 	/* Write zeroes to the file. We can't create holes. */
-	if (cmp64(end, start) <= 0) return EINVAL;
+	if (end <= start) return EINVAL;
 
-	delta = sub64(end, start);
+	delta = end - start;
 
-	if (ex64hi(delta) != 0) return EINVAL;
+	if ((unsigned long)(delta>>32) != 0) return EINVAL;
 
-	count = ex64lo(delta);
+	count = (unsigned long)(delta);
 
 	r = write_file(ino, &start, &count, NULL);
   }

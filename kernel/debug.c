@@ -7,7 +7,6 @@
 
 #include <minix/callnr.h>
 #include <minix/sysutil.h>
-#include <minix/u64.h>
 #include <limits.h>
 #include <string.h>
 #include <assert.h>
@@ -255,8 +254,8 @@ void print_proc(struct proc *pp)
 			"pdbr 0x%lx rts %s misc %s sched %s ",
 		proc_nr(pp), pp->p_name, pp->p_endpoint, 
 		pp->p_priority, pp->p_user_time,
-		pp->p_sys_time, ex64hi(pp->p_cycles),
-		ex64lo(pp->p_cycles), pp->p_cpu,
+		pp->p_sys_time, (unsigned long)(pp->p_cycles>>32),
+		(unsigned long)(pp->p_cycles), pp->p_cpu,
 #if defined(__i386__)
 		pp->p_seg.p_cr3,
 #elif defined(__arm__)

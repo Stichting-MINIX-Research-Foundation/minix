@@ -5,7 +5,6 @@
 
 #include <sys/types.h>
 #include <sys/time.h>
-#include <minix/u64.h>
 
 typedef void *sffs_file_t;		/* handle to open file */
 typedef void *sffs_dir_t;		/* handle to directory search */

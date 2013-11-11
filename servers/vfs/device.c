@@ -29,7 +29,6 @@
 #include <minix/com.h>
 #include <minix/endpoint.h>
 #include <minix/ioctl.h>
-#include <minix/u64.h>
 #include "file.h"
 #include "fproc.h"
 #include "scratchpad.h"
@@ -411,8 +410,8 @@ int dev_io(
   endpoint_t ioproc;
   int ret, is_asyn;
 
-  pos_lo = ex64lo(pos);
-  pos_high = ex64hi(pos);
+  pos_lo = (unsigned long)(pos);
+  pos_high = (unsigned long)(pos>>32);
   major_dev = major(dev);
   minor_dev = minor(dev);
 

@@ -20,7 +20,6 @@
 #include <minix/callnr.h>
 #include <minix/endpoint.h>
 #include <minix/com.h>
-#include <minix/u64.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <string.h>

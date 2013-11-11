@@ -23,7 +23,6 @@
 #include <stddef.h>
 #include <errno.h>
 #include <sys/param.h>
-#include <minix/u64.h>
 #include <minix/partition.h>
 
 /* Base and size of a partition in bytes. */

@@ -2,7 +2,6 @@
 #include <sys/cdefs.h>
 #include "namespace.h"
 #include <lib.h>
-#include <minix/u64.h>
 #include <minix/vm.h>
 
 /* INCLUDES HERE */
@@ -33,13 +32,13 @@ void *minix_mmap_for(endpoint_t forwhom,
 	m.VMM_PROT = prot;
 	m.VMM_FLAGS = flags;
 	m.VMM_FD = fd;
-	m.VMM_OFFSET_LO = ex64lo(offset);
+	m.VMM_OFFSET_LO = (unsigned long)(offset);
 
 	if(forwhom != SELF) {
 		m.VMM_FLAGS |= MAP_THIRDPARTY;
 		m.VMM_FORWHOM = forwhom;
 	} else {
-		m.VMM_OFFSET_HI = ex64hi(offset);
+		m.VMM_OFFSET_HI = (unsigned long)(offset>>32);
 	}
 
 	r = _syscall(VM_PROC_NR, VM_MMAP, &m);

@@ -135,8 +135,8 @@ static int bdev_rdwt_setup(int req, dev_t dev, u64_t pos, char *buf,
   memset(m, 0, sizeof(*m));
   m->m_type = req;
   m->BDEV_MINOR = minor(dev);
-  m->BDEV_POS_LO = ex64lo(pos);
-  m->BDEV_POS_HI = ex64hi(pos);
+  m->BDEV_POS_LO = (unsigned long)(pos);
+  m->BDEV_POS_HI = (unsigned long)(pos>>32);
   m->BDEV_COUNT = count;
   m->BDEV_GRANT = grant;
   m->BDEV_FLAGS = flags;
@@ -227,8 +227,8 @@ static int bdev_vrdwt_setup(int req, dev_t dev, u64_t pos, iovec_t *vec,
   memset(m, 0, sizeof(*m));
   m->m_type = req;
   m->BDEV_MINOR = minor(dev);
-  m->BDEV_POS_LO = ex64lo(pos);
-  m->BDEV_POS_HI = ex64hi(pos);
+  m->BDEV_POS_LO = (unsigned long)(pos);
+  m->BDEV_POS_HI = (unsigned long)(pos>>32);
   m->BDEV_COUNT = count;
   m->BDEV_GRANT = grant;
   m->BDEV_FLAGS = flags;
@@ -602,7 +602,7 @@ int bdev_restart_asyn(bdev_call_t *call)
 	bdev_rdwt_cleanup(&call->msg);
 
 	r = bdev_rdwt_setup(type, call->dev,
-		make64(call->msg.BDEV_POS_LO, call->msg.BDEV_POS_HI),
+		(u64_t)call->msg.BDEV_POS_LO | ((u64_t)call->msg.BDEV_POS_HI<<32),
 		(char *) call->vec[0].iov_addr, call->msg.BDEV_COUNT,
 		call->msg.BDEV_FLAGS, &call->msg);
 
@@ -613,7 +613,7 @@ int bdev_restart_asyn(bdev_call_t *call)
 	bdev_vrdwt_cleanup(&call->msg, call->gvec);
 
 	r = bdev_vrdwt_setup(type, call->dev,
-		make64(call->msg.BDEV_POS_LO, call->msg.BDEV_POS_HI),
+		(u64_t)call->msg.BDEV_POS_LO | ((u64_t)call->msg.BDEV_POS_HI<<32),
 		call->vec, call->msg.BDEV_COUNT, call->msg.BDEV_FLAGS,
 		&call->msg, call->gvec);
 

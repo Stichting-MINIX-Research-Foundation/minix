@@ -169,7 +169,7 @@ fb_do_read(endpoint_t ep, iovec_t *iov, int minor, u64_t pos, size_t *io_bytes)
         }
 
 	return sys_safecopyto(ep, (cp_grant_id_t) iov->iov_addr, 0,
-				(vir_bytes) (dev.dv_base + ex64lo(pos)),
+				(vir_bytes) (dev.dv_base + (unsigned long)(pos)),
 				*io_bytes);
 }
 
@@ -296,8 +296,8 @@ fb_do_write(endpoint_t ep, iovec_t *iov, int minor, u64_t pos, size_t *io_bytes)
 	}
 
 	return sys_safecopyfrom(ep, (cp_grant_id_t) iov->iov_addr, 0,
-				(vir_bytes) (dev.dv_base + ex64lo(pos)),
-				*io_bytes);
+			(vir_bytes) (dev.dv_base + (unsigned long)(pos)),
+			*io_bytes);
 }
 
 static int

@@ -14,7 +14,6 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <minix/com.h>
-#include <minix/u64.h>
 #include "file.h"
 #include "fproc.h"
 #include "scratchpad.h"
@@ -217,7 +216,7 @@ int read_write(struct fproc *rfp, int rw_flag, struct filp *f,
 			rw_flag, for_e, buf, size, &new_pos, &cum_io_incr);
 
 		if (r >= 0) {
-			if (ex64hi(new_pos))
+			if ((unsigned long)(new_pos>>32))
 				panic("read_write: bad new pos");
 
 			position = new_pos;
@@ -229,11 +228,11 @@ int read_write(struct fproc *rfp, int rw_flag, struct filp *f,
   /* On write, update file size and access time. */
   if (rw_flag == WRITING) {
 	if (S_ISREG(vp->v_mode) || S_ISDIR(vp->v_mode)) {
-		if (cmp64ul(position, vp->v_size) > 0) {
-			if (ex64hi(position) != 0) {
+		if (position > (u64_t)(vp->v_size)) {
+			if ((unsigned long)(position>>32) != 0) {
 				panic("read_write: file size too big ");
 			}
-			vp->v_size = ex64lo(position);
+			vp->v_size = (unsigned long)(position);
 		}
 	}
   }
@@ -279,7 +278,7 @@ int do_getdents(message *UNUSED(m_out))
 	r = EBADF;
 
   if (r == OK) {
-	if (ex64hi(rfilp->filp_pos) != 0)
+	if ((unsigned long)(rfilp->filp_pos>>32) != 0)
 		panic("do_getdents: can't handle large offsets");
 
 	r = req_getdents(rfilp->filp_vno->v_fs_e, rfilp->filp_vno->v_inode_nr,
@@ -346,14 +345,14 @@ size_t req_size;
 	return(r);
   }
 
-  if (ex64hi(new_pos))
+  if ((unsigned long)(new_pos>>32))
 	panic("rw_pipe: bad new pos");
 
   cum_io += cum_io_incr;
   buf += cum_io_incr;
   req_size -= cum_io_incr;
 
-  vp->v_size = ex64lo(new_pos);
+  vp->v_size = (unsigned long)(new_pos);
 
   if (partial_pipe) {
 	/* partial write on pipe with */

@@ -27,7 +27,6 @@
 #include <sys/ioctl.h>
 #include <sys/mtio.h>
 #include <minix/partition.h>
-#include <minix/u64.h>
 
 /* Preferred block size to variable block length tapes, block devices or files.
  */

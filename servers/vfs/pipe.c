@@ -23,7 +23,6 @@
 #include <minix/callnr.h>
 #include <minix/endpoint.h>
 #include <minix/com.h>
-#include <minix/u64.h>
 #include <sys/select.h>
 #include <sys/time.h>
 #include "file.h"

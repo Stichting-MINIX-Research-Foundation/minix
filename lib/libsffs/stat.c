@@ -70,10 +70,10 @@ int do_stat()
   stat.st_uid = sffs_params->p_uid;
   stat.st_gid = sffs_params->p_gid;
   stat.st_rdev = NO_DEV;
-  if (cmp64u(attr.a_size, LONG_MAX) > 0)
+  if (attr.a_size > (u64_t)(LONG_MAX))
 	stat.st_size = LONG_MAX;
   else
-	stat.st_size = ex64lo(attr.a_size);
+	stat.st_size = (unsigned long)(attr.a_size);
   stat.st_atimespec = attr.a_atime;
   stat.st_mtimespec = attr.a_mtime;
   stat.st_ctimespec = attr.a_ctime;

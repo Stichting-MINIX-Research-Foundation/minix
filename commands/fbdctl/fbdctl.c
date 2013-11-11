@@ -3,7 +3,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <minix/ioctl.h>
-#include <minix/u64.h>
 #include <sys/ioc_fbd.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -32,8 +31,8 @@ static int usage(char *name)
 static void print_rule(struct fbd_rule *rule)
 {
 	printf("%-2d %04lX%08lX-%04lX%08lX %-4d %-5d %c%c ",
-		rule->num, ex64hi(rule->start), ex64lo(rule->start),
-		ex64hi(rule->end), ex64lo(rule->end), rule->skip,
+		rule->num, (unsigned long)(rule->start>>32), (unsigned long)(rule->start),
+		(unsigned long)(rule->end>>32), (unsigned long)(rule->end), rule->skip,
 		rule->count, (rule->flags & FBD_FLAG_READ) ? 'r' : ' ',
 		(rule->flags & FBD_FLAG_WRITE) ? 'w' : ' ');
 
@@ -67,10 +66,10 @@ static void print_rule(struct fbd_rule *rule)
 
 	case FBD_ACTION_MISDIR:
 		printf("%-7s %04lX%08lX-%04lX%08lX %u",
-			"misdir", ex64hi(rule->params.misdir.start),
-			ex64lo(rule->params.misdir.start),
-			ex64hi(rule->params.misdir.end),
-			ex64lo(rule->params.misdir.end),
+			"misdir", (unsigned long)(rule->params.misdir.start>>32),
+			(unsigned long)(rule->params.misdir.start),
+			(unsigned long)(rule->params.misdir.end>>32),
+			(unsigned long)(rule->params.misdir.end),
 			rule->params.misdir.align);
 		break;
 
@@ -128,7 +127,7 @@ static int scan_hex64(char *input, u64_t *val)
 
 	lo = strtoul(input, NULL, 16);
 
-	*val = make64(lo, hi);
+	*val = (u64_t)lo | ((u64_t)hi << 32);
 
 	return 1;
 }

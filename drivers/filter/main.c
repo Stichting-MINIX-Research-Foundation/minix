@@ -136,10 +136,10 @@ static int do_rdwt(int flag_rw)
 	u64_t pos;
 	int r;
 
-	pos = make64(m_in.BDEV_POS_LO, m_in.BDEV_POS_HI);
+	pos = (u64_t)m_in.BDEV_POS_LO | ((u64_t)m_in.BDEV_POS_HI<<32);
 	size = m_in.BDEV_COUNT;
 
-	if (rem64u(pos, SECTOR_SIZE) != 0 || size % SECTOR_SIZE != 0) {
+	if ((unsigned)(pos % SECTOR_SIZE) != 0 || size % SECTOR_SIZE != 0) {
 		printf("Filter: unaligned request from caller!\n");
 
 		return EINVAL;
@@ -194,11 +194,11 @@ static int do_vrdwt(int flag_rw)
 		panic("copying in grant vector failed: %d", r);
 	}
 
-	pos = make64(m_in.BDEV_POS_LO, m_in.BDEV_POS_HI);
+	pos = (u64_t)m_in.BDEV_POS_LO | ((u64_t)m_in.BDEV_POS_HI<<32);
 	for(size = 0, i = 0; i < grants; i++)
 		size += iov_proc[i].iov_size;
 
-	if (rem64u(pos, SECTOR_SIZE) != 0 || size % SECTOR_SIZE != 0) {
+	if ((unsigned)(pos % SECTOR_SIZE) != 0 || size % SECTOR_SIZE != 0) {
 		printf("Filter: unaligned request from caller!\n");
 		return EINVAL;
 	}

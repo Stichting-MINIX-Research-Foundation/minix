@@ -2,7 +2,6 @@
 #include <string.h>
 #include <minix/com.h>
 #include <assert.h>
-#include <minix/u64.h>
 #include "buf.h"
 #include "inode.h"
 #include "super.h"

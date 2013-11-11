@@ -918,8 +918,8 @@ int read_write(u64_t pos, char *bufa, char *bufb, size_t *sizep, int request)
 	memset(&m1, 0, sizeof(m1));
 	m1.m_type = (request == FLT_WRITE) ? BDEV_SCATTER : BDEV_GATHER;
 	m1.BDEV_COUNT = count;
-	m1.BDEV_POS_LO = ex64lo(pos);
-	m1.BDEV_POS_HI = ex64hi(pos);
+	m1.BDEV_POS_LO = (unsigned long)(pos);
+	m1.BDEV_POS_HI = (unsigned long)(pos>>32);
 
 	m2 = m1;
 

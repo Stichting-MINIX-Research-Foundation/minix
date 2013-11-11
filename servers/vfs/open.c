@@ -17,7 +17,6 @@
 #include <unistd.h>
 #include <minix/callnr.h>
 #include <minix/com.h>
-#include <minix/u64.h>
 #include "file.h"
 #include "fproc.h"
 #include "scratchpad.h"
@@ -614,21 +613,18 @@ int actual_lseek(message *m_out, int seekfd, int seekwhence, off_t offset)
     default: unlock_filp(rfilp); return(EINVAL);
   }
 
-  if (offset >= 0)
-	newpos = pos + offset;
-  else
-	newpos = sub64ul(pos, -offset);
+  newpos = pos + offset;
 
   /* Check for overflow. */
-  if (ex64hi(newpos) != 0) {
+  if ((unsigned long)(newpos>>32) != 0) {
 	r = EOVERFLOW;
-  } else if ((off_t) ex64lo(newpos) < 0) { /* no negative file size */
+  } else if ((off_t) (unsigned long)(newpos) < 0) { /* no negative file size */
 	r = EOVERFLOW;
   } else {
 	/* insert the new position into the output message */
-	m_out->reply_l1 = ex64lo(newpos);
+	m_out->reply_l1 = (unsigned long)(newpos);
 
-	if (cmp64(newpos, rfilp->filp_pos) != 0) {
+	if (newpos != rfilp->filp_pos) {
 		rfilp->filp_pos = newpos;
 
 		/* Inhibit read ahead request */
@@ -660,7 +656,7 @@ int actual_llseek(struct fproc *rfp, message *m_out, int seekfd, int seekwhence,
   register struct filp *rfilp;
   u64_t pos, newpos;
   int r = OK;
-  long off_hi = ex64hi(offset);
+  long off_hi = (unsigned long)(offset>>32);
 
   /* Check to see if the file descriptor is valid. */
   if ( (rfilp = get_filp2(rfp, seekfd, VNODE_READ)) == NULL) {
@@ -684,16 +680,16 @@ int actual_llseek(struct fproc *rfp, message *m_out, int seekfd, int seekwhence,
   newpos = pos + offset;
 
   /* Check for overflow. */
-  if ((off_hi > 0) && cmp64(newpos, pos) < 0)
+  if ((off_hi > 0) && newpos < pos)
       r = EINVAL;
-  else if ((off_hi < 0) && cmp64(newpos, pos) > 0)
+  else if ((off_hi < 0) && newpos > pos)
       r = EINVAL;
   else {
 	/* insert the new position into the output message */
-	m_out->reply_l1 = ex64lo(newpos);
-	m_out->reply_l2 = ex64hi(newpos);
+	m_out->reply_l1 = (unsigned long)(newpos);
+	m_out->reply_l2 = (unsigned long)(newpos>>32);
 
-	if (cmp64(newpos, rfilp->filp_pos) != 0) {
+	if (newpos != rfilp->filp_pos) {
 		rfilp->filp_pos = newpos;
 
 		/* Inhibit read ahead request */
@@ -709,7 +705,7 @@ int actual_llseek(struct fproc *rfp, message *m_out, int seekfd, int seekwhence,
 int do_llseek(message *m_out)
 {
 	return actual_llseek(fp, m_out, job_m_in.ls_fd, job_m_in.whence,
-		make64(job_m_in.offset_lo, job_m_in.offset_high));
+		(u64_t)job_m_in.offset_lo | ((u64_t)job_m_in.offset_high<<32));
 }
 
 /*===========================================================================*

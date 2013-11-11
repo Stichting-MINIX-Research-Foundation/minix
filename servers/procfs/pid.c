@@ -103,8 +103,8 @@ static void pid_psinfo(int i)
 		(int) proc[i].p_priority,	/* process priority */
 		(long) proc[i].p_user_time,	/* user time */
 		(long) proc[i].p_sys_time,	/* system time */
-		ex64hi(proc[i].p_cycles),	/* execution cycles */
-		ex64lo(proc[i].p_cycles)
+		(unsigned long)(proc[i].p_cycles>>32),	/* execution cycles */
+		(unsigned long)(proc[i].p_cycles)
 	);
 
 	memset(&vui, 0, sizeof(vui));
@@ -160,10 +160,10 @@ static void pid_psinfo(int i)
 
 	/* always add kernel cycles */
 	buf_printf(" %lu %lu %lu %lu",
-		ex64hi(proc[i].p_kipc_cycles),
-		ex64lo(proc[i].p_kipc_cycles),
-		ex64hi(proc[i].p_kcall_cycles),
-		ex64lo(proc[i].p_kcall_cycles));
+		(unsigned long)(proc[i].p_kipc_cycles>>32),
+		(unsigned long)(proc[i].p_kipc_cycles),
+		(unsigned long)(proc[i].p_kcall_cycles>>32),
+		(unsigned long)(proc[i].p_kcall_cycles));
 
 	/* add total memory for tasks at the end */
 	if(task) buf_printf(" %lu", vui.vui_total);

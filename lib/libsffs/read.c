@@ -36,7 +36,7 @@ int do_read()
   if ((r = get_handle(ino)) != OK)
 	return r;
 
-  pos = make64(m_in.REQ_SEEK_POS_LO, m_in.REQ_SEEK_POS_HI);
+  pos = (u64_t)m_in.REQ_SEEK_POS_LO | ((u64_t)m_in.REQ_SEEK_POS_HI<<32);
   count = m_in.REQ_NBYTES;
 
   assert(count > 0);
@@ -67,8 +67,8 @@ int do_read()
   if (r < 0)
 	return r;
 
-  m_out.RES_SEEK_POS_HI = ex64hi(pos);
-  m_out.RES_SEEK_POS_LO = ex64lo(pos);
+  m_out.RES_SEEK_POS_HI = (unsigned long)(pos>>32);
+  m_out.RES_SEEK_POS_LO = (unsigned long)(pos);
   m_out.RES_NBYTES = off;
 
   return OK;

@@ -15,7 +15,6 @@
 #include <minix/com.h>
 #include <minix/endpoint.h>
 #include <machine/vmparam.h>
-#include <minix/u64.h>
 #include <minix/type.h>
 #include <minix/reboot.h>
 #include "clock.h"
@@ -507,7 +506,7 @@ void cpu_print_freq(unsigned cpu)
         u64_t freq;
 
         freq = cpu_get_freq(cpu);
-        printf("CPU %d freq %lu MHz\n", cpu, div64u(freq, 1000000));
+        printf("CPU %d freq %lu MHz\n", cpu, (unsigned long)(freq / 1000000));
 }
 
 int is_fpu(void)

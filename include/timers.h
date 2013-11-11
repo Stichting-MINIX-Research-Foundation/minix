@@ -18,7 +18,6 @@
 #include <limits.h>
 
 #include <sys/types.h>
-#include <minix/u64.h>
 #include <minix/minlib.h>
 #include <minix/endpoint.h>
 
@@ -64,17 +63,17 @@ clock_t tmrs_settimer(timer_t **tmrs, timer_t *tp, clock_t exp_time,
 	tmr_func_t watchdog, clock_t *new_head);
 
 #define PRINT_STATS(cum_spenttime, cum_instances) {		\
-		if(ex64hi(cum_spenttime)) { util_stacktrace(); printf(" ( ??? %lu %lu)\n",	\
-			ex64hi(cum_spenttime), ex64lo(cum_spenttime)); } \
+		if((unsigned long)(cum_spenttime>>32)) { util_stacktrace(); printf(" ( ??? %lu %lu)\n",	\
+			(unsigned long)(cum_spenttime>>32), (unsigned long)(cum_spenttime)); } \
 		printf("%s:%d,%lu,%lu\n", \
 			__FILE__, __LINE__, cum_instances,	\
-			 ex64lo(cum_spenttime)); \
+			 (unsigned long)(cum_spenttime)); \
 	}
 
 #define RESET_STATS(starttime, cum_instances, cum_spenttime, cum_starttime) { \
 		cum_instances = 0;				\
 		cum_starttime = starttime;			\
-		cum_spenttime = make64(0,0);			\
+		cum_spenttime = (u64_t)0;			\
 }
 
 #define TIME_BLOCK_VAR(timed_code_block, time_interval) do {	\
@@ -85,21 +84,21 @@ clock_t tmrs_settimer(timer_t **tmrs, timer_t *tp, clock_t exp_time,
 	read_tsc_64(&_starttime);				\
 	do { timed_code_block } while(0);			\
 	read_tsc_64(&_endtime);					\
-	_dt = sub64(_endtime, _starttime);			\
+	_dt = _endtime - _starttime;				\
 	if(_cum_instances == 0) {				\
 		RESET_STATS(_starttime, _cum_instances, _cum_spenttime, _cum_starttime); \
 	 }							\
 	_next_cum_spent = _cum_spenttime + _dt;			\
-	if(ex64hi(_next_cum_spent)) { 				\
+	if((unsigned long)(_next_cum_spent>>32)) { 		\
 		PRINT_STATS(_cum_spenttime, _cum_instances);	\
 		RESET_STATS(_starttime, _cum_instances, _cum_spenttime, _cum_starttime); \
 	} 							\
 	_cum_spenttime += _dt;					\
 	_cum_instances++;					\
-	_cum_dt = sub64(_endtime, _cum_starttime);		\
-	if(cmp64(_cum_dt, make64(0, 120)) > 0) {		\
+	_cum_dt = _endtime - _cum_starttime;			\
+	if(_cum_dt > ((u64_t)120<<32) {				\
 		PRINT_STATS(_cum_spenttime, _cum_instances);	\
-		RESET_STATS(_starttime, _cum_instances, _cum_spenttime, _cum_starttime); 	\
+		RESET_STATS(_starttime, _cum_instances, _cum_spenttime, _cum_starttime); \
 	} 							\
 } while(0)
 

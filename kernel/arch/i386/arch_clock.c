@@ -8,7 +8,6 @@
 
 #include "kernel/clock.h"
 #include "kernel/interrupt.h"
-#include <minix/u64.h>
 #include "glo.h"
 #include "kernel/profile.h"
 
@@ -287,9 +286,9 @@ void context_stop(struct proc * p)
 		p->p_cpu_time_left = 0;
 #else
 		/* if (tsc_delta < p->p_cpu_time_left) in 64bit */
-		if (ex64hi(tsc_delta) < ex64hi(p->p_cpu_time_left) ||
-				(ex64hi(tsc_delta) == ex64hi(p->p_cpu_time_left) &&
-				 ex64lo(tsc_delta) < ex64lo(p->p_cpu_time_left)))
+		if ((unsigned long)(tsc_delta>>32) < (unsigned long)(p->p_cpu_time_left>>32) ||
+				((unsigned long)(tsc_delta>>32) == (unsigned long)(p->p_cpu_time_left>>32) &&
+				 (unsigned long)(tsc_delta) < (unsigned long)(p->p_cpu_time_left)))
 			p->p_cpu_time_left = p->p_cpu_time_left - tsc_delta;
 		else {
 			p->p_cpu_time_left = 0;
@@ -362,7 +361,7 @@ short cpu_load(void)
 
 		busy = tsc_delta - idle_delta;
 		busy = busy * 100;
-		load = ex64lo(busy / tsc_delta);
+		load = (unsigned long)(busy / tsc_delta);
 
 		if (load > 100)
 			load = 100;

@@ -13,7 +13,6 @@
 #include <minix/libminixfs.h>
 #include <minix/syslib.h>
 #include <minix/sysutil.h>
-#include <minix/u64.h>
 #include <minix/bdev.h>
 
 #define BUFHASH(b) ((b) % nr_bufs)
@@ -75,8 +74,8 @@ u32_t fs_bufs_heuristic(int minbufs, u32_t btotal, u32_t bfree,
 	vsi.vsi_pagesize / 1024;
 
   /* check fs usage. */
-  kbytes_used_fs = div64u(mul64u(bused, blocksize), 1024);
-  kbytes_total_fs = div64u(mul64u(btotal, blocksize), 1024);
+  kbytes_used_fs = (unsigned long)(((u64_t)bused * blocksize) / 1024);
+  kbytes_total_fs = (unsigned long)(((u64_t)btotal * blocksize) / 1024);
 
   /* heuristic for a desired cache size based on FS usage;
    * but never bigger than half of the total filesystem
@@ -510,7 +509,7 @@ register struct buf *bp;	/* buffer pointer */
   ASSERT(bp->lmfs_bytes == fs_block_size);
   ASSERT(fs_block_size > 0);
 
-  pos = mul64u(bp->lmfs_blocknr, fs_block_size);
+  pos = (u64_t)bp->lmfs_blocknr * fs_block_size;
   if(fs_block_size > PAGE_SIZE) {
 #define MAXPAGES 20
 	vir_bytes vaddr = (vir_bytes) bp->data;
@@ -687,7 +686,7 @@ void lmfs_rw_scattered(
 	assert(nblocks > 0);
 	assert(niovecs > 0);
 
-	pos = mul64u(bufq[0]->lmfs_blocknr, fs_block_size);
+	pos = (u64_t)bufq[0]->lmfs_blocknr * fs_block_size;
 	if (rw_flag == READING)
 		r = bdev_gather(dev, pos, iovec, niovecs, BDEV_NOFLAGS);
 	else
@@ -924,7 +923,7 @@ int lmfs_do_bpeek(message *m)
 {
 	block_t startblock, b, limitblock;
 	dev_t dev = m->REQ_DEV2;
-	u64_t extra, pos = make64(m->REQ_SEEK_POS_LO, m->REQ_SEEK_POS_HI);
+	u64_t extra, pos = (u64_t)m->REQ_SEEK_POS_LO | ((u64_t)m->REQ_SEEK_POS_HI<<32);
 	size_t len = m->REQ_NBYTES;
 	struct buf *bp;
 

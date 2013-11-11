@@ -252,7 +252,7 @@ static int do_rdwt(struct chardriver *cdp, message *mp)
   iovec1.iov_size = mp->COUNT;
 
   /* Transfer bytes from/to the device. */
-  position= make64(mp->POSITION, mp->HIGHPOS);
+  position= (u64_t)mp->POSITION | ((u64_t)mp->HIGHPOS<<32);
   r = (*cdp->cdr_transfer)(mp->m_source, opcode, position, &iovec1, 1,
 	mp->USER_ENDPT, mp->FLAGS);
 
@@ -292,7 +292,7 @@ static int do_vrdwt(struct chardriver *cdp, message *mp)
 
   /* Transfer bytes from/to the device. */
   opcode = mp->m_type;
-  position= make64(mp->POSITION, mp->HIGHPOS);
+  position= (u64_t)mp->POSITION | ((u64_t)mp->HIGHPOS<<32);
   r = (*cdp->cdr_transfer)(mp->m_source, opcode, position, iovec, nr_req,
 	mp->USER_ENDPT, mp->FLAGS);
 

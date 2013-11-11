@@ -1,7 +1,6 @@
 #include <sys/cdefs.h>
 #include "namespace.h"
 #include <lib.h>
-#include <minix/u64.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <stdio.h>

@@ -1,4 +1,3 @@
-#include <minix/u64.h>
 
 #define AVL_UNIQUE(id) region_ ## id
 #define AVL_HANDLE region_t *

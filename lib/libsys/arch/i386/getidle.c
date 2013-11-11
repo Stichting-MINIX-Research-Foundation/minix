@@ -17,7 +17,6 @@
 
 #define _SYSTEM		1
 #include <lib.h>
-#include <minix/u64.h>
 #include <minix/sysutil.h>
 #include <minix/syslib.h>
 #include <minix/minlib.h>
@@ -33,11 +32,11 @@ static double make_double(u64_t d)
   double value;
   size_t i;
 
-  value = (double) ex64hi(d);
+  value = (double) (unsigned long)(d>>32);
   for (i = 0; i < sizeof(unsigned long); i += 2)
 	value *= 65536.0;
 
-  value += (double) ex64lo(d);
+  value += (double) (unsigned long)(d);
 
   return value;
 }
@@ -67,10 +66,10 @@ double getidle(void)
 	if ((r = sys_getidletsc(&idle2)) != OK)
 		return -1.0;
 
-	idelta = sub64(idle2, idle);
-	tdelta = sub64(stop, start);
+	idelta = idle2 - idle;
+	tdelta = stop - start;
 
-	if (cmp64(idelta, tdelta) >= 0)
+	if (idelta >= tdelta)
 		return 100.0;
 
 	ifp = make_double(idelta);

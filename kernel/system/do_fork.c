@@ -15,7 +15,6 @@
 #include <assert.h>
 
 #include <minix/endpoint.h>
-#include <minix/u64.h>
 
 #if USE_FORK
 

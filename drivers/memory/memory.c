@@ -238,7 +238,7 @@ static int m_transfer(
   vir_bytes dev_vaddr;
 
   /* ZERO_DEV and NULL_DEV are infinite in size. */
-  if (m_device != ZERO_DEV && m_device != NULL_DEV && ex64hi(pos64) != 0)
+  if (m_device != ZERO_DEV && m_device != NULL_DEV && (unsigned long)(pos64>>32) != 0)
 	return OK;	/* Beyond EOF */
   position= pos64;
 
@@ -447,7 +447,7 @@ static int m_block_transfer(
   dv_size = dv->dv_size;
   dev_vaddr = m_vaddrs[minor];
 
-  if (ex64hi(pos64) != 0)
+  if ((unsigned long)(pos64>>32) != 0)
 	return OK;	/* Beyond EOF */
   position= pos64;
 
@@ -554,7 +554,7 @@ static int m_block_ioctl(dev_t minor, unsigned int request, endpoint_t endpt,
 	return s;
   if(is_imgrd)
   	ramdev_size = 0;
-  if(m_vaddrs[minor] && !cmp64(dv->dv_size, ((u64_t)(ramdev_size)))) {
+  if(m_vaddrs[minor] && dv->dv_size == (u64_t)(ramdev_size)) {
 	return(OK);
   }
   /* openct is 1 for the ioctl(). */
@@ -567,7 +567,7 @@ static int m_block_ioctl(dev_t minor, unsigned int request, endpoint_t endpt,
 	u32_t a, o;
 	u64_t size;
 	int r;
-	if(ex64hi(dv->dv_size)) {
+	if((unsigned long)(dv->dv_size>>32)) {
 		panic("huge old ramdisk");
 	}
 	size = dv->dv_size;

@@ -30,7 +30,6 @@
 #include <minix/type.h>
 #include <minix/endpoint.h>
 #include <minix/const.h>
-#include <minix/u64.h>
 #include <paths.h>
 #include <minix/procfs.h>
 
@@ -145,7 +144,7 @@ static void parse_file(pid_t pid)
 
 	if (state != STATE_RUN)
 		p->p_flags |= BLOCKED;
-	p->p_cpucycles[0] = make64(cycles_lo, cycles_hi);
+	p->p_cpucycles[0] = (u64_t)cycles_lo | ((u64_t)cycles_hi<<32);
 	p->p_memory = 0L;
 
 	if (!(p->p_flags & IS_TASK)) {
@@ -163,7 +162,7 @@ static void parse_file(pid_t pid)
 	for(i = 1; i < CPUTIMENAMES; i++) {
 		if(fscanf(fp, " %lu %lu",
 			&cycles_hi, &cycles_lo) == 2) {
-			p->p_cpucycles[i] = make64(cycles_lo, cycles_hi);
+			p->p_cpucycles[i] = (u64_t)cycles_lo | ((u64_t)cycles_hi<<32);
 		} else	{
 			p->p_cpucycles[i] = 0;
 		}

@@ -16,7 +16,6 @@
 #include <sys/stat.h>
 #include <sys/statfs.h>
 #include <minix/com.h>
-#include <minix/u64.h>
 #include <string.h>
 #include "file.h"
 #include "fproc.h"

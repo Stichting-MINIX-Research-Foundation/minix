@@ -3,7 +3,6 @@
 #include <time.h>
 #include <sys/times.h>
 #include <sys/types.h>
-#include <minix/u64.h>
 #include <minix/config.h>
 #include <minix/const.h>
 #include <minix/minlib.h>
@@ -63,7 +62,7 @@ micro_delay(u32_t micros)
 	CALIBRATE;
 
 	/* We have to know when to end the delay. */
-	end = now + mul64u(micros, calib_mhz);
+	end = now + ((u64_t)micros * calib_mhz);
 
 	/* If we have to wait for at least one HZ tick, use the regular
 	 * tickdelay first. Round downwards on purpose, so the average
@@ -75,7 +74,7 @@ micro_delay(u32_t micros)
 		tickdelay(micros*Hz/MICROHZ);
 
 	/* Wait (the rest) of the delay time using busywait. */
-	while(cmp64(now, end) < 0)
+	while (now < end)
 		read_tsc_64(&now);
 
 	return OK;
@@ -87,18 +86,18 @@ u32_t tsc_64_to_micros(u64_t tsc)
 
 	CALIBRATE;
 
-	tmp = div64u64(tsc, calib_mhz);
-	if (ex64hi(tmp)) {
+	tmp = tsc / calib_mhz;
+	if ((unsigned long)(tmp>>32)) {
 		printf("tsc_64_to_micros: more than 2^32ms\n");
 		return ~0UL;
 	} else {
-		return ex64lo(tmp);
+		return (unsigned long)(tmp);
 	}
 }
 
 u32_t tsc_to_micros(u32_t low, u32_t high)
 {
-	return tsc_64_to_micros(make64(low, high));
+	return tsc_64_to_micros((u64_t)low | ((u64_t)high<<32));
 }
 
 u32_t tsc_get_khz(void)

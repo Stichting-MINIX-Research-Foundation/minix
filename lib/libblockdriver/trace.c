@@ -40,7 +40,7 @@ static u32_t trace_gettime(void)
 
   read_tsc_64(&tsc);
 
-  tsc = sub64(tsc, trace_tsc);
+  tsc -= trace_tsc;
 
   return tsc_64_to_micros(tsc);
 }
@@ -205,7 +205,7 @@ void trace_start(thread_id_t id, message *m_ptr)
   case BDEV_WRITE:
   case BDEV_GATHER:
   case BDEV_SCATTER:
-	pos = make64(m_ptr->BDEV_POS_LO, m_ptr->BDEV_POS_HI);
+	pos = (u64_t)m_ptr->BDEV_POS_LO | ((u64_t)m_ptr->BDEV_POS_HI<<32);
 	size = m_ptr->BDEV_COUNT;
 	flags = m_ptr->BDEV_FLAGS;
 

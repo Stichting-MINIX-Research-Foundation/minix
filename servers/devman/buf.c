@@ -20,7 +20,6 @@
 #include <minix/vfsif.h>
 #include <minix/endpoint.h>
 #include <minix/sysinfo.h>
-#include <minix/u64.h>
 #include <minix/sysinfo.h>
 #include <minix/type.h>
 #include <minix/ipc.h>

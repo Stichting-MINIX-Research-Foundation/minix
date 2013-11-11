@@ -17,7 +17,6 @@
 #include <string.h>
 #include <minix/profile.h>
 #include <minix/sysutil.h>
-#include <minix/u64.h>
 #include <minix/minlib.h>
 
 static char cpath[CPROF_CPATH_MAX_LEN];	/* current call path string */
@@ -178,7 +177,7 @@ void procexit (char *UNUSED(name))
 
   /* First thing: read CPU cycle count into local variable. */
   read_tsc(&tsc_hi, &tsc_lo);
-  stop = make64(tsc_lo, tsc_hi);
+  stop = (u64_t)tsc_lo | ((u64_t)tsc_hi<<32);
 
   /* Only continue if sane. */
   if (control.err) return;
@@ -191,9 +190,9 @@ void procexit (char *UNUSED(name))
    */
 
   /* Calculate "small" difference. */
-  spent = sub64(stop, cprof_stk[cprof_stk_top].start_2);
+  spent = stop - cprof_stk[cprof_stk_top].start_2;
   cprof_stk[cprof_stk_top].slot->cycles +=
-	sub64(spent, cprof_stk[cprof_stk_top].spent_deeper);
+	(spent - cprof_stk[cprof_stk_top].spent_deeper);
 
   /* Clear spent_deeper for call level we're leaving. */
   cprof_stk[cprof_stk_top].spent_deeper = ((u64_t)(0));
@@ -213,10 +212,10 @@ void procexit (char *UNUSED(name))
 
   /* Read CPU cycle count. */
   read_tsc(&tsc_hi, &tsc_lo);
-  stop = make64(tsc_lo, tsc_hi);
+  stop = (u64_t)tsc_lo | ((u64_t)tsc_hi<<32);
 
   /* Calculate "big" difference. */
-  spent = sub64(stop, cprof_stk[cprof_stk_top].start_1);
+  spent = stop - cprof_stk[cprof_stk_top].start_1;
   cprof_stk_top--;					/* decrease stack */
   if (cprof_stk_top >= 0)	    /* don't update non-existent level -1 */
 	cprof_stk[cprof_stk_top].spent_deeper += spent;
@@ -265,7 +264,7 @@ static void clear_tbl()
 	memset(cprof_tbl[i].cpath, '\0', CPROF_CPATH_MAX_LEN);
 	cprof_tbl[i].next = 0;
 	cprof_tbl[i].calls = 0;
-	cprof_tbl[i].cycles = make64(0, 0);
+	cprof_tbl[i].cycles = (u64_t)0;
   }
 }
 

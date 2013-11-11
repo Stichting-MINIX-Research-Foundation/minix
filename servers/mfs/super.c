@@ -15,7 +15,6 @@
 #include <string.h>
 #include <assert.h>
 #include <minix/com.h>
-#include <minix/u64.h>
 #include <minix/bdev.h>
 #include "buf.h"
 #include "inode.h"

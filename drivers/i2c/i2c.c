@@ -357,8 +357,8 @@ struct device *
 i2c_prepare(dev_t dev)
 {
 	/* NOP */
-	i2c_device.dv_base = make64(0, 0);
-	i2c_device.dv_size = make64(0, 0);
+	i2c_device.dv_base = (u64_t)0;
+	i2c_device.dv_size = (u64_t)0;
 
 	return &i2c_device;
 }
