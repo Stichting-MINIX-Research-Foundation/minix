@@ -194,9 +194,9 @@ int fs_breadwrite(void)
 	  if (lmfs_rdwt_err() < 0) break;
 
 	  /* Update counters and pointers. */
-	  nrbytes -= chunk;	        /* bytes yet to be read */
-	  cum_io += chunk;	        /* bytes read so far */
-	  position = add64ul(position, chunk);	/* position within the file */
+	  nrbytes -= chunk;	/* bytes yet to be read */
+	  cum_io += chunk;	/* bytes read so far */
+	  position += chunk;	/* position within the file */
   }
   
   fs_m_out.RES_SEEK_POS_LO = ex64lo(position); 

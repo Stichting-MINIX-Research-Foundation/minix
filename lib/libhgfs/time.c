@@ -33,8 +33,8 @@ void time_put(struct timespec *tsp)
   u64_t hgfstime;
 
   if (tsp != NULL) {
-	hgfstime = add64ul(mul64u(tsp->tv_sec, 10000000), tsp->tv_nsec / 100);
-	hgfstime = add64(hgfstime, time_offset);
+	hgfstime = mul64u(tsp->tv_sec, 10000000) + (tsp->tv_nsec / 100);
+	hgfstime += time_offset;
 
 	RPC_NEXT32 = ex64lo(hgfstime);
 	RPC_NEXT32 = ex64hi(hgfstime);

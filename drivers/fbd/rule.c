@@ -92,7 +92,7 @@ static int rule_match(struct fbd_rule *rule, u64_t pos, size_t size, int flag)
 	 */
 
 	/* Ranges must overlap (start < pos+size && end > pos). */
-	if (cmp64(rule->start, add64u(pos, size)) >= 0 ||
+	if (cmp64(rule->start, pos + size) >= 0 ||
 			(cmp64u(rule->end, 0) && cmp64(rule->end, pos) <= 0))
 		return FALSE;
 

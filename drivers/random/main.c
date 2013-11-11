@@ -202,7 +202,7 @@ static int r_transfer(
 	}
 
 	/* Book the number of bytes transferred. */
-	position= add64u(position, count);
+	position += count;
   	if ((iov->iov_size -= count) == 0) { iov++; nr_req--; vir_offset = 0; }
 
   }

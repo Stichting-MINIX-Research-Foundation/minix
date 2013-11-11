@@ -68,14 +68,12 @@ void context_stop(struct proc * p)
 	p->p_cycles += tsc_delta;
 
 	if(kbill_ipc) {
-		kbill_ipc->p_kipc_cycles =
-			add64(kbill_ipc->p_kipc_cycles, tsc_delta);
+		kbill_ipc->p_kipc_cycles += tsc_delta;
 		kbill_ipc = NULL;
 	}
 
 	if(kbill_kcall) {
-		kbill_kcall->p_kcall_cycles =
-			add64(kbill_kcall->p_kcall_cycles, tsc_delta);
+		kbill_kcall->p_kcall_cycles += tsc_delta;
 		kbill_kcall = NULL;
 	}
 

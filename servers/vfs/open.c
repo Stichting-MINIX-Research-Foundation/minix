@@ -615,7 +615,7 @@ int actual_lseek(message *m_out, int seekfd, int seekwhence, off_t offset)
   }
 
   if (offset >= 0)
-	newpos = add64ul(pos, offset);
+	newpos = pos + offset;
   else
 	newpos = sub64ul(pos, -offset);
 
