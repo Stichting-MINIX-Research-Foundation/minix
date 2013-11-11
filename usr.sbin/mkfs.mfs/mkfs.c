@@ -556,7 +556,7 @@ sizeup(char * device)
   d = div64u(bytes, block_size);
   rem = rem64u(bytes, block_size);
 
-  resize = add64u(mul64u(d, block_size), rem);
+  resize = mul64u(d, block_size) + rem;
   if(cmp64(resize, bytes) != 0) {
 	/* Assume block_t is unsigned */
 	d = (block_t)(-1ul);

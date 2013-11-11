@@ -192,9 +192,8 @@ void procexit (char *UNUSED(name))
 
   /* Calculate "small" difference. */
   spent = sub64(stop, cprof_stk[cprof_stk_top].start_2);
-  cprof_stk[cprof_stk_top].slot->cycles =
-	add64(cprof_stk[cprof_stk_top].slot->cycles, 
-		sub64(spent, cprof_stk[cprof_stk_top].spent_deeper));
+  cprof_stk[cprof_stk_top].slot->cycles +=
+	sub64(spent, cprof_stk[cprof_stk_top].spent_deeper);
 
   /* Clear spent_deeper for call level we're leaving. */
   cprof_stk[cprof_stk_top].spent_deeper = ((u64_t)(0));
@@ -220,8 +219,7 @@ void procexit (char *UNUSED(name))
   spent = sub64(stop, cprof_stk[cprof_stk_top].start_1);
   cprof_stk_top--;					/* decrease stack */
   if (cprof_stk_top >= 0)	    /* don't update non-existent level -1 */
-	cprof_stk[cprof_stk_top].spent_deeper =
-		add64(cprof_stk[cprof_stk_top].spent_deeper, spent);
+	cprof_stk[cprof_stk_top].spent_deeper += spent;
   cprof_locked = 0;
 }
 

@@ -108,7 +108,7 @@ int read_vds(
       /* I dont need to save anything about it */
       vol_ok = TRUE;
 
-    offset = add64u(offset,ISO9660_MIN_BLOCK_SIZE);
+    offset += ISO9660_MIN_BLOCK_SIZE;
   }
 
   if (vol_ok == FALSE)

@@ -89,12 +89,12 @@ clock_t tmrs_settimer(timer_t **tmrs, timer_t *tp, clock_t exp_time,
 	if(_cum_instances == 0) {				\
 		RESET_STATS(_starttime, _cum_instances, _cum_spenttime, _cum_starttime); \
 	 }							\
-	_next_cum_spent = add64(_cum_spenttime, _dt);		\
+	_next_cum_spent = _cum_spenttime + _dt;			\
 	if(ex64hi(_next_cum_spent)) { 				\
 		PRINT_STATS(_cum_spenttime, _cum_instances);	\
 		RESET_STATS(_starttime, _cum_instances, _cum_spenttime, _cum_starttime); \
 	} 							\
-	_cum_spenttime = add64(_cum_spenttime, _dt);		\
+	_cum_spenttime += _dt;					\
 	_cum_instances++;					\
 	_cum_dt = sub64(_endtime, _cum_starttime);		\
 	if(cmp64(_cum_dt, make64(0, 120)) > 0) {		\

@@ -64,7 +64,7 @@ cp_grant_id_t *grantp;
 
 	count -= r;
 	off += r;
-	pos = add64u(pos, r);
+	pos += r;
   }
 
   if (r < 0)

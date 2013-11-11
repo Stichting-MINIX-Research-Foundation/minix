@@ -148,8 +148,8 @@ static void testmul(void)
 		if (cmp64(mul64(mul64(i, j), k), mul64(i, mul64(j, k))) != 0) ERR;
 
 		/* left and right distributivity */
-		if (cmp64(mul64(add64(i, j), k), add64(mul64(i, k), mul64(j, k))) != 0) ERR;
-		if (cmp64(mul64(i, add64(j, k)), add64(mul64(i, j), mul64(i, k))) != 0) ERR;
+		if (cmp64(mul64(i + j, k), mul64(i, k) + mul64(j, k)) != 0) ERR;
+		if (cmp64(mul64(i, j + k), mul64(i, j) + mul64(i, k)) != 0) ERR;
 	}
 }
 
@@ -241,7 +241,7 @@ static void testdiv(void)
 	}
 
 	/* check results using i = q j + r and r < j */
-	if (cmp64(i, add64(mul64(q, j), r)) != 0) ERR;
+	if (cmp64(i, mul64(q, j) + r) != 0) ERR;
 	if (cmp64(r, j) >= 0) ERR;
 }
 

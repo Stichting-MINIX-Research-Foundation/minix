@@ -181,7 +181,7 @@ int read_write(struct fproc *rfp, int rw_flag, struct filp *f,
 		   suspend_reopen);
 	if (r >= 0) {
 		cum_io = r;
-		position = add64ul(position, r);
+		position += r;
 		r = OK;
 	}
   } else if (S_ISBLK(vp->v_mode)) {	/* Block special files. */

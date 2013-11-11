@@ -9,21 +9,6 @@
 
 #include <limits.h>
 
-static inline u64_t add64(u64_t i, u64_t j)
-{
-	return i + j;
-}
-
-static inline u64_t add64u(u64_t i, unsigned j)
-{
-	return i + j;
-}
-
-static inline u64_t add64ul(u64_t i, unsigned long j)
-{
-	return i + j;
-}
-
 static inline int bsr64(u64_t i)
 {
 	int index;
