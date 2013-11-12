@@ -1,0 +1,100 @@
+.\"	$NetBSD: form_field_attributes.3,v 1.10 2010/03/22 21:58:31 joerg Exp $
+.\"
+.\" Copyright (c) 2001
+.\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
+.\"
+.\" This code is donated to The NetBSD Foundation by the author.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. The name of the Author may not be used to endorse or promote
+.\"    products derived from this software without specific prior written
+.\"    permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.Dd January 1, 2001
+.Dt FORMS 3
+.Os
+.Sh NAME
+.Nm field_back ,
+.Nm field_fore ,
+.Nm field_pad ,
+.Nm set_field_back ,
+.Nm set_field_fore ,
+.Nm set_field_pad
+.Nd form library
+.Sh LIBRARY
+.Lb libform
+.Sh SYNOPSIS
+.In form.h
+.Ft chtype
+.Fn field_back "FIELD *field"
+.Ft chtype
+.Fn field_fore "FIELD *field"
+.Ft int
+.Fn field_pad "FIELD *field"
+.Ft int
+.Fn set_field_back "FIELD *field" "chtype attribute"
+.Ft int
+.Fn set_field_fore "FIELD *field" "chtype attribute"
+.Ft int
+.Fn set_field_pad "FIELD *field" "int pad"
+.Sh DESCRIPTION
+Calling the function
+.Fn field_back
+will return the character attributes that will be applied to a field
+that is not the current field, these attributes can be set by the
+.Fn set_field_back
+function.
+The
+.Fn field_fore
+function returns the character attributes that will be used to
+indicate that a field is the currently active one on the form, this
+attribute may be set by using the
+.Fn set_field_fore
+function.
+The pad character for a field is the character that will be printed in all
+field locations not occupied with actual field contents.
+The pad character can be retrieved by calling the
+.Fn field_pad
+function, the pad character is set by using the
+.Fn set_field_pad
+function.
+.Sh RETURN VALUES
+Functions returning pointers will return
+.Dv NULL
+if an error is detected.
+The functions that return an int will return one of the following error
+values:
+.Pp
+.Bl -tag -width E_UNKNOWN_COMMAND -compact
+.It Er E_OK
+The function was successful.
+.El
+.Sh SEE ALSO
+.Xr curses 3 ,
+.Xr forms 3
+.Sh NOTES
+The header
+.In form.h
+automatically includes both
+.In curses.h
+and
+.In eti.h .

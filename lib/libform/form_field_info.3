@@ -1,0 +1,89 @@
+.\"	$NetBSD: form_field_info.3,v 1.9 2010/03/22 21:58:31 joerg Exp $
+.\"
+.\" Copyright (c) 2001
+.\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
+.\"
+.\" This code is donated to The NetBSD Foundation by the author.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. The name of the Author may not be used to endorse or promote
+.\"    products derived from this software without specific prior written
+.\"    permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.Dd January 1, 2001
+.Dt FORMS 3
+.Os
+.Sh NAME
+.Nm dynamic_field_info ,
+.Nm field_info
+.Nd form library
+.Sh LIBRARY
+.Lb libform
+.Sh SYNOPSIS
+.In form.h
+.Ft int
+.Fn dynamic_field_info "FIELD *field" "int *drows" "int *dcols" "int *max"
+.Ft int
+.Fn field_info "FIELD *field" "int *rows" "int *cols" "int *frow" "int *fcol" \
+"int *nrow" "int *nbuf"
+.Sh DESCRIPTION
+The function
+.Fn dynamic_field_info
+returns the sizing information for the field given.
+The function will return the number of rows, columns and the maximum
+growth of the field in the storage pointed to by the drows, dcols and max
+parameters respectively.
+Dynamic field information cannot be requested for the default field.
+If the field given is not dynamic then
+.Fn dynamic_field_info
+will simply return the size of the actual field.
+The
+.Fn field_info
+will return the number or rows, columns, field starting row, field
+starting column, number of off screen rows and number of buffers in
+.Fa rows ,
+.Fa cols ,
+.Fa frow ,
+.Fa fcol ,
+.Fa nrow
+and
+.Fa nbuf
+respectively.
+.Sh RETURN VALUES
+The functions will return one of the following error values:
+.Pp
+.Bl -tag -width E_UNKNOWN_COMMAND -compact
+.It Er E_OK
+The function was successful.
+.It Er E_BAD_ARGUMENT
+A bad argument was passed to the function.
+.El
+.Sh SEE ALSO
+.Xr curses 3 ,
+.Xr forms 3
+.Sh NOTES
+The header
+.In form.h
+automatically includes both
+.In curses.h
+and
+.In eti.h .

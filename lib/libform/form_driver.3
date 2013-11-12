@@ -1,0 +1,226 @@
+.\"	$NetBSD: form_driver.3,v 1.11 2010/03/22 21:58:31 joerg Exp $
+.\"
+.\" Copyright (c) 2001
+.\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
+.\"
+.\" This code is donated to The NetBSD Foundation by the author.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. The name of the Author may not be used to endorse or promote
+.\"    products derived from this software without specific prior written
+.\"    permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.Dd January 1, 2001
+.Dt FORMS 3
+.Os
+.Sh NAME
+.Nm form_driver
+.Nd form library
+.Sh LIBRARY
+.Lb libform
+.Sh SYNOPSIS
+.In form.h
+.Ft int
+.Fn form_driver "FORM *form" "int request"
+.Sh DESCRIPTION
+The
+.Fn form_driver
+is the heart of the forms library, it takes commands in the
+.Fa request
+parameter that is either a request to the driver to perform some
+action or is a character to be inserted into the current field.
+The form driver will attempt to insert any printable character passed to
+it into the current field.
+This may or may not succeed depending on the state of the current field.
+If the character passed is not
+printable then the driver attempts to process it as a driver request.
+If the character passed is not a valid request then the driver will
+return an unknown command error.
+.Sh PARAMETERS
+The forms driver recognizes the following requests:
+.Pp
+.Bl -tag -width REQ_SFIRST_FIELD -compact
+.It REQ_NEXT_PAGE
+Change to the next page in the form.
+.It REQ_PREV_PAGE
+Change to the previous page in the form.
+.It REQ_FIRST_PAGE
+Select the first page in the form.
+.It REQ_LAST_PAGE
+Go to the last page in the form.
+.It REQ_NEXT_FIELD
+Move to the next field in the form field array.
+.It REQ_PREV_FIELD
+Move to the previous field in the form field array.
+.It REQ_FIRST_FIELD
+Go to the first field in the form field array.
+.It REQ_LAST_FIELD
+Go to the last field in the form field array.
+.It REQ_SNEXT_FIELD
+Move to the next sorted field on the form.
+.It REQ_SPREV_FIELD
+Move to the previous sorted field on the form.
+.It REQ_SFIRST_FIELD
+Go to the first field in the sorted list.
+.It REQ_SLAST_FIELD
+Move to the last field in the sorted list.
+.It REQ_LEFT_FIELD
+Go one field to the left on the form page.
+.It REQ_RIGHT_FIELD
+Go one field to the right on the form page.
+.It REQ_UP_FIELD
+Go up one field on the form page.
+.It REQ_DOWN_FIELD
+Go down one field on the form page.
+.It REQ_NEXT_CHAR
+Move one char to the right within the field
+.It REQ_PREV_CHAR
+Move one char to the left within the current field.
+.It REQ_NEXT_LINE
+Go down one line in the current field.
+.It REQ_PREV_LINE
+Go up one line in the current field.
+.It REQ_NEXT_WORD
+Go forward one word in the current field
+.It REQ_PREV_WORD
+Go backward one word in the current field.
+.It REQ_BEG_FIELD
+Move the cursor to the beginning of the current field.
+.It REQ_END_FIELD
+Move the cursor to the end of the current field.
+.It REQ_BEG_LINE
+Move the cursor to the beginning of the line in the current field.
+.It REQ_END_LINE
+Move the cursor to the end of the line.
+.It REQ_LEFT_CHAR
+Move the cursor left one character
+.It REQ_RIGHT_CHAR
+Move the cursor right one character
+.It REQ_UP_CHAR
+Move the cursor up one line.
+.It REQ_DOWN_CHAR
+Move the cursor down one line.
+.It REQ_NEW_LINE
+Insert a new line at the current cursor position.
+.It REQ_INS_CHAR
+Insert a blank character at the current cursor position
+.It REQ_INS_LINE
+Open a blank line at the current cursor position.
+.It REQ_DEL_CHAR
+Delete the character at the current cursor position.
+.It REQ_DEL_PREV
+Delete the character to the left of the current cursor position.
+.It REQ_DEL_LINE
+Delete the current line.
+.It REQ_DEL_WORD
+Delete the word at the current cursor position.
+.It REQ_CLR_EOL
+Clear the field from the current cursor position to the end of the
+current line.
+.It REQ_CLR_EOF
+Clear the field from the current cursor position to the end of the field.
+.It REQ_CLR_FIELD
+Clear the field.
+.It REQ_OVL_MODE
+Enter overlay mode, characters added to the field will replace the
+ones already there.
+.It REQ_INS_MODE
+Enter insert mode, characters will be inserted at the current cursor
+position.
+Any characters to the right of the cursor will be moved
+right to accommodate the new characters.
+.It REQ_SCR_FLINE
+Scroll the field forward one line.
+.It REQ_SCR_BLINE
+Scroll the field backward one line.
+.It REQ_SCR_FPAGE
+Scroll the field forward one field page.
+.It REQ_SCR_BPAGE
+Scroll the field backward one field page.
+.It REQ_SCR_FHPAGE
+Scroll the field forward half one field page.
+.It REQ_SCR_BHPAGE
+Scroll the field backward half one field page.
+.It REQ_SCR_FCHAR
+Scroll the field horizontally forward one character
+.It REQ_SCR_BCHAR
+Scroll the field horizontally backward one character
+.It REQ_SCR_HFLINE
+Scroll the field horizontally forward one field line.
+.It REQ_SCR_HBLINE
+Scroll the field horizontally backward one field line.
+.It REQ_SCR_HFHALF
+Scroll the field horizontally forward half a field line.
+.It REQ_SCR_HBHALF
+Scroll the field horizontally backward half a field line.
+.It REQ_VALIDATION
+Request the contents of the current field be validated using any field
+validation function that has been set for the field.
+Normally, the field is validated before the current field changes.
+This request allows the current field to be validated.
+.It REQ_PREV_CHOICE
+Select the previous choice in an enumerated type field.
+.It REQ_NEXT_CHOICE
+Select the next choice in an enumerated type field.
+.El
+.Sh RETURN VALUES
+Functions returning pointers will return
+.Dv NULL
+if an error is detected.
+The functions that return an int will return one of the following error
+values:
+.Pp
+.Bl -tag -width E_UNKNOWN_COMMAND -compact
+.It Er E_OK
+The function was successful.
+.It Er E_REQUEST_DENIED
+The forms driver request could not be fulfilled
+.It Er E_UNKNOWN_COMMAND
+The passed character is not a printable character and is not a valid
+forms driver request.
+.It Er E_BAD_ARGUMENT
+A bad argument was passed to the forms driver.
+.It Er E_INVALID_FIELD
+The form passed to the driver has no valid attached fields.
+.It Er E_NOT_POSTED
+The given form is not currently posted to the screen.
+.It Er E_BAD_STATE
+The forms driver was called from within an init or term function.
+.It Er E_INVALID_FIELD
+The character passed to the forms driver fails the character
+validation for the current field.
+.El
+.Sh SEE ALSO
+.Xr curses 3 ,
+.Xr forms 3
+.Sh NOTES
+Field sorting is done by location of the field on the form page, the
+fields are sorted by position starting with the top-most, left-most
+field and progressing left to right.
+For the purposes of sorting, the
+fields top left corner is used as the sort criteria.
+The header
+.In form.h
+automatically includes both
+.In curses.h
+and
+.In eti.h .

@@ -1,0 +1,109 @@
+.\"	$NetBSD: form_win.3,v 1.10 2010/03/22 21:58:31 joerg Exp $
+.\"
+.\" Copyright (c) 2001
+.\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
+.\"
+.\" This code is donated to The NetBSD Foundation by the author.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. The name of the Author may not be used to endorse or promote
+.\"    products derived from this software without specific prior written
+.\"    permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.Dd January 1, 2001
+.Dt FORMS 3
+.Os
+.Sh NAME
+.Nm form_sub ,
+.Nm form_win ,
+.Nm scale_form ,
+.Nm set_form_sub ,
+.Nm set_form_win
+.Nd form library
+.Sh LIBRARY
+.Lb libform
+.Sh SYNOPSIS
+.In form.h
+.Ft WINDOW *
+.Fn form_sub "FORM *form"
+.Ft WINDOW *
+.Fn form_win "FORM *form"
+.Ft int
+.Fn scale_form "FORM *form" "int *rows" "int *cols"
+.Ft int
+.Fn set_form_sub "FORM *form" "WINDOW *window"
+.Ft int
+.Fn set_form_win "FORM *form" "WINDOW *window"
+.Sh DESCRIPTION
+All output to the screen done by the forms library is handled by the
+curses library routines.
+By default, the forms library will output to the curses
+.Fa stdscr ,
+but if the forms window has been set via
+.Fn set_form_win
+then output will be sent to the window specified by
+.Fn set_form_win ,
+unless the forms subwindow has been set using
+.Fn set_form_sub .
+If a subwindow has been specified using
+.Fn set_form_sub
+then it will be used by the forms library to for screen output.
+The current setting for the form window can be retrieved by calling
+.Fn form_win .
+If the forms window has not been set then
+.Dv NULL
+will be returned.
+Similarly, the forms subwindow can be found by calling the
+.Fn form_sub
+function, again, if the subwindow has not been set then
+.Dv NULL
+will be
+returned.
+The
+.Fn scale_form
+function will return the minimum number of rows and columns that will
+entirely contain the given form.
+.Sh RETURN VALUES
+Functions returning pointers will return
+.Dv NULL
+if an error is detected.
+The functions that return an int will return one of the following error
+values:
+.Pp
+.Bl -tag -width E_UNKNOWN_COMMAND -compact
+.It Er E_OK
+The function was successful.
+.It Er E_NOT_CONNECTED
+The form has no fields connected to it.
+.It Er E_POSTED
+The form is posted to the screen.
+.El
+.Sh SEE ALSO
+.Xr curses 3 ,
+.Xr forms 3
+.Sh NOTES
+The header
+.In form.h
+automatically includes both
+.In curses.h
+and
+.In eti.h .

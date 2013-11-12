@@ -1,0 +1,116 @@
+.\"	$NetBSD: form_hook.3,v 1.10 2010/03/22 21:58:31 joerg Exp $
+.\"
+.\" Copyright (c) 2001
+.\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
+.\"
+.\" This code is donated to The NetBSD Foundation by the author.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. The name of the Author may not be used to endorse or promote
+.\"    products derived from this software without specific prior written
+.\"    permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.Dd January 1, 2001
+.Dt FORMS 3
+.Os
+.Sh NAME
+.Nm field_init ,
+.Nm field_term ,
+.Nm form_init ,
+.Nm form_term ,
+.Nm set_field_init ,
+.Nm set_field_term ,
+.Nm set_form_init ,
+.Nm set_form_term
+.Nd form library
+.Sh LIBRARY
+.Lb libform
+.Sh SYNOPSIS
+.In form.h
+.Ft void (*)(FORM *)
+.Fn field_init "FORM *form"
+.Ft void (*)(FORM *)
+.Fn field_term "FORM *form"
+.Ft void (*)(FORM *)
+.Fn form_init "FORM *form"
+.Ft void (*)(FORM *)
+.Fn form_term "FORM *form"
+.Ft int
+.Fn set_field_init "FORM *form" "void (*function)(FORM *)"
+.Ft int
+.Fn set_field_term "FORM *form" "void (*function)(FORM *)"
+.Ft int
+.Fn set_form_init "FORM *form" "void (*function)(FORM *)"
+.Ft int
+.Fn set_form_term "FORM *form" "void (*function)(FORM *)"
+.Sh DESCRIPTION
+The
+.Fn field_init
+function returns a pointer to the function that will be called just
+after the current field changes and just before the form is posted,
+this function may be set by using the
+.Fn set_field_init
+function.
+Similarly, the function
+.Fn field_term
+will return a pointer to the function that will be called just before
+the current field changes and just after the form is unposted, this
+function pointer may be set by using the
+.Fn set_field_term
+function.
+The
+.Fn form_init
+function will return a pointer to the function that will be called
+just before the form is posted to the screen, this function can be set
+by calling the
+.Fn set_form_init
+function.
+The
+.Fn form_term
+function will return a pointer to the function that will be called
+just after the form is unposted from the screen, this function may be
+set by using the
+.Fn set_form_term
+function.
+By default, the init and term function pointers are
+.Dv NULL .
+.Sh RETURN VALUES
+Functions returning pointers will return
+.Dv NULL
+if an error is detected.
+The functions that return an int will return one of the following error
+values:
+.Pp
+.Bl -tag -width E_UNKNOWN_COMMAND -compact
+.It Er E_OK
+The function was successful.
+.El
+.Sh SEE ALSO
+.Xr curses 3 ,
+.Xr forms 3
+.Sh NOTES
+The header
+.In form.h
+automatically includes both
+.In curses.h
+and
+.In eti.h .

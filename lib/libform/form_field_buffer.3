@@ -1,0 +1,134 @@
+.\"	$NetBSD: form_field_buffer.3,v 1.13 2010/03/22 21:58:31 joerg Exp $
+.\"
+.\" Copyright (c) 2001
+.\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
+.\"
+.\" This code is donated to The NetBSD Foundation by the author.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. The name of the Author may not be used to endorse or promote
+.\"    products derived from this software without specific prior written
+.\"    permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.Dd October 15, 2005
+.Dt FORMS 3
+.Os
+.Sh NAME
+.Nm field_buffer ,
+.Nm field_status ,
+.Nm set_field_buffer ,
+.Nm set_field_printf ,
+.Nm set_field_status ,
+.Nm set_max_field
+.Nd form library
+.Sh LIBRARY
+.Lb libform
+.Sh SYNOPSIS
+.In form.h
+.Ft char *
+.Fn field_buffer "FIELD *field" "int buffer"
+.Ft int
+.Fn field_status "FIELD *field"
+.Ft int
+.Fn set_field_buffer "FIELD *field" "int buffer" "char *value"
+.Ft int
+.Fn set_field_printf "FIELD *field" "int buffer" "char *fmt" "..."
+.Ft int
+.Fn set_field_status "FIELD *field" "int status"
+.Ft int
+.Fn set_max_field "FIELD *field" "int max"
+.Sh DESCRIPTION
+The
+.Fn field_buffer
+function returns the contents of the buffer number specified by
+.Fa buffer
+for the given field.
+If the requested buffer number exceeds the
+number of buffers attached to the field then
+.Dv NULL
+will be returned.
+If the field option
+.Dv O_REFORMAT
+is enabled on the given field then
+storage will be allocated to hold the reformatted buffer.
+This storage must be release by calling
+.Xr free 3
+when it is no longer required.
+If the
+.Dv O_REFORMAT
+field option is not set then no extra storage is allocated.
+The field buffer may be set by calling
+.Fn set_field_buffer
+which will set the given buffer number to the contents of the string
+passed.
+A buffer may also be set by calling
+.Fn set_field_printf
+which sets the buffer using the format arg
+.Fa fmt
+after being expanded using the subsequent arguments in the same manner
+as
+.Xr sprintf 3
+does.
+Calling
+.Fn field_status
+will return the status of the first buffer attached to the field.
+If the field has been modified then the function will return
+.Dv TRUE
+otherwise
+.Dv FALSE
+is returned, the status of the first buffer may be
+programmatically set by calling
+.Fn set_field_status .
+The maximum growth of a dynamic field can be set by calling
+.Fn set_max_field
+which limits the fields rows if the field is a multiline field or the
+fields columns if the field only has a single row.
+.Sh RETURN VALUES
+Functions returning pointers will return
+.Dv NULL
+if an error is detected.
+The functions that return an int will return one of the following error
+values:
+.Pp
+.Bl -tag -width E_UNKNOWN_COMMAND -compact
+.It Er E_OK
+The function was successful.
+.It Er E_BAD_ARGUMENT
+A bad parameter was passed to the function.
+.It Er E_SYSTEM_ERROR
+A system error occurred performing the function.
+.El
+.Sh SEE ALSO
+.Xr curses 3 ,
+.Xr forms 3
+.Sh NOTES
+The header
+.In form.h
+automatically includes both
+.In curses.h
+and
+.In eti.h .
+The function
+.Fn set_field_printf
+is a
+.Nx
+extension and must not be used in portable code.

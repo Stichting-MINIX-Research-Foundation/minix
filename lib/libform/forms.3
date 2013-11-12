@@ -1,0 +1,235 @@
+.\"	$NetBSD: forms.3,v 1.16 2004/11/24 12:09:13 wiz Exp $
+.\"
+.\" Copyright (c) 2001
+.\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
+.\"
+.\" This code is donated to The NetBSD Foundation by the author.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. The name of the Author may not be used to endorse or promote
+.\"    products derived from this software without specific prior written
+.\"    permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.Dd November 24, 2004
+.Dt FORMS 3
+.Os
+.Sh NAME
+.Nm form
+.Nd form library
+.Sh LIBRARY
+.Lb libform
+.Sh SYNOPSIS
+.In form.h
+.Sh DESCRIPTION
+The
+.Nm
+library provides a terminal independent form system using the
+.Xr curses 3
+library.
+Before using the
+.Nm
+functions the terminal must be set up by
+.Xr curses 3
+using the
+.Fn initscr
+function or similar.
+Programs using
+.Nm
+functions must be linked with the
+.Xr curses 3
+library
+.Fl lcurses .
+.Pp
+The
+.Nm
+library provides facilities for defining form fields, placing a form on the
+terminal screen, assign pre and post change operations and setting the
+attributes of both the form and its fields.
+.Ss Defining default attributes for forms and fields
+The
+.Nm
+library allows any settable attribute or option of both the form and field
+objects to be defined such that any new form or field automatically inherits
+the value as default.
+Setting the default value will not affect any field or
+form that has already been created but will be applied to subsequent objects.
+To set the default attribute or option the set routine is passed a
+.Dv NULL
+pointer in the field or form parameter when calling the set routine.
+The current default value can be retrieved by calling the get routine with a
+.Dv NULL
+pointer for the field or form parameter.
+.Pp
+.Bl -column set_fieldtype_choiceXX
+.It Sy "Form Routine Name" Ta Sy "Manual Page Name"
+.It current_field Ta Xr form_page 3
+.It data_ahead Ta Xr form_data 3
+.It data_behind Ta Xr form_data 3
+.It dup_field Ta Xr form_field_new 3
+.It dynamic_field_info Ta Xr form_field_info 3
+.It field_arg Ta Xr form_field_validation 3
+.It field_back Ta Xr form_field_attributes 3
+.It field_buffer Ta Xr form_field_buffer 3
+.It field_count Ta Xr form_field 3
+.It field_fore Ta Xr form_field_attributes 3
+.It field_index Ta Xr form_page 3
+.It field_info Ta Xr form_field_info 3
+.It field_init Ta Xr form_hook 3
+.It field_just Ta Xr form_field_just 3
+.It field_opts Ta Xr form_field_opts 3
+.It field_opts_off Ta Xr form_field_opts 3
+.It field_opts_on Ta Xr form_field_opts 3
+.It field_pad Ta Xr form_field_attributes 3
+.It field_status Ta Xr form_field_buffer 3
+.It field_term Ta Xr form_hook 3
+.It field_type Ta Xr form_field_validation 3
+.It field_userptr Ta Xr form_field_userptr 3
+.It form_driver Ta Xr form_driver 3
+.It form_fields Ta Xr form_field 3
+.It form_init Ta Xr form_hook 3
+.It form_max_page Ta Xr form_page 3
+.It form_opts Ta Xr form_opts 3
+.It form_opts_off Ta Xr form_opts 3
+.It form_opts_on Ta Xr form_opts 3
+.It form_page Ta Xr form_page 3
+.It form_sub Ta Xr form_win 3
+.It form_term Ta Xr form_hook 3
+.It form_userptr Ta Xr form_userptr 3
+.It form_win Ta Xr form_win 3
+.It free_field Ta Xr form_field_new 3
+.It free_fieldtype Ta Xr form_fieldtype 3
+.It free_form Ta Xr form_new 3
+.It link_field Ta Xr form_field_new 3
+.It link_fieldtype Ta Xr form_fieldtype 3
+.It move_field Ta Xr form_field 3
+.It new_field Ta Xr form_field_new 3
+.It new_fieldtype Ta Xr form_fieldtype 3
+.It new_form Ta Xr form_new 3
+.It new_page Ta Xr form_new_page 3
+.It pos_form_cursor Ta Xr form_cursor 3
+.It post_form Ta Xr form_post 3
+.It scale_form Ta Xr form_win 3
+.It set_current_field Ta Xr form_page 3
+.It set_field_back Ta Xr form_field_attributes 3
+.It set_field_buffer Ta Xr form_field_buffer 3
+.It set_field_fore Ta Xr form_field_attributes 3
+.It set_field_init Ta Xr form_hook 3
+.It set_field_just Ta Xr form_field_just 3
+.It set_field_opts Ta Xr form_field_opts 3
+.It set_field_pad Ta Xr form_field_attributes 3
+.It set_field_printf Ta Xr form_field_buffer 3
+.It set_field_status Ta Xr form_field_buffer 3
+.It set_field_term Ta Xr form_hook 3
+.It set_field_type Ta Xr form_field_validation 3
+.It set_field_userptr Ta Xr form_field_userptr 3
+.It set_fieldtype_arg Ta Xr form_fieldtype 3
+.It set_fieldtype_choice Ta Xr form_fieldtype 3
+.It set_form_fields Ta Xr form_field 3
+.It set_form_init Ta Xr form_hook 3
+.It set_form_opts Ta Xr form_opts 3
+.It set_form_page Ta Xr form_page 3
+.It set_form_sub Ta Xr form_win 3
+.It set_form_term Ta Xr form_hook 3
+.It set_form_userptr Ta Xr form_userptr 3
+.It set_form_win Ta Xr form_win 3
+.It set_max_field Ta Xr form_field_buffer 3
+.It set_new_page Ta Xr form_new_page 3
+.It unpost_form Ta Xr form_post 3
+.El
+.Sh RETURN VALUES
+Any function returning a string pointer will return
+.Dv NULL
+if an error occurs.
+Functions returning an integer will return one of the following:
+.Bl -column set_fieldtype_choiceXX
+.It Dv E_OK Ta No The function was successful.
+.It Dv E_SYSTEM_ERROR Ta No There was a system error during the call.
+.It Dv E_BAD_ARGUMENT Ta No One or more of the arguments passed to \
+the function was incorrect.
+.It Dv E_POSTED Ta No The form is already posted.
+.It Dv E_CONNECTED Ta No A field was already connected to a form.
+.It Dv E_BAD_STATE Ta No The function was called from within an \
+initialization or termination routine.
+.It Dv E_NO_ROOM Ta No The form does not fit within the subwindow.
+.It Dv E_NOT_POSTED Ta No The form is not posted.
+.It Dv E_UNKNOWN_COMMAND Ta No The form driver does not recognize the \
+request passed to it.
+.It Dv E_NOT_SELECTABLE Ta No The field could not be selected.
+.It Dv E_NOT_CONNECTED Ta No The field is not connected to a form.
+.It Dv E_REQUEST_DENIED Ta No The form driver could not process the request.
+.It Dv E_INVALID_FIELD Ta No The field is invalid.
+.It Dv E_CURRENT Ta No The field is the active one on the form.
+.El
+.Sh SEE ALSO
+.Xr curses 3 ,
+.Xr menus 3
+.Sh NOTES
+This implementation of the forms library does depart in behavior
+subtly from the original AT\*[Am]T implementation.
+Some of the more notable departures are:
+.Pp
+.Bl -tag -width "The TAB character" -compact
+.It field wrapping
+For multi-line fields the data will be wrapped as it is entered, this
+does not happen in the AT\*[Am]T implementation.
+.It buffer 0
+In this implementation, the contents of buffer 0 are always current
+regardless of whether the field has been validated or not.
+.It circular fields
+In the AT\*[Am]T implementation fields are circular on a page, that is, a
+next field from the last field will go to the first field on the
+current page.
+In this implementation a next field request on the last
+field of a page will result in the forms library positioning the
+cursor on the first field of the next page.
+If the field is the last
+field in the form then going to the next field will be denied, in the
+AT\*[Am]T it would result in the cursor being placed on the first field of
+the first page.
+.It buffer returns
+In this implementation only the data entered by the user in the form
+field will be returned, unlike the AT\*[Am]T library which would return the
+contents of the field padded to the size of the field with the pad
+character.
+.It The TAB character
+The handling of the TAB character in fields varies between
+implementations.
+In ncurses attempting to set a field contents with a
+string containing a TAB will result in an error and will not allow a
+TAB to be entered into a field.
+The AT\*[Am]T library statically
+converts tabs to the equivalent number of spaces when the field buffer
+is set but the form driver will not allow a TAB to be inserted into
+the field buffer.
+This implementation allows TAB when setting the
+field buffer and also will allow TAB to be inserted into a field
+buffer via the form driver and correctly calculates the cursor
+position allowing for expansion of the TAB character.
+.It set_field_printf
+This function is a
+.Nx
+extension and must not be used in portable code.
+.It Dv O_REFORMAT
+This field option is a
+.Nx
+extension and must not be used in portable code.
+.El

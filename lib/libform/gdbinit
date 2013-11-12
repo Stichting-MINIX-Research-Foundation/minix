@@ -1,0 +1,20 @@
+#
+# Print out the line structs
+#
+define lstructs
+	set $lstruct=(_FORMI_FIELD_LINES *)$arg0
+	while ($lstruct)
+		print *($lstruct)
+		if ($lstruct->prev != 0x0)
+			if ($lstruct->prev->next != $lstruct)
+				print "WARNING: backward pointers inconsistent"
+			end
+		end
+		if ($lstruct->next != 0x0)
+			if ($lstruct->next->prev != $lstruct)
+				print "WARNING: forward pointers inconsistent"
+			end
+		end
+		set $lstruct = $lstruct->next
+	end
+end

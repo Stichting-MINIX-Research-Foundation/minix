@@ -1,0 +1,117 @@
+.\"	$NetBSD: form_field_new.3,v 1.11 2010/03/22 21:58:31 joerg Exp $
+.\"
+.\" Copyright (c) 2001
+.\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
+.\"
+.\" This code is donated to The NetBSD Foundation by the author.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. The name of the Author may not be used to endorse or promote
+.\"    products derived from this software without specific prior written
+.\"    permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.Dd January 1, 2001
+.Dt FORMS 3
+.Os
+.Sh NAME
+.Nm dup_field ,
+.Nm free_field ,
+.Nm link_field ,
+.Nm new_field
+.Nd form library
+.Sh LIBRARY
+.Lb libform
+.Sh SYNOPSIS
+.In form.h
+.Ft FIELD *
+.Fn dup_field "FIELD *field" "int frow" "int fcol"
+.Ft int
+.Fn free_field "FIELD *field"
+.Ft FIELD *
+.Fn link_field "FIELD *field" "int frow" "int fcol"
+.Ft FIELD *
+.Fo new_field
+.Fa "int rows"
+.Fa "int cols"
+.Fa "int frow"
+.Fa "int fcol"
+.Fa "int nrows"
+.Fa "int nbuf"
+.Fc
+.Sh DESCRIPTION
+The
+.Fn dup_field
+function duplicates the given field, including any buffers associated
+with the field and returns the pointer to the newly created field.
+.Fn free_field
+destroys the field and frees any allocated resources associated with
+the field.
+The function
+.Fn link_field
+copies the given field to a new field at the location
+.Fa frow
+and
+.Fa fcol
+but shares the buffers with the original field.
+.Fn new_field
+creates a new field of size
+.Fa rows
+by
+.Fa cols
+at location
+.Fa frow ,
+.Fa fcol
+on the page, the argument
+.Fa nrows
+specified the number of off screen rows the field has and the
+.Fa nbuf
+parameter specifies the number of extra buffers attached to the
+field.
+There will always be one buffer associated with a field.
+.Sh RETURN VALUES
+On error
+.Fn dup_field
+and
+.Fn new_field
+will return
+.Dv NULL .
+The functions will one of the following error
+values:
+.Pp
+.Bl -tag -width E_UNKNOWN_COMMAND -compact
+.It Er E_OK
+The function was successful.
+.It Er E_BAD_ARGUMENT
+A bad argument was passed to the function.
+.It Er E_CONNECTED
+The field is connected to a form.
+.El
+.Sh SEE ALSO
+.Xr curses 3 ,
+.Xr forms 3
+.Sh NOTES
+The header
+.In form.h
+automatically includes both
+.In curses.h
+and
+.In eti.h .
