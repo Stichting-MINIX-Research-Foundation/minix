@@ -51,9 +51,6 @@ __RCSID("$NetBSD: putenv.c,v 1.19 2010/11/14 18:11:43 tron Exp $");
 
 #ifdef __weak_alias
 __weak_alias(putenv,_putenv)
-#if defined(__minix)
-__weak_alias(__putenv50,_putenv)
-#endif /* defined(__minix) */
 #endif
 
 int
