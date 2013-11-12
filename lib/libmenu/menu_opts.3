@@ -1,0 +1,88 @@
+.\"	$NetBSD: menu_opts.3,v 1.8 2003/04/16 13:35:11 wiz Exp $
+.\"
+.\" Copyright (c) 1999
+.\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
+.\"
+.\" This code is donated to The NetBSD Foundation by the author.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. The name of the Author may not be used to endorse or promote
+.\"    products derived from this software without specific prior written
+.\"    permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.Dd September 10, 1999
+.Dt MENU_OPTS 3
+.Os
+.Sh NAME
+.Nm menu_opts ,
+.Nm menu_opts_off ,
+.Nm menu_opts_on ,
+.Nm set_menu_opts
+.Nd get or modify options for a menu
+.Sh LIBRARY
+.Lb libmenu
+.Sh SYNOPSIS
+.In menu.h
+.Ft OPTIONS
+.Fn menu_opts "MENU *menu"
+.Ft int
+.Fn menu_opts_off "MENU *menu" "OPTIONS opts"
+.Ft int
+.Fn menu_opts_on "MENU *menu" "OPTIONS opts"
+.Ft int
+.Fn set_menu_opts "MENU *menu" "OPTIONS opts"
+.Sh DESCRIPTION
+The
+.Fn menu_opts
+function returns the current options set for the menu given.
+The
+.Fn menu_opts_off
+function turns off the menu options given by the opts parameter for
+the menu.
+The
+.Fn menu_opts_on
+function turns on the menu options given by the opts parameter for the
+menu passed.
+The
+.Fn set_menu_opts
+sets the menu options to the value given in opts.
+.Sh RETURN VALUES
+The functions return one of the following error values:
+.Pp
+.Bl -tag -width E_BAD_ARGUMENT -compact
+.It Er E_OK
+The function was successful.
+.It Er E_BAD_ARGUMENT
+One or more of the arguments passed to the function was incorrect.
+.It Er E_POSTED
+The menu is already posted.
+.El
+.Sh SEE ALSO
+.Xr curses 3 ,
+.Xr menus 3
+.Sh NOTES
+The header
+.Pa \*[Lt]menu.h\*[Gt]
+automatically includes both
+.Pa \*[Lt]curses.h\*[Gt]
+and
+.Pa \*[Lt]eti.h\*[Gt] .

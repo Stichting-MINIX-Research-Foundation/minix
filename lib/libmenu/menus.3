@@ -1,0 +1,299 @@
+.\"	$NetBSD: menus.3,v 1.15 2003/04/16 13:35:12 wiz Exp $
+.\"
+.\" Copyright (c) 1999
+.\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
+.\"
+.\" This code is donated to The NetBSD Foundation by the author.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. The name of the Author may not be used to endorse or promote
+.\"    products derived from this software without specific prior written
+.\"    permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.Dd September 10, 1999
+.Dt MENUS 3
+.Os
+.Sh NAME
+.Nm menus
+.Nd menu library
+.Sh LIBRARY
+.Lb libmenu
+.Sh SYNOPSIS
+.In menu.h
+.Sh DESCRIPTION
+The
+.Nm
+library provides a terminal independent menu system using the
+.Xr curses 3
+library.
+Before using the
+.Nm
+functions the terminal must be set up by
+.Xr curses 3
+using the
+.Fn initscr
+function or similar.
+Programs using
+.Nm
+functions must be linked with the
+.Xr curses 3
+library.
+.Pp
+The
+.Nm
+library provides facilities for defining menu items, placing a menu on the
+terminal screen, assign pre- and post-change operations and setting the
+attributes of both the menu and its items.
+.Ss Defining default attributes for menus and items
+The
+.Nm
+library allows any settable attribute or option of both the menu and item
+objects to be defined such that any new menu or item automatically inherits
+the value as default.
+Setting the default value will not affect any item or
+menu that has already been created but will be applied to subsequent objects.
+To set the default attribute or option the set routine is passed a NULL
+pointer in the item or menu parameter when calling the set routine.
+The current default value can be retrieved by calling the get routine with a
+NULL pointer for the item or menu parameter.
+.Pp
+.Bl -tag -width item_description -compact
+.It function name
+manual page name
+.It current_item
+.Xr menu_item_current 3
+.It free_item
+.Xr menu_item_new 3
+.It free_menu
+.Xr menu_new 3
+.It item_count
+.Xr menu_items 3
+.It item_description
+.Xr menu_item_name 3
+.It item_index
+.Xr menu_item_current 3
+.It item_init
+.Xr menu_hook 3
+.It item_name
+.Xr menu_item_name 3
+.It item_opts
+.Xr menu_item_opts 3
+.It item_opts_off
+.Xr menu_item_opts 3
+.It item_opts_on
+.Xr menu_item_opts 3
+.It item_selected
+.Xr menu_item_value 3
+.It item_term
+.Xr menu_hook 3
+.It item_userptr
+.Xr menu_item_userptr 3
+.It item_value
+.Xr menu_item_value 3
+.It item_visible
+.Xr menu_item_visible 3
+.It menu_back
+.Xr menu_attributes 3
+.It menu_driver
+.Xr menu_driver 3
+.It menu_fore
+.Xr menu_attributes 3
+.It menu_format
+.Xr menu_format 3
+.It menu_grey
+.Xr menu_attributes 3
+.It menu_init
+.Xr menu_hook 3
+.It menu_items
+.Xr menu_items 3
+.It menu_mark
+.Xr menu_mark 3
+.It menu_opts
+.Xr menu_opts 3
+.It menu_opts_off
+.Xr menu_opts 3
+.It menu_opts_on
+.Xr menu_opts 3
+.It menu_pad
+.Xr menu_attributes 3
+.It menu_pattern
+.Xr menu_pattern 3
+.It menu_sub
+.Xr menu_win 3
+.It menu_term
+.Xr menu_hook 3
+.It menu_unmark
+.Xr menu_mark 3
+.It menu_userptr
+.Xr menu_userptr 3
+.It men_win
+.Xr menu_win 3
+.It new_item
+.Xr menu_item_new 3
+.It new_menu
+.Xr menu_new 3
+.It pos_menu_cursor
+.Xr menu_cursor 3
+.It post_menu
+.Xr menu_post 3
+.It scale_menu
+.Xr menu_win 3
+.It set_current_item
+.Xr menu_item_current 3
+.It set_item_init
+.Xr menu_hook 3
+.It set_item_opts
+.Xr menu_item_opts 3
+.It set_item_term
+.Xr menu_hook 3
+.It set_item_userptr
+.Xr menu_item_userptr 3
+.It set_item_value
+.Xr menu_item_value 3
+.It set_menu_back
+.Xr menu_attributes 3
+.It set_menu_fore
+.Xr menu_attributes 3
+.It set_menu_format
+.Xr menu_format 3
+.It set_menu_grey
+.Xr menu_attributes 3
+.It set_menu_init
+.Xr menu_hook 3
+.It set_menu_items
+.Xr menu_items 3
+.It set_menu_mark
+.Xr menu_mark 3
+.It set_menu_opts
+.Xr menu_opts 3
+.It set_menu_pad
+.Xr menu_attributes 3
+.It set_menu_pattern
+.Xr menu_pattern 3
+.It set_menu_sub
+.Xr menu_win 3
+.It set_menu_term
+.Xr menu_hook 3
+.It set_menu_unmark
+.Xr menu_mark 3
+.It set_menu_userptr
+.Xr menu_userptr 3
+.It set_menu_win
+.Xr menu_win 3
+.It set_top_row
+.Xr menu_item_current 3
+.It top_row
+.Xr menu_item_current 3
+.It unpost_menu
+.Xr menu_post 3
+.El
+.Sh RETURN VALUES
+Any function returning a string pointer will return NULL if an error
+occurs.
+Functions returning an integer will return one of the following:
+.Pp
+.Bl -tag -width E_UNKNOWN_COMMAND -compact
+.It Er E_OK
+The function was successful.
+.It Er E_SYSTEM_ERROR
+There was a system error during the call.
+.It Er E_BAD_ARGUMENT
+One or more of the arguments passed to the function was incorrect.
+.It Er E_POSTED
+The menu is already posted.
+.It Er E_CONNECTED
+An item was already connected to a menu.
+.It Er E_BAD_STATE
+The function was called from within an initialization or termination
+routine.
+.It Er E_NO_ROOM
+The menu does not fit within the subwindow.
+.It Er E_NOT_POSTED
+The menu is not posted.
+.It Er E_UNKNOWN_COMMAND
+The menu driver does not recognize the request passed to it.
+.It Er E_NO_MATCH
+The character search failed to find a match.
+.It Er E_NOT_SELECTABLE
+The item could not be selected.
+.It Er E_NOT_CONNECTED
+The item is not connected to a menu.
+.It Er E_REQUEST_DENIED
+The menu driver could not process the request.
+.El
+.Sh SEE ALSO
+.Xr curses 3 ,
+.Xr menu_attributes 3 ,
+.Xr menu_cursor 3 ,
+.Xr menu_driver 3 ,
+.Xr menu_format 3 ,
+.Xr menu_hook 3 ,
+.Xr menu_item_current 3 ,
+.Xr menu_item_name 3 ,
+.Xr menu_item_new 3 ,
+.Xr menu_item_opts 3 ,
+.Xr menu_item_userptr 3 ,
+.Xr menu_item_value 3 ,
+.Xr menu_item_visible 3 ,
+.Xr menu_items 3 ,
+.Xr menu_mark 3 ,
+.Xr menu_new 3 ,
+.Xr menu_opts 3 ,
+.Xr menu_pattern 3 ,
+.Xr menu_post 3 ,
+.Xr menu_userptr 3 ,
+.Xr menu_win 3
+.Sh NOTES
+This implementation of the menus library does depart in behaviour
+subtly from the original AT \*[Am] T implementation.
+Some of the more notable departures are:
+.Pp
+.Bl -tag -width "item marking" -compact
+.It unmark
+The original implementation did not have a marker for an unmarked field
+the mark was only displayed next to a field when it had been marked using
+the REQ_TOGGLE_ITEM.
+In this implementation a separate marker can be used
+to indicate an unmarked item.
+This can be set using set_menu_unmark function.
+There is no requirement for the mark and unmark strings to be the same
+length.
+Room will be left for the longest of the two.
+The unmark string
+is optional, if it is not set then menus defaults to the old behaviour.
+.It item marking
+In the original implementation the current item was considered selected
+and hence had the mark string displayed next to it.
+This implementation does not do this because the Author considers the
+effect too confusing.
+Especially in the case of a multiple selection menu because there was no
+way to tell if the current item is selected or not without shifting off
+of it.
+Since the current item is displayed using the foreground attribute it was
+deemed unnecessary to also display the mark string against the current item.
+.El
+.Pp
+The option O_RADIO and the function
+.Fn item_selected
+are
+.Nx
+extensions and must not be used in portable code.

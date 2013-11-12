@@ -1,0 +1,103 @@
+.\"	$NetBSD: menu_hook.3,v 1.8 2003/04/16 13:35:10 wiz Exp $
+.\"
+.\" Copyright (c) 1999
+.\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
+.\"
+.\" This code is donated to The NetBSD Foundation by the author.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. The name of the Author may not be used to endorse or promote
+.\"    products derived from this software without specific prior written
+.\"    permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.Dd September 10, 1999
+.Dt MENU_HOOK 3
+.Os
+.Sh NAME
+.Nm item_init ,
+.Nm item_term ,
+.Nm menu_init ,
+.Nm menu_term ,
+.Nm set_item_init ,
+.Nm set_item_term ,
+.Nm set_menu_init ,
+.Nm set_menu_term
+.Nd get or set handler functions for menu post/unpost or item change
+.Sh LIBRARY
+.Lb libmenu
+.Sh SYNOPSIS
+.In menu.h
+.Ft void (*hook)()
+.Fn item_init "MENU *menu"
+.Ft void (*hook)()
+.Fn item_term "MENU *menu"
+.Ft void (*hook)()
+.Fn menu_init "MENU *menu"
+.Ft void (*hook)()
+.Fn menu_term "MENU *menu"
+.Ft int
+.Fn set_item_init "MENU *menu" "void (*hook)())"
+.Ft int
+.Fn set_item_term "MENU *menu" "void (*hook)())"
+.Ft int
+.Fn set_menu_init "MENU *menu" "void (*hook)())"
+.Ft int
+.Fn set_menu_term "MENU *menu" "void (*hook)())"
+.Sh DESCRIPTION
+The
+.Fn item_init
+function returns a pointer to the function that will be called
+whenever the menu is posted and also just after the current item
+changes.
+This is set by the
+.Fn set_item_init
+call.
+The
+.Fn item_term
+function returns a pointer to the function that will be called before
+the menu is unposted and just before the current item changes, this
+pointer is set by the
+.Fn set_item_term
+call.
+The
+.Fn menu_init
+functions returns a pointer to the function that will be called just
+before the menu is posted to the screen.
+This pointer is set by the
+.Fn set_menu_init
+function call.
+The
+.Fn menu_term
+function returns a pointer to the function that will be called just
+after the menu has been unposted, this pointer is set by the
+.Fn set_menu_term
+function.
+.Sh SEE ALSO
+.Xr curses 3 ,
+.Xr menus 3
+.Sh NOTES
+The header
+.Pa \*[Lt]menu.h\*[Gt]
+automatically includes both
+.Pa \*[Lt]curses.h\*[Gt]
+and
+.Pa \*[Lt]eti.h\*[Gt] .

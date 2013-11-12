@@ -1,0 +1,136 @@
+.\"	$NetBSD: menu_driver.3,v 1.8 2003/04/16 13:35:10 wiz Exp $
+.\"
+.\" Copyright (c) 1999
+.\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
+.\"
+.\" This code is donated to The NetBSD Foundation by the author.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. The name of the Author may not be used to endorse or promote
+.\"    products derived from this software without specific prior written
+.\"    permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.Dd September 10, 1999
+.Dt MENU_DRIVER 3
+.Os
+.Sh NAME
+.Nm menu_driver
+.Nd main menu handling function
+.Sh LIBRARY
+.Lb libmenu
+.Sh SYNOPSIS
+.In menu.h
+.Ft int
+.Fn menu_driver "MENU *menu" "int c"
+.Sh DESCRIPTION
+The
+.Fn menu_driver
+function is the guts of the menu system.
+It takes the commands passed
+by c parameter and performs the requested action on the menu given.
+The following commands may be given to the menu driver:
+.Pp
+.Bl -tag -width REQ_CLEAR_PATTERN -compact
+.It Command
+Action
+.It REQ_LEFT_ITEM
+Sets the new current item to be the item to the left of the current
+item.
+.It REQ_RIGHT_ITEM
+Sets the new current item to be the item to the rights of the current
+item.
+.It REQ_UP_ITEM
+Sets the new current item to be the item above the current item.
+.It REQ_DOWN_ITEM
+Sets the new current item to be the item below the current item.
+.It REQ_SCR_ULINE
+Scroll the menu one line towards the bottom of the menu window.
+The new current item becomes the item immediately above the current item.
+.It REQ_SCR_DLINE
+Scroll the menu one line towards the top of the menu window.
+The new current item becomes the item immediately below the current item.
+.It REQ_SCR_DPAGE
+Scroll the menu one page towards the bottom of the menu window.
+.It REQ_SCR_UPAGE
+Scroll the menu one page towards the top of the menu window.
+.It REQ_FIRST_ITEM
+Set the current item to be the first item in the menu.
+.It REQ_LAST_ITEM
+Set the current item to be the last item in the menu.
+.It REQ_NEXT_ITEM
+Set the new current item to be the next item in the item array after
+the current item.
+.It REQ_PREV_ITEM
+Set the new current item to be the item before the current item in the
+items array.
+.It REQ_TOGGLE_ITEM
+If the item is selectable then toggle the item's value.
+.It REQ_CLEAR_PATTERN
+Clear all the characters currently in the menu's pattern buffer.
+.It REQ_BACK_PATTERN
+Remove the last character from the pattern buffer.
+.It REQ_NEXT_MATCH
+Attempt to find the next item that matches the pattern buffer.
+.It REQ_PREV_MATCH
+Attempt to find the previous item that matches the pattern buffer.
+.El
+If
+.Fn menu_driver
+is passed a command that is greater than MAX_COMMAND then the command
+passed is assumed to be a user defined command and
+.Fn menu_driver
+returns E_UNKNOWN_COMMAND.
+Otherwise if the command is a printable
+character then the character represented by the command is placed at
+the end of the pattern buffer and an attempt is made to match the
+pattern buffer against the items in the menu.
+.Sh RETURN VALUES
+The functions return one of the following error values:
+.Pp
+.Bl -tag -width E_UNKNOWN_COMMAND -compact
+.It Er E_OK
+The function was successful.
+.It Er E_SYSTEM_ERROR
+There was a system error during the call.
+.It Er E_BAD_ARGUMENT
+One or more of the arguments passed to the function was incorrect.
+.It Er E_NOT_POSTED
+The menu is not posted.
+.It Er E_UNKNOWN_COMMAND
+The menu driver does not recognize the request passed to it.
+.It Er E_NO_MATCH
+The character search failed to find a match.
+.It Er E_NOT_CONNECTED
+The item is not connected to a menu.
+.It Er E_REQUEST_DENIED
+The menu driver could not process the request.
+.El
+.Sh SEE ALSO
+.Xr curses 3 ,
+.Xr menus 3
+.Sh NOTES
+The header
+.Pa \*[Lt]menu.h\*[Gt]
+automatically includes both
+.Pa \*[Lt]curses.h\*[Gt]
+and
+.Pa \*[Lt]eti.h\*[Gt] .
