@@ -12,7 +12,7 @@ SUBDIR= asa \
 	env expand \
 	finger fold from \
 	fsplit ftp genassym getopt \
-	head hexdump indent infocmp join jot \
+	head hexdump id indent infocmp join jot \
 	lam ldd leave \
 	lock login logname lorder m4 \
 	machine make man menuc mesg \

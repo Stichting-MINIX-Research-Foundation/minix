@@ -28,6 +28,18 @@
  */
 
 #include <sys/cdefs.h>
+#ifndef lint
+__COPYRIGHT("@(#) Copyright (c) 1991, 1993\
+ The Regents of the University of California.  All rights reserved.");
+#endif /* not lint */
+
+#ifndef lint
+#if 0
+static char sccsid[] = "@(#)id.c	8.3 (Berkeley) 4/28/95";
+#else
+__RCSID("$NetBSD: id.c,v 1.32 2011/09/16 15:39:26 joerg Exp $");
+#endif
+#endif /* not lint */
 
 #include <sys/param.h>
 
@@ -43,7 +55,7 @@
 static void current(void);
 static void pretty(struct passwd *);
 static void group(struct passwd *, int);
-static void usage(void);
+__dead static void usage(void);
 static void user(struct passwd *);
 static struct passwd *who(char *);
 
@@ -229,7 +241,6 @@ current(void)
 		if ((gr = getgrgid(egid)) != NULL)
 			(void)printf("(%s)", gr->gr_name);
 	}
-#ifndef __minix
 	if ((ngroups = getgroups(maxgroups, groups)) != 0) {
 		for (fmt = " groups=%ju", lastid = -1, cnt = 0; cnt < ngroups;
 		    fmt = ",%ju", lastid = gid, cnt++) {
@@ -241,7 +252,6 @@ current(void)
 				(void)printf("(%s)", gr->gr_name);
 		}
 	}
-#endif
 	(void)printf("\n");
 }
 
@@ -259,12 +269,10 @@ user(struct passwd *pw)
 	if ((gr = getgrgid(pw->pw_gid)) != NULL)
 		(void)printf("(%s)", gr->gr_name);
 	ngroups = maxgroups + 1;
-#ifndef __minix
 	if (getgrouplist(pw->pw_name, pw->pw_gid, glist, &ngroups) == -1) {
 		glist = malloc(ngroups * sizeof(gid_t));
 		(void) getgrouplist(pw->pw_name, pw->pw_gid, glist, &ngroups);
 	}
-#endif
 	for (fmt = " groups=%u", lastid = -1, cnt = 0; cnt < ngroups;
 	    fmt=",%u", lastid = id, cnt++) {
 		id = glist[cnt];
@@ -283,21 +291,19 @@ static void
 group(struct passwd *pw, int nflag)
 {
 	struct group *gr;
-	int cnt, id, lastid, ngroups;
+	int cnt, ngroups;
+	gid_t id, lastid;
 	const char *fmt;
 	gid_t *glist = groups;
 
 	if (pw) {
 		ngroups = maxgroups;
-#ifndef __minix
 		if (getgrouplist(pw->pw_name, pw->pw_gid, glist, &ngroups)
 		    == -1) {
 			glist = malloc(ngroups * sizeof(gid_t));
 			(void) getgrouplist(pw->pw_name, pw->pw_gid, glist,
 					    &ngroups);
-
 		}
-#endif
 	} else {
 		glist[0] = getgid();
 		ngroups = getgroups(maxgroups, glist + 1) + 1;

@@ -11,7 +11,7 @@ SUBDIR=	add_route arp ash at backup btrace \
 	eject factor fbdctl \
 	find fix format fortune fsck.mfs \
 	gcore gcov-pull getty grep host \
-	hostaddr id ifconfig ifdef \
+	hostaddr ifconfig ifdef \
 	intr ipcrm ipcs irdpd isoread last \
 	less loadkeys loadramdisk logger look lp \
 	lpd lspci mail MAKEDEV \

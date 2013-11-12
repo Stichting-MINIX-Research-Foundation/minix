@@ -12,11 +12,7 @@ TESTS_SH+=	t_whoami
 
 BINDIR=		${TESTSDIR}
 PROG=		h_id
-.if defined(__MINIX)
-.PATH:  	${NETBSDSRCDIR}/commands/id
-.else
 .PATH:  	${NETBSDSRCDIR}/usr.bin/id
-.endif # defined(__MINIX)
 SRCS=		id.c pwgr.c
 
 COPTS.id.c += -Wno-format-nonliteral
