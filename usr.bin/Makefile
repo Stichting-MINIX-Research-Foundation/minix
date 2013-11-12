@@ -10,7 +10,7 @@ SUBDIR= asa \
 	column comm csplit ctags cut \
 	dirname du \
 	env expand \
-	finger fold from \
+	finger fold fpr from \
 	fsplit ftp genassym getopt \
 	head hexdump id indent infocmp join jot \
 	lam ldd leave \
