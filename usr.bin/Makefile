@@ -26,7 +26,7 @@ SUBDIR= asa \
 	sdiff sed seq shlock \
 	shuffle sort split stat su \
 	tee tic tput \
-	tr tsort tty unexpand unifdef \
+	tr tsort tty ul unexpand unifdef \
 	toproto \
 	uniq units unvis unzip users \
 	uuidgen vis \

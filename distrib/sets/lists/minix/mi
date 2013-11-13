@@ -531,6 +531,7 @@
 ./usr/bin/ttn				minix-sys
 ./usr/bin/tty				minix-sys
 ./usr/bin/udpstat			minix-sys
+./usr/bin/ul				minix-sys
 ./usr/bin/uname				minix-sys
 ./usr/bin/uncompress			minix-sys
 ./usr/bin/unexpand			minix-sys
@@ -2127,6 +2128,7 @@
 ./usr/man/man1/truncate.1		minix-sys
 ./usr/man/man1/tsort.1			minix-sys
 ./usr/man/man1/tty.1			minix-sys
+./usr/man/man1/ul.1			minix-sys
 ./usr/man/man1/umask.1			minix-sys
 ./usr/man/man1/umount.1			minix-sys
 ./usr/man/man1/uname.1			minix-sys
