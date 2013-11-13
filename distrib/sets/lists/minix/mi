@@ -283,6 +283,7 @@
 ./usr/bin/dd				minix-sys
 ./usr/bin/decomp16			minix-sys
 ./usr/bin/del_route			minix-sys
+./usr/bin/deroff			minix-sys
 ./usr/bin/DESCRIBE			minix-sys
 ./usr/bin/devmand			minix-sys
 ./usr/bin/devsize			minix-sys
@@ -1883,6 +1884,7 @@
 ./usr/man/man1/cut.1			minix-sys
 ./usr/man/man1/date.1			minix-sys
 ./usr/man/man1/dd.1			minix-sys
+./usr/man/man1/deroff.1			minix-sys
 ./usr/man/man1/dev2name.1		minix-sys	obsolete
 ./usr/man/man1/df.1			minix-sys
 ./usr/man/man1/dhrystone.1		minix-sys

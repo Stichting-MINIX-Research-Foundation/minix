@@ -8,7 +8,7 @@ SUBDIR= asa \
 	bzip2 bzip2recover cal calendar \
 	chpass cksum col colrm \
 	column comm csplit ctags cut \
-	dirname du \
+	deroff dirname du \
 	env expand \
 	finger fold fpr from \
 	fsplit ftp genassym getopt \

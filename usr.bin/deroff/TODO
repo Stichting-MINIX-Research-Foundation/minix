@@ -1,0 +1,6 @@
+	$NetBSD: TODO,v 1.2 2005/09/01 18:27:24 rpaulo Exp $
+
+Things this needs:
+
+a) code cleanup
+b) support for mdoc macros
