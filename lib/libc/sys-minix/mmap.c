@@ -53,7 +53,7 @@ void *minix_mmap_for(endpoint_t forwhom,
 }
 
 int minix_vfs_mmap(endpoint_t who, u32_t offset, u32_t len,
-	u32_t dev, u32_t ino, u16_t fd, u32_t vaddr, u16_t clearend,
+	dev_t dev, u32_t ino, u16_t fd, u32_t vaddr, u16_t clearend,
 	u16_t flags)
 {
 	message m;

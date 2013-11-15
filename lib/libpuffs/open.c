@@ -161,7 +161,7 @@ int fs_mknod()
   va.va_mode = (mode_t) fs_m_in.REQ_MODE;
   va.va_uid = caller_uid;
   va.va_gid = caller_gid;
-  va.va_rdev = (dev_t) fs_m_in.REQ_DEV;
+  va.va_rdev = fs_m_in.REQ_DEV;
   va.va_atime = va.va_mtime = va.va_ctime = cur_time;
 
   if (buildpath) {

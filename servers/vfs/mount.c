@@ -178,7 +178,7 @@ char mount_label[LABEL_MAX] )
 	/* Get driver process' endpoint */
 	dp = &dmap[major(dev)];
 	if (dp->dmap_driver == NONE) {
-		printf("VFS: no driver for dev %d\n", dev);
+		printf("VFS: no driver for dev %llx\n", dev);
 		return(EINVAL);
 	}
 
@@ -466,7 +466,7 @@ int unmount(
   /* Find vmnt that is to be unmounted */
   for (vmp_i = &vmnt[0]; vmp_i < &vmnt[NR_MNTS]; ++vmp_i) {
 	  if (vmp_i->m_dev == dev) {
-		  if(vmp) panic("device mounted more than once: %d", dev);
+		  if(vmp) panic("device mounted more than once: %llx", dev);
 		  vmp = vmp_i;
 	  }
   }
@@ -565,7 +565,7 @@ void unmount_all(int force)
   /* Verify we succesfully unmounted all file systems */
   for (vmp = &vmnt[0]; vmp < &vmnt[NR_MNTS]; vmp++) {
 	if (vmp->m_dev != NO_DEV) {
-		panic("vmp still mounted: %s %d %d\n", vmp->m_label,
+		panic("vmp still mounted: %s %d %llx\n", vmp->m_label,
 			vmp->m_fs_e, vmp->m_dev);
 	}
   }

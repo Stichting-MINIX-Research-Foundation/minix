@@ -49,7 +49,7 @@ int fs_flush()
 /* Flush the blocks of a device from the cache after writing any dirty blocks
  * to disk.
  */
-  dev_t dev = (dev_t) fs_m_in.REQ_DEV;
+  dev_t dev = fs_m_in.REQ_DEV;
 
   if(dev == fs_dev) return(EBUSY);
 
@@ -71,7 +71,7 @@ int fs_new_driver(void)
   char label[sizeof(fs_dev_label)];
   int r;
 
-  dev = (dev_t) fs_m_in.REQ_DEV;
+  dev = fs_m_in.REQ_DEV;
   label_gid = (cp_grant_id_t) fs_m_in.REQ_GRANT;
   label_len = (size_t) fs_m_in.REQ_PATH_LEN;
 

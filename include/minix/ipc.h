@@ -17,9 +17,10 @@
 #define M3_LONG_STRING    44	/* current m3_ca1 size (may be increased) */
 
 typedef struct {
+	uint64_t m1ull1;
 	int m1i1, m1i2, m1i3;
 	char *m1p1, *m1p2, *m1p3, *m1p4;
-	uint8_t padding[28];
+	uint8_t padding[20];
 } mess_1;
 _ASSERT_MSG_SIZE(mess_1);
 
@@ -28,7 +29,7 @@ typedef struct {
 	long m2l1, m2l2;
 	char *m2p1;
 	sigset_t sigset;
-        short m2s1;
+	short m2s1;
 	uint8_t padding[14];
 } mess_2;
 _ASSERT_MSG_SIZE(mess_2);
@@ -89,9 +90,10 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_8);
 
 typedef struct {
+	uint64_t m9ull1;
 	long m9l1, m9l2, m9l3, m9l4, m9l5;
 	short m9s1, m9s2, m9s3, m9s4;
-	uint8_t padding[28];
+	uint8_t padding[20];
 } mess_9;
 _ASSERT_MSG_SIZE(mess_9);
 
@@ -111,15 +113,15 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_11);
 
 typedef struct {
+	dev_t dev;	/* 64bits long. */
 	void *block;
 	u32_t dev_offset_pages;
 	u32_t ino_offset_pages;
 	u32_t ino;
 	u32_t *flags_ptr;
-	u32_t dev;
 	u8_t pages;
 	u8_t flags;
-	uint8_t padding[30];
+	uint8_t padding[26];
 } mess_vmmcp;
 _ASSERT_MSG_SIZE(mess_vmmcp);
 
@@ -134,13 +136,13 @@ _ASSERT_MSG_SIZE(mess_notify);
 typedef struct {
 	endpoint_t who;
 	u32_t offset;
-	u32_t dev;
+	dev_t dev;
 	u32_t ino;
 	u32_t vaddr;
 	u32_t len;
 	u16_t fd;
 	u16_t clearend_and_flags; /* low 12 bits are clearend, rest flags */
-	uint8_t padding[28];
+	uint8_t padding[24];
 } mess_vm_vfs_mmap;
 _ASSERT_MSG_SIZE(mess_vm_vfs_mmap);
 
@@ -186,6 +188,7 @@ typedef int _ASSERT_message[/* CONSTCOND */sizeof(message) == 64 ?1 : -1];
 #define m1_p2  m_u.m_m1.m1p2
 #define m1_p3  m_u.m_m1.m1p3
 #define m1_p4  m_u.m_m1.m1p4
+#define m1_ull1  m_u.m_m1.m1ull1
 
 #define m2_i1  m_u.m_m2.m2i1
 #define m2_i2  m_u.m_m2.m2i2
@@ -251,6 +254,7 @@ typedef int _ASSERT_message[/* CONSTCOND */sizeof(message) == 64 ?1 : -1];
 #define m9_s2  m_u.m_m9.m9s2
 #define m9_s3  m_u.m_m9.m9s3
 #define m9_s4  m_u.m_m9.m9s4
+#define m9_ull1  m_u.m_m9.m9ull1
 
 #define m10_i1 m_u.m_m10.m10i1
 #define m10_i2 m_u.m_m10.m10i2

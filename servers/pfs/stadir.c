@@ -37,7 +37,7 @@ static int stat_inode(
   statbuf.st_nlink = rip->i_nlinks;
   statbuf.st_uid = rip->i_uid;
   statbuf.st_gid = (short int) rip->i_gid;
-  statbuf.st_rdev = (dev_t) (s ? rip->i_rdev : NO_DEV);
+  statbuf.st_rdev = (s ? rip->i_rdev : NO_DEV);
   statbuf.st_size = rip->i_size;
   if (!s)  statbuf.st_mode &= ~I_REGULAR;/* wipe out I_REGULAR bit for pipes */
   statbuf.st_atime = rip->i_atime;
