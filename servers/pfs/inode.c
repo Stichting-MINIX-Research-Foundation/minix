@@ -39,7 +39,7 @@ int fs_putnode(message *fs_m_in, message *fs_m_out)
 
   if(!rip) {
 	  printf("%s:%d put_inode: inode #%ld dev: %d not found\n", __FILE__,
-		 __LINE__, fs_m_in->REQ_INODE_NR, (dev_t) fs_m_in->REQ_DEV);
+		 __LINE__, fs_m_in->REQ_INODE_NR, fs_m_in->REQ_DEV);
 	  panic("fs_putnode failed");
   }
 

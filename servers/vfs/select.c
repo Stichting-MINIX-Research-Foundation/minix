@@ -805,7 +805,7 @@ int status;
 		/* This should never happen. The driver may be misbehaving.
 		 * For now we assume that the reply we want will arrive later..
 		 */
-		printf("VFS (%s:%d): expected reply from dev %d not %d\n",
+		printf("VFS (%s:%d): expected reply from dev %llx not %llx\n",
 			__FILE__, __LINE__, vp->v_sdev, dev);
 		return;
 	}

@@ -50,7 +50,7 @@ int req_breadwrite(
 
   /* Fill in request message */
   m.m_type = rw_flag == READING ? REQ_BREAD : REQ_BWRITE;
-  m.REQ_DEV2 = dev;
+  m.REQ_DEV = dev;
   m.REQ_GRANT = grant_id;
   m.REQ_SEEK_POS_LO = ex64lo(pos);
   m.REQ_SEEK_POS_HI = ex64hi(pos);
@@ -79,7 +79,7 @@ int req_bpeek(endpoint_t fs_e, dev_t dev, off_t pos, unsigned int num_of_bytes)
 
   /* Fill in request message */
   m.m_type = REQ_BPEEK;
-  m.REQ_DEV2 = dev;
+  m.REQ_DEV = dev;
   m.REQ_SEEK_POS_LO = ex64lo(pos);
   m.REQ_SEEK_POS_HI = ex64hi(pos);
   m.REQ_NBYTES = num_of_bytes;

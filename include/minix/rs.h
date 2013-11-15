@@ -118,7 +118,7 @@ struct rprocpub {
   unsigned sys_flags; 		  /* sys flags */
   endpoint_t endpoint;		  /* process endpoint number */
 
-  dev_t dev_nr;			  /* major device number or NO_DEV */
+  devmajor_t dev_nr;		  /* major device number or NO_DEV */
 
   char label[RS_MAX_LABEL_LEN];	  /* label of this service */
   char proc_name[RS_MAX_LABEL_LEN]; /* process name of this service */

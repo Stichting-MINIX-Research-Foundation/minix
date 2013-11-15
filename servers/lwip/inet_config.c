@@ -60,7 +60,7 @@ static void check_mknod(const char *device, mode_t mode, int minor)
 
 	unlink(device);
 	if (mknod(device, S_IFCHR | mode, dev) < 0) fatal(device);
-	printf("mknod %s c %d %d\n", device, (ip_dev >> 8), minor);
+	printf("mknod %s c %llx %d\n", device, (ip_dev >> 8), minor);
 }
 
 static int cfg_fd;

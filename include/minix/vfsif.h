@@ -8,8 +8,7 @@
 #define REQ_ACTIME		m9_l2
 #define REQ_ACNSEC		m9_l4
 #define REQ_COUNT		m9_l2
-#define REQ_DEV			m9_l5
-#define REQ_DEV2		m9_l1
+#define REQ_DEV			m9_ull1
 #define REQ_DIR_INO   		m9_l3
 #define REQ_FLAGS		m9_s3
 #define REQ_GID			m9_s1
@@ -41,7 +40,7 @@
 #define REQ_UID			m9_s4
 
 /* VFS/FS reply fields */
-#define RES_DEV			m9_l4
+#define RES_DEV			m9_ull1
 #define RES_GID			m9_s1
 #define RES_INODE_NR		m9_l1
 #define RES_FILE_SIZE_HI	m9_l2
