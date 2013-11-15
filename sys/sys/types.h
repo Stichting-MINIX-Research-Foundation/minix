@@ -183,9 +183,7 @@ typedef	__daddr_t	daddr_t;	/* disk address */
 typedef	int64_t		daddr_t;	/* disk address */
 #endif
 
-#if defined(__minix) /* LSC: Wait until bigger message to enlarge the data type. */
-typedef	uint32_t	dev_t;		/* device number */
-#endif /* defined(__minix) */
+typedef	uint64_t	dev_t;		/* device number */
 typedef	uint32_t	fixpt_t;	/* fixed point number */
 
 #ifndef	gid_t

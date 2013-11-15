@@ -160,7 +160,7 @@ int fs_breadwrite(void)
   
   r = OK;
 
-  target_dev = (dev_t) fs_m_in.REQ_DEV2;
+  target_dev = fs_m_in.REQ_DEV;
   
   /* Get the values from the request message */ 
   rw_flag = (fs_m_in.m_type == REQ_BREAD ? READING : WRITING);

@@ -164,9 +164,9 @@ int fs_breadwrite(void)
                     (unsigned long) fs_m_in.REQ_SEEK_POS_HI);
   nrbytes = (size_t) fs_m_in.REQ_NBYTES;
 
-  block_size = get_block_size( (dev_t) fs_m_in.REQ_DEV2);
+  block_size = get_block_size(fs_m_in.REQ_DEV);
 
-  rip.i_block[0] = (block_t) fs_m_in.REQ_DEV2;
+  rip.i_block[0] = (block_t) fs_m_in.REQ_DEV;
   rip.i_mode = I_BLOCK_SPECIAL;
   rip.i_size = 0;
 

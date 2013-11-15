@@ -26,7 +26,7 @@ int fs_new_driver(void)
   char label[sizeof(fs_dev_label)];
   int r;
 
-  dev = (dev_t) fs_m_in.REQ_DEV;
+  dev = fs_m_in.REQ_DEV;
   label_gid = (cp_grant_id_t) fs_m_in.REQ_GRANT;
   label_len = (size_t) fs_m_in.REQ_PATH_LEN;
 

@@ -276,9 +276,9 @@ static int fill_statvfs(struct vmnt *vmp, endpoint_t endpt, vir_bytes buf_addr,
   if (vmp->m_flags & VMNT_READONLY)
 	buf.f_flag |= ST_RDONLY;
 
-  buf.f_fsid = vmp->m_dev;
-  buf.f_fsidx.__fsid_val[0] = 0;
-  buf.f_fsidx.__fsid_val[1] = vmp->m_dev;
+  buf.f_fsid = (unsigned long)vmp->m_dev;
+  buf.f_fsidx.__fsid_val[0] = (long)vmp->m_dev; /* This is what is done on NetBSD */
+  buf.f_fsidx.__fsid_val[1] = 0; /* Here they convert the FS type name into a number. */
 
   strlcpy(buf.f_fstypename, vmp->m_fstype, sizeof(buf.f_fstypename));
   strlcpy(buf.f_mntonname, vmp->m_mount_path, sizeof(buf.f_mntonname));

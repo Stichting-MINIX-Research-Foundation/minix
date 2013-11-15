@@ -159,7 +159,7 @@ int common_open(char path[PATH_MAX], int oflags, mode_t omode)
 			break;
 		   case S_IFCHR:
 			/* Invoke the driver for special processing. */
-			dev = (dev_t) vp->v_sdev;
+			dev = vp->v_sdev;
 			/* TTY needs to know about the O_NOCTTY flag. */
 			r = cdev_open(dev, bits | (oflags & O_NOCTTY));
 			vp = filp->filp_vno;	/* Might be updated by
@@ -170,7 +170,7 @@ int common_open(char path[PATH_MAX], int oflags, mode_t omode)
 			lock_bsf();
 
 			/* Invoke the driver for special processing. */
-			dev = (dev_t) vp->v_sdev;
+			dev = vp->v_sdev;
 			r = bdev_open(dev, bits);
 			if (r != OK) {
 				unlock_bsf();
