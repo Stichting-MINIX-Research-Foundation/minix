@@ -361,7 +361,7 @@ struct filp *f;
   if (f->filp_count - 1 == 0 && f->filp_mode != FILP_CLOSED) {
 	/* Check to see if the file is special. */
 	if (S_ISCHR(vp->v_mode) || S_ISBLK(vp->v_mode)) {
-		dev = (dev_t) vp->v_sdev;
+		dev = vp->v_sdev;
 		if (S_ISBLK(vp->v_mode))  {
 			lock_bsf();
 			if (vp->v_bfs_e == ROOT_FS_E) {
@@ -402,7 +402,7 @@ struct filp *f;
 	f->filp_mode = FILP_CLOSED;
 	f->filp_count = 0;
   } else if (f->filp_count < 0) {
-	panic("VFS: invalid filp count: %d ino %d/%llu", f->filp_count,
+	panic("VFS: invalid filp count: %d ino %llx/%llu", f->filp_count,
 	      vp->v_dev, vp->v_inode_nr);
   } else {
 	unlock_vnode(f->filp_vno);

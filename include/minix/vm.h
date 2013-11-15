@@ -24,7 +24,7 @@ int vm_watch_exit(endpoint_t ep);
 int vm_forgetblock(u64_t id);
 void vm_forgetblocks(void);
 int minix_vfs_mmap(endpoint_t who, u32_t offset, u32_t len,
-        u32_t dev, u32_t ino, u16_t fd, u32_t vaddr, u16_t clearend, u16_t
+        dev_t dev, u32_t ino, u16_t fd, u32_t vaddr, u16_t clearend, u16_t
 	flags);
 
 /* minix vfs mmap flags */
@@ -65,13 +65,13 @@ int vm_info_region(endpoint_t who, struct vm_region_info *vri, int
 	count, vir_bytes *next);
 int vm_procctl(endpoint_t ep, int param);
 
-int vm_set_cacheblock(void *block, u32_t dev, u64_t dev_offset,
+int vm_set_cacheblock(void *block, dev_t dev, u64_t dev_offset,
         u64_t ino, u64_t ino_offset, u32_t *flags, int blocksize);
 
-void *vm_map_cacheblock(u32_t dev, u64_t dev_offset,
+void *vm_map_cacheblock(dev_t dev, u64_t dev_offset,
         u64_t ino, u64_t ino_offset, u32_t *flags, int blocksize);
 
-int vm_clear_cache(u32_t dev);
+int vm_clear_cache(dev_t dev);
 
 /* flags for vm cache functions */
 #define VMMC_FLAGS_LOCKED	0x01	/* someone is updating the flags; don't read/write */

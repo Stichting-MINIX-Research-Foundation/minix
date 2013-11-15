@@ -551,7 +551,7 @@ void unpause(void)
 			panic("process %d blocked on empty fd %d",
 				fp->fp_endpoint, fild);
 		}
-		dev = (dev_t) f->filp_vno->v_sdev;	/* device hung on */
+		dev = f->filp_vno->v_sdev;	/* device hung on */
 
 		status = cdev_cancel(dev);
 

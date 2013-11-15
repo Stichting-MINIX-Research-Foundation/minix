@@ -70,7 +70,7 @@ static int stat_inode(
   statbuf.st_nlink = (nlink_t) rip->i_nlinks;
   statbuf.st_uid = rip->i_uid;
   statbuf.st_gid = rip->i_gid;
-  statbuf.st_rdev = (s ? (dev_t) rip->i_zone[0] : NO_DEV);
+  statbuf.st_rdev = (s ? (dev_t)rip->i_zone[0] : NO_DEV);
   statbuf.st_size = rip->i_size;
   statbuf.st_atime = rip->i_atime;
   statbuf.st_mtime = rip->i_mtime;

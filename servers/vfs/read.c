@@ -167,12 +167,12 @@ int read_write(struct fproc *rfp, int rw_flag, struct filp *f,
 	if (vp->v_sdev == NO_DEV)
 		panic("VFS: read_write tries to access char dev NO_DEV");
 
-	dev = (dev_t) vp->v_sdev;
+	dev = vp->v_sdev;
 
 	r = cdev_io(op, dev, for_e, buf, position, size, f->filp_flags);
 	if (r >= 0) {
 		/* This should no longer happen: all calls are asynchronous. */
-		printf("VFS: I/O to device %x succeeded immediately!?\n", dev);
+		printf("VFS: I/O to device %llx succeeded immediately!?\n", dev);
 		cum_io = r;
 		position += r;
 		r = OK;

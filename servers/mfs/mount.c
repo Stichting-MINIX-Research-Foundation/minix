@@ -24,7 +24,7 @@ int fs_readsuper()
   int r;
   int readonly, isroot;
 
-  fs_dev    = (dev_t) fs_m_in.REQ_DEV;
+  fs_dev    = fs_m_in.REQ_DEV;
   label_gid = (cp_grant_id_t) fs_m_in.REQ_GRANT;
   label_len = (size_t) fs_m_in.REQ_PATH_LEN;
   readonly  = (fs_m_in.REQ_FLAGS & REQ_RDONLY) ? 1 : 0;
@@ -76,7 +76,7 @@ int fs_readsuper()
 		panic("couldn't bdev_open after found unclean FS");
 		return(EINVAL);
   	}
-	printf("MFS: WARNING: FS 0x%x unclean, mounting readonly\n", fs_dev);
+	printf("MFS: WARNING: FS 0x%llx unclean, mounting readonly\n", fs_dev);
   }
   
   lmfs_set_blocksize(superblock.s_block_size, major(fs_dev));

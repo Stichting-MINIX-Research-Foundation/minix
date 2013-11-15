@@ -479,7 +479,7 @@ int block_type;			/* INODE_BLOCK, DIRECTORY_BLOCK, or whatever */
 			printf("libminixfs: ENOSYS, disabling VM calls\n");
 			vmcache = 0;
 		} else {
-			panic("libminixfs: setblock of %p dev 0x%x off "
+			panic("libminixfs: setblock of %p dev 0x%llx off "
 				"0x%llx failed\n", bp->data, dev, dev_off);
 		}
 	}
@@ -940,7 +940,7 @@ int lmfs_rdwt_err(void)
 int lmfs_do_bpeek(message *m)
 {
 	block_t startblock, b, limitblock;
-	dev_t dev = m->REQ_DEV2;
+	dev_t dev = m->REQ_DEV;
 	u64_t extra, pos = make64(m->REQ_SEEK_POS_LO, m->REQ_SEEK_POS_HI);
 	size_t len = m->REQ_NBYTES;
 	struct buf *bp;

@@ -45,7 +45,7 @@ int fs_putnode(void)
   rip = find_inode(fs_dev, (pino_t) fs_m_in.REQ_INODE_NR);
 
   if(!rip) {
-	  printf("%s:%d put_inode: inode #%u dev: %d not found\n", __FILE__,
+	  printf("%s:%d put_inode: inode #%u dev: %llx not found\n", __FILE__,
 		 __LINE__, (pino_t) fs_m_in.REQ_INODE_NR, fs_dev);
 	  panic("fs_putnode failed");
   }

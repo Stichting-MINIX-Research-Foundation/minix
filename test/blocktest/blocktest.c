@@ -29,7 +29,7 @@ typedef struct {
 } result_t;
 
 static char driver_label[32] = "";	/* driver DS label */
-static dev_t driver_minor = -1;	/* driver's partition minor to use */
+static devminor_t driver_minor = -1;	/* driver's partition minor to use */
 static endpoint_t driver_endpt;	/* driver endpoint */
 
 static int may_write = FALSE;		/* may we write to the device? */

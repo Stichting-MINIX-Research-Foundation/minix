@@ -311,7 +311,7 @@ int dupvm(struct fproc *rfp, int pfd, int *vmfd, struct filp **newfilp)
 	assert(f->filp_vno->v_vmnt);
 
 	if (!S_ISREG(f->filp_vno->v_mode) && !S_ISBLK(f->filp_vno->v_mode)) {
-		printf("VFS: mmap regular/blockdev only; dev 0x%x ino %llu has mode 0%o\n",
+		printf("VFS: mmap regular/blockdev only; dev 0x%llx ino %llu has mode 0%o\n",
 			f->filp_vno->v_dev, f->filp_vno->v_inode_nr, f->filp_vno->v_mode);
 		unlock_filp(f);
 		return EINVAL;
@@ -648,7 +648,7 @@ static void free_proc(int flags)
 		if (rfilp->filp_mode == FILP_CLOSED) continue;
 		vp = rfilp->filp_vno;
 		if (!S_ISCHR(vp->v_mode)) continue;
-		if ((dev_t) vp->v_sdev != dev) continue;
+		if (vp->v_sdev != dev) continue;
 		lock_filp(rfilp, VNODE_READ);
 		(void) cdev_close(dev); /* Ignore any errors. */
 
