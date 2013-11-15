@@ -41,7 +41,7 @@ int fs_flush()
  * to disk.
  */
 #if 0
-  dev_t dev = (dev_t) fs_m_in.REQ_DEV;
+  dev_t dev = fs_m_in.REQ_DEV;
 
   if(dev == fs_dev) return(EBUSY);
 

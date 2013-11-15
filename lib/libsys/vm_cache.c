@@ -9,7 +9,7 @@
 #include <minix/sysutil.h>
 #include <machine/vmparam.h>
 
-int vm_cachecall(message *m, int call, void *addr, u32_t dev, u64_t dev_offset,
+int vm_cachecall(message *m, int call, void *addr, dev_t dev, u64_t dev_offset,
 	u64_t ino, u64_t ino_offset, u32_t *flags, int blocksize)
 {
     if(blocksize % PAGE_SIZE)
@@ -40,7 +40,7 @@ int vm_cachecall(message *m, int call, void *addr, u32_t dev, u64_t dev_offset,
     return _taskcall(VM_PROC_NR, call, m);
 }
 
-void *vm_map_cacheblock(u32_t dev, u64_t dev_offset,
+void *vm_map_cacheblock(dev_t dev, u64_t dev_offset,
 	u64_t ino, u64_t ino_offset, u32_t *flags, int blocksize)
 {
 	message m;
@@ -52,7 +52,7 @@ void *vm_map_cacheblock(u32_t dev, u64_t dev_offset,
 	return m.m_u.m_vmmcp_reply.addr;
 }
 
-int vm_set_cacheblock(void *block, u32_t dev, u64_t dev_offset,
+int vm_set_cacheblock(void *block, dev_t dev, u64_t dev_offset,
 	u64_t ino, u64_t ino_offset, u32_t *flags, int blocksize)
 {
 	message m;
@@ -62,7 +62,7 @@ int vm_set_cacheblock(void *block, u32_t dev, u64_t dev_offset,
 }
 
 int
-vm_clear_cache(u32_t dev)
+vm_clear_cache(dev_t dev)
 {
 	message m;
 

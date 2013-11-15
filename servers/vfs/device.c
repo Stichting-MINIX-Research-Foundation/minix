@@ -505,7 +505,7 @@ int do_ioctl(void)
   }
 
   if (r == OK) {
-	dev = (dev_t) vp->v_sdev;
+	dev = vp->v_sdev;
 
 	if (S_ISBLK(vp->v_mode)) {
 		f->filp_ioctl_fp = fp;
