@@ -1,0 +1,82 @@
+set(LLVM_LINK_COMPONENTS
+  ${LLVM_TARGETS_TO_BUILD}
+  asmparser
+  support
+  mc
+  )
+
+add_clang_library(clangSema
+  AnalysisBasedWarnings.cpp
+  AttributeList.cpp
+  CodeCompleteConsumer.cpp
+  DeclSpec.cpp
+  DelayedDiagnostic.cpp
+  IdentifierResolver.cpp
+  JumpDiagnostics.cpp
+  MultiplexExternalSemaSource.cpp
+  Scope.cpp
+  ScopeInfo.cpp
+  Sema.cpp
+  SemaAccess.cpp
+  SemaAttr.cpp
+  SemaCXXScopeSpec.cpp
+  SemaCast.cpp
+  SemaChecking.cpp
+  SemaCodeComplete.cpp
+  SemaConsumer.cpp
+  SemaDecl.cpp
+  SemaDeclAttr.cpp
+  SemaDeclCXX.cpp
+  SemaDeclObjC.cpp
+  SemaExceptionSpec.cpp
+  SemaExpr.cpp
+  SemaExprCXX.cpp
+  SemaExprMember.cpp
+  SemaExprObjC.cpp
+  SemaFixItUtils.cpp
+  SemaInit.cpp
+  SemaLambda.cpp
+  SemaLookup.cpp
+  SemaObjCProperty.cpp
+  SemaOpenMP.cpp
+  SemaOverload.cpp
+  SemaPseudoObject.cpp
+  SemaStmt.cpp
+  SemaStmtAsm.cpp
+  SemaStmtAttr.cpp
+  SemaTemplate.cpp
+  SemaTemplateDeduction.cpp
+  SemaTemplateInstantiate.cpp
+  SemaTemplateInstantiateDecl.cpp
+  SemaTemplateVariadic.cpp
+  SemaType.cpp
+  TargetAttributesSema.cpp
+  TypeLocBuilder.cpp
+  )
+
+add_dependencies(clangSema
+  ClangARMNeon
+  ClangAttrClasses
+  ClangAttrList
+  ClangAttrParsedAttrList
+  ClangAttrParsedAttrKinds
+  ClangAttrParsedAttrImpl
+  ClangAttrSpellingListIndex
+  ClangAttrTemplateInstantiate
+  ClangCommentNodes
+  ClangDeclNodes
+  ClangDiagnosticAST
+  ClangDiagnosticComment
+  ClangDiagnosticCommon
+  ClangDiagnosticParse
+  ClangDiagnosticSema
+  ClangStmtNodes
+  )
+
+target_link_libraries(clangSema
+  clangAST
+  clangAnalysis
+  clangBasic
+  clangEdit
+  clangLex
+  )

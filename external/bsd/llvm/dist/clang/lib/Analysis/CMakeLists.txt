@@ -1,0 +1,37 @@
+add_clang_library(clangAnalysis
+  AnalysisDeclContext.cpp
+  BodyFarm.cpp
+  CFG.cpp
+  CFGReachabilityAnalysis.cpp
+  CFGStmtMap.cpp
+  CallGraph.cpp
+  CocoaConventions.cpp
+  Consumed.cpp
+  Dominators.cpp
+  FormatString.cpp
+  LiveVariables.cpp
+  ObjCNoReturn.cpp
+  PostOrderCFGView.cpp
+  PrintfFormatString.cpp
+  ProgramPoint.cpp
+  PseudoConstantAnalysis.cpp
+  ReachableCode.cpp
+  ScanfFormatString.cpp
+  ThreadSafety.cpp
+  UninitializedValues.cpp
+  )
+
+add_dependencies(clangAnalysis
+  ClangAttrClasses
+  ClangAttrList
+  ClangCommentNodes
+  ClangDiagnosticCommon
+  ClangDeclNodes
+  ClangDiagnosticAnalysis
+  ClangStmtNodes
+  )
+
+target_link_libraries(clangAnalysis
+  clangBasic
+  clangAST
+  )

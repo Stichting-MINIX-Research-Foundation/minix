@@ -25,6 +25,8 @@ DOCGRP?=	operator
 
 MKKYUA?=	yes
 
+MKMCLINKER?=	no
+MKCLANGRT?=	no
 MKGCC?=		no
 MKGCCCMDS?=	no
 MKLIBSTDCXX?=	no
@@ -144,6 +146,11 @@ MKGCCCMDS:=	yes
 CXXFLAGS+=	-I/usr/include/g++
 .  endif # ${HAVE_GCC:Dyes} == "yes" && ${MKLIBCXX:Uno} != "yes"
 .endif # ${MKKYUA:Uno} == "yes" || ${MKATF:Uyes} == "yes"
+
+.if ${MKLLVM:Uno} == "yes"
+HAVE_LLVM?=34 # The in-tree LLVM version 3.4
+MKBINUTILS?=	yes # We are installing clang, so trigger binutils.
+.endif # ${MKLLVM:Uno} == "yes"
 
 # MKGCCCMDS == yes implies MKGCC == yes
 .if ${MKGCCCMDS} == "yes"

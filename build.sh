@@ -1770,7 +1770,6 @@ MAKEWRAPPERMACHINE=${makewrappermachine:-${MACHINE}}; export MAKEWRAPPERMACHINE
 USETOOLS=yes; export USETOOLS
 # LSC We are cross compiling, so do not install to root!
 MKINSTALLBOOT=no; export MKINSTALLBOOT
-MKGCC=yes; export MKGCC
 EOF
 	} | eval sort -u "${makewrapout}"
 	eval cat <<EOF "${makewrapout}"

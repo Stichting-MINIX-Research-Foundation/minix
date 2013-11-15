@@ -35,7 +35,8 @@ AS?=		as
 AFLAGS?=
 COMPILE.s?=	${CC} ${AFLAGS} ${AFLAGS.${<:T}} -c
 LINK.s?=	${CC} ${AFLAGS} ${AFLAGS.${<:T}} ${LDFLAGS}
-_ASM_TRADITIONAL_CPP=	-x assembler-with-cpp
+#_ASM_TRADITIONAL_CPP=	-x assembler-with-cpp
+_ASM_TRADITIONAL_CPP= 
 COMPILE.S?=	${CC} ${AFLAGS} ${AFLAGS.${<:T}} ${CPPFLAGS} ${_ASM_TRADITIONAL_CPP} -c
 LINK.S?=	${CC} ${AFLAGS} ${AFLAGS.${<:T}} ${CPPFLAGS} ${LDFLAGS}
 

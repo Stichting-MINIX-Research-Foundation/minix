@@ -1,0 +1,37 @@
+add_clang_library(clangParse
+  ParseAST.cpp
+  ParseCXXInlineMethods.cpp
+  ParseDecl.cpp
+  ParseDeclCXX.cpp
+  ParseExpr.cpp
+  ParseExprCXX.cpp
+  ParseInit.cpp
+  ParseObjc.cpp
+  ParseOpenMP.cpp
+  ParsePragma.cpp
+  ParseStmt.cpp
+  ParseTemplate.cpp
+  ParseTentative.cpp
+  Parser.cpp
+  )
+
+add_dependencies(clangParse
+  ClangAttrClasses
+  ClangAttrIdentifierArg
+  ClangAttrLateParsed
+  ClangAttrList
+  ClangAttrParsedAttrList
+  ClangAttrTypeArg
+  ClangCommentNodes
+  ClangDeclNodes
+  ClangDiagnosticCommon
+  ClangDiagnosticParse
+  ClangStmtNodes
+  )
+
+target_link_libraries(clangParse
+  clangBasic
+  clangAST
+  clangLex
+  clangSema
+  )

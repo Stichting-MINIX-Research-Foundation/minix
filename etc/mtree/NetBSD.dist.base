@@ -46,6 +46,7 @@
 ./usr/games/hide	gname=games mode=0750
 ./usr/include
 ./usr/include/arpa
+./usr/include/clang-3.4
 ./usr/include/compat
 ./usr/include/compat/machine
 ./usr/include/ddekit
