@@ -1,5 +1,6 @@
 /* fix file difflist - update file from difflist     Author: Erik Baalbergen */
-
+/* Change all K&R-style functions declarations to ANSI-style 
+declarations - Author: Alexandre Beletti (rhiguita@gmail.com) */
 
 /* Notes: files old and old.patch are equal after the following commands
      diff old new > difflist
@@ -46,7 +47,7 @@ int getcommand(FILE *fp, int *o1, int *o2, char *pcmd, int *n1, int
 	*n2);
 void fatal(const char *s, ...);
 int strwcmp(char *s1, char *s2);
-int whitespace(int ch);
+int whitespace(char ch);
 
 char *
 getline(FILE *fp, char *b)
@@ -113,9 +114,7 @@ int main(int argc, char **argv)
 }
 
 char *
- range(s, p1, p2)
-char *s;
-int *p1, *p2;
+ range(char *s, int *p1, int *p2)
 {
   register int v1 = 0, v2;
 
@@ -132,10 +131,7 @@ int *p1, *p2;
   return s;
 }
 
-int getcommand(fp, o1, o2, pcmd, n1, n2)
-FILE *fp;
-int *o1, *o2, *n1, *n2;
-char *pcmd;
+int getcommand(FILE *fp, int *o1, int *o2, char *pcmd, int *n1, int *n2)
 {
   char buf[LINELEN];
   register char *s;
@@ -166,8 +162,7 @@ void fatal(const char *s, ...)
 }
 #else
 /* the K&R lib does not have vfprintf */
-void fatal(s, a)
-const char *s, *a;
+void fatal(const char *s, const char *a)
 {
   fprintf(stderr, "%s: processing: %s fatal: ", prog, processing);
   fprintf(stderr, s, a);
@@ -183,8 +178,7 @@ const char *s, *a;
    tab conversion or trailing space removal
    Bret Mckee June, 1988 */
 
-int strwcmp(s1, s2)
-char *s1, *s2;
+int strwcmp(char *s1, char *s2)
 {
   char *x1 = s1, *x2 = s2;
 
@@ -206,8 +200,7 @@ char *s1, *s2;
   return(*s1 - *s2);
 }
 
-int whitespace(ch)
-char ch;
+int whitespace(char ch)
 {
   switch (ch) {
       case ' ':
