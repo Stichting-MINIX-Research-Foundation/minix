@@ -29,6 +29,8 @@
  *	 9 Sep 91.	Changed user interface.  cwr.
  *	21 Jan 93.	Revised error messages.  cwr.
  *	29 Mar 95.	Added -o, NARROW define.  cwr.
+ *      16 Nov 2013.    Changed the functions to ANSI style. 
+ *			Author: Alexandre Beletti (rhiguita@gmail.com)
  */
 
 #include <sys/types.h>
@@ -74,7 +76,7 @@ int dflag, jflag, mflag, nflag, oflag, rflag, sflag, tflag, vflag, zflag;
 extern int errno;
 extern char **environ;
 
-int main(int argc, char **argv);
+int main(int argc, char *argv[]);
 void maketarget(char *dir2);
 int make_dir(char *dir);
 int stat_all(char *dir1, int n);
@@ -88,9 +90,7 @@ void newdisk(char *dir);
 void usage(void);
 void error(int type, char *s1, char *s2, char *s3);
 
-int main(argc, argv)
-int argc;
-char *argv[];
+int main(int argc, char *argv[])
 {
   int n, m;
   char *dir1, *dir2, *cp, c;
@@ -165,8 +165,7 @@ char *argv[];
 }
 
 
-void maketarget(dir2)
-char *dir2;
+void maketarget(char *dir2)
 {
 /* The target directory is created if it does not already exist. */
 
@@ -190,8 +189,7 @@ char *dir2;
   }
 }
 
-int make_dir(dir)
-char *dir;
+int make_dir(char *dir)
 {
 /* Create a directory. */
   int pid, status;
@@ -213,9 +211,7 @@ char *dir;
 }
 
 
-int stat_all(dir1, n)
-char *dir1;
-int n;
+int stat_all(char *dir1, int n)
 {
 /* Stat all the directory entries.  By doing this all at once, the disk
  * head can stay in the inode area.
@@ -257,8 +253,7 @@ int n;
 }
 
 
-void sort_dir(m)
-int m;
+void sort_dir(int m)
 {
 /* Sort the directory using bubble sort. */
 
@@ -273,9 +268,7 @@ int m;
 }
 
 
-void process(m, dir1, dir2)
-int m;
-char *dir1, *dir2;
+void process(int m, char *dir1, char *dir2)
 {
 /* Process each entry in sorted[].  If it is a regular file, stat the target
  * file.  The the source is newer, copy it.  If the entry is a directory,
@@ -333,8 +326,7 @@ char *dir1, *dir2;
 
 
 
-void swap(sp1, sp2)
-struct sorted *sp1, *sp2;
+void swap(struct sorted *sp1, struct sorted *sp2)
 {
 /* Swap two directory entries. */
 
@@ -346,9 +338,7 @@ struct sorted *sp1, *sp2;
 }
 
 
-int copy(dir1, sp, cbuf2)
-struct sorted *sp;
-char *dir1, *cbuf2;
+int copy(char *dir1, struct sorted *sp, char *cbuf2)
 {
 /* Copy a regular file. */
 
@@ -465,8 +455,7 @@ char *dir1, *cbuf2;
 }
 
 
-int zcopy(src, targ)
-char *src, *targ;
+int zcopy(char *src, char *targ)
 {
 
   int pid, status, res, s;
@@ -501,8 +490,7 @@ char *src, *targ;
 }
 
 
-void copydir(dir1, dir2, namep)
-char *dir1, *dir2, *namep;
+void copydir(char *dir1, char *dir2, char *namep)
 {
 /* Copy a directory. */
 
@@ -547,8 +535,7 @@ char *dir1, *dir2, *namep;
   }
 }
 
-void newdisk(dir)
-char *dir;
+void newdisk(char *dir)
 {
 /* Ask for a new diskette. A big problem is that this program does not
  * know which device is being used and where it is mounted on.  As an
@@ -581,9 +568,7 @@ void usage()
 }
 
 
-void error(type, s1, s2, s3)
-int type;
-char *s1, *s2, *s3;
+void error(int type, char *s1, char *s2, char *s3)
 {
   fprintf(stderr, "%s: %s%s%s\n", pname, s1, s2, s3);
 
