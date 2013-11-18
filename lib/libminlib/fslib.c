@@ -3,6 +3,9 @@
 #include <minix/config.h>	/* for unused stuff in <minix/type.h> :-( */
 #include <limits.h>
 #include <dirent.h>
+#include <assert.h>
+#include <stdlib.h>
+#include <string.h>
 #include <sys/types.h>
 #include <minix/const.h>
 #include <minix/type.h>		/* for unshort :-( */
@@ -11,6 +14,7 @@
 #include "mfs/inode.h"		/* ditto */
 #include "mfs/super.h"
 #include <minix/fslib.h>
+#include <minix/minlib.h>
 
 /* The next routine is copied from fsck.c and mkfs.c...  (Re)define some
  * things for consistency.  Some things should be done better.
@@ -187,4 +191,62 @@ int norm;			/* TRUE = do not swap bytes; FALSE = swap */
 	for (i = 0; i < V2_NR_TZONES; i++)
 		dip->d2_zone[i] = conv4(norm, (long) rip->i_zone[i]);
   }
+}
+
+/* Compare dirent objects for order */
+static int cmp_dirent(const void *d1, const void *d2)
+{ 
+        struct me_dirent *dp1 = (struct me_dirent *) d1,
+                *dp2 = (struct me_dirent *) d2;
+        return strcmp(dp1->d_name, dp2->d_name);
+} 
+
+/* Return array of me_dirents. */
+struct me_dirent *minix_readdir(DIR *dirp, int *n)
+{
+	struct dirent *rdp;
+	struct me_dirent *dp;
+	struct me_dirent *dirents = NULL;
+	int reserved_dirents = 0;
+	int entries = 0;
+
+	while((rdp = readdir(dirp)) != NULL) {
+		if(entries >= reserved_dirents) {
+			struct me_dirent *newdirents;
+			int newreserved = (2*(reserved_dirents+1));
+			if(!(newdirents = realloc(dirents, newreserved *
+			  sizeof(*dirents)))) {
+				free(dirents);
+				return NULL;
+			}
+			dirents = newdirents;
+			reserved_dirents = newreserved;
+		}
+
+		assert(entries < reserved_dirents);
+		assert(strlen(rdp->d_name) < sizeof(dp->d_name));
+		dp = &dirents[entries];
+		memset(dp, 0, sizeof(*dp));
+		strcpy(dp->d_name, rdp->d_name);
+		entries++;
+	}
+
+	/* Assume directories contain at least "." and "..", and
+	 * therefore the array exists.
+	 */
+	assert(entries > 0);
+	assert(dirents);
+
+	/* normalize (sort) them */
+	qsort(dirents, entries, sizeof(*dp), cmp_dirent);
+
+	/* Return no. of entries. */
+	*n = entries;
+
+	return dirents;
+}
+
+void minix_free_readdir(struct me_dirent *md, int n)
+{
+	free(md);
 }

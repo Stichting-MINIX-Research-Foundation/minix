@@ -4,6 +4,7 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <minix/minlib.h>
 #include <limits.h>
 #include <dirent.h>
 #include <stdlib.h>
@@ -42,12 +43,6 @@ void descend(char *dirname);
 void display_attrib(const char *name, struct stat *st);
 void usage(char *binname);
 void open_outfile(void);
-
-#define MAXNAME 256
-
-struct mkproto_dirent {
-	char d_name[MAXNAME];
-};
 
 int main(argc, argv)
 int argc;
@@ -135,27 +130,18 @@ char *argv[];
   return(0);
 }
 
-/* Compare dirent objects for order */
-static int cmp_dirent(const void *d1, const void *d2)
-{
-	struct mkproto_dirent *dp1 = (struct mkproto_dirent *) d1,
-		*dp2 = (struct mkproto_dirent *) d2;
-	return strcmp(dp1->d_name, dp2->d_name);
-}
-
 /* Output the prototype spec for this directory. */
 void descend(dirname)
 char *dirname;
 {
-  struct dirent *rdp;
-  struct mkproto_dirent *dirents = NULL, *dp;
-  int reserved_dirents = 0;
+  struct me_dirent *dirents;
   DIR *dirp;
   char *name, *temp, *tempend;
   int i;
   struct stat st;
   mode_t mode;
-  int entries = 0;
+  int entries = 0, orig_entries;
+  struct me_dirent *dp;
 
   dirp = opendir(dirname);
   if (dirp == NULL) {
@@ -169,25 +155,10 @@ char *dirname;
   tempend = &temp[strlen(temp)];
    
   /* read all directory entries */
-  for (rdp = readdir(dirp); rdp != NULL; rdp = readdir(dirp)) {
-	if(entries >= reserved_dirents) {
-		int newreserved = (2*(reserved_dirents+1));
-		if(!(dirents = realloc(dirents, newreserved *
-		  sizeof(*dirents)))) {
-			errx(1, "realloc failed on dirents");
-		}
-		reserved_dirents = newreserved;
-	}
-	assert(entries < reserved_dirents);
-	assert(strlen(rdp->d_name) < sizeof(dp->d_name));
-	dp = &dirents[entries];
-	strcpy(dp->d_name, rdp->d_name);
-	entries++;
-  }
+  if(!(dirents = minix_readdir(dirp, &entries)))
+	errx(1, "minix_readdir failed");
+  orig_entries = entries;
   closedir(dirp);
-
-  /* normalize (sort) them */
-  qsort(dirents, entries, sizeof(*dp), cmp_dirent);
 
   for (dp = dirents; entries > 0; dp++, entries--) {
 	name = dp->d_name;
@@ -243,7 +214,7 @@ char *dirname;
 	fprintf(stderr,"File\n\t%s\n has an invalid mode, made empty.\n",temp);
   }
   free(temp);
-  free(dirents);
+  minix_free_readdir(dirents, orig_entries);
   tabs--;
 }
 

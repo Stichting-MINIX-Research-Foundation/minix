@@ -1,6 +1,7 @@
 
 /* writeisofs - simple ISO9660-format-image writing utility */
 
+#include <sys/cdefs.h>
 #include <errno.h>
 #include <stdio.h>
 #include <time.h>
@@ -12,6 +13,7 @@
 #include <assert.h>
 #include <ctype.h>
 #include <partition.h>
+#include <minix/minlib.h>
 
 #include <sys/stat.h>
 
@@ -277,10 +279,10 @@ void
 maketree(struct node *thisdir, char *name, int level)
 {
 	DIR *dir;
-	struct dirent *e;
 	struct node *dirnodes = NULL;
-	int reserved_dirnodes = 0, used_dirnodes = 0;
+	int reserved_dirnodes = 0, used_dirnodes = 0, nentries;
 	struct node *child;
+	struct me_dirent *entries, *e;
 
 	thisdir->firstchild = NULL;
 	thisdir->isdir = 1;
@@ -298,11 +300,11 @@ maketree(struct node *thisdir, char *name, int level)
 	}
 
 	/* how many entries do we need to allocate? */
-	while(readdir(dir)) reserved_dirnodes++;
-	if(!reserved_dirnodes) {
+	if(!(entries = minix_readdir(dir, &reserved_dirnodes))) {
 		closedir(dir);
 		return;
 	}
+	nentries = reserved_dirnodes;
 
 	if(!(dirnodes = malloc(sizeof(*dirnodes)*reserved_dirnodes))) {
 		fprintf(stderr, "couldn't allocate dirnodes (%d bytes)\n",
@@ -315,7 +317,7 @@ maketree(struct node *thisdir, char *name, int level)
 	rewinddir(dir);
 
 	child = dirnodes;
-	while((e=readdir(dir))) {
+	for(e = entries; nentries--; e++) {
 		struct stat st;
 		mode_t type;
 		if(!strcmp(e->d_name, CURRENTDIR) || !strcmp(e->d_name, PARENTDIR))
@@ -328,10 +330,6 @@ maketree(struct node *thisdir, char *name, int level)
 
 		type = st.st_mode & S_IFMT;
 
-/*
-		printf("%s type: %x dir: %x file: %x\n",
-			e->d_name, type, S_IFDIR, S_IFREG);
-			*/
 		if(type != S_IFDIR && type != S_IFREG)
 			continue;
 

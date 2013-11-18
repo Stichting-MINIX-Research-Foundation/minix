@@ -22,8 +22,8 @@ int fs_read(void) {
   int rw;
 
   switch(fs_m_in.m_type) {
-  	case REQ_READ: rw = READING;
-	case REQ_PEEK: rw = PEEKING;
+  	case REQ_READ: rw = READING; break;
+	case REQ_PEEK: rw = PEEKING; break;
 	default: panic("odd m_type");
   }
   
