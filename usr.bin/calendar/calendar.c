@@ -1,4 +1,4 @@
-/*	$NetBSD: calendar.c,v 1.49 2012/04/03 12:03:04 matthias Exp $	*/
+/*	$NetBSD: calendar.c,v 1.50 2013/11/09 15:57:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)calendar.c	8.4 (Berkeley) 1/7/95";
 #endif
-__RCSID("$NetBSD: calendar.c,v 1.49 2012/04/03 12:03:04 matthias Exp $");
+__RCSID("$NetBSD: calendar.c,v 1.50 2013/11/09 15:57:15 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -383,24 +383,23 @@ getfield(char *p, char **endp, int *flags)
 static FILE *
 opencal(FILE **in)
 {
-	int fd;
+	int fd = -1;
 	int pdes[2];
-	const char **name;
 
 	/* open up calendar file as stdin */
 	if (fname == NULL) {
-		for (name = defaultnames; *name != NULL; name++) {
-			if ((fd = open(*name, O_RDONLY)) < 0)
+		for (const char **name = defaultnames; *name != NULL; name++) {
+			if ((fd = open(*name, O_RDONLY)) == -1)
 				continue;
 			else
 				break;
 		}
-		if (*name == NULL) {
+		if (fd == -1) {
 			if (doall)
 				return NULL;
 			err(EXIT_FAILURE, "Cannot open calendar file");
 		}
-	} else if ((fd = open(fname, O_RDONLY)) < 0) {
+	} else if ((fd = open(fname, O_RDONLY)) == -1) {
 		if (doall)
 			return NULL;
 		err(EXIT_FAILURE, "Cannot open `%s'", fname);
