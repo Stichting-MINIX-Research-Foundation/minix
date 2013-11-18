@@ -16,24 +16,99 @@
 #define M3_STRING         44	/* legacy m3_ca1 size (must not be changed) */
 #define M3_LONG_STRING    44	/* current m3_ca1 size (may be increased) */
 
-typedef struct {int m1i1, m1i2, m1i3; char *m1p1, *m1p2, *m1p3, *m1p4;} mess_1;
-typedef struct {int m2i1, m2i2, m2i3; long m2l1, m2l2; char *m2p1; 
-        short m2s1; sigset_t sigset; } mess_2;
-typedef struct {endpoint_t ep; int sig; u32_t flags; sigset_t sigs; 
-	void *sigctx; int how; } mess_sigcalls;
-typedef struct {int m3i1, m3i2; char *m3p1; char m3ca1[M3_LONG_STRING];} mess_3;
-typedef struct {long m4l1, m4l2, m4l3, m4l4, m4l5;} mess_4;
-typedef struct {short m5s1, m5s2; int m5i1, m5i2; long m5l1, m5l2, m5l3;}mess_5;
-typedef struct {long m6l1, m6l2, m6l3; short m6s1, m6s2, m6s3; char m6c1, m6c2;
-        char *m6p1, *m6p2;} mess_6;
-typedef struct {int m7i1, m7i2, m7i3, m7i4, m7i5; char *m7p1, *m7p2;} mess_7;
-typedef struct {int m8i1, m8i2; char *m8p1, *m8p2, *m8p3, *m8p4;} mess_8;
-typedef struct {long m9l1, m9l2, m9l3, m9l4, m9l5;
-	short m9s1, m9s2, m9s3, m9s4; } mess_9;
-typedef struct {int m10i1, m10i2, m10i3, m10i4;
-	long m10l1, m10l2, m10l3; } mess_10;
-typedef struct {int m11i1; short m11s1, m11s2, m11s3, m11s4;
-	char *m11p1, *m11p2, *m11p3, *m11p4; } mess_11;
+typedef struct {
+	int m1i1, m1i2, m1i3;
+	char *m1p1, *m1p2, *m1p3, *m1p4;
+	uint8_t padding[28];
+} mess_1;
+_ASSERT_MSG_SIZE(mess_1);
+
+typedef struct {
+	int m2i1, m2i2, m2i3;
+	long m2l1, m2l2;
+	char *m2p1;
+	sigset_t sigset;
+        short m2s1;
+	uint8_t padding[14];
+} mess_2;
+_ASSERT_MSG_SIZE(mess_2);
+
+typedef struct {
+	endpoint_t ep;
+	int sig;
+	u32_t flags;
+	sigset_t sigs;
+	void *sigctx;
+	int how;
+	uint8_t padding[20];
+} mess_sigcalls;
+_ASSERT_MSG_SIZE(mess_sigcalls);
+
+typedef struct {
+	int m3i1, m3i2;
+	char *m3p1;
+	char m3ca1[M3_LONG_STRING];
+} mess_3;
+_ASSERT_MSG_SIZE(mess_3);
+
+typedef struct {
+	long m4l1, m4l2, m4l3, m4l4, m4l5;
+	uint8_t padding[36];
+} mess_4;
+_ASSERT_MSG_SIZE(mess_4);
+
+typedef struct {
+	short m5s1, m5s2;
+	int m5i1, m5i2;
+	long m5l1, m5l2, m5l3;
+	uint8_t padding[32];
+} mess_5;
+_ASSERT_MSG_SIZE(mess_5);
+
+typedef struct {
+	long m6l1, m6l2, m6l3;
+	short m6s1, m6s2, m6s3;
+	char m6c1, m6c2;
+        char *m6p1, *m6p2;
+	uint8_t padding[28];
+} mess_6;
+_ASSERT_MSG_SIZE(mess_6);
+
+typedef struct {
+	int m7i1, m7i2, m7i3, m7i4, m7i5;
+	char *m7p1, *m7p2;
+	uint8_t padding[28];
+} mess_7;
+_ASSERT_MSG_SIZE(mess_7);
+
+typedef struct {
+	int m8i1, m8i2;
+	char *m8p1, *m8p2, *m8p3, *m8p4;
+	uint8_t padding[32];
+} mess_8;
+_ASSERT_MSG_SIZE(mess_8);
+
+typedef struct {
+	long m9l1, m9l2, m9l3, m9l4, m9l5;
+	short m9s1, m9s2, m9s3, m9s4;
+	uint8_t padding[28];
+} mess_9;
+_ASSERT_MSG_SIZE(mess_9);
+
+typedef struct {
+	int m10i1, m10i2, m10i3, m10i4;
+	long m10l1, m10l2, m10l3;
+	uint8_t padding[28];
+} mess_10;
+_ASSERT_MSG_SIZE(mess_10);
+
+typedef struct {
+	int m11i1;
+	short m11s1, m11s2, m11s3, m11s4;
+	char *m11p1, *m11p2, *m11p3, *m11p4;
+	uint8_t padding[28];
+} mess_11;
+_ASSERT_MSG_SIZE(mess_11);
 
 typedef struct {
 	void *block;
@@ -44,13 +119,17 @@ typedef struct {
 	u32_t dev;
 	u8_t pages;
 	u8_t flags;
+	uint8_t padding[30];
 } mess_vmmcp;
+_ASSERT_MSG_SIZE(mess_vmmcp);
 
 typedef struct {
 	u64_t timestamp;	/* valid for every notify msg */
 	u64_t interrupts;	/* raised interrupts; valid if from HARDWARE */
 	sigset_t sigset;	/* raised signals; valid if from SYSTEM */
+	uint8_t padding[24];
 } mess_notify;
+_ASSERT_MSG_SIZE(mess_notify);
 
 typedef struct {
 	endpoint_t who;
@@ -61,9 +140,16 @@ typedef struct {
 	u32_t len;
 	u16_t fd;
 	u16_t clearend_and_flags; /* low 12 bits are clearend, rest flags */
+	uint8_t padding[28];
 } mess_vm_vfs_mmap;
+_ASSERT_MSG_SIZE(mess_vm_vfs_mmap);
 
-typedef struct { u8_t flags; void *addr; } mess_vmmcp_reply;
+typedef struct {
+	void *addr;
+	u8_t flags;
+	uint8_t padding[51];
+} mess_vmmcp_reply;
+_ASSERT_MSG_SIZE(mess_vmmcp_reply);
 
 typedef struct {
   endpoint_t m_source;		/* who sent the message */
@@ -88,6 +174,9 @@ typedef struct {
 	u32_t size[14];		/* message payload may have 14 longs at most */
   } m_u;
 } message __aligned(16);
+
+/* Ensure the complete union respects the IPC assumptions. */
+typedef int _ASSERT_message[/* CONSTCOND */sizeof(message) == 64 ?1 : -1];
 
 /* The following defines provide names for useful members. */
 #define m1_i1  m_u.m_m1.m1i1
