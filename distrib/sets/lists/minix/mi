@@ -490,6 +490,7 @@
 ./usr/bin/size				minix-sys	binutils
 ./usr/bin/sleep				minix-sys
 ./usr/bin/slip				minix-sys
+./usr/bin/soelim			minix-sys
 ./usr/bin/sort				minix-sys
 ./usr/bin/spell				minix-sys
 ./usr/bin/split				minix-sys
@@ -2094,6 +2095,7 @@
 ./usr/man/man1/shuffle.1		minix-sys
 ./usr/man/man1/size.1			minix-sys	binutils
 ./usr/man/man1/sleep.1			minix-sys
+./usr/man/man1/soelim.1			minix-sys
 ./usr/man/man1/sort.1			minix-sys
 ./usr/man/man1/spell.1			minix-sys
 ./usr/man/man1/split.1			minix-sys
