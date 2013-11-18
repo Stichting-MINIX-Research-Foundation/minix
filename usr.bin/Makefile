@@ -16,7 +16,7 @@ SUBDIR= asa \
 	lam ldd leave \
 	lock login logname lorder m4 \
 	machine make man menuc mesg \
-	mkdep mkstr mktemp \
+	mkdep mkfifo mkstr mktemp \
 	msgc \
 	nbperf newgrp nice nl nohup nvi \
 	passwd paste pathchk pr \
