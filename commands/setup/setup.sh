@@ -21,8 +21,8 @@ USRFILES="`find -x /usr | wc -l`"
 # /usr/install isn't copied onto the new system; compensate
 INSTALLDIR=/usr/install
 if [ -d $INSTALLDIR ]
-then	$USRFILES=$(($USRFILES - `find -x $INSTALLDIR | wc -l`))
-	$USRKB=$(($USRKB - `du -sxk $INSTALLDIR | awk '{ print $1 }'`))
+then	USRFILES=$(($USRFILES - `find -x $INSTALLDIR | wc -l`))
+	USRKB=$(($USRKB - `du -sxk $INSTALLDIR | awk '{ print $1 }'`))
 fi
 
 if [ -z "$FSTYPE" ]
