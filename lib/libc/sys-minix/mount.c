@@ -86,7 +86,7 @@ int mountflags, srvflags;
 			free(rslabel);
 		} else {
 			if (stat(name, &statbuf) < 0) return -1;
-			sprintf(label, "fs_%04x%llx", statbuf.st_dev, statbuf.st_ino);
+			sprintf(label, "fs_%llx_%llx", statbuf.st_dev, statbuf.st_ino);
 		}
 	}
   } else {
