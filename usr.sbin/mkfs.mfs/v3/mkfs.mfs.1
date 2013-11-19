@@ -13,6 +13,7 @@
 .Op Fl z Ar zone_shift
 .Op Fl x Ar extra_space
 .Op Fl I Ar fs_offset
+.Op Fl T Ar timestamp
 .Ar special
 .Op Ar prototype
 .Sh OPTIONS
@@ -38,6 +39,8 @@ Filesystem block size (in bytes)
 Filesystem size (in blocks)
 .It Fl I Ar fs_offset
 Write filesystem starting at offset (in bytes)
+.It Fl T Ar timestamp
+Use timestamp for inode times
 .It Fl x Ar extra_space
 Extra space after dynamic sizing (blocks and inodes)
 .It Fl z Ar zone_shift

@@ -4,12 +4,15 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <minix/minlib.h>
 #include <limits.h>
 #include <dirent.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <assert.h>
+#include <err.h>
 
 /* The default values for the prototype file */
 #define DEF_UID		2	/* bin */
@@ -40,6 +43,74 @@ void descend(char *dirname);
 void display_attrib(const char *name, struct stat *st);
 void usage(char *binname);
 void open_outfile(void);
+
+/* Returned by minix_readdir */
+#define ME_MAXNAME     256
+struct me_dirent {
+       char d_name[ME_MAXNAME];
+};
+
+struct me_dirent *minix_readdir(DIR *, int *n);
+void minix_free_readdir(struct me_dirent *md, int n);
+
+
+/* Compare dirent objects for order */
+static int cmp_dirent(const void *d1, const void *d2)
+{ 
+        struct me_dirent *dp1 = (struct me_dirent *) d1,
+                *dp2 = (struct me_dirent *) d2;
+        return strcmp(dp1->d_name, dp2->d_name);
+} 
+
+/* Return array of me_dirents. */
+struct me_dirent *minix_readdir(DIR *dirp, int *n)
+{
+       struct dirent *rdp;
+       struct me_dirent *dp;
+       struct me_dirent *dirents = NULL;
+       int reserved_dirents = 0;
+       int entries = 0;
+
+       while((rdp = readdir(dirp)) != NULL) {
+               if(entries >= reserved_dirents) {
+                       struct me_dirent *newdirents;
+                       int newreserved = (2*(reserved_dirents+1));
+                       if(!(newdirents = realloc(dirents, newreserved *
+                         sizeof(*dirents)))) {
+                               free(dirents);
+                               return NULL;
+                       }
+                       dirents = newdirents;
+                       reserved_dirents = newreserved;
+               }
+
+               assert(entries < reserved_dirents);
+               assert(strlen(rdp->d_name) < sizeof(dp->d_name));
+               dp = &dirents[entries];
+               memset(dp, 0, sizeof(*dp));
+               strcpy(dp->d_name, rdp->d_name);
+               entries++;
+       }
+
+       /* Assume directories contain at least "." and "..", and
+        * therefore the array exists.
+        */
+       assert(entries > 0);
+       assert(dirents);
+
+       /* normalize (sort) them */
+       qsort(dirents, entries, sizeof(*dp), cmp_dirent);
+
+       /* Return no. of entries. */
+       *n = entries;
+
+       return dirents;
+}
+
+void minix_free_readdir(struct me_dirent *md, int n)
+{
+       free(md);
+}
 
 int main(argc, argv)
 int argc;
@@ -131,12 +202,14 @@ char *argv[];
 void descend(dirname)
 char *dirname;
 {
-  struct dirent *dp;
+  struct me_dirent *dirents;
   DIR *dirp;
   char *name, *temp, *tempend;
   int i;
   struct stat st;
   mode_t mode;
+  int entries = 0, orig_entries;
+  struct me_dirent *dp;
 
   dirp = opendir(dirname);
   if (dirp == NULL) {
@@ -148,8 +221,14 @@ char *dirname;
   strcpy(temp, dirname);
   strcat(temp, "/");
   tempend = &temp[strlen(temp)];
+   
+  /* read all directory entries */
+  if(!(dirents = minix_readdir(dirp, &entries)))
+	errx(1, "minix_readdir failed");
+  orig_entries = entries;
+  closedir(dirp);
 
-  for (dp = readdir(dirp); dp != NULL; dp = readdir(dirp)) {
+  for (dp = dirents; entries > 0; dp++, entries--) {
 	name = dp->d_name;
 
 	count++;
@@ -202,8 +281,8 @@ char *dirname;
 	fprintf(outfile, " /dev/null");
 	fprintf(stderr,"File\n\t%s\n has an invalid mode, made empty.\n",temp);
   }
-  closedir(dirp);
   free(temp);
+  minix_free_readdir(dirents, orig_entries);
   tabs--;
 }
 
@@ -221,7 +300,7 @@ struct stat *st;
   if (same_prot)
 	prot = st->st_mode & 0777;	/***** This one is a bit shady *****/
   for (i = 0; i < tabs; i++) fprintf(outfile, "%s", indentstr);
-  fprintf(outfile, "%s%s%c%c%c%3o %d %d",
+  fprintf(outfile, "%s%s%c%c%c%03o %d %d",
 	name,
 	*name == '\0' ? "" : indentstr,	/* stop the tab for a null name */
 	(st->st_mode & S_IFMT) == S_IFDIR ? 'd' :
