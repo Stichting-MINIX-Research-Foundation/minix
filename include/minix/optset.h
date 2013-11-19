@@ -4,6 +4,7 @@
 typedef enum {
   OPT_BOOL,
   OPT_STRING,
+  OPT_64INT,
   OPT_INT
 } optset_type;
 
