@@ -45,7 +45,10 @@ SRCS.cawf= cawf.c device.c error.c expand.c expr.c getopt.c macsup.c nreq.c \
 SRCS.bsfilt= bsfilt.c
 
 LINKS+=	${BINDIR}/cawf ${BINDIR}/nroff
-LINKS+=	${BINDIR}/bsfilt ${BINDIR}/colcrt
+
+# replaced by usr.bin/colcrt
+#LINKS+=	${BINDIR}/bsfilt ${BINDIR}/colcrt
+
 MAN.cawf=
 MAN.bsfilt=
 
