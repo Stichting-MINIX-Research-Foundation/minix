@@ -53,22 +53,16 @@ __weak_alias(tcsetattr,_tcsetattr)
 int
 tcsetattr(int fd, int opt, const struct termios *t)
 {
-#ifndef __minix
 	struct termios localterm;
-#endif
 
 	_DIAGASSERT(fd != -1);
 	_DIAGASSERT(t != NULL);
 
-#ifndef __minix
 	if (opt & TCSASOFT) {
 		localterm = *t;
 		localterm.c_cflag |= CIGNORE;
 		t = &localterm;
 	}
-#else /* __minix */
-#define	TCSASOFT	0 
-#endif /* __minix */
 	switch (opt & ~TCSASOFT) {
 	case TCSANOW:
 		return (ioctl(fd, TIOCSETA, __UNCONST(t)));

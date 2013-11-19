@@ -4,7 +4,6 @@
  *
  * The entry points into this file are:
  *   do_itimer: perform the ITIMER system call
- *   do_alarm: perform the ALARM system call
  *   set_alarm: tell the timer interface to start or stop a process timer
  *   check_vtimer: check if one of the virtual timers needs to be restarted
  */
@@ -12,12 +11,11 @@
 #include "pm.h"
 #include <signal.h>
 #include <sys/time.h>
-#include <string.h>
 #include <minix/com.h>
+#include <minix/callnr.h>
 #include "mproc.h"
-#include "param.h"
 
-#define US 1000000	/* shortcut for microseconds per second */
+#define US 1000000UL	/* shortcut for microseconds per second */
 
 static clock_t ticks_from_timeval(struct timeval *tv);
 static void timeval_from_ticks(struct timeval *tv, clock_t ticks);
@@ -26,7 +24,7 @@ static void getset_vtimer(struct mproc *mp, int nwhich, struct
 	itimerval *value, struct itimerval *ovalue);
 static void get_realtimer(struct mproc *mp, struct itimerval *value);
 static void set_realtimer(struct mproc *mp, struct itimerval *value);
-static void cause_sigalrm(struct timer *tp);
+static void cause_sigalrm(minix_timer_t *tp);
 
 /*===========================================================================*
  *				ticks_from_timeval			     * 
@@ -53,15 +51,14 @@ struct timeval *tv;
 	
   /* In any case, the following conversion must always round up. */
 
-  ticks = (clock_t) (system_hz * (unsigned long) tv->tv_sec);
-  if ( (unsigned long) ticks / system_hz != (unsigned long) tv->tv_sec) {
+  ticks = system_hz * (unsigned long) tv->tv_sec;
+  if ( (ticks / system_hz) != (unsigned long)tv->tv_sec) {
 	ticks = LONG_MAX;
   } else {
-	ticks += (clock_t)
-		((system_hz * (unsigned long) tv->tv_usec + (US-1)) / US);
+	ticks += ((system_hz * (unsigned long)tv->tv_usec + (US-1)) / US);
   }
 
-  if (ticks < 0) ticks = LONG_MAX;
+  if (ticks > LONG_MAX) ticks = LONG_MAX;
 
   return(ticks);
 }
@@ -95,18 +92,18 @@ int do_itimer()
 {
   struct itimerval ovalue, value;	/* old and new interval timers */
   int setval, getval;			/* set and/or retrieve the values? */
-  int r;
+  int r, which;
 
   /* Make sure 'which' is one of the defined timers. */
-  if (m_in.which_timer < 0 || m_in.which_timer >= NR_ITIMERS)
-  	return(EINVAL);
+  which = m_in.PM_ITIMER_WHICH;
+  if (which < 0 || which >= NR_ITIMERS) return(EINVAL);
 
   /* Determine whether to set and/or return the given timer value, based on
-   * which of the new_val and old_val parameters are nonzero. At least one of
+   * which of the value and ovalue parameters are nonzero. At least one of
    * them must be nonzero.
    */
-  setval = (m_in.new_val != NULL);
-  getval = (m_in.old_val != NULL);
+  setval = (m_in.PM_ITIMER_VALUE != NULL);
+  getval = (m_in.PM_ITIMER_OVALUE != NULL);
 
   if (!setval && !getval) return(EINVAL);
 
@@ -114,8 +111,8 @@ int do_itimer()
    * Also, make sure its fields have sane values.
    */
   if (setval) {
-  	r = sys_datacopy(who_e, (vir_bytes) m_in.new_val,
-  		PM_PROC_NR, (vir_bytes) &value, (phys_bytes) sizeof(value));
+	r = sys_datacopy(who_e, (vir_bytes) m_in.PM_ITIMER_VALUE,
+		PM_PROC_NR, (vir_bytes) &value, (phys_bytes) sizeof(value));
   	if (r != OK) return(r);
 
   	if (!is_sane_timeval(&value.it_value) ||
@@ -123,7 +120,7 @@ int do_itimer()
   		return(EINVAL);
   }
 
-  switch (m_in.which_timer) {
+  switch (which) {
   	case ITIMER_REAL :
   		if (getval) get_realtimer(mp, &ovalue);
 
@@ -134,48 +131,24 @@ int do_itimer()
 
   	case ITIMER_VIRTUAL :
   	case ITIMER_PROF :
-  		getset_vtimer(mp, m_in.which_timer,
-  				(setval) ? &value : NULL,
-  				(getval) ? &ovalue : NULL);
+		getset_vtimer(mp, which, (setval) ? &value : NULL,
+			(getval) ? &ovalue : NULL);
 
   		r = OK;
   		break;
 
 	default:
-		panic("invalid timer type: %d", m_in.which_timer);
+		panic("invalid timer type: %d", which);
   }
 
   /* If requested, copy the old interval timer to user space. */
   if (r == OK && getval) {
-  	r = sys_datacopy(PM_PROC_NR, (vir_bytes) &ovalue,
-  		who_e, (vir_bytes) m_in.old_val, (phys_bytes) sizeof(ovalue));
+	r = sys_datacopy(PM_PROC_NR, (vir_bytes) &ovalue,
+		who_e, (vir_bytes) m_in.PM_ITIMER_OVALUE,
+		(phys_bytes) sizeof(ovalue));
   }
 
   return(r);
-}
-
-/*===========================================================================*
- *				do_alarm				     *
- *===========================================================================*/
-int do_alarm()
-{
-  struct itimerval value, ovalue;
-  int remaining;		/* previous time left in seconds */
-
-  /* retrieve the old timer value, in seconds (rounded up) */
-  get_realtimer(mp, &ovalue);
-  
-  remaining = ovalue.it_value.tv_sec;
-  if (ovalue.it_value.tv_usec > 0) remaining++;
-
-  /* set the new timer value */
-  memset(&value, 0, sizeof(value));
-  value.it_value.tv_sec = m_in.seconds;
-
-  set_realtimer(mp, &value);
-
-  /* and return the old timer value */
-  return(remaining);
 }
 
 /*===========================================================================*
@@ -346,7 +319,7 @@ clock_t ticks;			/* how many ticks delay before the signal */
  *				cause_sigalrm				     * 
  *===========================================================================*/
 static void cause_sigalrm(tp)
-struct timer *tp;
+minix_timer_t *tp;
 {
   int proc_nr_n;
   register struct mproc *rmp;

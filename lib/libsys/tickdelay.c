@@ -1,5 +1,5 @@
 #include "sysutil.h"
-#include <timers.h>
+#include <minix/timers.h>
 
 /*===========================================================================*
  *                               tickdelay			    	     *

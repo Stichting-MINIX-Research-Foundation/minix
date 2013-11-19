@@ -16,6 +16,8 @@ LDADD+=		-lm -lcompat_minix
 
 .include <bsd.own.mk>
 
+SUBDIR=		blocktest
+
 # Some have special flags compiling
 .if ${MACHINE_ARCH} == "i386"
 # LSC FIXME: Compilation error for now on ARM with that!
@@ -31,6 +33,8 @@ COPTS.test68.c=	-O0
 
 # Some have special libraries
 LDADD.test59=	-lmthread
+LDADD.test76=	-lutil
+LDADD.test77=	-lutil
 
 # Some have an extra file
 OBJS.test57=	test57loop.o
@@ -53,7 +57,7 @@ MINIX_TESTS= \
  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 \
 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 \
 41 42 43 44 45 46    48 49 50    52 53 54 55 56    58 59 60 \
-61       64 65 66 67 68 69 70 71 72 73 74 75
+61       64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79
 
 .if ${MACHINE_ARCH} == "i386"
 MINIX_TESTS+= \
@@ -61,20 +65,14 @@ MINIX_TESTS+= \
    62
 .endif #  ${MACHINE_ARCH} == "i386"
 
-.if ${MACHINE_ARCH} == "earm"
-# LSC Not yet supported on ARM
-MKPIC:=		no
-LDSTATIC:=	-static
-.endif
-
 .for t in ${MINIX_TESTS}
 PROGS+= test${t}
 .endfor
   
-PROGS+=	t10a t11a t11b t40a t40b t40c t40d t40e t40f t60a t60b \
-	t67a t67b t68a t68b
+PROGS+=	t10a t11a t11b t40a t40b t40c t40d t40e t40f t40g t60a t60b \
+	t67a t67b t68a t68b tvnd
 
-SCRIPTS+= run testinterp.sh testsh1.sh testsh2.sh
+SCRIPTS+= run testinterp.sh testsh1.sh testsh2.sh testvnd.sh
 
 .if ${MKPIC} == "yes"
 # Build them as dynamic executables by default if shared libraries
@@ -111,7 +109,7 @@ OBJS.${o} += common.o
 
 # LSC Make sure there is not leftover after a failed testrun
 clean: .PHONY .MAKE
-	$(MAKE) -C select clean
-	rm -rf DIR*
+	@rm -rf DIR*
 
 .include <bsd.prog.mk>
+.include <bsd.subdir.mk>

@@ -1,6 +1,5 @@
 #!/bin/bash
 set -e
-#set -x
 
 #
 # Source settings if present
@@ -45,7 +44,8 @@ fi
 #: ${CONSOLE=tty00}
 
 if [ ! -f ${BUILDSH} ]
-then	echo "Please invoke me from the root source dir, where ${BUILDSH} is."
+then
+	echo "Please invoke me from the root source dir, where ${BUILDSH} is."
 	exit 1
 fi
 
@@ -86,7 +86,7 @@ done
 # Call build.sh using a sloppy file list so we don't need to remove the installed /etc/fstag
 #
 export CPPFLAGS=${FLAG}
-sh ${BUILDSH} -V SLOPPY_FLIST=yes -V MKBINUTILS=yes -V MKGCCCMDS=yes -j ${JOBS} -m ${ARCH} -O ${OBJ} -D ${DESTDIR} ${BUILDVARS} -U -u distribution
+sh ${BUILDSH} -V SLOPPY_FLIST=yes -j ${JOBS} -m ${ARCH} -O ${OBJ} -D ${DESTDIR} ${BUILDVARS} -U -u distribution
 
 #
 # This script creates a bootable image and should at some point in the future
@@ -126,15 +126,19 @@ dd if=/dev/zero of=${IMG_DIR}/fat.img bs=512 count=1 seek=$(($FAT_SIZE -1)) 2>/d
 rm -f ${IMG}
 dd if=/dev/zero of=${IMG} bs=512 count=1 seek=$(($IMG_SIZE -1))
 
+#
 # Do some math to determine the start addresses of the partitions.
 # Don't leave holes so the 'partition' invocation later is easy.
+#
 FAT_START=2048
 ROOT_START=$(($FAT_START + $FAT_SIZE))
 HOME_START=$(($ROOT_START + $ROOT_SIZE))
 USR_START=$(($HOME_START + $HOME_SIZE))
 
+#
 # Write the partition table using the natively compiled
 # minix partition utility
+#
 ${CROSS_TOOLS}/nbpartition -m ${IMG} ${FAT_START} "c:${FAT_SIZE}*" 81:${ROOT_SIZE} 81:${HOME_SIZE} 81:${USR_SIZE}
 
 #
@@ -177,14 +181,17 @@ ${CROSS_PREFIX}objcopy ${OBJ}/kernel/kernel -O binary ${OBJ}/kernel.bin
 
 mcopy -bsp -i ${IMG_DIR}/fat.img ${OBJ}/kernel.bin ::kernel.bin
 
-for f in vm rs pm sched vfs ds mfs pfs init
+for f in servers/vm/vm servers/rs/rs servers/pm/pm servers/sched/sched \
+	servers/vfs/vfs servers/ds/ds servers/mfs/mfs servers/pfs/pfs \
+	sbin/init/init
 do
-    cp ${OBJ}/servers/${f}/${f} ${OBJ}/${f}.elf
-    ${CROSS_PREFIX}strip -s ${OBJ}/${f}.elf
-    mcopy -bsp -i ${IMG_DIR}/fat.img  ${OBJ}/${f}.elf ::${f}.elf
+    fn=`basename $f`.elf
+    cp ${OBJ}/${f} ${OBJ}/${fn}
+    ${CROSS_PREFIX}strip -s ${OBJ}/${fn}
+    mcopy -bsp -i ${IMG_DIR}/fat.img  ${OBJ}/${fn} ::${fn}
 done
 
-for f in tty memory log
+for f in tty memory
 do
     cp ${OBJ}/drivers/${f}/${f} ${OBJ}/${f}.elf
     ${CROSS_PREFIX}strip -s ${OBJ}/${f}.elf
@@ -195,8 +202,8 @@ done
 # make the different file system. this part is *also* hacky. We first convert
 # the METALOG.sanitised using mtree into a input METALOG containing uids and
 # gids.
-# Afther that we do some magic processing to add device nodes (also missing from METALOG)
-# and convert the METALOG into a proto file that can be used by mkfs.mfs
+# Afther that we do some processing to convert the METALOG into a proto file
+# that can be used by mkfs.mfs
 #
 echo "creating the file systems"
 
@@ -204,24 +211,13 @@ echo "creating the file systems"
 # read METALOG and use mtree to conver the user and group names into uid and gids
 # FIX put "input somwhere clean"
 #
-cat ${DESTDIR}/METALOG.sanitised | ${CROSS_TOOLS}/nbmtree -N ${DESTDIR}/etc -C > ${IMG_DIR}/input
+cat ${DESTDIR}/METALOG.sanitised | ${CROSS_TOOLS}/nbmtree -N ${DESTDIR}/etc -C -K device > ${IMG_DIR}/input
 
 # add fstab
 echo "./etc/fstab type=file uid=0 gid=0 mode=0755 size=747 time=1365060731.000000000" >> ${IMG_DIR}/input
 
 # fill root.img (skipping /usr entries while keeping the /usr directory)
-cat ${IMG_DIR}/input  | grep -v "^./usr/" | ${CROSS_TOOLS}/nbtoproto -b ${DESTDIR} -o ${IMG_DIR}/root.in
-
-#
-# add device nodes somewhere in the middle of the proto file. Better would be to add the entries in the
-# original METALOG
-# grab the first part
-grep -B 10000 "^ dev"  ${IMG_DIR}/root.in >  ${IMG_DIR}/root.proto
-# add the device nodes from the ramdisk
-cat  ${OBJ}/drivers/ramdisk/proto.dev >> ${IMG_DIR}/root.proto
-# and add the rest of the file
-grep -A 10000 "^ dev"  ${IMG_DIR}/root.in | tail -n +2    >>  ${IMG_DIR}/root.proto
-rm ${IMG_DIR}/root.in
+cat ${IMG_DIR}/input  | grep -v "^./usr/" | ${CROSS_TOOLS}/nbtoproto -b ${DESTDIR} -o ${IMG_DIR}/root.proto
 
 #
 # Create proto files for /usr and /home using toproto.
@@ -232,6 +228,7 @@ cat ${IMG_DIR}/input  | grep  "^\./home/\|^. "  | sed "s,\./home,\.,g" | ${CROSS
 #
 # Generate /root, /usr and /home partition images.
 #
+echo "Writing Minix filesystem images"
 echo " - ROOT"
 ${CROSS_TOOLS}/nbmkfs.mfs -I $((${ROOT_START} * 512)) -b $((${ROOT_SIZE} / 8)) ${IMG} ${IMG_DIR}/root.proto
 echo " - USR"

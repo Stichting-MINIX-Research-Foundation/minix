@@ -60,26 +60,28 @@ static void open_terminal(int *child_fd, int *parent_fd) {
 }
 
 static int do_child(int terminal) {
-  struct timeval tv;
-
   /* Going to sleep for two seconds to allow the parent proc to get ready */
-  tv.tv_sec = 2;
-  tv.tv_usec = 0;
-  select(0, NULL, NULL, NULL, &tv);
+  sleep(2);
 
   /* Try to write. Doesn't matter how many bytes we actually send. */
   (void) write(terminal, SENDSTRING, strlen(SENDSTRING));
-  close(terminal);
 
   /* Wait for another second to allow the parent to process incoming data */
-  tv.tv_usec = 1000000;
-  (void) select(0,NULL, NULL, NULL, &tv);
+  sleep(1);
+
+  /* Write some more, and wait some more. */
+  (void) write(terminal, SENDSTRING, strlen(SENDSTRING));
+
+  sleep(1);
+
+  close(terminal);
   exit(0);
 }
 
 static int do_parent(int child, int terminal) {
-  fd_set fds_read, fds_write, fds_error;
-  int retval;
+  fd_set fds_read, fds_read2, fds_write, fds_error;
+  int retval, terminal2, highest;
+  char buf[256];
 
   /* Clear bit masks */
   FD_ZERO(&fds_read); FD_ZERO(&fds_write); FD_ZERO(&fds_error);
@@ -96,7 +98,6 @@ static int do_parent(int child, int terminal) {
   
   if(retval != 1) em(1, "incorrect amount of ready file descriptors");
 
-
   if(FD_ISSET(terminal, &fds_read)) em(2, "read should NOT be set");
   if(!FD_ISSET(terminal, &fds_write)) em(3, "write should be set");
   if(FD_ISSET(terminal, &fds_error)) em(4, "error should NOT be set");
@@ -110,7 +111,6 @@ static int do_parent(int child, int terminal) {
   if(!FD_ISSET(terminal, &fds_read)) em(6, "read should be set");
   if(FD_ISSET(terminal, &fds_error)) em(7, "error should not be set");
 
-
   FD_ZERO(&fds_read); FD_ZERO(&fds_error);
   FD_SET(terminal, &fds_write);
   retval = select(terminal+1, NULL, &fds_write, NULL, NULL);
@@ -118,6 +118,33 @@ static int do_parent(int child, int terminal) {
    * immediately with fd set in fds_write. */
   if(retval != 1) em(8, "incorrect amount or ready file descriptors");
 
+  /* See if selecting on the same object with two different fds results in both
+   * fds being returned as ready, immediately.
+   */
+  terminal2 = dup(terminal);
+  if (terminal2 < 0) em(9, "unable to dup file descriptor");
+
+  FD_ZERO(&fds_read);
+  FD_SET(terminal, &fds_read);
+  FD_SET(terminal2, &fds_read);
+  fds_read2 = fds_read;
+  highest = terminal > terminal2 ? terminal : terminal2;
+
+  retval = select(highest+1, &fds_read, NULL, NULL, NULL);
+  if (retval != 2) em(10, "incorrect amount of ready file descriptors");
+  if (!FD_ISSET(terminal, &fds_read)) em(11, "first fd missing from set");
+  if (!FD_ISSET(terminal2, &fds_read)) em(12, "second fd missing from set");
+
+  /* Empty the buffer. */
+  if (read(terminal, buf, sizeof(buf)) <= 0) em(13, "unable to read data");
+
+  /* Repeat the test, now with a delay. */
+  retval = select(highest+1, &fds_read2, NULL, NULL, NULL);
+  if (retval != 2) em(10, "incorrect amount of ready file descriptors");
+  if (!FD_ISSET(terminal, &fds_read2)) em(11, "first fd missing from set");
+  if (!FD_ISSET(terminal2, &fds_read2)) em(12, "second fd missing from set");
+
+  close(terminal2);
   close(terminal);
   waitpid(child, &retval, 0);
   exit(errct);

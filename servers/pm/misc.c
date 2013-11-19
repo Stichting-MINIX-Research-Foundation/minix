@@ -3,40 +3,35 @@
  * The entry points into this file are:
  *   do_reboot: kill all processes, then reboot system
  *   do_getsysinfo: request copy of PM data structure  (Jorrit N. Herder)
- *   do_getprocnr: lookup process slot number  (Jorrit N. Herder)
+ *   do_getprocnr: lookup endpoint by process ID
  *   do_getepinfo: get the pid/uid/gid of a process given its endpoint
  *   do_getsetpriority: get/set process priority
  *   do_svrctl: process manager control
  */
 
-#define brk _brk
-
 #include "pm.h"
 #include <minix/callnr.h>
 #include <signal.h>
 #include <sys/svrctl.h>
+#include <sys/reboot.h>
 #include <sys/resource.h>
 #include <sys/utsname.h>
 #include <minix/com.h>
 #include <minix/config.h>
-#include <minix/reboot.h>
 #include <minix/sysinfo.h>
 #include <minix/type.h>
-#include <minix/vm.h>
 #include <minix/ds.h>
-#include <string.h>
 #include <machine/archtypes.h>
 #include <lib.h>
 #include <assert.h>
 #include "mproc.h"
-#include "param.h"
 #include "kernel/proc.h"
 
 struct utsname uts_val = {
-  "Minix",		/* system name */
+  OS_NAME,		/* system name */
   "noname",		/* node/network name */
-  OS_RELEASE,		/* O.S. release (e.g. 1.5) */
-  OS_VERSION,		/* O.S. version (e.g. 10) */
+  OS_RELEASE,		/* O.S. release (e.g. 3.3.0) */
+  OS_VERSION,		/* O.S. version (e.g. Minix 3.3.0 (GENERIC)) */
   "xyzzy",		/* machine (cpu) type (filled in later) */
 #if defined(__i386__)
   "i386",		/* architecture */
@@ -60,7 +55,7 @@ static char *uts_tbl[] = {
 };
 
 #if ENABLE_SYSCALL_STATS
-unsigned long calls_stats[NCALLS];
+unsigned long calls_stats[NR_PM_CALLS];
 #endif
 
 /*===========================================================================*
@@ -69,7 +64,6 @@ unsigned long calls_stats[NCALLS];
 int do_sysuname()
 {
 /* Set or get uname strings. */
-
   int r;
   size_t n;
   char *string;
@@ -87,19 +81,19 @@ int do_sysuname()
   };
 #endif
 
-  if ((unsigned) m_in.sysuname_field >= _UTS_MAX) return(EINVAL);
+  if ((unsigned) m_in.PM_SYSUNAME_FIELD >= _UTS_MAX) return(EINVAL);
 
-  string = uts_tbl[m_in.sysuname_field];
+  string = uts_tbl[m_in.PM_SYSUNAME_FIELD];
   if (string == NULL)
 	return EINVAL;	/* Unsupported field */
 
-  switch (m_in.sysuname_req) {
+  switch (m_in.PM_SYSUNAME_REQ) {
   case _UTS_GET:
 	/* Copy an uname string to the user. */
 	n = strlen(string) + 1;
-	if (n > m_in.sysuname_len) n = m_in.sysuname_len;
+	if (n > m_in.PM_SYSUNAME_LEN) n = m_in.PM_SYSUNAME_LEN;
 	r = sys_vircopy(SELF, (phys_bytes) string, 
-		mp->mp_endpoint, (phys_bytes) m_in.sysuname_value,
+		mp->mp_endpoint, (phys_bytes) m_in.PM_SYSUNAME_VALUE,
 		(phys_bytes) n);
 	if (r < 0) return(r);
 	break;
@@ -107,11 +101,11 @@ int do_sysuname()
 #if 0	/* no updates yet */
   case _UTS_SET:
 	/* Set an uname string, needs root power. */
-	len = sizes[m_in.sysuname_field];
+	len = sizes[m_in.PM_SYSUNAME_FIELD];
 	if (mp->mp_effuid != 0 || len == 0) return(EPERM);
-	n = len < m_in.sysuname_len ? len : m_in.sysuname_len;
+	n = len < m_in.PM_SYSUNAME_LEN ? len : m_in.PM_SYSUNAME_LEN;
 	if (n <= 0) return(EINVAL);
-	r = sys_vircopy(mp->mp_endpoint, (phys_bytes) m_in.sysuname_value,
+	r = sys_vircopy(mp->mp_endpoint, (phys_bytes) m_in.PM_SYSUNAME_VALUE,
 		SELF, (phys_bytes) tmp, (phys_bytes) n);
 	if (r < 0) return(r);
 	tmp[n-1] = 0;
@@ -142,7 +136,7 @@ int do_getsysinfo()
   {
 	printf("PM: unauthorized call of do_getsysinfo by proc %d '%s'\n",
 		mp->mp_endpoint, mp->mp_name);
-	sys_sysctl_stacktrace(mp->mp_endpoint);
+	sys_diagctl_stacktrace(mp->mp_endpoint);
 	return EPERM;
   }
 
@@ -171,118 +165,40 @@ int do_getsysinfo()
 /*===========================================================================*
  *				do_getprocnr			             *
  *===========================================================================*/
-int do_getprocnr()
+int do_getprocnr(void)
 {
   register struct mproc *rmp;
-  static char search_key[PROC_NAME_LEN+1];
-  int key_len;
-  int s;
 
-  /* This call should be moved to DS. */
-  if (mp->mp_effuid != 0)
-  {
-	/* For now, allow non-root processes to request their own endpoint. */
-	if (m_in.pid < 0 && m_in.namelen == 0) {
-		mp->mp_reply.PM_ENDPT = who_e;
-		mp->mp_reply.PM_PENDPT = NONE;
-		return OK;
-	}
-
-	printf("PM: unauthorized call of do_getprocnr by proc %d\n",
-		mp->mp_endpoint);
-	sys_sysctl_stacktrace(mp->mp_endpoint);
+  /* This check should be replaced by per-call ACL checks. */
+  if (who_e != RS_PROC_NR) {
+	printf("PM: unauthorized call of do_getprocnr by %d\n", who_e);
 	return EPERM;
   }
 
-#if 0
-  printf("PM: do_getprocnr(%d) call from endpoint %d, %s\n",
-	m_in.pid, mp->mp_endpoint, mp->mp_name);
-#endif
+  if ((rmp = find_proc(m_in.PM_GETPROCNR_PID)) == NULL)
+	return(ESRCH);
 
-  if (m_in.pid >= 0) {			/* lookup process by pid */
-	if ((rmp = find_proc(m_in.pid)) != NULL) {
-		mp->mp_reply.PM_ENDPT = rmp->mp_endpoint;
-#if 0
-		printf("PM: pid result: %d\n", rmp->mp_endpoint);
-#endif
-		return(OK);
-	}
-  	return(ESRCH);			
-  } else if (m_in.namelen > 0) {	/* lookup process by name */
-  	key_len = MIN(m_in.namelen, PROC_NAME_LEN);
- 	if (OK != (s=sys_datacopy(who_e, (vir_bytes) m_in.PMBRK_ADDR, 
- 			SELF, (vir_bytes) search_key, key_len))) 
- 		return(s);
- 	search_key[key_len] = '\0';	/* terminate for safety */
-  	for (rmp = &mproc[0]; rmp < &mproc[NR_PROCS]; rmp++) {
-		if (((rmp->mp_flags & (IN_USE | EXITING)) == IN_USE) && 
-			strncmp(rmp->mp_name, search_key, key_len)==0) {
-  			mp->mp_reply.PM_ENDPT = rmp->mp_endpoint;
-  			return(OK);
-		} 
-	}
-  	return(ESRCH);			
-  } else {			/* return own/parent process number */
-#if 0
-	printf("PM: endpt result: %d\n", mp->mp_reply.PM_ENDPT);
-#endif
-  	mp->mp_reply.PM_ENDPT = who_e;
-	mp->mp_reply.PM_PENDPT = mproc[mp->mp_parent].mp_endpoint;
-  }
-
+  mp->mp_reply.PM_GETPROCNR_ENDPT = rmp->mp_endpoint;
   return(OK);
 }
 
 /*===========================================================================*
  *				do_getepinfo			             *
  *===========================================================================*/
-int do_getepinfo()
+int do_getepinfo(void)
 {
-  register struct mproc *rmp;
+  struct mproc *rmp;
   endpoint_t ep;
+  int slot;
 
-  ep = m_in.PM_ENDPT;
+  ep = m_in.PM_GETEPINFO_ENDPT;
+  if (pm_isokendpt(ep, &slot) != OK)
+	return(ESRCH);
 
-  for (rmp = &mproc[0]; rmp < &mproc[NR_PROCS]; rmp++) {
-	if ((rmp->mp_flags & IN_USE) && (rmp->mp_endpoint == ep)) {
-		mp->mp_reply.reply_res2 = rmp->mp_effuid;
-		mp->mp_reply.reply_res3 = rmp->mp_effgid;
-		return(rmp->mp_pid);
-	}
-  }
-
-  /* Process not found */
-  return(ESRCH);
-}
-
-/*===========================================================================*
- *				do_getepinfo_o			             *
- *===========================================================================*/
-int do_getepinfo_o()
-{
-  register struct mproc *rmp;
-  endpoint_t ep;
-
-  /* This call should be moved to DS. */
-  if (mp->mp_effuid != 0) {
-	printf("PM: unauthorized call of do_getepinfo_o by proc %d\n",
-		mp->mp_endpoint);
-	sys_sysctl_stacktrace(mp->mp_endpoint);
-	return EPERM;
-  }
-
-  ep = m_in.PM_ENDPT;
-
-  for (rmp = &mproc[0]; rmp < &mproc[NR_PROCS]; rmp++) {
-	if ((rmp->mp_flags & IN_USE) && (rmp->mp_endpoint == ep)) {
-		mp->mp_reply.reply_res2 = (short) rmp->mp_effuid;
-		mp->mp_reply.reply_res3 = (char) rmp->mp_effgid;
-		return(rmp->mp_pid);
-	}
-  }
-
-  /* Process not found */
-  return(ESRCH);
+  rmp = &mproc[slot];
+  mp->mp_reply.PM_GETEPINFO_UID = rmp->mp_effuid;
+  mp->mp_reply.PM_GETEPINFO_GID = rmp->mp_effgid;
+  return(rmp->mp_pid);
 }
 
 /*===========================================================================*
@@ -296,11 +212,10 @@ int do_reboot()
   if (mp->mp_effuid != SUPER_USER) return(EPERM);
 
   /* See how the system should be aborted. */
-  abort_flag = (unsigned) m_in.reboot_flag;
-  if (abort_flag >= RBT_INVALID) return(EINVAL); 
+  abort_flag = (unsigned) m_in.PM_REBOOT_HOW;
 
   /* notify readclock (some arm systems power off via RTC alarms) */
-  if (abort_flag == RBT_POWEROFF) {
+  if (abort_flag & RB_POWERDOWN) {
 	endpoint_t readclock_ep;
 	if (ds_retrieve_label_endpt("readclock.drv", &readclock_ep) == OK) {
 		message m; /* no params to set, nothing we can do if it fails */
@@ -317,7 +232,8 @@ int do_reboot()
   sys_stop(INIT_PROC_NR);		   /* stop init, but keep it around */
 
   /* Tell VFS to reboot */
-  m.m_type = PM_REBOOT;
+  memset(&m, 0, sizeof(m));
+  m.m_type = VFS_PM_REBOOT;
 
   tell_vfs(&mproc[VFS_PROC_NR], &m);
 
@@ -332,9 +248,9 @@ int do_getsetpriority()
 	int r, arg_which, arg_who, arg_pri;
 	struct mproc *rmp;
 
-	arg_which = m_in.m1_i1;
-	arg_who = m_in.m1_i2;
-	arg_pri = m_in.m1_i3;	/* for SETPRIORITY */
+	arg_which = m_in.PM_PRIORITY_WHICH;
+	arg_who = m_in.PM_PRIORITY_WHO;
+	arg_pri = m_in.PM_PRIORITY_PRIO;	/* for SETPRIORITY */
 
 	/* Code common to GETPRIORITY and SETPRIORITY. */
 
@@ -353,7 +269,7 @@ int do_getsetpriority()
 		return EPERM;
 
 	/* If GET, that's it. */
-	if (call_nr == GETPRIORITY) {
+	if (call_nr == PM_GETPRIORITY) {
 		return(rmp->mp_nice - PRIO_MIN);
 	}
 
@@ -390,8 +306,8 @@ int do_svrctl()
   } local_param_overrides[MAX_LOCAL_PARAMS];
   static int local_params = 0;
 
-  req = m_in.svrctl_req;
-  ptr = (vir_bytes) m_in.svrctl_argp;
+  req = m_in.SVRCTL_REQ;
+  ptr = (vir_bytes) m_in.SVRCTL_ARG;
 
   /* Is the request indeed for the PM? */
   if (((req >> 8) & 0xFF) != 'M') return(EINVAL);
@@ -480,27 +396,6 @@ int do_svrctl()
   default:
 	return(EINVAL);
   }
-}
-
-/*===========================================================================*
- *				_brk				             *
- *===========================================================================*/
-
-extern char *_brksize;
-int brk(brk_addr)
-void *brk_addr;
-{
-	int r;
-/* PM wants to call brk() itself. */
-	if((r=vm_brk(PM_PROC_NR, brk_addr)) != OK) {
-#if 0
-		printf("PM: own brk(%p) failed: vm_brk() returned %d\n",
-			brk_addr, r);
-#endif
-		return -1;
-	}
-	_brksize = brk_addr;
-	return 0;
 }
 
 /*===========================================================================*

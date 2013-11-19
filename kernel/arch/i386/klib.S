@@ -221,7 +221,7 @@ LABEL(phys_copy_fault_in_kernel)	/* kernel can send us here */
 /*
  * int copy_msg_from_user(message * user_mbuf, message * dst);
  *
- * Copies a message of 36 bytes from user process space to a kernel buffer. This
+ * Copies a message of 64 bytes from user process space to a kernel buffer. This
  * function assumes that the process address space is installed (cr3 loaded).
  *
  * This function from the callers point of view either succeeds or returns an
@@ -258,6 +258,21 @@ ENTRY(copy_msg_from_user)
 	mov	8*4(%ecx), %eax
 	mov	%eax, 8*4(%edx)
 
+	mov	 9*4(%ecx), %eax
+	mov	%eax,  9*4(%edx) 
+	mov	10*4(%ecx), %eax
+	mov	%eax, 10*4(%edx)
+	mov	11*4(%ecx), %eax
+	mov	%eax, 11*4(%edx)
+	mov	12*4(%ecx), %eax
+	mov	%eax, 12*4(%edx)
+	mov	13*4(%ecx), %eax
+	mov	%eax, 13*4(%edx)
+	mov	14*4(%ecx), %eax
+	mov	%eax, 14*4(%edx)
+	mov	15*4(%ecx), %eax
+	mov	%eax, 15*4(%edx)
+
 LABEL(__copy_msg_from_user_end)
 	movl	$0, %eax
 	ret
@@ -268,7 +283,7 @@ LABEL(__copy_msg_from_user_end)
 /*
  * void copy_msg_to_user(message * src, message * user_mbuf);
  *
- * Copies a message of 36 bytes to user process space from a kernel buffer.
+ * Copies a message of 64 bytes to user process space from a kernel buffer.
  *
  * All the other copy_msg_from_user() comments apply here as well!
  */
@@ -296,6 +311,22 @@ ENTRY(copy_msg_to_user)
 	mov	%eax, 7*4(%edx)
 	mov	8*4(%ecx), %eax
 	mov	%eax, 8*4(%edx)
+
+
+	mov	9*4(%ecx), %eax
+	mov	%eax, 9*4(%edx)
+	mov	10*4(%ecx), %eax
+	mov	%eax, 10*4(%edx)
+	mov	11*4(%ecx), %eax
+	mov	%eax, 11*4(%edx)
+	mov	12*4(%ecx), %eax
+	mov	%eax, 12*4(%edx)
+	mov	13*4(%ecx), %eax
+	mov	%eax, 13*4(%edx)
+	mov	14*4(%ecx), %eax
+	mov	%eax, 14*4(%edx)
+	mov	15*4(%ecx), %eax
+	mov	%eax, 15*4(%edx)
 
 LABEL(__copy_msg_to_user_end)
 	movl	$0, %eax

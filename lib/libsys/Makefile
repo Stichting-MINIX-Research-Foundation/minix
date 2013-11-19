@@ -9,20 +9,24 @@ SRCS+=  \
 	alloc_util.c \
 	assert.c \
 	asynsend.c \
+	checkperms.c \
+	copyfd.c \
 	ds.c	\
 	env_get_prm.c \
 	env_panic.c \
 	env_parse.c \
 	env_prefix.c \
 	fkey_ctl.c \
+	getepinfo.c \
+	getprocnr.c \
 	getticks.c \
 	getsysinfo.c \
 	getuptime.c \
-	input.c \
 	kernel_call.c \
 	kprintf.c \
 	kputc.c \
 	kputs.c \
+	mapdriver.c \
 	optset.c \
 	panic.c \
 	safecopies.c \
@@ -34,10 +38,13 @@ SRCS+=  \
 	sef_ping.c \
 	sef_signal.c \
 	sqrt_approx.c \
+	srv_fork.c \
+	srv_kill.c \
 	stacktrace.c \
 	sys_abort.c \
 	sys_clear.c \
 	sys_cprof.c \
+	sys_diagctl.c \
 	sys_endsig.c \
 	sys_exec.c \
 	sys_exit.c \
@@ -66,7 +73,6 @@ SRCS+=  \
 	sys_sprof.c \
 	sys_statectl.c \
 	sys_stime.c \
-	sys_sysctl.c \
 	sys_times.c \
 	sys_trace.c \
 	sys_umap.c \
@@ -76,19 +82,21 @@ SRCS+=  \
 	sys_vsafecopy.c \
 	sys_vtimer.c \
 	sys_vumap.c \
-	send_taskreply.c \
 	taskcall.c \
 	tickdelay.c \
 	timers.c \
-	vm_brk.c \
 	vm_cache.c \
 	vm_exit.c \
 	vm_fork.c \
 	vm_info.c \
 	vm_map_phys.c \
+	vm_memctl.c \
 	vm_notify_sig.c \
 	vm_umap.c \
 	vm_procctl.c \
+	vm_query_exit.c \
+	vm_set_priv.c \
+	vm_update.c \
 	vprintf.c
 
 .if ${MKPCI} != "no"
@@ -127,9 +135,5 @@ CPPFLAGS+= -DUSE_SYSDEBUG
 .endif
 
 CPPFLAGS.sched_start.c+=	-I${NETBSDSRCDIR}
-
-.if (${CC} == "gcc") || (${CC} == "clang")
-LDADD+=	-lminc
-.endif
 
 .include <bsd.lib.mk>

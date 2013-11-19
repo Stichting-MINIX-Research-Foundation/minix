@@ -80,15 +80,12 @@ struct ps_strings *__ps_strings = 0;
 static char	 empty_string[] = "";
 char		*__progname = empty_string;
 
-#ifndef __minix
 __dead __dso_hidden void ___start(void (*)(void), const Obj_Entry *,
 			 struct ps_strings *);
 
+#ifndef __minix
 #define	write(fd, s, n)	__syscall(SYS_write, (fd), (s), (n))
 #else
-__dead __dso_hidden void ___start(int, char **, char **, void (*)(void),
-			const Obj_Entry *, struct ps_strings *);
-
 #define	write(fd, s, n) /* NO write() from here on minix */
 #endif
 
@@ -129,30 +126,11 @@ _fini(void)
 #endif /* HAVE_INITFINI_ARRAY */
 
 void
-#ifdef __minix
-___start(int argc, char **argv, char **envp,
-    void (*cleanup)(void),                 /* from shared loader */
-#else
 ___start(void (*cleanup)(void),			/* from shared loader */
-#endif /* __minix */
     const Obj_Entry *obj,			/* from shared loader */
     struct ps_strings *ps_strings)
 {
-#ifdef __minix
-	/* LSC: We have not yet updated the way we pass arguments to 
-	        the userspace, so here some code to adapt this to the new 
-	        ways. */
-	struct ps_strings minix_ps_strings;
 
-	if (ps_strings == NULL) {
-		memset(&minix_ps_strings, 0, sizeof(minix_ps_strings));
-
-		minix_ps_strings.ps_envstr = envp;
-		minix_ps_strings.ps_argvstr = argv;
-		minix_ps_strings.ps_nargvstr = argc;
-		ps_strings = &minix_ps_strings;
-	}
-#endif /* __minix */
 	if (ps_strings == NULL)
 		_FATAL("ps_strings missing\n");
 	__ps_strings = ps_strings;

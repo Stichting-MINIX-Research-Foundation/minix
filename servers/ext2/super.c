@@ -15,6 +15,7 @@
 #include <minix/com.h>
 #include <minix/u64.h>
 #include <minix/bdev.h>
+#include <machine/vmparam.h>
 #include "buf.h"
 #include "inode.h"
 #include "super.h"
@@ -74,6 +75,9 @@ register struct super_block *sp; /* pointer to a superblock */
   char *buf;
   block_t gd_size; /* group descriptors table size in blocks */
   int gdt_position;
+  static char superblock_buf[1024];
+
+  ondisk_superblock = (struct super_block *) superblock_buf;
 
   dev = sp->s_dev;              /* save device (will be overwritten by copy) */
   if (dev == NO_DEV)
@@ -86,16 +90,10 @@ register struct super_block *sp; /* pointer to a superblock */
 	super_block_offset = opt.block_with_super * 1024;
   }
 
-  STATICINIT(ondisk_superblock, 1);
-
-  if (!ondisk_superblock)
-	panic("can't allocate memory for super_block buffers");
-
-  assert(_MIN_BLOCK_SIZE <= sizeof(*ondisk_superblock));
   r = bdev_read(dev, ((u64_t)(super_block_offset)), (char*) ondisk_superblock,
-	_MIN_BLOCK_SIZE, BDEV_NOFLAGS);
+	sizeof(superblock_buf), BDEV_NOFLAGS);
 
-  if (r != _MIN_BLOCK_SIZE)
+  if (r != sizeof(superblock_buf))
 	return(EINVAL);
 
   super_copy(sp, ondisk_superblock);
@@ -107,8 +105,7 @@ register struct super_block *sp; /* pointer to a superblock */
 
   sp->s_block_size = 1024*(1<<sp->s_log_block_size);
 
-  if (sp->s_block_size < _MIN_BLOCK_SIZE
-      || sp->s_block_size >_MAX_BLOCK_SIZE) {
+  if (sp->s_block_size < PAGE_SIZE) {
 	printf("data block size (%u) is invalid\n", sp->s_block_size);
 	return(EINVAL);
   }

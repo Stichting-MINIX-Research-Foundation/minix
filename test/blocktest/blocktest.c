@@ -1,10 +1,12 @@
 /* Block Device Driver Test driver, by D.C. van Moolenbroek */
 #include <stdlib.h>
+#include <stdarg.h>
 #include <minix/blockdriver.h>
 #include <minix/drvlib.h>
 #include <minix/ds.h>
 #include <minix/optset.h>
 #include <sys/ioc_disk.h>
+#include <sys/mman.h>
 #include <assert.h>
 
 enum {
@@ -33,11 +35,16 @@ static endpoint_t driver_endpt;	/* driver endpoint */
 static int may_write = FALSE;		/* may we write to the device? */
 static int sector_size = 512;		/* size of a single disk sector */
 static int min_read = 512;		/* minimum total size of read req */
+static int min_write = 0;		/* minimum total size of write req */
 static int element_size = 512;		/* minimum I/O vector element size */
 static int max_size = 131072;		/* maximum total size of any req */
 /* Note that we do not test exceeding the max_size limit, so it is safe to set
  * it to a value lower than the driver supports.
  */
+
+/* These settings are used for automated test runs. */
+static int contig = TRUE;		/* allocate contiguous DMA memory? */
+static int silent = FALSE;		/* do not produce console output? */
 
 static struct part_geom part;		/* base and size of target partition */
 
@@ -60,9 +67,59 @@ static struct optset optset_table[] = {
 	{ "sector",	OPT_INT,	&sector_size,	10		     },
 	{ "element",	OPT_INT,	&element_size,	10		     },
 	{ "min_read",	OPT_INT,	&min_read,	10		     },
+	{ "min_write",	OPT_INT,	&min_write,	10		     },
 	{ "max",	OPT_INT,	&max_size,	10		     },
+	{ "nocontig",	OPT_BOOL,	&contig,	FALSE		     },
+	{ "silent",	OPT_BOOL,	&silent,	TRUE		     },
 	{ NULL,		0,		NULL,		0		     }
 };
+
+static void output(char *fmt, ...)
+{
+	/* Print debugging information, unless configured to be silent.
+	 */
+	va_list argp;
+
+	if (silent)
+		return;
+
+	va_start(argp, fmt);
+
+	vprintf(fmt, argp);
+
+	va_end(argp);
+}
+
+static void *alloc_dma_memory(size_t size)
+{
+	/* Allocate memory that may be used for direct DMA. For most drivers,
+	 * this means that the memory has to be physically contiguous. For some
+	 * drivers (e.g. VND) we allow non-contiguous allocation, because VM is
+	 * currently flaky and does not always manage to provide contiguous
+	 * memory even when it should, thus causing needless test failures.
+	 */
+	void *ptr;
+
+	if (contig)
+		ptr = alloc_contig(size, 0, NULL);
+	else
+		ptr = minix_mmap(NULL, size, PROT_READ | PROT_WRITE,
+			MAP_PREALLOC | MAP_ANON, -1, 0);
+
+	if (ptr == MAP_FAILED)
+		panic("unable to allocate %d bytes of memory", size);
+
+	return ptr;
+}
+
+static void free_dma_memory(void *ptr, size_t size)
+{
+	/* Free memory previously allocated for direct DMA. */
+	if (contig)
+		free_contig(ptr, size);
+	else
+		minix_munmap(ptr, size);
+}
 
 static int set_result(result_t *res, int type, ssize_t value)
 {
@@ -107,42 +164,42 @@ static void got_result(result_t *res, char *desc)
 		}
 	}
 
-	printf("#%02d: %-38s\t[%s]\n", ++i, desc,
+	output("#%02d: %-38s\t[%s]\n", ++i, desc,
 		(res->type == RESULT_OK) ? "PASS" : "FAIL");
 
 	switch (res->type) {
 	case RESULT_DEATH:
-		printf("- driver died\n");
+		output("- driver died\n");
 		break;
 	case RESULT_COMMFAIL:
-		printf("- communication failed; sendrec returned %d\n",
+		output("- communication failed; ipc_sendrec returned %d\n",
 			res->value);
 		break;
 	case RESULT_BADTYPE:
-		printf("- bad type %d in reply message\n", res->value);
+		output("- bad type %d in reply message\n", res->value);
 		break;
 	case RESULT_BADID:
-		printf("- mismatched ID %d in reply message\n", res->value);
+		output("- mismatched ID %d in reply message\n", res->value);
 		break;
 	case RESULT_BADSTATUS:
-		printf("- bad or unexpected status %d in reply message\n",
+		output("- bad or unexpected status %d in reply message\n",
 			res->value);
 		break;
 	case RESULT_TRUNC:
-		printf("- result size not as expected (%u bytes left)\n",
+		output("- result size not as expected (%u bytes left)\n",
 			res->value);
 		break;
 	case RESULT_CORRUPT:
-		printf("- buffer has been modified erroneously\n");
+		output("- buffer has been modified erroneously\n");
 		break;
 	case RESULT_MISSING:
-		printf("- buffer has been left untouched erroneously\n");
+		output("- buffer has been left untouched erroneously\n");
 		break;
 	case RESULT_OVERFLOW:
-		printf("- area around target buffer modified\n");
+		output("- area around target buffer modified\n");
 		break;
 	case RESULT_BADVALUE:
-		printf("- bad or unexpected return value %d from call\n",
+		output("- bad or unexpected return value %d from call\n",
 			res->value);
 		break;
 	}
@@ -153,7 +210,7 @@ static void test_group(char *name, int exec)
 	/* Start a new group of tests.
 	 */
 
-	printf("Test group: %s%s\n", name, exec ? "" : " (skipping)");
+	output("Test group: %s%s\n", name, exec ? "" : " (skipping)");
 
 	group_failure = FALSE;
 }
@@ -169,10 +226,10 @@ static void reopen_device(dev_t minor)
 	memset(&m, 0, sizeof(m));
 	m.m_type = BDEV_OPEN;
 	m.BDEV_MINOR = minor;
-	m.BDEV_ACCESS = (may_write) ? (R_BIT | W_BIT) : R_BIT;
+	m.BDEV_ACCESS = (may_write) ? (BDEV_R_BIT | BDEV_W_BIT) : BDEV_R_BIT;
 	m.BDEV_ID = 0;
 
-	(void) sendrec(driver_endpt, &m);
+	(void) ipc_sendrec(driver_endpt, &m);
 }
 
 static int sendrec_driver(message *m_ptr, ssize_t exp, result_t *res)
@@ -188,13 +245,13 @@ static int sendrec_driver(message *m_ptr, ssize_t exp, result_t *res)
 
 	m_orig = *m_ptr;
 
-	r = sendrec(driver_endpt, m_ptr);
+	r = ipc_sendrec(driver_endpt, m_ptr);
 
 	if (r == EDEADSRCDST) {
 		/* The driver has died. Find its new endpoint, and reopen all
 		 * devices that we opened earlier. Then return failure.
 		 */
-		printf("WARNING: driver has died, attempting to proceed\n");
+		output("WARNING: driver has died, attempting to proceed\n");
 
 		driver_deaths++;
 
@@ -323,9 +380,7 @@ static void alloc_buf_and_grant(u8_t **ptr, cp_grant_id_t *grant,
 	 * grant for it with the requested CPF_* grant permissions.
 	 */
 
-	*ptr = alloc_contig(size, 0, NULL);
-	if (*ptr == NULL)
-		panic("unable to allocate memory");
+	*ptr = alloc_dma_memory(size);
 
 	if ((*grant = cpf_grant_direct(driver_endpt, (vir_bytes) *ptr, size,
 			perms)) == GRANT_INVALID)
@@ -339,7 +394,7 @@ static void free_buf_and_grant(u8_t *ptr, cp_grant_id_t grant, size_t size)
 
 	cpf_revoke(grant);
 
-	free_contig(ptr, size);
+	free_dma_memory(ptr, size);
 }
 
 static void bad_read1(void)
@@ -723,19 +778,28 @@ static void bad_read2(void)
 	cpf_revoke(grant);
 
 	/* Test word-unaligned position. */
-	memcpy(iov, iovt, sizeof(iovt));
+	/* Only perform this test if the minimum read size is not 1, in which
+	 * case it is safe to assume that the driver expects no position
+	 * alignment either. These tests are indeed not exhaustive yet. For now
+	 * we assume that if no alignment is required at all, the driver does
+	 * not implement special logic to achieve this, so we don't need to
+	 * test all possible positions and sizes either (yes, laziness..).
+	 */
+	if (min_read > 1) {
+		memcpy(iov, iovt, sizeof(iovt));
 
-	buf_sum = fill_rand(buf_ptr, buf_size);
-	buf2_sum = fill_rand(buf2_ptr, buf2_size);
-	buf3_sum = fill_rand(buf3_ptr, buf3_size);
+		buf_sum = fill_rand(buf_ptr, buf_size);
+		buf2_sum = fill_rand(buf2_ptr, buf2_size);
+		buf3_sum = fill_rand(buf3_ptr, buf3_size);
 
-	raw_xfer(driver_minor, 1ULL, iov, 3, FALSE, EINVAL, &res);
+		raw_xfer(driver_minor, 1ULL, iov, 3, FALSE, EINVAL, &res);
 
-	test_sum(buf_ptr, buf_size, buf_sum, TRUE, &res);
-	test_sum(buf2_ptr, buf2_size, buf2_sum, TRUE, &res);
-	test_sum(buf3_ptr, buf3_size, buf3_sum, TRUE, &res);
+		test_sum(buf_ptr, buf_size, buf_sum, TRUE, &res);
+		test_sum(buf2_ptr, buf2_size, buf2_sum, TRUE, &res);
+		test_sum(buf3_ptr, buf3_size, buf3_sum, TRUE, &res);
 
-	got_result(&res, "word-unaligned position");
+		got_result(&res, "word-unaligned position");
+	}
 
 	/* Test normal vector request (final check). */
 	memcpy(iov, iovt, sizeof(iovt));
@@ -759,16 +823,14 @@ static void bad_read2(void)
 	free_buf_and_grant(buf_ptr, buf_grant, buf_size);
 }
 
-#define SECTOR_UNALIGN	2ULL	/* word-aligned and sector-unaligned */
-
 static void bad_write(void)
 {
 	/* Test various illegal write transfer requests, if writing is allowed.
 	 * If handled correctly, these requests will not actually write data.
-	 * However, the last test currently erroneously does end up writing.
+	 * This part of the test set is in need of further expansion.
 	 */
 	u8_t *buf_ptr, *buf2_ptr, *buf3_ptr;
-	size_t buf_size, buf2_size, buf3_size;
+	size_t buf_size, buf2_size, buf3_size, sector_unalign;
 	cp_grant_id_t buf_grant, buf2_grant, buf3_grant;
 	cp_grant_id_t grant;
 	u32_t buf_sum, buf2_sum, buf3_sum;
@@ -793,36 +855,49 @@ static void bad_write(void)
 	iovt[2].iov_grant = buf3_grant;
 	iovt[2].iov_size = buf3_size;
 
-	/* Test sector-unaligned write position. */
-	memcpy(iov, iovt, sizeof(iovt));
+	/* Only perform write alignment tests if writes require alignment. */
+	if (min_write == 0)
+		min_write = sector_size;
 
-	buf_sum = fill_rand(buf_ptr, buf_size);
-	buf2_sum = fill_rand(buf2_ptr, buf2_size);
-	buf3_sum = fill_rand(buf3_ptr, buf3_size);
+	if (min_write > 1) {
+		/* If min_write is larger than 2, use 2 as sector-unaligned
+		 * size, as word-unaligned values (e.g., 1) may be filtered out
+		 * on another code path.
+		 */
+		sector_unalign = (min_write > 2) ? 2 : 1;
 
-	raw_xfer(driver_minor, SECTOR_UNALIGN, iov, 3, TRUE, EINVAL, &res);
+		/* Test sector-unaligned write position. */
+		memcpy(iov, iovt, sizeof(iovt));
 
-	test_sum(buf_ptr, buf_size, buf_sum, TRUE, &res);
-	test_sum(buf2_ptr, buf2_size, buf2_sum, TRUE, &res);
-	test_sum(buf3_ptr, buf3_size, buf3_sum, TRUE, &res);
+		buf_sum = fill_rand(buf_ptr, buf_size);
+		buf2_sum = fill_rand(buf2_ptr, buf2_size);
+		buf3_sum = fill_rand(buf3_ptr, buf3_size);
 
-	got_result(&res, "sector-unaligned write position");
+		raw_xfer(driver_minor, (u64_t)sector_unalign, iov, 3, TRUE,
+			EINVAL, &res);
 
-	/* Test sector-unaligned write size. */
-	memcpy(iov, iovt, sizeof(iovt));
-	iov[1].iov_size -= SECTOR_UNALIGN;
+		test_sum(buf_ptr, buf_size, buf_sum, TRUE, &res);
+		test_sum(buf2_ptr, buf2_size, buf2_sum, TRUE, &res);
+		test_sum(buf3_ptr, buf3_size, buf3_sum, TRUE, &res);
 
-	buf_sum = fill_rand(buf_ptr, buf_size);
-	buf2_sum = fill_rand(buf2_ptr, buf2_size);
-	buf3_sum = fill_rand(buf3_ptr, buf3_size);
+		got_result(&res, "sector-unaligned write position");
 
-	raw_xfer(driver_minor, 0ULL, iov, 3, TRUE, EINVAL, &res);
+		/* Test sector-unaligned write size. */
+		memcpy(iov, iovt, sizeof(iovt));
+		iov[1].iov_size -= sector_unalign;
 
-	test_sum(buf_ptr, buf_size, buf_sum, TRUE, &res);
-	test_sum(buf2_ptr, buf2_size, buf2_sum, TRUE, &res);
-	test_sum(buf3_ptr, buf3_size, buf3_sum, TRUE, &res);
+		buf_sum = fill_rand(buf_ptr, buf_size);
+		buf2_sum = fill_rand(buf2_ptr, buf2_size);
+		buf3_sum = fill_rand(buf3_ptr, buf3_size);
 
-	got_result(&res, "sector-unaligned write size");
+		raw_xfer(driver_minor, 0ULL, iov, 3, TRUE, EINVAL, &res);
+
+		test_sum(buf_ptr, buf_size, buf_sum, TRUE, &res);
+		test_sum(buf2_ptr, buf2_size, buf2_sum, TRUE, &res);
+		test_sum(buf3_ptr, buf3_size, buf3_sum, TRUE, &res);
+
+		got_result(&res, "sector-unaligned write size");
+	}
 
 	/* Test write-only grant in iovec element. */
 	memcpy(iov, iovt, sizeof(iovt));
@@ -873,10 +948,8 @@ static void vector_and_large_sub(size_t small_size)
 	buf_size = large_size + sizeof(u32_t) * 2;
 	buf2_size = large_size + sizeof(u32_t) * (NR_IOREQS + 1);
 
-	buf_ptr = alloc_contig(buf_size, 0, NULL);
-	buf2_ptr = alloc_contig(buf2_size, 0, NULL);
-	if (buf_ptr == NULL || buf2_ptr == NULL)
-		panic("unable to allocate memory");
+	buf_ptr = alloc_dma_memory(buf_size);
+	buf2_ptr = alloc_dma_memory(buf2_size);
 
 	/* The first buffer has one large chunk with dword-sized guards on each
 	 * side. LPTR(n) points to the start of the nth small data chunk within
@@ -980,8 +1053,8 @@ static void vector_and_large_sub(size_t small_size)
 #undef SPTR
 
 	/* Clean up. */
-	free_contig(buf2_ptr, buf2_size);
-	free_contig(buf_ptr, buf_size);
+	free_dma_memory(buf2_ptr, buf2_size);
+	free_dma_memory(buf_ptr, buf_size);
 }
 
 static void vector_and_large(void)
@@ -992,6 +1065,12 @@ static void vector_and_large(void)
 	 * a common block size, and once to push against the max request size.
 	 */
 	size_t max_block;
+
+	/* Make sure that the maximum size does not exceed the target device
+	 * size, minus the margins we need for testing here and there.
+	 */
+	if (max_size > part.size - sector_size * 4)
+		max_size = part.size - sector_size * 4;
 
 	/* Compute the largest sector multiple which, when multiplied by
 	 * NR_IOREQS, is no more than the maximum transfer size. Note that if
@@ -1025,7 +1104,7 @@ static void open_device(dev_t minor)
 	memset(&m, 0, sizeof(m));
 	m.m_type = BDEV_OPEN;
 	m.BDEV_MINOR = minor;
-	m.BDEV_ACCESS = may_write ? (R_BIT | W_BIT) : R_BIT;
+	m.BDEV_ACCESS = may_write ? (BDEV_R_BIT | BDEV_W_BIT) : BDEV_R_BIT;
 	m.BDEV_ID = lrand48();
 
 	sendrec_driver(&m, OK, &res);
@@ -1090,10 +1169,9 @@ static int vir_ioctl(dev_t minor, int req, void *ptr, ssize_t exp,
 	memset(&m, 0, sizeof(m));
 	m.m_type = BDEV_IOCTL;
 	m.BDEV_MINOR = minor;
-	m.BDEV_POS_LO = 0L;
-	m.BDEV_POS_HI = 0L;
 	m.BDEV_REQUEST = req;
 	m.BDEV_GRANT = grant;
+	m.BDEV_USER = NONE;
 	m.BDEV_ID = lrand48();
 
 	r = sendrec_driver(&m, exp, res);
@@ -1120,7 +1198,7 @@ static void misc_ioctl(void)
 
 	/* The other tests do not check whether there is sufficient room. */
 	if (res.type == RESULT_OK && part.size < (u64_t)max_size * 2)
-		printf("WARNING: small partition, some tests may fail\n");
+		output("WARNING: small partition, some tests may fail\n");
 
 	/* Test retrieving global driver open count. */
 	openct = 0x0badcafe;
@@ -1176,9 +1254,7 @@ static void read_limits(dev_t sub0_minor, dev_t sub1_minor, size_t sub_size)
 	test_group("read around subpartition limits", TRUE);
 
 	buf_size = sector_size * 3;
-
-	if ((buf_ptr = alloc_contig(buf_size, 0, NULL)) == NULL)
-		panic("unable to allocate memory");
+	buf_ptr = alloc_dma_memory(buf_size);
 
 	/* Read one sector up to the partition limit. */
 	fill_rand(buf_ptr, buf_size);
@@ -1274,7 +1350,7 @@ static void read_limits(dev_t sub0_minor, dev_t sub1_minor, size_t sub_size)
 	got_result(&res, "read with negative offset");
 
 	/* Clean up. */
-	free_contig(buf_ptr, buf_size);
+	free_dma_memory(buf_ptr, buf_size);
 }
 
 static void write_limits(dev_t sub0_minor, dev_t sub1_minor, size_t sub_size)
@@ -1296,9 +1372,7 @@ static void write_limits(dev_t sub0_minor, dev_t sub1_minor, size_t sub_size)
 		return;
 
 	buf_size = sector_size * 3;
-
-	if ((buf_ptr = alloc_contig(buf_size, 0, NULL)) == NULL)
-		panic("unable to allocate memory");
+	buf_ptr = alloc_dma_memory(buf_size);
 
 	/* Write to the start of the second subpartition, so that we can
 	 * reliably check whether the contents have changed later.
@@ -1415,7 +1489,7 @@ static void write_limits(dev_t sub0_minor, dev_t sub1_minor, size_t sub_size)
 	got_result(&res, "read up to partition end");
 
 	/* Clean up. */
-	free_contig(buf_ptr, buf_size);
+	free_dma_memory(buf_ptr, buf_size);
 }
 
 static void vir_limits(dev_t sub0_minor, dev_t sub1_minor, int part_secs)
@@ -1510,9 +1584,7 @@ static void real_limits(dev_t sub0_minor, dev_t sub1_minor, int part_secs)
 	 * anyway.
 	 */
 	buf_size = sector_size;
-
-	if ((buf_ptr = alloc_contig(buf_size, 0, NULL)) == NULL)
-		panic("unable to allocate memory");
+	buf_ptr = alloc_dma_memory(buf_size);
 
 	memset(buf_ptr, 0, buf_size);
 
@@ -1621,7 +1693,7 @@ static void real_limits(dev_t sub0_minor, dev_t sub1_minor, int part_secs)
 	close_device(sub0_minor);
 	close_device(sub1_minor);
 
-	free_contig(buf_ptr, buf_size);
+	free_dma_memory(buf_ptr, buf_size);
 }
 
 static void part_limits(void)
@@ -1637,7 +1709,7 @@ static void part_limits(void)
 	 * cannot conduct this test.
 	 */
 	if (driver_minor >= MINOR_d0p0s0) {
-		printf("WARNING: operating on subpartition, "
+		output("WARNING: operating on subpartition, "
 			"skipping partition tests\n");
 		return;
 	}
@@ -1858,14 +1930,9 @@ static void unaligned_size(void)
 
 	base_pos = (u64_t)sector_size * 2;
 
-	if ((buf_ptr = alloc_contig(buf_size, 0, NULL)) == NULL)
-		panic("unable to allocate memory");
-
-	if ((sec_ptr[0] = alloc_contig(sector_size, 0, NULL)) == NULL)
-		panic("unable to allocate memory");
-
-	if ((sec_ptr[1] = alloc_contig(sector_size, 0, NULL)) == NULL)
-		panic("unable to allocate memory");
+	buf_ptr = alloc_dma_memory(buf_size);
+	sec_ptr[0] = alloc_dma_memory(sector_size);
+	sec_ptr[1] = alloc_dma_memory(sector_size);
 
 	if (may_write) {
 		sum = fill_rand(buf_ptr, buf_size);
@@ -1926,18 +1993,17 @@ static void unaligned_size(void)
 	}
 
 	/* Clean up. */
-	free_contig(sec_ptr[1], sector_size);
-	free_contig(sec_ptr[0], sector_size);
-	free_contig(buf_ptr, buf_size);
+	free_dma_memory(sec_ptr[1], sector_size);
+	free_dma_memory(sec_ptr[0], sector_size);
+	free_dma_memory(buf_ptr, buf_size);
 }
 
 static void unaligned_pos1(void)
 {
 	/* Test sector-unaligned positions and total sizes for requests. This
-	 * is a read-only test as no driver currently supports sector-unaligned
-	 * writes. In this context, the term "lead" means an unwanted first
-	 * part of a sector, and "trail" means an unwanted last part of a
-	 * sector.
+	 * is a read-only test for now. Write support should be added later.
+	 * In the current context, the term "lead" means an unwanted first part
+	 * of a sector, and "trail" means an unwanted last part of a sector.
 	 */
 	u8_t *buf_ptr, *buf2_ptr;
 	size_t buf_size, buf2_size, size;
@@ -1963,11 +2029,8 @@ static void unaligned_pos1(void)
 
 	base_pos = (u64_t)sector_size * 3;
 
-	if ((buf_ptr = alloc_contig(buf_size, 0, NULL)) == NULL)
-		panic("unable to allocate memory");
-
-	if ((buf2_ptr = alloc_contig(buf2_size, 0, NULL)) == NULL)
-		panic("unable to allocate memory");
+	buf_ptr = alloc_dma_memory(buf_size);
+	buf2_ptr = alloc_dma_memory(buf2_size);
 
 	if (may_write) {
 		sum = fill_rand(buf_ptr, buf_size);
@@ -2080,8 +2143,8 @@ static void unaligned_pos1(void)
 	got_result(&res, "multisector read with lead and trail");
 
 	/* Clean up. */
-	free_contig(buf2_ptr, buf2_size);
-	free_contig(buf_ptr, buf_size);
+	free_dma_memory(buf2_ptr, buf2_size);
+	free_dma_memory(buf_ptr, buf_size);
 }
 
 static void unaligned_pos2(void)
@@ -2111,11 +2174,8 @@ static void unaligned_pos2(void)
 
 	base_pos = (u64_t)sector_size * 3;
 
-	if ((buf_ptr = alloc_contig(buf_size, 0, NULL)) == NULL)
-		panic("unable to allocate memory");
-
-	if ((buf2_ptr = alloc_contig(buf2_size, 0, NULL)) == NULL)
-		panic("unable to allocate memory");
+	buf_ptr = alloc_dma_memory(buf_size);
+	buf2_ptr = alloc_dma_memory(buf2_size);
 
 	/* First establish a baseline. We need two requests for this, as the
 	 * total area intentionally exceeds the max request size.
@@ -2224,8 +2284,8 @@ static void unaligned_pos2(void)
 	got_result(&res, "large fully unaligned filled vector");
 
 	/* Clean up. */
-	free_contig(buf2_ptr, buf2_size);
-	free_contig(buf_ptr, buf_size);
+	free_dma_memory(buf2_ptr, buf2_size);
+	free_dma_memory(buf_ptr, buf_size);
 }
 
 static void sweep_area(u64_t base_pos)
@@ -2241,9 +2301,7 @@ static void sweep_area(u64_t base_pos)
 	int i, j;
 
 	buf_size = sector_size * 8;
-
-	if ((buf_ptr = alloc_contig(buf_size, 0, NULL)) == NULL)
-		panic("unable to allocate memory");
+	buf_ptr = alloc_dma_memory(buf_size);
 
 	/* First (write to, if allowed, and) read from the entire area in one
 	 * go, so that we know the (initial) contents of the area.
@@ -2316,7 +2374,7 @@ static void sweep_area(u64_t base_pos)
 	}
 
 	/* Clean up. */
-	free_contig(buf_ptr, buf_size);
+	free_dma_memory(buf_ptr, buf_size);
 }
 
 static void sweep_and_check(u64_t pos, int check_integ)
@@ -2333,9 +2391,7 @@ static void sweep_and_check(u64_t pos, int check_integ)
 
 	if (check_integ) {
 		buf_size = sector_size * 3;
-
-		if ((buf_ptr = alloc_contig(buf_size, 0, NULL)) == NULL)
-			panic("unable to allocate memory");
+		buf_ptr = alloc_dma_memory(buf_size);
 
 		if (may_write) {
 			sum = fill_rand(buf_ptr, buf_size);
@@ -2371,7 +2427,7 @@ static void sweep_and_check(u64_t pos, int check_integ)
 
 		got_result(&res, "check integrity zone");
 
-		free_contig(buf_ptr, buf_size);
+		free_dma_memory(buf_ptr, buf_size);
 	}
 }
 
@@ -2633,7 +2689,20 @@ static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 
 	srand48(now);
 
-	return OK;
+	output("BLOCKTEST: driver label '%s' (endpt %d), minor %d\n",
+		driver_label, driver_endpt, driver_minor);
+
+	do_tests();
+
+	output("BLOCKTEST: summary: %d out of %d tests failed "
+		"across %d group%s; %d driver deaths\n",
+		failed_tests, total_tests, failed_groups,
+		failed_groups == 1 ? "" : "s", driver_deaths);
+
+	/* The returned code will determine the outcome of the RS call, and
+	 * thus the entire test. The actual error code does not matter.
+	 */
+	return (failed_tests) ? EINVAL : OK;
 }
 
 static void sef_local_startup(void)
@@ -2653,16 +2722,6 @@ int main(int argc, char **argv)
 
 	env_setargs(argc, argv);
 	sef_local_startup();
-
-	printf("BLOCKTEST: driver label '%s' (endpt %d), minor %d\n",
-		driver_label, driver_endpt, driver_minor);
-
-	do_tests();
-
-	printf("BLOCKTEST: summary: %d out of %d tests failed "
-		"across %d group%s; %d driver deaths\n",
-		failed_tests, total_tests, failed_groups,
-		failed_groups == 1 ? "" : "s", driver_deaths);
 
 	return 0;
 }

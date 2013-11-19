@@ -21,11 +21,22 @@
 
 #include <minix/ipc.h>
 
+struct ps_strings; /* forward declaration for minix_stack_fill. */
+
+void minix_stack_params(const char *path, char * const *argv, char * const *envp,
+	size_t *stack_size,  char *overflow, int *argc, int *envc);
+void minix_stack_fill(const char *path, int argc, char * const *argv,
+	int envc, char * const *envp, size_t stack_size, char *frame,
+	int *vsp, struct ps_strings **psp);
+
 int __execve(const char *_path, char *const _argv[], char *const
 	_envp[], int _nargs, int _nenvps);
 int _syscall(endpoint_t _who, int _syscallnr, message *_msgptr);
 void _loadname(const char *_name, message *_msgptr);
 int _len(const char *_s);
 void _begsig(int _dummy);
+
+ssize_t pread64(int fd, void *buf, size_t count, u64_t where);
+ssize_t pwrite64(int fd, const void *buf, size_t count, u64_t where);
 
 #endif /* _LIB_H */

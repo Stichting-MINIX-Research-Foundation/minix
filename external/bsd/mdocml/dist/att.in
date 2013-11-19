@@ -1,4 +1,4 @@
-/*	$Vendor-Id: att.in,v 1.6 2010/06/19 20:46:27 kristaps Exp $ */
+/*	$Vendor-Id: att.in,v 1.8 2011/07/31 17:30:33 schwarze Exp $ */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -20,18 +20,21 @@
  * isn't going to change.  The right-hand side is the formatted string.
  *
  * Be sure to escape strings.
+ * The non-breaking blanks prevent ending an output line right before
+ * a number.  Groff prevent line breaks at the same places.
  */
 
-LINE("v1",		"Version 1 AT&T UNIX")
-LINE("v2",		"Version 2 AT&T UNIX")
-LINE("v3",		"Version 3 AT&T UNIX")
-LINE("v4",		"Version 4 AT&T UNIX")
-LINE("v5",		"Version 5 AT&T UNIX")
-LINE("v6",		"Version 6 AT&T UNIX")
-LINE("v7",		"Version 7 AT&T UNIX")
-LINE("32v",		"Version 32V AT&T UNIX")
-LINE("V",		"AT&T System V UNIX")
-LINE("V.1",		"AT&T System V.1 UNIX")
-LINE("V.2",		"AT&T System V.2 UNIX")
-LINE("V.3",		"AT&T System V.3 UNIX")
-LINE("V.4",		"AT&T System V.4 UNIX")
+LINE("v1",		"Version\\~1 AT&T UNIX")
+LINE("v2",		"Version\\~2 AT&T UNIX")
+LINE("v3",		"Version\\~3 AT&T UNIX")
+LINE("v4",		"Version\\~4 AT&T UNIX")
+LINE("v5",		"Version\\~5 AT&T UNIX")
+LINE("v6",		"Version\\~6 AT&T UNIX")
+LINE("v7",		"Version\\~7 AT&T UNIX")
+LINE("32v",		"Version\\~32V AT&T UNIX")
+LINE("III",		"AT&T System\\~III UNIX")
+LINE("V",		"AT&T System\\~V UNIX")
+LINE("V.1",		"AT&T System\\~V Release\\~1 UNIX")
+LINE("V.2",		"AT&T System\\~V Release\\~2 UNIX")
+LINE("V.3",		"AT&T System\\~V Release\\~3 UNIX")
+LINE("V.4",		"AT&T System\\~V Release\\~4 UNIX")

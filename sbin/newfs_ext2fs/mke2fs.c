@@ -120,6 +120,7 @@ __RCSID("$NetBSD: mke2fs.c,v 1.14 2010/09/10 15:51:20 tsutsui Exp $");
 
 #include <err.h>
 #include <errno.h>
+#include <lib.h>
 #include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -127,7 +128,7 @@ __RCSID("$NetBSD: mke2fs.c,v 1.14 2010/09/10 15:51:20 tsutsui Exp $");
 #include <stdio.h>
 #include <uuid.h>
 #include <assert.h>
-#include <minix/termios.h>
+#include <sys/termios.h>
 
 #include "extern.h"
 

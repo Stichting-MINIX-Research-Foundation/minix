@@ -84,7 +84,7 @@ int main(void)
 		if (m.m_type == IOMMU_MAP) {
 			r= do_add4pci(&m);
 			m.m_type= r;
-			send(m.m_source, &m);
+			ipc_send(m.m_source, &m);
 			continue;
 		}
 		printf("amddev: got message from %d\n", m.m_source);

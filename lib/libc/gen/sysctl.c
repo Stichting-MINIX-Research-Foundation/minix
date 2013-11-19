@@ -69,6 +69,15 @@ static size_t __cvt_node_out(uint, const struct sysctlnode *, void **,
 
 #include <stdlib.h>
 
+#ifdef __minix
+int __sysctl(const int *name, unsigned int namelen,
+	void *oldp, size_t *oldlenp,
+	const void *newp, size_t newlen)
+{
+	return ENOENT;
+}
+#endif
+
 int
 sysctl(const int *name, unsigned int namelen,
 	void *oldp, size_t *oldlenp,

@@ -43,10 +43,7 @@ esac
 # Get the device table.
 FSTAB=/etc/fstab
 touch $FSTAB
-if grep -q "Poor man" $FSTAB
-then	. $FSTAB
-else	root="`awk <$FSTAB '{ if($2=="/") { print $1 } }'`"
-fi
+root="`awk <$FSTAB '{ if($2=="/") { print $1 } }'`"
 
 # The real root device may be the RAM disk.
 realroot=`printroot -r`

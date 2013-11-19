@@ -99,7 +99,7 @@ CLEANFILES+=	errlist.c
 	isnanf_ieee754.c isnand_ieee754.c \
 	isfinitef_ieee754.c isfinited_ieee754.c \
 	signbitf_ieee754.c signbitd_ieee754.c \
-	nanf.c
+	nanf.c sigsetops.c
 .PATH.c .PATH.S: ${ARCHDIR}/gen ${LIBCDIR}/gen/minix \
 	${LIBCDIR}/gen ${LIBCDIR}
 SRCS+= ${i}
@@ -143,12 +143,14 @@ CPPFLAGS.${i}+= -I${LIBCDIR}/locale
 .endfor
 
 # Import from sys-minix
-.for i in access.c brk.c close.c environ.c execve.c fork.c \
-	getgid.c getpid.c geteuid.c getuid.c gettimeofday.c loadname.c \
-	link.c _mcontext.c mknod.c mmap.c nanosleep.c open.c \
-	read.c reboot.c sbrk.c select.c setuid.c sigprocmask.c stat.c \
-	stime.c syscall.c _ucontext.c umask.c unlink.c waitpid.c \
-	brksize.S _ipc.S _senda.S ucontext.S mmap.c init.c
+.for i in access.c brk.c close.c environ.c execve.c fork.c fsync.c \
+	getgid.c getpid.c geteuid.c getuid.c gettimeofday.c getvfsstat.c \
+	init.c link.c loadname.c lseek.c lseek64.c _mcontext.c mknod.c \
+	mmap.c nanosleep.c open.c pread.c pwrite.c read.c sbrk.c \
+	select.c setuid.c sigprocmask.c stack_utils.c stat.c stime.c \
+	syscall.c _ucontext.c umask.c unlink.c waitpid.c write.c \
+	brksize.S _do_kernel_call_intr.S get_minix_kerninfo.S _ipc.S ucontext.S \
+	kill.c
 .PATH.c: ${LIBCDIR}/sys-minix
 .PATH.S: ${ARCHDIR}/sys-minix
 SRCS+= ${i}

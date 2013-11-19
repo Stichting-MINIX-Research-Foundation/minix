@@ -146,7 +146,8 @@ static int rs_read(tty_t *tp, int try);
 static int rs_icancel(tty_t *tp, int try);
 static int rs_ocancel(tty_t *tp, int try);
 static void rs_ostart(rs232_t *rs);
-static int rs_break(tty_t *tp, int try);
+static int rs_break_on(tty_t *tp, int try);
+static int rs_break_off(tty_t *tp, int try);
 static int rs_close(tty_t *tp, int try);
 static int rs_open(tty_t *tp, int try);
 static void rs232_handler(rs232_t *rs);
@@ -239,11 +240,11 @@ rs_write(register tty_t *tp, int try)
 		if (tp->tty_outcaller == KERNEL) {
 			/* We're trying to print on kernel's behalf */
 			memcpy(rs->ohead,
-				(void *) tp->tty_outgrant + tp->tty_outoffset,
+				(char *) tp->tty_outgrant + tp->tty_outcum,
 				count);
 		} else {
 			if ((r = sys_safecopyfrom(tp->tty_outcaller,
-				tp->tty_outgrant, tp->tty_outoffset,
+				tp->tty_outgrant, tp->tty_outcum,
 				(vir_bytes) rs->ohead, count)) != OK) {
 				return 0;
 			}
@@ -264,31 +265,21 @@ rs_write(register tty_t *tp, int try)
 		rs_ostart(rs);
 		if ((rs->ohead += ocount) >= bufend(rs->obuf))
 			rs->ohead -= buflen(rs->obuf);
-		tp->tty_outoffset += count;
 		tp->tty_outcum += count;
 		if ((tp->tty_outleft -= count) == 0) {
 			/* Output is finished, reply to the writer. */
-			if(tp->tty_outrepcode == TTY_REVIVE) {
-				notify(tp->tty_outcaller);
-				tp->tty_outrevived = 1;
-			} else {
-				tty_reply(tp->tty_outrepcode, tp->tty_outcaller,
-					tp->tty_outproc, tp->tty_outcum);
-				tp->tty_outcum = 0;
-			}
+			chardriver_reply_task(tp->tty_outcaller, tp->tty_outid,
+				tp->tty_outcum);
+			tp->tty_outcum = 0;
+			tp->tty_outcaller = NONE;
 		}
 
 	}
 	if (tp->tty_outleft > 0 && tp->tty_termios.c_ospeed == B0) {
 		/* Oops, the line has hung up. */
-		if(tp->tty_outrepcode == TTY_REVIVE) {
-			notify(tp->tty_outcaller);
-			tp->tty_outrevived = 1;
-		} else {
-			tty_reply(tp->tty_outrepcode, tp->tty_outcaller,
-				tp->tty_outproc, EIO);
-			tp->tty_outleft = tp->tty_outcum = 0;
-		}
+		chardriver_reply_task(tp->tty_outcaller, tp->tty_outid, EIO);
+		tp->tty_outleft = tp->tty_outcum = 0;
+		tp->tty_outcaller = NONE;
 	}
 
 	return 1;
@@ -342,8 +333,11 @@ omap_get_divisor(rs232_t *rs, unsigned int baud)
 	switch(baud) {
 	case B460800:	/* Fall through */
 	case B921600:	/* Fall through */
+#if 0
 	case B1843200:	/* Fall through */
-	case B3686400:	oversampling = 13; break;
+	case B3686400:	
+#endif
+		oversampling = 13; break;
 	default:	oversampling = 16;
 	}
 
@@ -355,7 +349,6 @@ termios_baud_rate(struct termios *term)
 {
 	int baud;
 	switch(term->c_ospeed) {
-	case B0: term->c_ospeed = DFLT_BAUD; baud = termios_baud_rate(term);
 	case B300: baud = 300; break;
 	case B600: baud = 600; break;
 	case B1200: baud = 1200; break;
@@ -365,7 +358,14 @@ termios_baud_rate(struct termios *term)
 	case B38400: baud = 38400; break;
 	case B57600: baud = 57600; break;
 	case B115200: baud = 115200; break;
-	default: term->c_ospeed = DFLT_BAUD; baud = termios_baud_rate(term);
+	case B0:
+	default:
+		/* Reset the speed to the default speed, then call ourselves
+		 * to convert the default speed to a baudrate. This call will
+		 * always return a value without inducing another recursive
+		 * call. */
+		term->c_ospeed = DFLT_BAUD;
+		baud = termios_baud_rate(term);
 	}
 
 	return baud;
@@ -566,7 +566,8 @@ rs_init(tty_t *tp)
 	tp->tty_icancel = rs_icancel;
 	tp->tty_ocancel = rs_ocancel;
 	tp->tty_ioctl = rs_ioctl;
-	tp->tty_break = rs_break;
+	tp->tty_break_on = rs_break_on;
+	tp->tty_break_off = rs_break_off;
 	tp->tty_open = rs_open;
 	tp->tty_close = rs_close;
 
@@ -581,7 +582,7 @@ rs_interrupt(message *m)
 	int line;
 	rs232_t *rs;
 
-	irq_set = m->NOTIFY_ARG;
+	irq_set = m->NOTIFY_INTMASK;
 	for (line = 0, rs = rs_lines; line < NR_RS_LINES; line++, rs++) {
 		if (irq_set & (1 << rs->irq_hook_id)) {
 			rs232_handler(rs);
@@ -646,7 +647,7 @@ rs_read(tty_t *tp, int try)
 		if (count > icount) count = icount;
 
 		/* Perform input processing on (part of) the input buffer. */
-		if ((count = in_process(tp, rs->itail, count, -1)) == 0) break;
+		if ((count = in_process(tp, rs->itail, count)) == 0) break;
 		rs->icount -= count;
 		if (!rs->idevready && rs->icount < RS_ILOWWATER) istart(rs);
 		if ((rs->itail += count) == bufend(rs->ibuf))
@@ -666,17 +667,26 @@ rs_ostart(rs232_t *rs)
 }
 
 static int
-rs_break(tty_t *tp, int UNUSED(dummy))
+rs_break_on(tty_t *tp, int UNUSED(dummy))
 {
-/* Generate a break condition by setting the BREAK bit for 0.4 sec. */
+/* Raise break condition */
 	rs232_t *rs = tp->tty_priv;
 	unsigned int lsr;
 
 	lsr = serial_in(rs, OMAP3_LSR);
 	serial_out(rs, OMAP3_LSR, lsr | UART_LSR_BI);
-	/* XXX */
-	/* milli_delay(400); */				/* ouch */
-  	serial_out(rs, OMAP3_LSR, lsr);
+	return 0;	/* dummy */
+}
+
+static int
+rs_break_off(tty_t *tp, int UNUSED(dummy))
+{
+/* Clear break condition */
+	rs232_t *rs = tp->tty_priv;
+	unsigned int lsr;
+
+	lsr = serial_in(rs, OMAP3_LSR);
+	serial_out(rs, OMAP3_LSR, lsr & ~UART_LSR_BI);
 	return 0;	/* dummy */
 }
 

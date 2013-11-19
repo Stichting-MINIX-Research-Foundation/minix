@@ -17,7 +17,7 @@ EXTERN message m_in;		/* the incoming message itself is kept here. */
 EXTERN int who_p, who_e;	/* caller's proc number, endpoint */
 EXTERN int call_nr;		/* system call number */
 
-extern int(*call_vec[]) (void);
+extern int (* const call_vec[])(void);
 EXTERN sigset_t core_sset;	/* which signals cause core images */
 EXTERN sigset_t ign_sset;	/* which signals are by default ignored */
 EXTERN sigset_t noign_sset;	/* which signals cannot be ignored */

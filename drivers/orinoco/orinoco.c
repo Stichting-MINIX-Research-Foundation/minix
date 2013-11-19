@@ -15,7 +15,7 @@
 #include	<minix/syslib.h>
 #include	<minix/type.h>
 #include	<minix/sysutil.h>
-#include	<timers.h>
+#include	<minix/timers.h>
 #include	<machine/pci.h>
 #include 	<minix/ds.h>
 #include	<minix/endpoint.h>
@@ -149,7 +149,7 @@ static void or_getstat_s(message * mp);
 static void print_linkstatus(t_or * orp, u16_t status);
 static int or_get_recvd_packet(t_or *orp, u16_t rxfid, u8_t *databuf);
 static void or_reset(void);
-static void or_watchdog_f(timer_t *tp);
+static void or_watchdog_f(minix_timer_t *tp);
 static void setup_wepkey(t_or *orp, char *wepkey0);
 static void do_hard_int(void);
 static void check_int_events(void);
@@ -400,7 +400,7 @@ static void or_dump (message *m)
 
 	m->m_type = TTY_FKEY_CONTROL;
 	m->FKEY_REQUEST = FKEY_EVENTS;
-	if(OK!=(sendrec(TTY_PROC_NR,m)) )
+	if(OK!=(ipc_sendrec(TTY_PROC_NR,m)) )
 		printf("Contacting the TTY failed\n");
 		
 	if(bit_isset(m->FKEY_SFKEYS, 11)) {
@@ -1092,7 +1092,7 @@ next:
  * Will be called regularly to see whether the driver has crashed. If that   *
  * condition is detected, reset the driver and card                          *
  *****************************************************************************/
-static void or_watchdog_f(timer_t *tp)
+static void or_watchdog_f(minix_timer_t *tp)
 {
 	t_or *orp;
 	
@@ -1131,7 +1131,7 @@ static void or_watchdog_f(timer_t *tp)
  *****************************************************************************/
 static void mess_reply (message * req, message * reply_mess)
 {
-	if (send (req->m_source, reply_mess) != 0)
+	if (ipc_send(req->m_source, reply_mess) != 0)
 		panic("orinoco: unable to mess_reply");
 
 }
@@ -1346,7 +1346,7 @@ static void reply (t_or * orp) {
 	reply.DL_FLAGS = flags;
 	reply.DL_COUNT = orp->or_read_s;
 
-	r = send (orp->or_client, &reply);
+	r = ipc_send(orp->or_client, &reply);
 
 	if (r < 0)
 		panic("orinoco: send failed: %d", r);
@@ -1786,7 +1786,7 @@ static void or_getstat_s (message * mp) {
 
 	mp->m_type = DL_STAT_REPLY;
 
-	r = send(mp->m_source, mp);
+	r = ipc_send(mp->m_source, mp);
 	if(r != OK)
 		panic("orinoco: getstat_s failed: %d", r);
 }

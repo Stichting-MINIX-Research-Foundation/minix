@@ -33,7 +33,7 @@ endpoint_t proc_ep;
 	m.m_type= BUSC_PCI_DEL_ACL;
 	m.m1_i1= proc_ep;
 
-	r= sendrec(pci_procnr, &m);
+	r= ipc_sendrec(pci_procnr, &m);
 	if (r != 0)
 		panic("pci_del_acl: can't talk to PCI: %d", r);
 

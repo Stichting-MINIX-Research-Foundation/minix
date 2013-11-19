@@ -326,17 +326,6 @@ int	unlinkat(int, const char *, int);
 int lseek64(int fd, u64_t _offset, int _whence, u64_t *_newpos);
 #if defined(_NETBSD_SOURCE)
 #include <minix/type.h>
-
-int getprocnr(void);
-int getnprocnr(pid_t pid);
-int getpprocnr(void);
-int _pm_findproc(char *proc_name, int *proc_nr);
-int mapdriver(char *label, int major, int style, int flags);
-pid_t getnpid(endpoint_t proc_ep);
-uid_t getnuid(endpoint_t proc_ep);
-gid_t getngid(endpoint_t proc_ep);
-ssize_t pread64(int fd, void *buf, size_t count, u64_t where);
-ssize_t pwrite64(int fd, const void *buf, size_t count, u64_t where);
 #endif /* defined(_NETBSD_SOURCE) */
 #endif /* __minix */
 
@@ -387,8 +376,8 @@ int	 profil(char *, size_t, u_long, u_int);
 void	 psignal(int, const char *);
 #endif /* __PSIGNAL_DECLARED */
 int	 rcmd(char **, int, const char *, const char *, const char *, int *);
-#ifndef __minix
 int	 reboot(int, char *);
+#ifndef __minix
 int	 revoke(const char *);
 #endif
 int	 rresvport(int *);
@@ -434,5 +423,4 @@ extern	 char *suboptarg;	/* getsubopt(3) external variable */
 #endif
 
 __END_DECLS
-
 #endif /* !_UNISTD_H_ */

@@ -2,7 +2,6 @@
  *
  * The entry points are:
  *   get_free_pid:	get a free process or group id
- *   no_sys:		called for invalid system call numbers
  *   find_param:	look up a boot monitor parameter
  *   find_proc:		return process pointer from pid number
  *   nice_to_priority	convert nice level to priority queue
@@ -19,11 +18,9 @@
 #include <fcntl.h>
 #include <signal.h>		/* needed only because mproc.h needs it */
 #include "mproc.h"
-#include "param.h"
 
 #include <minix/config.h>
-#include <timers.h>
-#include <string.h>
+#include <minix/timers.h>
 #include <machine/archtypes.h>
 #include "kernel/const.h"
 #include "kernel/config.h"
@@ -50,16 +47,6 @@ pid_t get_free_pid()
 		}
   } while (t);					/* 't' = 0 means pid free */
   return(next_pid);
-}
-
-
-/*===========================================================================*
- *				no_sys					     *
- *===========================================================================*/
-int no_sys()
-{
-/* A system call number not implemented by PM has been requested. */
-  return(ENOSYS);
 }
 
 /*===========================================================================*
@@ -120,11 +107,11 @@ int nice_to_priority(int nice, unsigned* new_q)
 int pm_isokendpt(int endpoint, int *proc)
 {
 	*proc = _ENDPOINT_P(endpoint);
-	if(*proc < -NR_TASKS || *proc >= NR_PROCS)
+	if (*proc < 0 || *proc >= NR_PROCS)
 		return EINVAL;
-	if(*proc >= 0 && endpoint != mproc[*proc].mp_endpoint)
+	if (endpoint != mproc[*proc].mp_endpoint)
 		return EDEADEPT;
-	if(*proc >= 0 && !(mproc[*proc].mp_flags & IN_USE))
+	if (!(mproc[*proc].mp_flags & IN_USE))
 		return EDEADEPT;
 	return OK;
 }

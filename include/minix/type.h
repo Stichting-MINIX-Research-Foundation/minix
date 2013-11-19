@@ -7,6 +7,7 @@
 #endif
 
 #include <sys/types.h>
+#include <sys/sigtypes.h>
 
 #include <stdint.h>
 
@@ -65,7 +66,7 @@ typedef struct {
  */
 struct sigmsg {
   int sm_signo;			/* signal number being caught */
-  unsigned long sm_mask;	/* mask to restore when handler returns */
+  sigset_t sm_mask;		/* mask to restore when handler returns */
   vir_bytes sm_sighandler;	/* address of handler */
   vir_bytes sm_sigreturn;	/* address of _sigreturn in C library */
   vir_bytes sm_stkptr;		/* user stack pointer */

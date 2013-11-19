@@ -16,8 +16,6 @@ static message m_out;		/* the output message used for reply */
 static endpoint_t who_e;	/* caller's proc number */
 static int callnr;		/* system call number */
 
-extern int errno;	/* error number set by system library */
-
 /* Declare some local functions. */
 static void get_work(void);
 static void reply(int whom, int result);
@@ -142,7 +140,7 @@ int result;                           	/* report result to replyee */
 {
     int send_status;
     m_out.m_type = result;  		/* build reply message */
-    send_status = send(who, &m_out);    /* send the message */
+    send_status = ipc_send(who, &m_out);    /* send the message */
     if (OK != send_status)
         panic("unable to send reply!: %d", send_status);
 }

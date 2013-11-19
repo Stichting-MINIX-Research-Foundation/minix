@@ -135,11 +135,11 @@ struct rproc *rp;			/* pointer to process slot */
     ((rp)->r_old_rp || (rp)->r_prev_rp ? "+" : " "))
 
 #if DEBUG
-  sprintf(srv_string, "service '%s'%s%s(slot %d, ep %d, pid %d, cmd %s, script %s, proc %s, major %d, style %d, flags 0x%03x, sys_flags 0x%02x)",
+  sprintf(srv_string, "service '%s'%s%s(slot %d, ep %d, pid %d, cmd %s, script %s, proc %s, major %d, flags 0x%03x, sys_flags 0x%02x)",
       rpub->label, srv_active_str(rp), srv_version_str(rp),
       slot_nr, rpub->endpoint, rp->r_pid, srv_str(rp->r_cmd),
       srv_str(rp->r_script), srv_str(rpub->proc_name), rpub->dev_nr,
-      rpub->dev_style, rp->r_flags, rpub->sys_flags);
+      rp->r_flags, rpub->sys_flags);
 #else
   sprintf(srv_string, "service '%s'%s%s(slot %d, ep %d, pid %d)",
       rpub->label, srv_active_str(rp), srv_version_str(rp),
@@ -167,7 +167,7 @@ message *m_ptr;                         /* reply message */
   if(rs_verbose && rp)
       printf("RS: %s being replied to\n", srv_to_string(rp));
 
-  r = sendnb(who, m_ptr);		/* send the message */
+  r = ipc_sendnb(who, m_ptr);		/* send the message */
   if (r != OK)
       printf("RS: unable to send reply to %d: %d\n", who, r);
 }

@@ -53,10 +53,6 @@ __weak_alias(tcflush,_tcflush)
 int
 tcflush(int fd, int which)
 {
-#ifdef __minix
-	_DIAGASSERT(fd != -1);
-	return ioctl(fd, TCFLSH, &which);
-#else /* !__minix */
 	int com;
 
 	_DIAGASSERT(fd != -1);
@@ -76,5 +72,4 @@ tcflush(int fd, int which)
 		return (-1);
 	}
 	return (ioctl(fd, TIOCFLUSH, &com));
-#endif /* !__minix */
 }

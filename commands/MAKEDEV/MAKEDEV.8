@@ -1,0 +1,57 @@
+.Dd October 4, 2013
+.Dt MAKEDEV 8
+.Os
+.Sh NAME
+.Nm MAKEDEV, DESCRIBE
+.Nd make/describe device files
+.Sh SYNOPSIS
+.Nm MAKEDEV
+.Op Fl n | Fl m
+.Op Fl r | Fl s
+.Op key ...
+.Nm DESCRIBE
+.Op device ...
+.Sh DESCRIPTION
+.Nm MAKEDEV
+may be used to create the device files normally found in the /dev directory.
+.Nm MAKEDEV
+knows about all supported devices and will create them in the current
+directory with the proper owner and mode. For many devices
+.Nm MAKEDEV
+will not only create the device you want, but also the devices related
+to it that you will probably want too. Naming one floppy device will
+create all floppy devices for the same drive for instance.
+.Pp
+The options are as follows:
+.Bl -tag -width Xxxexcludexfilexx
+.It Fl n
+echo the commands it would execute when you call it without that flag.
+.It Fl m
+echo
+.Nm mtree(8)
+formatted lines instead of creating the device nodes.
+.It Fl r
+Restricted set of devices. This set is used when generating the ramdisk.
+.It Fl s
+Standard set of devices. This set is used when popluating /dev.
+.El
+.Pp
+.Ar key
+arguments are simply the names of the devices you want to create. Call
+.Nm MAKEDEV
+without arguments to see a list of keys that it understands.
+.Pp
+The command
+.Nm DESCRIBE
+will give you a one-line description of a given device. By default It
+will list all devices in /dev.
+.Sh "SEE ALSO"
+.Xr dev 4 ,
+.Xr mknod 8
+.Sh BUGS
+The eagerness of
+.Nm MAKEDEV
+to create devices may cause many "File exists" errors from
+.Nm mknod .
+.Sh AUTHORS
+Written by Kees J. Bot (kjb@cs.vu.nl) and Lionel A. Sambuc (lionel@minix3.org)

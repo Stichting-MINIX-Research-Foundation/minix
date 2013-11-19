@@ -99,10 +99,10 @@ void test3a()
   if (sigdelset(&s, SIGUSR1) != 0) e(40);
   if (sigdelset(&s, SIGUSR2) != 0) e(41);
   
-  if (s != s1) e(42);
+  if (memcmp(&s, &s1, sizeof(s))) e(42);
 
   if (sigaddset(&s, SIGILL) != 0) e(43);
-  if (s == s1) e(44);  
+  if (!memcmp(&s, &s1, sizeof(s))) e(42);
 
   if (sigfillset(&s) != 0) e(45);
   if (sigismember(&s, SIGABRT) != 1) e(46);

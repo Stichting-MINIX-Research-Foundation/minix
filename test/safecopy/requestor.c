@@ -63,15 +63,15 @@ int main(int argc, char **argv)
 	/* Sending the endpoint to the granter, in order to let him
 	 * create the grant.
 	 */
-	ep_self = getprocnr();
+	ep_self = sef_self();
 	write(fid_send, &ep_self, sizeof(ep_self));
-	dprint("REQUESTOR: sending my endpoint: %d\n", ep_self);
+	dprint(("REQUESTOR: sending my endpoint: %d\n", ep_self));
 
 	/* Getting the granter's endpoint and gid. */
 	read(fid_get, &ep_granter, sizeof(ep_granter));
 	read(fid_get, &gid, sizeof(gid));
-	dprint("REQUESTOR: getting granter's endpoint %d and gid %d\n",
-		ep_granter, gid);
+	dprint(("REQUESTOR: getting granter's endpoint %d and gid %d\n",
+		ep_granter, gid));
 
 	/* Test SAFECOPY. */
 	for(i = 0; i <= TEST_PAGE_SHIFT; i++) {

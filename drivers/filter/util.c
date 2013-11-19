@@ -45,7 +45,7 @@ clock_t flt_alarm(clock_t dt)
 {
 	int r;
 
-	if(dt < 0)
+	if((int) dt < 0)
 		return next_alarm;
 
 	r = sys_setalarm(dt, 0);

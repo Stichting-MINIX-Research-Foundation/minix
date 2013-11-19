@@ -1,12 +1,7 @@
 /* Keyboard unsupport for ARM. Just stubs. */
 #include <minix/ipc.h>
-#include <termios.h>
+#include <sys/termios.h>
 #include "tty.h"
-
-void
-kbd_interrupt(message *m)
-{
-}
 
 void
 do_fkey_ctl(message *m)
@@ -14,17 +9,7 @@ do_fkey_ctl(message *m)
 }
 
 void
-do_kb_inject(message *m)
-{
-}
-
-void
-do_kbd(message *m)
-{
-}
-
-void
-do_kbdaux(message *m)
+do_input(message *m)
 {
 }
 
@@ -34,13 +19,7 @@ kb_init_once(void)
 }
 
 int
-kbd_status(message *m)
-{
-	return 0;
-}
-
-int
-kbd_loadmap(message *m)
+kbd_loadmap(endpoint_t endpt, cp_grant_id_t grant)
 {
 	return 0;
 }

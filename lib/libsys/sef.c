@@ -9,7 +9,7 @@
 /* Self variables. */
 #define SEF_SELF_NAME_MAXLEN 20
 char sef_self_name[SEF_SELF_NAME_MAXLEN];
-endpoint_t sef_self_endpoint;
+endpoint_t sef_self_endpoint = NONE;
 int sef_self_priv_flags;
 int sef_self_first_receive_done;
 int sef_self_receiving;
@@ -68,8 +68,8 @@ void sef_startup()
   if((sef_self_priv_flags & ROOT_SYS_PROC) && sef_self_endpoint != RS_PROC_NR) {
       r = vm_update(RS_PROC_NR, sef_self_endpoint);
       if(r != OK) {
-          panic("unable to update RS from instance %d to %d",
-              RS_PROC_NR, sef_self_endpoint);
+          panic("unable to update RS from instance %d to %d: %d",
+              RS_PROC_NR, sef_self_endpoint, r);
       }
       old_endpoint = sef_self_endpoint;
       sef_self_endpoint = RS_PROC_NR;
@@ -96,9 +96,9 @@ void sef_startup()
        * these messages and block till a proper initialization request arrives.
        */
       do {
-          r = receive(RS_PROC_NR, &m, &status);
+          r = ipc_receive(RS_PROC_NR, &m, &status);
           if(r != OK) {
-              panic("unable to receive from RS: %d", r);
+              panic("unable to ipc_receive from RS: %d", r);
           }
       } while(!IS_SEF_INIT_REQUEST(&m));
 
@@ -137,7 +137,7 @@ int sef_receive_status(endpoint_t src, message *m_ptr, int *status_ptr)
 #endif
 
       /* Receive and return in case of error. */
-      r = receive(src, m_ptr, &status);
+      r = ipc_receive(src, m_ptr, &status);
       if(status_ptr) *status_ptr = status;
       if(!sef_self_first_receive_done) sef_self_first_receive_done = TRUE;
       if(r != OK) {
@@ -191,6 +191,19 @@ int sef_receive_status(endpoint_t src, message *m_ptr, int *status_ptr)
 }
 
 /*===========================================================================*
+ *				sef_self				     *
+ *===========================================================================*/
+endpoint_t sef_self(void)
+{
+/* Return the process's own endpoint number. */
+
+  if (sef_self_endpoint == NONE)
+	panic("sef_self called before initialization");
+
+  return sef_self_endpoint;
+}
+
+/*===========================================================================*
  *				sef_cancel				     *
  *===========================================================================*/
 void sef_cancel(void)
@@ -218,8 +231,9 @@ void sef_exit(int status)
   sys_exit();
 
   /* If sys_exit() fails, this is not a system service. Exit through PM. */
-  m.m1_i1 = status;
-  _syscall(PM_PROC_NR, EXIT, &m);
+  memset(&m, 0, sizeof(m));
+  m.PM_EXIT_STATUS = status;
+  _syscall(PM_PROC_NR, PM_EXIT, &m);
 
   /* If everything else fails, hang. */
   printf("Warning: system service %d couldn't exit\n", sef_self_endpoint);

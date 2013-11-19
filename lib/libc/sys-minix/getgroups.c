@@ -6,6 +6,7 @@ getgroups.c
 #include "namespace.h"
 #include <lib.h>
 
+#include <string.h>
 #include <unistd.h>
 
 #ifdef __weak_alias
@@ -16,9 +17,11 @@ __weak_alias(getgroups, _getgroups)
 int getgroups(int ngroups, gid_t *arr)
 {
   message m;
-  m.m1_i1 = ngroups;
-  m.m1_p1 = (char *) arr;
 
-  return(_syscall(PM_PROC_NR, GETGROUPS, &m));
+  memset(&m, 0, sizeof(m));
+  m.PM_GROUPS_NUM = ngroups;
+  m.PM_GROUPS_PTR = (char *) arr;
+
+  return(_syscall(PM_PROC_NR, PM_GETGROUPS, &m));
 }
 

@@ -3,7 +3,6 @@
 int identifier = 0x1234;
 endpoint_t who_e;
 int call_type;
-endpoint_t SELF_E;
 
 static struct {
 	int type;
@@ -100,7 +99,7 @@ int main(int argc, char *argv[])
 					printf("IPC: error for %d: %d\n",
 						call_type, result);
 
-				if ((r = sendnb(who_e, &m)) != OK)
+				if ((r = ipc_sendnb(who_e, &m)) != OK)
 					printf("IPC send error %d.\n", r);
 			}
 		} else {
@@ -140,10 +139,8 @@ static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 {
 /* Initialize the ipc server. */
 
-  SELF_E = getprocnr();
-
   if(verbose)
-      printf("IPC: self: %d\n", SELF_E);
+      printf("IPC: self: %d\n", sef_self());
 
   return(OK);
 }
