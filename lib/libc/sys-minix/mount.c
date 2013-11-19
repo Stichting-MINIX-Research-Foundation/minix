@@ -39,7 +39,7 @@ int mountflags, srvflags;
   int r;
   message m;
   struct stat statbuf;
-  char label[16];
+  char label[36];
   char path[PATH_MAX];
   char cmd[200];
   char *p;
@@ -86,7 +86,7 @@ int mountflags, srvflags;
 			free(rslabel);
 		} else {
 			if (stat(name, &statbuf) < 0) return -1;
-			sprintf(label, "fs_%04x%llx", statbuf.st_dev, statbuf.st_ino);
+			sprintf(label, "fs_%04llx%08llx", statbuf.st_dev, statbuf.st_ino);
 		}
 	}
   } else {
