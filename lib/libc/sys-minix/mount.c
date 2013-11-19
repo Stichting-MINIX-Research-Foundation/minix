@@ -39,7 +39,7 @@ int mountflags, srvflags;
   int r;
   message m;
   struct stat statbuf;
-  char label[16];
+  char label[MNT_LABEL_LEN];
   char path[PATH_MAX];
   char cmd[200];
   char *p;
@@ -75,24 +75,24 @@ int mountflags, srvflags;
 			errno = EINVAL;
 			return -1;
 		}
-		sprintf(label, "fs_%.12s", p);
+		snprintf(label, MNT_LABEL_LEN, "fs_%.12s", p);
 	} else {
 		/* check for a rslabel option in the arguments and try to use 
 		 * that. 
 		 */
 		rslabel = find_rslabel(args);
 		if (rslabel != NULL){
-			snprintf(label,16,"%s",rslabel);
+			snprintf(label, MNT_LABEL_LEN, "%s", rslabel);
 			free(rslabel);
 		} else {
 			if (stat(name, &statbuf) < 0) return -1;
-			sprintf(label, "fs_%04x%llx", statbuf.st_dev, statbuf.st_ino);
+			snprintf(label, MNT_LABEL_LEN, "fs_%llx_%llx", statbuf.st_dev, statbuf.st_ino);
 		}
 	}
   } else {
 		/* label to long? */
-		if (strlen(type) < 16) {
-			sprintf(label, "%s", type);
+		if (strlen(type) < MNT_LABEL_LEN) {
+			snprintf(label, MNT_LABEL_LEN, "%s", type);
 		} else {
 			errno = ENOMEM;
 			return -1;
@@ -174,7 +174,7 @@ int umount(name, srvflags)
 const char *name;
 int srvflags;
 {
-  char label[16];
+  char label[MNT_LABEL_LEN];
   message m;
   int r;
 
