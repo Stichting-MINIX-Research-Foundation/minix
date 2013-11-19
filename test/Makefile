@@ -74,7 +74,7 @@ PROGS+= test${t}
 PROGS+=	t10a t11a t11b t40a t40b t40c t40d t40e t40f t60a t60b \
 	t67a t67b t68a t68b
 
-SCRIPTS+= run testinterp.sh testsh1.sh testsh2.sh
+SCRIPTS+= run testinterp.sh testsh1.sh testsh2.sh testmfs.sh testisofs.sh
 
 .if ${MKPIC} == "yes"
 # Build them as dynamic executables by default if shared libraries

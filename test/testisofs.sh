@@ -1,0 +1,67 @@
+# Create and verify a simple ISO filesystem
+#
+#!/bin/sh
+
+set -e
+
+echo -n "isofs test "
+
+ramdev=/dev/ram
+mp=/mnt
+testdir=isofstest
+fsimage=isofsimage
+contents=CONTENTS
+out1=v1
+out2=v2
+rm -rf $testdir $fsimage $out1 $out2
+
+if [ -d $testdir ]
+then
+	echo "dir?"
+	exit 1
+fi
+
+mkdir -p $testdir $testdir/$contents
+
+if [ ! -d $testdir ]
+then
+	echo "no dir?"
+	exit 1
+fi
+
+# Make some small & big & bigger files
+
+prevf=$testdir/$contents/FILE
+echo "Test contents 123" >$prevf
+for double in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20
+do	fn=$testdir/$contents/FN.$double
+	cat $prevf $prevf >$fn
+	prevf=$fn
+done
+
+# Make an ISO filesystem image out of it
+writeisofs -s0x0 -l MINIX $testdir $fsimage >/dev/null 2>&1
+
+# umount previous things
+su root -c "umount $ramdev >/dev/null 2>&1 || true"
+su root -c "umount $mp >/dev/null 2>&1 || true"
+
+# Mount it on a RAM disk
+su root -c "ramdisk 50000 $ramdev >/dev/null 2>&1"
+su root -c "cp $fsimage $ramdev"
+su root -c "mount -t isofs $ramdev $mp >/dev/null 2>&1"
+
+# compare contents
+(cd $testdir/$contents && sha1 * | sort) >$out1
+(cd $mp/$contents && sha1 * | sort) >$out2
+
+diff -u $out1 $out2
+
+su root -c "umount $ramdev >/dev/null 2>&1"
+
+# cleanup
+rm -rf $testdir $fsimage $out1 $out2
+
+echo ok
+
+exit 0
