@@ -197,8 +197,7 @@ int main(int argc, char *argv[])
 
 
 /* Apply a mode change to a given file system element. */
-int do_change(name)
-char *name;
+int do_change(char *name)
 {
   mode_t m;
   DIR *dirp;
