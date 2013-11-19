@@ -132,13 +132,13 @@ static void because()
 	ex= 1;
 }
 
-static void perr(label) char *label;
+static void perr(char *label)
 {
 	fprintf(stderr, "%s: %s: %s\n", arg0, label, strerror(errno));
 	ex= 1;
 }
 
-static void perrx(label) char *label;
+static void perrx(char *label)
 {
 	perr(label);
 	exit(1);
@@ -148,7 +148,7 @@ static void perrx(label) char *label;
 /* Support for per achitecture hidden files. */
 static int transparent= 0;
 
-static void isvisible(name) char *name;
+static void isvisible(char *name)
 {
 	char *p= name + strlen(name);
 
@@ -161,7 +161,7 @@ static void isvisible(name) char *name;
 #define isvisible(name)	((void) 0)
 #endif
 
-static void isbackup(slave) int slave;
+static void isbackup(int slave)
 {
 	if ((filemodes= open(BACKUP, slave ? O_RDONLY : O_RDWR)) >= 0)
 		backup= 1;
@@ -179,7 +179,7 @@ static char Slnkpth[PATH_MAX+1];/* (Sym)link to Spath. */
 static char *Slinkpath=nil;	/* Either nil or Slnkpth. */
 static struct stat Sst;		/* Slave's stat(2). */
 
-static char *addpath(p, n) char *p, *n;
+static char *addpath(char *p, char *n)
 /* Add a name to the path, return pointer to end. */
 {
 	if (p - path + 1 + strlen(n) > PATH_MAX) {
@@ -206,7 +206,7 @@ struct entry {	/* A directory entry. */
 
 static struct entry *E= nil;		/* File being processed. */
 
-static void setpath(e) struct entry *e;
+static void setpath(struct entry *e)
 /* Set path leading to e. */
 {
 	static char *pend;
@@ -219,7 +219,7 @@ static void setpath(e) struct entry *e;
 	}
 }
 
-static void sort(ae) struct entry **ae;
+static void sort(struct entry **ae)
 /* This is either a stable mergesort, or thermal noise, I'm no longer sure.
  * It must be called like this: if (L!=nil && L->next!=nil) sort(&L);
  */
@@ -413,7 +413,7 @@ static char *islink()
 	return name;
 }
 
-static void setstat(ino, stp) ino_t ino; struct stat *stp;
+static void setstat(ino_t ino, struct stat *stp)
 /* Set backup status info, we know that backup is true. */
 {
 	struct mode md;
@@ -429,7 +429,7 @@ static void setstat(ino, stp) ino_t ino; struct stat *stp;
 	) perrx(BACKUP);
 }
 
-static int getstat(name, stp) char *name; struct stat *stp;
+static int getstat(char *name, struct stat *stp)
 /* Get status information of file name, skipping some files.  Backup info
  * is inserted as needed.
  */
@@ -568,7 +568,7 @@ static void report()
 	buckn= 0;
 }
 
-static void inform(a) enum answers a;
+static void inform(enum answers a)
 /* Slave replies to master. */
 {
 	DPRINTF("%s: inform(%s)\n", ANSWERS[(int) a - (int) PATH]);
@@ -579,7 +579,7 @@ static void inform(a) enum answers a;
 
 #define wwrite(buf, n)	(memcpy(buckp, (buf), (n)), buckp+= (n), buckn+= (n))
 
-static void sendnum(n) long n;
+static void sendnum(long n)
 /* Send number from least to most significant byte. */
 {
 #if BYTE_ORDER == LITTLE_ENDIAN
@@ -595,14 +595,14 @@ static void sendnum(n) long n;
 #endif
 }
 
-static void send(buf, n) char *buf; int n;
+static void send(char *buf, int n)
 /* Slave sends size and contents of buf. */
 {
 	sendnum((long) n);
 	if (n > 0) wwrite(buf, (size_t) n);
 }
 
-static void sendstat(stp) struct stat *stp;
+static void sendstat(struct stat *stp)
 {
 	sendnum((long) stp->st_mode);
 	sendnum((long) stp->st_uid);
@@ -693,7 +693,7 @@ static void slave()
 	} while (state != die);
 }
 
-static int execute(argv) char **argv;
+static int execute(char **argv)
 /* Execute a command and return its success or failure. */
 {
 	int pid, r, status;
@@ -715,7 +715,7 @@ static int execute(argv) char **argv;
 	return status == 0;
 }
 
-static int removedir(dir) char *dir;
+static int removedir(char *dir)
 /* Remove a directory and its contents. */
 {
 	static char *argv[] = { "rm", "-r", nil, nil };
@@ -726,7 +726,7 @@ static int removedir(dir) char *dir;
 	return execute(argv);
 }
 
-static void order(o) enum orders o;
+static void order(enum orders o)
 /* Master tells slave what to do. */
 {
 	char c= (char) o;
@@ -736,7 +736,7 @@ static void order(o) enum orders o;
 	if (write(chan[1], &c, 1) != 1) perrx("order()");
 }
 
-static void rread(buf, n) char *buf; int n;
+static void rread(char *buf, int n)
 /* Master gets buf of size n from slave, doing multiple reads if needed. */
 {
 	int r;
@@ -798,7 +798,7 @@ static long recnum()
 #endif
 }
 
-static int receive(buf, max) char *buf; int max;
+static int receive(char *buf, int max)
 /* Master get's data from slave, by first reading size, then data. */
 {
 	int n;
@@ -812,7 +812,7 @@ static int receive(buf, max) char *buf; int max;
 	return n;
 }
 
-static void recstat(stp) struct stat *stp;
+static void recstat(struct stat *stp)
 {
 	stp->st_mode= recnum();
 	stp->st_uid= recnum();
@@ -839,7 +839,7 @@ static int key()
 	return c;
 }
 
-static int ask(def) int def;
+static int ask(int def)
 /* Ask for a yes or no, anything else means choose def. */
 {
 	int y, c;
@@ -865,7 +865,7 @@ static int ask(def) int def;
 	return y == 'y' || y == 'Y';
 }
 
-static void setmodes(silent) int silent;
+static void setmodes(int silent)
 {
 	struct stat st;
 	int change= 0;
@@ -928,7 +928,7 @@ static void makeold()
 
 static int busy= 0;
 
-static void bail_out(sig) int sig;
+static void bail_out(int sig)
 {
 	signal(sig, SIG_IGN);
 
@@ -943,8 +943,7 @@ static void bail_out(sig) int sig;
 	exit(sig);
 }
 
-static int makenode(name, mode, addr, size)
-	char *name; int mode; dev_t addr; off_t size;
+static int makenode(char *name, int mode, dev_t addr, off_t size)
 {
 	int r;
 
@@ -956,7 +955,7 @@ static int makenode(name, mode, addr, size)
 	return r;
 }
 
-static void add(update) int update;
+static void add(int update)
 /* Add Spath to the filesystem. */
 {
 	int f, n;
@@ -1073,7 +1072,7 @@ static void add(update) int update;
 	setmodes(1);
 }
 
-static int delete(update) int update;
+static int delete(int update)
 /* Delete path. */
 {
 	int forced_update= force && update;
@@ -1275,8 +1274,8 @@ static void mediator()
 #define P_EXIT		1	/* Make sure process doesn't return. */
 #define P_SHADOW	2	/* Always use exec on 68000. */
 
-static void startprocess(proc, machine, path, p_flags)
-	void (*proc)(); char *machine, *path; int p_flags;
+static void startprocess(void (*proc)(), char *machine, char *path,
+	int p_flags)
 {
 	char *argv[10], **argp= argv;
 	char flags[10], *pfl= flags;
@@ -1327,7 +1326,7 @@ static void startprocess(proc, machine, path, p_flags)
 	perrx(argv[0]);
 }
 
-void splitcolon(path, amach, adir) char *path, **amach, **adir;
+void splitcolon(char *path, char **amach, char **adir)
 {
 	char *dir= path;
 
@@ -1355,7 +1354,7 @@ static void Usage()
 	exit(1);
 }
 
-int main(argc, argv) int argc; char **argv;
+int main(int argc, char **argv)
 {
 	char *s_mach, *s_dir;
 	char *m_mach, *m_dir;
