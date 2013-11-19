@@ -327,7 +327,9 @@ int dupvm(struct fproc *rfp, int pfd, int *vmfd, struct filp **newfilp)
 
 	if(!f->filp_vno->v_vmnt->m_haspeek) {
 		unlock_filp(f);
+#if 0	/* Noisy diagnostic for mmap() by ld.so */
 		printf("VFS dupvm: no peek available\n");
+#endif
 		return EINVAL;
 	}
 
@@ -409,7 +411,9 @@ int do_vm_call(message *m_out)
 			}
 
 			if((result = dupvm(rfp, req_fd, &procfd, &f)) != OK) {
+#if 0   /* Noisy diagnostic for mmap() by ld.so */
 				printf("vfs: dupvm failed\n");
+#endif
 				goto reqdone;
 			}
 
