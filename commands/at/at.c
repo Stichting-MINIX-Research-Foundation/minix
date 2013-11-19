@@ -23,9 +23,7 @@ int getltim(char *t);
 int getlday(char *m, char *d);
 int digitstring(char *s);
 
-int main(argc, argv, envp)
-int argc;
-char **argv, **envp;
+int main(int argc, char **argv, char **envp)
 {
   int i, c, mask, ltim, year, lday = NODAY;
   char buf[64], job[30], pastjob[35], *dp, *sp;
@@ -173,8 +171,7 @@ char **argv, **envp;
 /*-------------------------------------------------------------------------*
  *	getltim()		return((time OK) ? daytime : -1)	   *
  *-------------------------------------------------------------------------*/
-int getltim(t)
-char *t;
+int getltim(char *t)
 {
   if (t[4] == '\0' && t[3] >= '0' && t[3] <= '9' &&
       t[2] >= '0' && t[2] <= '5' && t[1] >= '0' && t[1] <= '9' &&
@@ -187,8 +184,7 @@ char *t;
 /*-------------------------------------------------------------------------*
  *	getlday()		return ((date OK) ? yearday : -1)	   *
  *-------------------------------------------------------------------------*/
-int getlday(m, d)
-char *m, *d;
+int getlday(char *m, char *d)
 {
   int i, day, im;
   static int cumday[] = {0, 0, 31, 60, 91, 121, 152,
@@ -215,8 +211,7 @@ char *m, *d;
 
 
 
-int digitstring(s)
-char *s;
+int digitstring(char *s)
 {
   while (*s >= '0' && *s <= '9') s++;
   return((*s == '\0') ? 1 : 0);
