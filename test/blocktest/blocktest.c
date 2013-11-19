@@ -61,7 +61,7 @@ static int driver_deaths = 0;		/* number of restarts that we saw */
 /* Options supported by this driver. */
 static struct optset optset_table[] = {
 	{ "label",	OPT_STRING,	driver_label,	sizeof(driver_label) },
-	{ "minor",	OPT_INT,	&driver_minor,	10		     },
+	{ "minor",	OPT_64INT,	&driver_minor,	10		     },
 	{ "rw",		OPT_BOOL,	&may_write,	TRUE		     },
 	{ "ro",		OPT_BOOL,	&may_write,	FALSE		     },
 	{ "sector",	OPT_INT,	&sector_size,	10		     },

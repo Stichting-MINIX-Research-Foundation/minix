@@ -33,6 +33,7 @@ int len;
  */
   char *dst;
   int val;
+  int64_t val64;
 
   switch (entry->os_type) {
   case OPT_BOOL:
@@ -52,6 +53,15 @@ int len;
 
 	break;
 
+  case OPT_64INT:
+	if (len > 0)
+		val64 = (uint64_t) strtoull(ptr, NULL, entry->os_val);
+	else
+		val64 = 0;
+
+	*((uint64_t *) entry->os_ptr) = val64;
+
+	break;
   case OPT_INT:
 	if (len > 0)
 		val = (int) strtoul(ptr, NULL, entry->os_val);
