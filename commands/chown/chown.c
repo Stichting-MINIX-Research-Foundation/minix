@@ -36,7 +36,7 @@ char *pgmname, path[PATH_MAX + 1];
 uid_t nuid;
 gid_t ngid;
 
-int main(int argc, char **argv);
+int main(int argc, char *argv[]);
 void do_chown(char *file);
 void usage(void);
 
@@ -45,9 +45,7 @@ void usage(void);
  * argument is to take a group id rather than an user id. This allow the
  * non-Posix "chgrp user:group file".
  */
-int main(argc, argv)
-int argc;
-char *argv[];
+int main(int argc, char *argv[])
 {
   char *id, *id2;
   struct group *grp;
@@ -122,8 +120,7 @@ char *argv[];
 
 /* Apply the user/group modification here.
  */
-void do_chown(file)
-char *file;
+void do_chown(char *file)
 {
   DIR *dirp;
   struct dirent *entp;
