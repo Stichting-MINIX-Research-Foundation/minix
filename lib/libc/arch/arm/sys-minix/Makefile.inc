@@ -11,9 +11,10 @@ ucontext.o: ucontextoffsets.h
 
 SRCS+=   \
 	__sigreturn.S \
+	_do_kernel_call_intr.S \
 	_ipc.S \
-	_senda.S \
 	brksize.S \
+	get_minix_kerninfo.S \
 	ucontext.S
 
 ucontextoffsets.h: ${CF} 

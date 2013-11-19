@@ -91,7 +91,7 @@ void start_vtreefs(struct fs_hooks *hooks, unsigned int nr_inodes,
 		}
 
 		if (fs_mounted || call_nr == REQ_READSUPER) {
-			call_nr -= VFS_BASE;
+			call_nr -= FS_BASE;
 
 			if (call_nr >= 0 && call_nr < NREQS) {
 				err = (*fs_call_vec[call_nr])();
@@ -134,7 +134,7 @@ static void send_reply(int err, int transid)
 		fs_m_out.m_type = TRNS_ADD_ID(fs_m_out.m_type, transid);
 	}
 
-	if ((r = send(fs_m_in.m_source, &fs_m_out)) != OK)
+	if ((r = ipc_send(fs_m_in.m_source, &fs_m_out)) != OK)
 		panic("unable to send reply: %d", r);
 }
 

@@ -53,12 +53,12 @@ int main(void) {
 
 	req_nr = fs_m_in.m_type;
 
-	if (req_nr < VFS_BASE) {
-		fs_m_in.m_type += VFS_BASE;
+	if (req_nr < FS_BASE) {
+		fs_m_in.m_type += FS_BASE;
 		req_nr = fs_m_in.m_type;
 	}
 
-	ind = req_nr-VFS_BASE;
+	ind = req_nr-FS_BASE;
 
 	if (ind < 0 || ind >= NREQS) {
 		error = EINVAL; 
@@ -102,8 +102,6 @@ static int sef_cb_init_fresh(int type, sef_init_info_t *info)
 {
 /* Initialize the iso9660fs server. */
 
-   /* SELF_E will contain the id of this process */
-   SELF_E = getprocnr();
 /*    hash_init(); */			/* Init the table with the ids */
    setenv("TZ","",1);		/* Used to calculate the time */
 
@@ -144,6 +142,6 @@ void reply(who, m_out)
 int who;	
 message *m_out;                       	/* report result */
 {
-  if (OK != send(who, m_out))    /* send the message */
-    printf("ISOFS(%d) was unable to send reply\n", SELF_E);
+  if (OK != ipc_send(who, m_out))    /* send the message */
+    printf("ISOFS(%d) was unable to send reply\n", sef_self());
 }

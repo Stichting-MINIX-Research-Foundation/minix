@@ -2,8 +2,8 @@
  *   m_type:	SYS_GETKSIG
  *
  * The parameters for this kernel call are:
- *     m2_i1:	SIG_ENDPT  	# process with pending signals
- *     m2_l1:	SIG_MAP		# bit map with pending signals
+ *     m2_i1:	SYS_SIG_ENDPT  	# process with pending signals
+ *     m2_l1:	SYS_SIG_MAP		# bit map with pending signals
  */
 
 #include "kernel/system.h"
@@ -28,8 +28,8 @@ int do_getksig(struct proc * caller, message * m_ptr)
       if (RTS_ISSET(rp, RTS_SIGNALED)) {
           if (caller->p_endpoint != priv(rp)->s_sig_mgr) continue;
 	  /* store signaled process' endpoint */
-          m_ptr->SIG_ENDPT = rp->p_endpoint;
-          m_ptr->SIG_MAP = rp->p_pending;	/* pending signals map */
+          m_ptr->SYS_SIG_ENDPT = rp->p_endpoint;
+          m_ptr->SYS_SIG_MAP = rp->p_pending;	/* pending signals map */
           (void) sigemptyset(&rp->p_pending); 	/* clear map in the kernel */
 	  RTS_UNSET(rp, RTS_SIGNALED);		/* blocked by SIG_PENDING */
           return(OK);
@@ -37,7 +37,7 @@ int do_getksig(struct proc * caller, message * m_ptr)
   }
 
   /* No process with pending signals was found. */
-  m_ptr->SIG_ENDPT = NONE; 
+  m_ptr->SYS_SIG_ENDPT = NONE; 
   return(OK);
 }
 #endif /* USE_GETKSIG */

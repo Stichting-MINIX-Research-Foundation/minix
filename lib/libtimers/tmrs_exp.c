@@ -4,7 +4,7 @@
  *				tmrs_exptimers				     *
  *===========================================================================*/
 void tmrs_exptimers(tmrs, now, new_head)
-timer_t **tmrs;				/* pointer to timers queue */
+minix_timer_t **tmrs;				/* pointer to timers queue */
 clock_t now;				/* current time */
 clock_t *new_head;
 {
@@ -12,7 +12,7 @@ clock_t *new_head;
  * Run the watchdog functions for all expired timers and deactivate them.
  * The caller is responsible for scheduling a new alarm if needed.
  */
-  timer_t *tp;
+  minix_timer_t *tp;
 
   while ((tp = *tmrs) != NULL && tp->tmr_exp_time <= now) {
 	*tmrs = tp->tmr_next;

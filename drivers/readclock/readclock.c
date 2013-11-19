@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <time.h>
 #include <errno.h>
+#include <lib.h>
 #include <minix/type.h>
 #include <minix/const.h>
 #include <minix/callnr.h>
@@ -119,9 +120,9 @@ main(int argc, char **argv)
 
 		log_debug(&log, "Sending Reply");
 
-		r = sendnb(caller, &m);
+		r = ipc_sendnb(caller, &m);
 		if (r != OK) {
-			log_warn(&log, "sendnb() failed\n");
+			log_warn(&log, "ipc_sendnb() failed\n");
 			continue;
 		}
 	}

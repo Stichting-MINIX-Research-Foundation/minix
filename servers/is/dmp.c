@@ -79,8 +79,8 @@ message *m;					/* notification message */
    */
   m->m_type = TTY_FKEY_CONTROL;
   m->FKEY_REQUEST = FKEY_EVENTS;
-  if (OK != (s=sendrec(TTY_PROC_NR, m)))
-      printf("IS: warning, sendrec to TTY failed: %d\n", s);
+  if (OK != (s=ipc_sendrec(TTY_PROC_NR, m)))
+      printf("IS: warning, ipc_sendrec to TTY failed: %d\n", s);
 
   /* Now check which keys were pressed: F1-F12, SF1-SF12. */
   for(h=0; h < NHOOKS; h++)

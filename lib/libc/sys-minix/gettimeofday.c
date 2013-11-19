@@ -6,6 +6,7 @@ gettimeofday.c
 #include "namespace.h"
 #include <lib.h>
 
+#include <string.h>
 #include <sys/time.h>
 
 #ifdef __weak_alias
@@ -16,11 +17,13 @@ int gettimeofday(struct timeval *__restrict tp, void *__restrict tzp)
 {
   message m;
 
-  if (_syscall(PM_PROC_NR, GETTIMEOFDAY, &m) < 0)
+  memset(&m, 0, sizeof(m));
+
+  if (_syscall(PM_PROC_NR, PM_GETTIMEOFDAY, &m) < 0)
   	return -1;
 
-  tp->tv_sec = m.m2_l1;
-  tp->tv_usec = m.m2_l2;
+  tp->tv_sec = m.PM_TIME_SEC;
+  tp->tv_usec = m.PM_TIME_USEC;
 
   return 0;
 }

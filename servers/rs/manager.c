@@ -211,30 +211,6 @@ void build_cmd_dep(struct rproc *rp)
 }
 
 /*===========================================================================*
- *				 srv_fork				     *
- *===========================================================================*/
-pid_t srv_fork(uid_t reuid, gid_t regid)
-{
-  message m;
-
-  m.m1_i1 = (int) reuid;
-  m.m1_i2 = (int) regid;
-  return _syscall(PM_PROC_NR, SRV_FORK, &m);
-}
-
-/*===========================================================================*
- *				 srv_kill				     *
- *===========================================================================*/
-int srv_kill(pid_t pid, int sig)
-{
-  message m;
-
-  m.m1_i1 = pid;
-  m.m1_i2 = sig;
-  return(_syscall(PM_PROC_NR, SRV_KILL, &m));
-}
-
-/*===========================================================================*
  *				 srv_update				     *
  *===========================================================================*/
 int srv_update(endpoint_t src_e, endpoint_t dst_e)
@@ -481,14 +457,15 @@ struct rproc *rp;
   if(rs_verbose)
       printf("RS: forking child with srv_fork()...\n");
   child_pid= srv_fork(rp->r_uid, 0);	/* Force group to operator for now */
-  if(child_pid == -1) {
-      printf("RS: srv_fork() failed (error %d)\n", errno);
+  if(child_pid < 0) {
+      printf("RS: srv_fork() failed (error %d)\n", child_pid);
       free_slot(rp);
-      return(errno);
+      return(child_pid);
   }
 
   /* Get endpoint of the child. */
-  child_proc_nr_e = getnprocnr(child_pid);
+  if ((s = getprocnr(child_pid, &child_proc_nr_e)) != 0)
+	panic("unable to get child endpoint: %d", s);
 
   /* There is now a child process. Update the system process table. */
   child_proc_nr_n = _ENDPOINT_P(child_proc_nr_e);
@@ -665,7 +642,7 @@ struct rproc *rp;				/* pointer to service slot */
   /* If the service is a driver, map it. */
   if (rpub->dev_nr > 0) {
       /* The purpose of non-blocking forks is to avoid involving VFS in the
-       * forking process, because VFS may be blocked on a sendrec() to a MFS
+       * forking process, because VFS may be blocked on a ipc_sendrec() to a MFS
        * that is waiting for a endpoint update for a dead driver. We have just
        * published that update, but VFS may still be blocked. As a result, VFS
        * may not yet have received PM's fork message. Hence, if we call
@@ -677,9 +654,8 @@ struct rproc *rp;				/* pointer to service slot */
        */
       setuid(0);
 
-      if (mapdriver(rpub->label, rpub->dev_nr, rpub->dev_style,
-          rpub->dev_flags) != OK) {
-          return kill_service(rp, "couldn't map driver", errno);
+      if ((r = mapdriver(rpub->label, rpub->dev_nr)) != OK) {
+          return kill_service(rp, "couldn't map driver", r);
       }
   }
 
@@ -706,7 +682,7 @@ struct rproc *rp;				/* pointer to service slot */
 	  m.m_type = DEVMAN_BIND;
 	  m.DEVMAN_ENDPOINT  = rpub->endpoint;
 	  m.DEVMAN_DEVICE_ID = rpub->devman_id;
-	  r = sendrec(ep, &m);
+	  r = ipc_sendrec(ep, &m);
 	  if (r != OK || m.DEVMAN_RESULT != OK) {
 		 return kill_service(rp, "devman bind device failed", r);
 	  }
@@ -763,7 +739,7 @@ struct rproc *rp;				/* pointer to service slot */
 		m.m_type = DEVMAN_UNBIND;
 		m.DEVMAN_ENDPOINT  = rpub->endpoint;
 		m.DEVMAN_DEVICE_ID = rpub->devman_id;
-		r = sendrec(ep, &m);
+		r = ipc_sendrec(ep, &m);
 
 		if (r != OK || m.DEVMAN_RESULT != OK) {
 			 printf("RS: devman unbind device failed");
@@ -1134,7 +1110,8 @@ static int run_script(struct rproc *rp)
 		exit(1);
 	default:
 		/* Set the privilege structure for the child process. */
-		endpoint = getnprocnr(pid);
+		if ((r = getprocnr(pid, &endpoint)) != 0)
+			panic("unable to get child endpoint: %d", r);
 		if ((r = sys_privctl(endpoint, SYS_PRIV_SET_USER, NULL))
 			!= OK) {
 			return kill_service(rp,"can't set script privileges",r);
@@ -1225,10 +1202,7 @@ struct rproc *rp;
   rpub = rp->r_pub;
 
   /* Device and PCI settings. These properties cannot change. */
-  rpub->dev_flags = def_rpub->dev_flags;
   rpub->dev_nr = def_rpub->dev_nr;
-  rpub->dev_style = def_rpub->dev_style;
-  rpub->dev_style2 = def_rpub->dev_style2;
   rpub->pci_acl = def_rpub->pci_acl;
 
   /* Immutable system and privilege flags. */
@@ -1608,15 +1582,8 @@ endpoint_t source;
   rp->r_uid= rs_start->rss_uid;
 
   /* Initialize device driver settings. */
-  rpub->dev_flags = DSRV_DF;
   rpub->dev_nr = rs_start->rss_major;
-  rpub->dev_style = rs_start->rss_dev_style;
   rpub->devman_id = rs_start->devman_id;
-  if(rpub->dev_nr && !IS_DEV_STYLE(rs_start->rss_dev_style)) {
-      printf("RS: init_slot: bad device style\n");
-      return EINVAL;
-  }
-  rpub->dev_style2 = STYLE_NDEV;
 
   /* Initialize pci settings. */
   if (rs_start->rss_nr_pci_id > RS_NR_PCI_DEVICE) {
@@ -1627,10 +1594,14 @@ endpoint_t source;
   for (i= 0; i<rpub->pci_acl.rsp_nr_device; i++) {
       rpub->pci_acl.rsp_device[i].vid= rs_start->rss_pci_id[i].vid;
       rpub->pci_acl.rsp_device[i].did= rs_start->rss_pci_id[i].did;
+      rpub->pci_acl.rsp_device[i].sub_vid= rs_start->rss_pci_id[i].sub_vid;
+      rpub->pci_acl.rsp_device[i].sub_did= rs_start->rss_pci_id[i].sub_did;
       if(rs_verbose)
-          printf("RS: init_slot: PCI %04x/%04x\n",
+          printf("RS: init_slot: PCI %04x/%04x (sub %04x:%04x)\n",
               rpub->pci_acl.rsp_device[i].vid,
-              rpub->pci_acl.rsp_device[i].did);
+              rpub->pci_acl.rsp_device[i].did,
+              rpub->pci_acl.rsp_device[i].sub_vid,
+              rpub->pci_acl.rsp_device[i].sub_did);
   }
   if (rs_start->rss_nr_pci_class > RS_NR_PCI_CLASS) {
       printf("RS: init_slot: too many PCI class IDs\n");

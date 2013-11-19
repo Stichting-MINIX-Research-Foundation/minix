@@ -47,7 +47,7 @@ vbox_conn_t vbox_open(char *name)
   m.VBOX_COUNT = len;
   m.VBOX_ID = 0;
 
-  r = sendrec(vbox_endpt, &m);
+  r = ipc_sendrec(vbox_endpt, &m);
 
   cpf_revoke(grant);
 
@@ -75,7 +75,7 @@ int vbox_close(vbox_conn_t conn)
   m.VBOX_CONN = conn;
   m.VBOX_ID = 0;
 
-  r = sendrec(vbox_endpt, &m);
+  r = ipc_sendrec(vbox_endpt, &m);
 
   if (r != OK)
 	return r;
@@ -134,7 +134,7 @@ int vbox_call(vbox_conn_t conn, u32_t function, vbox_param_t *param, int count,
   m.VBOX_ID = 0;
   m.VBOX_FUNCTION = function;
 
-  r = sendrec(vbox_endpt, &m);
+  r = ipc_sendrec(vbox_endpt, &m);
 
   if (GRANT_VALID(grant))
 	cpf_revoke(grant);

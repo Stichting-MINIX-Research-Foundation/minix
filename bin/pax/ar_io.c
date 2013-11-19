@@ -456,13 +456,8 @@ ar_close(void)
 
 	/* mimic cpio's block count first */
 	if (frmt && strcmp(NM_CPIO, argv0) == 0) {
-#ifdef __minix
-		(void)fprintf(listf, "%d blocks\n",
-		    (rdcnt ? rdcnt : wrcnt) / 5120);
-#else
 		(void)fprintf(listf, OFFT_F " blocks\n",
 		    (rdcnt ? rdcnt : wrcnt) / 5120);
-#endif
 	}
 
 	ar_summary(0);

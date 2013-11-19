@@ -11,12 +11,12 @@ int mknod(const char *name, mode_t mode, dev_t dev)
 {
   message m;
 
-  m.m1_i1 = strlen(name) + 1;
-  m.m1_i2 = mode;
-  m.m1_i3 = dev;
-  m.m1_p1 = (char *) __UNCONST(name);
-  m.m1_p2 = (char *) ((int) 0);		/* obsolete size field */
-  return(_syscall(VFS_PROC_NR, MKNOD, &m));
+  memset(&m, 0, sizeof(m));
+  m.VFS_MKNOD_LEN = strlen(name) + 1;
+  m.VFS_MKNOD_MODE = mode;
+  m.VFS_MKNOD_DEV = dev;
+  m.VFS_MKNOD_NAME = (char *) __UNCONST(name);
+  return(_syscall(VFS_PROC_NR, VFS_MKNOD, &m));
 }
 
 #if defined(__minix) && defined(__weak_alias)

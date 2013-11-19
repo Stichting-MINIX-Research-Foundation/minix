@@ -21,7 +21,6 @@
 #include <minix/const.h>
 #include <minix/ds.h>
 #include <minix/endpoint.h>
-#include <minix/keymap.h>
 #include <minix/minlib.h>
 #include <minix/type.h>
 #include <minix/ipc.h>
@@ -50,8 +49,8 @@ int do_brk(message *msg)
  */
 	int proc;
 
-	if(vm_isokendpt(msg->VMB_ENDPOINT, &proc) != OK) {
-		printf("VM: bogus endpoint VM_BRK %d\n", msg->VMB_ENDPOINT);
+	if (vm_isokendpt(msg->m_source, &proc) != OK) {
+		printf("VM: bogus endpoint VM_BRK %d\n", msg->m_source);
 		return EINVAL;
 	}
 

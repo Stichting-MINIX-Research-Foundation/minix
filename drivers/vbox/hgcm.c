@@ -83,7 +83,7 @@ static void send_reply(endpoint_t endpt, int ipc_status, int result, int code,
 	m.VBOX_ID = id;
 
 	if (IPC_STATUS_CALL(ipc_status) == SENDREC)
-		r = sendnb(endpt, &m);
+		r = ipc_sendnb(endpt, &m);
 	else
 		r = asynsend3(endpt, &m, AMF_NOREPLY);
 

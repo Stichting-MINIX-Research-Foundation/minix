@@ -18,6 +18,7 @@
  *   send_sig:		send a signal directly to a system process
  *   cause_sig:		take action to cause a signal to occur via a signal mgr
  *   sig_delay_done:	tell PM that a process is not sending
+ *   send_diag_sig:	send a diagnostics signal to interested processes
  *   get_randomness:	accumulate randomness in a buffer
  *   clear_endpoint:	remove a process' ability to send and receive messages
  *   sched_proc:	schedule a process
@@ -241,7 +242,7 @@ void system_init(void)
   /* System control. */
   map(SYS_ABORT, do_abort);		/* abort MINIX */
   map(SYS_GETINFO, do_getinfo); 	/* request system information */ 
-  map(SYS_SYSCTL, do_sysctl); 		/* misc system manipulation */ 
+  map(SYS_DIAGCTL, do_diagctl);		/* diagnostics-related functionality */
 
   /* Profiling. */
   map(SYS_SPROF, do_sprofile);         /* start/stop statistical profiling */
@@ -407,6 +408,7 @@ int sig_nr;			/* signal to be sent */
   register struct proc *rp, *sig_mgr_rp;
   endpoint_t sig_mgr;
   int sig_mgr_proc_nr;
+  int s;
 
   /* Lookup signal manager. */
   rp = proc_addr(proc_nr);
@@ -437,8 +439,10 @@ int sig_nr;			/* signal to be sent */
        return;
   }
 
+  if((s = sigismember(&rp->p_pending, sig_nr)) < 0)
+	panic("sigismember failed");
   /* Check if the signal is already pending. Process it otherwise. */
-  if (! sigismember(&rp->p_pending, sig_nr)) {
+  if (!s) {
       sigaddset(&rp->p_pending, sig_nr);
 	increase_proc_signals(rp);
       if (! (RTS_ISSET(rp, RTS_SIGNALED))) {		/* other pending */
@@ -462,6 +466,25 @@ void sig_delay_done(struct proc *rp)
   rp->p_misc_flags &= ~MF_SIG_DELAY;
 
   cause_sig(proc_nr(rp), SIGSNDELAY);
+}
+
+/*===========================================================================*
+ *				send_diag_sig				     *
+ *===========================================================================*/
+void send_diag_sig(void)
+{
+/* Send a SIGKMESS signal to all processes in receiving updates about new
+ * diagnostics messages.
+ */
+  struct priv *privp;
+  endpoint_t ep;
+
+  for (privp = BEG_PRIV_ADDR; privp < END_PRIV_ADDR; privp++) {
+	if (privp->s_proc_nr != NONE && privp->s_diag_sig == TRUE) {
+		ep = proc_addr(privp->s_proc_nr)->p_endpoint;
+		send_sig(ep, SIGKMESS);
+	}
+  }
 }
 
 /*===========================================================================*

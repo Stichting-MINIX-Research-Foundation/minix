@@ -18,8 +18,8 @@
 /*
  * int copy_msg_from_user(message * user_mbuf, message * dst);
  *
- * Copies a message of 36 bytes from user process space to a kernel buffer. This
- * function assumes that the process address space is installed (cr3 loaded).
+ * Copies a message of 64 bytes from user process space to a kernel buffer. This
+ * function assumes that the process address space is installed (ttbr loaded).
  *
  * This function from the callers point of view either succeeds or returns an
  * error which gives the caller a chance to respond accordingly. In fact it
@@ -36,9 +36,15 @@ ENTRY(copy_msg_from_user)
 	mov	r9, r0
 	/* load the destination pointer */
 	mov	r10, r1
-	/* do the copy */
-	ldm	r9,  {r0-r8}
-	stm	r10, {r0-r8}
+	/* do the copy, first 32 bytes */
+	ldm	r9,  {r0-r7}
+	stm	r10, {r0-r7}
+
+	/* next 32 bytes */
+	add	r9,  r9, #32
+	add	r10, r10, #32
+	ldm	r9,  {r0-r7}
+	stm	r10, {r0-r7}
 
 LABEL(__copy_msg_from_user_end)
 	pop	{r4-r10, lr}
@@ -51,7 +57,7 @@ LABEL(__copy_msg_from_user_end)
 /*
  * void copy_msg_to_user(message * src, message * user_mbuf);
  *
- * Copies a message of 36 bytes to user process space from a kernel buffer.
+ * Copies a message of 64 bytes to user process space from a kernel buffer.
  *
  * All the other copy_msg_from_user() comments apply here as well!
  */
@@ -61,9 +67,15 @@ ENTRY(copy_msg_to_user)
 	mov	r9, r0
 	/* load the destination pointer */
 	mov	r10, r1
-	/* do the copy */
-	ldm	r9,  {r0-r8}
-	stm	r10, {r0-r8}
+	/* do the copy, first 32 bytes */
+	ldm	r9,  {r0-r7}
+	stm	r10, {r0-r7}
+
+	/* next 32 bytes */
+	add	r9,  r9,  #32
+	add	r10, r10, #32
+	ldm	r9,  {r0-r7}
+	stm	r10, {r0-r7}
 
 LABEL(__copy_msg_to_user_end)
 	pop	{r4-r10, lr}

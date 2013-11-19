@@ -36,7 +36,7 @@
 #include <string>
 
 #if defined(__minix)
-#include <minix/termios.h>
+#include <sys/termios.h>
 #endif /* defined(__minix) */
 
 #include "utils/optional.hpp"

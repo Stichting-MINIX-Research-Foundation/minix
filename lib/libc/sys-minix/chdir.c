@@ -2,6 +2,7 @@
 #include "namespace.h"
 #include <lib.h>
 
+#include <string.h>
 #include <unistd.h>
 
 #ifdef __weak_alias
@@ -14,8 +15,9 @@ const char *name;
 {
   message m;
 
+  memset(&m, 0, sizeof(m));
   _loadname(name, &m);
-  return(_syscall(VFS_PROC_NR, CHDIR, &m));
+  return(_syscall(VFS_PROC_NR, VFS_CHDIR, &m));
 }
 
 int fchdir(fd)
@@ -23,6 +25,7 @@ int fd;
 {
   message m;
 
-  m.m1_i1 = fd;
-  return(_syscall(VFS_PROC_NR, FCHDIR, &m));
+  memset(&m, 0, sizeof(m));
+  m.VFS_FCHDIR_FD = fd;
+  return(_syscall(VFS_PROC_NR, VFS_FCHDIR, &m));
 }

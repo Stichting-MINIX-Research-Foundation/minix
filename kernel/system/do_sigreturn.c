@@ -25,12 +25,12 @@ int do_sigreturn(struct proc * caller, message * m_ptr)
   register struct proc *rp;
   int proc_nr, r;
 
-  if (! isokendpt(m_ptr->SIG_ENDPT, &proc_nr)) return(EINVAL);
+  if (! isokendpt(m_ptr->SYS_SIG_ENDPT, &proc_nr)) return(EINVAL);
   if (iskerneln(proc_nr)) return(EPERM);
   rp = proc_addr(proc_nr);
 
   /* Copy in the sigcontext structure. */
-  if((r=data_copy(m_ptr->SIG_ENDPT, (vir_bytes) m_ptr->SIG_CTXT_PTR,
+  if((r=data_copy(m_ptr->SYS_SIG_ENDPT, (vir_bytes) m_ptr->SYS_SIG_CTXT_PTR,
 	KERNEL, (vir_bytes) &sc, sizeof(struct sigcontext))) != OK)
 	return r;
 

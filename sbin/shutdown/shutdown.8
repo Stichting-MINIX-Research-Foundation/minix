@@ -1,0 +1,243 @@
+.\"	$NetBSD: shutdown.8,v 1.31 2011/10/04 07:25:34 dholland Exp $
+.\"
+.\" Copyright (c) 1988, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"     @(#)shutdown.8	8.2 (Berkeley) 4/27/95
+.\"
+.Dd October 4, 2011
+.Dt SHUTDOWN 8
+.Os
+.Sh NAME
+.Nm shutdown
+.Nd close down the system at a given time
+.Sh SYNOPSIS
+.Nm
+.Op Fl Ddfhknprvxz
+.Op Fl b Ar bootstr
+.Ar time
+.Op Ar message ... | Ar -
+.Sh DESCRIPTION
+.Nm
+provides an automated shutdown procedure for super-users
+to nicely notify users when the system is shutting down,
+saving them from system administrators, hackers, and gurus, who
+would otherwise not bother with such niceties.
+.Pp
+Available friendlinesses:
+.Bl -tag -width bootstr
+.It Fl b Ar bootstr
+The given
+.Ar bootstr
+is passed to
+.Xr reboot 8
+for the benefit of those systems that can pass boot arguments to the
+firmware.
+Currently, this only affects sun3 and sparc machines.
+.It Fl d
+.Nm
+will pass the
+.Fl d
+flag to
+.Xr reboot 8
+or
+.Xr halt 8
+to request a kernel core dump.
+If neither the
+.Fl h
+or
+.Fl r
+flags are specified, then
+.Fl d
+also implies
+.Fl r .
+.It Fl f
+.Nm
+arranges, in the manner of
+.Xr fastboot 8 ,
+for the file systems
+.Em not to be
+checked on reboot.
+.It Fl h
+The system is halted at the specified
+.Ar time ,
+using
+.Xr halt 8 .
+.It Fl k
+Kick everybody off.
+The
+.Fl k
+option
+does not actually halt the system, but leaves the
+system multi-user with logins disabled (for all but super-user).
+.It Fl n
+Prevent the normal
+.Xr sync 2
+before stopping.
+.It Fl p
+The system is powered down at the specified
+.Ar time ,
+using
+.Xr poweroff 8 .
+If the powerdown fails, or the system does not support software powerdown,
+the system will simply halt instead.
+.It Fl r
+The system is rebooted at the specified
+.Ar time ,
+using
+.Xr reboot 8 .
+.It Fl v
+To enable verbose messages on the console, pass
+.Fl v
+to
+.Xr reboot 8
+or
+.Xr halt 8 .
+.It Fl x
+To enable debugging messages on the console, pass
+.Fl x
+to
+.Xr reboot 8
+or
+.Xr halt 8 .
+.It Fl z
+To silence some shutdown messages on the console, pass
+.Fl z
+to
+.Xr reboot 8
+or
+.Xr halt 8 .
+.It Fl D
+Prevents
+.Nm
+from detaching from the tty with
+.Xr fork 2 Ns /
+.Xr exit 3 .
+.It Ar time
+.Ar Time
+is the time at which
+.Nm
+will bring the system down and
+may be the word
+.Ar now
+or a future time in one of two formats:
+.Ar +number ,
+or
+.Ar [[[[[cc]yy]mm]dd]hh]mm ,
+where the century, year, month, day, and hour may be defaulted
+to the current system values.
+The first form brings the system down
+.Ar number
+minutes from the current time; the second brings the system down at the
+absolute time specified.
+If the century is not specified, it defaults to 1900 for years between 69
+and 99, or 2000 for years between 0 and 68.
+A leading zero in the
+.Dq yy
+value is
+.Em not
+optional.
+.It Ar message ...
+Any other arguments comprise the warning message that is broadcast
+to users currently logged into the system.
+.It Ar -
+If
+.Ar -
+is supplied as the only argument after the time, the warning message is read
+from the standard input.
+.El
+.Sh BEHAVIOR
+.Pp
+At intervals, becoming more frequent as apocalypse approaches
+and starting at ten hours before shutdown, warning messages are displayed
+on the terminals of all users logged in.
+Five minutes before shutdown, or immediately if shutdown is in less
+than 5 minutes, logins are disabled by creating
+.Pa /etc/nologin
+and copying the warning message there.
+If this file exists when a user attempts to log in,
+.Xr login 1
+prints its contents and exits.
+The file is removed just before
+.Nm
+exits.
+.Pp
+At shutdown time, a message is written in the system log containing the
+time of shutdown, who initiated the shutdown, and the reason.
+Next a message is printed announcing the start of the system shutdown hooks.
+Then the shutdown hooks in
+.Pa /etc/rc.shutdown
+are run, and a message is printed indicating that they have completed.
+After a short delay,
+.Nm
+runs
+.Xr halt 8
+or
+.Xr reboot 8 ,
+or sends a terminate
+signal to
+.Xr init 8
+to bring the system down to single-user mode, depending on the choice
+of options.
+.Pp
+The time of the shutdown and the warning message are placed in
+.Pa /etc/nologin
+and should be used to tell the users why the system is
+going down, when it will be back up, and to share any other pertinent
+information.
+.Sh FILES
+.Bl -tag -width /etc/rc.shutdown -compact
+.It Pa /etc/nologin
+tells
+.Xr login 1
+not to let anyone log in
+.It Pa /fastboot
+tells
+.Xr rc 8
+not to run
+.Xr fsck 8
+when rebooting
+.It Pa /etc/rc.shutdown
+System shutdown commands
+.El
+.Sh SEE ALSO
+.Xr login 1 ,
+.Xr wall 1 ,
+.Xr fastboot 8 ,
+.Xr halt 8 ,
+.Xr init 8 ,
+.Xr poweroff 8 ,
+.Xr reboot 8 ,
+.Xr rescue 8
+.Sh BACKWARD COMPATIBILITY
+The hours and minutes in the second time format may be separated by
+a colon (``:'') for backward compatibility.
+.Sh HISTORY
+The
+.Nm
+command appeared in
+.Bx 4.0 .

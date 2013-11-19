@@ -14,14 +14,14 @@
 #ifndef EXT2_BUF_H
 #define EXT2_BUF_H
 
-#include <dirent.h>
+#include <sys/dirent.h>
 
 union fsdata_u {
-    char b__data[_MAX_BLOCK_SIZE];             /* ordinary user data */
+    char b__data[1];             /* ordinary user data */
 /* indirect block */
-    block_t b__ind[_MAX_BLOCK_SIZE/sizeof(block_t)];
+    block_t b__ind[1];
 /* bit map block */
-    bitchunk_t b__bitmap[FS_BITMAP_CHUNKS(_MAX_BLOCK_SIZE)];
+    bitchunk_t b__bitmap[1];
 };
 
 /* A block is free if b_dev == NO_DEV. */

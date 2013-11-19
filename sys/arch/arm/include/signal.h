@@ -28,7 +28,7 @@ struct sigcontext {
   int sc_flags;			/* sigstack state to restore (including
 				 * MF_FPU_INITIALIZED)
 				 */
-  long sc_mask;			/* signal mask to restore */
+  sigset_t sc_mask;		/* signal mask to restore */
   sigregs sc_regs;              /* register set to restore */
 };
 

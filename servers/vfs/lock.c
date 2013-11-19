@@ -11,11 +11,9 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include "file.h"
-#include "fproc.h"
 #include "scratchpad.h"
 #include "lock.h"
 #include "vnode.h"
-#include "param.h"
 
 /*===========================================================================*
  *				lock_op					     *
@@ -50,11 +48,7 @@ int req;			/* either F_SETLK or F_SETLKW */
   /* Compute the first and last bytes in the lock region. */
   switch (flock.l_whence) {
     case SEEK_SET:	first = 0; break;
-    case SEEK_CUR:
-	if (ex64hi(f->filp_pos) != 0)
-		panic("lock_op: position in file too high");
-	first = ex64lo(f->filp_pos);
-	break;
+    case SEEK_CUR:	first = f->filp_pos; break;
     case SEEK_END:	first = f->filp_vno->v_size; break;
     default:	return(EINVAL);
   }
@@ -147,8 +141,8 @@ int req;			/* either F_SETLK or F_SETLKW */
 	}
 
 	/* Copy the flock structure back to the caller. */
-	r = sys_datacopy(VFS_PROC_NR, (vir_bytes) &flock,
-		who_e, (vir_bytes) scratch(fp).io.io_buffer, sizeof(flock));
+	r = sys_datacopy(VFS_PROC_NR, (vir_bytes) &flock, who_e,
+		(vir_bytes) scratch(fp).io.io_buffer, sizeof(flock));
 	return(r);
   }
 

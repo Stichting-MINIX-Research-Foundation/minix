@@ -4,7 +4,7 @@
 #
 
 PROG=	in.telnetd
-SRCS=	main.c telnet.c term.c pty.c wtmp.c
+SRCS=	main.c telnet.c term.c pty.c 
 MAN=
 
 .include <bsd.prog.mk>

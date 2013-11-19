@@ -40,10 +40,11 @@ __RCSID("$NetBSD: tcsendbreak.c,v 1.10 2012/06/25 22:32:46 abs Exp $");
 
 #include "namespace.h"
 #include <sys/types.h>
-#include <sys/ioctl.h>
-#ifndef __minix
+#ifdef __minix
 #include <sys/time.h>
-#endif /* !__minix */
+#endif
+#include <sys/types.h>
+#include <sys/ioctl.h>
 
 #include <assert.h>
 #include <errno.h>
@@ -58,10 +59,6 @@ __weak_alias(tcsendbreak,_tcsendbreak)
 int
 tcsendbreak(int fd, int len)
 {
-#ifdef __minix
-	_DIAGASSERT(fd != -1);
-	return ioctl(fd, TCSBRK, &len);
-#else /* !__minix */
 	static const struct timespec sleepytime = { 0, 400000000 };
 
 	_DIAGASSERT(fd != -1);
@@ -72,5 +69,4 @@ tcsendbreak(int fd, int len)
 	if (ioctl(fd, TIOCCBRK, 0) == -1)
 		return (-1);
 	return (0);
-#endif /* !__minix */
 }

@@ -56,41 +56,52 @@ typedef	_BSD_SIZE_T_	size_t;
 
 #if defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE) || \
     defined(_NETBSD_SOURCE)
-typedef unsigned long sigset_t;
+
+typedef struct {
+	__uint32_t	__bits[4];
+} sigset_t;
 
 /*
  * Macro for manipulating signal masks.
  */
-#ifndef __minix
-#define __sigmask(n)		(1 << (((unsigned int)(n) - 1)))
-#else /* __minix */
-#define __sigmask(n)		(1 << (unsigned int)(n))
-#endif /* !__minix */ 
-#define __sigaddset(s, n)					\
-	do {							\
-		*(s) = *(unsigned long *)(s) | __sigmask(n);	\
-	} while(0)
-#define __sigdelset(s, n)					\
-	do {							\
-		*(s) = *(unsigned long *)(s) & ~__sigmask(n);	\
-	} while (0)
-
-#define __sigismember(s, n)	(((*(const unsigned long *)(s)) & __sigmask(n)) != 0)
-#define __sigemptyset(s)	(*(unsigned long *)(s) = 0)
-#define __sigsetequal(s1, s2)	(*(unsigned long *)(s1) = *(unsigned long *)(s2))
-#define __sigfillset(s)		(*(long *)(s) = -1L)
-#define __sigplusset(s, t)						\
-	do {								\
-		*(t) = *(unsigned long *)(t) | *(unsigned long *)(s);	\
-	} while (0)
-#define __sigminusset(s, t)					\
-	do {							\
-		*(t) = *(unsigned long *)(t) & ~*(unsigned long *)(s);	\
-	} while (0)
-#define __sigandset(s, t)					\
-	do {							\
-		*(t) = *(unsigned long *)(t) & *(unsigned long *)(s);	\
-	} while (0)
+#define __sigmask(n)		(1 << (((unsigned int)(n) - 1) & 31))
+#define	__sigword(n)		(((unsigned int)(n) - 1) >> 5)
+#define	__sigaddset(s, n)	((s)->__bits[__sigword(n)] |= __sigmask(n))
+#define	__sigdelset(s, n)	((s)->__bits[__sigword(n)] &= ~__sigmask(n))
+#define	__sigismember(s, n)	(((s)->__bits[__sigword(n)] & __sigmask(n)) != 0)
+#define	__sigemptyset(s)	((s)->__bits[0] = 0x00000000, \
+				 (s)->__bits[1] = 0x00000000, \
+				 (s)->__bits[2] = 0x00000000, \
+				 (s)->__bits[3] = 0x00000000)
+#define __sigsetequal(s1,s2)	((s1)->__bits[0] == (s2)->__bits[0] && \
+				 (s1)->__bits[1] == (s2)->__bits[1] && \
+				 (s1)->__bits[2] == (s2)->__bits[2] && \
+				 (s1)->__bits[3] == (s2)->__bits[3])
+#define	__sigfillset(s)		((s)->__bits[0] = 0xffffffff, \
+				 (s)->__bits[1] = 0xffffffff, \
+				 (s)->__bits[2] = 0xffffffff, \
+				 (s)->__bits[3] = 0xffffffff)
+#define	__sigplusset(s, t) \
+	do {						\
+		(t)->__bits[0] |= (s)->__bits[0];	\
+		(t)->__bits[1] |= (s)->__bits[1];	\
+		(t)->__bits[2] |= (s)->__bits[2];	\
+		(t)->__bits[3] |= (s)->__bits[3];	\
+	} while (/* CONSTCOND */ 0)
+#define	__sigminusset(s, t) \
+	do {						\
+		(t)->__bits[0] &= ~(s)->__bits[0];	\
+		(t)->__bits[1] &= ~(s)->__bits[1];	\
+		(t)->__bits[2] &= ~(s)->__bits[2];	\
+		(t)->__bits[3] &= ~(s)->__bits[3];	\
+	} while (/* CONSTCOND */ 0)
+#define	__sigandset(s, t) \
+	do {						\
+		(t)->__bits[0] &= (s)->__bits[0];	\
+		(t)->__bits[1] &= (s)->__bits[1];	\
+		(t)->__bits[2] &= (s)->__bits[2];	\
+		(t)->__bits[3] &= (s)->__bits[3];	\
+	} while (/* CONSTCOND */ 0)
 
 #if (defined(_XOPEN_SOURCE) && defined(_XOPEN_SOURCE_EXTENDED)) || \
     (_XOPEN_SOURCE - 0) >= 500 || defined(_NETBSD_SOURCE)

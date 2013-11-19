@@ -14,7 +14,7 @@
 
 #if USE_SETALARM
 
-static void cause_alarm(timer_t *tp);
+static void cause_alarm(minix_timer_t *tp);
 
 /*===========================================================================*
  *				do_setalarm				     *
@@ -24,7 +24,7 @@ int do_setalarm(struct proc * caller, message * m_ptr)
 /* A process requests a synchronous alarm, or wants to cancel its alarm. */
   long exp_time;		/* expiration time for this alarm */
   int use_abs_time;		/* use absolute or relative time */
-  timer_t *tp;			/* the process' timer structure */
+  minix_timer_t *tp;			/* the process' timer structure */
   clock_t uptime;		/* placeholder for current uptime */
 
   /* Extract shared parameters from the request message. */
@@ -47,10 +47,10 @@ int do_setalarm(struct proc * caller, message * m_ptr)
 
   /* Finally, (re)set the timer depending on the expiration time. */
   if (exp_time == 0) {
-      reset_timer(tp);
+      reset_kernel_timer(tp);
   } else {
       tp->tmr_exp_time = (use_abs_time) ? exp_time : exp_time + get_monotonic();
-      set_timer(tp, tp->tmr_exp_time, tp->tmr_func);
+      set_kernel_timer(tp, tp->tmr_exp_time, tp->tmr_func);
   }
   return(OK);
 }
@@ -58,7 +58,7 @@ int do_setalarm(struct proc * caller, message * m_ptr)
 /*===========================================================================*
  *				cause_alarm				     *
  *===========================================================================*/
-static void cause_alarm(timer_t *tp)
+static void cause_alarm(minix_timer_t *tp)
 {
 /* Routine called if a timer goes off and the process requested a synchronous
  * alarm. The process number is stored in timer argument 'ta_int'. Notify that

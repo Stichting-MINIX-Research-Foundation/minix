@@ -46,7 +46,7 @@ static void rewrite_i2c_minix_to_netbsd(i2c_ioctl_exec_t *out,
 
 int ioctl(fd, request, data)
 int fd;
-int request;
+unsigned long request;
 void *data;
 {
   int r, request_save;
@@ -73,11 +73,12 @@ void *data;
 		break;
   }
 
-  m.TTY_LINE = fd;
-  m.TTY_REQUEST = request;
-  m.ADDRESS = (char *) addr;
+  memset(&m, 0, sizeof(m));
+  m.VFS_IOCTL_FD = fd;
+  m.VFS_IOCTL_REQ = request;
+  m.VFS_IOCTL_ARG = (char *) addr;
 
-  r = _syscall(VFS_PROC_NR, IOCTL, &m);
+  r = _syscall(VFS_PROC_NR, VFS_IOCTL, &m);
 
   /* Translate back to original form */
   switch (request_save) {

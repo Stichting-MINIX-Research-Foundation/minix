@@ -29,7 +29,7 @@ char dot2[3] = "..";	/* permissions for . and ..		    */
 
 static char *get_name(char *name, char string[NAME_MAX+1]);
 static int ltraverse(struct puffs_node *pn, char *suffix);
-static int parse_path(ino_t dir_ino, ino_t root_ino, int flags, struct
+static int parse_path(pino_t dir_ino, pino_t root_ino, int flags, struct
 	puffs_node **res_inop, size_t *offsetp, int *symlinkp);
 
 /*===========================================================================*
@@ -41,14 +41,14 @@ int fs_lookup()
   int r, r1, flags, symlinks;
   unsigned int len;
   size_t offset = 0, path_size;
-  ino_t dir_ino, root_ino;
+  pino_t dir_ino, root_ino;
   struct puffs_node *pn;
 
   grant		= (cp_grant_id_t) fs_m_in.REQ_GRANT;
   path_size	= (size_t) fs_m_in.REQ_PATH_SIZE;	/* Size of the buffer */
   len		= (int) fs_m_in.REQ_PATH_LEN;	/* including terminating nul */
-  dir_ino	= (ino_t) fs_m_in.REQ_DIR_INO;
-  root_ino	= (ino_t) fs_m_in.REQ_ROOT_INO;
+  dir_ino	= (pino_t) fs_m_in.REQ_DIR_INO;
+  root_ino	= (pino_t) fs_m_in.REQ_ROOT_INO;
   flags		= (int) fs_m_in.REQ_FLAGS;
 
   /* Check length. */
@@ -128,14 +128,14 @@ int fs_lookup()
 /*===========================================================================*
  *                             parse_path				     *
  *===========================================================================*/
-static int parse_path(dir_ino, root_ino, flags, res_inop, offsetp, symlinkp)
-ino_t dir_ino;
-ino_t root_ino;
-int flags;
-struct puffs_node **res_inop;
-size_t *offsetp;
-int *symlinkp;
-{
+static int parse_path(
+pino_t dir_ino,
+pino_t root_ino,
+int flags,
+struct puffs_node **res_inop,
+size_t *offsetp,
+int *symlinkp
+) {
   /* Parse the path in user_path, starting at dir_ino. If the path is the empty
    * string, just return dir_ino. It is upto the caller to treat an empty
    * path in a special way. Otherwise, if the path consists of just one or

@@ -48,7 +48,7 @@ int usb_send_urb(struct usb_urb* urb)
 	msg.USB_GRANT_SIZE = urb->urb_size-sizeof(void*);
 		
 	/* send message */
-	res = sendrec(hcd_ep, &msg);
+	res = ipc_sendrec(hcd_ep, &msg);
 
 	if (res != 0) {
 		panic("usb_send_urb: could not talk to hcd: %d", res);
@@ -95,7 +95,7 @@ int usb_cancle_urb(struct usb_urb* urb)
 	msg.USB_URB_ID = urb->urb_id;
 
 	/* send message */
-	res = sendrec(hcd_ep, &msg);
+	res = ipc_sendrec(hcd_ep, &msg);
 	
 	if (res != 0) {
 		panic("usb_cancle_urb: could not talk to hcd: %d", res);
@@ -134,7 +134,7 @@ int usb_init(char *name)
 
 	strncpy(msg.USB_RB_INIT_NAME, name, M3_LONG_STRING);
 	
-	res = sendrec(hcd_ep, &msg);
+	res = ipc_sendrec(hcd_ep, &msg);
 
 	if (res != 0) {
 		panic("usb_init: can't talk to USB: %d", res);

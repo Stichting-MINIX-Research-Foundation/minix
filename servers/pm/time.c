@@ -4,9 +4,8 @@
  *   do_getres:		perform the CLOCK_GETRES system call
  *   do_gettime:	perform the CLOCK_GETTIME system call
  *   do_settime:	perform the CLOCK_SETTIME system call
- *   do_time:		perform the TIME system call
+ *   do_time:		perform the GETTIMEOFDAY system call
  *   do_stime:		perform the STIME system call
- *   do_times:		perform the TIMES system call
  */
 
 #include "pm.h"
@@ -15,7 +14,6 @@
 #include <signal.h>
 #include <sys/time.h>
 #include "mproc.h"
-#include "param.h"
 
 /*===========================================================================*
  *				do_gettime				     *
@@ -29,7 +27,7 @@ int do_gettime()
   if ( (s=getuptime(&ticks, &realtime, &boottime)) != OK)
   	panic("do_time couldn't get uptime: %d", s);
 
-  switch (m_in.clk_id) {
+  switch (m_in.PM_TIME_CLK_ID) {
 	case CLOCK_REALTIME:
 		clock = realtime;
 		break;
@@ -40,8 +38,8 @@ int do_gettime()
 		return EINVAL; /* invalid/unsupported clock_id */
   }
 
-  mp->mp_reply.reply_time = (time_t) (boottime + (clock / system_hz));
-  mp->mp_reply.reply_ntime =
+  mp->mp_reply.PM_TIME_SEC = (time_t) (boottime + (clock / system_hz));
+  mp->mp_reply.PM_TIME_NSEC =
 	(long) ((clock % system_hz) * 1000000000ULL / system_hz);
 
   return(OK);
@@ -52,12 +50,12 @@ int do_gettime()
  *===========================================================================*/
 int do_getres()
 {
-  switch (m_in.clk_id) {
+  switch (m_in.PM_TIME_CLK_ID) {
 	case CLOCK_REALTIME:
 	case CLOCK_MONOTONIC:
 		/* tv_sec is always 0 since system_hz is an int */
-		mp->mp_reply.reply_time = (time_t) 0;
-		mp->mp_reply.reply_ntime = 1000000000 / system_hz;
+		mp->mp_reply.PM_TIME_SEC = (time_t) 0;
+		mp->mp_reply.PM_TIME_NSEC = 1000000000 / system_hz;
 		return(OK);
 	default:
 		return EINVAL; /* invalid/unsupported clock_id */
@@ -75,10 +73,10 @@ int do_settime()
       return(EPERM);
   }
 
-  switch (m_in.clk_id) {
+  switch (m_in.PM_TIME_CLK_ID) {
 	case CLOCK_REALTIME:
-		s= sys_settime(m_in.settime_now, m_in.clk_id, m_in.time_sec,
-							m_in.time_nsec);
+		s= sys_settime(m_in.PM_TIME_NOW, m_in.PM_TIME_CLK_ID,
+			m_in.PM_TIME_SEC, m_in.PM_TIME_NSEC);
 		return(s);
 	case CLOCK_MONOTONIC: /* monotonic cannot be changed */
 	default:
@@ -103,8 +101,8 @@ int do_time()
   if ( (s=getuptime(&ticks, &realtime, &boottime)) != OK)
   	panic("do_time couldn't get uptime: %d", s);
 
-  mp->mp_reply.reply_time = (time_t) (boottime + (realtime / system_hz));
-  mp->mp_reply.reply_utime =
+  mp->mp_reply.PM_TIME_SEC = (time_t) (boottime + (realtime / system_hz));
+  mp->mp_reply.PM_TIME_USEC =
 	(long) ((realtime % system_hz) * 1000000ULL / system_hz);
   return(OK);
 }
@@ -126,7 +124,7 @@ int do_stime()
   }
   if ( (s=getuptime(&uptime, &realtime, &boottime)) != OK) 
       panic("do_stime couldn't get uptime: %d", s);
-  boottime = (long) m_in.stime - (realtime/system_hz);
+  boottime = (long) m_in.PM_TIME_SEC - (realtime/system_hz);
 
   s= sys_stime(boottime);		/* Tell kernel about boottime */
   if (s != OK)
@@ -134,25 +132,3 @@ int do_stime()
 
   return(OK);
 }
-
-/*===========================================================================*
- *				do_times				     *
- *===========================================================================*/
-int do_times()
-{
-/* Perform the times(buffer) system call. */
-  register struct mproc *rmp = mp;
-  clock_t user_time, sys_time, uptime;
-  int s;
-
-  if (OK != (s=sys_times(who_e, &user_time, &sys_time, &uptime, NULL)))
-      panic("do_times couldn't get times: %d", s);
-  rmp->mp_reply.reply_t1 = user_time;		/* user time */
-  rmp->mp_reply.reply_t2 = sys_time;		/* system time */
-  rmp->mp_reply.reply_t3 = rmp->mp_child_utime;	/* child user time */
-  rmp->mp_reply.reply_t4 = rmp->mp_child_stime;	/* child system time */
-  rmp->mp_reply.reply_t5 = uptime;		/* uptime since boot */
-
-  return(OK);
-}
-

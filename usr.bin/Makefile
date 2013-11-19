@@ -14,6 +14,7 @@ SUBDIR= asa \
 	fsplit ftp genassym getopt \
 	head hexdump id indent infocmp join jot \
 	lam ldd leave \
+	last \
 	lock login logname lorder m4 \
 	machine make man menuc mesg \
 	mkdep mkfifo mkstr mktemp \
@@ -26,13 +27,13 @@ SUBDIR= asa \
 	sdiff sed seq shlock \
 	shuffle soelim sort split stat su \
 	tee tic tput \
-	tr tsort tty ul unexpand unifdef \
+	tr tsort tty ul uname unexpand unifdef \
 	toproto \
 	uniq units unvis unzip users \
 	uuidgen vis \
-	\
-	wc what whatis who whois \
-	write xargs xinstall xstr yes
+	wall write \
+	xargs xinstall xstr yes \
+	wc what whatis who whois 
 
 .if !defined(__MINIX)
 SUBDIR+= ../external/zlib/pigz/bin/pigz
@@ -42,10 +43,11 @@ SUBDIR+= ministat
 
 # Minix commands
 SUBDIR+= top 
+SUBDIR+= toproto
 
-# LSC FIXME For now we compile unconditionnaly apropos even if we 
+# LSC FIXME For now we compile unconditionnaly apropos and whatis even if we 
 # do not have whatis
-SUBDIR+= apropos
+SUBDIR+= apropos whatis
 .endif # defie
 
 .if (${MKMAKEMANDB} == "no")

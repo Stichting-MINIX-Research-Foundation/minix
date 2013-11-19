@@ -5,25 +5,23 @@ exec 2>/dev/log
 exec </dev/null
 
 umask 022
-FSTAB=/etc/fstab
-TERM="${TERM-minix}"
-PATH=/usr/local/bin:/bin:/usr/bin:/usr/sbin:/usr/pkg/bin:/usr/pkg/sbin:/sbin
+
+# Same settings as in the default /etc/profile. We do not source this file
+# as the system administrator may decide to change those values for his users.
 RC_TZ=/etc/rc.timezone
+PATH=/usr/local/sbin:/usr/pkg/sbin:/usr/sbin:/sbin:/usr/local/bin:/usr/pkg/bin:/usr/bin:/bin
+
+# Set TERM to minix if not present.
+TERM="${TERM-minix}"
+
 export TERM PATH
 
+# Local variables
 ARCH="`sysenv arch`"
-
-if [ ! "$ARCH" ]
-then	# Older kernels do not provide an arch sysenv variable.
-	# We assume we are on x86 then, as existing systems with
-	# kernel and userland (i.e. this script) unsynchronized
-	# will be x86.
-	ARCH=i386
-fi
 
 usage()
 {
-    echo >&2 "Usage: $0 [-saf] start|stop|down"
+    echo >&2 "Usage: $0 [-saf] autoboot|start|stop|down"
     exec intr sh
 }
 
@@ -56,30 +54,12 @@ edit()
     service=$1
     shift
 
-    # Assume binaries are always in /usr/sbin
-    service $opt edit /usr/sbin/$service -label $service "$@" 
-}
-
-# This function parses the deprecated minix shellscript-style 
-# /etc/fstab, and fscks and mounts its filesystems.
-mountfstab_poorman()
-{
-    echo "WARNING: old fstab format, please upgrade!"
-
-    # /etc/fstab lists the root, home, and usr devices.
-    . $FSTAB
-
-    intr fsck.mfs $fsckopts $usr
-    if [ ! -z "$home" ]
-    then intr fsck.mfs $fsckopts $home
+    # Assume binaries are always in /sbin or /usr/sbin
+    binlocation=/usr/sbin/$service
+    if [ ! -x $binlocation ]
+    then	binlocation=/sbin/$service
     fi
-
-    # mount /usr
-    mount $bin_img $usr /usr
-
-    if [ ! -z "$home" ]
-    then mount $bin_img $home /home || echo "WARNING: couldn't mount $home on /home"
-    fi
+    service $opt edit $binlocation -label $service "$@" 
 }
 
 while getopts 'saf' opt
@@ -94,14 +74,14 @@ done
 shift `expr $OPTIND - 1`
 
 case "$#:$1" in
-1:start|1:stop|1:down)
+1:start|1:stop|1:down|1:autoboot)
     action=$1
     ;;
 *)  usage
 esac
 
 case $action in
-start)
+autoboot|start)
 
     # National keyboard?
     test -f /etc/keymap && loadkeys /etc/keymap
@@ -128,8 +108,12 @@ start)
     up readclock.drv
     readclock -q || date 201301010000
 
+    # We are not shutting down.
+    rm -f /etc/nologin
+
     # Initialize files.
-    >/etc/utmp				# /etc/utmp keeps track of logins
+    >/var/run/utmp				# /etc/utmp keeps track of logins
+    >/var/run/utmpx				# /etc/utmpx keeps track of logins
 
     # Use MFS binary only from kernel image?
     if [ "`sysenv bin_img`" = 1 ]
@@ -148,12 +132,8 @@ start)
 		mount -r $usrdev /usr
     else	
     # If we're not booting from CD, fsck + mount using /etc/fstab.
-		read <$FSTAB fstabline
-		if [ "$fstabline" = "# Poor man's File System Table." ]
-		then	mountfstab_poorman	# Old minix /etc/fstab
-		else	fsck -x / $fflag $fsckopts
-			mount -a
-		fi
+		fsck -x / $fflag $fsckopts
+		mount -a
     fi
 
     # Unmount and free now defunct ramdisk
@@ -171,14 +151,9 @@ start)
 	edit ds
 	edit tty
 	edit memory
-	edit -p log
-	edit -c pfs
+	edit pfs
 	edit init
     fi
-
-    # This file is necessary for above 'shutdown -C' check.
-    # (Silence stderr in case of running from cd.)
-    touch /usr/adm/wtmp /etc/wtmp 2>/dev/null
 
     if [ "$sflag" ]
     then
@@ -241,6 +216,10 @@ test -f /usr/etc/rc && sh /usr/etc/rc $action
 test -f /usr/local/etc/rc && sh /usr/local/etc/rc $action
 
 # Any messages?
-test "$action" = start -a -f /etc/issue && cat /etc/issue
+if [ "$action" = start -o "$action" = autoboot ]
+then	if [ -f /etc/issue ]
+	then	cat /etc/issue
+	fi
+fi
 
 exit 0

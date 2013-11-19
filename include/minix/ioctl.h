@@ -34,6 +34,7 @@
 				_IOC_IN)
 #define _IORW(x,y,t)	((x << 8) | y | ((sizeof(t) & _IOCPARM_MASK) << 16) |\
 				_IOC_INOUT)
+#define _IOWR(x,y,t)	_IORW(x,y,t)	/* NetBSD compatibility */
 
 #define _IOW_BIG(y,t)  (y | ((sizeof(t) & _IOCPARM_MASK_BIG) << 8) \
 	| _IOC_IN | _IOC_BIG)
@@ -53,7 +54,7 @@
 #define _MINIX_IOCTL_SIZE_BIG(i)	(((i) >> 8) & _IOCPARM_MASK_BIG)
 
 __BEGIN_DECLS
-int ioctl(int _fd, int _request, void *_data);
+int ioctl(int _fd, unsigned long _request, void *_data);
 __END_DECLS
 
 #endif /* _M_IOCTL_H */

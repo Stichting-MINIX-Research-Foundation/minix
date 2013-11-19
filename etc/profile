@@ -1,5 +1,32 @@
-RC_TZ=/etc/rc.timezone
-export TZ=GMT0
-if [ -f "$RC_TZ" ]
-then . "$RC_TZ"
+# Default system-wide login shell profile.
+
+# Activate emacs keybindings and command line history support
+set -o emacs
+
+# Set the default path
+PATH=/usr/local/bin:/usr/pkg/bin:/usr/bin:/bin
+
+# Add ~/bin, iff it is present
+if [ -e ${HOME}/bin ]; then
+	PATH=${HOME}/bin:${PATH}
 fi
+
+# Add sbin for root
+if [ "x$(id -u)" = "x0" ]; then
+	PATH=/usr/local/sbin:/usr/pkg/sbin:/usr/sbin:/sbin:${PATH}
+
+	if [ -e ${HOME}/sbin ]; then
+		PATH=${HOME}/sbin:${PATH}
+	fi
+fi
+
+# Set the timezone
+export TZ=GMT0
+RC_TZ=/etc/rc.timezone
+
+if [ -f ${RC_TZ} ]; then
+	. ${RC_TZ}
+fi
+
+export PATH TZ
+

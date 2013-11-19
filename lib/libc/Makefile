@@ -51,11 +51,12 @@ SUBDIR=compat
 .else
 COMPATDIR=${.CURDIR}/compat
 .include "${.CURDIR}/compat/Makefile.inc"
+.endif
+
 .if defined(__MINIX)
 SUBDIR+= pkgconfig
 .include <bsd.subdir.mk>
 .endif # defined(__MINIX)
-.endif
 
 .include "${.CURDIR}/../../common/lib/libc/Makefile.inc"
 .include "${.CURDIR}/atomic/Makefile.inc"

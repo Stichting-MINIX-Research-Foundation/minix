@@ -7,7 +7,6 @@
  *   do_mkdir:	perform the MKDIR system call
  *   do_close:	perform the CLOSE system call
  *   do_lseek:  perform the LSEEK system call
- *   do_llseek: perform the LLSEEK system call
  */
 
 #include "fs.h"
@@ -19,12 +18,9 @@
 #include <minix/com.h>
 #include <minix/u64.h>
 #include "file.h"
-#include "fproc.h"
 #include "scratchpad.h"
-#include "dmap.h"
 #include "lock.h"
-#include "param.h"
-#include <dirent.h>
+#include <sys/dirent.h>
 #include <assert.h>
 #include <minix/vfsif.h>
 #include "vnode.h"
@@ -40,41 +36,47 @@ static int pipe_open(struct vnode *vp, mode_t bits, int oflags);
 /*===========================================================================*
  *				do_open					     *
  *===========================================================================*/
-int do_open(message *UNUSED(m_out))
+int do_open(void)
 {
-/* Perform the open(name, flags,...) system call.
- * syscall might provide 'name' embedded in message when not creating file */
+/* Perform the open(name, flags) system call with O_CREAT *not* set. */
+  int open_flags;
+  char fullpath[PATH_MAX];
 
-  int create_mode;		/* is really mode_t but this gives problems */
-  int open_mode = 0;		/* is really mode_t but this gives problems */
-  int r = OK;
+  open_flags = job_m_in.VFS_PATH_FLAGS;
+
+  if (open_flags & O_CREAT)
+	return EINVAL;
+
+  if (copy_path(fullpath, sizeof(fullpath)) != OK)
+	return(err_code);
+
+  return common_open(fullpath, open_flags, 0 /*omode*/);
+}
+
+/*===========================================================================*
+ *				do_creat				     *
+ *===========================================================================*/
+int do_creat(void)
+{
+/* Perform the open(name, flags, mode) system call with O_CREAT set. */
+  int open_flags, create_mode;
   char fullpath[PATH_MAX];
   vir_bytes vname;
   size_t vname_length;
 
-  open_mode = (mode_t) job_m_in.mode;
-  create_mode = job_m_in.c_mode;
+  vname = (vir_bytes) job_m_in.VFS_CREAT_NAME;
+  vname_length = (size_t) job_m_in.VFS_CREAT_LEN;
+  open_flags = job_m_in.VFS_CREAT_FLAGS;
+  create_mode = job_m_in.VFS_CREAT_MODE;
 
-  /* If O_CREAT is set, open has three parameters, otherwise two. */
-  if (open_mode & O_CREAT) {
-	vname = (vir_bytes) job_m_in.name1;
-	vname_length = (size_t) job_m_in.name1_length;
-	r = fetch_name(vname, vname_length, fullpath);
-  } else {
-	vname = (vir_bytes) job_m_in.name;
-	vname_length = (size_t) job_m_in.name_length;
-	create_mode = 0;
-	if (copy_name(vname_length, fullpath) != OK) {
-		/* Direct copy failed, try fetching from user space */
-		if (fetch_name(vname, vname_length, fullpath) != OK)
-			r = err_code;
-	}
-  }
+  if (!(open_flags & O_CREAT))
+	return(EINVAL);
 
-  if (r != OK) return(err_code); /* name was bad */
-  return common_open(fullpath, open_mode, create_mode);
+  if (fetch_name(vname, vname_length, fullpath) != OK)
+	return(err_code);
+
+  return common_open(fullpath, open_flags, create_mode);
 }
-
 
 /*===========================================================================*
  *				common_open				     *
@@ -130,7 +132,6 @@ int common_open(char path[PATH_MAX], int oflags, mode_t omode)
 
   /* Claim the file descriptor and filp slot and fill them in. */
   fp->fp_filp[scratch(fp).file.fd_nr] = filp;
-  FD_SET(scratch(fp).file.fd_nr, &fp->fp_filp_inuse);
   filp->filp_count = 1;
   filp->filp_vno = vp;
   filp->filp_flags = oflags;
@@ -160,10 +161,9 @@ int common_open(char path[PATH_MAX], int oflags, mode_t omode)
 			/* Invoke the driver for special processing. */
 			dev = (dev_t) vp->v_sdev;
 			/* TTY needs to know about the O_NOCTTY flag. */
-			r = dev_open(dev, who_e, bits | (oflags & O_NOCTTY));
-			if (r == SUSPEND) suspend(FP_BLOCKED_ON_DOPEN);
-			else vp = filp->filp_vno; /* Might be updated by
-						   * dev_open/clone_opcl */
+			r = cdev_open(dev, bits | (oflags & O_NOCTTY));
+			vp = filp->filp_vno;	/* Might be updated by
+						 * cdev_open after cloning */
 			break;
 		   case S_IFBLK:
 
@@ -271,10 +271,8 @@ int common_open(char path[PATH_MAX], int oflags, mode_t omode)
   if (r != OK) {
 	if (r != SUSPEND) {
 		fp->fp_filp[scratch(fp).file.fd_nr] = NULL;
-		FD_CLR(scratch(fp).file.fd_nr, &fp->fp_filp_inuse);
 		filp->filp_count = 0;
 		filp->filp_vno = NULL;
-		filp->filp_state &= ~FS_INVALIDATED; /* Prevent garbage col. */
 		put_vnode(vp);
 	}
   } else {
@@ -493,7 +491,7 @@ static int pipe_open(struct vnode *vp, mode_t bits, int oflags)
 		return(SUSPEND);
 	}
   } else if (susp_count > 0) { /* revive blocked processes */
-	release(vp, OPEN, susp_count);
+	release(vp, VFS_OPEN, susp_count);
   }
   return(OK);
 }
@@ -502,7 +500,7 @@ static int pipe_open(struct vnode *vp, mode_t bits, int oflags)
 /*===========================================================================*
  *				do_mknod				     *
  *===========================================================================*/
-int do_mknod(message *UNUSED(m_out))
+int do_mknod(void)
 {
 /* Perform the mknod(name, mode, addr) system call. */
   register mode_t bits, mode_bits;
@@ -515,10 +513,10 @@ int do_mknod(message *UNUSED(m_out))
   size_t vname1_length;
   dev_t dev;
 
-  vname1 = (vir_bytes) job_m_in.name1;
-  vname1_length = (size_t) job_m_in.name1_length;
-  mode_bits = (mode_t) job_m_in.mk_mode;		/* mode of the inode */
-  dev = job_m_in.m1_i3;
+  vname1 = (vir_bytes) job_m_in.VFS_MKNOD_NAME;
+  vname1_length = (size_t) job_m_in.VFS_MKNOD_LEN;
+  mode_bits = (mode_t) job_m_in.VFS_MKNOD_MODE;
+  dev = job_m_in.VFS_MKNOD_DEV;
 
   lookup_init(&resolve, fullpath, PATH_NOFLAGS, &vmp, &vp);
   resolve.l_vmnt_lock = VMNT_WRITE;
@@ -551,7 +549,7 @@ int do_mknod(message *UNUSED(m_out))
 /*===========================================================================*
  *				do_mkdir				     *
  *===========================================================================*/
-int do_mkdir(message *UNUSED(m_out))
+int do_mkdir(void)
 {
 /* Perform the mkdir(name, mode) system call. */
   mode_t bits;			/* mode bits for the new inode */
@@ -560,19 +558,16 @@ int do_mkdir(message *UNUSED(m_out))
   struct vmnt *vmp;
   char fullpath[PATH_MAX];
   struct lookup resolve;
-  vir_bytes vname1;
-  size_t vname1_length;
   mode_t dirmode;
 
-  vname1 = (vir_bytes) job_m_in.name1;
-  vname1_length = (size_t) job_m_in.name1_length;
-  dirmode = (mode_t) job_m_in.mode;
+  if (copy_path(fullpath, sizeof(fullpath)) != OK)
+	return(err_code);
+  dirmode = (mode_t) job_m_in.VFS_PATH_MODE;
 
   lookup_init(&resolve, fullpath, PATH_NOFLAGS, &vmp, &vp);
   resolve.l_vmnt_lock = VMNT_WRITE;
   resolve.l_vnode_lock = VNODE_WRITE;
 
-  if (fetch_name(vname1, vname1_length, fullpath) != OK) return(err_code);
   bits = I_DIRECTORY | (dirmode & RWX_MODES & fp->fp_umask);
   if ((vp = last_dir(&resolve, fp)) == NULL) return(err_code);
 
@@ -590,15 +585,20 @@ int do_mkdir(message *UNUSED(m_out))
   return(r);
 }
 
-int actual_lseek(message *m_out, int seekfd, int seekwhence, off_t offset)
+/*===========================================================================*
+ *				actual_lseek				     *
+ *===========================================================================*/
+int actual_lseek(struct fproc *rfp, int seekfd, int seekwhence, off_t offset,
+	off_t *newposp)
 {
-/* Perform the lseek(ls_fd, offset, whence) system call. */
   register struct filp *rfilp;
   int r = OK;
-  u64_t pos, newpos;
+  off_t pos, newpos;
 
   /* Check to see if the file descriptor is valid. */
-  if ( (rfilp = get_filp(seekfd, VNODE_READ)) == NULL) return(err_code);
+  if ( (rfilp = get_filp2(rfp, seekfd, VNODE_READ)) == NULL) {
+	return(err_code);
+  }
 
   /* No lseek on pipes. */
   if (S_ISFIFO(rfilp->filp_vno->v_mode)) {
@@ -608,27 +608,23 @@ int actual_lseek(message *m_out, int seekfd, int seekwhence, off_t offset)
 
   /* The value of 'whence' determines the start position to use. */
   switch(seekwhence) {
-    case SEEK_SET: pos = ((u64_t)(0));	break;
-    case SEEK_CUR: pos = rfilp->filp_pos;	break;
-    case SEEK_END: pos = ((u64_t)(rfilp->filp_vno->v_size));	break;
+    case SEEK_SET: pos = 0; break;
+    case SEEK_CUR: pos = rfilp->filp_pos; break;
+    case SEEK_END: pos = rfilp->filp_vno->v_size; break;
     default: unlock_filp(rfilp); return(EINVAL);
   }
 
-  if (offset >= 0)
-	newpos = pos + offset;
-  else
-	newpos = sub64ul(pos, -offset);
+  newpos = pos + offset;
 
   /* Check for overflow. */
-  if (ex64hi(newpos) != 0) {
+  if ((offset > 0) && (newpos <= pos)) {
 	r = EOVERFLOW;
-  } else if ((off_t) ex64lo(newpos) < 0) { /* no negative file size */
+  } else if ((offset < 0) && (newpos >= pos)) {
 	r = EOVERFLOW;
   } else {
-	/* insert the new position into the output message */
-	m_out->reply_l1 = ex64lo(newpos);
+	if (newposp != NULL) *newposp = newpos;
 
-	if (cmp64(newpos, rfilp->filp_pos) != 0) {
+	if (newpos != rfilp->filp_pos) {
 		rfilp->filp_pos = newpos;
 
 		/* Inhibit read ahead request */
@@ -644,81 +640,30 @@ int actual_lseek(message *m_out, int seekfd, int seekwhence, off_t offset)
 /*===========================================================================*
  *				do_lseek				     *
  *===========================================================================*/
-int do_lseek(message *m_out)
+int do_lseek(void)
 {
-	return actual_lseek(m_out, job_m_in.ls_fd, job_m_in.whence,
-		(off_t) job_m_in.offset_lo);
-}
+  /* Perform the lseek(2) system call. */
+  off_t newpos;
+  int r;
 
-/*===========================================================================*
- *				actual_llseek				     *
- *===========================================================================*/
-int actual_llseek(struct fproc *rfp, message *m_out, int seekfd, int seekwhence,
-	u64_t offset)
-{
-/* Perform the llseek(ls_fd, offset, whence) system call. */
-  register struct filp *rfilp;
-  u64_t pos, newpos;
-  int r = OK;
-  long off_hi = ex64hi(offset);
+  if ((r = actual_lseek(fp, job_m_in.VFS_LSEEK_FD,
+		job_m_in.VFS_LSEEK_WHENCE, make64(job_m_in.VFS_LSEEK_OFF_LO,
+		job_m_in.VFS_LSEEK_OFF_HI), &newpos)) != OK)
+	return r;
 
-  /* Check to see if the file descriptor is valid. */
-  if ( (rfilp = get_filp2(rfp, seekfd, VNODE_READ)) == NULL) {
-	return(err_code);
-  }
-
-  /* No lseek on pipes. */
-  if (S_ISFIFO(rfilp->filp_vno->v_mode)) {
-	unlock_filp(rfilp);
-	return(ESPIPE);
-  }
-
-  /* The value of 'whence' determines the start position to use. */
-  switch(seekwhence) {
-    case SEEK_SET: pos = ((u64_t)(0));	break;
-    case SEEK_CUR: pos = rfilp->filp_pos;	break;
-    case SEEK_END: pos = ((u64_t)(rfilp->filp_vno->v_size));	break;
-    default: unlock_filp(rfilp); return(EINVAL);
-  }
-
-  newpos = pos + offset;
-
-  /* Check for overflow. */
-  if ((off_hi > 0) && cmp64(newpos, pos) < 0)
-      r = EINVAL;
-  else if ((off_hi < 0) && cmp64(newpos, pos) > 0)
-      r = EINVAL;
-  else {
-	/* insert the new position into the output message */
-	m_out->reply_l1 = ex64lo(newpos);
-	m_out->reply_l2 = ex64hi(newpos);
-
-	if (cmp64(newpos, rfilp->filp_pos) != 0) {
-		rfilp->filp_pos = newpos;
-
-		/* Inhibit read ahead request */
-		r = req_inhibread(rfilp->filp_vno->v_fs_e,
-				  rfilp->filp_vno->v_inode_nr);
-	}
-  }
-
-  unlock_filp(rfilp);
-  return(r);
-}
-
-int do_llseek(message *m_out)
-{
-	return actual_llseek(fp, m_out, job_m_in.ls_fd, job_m_in.whence,
-		make64(job_m_in.offset_lo, job_m_in.offset_high));
+  /* insert the new position into the output message */
+  job_m_out.VFS_LSEEK_OFF_LO = ex64lo(newpos);
+  job_m_out.VFS_LSEEK_OFF_HI = ex64hi(newpos);
+  return OK;
 }
 
 /*===========================================================================*
  *				do_close				     *
  *===========================================================================*/
-int do_close(message *UNUSED(m_out))
+int do_close(void)
 {
 /* Perform the close(fd) system call. */
-  int thefd = job_m_in.fd;
+  int thefd = job_m_in.VFS_CLOSE_FD;
   return close_fd(fp, thefd);
 }
 
@@ -749,7 +694,6 @@ int fd_nr;
   close_filp(rfilp);
 
   FD_CLR(fd_nr, &rfp->fp_cloexec_set);
-  FD_CLR(fd_nr, &rfp->fp_filp_inuse);
 
   /* Check to see if the file is locked.  If so, release all locks. */
   if (nr_locks > 0) {
@@ -766,12 +710,4 @@ int fd_nr;
   }
 
   return(OK);
-}
-
-/*===========================================================================*
- *				close_reply				     *
- *===========================================================================*/
-void close_reply()
-{
-	/* No need to do anything */
 }

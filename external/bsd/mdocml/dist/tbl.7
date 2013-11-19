@@ -1,6 +1,6 @@
-.\"	$Vendor-Id: tbl.7,v 1.4 2011/01/07 14:59:52 kristaps Exp $
+.\"	$Vendor-Id: tbl.7,v 1.16 2011/09/03 00:29:21 kristaps Exp $
 .\"
-.\" Copyright (c) 2010 Kristaps Dzonsons <kristaps@bsd.lv>
+.\" Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd January 7, 2011
+.Dd September 3, 2011
 .Dt TBL 7
 .Os
 .Sh NAME
@@ -49,7 +49,7 @@ macro tags, whose precise syntax is documented in
 Tables consist of a series of options on a single line, followed by the
 table layout, followed by data.
 .Pp
-For example, the following creates a boxed table with digits centered in
+For example, the following creates a boxed table with digits centred in
 the cells.
 .Bd -literal -offset indent
 \&.TS
@@ -69,6 +69,13 @@ c5 c5 c5.
 4:5:6
 .TE
 .Ed
+.Pp
+The
+.Nm
+implementation in
+.Xr mandoc 1
+is
+.Ud
 .Sh TABLE STRUCTURE
 Tables are enclosed by the
 .Sq TS
@@ -180,8 +187,6 @@ Accepts a single-character argument.
 This character will be used as the decimal point with the
 .Cm n
 layout key.
-This option is not supported by
-.Xr mandoc 1 .
 .It Cm nospaces
 This option is not supported by
 .Xr mandoc 1 .
@@ -205,18 +210,29 @@ Right-justify a literal string within its column.
 .It Cm l
 Left-justify a literal string within its column.
 .It Cm n
-Justify a number around its decimal point.
+Justify a number around its last decimal point.
 If the decimal point is not found on the number, it's assumed to trail
 the number.
 .It Cm s
+Horizontally span columns from the last
+.No non- Ns Cm s
+data cell.
+It is an error if spanning columns follow a
+.Cm \-
+or
+.Cm \(ba
+cell, or come first.
 This option is not supported by
 .Xr mandoc 1 .
 .It Cm a
-This option is not supported by
-.Xr mandoc 1 .
+Left-justify a literal string and pad with one space.
 .It Cm ^
-This option is not supported by
-.Xr mandoc 1 .
+Vertically span rows from the last
+.No non- Ns Cm ^
+data cell.
+It is an error to invoke a vertical span on the first layout row.
+Unlike a horizontal spanner, you must specify an empty cell (if it not
+empty, the data is discarded) in the corresponding data cell.
 .It Cm \-
 Replace the data cell (its contents will be lost) with a single
 horizontal line.
@@ -231,30 +247,39 @@ Emit a vertical bar instead of data.
 Emit a double-vertical bar instead of data.
 .El
 .Pp
-For example, the following layout specifies a centre-justified column of
-minimum width 10, followed by vertical bar, followed by a left-justified
-column of minimum width 10, another vertical bar, then a column
-justified about the decimal point in numbers:
-.Pp
-.Dl c10 | l10 | n
-.Pp
 Keys may be followed by a set of modifiers.
 A modifier is either a modifier key or a natural number for specifying
-spacing.
+the minimum width of a column.
 The following case-insensitive modifier keys are available:
 .Cm z ,
 .Cm u ,
 .Cm e ,
 .Cm t ,
 .Cm d ,
-.Cm f ,
 .Cm b ,
 .Cm i ,
-.Cm b ,
+.Cm r ,
 and
-.Cm i .
+.Cm f
+.Po
+followed by
+.Cm b ,
+.Cm i ,
+.Cm r ,
+.Cm 3 ,
+.Cm 2 ,
+or
+.Cm 1
+.Pc .
 All of these are ignored by
 .Xr mandoc 1 .
+.Pp
+For example, the following layout specifies a centre-justified column of
+minimum width 10, followed by vertical bar, followed by a left-justified
+column of minimum width 10, another vertical bar, then a column
+justified about the decimal point in numbers:
+.Pp
+.Dl c10 | l10 | n
 .Ss Data
 The data section follows the last layout row.
 By default, cells in a data section are delimited by a tab.
@@ -316,7 +341,8 @@ This formed the basis of the implementation that is part of the
 .Xr mandoc 1
 utility.
 .Sh AUTHORS
-This partial
+This
 .Nm
 reference was written by
-.An Kristaps Dzonsons Aq kristaps@bsd.lv .
+.An Kristaps Dzonsons ,
+.Mt kristaps@bsd.lv .

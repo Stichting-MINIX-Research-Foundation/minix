@@ -73,12 +73,12 @@ static void pid_psinfo(int i)
 	if (!task) {
 		if (is_zombie(i))
 			state = STATE_ZOMBIE;	/* zombie */
-		else if (mproc[pi].mp_flags & STOPPED)
+		else if (mproc[pi].mp_flags & TRACE_STOPPED)
 			state = STATE_STOP;	/* stopped (traced) */
 		else if (proc[i].p_rts_flags == 0)
 			state = STATE_RUN;	/* in run-queue */
 		else if (fp_is_blocked(&fproc[pi]) ||
-		(mproc[pi].mp_flags & (WAITING | PAUSED | SIGSUSPENDED)))
+		(mproc[pi].mp_flags & (WAITING | SIGSUSPENDED)))
 			state = STATE_SLEEP;	/* sleeping */
 		else
 			state = STATE_WAIT;	/* waiting */
@@ -116,9 +116,7 @@ static void pid_psinfo(int i)
 
 	/* If the process is not a kernel task, we add some extra info. */
 	if (!task) {
-		if (mproc[pi].mp_flags & PAUSED)
-			p_state = PSTATE_PAUSED;
-		else if (mproc[pi].mp_flags & WAITING)
+		if (mproc[pi].mp_flags & WAITING)
 			p_state = PSTATE_WAITING;
 		else if (mproc[pi].mp_flags & SIGSUSPENDED)
 			p_state = PSTATE_SIGSUSP;
@@ -136,7 +134,6 @@ static void pid_psinfo(int i)
 		case FP_BLOCKED_ON_LOCK:	f_state = FSTATE_LOCK; break;
 		case FP_BLOCKED_ON_POPEN:	f_state = FSTATE_POPEN; break;
 		case FP_BLOCKED_ON_SELECT:	f_state = FSTATE_SELECT; break;
-		case FP_BLOCKED_ON_DOPEN:	f_state = FSTATE_DOPEN; break;
 		case FP_BLOCKED_ON_OTHER:	f_state = FSTATE_TASK; break;
 		default:			f_state = FSTATE_UNKNOWN;
 		}

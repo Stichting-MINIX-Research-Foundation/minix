@@ -60,3 +60,17 @@ int vm_set_cacheblock(void *block, u32_t dev, u64_t dev_offset,
 	return vm_cachecall(&m, VM_SETCACHEPAGE, block, dev, dev_offset,
 		ino, ino_offset, flags, blocksize);
 }
+
+int
+vm_clear_cache(u32_t dev)
+{
+	message m;
+
+	assert(dev != NO_DEV);
+
+	memset(&m, 0, sizeof(m));
+
+	m.m_u.m_vmmcp.dev = dev;
+
+	return _taskcall(VM_PROC_NR, VM_CLEARCACHE, &m);
+}

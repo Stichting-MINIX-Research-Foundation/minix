@@ -1,11 +1,9 @@
 #include "fs.h"
 #include <fcntl.h>
 #include <string.h>
-#include "fproc.h"
 #include <minix/vm.h>
 #include <sys/mman.h>
 #include <sys/exec_elf.h>
-#include "param.h"
 
 /* Include ELF headers */
 #include <sys/elf_core.h>

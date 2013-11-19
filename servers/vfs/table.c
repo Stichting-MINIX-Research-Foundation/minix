@@ -8,148 +8,61 @@
 #include <minix/callnr.h>
 #include <minix/com.h>
 #include "file.h"
-#include "fproc.h"
 #include "lock.h"
 #include "scratchpad.h"
 #include "vnode.h"
 #include "vmnt.h"
 
-int (*call_vec[])(message *m_out) = {
-	no_sys,		/*  0 = unused	*/
-	no_sys,		/*  1 = (exit)	*/
-	no_sys,		/*  2 = (fork)	*/
-	do_read,	/*  3 = read	*/
-	do_write,	/*  4 = write	*/
-	do_open,	/*  5 = open	*/
-	do_close,	/*  6 = close	*/
-	no_sys,		/*  7 = wait	*/
-	no_sys,		/*  8 = unused (was creat) */
-	do_link,	/*  9 = link	*/
-	do_unlink,	/* 10 = unlink	*/
-	no_sys,		/* 11 = waitpid	*/
-	do_chdir,	/* 12 = chdir	*/
-	no_sys,		/* 13 = time	*/
-	do_mknod,	/* 14 = mknod	*/
-	do_chmod,	/* 15 = chmod	*/
-	do_chown,	/* 16 = chown	*/
-	no_sys,		/* 17 = break	*/
-	no_sys,		/* 18 = unused (was old stat)*/
-	do_lseek,	/* 19 = lseek	*/
-	no_sys,		/* 20 = getpid	*/
-	do_mount,	/* 21 = mount	*/
-	do_umount,	/* 22 = umount	*/
-	no_sys,		/* 23 = (setuid) */
-	no_sys,		/* 24 = getuid	*/
-	no_sys,		/* 25 = (stime)	*/
-	no_sys,		/* 26 = ptrace	*/
-	no_sys,		/* 27 = alarm	*/
-	no_sys,		/* 28 = unused (was old fstat)*/
-	no_sys,		/* 29 = pause	*/
-	do_utime,	/* 30 = utime	*/
-	no_sys,		/* 31 = (stty)	*/
-	no_sys,		/* 32 = (gtty)	*/
-	do_access,	/* 33 = access	*/
-	no_sys,		/* 34 = (nice)	*/
-	no_sys,		/* 35 = (ftime)	*/
-	do_sync,	/* 36 = sync	*/
-	no_sys,		/* 37 = kill	*/
-	do_rename,	/* 38 = rename	*/
-	do_mkdir,	/* 39 = mkdir	*/
-	do_unlink,	/* 40 = rmdir	*/
-	no_sys,		/* 41 = unused (was dup) */
-	do_pipe,	/* 42 = pipe	*/
-	no_sys,		/* 43 = times	*/
-	no_sys,		/* 44 = (prof)	*/
-	do_slink,	/* 45 = symlink	*/
-	no_sys,		/* 46 = (setgid)*/
-	no_sys,		/* 47 = getgid	*/
-	no_sys,		/* 48 = (signal)*/
-	do_rdlink,	/* 49 = readlink*/
-	no_sys,		/* 50 = unused (was old lstat)*/
-	do_stat,	/* 51 = stat	*/
-	do_fstat,	/* 52 = fstat	*/
-	do_lstat,	/* 53 = lstat	*/
-	do_ioctl,	/* 54 = ioctl	*/
-	do_fcntl,	/* 55 = fcntl	*/
-	no_sys,		/* 56 = (mpx)	*/
-	do_fsready,	/* 57 = FS proc ready */
-	do_pipe2,	/* 58 = pipe2	*/
-	no_sys,		/* 59 = (execve)*/
-	do_umask,	/* 60 = umask	*/
-	do_chroot,	/* 61 = chroot	*/
-	no_sys,		/* 62 = (setsid)*/
-	no_sys,		/* 63 = (getpgrp)*/
-	no_sys,		/* 64 = (itimer)*/
-	do_stat,	/* 65 = stat  - badly numbered, being phased out */
-	do_fstat, 	/* 66 = fstat - badly numbered, being phased out */
-	do_lstat,	/* 67 = lstat - badly numbered, being phased out */
-	no_sys,		/* 68 = (setmcontext) */
-	no_sys,		/* 69 = unused  */
-	no_sys,		/* 70 = unused  */
-	no_sys,		/* 71 = (sigaction) */
-	no_sys,		/* 72 = (sigsuspend) */
-	no_sys,		/* 73 = (sigpending) */
-	no_sys,		/* 74 = (sigprocmask) */
-	no_sys,		/* 75 = (sigreturn) */
-	no_sys,		/* 76 = (reboot) */
-	do_svrctl,	/* 77 = svrctl */
-	no_sys,		/* 78 = (sysuname) */
-	no_sys,		/* 79 = unused */
-	do_getdents,	/* 80 = getdents */
-	do_llseek,	/* 81 = llseek */
-	do_fstatfs,	/* 82 = fstatfs */
-	do_statvfs,		/* 83 = fstatvfs */
-	do_fstatvfs,		/* 84 = statvfs */
-	do_select,	/* 85 = select */
-	do_fchdir,	/* 86 = fchdir */
-	do_fsync,	/* 87 = fsync */
-	no_sys,		/* 88 = (getpriority) */
-	no_sys,		/* 89 = (setpriority) */
-	no_sys,		/* 90 = (gettimeofday) */
-	no_sys,		/* 91 = (seteuid) */
-	no_sys,		/* 92 = (setegid) */
-	do_truncate,	/* 93 = truncate */
-	do_ftruncate,	/* 94 = truncate */
-	do_chmod,	/* 95 = fchmod */
-	do_chown,	/* 96 = fchown */
-	no_sys,		/* 97 = unused */
-	no_sys,		/* 98 = (sprofile) */
-	no_sys,		/* 99 = (cprofile) */
-	no_sys,		/* 100 = (newexec) */
-	no_sys,		/* 101 = (srv_fork) */
-	no_sys,		/* 102 = (exec_restart) */
-	no_sys,		/* 103 = unused */
-	no_sys,		/* 104 = (getprocnr) */
-	no_sys,		/* 105 = unused */
-	no_sys,		/* 106 = unused */
-	no_sys,		/* 107 = (getepinfo) */
-	do_utimens,	/* 108 = utimens */
-	no_sys,		/* 109 = unused */
-	no_sys,		/* 110 = unused */
-	no_sys,		/* 111 = (srv_kill) */
-	do_gcov_flush,	/* 112 = gcov_flush */
-	no_sys,		/* 113 = (getsid) */
-	no_sys,		/* 114 = (clock_getres) */
-	no_sys,		/* 115 = (clock_gettime) */
-	no_sys,		/* 116 = (clock_settime) */
-	do_vm_call,	/* 117 = call from vm */
-	no_sys,		/* 118 = unsused */
-	no_sys,		/* 119 = unsused */
-	no_sys,		/* 120 = unsused */
-	no_sys,		/* 121 = (task reply) */
-	no_sys,		/* 122 = (map driver ) */
-	do_getrusage,	/* 123 = getrusage */
-};
-/* This should not fail with "array size is negative": */
-extern int dummy[sizeof(call_vec) == NCALLS * sizeof(call_vec[0]) ? 1 : -1];
+#define CALL(n) [((n) - VFS_BASE)]
 
-int (*pfs_call_vec[])(message *m_out) = {
-
-	no_sys,		/* 0 */
-	do_check_perms,	/* 1 */
-	do_verify_fd,	/* 2 */
-	do_set_filp,	/* 3 */
-	do_copy_filp,	/* 4 */
-	do_put_filp,	/* 5 */
-	do_cancel_fd	/* 6 */
+int (* const call_vec[NR_VFS_CALLS])(void) = {
+	CALL(VFS_READ)		= do_read,		/* read(2) */
+	CALL(VFS_WRITE)		= do_write,		/* write(2) */
+	CALL(VFS_LSEEK)		= do_lseek,		/* lseek(2) */
+	CALL(VFS_OPEN)		= do_open,		/* open(2) */
+	CALL(VFS_CREAT)		= do_creat,		/* creat(2) */
+	CALL(VFS_CLOSE)		= do_close,		/* close(2) */
+	CALL(VFS_LINK)		= do_link,		/* link(2) */
+	CALL(VFS_UNLINK)	= do_unlink,		/* unlink(2) */
+	CALL(VFS_CHDIR)		= do_chdir,		/* chdir(2) */
+	CALL(VFS_MKDIR)		= do_mkdir,		/* mkdir(2) */
+	CALL(VFS_MKNOD)		= do_mknod,		/* mknod(2) */
+	CALL(VFS_CHMOD)		= do_chmod,		/* chmod(2) */
+	CALL(VFS_CHOWN)		= do_chown,		/* chown(2) */
+	CALL(VFS_MOUNT)		= do_mount,		/* mount(2) */
+	CALL(VFS_UMOUNT)	= do_umount,		/* umount(2) */
+	CALL(VFS_ACCESS)	= do_access,		/* access(2) */
+	CALL(VFS_SYNC)		= do_sync,		/* sync(2) */
+	CALL(VFS_RENAME)	= do_rename,		/* rename(2) */
+	CALL(VFS_RMDIR)		= do_unlink,		/* rmdir(2) */
+	CALL(VFS_SYMLINK)	= do_slink,		/* symlink(2) */
+	CALL(VFS_READLINK)	= do_rdlink,		/* readlink(2) */
+	CALL(VFS_STAT)		= do_stat,		/* stat(2) */
+	CALL(VFS_FSTAT)		= do_fstat,		/* fstat(2) */
+	CALL(VFS_LSTAT)		= do_lstat,		/* lstat(2) */
+	CALL(VFS_IOCTL)		= do_ioctl,		/* ioctl(2) */
+	CALL(VFS_FCNTL)		= do_fcntl,		/* fcntl(2) */
+	CALL(VFS_PIPE2)		= do_pipe2,		/* pipe2(2) */
+	CALL(VFS_UMASK)		= do_umask,		/* umask(2) */
+	CALL(VFS_CHROOT)	= do_chroot,		/* chroot(2) */
+	CALL(VFS_GETDENTS)	= do_getdents,		/* getdents(2) */
+	CALL(VFS_SELECT)	= do_select,		/* select(2) */
+	CALL(VFS_FCHDIR)	= do_fchdir,		/* fchdir(2) */
+	CALL(VFS_FSYNC)		= do_fsync,		/* fsync(2) */
+	CALL(VFS_TRUNCATE)	= do_truncate,		/* truncate(2) */
+	CALL(VFS_FTRUNCATE)	= do_ftruncate,		/* ftruncate(2) */
+	CALL(VFS_FCHMOD)	= do_chmod,		/* fchmod(2) */
+	CALL(VFS_FCHOWN)	= do_chown,		/* fchown(2) */
+	CALL(VFS_UTIMENS)	= do_utimens,		/* [fl]utime[n]s(2) */
+	CALL(VFS_VMCALL)	= do_vm_call,
+	CALL(VFS_GETVFSSTAT)	= do_getvfsstat,	/* getvfsstat(2) */
+	CALL(VFS_STATVFS1)	= do_statvfs,		/* statvfs(2) */
+	CALL(VFS_FSTATVFS1)	= do_fstatvfs,		/* fstatvfs(2) */
+	CALL(VFS_GETRUSAGE)	= do_getrusage,		/* getrusage(2) */
+	CALL(VFS_SVRCTL)	= do_svrctl,		/* svrctl(2) */
+	CALL(VFS_GCOV_FLUSH)	= do_gcov_flush,	/* gcov_flush(2) */
+	CALL(VFS_MAPDRIVER)	= do_mapdriver,		/* mapdriver(2) */
+	CALL(VFS_COPYFD)	= do_copyfd,		/* copyfd(2) */
+	CALL(VFS_CHECKPERMS)	= do_checkperms,	/* checkperms(2) */
+	CALL(VFS_GETSYSINFO)	= do_getsysinfo,	/* getsysinfo(2) */
 };

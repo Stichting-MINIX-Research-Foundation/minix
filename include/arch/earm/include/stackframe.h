@@ -1,6 +1,8 @@
 #ifndef _ARM_STACKFRAME_H
 #define _ARM_STACKFRAME_H
 
+#include <sys/types.h>
+
 typedef u32_t reg_t;         /* machine register */
 
 struct stackframe_s {

@@ -149,9 +149,9 @@ int main(void)
 				((struct acpi_request_hdr *)&m)->m_source);
 		}
 
-		err = send(m.m_source, &m);
+		err = ipc_send(m.m_source, &m);
 		if (err != OK) {
-			printf("ACPI: send failed: %d\n", err);
+			printf("ACPI: ipc_send failed: %d\n", err);
 		}
 	}
 }

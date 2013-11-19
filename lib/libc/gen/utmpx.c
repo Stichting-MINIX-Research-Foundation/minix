@@ -355,20 +355,14 @@ updwtmpx(const char *file, const struct utmpx *utx)
 #else
 		if ((fd = open(file, O_CREAT|O_WRONLY, 0644)) < 0)
 			return -1;
-		if (flock(fd, LOCK_EX) < 0)
-			return -1;
 #endif
 		(void)memset(&ut, 0, sizeof(ut));
 		ut.ut_type = SIGNATURE;
 		(void)memcpy(ut.ut_user, vers, sizeof(vers));
 		if (write(fd, &ut, sizeof(ut)) == -1)
 			goto failed;
-	} else {
-#ifdef __minix
-		if (flock(fd, LOCK_SH) < 0 )
-			return -1;
-#endif
 	}
+
 	if (write(fd, utx, sizeof(*utx)) == -1)
 		goto failed;
 	if (close(fd) == -1)
@@ -455,10 +449,6 @@ getlastlogx(const char *fname, uid_t uid, struct lastlogx *ll)
 
 	if (db == NULL)
 		return NULL;
-#ifdef __minix
-	if (flock(db->fd(db), LOCK_SH) < 0)
-		return NULL;
-#endif
 
 	key.data = &uid;
 	key.size = sizeof(uid);
@@ -503,10 +493,6 @@ updlastlogx(const char *fname, uid_t uid, struct lastlogx *ll)
 	if (db == NULL)
 		return -1;
 
-#ifdef __minix
-	if (flock(db->fd(db), LOCK_EX) < 0)
-		return -1;
-#endif
 	key.data = &uid;
 	key.size = sizeof(uid);
 	data.data = ll;

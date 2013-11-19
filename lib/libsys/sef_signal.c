@@ -43,7 +43,9 @@ static void process_sigmgr_signals(void)
           /* Process every signal in the signal set. */
           r = OK;
           for (signo = SIGS_FIRST; signo <= SIGS_LAST; signo++) {
-              if(sigismember(&sigset, signo)) {
+              int s = sigismember(&sigset, signo);
+              assert(s >= 0);
+              if(s) {
                   /* Let the callback code process the signal. */
                   r = sef_cbs.sef_cb_signal_manager(target, signo);
 
@@ -71,7 +73,9 @@ static void process_sigmgr_self_signals(sigset_t sigset)
   int signo;
 
   for (signo = SIGS_FIRST; signo <= SIGS_LAST; signo++) {
-      if(sigismember(&sigset, signo)) {
+      int s = sigismember(&sigset, signo);
+      assert(s >= 0);
+      if(s) {
           /* Let the callback code process the signal. */
           sef_cbs.sef_cb_signal_handler(signo);
       }
@@ -89,9 +93,11 @@ int do_sef_signal_request(message *m_ptr)
 
   if(m_ptr->m_source == SYSTEM) {
       /* Handle kernel signals. */
-      sigset = m_ptr->NOTIFY_ARG;
+      sigset = m_ptr->NOTIFY_SIGSET;
       for (signo = SIGK_FIRST; signo <= SIGK_LAST; signo++) {
-          if (sigismember(&sigset, signo)) {
+          int s = sigismember(&sigset, signo);
+          assert(s >= 0);
+          if (s) {
               /* Let the callback code handle the kernel signal. */
               sef_cbs.sef_cb_signal_handler(signo);
 

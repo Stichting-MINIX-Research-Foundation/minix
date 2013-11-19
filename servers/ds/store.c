@@ -205,7 +205,7 @@ static void update_subscribers(struct data_store *dsp, int set)
 		} else {
 			UNSET_BIT(ds_subs[i].old_subs, nr);
 		}
-		notify(ep);
+		ipc_notify(ep);
 	}
 }
 
@@ -502,7 +502,7 @@ int do_subscribe(message *m_ptr)
 
 	/* Notify in case of match. */
 	if(match_found)
-		notify(m_ptr->m_source);
+		ipc_notify(m_ptr->m_source);
   }
 
   return OK;

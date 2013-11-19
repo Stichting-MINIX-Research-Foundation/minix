@@ -19,7 +19,7 @@ int pci_find_dev(u8_t bus, u8_t dev, u8_t func, int *devindp)
 	m.m1_i2= dev;
 	m.m1_i3= func;
 
-	r= sendrec(pci_procnr, &m);
+	r= ipc_sendrec(pci_procnr, &m);
 	if (r != 0)
 		panic("pci_find_dev: can't talk to PCI: %d", r);
 

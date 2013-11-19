@@ -2,6 +2,7 @@
 #include "namespace.h"
 #include <lib.h>
 
+#include <string.h>
 #include <signal.h>
 
 #ifdef __weak_alias
@@ -9,12 +10,13 @@ __weak_alias(kill, _kill)
 #endif
 
 int kill(proc, sig)
-int proc;			/* which process is to be sent the signal */
+pid_t proc;			/* which process is to be sent the signal */
 int sig;			/* signal number */
 {
   message m;
 
-  m.m1_i1 = proc;
-  m.m1_i2 = sig;
-  return(_syscall(PM_PROC_NR, KILL, &m));
+  memset(&m, 0, sizeof(m));
+  m.PM_SIG_PID = proc;
+  m.PM_SIG_NR = sig;
+  return(_syscall(PM_PROC_NR, PM_KILL, &m));
 }

@@ -10,7 +10,7 @@
 #include <minix/com.h>
 #include <sys/types.h>
 #include <sys/param.h>
-#include <minix/reboot.h>
+#include <sys/reboot.h>
 #include "string.h"
 #include "arch_proto.h"
 #include "direct_utils.h"
@@ -100,9 +100,9 @@ int overlaps(multiboot_module_t *mod, int n, int cmp_mod)
 }
 
 /* XXX: hard-coded stuff for modules */
-#define MB_MODS_NR 12
+#define MB_MODS_NR NR_BOOT_MODULES
 #define MB_MODS_BASE  0x82000000
-#define MB_PARAM_MOD  0x88000000
+#define MB_PARAM_MOD  0x87800000
 #define MB_MODS_ALIGN 0x00800000 /* 8 MB */
 #define MB_MMAP_START 0x80000000
 #define MB_MMAP_SIZE  0x10000000 /* 256 MB */
@@ -292,8 +292,8 @@ kinfo_t *pre_init(u32_t magic, u32_t ebx)
  * ensure this). The following methods are used in that context. Once we jump to kmain they are no
  * longer used and the "real" implementations are visible
  */
-int send_sig(endpoint_t proc_nr, int sig_nr) { return 0; }
-void minix_shutdown(timer_t *t) { arch_shutdown(RBT_PANIC); }
+void send_diag_sig(void) { }
+void minix_shutdown(minix_timer_t *t) { arch_shutdown(0); }
 void busy_delay_ms(int x) { }
 int raise(int n) { panic("raise(%d)\n", n); }
 int kern_phys_map_ptr( phys_bytes base_address, vir_bytes io_size, 
