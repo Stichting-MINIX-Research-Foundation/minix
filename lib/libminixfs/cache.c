@@ -161,8 +161,12 @@ free_unused_blocks(void)
 static void
 lmfs_alloc_block(struct buf *bp)
 {
+  int len;
   ASSERT(!bp->data);
   ASSERT(bp->lmfs_bytes == 0);
+
+  len = roundup(fs_block_size, PAGE_SIZE);
+
   if((bp->data = minix_mmap(0, fs_block_size,
      PROT_READ|PROT_WRITE, MAP_PREALLOC|MAP_ANON, -1, 0)) == MAP_FAILED) {
 	free_unused_blocks();
@@ -191,8 +195,11 @@ void minix_munmap_t(void *a, int len)
 	assert(a);
 	assert(a != MAP_FAILED);
 	assert(len > 0);
-	assert(!(len % PAGE_SIZE));
 	assert(!(av % PAGE_SIZE));
+
+	len = roundup(len, PAGE_SIZE);
+
+	assert(!(len % PAGE_SIZE));
 
 	if(minix_munmap(a, len) < 0)
 		panic("libminixfs cache: munmap failed");
@@ -513,17 +520,19 @@ register struct buf *bp;	/* buffer pointer */
   pos = mul64u(bp->lmfs_blocknr, fs_block_size);
   if(fs_block_size > PAGE_SIZE) {
 #define MAXPAGES 20
-	vir_bytes vaddr = (vir_bytes) bp->data;
-	int p;
+	vir_bytes blockrem, vaddr = (vir_bytes) bp->data;
+	int p = 0;
   	static iovec_t iovec[MAXPAGES];
-	int pages = fs_block_size/PAGE_SIZE;
-	ASSERT(pages > 1 && pages < MAXPAGES);
-	for(p = 0; p < pages; p++) {
+	blockrem = fs_block_size;
+	while(blockrem > 0) {
+		vir_bytes chunk = blockrem >= PAGE_SIZE ? PAGE_SIZE : blockrem;
 		iovec[p].iov_addr = vaddr;
-		iovec[p].iov_size = PAGE_SIZE;
-		vaddr += PAGE_SIZE;
+		iovec[p].iov_size = chunk;
+		vaddr += chunk;
+		blockrem -= chunk;
+		p++;
 	}
-  	r = bdev_gather(dev, pos, iovec, pages, BDEV_NOFLAGS);
+  	r = bdev_gather(dev, pos, iovec, p, BDEV_NOFLAGS);
   } else {
   	r = bdev_read(dev, pos, bp->data, fs_block_size,
   		BDEV_NOFLAGS);
@@ -638,9 +647,9 @@ void lmfs_rw_scattered(
   }
 
   assert(dev != NO_DEV);
-  assert(!(fs_block_size % PAGE_SIZE));
   assert(fs_block_size > 0);
-  iov_per_block = fs_block_size / PAGE_SIZE;
+  iov_per_block = roundup(fs_block_size, PAGE_SIZE) / PAGE_SIZE;
+  assert(iov_per_block < NR_IOREQS);
   
   /* (Shell) sort buffers on lmfs_blocknr. */
   gap = 1;
@@ -669,19 +678,24 @@ void lmfs_rw_scattered(
 	int r;
 	for (iop = iovec; nblocks < bufqsize; nblocks++) {
 		int p;
-		vir_bytes vdata;
+		vir_bytes vdata, blockrem;
 		bp = bufq[nblocks];
 		if (bp->lmfs_blocknr != (block_t) bufq[0]->lmfs_blocknr + nblocks)
 			break;
 		if(niovecs >= NR_IOREQS-iov_per_block) break;
 		vdata = (vir_bytes) bp->data;
+		blockrem = fs_block_size;
 		for(p = 0; p < iov_per_block; p++) {
+			vir_bytes chunk = blockrem < PAGE_SIZE ? blockrem : PAGE_SIZE;
 			iop->iov_addr = vdata;
-			iop->iov_size = PAGE_SIZE;
+			iop->iov_size = chunk;
 			vdata += PAGE_SIZE;
+			blockrem -= chunk;
 			iop++;
 			niovecs++;
 		}
+		assert(p == iov_per_block);
+		assert(blockrem == 0);
 	}
 
 	assert(nblocks > 0);
@@ -825,7 +839,7 @@ void lmfs_set_blocksize(int new_block_size, int major)
 
   vmcache = 0;
 
-  if(may_use_vmcache)
+  if(may_use_vmcache && !(new_block_size % PAGE_SIZE))
 	vmcache = 1;
 }
 
@@ -931,6 +945,10 @@ int lmfs_do_bpeek(message *m)
 	assert(m->m_type == REQ_BPEEK);
 	assert(fs_block_size > 0);
 	assert(dev != NO_DEV);
+
+	if(!vmcache) { return ENXIO; }
+
+	assert(!(fs_block_size % PAGE_SIZE));
 
 	if((extra=(pos % fs_block_size))) {
 		pos -= extra;

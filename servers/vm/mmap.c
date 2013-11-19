@@ -180,8 +180,10 @@ static void mmap_file_cont(struct vmproc *vmp, message *replymsg, void *cbarg,
 		writable = 1;
 
 	if(replymsg->VMV_RESULT != OK) {
+#if 0   /* Noisy diagnostic for mmap() by ld.so */
 		printf("VM: VFS reply failed (%d)\n", replymsg->VMV_RESULT);
 		sys_sysctl_stacktrace(vmp->vm_endpoint);
+#endif
 		result = origmsg->VMV_RESULT;
 	} else {
 		/* Finish mmap */
