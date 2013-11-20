@@ -119,9 +119,7 @@ void getbits(void);
 void getpipe(void);
 void putpipe(unsigned u, int flag);
 
-int main(argc, argv)
-int argc;
-char **argv;
+int main(int argc, char **argv)
 {
   char c, *cp;
   int j, k, fdtmp;
@@ -295,8 +293,7 @@ void ffork()
  *
  * If s is a message, write it to stderr. Flush buffers if needed. Then exit.
  */
-void die(s)
-char *s;
+void die(char *s)
 {
   /* Flush stdout buffer if needed */
   if (obufind != 0) {
@@ -321,8 +318,7 @@ char *s;
  *
  * Put a char to stdout.
  */
-void myputc(c)
-unsigned c;
+void myputc(unsigned c)
 {
   obuf[obufind++] = c;
   if (obufind >= BUFSZ) {	/* if stdout buffer full */
@@ -414,9 +410,7 @@ void getpipe()
  *
  * put an index into the pipeline.
  */
-void putpipe(u, flag)
-unsigned u;
-int flag;
+void putpipe(unsigned u, int flag)
 {
   static unsigned short flags, *flagp;
   static int n = 0;		/* number of flags in flags */
