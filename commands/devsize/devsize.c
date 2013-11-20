@@ -31,8 +31,7 @@ int main(int argc, char *argv[])
 }	
 
 
-unsigned long sizeup(device)
-char *device;
+unsigned long sizeup(char *device)
 {
   int fd;
   struct part_geom entry;
