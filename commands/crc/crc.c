@@ -17,9 +17,7 @@ void crc(char *fname);
 void crc();
 #endif
 
-int main(argc, argv)
-int argc;
-char **argv;
+int main(int argc, char **argv)
 {
   char line[256];
 
@@ -89,8 +87,7 @@ static unsigned short crctab[256] = {
 
 #define updcrc(cp, crc) ( crctab[((crc >> 8) & 255)] ^ (crc << 8) ^ cp)
 
-void crc(fname)
-char *fname;
+void crc(char *fname)
 {
   register int c;
   register long len = 0;
