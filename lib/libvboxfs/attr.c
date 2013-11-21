@@ -10,8 +10,8 @@ static void
 get_time(struct timespec *tsp, u64_t nsecs)
 {
 
-	tsp->tv_sec = div64u(nsecs, 1000000000);
-	tsp->tv_nsec = rem64u(nsecs, 1000000000);
+	tsp->tv_sec = (unsigned long)(nsecs / 1000000000);
+	tsp->tv_nsec = (unsigned)(nsecs % 1000000000);
 }
 
 /*
@@ -21,7 +21,7 @@ static u64_t
 set_time(struct timespec *tsp)
 {
 
-	return mul64u(tsp->tv_sec, 1000000000) + tsp->tv_nsec;
+	return ((u64_t)tsp->tv_sec * 1000000000) + tsp->tv_nsec;
 }
 
 /*

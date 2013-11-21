@@ -13,7 +13,6 @@
 #if defined(__minix)
 #include <minix/minlib.h>
 #include <minix/partition.h>
-#include <minix/u64.h>
 #include <sys/ioctl.h>
 #elif defined(__linux__)
 #include <mntent.h>
@@ -49,10 +48,6 @@
 /* XXX why do we not use 0 / SU_ID ? */
 #define BIN                  2
 #define BINGRP               2
-
-#if !defined(__minix)
-#define mul64u(a,b)	((uint64_t)(a) * (b))
-#endif
 
 /* some Minix specific types that do not conflict with Posix */
 #ifndef block_t
@@ -389,13 +384,13 @@ main(int argc, char *argv[])
 	testb = alloc_block();
 
 	/* Try writing the last block of partition or diskette. */
-	mkfs_seek(mul64u(blocks - 1, block_size), SEEK_SET);
+	mkfs_seek((uint64_t)(blocks - 1) * block_size, SEEK_SET);
 	testb[0] = 0x3245;
 	testb[1] = 0x11FF;
 	testb[block_size/2-1] = 0x1F2F;
 	w=mkfs_write(testb, block_size);
 	sync();			/* flush write, so if error next read fails */
-	mkfs_seek(mul64u(blocks - 1, block_size), SEEK_SET);
+	mkfs_seek((uint64_t)(blocks - 1) * block_size, SEEK_SET);
 	testb[0] = 0;
 	testb[1] = 0;
 	testb[block_size/2-1] = 0;
@@ -407,7 +402,7 @@ main(int argc, char *argv[])
 		    testb[0], testb[1], testb[block_size-1]);
 		errx(1, "File system is too big for minor device (read)");
 	}
-	mkfs_seek(mul64u(blocks - 1, block_size), SEEK_SET);
+	mkfs_seek((uint64_t)(blocks - 1) * block_size, SEEK_SET);
 	testb[0] = 0;
 	testb[1] = 0;
 	testb[block_size/2-1] = 0;
@@ -543,8 +538,8 @@ sizeup(char * device)
 {
   block_t d;
 #if defined(__minix)
-  u64_t bytes, resize;
-  u32_t rem;
+  uint64_t bytes, resize;
+  uint32_t rem;
 #else
   off_t size;
 #endif
@@ -562,11 +557,11 @@ sizeup(char * device)
        return 0;
   }
 
-  d = div64u(bytes, block_size);
-  rem = rem64u(bytes, block_size);
+  d = (uint32_t)(bytes / block_size);
+  rem = (uint32_t)(bytes % block_size);
 
-  resize = mul64u(d, block_size) + rem;
-  if(cmp64(resize, bytes) != 0) {
+  resize = ((uint64_t)d * block_size) + rem;
+  if(resize != bytes) {
 	/* Assume block_t is unsigned */
 	d = (block_t)(-1ul);
 	fprintf(stderr, "%s: truncating FS at %lu blocks\n",
@@ -1579,7 +1574,7 @@ get_block(block_t n, void *buf)
 	memcpy(buf, zero, block_size);
 	return;
   }
-  mkfs_seek(mul64u(n, block_size), SEEK_SET);
+  mkfs_seek((uint64_t)(n) * block_size, SEEK_SET);
   k = read(fd, buf, block_size);
   if (k != block_size)
 	pexit("get_block couldn't read block #%u", (unsigned)n);
@@ -1604,7 +1599,7 @@ put_block(block_t n, void *buf)
 
   (void) read_and_set(n);
 
-  mkfs_seek(mul64u(n, block_size), SEEK_SET);
+  mkfs_seek((uint64_t)(n) * block_size, SEEK_SET);
   mkfs_write(buf, block_size);
 }
 

@@ -293,7 +293,8 @@ static int do_dioctl(struct blockdriver *bdp, dev_t minor,
 		(*bdp->bdr_geometry)(minor, &entry);
 	} else {
 		/* The driver doesn't care -- make up fake geometry. */
-		entry.cylinders = div64u(entry.size, SECTOR_SIZE) / (64 * 32);
+		entry.cylinders = (unsigned long)(entry.size / SECTOR_SIZE) / 
+								  (64 * 32);
 		entry.heads = 64;
 		entry.sectors = 32;
 	}

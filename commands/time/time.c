@@ -11,7 +11,6 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include <minix/minlib.h>
-// #include <minix/u64.h>
 #include <stdio.h>
 
 /* -DNEW prints time to 0.01 sec. */

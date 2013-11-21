@@ -72,9 +72,9 @@ u8_t *tmp_buf;			/* temporary buffer */
 
   /* Get the geometry of the device to partition */
   if ((dv = (*bdp->bdr_part)(device)) == NULL
-				|| cmp64u(dv->dv_size, 0) == 0) return;
-  base = div64u(dv->dv_base, SECTOR_SIZE);
-  limit = base + div64u(dv->dv_size, SECTOR_SIZE);
+				|| dv->dv_size == 0) return;
+  base = (unsigned long)(dv->dv_base / SECTOR_SIZE);
+  limit = base + (unsigned long)(dv->dv_size / SECTOR_SIZE);
 
   /* Read the partition table for the device. */
   if(!get_part_table(bdp, device, 0L, table, tmp_buf)) {
@@ -109,8 +109,8 @@ u8_t *tmp_buf;			/* temporary buffer */
 	if (pe->lowsec < base) pe->lowsec = base;
 	if (part_limit < pe->lowsec) part_limit = pe->lowsec;
 
-	dv->dv_base = mul64u(pe->lowsec, SECTOR_SIZE);
-	dv->dv_size = mul64u(part_limit - pe->lowsec, SECTOR_SIZE);
+	dv->dv_base = (u64_t)pe->lowsec * SECTOR_SIZE;
+	dv->dv_size = (u64_t)(part_limit - pe->lowsec) * SECTOR_SIZE;
 
 	if (style == P_PRIMARY) {
 		/* Each Minix primary partition can be subpartitioned. */
@@ -163,9 +163,9 @@ u8_t *tmp_buf;			/* temporary buffer */
 		if (pe->sysind != NO_PART) {
 			if ((dv = (*bdp->bdr_part)(subdev)) == NULL) return;
 
-			dv->dv_base = mul64u(extbase + offset + pe->lowsec,
-								SECTOR_SIZE);
-			dv->dv_size = mul64u(pe->size, SECTOR_SIZE);
+			dv->dv_base = (u64_t)(extbase + offset + pe->lowsec) *
+								SECTOR_SIZE;
+			dv->dv_size = (u64_t)pe->size * SECTOR_SIZE;
 
 			/* Out of devices? */
 			if (++subdev % NR_PARTITIONS == 0) return;
@@ -191,7 +191,7 @@ u8_t *tmp_buf;			/* temporary buffer */
   u64_t position;
   int r;
 
-  position = mul64u(offset, SECTOR_SIZE);
+  position = (u64_t)offset * SECTOR_SIZE;
   iovec1.iov_addr = (vir_bytes) tmp_buf;
   iovec1.iov_size = CD_SECTOR_SIZE;
   r = (*bdp->bdr_transfer)(device, FALSE /*do_write*/, position, SELF,

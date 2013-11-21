@@ -107,7 +107,7 @@ int fs_bread(void)
   cum_io = 0;
   /* Split the transfer into chunks that don't span two blocks. */
   while (nrbytes != 0) {
-    off = rem64u(position, block_size);	/* offset in blk*/
+    off = (unsigned int)(position % block_size);	/* offset in blk*/
     
     chunk = MIN(nrbytes, block_size - off);
     if (chunk < 0) chunk = block_size - off;
@@ -312,20 +312,20 @@ int rw;				/* READING or PEEKING */
   if ((ex64lo(position) <= dir->d_file_size) && 
   				(ex64lo(position) > dir->data_length_l)) {
     while ((dir->d_next != NULL) && (ex64lo(position) > dir->data_length_l)) {
-      position = sub64ul(position, dir->data_length_l);
+      position -= dir->data_length_l;
       dir = dir->d_next;
     }
   }
 
   if (dir->inter_gap_size != 0) {
-    rel_block = div64u(position, block_size);
+    rel_block = (unsigned long)(position / block_size);
     file_unit = rel_block / dir->data_length_l;
     offset = rel_block % dir->file_unit_size;
     b = dir->loc_extent_l + (dir->file_unit_size +
     				 dir->inter_gap_size) * file_unit + offset;
   } else {
-    b = dir->loc_extent_l + div64u(position, block_size); /* Physical position
-							    * to read. */
+    b = dir->loc_extent_l + (unsigned long)(position / block_size); 
+    					    /* Physical position to read. */
   }
 
   bp = get_block(b);

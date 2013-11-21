@@ -40,7 +40,7 @@ static u32_t trace_gettime(void)
 
   read_tsc_64(&tsc);
 
-  tsc = sub64(tsc, trace_tsc);
+  tsc -= trace_tsc;
 
   return tsc_64_to_micros(tsc);
 }

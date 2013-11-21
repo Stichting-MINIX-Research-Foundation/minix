@@ -33,7 +33,7 @@ static void intel_arch_watchdog_init(const unsigned cpu)
 	 */
 	cpuf = cpu_get_freq(cpu);
 	while (ex64hi(cpuf) || ex64lo(cpuf) > 0x7fffffffU)
-		cpuf = div64u64(cpuf, 2);
+		cpuf /= 2;
 	cpuf = make64(-ex64lo(cpuf), ex64hi(cpuf));
 	watchdog->resetval = watchdog->watchdog_resetval = cpuf;
 
@@ -159,7 +159,7 @@ static int intel_arch_watchdog_profile_init(const unsigned freq)
 
 	/* FIXME works only if all CPUs have the same freq */
 	cpuf = cpu_get_freq(cpuid);
-	cpuf = div64u64(cpuf, freq);
+	cpuf /= freq;
 
 	/*
 	 * if freq is too low and the cpu freq too high we may get in a range of
@@ -223,7 +223,7 @@ static int amd_watchdog_profile_init(const unsigned freq)
 
 	/* FIXME works only if all CPUs have the same freq */
 	cpuf = cpu_get_freq(cpuid);
-	cpuf = -div64u64(cpuf, freq);
+	cpuf = -cpuf / freq;
 
 	watchdog->profile_resetval = cpuf;
 

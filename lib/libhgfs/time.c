@@ -18,7 +18,7 @@ void time_init(void)
    * the difference between that time and the UNIX epoch, in 100ns units.
    */
   /* FIXME: we currently do not take into account timezones. */
-  time_offset = mul64u(116444736, 1000000000);
+  time_offset = (u64_t)116444736 * 1000000000;
 }
 
 /*===========================================================================*
@@ -33,7 +33,7 @@ void time_put(struct timespec *tsp)
   u64_t hgfstime;
 
   if (tsp != NULL) {
-	hgfstime = mul64u(tsp->tv_sec, 10000000) + (tsp->tv_nsec / 100);
+	hgfstime = ((u64_t)tsp->tv_sec * 10000000) + (tsp->tv_nsec / 100);
 	hgfstime += time_offset;
 
 	RPC_NEXT32 = ex64lo(hgfstime);
@@ -60,10 +60,10 @@ void time_get(struct timespec *tsp)
 	time_lo = RPC_NEXT32;
 	time_hi = RPC_NEXT32;
 
-	hgfstime = sub64(make64(time_lo, time_hi), time_offset);
+	hgfstime = make64(time_lo, time_hi) - time_offset;
 
-	tsp->tv_sec = div64u(hgfstime, 10000000);
-	tsp->tv_nsec = rem64u(hgfstime, 10000000) * 100;
+	tsp->tv_sec  = (unsigned long)(hgfstime / 10000000);
+	tsp->tv_nsec = (unsigned)(hgfstime % 10000000) * 100;
   }
   else RPC_ADVANCE(sizeof(u32_t) * 2);
 }

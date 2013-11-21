@@ -84,7 +84,7 @@ clock_t tmrs_settimer(minix_timer_t **tmrs, minix_timer_t *tp, clock_t exp_time,
 	read_tsc_64(&_starttime);				\
 	do { timed_code_block } while(0);			\
 	read_tsc_64(&_endtime);					\
-	_dt = sub64(_endtime, _starttime);			\
+	_dt = _endtime - _starttime;				\
 	if(_cum_instances == 0) {				\
 		RESET_STATS(_starttime, _cum_instances, _cum_spenttime, _cum_starttime); \
 	 }							\
@@ -95,8 +95,8 @@ clock_t tmrs_settimer(minix_timer_t **tmrs, minix_timer_t *tp, clock_t exp_time,
 	} 							\
 	_cum_spenttime = add64(_cum_spenttime, _dt);		\
 	_cum_instances++;					\
-	_cum_dt = sub64(_endtime, _cum_starttime);		\
-	if(cmp64(_cum_dt, make64(0, 120)) > 0) {		\
+	_cum_dt = _endtime - _cum_starttime;			\
+	if(_cum_dt > make64(0, 120)) {				\
 		PRINT_STATS(_cum_spenttime, _cum_instances);	\
 		RESET_STATS(_starttime, _cum_instances, _cum_spenttime, _cum_starttime); 	\
 	} 							\

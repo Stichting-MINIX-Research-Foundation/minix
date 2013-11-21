@@ -47,8 +47,8 @@ int do_statvfs()
   statvfs.f_bsize = BLOCK_SIZE;
   statvfs.f_frsize = BLOCK_SIZE;
   statvfs.f_iosize = BLOCK_SIZE;
-  statvfs.f_blocks = div64u(total, BLOCK_SIZE);
-  statvfs.f_bfree = div64u(free, BLOCK_SIZE);
+  statvfs.f_blocks = (unsigned long)(total / BLOCK_SIZE);
+  statvfs.f_bfree = (unsigned long)(free / BLOCK_SIZE);
   statvfs.f_bavail = statvfs.f_bfree;
   statvfs.f_namemax = NAME_MAX;
 

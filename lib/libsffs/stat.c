@@ -70,7 +70,7 @@ int do_stat()
   stat.st_uid = sffs_params->p_uid;
   stat.st_gid = sffs_params->p_gid;
   stat.st_rdev = NO_DEV;
-  if (cmp64u(attr.a_size, LONG_MAX) > 0)
+  if (attr.a_size > LONG_MAX)
 	stat.st_size = LONG_MAX;
   else
 	stat.st_size = ex64lo(attr.a_size);
