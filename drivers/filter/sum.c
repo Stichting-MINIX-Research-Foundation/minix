@@ -8,8 +8,8 @@
 #define SEC2SUM_NR(nr)	((nr)/NR_SUM_SEC*(NR_SUM_SEC+1) + NR_SUM_SEC)
 #define LOG2PHYS(nr)	((nr)/NR_SUM_SEC*(NR_SUM_SEC+1) + (nr)%NR_SUM_SEC)
 
-#define POS2SEC(nr)	div64u((nr), SECTOR_SIZE)
-#define SEC2POS(nr)	mul64u((nr), SECTOR_SIZE)
+#define POS2SEC(nr)	(unsigned long)((nr) / SECTOR_SIZE)
+#define SEC2POS(nr)	((u64_t)(nr) * SECTOR_SIZE)
 
 /* Data buffers. */
 static char *ext_array, *ext_buffer;	/* interspersed buffer */

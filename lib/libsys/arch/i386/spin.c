@@ -61,7 +61,7 @@ int spin_check(spin_t *s)
 	case STATE_TS:
 		read_tsc_64(&cur_tsc);
 
-		tsc_delta = sub64(cur_tsc, s->s_base_tsc);
+		tsc_delta = cur_tsc - s->s_base_tsc;
 
 		micro_delta = tsc_64_to_micros(tsc_delta);
 

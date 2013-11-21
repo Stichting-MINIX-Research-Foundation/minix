@@ -406,8 +406,8 @@ static struct device *f_prepare(devminor_t device)
   if (f_fp->fl_density < NT) {
 	f_dp = &fdensity[f_fp->fl_density];
 	f_sectors = f_dp->secpt;
-	f_fp->fl_geom.dv_size = mul64u((long) (NR_HEADS * f_sectors
-					* f_dp->cyls), SECTOR_SIZE);
+	f_fp->fl_geom.dv_size = (u64_t)(NR_HEADS * f_sectors * f_dp->cyls) * 
+								SECTOR_SIZE;
   }
 
   /* A partition? */
@@ -496,7 +496,7 @@ static ssize_t f_transfer(
 	/* Which block on disk and how close to EOF? */
 	if (position >= dv_size) return(total);		/* At EOF */
 	if (position + nbytes > dv_size) nbytes = dv_size - position;
-	block = div64u(f_dv->dv_base + position, SECTOR_SIZE);
+	block = (unsigned long)((f_dv->dv_base + position) / SECTOR_SIZE);
 
 	if ((nbytes & SECTOR_MASK) != 0) return(EINVAL);
 

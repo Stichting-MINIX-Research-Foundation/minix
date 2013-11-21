@@ -155,7 +155,7 @@ static ssize_t filter_transfer(devminor_t UNUSED(minor), int do_write,
 	for(size = 0, i = 0; i < count; i++)
 		size += iov[i].iov_size;
 
-	if (rem64u(pos, SECTOR_SIZE) != 0 || size % SECTOR_SIZE != 0) {
+	if (pos % SECTOR_SIZE != 0 || size % SECTOR_SIZE != 0) {
 		printf("Filter: unaligned request from caller!\n");
 		return EINVAL;
 	}

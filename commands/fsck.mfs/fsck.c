@@ -46,7 +46,6 @@
 #include <minix/config.h>
 #include <minix/const.h>
 #include <minix/type.h>
-#include <minix/u64.h>
 #include "mfs/const.h"
 #include "mfs/inode.h"
 #include "mfs/type.h"
@@ -97,7 +96,7 @@ static struct super_block sb;
  * btoa64 gives the byte address of a block
  */
 #define ztob(z)		((block_nr) (z) << sb.s_log_zone_size)
-#define btoa64(b)	(mul64u(b, block_size))
+#define btoa64(b)	((u64_t)(b) * block_size)
 #define SCALE		((int) ztob(1))	/* # blocks in a zone */
 #define FIRST		((zone_nr) sb.s_firstdatazone)	/* as the name says */
 
@@ -656,12 +655,12 @@ void chksuper()
 
 int inoblock(int inn)
 {
-  return div64u(mul64u(inn - 1, INODE_SIZE), block_size) + BLK_ILIST;
+  return (int)(((u64_t)(inn - 1) * INODE_SIZE) / block_size) + BLK_ILIST;
 }
 
 int inooff(int inn)
 {
-  return rem64u(mul64u(inn - 1, INODE_SIZE), block_size);
+  return (int)(((u64_t)(inn - 1) * INODE_SIZE) % block_size);
 }
 
 /* Make a listing of the inodes given by `clist'.  If `repair' is set, ask

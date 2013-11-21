@@ -175,7 +175,7 @@ int fs_breadwrite(void)
   cum_io = 0;
   /* Split the transfer into chunks that don't span two blocks. */
   while (nrbytes > 0) {
-	  off = rem64u(position, block_size);	/* offset in blk*/
+	  off = (unsigned int)(position % block_size);	/* offset in blk*/
 	  chunk = min(nrbytes, block_size - off);
 
 	  /* Read or write 'chunk' bytes. */
@@ -240,7 +240,7 @@ int *completed;                 /* number of bytes copied */
   block_spec = (rip->i_mode & I_TYPE) == I_BLOCK_SPECIAL;
 
   if (block_spec) {
-	b = div64u(position, block_size);
+	b = (unsigned long)(position / block_size);
 	dev = (dev_t) rip->i_block[0];
   } else {
 	if (ex64hi(position) != 0)

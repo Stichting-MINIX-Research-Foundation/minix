@@ -138,7 +138,7 @@ int do_ftrunc()
   start = make64(m_in.REQ_TRC_START_LO, m_in.REQ_TRC_START_HI);
   end = make64(m_in.REQ_TRC_END_LO, m_in.REQ_TRC_END_HI);
 
-  if (cmp64u(end, 0) == 0) {
+  if (end == 0) {
 	/* Truncate or expand the file. */
 	if ((r = verify_inode(ino, path, NULL)) != OK)
 		return r;
@@ -149,9 +149,9 @@ int do_ftrunc()
 	r = sffs_table->t_setattr(path, &attr);
   } else {
 	/* Write zeroes to the file. We can't create holes. */
-	if (cmp64(end, start) <= 0) return EINVAL;
+	if (end <= start) return EINVAL;
 
-	delta = sub64(end, start);
+	delta = end - start;
 
 	if (ex64hi(delta) != 0) return EINVAL;
 

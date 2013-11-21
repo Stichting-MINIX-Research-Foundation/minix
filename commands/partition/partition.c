@@ -20,7 +20,6 @@
 #include <minix/config.h>
 #include <minix/const.h>
 #include <minix/partition.h>
-#include <minix/u64.h>
 #else
 #include "partition.h"
 #define NR_PARTITIONS 4
@@ -322,8 +321,8 @@ void geometry(void)
 		geometry.cylinders= (sb.st_size-1)/SECTOR_SIZE/
 			(geometry.sectors*geometry.heads) + 1;
 	}
-	primary.lowsec= div64u(geometry.base, SECTOR_SIZE);
-	primary.size= div64u(geometry.size, SECTOR_SIZE);
+	primary.lowsec= (unsigned long)(geometry.base / SECTOR_SIZE);
+	primary.size  = (unsigned long)(geometry.size / SECTOR_SIZE);
 	cylinders= geometry.cylinders;
 	heads= geometry.heads;
 	sectors= geometry.sectors;

@@ -19,7 +19,7 @@ SRCS+= dhcp_gettag.c dhcp_settag.c
 SRCS+= gcov.c gcov_flush.c
 
 # Various utils
-SRCS+= itoa.c u64util.c read_tsc_64.c
+SRCS+= itoa.c read_tsc_64.c
 
 # servxcheck
 SRCS+= servxcheck.c
