@@ -108,6 +108,7 @@ sh ${BUILDSH} -V SLOPPY_FLIST=yes -V MKBINUTILS=yes -V MKGCCCMDS=yes -j ${JOBS} 
 cat >${FSTAB} <<END_FSTAB
 /dev/c0d0p2   /home   mfs     rw                      0       2
 /dev/c0d0p3   /usr    mfs     rw                      0       2
+none          /sys    devman  rw,rslabel=devman       0       0
 END_FSTAB
 
 rm -f ${DESTDIR}/SETS.*
