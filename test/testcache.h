@@ -4,6 +4,7 @@
  */
 
 #include <sys/types.h>
+#include <machine/vmparam.h>
 
 #define MAXBLOCKS 1500000
 

@@ -262,14 +262,6 @@ __bt_open(const char *fname, int flags, mode_t mode, const BTREEINFO *openinfo,
 		 * Don't overflow the page offset type.
 		 */
 		if (b.psize == 0) {
-#ifdef __minix
-			if (sb.st_blksize == 0) {
-				/* 0 in 2 cases: upgrade from old to new struct stat or
-				 * there is a bug in underlying fs.
-				 */
-				b.psize = MINIX_ST_BLKSIZE;
-			} else
-#endif
 			b.psize = sb.st_blksize;
 			if (b.psize < MINPSIZE)
 				b.psize = MINPSIZE;

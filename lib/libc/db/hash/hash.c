@@ -301,14 +301,6 @@ init_hash(HTAB *hashp, const char *file, const HASHINFO *info)
 	if (file != NULL) {
 		if (stat(file, &statbuf))
 			return (NULL);
-#ifdef __minix
-		if (statbuf.st_blksize == 0) {
-			/* 0 in 2 cases: upgrade from old to new struct stat or
-			 * there is a bug in underlying fs.
-			 */
-			hashp->BSIZE = MIN(MINIX_ST_BLKSIZE, MAX_BSIZE);
-		} else
-#endif
 		hashp->BSIZE = MIN(statbuf.st_blksize, MAX_BSIZE);
 		hashp->BSHIFT = __log2((uint32_t)hashp->BSIZE);
 	}

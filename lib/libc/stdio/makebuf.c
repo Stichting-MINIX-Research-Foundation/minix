@@ -121,14 +121,6 @@ __swhatbuf(FILE *fp, size_t *bufsize, int *couldbetty)
 	 * __sseek is mainly paranoia.)  It is safe to set _blksize
 	 * unconditionally; it will only be used if __SOPT is also set.
 	 */
-#ifdef __minix
-	if (st.st_blksize == 0) {
-		/* 0 in 2 cases: upgrade from old to new struct stat or
-		 * there is a bug in underlying fs.
-		 */
-		*bufsize = fp->_blksize = MINIX_ST_BLKSIZE;
-	} else
-#endif
 		*bufsize = fp->_blksize = st.st_blksize;
 	return (st.st_mode & S_IFMT) == S_IFREG && fp->_seek == __sseek ?
 	    __SOPT : __SNPT;

@@ -13,6 +13,7 @@
  */
 
 #ifdef __minix
+#include <machine/vmparam.h>
 #define mmap minix_mmap
 #define munmap minix_munmap
 #ifdef _LIBSYS
