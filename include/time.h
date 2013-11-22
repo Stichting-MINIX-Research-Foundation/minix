@@ -97,11 +97,7 @@ clock_t clock(void);
 char *ctime(const time_t *) __RENAME(__ctime50);
 double difftime(time_t, time_t) __RENAME(__difftime50);
 struct tm *gmtime(const time_t *) __RENAME(__gmtime50);
-#ifndef __MINIX
 struct tm *localtime(const time_t *) __RENAME(__locatime50);
-#else
-struct tm *localtime(const time_t *) __RENAME(__localtime50);
-#endif
 time_t time(time_t *) __RENAME(__time50);
 time_t mktime(struct tm *) __RENAME(__mktime50);
 #endif
@@ -118,11 +114,7 @@ size_t strftime(char * __restrict, size_t, const char * __restrict,
  * need to include unistd.h
  */
 long __sysconf(int);
-#ifdef __minix
-#define CLK_TCK		(__sysconf(3))
-#else
 #define CLK_TCK		(__sysconf(39))
-#endif /* !__minix */
 #endif
 #endif
 
@@ -164,18 +156,14 @@ int clock_settime(clockid_t, const struct timespec *)
     __RENAME(__clock_settime50);
 int nanosleep(const struct timespec *, struct timespec *)
     __RENAME(__nanosleep50);
-#ifndef __minix
 int timer_gettime(timer_t, struct itimerspec *) __RENAME(__timer_gettime50);
 int timer_settime(timer_t, int, const struct itimerspec * __restrict, 
     struct itimerspec * __restrict) __RENAME(__timer_settime50);
-#endif /* !__minix */ 
 #endif
-#ifndef __minix
 int timer_create(clockid_t, struct sigevent * __restrict,
     timer_t * __restrict);
 int timer_delete(timer_t);
 int timer_getoverrun(timer_t);
-#endif /* __minix */
 #endif /* _POSIX_C_SOURCE >= 199309 || _XOPEN_SOURCE >= 500 || ... */
 
 #if (_POSIX_C_SOURCE - 0) >= 199506L || (_XOPEN_SOURCE - 0) >= 500 || \
