@@ -403,7 +403,7 @@ void *arg;
 	char *guard_start, *guard_end;
 
 	stacksize = round_page(stacksize + MTHREAD_GUARDSIZE);
-	stackaddr = minix_mmap(NULL, stacksize,
+	stackaddr = mmap(NULL, stacksize,
 			       PROT_READ|PROT_WRITE, MAP_ANON|MAP_PRIVATE,
 			       -1, 0);
 	if (stackaddr == MAP_FAILED)
@@ -431,7 +431,7 @@ void *arg;
 # error "Unsupported platform"
 #endif
 	stacksize = guarded_stacksize;
-	if (minix_munmap(guard_start, MTHREAD_GUARDSIZE) != 0)
+	if (munmap(guard_start, MTHREAD_GUARDSIZE) != 0)
 		mthread_panic("unable to unmap stack space for guard");
 	tcb->m_context.uc_stack.ss_sp = guard_end;
   } else
@@ -465,7 +465,7 @@ mthread_thread_t thread;
   rt->m_cond = NULL;
   if (rt->m_attr.ma_stackaddr == NULL) { /* We allocated stack space */
 	if (rt->m_context.uc_stack.ss_sp) {
-		if (minix_munmap(rt->m_context.uc_stack.ss_sp,
+		if (munmap(rt->m_context.uc_stack.ss_sp,
 				 rt->m_context.uc_stack.ss_size) != 0) {
 			mthread_panic("unable to unmap memory");
 		}

@@ -77,12 +77,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* mmap/munmap are used in this file just to allocate/free memory
- * so these functions are ok.
- */
-#define mmap minix_mmap
-#define munmap minix_munmap
-
 /*
  * mke2fs.c: "re-invent (dumb but non-GPLed) wheel as a fun project"
  *

@@ -38,10 +38,6 @@
  * John Polstra <jdp@polstra.com>.
  */
 
-#ifdef __minix
-#define munmap minix_munmap
-#endif
-
 #include <sys/cdefs.h>
 #ifndef lint
 __RCSID("$NetBSD: rtld.c,v 1.159 2012/10/01 03:03:46 riastradh Exp $");

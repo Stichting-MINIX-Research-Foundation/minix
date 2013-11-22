@@ -39,9 +39,6 @@
 
 #define MAX_MAP_LEN 1048576
 
-#define munmap minix_munmap
-#define mmap minix_mmap
-
 mmf_t *
 mmopen(char *fn, char *mode)
 {

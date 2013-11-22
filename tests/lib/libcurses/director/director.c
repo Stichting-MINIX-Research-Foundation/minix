@@ -44,11 +44,6 @@
 #include <err.h>
 #include "returns.h"
 
-#if defined(__minix)
-#define munmap minix_munmap
-#define mmap minix_mmap
-#endif /* defined(__minix) */
-
 void yyparse(void);
 #define DEF_TERMPATH "."
 #define DEF_TERM "atf"

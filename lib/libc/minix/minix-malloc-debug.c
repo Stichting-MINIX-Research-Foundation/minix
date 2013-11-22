@@ -12,9 +12,6 @@
 #include <sys/mman.h>
 #include <unistd.h>
 
-#define mmap minix_mmap
-#define munmap minix_munmap
-
 #include "malloc-debug.h"
 
 #if 0

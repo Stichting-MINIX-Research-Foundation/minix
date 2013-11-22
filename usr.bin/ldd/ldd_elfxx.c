@@ -84,8 +84,6 @@ __RCSID("$NetBSD: ldd_elfxx.c,v 1.4 2009/09/07 04:49:03 dholland Exp $");
 #include "rtld.h"
 #include "ldd.h"
 
-#define munmap minix_munmap
-
 /*
  * elfxx_ldd() - bit-size independant ELF ldd implementation.
  * returns 0 on success and -1 on failure.

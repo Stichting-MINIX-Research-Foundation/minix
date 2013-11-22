@@ -184,7 +184,7 @@ slowccalloc(struct puffs_usermount *pu)
 	if (puffs_fakecc)
 		return &fakecc;
 
-	sp = minix_mmap(NULL, stacksize, PROT_READ|PROT_WRITE,
+	sp = mmap(NULL, stacksize, PROT_READ|PROT_WRITE,
 	    MAP_ANON|MAP_PRIVATE, -1, 0);
 	if (sp == MAP_FAILED)
 		return NULL;
@@ -194,11 +194,11 @@ slowccalloc(struct puffs_usermount *pu)
 
 	/* initialize both ucontext's */
 	if (getcontext(&pcc->pcc_uc) == -1) {
-		minix_munmap(pcc, stacksize);
+		munmap(pcc, stacksize);
 		return NULL;
 	}
 	if (getcontext(&pcc->pcc_uc_ret) == -1) {
-		minix_munmap(pcc, stacksize);
+		munmap(pcc, stacksize);
 		return NULL;
 	}
 
@@ -280,7 +280,7 @@ cc_free(struct puffs_cc *pcc)
 
 	DPRINTF(("invalidating pcc %p\n", pcc));
 	assert(!puffs_fakecc);
-	minix_munmap(pcc, stacksize);
+	munmap(pcc, stacksize);
 }
 
 void

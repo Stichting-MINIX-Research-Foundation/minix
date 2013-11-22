@@ -570,7 +570,7 @@ static int m_block_ioctl(devminor_t minor, unsigned long request,
 		size -= l;
 	}
 	size = rounddown(size, PAGE_SIZE);
-	r = minix_munmap((void *) a, size);
+	r = munmap((void *) a, size);
 	if(r != OK) {
 		printf("memory: WARNING: munmap failed: %d\n", r);
 	}
@@ -586,7 +586,7 @@ static int m_block_ioctl(devminor_t minor, unsigned long request,
 
   /* Try to allocate a piece of memory for the RAM disk. */
   if(ramdev_size > 0 &&
-  	(mem = minix_mmap(NULL, ramdev_size, PROT_READ|PROT_WRITE,
+  	(mem = mmap(NULL, ramdev_size, PROT_READ|PROT_WRITE,
 		MAP_PREALLOC|MAP_ANON, -1, 0)) == MAP_FAILED) {
 	printf("MEM: failed to get memory for ramdisk\n");
 	return(ENOMEM);

@@ -13,11 +13,9 @@
  */
 
 #ifdef __minix
-#include <machine/vmparam.h>
-#define mmap minix_mmap
-#define munmap minix_munmap
 #ifdef _LIBSYS
 #include <minix/sysutil.h>
+#include <machine/vmparam.h>
 #define MALLOC_NO_SYSCALLS
 #define wrtwarning(w) printf("libminc malloc warning: %s\n", w)
 #define wrterror(w) panic("libminc malloc error: %s\n", w)
@@ -98,8 +96,8 @@ void utrace(struct ut *, int);
  * This is necessary for VM to be able to define its own versions, and
  * use this malloc.
  */
-#undef minix_mmap
-#undef minix_munmap
+#undef mmap
+#undef munmap
 
 #include <sys/types.h>
 #if defined(__NetBSD__)

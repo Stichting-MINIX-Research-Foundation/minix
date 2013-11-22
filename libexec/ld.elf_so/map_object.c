@@ -50,8 +50,6 @@ __RCSID("$NetBSD: map_object.c,v 1.45 2012/10/13 21:13:07 dholland Exp $");
 #include "rtld.h"
 
 #ifdef __minix
-#define munmap minix_munmap
-#define mmap minix_mmap
 #ifndef MAP_SHARED
 #define MAP_SHARED MAP_PRIVATE /* minix: MAP_SHARED should be MAP_PRIVATE */
 #endif

@@ -33,7 +33,7 @@ int main (int argc, char *argv[])
 
   if(f == 0) {
   	/* child: use up as much memory as we can */
-	while((addrs[i++ % NADDRS] = minix_mmap(0, LEN, PROT_READ|PROT_WRITE,
+	while((addrs[i++ % NADDRS] = mmap(0, LEN, PROT_READ|PROT_WRITE,
 		MAP_PREALLOC|MAP_CONTIG|MAP_ANON, -1, 0)) != MAP_FAILED)
 			;
 	exit(0);

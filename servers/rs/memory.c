@@ -6,19 +6,19 @@
 
 #include "inc.h"
 
-#define minix_munmap _minix_munmap
+#define munmap _munmap
 #include <sys/mman.h>
-#undef minix_munmap
+#undef munmap
 
 int unmap_ok = 0;
 
 /*===========================================================================*
- *				    minix_munmap            		     *
+ *				    munmap            		     	*
  *===========================================================================*/
-int minix_munmap(void *addrstart, vir_bytes len)
+int munmap(void *addrstart, vir_bytes len)
 {
   if(!unmap_ok) 
       return ENOSYS;
 
-  return _minix_munmap(addrstart, len);
+  return _munmap(addrstart, len);
 }

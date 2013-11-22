@@ -58,7 +58,7 @@ static void alloc_buf(struct buf *buf, phys_bytes next)
 		 * very unlikely that the actual piece of memory will end up
 		 * being physically contiguous with the last piece.
 		 */
-		tmp = minix_mmap((void *) (buf->addr + len + PAGE_SIZE), len,
+		tmp = mmap((void *) (buf->addr + len + PAGE_SIZE), len,
 			PROT_READ | PROT_WRITE, MAP_ANON | MAP_PREALLOC |
 			MAP_CONTIG, -1, 0L);
 
@@ -66,7 +66,7 @@ static void alloc_buf(struct buf *buf, phys_bytes next)
 			panic("unable to allocate temporary buffer");
 	}
 
-	addr = (vir_bytes) minix_mmap((void *) buf->addr, len,
+	addr = (vir_bytes) mmap((void *) buf->addr, len,
 		PROT_READ | PROT_WRITE, flags, -1, 0L);
 
 	if (addr != buf->addr)
@@ -75,7 +75,7 @@ static void alloc_buf(struct buf *buf, phys_bytes next)
 	if (!prealloc)
 		return;
 
-	if ((r = minix_munmap(tmp, len)) != OK)
+	if ((r = munmap(tmp, len)) != OK)
 		panic("unable to unmap buffer (%d)", errno);
 
 	if ((r = sys_umap(SELF, VM_D, addr, len, &buf->phys)) < 0)
@@ -92,9 +92,9 @@ static void alloc_buf(struct buf *buf, phys_bytes next)
 	 * unmapped the temporary memory also, there's a small chance we'll end
 	 * up with a different physical page this time. Who knows.
 	 */
-	minix_munmap((void *) addr, len);
+	munmap((void *) addr, len);
 
-	addr = (vir_bytes) minix_mmap((void *) buf->addr, len,
+	addr = (vir_bytes) mmap((void *) buf->addr, len,
 		PROT_READ | PROT_WRITE, flags, -1, 0L);
 
 	if (addr != buf->addr)
@@ -147,7 +147,7 @@ static void free_bufs(struct buf *buf, int count)
 
 	for (i = 0; i < count; i++) {
 		for (j = 0; j < buf[i].pages; j++) {
-			r = minix_munmap((void *) (buf[i].addr + j * PAGE_SIZE),
+			r = munmap((void *) (buf[i].addr + j * PAGE_SIZE),
 				PAGE_SIZE);
 
 			if (r != OK)
@@ -664,7 +664,7 @@ static void test_vector2(void)
 	got_result("invalid virtual vector pointer");
 
 	/* Test unallocated virtual vector. */
-	vvecp = (struct vumap_vir *) minix_mmap(NULL, PAGE_SIZE,
+	vvecp = (struct vumap_vir *) mmap(NULL, PAGE_SIZE,
 		PROT_READ | PROT_WRITE, MAP_ANON, -1, 0L);
 
 	if (vvecp == MAP_FAILED)
@@ -677,7 +677,7 @@ static void test_vector2(void)
 
 	got_result("unallocated virtual vector pointer");
 
-	minix_munmap((void *) vvecp, PAGE_SIZE);
+	munmap((void *) vvecp, PAGE_SIZE);
 
 	/* Test invalid physical vector pointer. */
 	r = do_vumap(SELF, vvec, 2, 0, VUA_READ, NULL, &pcount);
@@ -687,7 +687,7 @@ static void test_vector2(void)
 	got_result("invalid physical vector pointer");
 
 	/* Test unallocated physical vector. */
-	pvecp = (struct vumap_phys *) minix_mmap(NULL, PAGE_SIZE,
+	pvecp = (struct vumap_phys *) mmap(NULL, PAGE_SIZE,
 		PROT_READ | PROT_WRITE, MAP_ANON, -1, 0L);
 
 	if (pvecp == MAP_FAILED)
@@ -705,7 +705,7 @@ static void test_vector2(void)
 
 	got_result("unallocated physical vector pointer");
 
-	minix_munmap((void *) pvecp, PAGE_SIZE);
+	munmap((void *) pvecp, PAGE_SIZE);
 
 	free_bufs(buf, 2);
 }

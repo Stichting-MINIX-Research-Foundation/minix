@@ -68,7 +68,7 @@ uds_open(devminor_t UNUSED(orig_minor), int access,
 	 * in use.  We use mmap instead of malloc to allow the memory to be
 	 * actually freed later.
 	 */
-	if ((buf = minix_mmap(NULL, UDS_BUF, PROT_READ | PROT_WRITE,
+	if ((buf = mmap(NULL, UDS_BUF, PROT_READ | PROT_WRITE,
 	    MAP_ANON | MAP_PRIVATE, -1, 0)) == MAP_FAILED)
 		return ENOMEM;
 
@@ -166,7 +166,7 @@ uds_close(devminor_t minor)
 		uds_clear_fds(minor, &uds_fd_table[minor].ancillary_data);
 
 	/* Release the memory for the ring buffer. */
-	minix_munmap(uds_fd_table[minor].buf, UDS_BUF);
+	munmap(uds_fd_table[minor].buf, UDS_BUF);
 
 	/* Set the socket back to its original UDS_FREE state. */
 	memset(&uds_fd_table[minor], '\0', sizeof(uds_fd_t));

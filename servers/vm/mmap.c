@@ -41,7 +41,7 @@ static struct vir_region *mmap_region(struct vmproc *vmp, vir_bytes addr,
 
 	if(vmm_flags & MAP_LOWER16M) vrflags |= VR_LOWER16MB;
 	if(vmm_flags & MAP_LOWER1M)  vrflags |= VR_LOWER1MB;
-	if(vmm_flags & MAP_ALIGN64K) vrflags |= VR_PHYS64K;
+	if(vmm_flags & MAP_ALIGNMENT_64KB) vrflags |= VR_PHYS64K;
 	if(vmm_flags & MAP_PREALLOC) mfflags |= MF_PREALLOC;
 	if(vmm_flags & MAP_UNINITIALIZED) {
 		if(!execpriv) return NULL;

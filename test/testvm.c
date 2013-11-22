@@ -33,9 +33,9 @@ int dowriteblock(int b, int blocksize, u32_t seed, char *block)
 
 	if((bdata = vm_map_cacheblock(MYDEV, dev_off,
 		VMC_NO_INODE, 0, NULL, blocksize)) == MAP_FAILED) {
-		if((bdata = minix_mmap(0, blocksize,
+		if((bdata = mmap(0, blocksize,
 		       PROT_READ|PROT_WRITE, MAP_ANON, -1, 0)) == MAP_FAILED) {
-			printf("minix_mmap failed\n");
+			printf("mmap failed\n");
 			exit(1);
 		}
 		mustset = 1;
@@ -49,8 +49,8 @@ int dowriteblock(int b, int blocksize, u32_t seed, char *block)
 		exit(1);
 	}
 
-	if(minix_munmap(bdata, blocksize) < 0) {
-		printf("dowriteblock: minix_munmap failed %d\n", r);
+	if(munmap(bdata, blocksize) < 0) {
+		printf("dowriteblock: munmap failed %d\n", r);
 		exit(1);
 	}
 
@@ -69,8 +69,8 @@ int readblock(int b, int blocksize, u32_t seed, char *block)
 
 	memcpy(block, bdata, blocksize);
 
-	if(minix_munmap(bdata, blocksize) < 0) {
-		printf("dowriteblock: minix_munmap failed\n");
+	if(munmap(bdata, blocksize) < 0) {
+		printf("dowriteblock: munmap failed\n");
 		exit(1);
 	}
 

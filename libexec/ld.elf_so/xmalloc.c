@@ -60,12 +60,6 @@
  * SUCH DAMAGE.
  */
 
-#ifdef __minix
-/* Minix mmap can do this. */
-#define mmap minix_mmap
-#define munmap minix_munmap
-#endif
-
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)malloc.c	5.11 (Berkeley) 2/23/91";*/
 #endif /* LIBC_SCCS and not lint */

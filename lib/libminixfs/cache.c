@@ -168,10 +168,10 @@ lmfs_alloc_block(struct buf *bp)
 
   len = roundup(fs_block_size, PAGE_SIZE);
 
-  if((bp->data = minix_mmap(0, fs_block_size,
+  if((bp->data = mmap(0, fs_block_size,
      PROT_READ|PROT_WRITE, MAP_PREALLOC|MAP_ANON, -1, 0)) == MAP_FAILED) {
 	free_unused_blocks();
-	if((bp->data = minix_mmap(0, fs_block_size, PROT_READ|PROT_WRITE,
+	if((bp->data = mmap(0, fs_block_size, PROT_READ|PROT_WRITE,
 		MAP_PREALLOC|MAP_ANON, -1, 0)) == MAP_FAILED) {
 		panic("libminixfs: could not allocate block");
 	}
@@ -190,7 +190,7 @@ struct buf *lmfs_get_block(register dev_t dev, register block_t block,
 	return lmfs_get_block_ino(dev, block, only_search, VMC_NO_INODE, 0);
 }
 
-void minix_munmap_t(void *a, int len)
+void munmap_t(void *a, int len)
 {
 	vir_bytes av = (vir_bytes) a;
 	assert(a);
@@ -202,7 +202,7 @@ void minix_munmap_t(void *a, int len)
 
 	assert(!(len % PAGE_SIZE));
 
-	if(minix_munmap(a, len) < 0)
+	if(munmap(a, len) < 0)
 		panic("libminixfs cache: munmap failed");
 }
 
@@ -240,7 +240,7 @@ static void freeblock(struct buf *bp)
   MARKCLEAN(bp);		/* NO_DEV blocks may be marked dirty */
   if(bp->lmfs_bytes > 0) {
 	assert(bp->data);
-	minix_munmap_t(bp->data, bp->lmfs_bytes);
+	munmap_t(bp->data, bp->lmfs_bytes);
 	bp->lmfs_bytes = 0;
 	bp->data = NULL;
   } else assert(!bp->data);
@@ -571,7 +571,7 @@ void lmfs_invalidate(
 	if (bp->lmfs_dev == device) {
 		assert(bp->data);
 		assert(bp->lmfs_bytes > 0);
-		minix_munmap_t(bp->data, bp->lmfs_bytes);
+		munmap_t(bp->data, bp->lmfs_bytes);
 		bp->lmfs_dev = NO_DEV;
 		bp->lmfs_bytes = 0;
 		bp->data = NULL;
@@ -862,7 +862,7 @@ void lmfs_buf_pool(int new_nr_bufs)
   	for (bp = &buf[0]; bp < &buf[nr_bufs]; bp++) {
 		if(bp->data) {
 			assert(bp->lmfs_bytes > 0);
-			minix_munmap_t(bp->data, bp->lmfs_bytes);
+			munmap_t(bp->data, bp->lmfs_bytes);
 		}
 	}
   }

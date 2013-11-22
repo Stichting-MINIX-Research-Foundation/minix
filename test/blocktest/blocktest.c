@@ -103,7 +103,7 @@ static void *alloc_dma_memory(size_t size)
 	if (contig)
 		ptr = alloc_contig(size, 0, NULL);
 	else
-		ptr = minix_mmap(NULL, size, PROT_READ | PROT_WRITE,
+		ptr = mmap(NULL, size, PROT_READ | PROT_WRITE,
 			MAP_PREALLOC | MAP_ANON, -1, 0);
 
 	if (ptr == MAP_FAILED)
@@ -118,7 +118,7 @@ static void free_dma_memory(void *ptr, size_t size)
 	if (contig)
 		free_contig(ptr, size);
 	else
-		minix_munmap(ptr, size);
+		munmap(ptr, size);
 }
 
 static int set_result(result_t *res, int type, ssize_t value)

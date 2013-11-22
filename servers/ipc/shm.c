@@ -72,7 +72,7 @@ int do_shmget(message *m)
 			return ENOSPC;
 		shm = &shm_list[shm_list_nr];
 		memset(shm, 0, sizeof(struct shm_struct));
-		shm->page = (vir_bytes) minix_mmap(0, size,
+		shm->page = (vir_bytes) mmap(0, size,
 					PROT_READ|PROT_WRITE, MAP_ANON, -1, 0);
 		if (shm->page == (vir_bytes) MAP_FAILED)
 			return ENOMEM;
@@ -171,7 +171,7 @@ void update_refcount_and_destroy(void)
 			int size = shm_list[i].shmid_ds.shm_segsz;
 			if (size % PAGE_SIZE)
 				size += PAGE_SIZE - size % PAGE_SIZE;
-			minix_munmap((void *)shm_list[i].page, size);
+			munmap((void *)shm_list[i].page, size);
 		}
 	}
 	shm_list_nr = j;

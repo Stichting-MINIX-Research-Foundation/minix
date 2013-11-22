@@ -70,8 +70,6 @@
 
 
 #ifdef __minix
-#define mmap minix_mmap
-#define munmap minix_munmap
 #ifndef MAP_COPY
 #define MAP_COPY MAP_PRIVATE
 #endif

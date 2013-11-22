@@ -404,7 +404,7 @@ vnd_ioctl(devminor_t UNUSED(minor), unsigned long request, endpoint_t endpt,
 		 * of malloc to allow the memory to be actually freed later.
 		 */
 		if (r == OK) {
-			state.buf = minix_mmap(NULL, VND_BUF_SIZE, PROT_READ |
+			state.buf = mmap(NULL, VND_BUF_SIZE, PROT_READ |
 			    PROT_WRITE, MAP_ANON | MAP_PRIVATE, -1, 0);
 			if (state.buf == MAP_FAILED)
 				r = ENOMEM;
@@ -432,7 +432,7 @@ vnd_ioctl(devminor_t UNUSED(minor), unsigned long request, endpoint_t endpt,
 		}
 
 		if (r != OK) {
-			minix_munmap(state.buf, VND_BUF_SIZE);
+			munmap(state.buf, VND_BUF_SIZE);
 			close(state.fd);
 			state.fd = -1;
 		}
@@ -457,7 +457,7 @@ vnd_ioctl(devminor_t UNUSED(minor), unsigned long request, endpoint_t endpt,
 		 * allow reuse until the device has been closed by the other
 		 * users.
 		 */
-		minix_munmap(state.buf, VND_BUF_SIZE);
+		munmap(state.buf, VND_BUF_SIZE);
 		close(state.fd);
 		state.fd = -1;
 

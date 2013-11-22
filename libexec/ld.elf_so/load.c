@@ -57,10 +57,6 @@ __RCSID("$NetBSD: load.c,v 1.42 2010/12/24 12:41:43 skrll Exp $");
 #include <sys/sysctl.h>
 #include <dirent.h>
 
-#ifdef __minix
-#define munmap minix_munmap
-#endif
-
 #include "debug.h"
 #include "rtld.h"
 

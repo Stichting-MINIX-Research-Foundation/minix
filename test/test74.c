@@ -47,7 +47,7 @@ readblock(int b, int blocksize, u32_t seed, char *data)
 		}
 	}
 
-	if((mmapdata = minix_mmap(NULL, blocksize, PROT_READ, MAP_PRIVATE | MAP_FILE,
+	if((mmapdata = mmap(NULL, blocksize, PROT_READ, MAP_PRIVATE | MAP_FILE,
 		fd, offset)) == MAP_FAILED) {
 		perror("mmap");
 		return -1;
@@ -65,7 +65,7 @@ readblock(int b, int blocksize, u32_t seed, char *data)
 		return -1;
 	}
 
-	if(minix_munmap(mmapdata, blocksize) < 0) {
+	if(munmap(mmapdata, blocksize) < 0) {
 		perror("munmap");
 		return -1;
 	}
@@ -79,7 +79,7 @@ void basic_regression(void)
 {
 	void *block;
 #define BLOCKSIZE (PAGE_SIZE*10)
-	block = minix_mmap(0, BLOCKSIZE, PROT_READ | PROT_WRITE,
+	block = mmap(0, BLOCKSIZE, PROT_READ | PROT_WRITE,
 		MAP_PRIVATE | MAP_ANON, -1, 0);
 
 	if(block == MAP_FAILED) { e(1); exit(1); }
@@ -87,7 +87,7 @@ void basic_regression(void)
 	memset(block, 0, BLOCKSIZE);
 
 	/* shrink from bottom */
-	minix_munmap(block, PAGE_SIZE);
+	munmap(block, PAGE_SIZE);
 }
 
 int

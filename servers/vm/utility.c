@@ -272,7 +272,7 @@ int swap_proc_dyn_data(struct vmproc *src_vmp, struct vmproc *dst_vmp)
 	return OK;
 }
 
-void *minix_mmap(void *addr, size_t len, int f, int f2, int f3, off_t o)
+void *mmap(void *addr, size_t len, int f, int f2, int f3, off_t o)
 {
 	void *ret;
 	phys_bytes p;
@@ -287,7 +287,7 @@ void *minix_mmap(void *addr, size_t len, int f, int f2, int f3, off_t o)
 	return ret;
 }
 
-int minix_munmap(void * addr, size_t len)
+int munmap(void * addr, size_t len)
 {
 	vm_freepages((vir_bytes) addr, roundup(len, VM_PAGE_SIZE)/VM_PAGE_SIZE);
 	return 0;

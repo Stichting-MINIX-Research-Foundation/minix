@@ -49,10 +49,6 @@ __RCSID("$NetBSD: map_object.c,v 1.45 2012/10/13 21:13:07 dholland Exp $");
 #include "debug.h"
 #include "rtld.h"
 
-#ifdef __minix
-#define munmap minix_munmap
-#endif
-
 #define MINIXVERBOSE 0
 
 #if MINIXVERBOSE
@@ -137,7 +133,7 @@ _rtld_map_object_fallback(const char *path, int fd, const struct stat *sb)
 	}
 
 #ifdef __minix
-	ehdr = minix_mmap(NULL, _rtld_pagesz, PROT_READ|PROT_WRITE,
+	ehdr = mmap(NULL, _rtld_pagesz, PROT_READ|PROT_WRITE,
 		MAP_PREALLOC|MAP_ANON, -1, (off_t)0);
 	Pread(ehdr, _rtld_pagesz, fd, 0);
 #if MINIXVERBOSE
@@ -368,7 +364,7 @@ _rtld_map_object_fallback(const char *path, int fd, const struct stat *sb)
 	mapbase = mmap(base_addr, mapsize, text_flags,
 	    mapflags | MAP_FILE | MAP_PRIVATE, fd, base_offset);
 #else
-	mapbase = minix_mmap(base_addr, mapsize, PROT_READ|PROT_WRITE,
+	mapbase = mmap(base_addr, mapsize, PROT_READ|PROT_WRITE,
 	    MAP_ANON | MAP_PREALLOC, -1, 0);
 #if MINIXVERBOSE
 	fprintf(stderr, "minix mmap for whole block: 0x%lx-0x%lx\n", mapbase, mapbase+mapsize);
