@@ -31,6 +31,7 @@
 #include <minix/com.h>
 #include <minix/callnr.h>
 #include <sys/ptrace.h>
+#include <sys/wait.h>
 #include <signal.h>
 #include "mproc.h"
 
@@ -267,7 +268,7 @@ int signo;
 	sigdelset(&rmp->mp_sigtrace, signo);
 
 	rpmp->mp_flags &= ~WAITING;	/* parent is no longer waiting */
-	rpmp->mp_reply.PM_WAITPID_STATUS = 0177 | (signo << 8);
+	rpmp->mp_reply.PM_WAITPID_STATUS = W_STOPCODE(signo);
 	reply(rmp->mp_tracer, rmp->mp_pid);
   }
 }

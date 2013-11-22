@@ -499,8 +499,7 @@ int do_waitpid()
 				if (sigismember(&rp->mp_sigtrace, i)) {
 					sigdelset(&rp->mp_sigtrace, i);
 
-					mp->mp_reply.PM_WAITPID_STATUS =
-						0177 | (i << 8);
+					mp->mp_reply.PM_WAITPID_STATUS = W_STOPCODE(i);
 					return(rp->mp_pid);
 				}
 			}
@@ -649,7 +648,7 @@ register struct mproc *child;	/* tells which process is exiting */
 
   /* Wake up the parent by sending the reply message. */
   parent->mp_reply.PM_WAITPID_STATUS =
-	(child->mp_exitstatus << 8) | (child->mp_sigstatus & 0377);
+	W_EXITCODE(child->mp_exitstatus, child->mp_sigstatus);
   reply(child->mp_parent, child->mp_pid);
   parent->mp_flags &= ~WAITING;		/* parent no longer waiting */
   child->mp_flags &= ~ZOMBIE;		/* child no longer a zombie */
@@ -673,7 +672,7 @@ struct mproc *child;			/* tells which process is exiting */
   tracer = &mproc[mp_tracer];
 
   tracer->mp_reply.PM_WAITPID_STATUS =
-	(child->mp_exitstatus << 8) | (child->mp_sigstatus & 0377);
+	W_EXITCODE(child->mp_exitstatus, (child->mp_sigstatus & 0377));
   reply(child->mp_tracer, child->mp_pid);
   tracer->mp_flags &= ~WAITING;		/* tracer no longer waiting */
   child->mp_flags &= ~TRACE_ZOMBIE;	/* child no longer zombie to tracer */

@@ -47,7 +47,7 @@ basic_test(void)
 	snprintf(cmd_buf, sizeof(cmd_buf), "mount -t ntfs-3g %s %s %s",
 		RAMDISK, TESTMNT, SILENT);
 	status = system(cmd_buf);
-	if (WEXITSTATUS(status != 0))
+	if (WEXITSTATUS(status) != 0)
 		bomb("Unable to mount NTFS partition (1)");
 
 	/* Open file and verify contents */
@@ -98,7 +98,7 @@ create_partition(void)
 	snprintf(mntcmd, sizeof(mntcmd), "mount -t ntfs-3g %s %s %s",
 		RAMDISK, TESTMNT, SILENT);
 	status = system(mntcmd);
-	if (WEXITSTATUS(status != 0))
+	if (WEXITSTATUS(status) != 0)
 		bomb("Unable to mount NTFS partition (1)");
 }
 

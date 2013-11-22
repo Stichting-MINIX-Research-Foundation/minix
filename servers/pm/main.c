@@ -23,6 +23,7 @@
 #include <fcntl.h>
 #include <sys/resource.h>
 #include <sys/utsname.h>
+#include <sys/wait.h>
 #include <machine/archtypes.h>
 #include <env.h>
 #include <assert.h>
@@ -359,7 +360,7 @@ static void handle_vfs_reply()
 
   case VFS_PM_CORE_REPLY:
 	if (m_in.VFS_PM_STATUS == OK)
-		rmp->mp_sigstatus |= DUMPED;
+		rmp->mp_sigstatus |= WCOREFLAG;
 
 	exit_restart(rmp, TRUE /*dump_core*/);
 

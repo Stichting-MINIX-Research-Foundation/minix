@@ -34,42 +34,41 @@
 #ifndef _SYS_WAIT_H_
 #define _SYS_WAIT_H_
 
-#include <sys/cdefs.h>
-#include <sys/types.h>
 #include <sys/featuretest.h>
 
-/* The <sys/wait.h> header contains macros related to wait(). The value
- * returned by wait() and waitpid() depends on whether the process 
- * terminated by an exit() call, was killed by a signal, or was stopped
- * due to job control, as follows:
- *
- *				 High byte   Low byte
- *				+---------------------+
- *	exit(status)		|  status  |    0     |
- *				+---------------------+
- *      killed by signal	|    0     |  signal  |
- *				+---------------------+
- *	stopped (job control)	|  signal  |   0177   |
- *				+---------------------+
+/*
+ * This file holds definitions relevent to the wait4 system call
+ * and the alternate interfaces that use it (wait, wait3, waitpid).
  */
 
 /*
  * Macros to test the exit status returned by wait
  * and extract the relevant values.
  */
+#if !( defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE) ) || defined(_KERNEL)
+#define	_W_INT(i)	(i)
+#else
+#define	_W_INT(w)	(*(int *)(void *)&(w))	/* convert union wait to int */
+#endif
 
-#define _LOW(v)		( (v) & 0377)
-#define _HIGH(v)	( ((v) >> 8) & 0377)
+#define	_WSTATUS(x)	(_W_INT(x) & 0177)
+#define	_WSTOPPED	0177		/* _WSTATUS if process is stopped */
+#define WIFSTOPPED(x)	(_WSTATUS(x) == _WSTOPPED)
+#define WSTOPSIG(x)	((int)(((unsigned int)_W_INT(x)) >> 8) & 0xff)
+#define WIFSIGNALED(x)	(_WSTATUS(x) != _WSTOPPED && _WSTATUS(x) != 0)
+#define WTERMSIG(x)	(_WSTATUS(x))
+#define WIFEXITED(x)	(_WSTATUS(x) == 0)
+#define WEXITSTATUS(x)	((int)(((unsigned int)_W_INT(x)) >> 8) & 0xff)
+#if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE) || defined(_KERNEL)
+#define	WCOREFLAG	0200
+#define WCOREDUMP(x)	(_W_INT(x) & WCOREFLAG)
 
-#define WIFEXITED(s)	(_LOW(s) == 0)			    /* normal exit */
-#define WEXITSTATUS(s)	(_HIGH(s))			    /* exit status */
-#define WTERMSIG(s)	(_LOW(s) & 0177)		    /* sig value */
-#define WIFSIGNALED(s)	((((unsigned int)(s)-1) & 0xFFFFU) < 0xFFU) /* signaled */
-#define WIFSTOPPED(s)	(_LOW(s) == 0177)		    /* stopped */
-#define WSTOPSIG(s)	(_HIGH(s) & 0377)		    /* stop signal */
+#define	W_EXITCODE(ret, sig)	((ret) << 8 | (sig))
+#define	W_STOPCODE(sig)		((sig) << 8 | _WSTOPPED)
+#endif
 
 /*
- * Option bits for the third argument of waitpid.  WNOHANG causes the
+ * Option bits for the third argument of wait4.  WNOHANG causes the
  * wait to not hang if there are no stopped or terminated processes, rather
  * returning an error indication in this case (pid==0).  WUNTRACED
  * indicates that the caller should receive status about untraced children
@@ -80,18 +79,108 @@
 #define WNOHANG		0x00000001	/* don't hang in wait */
 #define WUNTRACED	0x00000002	/* tell about stopped,
 					   untraced children */
+#if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
+#define	WALTSIG		0x00000004	/* wait for processes that exit
+					   with an alternate signal (i.e.
+					   not SIGCHLD) */
+#define	WALLSIG		0x00000008	/* wait for processes that exit
+					   with any signal, i.e. SIGCHLD
+					   and alternates */
 
+/*
+ * These are the Linux names of some of the above flags, for compatibility
+ * with Linux's clone(2) API.
+ */
+#define	__WCLONE	WALTSIG
+#define	__WALL		WALLSIG
+
+/*
+ * These bits are used in order to support SVR4 (etc) functionality
+ * without replicating sys_wait4 5 times.
+ */
+#define	WNOWAIT		0x00010000	/* Don't mark child 'P_WAITED' */
+#define	WNOZOMBIE	0x00020000	/* Ignore zombies */
+#define	WOPTSCHECKED	0x00040000	/* Compat call, options verified */
+#endif /* _XOPEN_SOURCE || _NETBSD_SOURCE */
+
+#if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
 /* POSIX extensions and 4.2/4.3 compatibility: */
 
 /*
- * Tokens for special values of the "pid" parameter to waitpid.
+ * Tokens for special values of the "pid" parameter to wait4.
  */
 #define	WAIT_ANY	(-1)	/* any process */
 #define	WAIT_MYPGRP	0	/* any process in my process group */
 
+#include <sys/types.h>
+
+/*
+ * Deprecated:
+ * Structure of the information in the status word returned by wait4.
+ * If w_stopval==WSTOPPED, then the second structure describes
+ * the information returned, else the first.
+ */
+union wait {
+	int	w_status;		/* used in syscall */
+	/*
+	 * Terminated process status.
+	 */
+	struct {
+#if BYTE_ORDER == LITTLE_ENDIAN
+		unsigned int	w_Termsig:7,	/* termination signal */
+				w_Coredump:1,	/* core dump indicator */
+				w_Retcode:8,	/* exit code if w_termsig==0 */
+				w_Filler:16;	/* upper bits filler */
+#endif
+#if BYTE_ORDER == BIG_ENDIAN
+		unsigned int	w_Filler:16,	/* upper bits filler */
+				w_Retcode:8,	/* exit code if w_termsig==0 */
+				w_Coredump:1,	/* core dump indicator */
+				w_Termsig:7;	/* termination signal */
+#endif
+	} w_T;
+	/*
+	 * Stopped process status.  Returned
+	 * only for traced children unless requested
+	 * with the WUNTRACED option bit.
+	 */
+	struct {
+#if BYTE_ORDER == LITTLE_ENDIAN
+		unsigned int	w_Stopval:8,	/* == W_STOPPED if stopped */
+				w_Stopsig:8,	/* signal that stopped us */
+				w_Filler:16;	/* upper bits filler */
+#endif
+#if BYTE_ORDER == BIG_ENDIAN
+		unsigned int	w_Filler:16,	/* upper bits filler */
+				w_Stopsig:8,	/* signal that stopped us */
+				w_Stopval:8;	/* == W_STOPPED if stopped */
+#endif
+	} w_S;
+};
+#define	w_termsig	w_T.w_Termsig
+#define w_coredump	w_T.w_Coredump
+#define w_retcode	w_T.w_Retcode
+#define w_stopval	w_S.w_Stopval
+#define w_stopsig	w_S.w_Stopsig
+
+#define	WSTOPPED	_WSTOPPED
+#endif /* _XOPEN_SOURCE || _NETBSD_SOURCE */
+
+#ifndef _KERNEL
+#include <sys/cdefs.h>
+
 __BEGIN_DECLS
+struct rusage;	/* forward declaration */
+
 pid_t	wait(int *);
 pid_t	waitpid(pid_t, int *, int);
+#if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
+#ifndef __LIBC12_SOURCE__
+pid_t	wait3(int *, int, struct rusage *) __RENAME(__wait350);
+pid_t	wait4(pid_t, int *, int, struct rusage *) __RENAME(__wait450);
+#endif
+#endif
 __END_DECLS
+#endif
 
 #endif /* !_SYS_WAIT_H_ */
