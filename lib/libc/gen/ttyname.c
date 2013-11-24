@@ -56,56 +56,6 @@ __weak_alias(ttyname,_ttyname)
 __weak_alias(ttyname_r,_ttyname_r)
 #endif
 
-#if defined(__minix)
-/* LSC: We do not have devname functionality on Minix, so re-import for now
- * old, manual way of doing it.*/
-#include <dirent.h>
-static int
-oldttyname(const struct stat *sb, char *buf, size_t len)
-{
-	struct dirent *dirp;
-	DIR *dp;
-	struct stat dsb;
-	size_t dlen;
-
-	_DIAGASSERT(sb != NULL);
-
-	if ((dp = opendir(_PATH_DEV)) == NULL)
-		return -1;
-
-	while ((dirp = readdir(dp)) != NULL) {
-#define DEVSZ (sizeof(_PATH_DEV) - 1)
-		if (dirp->d_fileno != sb->st_ino)
-			continue;
-		dlen = strlen(dirp->d_name);
-		if (len - DEVSZ <= dlen) {
-			/*
-			 * XXX: we return an error if *any* entry does not
-			 * fit
-			 */
-			errno = ERANGE;
-			(void)closedir(dp);
-			return -1;
-		}
-		(void)memcpy(buf + DEVSZ, dirp->d_name, dlen);
-		if (stat(buf, &dsb) || sb->st_dev != dsb.st_dev ||
-		    sb->st_ino != dsb.st_ino)
-			continue;
-		(void)closedir(dp);
-		return 0;
-#undef DEVSZ
-	}
-	(void)closedir(dp);
-	/*
-	 * XXX: Documented by TOG to return EBADF or ENOTTY only; neither are
-	 * applicable here.
-	 */
-	errno = ENOENT;
-	return -1;
-}
-
-#endif /* defined(__minix) */
-
 int
 ttyname_r(int fd, char *buf, size_t len)
 {
@@ -136,16 +86,9 @@ ttyname_r(int fd, char *buf, size_t len)
 
 	if (strlcpy(buf, _PATH_DEV, len) >= len)
 		return ERANGE;
-
-#if defined(__minix)
-	if (oldttyname(&sb, buf, len) == -1)
-		return errno;
-	return 0;
-#else
 	buf += strlen(_PATH_DEV);
 	len -= strlen(_PATH_DEV);
 	return devname_r(sb.st_rdev, sb.st_mode & S_IFMT, buf, len);
-#endif /* defined(__minix) */
 }
 
 char *
