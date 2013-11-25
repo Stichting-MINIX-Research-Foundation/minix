@@ -47,10 +47,15 @@ rm -rf ${IMG_DIR} ${IMG}
 mkdir -p ${IMG_DIR} ${CDFILES}
 
 #
-# Call build.sh using a sloppy file list so we don't need to remove the installed /etc/fstag
+# Remove the generated files to allow us call build.sh without '-V SLOPPY_FLIST=yes'.
+#
+rm -f ${FSTAB}
+
+#
+# Now start the build.
 #
 export CPPFLAGS=${FLAG}
-sh ${BUILDSH} -V SLOPPY_FLIST=yes -j ${JOBS} -m ${ARCH} -O ${OBJ} -D ${DESTDIR} ${BUILDVARS} -U -u distribution
+sh ${BUILDSH} -j ${JOBS} -m ${ARCH} -O ${OBJ} -D ${DESTDIR} ${BUILDVARS} -U -u distribution
 
 if [ "x${ISOMODE}" = "x1" ]
 then

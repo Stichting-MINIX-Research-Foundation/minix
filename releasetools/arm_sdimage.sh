@@ -87,10 +87,15 @@ cp ${RELEASETOOLSDIR}/u-boot/${U_BOOT_BIN_DIR}/u-boot.img ${IMG_DIR}/
 cp ${RELEASETOOLSDIR}/u-boot/${U_BOOT_BIN_DIR}/MLO ${IMG_DIR}/
 
 #
-# Call build.sh using a sloppy file list so we don't need to remove the installed /etc/fstag
+# Remove the generated files to allow us call build.sh without '-V SLOPPY_FLIST=yes'.
+#
+rm -f ${FSTAB}
+
+#
+# Now start the build
 #
 export CPPFLAGS=${FLAG}
-sh ${BUILDSH} -V SLOPPY_FLIST=yes -j ${JOBS} -m ${ARCH} -O ${OBJ} -D ${DESTDIR} ${BUILDVARS} -U -u distribution
+sh ${BUILDSH} -j ${JOBS} -m ${ARCH} -O ${OBJ} -D ${DESTDIR} ${BUILDVARS} -U -u distribution
 
 #
 # This script creates a bootable image and should at some point in the future
