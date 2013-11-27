@@ -14,7 +14,7 @@ int clock_getres(clockid_t clock_id, struct timespec *res)
   message m;
 
   memset(&m, 0, sizeof(m));
-  m.PM_TIME_CLK_ID = (clockid_t) clock_id;
+  m.PM_TIME_CLK_ID = clock_id;
 
   if (_syscall(PM_PROC_NR, PM_CLOCK_GETRES, &m) < 0)
   	return -1;

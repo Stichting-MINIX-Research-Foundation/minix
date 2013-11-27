@@ -661,7 +661,7 @@ register struct mproc *child;	/* tells which process is exiting */
 static void tell_tracer(child)
 struct mproc *child;			/* tells which process is exiting */
 {
-  int exitstatus, mp_tracer;
+  int mp_tracer;
   struct mproc *tracer;
 
   mp_tracer = child->mp_tracer;

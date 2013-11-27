@@ -82,7 +82,7 @@
  */
 #define PM_TIME_CLK_ID		m2_i1	/* clockid_t */
 #define PM_TIME_NOW		m2_i2	/* int */
-#define PM_TIME_SEC		m2_l1	/* time_t */
+#define PM_TIME_SEC		m2_ll1	/* time_t */
 #define PM_TIME_USEC		m2_l2	/* long */
 #define PM_TIME_NSEC		m2_l2	/* long */
 

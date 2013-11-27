@@ -38,8 +38,7 @@ int do_gettime()
 		return EINVAL; /* invalid/unsupported clock_id */
   }
 
-  /* For now simply truncate time to a 32b value. */
-  mp->mp_reply.PM_TIME_SEC = (int32_t) (boottime + (clock / system_hz));
+  mp->mp_reply.PM_TIME_SEC = boottime + (clock / system_hz);
   mp->mp_reply.PM_TIME_NSEC =
 	(uint32_t) ((clock % system_hz) * 1000000000ULL / system_hz);
 
@@ -102,8 +101,7 @@ int do_time()
   if ( (s=getuptime(&ticks, &realtime, &boottime)) != OK)
   	panic("do_time couldn't get uptime: %d", s);
 
-  /* For now simply truncate time to a 32b value. */
-  mp->mp_reply.PM_TIME_SEC = (int32_t) (boottime + (realtime / system_hz));
+  mp->mp_reply.PM_TIME_SEC = boottime + (realtime / system_hz);
   mp->mp_reply.PM_TIME_USEC =
 	(uint32_t) ((realtime % system_hz) * 1000000ULL / system_hz);
   return(OK);
@@ -126,7 +124,7 @@ int do_stime()
   }
   if ( (s=getuptime(&uptime, &realtime, &boottime)) != OK) 
       panic("do_stime couldn't get uptime: %d", s);
-  boottime = (time_t)m_in.PM_TIME_SEC - (realtime/system_hz);
+  boottime = m_in.PM_TIME_SEC - (realtime/system_hz);
 
   s= sys_stime(boottime);		/* Tell kernel about boottime */
   if (s != OK)
