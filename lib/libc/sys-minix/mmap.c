@@ -58,15 +58,15 @@ int minix_vfs_mmap(endpoint_t who, off_t offset, size_t len,
 
 	memset(&m, 0, sizeof(message));
 
-	m.m_vm_vfs.who = who;
-	m.m_vm_vfs.offset = offset;
-	m.m_vm_vfs.dev = dev;
-	m.m_vm_vfs.ino = ino;
-	m.m_vm_vfs.vaddr = vaddr;
-	m.m_vm_vfs.len = len;
-	m.m_vm_vfs.fd = fd;
-	m.m_vm_vfs.clearend = clearend;
-	m.m_vm_vfs.flags = flags;
+	m.m_vm_vfs_mmap.who = who;
+	m.m_vm_vfs_mmap.offset = offset;
+	m.m_vm_vfs_mmap.dev = dev;
+	m.m_vm_vfs_mmap.ino = ino;
+	m.m_vm_vfs_mmap.vaddr = vaddr;
+	m.m_vm_vfs_mmap.len = len;
+	m.m_vm_vfs_mmap.fd = fd;
+	m.m_vm_vfs_mmap.clearend = clearend;
+	m.m_vm_vfs_mmap.flags = flags;
 
 	return _syscall(VM_PROC_NR, VM_VFS_MMAP, &m);
 }

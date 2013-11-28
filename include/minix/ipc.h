@@ -186,9 +186,9 @@ typedef struct {
 	mess_11 m_m11;
 	mess_mmap m_mmap;
 	mess_notify m_notify;
+	mess_vm_vfs_mmap m_vm_vfs_mmap;
 	mess_vmmcp m_vmmcp;
 	mess_vmmcp_reply m_vmmcp_reply;
-	mess_vm_vfs_mmap m_vm_vfs;
 	mess_sigcalls m_sigcalls; /* SYS_{GETKSIG,ENDKSIG,KILL,SIGSEND,SIGRETURN} */
 	u8_t size[56];		/* message payload may have 56 bytes at most */
   };
