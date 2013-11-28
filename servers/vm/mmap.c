@@ -81,27 +81,17 @@ static struct vir_region *mmap_region(struct vmproc *vmp, vir_bytes addr,
 }
 
 static int mmap_file(struct vmproc *vmp,
-	int vmfd, u32_t off_lo, u32_t off_hi, int flags,
+	int vmfd, off_t file_offset, int flags,
 	ino_t ino, dev_t dev, u64_t filesize, vir_bytes addr, vir_bytes len,
 	vir_bytes *retaddr, u16_t clearend, int writable, int mayclosefd)
 {
 /* VFS has replied to a VMVFSREQ_FDLOOKUP request. */
 	struct vir_region *vr;
-	u64_t file_offset, page_offset;
+	u64_t page_offset;
 	int result = OK;
 	u32_t vrflags = 0;
 
 	if(writable) vrflags |= VR_WRITABLE;
-
-	if(flags & MAP_THIRDPARTY) {
-		file_offset = off_lo;
-	} else {
-		file_offset = make64(off_lo, off_hi);
-		if(off_hi && !off_lo) {
-			/* XXX clang compatability hack */
-			off_hi = file_offset = 0;
-		}
-	}
 
 	/* Do some page alignments. */
 	if((page_offset = (file_offset % VM_PAGE_SIZE))) {
@@ -151,14 +141,14 @@ int do_vfs_mmap(message *m)
 	/* It might be disabled */
 	if(!enable_filemap) return ENXIO;
 
-	clearend = (m->m_u.m_vm_vfs.clearend_and_flags & MVM_LENMASK);
-	flags = (m->m_u.m_vm_vfs.clearend_and_flags & MVM_FLAGSMASK);
+	clearend = m->m_u.m_vm_vfs.clearend;
+	flags = m->m_u.m_vm_vfs.flags;
 
 	if((r=vm_isokendpt(m->m_u.m_vm_vfs.who, &n)) != OK)
 		panic("bad ep %d from vfs", m->m_u.m_vm_vfs.who);
 	vmp = &vmproc[n];
 
-	return mmap_file(vmp, m->m_u.m_vm_vfs.fd, m->m_u.m_vm_vfs.offset, 0,
+	return mmap_file(vmp, m->m_u.m_vm_vfs.fd, m->m_u.m_vm_vfs.offset,
 		MAP_PRIVATE | MAP_FIXED,
 		m->m_u.m_vm_vfs.ino, m->m_u.m_vm_vfs.dev,
 		(u64_t) LONG_MAX * VM_PAGE_SIZE,
@@ -186,18 +176,18 @@ static void mmap_file_cont(struct vmproc *vmp, message *replymsg, void *cbarg,
 		result = origmsg->VMV_RESULT;
 	} else {
 		/* Finish mmap */
-		result = mmap_file(vmp, replymsg->VMV_FD, origmsg->VMM_OFFSET_LO,
-			origmsg->VMM_OFFSET_HI, origmsg->VMM_FLAGS, 
+		result = mmap_file(vmp, replymsg->VMV_FD, origmsg->VMM_OFFSET,
+			origmsg->VMM_FLAGS, 
 			replymsg->VMV_INO, replymsg->VMV_DEV,
 			(u64_t) replymsg->VMV_SIZE_PAGES*PAGE_SIZE,
-			origmsg->VMM_ADDR,
+			(vir_bytes) origmsg->VMM_ADDR,
 			origmsg->VMM_LEN, &v, 0, writable, 1);
 	}
 
 	/* Unblock requesting process. */
 	memset(&mmap_reply, 0, sizeof(mmap_reply));
 	mmap_reply.m_type = result;
-	mmap_reply.VMM_ADDR = v;
+	mmap_reply.VMM_RETADDR = (void *) v;
 
 	if(ipc_send(vmp->vm_endpoint, &mmap_reply) != OK)
 		panic("VM: mmap_file_cont: ipc_send() failed");
@@ -210,7 +200,7 @@ int do_mmap(message *m)
 {
 	int r, n;
 	struct vmproc *vmp;
-	vir_bytes addr = m->VMM_ADDR;
+	vir_bytes addr = (vir_bytes) m->VMM_ADDR;
 	struct vir_region *vr = NULL;
 	int execpriv = 0;
 	size_t len = (vir_bytes) m->VMM_LEN;
@@ -281,7 +271,7 @@ int do_mmap(message *m)
 	}
 
 	/* Return mapping, as seen from process. */
-	m->VMM_RETADDR = vr->vaddr;
+	m->VMM_RETADDR = (void *) vr->vaddr;
 
 	return OK;
 }

@@ -9,8 +9,8 @@
 #include <minix/sysutil.h>
 #include <machine/vmparam.h>
 
-int vm_cachecall(message *m, int call, void *addr, dev_t dev, u64_t dev_offset,
-	u64_t ino, u64_t ino_offset, u32_t *flags, int blocksize)
+int vm_cachecall(message *m, int call, void *addr, dev_t dev, off_t dev_offset,
+	ino_t ino, off_t ino_offset, u32_t *flags, int blocksize)
 {
     if(blocksize % PAGE_SIZE)
     	panic("blocksize %d should be a multiple of pagesize %d\n",
@@ -28,8 +28,8 @@ int vm_cachecall(message *m, int call, void *addr, dev_t dev, u64_t dev_offset,
 
     assert(dev != NO_DEV);
 
-    m->m_u.m_vmmcp.dev_offset_pages = dev_offset/PAGE_SIZE;
-    m->m_u.m_vmmcp.ino_offset_pages = ino_offset/PAGE_SIZE;
+    m->m_u.m_vmmcp.dev_offset = dev_offset;
+    m->m_u.m_vmmcp.ino_offset = ino_offset;
     m->m_u.m_vmmcp.ino = ino;
     m->m_u.m_vmmcp.block = addr;
     m->m_u.m_vmmcp.flags_ptr = flags;
@@ -40,8 +40,8 @@ int vm_cachecall(message *m, int call, void *addr, dev_t dev, u64_t dev_offset,
     return _taskcall(VM_PROC_NR, call, m);
 }
 
-void *vm_map_cacheblock(dev_t dev, u64_t dev_offset,
-	u64_t ino, u64_t ino_offset, u32_t *flags, int blocksize)
+void *vm_map_cacheblock(dev_t dev, off_t dev_offset,
+	ino_t ino, off_t ino_offset, u32_t *flags, int blocksize)
 {
 	message m;
 
@@ -52,8 +52,8 @@ void *vm_map_cacheblock(dev_t dev, u64_t dev_offset,
 	return m.m_u.m_vmmcp_reply.addr;
 }
 
-int vm_set_cacheblock(void *block, dev_t dev, u64_t dev_offset,
-	u64_t ino, u64_t ino_offset, u32_t *flags, int blocksize)
+int vm_set_cacheblock(void *block, dev_t dev, off_t dev_offset,
+	ino_t ino, off_t ino_offset, u32_t *flags, int blocksize)
 {
 	message m;
 

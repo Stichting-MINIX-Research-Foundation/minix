@@ -823,20 +823,18 @@
 
 /* General calls. */
 #define VM_MMAP			(VM_RQ_BASE+10)
-#	define VMM_ADDR			m5_l1
-#	define VMM_LEN			m5_l2
-#	define VMM_PROT			m5_s1
-#	define VMM_FLAGS		m5_s2
-#	define VMM_FD			m5_i1
-#	define VMM_OFFSET_LO		m5_i2
-#	define VMM_FORWHOM		m5_l3
-#	define VMM_OFFSET_HI		m5_l3
-#	define VMM_RETADDR		m5_l1	/* result */
-#define VM_UMAP			(VM_RQ_BASE+11)
-#	define VMU_SEG			m1_i1
-#	define VMU_OFFSET		m1_p1
-#	define VMU_LENGTH		m1_p2
-#	define VMU_RETADDR		m1_p3
+#       define VMM_ADDR                 m_u.m_mmap.addr
+#       define VMM_LEN                  m_u.m_mmap.len
+#       define VMM_PROT                 m_u.m_mmap.prot
+#       define VMM_FLAGS                m_u.m_mmap.flags
+#       define VMM_FD                   m_u.m_mmap.fd
+#       define VMM_OFFSET               m_u.m_mmap.offset
+#       define VMM_FORWHOM              m_u.m_mmap.forwhom
+#       define VMM_RETADDR              m_u.m_mmap.retaddr
+
+#define VM_MUNMAP		(VM_RQ_BASE+17)
+#	define VMUM_ADDR		m_u.m_mmap.addr
+#	define VMUM_LEN			m_u.m_mmap.len
 
 /* to VM: inform VM about a region of memory that is used for
  * bus-master DMA
@@ -871,10 +869,6 @@
 #define VM_UNMAP_PHYS		(VM_RQ_BASE+16)
 #	define VMUP_EP			m1_i1
 #	define VMUP_VADDR		m1_p1
-
-#define VM_MUNMAP		(VM_RQ_BASE+17)
-#	define VMUM_ADDR		m1_p1
-#	define VMUM_LEN			m1_i1
 
 /* To VM: map in cache block by FS */
 #define VM_MAPCACHEPAGE		(VM_RQ_BASE+26)
@@ -919,8 +913,8 @@
 #	define VMRE_FLAGS		m1_i3
 
 #define VM_SHM_UNMAP		(VM_RQ_BASE+34)
-#	define VMUN_ENDPT		m2_i1
-#	define VMUN_ADDR		m2_l1
+#	define VMUN_ENDPT		m_u.m_mmap.forwhom
+#	define VMUN_ADDR		m_u.m_mmap.addr
 
 #define VM_GETPHYS		(VM_RQ_BASE+35)
 #	define VMPHYS_ENDPT		m2_i1

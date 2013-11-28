@@ -92,7 +92,6 @@ SRCS+=  \
 	vm_map_phys.c \
 	vm_memctl.c \
 	vm_notify_sig.c \
-	vm_umap.c \
 	vm_procctl.c \
 	vm_query_exit.c \
 	vm_set_priv.c \

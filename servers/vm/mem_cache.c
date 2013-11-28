@@ -86,14 +86,19 @@ int
 do_mapcache(message *msg)
 {
 	dev_t dev = msg->m_u.m_vmmcp.dev;
-	u64_t dev_off = (u64_t) msg->m_u.m_vmmcp.dev_offset_pages * VM_PAGE_SIZE;
-	u64_t ino_off = (u64_t) msg->m_u.m_vmmcp.ino_offset_pages * VM_PAGE_SIZE;
+	u64_t dev_off = msg->m_u.m_vmmcp.dev_offset;
+	u64_t ino_off = msg->m_u.m_vmmcp.ino_offset;
 	int n;
 	phys_bytes bytes = msg->m_u.m_vmmcp.pages * VM_PAGE_SIZE;
 	struct vir_region *vr;
 	struct vmproc *caller;
 	vir_bytes offset;
 	int io = 0;
+
+	if(dev_off % PAGE_SIZE || ino_off % PAGE_SIZE) {
+		printf("VM: unaligned cache operation\n");
+		return EFAULT;
+	}
 
 	if(vm_isokendpt(msg->m_source, &n) != OK) panic("bogus source");
 	caller = &vmproc[n];
@@ -166,14 +171,19 @@ do_setcache(message *msg)
 {
 	int r;
 	dev_t dev = msg->m_u.m_vmmcp.dev;
-	u64_t dev_off = (u64_t) msg->m_u.m_vmmcp.dev_offset_pages * VM_PAGE_SIZE;
-	u64_t ino_off = (u64_t) msg->m_u.m_vmmcp.ino_offset_pages * VM_PAGE_SIZE;
+	u64_t dev_off = (u64_t) msg->m_u.m_vmmcp.dev_offset;
+	u64_t ino_off = (u64_t) msg->m_u.m_vmmcp.ino_offset;
 	int n;
 	struct vmproc *caller;
 	phys_bytes offset;
 	phys_bytes bytes = msg->m_u.m_vmmcp.pages * VM_PAGE_SIZE;
 
 	if(bytes < VM_PAGE_SIZE) return EINVAL;
+
+	if(dev_off % PAGE_SIZE || ino_off % PAGE_SIZE) {
+		printf("VM: unaligned cache operation\n");
+		return EFAULT;
+	}
 
 	if(vm_isokendpt(msg->m_source, &n) != OK) panic("bogus source");
 	caller = &vmproc[n];

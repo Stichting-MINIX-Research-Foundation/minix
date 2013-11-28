@@ -429,14 +429,14 @@ int block_type;			/* INODE_BLOCK, DIRECTORY_BLOCK, or whatever */
  * disk immediately if they are dirty.
  */
   dev_t dev;
-  u64_t dev_off;
+  off_t dev_off;
   int r;
 
   if (bp == NULL) return;	/* it is easier to check here than in caller */
 
   dev = bp->lmfs_dev;
 
-  dev_off = (u64_t) bp->lmfs_blocknr * fs_block_size;
+  dev_off = (off_t) bp->lmfs_blocknr * fs_block_size;
 
   lowercount(bp);
   if (bp->lmfs_count != 0) return;	/* block is still in use */
@@ -508,7 +508,7 @@ register struct buf *bp;	/* buffer pointer */
  * from the cache, it is not clear what the caller could do about it anyway.
  */
   int r, op_failed;
-  u64_t pos;
+  off_t pos;
   dev_t dev = bp->lmfs_dev;
 
   op_failed = 0;
@@ -518,7 +518,7 @@ register struct buf *bp;	/* buffer pointer */
   ASSERT(bp->lmfs_bytes == fs_block_size);
   ASSERT(fs_block_size > 0);
 
-  pos = (u64_t)bp->lmfs_blocknr * fs_block_size;
+  pos = (off_t)bp->lmfs_blocknr * fs_block_size;
   if(fs_block_size > PAGE_SIZE) {
 #define MAXPAGES 20
 	vir_bytes blockrem, vaddr = (vir_bytes) bp->data;
@@ -629,7 +629,7 @@ void lmfs_rw_scattered(
   register int i;
   register iovec_t *iop;
   static iovec_t iovec[NR_IOREQS];
-  u64_t pos;
+  off_t pos;
   int iov_per_block;
   int start_in_use = bufs_in_use, start_bufqsize = bufqsize;
 
@@ -704,7 +704,7 @@ void lmfs_rw_scattered(
 	assert(nblocks > 0);
 	assert(niovecs > 0);
 
-	pos = (u64_t)bufq[0]->lmfs_blocknr * fs_block_size;
+	pos = (off_t)bufq[0]->lmfs_blocknr * fs_block_size;
 	if (rw_flag == READING)
 		r = bdev_gather(dev, pos, iovec, niovecs, BDEV_NOFLAGS);
 	else
@@ -941,7 +941,7 @@ int lmfs_do_bpeek(message *m)
 {
 	block_t startblock, b, limitblock;
 	dev_t dev = m->REQ_DEV;
-	u64_t extra, pos = make64(m->REQ_SEEK_POS_LO, m->REQ_SEEK_POS_HI);
+	off_t extra, pos = make64(m->REQ_SEEK_POS_LO, m->REQ_SEEK_POS_HI);
 	size_t len = m->REQ_NBYTES;
 	struct buf *bp;
 

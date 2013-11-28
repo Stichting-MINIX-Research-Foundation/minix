@@ -23,13 +23,11 @@ int vm_query_exit(endpoint_t *endpt);
 int vm_watch_exit(endpoint_t ep);
 int vm_forgetblock(u64_t id);
 void vm_forgetblocks(void);
-int minix_vfs_mmap(endpoint_t who, u32_t offset, u32_t len,
-        dev_t dev, u32_t ino, u16_t fd, u32_t vaddr, u16_t clearend, u16_t
+int minix_vfs_mmap(endpoint_t who, off_t offset, size_t len,
+        dev_t dev, ino_t ino, int fd, u32_t vaddr, u16_t clearend, u16_t
 	flags);
 
 /* minix vfs mmap flags */
-#define MVM_LENMASK	0x0FFF
-#define MVM_FLAGSMASK	0xF000
 #define MVM_WRITABLE	0x8000
 
 /* VM kernel request types. */
@@ -65,11 +63,11 @@ int vm_info_region(endpoint_t who, struct vm_region_info *vri, int
 	count, vir_bytes *next);
 int vm_procctl(endpoint_t ep, int param);
 
-int vm_set_cacheblock(void *block, dev_t dev, u64_t dev_offset,
-        u64_t ino, u64_t ino_offset, u32_t *flags, int blocksize);
+int vm_set_cacheblock(void *block, dev_t dev, off_t dev_offset,
+        ino_t ino, off_t ino_offset, u32_t *flags, int blocksize);
 
-void *vm_map_cacheblock(dev_t dev, u64_t dev_offset,
-        u64_t ino, u64_t ino_offset, u32_t *flags, int blocksize);
+void *vm_map_cacheblock(dev_t dev, off_t dev_offset,
+        ino_t ino, off_t ino_offset, u32_t *flags, int blocksize);
 
 int vm_clear_cache(dev_t dev);
 

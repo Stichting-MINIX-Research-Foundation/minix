@@ -114,14 +114,14 @@ _ASSERT_MSG_SIZE(mess_11);
 
 typedef struct {
 	dev_t dev;	/* 64bits long. */
-	void *block;
-	u32_t dev_offset_pages;
-	u32_t ino_offset_pages;
-	u32_t ino;
+	off_t dev_offset;
+	off_t ino_offset;
+	ino_t ino;
 	u32_t *flags_ptr;
+	void *block;
 	u8_t pages;
 	u8_t flags;
-	uint8_t padding[26];
+	uint8_t padding[12];
 } mess_vmmcp;
 _ASSERT_MSG_SIZE(mess_vmmcp);
 
@@ -134,15 +134,29 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_notify);
 
 typedef struct {
-	endpoint_t who;
-	u32_t offset;
+	off_t offset;
+	void *addr;
+	size_t len;
+	int prot;
+	int flags;
+	int fd;
+	endpoint_t forwhom;
+	void *retaddr;
+	u32_t padding[5];
+} mess_mmap;
+_ASSERT_MSG_SIZE(mess_mmap);
+
+typedef struct {
+	off_t offset;
 	dev_t dev;
-	u32_t ino;
+	ino_t ino;
+	endpoint_t who;
 	u32_t vaddr;
 	u32_t len;
-	u16_t fd;
-	u16_t clearend_and_flags; /* low 12 bits are clearend, rest flags */
-	uint8_t padding[24];
+	u32_t flags;
+	u32_t fd;
+	u16_t clearend;
+	uint8_t padding[8];
 } mess_vm_vfs_mmap;
 _ASSERT_MSG_SIZE(mess_vm_vfs_mmap);
 
@@ -170,6 +184,7 @@ typedef struct {
 	mess_11 m_m11;
 	mess_vmmcp m_vmmcp;
 	mess_vmmcp_reply m_vmmcp_reply;
+	mess_mmap m_mmap;
 	mess_vm_vfs_mmap m_vm_vfs;
 	mess_notify m_notify;	/* notify messages */
 	mess_sigcalls m_sigcalls; /* SYS_{GETKSIG,ENDKSIG,KILL,SIGSEND,SIGRETURN} */

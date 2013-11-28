@@ -29,18 +29,16 @@ void *minix_mmap_for(endpoint_t forwhom,
 	int r;
 
 	memset(&m, 0, sizeof(m));
-	m.VMM_ADDR = (vir_bytes) addr;
+	m.VMM_ADDR = addr;
 	m.VMM_LEN = len;
 	m.VMM_PROT = prot;
 	m.VMM_FLAGS = flags;
 	m.VMM_FD = fd;
-	m.VMM_OFFSET_LO = ex64lo(offset);
+	m.VMM_OFFSET = offset;
+	m.VMM_FORWHOM = forwhom;
 
 	if(forwhom != SELF) {
 		m.VMM_FLAGS |= MAP_THIRDPARTY;
-		m.VMM_FORWHOM = forwhom;
-	} else {
-		m.VMM_OFFSET_HI = ex64hi(offset);
 	}
 
 	r = _syscall(VM_PROC_NR, VM_MMAP, &m);
@@ -49,11 +47,11 @@ void *minix_mmap_for(endpoint_t forwhom,
 		return MAP_FAILED;
 	}
 
-	return (void *) m.VMM_RETADDR;
+	return m.VMM_RETADDR;
 }
 
-int minix_vfs_mmap(endpoint_t who, u32_t offset, u32_t len,
-	dev_t dev, u32_t ino, u16_t fd, u32_t vaddr, u16_t clearend,
+int minix_vfs_mmap(endpoint_t who, off_t offset, size_t len,
+	dev_t dev, ino_t ino, int fd, u32_t vaddr, u16_t clearend,
 	u16_t flags)
 {
 	message m;
@@ -67,19 +65,14 @@ int minix_vfs_mmap(endpoint_t who, u32_t offset, u32_t len,
 	m.m_u.m_vm_vfs.vaddr = vaddr;
 	m.m_u.m_vm_vfs.len = len;
 	m.m_u.m_vm_vfs.fd = fd;
-	m.m_u.m_vm_vfs.clearend_and_flags = clearend | flags;
+	m.m_u.m_vm_vfs.clearend = clearend;
+	m.m_u.m_vm_vfs.flags = flags;
 
 	return _syscall(VM_PROC_NR, VM_VFS_MMAP, &m);
 }
 
 void *minix_mmap(void *addr, size_t len, int prot, int flags,
 	int fd, off_t offset)
-{
-	return minix_mmap_for(SELF, addr, len, prot, flags, fd, offset);
-}
-
-void *minix_mmap64(void *addr, size_t len, int prot, int flags,
-	int fd, u64_t offset)
 {
 	return minix_mmap_for(SELF, addr, len, prot, flags, fd, offset);
 }
@@ -146,7 +139,7 @@ int vm_unmap(endpoint_t endpt, void *addr)
 
 	memset(&m, 0, sizeof(m));
 	m.VMUN_ENDPT = endpt;
-	m.VMUN_ADDR = (long) addr;
+	m.VMUN_ADDR = addr;
 
 	return _syscall(VM_PROC_NR, VM_SHM_UNMAP, &m);
 }
