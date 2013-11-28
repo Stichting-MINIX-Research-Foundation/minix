@@ -20,9 +20,9 @@ OLDPWD=`pwd`
 export OLDPWD
 
 # CC="exec cc -wo -F"		# nonstandard flags for ACK :-(
-if which clang 2>/dev/null
+if which clang 2>/dev/null >/dev/null
 then	CC=clang
-elif which gcc 2>/dev/null
+elif which gcc 2>/dev/null >/dev/null
 then	CC=gcc
 else	echo "Can't find a compiler, skipping test"
 	exit 0
