@@ -43,13 +43,13 @@ done
 writeisofs -s0x0 -l MINIX $testdir $fsimage >/dev/null 2>&1
 
 # umount previous things
-su root -c "umount $ramdev >/dev/null 2>&1 || true"
-su root -c "umount $mp >/dev/null 2>&1 || true"
+umount $ramdev >/dev/null 2>&1 || true
+umount $mp >/dev/null 2>&1 || true
 
 # Mount it on a RAM disk
-su root -c "ramdisk 50000 $ramdev >/dev/null 2>&1"
-su root -c "cp $fsimage $ramdev"
-su root -c "mount -t isofs $ramdev $mp >/dev/null 2>&1"
+ramdisk 50000 $ramdev >/dev/null 2>&1
+cp $fsimage $ramdev
+mount -t isofs $ramdev $mp >/dev/null 2>&1
 
 # compare contents
 (cd $testdir/$contents && sha1 * | sort) >$out1
@@ -57,7 +57,7 @@ su root -c "mount -t isofs $ramdev $mp >/dev/null 2>&1"
 
 diff -u $out1 $out2
 
-su root -c "umount $ramdev >/dev/null 2>&1"
+umount $ramdev >/dev/null 2>&1
 
 # cleanup
 rm -rf $testdir $fsimage $out1 $out2

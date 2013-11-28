@@ -17,11 +17,15 @@ skipped=`expr 0`		# count number of tests that were skipped
 total=`expr 0`			# total number of tests tried
 badones=			# list of tests that failed
 
-# Tests which require setuid
+# In the lists below, shell scripts should be listed without ".sh" suffix
+
+# Programs that require setuid
 setuids="test11 test33 test43 test44 test46 test56 test60 test61 test65 \
 	 test69" # test73"
+# Scripts that require to be run as root
+rootscripts="testisofs"
 
-alltests="   1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 \
+alltests="1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 \
          21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 \
          41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 \
          61 62 63 64 65 66 67 68 69 70 71 72 75 \
@@ -71,7 +75,7 @@ done
 
 # Count tests
 for i in `echo $tests`; do
-   if [ -x ./test$i ]; then
+   if [ -x ./test$i -o -x ./test${i}.sh ]; then
       tests_no=`expr $tests_no + 1`
    fi
 done
@@ -103,9 +107,27 @@ ARGS_63=`pwd`/mod
 runtest() {
 	i=$1
 	ARG=$2
+	# setuid doesn't work with scripts, so we can only run those as root
+	if echo "$rootscripts" | tr ' ' '\n' | grep "^test${i}\$" >/dev/null
+	then needroot=1
+	else needroot=0
+	fi
+	# depending on where we are, scripts might have a .sh suffix or not
+	if [ -x test${i}.sh ]
+	then NAME=./test${i}.sh
+	else NAME=./test$i
+	fi
 	if [ "$ROOT" ]
-	then	su - bin -c "cd `pwd`; ./test$i $ARG" || return 1
-	else	./test$i $ARG || return 1
+	then
+		if [ $needroot -eq 1 ]
+		then $NAME $ARG || return 1
+		else su - bin -c "cd `pwd`; $NAME $ARG" || return 1
+		fi
+	else
+		if [ $needroot -eq 1 ]
+		then echo "skipping test$i, not root" >&2 && return 0
+		else $NAME $ARG || return 1
+		fi
 	fi
 	return 0
 }
@@ -113,13 +135,11 @@ runtest() {
 # Run all the tests, keeping track of who failed.
 for i in `echo $tests`
 do
-   if [ -x ./test$i ] 
+   if [ -x ./test$i -o -x ./test${i}.sh ]
    then
       total=`expr $total + 1`
       FAIL=0
-      unset ARG
-      testid="`echo $i | sed 's/\..*//'`"
-      ARG=`eval echo "\\${ARGS_$testid}"`
+      ARG=`eval echo "\\${ARGS_$i}"`
 
       if [ "$tapmode" ]
       then	out=out.$$
