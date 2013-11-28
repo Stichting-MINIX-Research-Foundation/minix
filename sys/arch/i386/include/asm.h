@@ -191,7 +191,7 @@
 #define	__KERNEL_RCSID(_n, _s)	RCSID(_s)
 #endif
 
-#if defined(__ELF__) || defined(__minix)
+#ifdef __ELF__
 #define	WEAK_ALIAS(alias,sym)						\
 	.weak alias;							\
 	alias = sym

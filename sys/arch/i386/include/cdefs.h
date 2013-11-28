@@ -9,9 +9,4 @@
 
 #define __ALIGNBYTES	(sizeof(int) - 1)
 
-#if defined(__minix)
-#ifndef __ELF__
-#define __LEADING_UNDERSCORE
-#endif
-#endif /* defined(__minix) */
 #endif /* !_I386_CDEFS_H_ */
