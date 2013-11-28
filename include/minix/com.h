@@ -470,14 +470,6 @@
 #define SG_ADDR		m2_p1	/* address */
 #define SG_SIZE		m2_i2	/* no. of entries */
 
-/* Field names for SYS_GETKSIG, _ENDKSIG, _KILL, _SIGSEND, _SIGRETURN. */
-#define SYS_SIG_ENDPT      m_sigcalls.ep     /* process number for inform */
-#define SYS_SIG_NUMBER     m_sigcalls.sig    /* signal number to send */
-#define SYS_SIG_FLAGS      m_sigcalls.flags  /* signal flags field */
-#define SYS_SIG_MAP        m_sigcalls.sigs   /* used to pass signal bit map */
-#define SYS_SIG_CTXT_PTR   m_sigcalls.sigctx /* pointer to signal context */
-#define SYS_SIG_HOW        m_sigcalls.how   /* used to pass signal bit map */
-
 /* Field names for SYS_FORK, _EXEC, _EXIT, GETMCONTEXT, SETMCONTEXT.*/
 #define PR_ENDPT        m1_i1	/* indicates a process */
 #define PR_PRIORITY     m1_i2	/* process priority */

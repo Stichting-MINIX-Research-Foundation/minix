@@ -1,9 +1,9 @@
 /* The kernel call that is implemented in this file:
- *   m_type:	SYS_KILL
+ *	m_type: SYS_KILL
  *
  * The parameters for this kernel call are:
- *     m2_i1:	SYS_SIG_ENDPT  	# process to signal/ pending		
- *     m2_i2:	SYS_SIG_NUMBER	# signal number to send to process
+ *	m_sigcalls.endpt  	# process to signal/ pending
+ *	m_sigcalls.sig		# signal number to send to process
  */
 
 #include "kernel/system.h"
@@ -23,9 +23,9 @@ int do_kill(struct proc * caller, message * m_ptr)
  * translated into an IPC message for system services.
  */
   proc_nr_t proc_nr, proc_nr_e;
-  int sig_nr = m_ptr->SYS_SIG_NUMBER;
+  int sig_nr = m_ptr->m_sigcalls.sig;
 
-  proc_nr_e= (proc_nr_t) m_ptr->SYS_SIG_ENDPT;
+  proc_nr_e = (proc_nr_t)m_ptr->m_sigcalls.endpt;
 
   if (!isokendpt(proc_nr_e, &proc_nr)) return(EINVAL);
   if (sig_nr >= _NSIG) return(EINVAL);

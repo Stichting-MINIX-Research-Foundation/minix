@@ -11,8 +11,8 @@ sigset_t *k_sig_map;			/* return signal map here */
     int result;
 
     result = _kernel_call(SYS_GETKSIG, &m);
-    *proc_ep = m.SYS_SIG_ENDPT;
-    *k_sig_map = m.SYS_SIG_MAP;
+    *proc_ep = m.m_sigcalls.endpt;
+    *k_sig_map = m.m_sigcalls.map;
     return(result);
 }
 

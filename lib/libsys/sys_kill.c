@@ -7,8 +7,8 @@ int signr;			/* signal number: 1 - 16 */
 /* A proc_ep has to be signaled via PM.  Tell the kernel. */
   message m;
 
-  m.SYS_SIG_ENDPT = proc_ep;
-  m.SYS_SIG_NUMBER = signr;
+  m.m_sigcalls.endpt = proc_ep;
+  m.m_sigcalls.sig = signr;
   return(_kernel_call(SYS_KILL, &m));
 }
 

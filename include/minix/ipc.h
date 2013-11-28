@@ -36,17 +36,6 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_2);
 
 typedef struct {
-	endpoint_t ep;
-	int sig;
-	u32_t flags;
-	sigset_t sigs;
-	void *sigctx;
-	int how;
-	uint8_t padding[20];
-} mess_sigcalls;
-_ASSERT_MSG_SIZE(mess_sigcalls);
-
-typedef struct {
 	int m3i1, m3i2;
 	char *m3p1;
 	char m3ca1[M3_LONG_STRING];
@@ -135,6 +124,16 @@ typedef struct {
 } mess_notify;
 _ASSERT_MSG_SIZE(mess_notify);
 
+/* For SYS_GETKSIG, _ENDKSIG, _KILL, _SIGSEND, _SIGRETURN. */
+typedef struct {
+	sigset_t map;		/* used to pass signal bit map */
+	endpoint_t endpt;	/* process number for inform */
+	int sig;		/* signal number to send */
+	void *sigctx;		/* pointer to signal context */
+	uint8_t padding[28];
+} mess_sigcalls;
+_ASSERT_MSG_SIZE(mess_sigcalls);
+
 typedef struct {
 	off_t offset;
 	dev_t dev;
@@ -186,10 +185,10 @@ typedef struct {
 	mess_11 m_m11;
 	mess_mmap m_mmap;
 	mess_notify m_notify;
+	mess_sigcalls m_sigcalls;
 	mess_vm_vfs_mmap m_vm_vfs_mmap;
 	mess_vmmcp m_vmmcp;
 	mess_vmmcp_reply m_vmmcp_reply;
-	mess_sigcalls m_sigcalls; /* SYS_{GETKSIG,ENDKSIG,KILL,SIGSEND,SIGRETURN} */
 	u8_t size[56];		/* message payload may have 56 bytes at most */
   };
 } message __aligned(16);

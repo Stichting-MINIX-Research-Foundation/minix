@@ -1,8 +1,8 @@
 /* The kernel call that is implemented in this file:
- *   m_type:	SYS_ENDKSIG
+ *	m_type: SYS_ENDKSIG
  *
  * The parameters for this kernel call are:
- *     m2_i1:	SIG_ENDPT  	# process for which PM is done
+ *	m_sigcalls.endpt	# process for which PM is done
  */
 
 #include "kernel/system.h"
@@ -24,7 +24,7 @@ int do_endksig(struct proc * caller, message * m_ptr)
   /* Get process pointer and verify that it had signals pending. If the 
    * process is already dead its flags will be reset. 
    */
-  if(!isokendpt(m_ptr->SYS_SIG_ENDPT, &proc_nr))
+  if(!isokendpt(m_ptr->m_sigcalls.endpt, &proc_nr))
 	return EINVAL;
 
   rp = proc_addr(proc_nr);

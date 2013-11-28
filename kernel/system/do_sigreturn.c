@@ -1,9 +1,9 @@
 /* The kernel call that is implemented in this file:
- *   m_type:	SYS_SIGRETURN
+ *	m_type: SYS_SIGRETURN
  *
  * The parameters for this kernel call are:
- *     m2_i1:	SIG_ENDPT  	# process returning from handler
- *     m2_p1:	SIG_CTXT_PTR 	# pointer to sigcontext structure
+ *	m_sigcalls.endp		# process returning from handler
+ *	m_sigcalls.sigctx	# pointer to sigcontext structure
  *
  */
 
@@ -25,13 +25,14 @@ int do_sigreturn(struct proc * caller, message * m_ptr)
   register struct proc *rp;
   int proc_nr, r;
 
-  if (! isokendpt(m_ptr->SYS_SIG_ENDPT, &proc_nr)) return(EINVAL);
-  if (iskerneln(proc_nr)) return(EPERM);
+  if (!isokendpt(m_ptr->m_sigcalls.endpt, &proc_nr)) return EINVAL;
+  if (iskerneln(proc_nr)) return EPERM;
   rp = proc_addr(proc_nr);
 
   /* Copy in the sigcontext structure. */
-  if((r=data_copy(m_ptr->SYS_SIG_ENDPT, (vir_bytes) m_ptr->SYS_SIG_CTXT_PTR,
-	KERNEL, (vir_bytes) &sc, sizeof(struct sigcontext))) != OK)
+  if ((r = data_copy(m_ptr->m_sigcalls.endpt,
+		 (vir_bytes)m_ptr->m_sigcalls.sigctx, KERNEL,
+		 (vir_bytes)&sc, sizeof(struct sigcontext))) != OK)
 	return r;
 
 #if defined(__i386__)
@@ -53,7 +54,7 @@ int do_sigreturn(struct proc * caller, message * m_ptr)
   /* Restore the registers. */
   arch_proc_setcontext(rp, &sc.sc_regs, 1, sc.trap_style);
 #if defined(__i386__)
-  if(sc.sc_flags & MF_FPU_INITIALIZED)
+  if (sc.sc_flags & MF_FPU_INITIALIZED)
   {
 	memcpy(rp->p_seg.fpu_state, &sc.sc_fpu_state, FPU_XFP_SIZE);
 	rp->p_misc_flags |=  MF_FPU_INITIALIZED; /* Restore math usage flag. */
@@ -62,7 +63,7 @@ int do_sigreturn(struct proc * caller, message * m_ptr)
   }
 #endif
 
-  return(OK);
+  return OK;
 }
 #endif /* USE_SIGRETURN */
 
