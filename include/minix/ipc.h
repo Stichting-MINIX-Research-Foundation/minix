@@ -115,19 +115,6 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_11);
 
 typedef struct {
-	dev_t dev;	/* 64bits long. */
-	off_t dev_offset;
-	off_t ino_offset;
-	ino_t ino;
-	u32_t *flags_ptr;
-	void *block;
-	u8_t pages;
-	u8_t flags;
-	uint8_t padding[12];
-} mess_vmmcp;
-_ASSERT_MSG_SIZE(mess_vmmcp);
-
-typedef struct {
 	u64_t timestamp;	/* valid for every notify msg */
 	u64_t interrupts;	/* raised interrupts; valid if from HARDWARE */
 	sigset_t sigset;	/* raised signals; valid if from SYSTEM */
@@ -163,6 +150,19 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_vm_vfs_mmap);
 
 typedef struct {
+	dev_t dev;	/* 64bits long. */
+	off_t dev_offset;
+	off_t ino_offset;
+	ino_t ino;
+	void *block;
+	u32_t *flags_ptr;
+	u8_t pages;
+	u8_t flags;
+	uint8_t padding[12];
+} mess_vmmcp;
+_ASSERT_MSG_SIZE(mess_vmmcp);
+
+typedef struct {
 	void *addr;
 	u8_t flags;
 	uint8_t padding[51];
@@ -184,114 +184,114 @@ typedef struct {
 	mess_9 m_m9;
 	mess_10 m_m10;
 	mess_11 m_m11;
+	mess_mmap m_mmap;
 	mess_vmmcp m_vmmcp;
 	mess_vmmcp_reply m_vmmcp_reply;
-	mess_mmap m_mmap;
 	mess_vm_vfs_mmap m_vm_vfs;
 	mess_notify m_notify;	/* notify messages */
 	mess_sigcalls m_sigcalls; /* SYS_{GETKSIG,ENDKSIG,KILL,SIGSEND,SIGRETURN} */
-	u32_t size[14];		/* message payload may have 14 longs at most */
-  } m_u;
+	u8_t size[56];		/* message payload may have 56 bytes at most */
+  };
 } message __aligned(16);
 
 /* Ensure the complete union respects the IPC assumptions. */
-typedef int _ASSERT_message[/* CONSTCOND */sizeof(message) == 64 ?1 : -1];
+typedef int _ASSERT_message[/* CONSTCOND */sizeof(message) == 64 ? 1 : -1];
 
 /* The following defines provide names for useful members. */
-#define m1_i1  m_u.m_m1.m1i1
-#define m1_i2  m_u.m_m1.m1i2
-#define m1_i3  m_u.m_m1.m1i3
-#define m1_p1  m_u.m_m1.m1p1
-#define m1_p2  m_u.m_m1.m1p2
-#define m1_p3  m_u.m_m1.m1p3
-#define m1_p4  m_u.m_m1.m1p4
-#define m1_ull1  m_u.m_m1.m1ull1
+#define m1_i1  m_m1.m1i1
+#define m1_i2  m_m1.m1i2
+#define m1_i3  m_m1.m1i3
+#define m1_p1  m_m1.m1p1
+#define m1_p2  m_m1.m1p2
+#define m1_p3  m_m1.m1p3
+#define m1_p4  m_m1.m1p4
+#define m1_ull1  m_m1.m1ull1
 
-#define m2_ll1  m_u.m_m2.m2ll1
-#define m2_i1  m_u.m_m2.m2i1
-#define m2_i2  m_u.m_m2.m2i2
-#define m2_i3  m_u.m_m2.m2i3
-#define m2_l1  m_u.m_m2.m2l1
-#define m2_l2  m_u.m_m2.m2l2
-#define m2_p1  m_u.m_m2.m2p1
-#define m2_sigset  m_u.m_m2.sigset
+#define m2_ll1  m_m2.m2ll1
+#define m2_i1  m_m2.m2i1
+#define m2_i2  m_m2.m2i2
+#define m2_i3  m_m2.m2i3
+#define m2_l1  m_m2.m2l1
+#define m2_l2  m_m2.m2l2
+#define m2_p1  m_m2.m2p1
+#define m2_sigset  m_m2.sigset
 
-#define m2_s1  m_u.m_m2.m2s1
+#define m2_s1  m_m2.m2s1
 
-#define m3_i1  m_u.m_m3.m3i1
-#define m3_i2  m_u.m_m3.m3i2
-#define m3_p1  m_u.m_m3.m3p1
-#define m3_ca1 m_u.m_m3.m3ca1
+#define m3_i1  m_m3.m3i1
+#define m3_i2  m_m3.m3i2
+#define m3_p1  m_m3.m3p1
+#define m3_ca1 m_m3.m3ca1
 
-#define m4_ll1  m_u.m_m4.m4ll1
-#define m4_l1  m_u.m_m4.m4l1
-#define m4_l2  m_u.m_m4.m4l2
-#define m4_l3  m_u.m_m4.m4l3
-#define m4_l4  m_u.m_m4.m4l4
-#define m4_l5  m_u.m_m4.m4l5
+#define m4_ll1  m_m4.m4ll1
+#define m4_l1  m_m4.m4l1
+#define m4_l2  m_m4.m4l2
+#define m4_l3  m_m4.m4l3
+#define m4_l4  m_m4.m4l4
+#define m4_l5  m_m4.m4l5
 
-#define m5_s1  m_u.m_m5.m5s1
-#define m5_s2  m_u.m_m5.m5s2
-#define m5_i1  m_u.m_m5.m5i1
-#define m5_i2  m_u.m_m5.m5i2
-#define m5_l1  m_u.m_m5.m5l1
-#define m5_l2  m_u.m_m5.m5l2
-#define m5_l3  m_u.m_m5.m5l3
+#define m5_s1  m_m5.m5s1
+#define m5_s2  m_m5.m5s2
+#define m5_i1  m_m5.m5i1
+#define m5_i2  m_m5.m5i2
+#define m5_l1  m_m5.m5l1
+#define m5_l2  m_m5.m5l2
+#define m5_l3  m_m5.m5l3
 
-#define m6_l1  m_u.m_m6.m6l1
-#define m6_l2  m_u.m_m6.m6l2
-#define m6_l3  m_u.m_m6.m6l3
-#define m6_s1  m_u.m_m6.m6s1
-#define m6_s2  m_u.m_m6.m6s2
-#define m6_s3  m_u.m_m6.m6s3
-#define m6_c1  m_u.m_m6.m6c1
-#define m6_c2  m_u.m_m6.m6c2
-#define m6_p1  m_u.m_m6.m6p1
-#define m6_p2  m_u.m_m6.m6p2
+#define m6_l1  m_m6.m6l1
+#define m6_l2  m_m6.m6l2
+#define m6_l3  m_m6.m6l3
+#define m6_s1  m_m6.m6s1
+#define m6_s2  m_m6.m6s2
+#define m6_s3  m_m6.m6s3
+#define m6_c1  m_m6.m6c1
+#define m6_c2  m_m6.m6c2
+#define m6_p1  m_m6.m6p1
+#define m6_p2  m_m6.m6p2
 
-#define m7_i1  m_u.m_m7.m7i1
-#define m7_i2  m_u.m_m7.m7i2
-#define m7_i3  m_u.m_m7.m7i3
-#define m7_i4  m_u.m_m7.m7i4
-#define m7_i5  m_u.m_m7.m7i5
-#define m7_p1  m_u.m_m7.m7p1
-#define m7_p2  m_u.m_m7.m7p2
+#define m7_i1  m_m7.m7i1
+#define m7_i2  m_m7.m7i2
+#define m7_i3  m_m7.m7i3
+#define m7_i4  m_m7.m7i4
+#define m7_i5  m_m7.m7i5
+#define m7_p1  m_m7.m7p1
+#define m7_p2  m_m7.m7p2
 
-#define m8_i1  m_u.m_m8.m8i1
-#define m8_i2  m_u.m_m8.m8i2
-#define m8_p1  m_u.m_m8.m8p1
-#define m8_p2  m_u.m_m8.m8p2
-#define m8_p3  m_u.m_m8.m8p3
-#define m8_p4  m_u.m_m8.m8p4
+#define m8_i1  m_m8.m8i1
+#define m8_i2  m_m8.m8i2
+#define m8_p1  m_m8.m8p1
+#define m8_p2  m_m8.m8p2
+#define m8_p3  m_m8.m8p3
+#define m8_p4  m_m8.m8p4
 
-#define m9_l1  m_u.m_m9.m9l1
-#define m9_l2  m_u.m_m9.m9l2
-#define m9_l3  m_u.m_m9.m9l3
-#define m9_l4  m_u.m_m9.m9l4
-#define m9_l5  m_u.m_m9.m9l5
-#define m9_s1  m_u.m_m9.m9s1
-#define m9_s2  m_u.m_m9.m9s2
-#define m9_s3  m_u.m_m9.m9s3
-#define m9_s4  m_u.m_m9.m9s4
-#define m9_ull1  m_u.m_m9.m9ull1
+#define m9_l1  m_m9.m9l1
+#define m9_l2  m_m9.m9l2
+#define m9_l3  m_m9.m9l3
+#define m9_l4  m_m9.m9l4
+#define m9_l5  m_m9.m9l5
+#define m9_s1  m_m9.m9s1
+#define m9_s2  m_m9.m9s2
+#define m9_s3  m_m9.m9s3
+#define m9_s4  m_m9.m9s4
+#define m9_ull1  m_m9.m9ull1
 
-#define m10_i1 m_u.m_m10.m10i1
-#define m10_i2 m_u.m_m10.m10i2
-#define m10_i3 m_u.m_m10.m10i3
-#define m10_i4 m_u.m_m10.m10i4
-#define m10_l1 m_u.m_m10.m10l1
-#define m10_l2 m_u.m_m10.m10l2
-#define m10_l3 m_u.m_m10.m10l3
+#define m10_i1 m_m10.m10i1
+#define m10_i2 m_m10.m10i2
+#define m10_i3 m_m10.m10i3
+#define m10_i4 m_m10.m10i4
+#define m10_l1 m_m10.m10l1
+#define m10_l2 m_m10.m10l2
+#define m10_l3 m_m10.m10l3
 
-#define m11_i1 m_u.m_m11.m11i1
-#define m11_s1 m_u.m_m11.m11s1
-#define m11_s2 m_u.m_m11.m11s2
-#define m11_s3 m_u.m_m11.m11s3
-#define m11_s4 m_u.m_m11.m11s4
-#define m11_p1 m_u.m_m11.m11p1
-#define m11_p2 m_u.m_m11.m11p2
-#define m11_p3 m_u.m_m11.m11p3
-#define m11_p4 m_u.m_m11.m11p4
+#define m11_i1 m_m11.m11i1
+#define m11_s1 m_m11.m11s1
+#define m11_s2 m_m11.m11s2
+#define m11_s3 m_m11.m11s3
+#define m11_s4 m_m11.m11s4
+#define m11_p1 m_m11.m11p1
+#define m11_p2 m_m11.m11p2
+#define m11_p3 m_m11.m11p3
+#define m11_p4 m_m11.m11p4
 
 /*==========================================================================* 
  * Minix run-time system (IPC). 					    *

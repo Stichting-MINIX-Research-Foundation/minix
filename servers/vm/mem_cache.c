@@ -85,11 +85,11 @@ static int cache_resize(struct vmproc *vmp, struct vir_region *vr, vir_bytes l)
 int
 do_mapcache(message *msg)
 {
-	dev_t dev = msg->m_u.m_vmmcp.dev;
-	u64_t dev_off = msg->m_u.m_vmmcp.dev_offset;
-	u64_t ino_off = msg->m_u.m_vmmcp.ino_offset;
+	dev_t dev = msg->m_vmmcp.dev;
+	off_t dev_off = msg->m_vmmcp.dev_offset;
+	off_t ino_off = msg->m_vmmcp.ino_offset;
 	int n;
-	phys_bytes bytes = msg->m_u.m_vmmcp.pages * VM_PAGE_SIZE;
+	phys_bytes bytes = msg->m_vmmcp.pages * VM_PAGE_SIZE;
 	struct vir_region *vr;
 	struct vmproc *caller;
 	vir_bytes offset;
@@ -120,7 +120,7 @@ do_mapcache(message *msg)
 		assert(offset < vr->length);
 
 		if(!(hb = find_cached_page_bydev(dev, dev_off + offset,
-			msg->m_u.m_vmmcp.ino, ino_off + offset, 1))) {
+			msg->m_vmmcp.ino, ino_off + offset, 1))) {
 			map_unmap_region(caller, vr, 0, bytes);
 			return ENOENT;
 		}
@@ -141,7 +141,7 @@ do_mapcache(message *msg)
 
 	memset(msg, 0, sizeof(*msg));
 
-	msg->m_u.m_vmmcp_reply.addr = (void *) vr->vaddr;
+	msg->m_vmmcp_reply.addr = (void *) vr->vaddr;
  
  	assert(vr);
 
@@ -170,13 +170,13 @@ int
 do_setcache(message *msg)
 {
 	int r;
-	dev_t dev = msg->m_u.m_vmmcp.dev;
-	u64_t dev_off = (u64_t) msg->m_u.m_vmmcp.dev_offset;
-	u64_t ino_off = (u64_t) msg->m_u.m_vmmcp.ino_offset;
+	dev_t dev = msg->m_vmmcp.dev;
+	off_t dev_off = msg->m_vmmcp.dev_offset;
+	off_t ino_off = msg->m_vmmcp.ino_offset;
 	int n;
 	struct vmproc *caller;
 	phys_bytes offset;
-	phys_bytes bytes = msg->m_u.m_vmmcp.pages * VM_PAGE_SIZE;
+	phys_bytes bytes = msg->m_vmmcp.pages * VM_PAGE_SIZE;
 
 	if(bytes < VM_PAGE_SIZE) return EINVAL;
 
@@ -191,7 +191,7 @@ do_setcache(message *msg)
 	for(offset = 0; offset < bytes; offset += VM_PAGE_SIZE) {
 		struct vir_region *region;
 		struct phys_region *phys_region = NULL;
-		vir_bytes v = (vir_bytes) msg->m_u.m_vmmcp.block + offset;
+		vir_bytes v = (vir_bytes) msg->m_vmmcp.block + offset;
                 struct cached_page *hb;
 
 		if(!(region = map_lookup(caller, v, &phys_region))) {
@@ -205,7 +205,7 @@ do_setcache(message *msg)
 		}
 
 		if((hb=find_cached_page_bydev(dev, dev_off + offset,
-			msg->m_u.m_vmmcp.ino, ino_off + offset, 1))) {
+			msg->m_vmmcp.ino, ino_off + offset, 1))) {
 			/* block inode info updated */
 			if(hb->page != phys_region->ph) {
 				/* previous cache entry has become
@@ -235,7 +235,7 @@ do_setcache(message *msg)
 		phys_region->memtype = &mem_type_cache;
 
 		if((r=addcache(dev, dev_off + offset,
-			msg->m_u.m_vmmcp.ino, ino_off + offset, phys_region->ph)) != OK) {
+			msg->m_vmmcp.ino, ino_off + offset, phys_region->ph)) != OK) {
 			printf("VM: addcache failed\n");
 			return r;
 		}
@@ -256,7 +256,7 @@ do_clearcache(message *msg)
 {
 	dev_t dev;
 
-	dev = msg->m_u.m_vmmcp.dev;
+	dev = msg->m_vmmcp.dev;
 
 	clear_cache_bydev(dev);
 

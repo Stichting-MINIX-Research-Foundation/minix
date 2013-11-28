@@ -93,7 +93,7 @@ int do_sef_signal_request(message *m_ptr)
 
   if(m_ptr->m_source == SYSTEM) {
       /* Handle kernel signals. */
-      sigset = m_ptr->NOTIFY_SIGSET;
+      sigset = m_ptr->m_notify.sigset;
       for (signo = SIGK_FIRST; signo <= SIGK_LAST; signo++) {
           int s = sigismember(&sigset, signo);
           assert(s >= 0);

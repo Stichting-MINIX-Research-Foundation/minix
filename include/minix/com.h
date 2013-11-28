@@ -107,11 +107,6 @@
 #define is_ipc_asynch(ipc_status) \
     (is_ipc_notify(ipc_status) || IPC_STATUS_CALL(ipc_status) == SENDA)
 
-/* Shorthands for message parameters passed with notifications. */
-#define NOTIFY_TIMESTAMP       m_u.m_notify.timestamp
-#define NOTIFY_INTMASK         m_u.m_notify.interrupts
-#define NOTIFY_SIGSET          m_u.m_notify.sigset
-
 /*===========================================================================*
  *                Messages for BUS controller drivers 			     *
  *===========================================================================*/
@@ -476,12 +471,12 @@
 #define SG_SIZE		m2_i2	/* no. of entries */
 
 /* Field names for SYS_GETKSIG, _ENDKSIG, _KILL, _SIGSEND, _SIGRETURN. */
-#define SYS_SIG_ENDPT      m_u.m_sigcalls.ep     /* process number for inform */
-#define SYS_SIG_NUMBER     m_u.m_sigcalls.sig    /* signal number to send */
-#define SYS_SIG_FLAGS      m_u.m_sigcalls.flags  /* signal flags field */
-#define SYS_SIG_MAP        m_u.m_sigcalls.sigs   /* used to pass signal bit map */
-#define SYS_SIG_CTXT_PTR   m_u.m_sigcalls.sigctx /* pointer to signal context */
-#define SYS_SIG_HOW        m_u.m_sigcalls.how   /* used to pass signal bit map */
+#define SYS_SIG_ENDPT      m_sigcalls.ep     /* process number for inform */
+#define SYS_SIG_NUMBER     m_sigcalls.sig    /* signal number to send */
+#define SYS_SIG_FLAGS      m_sigcalls.flags  /* signal flags field */
+#define SYS_SIG_MAP        m_sigcalls.sigs   /* used to pass signal bit map */
+#define SYS_SIG_CTXT_PTR   m_sigcalls.sigctx /* pointer to signal context */
+#define SYS_SIG_HOW        m_sigcalls.how   /* used to pass signal bit map */
 
 /* Field names for SYS_FORK, _EXEC, _EXIT, GETMCONTEXT, SETMCONTEXT.*/
 #define PR_ENDPT        m1_i1	/* indicates a process */
@@ -823,18 +818,18 @@
 
 /* General calls. */
 #define VM_MMAP			(VM_RQ_BASE+10)
-#       define VMM_ADDR                 m_u.m_mmap.addr
-#       define VMM_LEN                  m_u.m_mmap.len
-#       define VMM_PROT                 m_u.m_mmap.prot
-#       define VMM_FLAGS                m_u.m_mmap.flags
-#       define VMM_FD                   m_u.m_mmap.fd
-#       define VMM_OFFSET               m_u.m_mmap.offset
-#       define VMM_FORWHOM              m_u.m_mmap.forwhom
-#       define VMM_RETADDR              m_u.m_mmap.retaddr
+#       define VMM_ADDR                 m_mmap.addr
+#       define VMM_LEN                  m_mmap.len
+#       define VMM_PROT                 m_mmap.prot
+#       define VMM_FLAGS                m_mmap.flags
+#       define VMM_FD                   m_mmap.fd
+#       define VMM_OFFSET               m_mmap.offset
+#       define VMM_FORWHOM              m_mmap.forwhom
+#       define VMM_RETADDR              m_mmap.retaddr
 
 #define VM_MUNMAP		(VM_RQ_BASE+17)
-#	define VMUM_ADDR		m_u.m_mmap.addr
-#	define VMUM_LEN			m_u.m_mmap.len
+#	define VMUM_ADDR		m_mmap.addr
+#	define VMUM_LEN			m_mmap.len
 
 /* to VM: inform VM about a region of memory that is used for
  * bus-master DMA
@@ -913,8 +908,8 @@
 #	define VMRE_FLAGS		m1_i3
 
 #define VM_SHM_UNMAP		(VM_RQ_BASE+34)
-#	define VMUN_ENDPT		m_u.m_mmap.forwhom
-#	define VMUN_ADDR		m_u.m_mmap.addr
+#	define VMUN_ENDPT		m_mmap.forwhom
+#	define VMUN_ADDR		m_mmap.addr
 
 #define VM_GETPHYS		(VM_RQ_BASE+35)
 #	define VMPHYS_ENDPT		m2_i1

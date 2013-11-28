@@ -101,14 +101,15 @@ static void set_idle_name(char * name, int n)
 #define BuildNotifyMessage(m_ptr, src, dst_ptr) \
 	memset((m_ptr), 0, sizeof(*(m_ptr)));				\
 	(m_ptr)->m_type = NOTIFY_MESSAGE;				\
-	(m_ptr)->NOTIFY_TIMESTAMP = get_monotonic();			\
+	(m_ptr)->m_notify.timestamp = get_monotonic();		\
 	switch (src) {							\
 	case HARDWARE:							\
-		(m_ptr)->NOTIFY_INTMASK = priv(dst_ptr)->s_int_pending; \
+		(m_ptr)->m_notify.interrupts =			\
+			priv(dst_ptr)->s_int_pending;			\
 		priv(dst_ptr)->s_int_pending = 0;			\
 		break;							\
 	case SYSTEM:							\
-		memcpy(&(m_ptr)->NOTIFY_SIGSET,				\
+		memcpy(&(m_ptr)->m_notify.sigset,			\
 			&priv(dst_ptr)->s_sig_pending,			\
 			sizeof(sigset_t));				\
 		sigemptyset(&priv(dst_ptr)->s_sig_pending);		\

@@ -275,7 +275,7 @@ int main(__unused int argc, __unused char ** argv)
 		else if (is_ipc_notify(ipc_status)) {
 			switch (m.m_source) {
 			case CLOCK:
-				expire_timers(m.NOTIFY_TIMESTAMP);
+				expire_timers(m.m_notify.timestamp);
 				break;
 			case DS_PROC_NR:
 				ds_event();

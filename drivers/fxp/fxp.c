@@ -237,7 +237,7 @@ int main(int argc, char *argv[])
 					handle_hw_intr();
 					break;
 				case CLOCK:
-					expire_timers(m.NOTIFY_TIMESTAMP);
+					expire_timers(m.m_notify.timestamp);
 					break;
 				default:
 					panic(" illegal notify from: %d", m.m_source);

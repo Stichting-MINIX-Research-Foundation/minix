@@ -226,11 +226,11 @@ message *m;
 	}
 
 	/* Re-enable Rx interrupt. */
-	if(m->NOTIFY_INTMASK & (1 << RX_INT))
+	if(m->m_notify.interrupts & (1 << RX_INT))
 		lan8710a_enable_interrupt(RX_INT);
 
 	/* Re-enable Tx interrupt. */
-	if(m->NOTIFY_INTMASK & (1 << TX_INT))
+	if(m->m_notify.interrupts & (1 << TX_INT))
 		lan8710a_enable_interrupt(TX_INT);
 }
 

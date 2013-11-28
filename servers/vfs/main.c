@@ -109,7 +109,7 @@ int main(void)
 			break;
 		case CLOCK:
 			/* Timer expired. Used only for select(). Check it. */
-			expire_timers(m_in.NOTIFY_TIMESTAMP);
+			expire_timers(m_in.m_notify.timestamp);
 			break;
 		default:
 			printf("VFS: ignoring notification from %d\n", who_e);

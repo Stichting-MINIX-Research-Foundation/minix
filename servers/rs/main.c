@@ -81,7 +81,7 @@ int main(void)
 	      continue;
 	  default:				/* heartbeat notification */
 	      if (rproc_ptr[who_p] != NULL) {	/* mark heartbeat time */ 
-		  rproc_ptr[who_p]->r_alive_tm = m.NOTIFY_TIMESTAMP;
+		  rproc_ptr[who_p]->r_alive_tm = m.m_notify.timestamp;
 	      } else {
 		  printf("RS: warning: got unexpected notify message from %d\n",
 		      m.m_source);

@@ -65,7 +65,7 @@ int main()
 	/* Check for system notifications first. Special cases. */
 	if (is_ipc_notify(ipc_status)) {
 		if (_ENDPOINT_P(m_in.m_source) == CLOCK)
-			expire_timers(m_in.NOTIFY_TIMESTAMP);
+			expire_timers(m_in.m_notify.timestamp);
 
 		/* done, continue */
 		continue;

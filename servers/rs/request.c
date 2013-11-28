@@ -730,7 +730,7 @@ message *m_ptr;
 {
   register struct rproc *rp;
   register struct rprocpub *rpub;
-  clock_t now = m_ptr->NOTIFY_TIMESTAMP;
+  clock_t now = m_ptr->m_notify.timestamp;
   int s;
   long period;
 

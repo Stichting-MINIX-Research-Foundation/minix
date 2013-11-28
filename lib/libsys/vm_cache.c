@@ -28,14 +28,14 @@ int vm_cachecall(message *m, int call, void *addr, dev_t dev, off_t dev_offset,
 
     assert(dev != NO_DEV);
 
-    m->m_u.m_vmmcp.dev_offset = dev_offset;
-    m->m_u.m_vmmcp.ino_offset = ino_offset;
-    m->m_u.m_vmmcp.ino = ino;
-    m->m_u.m_vmmcp.block = addr;
-    m->m_u.m_vmmcp.flags_ptr = flags;
-    m->m_u.m_vmmcp.dev = dev;
-    m->m_u.m_vmmcp.pages = blocksize / PAGE_SIZE;
-    m->m_u.m_vmmcp.flags = 0;
+    m->m_vmmcp.dev_offset = dev_offset;
+    m->m_vmmcp.ino_offset = ino_offset;
+    m->m_vmmcp.ino = ino;
+    m->m_vmmcp.block = addr;
+    m->m_vmmcp.flags_ptr = flags;
+    m->m_vmmcp.dev = dev;
+    m->m_vmmcp.pages = blocksize / PAGE_SIZE;
+    m->m_vmmcp.flags = 0;
 
     return _taskcall(VM_PROC_NR, call, m);
 }
@@ -49,7 +49,7 @@ void *vm_map_cacheblock(dev_t dev, off_t dev_offset,
 		ino, ino_offset, flags, blocksize) != OK)
 		return MAP_FAILED;
 
-	return m.m_u.m_vmmcp_reply.addr;
+	return m.m_vmmcp_reply.addr;
 }
 
 int vm_set_cacheblock(void *block, dev_t dev, off_t dev_offset,
@@ -70,7 +70,7 @@ vm_clear_cache(dev_t dev)
 
 	memset(&m, 0, sizeof(m));
 
-	m.m_u.m_vmmcp.dev = dev;
+	m.m_vmmcp.dev = dev;
 
 	return _taskcall(VM_PROC_NR, VM_CLEARCACHE, &m);
 }

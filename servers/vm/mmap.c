@@ -141,18 +141,18 @@ int do_vfs_mmap(message *m)
 	/* It might be disabled */
 	if(!enable_filemap) return ENXIO;
 
-	clearend = m->m_u.m_vm_vfs.clearend;
-	flags = m->m_u.m_vm_vfs.flags;
+	clearend = m->m_vm_vfs.clearend;
+	flags = m->m_vm_vfs.flags;
 
-	if((r=vm_isokendpt(m->m_u.m_vm_vfs.who, &n)) != OK)
-		panic("bad ep %d from vfs", m->m_u.m_vm_vfs.who);
+	if((r=vm_isokendpt(m->m_vm_vfs.who, &n)) != OK)
+		panic("bad ep %d from vfs", m->m_vm_vfs.who);
 	vmp = &vmproc[n];
 
-	return mmap_file(vmp, m->m_u.m_vm_vfs.fd, m->m_u.m_vm_vfs.offset,
+	return mmap_file(vmp, m->m_vm_vfs.fd, m->m_vm_vfs.offset,
 		MAP_PRIVATE | MAP_FIXED,
-		m->m_u.m_vm_vfs.ino, m->m_u.m_vm_vfs.dev,
+		m->m_vm_vfs.ino, m->m_vm_vfs.dev,
 		(u64_t) LONG_MAX * VM_PAGE_SIZE,
-		m->m_u.m_vm_vfs.vaddr, m->m_u.m_vm_vfs.len, &v,
+		m->m_vm_vfs.vaddr, m->m_vm_vfs.len, &v,
 		clearend, flags, 0);
 }
 

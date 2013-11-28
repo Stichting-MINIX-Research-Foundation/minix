@@ -237,7 +237,7 @@ int srv_update(endpoint_t src_e, endpoint_t dst_e)
  *===========================================================================*/
 void update_period(message *m_ptr)
 {
-  clock_t now = m_ptr->NOTIFY_TIMESTAMP;
+  clock_t now = m_ptr->m_notify.timestamp;
   short has_update_timed_out;
   message m;
   struct rprocpub *rpub;

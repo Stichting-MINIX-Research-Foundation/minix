@@ -64,7 +64,7 @@ static void dispatcher_thread(void *unused) {
 				case HARDWARE:
 					for	(i =0 ; i < 32 ; i++)
 					{
-						if(m.NOTIFY_INTMASK & (1 << i)) 
+						if(m.m_notify.interrupts & (1 << i))
 						{
 							_ddekit_interrupt_trigger(i);
 						}

@@ -50,7 +50,7 @@ int main(void)
 		if (is_ipc_notify(ipc_status)) {
 			switch(who_e) {
 				case CLOCK:
-					expire_timers(m_in.NOTIFY_TIMESTAMP);
+					expire_timers(m_in.m_notify.timestamp);
 					continue;	/* don't reply */
 				default :
 					result = ENOSYS;

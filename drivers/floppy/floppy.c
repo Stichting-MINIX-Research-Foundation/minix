@@ -769,7 +769,7 @@ static void start_motor(void)
 	if (is_ipc_notify(ipc_status)) {
 		switch (_ENDPOINT_P(mess.m_source)) {
 			case CLOCK:
-				f_expire_tmrs(mess.NOTIFY_TIMESTAMP);
+				f_expire_tmrs(mess.m_notify.timestamp);
 				break;
 			default :
 				f_busy = BSY_IDLE;
@@ -845,7 +845,7 @@ static int seek(void)
 		if (is_ipc_notify(ipc_status)) {
 			switch (_ENDPOINT_P(mess.m_source)) {
 				case CLOCK:
-					f_expire_tmrs(mess.NOTIFY_TIMESTAMP);
+					f_expire_tmrs(mess.m_notify.timestamp);
 					break;
 				default :
 					f_busy = BSY_IDLE;
@@ -1123,7 +1123,7 @@ static void f_reset(void)
 	if (is_ipc_notify(ipc_status)) {
 		switch (_ENDPOINT_P(mess.m_source)) {
 			case CLOCK:
-				f_expire_tmrs(mess.NOTIFY_TIMESTAMP);
+				f_expire_tmrs(mess.m_notify.timestamp);
 				break;
 			default :
 				f_busy = BSY_IDLE;
@@ -1174,7 +1174,7 @@ static int f_intr_wait(void)
 	if (is_ipc_notify(ipc_status)) {
 		switch (_ENDPOINT_P(mess.m_source)) {
 			case CLOCK:
-				f_expire_tmrs(mess.NOTIFY_TIMESTAMP);
+				f_expire_tmrs(mess.m_notify.timestamp);
 				break;
 			default :
 				f_busy = BSY_IDLE;

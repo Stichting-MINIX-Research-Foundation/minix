@@ -186,18 +186,18 @@ int main(void)
 		switch (_ENDPOINT_P(tty_mess.m_source)) {
 			case CLOCK:
 				/* run watchdogs of expired timers */
-				expire_timers(tty_mess.NOTIFY_TIMESTAMP);
+				expire_timers(tty_mess.m_notify.timestamp);
 				break;
 			case HARDWARE: 
 				/* hardware interrupt notification */
 
 #if NR_RS_LINES > 0
 				/* serial I/O */
-				if (tty_mess.NOTIFY_INTMASK & rs_irq_set)
+				if (tty_mess.m_notify.interrupts & rs_irq_set)
 					rs_interrupt(&tty_mess);
 #endif
 				/* run watchdogs of expired timers */
-				expire_timers(tty_mess.NOTIFY_TIMESTAMP);
+				expire_timers(tty_mess.m_notify.timestamp);
 				break;
 			default:
 				/* do nothing */

@@ -583,7 +583,7 @@ static int flt_receive(message *mess, int which)
 		}
 
 		if(mess->m_source == CLOCK && is_ipc_notify(ipc_status)) {
-			if (mess->NOTIFY_TIMESTAMP < flt_alarm((clock_t) -1)) {
+			if (mess->m_notify.timestamp < flt_alarm((clock_t) -1)) {
 #if DEBUG
 				printf("Filter: SKIPPING old alarm "
 					"notification\n");
