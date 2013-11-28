@@ -7,13 +7,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
-#ifdef __minix
-#include <minix/input.h>
-#include <minix/keymap.h>
-#else
 #include "../../../include/minix/input.h"
 #include "../../../include/minix/keymap.h"
-#endif
 
 keymap_t keymap = {
 #include KEYSRC
