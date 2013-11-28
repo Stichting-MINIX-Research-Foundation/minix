@@ -288,16 +288,6 @@
 #define VFS_MAPDRIVER_LABELLEN	m1_i2	/* size_t */
 #define VFS_MAPDRIVER_LABEL	m1_p1	/* char * */
 
-/* Field names for the utimens(2) call. */
-#define VFS_UTIMENS_FD		m2_i1	/* int */
-#define VFS_UTIMENS_NAME	m2_p1	/* const char * */
-#define VFS_UTIMENS_LEN		m2_i1	/* size_t */
-#define VFS_UTIMENS_ATIME	m2_l1	/* time_t */
-#define VFS_UTIMENS_ANSEC	m2_i2	/* long */
-#define VFS_UTIMENS_MTIME	m2_l2	/* time_t */
-#define VFS_UTIMENS_MNSEC	m2_i3	/* long */
-#define VFS_UTIMENS_FLAGS	m2_s1	/* int */
-
 /* Field names for the fsync(2) call. */
 #define VFS_FSYNC_FD		m1_i1	/* int */
 

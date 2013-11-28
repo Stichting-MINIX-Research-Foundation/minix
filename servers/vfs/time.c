@@ -51,19 +51,19 @@ int do_utimens(void)
   memset(&now, 0, sizeof(now));
 
   /* The case times==NULL is handled by the caller, replaced with UTIME_NOW */
-  actim.tv_sec = job_m_in.VFS_UTIMENS_ATIME;
-  actim.tv_nsec = job_m_in.VFS_UTIMENS_ANSEC;
-  modtim.tv_sec = job_m_in.VFS_UTIMENS_MTIME;
-  modtim.tv_nsec = job_m_in.VFS_UTIMENS_MNSEC;
+  actim.tv_sec = job_m_in.m_vfs_utimens.atime;
+  actim.tv_nsec = job_m_in.m_vfs_utimens.ansec;
+  modtim.tv_sec = job_m_in.m_vfs_utimens.mtime;
+  modtim.tv_nsec = job_m_in.m_vfs_utimens.mnsec;
 
-  if (job_m_in.VFS_UTIMENS_NAME != NULL) {
+  if (job_m_in.m_vfs_utimens.name != NULL) {
 	kind = UTIMENS_STYLE;
-	if (job_m_in.VFS_UTIMENS_FLAGS & ~AT_SYMLINK_NOFOLLOW)
+	if (job_m_in.m_vfs_utimens.flags & ~AT_SYMLINK_NOFOLLOW)
 		return EINVAL; /* unknown flag */
 	/* Temporarily open the file */
-	vname = (vir_bytes) job_m_in.VFS_UTIMENS_NAME;
-	vname_length = (size_t) job_m_in.VFS_UTIMENS_LEN;
-	if (job_m_in.VFS_UTIMENS_FLAGS & AT_SYMLINK_NOFOLLOW)
+	vname = (vir_bytes) job_m_in.m_vfs_utimens.name;
+	vname_length = (size_t) job_m_in.m_vfs_utimens.len;
+	if (job_m_in.m_vfs_utimens.flags & AT_SYMLINK_NOFOLLOW)
 		lookup_flags = PATH_RET_SYMLINK;
 	else
 		lookup_flags = PATH_NOFLAGS;
@@ -77,9 +77,9 @@ int do_utimens(void)
   else {
 	kind = FUTIMENS_STYLE;
 	/* Change timestamps on already-opened fd. Is it valid? */
-	if (job_m_in.VFS_UTIMENS_FLAGS != 0)
+	if (job_m_in.m_vfs_utimens.flags != 0)
 		return EINVAL; /* unknown flag */
-	if ((filp = get_filp(job_m_in.VFS_UTIMENS_FD, VNODE_READ)) == NULL)
+	if ((filp = get_filp(job_m_in.m_vfs_utimens.fd, VNODE_READ)) == NULL)
 		return err_code;
 	vp = filp->filp_vno;
   }

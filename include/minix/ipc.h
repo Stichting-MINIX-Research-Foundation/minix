@@ -135,6 +135,19 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_sigcalls);
 
 typedef struct {
+	time_t atime;
+	time_t mtime;
+	long ansec;
+	long mnsec;
+	size_t len;
+	char *name;
+	int fd;
+	int flags;
+	uint8_t padding[16];
+} mess_vfs_utimens;
+_ASSERT_MSG_SIZE(mess_vfs_utimens);
+
+typedef struct {
 	off_t offset;
 	dev_t dev;
 	ino_t ino;
@@ -186,6 +199,7 @@ typedef struct {
 	mess_mmap m_mmap;
 	mess_notify m_notify;
 	mess_sigcalls m_sigcalls;
+	mess_vfs_utimens m_vfs_utimens;
 	mess_vm_vfs_mmap m_vm_vfs_mmap;
 	mess_vmmcp m_vmmcp;
 	mess_vmmcp_reply m_vmmcp_reply;

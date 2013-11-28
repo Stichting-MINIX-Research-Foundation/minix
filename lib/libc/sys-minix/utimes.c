@@ -24,20 +24,19 @@ int utimes(const char *name, const struct timeval tv[2])
 	return -1;
   }
   memset(&m, 0, sizeof(m));
-  m.VFS_UTIMENS_LEN = strlen(name) + 1;
-  m.VFS_UTIMENS_NAME = (char *) __UNCONST(name);
+  m.m_vfs_utimens.len = strlen(name) + 1;
+  m.m_vfs_utimens.name = __UNCONST(name);
   if (tv == NULL) {
-	m.VFS_UTIMENS_ATIME = m.VFS_UTIMENS_MTIME = 0;
-	m.VFS_UTIMENS_ANSEC = m.VFS_UTIMENS_MNSEC = UTIME_NOW;
+	m.m_vfs_utimens.atime = m.m_vfs_utimens.mtime = 0;
+	m.m_vfs_utimens.ansec = m.m_vfs_utimens.mnsec = UTIME_NOW;
   }
   else {
-	/* For now just truncate time_t values to 32bits. */
-	m.VFS_UTIMENS_ATIME = (int32_t)tv[0].tv_sec;
-	m.VFS_UTIMENS_MTIME = (int32_t)tv[1].tv_sec;
-	m.VFS_UTIMENS_ANSEC = (int32_t)tv[0].tv_usec * 1000;
-	m.VFS_UTIMENS_MNSEC = (int32_t)tv[1].tv_usec * 1000;
+	m.m_vfs_utimens.atime = tv[0].tv_sec;
+	m.m_vfs_utimens.mtime = tv[1].tv_sec;
+	m.m_vfs_utimens.ansec = tv[0].tv_usec * 1000;
+	m.m_vfs_utimens.mnsec = tv[1].tv_usec * 1000;
   }
-  m.VFS_UTIMENS_FLAGS = 0;
+  m.m_vfs_utimens.flags = 0;
 
   return(_syscall(VFS_PROC_NR, VFS_UTIMENS, &m));
 }
