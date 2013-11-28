@@ -115,14 +115,6 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_11);
 
 typedef struct {
-	u64_t timestamp;	/* valid for every notify msg */
-	u64_t interrupts;	/* raised interrupts; valid if from HARDWARE */
-	sigset_t sigset;	/* raised signals; valid if from SYSTEM */
-	uint8_t padding[24];
-} mess_notify;
-_ASSERT_MSG_SIZE(mess_notify);
-
-typedef struct {
 	off_t offset;
 	void *addr;
 	size_t len;
@@ -134,6 +126,14 @@ typedef struct {
 	u32_t padding[5];
 } mess_mmap;
 _ASSERT_MSG_SIZE(mess_mmap);
+
+typedef struct {
+	u64_t timestamp;	/* valid for every notify msg */
+	u64_t interrupts;	/* raised interrupts; valid if from HARDWARE */
+	sigset_t sigset;	/* raised signals; valid if from SYSTEM */
+	uint8_t padding[24];
+} mess_notify;
+_ASSERT_MSG_SIZE(mess_notify);
 
 typedef struct {
 	off_t offset;
@@ -185,10 +185,10 @@ typedef struct {
 	mess_10 m_m10;
 	mess_11 m_m11;
 	mess_mmap m_mmap;
+	mess_notify m_notify;
 	mess_vmmcp m_vmmcp;
 	mess_vmmcp_reply m_vmmcp_reply;
 	mess_vm_vfs_mmap m_vm_vfs;
-	mess_notify m_notify;	/* notify messages */
 	mess_sigcalls m_sigcalls; /* SYS_{GETKSIG,ENDKSIG,KILL,SIGSEND,SIGRETURN} */
 	u8_t size[56];		/* message payload may have 56 bytes at most */
   };
