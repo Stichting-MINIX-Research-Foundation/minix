@@ -7,6 +7,7 @@
 #include "kernel/proc.h"
 #include "kernel/interrupt.h"
 #include <minix/u64.h>
+#include <minix/board.h>
 #include "kernel/glo.h"
 #include "kernel/profile.h"
 
@@ -28,12 +29,14 @@ int init_local_timer(unsigned freq)
 {
 	omap3_timer_init(freq);
 	omap3_frclock_init();
-#ifdef DM37XX
-	tsc_per_ms[0] = 16250;
-#endif
-#ifdef AM335X
-	tsc_per_ms[0] = 15000;
-#endif
+
+	if (BOARD_IS_BBXM(machine.board_id)){
+		tsc_per_ms[0] = 16250;
+	} else if (BOARD_IS_BB(machine.board_id)){
+		tsc_per_ms[0] = 15000;
+	} else {
+		panic("Can not do the clock setup. machine (0x%08x) is unknown\n",machine.board_id);
+	};
 
 	return 0;
 }

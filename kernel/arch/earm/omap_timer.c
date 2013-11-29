@@ -2,6 +2,7 @@
 #include "kernel/clock.h"
 #include <sys/types.h>
 #include <machine/cpu.h>
+#include <minix/board.h>
 #include <minix/mmio.h>
 #include <assert.h>
 #include <io.h>
@@ -157,37 +158,37 @@ void omap3_frclock_init(void)
 	&fr_timer_phys_map, (vir_bytes) &fr_timer.base);
 
     /* enable the clock */
-#ifdef AM335X
-    /* Disable the module and wait for the module to be disabled */
-    set32(CM_PER_TIMER7_CLKCTRL, CM_MODULEMODE_MASK,CM_MODULEMODE_DISABLED);
-    while( (mmio_read(CM_PER_TIMER7_CLKCTRL) & CM_CLKCTRL_IDLEST) != CM_CLKCTRL_IDLEST_DISABLE);
+    if(BOARD_IS_BBXM(machine.board_id)){
+	    /* Stop timer */
+	    mmio_clear(fr_timer.base + fr_timer.regs->TCLR, OMAP3_TCLR_ST);
 
-    set32(CLKSEL_TIMER7_CLK,CLKSEL_TIMER7_CLK_SEL_MASK, CLKSEL_TIMER7_CLK_SEL_SEL2);
-    while( (read32(CLKSEL_TIMER7_CLK) & CLKSEL_TIMER7_CLK_SEL_MASK) != CLKSEL_TIMER7_CLK_SEL_SEL2);
+	    /* Use functional clock source for GPTIMER10 */
+	    mmio_set(OMAP3_CM_CLKSEL_CORE, OMAP3_CLKSEL_GPT10);
 
-    /* enable the module and wait for the module to be ready */
-    set32(CM_PER_TIMER7_CLKCTRL,CM_MODULEMODE_MASK,CM_MODULEMODE_ENABLE);
-    while( (mmio_read(CM_PER_TIMER7_CLKCTRL) & CM_CLKCTRL_IDLEST) != CM_CLKCTRL_IDLEST_FUNC);
-#endif
+	    /* Scale timer down to 13/8 = 1.625 Mhz to roughly get microsecond ticks */
+	    /* The scale is computed as 2^(PTV+1). So if PTV == 2, we get 2^3 = 8.
+	     */
+	    mmio_set(fr_timer.base + fr_timer.regs->TCLR, (2 << OMAP3_TCLR_PTV));
+    } else if(BOARD_IS_BB(machine.board_id)){
+	    /* Disable the module and wait for the module to be disabled */
+	    set32(CM_PER_TIMER7_CLKCTRL, CM_MODULEMODE_MASK,CM_MODULEMODE_DISABLED);
+	    while( (mmio_read(CM_PER_TIMER7_CLKCTRL) & CM_CLKCTRL_IDLEST) != CM_CLKCTRL_IDLEST_DISABLE);
 
-    /* Stop timer */
-    mmio_clear(fr_timer.base + fr_timer.regs->TCLR, OMAP3_TCLR_ST);
+	    set32(CLKSEL_TIMER7_CLK,CLKSEL_TIMER7_CLK_SEL_MASK, CLKSEL_TIMER7_CLK_SEL_SEL2);
+	    while( (read32(CLKSEL_TIMER7_CLK) & CLKSEL_TIMER7_CLK_SEL_MASK) != CLKSEL_TIMER7_CLK_SEL_SEL2);
 
-#ifdef DM37XX
-    /* Use functional clock source for GPTIMER10 */
-    mmio_set(OMAP3_CM_CLKSEL_CORE, OMAP3_CLKSEL_GPT10);
-#endif
+	    /* enable the module and wait for the module to be ready */
+	    set32(CM_PER_TIMER7_CLKCTRL,CM_MODULEMODE_MASK,CM_MODULEMODE_ENABLE);
+	    while( (mmio_read(CM_PER_TIMER7_CLKCTRL) & CM_CLKCTRL_IDLEST) != CM_CLKCTRL_IDLEST_FUNC);
 
-#ifdef DM37XX
-    /* Scale timer down to 13/8 = 1.625 Mhz to roughly get microsecond ticks */
-    /* The scale is computed as 2^(PTV+1). So if PTV == 2, we get 2^3 = 8.
-     */
-    mmio_set(fr_timer.base + fr_timer.regs->TCLR, (2 << OMAP3_TCLR_PTV));
-#endif
-#ifdef AM335X
-   /* 24Mhz / 16 = 1.5 Mhz */
-    mmio_set(fr_timer.base + fr_timer.regs->TCLR, (3 << OMAP3_TCLR_PTV));
-#endif
+	    /* Stop timer */
+	    mmio_clear(fr_timer.base + fr_timer.regs->TCLR, OMAP3_TCLR_ST);
+
+	   /* 24Mhz / 16 = 1.5 Mhz */
+	    mmio_set(fr_timer.base + fr_timer.regs->TCLR, (3 << OMAP3_TCLR_PTV));
+    }
+
+
 
     /* Start and auto-reload at 0 */
     mmio_write(fr_timer.base + fr_timer.regs->TLDR, 0x0);
@@ -230,11 +231,15 @@ void omap3_timer_init(unsigned freq)
     /* enable the module and wait for the module to be ready */
     set32(CM_WKUP_TIMER1_CLKCTRL,CM_MODULEMODE_MASK,CM_MODULEMODE_ENABLE);
     while( (mmio_read(CM_WKUP_TIMER1_CLKCTRL) & CM_CLKCTRL_IDLEST) != CM_CLKCTRL_IDLEST_FUNC);
+
+    /* Stop timer */
+    mmio_clear(timer.base + fr_timer.regs->TCLR, OMAP3_TCLR_ST);
 #endif
+
+#ifdef DM37XX
     /* Stop timer */
     mmio_clear(timer.base + fr_timer.regs->TCLR, OMAP3_TCLR_ST);
 
-#ifdef DM37XX
     /* Use 32 KHz clock source for GPTIMER1 */
     mmio_clear(OMAP3_CM_CLKSEL_WKUP, OMAP3_CLKSEL_GPT1);
 #endif
