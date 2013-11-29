@@ -6,6 +6,7 @@
 #include <minix/gpio.h>
 #include <minix/clkconf.h>
 #include <minix/type.h>
+#include <minix/board.h>
 
 /* system headers */
 #include <sys/mman.h>
@@ -64,8 +65,9 @@ struct omap_gpio_bank
 	uint32_t inter_values;	/* values when the interrupt was called */
 };
 
-static struct omap_gpio_bank omap_gpio_banks[] = {
-#ifdef AM335X
+static struct omap_gpio_bank *omap_gpio_banks;
+
+static struct omap_gpio_bank am335x_gpio_banks[] = {
 	{
 		    .name = "GPIO0",
 		    .register_address = AM335X_GPIO0_BASE,
@@ -106,7 +108,10 @@ static struct omap_gpio_bank omap_gpio_banks[] = {
 		    .irq_hook_id = AM335X_GPIO3A_IRQ_HOOK_ID,
 
 	    },
-#elif DM37XX
+	{NULL, 0, 0, 0, 0, 0, 0, 0 }
+};
+
+static struct omap_gpio_bank dm37xx_gpio_banks[] = {
 	{
 		    .name = "GPIO1",
 		    .register_address = DM37XX_GPIO1_BASE,
@@ -161,11 +166,10 @@ static struct omap_gpio_bank omap_gpio_banks[] = {
 		    .irq_id = DM37XX_GPIO6_IRQ_HOOK_ID,
 		    .irq_hook_id = DM37XX_GPIO6_IRQ_HOOK_ID,
 	    },
-#endif /* DM37XX */
 	{NULL, 0, 0, 0, 0, 0, 0, 0 }
 };
 
-#define NBANKS ((int)((sizeof(omap_gpio_banks)/sizeof(omap_gpio_banks[0])) - 1))
+static int nbanks; /* number of banks */
 
 /*
  * Defines the set of registers. There is a lot of commonality between the
@@ -213,17 +217,14 @@ gpio_omap_regs_t gpio_omap_am335x = {
 	.SETDATAOUT = AM335X_GPIO_SETDATAOUT
 };
 
-#ifdef AM335X
-static gpio_omap_regs_t *regs = &gpio_omap_am335x;
-#elif DM37XX
-static gpio_omap_regs_t *regs = &gpio_omap_dm37xx;
-#endif /* DM37XX */
+static gpio_omap_regs_t *regs;
+
 
 static struct omap_gpio_bank *
 omap_gpio_bank_get(int gpio_nr)
 {
 	struct omap_gpio_bank *bank;
-	assert(gpio_nr >= 0 && gpio_nr <= 32 * NBANKS);
+	assert(gpio_nr >= 0 && gpio_nr <= 32 * nbanks);
 	bank = &omap_gpio_banks[gpio_nr / 32];
 	return bank;
 }
@@ -233,7 +234,7 @@ omap_gpio_claim(char *owner, int nr, struct gpio **gpio)
 {
 	log_trace(&log, "%s s claiming %d\n", owner, nr);
 
-	if (nr < 0 && nr >= 32 * NBANKS) {
+	if (nr < 0 && nr >= 32 * nbanks) {
 		log_warn(&log, "%s is claiming unknown GPIO number %d\n",
 		    owner, nr);
 		return EINVAL;
@@ -284,7 +285,7 @@ omap_gpio_set(struct gpio *gpio, int value)
 {
 	struct omap_gpio_bank *bank;
 	assert(gpio != NULL);
-	assert(gpio->nr >= 0 && gpio->nr <= 32 * NBANKS);
+	assert(gpio->nr >= 0 && gpio->nr <= 32 * nbanks);
 
 	bank = omap_gpio_bank_get(gpio->nr);
 	if (value == 1) {
@@ -302,7 +303,7 @@ omap_gpio_read(struct gpio *gpio, int *value)
 {
 	struct omap_gpio_bank *bank;
 	assert(gpio != NULL);
-	assert(gpio->nr >= 0 && gpio->nr <= 32 * NBANKS);
+	assert(gpio->nr >= 0 && gpio->nr <= 32 * nbanks);
 
 	bank = omap_gpio_bank_get(gpio->nr);
 	log_trace(&log, "mode=%d OU/IN 0x%08x 0x%08x\n", gpio->mode,
@@ -327,7 +328,7 @@ omap_gpio_intr_read(struct gpio *gpio, int *value)
 {
 	struct omap_gpio_bank *bank;
 	assert(gpio != NULL);
-	assert(gpio->nr >= 0 && gpio->nr <= 32 * NBANKS);
+	assert(gpio->nr >= 0 && gpio->nr <= 32 * nbanks);
 
 	bank = omap_gpio_bank_get(gpio->nr);
 	/* TODO: check if interrupt where enabled?? */
@@ -385,9 +386,22 @@ omap_gpio_init(struct gpio_driver *gpdrv)
 	int i;
 	struct minix_mem_range mr;
 	struct omap_gpio_bank *bank;
+	struct machine machine;
+	sys_getmachine(&machine);
+
+	nbanks =0;
+	omap_gpio_banks = NULL;
+	if (BOARD_IS_BBXM(machine.board_id)){
+		omap_gpio_banks = dm37xx_gpio_banks;
+		regs = &gpio_omap_dm37xx;
+	} else if (BOARD_IS_BB(machine.board_id)){
+		omap_gpio_banks = am335x_gpio_banks;
+		regs = &gpio_omap_am335x;
+	}
 
 	bank = &omap_gpio_banks[0];
 	for (i = 0; omap_gpio_banks[i].name != NULL; i++) {
+		nbanks++;
 		bank = &omap_gpio_banks[i];
 		mr.mr_base = bank->register_address;
 		mr.mr_limit = bank->register_address + 0x400;
@@ -410,15 +424,19 @@ omap_gpio_init(struct gpio_driver *gpdrv)
 
 		revision = 0;
 		revision = read32(bank->base_address + regs->REVISION);
+		unsigned int expected_major = 0;
+		unsigned int expected_minor = 0;
+		if (BOARD_IS_BBXM(machine.board_id)){
+			expected_major = 2;
+			expected_minor = 5;
+		} else if (BOARD_IS_BB(machine.board_id)){
+			expected_major = 0;
+			expected_minor = 1;
+		}
 		/* test if we can access it */
 		if (
-#ifdef AM335X
-		    AM335X_GPIO_REVISION_MAJOR(revision) != 0
-		    || AM335X_GPIO_REVISION_MINOR(revision) != 1
-#elif DM37XX	    
-		    DM37XX_GPIO_REVISION_MAJOR(revision) != 2
-		    || DM37XX_GPIO_REVISION_MINOR(revision) != 5
-#endif /* DM37XX */
+		    AM335X_GPIO_REVISION_MAJOR(revision) != expected_major
+		    || AM335X_GPIO_REVISION_MINOR(revision) != expected_minor
 		    ) {
 			log_warn(&log,
 			    "Failed to read the revision of GPIO bank %s.. disabling\n",
@@ -451,13 +469,13 @@ omap_gpio_init(struct gpio_driver *gpdrv)
 	};
 
 	clkconf_init();
-#ifdef AM335X
-	/* Nothing to enable for GPIO on AM335X */
-#elif DM37XX
-	/* enable the interface and functional clock on GPIO bank 1 */
-	clkconf_set(CM_FCLKEN_WKUP, BIT(3), 0xffffffff);
-	clkconf_set(CM_ICLKEN_WKUP, BIT(3), 0xffffffff);
-#endif /* DM37XX */
+
+	if (BOARD_IS_BBXM(machine.board_id)){
+		/* enable the interface and functional clock on GPIO bank 1 , this only
+		   applies to the Beagelboard XM */
+		clkconf_set(CM_FCLKEN_WKUP, BIT(3), 0xffffffff);
+		clkconf_set(CM_ICLKEN_WKUP, BIT(3), 0xffffffff);
+	}
 	clkconf_release();
 
 
