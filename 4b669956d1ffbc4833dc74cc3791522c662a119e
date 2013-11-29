@@ -1,0 +1,7 @@
+Verified+1: Jenkins
+Code-Review+2: Thomas Cort <tcort@minix3.org>
+Submitted-by: Thomas Cort <tcort@minix3.org>
+Submitted-at: Fri, 29 Nov 2013 21:06:16 +0100
+Reviewed-on: http://gerrit-minix.few.vu.nl/1172
+Project: minix
+Branch: refs/heads/master
