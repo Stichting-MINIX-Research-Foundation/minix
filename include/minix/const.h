@@ -146,6 +146,7 @@
 
 #define SERVARNAME		"cttyline"
 #define ARCHVARNAME		"arch"
+#define BOARDVARNAME		"board"
 #define SERBAUDVARNAME		"cttybaud"
 
 /* Bits for s_flags in the privilege structure. */

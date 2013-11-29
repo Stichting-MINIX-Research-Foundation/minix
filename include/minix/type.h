@@ -94,6 +94,9 @@ struct machine {
   int padding;			/* used to be protected */
   int apic_enabled; /* does the kernel use APIC or not? */
   phys_bytes	acpi_rsdp; /* where is the acpi RSDP */
+  unsigned int board_id;   /* Identifier for the board see   */
+                           /* include/minix/board.h for more */
+                           /* information.                   */
 };
 
 struct io_range
