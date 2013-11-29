@@ -1,7 +1,7 @@
 #ifndef _OMAP_TIMER_REGISTERS_H
 #define _OMAP_TIMER_REGISTERS_H
 
-#ifdef DM37XX
+//#ifdef DM37XX
 
 /* General-purpose timer register map */
 #define OMAP3_GPTIMER1_BASE  0x48318000 /* GPTIMER1 physical address */
@@ -16,7 +16,7 @@
 #define OMAP3_GPTIMER10_BASE 0x48086000 /* GPTIMER10 physical address */
 #define OMAP3_GPTIMER11_BASE 0x48088000 /* GPTIMER11 physical address */
 
-#endif /* DM37XX */
+//#endif /* DM37XX */
 
 /* General-purpose timer registers */
 #define OMAP3_TIMER_TIDR      0x000 /* IP revision code */
@@ -40,7 +40,7 @@
 #define OMAP3_TIMER_TOCR      0x054 /* Masks tick interrupt */
 #define OMAP3_TIMER_TOWR      0x058 /* Number of masked overflow interrupts */
 
-#ifdef AM335X
+//#ifdef AM335X
 #define AM335X_DMTIMER0_BASE      0x44E05000  /* DMTimer0 Registers */
 #define AM335X_DMTIMER1_1MS_BASE  0x44E31000 /* DMTimer1 1ms Registers (Accurate 1ms timer) */
 #define AM335X_DMTIMER2_BASE      0x48040000 /*  DMTimer2 Registers */
@@ -68,7 +68,7 @@
 #define AM335X_TIMER_TSICR     0x054 /* Control posted mode and functional SW reset */
 #define AM335X_TIMER_TCAR2     0x058 /* Second captured value of counter register */
 
-#endif
+//#endif
 
 
 /* Interrupt status register fields */
