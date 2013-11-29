@@ -9,6 +9,7 @@
 #include <minix/i2c.h>
 #include <minix/log.h>
 #include <minix/type.h>
+#include <minix/board.h>
 
 /* system headers */
 #include <sys/mman.h>
@@ -455,20 +456,23 @@ sef_cb_init(int type, sef_init_info_t * UNUSED(info))
 {
 	int r;
 	char regex[DS_MAX_KEYLEN];
+	struct machine machine;
+	sys_getmachine(&machine);
 
 	if (type != SEF_INIT_FRESH) {
 		/* Restore a prior state. */
 		lu_state_restore();
 	}
-#if defined(AM335X) || defined(DM37XX)
-	/* Set callback and initialize the bus */
-	r = omap_interface_setup(&process, i2c_bus_id);
-	if (r != OK) {
-		return r;
+	
+	if (BOARD_IS_BBXM(machine.board_id) || BOARD_IS_BB(machine.board_id)){
+		/* Set callback and initialize the bus */
+		r = omap_interface_setup(&process, i2c_bus_id);
+		if (r != OK) {
+			return r;
+		}
+	} else {
+		return ENODEV;
 	}
-#else
-#error				/* Unknown SoC or bad configuration */
-#endif
 
 	/* Announce we are up when necessary. */
 	if (type != SEF_INIT_LU) {

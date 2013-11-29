@@ -5,6 +5,8 @@
 #include <minix/spin.h>
 #include <minix/log.h>
 #include <minix/mmio.h>
+#include <minix/type.h>
+#include <minix/board.h>
 #include <sys/mman.h>
 #include <sys/time.h>
 
@@ -1233,13 +1235,18 @@ host_initialize_host_structure_mmchs(struct mmc_host *host)
 {
 	/* Initialize the basic data structures host slots and cards */
 	int i;
+	mmchs = NULL;
 
-#ifdef AM335X
-	mmchs = &bone_sdcard;
-#endif
-#ifdef DM37XX
-	mmchs = &bbxm_sdcard;
-#endif
+	struct machine  machine ;
+	sys_getmachine(&machine);
+
+	if (BOARD_IS_BBXM(machine.board_id)){
+		mmchs = &bbxm_sdcard;
+	} else if ( BOARD_IS_BB(machine.board_id)){
+		mmchs = &bone_sdcard;
+	}
+	
+	assert(mmchs);
 	host->host_set_instance = mmchs_host_set_instance;
 	host->host_init = mmchs_host_init;
 	host->set_log_level = mmchs_set_log_level;
