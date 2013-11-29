@@ -7,6 +7,7 @@
 #include <minix/minlib.h>
 #include <minix/const.h>
 #include <minix/type.h>
+#include <minix/board.h>
 #include <minix/com.h>
 #include <sys/types.h>
 #include <sys/param.h>
@@ -195,6 +196,21 @@ void get_parameters(u32_t ebx, kinfo_t *cbi)
 
 	/* let higher levels know what we are booting on */
 	mb_set_param(cbi->param_buf, ARCHVARNAME, "earm", cbi);
+#ifdef AM335X
+       int id = get_board_id_by_short_name("A335BONE");
+       printf("BOARD ID=0x%08x\n",id);
+       const char * boardname = get_board_name(id);
+       printf("BOARD NAME=%s\n",boardname);
+       mb_set_param(cbi->param_buf, BOARDVARNAME,(char *) boardname, cbi);
+#endif
+#ifdef DM337x
+       int id = get_board_id_by_short_name("BBXM");
+       printf("BOARD ID=0x%08x\n",id);
+       const char * boardname = get_board_name(id);
+       printf("BOARD NAME=%s\n",boardname);
+       mb_set_param(cbi->param_buf, BOARDVARNAME,(char *) boardname, cbi);
+#endif
+
 
 	/* round user stack down to leave a gap to catch kernel
 	 * stack overflow; and to distinguish kernel and user addresses
