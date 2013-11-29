@@ -131,14 +131,9 @@ void kmain(kinfo_t *local_cbi)
   memcpy(&kinfo, local_cbi, sizeof(kinfo));
   memcpy(&kmess, kinfo.kmess, sizeof(kmess));
 
-/* The following will be replaced with code getting this information from the 
-   bootloader */
-#ifdef DM37XX
-  machine.board_id = BOARD_ID_BBXM;
-#endif
-#ifdef AM335X
-  machine.board_id = BOARD_ID_BBW;
-#endif
+   /* We have done this exercise in pre_init so we expect this code
+      to simply work! */
+   machine.board_id = get_board_id_by_name(env_get(BOARDVARNAME));
 #ifdef __arm__
   /* We want to initialize serial before we do any output */
   omap3_ser_init();

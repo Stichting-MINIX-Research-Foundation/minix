@@ -19,9 +19,9 @@
 #define MINIX_BOARD_SHIFT              (8)
 #define MINIX_BOARD_VARIANT_SHIFT      (0)
 
-/* 8 bits */
+/* 4 bits */
 #define MINIX_BOARD_ARCH_MASK \
-	(0XFF << MINIX_BOARD_ARCH_SHIFT)
+	(0XF << MINIX_BOARD_ARCH_SHIFT)
 /* 4 bits */
 #define MINIX_BOARD_ARCH_VARIANT_MASK \
 	(0XF << MINIX_BOARD_ARCH_VARIANT_SHIFT)
@@ -171,6 +171,19 @@ get_board_id_by_short_name(const char *name)
 	for (x = 0; x < sizeof(shortname2id) / sizeof(shortname2id[0]); x++) {
 		if (strncmp(name, shortname2id[x].name, 15) == 0) {
 			return shortname2id[x].id;
+		}
+	}
+	return 0;
+}
+
+/* returns 0 if no board was found that match that id */
+static int
+get_board_id_by_name(const char *name)
+{
+	int x;
+	for (x = 0; x < sizeof(board_id2name) / sizeof(board_id2name[0]); x++) {
+		if (strncmp(name, board_id2name[x].name, 40) == 0) {
+			return board_id2name[x].id;
 		}
 	}
 	return 0;
