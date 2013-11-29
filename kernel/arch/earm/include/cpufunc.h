@@ -410,6 +410,17 @@ static inline void write_vbar(u32_t vbar)
 	isb();
 }
 
+#define MIDR_IMPLEMENTER_SHIFT (24)
+#define MIDR_IMPLEMENTER_MASK (0xFF << MIDR_IMPLEMENTER_SHIFT)
+#define MIDR_MAJOR_REV_SHIFT (20)
+#define MIDR_MAJOR_REV_MASK (0xF << MIDR_MAJOR_REV_SHIFT)
+#define MIDR_ARCH_CODE_SHIFT (16)
+#define MIDR_ARCH_CODE_MASK (0xF << MIDR_ARCH_CODE_SHIFT)
+#define MIDR_PART_NUMBER_SHIFT (4)
+#define MIDR_PART_NUMBER_MASK (0xFFF << MIDR_PART_NUMBER_SHIFT)
+#define MIDR_MINOR_REV_SHIFT (0)
+#define MIDR_MINOR_REV_MASK (0xF << MIDR_MINOR_REV_SHIFT)
+
 /* Read the Main ID Register  */
 static inline u32_t read_midr()
 {

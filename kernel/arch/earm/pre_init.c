@@ -277,6 +277,71 @@ void get_parameters(u32_t ebx, kinfo_t *cbi)
 	}
 }
 
+
+
+
+#define OMAP3_ROM_ADDRESS 0x40000000
+#define OMAP3_ROM_SIZE 0x00020000
+
+
+struct omap_rom_sum {
+	u32_t sum,
+	u32_t board_id,
+	
+} ;
+
+static struct  omap_rom_sum[] = {
+	{ .sum = 0x2185, .board_id = BOARD_ID_BBW };
+}
+
+void determine_omap_board_id(){
+	/* for am335x read 0x44E10600 */
+	//27-12  (See AM335x errata for specific information on each revision.)
+	//11-1  (Device part number 0xB944)
+
+
+        /*
+        * 16-bit checksum, rotating right before each addition;
+        * overflow is discarded.
+        */
+        u_char *p;
+	u32_t count = 0;
+        u_int lcrc = 0;
+	p = (char *) OMAP3_ROM_ADDRESS;
+	
+        for (count =0 ; count < OMAP3_ROM_SIZE ; count++){
+		if (lcrc & 1) { lcrc |= 0x10000; }
+		lcrc = ((lcrc >> 1) + *p) & 0xffff;
+		p++;
+        }
+	/* calculate a BSD compatible checksum of the rom code */
+	printf("ROM sum 0x%04x\n",lcrc);
+}
+
+void determine_board_id(){
+
+	u32_t midr = read_midr();
+	u32_t impl = (midr & MIDR_IMPLEMENTER_MASK) >> MIDR_IMPLEMENTER_SHIFT;
+	u32_t major = (midr & MIDR_MAJOR_REV_MASK) >> MIDR_MAJOR_REV_SHIFT;
+	u32_t arch_code = (midr & MIDR_ARCH_CODE_MASK) >> MIDR_ARCH_CODE_SHIFT;
+	u32_t part_nr = (midr & MIDR_PART_NUMBER_MASK) >> MIDR_PART_NUMBER_SHIFT;
+	u32_t minor = (midr & MIDR_MINOR_REV_MASK) >> MIDR_MINOR_REV_SHIFT;
+
+
+	/* ARMv7 Must have 0x41 as implementer code */
+	assert(impl == 0x41); 
+	
+	/* if arch code equals 0xf we need to read out the cpuid register */
+	if (arch_code == 0xf){ 
+
+	}
+	printf("ID 0x%08x\n",midr);
+	printf("ID IMPL MASKED%08x\n",midr & MIDR_IMPLEMENTER_MASK);
+	
+	printf(" IMPL= 0x%x\nmajor= 0x%x\nminor= 0x%x\n arch_code= 0x%0x\n part_nr= 0x%0x\n",impl,major,minor,arch_code,part_nr);
+	determine_omap_board_id();	
+}
+
 kinfo_t *pre_init(u32_t magic, u32_t ebx)
 {
 	/* Clear BSS */
@@ -287,6 +352,7 @@ kinfo_t *pre_init(u32_t magic, u32_t ebx)
 	 * Here we find out whether we should do serial output.
 	 */
 	get_parameters(ebx, &kinfo);
+	determine_board_id();
 
 	/* Make and load a pagetable that will map the kernel
 	 * to where it should be; but first a 1:1 mapping so
@@ -314,3 +380,4 @@ void busy_delay_ms(int x) { }
 int raise(int n) { panic("raise(%d)\n", n); }
 int kern_phys_map_ptr( phys_bytes base_address, vir_bytes io_size, 
 	struct kern_phys_map * priv, vir_bytes ptr) {};
+struct machine machine;
