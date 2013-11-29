@@ -16,6 +16,7 @@
 #include <minix/endpoint.h>
 #include <machine/vmparam.h>
 #include <minix/u64.h>
+#include <minix/board.h>
 #include <minix/type.h>
 #include <minix/reboot.h>
 #include "clock.h"
@@ -103,6 +104,7 @@ void bsp_finish_booting(void)
   machine.processors_count = 1;
   machine.bsp_id = 0;
 #endif
+  
 
   /* Kernel may no longer use bits of memory as VM will be running soon */
   kernel_may_alloc = 0;
@@ -129,6 +131,14 @@ void kmain(kinfo_t *local_cbi)
   memcpy(&kinfo, local_cbi, sizeof(kinfo));
   memcpy(&kmess, kinfo.kmess, sizeof(kmess));
 
+/* The following will be replaced with code getting this information from the 
+   bootloader */
+#ifdef DM37XX
+  machine.board_id = BOARD_ID_BBXM;
+#endif
+#ifdef AM335X
+  machine.board_id = BOARD_ID_BBW;
+#endif
 #ifdef __arm__
   /* We want to initialize serial before we do any output */
   omap3_ser_init();

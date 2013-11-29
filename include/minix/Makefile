@@ -5,7 +5,7 @@ INCSDIR= /usr/include/minix
 INCS+=	dirent.h paths.h param.h
 INCS+=	acpi.h audio_fw.h bitmap.h \
 	bdev.h blockdriver.h blockdriver_mt.h \
-	btrace.h \
+	board.h btrace.h \
 	callnr.h chardriver.h clkconf.h com.h \
 	config.h const.h cpufeature.h \
 	debug.h devio.h devman.h dmap.h \

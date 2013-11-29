@@ -1150,6 +1150,7 @@
 ./usr/include/minix/acpi.h		minix-sys
 ./usr/include/minix/audio_fw.h		minix-sys
 ./usr/include/minix/bdev.h		minix-sys
+./usr/include/minix/board.h		minix-sys
 ./usr/include/minix/bitmap.h		minix-sys
 ./usr/include/minix/blockdriver.h	minix-sys
 ./usr/include/minix/blockdriver_mt.h	minix-sys
