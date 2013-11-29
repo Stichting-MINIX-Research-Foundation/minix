@@ -1,6 +1,8 @@
 #include <minix/config.h>
 #include <minix/drivers.h>
 #include <minix/vm.h>
+#include <minix/type.h>
+#include <minix/board.h>
 #include <sys/mman.h>
 #include <assert.h>
 #include <signal.h>
@@ -118,24 +120,20 @@ typedef struct uart_port {
 	int irq;
 } uart_port_t;
 
-#ifdef DM37XX 
 /* OMAP3 UART base addresses. */
-static uart_port_t omap3[] = {
+static uart_port_t dm37xx_ports[] = {
   { OMAP3_UART1_BASE, 72},	/* UART1 */
   { OMAP3_UART2_BASE, 73},	/* UART2 */
   { OMAP3_UART3_BASE, 74},	/* UART3 */
   { 0, 0 }
 };
-#endif
 
-#ifdef AM335X
-static uart_port_t omap3[] = {
+static uart_port_t am335x_ports[] = {
   {  0x44E09000 , 72 },	/* UART0 */
   { 0, 0 },
   { 0, 0 },
   { 0, 0 }
 };
-#endif
 
 
 static int rs_write(tty_t *tp, int try);
@@ -482,6 +480,7 @@ rs_init(tty_t *tp)
 	uart_port_t this_omap3;
 	char l[10];
 	struct minix_mem_range mr;
+	struct machine machine;
 
 	/* Associate RS232 and TTY structures. */
 	line = tp - &tty_table[NR_CONS];
@@ -502,7 +501,15 @@ rs_init(tty_t *tp)
 	/* Set up input queue. */
 	rs->ihead = rs->itail = rs->ibuf;
 
-	this_omap3 = omap3[line];
+	sys_getmachine(&machine);
+	
+	if (BOARD_IS_BBXM(machine.board_id)){
+		this_omap3 = dm37xx_ports[line];
+	} else if (BOARD_IS_BB(machine.board_id)){
+		this_omap3 = am335x_ports[line];
+	} else {
+		return;
+	}
 	if (this_omap3.base_addr == 0) return;
 
 	/* Configure memory access */
