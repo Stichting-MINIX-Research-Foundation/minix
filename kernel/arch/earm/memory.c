@@ -6,6 +6,7 @@
 #include <machine/vm.h>
 
 #include <minix/type.h>
+#include <minix/board.h>
 #include <minix/syslib.h>
 #include <minix/cpufeature.h>
 #include <string.h>
@@ -737,12 +738,13 @@ int arch_phys_map(const int index,
 	}
 	else if (index == frclock_index) {
 
-#ifdef DM37XX
-		*addr = OMAP3_GPTIMER10_BASE;
-#endif
-#ifdef AM335X
-		*addr = AM335X_DMTIMER7_BASE;
-#endif
+		if (BOARD_IS_BBXM(machine.board_id)){
+			*addr = OMAP3_GPTIMER10_BASE;
+		} else if (BOARD_IS_BB(machine.board_id)){
+			*addr = AM335X_DMTIMER7_BASE;
+		} else {
+			panic("Can not do the clock setup. machine (0x%08x) is unknown\n",machine.board_id);
+		};
 		*len = ARM_PAGE_SIZE;
 		*flags = VMMF_UNCACHED | VMMF_USER;
 		return OK;
@@ -792,15 +794,15 @@ int arch_phys_map_reply(const int index, const vir_bytes addr)
 		return OK;
 	}
 	else if (index == frclock_index) {
-#if defined(DM37XX)
-		minix_kerninfo.minix_frclock_tcrr = addr + OMAP3_TIMER_TCRR;
-		minix_kerninfo.minix_arm_frclock_hz = 1625000;
-#elif defined(AM335X) 
-		minix_kerninfo.minix_frclock_tcrr = addr + AM335X_TIMER_TCRR;
-		minix_kerninfo.minix_arm_frclock_hz = 1500000;
-#else
-#error ARM: plese define either AM335X or DM37XX.
-#endif
+		if (BOARD_IS_BBXM(machine.board_id)){
+			minix_kerninfo.minix_frclock_tcrr = addr + OMAP3_TIMER_TCRR;
+			minix_kerninfo.minix_arm_frclock_hz = 1625000;
+		} else if (BOARD_IS_BB(machine.board_id)){
+			minix_kerninfo.minix_frclock_tcrr = addr + AM335X_TIMER_TCRR;
+			minix_kerninfo.minix_arm_frclock_hz = 1500000;
+		} else {
+			panic("memory setup errot machine (0x%08x) is unhandled\n",machine.board_id);
+		};
 
 		return OK;
 	}
