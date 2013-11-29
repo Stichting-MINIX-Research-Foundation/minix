@@ -176,6 +176,19 @@ get_board_id_by_short_name(const char *name)
 	return 0;
 }
 
+/* returns 0 if no board was found that match that id */
+static int
+get_board_id_by_name(const char *name)
+{
+	int x;
+	for (x = 0; x < sizeof(board_id2name) / sizeof(board_id2name[0]); x++) {
+		if (strncmp(name, board_id2name[x].name, 40) == 0) {
+			return board_id2name[x].id;
+		}
+	}
+	return 0;
+}
+
 /* convert a board id to a board name to use later 
    returns NULL if no board was found that match that id */
 static const char *

@@ -1,6 +1,7 @@
 #include <sys/types.h>
 #include <machine/cpu.h>
 #include <minix/type.h>
+#include <minix/board.h>
 #include <io.h>
 
 #include "kernel/kernel.h"
@@ -21,12 +22,13 @@ static kern_phys_map intr_phys_map;
 
 int intr_init(const int auto_eoi)
 {
-#ifdef DM37XX
-    omap_intr.base = OMAP3_DM37XX_INTR_BASE;
-#endif
-#ifdef AM335X
-    omap_intr.base = OMAP3_AM335X_INTR_BASE;
-#endif
+    if (BOARD_IS_BBXM(machine.board_id)){
+	omap_intr.base = OMAP3_DM37XX_INTR_BASE;
+    } else if (BOARD_IS_BB(machine.board_id)){
+	omap_intr.base = OMAP3_AM335X_INTR_BASE;
+    } else {
+	panic("Can not do the interrupt setup. machine (0x%08x) is unknown\n",machine.board_id);
+    };
     omap_intr.size = 0x1000 ; /* 4K */
 
     kern_phys_map_ptr(omap_intr.base,omap_intr.size,

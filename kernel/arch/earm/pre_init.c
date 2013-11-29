@@ -30,7 +30,7 @@ struct kmessages kmessages;
 /* pg_utils.c uses this; in this phase, there is a 1:1 mapping. */
 phys_bytes vir2phys(void *addr) { return (phys_bytes) addr; } 
 
-static void setup_mbi(multiboot_info_t *mbi);
+static void setup_mbi(multiboot_info_t *mbi,char *cmdline);
 
 /* String length used for mb_itoa */
 #define ITOA_BUFFER_SIZE 20
@@ -41,8 +41,73 @@ int kernel_may_alloc = 1;
 extern u32_t _edata;
 extern u32_t _end;
 
-static int mb_set_param(char *bigbuf, char *name, char *value, kinfo_t *cbi)
+/**
+ *
+ * The following function combines a few things together
+ * that can well be done using standard libc like strlen/strstr
+ * and such but these are not available in pre_init stage. 
+ *
+ * The function expects content to be in the form of space separated
+ * key value pairs.
+ * param content the contents to search in
+ * param key the key to find (this *should* include the key/value delimiter)
+ * param value a pointer to an initialized char * of at least value_max_len length
+ * param value_max_len the maximum length of the value to store in value including
+ *       the end char
+ *
+**/
+int find_value(char * content,char * key,char *value,int value_max_len){
+
+	char *iter,*keyp;
+	int key_len,content_len,match_len,value_len;
+
+	/* return if the input is invalid */
+	if  (key == NULL || content == NULL || value == NULL){
+		return 1;
+	}
+
+	/* find the key and content length */
+	key_len = content_len =0;
+	for(iter = key ; *iter != '\0'; iter++, key_len++);
+	for(iter = content ; *iter != '\0'; iter++, content_len++);
+
+	/* return if key or content length invalid */
+	if (key_len == 0 || content_len == 0) {
+		return 1;
+	}
+
+	/* now find the key in the contents */
+	match_len =0;
+	for (iter = content ,keyp=key; match_len < key_len && *iter != '\0' ; iter++){
+		if (*iter == *keyp){
+			match_len++;
+			keyp++;
+			continue;
+		} 
+		/* The current key does not match the value , reset */
+		match_len =0;
+		keyp=key;
+	}
+
+	if (match_len == key_len){
+		printf("key found at %d %s\n", match_len, &content[match_len]);	
+		value_len = 0;
+		/* copy the content to the value char iter already points to the first 
+		   char value */
+		while(*iter != '\0' && *iter != ' ' && value_len  + 1< value_max_len){
+			*value++ = *iter++;
+			value_len++;
+		}
+		*value='\0';
+		return 0;
+	}
+	return 1; /* not found */
+}
+
+static int mb_set_param(char *bigbuf,char *name,char *value, kinfo_t *cbi)
 {
+	/* bigbuf contains a list of key=value pairs separated by \0 char.
+	 * The list itself is ended by a second \0 terminator*/
 	char *p = bigbuf;
 	char *bufend = bigbuf + MULTIBOOT_PARAM_BUF_SIZE;
 	char *q;
@@ -57,18 +122,24 @@ static int mb_set_param(char *bigbuf, char *name, char *value, kinfo_t *cbi)
 	while (*p) {
 		if (strncmp(p, name, namelen) == 0 && p[namelen] == '=') {
 			q = p;
-			while (*q) q++;
-			for (q++; q < bufend; q++, p++)
+			/* let q point to the end of the entry */
+			while (*q) q++; 
+			/* now copy the remained of the buffer */
+			for (q++; q < bufend; q++, p++) 
 				*p = *q;
 			break;
 		}
-		while (*p++)
-			;
+
+		/* find the end of the buffer */
+		while (*p++);
 		p++;
 	}
 	
-	for (p = bigbuf; p < bufend && (*p || *(p + 1)); p++)
-		;
+
+	/* find the first empty spot */
+	for (p = bigbuf; p < bufend && (*p || *(p + 1)); p++);
+
+	/* unless we are the first entry step over the delimiter */
 	if (p > bigbuf) p++;
 	
 	/* Make sure there's enough space for the new parameter */
@@ -79,7 +150,7 @@ static int mb_set_param(char *bigbuf, char *name, char *value, kinfo_t *cbi)
 	p[namelen] = '=';
 	strcpy(p + namelen + 1, value);
 	p[namelen + valuelen + 1] = 0;
-	p[namelen + valuelen + 2] = 0;
+	p[namelen + valuelen + 2] = 0; /* end with a second delimiter */
 	return 0;
 }
 
@@ -103,7 +174,6 @@ int overlaps(multiboot_module_t *mod, int n, int cmp_mod)
 /* XXX: hard-coded stuff for modules */
 #define MB_MODS_NR 12
 #define MB_MODS_BASE  0x82000000
-#define MB_PARAM_MOD  0x88000000
 #define MB_MODS_ALIGN 0x00800000 /* 8 MB */
 #define MB_MMAP_START 0x80000000
 #define MB_MMAP_SIZE  0x10000000 /* 256 MB */
@@ -111,7 +181,7 @@ int overlaps(multiboot_module_t *mod, int n, int cmp_mod)
 multiboot_module_t mb_modlist[MB_MODS_NR];
 multiboot_memory_map_t mb_memmap;
 
-void setup_mbi(multiboot_info_t *mbi)
+void setup_mbi(multiboot_info_t *mbi, char *cmdline)
 {
 	memset(mbi, 0, sizeof(*mbi));
 	mbi->flags = MULTIBOOT_INFO_MODS | MULTIBOOT_INFO_MEM_MAP |
@@ -127,8 +197,7 @@ void setup_mbi(multiboot_info_t *mbi)
 	    mb_modlist[i].cmdline = 0;
 	}
 
-	/* Final 'module' is actually a string holding the boot cmdline */
-	mbi->cmdline = MB_PARAM_MOD;
+	mbi->cmdline = (u32_t)cmdline;
 
 	mbi->mmap_addr =(u32_t)&mb_memmap;
 	mbi->mmap_length = sizeof(mb_memmap);
@@ -139,7 +208,7 @@ void setup_mbi(multiboot_info_t *mbi)
 	mb_memmap.type = MULTIBOOT_MEMORY_AVAILABLE;
 }
 
-void get_parameters(u32_t ebx, kinfo_t *cbi) 
+void get_parameters(u32_t ebx, kinfo_t *cbi,char *cmdline) 
 {
 	multiboot_memory_map_t *mmap;
 	multiboot_info_t *mbi = &cbi->mbi;
@@ -150,11 +219,11 @@ void get_parameters(u32_t ebx, kinfo_t *cbi)
 	phys_bytes kernbase = (phys_bytes) &_kern_phys_base,
 		kernsize = (phys_bytes) &_kern_size;
 #define BUF 1024
-	static char cmdline[BUF];
+	static char module_cmdline[BUF];
 
 	/* get our own copy of the multiboot info struct and module list */
 	//memcpy((void *) mbi, (void *) ebx, sizeof(*mbi));
-	setup_mbi(mbi);
+	setup_mbi(mbi,cmdline);
 
 	/* Set various bits of info for the higher-level kernel. */
 	cbi->mem_high_phys = 0;
@@ -175,13 +244,13 @@ void get_parameters(u32_t ebx, kinfo_t *cbi)
 		static char value[BUF];
 
 		/* Override values with cmdline argument */
-		memcpy(cmdline, (void *) mbi->cmdline, BUF);
-		p = cmdline;
+		memcpy(module_cmdline, (void *) mbi->cmdline, BUF);
+		p = module_cmdline;
 		while (*p) {
 			var_i = 0;
 			value_i = 0;
-			while (*p == ' ') p++;
-			if (!*p) break;
+			while (*p == ' ') p++; /* skip spaces */
+			if (!*p) break; /* is this the end? */
 			while (*p && *p != '=' && *p != ' ' && var_i < BUF - 1) 
 				var[var_i++] = *p++ ;
 			var[var_i] = 0;
@@ -196,21 +265,8 @@ void get_parameters(u32_t ebx, kinfo_t *cbi)
 
 	/* let higher levels know what we are booting on */
 	mb_set_param(cbi->param_buf, ARCHVARNAME, "earm", cbi);
-#ifdef AM335X
-       int id = get_board_id_by_short_name("A335BONE");
-       printf("BOARD ID=0x%08x\n",id);
-       const char * boardname = get_board_name(id);
-       printf("BOARD NAME=%s\n",boardname);
-       mb_set_param(cbi->param_buf, BOARDVARNAME,(char *) boardname, cbi);
-#endif
-#ifdef DM337x
-       int id = get_board_id_by_short_name("BBXM");
-       printf("BOARD ID=0x%08x\n",id);
-       const char * boardname = get_board_name(id);
-       printf("BOARD NAME=%s\n",boardname);
-       mb_set_param(cbi->param_buf, BOARDVARNAME,(char *) boardname, cbi);
-#endif
-
+	mb_set_param(cbi->param_buf, BOARDVARNAME,(char *)get_board_name(machine.board_id) , cbi);
+	
 
 	/* round user stack down to leave a gap to catch kernel
 	 * stack overflow; and to distinguish kernel and user addresses
@@ -277,18 +333,44 @@ void get_parameters(u32_t ebx, kinfo_t *cbi)
 	}
 }
 
-kinfo_t *pre_init(u32_t magic, u32_t ebx)
+/* use the passed cmdline argument to determine the machine id */
+void set_machine_id(char *cmdline)
 {
+
+	char boardname[20];
+	memset(boardname,'\0',20);
+	if (find_value(cmdline,"board_name=",boardname,20)){
+		/* we expect the bootloader to pass a board_name as argument 
+		 * this however did not happen and given we still are in early
+	      	 * boot we can't use the serial. We therefore generate an interrupt
+		 * and hope the bootloader will do something nice with it */
+		asm volatile("svc #00\n");
+	}  
+	machine.board_id = get_board_id_by_short_name(boardname);
+
+	if (machine.board_id ==0){
+		/* same thing as above there is no safe escape */
+		asm volatile("svc #00\n");
+	}
+}
+
+kinfo_t *pre_init(u32_t brd_info, u32_t img_addr ,char *cons_dev, char *cmdline)
+{
+	/* This is the main "c" entry point into the kernel. It gets called 
+	   from head.S */
+	   
 	/* Clear BSS */
 	memset(&_edata, 0, (u32_t)&_end - (u32_t)&_edata);
 
+	set_machine_id(cmdline);
 	omap3_ser_init();	
+
 	/* Get our own copy boot params pointed to by ebx.
 	 * Here we find out whether we should do serial output.
 	 */
-	get_parameters(ebx, &kinfo);
+	get_parameters(brd_info, &kinfo,cmdline);
 
-	/* Make and load a pagetable that will map the kernel
+	/* Make and load a page table that will map the kernel
 	 * to where it should be; but first a 1:1 mapping so
 	 * this code stays where it should be.
 	 */
@@ -314,3 +396,4 @@ void busy_delay_ms(int x) { }
 int raise(int n) { panic("raise(%d)\n", n); }
 int kern_phys_map_ptr( phys_bytes base_address, vir_bytes io_size, 
 	struct kern_phys_map * priv, vir_bytes ptr) {};
+struct machine machine; /* pre init stage machine */
