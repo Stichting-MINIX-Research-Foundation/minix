@@ -246,9 +246,6 @@ int	 posix_memalign(void **, size_t, size_t);
 void	*alloca(int);     /* built-in for gcc */
 #elif defined(__PCC__) && !defined(__GNUC__)
 #define alloca(size) __builtin_alloca(size)
-#elif (__GNUC__ >= 2)
-/* LSC: MINIX Patch needed (2 following lines) */
-#define alloca(size) __builtin_alloca(size)
 #else
 void	*alloca(size_t);
 #endif /* __GNUC__ */
