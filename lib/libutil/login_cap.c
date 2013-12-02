@@ -575,9 +575,6 @@ setusercontext(login_cap_t *lc, struct passwd *pwd, uid_t uid, u_int flags)
 
 	if (!lc)
 		flc = lc = login_getclass(pwd ? pwd->pw_class : NULL);
-#ifdef __minix
-#define LOGIN_SETLOGIN 0
-#endif
 
 	/*
 	 * Without the pwd entry being passed we cannot set either
