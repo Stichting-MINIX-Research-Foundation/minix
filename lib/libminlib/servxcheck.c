@@ -16,6 +16,7 @@
 #include <unistd.h>
 #include <time.h>
 #include <sys/ioctl.h>
+#include <minix/paths.h>
 #include <net/hton.h>
 #include <net/gen/in.h>
 #include <net/gen/tcp.h>

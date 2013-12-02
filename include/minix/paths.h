@@ -17,4 +17,6 @@
 
 #define _PATH_DRIVERS	"/usr/sbin"
 
+#define	_PATH_SERVACCES	"/etc/serv.access"
+
 #endif /* _MINIX_PATHS_H_ */

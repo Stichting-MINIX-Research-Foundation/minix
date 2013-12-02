@@ -12,6 +12,7 @@ tcpd.c
 #include <unistd.h>
 #include <signal.h>
 #include <minix/config.h>
+#include <minix/paths.h>
 #include <sys/ioctl.h>
 #include <sys/wait.h>
 #include <net/hton.h>

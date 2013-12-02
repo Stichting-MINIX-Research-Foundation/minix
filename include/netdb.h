@@ -131,9 +131,6 @@ typedef _BSD_SIZE_T_	size_t;
 #ifndef _PATH_SERVICES_DB
 #define	_PATH_SERVICES_DB "/var/db/services.db"
 #endif
-#ifdef __minix
-#define	_PATH_SERVACCES	"/etc/serv.access"
-#endif
 #endif
 
 __BEGIN_DECLS
