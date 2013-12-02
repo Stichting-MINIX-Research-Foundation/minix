@@ -1633,15 +1633,8 @@ static uint64_t
 mkfs_seek(uint64_t pos, int whence)
 {
 	if(whence == SEEK_SET) pos += fs_offset_bytes;
-#ifdef __minix
-	uint64_t newpos;
-	if((lseek64(fd, pos, whence, &newpos)) < 0)
-		err(1, "mkfs_seek: lseek64 failed");
-	return newpos;
-#else
 	off_t newpos;
 	if((newpos=lseek(fd, pos, whence)) == (off_t) -1)
 		err(1, "mkfs_seek: lseek failed");
 	return newpos;
-#endif
 }

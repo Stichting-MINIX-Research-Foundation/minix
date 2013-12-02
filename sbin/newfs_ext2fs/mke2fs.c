@@ -1385,18 +1385,10 @@ void
 rdfs(daddr_t bno, int size, void *bf)
 {
 	int n;
-#ifndef __minix
 	off_t offset;
-#else
-	u64_t offset;
-#endif
 
 	offset = bno;
-#ifndef __minix
 	n = pread(fsi, bf, size, offset * sectorsize);
-#else
-	n = pread64(fsi, bf, size, offset * sectorsize);
-#endif
 	if (n != size)
 		err(EXIT_FAILURE, "%s: read error for sector %" PRId64,
 		    __func__, (int64_t)bno);
@@ -1409,21 +1401,13 @@ void
 wtfs(daddr_t bno, int size, void *bf)
 {
 	int n;
-#ifndef __minix
 	off_t offset;
-#else
-	u64_t offset;
-#endif
 
 	if (Nflag)
 		return;
 	offset = bno;
 	errno = 0;
-#ifndef __minix
 	n = pwrite(fso, bf, size, offset * sectorsize);
-#else
-	n = pwrite64(fso, bf, size, offset * sectorsize);
-#endif
 	if (n != size)
 		err(EXIT_FAILURE, "%s: write error for sector %" PRId64,
 		    __func__, (int64_t)bno);

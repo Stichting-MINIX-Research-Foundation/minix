@@ -864,7 +864,6 @@
 #define bind _bind
 #define chdir _chdir
 #define chmod _chmod
-#define chown _chown
 #define chroot _chroot
 #define close _close
 #define dup _dup
@@ -872,7 +871,6 @@
 #define execve _execve
 #define fchdir _fchdir
 #define fchmod _fchmod
-#define fchown _fchown
 #define fcntl _fcntl
 #define flock _flock
 #define fstatfs _fstatfs

@@ -88,7 +88,7 @@ __dead	 void _exit(int);
 int	 access(const char *, int);
 unsigned int alarm(unsigned int);
 int	 chdir(const char *);
-#if !defined(__minix) && (defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE))
+#if defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE)
 int	chown(const char *, uid_t, gid_t) __RENAME(__posix_chown);
 #else
 int	chown(const char *, uid_t, gid_t);
@@ -194,7 +194,7 @@ int	 ftruncate(int, off_t);
  */
 #if (_POSIX_C_SOURCE - 0) >= 199309L || (_XOPEN_SOURCE - 0) >= 500 || \
     defined(_NETBSD_SOURCE)
-#ifndef __minix 
+#ifndef __minix
 int	 fdatasync(int);
 #endif /* !__minix */
 int	 fsync(int);
@@ -247,7 +247,7 @@ typedef	__intptr_t	intptr_t;
 
 int	 brk(void *);
 int	 fchdir(int);
-#if !defined(__minix) && defined(_XOPEN_SOURCE)
+#if defined(_XOPEN_SOURCE)
 int	 fchown(int, uid_t, gid_t) __RENAME(__posix_fchown);
 #else
 int	 fchown(int, uid_t, gid_t);
@@ -321,14 +321,6 @@ int	unlinkat(int, const char *, int);
 /*
  * Implementation-defined extensions
  */
-#ifdef __minix
-
-int lseek64(int fd, u64_t _offset, int _whence, u64_t *_newpos);
-#if defined(_NETBSD_SOURCE)
-#include <minix/type.h>
-#endif /* defined(_NETBSD_SOURCE) */
-#endif /* __minix */
-
 #if defined(_NETBSD_SOURCE)
 #ifndef __minix
 int	 acct(const char *);

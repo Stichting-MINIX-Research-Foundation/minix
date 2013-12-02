@@ -318,23 +318,13 @@ bread(int fd, char *buf, daddr_t blk, long size)
 
 	offset = blk;
 	offset *= dev_bsize;
-#ifndef __minix
 	if (lseek(fd, offset, 0) < 0)
 		rwerror("SEEK", blk);
-#else
-	if (lseek64(fd, offset, 0, NULL) < 0)
-		rwerror("SEEK", blk);
-#endif
 	else if (read(fd, buf, (int)size) == size)
 		return (0);
 	rwerror("READ", blk);
-#ifndef __minix
 	if (lseek(fd, offset, 0) < 0)
 		rwerror("SEEK", blk);
-#else
-	if (lseek64(fd, offset, 0, NULL) < 0)
-		rwerror("SEEK", blk);
-#endif
 	errs = 0;
 	memset(buf, 0, (size_t)size);
 	printf("THE FOLLOWING DISK SECTORS COULD NOT BE READ:");
@@ -370,25 +360,15 @@ bwrite(int fd, char *buf, daddr_t blk, long size)
 		return;
 	offset = blk;
 	offset *= dev_bsize;
-#ifndef __minix
 	if (lseek(fd, offset, 0) < 0)
 		rwerror("SEEK", blk);
-#else
-	if (lseek64(fd, offset, 0, NULL) < 0)
-		rwerror("SEEK", blk);
-#endif
 	else if (write(fd, buf, (int)size) == size) {
 		fsmodified = 1;
 		return;
 	}
 	rwerror("WRITE", blk);
-#ifndef __minix
 	if (lseek(fd, offset, 0) < 0)
 		rwerror("SEEK", blk);
-#else
-	if (lseek64(fd, offset, 0, NULL) < 0)
-		rwerror("SEEK", blk);
-#endif
 	printf("THE FOLLOWING SECTORS COULD NOT BE WRITTEN:");
 	for (cp = buf, i = 0; i < size; i += dev_bsize, cp += dev_bsize)
 		if (write(fd, cp, (int)dev_bsize) != dev_bsize) {

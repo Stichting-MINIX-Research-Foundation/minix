@@ -6,7 +6,7 @@
 #include <unistd.h>
 
 #ifdef __weak_alias
-__weak_alias(chown, _chown)
+__weak_alias(__posix_chown, chown)
 #endif
 
 int chown(const char *name, uid_t owner, gid_t grp)

@@ -36,7 +36,4 @@ void _loadname(const char *_name, message *_msgptr);
 int _len(const char *_s);
 void _begsig(int _dummy);
 
-ssize_t pread64(int fd, void *buf, size_t count, u64_t where);
-ssize_t pwrite64(int fd, const void *buf, size_t count, u64_t where);
-
 #endif /* _LIB_H */

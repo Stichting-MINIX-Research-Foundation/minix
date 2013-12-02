@@ -145,7 +145,7 @@ CPPFLAGS.${i}+= -I${LIBCDIR}/locale
 # Import from sys-minix
 .for i in access.c brk.c close.c environ.c execve.c fork.c fsync.c \
 	getgid.c getpid.c geteuid.c getuid.c gettimeofday.c getvfsstat.c \
-	init.c link.c loadname.c lseek.c lseek64.c _mcontext.c mknod.c \
+	init.c link.c loadname.c lseek.c _mcontext.c mknod.c \
 	mmap.c nanosleep.c open.c pread.c pwrite.c read.c sbrk.c \
 	select.c setuid.c sigprocmask.c stack_utils.c stat.c stime.c \
 	syscall.c _ucontext.c umask.c unlink.c waitpid.c write.c \

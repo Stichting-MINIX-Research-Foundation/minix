@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <minix/type.h>
 
 #include "tdist.h"
 

@@ -6,7 +6,7 @@
 #include <unistd.h>
 
 #ifdef __weak_alias
-__weak_alias(fchown, _fchown)
+__weak_alias(__posix_fchown, fchown)
 #endif
 
 int fchown(int fd, uid_t owner, gid_t grp)

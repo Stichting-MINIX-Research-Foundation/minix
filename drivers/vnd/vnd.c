@@ -256,7 +256,7 @@ vnd_transfer(devminor_t minor, int do_write, u64_t position,
 
 		/* For reads, read in the data for the chunk; possibly less. */
 		if (!do_write) {
-			chunk = r = pread64(state.fd, state.buf, chunk,
+			chunk = r = pread(state.fd, state.buf, chunk,
 			    position);
 
 			if (r < 0) {
@@ -276,7 +276,7 @@ vnd_transfer(devminor_t minor, int do_write, u64_t position,
 
 		/* For writes, write the data to the file; possibly less. */
 		if (do_write) {
-			chunk = r = pwrite64(state.fd, state.buf, chunk,
+			chunk = r = pwrite(state.fd, state.buf, chunk,
 			    position);
 
 			if (r <= 0) {
