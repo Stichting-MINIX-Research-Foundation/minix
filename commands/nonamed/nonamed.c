@@ -365,10 +365,10 @@ static void dns_tell(int indent, dns_t *dp, size_t size)
     if (dp->hdr.cd) printf(" CD");
     fputc('\n', stdout);
 
-    count[0]= ntohs(dp->hdr.dh_qdcount);
-    count[1]= ntohs(dp->hdr.dh_ancount);
-    count[2]= ntohs(dp->hdr.dh_nscount);
-    count[3]= ntohs(dp->hdr.dh_arcount);
+    count[0]= ntohs(dp->hdr.qdcount);
+    count[1]= ntohs(dp->hdr.ancount);
+    count[2]= ntohs(dp->hdr.nscount);
+    count[3]= ntohs(dp->hdr.arcount);
     cp = dp->data;
     for (i= 0; i < 4; i++) {
 	while (count[i] > 0) {
@@ -402,10 +402,10 @@ static u32_t dns_ttl(dns_t *dp, size_t size, u32_t delta)
     if (size < sizeof(HEADER)) return 0;
 
     rcode= dp->hdr.rcode;
-    count[0]= ntohs(dp->hdr.dh_qdcount);
-    count[1]= ntohs(dp->hdr.dh_ancount);
-    count[2]= ntohs(dp->hdr.dh_nscount);
-    count[3]= ntohs(dp->hdr.dh_arcount);
+    count[0]= ntohs(dp->hdr.qdcount);
+    count[1]= ntohs(dp->hdr.ancount);
+    count[2]= ntohs(dp->hdr.nscount);
+    count[3]= ntohs(dp->hdr.arcount);
     cp = dp->data;
     for (i= 0; i < 4 && cp < dlim; i++) {
 	while (count[i] > 0) {
@@ -915,10 +915,10 @@ static int query_hosts(u8_t *qname, unsigned type, dns_t *dp, size_t *pdlen)
     dns.hdr.ad = 0;
     dns.hdr.cd = 0;
     dns.hdr.rcode = 0;
-    dns.hdr.dh_qdcount= HTONS(1);
+    dns.hdr.qdcount= HTONS(1);
     ancount= 0;
-    dns.hdr.dh_nscount= HTONS(0);
-    dns.hdr.dh_arcount= HTONS(0);
+    dns.hdr.nscount= HTONS(0);
+    dns.hdr.arcount= HTONS(0);
 
     dnvec[0]= dns2oct(&dns);
     dnvec[1]= nil;
@@ -1036,7 +1036,7 @@ static int query_hosts(u8_t *qname, unsigned type, dns_t *dp, size_t *pdlen)
 
     if (r == -1 || ancount == 0) return 0;
 
-    dns.hdr.dh_ancount= htons(ancount);
+    dns.hdr.ancount= htons(ancount);
     memcpy(dp, &dns, *pdlen= cp - dns2oct(&dns));
     return 1;
 }
@@ -1061,10 +1061,10 @@ static int query_chaos(u8_t *qname, unsigned type, dns_t *dp, size_t *pdlen)
     dns.hdr.ad = 0;
     dns.hdr.cd = 0;
     dns.hdr.rcode = 0;
-    dns.hdr.dh_qdcount= HTONS(1);
-    dns.hdr.dh_ancount= HTONS(1);
-    dns.hdr.dh_nscount= HTONS(0);
-    dns.hdr.dh_arcount= htons(n_nameds);
+    dns.hdr.qdcount= HTONS(1);
+    dns.hdr.ancount= HTONS(1);
+    dns.hdr.nscount= HTONS(0);
+    dns.hdr.arcount= htons(n_nameds);
 
     dnvec[0]= dns2oct(&dns);
     dnvec[1]= nil;
@@ -1129,7 +1129,7 @@ static void cache_reply(dns_t *dp, size_t dlen)
     u32_t minttl;
 
     if ((dp->hdr.rd && !dp->hdr.tc)) return;
-    if (dp->hdr.dh_qdcount != HTONS(1)) return;
+    if (dp->hdr.qdcount != HTONS(1)) return;
     cp= dp->data;
     r= dn_expand(dns2oct(dp), dns2oct(dp) + dlen, cp, name, MAXDNAME);
     if (r == -1) return;
@@ -1211,7 +1211,7 @@ static int compose_reply(dns_t *dp, size_t *pdlen)
     }
 
     /* Remember ID and RD. */
-    id= dp->hdr.dh_id;
+    id= dp->hdr.id;
     rd= dp->hdr.rd;
 
     if (r == -1) {
@@ -1269,7 +1269,7 @@ static int compose_reply(dns_t *dp, size_t *pdlen)
     }
 
     /* Copy ID and RD back to answer. */
-    dp->hdr.dh_id= id;
+    dp->hdr.id= id;
     dp->hdr.rd = rd;
     *pdlen= dlen;
     return 1;
@@ -1322,7 +1322,7 @@ static void refresh_cache(void)
     cp += sizeof(u16_t);
     dlen= cp - dns2oct(&udp.dns);
 
-    udp.dns.hdr.dh_id= new_id(ID_REFRESH, my_port, ID_IPSELF);
+    udp.dns.hdr.id= new_id(ID_REFRESH, my_port, ID_IPSELF);
     udp.dns.hdr.qr = 0;
     udp.dns.hdr.opcode = 0;
     udp.dns.hdr.aa = 0;
@@ -1334,10 +1334,10 @@ static void refresh_cache(void)
     udp.dns.hdr.ad = 0;
     udp.dns.hdr.cd = 0;
     udp.dns.hdr.rcode = 0;
-    udp.dns.hdr.dh_qdcount= HTONS(1);
-    udp.dns.hdr.dh_ancount= HTONS(0);
-    udp.dns.hdr.dh_nscount= HTONS(0);
-    udp.dns.hdr.dh_arcount= HTONS(0);
+    udp.dns.hdr.qdcount= HTONS(1);
+    udp.dns.hdr.ancount= HTONS(0);
+    udp.dns.hdr.nscount= HTONS(0);
+    udp.dns.hdr.arcount= HTONS(0);
 
     udp.hdr.uih_dst_addr= current_named();
     udp.hdr.uih_dst_port= named_port;
@@ -1400,7 +1400,7 @@ static int job_read_udp(void *data, int expired)
 	/* This is a remote named reply, not a query. */
 
 	/* Response to a query previously relayed? */
-	if (!old_id(udp.dns.hdr.dh_id, &id, &port, &ip)) return 1;
+	if (!old_id(udp.dns.hdr.id, &id, &port, &ip)) return 1;
 
 	if (ip == ID_IPSELF && id == ID_PROBE) {
 	    if (searching()) {
@@ -1438,13 +1438,13 @@ static int job_read_udp(void *data, int expired)
 	if (ip == ID_IPSELF) return 1;
 
 	/* Send the reply to the process that asked for it. */
-	udp.dns.hdr.dh_id= id;
+	udp.dns.hdr.id= id;
 	udp.hdr.uih_dst_addr= ip;
 	udp.hdr.uih_dst_port= port;
 	if (debug >= 1) printf("To client %s:%u\n", inet_ntoa(ip), ntohs(port));
     } else {
 	/* A query. */
-	if (udp.dns.hdr.dh_qdcount != HTONS(1)) return 1;
+	if (udp.dns.hdr.qdcount != HTONS(1)) return 1;
 
 	if(localonly) {
 		/* Check if it's a local query. */
@@ -1471,7 +1471,7 @@ static int job_read_udp(void *data, int expired)
 	    }
 	} else {
 	    /* Let a real name daemon handle the query. */
-	    udp.dns.hdr.dh_id= new_id(udp.dns.hdr.dh_id,
+	    udp.dns.hdr.id= new_id(udp.dns.hdr.id,
 				udp.hdr.uih_src_port, udp.hdr.uih_src_addr);
 	    udp.hdr.uih_dst_addr= current_named();
 	    udp.hdr.uih_dst_port= named_port;
@@ -1954,7 +1954,7 @@ static void named_probe(ipaddr_t ip)
     /* Send a simple DNS query that all name servers can answer easily:
      * "What are the name servers for the root domain?"
      */
-    udp.dns.hdr.dh_id= new_id(ID_PROBE, my_port, ID_IPSELF);
+    udp.dns.hdr.id= new_id(ID_PROBE, my_port, ID_IPSELF);
     udp.dns.hdr.qr = 0;
     udp.dns.hdr.opcode = 0;
     udp.dns.hdr.aa = 0;
@@ -1965,10 +1965,10 @@ static void named_probe(ipaddr_t ip)
     udp.dns.hdr.ad = 0;
     udp.dns.hdr.cd = 0;
     udp.dns.hdr.rcode = 0;
-    udp.dns.hdr.dh_qdcount= HTONS(1);
-    udp.dns.hdr.dh_ancount= HTONS(0);
-    udp.dns.hdr.dh_nscount= HTONS(0);
-    udp.dns.hdr.dh_arcount= HTONS(0);
+    udp.dns.hdr.qdcount= HTONS(1);
+    udp.dns.hdr.ancount= HTONS(0);
+    udp.dns.hdr.nscount= HTONS(0);
+    udp.dns.hdr.arcount= HTONS(0);
 
     udp.dns.data[0] = 0;	/* Null name. */
     pack16(udp.dns.data+1, HTONS(T_NS));

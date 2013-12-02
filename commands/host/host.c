@@ -479,10 +479,10 @@ printinfo(answer, eom, filter, isls)
 	 * find first satisfactory answer
 	 */
 	hp = (HEADER *) answer;
-	ancount = ntohs(hp->dh_ancount);
-	qdcount = ntohs(hp->dh_qdcount);
-	nscount = ntohs(hp->dh_nscount);
-	arcount = ntohs(hp->dh_arcount);
+	ancount = ntohs(hp->ancount);
+	qdcount = ntohs(hp->qdcount);
+	nscount = ntohs(hp->nscount);
+	arcount = ntohs(hp->arcount);
 	if (_res.options & RES_DEBUG || (verbose && isls == 0))
 		printf("rcode = %d (%s), ancount=%d\n", 
 		       hp->rcode,
@@ -1040,7 +1040,7 @@ ListHosts(namePtr, queryType)
 	}
 
 	cp = answer.qb2 + sizeof(HEADER);
-	if (ntohs(answer.qb1.dh_qdcount) > 0)
+	if (ntohs(answer.qb1.qdcount) > 0)
 	  cp += dn_skipname(cp, answer.qb2 + msglen) + QFIXEDSZ;
 
 	numns = 0;
@@ -1261,7 +1261,7 @@ again:
 
 	    i = buf.qb1.rcode;
 
-	    if (i != NOERROR || ntohs(buf.qb1.dh_ancount) == 0) {
+	    if (i != NOERROR || ntohs(buf.qb1.ancount) == 0) {
 	      if ((thisns+1) < numnsaddr &&
 		  (i == SERVFAIL || i == NOTIMP || i == REFUSED)) {
 		if (_res.options & RES_DEBUG || verbose)
@@ -1285,7 +1285,7 @@ again:
 	    }
 	    numAnswers++;
 	    cp = buf.qb2 + sizeof(HEADER);
-	    if (ntohs(buf.qb1.dh_qdcount) > 0)
+	    if (ntohs(buf.qb1.qdcount) > 0)
 		cp += dn_skipname(cp, buf.qb2 + len) + QFIXEDSZ;
 
 	    nmp = cp;
@@ -1321,9 +1321,9 @@ again:
 		fprintf(stderr,
 	       "  result: %s, answers = %d, authority = %d, additional = %d\n", 
 			resultcodes[headerPtr->rcode],
-		    	ntohs(headerPtr->dh_ancount), 
-			ntohs(headerPtr->dh_nscount), 
-			ntohs(headerPtr->dh_arcount));
+			ntohs(headerPtr->ancount),
+			ntohs(headerPtr->nscount),
+			ntohs(headerPtr->arcount));
 		return(ERROR);
 	    default:
 		return(ERROR);
