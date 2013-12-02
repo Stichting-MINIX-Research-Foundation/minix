@@ -26,8 +26,8 @@
 
 #define SHELL		"/bin/sh"
 
-#define DROPNAME 	"/usr/spool/mail/%s"
-#define LOCKNAME	"/usr/spool/mail/%s.lock"
+#define DROPNAME 	"/var/mail/%s"
+#define LOCKNAME	"/var/mail/%s.lock"
 #define LOCKWAIT	5	/* seconds to wait after collision */
 #define LOCKTRIES	4	/* maximum number of collisions */
 

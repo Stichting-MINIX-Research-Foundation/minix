@@ -77,7 +77,7 @@
 #define	_PATH_KSYMS	"/dev/ksyms"
 #define	_PATH_KVMDB	"/var/db/kvm.db"
 #define	_PATH_LOCALE	"/usr/share/locale"
-#define	_PATH_MAILDIR	"/usr/spool/mail"
+#define	_PATH_MAILDIR	"/var/mail"
 #define	_PATH_MAN	"/usr/share/man"
 #define	_PATH_MEM	"/dev/mem"
 #define	_PATH_MIXER	"/dev/mixer"

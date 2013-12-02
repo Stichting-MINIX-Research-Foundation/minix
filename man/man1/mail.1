@@ -31,7 +31,7 @@ mail \- send and receive electronic mail
 # Reverse print order, i.e., print oldest first
 .TP 5
 .B \-f
-# Use \fIfile\fR instead of \fI/usr/spool/mail/user\fR as mailbox
+# Use \fIfile\fR instead of \fI/var/mail/user\fR as mailbox
 .PP
 .TP 5
 .B \-d
@@ -56,7 +56,7 @@ mail \- send and receive electronic mail
 .B cat mail.cdiff | mail -s ''Here's the diff!'' asw
 # Pipe program output to mail with a subject line
 .TP 20
-.B mail -f /usr/spool/mail/asw
+.B mail -f /var/mail/asw
 # How root can read asw's mail
 .SH DESCRIPTION
 .PP
@@ -71,7 +71,7 @@ No such agent is supplied with
 \s-1MINIX 3\s-1.
 .PP
 When called by \fIuser\fR with no arguments, it examines the mailbox
-\fI/usr/spool/mail/user\fR, prints one message (depending on the \fB\-r\fR
+\fI/var/mail/user\fR, prints one message (depending on the \fB\-r\fR
 flag), and waits for one of the following commands:
 .PP
 .nf
@@ -90,10 +90,10 @@ flag), and waits for one of the following commands:
 To send mail, the program is called with the name of one or more recipients as
 arguments.  The mail is sent, along with a postmark line containing the date.
 For local delivery, a file named after each recipient in the directory
-\fI/usr/spool/mail\fR must be writable. If a spool file does not exist for
+\fI/var/mail\fR must be writable. If a spool file does not exist for
 a recipient it will be created.
 .PP
-If the directory \fI/usr/spool/mail\fR does not exist then the mail is
+If the directory \fI/var/mail\fR does not exist then the mail is
 dumped on the console, so that system programs have a way to notify
 a user on a system that does not have a mail spool.
 .PP

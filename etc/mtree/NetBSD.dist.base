@@ -135,7 +135,6 @@
 ./usr/spool/crontabs
 ./usr/spool/locks
 ./usr/spool/lpd
-./usr/spool/mail
 ./usr/src
 ./usr/tests
 ./usr/var
@@ -145,6 +144,7 @@
 ./var
 ./var/db
 ./var/db/obsolete
+./var/mail
 ./var/run
 
 # Directories with special access rights
