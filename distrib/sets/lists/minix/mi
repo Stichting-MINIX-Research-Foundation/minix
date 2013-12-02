@@ -1,3 +1,4 @@
+
 #
 # Sorted using sort_set.sh in releasetools.
 # to add an entry simply add it at the end of the
@@ -1097,6 +1098,7 @@
 ./usr/include/ifaddrs.h			minix-sys
 ./usr/include/inttypes.h		minix-sys
 ./usr/include/iso646.h			minix-sys
+./usr/include/kvm.h			minix-sys
 ./usr/include/langinfo.h		minix-sys
 ./usr/include/lauxlib.h			minix-sys
 ./usr/include/libelf.h			minix-sys
@@ -1325,6 +1327,7 @@
 ./usr/include/puffs.h			minix-sys
 ./usr/include/puffs_msgif.h		minix-sys
 ./usr/include/pwd.h			minix-sys
+./usr/include/quota.h			minix-sys
 ./usr/include/randomid.h		minix-sys
 ./usr/include/ranlib.h			minix-sys
 ./usr/include/readline			minix-sys
@@ -1348,6 +1351,7 @@
 ./usr/include/sha1.h			minix-sys
 ./usr/include/sha2.h			minix-sys
 ./usr/include/signal.h			minix-sys
+./usr/include/spawn.h			minix-sys
 ./usr/include/sqlite3ext.h		minix-sys
 ./usr/include/sqlite3.h			minix-sys
 ./usr/include/ssp			minix-sys
