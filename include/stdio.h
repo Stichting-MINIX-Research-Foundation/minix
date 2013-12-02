@@ -276,7 +276,7 @@ int	 vsprintf(char * __restrict, const char * __restrict,
 		__printflike(2, 0);
 #endif
 
-#if !defined(__minix) && (defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE))
+#if defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE)
 int	 rename (const char *, const char *) __RENAME(__posix_rename);
 #else
 int	 rename (const char *, const char *);

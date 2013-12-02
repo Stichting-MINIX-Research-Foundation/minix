@@ -5,6 +5,10 @@
 #include <string.h>
 #include <stdio.h>
 
+#ifdef __weak_alias
+__weak_alias(__posix_rename, rename)
+#endif
+
 int rename(const char *name, const char *name2)
 {
   message m;
