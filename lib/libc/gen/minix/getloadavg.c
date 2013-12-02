@@ -2,7 +2,7 @@
 #include "namespace.h"
 
 #include <sys/types.h>
-#include <paths.h>
+#include <minix/paths.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>

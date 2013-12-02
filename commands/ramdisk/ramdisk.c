@@ -1,5 +1,5 @@
 
-#include <paths.h>
+#include <minix/paths.h>
 
 #include <sys/ioc_memory.h>
 #include <stdio.h>

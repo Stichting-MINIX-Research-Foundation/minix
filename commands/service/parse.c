@@ -18,7 +18,7 @@
 #include <minix/rs.h>
 #include <minix/syslib.h>
 #include <minix/bitmap.h>
-#include <paths.h>
+#include <minix/paths.h>
 #include <minix/sef.h>
 #include <minix/dmap.h>
 #include <sys/types.h>

@@ -5,7 +5,7 @@
 
 #define nil ((void*)0)
 
-#include <paths.h>
+#include <minix/paths.h>
 
 /* Paths to files. */
 #define PATH_DHCPCONF	_PATH_DHCPCONF

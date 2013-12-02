@@ -41,7 +41,7 @@
 
 #include <minix/config.h>
 #include <minix/endpoint.h>
-#include <paths.h>
+#include <minix/paths.h>
 #include <minix/procfs.h>
 #include <limits.h>
 #include <sys/types.h>

@@ -31,7 +31,7 @@
 #include <minix/endpoint.h>
 #include <minix/const.h>
 #include <minix/u64.h>
-#include <paths.h>
+#include <minix/paths.h>
 #include <minix/procfs.h>
 
 #define TIMECYCLEKEY 't'

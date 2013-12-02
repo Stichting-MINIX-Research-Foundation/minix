@@ -13,7 +13,7 @@
 #include <unistd.h>
 #include <time.h>
 #include <stdio.h>
-#include <paths.h>
+#include <minix/paths.h>
 
 #ifdef __weak_alias
 __weak_alias(sysconf, __sysconf)

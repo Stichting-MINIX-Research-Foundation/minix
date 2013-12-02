@@ -44,6 +44,7 @@ static const char version[] = "2.7";
 #include <net/gen/dhcp.h>
 
 #include <paths.h>
+#include <minix/paths.h>
 
 #undef HTONL
 #undef HTONS

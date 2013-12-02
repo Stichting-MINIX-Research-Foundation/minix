@@ -76,6 +76,7 @@
 #include <sys/disk.h>
 #include <sys/bitops.h>
 #else
+#include <minix/paths.h>
 #include <sys/wait.h>
 #endif
 

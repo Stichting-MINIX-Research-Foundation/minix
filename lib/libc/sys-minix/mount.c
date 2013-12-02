@@ -7,9 +7,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/stat.h>
-#include <minix/syslib.h>
+#include <minix/paths.h>
 #include <minix/rs.h>
-#include <paths.h>
+#include <minix/syslib.h>
 #include <unistd.h>
 #define OK	0
 

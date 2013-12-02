@@ -126,9 +126,5 @@
 #define	_PATH_VI	"/usr/bin/vi"
 #endif
 
-#ifdef __minix
-#include <minix/paths.h>
-#endif /* !__minix */
-
 #endif /* !_PATHS_H_ */
 
