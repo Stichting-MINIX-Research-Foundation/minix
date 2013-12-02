@@ -189,7 +189,7 @@ __END_DECLS
  */
 				/* must be == _POSIX_STREAM_MAX <limits.h> */
 #define	FOPEN_MAX	20	/* must be <= OPEN_MAX <sys/syslimits.h> */
-#define	FILENAME_MAX	255	/* must be <= PATH_MAX <sys/syslimits.h> */
+#define	FILENAME_MAX	1024	/* must be <= PATH_MAX <sys/syslimits.h> */
 
 /* System V/ANSI C; this is the wrong way to do this, do *not* use these. */
 #if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
