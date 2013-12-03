@@ -70,11 +70,7 @@ typedef	_BSD_TIMER_T_	timer_t;
 #undef	_BSD_TIMER_T_
 #endif
 
-#ifdef __minix
-#define CLOCKS_PER_SEC	60
-#else
 #define CLOCKS_PER_SEC	100
-#endif
 
 struct tm {
 	int	tm_sec;		/* seconds after the minute [0-61] */
@@ -209,10 +205,6 @@ size_t strftime_z(const timezone_t, char * __restrict, size_t,
     __attribute__((__format__(__strftime__, 4, 0)));
 
 #endif /* _NETBSD_SOURCE */
-
-#ifdef __minix
-int stime(time_t *_top);
-#endif /* __minix */
 
 __END_DECLS
 

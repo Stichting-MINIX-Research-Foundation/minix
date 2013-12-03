@@ -4,6 +4,7 @@
  * - synchronizing to the host system time;
  * - providing an interface for HGCM communication with the host system.
  */
+#include <minix/sysutil.h>
 #include <minix/drivers.h>
 #include <minix/driver.h>
 #include <minix/optset.h>

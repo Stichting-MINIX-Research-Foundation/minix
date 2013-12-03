@@ -26,11 +26,13 @@
 #define DO_TIMEOUT 7
 #define DO_DELTA 0.5
 #define MAX_ERROR 5
-#define DELTA(x,y)  (x.tv_sec - y.tv_sec) * CLOCKS_PER_SEC \
-  + (x.tv_usec - y.tv_usec) * CLOCKS_PER_SEC / 1000000
+#define DELTA(x,y)  (x.tv_sec - y.tv_sec) * system_hz \
+  + (x.tv_usec - y.tv_usec) * system_hz / 1000000
 
 int got_signal = 0;
 int fd_ap[2];
+
+int system_hz;
 
 static void catch_signal(int sig_no) {
   got_signal = 1;
@@ -43,8 +45,8 @@ static float compute_diff(struct timeval start, struct timeval end, float compar
   float diff;
 
   delta = DELTA(end, start); /* delta is in ticks */
-  seconds = (int) (delta / CLOCKS_PER_SEC);
-  hundreths = (int) (delta * 100 / CLOCKS_PER_SEC) - (seconds * 100);
+  seconds = (int) (delta / system_hz);
+  hundreths = (int) (delta * 100 / system_hz) - (seconds * 100);
 
   diff = seconds + (hundreths / 100.0);
   diff -= compare;
@@ -149,6 +151,8 @@ static void do_parent(int child) {
 int main(int argc, char **argv) {
   int forkres;
 
+  /* Retrieve actual system frequency. */
+  system_hz = sysconf(_SC_CLK_TCK);
   /* Get subtest number */
   if(argc != 2) {
     printf("Usage: %s subtest_no\n", argv[0]);

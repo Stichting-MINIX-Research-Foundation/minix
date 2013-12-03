@@ -36,12 +36,8 @@ char *argv[];
   int cycles = 0;
   struct tms pre_buf, post_buf;
   int status, pid;
-#if _VMD_EXT
-  struct timeval start_time, end_time;
-#else
   struct tms dummy;
   int start_time, end_time;
-#endif
   u64_t start_tsc, end_tsc, spent_tsc;
   clock_t real_time;
   int c;
@@ -66,11 +62,7 @@ char *argv[];
   name = argv[0];
 
   /* Get real time at start of run. */
-#if _VMD_EXT
-  (void) sysutime(UTIME_TIMEOFDAY, &start_time);
-#else
   start_time = times(&dummy);
-#endif
   read_tsc_64(&start_tsc);
 
   /* Fork off child. */
@@ -89,14 +81,8 @@ char *argv[];
   } while (wait(&status) != pid);
   read_tsc_64(&end_tsc);
   spent_tsc = end_tsc - start_tsc;
-#if _VMD_EXT
-  (void) sysutime(UTIME_TIMEOFDAY, &end_time);
-  real_time = (end_time.tv_sec - start_time.tv_sec) * CLOCKS_PER_SEC
-	+ (end_time.tv_usec - start_time.tv_usec) * CLOCKS_PER_SEC / 1000000;
-#else
   end_time = times(&dummy);
   real_time = (end_time - start_time);
-#endif
 
   if ((status & 0377) != 0) std_err("Command terminated abnormally.\n");
   times(&post_buf);

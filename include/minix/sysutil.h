@@ -73,6 +73,8 @@ void ser_putc(char c);
 void get_randomness(struct k_randomness *, int);
 u32_t sqrt_approx(u32_t);
 
+int stime(time_t *_top);
+
 #define asynsend(ep, msg) asynsend3(ep, msg, 0)
 int asynsend3(endpoint_t ep, message *msg, int flags);
 int asyn_geterror(endpoint_t *dst, message *msg, int *err);
