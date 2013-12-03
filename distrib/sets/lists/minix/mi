@@ -2130,6 +2130,7 @@
 ./usr/man/man1/ld.elf_so.1		minix-sys
 ./usr/man/man1/leave.1			minix-sys
 ./usr/man/man1/less.1			minix-sys
+./usr/man/man1/lessecho.1		minix-sys
 ./usr/man/man1/lesskey.1		minix-sys
 ./usr/man/man1/lex.1			minix-sys
 ./usr/man/man1/linkfarm.1		minix-sys

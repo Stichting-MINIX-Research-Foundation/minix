@@ -2,8 +2,10 @@
 
 .include <bsd.own.mk>
 
-SUBDIR= byacc file flex mdocml \
-	libarchive
+SUBDIR= byacc file flex less \
+	libarchive mdocml \
+	
+
 .if (${MKATF} != "no")
 SUBDIR+= atf
 .endif
