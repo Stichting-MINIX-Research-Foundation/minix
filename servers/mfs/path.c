@@ -246,7 +246,7 @@ int *symlinkp
 		*offsetp = 0;
 
 		/* Symloop limit reached? */
-		if (++(*symlinkp) > SYMLOOP_MAX)
+		if (++(*symlinkp) > _POSIX_SYMLOOP_MAX)
 			r = ELOOP;
 
 		if (r != OK) {

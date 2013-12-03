@@ -230,7 +230,7 @@ int fs_lookup(void)
 				(ptr[0] != '\0' ||
 				!(fs_m_in.REQ_FLAGS & PATH_RET_SYMLINK))) {
 
-				if (++symloop == SYMLOOP_MAX) {
+				if (++symloop == _POSIX_SYMLOOP_MAX) {
 					put_inode(next_ino);
 
 					r = ELOOP;

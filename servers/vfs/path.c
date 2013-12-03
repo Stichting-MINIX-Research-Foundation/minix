@@ -353,9 +353,9 @@ struct fproc *rfp;
 		}
 	}
 	break;
-  } while (symloop < SYMLOOP_MAX);
+  } while (symloop < _POSIX_SYMLOOP_MAX);
 
-  if (symloop >= SYMLOOP_MAX) {
+  if (symloop >= _POSIX_SYMLOOP_MAX) {
 	err_code = ELOOP;
 	res_vp = NULL;
   }
@@ -475,7 +475,7 @@ struct fproc *rfp;
 
 	/* Update the current value of the symloop counter */
 	symloop += res.symloop;
-	if (symloop > SYMLOOP_MAX) {
+	if (symloop > _POSIX_SYMLOOP_MAX) {
 		if (vmpres) unlock_vmnt(vmpres);
 		*(resolve->l_vmp) = NULL;
 		return(ELOOP);
@@ -708,9 +708,9 @@ struct fproc *rfp;
 	/* encountered a symlink -- loop again */
 	strlcpy(orig_path, temp_path, PATH_MAX);
 	symloop++;
-  } while (symloop < SYMLOOP_MAX);
+  } while (symloop < _POSIX_SYMLOOP_MAX);
 
-  if (symloop >= SYMLOOP_MAX) {
+  if (symloop >= _POSIX_SYMLOOP_MAX) {
 	if (dir_vp) {
 		unlock_vnode(dir_vp);
 		unlock_vmnt(dir_vmp);

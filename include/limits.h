@@ -171,11 +171,6 @@
 # define CHAR_MAX     SCHAR_MAX
 #endif
 
-#ifdef __minix
-#define SYMLOOP_MAX		16
-#define SYMLINK_MAX		1024
-#endif /* __minix */
-
 #include <sys/syslimits.h>
 
 #endif /* !_LIMITS_H_ */

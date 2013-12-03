@@ -409,7 +409,7 @@ int do_slink(void)
   vname2_length = job_m_in.VFS_LINK_LEN2;
 
   if (vname1_length <= 1) return(ENOENT);
-  if (vname1_length >= SYMLINK_MAX) return(ENAMETOOLONG);
+  if (vname1_length >= _POSIX_SYMLINK_MAX) return(ENAMETOOLONG);
 
   /* Get dir inode of 'name2' */
   if (fetch_name(vname2, vname2_length, fullpath) != OK) return(err_code);
