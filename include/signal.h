@@ -79,17 +79,7 @@ int	__libc_thr_sigsetmask(int, const sigset_t * __restrict,
 #ifndef __LIBC12_SOURCE__
 int	sigaction(int, const struct sigaction * __restrict,
     struct sigaction * __restrict) __RENAME(__sigaction14);
-#if defined(__minix) && defined(_SYSTEM)
-/* In Minix system code, use alternate versions of the signal mask
- * manipulation functions that do not check signal numbers vs. _NSIG.
- * _NSIG can then represent the user-visible signal set.
- */
-#define sigaddset(set, sig)    __sigaddset((set), (sig))
-#define sigdelset(set, sig)    __sigdelset((set), (sig))
-#define sigemptyset(set)       __sigemptyset((set))
-#define sigfillset(set)                __sigfillset((set))
-#define sigismember(set, sig)  __sigismember((set), (sig))
-#else
+#if defined(__minix) && !defined(_SYSTEM)
 int	sigaddset(sigset_t *, int) __RENAME(__sigaddset14);
 int	sigdelset(sigset_t *, int) __RENAME(__sigdelset14);
 int	sigemptyset(sigset_t *) __RENAME(__sigemptyset14);
@@ -119,7 +109,17 @@ int *__errno(void);
 #define ___errno (*__errno())
 #endif
 
-#if !(defined(__minix) && defined(_SYSTEM))
+#if defined(__minix) && defined(_SYSTEM)
+/* In Minix system code, use alternate versions of the signal mask
+ * manipulation functions that do not check signal numbers vs. _NSIG.
+ * _NSIG can then represent the user-visible signal set.
+ */
+#define sigaddset(set, sig)    __sigaddset((set), (sig))
+#define sigdelset(set, sig)    __sigdelset((set), (sig))
+#define sigemptyset(set)       __sigemptyset((set))
+#define sigfillset(set)                __sigfillset((set))
+#define sigismember(set, sig)  __sigismember((set), (sig))
+#else
 __c99inline int
 sigaddset(sigset_t *set, int signo)
 {
