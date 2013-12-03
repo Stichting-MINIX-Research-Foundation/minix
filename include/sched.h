@@ -29,8 +29,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* LSC: It seems we actually do not want this header to be visible. */
-#ifndef __minix
 #ifndef _SCHED_H_
 #define _SCHED_H_
 
@@ -78,5 +76,3 @@ __END_DECLS
 #endif /* _NETBSD_SOURCE */
 
 #endif /* _SCHED_H_ */
-
-#endif /* !__minix */
