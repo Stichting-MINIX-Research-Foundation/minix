@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_sigsetjmp.S,v 1.1 2005/10/16 17:27:50 christos Exp $	*/
+/*	$NetBSD: compat_sigsetjmp.S,v 1.3 2013/11/30 20:54:14 joerg Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -46,16 +46,46 @@
  */
 
 ENTRY(sigsetjmp)
-	teq	r1, #0
-	beq	PIC_SYM(_C_LABEL(_setjmp), PLT)
-	b	PIC_SYM(_C_LABEL(setjmp), PLT)
-
-.L_setjmp_magic:
-	.word	_JB_MAGIC__SETJMP
+#if defined(__thumb__) && defined(_ARM_ARCH_T2)
+	cbnz	r1, 1f
+	b	PLT_SYM(_C_LABEL(_setjmp))
+1:	b	PLT_SYM(_C_LABEL(setjmp))
+#elif !defined(__thumb__)
+	cmp	r1, #0
+	beq	PLT_SYM(_C_LABEL(_setjmp))
+	b	PLT_SYM(_C_LABEL(setjmp))
+#else
+	push	{r3, lr}
+	beq	1f
+	bl	PLT_SYM(_C_LABEL(setjmp))
+	pop	{r3, pc}
+1:	bl	PLT_SYM(_C_LABEL(_setjmp))
+	pop	{r3, pc}
+#endif
+END(sigsetjmp)
 
 ENTRY(siglongjmp)
 	ldr	r2, .L_setjmp_magic
 	ldr	r3, [r0]
-	teq	r2, r3
-	beq	PIC_SYM(_C_LABEL(_longjmp), PLT)
-	b	PIC_SYM(_C_LABEL(longjmp), PLT)
+	cmp	r2, r3
+#if !defined(__thumb__) || defined(_ARM_ARCH_T2)
+#if defined(__thumb__)
+	it	eq
+#endif
+	beq	PLT_SYM(_C_LABEL(_longjmp))
+	b	PLT_SYM(_C_LABEL(longjmp))
+#else
+	push	{lr}
+	sub	sp, sp, #4
+	beq	1f
+	bl	PIC_SYM(_C_LABEL(longjmp), PLT)
+	b	2f
+1:	bl	PIC_SYM(_C_LABEL(_longjmp), PLT)
+2:	add	sp, sp, #4
+	pop	{pc}
+#endif
+
+	.align	0
+.L_setjmp_magic:
+	.word	_JB_MAGIC__SETJMP
+END(siglongjmp)

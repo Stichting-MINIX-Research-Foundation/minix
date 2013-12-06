@@ -32,7 +32,7 @@
 #if !defined(STORE_BACKEND_HPP)
 #define STORE_BACKEND_HPP
 
-#include <tr1/memory>
+#include "utils/shared_ptr.hpp"
 
 namespace utils {
 namespace fs {
@@ -72,7 +72,7 @@ class backend {
     struct impl;
 
     /// Pointer to the shared internal implementation.
-    std::tr1::shared_ptr< impl > _pimpl;
+    std::shared_ptr< impl > _pimpl;
 
     friend class metadata;
 

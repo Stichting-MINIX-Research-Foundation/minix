@@ -1,12 +1,12 @@
 
 #------------------------------------------------------------------------------
-# $File: riff,v 1.22 2011/09/06 11:00:06 christos Exp $
+# $File: riff,v 1.23 2013/02/06 14:18:52 christos Exp $
 # riff:  file(1) magic for RIFF format
 # See
 #
 #	http://www.seanet.com/users/matts/riffmci/riffmci.htm
 #
-# AVI section extended by Patrik Rådman <patrik+file-magic@iki.fi>
+# AVI section extended by Patrik Radman <patrik+file-magic@iki.fi>
 #
 0	string		RIFF		RIFF (little-endian) data
 # RIFF Palette format
@@ -247,7 +247,7 @@
 
 #------------------------------------------------------------------------------
 # MBWF/RF64
-# see EBU – TECH 3306 http://tech.ebu.ch/docs/tech/tech3306-2009.pdf
+# see EBU TECH 3306 http://tech.ebu.ch/docs/tech/tech3306-2009.pdf
 0	string	RF64\xff\xff\xff\xffWAVEds64		MBWF/RF64 audio
 !:mime	audio/x-wav
 >40	search/256	fmt\x20		\b

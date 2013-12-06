@@ -26,14 +26,15 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)atanh.3	5.2 (Berkeley) 5/6/91
-.\"	$NetBSD: atanh.3,v 1.15 2003/08/07 16:44:46 agc Exp $
+.\"	$NetBSD: atanh.3,v 1.16 2013/01/29 02:54:30 matt Exp $
 .\"
-.Dd May 6, 1991
+.Dd January 29, 2013
 .Dt ATANH 3
 .Os
 .Sh NAME
 .Nm atanh ,
-.Nm atanhf
+.Nm atanhf ,
+.Nm atanhl
 .Nd inverse hyperbolic tangent function
 .Sh LIBRARY
 .Lb libm
@@ -43,20 +44,24 @@
 .Fn atanh "double x"
 .Ft float
 .Fn atanhf "float x"
+.Ft long double
+.Fn atanhl "long double x"
 .Sh DESCRIPTION
 The
-.Fn atanh
+.Fn atanh ,
+.Fn atanhf ,
 and
-.Fn atanhf
+.Fn atanhl
 functions compute the inverse hyperbolic tangent
 of the real
 argument
 .Ar x .
 .Sh RETURN VALUES
 If |x|\*[Ge]1,
-.Fn atanh "x"
+.Fn atanh "x" ,
+.Fn atanhf "x" ,
 and
-.Fn atanhf "x"
+.Fn atanhl "x"
 .\" POSIX_MODE
 return +inf, -inf or NaN, and sets the global variable
 .Va errno
@@ -75,3 +80,8 @@ The
 .Fn atanh
 function appeared in
 .Bx 4.3 .
+.Sh STANDARDS
+The
+.Fn atanh
+function conforms to
+.St -isoC-99 .

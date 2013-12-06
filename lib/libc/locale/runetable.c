@@ -1,4 +1,4 @@
-/*	$NetBSD: runetable.c,v 1.27 2010/06/19 13:26:52 tnozaki Exp $	*/
+/*	$NetBSD: runetable.c,v 1.29 2013/08/18 20:03:48 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)table.c	8.1 (Berkeley) 6/27/93";
 #else
-__RCSID("$NetBSD: runetable.c,v 1.27 2010/06/19 13:26:52 tnozaki Exp $");
+__RCSID("$NetBSD: runetable.c,v 1.29 2013/08/18 20:03:48 joerg Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -51,7 +51,7 @@ __RCSID("$NetBSD: runetable.c,v 1.27 2010/06/19 13:26:52 tnozaki Exp $");
 #include "citrus_ctype.h"
 #include "runetype_local.h"
 
-const _RuneLocale _DefaultRuneLocale = {
+__dso_hidden const _RuneLocale _DefaultRuneLocale = {
     {	/*00*/	_RUNETYPE_C,
 		_RUNETYPE_C,
 		_RUNETYPE_C,
@@ -343,9 +343,11 @@ const _RuneLocale _DefaultRuneLocale = {
 	    { "upper", _RUNETYPE_U },
 	    { "xdigit", _RUNETYPE_X },
     },
-    _C_ctype_,
-    _C_tolower_,
-    _C_toupper_
-};
+    _C_ctype_tab_,
+    _C_tolower_tab_,
+    _C_toupper_tab_,
 
-const _RuneLocale *_CurrentRuneLocale = &_DefaultRuneLocale;
+#ifdef __BUILD_LEGACY
+    _C_compat_bsdctype,
+#endif
+};

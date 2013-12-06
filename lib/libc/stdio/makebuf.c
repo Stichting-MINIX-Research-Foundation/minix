@@ -121,7 +121,8 @@ __swhatbuf(FILE *fp, size_t *bufsize, int *couldbetty)
 	 * __sseek is mainly paranoia.)  It is safe to set _blksize
 	 * unconditionally; it will only be used if __SOPT is also set.
 	 */
-		*bufsize = fp->_blksize = st.st_blksize;
+	*bufsize = st.st_blksize;
+	fp->_blksize = st.st_blksize;
 	return (st.st_mode & S_IFMT) == S_IFREG && fp->_seek == __sseek ?
 	    __SOPT : __SNPT;
 }

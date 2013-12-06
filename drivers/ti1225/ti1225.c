@@ -8,6 +8,7 @@ Created:	Dec 2005 by Philip Homburg
 #include <minix/driver.h>
 #include <machine/pci.h>
 #include <machine/vm.h>
+#include <machine/vmparam.h>
 #include <sys/mman.h>
 
 #include "ti1225.h"

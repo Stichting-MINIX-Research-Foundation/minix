@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_lookup.c,v 1.66 2011/07/12 16:59:48 dholland Exp $	*/
+/*	$NetBSD: ext2fs_lookup.c,v 1.73 2013/01/22 09:39:15 dholland Exp $	*/
 
 /*
  * Modified for NetBSD 1.2E
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.66 2011/07/12 16:59:48 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.73 2013/01/22 09:39:15 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.66 2011/07/12 16:59:48 dholland 
 #include <sys/file.h>
 #include <sys/mount.h>
 #include <sys/vnode.h>
+#include <sys/kmem.h>
 #include <sys/malloc.h>
 #include <sys/dirent.h>
 #include <sys/kauth.h>
@@ -69,6 +70,8 @@ __KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.66 2011/07/12 16:59:48 dholland 
 #include <ufs/ext2fs/ext2fs_extern.h>
 #include <ufs/ext2fs/ext2fs_dir.h>
 #include <ufs/ext2fs/ext2fs.h>
+
+#include <miscfs/genfs/genfs.h>
 
 extern	int dirchk;
 
@@ -167,15 +170,14 @@ ext2fs_readdir(void *v)
 	aiov.iov_len = e2fs_count;
 	auio.uio_resid = e2fs_count;
 	UIO_SETUP_SYSSPACE(&auio);
-	dirbuf = malloc(e2fs_count, M_TEMP, M_WAITOK);
-	dstd = malloc(sizeof(struct dirent), M_TEMP, M_WAITOK | M_ZERO);
+	dirbuf = kmem_alloc(e2fs_count, KM_SLEEP);
+	dstd = kmem_zalloc(sizeof(struct dirent), KM_SLEEP);
 	if (ap->a_ncookies) {
 		nc = e2fs_count / _DIRENT_MINSIZE((struct dirent *)0);
 		ncookies = nc;
 		cookies = malloc(sizeof (off_t) * ncookies, M_TEMP, M_WAITOK);
 		*ap->a_cookies = cookies;
 	}
-	memset(dirbuf, 0, e2fs_count);
 	aiov.iov_base = dirbuf;
 
 	error = VOP_READ(ap->a_vp, &auio, 0, ap->a_cred);
@@ -209,8 +211,8 @@ ext2fs_readdir(void *v)
 		/* we need to correct uio_offset */
 		uio->uio_offset = off;
 	}
-	free(dirbuf, M_TEMP);
-	free(dstd, M_TEMP);
+	kmem_free(dirbuf, e2fs_count);
+	kmem_free(dstd, sizeof(*dstd));
 	*ap->a_eofflag = ext2fs_size(VTOI(ap->a_vp)) <= uio->uio_offset;
 	if (ap->a_ncookies) {
 		if (error) {
@@ -323,8 +325,10 @@ ext2fs_lookup(void *v)
 	 * check the name cache to see if the directory/name pair
 	 * we are looking for is known already.
 	 */
-	if ((error = cache_lookup(vdp, vpp, cnp)) >= 0)
-		return (error);
+	if (cache_lookup(vdp, cnp->cn_nameptr, cnp->cn_namelen,
+			 cnp->cn_nameiop, cnp->cn_flags, NULL, vpp)) {
+		return *vpp == NULLVP ? ENOENT : 0;
+	}
 
 	/*
 	 * Suppress search for slots unless creating
@@ -536,9 +540,11 @@ searchloop:
 	/*
 	 * Insert name into cache (as non-existent) if appropriate.
 	 */
-	if ((cnp->cn_flags & MAKEENTRY) && nameiop != CREATE)
-		cache_enter(vdp, *vpp, cnp);
-	return (ENOENT);
+	if (nameiop != CREATE) {
+		cache_enter(vdp, *vpp, cnp->cn_nameptr, cnp->cn_namelen,
+			    cnp->cn_flags);
+	}
+	return ENOENT;
 
 found:
 	if (numdirpasses == 2)
@@ -575,11 +581,6 @@ found:
 	 */
 	if (nameiop == DELETE && (flags & ISLASTCN)) {
 		/*
-		 * Write access to directory required to delete files.
-		 */
-		if ((error = VOP_ACCESS(vdp, VWRITE, cred)) != 0)
-			return (error);
-		/*
 		 * Return pointer to current entry in results->ulr_offset,
 		 * and distance past previous entry (if there
 		 * is a previous entry in this block) in results->ulr_count.
@@ -591,28 +592,43 @@ found:
 			results->ulr_count = results->ulr_offset - prevoff;
 		if (dp->i_number == foundino) {
 			vref(vdp);
-			*vpp = vdp;
-			return (0);
+			tdp = vdp;
+		} else {
+			if (flags & ISDOTDOT)
+				VOP_UNLOCK(vdp); /* race to get the inode */
+			error = VFS_VGET(vdp->v_mount, foundino, &tdp);
+			if (flags & ISDOTDOT)
+				vn_lock(vdp, LK_EXCLUSIVE | LK_RETRY);
+			if (error)
+				return (error);
 		}
-		if (flags & ISDOTDOT)
-			VOP_UNLOCK(vdp); /* race to get the inode */
-		error = VFS_VGET(vdp->v_mount, foundino, &tdp);
-		if (flags & ISDOTDOT)
-			vn_lock(vdp, LK_EXCLUSIVE | LK_RETRY);
-		if (error)
+		/*
+		 * Write access to directory required to delete files.
+		 */
+		if ((error = VOP_ACCESS(vdp, VWRITE, cred)) != 0) {
+			if (dp->i_number == foundino)
+				vrele(tdp);
+			else
+				vput(tdp);
 			return (error);
+		}
 		/*
 		 * If directory is "sticky", then user must own
 		 * the directory, or the file in it, else she
 		 * may not delete it (unless she's root). This
 		 * implements append-only directories.
 		 */
-		if ((dp->i_e2fs_mode & ISVTX) &&
-		    kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER, NULL) &&
-		    kauth_cred_geteuid(cred) != dp->i_uid &&
-		    VTOI(tdp)->i_uid != kauth_cred_geteuid(cred)) {
-			vput(tdp);
-			return (EPERM);
+		if (dp->i_e2fs_mode & ISVTX) {
+			error = kauth_authorize_vnode(cred, KAUTH_VNODE_DELETE,
+			    tdp, vdp, genfs_can_sticky(cred, dp->i_uid,
+			    VTOI(tdp)->i_uid));
+			if (error) {
+				if (dp->i_number == foundino)
+					vrele(tdp);
+				else
+					vput(tdp);
+				return (EPERM);
+			}
 		}
 		*vpp = tdp;
 		return (0);
@@ -686,9 +702,8 @@ found:
 	/*
 	 * Insert name into cache if appropriate.
 	 */
-	if (cnp->cn_flags & MAKEENTRY)
-		cache_enter(vdp, *vpp, cnp);
-	return (0);
+	cache_enter(vdp, *vpp, cnp->cn_nameptr, cnp->cn_namelen, cnp->cn_flags);
+	return 0;
 }
 
 /*
@@ -1030,7 +1045,7 @@ ext2fs_checkpath(struct inode *source, struct inode *target,
 		error = EEXIST;
 		goto out;
 	}
-	rootino = ROOTINO;
+	rootino = UFS_ROOTINO;
 	error = 0;
 	if (target->i_number == rootino)
 		goto out;

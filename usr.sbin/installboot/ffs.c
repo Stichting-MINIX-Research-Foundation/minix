@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.c,v 1.29 2010/01/14 16:27:49 tsutsui Exp $	*/
+/*	$NetBSD: ffs.c,v 1.32 2013/06/23 02:06:06 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: ffs.c,v 1.29 2010/01/14 16:27:49 tsutsui Exp $");
+__RCSID("$NetBSD: ffs.c,v 1.32 2013/06/23 02:06:06 dholland Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -158,7 +158,7 @@ ffs_find_disk_blocks_ufs1(ib_params *params, ino_t ino,
 
 	/* Read the inode. */
 	if (! ffs_read_disk_block(params,
-		fsbtodb(fs, ino_to_fsba(fs, ino)) + params->fstype->offset,
+		FFS_FSBTODB(fs, ino_to_fsba(fs, ino)) + params->fstype->offset,
 		fs->fs_bsize, inodebuf))
 		return (0);
 	inode = (struct ufs1_dinode *)inodebuf;
@@ -173,7 +173,7 @@ ffs_find_disk_blocks_ufs1(ib_params *params, ino_t ino,
 	lblk = 0;
 	level_i = 0;
 	level[0].blknums = &inode->di_db[0];
-	level[0].blkcount = NDADDR;
+	level[0].blkcount = UFS_NDADDR;
 	level[1].blknums = &inode->di_ib[0];
 	level[1].blkcount = 1;
 	level[2].blknums = &inode->di_ib[1];
@@ -215,24 +215,24 @@ ffs_find_disk_blocks_ufs1(ib_params *params, ino_t ino,
 			if (blk == 0)
 				memset(level[level_i].diskbuf, 0, MAXBSIZE);
 			else if (! ffs_read_disk_block(params, 
-				fsbtodb(fs, blk) + params->fstype->offset,
+				FFS_FSBTODB(fs, blk) + params->fstype->offset,
 				fs->fs_bsize, level[level_i].diskbuf))
 				return (0);
 			/* XXX ondisk32 */
 			level[level_i].blknums = 
 				(int32_t *)level[level_i].diskbuf;
-			level[level_i].blkcount = NINDIR(fs);
+			level[level_i].blkcount = FFS_NINDIR(fs);
 			continue;
 		}
 
 		/* blk is the next direct level block. */
 #if 0
 		fprintf(stderr, "ino %lu db %lu blksize %lu\n", ino, 
-		    fsbtodb(fs, blk), sblksize(fs, inode->di_size, lblk));
+		    FFS_FSBTODB(fs, blk), ffs_sblksize(fs, inode->di_size, lblk));
 #endif
 		rv = (*callback)(params, state, 
-		    fsbtodb(fs, blk) + params->fstype->offset,
-		    sblksize(fs, (int64_t)inode->di_size, lblk));
+		    FFS_FSBTODB(fs, blk) + params->fstype->offset,
+		    ffs_sblksize(fs, (int64_t)inode->di_size, lblk));
 		lblk++;
 		nblk--;
 		if (rv != 1)
@@ -295,7 +295,7 @@ ffs_find_disk_blocks_ufs2(ib_params *params, ino_t ino,
 
 	/* Read the inode. */
 	if (! ffs_read_disk_block(params,
-		fsbtodb(fs, ino_to_fsba(fs, ino)) + params->fstype->offset,
+		FFS_FSBTODB(fs, ino_to_fsba(fs, ino)) + params->fstype->offset,
 		fs->fs_bsize, inodebuf))
 		return (0);
 	inode = (struct ufs2_dinode *)inodebuf;
@@ -310,7 +310,7 @@ ffs_find_disk_blocks_ufs2(ib_params *params, ino_t ino,
 	lblk = 0;
 	level_i = 0;
 	level[0].blknums = &inode->di_db[0];
-	level[0].blkcount = NDADDR;
+	level[0].blkcount = UFS_NDADDR;
 	level[1].blknums = &inode->di_ib[0];
 	level[1].blkcount = 1;
 	level[2].blknums = &inode->di_ib[1];
@@ -352,23 +352,23 @@ ffs_find_disk_blocks_ufs2(ib_params *params, ino_t ino,
 			if (blk == 0)
 				memset(level[level_i].diskbuf, 0, MAXBSIZE);
 			else if (! ffs_read_disk_block(params, 
-				fsbtodb(fs, blk) + params->fstype->offset,
+				FFS_FSBTODB(fs, blk) + params->fstype->offset,
 				fs->fs_bsize, level[level_i].diskbuf))
 				return (0);
 			level[level_i].blknums = 
 				(int64_t *)level[level_i].diskbuf;
-			level[level_i].blkcount = NINDIR(fs);
+			level[level_i].blkcount = FFS_NINDIR(fs);
 			continue;
 		}
 
 		/* blk is the next direct level block. */
 #if 0
 		fprintf(stderr, "ino %lu db %llu blksize %lu\n", ino, 
-		    fsbtodb(fs, blk), sblksize(fs, inode->di_size, lblk));
+		    FFS_FSBTODB(fs, blk), ffs_sblksize(fs, inode->di_size, lblk));
 #endif
 		rv = (*callback)(params, state, 
-		    fsbtodb(fs, blk) + params->fstype->offset,
-		    sblksize(fs, (int64_t)inode->di_size, lblk));
+		    FFS_FSBTODB(fs, blk) + params->fstype->offset,
+		    ffs_sblksize(fs, (int64_t)inode->di_size, lblk));
 		lblk++;
 		nblk--;
 		if (rv != 1)
@@ -560,10 +560,10 @@ ffs_findstage2(ib_params *params, uint32_t *maxblk, ib_block *blocks)
 
 	/* Get the inode number of the secondary bootstrap. */
 	if (is_ufs2)
-		rv = ffs_find_disk_blocks_ufs2(params, ROOTINO,
+		rv = ffs_find_disk_blocks_ufs2(params, UFS_ROOTINO,
 		    ffs_findstage2_ino, &ino);
 	else
-		rv = ffs_find_disk_blocks_ufs1(params, ROOTINO,
+		rv = ffs_find_disk_blocks_ufs1(params, UFS_ROOTINO,
 		    ffs_findstage2_ino, &ino);
 	if (rv != 2) {
 		warnx("Could not find secondary bootstrap `%s' in `%s'",

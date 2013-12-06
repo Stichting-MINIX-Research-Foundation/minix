@@ -24,5 +24,5 @@ __ledf2(float64 a, float64 b)
 #else
 	/* libgcc1.c says 1 - (a <= b) */
 	return 1 - float64_le(a, b);
-#endif
+#endif /* defined(__minix) */
 }

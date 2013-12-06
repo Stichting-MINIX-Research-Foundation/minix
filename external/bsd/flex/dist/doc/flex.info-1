@@ -1,4 +1,4 @@
-This is flex.info, produced by makeinfo version 4.8 from flex.texi.
+This is flex.info, produced by makeinfo version 4.13 from flex.texi.
 
 INFO-DIR-SECTION Programming
 START-INFO-DIR-ENTRY
@@ -8,8 +8,8 @@ END-INFO-DIR-ENTRY
    The flex manual is placed under the same licensing conditions as the
 rest of flex:
 
-   Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007 The Flex
-Project.
+   Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2012 The
+Flex Project.
 
    Copyright (C) 1990, 1997 The Regents of the University of California.
 All rights reserved.
@@ -51,8 +51,8 @@ This manual describes `flex', a tool for generating programs that
 perform pattern-matching on text.  The manual includes both tutorial and
 reference sections.
 
-   This edition of `The flex Manual' documents `flex' version 2.5.35.
-It was last updated on 10 September 2007.
+   This edition of `The flex Manual' documents `flex' version 2.5.37.
+It was last updated on 22 July 2012.
 
    This manual was written by Vern Paxson, Will Estes and John Millaway.
 
@@ -265,8 +265,8 @@ File: flex.info,  Node: Copyright,  Next: Reporting Bugs,  Prev: Top,  Up: Top
 The flex manual is placed under the same licensing conditions as the
 rest of flex:
 
-   Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007 The Flex
-Project.
+   Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2012 The
+Flex Project.
 
    Copyright (C) 1990, 1997 The Regents of the University of California.
 All rights reserved.
@@ -338,7 +338,6 @@ First some simple examples to get the flavor of how one uses `flex'.
 encounters the string `username' will replace it with the user's login
 name:
 
-
          %%
          username    printf( "%s", getlogin() );
 
@@ -351,7 +350,6 @@ rules.
 
    Here's another simple example:
 
-
                  int num_lines = 0, num_chars = 0;
 
          %%
@@ -359,7 +357,8 @@ rules.
          .       ++num_chars;
 
          %%
-         main()
+
+         int main()
                  {
                  yylex();
                  printf( "# of lines = %d, # of chars = %d\n",
@@ -377,12 +376,11 @@ other than a newline (indicated by the `.' regular expression).
 
    A somewhat more complicated example:
 
-
          /* scanner for a toy Pascal-like language */
 
          %{
          /* need this for the call to atof() below */
-         #include math.h>
+         #include <math.h>
          %}
 
          DIGIT    [0-9]
@@ -416,9 +414,7 @@ other than a newline (indicated by the `.' regular expression).
 
          %%
 
-         main( argc, argv )
-         int argc;
-         char **argv;
+         int main( int argc, char **argv )
              {
              ++argv, --argc;  /* skip over program name */
              if ( argc > 0 )
@@ -445,7 +441,6 @@ File: flex.info,  Node: Format,  Next: Patterns,  Prev: Simple Examples,  Up: To
 The `flex' input file consists of three sections, separated by a line
 containing only `%%'.
 
-
          definitions
          %%
          rules
@@ -471,7 +466,6 @@ definitions to simplify the scanner specification, and declarations of
 
    Name definitions have the form:
 
-
          name definition
 
    The `name' is a word beginning with a letter or an underscore (`_')
@@ -481,7 +475,6 @@ following the name and continuing to the end of the line.  The
 definition can subsequently be referred to using `{name}', which will
 expand to `(definition)'.  For example,
 
-
          DIGIT    [0-9]
          ID       [a-z][a-z0-9]*
 
@@ -489,11 +482,9 @@ expand to `(definition)'.  For example,
 digit, and `ID' to be a regular expression which matches a letter
 followed by zero-or-more letters-or-digits.  A subsequent reference to
 
-
          {DIGIT}+"."{DIGIT}*
 
    is identical to
-
 
          ([0-9])+"."([0-9])*
 
@@ -513,7 +504,6 @@ before any flex definitions (1).  The `%top' block is useful when you
 want certain preprocessor macros to be defined or certain files to be
 included before the generated code.  The single characters, `{'  and
 `}' are used to delimit the `%top' block, as show in the example below:
-
 
          %top{
              /* This code goes at the "top" of the generated file. */
@@ -535,7 +525,6 @@ File: flex.info,  Node: Rules Section,  Next: User Code Section,  Prev: Definiti
 
 The "rules" section of the `flex' input contains a series of rules of
 the form:
-
 
          pattern   action
 
@@ -592,7 +581,6 @@ new line, with one or more whitespace characters before the initial
 
    All the comments in the following example are valid:
 
-
      %{
      /* code block */
      %}
@@ -620,7 +608,7 @@ File: flex.info,  Node: Patterns,  Next: Matching,  Prev: Format,  Up: Top
 6 Patterns
 **********
 
-The patterns in the input (see *Note Rules Section::) are written using
+The patterns in the input (see *note Rules Section::) are written using
 an extended set of regular expressions.  These are:
 
 `x'
@@ -705,7 +693,6 @@ an extended set of regular expressions.  These are:
 
      The following are all valid:
 
-
      (?:foo)         same as  (foo)
      (?i:ab7)        same as  ([aA][bB]7)
      (?-i:ab)        same as  (ab)
@@ -756,7 +743,7 @@ an extended set of regular expressions.  These are:
      yourself, or explicitly use `r/\r\n' for `r$'.
 
 `<s>r'
-     an `r', but only in start condition `s' (see *Note Start
+     an `r', but only in start condition `s' (see *note Start
      Conditions:: for discussion of start conditions).
 
 `<s1,s2,s3>r'
@@ -782,11 +769,9 @@ Those grouped together have equal precedence (see special note on the
 precedence of the repeat operator, `{}', under the documentation for
 the `--posix' POSIX compliance option).  For example,
 
-
          foo|bar*
 
    is the same as
-
 
          (foo)|(ba(r*))
 
@@ -796,12 +781,10 @@ matches _either_ the string `foo' _or_ the string `ba' followed by
 zero-or-more `r''s.  To match `foo' or zero-or-more repetitions of the
 string `bar', use:
 
-
          foo|(bar)*
 
    And to match a sequence of zero or more repetitions of `foo' and
 `bar':
-
 
          (foo|bar)*
 
@@ -810,7 +793,6 @@ can also contain "character class expressions".  These are expressions
 enclosed inside `[': and `:]' delimiters (which themselves must appear
 between the `[' and `]' of the character class. Other elements may
 occur inside the character class, too).  The valid expressions are:
-
 
          [:alnum:] [:alpha:] [:blank:]
          [:cntrl:] [:digit:] [:graph:]
@@ -824,7 +806,6 @@ any alphabetic or numeric character.  Some systems don't provide
 `isblank()', so flex defines `[:blank:]' as a blank or a tab.
 
    For example, the following character classes are all equivalent:
-
 
          [[:alnum:]]
          [[:alpha:][:digit:]]
@@ -871,7 +852,6 @@ not be desirable.
      Flex allows negation of character class expressions by prepending
      `^' to the POSIX character class name.
 
-
               [:^alnum:] [:^alpha:] [:^blank:]
               [:^cntrl:] [:^digit:] [:^graph:]
               [:^lower:] [:^print:] [:^punct:]
@@ -906,7 +886,6 @@ not be desirable.
 
    * The following are invalid:
 
-
               foo/bar$
               <sc1>foo<sc2>bar
 
@@ -915,14 +894,12 @@ not be desirable.
    * The following will result in `$' or `^' being treated as a normal
      character:
 
-
               foo|(bar$)
               foo|^bar
 
      If the desired meaning is a `foo' or a
      `bar'-followed-by-a-newline, the following could be used (the
      special `|' action is explained below, *note Actions::):
-
 
               foo      |
               bar$     /* action goes here */
@@ -954,7 +931,6 @@ Actions::), and then the remaining input is scanned for another match.
 character in the input is considered matched and copied to the standard
 output.  Thus, the simplest valid `flex' input is:
 
-
          %%
 
    which generates a scanner that simply copies its input (one
@@ -978,7 +954,6 @@ versions.
 your heart's content, and calls to `unput()' do not destroy `yytext'
 (*note Actions::).  Furthermore, existing `lex' programs sometimes
 access `yytext' externally using declarations of the form:
-
 
          extern char yytext[];
 
@@ -1013,7 +988,6 @@ action is empty, then when the pattern is matched the input token is
 simply discarded.  For example, here is the specification for a program
 which deletes all occurrences of `zap me' from its input:
 
-
          %%
          "zap me"
 
@@ -1022,7 +996,6 @@ output since they will be matched by the default rule.
 
    Here is a program which compresses multiple blanks and tabs down to a
 single blank, and throws away whitespace found at the end of a line:
-
 
          %%
          [ \t]+        putchar( ' ' );
@@ -1066,13 +1039,12 @@ within an action:
 `REJECT'
      directs the scanner to proceed on to the "second best" rule which
      matched the input (or a prefix of the input).  The rule is chosen
-     as described above in *Note Matching::, and `yytext' and `yyleng'
+     as described above in *note Matching::, and `yytext' and `yyleng'
      set up appropriately.  It may either be one which matched as much
      text as the originally chosen rule but came later in the `flex'
      input file, or one which matched less text.  For example, the
      following will both count the words in the input and call the
      routine `special()' whenever `frob' is seen:
-
 
                       int word_count = 0;
               %%
@@ -1086,7 +1058,6 @@ within an action:
      one finding the next best choice to the currently active rule.  For
      example, when the following scanner scans the token `abcd', it will
      write `abcdabcaba' to the output:
-
 
               %%
               a        |
@@ -1115,7 +1086,6 @@ within an action:
      `mega-kludge' the following will write `mega-mega-kludge' to the
      output:
 
-
               %%
               mega-    ECHO; yymore();
               kludge   ECHO;
@@ -1137,7 +1107,6 @@ scanner looks for the next match.  `yytext' and `yyleng' are adjusted
 appropriately (e.g., `yyleng' will now be equal to `n').  For example,
 on the input `foobar' the following will write out `foobarbar':
 
-
          %%
          foobar    ECHO; yyless(3);
          [a-z]+    ECHO;
@@ -1153,7 +1122,6 @@ input file, not from other source files.
    `unput(c)' puts the character `c' back onto the input stream.  It
 will be the next character scanned.  The following action will take the
 current token and cause it to be rescanned enclosed in parentheses.
-
 
          {
          int i;
@@ -1183,7 +1151,6 @@ input stream with an end-of-file.
 
    `input()' reads the next character from the input stream.  For
 example, the following is one way to eat up C comments:
-
 
          %%
          "/*"        {
@@ -1215,11 +1182,11 @@ example, the following is one way to eat up C comments:
 instead referred to as yyinput(), in order to avoid a name clash with
 the `C++' stream by the name of `input'.)
 
-   `YY_FLUSH_BUFFER()' flushes the scanner's internal buffer so that
-the next time the scanner attempts to match a token, it will first
-refill the buffer using `YY_INPUT()' (*note Generated Scanner::).  This
-action is a special case of the more general `yy_flush_buffer()'
-function, described below (*note Multiple Input Buffers::)
+   `YY_FLUSH_BUFFER;' flushes the scanner's internal buffer so that the
+next time the scanner attempts to match a token, it will first refill
+the buffer using `YY_INPUT()' (*note Generated Scanner::).  This action
+is a special case of the more general `yy_flush_buffer;' function,
+described below (*note Multiple Input Buffers::)
 
    `yyterminate()' can be used in lieu of a return statement in an
 action.  It terminates the scanner and returns a 0 to the scanner's
@@ -1238,7 +1205,6 @@ scanning routine `yylex()', a number of tables used by it for matching
 tokens, and a number of auxiliary routines and macros.  By default,
 `yylex()' is declared as follows:
 
-
          int yylex()
              {
              ... various definitions and the actions in here ...
@@ -1247,7 +1213,6 @@ tokens, and a number of auxiliary routines and macros.  By default,
    (If your environment supports function prototypes, then it will be
 `int yylex( void )'.)  This definition may be changed by defining the
 `YY_DECL' macro.  For example, you could use:
-
 
          #define YY_DECL float lexscan( a, b ) float a, b;
 
@@ -1303,7 +1268,6 @@ constant `YY_NULL' (0 on Unix systems) to indicate `EOF'.  The default
    Here is a sample definition of `YY_INPUT' (in the definitions
 section of the input file):
 
-
          %{
          #define YY_INPUT(buf,result,max_size) \
              { \
@@ -1329,7 +1293,7 @@ though `yywrap()' returned 1), or you must link with `-lfl' to obtain
 the default version of the routine, which always returns 1.
 
    For scanning from in-memory buffers (e.g., scanning strings), see
-*Note Scanning Strings::. *Note Multiple Input Buffers::.
+*note Scanning Strings::. *Note Multiple Input Buffers::.
 
    The scanner writes its `ECHO' output to the `yyout' global (default,
 `stdout'), which may be redefined by the user simply by assigning it to
@@ -1345,14 +1309,12 @@ File: flex.info,  Node: Start Conditions,  Next: Multiple Input Buffers,  Prev: 
 rule whose pattern is prefixed with `<sc>' will only be active when the
 scanner is in the "start condition" named `sc'.  For example,
 
-
          <STRING>[^"]*        { /* eat up the string body ... */
                      ...
                      }
 
    will be active only when the scanner is in the `STRING' start
 condition, and
-
 
          <INITIAL,STRING,QUOTE>\.        { /* handle an escape ... */
                      ...
@@ -1381,7 +1343,6 @@ the rest (e.g., comments).
 is still a little vague, here's a simple example illustrating the
 connection between the two.  The set of rules:
 
-
          %s example
          %%
 
@@ -1390,7 +1351,6 @@ connection between the two.  The set of rules:
          bar            something_else();
 
    is equivalent to
-
 
          %x example
          %%
@@ -1411,7 +1371,6 @@ condition.
 every start condition.  Thus, the above example could also have been
 written:
 
-
          %x example
          %%
 
@@ -1421,7 +1380,6 @@ written:
 
    The default rule (to `ECHO' any unmatched character) remains active
 in start conditions.  It is equivalent to:
-
 
          <*>.|\n     ECHO;
 
@@ -1435,7 +1393,6 @@ required but are considered good style.)
 of the rules section.  For example, the following will cause the scanner
 to enter the `SPECIAL' start condition whenever `yylex()' is called and
 the global variable `enter_special' is true:
-
 
                  int enter_special;
 
@@ -1454,7 +1411,6 @@ default it will treat it as three tokens, the integer `123', a dot
 the line by the string `expect-floats' it will treat it as a single
 token, the floating-point number `123.456':
 
-
          %{
          #include <math.h>
          %}
@@ -1463,7 +1419,7 @@ token, the floating-point number `123.456':
          %%
          expect-floats        BEGIN(expect);
 
-         <expect>[0-9]+@samp{.}[0-9]+      {
+         <expect>[0-9]+.[0-9]+      {
                      printf( "found a float, = %f\n",
                              atof( yytext ) );
                      }
@@ -1486,7 +1442,6 @@ token, the floating-point number `123.456':
    Here is a scanner which recognizes (and discards) C comments while
 maintaining a count of the current input line.
 
-
          %x comment
          %%
                  int line_num = 1;
@@ -1506,7 +1461,6 @@ a big win.
    Note that start-conditions names are really integer values and can
 be stored as such.  Thus, the above could be extended in the following
 fashion:
-
 
          %x comment foo
          %%
@@ -1534,7 +1488,6 @@ fashion:
 integer-valued `YY_START' macro.  For example, the above assignments to
 `comment_caller' could instead be written
 
-
          comment_caller = YY_START;
 
    Flex provides `YYSTATE' as an alias for `YY_START' (since that is
@@ -1548,7 +1501,6 @@ option-header::. *Note option-prefix::.
    Finally, here's an example of how to match C-style quoted strings
 using exclusive start conditions, including expanded escape sequences
 (but not including checking for a string that's too long):
-
 
          %x str
 
@@ -1610,14 +1562,12 @@ whole bunch of rules all preceded by the same start condition(s).  Flex
 makes this a little easier and cleaner by introducing a notion of start
 condition "scope".  A start condition scope is begun with:
 
-
          <SCs>{
 
    where `SCs' is a list of one or more start conditions.  Inside the
 start condition scope, every rule automatically has the prefix `SCs>'
 applied to it, until a `}' which matches the initial `{'.  So, for
 example,
-
 
          <ESC>{
              "\\n"   return '\n';
@@ -1627,7 +1577,6 @@ example,
          }
 
    is equivalent to:
-
 
          <ESC>"\\n"  return '\n';
          <ESC>"\\r"  return '\r';
@@ -1744,7 +1693,6 @@ which expands include files (the `<<EOF>>' feature is discussed below).
    This first example uses yypush_buffer_state and yypop_buffer_state.
 Flex maintains the stack internally.
 
-
          /* the "incl" state is used for picking up the name
           * of an include file
           */
@@ -1779,7 +1727,6 @@ Flex maintains the stack internally.
    The second example, below, does the same thing as the previous
 example did, but manages its own input buffer stack manually (instead
 of letting flex do it).
-
 
          /* the "incl" state is used for picking up the name
           * of an include file
@@ -1899,12 +1846,10 @@ rule is given, it applies to _all_ start conditions which do not
 already have <<EOF>> actions.  To specify an <<EOF>> rule for only the
 initial start condition, use:
 
-
          <INITIAL><<EOF>>
 
    These rules are useful for catching things like unclosed comments.
 An example:
-
 
          %x quote
          %%
@@ -1936,14 +1881,12 @@ number of the matched rule (rules are numbered starting with 1).
 Suppose you want to profile how often each of your rules is matched.
 The following would do the trick:
 
-
          #define YY_USER_ACTION ++ctr[yy_act]
 
    where `ctr' is an array to hold the counts for the different rules.
 Note that the macro `YY_NUM_RULES' gives the total number of rules
 (including the default rule), even if you use `-s)', so a correct
 declaration for `ctr' is:
-
 
          int ctr[YY_NUM_RULES];
 
@@ -1956,7 +1899,7 @@ call a routine to read in a data table or open a logging file.
 control whether the current buffer is considered "interactive".  An
 interactive buffer is processed more slowly, but must be used when the
 scanner's input source is indeed interactive to avoid problems due to
-waiting to fill buffers (see the discussion of the `-I' flag in *Note
+waiting to fill buffers (see the discussion of the `-I' flag in *note
 Scanner Options::).  A non-zero value in the macro invocation marks the
 buffer as interactive, a zero value as non-interactive.  Note that use
 of this macro overrides `%option always-interactive' or `%option
@@ -2057,7 +2000,6 @@ input.  This file is then included in the `flex' scanner.  For example,
 if one of the tokens is `TOK_NUMBER', part of the scanner might look
 like:
 
-
          %{
          #include "y.tab.h"
          %}
@@ -2087,7 +2029,6 @@ Scanner Options::.
 
    Even though there are many scanner options, a typical scanner might
 only specify the following options:
-
 
      %option   8bit reentrant bison-bridge
      %option   warn nodefault
@@ -2123,7 +2064,6 @@ is indeed used, or unsetting them to indicate it actually is not used
 suppress the appearance of unneeded routines in the generated scanner.
 Each of the following, if unset (e.g., `%option nounput'), results in
 the corresponding routine not appearing in the generated scanner:
-
 
          input, unput
          yy_push_state, yy_pop_state, yy_top_state
@@ -2199,7 +2139,7 @@ File: flex.info,  Node: Options Affecting Scanner Behavior,  Next: Code-Level An
      case of letters given in the `flex' input patterns will be ignored,
      and tokens in the input will be matched regardless of case.  The
      matched text given in `yytext' will have the preserved case (i.e.,
-     it will not be folded).  For tricky behavior, see *Note case and
+     it will not be folded).  For tricky behavior, see *note case and
      character ranges::.
 
 `-l, --lex-compat, `%option lex-compat''
@@ -2208,7 +2148,7 @@ File: flex.info,  Node: Options Affecting Scanner Behavior,  Next: Code-Level An
      Use of this option costs a considerable amount of performance, and
      it cannot be used with the `--c++', `--full', `--fast', `-Cf', or
      `-CF' options.  For details on the compatibilities it provides, see
-     *Note Lex and Posix::.  This option also results in the name
+     *note Lex and Posix::.  This option also results in the name
      `YY_FLEX_LEX_COMPAT' being `#define''d in the generated scanner.
 
 `-B, --batch, `%option batch''
@@ -2377,7 +2317,7 @@ File: flex.info,  Node: Code-Level And API Options,  Next: Options for Scanner S
      located with respect to either the original `flex' input file (if
      the errors are due to code in the input file), or `lex.yy.c' (if
      the errors are `flex''s fault - you should report these sorts of
-     errors to the email address given in *Note Reporting Bugs::).
+     errors to the email address given in *note Reporting Bugs::).
 
 `-R, --reentrant, `%option reentrant''
      instructs flex to generate a reentrant C scanner.  The generated
@@ -2409,7 +2349,6 @@ File: flex.info,  Node: Code-Level And API Options,  Next: Options for Scanner S
      `yytext' to `footext'.  It also changes the name of the default
      output file from `lex.yy.c' to `lex.foo.c'.  Here is a partial
      list of the names affected:
-
 
               yy_create_buffer
               yy_delete_buffer
@@ -2544,7 +2483,6 @@ File: flex.info,  Node: Options for Scanner Speed and Size,  Next: Debugging Opt
      trade off faster-executing scanners at the cost of larger tables
      with the following generally being true:
 
-
               slowest & smallest
                     -Cem
                     -Cm
@@ -2574,7 +2512,6 @@ File: flex.info,  Node: Options for Scanner Speed and Size,  Next: Debugging Opt
      patterns will be considerably smaller (and for others, larger).  In
      general, if the pattern set contains both _keywords_ and a
      catch-all, _identifier_ rule, such as in the set:
-
 
               "case"    return TOK_CASE;
               "switch"  return TOK_SWITCH;
@@ -2612,7 +2549,6 @@ File: flex.info,  Node: Debugging Options,  Next: Miscellaneous Options,  Prev: 
      pattern is recognized and the global variable `yy_flex_debug' is
      non-zero (which is the default), the scanner will write to
      `stderr' a line of the form:
-
 
               -accepting rule at line 53 ("the matched text")
 
@@ -2696,7 +2632,6 @@ rules.  Aside from the effects on scanner speed of the table compression
 `-C' options outlined above, there are a number of options/actions
 which degrade performance.  These are, from most expensive to least:
 
-
          REJECT
          arbitrary trailing context
 
@@ -2707,7 +2642,7 @@ which degrade performance.  These are, from most expensive to least:
          %option interactive
          %option always-interactive
 
-         @samp{^} beginning-of-line operator
+         ^ beginning-of-line operator
          yymore()
 
    with the first two all being quite expensive and the last two being
@@ -2727,7 +2662,6 @@ newlines.  In general, you should avoid rules such as `[^f]+', which
 match very long tokens, including newlines, and may possibly match your
 entire file! A better approach is to separate `[^f]+' into two rules:
 
-
      %option yylineno
      %%
          [^f\n]+
@@ -2740,13 +2674,11 @@ amount of work for a complicated scanner.  In principal, one begins by
 using the `-b' flag to generate a `lex.backup' file.  For example, on
 the input:
 
-
          %%
          foo        return TOK_KEYWORD;
          foobar     return TOK_KEYWORD;
 
    the file looks like:
-
 
          State #6 is non-accepting -
           associated rule line numbers:
@@ -2792,7 +2724,6 @@ scanners.
 
    The way to remove the backing up is to add "error" rules:
 
-
          %%
          foo         return TOK_KEYWORD;
          foobar      return TOK_KEYWORD;
@@ -2806,7 +2737,6 @@ scanners.
 
    Eliminating backing up among a list of keywords can also be done
 using a "catch-all" rule:
-
 
          %%
          foo         return TOK_KEYWORD;
@@ -2831,19 +2761,16 @@ backing up.  Leaving just one means you gain nothing.
 parts do not have a fixed length) entails almost the same performance
 loss as `REJECT' (i.e., substantial).  So when possible a rule like:
 
-
          %%
          mouse|rat/(cat|dog)   run();
 
    is better written:
-
 
          %%
          mouse/cat|dog         run();
          rat/cat|dog           run();
 
    or as
-
 
          %%
          mouse|rat/cat         run();
@@ -2860,7 +2787,6 @@ long tokens the processing of most input characters takes place in the
 additional work of setting up the scanning environment (e.g., `yytext')
 for the action.  Recall the scanner for C comments:
 
-
          %x comment
          %%
                  int line_num = 1;
@@ -2873,7 +2799,6 @@ for the action.  Recall the scanner for C comments:
          <comment>"*"+"/"        BEGIN(INITIAL);
 
    This could be sped up by writing it as:
-
 
          %x comment
          %%
@@ -2900,7 +2825,6 @@ through a file containing identifiers and keywords, one per line and
 with no other extraneous characters, and recognize all the keywords.  A
 natural first approach is:
 
-
          %%
          asm      |
          auto     |
@@ -2912,7 +2836,6 @@ natural first approach is:
          .|\n     /* it's not a keyword */
 
    To eliminate the back-tracking, introduce a catch-all rule:
-
 
          %%
          asm      |
@@ -2928,7 +2851,6 @@ natural first approach is:
    Now, if it's guaranteed that there's exactly one word per line, then
 we can reduce the total number of matches by a half by merging in the
 recognition of newlines with that of the other tokens:
-
 
          %%
          asm\n    |
@@ -2954,7 +2876,6 @@ newlines, or, since we never expect to encounter such an input and
 therefore don't how it's classified, we can introduce one more
 catch-all rule, this one which doesn't include a newline:
 
-
          %%
          asm\n    |
          auto\n   |
@@ -2975,7 +2896,7 @@ a token contains multiple `NUL's.  It's best to write rules which match
 _short_ amounts of text if it's anticipated that the text will often
 include `NUL's.
 
-   Another final note regarding performance: as mentioned in *Note
+   Another final note regarding performance: as mentioned in *note
 Matching::, dynamically resizing `yytext' to accommodate huge tokens is
 a slow process because it presently requires that the (huge) token be
 rescanned from the beginning.  Thus if performance is vital, you should
@@ -3077,7 +2998,7 @@ scanner:
      reads up to `max_size' characters into `buf' and returns the
      number of characters read.  To indicate end-of-input, return 0
      characters.  Note that `interactive' scanners (see the `-B' and
-     `-I' flags in *Note Scanner Options::) define the macro
+     `-I' flags in *note Scanner Options::) define the macro
      `YY_INTERACTIVE'.  If you redefine `LexerInput()' and need to take
      different actions depending on whether or not the scanner might be
      scanning an interactive input source, you can test for the
@@ -3094,7 +3015,7 @@ scanner:
 
    Note that a `yyFlexLexer' object contains its _entire_ scanning
 state.  Thus you can use such objects to create reentrant scanners, but
-see also *Note Reentrant::.  You can instantiate multiple instances of
+see also *note Reentrant::.  You can instantiate multiple instances of
 the same `yyFlexLexer' class, and you can also combine multiple C++
 scanner classes together in the same program using the `-P' option
 discussed above.
@@ -3104,12 +3025,15 @@ scanner classes; you must use `%pointer' (the default).
 
    Here is an example of a simple C++ scanner:
 
-
-             // An example of using the flex C++ scanner class.
+          // An example of using the flex C++ scanner class.
 
          %{
+         #include <iostream>
+         using namespace std;
          int mylineno = 0;
          %}
+
+         %option noyywrap
 
          string  \"[^\n"]+\"
 
@@ -3134,7 +3058,7 @@ scanner classes; you must use `%pointer' (the default).
                      if(c == '\n')
                          ++mylineno;
 
-                     else if(c == @samp{*})
+                     else if(c == '*')
                          {
                          if((c = yyinput()) == '/')
                              break;
@@ -3144,30 +3068,29 @@ scanner classes; you must use `%pointer' (the default).
                      }
                  }
 
-         {number}  cout  "number "  YYText()  '\n';
+         {number}  cout << "number " << YYText() << '\n';
 
          \n        mylineno++;
 
-         {name}    cout  "name "  YYText()  '\n';
+         {name}    cout << "name " << YYText() << '\n';
 
-         {string}  cout  "string "  YYText()  '\n';
+         {string}  cout << "string " << YYText() << '\n';
 
          %%
 
          int main( int /* argc */, char** /* argv */ )
-             {
-             @code{flex}Lexer* lexer = new yyFlexLexer;
+         {
+             FlexLexer* lexer = new yyFlexLexer;
              while(lexer->yylex() != 0)
                  ;
              return 0;
-             }
+         }
 
    If you want to create multiple (different) lexer classes, you use the
 `-P' flag (or the `prefix=' option) to rename each `yyFlexLexer' to
 some other `xxFlexLexer'.  You then can include `<FlexLexer.h>' in your
 other sources once per lexer class, first renaming `yyFlexLexer' as
 follows:
-
 
          #undef yyFlexLexer
          #define yyFlexLexer xxFlexLexer
@@ -3212,7 +3135,6 @@ However, there are other uses for a reentrant scanner.  For example, you
 could scan two or more files simultaneously to implement a `diff' at
 the token level (i.e., instead of at the character level):
 
-
          /* Example of maintaining more than one active scanner. */
 
          do {
@@ -3232,7 +3154,6 @@ buffer states. *Note Multiple Input Buffers::.)
 
    The following crude scanner supports the `eval' command by invoking
 another instance of itself.
-
 
          /* Example of recursive invocation. */
 
@@ -3286,7 +3207,6 @@ File: flex.info,  Node: Reentrant Example,  Next: Reentrant Detail,  Prev: Reent
 ======================
 
 First, an example of a reentrant scanner: 
-
          /* This scanner prints "//" comments. */
 
          %option reentrant stack noyywrap
@@ -3359,7 +3279,6 @@ have an argument, `yyscanner' , that is not present in a non-reentrant
 scanner.  Here are the declarations of `yy_push_state' and
 `yy_pop_state' in the reentrant scanner:
 
-
          static void yy_push_state  ( int new_state , yyscan_t yyscanner ) ;
          static void yy_pop_state  ( yyscan_t yyscanner  ) ;
 
@@ -3370,7 +3289,7 @@ argument list, it is always of type `yyscan_t' (which is typedef'd to
 `void *') and it is always named `yyscanner'.  As you may have guessed,
 `yyscanner' is a pointer to an opaque data structure encapsulating the
 current state of the scanner.  For a list of function declarations, see
-*Note Reentrant Functions::. Note that preprocessor macros, such as
+*note Reentrant Functions::. Note that preprocessor macros, such as
 `BEGIN', `ECHO', and `REJECT', do not take this additional argument.
 
 
@@ -3392,7 +3311,6 @@ tell you this so you don't expect to link to these variables
 externally. Currently, each macro expands to a member of an internal
 struct, e.g.,
 
-
      #define yytext (((struct yyguts_t*)yyscanner)->yytext_r)
 
    One important thing to remember about `yytext' and friends is that
@@ -3409,7 +3327,6 @@ File: flex.info,  Node: Init and Destroy Functions,  Next: Accessor Methods,  Pr
 
 `yylex_init' and `yylex_destroy' must be called before and after
 `yylex', respectively.
-
 
          int yylex_init ( yyscan_t * ptr_yy_globals ) ;
          int yylex_init_extra ( YY_EXTRA_TYPE user_defined, yyscan_t * ptr_yy_globals ) ;
@@ -3451,7 +3368,6 @@ and non-reentrant) may be restarted by calling `yyrestart'.
    Below is an example of a program that creates a scanner, uses it,
 then destroys it when done:
 
-
          int main ()
          {
              yyscan_t scanner;
@@ -3459,7 +3375,7 @@ then destroys it when done:
 
              yylex_init(&scanner);
 
-             while ((tok=yylex()) > 0)
+             while ((tok=yylex(scanner)) > 0)
                  printf("tok=%d  yytext=%s\n", tok, yyget_text(scanner));
 
              yylex_destroy(scanner);
@@ -3484,7 +3400,6 @@ Instead, you must access `flex' values using accessor methods (get/set
 functions). Each accessor method is named `yyget_NAME' or `yyset_NAME',
 where `NAME' is the name of the `flex' variable you want. For example:
 
-
          /* Set the last character of yytext to NULL. */
          void chop ( yyscan_t scanner )
          {
@@ -3493,7 +3408,6 @@ where `NAME' is the name of the `flex' variable you want. For example:
          }
 
    The above code may be called from within an action like this:
-
 
          %%
          .+\n    { chop( yyscanner );}
@@ -3522,7 +3436,6 @@ accessible through the accessor methods `yyget_extra' and `yyset_extra'
 from outside the scanner, and through the shortcut macro `yyextra' from
 within the scanner itself. They are defined as follows:
 
-
          #define YY_EXTRA_TYPE  void*
          YY_EXTRA_TYPE  yyget_extra ( yyscan_t scanner );
          void           yyset_extra ( YY_EXTRA_TYPE arbitrary_data , yyscan_t scanner);
@@ -3535,7 +3448,6 @@ the scanner itself.
    By default, `YY_EXTRA_TYPE' is defined as type `void *'.  You may
 redefine this type using `%option extra-type="your_type"' in the
 scanner:
-
 
          /* An example of overriding YY_EXTRA_TYPE. */
          %{
@@ -3574,7 +3486,6 @@ File: flex.info,  Node: About yyscan_t,  Prev: Extra Data,  Up: Reentrant Detail
 
 `yyscan_t' is defined as:
 
-
           typedef void* yyscan_t;
 
    It is initialized by `yylex_init()' to point to an internal
@@ -3588,7 +3499,6 @@ File: flex.info,  Node: Reentrant Functions,  Prev: Reentrant Detail,  Up: Reent
 ===========================================================
 
 The following Functions are available in a reentrant scanner:
-
 
          char *yyget_text ( yyscan_t scanner );
          int yyget_leng ( yyscan_t scanner );
@@ -3610,7 +3520,6 @@ intentional.
    The following Macro shortcuts are available in actions in a reentrant
 scanner:
 
-
          yytext
          yyleng
          yyin
@@ -3627,14 +3536,12 @@ to maintain the line count independently of `flex'.
    The following functions and macros are made available when `%option
 bison-bridge' (`--bison-bridge') is specified:
 
-
          YYSTYPE * yyget_lval ( yyscan_t scanner );
          void yyset_lval ( YYSTYPE * yylvalp , yyscan_t scanner );
          yylval
 
    The following functions and macros are made available when `%option
 bison-locations' (`--bison-locations') is specified:
-
 
          YYLTYPE *yyget_lloc ( yyscan_t scanner );
          void yyset_lloc ( YYLTYPE * yyllocp , yyscan_t scanner );
@@ -3695,11 +3602,9 @@ exceptions:
      handler which long-jumps out of the scanner, and the scanner is
      subsequently called again, you may get the following message:
 
-
-              fatal @code{flex} scanner internal error--end of buffer missed
+              fatal flex scanner internal error--end of buffer missed
 
      To reenter the scanner, first use:
-
 
               yyrestart( yyin );
 
@@ -3709,7 +3614,7 @@ exceptions:
 
    * Also note that `flex' C++ scanner classes _are_ reentrant, so if
      using C++ is an option for you, you should use them instead.
-     *Note Cxx::, and *Note Reentrant::  for details.
+     *Note Cxx::, and *note Reentrant::  for details.
 
    * `output()' is not supported.  Output from the ECHO macro is done
      to the file-pointer `yyout' (default `stdout)'.
@@ -3721,7 +3626,6 @@ exceptions:
 
    * When definitions are expanded, `flex' encloses them in parentheses.
      With `lex', the following:
-
 
               NAME    [A-Z][A-Z0-9]*
               %%
@@ -3749,7 +3653,6 @@ exceptions:
    * Some implementations of `lex' allow a rule's action to begin on a
      separate line, if the rule's pattern has trailing whitespace:
 
-
               %%
               foo|bar<space here>
                 { foobar_action();}
@@ -3765,8 +3668,8 @@ exceptions:
      `-l' option does away with this incompatibility.
 
    * The precedence of the `{,}' (numeric range) operator is different.
-     The AT&T and POSIX specifications of `lex' interpret `abc{1,3}'
-     as match one, two, or three occurrences of `abc'", whereas `flex'
+     The AT&T and POSIX specifications of `lex' interpret `abc{1,3}' as
+     match one, two, or three occurrences of `abc'", whereas `flex'
      interprets it as "match `ab' followed by one, two, or three
      occurrences of `c'".  The `-l' and `--posix' options do away with
      this incompatibility.
@@ -3840,11 +3743,9 @@ specification:
 with `flex' you can put multiple actions on the same line, separated
 with semi-colons, while with `lex', the following:
 
-
          foo    handle_foo(); ++num_foos_seen;
 
    is (rather surprisingly) truncated to
-
 
          foo    handle_foo();
 
@@ -3897,7 +3798,7 @@ all memory when you call `yylex_destroy' *Note faq-memory-leak::.
      memory management API.
 
 64kb for the REJECT state. This will only be allocated if you use REJECT.
-     The size is the large enough to hold the same number of states as
+     The size is  large enough to hold the same number of states as
      characters in the input buffer. If you override the size of the
      input buffer (via `YY_BUF_SIZE'), then you automatically override
      the size of this buffer as well.
@@ -3966,7 +3867,6 @@ telling flex that you will provide your own implementations.
 
   2. Provide your own implementation of the following functions: (1)
 
-
           // For a non-reentrant scanner
           void * yyalloc (size_t bytes);
           void * yyrealloc (void * ptr, size_t bytes);
@@ -3983,7 +3883,6 @@ routines. We assume that there is a custom allocator with garbage
 collection. In order to make this example interesting, we will use a
 reentrant scanner, passing a pointer to the custom allocator through
 `yyextra'.
-
 
      %{
      #include "some_allocator.h"
@@ -4078,7 +3977,6 @@ File: flex.info,  Node: Creating Serialized Tables,  Next: Loading and Unloading
 
 You may create a scanner with serialized tables by specifying:
 
-
          %option tables-file=FILE
      or
          --tables-file=FILE
@@ -4096,7 +3994,6 @@ be saved to `lex.yy.tables', where `yy' is the appropriate prefix.
 the serialized tables into one file, and flex will find the correct set
 of tables, using the scanner prefix as part of the lookup key. An
 example follows:
-
 
      $ flex --tables-file --prefix=cpp cpp.l
      $ flex --tables-file --prefix=c   c.l
@@ -4158,7 +4055,6 @@ This section defines the file format of serialized `flex' tables.
 specified, where each set corresponds to a given scanner. Scanners are
 indexed by name, as described below. The file format is as follows:
 
-
                       TABLE SET 1
                      +-------------------------------+
              Header  | uint32          th_magic;     |
@@ -4171,8 +4067,8 @@ indexed by name, as described below. The file format is as follows:
                      +-------------------------------+
              Table 1 | uint16          td_id;        |
                      | uint16          td_flags;     |
-                     | uint32          td_lolen;     |
                      | uint32          td_hilen;     |
+                     | uint32          td_lolen;     |
                      | void            td_data[];    |
                      | uint8           td_pad64[];   |
                      +-------------------------------+
@@ -4303,12 +4199,6 @@ Fields of a table:
           elements or between structs.  The type of each member is
           determined by the `YYTD_DATA*' bits.
 
-`td_lolen'
-     Specifies the number of elements in the lowest dimension array. If
-     this is a one-dimensional array, then it is simply the number of
-     elements in this array.  The element size is determined by the
-     `td_flags' field.
-
 `td_hilen'
      If `td_hilen' is non-zero, then the data is a two-dimensional
      array.  Otherwise, the data is a one-dimensional array. `td_hilen'
@@ -4324,11 +4214,17 @@ Fields of a table:
      simply skipped. Flex does not currently generate tables of zero
      length.
 
+`td_lolen'
+     Specifies the number of elements in the lowest dimension array. If
+     this is a one-dimensional array, then it is simply the number of
+     elements in this array.  The element size is determined by the
+     `td_flags' field.
+
 `td_data[]'
      The table data. This array may be a one- or two-dimensional array,
      of type `int8', `int16', `int32', `struct yy_trans_info', or
      `struct yy_trans_info*',  depending upon the values in the
-     `td_flags', `td_lolen', and `td_hilen' fields.
+     `td_flags', `td_hilen', and `td_lolen' fields.
 
 `td_pad64[]'
      Zero or more NULL bytes, padding the entire table to the next
@@ -4347,7 +4243,6 @@ The following is a list of `flex' diagnostic messages:
      match the same text as it.  For example, in the following `foo'
      cannot be matched because it comes after an identifier "catch-all"
      rule:
-
 
               [a-z]+    got_identifier();
               foo       got_foo();
@@ -4384,7 +4279,7 @@ The following is a list of `flex' diagnostic messages:
      specification includes recognizing the 8-bit character `'x'' and
      you did not specify the -8 flag, and your scanner defaulted to
      7-bit because you used the `-Cf' or `-CF' table compression
-     options.  See the discussion of the `-7' flag, *Note Scanner
+     options.  See the discussion of the `-7' flag, *note Scanner
      Options::, for details.
 
    * `flex scanner push-back overflow'. you used `unput()' to push back
@@ -4402,7 +4297,6 @@ The following is a list of `flex' diagnostic messages:
      occur in a scanner which is reentered after a long-jump has jumped
      out (or over) the scanner's activation frame.  Before reentering
      the scanner, use:
-
               yyrestart( yyin );
      or, as noted above, switch to using the C++ scanner class.
 
@@ -4429,7 +4323,6 @@ considered variable-length.  Combining trailing context with the
 special `|' action can result in _fixed_ trailing context being turned
 into the more expensive _variable_ trailing context.  For example, in
 the following:
-
 
          %%
          abc      |
@@ -4647,7 +4540,6 @@ Does flex support recursive pattern definitions?
 
 e.g.,
 
-
      %%
      block   "{"({block}|{statement})*"}"
 
@@ -4689,7 +4581,6 @@ section *Note Matching::.
 around this behavior by expanding your short rule to match more text,
 then put back the extra:
 
-
      data_.*        yyless( 5 ); BEGIN BLOCKIDSTATE;
 
    Another fix would be to make the second rule active only during the
@@ -4711,7 +4602,6 @@ My actions are executing out of order or sometimes not at all.
 Most likely, you have (in error) placed the opening `{' of the action
 block on a different line than the rule, e.g.,
 
-
      ^(foo|bar)
      {  <<<--- WRONG!
 
@@ -4720,7 +4610,6 @@ block on a different line than the rule, e.g.,
    `flex' requires that the opening `{' of an action associated with a
 rule begin on the same line as does the rule.  You need instead to
 write your rules as follows:
-
 
      ^(foo|bar)   {  // CORRECT!
 
@@ -4794,7 +4683,6 @@ input.  Then you redefine `YY_INPUT' to call your own routine which, if
 it sees an `EOF', returns the magic character first (and remembers to
 return a real `EOF' next time it's called).  Then you could write:
 
-
      <COMMENT>(.|\n)*{EOF_CHAR}    /* saw comment at EOF */
 
 
@@ -4806,7 +4694,6 @@ How can I make REJECT cascade across start condition boundaries?
 You can do this as follows.  Suppose you have a start condition `A', and
 after exhausting all of the possible matches in `<A>', you want to try
 matches in `<INITIAL>'.  Then you could use the following:
-
 
      %x A
      %%
@@ -4885,21 +4772,17 @@ How can I match C-style comments?
 
 You might be tempted to try something like this:
 
-
      "/*".*"*/"       // WRONG!
 
    or, worse, this:
-
 
      "/*"(.|\n)"*/"   // WRONG!
 
    The above rules will eat too much input, and blow up on things like:
 
-
      /* a comment */ do_my_thing( "oops */" );
 
    Here is one way which allows you to track line information:
-
 
      <INITIAL>{
      "/*"              BEGIN(IN_COMMENT);
@@ -4992,7 +4875,6 @@ How can I use more than 8192 rules?
 you need more than 8192 rules in your scanner, you'll have to recompile
 `flex' with the following changes in `flexdef.h':
 
-
      <    #define YY_TRAILING_MASK 0x2000
      <    #define YY_TRAILING_HEAD_MASK 0x4000
      --
@@ -5007,7 +4889,6 @@ number of rules is the best way to solve your problem.
 
    With luck, you should be able to increase the definitions in
 flexdef.h for:
-
 
      #define JAMSTATE -32766 /* marks a reference to the state that always jams */
      #define MAXIMUM_MNS 31999
@@ -5038,7 +4919,6 @@ How do I execute code only during initialization (only before the first scan)?
 You can specify an initial action by defining the macro `YY_USER_INIT'
 (though note that `yyout' may not be available at the time this macro
 is executed).  Or you can add to the beginning of your rules section:
-
 
      %%
          /* Must be indented! */
@@ -5085,7 +4965,6 @@ I get an error about undefined yywrap().
 You must supply a `yywrap()' function of your own, or link to `libfl.a'
 (which provides one), or use
 
-
      %option noyywrap
 
    in your source to say you don't want a `yywrap()' function.
@@ -5109,7 +4988,6 @@ The best way to approach this problem is at a higher level, e.g., in
 the parser.
 
    However, you can do this using multiple input buffers.
-
 
      %%
      macro/[a-z]+	{
@@ -5163,7 +5041,6 @@ One way to assign precedence, is to place the more specific rules
 first. If two rules would match the same input (same sequence of
 characters) then the first rule listed in the `flex' input wins, e.g.,
 
-
      %%
      foo[a-zA-Z_]+    return FOO_ID;
      bar[a-zA-Z_]+    return BAR_ID;
@@ -5194,7 +5071,7 @@ Is there a way to make flex treat NULL like a regular character?
 ================================================================
 
 Yes, `\0' and `\x00' should both do the trick.  Perhaps you have an
-ancient version of `flex'.  The latest release is version 2.5.35.
+ancient version of `flex'.  The latest release is version 2.5.37.
 
 
 File: flex.info,  Node: Whenever flex can not match the input it says "flex scanner jammed".,  Next: Why doesn't flex have non-greedy operators like perl does?,  Prev: Is there a way to make flex treat NULL like a regular character?,  Up: FAQ
@@ -5203,7 +5080,6 @@ Whenever flex can not match the input it says "flex scanner jammed".
 ====================================================================
 
 You need to add a rule that matches the otherwise-unmatched text, e.g.,
-
 
      %option yylineno
      %%
@@ -5261,7 +5137,6 @@ matter how many times you call `yylex()'.
    If you want to reclaim the memory when you are completely done
 scanning, then you might try this:
 
-
      /* For non-reentrant C scanner only. */
      yy_delete_buffer(YY_CURRENT_BUFFER);
      yy_init = 1;
@@ -5275,7 +5150,6 @@ File: flex.info,  Node: How do I track the byte offset for lseek()?,  Next: How 
 
 How do I track the byte offset for lseek()?
 ===========================================
-
 
      >   We thought that it would be possible to have this number through the
      >   evaluation of the following expression:
@@ -5296,7 +5170,6 @@ already read from the current buffer.
    An alternative solution is to count the number of characters you've
 matched since starting to scan.  This can be done by using
 `YY_USER_ACTION'.  For example,
-
 
      #define YY_USER_ACTION num_chars += yyleng;
 
@@ -5333,7 +5206,6 @@ other patterns?
 the phrase "endskip". The following will _NOT_ work correctly (do you
 see why not?)
 
-
      /* INCORRECT SCANNER */
      %x SKIP
      %%
@@ -5345,13 +5217,11 @@ see why not?)
    The problem is that the pattern .* will eat up the word "endskip."
 The simplest (but slow) fix is:
 
-
      <SKIP>"endskip"      BEGIN(INITIAL);
      <SKIP>.              ;
 
    The fix involves making the second rule match more, without making
 it match "endskip" plus something else.  So for example:
-
 
      <SKIP>"endskip"     BEGIN(INITIAL);
      <SKIP>[^e]+         ;
@@ -5362,7 +5232,6 @@ File: flex.info,  Node: deleteme00,  Next: Are certain equivalent patterns faste
 
 deleteme00
 ==========
-
 
      QUESTION:
      When was flex born?
@@ -5377,7 +5246,6 @@ File: flex.info,  Node: Are certain equivalent patterns faster than others?,  Ne
 
 Are certain equivalent patterns faster than others?
 ===================================================
-
 
      To: Adoram Rogel <adoram@orna.hybridge.com>
      Subject: Re: Flex 2.5.2 performance questions
@@ -5456,7 +5324,6 @@ File: flex.info,  Node: Is backing up a big deal?,  Next: Can I fake multi-byte 
 Is backing up a big deal?
 =========================
 
-
      To: Adoram Rogel <adoram@hybridge.com>
      Subject: Re: Flex 2.5.2 performance questions
      In-reply-to: Your message of Thu, 19 Sep 96 10:16:04 EDT.
@@ -5509,7 +5376,6 @@ File: flex.info,  Node: Can I fake multi-byte character support?,  Next: deletem
 Can I fake multi-byte character support?
 ========================================
 
-
      To: Heeman_Lee@hp.com
      Subject: Re: flex - multi-byte support?
      In-reply-to: Your message of Thu, 03 Oct 1996 17:24:04 PDT.
@@ -5548,7 +5414,6 @@ File: flex.info,  Node: deleteme01,  Next: Can you discuss some flex internals?,
 deleteme01
 ==========
 
-
      To: moleary@primus.com
      Subject: Re: Flex / Unicode compatibility question
      In-reply-to: Your message of Tue, 22 Oct 1996 10:15:42 PDT.
@@ -5574,7 +5439,6 @@ File: flex.info,  Node: Can you discuss some flex internals?,  Next: unput() mes
 
 Can you discuss some flex internals?
 ====================================
-
 
      To: Johan Linde <jl@theophys.kth.se>
      Subject: Re: translation of flex
@@ -5631,7 +5495,6 @@ File: flex.info,  Node: unput() messes up yy_at_bol,  Next: The | operator is no
 unput() messes up yy_at_bol
 ===========================
 
-
      To: Xinying Li <xli@npac.syr.edu>
      Subject: Re: FLEX ?
      In-reply-to: Your message of Wed, 13 Nov 1996 17:28:38 PST.
@@ -5661,7 +5524,6 @@ File: flex.info,  Node: The | operator is not doing what I want,  Next: Why can'
 
 The | operator is not doing what I want
 =======================================
-
 
      To: Alain.ISSARD@st.com
      Subject: Re: Start condition with FLEX
@@ -5703,7 +5565,6 @@ File: flex.info,  Node: Why can't flex understand this variable trailing context
 Why can't flex understand this variable trailing context pattern?
 =================================================================
 
-
      To: Gregory Margo <gmargo@newton.vip.best.com>
      Subject: Re: flex-2.5.3 bug report
      In-reply-to: Your message of Sat, 23 Nov 1996 16:50:09 PST.
@@ -5728,7 +5589,6 @@ File: flex.info,  Node: The ^ operator isn't working,  Next: Trailing context is
 
 The ^ operator isn't working
 ============================
-
 
      To: Thomas Hadig <hadig@toots.physik.rwth-aachen.de>
      Subject: Re: Flex Bug ?
@@ -5766,7 +5626,6 @@ File: flex.info,  Node: Trailing context is getting confused with trailing optio
 Trailing context is getting confused with trailing optional patterns
 ====================================================================
 
-
      To: Adoram Rogel <adoram@hybridge.com>
      Subject: Re: Flex 2.5.4 BOF ???
      In-reply-to: Your message of Tue, 26 Nov 1996 16:10:41 PST.
@@ -5796,7 +5655,6 @@ File: flex.info,  Node: Is flex GNU or not?,  Next: ERASEME53,  Prev: Trailing c
 
 Is flex GNU or not?
 ===================
-
 
      To: Cameron MacKinnon <mackin@interlog.com>
      Subject: Re: Flex documentation bug
@@ -5838,7 +5696,6 @@ File: flex.info,  Node: ERASEME53,  Next: I need to scan if-then-else blocks and
 ERASEME53
 =========
 
-
      To: tsv@cs.UManitoba.CA
      Subject: Re: Flex (reg)..
      In-reply-to: Your message of Thu, 06 Mar 1997 23:50:16 PST.
@@ -5863,7 +5720,6 @@ File: flex.info,  Node: I need to scan if-then-else blocks and while loops,  Nex
 
 I need to scan if-then-else blocks and while loops
 ==================================================
-
 
      To: "Mike Stolnicki" <mstolnic@ford.com>
      Subject: Re: FLEX help
@@ -5893,7 +5749,6 @@ File: flex.info,  Node: ERASEME55,  Next: ERASEME56,  Prev: I need to scan if-th
 ERASEME55
 =========
 
-
      To: Colin Paul Adams <colin@colina.demon.co.uk>
      Subject: Re: Flex C++ classes and Bison
      In-reply-to: Your message of 09 Aug 1997 17:11:41 PDT.
@@ -5922,7 +5777,6 @@ File: flex.info,  Node: ERASEME56,  Next: ERASEME57,  Prev: ERASEME55,  Up: FAQ
 
 ERASEME56
 =========
-
 
      To: Mikael.Latvala@lmf.ericsson.se
      Subject: Re: Possible mistake in Flex v2.5 document
@@ -5959,7 +5813,6 @@ File: flex.info,  Node: ERASEME57,  Next: Is there a repository for flex scanner
 
 ERASEME57
 =========
-
 
      To: "Marty Leisner" <leisner@sdsp.mc.xerox.com>
      Subject: Re: flex limitations
@@ -6032,7 +5885,6 @@ File: flex.info,  Node: unnamed-faq-62,  Next: unnamed-faq-63,  Prev: I get an e
 unnamed-faq-62
 ==============
 
-
      To: Georg.Rehm@CL-KI.Uni-Osnabrueck.DE
      Subject: Re: Flex maximums
      In-reply-to: Your message of Mon, 17 Nov 1997 17:16:06 PST.
@@ -6066,7 +5918,6 @@ File: flex.info,  Node: unnamed-faq-63,  Next: unnamed-faq-64,  Prev: unnamed-fa
 unnamed-faq-63
 ==============
 
-
      To: jimmey@lexis-nexis.com (Jimmey Todd)
      Subject: Re: FLEX question regarding istream vs ifstream
      In-reply-to: Your message of Mon, 08 Dec 1997 15:54:15 PST.
@@ -6099,7 +5950,6 @@ File: flex.info,  Node: unnamed-faq-64,  Next: unnamed-faq-65,  Prev: unnamed-fa
 unnamed-faq-64
 ==============
 
-
      To: Enda Fadian <fadiane@piercom.ie>
      Subject: Re: Question related to Flex man page?
      In-reply-to: Your message of Tue, 16 Dec 1997 15:17:34 PST.
@@ -6129,7 +5979,6 @@ File: flex.info,  Node: unnamed-faq-65,  Next: unnamed-faq-66,  Prev: unnamed-fa
 unnamed-faq-65
 ==============
 
-
      To: hassan@larc.info.uqam.ca (Hassan Alaoui)
      Subject: Re: Need urgent Help
      In-reply-to: Your message of Sat, 20 Dec 1997 19:38:19 PST.
@@ -6155,7 +6004,6 @@ File: flex.info,  Node: unnamed-faq-66,  Next: unnamed-faq-67,  Prev: unnamed-fa
 
 unnamed-faq-66
 ==============
-
 
      To: mc0307@mclink.it
      Cc: gnu@prep.ai.mit.edu
@@ -6187,7 +6035,6 @@ File: flex.info,  Node: unnamed-faq-67,  Next: unnamed-faq-68,  Prev: unnamed-fa
 unnamed-faq-67
 ==============
 
-
      To: hassan@larc.info.uqam.ca (Hassan Alaoui)
      Subject: Re: Thanks
      In-reply-to: Your message of Mon, 22 Dec 1997 16:06:35 PST.
@@ -6212,7 +6059,6 @@ File: flex.info,  Node: unnamed-faq-68,  Next: unnamed-faq-69,  Prev: unnamed-fa
 
 unnamed-faq-68
 ==============
-
 
      To: "Bart Niswonger" <NISWONGR@almaden.ibm.com>
      Subject: Re: flex 2.5: c++ scanners & start conditions
@@ -6241,7 +6087,6 @@ File: flex.info,  Node: unnamed-faq-69,  Next: unnamed-faq-70,  Prev: unnamed-fa
 unnamed-faq-69
 ==============
 
-
      To: "Boris Zinin" <boris@ippe.rssi.ru>
      Subject: Re: current position in flex buffer
      In-reply-to: Your message of Mon, 12 Jan 1998 18:58:23 PST.
@@ -6263,7 +6108,6 @@ File: flex.info,  Node: unnamed-faq-70,  Next: unnamed-faq-71,  Prev: unnamed-fa
 
 unnamed-faq-70
 ==============
-
 
      To: Bik.Dhaliwal@bis.org
      Subject: Re: Flex question
@@ -6287,7 +6131,6 @@ File: flex.info,  Node: unnamed-faq-71,  Next: unnamed-faq-72,  Prev: unnamed-fa
 
 unnamed-faq-71
 ==============
-
 
      To: Vladimir Alexiev <vladimir@cs.ualberta.ca>
      Subject: Re: flex: how to control start condition from parser?
@@ -6317,7 +6160,6 @@ File: flex.info,  Node: unnamed-faq-72,  Next: unnamed-faq-73,  Prev: unnamed-fa
 
 unnamed-faq-72
 ==============
-
 
      To: Barbara Denny <denny@3com.com>
      Subject: Re: freebsd flex bug?
@@ -6354,7 +6196,6 @@ File: flex.info,  Node: unnamed-faq-73,  Next: unnamed-faq-74,  Prev: unnamed-fa
 unnamed-faq-73
 ==============
 
-
      To: Maurice Petrie <mpetrie@infoscigroup.com>
      Subject: Re: Lost flex .l file
      In-reply-to: Your message of Mon, 02 Feb 1998 14:10:01 PST.
@@ -6380,7 +6221,6 @@ File: flex.info,  Node: unnamed-faq-74,  Next: unnamed-faq-75,  Prev: unnamed-fa
 
 unnamed-faq-74
 ==============
-
 
      To: jimmey@lexis-nexis.com (Jimmey Todd)
      Subject: Re: Flex performance question
@@ -6409,7 +6249,6 @@ File: flex.info,  Node: unnamed-faq-75,  Next: unnamed-faq-76,  Prev: unnamed-fa
 
 unnamed-faq-75
 ==============
-
 
      To: jimmey@lexis-nexis.com (Jimmey Todd)
      Subject: Re: Flex performance question
@@ -6449,7 +6288,6 @@ File: flex.info,  Node: unnamed-faq-76,  Next: unnamed-faq-77,  Prev: unnamed-fa
 unnamed-faq-76
 ==============
 
-
      To: "Frescatore, David (CRD, TAD)" <frescatore@exc01crdge.crd.ge.com>
      Subject: Re: FLEX 2.5 & THE YEAR 2000
      In-reply-to: Your message of Wed, 03 Jun 1998 11:26:22 PDT.
@@ -6470,7 +6308,6 @@ File: flex.info,  Node: unnamed-faq-77,  Next: unnamed-faq-78,  Prev: unnamed-fa
 
 unnamed-faq-77
 ==============
-
 
      To: "Hans Dermot Doran" <htd@ibhdoran.com>
      Subject: Re: flex problem
@@ -6494,7 +6331,6 @@ File: flex.info,  Node: unnamed-faq-78,  Next: unnamed-faq-79,  Prev: unnamed-fa
 
 unnamed-faq-78
 ==============
-
 
      To: soumen@almaden.ibm.com
      Subject: Re: Flex++ 2.5.3 instance member vs. static member
@@ -6527,7 +6363,6 @@ File: flex.info,  Node: unnamed-faq-79,  Next: unnamed-faq-80,  Prev: unnamed-fa
 
 unnamed-faq-79
 ==============
-
 
      To: Adoram Rogel <adoram@hybridge.com>
      Subject: Re: More than 32K states change hangs
@@ -6576,7 +6411,6 @@ File: flex.info,  Node: unnamed-faq-80,  Next: unnamed-faq-81,  Prev: unnamed-fa
 unnamed-faq-80
 ==============
 
-
      To: "Schmackpfeffer, Craig" <Craig.Schmackpfeffer@usa.xerox.com>
      Subject: Re: flex output for static code portion
      In-reply-to: Your message of Tue, 11 Aug 1998 11:55:30 PDT.
@@ -6607,7 +6441,6 @@ File: flex.info,  Node: unnamed-faq-81,  Next: unnamed-faq-82,  Prev: unnamed-fa
 
 unnamed-faq-81
 ==============
-
 
      Received: from 131.173.17.11 (131.173.17.11 [131.173.17.11])
      	by ee.lbl.gov (8.9.1/8.9.1) with ESMTP id AAA03838
@@ -6664,7 +6497,6 @@ File: flex.info,  Node: unnamed-faq-82,  Next: unnamed-faq-83,  Prev: unnamed-fa
 unnamed-faq-82
 ==============
 
-
      To: Georg.Rehm@CL-KI.Uni-Osnabrueck.DE
      Subject: Re: "flex scanner push-back overflow"
      In-reply-to: Your message of Thu, 20 Aug 1998 09:47:54 PDT.
@@ -6692,7 +6524,6 @@ File: flex.info,  Node: unnamed-faq-83,  Next: unnamed-faq-84,  Prev: unnamed-fa
 
 unnamed-faq-83
 ==============
-
 
      To: Jan Kort <jan@research.techforce.nl>
      Subject: Re: Flex
@@ -6740,7 +6571,6 @@ File: flex.info,  Node: unnamed-faq-84,  Next: unnamed-faq-85,  Prev: unnamed-fa
 unnamed-faq-84
 ==============
 
-
      To: Patrick Krusenotto <krusenot@mac-info-link.de>
      Subject: Re: Problems with restarting flex-2.5.2-generated scanner
      In-reply-to: Your message of Thu, 24 Sep 1998 10:14:07 PDT.
@@ -6766,7 +6596,6 @@ File: flex.info,  Node: unnamed-faq-85,  Next: unnamed-faq-86,  Prev: unnamed-fa
 
 unnamed-faq-85
 ==============
-
 
      To: Henric Jungheim <junghelh@pe-nelson.com>
      Subject: Re: flex 2.5.4a
@@ -6801,7 +6630,6 @@ File: flex.info,  Node: unnamed-faq-86,  Next: unnamed-faq-87,  Prev: unnamed-fa
 unnamed-faq-86
 ==============
 
-
      To: "Repko, Billy D" <billy.d.repko@intel.com>
      Subject: Re: Compiling scanners
      In-reply-to: Your message of Wed, 13 Jan 1999 10:52:47 PST.
@@ -6834,7 +6662,6 @@ File: flex.info,  Node: unnamed-faq-87,  Next: unnamed-faq-88,  Prev: unnamed-fa
 unnamed-faq-87
 ==============
 
-
      To: Erick Branderhorst <Erick.Branderhorst@asml.nl>
      Subject: Re: flex input buffer
      In-reply-to: Your message of Tue, 09 Feb 1999 13:53:46 PST.
@@ -6854,7 +6681,6 @@ File: flex.info,  Node: unnamed-faq-88,  Next: unnamed-faq-90,  Prev: unnamed-fa
 
 unnamed-faq-88
 ==============
-
 
      To: "Guido Minnen" <guidomi@cogs.susx.ac.uk>
      Subject: Re: Flex error message
@@ -6882,7 +6708,6 @@ File: flex.info,  Node: unnamed-faq-90,  Next: unnamed-faq-91,  Prev: unnamed-fa
 
 unnamed-faq-90
 ==============
-
 
      To: "Dmitriy Goldobin" <gold@ems.chel.su>
      Subject: Re: FLEX trouble
@@ -6918,7 +6743,6 @@ File: flex.info,  Node: unnamed-faq-91,  Next: unnamed-faq-92,  Prev: unnamed-fa
 
 unnamed-faq-91
 ==============
-
 
      Received: from mc-qout4.whowhere.com (mc-qout4.whowhere.com [209.185.123.18])
      	by ee.lbl.gov (8.9.3/8.9.3) with SMTP id IAA05100
@@ -6988,7 +6812,6 @@ File: flex.info,  Node: unnamed-faq-92,  Next: unnamed-faq-93,  Prev: unnamed-fa
 unnamed-faq-92
 ==============
 
-
      To: neko@my-deja.com
      Subject: Re: A question on flex C++ scanner
      In-reply-to: Your message of Tue, 15 Jun 1999 08:55:43 PDT.
@@ -7007,7 +6830,6 @@ File: flex.info,  Node: unnamed-faq-93,  Next: unnamed-faq-94,  Prev: unnamed-fa
 
 unnamed-faq-93
 ==============
-
 
      To: "Stones, Darren" <Darren.Stones@nectech.co.uk>
      Subject: Re: You're the man to see?
@@ -7032,7 +6854,6 @@ File: flex.info,  Node: unnamed-faq-94,  Next: unnamed-faq-95,  Prev: unnamed-fa
 
 unnamed-faq-94
 ==============
-
 
      To: Petr Danecek <petr@ics.cas.cz>
      Subject: Re: flex - question
@@ -7069,7 +6890,6 @@ File: flex.info,  Node: unnamed-faq-95,  Next: unnamed-faq-96,  Prev: unnamed-fa
 
 unnamed-faq-95
 ==============
-
 
      To: Tielman Koekemoer <tielman@spi.co.za>
      Subject: Re: Please help.
@@ -7112,7 +6932,6 @@ File: flex.info,  Node: unnamed-faq-96,  Next: unnamed-faq-97,  Prev: unnamed-fa
 unnamed-faq-96
 ==============
 
-
      To: Tielman Koekemoer <tielman@spi.co.za>
      Subject: Re: Please help.
      In-reply-to: Your message of Fri, 09 Jul 1999 09:16:14 PDT.
@@ -7140,7 +6959,6 @@ File: flex.info,  Node: unnamed-faq-97,  Next: unnamed-faq-98,  Prev: unnamed-fa
 unnamed-faq-97
 ==============
 
-
      To: Sumanth Kamenani <skamenan@crl.nmsu.edu>
      Subject: Re: Error
      In-reply-to: Your message of Mon, 19 Jul 1999 23:08:41 PDT.
@@ -7160,7 +6978,6 @@ File: flex.info,  Node: unnamed-faq-98,  Next: unnamed-faq-99,  Prev: unnamed-fa
 
 unnamed-faq-98
 ==============
-
 
      To: daniel@synchrods.synchrods.COM (Daniel Senderowicz)
      Subject: Re: lex
@@ -7184,7 +7001,6 @@ File: flex.info,  Node: unnamed-faq-99,  Next: unnamed-faq-100,  Prev: unnamed-f
 
 unnamed-faq-99
 ==============
-
 
      To: archow@hss.hns.com
      Subject: Re: Regarding distribution of flex and yacc based grammars
@@ -7214,7 +7030,6 @@ File: flex.info,  Node: unnamed-faq-100,  Next: unnamed-faq-101,  Prev: unnamed-
 unnamed-faq-100
 ===============
 
-
      To: Martin Gallwey <gallweym@hyperion.moe.ul.ie>
      Subject: Re: Flex, and self referencing rules
      In-reply-to: Your message of Sun, 20 Feb 2000 01:01:21 PST.
@@ -7236,7 +7051,6 @@ File: flex.info,  Node: unnamed-faq-101,  Next: What is the difference between Y
 
 unnamed-faq-101
 ===============
-
 
      To: slg3@lehigh.edu (SAMUEL L. GULDEN)
      Subject: Re: Flex problem
@@ -7274,7 +7088,6 @@ pass extra params when it calls yylex() from the parser.
    YY_DECL is the Flex declaration of yylex. The default is similar to
 this:
 
-
      #define int yy_lex ()
 
 
@@ -7294,7 +7107,7 @@ How do I access the values set in a Flex action from within a Bison action?
 ===========================================================================
 
 With $1, $2, $3, etc. These are called "Semantic Values" in the Bison
-manual.  See *Note Top: (bison)Top.
+manual.  See *note Top: (bison)Top.
 
 
 File: flex.info,  Node: Appendices,  Next: Indices,  Prev: FAQ,  Up: Top
@@ -7330,7 +7143,6 @@ following Makefile does not explicitly instruct `make' how to build
 `foo.c' from `foo.l'. Instead, it relies on the implicit rules of the
 `make' program to build the intermediate file, `scan.c':
 
-
          # Basic Makefile -- relies on implicit rules
          # Creates "myprogram" from "scan.l" and "myprogram.c"
          #
@@ -7341,7 +7153,6 @@ following Makefile does not explicitly instruct `make' how to build
    For simple cases, the above may be sufficient. For other cases, you
 may have to explicitly instruct `make' how to build your scanner.  The
 following is an example of a Makefile containing explicit rules:
-
 
          # Basic Makefile -- provides explicit rules
          # Creates "myprogram" from "scan.l" and "myprogram.c"
@@ -7373,7 +7184,6 @@ with. Since a `flex' scanner will typically include a header file
 header file is generated BEFORE the scanner is compiled. We handle this
 case in the following example:
 
-
          # Makefile example -- scanner and parser.
          # Creates "myprogram" from "scan.l", "parse.y", and "myprogram.c"
          #
@@ -7389,7 +7199,6 @@ case in the following example:
 
    In the above example, notice the line,
 
-
          scan.o: scan.l parse.c
 
    , which lists the file `parse.c' (the generated parser) as a
@@ -7398,7 +7207,7 @@ before the scanner is compiled, and the above line seems to do the
 trick. Feel free to experiment with your specific implementation of
 `make'.
 
-   For more details on writing Makefiles, see *Note Top: (make)Top.
+   For more details on writing Makefiles, see *note Top: (make)Top.
 
    ---------- Footnotes ----------
 
@@ -7421,7 +7230,7 @@ This section describes the `flex' features useful when integrating
 `flex' with `GNU bison'(1).  Skip this section if you are not using
 `bison' with your scanner.  Here we discuss only the `flex' half of the
 `flex' and `bison' pair.  We do not discuss `bison' in any detail.  For
-more information about generating `bison' parsers, see *Note Top:
+more information about generating `bison' parsers, see *note Top:
 (bison)Top.
 
    A compatible `bison' scanner is generated by declaring `%option
@@ -7434,12 +7243,10 @@ bison-functions::.
 
    The declaration of yylex becomes,
 
-
            int yylex ( YYSTYPE * lvalp, yyscan_t scanner );
 
    If `%option bison-locations' is specified, then the declaration
 becomes,
-
 
            int yylex ( YYSTYPE * lvalp, YYLTYPE * llocp, yyscan_t scanner );
 
@@ -7447,7 +7254,6 @@ becomes,
 Support for `yylloc' is optional in `bison', so it is optional in
 `flex' as well. The following is an example of a `flex' scanner that is
 compatible with `bison'.
-
 
          /* Scanner for "C" assignment statements... sort of. */
          %{
@@ -7467,7 +7273,6 @@ compatible with `bison'.
 as we would any other variable. The data type of `yylval' is generated
 by `bison', and included in the file `y.tab.h'. Here is the
 corresponding `bison' parser:
-
 
          /* Parser to convert "C" assignments to lisp. */
          %{
@@ -7560,10 +7365,9 @@ C99 hexadecimal constant
      `0[xX][[:xdigit:]]+'
 
 C99 octal constant
-     `0[0123456]*'
+     `0[01234567]*'
 
 C99 floating point constant
-
       {dseq}      ([[:digit:]]+)
       {dseq_opt}  ([[:digit:]]*)
       {frac}      (({dseq_opt}"."{dseq})|{dseq}".")
@@ -7591,7 +7395,6 @@ A.4.2 Identifiers
 -----------------
 
 C99 Identifier
-
      ucn        ((\\u([[:xdigit:]]{4}))|(\\U([[:xdigit:]]{8})))
      nondigit    [_[:alpha:]]
      c99_id     ([_[:alpha:]]|{ucn})([_[:alnum:]]|{ucn})*
@@ -7602,7 +7405,6 @@ C99 Identifier
      with the addition of the `$' character.
 
 UTF-8 Encoded Unicode Code Point
-
      [\x09\x0A\x0D\x20-\x7E]|[\xC2-\xDF][\x80-\xBF]|\xE0[\xA0-\xBF][\x80-\xBF]|[\xE1-\xEC\xEE\xEF]([\x80-\xBF]{2})|\xED[\x80-\x9F][\x80-\xBF]|\xF0[\x90-\xBF]([\x80-\xBF]{2})|[\xF1-\xF3]([\x80-\xBF]{3})|\xF4[\x80-\x8F]([\x80-\xBF]{2})
 
 
@@ -7628,7 +7430,6 @@ C99 Comment
      appear at sane intervals. This is also more efficient when used
      with automatic line number processing. *Note option-yylineno::.
 
-
      <INITIAL>{
          "/*"      BEGIN(COMMENT);
      }
@@ -7647,23 +7448,33 @@ A.4.4 Addresses
 ---------------
 
 IPv4 Address
-     `(([[:digit:]]{1,3}"."){3}([[:digit:]]{1,3}))'
+     dec-octet     [0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5]
+     IPv4address   {dec-octet}\.{dec-octet}\.{dec-octet}\.{dec-octet}
 
 IPv6 Address
+     h16           [0-9A-Fa-f]{1,4}
+     ls32          {h16}:{h16}|{IPv4address}
+     IPv6address   ({h16}:){6}{ls32}|
+                   ::({h16}:){5}{ls32}|
+                   ({h16})?::({h16}:){4}{ls32}|
+                   (({h16}:){0,1}{h16})?::({h16}:){3}{ls32}|
+                   (({h16}:){0,2}{h16})?::({h16}:){2}{ls32}|
+                   (({h16}:){0,3}{h16})?::{h16}:{ls32}|
+                   (({h16}:){0,4}{h16})?::{ls32}|
+                   (({h16}:){0,5}{h16})?::{h16}|
+                   (({h16}:){0,6}{h16})?::
 
-     hex4         ([[:xdigit:]]{1,4})
-     hexseq       ({hex4}(:{hex4}*))
-     hexpart      ({hexseq}|({hexseq}::({hexseq}?))|::{hexseq})
-     IPv6address  ({hexpart}(":"{IPv4address})?)
-
-     See RFC2373 for details.
+     See RFC 2373 (http://www.ietf.org/rfc/rfc2373.txt) for details.
+     Note that you have to fold the definition of `IPv6address' into one
+     line and that it also matches the "unspecified address" "::".
 
 URI
      `(([^:/?#]+):)?("//"([^/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))?'
 
      This pattern is nearly useless, since it allows just about any
      character to appear in a URI, including spaces and control
-     characters.  See RFC2396 for details.
+     characters.  See RFC 2396 (http://www.ietf.org/rfc/rfc2396.txt)
+     for details.
 
 
 

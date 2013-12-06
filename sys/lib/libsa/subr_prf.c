@@ -71,6 +71,11 @@ const char hexdigits[16] = "0123456789abcdef";
 #ifdef LIBSA_PRINTF_LONGLONG_SUPPORT
 #define LLONG		0x02
 #endif
+
+#if defined(__minix)
+#define HEXCAP		0x100
+#endif /* defined(__minix) */
+
 #ifdef LIBSA_PRINTF_WIDTH_SUPPORT
 #define ALT		0x04
 #define SPACE		0x08
@@ -139,6 +144,10 @@ vprintf(const char *fmt, va_list ap)
 {
 
 	kdoprnt(putchar, fmt, ap);
+#if defined(__minix) && defined(LIBSA_PRINTF_WIDTH_SUPPORT)
+	/* BJG: our libminc kputc() relies on a 0 to flush the diag buffer. */
+	putchar(0);
+#endif /* defined(__minix) && defined(LIBSA_PRINTF_WIDTH_SUPPORT) */
 }
 
 int
@@ -177,6 +186,16 @@ kdoprnt(void (*put)(int), const char *fmt, va_list ap)
 reswitch:
 		switch (ch = *fmt++) {
 #ifdef LIBSA_PRINTF_WIDTH_SUPPORT
+#if defined(__minix)
+		/* LSC: FIXME: this is a simple hack which ignores the thing for now. */
+		case '.':
+			/* eat up digits */
+			while( ((('1' >= *fmt) && ( *fmt <= '9'))
+				 || (*fmt == '*')) )
+				 fmt++;
+			fmt++;
+			goto reswitch;
+#endif /* defined(__minix) */
 		case '#':
 			lflag |= ALT;
 			goto reswitch;
@@ -275,6 +294,12 @@ reswitch:
 		case 'x':
 			KPRINT(16);
 			break;
+#if defined(__minix)
+		case 'X':
+			lflag |= HEXCAP;
+			KPRINT(16);
+			break;
+#endif /* defined(__minix) */
 		default:
 			if (ch == '\0')
 				return;
@@ -300,6 +325,14 @@ kprintn(void (*put)(int), UINTMAX_T ul, int base)
 	p = buf;
 	do {
 		*p++ = hexdigits[ul % base];
+#if defined(__minix)
+#ifdef LIBSA_PRINTF_WIDTH_SUPPORT
+		/* LSC: Quick hack to support capital hex printout. */
+		if ((lflag & HEXCAP) && (*(p-1) >= 'a') && (*(p-1) <= 'z')) {
+			*(p-1) -= 32;
+		}
+#endif
+#endif /* defined(__minix) */
 	} while (ul /= base);
 #ifdef LIBSA_PRINTF_WIDTH_SUPPORT
 	q = p;

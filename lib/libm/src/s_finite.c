@@ -12,11 +12,11 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_finite.c,v 1.11 2002/05/26 22:01:55 wiz Exp $");
+__RCSID("$NetBSD: s_finite.c,v 1.12 2013/11/12 17:37:43 joerg Exp $");
 #endif
 
 /*
- * finite(x) returns 1 is x is finite, else 0;
+ * finite(x) returns 1 if x is finite, else 0;
  * no branching!
  */
 

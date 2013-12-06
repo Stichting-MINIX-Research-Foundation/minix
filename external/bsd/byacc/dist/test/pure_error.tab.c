@@ -1,4 +1,4 @@
-/*	$NetBSD: pure_error.tab.c,v 1.1.1.3 2011/09/10 21:22:04 christos Exp $	*/
+/*	$NetBSD: pure_error.tab.c,v 1.1.1.4 2013/04/06 14:45:27 christos Exp $	*/
 
 #ifndef lint
 static const char yysccsid[] = "@(#)yaccpar	1.9 (Berkeley) 02/21/93";
@@ -97,6 +97,18 @@ static const char yysccsid[] = "@(#)yaccpar	1.9 (Berkeley) 02/21/93";
 
 #define YYPURE 1
 
+#line 2 "pure_error.y"
+
+#ifdef YYBISON
+#define YYSTYPE int
+#define YYLEX_PARAM &yylval
+#define YYLEX_DECL() yylex(YYSTYPE *yylval)
+#define YYERROR_DECL() yyerror(const char *s)
+int YYLEX_DECL();
+static void YYERROR_DECL();
+#endif
+
+#line 110 "pure_error.tab.c"
 
 #ifndef YYSTYPE
 typedef int YYSTYPE;
@@ -116,7 +128,11 @@ typedef int YYSTYPE;
 
 /* Parameters sent to lex. */
 #ifdef YYLEX_PARAM
-# define YYLEX_DECL() yylex(YYSTYPE *yylval, void *YYLEX_PARAM)
+# ifdef YYLEX_PARAM_TYPE
+#  define YYLEX_DECL() yylex(YYSTYPE *yylval, YYLEX_PARAM_TYPE YYLEX_PARAM)
+# else
+#  define YYLEX_DECL() yylex(YYSTYPE *yylval, void * YYLEX_PARAM)
+# endif
 # define YYLEX yylex(&yylval, YYLEX_PARAM)
 #else
 # define YYLEX_DECL() yylex(YYSTYPE *yylval)
@@ -124,8 +140,12 @@ typedef int YYSTYPE;
 #endif
 
 /* Parameters sent to yyerror. */
+#ifndef YYERROR_DECL
 #define YYERROR_DECL() yyerror(const char *s)
+#endif
+#ifndef YYERROR_CALL
 #define YYERROR_CALL(msg) yyerror(msg)
+#endif
 
 extern int YYPARSE_DECL();
 
@@ -197,13 +217,12 @@ typedef struct {
     YYSTYPE  *l_base;
     YYSTYPE  *l_mark;
 } YYSTACKDATA;
-#line 4 "pure_error.y"
+#line 17 "pure_error.y"
 
 #include <stdio.h>
 
 #ifdef YYBYACC
 extern int YYLEX_DECL();
-static void YYERROR_DECL();
 #endif
 
 int
@@ -224,7 +243,7 @@ yyerror(const char* s)
 {
     printf("%s\n", s);
 }
-#line 226 "pure_error.tab.c"
+#line 245 "pure_error.tab.c"
 
 #if YYDEBUG
 #include <stdio.h>		/* needed for printf */
@@ -248,7 +267,7 @@ static int yygrowstack(YYSTACKDATA *data)
     else if ((newsize *= 2) > YYMAXDEPTH)
         newsize = YYMAXDEPTH;
 
-    i = data->s_mark - data->s_base;
+    i = (int) (data->s_mark - data->s_base);
     newss = (short *)realloc(data->s_base, newsize * sizeof(*newss));
     if (newss == 0)
         return -1;

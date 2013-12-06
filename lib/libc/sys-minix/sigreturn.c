@@ -10,10 +10,6 @@
 #include <sys/signal.h>
 #include <machine/signal.h>
 
-#ifdef __weak_alias
-__weak_alias(sigreturn, _sigreturn)
-#endif
-
 int sigreturn(struct sigcontext *scp)
 {
   sigset_t set;

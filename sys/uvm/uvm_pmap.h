@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pmap.h,v 1.37 2011/06/30 00:49:14 matt Exp $	*/
+/*	$NetBSD: uvm_pmap.h,v 1.38 2013/02/02 14:06:58 matt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -137,7 +137,6 @@ extern struct pmap	*const kernel_pmap_ptr;
 
 #ifndef PMAP_EXCLUDE_DECLS	/* Used in Sparc port to virtualize pmap mod */
 #ifdef _KERNEL
-__BEGIN_DECLS
 void		pmap_activate(struct lwp *);
 void		pmap_deactivate(struct lwp *);
 void		pmap_unwire(pmap_t, vaddr_t);
@@ -165,7 +164,9 @@ vaddr_t		pmap_growkernel(vaddr_t);
 
 void		pmap_init(void);
 
+#if !defined(pmap_kenter_pa)
 void		pmap_kenter_pa(vaddr_t, paddr_t, vm_prot_t, u_int);
+#endif
 void		pmap_kremove(vaddr_t, vsize_t);
 #if !defined(pmap_is_modified)
 bool		pmap_is_modified(struct vm_page *);
@@ -211,7 +212,6 @@ vaddr_t		pmap_steal_memory(vsize_t, vaddr_t *, vaddr_t *);
 #if defined(PMAP_FORK)
 void		pmap_fork(pmap_t, pmap_t);
 #endif
-__END_DECLS
 #endif	/* kernel*/
 #endif  /* PMAP_EXCLUDE_DECLS */
 

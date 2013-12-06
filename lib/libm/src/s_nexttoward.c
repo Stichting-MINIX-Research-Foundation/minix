@@ -1,4 +1,4 @@
-/*	$NetBSD: s_nexttoward.c,v 1.1 2010/09/15 16:12:05 christos Exp $	*/
+/*	$NetBSD: s_nexttoward.c,v 1.2 2013/08/21 13:03:56 martin Exp $	*/
 
 /* @(#)s_nextafter.c 5.1 93/09/24 */
 /*
@@ -13,7 +13,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: s_nexttoward.c,v 1.1 2010/09/15 16:12:05 christos Exp $");
+__RCSID("$NetBSD: s_nexttoward.c,v 1.2 2013/08/21 13:03:56 martin Exp $");
 
 /*
  * We assume that a long double has a 15-bit exponent.  On systems
@@ -28,6 +28,10 @@ __RCSID("$NetBSD: s_nexttoward.c,v 1.1 2010/09/15 16:12:05 christos Exp $");
 
 #if LDBL_MAX_EXP != 0x4000
 #error "Unsupported long double format"
+#endif
+
+#ifdef LDBL_IMPLICIT_NBIT
+#define	LDBL_NBIT	0
 #endif
 
 /*

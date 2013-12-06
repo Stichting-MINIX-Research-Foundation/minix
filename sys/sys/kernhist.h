@@ -1,4 +1,4 @@
-/*	$NetBSD: kernhist.h,v 1.5 2012/07/30 23:56:48 matt Exp $	*/
+/*	$NetBSD: kernhist.h,v 1.7 2013/02/19 22:54:03 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -97,6 +97,7 @@ LIST_HEAD(kern_history_head, kern_history);
 #define KERNHIST_INIT(NAME,N)
 #define KERNHIST_INIT_STATIC(NAME,BUF)
 #define KERNHIST_LOG(NAME,FMT,A,B,C,D)
+#define KERNHIST_CALLARGS(NAME,FMT,A,B,C,D)
 #define KERNHIST_CALLED(NAME)
 #define KERNHIST_FUNC(FNAME)
 #define kernhist_dump(NAME)
@@ -132,13 +133,18 @@ do { \
 	LIST_INSERT_HEAD(&kern_histories, &(NAME), list); \
 } while (/*CONSTCOND*/ 0)
 
+#ifndef KERNHIST_DELAY
+#define KERNHIST_DELAY	100000
+#endif
+
 #if defined(KERNHIST_PRINT)
 extern int kernhist_print_enabled;
 #define KERNHIST_PRINTNOW(E) \
 do { \
 		if (kernhist_print_enabled) { \
 			kernhist_entry_print(E); \
-			DELAY(100000); \
+			if (KERNHIST_DELAY != 0) \
+				DELAY(KERNHIST_DELAY); \
 		} \
 } while (/*CONSTCOND*/ 0)
 #else
@@ -174,10 +180,20 @@ do { \
 	KERNHIST_LOG(NAME, "called!", 0, 0, 0, 0); \
 } while (/*CONSTCOND*/ 0)
 
+/*
+ * This extends kernhist to avoid wasting a separate "called!" entry on every
+ * function.
+ */
+#define KERNHIST_CALLARGS(NAME, FMT, A, B, C, D) \
+do { \
+	_kernhist_call = atomic_inc_uint_nv(&_kernhist_cnt); \
+	KERNHIST_LOG(NAME, "called: "FMT, (A), (B), (C), (D)); \
+} while (/*CONSTCOND*/ 0)
+
 #define KERNHIST_FUNC(FNAME) \
 	static unsigned int _kernhist_cnt = 0; \
 	static const char *const _kernhist_name = FNAME; \
-	int _kernhist_call = 0;
+	unsigned int _kernhist_call = 0;
 
 static inline void kernhist_entry_print(const struct kern_history_ent *);
 

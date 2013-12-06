@@ -1,6 +1,6 @@
 
 #------------------------------------------------------------------------------
-# $File: xilinx,v 1.4 2009/09/19 16:28:13 christos Exp $
+# $File: xilinx,v 1.5 2013/01/08 03:06:50 christos Exp $
 # This is Aaron's attempt at a MAGIC file for Xilinx .bit files.
 # Xilinx-Magic@RevRagnarok.com
 # Got the info from FPGA-FAQ 0026
@@ -33,3 +33,6 @@
 >>>>>>>>&1	byte	0x00
 >>>>>>>>&2	string	e
 >>>>>>>>&4	belong	x	- data length 0x%lx
+# Raw bitstream files
+0	long	0xffffffff	
+>&0	belong	0xaa995566	Xilinx RAW bitstream (.BIN)

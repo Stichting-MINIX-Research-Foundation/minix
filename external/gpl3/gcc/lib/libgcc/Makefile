@@ -1,17 +1,23 @@
-#	$NetBSD: Makefile,v 1.1 2011/06/21 06:02:25 mrg Exp $
-
-SUBDIR+=	libgcc
+#	$NetBSD: Makefile,v 1.2 2013/08/22 00:16:54 matt Exp $
 
 .include <bsd.own.mk>
 
-.if ${MKGCCCMDS} == "yes"
+SUBDIR+=	libgcc
+
+.if defined(__MINIX) && ${MKGCCCMDS} == "yes"
+
+.if ${MKPIC} != "no" || ${MACHINE_ARCH} == "earm"
+SUBDIR+=	libgcc_eh
+.endif
+
+SUBDIR+=	libgcc_s
+
+.else
 .if ${MKPIC} != "no"
 SUBDIR+=	libgcc_eh libgcc_s
 .endif
-.endif # ${MKGCCCMDS} == "yes"
 
-.if !defined(__MINIX)
 SUBDIR+=	libgcov
-.endif # !defined(__MINIX)
+.endif # defined(__MINIX) && ${MKGCCCMDS} == "yes"
 
 .include <bsd.subdir.mk>

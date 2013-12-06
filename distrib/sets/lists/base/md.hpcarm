@@ -1,8 +1,5 @@
-# $NetBSD: md.hpcarm,v 1.11 2008/11/29 17:57:33 tsutsui Exp $
+# $NetBSD: md.hpcarm,v 1.12 2013/05/02 03:56:38 matt Exp $
 ./dev/beep					base-obsolete		obsolete
 ./dev/mouse-qms0				base-obsolete		obsolete
 ./dev/pms0					base-obsolete		obsolete
 ./dev/qms0					base-obsolete		obsolete
-./usr/sbin/apm					base-sysutil-bin
-./usr/sbin/tpctl				base-sysutil-bin
-./usr/sbin/zzz					base-sysutil-bin

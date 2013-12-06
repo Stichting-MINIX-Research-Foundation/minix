@@ -1,4 +1,4 @@
-/*	$NetBSD: partutil.c,v 1.10 2010/03/06 00:30:54 christos Exp $	*/
+/*	$NetBSD: partutil.c,v 1.12 2013/04/13 22:08:57 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: partutil.c,v 1.10 2010/03/06 00:30:54 christos Exp $");
+__RCSID("$NetBSD: partutil.c,v 1.12 2013/04/13 22:08:57 jakllsch Exp $");
 
 #include <sys/types.h>
 #include <sys/disklabel.h>
@@ -89,73 +89,6 @@ dict2geom(struct disk_geom *geo, prop_dictionary_t dict)
 }
 
 
-static void
-part2wedge(struct dkwedge_info *dkw, const struct disklabel *lp, const char *s)
-{
-#ifdef __minix
-	errx(1, "minix doesn't know about wedges");
-#else
-	struct stat sb;
-	const struct partition *pp;
-	int ptn;
-
-	(void)memset(dkw, 0, sizeof(*dkw));
-	if (stat(s, &sb) == -1)
-		return;
-
-	ptn = strchr(s, '\0')[-1] - 'a';
-	if ((unsigned)ptn >= lp->d_npartitions ||
-	    (devminor_t)ptn != DISKPART(sb.st_rdev))
-		return;
-
-	pp = &lp->d_partitions[ptn];
-	dkw->dkw_offset = pp->p_offset;
-	dkw->dkw_size = pp->p_size;
-	dkw->dkw_parent[0] = '*';
-	switch (pp->p_fstype) {
-	default:
-		(void)strcpy(dkw->dkw_ptype, DKW_PTYPE_UNKNOWN);
-		break;
-	case FS_UNUSED:
-		(void)strcpy(dkw->dkw_ptype, DKW_PTYPE_UNUSED);
-		break;
-	case FS_SWAP:
-		(void)strcpy(dkw->dkw_ptype, DKW_PTYPE_SWAP);
-		break;
-	case FS_BSDFFS:
-		(void)strcpy(dkw->dkw_ptype, DKW_PTYPE_FFS);
-		break;
-	case FS_BSDLFS:
-		(void)strcpy(dkw->dkw_ptype, DKW_PTYPE_LFS);
-		break;
-	case FS_EX2FS:
-		(void)strcpy(dkw->dkw_ptype, DKW_PTYPE_EXT2FS);
-		break;
-	case FS_ISO9660:
-		(void)strcpy(dkw->dkw_ptype, DKW_PTYPE_ISO9660);
-		break;
-	case FS_ADOS:
-		(void)strcpy(dkw->dkw_ptype, DKW_PTYPE_AMIGADOS);
-		break;
-	case FS_HFS:
-		(void)strcpy(dkw->dkw_ptype, DKW_PTYPE_APPLEHFS);
-		break;
-	case FS_MSDOS:
-		(void)strcpy(dkw->dkw_ptype, DKW_PTYPE_FAT);
-		break;
-	case FS_FILECORE:
-		(void)strcpy(dkw->dkw_ptype, DKW_PTYPE_FILECORE);
-		break;
-	case FS_APPLEUFS:
-		(void)strcpy(dkw->dkw_ptype, DKW_PTYPE_APPLEUFS);
-		break;
-	case FS_NTFS:
-		(void)strcpy(dkw->dkw_ptype, DKW_PTYPE_NTFS);
-		break;
-	}
-#endif
-}
-
 int
 getdiskinfo(const char *s, int fd, const char *dt, struct disk_geom *geo,
     struct dkwedge_info *dkw)
@@ -163,23 +96,28 @@ getdiskinfo(const char *s, int fd, const char *dt, struct disk_geom *geo,
 	struct disklabel lab;
 	struct disklabel *lp = &lab;
 	prop_dictionary_t disk_dict, geom_dict;
+#if !defined(__minix)
+	struct stat sb;
+	const struct partition *pp;
+	int ptn;
+#endif /* defined(__minix) */
 
 	if (dt) {
-#ifdef __minix
+#if defined(__minix)
 		errx(1, "minix doesn't know about disk types (%s)", dt);
 #else
 		lp = getdiskbyname(dt);
 		if (lp == NULL)
 			errx(1, "unknown disk type `%s'", dt);
-#endif
+#endif /* defined(__minix) */
 	}
 
 	/* Get disk description dictionary */
-#ifndef __minix
+#if !defined(__minix)
 	if (prop_dictionary_recv_ioctl(fd, DIOCGDISKINFO, &disk_dict)) {
 #else
-	if (-1) {
-#endif
+	if (1) {
+#endif /* !defined(__minix) */
 		/*
 		 * Ask for disklabel if DIOCGDISKINFO failed. This is
 		 * compatibility call and can be removed when all devices
@@ -195,15 +133,43 @@ getdiskinfo(const char *s, int fd, const char *dt, struct disk_geom *geo,
 		geom_dict = prop_dictionary_get(disk_dict, "geometry");
 		dict2geom(geo, geom_dict);
 	}
-	
-	/* Get info about partition/wedge */
-	if (ioctl(fd, DIOCGWEDGEINFO, dkw) == -1) {
-		if (ioctl(fd, DIOCGDINFO, lp) == -1)
-			err(1, "Please implement DIOCGWEDGEINFO or "
-			    "DIOCGDINFO for disk device %s", s);
 
-		part2wedge(dkw, lp, s);
+	/* Get info about partition/wedge */
+	if (ioctl(fd, DIOCGWEDGEINFO, dkw) != -1) {
+		/* DIOCGWEDGEINFO didn't fail, we're done */
+		return 0;
 	}
+
+	if (ioctl(fd, DIOCGDINFO, lp) == -1) {
+		err(1, "Please implement DIOCGWEDGEINFO or "
+		    "DIOCGDINFO for disk device %s", s);
+	}
+
+#if !defined(__minix)
+	/* DIOCGDINFO didn't fail */
+
+	(void)memset(dkw, 0, sizeof(*dkw));
+
+	if (stat(s, &sb) == -1)
+		return 0;
+
+	ptn = strchr(s, '\0')[-1] - 'a';
+	if ((unsigned)ptn >= lp->d_npartitions ||
+	    (devminor_t)ptn != DISKPART(sb.st_rdev))
+		return 0;
+
+	pp = &lp->d_partitions[ptn];
+	if (ptn != getrawpartition()) {
+		dkw->dkw_offset = pp->p_offset;
+		dkw->dkw_size = pp->p_size;
+	} else {
+		dkw->dkw_offset = 0;
+		dkw->dkw_size = geo->dg_secperunit;
+	}
+	dkw->dkw_parent[0] = '*';
+	strlcpy(dkw->dkw_ptype, getfstypename(pp->p_fstype),
+	    sizeof(dkw->dkw_ptype));
+#endif /* !defined(__minix) */
 
 	return 0;
 }

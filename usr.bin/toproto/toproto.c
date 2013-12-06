@@ -1,3 +1,9 @@
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#else
+#include <sys/cdefs.h>
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -317,6 +323,14 @@ dump_entry(FILE * out, int mindex, const char *base_dir)
 	int i;
 	struct entry *entry = &entries[mindex];
 
+	/* Ensure uid & gid are set to something meaningful. */
+	if (entry->uid == NULL) {
+		entry->uid = __UNCONST("0");
+	}
+	if (entry->gid == NULL) {
+		entry->gid = __UNCONST("0");
+	}
+
 	/* Indent the line */
 	for (space = 0; space < entries[mindex].depth; space++) {
 		fprintf(out, " ");
@@ -326,8 +340,8 @@ dump_entry(FILE * out, int mindex, const char *base_dir)
 			fprintf(out, "%s ", entry->filename);
 		}
 		fprintf(out, "d%s", parse_mode(entry->mode));
-		fprintf(out, " %s", (entry->uid) ? entry->uid : "0");
-		fprintf(out, " %s", (entry->gid) ? entry->gid : "0");
+		fprintf(out, " %s", entry->uid);
+		fprintf(out, " %s", entry->gid);
 		fprintf(out, "\n");
 		for (i = 0; i < entry_total_count; i++) {
 			if (entries[i].parent == entry) {

@@ -1,4 +1,4 @@
-/* $NetBSD: strtord.c,v 1.4 2008/03/21 23:13:48 christos Exp $ */
+/* $NetBSD: strtord.c,v 1.5 2013/04/18 21:54:11 joerg Exp $ */
 
 /****************************************************************
 
@@ -73,11 +73,7 @@ ULtod(ULong *L, ULong *bits, Long expt, int k)
 	}
 
  int
-#ifdef KR_headers
-strtord(s, sp, rounding, d) CONST char *s; char **sp; int rounding; double *d;
-#else
-strtord(CONST char *s, char **sp, int rounding, double *d)
-#endif
+strtord(CONST char *s, char **sp, int rounding, double *d, locale_t loc)
 {
 	static CONST FPI fpi0 = { 53, 1-1023-53+1, 2046-1023-53+1, 1, SI };
 	CONST FPI *fpi;
@@ -92,7 +88,7 @@ strtord(CONST char *s, char **sp, int rounding, double *d)
 		fpi1.rounding = rounding;
 		fpi = &fpi1;
 		}
-	k = strtodg(s, sp, fpi, &expt, bits);
+	k = strtodg(s, sp, fpi, &expt, bits, loc);
 	if (k == STRTOG_NoMemory)
 		return k; 
 	ULtod((/* LINTED */(U*)d)->L, bits, expt, k);

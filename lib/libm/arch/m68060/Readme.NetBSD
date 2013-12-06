@@ -1,0 +1,31 @@
+- Import new Motorola 060SP packages in /sys/arch/m68k/060SP first.
+- if you had to change something in here, "make clean" here
+- commit Makefile Readme.NetBSD makeas.sh makeoffs.awk
+- "make" here
+- commit this directory
+     ----------------------------------------------------------------------
+Method:
+
+Out of the table, we create a wrapper for fplsp.S. It contains:
+
+Single precision:
+
+	movl	sp@(4),sp@-			4
+	bsr	_060fplsp+theoffset		4
+	fmovs	fp0,sp@				4
+	movel	sp@+,d0				4
+	rts					2
+	(18 bytes)
+
+Double precision:
+
+	movl	sp@(4+0),sp@-			4
+	movl	sp@(8+4),sp@-			4
+	bsr	_060fplsp+theoffset		4
+	fmovd	fp0,sp@				4
+	movel	sp@+,d0				4
+	movel	sp@+,d1				4
+	rts					2
+	(26 bytes)
+
+For __SVR4_ABI, the code is much shorter... it reduces to a single jbra.

@@ -1,4 +1,4 @@
-/*	$NetBSD: crtend.S,v 1.1 2011/02/08 02:02:25 matt Exp $	*/
+/*	$NetBSD: crtend.S,v 1.2 2013/06/27 21:24:39 matt Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <powerpc/asm.h>
 
-RCSID("$NetBSD: crtend.S,v 1.1 2011/02/08 02:02:25 matt Exp $")
+RCSID("$NetBSD: crtend.S,v 1.2 2013/06/27 21:24:39 matt Exp $")
 
 	.section	.ctors, "aw", @progbits
 	.p2align 2
@@ -41,6 +41,9 @@ __CTOR_LIST_END__:
 
 	.section	.dtors, "aw", @progbits
 	.p2align 2
+	.global		__DTOR_LIST_END__
+	.hidden 	__DTOR_LIST_END__
+__DTOR_LIST_END__:
 	.long 0
 
 	.section	.eh_frame, "a", @progbits

@@ -57,13 +57,9 @@ struct tms {
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-#ifdef __minix
-clock_t times(struct tms *);
-#else
 #ifndef __LIBC12_SOURCE__
 clock_t times(struct tms *) __RENAME(__times13);
 #endif
-#endif /* __minix */
 __END_DECLS
 #endif
 #endif /* !_SYS_TIMES_H_ */

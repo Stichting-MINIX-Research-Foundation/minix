@@ -5,8 +5,7 @@
 #include <string.h>
 #include <sys/statvfs.h>
 
-#ifdef __weak_alias
-__weak_alias(fstatvfs1, _fstatvfs1)
+#if defined(__weak_alias)
 __weak_alias(fstatvfs, _fstatvfs)
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vdprintf.c,v 1.2 2011/07/17 20:54:34 joerg Exp $	*/
+/*	$NetBSD: vdprintf.c,v 1.4 2013/05/17 12:55:57 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: vdprintf.c,v 1.2 2011/07/17 20:54:34 joerg Exp $");
+__RCSID("$NetBSD: vdprintf.c,v 1.4 2013/05/17 12:55:57 joerg Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -43,19 +43,22 @@ __RCSID("$NetBSD: vdprintf.c,v 1.2 2011/07/17 20:54:34 joerg Exp $");
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <locale.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <limits.h>
 
 #include "reentrant.h"
+#include "setlocale_local.h"
 #include "local.h"
 
 #ifdef __weak_alias
 __weak_alias(vdprintf,_vdprintf)
+__weak_alias(vdprintf_l,_vdprintf_l)
 #endif
 
 int
-vdprintf(int fd, const char * __restrict fmt, va_list ap)
+vdprintf_l(int fd, locale_t loc, const char * __restrict fmt, va_list ap)
 {
 	FILE f;
 	struct __sfileext fext;
@@ -109,8 +112,14 @@ vdprintf(int fd, const char * __restrict fmt, va_list ap)
 	f._seek = NULL;
 	f._close = NULL;
 
-	if ((ret = vfprintf(&f, fmt, ap)) < 0)
+	if ((ret = vfprintf_l(&f, loc, fmt, ap)) < 0)
 		return ret;
 
 	return fflush(&f) ? EOF : ret;
+}
+
+int
+vdprintf(int fd, const char * __restrict fmt, va_list ap)
+{
+	return vdprintf_l(fd, _current_locale(), fmt, ap);
 }

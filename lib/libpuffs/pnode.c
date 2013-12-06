@@ -1,4 +1,4 @@
-/*	$NetBSD: pnode.c,v 1.10 2008/08/12 19:44:39 pooka Exp $	*/
+/*	$NetBSD: pnode.c,v 1.13 2012/08/16 09:25:43 manu Exp $	*/
 
 /*
  * Copyright (c) 2006 Antti Kantee.  All Rights Reserved.
@@ -27,20 +27,22 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: pnode.c,v 1.10 2008/08/12 19:44:39 pooka Exp $");
+__RCSID("$NetBSD: pnode.c,v 1.13 2012/08/16 09:25:43 manu Exp $");
 #endif /* !lint */
 
-#include <minix/type.h>
 #include <sys/types.h>
 
 #include <assert.h>
+#include <puffs.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
-#include "puffs.h"
 #include "puffs_priv.h"
+#if defined(__minix)
+#include <minix/type.h>
 #include "proto.h"
+#endif /* defined(__minix) */
 
 /*
  * Well, you're probably wondering why this isn't optimized.
@@ -61,6 +63,8 @@ puffs_pn_new(struct puffs_usermount *pu, void *privdata)
 	puffs_vattr_null(&pn->pn_va);
 
 	LIST_INSERT_HEAD(&pu->pu_pnodelst, pn, pn_entries);
+
+	pu->pu_flags |= PUFFS_FLAG_PNCOOKIE;
 
 	return pn;
 }
@@ -90,8 +94,8 @@ puffs_pn_put(struct puffs_node *pn)
 	struct puffs_usermount *pu = pn->pn_mnt;
 
 	pu->pu_pathfree(pu, &pn->pn_po);
-	/* Removes either from pu_pnodelst or pu_pnode_removed_lst */
-	LIST_REMOVE(pn, pn_entries);
+	if ((pn->pn_flags & PUFFS_NODE_REMOVED) == 0)
+		LIST_REMOVE(pn, pn_entries);
 	free(pn);
 }
 
@@ -120,32 +124,6 @@ puffs_pn_nodewalk(struct puffs_usermount *pu, puffs_nodewalk_fn fn, void *arg)
 	}
 
 	return NULL;
-}
-
-void*
-puffs_pn_nodeprint(struct puffs_usermount *pu, struct puffs_node *pn, void *arg)
-{
-	/* If arg is specified, print only pnodes with inum (should be only one,
-	 * otherwise - all.
-	 */
-	if (arg != NULL) {
-		ino_t inum = *(ino_t*)arg;
-		if (pn->pn_va.va_fileid != inum) {
-			return NULL;
-		}
-	}
-	lpuffs_debug(" ino %ld used %d %s\n", pn->pn_va.va_fileid, pn->pn_count,
-				pn->pn_po.po_path);
-	/* If arg specified, it should be the only one pnode to be printed,
-	 * but we walk through the rest of list for debugging purposes.
-	 */
-	return NULL;
-}
-
-void
-puffs_pn_nodeprintall(struct puffs_usermount *pu)
-{
-	puffs_pn_nodewalk(pu, puffs_pn_nodeprint, NULL);
 }
 
 struct vattr *
@@ -221,3 +199,27 @@ puffs_newinfo_setrdev(struct puffs_newinfo *pni, dev_t rdev)
 
 	*pni->pni_rdev = rdev;
 }
+
+void
+puffs_newinfo_setva(struct puffs_newinfo *pni, struct vattr *va)
+{
+
+	(void)memcpy(pni->pni_va, va, sizeof(struct vattr));
+}
+
+void
+puffs_newinfo_setvattl(struct puffs_newinfo *pni, struct timespec *va_ttl)
+{
+
+	pni->pni_va_ttl->tv_sec = va_ttl->tv_sec;
+	pni->pni_va_ttl->tv_nsec = va_ttl->tv_nsec;
+}
+
+void
+puffs_newinfo_setcnttl(struct puffs_newinfo *pni, struct timespec *cn_ttl)
+{
+
+	pni->pni_cn_ttl->tv_sec = cn_ttl->tv_sec;
+	pni->pni_cn_ttl->tv_nsec = cn_ttl->tv_nsec;
+}
+

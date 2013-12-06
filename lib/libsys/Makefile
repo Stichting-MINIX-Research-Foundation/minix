@@ -1,7 +1,12 @@
+NOGCCERROR=yes
+NOCLANGERROR=yes
+
 # Makefile for libsys
 .include <bsd.own.mk>
 
 LIB=		sys
+
+CFLAGS+=	-fno-builtin
 
 .include "arch/${MACHINE_ARCH}/Makefile.inc"
 
@@ -95,8 +100,7 @@ SRCS+=  \
 	vm_procctl.c \
 	vm_query_exit.c \
 	vm_set_priv.c \
-	vm_update.c \
-	vprintf.c
+	vm_update.c
 
 .if ${MKPCI} != "no"
 SRCS+=	pci_attr_r16.c \

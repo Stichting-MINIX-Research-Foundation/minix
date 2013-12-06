@@ -1,0 +1,620 @@
+.\"	$NetBSD: puffs_framebuf.3,v 1.29 2010/04/01 09:57:00 pooka Exp $
+.\"
+.\" Copyright (c) 2007 Antti Kantee.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.Dd September 6, 2008
+.Dt PUFFS_FRAMEBUF 3
+.Os
+.Sh NAME
+.Nm puffs_framebuf
+.Nd buffering and event handling for networked file systems
+.Sh LIBRARY
+.Lb libpuffs
+.Sh SYNOPSIS
+.In puffs.h
+.Ft struct puffs_framebuf *
+.Fn puffs_framebuf_make
+.Ft void
+.Fn puffs_framebuf_destroy "struct puffs_framebuf *pufbuf"
+.Ft void
+.Fn puffs_framebuf_recycle "struct puffs_framebuf *pufbuf"
+.Ft int
+.Fn puffs_framebuf_reserve_space "struct puffs_framebuf *pufbuf" "size_t space"
+.Ft int
+.Fo puffs_framebuf_putdata
+.Fa "struct puffs_framebuf *pufbuf" "const void *data" "size_t dlen"
+.Fc
+.Ft int
+.Fo puffs_framebuf_putdata_atoff
+.Fa "struct puffs_framebuf *pufbuf" "size_t offset" "const void *data"
+.Fa "size_t dlen"
+.Fc
+.Ft int
+.Fo puffs_framebuf_getdata
+.Fa "struct puffs_framebuf *pufbuf" "void *data" "size_t dlen"
+.Fc
+.Ft int
+.Fo puffs_framebuf_getdata_atoff
+.Fa "struct puffs_framebuf *pufbuf" "size_t offset"
+.Fa "void *data" "size_t dlen"
+.Fc
+.Ft size_t
+.Fn puffs_framebuf_telloff "struct puffs_framebuf *pufbuf"
+.Ft size_t
+.Fn puffs_framebuf_tellsize "struct puffs_framebuf *pufbuf"
+.Ft size_t
+.Fn puffs_framebuf_remaining "struct puffs_framebuf *pufbuf"
+.Ft int
+.Fn puffs_framebuf_seekset "struct puffs_framebuf *pufbuf" "size_t offset"
+.Ft int
+.Fo puffs_framebuf_getwindow
+.Fa "struct puffs_framebuf *pufbuf" "size_t offset"
+.Fa "void **winp" "size_t *winlen"
+.Fc
+.Ft int
+.Fo puffs_framev_enqueue_cc
+.Fa "struct puffs_cc *pcc" "int fd" "struct puffs_framebuf *pufbuf" "int flags"
+.Fc
+.Ft void
+.Fo puffs_framev_cb
+.Fa "struct puffs_usermount *pu" "int fd" "struct puffs_framebuf *pufbuf"
+.Fa "void *arg" "int flags"
+.Fa "int error"
+.Fc
+.Ft void
+.Fo puffs_framev_enqueue_cb
+.Fa "struct puffs_usermount *pu" "int fd" "struct puffs_framebuf *pufbuf"
+.Fa "puffs_framebuf_cb fcb" "void *fcb_arg" "int flags"
+.Fc
+.Ft void
+.Fo puffs_framev_enqueue_justsend
+.Fa "struct puffs_usermount *pu" "int fd" "struct puffs_framebuf *pufbuf"
+.Fa "int waitreply" "int flags"
+.Fc
+.Ft void
+.Fo puffs_framev_enqueue_directsend
+.Fa "struct puffs_usermount *pu" "int fd" "struct puffs_framebuf *pufbuf"
+.Fa "int flags"
+.Fc
+.Ft void
+.Fo puffs_framev_enqueue_directreceive
+.Fa "struct puffs_usermount *pu" "int fd" "struct puffs_framebuf *pufbuf"
+.Fa "int flags"
+.Fc
+.Ft int
+.Fo puffs_framev_framebuf_ccpromote
+.Fa "struct puffs_framebuf *pufbuf" "struct puffs_cc *pcc"
+.Fc
+.Ft int
+.Fn puffs_framev_enqueue_waitevent "struct puffs_cc *pcc" "int fd" "int *what"
+.Ft int
+.Fo puffs_framev_readframe_fn
+.Fa "struct puffs_usermount *pu" "struct puffs_framebuf *pufbuf"
+.Fa "int fd" "int *done"
+.Fc
+.Ft int
+.Fo puffs_framev_writeframe_fn
+.Fa "struct puffs_usermount *pu" "struct puffs_framebuf *pufbuf"
+.Fa "int fd" "int *done"
+.Fc
+.Ft int
+.Fo puffs_framev_cmpframe_fn
+.Fa "struct puffs_usermount *pu"
+.Fa "struct puffs_framebuf *cmp1" "struct puffs_framebuf *cmp2" "int *notresp"
+.Fc
+.Ft void
+.Fo puffs_framev_gotframe_fn
+.Fa "struct puffs_usermount *pu" "struct puffs_framebuf *pufbuf"
+.Fc
+.Ft void
+.Fo puffs_framev_fdnotify_fn
+.Fa "struct puffs_usermount *pu" "int fd" "int what"
+.Fc
+.Ft void
+.Fo puffs_framev_init
+.Fa "struct puffs_usermount *pu"
+.Fa "puffs_framev_readframe_fn rfb" "puffs_framev_writeframe_fn wfb"
+.Fa "puffs_framev_cmpframe_fn cmpfb" "puffs_framev_gotframe_fn gotfb"
+.Fa "puffs_framev_fdnotify_fn fdnotfn"
+.Fc
+.Ft int
+.Fn puffs_framev_addfd "struct puffs_usermount *pu" "int fd" "int what"
+.Ft int
+.Fn puffs_framev_enablefd "struct puffs_usermount *pu" "int fd" "int what"
+.Ft int
+.Fn puffs_framev_disablefd "struct puffs_usermount *pu" "int fd" "int what"
+.Ft int
+.Fn puffs_framev_removefd "struct puffs_usermount *pu" "int fd" "int error"
+.Ft void
+.Fo puffs_framev_unmountonclose
+.Fa "struct puffs_usermount *pu" "int fd" "int what"
+.Fc
+.Sh DESCRIPTION
+The
+.Nm
+routines provide buffering and an event loop structured around the
+buffers.
+It operates on top of the puffs continuation framework,
+.Xr puffs_cc 3 ,
+and multiplexes execution automatically to an instance whenever
+one is runnable.
+.Pp
+The file system is entered in three different ways:
+.Bl -bullet -offset indent
+.It
+An event arrives from the kernel and the
+.Xr puffs_ops 3
+callbacks are called to start processing the event.
+.It
+A file system which has sent out a request receives a response.
+Execution is resumed from the place where the file system yielded.
+.It
+A request from a peer arrives.
+A request is an incoming PDU which is not a response to any outstanding
+request.
+.El
+.Pp
+.Nm
+is used by defining various callbacks and providing I/O descriptors,
+which are then monitored for activity by the library.
+A descriptor, when present, can be either enabled or disabled for
+input and output.
+If a descriptor is not enabled for a certain direction, the callbacks
+will not be called even if there were activity on the descriptor.
+For example, even if a network socket has been added and there is
+input data in the socket buffer, the read callback will be called
+only if the socket has been enabled for reading.
+.Pp
+File descriptors are treated like sockets: they have two sides, a read
+side and a write side.
+The framework determines that one side of the descriptor has been
+closed if the supplied I/O callbacks return an error or if the I/O
+multiplexing call says a side has been closed.
+It is still possible, from the framework perspective, to write to a
+file descriptor whose read side is closed.
+However, it is not possible to wait for a response on such a file
+descriptor.
+Conversely, it is possible to read responses from a descriptor whose
+write side is closed.
+It should be stressed that the implementation underlying the file
+descriptor might not support this.
+.Pp
+The following callbacks can be defined, cf.
+.Fn puffs_framev_init ,
+and all are optional.
+None of them should block, because this would cause the entire file server
+to block.
+One option is to make the descriptors non-blocking before adding them.
+.Bl -tag -width "xfdnotfnx"
+.It rfb
+Read a frame from the file descriptor onto the specified buffer.
+.It wfb
+Write a frame from the specified buffer into the file descriptor.
+.It cmpfb
+Identify if a buffer is the response to the specified buffer.
+.It gotfb
+Called iff no outstanding request matches the incoming frame.
+In other words, this is called when we receive a request from a peer.
+.It fdnotfn
+Receive notifications about a change-of-state in a file descriptor's
+status.
+.El
+.Pp
+Better descriptions for each callback are given below.
+.Pp
+The buffers of
+.Nm
+provide automatic memory management of buffers for the file servers.
+They provide a cursor to the current buffer offset.
+Reading or writing data through the normal routines will advance that cursor.
+Additionally, the buffer size is provided to the user.
+It represents the maximum offset where data was written.
+.Pp
+Generally the write functions will fail if the cannot allocate enough
+memory to satisfy the buffer length requirements.
+Read functions will fail if the amount of data written to the buffer
+is not large enough to satisfy the read.
+.Bl -tag -width xxxx
+.It Fn puffs_framebuf_make
+Create a buffer.
+Return the address of the buffer or
+.Dv NULL
+in case no memory was available.
+.It Fn puffs_framebuf_destroy pufbuf
+Free memory used by buffer.
+.It Fn puffs_framebuf_recycle pufbuf
+Reset offsets so that buffer can be reused.
+Does not free memory or reallocate memory.
+.It Fn puffs_framebuf_reserve_space pufbuf space
+Make sure that the buffer has
+.Ar space
+bytes of available memory starting from the current offset.
+This is not strictly necessary, but can be used for optimizations
+where it is known in advance how much memory will be required.
+.It Fn puffs_framebuf_putdata pufbuf data dlen
+Write
+.Ar dlen
+amount of data from the address
+.Ar data
+into the buffer.
+Moves the offset cursor forward
+.Ar dlen
+bytes.
+.It Fn puffs_framebuf_putdata_atoff pufbuf offset data dlen
+Like
+.Fn puffs_framebuf_putdata ,
+except writes data at buffer offset
+.Ar offset .
+It is legal to write past the current end of the buffer.
+Does NOT modify the current offset cursor.
+.It Fn puffs_framebuf_getdata pufbuf data dlen
+Read
+.Ar dlen
+bytes of data from the buffer into
+.Ar data .
+Advances the offset cursor.
+.It Fn puffs_framebuf_getdata_atoff pufbuf offset data dlen
+Read data from buffer position
+.Ar offset .
+Does NOT modify the offset cursor.
+.It Fn puffs_framebuf_telloff pufbuf
+Return the offset into the buffer.
+.It Fn puffs_framebuf_tellsize pufbuf
+Return the maximum offset where data has been written, i.e. buffer size.
+.It Fn puffs_framebuf_remaining pufbuf
+Distance from current offset to the end of the buffer, i.e. size-offset.
+.It Fn puffs_framebuf_seekset pufbuf offset
+Set the offset cursor to the position
+.Ar offset .
+This does NOT modify the buffer size, but reserves at least
+enough memory memory for a write to
+.Ar offset
+and will fail if memory cannot be allocated.
+.It Fn puffs_framebuf_getwindow pufbuf offset winp winlen
+Get a direct memory window into the buffer starting from
+.Ar offset .
+The maximum mapped window size will be
+.Ar winlen
+bytes, but this routine might return a smaller window and the caller
+should always check the actual mapped size after the call.
+The window is returned in
+.Ar winp .
+This function not modify the buffer offset, but it DOES set the buffer
+size to
+.Ar offset +
+.Ar winlen
+in case that value is greater than the current size.
+The window is valid until the next until the next
+.Fn puffs_framebuf
+call operating on the buffer in question.
+.It Fn puffs_framev_enqueue_cc pcc fd pufbuf flags
+Add the buffer
+.Ar pufbuf
+to outgoing queue of descriptor
+.Ar fd
+and yield with the continuation
+.Ar pcc .
+Execution is resumed once a response is received.
+Returns 0 if the buffer was successfully enqueued (not necessarily
+delivered) and non-zero to signal a non-recoverable error.
+.Pp
+Usually the buffer is placed at the end of the output queue.
+However, if
+.Ar flags
+contains
+.Dv PUFFS_FBQUEUE_URGENT ,
+.Ar pufbuf
+is placed in the front of the queue to be sent immediately after
+the current PDU (if any) has been sent.
+.It Fn puffs_framev_enqueue_cb pu fd pufbuf fcb fcb_arg flags
+Enqueue the buffer
+.Ar pufbuf
+for outgoing data and immediately return.
+Once a response arrives, the callback
+.Fn fcb
+will be called with the argument
+.Ar fcb_arg .
+The callback function
+.Fn fcb
+is responsible for freeing the buffer.
+Returns 0 if the buffer was successfully enqueued (not necessarily
+delivered) and non-zero to signal a non-recoverable error.
+.Pp
+See
+.Fn puffs_framev_enqueue_cc
+for
+.Ar flags .
+.It Fn puffs_framev_cb pu pufbuf arg error
+Callback function.
+Called when a response to a specific request arrives from the server.
+If
+.Ar error
+is non-zero, the framework was unable to obtain a response and the
+function should not examine the contents of
+.Ar pufbuf ,
+only do resource cleanup.
+May not block.
+.It Fn puffs_framev_enqueue_justsend pu fd pufbuf waitreply flags
+Enqueue the buffer
+.Ar pufbuf
+for outgoing traffic and immediately return.
+The parameter
+.Ar waitreply
+can be used to control if the buffer is to be freed immediately after
+sending of if a response is expected and the buffer should be freed
+only after the response arrives (receiving an unexpected message from
+the server is treated as an error).
+Returns 0 if the buffer was successfully enqueued (not necessarily
+delivered) and non-zero to signal a non-recoverable error.
+.Pp
+See
+.Fn puffs_framev_enqueue_cc
+for
+.Ar flags .
+.It Fn puffs_framev_enqueue_directsend pcc fd pufbuf flags
+Acts like
+.Fn puffs_framev_enqueue_justsend
+with the exception that the call yields until the frame has been sent.
+As opposed to
+.Fn puffs_framev_enqueue_cc ,
+the routine does not wait for input, but returns immediately after
+sending the frame.
+.Pp
+See
+.Fn puffs_framev_enqueue_cc
+for
+.Ar flags .
+.It Fn puffs_framev_enqueue_directreceive pcc fd pufbuf flags
+Receive data into
+.Ar pufbuf .
+This routine yields until a complete frame has been read into
+the buffer by the readframe routine.
+.Pp
+See
+.Fn puffs_framev_enqueue_cc
+for
+.Ar flags .
+.It Fn puffs_framev_framebuf_ccpromote pufbuf pcc
+Promote the framebuffer
+.Ar pufbuf
+sent with
+.Fn puffs_framev_enqueue_cb
+or
+.Fn puffs_framev_enqueue_justsend
+to a wait using
+.Ar pcc
+and yield until the result arrives.
+The response from the file server for
+.Ar pufbuf
+must not yet have arrived.
+If sent with
+.Fn puffs_framev_enqueue_justsend ,
+the call must be expecting a response.
+.It Fn puffs_framev_enqueue_waitevent pcc fd what
+Waits for an event in
+.Ar what
+to happen on file descriptor
+.Ar fd .
+The events which happened are returned back in
+.Ar what .
+The possible events are
+.Dv PUFFS_FBIO_READ ,
+.Dv PUFFS_FBIO_WRITE ,
+and
+.Dv PUFFS_FBIO_ERROR ,
+specifying read, write and error conditions, respectively.
+Error is always checked.
+.Pp
+This call does not depend on if the events were previously enabled on
+the file descriptor - the specified events are always checked
+regardless.
+.Pp
+There is currently no other way to cancel or timeout a call except by
+removing the file descriptor in question.
+This may change in the future.
+.It Fn puffs_framev_readframe_fn pu pufbuf fd done
+Callback function.
+Read at most one frame from file descriptor
+.Ar fd
+into the buffer
+.Ar pufbuf .
+If a complete frame is read, the value pointed to by
+.Ar done
+must be set to 1.
+This function should return 0 on success (even if a complete frame was not
+yet read) and a non-zero
+.Er errno
+to signal a fatal error.
+In case a fatal error is returned, the read side of the file descriptor
+is marked closed.
+This routine will be called with the same buffer argument until a
+complete frame has been read.
+May not block.
+.It Fn puffs_framev_writeframe_fn pu pufbuf fd done
+Write the frame contained in
+.Ar pufbuf
+to the file descriptor
+.Ar fd .
+In case the entire frame is successfully written,
+.Ar *done
+should be set to 1.
+This function should return 0 on success (even if a complete frame was not
+yet written) and a non-zero
+.Er errno
+to signal a fatal error.
+In case a fatal error is returned, the write side of the file descriptor
+is marked closed.
+This routine will be called with the same buffer argument until the
+complete frame has been written.
+May not block.
+.Pp
+It is a good idea to make sure that this function can handle a possible
+.Dv SIGPIPE
+caused by a closed connection.
+For example, the file server can opt to trap
+.Dv SIGPIPE
+or, if writing to a socket, call
+.Fn send
+with the flag
+.Dv MSG_NOSIGNAL
+instead of using
+.Fn write .
+.It Fn puffs_framev_cmpframe_fn pu pufbuf_cmp1 pufbuf_cmp2 notresp
+Compare the file system internal request tags in
+.Ar pufbuf_cmp1
+and
+.Ar pufbuf_cmp2 .
+Should return 0 if the tags are equal, 1 if first buffer's tag is
+greater than the second and \-1 if it is smaller.
+The definitions "greater" and "smaller" are used transparently by
+the library, e.g. like
+.Xr qsort 3 .
+If it can be determined from
+.Ar pufbuf_cmp1
+that it is not a response to any outstanding request,
+.Ar notresp
+should be set to non-zero.
+This will cause
+.Nm
+to skip the test of the buffer against the rest of the outstanding
+request.
+May not block.
+.It Fn puffs_framev_gotframe_fn pu pufbuf
+Called when no outstanding request matches an incoming frame.
+The ownership of
+.Ar pufbuf
+is transferred to the called function and must be destroyed once
+processing is over.
+May not block.
+.It Fn puffs_framev_fdnotify_fn pu fd what
+Is called when the read or write side of the file descriptor
+.Ar fd
+is closed.
+It is called once for each side, the bitmask parameter
+.Ar what
+specified what is currently closed:
+.Dv PUFFS_FBIO_READ
+and
+.Dv PUFFS_FBIO_WRITE
+for read and write, respectively.
+.It Fn puffs_framev_init pu rfb wfb cmpfb gotfb fdnotfn
+Initializes the given callbacks to the system.
+They will be used when
+.Fn puffs_mainloop
+is called.
+The framework provides the routines
+.Fn puffs_framev_removeonclose
+and
+.Fn puffs_framev_unmountonclose ,
+which can be given as
+.Ar fdnotfn .
+The first one removes the file descriptor once both sides are closed
+while the second one unmounts the file system and exits the mainloop.
+.It Fn puffs_framev_addfd pu fd what
+Add file descriptor
+.Ar fd
+to be handled by the framework.
+It is legal to add a file descriptor either before calling
+.Fn puffs_mainloop
+or at time when running.
+The parameter
+.Ar what
+controls enabling of input and output events and can be a bitwise
+combination of
+.Dv PUFFS_FBIO_READ
+and
+.Dv PUFFS_FBIO_WRITE .
+If not specified, the descriptor will be in a disabled state.
+.It Fn puffs_framev_enablefd pu fd what
+Enable events of type
+.Ar what
+for file descriptor
+.Ar fd .
+.It Fn puffs_framev_disablefd pu fd what
+Disable events of type
+.Ar what
+for file descriptor
+.Ar fd .
+.It Fn puffs_framev_removefd pu fd error
+Remove file descriptor
+.Ar fd
+from the list of descriptors handled by the framework.
+Removing a file descriptor causes all operations blocked either on
+output or input to be released with the error value
+.Ar error .
+In case 0 is supplied as this parameter,
+.Er ECONNRESET
+is used.
+.Pp
+The file system
+.Em must
+explicitly remove each fd it has added.
+A good place to do this is
+.Fn puffs_framev_fdnotify_fn
+or
+.Fn puffs_node_reclaim ,
+depending a little on the structure of the file system.
+.It Fn puffs_framev_unmountonclose pu fd what
+This is library provided convenience routine for
+.Fn puffs_framev_fdnotify_fn .
+It unmounts the file system when both the read and write side are
+closed.
+It is useful for file systems such as
+.Xr mount_psshfs 8
+which depend on a single connection.
+.El
+.Sh CODE REFERENCES
+The current users of
+.Nm
+in the tree are
+.Xr mount_psshfs 8
+and
+.Xr mount_9p 8 .
+See
+.Pa src/usr.sbin/puffs/mount_psshfs
+and
+.Pa src/usr.sbin/puffs/mount_9p
+for the respective usage examples.
+.Sh RETURN VALUES
+These functions generally return \-1 to signal error and set
+.Er errno
+to indicate the type of error.
+.Sh SEE ALSO
+.Xr puffs 3 ,
+.Xr puffs_cc 3 ,
+.Xr puffs_ops 3
+.Rs
+.%A Antti Kantee
+.%D September 2007
+.%I Helsinki University of Technology
+.%R Tech Report TKK-TKO-B157
+.%T Using puffs for Implementing Client-Server Distributed File Systems
+.Re
+.Rs
+.%A Antti Kantee
+.%D March 2008
+.%J Proceedings of AsiaBSDCon 2008
+.%P pp. 55-70
+.%T Send and Receive of File System Protocols: Userspace Approach With puffs
+.Re

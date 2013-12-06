@@ -97,9 +97,9 @@ struct ipc_perm_sysctl {
 #define	IPC_SET		1	/* set options */
 #define	IPC_STAT	2	/* get options */
 
-#ifdef __minix
+#if defined(__minix)
 #define IPC_INFO       500       /* See ipcs. */
-#endif /* !__minix */
+#endif /* !defined(__minix) */
 
 /*
  * Macros to convert between ipc ids and array indices or sequence ids.

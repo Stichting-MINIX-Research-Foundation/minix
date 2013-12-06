@@ -1,4 +1,4 @@
-/*	$NetBSD: vsnprintf.c,v 1.25 2012/03/15 18:22:31 christos Exp $	*/
+/*	$NetBSD: vsnprintf.c,v 1.27 2013/05/17 12:55:57 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)vsnprintf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: vsnprintf.c,v 1.25 2012/03/15 18:22:31 christos Exp $");
+__RCSID("$NetBSD: vsnprintf.c,v 1.27 2013/05/17 12:55:57 joerg Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -45,21 +45,28 @@ __RCSID("$NetBSD: vsnprintf.c,v 1.25 2012/03/15 18:22:31 christos Exp $");
 
 #include <assert.h>
 #include <errno.h>
+#include <locale.h>
 #include <stdio.h>
 #include "reentrant.h"
+#include "setlocale_local.h"
 #include "local.h"
 
 #if defined(_FORTIFY_SOURCE) && !defined(__lint__)
 #undef vsnprintf
 #define vsnprintf _vsnprintf
+#undef snprintf
+#define snprintf _snprintf
 #endif
 
 #ifdef __weak_alias
 __weak_alias(vsnprintf,_vsnprintf)
+__weak_alias(vsnprintf_l,_vsnprintf_l)
+__weak_alias(snprintf,_snprintf)
+__weak_alias(snprintf_l,_snprintf_l)
 #endif
 
 int
-vsnprintf(char *str, size_t n, const char *fmt, va_list ap)
+vsnprintf_l(char *str, size_t n, locale_t loc, const char *fmt, va_list ap)
 {
 	int ret;
 	FILE f;
@@ -85,7 +92,37 @@ vsnprintf(char *str, size_t n, const char *fmt, va_list ap)
 		_DIAGASSERT(__type_fit(int, n - 1));
 		f._bf._size = f._w = (int)(n - 1);
 	}
-	ret = __vfprintf_unlocked(&f, fmt, ap);
+	ret = __vfprintf_unlocked_l(&f, loc, fmt, ap);
 	*f._p = 0;
+	return ret;
+}
+
+int
+vsnprintf(char *str, size_t n, const char *fmt, va_list ap)
+{
+	return vsnprintf_l(str, n, _current_locale(), fmt, ap);
+}
+
+int
+snprintf(char *str, size_t n, const char *fmt, ...)
+{
+	va_list ap;
+	int ret;
+
+	va_start(ap, fmt);
+	ret = vsnprintf(str, n, fmt, ap);
+	va_end(ap);
+	return ret;
+}
+
+int
+snprintf_l(char *str, size_t n, locale_t loc, const char *fmt, ...)
+{
+	va_list ap;
+	int ret;
+
+	va_start(ap, fmt);
+	ret = vsnprintf_l(str, n, loc, fmt, ap);
+	va_end(ap);
 	return ret;
 }

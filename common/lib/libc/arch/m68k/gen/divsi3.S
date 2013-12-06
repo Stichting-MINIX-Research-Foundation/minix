@@ -1,4 +1,4 @@
-/*	$NetBSD: divsi3.S,v 1.2 2006/01/05 22:33:34 he Exp $	*/
+/*	$NetBSD: divsi3.S,v 1.5 2013/09/07 19:06:29 chs Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,29 +39,32 @@
 #if 0
 	RCSID("from: @(#)divsi3.s	5.1 (Berkeley) 6/7/90")
 #else
-	RCSID("$NetBSD: divsi3.S,v 1.2 2006/01/05 22:33:34 he Exp $")
+	RCSID("$NetBSD: divsi3.S,v 1.5 2013/09/07 19:06:29 chs Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 /* int / int */
-ENTRY(__divsi3)
 #ifndef __mc68010__
-	movel	%sp@(4),%d0
-	divsl	%sp@(8),%d0
+ENTRY(__divsi3)
+	movel	4(%sp),%d0
+	divsl	8(%sp),%d0
 	rts
+END(__divsi3)
 #else
+ENTRY(__divsi3)
 | NB: this requires that __udivsi3 preserve %a0:
-	movel	%sp@(4), %d1	| load the dividend
+	movel	4(%sp), %d1	| load the dividend
 	bpl	1f
-	negl	%sp@(4)		| store abs(dividend)
-1:	movel	%sp@(8), %d0	| load the divisor
+	negl	4(%sp)		| store abs(dividend)
+1:	movel	8(%sp), %d0	| load the divisor
 	bpl	2f
-	negl	%sp@(8)		| store abs(divisor)
+	negl	8(%sp)		| store abs(divisor)
 2:	eorl	%d1, %d0
 	bpl	3f		| branch if sgn(divisor) == sgn(dividend)
-	movel	%sp@+, %a0	| pop return address
-	pea	%pc@(Lret)	| push our return address
+	movel	(%sp)+, %a0	| pop return address
+	pea	(.Lret,%pc)	| push our return address
 3:	jmp	_C_LABEL(__udivsi3)
-Lret:	negl	%d0		| negate quotient
-	jmp	%a0@
+.Lret:	negl	%d0		| negate quotient
+	jmp	(%a0)
+END(__divsi3)
 #endif /* __mc68010__ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: iso646.h,v 1.1 1995/02/17 09:08:10 jtc Exp $	*/
+/*	$NetBSD: iso646.h,v 1.2 2013/04/26 10:58:45 joerg Exp $	*/
 
 /* 
  * Written by J.T. Conklin <jtc@wimsey.com> 02/16/95.
@@ -8,6 +8,7 @@
 #ifndef _ISO646_H_
 #define _ISO646_H_
 
+#ifndef __cplusplus
 #define and	&&
 #define and_eq	&=
 #define bitand	&
@@ -19,5 +20,6 @@
 #define or_eq	|=
 #define xor	^
 #define xor_eq	^=
+#endif
 
 #endif	/* !_ISO646_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_nodeops.c,v 1.1 2011/11/24 15:51:31 ahoka Exp $	*/
+/*	$NetBSD: chfs_nodeops.c,v 1.3 2012/10/19 12:44:39 ttoth Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -35,13 +35,10 @@
 
 #include "chfs.h"
 
-/**
+/*
  * chfs_update_eb_dirty - updates dirty and free space, first and
  *			      last node references
- * @sbi: CHFS main descriptor structure
- * @cheb: eraseblock to update
- * @size: increase dirty space size with this
- * Returns zero in case of success, %1 in case of fail.
+ * Returns zero in case of success, 1 in case of fail.
  */
 int
 chfs_update_eb_dirty(struct chfs_mount *chmp,
@@ -59,19 +56,14 @@ chfs_update_eb_dirty(struct chfs_mount *chmp,
 		return 1;
 	}
 	mutex_enter(&chmp->chm_lock_sizes);
-	//dbg("BEFORE: free_size: %d\n", cheb->free_size);
 	chfs_change_size_free(chmp, cheb, -size);
 	chfs_change_size_dirty(chmp, cheb, size);
-	//dbg(" AFTER: free_size: %d\n", cheb->free_size);
 	mutex_exit(&chmp->chm_lock_sizes);
 	return 0;
 }
 
-/**
+/*
  * chfs_add_node_to_list - adds a data node ref to vnode cache's dnode list
- * @sbi: super block informations
- * @new: node ref to insert
- * @list: head of the list
  * This function inserts a data node ref to the list of vnode cache.
  * The list is sorted by data node's lnr and offset.
  */
@@ -80,6 +72,8 @@ chfs_add_node_to_list(struct chfs_mount *chmp,
     struct chfs_vnode_cache *vc,
     struct chfs_node_ref *new, struct chfs_node_ref **list)
 {
+	KASSERT(mutex_owned(&chmp->chm_lock_vnocache));
+
 	struct chfs_node_ref *nextref = *list;
 	struct chfs_node_ref *prevref = NULL;
 
@@ -104,9 +98,12 @@ chfs_add_node_to_list(struct chfs_mount *chmp,
 	    CHFS_GET_OFS(nextref->nref_offset) ==
 	    CHFS_GET_OFS(new->nref_offset)) {
 		new->nref_next = nextref->nref_next;
+		chfs_mark_node_obsolete(chmp, nextref);
 	} else {
 		new->nref_next = nextref;
 	}
+
+	KASSERT(new->nref_next != NULL);
 
 	if (prevref) {
 		prevref->nref_next = new;
@@ -115,18 +112,74 @@ chfs_add_node_to_list(struct chfs_mount *chmp,
 	}
 }
 
+/*
+ * chfs_remove_node_from_list - removes a node from a list
+ * Usually used for removing data nodes.
+ */
+void
+chfs_remove_node_from_list(struct chfs_mount *chmp,
+	struct chfs_vnode_cache *vc,
+	struct chfs_node_ref *old_nref, struct chfs_node_ref **list)
+{
+	KASSERT(mutex_owned(&chmp->chm_lock_mountfields));
+	KASSERT(mutex_owned(&chmp->chm_lock_vnocache));
+
+	struct chfs_node_ref *tmpnref;
+
+	if (*list == (struct chfs_node_ref *)vc) {
+		/* list is empty */
+		return;
+	}
+
+	KASSERT(old_nref->nref_next != NULL);
+
+	if (*list == old_nref) {
+		*list = old_nref->nref_next;
+	} else {
+		tmpnref = *list;
+		while (tmpnref->nref_next &&
+			tmpnref->nref_next != (struct chfs_node_ref *)vc) {
+			if (tmpnref->nref_next == old_nref) {
+				tmpnref->nref_next = old_nref->nref_next;
+				break;
+			}
+			tmpnref = tmpnref->nref_next;
+		}
+	}
+}
+
+/*
+ * chfs_remove_and_obsolete - removes a node from a list and obsoletes the nref
+ * We should use this function carefully on data nodes, 
+ * because removing a frag will also obsolete the node ref.
+ */
+void
+chfs_remove_and_obsolete(struct chfs_mount *chmp,
+	struct chfs_vnode_cache *vc,
+	struct chfs_node_ref *old_nref, struct chfs_node_ref **list)
+{
+	KASSERT(mutex_owned(&chmp->chm_lock_mountfields));
+	KASSERT(mutex_owned(&chmp->chm_lock_vnocache));
+
+	chfs_remove_node_from_list(chmp, vc, old_nref, list);
+
+	dbg("[MARK] vno: %llu lnr: %u ofs: %u\n", vc->vno, old_nref->nref_lnr,
+		old_nref->nref_offset);
+	chfs_mark_node_obsolete(chmp, old_nref);
+}
+
+/* chfs_add_fd_to_inode - adds a directory entry to an inode */
 void
 chfs_add_fd_to_inode(struct chfs_mount *chmp,
     struct chfs_inode *parent, struct chfs_dirent *new)
 {
-//	struct chfs_dirent **prev = &parent->dents;
 	struct chfs_dirent *fd, *tmpfd;
 
+	/* update highest version */
 	if (new->version > parent->chvc->highest_version) {
 		parent->chvc->highest_version = new->version;
 	}
 
-	//mutex_enter(&parent->inode_lock);
 	TAILQ_FOREACH_SAFE(fd, &parent->dents, fds, tmpfd) {
 		if (fd->nhash > new->nhash) {
 			/* insert new before fd */
@@ -135,17 +188,18 @@ chfs_add_fd_to_inode(struct chfs_mount *chmp,
 		} else if (fd->nhash == new->nhash &&
 		    !strcmp(fd->name, new->name)) {
 			if (new->version > fd->version) {
-//				new->next = fd->next;
 				/* replace fd with new */
 				TAILQ_INSERT_BEFORE(fd, new, fds);
 				TAILQ_REMOVE(&parent->dents, fd, fds);
 				if (fd->nref) {
-					chfs_mark_node_obsolete(chmp,
-					    fd->nref);
+					mutex_enter(&chmp->chm_lock_vnocache);
+					chfs_remove_and_obsolete(chmp, parent->chvc, fd->nref,
+						&parent->chvc->dirents);
+					mutex_exit(&chmp->chm_lock_vnocache);
 				}
 				chfs_free_dirent(fd);
-//				*prev = new;//XXX
 			} else {
+				/* new is older (normally it's not an option) */
 				chfs_mark_node_obsolete(chmp, new->nref);
 				chfs_free_dirent(new);
 			}
@@ -155,66 +209,48 @@ chfs_add_fd_to_inode(struct chfs_mount *chmp,
 	/* if we couldnt fit it elsewhere, lets add to the end */
 	/* FIXME insert tail or insert head? */
 	TAILQ_INSERT_HEAD(&parent->dents, new, fds);
-	//mutex_exit(&parent->inode_lock);
-#if 0
-   	while ((*prev) && (*prev)->nhash <= new->nhash) {
-		if ((*prev)->nhash == new->nhash &&
-		    !strcmp((*prev)->name, new->name)) {
-			if (new->version > (*prev)->version) {
-				new->next = (*prev)->next;
-				if ((*prev)->nref) {
-					chfs_mark_node_obsolete(chmp,
-					    (*prev)->nref);
-				}
-				chfs_free_dirent(*prev);
-				*prev = new;
-			} else {
-				chfs_mark_node_obsolete(chmp, new->nref);
-				chfs_free_dirent(new);
-			}
-			return;
-		}
-		prev = &((*prev)->next);
-	}
-
-	new->next = *prev;
-	*prev = new;
-#endif
 }
 
+
+/* chfs_add_vnode_ref_to_vc - adds a vnode info to the vnode cache */
 void
 chfs_add_vnode_ref_to_vc(struct chfs_mount *chmp,
     struct chfs_vnode_cache *vc, struct chfs_node_ref *new)
 {
-	if ((struct chfs_vnode_cache*)(vc->v) != vc) {
-		chfs_mark_node_obsolete(chmp, vc->v);
-		new->nref_next = vc->v->nref_next;
-	} else {
-		new->nref_next = vc->v;
+	KASSERT(mutex_owned(&chmp->chm_lock_vnocache));
+	struct chfs_node_ref *nref;
+
+	/* store only the last one, drop the others */
+	while (vc->v != (struct chfs_node_ref *)vc) {
+		nref = vc->v;
+		chfs_remove_and_obsolete(chmp, vc, nref, &vc->v);
 	}
+
+	new->nref_next = (struct chfs_node_ref *)vc;
 	vc->v = new;
 }
 
+/* chfs_nref_next - step to the next in-memory nref */
 struct chfs_node_ref *
 chfs_nref_next(struct chfs_node_ref *nref)
 {
-//	dbg("check nref: %u - %u\n", nref->nref_lnr, nref->nref_offset);
 	nref++;
-//	dbg("next nref: %u - %u\n", nref->nref_lnr, nref->nref_offset);
 	if (nref->nref_lnr == REF_LINK_TO_NEXT) {
-		//End of chain
+		/* end of chain */
 		if (!nref->nref_next)
 			return NULL;
 
+		/* link to the next block */
 		nref = nref->nref_next;
 	}
-	//end of chain
+	/* end of chain */
 	if (nref->nref_lnr == REF_EMPTY_NODE)
 		return NULL;
 
 	return nref;
 }
 
+/* chfs_nref_len - calculates the length of an nref */
 int
 chfs_nref_len(struct chfs_mount *chmp,
     struct chfs_eraseblock *cheb, struct chfs_node_ref *nref)
@@ -229,18 +265,14 @@ chfs_nref_len(struct chfs_mount *chmp,
 	next = chfs_nref_next(nref);
 
 	if (!next) {
-		//dbg("next null\n");
 		return chmp->chm_ebh->eb_size - cheb->free_size -
 		    CHFS_GET_OFS(nref->nref_offset);
 	}
-	//dbg("size: %d\n", CHFS_GET_OFS(next->nref_offset) - CHFS_GET_OFS(nref->nref_offset));
 	return CHFS_GET_OFS(next->nref_offset) -
 	    CHFS_GET_OFS(nref->nref_offset);
 }
 
-/**
- * chfs_mark_node_obsolete - marks a node obsolete
- */
+/* chfs_mark_node_obsolete - marks a node as obsolete */
 void
 chfs_mark_node_obsolete(struct chfs_mount *chmp,
     struct chfs_node_ref *nref)
@@ -268,19 +300,14 @@ chfs_mark_node_obsolete(struct chfs_mount *chmp,
 #endif
 
 	len = chfs_nref_len(chmp, cheb, nref);
-	//dbg("len: %u\n", len);
-	//dbg("1. used: %u\n", cheb->used_size);
 
 	mutex_enter(&chmp->chm_lock_sizes);
 	
 	if (CHFS_REF_FLAGS(nref) == CHFS_UNCHECKED_NODE_MASK) {
-		//dbg("UNCHECKED mark an unchecked node\n");
 		chfs_change_size_unchecked(chmp, cheb, -len);
-		//dbg("unchecked: %u\n", chmp->chm_unchecked_size);
 	} else {
 		chfs_change_size_used(chmp, cheb, -len);
 
-		//dbg("2. used: %u\n", cheb->used_size);
 		KASSERT(cheb->used_size <= chmp->chm_ebh->eb_size);
 	}
 	chfs_change_size_dirty(chmp, cheb, len);
@@ -312,8 +339,8 @@ chfs_mark_node_obsolete(struct chfs_mount *chmp,
 			dbg("gcblock is completely dirtied\n");
 			chmp->chm_gcblock = NULL;
 		} else {
-			//remove from a tailq, but we don't know which tailq contains this cheb
-			//so we remove it from the dirty list now
+			/* remove from a tailq, but we don't know which tailq contains this cheb
+			 * so we remove it from the dirty list now */
 			//TAILQ_REMOVE(&chmp->chm_dirty_queue, cheb, queue);
 			int removed = 0;
 			struct chfs_eraseblock *eb, *tmpeb;
@@ -384,10 +411,8 @@ chfs_mark_node_obsolete(struct chfs_mount *chmp,
 	return;
 }
 
-/**
+/*
  * chfs_close_eraseblock - close an eraseblock
- * @chmp: chfs mount structure
- * @cheb: eraseblock informations
  *
  * This function close the physical chain of the nodes on the eraseblock,
  * convert its free size to dirty and add it to clean, dirty or very dirty list.
@@ -424,6 +449,11 @@ chfs_close_eraseblock(struct chfs_mount *chmp,
 	return 0;
 }
 
+/*
+ * chfs_reserve_space_normal - 
+ * checks available space and calls chfs_reserve_space
+ * used during writing
+ */
 int
 chfs_reserve_space_normal(struct chfs_mount *chmp, uint32_t size, int prio)
 {
@@ -456,8 +486,6 @@ chfs_reserve_space_normal(struct chfs_mount *chmp, uint32_t size, int prio)
 
 		mutex_exit(&chmp->chm_lock_sizes);
 		ret = chfs_gcollect_pass(chmp);
-		/* gcollect_pass exits chm_lock_mountfields */
-		mutex_enter(&chmp->chm_lock_mountfields);
 		mutex_enter(&chmp->chm_lock_sizes);
 
 		if (chmp->chm_nr_erasable_blocks ||
@@ -479,6 +507,7 @@ out:
 }
 
 
+/* chfs_reserve_space_gc - tries to reserve space for GC */
 int
 chfs_reserve_space_gc(struct chfs_mount *chmp, uint32_t size)
 {
@@ -500,11 +529,8 @@ chfs_reserve_space_gc(struct chfs_mount *chmp, uint32_t size)
 	return ret;
 }
 
-/**
+/*
  * chfs_reserve_space - finds a block which free size is >= requested size
- * @chmp: chfs mount point
- * @size: requested size
- * @len: reserved spaced will be returned in this variable;
  * Returns zero in case of success, error code in case of fail.
  */
 int
@@ -521,8 +547,6 @@ chfs_reserve_space(struct chfs_mount *chmp, uint32_t size)
 	KASSERT(!mutex_owned(&chmp->chm_lock_sizes));
 
 	cheb = chmp->chm_nextblock;
-	//if (cheb)
-	    //dbg("cheb->free_size %u\n", cheb->free_size);
 	if (cheb && size > cheb->free_size) {
 		dbg("size: %u > free_size: %u\n", size, cheb->free_size);
 		/*

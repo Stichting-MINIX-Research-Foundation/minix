@@ -1,4 +1,4 @@
-/*	$NetBSD: setjmp.h,v 1.4 2011/06/30 20:09:20 wiz Exp $	*/
+/*	$NetBSD: setjmp.h,v 1.5 2013/01/11 13:56:32 matt Exp $	*/
 
 /*
  * machine/setjmp.h: machine dependent setjmp-related information.
@@ -15,11 +15,7 @@
  * Description of the setjmp buffer
  *
  * word  0	magic number	(dependent on creator)
- *       1 -  3	f4		fp register 4
- *	 4 -  6	f5		fp register 5
- *	 7 -  9 f6		fp register 6
- *	10 - 12	f7		fp register 7
- *	13	fpsr		fp status register
+ *	13	fpscr		vfp status control register
  *	14	r4		register 4
  *	15	r5		register 5
  *	16	r6		register 6
@@ -35,6 +31,14 @@
  *	26	(con't)
  *	27	(con't)
  *	28	(con't)
+ *	32-33	d8		(vfp register d8)
+ *	34-35	d9		(vfp register d9)
+ *	36-37	d10		(vfp register d10)
+ *	38-39	d11		(vfp register d11)
+ *	40-41	d12		(vfp register d12)
+ *	42-43	d13		(vfp register d13)
+ *	44-45	d14		(vfp register d14)
+ *	46-47	d15		(vfp register d15)
  *
  * The magic number number identifies the jmp_buf and
  * how the buffer was created as well as providing
@@ -56,15 +60,13 @@
 
 #define _JB_MAGIC__SETJMP	0x4278f500
 #define _JB_MAGIC_SETJMP	0x4278f501
+#define _JB_MAGIC__SETJMP_VFP	0x4278f502
+#define _JB_MAGIC_SETJMP_VFP	0x4278f503
 
 /* Valid for all jmp_buf's */
 
 #define _JB_MAGIC		 0
-#define _JB_REG_F4		 1
-#define _JB_REG_F5		 4
-#define _JB_REG_F6		 7
-#define _JB_REG_F7		10
-#define _JB_REG_FPSR		13
+#define _JB_REG_FPSCR		13
 #define _JB_REG_R4		14
 #define _JB_REG_R5		15
 #define _JB_REG_R6		16
@@ -80,3 +82,12 @@
 /* Only valid with the _JB_MAGIC_SETJMP magic */
 
 #define _JB_SIGMASK		25
+
+#define	_JB_REG_D8		32
+#define	_JB_REG_D9		34
+#define	_JB_REG_D10		36
+#define	_JB_REG_D11		38
+#define	_JB_REG_D12		40
+#define	_JB_REG_D13		42
+#define	_JB_REG_D14		44
+#define	_JB_REG_D15		46

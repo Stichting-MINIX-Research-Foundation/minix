@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.14 2011/08/21 21:24:34 dholland Exp $	*/
+/*	$NetBSD: eval.c,v 1.15 2013/10/18 19:53:34 christos Exp $	*/
 
 /*
  * Expansion - quoting, separation, substitution, globbing
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: eval.c,v 1.14 2011/08/21 21:24:34 dholland Exp $");
+__RCSID("$NetBSD: eval.c,v 1.15 2013/10/18 19:53:34 christos Exp $");
 #endif
 
 #include <stdint.h>
@@ -729,13 +729,11 @@ varsub(xp, sp, word, stypep, slenp)
 		/* Check for size of array */
 		if ((p=strchr(sp,'[')) && (p[1]=='*'||p[1]=='@') && p[2]==']') {
 			int n = 0;
-			int max = 0;
 			vp = global(arrayname(sp));
 			if (vp->flag & (ISSET|ARRAY))
 				zero_ok = 1;
 			for (; vp; vp = vp->u.array)
 				if (vp->flag & ISSET) {
-					max = vp->index + 1;
 					n++;
 				}
 			c = n; /* ksh88/ksh93 go for number, not max index */

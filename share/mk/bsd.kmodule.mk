@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmodule.mk,v 1.37 2012/08/10 16:34:23 joerg Exp $
+#	$NetBSD: bsd.kmodule.mk,v 1.41 2013/11/09 22:40:15 jmcneill Exp $
 
 # We are not building this with PIE
 MKPIE=no
@@ -27,11 +27,18 @@ CFLAGS+=	-fno-strict-aliasing -Wno-pointer-sign
 # relocations inside the loader and removing this workaround, as the
 # resulting code would be much faster.
 .if ${MACHINE_CPU} == "arm"
+CFLAGS+=	-fno-common -fno-unwind-tables
+.elif ${MACHINE_CPU} == "hppa"
 CFLAGS+=	-mlong-calls
 .elif ${MACHINE_CPU} == "powerpc"
 CFLAGS+=	-mlongcall
 .elif ${MACHINE_CPU} == "vax"
 CFLAGS+=	-fno-pic
+.endif
+
+.if ${MACHINE} == "sparc64"
+# force same memory model as rest of the kernel
+CFLAGS+=	-mcmodel=medlow
 .endif
 
 # evbppc needs some special help
@@ -102,10 +109,45 @@ OBJS+=		${SRCS:N*.h:N*.sh:R:S/$/.o/g}
 
 ${OBJS} ${LOBJS}: ${DPSRCS}
 
+.if ${MACHINE_CPU} == "arm"
+# The solution to limited branch space involves generating trampolines for
+# those relocations while creating the module, as the resulting code will
+# be much faster and simplifies the loader.
+ARCHDIR=	$S/modules/arch/${MACHINE_CPU}
+ASM_H=		$S/arch/${MACHINE_CPU}/include/asm.h
+CLEANFILES+=	tmp.o tmp.S ${KMOD}_tmp.o ${KMOD}_tramp.o ${KMOD}_tramp.S
+${KMOD}_tmp.o: ${OBJS} ${DPADD}
+	${_MKTARGET_LINK}
+	${LD} -r -o tmp.o ${OBJS}
+	${LD} -r \
+		`${OBJDUMP} --syms --reloc tmp.o | \
+			${TOOL_AWK} -f ${ARCHDIR}/kmodwrap.awk` \
+		 -o ${.TARGET} tmp.o
+
+${KMOD}_tramp.S: ${KMOD}_tmp.o ${ARCHDIR}/kmodtramp.awk ${ASM_H}
+	${_MKTARGET_CREATE}
+	${OBJDUMP} --syms --reloc ${KMOD}_tmp.o | \
+		 ${TOOL_AWK} -f ${ARCHDIR}/kmodtramp.awk \
+		 > tmp.S && \
+	mv tmp.S ${.TARGET}
+
+${PROG}: ${KMOD}_tmp.o ${KMOD}_tramp.o
+	${_MKTARGET_LINK}
+.if exists(${ARCHDIR}/kmodhide.awk)
+	${LD} -r -o tmp.o ${KMOD}_tmp.o ${KMOD}_tramp.o
+	${OBJCOPY} \
+		`${NM} tmp.o | ${TOOL_AWK} -f ${ARCHDIR}/kmodhide.awk` \
+		tmp.o ${.TARGET} && \
+	rm tmp.o
+.else
+	${LD} -r -o ${.TARGET} ${KMOD}_tmp.o ${KMOD}_tramp.o
+.endif
+.else
 ${PROG}: ${OBJS} ${DPADD}
 	${_MKTARGET_LINK}
 	${CC} ${LDFLAGS} -nostdlib -r -Wl,-T,${KMODSCRIPT},-d \
 		-o ${.TARGET} ${OBJS}
+.endif
 .endif
 
 ##### Install rules

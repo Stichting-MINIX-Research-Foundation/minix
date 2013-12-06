@@ -30,9 +30,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)memset.3	8.1 (Berkeley) 6/4/93
-.\"	$NetBSD: memset.3,v 1.9 2003/08/07 16:43:49 agc Exp $
+.\"	$NetBSD: memset.3,v 1.12 2013/06/24 07:56:49 wiz Exp $
 .\"
-.Dd June 4, 1993
+.Dd June 23, 2013
 .Dt MEMSET 3
 .Os
 .Sh NAME
@@ -60,8 +60,17 @@ The
 function
 returns the original value of
 .Fa b .
+.Pp
+Note that the compiler may optimize away a call to
+.Fn memset
+if it can prove that the string will not be used by the program again,
+for example if it is allocated on the stack and about to out of scope.
+If you want to guarantee that zeros are written to memory, for example
+to sanitize a buffer holding a cryptographic secret, use
+.Xr explicit_memset 3 .
 .Sh SEE ALSO
 .Xr bzero 3 ,
+.Xr explicit_memset 3 ,
 .Xr swab 3
 .Sh STANDARDS
 The

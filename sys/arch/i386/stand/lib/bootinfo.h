@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.9 2006/01/25 18:28:26 christos Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.10 2013/11/18 03:52:45 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -29,14 +29,14 @@
 #include <machine/bootinfo.h>
 
 struct bootinfo {
-	int nentries;
-	physaddr_t entry[1];
+	uint32_t nentries;
+	uint32_t entry[1];
 };
 
 extern struct bootinfo *bootinfo;
 
 #define BI_ALLOC(max) (bootinfo = alloc(sizeof(struct bootinfo) \
-                                        + ((max) - 1) * sizeof(physaddr_t))) \
+                                        + ((max) - 1) * sizeof(uint32_t))) \
                       ->nentries = 0
 
 #define BI_FREE() dealloc(bootinfo, 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: minixfs3.c,v 1.1 2012/01/16 18:44:13 christos Exp $	*/
+/*	$NetBSD: minixfs3.c,v 1.6 2013/11/03 00:44:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 2012
@@ -138,7 +138,7 @@
 
 typedef uint32_t	ino32_t;
 #ifndef FSBTODB
-#define FSBTODB(fs, indp) fsbtodb(fs, indp)
+#define FSBTODB(fs, indp) MFS_FSBTODB(fs, indp)
 #endif
 
 /*
@@ -258,13 +258,13 @@ block_map(struct open_file *f, block_t file_block, block_t *disk_block_p)
 	 * mdi_blocks[NR_DZONES+0]
 	 *			block NDADDR+0 is the single indirect block
 	 *			holds zone numbers for zones
-	 *			NR_DZONES .. NR_DZONES + NINDIR(fs)-1
+	 *			NR_DZONES .. NR_DZONES + MFS_NINDIR(fs)-1
 	 *
 	 * mdi_blocks[NR_DZONES+1]
 	 *			block NDADDR+1 is the double indirect block
 	 *			holds zone numbers for INDEX blocks for zones
-	 *			NR_DZONES + NINDIR(fs) ..
-	 *			NR_TZONES + NINDIR(fs) + NINDIR(fs)**2 - 1
+	 *			NR_DZONES + MFS_NINDIR(fs) ..
+	 *			NR_TZONES + MFS_NINDIR(fs) + MFS_NINDIR(fs)**2 - 1
 	 */
 
 	zone = file_block >> scale;
@@ -354,12 +354,12 @@ buf_read_file(struct open_file *f, void *v, size_t *size_p)
 	struct mfs_sblock *fs = fp->f_fs;
 	long off;
 	block_t file_block;
-	block_t disk_block;
+	block_t disk_block = 0;	/* XXX: gcc */
 	size_t block_size;
 	int rc;
 
-	off = blkoff(fs, fp->f_seekp);
-	file_block = lblkno(fs, fp->f_seekp);
+	off = mfs_blkoff(fs, fp->f_seekp);
+	file_block = mfs_lblkno(fs, fp->f_seekp);
 	block_size = fs->mfs_block_size;
 
 	if (file_block != fp->f_buf_blkno) {
@@ -587,7 +587,7 @@ minixfs3_open(const char *path, struct open_file *f)
 		 * of divide and remainder and avoinds pulling in the
 		 * 64bit division routine into the boot code.
 		 */
-		mult = NINDIR(fs);
+		mult = MFS_NINDIR(fs);
 #ifdef DEBUG
 		if (!powerof2(mult)) {
 			/* Hummm was't a power of 2 */

@@ -1,4 +1,4 @@
-# $NetBSD: md.landisk,v 1.4 2011/07/18 17:29:20 dyoung Exp $
+# $NetBSD: md.landisk,v 1.5 2013/08/11 22:29:02 joerg Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/landisk				comp-c-include
 ./usr/include/landisk/ansi.h			comp-c-include
@@ -28,8 +28,8 @@
 ./usr/include/landisk/int_types.h		comp-c-include
 ./usr/include/landisk/intr.h			comp-c-include
 ./usr/include/landisk/limits.h			comp-c-include
-./usr/include/landisk/lock.h			comp-c-include
 ./usr/include/landisk/loadfile_machdep.h	comp-c-include
+./usr/include/landisk/lock.h			comp-c-include
 ./usr/include/landisk/math.h			comp-c-include
 ./usr/include/landisk/mcontext.h		comp-c-include
 ./usr/include/landisk/mutex.h			comp-c-include

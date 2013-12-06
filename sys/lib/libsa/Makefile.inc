@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.20 2011/05/26 12:56:31 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.21 2012/12/12 15:12:11 matt Exp $
 #
 #	Configuration variables (default values are below):
 #
@@ -37,7 +37,7 @@ SAMISCCPPFLAGS+=-I${ZLIBSRCDIR}
 SAMAKE= \
 	cd ${SADST} && ${MAKE} -f ${SADIR:Q}/Makefile \
 	    SADIR=${SADIR:Q} \
-	    CC=${CC:Q} CFLAGS=${CFLAGS:Q} \
+	    CC=${CC:Q} CFLAGS=${CFLAGS:Q} CPUFLAGS= \
 	    AS=${AS:Q} AFLAGS=${AFLAGS:Q} \
 	    LORDER=${LORDER:Q} \
 	    TSORT=${TSORT:Q} \

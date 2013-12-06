@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.110 2012/08/15 03:46:06 matt Exp $	 */
+/*	$NetBSD: rtld.h,v 1.116 2013/05/09 15:38:14 christos Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -48,6 +48,10 @@
 
 #if defined(_RTLD_SOURCE)
 
+#ifdef __ARM_EABI__
+#include "unwind.h"
+#endif
+
 #ifndef	RTLD_DEFAULT_LIBRARY_PATH
 #define	RTLD_DEFAULT_LIBRARY_PATH	"/usr/lib"
 #endif
@@ -88,7 +92,7 @@ typedef struct Struct_Objlist_Entry {
 typedef SIMPLEQ_HEAD(Struct_Objlist, Struct_Objlist_Entry) Objlist;
 
 typedef struct Struct_Name_Entry {
-	STAILQ_ENTRY(Struct_Name_Entry)	link;
+	SIMPLEQ_ENTRY(Struct_Name_Entry) link;
 	char	name[1];
 } Name_Entry;
 
@@ -215,9 +219,9 @@ typedef struct Struct_Obj_Entry {
 			mainref:1,	/* True if on _rtld_list_main */
 			globalref:1,	/* True if on _rtld_list_global */
 			init_done:1,	/* True if .init has been added */
-			init_called:1,	/* True if .init function has been 
+			init_called:1,	/* True if .init function has been
 					 * called */
-			fini_called:1,	/* True if .fini function has been 
+			fini_called:1,	/* True if .fini function has been
 					 * called */
 			z_now:1,	/* True if object's symbols should be
 					   bound immediately */
@@ -251,8 +255,8 @@ typedef struct Struct_Obj_Entry {
 	uint8_t         nbuckets_s1;
 	uint8_t         nbuckets_s2;
 	size_t		pathlen;	/* Pathname length */
-	STAILQ_HEAD(, Struct_Name_Entry) names;	/* List of names for this object we
-						   know about. */
+	SIMPLEQ_HEAD(, Struct_Name_Entry) names; /* List of names for this
+						  * object we know about. */
 
 #ifdef __powerpc__
 	Elf_Addr       *gotptr;		/* GOT table (secure-plt only) */
@@ -284,6 +288,10 @@ typedef struct Struct_Obj_Entry {
 	size_t		init_arraysz;	/* # of entries in it */
 	fptr_t		*fini_array;	/* start of fini array */
 	size_t		fini_arraysz;	/* # of entries in it */
+#ifdef __ARM_EABI__
+	void		*exidx_start;
+	size_t		exidx_sz;
+#endif
 } Obj_Entry;
 
 typedef struct Struct_DoneList {
@@ -340,10 +348,17 @@ __dso_public int dl_iterate_phdr(int (*)(struct dl_phdr_info *, size_t, void *),
 
 __dso_public void *_dlauxinfo(void) __pure;
 
+#ifdef __ARM_EABI__
+/*
+ * This is used by libgcc to find the start and length of the exception table
+ * associated with a PC.
+ */
+__dso_public _Unwind_Ptr __gnu_Unwind_Find_exidx(_Unwind_Ptr, int *);
+#endif
+
 /* These aren't exported */
-void _rtld_error(const char *, ...)
-     __attribute__((__format__(__printf__,1,2)));
-void _rtld_die(void) __attribute__((__noreturn__));
+void _rtld_error(const char *, ...) __printflike(1,2);
+void _rtld_die(void) __dead;
 void *_rtld_objmain_sym(const char *);
 __dso_public void _rtld_debug_state(void) __noinline;
 void _rtld_linkmap_add(Obj_Entry *);
@@ -395,7 +410,7 @@ const Elf_Sym *_rtld_symlook_obj(const char *, unsigned long,
     const Obj_Entry *, u_int, const Ver_Entry *);
 const Elf_Sym *_rtld_find_symdef(unsigned long, const Obj_Entry *,
     const Obj_Entry **, u_int);
-const Elf_Sym *_rtld_find_plt_symdef(unsigned long, const Obj_Entry *, 
+const Elf_Sym *_rtld_find_plt_symdef(unsigned long, const Obj_Entry *,
     const Obj_Entry **, bool);
 
 const Elf_Sym *_rtld_symlook_list(const char *, unsigned long,
@@ -410,6 +425,7 @@ void _rtld_combreloc_reset(const Obj_Entry *);
 #endif
 
 /* symver.c */
+void _rtld_object_add_name(Obj_Entry *, const char *);
 int _rtld_object_match_name(const Obj_Entry *, const char *);
 int _rtld_verify_object_versions(Obj_Entry *);
 
@@ -451,13 +467,15 @@ __dso_public extern void *___tls_get_addr(void *)
 /* map_object.c */
 struct stat;
 Obj_Entry *_rtld_map_object(const char *, int, const struct stat *);
+#if defined(__minix)
 Obj_Entry *_rtld_map_object_fallback(const char *, int, const struct stat *);
+#endif /* defined(__minix) */
 void _rtld_obj_free(Obj_Entry *);
 Obj_Entry *_rtld_obj_new(void);
 
 /* function descriptors */
 #ifdef __HAVE_FUNCTION_DESCRIPTORS
-Elf_Addr _rtld_function_descriptor_alloc(const Obj_Entry *, 
+Elf_Addr _rtld_function_descriptor_alloc(const Obj_Entry *,
     const Elf_Sym *, Elf_Addr);
 const void *_rtld_function_descriptor_function(const void *);
 #endif /* __HAVE_FUNCTION_DESCRIPTORS */

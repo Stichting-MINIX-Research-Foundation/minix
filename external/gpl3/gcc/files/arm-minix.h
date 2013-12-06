@@ -20,11 +20,13 @@
    <http://www.gnu.org/licenses/>.  */
 
 #undef MINIX_TARGET_CPU_CPP_BUILTINS
-#define MINIX_TARGET_CPU_CPP_BUILTINS()	\
-  do					\
-    {					\
-      TARGET_BPABI_CPP_BUILTINS();	\
-    }					\
+#define MINIX_TARGET_CPU_CPP_BUILTINS()		\
+  do						\
+    {						\
+      TARGET_BPABI_CPP_BUILTINS();		\
+      if (ARM_EABI_UNWIND_TABLES)		\
+        builtin_define ("__UNWIND_TABLES__");	\
+    }						\
   while (0)
 
 /* Define the actual types of some ANSI-mandated types.  
@@ -38,6 +40,27 @@
 
 #undef WCHAR_TYPE
 #define WCHAR_TYPE	"int"
+
+#undef WINT_TYPE
+#define WINT_TYPE	"int"
+
+/* We don't have any limit on the length as out debugger is GDB.  */
+#undef DBX_CONTIN_LENGTH
+
+/* NetBSD does its profiling differently to the Acorn compiler. We
+   don't need a word following the mcount call; and to skip it
+   requires either an assembly stub or use of fomit-frame-pointer when
+   compiling the profiling functions.  Since we break Acorn CC
+   compatibility below a little more won't hurt.  */
+
+#undef ARM_FUNCTION_PROFILER
+#define ARM_FUNCTION_PROFILER(STREAM,LABELNO)           \
+{                                                       \
+  asm_fprintf (STREAM, "\tmov\t%Rip, %Rlr\n");          \
+  asm_fprintf (STREAM, "\tbl\t__mcount%s\n",            \
+               (TARGET_ARM && NEED_PLT_RELOC)           \
+               ? "(PLT)" : "");                         \
+}
 
 /* VERY BIG NOTE: Change of structure alignment for NetBSD/arm.
    There are consequences you should be aware of...
@@ -93,6 +116,13 @@
 #define TARGET_DEFAULT_FLOAT_ABI ARM_FLOAT_ABI_HARD
 #endif
 
+#if defined(NETBSD_NATIVE)
+/* LSC: On arm, when compiling statically, we need gcc_eh. */
+#undef MINIX_LINK_GCC_C_SEQUENCE_SPEC
+#define MINIX_LINK_GCC_C_SEQUENCE_SPEC \
+	"%{static:--start-group} %G %L -lgcc_eh %{static:--end-group}%{!static:%G}"
+#endif /* defined(NETBSD_NATIVE) */
+
 /* Default to full VFP if -mhard-float is specified.  */
 #undef MINIX_SUBTARGET_ASM_FLOAT_SPEC
 #define MINIX_SUBTARGET_ASM_FLOAT_SPEC					\
@@ -114,3 +144,7 @@
 
 #undef TARGET_VERSION
 #define TARGET_VERSION fputs (" (MINIX/arm ELF EABI)", stderr);
+
+#undef ARM_EABI_UNWIND_TABLES
+#define ARM_EABI_UNWIND_TABLES \
+	((!USING_SJLJ_EXCEPTIONS && flag_exceptions) || flag_unwind_tables)

@@ -1,5 +1,8 @@
 # $NetBSD: Makefile,v 1.1 2013/02/19 06:04:44 jmmv Exp $
 
+#LSC: For MINIX, to get NETBSDSRCDIR
+.include <bsd.own.mk>
+
 SRCDIR=		${NETBSDSRCDIR}/external/bsd/kyua-testers/dist
 .PATH:		${SRCDIR}
 

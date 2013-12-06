@@ -61,7 +61,8 @@ public:
 
 
 /// Tuple containing the results of this driver.
-struct result {
+class result {
+public:
     /// Filters that did not match any available test case.
     ///
     /// The presence of any filters here probably indicates a usage error.  If a

@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.62 2011/08/29 20:41:06 joerg Exp $	*/
+/*	$NetBSD: extern.h,v 1.63 2013/03/21 05:53:01 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -118,7 +118,7 @@ void	closedataconn(FILE *);
 char   *conffilename(const char *);
 void	count_users(void);
 void	cprintf(FILE *, const char *, ...)
-	    __attribute__((__format__(__printf__, 2, 3)));
+	    __printflike(2, 3);
 void	cwd(const char *);
 FILE   *dataconn(const char *, off_t, const char *);
 void	delete(const char *);
@@ -155,7 +155,7 @@ void	removedir(const char *);
 void	renamecmd(const char *, const char *);
 char   *renamefrom(const char *);
 void	reply(int, const char *, ...)
-	    __attribute__((__format__(__printf__, 2, 3)));
+	    __printflike(2, 3);
 void	retrieve(const char *[], const char *);
 void	send_file_list(const char *);
 void	show_chdir_messages(int);
@@ -295,7 +295,7 @@ struct ftpclass {
 	LLT		 sendlowat;	/* SO_SNDLOWAT size */
 };
 
-extern void		ftp_loop(void) __attribute__ ((noreturn));
+__dead extern void		ftp_loop(void);
 extern void		ftp_handle_line(char *);
 
 #ifndef	GLOBAL

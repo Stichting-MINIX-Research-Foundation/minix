@@ -1,4 +1,4 @@
-/*	$NetBSD: su_pam.c,v 1.16 2010/10/02 10:55:36 tron Exp $	*/
+/*	$NetBSD: su_pam.c,v 1.19 2013/06/29 05:08:35 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988\
 #if 0
 static char sccsid[] = "@(#)su.c	8.3 (Berkeley) 4/2/94";*/
 #else
-__RCSID("$NetBSD: su_pam.c,v 1.16 2010/10/02 10:55:36 tron Exp $");
+__RCSID("$NetBSD: su_pam.c,v 1.19 2013/06/29 05:08:35 mlelstv Exp $");
 #endif
 #endif /* not lint */
 
@@ -81,7 +81,19 @@ static const struct pam_conv pamc = { &openpam_ttyconv, NULL };
 #define ARGSTR ARGSTRX
 #endif
 
-static void logit(const char *, ...);
+static void logit(const char *, ...) __printflike(1, 2);
+
+static const char *
+safe_pam_strerror(pam_handle_t *pamh, int pam_err) {
+	const char *msg;
+
+	if ((msg = pam_strerror(pamh, pam_err)) != NULL)
+		return msg;
+
+	static char buf[1024];
+	snprintf(buf, sizeof(buf), "Unknown pam error %d", pam_err);
+	return buf;
+}
 
 int
 main(int argc, char **argv)
@@ -215,7 +227,7 @@ main(int argc, char **argv)
 			PAM_END("pam_start");
 		/* Things went really bad... */
 		syslog(LOG_ERR, "pam_start failed: %s",
-		    pam_strerror(pamh, pam_err));
+		    safe_pam_strerror(pamh, pam_err));
 		errx(EXIT_FAILURE, "pam_start failed");
 	}
 
@@ -239,9 +251,9 @@ main(int argc, char **argv)
 	 */
 	if ((pam_err = pam_authenticate(pamh, 0)) != PAM_SUCCESS) {
 		syslog(LOG_WARNING, "BAD SU %s to %s%s: %s",
-		    username, user, ontty(), pam_strerror(pamh, pam_err));
+		    username, user, ontty(), safe_pam_strerror(pamh, pam_err));
 		(void)pam_end(pamh, pam_err);
-		errx(EXIT_FAILURE, "Sorry: %s", pam_strerror(pamh, pam_err));
+		errx(EXIT_FAILURE, "Sorry: %s", safe_pam_strerror(pamh, pam_err));
 	}
 
 	/*
@@ -267,7 +279,7 @@ main(int argc, char **argv)
 	pam_err = pam_get_item(pamh, PAM_USER, &newuser);
 	if (pam_err != PAM_SUCCESS) {
 		syslog(LOG_WARNING,
-		    "pam_get_item(PAM_USER): %s", pam_strerror(pamh, pam_err));
+		    "pam_get_item(PAM_USER): %s", safe_pam_strerror(pamh, pam_err));
 	} else {
 		user = (char *)__UNCONST(newuser);
 		if (getpwnam_r(user, &pwres, pwbuf, sizeof(pwbuf), &pwd) != 0 ||
@@ -423,11 +435,11 @@ out:
 			pam_err = pam_setcred(pamh, PAM_DELETE_CRED);
 			if (pam_err != PAM_SUCCESS)
 				logit("pam_setcred: %s",
-				    pam_strerror(pamh, pam_err));
+				    safe_pam_strerror(pamh, pam_err));
 			pam_err = pam_close_session(pamh, 0);
 			if (pam_err != PAM_SUCCESS)
 				logit("pam_close_session: %s",
-				    pam_strerror(pamh, pam_err));
+				    safe_pam_strerror(pamh, pam_err));
 			(void)pam_end(pamh, pam_err);
 			exit(WEXITSTATUS(status));
 			break;
@@ -481,8 +493,6 @@ out:
 				err(EXIT_FAILURE, "setting user context");
 			if (p)
 				(void)setenv("TERM", p, 1);
-			if (gohome && chdir(pwd->pw_dir) == -1)
-				errx(EXIT_FAILURE, "no directory");
 		}
 
 		if (asthem || pwd->pw_uid) {
@@ -540,10 +550,17 @@ out:
 	if (setusercontext(lc, pwd, pwd->pw_uid, setwhat) == -1)
 		err(EXIT_FAILURE, "setusercontext");
 
+	if (!asme) {
+		if (asthem) {
+			if (gohome && chdir(pwd->pw_dir) == -1)
+				errx(EXIT_FAILURE, "no directory");
+		}
+	}
+
 	(void)execv(shell, np);
 	err(EXIT_FAILURE, "%s", shell);
 done:
-	logit("%s: %s", func, pam_strerror(pamh, pam_err));
+	logit("%s: %s", func, safe_pam_strerror(pamh, pam_err));
 	(void)pam_end(pamh, pam_err);
 	return EXIT_FAILURE;
 }
@@ -555,6 +572,8 @@ logit(const char *fmt, ...)
 
 	va_start(ap, fmt);
 	vwarnx(fmt, ap);
+	va_end(ap);
+	va_start(ap, fmt);
 	vsyslog(LOG_ERR, fmt, ap);
 	va_end(ap);
 }

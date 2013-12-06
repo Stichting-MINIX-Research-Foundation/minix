@@ -1,8 +1,7 @@
-#	$NetBSD: Makefile,v 1.78 2012/08/10 16:05:27 joerg Exp $
+#	$NetBSD: Makefile,v 1.79 2013/08/21 08:30:50 matt Exp $
 
 LIB=	sa
-NOPIC=	# defined
-NOPROFILE=# defined
+LIBISPRIVATE?= yes
 
 SA_USE_CREAD?= no		# Read compressed kernels
 SA_INCLUDE_NET?= yes		# Netboot via TFTP, NFS
@@ -37,10 +36,9 @@ SRCS+=	exec.c
 .if ${MACHINE_ARCH} != "i386" && ${MACHINE_ARCH} != "x86_64"
 SRCS+=	memcmp.c memcpy.c memmove.c memset.c strchr.c
 .endif
-
-.ifndef __MINIX
+.if !defined(__MINIX)
 SRCS+=	bcopy.c bzero.c	# Remove me eventually.
-.endif
+.endif # !defined(__MINIX)
 
 # io routines
 SRCS+=	closeall.c dev.c disklabel.c dkcksum.c ioctl.c nullfs.c stat.c fstat.c
@@ -54,7 +52,7 @@ SRCS+= ls.c
 .endif
 
 .if (${SA_USE_LOADFILE} == "yes")
-.ifndef __MINIX
+.if !defined(__MINIX)
 SRCS+=	loadfile.c loadfile_ecoff.c loadfile_elf32.c lookup_elf32.c \
 	loadfile_elf64.c lookup_elf64.c
 .if (${MACHINE_CPU} != "mips")
@@ -62,7 +60,7 @@ SRCS+=	loadfile_aout.c
 .endif
 .else
 SRCS+=	loadfile.c loadfile_elf32.c loadfile_elf64.c
-.endif
+.endif # !defined(__MINIX)
 .endif
 
 .if (${SA_INCLUDE_NET} == "yes")
@@ -90,16 +88,13 @@ SRCS+=	ufs.c
 .if defined(__MINIX)
 # NetBSD has it in libkern, MINIX lacks it
 SRCS+=	xlat_mbr_fstype.c
+.PATH.c: ${NETBSDSRCDIR}/sys/lib/libkern
 
 # NetBSD has it in libkern, MINIX has it in libc but not libminc...
 SRCS+=	md5c.c
-.PATH.c: ${.PARSEDIR}/../../../common/lib/libc/md
-.endif
+.PATH.c: ${NETBSDSRCDIR}/common/lib/libc/md
+.endif # defined(__MINIX)
 
-# only needed during build
-libinstall::
-
-.undef DESTDIR
 .include <bsd.lib.mk>
 
 lib${LIB}.o:: ${OBJS}

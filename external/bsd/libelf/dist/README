@@ -1,0 +1,12 @@
+# $FreeBSD: src/lib/libelf/README,v 1.1.2.1.2.1 2009/10/25 01:10:29 kensmith Exp $
+# $NetBSD: README,v 1.1.1.1 2009/12/19 05:43:41 thorpej Exp $
+
+libelf: a BSD-licensed implementation of the ELF(3)/GELF(3) API.
+
+Documentation:
+ * Manual page elf.3 contains an overview of the library.  Other
+   manual pages document individual APIs in the library.
+ * A tutorial "libelf by Example" is available at:
+   http://people.freebsd.org/~jkoshy/download/libelf/article.html
+	
+For ongoing development please see http://elftoolchain.sourceforge.net/

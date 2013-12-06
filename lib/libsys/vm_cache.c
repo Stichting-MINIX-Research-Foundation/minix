@@ -5,8 +5,11 @@
 #include <assert.h>
 
 #include <sys/mman.h>
+
 #include <minix/vm.h>
 #include <minix/sysutil.h>
+
+#include <machine/param.h>
 #include <machine/vmparam.h>
 
 int vm_cachecall(message *m, int call, void *addr, dev_t dev, off_t dev_offset,

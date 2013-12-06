@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.90 2012/10/07 19:17:31 sjg Exp $	*/
+/*	$NetBSD: compat.c,v 1.93 2013/09/02 19:26:42 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: compat.c,v 1.90 2012/10/07 19:17:31 sjg Exp $";
+static char rcsid[] = "$NetBSD: compat.c,v 1.93 2013/09/02 19:26:42 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: compat.c,v 1.90 2012/10/07 19:17:31 sjg Exp $");
+__RCSID("$NetBSD: compat.c,v 1.93 2013/09/02 19:26:42 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -329,18 +329,23 @@ again:
 	 * We need to pass the command off to the shell, typically
 	 * because the command contains a "meta" character.
 	 */
-	static const char *shargv[4];
+	static const char *shargv[5];
+	int shargc;
 
-	shargv[0] = shellPath;
+	shargc = 0;
+	shargv[shargc++] = shellPath;
 	/*
 	 * The following work for any of the builtin shell specs.
 	 */
+	if (errCheck && shellErrFlag) {
+	    shargv[shargc++] = shellErrFlag;
+	}
 	if (DEBUG(SHELL))
-		shargv[1] = "-xc";
+		shargv[shargc++] = "-xc";
 	else
-		shargv[1] = "-c";
-	shargv[2] = cmd;
-	shargv[3] = NULL;
+		shargv[shargc++] = "-c";
+	shargv[shargc++] = cmd;
+	shargv[shargc++] = NULL;
 	av = shargv;
 	argc = 0;
 	bp = NULL;
@@ -374,7 +379,6 @@ again:
 	Fatal("Could not fork");
     }
     if (cpid == 0) {
-	Check_Cwd(av);
 	Var_ExportVars();
 #ifdef USE_META
 	if (useMeta) {

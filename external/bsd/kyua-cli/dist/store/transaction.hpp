@@ -37,13 +37,13 @@ extern "C" {
 }
 
 #include <string>
-#include <tr1/memory>
 #include <utility>
 
 #include "engine/test_program.hpp"
 #include "utils/datetime.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/optional.hpp"
+#include "utils/shared_ptr.hpp"
 
 namespace engine {
 class action;
@@ -77,10 +77,10 @@ class results_iterator {
     struct impl;
 
     /// Pointer to the shared internal implementation.
-    std::tr1::shared_ptr< impl > _pimpl;
+    std::shared_ptr< impl > _pimpl;
 
     friend class transaction;
-    results_iterator(std::tr1::shared_ptr< impl >);
+    results_iterator(std::shared_ptr< impl >);
 
 public:
     ~results_iterator(void);
@@ -106,7 +106,7 @@ class transaction {
     struct impl;
 
     /// Pointer to the shared internal implementation.
-    std::tr1::shared_ptr< impl > _pimpl;
+    std::shared_ptr< impl > _pimpl;
 
     friend class backend;
     transaction(backend&);

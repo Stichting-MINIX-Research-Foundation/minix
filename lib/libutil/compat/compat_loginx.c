@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_loginx.c,v 1.2 2009/01/11 02:57:18 christos Exp $	*/
+/*	$NetBSD: compat_loginx.c,v 1.3 2012/11/04 13:08:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat_loginx.c,v 1.2 2009/01/11 02:57:18 christos Exp $");
+__RCSID("$NetBSD: compat_loginx.c,v 1.3 2012/11/04 13:08:56 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -44,12 +44,10 @@ __RCSID("$NetBSD: compat_loginx.c,v 1.2 2009/01/11 02:57:18 christos Exp $");
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <util.h>
-#include <compat/util.h>
-#include <utmp.h>
-#include <compat/include/utmp.h>
 #include <utmpx.h>
 #include <compat/include/utmpx.h>
+#include <util.h>
+#include <compat/util.h>
 
 __warn_references(loginx,
     "warning: reference to compatibility loginx(); include <util.h> to generate correct reference")

@@ -5,10 +5,6 @@
 #include <string.h>
 #include <sys/stat.h>
 
-#ifdef __weak_alias
-__weak_alias(fchmod, _fchmod)
-#endif
-
 int fchmod(int fd, mode_t mode)
 {
   message m;

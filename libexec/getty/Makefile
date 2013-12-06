@@ -1,7 +1,5 @@
-#	$NetBSD: Makefile,v 1.19 2010/02/03 15:34:43 roy Exp $
+#	$NetBSD: Makefile,v 1.20 2013/08/11 05:42:41 dholland Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/4/93
-
-WARNS?=	2	# XXX: many const & sign-compare issues
 
 PROG=	getty
 SRCS=	main.c init.c subr.c

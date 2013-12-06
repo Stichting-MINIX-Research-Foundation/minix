@@ -1,4 +1,4 @@
-/*	$NetBSD: k5login.c,v 1.27 2006/03/23 23:33:28 wiz Exp $	*/
+/*	$NetBSD: k5login.c,v 1.33 2012/04/24 16:52:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -51,7 +51,7 @@
 #if 0
 static char sccsid[] = "@(#)klogin.c	5.11 (Berkeley) 7/12/92";
 #endif
-__RCSID("$NetBSD: k5login.c,v 1.27 2006/03/23 23:33:28 wiz Exp $");
+__RCSID("$NetBSD: k5login.c,v 1.33 2012/04/24 16:52:26 christos Exp $");
 #endif /* not lint */
 
 #ifdef KERBEROS5
@@ -71,7 +71,7 @@ __RCSID("$NetBSD: k5login.c,v 1.27 2006/03/23 23:33:28 wiz Exp $");
 
 krb5_context kcontext;
 
-int notickets;
+extern int notickets;
 int krb5_configured;
 char *krb5tkfile_env;
 extern char *tty;
@@ -81,7 +81,7 @@ extern int has_ccache;
 static char tkt_location[MAXPATHLEN];
 static krb5_creds forw_creds;
 int have_forward;
-static krb5_principal me, server;
+static krb5_principal me;
 
 int k5_read_creds(char *);
 int k5_write_creds(void);
@@ -89,12 +89,26 @@ int k5_verify_creds(krb5_context, krb5_ccache);
 int k5login(struct passwd *, char *, char *, char *);
 void k5destroy(void);
 
-#ifndef krb5_realm_length
-#define krb5_realm_length(r)	((r).length)
-#endif
-#ifndef krb5_realm_data
-#define krb5_realm_data(r)	((r).data)
-#endif
+static void __printflike(3, 4)
+k5_log(krb5_context context, krb5_error_code kerror, const char *fmt, ...)
+{
+	const char *msg = krb5_get_error_message(context, kerror);
+	char *str;
+	va_list ap;
+
+	va_start(ap, fmt);
+	if (vasprintf(&str, fmt, ap) == -1) {
+		va_end(ap);
+		syslog(LOG_NOTICE, "Cannot allocate memory for error %s: %s",
+		    fmt, msg);
+		return;
+	}
+	va_end(ap);
+
+	syslog(LOG_NOTICE, "warning: %s: %s", str, msg);
+	krb5_free_error_message(kcontext, msg);
+	free(str);
+}
 
 /*
  * Verify the Kerberos ticket-granting ticket just retrieved for the
@@ -163,8 +177,7 @@ k5_verify_creds(krb5_context c, krb5_ccache ccache)
 	else if (kerror) {
 		krb5_warn(kcontext, kerror,
 			  "Unable to verify Kerberos V5 TGT: %s", phost);
-		syslog(LOG_NOTICE, "Kerberos V5 TGT bad: %s",
-		       krb5_get_err_text(kcontext, kerror));
+		k5_log(kcontext, kerror, "Kerberos V5 TGT bad");
 		retval = -1;
 		goto EGRESS;
 	}
@@ -192,11 +205,9 @@ k5_verify_creds(krb5_context c, krb5_ccache ccache)
 			retval = -1;
 		}
 		krb5_warn(kcontext, kerror, "Unable to verify host ticket");
-		syslog(LOG_NOTICE, "can't verify v5 ticket: %s; %s\n",
-		       krb5_get_err_text(kcontext, kerror),
-		       retval
-		         ? "keytab found, assuming failure"
-		         : "no keytab found, assuming success");
+		k5_log(kcontext, kerror, "can't verify v5 ticket (%s)",
+		    retval ? "keytab found, assuming failure" :
+		    "no keytab found, assuming success");
 		goto EGRESS;
 	}
 	/*
@@ -243,13 +254,13 @@ k5_read_creds(char *username)
 	}
 
 	mcreds.client = me;
+	const char *realm = krb5_principal_get_realm(kcontext, me);
+	size_t rlen = strlen(realm);
 	kerror = krb5_build_principal_ext(kcontext, &mcreds.server,
-			krb5_realm_length(*krb5_princ_realm(kcontext, me)),
-			krb5_realm_data(*krb5_princ_realm(kcontext, me)),
+			rlen, realm,
 			KRB5_TGS_NAME_SIZE,
 			KRB5_TGS_NAME,
-			krb5_realm_length(*krb5_princ_realm(kcontext, me)),
-			krb5_realm_data(*krb5_princ_realm(kcontext, me)),
+			rlen, realm,
 			0);
 	if (kerror) {
 		krb5_warn(kcontext, kerror, "while building server name");
@@ -321,17 +332,12 @@ k5login(struct passwd *pw, char *instance, char *localhost, char *password)
 {
         krb5_error_code kerror;
 	krb5_creds my_creds;
-	krb5_timestamp now;
 	krb5_ccache ccache = NULL;
-	long lifetime = KRB5_DEFAULT_LIFE;
-	int options = KRB5_DEFAULT_OPTIONS;
 	char *realm, *client_name;
 	char *principal;
 
 	krb5_configured = 1;
 
-	if (login_krb5_forwardable_tgt)
-		options |= KDC_OPT_FORWARDABLE;
 
 	/*
 	 * Root logins don't use Kerberos.
@@ -355,10 +361,10 @@ k5login(struct passwd *pw, char *instance, char *localhost, char *password)
 
 	if (strcmp(instance, "root") != 0)
 		(void)snprintf(tkt_location, sizeof tkt_location,
-				"FILE:/tmp/krb5cc_%d.%s", pw->pw_uid, tty);
+				"FILE:/tmp/krb5cc_%d", pw->pw_uid);
 	else
 		(void)snprintf(tkt_location, sizeof tkt_location,
-				"FILE:/tmp/krb5cc_root_%d.%s", pw->pw_uid, tty);
+				"FILE:/tmp/krb5cc_root_%d", pw->pw_uid);
 	krb5tkfile_env = tkt_location;
 	has_ccache = 1;
 
@@ -372,71 +378,43 @@ k5login(struct passwd *pw, char *instance, char *localhost, char *password)
 	}
 
 	if ((kerror = krb5_cc_resolve(kcontext, tkt_location, &ccache)) != 0) {
-		syslog(LOG_NOTICE, "warning: %s while getting default ccache",
-			krb5_get_err_text(kcontext, kerror));
+		k5_log(kcontext, kerror, "while getting default ccache");
 		return (1);
 	}
 
 	if ((kerror = krb5_parse_name(kcontext, principal, &me)) != 0) {
-		syslog(LOG_NOTICE, "warning: %s when parsing name %s",
-			krb5_get_err_text(kcontext, kerror), principal);
+		k5_log(kcontext, kerror, "when parsing name %s", principal);
 		return (1);
 	}
 
 	if ((kerror = krb5_unparse_name(kcontext, me, &client_name)) != 0) {
-		syslog(LOG_NOTICE, "warning: %s when unparsing name %s",
-			krb5_get_err_text(kcontext, kerror), principal);
+		k5_log(kcontext, kerror, "when unparsing name %s", principal);
 		return (1);
 	}
 
 	kerror = krb5_cc_initialize(kcontext, ccache, me);
 	if (kerror != 0) {
-		syslog(LOG_NOTICE, "%s when initializing cache %s",
-			krb5_get_err_text(kcontext, kerror), tkt_location);
+		k5_log(kcontext, kerror, "when initializing cache %s",
+		    tkt_location);
 		return (1);
 	}
 
-	memset((char *)&my_creds, 0, sizeof(my_creds));
+	memset(&my_creds, 0, sizeof(my_creds));
+	krb5_get_init_creds_opt *opt;
 
-	my_creds.client = me;
-
-	if ((kerror = krb5_build_principal_ext(kcontext,
-			&server,
-			krb5_realm_length(*krb5_princ_realm(kcontext, me)),
-			krb5_realm_data(*krb5_princ_realm(kcontext, me)),
-			KRB5_TGS_NAME_SIZE,
-			KRB5_TGS_NAME,
-			krb5_realm_length(*krb5_princ_realm(kcontext, me)),
-			krb5_realm_data(*krb5_princ_realm(kcontext, me)),
-			0)) != 0) {
-		syslog(LOG_NOTICE, "%s while building server name",
-			krb5_get_err_text(kcontext, kerror));
+	if ((kerror = krb5_get_init_creds_opt_alloc(kcontext, &opt)) != 0) {
+		k5_log(kcontext, kerror, "while getting options");
 		return (1);
 	}
+	if (login_krb5_forwardable_tgt)
+	    krb5_get_init_creds_opt_set_forwardable(opt, 1);
 
-	my_creds.server = server;
+        kerror = krb5_get_init_creds_password(kcontext, &my_creds, me, password,
+	    NULL, NULL, 0, NULL, opt);
 
-	if ((kerror = krb5_timeofday(kcontext, &now)) != 0) {
-		syslog(LOG_NOTICE, "%s while getting time of day",
-			krb5_get_err_text(kcontext, kerror));
-		return (1);
-	}
-
-	my_creds.times.starttime = 0;	/* start timer when request
-					   gets to KDC */
-	my_creds.times.endtime = now + lifetime;
-	my_creds.times.renew_till = 0;
-
-	kerror = krb5_get_in_tkt_with_password(kcontext, options,
-					       NULL,
-					       NULL,
-					       NULL,
-					       password,
-					       ccache,
-					       &my_creds, 0);
-
-	if (my_creds.server != NULL)
-		krb5_free_principal(kcontext, my_creds.server);
+	krb5_get_init_creds_opt_free(kcontext, opt);
+	if (kerror == 0)
+		kerror = krb5_cc_store_cred(kcontext, ccache, &my_creds);
 
 	if (chown(&tkt_location[5], pw->pw_uid, pw->pw_gid) < 0)
 		syslog(LOG_ERR, "chown tkfile (%s): %m", &tkt_location[5]);

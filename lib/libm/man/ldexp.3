@@ -1,4 +1,4 @@
-.\"	$NetBSD: ldexp.3,v 1.1 2006/07/03 16:03:56 drochner Exp $
+.\"	$NetBSD: ldexp.3,v 1.4 2011/09/18 05:33:13 jruoho Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,11 +33,12 @@
 .\"
 .\"     @(#)ldexp.3	8.2 (Berkeley) 4/19/94
 .\"
-.Dd March 21, 2006
+.Dd September 18, 2011
 .Dt LDEXP 3
 .Os
 .Sh NAME
-.Nm ldexp
+.Nm ldexp ,
+.Nm ldexpf
 .Nd multiply floating-point number by integral power of 2
 .Sh LIBRARY
 .Lb libm
@@ -50,40 +51,52 @@
 .Sh DESCRIPTION
 The
 .Fn ldexp
-function multiplies a floating-point number by an integral
-power of 2.
+family of functions compute
+.Bd -ragged -offset indent
+.Va x
+*
+2^\fIexp\fR
+.Ed
+.Pp
+for a real floating-point number
+.Fa x .
 .Sh RETURN VALUES
-The
-.Fn ldexp
-function returns the value of
+The functions return the value of
 .Fa x
 times 2 raised to the power
 .Fa exp .
-.Pp
-If the input
-.Va x
-is a NaN, infinity, or 0.0, it is returned unchanged.
-.Pp
-If the result would cause an overflow,
-the global variable
-.Va errno
-is set to
-.Er ERANGE
-and infinity is returned, with the same sign as
-.Fa x .
-.Pp
-If the result would cause underflow to 0.0,
-the global variable
-.Va errno
-is set to
-.Er ERANGE
-and the value 0.0 is returned.
+Otherwise the following may occur:
+.Bl -enum -offset indent
+.It
+If
+.Fa x
+is \*(Na, a \*(Na is returned.
+.It
+If
+.Fa exp
+is zero or
+.Fa x
+is either \*(Pm 0 or \*(Pm\[if],
+.Fa x
+is returned.
+.It
+If the call would cause an overflow, a range error occurs and either
+.Dv \*(Pm\*HHUGE_VAL ,
+.Dv  \*(Pm\*HHUGE_VALF ,
+or
+.Dv  \*(Pm\*HHUGE_VALL
+is returned, depending on the sign of
+.Fa x
+and the type of the return value.
+.It
+If an underflow would be caused by the correct value,
+and the value is not representable, either 0.0 or
+an implementation-defined value is returned.
+.El
 .Sh SEE ALSO
 .Xr frexp 3 ,
 .Xr math 3 ,
 .Xr modf 3
 .Sh STANDARDS
-The
-.Fn ldexp
-function conforms to
-.St -ansiC .
+The described functions conform to
+.St -isoC-99 .

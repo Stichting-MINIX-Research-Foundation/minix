@@ -1,4 +1,4 @@
-/*      $NetBSD: strncmp.S,v 1.1 2005/12/20 19:28:49 christos Exp $ */
+/*      $NetBSD: strncmp.S,v 1.2 2013/08/19 00:57:25 matt Exp $ */
 
 /*
  * Copyright (c) 2002 ARM Ltd
@@ -30,22 +30,48 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: strncmp.S,v 1.1 2005/12/20 19:28:49 christos Exp $")
+RCSID("$NetBSD: strncmp.S,v 1.2 2013/08/19 00:57:25 matt Exp $")
 
 ENTRY(strncmp)
 /* if ((len - 1) < 0) return 0 */
 	subs	r2, r2, #1
+#ifdef __thumb__
+	bmi	5f
+#else
 	movmi	r0, #0
 	RETc(mi)
+#endif
 
 /* ip == last src address to compare */
+#ifdef __thumb__
+	adds	r3, r0, r2
+	mov	ip, r3
+	subs	r1, r1, r0
+#else
 	add	ip, r0, r2
+#endif
 1:
+#ifdef __thumb__
+	ldrb	r2, [r0]
+	ldrb	r3, [r1, r0]
+	adds	r0, r0, #1
+	cmp	ip, r0		/* exhausted length? */
+	bcc	4f		/*   yes, we're done */
+	cmp	r2, #1		/* NUL? */
+	bcc	4f		/*   yes, we're done */
+	cmp	r2, r3		/* different? */
+#else
 	ldrb	r2, [r0], #1
 	ldrb	r3, [r1], #1
 	cmp	ip, r0
 	cmpcs	r2, #1
 	cmpcs	r2, r3
+#endif
 	beq	1b
-	sub	r0, r2, r3
+4:	subs	r0, r2, r3
 	RET
+#ifdef __thumb__
+5:	movs	r0, #0
+	RET
+#endif
+END(strncmp)

@@ -1,4 +1,4 @@
-/*	$NetBSD: calc.y,v 1.1.1.4 2011/09/10 21:22:08 christos Exp $	*/
+/*	$NetBSD: calc.y,v 1.1.1.5 2013/04/06 14:45:27 christos Exp $	*/
 
 %{
 # include <stdio.h>
@@ -6,6 +6,9 @@
 
 int regs[26];
 int base;
+
+extern int yylex(void);
+static void yyerror(const char *s);
 
 %}
 
@@ -63,11 +66,6 @@ number:  DIGIT
       ;
 
 %% /* start of programs */
-
-#ifdef YYBYACC
-extern int YYLEX_DECL();
-static void YYERROR_DECL();
-#endif
 
 int
 main (void)

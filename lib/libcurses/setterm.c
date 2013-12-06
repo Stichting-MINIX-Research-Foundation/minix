@@ -1,4 +1,4 @@
-/*	$NetBSD: setterm.c,v 1.49 2012/04/21 12:27:28 roy Exp $	*/
+/*	$NetBSD: setterm.c,v 1.52 2013/10/16 19:59:29 roy Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setterm.c	8.8 (Berkeley) 10/25/94";
 #else
-__RCSID("$NetBSD: setterm.c,v 1.49 2012/04/21 12:27:28 roy Exp $");
+__RCSID("$NetBSD: setterm.c,v 1.52 2013/10/16 19:59:29 roy Exp $");
 #endif
 #endif /* not lint */
 
@@ -49,7 +49,7 @@ __RCSID("$NetBSD: setterm.c,v 1.49 2012/04/21 12:27:28 roy Exp $");
 #include "curses_private.h"
 
 static int does_esc_m(const char *cap);
-static int does_ctrl_o(const char *cap);
+static int does_ctrl_o(const char *exit_cap, const char *acs_cap);
 
 attr_t	 __mask_op, __mask_me, __mask_ue, __mask_se;
 
@@ -95,7 +95,6 @@ _cursesi_setterm(char *type, SCREEN *screen)
 			screen->LINES = t_lines(screen->term);
 			screen->COLS = t_columns(screen->term);
 		}
-		
 	}
 
 	/* POSIX 1003.2 requires that the environment override. */
@@ -105,7 +104,12 @@ _cursesi_setterm(char *type, SCREEN *screen)
 		screen->COLS = (int) strtol(p, NULL, 0);
 	if ((p = getenv("ESCDELAY")) != NULL)
 		ESCDELAY = (int) strtol(p, NULL, 0);
-
+	if ((p = getenv("TABSIZE")) != NULL)
+		screen->TABSIZE = (int) strtol(p, NULL, 0);
+	else if (t_init_tabs(screen->term) >= 0)
+		screen->TABSIZE = (int) t_init_tabs(screen->term);
+	else
+		screen->TABSIZE = 8;
 	/*
 	 * Want cols > 4, otherwise things will fail.
 	 */
@@ -114,10 +118,12 @@ _cursesi_setterm(char *type, SCREEN *screen)
 
 	LINES = screen->LINES;
 	COLS = screen->COLS;
+	TABSIZE = screen->TABSIZE;
 
 #ifdef DEBUG
-	__CTRACE(__CTRACE_INIT, "setterm: LINES = %d, COLS = %d\n",
-	    LINES, COLS);
+	__CTRACE(__CTRACE_INIT,
+	    "setterm: LINES = %d, COLS = %d\n, TABSIZE = %d\n",
+	    LINES, COLS, TABSIZE);
 #endif
 
 	/*
@@ -172,7 +178,9 @@ _cursesi_setterm(char *type, SCREEN *screen)
 	 * It might turn off ACS, so check for that.
 	 */
 	if (t_exit_attribute_mode(screen->term) != NULL &&
-	    does_ctrl_o(t_exit_attribute_mode(screen->term)))
+	    t_exit_alt_charset_mode(screen->term) != NULL &&
+	    does_ctrl_o(t_exit_attribute_mode(screen->term),
+	    t_exit_alt_charset_mode(screen->term)))
 		screen->mask_me = 0;
 	else
 		screen->mask_me = __ALTCHARSET;
@@ -241,6 +249,7 @@ _cursesi_resetterm(SCREEN *screen)
 
 	LINES = screen->LINES;
 	COLS = screen->COLS;
+	TABSIZE = screen->TABSIZE;
 	__GT = screen->GT;
 
 	__noqch = screen->noqch;
@@ -330,20 +339,22 @@ does_esc_m(const char *cap)
 /*
  * does_ctrl_o --
  * A hack for vt100/xterm-like terminals where the "me" capability also
- * unsets acs (i.e. it contains the character '\017').
+ * unsets acs.
  */
 static int
-does_ctrl_o(const char *cap)
+does_ctrl_o(const char *exit_cap, const char *acs_cap)
 {
-	const char *capptr = cap;
+	const char *eptr = exit_cap, *aptr = acs_cap;
+	int l;
 
 #ifdef DEBUG
-	__CTRACE(__CTRACE_INIT, "does_ctrl_o: Looping on %s\n", capptr);
+	__CTRACE(__CTRACE_INIT, "does_ctrl_o: Testing %s for %s\n", eptr, aptr);
 #endif
-	while (*capptr != 0) {
-		if (*capptr == '\x0f')
+	l = strlen(acs_cap);
+	while (*eptr != 0) {
+		if (!strncmp(eptr, aptr, l))
 			return 1;
-		capptr++;
+		eptr++;
 	}
 	return 0;
 }

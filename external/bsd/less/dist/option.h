@@ -1,13 +1,12 @@
-/*	$NetBSD: option.h,v 1.3 2011/07/03 20:14:13 tron Exp $	*/
+/*	$NetBSD: option.h,v 1.4 2013/09/04 19:44:21 tron Exp $	*/
 
 /*
- * Copyright (C) 1984-2011  Mark Nudelman
+ * Copyright (C) 1984-2012  Mark Nudelman
  *
  * You may distribute under the terms of either the GNU General Public
  * License or the Less License, as specified in the README file.
  *
- * For more information about less, or for information on how to 
- * contact the author, see the README file.
+ * For more information, see the README file.
  */
 
 

@@ -207,7 +207,7 @@ pw_cont(int sig)
 void
 pw_init(void)
 {
-#ifndef __minix
+#if !defined(__minix)
 	struct rlimit rlim;
 
 	/* Unlimited resource limits. */
@@ -221,7 +221,7 @@ pw_init(void)
 	/* Don't drop core (not really necessary, but GP's). */
 	rlim.rlim_cur = rlim.rlim_max = 0;
 	(void)setrlimit(RLIMIT_CORE, &rlim);
-#endif
+#endif /* !defined(__minix) */
 
 	/* Turn off signals. */
 	(void)signal(SIGALRM, SIG_IGN);
@@ -661,9 +661,3 @@ pw_getpwconf(char *data, size_t max, const struct passwd *pwd,
 		        pw_getconf(data, max, "default", option);
 	}
 }
-
-#if defined(__minix) && defined(__weak_alias)
-__weak_alias(pw_copy, __pw_copy50)
-__weak_alias(pw_copyx, __pw_copyx50)
-__weak_alias(pw_getpwconf, __pw_getpwconf50)
-#endif

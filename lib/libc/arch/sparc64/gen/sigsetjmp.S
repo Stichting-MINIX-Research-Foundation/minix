@@ -1,4 +1,4 @@
-/*	$NetBSD: sigsetjmp.S,v 1.10 2011/04/30 19:39:38 martin Exp $	*/
+/*	$NetBSD: sigsetjmp.S,v 1.12 2013/09/14 05:38:00 nakayama Exp $	*/
 /*
  * Copyright (c) 1995 Paul Kranenburg
  * All rights reserved.
@@ -37,8 +37,7 @@
  */
 #define	MASK_OFFSET	0x68
 
-#ifdef PIC
-#ifdef BIGPIC
+#if __PIC__ - 0 >= 2
 	
 ENTRY(__sigsetjmp14)
 	PIC_PROLOGUE(%g1,%o2)		! %g1 = _GLOBAL_OFFSET_TABLE
@@ -68,7 +67,8 @@ ENTRY(__siglongjmp14)
 	jmp	%o4	
 	 nop
 	unimp 0
-#else
+
+#elif __PIC__ - 0 >= 1
 
 ENTRY(__sigsetjmp14)
 	PIC_PROLOGUE(%g1,%o2)			! %g1 = _GLOBAL_OFFSET_TABLE
@@ -92,8 +92,8 @@ ENTRY(__siglongjmp14)
 	jmp %g1
 	 nop
 	unimp 0
-#endif /* BIGPIC */
-#else /* PIC */
+
+#else /* !__PIC__ */
 
 ENTRY(__sigsetjmp14)
 	cmp	%o1,0
@@ -110,4 +110,4 @@ ENTRY(__siglongjmp14)
 	ba,a	_C_LABEL(__longjmp14)
 	unimp 0
 
-#endif /* PIC */
+#endif /* !__PIC__ */

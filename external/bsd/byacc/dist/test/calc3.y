@@ -1,4 +1,4 @@
-/*	$NetBSD: calc3.y,v 1.1.1.3 2011/09/10 21:22:07 christos Exp $	*/
+/*	$NetBSD: calc3.y,v 1.1.1.4 2013/04/06 14:45:28 christos Exp $	*/
 
 %pure-parser
 
@@ -10,6 +10,15 @@
 %{
 # include <stdio.h>
 # include <ctype.h>
+
+#ifdef YYBISON
+#define YYSTYPE int
+#define YYLEX_PARAM base
+#define YYLEX_DECL() yylex(YYSTYPE *yylval, int *YYLEX_PARAM)
+#define YYERROR_DECL() yyerror(int regs[26], int *base, const char *s)
+int YYLEX_DECL();
+static void YYERROR_DECL();
+#endif
 
 %}
 
@@ -70,7 +79,6 @@ number:  DIGIT
 
 #ifdef YYBYACC
 extern int YYLEX_DECL();
-static void YYERROR_DECL();
 #endif
 
 int

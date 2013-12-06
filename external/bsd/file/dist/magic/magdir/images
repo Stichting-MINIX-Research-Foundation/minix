@@ -1,6 +1,6 @@
 
 #------------------------------------------------------------------------------
-# $File: images,v 1.72 2011/12/08 12:12:46 rrt Exp $
+# $File: images,v 1.81 2013/03/09 22:36:00 christos Exp $
 # images:  file(1) magic for image formats (see also "iff", and "c-lang" for
 # XPM bitmaps)
 #
@@ -32,17 +32,42 @@
 
 # PBMPLUS images
 # The next byte following the magic is always whitespace.
-0	search/1	P1		Netpbm PBM image text
+# strength is changed to try these patterns before "x86 boot sector"
+0	search/1	P1		
+>3	regex		=[0-9]*\ [0-9]*		Netpbm PBM image text
+>3	regex		=[0-9]+\ 		\b, size = %sx
+>>3	regex		=\ [0-9]+	\b%s
+!:strength + 45
 !:mime	image/x-portable-bitmap
-0	search/1b	P2		Netpbm PGM image text
+0	search/1	P2		
+>3	regex		=[0-9]*\ [0-9]*		Netpbm PGM image text
+>3	regex		=[0-9]+\ 		\b, size = %sx
+>>3	regex		=\ [0-9]+	\b%s
+!:strength + 45
 !:mime	image/x-portable-greymap
 0	search/1	P3		Netpbm PPM image text
+>3	regex		=[0-9]*\ [0-9]*		Netpbm PPM image text
+>3	regex		=[0-9]+\ 		\b, size = %sx
+>>3	regex		=\ [0-9]+	\b%s
+!:strength + 45
 !:mime	image/x-portable-pixmap
-0	string		P4		Netpbm PBM "rawbits" image data
+0	string		P4		
+>3	regex		=[0-9]*\ [0-9]*		Netpbm PBM "rawbits" image data
+>3	regex		=[0-9]+\ 		\b, size = %sx
+>>3	regex		=\ [0-9]+	\b%s
+!:strength + 45
 !:mime	image/x-portable-bitmap
-0	string		P5		Netpbm PGM "rawbits" image data
+0	string		P5		
+>3	regex		=[0-9]*\ [0-9]*		Netpbm PGM "rawbits" image data
+>3	regex		=[0-9]+\ 		\b, size = %sx
+>>3	regex		=\ [0-9]+	\b%s
+!:strength + 45
 !:mime	image/x-portable-greymap
-0	string		P6		Netpbm PPM "rawbits" image data
+0	string		P6		
+>3	regex		=[0-9]*\ [0-9]*		Netpbm PPM "rawbits" image data
+>3	regex		=[0-9]+\ 		\b, size = %sx
+>>3	regex		=\ [0-9]+	\b%s
+!:strength + 45
 !:mime	image/x-portable-pixmap
 0	string		P7		Netpbm PAM image file
 !:mime	image/x-portable-pixmap
@@ -203,6 +228,32 @@
 # From: Herbert Rosmanith <herp@wildsau.idv.uni.linz.at>
 0	string		Sfff		structured fax file
 
+# From: Joerg Jenderek <joerg.jen.der.ek@gmx.net>
+# most files with the extension .EPA and some with .BMP
+0	string		\x11\x06	Award BIOS Logo, 136 x 84
+!:mime	image/x-award-bioslogo
+0	string		\x11\x09	Award BIOS Logo, 136 x 126
+!:mime	image/x-award-bioslogo
+#0	string		\x07\x1f	BIOS Logo corrupted?
+# http://www.blackfiveservices.co.uk/awbmtools.shtml
+# http://biosgfx.narod.ru/v3/
+# http://biosgfx.narod.ru/abr-2/
+0	string		AWBM		
+>4	leshort		<1981		Award BIOS bitmap
+!:mime	image/x-award-bmp
+# image width is a multiple of 4
+>>4	leshort&0x0003	0		
+>>>4		leshort	x		\b, %d
+>>>6		leshort	x		x %d
+>>4	leshort&0x0003	>0		\b,
+>>>4	leshort&0x0003	=1		
+>>>>4		leshort	x		%d+3
+>>>4	leshort&0x0003	=2		
+>>>>4		leshort	x		%d+2
+>>>4	leshort&0x0003	=3		
+>>>>4		leshort	x		%d+1
+>>>6		leshort	x		x %d
+# at offset 8 starts imagedata followed by "RGB " marker
 
 # PC bitmaps (OS/2, Windows BMP files)  (Greg Roelofs, newt@uchicago.edu)
 0	string		BM
@@ -376,7 +427,7 @@
 >5	byte	0x00		(white background)
 >5	byte	0xFF		(black background)
 
-# Gürkan Sengün <gurkan@linuks.mine.nu>, www.linuks.mine.nu
+# Gurkan Sengun <gurkan@linuks.mine.nu>, www.linuks.mine.nu
 # http://www.atarimax.com/jindroush.atari.org/afmtatr.html
 0	leshort	0x0296		Atari ATR image
 
@@ -401,38 +452,39 @@
 #>12	beshort	3		RP175
 #>12	beshort	4		YUV
 
-#------------------------------------------------------------------------------
-#
-# Marco Schmidt (marcoschmidt@users.sourceforge.net) -- an image  file format
-# for the EPOC operating system, which is used with PDAs like those from Psion
-#
-# see http://huizen.dds.nl/~frodol/psiconv/html/Index.html for a description
-# of various EPOC file formats
-
-0	string \x37\x00\x00\x10\x42\x00\x00\x10\x00\x00\x00\x00\x39\x64\x39\x47 EPOC MBM image file
-
 # PCX image files
 # From: Dan Fandrich <dan@coneharvesters.com>
-0	beshort		0x0a00	PCX ver. 2.5 image data
-0	beshort		0x0a02	PCX ver. 2.8 image data, with palette
-0	beshort		0x0a03	PCX ver. 2.8 image data, without palette
-0	beshort		0x0a04	PCX for Windows image data
-0	beshort		0x0a05	PCX ver. 3.0 image data
->4	leshort		x      bounding box [%hd,
->6	leshort		x      %hd] -
->8	leshort		x      [%hd,
->10	leshort		x      %hd],
->65	byte		>1	%d planes each of
->3	byte		x	%hhd-bit
->68	byte		0	image,
->68	byte		1	colour,
->68	byte		2	grayscale,
->68	byte		>2	image,
->68	byte		<0	image,
->12	leshort		>0	%hd x
->>14	leshort		x      %hd dpi,
->2	byte		0	uncompressed
->2	byte		1	RLE compressed
+# updated by Joerg Jenderek at Feb 2013 by http://de.wikipedia.org/wiki/PCX
+# http://web.archive.org/web/20100206055706/http://www.qzx.com/pc-gpe/pcx.txt
+# GRR: original test was still too general as it catches xbase examples T5.DBT,T6.DBT with 0xa000000
+# test for bytes 0x0a,version byte (0,2,3,4,5),compression byte flag(0,1), bit depth (>0) of PCX or T5.DBT,T6.DBT
+0	ubelong&0xffF8fe00	0x0a000000	
+# for PCX bit depth > 0 
+>3	ubyte		>0	
+# test for valid versions
+>>1	ubyte		<6	
+>>>1	ubyte		!1	PCX
+!:mime	image/x-pcx
+#!:mime	image/pcx
+>>>>1	ubyte		0	ver. 2.5 image data
+>>>>1	ubyte		2	ver. 2.8 image data, with palette
+>>>>1	ubyte		3	ver. 2.8 image data, without palette
+>>>>1	ubyte		4	for Windows image data
+>>>>1	ubyte		5	ver. 3.0 image data
+>>>>4	uleshort	x	bounding box [%hd,
+>>>>6	uleshort	x	%d] -
+>>>>8	uleshort	x	[%d,
+>>>>10	uleshort	x	%d],
+>>>>65	ubyte		>1	%d planes each of
+>>>>3	ubyte		x	%d-bit
+>>>>68	byte		1	colour,
+>>>>68	byte		2	grayscale,
+# this should not happen
+>>>>68	default		x	image,
+>>>>12	leshort		>0	%d x
+>>>>>14	uleshort	x	%d dpi,
+>>>>2	byte		0	uncompressed
+>>>>2	byte		1	RLE compressed
 
 # Adobe Photoshop
 # From: Asbjoern Sloth Toennesen <asbjorn@lila.io>
@@ -615,9 +667,61 @@
 >12	string	THUM		DjVu page thumbnails
 !:mime	image/vnd.djvu
 
+# Originally by Marc Espie
+# Modified by Robert Minsk <robertminsk at yahoo.com>
+# http://www.openexr.com/openexrfilelayout.pdf
+0	lelong		20000630	OpenEXR image data,
+!:mime image/x-exr
+>4	lelong&0x000000ff x		version %d,
+>4	lelong		^0x00000200	storage: scanline
+>4	lelong		&0x00000200	storage: tiled
+>8	search/0x1000	compression\0	\b, compression:
+>>&16	byte		0		none
+>>&16	byte		1		rle
+>>&16	byte		2		zips
+>>&16	byte		3		zip
+>>&16	byte		4		piz
+>>&16	byte		5		pxr24
+>>&16	byte		6		b44
+>>&16	byte		7		b44a
+>>&16	byte		>7		unknown
+>8	 search/0x1000	dataWindow\0	\b, dataWindow:
+>>&10	lelong		x		(%d
+>>&14	lelong		x		%d)-
+>>&18	lelong		x		\b(%d
+>>&22	lelong		x		%d)
+>8	search/0x1000	displayWindow\0	\b, displayWindow:
+>>&10	lelong		x		(%d
+>>&14	lelong		x		%d)-
+>>&18	lelong		x		\b(%d
+>>&22	lelong		x		%d)
+>8	search/0x1000	lineOrder\0	 \b, lineOrder:
+>>&14	byte		0		increasing y
+>>&14	byte		1		decreasing y
+>>&14	byte		2		random y
+>>&14	byte		>2		unknown
 
-# From Marc Espie
-0	lelong	20000630		OpenEXR image data
+# SMPTE Digital Picture Exchange Format, SMPTE DPX
+#
+# ANSI/SMPTE 268M-1994, SMPTE Standard for File Format for Digital
+# Moving-Picture Exchange (DPX), v1.0, 18 February 1994
+# Robert Minsk <robertminsk at yahoo.com>
+0	string		SDPX	DPX image data, big-endian,
+!:mime image/x-dpx
+>768	beshort		<4
+>>772	belong		x	%dx
+>>776	belong		x	\b%d,
+>768	beshort		>3
+>>776	belong		x	%dx
+>>772	belong		x	\b%d,
+>768	beshort		0	left to right/top to bottom
+>768	beshort		1	right to left/top to bottom
+>768	beshort		2	left to right/bottom to top
+>768	beshort		3	right to left/bottom to top
+>768	beshort		4	top to bottom/left to right
+>768	beshort		5	top to bottom/right to left
+>768	leshort		6	bottom to top/left to right
+>768	leshort		7	bottom to top/right to left
 
 # From: Tom Hilinski <tom.hilinski@comcast.net>
 # http://www.unidata.ucar.edu/packages/netcdf/
@@ -665,9 +769,10 @@
 # From Tano M Fotang <mfotang@quanteq.com>
 0	string	\xff\xa0\xff\xa8\x00	Wavelet Scalar Quantization image data
 
-# JPEG 2000 Code Stream Bitmap
-# From Petr Splichal <psplicha@redhat.com>
-0	string	\xFF\x4F\xFF\x51\x00	JPEG-2000 Code Stream Bitmap data
+# Polar Monitor Bitmap (.pmb) used as logo for Polar Electro watches
+# From: Markus Heidelberg <markus.heidelberg at web.de>
+0	string/t	[BitmapInfo2]	Polar Monitor Bitmap text
+!:mime	image/x-polar-monitor-bitmap
 
 # From: Rick Richardson <rick.richardson@comcast.net>
 0	string	GARMIN\ BITMAP\ 01	Garmin Bitmap file

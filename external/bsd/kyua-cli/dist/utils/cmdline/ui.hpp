@@ -35,10 +35,6 @@
 #include <cstddef>
 #include <string>
 
-#if defined(__minix)
-#include <sys/termios.h>
-#endif /* defined(__minix) */
-
 #include "utils/optional.hpp"
 
 namespace utils {

@@ -23,6 +23,7 @@
 #include <minix/ds.h>
 #include <minix/vm.h>
 #include <machine/param.h>
+#include <machine/vmparam.h>
 #include <sys/mman.h>
 #include "kernel/const.h"
 #include "kernel/config.h"

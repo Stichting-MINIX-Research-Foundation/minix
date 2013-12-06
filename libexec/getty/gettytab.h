@@ -1,4 +1,4 @@
-/*	$NetBSD: gettytab.h,v 1.16 2006/11/16 04:31:24 christos Exp $	*/
+/*	$NetBSD: gettytab.h,v 1.17 2013/08/11 05:42:41 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -35,20 +35,20 @@
  * Getty description definitions.
  */
 struct	gettystrs {
-	char	*field;		/* name to lookup in gettytab */
-	char	*defalt;	/* value we find by looking in defaults */
+	const char *field;	/* name to lookup in gettytab */
+	const char *defalt;	/* value we find by looking in defaults */
 	char	*value;		/* value that we find there */
 };
 
 struct	gettynums {
-	char	*field;		/* name to lookup */
+	const char *field;	/* name to lookup */
 	long	defalt;		/* number we find in defaults */
 	long	value;		/* number we find there */
 	int	set;		/* we actually got this one */
 };
 
 struct gettyflags {
-	char	*field;		/* name to lookup */
+	const char *field;	/* name to lookup */
 	char	invrt;		/* name existing in gettytab --> false */
 	char	defalt;		/* true/false in defaults */
 	char	value;		/* true/false flag */

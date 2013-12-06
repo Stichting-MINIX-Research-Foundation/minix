@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_ceil.c,v 1.13 2009/02/16 01:22:18 lukem Exp $");
+__RCSID("$NetBSD: s_ceil.c,v 1.14 2013/11/11 23:57:34 joerg Exp $");
 #endif
 
 /*
@@ -28,6 +28,11 @@ __RCSID("$NetBSD: s_ceil.c,v 1.13 2009/02/16 01:22:18 lukem Exp $");
 #include "math_private.h"
 
 static const double huge = 1.0e300;
+
+#ifndef __HAVE_LONG_DOUBLE
+__strong_alias(_ceill, ceil)
+__weak_alias(ceill, ceil)
+#endif
 
 double
 ceil(double x)

@@ -1,4 +1,4 @@
-# $NetBSD: md.hpcmips,v 1.29 2011/07/17 20:54:31 joerg Exp $
+# $NetBSD: md.hpcmips,v 1.31 2013/01/16 16:01:06 christos Exp $
 ./usr/include/dev/hpc/hpcfbio.h			comp-c-include
 ./usr/include/hpcmips				comp-c-include
 ./usr/include/hpcmips/_G_config.h		comp-obsolete		obsolete
@@ -54,6 +54,7 @@
 ./usr/include/hpcmips/rwlock.h			comp-c-include
 ./usr/include/hpcmips/setjmp.h			comp-c-include
 ./usr/include/hpcmips/signal.h			comp-c-include
+./usr/include/hpcmips/sljitarch.h		comp-c-include
 ./usr/include/hpcmips/stdarg.h			comp-obsolete		obsolete
 ./usr/include/hpcmips/sysconf.h			comp-c-include
 ./usr/include/hpcmips/trap.h			comp-c-include
@@ -62,6 +63,3 @@
 ./usr/include/hpcmips/vmparam.h			comp-c-include
 ./usr/include/hpcmips/wchar_limits.h		comp-c-include
 ./usr/include/ieeefp.h				comp-c-include
-./usr/libdata/debug/usr/sbin/apm.debug		comp-sysutil-debug	debug
-./usr/libdata/debug/usr/sbin/apmd.debug		comp-sysutil-debug	debug
-./usr/libdata/debug/usr/sbin/tpctl.debug	comp-sysutil-debug	debug

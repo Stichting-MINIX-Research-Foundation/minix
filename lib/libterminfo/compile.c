@@ -1,4 +1,4 @@
-/* $NetBSD: compile.c,v 1.8 2012/06/03 23:19:10 joerg Exp $ */
+/* $NetBSD: compile.c,v 1.9 2013/06/07 13:16:18 roy Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2011 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: compile.c,v 1.8 2012/06/03 23:19:10 joerg Exp $");
+__RCSID("$NetBSD: compile.c,v 1.9 2013/06/07 13:16:18 roy Exp $");
 
 #if !HAVE_NBTOOL_CONFIG_H || HAVE_SYS_ENDIAN_H
 #include <sys/endian.h>
@@ -115,7 +115,7 @@ _ti_find_cap(TBUF *tbuf, char type, short ind)
 			break;
 		}
 	}
-	
+
 	errno = ESRCH;
 	return NULL;
 }
@@ -151,7 +151,7 @@ _ti_find_extra(TBUF *tbuf, const char *code)
 			break;
 		}
 	}
-	
+
 	errno = ESRCH;
 	return NULL;
 }
@@ -174,19 +174,19 @@ _ti_store_extra(TIC *tic, int wrn, char *id, char type, char flag, short num,
 			return 0;
 		}
 	}
-	
+
 	l = strlen(id) + 1;
 	if (l > UINT16_T_MAX) {
 		dowarn(flags, "%s: %s: cap name is too long", tic->name, id);
 		return 0;
 	}
-	
+
 	if (!_ti_grow_tbuf(&tic->extras,
 		l + strl + (sizeof(uint16_t) * 2) + 1))
 		return 0;
 	le16enc(tic->extras.buf + tic->extras.bufpos, l);
 	tic->extras.bufpos += sizeof(uint16_t);
-     	memcpy(tic->extras.buf + tic->extras.bufpos, id, l);
+	memcpy(tic->extras.buf + tic->extras.bufpos, id, l);
 	tic->extras.bufpos += l;
 	tic->extras.buf[tic->extras.bufpos++] = type;
 	switch (type) {
@@ -237,14 +237,14 @@ _ti_flatten(uint8_t **buf, const TIC *tic)
 	*buf = malloc(buflen);
 	if (*buf == NULL)
 		return -1;
-	
+
 	cap = *buf;
 	*cap++ = 1;
 	le16enc(cap, len);
 	cap += sizeof(uint16_t);
 	memcpy(cap, tic->name, len);
 	cap += len;
-	
+
 	le16enc(cap, alen);
 	cap += sizeof(uint16_t);
 	if (tic->alias != NULL) {
@@ -269,7 +269,7 @@ _ti_flatten(uint8_t **buf, const TIC *tic)
 		memcpy(cap, tic->flags.buf, tic->flags.bufpos);
 		cap += tic->flags.bufpos;
 	}
-	
+
 	if (tic->nums.entries == 0) {
 		le16enc(cap, 0);
 		cap += sizeof(uint16_t);
@@ -281,7 +281,7 @@ _ti_flatten(uint8_t **buf, const TIC *tic)
 		memcpy(cap, tic->nums.buf, tic->nums.bufpos);
 		cap += tic->nums.bufpos;
 	}
-	
+
 	if (tic->strs.entries == 0) {
 		le16enc(cap, 0);
 		cap += sizeof(uint16_t);
@@ -293,7 +293,7 @@ _ti_flatten(uint8_t **buf, const TIC *tic)
 		memcpy(cap, tic->strs.buf, tic->strs.bufpos);
 		cap += tic->strs.bufpos;
 	}
-	
+
 	if (tic->extras.entries == 0) {
 		le16enc(cap, 0);
 		cap += sizeof(uint16_t);
@@ -315,7 +315,7 @@ encode_string(const char *term, const char *cap, TBUF *tbuf, const char *str,
 {
 	int slash, i, num;
 	char ch, *p, *s, last;
-	
+
 	if (_ti_grow_tbuf(tbuf, strlen(str) + 1) == NULL)
 		return -1;
 	p = s = tbuf->buf + tbuf->bufpos;
@@ -392,7 +392,6 @@ encode_string(const char *term, const char *cap, TBUF *tbuf, const char *str,
 			*p++ = '\t';
 			break;
 		default:
-					
 			/* We should warn here */
 		case '^':
 		case ',':
@@ -454,7 +453,7 @@ _ti_compile(char *cap, int flags)
 	TBUF buf;
 	TIC *tic;
 
-	_DIAGASSERT(cap != NULL);	
+	_DIAGASSERT(cap != NULL);
 
 	name = _ti_get_token(&cap, ',');
 	if (name == NULL) {

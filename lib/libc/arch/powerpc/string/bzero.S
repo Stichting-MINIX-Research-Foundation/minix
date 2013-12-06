@@ -1,4 +1,4 @@
-/*	$NetBSD: bzero.S,v 1.11 2011/01/29 02:21:20 matt Exp $ */
+/*	$NetBSD: bzero.S,v 1.14 2013/09/12 15:36:15 joerg Exp $ */
 
 /*-
  * Copyright (C) 2001	Martin J. Laubach <mjl@NetBSD.org>
@@ -32,12 +32,10 @@
 
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: bzero.S,v 1.11 2011/01/29 02:21:20 matt Exp $")
+__RCSID("$NetBSD: bzero.S,v 1.14 2013/09/12 15:36:15 joerg Exp $")
 #endif /* LIBC_SCCS && !lint */
 
-#ifdef _KERNEL
-#include <assym.h>
-#endif
+#include "assym.h"
 
 #define USE_STSWX 0	/* don't. slower than trivial copy loop */
 
@@ -73,132 +71,20 @@ cb_memset:
 
 /*----------------------------------------------------------------------*/
 #ifndef _KERNEL
-		/* First find out cache line size */
+#ifdef __PIC__
+		/* First get cache line size */
 		mflr	%r9
-#ifdef PIC
-		PIC_GOTSETUP(%r10)
+		bcl	20,31,1f
+1:		mflr	%r10
 		mtlr	%r9
-		lwz	%r5,cache_info@got(%r10)
+		addis	%r10,%r10,_libc_powerpc_cache_info+CACHE_INFO_DCACHE_LINE_SIZE-1b@ha
+		lwz	%r9,_libc_powerpc_cache_info+CACHE_INFO_DCACHE_LINE_SIZE-1b@l(%r10)
 #else
-		lis	%r5,cache_info@h
-		ori	%r5,%r5,cache_info@l
+		lis	%r10,_libc_powerpc_cache_info+CACHE_INFO_DCACHE_LINE_SIZE@ha
+		lwz	%r9,_libc_powerpc_cache_info+CACHE_INFO_DCACHE_LINE_SIZE@l(%r10)
 #endif
-		lwz	%r6, 4(%r5)
-		cmpwi	%r6, -1
-		bne+	cb_cacheline_known
-
-/*----------------------------------------------------------------------*/
-#define CTL_MACHDEP	7
-#define CPU_CACHELINE	1
-#define	CPU_CACHEINFO	5
-
-#define STKFRAME_SZ	64
-#define MIB		8
-#define OLDPLEN		16
-#define R3_SAVE		20
-#define R4_SAVE		24
-#define R0_SAVE		28
-#define R8_SAVE		32
-#define R31_SAVE	36
-#ifdef PIC
-#define R30_SAVE	40
-#endif
-
-		stw	%r9, 4(%r1)
-		stwu	%r1, -STKFRAME_SZ(%r1)
-
-		stw	%r31, R31_SAVE(%r1)
-		mr	%r31, %r5		/* cache info */
-
-#ifdef PIC
-		stw	%r30, R30_SAVE(%r1)
-		PIC_TOCSETUP(cb_memset,%r30)
-#endif
-
-		stw	%r8, R8_SAVE(%r1)
-		stw	%r3, R3_SAVE(%r1)
-		stw	%r4, R4_SAVE(%r1)
-		stw	%r0, R0_SAVE(%r1)
-
-		li	%r0, CTL_MACHDEP		/* Construct MIB */
-		stw	%r0, MIB(%r1)
-		li	%r0, CPU_CACHEINFO
-		stw	%r0, MIB+4(%r1)
-
-		li	%r0, 4*4			/* Oldlenp := 4*4 */
-		stw	%r0, OLDPLEN(%r1)
-
-		addi	%r3, %r1, MIB
-		li	%r4, 2			/* namelen */
-		/* %r5 already contains &cache_info */
-		addi	%r6, %r1, OLDPLEN
-		li	%r7, 0
-		li	%r8, 0
-		bl	PIC_PLT(_C_LABEL(sysctl))
-	
-		cmpwi	%r3, 0			/* Check result */
-		beq	1f
-
-		/* Failure, try older sysctl */
-	
-		li	%r0, CTL_MACHDEP	/* Construct MIB */
-		stw	%r0, MIB(%r1)
-		li	%r0, CPU_CACHELINE
-		stw	%r0, MIB+4(%r1)
-
-		li	%r0, 4			/* Oldlenp := 4 */
-		stw	%r0, OLDPLEN(%r1)
-
-		addi	%r3, %r1, MIB
-		li	%r4, 2			/* namelen */
-		addi	%r5, %r31, 4
-		addi	%r6, %r1, OLDPLEN
-		li	%r7, 0
-		li	%r8, 0
-		bl	PIC_PLT(_C_LABEL(sysctl))
-1:
-		lwz	%r3, R3_SAVE(%r1)
-		lwz	%r4, R4_SAVE(%r1)
-		lwz	%r8, R8_SAVE(%r1)
-		lwz	%r0, R0_SAVE(%r1)
-		lwz	%r9, 4(%r31)
-		lwz	%r31, R31_SAVE(%r1)
-#ifdef PIC
-		lwz	%r30, R30_SAVE(%r1)
-#endif
-		addi	%r1, %r1, STKFRAME_SZ
-		lwz	%r7, 4(%r1)
-		mtlr	%r7
-
-		cntlzw	%r6, %r9			/* compute shift value */
-		li	%r5, 31
-		subf	%r5, %r6, %r5
-
-#ifdef PIC
-		mflr	%r9
-		PIC_GOTSETUP(%r10)
-		mtlr	%r9
-		lwz	%r6, cache_sh@got(%r10)
-		stw	%r5, 0(%r6)
-#else
-		lis	%r6, cache_sh@ha
-		stw	%r5, cache_sh@l(%r6)
-#endif
-/*----------------------------------------------------------------------*/
-/* Okay, we know the cache line size (%r9) and shift value (%r10) */
-cb_cacheline_known:
-#ifdef PIC
-		lwz	%r5, cache_info@got(%r10)
-		lwz	%r9, 4(%r5)
-		lwz	%r5, cache_sh@got(%r10)
-		lwz	%r10, 0(%r5)
-#else
-		lis	%r9, cache_info+4@ha
-		lwz	%r9, cache_info+4@l(%r9)
-		lis	%r10, cache_sh@ha
-		lwz	%r10, cache_sh@l(%r10)
-#endif
-
+		cmplwi	%cr1, %r9, 0		/* Unknown? */
+		beq-	simple_fill		/* a trivial fill routine */
 #else /* _KERNEL */
 #ifdef	MULTIPROCESSOR
 		mfsprg	%r10, 0			/* Get cpu_info pointer */
@@ -206,11 +92,11 @@ cb_cacheline_known:
 		lis	%r10, cpu_info_store@ha
 		addi	%r10, %r10, cpu_info_store@l
 #endif
-		lwz	%r9, CPU_CI+4(%r10)	/* Load D$ line size */
+		lwz	%r9, CPU_CI+CACHE_INFO_DCACHE_LINE_SIZE(%r10)	/* Load D$ line size */
+#endif /* _KERNEL */
 		cntlzw	%r10, %r9			/* Calculate shift.. */
 		li	%r6, 31
 		subf	%r10, %r10, %r6
-#endif /* _KERNEL */
 		/* Back in memory filling business */
 		
 		cmplwi	%cr1, r_len, 0		/* Nothing to do? */
@@ -371,6 +257,7 @@ END(memset)
 /*----------------------------------------------------------------------*/
 #ifndef _KERNEL
 		.data
+		.p2align 2
 cache_info:	.long	-1, -1, -1, -1
 cache_sh:	.long	0
 

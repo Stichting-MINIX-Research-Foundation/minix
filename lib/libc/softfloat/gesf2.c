@@ -18,10 +18,11 @@ flag __gesf2(float32, float32);
 flag
 __gesf2(float32 a, float32 b)
 {
+
 #if defined(__minix) && defined(__arm__)
 	return float32_le(b, a);
 #else
 	/* libgcc1.c says (a >= b) - 1 */
 	return float32_le(b, a) - 1;
-#endif
+#endif /* defined(__minix) */
 }

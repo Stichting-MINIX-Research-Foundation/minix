@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.h,v 1.25 2010/07/31 21:47:54 joerg Exp $	*/
+/*	$NetBSD: npx.h,v 1.26 2013/11/11 11:10:45 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -126,8 +126,10 @@ union savefpu {
  * with all exceptions masked.
  */
 #define	__INITIAL_NPXCW__	0x037f
-/* NetBSD uses IEEE double precision. */
-#define	__NetBSD_NPXCW__	0x127f
+/* Modern NetBSD uses the default control word.. */
+#define	__NetBSD_NPXCW__	0x037f
+/* NetBSD before 6.99.26 forced IEEE double precision. */
+#define	__NetBSD_COMPAT_NPXCW__	0x127f
 /* FreeBSD leaves some exceptions unmasked as well. */
 #define	__FreeBSD_NPXCW__	0x1272
 /* iBCS2 goes a bit further and leaves the underflow exception unmasked. */

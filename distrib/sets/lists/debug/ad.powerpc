@@ -1,0 +1,4 @@
+# $NetBSD: ad.powerpc,v 1.1 2013/01/16 16:01:07 christos Exp $
+./usr/libdata/debug/usr/bin/elf2aout.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/bin/fdformat.debug	comp-util-debug		debug
+./usr/libdata/debug/usr/bin/psim.debug		comp-debug-debug	debug,gdb

@@ -18,10 +18,11 @@ flag __gedf2(float64, float64);
 flag
 __gedf2(float64 a, float64 b)
 {
+
 #if defined(__minix) && defined(__arm__)
 	return float64_le(b, a);
 #else
 	/* libgcc1.c says (a >= b) - 1 */
 	return float64_le(b, a) - 1;
-#endif
+#endif /* defined(__minix) */
 }

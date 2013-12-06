@@ -1,4 +1,4 @@
-/*	$NetBSD: memcpy_arm.S,v 1.2 2008/04/28 20:22:52 martin Exp $	*/
+/*	$NetBSD: memcpy_arm.S,v 1.4 2013/08/11 04:56:32 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -30,6 +30,10 @@
  */
 
 #include <machine/asm.h>
+
+#if defined(__ARM_EABI__)
+STRONG_ALIAS(__aeabi_memcpy, memcpy)
+#endif
 
 /*
  * This is one fun bit of code ...
@@ -63,7 +67,7 @@
 /* LINTSTUB: Func: void *memcpy(void *dst, const void *src, size_t len) */
 ENTRY(memcpy)
 	/* save leaf functions having to store this away */
-	stmdb	sp!, {r0, lr}		/* memcpy() returns dest addr */
+	push	{r0, lr}		/* memcpy() returns dest addr */
 
 	subs	r2, r2, #4
 	blt	.Lmemcpy_l4		/* less than 4 bytes */
@@ -78,7 +82,7 @@ ENTRY(memcpy)
 	blt	.Lmemcpy_l12		/* less than 12 bytes (4 from above) */
 	subs	r2, r2, #0x14
 	blt	.Lmemcpy_l32		/* less than 32 bytes (12 from above) */
-	stmdb	sp!, {r4}		/* borrow r4 */
+	push	{r4}		/* borrow r4 */
 
 	/* blat 32 bytes at a time */
 	/* XXX for really big copies perhaps we should use more registers */
@@ -91,19 +95,19 @@ ENTRY(memcpy)
 	bge	.Lmemcpy_loop32
 
 	cmn	r2, #0x10
-	ldmgeia	r1!, {r3, r4, r12, lr}	/* blat a remaining 16 bytes */
-	stmgeia	r0!, {r3, r4, r12, lr}
+	ldmiage	r1!, {r3, r4, r12, lr}	/* blat a remaining 16 bytes */
+	stmiage	r0!, {r3, r4, r12, lr}
 	subge	r2, r2, #0x10
-	ldmia	sp!, {r4}		/* return r4 */
+	pop	{r4}		/* return r4 */
 
 .Lmemcpy_l32:
 	adds	r2, r2, #0x14
 
 	/* blat 12 bytes at a time */
 .Lmemcpy_loop12:
-	ldmgeia	r1!, {r3, r12, lr}
-	stmgeia	r0!, {r3, r12, lr}
-	subges	r2, r2, #0x0c
+	ldmiage	r1!, {r3, r12, lr}
+	stmiage	r0!, {r3, r12, lr}
+	subsge	r2, r2, #0x0c
 	bge	.Lmemcpy_loop12
 
 .Lmemcpy_l12:
@@ -113,27 +117,27 @@ ENTRY(memcpy)
 	subs	r2, r2, #4
 	ldrlt	r3, [r1], #4
 	strlt	r3, [r0], #4
-	ldmgeia	r1!, {r3, r12}
-	stmgeia	r0!, {r3, r12}
+	ldmiage	r1!, {r3, r12}
+	stmiage	r0!, {r3, r12}
 	subge	r2, r2, #4
 
 .Lmemcpy_l4:
 	/* less than 4 bytes to go */
 	adds	r2, r2, #4
 #ifdef __APCS_26_
-	ldmeqia sp!, {r0, pc}^		/* done */
+	ldmiaeq sp!, {r0, pc}^		/* done */
 #else
-	ldmeqia	sp!, {r0, pc}		/* done */
+	popeq	{r0, pc}		/* done */
 #endif
 	/* copy the crud byte at a time */
 	cmp	r2, #2
 	ldrb	r3, [r1], #1
 	strb	r3, [r0], #1
-	ldrgeb	r3, [r1], #1
-	strgeb	r3, [r0], #1
-	ldrgtb	r3, [r1], #1
-	strgtb	r3, [r0], #1
-	ldmia	sp!, {r0, pc}
+	ldrbge	r3, [r1], #1
+	strbge	r3, [r0], #1
+	ldrbgt	r3, [r1], #1
+	strbgt	r3, [r0], #1
+	pop	{r0, pc}
 
 	/* erg - unaligned destination */
 .Lmemcpy_destul:
@@ -143,10 +147,10 @@ ENTRY(memcpy)
 	/* align destination with byte copies */
 	ldrb	r3, [r1], #1
 	strb	r3, [r0], #1
-	ldrgeb	r3, [r1], #1
-	strgeb	r3, [r0], #1
-	ldrgtb	r3, [r1], #1
-	strgtb	r3, [r0], #1
+	ldrbge	r3, [r1], #1
+	strbge	r3, [r0], #1
+	ldrbgt	r3, [r1], #1
+	strbgt	r3, [r0], #1
 	subs	r2, r2, r12
 	blt	.Lmemcpy_l4		/* less the 4 bytes */
 
@@ -164,7 +168,7 @@ ENTRY(memcpy)
 	cmp	r2, #0x0c
 	blt	.Lmemcpy_srcul1loop4
 	sub	r2, r2, #0x0c
-	stmdb	sp!, {r4, r5}
+	push	{r4, r5}
 
 .Lmemcpy_srcul1loop16:
 #ifdef __ARMEB__
@@ -193,7 +197,7 @@ ENTRY(memcpy)
 	stmia	r0!, {r3-r5, r12}
 	subs	r2, r2, #0x10
 	bge	.Lmemcpy_srcul1loop16
-	ldmia	sp!, {r4, r5}
+	pop	{r4, r5}
 	adds	r2, r2, #0x0c
 	blt	.Lmemcpy_srcul1l4
 
@@ -221,7 +225,7 @@ ENTRY(memcpy)
 	cmp	r2, #0x0c
 	blt	.Lmemcpy_srcul2loop4
 	sub	r2, r2, #0x0c
-	stmdb	sp!, {r4, r5}
+	push	{r4, r5}
 
 .Lmemcpy_srcul2loop16:
 #ifdef __ARMEB__
@@ -250,7 +254,7 @@ ENTRY(memcpy)
 	stmia	r0!, {r3-r5, r12}
 	subs	r2, r2, #0x10
 	bge	.Lmemcpy_srcul2loop16
-	ldmia	sp!, {r4, r5}
+	pop	{r4, r5}
 	adds	r2, r2, #0x0c
 	blt	.Lmemcpy_srcul2l4
 
@@ -278,7 +282,7 @@ ENTRY(memcpy)
 	cmp	r2, #0x0c
 	blt	.Lmemcpy_srcul3loop4
 	sub	r2, r2, #0x0c
-	stmdb	sp!, {r4, r5}
+	push	{r4, r5}
 
 .Lmemcpy_srcul3loop16:
 #ifdef __ARMEB__
@@ -307,7 +311,7 @@ ENTRY(memcpy)
 	stmia	r0!, {r3-r5, r12}
 	subs	r2, r2, #0x10
 	bge	.Lmemcpy_srcul3loop16
-	ldmia	sp!, {r4, r5}
+	pop	{r4, r5}
 	adds	r2, r2, #0x0c
 	blt	.Lmemcpy_srcul3l4
 
@@ -330,3 +334,4 @@ ENTRY(memcpy)
 .Lmemcpy_srcul3l4:
 	sub	r1, r1, #1
 	b	.Lmemcpy_l4
+END(memcpy)

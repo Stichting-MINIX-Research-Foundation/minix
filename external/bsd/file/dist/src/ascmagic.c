@@ -1,4 +1,4 @@
-/*	$NetBSD: ascmagic.c,v 1.1.1.3 2012/02/22 17:48:22 christos Exp $	*/
+/*	$NetBSD: ascmagic.c,v 1.1.1.4 2013/01/03 16:27:52 christos Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -38,9 +38,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)$File: ascmagic.c,v 1.84 2011/12/08 12:38:24 rrt Exp $")
+FILE_RCSID("@(#)$File: ascmagic.c,v 1.85 2012/08/09 16:33:15 christos Exp $")
 #else
-__RCSID("$NetBSD: ascmagic.c,v 1.1.1.3 2012/02/22 17:48:22 christos Exp $");
+__RCSID("$NetBSD: ascmagic.c,v 1.1.1.4 2013/01/03 16:27:52 christos Exp $");
 #endif
 #endif	/* lint */
 
@@ -140,7 +140,7 @@ file_ascmagic_with_encoding(struct magic_set *ms, const unsigned char *buf,
 		goto done;
 	}
 
-	if ((ms->flags & MAGIC_NO_CHECK_SOFT) == 0) {
+	if (ulen > 0 && (ms->flags & MAGIC_NO_CHECK_SOFT) == 0) {
 		/* Convert ubuf to UTF-8 and try text soft magic */
 		/* malloc size is a conservative overestimate; could be
 		   improved, or at least realloced after conversion. */

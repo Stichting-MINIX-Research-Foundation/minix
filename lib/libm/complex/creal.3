@@ -1,63 +1,52 @@
-.\" $NetBSD: creal.3,v 1.3 2010/09/15 18:40:27 wiz Exp $
+.\" $NetBSD: creal.3,v 1.4 2012/12/27 21:34:10 wiz Exp $
 .\" Copyright (c) 2001-2003 The Open Group, All Rights Reserved
-.TH "CREAL" 3P 2003 "IEEE/The Open Group" "POSIX Programmer's Manual"
-.\" creal
-.SH NAME
-creal, crealf \- complex real functions
-.SH SYNOPSIS
-.LP
-\fB#include <complex.h>
-.br
-.sp
-double creal(double complex\fP \fIz\fP\fB);
-.br
-float crealf(float complex\fP \fIz\fP\fB);
-.br
-long double creall(long double complex\fP \fIz\fP\fB);
-.br
-\fP
-.SH DESCRIPTION
-.LP
-These functions compute the real part of \fIz\fP.
-.SH RETURN VALUE
-.LP
+.Dd December 27, 2012
+.Dt CREAL 3
+.Os
+.Sh NAME
+.Nm creal ,
+.Nm crealf ,
+.Nm creall
+.Nd complex real functions
+.Sh SYNOPSIS
+.In complex.h
+.Ft double
+.Fn creal "double complex z"
+.Ft float
+.Fn crealf "float complex z"
+.Ft long double
+.Fn creall "long double complex z"
+.Sh DESCRIPTION
+These functions compute the real part of
+.Ar z .
+.Sh RETURN VALUES
 These functions return the real part value.
-.SH ERRORS
-.LP
+.Sh ERRORS
 No errors are defined.
-.LP
-\fIThe following sections are informative.\fP
-.SH EXAMPLES
-.LP
-None.
-.SH APPLICATION USAGE
-.LP
-For a variable \fIz\fP of type \fBcomplex\fP:
-.sp
-.RS
-.nf
-
-\fBz == creal(z) + cimag(z)*I
-\fP
-.fi
-.RE
-.SH RATIONALE
-.LP
-None.
-.SH FUTURE DIRECTIONS
-.LP
-None.
-.SH SEE ALSO
-.LP
-\fIcarg\fP(), \fIcimag\fP(), \fIconj\fP(), \fIcproj\fP(), the
-Base Definitions volume of IEEE\ Std\ 1003.1-2001, \fI<complex.h>\fP
-.SH COPYRIGHT
+.Sh APPLICATION USAGE
+For a variable
+.Ar z
+of type
+.Vt complex :
+.Bd -literal -offset indent
+z == creal(z) + cimag(z)*I
+.Ed
+.Sh SEE ALSO
+.Xr carg 3 ,
+.Xr cimag 3 ,
+.Xr conj 3 ,
+.Xr cproj 3 ,
+.St -p1003.1-2001
+.Aq Pa complex.h
+.Sh COPYRIGHT
 Portions of this text are reprinted and reproduced in electronic form
 from IEEE Std 1003.1, 2003 Edition, Standard for Information Technology
 -- Portable Operating System Interface (POSIX), The Open Group Base
 Specifications Issue 6, Copyright (C) 2001-2003 by the Institute of
-Electrical and Electronics Engineers, Inc and The Open Group. In the
+Electrical and Electronics Engineers, Inc and The Open Group.
+In the
 event of any discrepancy between this version and the original IEEE and
 The Open Group Standard, the original IEEE and The Open Group Standard
-is the referee document. The original Standard can be obtained online at
+is the referee document.
+The original Standard can be obtained online at
 http://www.opengroup.org/unix/online.html .

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_bmap.c,v 1.49 2011/03/06 17:08:39 bouyer Exp $	*/
+/*	$NetBSD: ufs_bmap.c,v 1.50 2013/01/22 09:39:18 dholland Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_bmap.c,v 1.49 2011/03/06 17:08:39 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_bmap.c,v 1.50 2013/01/22 09:39:18 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,7 +122,7 @@ ufs_bmaparray(struct vnode *vp, daddr_t bn, daddr_t *bnp, struct indir *ap,
 	struct buf *bp, *cbp;
 	struct ufsmount *ump;
 	struct mount *mp;
-	struct indir a[NIADDR + 1], *xap;
+	struct indir a[UFS_NIADDR + 1], *xap;
 	daddr_t daddr;
 	daddr_t metalbn;
 	int error, maxrun = 0, num;
@@ -146,7 +146,7 @@ ufs_bmaparray(struct vnode *vp, daddr_t bn, daddr_t *bnp, struct indir *ap,
 		maxrun = MAXPHYS / mp->mnt_stat.f_iosize - 1;
 	}
 
-	if (bn >= 0 && bn < NDADDR) {
+	if (bn >= 0 && bn < UFS_NDADDR) {
 		if (nump != NULL)
 			*nump = 0;
 		if (ump->um_fstype == UFS1)
@@ -177,7 +177,7 @@ ufs_bmaparray(struct vnode *vp, daddr_t bn, daddr_t *bnp, struct indir *ap,
 			}
 		} else if (runp) {
 			if (ump->um_fstype == UFS1) {
-				for (++bn; bn < NDADDR && *runp < maxrun &&
+				for (++bn; bn < UFS_NDADDR && *runp < maxrun &&
 				    is_sequential(ump,
 				        ufs_rw32(ip->i_ffs1_db[bn - 1],
 				            UFS_MPNEEDSWAP(ump)),
@@ -185,7 +185,7 @@ ufs_bmaparray(struct vnode *vp, daddr_t bn, daddr_t *bnp, struct indir *ap,
 				            UFS_MPNEEDSWAP(ump)));
 				    ++bn, ++*runp);
 			} else {
-				for (++bn; bn < NDADDR && *runp < maxrun &&
+				for (++bn; bn < UFS_NDADDR && *runp < maxrun &&
 				    is_sequential(ump,
 				        ufs_rw64(ip->i_ffs2_db[bn - 1],
 				            UFS_MPNEEDSWAP(ump)),
@@ -349,17 +349,17 @@ ufs_getlbns(struct vnode *vp, daddr_t bn, struct indir *ap, int *nump)
 	realbn = bn;
 	if (bn < 0)
 		bn = -bn;
-	KASSERT(bn >= NDADDR);
+	KASSERT(bn >= UFS_NDADDR);
 
 	/*
 	 * Determine the number of levels of indirection.  After this loop
 	 * is done, blockcnt indicates the number of data blocks possible
-	 * at the given level of indirection, and NIADDR - i is the number
+	 * at the given level of indirection, and UFS_NIADDR - i is the number
 	 * of levels of indirection needed to locate the requested block.
 	 */
 
-	bn -= NDADDR;
-	for (lbc = 0, i = NIADDR;; i--, bn -= blockcnt) {
+	bn -= UFS_NDADDR;
+	for (lbc = 0, i = UFS_NIADDR;; i--, bn -= blockcnt) {
 		if (i == 0)
 			return (EFBIG);
 
@@ -371,7 +371,7 @@ ufs_getlbns(struct vnode *vp, daddr_t bn, struct indir *ap, int *nump)
 	}
 
 	/* Calculate the address of the first meta-block. */
-	metalbn = -((realbn >= 0 ? realbn : -realbn) - bn + NIADDR - i);
+	metalbn = -((realbn >= 0 ? realbn : -realbn) - bn + UFS_NIADDR - i);
 
 	/*
 	 * At each iteration, off is the offset into the bap array which is
@@ -380,10 +380,10 @@ ufs_getlbns(struct vnode *vp, daddr_t bn, struct indir *ap, int *nump)
 	 * into the argument array.
 	 */
 	ap->in_lbn = metalbn;
-	ap->in_off = off = NIADDR - i;
+	ap->in_off = off = UFS_NIADDR - i;
 	ap->in_exists = 0;
 	ap++;
-	for (++numlevels; i <= NIADDR; i++) {
+	for (++numlevels; i <= UFS_NIADDR; i++) {
 		/* If searching for a meta-data block, quit when found. */
 		if (metalbn == realbn)
 			break;

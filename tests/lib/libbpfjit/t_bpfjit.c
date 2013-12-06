@@ -1,4 +1,4 @@
-/*	$NetBSD: t_bpfjit.c,v 1.1 2012/11/11 17:37:34 alnsn Exp $ */
+/*	$NetBSD: t_bpfjit.c,v 1.2 2013/11/15 00:12:45 rmind Exp $ */
 
 /*-
  * Copyright (c) 2011-2012 Alexander Nasonov.
@@ -30,17 +30,22 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_bpfjit.c,v 1.1 2012/11/11 17:37:34 alnsn Exp $");
-
-#include <net/bpfjit.h>
+__RCSID("$NetBSD: t_bpfjit.c,v 1.2 2013/11/15 00:12:45 rmind Exp $");
 
 #include <atf-c.h>
 #include <stdint.h>
 #include <string.h>
 
+#define	__BPF_PRIVATE
+#include <net/bpf.h>
+#include <net/bpfjit.h>
+
 static uint8_t deadbeef_at_5[16] = {
 	0, 0xf1, 2, 0xf3, 4, 0xde, 0xad, 0xbe, 0xef, 0xff
 };
+
+static bpf_ctx_t bc_zeroed;
+static bpf_ctx_t *bc = &bc_zeroed;
 
 ATF_TC(bpfjit_empty);
 ATF_TC_HEAD(bpfjit_empty, tc)
@@ -53,7 +58,7 @@ ATF_TC_BODY(bpfjit_empty, tc)
 {
 	struct bpf_insn dummy;
 
-	ATF_CHECK(bpfjit_generate_code(&dummy, 0) == NULL);
+	ATF_CHECK(bpfjit_generate_code(bc, &dummy, 0) == NULL);
 }
 
 ATF_TC(bpfjit_alu_add_k);
@@ -71,14 +76,14 @@ ATF_TC_BODY(bpfjit_alu_add_k, tc)
 		BPF_STMT(BPF_RET+BPF_A, 0)
 	};
 
-	bpfjit_function_t code;
+	bpfjit_func_t code;
 	uint8_t pkt[1]; /* the program doesn't read any data */
 
 	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(insns, insn_count);
+	code = bpfjit_generate_code(bc, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	ATF_CHECK(code(pkt, 1, 1) == 5);
@@ -101,14 +106,14 @@ ATF_TC_BODY(bpfjit_alu_sub_k, tc)
 		BPF_STMT(BPF_RET+BPF_A, 0)
 	};
 
-	bpfjit_function_t code;
+	bpfjit_func_t code;
 	uint8_t pkt[1]; /* the program doesn't read any data */
 
 	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(insns, insn_count);
+	code = bpfjit_generate_code(bc, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	ATF_CHECK(code(pkt, 1, 1) == UINT32_MAX);
@@ -131,14 +136,14 @@ ATF_TC_BODY(bpfjit_alu_mul_k, tc)
 		BPF_STMT(BPF_RET+BPF_A, 0)
 	};
 
-	bpfjit_function_t code;
+	bpfjit_func_t code;
 	uint8_t pkt[1]; /* the program doesn't read any data */
 
 	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(insns, insn_count);
+	code = bpfjit_generate_code(bc, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	ATF_CHECK(code(pkt, 1, 1) == UINT32_C(0xfffffffd));
@@ -160,14 +165,14 @@ ATF_TC_BODY(bpfjit_alu_div0_k, tc)
 		BPF_STMT(BPF_RET+BPF_A, 0)
 	};
 
-	bpfjit_function_t code;
+	bpfjit_func_t code;
 	uint8_t pkt[1]; /* the program doesn't read any data */
 
 	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
 
 	//ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(insns, insn_count);
+	code = bpfjit_generate_code(bc, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	ATF_CHECK(code(pkt, 1, 1) == 0);
@@ -190,14 +195,14 @@ ATF_TC_BODY(bpfjit_alu_div1_k, tc)
 		BPF_STMT(BPF_RET+BPF_A, 0)
 	};
 
-	bpfjit_function_t code;
+	bpfjit_func_t code;
 	uint8_t pkt[1]; /* the program doesn't read any data */
 
 	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(insns, insn_count);
+	code = bpfjit_generate_code(bc, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	ATF_CHECK(code(pkt, 1, 1) == 7);
@@ -220,14 +225,14 @@ ATF_TC_BODY(bpfjit_alu_div2_k, tc)
 		BPF_STMT(BPF_RET+BPF_A, 0)
 	};
 
-	bpfjit_function_t code;
+	bpfjit_func_t code;
 	uint8_t pkt[1]; /* the program doesn't read any data */
 
 	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(insns, insn_count);
+	code = bpfjit_generate_code(bc, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	ATF_CHECK(code(pkt, 1, 1) == 3);
@@ -250,14 +255,14 @@ ATF_TC_BODY(bpfjit_alu_div4_k, tc)
 		BPF_STMT(BPF_RET+BPF_A, 0)
 	};
 
-	bpfjit_function_t code;
+	bpfjit_func_t code;
 	uint8_t pkt[1]; /* the program doesn't read any data */
 
 	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(insns, insn_count);
+	code = bpfjit_generate_code(bc, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	ATF_CHECK(code(pkt, 1, 1) == UINT32_C(0x3fffffff));
@@ -280,14 +285,14 @@ ATF_TC_BODY(bpfjit_alu_div10_k, tc)
 		BPF_STMT(BPF_RET+BPF_A, 0)
 	};
 
-	bpfjit_function_t code;
+	bpfjit_func_t code;
 	uint8_t pkt[1]; /* the program doesn't read any data */
 
 	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(insns, insn_count);
+	code = bpfjit_generate_code(bc, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	ATF_CHECK(code(pkt, 1, 1) == UINT32_C(429484384));
@@ -310,14 +315,14 @@ ATF_TC_BODY(bpfjit_alu_div10000_k, tc)
 		BPF_STMT(BPF_RET+BPF_A, 0)
 	};
 
-	bpfjit_function_t code;
+	bpfjit_func_t code;
 	uint8_t pkt[1]; /* the program doesn't read any data */
 
 	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(insns, insn_count);
+	code = bpfjit_generate_code(bc, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	ATF_CHECK(code(pkt, 1, 1) == UINT32_C(429484));
@@ -340,14 +345,14 @@ ATF_TC_BODY(bpfjit_alu_div7609801_k, tc)
 		BPF_STMT(BPF_RET+BPF_A, 0)
 	};
 
-	bpfjit_function_t code;
+	bpfjit_func_t code;
 	uint8_t pkt[1]; /* the program doesn't read any data */
 
 	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(insns, insn_count);
+	code = bpfjit_generate_code(bc, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	ATF_CHECK(code(pkt, 1, 1) == 564);
@@ -370,14 +375,14 @@ ATF_TC_BODY(bpfjit_alu_div80000000_k, tc)
 		BPF_STMT(BPF_RET+BPF_A, 0)
 	};
 
-	bpfjit_function_t code;
+	bpfjit_func_t code;
 	uint8_t pkt[1]; /* the program doesn't read any data */
 
 	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(insns, insn_count);
+	code = bpfjit_generate_code(bc, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	ATF_CHECK(code(pkt, 1, 1) == 1);
@@ -400,14 +405,14 @@ ATF_TC_BODY(bpfjit_alu_and_k, tc)
 		BPF_STMT(BPF_RET+BPF_A, 0)
 	};
 
-	bpfjit_function_t code;
+	bpfjit_func_t code;
 	uint8_t pkt[1]; /* the program doesn't read any data */
 
 	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(insns, insn_count);
+	code = bpfjit_generate_code(bc, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	ATF_CHECK(code(pkt, 1, 1) == (0xdead&0xbeef));
@@ -430,14 +435,14 @@ ATF_TC_BODY(bpfjit_alu_or_k, tc)
 		BPF_STMT(BPF_RET+BPF_A, 0)
 	};
 
-	bpfjit_function_t code;
+	bpfjit_func_t code;
 	uint8_t pkt[1]; /* the program doesn't read any data */
 
 	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(insns, insn_count);
+	code = bpfjit_generate_code(bc, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	ATF_CHECK(code(pkt, 1, 1) == 0xdeadbeef);
@@ -460,14 +465,14 @@ ATF_TC_BODY(bpfjit_alu_lsh_k, tc)
 		BPF_STMT(BPF_RET+BPF_A, 0)
 	};
 
-	bpfjit_function_t code;
+	bpfjit_func_t code;
 	uint8_t pkt[1]; /* the program doesn't read any data */
 
 	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(insns, insn_count);
+	code = bpfjit_generate_code(bc, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	ATF_CHECK(code(pkt, 1, 1) == 0xbeef0000);
@@ -490,14 +495,14 @@ ATF_TC_BODY(bpfjit_alu_lsh0_k, tc)
 		BPF_STMT(BPF_RET+BPF_A, 0)
 	};
 
-	bpfjit_function_t code;
+	bpfjit_func_t code;
 	uint8_t pkt[1]; /* the program doesn't read any data */
 
 	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(insns, insn_count);
+	code = bpfjit_generate_code(bc, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	ATF_CHECK(code(pkt, 1, 1) == 0xdeadbeef);
@@ -520,14 +525,14 @@ ATF_TC_BODY(bpfjit_alu_rsh_k, tc)
 		BPF_STMT(BPF_RET+BPF_A, 0)
 	};
 
-	bpfjit_function_t code;
+	bpfjit_func_t code;
 	uint8_t pkt[1]; /* the program doesn't read any data */
 
 	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(insns, insn_count);
+	code = bpfjit_generate_code(bc, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	ATF_CHECK(code(pkt, 1, 1) == 0x0000dead);
@@ -550,14 +555,14 @@ ATF_TC_BODY(bpfjit_alu_rsh0_k, tc)
 		BPF_STMT(BPF_RET+BPF_A, 0)
 	};
 
-	bpfjit_function_t code;
+	bpfjit_func_t code;
 	uint8_t pkt[1]; /* the program doesn't read any data */
 
 	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(insns, insn_count);
+	code = bpfjit_generate_code(bc, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	ATF_CHECK(code(pkt, 1, 1) == 0xdeadbeef);
@@ -612,14 +617,14 @@ ATF_TC_BODY(bpfjit_alu_modulo_k, tc)
 		BPF_STMT(BPF_RET+BPF_A, 0)
 	};
 
-	bpfjit_function_t code;
+	bpfjit_func_t code;
 	uint8_t pkt[1]; /* the program doesn't read any data */
 
 	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(insns, insn_count);
+	code = bpfjit_generate_code(bc, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	ATF_CHECK(code(pkt, 1, 1) != UINT32_C(0x71cbbbc3));
@@ -645,14 +650,14 @@ ATF_TC_BODY(bpfjit_alu_add_x, tc)
 		BPF_STMT(BPF_RET+BPF_A, 0)
 	};
 
-	bpfjit_function_t code;
+	bpfjit_func_t code;
 	uint8_t pkt[1]; /* the program doesn't read any data */
 
 	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(insns, insn_count);
+	code = bpfjit_generate_code(bc, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	ATF_CHECK(code(pkt, 1, 1) == 5);
@@ -676,14 +681,14 @@ ATF_TC_BODY(bpfjit_alu_sub_x, tc)
 		BPF_STMT(BPF_RET+BPF_A, 0)
 	};
 
-	bpfjit_function_t code;
+	bpfjit_func_t code;
 	uint8_t pkt[1]; /* the program doesn't read any data */
 
 	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(insns, insn_count);
+	code = bpfjit_generate_code(bc, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	ATF_CHECK(code(pkt, 1, 1) == UINT32_MAX);
@@ -707,14 +712,14 @@ ATF_TC_BODY(bpfjit_alu_mul_x, tc)
 		BPF_STMT(BPF_RET+BPF_A, 0)
 	};
 
-	bpfjit_function_t code;
+	bpfjit_func_t code;
 	uint8_t pkt[1]; /* the program doesn't read any data */
 
 	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(insns, insn_count);
+	code = bpfjit_generate_code(bc, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	ATF_CHECK(code(pkt, 1, 1) == UINT32_C(0xfffffffd));
@@ -737,14 +742,14 @@ ATF_TC_BODY(bpfjit_alu_div0_x, tc)
 		BPF_STMT(BPF_RET+BPF_A, 0)
 	};
 
-	bpfjit_function_t code;
+	bpfjit_func_t code;
 	uint8_t pkt[1]; /* the program doesn't read any data */
 
 	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(insns, insn_count);
+	code = bpfjit_generate_code(bc, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	ATF_CHECK(code(pkt, 1, 1) == 0);
@@ -768,14 +773,14 @@ ATF_TC_BODY(bpfjit_alu_div1_x, tc)
 		BPF_STMT(BPF_RET+BPF_A, 0)
 	};
 
-	bpfjit_function_t code;
+	bpfjit_func_t code;
 	uint8_t pkt[1]; /* the program doesn't read any data */
 
 	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(insns, insn_count);
+	code = bpfjit_generate_code(bc, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	ATF_CHECK(code(pkt, 1, 1) == 7);
@@ -799,14 +804,14 @@ ATF_TC_BODY(bpfjit_alu_div2_x, tc)
 		BPF_STMT(BPF_RET+BPF_A, 0)
 	};
 
-	bpfjit_function_t code;
+	bpfjit_func_t code;
 	uint8_t pkt[1]; /* the program doesn't read any data */
 
 	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(insns, insn_count);
+	code = bpfjit_generate_code(bc, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	ATF_CHECK(code(pkt, 1, 1) == 3);
@@ -830,14 +835,14 @@ ATF_TC_BODY(bpfjit_alu_div4_x, tc)
 		BPF_STMT(BPF_RET+BPF_A, 0)
 	};
 
-	bpfjit_function_t code;
+	bpfjit_func_t code;
 	uint8_t pkt[1]; /* the program doesn't read any data */
 
 	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(insns, insn_count);
+	code = bpfjit_generate_code(bc, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	ATF_CHECK(code(pkt, 1, 1) == UINT32_C(0x3fffffff));
@@ -861,14 +866,14 @@ ATF_TC_BODY(bpfjit_alu_div10_x, tc)
 		BPF_STMT(BPF_RET+BPF_A, 0)
 	};
 
-	bpfjit_function_t code;
+	bpfjit_func_t code;
 	uint8_t pkt[1]; /* the program doesn't read any data */
 
 	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(insns, insn_count);
+	code = bpfjit_generate_code(bc, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	ATF_CHECK(code(pkt, 1, 1) == UINT32_C(429484384));
@@ -892,14 +897,14 @@ ATF_TC_BODY(bpfjit_alu_div10000_x, tc)
 		BPF_STMT(BPF_RET+BPF_A, 0)
 	};
 
-	bpfjit_function_t code;
+	bpfjit_func_t code;
 	uint8_t pkt[1]; /* the program doesn't read any data */
 
 	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(insns, insn_count);
+	code = bpfjit_generate_code(bc, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	ATF_CHECK(code(pkt, 1, 1) == UINT32_C(429484));
@@ -923,14 +928,14 @@ ATF_TC_BODY(bpfjit_alu_div7609801_x, tc)
 		BPF_STMT(BPF_RET+BPF_A, 0)
 	};
 
-	bpfjit_function_t code;
+	bpfjit_func_t code;
 	uint8_t pkt[1]; /* the program doesn't read any data */
 
 	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(insns, insn_count);
+	code = bpfjit_generate_code(bc, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	ATF_CHECK(code(pkt, 1, 1) == 564);
@@ -954,14 +959,14 @@ ATF_TC_BODY(bpfjit_alu_div80000000_x, tc)
 		BPF_STMT(BPF_RET+BPF_A, 0)
 	};
 
-	bpfjit_function_t code;
+	bpfjit_func_t code;
 	uint8_t pkt[1]; /* the program doesn't read any data */
 
 	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(insns, insn_count);
+	code = bpfjit_generate_code(bc, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	ATF_CHECK(code(pkt, 1, 1) == 1);
@@ -985,14 +990,14 @@ ATF_TC_BODY(bpfjit_alu_and_x, tc)
 		BPF_STMT(BPF_RET+BPF_A, 0)
 	};
 
-	bpfjit_function_t code;
+	bpfjit_func_t code;
 	uint8_t pkt[1]; /* the program doesn't read any data */
 
 	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(insns, insn_count);
+	code = bpfjit_generate_code(bc, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	ATF_CHECK(code(pkt, 1, 1) == (0xdead&0xbeef));
@@ -1016,14 +1021,14 @@ ATF_TC_BODY(bpfjit_alu_or_x, tc)
 		BPF_STMT(BPF_RET+BPF_A, 0)
 	};
 
-	bpfjit_function_t code;
+	bpfjit_func_t code;
 	uint8_t pkt[1]; /* the program doesn't read any data */
 
 	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(insns, insn_count);
+	code = bpfjit_generate_code(bc, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	ATF_CHECK(code(pkt, 1, 1) == 0xdeadbeef);
@@ -1047,14 +1052,14 @@ ATF_TC_BODY(bpfjit_alu_lsh_x, tc)
 		BPF_STMT(BPF_RET+BPF_A, 0)
 	};
 
-	bpfjit_function_t code;
+	bpfjit_func_t code;
 	uint8_t pkt[1]; /* the program doesn't read any data */
 
 	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(insns, insn_count);
+	code = bpfjit_generate_code(bc, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	ATF_CHECK(code(pkt, 1, 1) == 0xbeef0000);
@@ -1078,14 +1083,14 @@ ATF_TC_BODY(bpfjit_alu_lsh0_x, tc)
 		BPF_STMT(BPF_RET+BPF_A, 0)
 	};
 
-	bpfjit_function_t code;
+	bpfjit_func_t code;
 	uint8_t pkt[1]; /* the program doesn't read any data */
 
 	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(insns, insn_count);
+	code = bpfjit_generate_code(bc, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	ATF_CHECK(code(pkt, 1, 1) == 0xdeadbeef);
@@ -1109,14 +1114,14 @@ ATF_TC_BODY(bpfjit_alu_rsh_x, tc)
 		BPF_STMT(BPF_RET+BPF_A, 0)
 	};
 
-	bpfjit_function_t code;
+	bpfjit_func_t code;
 	uint8_t pkt[1]; /* the program doesn't read any data */
 
 	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(insns, insn_count);
+	code = bpfjit_generate_code(bc, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	ATF_CHECK(code(pkt, 1, 1) == 0x0000dead);
@@ -1140,14 +1145,14 @@ ATF_TC_BODY(bpfjit_alu_rsh0_x, tc)
 		BPF_STMT(BPF_RET+BPF_A, 0)
 	};
 
-	bpfjit_function_t code;
+	bpfjit_func_t code;
 	uint8_t pkt[1]; /* the program doesn't read any data */
 
 	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(insns, insn_count);
+	code = bpfjit_generate_code(bc, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	ATF_CHECK(code(pkt, 1, 1) == 0xdeadbeef);
@@ -1211,14 +1216,14 @@ ATF_TC_BODY(bpfjit_alu_modulo_x, tc)
 		BPF_STMT(BPF_RET+BPF_A, 0)
 	};
 
-	bpfjit_function_t code;
+	bpfjit_func_t code;
 	uint8_t pkt[1]; /* the program doesn't read any data */
 
 	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(insns, insn_count);
+	code = bpfjit_generate_code(bc, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	ATF_CHECK(code(pkt, 1, 1) != UINT32_C(0x71cbbbc3));
@@ -1243,14 +1248,14 @@ ATF_TC_BODY(bpfjit_alu_neg, tc)
 		BPF_STMT(BPF_RET+BPF_A, 0)
 	};
 
-	bpfjit_function_t code;
+	bpfjit_func_t code;
 	uint8_t pkt[1]; /* the program doesn't read any data */
 
 	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(insns, insn_count);
+	code = bpfjit_generate_code(bc, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	ATF_CHECK(code(pkt, 1, 1) == 0u-777u);
@@ -1276,14 +1281,14 @@ ATF_TC_BODY(bpfjit_jmp_ja, tc)
 		BPF_STMT(BPF_RET+BPF_K, 3),
 	};
 
-	bpfjit_function_t code;
+	bpfjit_func_t code;
 	uint8_t pkt[1]; /* the program doesn't read any data */
 
 	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(insns, insn_count);
+	code = bpfjit_generate_code(bc, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	ATF_CHECK(code(pkt, 1, 1) == UINT32_MAX);
@@ -1320,14 +1325,14 @@ ATF_TC_BODY(bpfjit_jmp_jgt_k, tc)
 		BPF_STMT(BPF_RET+BPF_K, 8)
 	};
 
-	bpfjit_function_t code;
+	bpfjit_func_t code;
 	uint8_t pkt[8]; /* the program doesn't read any data */
 
 	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(insns, insn_count);
+	code = bpfjit_generate_code(bc, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	ATF_CHECK(code(pkt, 1, 1) == 1);
@@ -1371,14 +1376,14 @@ ATF_TC_BODY(bpfjit_jmp_jge_k, tc)
 		BPF_STMT(BPF_RET+BPF_K, 8)
 	};
 
-	bpfjit_function_t code;
+	bpfjit_func_t code;
 	uint8_t pkt[8]; /* the program doesn't read any data */
 
 	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(insns, insn_count);
+	code = bpfjit_generate_code(bc, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	ATF_CHECK(code(pkt, 1, 1) == 1);
@@ -1422,14 +1427,14 @@ ATF_TC_BODY(bpfjit_jmp_jeq_k, tc)
 		BPF_STMT(BPF_RET+BPF_K, 8)
 	};
 
-	bpfjit_function_t code;
+	bpfjit_func_t code;
 	uint8_t pkt[8]; /* the program doesn't read any data */
 
 	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(insns, insn_count);
+	code = bpfjit_generate_code(bc, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	ATF_CHECK(code(pkt, 1, 1) == 7);
@@ -1473,14 +1478,14 @@ ATF_TC_BODY(bpfjit_jmp_jset_k, tc)
 		BPF_STMT(BPF_RET+BPF_K, 8)
 	};
 
-	bpfjit_function_t code;
+	bpfjit_func_t code;
 	uint8_t pkt[8]; /* the program doesn't read any data */
 
 	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(insns, insn_count);
+	code = bpfjit_generate_code(bc, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	ATF_CHECK(code(pkt, 1, 1) == 1);
@@ -1535,14 +1540,14 @@ ATF_TC_BODY(bpfjit_jmp_modulo_k, tc)
 		BPF_STMT(BPF_RET+BPF_K, 7)
 	};
 
-	bpfjit_function_t code;
+	bpfjit_func_t code;
 	uint8_t pkt[1]; /* the program doesn't read any data */
 
 	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(insns, insn_count);
+	code = bpfjit_generate_code(bc, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	ATF_CHECK(code(pkt, 1, 1) == UINT32_MAX);
@@ -1586,14 +1591,14 @@ ATF_TC_BODY(bpfjit_jmp_jgt_x, tc)
 		BPF_STMT(BPF_RET+BPF_K, 8)
 	};
 
-	bpfjit_function_t code;
+	bpfjit_func_t code;
 	uint8_t pkt[8]; /* the program doesn't read any data */
 
 	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(insns, insn_count);
+	code = bpfjit_generate_code(bc, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	ATF_CHECK(code(pkt, 1, 1) == 1);
@@ -1644,14 +1649,14 @@ ATF_TC_BODY(bpfjit_jmp_jge_x, tc)
 		BPF_STMT(BPF_RET+BPF_K, 8)
 	};
 
-	bpfjit_function_t code;
+	bpfjit_func_t code;
 	uint8_t pkt[8]; /* the program doesn't read any data */
 
 	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(insns, insn_count);
+	code = bpfjit_generate_code(bc, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	ATF_CHECK(code(pkt, 1, 1) == 1);
@@ -1701,14 +1706,14 @@ ATF_TC_BODY(bpfjit_jmp_jeq_x, tc)
 		BPF_STMT(BPF_RET+BPF_K, 8)
 	};
 
-	bpfjit_function_t code;
+	bpfjit_func_t code;
 	uint8_t pkt[8]; /* the program doesn't read any data */
 
 	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(insns, insn_count);
+	code = bpfjit_generate_code(bc, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	ATF_CHECK(code(pkt, 1, 1) == 7);
@@ -1758,14 +1763,14 @@ ATF_TC_BODY(bpfjit_jmp_jset_x, tc)
 		BPF_STMT(BPF_RET+BPF_K, 8)
 	};
 
-	bpfjit_function_t code;
+	bpfjit_func_t code;
 	uint8_t pkt[8]; /* the program doesn't read any data */
 
 	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(insns, insn_count);
+	code = bpfjit_generate_code(bc, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	ATF_CHECK(code(pkt, 1, 1) == 1);
@@ -1830,14 +1835,14 @@ ATF_TC_BODY(bpfjit_jmp_modulo_x, tc)
 		BPF_STMT(BPF_RET+BPF_K, 7)
 	};
 
-	bpfjit_function_t code;
+	bpfjit_func_t code;
 	uint8_t pkt[1]; /* the program doesn't read any data */
 
 	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(insns, insn_count);
+	code = bpfjit_generate_code(bc, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	ATF_CHECK(code(pkt, 1, 1) == UINT32_MAX);
@@ -1879,11 +1884,11 @@ ATF_TC_BODY(bpfjit_ld_abs, tc)
 	size_t insn_count = sizeof(insns[0]) / sizeof(insns[0][0]);
 
 	for (i = 0; i < 3; i++) {
-		bpfjit_function_t code;
+		bpfjit_func_t code;
 
 		ATF_CHECK(bpf_validate(insns[i], insn_count));
 
-		code = bpfjit_generate_code(insns[i], insn_count);
+		code = bpfjit_generate_code(bc, insns[i], insn_count);
 		ATF_REQUIRE(code != NULL);
 
 		for (l = 0; l < 5 + lengths[i]; l++) {
@@ -1980,11 +1985,11 @@ ATF_TC_BODY(bpfjit_ld_abs_k_overflow, tc)
 	size_t insn_count = sizeof(insns[0]) / sizeof(insns[0][0]);
 
 	for (i = 0; i < 3; i++) {
-		bpfjit_function_t code;
+		bpfjit_func_t code;
 
 		ATF_CHECK(bpf_validate(insns[i], insn_count));
 
-		code = bpfjit_generate_code(insns[i], insn_count);
+		code = bpfjit_generate_code(bc, insns[i], insn_count);
 		ATF_REQUIRE(code != NULL);
 
 		ATF_CHECK(code(pkt, 8, 8) == 0);
@@ -2049,11 +2054,11 @@ ATF_TC_BODY(bpfjit_ld_ind, tc)
 	size_t insn_count = sizeof(insns[0]) / sizeof(insns[0][0]);
 
 	for (i = 0; i < 3; i++) {
-		bpfjit_function_t code;
+		bpfjit_func_t code;
 
 		ATF_CHECK(bpf_validate(insns[i], insn_count));
 
-		code = bpfjit_generate_code(insns[i], insn_count);
+		code = bpfjit_generate_code(bc, insns[i], insn_count);
 		ATF_REQUIRE(code != NULL);
 
 		for (l = 0; l < 5 + lengths[i]; l++) {
@@ -2150,11 +2155,11 @@ ATF_TC_BODY(bpfjit_ld_ind_k_overflow, tc)
 	size_t insn_count = sizeof(insns[0]) / sizeof(insns[0][0]);
 
 	for (i = 0; i < 3; i++) {
-		bpfjit_function_t code;
+		bpfjit_func_t code;
 
 		ATF_CHECK(bpf_validate(insns[i], insn_count));
 
-		code = bpfjit_generate_code(insns[i], insn_count);
+		code = bpfjit_generate_code(bc, insns[i], insn_count);
 		ATF_REQUIRE(code != NULL);
 
 		ATF_CHECK(code(pkt, 8, 8) == 0);
@@ -2181,14 +2186,14 @@ ATF_TC_BODY(bpfjit_ld_ind_x_overflow1, tc)
 	};
 
 	size_t i;
-	bpfjit_function_t code;
+	bpfjit_func_t code;
 	uint8_t pkt[8] = { 10, 20, 30, 40, 50, 60, 70, 80 };
 
 	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(insns, insn_count);
+	code = bpfjit_generate_code(bc, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	for (i = 1; i <= sizeof(pkt); i++) {
@@ -2218,14 +2223,14 @@ ATF_TC_BODY(bpfjit_ld_ind_x_overflow2, tc)
 	};
 
 	size_t i;
-	bpfjit_function_t code;
+	bpfjit_func_t code;
 	uint8_t pkt[8] = { 10, 20, 30, 40, 50, 60, 70, 80 };
 
 	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(insns, insn_count);
+	code = bpfjit_generate_code(bc, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	for (i = 1; i <= sizeof(pkt); i++) {
@@ -2251,14 +2256,14 @@ ATF_TC_BODY(bpfjit_ld_len, tc)
 	};
 
 	size_t i;
-	bpfjit_function_t code;
+	bpfjit_func_t code;
 	uint8_t pkt[32]; /* the program doesn't read any data */
 
 	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(insns, insn_count);
+	code = bpfjit_generate_code(bc, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	for (i = 0; i < sizeof(pkt); i++)
@@ -2281,14 +2286,14 @@ ATF_TC_BODY(bpfjit_ld_imm, tc)
 		BPF_STMT(BPF_RET+BPF_A, 0)
 	};
 
-	bpfjit_function_t code;
+	bpfjit_func_t code;
 	uint8_t pkt[1]; /* the program doesn't read any data */
 
 	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(insns, insn_count);
+	code = bpfjit_generate_code(bc, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	ATF_CHECK(code(pkt, 1, 1) == UINT32_MAX);
@@ -2311,14 +2316,14 @@ ATF_TC_BODY(bpfjit_ldx_imm1, tc)
 		BPF_STMT(BPF_RET+BPF_A, 0)
 	};
 
-	bpfjit_function_t code;
+	bpfjit_func_t code;
 	uint8_t pkt[1]; /* the program doesn't read any data */
 
 	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(insns, insn_count);
+	code = bpfjit_generate_code(bc, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	ATF_CHECK(code(pkt, 1, 1) == UINT32_MAX - 5);
@@ -2343,14 +2348,14 @@ ATF_TC_BODY(bpfjit_ldx_imm2, tc)
 		BPF_STMT(BPF_RET+BPF_K, UINT32_MAX)
 	};
 
-	bpfjit_function_t code;
+	bpfjit_func_t code;
 	uint8_t pkt[1]; /* the program doesn't read any data */
 
 	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(insns, insn_count);
+	code = bpfjit_generate_code(bc, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	ATF_CHECK(code(pkt, 1, 1) == UINT32_MAX);
@@ -2374,14 +2379,14 @@ ATF_TC_BODY(bpfjit_ldx_len1, tc)
 	};
 
 	size_t i;
-	bpfjit_function_t code;
+	bpfjit_func_t code;
 	uint8_t pkt[5]; /* the program doesn't read any data */
 
 	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(insns, insn_count);
+	code = bpfjit_generate_code(bc, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	for (i = 1; i < sizeof(pkt); i++) {
@@ -2409,14 +2414,14 @@ ATF_TC_BODY(bpfjit_ldx_len2, tc)
 		BPF_STMT(BPF_RET+BPF_K, UINT32_MAX)
 	};
 
-	bpfjit_function_t code;
+	bpfjit_func_t code;
 	uint8_t pkt[5]; /* the program doesn't read any data */
 
 	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(insns, insn_count);
+	code = bpfjit_generate_code(bc, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	ATF_CHECK(code(pkt, 5, 1) == UINT32_MAX);
@@ -2440,14 +2445,14 @@ ATF_TC_BODY(bpfjit_ldx_msh, tc)
 		BPF_STMT(BPF_RET+BPF_A, 0)
 	};
 
-	bpfjit_function_t code;
+	bpfjit_func_t code;
 	uint8_t pkt[2] = { 0, 0x7a };
 
 	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(insns, insn_count);
+	code = bpfjit_generate_code(bc, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	ATF_CHECK(code(pkt, 2, 2) == 40);
@@ -2471,14 +2476,14 @@ ATF_TC_BODY(bpfjit_misc_tax, tc)
 		BPF_STMT(BPF_RET+BPF_A, 0)
 	};
 
-	bpfjit_function_t code;
+	bpfjit_func_t code;
 	uint8_t pkt[] = { 0, 11, 22, 33, 44, 55 };
 
 	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(insns, insn_count);
+	code = bpfjit_generate_code(bc, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	ATF_CHECK(code(pkt, sizeof(pkt), sizeof(pkt)) == 55);
@@ -2501,14 +2506,14 @@ ATF_TC_BODY(bpfjit_misc_txa, tc)
 		BPF_STMT(BPF_RET+BPF_A, 0)
 	};
 
-	bpfjit_function_t code;
+	bpfjit_func_t code;
 	uint8_t pkt[1]; /* the program doesn't read any data */
 
 	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(insns, insn_count);
+	code = bpfjit_generate_code(bc, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	ATF_CHECK(code(pkt, 1, 1) == 391);
@@ -2533,14 +2538,14 @@ ATF_TC_BODY(bpfjit_st1, tc)
 	};
 
 	size_t i;
-	bpfjit_function_t code;
+	bpfjit_func_t code;
 	uint8_t pkt[16]; /* the program doesn't read any data */
 
 	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(insns, insn_count);
+	code = bpfjit_generate_code(bc, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	for (i = 1; i <= sizeof(pkt); i++)
@@ -2565,14 +2570,14 @@ ATF_TC_BODY(bpfjit_st2, tc)
 		BPF_STMT(BPF_RET+BPF_A, 0)
 	};
 
-	bpfjit_function_t code;
+	bpfjit_func_t code;
 	uint8_t pkt[1]; /* the program doesn't read any data */
 
 	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(insns, insn_count);
+	code = bpfjit_generate_code(bc, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	ATF_CHECK(code(pkt, 1, 1) == 0);
@@ -2602,7 +2607,7 @@ ATF_TC_BODY(bpfjit_st3, tc)
 		BPF_STMT(BPF_RET+BPF_A, 0)
 	};
 
-	bpfjit_function_t code;
+	bpfjit_func_t code;
 	uint8_t pkt[2]; /* the program doesn't read any data */
 
 	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
@@ -2611,7 +2616,7 @@ ATF_TC_BODY(bpfjit_st3, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(insns, insn_count);
+	code = bpfjit_generate_code(bc, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	ATF_CHECK(code(pkt, 1, 1) == 1);
@@ -2642,7 +2647,7 @@ ATF_TC_BODY(bpfjit_st4, tc)
 		BPF_STMT(BPF_RET+BPF_A, 0)
 	};
 
-	bpfjit_function_t code;
+	bpfjit_func_t code;
 	uint8_t pkt[2]; /* the program doesn't read any data */
 
 	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
@@ -2651,7 +2656,7 @@ ATF_TC_BODY(bpfjit_st4, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(insns, insn_count);
+	code = bpfjit_generate_code(bc, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	ATF_CHECK(code(pkt, 1, 1) == 1);
@@ -2673,7 +2678,7 @@ ATF_TC_BODY(bpfjit_st5, tc)
 	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
 
 	size_t k;
-	bpfjit_function_t code;
+	bpfjit_func_t code;
 	uint8_t pkt[BPF_MEMWORDS]; /* the program doesn't read any data */
 
 	memset(insns, 0, sizeof(insns));
@@ -2706,7 +2711,7 @@ ATF_TC_BODY(bpfjit_st5, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(insns, insn_count);
+	code = bpfjit_generate_code(bc, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	for (k = 1; k <= sizeof(pkt); k++)
@@ -2733,14 +2738,14 @@ ATF_TC_BODY(bpfjit_stx1, tc)
 	};
 
 	size_t i;
-	bpfjit_function_t code;
+	bpfjit_func_t code;
 	uint8_t pkt[16]; /* the program doesn't read any data */
 
 	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(insns, insn_count);
+	code = bpfjit_generate_code(bc, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	for (i = 1; i <= sizeof(pkt); i++)
@@ -2766,14 +2771,14 @@ ATF_TC_BODY(bpfjit_stx2, tc)
 		BPF_STMT(BPF_RET+BPF_A, 0)
 	};
 
-	bpfjit_function_t code;
+	bpfjit_func_t code;
 	uint8_t pkt[1]; /* the program doesn't read any data */
 
 	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(insns, insn_count);
+	code = bpfjit_generate_code(bc, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	ATF_CHECK(code(pkt, 1, 1) == 0);
@@ -2809,14 +2814,14 @@ ATF_TC_BODY(bpfjit_stx3, tc)
 	};
 
 	size_t i;
-	bpfjit_function_t code;
+	bpfjit_func_t code;
 	uint8_t pkt[16]; /* the program doesn't read any data */
 
 	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(insns, insn_count);
+	code = bpfjit_generate_code(bc, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	for (i = 1; i <= sizeof(pkt); i++)
@@ -2838,7 +2843,7 @@ ATF_TC_BODY(bpfjit_stx4, tc)
 	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
 
 	size_t k;
-	bpfjit_function_t code;
+	bpfjit_func_t code;
 	uint8_t pkt[BPF_MEMWORDS]; /* the program doesn't read any data */
 
 	memset(insns, 0, sizeof(insns));
@@ -2871,7 +2876,7 @@ ATF_TC_BODY(bpfjit_stx4, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(insns, insn_count);
+	code = bpfjit_generate_code(bc, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	for (k = 1; k <= sizeof(pkt); k++)
@@ -2905,7 +2910,7 @@ ATF_TC_BODY(bpfjit_opt_ld_abs_1, tc)
 	};
 
 	size_t i, j;
-	bpfjit_function_t code;
+	bpfjit_func_t code;
 	uint8_t pkt[2][34] = {
 		{
 			0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 0x08, 0x00,
@@ -2925,7 +2930,7 @@ ATF_TC_BODY(bpfjit_opt_ld_abs_1, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(insns, insn_count);
+	code = bpfjit_generate_code(bc, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	for (i = 0; i < 2; i++) {
@@ -2962,7 +2967,7 @@ ATF_TC_BODY(bpfjit_opt_ld_abs_2, tc)
 	};
 
 	size_t i, j;
-	bpfjit_function_t code;
+	bpfjit_func_t code;
 	uint8_t pkt[2][34] = {
 		{
 			0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 0x08, 0x00,
@@ -2982,7 +2987,7 @@ ATF_TC_BODY(bpfjit_opt_ld_abs_2, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(insns, insn_count);
+	code = bpfjit_generate_code(bc, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	for (i = 0; i < 2; i++) {
@@ -3019,7 +3024,7 @@ ATF_TC_BODY(bpfjit_opt_ld_abs_3, tc)
 	};
 
 	size_t i, j;
-	bpfjit_function_t code;
+	bpfjit_func_t code;
 	uint8_t pkt[2][34] = {
 		{
 			0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 0x08, 0x00,
@@ -3039,7 +3044,7 @@ ATF_TC_BODY(bpfjit_opt_ld_abs_3, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(insns, insn_count);
+	code = bpfjit_generate_code(bc, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	for (i = 0; i < 2; i++) {
@@ -3077,7 +3082,7 @@ ATF_TC_BODY(bpfjit_opt_ld_ind_1, tc)
 	};
 
 	size_t i, j;
-	bpfjit_function_t code;
+	bpfjit_func_t code;
 	uint8_t pkt[2][34] = {
 		{
 			0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 0x08, 0x00,
@@ -3097,7 +3102,7 @@ ATF_TC_BODY(bpfjit_opt_ld_ind_1, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(insns, insn_count);
+	code = bpfjit_generate_code(bc, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	for (i = 0; i < 2; i++) {
@@ -3135,7 +3140,7 @@ ATF_TC_BODY(bpfjit_opt_ld_ind_2, tc)
 	};
 
 	size_t i, j;
-	bpfjit_function_t code;
+	bpfjit_func_t code;
 	uint8_t pkt[2][34] = {
 		{
 			0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 0x08, 0x00,
@@ -3155,7 +3160,7 @@ ATF_TC_BODY(bpfjit_opt_ld_ind_2, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(insns, insn_count);
+	code = bpfjit_generate_code(bc, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	for (i = 0; i < 2; i++) {
@@ -3194,7 +3199,7 @@ ATF_TC_BODY(bpfjit_opt_ld_ind_3, tc)
 	};
 
 	size_t i, j;
-	bpfjit_function_t code;
+	bpfjit_func_t code;
 	uint8_t pkt[2][34] = {
 		{
 			0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 0x08, 0x00,
@@ -3214,7 +3219,7 @@ ATF_TC_BODY(bpfjit_opt_ld_ind_3, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(insns, insn_count);
+	code = bpfjit_generate_code(bc, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	for (i = 0; i < 2; i++) {
@@ -3253,7 +3258,7 @@ ATF_TC_BODY(bpfjit_opt_ld_ind_4, tc)
 	};
 
 	size_t i, j;
-	bpfjit_function_t code;
+	bpfjit_func_t code;
 	uint8_t pkt[2][34] = {
 		{
 			0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 0x08, 0x00,
@@ -3273,7 +3278,7 @@ ATF_TC_BODY(bpfjit_opt_ld_ind_4, tc)
 
 	ATF_CHECK(bpf_validate(insns, insn_count));
 
-	code = bpfjit_generate_code(insns, insn_count);
+	code = bpfjit_generate_code(bc, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
 	for (i = 0; i < 2; i++) {

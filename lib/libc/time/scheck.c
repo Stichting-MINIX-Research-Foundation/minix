@@ -1,4 +1,4 @@
-/*	$NetBSD: scheck.c,v 1.8 2010/01/02 10:42:49 tsutsui Exp $	*/
+/*	$NetBSD: scheck.c,v 1.11 2013/07/17 23:09:26 christos Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -15,7 +15,7 @@
 #if 0
 static char	elsieid[] = "@(#)scheck.c	8.19";
 #else
-__RCSID("$NetBSD: scheck.c,v 1.8 2010/01/02 10:42:49 tsutsui Exp $");
+__RCSID("$NetBSD: scheck.c,v 1.11 2013/07/17 23:09:26 christos Exp $");
 #endif
 #endif /* !defined lint */
 
@@ -24,50 +24,57 @@ __RCSID("$NetBSD: scheck.c,v 1.8 2010/01/02 10:42:49 tsutsui Exp $");
 #include "private.h"
 
 const char *
-scheck(string, format)
-const char * const	string;
-const char * const	format;
+scheck(const char *const string, const char *const format)
 {
-	register char *		fbuf;
-	register const char *	fp;
-	register char *		tp;
-	register int		c;
-	register const char *	result;
-	char			dummy;
+	char *		fbuf;
+	const char *	fp;
+	char *		tp;
+	int		c;
+	const char *	result;
+	char		dummy;
 
 	result = "";
 	if (string == NULL || format == NULL)
 		return result;
-	fbuf = imalloc((int) (2 * strlen(format) + 4));
+	fbuf = malloc(2 * strlen(format) + 4);
 	if (fbuf == NULL)
 		return result;
 	fp = format;
 	tp = fbuf;
+
+	/*
+	** Copy directives, suppressing each conversion that is not
+	** already suppressed.  Scansets containing '%' are not
+	** supported; e.g., the conversion specification "%[%]" is not
+	** supported.  Also, multibyte characters containing a
+	** non-leading '%' byte are not supported.
+	*/
 	while ((*tp++ = c = *fp++) != '\0') {
 		if (c != '%')
 			continue;
-		if (*fp == '%') {
-			*tp++ = *fp++;
-			continue;
+		if (is_digit(*fp)) {
+			char const *f = fp;
+			char *t = tp;
+			do {
+				*t++ = c = *f++;
+			} while (is_digit(c));
+			if (c == '$') {
+				fp = f;
+				tp = t;
+			}
 		}
 		*tp++ = '*';
 		if (*fp == '*')
 			++fp;
-		while (is_digit(*fp))
-			*tp++ = *fp++;
-		if (*fp == 'l' || *fp == 'h')
-			*tp++ = *fp++;
-		else if (*fp == '[')
-			do *tp++ = *fp++;
-				while (*fp != '\0' && *fp != ']');
 		if ((*tp++ = *fp++) == '\0')
 			break;
 	}
+
 	*(tp - 1) = '%';
 	*tp++ = 'c';
 	*tp = '\0';
 	if (sscanf(string, fbuf, &dummy) != 1)
-		result = (char *) format;
-	ifree(fbuf);
+		result = format;
+	free(fbuf);
 	return result;
 }

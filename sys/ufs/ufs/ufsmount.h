@@ -1,4 +1,4 @@
-/*	$NetBSD: ufsmount.h,v 1.37 2011/11/24 15:51:32 ahoka Exp $	*/
+/*	$NetBSD: ufsmount.h,v 1.41 2013/08/11 04:36:17 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -43,7 +43,7 @@ struct ufs_args {
 	char	*fspec;			/* block special device to mount */
 };
 
-#ifndef __minix
+#if !defined(__minix)
 /*
  * Arguments to mount MFS
  */
@@ -53,7 +53,7 @@ struct mfs_args {
 	void *	base;			/* base of file system in memory */
 	u_long	size;			/* size of file system */
 };
-#endif
+#endif /* !defined(__minix) */
 
 #ifdef _KERNEL
 
@@ -126,6 +126,8 @@ struct ufsmount {
 	void	*um_snapinfo;			/* snapshot private data */
 
 	const struct ufs_ops *um_ops;
+
+	void *um_discarddata;
 };
 
 struct ufs_ops {
@@ -138,7 +140,7 @@ struct ufs_ops {
 	int (*uo_vfree)(struct vnode *, ino_t, int);
 	int (*uo_balloc)(struct vnode *, off_t, int, kauth_cred_t, int,
 	    struct buf **);
-        void (*uo_unmark_vnode)(struct vnode *);
+        void (*uo_snapgone)(struct vnode *);
 };
 
 #define	UFS_OPS(vp)	(VFSTOUFS((vp)->v_mount)->um_ops)
@@ -155,8 +157,8 @@ struct ufs_ops {
 	(*UFS_OPS(vp)->uo_vfree)((vp), (ino), (mode))
 #define	UFS_BALLOC(vp, off, size, cr, flags, bpp) \
 	(*UFS_OPS(vp)->uo_balloc)((vp), (off), (size), (cr), (flags), (bpp))
-#define	UFS_UNMARK_VNODE(vp) \
-	(*UFS_OPS(vp)->uo_unmark_vnode)((vp))
+#define	UFS_SNAPGONE(vp) \
+	(*UFS_OPS(vp)->uo_snapgone)((vp))
 
 /* UFS-specific flags */
 #define UFS_NEEDSWAP	0x01	/* filesystem metadata need byte-swapping */
@@ -192,6 +194,12 @@ struct ufs_ops {
  */
 #define MNINDIR(ump)			((ump)->um_nindir)
 #define	blkptrtodb(ump, b)		((b) << (ump)->um_bptrtodb)
+
+/*
+ * Predicate for byte-swapping support.
+ */
+#define	FSFMT(vp)	(((vp)->v_mount->mnt_iflag & IMNT_DTYPE) == 0)
+
 #endif /* _KERNEL */
 
 #endif /* !_UFS_UFS_UFSMOUNT_H_ */

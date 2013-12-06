@@ -1,4 +1,4 @@
-/*	$NetBSD: landisk.c,v 1.5 2009/05/07 07:03:39 lukem Exp $	*/
+/*	$NetBSD: landisk.c,v 1.6 2013/10/19 17:08:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: landisk.c,v 1.5 2009/05/07 07:03:39 lukem Exp $");
+__RCSID("$NetBSD: landisk.c,v 1.6 2013/10/19 17:08:15 christos Exp $");
 #endif /* !__lint */
 
 #include <sys/param.h>
@@ -68,7 +68,6 @@ landisk_setboot(ib_params *params)
 	size_t bootstrapsize;
 	int retval, i;
 	uint32_t bplen;
-	int bpbsize;
 
 	assert(params != NULL);
 	assert(params->fsfd != -1);
@@ -149,11 +148,11 @@ landisk_setboot(ib_params *params)
 	 *	2b a0 11	jmp ENDOF(mbr_bpbFAT32)+1, nop
 	 *      (anything else)	; don't preserve
 	 */
-	bpbsize = 0;
 #if 0
+	int bpbsize;
 	if (bootstrapbuf[1] == 0xa0 && bootstrapbuf[2] == 0x11 &&
 	    (bootstrapbuf[0] == 0x2b /*|| bootstrapbuf[0] == 0x1d*/)) {
-		bpbsize = bootstrapbuf[0] + 2 - MBR_BPB_OFFSET;
+		 bpbsize = bootstrapbuf[0] + 2 - MBR_BPB_OFFSET;
 	}
 #endif
 

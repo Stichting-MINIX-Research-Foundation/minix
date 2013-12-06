@@ -5,7 +5,9 @@ REQUIRETOOLS=	yes
 NOLINT=		# defined
 
 LIB=		gcc_s
+.if !defined(__MINIX)
 NOSTATICLIB=	# defined
+.endif # !defined(__MINIX)
 NOPROFILE=	# defined
 NOPICINSTALL=	# defined
 

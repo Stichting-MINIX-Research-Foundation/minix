@@ -1,13 +1,13 @@
-# $NetBSD: Makefile.srcs,v 1.1 2011/06/21 06:02:25 mrg Exp $
+# $NetBSD: Makefile.srcs,v 1.2 2013/08/22 00:16:54 matt Exp $
 
 #
 # Generated makefiles.
 #
 
-.include "${.CURDIR}/../arch/${MACHINE_ARCH}/srcs.tmplsrcs.mk"
-.include "${.CURDIR}/../arch/${MACHINE_ARCH}/srcs.cppflags.mk"
-.include "${.CURDIR}/../arch/${MACHINE_ARCH}/srcs.copts.mk"
-.include "${.CURDIR}/../arch/${MACHINE_ARCH}/libs.lib${LIB}.srcs.mk"
-.include "${.CURDIR}/../arch/${MACHINE_ARCH}/libs.lib${LIB}.tmplsrcs.tmplsrcs.mk"
-.include "${.CURDIR}/../arch/${MACHINE_ARCH}/libs.lib${LIB}.tmplsrcs.tmplfpsrcs.mk"
-.include "${.CURDIR}/../arch/${MACHINE_ARCH}/libs.lib${LIB}.tmplsrcs.tmplasmsrcs.mk"
+.include "${.CURDIR}/../arch/${LIBGCC_MACHINE_ARCH}/srcs.tmplsrcs.mk"
+.include "${.CURDIR}/../arch/${LIBGCC_MACHINE_ARCH}/srcs.cppflags.mk"
+.include "${.CURDIR}/../arch/${LIBGCC_MACHINE_ARCH}/srcs.copts.mk"
+.include "${.CURDIR}/../arch/${LIBGCC_MACHINE_ARCH}/libs.lib${LIB}.srcs.mk"
+.include "${.CURDIR}/../arch/${LIBGCC_MACHINE_ARCH}/libs.lib${LIB}.tmplsrcs.tmplsrcs.mk"
+.include "${.CURDIR}/../arch/${LIBGCC_MACHINE_ARCH}/libs.lib${LIB}.tmplsrcs.tmplfpsrcs.mk"
+.include "${.CURDIR}/../arch/${LIBGCC_MACHINE_ARCH}/libs.lib${LIB}.tmplsrcs.tmplasmsrcs.mk"

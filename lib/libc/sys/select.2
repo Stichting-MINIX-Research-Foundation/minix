@@ -1,4 +1,4 @@
-.\"	$NetBSD: select.2,v 1.38 2010/04/05 21:25:56 joerg Exp $
+.\"	$NetBSD: select.2,v 1.41 2013/11/28 03:45:31 khorben Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)select.2	8.2 (Berkeley) 3/25/94
 .\"
-.Dd October 18, 2008
+.Dd November 28, 2013
 .Dt SELECT 2
 .Os
 .Sh NAME
@@ -192,7 +192,7 @@ main(int argc, char **argv)
 	FD_SET(fd, \*[Am]read_set);
 
 	/*
-	 * Check if data is ready to be readen on
+	 * Check if data is ready to be read on
 	 * file descriptor 1, give up after 10 seconds.
 	 */
 	ret = select(fd + 1, \*[Am]read_set, NULL, NULL, \*[Am]timeout);
@@ -211,7 +211,7 @@ main(int argc, char **argv)
 		break;
 
 	default:
-		printf("Data received on %d file desciptor(s)\en", ret);
+		printf("Data received on %d file descriptor(s)\en", ret);
 
 		/*
 		 * select(2) hands back a file descriptor set where

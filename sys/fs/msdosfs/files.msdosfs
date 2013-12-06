@@ -1,0 +1,10 @@
+#	$NetBSD: files.msdosfs,v 1.1 2002/12/26 12:31:33 jdolecek Exp $
+
+deffs	MSDOSFS
+
+file	fs/msdosfs/msdosfs_conv.c		msdosfs
+file	fs/msdosfs/msdosfs_denode.c		msdosfs
+file	fs/msdosfs/msdosfs_fat.c		msdosfs
+file	fs/msdosfs/msdosfs_lookup.c		msdosfs
+file	fs/msdosfs/msdosfs_vfsops.c		msdosfs
+file	fs/msdosfs/msdosfs_vnops.c		msdosfs

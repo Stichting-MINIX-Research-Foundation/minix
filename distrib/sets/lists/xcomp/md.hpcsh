@@ -1,6 +1,1 @@
-# $NetBSD: md.hpcsh,v 1.3 2010/06/19 18:07:38 tsutsui Exp $
-./usr/libdata/debug/usr/X11R6/bin/Xhpc.debug		-unknown-	debug,x11
-./usr/libdata/debug/usr/X11R6/bin/Xvfb.debug		-unknown-	debug,x11
-./usr/libdata/debug/usr/X11R7/bin/Xorg.debug		-unknown-	debug,xorg
-./usr/libdata/debug/usr/X11R7/bin/cvt.debug		-unknown-	debug,xorg
-./usr/libdata/debug/usr/X11R7/bin/gtf.debug		-unknown-	debug,xorg
+# $NetBSD: md.hpcsh,v 1.4 2013/01/16 16:01:08 christos Exp $

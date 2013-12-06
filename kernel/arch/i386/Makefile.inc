@@ -5,52 +5,52 @@ HERE=${.CURDIR}/arch/${MACHINE_ARCH}
 .PATH:	${HERE}
 
 # objects we want unpaged from -lminlib
-MINLIB_OBJS_UNPAGED=_cpufeature.o _cpuid.o get_bp.o
+MINLIB_OBJS_UNPAGED= _cpufeature.o _cpuid.o get_bp.o
 _cpufeature.o:	${NETBSDSRCDIR}/lib/libminlib/${MACHINE_ARCH}/_cpufeature.c
 _cpuid.o:	${NETBSDSRCDIR}/lib/libminlib/${MACHINE_ARCH}/_cpuid.S
 get_bp.o:	${NETBSDSRCDIR}/lib/libminlib/${MACHINE_ARCH}/get_bp.S
 
 # objects we want unpaged from -lsys
-SYS_OBJS_UNPAGED=assert.o kprintf.o stacktrace.o vprintf.o
+SYS_OBJS_UNPAGED=assert.o stacktrace.o
 assert.o:	${NETBSDSRCDIR}/lib/libsys/assert.c
-kprintf.o:	${NETBSDSRCDIR}/lib/libsys/kprintf.c
 stacktrace.o:	${NETBSDSRCDIR}/lib/libsys/stacktrace.c
-vprintf.o:	${NETBSDSRCDIR}/lib/libsys/vprintf.c
 
 # objects we want unpaged from -lminc
-MINC_OBJS_UNPAGED=findfp.o strcat.o strlen.o memcpy.o strcpy.o strncmp.o \
-	memset.o memmove.o strcmp.o atoi.o ctype_.o strtol.o \
-	_errno.o errno.o udivdi3.o umoddi3.o qdivrem.o
-memcpy.o:	${NETBSDSRCDIR}/common/lib/libc/string/memcpy.c
-memmove.o:	${NETBSDSRCDIR}/common/lib/libc/string/memmove.c
-memset.o:	${NETBSDSRCDIR}/common/lib/libc/string/memset.c
-strcat.o:	${NETBSDSRCDIR}/common/lib/libc/string/strcat.c
-strlen.o:	${NETBSDSRCDIR}/common/lib/libc/string/strlen.c
-strcpy.o:	${NETBSDSRCDIR}/common/lib/libc/string/strcpy.c
-strcmp.o:	${NETBSDSRCDIR}/common/lib/libc/string/strcmp.c
+MINC_OBJS_UNPAGED= atoi.o \
+	printf.o subr_prf.o \
+	strcmp.o strcpy.o strlen.o strncmp.o \
+	memcpy.o memmove.o memset.o \
+	udivdi3.o umoddi3.o qdivrem.o
+atoi.o:		${NETBSDSRCDIR}/lib/libminc/atoi.c
+printf.o:	${NETBSDSRCDIR}/sys/lib/libsa/printf.c
+subr_prf.o:	${NETBSDSRCDIR}/sys/lib/libsa/subr_prf.c
+memcpy.o:	${NETBSDSRCDIR}/common/lib/libc/arch/i386/string/memcpy.S
+memmove.o:	${NETBSDSRCDIR}/common/lib/libc/arch/i386/string/memmove.S
+memset.o:	${NETBSDSRCDIR}/common/lib/libc/arch/i386/string/memset.S
+strlen.o:	${NETBSDSRCDIR}/common/lib/libc/arch/i386/string/strlen.S
+strcpy.o:	${NETBSDSRCDIR}/common/lib/libc/arch/i386/string/strcpy.S
+strcmp.o:	${NETBSDSRCDIR}/common/lib/libc/arch/i386/string/strcmp.S
+
+# the following is required by pre_init.c
 strncmp.o:	${NETBSDSRCDIR}/common/lib/libc/string/strncmp.c
+
+# these are required by kprintn.o:
 udivdi3.o:	${NETBSDSRCDIR}/common/lib/libc/quad/udivdi3.c
 umoddi3.o:	${NETBSDSRCDIR}/common/lib/libc/quad/umoddi3.c
 qdivrem.o:	${NETBSDSRCDIR}/common/lib/libc/quad/qdivrem.c
-atoi.o:		${NETBSDSRCDIR}/lib/libc/stdlib/atoi.c
-strtol.o:	${NETBSDSRCDIR}/lib/libc/stdlib/strtol.c
-findfp.o:	${NETBSDSRCDIR}/lib/libc/stdio/findfp.c
-ctype_.o:	${NETBSDSRCDIR}/lib/libc/gen/ctype_.c
-_errno.o:	${NETBSDSRCDIR}/lib/libc/gen/_errno.c
-errno.o:	${NETBSDSRCDIR}/lib/libc/gen/errno.c
 
-# Specific flags needed to compile a few of the object files.
-CPPFLAGS.strtol.c+= -I ${NETBSDSRCDIR}/common/lib/libc/stdlib
-CPPFLAGS.ctype_.c+= -I ${NETBSDSRCDIR}/lib/libc/locale
-CPPFLAGS._errno.c+= -I ${NETBSDSRCDIR}/lib/libc/include
-CPPFLAGS.assert.c+= -I ${NETBSDSRCDIR}/lib/libc/include
-CPPFLAGS.findfp.c+= -I ${NETBSDSRCDIR}/lib/libc/include
+# LSC: putchar and kputc have the same signature. A bit hackish.
+CPPFLAGS.subr_prf.c+= -Dputchar=kputc
+
+# Activate optional support, may be deactivated.
+CPPFLAGS.subr_prf.c+= -DLIBSA_PRINTF_LONGLONG_SUPPORT -DLIBSA_PRINTF_WIDTH_SUPPORT
 
 # some object files we give a symbol prefix (or namespace) of __k_unpaged_
 # that must live in their own unique namespace.
 #
-.for unpaged_obj in head.o pre_init.o direct_tty_utils.o io_outb.o \
-	io_inb.o pg_utils.o klib.o utility.o arch_reset.o \
+.for unpaged_obj in head.o pre_init.o direct_tty_utils.o \
+	pg_utils.o klib.o utility.o arch_reset.o \
+	io_inb.o io_outb.o \
 	${MINLIB_OBJS_UNPAGED} ${MINC_OBJS_UNPAGED} ${SYS_OBJS_UNPAGED}
 unpaged_${unpaged_obj}: ${unpaged_obj}
 	${OBJCOPY} --prefix-symbols=__k_unpaged_ ${.OBJDIR}/${unpaged_obj} $@
@@ -61,10 +61,12 @@ ORIG_UNPAGED_OBJS += ${unpaged_obj}
 CLEANFILES+= ${ORIG_UNPAGED_OBJS}
 
 SRCS+=	mpx.S arch_clock.c arch_do_vmctl.c arch_system.c \
-	do_iopenable.c do_readbios.c do_sdevio.c exception.c i8259.c io_inb.S \
-	io_inl.S io_intr.S io_inw.S io_outb.S io_outl.S io_outw.S klib.S memory.c \
-	oxpcie.c protect.c direct_tty_utils.c arch_reset.c \
-	pg_utils.c usermapped_glo_ipc.S usermapped_data_arch.c
+	klib.S memory.c protect.c direct_tty_utils.c arch_reset.c pg_utils.c
+
+SRCS+=	do_iopenable.c do_readbios.c do_sdevio.c exception.c i8259.c oxpcie.c \
+	usermapped_data_arch.c \
+	io_inb.S io_inl.S io_intr.S io_inw.S io_outb.S io_outl.S io_outw.S \
+	usermapped_glo_ipc.S
 
 OBJS.kernel+=	${UNPAGED_OBJS}
 
@@ -90,6 +92,8 @@ SRCS+=  breakpoints.c debugreg.S
 SRCS+= arch_watchdog.c
 CPPFLAGS+= -DUSE_WATCHDOG
 .endif
+
+klib.o mpx.o head.o: procoffsets.h
 
 SRCS+= procoffsets.h
 

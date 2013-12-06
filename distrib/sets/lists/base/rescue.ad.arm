@@ -1,2 +1,2 @@
-# $NetBSD: rescue.ad.arm,v 1.2 2004/01/11 10:24:59 lukem Exp $
-./rescue/ldconfig				base-rescue-root
+# $NetBSD: rescue.ad.arm,v 1.3 2013/04/30 23:46:46 matt Exp $
+./rescue/ldconfig				base-rescue-root	endian=1234

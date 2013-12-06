@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.31 2012/06/19 06:06:34 dholland Exp $	*/
+/*	$NetBSD: cmds.c,v 1.33 2013/07/03 14:15:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1999-2009 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cmds.c,v 1.31 2012/06/19 06:06:34 dholland Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.33 2013/07/03 14:15:47 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -878,7 +878,7 @@ discover_path(char *last_path, const char *new_path)
 		cp = tp;
 		nomorelink = 1;
 		
-		while ((cp = strstr(++cp, "/")) != NULL) {
+		while ((cp = strstr(cp + 1, "/")) != NULL) {
 			sz1 = (unsigned long)cp - (unsigned long)tp;
 			if (sz1 > MAXPATHLEN)
 				goto bad;
@@ -951,8 +951,8 @@ discover_path(char *last_path, const char *new_path)
 		tp[strlen(tp) - 1] = '\0';
 
 	/* check that the path is correct */
-	stat(tp, &st1);
-	stat(".", &st2);
+	if (stat(tp, &st1) == -1 || stat(".", &st2) == -1)
+		goto bad;
 	if ((st1.st_dev != st2.st_dev) || (st1.st_ino != st2.st_ino))
 		goto bad;
 

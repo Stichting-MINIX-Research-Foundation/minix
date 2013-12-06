@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: makeflist,v 1.76 2009/12/05 15:56:25 cegger Exp $
+# $NetBSD: makeflist,v 1.77 2013/01/14 20:29:26 christos Exp $
 #
 # Print out the files in some or all lists.
 # Usage: makeflist [-bxlo] [-a arch] [-m machine] [-s setsdir] [setname ...]
@@ -29,7 +29,7 @@ USAGE
 }
 
 # handle args
-while getopts L:bxXloa:m:s: ch; do
+while getopts L:bxloa:m:s: ch; do
 	case ${ch} in
 	L)
 		save_IFS="${IFS}"

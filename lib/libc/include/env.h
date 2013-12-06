@@ -56,11 +56,11 @@ __writelockenv(void)
 }
 
 static __inline bool
-#ifdef __minix
+#if defined(__minix)
 __unlockenv(void)
-#else /* Bug-to-bug compatibility? */
+#else /* Bug-to-bug compatibility? LSC: FIXME We should upstream that. */
 __unlocklockenv(void)
-#endif
+#endif /* defined(__minix) */
 {
 	return true;
 }

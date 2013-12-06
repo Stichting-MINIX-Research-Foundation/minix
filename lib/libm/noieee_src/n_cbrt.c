@@ -1,4 +1,4 @@
-/*	$NetBSD: n_cbrt.c,v 1.5 2003/08/07 16:44:50 agc Exp $	*/
+/*	$NetBSD: n_cbrt.c,v 1.6 2013/11/24 14:49:00 martin Exp $	*/
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -61,6 +61,18 @@ static const double
 	    E= 99./70.,
 	    F= 45./28.,
 	    G= 5./14.;
+
+float
+cbrtf(float x)
+{
+	return (float)cbrt(x);
+}
+
+long double
+cbrtl(long double x)
+{
+	return cbrt((double)x);
+}
 
 double
 cbrt(double x)

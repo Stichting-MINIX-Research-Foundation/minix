@@ -1,4 +1,4 @@
-/*	$NetBSD: fsutil.h,v 1.17 2011/06/09 21:23:29 christos Exp $	*/
+/*	$NetBSD: fsutil.h,v 1.19 2012/04/07 16:44:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -27,20 +27,12 @@
 #include <stdarg.h>
 #include <signal.h>
 
-void errexit(const char *, ...)
-    __attribute__((__noreturn__,__format__(__printf__,1,2)));  
-void pfatal(const char *, ...)
-    __attribute__((__format__(__printf__,1,2)));  
-void pwarn(const char *, ...)
-    __attribute__((__format__(__printf__,1,2)));  
-void perr(const char *, ...)
-    __attribute__((__format__(__printf__,1,2)));  
-void panic(const char *, ...)
-    __attribute__((__noreturn__,__format__(__printf__,1,2)));  
-void vmsg(int, const char *, va_list)
-     __attribute__((__format__(__printf__,2,0)));
-const char *rawname(const char *);
-const char *unrawname(const char *);
+void errexit(const char *, ...) __printflike(1, 2) __dead;
+void pfatal(const char *, ...) __printflike(1, 2);
+void pwarn(const char *, ...) __printflike(1, 2);
+void perr(const char *, ...) __printflike(1, 2);
+void panic(const char *, ...) __printflike(1, 2) __dead;
+void vmsg(int, const char *, va_list) __printflike(2, 0);
 const char *blockcheck(const char *);
 const char *cdevname(void);
 void setcdevname(const char *, int);
@@ -60,6 +52,6 @@ int checkfstab(int, int, void *(*)(struct fstab *),
 
 void (*ckfinish)(int);
 volatile sig_atomic_t returntosingle;
-void catch(int);
+void catch(int) __dead;
 void catchquit(int);
 void voidquit(int);

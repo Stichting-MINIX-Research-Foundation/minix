@@ -2,8 +2,14 @@
 #include <errno.h>
 #include <minix/mthread.h>
 #include <string.h>
+
 #include <machine/param.h>
+#include <machine/vmparam.h>
+
 #include <sys/mman.h>
+
+#include <uvm/uvm_param.h>
+
 #include "global.h"
 #include "proto.h"
 
@@ -15,9 +21,6 @@ static void mthread_thread_stop(mthread_thread_t thread);
 static void mthread_trampoline(void);
 
 static int initialized = 0;
-#ifndef PGSHIFT
-# define PGSHIFT	12	/* XXX: temporarily for ACK */
-#endif
 #define MTHREAD_GUARDSIZE 	(1 << PGSHIFT) 	/* 1 page */
 
 static struct __mthread_attr default_attr = {	MTHREAD_STACK_MIN,

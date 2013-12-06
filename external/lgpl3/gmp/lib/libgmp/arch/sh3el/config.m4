@@ -11,7 +11,7 @@ define(<GMP_NUMB_BITS>,eval(GMP_LIMB_BITS-GMP_NAIL_BITS))
 changequote(`,')
 ifdef(`__CONFIG_M4_INCLUDED__',,`
 include(CONFIG_TOP_SRCDIR`/mpn/asm-defs.m4')
-define_not_for_expansion(`HAVE_HOST_CPU_sh3')
+define_not_for_expansion(`HAVE_HOST_CPU_shle')
 define_not_for_expansion(`HAVE_ABI_standard')
 define_not_for_expansion(`HAVE_LIMB_LITTLE_ENDIAN')
 define_not_for_expansion(`HAVE_DOUBLE_IEEE_LITTLE_ENDIAN')

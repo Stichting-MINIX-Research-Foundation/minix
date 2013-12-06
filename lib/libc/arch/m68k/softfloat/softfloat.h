@@ -1,4 +1,4 @@
-/*	$NetBSD: softfloat.h,v 1.4 2011/07/07 07:14:57 matt Exp $	*/
+/*	$NetBSD: softfloat.h,v 1.5 2013/07/18 21:30:40 matt Exp $	*/
 
 /* This is a derivative work. */
 
@@ -41,7 +41,9 @@ input or output the `floatx80' type will be defined.  The same applies to
 the `FLOAT128' macro and the quadruple-precision format `float128'.
 -------------------------------------------------------------------------------
 */
+#ifndef __mcoldfire__
 #define FLOATX80
+#endif
 /* #define FLOAT128 */
 
 #include <machine/ieeefp.h>

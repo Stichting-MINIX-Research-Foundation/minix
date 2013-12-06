@@ -1,4 +1,4 @@
-/*	$NetBSD: snprintb.c,v 1.7 2012/01/23 03:22:41 christos Exp $	*/
+/*	$NetBSD: snprintb.c,v 1.14 2013/08/08 22:18:20 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,23 +41,24 @@
 
 #  include <sys/cdefs.h>
 #  if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: snprintb.c,v 1.7 2012/01/23 03:22:41 christos Exp $");
+__RCSID("$NetBSD: snprintb.c,v 1.14 2013/08/08 22:18:20 pgoyette Exp $");
 #  endif
 
 #  include <sys/types.h>
-#  include <sys/inttypes.h>
+#  include <inttypes.h>
 #  include <stdio.h>
 #  include <util.h>
 #  include <errno.h>
-# else
+# else /* ! _KERNEL */
 #  include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: snprintb.c,v 1.7 2012/01/23 03:22:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: snprintb.c,v 1.14 2013/08/08 22:18:20 pgoyette Exp $");
 #  include <sys/param.h>
 #  include <sys/inttypes.h>
 #  include <sys/systm.h>
 #  include <lib/libkern/libkern.h>
-# endif
+# endif /* ! _KERNEL */
 
+# ifndef HAVE_SNPRINTB_M
 int
 snprintb_m(char *buf, size_t buflen, const char *bitfmt, uint64_t val,
 	   size_t l_max)
@@ -114,12 +115,12 @@ snprintb_m(char *buf, size_t buflen, const char *bitfmt, uint64_t val,
 	if ((val == 0) && (ch != '\177'))
 		goto terminate;
 
-#define STORE(c) { l_len++;						\
+#define STORE(c) do { l_len++;						\
 		   if ((size_t)(++t_len) < buflen)			\
 		   	*bp++ = (c);					\
 		 } while ( /* CONSTCOND */ 0)
 
-#define	BACKUP	{ if (s_bp != NULL) {					\
+#define	BACKUP	do { if (s_bp != NULL) {				\
 			bp = s_bp; s_bp = NULL;				\
 			t_len -= l_len - s_len;				\
 			restart = 1;					\
@@ -131,32 +132,34 @@ snprintb_m(char *buf, size_t buflen, const char *bitfmt, uint64_t val,
 		  t_len += v_len; l_len = v_len; bp += v_len;		\
 		} while ( /* CONSTCOND */ 0)
 
-#define	PUTSEP								\
-		if (l_max > 0 && (size_t)l_len >= l_max) {		\
-			BACKUP;						\
-			STORE('<');					\
-		} else {						\
-			/* Remember separator location */		\
-			if (l_max > 0 && sep != '<') {			\
-				s_len = l_len;				\
-				s_bp  = bp;				\
-				s_fmt = cur_fmt;			\
+#define	PUTSEP do {							\
+			if (l_max > 0 && (size_t)l_len >= l_max) {	\
+				BACKUP;					\
+				STORE('<');				\
+			} else {					\
+				/* Remember separator location */	\
+				if (l_max > 0 && sep != '<') {		\
+					s_len = l_len;			\
+					s_bp  = bp;			\
+					s_fmt = cur_fmt;		\
+				}					\
+				STORE(sep);				\
+				restart = 0;				\
 			}						\
-			STORE(sep);					\
-			restart = 0;					\
-		}							\
+		} while ( /* CONSTCOND */ 0)
 
-#define	PUTCHR(c)							\
-		if (l_max > 0 && (size_t)l_len >= (l_max - 1)) {	\
-			BACKUP;						\
-			if (restart == 0) {				\
+#define	PUTCHR(c) do {							\
+			if (l_max > 0 && (size_t)l_len >= (l_max - 1)) {\
+				BACKUP;					\
+				if (restart == 0)			\
+					STORE(c);			\
+				else					\
+					sep = '<';			\
+			} else {					\
 				STORE(c);				\
-			} else						\
-				sep = '<';				\
-		} else {						\
-			STORE(c);					\
-			restart = 0;					\
-		}							\
+				restart = 0;				\
+			}						\
+		} while ( /* CONSTCOND */ 0)
 
 #define PUTS(s) while ((ch = *(s)++) != 0) {				\
 			PUTCHR(ch);					\
@@ -193,7 +196,7 @@ snprintb_m(char *buf, size_t buflen, const char *bitfmt, uint64_t val,
 			bit = *bitfmt++;	/* now 0-origin */
 			switch (ch) {
 			case 'b':
-				if (((u_int)(val >> bit) & 1) == 0)
+				if (((unsigned int)(val >> bit) & 1) == 0)
 					goto skip;
 				cur_fmt = c_fmt;
 				PUTSEP;
@@ -214,10 +217,10 @@ snprintb_m(char *buf, size_t buflen, const char *bitfmt, uint64_t val,
 					sep = ',';
 				if (ch == 'F')	/* just extract */
 					break;
-				if (restart == 0) {
+				if (restart == 0)
 					PUTS(bitfmt);
+				if (restart == 0)
 					PUTCHR('=');
-				}
 				if (restart == 0) {
 					f_len = snprintf(bp, buflen - t_len,
 							 sbase, field);
@@ -227,10 +230,8 @@ snprintb_m(char *buf, size_t buflen, const char *bitfmt, uint64_t val,
 					l_len += f_len;
 					if ((size_t)t_len < buflen)
 						bp += f_len;
-					if (l_max > 0 &&
-					    (size_t)l_len > l_max) {
+					if (l_max > 0 && (size_t)l_len > l_max)
 						PUTCHR('#');
-					}
 				}
 				break;
 			case '=':
@@ -243,9 +244,8 @@ snprintb_m(char *buf, size_t buflen, const char *bitfmt, uint64_t val,
 				 */
 				if ((int)field != bit)
 					goto skip;
-				if (ch == '=') {
+				if (ch == '=')
 					PUTCHR('=');
-				}
 				PUTS(bitfmt);
 				break;
 			default:
@@ -278,4 +278,5 @@ snprintb(char *buf, size_t buflen, const char *bitfmt, uint64_t val)
 {
 	return snprintb_m(buf, buflen, bitfmt, val, 0);
 }
-#endif
+# endif /* ! HAVE_SNPRINTB_M */
+#endif /* ! _STANDALONE */

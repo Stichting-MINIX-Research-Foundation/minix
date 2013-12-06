@@ -4,5 +4,5 @@
 #	Remember to increment the major numbers of both libform and libmenu
 #	when the libcurses major number increments.
 #
-major=0
+major=7
 minor=0

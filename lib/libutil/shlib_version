@@ -1,6 +1,5 @@
 #	$NetBSD: shlib_version,v 1.51 2012/04/07 16:44:39 christos Exp $
 #	Remember to update distrib/sets/lists/base/shl.* when changing
 #
-# MINIX Keep lower than NETBSD until we are ABI compatible
-major=0
-minor=0
+major=7
+minor=21

@@ -1,4 +1,4 @@
-/* $NetBSD: t_msgrcv.c,v 1.2 2011/11/11 05:06:01 jruoho Exp $ */
+/* $NetBSD: t_msgrcv.c,v 1.3 2013/07/24 11:44:10 skrll Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_msgrcv.c,v 1.2 2011/11/11 05:06:01 jruoho Exp $");
+__RCSID("$NetBSD: t_msgrcv.c,v 1.3 2013/07/24 11:44:10 skrll Exp $");
 
 #include <sys/msg.h>
 #include <sys/stat.h>
@@ -51,10 +51,11 @@ __RCSID("$NetBSD: t_msgrcv.c,v 1.2 2011/11/11 05:06:01 jruoho Exp $");
 #define MSG_MTYPE_1	0x41
 #define	MSG_MTYPE_2	0x42
 #define MSG_MTYPE_3	0x43
+#define MSG_LEN		3
 
 struct msg {
 	long		 mtype;
-	char		 buf[3];
+	char		 buf[MSG_LEN];
 };
 
 static void		clean(void);
@@ -83,8 +84,8 @@ ATF_TC_BODY(msgrcv_basic, tc)
 	id = msgget(MSG_KEY, IPC_CREAT | 0600);
 	ATF_REQUIRE(id != -1);
 
-	(void)msgsnd(id, &msg1, sizeof(struct msg), IPC_NOWAIT);
-	(void)msgrcv(id, &msg2, sizeof(struct msg), MSG_MTYPE_1, IPC_NOWAIT);
+	(void)msgsnd(id, &msg1, MSG_LEN, IPC_NOWAIT);
+	(void)msgrcv(id, &msg2, MSG_LEN, MSG_MTYPE_1, IPC_NOWAIT);
 
 	ATF_CHECK(msg1.buf[0] == msg2.buf[0]);
 	ATF_CHECK(msg1.buf[1] == msg2.buf[1]);
@@ -118,7 +119,7 @@ ATF_TC_BODY(msgrcv_block, tc)
 
 	if (pid == 0) {
 
-		if (msgrcv(id, &msg, sizeof(struct msg), MSG_MTYPE_1, 0) < 0)
+		if (msgrcv(id, &msg, MSG_LEN, MSG_MTYPE_1, 0) < 0)
 			_exit(EXIT_FAILURE);
 
 		_exit(EXIT_SUCCESS);
@@ -129,7 +130,7 @@ ATF_TC_BODY(msgrcv_block, tc)
 	 * and hence kill(2) should fail with ESRCH.
 	 */
 	(void)sleep(1);
-	(void)msgsnd(id, &msg, sizeof(struct msg), IPC_NOWAIT);
+	(void)msgsnd(id, &msg, MSG_LEN, IPC_NOWAIT);
 	(void)sleep(1);
 	(void)kill(pid, SIGKILL);
 	(void)wait(&sta);
@@ -162,31 +163,31 @@ ATF_TC_BODY(msgrcv_err, tc)
 	errno = 0;
 
 	ATF_REQUIRE_ERRNO(ENOMSG, msgrcv(id, &msg,
-		sizeof(struct msg), MSG_MTYPE_1, IPC_NOWAIT) == -1);
+		MSG_LEN, MSG_MTYPE_1, IPC_NOWAIT) == -1);
 
-	ATF_REQUIRE(msgsnd(id, &msg, sizeof(struct msg), IPC_NOWAIT) == 0);
+	ATF_REQUIRE(msgsnd(id, &msg, MSG_LEN, IPC_NOWAIT) == 0);
 
 	errno = 0;
 
 	ATF_REQUIRE_ERRNO(EFAULT, msgrcv(id, (void *)-1,
-		sizeof(struct msg), MSG_MTYPE_1, IPC_NOWAIT) == -1);
+		MSG_LEN, MSG_MTYPE_1, IPC_NOWAIT) == -1);
 
 	errno = 0;
 
 	ATF_REQUIRE_ERRNO(EINVAL, msgrcv(-1, &msg,
-		sizeof(struct msg), MSG_MTYPE_1, IPC_NOWAIT) == -1);
+		MSG_LEN, MSG_MTYPE_1, IPC_NOWAIT) == -1);
 
 	errno = 0;
 
 	ATF_REQUIRE_ERRNO(EINVAL, msgrcv(-1, &msg,
 		SSIZE_MAX, MSG_MTYPE_1, IPC_NOWAIT) == -1);
 
-	ATF_REQUIRE(msgsnd(id, &msg, sizeof(struct msg), IPC_NOWAIT) == 0);
+	ATF_REQUIRE(msgsnd(id, &msg, MSG_LEN, IPC_NOWAIT) == 0);
 
 	errno = 0;
 
 	ATF_REQUIRE_ERRNO(E2BIG, msgrcv(id, &r,
-		sizeof(int), MSG_MTYPE_1, IPC_NOWAIT) == -1);
+		MSG_LEN - 1, MSG_MTYPE_1, IPC_NOWAIT) == -1);
 
 	ATF_REQUIRE(msgctl(id, IPC_RMID, 0) == 0);
 }
@@ -212,14 +213,14 @@ ATF_TC_BODY(msgrcv_mtype, tc)
 	id = msgget(MSG_KEY, IPC_CREAT | 0600);
 	ATF_REQUIRE(id != -1);
 
-	(void)msgsnd(id, &msg1, sizeof(struct msg), IPC_NOWAIT);
-	(void)msgrcv(id, &msg2, sizeof(struct msg), MSG_MTYPE_2, IPC_NOWAIT);
+	(void)msgsnd(id, &msg1, MSG_LEN, IPC_NOWAIT);
+	(void)msgrcv(id, &msg2, MSG_LEN, MSG_MTYPE_2, IPC_NOWAIT);
 
 	ATF_CHECK(msg1.buf[0] != msg2.buf[0]);	/* Different mtype. */
 	ATF_CHECK(msg1.buf[1] != msg2.buf[1]);
 	ATF_CHECK(msg1.buf[2] != msg2.buf[2]);
 
-	(void)msgrcv(id, &msg2, sizeof(struct msg), MSG_MTYPE_1, IPC_NOWAIT);
+	(void)msgrcv(id, &msg2, MSG_LEN, MSG_MTYPE_1, IPC_NOWAIT);
 
 	ATF_CHECK(msg1.buf[0] == msg2.buf[0]);	/* Same mtype. */
 	ATF_CHECK(msg1.buf[1] == msg2.buf[1]);
@@ -253,8 +254,7 @@ ATF_TC_BODY(msgrcv_nonblock, tc)
 
 	for (i = 0; i < n; i++) {
 
-		ATF_REQUIRE(msgsnd(id, &msg,
-			sizeof(struct msg), IPC_NOWAIT) == 0);
+		ATF_REQUIRE(msgsnd(id, &msg, MSG_LEN, IPC_NOWAIT) == 0);
 	}
 
 	pid = fork();
@@ -264,8 +264,8 @@ ATF_TC_BODY(msgrcv_nonblock, tc)
 
 		while (i != 0) {
 
-			if (msgrcv(id, &msg, sizeof(struct msg),
-				MSG_MTYPE_1, IPC_NOWAIT) == -1)
+			if (msgrcv(id, &msg, MSG_LEN, MSG_MTYPE_1,
+			    IPC_NOWAIT) == -1)
 				_exit(EXIT_FAILURE);
 
 			i--;
@@ -300,9 +300,10 @@ ATF_TC_HEAD(msgrcv_truncate, tc)
 
 ATF_TC_BODY(msgrcv_truncate, tc)
 {
+#define	MSG_SMALLLEN	2
 	struct msgsmall {
 		long		 mtype;
-		char		 buf[2];
+		char		 buf[MSG_SMALLLEN];
 	};
 
 	struct msg msg1 = { MSG_MTYPE_1, { 'a', 'b', 'c' } };
@@ -312,8 +313,8 @@ ATF_TC_BODY(msgrcv_truncate, tc)
 	id = msgget(MSG_KEY, IPC_CREAT | 0600);
 	ATF_REQUIRE(id != -1);
 
-	(void)msgsnd(id, &msg1, sizeof(struct msg), IPC_NOWAIT);
-	(void)msgrcv(id, &msg2, sizeof(struct msgsmall),
+	(void)msgsnd(id, &msg1, MSG_LEN, IPC_NOWAIT);
+	(void)msgrcv(id, &msg2, MSG_SMALLLEN,
 	    MSG_MTYPE_1, IPC_NOWAIT | MSG_NOERROR);
 
 	ATF_CHECK(msg1.buf[0] == msg2.buf[0]);

@@ -40,14 +40,15 @@ extern "C" {
 #include <ostream>
 #include <string>
 
-#include <tr1/memory>
+#include "utils/shared_ptr.hpp"
 
 namespace utils {
 namespace datetime {
 
 
 /// Represents a time delta to describe deadlines.
-struct delta {
+class delta {
+public:
     /// The amount of seconds in the time delta.
     int64_t seconds;
 
@@ -81,9 +82,9 @@ class timestamp {
     struct impl;
 
     /// Pointer to the shared internal implementation.
-    std::tr1::shared_ptr< impl > _pimpl;
+    std::shared_ptr< impl > _pimpl;
 
-    timestamp(std::tr1::shared_ptr< impl >);
+    timestamp(std::shared_ptr< impl >);
 
 public:
     static timestamp from_microseconds(const int64_t);

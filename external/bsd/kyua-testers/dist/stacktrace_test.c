@@ -44,10 +44,6 @@
 #include "run.h"
 #include "text.h"
 
-#if !defined(WCOREDUMP) && defined(__minix)
-#define WCOREDUMP(x) ((x) & 0x80)
-#endif /*!defined(WCOREDUMP) && defined(__minix) */
-
 
 /// Ensures that the given expression does not return a kyua_error_t.
 ///

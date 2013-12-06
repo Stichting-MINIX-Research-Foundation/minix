@@ -14,10 +14,6 @@
 #include <sys/exec_elf.h>
 #include <sys/exec.h>
 
-#ifdef __weak_alias
-__weak_alias(execve, _execve)
-#endif
-
 extern struct minix_kerninfo *_minix_kerninfo;
 
 /* Create a stack image that only needs to be patched up slightly by

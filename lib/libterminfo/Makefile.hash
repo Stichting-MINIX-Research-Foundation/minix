@@ -1,12 +1,12 @@
-#	$NetBSD: Makefile.hash,v 1.6 2012/08/20 15:44:02 joerg Exp $
+#	$NetBSD: Makefile.hash,v 1.7 2013/01/24 14:17:40 roy Exp $
 
 SCRIPT_ENV=	\
+	NETBSDSRCDIR=${NETBSDSRCDIR:Q} \
 	TOOL_AWK=${TOOL_AWK:Q} \
 	TOOL_NBPERF=${TOOL_NBPERF:Q} \
 	TOOL_SED=${TOOL_SED:Q} \
 	TOOL_SORT=${TOOL_SORT:Q} \
-	TOOL_TIC=${TOOL_TIC:Q} \
-	TERMINFO=${NETBSDSRCDIR}/share/terminfo/terminfo
+	TOOL_TIC=${TOOL_TIC:Q}
 
 PARSEDIR:=${.PARSEDIR}
 # Generate our string and hash tables

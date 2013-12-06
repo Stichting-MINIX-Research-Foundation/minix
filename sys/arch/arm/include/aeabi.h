@@ -1,4 +1,4 @@
-/*	$NetBSD: aeabi.h,v 1.2 2012/08/11 16:21:26 matt Exp $	*/
+/*	$NetBSD: aeabi.h,v 1.5 2013/08/01 22:20:40 matt Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -31,89 +31,94 @@
 #ifndef _ARM_AEABI_H_
 #define	_ARM_AEABI_H_
 
+#if defined(_KERNEL) || defined(_STANDALONE)
+#include <sys/types.h>
+#else
 #include <stddef.h>
+#endif
 
 #define	__value_in_regs		/* nothing */
+#define	__aapcs			__attribute__((__pcs__("aapcs")))
 
 /*
  * Standard double precision floating-point arithmetic helper functions
  */
-double __aeabi_dadd(double, double);	// double-precision addition
-double __aeabi_ddiv(double n, double d);	// double-precision division, n / d
-double __aeabi_dmul(double, double);	// double-precision multiplication
-double __aeabi_drsub(double x, double y);	// double-precision reverse subtraction, y - x
-double __aeabi_dsub(double x, double y);	// double-precision subtraction, x - y
-double __aeabi_dneg(double);	// double-precision negation (obsolete, to be removed in r2.09)
+double __aeabi_dadd(double, double) __aapcs;	// double-precision addition
+double __aeabi_ddiv(double n, double d) __aapcs;	// double-precision division, n / d
+double __aeabi_dmul(double, double) __aapcs;	// double-precision multiplication
+double __aeabi_drsub(double x, double y) __aapcs;	// double-precision reverse subtraction, y - x
+double __aeabi_dsub(double x, double y) __aapcs;	// double-precision subtraction, x - y
+double __aeabi_dneg(double) __aapcs;	// double-precision negation (obsolete, to be removed in r2.09)
 
 /*
  * Double precision floating-point comparison helper functions
  */
-void __aeabi_cdcmpeq(double, double); // non-excepting equality comparison [1], result in PSR ZC flags
-void __aeabi_cdcmple(double, double); // 3-way (<, =, >) compare [1], result in PSR ZC flags
-void __aeabi_cdrcmple(double, double); // reversed 3-way (<, =, >) compare [1], result in PSR ZC flags
-int __aeabi_dcmpeq(double, double); // result (1, 0) denotes (=, <>) [2], use for C == and !=
-int __aeabi_dcmplt(double, double); // result (1, 0) denotes (<, >=) [2], use for C <
-int __aeabi_dcmple(double, double); // result (1, 0) denotes (<=, >) [2], use for C <=
-int __aeabi_dcmpge(double, double); // result (1, 0) denotes (>=, <) [2], use for C >=
-int __aeabi_dcmpgt(double, double); // result (1, 0) denotes (>, <=) [2], use for C >
-int __aeabi_dcmpun(double, double); // result (1, 0) denotes (?, <=>) [2], use for C99 isunordered()
+void __aeabi_cdcmpeq(double, double) __aapcs; // non-excepting equality comparison [1], result in PSR ZC flags
+void __aeabi_cdcmple(double, double) __aapcs; // 3-way (<, =, >) compare [1], result in PSR ZC flags
+void __aeabi_cdrcmple(double, double) __aapcs; // reversed 3-way (<, =, >) compare [1], result in PSR ZC flags
+int __aeabi_dcmpeq(double, double) __aapcs; // result (1, 0) denotes (=, <>) [2], use for C == and !=
+int __aeabi_dcmplt(double, double) __aapcs; // result (1, 0) denotes (<, >=) [2], use for C <
+int __aeabi_dcmple(double, double) __aapcs; // result (1, 0) denotes (<=, >) [2], use for C <=
+int __aeabi_dcmpge(double, double) __aapcs; // result (1, 0) denotes (>=, <) [2], use for C >=
+int __aeabi_dcmpgt(double, double) __aapcs; // result (1, 0) denotes (>, <=) [2], use for C >
+int __aeabi_dcmpun(double, double) __aapcs; // result (1, 0) denotes (?, <=>) [2], use for C99 isunordered()
 
 /*
  * Standard single precision floating-point arithmetic helper functions
  */
-float __aeabi_fadd(float, float); // single-precision addition
-float __aeabi_fdiv(float n, float d); // single-precision division, n / d
-float __aeabi_fmul(float, float); // single-precision multiplication
-float __aeabi_frsub(float x, float y); // single-precision reverse subtraction, y - x
-float __aeabi_fsub(float x, float y); // single-precision subtraction, x - y
-float __aeabi_fneg(float); // single-precision negation (obsolete, to be removed in r2.09)
+float __aeabi_fadd(float, float) __aapcs; // single-precision addition
+float __aeabi_fdiv(float n, float d) __aapcs; // single-precision division, n / d
+float __aeabi_fmul(float, float) __aapcs; // single-precision multiplication
+float __aeabi_frsub(float x, float y) __aapcs; // single-precision reverse subtraction, y - x
+float __aeabi_fsub(float x, float y) __aapcs; // single-precision subtraction, x - y
+float __aeabi_fneg(float) __aapcs; // single-precision negation (obsolete, to be removed in r2.09)
 
 /*
  * Standard single precision floating-point comparison helper functions
  */
-void __aeabi_cfcmpeq(float, float); // non-excepting equality comparison [1], result in PSR ZC flags
-void __aeabi_cfcmple(float, float); // 3-way (<, =, ?>) compare [1], result in PSR ZC flags
-void __aeabi_cfrcmple(float, float); // reversed 3-way (<, =, ?>) compare [1], result in PSR ZC flags
-int __aeabi_fcmpeq(float, float); // result (1, 0) denotes (=, <>) [2], use for C == and !=
-int __aeabi_fcmplt(float, float); // result (1, 0) denotes (<, >=) [2], use for C <
-int __aeabi_fcmple(float, float); // result (1, 0) denotes (<=, >) [2], use for C <=
-int __aeabi_fcmpge(float, float); // result (1, 0) denotes (>=, <) [2], use for C >=
-int __aeabi_fcmpgt(float, float); // result (1, 0) denotes (>, <=) [2], use for C >
-int __aeabi_fcmpun(float, float); // result (1, 0) denotes (?, <=>) [2], use for C99 isunordered()
+void __aeabi_cfcmpeq(float, float) __aapcs; // non-excepting equality comparison [1], result in PSR ZC flags
+void __aeabi_cfcmple(float, float) __aapcs; // 3-way (<, =, ?>) compare [1], result in PSR ZC flags
+void __aeabi_cfrcmple(float, float) __aapcs; // reversed 3-way (<, =, ?>) compare [1], result in PSR ZC flags
+int __aeabi_fcmpeq(float, float) __aapcs; // result (1, 0) denotes (=, <>) [2], use for C == and !=
+int __aeabi_fcmplt(float, float) __aapcs; // result (1, 0) denotes (<, >=) [2], use for C <
+int __aeabi_fcmple(float, float) __aapcs; // result (1, 0) denotes (<=, >) [2], use for C <=
+int __aeabi_fcmpge(float, float) __aapcs; // result (1, 0) denotes (>=, <) [2], use for C >=
+int __aeabi_fcmpgt(float, float) __aapcs; // result (1, 0) denotes (>, <=) [2], use for C >
+int __aeabi_fcmpun(float, float) __aapcs; // result (1, 0) denotes (?, <=>) [2], use for C99 isunordered()
 
 /*
  * Standard conversions between floating types
  */
-float __aeabi_d2f(double);	// double to float (single precision) conversion
-double __aeabi_f2d(float);	// float (single precision) to double conversion
-float __aeabi_h2f(short hf);	// IEEE 754 binary16 storage format (VFP half precision) to binary32 (float) conversion [4, 5]
-short __aeabi_f2h(float f);	// IEEE 754 binary32 (float) to binary16 storage format (VFP half precision) conversion [4, 6]
-float __aeabi_h2f_alt(short hf);	// __aeabi_h2f_alt converts from VFP alternative format [7].
-short __aeabi_f2h_alt(float f);	// __aeabi_f2h_alt converts to VFP alternative format [8].
+float __aeabi_d2f(double) __aapcs;	// double to float (single precision) conversion
+double __aeabi_f2d(float) __aapcs;	// float (single precision) to double conversion
+float __aeabi_h2f(short hf) __aapcs;	// IEEE 754 binary16 storage format (VFP half precision) to binary32 (float) conversion [4, 5]
+short __aeabi_f2h(float f) __aapcs;	// IEEE 754 binary32 (float) to binary16 storage format (VFP half precision) conversion [4, 6]
+float __aeabi_h2f_alt(short hf) __aapcs;	// __aeabi_h2f_alt converts from VFP alternative format [7].
+short __aeabi_f2h_alt(float f) __aapcs;	// __aeabi_f2h_alt converts to VFP alternative format [8].
 
 /*
  * Standard floating-point to integer conversions
  */
-int __aeabi_d2iz(double);	// double to integer C-style conversion [3]
-unsigned __aeabi_d2uiz(double);	// double to unsigned C-style conversion [3]
-long long __aeabi_d2lz(double);	// double to long long C-style conversion [3]
-unsigned long long __aeabi_d2ulz(double);	// double to unsigned long long C-style conversion [3]
-int __aeabi_f2iz(float);	// float (single precision) to integer C-style conversion [3]
-unsigned __aeabi_f2uiz(float);	// float (single precision) to unsigned C-style conversion [3]
-long long __aeabi_f2lz(float);	// float (single precision) to long long C-style conversion [3]
-unsigned long long __aeabi_f2ulz(float);	// float to unsigned long long C-style conversion [3]
+int __aeabi_d2iz(double) __aapcs;	// double to integer C-style conversion [3]
+unsigned __aeabi_d2uiz(double) __aapcs;	// double to unsigned C-style conversion [3]
+long long __aeabi_d2lz(double) __aapcs;	// double to long long C-style conversion [3]
+unsigned long long __aeabi_d2ulz(double) __aapcs;	// double to unsigned long long C-style conversion [3]
+int __aeabi_f2iz(float) __aapcs;	// float (single precision) to integer C-style conversion [3]
+unsigned __aeabi_f2uiz(float) __aapcs;	// float (single precision) to unsigned C-style conversion [3]
+long long __aeabi_f2lz(float) __aapcs;	// float (single precision) to long long C-style conversion [3]
+unsigned long long __aeabi_f2ulz(float) __aapcs;	// float to unsigned long long C-style conversion [3]
 
 /*
  * Standard integer to floating-point conversions
  */
-double __aeabi_i2d(int);		// integer to double conversion
-double __aeabi_ui2d(unsigned);	// unsigned to double conversion
-double __aeabi_l2d(long long);	// long long to double conversion
-double __aeabi_ul2d(unsigned long long);	// unsigned long long to double conversion
-float __aeabi_i2f(int);	// integer to float (single precision) conversion
-float __aeabi_ui2f(unsigned);	// unsigned to float (single precision) conversion
-float __aeabi_l2f(long long);	// long long to float (single precision) conversion
-float __aeabi_ul2f(unsigned long long);	// ￼unsigned long long to float (single precision) conversion
+double __aeabi_i2d(int) __aapcs;		// integer to double conversion
+double __aeabi_ui2d(unsigned) __aapcs;	// unsigned to double conversion
+double __aeabi_l2d(long long) __aapcs;	// long long to double conversion
+double __aeabi_ul2d(unsigned long long) __aapcs;	// unsigned long long to double conversion
+float __aeabi_i2f(int) __aapcs;	// integer to float (single precision) conversion
+float __aeabi_ui2f(unsigned) __aapcs;	// unsigned to float (single precision) conversion
+float __aeabi_l2f(long long) __aapcs;	// long long to float (single precision) conversion
+float __aeabi_ul2f(unsigned long long) __aapcs;	// ￼unsigned long long to float (single precision) conversion
 
 /*
  * Long long functions
@@ -196,5 +201,7 @@ void __aeabi_memclr4(void *, size_t);
 void __aeabi_memclr(void *, size_t);
 
 void *__aeabi_read_tp(void); // return the value of $tp
+
+#undef	__aapcs
 
 #endif /* _ARM_AEABI_H_ */

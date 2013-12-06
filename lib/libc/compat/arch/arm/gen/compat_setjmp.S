@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_setjmp.S,v 1.1 2005/10/16 17:27:50 christos Exp $	*/
+/*	$NetBSD: compat_setjmp.S,v 1.4 2013/11/30 20:54:14 joerg Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -47,84 +47,109 @@
 
 ENTRY(setjmp)
 	/* Block all signals and retrieve the old signal mask */
-	stmfd	sp!, {r0, r14}
-	mov	r0, #0x00000000
+	push	{r0, lr}
+	movs	r0, #0x00000000
 
-	bl	PIC_SYM(_C_LABEL(sigblock), PLT)
+	bl	PLT_SYM(_C_LABEL(sigblock))
 	mov	r1, r0
 
-	ldmfd	sp!, {r0, r14}
-
 	/* Store signal mask */
-	str	r1, [r0, #(25 * 4)]
+	str	r1, [r0, #(_JB_SIGMASK * 4)]
 
 	ldr	r1, .Lsetjmp_magic
-	str	r1, [r0], #4
+	str	r1, [r0]
 
-#ifdef SOFTFLOAT
-	add	r0, r0, #52
-#else
-	/* Store fp registers */
-	sfm	f4, 4, [r0], #48
-	/* Store fpsr */
-	rfs	r1
-	str	r1, [r0], #0x0004
-#endif	/*SOFTFLOAT*/
 	/* Store integer registers */
-        stmia	r0, {r4-r14}
-        mov	r0, #0x00000000
-        RET
-
-.Lsetjmp_magic:
-	.word	_JB_MAGIC_SETJMP
-
+	adds	r0, r0, #(_JB_REG_R4 * 4)
+#ifdef __thumb__
+#ifdef _ARM_ARCH_7
+        stmia	r0!, {r4-r12}
+	str	sp, [r0, #0]
+	str	lr, [r0, #4]
+#else
+        stmia	r0!, {r4-r7}
+	mov	r2, r8
+	mov	r3, r9
+	stmia	r0!, {r2-r3}
+	mov	r1, r10
+	mov	r2, r11
+	mov	r3, r12
+	stmia	r0!, {r1-r3}
+	mov	r2, sp
+	mov	r3, lr
+	stmia	r0!, {r2-r3}
+#endif
+#else
+        stmia	r0, {r4-lr}
+#endif
+        movs	r0, #0
+	pop	{r3, pc}
+END(setjmp)
 
 ENTRY(longjmp)
 	ldr	r2, .Lsetjmp_magic
 	ldr	r3, [r0]
-	teq	r2, r3
+	cmp	r2, r3
 	bne	botch
 
 	/* Fetch signal mask */
-	ldr	r2, [r0, #(25 * 4)]
+	ldr	r2, [r0, #(_JB_SIGMASK * 4)]
 
 	/* Set signal mask */
-	stmfd	sp!, {r0, r1, r14}
-	sub	sp, sp, #4	/* align the stack */
+	push	{r0, r1}	/* don't care about lr */
 
 	mov	r0, r2
-	bl	PIC_SYM(_C_LABEL(sigsetmask), PLT)
+	bl	PLT_SYM(_C_LABEL(sigsetmask))
 
-	add	sp, sp, #4	/* unalign the stack */
-	ldmfd	sp!, {r0, r1, r14} 
+	pop	{r0, r1} 
 
-	add	r0, r0, #4
-#ifdef SOFTFLOAT
-	add	r0, r0, #52
-#else
-	/* Restore fp registers */
-	lfm	f4, 4, [r0], #48
-	/* Restore FPSR */
-	ldr	r4, [r0], #0x0004
-	wfs	r4
-#endif	/* SOFTFLOAT */
 	/* Restore integer registers */
-        ldmia	r0, {r4-r14}
+	adds	r0, r0, #(_JB_REG_R4 * 4)
+#if !defined(__thumb__) || defined(_ARM_ARCH_7)
+        ldmia	r0!, {r4-r12}
+#else
+        ldmia	r0!, {r4-r7}
+        ldmia	r0!, {r2-r3}
+	mov	r8, r2
+	mov	r9, r3
+        ldmia	r0!, {r1-r3}
+	mov	r10, r2
+	mov	r11, r3
+        ldmia	r0!, {r2}
+	mov	r12, r2
+#endif
 
-	/* Validate sp and r14 */
-	teq	sp, #0
-	teqne	r14, #0
+	ldmia	r0!, {r2-r3}	/* r2 = sp, r3 = lr */
+
+	/* Validate sp */
+	cmp	r2, #0
 	beq	botch
+	mov	sp, r2
+
+	/* Validate lr */
+	cmp	r3, #0
+	beq	botch
+	mov	lr, r3
 
 	/* Set return value */
-
 	mov	r0, r1
-	teq	r0, #0x00000000
-	moveq	r0, #0x00000001
+	cmp	r0, #0
+#ifdef __thumb__
+	bne	1f
+	movs	r0, #1
+1:
+#else
+	moveq	r0, #1
+#endif
 	RET
 
 	/* validation failed, die die die. */
 botch:
-	bl	PIC_SYM(_C_LABEL(longjmperror), PLT)
-	bl	PIC_SYM(_C_LABEL(abort), PLT)
-	b	. - 8		/* Cannot get here */
+	bl	PLT_SYM(_C_LABEL(longjmperror))
+	bl	PLT_SYM(_C_LABEL(abort))
+2:	b	2b		/* Cannot get here */
+
+	.align	0
+.Lsetjmp_magic:
+	.word	_JB_MAGIC_SETJMP
+END(longjmp)

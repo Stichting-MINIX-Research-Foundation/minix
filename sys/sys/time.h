@@ -249,10 +249,10 @@ struct	itimerspec {
 };
 
 #define	CLOCK_REALTIME	0
-#ifndef __minix
+#if !defined(__minix)
 #define	CLOCK_VIRTUAL	1
 #define	CLOCK_PROF	2
-#endif
+#endif /* !defined(__minix) */
 #define	CLOCK_MONOTONIC	3
 
 #if defined(_NETBSD_SOURCE)
@@ -278,7 +278,8 @@ __BEGIN_DECLS
 #if (_POSIX_C_SOURCE - 0) >= 200112L || \
     defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
 int	getitimer(int, struct itimerval *) __RENAME(__getitimer50);
-int	gettimeofday(struct timeval * __restrict, void *__restrict);
+int	gettimeofday(struct timeval * __restrict, void *__restrict)
+    __RENAME(__gettimeofday50);
 int	setitimer(int, const struct itimerval * __restrict,
 	    struct itimerval * __restrict) __RENAME(__setitimer50);
 int	utimes(const char *, const struct timeval [2]) __RENAME(__utimes50);

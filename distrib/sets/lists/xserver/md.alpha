@@ -1,4 +1,4 @@
-# $NetBSD: md.alpha,v 1.32 2011/08/03 01:43:26 mrg Exp $
+# $NetBSD: md.alpha,v 1.35 2013/08/11 22:29:03 joerg Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XalphaNetBSD				-unknown-	x11
 ./usr/X11R6/bin/XdecNetBSD				-unknown-	x11
@@ -123,12 +123,11 @@
 ./usr/X11R7/lib/modules/extensions/libdri.a		-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/libdri.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/libdri.so.0		-unknown-	xorg
-./usr/X11R7/lib/modules/extensions/libdri_pic.a		-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/libdri2.a		-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/libdri2.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/libdri2.so.0		-unknown-	xorg
-./usr/X11R7/lib/modules/extensions/libdri2_g.a		-unknown-	debuglib,xorg
 ./usr/X11R7/lib/modules/extensions/libdri2_pic.a	-unknown-	xorg
+./usr/X11R7/lib/modules/extensions/libdri_pic.a		-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/libextmod.a		-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/libextmod.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/libextmod.so.0	-unknown-	xorg

@@ -1,4 +1,4 @@
-/*	$NetBSD: locale.h,v 1.17 2010/06/07 13:52:29 tnozaki Exp $	*/
+/*	$NetBSD: locale.h,v 1.24 2013/05/17 14:11:55 joerg Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -33,6 +33,8 @@
 
 #ifndef _LOCALE_H_
 #define _LOCALE_H_
+
+#include <sys/featuretest.h>
 
 struct lconv {
 	char	*decimal_point;
@@ -75,17 +77,51 @@ struct lconv {
 
 #include <sys/cdefs.h>
 
-#ifdef __SETLOCALE_SOURCE__
-
-typedef struct _locale_impl_t		*_locale_t;
-
-#define _LC_GLOBAL_LOCALE		((_locale_t)-1)
-
+#if (_POSIX_C_SOURCE - 0) >= 200809L || defined(_NETBSD_SOURCE) || \
+    defined(__SETLOCALE_SOURCE__)
+#  ifndef __LOCALE_T_DECLARED
+typedef struct _locale		*locale_t;
+#  define __LOCALE_T_DECLARED
+#  endif
 #endif
 
 __BEGIN_DECLS
 struct lconv *localeconv(void);
 char *setlocale(int, const char *) __RENAME(__setlocale50);
+
+#if (_POSIX_C_SOURCE - 0) >= 200809L || defined(_NETBSD_SOURCE)
+#  ifndef __LOCALE_T_DECLARED
+typedef struct _locale		*locale_t;
+#  define __LOCALE_T_DECLARED
+#  endif
+#define	LC_ALL_MASK		((int)~0)
+#define	LC_COLLATE_MASK		((int)(1 << LC_COLLATE))
+#define	LC_CTYPE_MASK		((int)(1 << LC_CTYPE))
+#define	LC_MONETARY_MASK	((int)(1 << LC_MONETARY))
+#define	LC_NUMERIC_MASK		((int)(1 << LC_NUMERIC))
+#define	LC_TIME_MASK		((int)(1 << LC_TIME))
+#define	LC_MESSAGES_MASK	((int)(1 << LC_MESSAGES))
+locale_t	duplocale(locale_t);
+void		freelocale(locale_t);
+struct lconv	*localeconv_l(locale_t);
+locale_t	newlocale(int, const char *, locale_t);
+
+#ifndef _LIBC
+extern struct _locale	_lc_global_locale;
+#else
+extern __dso_protected struct _locale	_lc_global_locale;
+#endif
+#define LC_GLOBAL_LOCALE	(&_lc_global_locale)
+#endif /* _POSIX_SOURCE >= 200809 || _NETBSD_SOURCE */
+
+#if defined(_NETBSD_SOURCE)
+#  ifndef _LIBC
+extern const struct _locale _lc_C_locale;
+#  else
+extern __dso_protected const struct _locale _lc_C_locale;
+#  endif
+#define LC_C_LOCALE		((locale_t)__UNCONST(&_lc_C_locale))
+#endif
 __END_DECLS
 
 #endif /* _LOCALE_H_ */

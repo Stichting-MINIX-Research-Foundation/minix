@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_db_factory.c,v 1.9 2008/02/09 14:56:20 junyoung Exp $	*/
+/*	$NetBSD: citrus_db_factory.c,v 1.10 2013/09/14 13:05:51 joerg Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_db_factory.c,v 1.9 2008/02/09 14:56:20 junyoung Exp $");
+__RCSID("$NetBSD: citrus_db_factory.c,v 1.10 2013/09/14 13:05:51 joerg Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -232,14 +232,6 @@ put8(struct _region *r, size_t *rofs, uint8_t val)
 {
 	*(uint8_t *)_region_offset(r, *rofs) = val;
 	*rofs += 1;
-}
-
-static __inline void
-put16(struct _region *r, size_t *rofs, uint16_t val)
-{
-	val = htons(val);
-	memcpy(_region_offset(r, *rofs), &val, 2);
-	*rofs += 2;
 }
 
 static __inline void

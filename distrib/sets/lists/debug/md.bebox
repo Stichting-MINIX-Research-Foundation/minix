@@ -1,0 +1,3 @@
+# $NetBSD: md.bebox,v 1.2 2013/01/16 21:11:07 christos Exp $
+./usr/libdata/debug/usr/bin/fdformat.debug	comp-util-debug		debug
+./usr/libdata/debug/usr/mdec/mkbootimage.debug	comp-sysutil-debug	debug

@@ -22,9 +22,11 @@ COPTS.run.c += -Wno-format-nonliteral
 COPTS.tran.c += -Wno-format-nonliteral
 
 # info file originally from GNU awk 3.1.3, adjusted for nawk slightly
+.if !defined(__MINIX)
 # Don't install on Minix, we don't have it.
-#.PATH:	${NETBSDSRCDIR}/external/gpl2/gawk/dist
-#TEXINFO=        awk.info
+.PATH:	${NETBSDSRCDIR}/external/gpl2/gawk/dist
+TEXINFO=        awk.info
+.endif # !defined(__MINIX)
 
 # During the tools build (from src/tools/awk/Makefile),
 # src/tools/Makefile.host changes .CURDIR back and forth between

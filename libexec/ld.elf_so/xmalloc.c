@@ -1,4 +1,4 @@
-/*	$NetBSD: xmalloc.c,v 1.11 2011/05/25 14:41:46 christos Exp $	*/
+/*	$NetBSD: xmalloc.c,v 1.12 2013/01/24 17:57:29 christos Exp $	*/
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -77,7 +77,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: xmalloc.c,v 1.11 2011/05/25 14:41:46 christos Exp $");
+__RCSID("$NetBSD: xmalloc.c,v 1.12 2013/01/24 17:57:29 christos Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -369,12 +369,13 @@ irealloc(void *cp, size_t nbytes)
 		*(u_short *)((caddr_t)(op + 1) + op->ov_size) = RMAGIC;
 #endif
 		return(cp);
-	} else
-		xfree(cp);
+	}
   	if ((res = imalloc(nbytes)) == NULL)
   		return (NULL);
-  	if (cp != res)		/* common optimization if "compacting" */
+  	if (cp != res) {	/* common optimization if "compacting" */
 		memcpy(res, cp, (nbytes < onb) ? nbytes : onb);
+		xfree(cp);
+	}
   	return (res);
 }
 

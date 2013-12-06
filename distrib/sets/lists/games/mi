@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.47 2012/06/06 00:23:09 christos Exp $
+# $NetBSD: mi,v 1.49 2013/11/12 17:46:21 mbalmer Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -14,6 +14,7 @@
 ./usr/games/caesar				games-utils-bin
 ./usr/games/canfield				games-games-bin
 ./usr/games/cfscores				games-games-bin
+./usr/games/cgram				games-games-bin
 ./usr/games/chess				games-obsolete		obsolete
 ./usr/games/ching				games-games-bin
 ./usr/games/colorbars				games-utils-bin
@@ -26,6 +27,7 @@
 ./usr/games/fortune				games-utils-bin
 ./usr/games/gomoku				games-games-bin
 ./usr/games/hack				games-games-bin
+./usr/games/hals_end				games-games-bin
 ./usr/games/hangman				games-games-bin
 ./usr/games/hide/adventure			games-obsolete		obsolete
 ./usr/games/hide/arithmetic			games-obsolete		obsolete
@@ -201,6 +203,7 @@
 ./usr/share/man/cat6/boggle.0			games-games-catman	.cat
 ./usr/share/man/cat6/caesar.0			games-utils-catman	.cat
 ./usr/share/man/cat6/canfield.0			games-games-catman	.cat
+./usr/share/man/cat6/cgram.0			games-games-catman	.cat
 ./usr/share/man/cat6/chess.0			games-obsolete		obsolete
 ./usr/share/man/cat6/ching.0			games-games-catman	.cat
 ./usr/share/man/cat6/colorbars.0		games-utils-catman	.cat
@@ -212,6 +215,7 @@
 ./usr/share/man/cat6/fortune.0			games-utils-catman	.cat
 ./usr/share/man/cat6/gomoku.0			games-games-catman	.cat
 ./usr/share/man/cat6/hack.0			games-games-catman	.cat
+./usr/share/man/cat6/hals_end.0			games-games-catman	.cat
 ./usr/share/man/cat6/hangman.0			games-games-catman	.cat
 ./usr/share/man/cat6/hunt.0			games-games-catman	.cat
 ./usr/share/man/cat6/huntd.0			games-games-catman	.cat
@@ -255,6 +259,7 @@
 ./usr/share/man/html6/boggle.html		games-games-htmlman	html
 ./usr/share/man/html6/caesar.html		games-utils-htmlman	html
 ./usr/share/man/html6/canfield.html		games-games-htmlman	html
+./usr/share/man/html6/cgram.html		games-games-htmlman	html
 ./usr/share/man/html6/ching.html		games-games-htmlman	html
 ./usr/share/man/html6/colorbars.html		games-utils-htmlman	html
 ./usr/share/man/html6/countmail.html		games-utils-htmlman	html
@@ -265,6 +270,7 @@
 ./usr/share/man/html6/fortune.html		games-utils-htmlman	html
 ./usr/share/man/html6/gomoku.html		games-games-htmlman	html
 ./usr/share/man/html6/hack.html			games-games-htmlman	html
+./usr/share/man/html6/hals_end.html		games-games-htmlman	html
 ./usr/share/man/html6/hangman.html		games-games-htmlman	html
 ./usr/share/man/html6/hunt.html			games-games-htmlman	html
 ./usr/share/man/html6/huntd.html		games-games-htmlman	html
@@ -308,6 +314,7 @@
 ./usr/share/man/man6/boggle.6			games-games-man		.man
 ./usr/share/man/man6/caesar.6			games-utils-man		.man
 ./usr/share/man/man6/canfield.6			games-games-man		.man
+./usr/share/man/man6/cgram.6			games-games-man		.man
 ./usr/share/man/man6/chess.6			games-obsolete		obsolete
 ./usr/share/man/man6/ching.6			games-games-man		.man
 ./usr/share/man/man6/colorbars.6		games-utils-man		.man
@@ -319,6 +326,7 @@
 ./usr/share/man/man6/fortune.6			games-utils-man		.man
 ./usr/share/man/man6/gomoku.6			games-games-man		.man
 ./usr/share/man/man6/hack.6			games-games-man		.man
+./usr/share/man/man6/hals_end.6			games-games-man		.man
 ./usr/share/man/man6/hangman.6			games-games-man		.man
 ./usr/share/man/man6/hunt.6			games-games-man		.man
 ./usr/share/man/man6/huntd.6			games-games-man		.man

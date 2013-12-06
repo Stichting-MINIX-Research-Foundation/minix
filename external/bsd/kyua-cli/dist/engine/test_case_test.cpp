@@ -364,6 +364,30 @@ public:
 };
 
 
+/// Creates a mock tester that receives a signal.
+///
+/// \param interface The name of the interface implemented by the tester.
+/// \param term_sig Signal to deliver to the tester.  If the tester does not
+///     exit due to this reason, it exits with an arbitrary non-zero code.
+static void
+create_mock_tester_signal(const char* interface, const int term_sig)
+{
+    const std::string tester_name = F("kyua-%s-tester") % interface;
+
+    atf::utils::create_file(
+        tester_name,
+        F("#! /bin/sh\n"
+          "echo 'stdout stuff'\n"
+          "echo 'stderr stuff' 1>&2\n"
+          "kill -%s $$\n"
+          "echo 'not reachable' 1>&2\n"
+          "exit 0\n") % term_sig);
+    ATF_REQUIRE(::chmod(tester_name.c_str(), 0755) != -1);
+
+    utils::setenv("KYUA_TESTERSDIR", fs::current_path().str());
+}
+
+
 }  // anonymous namespace
 
 
@@ -510,6 +534,23 @@ ATF_TEST_CASE_BODY(test_case__operators_eq_and_ne__not_copy)
         ATF_REQUIRE(!(base_tc == other_tc));
         ATF_REQUIRE(  base_tc != other_tc);
     }
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(run_test_case__tester_crashes);
+ATF_TEST_CASE_BODY(run_test_case__tester_crashes)
+{
+    atf_helper helper(this, "pass");
+    helper.move("program", ".");
+    create_mock_tester_signal("atf", SIGSEGV);
+    capture_hooks hooks;
+    const engine::test_result result = helper.run(hooks);
+
+    ATF_REQUIRE(engine::test_result::broken == result.type());
+    ATF_REQUIRE_MATCH("Tester received signal.*bug", result.reason());
+
+    ATF_REQUIRE_EQ("stdout stuff\n", hooks.stdout_contents);
+    ATF_REQUIRE_EQ("stderr stuff\n", hooks.stderr_contents);
 }
 
 
@@ -1063,6 +1104,8 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, test_case__operators_eq_and_ne__not_copy);
 
     ATF_ADD_TEST_CASE(tcs, test_case__output);
+
+    ATF_ADD_TEST_CASE(tcs, run_test_case__tester_crashes);
 
     ATF_ADD_TEST_CASE(tcs, run_test_case__atf__current_directory);
     ATF_ADD_TEST_CASE(tcs, run_test_case__atf__subdirectory);

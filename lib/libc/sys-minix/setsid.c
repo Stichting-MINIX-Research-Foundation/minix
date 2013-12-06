@@ -5,10 +5,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#ifdef __weak_alias
-__weak_alias(setsid, _setsid)
-#endif
-
 pid_t setsid(void)
 {
   message m;

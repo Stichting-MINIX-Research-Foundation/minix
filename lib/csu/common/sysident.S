@@ -1,4 +1,4 @@
-/* $NetBSD: sysident.S,v 1.1 2010/08/07 18:01:33 joerg Exp $ */
+/* $NetBSD: sysident.S,v 1.2 2013/09/10 16:45:33 matt Exp $ */
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou
@@ -58,25 +58,41 @@
 
 #include "sysident_assym.h"
 
-#ifdef __minix
-        .section .rodata
-	.ascii "$MINIX$\0"
+#if defined(__minix)
+	.section ".note.minix.ident", "a"
+	.p2align 2
+	.long	ELF_NOTE_MINIX_NAMESZ
+	.long	ELF_NOTE_MINIX_DESCSZ
+	.long	ELF_NOTE_TYPE_MINIX_TAG
+	.ascii	"Minix\0\0\0"	/* ELF_NOTE_NETBSD_NAME */
+	.long	300300000 /* Minix versiont as in "%d%03d%03d", MAJ-MIN-TEENY */
 #else
 	.section ".note.netbsd.ident", "a"
-	.align 4
+	.p2align 2
 
 	.long	ELF_NOTE_NETBSD_NAMESZ
 	.long	ELF_NOTE_NETBSD_DESCSZ
 	.long	ELF_NOTE_TYPE_NETBSD_TAG
 	.ascii	"NetBSD\0\0"	/* ELF_NOTE_NETBSD_NAME */
 	.long	__NetBSD_Version__
+#endif /* defined(__minix) */
 
 	.section ".note.netbsd.pax", "a"
-	.align 4
+	.p2align 2
 
 	.long	ELF_NOTE_PAX_NAMESZ
 	.long	ELF_NOTE_PAX_DESCSZ
 	.long	ELF_NOTE_TYPE_PAX_TAG
 	.ascii	"PaX\0"		/* ELF_NOTE_PAX_NAME */
 	.long	0
+
+#ifdef ELF_NOTE_MARCH_DESC
+	.section ".note.netbsd.march", "a"
+	.p2align 2
+
+	.long	ELF_NOTE_MARCH_NAMESZ
+	.long	ELF_NOTE_MARCH_DESCSZ
+	.long	ELF_NOTE_TYPE_MARCH_TAG
+	.ascii	"NetBSD\0\0"
+	.asciz	ELF_NOTE_MARCH_DESC
 #endif

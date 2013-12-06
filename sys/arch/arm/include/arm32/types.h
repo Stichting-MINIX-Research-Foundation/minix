@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.9 2010/07/07 01:20:50 chs Exp $	*/
+/*	$NetBSD: types.h,v 1.11 2013/05/07 23:01:55 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: comreg.h,v 1.17 2011/05/28 19:30:19 matt Exp $	*/
+/*	$NetBSD: comreg.h,v 1.22 2013/10/03 13:23:03 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -61,13 +61,18 @@
 #define	IIR_TXRDY	0x2	/* Transmitter ready */
 #define	IIR_MLSC	0x0	/* Modem status */
 #define	IIR_NOPEND	0x1	/* No pending interrupts */
+#define	IIR_64B_FIFO	0x20	/* 64byte FIFO Enabled (16750) */
 #define	IIR_FIFO_MASK	0xc0	/* set if FIFOs are enabled */
+#ifdef COM_16750
+#define IIR_BUSY	0x7	/* Busy indicator */
+#endif
 
 /* fifo control register */
 #define	FIFO_ENABLE	0x01	/* Turn the FIFO on */
 #define	FIFO_RCV_RST	0x02	/* Reset RX FIFO */
 #define	FIFO_XMT_RST	0x04	/* Reset TX FIFO */
 #define	FIFO_DMA_MODE	0x08
+#define	FIFO_64B_ENABLE	0x20	/* 64byte FIFO Enable (16750) */
 #define	FIFO_TRIGGER_1	0x00	/* Trigger RXRDY intr on 1 character */
 #define	FIFO_TRIGGER_4	0x40	/* ibid 4 */
 #define	FIFO_TRIGGER_8	0x80	/* ibid 8 */
@@ -107,6 +112,7 @@
 #define MCR_PRESCALE	0x80	/* 16650/16950: Baud rate prescaler select */
 #define MCR_TCR_TLR	0x40	/* OMAP: enables access to the TCR & TLR regs */
 #define MCR_XONENABLE	0x20	/* OMAP XON_EN */
+#define MCR_AFE		0x20	/* tl16c750: Flow Control Enable */
 #define	MCR_LOOPBACK	0x10	/* Loop test: echos from TX to RX */
 #define	MCR_IENABLE	0x08	/* Out2: enables UART interrupts */
 #define	MCR_DRS		0x04	/* Out1: resets some internal modems */

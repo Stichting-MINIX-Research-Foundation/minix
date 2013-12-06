@@ -3,7 +3,7 @@
 /* Both __sigreturn and _sigreturn are needed. */
 #include <machine/asm.h>
 
-IMPORT(_sigreturn)
+IMPORT(sigreturn)
 ENTRY(__sigreturn)
 	pop	{r0}		/* load sigframe.sf_scp into r0 as parameter */
-	b	_C_LABEL(_sigreturn)	/* _sigreturn(struct sigcontext *sf_scpcopy) */
+	b	_C_LABEL(sigreturn)	/* _sigreturn(struct sigcontext *sf_scpcopy) */

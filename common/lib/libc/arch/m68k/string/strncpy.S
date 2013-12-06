@@ -1,4 +1,4 @@
-/*	$NetBSD: strncpy.S,v 1.1 2005/12/20 19:28:49 christos Exp $	*/
+/*	$NetBSD: strncpy.S,v 1.5 2013/09/07 19:06:29 chs Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,35 +39,42 @@
 #if 0
 	RCSID("from: @(#)strncpy.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: strncpy.S,v 1.1 2005/12/20 19:28:49 christos Exp $")
+	RCSID("$NetBSD: strncpy.S,v 1.5 2013/09/07 19:06:29 chs Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 ENTRY(strncpy)
-	movl	%sp@(4),%d0		| return value is toaddr
-	movl	%sp@(12),%d1		| count
-	jeq	Lscdone			| nothing to do
-	movl	%sp@(8),%a0		| a0 = fromaddr
+	movl	4(%sp),%d0		| return value is toaddr
+	movl	12(%sp),%d1		| count
+	jeq	.Lscdone		| nothing to do
+	movl	8(%sp),%a0		| a0 = fromaddr
 	movl	%d0,%a1			| a1 = toaddr
 	subql	#1,%d1
-Lscloop:
-	movb	%a0@+,%a1@+		| copy a byte
-	dbeq	%d1,Lscloop		| loop through low word of d1
-	jeq	Lscpadding		| copied null, padding if necessary
+.Lscloop:
+	movb	(%a0)+,(%a1)+		| copy a byte
+#ifndef __mcoldfire__
+	dbeq	%d1,.Lscloop		| loop through low word of d1
+#endif
+	jeq	.Lscpadding		| copied null, padding if necessary
+#ifndef __mcoldfire__
 	clrw	%d1			| clear low word of d1
+#endif
 	subql	#1,%d1			| adjust count for long copies
-	jcc	Lscloop			| more room, keep going
-Lscdone:
+	jcc	.Lscloop		| more room, keep going
+.Lscdone:
 #ifdef __SVR4_ABI__
 	moveal	%d0,%a0
 #endif
 	rts
 
-Lscploop:
-	clrb	%a1@+			| clear a byte
-	dbra	%d1,Lscploop		| keep going
+.Lscploop:
+	clrb	(%a1)+			| clear a byte
+#ifndef __mcoldfire__
+	dbra	%d1,.Lscploop		| keep going
 	clrw	%d1
-Lscpadding:
+#endif
+.Lscpadding:
 	subql	#1,%d1
-	jcc	Lscploop
-	jra	Lscdone
+	jcc	.Lscploop
+	jra	.Lscdone
+END(strncpy)

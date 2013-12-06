@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: sed.test,v 1.4 2003/10/27 20:09:49 uwe Exp $
+#	$NetBSD: sed.test,v 1.5 2011/11/12 03:15:05 christos Exp $
 #
 # Copyright (c) 1992 Diomidis Spinellis.
 # Copyright (c) 1992, 1993
@@ -34,7 +34,7 @@
 # SUCH DAMAGE.
 #
 #	from: @(#)sed.test	8.1 (Berkeley) 6/6/93
-#	$NetBSD: sed.test,v 1.4 2003/10/27 20:09:49 uwe Exp $
+#	$NetBSD: sed.test,v 1.5 2011/11/12 03:15:05 christos Exp $
 #
 
 # sed Regression Tests
@@ -45,9 +45,9 @@
 
 main()
 {
-	BASE=/usr/old/bin/sed
+	BASE=/usr/bin/sed
 	BASELOG=sed.out
-	TEST=../obj/sed
+	TEST=$(cd $(dirname $0)/.. && make -V .OBJDIR)/sed
 	TESTLOG=nsed.out
 	DICT=/usr/share/dict/words
 
@@ -93,7 +93,7 @@ tests()
 
 mark()
 {
-	MARK=`expr $MARK + 1`
+	MARK=$(expr $MARK + 1)
 	exec 1>&4 2>&5
 	exec >"$DIR/${MARK}_$1"
 	echo "Test $1:$MARK"

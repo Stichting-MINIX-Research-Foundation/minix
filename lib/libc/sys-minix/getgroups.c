@@ -9,11 +9,6 @@ getgroups.c
 #include <string.h>
 #include <unistd.h>
 
-#ifdef __weak_alias
-__weak_alias(getgroups, _getgroups)
-#endif
-
-
 int getgroups(int ngroups, gid_t *arr)
 {
   message m;

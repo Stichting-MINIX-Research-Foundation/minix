@@ -1,4 +1,4 @@
-/*	$NetBSD: vfwscanf.c,v 1.8 2012/03/15 18:22:30 christos Exp $	*/
+/*	$NetBSD: vfwscanf.c,v 1.11 2013/09/23 12:41:37 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -42,7 +42,7 @@
 static char sccsid[] = "@(#)ftell.c	8.2 (Berkeley) 5/4/95";
 __FBSDID("$FreeBSD: src/lib/libc/stdio/vfwscanf.c,v 1.12 2004/05/02 20:13:29 obrien Exp $");
 #else
-__RCSID("$NetBSD: vfwscanf.c,v 1.8 2012/03/15 18:22:30 christos Exp $");
+__RCSID("$NetBSD: vfwscanf.c,v 1.11 2013/09/23 12:41:37 pooka Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -62,9 +62,8 @@ __RCSID("$NetBSD: vfwscanf.c,v 1.8 2012/03/15 18:22:30 christos Exp $");
 #include "reentrant.h"
 #include "local.h"
 
-#ifndef NO_FLOATING_POINT
 #include <locale.h>
-#endif
+#include "setlocale_local.h"
 
 #define	BUF		513	/* Maximum length of numeric string. */
 
@@ -103,7 +102,9 @@ __RCSID("$NetBSD: vfwscanf.c,v 1.8 2012/03/15 18:22:30 christos Exp $");
 #define	CT_INT		3	/* %[dioupxX] conversion */
 #define	CT_FLOAT	4	/* %[efgEFG] conversion */
 
-static int parsefloat(FILE *, wchar_t *, wchar_t *);
+#ifndef NO_FLOATING_POINT
+static int parsefloat(FILE *, wchar_t *, wchar_t *, locale_t);
+#endif
 
 #define	INCCL(_c)	\
 	(cclcompl ? (wmemchr(ccls, (_c), (size_t)(ccle - ccls)) == NULL) : \
@@ -115,11 +116,18 @@ static int parsefloat(FILE *, wchar_t *, wchar_t *);
 int
 vfwscanf(FILE * __restrict fp, const wchar_t * __restrict fmt, va_list ap)
 {
+	return vfwscanf_l(fp, _current_locale(), fmt, ap);
+}
+
+int
+vfwscanf_l(FILE * __restrict fp, locale_t loc, const wchar_t * __restrict fmt,
+    va_list ap)
+{
 	int ret;
 
 	FLOCKFILE(fp);
 	_SET_ORIENTATION(fp, 1);
-	ret = __vfwscanf_unlocked(fp, fmt, ap);
+	ret = __vfwscanf_unlocked_l(fp, loc, fmt, ap);
 	FUNLOCKFILE(fp);
 	return ret;
 }
@@ -128,7 +136,7 @@ vfwscanf(FILE * __restrict fp, const wchar_t * __restrict fmt, va_list ap)
 do { \
 	wint_t tc; \
  \
-	while ((tc = __fgetwc_unlock(fp)) != WEOF && iswspace(tc)) \
+	while ((tc = __fgetwc_unlock(fp)) != WEOF && iswspace_l(tc, loc)) \
 		continue; \
 	if (tc != WEOF) \
 		ungetwc(tc, fp); \
@@ -138,7 +146,8 @@ do { \
  * Non-MT-safe version.
  */
 int
-__vfwscanf_unlocked(FILE * __restrict fp, const wchar_t * __restrict fmt, va_list ap)
+__vfwscanf_unlocked_l(FILE * __restrict fp, locale_t loc,
+    const wchar_t * __restrict fmt, va_list ap)
 {
 	wint_t c;		/* character from format, or conversion */
 	size_t width;		/* field width, or 0 */
@@ -157,10 +166,9 @@ __vfwscanf_unlocked(FILE * __restrict fp, const wchar_t * __restrict fmt, va_lis
 	wint_t wi;		/* handy wint_t */
 	char *mbp;		/* multibyte string pointer for %c %s %[ */
 	size_t nconv;		/* number of bytes in mb. conversion */
-	char mbbuf[MB_LEN_MAX];	/* temporary mb. character buffer */
 	static const mbstate_t initial;
 	mbstate_t mbs;
-
+	char mbbuf[MB_LEN_MAX];	/* temporary mb. character buffer */
 	/* `basefix' is used to avoid `if' tests in the integer scanner */
 	static short basefix[17] =
 		{ 10, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 };
@@ -176,9 +184,9 @@ __vfwscanf_unlocked(FILE * __restrict fp, const wchar_t * __restrict fmt, va_lis
 		c = *fmt++;
 		if (c == 0)
 			return nassigned;
-		if (iswspace(c)) {
+		if (iswspace_l(c, loc)) {
 			while ((c = __fgetwc_unlock(fp)) != WEOF &&
-			    iswspace(c))
+			    iswspace_l(c, loc))
 				;
 			if (c != WEOF)
 				ungetwc(c, fp);
@@ -360,7 +368,8 @@ literal:
 		 * that suppress this.
 		 */
 		if ((flags & NOSKIP) == 0) {
-			while ((wi = __fgetwc_unlock(fp)) != WEOF && iswspace(wi))
+			while ((wi = __fgetwc_unlock(fp)) != WEOF &&
+			       iswspace_l(wi, loc))
 				nread++;
 			if (wi == WEOF)
 				goto input_failure;
@@ -398,14 +407,15 @@ literal:
 				mbs = initial;
 				while (width != 0 &&
 				    (wi = __fgetwc_unlock(fp)) != WEOF) {
-					if (width >= MB_CUR_MAX &&
+					if (width >= MB_CUR_MAX_L(loc) &&
 					    !(flags & SUPPRESS)) {
-						nconv = wcrtomb(mbp, wi, &mbs);
+						nconv = wcrtomb_l(mbp, wi,
+						    &mbs, loc);
 						if (nconv == (size_t)-1)
 							goto input_failure;
 					} else {
-						nconv = wcrtomb(mbbuf, wi,
-						    &mbs);
+						nconv = wcrtomb_l(mbbuf, wi,
+						    &mbs, loc);
 						if (nconv == (size_t)-1)
 							goto input_failure;
 						if (nconv > width) {
@@ -464,14 +474,15 @@ literal:
 				mbs = initial;
 				while ((wi = __fgetwc_unlock(fp)) != WEOF &&
 				    width != 0 && INCCL(wi)) {
-					if (width >= MB_CUR_MAX &&
+					if (width >= MB_CUR_MAX_L(loc) &&
 					   !(flags & SUPPRESS)) {
-						nconv = wcrtomb(mbp, wi, &mbs);
+						nconv = wcrtomb_l(mbp, wi,
+						    &mbs, loc);
 						if (nconv == (size_t)-1)
 							goto input_failure;
 					} else {
-						nconv = wcrtomb(mbbuf, wi,
-						    &mbs);
+						nconv = wcrtomb_l(mbbuf, wi,
+						    &mbs, loc);
 						if (nconv == (size_t)-1)
 							goto input_failure;
 						if (nconv > width)
@@ -503,7 +514,7 @@ literal:
 			if ((flags & SUPPRESS) && (flags & LONG)) {
 				while ((wi = __fgetwc_unlock(fp)) != WEOF &&
 				    width-- != 0 &&
-				    !iswspace(wi))
+				    !iswspace_l(wi, loc))
 					nread++;
 				if (wi != WEOF)
 					ungetwc(wi, fp);
@@ -511,7 +522,7 @@ literal:
 				p0 = p = va_arg(ap, wchar_t *);
 				while ((wi = __fgetwc_unlock(fp)) != WEOF &&
 				    width-- != 0 &&
-				    !iswspace(wi)) {
+				    !iswspace_l(wi, loc)) {
 					*p++ = (wchar_t)wi;
 					nread++;
 				}
@@ -525,15 +536,16 @@ literal:
 				mbs = initial;
 				while ((wi = __fgetwc_unlock(fp)) != WEOF &&
 				    width != 0 &&
-				    !iswspace(wi)) {
-					if (width >= MB_CUR_MAX &&
+				    !iswspace_l(wi, loc)) {
+					if (width >= MB_CUR_MAX_L(loc) &&
 					    !(flags & SUPPRESS)) {
-						nconv = wcrtomb(mbp, wi, &mbs);
+						nconv = wcrtomb_l(mbp, wi,
+						    &mbs, loc);
 						if (nconv == (size_t)-1)
 							goto input_failure;
 					} else {
-						nconv = wcrtomb(mbbuf, wi,
-						    &mbs);
+						nconv = wcrtomb_l(mbbuf, wi,
+						    &mbs, loc);
 						if (nconv == (size_t)-1)
 							goto input_failure;
 						if (nconv > width)
@@ -677,9 +689,9 @@ literal:
 
 				*p = 0;
 				if ((flags & UNSIGNED) == 0)
-				    res = wcstoimax(buf, NULL, base);
+				    res = wcstoimax_l(buf, NULL, base, loc);
 				else
-				    res = wcstoumax(buf, NULL, base);
+				    res = wcstoumax_l(buf, NULL, base, loc);
 				if (flags & POINTER)
 					*va_arg(ap, void **) =
 							(void *)(uintptr_t)res;
@@ -712,18 +724,19 @@ literal:
 			if (width == 0 || width > sizeof(buf) /
 			    sizeof(*buf) - 1)
 				width = sizeof(buf) / sizeof(*buf) - 1;
-			if ((width = parsefloat(fp, buf, buf + width)) == 0)
+			if ((width = parsefloat(fp, buf, buf + width, loc)) == 0)
 				goto match_failure;
 			if ((flags & SUPPRESS) == 0) {
 				if (flags & LONGDBL) {
-					long double res = wcstold(buf, &p);
+					long double res = wcstold_l(buf, &p,
+					    loc);
 					*va_arg(ap, long double *) = res;
 				} else
 				if (flags & LONG) {
-					double res = wcstod(buf, &p);
+					double res = wcstod_l(buf, &p, loc);
 					*va_arg(ap, double *) = res;
 				} else {
-					float res = wcstof(buf, &p);
+					float res = wcstof_l(buf, &p, loc);
 					*va_arg(ap, float *) = res;
 				}
 #ifdef DEBUG
@@ -746,7 +759,7 @@ match_failure:
 
 #ifndef NO_FLOATING_POINT
 static int
-parsefloat(FILE *fp, wchar_t *buf, wchar_t *end)
+parsefloat(FILE *fp, wchar_t *buf, wchar_t *end, locale_t loc)
 {
 	wchar_t *commit, *p;
 	int infnanpos = 0;
@@ -755,7 +768,7 @@ parsefloat(FILE *fp, wchar_t *buf, wchar_t *end)
 		S_DIGITS, S_FRAC, S_EXP, S_EXPDIGITS
 	} state = S_START;
 	wchar_t c;
-	wchar_t decpt = (wchar_t)(unsigned char)*localeconv()->decimal_point;
+	wchar_t decpt = (wchar_t)(unsigned char)*localeconv_l(loc)->decimal_point;
 	int gotmantdig = 0, ishex = 0;
 
 	/*
@@ -830,7 +843,7 @@ reswitch:
 				if (c == ')') {
 					commit = p;
 					infnanpos = -2;
-				} else if (!iswalnum(c) && c != '_')
+				} else if (!iswalnum_l(c, loc) && c != '_')
 					goto parsedone;
 				break;
 			}
@@ -846,7 +859,8 @@ reswitch:
 				goto reswitch;
 			}
 		case S_DIGITS:
-			if ((ishex && iswxdigit(c)) || iswdigit(c))
+			if ((ishex && iswxdigit_l(c, loc)) ||
+			    iswdigit_l(c, loc))
 				gotmantdig = 1;
 			else {
 				state = S_FRAC;
@@ -863,7 +877,8 @@ reswitch:
 					goto parsedone;
 				else
 					state = S_EXP;
-			} else if ((ishex && iswxdigit(c)) || iswdigit(c)) {
+			} else if ((ishex && iswxdigit_l(c, loc)) ||
+			    iswdigit_l(c, loc)) {
 				commit = p;
 				gotmantdig = 1;
 			} else
@@ -876,7 +891,7 @@ reswitch:
 			else
 				goto reswitch;
 		case S_EXPDIGITS:
-			if (iswdigit(c))
+			if (iswdigit_l(c, loc))
 				commit = p;
 			else
 				goto parsedone;

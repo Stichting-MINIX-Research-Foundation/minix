@@ -143,13 +143,13 @@ units::bytes::operator uint64_t(void) const
 ///
 /// \post The bad bit of input is set to 1 if the parsing failed.
 std::istream&
-operator>>(std::istream& input, units::bytes& rhs)
+units::operator>>(std::istream& input, bytes& rhs)
 {
     std::string word;
     input >> word;
     if (input.good() || input.eof()) {
         try {
-            rhs = units::bytes::parse(word);
+            rhs = bytes::parse(word);
         } catch (const std::runtime_error& e) {
             input.setstate(std::ios::badbit);
         }
@@ -166,7 +166,7 @@ operator>>(std::istream& input, units::bytes& rhs)
 ///
 /// \return The output stream.
 std::ostream&
-operator<<(std::ostream& output, const units::bytes& rhs)
+units::operator<<(std::ostream& output, const bytes& rhs)
 {
     return (output << rhs.format());
 }

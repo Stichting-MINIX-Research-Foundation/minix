@@ -28,6 +28,7 @@
 
 #include "cli/cmd_report_html.hpp"
 
+#include <algorithm>
 #include <cerrno>
 #include <cstdlib>
 #include <stdexcept>
@@ -139,8 +140,14 @@ class html_hooks : public scan_action::base_hooks {
     /// The top directory in which to create the HTML files.
     fs::path _directory;
 
+    /// Collection of result types to include in the report.
+    const cli::result_types& _results_filters;
+
     /// Templates accumulator to generate the index.html file.
     text::templates_def _summary_templates;
+
+    /// Mapping of result types to the amount of tests with such result.
+    std::map< engine::test_result::result_type, std::size_t > _types_count;
 
     /// Generates a common set of templates for all of our files.
     ///
@@ -157,10 +164,19 @@ class html_hooks : public scan_action::base_hooks {
     ///
     /// \param test_case The test case to be added.
     /// \param result The result of the test case.
+    /// \param has_detail If true, the result of the test case has not been
+    ///     filtered and therefore there exists a separate file for the test
+    ///     with all of its information.
     void
     add_to_summary(const engine::test_case& test_case,
-                   const engine::test_result& result)
+                   const engine::test_result& result,
+                   const bool has_detail)
     {
+        ++_types_count[result.type()];
+
+        if (!has_detail)
+            return;
+
         std::string test_cases_vector;
         std::string test_cases_file_vector;
         switch (result.type()) {
@@ -221,16 +237,40 @@ class html_hooks : public scan_action::base_hooks {
         text::instantiate(templates, template_file, output_path);
     }
 
+    /// Gets the number of tests with a given result type.
+    ///
+    /// \param type The type to be queried.
+    ///
+    /// \return The number of tests of the given type, or 0 if none have yet
+    /// been registered by add_to_summary().
+    std::size_t
+    get_count(const engine::test_result::result_type type) const
+    {
+        const std::map< engine::test_result::result_type,
+                        std::size_t >::const_iterator
+            iter = _types_count.find(type);
+        if (iter == _types_count.end())
+            return 0;
+        else
+            return (*iter).second;
+    }
+
 public:
     /// Constructor for the hooks.
     ///
     /// \param ui_ User interface object where to report progress.
     /// \param directory_ The directory in which to create the HTML files.
-    html_hooks(cmdline::ui* ui_, const fs::path& directory_) :
+    /// \param results_filters_ The result types to include in the report.
+    ///     Cannot be empty.
+    html_hooks(cmdline::ui* ui_, const fs::path& directory_,
+               const cli::result_types& results_filters_) :
         _ui(ui_),
         _directory(directory_),
+        _results_filters(results_filters_),
         _summary_templates(common_templates())
     {
+        PRE(!results_filters_.empty());
+
         // Keep in sync with add_to_summary().
         _summary_templates.add_vector("broken_test_cases");
         _summary_templates.add_vector("broken_test_cases_file");
@@ -274,7 +314,13 @@ public:
         const engine::test_case& test_case = *test_program->find(
             iter.test_case_name());
 
-        add_to_summary(test_case, result);
+        if (std::find(_results_filters.begin(), _results_filters.end(),
+                      result.type()) == _results_filters.end()) {
+            add_to_summary(test_case, result, false);
+            return;
+        }
+
+        add_to_summary(test_case, result, true);
 
         text::templates_def templates = common_templates();
         templates.add_variable("test_case",
@@ -308,10 +354,26 @@ public:
     void
     write_summary(void)
     {
-        const std::size_t bad_count =
-            _summary_templates.get_vector("broken_test_cases").size() +
-            _summary_templates.get_vector("failed_test_cases").size();
-        _summary_templates.add_variable("bad_tests_count", F("%s") % bad_count);
+        const std::size_t n_passed = get_count(engine::test_result::passed);
+        const std::size_t n_failed = get_count(engine::test_result::failed);
+        const std::size_t n_skipped = get_count(engine::test_result::skipped);
+        const std::size_t n_xfail = get_count(
+            engine::test_result::expected_failure);
+        const std::size_t n_broken = get_count(engine::test_result::broken);
+
+        const std::size_t n_bad = n_broken + n_failed;
+
+        _summary_templates.add_variable("passed_tests_count",
+                                        F("%s") % n_passed);
+        _summary_templates.add_variable("failed_tests_count",
+                                        F("%s") % n_failed);
+        _summary_templates.add_variable("skipped_tests_count",
+                                        F("%s") % n_skipped);
+        _summary_templates.add_variable("xfail_tests_count",
+                                        F("%s") % n_xfail);
+        _summary_templates.add_variable("broken_tests_count",
+                                        F("%s") % n_broken);
+        _summary_templates.add_variable("bad_tests_count", F("%s") % n_bad);
 
         generate(text::templates_def(), "report.css", "report.css");
         generate(_summary_templates, "index.html", "index.html");
@@ -337,6 +399,9 @@ cli::cmd_report_html::cmd_report_html(void) : cli_command(
     add_option(cmdline::path_option(
         "output", "The directory in which to store the HTML files",
         "path", "html"));
+    add_option(cmdline::list_option(
+        "results-filter", "Comma-separated list of result types to include in "
+        "the report", "types", "skipped,xfail,broken,failed"));
 }
 
 
@@ -357,10 +422,11 @@ cli::cmd_report_html::run(cmdline::ui* ui,
     if (cmdline.has_option("action"))
         action_id = cmdline.get_option< cmdline::int_option >("action");
 
+    const result_types types = get_result_types(cmdline);
     const fs::path directory =
         cmdline.get_option< cmdline::path_option >("output");
     create_top_directory(directory, cmdline.has_option("force"));
-    html_hooks hooks(ui, directory);
+    html_hooks hooks(ui, directory, types);
     scan_action::drive(store_path(cmdline), action_id, hooks);
     hooks.write_summary();
 

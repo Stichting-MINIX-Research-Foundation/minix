@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_ctype_fallback.h,v 1.1 2003/03/05 20:18:15 tshiozak Exp $	*/
+/*	$NetBSD: citrus_ctype_fallback.h,v 1.2 2013/05/28 16:57:56 joerg Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -34,5 +34,17 @@ int _citrus_ctype_btowc_fallback(_citrus_ctype_rec_t * __restrict,
 				 int, wint_t * __restrict);
 int _citrus_ctype_wctob_fallback(_citrus_ctype_rec_t * __restrict,
 				 wint_t, int * __restrict);
+
+/* fallback functions for 0x00000003 */
+int _citrus_ctype_mbsnrtowcs_fallback(_citrus_ctype_rec_t * __restrict,
+				      wchar_t * __restrict,
+				      const char ** __restrict, size_t,
+				      size_t, void * __restrict,
+				      size_t * __restrict);
+int _citrus_ctype_wcsnrtombs_fallback(_citrus_ctype_rec_t * __restrict,
+				     char * __restrict,
+				     const wchar_t ** __restrict, size_t,
+				     size_t, void * __restrict,
+				     size_t * __restrict);
 
 #endif

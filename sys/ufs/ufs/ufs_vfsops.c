@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vfsops.c,v 1.42 2011/03/24 17:05:46 bouyer Exp $	*/
+/*	$NetBSD: ufs_vfsops.c,v 1.52 2013/01/22 09:39:18 dholland Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.42 2011/03/24 17:05:46 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.52 2013/01/22 09:39:18 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -50,11 +50,12 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.42 2011/03/24 17:05:46 bouyer Exp $
 #include <sys/proc.h>
 #include <sys/buf.h>
 #include <sys/vnode.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/kauth.h>
 
 #include <miscfs/specfs/specdev.h>
 
+#include <sys/quotactl.h>
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/ufsmount.h>
@@ -62,7 +63,6 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.42 2011/03/24 17:05:46 bouyer Exp $
 #ifdef UFS_DIRHASH
 #include <ufs/ufs/dirhash.h>
 #endif
-#include <quota/quotaprop.h>
 
 /* how many times ufs_init() was called */
 static int ufs_initcount = 0;
@@ -90,7 +90,7 @@ ufs_root(struct mount *mp, struct vnode **vpp)
 	struct vnode *nvp;
 	int error;
 
-	if ((error = VFS_VGET(mp, (ino_t)ROOTINO, &nvp)) != 0)
+	if ((error = VFS_VGET(mp, (ino_t)UFS_ROOTINO, &nvp)) != 0)
 		return (error);
 	*vpp = nvp;
 	return (0);
@@ -100,47 +100,27 @@ ufs_root(struct mount *mp, struct vnode **vpp)
  * Do operations associated with quotas
  */
 int
-ufs_quotactl(struct mount *mp, prop_dictionary_t dict)
+ufs_quotactl(struct mount *mp, struct quotactl_args *args)
 {
-	struct lwp *l = curlwp;
 
 #if !defined(QUOTA) && !defined(QUOTA2)
 	(void) mp;
-	(void) dict;
-	(void) l;
+	(void) args;
 	return (EOPNOTSUPP);
 #else
-	int  error;
-	prop_dictionary_t cmddict;
-	prop_array_t commands;
-	prop_object_iterator_t iter;
+	struct lwp *l = curlwp;
+	int error;
 
 	/* Mark the mount busy, as we're passing it to kauth(9). */
 	error = vfs_busy(mp, NULL);
-	if (error)
+	if (error) {
 		return (error);
-
-	error = quota_get_cmds(dict, &commands);
-	if (error)
-		goto out_vfs;
-	iter = prop_array_iterator(commands);
-	if (iter == NULL) {
-		error = ENOMEM;
-		goto out_vfs;
 	}
-		
-		
 	mutex_enter(&mp->mnt_updating);
-	while ((cmddict = prop_object_iterator_next(iter)) != NULL) {
-		if (prop_object_type(cmddict) != PROP_TYPE_DICTIONARY)
-			continue;
-		error = quota_handle_cmd(mp, l, cmddict);
-		if (error)
-			break;
-	}
-	prop_object_iterator_release(iter);
+
+	error = quota_handle_cmd(mp, l, args);
+
 	mutex_exit(&mp->mnt_updating);
-out_vfs:
 	vfs_unbusy(mp, false, NULL);
 	return (error);
 #endif
@@ -243,6 +223,7 @@ ufs_fhtovp(struct mount *mp, struct ufid *ufhp, struct vnode **vpp)
 		return (error);
 	}
 	ip = VTOI(nvp);
+	KASSERT(ip != NULL);
 	if (ip->i_mode == 0 || ip->i_gen != ufhp->ufid_gen) {
 		vput(nvp);
 		*vpp = NULLVP;

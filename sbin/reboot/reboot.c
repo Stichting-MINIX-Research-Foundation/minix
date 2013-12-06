@@ -1,4 +1,4 @@
-/*	$NetBSD: reboot.c,v 1.39 2011/08/27 18:46:19 joerg Exp $	*/
+/*	$NetBSD: reboot.c,v 1.40 2012/11/04 22:28:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1993\
 #if 0
 static char sccsid[] = "@(#)reboot.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: reboot.c,v 1.39 2011/08/27 18:46:19 joerg Exp $");
+__RCSID("$NetBSD: reboot.c,v 1.40 2012/11/04 22:28:16 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -56,6 +56,9 @@ __RCSID("$NetBSD: reboot.c,v 1.39 2011/08/27 18:46:19 joerg Exp $");
 #include <syslog.h>
 #include <unistd.h>
 #include <util.h>
+#ifdef SUPPORT_UTMPX
+#include <utmpx.h>
+#endif
 
 __dead static void usage(void);
 
@@ -66,7 +69,9 @@ int
 main(int argc, char *argv[])
 {
 	const char *progname;
-	/* int i; */
+#if !defined(__minix)
+	int i;
+#endif /* !defined(__minix) */
 	struct passwd *pw;
 	int ch, howto, lflag, nflag, qflag, sverrno, len;
 	const char *user;
@@ -193,15 +198,9 @@ main(int argc, char *argv[])
 	 */
 	(void)signal(SIGPIPE, SIG_IGN);
 
-
 	/* Just stop init -- if we fail, we'll restart it. */
-#if 0 && defined(__minix)
-	if (kill(1, SIGTERM) == -1)
-		err(1, "SIGTERM init");
-#else
 	if (kill(1, SIGTSTP) == -1)
 		err(1, "SIGTSTP init");
-#endif
 
 	/* Send a SIGTERM first, a chance to save the buffers. */
 	if (kill(-1, SIGTERM) == -1) {
@@ -226,7 +225,7 @@ main(int argc, char *argv[])
 		sync();
 	sleep(3);
 
-#ifndef __minix
+#if !defined(__minix)
 	for (i = 1;; ++i) {
 		if (kill(-1, SIGKILL) == -1) {
 			if (errno == ESRCH)
@@ -240,7 +239,7 @@ main(int argc, char *argv[])
 		}
 		(void)sleep(2 * i);
 	}
-#endif
+#endif /* !defined(__minix) */
 
 	reboot(howto, bootstr);
 	warn("reboot()");

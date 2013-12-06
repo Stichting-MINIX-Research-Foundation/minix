@@ -1,4 +1,4 @@
-.\"	$NetBSD: open.2,v 1.51 2012/01/25 00:28:35 christos Exp $
+.\"	$NetBSD: open.2,v 1.56 2013/07/29 18:37:16 njoly Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,11 +29,12 @@
 .\"
 .\"     @(#)open.2	8.2 (Berkeley) 11/16/93
 .\"
-.Dd January 23, 2012
+.Dd July 29, 2013
 .Dt OPEN 2
 .Os
 .Sh NAME
-.Nm open
+.Nm open ,
+.Nm openat
 .Nd open or create a file for reading or writing
 .Sh LIBRARY
 .Lb libc
@@ -41,6 +42,8 @@
 .In fcntl.h
 .Ft int
 .Fn open "const char *path" "int flags" "..."
+.Ft int
+.Fn openat "int fd" "const char *path" "int flags" "..."
 .Sh DESCRIPTION
 The file name specified by
 .Fa path
@@ -49,6 +52,33 @@ for reading and/or writing as specified by the
 argument
 .Fa flags
 and the file descriptor returned to the calling process.
+.Pp
+.Fn openat
+works the same way as
+.Fn open
+except if
+.Fa path
+is relative.
+In that case, it is looked up from a directory whose file
+descriptor was passed as
+.Fa fd .
+Search permission is required on this directory.
+.\"    (These alternatives await a decision about the semantics of O_SEARCH)
+.\" Search permission is required on this directory
+.\" except if
+.\" .Fa fd
+.\" was opened with the
+.\" .Dv O_SEARCH
+.\" flag.
+.\"    - or -
+.\" This file descriptor must have been opened with the
+.\" .Dv O_SEARCH
+.\" flag.
+.Fa fd
+can be set to
+.Dv AT_FDCWD
+in order to specify the current directory.
+.Pp
 The
 .Fa flags
 are specified by
@@ -164,6 +194,24 @@ Enable the
 signal to be sent to the process group
 when I/O is possible, e.g.,
 upon availability of data to be read.
+.\"    (This block awaits a decision about the semantics of O_SEARCH)
+.\" .It Dv O_SEARCH
+.\" If opening a directory, search permission checks will not be performed on
+.\" subsequent usage of the file descriptor for looking up relative paths by
+.\" .Xr faccessat 2 ,
+.\" .Xr fchmodat 2 ,
+.\" .Xr fchownat 2 ,
+.\" .Xr fstatat 2 ,
+.\" .Xr linkat 2 ,
+.\" .Xr mkdirat 2 ,
+.\" .Xr mkfifoat 2 ,
+.\" .Xr mknodat 2 ,
+.\" .Xr openat 2 ,
+.\" .Xr readlinkat 2 ,
+.\" .Xr symlinkat 2 ,
+.\" .Xr unlinkat 2 ,
+.\" and
+.\" .Xr utimensat 2 .
 .El
 .Pp
 Opening a file with
@@ -240,6 +288,8 @@ returns the current system limit.
 .Sh RETURN VALUES
 If successful,
 .Fn open
+and
+.Fn openat
 returns a non-negative integer, termed a file descriptor.
 Otherwise, a value of \-1 is returned and
 .Va errno
@@ -357,13 +407,43 @@ executed and the
 .Fn open
 call requests write access.
 .El
+.Pp
+In addition,
+.Fn openat
+will fail if:
+.Bl -tag -width Er
+.It Bq Er EBADF
+.Fa path
+does not specify an absolute path and
+.Fa fd
+is neither
+.Dv AT_FDCWD
+nor a valid file descriptor open for reading or searching.
+.It Bq Er ENOTDIR
+.Fa path
+is not an absolute path and
+.Fa fd
+is a file descriptor associated with a non-directory file.
+.El
 .Sh SEE ALSO
 .Xr chmod 2 ,
 .Xr close 2 ,
 .Xr dup 2 ,
+.Xr faccessat 2 ,
+.Xr fchmodat 2 ,
+.Xr fchownat 2 ,
+.Xr fstatat 2 ,
+.Xr linkat 2 ,
 .Xr lseek 2 ,
+.Xr mkdirat 2 ,
+.Xr mkfifoat 2 ,
+.Xr mknodat 2 ,
 .Xr read 2 ,
+.Xr readlinkat 2 ,
+.Xr symlinkat 2 ,
 .Xr umask 2 ,
+.Xr unlinkat 2 ,
+.Xr utimensat 2 ,
 .Xr write 2 ,
 .Xr getdtablesize 3
 .Sh STANDARDS
@@ -371,6 +451,10 @@ The
 .Fn open
 function conforms to
 .St -p1003.1-90 .
+.Fn openat
+conforms to
+.St -p1003.1-2008 .
+.Pp
 The
 .Fa flags
 values
@@ -380,6 +464,10 @@ and
 .Dv O_RSYNC
 are extensions defined in
 .St -p1003.1b-93 .
+.\"    (This block awaits a decision about the semantics of O_SEARCH)
+.\" .Dv O_SEARCH
+.\" is defined in
+.\" .St -p1003.1-2008 .
 .Pp
 The
 .Dv O_SHLOCK

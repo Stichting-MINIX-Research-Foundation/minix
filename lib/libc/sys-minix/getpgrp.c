@@ -5,10 +5,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#ifdef __weak_alias
-__weak_alias(getpgrp, _getpgrp)
-#endif
-
 pid_t getpgrp(void)
 {
   message m;

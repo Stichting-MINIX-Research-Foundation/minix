@@ -1,4 +1,4 @@
-.\"	$NetBSD: fts.3,v 1.30 2011/03/30 16:29:26 jruoho Exp $
+.\"	$NetBSD: fts.3,v 1.31 2013/06/30 19:19:12 wiz Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -332,7 +332,7 @@ Therefore, the
 and
 .Fa fts_accpath
 fields are guaranteed to be
-.Dv NULL Ns -terminated
+.Dv NUL Ns -terminated
 .Em only
 for the file most recently returned by
 .Fn fts_read .
@@ -350,7 +350,7 @@ are attempted.
 The
 .Fa fts_name
 field is always
-.Dv NULL Ns -terminated .
+.Dv NUL Ns -terminated .
 .Sh FTS_OPEN
 The
 .Fn fts_open

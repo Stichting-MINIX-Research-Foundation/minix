@@ -1,4 +1,4 @@
-/*	$NetBSD: ebh.h,v 1.1 2011/11/24 15:51:32 ahoka Exp $	*/
+/*	$NetBSD: ebh.h,v 1.3 2012/10/19 12:44:39 ttoth Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -32,16 +32,10 @@
  * SUCH DAMAGE.
  */
 
-/*
- * ebh.h
- *
- *  Created on: 2009.11.03.
- *      Author: dtengeri
- */
-
 #ifndef EBH_H_
 #define EBH_H_
 
+#ifdef _KERNEL
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/cdefs.h>
@@ -57,10 +51,27 @@
 #include <sys/kthread.h>
 
 #include <dev/flash/flash.h>
-#include <ufs/chfs/ebh_media.h>
-#include <ufs/chfs/debug.h>
-#include <ufs/chfs/ebh_misc.h>
+#include "debug.h"
+#include "ebh_misc.h"
+#endif /* _KERNEL */
 
+#include "ebh_media.h"
+
+/**
+ * struct  chfs_eb_hdr - in-memory representation of eraseblock headers
+ * @ec_hdr: erase counter header ob eraseblock
+ * @u.nor_hdr: eraseblock header on NOR flash
+ * @u.nand_hdr: eraseblock header on NAND flash
+ */
+struct  chfs_eb_hdr {
+	struct chfs_eb_ec_hdr ec_hdr;
+	union {
+		struct chfs_nor_eb_hdr  nor_hdr;
+		struct chfs_nand_eb_hdr nand_hdr;
+	} u;
+};
+
+#ifdef _KERNEL
 /* Maximum retries when getting new PEB before exit with failure */
 #define CHFS_MAX_GET_PEB_RETRIES 2
 
@@ -134,7 +145,6 @@ TAILQ_HEAD(scan_leb_queue, chfs_scan_leb);
 RB_HEAD(scan_leb_used_rbtree, chfs_scan_leb);
 
 
-
 /**
  * struct chfs_scan_info - chfs scanning information
  * @corrupted: queue of corrupted physical eraseblocks
@@ -181,19 +191,6 @@ TAILQ_HEAD(peb_queue, chfs_peb);
 RB_HEAD(peb_free_rbtree, chfs_peb);
 RB_HEAD(peb_in_use_rbtree, chfs_peb);
 
-/**
- * struct  chfs_eb_hdr - in-memory representation of eraseblock headers
- * @ec_hdr: erase counter header ob eraseblock
- * @u.nor_hdr: eraseblock header on NOR flash
- * @u.nand_hdr: eraseblock header on NAND flash
- */
-struct  chfs_eb_hdr {
-	struct chfs_eb_ec_hdr ec_hdr;
-	union {
-		struct chfs_nor_eb_hdr  nor_hdr;
-		struct chfs_nand_eb_hdr nand_hdr;
-	} u;
-};
 
 /*
  * struct chfs_ebh_ops - collection of operations which
@@ -314,5 +311,6 @@ int ebh_is_mapped(struct chfs_ebh *ebh, int lnr);
 int ebh_change_leb(struct chfs_ebh *ebh, int lnr, char *buf,
     size_t len, size_t *retlen);
 
+#endif /* _KERNEL */
 
 #endif /* EBH_H_ */

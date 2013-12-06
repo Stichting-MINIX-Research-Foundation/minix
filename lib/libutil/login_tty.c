@@ -53,10 +53,8 @@ login_tty(int fd)
 	_DIAGASSERT(fd != -1);
 
 	(void) setsid();
-#ifdef TIOCSCTTY
 	if (ioctl(fd, TIOCSCTTY, NULL) == -1)
 		return (-1);
-#endif
 	(void) dup2(fd, STDIN_FILENO);
 	(void) dup2(fd, STDOUT_FILENO);
 	(void) dup2(fd, STDERR_FILENO);

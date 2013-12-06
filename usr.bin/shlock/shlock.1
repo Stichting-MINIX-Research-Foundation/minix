@@ -1,4 +1,4 @@
-.\"	$NetBSD: shlock.1,v 1.11 2008/04/30 13:11:01 martin Exp $
+.\"	$NetBSD: shlock.1,v 1.13 2013/07/20 21:40:00 wiz Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 29, 1997
+.Dd November 2, 2012
 .Dt SHLOCK 1
 .Os
 .Sh NAME
@@ -127,6 +127,8 @@ endif
 .Pp
 The examples assume that the file system where the lock file is to
 be created is writable by the user, and has space available.
+.Sh SEE ALSO
+.Xr flock 1
 .Sh HISTORY
 .Nm
 was written for the first Network News Transfer Protocol (NNTP)
@@ -134,7 +136,7 @@ software distribution, released in March 1986.
 The algorithm was suggested by Peter Honeyman,
 from work he did on HoneyDanBer UUCP.
 .Sh AUTHORS
-.An Erik E. Fair Aq fair@clock.org
+.An Erik E. Fair Aq Mt fair@clock.org
 .Sh BUGS
 Does not work on NFS or other network file system on different
 systems because the disparate systems have disjoint PID spaces.

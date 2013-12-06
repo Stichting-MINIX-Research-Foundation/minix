@@ -1,4 +1,4 @@
-/*	$NetBSD: flexdef.h,v 1.2 2009/10/26 04:27:15 christos Exp $	*/
+/*	$NetBSD: flexdef.h,v 1.5 2013/04/09 15:19:45 christos Exp $	*/
 
 
 /* flexdef - definitions file for flex */
@@ -93,7 +93,9 @@ char *alloca ();
 #define true 1
 #define false 0
 #endif
+#ifdef HAVE_REGEX_H
 #include <regex.h>
+#endif
 #include "flexint.h"
 
 /* We use gettext. So, when we write strings which should be translated, we mark them with _() */
@@ -416,7 +418,6 @@ extern int yymore_really_used, reject_really_used;
  * dataline - number of contiguous lines of data in current data
  * 	statement.  Used to generate readable -f output
  * linenum - current input line number
- * out_linenum - current output line number
  * skelfile - the skeleton file
  * skel - compiled-in skeleton array
  * skel_ind - index into "skel" array, if skelfile is nil
@@ -444,7 +445,7 @@ extern int yymore_really_used, reject_really_used;
  * 	to "action_array"
  */
 
-extern int datapos, dataline, linenum, out_linenum;
+extern int datapos, dataline, linenum;
 extern FILE *skelfile, *yyin, *backing_up_file;
 extern const char *skel[];
 extern int skel_ind;
@@ -849,8 +850,8 @@ extern int all_lower PROTO ((register char *));
 /* True if a string is all upper case. */
 extern int all_upper PROTO ((register char *));
 
-/* Bubble sort an integer array. */
-extern void bubble PROTO ((int[], int));
+/* Compare two integers for use by qsort. */
+extern int intcmp PROTO ((const void *, const void *));
 
 /* Check a character to make sure it's in the expected range. */
 extern void check_char PROTO ((int c));
@@ -864,8 +865,8 @@ extern char *copy_string PROTO ((register const char *));
 /* Returns a dynamically allocated copy of a (potentially) unsigned string. */
 extern Char *copy_unsigned_string PROTO ((register Char *));
 
-/* Shell sort a character array. */
-extern void cshell PROTO ((Char[], int, int));
+/* Compare two characters for use by qsort with '\0' sorting last. */
+extern int cclcmp PROTO ((const void *, const void *));
 
 /* Finish up a block of data declarations. */
 extern void dataend PROTO ((void));
@@ -939,7 +940,6 @@ extern void out PROTO ((const char *));
 extern void out_dec PROTO ((const char *, int));
 extern void out_dec2 PROTO ((const char *, int, int));
 extern void out_hex PROTO ((const char *, unsigned int));
-extern void out_line_count PROTO ((const char *));
 extern void out_str PROTO ((const char *, const char *));
 extern void out_str3
 PROTO ((const char *, const char *, const char *, const char *));
@@ -1221,5 +1221,12 @@ extern void sf_init(void);
 extern void sf_push(void);
 extern void sf_pop(void);
 
+/*
+ * From "misc.c"
+ */
+#ifdef __printflike
+__printflike(1, 2)
+#endif
+void lerrsf_fatal (const char *msg, ...);
 
 #endif /* not defined FLEXDEF_H */

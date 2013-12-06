@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.S,v 1.2 2009/12/19 19:09:48 pooka Exp $	*/
+/*	$NetBSD: ffs.S,v 1.3 2013/09/12 15:36:14 joerg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
 #if 0
 	.asciz "@(#)ffs.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: ffs.S,v 1.2 2009/12/19 19:09:48 pooka Exp $")
+	RCSID("$NetBSD: ffs.S,v 1.3 2013/09/12 15:36:14 joerg Exp $")
 #endif
 #endif  /* LIBC_SCCS and not lint */
 
@@ -81,7 +81,7 @@ ENTRY(ffs)
  * that ffstab[0] must be -24 so that ffs(0) will return 0.
  */
 ENTRY(ffs)
-#ifdef PIC
+#ifdef __PIC__
 	PICCY_SET(ffstab, %o2, %o3)
 #else
 	set	ffstab, %o2

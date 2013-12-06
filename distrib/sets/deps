@@ -165,6 +165,7 @@ base-texinfo_locale-tr base-locale-tr
 base-texinfo_locale-zh base-locale-zh
 base-timed-bin base-sys-usr
 base-tn3270-bin base-sys-usr
+base-tpm-bin base-sys-usr
 base-usd-share base-sys-share
 base-util-bin base-sys-usr
 base-util-root base-sys-root
@@ -265,6 +266,11 @@ comp-sys-man base-man-share
 comp-sys-root base-sys-root
 comp-sysutil-catman base-man-share
 comp-sysutil-man base-man-share
+comp-tpm-catman	base-man-share
+comp-tpm-htmlman	base-man-share
+comp-tpm-debug	base-sys-usr
+comp-tpm-lib	base-sys-usr
+comp-tpm-man	base-man-share
 comp-util-bin base-sys-usr
 comp-util-catman base-man-share
 comp-util-man base-man-share
@@ -458,6 +464,9 @@ man-timed-catman base-man-share
 man-timed-man base-man-share
 man-tn3270-catman base-man-share
 man-tn3270-man base-man-share
+man-tpm-catman	base-man-share
+man-tpm-htmlman	base-man-share
+man-tpm-man	base-man-share
 man-util-catman base-man-share
 man-util-info base-texinfo-share
 man-util-man base-man-share

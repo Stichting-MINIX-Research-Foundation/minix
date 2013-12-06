@@ -1,4 +1,4 @@
-/*	$NetBSD: s_nextafterl.c,v 1.2 2010/09/17 20:39:39 christos Exp $	*/
+/*	$NetBSD: s_nextafterl.c,v 1.4 2013/07/18 22:31:13 matt Exp $	*/
 
 /* @(#)s_nextafter.c 5.1 93/09/24 */
 /*
@@ -13,15 +13,21 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: s_nextafterl.c,v 1.2 2010/09/17 20:39:39 christos Exp $");
+__RCSID("$NetBSD: s_nextafterl.c,v 1.4 2013/07/18 22:31:13 matt Exp $");
 
 #include <float.h>
 #include <math.h>
 #include <machine/ieee.h>
 
+#ifdef __HAVE_LONG_DOUBLE
+
 #ifdef EXT_EXP_INFNAN
 #if LDBL_MAX_EXP != 0x4000
 #error "Unsupported long double format"
+#endif
+
+#ifdef LDBL_IMPLICIT_NBIT
+#define	LDBL_NBIT	0
 #endif
 
 /*
@@ -83,7 +89,9 @@ nextafterl(long double x, long double y)
 		return x+x;			/* overflow  */
 
 	if (ux.extu_exp == 0) {			/* underflow */
+#ifndef LDBL_IMPLICIT_NBIT
 		mask_nbit_l(ux);
+#endif
 		t = ux.extu_ld * ux.extu_ld;
 		if (t != ux.extu_ld)		/* raise underflow flag */
 			return ux.extu_ld;
@@ -92,3 +100,5 @@ nextafterl(long double x, long double y)
 	return ux.extu_ld;
 }
 #endif
+
+#endif /* __HAVE_LONG_DOUBLE */

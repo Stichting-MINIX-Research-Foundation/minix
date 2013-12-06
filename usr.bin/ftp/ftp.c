@@ -102,10 +102,10 @@ __RCSID("$NetBSD: ftp.c,v 1.164 2012/07/04 06:09:37 is Exp $");
 #include <sys/time.h>
 
 #include <netinet/in.h>
-#ifndef __minix
+#if !defined(__minix)
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
-#endif
+#endif /* !defined(__minix) */
 #include <arpa/inet.h>
 #include <arpa/ftp.h>
 #include <arpa/telnet.h>
@@ -165,9 +165,9 @@ hookup(const char *host, const char *port)
 	struct addrinfo hints, *res, *res0;
 	static char hostnamebuf[MAXHOSTNAMELEN];
 	socklen_t len;
-#ifndef __minix
+#if !defined(__minix)
 	int on = 1;
-#endif
+#endif /* !defined(__minix) */
 
 	memset((char *)&hisctladdr, 0, sizeof (hisctladdr));
 	memset((char *)&myctladdr, 0, sizeof (myctladdr));
@@ -274,12 +274,12 @@ hookup(const char *host, const char *port)
 		goto bad;
 	}
 
-#ifndef __minix
+#if !defined(__minix)
 	if (setsockopt(s, SOL_SOCKET, SO_OOBINLINE,
 			(void *)&on, sizeof(on)) == -1) {
 		DWARN("setsockopt %s (ignored)", "SO_OOBINLINE");
 	}
-#endif
+#endif /* !defined(__minix) */
 
 	return (hostname);
  bad:

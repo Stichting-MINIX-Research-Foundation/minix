@@ -1,4 +1,4 @@
-/*	$NetBSD: brk.S,v 1.9 2011/05/13 23:14:36 nonaka Exp $	*/
+/*	$NetBSD: brk.S,v 1.13 2013/09/12 15:36:15 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -34,7 +34,7 @@
 #include "SYS.h"
 
 	.globl	_C_LABEL(_end)
-	.globl	CURBRK
+	.globl	_C_LABEL(__curbrk)
 
 #ifdef WEAK_ALIAS
 WEAK_ALIAS(brk, _brk)
@@ -43,6 +43,7 @@ WEAK_ALIAS(brk, _brk)
 	.data
 	.align	0
 	.globl	_C_LABEL(__minbrk)
+	.hidden	_C_LABEL(__minbrk)
 	.type	_C_LABEL(__minbrk),#object
 _C_LABEL(__minbrk):
 	.word	_C_LABEL(_end)
@@ -51,15 +52,10 @@ _C_LABEL(__minbrk):
  * Change the data segment size
  */
 ENTRY(_brk)
-#ifdef PIC
-	/* Setup the GOT */
-	ldr	r3, .Lgot
-	add	r3, pc, r3
-.L1:
 	ldr	r1, .Lminbrk
-	ldr	r1, [r3, r1]
-#else
-	ldr	r1, .Lminbrk
+#ifdef __PIC__
+	adr	r3, .Lminbrk
+	adds	r1, r1, r3
 #endif
 	/* Get the minimum allowable brk address */
 	ldr	r1, [r1]
@@ -69,30 +65,31 @@ ENTRY(_brk)
 	 * if the address is below minbrk.
 	 */
 	cmp	r0, r1
+#ifdef __thumb__
+	bcs	1f
+	mov	r0, r1
+1:
+#else
 	movcc	r0, r1
+#endif
 	mov	r2, r0
 	SYSTRAP(break)
-	bcs	PIC_SYM(CERROR, PLT)
+	_INVOKE_CERROR()
 
-#ifdef PIC
 	ldr	r1, .Lcurbrk
-	ldr	r1, [r3, r1]
-#else
-	ldr	r1, .Lcurbrk
+#ifdef __PIC__
+	adds	r1, r1, r3
 #endif
 	/* Store the new address in curbrk */
 	str	r2, [r1]
 
 	/* Return 0 for success */
-	mov	r0, #0x00000000
+	movs	r0, #0
 	RET
 
-	.align	2
-#ifdef PIC
-.Lgot:
-	.word	_C_LABEL(_GLOBAL_OFFSET_TABLE_) + (. - (.L1+4))
-#endif
+	.align	0
 .Lminbrk:
-	.word	PIC_SYM(_C_LABEL(__minbrk), GOT)
+	.word	REL_SYM(_C_LABEL(__minbrk), .Lminbrk)
 .Lcurbrk:
-	.word	PIC_SYM(CURBRK, GOT)
+	.word	REL_SYM(_C_LABEL(__curbrk), .Lminbrk)
+END(_brk)

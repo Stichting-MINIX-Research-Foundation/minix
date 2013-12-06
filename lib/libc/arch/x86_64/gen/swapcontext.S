@@ -1,4 +1,4 @@
-/*	$NetBSD: swapcontext.S,v 1.4 2007/04/12 12:33:26 pooka Exp $	*/
+/*	$NetBSD: swapcontext.S,v 1.5 2013/09/12 15:36:16 joerg Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: swapcontext.S,v 1.4 2007/04/12 12:33:26 pooka Exp $")
+	RCSID("$NetBSD: swapcontext.S,v 1.5 2013/09/12 15:36:16 joerg Exp $")
 #endif /* LIBC_SCCS && !lint */
 
 /*
@@ -50,7 +50,7 @@
 ENTRY(swapcontext)
 	pushq	%rdi				/* preserve oucp */
 	pushq	%rsi				/* preserve ucp */
-#ifdef PIC
+#ifdef __PIC__
 	call	PIC_PLT(_C_LABEL(_getcontext))
 #else
 	call	_C_LABEL(_getcontext)
@@ -64,7 +64,7 @@ ENTRY(swapcontext)
 	leaq	8(%rsp),%r11
 	movq	%r11,(56 + 24 * 8)(%rdi)
 	movq	%rsi,%rdi
-#ifdef PIC
+#ifdef __PIC__
 	call	PIC_PLT(_C_LABEL(setcontext))
 #else
 	call	_C_LABEL(setcontext)

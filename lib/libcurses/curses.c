@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.c,v 1.24 2010/02/03 15:34:40 roy Exp $	*/
+/*	$NetBSD: curses.c,v 1.25 2013/10/16 19:59:29 roy Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -35,7 +35,7 @@
 #if 0
 static char sccsid[] = "@(#)curses.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: curses.c,v 1.24 2010/02/03 15:34:40 roy Exp $");
+__RCSID("$NetBSD: curses.c,v 1.25 2013/10/16 19:59:29 roy Exp $");
 #endif
 #endif				/* not lint */
 
@@ -66,6 +66,7 @@ WINDOW	*__virtscr;			/* Virtual screen (for doupdate()). */
 SCREEN  *_cursesi_screen;               /* the current screen we are using */
 int	 COLS;				/* Columns on the screen. */
 int	 LINES;				/* Lines on the screen. */
+int	 TABSIZE;			/* Size of a tab. */
 int	 COLORS;			/* Maximum colors on the screen */
 int	 COLOR_PAIRS = 0;		/* Maximum color pairs on the screen */
 int	 My_term = 0;			/* Use Def_term regardless. */

@@ -1,6 +1,6 @@
-/*	$Vendor-Id: cgi.c,v 1.39 2011/12/25 17:49:52 kristaps Exp $ */
+/*	$Vendor-Id: cgi.c,v 1.42 2012/03/24 01:46:25 kristaps Exp $ */
 /*
- * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -69,7 +69,6 @@ struct	query {
 	const char	*sec; /* manual section */
 	const char	*expr; /* unparsed expression string */
 	int		 manroot; /* manroot index (or -1)*/
-	int		 whatis; /* whether whatis mode */
 	int		 legacy; /* whether legacy mode */
 };
 
@@ -230,7 +229,6 @@ http_parse(struct req *req, char *p)
 
 	memset(&req->q, 0, sizeof(struct query));
 
-	req->q.whatis = 1;
 	legacy = -1;
 	manroot = NULL;
 
@@ -268,19 +266,11 @@ http_parse(struct req *req, char *p)
 			manroot = val;
 		else if (0 == strcmp(key, "apropos"))
 			legacy = 0 == strcmp(val, "0");
-		else if (0 == strcmp(key, "op"))
-			req->q.whatis = 0 == strcasecmp(val, "whatis");
 	}
 
 	/* Test for old man.cgi compatibility mode. */
 
-	if (legacy == 0) {
-		req->q.whatis = 0;
-		req->q.legacy = 1;
-	} else if (legacy > 0) {
-		req->q.legacy = 1;
-		req->q.whatis = 1;
-	}
+	req->q.legacy = legacy > 0;
 
 	/* 
 	 * Section "0" means no section when in legacy mode.
@@ -408,10 +398,8 @@ resp_searchform(const struct req *req)
 	       "<FORM ACTION=\"%s/search.html\" METHOD=\"get\">\n"
 	       "<FIELDSET>\n"
 	       "<LEGEND>Search Parameters</LEGEND>\n"
-	       "<INPUT TYPE=\"submit\" NAME=\"op\""
-	       " VALUE=\"Whatis\"> or \n"
-	       "<INPUT TYPE=\"submit\" NAME=\"op\""
-	       " VALUE=\"apropos\"> for manuals satisfying \n"
+	       "<INPUT TYPE=\"submit\" "
+	       " VALUE=\"Search\"> for manuals satisfying \n"
 	       "<INPUT TYPE=\"text\" NAME=\"expr\" VALUE=\"",
 	       progname);
 	html_print(req->q.expr ? req->q.expr : "");
@@ -507,15 +495,22 @@ resp_baddb(void)
 static void
 resp_search(struct res *r, size_t sz, void *arg)
 {
-	int		  i;
+	size_t		 i, matched;
 	const struct req *req;
 
 	req = (const struct req *)arg;
 
 	if (sz > 0)
 		assert(req->q.manroot >= 0);
+
+	for (matched = i = 0; i < sz; i++)
+		if (r[i].matched)
+			matched++;
 	
-	if (1 == sz) {
+	if (1 == matched) {
+		for (i = 0; i < sz; i++)
+			if (r[i].matched)
+				break;
 		/*
 		 * If we have just one result, then jump there now
 		 * without any delay.
@@ -523,40 +518,34 @@ resp_search(struct res *r, size_t sz, void *arg)
 		puts("Status: 303 See Other");
 		printf("Location: http://%s%s/show/%d/%u/%u.html?",
 				host, progname, req->q.manroot,
-				r[0].volume, r[0].rec);
+				r[i].volume, r[i].rec);
 		http_printquery(req);
 		puts("\n"
 		     "Content-Type: text/html; charset=utf-8\n");
 		return;
 	}
 
-	qsort(r, sz, sizeof(struct res), cmp);
-
 	resp_begin_html(200, NULL);
 	resp_searchform(req);
 
 	puts("<DIV CLASS=\"results\">");
 
-	if (0 == sz) {
-		printf("<P>\n"
-		       "No %s results found.\n",
-		       req->q.whatis ? "whatis" : "apropos");
-		if (req->q.whatis) {
-			printf("(Try "
-			       "<A HREF=\"%s/search.html?op=apropos",
-			       progname);
-			html_printquery(req);
-			puts("\">apropos</A>?)");
-		}
-		puts("</P>");
-		puts("</DIV>");
+	if (0 == matched) {
+		puts("<P>\n"
+		     "No results found.\n"
+		     "</P>\n"
+		     "</DIV>");
 		resp_end_html();
 		return;
 	}
 
+	qsort(r, sz, sizeof(struct res), cmp);
+
 	puts("<TABLE>");
 
-	for (i = 0; i < (int)sz; i++) {
+	for (i = 0; i < sz; i++) {
+		if ( ! r[i].matched)
+			continue;
 		printf("<TR>\n"
 		       "<TD CLASS=\"title\">\n"
 		       "<A HREF=\"%s/show/%d/%u/%u.html?", 
@@ -890,10 +879,11 @@ out:
 static void
 pg_search(const struct req *req, char *path)
 {
-	size_t		  tt;
+	size_t		  tt, ressz;
 	struct manpaths	  ps;
 	int		  i, sz, rc;
 	const char	 *ep, *start;
+	struct res	*res;
 	char		**cp;
 	struct opts	  opt;
 	struct expr	 *expr;
@@ -911,6 +901,8 @@ pg_search(const struct req *req, char *path)
 	rc 	 = -1;
 	sz 	 = 0;
 	cp	 = NULL;
+	ressz	 = 0;
+	res	 = NULL;
 
 	/*
 	 * Begin by chdir()ing into the root of the manpath.
@@ -953,25 +945,26 @@ pg_search(const struct req *req, char *path)
 	 * The resp_search() function is called with the results.
 	 */
 
-	expr = req->q.whatis ? 
+	expr = req->q.legacy ? 
 		termcomp(sz, cp, &tt) : exprcomp(sz, cp, &tt);
 
 	if (NULL != expr)
 		rc = apropos_search
-			(ps.sz, ps.paths, &opt,
-			 expr, tt, (void *)req, resp_search);
+			(ps.sz, ps.paths, &opt, expr, tt, 
+			 (void *)req, &ressz, &res, resp_search);
 
 	/* ...unless errors occured. */
 
 	if (0 == rc)
 		resp_baddb();
 	else if (-1 == rc)
-		resp_search(NULL, 0, (void *)req);
+		resp_search(NULL, 0, NULL);
 
 	for (i = 0; i < sz; i++)
 		free(cp[i]);
 
 	free(cp);
+	resfree(res, ressz);
 	exprfree(expr);
 	manpath_free(&ps);
 }

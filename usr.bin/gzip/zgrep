@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: zgrep,v 1.7 2008/05/08 15:35:23 wiz Exp $
+# $NetBSD: zgrep,v 1.8 2013/07/25 12:25:23 pgoyette Exp $
 #
 # Copyright (c) 2003 Thomas Klausner.
 #
@@ -33,7 +33,7 @@ grep_args=""
 hyphen=0
 silent=0
 
-prg=$0
+prg=$(basename $0)
 
 # handle being called 'zegrep' or 'zfgrep'
 case ${prg} in

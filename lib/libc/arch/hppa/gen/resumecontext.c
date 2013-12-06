@@ -1,4 +1,4 @@
-/*	$NetBSD: resumecontext.c,v 1.4 2011/09/19 21:24:57 joerg Exp $	*/
+/*	$NetBSD: resumecontext.c,v 1.5 2013/08/24 07:12:13 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: resumecontext.c,v 1.4 2011/09/19 21:24:57 joerg Exp $");
+__RCSID("$NetBSD: resumecontext.c,v 1.5 2013/08/24 07:12:13 skrll Exp $");
 #endif
 
 #include "namespace.h"
@@ -46,7 +46,7 @@ _resumecontext(void)
 	ucontext_t uct;
 
 	(void)getcontext(&uct);
-	if (uct.uc_link == NULL) 
+	if (uct.uc_link == NULL)
 		exit(0);
 	(void)setcontext(uct.uc_link);
 	_exit(-1);

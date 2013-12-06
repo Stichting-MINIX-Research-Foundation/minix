@@ -10,7 +10,7 @@ LIBISPRIVATE=   yes
 LIB=		decnumber
 
 SRCS=		decNumber.c decContext.c decimal32.c decimal64.c decimal128.c
-CPPFLAGS+=	-I${.CURDIR}/arch/${MACHINE_ARCH} -I${DIST}/libdecnumber
+CPPFLAGS+=	-I${.CURDIR}/arch/${GCC_MACHINE_ARCH} -I${DIST}/libdecnumber
 CPPFLAGS+=	-I${DIST}/libgcc
 
 .include <bsd.lib.mk>

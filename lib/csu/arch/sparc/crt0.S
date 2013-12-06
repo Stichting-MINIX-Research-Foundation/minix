@@ -1,4 +1,4 @@
-/* $NetBSD: crt0.S,v 1.1 2010/08/07 18:01:34 joerg Exp $ */
+/* $NetBSD: crt0.S,v 1.2 2013/07/11 06:57:15 martin Exp $ */
 
 /*
  * Copyright (c) 1998 Christos Zoulas
@@ -37,20 +37,21 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: crt0.S,v 1.1 2010/08/07 18:01:34 joerg Exp $")
+RCSID("$NetBSD: crt0.S,v 1.2 2013/07/11 06:57:15 martin Exp $")
 
 STRONG_ALIAS(_start,__start)
 
+	! called with:
+	!  %g3 = cleanup
+	!  %g2 = obj
+	!  %g1 = ps_strings
+	! call: ___start(cleanup, obj, ps_strings)
 _ENTRY(__start)
 	mov	0, %fp
-	ld	[%sp + 64], %o0		! get argc
-	add	%sp, 68, %o1		! get argv
-	sll	%o0, 2,	%o2		!
-	add	%o2, 4,	%o2		! envp = argv + (argc << 2) + 4
-	add	%o1, %o2, %o2		!
-	andn	%sp, 7,	%sp		! align
+	andn	%sp, 7,	%sp		! align stack
 	sub	%sp, 24, %sp		! expand to standard stack frame size
-	mov	%g3, %o3
-	mov	%g2, %o4
+	mov	%g3, %o0
+	mov	%g2, %o1
 	call	___start
-	 mov	%g1, %o5
+	 mov	%g1, %o2
+

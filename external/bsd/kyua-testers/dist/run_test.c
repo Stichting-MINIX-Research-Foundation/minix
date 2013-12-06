@@ -52,10 +52,6 @@
 #include "error.h"
 #include "fs.h"
 
-#if !defined(WCOREDUMP) && defined(__minix)
-#define WCOREDUMP(x) ((x) & 0x80)
-#endif /*!defined(WCOREDUMP) && defined(__minix) */
-
 
 /// Evalutes an expression and ensures it does not return an error.
 ///

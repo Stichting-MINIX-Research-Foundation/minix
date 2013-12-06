@@ -48,13 +48,18 @@
 ./usr/include/compat/machine
 ./usr/include/ddekit
 ./usr/include/ddekit/minix
+./usr/include/fs
 ./usr/include/g++
 ./usr/include/i386
 ./usr/include/lutok
 ./usr/include/lzma
+./usr/include/isofs
+./usr/include/isofs/cd9660
 ./usr/include/minix
+./usr/include/msdosfs
 ./usr/include/net
 ./usr/include/net/gen
+./usr/include/ppath
 ./usr/include/prop
 ./usr/include/protocols
 ./usr/include/readline
@@ -75,6 +80,8 @@
 ./usr/lib/flex
 ./usr/lib/fonts
 ./usr/lib/keymaps
+./usr/lib/lua
+./usr/lib/lua/5.1
 ./usr/lib/pkgconfig
 ./usr/libexec
 ./usr/log
@@ -106,6 +113,8 @@
 ./usr/share/info
 ./usr/share/misc
 ./usr/share/mk
+./usr/share/nvi
+./usr/share/nvi/catalog
 ./usr/share/terminfo
 ./usr/share/zoneinfo
 ./usr/share/zoneinfo/Africa

@@ -418,18 +418,32 @@ engine::debug_test_case(const test_case* test_case,
     const engine::test_program& test_program =
         test_case->container_test_program();
 
-    const engine::tester tester = create_tester(
-        test_program.interface_name(), test_case->get_metadata(), user_config);
-    tester.test(test_program.absolute_path(), test_case->name(),
-                result_file.file(), stdout_path, stderr_path,
-                generate_tester_config(test_case->get_metadata(), user_config,
-                                       test_program.test_suite_name()));
+    try {
+        const engine::tester tester = create_tester(
+            test_program.interface_name(), test_case->get_metadata(),
+            user_config);
+        tester.test(test_program.absolute_path(), test_case->name(),
+                    result_file.file(), stdout_path, stderr_path,
+                    generate_tester_config(test_case->get_metadata(),
+                                           user_config,
+                                           test_program.test_suite_name()));
 
-    hooks.got_stdout(stdout_path);
-    hooks.got_stderr(stderr_path);
+        hooks.got_stdout(stdout_path);
+        hooks.got_stderr(stderr_path);
 
-    std::ifstream result_input(result_file.file().c_str());
-    return engine::test_result::parse(result_input);
+        std::ifstream result_input(result_file.file().c_str());
+        return engine::test_result::parse(result_input);
+    } catch (const std::runtime_error& e) {
+        // One of the possible explanation for us getting here is if the tester
+        // crashes or doesn't behave as expected.  We must record any output
+        // from the process so that we can debug it further.
+        hooks.got_stdout(stdout_path);
+        hooks.got_stderr(stderr_path);
+
+        return engine::test_result(
+            engine::test_result::broken,
+            F("Caught unexpected exception: %s") % e.what());
+    }
 }
 
 
@@ -467,16 +481,30 @@ engine::run_test_case(const test_case* test_case,
     const engine::test_program& test_program =
         test_case->container_test_program();
 
-    const engine::tester tester = create_tester(
-        test_program.interface_name(), test_case->get_metadata(), user_config);
-    tester.test(test_program.absolute_path(), test_case->name(),
-                result_file.file(), stdout_file.file(), stderr_file.file(),
-                generate_tester_config(test_case->get_metadata(), user_config,
-                                       test_program.test_suite_name()));
+    try {
+        const engine::tester tester = create_tester(
+            test_program.interface_name(), test_case->get_metadata(),
+            user_config);
+        tester.test(test_program.absolute_path(), test_case->name(),
+                    result_file.file(), stdout_file.file(), stderr_file.file(),
+                    generate_tester_config(test_case->get_metadata(),
+                                           user_config,
+                                           test_program.test_suite_name()));
 
-    hooks.got_stdout(stdout_file.file());
-    hooks.got_stderr(stderr_file.file());
+        hooks.got_stdout(stdout_file.file());
+        hooks.got_stderr(stderr_file.file());
 
-    std::ifstream result_input(result_file.file().c_str());
-    return engine::test_result::parse(result_input);
+        std::ifstream result_input(result_file.file().c_str());
+        return engine::test_result::parse(result_input);
+    } catch (const std::runtime_error& e) {
+        // One of the possible explanation for us getting here is if the tester
+        // crashes or doesn't behave as expected.  We must record any output
+        // from the process so that we can debug it further.
+        hooks.got_stdout(stdout_file.file());
+        hooks.got_stderr(stderr_file.file());
+
+        return engine::test_result(
+            engine::test_result::broken,
+            F("Caught unexpected exception: %s") % e.what());
+    }
 }

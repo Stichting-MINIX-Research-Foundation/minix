@@ -1,4 +1,4 @@
-/*	$NetBSD: nrand48.c,v 1.9 2005/06/12 05:21:28 lukem Exp $	*/
+/*	$NetBSD: nrand48.c,v 1.10 2013/10/22 08:08:51 matt Exp $	*/
 
 /*
  * Copyright (c) 1993 Martin Birgmeier
@@ -15,7 +15,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: nrand48.c,v 1.9 2005/06/12 05:21:28 lukem Exp $");
+__RCSID("$NetBSD: nrand48.c,v 1.10 2013/10/22 08:08:51 matt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -34,6 +34,5 @@ nrand48(unsigned short xseed[3])
 	_DIAGASSERT(xseed != NULL);
 
 	__dorand48(xseed);
-	return (long)((unsigned long) xseed[2] << 15) +
-	    ((unsigned long) xseed[1] >> 1);
+	return xseed[2] * 32768 + (xseed[1] >> 1);
 }

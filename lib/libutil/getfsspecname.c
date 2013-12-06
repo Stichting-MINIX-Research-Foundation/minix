@@ -1,4 +1,4 @@
-/*	$NetBSD: getfsspecname.c,v 1.3 2012/04/08 20:56:12 christos Exp $	*/
+/*	$NetBSD: getfsspecname.c,v 1.4 2013/01/01 18:32:17 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -29,9 +29,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: getfsspecname.c,v 1.3 2012/04/08 20:56:12 christos Exp $");
+__RCSID("$NetBSD: getfsspecname.c,v 1.4 2013/01/01 18:32:17 dsl Exp $");
 
 #include <sys/types.h>
+#include <sys/ioctl.h>
 #include <sys/sysctl.h>
 #include <sys/disk.h>
 
@@ -45,7 +46,9 @@ __RCSID("$NetBSD: getfsspecname.c,v 1.3 2012/04/08 20:56:12 christos Exp $");
 #include <unistd.h>
 #include <util.h>
 
+#if !defined(__minix)
 #define COMPAT_DKWEDGE	/* To be removed */
+#endif /* !defined(__minix) */
 
 const char *
 getfsspecname(char *buf, size_t bufsiz, const char *name)

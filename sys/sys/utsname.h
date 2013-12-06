@@ -51,19 +51,21 @@ struct utsname {
 	char	release[_SYS_NMLN];	/* Release level. */
 	char	version[_SYS_NMLN];	/* Version level. */
 	char	machine[_SYS_NMLN];	/* Hardware type. */
+#if defined(__minix)
 	char	arch[_SYS_NMLN];
+#endif /* defined(__minix) */
 };
 
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
 int	uname(struct utsname *);
-#ifdef __minix
+#if defined(__minix)
 int 	sysuname(int _req, int _field, char *_value, size_t _len);
-#endif
+#endif /* defined(__minix) */
 __END_DECLS
 
-#ifdef __minix
+#if defined(__minix)
 /* req: Get or set a string. */
 #define _UTS_GET	0
 #define _UTS_SET	1
@@ -79,6 +81,6 @@ __END_DECLS
 #define _UTS_SYSNAME	7
 #define _UTS_BUS	8
 #define _UTS_MAX	9	/* Number of strings. */
-#endif /* __minix */
+#endif /* defined(__minix) */
 
 #endif	/* !_SYS_UTSNAME_H_ */

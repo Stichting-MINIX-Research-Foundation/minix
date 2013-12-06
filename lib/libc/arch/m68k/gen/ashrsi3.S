@@ -1,4 +1,4 @@
-/*	$NetBSD: ashrsi3.S,v 1.5 2003/08/07 16:42:10 agc Exp $	*/
+/*	$NetBSD: ashrsi3.S,v 1.7 2013/07/16 22:12:20 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,13 +39,14 @@
 #if 0
 	RCSID("from: @(#)ashrsi3.s	5.1 (Berkeley) 6/7/90")
 #else
-	RCSID("$NetBSD: ashrsi3.S,v 1.5 2003/08/07 16:42:10 agc Exp $")
+	RCSID("$NetBSD: ashrsi3.S,v 1.7 2013/07/16 22:12:20 matt Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 /* int >> int */
 ENTRY(__ashrsi3)
-	movel	%sp@(8),%d1
-	movel	%sp@(4),%d0
+	movel	8(%sp),%d1
+	movel	4(%sp),%d0
 	asrl	%d1,%d0
 	rts
+END(__ashrsi3)

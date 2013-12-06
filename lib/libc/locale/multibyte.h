@@ -1,4 +1,4 @@
-/*	$NetBSD: multibyte.h,v 1.5 2009/01/11 02:46:28 christos Exp $	*/
+/*	$NetBSD: multibyte.h,v 1.6 2013/08/18 20:03:48 joerg Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -49,14 +49,13 @@ typedef union _RuneState {
 } _RuneState;
 #define _PRIVSIZE	(sizeof(mbstate_t)-offsetof(_RuneStatePriv, __private))
 
+#define _RUNE_LOCALE(loc) \
+    ((_RuneLocale *)((loc)->part_impl[(size_t)LC_CTYPE]))
+
+#define _CITRUS_CTYPE(loc) \
+    (((_RuneLocale *)((loc)->part_impl[(size_t)LC_CTYPE]))->rl_citrus_ctype)
 
 /* */
-
-static __inline _citrus_ctype_t
-_to_cur_ctype(void)
-{
-	return (_CurrentRuneLocale->rl_citrus_ctype);
-}
 
 static __inline _RuneState *
 _ps_to_runestate(mbstate_t *ps)
@@ -77,10 +76,10 @@ _ps_to_runelocale(mbstate_t const *ps)
 }
 
 static __inline _citrus_ctype_t
-_ps_to_ctype(mbstate_t const *ps)
+_ps_to_ctype(mbstate_t const *ps, locale_t loc)
 {
 	if (!ps)
-		return _to_cur_ctype();
+		return _CITRUS_CTYPE(loc);
 
 	_DIAGASSERT(_ps_to_runelocale(ps) != NULL);
 

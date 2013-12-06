@@ -1,4 +1,4 @@
-/*	$NetBSD: hash_page.c,v 1.25 2012/03/13 21:13:33 christos Exp $	*/
+/*	$NetBSD: hash_page.c,v 1.26 2013/12/01 00:22:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hash_page.c,v 1.25 2012/03/13 21:13:33 christos Exp $");
+__RCSID("$NetBSD: hash_page.c,v 1.26 2013/12/01 00:22:48 christos Exp $");
 
 /*
  * PACKAGE:  hashing
@@ -52,7 +52,6 @@ __RCSID("$NetBSD: hash_page.c,v 1.25 2012/03/13 21:13:33 christos Exp $");
  *	__add_ovflpage
  * Internal
  *	overflow_page
- *	open_temp
  */
 
 #include "namespace.h"
@@ -76,7 +75,6 @@ __RCSID("$NetBSD: hash_page.c,v 1.25 2012/03/13 21:13:33 christos Exp $");
 
 static uint32_t	*fetch_bitmap(HTAB *, int);
 static uint32_t	 first_free(uint32_t);
-static int	 open_temp(HTAB *);
 static uint16_t	 overflow_page(HTAB *);
 static void	 putpair(char *, const DBT *, const DBT *);
 static void	 squeeze_key(uint16_t *, const DBT *, const DBT *);
@@ -597,7 +595,7 @@ __put_page(HTAB *hashp, char *p, uint32_t bucket, int is_bucket, int is_bitmap)
 	ssize_t wsize;
 
 	size = hashp->BSIZE;
-	if ((hashp->fp == -1) && open_temp(hashp))
+	if ((hashp->fp == -1) && (hashp->fp = __dbtemp("_hash", NULL)) == -1)
 		return (-1);
 	fd = hashp->fp;
 
@@ -856,42 +854,6 @@ __free_ovflpage(HTAB *hashp, BUFHEAD *obufp)
 	    obufp->addr, free_bit, free_page);
 #endif
 	__reclaim_buf(hashp, obufp);
-}
-
-/*
- * Returns:
- *	 0 success
- *	-1 failure
- */
-static int
-open_temp(HTAB *hashp)
-{
-	sigset_t set, oset;
-	char *envtmp;
-	char namestr[PATH_MAX];
-	int len;
-
-	if (issetugid())
-		envtmp = NULL;
-	else
-		envtmp = getenv("TMPDIR");
-
-	len = snprintf(namestr, sizeof(namestr), "%s/_hashXXXXXX",
-	    envtmp ? envtmp : _PATH_TMP);
-	if (len < 0 || (size_t)len >= sizeof(namestr)) {
-		errno = ENAMETOOLONG;
-		return -1;
-	}
-
-	/* Block signals; make sure file goes away at process exit. */
-	(void)sigfillset(&set);
-	(void)sigprocmask(SIG_BLOCK, &set, &oset);
-	if ((hashp->fp = mkstemp(namestr)) != -1) {
-		(void)unlink(namestr);
-		(void)fcntl(hashp->fp, F_SETFD, FD_CLOEXEC);
-	}
-	(void)sigprocmask(SIG_SETMASK, &oset, (sigset_t *)NULL);
-	return (hashp->fp != -1 ? 0 : -1);
 }
 
 /*

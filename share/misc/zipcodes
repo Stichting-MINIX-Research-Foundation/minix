@@ -1,5 +1,5 @@
 # Zip Code : Location
-#	$NetBSD: zipcodes,v 1.6 2003/05/11 01:55:18 wiz Exp $
+#	$NetBSD: zipcodes,v 1.8 2012/03/06 17:20:38 pgoyette Exp $
 #	@(#)zipcodes	8.1 (Berkeley) 6/8/93
 00401:Pleasantville, NY
 00501:Holtsville, NY
@@ -39430,6 +39430,7 @@
 94074:San Gregorio, CA
 94080:South San Francisco, CA
 94083:South San Francisco, CA
+94085:Sunnyvale, CA
 94086:Sunnyvale, CA
 94087:Sunnyvale, CA
 94088:Sunnyvale, CA
@@ -42157,3 +42158,4 @@
 99645:Palmer, AK
 99647:Pedro Bay, AK
 99648:Perryville, AK
+CH-5073:Gipf-Oberfrick, Switzerland

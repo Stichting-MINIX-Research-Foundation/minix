@@ -7,7 +7,7 @@ SUBDIR=	apm ata bluetooth dec dm dmover dtv filemon hpc \
 	i2c i2o ic ieee1394 ir isa \
 	microcode ofw pci pckbport pcmcia pud putter raidframe sbus scsipi \
 	sun tc usb vme wscons
-.endif
+.endif # defined(__MINIX)
 
 .include <bsd.own.mk>
 
@@ -23,6 +23,6 @@ INCS=	biovar.h ccdvar.h cgdvar.h fssvar.h keylock.h kttcpio.h lockstat.h \
 	md.h vndvar.h
 .else
 INCS=	vndvar.h
-.endif
+.endif # !defined(__MINIX)
 
 .include <bsd.kinc.mk>

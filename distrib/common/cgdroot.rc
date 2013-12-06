@@ -1,0 +1,60 @@
+#	$NetBSD: cgdroot.rc,v 1.1 2013/07/15 00:25:38 khorben Exp $
+#
+# Copyright (c) 2013 Pierre Pronchery <khorben@defora.org>
+# All rights reserved.
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+# IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+# OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+# IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+# NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+# THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+PATH=/sbin:/usr/sbin:/bin:/usr/bin
+export PATH
+TERM=wsvt25
+export TERM
+HOME=/
+export HOME
+BLOCKSIZE=1k
+export BLOCKSIZE
+EDITOR=ed
+export EDITOR
+
+umask 022
+
+mount -o ro /dev/wd0a /etc/cgd
+if [ $? -ne 0 ]; then
+	echo "Could not mount the boot partition" 1>&2
+	exit 2
+fi
+/sbin/wsconsctl -d -w splash.enable=0 > /dev/null 2>&1
+cgdconfig -C
+if [ $? -ne 0 ]; then
+	echo "Could not decrypt the encrypted volume" 1>&2
+	umount /etc/cgd
+	exit 2
+fi
+mount -o ro /dev/cgd0a /altroot
+if [ $? -ne 0 ]; then
+	echo "Could not mount the root partition" 1>&2
+	cgdconfig -U
+	umount /etc/cgd
+	exit 2
+fi
+umount /etc/cgd
+/sbin/wsconsctl -d -w splash.enable=1 > /dev/null 2>&1
+sysctl -w init.root=/altroot

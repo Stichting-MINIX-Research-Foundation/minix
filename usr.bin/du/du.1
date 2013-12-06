@@ -1,4 +1,4 @@
-.\"	$NetBSD: du.1,v 1.21 2006/09/24 07:19:16 wiz Exp $
+.\"	$NetBSD: du.1,v 1.23 2012/05/14 21:14:14 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)du.1	8.2 (Berkeley) 4/1/94
 .\"
-.Dd September 24, 2006
+.Dd May 14, 2012
 .Dt DU 1
 .Os
 .Sh NAME
@@ -39,12 +39,12 @@
 .Nm
 .Op Fl H | Fl L | Fl P
 .Op Fl a | Fl d Ar depth | Fl s
-.Op Fl cghkmnrx
+.Op Fl cghikmnrx
 .Op Ar file ...
 .Sh DESCRIPTION
 The
 .Nm
-utility displays the file system block usage for each file argument
+utility displays the file system usage for each file argument
 and for each directory in the file hierarchy rooted in each directory
 argument.
 If no file is specified, the block usage of the hierarchy rooted in
@@ -79,6 +79,9 @@ flag is specified, the numbers will be displayed in "human-readable"
 format.
 Use unit suffixes: B (Byte), K (Kilobyte), M (Megabyte), G (Gigabyte),
 T (Terabyte) and P (Petabyte).
+.It Fl i
+Output inode usage instead of blocks.
+All "human-readable" options are ignored.
 .It Fl k
 By default,
 .Nm
@@ -149,6 +152,8 @@ and
 options are not specified, the block counts will be displayed in units of that
 size block.
 .El
+.Sh EXIT STATUS
+.Ex -std
 .Sh SEE ALSO
 .Xr df 1 ,
 .Xr chflags 2 ,

@@ -1,0 +1,8 @@
+# $NetBSD: TODO,v 1.1 2002/12/26 12:31:32 jdolecek Exp $
+
+- use the dirty flag introduced by Win95 OSR2, as noted in bin/5638
+- the fat cache (see msdosfs_fat.c, denode->de_fc[]) should probably
+	hold all cluster numbers for directories to speed up file lookup;
+	doing the same for files is likely to not be worth the needed
+	memory, since they are often much bigger and scanned much less
+	frequently

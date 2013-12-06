@@ -1,4 +1,5 @@
-# $NetBSD: md.sun2,v 1.9 2009/02/14 11:33:56 abs Exp $
+# $NetBSD: md.sun2,v 1.11 2013/08/11 22:29:02 joerg Exp $
+./usr/bin/fdformat				base-util-bin
 ./usr/mdec/bootxx				base-sysutil-bin
 ./usr/mdec/bootyy				base-sysutil-bin
 ./usr/mdec/installboot				base-obsolete		obsolete

@@ -1,4 +1,4 @@
-/*	$NetBSD: bootmenu.c,v 1.10 2011/08/18 13:20:04 christos Exp $	*/
+/*	$NetBSD: bootmenu.c,v 1.11 2013/07/28 08:50:09 he Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -40,6 +40,8 @@
 #include <bootmenu.h>
 
 #define isnum(c) ((c) >= '0' && (c) <= '9')
+
+static void docommandchoice(int);
 
 extern struct x86_boot_params boot_params;
 extern	const char bootprog_name[], bootprog_rev[], bootprog_kernrev[];
@@ -298,6 +300,53 @@ getchoicefrominput(char *input, int def)
 }
 
 static void
+docommandchoice(int choice)
+{
+	char input[80], *ic, *oc;
+
+	ic = bootconf.command[choice];
+	/* Split command string at ; into separate commands */
+	do {
+		oc = input;
+		/* Look for ; separator */
+		for (; *ic && *ic != COMMAND_SEPARATOR; ic++)
+			*oc++ = *ic;
+		if (*input == '\0')
+			continue;
+		/* Strip out any trailing spaces */
+		oc--;
+		for (; *oc == ' ' && oc > input; oc--);
+		*++oc = '\0';
+		if (*ic == COMMAND_SEPARATOR)
+			ic++;
+		/* Stop silly command strings like ;;; */
+		if (*input != '\0')
+			docommand(input);
+		/* Skip leading spaces */
+		for (; *ic == ' '; ic++);
+	} while (*ic);
+}
+
+void
+bootdefault(void)
+{
+	int choice;
+	static int entered;
+
+	if (bootconf.nummenu > 0) {
+		if (entered) {
+			printf("default boot twice, skipping...\n");
+			return;
+		}
+		entered = 1;
+		choice = bootconf.def;
+		printf("command(s): %s\n", bootconf.command[choice]);
+		docommandchoice(choice);
+	}
+}
+
+#if defined(__minix)
+static void
 showmenu(void)
 {
 	int choice;
@@ -317,30 +366,66 @@ showmenu(void)
 			    bootconf.desc[choice]);
 	}
 }
+#endif /* defined(__minix) */
 
 void
 doboottypemenu(void)
 {
+#if !defined(__minix)
+	int choice;
+	char input[80];
+
+	printf("\n");
+	/* Display menu */
+	if (bootconf.menuformat == MENUFORMAT_LETTER) {
+		for (choice = 0; choice < bootconf.nummenu; choice++)
+			printf("    %c. %s\n", choice + 'A',
+			    bootconf.desc[choice]);
+	} else {
+		/* Can't use %2d format string with libsa */
+		for (choice = 0; choice < bootconf.nummenu; choice++)
+			printf("    %s%d. %s\n",
+			    (choice < 9) ?  " " : "",
+			    choice + 1,
+			    bootconf.desc[choice]);
+	}
+#else
 	int choice, editing;
 	char input[256], *ic, *oc;
-
+#endif /* !defined(__minix) */
+#if defined(__minix)
 	showmenu();
+#endif /* defined(__minix) */
 	choice = -1;
+#if defined(__minix)
 	editing = 0;
+#endif /* defined(__minix) */
 	for (;;) {
 		input[0] = '\0';
 
 		if (bootconf.timeout < 0) {
 			if (bootconf.menuformat == MENUFORMAT_LETTER)
+#if !defined(__minix)
+				printf("\nOption: [%c]:",
+#else
 				printf("\nOption%s: [%c]:",
 				    editing ? " (edit)" : "",
+#endif /* !defined(__minix) */
 				    bootconf.def + 'A');
 			else
+#if !defined(__minix)
+				printf("\nOption: [%d]:",
+#else
 				printf("\nOption%s: [%d]:",
 				    editing ? " (edit)" : "",
+#endif /* !defined(__minix) */
 				    bootconf.def + 1);
 
+#if !defined(__minix)
+			gets(input);
+#else
 			editline(input, sizeof(input), NULL);
+#endif /* !defined(__minix) */
 			choice = getchoicefrominput(input, bootconf.def);
 		} else if (bootconf.timeout == 0)
 			choice = bootconf.def;
@@ -362,6 +447,16 @@ doboottypemenu(void)
 		}
 		if (choice < 0)
 			continue;
+#if !defined(__minix)
+		if (!strcmp(bootconf.command[choice], "prompt") &&
+		    ((boot_params.bp_flags & X86_BP_FLAGS_PASSWORD) == 0 ||
+		    check_password((char *)boot_params.bp_password))) {
+			printf("type \"?\" or \"help\" for help.\n");
+			bootmenu(); /* does not return */
+		} else {
+			docommandchoice(choice);
+		}
+#else
 		ic = bootconf.command[choice];
 		if (editing) {
 			printf("> ");
@@ -408,6 +503,7 @@ doboottypemenu(void)
 				for (; *ic == ' '; ic++);
 			} while (*ic);
 		}
+#endif /* !defined(__minix) */
 
 	}
 }

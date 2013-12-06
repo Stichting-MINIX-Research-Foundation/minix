@@ -1,13 +1,12 @@
-/*	$NetBSD: prompt.c,v 1.3 2011/07/03 20:14:13 tron Exp $	*/
+/*	$NetBSD: prompt.c,v 1.4 2013/09/04 19:44:21 tron Exp $	*/
 
 /*
- * Copyright (C) 1984-2011  Mark Nudelman
+ * Copyright (C) 1984-2012  Mark Nudelman
  *
  * You may distribute under the terms of either the GNU General Public
  * License or the Less License, as specified in the README file.
  *
- * For more information about less, or for information on how to 
- * contact the author, see the README file.
+ * For more information, see the README file.
  */
 
 
@@ -407,9 +406,9 @@ protochar(c, where, iseditproto)
  * where to resume parsing the string.
  * We must keep track of nested IFs and skip them properly.
  */
-	static const char *
+	static constant char *
 skipcond(p)
-	register const char *p;
+	register constant char *p;
 {
 	register int iflevel;
 
@@ -465,9 +464,9 @@ skipcond(p)
 /*
  * Decode a char that represents a position on the screen.
  */
-	static const char *
+	static constant char *
 wherechar(p, wp)
-	const char *p;
+	char constant *p;
 	int *wp;
 {
 	switch (*p)
@@ -491,10 +490,10 @@ wherechar(p, wp)
  */
 	public char *
 pr_expand(proto, maxwidth)
-	const char *proto;
+	constant char *proto;
 	int maxwidth;
 {
-	register const char *p;
+	register constant char *p;
 	register int c;
 	int where;
 

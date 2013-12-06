@@ -1,4 +1,4 @@
-/*     $NetBSD: login_pam.c,v 1.20 2009/12/29 19:26:13 christos Exp $       */
+/*     $NetBSD: login_pam.c,v 1.23 2013/10/18 20:47:06 christos Exp $       */
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: login_pam.c,v 1.20 2009/12/29 19:26:13 christos Exp $");
+__RCSID("$NetBSD: login_pam.c,v 1.23 2013/10/18 20:47:06 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -107,10 +107,9 @@ main(int argc, char *argv[])
 	uid_t uid, saved_uid;
 	gid_t saved_gid, saved_gids[NGROUPS_MAX];
 	int nsaved_gids;
-	char *domain, *p, *ttyn, *pwprompt;
+	char *domain, *p, *ttyn;
 	char tbuf[MAXPATHLEN + 2], tname[sizeof(_PATH_TTY) + 10];
 	char localhost[MAXHOSTNAMELEN + 1];
-	int need_chpass, require_chpass;
 	int login_retries = DEFAULT_RETRIES, 
 	    login_backoff = DEFAULT_BACKOFF;
 	char *shell = NULL;
@@ -126,9 +125,7 @@ main(int argc, char *argv[])
 	char **pamenv;
 
 	tbuf[0] = '\0';
-	pwprompt = NULL;
 	nested = NULL;
-	need_chpass = require_chpass = 0;
 
 	oabrt = signal(SIGABRT, SIG_IGN);
 	oalrm = signal(SIGALRM, timedout);
@@ -194,7 +191,7 @@ main(int argc, char *argv[])
 	argv += optind;
 
 	if (*argv) {
-		username = *argv;
+		username = trimloginname(*argv);
 		ask = 0;
 	} else
 		ask = 1;
@@ -240,12 +237,10 @@ main(int argc, char *argv[])
 	for (cnt = 0;; ask = 1) {
 		if (ask) {
 			fflag = 0;
-			getloginname();
+			username = trimloginname(getloginname());
 		}
 		rootlogin = 0;
 		auth_passed = 0;
-		if (strlen(username) > MAXLOGNAME)
-			username[MAXLOGNAME] = '\0';
 
 		/*
 		 * Note if trying multiple user names; log failures for
@@ -334,7 +329,7 @@ main(int argc, char *argv[])
 			if (pam_err != PAM_SUCCESS)
 				PAM_END("pam_get_item(PAM_USER)");
 
-			username = (char *)newuser;
+			username = newuser;
 			/*
 			 * Don't check for errors, because we don't want to give
 			 * out any information.
@@ -441,7 +436,7 @@ skip_auth:
 			pam_end(pamh, PAM_SUCCESS);
 			exit(EXIT_FAILURE);
 		}
-		pwd->pw_dir = "/";
+		pwd->pw_dir = __UNCONST("/");
 		(void)printf("Logging in with home = \"/\".\n");
 	}
 
@@ -570,7 +565,7 @@ skip_auth:
 	}
 
 	if (*pwd->pw_shell == '\0')
-		pwd->pw_shell = _PATH_BSHELL;
+		pwd->pw_shell = __UNCONST(_PATH_BSHELL);
 
 	shell = login_getcapstr(lc, "shell", pwd->pw_shell, pwd->pw_shell);
 	if (*shell == '\0')
@@ -584,7 +579,7 @@ skip_auth:
 	(void)setenv("HOME", pwd->pw_dir, 1);
 	(void)setenv("SHELL", pwd->pw_shell, 1);
 	if (term[0] == '\0') {
-		char *tt = (char *)stypeof(tty);
+		const char *tt = stypeof(tty);
 
 		if (tt == NULL)
 			tt = login_getcapstr(lc, "term", NULL, NULL);
@@ -618,7 +613,7 @@ skip_auth:
 	}
 
 	if (!quietlog) {
-		char *fname;
+		const char *fname;
 
 		fname = login_getcapstr(lc, "copyright", NULL, NULL);
 		if (fname != NULL && access(fname, F_OK) == 0)

@@ -13,10 +13,6 @@ SRCS=	cmds.c cmdtab.c complete.c domacro.c fetch.c ftp.c main.c \
 #
 #CPPFLAGS+=-DGATE_SERVER=\"ftp-gw.host\" # -DGATE_PORT=21
 
-.if defined(__MINIX)
-CPPFLAGS+= -DDIRENT_MISSING_D_NAMLEN
-.endif # defined (__MINIX)
-
 .if defined(SMALLPROG)
 CPPFLAGS+=-DNO_EDITCOMPLETE -DNO_ABOUT -DNO_AUTH -DNO_HELP -DNO_STATUS -DNO_DEBUG -DNO_USAGE
 .else

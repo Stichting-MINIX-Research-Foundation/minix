@@ -1,4 +1,4 @@
-/*	$NetBSD: SYS.h,v 1.16 2003/08/07 16:42:09 agc Exp $	*/
+/*	$NetBSD: SYS.h,v 1.18 2013/07/24 15:38:07 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -45,23 +45,15 @@
 #define SYSTRAP(x)	movl #SYS_/**/x,%d0; trap #0
 #endif
 
-#ifdef __ELF__
 #define CERROR		_C_LABEL(__cerror)
-#define CURBRK		_C_LABEL(__curbrk)
-#else
-#define CERROR		_ASM_LABEL(cerror)
-#define CURBRK		_ASM_LABEL(curbrk)
-#endif
 
 #define _SYSCALL_NOERROR(x,y)						\
 	ENTRY(x);							\
 	SYSTRAP(y)
 
 #define _SYSCALL(x,y)							\
-	.even;								\
-	err: jra PIC_PLT(CERROR);					\
 	_SYSCALL_NOERROR(x,y);						\
-	jcs err
+	jcs CERROR
 
 #define SYSCALL_NOERROR(x)						\
 	_SYSCALL_NOERROR(x,x)
@@ -71,11 +63,13 @@
 
 #define PSEUDO_NOERROR(x,y)						\
 	_SYSCALL_NOERROR(x,y);						\
-	rts
+	rts;								\
+	END(x)
 
 #define PSEUDO(x,y)							\
 	_SYSCALL(x,y);							\
-	rts
+	rts;								\
+	END(x)
 
 #define RSYSCALL_NOERROR(x)						\
 	PSEUDO_NOERROR(x,x)
@@ -95,3 +89,4 @@
 #define	ASMSTR		.asciz
 
 	.globl	CERROR
+	.hidden	CERROR

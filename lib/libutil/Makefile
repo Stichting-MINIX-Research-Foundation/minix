@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.73 2012/04/07 16:44:39 christos Exp $
+#	$NetBSD: Makefile,v 1.75 2013/06/20 20:42:30 christos Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 USE_SHLIBDIR=	yes
@@ -11,11 +11,11 @@ WARNS?=	5
 LIB=	util
 CPPFLAGS+=-DLIBC_SCCS -I${.CURDIR}
 LINTFLAGS+=-w
-.if !defined(__MINIX)
-SRCS+=	efun.c getbootfile.c getlabelsector.c getmaxpartitions.c \
-	getfsspecname.c getmntopts.c getrawpartition.c getdiskrawname.c \
-	disklabel_dkcksum.c disklabel_scan.c \
-	if_media.c \
+SRCS+=	efun.c \
+	\
+	getfsspecname.c getmntopts.c \
+	\
+	\
 	login.c loginx.c login_cap.c login_tty.c logout.c logoutx.c \
 	logwtmp.c logwtmpx.c opendisk.c parsedate.y \
 	passwd.c pw_scan.c pidfile.c pidlock.c pty.c \
@@ -23,36 +23,15 @@ SRCS+=	efun.c getbootfile.c getlabelsector.c getmaxpartitions.c \
 	secure_path.c sockaddr_snprintf.c stat_flags.c \
 	strpct.c ttyaction.c ttymsg.c
 
-MAN=	efun.3 getbootfile.3 getfstypename.3 getlabelsector.3 \
-	getmaxpartitions.3 getmntopts.3 getrawpartition.3 \
-	getdiskrawname.3 getfsspecname.3 \
+MAN=	efun.3 \
+	getmntopts.3 \
+	getfsspecname.3 \
 	login.3 login_cap.3 loginx.3 \
-	disklabel_dkcksum.3 disklabel_scan.3 \
 	opendisk.3 openpty.3 parsedate.3 pidfile.3 pidlock.3 \
-	proc_compare.3 pw_getconf.3 pw_init.3 pw_lock.3 secure_path.3 \
+	pw_getconf.3 pw_init.3 pw_lock.3 secure_path.3 \
 	raise_default_signal.3 \
 	snprintb.3 sockaddr_snprintf.3 stat_flags.3 strpct.3 ttyaction.3 \
 	ttymsg.3 util.3
-
-.else
-SRCS+=	efun.c \
-	getmntopts.c sockaddr_snprintf.c\
-	login.c loginx.c login_cap.c login_tty.c logout.c logoutx.c \
-	logwtmp.c logwtmpx.c opendisk.c \
-	passwd.c pw_scan.c pidfile.c pidlock.c pty.c \
-	raise_default_signal.c \
-	secure_path.c stat_flags.c \
-	strpct.c ttyaction.c ttymsg.c \
-
-MAN=	efun.3 \
-	getmntopts.3 \
-	login.3 login_cap.3 loginx.3 \
-	opendisk.3 openpty.3 pidfile.3 pidlock.3 \
-	pw_getconf.3 pw_init.3 pw_lock.3 secure_path.3 \
-	raise_default_signal.3 \
-	snprintb.3 stat_flags.3 strpct.3 ttyaction.3 \
-	util.3
-.endif
 
 YPREFIX=__pd
 .PATH:	${NETBSDSRCDIR}/lib/libc/gen
@@ -74,6 +53,7 @@ MLINKS+=login_cap.3 login_getcapnum.3
 MLINKS+=login_cap.3 login_getcapsize.3
 MLINKS+=login_cap.3 login_getcapstr.3
 MLINKS+=login_cap.3 login_getcaptime.3
+MLINKS+=login_cap.3 login_getpwclass.3
 MLINKS+=login_cap.3 login_close.3
 MLINKS+=login_cap.3 setclasscontext.3
 MLINKS+=login_cap.3 setusercontext.3
@@ -107,9 +87,7 @@ MLINKS+=efun.3 evasprintf.3
 MLINKS+=stat_flags.3 string_to_flags.3
 MLINKS+=stat_flags.3 flags_to_string.3
 MLINKS+=snprintb.3 snprintb_m.3
-.if !defined(__MINIX)
 MLINKS+=util.3 libutil.3
 MLINKS+=strpct.3 strspct.3
-.endif
 
 .include <bsd.lib.mk>

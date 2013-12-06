@@ -1,4 +1,4 @@
-/*	$NetBSD: ksyms.h,v 1.27 2010/03/15 02:28:59 darran Exp $	*/
+/*	$NetBSD: ksyms.h,v 1.28 2012/11/18 00:06:56 chs Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Anders Magnusson (ragge@ludd.luth.se).
@@ -32,10 +32,6 @@
 
 #ifdef _KSYMS_PRIVATE
 
-#if defined(_KERNEL_OPT)
-#include "opt_dtrace.h"
-#endif
-
 #define	ELFSIZE	ARCH_ELFSIZE
 #include <sys/exec_elf.h>
 #include <sys/queue.h>
@@ -52,12 +48,10 @@ struct ksyms_symtab {
 	int sd_strsize;		/* Size of string table */
 	int sd_nglob;		/* Number of global symbols */
 	bool sd_gone;		/* dead but around for open() */
-#ifdef KDTRACE_HOOKS
 	void *sd_ctfstart;	/* Address of CTF contents */
 	int sd_ctfsize;		/* Size in bytes of CTF contents */
 	uint32_t *sd_nmap;	/* Name map for sorted symbols */
 	int sd_nmapsize;	/* Total span of map */
-#endif
 };
 
 /*
@@ -68,12 +62,8 @@ struct ksyms_symtab {
 #define	STRTAB		2
 #define	SHSTRTAB	3
 #define	SHBSS		4
-#ifdef KDTRACE_HOOKS
 #define	SHCTF		5
 #define NSECHDR		6
-#else
-#define NSECHDR		5
-#endif
 
 #define	NPRGHDR		1
 #define	SHSTRSIZ	42

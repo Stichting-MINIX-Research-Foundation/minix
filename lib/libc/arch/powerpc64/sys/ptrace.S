@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.S,v 1.1 2006/07/01 16:37:20 ross Exp $	*/
+/*	$NetBSD: ptrace.S,v 1.2 2013/09/12 15:36:15 joerg Exp $	*/
 
 #include "SYS.h"
 
@@ -24,7 +24,7 @@ ENTRY(ptrace)
 	mtlr	%r0
 	la	%r1,32(%r1)
 #else
-#ifdef PIC
+#ifdef __PIC__
 	mflr	%r0
 	bl	_GLOBAL_OFFSET_TABLE_@local-4
 	mflr	%r7
@@ -36,7 +36,7 @@ ENTRY(ptrace)
 	lis	%r7,_C_LABEL(errno)@ha
 	li	%r8,0
 	stw	%r8,_C_LABEL(errno)@l(%r7)
-#endif /* PIC */
+#endif /* __PIC__ */
 #endif /* _REENTRANT */
 	li	%r0,SYS_ptrace
 	sc

@@ -1,4 +1,4 @@
-# $NetBSD: md.newsmips,v 1.29 2011/07/17 20:54:31 joerg Exp $
+# $NetBSD: md.newsmips,v 1.30 2012/11/25 21:55:50 alnsn Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/newsmips				comp-c-include
 ./usr/include/newsmips/_G_config.h		comp-obsolete		obsolete
@@ -57,6 +57,7 @@
 ./usr/include/newsmips/rwlock.h			comp-c-include
 ./usr/include/newsmips/setjmp.h			comp-c-include
 ./usr/include/newsmips/signal.h			comp-c-include
+./usr/include/newsmips/sljitarch.h		comp-c-include
 ./usr/include/newsmips/stdarg.h			comp-obsolete		obsolete
 ./usr/include/newsmips/trap.h			comp-c-include
 ./usr/include/newsmips/types.h			comp-c-include

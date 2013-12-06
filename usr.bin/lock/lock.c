@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.c,v 1.32 2012/03/20 20:34:58 matt Exp $	*/
+/*	$NetBSD: lock.c,v 1.33 2013/10/18 20:47:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1987, 1993\
 #if 0
 static char sccsid[] = "@(#)lock.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: lock.c,v 1.32 2012/03/20 20:34:58 matt Exp $");
+__RCSID("$NetBSD: lock.c,v 1.33 2013/10/18 20:47:06 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -105,7 +105,7 @@ main(int argc, char **argv)
 	time_t curtime;
 	int ch, usemine;
 	long sectimeout;
-	char *ap, *mypw, *ttynam;
+	char *ap, *ttynam;
 	const char *tzn;
 	uid_t uid = getuid();
 	char hostname[MAXHOSTNAMELEN + 1], s[BUFSIZ], s1[BUFSIZ];
@@ -113,6 +113,8 @@ main(int argc, char **argv)
 	pam_handle_t *pamh = NULL;
 	static const struct pam_conv pamc = { &openpam_ttyconv, NULL };
 	int pam_err;
+#else
+	char *mypw = NULL;
 #endif
 
 	if ((pw = getpwuid(getuid())) == NULL)
@@ -120,7 +122,6 @@ main(int argc, char **argv)
 
 	notimeout = 0;
 	sectimeout = TIMEOUT;
-	mypw = NULL;
 	usemine = 0;
 
 	while ((ch = getopt(argc, argv, "npt:")) != -1)
@@ -210,7 +211,9 @@ main(int argc, char **argv)
 			exit(1);
 		}
 		s[0] = '\0';
+#ifndef USE_PAM
 		mypw = s1;
+#endif
 	}
 #ifdef USE_PAM
 	if (usemine) {

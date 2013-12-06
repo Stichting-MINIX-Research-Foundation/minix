@@ -1,0 +1,2 @@
+# $NetBSD: md.ofppc,v 1.2 2013/01/16 21:11:09 christos Exp $
+./usr/libdata/debug/usr/sbin/ofctl.debug	comp-sysutil-debug	debug

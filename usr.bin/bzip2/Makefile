@@ -2,10 +2,6 @@
 
 .include <bsd.own.mk>		# for MKDYNAMICROOT definition
 
-.if defined(__MINIX)
-MKDYNAMICROOT= no
-SMALLPROG= yes
-.endif
 USE_FORT?= yes	# data-driven bugs?
 
 

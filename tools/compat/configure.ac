@@ -1,4 +1,4 @@
-#	$NetBSD: configure.ac,v 1.74 2011/11/03 14:13:53 joerg Exp $
+#	$NetBSD: configure.ac,v 1.80 2013/08/14 10:14:45 jmcneill Exp $
 #
 # Autoconf definition file for libnbcompat.
 #
@@ -35,9 +35,9 @@ AH_BOTTOM([#include "compat_defs.h"
 AC_DEFUN([AC_NETBSD],
 [AC_BEFORE([$0], [AC_COMPILE_IFELSE])dnl
       AC_BEFORE([$0], [AC_RUN_IFELSE])dnl
-      AC_MSG_CHECKING([for NetBSD])
+      AC_MSG_CHECKING([for NetBSD or MINIX3])
       AC_EGREP_CPP(yes,
-      [#ifdef __NetBSD__
+      [#if defined(__NetBSD__) || ((__minix)
 	yes
 	#endif
 	],
@@ -79,7 +79,7 @@ AC_CHECK_HEADERS(sys/ioctl.h sys/mman.h sys/param.h \
 # Find headers that may not be available.
 AC_HEADER_DIRENT
 AC_CHECK_HEADERS(sys/mtio.h sys/sysmacros.h sys/syslimits.h \
-	getopt.h features.h malloc.h sys/poll.h pthread.h stddef.h)
+	getopt.h features.h malloc.h sys/poll.h pthread.h stddef.h rpc/types.h)
 AC_CHECK_HEADERS(sys/bswap.h machine/bswap.h sys/cdefs.h machine/endian.h \
 	sys/endian.h sys/featuretest.h err.h inttypes.h libgen.h paths.h \
 	stdint.h util.h resolv.h arpa/nameser.h,,
@@ -100,6 +100,9 @@ AC_CHECK_TYPES([id_t, long long, u_long, u_char, u_short, u_int, u_quad_t])
 AC_CHECK_TYPE(socklen_t, [AC_DEFINE([HAVE_SOCKLEN_T], 1,
 			  [Define if you have the socklen_t type.])],,
 [#include <sys/types.h>
+#ifdef HAVE_RPC_TYPES_H
+#include <rpc/types.h>
+#endif
 #include <sys/socket.h>])
 
 dnl XXX - This is UGLY.  Need a better way to homogenize the bitsized types,
@@ -134,24 +137,29 @@ AC_CHECK_MEMBERS([struct stat.st_flags, struct stat.st_gen,
 	struct stat.st_atim, struct stat.st_mtimensec],,, 
 	[#include <sys/stat.h>])
 AC_CHECK_MEMBERS(struct statvfs.f_iosize,,, [#include <sys/statvfs.h>])
+AC_CHECK_MEMBERS(struct tm.tm_gmtoff,,, [#include <time.h>])
 
 # Global variable decls.
 AC_CHECK_DECLS([optind, optreset],,, [
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#ifdef HAVE_GETOPT_H
+#include <getopt.h>
+#endif
 ])
 AC_CHECK_DECLS(sys_signame,,, [#include <signal.h>])
 
 # Library functions (where a .h check isn't enough).
 AC_FUNC_ALLOCA
 AC_CHECK_FUNCS(atoll asprintf asnprintf basename devname dirfd dirname \
-	esetfunc fgetln flock fpurge __fpurge futimes getline \
+	dprintf esetfunc fgetln flock fpurge __fpurge futimes getline \
 	getopt getopt_long group_from_gid gid_from_group \
 	heapsort isblank issetugid lchflags lchmod lchown lutimes mkstemp \
 	mkdtemp poll pread putc_unlocked pwcache_userdb pwcache_groupdb \
 	pwrite raise_default_signal random setenv \
-	setgroupent setprogname setpassent snprintf strlcat strlcpy strmode \
+	setgroupent setprogname setpassent \
+	snprintb_m snprintf strlcat strlcpy strmode \
 	strndup strsep strsuftoll strtoll \
 	user_from_uid uid_from_user vasprintf vasnprintf vsnprintf)
 
@@ -193,6 +201,8 @@ dnl # Cygwin: We *MUST* look at -lregex *before* the "no libs" condition.
 dnl # Thus AC_CHECK_LIB(regex...) comes first, and AC_SEARCHLIBS next.
 AC_CHECK_LIB(regex, regfree)
 AC_SEARCH_LIBS(regfree, rx posix)
+
+AC_CHECK_LIB(rt, clock_gettime)
 
 AC_CHECK_FUNCS(fparseln, [
     AC_MSG_CHECKING(if fparseln seems to work)

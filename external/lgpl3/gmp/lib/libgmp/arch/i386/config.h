@@ -1,10 +1,10 @@
 /* config.h.  Generated from config.in by configure.  */
-/* config.in.  Generated from configure.in by autoheader.  */
+/* config.in.  Generated from configure.ac by autoheader.  */
 
 /*
 
 Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006,
-2007, 2008, 2009, 2010 Free Software Foundation, Inc.
+2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -27,7 +27,7 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
 
 /* The gmp-mparam.h file (a string) the tune program should suggest updating.
    */
-#define GMP_MPARAM_H_SUGGEST "/usr/src/external/lgpl3/gmp/dist/mpn/x86/i486/gmp-mparam.h"
+#define GMP_MPARAM_H_SUGGEST "./mpn/x86/i486/gmp-mparam.h"
 
 /* Define to 1 if you have the `alarm' function. */
 #define HAVE_ALARM 1
@@ -62,7 +62,7 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
 /* Define to 1 if you have the `clock' function. */
 #define HAVE_CLOCK 1
 
-/* Define to 1 if you have the `clock_gettime' function. */
+/* Define to 1 if you have the `clock_gettime' function */
 #define HAVE_CLOCK_GETTIME 1
 
 /* Define to 1 if you have the `cputime' function. */
@@ -162,6 +162,14 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
 /* #undef HAVE_HOST_CPU_pentiumpro */
 /* #undef HAVE_HOST_CPU_pentium2 */
 /* #undef HAVE_HOST_CPU_pentium3 */
+/* #undef HAVE_HOST_CPU_s390_z900 */
+/* #undef HAVE_HOST_CPU_s390_z990 */
+/* #undef HAVE_HOST_CPU_s390_z9 */
+/* #undef HAVE_HOST_CPU_s390_z10 */
+/* #undef HAVE_HOST_CPU_s390_z196 */
+
+/* Define to 1 iff we have a s390 with 64-bit registers.  */
+/* #undef HAVE_HOST_CPU_s390_zarch */
 
 /* Define to 1 if the system has the type `intmax_t'. */
 #define HAVE_INTMAX_T 1
@@ -215,12 +223,27 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
     implementation of the corresponding routine exists.  */
 #define HAVE_NATIVE_mpn_add_n 1
 /* #undef HAVE_NATIVE_mpn_add_n_sub_n */
-/* XXXMRG */
-/* #define HAVE_NATIVE_mpn_add_nc 1 */
+#define HAVE_NATIVE_mpn_add_nc 1
 /* #undef HAVE_NATIVE_mpn_addaddmul_1msb0 */
+/* #undef HAVE_NATIVE_mpn_addcnd_n */
 /* #undef HAVE_NATIVE_mpn_addlsh1_n */
 /* #undef HAVE_NATIVE_mpn_addlsh2_n */
 /* #undef HAVE_NATIVE_mpn_addlsh_n */
+/* #undef HAVE_NATIVE_mpn_addlsh1_nc */
+/* #undef HAVE_NATIVE_mpn_addlsh2_nc */
+/* #undef HAVE_NATIVE_mpn_addlsh_nc */
+/* #undef HAVE_NATIVE_mpn_addlsh1_n_ip1 */
+/* #undef HAVE_NATIVE_mpn_addlsh2_n_ip1 */
+/* #undef HAVE_NATIVE_mpn_addlsh_n_ip1 */
+/* #undef HAVE_NATIVE_mpn_addlsh1_nc_ip1 */
+/* #undef HAVE_NATIVE_mpn_addlsh2_nc_ip1 */
+/* #undef HAVE_NATIVE_mpn_addlsh_nc_ip1 */
+/* #undef HAVE_NATIVE_mpn_addlsh1_n_ip2 */
+/* #undef HAVE_NATIVE_mpn_addlsh2_n_ip2 */
+/* #undef HAVE_NATIVE_mpn_addlsh_n_ip2 */
+/* #undef HAVE_NATIVE_mpn_addlsh1_nc_ip2 */
+/* #undef HAVE_NATIVE_mpn_addlsh2_nc_ip2 */
+/* #undef HAVE_NATIVE_mpn_addlsh_nc_ip2 */
 /* #undef HAVE_NATIVE_mpn_addmul_1c */
 /* #undef HAVE_NATIVE_mpn_addmul_2 */
 /* #undef HAVE_NATIVE_mpn_addmul_3 */
@@ -229,14 +252,16 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
 /* #undef HAVE_NATIVE_mpn_addmul_6 */
 /* #undef HAVE_NATIVE_mpn_addmul_7 */
 /* #undef HAVE_NATIVE_mpn_addmul_8 */
+/* #undef HAVE_NATIVE_mpn_addmul_2s */
 /* #undef HAVE_NATIVE_mpn_and_n */
 /* #undef HAVE_NATIVE_mpn_andn_n */
 #define HAVE_NATIVE_mpn_bdiv_dbm1c 1
-/* #undef HAVE_NATIVE_mpn_bdiv_q_1 */
-/* #undef HAVE_NATIVE_mpn_pi1_bdiv_q_1 */
+#define HAVE_NATIVE_mpn_bdiv_q_1 1
+#define HAVE_NATIVE_mpn_pi1_bdiv_q_1 1
 /* #undef HAVE_NATIVE_mpn_com */
 #define HAVE_NATIVE_mpn_copyd 1
 #define HAVE_NATIVE_mpn_copyi 1
+/* #undef HAVE_NATIVE_mpn_div_qr_2 */
 #define HAVE_NATIVE_mpn_divexact_1 1
 /* #undef HAVE_NATIVE_mpn_divexact_by3c */
 #define HAVE_NATIVE_mpn_divrem_1 1
@@ -244,8 +269,7 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
 #define HAVE_NATIVE_mpn_divrem_2 1
 /* #undef HAVE_NATIVE_mpn_gcd_1 */
 /* #undef HAVE_NATIVE_mpn_hamdist */
-/* XXXMRG */
-/* #define HAVE_NATIVE_mpn_invert_limb 1 */
+/* #undef HAVE_NATIVE_mpn_invert_limb */
 /* #undef HAVE_NATIVE_mpn_ior_n */
 /* #undef HAVE_NATIVE_mpn_iorn_n */
 #define HAVE_NATIVE_mpn_lshift 1
@@ -264,6 +288,8 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
 /* #undef HAVE_NATIVE_mpn_mul_2 */
 /* #undef HAVE_NATIVE_mpn_mul_3 */
 /* #undef HAVE_NATIVE_mpn_mul_4 */
+/* #undef HAVE_NATIVE_mpn_mul_5 */
+/* #undef HAVE_NATIVE_mpn_mul_6 */
 #define HAVE_NATIVE_mpn_mul_basecase 1
 /* #undef HAVE_NATIVE_mpn_nand_n */
 /* #undef HAVE_NATIVE_mpn_nior_n */
@@ -275,6 +301,9 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
 /* #undef HAVE_NATIVE_mpn_rsblsh1_n */
 /* #undef HAVE_NATIVE_mpn_rsblsh2_n */
 /* #undef HAVE_NATIVE_mpn_rsblsh_n */
+/* #undef HAVE_NATIVE_mpn_rsblsh1_nc */
+/* #undef HAVE_NATIVE_mpn_rsblsh2_nc */
+/* #undef HAVE_NATIVE_mpn_rsblsh_nc */
 /* #undef HAVE_NATIVE_mpn_rsh1add_n */
 /* #undef HAVE_NATIVE_mpn_rsh1add_nc */
 /* #undef HAVE_NATIVE_mpn_rsh1sub_n */
@@ -282,12 +311,24 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
 #define HAVE_NATIVE_mpn_rshift 1
 #define HAVE_NATIVE_mpn_sqr_basecase 1
 /* #undef HAVE_NATIVE_mpn_sqr_diagonal */
+/* #undef HAVE_NATIVE_mpn_sqr_diag_addlsh1 */
 #define HAVE_NATIVE_mpn_sub_n 1
-/* #define HAVE_NATIVE_mpn_sub_nc 1 */
+#define HAVE_NATIVE_mpn_sub_nc 1
+/* #undef HAVE_NATIVE_mpn_subcnd_n */
 /* #undef HAVE_NATIVE_mpn_sublsh1_n */
 /* #undef HAVE_NATIVE_mpn_sublsh2_n */
 /* #undef HAVE_NATIVE_mpn_sublsh_n */
+/* #undef HAVE_NATIVE_mpn_sublsh1_nc */
+/* #undef HAVE_NATIVE_mpn_sublsh2_nc */
+/* #undef HAVE_NATIVE_mpn_sublsh_nc */
+/* #undef HAVE_NATIVE_mpn_sublsh1_n_ip1 */
+/* #undef HAVE_NATIVE_mpn_sublsh2_n_ip1 */
+/* #undef HAVE_NATIVE_mpn_sublsh_n_ip1 */
+/* #undef HAVE_NATIVE_mpn_sublsh1_nc_ip1 */
+/* #undef HAVE_NATIVE_mpn_sublsh2_nc_ip1 */
+/* #undef HAVE_NATIVE_mpn_sublsh_nc_ip1 */
 /* #undef HAVE_NATIVE_mpn_submul_1c */
+#define HAVE_NATIVE_mpn_tabselect 1
 #define HAVE_NATIVE_mpn_udiv_qrnnd 1
 /* #undef HAVE_NATIVE_mpn_udiv_qrnnd_r */
 #define HAVE_NATIVE_mpn_umul_ppmm 1
@@ -318,7 +359,7 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
 /* #undef HAVE_PSTAT_GETPROCESSOR */
 
 /* Define to 1 if the system has the type `ptrdiff_t'. */
-#define HAVE_PTRDIFF_T 1
+/* #undef HAVE_PTRDIFF_T */
 
 /* Define to 1 if the system has the type `quad_t'. */
 #define HAVE_QUAD_T 1
@@ -452,6 +493,9 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
 /* Define to 1 if you have the `vsnprintf' function and it works properly. */
 #define HAVE_VSNPRINTF 1
 
+/* Define to 1 for Windos/64 */
+/* #undef HOST_DOS64 */
+
 /* Assembler local label prefix */
 #define LSYM_PREFIX ".L"
 
@@ -463,13 +507,13 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
 #define PACKAGE "gmp"
 
 /* Define to the address where bug reports for this package should be sent. */
-#define PACKAGE_BUGREPORT "gmp-bugs@gmplib.org"
+#define PACKAGE_BUGREPORT "gmp-bugs@gmplib.org, see http://gmplib.org/manual/Reporting-Bugs.html"
 
 /* Define to the full name of this package. */
 #define PACKAGE_NAME "GNU MP"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "GNU MP 5.0.2"
+#define PACKAGE_STRING "GNU MP 5.1.3"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "gmp"
@@ -478,10 +522,7 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
 #define PACKAGE_URL "http://www.gnu.org/software/gmp/"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "5.0.2"
-
-/* Define to 1 if the C compiler supports function prototypes. */
-#define PROTOTYPES 1
+#define PACKAGE_VERSION "5.1.3"
 
 /* Define as the return type of signal handlers (`int' or `void'). */
 #define RETSIGTYPE void
@@ -505,7 +546,7 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
 /* #undef SSCANF_WRITABLE_INPUT */
 
 /* Define to 1 if you have the ANSI C header files. */
-#define STDC_HEADERS 1
+/* #undef STDC_HEADERS */
 
 /* Define to 1 if you can safely include both <sys/time.h> and <time.h>. */
 #define TIME_WITH_SYS_TIME 1
@@ -514,7 +555,10 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
 /* #undef TUNE_SQR_TOOM2_MAX */
 
 /* Version number of package */
-#define VERSION "5.0.2"
+#define VERSION "5.1.3"
+
+/* Defined to 1 as per --enable-assembly */
+#define WANT_ASSEMBLY 1
 
 /* Define to 1 to enable ASSERT checking, per --enable-assert */
 /* #undef WANT_ASSERT */
@@ -560,9 +604,6 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
 /* Define to 1 if `lex' declares `yytext' as a `char *' by default, not a
    `char[]'. */
 #define YYTEXT_POINTER 1
-
-/* Define like PROTOTYPES; this can be used by system headers. */
-#define __PROTOTYPES 1
 
 /* Define to `__inline__' or `__inline' if that's what the C compiler
    calls it, or to nothing if 'inline' is not supported under any name.  */

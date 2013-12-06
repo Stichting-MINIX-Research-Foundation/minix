@@ -1,4 +1,4 @@
-/*	$NetBSD: fabs.S,v 1.8 2008/04/28 20:22:56 martin Exp $	*/
+/*	$NetBSD: fabs.S,v 1.11 2013/07/17 06:43:32 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -31,15 +31,16 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: fabs.S,v 1.8 2008/04/28 20:22:56 martin Exp $")
+RCSID("$NetBSD: fabs.S,v 1.11 2013/07/17 06:43:32 matt Exp $")
 
 ENTRY(fabs)
-#if defined(__SVR4_ABI__) && defined(__HAVE_68881__)
-	bclr	#31,%sp@(4)
-	fmoved	%sp@(4),%fp0
+#if defined(__SVR4_ABI__) && defined(__HAVE_FPU__)
+	bclr	#31,4(%sp)
+	fmoved	4(%sp),%fp0
 #else
-	movl	%sp@(4),%d0
-	movl	%sp@(8),%d1
+	movl	4(%sp),%d0
+	movl	8(%sp),%d1
 	bclr	#31,%d0
 #endif
 	rts
+END(fabs)

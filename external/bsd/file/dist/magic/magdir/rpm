@@ -1,6 +1,6 @@
 
 #------------------------------------------------------------------------------
-# $File: rpm,v 1.11 2011/06/14 12:47:41 christos Exp $
+# $File: rpm,v 1.12 2013/01/11 16:45:23 christos Exp $
 #
 # RPM: file(1) magic for Red Hat Packages   Erik Troan (ewt@redhat.com)
 #
@@ -31,22 +31,15 @@
 >>8	beshort		255		noarch
 
 #delta RPM    Daniel Novotny (dnovotny@redhat.com)
-0	string	drpm	Delta RPM
+0	string		drpm		Delta RPM
 !:mime  application/x-rpm
 >12	string 	x	%s
-
->>>8	beshort		11		MIPSel
->>>8	beshort		12		ARM
->>>8	beshort		13		MiNT
->>>8	beshort		14		S/390
->>>8	beshort		15		S/390x
->>>8	beshort		16		PowerPC64
->>>8	beshort		17		SuperH
->>>8	beshort		18		Xtensa
+>>8	beshort		11		MIPSel
+>>8	beshort		12		ARM
+>>8	beshort		13		MiNT
+>>8	beshort		14		S/390
+>>8	beshort		15		S/390x
+>>8	beshort		16		PowerPC64
+>>8	beshort		17		SuperH
+>>8	beshort		18		Xtensa
 >>10	string		x		%s
-
-# Type:	Delta RPM
-# From:	Daniel Novotny (dnovotny@redhat.com)
-0	string		drpm		Delta RPM
-!:mime application/x-rpm
->12	string		x		%s

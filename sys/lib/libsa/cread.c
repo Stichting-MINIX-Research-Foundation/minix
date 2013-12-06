@@ -1,4 +1,4 @@
-/*	$NetBSD: cread.c,v 1.23 2009/03/25 18:41:06 tls Exp $	*/
+/*	$NetBSD: cread.c,v 1.26 2013/10/13 20:09:02 joerg Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -284,6 +284,7 @@ open(const char *fname, int mode)
 errout:
 	if (s != 0)
 		dealloc(s, sizeof(struct sd));
+	ss[fd] = NULL;
 	oclose(fd);
 	return -1;
 }
@@ -291,7 +292,6 @@ errout:
 int
 close(int fd)
 {
-	struct open_file *f;
 	struct sd *s;
 
 #if !defined(LIBSA_NO_FD_CHECKING)
@@ -300,17 +300,15 @@ close(int fd)
 		return -1;
 	}
 #endif
-	f = &files[fd];
-
-	if ((f->f_flags & F_READ) == 0)
-		return oclose(fd);
 
 	s = ss[fd];
 
-	inflateEnd(&(s->stream));
+	if (s != NULL) {
+		inflateEnd(&(s->stream));
 
-	dealloc(s->inbuf, Z_BUFSIZE);
-	dealloc(s, sizeof(struct sd));
+		dealloc(s->inbuf, Z_BUFSIZE);
+		dealloc(s, sizeof(struct sd));
+	}
 
 	return oclose(fd);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: cdf.h,v 1.1.1.3 2012/02/22 17:48:26 christos Exp $	*/
+/*	$NetBSD: cdf.h,v 1.1.1.4 2013/01/03 16:27:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 Christos Zoulas
@@ -310,7 +310,7 @@ int cdf_print_elapsed_time(char *, size_t, cdf_timestamp_t);
 uint16_t cdf_tole2(uint16_t);
 uint32_t cdf_tole4(uint32_t);
 uint64_t cdf_tole8(uint64_t);
-char *cdf_ctime(const time_t *);
+char *cdf_ctime(const time_t *, char *);
 
 #ifdef CDF_DEBUG
 void cdf_dump_header(const cdf_header_t *);

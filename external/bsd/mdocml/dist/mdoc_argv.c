@@ -1,4 +1,4 @@
-/*	$Vendor-Id: mdoc_argv.c,v 1.81 2011/09/18 14:14:15 schwarze Exp $ */
+/*	$Vendor-Id: mdoc_argv.c,v 1.82 2012/03/23 05:50:24 kristaps Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -81,7 +81,7 @@ static	const enum argvflag argvflags[MDOC_ARG_MAX] = {
 	ARGV_NONE,	/* MDOC_Ohang */
 	ARGV_NONE,	/* MDOC_Inset */
 	ARGV_MULTI,	/* MDOC_Column */
-	ARGV_SINGLE,	/* MDOC_Width */
+	ARGV_OPT_SINGLE, /* MDOC_Width */
 	ARGV_NONE,	/* MDOC_Compact */
 	ARGV_NONE,	/* MDOC_Std */
 	ARGV_NONE,	/* MDOC_Filled */

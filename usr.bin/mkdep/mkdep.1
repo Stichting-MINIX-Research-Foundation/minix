@@ -1,4 +1,4 @@
-.\"	$NetBSD: mkdep.1,v 1.15 2010/10/15 05:46:48 dholland Exp $
+.\"	$NetBSD: mkdep.1,v 1.18 2013/03/05 01:59:56 christos Exp $
 .\"
 .\" Copyright (c) 1987, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)mkdep.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd October 15, 2010
+.Dd March 4, 2013
 .Dt MKDEP 1
 .Os
 .Sh NAME
@@ -37,8 +37,9 @@
 .Nd construct Makefile dependency list
 .Sh SYNOPSIS
 .Nm
-.Op Fl aDdopq
+.Op Fl aDdiopqv
 .Op Fl f Ar file
+.Op Fl P Ar prefix
 .Op Fl s Ar suffixes
 .Li --
 .Op Ar flags
@@ -79,8 +80,23 @@ depend files into a single file.
 Write the include file dependencies to
 .Ar file ,
 instead of the default ``.depend''.
+.It Fl i
+When
+.Fl d
+or
+.Fl D
+is used, instead of inlining the contents of the files to the resulting
+depend file, use include statements to include the source dependency files.
 .It Fl o
-Add an additional .OPTIONAL line for each dependant file.
+Add an additional .OPTIONAL line for each dependent file.
+.It Fl P
+Prepend the string given in
+.Ar prefix
+to every target filename.
+This is useful for programs that have source files in multiple subdirectories
+and a single Makefile that references all of them explicitly (without using
+the VPATH functionality because there can be files with the same name in
+each subdirectory).
 .It Fl p
 Cause
 .Nm
@@ -109,6 +125,8 @@ Expand each target filename to a list, replacing the
 suffix with each element of
 .Ar suffixes .
 The list of suffixes may be space or comma separated.
+.It Fl v
+print debugging output.
 .El
 .Sh FILES
 .Bl -tag -width .depend -compact

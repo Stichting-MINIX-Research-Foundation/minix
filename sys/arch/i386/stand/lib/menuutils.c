@@ -62,7 +62,11 @@ docommand(char *arg)
 }
 
 void
+#if !defined(__minix)
+bootmenu(void)
+#else
 prompt(int allowreturn)
+#endif /* !defined(__minix) */
 {
 	char input[80];
 
@@ -71,20 +75,27 @@ prompt(int allowreturn)
 
 		input[0] = '\0';
 		printf("> ");
+#if !defined(__minix)
+		gets(input);
+#else
 		editline(input, sizeof(input), NULL);
+#endif /* !defined(__minix) */
 
 		/*
 		 * Skip leading whitespace.
 		 */
 		while (*c == ' ')
 			c++;
+#if defined(__minix)
 		if (allowreturn && !strcmp(c, "menu"))
 			break;
+#endif /* defined(__minix) */
 		if (*c)
 			docommand(c);
 	}
 }
 
+#if defined(__minix)
 void
 bootmenu(void)
 {
@@ -196,3 +207,4 @@ editline(char *buf, size_t size, char *input)
 	}
 	/*NOTREACHED*/
 }
+#endif /* defined(__minix) */

@@ -1,11 +1,11 @@
-/*	$NetBSD: cprng.h,v 1.5 2012/04/17 02:50:39 tls Exp $ */
+/*	$NetBSD: cprng.h,v 1.8 2013/07/01 15:22:00 riastradh Exp $ */
 
 /*-
- * Copyright (c) 2011 The NetBSD Foundation, Inc.
+ * Copyright (c) 2011-2013 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Thor Lancelot Simon.
+ * by Thor Lancelot Simon and Taylor R. Campbell.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -28,16 +28,19 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+/*
+ * XXX Don't change this to _SYS_CPRNG_H or anything -- code outside
+ * this file relies on its name...  (I'm looking at you, ipf!)
+ */
 #ifndef _CPRNG_H
 #define _CPRNG_H
 
 #include <sys/types.h>
-#include <sys/fcntl.h>
-#include <lib/libkern/libkern.h>
-#include <sys/rnd.h>
+#include <sys/fcntl.h>		/* XXX users bogusly transitively need this */
+#include <sys/rnd.h>		/* XXX users bogusly transitively need this */
+
 #include <crypto/nist_ctr_drbg/nist_ctr_drbg.h>
-#include <sys/condvar.h>
-#include <sys/select.h>
 
 /*
  * NIST SP800-90 says 2^19 bytes per request for the CTR_DRBG.
@@ -77,75 +80,51 @@ uint32_t cprng_fast32(void);
 uint64_t cprng_fast64(void);
 #endif
 
-typedef struct _cprng_strong {
-	kmutex_t	mtx;
-	kcondvar_t	cv;
-	struct selinfo	selq;
-	NIST_CTR_DRBG	drbg;
-	int		flags;
-	char		name[16];
-	int		reseed_pending;
-	int		entropy_serial;
-	rndsink_t	reseed;
-} cprng_strong_t;
+typedef struct cprng_strong cprng_strong_t;
+
+void	cprng_init(void);
 
 #define CPRNG_INIT_ANY		0x00000001
 #define CPRNG_REKEY_ANY		0x00000002
 #define CPRNG_USE_CV		0x00000004
+#define CPRNG_HARD		0x00000008
+#define CPRNG_FMT	"\177\020\
+b\0INIT_ANY\0\
+b\1REKEY_ANY\0\
+b\2USE_CV\0\
+b\3HARD\0"
 
-cprng_strong_t *cprng_strong_create(const char *const, int, int);
+cprng_strong_t *
+	cprng_strong_create(const char *, int, int);
+void	cprng_strong_destroy(cprng_strong_t *);
+size_t	cprng_strong(cprng_strong_t *, void *, size_t, int);
 
-size_t cprng_strong(cprng_strong_t *const, void *const, size_t, int);
+struct knote;			/* XXX temp, for /dev/random */
+int	cprng_strong_kqfilter(cprng_strong_t *, struct knote *); /* XXX " */
+int	cprng_strong_poll(cprng_strong_t *, int); /* XXX " */
 
-void cprng_strong_destroy(cprng_strong_t *);
-
-extern cprng_strong_t *	kern_cprng;
+extern cprng_strong_t	*kern_cprng;
 
 static inline uint32_t
 cprng_strong32(void)
 {
 	uint32_t r;
 	cprng_strong(kern_cprng, &r, sizeof(r), 0);
-        return r;
+	return r;
 }
 
 static inline uint64_t
 cprng_strong64(void)
 {
-        uint64_t r;
+	uint64_t r;
 	cprng_strong(kern_cprng, &r, sizeof(r), 0);
-        return r;
+	return r;
 }
 
-static inline int
-cprng_strong_ready(cprng_strong_t *c)
-{
-	int ret = 0;
-	
-	mutex_enter(&c->mtx);
-	if (c->drbg.reseed_counter < NIST_CTR_DRBG_RESEED_INTERVAL) {
-		ret = 1;
-	}
-	mutex_exit(&c->mtx);
-	return ret;
-}
-
-static inline void
-cprng_strong_deplete(cprng_strong_t *c)
-{
-	mutex_enter(&c->mtx);
-	c->drbg.reseed_counter = NIST_CTR_DRBG_RESEED_INTERVAL + 1;
-	mutex_exit(&c->mtx);
-}
-
-static inline int
+static inline unsigned int
 cprng_strong_strength(cprng_strong_t *c)
 {
 	return NIST_BLOCK_KEYLEN_BYTES;
 }
 
-void cprng_init(void);
-int cprng_strong_getflags(cprng_strong_t *const);
-void cprng_strong_setflags(cprng_strong_t *const, int);
-
-#endif
+#endif	/* _CPRNG_H */

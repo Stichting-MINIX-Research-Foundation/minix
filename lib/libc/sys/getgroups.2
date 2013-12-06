@@ -1,4 +1,4 @@
-.\"	$NetBSD: getgroups.2,v 1.22 2006/10/13 20:51:28 wiz Exp $
+.\"	$NetBSD: getgroups.2,v 1.23 2013/07/14 14:29:09 njoly Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -54,7 +54,7 @@ indicates the number of entries that may be placed in
 returns the actual number of groups returned in
 .Fa gidset .
 No more than
-.Dv {NGROUPS_MAX}
+.Brq Dv NGROUPS_MAX
 will ever
 be returned.
 If

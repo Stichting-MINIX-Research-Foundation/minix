@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_sigpending.S,v 1.1 2006/03/09 16:20:55 christos Exp $	*/
+/*	$NetBSD: compat_sigpending.S,v 1.2 2013/07/16 23:00:15 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
 #if 0
 	RCSID("from: @(#)sigpending.s	5.2 (Berkeley) 8/6/90")
 #else
-	RCSID("$NetBSD: compat_sigpending.S,v 1.1 2006/03/09 16:20:55 christos Exp $")
+	RCSID("$NetBSD: compat_sigpending.S,v 1.2 2013/07/16 23:00:15 matt Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -47,7 +47,8 @@ WARN_REFERENCES(sigpending, \
     "warning: reference to compatibility sigpending(); include <signal.h> for correct reference")
 
 _SYSCALL(sigpending,compat_13_sigpending13)
-	movl	%sp@(4),%a0
-	movl	%d0,%a0@
+	movl	4(%sp),%a0
+	movl	%d0,(%a0)
 	clrl	%d0
 	rts
+END(sigpending)

@@ -57,15 +57,15 @@ dbopen(const char *fname, int flags, mode_t mode, DBTYPE type,
 {
 
 #define	DB_FLAGS	(DB_LOCK | DB_SHMEM | DB_TXN)
-#ifdef __minix
+#if defined(__minix)
 #define USE_OPEN_FLAGS 							\
 	(O_CREAT | O_EXCL | O_NONBLOCK | O_RDONLY |			\
 	 O_RDWR | O_TRUNC)
-#else /* !__minix */
+#else
 #define	USE_OPEN_FLAGS							\
 	(O_CREAT | O_EXCL | O_EXLOCK | O_NONBLOCK | O_RDONLY |		\
 	 O_RDWR | O_SHLOCK | O_TRUNC)
-#endif /* __minix */
+#endif  /* defined(__minix) */
 
 	if ((flags & ~(USE_OPEN_FLAGS | DB_FLAGS)) == 0)
 		switch (type) {

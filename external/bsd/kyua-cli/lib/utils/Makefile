@@ -6,10 +6,6 @@
 
 LIB=		utils
 
-.if defined(__MINIX)
-WARNS=	# empty
-.endif
-
 WARNS?=		2
 
 SRCS=		datetime.cpp \
@@ -19,6 +15,10 @@ SRCS=		datetime.cpp \
 		sanity.cpp \
 		stream.cpp \
 		units.cpp
+
+.if defined(__MINIX)
+COPTS.memory.cpp+=	-Wno-unused-function
+.endif # defined(__MINIX)
 
 SRCS+=		cmdline/base_command.cpp \
 		cmdline/exceptions.cpp \

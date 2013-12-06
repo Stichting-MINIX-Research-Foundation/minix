@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_ctype.h,v 1.2 2003/03/05 20:18:15 tshiozak Exp $	*/
+/*	$NetBSD: citrus_ctype.h,v 1.3 2013/05/28 16:57:56 joerg Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -95,6 +95,16 @@ _citrus_ctype_mbsrtowcs(_citrus_ctype_t cc, wchar_t *pwcs, const char **s,
 }
 
 static __inline int
+_citrus_ctype_mbsnrtowcs(_citrus_ctype_t cc, wchar_t *pwcs, const char **s,
+			size_t in, size_t n, void *pspriv, size_t *nresult)
+{
+
+	_DIAGASSERT(cc && cc->cc_ops && cc->cc_ops->co_mbsnrtowcs && nresult);
+	return (*cc->cc_ops->co_mbsnrtowcs)(cc, pwcs, s, in, n,
+					   pspriv, nresult);
+}
+
+static __inline int
 _citrus_ctype_mbstowcs(_citrus_ctype_t cc, wchar_t *pwcs, const char *s,
 		       size_t n, size_t *nresult)
 {
@@ -129,6 +139,16 @@ _citrus_ctype_wcsrtombs(_citrus_ctype_t cc, char *s, const wchar_t **ppwcs,
 
 	_DIAGASSERT(cc && cc->cc_ops && cc->cc_ops->co_wcsrtombs && nresult);
 	return (*cc->cc_ops->co_wcsrtombs)(cc->cc_closure, s, ppwcs, n,
+					   pspriv, nresult);
+}
+
+static __inline int
+_citrus_ctype_wcsnrtombs(_citrus_ctype_t cc, char *s, const wchar_t **ppwcs,
+			size_t in, size_t n, void *pspriv, size_t *nresult)
+{
+
+	_DIAGASSERT(cc && cc->cc_ops && cc->cc_ops->co_wcsnrtombs && nresult);
+	return (*cc->cc_ops->co_wcsnrtombs)(cc, s, ppwcs, in, n,
 					   pspriv, nresult);
 }
 

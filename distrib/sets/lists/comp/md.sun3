@@ -1,4 +1,4 @@
-# $NetBSD: md.sun3,v 1.61 2011/07/17 20:54:32 joerg Exp $
+# $NetBSD: md.sun3,v 1.62 2013/01/16 16:01:06 christos Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sun3				comp-c-include
 ./usr/include/sun3/_G_config.h			comp-obsolete		obsolete
@@ -80,5 +80,3 @@
 ./usr/include/sun68k/intr.h			comp-c-include
 ./usr/include/sun68k/mon.h			comp-c-include
 ./usr/include/sun68k/psl.h			comp-c-include
-./usr/libdata/debug/sbin/edlabel.debug		comp-sysutil-debug	obsolete
-./usr/libdata/debug/usr/sbin/eeprom.debug	comp-sysutil-debug	debug

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2011/11/10 09:28:25 yamt Exp $
+#	$NetBSD: Makefile,v 1.18 2013/08/22 00:17:48 matt Exp $
 
 LIBISPRIVATE=	yes
 
@@ -97,10 +97,10 @@ gtype-desc.c: gtype-desc.h
 gtype-desc.h: gengtype gtyp-input.list.tmp
 	${_MKTARGET_CREATE}
 	rm -f auto-host.h
-	ln -s ${.CURDIR}/../gcc/arch/${MACHINE_ARCH}/auto-host.h .
-	if [ -f ${.CURDIR}/../gcc/arch/${MACHINE_ARCH}/sysroot-suffix.h ]; then \
+	ln -s ${.CURDIR}/../gcc/arch/${GCC_MACHINE_ARCH}/auto-host.h .
+	if [ -f ${.CURDIR}/../gcc/arch/${GCC_MACHINE_ARCH}/sysroot-suffix.h ]; then \
 	  rm -f sysroot-suffix.h; \
-	  ln -s ${.CURDIR}/../gcc/arch/${MACHINE_ARCH}/sysroot-suffix.h ; \
+	  ln -s ${.CURDIR}/../gcc/arch/${GCC_MACHINE_ARCH}/sysroot-suffix.h ; \
 	fi
 	./gengtype ${DIST}/gcc gtyp-input.list.tmp
 # gengtype is the real need for options.h
@@ -112,19 +112,19 @@ gengtype: gengtype.lo gengtype-lex.lo gengtype-parse.lo build-errors.lo
 gtyp-gen.h: Makefile
 	${_MKTARGET_CREATE}
 	(\
+	unset empty							; \
 	echo "static const char *srcdir = \"$(G_GTFILES_SRCDIR)\";"	; \
 	echo "static const char *lang_files[] = {"			; \
-	for f in $(G_GTFILES_FILES_FILES); do echo "\"$$f\", "; done	; \
+	for f in $$empty $(G_GTFILES_FILES_FILES); do echo "\"$$f\", "; done ; \
 	echo "NULL };"							; \
 	echo "static const char *langs_for_lang_files[] = {"		; \
-	for f in $(G_GTFILES_FILES_LANGS); do echo "\"$$f\", "; done 	; \
+	for f in $$empty $(G_GTFILES_FILES_LANGS); do echo "\"$$f\", "; done ; \
 	echo "NULL };"							; \
 	echo "static const char *all_files[] = {"			; \
-	for f in $(G_GTFILES); do echo "\"$$f\", "; done		; \
+	for f in $$empty $(G_GTFILES); do echo "\"$$f\", "; done	; \
 	echo " NULL };"							; \
 	echo "static const char *lang_dir_names[] = {"			; \
-	echo "\"c\", "							; \
-	for f in $(G_GTFILES_LANG_DIR_NAMES); do echo "\"$$f\", "; done	; \
+	for f in c $(G_GTFILES_LANG_DIR_NAMES); do echo "\"$$f\", "; done ; \
 	echo "NULL };"							; \
 	) >${.TARGET}
 
@@ -181,8 +181,8 @@ options.o: options.c coretypes.h opts.h intl.h
 #options.o: options.c ${G_CONFIG_H} ${G_SYSTEM_H} coretypes.h ${G_TM_H} opts.h intl.h
 
 # Yuck, we have to run configure to generate this one...
-CLEANFILES+=	auto-host.h
-auto-host.h: Makefile
+CLEANFILES+=	auto-build.h
+auto-build.h: Makefile
 	${_MKTARGET_CREATE}
 	rm -rf .ab && \
 	mkdir .ab && \
@@ -194,7 +194,8 @@ auto-host.h: Makefile
 		${HOST_SH} ${GNUHOSTDIST}/gcc/configure \
 			--build=`${HOST_SH} ${GNUHOSTDIST}/config.guess` \
 			--host=`${HOST_SH} ${GNUHOSTDIST}/config.guess` \
-			--target=${MACHINE_GNU_PLATFORM}) && \
+			--target=${MACHINE_GNU_PLATFORM} && \
+		mv auto-host.h ../auto-build.h) && \
 	rm -rf .ab
 
 #
@@ -306,7 +307,7 @@ vec.lo: gtype-desc.h
 gtype-desc.d gtype-desc.o: insn-constants.h
 insn-emit.d insn-emit.o: tm-constrs.h
 
-.if ${MACHINE_ARCH} == "alpha"
+.if ${GCC_MACHINE_ARCH} == "alpha"
 alpha.d alpha.o: tm-constrs.h tm_p.h
 .endif
 
@@ -314,13 +315,13 @@ alpha.d alpha.o: tm-constrs.h tm_p.h
 arm.d arm.o: insn-constants.h tm_p.h
 .endif
 
-.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
+.if ${GCC_MACHINE_ARCH} == "i386" || ${GCC_MACHINE_ARCH} == "x86_64"
 i386.d i386.o: tm-constrs.h
 .endif
 
 CFLAGS+=	-Wno-stack-protector
 
-.if ${MACHINE_ARCH} == "m68000"
+.if ${GCC_MACHINE_ARCH} == "m68000" || ${GCC_MACHINE_ARCH} == "m68k"
 COPTS.lambda-code.c=		-O0
 COPTS.tree-loop-linear.c=	-O0
 .endif

@@ -1,0 +1,8 @@
+#	$NetBSD: mtree.cgdroot,v 1.1 2013/07/15 00:25:38 khorben Exp $
+
+/set				type=dir uname=root gname=wheel mode=0755
+
+.
+./altroot
+./etc
+./etc/cgd			mode=0700

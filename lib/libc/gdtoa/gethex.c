@@ -1,4 +1,4 @@
-/* $NetBSD: gethex.c,v 1.5 2011/03/20 23:15:35 christos Exp $ */
+/* $NetBSD: gethex.c,v 1.6 2013/04/19 10:41:53 joerg Exp $ */
 
 /****************************************************************
 
@@ -38,12 +38,7 @@ THIS SOFTWARE.
 #endif
 
  int
-#ifdef KR_headers
-gethex(sp, fpi, expt, bp, sign)
-	CONST char **sp; CONST FPI *fpi; Long *expt; Bigint **bp; int sign;
-#else
-gethex( CONST char **sp, CONST FPI *fpi, Long *expt, Bigint **bp, int sign)
-#endif
+gethex( CONST char **sp, CONST FPI *fpi, Long *expt, Bigint **bp, int sign, locale_t loc)
 {
 	Bigint *b;
 	CONST char *decpt, *s, *s0, *s1;
@@ -52,20 +47,7 @@ gethex( CONST char **sp, CONST FPI *fpi, Long *expt, Bigint **bp, int sign)
 	Long e, e1;
 #ifdef USE_LOCALE
 	int i;
-#ifdef NO_LOCALE_CACHE
-	const char *decimalpoint = localeconv()->decimal_point;
-#else
-	const unsigned char *decimalpoint;
-	static char *decimalpoint_cache;
-	if (!(s0 = decimalpoint_cache)) {
-		s0 = localeconv()->decimal_point;
-		if ((decimalpoint_cache = MALLOC(strlen(s0) + 1)) != NULL) {
-			strcpy(decimalpoint_cache, s0);
-			s0 = decimalpoint_cache;
-			}
-		}
-	decimalpoint = __UNCONST(s0);
-#endif
+	const char *decimalpoint = localeconv_l(loc)->decimal_point;
 #endif
 
 	if (!hexdig[(unsigned char)'0'])

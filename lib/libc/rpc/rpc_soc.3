@@ -1,5 +1,5 @@
 .\"	@(#)rpc.3n	2.4 88/08/08 4.0 RPCSRC; from 1.19 88/06/24 SMI
-.\"	$NetBSD: rpc_soc.3,v 1.13 2009/01/11 02:46:29 christos Exp $
+.\"	$NetBSD: rpc_soc.3,v 1.14 2013/03/04 17:29:03 christos Exp $
 .\" Converted to mdoc by Thomas Klausner <wiz@NetBSD.org>
 .\"
 .Dd December 12, 2008
@@ -221,7 +221,7 @@
 .Fn xdr_rejected_reply "XDR *xdrs" "struct rejected_reply *rr"
 .Ft int
 .Fn xdr_replymsg "XDR *xdrs" "struct rpc_msg *rmsg"
-.Ft void
+.Ft bool_t
 .Fn xprt_register "SVCXPRT *xprt"
 .Ft void
 .Fn xprt_unregister "SVCXPRT *xprt"

@@ -1,4 +1,4 @@
-/*	$NetBSD: getnameinfo.c,v 1.53 2012/09/26 23:13:00 christos Exp $	*/
+/*	$NetBSD: getnameinfo.c,v 1.54 2013/08/16 15:27:12 christos Exp $	*/
 /*	$KAME: getnameinfo.c,v 1.45 2000/09/25 22:43:56 itojun Exp $	*/
 
 /*
@@ -47,7 +47,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getnameinfo.c,v 1.53 2012/09/26 23:13:00 christos Exp $");
+__RCSID("$NetBSD: getnameinfo.c,v 1.54 2013/08/16 15:27:12 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -55,12 +55,12 @@ __RCSID("$NetBSD: getnameinfo.c,v 1.53 2012/09/26 23:13:00 christos Exp $");
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <net/if.h>
-#ifndef __minix
+#if !defined(__minix)
 #include <net/if_dl.h>
 #include <net/if_ieee1394.h>
 #include <net/if_types.h>
 #include <netatalk/at.h>
-#endif /* !__minix */
+#endif /* !defined(__minix) */
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <arpa/nameser.h>
@@ -72,6 +72,7 @@ __RCSID("$NetBSD: getnameinfo.c,v 1.53 2012/09/26 23:13:00 christos Exp $");
 #include <string.h>
 
 #include "servent.h"
+#include "hostent.h"
 
 #ifdef __weak_alias
 __weak_alias(getnameinfo,_getnameinfo)
@@ -105,7 +106,7 @@ static int ip6_parsenumeric(const struct sockaddr *, const char *, char *,
 				 socklen_t, int);
 static int ip6_sa2str(const struct sockaddr_in6 *, char *, size_t, int);
 #endif
-#ifndef __minix
+#if !defined(__minix)
 static int getnameinfo_atalk(const struct sockaddr *, socklen_t, char *,
     socklen_t, char *, socklen_t, int);
 static int getnameinfo_local(const struct sockaddr *, socklen_t, char *,
@@ -114,7 +115,7 @@ static int getnameinfo_local(const struct sockaddr *, socklen_t, char *,
 static int getnameinfo_link(const struct sockaddr *, socklen_t, char *,
     socklen_t, char *, socklen_t, int);
 static int hexname(const uint8_t *, size_t, char *, socklen_t);
-#endif /* __minix */
+#endif /* !defined(__minix) */
 
 /*
  * Top-level getnameinfo() code.  Look at the address family, and pick an
@@ -128,29 +129,29 @@ getnameinfo(const struct sockaddr *sa, socklen_t salen,
 {
 
 	switch (sa->sa_family) {
-#ifndef __minix
+#if !defined(__minix)
 	case AF_APPLETALK:
 		return getnameinfo_atalk(sa, salen, host, hostlen,
 		    serv, servlen, flags);
-#endif /* !__minix */
+#endif /* !defined(__minix) */
 	case AF_INET:
 	case AF_INET6:
 		return getnameinfo_inet(sa, salen, host, hostlen,
 		    serv, servlen, flags);
-#ifndef __minix
+#if !defined(__minix)
 	case AF_LINK:
 		return getnameinfo_link(sa, salen, host, hostlen,
 		    serv, servlen, flags);
 	case AF_LOCAL:
 		return getnameinfo_local(sa, salen, host, hostlen,
 		    serv, servlen, flags);
-#endif /* !__minix */
+#endif /* !defined(__minix) */
 	default:
 		return EAI_FAMILY;
 	}
 }
 
-#ifndef __minix
+#if !defined(__minix)
 /*
  * getnameinfo_atalk():
  * Format an AppleTalk address into a printable format.
@@ -233,7 +234,7 @@ getnameinfo_local(const struct sockaddr *sa, socklen_t salen,
 
 	return 0;
 }
-#endif /* !__minix */
+#endif /* !defined(__minix) */
 
 /*
  * getnameinfo_inet():
@@ -385,7 +386,11 @@ getnameinfo_inet(const struct sockaddr *sa, socklen_t salen,
 			break;
 		}
 	} else {
-		hp = gethostbyaddr(addr, afd->a_addrlen, afd->a_af);
+		struct hostent hent;
+		char hbuf[4096];
+		int he;
+		hp = gethostbyaddr_r(addr, afd->a_addrlen, afd->a_af, &hent,
+		    hbuf, sizeof(hbuf), &he);
 
 		if (hp) {
 #if 0
@@ -516,7 +521,7 @@ ip6_sa2str(const struct sockaddr_in6 *sa6, char *buf, size_t bufsiz, int flags)
 #endif /* INET6 */
 
 
-#ifndef __minix
+#if !defined(__minix)
 /*
  * getnameinfo_link():
  * Format a link-layer address into a printable format, paying attention to
@@ -615,4 +620,4 @@ hexname(const uint8_t *cp, size_t len, char *host, socklen_t hostlen)
 	}
 	return 0;
 }
-#endif /* !__minix */
+#endif /* !defined(__minix) */

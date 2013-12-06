@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs_cc.3,v 1.12.4.1 2009/02/24 03:45:56 snj Exp $
+.\"	$NetBSD: puffs_cc.3,v 1.14 2009/04/11 16:48:53 wiz Exp $
 .\"
 .\" Copyright (c) 2007, 2008 Antti Kantee.  All rights reserved.
 .\"
@@ -83,7 +83,8 @@ own internal bookkeeping.
 This cookie should be hooked to the
 .Va pcc
 so that the correct continuation can be continued when the event it
-was waiting for triggers.  Alternatively, the
+was waiting for triggers.
+Alternatively, the
 .Xr puffs_framebuf 3
 framework and
 .Fn puffs_mainloop

@@ -1,6 +1,6 @@
-/* $NetBSD: quota2_subr.c,v 1.4 2011/06/07 14:56:13 bouyer Exp $ */
+/* $NetBSD: quota2_subr.c,v 1.5 2012/02/05 14:19:04 dholland Exp $ */
 /*-
-  * Copyright (c) 2010 Manuel Bouyer
+  * Copyright (c) 2010, 2011 Manuel Bouyer
   * All rights reserved.
   *
   * Redistribution and use in source and binary forms, with or without
@@ -26,7 +26,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: quota2_subr.c,v 1.4 2011/06/07 14:56:13 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: quota2_subr.c,v 1.5 2012/02/05 14:19:04 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -106,3 +106,22 @@ int needswap)
 	    needswap);
 	d->q2e_uid = ufs_rw32(s->q2e_uid, needswap);
 }
+
+int
+quota_check_limit(uint64_t cur, uint64_t change, uint64_t soft, uint64_t hard,
+    time_t expire, time_t now)
+{ 
+	if (cur + change > hard) {
+		if (cur <= soft)
+			return (QL_F_CROSS | QL_S_DENY_HARD);
+		return QL_S_DENY_HARD;
+	} else if (cur + change > soft) {
+		if (cur <= soft)
+			return (QL_F_CROSS | QL_S_ALLOW_SOFT);
+		if (now > expire) {
+			return QL_S_DENY_GRACE;
+		}
+		return QL_S_ALLOW_SOFT;
+	}
+	return QL_S_ALLOW_OK;
+} 

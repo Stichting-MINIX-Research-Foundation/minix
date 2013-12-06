@@ -1,4 +1,4 @@
-# $NetBSD: md.macppc,v 1.31 2012/04/06 22:46:15 christos Exp $
+# $NetBSD: md.macppc,v 1.32 2013/08/11 22:29:02 joerg Exp $
 ./usr/mdec/bootxx				base-sysutil-bin
 ./usr/mdec/installboot				base-obsolete		obsolete
 ./usr/mdec/mbr					base-obsolete		obsolete
@@ -7,6 +7,6 @@
 ./usr/mdec/ofwboot.xcf				base-sysutil-bin
 ./usr/sbin/apm					base-sysutil-bin
 ./usr/sbin/apmd					base-sysutil-bin
-./usr/sbin/zzz					base-sysutil-bin
 ./usr/sbin/eeprom				base-sysutil-bin
 ./usr/sbin/ofctl				base-sysutil-bin
+./usr/sbin/zzz					base-sysutil-bin

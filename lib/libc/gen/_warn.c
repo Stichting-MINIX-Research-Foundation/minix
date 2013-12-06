@@ -24,11 +24,7 @@ warn(const char *fmt, ...)
 	va_list ap;
 
 	va_start(ap, fmt);
-#ifdef __minix
-	_vwarn(fmt, ap);
-#else
 	_vwarn(eval, fmt, ap);
-#endif
 	va_end(ap);
 }
 #endif

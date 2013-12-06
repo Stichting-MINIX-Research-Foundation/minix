@@ -1,0 +1,18 @@
+# $NetBSD: Makefile.list,v 1.6 2010/01/06 14:11:53 phx Exp $
+
+#
+# list of M68060 architecture dependent files for libm.
+#
+# Created by a script. Do not edit manually!
+#
+
+ARCH_SRCS =  e_acosf.S  e_acos.S  e_asinf.S  e_asin.S \
+	  s_atanf.S  s_atan.S  e_atanhf.S  e_atanh.S \
+	  s_cosf.S  s_cos.S  e_coshf.S  e_cosh.S \
+	  e_expf.S  e_exp.S  s_expm1f.S  s_expm1.S \
+	  e_log10f.S  e_log10.S  s_logbf.S  s_logb.S \
+	  e_logf.S  e_log.S  s_log1pf.S  s_log1p.S \
+	  s_sinf.S  s_sin.S  e_sinhf.S  e_sinh.S \
+	  s_tanf.S  k_tanf.S  s_tan.S  k_tan.S  s_tanhf.S  s_tanh.S \
+	  e_sqrtf.S  e_sqrt.S
+ARCH_ADDS = fplsp_wrap.S

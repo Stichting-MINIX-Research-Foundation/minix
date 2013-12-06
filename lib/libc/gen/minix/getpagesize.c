@@ -5,7 +5,9 @@ getpagesize.c
 #include <sys/types.h>
 #include "namespace.h"
 
+#include <machine/param.h>
 #include <machine/vmparam.h>
+
 #include <unistd.h>
 
 #ifdef __weak_alias

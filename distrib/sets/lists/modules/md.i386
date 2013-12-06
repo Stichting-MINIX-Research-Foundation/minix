@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.40 2012/08/06 10:44:08 martin Exp $
+# $NetBSD: md.i386,v 1.43 2013/11/17 18:58:28 alnsn Exp $
 ./@MODULEDIR@/acpiacad				base-kernel-modules	kmod
 ./@MODULEDIR@/acpiacad/acpiacad.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/acpibat				base-kernel-modules	kmod
@@ -41,6 +41,8 @@
 ./@MODULEDIR@/auvitek/auvitek.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/azalia				base-kernel-modules	kmod
 ./@MODULEDIR@/azalia/azalia.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/bpfjit				base-kernel-modules	kmod,sljit
+./@MODULEDIR@/bpfjit/bpfjit.kmod		base-kernel-modules	kmod,sljit
 ./@MODULEDIR@/compat_freebsd			base-kernel-modules	kmod
 ./@MODULEDIR@/compat_freebsd/compat_freebsd.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/compat_ibcs2			base-kernel-modules	kmod
@@ -125,6 +127,8 @@
 ./@MODULEDIR@/savagedrm/savagedrm.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/sisdrm				base-kernel-modules	kmod
 ./@MODULEDIR@/sisdrm/sisdrm.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/sljit				base-kernel-modules	kmod,sljit
+./@MODULEDIR@/sljit/sljit.kmod			base-kernel-modules	kmod,sljit
 ./@MODULEDIR@/syscallemu			base-kernel-modules	kmod
 ./@MODULEDIR@/syscallemu/syscallemu.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/tdfxdrm				base-kernel-modules	kmod

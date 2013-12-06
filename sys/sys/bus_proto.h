@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_proto.h,v 1.6 2011/08/17 10:46:38 martin Exp $	*/
+/*	$NetBSD: bus_proto.h,v 1.7 2013/02/04 13:18:35 macallan Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001, 2007 The NetBSD Foundation, Inc.
@@ -319,6 +319,8 @@ bool	bus_space_handle_is_equal(bus_space_tag_t, bus_space_handle_t,
 #define	BUS_DMA_READ		0x100	/* mapping is device -> memory only */
 #define	BUS_DMA_WRITE		0x200	/* mapping is memory -> device only */
 #define	BUS_DMA_NOCACHE		0x400	/* hint: map non-cached memory */
+#define	BUS_DMA_PREFETCHABLE	0x800	/* hint: map non-cached but allow 
+					 * things like write combining */
 
 /* Operations performed by bus_dmamap_sync(). */
 #define	BUS_DMASYNC_PREREAD	0x01	/* pre-read synchronization */

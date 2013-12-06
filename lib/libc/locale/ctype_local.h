@@ -1,4 +1,4 @@
-/* $NetBSD: ctype_local.h,v 1.4 2010/06/13 04:14:57 tnozaki Exp $ */
+/* $NetBSD: ctype_local.h,v 1.5 2013/04/13 10:21:20 joerg Exp $ */
 
 /*-
  * Copyright (c) 2010 Citrus Project,
@@ -33,8 +33,22 @@
 #define _CTYPE_NUM_CHARS	(1 << CHAR_BIT)
 #define _CTYPE_CACHE_SIZE	(1 << 8)
 
-extern const unsigned char _C_ctype_[];
-extern const short _C_toupper_[];
-extern const short _C_tolower_[];
+#define _COMPAT_U	0x01
+#define _COMPAT_L	0x02
+#define _COMPAT_N	0x04
+#define _COMPAT_S	0x08
+#define _COMPAT_P	0x10
+#define _COMPAT_C	0x20
+#define _COMPAT_X	0x40
+#define _COMPAT_B	0x80
+
+extern const unsigned short _C_ctype_tab_[];
+extern const short _C_toupper_tab_[];
+extern const short _C_tolower_tab_[];
+
+#ifdef __BUILD_LEGACY
+extern const unsigned char	*_ctype_;
+extern const unsigned char	_C_compat_bsdctype[];
+#endif
 
 #endif /*_CTYPE_LOCAL_H_*/

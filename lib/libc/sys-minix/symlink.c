@@ -2,10 +2,6 @@
 #include <lib.h>
 #include "namespace.h"
 
-#ifdef __weak_alias
-__weak_alias(symlink, _symlink)
-#endif
-
 #include <string.h>
 #include <unistd.h>
 

@@ -1,6 +1,6 @@
 
 #------------------------------------------------------------------------------
-# $File: database,v 1.28 2011/09/16 19:40:40 christos Exp $
+# $File: database,v 1.33 2013/03/09 22:36:00 christos Exp $
 # database:  file(1) magic for various databases
 #
 # extracted from header/code files by Graeme Wilford (eep2gw@ee.surrey.ac.uk)
@@ -114,94 +114,246 @@
 #>>>0x04	  byte		8	incrementing secondary index .XGn file 
 
 ## XBase database files
-#0      byte       0x02	
-#>8     leshort	  >0
-#>>12   leshort    0	FoxBase 
-#!:mime	application/x-dbf
-#>>>0x04	lelong		0		(no records)
-#>>>0x04	lelong		>0		(%ld records)
+# updated by Joerg Jenderek at Feb 2013
+# http://www.dbase.com/Knowledgebase/INT/db7_file_fmt.htm
+# http://www.clicketyclick.dk/databases/xbase/format/dbf.html
+# http://home.f1.htw-berlin.de/scheibl/db/intern/dBase.htm
+# inspect VVYYMMDD , where 1<= MM <= 12 and 1<= DD <= 31
+0	ubelong&0x0000FFFF		<0x00000C20	
+# skip Infocom game Z-machine
+>2		ubyte			>0		
+# skip Androids *.xml
+>>3		ubyte			>0		
+>>>3		ubyte			<32		
+# 1 < version VV
+>>>>0		ubyte			>1		
+# skip HELP.CA3 by test for reserved byte ( NULL )
+>>>>>27		ubyte			0		
+# reserved bytes not always 0 ; also found 0x3901 (T4.DBF) ,0x7101 (T5.DBF,T6.DBF)
+#>>>>>30		ubeshort     		x		30NULL?%x
+# possible production flag,tag numbers(<=0x30),tag length(<=0x20), reserved (NULL) 
+>>>>>>24	ubelong&0xffFFFFff	>0x01302000	
+# .DBF or .MDX
+>>>>>>24	ubelong&0xffFFFFff	<0x01302001	
+# for Xbase Database file (*.DBF) reserved (NULL) for multi-user
+>>>>>>>24	ubelong&0xffFFFFff	=0		
+# test for 2 reserved NULL bytes,transaction and encryption byte flag
+>>>>>>>>12	ubelong&0xFFFFfEfE	0		
+# test for MDX flag
+>>>>>>>>>28	ubyte			x		
+>>>>>>>>>28	ubyte&0xf8		0		
+# header size >= 32
+>>>>>>>>>>8	uleshort		>31		
+# skip PIC15736.PCX by test for language driver name or field name
+>>>>>>>>>>>32	ubyte			>0		
+!:mime	application/x-dbf
+#!:mime	application/x-dbf; charset=unknown-8bit ??
+#!:mime	application/x-dbase
+>>>>>>>>>>>>0	use			xbase-type
+# database file
+>>>>>>>>>>>>0	ubyte			x		\b DBF
+>>>>>>>>>>>>4	lelong			0		\b, no records
+>>>>>>>>>>>>4	lelong			>0		\b, %ld record
+# plural s appended
+>>>>>>>>>>>>>4	lelong			>1		\bs
+# http://www.clicketyclick.dk/databases/xbase/format/dbf_check.html#CHECK_DBF
+# 1 <= record size <= 4000 (dBase 3,4) or 32 * KB (=0x8000)
+>>>>>>>>>>>>10	uleshort		x		* %d
+# file size = records * record size + header size
+>>>>>>>>>>>>1	ubyte			x		\b, update-date
+>>>>>>>>>>>>1	use			xbase-date
+# http://msdn.microsoft.com/de-de/library/cc483186(v=vs.71).aspx
+#>>>>>>>>>>>>29	ubyte			=0		\b, codepage ID=0x%x
+# 2~cp850 , 3~cp1252 , 0x1b~?? ; what code page is 0x1b ?
+>>>>>>>>>>>>29	ubyte			>0		\b, codepage ID=0x%x
+#>>>>>>>>>>>>28	ubyte&0x01		0		\b, no index file
+>>>>>>>>>>>>28	ubyte&0x01		1		\b, with index file .MDX
+>>>>>>>>>>>>28	ubyte&0x02		2		\b, with memo .FPT
+>>>>>>>>>>>>28	ubyte&0x04		4		\b, DataBaseContainer
+# 1st record offset + 1 = header size
+>>>>>>>>>>>>8	uleshort		>0		
+>>>>>>>>>>>>(8.s+1)	ubyte		>0		
+>>>>>>>>>>>>>8		uleshort	>0		\b, at offset %d
+>>>>>>>>>>>>>(8.s+1)	ubyte		>0		
+>>>>>>>>>>>>>>&-1	string		>\0		1st record "%s"
+# for multiple index files (*.MDX) Production flag,tag numbers(<=0x30),tag length(<=0x20), reserverd (NULL) 
+>>>>>>>24	ubelong&0x0133f7ff	>0		
+# test for reserved NULL byte
+>>>>>>>>47	ubyte			x		
+# test for valid TAG key format (0x10 or 0)
+>>>>>>>>>559	ubyte&0xeF		0		
+# test MM <= 12
+>>>>>>>>>45	ubeshort		<0x0C20		
+>>>>>>>>>>45	ubyte			>0		
+>>>>>>>>>>>46	ubyte			<32		
+>>>>>>>>>>>>46	ubyte			>0		
+#!:mime	application/x-mdx
+>>>>>>>>>>>>>0	use			xbase-type
+>>>>>>>>>>>>>0	ubyte			x		\b MDX
+>>>>>>>>>>>>>1	ubyte			x		\b, creation-date
+>>>>>>>>>>>>>1	use			xbase-date
+>>>>>>>>>>>>>44	ubyte			x		\b, update-date
+>>>>>>>>>>>>>44	use			xbase-date
+# No.of tags in use (1,2,5,12)
+>>>>>>>>>>>>>28	uleshort		x		\b, %d
+# No. of entries in tag (0x30)
+>>>>>>>>>>>>>25	ubyte			x		\b/%d tags
+#  Length of tag
+>>>>>>>>>>>>>26	ubyte			x		* %d
+# 1st tag name_
+>>>>>>>>>>>>>548	string		x		\b, 1st tag "%.11s"
+# 2nd tag name
+#>>>>>>>>>>>>(26.b+548)	string		x		\b, 2nd tag "%.11s"
 #
-#0      byte       0x03	
-#!:mime	application/x-dbf
-#>8     leshort	  >0
-#>>12   leshort    0	FoxBase+, FoxPro, dBaseIII+, dBaseIV, no memo 
-#>>>0x04	lelong		0		(no records)
-#>>>0x04	lelong		>0		(%ld records)
-#
-#0      byte       0x04	
-#!:mime	application/x-dbf
-#>8     leshort	  >0
-#>>12   leshort    0	dBASE IV no memo file 
-#>>>0x04	lelong		0		(no records)
-#>>>0x04	lelong		>0		(%ld records)
-#
-#0      byte       0x05	
-#!:mime	application/x-dbf
-#>8     leshort	  >0
-#>>12   leshort    0	dBASE V no memo file 
-#>>>0x04	lelong		0		(no records)
-#>>>0x04	lelong		>0		(%ld records)
-#
-#0      byte       0x30
-#!:mime	application/x-dbf
-#>8     leshort	  >0
-#>>12   leshort    0	Visual FoxPro 
-#>>>0x04	lelong		0		(no records)
-#>>>0x04	lelong		>0		(%ld records)
-#
-#0      byte       0x43
-#!:mime	application/x-dbf
-#>8     leshort	  >0
-#>>12   leshort    0	FlagShip with memo var size 
-#>>>0x04	lelong		0		(no records)
-#>>>0x04	lelong		>0		(%ld records)
-#
-#0      byte       0x7b
-#!:mime	application/x-dbf
-#>8     leshort	  >0
-#>>12   leshort    0	dBASEIV with memo 
-#>>>0x04	lelong		0		(no records)
-#>>>0x04	lelong		>0		(%ld records)
-#
-#0      byte       0x83	
-#!:mime	application/x-dbf
-#>8     leshort	  >0
-#>>12   leshort    0	FoxBase+, dBaseIII+ with memo 
-#>>>0x04	lelong		0		(no records)
-#>>>0x04	lelong		>0		(%ld records)
-#
-#0      byte       0x8b
-#!:mime	application/x-dbf
-#>8     leshort	  >0
-#>>12   leshort    0	dBaseIV with memo 
-#>>>0x04	lelong		0		(no records)
-#>>>0x04	lelong		>0		(%ld records)
-#
-#0      byte       0x8e	
-#!:mime	application/x-dbf
-#>8     leshort	  >0
-#>>12   leshort    0	dBaseIV with SQL Table 
-#>>>0x04	lelong		0		(no records)
-#>>>0x04	lelong		>0		(%ld records)
-#
-#0      byte       0xb3
-#!:mime	application/x-dbf
-#>8     leshort	  >0
-#>>12   leshort    0	FlagShip with .dbt memo 
-#>>>0x04	lelong		0		(no records)
-#>>>0x04	lelong		>0		(%ld records)
-#
-#0      byte       0xf5
-#!:mime	application/x-dbf
-#>8     leshort	  >0
-#>>12   leshort    0	FoxPro with memo 
-#>>>0x04	lelong		0		(no records)
-#>>>0x04	lelong		>0		(%ld records)
-#
-#0	leshort		0x0006		DBase 3 index file
+#		Print the xBase names of different version variants 
+0	name				xbase-type
+>0	ubyte		<2		
+# 1 < version
+>0	ubyte		>1		
+>>0	ubyte		0x02		FoxBase
+# FoxBase+/dBaseIII+, no memo
+>>0	ubyte		0x03		FoxBase+/dBase III
+# dBASE IV no memo file
+>>0	ubyte		0x04		dBase IV
+# dBASE V no memo file
+>>0	ubyte		0x05		dBase V
+>>0	ubyte		0x30		Visual FoxPro
+>>0	ubyte		0x31		Visual FoxPro, autoincrement
+# Visual FoxPro, with field type Varchar or Varbinary
+>>0	ubyte		0x32		Visual FoxPro, with field type Varchar
+# dBASE IV SQL, no memo;dbv memo var size (Flagship)
+>>0	ubyte		0x43		dBase IV, with SQL table
+# http://msdn.microsoft.com/en-US/library/st4a0s68(v=vs.80).aspx
+#>>0	ubyte		0x62		dBase IV, with SQL table
+# dBASE IV, with memo!!
+>>0	ubyte		0x7b		dBase IV, with memo
+# http://msdn.microsoft.com/en-US/library/st4a0s68(v=vs.80).aspx
+#>>0	ubyte		0x82		dBase IV, with SQL system
+# FoxBase+/dBaseIII+ with memo .DBT!
+>>0	ubyte		0x83		FoxBase+/dBase III, with memo .DBT
+# VISUAL OBJECTS (first 1.0 versions) for the Dbase III files (NTX clipper driver); memo file
+>>0	ubyte		0x87		VISUAL OBJECTS, with memo file
+# http://msdn.microsoft.com/en-US/library/st4a0s68(v=vs.80).aspx
+#>>0	ubyte		0x8A		FoxBase+/dBase III, with memo .DBT
+# dBASE IV with memo!
+>>0	ubyte		0x8B		dBase IV, with memo .DBT
+# dBase IV with SQL Table,no memo?
+>>0	ubyte		0x8E		dBase IV, with SQL table
+# .dbv and .dbt memo (Flagship)?
+>>0	ubyte		0xB3		Flagship
+# http://msdn.microsoft.com/en-US/library/st4a0s68(v=vs.80).aspx
+#>>0	ubyte		0xCA		dBase IV with memo .DBT
+# dBASE IV with SQL table, with memo .DBT
+>>0	ubyte		0xCB		dBase IV with SQL table, with memo .DBT
+# HiPer-Six format;Clipper SIX, with SMT memo file		
+>>0	ubyte		0xE5		Clipper SIX with memo
+# http://msdn.microsoft.com/en-US/library/st4a0s68(v=vs.80).aspx
+#>>0	ubyte		0xF4		dBase IV, with SQL table, with memo
+>>0	ubyte		0xF5		FoxPro with memo
+# http://msdn.microsoft.com/en-US/library/st4a0s68(v=vs.80).aspx
+#>>0	ubyte		0xFA		FoxPro 2.x, with memo
+# unkown version (should not happen)
+>>0	default		x		xBase
+>>>0	ubyte		x		(0x%x)
+# flags in version byte
+# DBT flag (with dBASE III memo .DBT)!!
+# >>0	ubyte&0x80	>0		DBT_FLAG=%x
+# memo flag ??
+# >>0	ubyte&0x08	>0		MEMO_FLAG=%x
+# SQL flag ??
+# >>0	ubyte&0x70	>0		SQL_FLAG=%x
+#		test and print the date of xBase .DBF .MDX
+0	name				xbase-date
+# inspect YYMMDD , where 1<= MM <= 12 and 1<= DD <= 31
+>0	ubelong		x		
+>1	ubyte		<13		
+>>1	ubyte		>0		
+>>>2	ubyte		>0		
+>>>>2	ubyte		<32		
+>>>>>0	ubyte		x		
+# YY is interpreted as 20YY or 19YY
+>>>>>>0	ubyte		<100		\b %.2d
+# YY is interpreted 1900+YY; TODO: display yy or 20yy instead 1YY
+>>>>>>0	ubyte		>99		\b %d
+>>>>>1	ubyte		x		\b-%d
+>>>>>2	ubyte		x		\b-%d
+
+#	dBase memo files .DBT or .FPT
+# http://msdn.microsoft.com/en-us/library/8599s21w(v=vs.80).aspx
+16		ubyte		<4		
+>16		ubyte		!2		
+>>16		ubyte		!1		
+# next free block index is positive
+>>>0		ulelong		>0		
+# skip many JPG. ZIP, BZ2 by test for reserved bytes NULL , 0|2 , 0|1 , low byte of block size
+>>>>17		ubelong&0xFFfdFE00	0x00000000	
+# skip many RAR by test for low byte 0 ,high byte 0|2|even of block size, 0|a|e|d7 , 0|64h
+>>>>>20		ubelong&0xFF01209B	0x00000000	
+# dBASE III
+>>>>>>16	ubyte		3		
+# dBASE III DBT
+>>>>>>>0	use		xbase-memo-print
+# dBASE IV DBT , FoxPro FPT or many PNG , ZIP , DBF garbage
+>>>>>>16	ubyte		0		
+# dBASE IV DBT with DBF name or DBF garbage
+>>>>>>>8	ubelong		>0x40000000	
+# skip DBF and catch dBASE IV DBT with DBF name and with non big index of next free block
+>>>>>>>>0	ulelong		<0x01010002	
+>>>>>>>>>0	use		xbase-memo-print
+>>>>>>>8	ubelong		0		
+# skip MM*DD*.bin by test for for reserved NULL byte
+>>>>>>>>508	ubelong		0		
+>>>>>>>>>0	use		xbase-memo-print
+# garbage PCX , ZIP , JAR , XPI 
+>>>>>>>8	default		x		
+
+#		Print the information of dBase DBT or FoxPro FPT memo files 
+0	name				xbase-memo-print
+>0	ubyte			x		
+# test version
+# memo file
+>>16	ubyte			3		dBase III DBT
+>>16	ubyte			0		
+>>>512	ubelong			<0x00000003	FoxPro FPT
+# Size of blocks for FoxPro
+>>>>6	ubeshort		x		\b, blocks size %lu
+# Number of next available block for appending data for FoxPro
+>>>>0	ubelong			=0		\b, next free block index %lu
+>>>>0	ubelong			!0		\b, next free block index %lu
+>>>512	default			x		dBase IV DBT
+# DBF file name without extention 
+>>>>8	string			>\0		\b of %-.8s.DBF
+# size of blocks  ; not reliable 0x2020204C
+#>>>>4	ulelong			=0		\b, blocks size %lu
+>>>>4	ulelong			!0		\b, blocks size %lu
+# Block length found 0 , 512
+#>>>>20	uleshort		=0		\b, block length %u
+>>>>20	uleshort		!0		\b, block length %u
+# Number of next available block for appending data
+>>>>0	ulelong			=0		\b, next free block index %lu
+>>>>0	ulelong			!0		\b, next free block index %lu
+>>512	ubelong			x		
+>>>512	ubelong			=0xFFFF0800	
+>>>>520	string			>\0		\b, 1st used item "%s"
+# FoxPro
+>>>512	ubelong			<3		
+# FoxPro memo
+>>>>512	ubelong			=1		
+>>>>520	string			>\0		\b, 1st used item "%s"
+>>>512	default			x		
+# may be deleted memo field
+>>>>512	string			>\0		\b, 1st item "%s"
+
+# TODO: 
+# DBASE index file *.NDX
+# DBASE Compound Index file *.CDX
+# dBASE IV Printer Driver *.PRF
+## End of XBase database stuff
 
 # MS Access database
 4	string	Standard\ Jet\ DB	Microsoft Access Database
+!:mime	application/x-msaccess
+4	string	Standard\ ACE\ DB	Microsoft Access Database
 !:mime	application/x-msaccess
 
 # TDB database from Samba et al - Martin Pool <mbp@samba.org>
@@ -269,14 +421,6 @@
 >48	lequad		x			\b, rnum=%lld
 >56	lequad		x			\b, fsiz=%lld
 
-# G-IR database made by gobject-introspect toolset,
-# http://live.gnome.org/GObjectIntrospection
-0	string		GOBJ\nMETADATA\r\n\032	G-IR binary database
->16	byte		x			\b, v%d
->17	byte		x			\b.%d
->20	leshort		x			\b, %d entries
->22	leshort		x			\b/%d local
-
 # Type:	QDBM Quick Database Manager
 # From:	Benoit Sibaud <bsibaud@april.org>
 0	string		\\[depot\\]\n\f		Quick Database Manager, little endian
@@ -288,8 +432,11 @@
 0	string		ToKyO\ CaBiNeT\n	TokyoCabinet database
 >14	string		x			(version %s)
 
-# From:  Stéphane Blondon http://www.yaal.fr
+# From:  Stephane Blondon http://www.yaal.fr
 # Database file for Zope (done by FileStorage)
 0	string		FS21	Zope Object Database File Storage (data)
 # Cache file for the database of Zope (done by ClientStorage)
 0	string		ZEC3	Zope Object Database Client Cache File (data)
+
+# IDA (Interactive Disassembler) database
+0	string		IDA1	IDA (Interactive Disassembler) database

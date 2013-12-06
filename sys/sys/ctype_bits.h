@@ -1,4 +1,4 @@
-/* $NetBSD: ctype_bits.h,v 1.2 2010/12/14 02:28:57 joerg Exp $ */
+/* $NetBSD: ctype_bits.h,v 1.5 2013/04/30 00:42:31 joerg Exp $ */
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -40,17 +40,29 @@
 #ifndef _SYS_CTYPE_BITS_H_
 #define _SYS_CTYPE_BITS_H_
 
-#define	_CTYPE_U	0x01
-#define	_CTYPE_L	0x02
-#define	_CTYPE_N	0x04
-#define	_CTYPE_S	0x08
-#define	_CTYPE_P	0x10
-#define	_CTYPE_C	0x20
-#define	_CTYPE_X	0x40
-#define	_CTYPE_B	0x80
+#define	_CTYPE_A	0x0001	/* Alpha     */
+#define	_CTYPE_C	0x0002	/* Control   */
+#define	_CTYPE_D	0x0004	/* Digit     */
+#define	_CTYPE_G	0x0008	/* Graph     */
+#define	_CTYPE_L	0x0010	/* Lower     */
+#define	_CTYPE_P	0x0020	/* Punct     */
+#define	_CTYPE_S	0x0040	/* Space     */
+#define	_CTYPE_U	0x0080	/* Upper     */
+#define	_CTYPE_X	0x0100	/* X digit   */
+#define	_CTYPE_BL	0x0200	/* Blank     */
+#define	_CTYPE_R	0x0400	/* Print     */
+#define	_CTYPE_I	0x0800	/* Ideogram  */
+#define	_CTYPE_T	0x1000	/* Special   */
+#define	_CTYPE_Q	0x2000	/* Phonogram */
 
-extern const unsigned char	*_ctype_;
+__BEGIN_DECLS
+extern const unsigned short	*_ctype_tab_;
 extern const short	*_tolower_tab_;
 extern const short	*_toupper_tab_;
+
+extern const unsigned short _C_ctype_tab_[];
+extern const short _C_toupper_tab_[];
+extern const short _C_tolower_tab_[];
+__END_DECLS
 
 #endif /* !_SYS_CTYPE_BITS_H_ */

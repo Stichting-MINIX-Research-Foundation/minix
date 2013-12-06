@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.7 2013/01/16 16:01:08 christos Exp $
+# $NetBSD: shl.mi,v 1.8 2013/08/11 22:29:03 joerg Exp $
 #
 ./usr/tests/lib/csu/h_initfini3_dso.so		tests-lib-tests		atf
 ./usr/tests/lib/csu/h_initfini3_dso.so.1	tests-lib-tests		atf

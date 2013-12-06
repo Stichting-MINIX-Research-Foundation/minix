@@ -1,4 +1,4 @@
-/*	$NetBSD: cerror.S,v 1.4 2008/04/28 20:22:56 martin Exp $	*/
+/*	$NetBSD: cerror.S,v 1.5 2013/09/12 15:36:15 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@ LEAF_ENTRY(__cerror)
 	ldw	HPPA_FRAME_CRP(%sp), %rp
 	stw	%t1, 0(%ret0)
 #else
-#ifdef PIC
+#ifdef __PIC__
 	addil	LT%errno, %r19
 	ldw	RT%errno(%r1), %r1
 	stw	%t1, 0(%r1)

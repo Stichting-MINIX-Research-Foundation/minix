@@ -1,4 +1,4 @@
-/*	$NetBSD: rec_utils.c,v 1.12 2008/09/10 17:52:36 joerg Exp $	*/
+/*	$NetBSD: rec_utils.c,v 1.13 2013/12/01 00:22:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rec_utils.c,v 1.12 2008/09/10 17:52:36 joerg Exp $");
+__RCSID("$NetBSD: rec_utils.c,v 1.13 2013/12/01 00:22:48 christos Exp $");
 
 #include <sys/param.h>
 
@@ -70,17 +70,17 @@ __rec_ret(BTREE *t, EPG *e, recno_t nrec, DBT *key, DBT *data)
 		goto dataonly;
 
 	/* We have to copy the key, it's not on the page. */
-	if (sizeof(recno_t) > t->bt_rkey.size) {
-		p = (void *)(t->bt_rkey.data == NULL ?
-		    malloc(sizeof(recno_t)) :
-		    realloc(t->bt_rkey.data, sizeof(recno_t)));
+	if (sizeof(nrec) > t->bt_rkey.size) {
+		p = t->bt_rkey.data == NULL ?
+		    malloc(sizeof(nrec)) :
+		    realloc(t->bt_rkey.data, sizeof(nrec));
 		if (p == NULL)
 			return (RET_ERROR);
 		t->bt_rkey.data = p;
-		t->bt_rkey.size = sizeof(recno_t);
+		t->bt_rkey.size = sizeof(nrec);
 	}
-	memmove(t->bt_rkey.data, &nrec, sizeof(recno_t));
-	key->size = sizeof(recno_t);
+	memmove(t->bt_rkey.data, &nrec, sizeof(nrec));
+	key->size = sizeof(nrec);
 	key->data = t->bt_rkey.data;
 
 dataonly:
@@ -101,9 +101,9 @@ dataonly:
 	} else if (F_ISSET(t, B_DB_LOCK)) {
 		/* Use +1 in case the first record retrieved is 0 length. */
 		if (rl->dsize + 1 > t->bt_rdata.size) {
-			p = (void *)(t->bt_rdata.data == NULL ?
+			p = t->bt_rdata.data == NULL ?
 			    malloc(rl->dsize + 1) :
-			    realloc(t->bt_rdata.data, rl->dsize + 1));
+			    realloc(t->bt_rdata.data, rl->dsize + 1);
 			if (p == NULL)
 				return (RET_ERROR);
 			t->bt_rdata.data = p;

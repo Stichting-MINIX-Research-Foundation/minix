@@ -5,7 +5,7 @@ exec >/dev/log
 exec 2>/dev/log
 exec </dev/null
 
-FSCK=/bin/fsck.mfs
+FSCK=/bin/fsck_mfs
 ACPI=/usr/sbin/acpi
 
 if [ X`/bin/sysenv arch` = Xi386 ]

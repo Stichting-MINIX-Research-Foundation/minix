@@ -1,4 +1,4 @@
-/*	$NetBSD: tar.c,v 1.70 2012/08/09 08:09:22 christos Exp $	*/
+/*	$NetBSD: tar.c,v 1.71 2013/01/24 17:43:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tar.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: tar.c,v 1.70 2012/08/09 08:09:22 christos Exp $");
+__RCSID("$NetBSD: tar.c,v 1.71 2013/01/24 17:43:44 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -948,6 +948,13 @@ ustar_rd(ARCHD *arcn, char *buf)
 			    hd->typeflag == LONGLINKTYPE ? "Link" : "File");
 		}
 		break;
+	case FILEXTYPE:
+	case GLOBXTYPE:
+		    tty_warn(0, "%s extended headers posix ustar archive."
+		    " Extracting as plain files. Following files might be"
+		    " in the wrong directory or have wrong attributes.",
+			hd->typeflag == FILEXTYPE ? "File" : "Global");
+		    /*FALLTHROUGH*/
 	case CONTTYPE:
 	case AREGTYPE:
 	case REGTYPE:

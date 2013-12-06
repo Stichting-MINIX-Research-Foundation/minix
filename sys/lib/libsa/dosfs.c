@@ -1,4 +1,4 @@
-/*	$NetBSD: dosfs.c,v 1.18 2011/12/25 06:09:08 tsutsui Exp $	*/
+/*	$NetBSD: dosfs.c,v 1.19 2013/10/20 17:15:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Robert Nordier
@@ -571,7 +571,7 @@ lookup(DOS_FS *fs, u_int clus, const char *name, const struct direntry **dep)
 							for (x = 0, i = 0;
 							     i < 11; i++)
 								x = ((((x & 1) << 7) | (x >> 1)) +
-								    dir[ent].de.deName[i]) & 0xff;
+								    msdos_dirchar(&dir[ent].de,i)) & 0xff;
 							ok = chk == x &&
 							    !strcasecmp(name, (const char *)lfn);
 						}

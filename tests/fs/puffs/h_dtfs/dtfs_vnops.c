@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs_vnops.c,v 1.9 2012/01/31 18:56:07 njoly Exp $	*/
+/*	$NetBSD: dtfs_vnops.c,v 1.10 2013/10/19 17:45:00 christos Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -430,7 +430,6 @@ dtfs_node_mknod(struct puffs_usermount *pu, void *opc,
 {
 	struct puffs_node *pn_parent = opc;
 	struct puffs_node *pn_new;
-	struct dtfs_file *df;
 
 	if (!(va->va_type == VBLK || va->va_type == VCHR
 	    || va->va_type == VFIFO))
@@ -439,7 +438,6 @@ dtfs_node_mknod(struct puffs_usermount *pu, void *opc,
 	pn_new = dtfs_genfile(pn_parent, pcn, va->va_type);
 	puffs_setvattr(&pn_new->pn_va, va);
 
-	df = DTFS_PTOF(pn_new);
 	puffs_newinfo_setcookie(pni, pn_new);
 
 	return 0;

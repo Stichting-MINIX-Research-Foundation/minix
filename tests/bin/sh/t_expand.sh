@@ -1,4 +1,4 @@
-# $NetBSD: t_expand.sh,v 1.1 2012/03/17 16:33:11 jruoho Exp $
+# $NetBSD: t_expand.sh,v 1.2 2013/10/06 21:05:50 ast Exp $
 #
 # Copyright (c) 2007, 2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -37,7 +37,7 @@ delim_argv() {
 		else
 			str="${str} >$1<"
 		fi
-                shift
+		shift
 	done
 	echo ${str}
 }
@@ -119,10 +119,24 @@ arithmetic_body() {
 	atf_check_equal '9223372036854775807' '$(((1 << 63) - 1))'
 }
 
+atf_test_case iteration_on_null_parameter
+iteration_on_null_parameter_head() {
+	atf_set "descr" "Check iteration of \$@ in for loop when set to null;" \
+	                "the error \"sh: @: parameter not set\" is incorrect." \
+	                "PR bin/48202."
+}
+iteration_on_null_parameter_body() {
+	s1=`/bin/sh -uc 'N=; set -- ${N};   for X; do echo "[$X]"; done' 2>&1`
+	s2=`/bin/sh -uc 'N=; set -- ${N:-}; for X; do echo "[$X]"; done' 2>&1`
+	atf_check_equal ''   '$s1'
+	atf_check_equal '[]' '$s2'
+}
+
 atf_init_test_cases() {
 	atf_add_test_case dollar_at
 	atf_add_test_case dollar_at_with_text
 	atf_add_test_case strip
 	atf_add_test_case varpattern_backslashes
 	atf_add_test_case arithmetic
+	atf_add_test_case iteration_on_null_parameter
 }

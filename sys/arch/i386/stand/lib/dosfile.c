@@ -1,4 +1,4 @@
-/*	$NetBSD: dosfile.c,v 1.15 2011/06/16 13:27:59 joerg Exp $	 */
+/*	$NetBSD: dosfile.c,v 1.16 2013/10/20 21:06:37 christos Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -178,9 +178,6 @@ dos_write(struct open_file *f, void *start, size_t size, size_t *resid)
 __compactcall int
 dos_stat(struct open_file *f, struct stat *sb)
 {
-	struct dosfile *df;
-	df = (struct dosfile *) f->f_fsdata;
-
 	sb->st_mode = 0444;
 	sb->st_nlink = 1;
 	sb->st_uid = 0;

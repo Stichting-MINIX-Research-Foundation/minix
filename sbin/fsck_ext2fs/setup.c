@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.28 2011/09/16 16:13:18 plunky Exp $	*/
+/*	$NetBSD: setup.c,v 1.31 2013/06/23 02:06:04 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -58,7 +58,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.5 (Berkeley) 11/23/94";
 #else
-__RCSID("$NetBSD: setup.c,v 1.28 2011/09/16 16:13:18 plunky Exp $");
+__RCSID("$NetBSD: setup.c,v 1.31 2013/06/23 02:06:04 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -94,11 +94,7 @@ setup(const char *dev)
 	long cg, asked, i;
 	long bmapsize;
 	struct disklabel *lp;
-#ifndef __minix
 	off_t sizepb;
-#else
-	u64_t sizepb;
-#endif
 	struct stat statb;
 	struct m_ext2fs proto;
 	int doskipclean;
@@ -111,15 +107,13 @@ setup(const char *dev)
 		printf("Can't stat %s: %s\n", dev, strerror(errno));
 		return 0;
 	}
-
-#ifndef __minix
+#if !defined(__minix)
 	if (!S_ISCHR(statb.st_mode)) {
 		pfatal("%s is not a character device", dev);
 		if (reply("CONTINUE") == 0)
 			return 0;
 	}
-#endif
-
+#endif /* !defined(__minix) */
 	if ((fsreadfd = open(dev, O_RDONLY)) < 0) {
 		printf("Can't open %s: %s\n", dev, strerror(errno));
 		return 0;
@@ -155,7 +149,7 @@ setup(const char *dev)
 		if (reply("LOOK FOR ALTERNATE SUPERBLOCKS") == 0)
 			return 0;
 		for (cg = 1; cg < proto.e2fs_ncg; cg++) {
-			bflag = fsbtodb(&proto,
+			bflag = EXT2_FSBTODB(&proto,
 			    cg * proto.e2fs.e2fs_bpg +
 			    proto.e2fs.e2fs_first_dblock);
 			if (readsb(0) != 0)
@@ -188,9 +182,9 @@ setup(const char *dev)
 	maxfsblock = sblock.e2fs.e2fs_bcount;
 	maxino = sblock.e2fs_ncg * sblock.e2fs.e2fs_ipg;
 	sizepb = sblock.e2fs_bsize;
-	maxfilesize = sblock.e2fs_bsize * NDADDR - 1;
-	for (i = 0; i < NIADDR; i++) {
-		sizepb *= NINDIR(&sblock);
+	maxfilesize = sblock.e2fs_bsize * EXT2FS_NDADDR - 1;
+	for (i = 0; i < EXT2FS_NIADDR; i++) {
+		sizepb *= EXT2_NINDIR(&sblock);
 		maxfilesize += sizepb;
 	}
 	/*
@@ -228,7 +222,7 @@ setup(const char *dev)
 		if (bread(fsreadfd,
 		    (char *)&sblock.e2fs_gd[i * sblock.e2fs_bsize /
 		    sizeof(struct ext2_gd)],
-		    fsbtodb(&sblock, ((sblock.e2fs_bsize > 1024) ? 0 : 1) +
+		    EXT2_FSBTODB(&sblock, ((sblock.e2fs_bsize > 1024) ? 0 : 1) +
 		    i + 1),
 		    sblock.e2fs_bsize) != 0 && !asked) {
 			pfatal("BAD SUMMARY INFORMATION");
@@ -343,7 +337,7 @@ readsb(int listerr)
 	 * so we can tell if this is an alternate later.
 	 */
 	super *= dev_bsize;
-	dev_bsize = sblock.e2fs_bsize / fsbtodb(&sblock, 1);
+	dev_bsize = sblock.e2fs_bsize / EXT2_FSBTODB(&sblock, 1);
 	sblk.b_bno = super / dev_bsize;
 
 	if (sblock.e2fs_ncg == 1) {
@@ -477,7 +471,7 @@ badsb(int listerr, const char *s)
 int
 calcsb(const char *dev, int devfd, struct m_ext2fs *fs)
 {
-#ifdef __minix
+#if defined(__minix)
 	errexit("%s: calcsb: can't read disk label under minix", dev);
 #else
 	struct disklabel *lp;
@@ -518,7 +512,7 @@ calcsb(const char *dev, int devfd, struct m_ext2fs *fs)
 	    fs->e2fs_bsize / sizeof(struct ext2_gd));
 
 	return 1;
-#endif
+#endif /* defined(__minix) */
 }
 
 static struct disklabel *
@@ -526,7 +520,7 @@ getdisklabel(const char *s, int fd)
 {
 	static struct disklabel lab;
 
-#ifdef __minix
+#if defined(__minix)
 	if (s == NULL)
 		return NULL;
 	errexit("%s: can't read disk label under minix", s);
@@ -537,7 +531,7 @@ getdisklabel(const char *s, int fd)
 		pwarn("ioctl (GCINFO): %s\n", strerror(errno));
 		errexit("%s: can't read disk label", s);
 	}
-#endif
+#endif /* defined(__minix) */
 	return &lab;
 }
 

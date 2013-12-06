@@ -1,4 +1,4 @@
-/*	$NetBSD: langinfo.h,v 1.9 2005/02/03 04:39:32 perry Exp $	*/
+/*	$NetBSD: langinfo.h,v 1.10 2013/08/19 08:03:33 joerg Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@NetBSD.org>
@@ -87,5 +87,15 @@
 __BEGIN_DECLS
 char *nl_langinfo(nl_item);
 __END_DECLS
+
+#if defined(_NETBSD_SOURCE)
+#  ifndef __LOCALE_T_DECLARED
+typedef struct _locale		*locale_t;
+#  define __LOCALE_T_DECLARED
+#  endif
+__BEGIN_DECLS
+char *nl_langinfo_l(nl_item, locale_t);
+__END_DECLS
+#endif
 
 #endif	/* _LANGINFO_H_ */

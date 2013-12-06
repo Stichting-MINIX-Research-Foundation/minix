@@ -6,8 +6,7 @@ TESTSDIR=	${TESTSBASE}/lib/libc/locale
 
 TESTS_C+=	t_mbrtowc
 TESTS_C+=	t_mbstowcs
-# LSC: Unsupported on MINIX
-#TESTS_C+=	t_mbsnrtowcs
+TESTS_C+=	t_mbsnrtowcs
 TESTS_C+=	t_mbtowc
 TESTS_C+=	t_wcscspn
 TESTS_C+=	t_wcspbrk

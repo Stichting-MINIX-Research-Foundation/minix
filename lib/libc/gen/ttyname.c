@@ -56,7 +56,7 @@ __weak_alias(ttyname,_ttyname)
 __weak_alias(ttyname_r,_ttyname_r)
 #endif
 
-#ifdef __minix
+#if defined(__minix)
 /* LSC: We do not have devname functionality on Minix, so re-import for now
  * old, manual way of doing it.*/
 #include <dirent.h>
@@ -104,20 +104,20 @@ oldttyname(const struct stat *sb, char *buf, size_t len)
 	return -1;
 }
 
-#endif
+#endif /* defined(__minix) */
 
 int
 ttyname_r(int fd, char *buf, size_t len)
 {
 	struct stat sb;
 	struct termios ttyb;
-#ifndef __minix
+#if !defined(__minix)
 	struct ptmget ptm;
-#endif
+#endif /* !defined(__minix) */
 
 	_DIAGASSERT(fd != -1);
 
-#ifndef __minix
+#if !defined(__minix)
 	/* If it is a pty, deal with it quickly */
 	if (ioctl(fd, TIOCPTSNAME, &ptm) != -1) {
 		if (strlcpy(buf, ptm.sn, len) >= len) {
@@ -125,7 +125,7 @@ ttyname_r(int fd, char *buf, size_t len)
 		}
 		return 0;
 	}
-#endif
+#endif /* !defined(__minix) */
 
 	/* Must be a terminal. */
 	if (tcgetattr(fd, &ttyb) == -1)
@@ -137,7 +137,7 @@ ttyname_r(int fd, char *buf, size_t len)
 	if (strlcpy(buf, _PATH_DEV, len) >= len)
 		return ERANGE;
 
-#ifdef __minix
+#if defined(__minix)
 	if (oldttyname(&sb, buf, len) == -1)
 		return errno;
 	return 0;
@@ -145,9 +145,8 @@ ttyname_r(int fd, char *buf, size_t len)
 	buf += strlen(_PATH_DEV);
 	len -= strlen(_PATH_DEV);
 	return devname_r(sb.st_rdev, sb.st_mode & S_IFMT, buf, len);
-#endif
+#endif /* defined(__minix) */
 }
-
 
 char *
 ttyname(int fd)

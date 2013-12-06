@@ -1,4 +1,4 @@
-/*	$NetBSD: sbrk.S,v 1.18 2010/12/12 09:03:06 tsutsui Exp $	*/
+/*	$NetBSD: sbrk.S,v 1.19 2013/06/26 08:38:34 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 	RCSID("from: @(#)sbrk.s	8.1 (Berkeley) 6/4/93")
 #else
-	RCSID("$NetBSD: sbrk.S,v 1.18 2010/12/12 09:03:06 tsutsui Exp $")
+	RCSID("$NetBSD: sbrk.S,v 1.19 2013/06/26 08:38:34 matt Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -57,11 +57,11 @@ _C_LABEL(__curbrk):
 LEAF(_sbrk)
 	PIC_PROLOGUE(_sbrk)
 	PTR_LA		t0, _C_LABEL(__curbrk)
-	PTR_L		v1, 0(t0)
-	PTR_ADDU	a0, a0, v1	# compute current break
+	PTR_L		t1, 0(t0)
+	PTR_ADDU	a0, a0, t1	# compute current break
 	SYSTRAP(break)
 	bne		a3, zero, 1f
-	move		v0, v1		# return old val of curbrk from above
+	move		v0, t1		# return old val of curbrk from above
 	PTR_LA		t0, _C_LABEL(__curbrk)
 	PTR_S		a0, 0(t0)	# save current val of curbrk from above
 	PIC_RETURN()

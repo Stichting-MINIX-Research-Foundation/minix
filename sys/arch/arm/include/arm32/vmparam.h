@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.27 2012/08/16 07:25:37 matt Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.29 2013/02/27 17:50:07 matt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -55,25 +55,25 @@
  * Note that MAXTSIZ can't be larger than 32M, otherwise the compiler
  * would have to be changed to not generate "bl" instructions.
  */
-#define	MAXTSIZ		(16*1024*1024)		/* max text size */
+#define	MAXTSIZ		(64*1024*1024)		/* max text size */
 #ifndef	DFLDSIZ
 #define	DFLDSIZ		(128*1024*1024)		/* initial data size limit */
 #endif
 #ifndef	MAXDSIZ
-#define	MAXDSIZ		(512*1024*1024)		/* max data size */
+#define	MAXDSIZ		(1024*1024*1024)	/* max data size */
 #endif
 #ifndef	DFLSSIZ
 #define	DFLSSIZ		(2*1024*1024)		/* initial stack size limit */
 #endif
 #ifndef	MAXSSIZ
-#define	MAXSSIZ		(8*1024*1024)		/* max stack size */
+#define	MAXSSIZ		(32*1024*1024)		/* max stack size */
 #endif
 
 /*
  * While the ARM architecture defines Section mappings, large pages,
  * and small pages, the standard page size is (and will always be) 4K.
  */
-#define	PAGE_SHIFT	12
+#define	PAGE_SHIFT	PGSHIFT
 #define	PAGE_SIZE	(1 << PAGE_SHIFT)
 #define	PAGE_MASK	(PAGE_SIZE - 1)
 

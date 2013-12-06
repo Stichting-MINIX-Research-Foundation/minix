@@ -1,4 +1,4 @@
-/* $NetBSD: _wcstol.h,v 1.4 2012/06/25 22:32:44 abs Exp $ */
+/* $NetBSD: _wcstol.h,v 1.6 2013/05/17 12:55:57 joerg Exp $ */
 
 /*-
  * Copyright (c) 1990, 1993
@@ -44,8 +44,14 @@
  *      __INT_MAX : upper limit of the return type
  */
 
-__INT
-_FUNCNAME(const wchar_t *nptr, wchar_t **endptr, int base)
+#include <locale.h>
+#include "setlocale_local.h"
+#define INT_FUNCNAME_(pre, name, post)	pre ## name ## post
+#define INT_FUNCNAME(pre, name, post)	INT_FUNCNAME_(pre, name, post)
+
+static __INT
+INT_FUNCNAME(_int_, _FUNCNAME, _l)(const wchar_t *nptr, wchar_t **endptr,
+				   int base, locale_t loc)
 {
 	const wchar_t *s;
 	__INT acc, cutoff;
@@ -74,7 +80,7 @@ _FUNCNAME(const wchar_t *nptr, wchar_t **endptr, int base)
 	s = nptr;
 	do {
 		wc = (wchar_t) *s++;
-	} while (iswspace(wc));
+	} while (iswspace_l(wc, loc));
 	if (wc == L'-') {
 		neg = 1;
 		wc = *s++;
@@ -138,4 +144,18 @@ _FUNCNAME(const wchar_t *nptr, wchar_t **endptr, int base)
 	if (endptr != 0)
 		*endptr = __UNCONST(any ? s - 1 : nptr);
 	return (acc);
+}
+
+__INT
+_FUNCNAME(const wchar_t *nptr, wchar_t **endptr, int base)
+{
+	return INT_FUNCNAME(_int_, _FUNCNAME, _l)(nptr, endptr, base,
+						  _current_locale());
+}
+
+__INT
+INT_FUNCNAME(, _FUNCNAME, _l)(const wchar_t *nptr, wchar_t **endptr,
+			      int base, locale_t loc)
+{
+	return INT_FUNCNAME(_int_, _FUNCNAME, _l)(nptr, endptr, base, loc);
 }

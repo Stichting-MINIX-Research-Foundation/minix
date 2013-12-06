@@ -1,4 +1,4 @@
-/* $NetBSD: dirhash.h,v 1.5 2009/09/27 21:50:48 reinoud Exp $ */
+/* $NetBSD: dirhash.h,v 1.6 2013/07/07 19:31:26 reinoud Exp $ */
 
 /*
  * Copyright (c) 2008 Reinoud Zandijk
@@ -52,6 +52,7 @@ struct dirhash {
 	uint32_t		 flags;
 	uint32_t		 size;			/* in bytes */
 	uint32_t		 refcnt;
+	uint32_t		 num_files;
 	LIST_HEAD(, dirhash_entry) entries[DIRHASH_HASHSIZE];
 	LIST_HEAD(, dirhash_entry) free_entries;
 	TAILQ_ENTRY(dirhash) next;
@@ -79,5 +80,6 @@ int	dirhash_lookup(struct dirhash *, const char *, int,
 	    struct dirhash_entry **);
 int	dirhash_lookup_freed(struct dirhash *, uint32_t,
 	    struct dirhash_entry **);
+bool	dirhash_dir_isempty(struct dirhash *dirh);
 
 #endif /* _SYS_DIRHASH_H_ */

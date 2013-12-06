@@ -1,3 +1,6 @@
+NOGCCERROR=yes
+NOCLANGERROR=yes
+
 LIB = netsock
 
 CPPFLAGS += -I${.CURDIR}/include/ -D_SYSTEM

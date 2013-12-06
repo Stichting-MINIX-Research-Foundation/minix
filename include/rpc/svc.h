@@ -1,4 +1,4 @@
-/*	$NetBSD: svc.h,v 1.24 2011/08/30 17:06:20 plunky Exp $	*/
+/*	$NetBSD: svc.h,v 1.25 2013/03/04 17:29:03 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -221,7 +221,7 @@ __END_DECLS
  *	SVCXPRT *xprt;
  */
 __BEGIN_DECLS
-extern void	xprt_register	(SVCXPRT *);
+extern bool_t	xprt_register	(SVCXPRT *);
 __END_DECLS
 
 /*

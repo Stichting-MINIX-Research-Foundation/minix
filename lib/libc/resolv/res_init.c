@@ -88,9 +88,9 @@ __RCSID("$NetBSD: res_init.c,v 1.26 2012/09/09 18:04:26 christos Exp $");
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/time.h>
-#ifndef __minix
+#if !defined(__minix)
 #include <sys/event.h>
-#endif /* !__minix */
+#endif /* !defined(__minix) */
 
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -350,9 +350,9 @@ __res_vinit(res_state statp, int preinit) {
 	nserv = 0;
 	if ((fp = fopen(_PATH_RESCONF, "re")) != NULL) {
 	    struct stat st;
-#ifndef __minix
+#if !defined(__minix)
 	    struct kevent kc;
-#endif /* !__minix */
+#endif /* !defined(__minix) */
 
 	    /* read the config file */
 	    while (fgets(buf, (int)sizeof(buf), fp) != NULL) {
@@ -506,15 +506,15 @@ __res_vinit(res_state statp, int preinit) {
 	    if (fstat(statp->_u._ext.ext->resfd, &st) != -1)
 		    __res_conf_time = statp->_u._ext.ext->res_conf_time =
 			st.st_mtimespec;
-#ifndef __minix
+#if !defined(__minix)
 	    statp->_u._ext.ext->kq = kqueue1(O_CLOEXEC);
 	    EV_SET(&kc, statp->_u._ext.ext->resfd, EVFILT_VNODE,
 		EV_ADD|EV_ENABLE|EV_CLEAR, NOTE_DELETE|NOTE_WRITE| NOTE_EXTEND|
 		NOTE_ATTRIB|NOTE_LINK|NOTE_RENAME|NOTE_REVOKE, 0, 0);
 	    (void)kevent(statp->_u._ext.ext->kq, &kc, 1, NULL, 0, &ts);
-#else /* __minix */
+#else
 	statp->_u._ext.ext->kq = -1;
-#endif /* !__minix */
+#endif /* !defined(__minix) */
 	} else {
 	    statp->_u._ext.ext->kq = -1;
 	    statp->_u._ext.ext->resfd = -1;
@@ -571,12 +571,12 @@ __res_vinit(res_state statp, int preinit) {
 int
 res_check(res_state statp, struct timespec *mtime)
 {
-#ifdef __minix
+#if defined(__minix)
 	/*
 	 * XXX: No update on change.
 	 */
 	return 0;
-#else /* !__minix */
+#else
 	/*
 	 * If the times are equal, then we check if there
 	 * was a kevent related to resolv.conf and reload.
@@ -605,7 +605,7 @@ out:
 	if (mtime)
 		*mtime = __res_conf_time;
 	return 1;
-#endif /* !__minix */
+#endif /* defined(__minix) */
 }
 
 static void

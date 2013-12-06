@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_inc.S,v 1.4 2008/05/25 15:56:11 chs Exp $	*/
+/*	$NetBSD: atomic_inc.S,v 1.6 2013/07/16 23:24:18 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -34,9 +34,10 @@
 	.text
 
 ENTRY(_atomic_inc_32)
-	movl	%sp@(4), %a0
-	addql	#1, %a0@
+	movl	4(%sp), %a0
+	addql	#1, (%a0)
 	rts
+END(_atomic_inc_32)
 ATOMIC_OP_ALIAS(atomic_inc_32,_atomic_inc_32)
 ATOMIC_OP_ALIAS(atomic_inc_uint,_atomic_inc_32)
 STRONG_ALIAS(_atomic_inc_uint,_atomic_inc_32)
@@ -46,14 +47,15 @@ ATOMIC_OP_ALIAS(atomic_inc_ptr,_atomic_inc_32)
 STRONG_ALIAS(_atomic_inc_ptr,_atomic_inc_32)
 
 ENTRY(_atomic_inc_32_nv)
-	movl	%sp@(4), %a0
-1:	movl	%a0@, %d0
+	movl	4(%sp), %a0
+1:	movl	(%a0), %d0
 	movl	%d0, %d1
 	addql	#1, %d0
-	casl	%d1, %d0, %a0@
+	casl	%d1, %d0, (%a0)
 	bne	1b
 	movl	%d0, %a0	/* pointers return also in %a0 */
 	rts
+END(_atomic_inc_32_nv)
 ATOMIC_OP_ALIAS(atomic_inc_32_nv,_atomic_inc_32_nv)
 ATOMIC_OP_ALIAS(atomic_inc_uint_nv,_atomic_inc_32_nv)
 STRONG_ALIAS(_atomic_inc_uint_nv,_atomic_inc_32_nv)

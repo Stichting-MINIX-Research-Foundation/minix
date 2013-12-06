@@ -1,9 +1,8 @@
-#	$NetBSD: Makefile,v 1.7 2007/05/28 12:06:24 tls Exp $
+#	$NetBSD: Makefile,v 1.8 2013/08/11 06:47:38 dholland Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
 USE_FORT?=	yes	# cryptographic software
 
-WARNS=	3
 PROG=	bdes
 
 LDADD+=	-lcrypt

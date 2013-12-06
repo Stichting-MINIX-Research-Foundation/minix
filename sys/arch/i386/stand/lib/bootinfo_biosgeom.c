@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo_biosgeom.c,v 1.21 2010/12/25 01:19:33 jakllsch Exp $	*/
+/*	$NetBSD: bootinfo_biosgeom.c,v 1.22 2013/05/16 19:06:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -169,8 +169,8 @@ bi_getbiosgeom(void)
 		for (j = 0, cksum = 0; j < BIOSDISK_DEFAULT_SECSIZE; j++)
 			cksum += buf[j];
 		bibg->disk[nvalid].cksum = cksum;
-		memcpy(bibg->disk[nvalid].dosparts, &buf[MBR_PART_OFFSET],
-		       sizeof(bibg->disk[nvalid].dosparts));
+		memcpy(bibg->disk[nvalid].mbrparts, &buf[MBR_PART_OFFSET],
+		       sizeof(bibg->disk[nvalid].mbrparts));
 		nvalid++;
 	}
 

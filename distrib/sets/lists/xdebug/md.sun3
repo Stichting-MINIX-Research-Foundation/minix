@@ -1,0 +1,6 @@
+# $NetBSD: md.sun3,v 1.1 2013/01/16 21:11:19 christos Exp $
+./usr/libdata/debug/usr/X11R6/bin/Xsun.debug		-unknown-	debug
+./usr/libdata/debug/usr/X11R6/bin/XsunMono.debug	-unknown-	debug
+./usr/libdata/debug/usr/X11R6/bin/Xvfb.debug		-unknown-	debug
+./usr/libdata/debug/usr/X11R6/bin/constype.debug	-unknown-	debug
+./usr/libdata/debug/usr/X11R6/bin/kbd_mode.debug	-unknown-	debug

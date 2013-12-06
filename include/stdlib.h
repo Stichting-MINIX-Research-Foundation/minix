@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.100 2012/06/21 21:13:29 christos Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.106 2013/04/26 18:07:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -65,7 +65,7 @@ typedef struct {
 
 #if !defined(_ANSI_SOURCE) && \
     (defined(_ISOC99_SOURCE) || (__STDC_VERSION__ - 0) >= 199901L || \
-     defined(_NETBSD_SOURCE))
+     (__cplusplus - 0) >= 201103L || defined(_NETBSD_SOURCE))
 typedef struct {
 	/* LONGLONG */
 	long long int quot;	/* quotient */
@@ -207,7 +207,8 @@ char	*ptsname(int);
  * ISO C99
  */
 #if defined(_ISOC99_SOURCE) || (__STDC_VERSION__ - 0) >= 199901L || \
-    defined(_NETBSD_SOURCE)
+    defined(_NETBSD_SOURCE) || (__cplusplus - 0) >= 201103L
+
 /* LONGLONG */
 long long int	atoll(const char *);
 /* LONGLONG */
@@ -221,6 +222,12 @@ unsigned long long int
 		strtoull(const char * __restrict, char ** __restrict, int);
 float		strtof(const char * __restrict, char ** __restrict);
 long double	strtold(const char * __restrict, char ** __restrict);
+#endif
+
+#if defined(_ISOC11_SOURCE) || (__STDC_VERSION__ - 0) >= 201101L || \
+    defined(_NETBSD_SOURCE) || (__cplusplus - 0) >= 201103L
+int	at_quick_exit(void (*)(void));
+__dead void quick_exit(int);
 #endif
 
 /*
@@ -285,9 +292,9 @@ __aconst char *devname(dev_t, mode_t) __RENAME(__devname50);
 int	 humanize_number(char *, size_t, int64_t, const char *, int, int);
 int	 dehumanize_number(const char *, int64_t *);
 
-#ifndef __minix
+#if !defined(__minix)
 devmajor_t getdevmajor(const char *, mode_t);
-#endif /* !__minix */
+#endif /* !defined(__minix) */
 int	 getloadavg(double [], int);
 
 int	 getenv_r(const char *, char *, size_t);
@@ -330,6 +337,44 @@ size_t	shquotev(int, char * const *, char *, size_t);
 #if defined(_NETBSD_SOURCE)
 qdiv_t	 qdiv(quad_t, quad_t);
 #endif
+
+#if (_POSIX_C_SOURCE - 0) >= 200809L || defined(_NETBSD_SOURCE)
+#  ifndef __LOCALE_T_DECLARED
+typedef struct _locale		*locale_t;
+#  define __LOCALE_T_DECLARED
+#  endif
+double		strtod_l(const char * __restrict, char ** __restrict, locale_t);
+float		strtof_l(const char * __restrict, char ** __restrict, locale_t);
+long double	strtold_l(const char * __restrict, char ** __restrict,
+			  locale_t);
+long	 strtol_l(const char * __restrict, char ** __restrict, int, locale_t);
+unsigned long
+	 strtoul_l(const char * __restrict, char ** __restrict, int, locale_t);
+/* LONGLONG */
+long long int
+	strtoll_l(const char * __restrict, char ** __restrict, int, locale_t);
+/* LONGLONG */
+unsigned long long int
+	strtoull_l(const char * __restrict, char ** __restrict, int, locale_t);
+
+#  if defined(_NETBSD_SOURCE)
+quad_t	 strtoq_l(const char * __restrict, char ** __restrict, int, locale_t);
+u_quad_t strtouq_l(const char * __restrict, char ** __restrict, int, locale_t);
+
+size_t	_mb_cur_max_l(locale_t);
+#define	MB_CUR_MAX_L(loc)	_mb_cur_max_l(loc)
+int	 mblen_l(const char *, size_t, locale_t);
+size_t	 mbstowcs_l(wchar_t * __restrict, const char * __restrict, size_t,
+		    locale_t);
+int	 wctomb_l(char *, wchar_t, locale_t);
+int	 mbtowc_l(wchar_t * __restrict, const char * __restrict, size_t,
+	          locale_t);
+size_t	 wcstombs_l(char * __restrict, const wchar_t * __restrict, size_t,
+		    locale_t);
+
+#  endif /* _NETBSD_SOURCE */
+#endif /* _POSIX_C_SOURCE >= 200809 || _NETBSD_SOURCE */
+
 __END_DECLS
 
 #endif /* !_STDLIB_H_ */

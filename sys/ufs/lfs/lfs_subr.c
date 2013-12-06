@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.76 2010/06/25 10:03:52 hannken Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.80 2013/07/28 01:05:52 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.76 2010/06/25 10:03:52 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.80 2013/07/28 01:05:52 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,8 +72,9 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.76 2010/06/25 10:03:52 hannken Exp $"
 #include <sys/proc.h>
 #include <sys/kauth.h>
 
-#include <ufs/ufs/inode.h>
+#include <ufs/lfs/ulfs_inode.h>
 #include <ufs/lfs/lfs.h>
+#include <ufs/lfs/lfs_kernel.h>
 #include <ufs/lfs/lfs_extern.h>
 
 #include <uvm/uvm.h>
@@ -144,7 +145,7 @@ lfs_setup_resblks(struct lfs *fs)
 	pool_init(&fs->lfs_segpool, sizeof(struct segment), 0, 0, 0,
 		"lfssegpool", &pool_allocator_nointr, IPL_NONE);
 	maxbpp = ((fs->lfs_sumsize - SEGSUM_SIZE(fs)) / sizeof(int32_t) + 2);
-	maxbpp = MIN(maxbpp, segsize(fs) / fs->lfs_fsize + 2);
+	maxbpp = MIN(maxbpp, lfs_segsize(fs) / fs->lfs_fsize + 2);
 	pool_init(&fs->lfs_bpppool, maxbpp * sizeof(struct buf *), 0, 0, 0,
 		"lfsbpppl", &pool_allocator_nointr, IPL_NONE);
 }
@@ -335,6 +336,7 @@ lfs_seglock(struct lfs *fs, unsigned long flags)
 	 */
 	mutex_enter(&lfs_lock);
 	++fs->lfs_iocount;
+	fs->lfs_startseg = fs->lfs_curseg;
 	mutex_exit(&lfs_lock);
 	return 0;
 }
@@ -361,7 +363,7 @@ lfs_unmark_dirop(struct lfs *fs)
 	for (ip = TAILQ_FIRST(&fs->lfs_dchainhd); ip != NULL; ip = nip) {
 		nip = TAILQ_NEXT(ip, i_lfs_dchain);
 		vp = ITOV(ip);
-		if ((VTOI(vp)->i_flag & (IN_ADIROP | IN_ALLMOD)) == 0) {
+		if ((ip->i_flag & (IN_ADIROP | IN_CDIROP)) == IN_CDIROP) {
 			--lfs_dirvcount;
 			--fs->lfs_dirvcount;
 			vp->v_uflag &= ~VU_DIROP;
@@ -372,6 +374,7 @@ lfs_unmark_dirop(struct lfs *fs)
 			vrele(vp);
 			mutex_enter(&lfs_lock);
 			fs->lfs_unlockvp = NULL;
+			ip->i_flag &= ~IN_CDIROP;
 		}
 	}
 
@@ -437,8 +440,7 @@ lfs_segunlock(struct lfs *fs)
 	mutex_enter(&lfs_lock);
 	KASSERT(LFS_SEGLOCK_HELD(fs));
 	if (fs->lfs_seglock == 1) {
-		if ((sp->seg_flags & (SEGM_PROT | SEGM_CLEAN)) == 0 &&
-		    LFS_STARVED_FOR_SEGS(fs) == 0)
+		if ((sp->seg_flags & (SEGM_PROT | SEGM_CLEAN)) == 0)
 			do_unmark_dirop = 1;
 		mutex_exit(&lfs_lock);
 		sync = sp->seg_flags & SEGM_SYNC;
@@ -448,7 +450,7 @@ lfs_segunlock(struct lfs *fs)
 		KASSERT(sp->cbpp == sp->bpp + 1);
 
 		/* Free allocated segment summary */
-		fs->lfs_offset -= btofsb(fs, fs->lfs_sumsize);
+		fs->lfs_offset -= lfs_btofsb(fs, fs->lfs_sumsize);
 		bp = *sp->bpp;
 		lfs_freebuf(fs, bp);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_or.S,v 1.6 2008/05/25 15:56:11 chs Exp $	*/
+/*	$NetBSD: atomic_or.S,v 1.8 2013/07/16 23:24:18 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -34,10 +34,11 @@
 	.text
 
 ENTRY(_atomic_or_32)
-	movl	%sp@(4), %a0
-	movl	%sp@(8), %d0
-	orl	%d0, %a0@
+	movl	4(%sp), %a0
+	movl	8(%sp), %d0
+	orl	%d0, (%a0)
 	rts
+END(_atomic_or_32)
 ATOMIC_OP_ALIAS(atomic_or_32,_atomic_or_32)
 ATOMIC_OP_ALIAS(atomic_or_uint,_atomic_or_32)
 STRONG_ALIAS(_atomic_or_uint,_atomic_or_32)
@@ -47,11 +48,11 @@ ATOMIC_OP_ALIAS(atomic_or_ptr,_atomic_or_32)
 STRONG_ALIAS(_atomic_or_ptr,_atomic_or_32)
 
 ENTRY(_atomic_or_32_nv)
-	movl	%sp@(4), %a0
-1:	movl	%a0@, %d0
+	movl	4(%sp), %a0
+1:	movl	(%a0), %d0
 	movl	%d0, %d1
-	orl	%sp@(8), %d0
-	casl	%d1, %d0, %a0@
+	orl	8(%sp), %d0
+	casl	%d1, %d0, (%a0)
 	bne	1b
 	rts
 ATOMIC_OP_ALIAS(atomic_or_32_nv,_atomic_or_32_nv)

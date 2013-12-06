@@ -104,10 +104,6 @@ typedef struct {
 #endif
 } mcontext_t;
 
-#ifdef __minix
-#define _MC_FPU_SAVED	0x001
-#endif
-
 #define _UC_FXSAVE	0x20	/* FP state is in FXSAVE format in XMM space */
 
 #define _UC_MACHINE_PAD	4	/* Padding appended to ucontext_t */
@@ -133,7 +129,7 @@ typedef struct {
 
 #define	_UC_MACHINE_SET_PC(uc, pc)	_UC_MACHINE_PC(uc) = (pc)
 
-#ifdef __minix
+#if defined(__minix)
 #define	_UC_MACHINE_STACK(uc)		((uc)->uc_mcontext.__gregs[_REG_ESP])
 #define	_UC_MACHINE_SET_STACK(uc, esp)	_UC_MACHINE_STACK(uc) = (esp)
 
@@ -142,7 +138,14 @@ typedef struct {
 
 #define	_UC_MACHINE_ESI(uc)		((uc)->uc_mcontext.__gregs[_REG_ESI])
 #define	_UC_MACHINE_SET_ESI(uc, esi)	_UC_MACHINE_ESI(uc) = (esi)
-#endif
+
+int setmcontext(const mcontext_t *mcp);
+int getmcontext(mcontext_t *mcp);
+
+#define MCF_MAGIC 0xc0ffee
+#define _MC_FPU_SAVED	0x001
+
+#endif /* defined(__minix) */
 
 #define	__UCONTEXT_SIZE	776
 
@@ -155,11 +158,5 @@ __lwp_getprivate_fast(void)
 
 	return __tmp;
 }
-
-#ifdef __minix
-int setmcontext(const mcontext_t *mcp);
-int getmcontext(mcontext_t *mcp);
-#define MCF_MAGIC 0xc0ffee
-#endif
 
 #endif	/* !_I386_MCONTEXT_H_ */

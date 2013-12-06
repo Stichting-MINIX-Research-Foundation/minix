@@ -1,4 +1,4 @@
-/*	$NetBSD: mknod.c,v 1.40 2011/08/27 18:37:41 joerg Exp $	*/
+/*	$NetBSD: mknod.c,v 1.41 2013/06/14 16:28:20 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1998\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: mknod.c,v 1.40 2011/08/27 18:37:41 joerg Exp $");
+__RCSID("$NetBSD: mknod.c,v 1.41 2013/06/14 16:28:20 tsutsui Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -61,7 +61,7 @@ __RCSID("$NetBSD: mknod.c,v 1.40 2011/08/27 18:37:41 joerg Exp $");
 #include "pack_dev.h"
 
 static int gid_name(const char *, gid_t *);
-static portdev_t callPack(pack_t *, int, u_long *);
+static dev_t callPack(pack_t *, int, u_long *);
 
 __dead static	void	usage(void);
 
@@ -81,7 +81,7 @@ main(int argc, char **argv)
 {
 	char	*name, *p;
 	mode_t	 mode;
-	portdev_t	 dev;
+	dev_t	 dev;
 	pack_t	*pack;
 	u_long	 numbers[MAXARGS];
 	int	 n, ch, fifo, hasformat;
@@ -317,10 +317,10 @@ gid_name(const char *name, gid_t *gid)
 	return 0;
 }
 
-static portdev_t
+static dev_t
 callPack(pack_t *f, int n, u_long *numbers)
 {
-	portdev_t d;
+	dev_t d;
 	const char *error = NULL;
 
 	d = (*f)(n, numbers, &error);
@@ -333,7 +333,7 @@ callPack(pack_t *f, int n, u_long *numbers)
 static void
 get_device_info(void)
 {
-#ifdef __minix
+#if defined(__minix)
 	err(1, "no kern.drivers on minix" );
 #else
 	static int mib[2] = {CTL_KERN, KERN_DRIVERS};
@@ -348,7 +348,7 @@ get_device_info(void)
 		err(1, "kern.drivers" );
 
 	num_drivers = len / sizeof *kern_drivers;
-#endif
+#endif /* defined(__minix) */
 }
 
 static void

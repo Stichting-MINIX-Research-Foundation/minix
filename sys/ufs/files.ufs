@@ -1,4 +1,4 @@
-#	$NetBSD: files.ufs,v 1.27 2011/11/24 15:51:31 ahoka Exp $
+#	$NetBSD: files.ufs,v 1.33 2013/07/20 19:59:31 dholland Exp $
 
 deffs					FFS
 deffs					EXT2FS
@@ -10,7 +10,10 @@ defflag	opt_ffs.h			FFS_EI FFS_NO_SNAPSHOT APPLE_UFS
 					UFS_DIRHASH
 					UFS_EXTATTR UFS_EXTATTR_AUTOSTART
 
-defflag	opt_lfs.h			LFS_KERNEL_RFW
+defflag	opt_lfs.h			LFS_EI LFS_KERNEL_RFW
+					LFS_DIRHASH
+					LFS_EXTATTR LFS_EXTATTR_AUTOSTART
+					LFS_QUOTA LFS_QUOTA2
 
 file	ufs/ext2fs/ext2fs_alloc.c	ext2fs
 file	ufs/ext2fs/ext2fs_balloc.c	ext2fs
@@ -19,6 +22,7 @@ file	ufs/ext2fs/ext2fs_bswap.c	ext2fs
 file	ufs/ext2fs/ext2fs_inode.c	ext2fs
 file	ufs/ext2fs/ext2fs_lookup.c	ext2fs
 file	ufs/ext2fs/ext2fs_readwrite.c	ext2fs
+file	ufs/ext2fs/ext2fs_rename.c	ext2fs
 file	ufs/ext2fs/ext2fs_subr.c	ext2fs
 file	ufs/ext2fs/ext2fs_vfsops.c	ext2fs
 file	ufs/ext2fs/ext2fs_vnops.c	ext2fs
@@ -36,24 +40,23 @@ file	ufs/chfs/chfs_gc.c		chfs
 file	ufs/chfs/chfs_nodeops.c		chfs
 file	ufs/chfs/chfs_malloc.c		chfs
 file	ufs/chfs/chfs_pool.c		chfs
-file	ufs/chfs/debug.c			chfs
 file	ufs/chfs/chfs_vnode.c		chfs
 file	ufs/chfs/chfs_subr.c		chfs
 file	ufs/chfs/chfs_vfsops.c		chfs
 file	ufs/chfs/chfs_readinode.c	chfs
 
-file	ufs/ffs/ffs_alloc.c		ffs | lfs | mfs | ext2fs | chfs
-file	ufs/ffs/ffs_balloc.c		ffs | lfs | mfs | ext2fs | chfs
+file	ufs/ffs/ffs_alloc.c		ffs | mfs | ext2fs | chfs
+file	ufs/ffs/ffs_balloc.c		ffs | mfs | ext2fs | chfs
 file	ufs/ffs/ffs_bswap.c		(ffs | mfs) & ffs_ei
-file	ufs/ffs/ffs_inode.c		ffs | lfs | mfs | ext2fs | chfs
-file	ufs/ffs/ffs_snapshot.c		ffs | lfs | mfs | ext2fs | chfs
-file	ufs/ffs/ffs_subr.c		ffs | lfs | mfs | ext2fs | chfs
-file	ufs/ffs/ffs_tables.c		ffs | lfs | mfs | ext2fs | chfs
-file	ufs/ffs/ffs_vfsops.c		ffs | lfs | mfs | ext2fs | chfs
-file	ufs/ffs/ffs_vnops.c		ffs | lfs | mfs | ext2fs | chfs
+file	ufs/ffs/ffs_inode.c		ffs | mfs | ext2fs | chfs
+file	ufs/ffs/ffs_snapshot.c		ffs | mfs | ext2fs | chfs
+file	ufs/ffs/ffs_subr.c		ffs | mfs | ext2fs | chfs
+file	ufs/ffs/ffs_tables.c		ffs | mfs | ext2fs | chfs
+file	ufs/ffs/ffs_vfsops.c		ffs | mfs | ext2fs | chfs
+file	ufs/ffs/ffs_vnops.c		ffs | mfs | ext2fs | chfs
 file	ufs/ffs/ffs_wapbl.c		ffs & wapbl
 file	ufs/ffs/ffs_appleufs.c		ffs & apple_ufs
-file	ufs/ffs/ffs_quota2.c		quota2 & (ffs | lfs | mfs | ext2fs | chfs)
+file	ufs/ffs/ffs_quota2.c		quota2 & (ffs | mfs | ext2fs | chfs)
 
 file	ufs/lfs/lfs_alloc.c		lfs
 file	ufs/lfs/lfs_balloc.c		lfs
@@ -62,28 +65,44 @@ file	ufs/lfs/lfs_cksum.c		lfs
 file	ufs/lfs/lfs_debug.c		lfs
 file	ufs/lfs/lfs_inode.c		lfs
 file	ufs/lfs/lfs_itimes.c		lfs
+file	ufs/lfs/lfs_rename.c		lfs
 file	ufs/lfs/lfs_rfw.c		lfs & lfs_kernel_rfw
 file	ufs/lfs/lfs_segment.c		lfs
 file	ufs/lfs/lfs_subr.c		lfs
 file	ufs/lfs/lfs_syscalls.c		lfs
 file	ufs/lfs/lfs_vfsops.c		lfs
 file	ufs/lfs/lfs_vnops.c		lfs
+file	ufs/lfs/ulfs_bmap.c		lfs
+file	ufs/lfs/ulfs_dirhash.c		lfs & lfs_dirhash
+file	ufs/lfs/ulfs_extattr.c		lfs & lfs_extattr
+file	ufs/lfs/ulfs_ihash.c		lfs
+file	ufs/lfs/ulfs_inode.c		lfs
+file	ufs/lfs/ulfs_lookup.c		lfs
+file	ufs/lfs/ulfs_quota.c		lfs & (lfs_quota | lfs_quota2)
+file	ufs/lfs/ulfs_quota1.c		lfs & lfs_quota
+file	ufs/lfs/ulfs_quota2.c		lfs & lfs_quota2
+file	ufs/lfs/ulfs_quota1_subr.c	lfs
+file	ufs/lfs/ulfs_quota2_subr.c	lfs & lfs_quota2
+file	ufs/lfs/ulfs_snapshot.c		lfs
+file	ufs/lfs/ulfs_vfsops.c		lfs
+file	ufs/lfs/ulfs_vnops.c		lfs
 
 file	ufs/mfs/mfs_vfsops.c		mfs
 file	ufs/mfs/mfs_vnops.c		mfs
 file	ufs/mfs/mfs_miniroot.c
 
-file	ufs/ufs/ufs_bmap.c		ffs | lfs | mfs | ext2fs | chfs
-file	ufs/ufs/ufs_dirhash.c		(ffs | lfs | mfs | ext2fs | chfs) & ufs_dirhash
+file	ufs/ufs/ufs_bmap.c		ffs | mfs | ext2fs | chfs
+file	ufs/ufs/ufs_dirhash.c		(ffs | mfs | ext2fs | chfs) & ufs_dirhash
 file	ufs/ufs/ufs_extattr.c		(ffs | mfs) & ufs_extattr
-file	ufs/ufs/ufs_ihash.c		ffs | lfs | mfs | ext2fs
-file	ufs/ufs/ufs_inode.c		ffs | lfs | mfs | ext2fs
-file	ufs/ufs/ufs_lookup.c		ffs | lfs | mfs | ext2fs | chfs
-file	ufs/ufs/ufs_quota.c		(quota | quota2) & (ffs | lfs | mfs | ext2fs | chfs)
-file	ufs/ufs/ufs_quota1.c		quota & (ffs | lfs | mfs | ext2fs | chfs)
-file	ufs/ufs/ufs_quota2.c		quota2 & (ffs | lfs | mfs | ext2fs | chfs)
+file	ufs/ufs/ufs_ihash.c		ffs | mfs | ext2fs
+file	ufs/ufs/ufs_inode.c		ffs | mfs | ext2fs
+file	ufs/ufs/ufs_lookup.c		ffs | mfs | ext2fs | chfs
+file	ufs/ufs/ufs_quota.c		(quota | quota2) & (ffs | mfs | ext2fs | chfs)
+file	ufs/ufs/ufs_quota1.c		quota & (ffs | mfs | ext2fs | chfs)
+file	ufs/ufs/ufs_quota2.c		quota2 & (ffs | mfs | ext2fs | chfs)
 file	ufs/ufs/quota1_subr.c
-file	ufs/ufs/quota2_subr.c		quota2 & (ffs | lfs | mfs | ext2fs | chfs)
-file	ufs/ufs/ufs_vfsops.c		ffs | lfs | mfs | ext2fs | chfs
-file	ufs/ufs/ufs_vnops.c		ffs | lfs | mfs | ext2fs | chfs
+file	ufs/ufs/quota2_subr.c		quota2 & (ffs | mfs | ext2fs | chfs)
+file	ufs/ufs/ufs_rename.c		ffs | mfs | chfs
+file	ufs/ufs/ufs_vfsops.c		ffs | mfs | ext2fs | chfs
+file	ufs/ufs/ufs_vnops.c		ffs | mfs | ext2fs | chfs
 file	ufs/ufs/ufs_wapbl.c		ffs & wapbl

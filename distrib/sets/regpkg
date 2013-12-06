@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-# $NetBSD: regpkg,v 1.19 2009/12/02 15:52:14 apb Exp $
+# $NetBSD: regpkg,v 1.20 2012/11/03 07:59:46 mbalmer Exp $
 #
 # Copyright (c) 2003,2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -628,7 +628,7 @@ EOF
 	# "@name" line and a lot of "@comment MD5:" lines.
 	#
 	{
-		rcsid='$NetBSD: regpkg,v 1.19 2009/12/02 15:52:14 apb Exp $'
+		rcsid='$NetBSD: regpkg,v 1.20 2012/11/03 07:59:46 mbalmer Exp $'
 		utcdate="$(${ENV_CMD} TZ=UTC LOCALE=C \
 			${DATE} '+%Y-%m-%d %H:%M')"
 		user="${USER:-root}"
@@ -992,7 +992,7 @@ do_register_syspkg()
 }
 
 #
-# do_create_syspkg_tgz() creates the the binary pkg (*.tgz) if
+# do_create_syspkg_tgz() creates the binary pkg (*.tgz) if
 # appropriate.
 #
 # If binpkgfile already exists, that might be an error, depending on

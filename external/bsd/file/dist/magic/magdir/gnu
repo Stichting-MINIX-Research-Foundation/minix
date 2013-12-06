@@ -1,6 +1,6 @@
 
 #------------------------------------------------------------------------------
-# $File: gnu,v 1.13 2012/01/03 17:16:54 christos Exp $
+# $File: gnu,v 1.14 2012/10/03 23:38:12 christos Exp $
 # gnu:  file(1) magic for various GNU tools
 #
 # GNU nlsutils message catalog file format
@@ -36,6 +36,21 @@
 # magic. Nevertheless, it covers many keyrings.
 0       beshort         0x9901                  GPG key public ring
 !:mime	application/x-gnupg-keyring
+
+# Symmetric encryption
+0	leshort		0x0d8c
+>4	leshort		0x0203
+>>2	leshort		0x0204		GPG symmetrically encrypted data (3DES cipher)
+>>2	leshort		0x0304		GPG symmetrically encrypted data (CAST5 cipher)
+>>2	leshort		0x0404		GPG symmetrically encrypted data (BLOWFISH cipher)
+>>2	leshort		0x0704		GPG symmetrically encrypted data (AES cipher)
+>>2	leshort		0x0804		GPG symmetrically encrypted data (AES192 cipher)
+>>2	leshort		0x0904		GPG symmetrically encrypted data (AES256 cipher)
+>>2	leshort		0x0a04		GPG symmetrically encrypted data (TWOFISH cipher)
+>>2	leshort		0x0b04		GPG symmetrically encrypted data (CAMELLIA128 cipher)
+>>2	leshort		0x0c04		GPG symmetrically encrypted data (CAMELLIA192 cipher)
+>>2	leshort		0x0d04		GPG symmetrically encrypted data (CAMELLIA256 cipher)
+
 
 # Gnumeric spreadsheet
 # This entry is only semi-helpful, as Gnumeric compresses its files, so

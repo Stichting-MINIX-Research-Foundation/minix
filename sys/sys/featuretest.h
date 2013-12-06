@@ -1,4 +1,4 @@
-/*	$NetBSD: featuretest.h,v 1.9 2009/05/04 16:44:14 ginsbach Exp $	*/
+/*	$NetBSD: featuretest.h,v 1.10 2013/04/26 18:29:06 christos Exp $	*/
 
 /*
  * Written by Klaus Klein <kleink@NetBSD.org>, February 2, 1998.
@@ -56,6 +56,7 @@
  *
  * _REENTRANT
  * _ISOC99_SOURCE
+ * _ISOC11_SOURCE
  * _LARGEFILE_SOURCE		Large File Support
  *		<http://ftp.sas.com/standards/large.file/x_open.20Mar96.html>
  */
@@ -73,15 +74,12 @@
 #if defined(_MINIX)
 #undef _MINIX
 #define _NETBSD_SOURCE 1
-#endif
+#endif /* defined(__minix) */
 
 /* Never define _REENTRANT on Minix */
-
-#ifndef __minix
-
+#if !defined(__minix)
 #if ((_POSIX_C_SOURCE - 0) >= 199506L || (_XOPEN_SOURCE - 0) >= 500) && \
     !defined(_REENTRANT)
 #define _REENTRANT
+#endif /* !defined(__minix) */
 #endif
-
-#endif /* __minix */

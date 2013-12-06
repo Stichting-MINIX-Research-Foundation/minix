@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.78 2012/08/17 16:22:27 joerg Exp $
+#	$NetBSD: Makefile,v 1.79 2013/03/01 18:25:27 joerg Exp $
 
 .include <bsd.own.mk>
 
-SUBDIR=	arch dev \
+SUBDIR=	arch dev fs \
 	net netinet netinet6 \
         \
 	sys ufs uvm

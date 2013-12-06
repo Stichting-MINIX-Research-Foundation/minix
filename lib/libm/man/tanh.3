@@ -26,9 +26,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)tanh.3	5.1 (Berkeley) 5/2/91
-.\"	$NetBSD: tanh.3,v 1.12 2003/08/07 16:44:49 agc Exp $
+.\"	$NetBSD: tanh.3,v 1.15 2011/11/17 23:46:32 wiz Exp $
 .\"
-.Dd May 2, 1991
+.Dd September 18, 2011
 .Dt TANH 3
 .Os
 .Sh NAME
@@ -53,9 +53,34 @@ functions compute the hyperbolic tangent of
 For a discussion of error due to roundoff, see
 .Xr math 3 .
 .Sh RETURN VALUES
-The
-.Fn tanh
-function returns the hyperbolic tangent value.
+Upon successful completion,
+these functions return the hyperbolic tangent value.
+The following may also occur:
+.Bl -enum -offset indent
+.It
+If
+.Fa x
+is \*(Pm 0,
+.Fa x
+is returned.
+.It
+If
+.Fa x
+is \*(Na, a \*(Na is returned.
+.It
+If
+.Fa x
+is positive infinity, a value 1 is returned;
+if
+.Fa x
+is negative infinity, -1 is returned.
+.It
+If
+.Fa x
+is subnormal, a range error can occur and
+.Fa x
+is returned.
+.El
 .Sh SEE ALSO
 .Xr acos 3 ,
 .Xr asin 3 ,
@@ -68,7 +93,5 @@ function returns the hyperbolic tangent value.
 .Xr sinh 3 ,
 .Xr tan 3
 .Sh STANDARDS
-The
-.Fn tanh
-function conforms to
-.St -ansiC .
+The described functions conform to
+.St -isoC-99 .

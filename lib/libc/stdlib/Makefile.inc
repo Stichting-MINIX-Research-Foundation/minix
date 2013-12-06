@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.78 2011/09/14 23:33:51 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.79 2013/04/26 18:29:55 christos Exp $
 #	from: @(#)Makefile.inc	8.3 (Berkeley) 2/4/95
 
 # stdlib sources
@@ -12,7 +12,7 @@ SRCS+=	_env.c _rand48.c \
 	hcreate.c heapsort.c imaxdiv.c insque.c jrand48.c l64a.c lldiv.c \
 	lcong48.c lrand48.c lsearch.c merge.c mi_vector_hash.c mrand48.c \
 	nrand48.c putenv.c qabs.c qdiv.c qsort.c posix_openpt.c \
-	radixsort.c rand.c rand_r.c random.c remque.c \
+	quick_exit.c radixsort.c rand.c rand_r.c random.c remque.c \
 	seed48.c setenv.c srand48.c strsuftoll.c \
 	strtoimax.c strtol.c strtoll.c strtoq.c strtoul.c strtoull.c \
 	strtoumax.c strtouq.c system.c tdelete.c tfind.c tsearch.c twalk.c \
@@ -41,6 +41,7 @@ CPPFLAGS.strtouq.c+=	-I${LIBCDIR}/../../common/lib/libc/stdlib
 .include "${ARCHDIR}/stdlib/Makefile.inc"
 
 MAN+=	a64l.3 abort.3 abs.3 alloca.3 atexit.3 atof.3 atoi.3 atol.3 atoll.3 \
+	at_quick_exit.3 \
 	bsearch.3 \
 	div.3 \
 	exit.3 \
@@ -51,7 +52,7 @@ MAN+=	a64l.3 abort.3 abs.3 alloca.3 atexit.3 atof.3 atoi.3 atol.3 atoll.3 \
 	lsearch.3 \
 	malloc.3 memory.3 mi_vector_hash.3 \
 	posix_memalign.3 posix_openpt.3 ptsname.3 \
-	qabs.3 qdiv.3 qsort.3 \
+	qabs.3 qdiv.3 quick_exit.3 qsort.3 \
 	radixsort.3 rand48.3 rand.3 random.3 \
 	strfmon.3 strsuftoll.3 strtod.3 strtol.3 strtoul.3 system.3 \
 	tsearch.3 \

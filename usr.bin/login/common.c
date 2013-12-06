@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.3 2009/12/29 20:15:15 christos Exp $	*/
+/*	$NetBSD: common.c,v 1.6 2012/05/19 00:02:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -29,7 +29,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: common.c,v 1.3 2009/12/29 20:15:15 christos Exp $");
+__RCSID("$NetBSD: common.c,v 1.6 2012/05/19 00:02:44 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -77,11 +77,20 @@ u_int	timeout = 300;
 void	 decode_ss(const char *);
 struct	passwd *pwd;
 int	failures, have_ss;
-char	term[64], *envinit[1], *hostname, *username, *tty, *nested;
+char	term[64], *envinit[1], *hostname, *tty, *nested;
+const char *username;
 struct timeval now;
 struct sockaddr_storage ss;
 
-void
+char *
+trimloginname(char *u)
+{
+	if (strlen(u) > MAXLOGNAME)
+		u[MAXLOGNAME] = '\0';
+	return u;
+}
+
+char *
 getloginname(void)
 {
 	int ch;
@@ -104,8 +113,7 @@ getloginname(void)
 				    "login names may not start with '-'.\n");
 			else {
 				*p = '\0';
-				username = nbuf;
-				break;
+				return nbuf;
 			}
 		}
 	}
@@ -122,7 +130,7 @@ rootterm(char *ttyn)
 static jmp_buf motdinterrupt;
 
 void
-motd(char *fname)
+motd(const char *fname)
 {
 	int fd, nchars;
 	sig_t oldint;
@@ -139,7 +147,7 @@ motd(char *fname)
 }
 
 /* ARGSUSED */
-void
+void __dead
 sigint(int signo)
 {
 
@@ -147,7 +155,7 @@ sigint(int signo)
 }
 
 /* ARGSUSED */
-void
+void __dead
 timedout(int signo)
 {
 
@@ -243,7 +251,7 @@ doutmpx(void)
 	utmpx.ut_type = USER_PROCESS;
 	utmpx.ut_pid = getpid();
 	t = tty + strlen(tty);
-	if (t - tty >= sizeof(utmpx.ut_id)) {
+	if ((size_t)(t - tty) >= sizeof(utmpx.ut_id)) {
 	    (void)strncpy(utmpx.ut_id, t - sizeof(utmpx.ut_id),
 		sizeof(utmpx.ut_id));
 	} else {
@@ -364,7 +372,7 @@ stypeof(const char *ttyid)
 	return (ttyid && (t = getttynam(ttyid)) ? t->ty_type : NULL);
 }
 
-void
+void __dead
 sleepexit(int eval)
 {
 

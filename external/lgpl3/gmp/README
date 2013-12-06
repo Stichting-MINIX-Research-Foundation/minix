@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.3 2012/03/20 08:21:38 mrg Exp $
+$NetBSD: README,v 1.4 2013/07/15 08:59:47 mrg Exp $
 
 GMP in NetBSD.  We need GMP for GCC >= 4.2.
 
@@ -12,7 +12,9 @@ final product.  All of these issues need to be dealt with.
 
 There are a few steps to this:
 
-	- run ./configure, save the output
+	- run ./configure, save the output.  you can use the makefile
+	  "Makefile.netbsd-gmp" in this directory to run this with the
+	  right options, etc.  run it with nbmake-$MACHINE.
 
 	- create src/external/gpl3/gmp/lib/libgmp/arch/${MACHINE_ARCH} dir,
 	  and copy these files into it:

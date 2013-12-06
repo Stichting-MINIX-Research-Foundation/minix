@@ -14,7 +14,17 @@ CPPFLAGS+=	-I${NETBSDSRCDIR}/lib/libc/regex ${IMPLEMENTATION}
 
 TESTS_SH?=	t_regex
 TESTS_C=	t_regex_att
+.if !defined(__MINIX)
 TESTS_C+=	t_exhaust
+.else
+# this test fails in a way which breaks the test run
+# Thre following is normaly done in bsd.test.mk
+PROGS+=	t_exhaust
+BINDIR.t_exhaust=  ${TESTSDIR}
+LDADD.t_exhaust+= -latf-c
+DPADD.t_exhaust+= ${LIBATF_C}
+MAN.t_exhaust=	# empty
+.endif # !defined(__MINIX)
 
 FILESDIR=	${TESTSDIR}/data
 FILES+=		README

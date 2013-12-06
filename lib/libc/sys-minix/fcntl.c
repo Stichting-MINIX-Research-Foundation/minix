@@ -6,10 +6,6 @@
 #include <fcntl.h>
 #include <stdarg.h>
 
-#ifdef __weak_alias
-__weak_alias(fcntl, _fcntl)
-#endif
-
 int fcntl(int fd, int cmd, ...)
 {
   va_list argp;

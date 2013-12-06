@@ -1,9 +1,9 @@
-/* $NetBSD: sysident.h,v 1.14 2007/06/24 20:35:36 christos Exp $ */
+/* $NetBSD: sysident.h,v 1.16 2013/09/10 16:35:10 matt Exp $ */
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -19,7 +19,7 @@
  *          information about NetBSD.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -30,7 +30,7 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  * <<Id: LICENSE,v 1.2 2000/06/14 15:57:33 cgd Exp>>
  */
 
@@ -89,3 +89,20 @@ __asm(
 	"\t.previous\n"
 	"\t.p2align\t2\n"
 );
+
+#ifdef ELF_NOTE_MARCH_DESC
+__asm(
+	".section\t\".note.netbsd.march\", \"a\"\n"
+	"\t.p2align\t2\n\n"
+
+	"\t.long\t" __S(ELF_NOTE_MARCH_NAMESZ) "\n"
+	"\t.long\t2f-1f\n"
+	"\t.long\t" __S(ELF_NOTE_TYPE_MARCH_TAG) "\n"
+	"\t.ascii\t" __S(ELF_NOTE_MARCH_NAME) "\n"
+	"1:\t.asciz\t" __S(ELF_NOTE_MARCH_DESC) "\n"
+	"2:\n"
+
+	"\t.previous\n"
+	"\t.p2align\t2\n"
+);
+#endif

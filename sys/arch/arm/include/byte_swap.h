@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap.h,v 1.12 2012/09/05 01:03:53 matt Exp $	*/
+/*	$NetBSD: byte_swap.h,v 1.13 2013/01/28 06:16:05 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2002 The NetBSD Foundation, Inc.
@@ -91,8 +91,9 @@ __byte_swap_u16_variable(uint16_t v)
 
 #ifdef _ARM_ARCH_6
 	if (!__builtin_constant_p(v)) {
-		__asm("rev16\t%0, %1" : "=r" (v) : "0" (v));
-		return v;
+		uint32_t v32 = v;
+		__asm("rev16\t%0, %1" : "=r" (v32) : "0" (v32));
+		return v32;
 	}
 #elif !defined(__thumb__) && 0	/* gcc produces decent code for this */
 	if (!__builtin_constant_p(v)) {

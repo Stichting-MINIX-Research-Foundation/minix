@@ -1,4 +1,4 @@
-/* $NetBSD: dummy_lc_template.h,v 1.3 2012/03/04 21:14:56 tnozaki Exp $ */
+/* $NetBSD: dummy_lc_template.h,v 1.4 2013/04/14 23:30:16 joerg Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -33,7 +33,7 @@
 
 const char *
 _PREFIX(setlocale)(const char * __restrict name,
-    struct _locale_impl_t * __restrict locale)
+    struct _locale * __restrict locale)
 {
 	if (name != NULL) {
 		if (*name == '\0')

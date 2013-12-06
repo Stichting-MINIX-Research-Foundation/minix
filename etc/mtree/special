@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.142 2012/06/28 16:34:07 kefren Exp $
+#	$NetBSD: special,v 1.146 2013/07/09 09:34:58 roy Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # This file may be overwritten on upgrades.
@@ -193,6 +193,7 @@
 ./etc/rc.d/cgd			type=file mode=0555
 ./etc/rc.d/cleartmp		type=file mode=0555
 ./etc/rc.d/cron			type=file mode=0555
+./etc/rc.d/devpubd		type=file mode=0555
 ./etc/rc.d/dhclient		type=file mode=0555
 ./etc/rc.d/dhcpd		type=file mode=0555
 ./etc/rc.d/dhcrelay		type=file mode=0555
@@ -310,6 +311,8 @@
 ./etc/ssh/ssh_config		type=file mode=0644 optional
 ./etc/ssh/ssh_host_dsa_key	type=file mode=0600 optional tags=nodiff
 ./etc/ssh/ssh_host_dsa_key.pub	type=file mode=0644 optional
+./etc/ssh/ssh_host_ecdsa_key	type=file mode=0600 optional tags=nodiff
+./etc/ssh/ssh_host_ecdsa_key.pub	type=file mode=0644 optional
 ./etc/ssh/ssh_host_key		type=file mode=0600 optional tags=nodiff
 ./etc/ssh/ssh_host_key.pub	type=file mode=0644 optional
 ./etc/ssh/ssh_host_rsa_key	type=file mode=0600 optional tags=nodiff
@@ -392,6 +395,10 @@
 ./var/chroot/ntpd/var/db	type=dir  mode=0775 gname=ntpd
 ./var/chroot/ntpd/var/run	type=dir  mode=0775 gname=ntpd
 ./var/chroot/pflogd		type=dir  mode=0755
+./var/chroot/rtadvd		type=dir  mode=0755
+./var/chroot/rtadvd/etc		type=dir  mode=0755
+./var/chroot/rtadvd/var		type=dir  mode=0755
+./var/chroot/rtadvd/var/run	type=dir  mode=0775 gname=_rtadvd
 ./var/chroot/sshd		type=dir  mode=0755
 ./var/chroot/tcpdump		type=dir  mode=0755
 ./var/chroot/tftp-proxy		type=dir  mode=0755

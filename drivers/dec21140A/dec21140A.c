@@ -494,7 +494,7 @@ static void do_vread_s(const message * mp, int from_int)
       incomplete frames to us, so this hack is safe
     */    
     if(size<60){
-      bzero(&descr->buf1[size], 60-size);
+      memset(&descr->buf1[size], 0, 60-size);
       size=60;
     }
     /* End ugly hack */

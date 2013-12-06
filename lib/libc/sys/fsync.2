@@ -1,4 +1,4 @@
-.\"	$NetBSD: fsync.2,v 1.17 2010/05/17 12:38:04 jruoho Exp $
+.\"	$NetBSD: fsync.2,v 1.18 2013/09/22 10:02:05 apb Exp $
 .\"
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)fsync.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd May 17, 2010
+.Dd September 22, 2013
 .Dt FSYNC 2
 .Os
 .Sh NAME
@@ -48,14 +48,35 @@
 .Fn fsync
 causes all modified data and attributes of
 .Fa fd
-to be moved to a permanent storage device.
+to be written to a permanent storage device.
 This normally results in all in-core modified copies
 of buffers for the associated file to be written to a disk.
 .Pp
-.Fn fsync
-should be used by programs that require a file to be
+.Fn fsync_range
+is similar, but provides control over the region of the file
+to be synchronized, and the method of synchronization.
+.Pp
+These functions should be used by programs that require a file to be
 in a known state, for example, in building a simple transaction
 facility.
+.Pp
+Note that writing the data to a permanent storage device
+does not necessarily write the data to permanent storage media
+within that device;
+for example, after writing data to a disk device, the data might
+reside in a cache within the device, but not yet on
+more permanent storage within the device.
+Neither
+.Fn fsync
+nor the default behavior of
+.Fn fsync_range
+(without the
+.Dv FDISKSYNC
+flag)
+will flush disk caches,
+because they assume that storage devices are able to ensure that
+completed writes are transferred to media some time between the
+write and a power failure or system crash.
 .Pp
 .Fn fsync_range
 causes all modified data starting at
@@ -64,38 +85,52 @@ for length
 .Fa length
 of
 .Fa fd
-to be written to permanent storage.
-Note that
-.Fn fsync_range
-requires that the file
-.Fa fd
-must be open for writing.
-.Pp
-.Fn fsync_range
-may flush the file data in one of two manners:
-.Bl -tag -width FDATASYNC -offset indent
-.It Dv FDATASYNC
-Synchronize the file data and sufficient meta-data to retrieve the
-data for the specified range.
-.It Dv FFILESYNC
-Synchronize all modified file data and meta-data for the specified range.
-.El
-.Pp
-By default,
-.Fn fsync_range
-does not flush disk caches, assuming that storage media are able to ensure
-completed writes are transfered to media.
-The
-.Dv FDISKSYNC
-flag may be included in the
-.Fa how
-parameter to trigger flushing of all disk caches for the file.
-.Pp
+to be written to a permanent storage device.
 If the
 .Fa length
 parameter is zero,
 .Fn fsync_range
 will synchronize all of the file data.
+.Pp
+.Fn fsync_range
+takes a
+.Fa how
+parameter which contains one or more of the following flags:
+.Bl -tag -width FDATASYNC -offset indent
+.It Dv FDATASYNC
+Synchronize the file data and sufficient meta-data to retrieve the
+data for the specified range.
+This is equivalent to
+.Xr fdatasync 2
+on the specified range.
+.It Dv FFILESYNC
+Synchronize all modified file data and meta-data for the specified range.
+This is equivalent to
+.Xr fsync 2
+on the specified range.
+.It Dv FDISKSYNC
+Request the destination device to ensure that the relevant data
+and meta-data is flushed from any cache to permanent storage media.
+In the present implementation, the entire cache on the affected device will
+be flushed, and this may have a significant impact on performance.
+.El
+.Pp
+The
+.Dv FDATASYNC
+and
+.Dv FFILESYNC
+flags are mutually exclusive.
+Either of those flags may be combined with the
+.Dv FDISKSYNC
+flag.
+.Pp
+Note that
+.Fn fsync_range
+requires that the file
+.Fa fd
+must be open for writing, whereas
+.Fn fsync
+does not.
 .Sh RETURN VALUES
 A 0 value is returned on success.
 A \-1 value indicates an error.
@@ -140,6 +175,7 @@ not support partial synchronization, the entire file will be synchronized
 and the call will be the equivalent of calling
 .Fn fsync .
 .Sh SEE ALSO
+.Xr fdatasync 2 ,
 .Xr sync 2 ,
 .Xr sync 8
 .Sh HISTORY

@@ -28,15 +28,51 @@
 
 #include "engine/test_program.hpp"
 
+extern "C" {
+#include <sys/stat.h>
+
+#include <signal.h>
+}
+
 #include <sstream>
 
 #include <atf-c++.hpp>
 
 #include "engine/exceptions.hpp"
+#include "engine/test_result.hpp"
+#include "utils/env.hpp"
+#include "utils/format/macros.hpp"
 #include "utils/fs/operations.hpp"
 #include "utils/fs/path.hpp"
+#include "utils/optional.ipp"
 
 namespace fs = utils::fs;
+
+
+namespace {
+
+
+/// Creates a mock tester that receives a signal.
+///
+/// \param term_sig Signal to deliver to the tester.  If the tester does not
+///     exit due to this reason, it exits with an arbitrary non-zero code.
+static void
+create_mock_tester_signal(const int term_sig)
+{
+    const std::string tester_name = "kyua-mock-tester";
+
+    atf::utils::create_file(
+        tester_name,
+        F("#! /bin/sh\n"
+          "kill -%s $$\n"
+          "exit 0\n") % term_sig);
+    ATF_REQUIRE(::chmod(tester_name.c_str(), 0755) != -1);
+
+    utils::setenv("KYUA_TESTERSDIR", fs::current_path().str());
+}
+
+
+}  // anonymous namespace
 
 
 ATF_TEST_CASE_WITHOUT_HEAD(ctor_and_getters);
@@ -111,6 +147,27 @@ ATF_TEST_CASE_BODY(test_cases__some)
     test_program.set_test_cases(exp_test_cases);
 
     ATF_REQUIRE_EQ(exp_test_cases, test_program.test_cases());
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(test_cases__tester_fails);
+ATF_TEST_CASE_BODY(test_cases__tester_fails)
+{
+    engine::test_program test_program(
+        "mock", fs::path("non-existent"), fs::path("."), "suite-name",
+        engine::metadata_builder().build());
+    create_mock_tester_signal(SIGSEGV);
+
+    const engine::test_cases_vector& test_cases = test_program.test_cases();
+    ATF_REQUIRE_EQ(1, test_cases.size());
+
+    const engine::test_case_ptr& test_case = test_cases[0];
+    ATF_REQUIRE_EQ("__test_cases_list__", test_case->name());
+
+    ATF_REQUIRE(test_case->fake_result());
+    const engine::test_result result = test_case->fake_result().get();
+    ATF_REQUIRE(engine::test_result::broken == result.type());
+    ATF_REQUIRE_MATCH("Tester did not exit cleanly", result.reason());
 }
 
 
@@ -318,6 +375,7 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, find__missing);
     ATF_ADD_TEST_CASE(tcs, test_cases__get);
     ATF_ADD_TEST_CASE(tcs, test_cases__some);
+    ATF_ADD_TEST_CASE(tcs, test_cases__tester_fails);
 
     ATF_ADD_TEST_CASE(tcs, operators_eq_and_ne__copy);
     ATF_ADD_TEST_CASE(tcs, operators_eq_and_ne__not_copy);

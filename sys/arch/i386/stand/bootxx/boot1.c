@@ -39,11 +39,11 @@ __RCSID("$NetBSD: boot1.c,v 1.20 2011/01/06 01:08:48 jakllsch Exp $");
 #include <sys/param.h>
 #include <sys/bootblock.h>
 #include <sys/disklabel.h>
-#ifndef __minix
+#if !defined(__minix)
 #include <dev/raidframe/raidframevar.h>	/* For RF_PROTECTED_SECTORS */
 #else
 #define RF_PROTECTED_SECTORS 64
-#endif
+#endif /* !defined(__minix) */
 
 #define XSTR(x) #x
 #define STR(x) XSTR(x)
@@ -60,11 +60,11 @@ extern struct disklabel ptn_disklabel;
 static int
 ob(void)
 {
-#ifndef __minix
+#if !defined(__minix)
 	return open("boot", 0);
 #else
 	return open("boot_monitor", 0);
-#endif
+#endif /* !defined(__minix) */
 }
 
 const char *
@@ -76,11 +76,11 @@ boot1(uint32_t biosdev, uint64_t *sector)
 	bios_sector = *sector;
 	d.dev = biosdev;
 
-#ifdef __minix
+#if defined(__minix)
 	putstr("\r\nMINIX/x86 " STR(FS) " Primary Bootstrap\r\n");
 #else
 	putstr("\r\nNetBSD/x86 " STR(FS) " Primary Bootstrap\r\n");
-#endif
+#endif /* defined(__minix) */
 
 	if (set_geometry(&d, NULL))
 		return "set_geometry\r\n";
@@ -103,7 +103,7 @@ boot1(uint32_t biosdev, uint64_t *sector)
 	if (fd != -1)
 		goto done;
 
-#ifdef BOOT_FROM_MINIXFS3
+#if defined(__minix) && defined(BOOT_FROM_MINIXFS3)
 	bios_sector -= RF_PROTECTED_SECTORS;
 	bios_sector += MINIX3_FIRST_SUBP_OFFSET;
 	*sector = bios_sector;
@@ -111,7 +111,7 @@ boot1(uint32_t biosdev, uint64_t *sector)
 	fd = ob();
 	if (fd != -1)
 		goto done;
-#endif
+#endif /* defined(__minix) && defined(BOOT_FROM_MINIXFS3) */
 
 	/*
 	 * Nothing at the start of the MBR partition, fallback on
@@ -131,11 +131,11 @@ boot1(uint32_t biosdev, uint64_t *sector)
 done:
 	/* if we fail here, so will fstat, so keep going */
 	if (fd == -1 || fstat(fd, &sb) == -1)
-#ifndef __minix
+#if !defined(__minix)
 		return "Can't open /boot\r\n";
 #else
 		return "Can't open /boot_monitor\r\n";
-#endif
+#endif /* !defined(__minix) */
 
 	biosdev = (uint32_t)sb.st_size;
 #if 0
@@ -144,18 +144,18 @@ done:
 #endif
 
 	if (read(fd, (void *)SECONDARY_LOAD_ADDRESS, biosdev) != biosdev)
-#ifndef __minix
+#if !defined(__minix)
 		return "/boot load failed\r\n";
 #else
 		return "/boot_monitor load failed\r\n";
-#endif
+#endif /* !defined(__minix) */
 
 	if (*(uint32_t *)(SECONDARY_LOAD_ADDRESS + 4) != X86_BOOT_MAGIC_2)
-#ifndef __minix
+#if !defined(__minix)
 		return "Invalid /boot file format\r\n";
 #else
 		return "Invalid /boot_monitor file format\r\n";
-#endif
+#endif /* !defined(__minix) */
 
 	/* We need to jump to the secondary bootstrap in realmode */
 	return 0;

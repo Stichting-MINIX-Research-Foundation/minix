@@ -1,4 +1,4 @@
-/*	$NetBSD: wchar.h,v 1.30 2011/07/17 20:54:34 joerg Exp $	*/
+/*	$NetBSD: wchar.h,v 1.40 2013/11/21 09:09:52 degroote Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -145,7 +145,8 @@ long int wcstol(const wchar_t * __restrict,
 double wcstod(const wchar_t * __restrict, wchar_t ** __restrict);
 
 #if defined(_ISOC99_SOURCE) || (__STDC_VERSION__ - 0) > 199901L || \
-    defined(_NETBSD_SOURCE)
+    defined(_NETBSD_SOURCE) || \
+	(_POSIX_C_SOURCE - 0) >= 200112L || (_XOPEN_SOURCE - 0) >= 600
 float wcstof(const wchar_t * __restrict, wchar_t ** __restrict);
 long double wcstold(const wchar_t * __restrict, wchar_t ** __restrict);
 
@@ -181,7 +182,8 @@ int vwprintf(const wchar_t * __restrict, __va_list);
 int wprintf(const wchar_t * __restrict, ...);
 int wscanf(const wchar_t * __restrict, ...);
 #if defined(_ISOC99_SOURCE) || (__STDC_VERSION__ - 0) > 199901L || \
-    defined(_NETBSD_SOURCE)
+    defined(_NETBSD_SOURCE) || \
+	(_POSIX_C_SOURCE - 0) >= 200112L || (_XOPEN_SOURCE - 0) >= 600
 int vfwscanf(FILE * __restrict, const wchar_t * __restrict, __va_list);
 int vswscanf(const wchar_t * __restrict, const wchar_t * __restrict,
     __va_list);
@@ -205,5 +207,84 @@ __END_DECLS
 #define getwchar() getwc(stdin)
 #define putwc(wc, f) fputwc((wc), (f))
 #define putwchar(wc) putwc((wc), stdout)
+
+#if (_POSIX_C_SOURCE - 0) >= 200809L || defined(_NETBSD_SOURCE)
+#  ifndef __LOCALE_T_DECLARED
+typedef struct _locale		*locale_t;
+#  define __LOCALE_T_DECLARED
+#  endif
+__BEGIN_DECLS
+size_t	mbsnrtowcs(wchar_t * __restrict, const char ** __restrict, size_t,
+	    size_t, mbstate_t * __restrict);
+size_t	wcsnrtombs(char * __restrict, const wchar_t ** __restrict, size_t,
+	    size_t, mbstate_t * __restrict);
+
+int	wcscoll_l(const wchar_t *, const wchar_t *, locale_t);
+size_t	wcsxfrm_l(wchar_t *, const wchar_t *, size_t, locale_t);
+int wcsncasecmp_l(const wchar_t *, const wchar_t *, size_t, locale_t);
+int wcscasecmp_l(const wchar_t *, const wchar_t *, locale_t);
+
+size_t	wcsftime_l(wchar_t * __restrict, size_t, const wchar_t * __restrict,
+	    const struct tm * __restrict, locale_t);
+
+float wcstof_l(const wchar_t * __restrict, wchar_t ** __restrict, locale_t);
+double wcstod_l(const wchar_t * __restrict, wchar_t ** __restrict, locale_t);
+long double wcstold_l(const wchar_t * __restrict, wchar_t ** __restrict,
+    locale_t);
+long int wcstol_l(const wchar_t * __restrict, wchar_t ** __restrict, int,
+		  locale_t);
+unsigned long int wcstoul_l(const wchar_t * __restrict,
+	wchar_t ** __restrict, int, locale_t);
+/* LONGLONG */
+long long int wcstoll_l(const wchar_t * __restrict, wchar_t ** __restrict, int,
+			locale_t);
+/* LONGLONG */
+unsigned long long int wcstoull_l(const wchar_t * __restrict,
+				  wchar_t ** __restrict, int, locale_t);
+int	wcwidth_l(wchar_t, locale_t);
+int	wcswidth_l(const wchar_t *, size_t, locale_t);
+__END_DECLS
+#endif /* _POSIX_C_SOURCE || _NETBSD_SOURCE */
+
+#if defined(_NETBSD_SOURCE)
+__BEGIN_DECLS
+wint_t	btowc_l(int, locale_t);
+size_t	mbrlen_l(const char * __restrict, size_t, mbstate_t * __restrict,
+		locale_t);
+size_t	mbrtowc_l(wchar_t * __restrict, const char * __restrict, size_t,
+	    mbstate_t * __restrict, locale_t);
+int	mbsinit_l(const mbstate_t *, locale_t);
+size_t	mbsrtowcs_l(wchar_t * __restrict, const char ** __restrict, size_t,
+	    mbstate_t * __restrict, locale_t);
+size_t	mbsnrtowcs_l(wchar_t * __restrict, const char ** __restrict, size_t,
+	    size_t, mbstate_t * __restrict, locale_t);
+size_t	wcrtomb_l(char * __restrict, wchar_t, mbstate_t * __restrict, locale_t);
+size_t	wcsrtombs_l(char * __restrict, const wchar_t ** __restrict, size_t,
+	    mbstate_t * __restrict, locale_t);
+size_t	wcsnrtombs_l(char * __restrict, const wchar_t ** __restrict, size_t,
+	    size_t, mbstate_t * __restrict, locale_t);
+int	wctob_l(wint_t, locale_t);
+
+int fwprintf_l(FILE * __restrict, locale_t, const wchar_t * __restrict, ...);
+int swprintf_l(wchar_t * __restrict, size_t n, locale_t,
+    const wchar_t * __restrict, ...);
+int vfwprintf_l(FILE * __restrict, locale_t,
+    const wchar_t * __restrict, __va_list);
+int vswprintf_l(wchar_t * __restrict, size_t, locale_t,
+    const wchar_t * __restrict, __va_list);
+int vwprintf_l(locale_t, const wchar_t * __restrict, __va_list);
+int wprintf_l(locale_t, const wchar_t * __restrict, ...);
+
+int fwscanf_l(FILE * __restrict, locale_t, const wchar_t * __restrict, ...);
+int swscanf_l(const wchar_t * __restrict, locale_t, const wchar_t *
+    __restrict, ...);
+int wscanf_l(locale_t, const wchar_t * __restrict, ...);
+int vfwscanf_l(FILE * __restrict, locale_t, const wchar_t * __restrict,
+    __va_list);
+int vswscanf_l(const wchar_t * __restrict, locale_t, const wchar_t * __restrict,
+    __va_list);
+int vwscanf_l(locale_t, const wchar_t * __restrict, __va_list);
+__END_DECLS
+#endif /* _NETBSD_SOURCE */
 
 #endif /* !_WCHAR_H_ */

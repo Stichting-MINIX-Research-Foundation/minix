@@ -1,4 +1,4 @@
-/* $NetBSD: catan.c,v 1.1 2007/08/20 16:01:32 drochner Exp $ */
+/* $NetBSD: catan.c,v 1.2 2011/07/03 06:45:24 mrg Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -32,13 +32,14 @@
 #include "../src/namespace.h"
 #include <complex.h>
 #include <math.h>
+#include <float.h>
 #include "cephes_subr.h"
 
 #ifdef __weak_alias
 __weak_alias(catan, _catan)
 #endif
 
-#define MAXNUM 1.0e308
+#define MAXNUM DBL_MAX
 
 double complex
 catan(double complex z)

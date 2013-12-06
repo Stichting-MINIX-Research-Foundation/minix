@@ -1,4 +1,4 @@
-.\"	$NetBSD: uniq.1,v 1.12 2010/10/06 06:43:26 dholland Exp $
+.\"	$NetBSD: uniq.1,v 1.13 2012/08/26 14:13:50 wiz Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"     @(#)uniq.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd January 6, 2007
+.Dd August 26, 2012
 .Dt UNIQ 1
 .Os
 .Sh NAME
@@ -70,7 +70,7 @@ Ignore the first
 in each input line when doing comparisons.
 A field is a string of non-blank characters separated from adjacent fields
 by blanks.
-Field numbers are one based, i.e. the first field is field one.
+Field numbers are one based, i.e., the first field is field one.
 .It Fl s Ar chars
 Ignore the first
 .Ar chars
@@ -82,7 +82,7 @@ option, the first
 characters after the first
 .Ar fields
 fields will be ignored.
-Character numbers are one based, i.e. the first character is character one.
+Character numbers are one based, i.e., the first character is character one.
 .It Fl u
 Don't output lines that are repeated in the input.
 .\".It Fl Ns Ar n
@@ -105,13 +105,15 @@ Don't output lines that are repeated in the input.
 .\"number.
 .El
 .Pp
-If additional arguments are specified on the command line, the first
-such argument is used as the name of an input file, the second is used
-as the name of an output file.
-.Pp
-The
-.Nm
-utility exits 0 on success, and \*[Gt]0 if an error occurs.
+Additional arguments
+.Ar input_file
+and
+.Ar output_file
+may be specified on the command line,
+where the former is then used as the name of an input file,
+and the latter as the name of an output file.
+.Sh EXIT STATUS
+.Ex -std
 .Sh COMPATIBILITY
 The historic
 .Cm \&\(pl Ns Ar number

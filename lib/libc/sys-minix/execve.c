@@ -11,10 +11,6 @@
 #include <sys/exec_elf.h>
 #include <sys/exec.h>
 
-#ifdef __weak_alias
-__weak_alias(execve, _execve)
-#endif
-
 int execve(const char *path, char * const *argv, char * const *envp)
 {
 	message m;

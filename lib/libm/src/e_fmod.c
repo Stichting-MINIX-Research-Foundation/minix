@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: e_fmod.c,v 1.11 2002/05/26 22:01:49 wiz Exp $");
+__RCSID("$NetBSD: e_fmod.c,v 1.12 2013/11/19 14:02:59 joerg Exp $");
 #endif
 
 /*
@@ -25,6 +25,10 @@ __RCSID("$NetBSD: e_fmod.c,v 1.11 2002/05/26 22:01:49 wiz Exp $");
 #include "math_private.h"
 
 static const double one = 1.0, Zero[] = {0.0, -0.0,};
+
+#ifndef __HAVE_LONG_DOUBLE
+__strong_alias(__ieee754_fmodl, __ieee754_fmod)
+#endif
 
 double
 __ieee754_fmod(double x, double y)

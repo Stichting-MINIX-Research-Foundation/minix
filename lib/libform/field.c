@@ -1,4 +1,4 @@
-/*	$NetBSD: field.c,v 1.25 2010/02/03 15:34:43 roy Exp $	*/
+/*	$NetBSD: field.c,v 1.27 2013/11/21 15:40:17 christos Exp $	*/
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
  *                         (blymn@baea.com.au, brett_lymn@yahoo.com.au)
@@ -29,8 +29,9 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: field.c,v 1.25 2010/02/03 15:34:43 roy Exp $");
+__RCSID("$NetBSD: field.c,v 1.27 2013/11/21 15:40:17 christos Exp $");
 
+#include <sys/param.h>
 #include <stdlib.h>
 #include <strings.h>
 #include <stdarg.h>
@@ -472,6 +473,7 @@ field_buffer(FIELD *field, int buffer)
 
 	char *reformat, *p;
 	_FORMI_FIELD_LINES *linep;
+	size_t bufsize, pos;
 	
 	if (field == NULL)
 		return NULL;
@@ -491,49 +493,35 @@ field_buffer(FIELD *field, int buffer)
 	if (_formi_sync_buffer(field) != E_OK)
 		return NULL;
 	
-	if ((field->opts & O_REFORMAT) != O_REFORMAT) {
+	if ((field->opts & O_REFORMAT) != O_REFORMAT)
 		return field->buffers[buffer].string;
-	} else {
-		if (field->row_count > 1) {
-			  /* reformat */
-			reformat = (char *)
-				malloc(strlen(field->buffers[buffer].string)
-				       + ((field->row_count - 1)
-					  * sizeof(char)) + 1);
 
-			if (reformat == NULL)
+	if (field->row_count <= 1)
+		return strdup(field->buffers[buffer].string);
+
+	/*
+	 * create a single string containing each line,
+	 * separated by newline, last line having no
+	 * newline, but NUL terminated.
+	 */
+	bufsize = pos = 0;
+	reformat = NULL;
+	for (linep = field->alines; linep; linep = linep->next) {
+		size_t len = strlen(linep->string);
+		if (len + 1 >= bufsize - pos) {
+			bufsize += MAX(1024, 2 * len);
+			p = realloc(reformat, bufsize);
+			if (p == NULL) {
+				free(reformat);
 				return NULL;
-
-			  /*
-			   * foreach row copy line, append newline, no
-			   * newline on last row.
-			   */
-			p = reformat;
-			linep = field->alines;
-			
-			do
-			{
-				if (linep->length != 0) {
-					strncpy(p, linep->string,
-						(size_t) linep->length);
-					p += linep->length;
-				}
-				
-				linep = linep->next;
-				if (linep != NULL)
-					*p = '\n';
-				p++;
 			}
-			while (linep != NULL);
-
-			p = '\0';
-			return reformat;
-		} else {
-			asprintf(&reformat, "%s",
-				 field->buffers[buffer].string);
-			return reformat;
+			reformat = p;
 		}
+		memcpy(reformat + pos, linep->string, len);
+		pos += len;
+		reformat[pos++] = linep->next ? '\n' : '\0';
 	}
+	return reformat;
 }
 
 /*

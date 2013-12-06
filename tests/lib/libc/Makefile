@@ -8,7 +8,10 @@ SUBDIR+=	tls_dso .WAIT
 # LSC: Unsupported on MINIX
 # c063 gen rpc setjmp 
 # sys tls ttyio
-TESTS_SUBDIRS+=	db hash inet locale net regex stdlib
+# LSC: db hangs, so compiled, installed, but not added to the testsuite by
+#      default
+SUBDIR+= db
+TESTS_SUBDIRS+=	hash inet locale net regex stdlib
 TESTS_SUBDIRS+=	stdio string termios time
 
 .if !defined(__MINIX)

@@ -641,7 +641,3 @@ main(int argc, char *argv[])
 }
 #endif	/* TEST_PWCACHE */
 #endif	/* !HAVE_PWCACHE_USERDB */
-
-#if defined(__minix) && defined(__weak_alias)
-__weak_alias(pwcache_userdb, __pwcache_userdb50)
-#endif

@@ -7,6 +7,7 @@
 #include <minix/const.h>
 #include <minix/type.h>		/* for unshort :-( */
 #include <minix/sysutil.h>
+#include <minix/minlib.h>
 #include "mfs/const.h"		/* depends of -I flag in Makefile */
 #include "mfs/type.h"		/* ditto */
 #include "mfs/inode.h"		/* ditto */

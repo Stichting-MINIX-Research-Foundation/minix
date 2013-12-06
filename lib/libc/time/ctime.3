@@ -1,8 +1,8 @@
-.\" $NetBSD: ctime.3,v 1.46 2011/11/02 23:06:08 christos Exp $
+.\" $NetBSD: ctime.3,v 1.48 2013/09/20 19:06:54 christos Exp $
 .\"
 .\" XXX: License missing?
 .\"
-.Dd November 2, 2011
+.Dd September 20, 2013
 .Dt CTIME 3
 .Os
 .Sh NAME
@@ -96,7 +96,6 @@ function converts a
 .Vt time_t ,
 pointed to by
 .Fa clock ,
-representing the time in seconds since 00:00:00 UTC, 1970-01-01,
 and returns a pointer to a string with the format described above.
 Years requiring fewer than four characters are padded with leading zeroes.
 For years longer than four characters, the string is of the form
@@ -108,6 +107,17 @@ with five spaces before the year.
 These unusual formats are designed to make it less likely that older
 software that expects exactly 26 bytes of output will mistakenly output
 misleading values for out-of-range years.
+.Pp
+The
+.Fa clock
+time stamp represents the time in seconds since 1970-01-01 00:00:00
+Coordinated Universal Time (UTC).
+The POSIX standard says that time stamps must be nonnegative
+and must ignore leap seconds.
+Many implementations extend POSIX by allowing negative time stamps,
+and can therefore represent time stamps that predate the
+introduction of UTC and are some other flavor of Universal Time (UT).
+Some implementations support leap seconds, in contradiction to POSIX.
 .It Fn ctime_r "clock" "buf"
 The
 .Fn ctime_r
@@ -125,7 +135,10 @@ function is similar to
 but it also takes a
 .Ft "const timezone_t"
 argument, as returned by a previous call to
-.Fn tzalloc .
+.Fn tzalloc ,
+or a null pointer denoting
+Coordinated Universal Time
+.Pq Tn UTC .
 .It Fn difftime "time1" "time2"
 The
 .Fn difftime
@@ -189,7 +202,10 @@ function is similar to
 but it also takes a
 .Ft "const timezone_t"
 argument, returned by a previous call to
-.Fn tzalloc .
+.Fn tzalloc ,
+or a null pointer denoting
+Coordinated Universal Time
+.Pq Tn UTC .
 .It Fn mktime "tm"
 The
 .Fn mktime
@@ -266,7 +282,10 @@ function is similar to
 but it also takes a
 .Ft "const timezone_t"
 argument, returned by a previous call to
-.Fn tzalloc .
+.Fn tzalloc ,
+or a null pointer denoting
+Coordinated Universal Time
+.Pq Tn UTC .
 .It Fn tzalloc "zone"
 The
 .Fn tzalloc
@@ -278,6 +297,12 @@ object suitable to be used in the
 and
 .Fn mktime_z
 functions.
+.Pp
+A null pointer may be passed to
+.Fn tzalloc
+instead of a timezone name, to refer to
+Coordinated Universal Time
+.Pq Tn UTC .
 .Pp
 Note that instead of setting the environment variable
 .Va TZ ,
@@ -313,6 +338,48 @@ is set to
 .Va 1
 the call is equivalent to
 .Va tzname[1] .
+.El
+.Pp
+Declarations of all the functions and externals, and the 
+.Ft tm
+structure, are in the
+.In time.h
+header file.
+The structure (of type)
+.Ft struct tm
+includes the following fields:
+.Bd -literal
+       int tm_sec;      /* seconds (0 - 60) */
+       int tm_min;      /* minutes (0 - 59) */
+       int tm_hour;     /* hours (0 - 23) */
+       int tm_mday;     /* day of month (1 - 31) */
+       int tm_mon;      /* month of year (0 - 11) */
+       int tm_year;     /* year - 1900 */
+       int tm_wday;     /* day of week (Sunday = 0) */
+       int tm_yday;     /* day of year (0 - 365) */
+       int tm_isdst;    /* is summer time in effect? */
+       char *tm_zone;   /* abbreviation of timezone name */
+       long tm_gmtoff;  /* offset from UT in seconds */
+.Ed
+.Pp
+The
+.Fa tm_zone
+and
+.Fa tm_gmtoff
+fields exist, and are filled in, only if
+arrangements to do so were made when the library containing these functions
+was created.
+There is no guarantee that these fields  will  continue to exist in this form
+in future releases of this code.
+.Bl -bullet
+.It
+.Va tm_isdst
+is non-zero if summer time is in effect.
+.It
+.Va tm_gmtoff
+is the offset (in seconds) of the time represented from UT,
+with positive values indicating east of the Prime Meridian.
+The field's name is derived from Greenwich Mean Time, a precursor of UT.
 .El
 .Sh RETURN VALUES
 .Bl -bullet
@@ -376,6 +443,15 @@ object or
 on failure, setting
 .Va errno
 to indicate the error.
+It may also return
+.Dv NULL
+when the
+.Fa name
+argument is
+.Dv NULL ,
+and this is not an error, but a way of referring to
+Coordinated Universal Time
+.Pq Tn UTC .
 .It
 .Fn tzgetzone
 function returns string containing the name of the timezone given in

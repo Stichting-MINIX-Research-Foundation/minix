@@ -11,10 +11,6 @@
 #include <net/gen/tcp.h>
 #include <net/gen/tcp_io.h>
 
-#ifdef __weak_alias
-__weak_alias(shutdown, _shutdown)
-#endif
-
 #define DEBUG 0
 
 static int _tcp_shutdown(int sock, int how);

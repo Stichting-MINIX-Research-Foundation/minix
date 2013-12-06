@@ -1,8 +1,8 @@
 #!/bin/sh -
 #
-# $NetBSD: zmore,v 1.3 2004/03/29 09:59:42 wiz Exp $
+# $NetBSD: zmore,v 1.4 2013/11/12 21:58:37 pettai Exp $
 #
-# $OpenBSD: zmore,v 1.4 2003/07/29 07:42:45 otto Exp $
+# $OpenBSD: zmore,v 1.6 2008/08/20 09:22:02 mpf Exp $
 #
 # Copyright (c) 2003 Todd C. Miller <Todd.Miller@courtesan.com>
 #
@@ -40,6 +40,12 @@ while test $# -ne 0; do
 			;;
 	esac
 done
+
+if [ `basename $0` == "zless" ] ; then
+	pager=${PAGER-less}
+else
+	pager=${PAGER-more}
+fi
 
 # No files means read from stdin
 if [ $# -eq 0 ]; then

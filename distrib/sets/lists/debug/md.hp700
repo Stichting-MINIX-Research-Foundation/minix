@@ -1,0 +1,2 @@
+# $NetBSD: md.hp700,v 1.1 2013/01/16 16:01:07 christos Exp $
+./usr/libdata/debug/usr/mdec/mkboot.debug	comp-sysutil-debug      debug

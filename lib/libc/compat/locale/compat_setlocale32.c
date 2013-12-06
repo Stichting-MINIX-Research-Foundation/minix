@@ -1,4 +1,4 @@
-/* $NetBSD: compat_setlocale32.c,v 1.1 2010/06/07 13:52:30 tnozaki Exp $ */
+/* $NetBSD: compat_setlocale32.c,v 1.2 2013/03/06 11:29:01 yamt Exp $ */
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat_setlocale32.c,v 1.1 2010/06/07 13:52:30 tnozaki Exp $");
+__RCSID("$NetBSD: compat_setlocale32.c,v 1.2 2013/03/06 11:29:01 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -41,6 +41,14 @@ __RCSID("$NetBSD: compat_setlocale32.c,v 1.1 2010/06/07 13:52:30 tnozaki Exp $")
 __warn_references(__setlocale_mb_len_max_32,
     "warning: reference to compatibility __setlocale_mb_len_max_32();"
     "include <locale.h> for correct reference")
+
+/*
+ * MB_LEN_MAX used to be a MD macro.  it was 32 for most ports but 6 for hppa.
+ * hppa uses arch/hppa/locale/compat_setlocale32.c instead of this file.
+ */
+#if defined(__hppa__)
+#error using wrong variant of compat_setlocale32.c
+#endif /* defined(__hppa__) */
 
 char *
 __setlocale_mb_len_max_32(int category, const char *locale)

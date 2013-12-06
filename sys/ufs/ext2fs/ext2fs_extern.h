@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_extern.h,v 1.43 2011/07/12 16:59:48 dholland Exp $	*/
+/*	$NetBSD: ext2fs_extern.h,v 1.46 2012/11/21 23:11:23 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -77,6 +77,7 @@ struct uio;
 struct vnode;
 struct mbuf;
 struct componentname;
+struct ufs_lookup_results;
 
 extern struct pool ext2fs_inode_pool;		/* memory pool for inodes */
 extern struct pool ext2fs_dinode_pool;		/* memory pool for dinodes */
@@ -107,8 +108,10 @@ int ext2fs_gop_alloc(struct vnode *, off_t, off_t, int, kauth_cred_t);
 int ext2fs_bmap(void *);
 
 /* ext2fs_inode.c */
-u_int64_t ext2fs_size(struct inode *);
-int ext2fs_setsize(struct inode *, u_int64_t);
+uint64_t ext2fs_size(struct inode *);
+int ext2fs_setsize(struct inode *, uint64_t);
+uint64_t ext2fs_nblock(struct inode *);
+int ext2fs_setnblock(struct inode *, uint64_t);
 int ext2fs_update(struct vnode *, const struct timespec *,
     const struct timespec *, int);
 int ext2fs_truncate(struct vnode *, off_t, int, kauth_cred_t);

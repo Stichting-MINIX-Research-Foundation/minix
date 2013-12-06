@@ -4,9 +4,11 @@
 .include <bsd.own.mk>
 
 SUBDIR= \
-	fingerd ftpd	\
-	ld.elf_so	\
-	getty
+	fingerd ftpd getty \
+	ld.elf_so \
+	 \
+
+
 
 .if defined(__MINIX)
 SUBDIR+= makewhatis

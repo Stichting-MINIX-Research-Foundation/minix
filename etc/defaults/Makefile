@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.5 2011/08/22 20:48:38 jym Exp $
+#	$NetBSD: Makefile,v 1.6 2013/05/01 05:36:25 agc Exp $
 
 .include <bsd.own.mk>
 
 .if !defined(__MINIX)
-CONFIGFILES=	daily.conf monthly.conf security.conf weekly.conf
+CONFIGFILES=	daily.conf monthly.conf pkgpath.conf security.conf weekly.conf
 .else
 CONFIGFILES=	minix.rc.conf
 .endif # !defined(__MINIX)

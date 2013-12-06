@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_open.c,v 1.26 2012/03/13 21:13:32 christos Exp $	*/
+/*	$NetBSD: bt_open.c,v 1.27 2013/12/01 00:22:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bt_open.c,v 1.26 2012/03/13 21:13:32 christos Exp $");
+__RCSID("$NetBSD: bt_open.c,v 1.27 2013/12/01 00:22:48 christos Exp $");
 
 /*
  * Implementation of btree access method for 4.4BSD.
@@ -71,7 +71,6 @@ __RCSID("$NetBSD: bt_open.c,v 1.26 2012/03/13 21:13:32 christos Exp $");
 
 static int byteorder(void);
 static int nroot(BTREE *);
-static int tmp(void);
 
 /*
  * __BT_OPEN -- Open a btree.
@@ -161,7 +160,7 @@ __bt_open(const char *fname, int flags, mode_t mode, const BTREEINFO *openinfo,
 		goto einval;
 
 	/* Allocate and initialize DB and BTREE structures. */
-	if ((t = (BTREE *)malloc(sizeof(BTREE))) == NULL)
+	if ((t = malloc(sizeof(*t))) == NULL)
 		goto err;
 	memset(t, 0, sizeof(BTREE));
 	t->bt_fd = -1;			/* Don't close unopened fd on error. */
@@ -171,7 +170,7 @@ __bt_open(const char *fname, int flags, mode_t mode, const BTREEINFO *openinfo,
 	t->bt_pfx = b.prefix;
 	t->bt_rfd = -1;
 
-	if ((t->bt_dbp = dbp = (DB *)malloc(sizeof(DB))) == NULL)
+	if ((t->bt_dbp = dbp = malloc(sizeof(*dbp))) == NULL)
 		goto err;
 	memset(t->bt_dbp, 0, sizeof(DB));
 	if (t->bt_lorder != machine_lorder)
@@ -202,24 +201,17 @@ __bt_open(const char *fname, int flags, mode_t mode, const BTREEINFO *openinfo,
 		default:
 			goto einval;
 		}
-		
-		if ((t->bt_fd = open(fname, flags, mode)) == -1)
-			goto err;
-		if (fcntl(t->bt_fd, F_SETFD, FD_CLOEXEC) == -1)
+		if ((t->bt_fd = __dbopen(fname, flags, mode, &sb)) == -1)
 			goto err;
 	} else {
 		if ((flags & O_ACCMODE) != O_RDWR)
 			goto einval;
-		if ((t->bt_fd = tmp()) == -1)
+		if ((t->bt_fd = __dbtemp("bt.", &sb)) == -1)
 			goto err;
 		F_SET(t, B_INMEM);
 	}
 
-	if (fcntl(t->bt_fd, F_SETFD, FD_CLOEXEC) == -1)
-		goto err;
 
-	if (fstat(t->bt_fd, &sb))
-		goto err;
 	if (sb.st_size) {
 		if ((nr = read(t->bt_fd, &m, sizeof(BTMETA))) < 0)
 			goto err;
@@ -387,37 +379,6 @@ nroot(BTREE *t)
 	mpool_put(t->bt_mp, meta, MPOOL_DIRTY);
 	mpool_put(t->bt_mp, root, MPOOL_DIRTY);
 	return (RET_SUCCESS);
-}
-
-static int
-tmp(void)
-{
-	sigset_t set, oset;
-	int len;
-	int fd;
-	char *envtmp;
-	char path[PATH_MAX];
-
-	if (issetugid())
-		envtmp = NULL;
-	else
-		envtmp = getenv("TMPDIR");
-
-	len = snprintf(path,
-	    sizeof(path), "%s/bt.XXXXXX", envtmp ? envtmp : _PATH_TMP);
-	if (len < 0 || (size_t)len >= sizeof(path)) {
-		errno = ENAMETOOLONG;
-		return -1;
-	}
-	
-	(void)sigfillset(&set);
-	(void)sigprocmask(SIG_BLOCK, &set, &oset);
-	if ((fd = mkstemp(path)) != -1) {
-		(void)unlink(path);
-		(void)fcntl(fd, F_SETFD, FD_CLOEXEC);
-	}
-	(void)sigprocmask(SIG_SETMASK, &oset, NULL);
-	return(fd);
 }
 
 static int

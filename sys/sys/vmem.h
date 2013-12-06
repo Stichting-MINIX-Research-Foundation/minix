@@ -1,4 +1,4 @@
-/*	$NetBSD: vmem.h,v 1.17 2012/01/27 19:48:41 para Exp $	*/
+/*	$NetBSD: vmem.h,v 1.20 2013/01/29 21:26:24 para Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -31,9 +31,10 @@
 
 #include <sys/types.h>
 
-#if !defined(_KERNEL)
+#if defined(_KERNEL)
+#else /* defined(_KERNEL) */
 #include <stdbool.h>
-#endif /* !defined(_KERNEL) */
+#endif /* defined(_KERNEL) */
 
 typedef struct vmem vmem_t;
 
@@ -54,14 +55,16 @@ extern vmem_t *kmem_arena;
 extern vmem_t *kmem_meta_arena;
 extern vmem_t *kmem_va_arena;
 
-void vmem_bootstrap(void);
-void vmem_init(vmem_t *vm);
+void vmem_subsystem_init(vmem_t *vm);
 
 vmem_t *vmem_create(const char *, vmem_addr_t, vmem_size_t, vmem_size_t,
     vmem_import_t *, vmem_release_t *, vmem_t *, vmem_size_t,
     vm_flag_t, int);
 vmem_t *vmem_xcreate(const char *, vmem_addr_t, vmem_size_t, vmem_size_t,
     vmem_ximport_t *, vmem_release_t *, vmem_t *, vmem_size_t,
+    vm_flag_t, int);
+vmem_t *vmem_init(vmem_t *, const char *, vmem_addr_t, vmem_size_t, vmem_size_t,
+    vmem_import_t *, vmem_release_t *, vmem_t *, vmem_size_t,
     vm_flag_t, int);
 void vmem_destroy(vmem_t *);
 int vmem_alloc(vmem_t *, vmem_size_t, vm_flag_t, vmem_addr_t *);

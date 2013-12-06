@@ -25,7 +25,7 @@
 .\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 .\" OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-.Dd September 9, 2012
+.Dd April 15, 2013
 .Dt KYUA-REPORT-HTML 1
 .Os
 .Sh NAME
@@ -36,6 +36,7 @@
 .Op Fl -action Ar id
 .Op Fl -force
 .Op Fl -output Ar path
+.Op Fl -results-filter Ar types
 .Op Fl -store Ar file
 .Sh DESCRIPTION
 The
@@ -64,6 +65,24 @@ directory must not exist unless the
 .Fl -force
 option is provided.  The default is
 .Pa ./html .
+.It Fl -results-filter Ar types
+Comma-separated list of the test result types to include in the report.
+The ordering of the values is respected so that you can determine how you
+want the list of tests to be shown.
+.Pp
+The valid values are:
+.Sq broken ,
+.Sq failed ,
+.Sq passed ,
+.Sq skipped
+and
+.Sq xfail .
+If the parameter supplied to the option is empty, filtering is suppressed
+and all result types are shown in the report.
+.Pp
+The default value for this flag includes all the test results except the
+passed tests.  Showing the passed tests by default clutters the report with
+too much information, so only abnormal conditions are included.
 .It Fl -store Ar path , Fl s Ar path
 Specifies the database to use.  Defaults to
 .Pa ~/.kyua/store.db .

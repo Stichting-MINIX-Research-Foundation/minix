@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile,v 1.1 2011/07/01 01:21:38 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2013/08/22 16:03:31 matt Exp $
 
 .include <bsd.own.mk>
+.include <bsd.init.mk>
 
-.include "${.CURDIR}/../../arch/${MACHINE_ARCH}/defs.mk"
+.include "${.CURDIR}/../../arch/${GCC_MACHINE_ARCH}/defs.mk"
 
 .cc: # disable .cc->NULL transform
 

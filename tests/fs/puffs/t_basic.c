@@ -1,4 +1,4 @@
-/*	$NetBSD: t_basic.c,v 1.11 2011/04/04 15:42:42 plunky Exp $	*/
+/*	$NetBSD: t_basic.c,v 1.12 2013/10/19 17:45:00 christos Exp $	*/
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -115,13 +115,11 @@ ATF_TC_HEAD(root_lnk, tc)
 ATF_TC_BODY(root_lnk, tc)
 {
 	MAKEOPTS("-r", "lnk " LINKSTR);
-	struct puffstestargs *pargs;
 	void *args;
 	char buf[PATH_MAX];
 	ssize_t len;
 
 	FSTEST_CONSTRUCTOR_FSPRIV(tc, puffs, args, theopts);
-	pargs = args;
 
 	if ((len = rump_sys_readlink(FSTEST_MNTNAME, buf, sizeof(buf)-1)) == -1)
 		atf_tc_fail_errno("readlink");

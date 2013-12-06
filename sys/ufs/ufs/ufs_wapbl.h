@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_wapbl.h,v 1.7 2011/09/19 11:18:01 gdt Exp $	*/
+/*	$NetBSD: ufs_wapbl.h,v 1.8 2013/11/10 18:28:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003,2006,2008 The NetBSD Foundation, Inc.
@@ -163,7 +163,7 @@ ufs_wapbl_end2(struct mount *mp, struct vnode *vp1, struct vnode *vp2)
 	if (mp->mnt_wapbl) wapbl_register_deallocation(mp->mnt_wapbl, blk, len)
 
 #else /* ! WAPBL */
-#define	UFS_WAPBL_BEGIN(mp) 0
+#define	UFS_WAPBL_BEGIN(mp) (__USE(mp), 0)
 #define	UFS_WAPBL_BEGIN1(mp, v1) 0
 #define	UFS_WAPBL_END(mp)	do { } while (0)
 #define	UFS_WAPBL_END1(mp, v1)

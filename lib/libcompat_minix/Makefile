@@ -1,3 +1,6 @@
+NOGCCERROR=yes
+NOCLANGERROR=yes
+
 .include <bsd.own.mk>
 
 LIB=	compat_minix
@@ -17,10 +20,7 @@ SRCS+= configfile.c
 # NetBSD's 'mtab' format.
 SRCS+= mtab.c
 
-.include "include/Makefile.inc"
-
-.include <bsd.own.mk>
-SUBDIR+= pkgconfig
-.include <bsd.subdir.mk>
+SUBDIR+= pkgconfig include
 
 .include <bsd.lib.mk>
+.include <bsd.subdir.mk>

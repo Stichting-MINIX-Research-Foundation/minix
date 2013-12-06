@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.dep.mk,v 1.74 2012/02/19 23:19:37 matt Exp $
+#	$NetBSD: bsd.dep.mk,v 1.79 2013/10/31 01:55:03 mrg Exp $
 
 ##### Basic targets
 realdepend:	beforedepend .depend afterdepend
@@ -8,12 +8,13 @@ beforedepend .depend afterdepend: # ensure existence
 
 ##### Default values
 MKDEP?=			mkdep
+MKDEPCXX?=		mkdep
 MKDEP_SUFFIXES?=	.o
 
 ##### Build rules
 # some of the rules involve .h sources, so remove them from mkdep line
 
-.if defined(SRCS)							# {
+.if defined(SRCS) && !empty(SRCS)
 __acpp_flags=	${_ASM_TRADITIONAL_CPP}
 
 .if defined(NODPSRCS)
@@ -41,11 +42,28 @@ __DPSRCS.d+=	${__DPSRCS.bcd}
 ${__DPSRCS.d}: ${__DPSRCS.notd} ${DPSRCS}
 .endif									# }
 
+MKDEPSUFFLAGS=-s ${MKDEP_SUFFIXES:Q}
+
+.if defined(MKDEPINCLUDES) && ${MKDEPINCLUDES} != "no"
+.STALE:
+	@echo Rebuilding dependency file: ${.ALLSRC}
+	@rm -f ${.ALLSRC}
+	@(cd ${.CURDIR} && ${MAKE} depend)
+_MKDEP_MERGEFLAGS=-i
+_MKDEP_FILEFLAGS=${MKDEPSUFFLAGS}
+.else
+_MKDEP_MERGEFLAGS=${MKDEPSUFFLAGS}
+_MKDEP_FILEFLAGS=
+.endif
+
 .depend: ${__DPSRCS.d}
 	${_MKTARGET_CREATE}
 	rm -f .depend
-	${MKDEP} -d -f ${.TARGET} -s ${MKDEP_SUFFIXES:Q} ${__DPSRCS.d}
+	${MKDEP} ${_MKDEP_MERGEFLAGS} -d -f ${.TARGET} ${__DPSRCS.d}
 
+.if !defined(__MINIX)
+.SUFFIXES: .d .s .S .c .C .cc .cpp .cxx .m
+.else
 .SUFFIXES: .bcd .d .s .S .c .C .cc .cpp .cxx .m
 
 .if ${USE_BITCODE:Uno} == "yes"
@@ -54,43 +72,52 @@ ${__DPSRCS.d}: ${__DPSRCS.notd} ${DPSRCS}
 	${MKDEP} -f ${.TARGET} -s .bc -- ${MKDEPFLAGS} \
 	    ${CFLAGS:C/-([IDU])[  ]*/-\1/Wg:M-[IDU]*} \
 	    ${CPPFLAGS} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC}
-.endif
+.endif # ${USE_BITCODE:Uno} == "yes"
+.endif # !defined(__MINIX)
 
 .c.d:
 	${_MKTARGET_CREATE}
-	${MKDEP} -f ${.TARGET} -- ${MKDEPFLAGS} \
+	${MKDEP} -f ${.TARGET}.tmp ${_MKDEP_FILEFLAGS} -- ${MKDEPFLAGS} \
 	    ${CFLAGS:C/-([IDU])[  ]*/-\1/Wg:M-[IDU]*} \
-	    ${CPPFLAGS} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC}
+	    ${CPPFLAGS} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} \
+	    ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC} && \
+	    mv ${.TARGET}.tmp ${.TARGET}
 
 .m.d:
 	${_MKTARGET_CREATE}
-	${MKDEP} -f ${.TARGET} -- ${MKDEPFLAGS} \
+	${MKDEP} -f ${.TARGET}.tmp ${_MKDEP_FILEFLAGS} -- ${MKDEPFLAGS} \
 	    ${OBJCFLAGS:C/-([IDU])[  ]*/-\1/Wg:M-[IDU]*} \
-	    ${CPPFLAGS} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC}
+	    ${CPPFLAGS} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} \
+	    ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC} && \
+	    mv ${.TARGET}.tmp ${.TARGET}
 
 .s.d .S.d:
 	${_MKTARGET_CREATE}
-	${MKDEP} -f ${.TARGET} -- ${MKDEPFLAGS} \
+	${MKDEP} -f ${.TARGET}.tmp ${_MKDEP_FILEFLAGS} -- ${MKDEPFLAGS} \
 	    ${AFLAGS:C/-([IDU])[  ]*/-\1/Wg:M-[IDU]*} \
-	    ${CPPFLAGS} ${CPPFLAGS.${.IMPSRC:T}} ${__acpp_flags} ${.IMPSRC}
+	    ${CPPFLAGS} ${AFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} \
+	    ${__acpp_flags} ${.IMPSRC} && \
+	    mv ${.TARGET}.tmp ${.TARGET}
 
 .C.d .cc.d .cpp.d .cxx.d:
 	${_MKTARGET_CREATE}
-	${MKDEP} -f ${.TARGET} -- ${MKDEPFLAGS} \
+	${MKDEPCXX} -f ${.TARGET}.tmp ${_MKDEP_FILEFLAGS} -- ${MKDEPFLAGS} \
 	    ${CXXFLAGS:C/-([IDU])[  ]*/-\1/Wg:M-[IDU]*} \
-	    ${CPPFLAGS} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC}
+	    ${CPPFLAGS} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} \
+	    ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC} && \
+	    mv ${.TARGET}.tmp ${.TARGET}
 
-.endif # defined(SRCS)							# }
+.endif # defined(SRCS) && !empty(SRCS)					# }
 
 ##### Clean rules
-.if defined(SRCS)
-CLEANDIRFILES+= .depend ${__DPSRCS.d} ${.CURDIR}/tags ${CLEANDEPEND}
+.if defined(SRCS) && !empty(SRCS)
+CLEANDIRFILES+= .depend ${__DPSRCS.d} ${__DPSRCS.d:.d=.d.tmp} ${.CURDIR}/tags ${CLEANDEPEND}
 .endif
 
 ##### Custom rules
 .if !target(tags)
 tags: ${SRCS}
-.if defined(SRCS)
+.if defined(SRCS) && !empty(SRCS)
 	-cd "${.CURDIR}"; ctags -f /dev/stdout ${.ALLSRC:N*.h} | \
 	    ${TOOL_SED} "s;\${.CURDIR}/;;" > tags
 .endif

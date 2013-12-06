@@ -44,11 +44,11 @@ __RCSID("$NetBSD: uname.c,v 1.11 2011/09/06 18:35:13 joerg Exp $");
 #include <unistd.h>
 #include <err.h>
 
-#ifdef __minix
+#if defined(__minix)
 #include <string.h>
-#else /* !__minix */
+#else
 #include <sys/sysctl.h>
-#endif /* !__minix */
+#endif /* !defined(__minix) */
 #include <sys/utsname.h>
 
 __dead static void usage(void);
@@ -109,15 +109,7 @@ main(int argc, char **argv)
 	}
 
 	if (!print_mask) {
-#ifdef __minix
-		setprogname(argv[0]);
-
-		/* When executed via the `arch` symlink, do `uname -p` */
-		if (getprogname() != NULL && strcmp(getprogname(), "arch") == 0)
-			print_mask = PRINT_MACHINE_ARCH;
-		else
-#endif /* __minix */
-			print_mask = PRINT_SYSNAME;
+		print_mask = PRINT_SYSNAME;
 	}
 
 	if (uname(&u) != 0) {
@@ -125,16 +117,16 @@ main(int argc, char **argv)
 		/* NOTREACHED */
 	}
 	if (print_mask & PRINT_MACHINE_ARCH) {
-#ifdef __minix
+#if defined(__minix)
 		strlcpy(machine_arch, u.arch, sizeof(machine_arch));
-#else /* !__minix */
+#else
 		int mib[2] = { CTL_HW, HW_MACHINE_ARCH };
 		size_t len = sizeof (machine_arch);
 
 		if (sysctl(mib, sizeof (mib) / sizeof (mib[0]), machine_arch,
 		    &len, NULL, 0) < 0)
 			err(EXIT_FAILURE, "sysctl");
-#endif /* !__minix */
+#endif /* defined(__minix) */
 	}
 
 	if (print_mask & PRINT_SYSNAME) {

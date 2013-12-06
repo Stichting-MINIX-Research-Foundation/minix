@@ -1,31 +1,33 @@
-#	$NetBSD: Makefile.inc,v 1.11 2012/09/18 07:05:15 skrll Exp $
+#	$NetBSD: Makefile.inc,v 1.17 2013/11/28 13:04:35 mrg Exp $
 
 .ifndef _EXTERNAL_GPL3_GCC_USR_BIN_MAKEFILE_INC_
 _EXTERNAL_GPL3_GCC_USR_BIN_MAKEFILE_INC_=1
 
 .include <bsd.own.mk>
 
+GCC_MACHINE_ARCH=${MACHINE_ARCH:S/earmv5/earm/}
+GMP_MACHINE_ARCH=${MACHINE_ARCH:C/armv[4-7]/arm/}
+
 TOP=		${NETBSDSRCDIR}
 DIST=		${TOP}/external/gpl3/gcc/dist
 
-GCCARCH=	${.CURDIR}/../gcc/arch/${MACHINE_ARCH}
+GCCARCH=	${.CURDIR}/../gcc/arch/${GCC_MACHINE_ARCH}
 
-CPPFLAGS+=	-DLOCALEDIR=\"/usr/share/locale\"
+CPPFLAGS+=	-DLOCALEDIR=\"/usr/share/locale\" -DNETBSD_NATIVE
 HOST_CPPFLAGS+=	-I${.CURDIR}/..
 
 # Link in the GMP/MPFR/MPC headers since we don't install them
-BUILDSYMLINKS+=	${NETBSDSRCDIR}/external/lgpl3/gmp/lib/libgmp/arch/${MACHINE_ARCH}/gmp.h gmp.h
-BUILDSYMLINKS+=	${NETBSDSRCDIR}/external/lgpl3/mpfr/dist/mpfr.h mpfr.h
-BUILDSYMLINKS+=	${NETBSDSRCDIR}/external/lgpl3/mpfr/dist/mpf2mpfr.h mpf2mpfr.h
-BUILDSYMLINKS+=	${NETBSDSRCDIR}/external/lgpl2/mpc/dist/src/mpc.h mpc.h
-BUILDSYMLINKS+=	${NETBSDSRCDIR}/external/lgpl2/mpc/dist/src/mpc-log.h mpc-log.h
+BUILDSYMLINKS+=	${NETBSDSRCDIR}/external/lgpl3/gmp/lib/libgmp/arch/${GMP_MACHINE_ARCH}/gmp.h gmp.h
+BUILDSYMLINKS+=	${NETBSDSRCDIR}/external/lgpl3/mpfr/dist/src/mpfr.h mpfr.h
+BUILDSYMLINKS+=	${NETBSDSRCDIR}/external/lgpl3/mpfr/dist/src/mpf2mpfr.h mpf2mpfr.h
+BUILDSYMLINKS+=	${NETBSDSRCDIR}/external/lgpl3/mpc/dist/src/mpc.h mpc.h
+BUILDSYMLINKS+=	${NETBSDSRCDIR}/external/lgpl3/mpc/dist/src/mpc-log.h mpc-log.h
 CPPFLAGS+=	-I.
 # XXX
 DPSRCS+= gmp.h mpfr.h mpf2mpfr.h mpc.h mpc-log.h
 
 .if ${USETOOLS} == "yes"
-COMPATOBJDIR!=	cd ${NETBSDSRCDIR}/tools/compat && ${PRINTOBJDIR}
-NBCOMPATLIB=	-L${COMPATOBJDIR} -lnbcompat
+NBCOMPATLIB=   -L${TOOLDIR}/lib -lnbcompat
 .endif
 
 GNUHOSTDIST=	${DIST}

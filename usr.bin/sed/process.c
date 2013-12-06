@@ -1,4 +1,4 @@
-/*	$NetBSD: process.c,v 1.38 2009/04/13 07:29:55 lukem Exp $	*/
+/*	$NetBSD: process.c,v 1.39 2013/03/17 21:02:54 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -76,7 +76,7 @@
 #if 0
 static char sccsid[] = "@(#)process.c	8.6 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: process.c,v 1.38 2009/04/13 07:29:55 lukem Exp $");
+__RCSID("$NetBSD: process.c,v 1.39 2013/03/17 21:02:54 uwe Exp $");
 #endif
 #endif /* not lint */
 
@@ -84,6 +84,7 @@ __RCSID("$NetBSD: process.c,v 1.38 2009/04/13 07:29:55 lukem Exp $");
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <sys/uio.h>
+
 #include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -93,10 +94,6 @@ __RCSID("$NetBSD: process.c,v 1.38 2009/04/13 07:29:55 lukem Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
-#ifdef __minix
-#include <sys/ttycom.h>
-#endif
 
 #include "defs.h"
 #include "extern.h"
@@ -171,7 +168,7 @@ redirect:
 				psl = 0;
 				if (cp->a2 == NULL || lastaddr)
 					(void)printf("%s", cp->t);
-				break;
+				goto new;
 			case 'd':
 				pd = 1;
 				goto new;

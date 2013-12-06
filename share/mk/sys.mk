@@ -1,22 +1,29 @@
-#	$NetBSD: sys.mk,v 1.110 2012/10/06 20:54:58 christos Exp $
+#	$NetBSD: sys.mk,v 1.118 2013/11/01 17:07:37 christos Exp $
 #	@(#)sys.mk	8.2 (Berkeley) 3/21/94
+#
+# This file contains the basic rules for make(1) and is read first
+# Do not put conditionals that are set on different files here and
+# expect them to work.
 
 # This variable should be used to differentiate Minix builds in Makefiles.
 __MINIX=	yes
 
-.if defined(__MINIX)
+.if !defined(__MINIX)
+unix?=		We run NetBSD.
+
+.SUFFIXES: .a .o .ln .s .S .c .cc .cpp .cxx .C .f .F .r .p .l .y .sh
+.else
+unix?=		We run MINIX.
+
+.SUFFIXES: .a .o .bc .ln .s .S .c .cc .cpp .cxx .C .f .F .r .p .l .y .sh
+
 .if ${MKSMALL:U} == "yes"
 CPPFLAGS+= -DNDEBUG
 DBG=	-Os
 .endif
 
-unix?=		We run MINIX.
-
 CPP?=	/usr/lib/cpp
 .endif # defined(__MINIX)
-unix?=		We run NetBSD.
-
-.SUFFIXES: .a .o .bc .ln .s .S .c .cc .cpp .cxx .C .f .F .r .p .l .y .sh
 
 .LIBS:		.a
 
@@ -39,6 +46,8 @@ DBG?=	-Os -freorder-blocks
 .elif ${MACHINE_ARCH} == "m68k" || ${MACHINE_ARCH} == "m68000"
 # see src/doc/HACKS for details
 DBG?=	-Os
+.elif ${MACHINE_ARCH} == "coldfire"
+DBG?=	-O1
 .elif ${MACHINE_ARCH} == "vax"
 DBG?=	-O1 -fgcse -fstrength-reduce -fgcse-after-reload
 .else
@@ -50,23 +59,15 @@ COMPILE.c?=	${CC} ${CFLAGS} ${CPPFLAGS} -c
 LINK.c?=	${CC} ${CFLAGS} ${CPPFLAGS} ${LDFLAGS}
 
 # C Type Format data is required for DTrace
-# XXX TBD VERSION is not defined
-CTFFLAGS	?=	-L VERSION
-CTFMFLAGS	?=	-t -L VERSION
+CTFFLAGS	?=	-g -L VERSION
+CTFMFLAGS	?=	-g -t -L VERSION
 
-.if defined(MKDTRACE) && ${MKDTRACE} != "no"
-CTFCONVERT	?=	${TOOL_CTFCONVERT}
-CTFMERGE	?=	${TOOL_CTFMERGE}
-.if defined(CFLAGS) && (${CFLAGS:M-g} != "")
-CTFFLAGS	+=	-g
-CTFMFLAGS	+=	-g
-.else
-CFLAGS		+=	-g
-.endif
-.endif
+# We don't define these here, we let the bsd.own.mk to do it
+#CTFCONVERT	?=	ctfconvert
+#CTFMERGE	?=	ctfmerge
 
 CXX?=		c++
-CXXFLAGS?=	${CFLAGS:N-Wno-traditional:N-Wstrict-prototypes:N-Wmissing-prototypes:N-Wno-pointer-sign:N-ffreestanding:N-std=gnu99:N-Wold-style-definition:N-Wno-format-zero-length}
+CXXFLAGS?=	${CFLAGS:N-Wno-traditional:N-Wstrict-prototypes:N-Wmissing-prototypes:N-Wno-pointer-sign:N-ffreestanding:N-std=gnu[0-9][0-9]:N-Wold-style-definition:N-Wno-format-zero-length}
 
 __ALLSRC1=	${empty(DESTDIR):?${.ALLSRC}:${.ALLSRC:S|^${DESTDIR}|^destdir|}}
 __ALLSRC2=	${empty(MAKEOBJDIR):?${__ALLSRC1}:${__ALLSRC1:S|^${MAKEOBJDIR}|^obj|}}
@@ -162,6 +163,9 @@ YACC.y?=	${YACC} ${YFLAGS}
 	${LINK.f} -o ${.TARGET} ${.IMPSRC} ${LDLIBS}
 .f.o:
 	${COMPILE.f} ${.IMPSRC}
+.if defined(CTFCONVERT)
+	${CTFCONVERT} ${CTFFLAGS} ${.TARGET}
+.endif
 .f.a:
 	${COMPILE.f} ${.IMPSRC}
 	${AR} ${ARFLAGS} ${.TARGET} ${.PREFIX}.o
@@ -186,6 +190,9 @@ YACC.y?=	${YACC} ${YFLAGS}
 	${LINK.r} -o ${.TARGET} ${.IMPSRC} ${LDLIBS}
 .r.o:
 	${COMPILE.r} ${.IMPSRC}
+.if defined(CTFCONVERT)
+	${CTFCONVERT} ${CTFFLAGS} ${.TARGET}
+.endif
 .r.a:
 	${COMPILE.r} ${.IMPSRC}
 	${AR} ${ARFLAGS} ${.TARGET} ${.PREFIX}.o
@@ -248,6 +255,9 @@ YACC.y?=	${YACC} ${YFLAGS}
 .l.o:
 	${LEX.l} ${.IMPSRC}
 	${COMPILE.c} -o ${.TARGET} lex.yy.c
+.if defined(CTFCONVERT)
+	${CTFCONVERT} ${CTFFLAGS} ${.TARGET}
+.endif
 	rm -f lex.yy.c
 
 # Yacc
@@ -261,6 +271,9 @@ YACC.y?=	${YACC} ${YFLAGS}
 .y.o:
 	${YACC.y} ${.IMPSRC}
 	${COMPILE.c} -o ${.TARGET} y.tab.c
+.if defined(CTFCONVERT)
+	${CTFCONVERT} ${CTFFLAGS} ${.TARGET}
+.endif
 	rm -f y.tab.c
 
 # Shell

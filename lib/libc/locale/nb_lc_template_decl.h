@@ -1,4 +1,4 @@
-/* $NetBSD: nb_lc_template_decl.h,v 1.2 2009/01/11 02:46:29 christos Exp $ */
+/* $NetBSD: nb_lc_template_decl.h,v 1.4 2013/09/13 13:13:32 joerg Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -36,10 +36,6 @@ _PREFIX(create_impl)(const char * __restrict,
     const char * __restrict, _CATEGORY_TYPE ** __restrict);
 
 static __inline void
-_PREFIX(build_cache)(struct _locale_cache_t * __restrict,
-    _CATEGORY_TYPE * __restrict);
-
-static __inline void
-_PREFIX(fixup)(_CATEGORY_TYPE *);
+_PREFIX(update_global)(_CATEGORY_TYPE *);
 
 #endif /*_NB_LC_TEMPLATE_DECL_H_*/

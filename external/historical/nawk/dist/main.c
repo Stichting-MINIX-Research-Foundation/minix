@@ -22,7 +22,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 THIS SOFTWARE.
 ****************************************************************/
 
-const char	*version = "version 20100523";
+const char	*version = "version 20121220";
 
 #if HAVE_NBTOOL_CONFIG_H
 #include "nbtool_config.h"
@@ -42,7 +42,7 @@ extern	char	**environ;
 extern	int	nfields;
 
 int	dbg	= 0;
-unsigned int srand_seed;
+unsigned int srand_seed = 1;
 char	*cmdname;	/* gets argv[0] for error messages */
 extern	FILE	*yyin;	/* lex input file */
 char	*lexprog;	/* points to program argument if it exists */
@@ -101,6 +101,7 @@ __dead static void fpecatch(int n
 int main(int argc, char *argv[])
 {
 	const char *fs = NULL;
+	char *fn;
 
 	setlocale(LC_ALL, "");
 	setlocale(LC_NUMERIC, "C"); /* for parsing cmdline & prog */
@@ -146,10 +147,15 @@ int main(int argc, char *argv[])
 				safe = 1;
 			break;
 		case 'f':	/* next argument is program filename */
-			argc--;
-			argv++;
-			if (argc <= 1)
-				FATAL("no program filename");
+			if (argv[1][2] != 0) /* arg is -fsomething */
+				fn = &argv[1][2];
+			else {
+				argc--;
+				argv++;
+				if (argc <= 1)
+					FATAL("no program filename");
+				fn = argv[1];
+			}
 			if (npfile >= maxpfile) {
 				maxpfile += 20;
 				pfile = realloc(pfile,
@@ -158,7 +164,7 @@ int main(int argc, char *argv[])
 					FATAL("error allocating space for "
 					    "-f options"); 
 			}
-			pfile[npfile++] = argv[1];
+			pfile[npfile++] = fn;
 			break;
 		case 'F':	/* set field separator */
 			if (argv[1][2] != 0) {	/* arg is -Fsomething */
@@ -172,10 +178,20 @@ int main(int argc, char *argv[])
 				WARNING("field separator FS is empty");
 			break;
 		case 'v':	/* -v a=1 to be done NOW.  one -v for each */
-			if (argv[1][2] == '\0' && --argc > 1 && isclvar((++argv)[1]))
-				setclvar(argv[1]);
-			else if (argv[1][2] != '\0')
-				setclvar(&argv[1][2]);
+			if (argv[1][2] != 0) {  /* arg is -vsomething */
+				if (isclvar(&argv[1][2]))
+					setclvar(&argv[1][2]);
+				else
+					FATAL("invalid -v option argument: %s", &argv[1][2]);
+			} else {		/* arg is -v something */
+				argc--; argv++;
+				if (argc <= 1)
+					FATAL("no variable name");
+				if (isclvar(argv[1]))
+					setclvar(argv[1]);
+				else
+					FATAL("invalid -v option argument: %s", argv[1]);
+			}
 			break;
 		case 'd':
 			dbg = atoi(&argv[1][2]);

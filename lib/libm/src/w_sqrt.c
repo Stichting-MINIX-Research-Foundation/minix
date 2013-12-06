@@ -12,15 +12,21 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: w_sqrt.c,v 1.9 2002/05/26 22:02:03 wiz Exp $");
+__RCSID("$NetBSD: w_sqrt.c,v 1.10 2013/11/19 19:24:34 joerg Exp $");
 #endif
 
 /*
  * wrapper sqrt(x)
  */
 
+#include "namespace.h"
 #include "math.h"
 #include "math_private.h"
+
+#ifndef __HAVE_LONG_DOUBLE
+__strong_alias(_sqrtl, sqrt)
+__weak_alias(sqrtl, _sqrtl)
+#endif
 
 double
 sqrt(double x)		/* wrapper sqrt */

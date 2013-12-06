@@ -26,7 +26,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)sigsetmask.2	8.1 (Berkeley) 6/2/93
-.\"	$NetBSD: sigsetmask.3,v 1.18 2003/08/07 16:42:40 agc Exp $
+.\"	$NetBSD: sigsetmask.3,v 1.19 2013/05/06 13:29:12 wiz Exp $
 .\"
 .Dd August 10, 2002
 .Dt SIGSETMASK 3
@@ -48,7 +48,7 @@ This interface is made obsolete by:
 .Xr sigprocmask 2 .
 .Pp
 .Fn sigsetmask
-sets the current signal mask
+sets the current signal mask.
 Signals are blocked from delivery if the
 corresponding bit in
 .Fa mask

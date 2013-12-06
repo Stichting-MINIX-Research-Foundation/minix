@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.126 2012/08/05 01:43:59 matt Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.132 2013/11/05 14:26:19 martin Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -301,6 +301,7 @@ typedef struct {
 #define EM_SEP		108	/* Sharp embedded microprocessor */
 #define EM_ARCA		109	/* Arca RISC microprocessor */
 #define EM_UNICORE	110	/* UNICORE from PKU-Unity Ltd. and MPRC Peking University */
+#define EM_AARCH64	183	/* AArch64 64-bit ARM microprocessor */
 
 /* Unofficial machine types follow */
 #define EM_AVR32	6317	/* used by NetBSD/avr32 */
@@ -429,6 +430,13 @@ typedef struct {
 #define SHT_HIOS	     0x6fffffff
 #define SHT_LOPROC	     0x70000000 /* Processor-specific range */
 #define SHT_AMD64_UNWIND     0x70000001 /* unwind information */
+#define SHT_ARM_EXIDX	     0x70000001	/* exception index table */
+#define SHT_ARM_PREEMPTMAP   0x70000002 /* BPABI DLL dynamic linking 
+					 * pre-emption map */
+#define SHT_ARM_ATTRIBUTES   0x70000003 /* Object file compatibility 
+					 * attributes */
+#define SHT_ARM_DEBUGOVERLAY 0x70000004 /* See DBGOVL for details */
+#define SHT_ARM_OVERLAYSECTION 0x70000005
 #define SHT_HIPROC	     0x7fffffff
 #define SHT_LOUSER	     0x80000000 /* Application-specific range */
 #define SHT_HIUSER	     0xffffffff
@@ -668,7 +676,12 @@ typedef struct {
 #define DT_FINI_ARRAY	26	/* Size, in bytes, of DT_INIT_ARRAY array */
 #define DT_INIT_ARRAYSZ 27	/* Address of termination function array */
 #define DT_FINI_ARRAYSZ 28	/* Size, in bytes, of DT_FINI_ARRAY array*/
-#define DT_NUM		29
+#define DT_RUNPATH	29	/* overrides DT_RPATH */
+#define DT_FLAGS	30	/* Encodes ORIGIN, SYMBOLIC, TEXTREL, BIND_NOW, STATIC_TLS */
+#define DT_ENCODING	31	/* ??? */
+#define DT_PREINIT_ARRAY 32	/* Address of pre-init function array */
+#define DT_PREINIT_ARRAYSZ 33	/* Size, in bytes, of DT_PREINIT_ARRAY array */
+#define DT_NUM		34
 
 #define DT_LOOS		0x60000000	/* Operating system specific range */
 #define DT_VERSYM	0x6ffffff0	/* Symbol versions */
@@ -680,6 +693,13 @@ typedef struct {
 #define DT_HIOS		0x6fffffff
 #define DT_LOPROC	0x70000000	/* Processor-specific range */
 #define DT_HIPROC	0x7fffffff
+
+/* Flag values for DT_FLAGS */
+#define DF_ORIGIN	0x00000001	/* uses $ORIGIN */
+#define DF_SYMBOLIC	0x00000002	/* */
+#define DF_TEXTREL	0x00000004	/* */
+#define DF_BIND_NOW	0x00000008	/* */
+#define DF_STATICT_LS	0x00000010	/* */
 
 /* Flag values for DT_FLAGS_1 (incomplete) */
 #define DF_1_BIND_NOW	0x00000001	/* Same as DF_BIND_NOW */
@@ -860,6 +880,14 @@ typedef struct {
 /* NetBSD-specific note name */
 #define ELF_NOTE_NETBSD_NAME		"NetBSD\0\0"
 
+#if defined(__minix)
+#define ELF_NOTE_TYPE_MINIX_TAG		1
+/* MINIX3-specific note name and description sizes */
+#define ELF_NOTE_MINIX_NAMESZ		6
+#define ELF_NOTE_MINIX_DESCSZ		4
+#define ELF_NOTE_MINIX_NAME		"Minix\0\0\0"
+#endif /* defined(__minix) */
+
 /* NetBSD-specific note type: Checksum. 
  * There should be 1 NOTE per PT_LOAD section.
  * name: ???
@@ -948,6 +976,35 @@ struct netbsd_elfcore_procinfo {
 	/* Add version 2 fields below here. */
 	int32_t		cpi_siglwp;	/* LWP target of killing signal */
 };
+
+/*
+ * NetBSD-specific note type: MACHINE_ARCH.
+ * There should be 1 NOTE per executable.
+ * name:	NetBSD\0
+ * namesz:	7
+ * desc:	string
+ * descsz:	variable
+ */
+#define ELF_NOTE_TYPE_MARCH_TAG		5
+/* NetBSD-specific note name and description sizes */
+#define ELF_NOTE_MARCH_NAMESZ		ELF_NOTE_NETBSD_NAMESZ
+/* NetBSD-specific note name */
+#define ELF_NOTE_MARCH_NAME		ELF_NOTE_NETBSD_NAME
+
+/*
+ * NetBSD-specific note type: MCMODEL
+ * There should be 1 NOTE per executable.
+ * name:	NetBSD\0
+ * namesz:	7
+ * code model:	string
+ */
+
+#define ELF_NOTE_TYPE_MCMODEL_TAG	6
+/* NetBSD-specific note name and description sizes */
+#define ELF_NOTE_MCMODEL_NAMESZ		ELF_NOTE_NETBSD_NAMESZ
+/* NetBSD-specific note name */
+#define ELF_NOTE_MCMODEL_NAME		ELF_NOTE_NETBSD_NAME
+
 
 #if !defined(ELFSIZE) && defined(ARCH_ELFSIZE)
 #define ELFSIZE ARCH_ELFSIZE

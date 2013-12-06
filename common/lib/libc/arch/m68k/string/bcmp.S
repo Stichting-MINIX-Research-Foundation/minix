@@ -1,4 +1,4 @@
-/*	$NetBSD: bcmp.S,v 1.2 2008/04/28 20:22:52 martin Exp $	*/
+/*	$NetBSD: bcmp.S,v 1.6 2013/09/07 19:06:29 chs Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -68,21 +68,34 @@
 #if 0
 	RCSID("from: @(#)bcmp.s 5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: bcmp.S,v 1.2 2008/04/28 20:22:52 martin Exp $")
+	RCSID("$NetBSD: bcmp.S,v 1.6 2013/09/07 19:06:29 chs Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#ifdef __mcoldfire__
+#define	CMPMB(a,b)	movb b,%d2; cmpb a,%d2
+#define	CMPMW(a,b)	movw b,%d2; cmpw a,%d2
+#define	CMPML(a,b)	movl b,%d2; cmpl a,%d2
+#else
+#define	CMPMB(a,b)	cmpmb a,b
+#define	CMPMW(a,b)	cmpmw a,b
+#define	CMPML(a,b)	cmpml a,b
+#endif
+
 ENTRY(bcmp)
-	movl	%sp@(4),%a0		| string 1
-	movl	%sp@(8),%a1		| string 2
-	movl	%sp@(12),%d1		| length
+	movl	4(%sp),%a0		| string 1
+	movl	8(%sp),%a1		| string 2
+	movl	12(%sp),%d1		| length
+#ifdef __mcoldfire__
+	movl	%d2,-(%sp)		| save temp
+#endif
 
 	/*
 	 * It isn't worth the overhead of aligning to {long}word boundries
 	 * if the string is too short.
 	 */
 	cmpl	#8,%d1
-	jlt	Lbcbyte			
+	jlt	.Lbcbyte			
 
 #ifdef	__mc68010__
 	/*
@@ -93,75 +106,91 @@ ENTRY(bcmp)
 	movl	%a0,%d0
 	addl	%a1,%d0
 	btst	#0,%d0
-	jne	Lbcbyte
+	jne	.Lbcbyte
 #endif	/* __mc68010__ */
 	
 	/* word align */
 	movl	%a0,%d0
 	btst	#0,%d0
-	jeq	Lbcalgndw
-	cmpmb	%a0@+,%a1@+
-	jne	Lbcnoteq
+	jeq	.Lbcalgndw
+	CMPMB((%a0)+,(%a1)+)
+	jne	.Lbcnoteq
 	subql	#1,%d1
-Lbcalgndw:
+.Lbcalgndw:
 	/* long word align */
 	btst	#1,%d0
-	jeq	Lbcalgndl
-	cmpmw	%a0@+,%a1@+
-	jne	Lbcnoteq
+	jeq	.Lbcalgndl
+	CMPMW((%a0)+,(%a1)+)
+	jne	.Lbcnoteq
 	subql	#2,%d1
-Lbcalgndl:
+.Lbcalgndl:
 	/* compare by 8 longwords */
 	movl	%d1,%d0
 	lsrl	#5,%d0			| cnt = len / 32
-	jeq	Lbclong			| if (cnt)
+	jeq	.Lbclong			| if (cnt)
 	andl	#31,%d1			|	len %= 32
 	subql	#1,%d0			|	set up for dbf
-Lbc32loop:
-	cmpml	%a0@+,%a1@+		|	compare 8 longwords
-	jne	Lbcnoteq		|	not equal, return non-zero
-	cmpml	%a0@+,%a1@+
-	jne	Lbcnoteq
-	cmpml	%a0@+,%a1@+
-	jne	Lbcnoteq
-	cmpml	%a0@+,%a1@+
-	jne	Lbcnoteq
-	cmpml	%a0@+,%a1@+
-	jne	Lbcnoteq
-	cmpml	%a0@+,%a1@+
-	jne	Lbcnoteq
-	cmpml	%a0@+,%a1@+
-	jne	Lbcnoteq
-	cmpml	%a0@+,%a1@+
-	jne	Lbcnoteq
-	dbf	%d0,Lbc32loop		|	till done
+.Lbc32loop:
+	CMPML((%a0)+,(%a1)+)		|	compare 1 of 8 longwords
+	jne	.Lbcnoteq		|	not equal, return non-zero
+	CMPML((%a0)+,(%a1)+)		|	compare 2 of 8 longwords
+	jne	.Lbcnoteq
+	CMPML((%a0)+,(%a1)+)		|	compare 3 of 8 longwords
+	jne	.Lbcnoteq
+	CMPML((%a0)+,(%a1)+)		|	compare 4 of 8 longwords
+	jne	.Lbcnoteq
+	CMPML((%a0)+,(%a1)+)		|	compare 5 of 8 longwords
+	jne	.Lbcnoteq
+	CMPML((%a0)+,(%a1)+)		|	compare 6 of 8 longwords
+	jne	.Lbcnoteq
+	CMPML((%a0)+,(%a1)+)		|	compare 7 of 8 longwords
+	jne	.Lbcnoteq
+	CMPML((%a0)+,(%a1)+)		|	compare 8 of 8 longwords
+	jne	.Lbcnoteq
+#ifndef __mcoldfire__
+	dbf	%d0,.Lbc32loop		|	till done
 	clrw	%d0
+#endif
 	subql	#1,%d0
-	jcc	Lbc32loop
+	jcc	.Lbc32loop
 
-Lbclong:
+.Lbclong:
 	/* compare by longwords */
 	movl	%d1,%d0
 	lsrl	#2,%d0			| cnt = len / 4
-	jeq	Lbcbyte			| if (cnt)
+	jeq	.Lbcbyte			| if (cnt)
 	subql	#1,%d0			|	set up for dbf
-Lbclloop:
-	cmpml	%a0@+,%a1@+		|	compare a longword
-	jne	Lbcnoteq		|	not equal, return non-zero
-	dbf	%d0,Lbclloop		|	till done
+.Lbclloop:
+	CMPML((%a0)+,(%a1)+)		|	compare a longword
+	jne	.Lbcnoteq		|	not equal, return non-zero
+#ifdef __mcoldfire__
+	subql	#1,%d0			|	decrement
+	jcc	.Lbclloop		|	till done
+#else
+	dbf	%d0,.Lbclloop		|	till done
+#endif
 	andl	#3,%d1			|	len %= 4
-	jeq	Lbcdone 
+	jeq	.Lbcdone 
 
 	subql	#1,%d1			| set up for dbf
-Lbcbloop:
-	cmpmb	%a0@+,%a1@+		| compare a byte
-	jne	Lbcnoteq		| not equal, return non-zero
-Lbcbyte:
-	dbf	%d1,Lbcbloop
-Lbcdone:
+.Lbcbloop:
+	CMPMB((%a0)+,(%a1)+)		| compare a byte
+	jne	.Lbcnoteq		| not equal, return non-zero
+.Lbcbyte:
+#ifdef __mcoldfire__
+	subql	#1,%d0			|	decrement
+	jcc	.Lbcbloop		|	till done
+#else
+	dbf	%d1,.Lbcbloop
+#endif
+.Lbcdone:
+#ifdef __mcoldfire__
+	movl	(%sp)+,%d2		| restore temp
+#endif
 	movql	#0,%d0
 	rts
 
-Lbcnoteq:
+.Lbcnoteq:
 	movql	#1,%d0
 	rts
+END(bcmp)

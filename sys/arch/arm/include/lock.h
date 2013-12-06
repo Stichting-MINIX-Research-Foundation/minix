@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.21 2012/08/31 17:29:08 matt Exp $	*/
+/*	$NetBSD: lock.h,v 1.25 2013/08/18 04:31:08 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -74,16 +74,19 @@ __cpu_simple_lock_set(__cpu_simple_lock_t *__ptr)
 #endif
 
 #if defined(_KERNEL)
-static __inline __cpu_simple_lock_t
+static __inline unsigned char
 __swp(__cpu_simple_lock_t __val, volatile __cpu_simple_lock_t *__ptr)
 {
 #ifdef _ARM_ARCH_6
-	__cpu_simple_lock_t __rv, __tmp;
+	uint32_t __rv, __tmp;
 	if (sizeof(*__ptr) == 1) {
 		__asm volatile(
 			"1:\t"
 			"ldrexb\t%[__rv], [%[__ptr]]"			"\n\t"
 			"cmp\t%[__rv],%[__val]"				"\n\t"
+#ifdef __thumb__
+			"itt\tne"					"\n\t"
+#endif
 			"strexbne\t%[__tmp], %[__val], [%[__ptr]]"	"\n\t"
 			"cmpne\t%[__tmp], #0"				"\n\t"
 			"bne\t1b"					"\n\t"
@@ -99,6 +102,9 @@ __swp(__cpu_simple_lock_t __val, volatile __cpu_simple_lock_t *__ptr)
 			"1:\t"
 			"ldrex\t%[__rv], [%[__ptr]]"			"\n\t"
 			"cmp\t%[__rv],%[__val]"				"\n\t"
+#ifdef __thumb__
+			"itt\tne"					"\n\t"
+#endif
 			"strexne\t%[__tmp], %[__val], [%[__ptr]]"	"\n\t"
 			"cmpne\t%[__tmp], #0"				"\n\t"
 			"bne\t1b"					"\n\t"
@@ -112,9 +118,10 @@ __swp(__cpu_simple_lock_t __val, volatile __cpu_simple_lock_t *__ptr)
 	}
 	return __rv;
 #else
+	uint32_t __val32;
 	__asm volatile("swpb %0, %1, [%2]"
-	    : "=&r" (__val) : "r" (__val), "r" (__ptr) : "memory");
-	return __val;
+	    : "=&r" (__val32) : "r" (__val), "r" (__ptr) : "memory");
+	return __val32;
 #endif
 }
 #else
@@ -135,11 +142,14 @@ __swp(int __val, volatile int *__ptr)
 #ifdef _ARM_ARCH_6
 		"ldrex\t%[__rv], [%[__ptr]]"			"\n\t"
 		"cmp\t%[__rv],%[__val]"				"\n\t"
+#ifdef __thumb__
+		"it\tne"					"\n\t"
+#endif
 		"strexne\t%[__tmp], %[__val], [%[__ptr]]"	"\n\t"
 #else
 		"swp\t%[__rv], %[__val], [%[__ptr]]"		"\n\t"
+		"mov\t%[__tmp], #0"				"\n\t"
 		"cmp\t%[__rv],%[__val]"				"\n\t"
-		"movs\t%[__tmp], #0"				"\n\t"
 #endif
 		"cmpne\t%[__tmp], #0"				"\n\t"
 		"bne\t1b"					"\n\t"
@@ -156,7 +166,7 @@ __swp(int __val, volatile int *__ptr)
 }
 #endif /* _KERNEL */
 
-static __inline void __attribute__((__unused__))
+static __inline void __unused
 __cpu_simple_lock_init(__cpu_simple_lock_t *alp)
 {
 
@@ -166,22 +176,30 @@ __cpu_simple_lock_init(__cpu_simple_lock_t *alp)
 #endif
 }
 
-static __inline void __attribute__((__unused__))
+#if !defined(__thumb__) || defined(_ARM_ARCH_T2)
+static __inline void __unused
 __cpu_simple_lock(__cpu_simple_lock_t *alp)
 {
 
 	while (__swp(__SIMPLELOCK_LOCKED, alp) != __SIMPLELOCK_UNLOCKED)
 		continue;
 }
+#else
+void __cpu_simple_lock(__cpu_simple_lock_t *);
+#endif
 
-static __inline int __attribute__((__unused__))
+#if !defined(__thumb__) || defined(_ARM_ARCH_T2)
+static __inline int __unused
 __cpu_simple_lock_try(__cpu_simple_lock_t *alp)
 {
 
 	return (__swp(__SIMPLELOCK_LOCKED, alp) == __SIMPLELOCK_UNLOCKED);
 }
+#else
+int __cpu_simple_lock_try(__cpu_simple_lock_t *);
+#endif
 
-static __inline void __attribute__((__unused__))
+static __inline void __unused
 __cpu_simple_unlock(__cpu_simple_lock_t *alp)
 {
 

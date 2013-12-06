@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_number.c,v 1.24 2012/07/27 09:10:59 pooka Exp $	*/
+/*	$NetBSD: prop_number.c,v 1.25 2013/10/18 18:26:20 martin Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -314,7 +314,7 @@ _prop_number_alloc(const struct _prop_number_value *pnv)
 	rpn = _prop_rb_tree_insert_node(&_prop_number_tree, pn);
 	_PROP_ASSERT(rpn == pn);
 	_PROP_MUTEX_UNLOCK(_prop_number_tree_mutex);
-	return (pn);
+	return (rpn);
 }
 
 /*

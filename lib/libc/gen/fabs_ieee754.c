@@ -1,4 +1,4 @@
-/*	$NetBSD: fabs_ieee754.c,v 1.2 2010/09/10 16:32:35 matt Exp $	*/
+/*	$NetBSD: fabs_ieee754.c,v 1.3 2013/11/29 22:15:26 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fabs_ieee754.c,v 1.2 2010/09/10 16:32:35 matt Exp $");
+__RCSID("$NetBSD: fabs_ieee754.c,v 1.3 2013/11/29 22:15:26 joerg Exp $");
 #endif
 
 #include <machine/ieee.h>
@@ -41,6 +41,10 @@ __RCSID("$NetBSD: fabs_ieee754.c,v 1.2 2010/09/10 16:32:35 matt Exp $");
  * 7.12.3.6 fabs - return the absolute value of the argument
  *          IEEE 754 double-precision version
  */
+#ifndef __HAVE_LONG_DOUBLE
+__strong_alias(fabsl, fabs)
+#endif
+
 double
 fabs(double x)
 {

@@ -1,15 +1,13 @@
 
 #------------------------------------------------------------------------------
-# $File: netbsd,v 1.19 2011/10/31 17:23:34 christos Exp $
+# $File: netbsd,v 1.20 2013/01/09 22:37:24 christos Exp $
 # netbsd:  file(1) magic for NetBSD objects
 #
 # All new-style magic numbers are in network byte order.
+# The old-style magic numbers are indistinguishable from the same magic
+# numbers used in other systems, and are handled, for all those systems,
+# in aout.
 #
-
-0	lelong			000000407	a.out NetBSD little-endian object file
->16	lelong			>0		not stripped
-0	belong			000000407	a.out NetBSD big-endian object file
->16	belong			>0		not stripped
 
 0	belong&0377777777	041400413	a.out NetBSD/i386 demand paged
 >0	byte			&0x80		

@@ -41,10 +41,6 @@
 #include "run.h"
 #include "stacktrace.h"
 
-#if !defined(WCOREDUMP) && defined(__minix)
-#define WCOREDUMP(x) ((x) & 0x80)
-#endif /*!defined(WCOREDUMP) && defined(__minix) */
-
 
 /// Template for the creation of the temporary work directories.
 #define WORKDIR_TEMPLATE "kyua.plain-tester.XXXXXX"

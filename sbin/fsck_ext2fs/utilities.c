@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.22 2011/06/09 19:57:51 christos Exp $	*/
+/*	$NetBSD: utilities.c,v 1.23 2013/06/23 02:06:04 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -58,7 +58,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: utilities.c,v 1.22 2011/06/09 19:57:51 christos Exp $");
+__RCSID("$NetBSD: utilities.c,v 1.23 2013/06/23 02:06:04 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -183,7 +183,7 @@ getdatablk(daddr_t blkno, long size)
 	struct bufarea *bp;
 
 	for (bp = bufhead.b_next; bp != &bufhead; bp = bp->b_next)
-		if (bp->b_bno == fsbtodb(&sblock, blkno))
+		if (bp->b_bno == EXT2_FSBTODB(&sblock, blkno))
 			goto foundit;
 	for (bp = bufhead.b_prev; bp != &bufhead; bp = bp->b_prev)
 		if ((bp->b_flags & B_INUSE) == 0)
@@ -210,7 +210,7 @@ getblk(struct bufarea *bp, daddr_t blk, long size)
 {
 	daddr_t dblk;
 
-	dblk = fsbtodb(&sblock, blk);
+	dblk = EXT2_FSBTODB(&sblock, blk);
 	if (bp->b_bno != dblk) {
 		flush(fswritefd, bp);
 		bp->b_errs = bread(fsreadfd, bp->b_un.b_buf, dblk, size);
@@ -238,7 +238,7 @@ flush(int fd, struct bufarea *bp)
 	for (i = 0; i < sblock.e2fs_ngdb; i++) {
 		bwrite(fswritefd, (char *)
 			&sblock.e2fs_gd[i* sblock.e2fs_bsize / sizeof(struct ext2_gd)],
-		    fsbtodb(&sblock, ((sblock.e2fs_bsize>1024)?0:1)+i+1),
+		    EXT2_FSBTODB(&sblock, ((sblock.e2fs_bsize>1024)?0:1)+i+1),
 		    sblock.e2fs_bsize);
 	}
 }
@@ -310,11 +310,7 @@ bread(int fd, char *buf, daddr_t blk, long size)
 {
 	char *cp;
 	int i, errs;
-#ifndef __minix
 	off_t offset;
-#else
-	u64_t offset;
-#endif
 
 	offset = blk;
 	offset *= dev_bsize;
@@ -350,11 +346,7 @@ bwrite(int fd, char *buf, daddr_t blk, long size)
 {
 	int i;
 	char *cp;
-#ifndef __minix
 	off_t offset;
-#else
-	u64_t offset;
-#endif
 
 	if (fd < 0)
 		return;

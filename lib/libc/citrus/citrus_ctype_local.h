@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_ctype_local.h,v 1.3 2008/02/09 14:56:20 junyoung Exp $	*/
+/*	$NetBSD: citrus_ctype_local.h,v 1.4 2013/05/28 16:57:56 joerg Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -60,6 +60,11 @@ static int	_citrus_##_e_##_ctype_mbsrtowcs(void * __restrict,	      \
 					 const char ** __restrict,	      \
 					 size_t, void * __restrict,	      \
 					 size_t * __restrict);		      \
+static int	_citrus_##_e_##_ctype_mbsnrtowcs(_citrus_ctype_rec_t * __restrict, \
+					 wchar_t * __restrict,		      \
+					 const char ** __restrict,	      \
+					 size_t, size_t, void * __restrict,   \
+					 size_t * __restrict);		      \
 static int	_citrus_##_e_##_ctype_mbstowcs(void * __restrict,	      \
 					wchar_t * __restrict,		      \
 					const char * __restrict,	      \
@@ -76,6 +81,11 @@ static int	_citrus_##_e_##_ctype_wcsrtombs(void * __restrict,	      \
 					 char * __restrict,		      \
 					 const wchar_t ** __restrict,	      \
 					 size_t, void * __restrict,	      \
+					 size_t * __restrict);		      \
+static int	_citrus_##_e_##_ctype_wcsnrtombs(_citrus_ctype_rec_t * __restrict, \
+					 char * __restrict,		      \
+					 const wchar_t ** __restrict,	      \
+					 size_t, size_t, void * __restrict,   \
 					 size_t * __restrict);		      \
 static int	_citrus_##_e_##_ctype_wcstombs(void * __restrict,	      \
 					char * __restrict,		      \
@@ -107,7 +117,9 @@ _citrus_ctype_ops_rec_t _citrus_##_e_##_ctype_ops = {			\
 	/* co_wcstombs */	&_citrus_##_e_##_ctype_wcstombs,	\
 	/* co_wctomb */		&_citrus_##_e_##_ctype_wctomb,		\
 	/* co_btowc */		&_citrus_##_e_##_ctype_btowc,		\
-	/* co_wctob */		&_citrus_##_e_##_ctype_wctob		\
+	/* co_wctob */		&_citrus_##_e_##_ctype_wctob,		\
+	/* co_mbsnrtowcs */	&_citrus_##_e_##_ctype_mbsnrtowcs,	\
+	/* co_wcsnrtombs */	&_citrus_##_e_##_ctype_wcsnrtombs,	\
 }
 
 typedef struct _citrus_ctype_ops_rec	_citrus_ctype_ops_rec_t;
@@ -129,7 +141,10 @@ typedef int	(*_citrus_ctype_mbsinit_t)
 	(void * __restrict, const void * __restrict, int * __restrict);
 typedef int	(*_citrus_ctype_mbsrtowcs_t)
 	(void * __restrict, wchar_t * __restrict, const char ** __restrict,
-	 size_t, void * __restrict,
+	 size_t, void * __restrict, size_t * __restrict);
+typedef int	(*_citrus_ctype_mbsnrtowcs_t)
+	(_citrus_ctype_rec_t * __restrict, wchar_t * __restrict,
+	 const char ** __restrict, size_t, size_t, void * __restrict,
 	 size_t * __restrict);
 typedef int	(*_citrus_ctype_mbstowcs_t)
 	(void * __restrict, wchar_t * __restrict, const char * __restrict,
@@ -143,6 +158,10 @@ typedef int	(*_citrus_ctype_wcrtomb_t)
 typedef int	(*_citrus_ctype_wcsrtombs_t)
 	(void * __restrict, char * __restrict, const wchar_t ** __restrict,
 	 size_t, void * __restrict, size_t * __restrict);
+typedef int	(*_citrus_ctype_wcsnrtombs_t)
+	(_citrus_ctype_rec_t * __restrict, char * __restrict,
+	 const wchar_t ** __restrict, size_t, size_t, void * __restrict,
+	 size_t * __restrict);
 typedef int	(*_citrus_ctype_wcstombs_t)
 	(void * __restrict, char * __restrict, const wchar_t * __restrict,
 	 size_t, size_t * __restrict);
@@ -152,16 +171,20 @@ typedef int	(*_citrus_ctype_btowc_t)
 	(_citrus_ctype_rec_t * __restrict, int, wint_t * __restrict);
 typedef int	(*_citrus_ctype_wctob_t)
 	(_citrus_ctype_rec_t * __restrict, wint_t, int * __restrict);
+#include "citrus_ctype_fallback.h"
 
 /*
  * ABI Version change log:
  *   0x00000001
  *     initial version
  *   0x00000002
- *     ops record:	btowc and wctob are added.
+ *     ops record:	btowc and wctob added.
+ *     ctype record:	unchanged.
+ *   0x00000003
+ *     ops record:	mbsnrtowcs and wcsnrtombs added.
  *     ctype record:	unchanged.
  */
-#define _CITRUS_CTYPE_ABI_VERSION	0x00000002
+#define _CITRUS_CTYPE_ABI_VERSION	0x00000003
 struct _citrus_ctype_ops_rec {
 	uint32_t			co_abi_version;
 	/* version 0x00000001 */
@@ -182,6 +205,9 @@ struct _citrus_ctype_ops_rec {
 	/* version 0x00000002 */
 	_citrus_ctype_btowc_t		co_btowc;
 	_citrus_ctype_wctob_t		co_wctob;
+	/* version 0x00000003 */
+	_citrus_ctype_mbsnrtowcs_t	co_mbsnrtowcs;
+	_citrus_ctype_wcsnrtombs_t	co_wcsnrtombs;
 };
 
 #define _CITRUS_DEFAULT_CTYPE_NAME	"NONE"

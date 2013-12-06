@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.84 2011/08/09 15:02:30 jmcneill Exp $
+#	$NetBSD: Makefile,v 1.90 2013/10/30 15:17:01 apb Exp $
 
 # Experimental RCS METALOG versioning
 # (Needs host's rcs(1) commands)
@@ -124,9 +124,17 @@ clean_METALOG: .PHONY
 METALOG.unpriv= -M ${METALOG}.sanitised
 sanitise_METALOG: .PHONY ${METALOG}.sanitised
 ${METALOG}.sanitised: ${METALOG}
-	sort ${METALOG} | \
-	    ${TOOL_MTREE} -CSM -k all -N ${NETBSDSRCDIR}/etc \
+# We keep only the last entry for update builds, but for clean builds we
+# want to make sure we install files only once.
+.if ${MKUPDATE} != "no"
+	${TOOL_AWK} \
+	    '{ a[$$1] = $$0; } END { for (f in a) print a[f]; }' ${METALOG} | \
+	    sort | ${TOOL_MTREE} -CSM -k all -N ${NETBSDSRCDIR}/etc \
 	    >${METALOG}.new
+.else
+	    sort ${METALOG} | ${TOOL_MTREE} -CSM -k all -N ${NETBSDSRCDIR}/etc \
+	    >${METALOG}.new
+.endif
 	mv ${METALOG}.new ${METALOG}.sanitised
 .if defined(RCSMETALOG)
 	. ./metalog.subr; \
@@ -298,6 +306,22 @@ makesyspkgsums: .PHONY check_RELEASEDIR
 # just being created as necessary?
 makedeps: .PHONY
 	${SETSCMD} ./syspkgdeps all >${.CURDIR}/deps
+
+# Sort the lists files
+sortlists: .PHONY
+	find ${.CURDIR}/lists \! \( -name CVS -prune \) -type f -print \
+	| while read f ; do \
+	    ${_MKSHMSG} "sorting $${f#${.CURDIR}/}" ; \
+	    { grep '^#' "$$f" ; \
+	      grep -v '^#' "$$f" | sort ; \
+	    } >"$$f".tmp; \
+	    if cmp "$$f" "$$f".tmp >/dev/null; then \
+	      : "$$f is unchanged" ; \
+	      rm "$$f".tmp ; \
+	    else \
+	      mv "$$f".tmp "$$f" ; \
+	    fi ; \
+	  done
 
 #
 # MAIN ENTRY POINTS

@@ -1,4 +1,4 @@
-/*	$NetBSD: setjmp.S,v 1.12 2006/03/09 16:20:27 christos Exp $	*/
+/*	$NetBSD: setjmp.S,v 1.15 2013/07/17 03:05:41 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -34,12 +34,13 @@
  */
 
 #include <machine/asm.h>
+#include "assym.h"
 
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 	RCSID("from: @(#)setjmp.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: setjmp.S,v 1.12 2006/03/09 16:20:27 christos Exp $")
+	RCSID("$NetBSD: setjmp.S,v 1.15 2013/07/17 03:05:41 matt Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -56,38 +57,38 @@
 
 ENTRY(__setjmp14)
 	/* Get signal stack info.  Note overlay of ss_sp and ss_size! */
-	lea	%sp@(-12),%sp	/* sizeof(stack_t) */
-	clrl	%sp@		/* ss = NULL */
-	movl	%sp,%sp@(4)	/* oss = stack_t on stack */
+	lea	-12(%sp),%sp	/* sizeof(stack_t) */
+	clrl	(%sp)		/* ss = NULL */
+	movl	%sp,4(%sp)	/* oss = stack_t on stack */
 	jbsr	PIC_PLT(_C_LABEL(__sigaltstack14))
 
-	movl	%sp@(8),%d0	/* ss_flags */
+	movl	8(%sp),%d0	/* ss_flags */
 	andl	#1,%d0		/* extract SS_ONSTACK */
-	lea	%sp@(12),%sp	/* pop stack_t */
+	lea	12(%sp),%sp	/* pop stack_t */
 
 	/* Get pointer to jmp_buf; a sigcontext is at the beginning. */
-	movl	%sp@(4),%a0
-	movl	%d0,%a0@	/* store onstack */
-	clrl	%a0@(4)		/* unused word (old style signal mask) */
+	movl	4(%sp),%a0
+	movl	%d0,SC_ONSTACK(%a0) /* store onstack */
+	clrl	SC___MASK13(%a0) /* unused word (old style signal mask) */
 
 	/* Get the signal mask. */
-	pea	%a0@(28)	/* oset = &sc.sc_mask */
-	movl	#0,%sp@-	/* set = NULL */
-	movl	#0,%sp@-	/* action = 0 <ignored> */
+	pea	SC_MASK(%a0)	/* oset = &sc.sc_mask */
+	movl	#0,-(%sp)	/* set = NULL */
+	movl	#0,-(%sp)	/* action = 0 <ignored> */
 	jbsr	PIC_PLT(_C_LABEL(__sigprocmask14))
 	addl	#12,%sp
 
-	movl	%sp@(4),%a0	/* get jmp_buf pointer again */
-	lea	%sp@(4),%a1	/* adjust SP since we won't rts */
-	movl	%a1,%a0@(8)	/* save SP */
-	movl	%a6,%a0@(12)	/* save FP */
-	clrl	%a0@(16)	/* no AP */
-	movl	%sp@,%a0@(20)	/* save return PC */
-	clrl	%a0@(24)	/* clear PS */
+	movl	4(%sp),%a0	/* get jmp_buf pointer again */
+	lea	4(%sp),%a1	/* adjust SP since we won't rts */
+	movl	%a1,SC_SP(%a0)	/* save SP */
+	movl	%a6,SC_FP(%a0)	/* save FP */
+	clrl	SC_AP(%a0)	/* no AP */
+	movl	(%sp),SC_PC(%a0)/* save return PC */
+	clrl	SC_PS(%a0)	/* clear PS */
 
 	/* Save remaining non-scratch regs after signal mask. */
-	moveml	#0x3CFC,%a0@(44)
+	moveml	#0x3CFC,SC_SIZE(%a0)
 
 	clrl	%d0		/* return 0 */
 	rts
-
+END(__setjmp14)

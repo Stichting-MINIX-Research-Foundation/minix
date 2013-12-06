@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.hostlib.mk,v 1.16 2011/09/10 16:57:35 apb Exp $
+#	$NetBSD: bsd.hostlib.mk,v 1.17 2013/10/29 16:11:46 joerg Exp $
 
 .include <bsd.init.mk>
 .include <bsd.sys.mk>
@@ -8,10 +8,12 @@
 ##### Default values
 CFLAGS+=	${COPTS}
 HOST_MKDEP?=	CC=${HOST_CC:Q} mkdep
+HOST_MKDEPCXX?=	CC=${HOST_CXX:Q} mkdep
 MKDEP_SUFFIXES?=	.o .lo
 
 # Override these:
 MKDEP:=		${HOST_MKDEP}
+MKDEPCXX:=	${HOST_MKDEPCXX}
 
 .if ${TOOLCHAIN_MISSING} == "no" || defined(EXTERNAL_TOOLCHAIN)
 OBJHOSTMACHINE=	# set

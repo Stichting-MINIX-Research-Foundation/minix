@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.12 2012/08/16 17:35:01 matt Exp $	*/
+/*	$NetBSD: proc.h,v 1.15 2013/09/11 04:24:48 matt Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -48,14 +48,17 @@ struct mdlwp {
 };
 
 /* Flags setttings for md_flags */
-#define MDLWP_VFPUSED		0x00000001	/* Process used the VFP */
 #define MDLWP_NOALIGNFLT	0x00000002	/* For EXEC_AOUT */
+#define MDLWP_VFPINTR		0x00000004	/* VFP used in intr */
 
 
 struct mdproc {
 	void	(*md_syscall)(struct trapframe *, struct lwp *, uint32_t);
 	int	pmc_enabled;		/* bitfield of enabled counters */
 	void	*pmc_state;		/* port-specific pmc state */
+	char	md_march[12];		/* machine arch of executable */
 };
+
+#define	PROC0_MD_INITIALIZERS .p_md = { .md_march = MACHINE_ARCH },
 
 #endif /* _ARM32_PROC_H_ */

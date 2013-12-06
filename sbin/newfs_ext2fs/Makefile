@@ -1,11 +1,5 @@
-#	$NetBSD: Makefile,v 1.4 2012/03/24 08:22:24 joerg Exp $
+#	$NetBSD: Makefile,v 1.6 2013/11/09 21:39:27 christos Exp $
 #	@(#)Makefile	8.2 (Berkeley) 3/27/94
-
-.if defined(__MINIX)
-WARNS=3
-.endif
-
-WARNS?=	4
 
 CWARNFLAGS+=	-Wno-sign-compare
 
@@ -24,10 +18,10 @@ LDADD+= -lutil
 LDADD+=-lprop
 DPADD+=${LIBPROP}
 
-SYMLINKS+= $(BINDIR)/$(PROG)  $(BINDIR)/newfs_ext2 \
-	$(BINDIR)/$(PROG)  $(BINDIR)/mkfs.ext2
+.PATH:	${NETBSDSRCDIR}/sys/ufs/ext2fs ${FSCK}
 
-#.PATH:	${NETBSDSRCDIR}/sys/ufs/ext2fs ${FSCK}
-.PATH:	${NETBSDSRCDIR}/sbin/fsck_ext2fs ${FSCK}
+.if ${MACHINE_ARCH} == "vax"
+COPTS.mke2fs.c=-O0
+.endif
 
 .include <bsd.prog.mk>

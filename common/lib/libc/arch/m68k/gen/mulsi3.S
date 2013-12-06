@@ -1,4 +1,4 @@
-/*	$NetBSD: mulsi3.S,v 1.2 2006/01/05 22:33:34 he Exp $	*/
+/*	$NetBSD: mulsi3.S,v 1.4 2013/07/16 23:24:18 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,24 +39,24 @@
 #if 0
 	RCSID("from: @(#)mulsi3.s	5.1 (Berkeley) 6/7/90")
 #else
-	RCSID("$NetBSD: mulsi3.S,v 1.2 2006/01/05 22:33:34 he Exp $")
+	RCSID("$NetBSD: mulsi3.S,v 1.4 2013/07/16 23:24:18 matt Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 /* int * int */
 ENTRY(__mulsi3)
 #ifndef __mc68010__
-	movel	%sp@(4),%d0
-	mulsl	%sp@(8),%d0
+	movel	4(%sp),%d0
+	mulsl	8(%sp),%d0
 #else
 | NB: this requires that __udivsi3 preserve %a0 and return
 | the modulus in %d1:
-	movew	%sp@(6), %d0
+	movew	6(%sp), %d0
 	movel	%d0, %a0	| save B
-	muluw	%sp@(8), %d0	| %d0 holds B * C
-	movew	%sp@(10), %d1
+	muluw	8(%sp), %d0	| %d0 holds B * C
+	movew	10(%sp), %d1
 	movel	%d1, %a1	| save D
-	muluw	%sp@(4), %d1	| %d1 holds A * D
+	muluw	4(%sp), %d1	| %d1 holds A * D
 	addw	%d1, %d0	| %d0 holds (B * C) + (A * D)
 	swap	%d0
 	clrw	%d0		| %d0 holds ((B * C) + (A * D)) << 16
@@ -66,3 +66,4 @@ ENTRY(__mulsi3)
 	addl	%a0, %d0	| final result
 #endif /* __mc68010__ */
 	rts
+END(__mulsi3)

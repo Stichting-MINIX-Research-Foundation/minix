@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_bmap.c,v 1.25 2009/10/19 18:41:17 bouyer Exp $	*/
+/*	$NetBSD: ext2fs_bmap.c,v 1.26 2013/01/22 09:39:15 dholland Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_bmap.c,v 1.25 2009/10/19 18:41:17 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_bmap.c,v 1.26 2013/01/22 09:39:15 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -139,7 +139,7 @@ ext2fs_bmaparray(struct vnode *vp, daddr_t bn, daddr_t *bnp, struct indir *ap,
 	struct buf *bp, *cbp;
 	struct ufsmount *ump;
 	struct mount *mp;
-	struct indir a[NIADDR+1], *xap;
+	struct indir a[EXT2FS_NIADDR+1], *xap;
 	daddr_t daddr;
 	daddr_t metalbn;
 	int error, maxrun = 0, num;
@@ -163,14 +163,14 @@ ext2fs_bmaparray(struct vnode *vp, daddr_t bn, daddr_t *bnp, struct indir *ap,
 		maxrun = MAXBSIZE / mp->mnt_stat.f_iosize - 1;
 	}
 
-	if (bn >= 0 && bn < NDADDR) {
+	if (bn >= 0 && bn < EXT2FS_NDADDR) {
 		/* XXX ondisk32 */
 		*bnp = blkptrtodb(ump, fs2h32(ip->i_e2fs_blocks[bn]));
 		if (*bnp == 0)
 			*bnp = -1;
 		else if (runp)
 			/* XXX ondisk32 */
-			for (++bn; bn < NDADDR && *runp < maxrun &&
+			for (++bn; bn < EXT2FS_NDADDR && *runp < maxrun &&
 				is_sequential(ump, (daddr_t)fs2h32(ip->i_e2fs_blocks[bn - 1]),
 							  (daddr_t)fs2h32(ip->i_e2fs_blocks[bn]));
 				++bn, ++*runp);
@@ -187,10 +187,10 @@ ext2fs_bmaparray(struct vnode *vp, daddr_t bn, daddr_t *bnp, struct indir *ap,
 
 	/* Get disk address out of indirect block array */
 	/* XXX ondisk32 */
-	daddr = fs2h32(ip->i_e2fs_blocks[NDADDR + xap->in_off]);
+	daddr = fs2h32(ip->i_e2fs_blocks[EXT2FS_NDADDR + xap->in_off]);
 
 #ifdef DIAGNOSTIC
-    if (num > NIADDR + 1 || num < 1) {
+    if (num > EXT2FS_NIADDR + 1 || num < 1) {
 		printf("ext2fs_bmaparray: num=%d\n", num);
 		panic("ext2fs_bmaparray: num");
 	}

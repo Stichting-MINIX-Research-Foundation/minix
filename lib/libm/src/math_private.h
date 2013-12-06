@@ -11,7 +11,7 @@
 
 /*
  * from: @(#)fdlibm.h 5.1 93/09/24
- * $NetBSD: math_private.h,v 1.16 2010/09/16 20:39:50 drochner Exp $
+ * $NetBSD: math_private.h,v 1.20 2013/11/19 19:24:34 joerg Exp $
  */
 
 #ifndef _MATH_PRIVATE_H_
@@ -48,6 +48,9 @@ typedef union
     u_int32_t msw;
     u_int32_t lsw;
   } parts;
+  struct {
+    u_int64_t w;
+  } xparts;
 } ieee_double_shape_type;
 
 #endif
@@ -63,6 +66,9 @@ typedef union
     u_int32_t lsw;
     u_int32_t msw;
   } parts;
+  struct {
+    u_int64_t w;
+  } xparts;
 } ieee_double_shape_type;
 
 #endif
@@ -76,6 +82,15 @@ do {								\
   (ix0) = ew_u.parts.msw;					\
   (ix1) = ew_u.parts.lsw;					\
 } while (/*CONSTCOND*/0)
+
+/* Get a 64-bit int from a double. */
+#define EXTRACT_WORD64(ix,d)					\
+do {								\
+  ieee_double_shape_type ew_u;					\
+  ew_u.value = (d);						\
+  (ix) = ew_u.xparts.w;						\
+} while (/*CONSTCOND*/0)
+
 
 /* Get the more significant 32 bit int from a double.  */
 
@@ -104,6 +119,15 @@ do {								\
   iw_u.parts.lsw = (ix1);					\
   (d) = iw_u.value;						\
 } while (/*CONSTCOND*/0)
+
+/* Set a double from a 64-bit int. */
+#define INSERT_WORD64(d,ix)					\
+do {								\
+  ieee_double_shape_type iw_u;					\
+  iw_u.xparts.w = (ix);						\
+  (d) = iw_u.value;						\
+} while (/*CONSTCOND*/0)
+
 
 /* Set the more significant 32 bits of a double from an int.  */
 
@@ -274,5 +298,38 @@ extern float __kernel_sinf __P((float,float,int));
 extern float __kernel_cosf __P((float,float));
 extern float __kernel_tanf __P((float,float,int));
 extern int   __kernel_rem_pio2f __P((float*,float*,int,int,int,const int*));
+
+/* ieee style elementary long double functions */
+extern long double __ieee754_fmodl(long double, long double);
+extern long double __ieee754_sqrtl(long double);
+
+/*
+ * TRUNC() is a macro that sets the trailing 27 bits in the mantissa of an
+ * IEEE double variable to zero.  It must be expression-like for syntactic
+ * reasons, and we implement this expression using an inline function
+ * instead of a pure macro to avoid depending on the gcc feature of
+ * statement-expressions.
+ */
+#define	TRUNC(d)	(_b_trunc(&(d)))
+
+static __inline void
+_b_trunc(volatile double *_dp)
+{
+	uint32_t _lw;
+
+	GET_LOW_WORD(_lw, *_dp);
+	SET_LOW_WORD(*_dp, _lw & 0xf8000000);
+}
+
+struct Double {
+	double	a;
+	double	b;
+};
+
+/*
+ * Functions internal to the math package, yet not static.
+ */
+double	__exp__D(double, double);
+struct Double __log__D(double);
 
 #endif /* _MATH_PRIVATE_H_ */

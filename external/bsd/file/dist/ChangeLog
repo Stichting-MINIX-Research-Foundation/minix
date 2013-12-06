@@ -1,3 +1,80 @@
+2013-03-06  21:24  Christos Zoulas <christos@zoulas.com>
+
+	* fix recursive magic separator printing
+
+2013-02-26  19:28  Christos Zoulas <christos@zoulas.com>
+
+	* limit recursion level for mget
+	* fix pread() related breakage in cdf
+	* handle offsets properly in recursive "use"
+
+2013-02-18  10:39  Christos Zoulas <christos@zoulas.com>
+
+	* add elf reading of debug info to determine if file is stripped
+	  (Jan Kaluza)
+	* use pread()
+
+2013-01-25  18:05  Christos Zoulas <christos@zoulas.com>
+
+	* change mime description size from 64 to 80 to accommodate OOXML.
+
+2013-01-11  14:50  Christos Zoulas <christos@zoulas.com>
+
+	* Warn about inconsistent continuation levels.
+	* Change fsmagic to add a space after it prints.
+
+2013-01-10  21:00  Christos Zoulas <christos@zoulas.com>
+
+	* Make getline public so that file can link against it.
+	  Perhaps it is better to rename it, or hide it differently.
+	  Fixes builds on platforms that do not provide it.
+	  
+2013-01-07  16:30  Christos Zoulas <christos@zoulas.com>
+
+	* Add SuS d{,1,2,4,8}, u{,1,2,4,8} and document
+	  what long, int, short, etc is (Guy Harris)
+
+2013-01-06  11:20  Christos Zoulas <christos@zoulas.com>
+
+	* add magic_version function and constant
+	* Redo memory allocation and de-allocation.
+	  (prevents double frees on non mmap platforms)
+	* Fix bug with name/use having to do with passing
+	  found state from the parent to the child and back.
+
+2012-12-19   8:47  Christos Zoulas <christos@zoulas.com>
+
+	* Only print elf capabilities for archs we know (Jan Kaluza)
+
+2012-10-30  19:14  Christos Zoulas <christos@zoulas.com>
+
+	* Add "name" and "use" file types in order to look
+	  inside mach-o files.
+
+2012-09-06  10:40  Christos Zoulas <christos@zoulas.com>
+
+	* make --version exit 0 (Matthew Schultz)
+	* add string/T (Jan Kaluza)
+
+2012-08-09  2:15  Christos Zoulas <christos@zoulas.com>
+
+	* add z and t modifiers for our own vasprintf
+	* search for $HOME/.magic.mgc if it is there first
+	* fix reads from a pipe, and preserve errno
+
+2012-05-15  13:12  Christos Zoulas <christos@zoulas.com>
+
+	* use ctime_r, asctime_r
+
+2012-04-06  17:18  Christos Zoulas <christos@zoulas.com>
+
+	* Fixes for indirect offsets to handle apple disk formats
+
+2012-04-03  18:26  Christos Zoulas <christos@zoulas.com>
+
+	* Add windows date field types
+	* More info for windows shortcuts (incomplete)
+
 2012-02-20  17:33  Christos Zoulas <christos@zoulas.com>
 
 	* Fix CDF parsing issues found by CERT's fuzzing tool (Will Dormann)

@@ -1,4 +1,4 @@
-/* $NetBSD: stty.h,v 1.10 2003/08/07 09:05:42 agc Exp $ */
+/* $NetBSD: stty.h,v 1.11 2013/09/12 19:47:23 christos Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993
@@ -39,7 +39,8 @@
 
 struct info {
 	int fd;					/* file descriptor */
-	int ldisc;				/* line discipline */
+	linedn_t ldisc;				/* line discipline */
+	int queue;				/* queue size */
 	int off;				/* turn off */
 	int set;				/* need set */
 	int wset;				/* need window set */

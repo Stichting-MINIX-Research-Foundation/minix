@@ -19,7 +19,7 @@
 /* #undef GWINSZ_IN_SYS_IOCTL */
 
 /* Define to 1 if you have `alloca', as a function or macro. */
-/* #undef HAVE_ALLOCA */
+#define HAVE_ALLOCA 1
 
 /* Define to 1 if you have <alloca.h> and it should be used (not on Ultrix).
    */
@@ -166,10 +166,10 @@
 #define HAVE_MKSTEMP 1
 
 /* Define to 1 if you have a working `mmap' system call. */
-/* #undef HAVE_MMAP */
+#define HAVE_MMAP 1
 
 /* Define to 1 if you have the `munmap' function. */
-/* #undef HAVE_MUNMAP */
+#define HAVE_MUNMAP 1
 
 /* Define to 1 if you have the <ncurses/termcap.h> header file. */
 /* #undef HAVE_NCURSES_TERMCAP_H */

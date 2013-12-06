@@ -1,32 +1,34 @@
-/*	$NetBSD: svc_generic.c,v 1.12 2012/03/20 17:14:50 matt Exp $	*/
+/*	$NetBSD: svc_generic.c,v 1.15 2013/03/11 20:19:29 tron Exp $	*/
 
 /*
- * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
- * unrestricted use provided that this legend is included on all tape
- * media and as a part of the software program in whole or part.  Users
- * may copy or modify Sun RPC without charge, but are not authorized
- * to license or distribute it to anyone else except as part of a product or
- * program developed by the user.
- * 
- * SUN RPC IS PROVIDED AS IS WITH NO WARRANTIES OF ANY KIND INCLUDING THE
- * WARRANTIES OF DESIGN, MERCHANTIBILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE, OR ARISING FROM A COURSE OF DEALING, USAGE OR TRADE PRACTICE.
- * 
- * Sun RPC is provided with no support and without any obligation on the
- * part of Sun Microsystems, Inc. to assist in its use, correction,
- * modification or enhancement.
- * 
- * SUN MICROSYSTEMS, INC. SHALL HAVE NO LIABILITY WITH RESPECT TO THE
- * INFRINGEMENT OF COPYRIGHTS, TRADE SECRETS OR ANY PATENTS BY SUN RPC
- * OR ANY PART THEREOF.
- * 
- * In no event will Sun Microsystems, Inc. be liable for any lost revenue
- * or profits or other special, indirect and consequential damages, even if
- * Sun has been advised of the possibility of such damages.
- * 
- * Sun Microsystems, Inc.
- * 2550 Garcia Avenue
- * Mountain View, California  94043
+ * Copyright (c) 2010, Oracle America, Inc.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above
+ *       copyright notice, this list of conditions and the following
+ *       disclaimer in the documentation and/or other materials
+ *       provided with the distribution.
+ *     * Neither the name of the "Oracle America, Inc." nor the names of its
+ *       contributors may be used to endorse or promote products derived
+ *       from this software without specific prior written permission.
+ *
+ *   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ *   "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ *   LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ *   FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ *   COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+ *   INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ *   DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ *   GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *   INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ *   WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ *   NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 /*
@@ -40,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)svc_generic.c 1.21 89/02/28 Copyr 1988 Sun Micro";
 #else
-__RCSID("$NetBSD: svc_generic.c,v 1.12 2012/03/20 17:14:50 matt Exp $");
+__RCSID("$NetBSD: svc_generic.c,v 1.15 2013/03/11 20:19:29 tron Exp $");
 #endif
 #endif
 
@@ -63,6 +65,7 @@ __RCSID("$NetBSD: svc_generic.c,v 1.12 2012/03/20 17:14:50 matt Exp $");
 #include <unistd.h>
 #include <err.h>
 
+#include "svc_fdset.h"
 #include "rpc_internal.h"
 
 #ifdef __weak_alias
@@ -105,7 +108,7 @@ svc_create(
 /* VARIABLES PROTECTED BY xprtlist_lock: xprtlist */
 
 	if ((handle = __rpc_setconf(nettype)) == NULL) {
-		warnx("svc_create: unknown protocol");
+		warnx("%s: unknown protocol %s", __func__, nettype);
 		return (0);
 	}
 	while ((nconf = __rpc_getconf(handle)) != NULL) {
@@ -116,10 +119,10 @@ svc_create(
 				(void) rpcb_unset(prognum, versnum, nconf);
 				if (svc_reg(l->xprt, prognum, versnum,
 					dispatch, nconf) == FALSE)
-					warnx(
-		"svc_create: could not register prog %u vers %u on %s",
-					(unsigned)prognum, (unsigned)versnum,
-					 nconf->nc_netid);
+					warnx("%s: could not register prog %u "
+					    "vers %u on %s", __func__,
+					    (unsigned)prognum,
+					    (unsigned)versnum, nconf->nc_netid);
 				else
 					num++;
 				break;
@@ -131,7 +134,7 @@ svc_create(
 			if (xprt) {
 				l = malloc(sizeof(*l));
 				if (l == NULL) {
-					warnx("svc_create: no memory");
+					warn("%s: out of memory", __func__);
 					mutex_unlock(&xprtlist_lock);
 					return (0);
 				}
@@ -166,9 +169,8 @@ svc_tp_create(
 	SVCXPRT *xprt;
 
 	if (nconf == NULL) {
-		warnx(
-	"svc_tp_create: invalid netconfig structure for prog %u vers %u",
-				(unsigned)prognum, (unsigned)versnum);
+		warnx("%s: invalid netconfig structure for prog %u vers %u",
+		    __func__, (unsigned)prognum, (unsigned)versnum);
 		return (NULL);
 	}
 	xprt = svc_tli_create(RPC_ANYFD, nconf, NULL, 0, 0);
@@ -177,10 +179,9 @@ svc_tp_create(
 	}
 	(void) rpcb_unset(prognum, versnum, __UNCONST(nconf));
 	if (svc_reg(xprt, prognum, versnum, dispatch, nconf) == FALSE) {
-		warnx(
-		"svc_tp_create: Could not register prog %u vers %u on %s",
-				(unsigned)prognum, (unsigned)versnum,
-				nconf->nc_netid);
+		warnx("%s: Could not register prog %u vers %u on %s",
+		    __func__, (unsigned)prognum, (unsigned)versnum,
+		    nconf->nc_netid);
 		SVC_DESTROY(xprt);
 		return (NULL);
 	}
@@ -212,14 +213,13 @@ svc_tli_create(
 
 	if (fd == RPC_ANYFD) {
 		if (nconf == NULL) {
-			warnx("svc_tli_create: invalid netconfig");
+			warnx("%s: invalid netconfig", __func__);
 			return (NULL);
 		}
 		fd = __rpc_nconf2fd(nconf);
 		if (fd == -1) {
-			warnx(
-			    "svc_tli_create: could not open connection for %s",
-					nconf->nc_netid);
+			warnx("%s: could not open connection for %s", __func__,
+			    nconf->nc_netid);
 			return (NULL);
 		}
 		__rpc_nconf2sockinfo(nconf, &si);
@@ -229,8 +229,8 @@ svc_tli_create(
 		 * It is an open descriptor. Get the transport info.
 		 */
 		if (!__rpc_fd2sockinfo(fd, &si)) {
-			warnx(
-		"svc_tli_create: could not get transport information");
+			warnx("%s: could not get transport information",
+			    __func__);
 			return (NULL);
 		}
 	}
@@ -246,8 +246,8 @@ svc_tli_create(
 				ss.ss_len = si.si_alen;
 				if (bind(fd, (struct sockaddr *)(void *)&ss,
 				    (socklen_t)si.si_alen) < 0) {
-					warnx(
-			"svc_tli_create: could not bind to anonymous port");
+					warn( "%s: could not bind to anonymous "
+					    "port", __func__);
 					goto freedata;
 				}
 			}
@@ -256,8 +256,8 @@ svc_tli_create(
 			if (bind(fd,
 			    (struct sockaddr *)bindaddr->addr.buf,
 			    (socklen_t)si.si_alen) < 0) {
-				warnx(
-		"svc_tli_create: could not bind to requested address");
+				warnx("%s: could not bind to requested address",
+				    __func__);
 				goto freedata;
 			}
 			listen(fd, (int)bindaddr->qlen);
@@ -268,29 +268,29 @@ svc_tli_create(
 	 * call transport specific function.
 	 */
 	switch (si.si_socktype) {
-		case SOCK_STREAM:
-			slen = sizeof ss;
-			if (getpeername(fd, (struct sockaddr *)(void *)&ss, &slen)
-			    == 0) {
-				/* accepted socket */
-				xprt = svc_fd_create(fd, sendsz, recvsz);
-			} else
-				xprt = svc_vc_create(fd, sendsz, recvsz);
-			if (!nconf || !xprt)
-				break;
+	case SOCK_STREAM:
+		slen = sizeof ss;
+		if (getpeername(fd, (struct sockaddr *)(void *)&ss, &slen)
+		    == 0) {
+			/* accepted socket */
+			xprt = svc_fd_create(fd, sendsz, recvsz);
+		} else
+			xprt = svc_vc_create(fd, sendsz, recvsz);
+		if (!nconf || !xprt)
+			break;
 #if 0
-			/* XXX fvdl */
-			if (strcmp(nconf->nc_protofmly, "inet") == 0 ||
-			    strcmp(nconf->nc_protofmly, "inet6") == 0)
-				(void) __svc_vc_setflag(xprt, TRUE);
+		/* XXX fvdl */
+		if (strcmp(nconf->nc_protofmly, "inet") == 0 ||
+		    strcmp(nconf->nc_protofmly, "inet6") == 0)
+			(void) __svc_vc_setflag(xprt, TRUE);
 #endif
-			break;
-		case SOCK_DGRAM:
-			xprt = svc_dg_create(fd, sendsz, recvsz);
-			break;
-		default:
-			warnx("svc_tli_create: bad service type");
-			goto freedata;
+		break;
+	case SOCK_DGRAM:
+		xprt = svc_dg_create(fd, sendsz, recvsz);
+		break;
+	default:
+		warnx("%s: bad service type %u", __func__, si.si_socktype);
+		goto freedata;
 	}
 
 	if (xprt == NULL)

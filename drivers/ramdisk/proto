@@ -7,7 +7,7 @@ d--755 0 0
 #endif
 		sysenv ---755 0 0 sysenv
 #if RAMDISK_SMALL == 1
-		fsck.mfs ---755 0 0 fsck.mfs
+		fsck_mfs ---755 0 0 fsck_mfs
 #endif
 		mount ---755 0 0 mount
 		umount ---755 0 0 umount

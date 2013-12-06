@@ -1,3 +1,6 @@
+NOGCCERROR=yes
+NOCLANGERROR=yes
+
 # Makefile for HGFS library
 
 LIB=    hgfs

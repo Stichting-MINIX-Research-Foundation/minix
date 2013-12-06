@@ -1,4 +1,4 @@
-/* $NetBSD: strtold_subr.c,v 1.1 2006/03/15 17:35:18 kleink Exp $ */
+/* $NetBSD: strtold_subr.c,v 1.3 2013/05/17 12:55:57 joerg Exp $ */
 
 /*
  * Written by Klaus Klein <kleink@NetBSD.org>, November 16, 2005.
@@ -15,7 +15,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strtold_subr.c,v 1.1 2006/03/15 17:35:18 kleink Exp $");
+__RCSID("$NetBSD: strtold_subr.c,v 1.3 2013/05/17 12:55:57 joerg Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -23,8 +23,12 @@ __RCSID("$NetBSD: strtold_subr.c,v 1.1 2006/03/15 17:35:18 kleink Exp $");
 #include <stdlib.h>
 #include "gdtoa.h"
 
+#include <locale.h>
+#include "setlocale_local.h"
+
 #ifdef __weak_alias
 __weak_alias(strtold, _strtold)
+__weak_alias(strtold_l, _strtold_l)
 #endif
 
 #ifndef __HAVE_LONG_DOUBLE
@@ -37,11 +41,23 @@ __weak_alias(strtold, _strtold)
 
 #define	STRTOP(x)	__CONCAT(strtop, x)
 
-long double
-strtold(const char *nptr, char **endptr)
+static long double
+_int_strtold_l(const char *nptr, char **endptr, locale_t loc)
 {
 	long double ld;
 
-	(void)STRTOP(GDTOA_LD_FMT)(nptr, endptr, &ld);
+	(void)STRTOP(GDTOA_LD_FMT)(nptr, endptr, &ld, loc);
 	return ld;
+}
+
+long double
+strtold(CONST char *s, char **sp)
+{
+	return _int_strtold_l(s, sp, _current_locale());
+}
+
+long double
+strtold_l(CONST char *s, char **sp, locale_t loc)
+{
+	return _int_strtold_l(s, sp, loc);
 }

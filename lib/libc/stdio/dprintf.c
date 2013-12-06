@@ -1,4 +1,4 @@
-/*	$NetBSD: dprintf.c,v 1.1 2010/09/06 14:52:55 christos Exp $	*/
+/*	$NetBSD: dprintf.c,v 1.2 2013/04/19 15:22:25 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: dprintf.c,v 1.1 2010/09/06 14:52:55 christos Exp $");
+__RCSID("$NetBSD: dprintf.c,v 1.2 2013/04/19 15:22:25 joerg Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -46,6 +46,8 @@ __RCSID("$NetBSD: dprintf.c,v 1.1 2010/09/06 14:52:55 christos Exp $");
 #include "reentrant.h"
 #include "local.h"
 
+__weak_alias(dprintf_l, _dprintf_l)
+
 int
 dprintf(int fd, const char * __restrict fmt, ...)
 {
@@ -54,6 +56,18 @@ dprintf(int fd, const char * __restrict fmt, ...)
 
 	va_start(ap, fmt);
 	ret = vdprintf(fd, fmt, ap);
+	va_end(ap);
+	return ret;
+}
+
+int
+dprintf_l(int fd, locale_t loc, const char * __restrict fmt, ...)
+{
+	va_list ap;
+	int ret;
+
+	va_start(ap, fmt);
+	ret = vdprintf_l(fd, loc, fmt, ap);
 	va_end(ap);
 	return ret;
 }

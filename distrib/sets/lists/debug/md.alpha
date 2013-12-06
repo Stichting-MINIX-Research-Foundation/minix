@@ -1,0 +1,7 @@
+# $NetBSD: md.alpha,v 1.3 2013/11/02 23:23:51 christos Exp $
+./usr/lib/libalpha_g.a				comp-c-debuglib		debuglib
+./usr/libdata/debug/usr/bin/fdformat.debug	comp-util-debug		debug
+./usr/libdata/debug/usr/lib/libalpha.so.0.0.debug	comp-sys-debug		debug
+./usr/libdata/debug/usr/mdec/mkbootimage.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/mdec/setnetbootinfo.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/bad144.debug	comp-sysutil-debug	debug

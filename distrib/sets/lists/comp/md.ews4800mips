@@ -1,5 +1,4 @@
-# $NetBSD: md.ews4800mips,v 1.5 2011/07/17 20:54:31 joerg Exp $
-./usr/include/ieeefp.h				comp-c-include
+# $NetBSD: md.ews4800mips,v 1.7 2013/08/11 22:29:02 joerg Exp $
 ./usr/include/ews4800mips			comp-c-include
 ./usr/include/ews4800mips/ansi.h		comp-c-include
 ./usr/include/ews4800mips/aout_machdep.h	comp-c-include
@@ -48,6 +47,7 @@
 ./usr/include/ews4800mips/rwlock.h		comp-c-include
 ./usr/include/ews4800mips/setjmp.h		comp-c-include
 ./usr/include/ews4800mips/signal.h		comp-c-include
+./usr/include/ews4800mips/sljitarch.h		comp-c-include
 ./usr/include/ews4800mips/stdarg.h		comp-obsolete		obsolete
 ./usr/include/ews4800mips/trap.h		comp-c-include
 ./usr/include/ews4800mips/types.h		comp-c-include
@@ -55,3 +55,4 @@
 ./usr/include/ews4800mips/vmparam.h		comp-c-include
 ./usr/include/ews4800mips/vtoc.h		comp-c-include
 ./usr/include/ews4800mips/wchar_limits.h	comp-c-include
+./usr/include/ieeefp.h				comp-c-include

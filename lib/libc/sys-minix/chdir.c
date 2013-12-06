@@ -5,11 +5,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#ifdef __weak_alias
-__weak_alias(chdir, _chdir)
-__weak_alias(fchdir, _fchdir)
-#endif
-
 int chdir(name)
 const char *name;
 {

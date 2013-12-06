@@ -1,4 +1,4 @@
-/* $NetBSD: compat_setlocale1.c,v 1.1 2010/06/07 13:52:30 tnozaki Exp $ */
+/* $NetBSD: compat_setlocale1.c,v 1.2 2013/09/13 13:13:32 joerg Exp $ */
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -30,13 +30,15 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat_setlocale1.c,v 1.1 2010/06/07 13:52:30 tnozaki Exp $");
+__RCSID("$NetBSD: compat_setlocale1.c,v 1.2 2013/09/13 13:13:32 joerg Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <compat/include/locale.h>
 
 #include "setlocale_local.h"
+
+#undef setlocale
 
 __warn_references(setlocale,
     "warning: reference to compatibility setlocale();"
@@ -47,7 +49,10 @@ __warn_references(setlocale,
  * This function will ensure binary compatibility for old executables.
  */
 char *
-setlocale(int category, const char *locale)
+compat_setlocale(int category, const char *locale) __RENAME(setlocale);
+
+char *
+compat_setlocale(int category, const char *locale)
 {
 
 	/* locale may be NULL */

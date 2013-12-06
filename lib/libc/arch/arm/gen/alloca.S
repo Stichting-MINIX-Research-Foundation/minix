@@ -1,4 +1,4 @@
-/*	$NetBSD: alloca.S,v 1.4 2004/08/21 11:20:10 rearnsha Exp $	*/
+/*	$NetBSD: alloca.S,v 1.5 2013/08/17 01:07:45 matt Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -37,8 +37,17 @@
 #include <machine/asm.h>
 
 ENTRY(alloca)
-	add	r0, r0, #0x00000007	/* round up to next 8 byte alignment */
-	bic	r0, r0, #0x00000007
-	sub	sp, sp, r0		/* Adjust the stack pointer */
-	mov	r0, sp			/* r0 = base of new space */
+	adds	r0, r0, #7	/* round up to next 8 byte alignment */
+#if !defined(__thumb__) || defined(_ARM_ARCH_T2)
+	bics	r0, r0, #7
+	sub	sp, sp, r0	/* Adjust the stack pointer */
+	mov	r0, sp		/* r0 = base of new space */
+#else
+	lsrs	r0, r0, #3
+	lsls	r0, r0, #3
+	mov	r1, sp
+	subs	r0, r1, r0	/* Adjust the stack pointer */
+	mov	sp, r0		/* r0 = base of new space */
+#endif
 	RET
+END(alloca)

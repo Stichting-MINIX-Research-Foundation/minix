@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.36 2012/10/05 01:26:56 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.38 2013/02/03 19:15:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -36,14 +36,15 @@
 #if HAVE_NBTOOL_CONFIG_H
 #include "nbtool_config.h"
 #else 
-#ifndef __minix
+#if !defined(__minix)
 #define HAVE_STRUCT_STAT_ST_FLAGS 1
 #endif
-#endif
+#endif /* !defined(__minix) */
  
 #include <err.h> 
 #include <fts.h>
 #include <util.h>
+#include <stdbool.h>
 
 #if HAVE_NETDB_H
 /* For MAXHOSTNAMELEN on some platforms. */
@@ -53,6 +54,12 @@
 #ifndef MAXHOSTNAMELEN
 #define MAXHOSTNAMELEN 256
 #endif
+
+enum flavor {
+	F_MTREE,
+	F_FREEBSD9,
+	F_NETBSD6
+};
 
 void	 addtag(slist_t *, char *);
 int	 check_excludes(const char *, const char *);
@@ -70,11 +77,14 @@ u_int	 parsetype(const char *);
 void	 read_excludes_file(const char *);
 const char *rlink(const char *);
 int	 verify(FILE *);
+void	 load_only(const char *fname);
+bool	 find_only(const char *path);
 
-extern int	dflag, eflag, iflag, jflag, lflag, mflag,
+extern int	bflag, dflag, eflag, iflag, jflag, lflag, mflag,
 		nflag, qflag, rflag, sflag, tflag, uflag;
 extern int	mtree_Mflag, mtree_Sflag, mtree_Wflag;
 extern size_t	mtree_lineno;
+extern enum flavor	flavor;
 extern u_int32_t crc_total;
 extern int	ftsoptions, keys;
 extern char	fullpath[];

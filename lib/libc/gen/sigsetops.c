@@ -44,11 +44,3 @@ __RCSID("$NetBSD: sigsetops.c,v 1.16 2010/07/31 00:04:43 joerg Exp $");
 
 #include <errno.h>
 #include <signal.h>
-
-#if defined(__minix) && defined(__weak_alias)
-__weak_alias(sigaddset, __sigaddset14)
-__weak_alias(sigdelset, __sigdelset14)
-__weak_alias(sigemptyset, __sigemptyset14)
-__weak_alias(sigfillset, __sigfillset14)
-__weak_alias(sigismember, __sigismember14)
-#endif

@@ -1,7 +1,9 @@
-#	$NetBSD: Makefile.common,v 1.3 2011/06/28 04:03:16 mrg Exp $
+#	$NetBSD: Makefile.common,v 1.4 2013/08/23 05:02:46 matt Exp $
 
 DIST=		${NETBSDSRCDIR}/external/gpl3/gcc/dist
 GNUHOSTDIST=	${DIST}
+
+GCC_MACHINE_ARCH=${MACHINE_ARCH:S/earmv5/earm/}
 
 LIBSTDCXXSRCS=	${G_SRC_SOURCES}
 LIBSUPCXXSRCS=	${G_LIBSUPCXX_SOURCES} ${G_LIBSUPCXX_C_SOURCES}
@@ -9,7 +11,7 @@ LIBSUPCXXSRCS=	${G_LIBSUPCXX_SOURCES} ${G_LIBSUPCXX_C_SOURCES}
 CPPFLAGS+=	-I${DIST}/gcc
 CPPFLAGS+=	-I${DIST}/include
 CPPFLAGS+=	-I${DIST}/libstdc++-v3/libsupc++
-CPPFLAGS+=	-I${.CURDIR}/../libstdc++-v3_4/arch/${MACHINE_ARCH} -I.
+CPPFLAGS+=	-I${.CURDIR}/../libstdc++-v3_4/arch/${GCC_MACHINE_ARCH} -I.
 CPPFLAGS+=	-DHAVE_STDLIB_H -DHAVE_STRING_H
 
 .if defined(__MINIX)

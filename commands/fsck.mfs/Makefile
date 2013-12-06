@@ -1,5 +1,5 @@
 FSCK=   ${NETBSDSRCDIR}/sbin/fsck
-PROG=	fsck.mfs
+PROG=	fsck_mfs
 SRCS=	fsck.c
 CPPFLAGS+= -I${NETBSDSRCDIR}/servers -I${FSCK}
 BINDIR=	/sbin

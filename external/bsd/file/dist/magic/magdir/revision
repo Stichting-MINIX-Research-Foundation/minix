@@ -1,6 +1,6 @@
 
 #------------------------------------------------------------------------------
-# $File: revision,v 1.8 2010/11/25 15:00:12 christos Exp $
+# $File: revision,v 1.9 2013/02/06 14:18:52 christos Exp $
 # file(1) magic for revision control files
 # From Hendrik Scholz <hendrik@scholz.net>
 0	string/t	/1\ :pserver:	cvs password text file
@@ -29,7 +29,7 @@
 >4	belong	=2		\b, version 2
 
 # Type: Git index file
-# From: Frédéric Brière <fbriere@fbriere.net>
+# From: Frederic Briare <fbriere@fbriere.net>
 0	string	DIRC		Git index
 >4	belong	>0		\b, version %d
 >>8	belong	>0		\b, %d entries

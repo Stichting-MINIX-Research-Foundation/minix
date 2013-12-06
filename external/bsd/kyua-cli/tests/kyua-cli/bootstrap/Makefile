@@ -17,10 +17,6 @@ MAN.atf_helpers=	# none
 LDADD.atf_helpers=	-latf-c++ -latf-c
 DPADD.atf_helpers=	${LIBATF_CXX} ${LIBATF_C}
 
-.if defined(__MINIX)
-LDADD+=			-lgcc_s
-.endif # defined(__MINIX)
-
 PROGS_CXX+=		plain_helpers
 BINDIR.plain_helpers=	${TESTSDIR}
 MAN.plain_helpers=	# none

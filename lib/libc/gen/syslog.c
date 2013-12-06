@@ -59,9 +59,9 @@ __RCSID("$NetBSD: syslog.c,v 1.53 2012/10/11 17:09:55 christos Exp $");
 #include "reentrant.h"
 #include "extern.h"
 
-#ifdef __minix
+#if defined(__minix)
 #include <sys/ioctl.h>
-#endif
+#endif /* defined(__minix) */
 
 #ifdef __weak_alias
 __weak_alias(closelog,_closelog)
@@ -298,10 +298,10 @@ vsyslogp_r(int pri, struct syslog_data *data, const char *msgid,
 #endif
 	}
 
-#ifndef __minix
+#if !defined(__minix)
 	if (data == &sdata)
 		mutex_lock(&syslog_mutex);
-#endif
+#endif /* !defined(__minix) */
 
 	if (data->log_hostname[0] == '\0' && gethostname(data->log_hostname,
 	    sizeof(data->log_hostname)) == -1) {
@@ -320,10 +320,10 @@ vsyslogp_r(int pri, struct syslog_data *data, const char *msgid,
 	prlen = snprintf_ss(p, tbuf_left, "%s ",
 	    data->log_tag ? data->log_tag : "-");
 
-#ifndef __minix
+#if !defined(__minix)
 	if (data == &sdata)
 		mutex_unlock(&syslog_mutex);
-#endif
+#endif /* !defined(__minix) */
 
 	if (data->log_stat & (LOG_PERROR|LOG_CONS)) {
 		iovcnt = 0;
@@ -434,10 +434,10 @@ vsyslogp_r(int pri, struct syslog_data *data, const char *msgid,
 	}
 
 	/* Get connected, output the message to the local logger. */
-#ifndef __minix
+#if !defined(__minix)
 	if (data == &sdata)
 		mutex_lock(&syslog_mutex);
-#endif
+#endif /* !defined(__minix) */
 	opened = !data->log_opened;
 	if (opened)
 		openlog_unlocked_r(data->log_tag, data->log_stat, 0, data);
@@ -452,11 +452,11 @@ vsyslogp_r(int pri, struct syslog_data *data, const char *msgid,
 	 * to give syslogd a chance to empty its socket buffer.
 	 */
 	for (tries = 0; tries < MAXTRIES; tries++) {
-#ifdef __minix
+#if defined(__minix)
 		if (write(data->log_file, tbuf, cnt) != -1)
 #else
 		if (send(data->log_file, tbuf, cnt, 0) != -1)
-#endif
+#endif /* defined(__minix) */
 			break;
 		if (errno != ENOBUFS) {
 			disconnectlog_r(data);
@@ -478,10 +478,10 @@ vsyslogp_r(int pri, struct syslog_data *data, const char *msgid,
 		(void)close(fd);
 	}
 
-#ifndef __minix
+#if !defined(__minix)
 	if (data == &sdata)
 		mutex_unlock(&syslog_mutex);
-#endif
+#endif /* !defined(__minix) */
 
 	if (data != &sdata && opened) {
 		/* preserve log tag */
@@ -512,9 +512,9 @@ connectlog_r(struct syslog_data *data)
 	/* AF_UNIX address of local logger */
 	static const struct sockaddr_un sun = {
 		.sun_family = AF_LOCAL,
-#ifndef __minix
+#if !defined(__minix)
 		.sun_len = sizeof(sun),
-#endif
+#endif /* !defined(__minix) */
 		.sun_path = _PATH_LOG,
 	};
 
@@ -525,14 +525,14 @@ connectlog_r(struct syslog_data *data)
 		data->log_connected = 0;
 	}
 	if (!data->log_connected) {
-#ifdef __minix
+#if defined(__minix)
 		if(ioctl(data->log_file, NWIOSUDSTADDR, (void *) &sun) < 0)
 
 #else
 		if (connect(data->log_file,
 		    (const struct sockaddr *)(const void *)&sun,
 		    (socklen_t)sizeof(sun)) == -1)
-#endif
+#endif /* defined(__minix) */
 		{
 			(void)close(data->log_file);
 			data->log_file = -1;
@@ -560,32 +560,32 @@ openlog_unlocked_r(const char *ident, int logstat, int logfac,
 void
 openlog_r(const char *ident, int logstat, int logfac, struct syslog_data *data)
 {
-#ifndef __minix
+#if !defined(__minix)
 	if (data == &sdata)
 		mutex_lock(&syslog_mutex);
-#endif
+#endif /* !defined(__minix) */
 	openlog_unlocked_r(ident, logstat, logfac, data);
-#ifndef __minix
+#if !defined(__minix)
 	if (data == &sdata)
 		mutex_unlock(&syslog_mutex);
-#endif
+#endif /* !defined(__minix) */
 }
 
 void
 closelog_r(struct syslog_data *data)
 {
-#ifndef __minix
+#if !defined(__minix)
 	if (data == &sdata)
 		mutex_lock(&syslog_mutex);
-#endif
+#endif /* !defined(__minix) */
 	(void)close(data->log_file);
 	data->log_file = -1;
 	data->log_connected = 0;
 	data->log_tag = NULL;
-#ifndef __minix
+#if !defined(__minix)
 	if (data == &sdata)
 		mutex_unlock(&syslog_mutex);
-#endif
+#endif /* !defined(__minix) */
 }
 
 int

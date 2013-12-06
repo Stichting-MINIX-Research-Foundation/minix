@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.299 2012/08/17 16:22:27 joerg Exp $
+#	$NetBSD: Makefile,v 1.303 2013/07/16 09:52:21 joerg Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -87,11 +87,11 @@
 #   do-top-obj:      creates the top level object directory.
 #   do-tools-obj:    creates object directories for the host toolchain.
 #   do-tools:        builds host toolchain.
+#   params:          record the values of variables that might affect the
+#                    build.
 #   obj:             creates object directories.
 #   do-distrib-dirs: creates the distribution directories.
 #   includes:        installs include files.
-#   do-tools-compat: builds the "libnbcompat" library; needed for some
-#                    random host tool programs in the source tree.
 #   do-lib:          builds and installs prerequisites from lib
 #                    if ${MKCOMPAT} != "no".
 #   do-compat-lib:   builds and installs prerequisites from compat/lib
@@ -137,15 +137,14 @@ _SRC_TOP_OBJ_=
 # _SUBDIR is used to set SUBDIR, after removing directories that have
 # BUILD_${dir}=no, or that have no ${dir}/Makefile.
 #
-_SUBDIR=	tools lib .WAIT include gnu external crypto/external bin games
-_SUBDIR+=	libexec sbin usr.bin
-_SUBDIR+=	commands man
-_SUBDIR+=	common drivers kernel servers
-_SUBDIR+=	usr.sbin share rescue sys etc test tests compat .WAIT distrib regress
-
+_SUBDIR=	tools lib include gnu external crypto/external bin games
 .if defined(__MINIX)
-_SUBDIR+=	benchmarks
-.endif
+_SUBDIR+=	commands man benchmarks test
+_SUBDIR+=	kernel servers drivers
+.endif # defined(__MINIX)
+_SUBDIR+=	libexec sbin usr.bin
+_SUBDIR+=	usr.sbin share sys etc tests compat
+_SUBDIR+=	.WAIT rescue .WAIT distrib regress
 
 .for dir in ${_SUBDIR}
 .if "${dir}" == ".WAIT" \
@@ -232,6 +231,7 @@ BUILDTARGETS+=	do-tools-obj
 .endif
 BUILDTARGETS+=	do-tools
 .endif # USETOOLS		# }
+BUILDTARGETS+=	params
 .if ${MKOBJDIRS} != "no"
 BUILDTARGETS+=	obj
 .endif
@@ -263,6 +263,32 @@ BUILDTARGETS+=	do-obsolete
 .ORDER:		${BUILDTARGETS}
 includes-lib:	.PHONY includes-include includes-sys
 includes-gnu:	.PHONY includes-lib
+
+#
+# Record the values of variables that might affect the build.
+# If no values have changed, avoid updating the timestamp
+# of the params file.
+#
+# This is referenced by _NETBSD_VERSION_DEPENDS in <bsd.own.mk>.
+#
+.include "${NETBSDSRCDIR}/etc/Makefile.params"
+CLEANDIRFILES+= params
+params: .EXEC
+	${_MKMSG_CREATE} params
+	@${PRINT_PARAMS} >${.TARGET}.new
+	@if cmp -s ${.TARGET}.new ${.TARGET} > /dev/null 2>&1; then \
+		: "params is unchanged" ; \
+		rm ${.TARGET}.new ; \
+	else \
+		: "params has changed or is new" ; \
+		mv ${.TARGET}.new ${.TARGET} ; \
+	fi
+
+#
+# Display current make(1) parameters
+#
+show-params: .PHONY .MAKE
+	@${PRINT_PARAMS}
 
 #
 # Build the system and install into DESTDIR.
@@ -342,7 +368,7 @@ installworld: .PHONY .MAKE
 .endif
 .if !defined(INSTALLWORLDDIR) || \
     ${INSTALLWORLDDIR} == "" || ${INSTALLWORLDDIR} == "/"
-.if (${HOST_UNAME_S} != "Minix")
+.if (${HOST_UNAME_S} != "NetBSD") && (${HOST_UNAME_S} != "Minix")
 	@echo "Won't cross-make ${.TARGET} from ${HOST_UNAME_S} to Minix with INSTALLWORLDDIR=/"
 	@false
 .endif
@@ -468,12 +494,8 @@ do-${targ}: .PHONY ${targ}
 	@true
 .endfor
 
-.for dir in tools tools/compat
-do-${dir:S/\//-/g}: .PHONY .MAKE
-.for targ in dependall install
-	${MAKEDIRTARGET} ${dir} ${targ}
-.endfor
-.endfor
+do-tools: .PHONY .MAKE
+	${MAKEDIRTARGET} tools build_install
 
 do-lib: .PHONY .MAKE
 	${MAKEDIRTARGET} lib build_install
@@ -540,9 +562,3 @@ dependall-distrib depend-distrib all-distrib: .PHONY
 .include <bsd.obj.mk>
 .include <bsd.kernobj.mk>
 .include <bsd.subdir.mk>
-
-#
-# Display current make(1) parameters
-#
-params: .PHONY .MAKE
-	${MAKEDIRTARGET} etc params

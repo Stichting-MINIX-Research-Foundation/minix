@@ -12,8 +12,8 @@
 #
 # CFLAGS	+= -DOSNAME="\"OpenBSD 4.5\""
 
-VERSION		 = 1.12.0
-VDATE		 = 8 October 2011
+VERSION		 = 1.12.1
+VDATE		 = 23 March 2012
 
 # IFF your system supports multi-byte functions (setlocale(), wcwidth(),
 # putwchar()) AND has __STDC_ISO_10646__ (that is, wchar_t is simply a
@@ -142,7 +142,6 @@ SRCS		 = Makefile \
 		   preconv.c \
 		   predefs.in \
 		   read.c \
-		   regress \
 		   roff.7 \
 		   roff.c \
 		   st.c \
@@ -453,12 +452,16 @@ clean:
 	rm -f config.h config.log $(COMPAT_OBJS) $(COMPAT_LNS)
 	rm -f mdocml.tar.gz mdocml-win32.zip mdocml-win64.zip mdocml-macosx.zip
 	rm -f index.html $(INDEX_OBJS)
-	rm -rf test-fgetln.DSYM
-	rm -rf test-strlcpy.DSYM
-	rm -rf test-strlcat.DSYM 
-	rm -rf test-strptime.DSYM 
-	rm -rf test-mmap.DSYM 
-	rm -rf test-getsubopt.DSYM
+	rm -rf test-fgetln.dSYM
+	rm -rf test-strlcpy.dSYM
+	rm -rf test-strlcat.dSYM 
+	rm -rf test-strptime.dSYM 
+	rm -rf test-mmap.dSYM 
+	rm -rf test-getsubopt.dSYM
+	rm -rf apropos.dSYM
+	rm -rf catman.dSYM
+	rm -rf mandocdb.dSYM
+	rm -rf whatis.dSYM
 
 install: all
 	mkdir -p $(DESTDIR)$(BINDIR)
@@ -468,7 +471,6 @@ install: all
 	mkdir -p $(DESTDIR)$(MANDIR)/man1
 	mkdir -p $(DESTDIR)$(MANDIR)/man3
 	mkdir -p $(DESTDIR)$(MANDIR)/man7
-	mkdir -p $(DESTDIR)$(MANDIR)/man8
 	$(INSTALL_PROGRAM) mandoc preconv demandoc $(DESTDIR)$(BINDIR)
 	$(INSTALL_LIB) libmandoc.a $(DESTDIR)$(LIBDIR)
 	$(INSTALL_LIB) man.h mdoc.h mandoc.h $(DESTDIR)$(INCLUDEDIR)

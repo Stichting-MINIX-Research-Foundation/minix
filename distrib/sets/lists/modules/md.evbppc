@@ -1,4 +1,4 @@
-# $NetBSD: md.evbppc,v 1.28 2012/09/21 08:42:33 martin Exp $
+# $NetBSD: md.evbppc,v 1.37 2013/11/19 12:07:06 kiyohara Exp $
 ./stand/powerpc-4xx							base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@						base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules					base-kernel-modules	kmod,compatmodules
@@ -76,6 +76,12 @@
 ./stand/powerpc-4xx/@OSRELEASE@/modules/hfs/hfs.kmod			base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/if_axe				base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/if_axe/if_axe.kmod		base-kernel-modules	kmod,compatmodules
+./stand/powerpc-4xx/@OSRELEASE@/modules/if_axen				base-kernel-modules	kmod,compatmodules
+./stand/powerpc-4xx/@OSRELEASE@/modules/if_axen/if_axen.kmod		base-kernel-modules	kmod,compatmodules
+./stand/powerpc-4xx/@OSRELEASE@/modules/if_npflog			base-kernel-modules	kmod,compatmodules
+./stand/powerpc-4xx/@OSRELEASE@/modules/if_npflog/if_npflog.kmod	base-kernel-modules	kmod,compatmodules
+./stand/powerpc-4xx/@OSRELEASE@/modules/if_smsc				base-kernel-modules	kmod,compatmodules
+./stand/powerpc-4xx/@OSRELEASE@/modules/if_smsc/if_smsc.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/iic				base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/iic/iic.kmod			base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/iscsi				base-kernel-modules	kmod,compatmodules
@@ -88,6 +94,12 @@
 ./stand/powerpc-4xx/@OSRELEASE@/modules/layerfs/layerfs.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/lfs				base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/lfs/lfs.kmod			base-kernel-modules	kmod,compatmodules
+./stand/powerpc-4xx/@OSRELEASE@/modules/lua				base-kernel-modules	kmod,compatmodules
+./stand/powerpc-4xx/@OSRELEASE@/modules/lua/lua.kmod			base-kernel-modules	kmod,compatmodules
+./stand/powerpc-4xx/@OSRELEASE@/modules/luacore				base-kernel-modules	kmod,compatmodules
+./stand/powerpc-4xx/@OSRELEASE@/modules/luacore/luacore.kmod		base-kernel-modules	kmod,compatmodules
+./stand/powerpc-4xx/@OSRELEASE@/modules/luapmf				base-kernel-modules	kmod,compatmodules
+./stand/powerpc-4xx/@OSRELEASE@/modules/luapmf/luapmf.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/mfs				base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/mfs/mfs.kmod			base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/miiverbose			base-kernel-modules	kmod,compatmodules
@@ -114,8 +126,12 @@
 ./stand/powerpc-4xx/@OSRELEASE@/modules/npf_alg_icmp/npf_alg_icmp.kmod	base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/npf_ext_log			base-kernel-modules	kmod
 ./stand/powerpc-4xx/@OSRELEASE@/modules/npf_ext_log/npf_ext_log.kmod	base-kernel-modules	kmod
-./stand/powerpc-4xx/@OSRELEASE@/modules/npf_ext_normalise		base-kernel-modules	kmod
-./stand/powerpc-4xx/@OSRELEASE@/modules/npf_ext_normalise/npf_ext_normalise.kmod	base-kernel-modules	kmod
+./stand/powerpc-4xx/@OSRELEASE@/modules/npf_ext_normalise		base-obsolete	obsolete
+./stand/powerpc-4xx/@OSRELEASE@/modules/npf_ext_normalise/npf_ext_normalise.kmod	base-obsolete	obsolete
+./stand/powerpc-4xx/@OSRELEASE@/modules/npf_ext_normalize		base-kernel-modules	kmod
+./stand/powerpc-4xx/@OSRELEASE@/modules/npf_ext_normalize/npf_ext_normalize.kmod	base-kernel-modules	kmod
+./stand/powerpc-4xx/@OSRELEASE@/modules/npf_ext_rndblock		base-kernel-modules	kmod
+./stand/powerpc-4xx/@OSRELEASE@/modules/npf_ext_rndblock/npf_ext_rndblock.kmod	base-kernel-modules	kmod
 ./stand/powerpc-4xx/@OSRELEASE@/modules/ntfs				base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/ntfs/ntfs.kmod			base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/null				base-kernel-modules	kmod,compatmodules
@@ -182,10 +198,10 @@
 ./stand/powerpc-4xx/@OSRELEASE@/modules/union/union.kmod			base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/usbverbose			base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/usbverbose/usbverbose.kmod	base-kernel-modules	kmod,compatmodules
-./stand/powerpc-4xx/@OSRELEASE@/modules/vcoda				base-kernel-modules	kmod,compatmodules
-./stand/powerpc-4xx/@OSRELEASE@/modules/vcoda/vcoda.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/v7fs 				base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/v7fs/v7fs.kmod		        base-kernel-modules	kmod,compatmodules
+./stand/powerpc-4xx/@OSRELEASE@/modules/vcoda				base-kernel-modules	kmod,compatmodules
+./stand/powerpc-4xx/@OSRELEASE@/modules/vcoda/vcoda.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/vnd 				base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/vnd/vnd.kmod		        base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/zfs				base-kernel-modules     kmod,zfs
@@ -267,6 +283,12 @@
 ./stand/powerpc-booke/@OSRELEASE@/modules/hfs/hfs.kmod			base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/if_axe			base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/if_axe/if_axe.kmod		base-kernel-modules	kmod,compatmodules
+./stand/powerpc-booke/@OSRELEASE@/modules/if_axen			base-kernel-modules	kmod,compatmodules
+./stand/powerpc-booke/@OSRELEASE@/modules/if_axen/if_axen.kmod		base-kernel-modules	kmod,compatmodules
+./stand/powerpc-booke/@OSRELEASE@/modules/if_npflog			base-kernel-modules	kmod,compatmodules
+./stand/powerpc-booke/@OSRELEASE@/modules/if_npflog/if_npflog.kmod	base-kernel-modules	kmod,compatmodules
+./stand/powerpc-booke/@OSRELEASE@/modules/if_smsc			base-kernel-modules	kmod,compatmodules
+./stand/powerpc-booke/@OSRELEASE@/modules/if_smsc/if_smsc.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/iic				base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/iic/iic.kmod			base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/iscsi				base-kernel-modules	kmod,compatmodules
@@ -279,6 +301,12 @@
 ./stand/powerpc-booke/@OSRELEASE@/modules/layerfs/layerfs.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/lfs				base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/lfs/lfs.kmod			base-kernel-modules	kmod,compatmodules
+./stand/powerpc-booke/@OSRELEASE@/modules/lua				base-kernel-modules	kmod,compatmodules
+./stand/powerpc-booke/@OSRELEASE@/modules/lua/lua.kmod			base-kernel-modules	kmod,compatmodules
+./stand/powerpc-booke/@OSRELEASE@/modules/luacore			base-kernel-modules	kmod,compatmodules
+./stand/powerpc-booke/@OSRELEASE@/modules/luacore/luacore.kmod		base-kernel-modules	kmod,compatmodules
+./stand/powerpc-booke/@OSRELEASE@/modules/luapmf			base-kernel-modules	kmod,compatmodules
+./stand/powerpc-booke/@OSRELEASE@/modules/luapmf/luapmf.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/mfs				base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/mfs/mfs.kmod			base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/miiverbose			base-kernel-modules	kmod,compatmodules
@@ -305,8 +333,12 @@
 ./stand/powerpc-booke/@OSRELEASE@/modules/npf_alg_icmp/npf_alg_icmp.kmod	base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/npf_ext_log			base-kernel-modules	kmod
 ./stand/powerpc-booke/@OSRELEASE@/modules/npf_ext_log/npf_ext_log.kmod	base-kernel-modules	kmod
-./stand/powerpc-booke/@OSRELEASE@/modules/npf_ext_normalise		base-kernel-modules	kmod
-./stand/powerpc-booke/@OSRELEASE@/modules/npf_ext_normalise/npf_ext_normalise.kmod	base-kernel-modules	kmod
+./stand/powerpc-booke/@OSRELEASE@/modules/npf_ext_normalise		base-obsolete	obsolete
+./stand/powerpc-booke/@OSRELEASE@/modules/npf_ext_normalise/npf_ext_normalise.kmod	base-kobsolete	obsoleteernel-modules	kmod
+./stand/powerpc-booke/@OSRELEASE@/modules/npf_ext_normalize		base-kernel-modules	kmod
+./stand/powerpc-booke/@OSRELEASE@/modules/npf_ext_normalize/npf_ext_normalize.kmod	base-kernel-modules	kmod
+./stand/powerpc-booke/@OSRELEASE@/modules/npf_ext_rndblock		base-kernel-modules	kmod
+./stand/powerpc-booke/@OSRELEASE@/modules/npf_ext_rndblock/npf_ext_rndblock.kmod	base-kernel-modules	kmod
 ./stand/powerpc-booke/@OSRELEASE@/modules/ntfs				base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/ntfs/ntfs.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/null				base-kernel-modules	kmod,compatmodules
@@ -373,10 +405,10 @@
 ./stand/powerpc-booke/@OSRELEASE@/modules/union/union.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/usbverbose			base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/usbverbose/usbverbose.kmod	base-kernel-modules	kmod,compatmodules
-./stand/powerpc-booke/@OSRELEASE@/modules/vcoda 			base-kernel-modules	kmod,compatmodules
-./stand/powerpc-booke/@OSRELEASE@/modules/vcoda/vcoda.kmod	        base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/v7fs 				base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/v7fs/v7fs.kmod	        base-kernel-modules	kmod,compatmodules
+./stand/powerpc-booke/@OSRELEASE@/modules/vcoda 			base-kernel-modules	kmod,compatmodules
+./stand/powerpc-booke/@OSRELEASE@/modules/vcoda/vcoda.kmod	        base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/vnd 				base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/vnd/vnd.kmod		        base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/zfs				base-kernel-modules     kmod,zfs

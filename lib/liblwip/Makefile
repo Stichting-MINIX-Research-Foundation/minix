@@ -1,3 +1,6 @@
+NOGCCERROR=yes
+NOCLANGERROR=yes
+
 LIB = lwip
 
 CPPFLAGS += -I${.CURDIR}/include/ -I${.CURDIR}/include/ipv4 -I${.CURDIR}/include/ipv6 -D_SYSTEM

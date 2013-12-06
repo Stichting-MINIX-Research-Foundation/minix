@@ -1,4 +1,4 @@
-/*	$NetBSD: compress.c,v 1.5 2012/02/22 17:53:51 christos Exp $	*/
+/*	$NetBSD: compress.c,v 1.7 2013/11/28 14:40:00 joerg Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -38,9 +38,9 @@
 
 #ifndef lint
 #if 0
-FILE_RCSID("@(#)$File: compress.c,v 1.68 2011/12/08 12:38:24 rrt Exp $")
+FILE_RCSID("@(#)$File: compress.c,v 1.70 2012/11/07 17:54:48 christos Exp $")
 #else
-__RCSID("$NetBSD: compress.c,v 1.5 2012/02/22 17:53:51 christos Exp $");
+__RCSID("$NetBSD: compress.c,v 1.7 2013/11/28 14:40:00 joerg Exp $");
 #endif
 #endif
 
@@ -174,12 +174,9 @@ swrite(int fd, const void *buf, size_t n)
  * `safe' read for sockets and pipes.
  */
 protected ssize_t
-sread(int fd, void *buf, size_t n, int canbepipe __attribute__ ((unused)))
+sread(int fd, void *buf, size_t n, int canbepipe __attribute__((__unused__)))
 {
 	ssize_t rv;
-#ifdef FD_ZERO
-	ssize_t cnt;
-#endif
 #ifdef FIONREAD
 	int t = 0;
 #endif
@@ -189,8 +186,9 @@ sread(int fd, void *buf, size_t n, int canbepipe __attribute__ ((unused)))
 		goto nocheck;
 
 #ifdef FIONREAD
-	if ((canbepipe && (ioctl(fd, FIONREAD, &t) == -1)) || (t == 0)) {
+	if (canbepipe && (ioctl(fd, FIONREAD, &t) == -1 || t == 0)) {
 #ifdef FD_ZERO
+		ssize_t cnt;
 		for (cnt = 0;; cnt++) {
 			fd_set check;
 			struct timeval tout = {0, 100 * 1000};
@@ -247,9 +245,6 @@ file_pipe2file(struct magic_set *ms, int fd, const void *startbuf,
 	char buf[4096];
 	ssize_t r;
 	int tfd;
-#ifdef HAVE_MKSTEMP
-	int te;
-#endif
 
 	(void)strlcpy(buf, "/tmp/file.XXXXXX", sizeof buf);
 #ifndef HAVE_MKSTEMP
@@ -261,10 +256,13 @@ file_pipe2file(struct magic_set *ms, int fd, const void *startbuf,
 		errno = r;
 	}
 #else
-	tfd = mkstemp(buf);
-	te = errno;
-	(void)unlink(buf);
-	errno = te;
+	{
+		int te;
+		tfd = mkstemp(buf);
+		te = errno;
+		(void)unlink(buf);
+		errno = te;
+	}
 #endif
 	if (tfd == -1) {
 		file_error(ms, errno,
@@ -405,16 +403,19 @@ uncompressbuf(struct magic_set *ms, int fd, size_t method,
 	case 0:	/* child */
 		(void) close(0);
 		if (fd != -1) {
-		    (void) dup(fd);
+		    if (dup(fd) == -1)
+			_exit(1);
 		    (void) lseek(0, (off_t)0, SEEK_SET);
 		} else {
-		    (void) dup(fdin[0]);
+		    if (dup(fdin[0]) == -1)
+			_exit(1);
 		    (void) close(fdin[0]);
 		    (void) close(fdin[1]);
 		}
 
 		(void) close(1);
-		(void) dup(fdout[1]);
+		if (dup(fdout[1]) == -1)
+			_exit(1);
 		(void) close(fdout[0]);
 		(void) close(fdout[1]);
 #ifndef DEBUG
@@ -486,7 +487,7 @@ uncompressbuf(struct magic_set *ms, int fd, size_t method,
 #endif
 			free(*newch);
 			n = 0;
-			newch[0] = '\0';
+			*newch = NULL;
 			goto err;
 		} else {
 			n = r;

@@ -1,4 +1,4 @@
-/*	$NetBSD: load.c,v 1.42 2010/12/24 12:41:43 skrll Exp $	 */
+/*	$NetBSD: load.c,v 1.47 2013/11/27 18:01:33 christos Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: load.c,v 1.42 2010/12/24 12:41:43 skrll Exp $");
+__RCSID("$NetBSD: load.c,v 1.47 2013/11/27 18:01:33 christos Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -68,7 +68,7 @@ Objlist _rtld_list_main =	/* Objects loaded at program startup */
   SIMPLEQ_HEAD_INITIALIZER(_rtld_list_main);
 Objlist _rtld_list_global =	/* Objects dlopened with RTLD_GLOBAL */
   SIMPLEQ_HEAD_INITIALIZER(_rtld_list_global);
-  
+
 void
 _rtld_objlist_push_head(Objlist *list, Obj_Entry *obj)
 {
@@ -117,7 +117,7 @@ _rtld_load_object(const char *filepath, int flags)
 	size_t pathlen = strlen(filepath);
 
 	for (obj = _rtld_objlist->next; obj != NULL; obj = obj->next)
-		if (pathlen == obj->pathlen && !strcmp(obj->path, filepath)) 
+		if (pathlen == obj->pathlen && !strcmp(obj->path, filepath))
 			break;
 
 	/*
@@ -145,6 +145,14 @@ _rtld_load_object(const char *filepath, int flags)
 			}
 		}
 	}
+
+#ifdef RTLD_LOADER
+	if (pathlen == _rtld_objself.pathlen &&
+	    strcmp(_rtld_objself.path, filepath) == 0) {
+		close(fd);
+		return &_rtld_objself;
+	}
+#endif
 
 	if (obj == NULL) { /* First use of this object, so we must map it in */
 		obj = _rtld_map_object(filepath, fd, &sb);
@@ -200,7 +208,9 @@ _rtld_load_by_name(const char *name, Obj_Entry *obj, Needed_Entry **needed,
 {
 #if !defined(__minix)
 	Library_Xform *x = _rtld_xforms;
-	Obj_Entry *o = NULL;
+#endif /* !defined(__minix) */
+	Obj_Entry *o;
+#if !defined(__minix)
 	size_t j;
 	ssize_t i;
 #endif /* !defined(__minix) */
@@ -211,10 +221,17 @@ _rtld_load_by_name(const char *name, Obj_Entry *obj, Needed_Entry **needed,
 		u_quad_t q;
 		char s[16];
 	} val;
+
+	dbg(("load by name %s %p", name, x));
 #endif /* !defined(__minix) */
+	for (o = _rtld_objlist->next; o != NULL; o = o->next)
+		if (_rtld_object_match_name(o, name)) {
+			++o->refcount;
+			(*needed)->obj = o;
+			return true;
+		}
 
 #if !defined(__minix)
-	dbg(("load by name %s %p", name, x));
 	for (; x; x = x->next) {
 		if (strcmp(x->name, name) != 0)
 			continue;
@@ -276,9 +293,9 @@ _rtld_load_by_name(const char *name, Obj_Entry *obj, Needed_Entry **needed,
 				(*needed)->next = ne;
 				*needed = ne;
 			}
-				
+
 		}
-		
+
 	}
 #endif /* !defined(__minix) */
 

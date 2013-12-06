@@ -1,11 +1,6 @@
 #	$NetBSD: Makefile,v 1.17 2012/05/07 08:51:47 wiz Exp $
 
-.if defined(__MINIX)
-# ssp-buffer-size=0, __SSP_FORTIFY_LEVEL=0
-USE_FORT=no
-.else
 USE_FORT?= yes	# data driven bugs?
-.endif
 
 NOMAN=		# defined
 

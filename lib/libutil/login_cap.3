@@ -1,4 +1,4 @@
-.\" $NetBSD: login_cap.3,v 1.18 2010/05/05 22:05:31 wiz Exp $
+.\" $NetBSD: login_cap.3,v 1.21 2013/06/23 08:38:41 wiz Exp $
 .\"
 .\" Copyright (c) 1996,1997 Berkeley Software Design, Inc. All rights reserved.
 .\"
@@ -32,7 +32,7 @@
 .\"
 .\" BSDI login_cap.3,v 1.4 1997/11/07 16:22:27 jch Exp
 .\"
-.Dd October 6, 2007
+.Dd June 20, 2013
 .Dt LOGIN_CAP 3
 .Os
 .Sh NAME
@@ -42,6 +42,7 @@
 .Nm login_getcapsize ,
 .Nm login_getcapstr ,
 .Nm login_getcaptime ,
+.Nm login_getpwclass ,
 .Nm login_close ,
 .Nm setclasscontext ,
 .Nm setusercontext
@@ -63,6 +64,8 @@
 .Fn login_getcapstr "login_cap_t *lc" "const char *cap" "char *def" "char *err"
 .Ft quad_t
 .Fn login_getcaptime "login_cap_t *lc" "const char *cap" "quad_t def" "quad_t err"
+.Ft login_cap_t *
+.Fn login_getpwclass "struct passwd *pwd"
 .Ft void
 .Fn login_close "login_cap_t *lc"
 .Ft int
@@ -95,6 +98,11 @@ When the
 structure is no longer needed, it should be freed by the
 .Fn login_close
 function.
+.Pp
+The
+.Fn login_getpwclass
+function is equivalent to:
+.Dl login_getclass(pwd\ ? pwd->pw_class\ : NULL)
 .Pp
 Once
 .Ar lc

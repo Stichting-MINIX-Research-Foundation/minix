@@ -34,7 +34,9 @@
 
 #include <memory>
 #include <set>
+#include <vector>
 
+#include "engine/test_result.hpp"
 #include "utils/cmdline/base_command.hpp"
 #include "utils/cmdline/options.hpp"
 #include "utils/cmdline/parser.hpp"
@@ -51,9 +53,8 @@ class path;
 }  // namespace utils
 
 namespace engine {
-struct test_filter;
 class test_case;
-class test_result;
+class test_filter;
 }  // namespace engine
 
 namespace cli {
@@ -61,6 +62,7 @@ namespace cli {
 
 extern const utils::cmdline::path_option build_root_option;
 extern const utils::cmdline::path_option kyuafile_option;
+extern const utils::cmdline::list_option results_filter_option;
 extern const utils::cmdline::path_option store_option;
 extern const utils::cmdline::property_option variable_option;
 
@@ -77,11 +79,19 @@ typedef utils::cmdline::base_command< utils::config::tree > cli_command;
 typedef std::auto_ptr< cli_command > cli_command_ptr;
 
 
+/// Collection of result types.
+///
+/// This is a vector rather than a set because we want to respect the order in
+/// which the user provided the types.
+typedef std::vector< engine::test_result::result_type > result_types;
+
+
 utils::optional< utils::fs::path > get_home(void);
 
 utils::optional< utils::fs::path > build_root_path(
     const utils::cmdline::parsed_cmdline&);
 utils::fs::path kyuafile_path(const utils::cmdline::parsed_cmdline&);
+result_types get_result_types(const utils::cmdline::parsed_cmdline&);
 utils::fs::path store_path(const utils::cmdline::parsed_cmdline&);
 
 std::set< engine::test_filter > parse_filters(

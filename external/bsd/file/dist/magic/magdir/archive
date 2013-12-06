@@ -1,5 +1,5 @@
 #------------------------------------------------------------------------------
-# $File: archive,v 1.70 2011/10/26 15:44:47 christos Exp $
+# $File: archive,v 1.79 2013/02/08 17:24:06 christos Exp $
 # archive:  file(1) magic for archive formats (see also "msdos" for self-
 #           extracting compressed archives)
 #
@@ -36,7 +36,60 @@
 0	string		070701		ASCII cpio archive (SVR4 with no CRC)
 0	string		070702		ASCII cpio archive (SVR4 with CRC)
 
-# Debian package (needs to go before regular portable archives)
+#
+# Various archive formats used by various versions of the "ar"
+# command.
+#
+
+#
+# Original UNIX archive formats.
+# They were written with binary values in host byte order, and
+# the magic number was a host "int", which might have been 16 bits
+# or 32 bits.  We don't say "PDP-11" or "VAX", as there might have
+# been ports to little-endian 16-bit-int or 32-bit-int platforms
+# (x86?) using some of those formats; if none existed, feel free
+# to use "PDP-11" for little-endian 16-bit and "VAX" for little-endian
+# 32-bit.  There might have been big-endian ports of that sort as
+# well.
+#
+0	leshort		0177555		very old 16-bit-int little-endian archive
+0	beshort		0177555		very old 16-bit-int big-endian archive
+0	lelong		0177555		very old 32-bit-int little-endian archive
+0	belong		0177555		very old 32-bit-int big-endian archive
+
+0	leshort		0177545		old 16-bit-int little-endian archive
+>2	string		__.SYMDEF	random library
+0	beshort		0177545		old 16-bit-int big-endian archive
+>2	string		__.SYMDEF	random library
+0	lelong		0177545		old 32-bit-int little-endian archive
+>4	string		__.SYMDEF	random library
+0	belong		0177545		old 32-bit-int big-endian archive
+>4	string		__.SYMDEF	random library
+
+#
+# From "pdp" (but why a 4-byte quantity?)
+#
+0	lelong		0x39bed		PDP-11 old archive
+0	lelong		0x39bee		PDP-11 4.0 archive
+
+#
+# XXX - what flavor of APL used this, and was it a variant of
+# some ar archive format?  It's similar to, but not the same
+# as, the APL workspace magic numbers in pdp.
+#
+0	long		0100554		apl workspace
+
+#
+# System V Release 1 portable(?) archive format.
+#
+0	string		=<ar>		System V Release 1 ar archive
+!:mime	application/x-archive
+
+#
+# Debian package; it's in the portable archive format, and needs to go
+# before the entry for regular portable archives, as it's recognized as
+# a portable archive whose first member has a name beginning with
+# "debian".
 #
 0	string		=!<arch>\ndebian
 !:mime	application/x-debian-package
@@ -53,18 +106,14 @@
 #>84	string		gz		\b, uses gzip compression
 #>136	ledate		x		created: %s
 
-# other archives
-0	long		0177555		very old archive
-0	short		0177555		very old PDP-11 archive
-0	long		0177545		old archive
-0	short		0177545		old PDP-11 archive
-0	long		0100554		apl workspace
-0	string		=<ar>		archive
-!:mime	application/x-archive
-
-# MIPS archive (needs to go before regular portable archives)
+#
+# MIPS archive; they're in the portable archive format, and need to go
+# before the entry for regular portable archives, as it's recognized as
+# a portable archive whose first member has a name beginning with
+# "__________E".
 #
 0	string	=!<arch>\n__________E	MIPS archive
+!:mime	application/x-archive
 >20	string	U			with MIPS Ucode members
 >21	string	L			with MIPSEL members
 >21	string	B			with MIPSEB members
@@ -75,56 +124,20 @@
 0	search/1	-h-		Software Tools format archive text
 
 #
-# XXX - why are there multiple <ar> thingies?  Note that 0x213c6172 is
-# "!<ar", so, for new-style (4.xBSD/SVR2andup) archives, we have:
-#
-# 0	string		=!<arch>		current ar archive
-# 0	long		0x213c6172	archive file
-#
-# and for SVR1 archives, we have:
-#
-# 0	string		\<ar>		System V Release 1 ar archive
-# 0	string		=<ar>		archive
-#
-# XXX - did Aegis really store shared libraries, breakpointed modules,
-# and absolute code program modules in the same format as new-style
-# "ar" archives?
+# BSD/SVR2-and-later portable archive formats.
 #
 0	string		=!<arch>		current ar archive
 !:mime	application/x-archive
 >8	string		__.SYMDEF	random library
->0	belong		=65538		- pre SR9.5
->0	belong		=65539		- post SR9.5
->0	beshort		2		- object archive
->0	beshort		3		- shared library module
->0	beshort		4		- debug break-pointed module
->0	beshort		5		- absolute code program module
-0	string		\<ar>		System V Release 1 ar archive
-0	string		=<ar>		archive
+>68	string		__.SYMDEF\ SORTED	random library
+
 #
-# XXX - from "vax", which appears to collect a bunch of byte-swapped
-# thingies, to help you recognize VAX files on big-endian machines;
-# with "leshort", "lelong", and "string", that's no longer necessary....
+# "Thin" archive, as can be produced by GNU ar.
 #
-0	belong		0x65ff0000	VAX 3.0 archive
-0	belong		0x3c61723e	VAX 5.0 archive
-#
-0	long		0x213c6172	archive file
-0	lelong		0177555		very old VAX archive
-0	leshort		0177555		very old PDP-11 archive
-#
-# XXX - "pdp" claims that 0177545 can have an __.SYMDEF member and thus
-# be a random library (it said 0xff65 rather than 0177545).
-#
-0	lelong		0177545		old VAX archive
->8	string		__.SYMDEF	random library
-0	leshort		0177545		old PDP-11 archive
->8	string		__.SYMDEF	random library
-#
-# From "pdp" (but why a 4-byte quantity?)
-#
-0	lelong		0x39bed		PDP-11 old archive
-0	lelong		0x39bee		PDP-11 4.0 archive
+0	string		=!<thin>\n	thin archive with
+>68	belong		0		no symbol entries
+>68	belong		1		%d symbol entry
+>68	belong		>1		%d symbol entries
 
 # ARC archiver, from Daniel Quinlan (quinlan@yggdrasil.com)
 #
@@ -184,7 +197,10 @@
 # SAR
 3	string	LH5 SAR archive data
 # BSArc/BS2
-0	string	\212\3SB \0 BSArc/BS2 archive data
+0	string	\212\3SB\020\0	BSArc/BS2 archive data
+# Bethesda Softworks Archive (Oblivion)
+0	string	BSA\0 		BSArc archive data
+>4	lelong	x		version %d
 # MAR
 2	string	=-ah MAR archive data
 # ACB
@@ -209,7 +225,7 @@
 # AMGC
 0	string	\xad6" AMGC archive data
 # NuLIB
-0	string	NõFélå NuLIB archive data
+0	string	N\xc3\xb5F\xc3\xa9lx\xc3\xa5 NuLIB archive data
 # PakLeo
 0	string	LEOLZW PAKLeo archive data
 # ChArc
@@ -221,7 +237,7 @@
 # Freeze
 0	string	\x1f\x9f\x4a\x10\x0a Freeze archive data
 # KBoom
-0	string	¨MP¨ KBoom archive data
+0	string	\xc2\xa8MP\xc2\xa8 KBoom archive data
 # NSQ, must go after CDC Codec
 0	string	\x76\xff NSQ archive data
 # DPA
@@ -259,7 +275,7 @@
 # MP3 (archiver, not lossy audio compression)
 0	string	MP3\x1a MP3-Archiver archive data
 # ZET
-0	string	OZÝ ZET archive data
+0	string	OZ\xc3\x9d ZET archive data
 # TSComp
 0	string	\x65\x5d\x13\x8c\x08\x01\x03\x00 TSComp archive data
 # ARQ
@@ -290,7 +306,7 @@
 # Xtreme
 0	string	ULEB\0 Xtreme archive data
 # Pack Magic
-0	string	@â\1\0 Pack Magic archive data
+0	string	@\xc3\xa2\1\0 Pack Magic archive data
 # BTS
 0	belong&0xfeffffff	0x1a034465 BTS archive data
 # ELI 5750
@@ -426,7 +442,7 @@
 # XPack Data
 0	string	xpa XPack archive data
 # XPack Single Data
-0	string	Í\ jm XPack single archive data
+0	string	\xc3\x8d\ jm XPack single archive data
 
 # TODO: missing due to unknown magic/magic at end of file:
 #DWC
@@ -571,6 +587,7 @@
 !:mime	application/zip
 
 # Zip archives (Greg Roelofs, c/o zip-bugs@wkuvx1.wku.edu)
+0	string		PK\005\006	Zip archive data (empty)
 0	string		PK\003\004
 
 # Specialised zip formats which start with a member named 'mimetype'
@@ -660,11 +677,10 @@
 !:mime	application/vnd.oasis.opendocument.image-template
 
 #  EPUB (OEBPS) books using OCF (OEBPS Container Format)
-#    From: Adam Buchbinder <adam.buchbinder@gmail.com>
 #    http://www.idpf.org/ocf/ocf1.0/download/ocf10.htm, section 4.
-#    (mimetype contains "application/epub+zip")
->>50	string	epub+zip		EPUB ebook data
-!:mime	application/epub+zip
+#    From: Ralf Brown <ralf.brown@gmail.com>
+>0x1E	string	mimetypeapplication/epub+zip	EPUB document
+!:mime application/epub+zip
 
 #  Catch other ZIP-with-mimetype formats
 #	In a ZIP file, the bytes immediately after a member's contents are
@@ -684,16 +700,21 @@
 >>>38		regex	[!-OQ-~]+		Zip data (MIME type "%s"?)
 !:mime	application/zip
 
+# Java Jar files
+>(26.s+30)	leshort	0xcafe		Java Jar file data (zip)
+!:mime	application/jar
+
 # Generic zip archives (Greg Roelofs, c/o zip-bugs@wkuvx1.wku.edu)
 #   Next line excludes specialized formats:
->26    string          !\x8\0\0\0mimetype	Zip archive data
+>(26.s+30)	leshort	!0xcafe
+>>26    string          !\x8\0\0\0mimetype	Zip archive data
 !:mime	application/zip
->>4	byte		0x09		\b, at least v0.9 to extract
->>4	byte		0x0a		\b, at least v1.0 to extract
->>4	byte		0x0b		\b, at least v1.1 to extract
->>4	byte		0x14		\b, at least v2.0 to extract
->>4	byte		0x2d		\b, at least v3.0 to extract
->>0x161	string		WINZIP		\b, WinZIP self-extracting
+>>>4	byte		0x09		\b, at least v0.9 to extract
+>>>4	byte		0x0a		\b, at least v1.0 to extract
+>>>4	byte		0x0b		\b, at least v1.1 to extract
+>>>4	byte		0x14		\b, at least v2.0 to extract
+>>>4	byte		0x2d		\b, at least v3.0 to extract
+>>>0x161	string		WINZIP		\b, WinZIP self-extracting
 
 # StarView Metafile
 # From Pierre Ducroquet <pinaraf@pinaraf.info>
@@ -884,14 +905,8 @@
 #   archive must be an uncompressed file called 'mimetype' with contents
 #   'application/epub+zip'
 
-# start by checking that this is a ZIP archive, then check for the
-#   proper mimetype file
-# From: Ralf Brown <ralf.brown@gmail.com>
-0	string	PK\003\004
->0x1E	string	mimetypeapplication/epub+zip	EPUB document
-!:mime application/epub+zip
 
-# From: "Michał Górny" <mgorny@gentoo.org>
+# From: "Michael Gorny" <mgorny@gentoo.org>
 # ZPAQ: http://mattmahoney.net/dc/zpaq.html
 0	string	zPQ	ZPAQ stream
 >3	byte	x	\b, level %d

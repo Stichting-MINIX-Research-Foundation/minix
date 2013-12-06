@@ -255,11 +255,17 @@ extern u_int		uvm_emap_size;	/* size of emap */
 
 #else
 /* out-of-kernel versions of round_page and trunc_page */
+#if !defined(__minix)
 #define	round_page(x) \
 	((((vaddr_t)(x) + (vm_page_size - 1)) / vm_page_size) * \
 	    vm_page_size)
 #define	trunc_page(x) \
 	((((vaddr_t)(x)) / vm_page_size) * vm_page_size)
+#else
+/* LSC: Minix always uses the same definition of those. */
+#define	round_page(x)	(((x) + PAGE_MASK) & ~PAGE_MASK)
+#define	trunc_page(x)	((x) & ~PAGE_MASK)
+#endif /* !defined(__minix) */
 
 #endif /* _KERNEL */
 

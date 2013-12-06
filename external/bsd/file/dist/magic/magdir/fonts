@@ -1,6 +1,6 @@
 
 #------------------------------------------------------------------------------
-# $File: fonts,v 1.23 2010/09/20 18:55:20 rrt Exp $
+# $File: fonts,v 1.26 2013/03/09 22:36:00 christos Exp $
 # fonts:  file(1) magic for font data
 #
 0	search/1	FONT		ASCII vfont text
@@ -16,8 +16,15 @@
 0	string		%!PS-Adobe-3.0\ Resource-Font	PostScript Type 1 font text
 
 # X11 font files in SNF (Server Natural Format) format
+# updated by Joerg Jenderek at Feb 2013
+# http://computer-programming-forum.com/51-perl/8f22fb96d2e34bab.htm
 0	belong		00000004		X11 SNF font data, MSB first
-0	lelong		00000004		X11 SNF font data, LSB first
+#>104	belong		00000004		X11 SNF font data, MSB first
+!:mime	application/x-font-sfn
+# GRR: line below too general as it catches also Xbase index file t3-CHAR.NDX
+0	lelong		00000004		
+>104	lelong		00000004		X11 SNF font data, LSB first
+!:mime	application/x-font-sfn
 
 # X11 Bitmap Distribution Format, from Daniel Quinlan (quinlan@yggdrasil.com)
 0	search/1	STARTFONT\ 		X11 BDF font text
@@ -75,7 +82,7 @@
 0	string		OTTO		OpenType font data
 !:mime application/vnd.ms-opentype
 
-# Gürkan Sengün <gurkan@linuks.mine.nu>, www.linuks.mine.nu 
+# Gurkan Sengun <gurkan@linuks.mine.nu>, www.linuks.mine.nu 
 0	string		SplineFontDB:	Spline Font Database 
 !:mime application/vnd.font-fontforge-sfd
 >14	string		x		version %s
@@ -83,3 +90,11 @@
 # EOT
 34	string		LP		Embedded OpenType (EOT)
 !:mime application/vnd.ms-fontobject
+
+# Web Open Font Format (.woff)
+# http://www.w3.org/TR/WOFF/
+0	string		wOFF	Web Open Font Format
+>4	belong		x	\b, flavor %d
+>8	belong		x	\b, length %d
+>20	beshort		x	\b, version %hd
+>22	beshort		x	\b.%hd

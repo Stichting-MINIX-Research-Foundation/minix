@@ -1,4 +1,4 @@
-/*	$Vendor-Id: st.in,v 1.18 2012/01/03 10:18:05 kristaps Exp $ */
+/*	$Vendor-Id: st.in,v 1.19 2012/02/26 21:47:09 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -66,7 +66,7 @@ LINE("-xpg3",		"X/Open Portability Guide Issue\\~3 (\\(lqXPG3\\(rq)")
 LINE("-xpg4",		"X/Open Portability Guide Issue\\~4 (\\(lqXPG4\\(rq)")
 LINE("-xpg4.2",		"X/Open Portability Guide Issue\\~4, Version\\~2 (\\(lqXPG4.2\\(rq)")
 LINE("-xpg4.3",		"X/Open Portability Guide Issue\\~4, Version\\~3 (\\(lqXPG4.3\\(rq)")
-LINE("-xbd5",		"X/Open System Interface Definitions Issue\\~5 (\\(lqXBD5\\(rq)")
+LINE("-xbd5",		"X/Open Base Definitions Issue\\~5 (\\(lqXBD5\\(rq)")
 LINE("-xcu5",		"X/Open Commands and Utilities Issue\\~5 (\\(lqXCU5\\(rq)")
 LINE("-xsh5",		"X/Open System Interfaces and Headers Issue\\~5 (\\(lqXSH5\\(rq)")
 LINE("-xns5",		"X/Open Networking Services Issue\\~5 (\\(lqXNS5\\(rq)")

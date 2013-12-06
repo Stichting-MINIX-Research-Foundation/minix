@@ -1,4 +1,4 @@
-/*	$NetBSD: cerror.S,v 1.4 2012/02/27 15:47:11 matt Exp $	*/
+/*	$NetBSD: cerror.S,v 1.5 2013/09/12 15:36:15 joerg Exp $	*/
 
 #include <machine/asm.h>
 #include "SYS.h"
@@ -6,7 +6,7 @@
 #ifndef _REENTRANT
 	.globl	_C_LABEL(errno)
 #endif
-#ifdef PIC
+#ifdef __PIC__
 	.protected _C_LABEL(__cerror)
 #endif
 
@@ -24,7 +24,7 @@ ENTRY(__cerror)
 	mtlr	%r0
 	la	%r1,16(%r1)
 #else
-#ifdef PIC
+#ifdef __PIC__
 	mflr	%r10
 	bl	_GLOBAL_OFFSET_TABLE_@local-4
 	mflr	%r4
@@ -34,7 +34,7 @@ ENTRY(__cerror)
 #else
 	lis	%r4,_C_LABEL(errno)@ha
 	stw	%r3,_C_LABEL(errno)@l(%r4)
-#endif /* PIC */
+#endif /* __PIC__ */
 #endif /* _REENTRANT */
 	li	%r3,-1
 	li	%r4,-1

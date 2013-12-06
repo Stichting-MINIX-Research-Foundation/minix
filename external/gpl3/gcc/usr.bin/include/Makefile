@@ -1,17 +1,17 @@
-#	$NetBSD: Makefile,v 1.4 2011/07/07 08:46:20 mrg Exp $
+#	$NetBSD: Makefile,v 1.5 2013/08/22 00:17:48 matt Exp $
 
 .include "../Makefile.inc"
 
 # XXX for G_EXTRA_HEADERS.  make mknative-gcc put that somewhere
 # inside usr.bin/ not lib/
-.if exists(${.CURDIR}/../../lib/libgcc/arch/${MACHINE_ARCH}.mk)
-.include "${.CURDIR}/../../lib/libgcc/arch/${MACHINE_ARCH}.mk"
+.if exists(${.CURDIR}/../../lib/libgcc/arch/${GCC_MACHINE_ARCH}.mk)
+.include "${.CURDIR}/../../lib/libgcc/arch/${GCC_MACHINE_ARCH}.mk"
 .endif
 
 INCS= ${G_EXTRA_HEADERS:T}
 
 # XXX missed some how
-.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
+.if ${GCC_MACHINE_ARCH} == "i386" || ${GCC_MACHINE_ARCH} == "x86_64"
 INCS+=	mm_malloc.h
 
 # XXX we should put this in gcc/config.gcc and regenerate the i386/x86

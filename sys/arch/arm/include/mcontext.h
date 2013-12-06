@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.11 2012/08/03 07:59:23 matt Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.16 2013/08/15 22:34:59 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -32,6 +32,7 @@
 #ifndef _ARM_MCONTEXT_H_
 #define _ARM_MCONTEXT_H_
 
+#include <sys/stdint.h>
 /*
  * General register state
  */
@@ -76,9 +77,15 @@ typedef struct {
 } __fpregset_t;
 
 typedef struct {
+#ifdef __ARM_EABI__
+	unsigned int	__vfp_fpscr;
+	uint64_t	__vfp_fstmx[32];
+	unsigned int	__vfp_fpsid;
+#else
 	unsigned int	__vfp_fpscr;
 	unsigned int	__vfp_fstmx[33];
 	unsigned int	__vfp_fpsid;
+#endif
 } __vfpregset_t;
 
 typedef struct {
@@ -88,10 +95,10 @@ typedef struct {
 		__vfpregset_t __vfpregs;
 	} __fpu;
 	__greg_t	_mc_tlsbase;
-#ifdef __minix
+#if defined(__minix)
 	int mc_flags;
 	int mc_magic;
-#endif
+#endif /* defined(__minix) */
 } mcontext_t, mcontext32_t;
 
 /* Machine-dependent uc_flags */
@@ -111,7 +118,7 @@ typedef struct {
 
 #define	_UC_MACHINE_SET_PC(uc, pc)	_UC_MACHINE_PC(uc) = (pc)
 
-#ifdef __minix
+#if defined(__minix)
 #define _UC_MACHINE_STACK(uc)	((uc)->uc_mcontext.__gregs[_REG_SP])
 #define	_UC_MACHINE_SET_STACK(uc, sp)	_UC_MACHINE_STACK(uc) = (sp)
 
@@ -135,13 +142,18 @@ typedef struct {
 
 #define _UC_MACHINE_R4(uc)	((uc)->uc_mcontext.__gregs[_REG_R4])
 #define	_UC_MACHINE_SET_R4(uc, setreg)	_UC_MACHINE_R4(uc) = (setreg)
-#endif
+#endif /* defined(__minix) */
 
+#ifdef __ARM_EABI__
+#define	__UCONTEXT_SIZE	(256 + 144)
+#else
 #define	__UCONTEXT_SIZE	256
+#endif
 
 static __inline void *
 __lwp_getprivate_fast(void)
 {
+#if !defined(__thumb__) || defined(_ARM_ARCH_T2)
 	extern void *_lwp_getprivate(void);
 	void *rv;
 	__asm("mrc p15, 0, %0, c13, c0, 3" : "=r"(rv));
@@ -154,12 +166,21 @@ __lwp_getprivate_fast(void)
 	 * syscall.
 	 */
 	return _lwp_getprivate();
+#else
+	extern void *__aeabi_read_tp(void);
+	return __aeabi_read_tp();
+#endif /* !__thumb__ || _ARM_ARCH_T2 */
 }
 
-#ifdef __minix
+#if defined(_KERNEL)
+void vfp_getcontext(struct lwp *, mcontext_t *, int *);
+void vfp_setcontext(struct lwp *, const mcontext_t *); 
+#endif
+
+#if defined(__minix)
 int setmcontext(const mcontext_t *mcp);
 int getmcontext(mcontext_t *mcp);
 #define MCF_MAGIC 0xc0ffee
-#endif
+#endif /* defined(__minix) */
 
 #endif	/* !_ARM_MCONTEXT_H_ */

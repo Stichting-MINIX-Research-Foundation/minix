@@ -1,4 +1,4 @@
-/*	$NetBSD: mvwin.c,v 1.17 2012/09/28 06:03:45 blymn Exp $	*/
+/*	$NetBSD: mvwin.c,v 1.18 2013/10/18 19:53:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)mvwin.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: mvwin.c,v 1.17 2012/09/28 06:03:45 blymn Exp $");
+__RCSID("$NetBSD: mvwin.c,v 1.18 2013/10/18 19:53:59 christos Exp $");
 #endif
 #endif				/* not lint */
 
@@ -52,7 +52,7 @@ int
 mvderwin(WINDOW *win, int dy, int dx)
 {
 	WINDOW *parent;
-	int x, y, i;
+	int x, i;
 	__LINE *lp, *olp;
 #ifdef HAVE_WCHAR
 	__LDATA *cp;
@@ -73,7 +73,6 @@ mvderwin(WINDOW *win, int dy, int dx)
 		return ERR;
 
 	x = parent->begx + dx;
-	y = parent->begy + dy;
 
 	win->ch_off = x;
 	/* Point the line pointers to line space */

@@ -1,32 +1,34 @@
-/*	$NetBSD: svc_dg.c,v 1.14 2012/03/20 17:14:50 matt Exp $	*/
+/*	$NetBSD: svc_dg.c,v 1.17 2013/03/11 20:19:29 tron Exp $	*/
 
 /*
- * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
- * unrestricted use provided that this legend is included on all tape
- * media and as a part of the software program in whole or part.  Users
- * may copy or modify Sun RPC without charge, but are not authorized
- * to license or distribute it to anyone else except as part of a product or
- * program developed by the user.
- * 
- * SUN RPC IS PROVIDED AS IS WITH NO WARRANTIES OF ANY KIND INCLUDING THE
- * WARRANTIES OF DESIGN, MERCHANTIBILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE, OR ARISING FROM A COURSE OF DEALING, USAGE OR TRADE PRACTICE.
- * 
- * Sun RPC is provided with no support and without any obligation on the
- * part of Sun Microsystems, Inc. to assist in its use, correction,
- * modification or enhancement.
- * 
- * SUN MICROSYSTEMS, INC. SHALL HAVE NO LIABILITY WITH RESPECT TO THE
- * INFRINGEMENT OF COPYRIGHTS, TRADE SECRETS OR ANY PATENTS BY SUN RPC
- * OR ANY PART THEREOF.
- * 
- * In no event will Sun Microsystems, Inc. be liable for any lost revenue
- * or profits or other special, indirect and consequential damages, even if
- * Sun has been advised of the possibility of such damages.
- * 
- * Sun Microsystems, Inc.
- * 2550 Garcia Avenue
- * Mountain View, California  94043
+ * Copyright (c) 2010, Oracle America, Inc.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above
+ *       copyright notice, this list of conditions and the following
+ *       disclaimer in the documentation and/or other materials
+ *       provided with the distribution.
+ *     * Neither the name of the "Oracle America, Inc." nor the names of its
+ *       contributors may be used to endorse or promote products derived
+ *       from this software without specific prior written permission.
+ *
+ *   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ *   "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ *   LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ *   FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ *   COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+ *   INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ *   DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ *   GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *   INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ *   WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ *   NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 /*
@@ -44,7 +46,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: svc_dg.c,v 1.14 2012/03/20 17:14:50 matt Exp $");
+__RCSID("$NetBSD: svc_dg.c,v 1.17 2013/03/11 20:19:29 tron Exp $");
 #endif
 
 #include "namespace.h"
@@ -64,6 +66,7 @@ __RCSID("$NetBSD: svc_dg.c,v 1.14 2012/03/20 17:14:50 matt Exp $");
 #endif
 #include <err.h>
 
+#include "svc_fdset.h"
 #include "rpc_internal.h"
 #include "svc_dg.h"
 
@@ -128,15 +131,15 @@ svc_dg_create(int fd, u_int sendsize, u_int recvsize)
 
 	xprt = mem_alloc(sizeof (SVCXPRT));
 	if (xprt == NULL)
-		goto freedata;
+		goto outofmem;
 	memset(xprt, 0, sizeof (SVCXPRT));
 
 	su = mem_alloc(sizeof (*su));
 	if (su == NULL)
-		goto freedata;
+		goto outofmem;
 	su->su_iosz = ((MAX(sendsize, recvsize) + 3) / 4) * 4;
 	if ((rpc_buffer(xprt) = malloc(su->su_iosz)) == NULL)
-		goto freedata;
+		goto outofmem;
 	_DIAGASSERT(__type_fit(u_int, su->su_iosz));
 	xdrmem_create(&(su->su_xdrs), rpc_buffer(xprt), (u_int)su->su_iosz,
 		XDR_DECODE);
@@ -155,10 +158,13 @@ svc_dg_create(int fd, u_int sendsize, u_int recvsize)
 	xprt->xp_ltaddr.len = slen;
 	memcpy(xprt->xp_ltaddr.buf, &ss, slen);
 
-	xprt_register(xprt);
+	if (!xprt_register(xprt))
+		goto freedata;
 	return (xprt);
-freedata:
+
+outofmem:
 	(void) warnx(svc_dg_str, __no_mem_str);
+freedata:
 	if (xprt) {
 		if (su)
 			(void) mem_free(su, sizeof (*su));

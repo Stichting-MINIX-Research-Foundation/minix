@@ -1,4 +1,4 @@
-/*	$NetBSD: _env.c,v 1.6 2011/10/06 20:31:41 christos Exp $ */
+/*	$NetBSD: _env.c,v 1.8 2013/09/09 10:21:28 tron Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: _env.c,v 1.6 2011/10/06 20:31:41 christos Exp $");
+__RCSID("$NetBSD: _env.c,v 1.8 2013/09/09 10:21:28 tron Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -256,10 +256,6 @@ __getenvslot(const char *name, size_t l_name, bool allocate)
 	size_t new_size, num_entries, required_size;
 	char **new_environ;
 
-	/* Does the environ need scrubbing? */
-	if (environ != allocated_environ && allocated_environ != NULL)
-		__scrubenv();
-
 	/* Search for an existing environment variable of the given name. */
 	num_entries = 0;
 	while (environ[num_entries] != NULL) {
@@ -274,6 +270,10 @@ __getenvslot(const char *name, size_t l_name, bool allocate)
 	/* No match found, return if we don't want to allocate a new slot. */
 	if (!allocate)
 		return -1;
+
+	/* Does the environ need scrubbing? */
+	if (environ != allocated_environ && allocated_environ != NULL)
+		__scrubenv();
 
 	/* Create a new slot in the environment. */
 	required_size = num_entries + 1;
@@ -400,7 +400,7 @@ __unlockenv(void)
 #endif
 
 /* Initialize environment memory RB tree. */
-void
+void __section(".text.startup")
 __libc_env_init(void)
 {
 	rb_tree_init(&env_tree, &env_tree_ops);

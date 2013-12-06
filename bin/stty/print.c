@@ -1,4 +1,4 @@
-/* $NetBSD: print.c,v 1.22 2005/06/26 19:10:49 christos Exp $ */
+/* $NetBSD: print.c,v 1.23 2013/09/12 19:47:23 christos Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.22 2005/06/26 19:10:49 christos Exp $");
+__RCSID("$NetBSD: print.c,v 1.23 2013/09/12 19:47:23 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,7 +52,8 @@ static void bput(const char *);
 static const char *ccval(const struct cchar *, int);
 
 void
-print(struct termios *tp, struct winsize *wp, int ldisc, enum FMT fmt)
+print(struct termios *tp, struct winsize *wp, int queue, const char *ldisc,
+    enum FMT fmt)
 {
 	const struct cchar *p;
 	long tmp;
@@ -62,29 +63,6 @@ print(struct termios *tp, struct winsize *wp, int ldisc, enum FMT fmt)
 
 	cnt = 0;
 
-	/* Line discipline. */
-#ifdef TTYDISC
-	if (ldisc != TTYDISC) {
-		switch(ldisc) {
-		case TABLDISC:	
-			cnt += printf("tablet disc; ");
-			break;
-		case SLIPDISC:	
-			cnt += printf("slip disc; ");
-			break;
-		case PPPDISC:	
-			cnt += printf("ppp disc; ");
-			break;
-		case STRIPDISC:	
-			cnt += printf("strip disc; ");
-			break;
-		default:	
-			cnt += printf("#%d disc; ", ldisc);
-			break;
-		}
-	}
-#endif
-
 	/* Line speed. */
 	ispeed = cfgetispeed(tp);
 	ospeed = cfgetospeed(tp);
@@ -93,8 +71,14 @@ print(struct termios *tp, struct winsize *wp, int ldisc, enum FMT fmt)
 		    printf("ispeed %d baud; ospeed %d baud;", ispeed, ospeed);
 	else
 		cnt += printf("speed %d baud;", ispeed);
-	if (fmt >= STTY_BSD)
+	if (fmt >= STTY_BSD) {
 		cnt += printf(" %d rows; %d columns;", wp->ws_row, wp->ws_col);
+		if (queue)
+			cnt += printf(" queue = %d;", queue);
+		if (ldisc)
+			cnt += printf(" line = %s;", ldisc);
+	}
+
 	if (cnt)
 		(void)printf("\n");
 

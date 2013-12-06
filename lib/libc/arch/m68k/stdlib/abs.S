@@ -1,4 +1,4 @@
-/*	$NetBSD: abs.S,v 1.6 2003/08/07 16:42:12 agc Exp $	*/
+/*	$NetBSD: abs.S,v 1.8 2013/07/16 21:48:32 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
 #if 0
 	RCSID("from: @(#)abs.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: abs.S,v 1.6 2003/08/07 16:42:12 agc Exp $")
+	RCSID("$NetBSD: abs.S,v 1.8 2013/07/16 21:48:32 matt Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -51,8 +51,9 @@ ENTRY_NOPROFILE(labs)
 /* abs - int absolute value */
 
 ENTRY(abs)
-	movl	%sp@(4),%d0
+	movl	4(%sp),%d0
 	jge	L1
 	negl	%d0
 L1:
 	rts
+END(abs)

@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.104 2012/04/21 12:27:27 roy Exp $	*/
+/*	$NetBSD: curses.h,v 1.106 2013/10/16 19:59:29 roy Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -259,6 +259,7 @@ typedef struct __screen SCREEN;
 
 #ifdef HAVE_WCHAR
 #define WA_ATTRIBUTES	0x03ffffff	/* Wide character attributes mask */
+#define WA_NORMAL	__NORMAL
 #define WA_STANDOUT	__STANDOUT	/* Best highlighting mode */
 #define WA_UNDERLINE	__UNDERSCORE	/* Underlining */
 #define WA_REVERSE	__REVERSE	/* Reverse video */
@@ -409,6 +410,7 @@ extern int	 COLORS;		/* Max colors on the screen. */
 extern int	 COLOR_PAIRS;		/* Max color pairs on the screen. */
 
 extern int	 ESCDELAY;		/* Delay between keys in esc seq's. */
+extern int	 TABSIZE;		/* Size of a tab. */
 
 #ifndef OK
 #define	ERR	(-1)			/* Error return. */

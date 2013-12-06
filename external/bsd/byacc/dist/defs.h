@@ -1,9 +1,9 @@
-/*	$NetBSD: defs.h,v 1.5 2011/09/10 21:29:04 christos Exp $	*/
+/*	$NetBSD: defs.h,v 1.6 2013/04/06 14:52:24 christos Exp $	*/
 
 #if HAVE_NBTOOL_CONFIG_H
 #include "nbtool_config.h"
 #endif
-/* Id: defs.h,v 1.35 2011/09/07 08:55:03 tom Exp */
+/* Id: defs.h,v 1.37 2012/05/26 15:23:00 tom Exp  */
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -15,6 +15,10 @@
 #include <assert.h>
 #include <ctype.h>
 #include <stdio.h>
+
+#if defined(__cplusplus)	/* __cplusplus, etc. */
+#define class myClass
+#endif
 
 #define YYMAJOR 1
 #define YYMINOR 9
@@ -137,9 +141,11 @@
 #define CALLOC(k,n)	(calloc((size_t)(k),(size_t)(n)))
 #define	FREE(x)		(free((char*)(x)))
 #define MALLOC(n)	(malloc((size_t)(n)))
+#define TMALLOC(t,n)	((t*) malloc((size_t)(n) * sizeof(t)))
 #define	NEW(t)		((t*)allocate(sizeof(t)))
 #define	NEW2(n,t)	((t*)allocate(((size_t)(n)*sizeof(t))))
 #define REALLOC(p,n)	(realloc((char*)(p),(size_t)(n)))
+#define TREALLOC(t,p,n)	((t*)realloc((char*)(p), (size_t)(n) * sizeof(t)))
 
 #define DO_FREE(x)	if (x) { FREE(x); x = 0; }
 
@@ -235,6 +241,7 @@ extern char gflag;
 extern char iflag;
 extern char lflag;
 extern char rflag;
+extern char sflag;
 extern char tflag;
 extern char vflag;
 extern const char *symbol_prefix;
@@ -306,7 +313,6 @@ extern char *nullable;
 extern bucket *first_symbol;
 extern bucket *last_symbol;
 
-extern int pure_parser;
 extern int nstates;
 extern core *first_state;
 extern shifts *first_shift;
@@ -347,11 +353,21 @@ extern bucket *lookup(const char *);
 extern bucket *make_bucket(const char *);
 
 #ifndef GCC_NORETURN
+#if defined(__dead2)
+#define GCC_NORETURN		__dead2
+#elif defined(__dead)
+#define GCC_NORETURN		__dead
+#else
 #define GCC_NORETURN		/* nothing */
+#endif
 #endif
 
 #ifndef GCC_UNUSED
+#if defined(__unused)
+#define GCC_UNUSED		__unused
+#else
 #define GCC_UNUSED		/* nothing */
+#endif
 #endif
 
 /* closure.c */
@@ -426,7 +442,7 @@ extern void output(void);
 extern void reader(void);
 
 /* skeleton.c */
-extern void write_section(FILE *fp, const char *const section[]);
+extern void write_section(FILE * fp, const char *const section[]);
 
 /* verbose.c */
 extern void verbose(void);

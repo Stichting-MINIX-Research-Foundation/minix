@@ -12,10 +12,6 @@
 #include <errno.h>
 #include <string.h>
 
-#ifdef __weak_alias
-__weak_alias(shmget, _shmget)
-#endif
-
 static int get_ipc_endpt(endpoint_t *pt)
 {
 	return minix_rs_lookup("ipc", pt);

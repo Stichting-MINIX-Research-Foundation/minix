@@ -83,12 +83,12 @@
 #define	SIGUSR2		31	/* user defined signal 2 */
 #define	SIGPWR		32	/* power fail/restart (not reset when caught) */
 
-#ifndef __minix
+#if !defined(__minix)
 #ifdef _KERNEL
 #define	SIGRTMIN	33	/* Kernel only; not exposed to userland yet */
 #define	SIGRTMAX	63	/* Kernel only; not exposed to userland yet */
 #endif
-#endif
+#endif /* !defined(__minix) */
 
 #ifndef _KERNEL
 #include <sys/cdefs.h>
@@ -102,7 +102,7 @@
 #if defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE) || \
     defined(_NETBSD_SOURCE)
 
-#if defined(_KERNEL)
+#ifdef _KERNEL
 #define	sigaddset(s, n)		__sigaddset(s, n)
 #define	sigdelset(s, n)		__sigdelset(s, n)
 #define	sigismember(s, n)	__sigismember(s, n)
@@ -157,9 +157,9 @@ struct	sigaction {
 #define SA_NOCLDWAIT	0x0020	/* do not generate zombies on unwaited child */
 #if (_POSIX_C_SOURCE - 0) >= 199309L || (_XOPEN_SOURCE - 0) >= 500 || \
     defined(_NETBSD_SOURCE)
-#ifndef __minix
+#if !defined(__minix)
 #define SA_SIGINFO	0x0040	/* take sa_sigaction handler */
-#endif
+#endif /* !defined(__minix) */
 #endif /* (_POSIX_C_SOURCE - 0) >= 199309L || ... */
 #if defined(_NETBSD_SOURCE)
 #define	SA_NOKERNINFO	0x0080	/* siginfo does not print kernel info on tty */
@@ -175,9 +175,9 @@ struct	sigaction {
 #define	SIG_UNBLOCK	2	/* unblock specified signal set */
 #define	SIG_SETMASK	3	/* set specified signal set */
 
-#ifdef __minix
+#if defined(__minix)
 #define SIG_INQUIRE    10	/* for internal use only */
-#endif
+#endif /* defined(__minix) */
 
 #if defined(_NETBSD_SOURCE)
 typedef	void (*sig_t)(int);	/* type of signal function */
@@ -285,6 +285,6 @@ __END_DECLS
     || (sig == SIGKILL || sig == SIGPIPE))
 #define SIGS_IS_STACKTRACE(sig) (SIGS_IS_LETHAL(sig) && sig != SIGABRT)
 
-#endif /* __minix && _NETBSD_SOURCE */
+#endif /* defined(__minix) && defined(_NETBSD_SOURCE) */
 
 #endif	/* !_SYS_SIGNAL_H_ */

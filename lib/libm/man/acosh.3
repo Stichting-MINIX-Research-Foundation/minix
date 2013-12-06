@@ -26,14 +26,15 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)acosh.3	5.2 (Berkeley) 5/6/91
-.\"	$NetBSD: acosh.3,v 1.15 2003/08/07 16:44:46 agc Exp $
+.\"	$NetBSD: acosh.3,v 1.16 2013/01/29 02:54:30 matt Exp $
 .\"
-.Dd May 6, 1991
+.Dd January 29, 2013
 .Dt ACOSH 3
 .Os
 .Sh NAME
 .Nm acosh ,
-.Nm acoshf
+.Nm acoshf ,
+.Nm acoshl
 .Nd inverse hyperbolic cosine function
 .Sh LIBRARY
 .Lb libm
@@ -43,11 +44,14 @@
 .Fn acosh "double x"
 .Ft float
 .Fn acoshf "float x"
+.Ft long double
+.Fn acoshl "long double x"
 .Sh DESCRIPTION
 The
-.Fn acosh
+.Fn acosh ,
+.Fn acoshf ,
 and
-.Fn acoshf
+.Fn acoshl
 functions compute the inverse hyperbolic cosine
 of the real
 argument
@@ -55,9 +59,10 @@ argument
 .Sh RETURN VALUES
 .\" POSIX_MODE
 If x is less than one,
-.Fn acosh "x"
+.Fn acosh "x" ,
+.Fn acoshf "x" ,
 and
-.Fn acoshf "x"
+.Fn acoshl "x"
 return NaN and set the global variable
 .Va errno
 to EDOM.
@@ -75,3 +80,8 @@ The
 .Fn acosh
 function appeared in
 .Bx 4.3 .
+.Sh STANDARDS
+The
+.Fn acosh
+function conforms to
+.St -isoC-99 .

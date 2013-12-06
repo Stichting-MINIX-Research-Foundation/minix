@@ -14,6 +14,7 @@ Driver for the AMD Device Exclusion Vector (DEV)
 #include <string.h>
 #include <unistd.h>
 #include <machine/vm.h>
+#include <machine/vmparam.h>
 #include <signal.h>
 #include <minix/com.h>
 #include <minix/const.h>

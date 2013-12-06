@@ -1,4 +1,4 @@
-/*	$NetBSD: res_update.h,v 1.7 2009/04/12 17:07:33 christos Exp $	*/
+/*	$NetBSD: res_update.h,v 1.8 2012/11/15 18:49:37 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -26,14 +26,14 @@
 
 #include <sys/types.h>
 #include <arpa/nameser.h>
-#include <isc/list.h>
+#include <sys/queue.h>
 #include <resolv.h>
 
 /*%
  * This RR-like structure is particular to UPDATE.
  */
 struct ns_updrec {
-	LINK(struct ns_updrec) r_link, r_glink;
+	TAILQ_ENTRY(ns_updrec) r_link, r_glink;
 	ns_sect		r_section;	/*%< ZONE/PREREQUISITE/UPDATE */
 	char *		r_dname;	/*%< owner of the RR */
 	ns_class	r_class;	/*%< class number */
@@ -48,7 +48,7 @@ struct ns_updrec {
 	u_int		r_zone;		/*%< zone number on server */
 };
 typedef struct ns_updrec ns_updrec;
-typedef	LIST(ns_updrec)	ns_updque;
+typedef	TAILQ_HEAD(ns_updqueu, ns_updrec) ns_updque;
 
 #define res_mkupdate		__res_mkupdate
 #define res_update		__res_update

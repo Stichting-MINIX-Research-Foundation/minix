@@ -1,4 +1,2 @@
-# $NetBSD: ad.m68k.shl,v 1.8 2010/05/09 11:58:15 lukem Exp $
+# $NetBSD: ad.m68k.shl,v 1.9 2013/01/16 16:01:05 christos Exp $
 ./usr/lib/libm68k_pic.a				comp-c-piclib
-./usr/libdata/debug/sbin/ldconfig.debug		comp-sysutil-debug	debug
-./usr/libdata/debug/usr/lib/libm68k.so.0.0.debug	comp-sys-debug	debug

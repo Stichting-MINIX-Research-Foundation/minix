@@ -1,4 +1,4 @@
-/*	$NetBSD: tput.c,v 1.22 2011/10/04 12:23:14 roy Exp $	*/
+/*	$NetBSD: tput.c,v 1.26 2013/02/05 11:31:56 roy Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1988, 1993
@@ -39,20 +39,21 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)tput.c	8.3 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: tput.c,v 1.22 2011/10/04 12:23:14 roy Exp $");
+__RCSID("$NetBSD: tput.c,v 1.26 2013/02/05 11:31:56 roy Exp $");
 #endif /* not lint */
 
 #include <termios.h>
 
 #include <err.h>
+#include <errno.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <term_private.h>
 #include <term.h>
-#include <termcap.h>
 #include <unistd.h>
 
-static int    outc(int);
 static void   usage(void) __dead;
 static char **process(const char *, const char *, char **);
 
@@ -91,7 +92,7 @@ main(int argc, char **argv)
 			if (!strcmp(p, "init")) {
 				s = tigetstr("is1");
 				if (s != NULL)
-					tputs(s, 0, outc);
+					putp(s);
 				p = "is2";
 			}
 			break;
@@ -105,7 +106,7 @@ main(int argc, char **argv)
 			if (!strcmp(p, "reset")) {
 				s = tigetstr("rs1");
 				if (s != NULL)
-					tputs(s, 0, outc);
+					putp(s);
 				p = "rs2";
 			}
 			break;
@@ -140,91 +141,48 @@ process(const char *cap, const char *str, char **argv)
 	static const char errfew[] =
 	    "Not enough arguments (%d) for capability `%s'";
 	static const char erresc[] =
-	    "Unknown %% escape `%c' for capability `%s'";
-	char c, l;
-	const char *p;
-	int arg_need, p1, p2, p3, p4, p5, p6, p7, p8, p9;
+	    "Unknown %% escape (%s) for capability `%s'";
+	static const char errnum[] =
+	    "Expected a numeric argument [%d] (%s) for capability `%s'";
+	static const char errcharlong[] = 
+	    "Platform does not fit a string into a long for capability '%s'";
+	int i, nparams, piss[TPARM_MAX];
+	long nums[TPARM_MAX];
+	char *strs[TPARM_MAX], *tmp;
 
 	/* Count how many values we need for this capability. */
-	arg_need = 0;
-	p = str;
-	while ((c = *p++) != '\0') {
-		if (c != '%')
-			continue;
-		c = *p++;
-		if (c == '\0')
-			break;
-		if (c != 'p')
-			continue;
-		c = *p++;
-		if (c < '1' || c > '9')
-			errx(2, erresc, c, cap);
-		l = c - '0';
-		if (l > arg_need)
-			arg_need = l;
-	}
-	
-#define NEXT_ARG							      \
-	{								      \
-		if (*++argv == NULL || *argv[0] == '\0')		      \
-			errx(2, errfew, 1, cap);			      \
+	errno = 0;
+	memset(&piss, 0, sizeof(piss));
+	nparams = _ti_parm_analyse(str, piss, TPARM_MAX);
+	if (errno == EINVAL)
+		errx(2, erresc, str, cap);
+
+	/* Create our arrays of integers and strings */
+	for (i = 0; i < nparams; i++) {
+		if (*++argv == NULL || *argv[0] == '\0')
+			errx(2, errfew, nparams, cap);
+		if (piss[i]) {
+			if (sizeof(char *) > sizeof(long) /* CONSTCOND */)
+				errx(2, errcharlong, cap);
+			strs[i] = *argv;
+		} else {
+			errno = 0;
+			nums[i] = strtol(*argv, &tmp, 0);
+			if ((errno == ERANGE && 
+			    (nums[i] == LONG_MIN || nums[i] == LONG_MAX)) ||
+			    (errno != 0 && nums[i] == 0) ||
+			    tmp == str ||
+			    *tmp != '\0')
+				errx(2, errnum, i + 1, *argv, cap);
+		}
 	}
 
-	if (arg_need > 0) {
-		NEXT_ARG;
-		p1 = atoi(*argv);
-	} else
-		p1 = 0;
-	if (arg_need > 1) {
-		NEXT_ARG;
-		p2 = atoi(*argv);
-	} else
-		p2 = 0;
-	if (arg_need > 2) {
-		NEXT_ARG;
-		p3 = atoi(*argv);
-	} else
-		p3 = 0;
-	if (arg_need > 3) {
-		NEXT_ARG;
-		p4 = atoi(*argv);
-	} else
-		p4 = 0;
-	if (arg_need > 4) {
-		NEXT_ARG;
-		p5 = atoi(*argv);
-	} else
-		p5 = 0;
-	if (arg_need > 5) {
-		NEXT_ARG;
-		p6 = atoi(*argv);
-	} else
-		p6 = 0;
-	if (arg_need > 6) {
-		NEXT_ARG;
-		p7 = atoi(*argv);
-	} else
-		p7 = 0;
-	if (arg_need > 7) {
-		NEXT_ARG;
-		p8 = atoi(*argv);
-	} else
-		p8 = 0;
-	if (arg_need > 8) {
-		NEXT_ARG;
-		p9 = atoi(*argv);
-	} else
-		p9 = 0;
+	/* And output */
+#define p(i)	(i <= nparams ? \
+		    (piss[i - 1] ? (long)strs[i - 1] : nums[i - 1]) : 0)
+	putp(tparm(str, p(1), p(2), p(3), p(4), p(5), p(6), p(7), p(8), p(9)));
 
-	/* And print them. */
-	(void)tputs(tparm(str, p1, p2, p3, p4, p5, p6, p7, p8, p9), 0, outc);
 	return argv;
-}
-
-static int
-outc(int c)
-{
-	return putchar(c);
 }
 
 static void

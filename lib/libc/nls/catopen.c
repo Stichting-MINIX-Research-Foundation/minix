@@ -1,4 +1,4 @@
-/*	$NetBSD: catopen.c,v 1.31 2012/07/30 23:02:41 yamt Exp $	*/
+/*	$NetBSD: catopen.c,v 1.32 2013/08/19 08:03:34 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,11 +30,10 @@
  */
 
 #include <sys/cdefs.h>
-#if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: catopen.c,v 1.31 2012/07/30 23:02:41 yamt Exp $");
-#endif /* LIBC_SCCS and not lint */
+__RCSID("$NetBSD: catopen.c,v 1.32 2013/08/19 08:03:34 joerg Exp $");
 
 #define _NLS_PRIVATE
+#define __SETLOCALE_SOURCE__
 
 #include "namespace.h"
 #include <sys/param.h>
@@ -55,20 +54,31 @@ __RCSID("$NetBSD: catopen.c,v 1.31 2012/07/30 23:02:41 yamt Exp $");
 #include "citrus_region.h"
 #include "citrus_lookup.h"
 #include "citrus_aliasname_local.h"
+#include "setlocale_local.h"
 
 #define NLS_ALIAS_DB "/usr/share/nls/nls.alias"
 
 #define NLS_DEFAULT_PATH "/usr/share/nls/%L/%N.cat:/usr/share/nls/%N/%L"
 #define NLS_DEFAULT_LANG "C"
 
-#ifdef __weak_alias
+#if defined(__minix) && !defined(MAP_SHARED)
+#define MAP_SHARED MAP_PRIVATE /* LSC: We lose some memory, but it's OK as this is RO. */
+#endif /* defined(__minix) && !defined(MAP_SHARED) */
+
 __weak_alias(catopen, _catopen)
-#endif
+__weak_alias(catopen_l, _catopen_l)
 
 static nl_catd load_msgcat(const char *);
 
 nl_catd
-_catopen(const char *name, int oflag)
+catopen(const char *name, int oflag)
+{
+
+	return catopen_l(name, oflag, _current_locale());
+}
+
+nl_catd
+catopen_l(const char *name, int oflag, locale_t loc)
 {
 	char tmppath[PATH_MAX+1];
 	const char *nlspath;
@@ -88,11 +98,11 @@ _catopen(const char *name, int oflag)
 	if (issetugid() || (nlspath = getenv("NLSPATH")) == NULL)
 		nlspath = NLS_DEFAULT_PATH;
 	/*
-	 * histrical note:
+	 * Historical note:
 	 * http://www.hauN.org/ml/b-l-j/a/800/828.html (in japanese)
 	 */
 	if (oflag == NL_CAT_LOCALE) {
-		lang = setlocale(LC_MESSAGES, NULL);
+		lang = loc->part_name[LC_MESSAGES];
 	} else {
 		lang = getenv("LANG");
 	}
@@ -165,18 +175,6 @@ load_msgcat(const char *path)
 		return (nl_catd)-1;
 	}
 
-#ifdef __minix
-	if(!(data = malloc((size_t)st.st_size))) {
-		return (nl_catd)-1;
-	}
-
-	if (read(fd, data, st.st_size) != st.st_size)
-	{
-		free(data);
-		return (nl_catd)-1;
-	}
-	close (fd);
-#else /* !__minix */
 	data = mmap(0, (size_t)st.st_size, PROT_READ, MAP_FILE|MAP_SHARED, fd,
 	    (off_t)0);
 	close (fd);
@@ -184,24 +182,15 @@ load_msgcat(const char *path)
 	if (data == MAP_FAILED) {
 		return (nl_catd)-1;
 	}
-#endif /* __minix */
 
 	if (ntohl((u_int32_t)((struct _nls_cat_hdr *)data)->__magic) !=
 	    _NLS_MAGIC) {
-#ifdef __minix
-		free(data);
-#else
 		munmap(data, (size_t)st.st_size);
-#endif
 		return (nl_catd)-1;
 	}
 
 	if ((catd = malloc(sizeof (*catd))) == NULL) {
-#ifdef __minix
-		free(data);
-#else
 		munmap(data, (size_t)st.st_size);
-#endif
 		return (nl_catd)-1;
 	}
 

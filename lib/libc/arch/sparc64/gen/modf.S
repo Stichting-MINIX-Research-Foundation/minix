@@ -1,4 +1,4 @@
-/*	$NetBSD: modf.S,v 1.4 2003/08/07 16:42:27 agc Exp $	*/
+/*	$NetBSD: modf.S,v 1.5 2013/09/12 15:36:16 joerg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
 #if 0
 	.asciz "@(#)modf.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: modf.S,v 1.4 2003/08/07 16:42:27 agc Exp $")
+	RCSID("$NetBSD: modf.S,v 1.5 2013/09/12 15:36:16 joerg Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -101,7 +101,7 @@ ENTRY(modf)
 	 */
 	fabsd	%f0, %f4		! %f4:f5 = v
 	fcmped	%fcc1, %f0, %f4		! %fcc1 = (val == abs(val))
-#ifdef PIC
+#ifdef __PIC__
 	PICCY_SET(Lmagic, %l0, %o7)
 	ldd	[%l0], %f2
 #else
@@ -175,7 +175,7 @@ Lbig:
 	 * case the integer part is the original value, and the
 	 * fractional part is 0.
 	 */
-#ifdef PIC
+#ifdef __PIC__
 	PICCY_SET(L0, %l0, %o7)
 	std	%f0, [%i1]		! *ival = val;
 	ldd	[%l0], %f0		! return 0.0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: bpb.h,v 1.6 2007/01/27 07:18:10 cbiere Exp $	*/
+/*	$NetBSD: bpb.h,v 1.7 2012/11/04 17:57:59 jakllsch Exp $	*/
 
 /*
  * Written by Paul Popelka (paulp@uts.amdahl.com)
@@ -85,7 +85,7 @@ struct bpb710 {
 
 #ifdef	atari
 /*
- * BPB for gemdos filesystems. Atari leaves the obsolete stuff undefined.
+ * BPB for GEMDOS filesystems. Atari leaves the obsolete stuff undefined.
  * Currently there is no need for a separate BPB structure.
  */
 #if 0
@@ -96,7 +96,7 @@ struct bpb_a {
 	u_int8_t	bpbFATs;	/* number of FATs		*/
 	u_int16_t	bpbRootDirEnts;	/* number of root directory entries */
 	u_int16_t	bpbSectors;	/* total number of sectors	*/
-	u_int8_t	bpbUseless1;	/* meaningless on gemdos fs	*/
+	u_int8_t	bpbUseless1;	/* meaningless on GEMDOS FS	*/
 	u_int16_t	bpbFATsecs;	/* number of sectors per FAT	*/
 	u_int16_t	bpbUseless2;	/* meaningless for harddisk fs	*/
 	u_int16_t	bpbUseless3;	/* meaningless for harddisk fs	*/

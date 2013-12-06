@@ -1,0 +1,144 @@
+.\" $NetBSD: remainder.3,v 1.2 2011/09/18 05:33:14 jruoho Exp $
+.\"
+.\" Copyright (c) 2011 Jukka Ruohonen <jruohonen@iki.fi>
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd September 18, 2011
+.Dt REMAINDER 3
+.Os
+.Sh NAME
+.Nm remainder ,
+.Nm remainderf ,
+.Nm remquo ,
+.Nm remquof
+.Nd remainder functions
+.Sh LIBRARY
+.Lb libm
+.Sh SYNOPSIS
+.In math.h
+.Ft double
+.Fn remainder "double x" "double y"
+.Ft float
+.Fn remainderf "float x" "float y"
+.Ft double
+.Fn remquo "double x" "double y" "int *quo"
+.Ft float
+.Fn remquof "float x" "float y" "int *quo"
+.Sh DESCRIPTION
+Provided that
+.Fa y
+\*(Ne 0 ,
+the
+.Fn remainder
+and
+.Fn remainderf
+functions calculate the floating-point remainder
+.Fa r
+of
+.Bd -ragged -offset indent
+.Va r
+=
+.Va x - ny ,
+.Ed
+.Pp
+where
+.Fa n
+is the integral value nearest to the exact value of
+.Fa x
+/
+.Fa y .
+If
+.Bd -ragged -offset indent
+.Va | n
+-
+.Va x / y |
+= 1/2 ,
+.Ed
+.Pp
+the value
+.Fa n
+is chosen to be even.
+Consequently, the remainder is computed exactly and
+.Va | r |
+\*(Le
+.Fa | y |
+/ 2 .
+.Pp
+Also the
+.Fn remquo
+and
+.Fn remquof
+functions calculate the remainder as described above.
+But these additionally use
+.Fa quo
+to store a value whose sign is the sign of
+.Va x / y
+and whose magnitude is congruent modulo
+.Va 2^k
+to the magnitude of the integral quotient of
+.Va x / y ,
+where
+.Fa k
+is an implementation-defined integer greater than or equal to 3.
+.Pp
+The rationale of the
+.Fn remquo
+family of functions relates to situations where
+only few bits of the quotient are required.
+The exact representation of the quotient may not be meaningful when
+.Fa x
+is large in magnitude compared to
+.Fa y .
+.Sh RETURN VALUES
+The functions return the remainder independent of the rounding mode.
+If
+.Fa y
+is zero ,
+\*(Na
+is returned and a domain error occurs.
+A domain error occurs and a
+\*(Na
+is returned also when
+.Fa x
+is infinite but
+.Fa y
+is not a
+\*(Na.
+If either
+.Fa x
+or
+.Fa y
+is
+\*(Na,
+a
+\*(Na
+is always returned.
+.Sh SEE ALSO
+.Xr div 3 ,
+.Xr fast_remainder32 3 ,
+.Xr fmod 3 ,
+.Xr math 3
+.Sh STANDARDS
+The described functions conform to
+.St -isoC-99 .

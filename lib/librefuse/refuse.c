@@ -1,4 +1,4 @@
-/*	$NetBSD: refuse.c,v 1.92 2009/03/05 01:21:57 msaitoh Exp $	*/
+/*	$NetBSD: refuse.c,v 1.96 2012/12/30 10:04:22 tron Exp $	*/
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse.c,v 1.92 2009/03/05 01:21:57 msaitoh Exp $");
+__RCSID("$NetBSD: refuse.c,v 1.96 2012/12/30 10:04:22 tron Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -39,7 +39,6 @@ __RCSID("$NetBSD: refuse.c,v 1.92 2009/03/05 01:21:57 msaitoh Exp $");
 #include <assert.h>
 #include <err.h>
 #include <errno.h>
-#include <fcntl.h>
 #include <fuse.h>
 #include <paths.h>
 #include <stdio.h>
@@ -95,10 +94,10 @@ struct fuse {
 	fuse_ino_t		ctr;
 	unsigned int		generation;
 	unsigned int		hidectr;
-#ifdef MULTITHREADED_REFUSE
+#if !defined(__minix)
 	pthread_mutex_t		lock;
 	pthread_rwlock_t	tree_lock;
-#endif
+#endif /* !defined(__minix) */
 	void			*user_data;
 	struct fuse_config	conf;
 	int			intr_installed;
@@ -1086,14 +1085,16 @@ puffs_fuse_node_write(struct puffs_usermount *pu, void *opc, uint8_t *buf,
 	ret = (*fuse->op.write)(path, (char *)buf, *resid, offset,
 	    &rn->file_info);
 
-	if (ret > 0) {
+	if (ret >= 0) {
 		if ((uint64_t)(offset + ret) > pn->pn_va.va_size)
 			pn->pn_va.va_size = offset + ret;
 		*resid -= ret;
-		ret = 0;
+		ret = (*resid == 0) ? 0 : ENOSPC;
+	} else {
+		ret = -ret;
 	}
 
-	return -ret;
+	return ret;
 }
 
 
@@ -1227,8 +1228,8 @@ fuse_main_real(int argc, char **argv, const struct fuse_operations *ops,
 	int		 multithreaded;
 	int		 fd;
 
-	fuse = fuse_setup(argc, argv, ops, size, &mountpoint, &multithreaded,
-			&fd);
+	fuse = fuse_setup_real(argc, argv, ops, size, &mountpoint,
+	    &multithreaded, &fd, userdata);
 
 	return fuse_loop(fuse);
 }
@@ -1304,6 +1305,9 @@ fuse_new(struct fuse_chan *fc, struct fuse_args *args,
 
 	fuse->fc = fc;
 
+	if (fuse->op.init != NULL)
+		fusectx->private_data = fuse->op.init(NULL); /* XXX */
+
 	/* initialise the puffs operations structure */
         PUFFSOP_INIT(pops);
 
@@ -1366,9 +1370,6 @@ fuse_new(struct fuse_chan *fc, struct fuse_args *args,
 		if (fuse->op.getattr(po_root->po_path, &st) == 0)
 			puffs_stat2vattr(&pn_root->pn_va, &st);
 	assert(pn_root->pn_va.va_type == VDIR);
-
-	if (fuse->op.init)
-		fusectx->private_data = fuse->op.init(NULL); /* XXX */
 
 	puffs_set_prepost(pu, set_fuse_context_pid, NULL);
 

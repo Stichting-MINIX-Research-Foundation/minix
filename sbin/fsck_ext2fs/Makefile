@@ -11,8 +11,6 @@ FSCK=	${NETBSDSRCDIR}/sbin/fsck
 CPPFLAGS+= -I${FSCK}
 .PATH:	${NETBSDSRCDIR}/sys/ufs/ext2fs ${FSCK}
 
-SYMLINKS+= $(BINDIR)/$(PROG) $(BINDIR)/fsck.ext2
-
 .include <bsd.prog.mk>
 
 LDADD+=-lutil

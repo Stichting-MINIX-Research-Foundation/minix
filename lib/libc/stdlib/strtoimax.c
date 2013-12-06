@@ -32,7 +32,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: strtoimax.c,v 1.7 2008/09/10 18:08:58 joerg Exp $");
+__RCSID("$NetBSD: strtoimax.c,v 1.8 2013/04/16 21:44:08 joerg Exp $");
 
 #include <assert.h>
 #include <ctype.h>
@@ -50,3 +50,4 @@ __RCSID("$NetBSD: strtoimax.c,v 1.7 2008/09/10 18:08:58 joerg Exp $");
 #include "_strtol.h"
 
 __strong_alias(_strtoimax, strtoimax)
+__strong_alias(_strtoimax_l, strtoimax_l)

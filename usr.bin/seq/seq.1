@@ -1,4 +1,4 @@
-.\"	$NetBSD: seq.1,v 1.7 2010/05/27 08:30:35 dholland Exp $
+.\"	$NetBSD: seq.1,v 1.8 2013/04/07 17:37:45 jdf Exp $
 .\"
 .\" Copyright (c) 2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -58,7 +58,7 @@ as possible, in increments of
 When
 .Ar first
 is larger than
-.Ar last
+.Ar last ,
 the default
 .Ar incr
 is -1.
@@ -129,10 +129,8 @@ If any sequence numbers will be printed in exponential notation,
 the default conversion is changed to
 .Cm %e .
 .El
-.Pp
-The
-.Nm
-utility exits 0 on success and non-zero if an error occurs.
+.Sh EXIT STATUS
+.Ex -std
 .Sh EXAMPLES
 .Bd -literal -offset indent
 # seq 1 3

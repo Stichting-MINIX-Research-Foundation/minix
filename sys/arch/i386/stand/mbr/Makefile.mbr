@@ -35,7 +35,7 @@ BUILDSYMLINKS+= \
 	${NETBSDSRCDIR}/include/arch/i386/include/fpu.h machine/fpu.h
 
 DPSRCS+= machine/stackframe.h  machine/fpu.h
-.endif
+.endif # defined(__MINIX)
 
 .if ${MACHINE_ARCH} == "x86_64"
 LDFLAGS+=	-Wl,-m,elf_i386
@@ -57,7 +57,7 @@ AFLAGS.gpt.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 ${PROG}: ${OBJS}
 	${_MKTARGET_LINK}
 	${CC} -o ${PROG}.tmp ${LDFLAGS} -Wl,-Ttext,${LOADADDR} ${OBJS}
-	@ set -- $$( ${NM} -t d ${PROG}.tmp | grep 'mbr_space' \
+	@ set -- $$( ${NM} -t d ${PROG}.tmp | grep '\<mbr_space\>' \
 		    | ${TOOL_SED} 's/^0*//'  ); \
 		echo "#### There are $$1 free bytes in ${PROG}"
 	${OBJCOPY} -O binary ${PROG}.tmp ${PROG}

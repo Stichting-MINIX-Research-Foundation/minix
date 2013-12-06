@@ -1,4 +1,4 @@
-/* $NetBSD: next68k.c,v 1.7 2010/01/07 13:26:00 tsutsui Exp $ */
+/* $NetBSD: next68k.c,v 1.8 2013/06/14 03:54:43 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: next68k.c,v 1.7 2010/01/07 13:26:00 tsutsui Exp $");
+__RCSID("$NetBSD: next68k.c,v 1.8 2013/06/14 03:54:43 msaitoh Exp $");
 #endif /* !__lint */
 
 #include <sys/param.h>
@@ -154,7 +154,7 @@ next68k_setboot(ib_params *params)
 		goto done;
 	}
 
-	if (bootsize > be16toh(next68klabel->cd_front) * cd_secsize - 
+	if (bootsize > be16toh(next68klabel->cd_front) * cd_secsize -
 	    NEXT68K_LABEL_SIZE) {
 		warnx("Boot program is larger than front porch space");
 		goto done;
@@ -174,7 +174,7 @@ next68k_setboot(ib_params *params)
 			/* can only fit one copy */
 			b0 = b1 = NEXT68K_LABEL_SIZE / cd_secsize;
 		else {
-			if (2 * bootsize > (fp * cd_secsize - 
+			if (2 * bootsize > (fp * cd_secsize -
 				NEXT68K_LABEL_DEFAULTBOOT0_1 *
 				params->sectorsize))
 				/* can fit two copies starting after label */
@@ -230,7 +230,7 @@ next68k_setboot(ib_params *params)
 			goto done;
 		}
 	}
-	
+
 	b0 *= sec_netonb_mult;
 	b1 *= sec_netonb_mult;
 
@@ -247,7 +247,7 @@ next68k_setboot(ib_params *params)
 			goto done;
 		}
 		if ((size_t)rv != bootsize) {
-			warnx("Writing `%s' at %d: short write", 
+			warnx("Writing `%s' at %d: short write",
 			    params->filesystem, b0);
 			goto done;
 		}

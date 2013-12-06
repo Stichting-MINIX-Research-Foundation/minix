@@ -1,4 +1,4 @@
-/*	$NetBSD: setjmp.S,v 1.9 2011/04/30 19:39:38 martin Exp $	*/
+/*	$NetBSD: setjmp.S,v 1.10 2013/09/12 15:36:16 joerg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -42,7 +42,7 @@
 #if 0
 	.asciz "@(#)setjmp.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: setjmp.S,v 1.9 2011/04/30 19:39:38 martin Exp $")
+	RCSID("$NetBSD: setjmp.S,v 1.10 2013/09/12 15:36:16 joerg Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -75,7 +75,7 @@ ENTRY(__setjmp14)
 	mov	%g6, %l6
 	mov	%g7, %l7
 
-#ifdef PIC
+#ifdef __PIC__
 	PIC_PROLOGUE(%i1, %o4)
 #endif
 
@@ -83,13 +83,12 @@ ENTRY(__setjmp14)
 	add	%i0, 0x38, %o2		/* build sigcontext in [%o2]->sc.sc_mask */
 	mov	1, %o0			/* SIG_BLOCK */
 					/* sigprocmask(SIG_BLOCK, (sigset_t *)NULL, (sigset_t *)a) */
-#ifdef PIC
-#ifdef BIGPIC
+#if __PIC__ - 0 >= 2
 	set	_C_LABEL(__sigprocmask14), %o4
 	ldx	[%i1 + %o4], %g2
-#else
+	call	%g2
+#elif __PIC__ - 0 >= 1
 	ldx	[%i1 + _C_LABEL(__sigprocmask14)], %g2
-#endif
 	call	%g2
 #else
 	call	_C_LABEL(__sigprocmask14)
@@ -97,13 +96,12 @@ ENTRY(__setjmp14)
 	 clr	%o1
 
 	clr	%o0			/* sigstack(NULL, &foo) */
-#ifdef PIC
-#ifdef BIGPIC
+#if __PIC__ - 0 >= 2
 	set	_C_LABEL(__sigaltstack14), %o4
 	ldx	[%i1 + %o4], %g2
-#else
+	call	%g2
+#elif __PIC__ - 0 >= 1
 	ldx	[%i1 + _C_LABEL(__sigaltstack14)], %g2
-#endif
 	call	%g2
 #else
 	call	_C_LABEL(__sigaltstack14)

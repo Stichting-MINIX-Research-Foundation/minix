@@ -1,4 +1,4 @@
-/* $NetBSD: crt0-common.c,v 1.9 2012/08/13 02:15:35 matt Exp $ */
+/* $NetBSD: crt0-common.c,v 1.13 2013/01/31 22:24:25 matt Exp $ */
 
 /*
  * Copyright (c) 1998 Christos Zoulas
@@ -36,15 +36,15 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: crt0-common.c,v 1.9 2012/08/13 02:15:35 matt Exp $");
+__RCSID("$NetBSD: crt0-common.c,v 1.13 2013/01/31 22:24:25 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/exec.h>
-#ifndef __minix
+#if !defined(__minix)
 #include <sys/syscall.h>
 #else
 #include <string.h>
-#endif
+#endif /* !defined(__minix) */
 #include <machine/profile.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -83,11 +83,11 @@ char		*__progname = empty_string;
 __dead __dso_hidden void ___start(void (*)(void), const Obj_Entry *,
 			 struct ps_strings *);
 
-#ifndef __minix
+#if !defined(__minix)
 #define	write(fd, s, n)	__syscall(SYS_write, (fd), (s), (n))
 #else
 #define	write(fd, s, n) /* NO write() from here on minix */
-#endif
+#endif /* !defined(__minix) */
 
 #define	_FATAL(str)				\
 do {						\
@@ -103,10 +103,26 @@ do {						\
  * Since we don't need .init or .fini sections, just code them in C
  * to make life easier.
  */
-static const fptr_t init_array_start[] __weak_reference(__init_array_start);
-static const fptr_t init_array_end[] __weak_reference(__init_array_end);
-static const fptr_t fini_array_start[] __weak_reference(__fini_array_start);
-static const fptr_t fini_array_end[] __weak_reference(__fini_array_end);
+__weakref_visible const fptr_t preinit_array_start[1]
+    __weak_reference(__preinit_array_start);
+__weakref_visible const fptr_t preinit_array_end[1]
+    __weak_reference(__preinit_array_end);
+__weakref_visible const fptr_t init_array_start[1]
+    __weak_reference(__init_array_start);
+__weakref_visible const fptr_t init_array_end[1]
+    __weak_reference(__init_array_end);
+__weakref_visible const fptr_t fini_array_start[1]
+    __weak_reference(__fini_array_start);
+__weakref_visible const fptr_t fini_array_end[1]
+    __weak_reference(__fini_array_end);
+
+static inline void
+_preinit(void)
+{
+	for (const fptr_t *f = preinit_array_start; f < preinit_array_end; f++) {
+		(*f)();
+	}
+}
 
 static inline void
 _init(void)
@@ -159,6 +175,10 @@ ___start(void (*cleanup)(void),			/* from shared loader */
 	}
 
 	_libc_init();
+
+#ifdef HAVE_INITFINI_ARRAY
+	_preinit();
+#endif
 
 #ifdef MCRT0
 	atexit(_mcleanup);

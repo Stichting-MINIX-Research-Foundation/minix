@@ -71,6 +71,18 @@ Cell	*literal0;
 
 extern Cell **fldtab;
 
+static void
+setfree(Cell *vp)
+{
+	if (&vp->sval == FS || &vp->sval == RS ||
+	    &vp->sval == OFS || &vp->sval == ORS ||
+	    &vp->sval == OFMT || &vp->sval == CONVFMT ||
+	    &vp->sval == FILENAME || &vp->sval == SUBSEP)
+		vp->tval |= DONTFREE;
+	else
+		vp->tval &= ~DONTFREE;
+}
+
 void syminit(void)	/* initialize symbol table with builtin vars */
 {
 	literal0 = setsymtab("0", "0", 0.0, NUM|STR|CON|DONTFREE, symtab);
@@ -310,6 +322,8 @@ Awkfloat setfval(Cell *vp, Awkfloat f)	/* set float val of a Cell */
 		xfree(vp->sval); /* free any previous string */
 	vp->tval &= ~STR;	/* mark string invalid */
 	vp->tval |= NUM;	/* mark number ok */
+	if (f == -0)  /* who would have thought this possible? */
+		f = 0;
 	   dprintf( ("setfval %p: %s = %g, t=%o\n", vp, NN(vp->nval), f, vp->tval) );
 	return vp->fval = f;
 }
@@ -344,12 +358,12 @@ char *setsval(Cell *vp, const char *s)	/* set string val of a Cell */
 		donefld = 0;	/* mark $1... invalid */
 		donerec = 1;
 	}
-	t = tostring(s);	/* in case it's self-assign */
+	t = s ? tostring(s) : tostring("");	/* in case it's self-assign */
 	if (freeable(vp))
 		xfree(vp->sval);
 	vp->tval &= ~NUM;
 	vp->tval |= STR;
-	vp->tval &= ~DONTFREE;
+	setfree(vp);
 	   dprintf( ("setsval %p: %s = \"%s (%p) \", t=%o r,f=%d,%d\n", 
 		vp, NN(vp->nval), t,t, vp->tval, donerec, donefld) );
 
@@ -377,7 +391,8 @@ Awkfloat getfval(Cell *vp)	/* get float val of a Cell */
 		if (is_number(vp->sval) && !(vp->tval&CON))
 			vp->tval |= NUM;	/* make NUM only sparingly */
 	}
-	   dprintf( ("getfval %p: %s = %g, t=%o\n", vp, NN(vp->nval), vp->fval, vp->tval) );
+	   dprintf( ("getfval %p: %s = %g, t=%o\n",
+		vp, NN(vp->nval), vp->fval, vp->tval) );
 	return(vp->fval);
 }
 
@@ -400,10 +415,11 @@ static char *get_str_val(Cell *vp, char **fmt)        /* get string val of a Cel
 		else
 			snprintf(s, sizeof(s), *fmt, vp->fval);
 		vp->sval = tostring(s);
-		vp->tval &= ~DONTFREE;
 		vp->tval |= STR;
+		setfree(vp);
 	}
-	   dprintf( ("getsval %p: %s = \"%s (%p)\", t=%o\n", vp, NN(vp->nval), vp->sval, vp->sval, vp->tval) );
+	   dprintf( ("getsval %p: %s = \"%s (%p)\", t=%o\n",
+		vp, NN(vp->nval), vp->sval, vp->sval, vp->tval) );
 	return(vp->sval);
 }
 

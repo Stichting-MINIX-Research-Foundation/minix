@@ -40,7 +40,8 @@ extern "C" {
 }
 
 #include <string>
-#include <tr1/memory>
+
+#include "utils/shared_ptr.hpp"
 
 namespace utils {
 namespace sqlite {
@@ -92,7 +93,7 @@ class statement {
     struct impl;
 
     /// Pointer to the shared internal implementation.
-    std::tr1::shared_ptr< impl > _pimpl;
+    std::shared_ptr< impl > _pimpl;
 
     statement(database&, void*);
     friend class database;

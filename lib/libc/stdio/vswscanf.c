@@ -1,4 +1,4 @@
-/*	$NetBSD: vswscanf.c,v 1.9 2012/03/27 15:05:42 christos Exp $	*/
+/*	$NetBSD: vswscanf.c,v 1.12 2013/05/17 12:55:57 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -42,19 +42,25 @@
 static char sccsid[] = "@(#)vsscanf.c	8.1 (Berkeley) 6/4/93";
 __FBSDID("$FreeBSD: src/lib/libc/stdio/vswscanf.c,v 1.3 2004/04/07 09:55:05 tjr Exp $");
 #else
-__RCSID("$NetBSD: vswscanf.c,v 1.9 2012/03/27 15:05:42 christos Exp $");
+__RCSID("$NetBSD: vswscanf.c,v 1.12 2013/05/17 12:55:57 joerg Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
+
 #include <assert.h>
 #include <limits.h>
+#include <locale.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <wchar.h>
 #include "reentrant.h"
+#include "setlocale_local.h"
 #include "local.h"
+
+__weak_alias(vswscanf_l, _vswscanf_l)
 
 static ssize_t
 /*ARGSUSED*/
@@ -65,8 +71,8 @@ eofread(void *cookie, void *buf, size_t len)
 }
 
 int
-vswscanf(const wchar_t * __restrict str, const wchar_t * __restrict fmt,
-    va_list ap)
+vswscanf_l(const wchar_t * __restrict str, locale_t loc,
+    const wchar_t * __restrict fmt, va_list ap)
 {
 	static const mbstate_t initial;
 	mbstate_t mbs;
@@ -81,10 +87,12 @@ vswscanf(const wchar_t * __restrict str, const wchar_t * __restrict fmt,
 	 * XXX Convert the wide character string to multibyte, which
 	 * __vfwscanf() will convert back to wide characters.
 	 */
-	if ((mbstr = malloc(wcslen(str) * MB_CUR_MAX + 1)) == NULL)
+	mbstr = malloc(wcslen(str) * MB_CUR_MAX_L(loc) + 1);
+	if (mbstr == NULL)
 		return EOF;
 	mbs = initial;
-	if ((mlen = wcsrtombs(mbstr, &rstr, SIZE_T_MAX, &mbs)) == (size_t)-1) {
+	if ((mlen = wcsrtombs_l(mbstr, &rstr, SIZE_T_MAX, &mbs, loc))
+	    == (size_t)-1) {
 		free(mbstr);
 		return EOF;
 	}
@@ -97,8 +105,15 @@ vswscanf(const wchar_t * __restrict str, const wchar_t * __restrict fmt,
 	f._bf._size = f._r = (int)mlen;
 	f._read = eofread;
 	_UB(&f)._base = NULL;
-	r = __vfwscanf_unlocked(&f, fmt, ap);
+	r = __vfwscanf_unlocked_l(&f, loc, fmt, ap);
 	free(mbstr);
 
 	return r;
+}
+
+int
+vswscanf(const wchar_t * __restrict str, const wchar_t * __restrict fmt,
+    va_list ap)
+{
+	return vswscanf_l(str, _current_locale(), fmt, ap);
 }

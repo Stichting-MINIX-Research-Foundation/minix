@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.h,v 1.5 2002/09/12 22:56:28 mycroft Exp $	*/
+/*	$NetBSD: debug.h,v 1.7 2013/08/03 13:17:05 skrll Exp $	*/
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -35,7 +35,7 @@
  * Support for printing debugging messages.
  */
 
-#ifndef DEBUG_H 
+#ifndef DEBUG_H
 #define DEBUG_H
 
 
@@ -46,13 +46,19 @@ extern void debug_printf __P((const char *, ...))
 extern int debug;
 
 # define dbg(a)		debug_printf a
-#else 
+#else
 # define dbg(a)		((void) 0)
 #endif
 #ifdef RTLD_DEBUG_RELOC
 # define rdbg(a)	debug_printf a
 #else
 # define rdbg(a)	((void) 0)
+#endif
+
+#if ELFSIZE == 64               
+#define	PRImemsz	PRIu64
+#else
+#define	PRImemsz	PRIu32
 #endif
 
 #endif

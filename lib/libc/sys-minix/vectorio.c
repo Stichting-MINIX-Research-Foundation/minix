@@ -15,11 +15,6 @@
 #define VECTORIO_READ	1
 #define VECTORIO_WRITE	2
 
-#ifdef __weak_alias
-__weak_alias(writev, _writev)
-__weak_alias(readv, _readv)
-#endif
-
 static ssize_t vectorio_buffer(int fildes, const struct iovec *iov, 
 	int iovcnt, int readwrite, ssize_t totallen)
 {

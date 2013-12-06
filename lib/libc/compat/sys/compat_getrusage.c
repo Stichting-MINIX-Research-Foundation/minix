@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_getrusage.c,v 1.2 2009/01/11 02:46:26 christos Exp $	*/
+/*	$NetBSD: compat_getrusage.c,v 1.4 2013/10/04 21:07:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat_getrusage.c,v 1.2 2009/01/11 02:46:26 christos Exp $");
+__RCSID("$NetBSD: compat_getrusage.c,v 1.4 2013/10/04 21:07:37 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #define __LIBC12_SOURCE__
@@ -44,6 +44,8 @@ __RCSID("$NetBSD: compat_getrusage.c,v 1.2 2009/01/11 02:46:26 christos Exp $");
 
 __warn_references(getrusage,
     "warning: reference to compatibility getrusage(); include <sys/resource.h> to generate correct reference")
+
+__strong_alias(getrusage, __compat_getrusage)
 
 void __rusage_to_rusage50(const struct rusage *, struct rusage50 *);
 
@@ -62,7 +64,7 @@ __rusage_to_rusage50(const struct rusage *ru, struct rusage50 *ru50)
  * libc12 compatible getrusage routine.
  */
 int
-getrusage(int who, struct rusage50 *ru50)
+__compat_getrusage(int who, struct rusage50 *ru50)
 {
 	struct rusage ru;
 	int rv;

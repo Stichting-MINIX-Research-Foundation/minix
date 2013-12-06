@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.129 2011/12/01 00:34:05 dholland Exp $ */
+/* $NetBSD: user.c,v 1.131 2012/11/28 11:31:27 blymn Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -33,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.129 2011/12/01 00:34:05 dholland Exp $");
+__RCSID("$NetBSD: user.c,v 1.131 2012/11/28 11:31:27 blymn Exp $");
 #endif
 
 #include <sys/types.h>
@@ -142,7 +142,6 @@ enum {
 #define LOCK		1
 #define LOCKED		"*LOCKED*"
 
-
 #ifndef DEF_GROUP
 #define DEF_GROUP	"users"
 #endif
@@ -152,12 +151,12 @@ enum {
 #endif
 
 #ifndef DEF_SKELDIR
-#ifdef __minix
+#if defined(__minix)
 #define DEF_SKELDIR	"/usr/ast"
 #else
 #define DEF_SKELDIR	"/etc/skel"
 #endif
-#endif
+#endif /* defined(__minix) */
 
 #ifndef DEF_SHELL
 #define DEF_SHELL	_PATH_BSHELL
@@ -210,7 +209,6 @@ enum {
 
 	DES_Len = 13,
 };
-
 
 #define UNSET_INACTIVE	"Null (unset)"
 #define UNSET_EXPIRY	"Null (unset)"
@@ -1582,9 +1580,15 @@ moduser(char *login_name, char *newlogin, user_t *up, int allow_samba)
 					errx(EXIT_FAILURE,
 					    "Can't modify user `%s': "
 					    "gid %d is already in use",
-					    login_name, up->u_uid);
+					    login_name, pwp->pw_uid);
 				}
 				pwp->pw_gid = pwp->pw_uid;
+				if (!creategid(newlogin, pwp->pw_uid, "")) {
+					errx(EXIT_FAILURE, 
+					    "Could not create group %s "
+					    "with uid %d", newlogin, 
+					    up->u_uid);
+				}
 			} else if ((grp = getgrnam(up->u_primgrp)) != NULL) {
 				pwp->pw_gid = grp->gr_gid;
 			} else if (is_number(up->u_primgrp) &&

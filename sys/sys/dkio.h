@@ -1,4 +1,4 @@
-/*	$NetBSD: dkio.h,v 1.17 2011/01/18 19:52:24 matt Exp $	*/
+/*	$NetBSD: dkio.h,v 1.18 2012/10/19 17:09:07 drochner Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -108,5 +108,16 @@
 
 
 #define	DIOCTUR		_IOR('d', 128, int)	/* test unit ready */
+
+struct disk_discard_params {
+	long maxsize; /* in DEV_BSIZE units */
+};
+#define DIOCGDISCARDPARAMS _IOR('d', 129, struct disk_discard_params)
+
+struct disk_discard_range {
+	daddr_t bno;
+	long size;
+};
+#define DIOCDISCARD	_IOW('d', 130, struct disk_discard_range)
 
 #endif /* _SYS_DKIO_H_ */

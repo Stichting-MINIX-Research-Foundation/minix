@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.13 2005/12/11 12:24:46 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.14 2012/12/12 15:12:11 matt Exp $
 #
 #	Configuration variables (default values are below):
 #
@@ -33,7 +33,7 @@ ZLIB_PROF=	${ZDST}/libz_p.a
 ZMAKE= \
 	cd ${ZDST} && ${MAKE} -f ${ZDIR:Q}/Makefile \
 	    ZDIR=${ZDIR:Q} \
-	    CC=${CC:Q} CFLAGS=${CFLAGS:Q} \
+	    CC=${CC:Q} CFLAGS=${CFLAGS:Q} CPUFLAGS= \
 	    AS=${AS:Q} AFLAGS=${AFLAGS:Q} \
 	    LORDER=${LORDER:Q} \
 	    TSORT=${TSORT:Q} \

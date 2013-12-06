@@ -1,32 +1,34 @@
-/*	$NetBSD: svc_simple.c,v 1.31 2012/03/20 17:14:50 matt Exp $	*/
+/*	$NetBSD: svc_simple.c,v 1.33 2013/03/11 20:19:29 tron Exp $	*/
 
 /*
- * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
- * unrestricted use provided that this legend is included on all tape
- * media and as a part of the software program in whole or part.  Users
- * may copy or modify Sun RPC without charge, but are not authorized
- * to license or distribute it to anyone else except as part of a product or
- * program developed by the user.
- * 
- * SUN RPC IS PROVIDED AS IS WITH NO WARRANTIES OF ANY KIND INCLUDING THE
- * WARRANTIES OF DESIGN, MERCHANTIBILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE, OR ARISING FROM A COURSE OF DEALING, USAGE OR TRADE PRACTICE.
- * 
- * Sun RPC is provided with no support and without any obligation on the
- * part of Sun Microsystems, Inc. to assist in its use, correction,
- * modification or enhancement.
- * 
- * SUN MICROSYSTEMS, INC. SHALL HAVE NO LIABILITY WITH RESPECT TO THE
- * INFRINGEMENT OF COPYRIGHTS, TRADE SECRETS OR ANY PATENTS BY SUN RPC
- * OR ANY PART THEREOF.
- * 
- * In no event will Sun Microsystems, Inc. be liable for any lost revenue
- * or profits or other special, indirect and consequential damages, even if
- * Sun has been advised of the possibility of such damages.
- * 
- * Sun Microsystems, Inc.
- * 2550 Garcia Avenue
- * Mountain View, California  94043
+ * Copyright (c) 2010, Oracle America, Inc.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above
+ *       copyright notice, this list of conditions and the following
+ *       disclaimer in the documentation and/or other materials
+ *       provided with the distribution.
+ *     * Neither the name of the "Oracle America, Inc." nor the names of its
+ *       contributors may be used to endorse or promote products derived
+ *       from this software without specific prior written permission.
+ *
+ *   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ *   "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ *   LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ *   FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ *   COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+ *   INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ *   DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ *   GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *   INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ *   WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ *   NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
  * Copyright (c) 1986-1991 by Sun Microsystems Inc. 
@@ -48,7 +50,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: svc_simple.c,v 1.31 2012/03/20 17:14:50 matt Exp $");
+__RCSID("$NetBSD: svc_simple.c,v 1.33 2013/03/11 20:19:29 tron Exp $");
 #endif
 
 #include "namespace.h"
@@ -83,8 +85,6 @@ static struct proglst {
 	struct proglst *p_nxt;
 } *proglst;
 
-static const char rpc_reg_err[] = "%s: %s";
-static const char rpc_reg_msg[] = "rpc_reg: ";
 static const char __reg_err1[] = "can't find appropriate transport";
 static const char __reg_err2[] = "can't get protocol info";
 static const char __reg_err3[] = "unsupported transport size";
@@ -119,15 +119,15 @@ rpc_reg(
 #endif
 
 	if (procnum == NULLPROC) {
-		warnx("%s can't reassign procedure number %u", rpc_reg_msg,
-			NULLPROC);
+		warnx("%s: can't reassign procedure number %u", __func__,
+		    NULLPROC);
 		return (-1);
 	}
 
 	if (nettype == NULL)
 		nettype = __UNCONST("netpath");	/* The default behavior */
 	if ((handle = __rpc_setconf(nettype)) == NULL) {
-		warnx(rpc_reg_err, rpc_reg_msg, __reg_err1);
+		warnx("%s: %s", __func__, __reg_err1);
 		return (-1);
 	}
 /* VARIABLES PROTECTED BY proglst_lock: proglst */
@@ -161,19 +161,19 @@ rpc_reg(
 			if (svcxprt == NULL)
 				continue;
 			if (!__rpc_fd2sockinfo(svcxprt->xp_fd, &si)) {
-				warnx(rpc_reg_err, rpc_reg_msg, __reg_err2);
+				warnx("%s: %s", __func__, __reg_err2);
 				SVC_DESTROY(svcxprt);
 				continue;
 			}
 			recvsz = __rpc_get_t_size(si.si_af, si.si_proto, 0);
 			if (recvsz == 0) {
-				warnx(rpc_reg_err, rpc_reg_msg, __reg_err3);
+				warnx("%s: %s", __func__, __reg_err3);
 				SVC_DESTROY(svcxprt);
 				continue;
 			}
-			if (((xdrbuf = malloc((size_t)recvsz)) == NULL) ||
+			if (((xdrbuf = mem_alloc((size_t)recvsz)) == NULL) ||
 				((netid = strdup(nconf->nc_netid)) == NULL)) {
-				warnx(rpc_reg_err, rpc_reg_msg, __no_mem_str);
+				warnx("%s: %s", __func__, __no_mem_str);
 				if (xdrbuf != NULL)
 					free(xdrbuf);
 				if (netid != NULL)
@@ -200,9 +200,9 @@ rpc_reg(
 		}
 
 		if (!svc_reg(svcxprt, prognum, versnum, universal, nconf)) {
-			warnx("%s couldn't register prog %u vers %u for %s",
-				rpc_reg_msg, (unsigned)prognum,
-				(unsigned)versnum, netid);
+			warnx("%s: couldn't register prog %u vers %u for %s",
+			    __func__, (unsigned)prognum,
+			    (unsigned)versnum, netid);
 			if (madenow) {
 				SVC_DESTROY(svcxprt);
 				free(xdrbuf);
@@ -213,7 +213,7 @@ rpc_reg(
 
 		pl = malloc(sizeof(*pl));
 		if (pl == NULL) {
-			warnx(rpc_reg_err, rpc_reg_msg, __no_mem_str);
+			warn("%s: %s", __func__, __no_mem_str);
 			if (madenow) {
 				SVC_DESTROY(svcxprt);
 				free(xdrbuf);
@@ -239,8 +239,8 @@ rpc_reg(
 	mutex_unlock(&proglst_lock);
 
 	if (done == FALSE) {
-		warnx("%s cant find suitable transport for %s",
-			rpc_reg_msg, nettype);
+		warnx("%s: can't find suitable transport for %s",
+		    __func__, nettype);
 		return (-1);
 	}
 	return (0);
@@ -273,7 +273,7 @@ universal(struct svc_req *rqstp, SVCXPRT *transp)
 	if (rqstp->rq_proc == NULLPROC) {
 		if (svc_sendreply(transp, (xdrproc_t) xdr_void, NULL) ==
 		    FALSE) {
-			warnx("svc_sendreply failed");
+			warnx("%s: svc_sendreply failed", __func__);
 		}
 		return;
 	}
@@ -307,9 +307,8 @@ universal(struct svc_req *rqstp, SVCXPRT *transp)
 				return;
 			}
 			if (!svc_sendreply(transp, pl->p_outproc, outdata)) {
-				warnx(
-			"rpc: rpc_reg trouble replying to prog %u vers %u",
-				(unsigned)prog, (unsigned)vers);
+				warnx("%s: trouble replying to prog %u vers %u",
+				    __func__, (unsigned)prog, (unsigned)vers);
 				mutex_unlock(&proglst_lock);
 				return;
 			}
@@ -320,7 +319,7 @@ universal(struct svc_req *rqstp, SVCXPRT *transp)
 		}
 	mutex_unlock(&proglst_lock);
 	/* This should never happen */
-	warnx("rpc: rpc_reg: never registered prog %u vers %u",
-		(unsigned)prog, (unsigned)vers);
+	warnx("%s: never registered prog %u vers %u", __func__,
+	    (unsigned)prog, (unsigned)vers);
 	return;
 }

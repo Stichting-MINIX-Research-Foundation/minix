@@ -16,6 +16,8 @@
 #include <minix/bitmap.h>
 #include <minix/debug.h>
 
+#include <machine/vmparam.h>
+
 #include <sys/mman.h>
 #include <sys/param.h>
 

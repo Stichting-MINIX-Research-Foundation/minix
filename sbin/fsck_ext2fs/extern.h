@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.7 2011/06/09 19:57:50 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.8 2012/11/25 19:42:14 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -71,3 +71,5 @@ int	reply(const char *);
 void	resetinodebuf(void);
 int	setup(const char *);
 struct	ext2fs_dinode * getnextinode(ino_t);
+uint64_t inonblock(struct ext2fs_dinode *);
+void	inosnblock(struct ext2fs_dinode *, uint64_t);

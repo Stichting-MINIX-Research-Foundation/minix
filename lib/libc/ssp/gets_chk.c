@@ -1,4 +1,4 @@
-/*	$NetBSD: gets_chk.c,v 1.6 2010/01/17 23:13:32 wiz Exp $	*/
+/*	$NetBSD: gets_chk.c,v 1.7 2013/10/04 20:49:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: gets_chk.c,v 1.6 2010/01/17 23:13:32 wiz Exp $");
+__RCSID("$NetBSD: gets_chk.c,v 1.7 2013/10/04 20:49:16 christos Exp $");
 
 /*LINTLIBRARY*/
 
@@ -40,6 +40,7 @@ __RCSID("$NetBSD: gets_chk.c,v 1.6 2010/01/17 23:13:32 wiz Exp $");
 #include <stdlib.h>
 #include <ssp/stdio.h>
 
+extern char *__gets(char *);
 #undef gets
 
 char *
@@ -49,10 +50,10 @@ __gets_chk(char * __restrict buf, size_t slen)
 	size_t len;
 
 	if (slen >= (size_t)INT_MAX)
-		return gets(buf);
+		return __gets(buf);
 
 	if ((abuf = malloc(slen + 1)) == NULL)
-		return gets(buf);
+		return __gets(buf);
 
 	if (fgets(abuf, (int)(slen + 1), stdin) == NULL) {
 		free(abuf);

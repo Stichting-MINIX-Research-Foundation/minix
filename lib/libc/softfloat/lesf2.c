@@ -24,5 +24,5 @@ __lesf2(float32 a, float32 b)
 #else
 	/* libgcc1.c says 1 - (a <= b) */
 	return 1 - float32_le(a, b);
-#endif
+#endif /* defined(__minix) */
 }

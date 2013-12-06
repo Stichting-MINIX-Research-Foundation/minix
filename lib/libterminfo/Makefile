@@ -2,9 +2,6 @@
 
 .include <bsd.own.mk>
 
-.if defined(__MINIX)
-CPPFLAGS+= 	-D_NETBSD_SOURCE
-.endif
 USE_SHLIBDIR=	yes
 
 LIB=		terminfo

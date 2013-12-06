@@ -1,4 +1,4 @@
-/* $NetBSD: strtof.c,v 1.5 2011/06/20 09:11:17 mrg Exp $ */
+/* $NetBSD: strtof.c,v 1.7 2013/05/17 12:55:57 joerg Exp $ */
 
 /****************************************************************
 
@@ -34,16 +34,16 @@ THIS SOFTWARE.
 #include "namespace.h"
 #include "gdtoaimp.h"
 
+#include <locale.h>
+#include "setlocale_local.h"
+
 #ifdef __weak_alias
 __weak_alias(strtof, _strtof)
+__weak_alias(strtof_l, _strtof_l)
 #endif
 
- float
-#ifdef KR_headers
-strtof(s, sp) CONST char *s; char **sp;
-#else
-strtof(CONST char *s, char **sp)
-#endif
+static float
+_int_strtof_l(CONST char *s, char **sp, locale_t loc)
 {
 	static CONST FPI fpi0 = { 24, 1-127-24+1,  254-127-24+1, 1, SI };
 	ULong bits[1];
@@ -56,7 +56,7 @@ strtof(CONST char *s, char **sp)
 #define fpi &fpi0
 #endif
 
-	k = strtodg(s, sp, fpi, &expt, bits);
+	k = strtodg(s, sp, fpi, &expt, bits, loc);
 	if (k == STRTOG_NoMemory) {
 		errno = ERANGE;
 		return HUGE_VALF;
@@ -92,3 +92,15 @@ strtof(CONST char *s, char **sp)
 		u.L[0] |= 0x80000000L;
 	return u.f;
 	}
+
+float
+strtof(CONST char *s, char **sp)
+{
+	return _int_strtof_l(s, sp, _current_locale());
+}
+
+float
+strtof_l(CONST char *s, char **sp, locale_t loc)
+{
+	return _int_strtof_l(s, sp, loc);
+}

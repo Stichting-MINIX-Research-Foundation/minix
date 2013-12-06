@@ -1,4 +1,4 @@
-/*	$NetBSD: sigsetjmp.S,v 1.6 2007/10/08 13:06:00 uwe Exp $	*/
+/*	$NetBSD: sigsetjmp.S,v 1.7 2013/09/12 15:36:16 joerg Exp $	*/
 /*
  * Copyright (c) 1995 Paul Kranenburg
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include "SYS.h"
 
-#ifdef PIC
+#ifdef __PIC__
 
 ENTRY(__sigsetjmp14)
 	PIC_PROLOGUE(%g1, %g2)		! %g1 = _GLOBAL_OFFSET_TABLE
@@ -72,7 +72,7 @@ ENTRY(__siglongjmp14)
 	jmp %g1
 	 nop
 
-#else /* !PIC */
+#else /* !__PIC__ */
 
 ENTRY(__sigsetjmp14)
 	cmp %o1,0
@@ -90,4 +90,4 @@ ENTRY(__siglongjmp14)
 	ba,a _C_LABEL(__longjmp14)
 	unimp 0
 
-#endif /* !PIC */
+#endif /* !__PIC__ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: kcpuset.h,v 1.8 2012/09/16 22:09:33 rmind Exp $	*/
+/*	$NetBSD: kcpuset.h,v 1.9 2013/07/17 22:36:26 matt Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2011 The NetBSD Foundation, Inc.
@@ -42,8 +42,9 @@ typedef struct kcpuset	kcpuset_t;
 void		kcpuset_sysinit(void);
 
 void		kcpuset_create(kcpuset_t **, bool);
+void		kcpuset_clone(kcpuset_t **, const kcpuset_t *);
 void		kcpuset_destroy(kcpuset_t *);
-void		kcpuset_copy(kcpuset_t *, kcpuset_t *);
+void		kcpuset_copy(kcpuset_t *, const kcpuset_t *);
 
 void		kcpuset_use(kcpuset_t *);
 void		kcpuset_unuse(kcpuset_t *, kcpuset_t **);
@@ -56,16 +57,26 @@ void		kcpuset_fill(kcpuset_t *);
 void		kcpuset_set(kcpuset_t *, cpuid_t);
 void		kcpuset_clear(kcpuset_t *, cpuid_t);
 
-bool		kcpuset_isset(kcpuset_t *, cpuid_t);
-bool		kcpuset_isotherset(kcpuset_t *, cpuid_t);
-bool		kcpuset_iszero(kcpuset_t *);
+bool		kcpuset_isset(const kcpuset_t *, cpuid_t);
+bool		kcpuset_isotherset(const kcpuset_t *, cpuid_t);
+bool		kcpuset_iszero(const kcpuset_t *);
+bool		kcpuset_intersecting_p(const kcpuset_t *, const kcpuset_t *);
 bool		kcpuset_match(const kcpuset_t *, const kcpuset_t *);
-void		kcpuset_merge(kcpuset_t *, kcpuset_t *);
-void		kcpuset_intersect(kcpuset_t *, kcpuset_t *);
+void		kcpuset_intersect(kcpuset_t *, const kcpuset_t *);
+void		kcpuset_merge(kcpuset_t *, const kcpuset_t *);
+void		kcpuset_remove(kcpuset_t *, const kcpuset_t *);
 int		kcpuset_countset(kcpuset_t *);
+
+cpuid_t		kcpuset_ffs(const kcpuset_t *);
+cpuid_t		kcpuset_ffs_intersecting(const kcpuset_t *, const kcpuset_t *);
 
 void		kcpuset_atomic_set(kcpuset_t *, cpuid_t);
 void		kcpuset_atomic_clear(kcpuset_t *, cpuid_t);
+
+void		kcpuset_atomicly_zero(kcpuset_t *);
+void		kcpuset_atomicly_intersect(kcpuset_t *, const kcpuset_t *);
+void		kcpuset_atomicly_merge(kcpuset_t *, const kcpuset_t *);
+void		kcpuset_atomicly_remove(kcpuset_t *, const kcpuset_t *);
 
 void		kcpuset_export_u32(const kcpuset_t *, uint32_t *, size_t);
 

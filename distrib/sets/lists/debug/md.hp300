@@ -1,0 +1,4 @@
+# $NetBSD: md.hp300,v 1.2 2013/01/16 21:11:08 christos Exp $
+./usr/libdata/debug/usr/mdec/mkboot.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/grfinfo.debug	comp-obsolete		obsolete
+./usr/libdata/debug/usr/sbin/hilinfo.debug	comp-obsolete		obsolete

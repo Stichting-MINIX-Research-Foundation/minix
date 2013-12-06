@@ -70,7 +70,7 @@
 #include <sys/param.h>
 #include <sys/ioctl.h>
 #include <sys/mount.h>
-#ifndef __minix
+#if !defined(__minix)
 #include <sys/buf.h>
 #include <sys/disklabel.h>
 #include <sys/disk.h>
@@ -78,7 +78,7 @@
 #else
 #include <minix/paths.h>
 #include <sys/wait.h>
-#endif
+#endif /* !defined(__minix) */
 
 #include <dev/vndvar.h>
 
@@ -104,20 +104,20 @@ static int	readonly = 0;
 static int	force = 0;
 static int	compressed = 0;
 static char	*tabname;
-#ifdef __minix
+#if defined(__minix)
 static int	service = 1;
-#endif
+#endif /* defined(__minix) */
 
-#ifndef __minix
+#if !defined(__minix)
 static void	show(int, int);
 #else
 static void	show(const char *, int);
-#endif
+#endif /* !defined(__minix) */
 static int	config(char *, char *, char *, int);
 static int	getgeom(struct vndgeom *, char *);
 __dead static void	usage(void);
 
-#ifdef __minix
+#if defined(__minix)
 /*
  * Start a driver instance for the given vnd name.  The return value indicates
  * whether the instance has been started successfully.
@@ -189,25 +189,25 @@ stop_service(int fd, char *dev)
 		system(cmd);
 	}
 }
-#endif
+#endif /* defined(__minix) */
 
 int
 main(int argc, char *argv[])
 {
 	int ch, rv, action = VND_CONFIG;
 
-#ifndef __minix
+#if !defined(__minix)
 	while ((ch = getopt(argc, argv, "Fcf:lrt:uvz")) != -1) {
 #else
 	/* MINIX3: added -S; no support for -f, -t, -z at this time. */
 	while ((ch = getopt(argc, argv, "SFclruv")) != -1) {
-#endif
+#endif /* !defined(__minix) */
 		switch (ch) {
-#ifdef __minix
+#if defined(__minix)
 		case 'S':
 			service = 0;
 			break;
-#endif
+#endif /* defined(__minix) */
 		case 'F':
 			force = 1;
 			break;
@@ -215,10 +215,10 @@ main(int argc, char *argv[])
 			action = VND_CONFIG;
 			break;
 		case 'f':
-#ifndef __minix
+#if !defined(__minix)
 			if (setdisktab(optarg) == -1)
 				usage();
-#endif
+#endif /* !defined(__minix) */
 			break;
 		case 'l':
 			action = VND_GET;
@@ -259,47 +259,47 @@ main(int argc, char *argv[])
 			usage();
 		rv = config(argv[0], NULL, NULL, action);
 	} else { /* VND_GET */
-#ifndef __minix
+#if !defined(__minix)
 		int n, v;
 		const char *vn;
 		char path[64];
 #else
 		int n;
-#endif
+#endif /* !defined(__minix) */
 
 		if (argc != 0 && argc != 1)
 			usage();
 
-#ifndef __minix
+#if !defined(__minix)
 		vn = argc ? argv[0] : "vnd0";
 
 		v = opendisk(vn, O_RDONLY, path, sizeof(path), 0);
 		if (v == -1)
 			err(1, "open: %s", vn);
-#endif
+#endif /* !defined(__minix) */
 
 		if (argc)
-#ifndef __minix
+#if !defined(__minix)
 			show(v, -1);
 #else
 			show(argv[0], -1);
-#endif
+#endif /* !defined(__minix) */
 		else {
 			DIR *dirp;
 			struct dirent *dp;
-#ifndef __minix
+#if !defined(__minix)
 			__BITMAP_TYPE(, uint32_t, 65536) bm;
 
 			__BITMAP_ZERO(&bm);
 #else
 			char *endp;
-#endif
+#endif /* !defined(__minix) */
 
 			if ((dirp = opendir(_PATH_DEV)) == NULL)
 				err(1, "opendir: %s", _PATH_DEV);
 
 			while ((dp = readdir(dirp)) != NULL) {
-#ifndef __minix
+#if !defined(__minix)
 				if (strncmp(dp->d_name, "rvnd", 4) != 0)
 					continue;
 				n = atoi(dp->d_name + 4);
@@ -314,31 +314,31 @@ main(int argc, char *argv[])
 				if (endp[0])
 					continue;
 				show(dp->d_name, n);
-#endif
+#endif /* !defined(__minix) */
 			}
 
 			closedir(dirp);
 		}
-#ifndef __minix
+#if !defined(__minix)
 		close(v);
-#endif
+#endif /* !defined(__minix) */
 		rv = 0;
 	}
 	return rv;
 }
 
 static void
-#ifndef __minix
+#if !defined(__minix)
 show(int v, int n)
 #else
 show(const char *vn, int n)
-#endif
+#endif /* !defined(__minix) */
 {
 	struct vnd_user vnu;
 	char *dev;
 	struct statvfs *mnt;
 	int i, nmount;
-#ifdef __minix
+#if defined(__minix)
 	int v;
 	char path[PATH_MAX];
 
@@ -350,15 +350,15 @@ show(const char *vn, int n)
 			printf("vnd%d: not in use\n", n);
 		return;
 	}
-#endif
+#endif /* defined(__minix) */
 
 	vnu.vnu_unit = n;
 	if (ioctl(v, VNDIOCGET, &vnu) == -1)
 		err(1, "VNDIOCGET");
 
-#ifdef __minix
+#if defined(__minix)
 	close(v);
-#endif
+#endif /* defined(__minix) */
 
 	if (vnu.vnu_ino == 0) {
 		printf("vnd%d: not in use\n", vnu.vnu_unit);
@@ -401,15 +401,15 @@ static int
 config(char *dev, char *file, char *geom, int action)
 {
 	struct vnd_ioctl vndio;
-#ifndef __minix
+#if !defined(__minix)
 	struct disklabel *lp;
 #else
 	int stop = 0;
-#endif
+#endif /* !defined(__minix) */
 	char rdev[MAXPATHLEN + 1];
 	int fd, rv;
 
-#ifdef __minix
+#if defined(__minix)
 	/*
 	 * MINIX does not have the concept of raw devices.  As such, the access
 	 * checks that apply to opening block devices, automatically apply here
@@ -426,7 +426,7 @@ config(char *dev, char *file, char *geom, int action)
 	}
 #else
 	fd = opendisk(dev, O_RDWR, rdev, sizeof(rdev), 0);
-#endif
+#endif /* defined(__minix) */
 	if (fd < 0) {
 		warn("%s: opendisk", rdev);
 		return (1);
@@ -437,19 +437,19 @@ config(char *dev, char *file, char *geom, int action)
 	rv = 0;			/* XXX */
 #endif
 
-#ifndef __minix
+#if !defined(__minix)
 	vndio.vnd_file = file;
-#endif
+#endif /* !defined(__minix) */
 	if (geom != NULL) {
 		rv = getgeom(&vndio.vnd_geom, geom);
-#ifdef __minix
+#if defined(__minix)
 		if (rv && stop)
 			stop_service(fd, rdev);
-#endif
+#endif /* !defined(__minix) */
 		if (rv != 0)
 			errx(1, "invalid geometry: %s", geom);
 		vndio.vnd_flags = VNDIOF_HASGEOM;
-#ifndef __minix
+#if !defined(__minix)
 	} else if (tabname != NULL) {
 		lp = getdiskbyname(tabname);
 		if (lp == NULL)
@@ -459,16 +459,16 @@ config(char *dev, char *file, char *geom, int action)
 		vndio.vnd_geom.vng_ntracks = lp->d_ntracks;
 		vndio.vnd_geom.vng_ncylinders = lp->d_ncylinders;
 		vndio.vnd_flags = VNDIOF_HASGEOM;
-#endif
+#endif /* !defined(__minix) */
 	}
 
 	if (readonly)
 		vndio.vnd_flags |= VNDIOF_READONLY;
 
-#ifndef __minix
+#if !defined(__minix)
 	if (compressed)
 		vndio.vnd_flags |= VNF_COMP;
-#endif
+#endif /* !defined(__minix) */
 
 	/*
 	 * Clear (un-configure) the device
@@ -485,10 +485,10 @@ config(char *dev, char *file, char *geom, int action)
 			warn("%s: VNDIOCCLR", rdev);
 		else if (verbose)
 			printf("%s: cleared\n", rdev);
-#ifdef __minix
+#if defined(__minix)
 		if (!rv && service)
 			stop = 2;
-#endif
+#endif /* defined(__minix) */
 	}
 	/*
 	 * Configure the device
@@ -500,11 +500,11 @@ config(char *dev, char *file, char *geom, int action)
 		if (ffd < 0)
 			warn("%s", file);
 		else {
-#ifndef __minix
+#if !defined(__minix)
 			(void) close(ffd);
 #else
 			vndio.vnd_fildes = ffd;
-#endif
+#endif /* defined(__minix) */
 
 			rv = ioctl(fd, VNDIOCSET, &vndio);
 #ifdef VNDIOOCSET
@@ -513,9 +513,9 @@ config(char *dev, char *file, char *geom, int action)
 				vndio.vnd_size = vndio.vnd_osize;
 			}
 #endif
-#ifdef __minix
+#if defined(__minix)
 			(void) close(ffd);
-#endif
+#endif /* defined(__minix) */
 			if (rv)
 				warn("%s: VNDIOCSET", rdev);
 			else if (verbose) {
@@ -530,17 +530,17 @@ config(char *dev, char *file, char *geom, int action)
 				printf("\n");
 			}
 		}
-#ifdef __minix
+#if defined(__minix)
 		if ((ffd < 0 || rv) && service)
 			stop++;
-#endif
+#endif /* defined(__minix) */
 	}
 
-#ifdef __minix
+#if defined(__minix)
 	if (stop >= 2)
 		stop_service(fd, rdev);
 	else
-#endif
+#endif /* defined(__minix) */
 	(void) close(fd);
 	fflush(stdout);
 	return (rv < 0);
@@ -593,14 +593,14 @@ usage(void)
 {
 
 	(void)fprintf(stderr, "%s%s",
-#ifndef __minix
+#if !defined(__minix)
 	    "usage: vnconfig [-crvz] [-f disktab] [-t typename] vnode_disk"
 		" regular-file [geomspec]\n",
 	    "       vnconfig -u [-Fv] vnode_disk\n"
 #else
 	    "usage: vnconfig [-Scrv] vnode_disk regular-file [geomspec]\n",
 	    "       vnconfig -u [-SFv] vnode_disk\n"
-#endif
+#endif /* !defined(__minix) */
 	    "       vnconfig -l [vnode_disk]\n");
 	exit(1);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: stpncpy.c,v 1.1 2009/05/01 17:27:01 perry Exp $	*/
+/*	$NetBSD: stpncpy.c,v 1.2 2013/11/06 21:05:27 tron Exp $	*/
 
 /*-
  * Copyright (c) 2009 David Schultz <das@FreeBSD.org>
@@ -28,11 +28,15 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: stpncpy.c,v 1.1 2009/05/01 17:27:01 perry Exp $");
+__RCSID("$NetBSD: stpncpy.c,v 1.2 2013/11/06 21:05:27 tron Exp $");
 #endif /* LIBC_SCCS and not lint */
 /* FreeBSD: src/lib/libc/string/stpncpy.c,v 1.1 2009/02/28 06:00:58 das Exp */
 
 #include <string.h>
+
+#ifdef _FORTIFY_SOURCE
+#undef stpncpy
+#endif
 
 char *
 stpncpy(char * __restrict dst, const char * __restrict src, size_t n)

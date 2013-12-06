@@ -143,6 +143,83 @@ ATF_TEST_CASE_BODY(kyuafile_path__explicit)
 }
 
 
+ATF_TEST_CASE_WITHOUT_HEAD(result_types__default);
+ATF_TEST_CASE_BODY(result_types__default)
+{
+    std::map< std::string, std::vector< std::string > > options;
+    options["results-filter"].push_back(
+        cli::results_filter_option.default_value());
+    const cmdline::parsed_cmdline mock_cmdline(options, cmdline::args_vector());
+
+    cli::result_types exp_types;
+    exp_types.push_back(engine::test_result::skipped);
+    exp_types.push_back(engine::test_result::expected_failure);
+    exp_types.push_back(engine::test_result::broken);
+    exp_types.push_back(engine::test_result::failed);
+    ATF_REQUIRE(exp_types == cli::get_result_types(mock_cmdline));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(result_types__empty);
+ATF_TEST_CASE_BODY(result_types__empty)
+{
+    std::map< std::string, std::vector< std::string > > options;
+    options["results-filter"].push_back("");
+    const cmdline::parsed_cmdline mock_cmdline(options, cmdline::args_vector());
+
+    cli::result_types exp_types;
+    exp_types.push_back(engine::test_result::passed);
+    exp_types.push_back(engine::test_result::skipped);
+    exp_types.push_back(engine::test_result::expected_failure);
+    exp_types.push_back(engine::test_result::broken);
+    exp_types.push_back(engine::test_result::failed);
+    ATF_REQUIRE(exp_types == cli::get_result_types(mock_cmdline));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(result_types__explicit__all);
+ATF_TEST_CASE_BODY(result_types__explicit__all)
+{
+    std::map< std::string, std::vector< std::string > > options;
+    options["results-filter"].push_back("passed,skipped,xfail,broken,failed");
+    const cmdline::parsed_cmdline mock_cmdline(options, cmdline::args_vector());
+
+    cli::result_types exp_types;
+    exp_types.push_back(engine::test_result::passed);
+    exp_types.push_back(engine::test_result::skipped);
+    exp_types.push_back(engine::test_result::expected_failure);
+    exp_types.push_back(engine::test_result::broken);
+    exp_types.push_back(engine::test_result::failed);
+    ATF_REQUIRE(exp_types == cli::get_result_types(mock_cmdline));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(result_types__explicit__some);
+ATF_TEST_CASE_BODY(result_types__explicit__some)
+{
+    std::map< std::string, std::vector< std::string > > options;
+    options["results-filter"].push_back("skipped,broken");
+    const cmdline::parsed_cmdline mock_cmdline(options, cmdline::args_vector());
+
+    cli::result_types exp_types;
+    exp_types.push_back(engine::test_result::skipped);
+    exp_types.push_back(engine::test_result::broken);
+    ATF_REQUIRE(exp_types == cli::get_result_types(mock_cmdline));
+}
+
+
+ATF_TEST_CASE_WITHOUT_HEAD(result_types__explicit__invalid);
+ATF_TEST_CASE_BODY(result_types__explicit__invalid)
+{
+    std::map< std::string, std::vector< std::string > > options;
+    options["results-filter"].push_back("skipped,foo,broken");
+    const cmdline::parsed_cmdline mock_cmdline(options, cmdline::args_vector());
+
+    ATF_REQUIRE_THROW_RE(std::runtime_error, "Unknown result type 'foo'",
+                         cli::get_result_types(mock_cmdline));
+}
+
+
 ATF_TEST_CASE_WITHOUT_HEAD(store_path__default__create_directory__ok);
 ATF_TEST_CASE_BODY(store_path__default__create_directory__ok)
 {
@@ -354,6 +431,12 @@ ATF_INIT_TEST_CASES(tcs)
 
     ATF_ADD_TEST_CASE(tcs, kyuafile_path__default);
     ATF_ADD_TEST_CASE(tcs, kyuafile_path__explicit);
+
+    ATF_ADD_TEST_CASE(tcs, result_types__default);
+    ATF_ADD_TEST_CASE(tcs, result_types__empty);
+    ATF_ADD_TEST_CASE(tcs, result_types__explicit__all);
+    ATF_ADD_TEST_CASE(tcs, result_types__explicit__some);
+    ATF_ADD_TEST_CASE(tcs, result_types__explicit__invalid);
 
     ATF_ADD_TEST_CASE(tcs, store_path__default__create_directory__ok);
     ATF_ADD_TEST_CASE(tcs, store_path__default__create_directory__fail);

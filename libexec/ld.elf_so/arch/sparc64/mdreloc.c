@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.53 2012/07/22 09:21:03 martin Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.55 2013/10/03 10:45:57 martin Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo Horvath.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.53 2012/07/22 09:21:03 martin Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.55 2013/10/03 10:45:57 martin Exp $");
 #endif /* not lint */
 
 #include <errno.h>
@@ -180,10 +180,10 @@ static const long reloc_target_bitmask[] = {
 	_BM(22), _BM(10), _BM(22),	/* _PC_HH22, _PC_HM10, _PC_LM22 */
 	_BM(16), _BM(19),		/* _WDISP16, _WDISP19 */
 	-1,				/* GLOB_JMP */
-	_BM(7), _BM(5), _BM(6)		/* _7, _5, _6 */
+	_BM(7), _BM(5), _BM(6),		/* _7, _5, _6 */
 	-1, -1,				/* DISP64, PLT64 */
 	_BM(22), _BM(13),		/* HIX22, LOX10 */
-	_BM(22), _BM(10), _BM(13),	/* H44, M44, L44 */
+	_BM(22), _BM(10), _BM(12),	/* H44, M44, L44 */
 	-1, -1, _BM(16),		/* REGISTER, UA64, UA16 */
 #undef _BM
 };

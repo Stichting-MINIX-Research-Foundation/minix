@@ -1,17 +1,16 @@
-/*	$NetBSD: cmd.h,v 1.2 2011/07/03 19:51:26 tron Exp $	*/
+/*	$NetBSD: cmd.h,v 1.3 2013/09/04 19:44:21 tron Exp $	*/
 
 /*
- * Copyright (C) 1984-2011  Mark Nudelman
+ * Copyright (C) 1984-2012  Mark Nudelman
  *
  * You may distribute under the terms of either the GNU General Public
  * License or the Less License, as specified in the README file.
  *
- * For more information about less, or for information on how to 
- * contact the author, see the README file.
+ * For more information, see the README file.
  */
 
 
-#define	MAX_USERCMD		500
+#define	MAX_USERCMD		1000
 #define	MAX_CMDLEN		16
 
 #define	A_B_LINE		2
@@ -68,6 +67,7 @@
 #define	A_NEXT_TAG		53
 #define	A_PREV_TAG		54
 #define	A_FILTER		55
+#define	A_F_UNTIL_HILITE	56
 
 #define	A_INVALID		100
 #define	A_NOACTION		101
@@ -80,7 +80,7 @@
 #define	A_EXTRA			0200
 
 
-/* Line editting characters */
+/* Line editing characters */
 
 #define	EC_BACKSPACE	1
 #define	EC_LINEKILL	2

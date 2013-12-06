@@ -69,13 +69,15 @@
 .Nd configure vnode disks
 .Sh SYNOPSIS
 .Nm
-.Op Fl Scrv
+.Op Fl crvz
+.Op Fl f Ar disktab
+.Op Fl t Ar typename
 .Ar vnode_disk
 .Ar regular_file
 .Op Ar geomspec
 .Nm
 .Fl u
-.Op Fl SFv
+.Op Fl Fv
 .Ar vnode_disk
 .Nm
 .Fl l
@@ -118,7 +120,7 @@ argument is:
 .Sm on
 .Ed
 .Pp
-If geometry is not specified, the driver will choose a default based on 1MB
+If geometry is not specified, the kernel will choose a default based on 1MB
 cylinders.
 .Ar secsize
 is the number of bytes per sector.
@@ -129,39 +131,65 @@ is the number of sectors per track.
 is the number of tracks per cylinder.
 .Ar ncylinders
 is the number of cylinders in the device.
-.It Fl S
-Do not start or stop the corresponding device driver instance.
 .It Fl F
 Force unconfiguration if the device is in use.
 Does not imply
 .Fl u .
+.It Fl f Ar disktab
+Specifies that the
+.Fl t
+option should look up in
+.Ar disktab
+instead of in
+.Pa /etc/disktab .
 .It Fl l
 List the vnd devices and indicate which ones are in use.
 If a specific
 .Ar vnode_disk
 is given, then only that will be described.
+.It Fl t Ar typename
+If configuring the device, look up
+.Ar typename
+in
+.Pa /etc/disktab
+and use the geometry specified in the entry.
+This option and the
+.Ar geomspec
+argument are mutually exclusive.
 .It Fl r
 Configure the device as read-only.
 .It Fl u
 Unconfigures the device.
 .It Fl v
 Print messages to stdout describing actions taken.
+.It Fl z
+Assume that
+.Ar regular_file
+is a compressed disk image in cloop2 format, and configure it
+read-only.
+See the
+.Xr vndcompress 1
+manpage on how to create such an image.
 .El
 .Pp
 If no action option is given,
 .Fl c
 is assumed.
 .Sh FILES
-.Bl -tag -width /dev/vnd* -compact
-.It Pa /dev/vnd*
+.Bl -tag -width /etc/disktab -compact
+.It Pa /dev/rvnd??
+.It Pa /dev/vnd??
+.It Pa /etc/disktab
 .El
 .Sh EXAMPLES
 .Dl vndconfig vnd0 /tmp/diskimage
 or
-.Dl vndconfig /dev/vnd0 /tmp/diskimage
+.Dl vndconfig /dev/rvnd0c /tmp/diskimage
 .Pp
 Configures the vnode disk
 .Pa vnd0 .
+Please note that use of the second form of the command is discouraged because
+it requires knowledge of the raw partition which varies between architectures.
 .Pp
 .Dl vndconfig vnd0 /tmp/floppy.img 512/18/2/80
 .Pp
@@ -170,26 +198,32 @@ Configures the vnode disk
 emulating the geometry of 512 bytes per sector, 18 sectors per track,
 2 tracks per cylinder, and 80 cylinders total.
 .Pp
+.Dl vndconfig -t floppy vnd0 /tmp/floppy.img
+.Pp
+Configures the vnode disk
+.Pa vnd0
+using the geometry specified in the
+.Pa floppy
+entry in
+.Pa /etc/disktab .
+.Pp
 .Dl vndconfig -u vnd0
 .Pp
 Unconfigures the
 .Pa vnd0
 device.
-.Sh NOTES
-If
-.Ic vnconfig -uF
-is used and the device was still in use, the driver instance
-will not be shut down, even if
-.Fl S
-was not given. One may manually shut down
-the service later with
-.Ic service down
-.Ar vndN
-where
-.Ar N
-is the instance number, or simply
-leave the driver running for later reuse.
 .Sh SEE ALSO
+.Xr vndcompress 1 ,
 .Xr opendisk 3 ,
+.Xr vnd 4 ,
 .Xr mount 8 ,
+.Xr swapctl 8 ,
 .Xr umount 8
+.Sh HISTORY
+The
+.Nm
+command appeared in
+.Nx 1.0 .
+.Sh BUGS
+This command should really be named
+.Nm vndconfig .

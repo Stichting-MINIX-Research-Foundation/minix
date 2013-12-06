@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.203 2012/10/14 20:56:55 christos Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.209 2013/09/20 12:20:01 wiz Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,16 +37,20 @@
 #ifndef _SYS_SYSCTL_H_
 #define	_SYS_SYSCTL_H_
 
+#include <sys/param.h> /* precautionary upon removal from ucred.h */
+#include <sys/proc.h>  /* Needed for things like P_ZOMBIE() and LW_SINTR */
+#include <uvm/uvm_param.h>
+
+#if defined(_KERNEL) || defined(_KMEMUSER)
 /*
  * These are for the eproc structure defined below.
  */
-#include <sys/param.h> /* precautionary upon removal from ucred.h */
 #include <sys/time.h>
 #include <sys/ucred.h>
 #include <sys/ucontext.h>
-#include <sys/proc.h>
 #include <sys/mallocvar.h>
 #include <uvm/uvm_extern.h>
+#endif
 
 
 /* For offsetof() */
@@ -57,7 +61,7 @@
 #include <stdbool.h>
 #endif
 
-#ifdef _KERNEL
+#ifdef SYSCTL_PRIVATE
 #include <sys/cprng.h>
 #endif
 
@@ -69,6 +73,8 @@
  * identifiers are defined here, and other identifiers are defined in the
  * respective subsystem header files.
  */
+
+struct sysctlnode;
 
 #define	CTL_MAXNAME	12	/* largest number of components supported */
 #define SYSCTL_NAMELEN	32	/* longest name allowed for a node */
@@ -153,13 +159,13 @@ struct ctlname {
 /*
  * Meta-identifiers
  */
-#define CTL_EOL		-1		/* end of createv/destroyv list */
-#define CTL_QUERY	-2		/* enumerates children of a node */
-#define CTL_CREATE	-3		/* node create request */
-#define CTL_CREATESYM	-4		/* node create request with symbol */
-#define CTL_DESTROY	-5		/* node destroy request */
-#define CTL_MMAP	-6		/* mmap request */
-#define CTL_DESCRIBE	-7		/* get node descriptions */
+#define CTL_EOL		(-1)		/* end of createv/destroyv list */
+#define CTL_QUERY	(-2)		/* enumerates children of a node */
+#define CTL_CREATE	(-3)		/* node create request */
+#define CTL_CREATESYM	(-4)		/* node create request with symbol */
+#define CTL_DESTROY	(-5)		/* node destroy request */
+#define CTL_MMAP	(-6)		/* mmap request */
+#define CTL_DESCRIBE	(-7)		/* get node descriptions */
 
 /*
  * Top-level identifiers
@@ -221,7 +227,7 @@ struct ctlname {
 #define	KERN_ROOT_DEVICE	30	/* string: root device */
 #define	KERN_MSGBUFSIZE		31	/* int: max # of chars in msg buffer */
 #define	KERN_FSYNC		32	/* int: file synchronization support */
-#define	KERN_OLDSYSVMSG		33	/* old: SysV message queue suppoprt */
+#define	KERN_OLDSYSVMSG		33	/* old: SysV message queue support */
 #define	KERN_OLDSYSVSEM		34	/* old: SysV semaphore support */
 #define	KERN_OLDSYSVSHM		35	/* old: SysV shared memory support */
 #define	KERN_OLDSHORTCORENAME	36	/* old, unimplemented */
@@ -234,7 +240,7 @@ struct ctlname {
 #define	KERN_MEMORY_PROTECTION	43	/* int: POSIX memory protections */
 #define	KERN_LOGIN_NAME_MAX	44	/* int: max length login name + NUL */
 #define	KERN_DEFCORENAME	45	/* old: sort core name format */
-#define	KERN_LOGSIGEXIT		46	/* int: log signalled processes */
+#define	KERN_LOGSIGEXIT		46	/* int: log signaled processes */
 #define	KERN_PROC2		47	/* struct: process entries */
 #define	KERN_PROC_ARGS		48	/* struct: process argv/env */
 #define	KERN_FSCALE		49	/* int: fixpt FSCALE */
@@ -411,6 +417,8 @@ struct ki_ucred {
 	gid_t		cr_groups[NGROUPS];	/* groups */
 };
 
+#if defined(_KERNEL) || defined(_KMEMUSER)
+
 /*
  * KERN_PROC subtype ops return arrays of augmented proc structures:
  */
@@ -434,14 +442,13 @@ struct kinfo_proc {
 		short	e_xrssize;		/* text rss */
 		short	e_xccount;		/* text references */
 		short	e_xswrss;
-		long	e_flag;
-#define	EPROC_CTTY	0x01	/* controlling tty vnode active */
-#define	EPROC_SLEADER	0x02	/* session leader */
+		long	e_flag;			/* see p_eflag  below */
 		char	e_login[MAXLOGNAME];	/* setlogin() name */
 		pid_t	e_sid;			/* session id */
 		long	e_spare[3];
 	} kp_eproc;
 };
+#endif /* defined(_KERNEL) || defined(_KMEMUSER) */
 
 /*
  * Convert pointer to 64 bit unsigned integer for struct
@@ -486,6 +493,8 @@ struct kinfo_proc2 {
 	uint64_t p_ru;			/* PTR: Exit information. XXX */
 
 	int32_t	p_eflag;		/* LONG: extra kinfo_proc2 flags */
+#define	EPROC_CTTY	0x01	/* controlling tty vnode active */
+#define	EPROC_SLEADER	0x02	/* session leader */
 	int32_t	p_exitsig;		/* INT: signal to sent to parent on exit */
 	int32_t	p_flag;			/* INT: P_* flags. */
 
@@ -590,7 +599,7 @@ struct kinfo_proc2 {
 };
 
 /*
- * Compat flags for kinfo_proc, kinfo_proc2.  Not guarenteed to be stable.
+ * Compat flags for kinfo_proc, kinfo_proc2.  Not guaranteed to be stable.
  * Some of them used to be shared with LWP flags.
  * XXXAD Trim to the minimum necessary...
  */
@@ -676,7 +685,7 @@ struct kinfo_lwp {
  * KERN_SYSVIPC subtypes
  */
 #define	KERN_SYSVIPC_INFO	1	/* struct: number of valid kern ids */
-#define	KERN_SYSVIPC_MSG	2	/* int: SysV message queue suppoprt */
+#define	KERN_SYSVIPC_MSG	2	/* int: SysV message queue support */
 #define	KERN_SYSVIPC_SEM	3	/* int: SysV semaphore support */
 #define	KERN_SYSVIPC_SHM	4	/* int: SysV shared memory support */
 #define	KERN_SYSVIPC_SHMMAX	5	/* int: max shared memory segment size (bytes) */
@@ -691,7 +700,7 @@ struct kinfo_lwp {
 /* KERN_SYSVIPC_OMSG_INFO		1	*/
 /* KERN_SYSVIPC_OSEM_INFO		2	*/
 /* KERN_SYSVIPC_OSHM_INFO		3	*/
-#define	KERN_SYSVIPC_MSG_INFO		4	/* msginfo and msqid_ds */
+#define	KERN_SYSVIPC_MSG_INFO		4	/* msginfo and msgid_ds */
 #define	KERN_SYSVIPC_SEM_INFO		5	/* seminfo and semid_ds */
 #define	KERN_SYSVIPC_SHM_INFO		6	/* shminfo and shmid_ds */
 
@@ -800,7 +809,7 @@ struct kinfo_file {
  * kern.evcnt returns an array of these structures, which are designed both to
  * be immune to 32/64 bit emulation issues.  Note that the struct here differs
  * from the real struct evcnt but contains the same information in order to
- * accomodate sysctl.
+ * accommodate sysctl.
  */
 struct evcnt_sysctl {
 	uint64_t	ev_count;		/* current count */
@@ -1049,7 +1058,7 @@ struct sysctllog;
  * variable. The loader prevents multiple use by issuing errors
  * if a variable is initialized in more than one place. They are
  * aggregated into an array in debug_sysctl(), so that it can
- * conveniently locate them when querried. If more debugging
+ * conveniently locate them when queried. If more debugging
  * variables are added, they must also be declared here and also
  * entered into the array.
  *
@@ -1242,7 +1251,9 @@ MALLOC_DECLARE(M_SYSCTLDATA);
 
 extern const u_int sysctl_lwpflagmap[];
 
+#ifdef SYSCTL_PRIVATE
 extern cprng_strong_t *sysctl_prng;
+#endif
 
 #else	/* !_KERNEL */
 #include <sys/cdefs.h>

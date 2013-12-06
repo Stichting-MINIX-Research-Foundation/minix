@@ -486,11 +486,8 @@ bogus_kyuafile_body() {
     cat >Kyuafile <<EOF
 Hello, world.
 EOF
-
-    cat >experr <<EOF
-kyua: E: Load of 'Kyuafile' failed: Failed to load Lua file 'Kyuafile': Kyuafile:2: '<name>' expected near '<eof>'.
-EOF
-    atf_check -s exit:2 -o empty -e file:experr kyua list
+    atf_check -s exit:2 -o empty \
+        -e match:"Load of 'Kyuafile' failed: .* Kyuafile:2:" kyua list
 }
 
 

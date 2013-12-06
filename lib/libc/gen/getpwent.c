@@ -2603,12 +2603,3 @@ setpwent(void)
 	    __nsdefaultcompat_forceall);
 	mutex_unlock(&_pwmutex);
 }
-
-#if defined(__minix) && defined(__weak_alias)
-__weak_alias(getpwent, __getpwent50)
-__weak_alias(getpwent_r, __getpwent_r50)
-__weak_alias(getpwnam, __getpwnam50)
-__weak_alias(getpwnam_r, __getpwnam_r50)
-__weak_alias(getpwuid, __getpwuid50)
-__weak_alias(getpwuid_r, __getpwuid_r50)
-#endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: memcpy_arm.S,v 1.2 2008/04/28 20:22:52 martin Exp $	*/
+/*	$NetBSD: memcpy_arm.S,v 1.4 2013/08/11 04:56:32 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -30,6 +30,12 @@
  */
 
 #include <machine/asm.h>
+
+#if !defined(__minix)
+#if defined(__ARM_EABI__)
+STRONG_ALIAS(__aeabi_memcpy, memcpy)
+#endif
+#endif /* !defined(__minix) */
 
 /*
  * This is one fun bit of code ...
@@ -78,9 +84,9 @@ ENTRY(memcpy)
 #endif
 	/* save leaf functions having to store this away */
 #if defined(__minix)
-	stmdb	sp!, {r0, r4, r5, lr}		/* memcpy() returns dest addr */
+	push	{r0, r4, r5, lr}	/* memcpy() returns dest addr */
 #else
-	stmdb	sp!, {r0, lr}		/* memcpy() returns dest addr */
+	push	{r0, lr}		/* memcpy() returns dest addr */
 #endif
 
 	subs	r2, r2, #4
@@ -97,7 +103,7 @@ ENTRY(memcpy)
 	subs	r2, r2, #0x14
 	blt	.Lmemcpy_l32		/* less than 32 bytes (12 from above) */
 #if !defined(__minix)
-	stmdb	sp!, {r4}		/* borrow r4 */
+	push	{r4}		/* borrow r4 */
 #endif
 
 	/* blat 32 bytes at a time */
@@ -111,11 +117,11 @@ ENTRY(memcpy)
 	bge	.Lmemcpy_loop32
 
 	cmn	r2, #0x10
-	ldmgeia	r1!, {r3, r4, r12, lr}	/* blat a remaining 16 bytes */
-	stmgeia	r0!, {r3, r4, r12, lr}
+	ldmiage	r1!, {r3, r4, r12, lr}	/* blat a remaining 16 bytes */
+	stmiage	r0!, {r3, r4, r12, lr}
 	subge	r2, r2, #0x10
 #if !defined(__minix)
-	ldmia	sp!, {r4}		/* return r4 */
+	pop	{r4}		/* return r4 */
 #endif
 
 .Lmemcpy_l32:
@@ -123,9 +129,9 @@ ENTRY(memcpy)
 
 	/* blat 12 bytes at a time */
 .Lmemcpy_loop12:
-	ldmgeia	r1!, {r3, r12, lr}
-	stmgeia	r0!, {r3, r12, lr}
-	subges	r2, r2, #0x0c
+	ldmiage	r1!, {r3, r12, lr}
+	stmiage	r0!, {r3, r12, lr}
+	subsge	r2, r2, #0x0c
 	bge	.Lmemcpy_loop12
 
 .Lmemcpy_l12:
@@ -135,38 +141,38 @@ ENTRY(memcpy)
 	subs	r2, r2, #4
 	ldrlt	r3, [r1], #4
 	strlt	r3, [r0], #4
-	ldmgeia	r1!, {r3, r12}
-	stmgeia	r0!, {r3, r12}
+	ldmiage	r1!, {r3, r12}
+	stmiage	r0!, {r3, r12}
 	subge	r2, r2, #4
 
 .Lmemcpy_l4:
 	/* less than 4 bytes to go */
 	adds	r2, r2, #4
 #if defined(__minix)
-	ldmeqia	sp!, {r0, r4, r5}
+	popeq	{r0, r4, r5}
 	moveq	r0, #0
-	ldmeqia	sp!, {pc}
+	popeq	{pc}
 #else
 #ifdef __APCS_26_
-	ldmeqia sp!, {r0, pc}^		/* done */
+	ldmiaeq sp!, {r0, pc}^		/* done */
 #else
-	ldmeqia	sp!, {r0, pc}		/* done */
+	popeq	{r0, pc}		/* done */
 #endif
 #endif
 	/* copy the crud byte at a time */
 	cmp	r2, #2
 	ldrb	r3, [r1], #1
 	strb	r3, [r0], #1
-	ldrgeb	r3, [r1], #1
-	strgeb	r3, [r0], #1
-	ldrgtb	r3, [r1], #1
-	strgtb	r3, [r0], #1
+	ldrbge	r3, [r1], #1
+	strbge	r3, [r0], #1
+	ldrbgt	r3, [r1], #1
+	strbgt	r3, [r0], #1
 #if defined(__minix)
-	ldmia	sp!, {r0, r4, r5}
+	pop	{r0, r4, r5}
 	mov	r0, #0
-	ldmia	sp!, {pc}
+	pop	{pc}
 #else
-	ldmia	sp!, {r0, pc}
+	pop	{r0, pc}
 #endif
 
 	/* erg - unaligned destination */
@@ -177,10 +183,10 @@ ENTRY(memcpy)
 	/* align destination with byte copies */
 	ldrb	r3, [r1], #1
 	strb	r3, [r0], #1
-	ldrgeb	r3, [r1], #1
-	strgeb	r3, [r0], #1
-	ldrgtb	r3, [r1], #1
-	strgtb	r3, [r0], #1
+	ldrbge	r3, [r1], #1
+	strbge	r3, [r0], #1
+	ldrbgt	r3, [r1], #1
+	strbgt	r3, [r0], #1
 	subs	r2, r2, r12
 	blt	.Lmemcpy_l4		/* less the 4 bytes */
 
@@ -199,7 +205,7 @@ ENTRY(memcpy)
 	blt	.Lmemcpy_srcul1loop4
 	sub	r2, r2, #0x0c
 #if !defined(__minix)
-	stmdb	sp!, {r4, r5}
+	push	{r4, r5}
 #endif
 
 .Lmemcpy_srcul1loop16:
@@ -230,7 +236,7 @@ ENTRY(memcpy)
 	subs	r2, r2, #0x10
 	bge	.Lmemcpy_srcul1loop16
 #if !defined(__minix)
-	ldmia	sp!, {r4, r5}
+	pop	{r4, r5}
 #endif
 	adds	r2, r2, #0x0c
 	blt	.Lmemcpy_srcul1l4
@@ -260,7 +266,7 @@ ENTRY(memcpy)
 	blt	.Lmemcpy_srcul2loop4
 	sub	r2, r2, #0x0c
 #if !defined(__minix)
-	stmdb	sp!, {r4, r5}
+	push	{r4, r5}
 #endif
 
 .Lmemcpy_srcul2loop16:
@@ -291,7 +297,7 @@ ENTRY(memcpy)
 	subs	r2, r2, #0x10
 	bge	.Lmemcpy_srcul2loop16
 #if !defined(__minix)
-	ldmia	sp!, {r4, r5}
+	pop	{r4, r5}
 #endif
 	adds	r2, r2, #0x0c
 	blt	.Lmemcpy_srcul2l4
@@ -321,7 +327,7 @@ ENTRY(memcpy)
 	blt	.Lmemcpy_srcul3loop4
 	sub	r2, r2, #0x0c
 #if !defined(__minix)
-	stmdb	sp!, {r4, r5}
+	push	{r4, r5}
 #endif
 
 .Lmemcpy_srcul3loop16:
@@ -352,7 +358,7 @@ ENTRY(memcpy)
 	subs	r2, r2, #0x10
 	bge	.Lmemcpy_srcul3loop16
 #if !defined(__minix)
-	ldmia	sp!, {r4, r5}
+	pop	{r4, r5}
 #endif
 	adds	r2, r2, #0x0c
 	blt	.Lmemcpy_srcul3l4
@@ -379,11 +385,13 @@ ENTRY(memcpy)
 
 #if defined(__minix)
 LABEL(phys_copy_fault)		/* kernel can send us here */
-	ldmia	sp!, {r0, r4, r5}
-	ldmia	sp!, {pc}
+	pop	{r0, r4, r5}
+	pop	{pc}
 
 LABEL(phys_copy_fault_in_kernel)	/* kernel can send us here */
-	ldmia	sp!, {r0, r4, r5}
+	pop	 {r0, r4, r5}
 	mrc	p15, 0, r0, c6, c0, 0	/* Read DFAR */
-	ldmia	sp!, {pc}
+	pop	{pc}
+#else
+END(memcpy)
 #endif

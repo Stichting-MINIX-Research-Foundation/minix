@@ -29,7 +29,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: __aeabi_uldivmod.S,v 1.2 2012/08/05 06:34:09 matt Exp $")
+RCSID("$NetBSD: __aeabi_uldivmod.S,v 1.7 2013/08/19 03:43:07 matt Exp $")
 
 /*
  * typedef struct { unsigned long long quo, rem } ulldiv_t;
@@ -38,16 +38,79 @@ RCSID("$NetBSD: __aeabi_uldivmod.S,v 1.2 2012/08/05 06:34:09 matt Exp $")
  */
 
 ENTRY(__aeabi_uldivmod)
+#ifdef __ARM_EABI__
+	.fnstart
+	.cfi_startproc
+#endif
+#if !defined(_KERNEL) && !defined(_STANDALONE)
+#if !defined(__thumb__)
+	orrs	ip, r2, r3
+	beq	.Ldivbyzero
+#elif defined(_ARM_ARCH_T2)
+	cbnz	r2, 1f
+	cbz	r3, .Ldivbyzero
+1:
+#else
+	cmp	r2, #0
+	bne	1f
+	cmp	r3, #0
+	beq	.Ldivbyzero
+1:
+#endif
+#endif
+
 	push	{r4,lr}
-	sub	sp, sp, #8
+#ifdef __ARM_EABI__
+	.save	{r4,lr}
+	.cfi_def_cfa_offset 8
+	.cfi_offset 14, -4
+	.cfi_offset 4, -8
+#endif
+	sub	sp, sp, #16
+#ifdef __ARM_EABI__
+	.cfi_def_cfa_offset 24
+#endif
+#if !defined(__thumb__) || defined(_ARM_ARCH_T2)
+	add	r4, sp, #8
+#else
 	mov	r4, sp
-	push	{r4}
+	adds	r4, r4, #8
+#endif
+	str	r4, [sp]
 	bl	PLT_SYM(__qdivrem)
-	add	sp, sp, #4
+	add	sp, sp, #8
+#ifdef __ARM_EABI__
+	.cfi_def_cfa_offset 16
+	.cfi_offset 3, -12
+	.cfi_offset 2, -16
+#endif
 	/*
 	 * The remainder is already on the stack just waiting to be popped
 	 * into r2/r3.
 	 */
-	pop	{r2-r4,lr}
-	RET
+	pop	{r2-r4,pc}
+
+#if !defined(_KERNEL) && !defined(_STANDALONE)
+.Ldivbyzero:
+	push	{r0-r1,r4,lr}
+#ifdef __ARM_EABI__
+	.save	{r0-r1,r4,lr}
+	.cfi_def_cfa_offset 16
+	.cfi_offset 14, -4
+	.cfi_offset 4, -8
+#endif
+#ifdef __thumb__
+	movs	r0, #0
+	mvns	r0, r0
+#else
+	mvn	r0, #0
+#endif
+	mvns	r1, r0
+	bl	PLT_SYM(__aeabi_ldiv0)
+	pop	{r2-r4,pc}
+#endif
+#ifdef __ARM_EABI__
+	.cfi_endproc
+	.fnend
+#endif
 END(__aeabi_uldivmod)

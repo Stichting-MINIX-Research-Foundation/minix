@@ -1,4 +1,4 @@
-/*	$NetBSD: crtbegin.S,v 1.2 2012/06/02 22:15:15 uwe Exp $	*/
+/*	$NetBSD: crtbegin.S,v 1.3 2013/09/12 15:36:14 joerg Exp $	*/
 /*-
  * Copyright (c) 2012 Valeriy E. Ushakov
  * All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: crtbegin.S,v 1.2 2012/06/02 22:15:15 uwe Exp $")
+RCSID("$NetBSD: crtbegin.S,v 1.3 2013/09/12 15:36:14 joerg Exp $")
 
 	.section	.ctors, "aw", @progbits
 	.p2align 2
@@ -84,7 +84,7 @@ __finished:
  * address and only r0 can be used in @(r0, Rm) addressing mode, so we
  * always load variable address to r0.
  */
-#ifdef PIC
+#ifdef __PIC__
 #define VAR_DATUM(var)	var@GOTOFF
 #define FUNC_DATUM(f)	f@GOT
 #define R0VAR		(r0, r12)
@@ -98,7 +98,7 @@ __finished:
 __do_global_ctors_aux:
         mov.l   r8, @-sp
         mov.l   r9, @-sp
-#ifdef PIC
+#ifdef __PIC__
         mov.l   r12, @-sp
         mov.l   .Lc_got, r12
         mova    .Lc_got, r0
@@ -121,7 +121,7 @@ __do_global_ctors_aux:
 
 	!! if (__register_frame_info)
 	!!     __register_frame_info(&__EH_FRAME_LIST__[0], &__dwarf_eh_object)
-#ifdef PIC
+#ifdef __PIC__
 	mov.l	.Lc___register_frame_info_GOT, r0
 	mov.l	@R0VAR, r1
 	tst	r1, r1
@@ -146,7 +146,7 @@ __do_global_ctors_aux:
 
 	!!  if (_Jv_RegisterClasses && __JCR_LIST__[0])
 	!!      _Jv_RegisterClasses(&__JCR_LIST__[0]);
-#ifdef PIC
+#ifdef __PIC__
 	mov.l	.Lc__Jv_RegisterClasses_GOT, r0
 	mov.l	@R0VAR, r1
 	tst	r1, r1
@@ -183,7 +183,7 @@ __do_global_ctors_aux:
 
 	!! call all constructors on __CTOR_LIST__ in reverse order
 	mov.l	.Lc___CTOR_LIST_END__, r8
-#ifdef PIC
+#ifdef __PIC__
 	add	r12, r8
 #endif
 	add	#-4, r8
@@ -203,7 +203,7 @@ __do_global_ctors_aux:
 	mov	r14, sp
 	lds.l	@sp+, pr
 	mov.l	@sp+, r14
-#ifdef PIC
+#ifdef __PIC__
 	mov.l	@sp+, r12
 #endif
 	mov.l	@sp+, r9
@@ -215,7 +215,7 @@ __do_global_ctors_aux:
 	PIC_GOT_DATUM
 .Lc___initialized:
 	.long	VAR_DATUM(__initialized)
-#ifdef PIC
+#ifdef __PIC__
 .Lc___register_frame_info_GOT:
 	.long	__register_frame_info@GOT
 #endif
@@ -225,7 +225,7 @@ __do_global_ctors_aux:
 	.long	VAR_DATUM(__EH_FRAME_LIST__)
 .Lc___dwarf_eh_object:
 	.long	VAR_DATUM(__dwarf_eh_object)
-#ifdef PIC
+#ifdef __PIC__
 .Lc__Jv_RegisterClasses_GOT:
 	.long	_Jv_RegisterClasses@GOT
 #endif
@@ -240,7 +240,7 @@ __do_global_ctors_aux:
 __do_global_dtors_aux:
         mov.l   r8, @-sp
         mov.l   r9, @-sp
-#ifdef PIC
+#ifdef __PIC__
         mov.l   r12, @-sp
         mov.l   .Ld_got, r12
         mova    .Ld_got, r0
@@ -277,7 +277,7 @@ __do_global_dtors_aux:
 
 	!! call all destructors on __DTOR_LIST__
 	mov.l	.Ld___DTOR_LIST__, r8
-#ifdef PIC
+#ifdef __PIC__
 	add	r12, r8
 #endif
 	add	#4, r8		! skip first entry that we know to be -1
@@ -293,7 +293,7 @@ __do_global_dtors_aux:
 
 	!! if (__deregister_frame_info)
 	!!     __deregister_frame_info(&__EH_FRAME_LIST__[0]);
-#ifdef PIC
+#ifdef __PIC__
 	mov.l	.Ld___deregister_frame_info_GOT, r0
 	mov.l	@R0VAR, r1
 	tst	r1, r1
@@ -317,7 +317,7 @@ __do_global_dtors_aux:
 	mov	r14, sp
 	lds.l	@sp+, pr
 	mov.l	@sp+, r14
-#ifdef PIC
+#ifdef __PIC__
 	mov.l	@sp+, r12
 #endif
 	mov.l	@sp+, r9
@@ -339,7 +339,7 @@ __do_global_dtors_aux:
 #endif
 .Ld___DTOR_LIST__:
 	.long	VAR_DATUM(__DTOR_LIST__)
-#ifdef PIC
+#ifdef __PIC__
 .Ld___deregister_frame_info_GOT:
 	.long	__deregister_frame_info@GOT
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_readinode.c,v 1.2 2011/11/24 21:09:37 agc Exp $	*/
+/*	$NetBSD: chfs_readinode.c,v 1.8 2013/10/20 17:18:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -31,13 +31,6 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- */
-
-/*
- * chfs_readinode.c
- *
- *  Created on: 2010.05.31.
- *      Author: dtengeri
  */
 
 #include <sys/buf.h>
@@ -82,11 +75,7 @@ int chfs_build_fragtree(struct chfs_mount *,
 
 
 
-/*
- * --------------------------
- * tmp node rbtree operations
- * --------------------------
- */
+/* tmp node rbtree operations */
 static signed int
 tmp_node_compare_nodes(void *ctx, const void *n1, const void *n2)
 {
@@ -113,11 +102,7 @@ const rb_tree_ops_t tmp_node_rbtree_ops = {
 };
 
 
-/*
- * ---------------------------
- * frag node rbtree operations
- * ---------------------------
- */
+/* frag node rbtree operations */
 static signed int
 frag_compare_nodes(void *ctx, const void *n1, const void *n2)
 {
@@ -145,12 +130,7 @@ const rb_tree_ops_t frag_rbtree_ops = {
 
 
 /*
- * -------------------
- * tmp node operations
- * -------------------
- */
-/*
- * Check the data CRC of the node.
+ * chfs_check_td_data - checks the data CRC of the node
  *
  * Returns: 0 - if everything OK;
  * 	    	1 - if CRC is incorrect;
@@ -176,6 +156,7 @@ chfs_check_td_data(struct chfs_mount *chmp,
 	if (!len)
 		return 0;
 
+	/* Read data. */
 	buf = kmem_alloc(len, KM_SLEEP);
 	if (!buf) {
 		dbg("allocating error\n");
@@ -183,11 +164,12 @@ chfs_check_td_data(struct chfs_mount *chmp,
 	}
 	err = chfs_read_leb(chmp, nref->nref_lnr, buf, ofs, len, &retlen);
 	if (err) {
-		dbg("error wile reading: %d\n", err);
+		dbg("error while reading: %d\n", err);
 		err = 2;
 		goto out;
 	}
 
+	/* Check crc. */
 	if (len != retlen) {
 		dbg("len:%zu, retlen:%zu\n", len, retlen);
 		err = 2;
@@ -201,7 +183,8 @@ chfs_check_td_data(struct chfs_mount *chmp,
 		return 1;
 	}
 
-	nref->nref_offset = CHFS_GET_OFS(nref->nref_offset) | CHFS_NORMAL_NODE_MASK;
+	/* Correct sizes. */
+	CHFS_MARK_REF_NORMAL(nref);
 	totlen = CHFS_PAD(sizeof(struct chfs_flash_data_node) + len);
 
 	mutex_enter(&chmp->chm_lock_sizes);
@@ -216,6 +199,7 @@ out:
 	return err;
 }
 
+/* chfs_check_td_node - checks a temporary node */
 int
 chfs_check_td_node(struct chfs_mount *chmp, struct chfs_tmp_dnode *td)
 {
@@ -225,13 +209,13 @@ chfs_check_td_node(struct chfs_mount *chmp, struct chfs_tmp_dnode *td)
 		return 0;
 
 	ret = chfs_check_td_data(chmp, td);
-	if (ret == 1) {
-		chfs_mark_node_obsolete(chmp, td->node->nref);
-	}
 	return ret;
 }
 
-
+/* 
+ * chfs_first_valid_data_ref -
+ * returns the first valid nref after the given nref
+ */
 struct chfs_node_ref *
 chfs_first_valid_data_ref(struct chfs_node_ref *nref)
 {
@@ -253,13 +237,19 @@ chfs_first_valid_data_ref(struct chfs_node_ref *nref)
 	return NULL;
 }
 
+/*
+ * chfs_add_tmp_dnode_to_tdi -
+ * adds a temporary node to a temporary node descriptor
+ */
 void
 chfs_add_tmp_dnode_to_tdi(struct chfs_tmp_dnode_info *tdi,
 	struct chfs_tmp_dnode *td)
 {
 	if (!tdi->tmpnode) {
+	/* The chain is empty. */
 		tdi->tmpnode = td;
 	} else {
+	/* Insert into the chain. */
 		struct chfs_tmp_dnode *tmp = tdi->tmpnode;
 		while (tmp->next) {
 			tmp = tmp->next;
@@ -268,13 +258,19 @@ chfs_add_tmp_dnode_to_tdi(struct chfs_tmp_dnode_info *tdi,
 	}
 }
 
+/*
+ * chfs_remove_tmp_dnode_from_tdi - 
+ * removes a temporary node from its descriptor
+ */
 void
 chfs_remove_tmp_dnode_from_tdi(struct chfs_tmp_dnode_info *tdi,
 	struct chfs_tmp_dnode *td)
 {
 	if (tdi->tmpnode == td) {
+	/* It's the first in the chain. */
 		tdi->tmpnode = tdi->tmpnode->next;
 	} else {
+	/* Remove from the middle of the chain. */
 		struct chfs_tmp_dnode *tmp = tdi->tmpnode->next;
 		while (tmp->next && tmp->next != td) {
 			tmp = tmp->next;
@@ -285,24 +281,31 @@ chfs_remove_tmp_dnode_from_tdi(struct chfs_tmp_dnode_info *tdi,
 	}
 }
 
+/* chfs_kill_td - removes all components of a temporary node */
 static void
 chfs_kill_td(struct chfs_mount *chmp,
     struct chfs_tmp_dnode *td)
 {
-	/* check if we need to mark as obsolete, to avoid double mark */
-	if (!CHFS_REF_OBSOLETE(td->node->nref)) {
-		chfs_mark_node_obsolete(chmp, td->node->nref);
+	struct chfs_vnode_cache *vc;
+	if (td->node) {
+		mutex_enter(&chmp->chm_lock_vnocache);
+		/* Remove the node from the vnode cache's data node chain. */
+		vc = chfs_nref_to_vc(td->node->nref);
+		chfs_remove_and_obsolete(chmp, vc, td->node->nref, &vc->dnode);	
+		mutex_exit(&chmp->chm_lock_vnocache);
 	}
 
 	chfs_free_tmp_dnode(td);
 }
 
+/* chfs_kill_tdi - removes a temporary node descriptor */
 static void
 chfs_kill_tdi(struct chfs_mount *chmp,
     struct chfs_tmp_dnode_info *tdi)
 {
 	struct chfs_tmp_dnode *next, *tmp = tdi->tmpnode;
 
+	/* Iterate the chain and remove all temporary node from it. */
 	while (tmp) {
 		next = tmp->next;
 		chfs_kill_td(chmp, tmp);
@@ -312,6 +315,10 @@ chfs_kill_tdi(struct chfs_mount *chmp,
 	chfs_free_tmp_dnode_info(tdi);
 }
 
+/* 
+ * chfs_add_tmp_dnode_to_tree - 
+ * adds a temporary node to the temporary tree
+ */
 int
 chfs_add_tmp_dnode_to_tree(struct chfs_mount *chmp,
     struct chfs_readinode_info *rii,
@@ -335,6 +342,7 @@ chfs_add_tmp_dnode_to_tree(struct chfs_mount *chmp,
 			this = (struct chfs_tmp_dnode_info *)node;
 		}
 	}
+
 	while (node) {
 		this = (struct chfs_tmp_dnode_info *)node;
 		if (this->tmpnode->node->ofs > end_ofs)
@@ -343,6 +351,7 @@ chfs_add_tmp_dnode_to_tree(struct chfs_mount *chmp,
 		struct chfs_tmp_dnode *tmp_td = this->tmpnode;
 		while (tmp_td) {
 			if (tmp_td->version == newtd->version) {
+				/* This is a new version of an old node. */
 				if (!chfs_check_td_node(chmp, tmp_td)) {
 					dbg("calling kill td 0\n");
 					chfs_kill_td(chmp, newtd);
@@ -422,8 +431,8 @@ chfs_add_tmp_dnode_to_tree(struct chfs_mount *chmp,
 	   obsoleted by an earlier node. Insert into the tree */
 	struct chfs_tmp_dnode_info *tmp_tdi = rb_tree_insert_node(&rii->tdi_root, newtdi);
 	if (tmp_tdi != newtdi) {
+		chfs_remove_tmp_dnode_from_tdi(newtdi, newtd);
 		chfs_add_tmp_dnode_to_tdi(tmp_tdi, newtd);
-		newtdi->tmpnode = NULL;
 		chfs_kill_tdi(chmp, newtdi);
 	}
 
@@ -459,26 +468,30 @@ chfs_add_tmp_dnode_to_tree(struct chfs_mount *chmp,
 }
 
 
-/*
- * --------------------
- * frag node operations
- * --------------------
- */
+/* new_fragment - creates a new fragment for a data node */
 struct chfs_node_frag *
 new_fragment(struct chfs_full_dnode *fdn, uint32_t ofs, uint32_t size)
 {
 	struct chfs_node_frag *newfrag;
 	newfrag = chfs_alloc_node_frag();
 	if (newfrag) {
+		/* Initialize fragment. */
 		newfrag->ofs = ofs;
 		newfrag->size = size;
 		newfrag->node = fdn;
+		if (newfrag->node) {
+			newfrag->node->frags++;
+		}
 	} else {
 		chfs_err("cannot allocate a chfs_node_frag object\n");
 	}
 	return newfrag;
 }
 
+/*
+ * no_overlapping_node - inserts a node to the fragtree
+ * Puts hole frag into the holes between fragments.
+ */
 int
 no_overlapping_node(struct rb_tree *fragtree,
     struct chfs_node_frag *newfrag,
@@ -494,7 +507,6 @@ no_overlapping_node(struct rb_tree *fragtree,
 		}
 
 		rb_tree_insert_node(fragtree, holefrag);
-		this = holefrag;
 	}
 
 	rb_tree_insert_node(fragtree, newfrag);
@@ -502,6 +514,10 @@ no_overlapping_node(struct rb_tree *fragtree,
 	return 0;
 }
 
+/*
+ * chfs_add_frag_to_fragtree - 
+ * adds a fragment to a data node's fragtree
+ */
 int
 chfs_add_frag_to_fragtree(struct chfs_mount *chmp,
     struct rb_tree *fragtree,
@@ -511,6 +527,7 @@ chfs_add_frag_to_fragtree(struct chfs_mount *chmp,
 	uint32_t lastend;
 	KASSERT(mutex_owned(&chmp->chm_lock_mountfields));
 
+	/* Find the offset of frag which is before the new one. */
 	this = (struct chfs_node_frag *)rb_tree_find_node_leq(fragtree, &newfrag->ofs);
 
 	if (this) {
@@ -519,8 +536,8 @@ chfs_add_frag_to_fragtree(struct chfs_mount *chmp,
 		lastend = 0;
 	}
 
+	/* New fragment is end of the file and there is no overlapping. */
 	if (lastend <= newfrag->ofs) {
-		//dbg("no overlapping node\n");
 		if (lastend && (lastend - 1) >> PAGE_SHIFT == newfrag->ofs >> PAGE_SHIFT) {
 			if (this->node)
 				CHFS_MARK_REF_NORMAL(this->node->nref);
@@ -530,22 +547,18 @@ chfs_add_frag_to_fragtree(struct chfs_mount *chmp,
 	}
 
 	if (newfrag->ofs > this->ofs) {
-
 		CHFS_MARK_REF_NORMAL(newfrag->node->nref);
 		if (this->node)
 			CHFS_MARK_REF_NORMAL(this->node->nref);
 
 		if (this->ofs + this->size > newfrag->ofs + newfrag->size) {
-			/* newfrag is inside of this */
-			//dbg("newfrag is inside of this\n");
+			/* Newfrag is inside of this. */
 			struct chfs_node_frag *newfrag2;
 
 			newfrag2 = new_fragment(this->node, newfrag->ofs + newfrag->size,
 			    this->ofs + this->size - newfrag->ofs - newfrag->size);
 			if (!newfrag2)
 				return ENOMEM;
-			if (this->node)
-				this->node->frags++;
 
 			this->size = newfrag->ofs - this->ofs;
 
@@ -554,13 +567,11 @@ chfs_add_frag_to_fragtree(struct chfs_mount *chmp,
 
 			return 0;
 		}
-		/* newfrag is bottom of this */
-		//dbg("newfrag is bottom of this\n");
+		/* Newfrag is bottom of this. */
 		this->size = newfrag->ofs - this->ofs;
 		rb_tree_insert_node(fragtree, newfrag);
 	} else {
-		/* newfrag start at same point */
-		//dbg("newfrag start at same point\n");
+		/* Newfrag start at same point */
 		//TODO replace instead of remove and insert
 		rb_tree_remove_node(fragtree, this);
 		rb_tree_insert_node(fragtree, newfrag);
@@ -596,30 +607,60 @@ chfs_add_frag_to_fragtree(struct chfs_mount *chmp,
 	return 0;
 }
 
+/* 
+ * chfs_remove_frags_of_node -
+ * removes all fragments from a fragtree and DOESN'T OBSOLETE them
+ */
 void
-chfs_kill_fragtree(struct rb_tree *fragtree)
+chfs_remove_frags_of_node(struct chfs_mount *chmp, struct rb_tree *fragtree,
+	struct chfs_node_ref *nref)
 {
+	KASSERT(mutex_owned(&chmp->chm_lock_mountfields));
 	struct chfs_node_frag *this, *next;
-	//dbg("start\n");
 
+	if (nref == NULL) {
+		return;
+	}
+
+	/* Iterate the tree and clean all elements. */
 	this = (struct chfs_node_frag *)RB_TREE_MIN(fragtree);
 	while (this) {
-		//for (this = (struct chfs_node_frag *)RB_TREE_MIN(&fragtree); this != NULL; this = (struct chfs_node_frag *)rb_tree_iterate(&fragtree, &this->rb_node, RB_DIR_RIGHT)) {
 		next = frag_next(fragtree, this);
-		rb_tree_remove_node(fragtree, this);
-		chfs_free_node_frag(this);
-		//dbg("one frag killed\n");
+		if (this->node->nref == nref) {
+			rb_tree_remove_node(fragtree, this);
+			chfs_free_node_frag(this);
+		}
 		this = next;
 	}
-	//dbg("end\n");
 }
 
+/*
+ * chfs_kill_fragtree - 
+ * removes all fragments from a fragtree and OBSOLETES them
+ */
+void
+chfs_kill_fragtree(struct chfs_mount *chmp, struct rb_tree *fragtree)
+{
+	KASSERT(mutex_owned(&chmp->chm_lock_mountfields));
+	struct chfs_node_frag *this, *next;
+
+	/* Iterate the tree and clean all elements. */
+	this = (struct chfs_node_frag *)RB_TREE_MIN(fragtree);
+	while (this) {
+		next = frag_next(fragtree, this);
+		rb_tree_remove_node(fragtree, this);
+		chfs_obsolete_node_frag(chmp, this);
+		this = next;
+	}
+}
+
+/* chfs_truncate_fragtree - truncates the tree to a specified size */
 uint32_t
 chfs_truncate_fragtree(struct chfs_mount *chmp,
 	struct rb_tree *fragtree, uint32_t size)
 {
-	struct chfs_node_frag *frag;
 	KASSERT(mutex_owned(&chmp->chm_lock_mountfields));
+	struct chfs_node_frag *frag;
 
 	dbg("truncate to size: %u\n", size);
 
@@ -658,45 +699,45 @@ chfs_truncate_fragtree(struct chfs_mount *chmp,
 
 	/* FIXME Should we check the postion of the last node? (PAGE_CACHE size, etc.) */
 	if (frag->node && (frag->ofs & (PAGE_SIZE - 1)) == 0) {
-		frag->node->nref->nref_offset = CHFS_GET_OFS(frag->node->nref->nref_offset) | CHFS_PRISTINE_NODE_MASK;
+		frag->node->nref->nref_offset =
+			CHFS_GET_OFS(frag->node->nref->nref_offset) | CHFS_PRISTINE_NODE_MASK;
 	}
 
 	return size;
 }
 
+/* chfs_obsolete_node_frag - obsoletes a fragment of a node */
 void
 chfs_obsolete_node_frag(struct chfs_mount *chmp,
     struct chfs_node_frag *this)
 {
+	struct chfs_vnode_cache *vc;
 	KASSERT(mutex_owned(&chmp->chm_lock_mountfields));
 	if (this->node) {
+	/* The fragment is in a node. */
+		KASSERT(this->node->frags != 0);
 		this->node->frags--;
-		if (!this->node->frags) {
-			struct chfs_vnode_cache *vc = chfs_nref_to_vc(this->node->nref);
-			chfs_mark_node_obsolete(chmp, this->node->nref);
-			
-			if (vc->dnode == this->node->nref) {
-				vc->dnode = this->node->nref->nref_next;
-			} else {
-				struct chfs_node_ref *tmp = vc->dnode;
-				while (tmp->nref_next != (struct chfs_node_ref*) vc 
-						&& tmp->nref_next != this->node->nref) {
-					tmp = tmp->nref_next;
-				}
-				if (tmp->nref_next == this->node->nref) {
-					tmp->nref_next = this->node->nref->nref_next;
-				}
-				// FIXME should we free here the this->node->nref?
-			}
-			
+		if (this->node->frags == 0) {
+		/* This is the last fragment. (There is no more.) */
+			KASSERT(!CHFS_REF_OBSOLETE(this->node->nref));
+			mutex_enter(&chmp->chm_lock_vnocache);
+			vc = chfs_nref_to_vc(this->node->nref);
+			dbg("[MARK] lnr: %u ofs: %u\n", this->node->nref->nref_lnr, 
+				this->node->nref->nref_offset);
+
+			chfs_remove_and_obsolete(chmp, vc, this->node->nref, &vc->dnode);	
+			mutex_exit(&chmp->chm_lock_vnocache);
+
 			chfs_free_full_dnode(this->node);
 		} else {
+		/* There is more frags in the node. */
 			CHFS_MARK_REF_NORMAL(this->node->nref);
 		}
 	}
 	chfs_free_node_frag(this);
 }
 
+/* chfs_add_full_dnode_to_inode - adds a data node to an inode */
 int
 chfs_add_full_dnode_to_inode(struct chfs_mount *chmp,
     struct chfs_inode *ip,
@@ -709,16 +750,16 @@ chfs_add_full_dnode_to_inode(struct chfs_mount *chmp,
 	if (unlikely(!fd->size))
 		return 0;
 
+	/* Create a new fragment from the data node and add it to the fragtree. */
 	newfrag = new_fragment(fd, fd->ofs, fd->size);
 	if (unlikely(!newfrag))
 		return ENOMEM;
-
-	newfrag->node->frags = 1;
 
 	ret = chfs_add_frag_to_fragtree(chmp, &ip->fragtree, newfrag);
 	if (ret)
 		return ret;
 
+	/* Check previous fragment. */
 	if (newfrag->ofs & (PAGE_SIZE - 1)) {
 		struct chfs_node_frag *prev = frag_prev(&ip->fragtree, newfrag);
 
@@ -727,6 +768,7 @@ chfs_add_full_dnode_to_inode(struct chfs_mount *chmp,
 			CHFS_MARK_REF_NORMAL(prev->node->nref);
 	}
 
+	/* Check next fragment. */
 	if ((newfrag->ofs+newfrag->size) & (PAGE_SIZE - 1)) {
 		struct chfs_node_frag *next = frag_next(&ip->fragtree, newfrag);
 
@@ -741,12 +783,7 @@ chfs_add_full_dnode_to_inode(struct chfs_mount *chmp,
 }
 
 
-/*
- * -----------------------
- * general node operations
- * -----------------------
- */
-/* get tmp nodes of an inode */
+/* chfs_get_data_nodes - get temporary nodes of an inode */
 int
 chfs_get_data_nodes(struct chfs_mount *chmp,
     struct chfs_inode *ip,
@@ -769,6 +806,7 @@ chfs_get_data_nodes(struct chfs_mount *chmp,
 
 	nref = chfs_first_valid_data_ref(ip->chvc->dnode);
 
+	/* Update highest version. */
 	rii->highest_version = ip->chvc->highest_version;
 
 	while(nref && (struct chfs_vnode_cache *)nref != ip->chvc) {
@@ -777,29 +815,33 @@ chfs_get_data_nodes(struct chfs_mount *chmp,
 			goto out;
 		dnode = (struct chfs_flash_data_node*)buf;
 
-		//check header crc
+		/* Check header crc. */
 		crc = crc32(0, (uint8_t *)dnode, CHFS_NODE_HDR_SIZE - 4);
 		if (crc != le32toh(dnode->hdr_crc)) {
 			chfs_err("CRC check failed. calc: 0x%x orig: 0x%x\n", crc, le32toh(dnode->hdr_crc));
 			goto cont;
 		}
-		//check header magic bitmask
+
+		/* Check header magic bitmask. */
 		if (le16toh(dnode->magic) != CHFS_FS_MAGIC_BITMASK) {
 			chfs_err("Wrong magic bitmask.\n");
 			goto cont;
 		}
-		//check node crc
+
+		/* Check node crc. */
 		crc = crc32(0, (uint8_t *)dnode, sizeof(*dnode) - 4);
 		if (crc != le32toh(dnode->node_crc)) {
 			chfs_err("Node CRC check failed. calc: 0x%x orig: 0x%x\n", crc, le32toh(dnode->node_crc));
 			goto cont;
 		}
+
 		td = chfs_alloc_tmp_dnode();
 		if (!td) {
 			chfs_err("Can't allocate tmp dnode info.\n");
 			err = ENOMEM;
 			goto out;
 		}
+
 		/* We don't check data crc here, just add nodes to tmp frag tree, because
 		 * we don't want to check nodes which have been overlapped by a new node
 		 * with a higher version number.
@@ -815,12 +857,14 @@ chfs_get_data_nodes(struct chfs_mount *chmp,
 		td->data_crc = le32toh(dnode->data_crc);
 		td->node->nref = nref;
 		td->node->size = le32toh(dnode->data_length);
+		td->node->frags = 1;
 		td->overlapped = 0;
 
 		if (td->version > rii->highest_version) {
 			rii->highest_version = td->version;
 		}
 
+		/* Add node to the tree. */
 		err = chfs_add_tmp_dnode_to_tree(chmp, rii, td);
 		if (err)
 			goto out_full_dnode;
@@ -832,7 +876,6 @@ cont:
 	ip->chvc->highest_version = rii->highest_version;
 	return 0;
 
-/* Exit points */
 out_full_dnode:
 	chfs_free_full_dnode(td->node);
 out_tmp_dnode:
@@ -844,28 +887,31 @@ out:
 }
 
 
-/* Build final normal fragtree from tdi tree. */
+/* chfs_build_fragtree - builds fragtree from temporary tree */
 int
 chfs_build_fragtree(struct chfs_mount *chmp, struct chfs_inode *ip,
     struct chfs_readinode_info *rii)
 {
 	struct chfs_tmp_dnode_info *pen, *last, *this;
-	struct rb_tree ver_tree;    /* version tree */
+	struct rb_tree ver_tree;    /* version tree, used only temporary */
 	uint64_t high_ver = 0;
 	KASSERT(mutex_owned(&chmp->chm_lock_mountfields));
 
 	rb_tree_init(&ver_tree, &tmp_node_rbtree_ops);
 
+	/* Update highest version and latest node reference. */
 	if (rii->mdata_tn) {
 		high_ver = rii->mdata_tn->tmpnode->version;
 		rii->latest_ref = rii->mdata_tn->tmpnode->node->nref;
 	}
 
+	/* Iterate the temporary tree in reverse order. */
 	pen = (struct chfs_tmp_dnode_info *)RB_TREE_MAX(&rii->tdi_root);
 
 	while((last = pen)) {
 		pen = (struct chfs_tmp_dnode_info *)rb_tree_iterate(&rii->tdi_root, last, RB_DIR_LEFT);
 
+		/* We build here a version tree from overlapped nodes. */
 		rb_tree_remove_node(&rii->tdi_root, last);
 		rb_tree_insert_node(&ver_tree, last);
 
@@ -878,6 +924,7 @@ chfs_build_fragtree(struct chfs_mount *chmp, struct chfs_inode *ip,
 		
 		this = (struct chfs_tmp_dnode_info *)RB_TREE_MAX(&ver_tree);
 
+		/* Start to build the fragtree. */
 		while (this) {
 			struct chfs_tmp_dnode_info *vers_next;
 			int ret;
@@ -889,9 +936,11 @@ chfs_build_fragtree(struct chfs_mount *chmp, struct chfs_inode *ip,
 			while (tmp_td) {
 				struct chfs_tmp_dnode *next_td = tmp_td->next;
 				
+				/* Check temporary node. */
 				if (chfs_check_td_node(chmp, tmp_td)) {
 					if (next_td) {
 						chfs_remove_tmp_dnode_from_tdi(this, tmp_td);
+						chfs_kill_td(chmp, tmp_td);
 					} else {
 						break;
 					}
@@ -902,19 +951,18 @@ chfs_build_fragtree(struct chfs_mount *chmp, struct chfs_inode *ip,
 						rii->latest_ref = tmp_td->node->nref;
 					}
 
+					/* Add node to inode and its fragtree. */
 					ret = chfs_add_full_dnode_to_inode(chmp, ip, tmp_td->node);
 					if (ret) {
+						/* On error, clean the whole version tree. */
 						while (1) {
 							vers_next = (struct chfs_tmp_dnode_info *)rb_tree_iterate(&ver_tree, this, RB_DIR_LEFT);
 							while (tmp_td) {
 								next_td = tmp_td->next;
-								if (chfs_check_td_node(chmp, tmp_td) > 1) {
-									chfs_mark_node_obsolete(chmp,
-										tmp_td->node->nref);
-								}
+
 								chfs_free_full_dnode(tmp_td->node);
 								chfs_remove_tmp_dnode_from_tdi(this, tmp_td);
-								chfs_free_tmp_dnode(tmp_td);
+								chfs_kill_td(chmp, tmp_td);
 								tmp_td = next_td;
 							}
 							chfs_free_tmp_dnode_info(this);
@@ -922,15 +970,20 @@ chfs_build_fragtree(struct chfs_mount *chmp, struct chfs_inode *ip,
 							if (!this)
 								break;
 							rb_tree_remove_node(&ver_tree, vers_next);
+							chfs_kill_tdi(chmp, vers_next);
 						}
 						return ret;
 					}
 
+					/* Remove temporary node from temporary descriptor.
+					 * Shouldn't obsolete tmp_td here, because tmp_td->node
+					 * was added to the inode. */
 					chfs_remove_tmp_dnode_from_tdi(this, tmp_td);
 					chfs_free_tmp_dnode(tmp_td);
 				}
 				tmp_td = next_td;
 			}
+			/* Continue with the previous element of version tree. */
 			chfs_kill_tdi(chmp, this);
 			this = vers_next;
 		}
@@ -939,6 +992,7 @@ chfs_build_fragtree(struct chfs_mount *chmp, struct chfs_inode *ip,
 	return 0;
 }
 
+/* chfs_read_inode - checks the state of the inode then reads and builds it */
 int chfs_read_inode(struct chfs_mount *chmp, struct chfs_inode *ip)
 {
 	struct chfs_vnode_cache *vc = ip->chvc;
@@ -946,39 +1000,38 @@ int chfs_read_inode(struct chfs_mount *chmp, struct chfs_inode *ip)
 	KASSERT(mutex_owned(&chmp->chm_lock_mountfields));
 
 retry:
-	/* XXX locking */
-	//mutex_enter(&chmp->chm_lock_vnocache);
+	mutex_enter(&chmp->chm_lock_vnocache);
 	switch (vc->state) {
-	case VNO_STATE_UNCHECKED:
-	case VNO_STATE_CHECKEDABSENT:
-//		chfs_vnode_cache_set_state(chmp, vc, VNO_STATE_READING);
-		vc->state = VNO_STATE_READING;
-		break;
-	case VNO_STATE_CHECKING:
-	case VNO_STATE_GC:
-		//sleep_on_spinunlock(&chmp->chm_lock_vnocache);
-		//KASSERT(!mutex_owned(&chmp->chm_lock_vnocache));
-		goto retry;
-		break;
-	case VNO_STATE_PRESENT:
-	case VNO_STATE_READING:
-		chfs_err("Reading inode #%llu in state %d!\n",
-			(unsigned long long)vc->vno, vc->state);
-		chfs_err("wants to read a nonexistent ino %llu\n",
-			(unsigned long long)vc->vno);
-		return ENOENT;
-	default:
-		panic("BUG() Bad vno cache state.");
+		case VNO_STATE_UNCHECKED:
+			/* FALLTHROUGH */
+		case VNO_STATE_CHECKEDABSENT:
+			vc->state = VNO_STATE_READING;
+			break;
+		case VNO_STATE_CHECKING:
+			/* FALLTHROUGH */
+		case VNO_STATE_GC:
+			mutex_exit(&chmp->chm_lock_vnocache);
+			goto retry;
+			break;
+		case VNO_STATE_PRESENT:
+			/* FALLTHROUGH */
+		case VNO_STATE_READING:
+			chfs_err("Reading inode #%llu in state %d!\n",
+				(unsigned long long)vc->vno, vc->state);
+			chfs_err("wants to read a nonexistent ino %llu\n",
+				(unsigned long long)vc->vno);
+			return ENOENT;
+		default:
+			panic("BUG() Bad vno cache state.");
 	}
-	//mutex_exit(&chmp->chm_lock_vnocache);
+	mutex_exit(&chmp->chm_lock_vnocache);
 
 	return chfs_read_inode_internal(chmp, ip);
 }
 
 /*
- * Read inode frags.
- * Firstly get tmp nodes,
- * secondly build fragtree from those.
+ * chfs_read_inode_internal - reads and builds an inode
+ * Firstly get temporary nodes then build fragtree.
  */
 int
 chfs_read_inode_internal(struct chfs_mount *chmp, struct chfs_inode *ip)
@@ -997,7 +1050,7 @@ chfs_read_inode_internal(struct chfs_mount *chmp, struct chfs_inode *ip)
 
 	rb_tree_init(&rii.tdi_root, &tmp_node_rbtree_ops);
 
-	/* build up a temp node frag tree */
+	/* Build a temporary node tree. */
 	err = chfs_get_data_nodes(chmp, ip, &rii);
 	if (err) {
 		if (ip->chvc->state == VNO_STATE_READING)
@@ -1006,10 +1059,9 @@ chfs_read_inode_internal(struct chfs_mount *chmp, struct chfs_inode *ip)
 		return err;
 	}
 
+	/* Build fragtree from temp nodes. */
 	rb_tree_init(&ip->fragtree, &frag_rbtree_ops);
-	/*
-	 * build fragtree from temp nodes
-	 */
+
 	err = chfs_build_fragtree(chmp, ip, &rii);
 	if (err) {
 		if (ip->chvc->state == VNO_STATE_READING)
@@ -1026,9 +1078,7 @@ chfs_read_inode_internal(struct chfs_mount *chmp, struct chfs_inode *ip)
 	if (!buf)
 		return ENOMEM;
 
-	/*
-	 * set inode size from chvc->v
-	 */
+	/* Set inode size from its vnode information node. */
 	err = chfs_read_leb(chmp, ip->chvc->v->nref_lnr, buf, CHFS_GET_OFS(ip->chvc->v->nref_offset), len, &retlen);
 	if (err || retlen != len) {
 		kmem_free(buf, len);
@@ -1053,6 +1103,7 @@ chfs_read_inode_internal(struct chfs_mount *chmp, struct chfs_inode *ip)
 	return 0;
 }
 
+/* chfs_read_data - reads and checks data of a file */
 int
 chfs_read_data(struct chfs_mount* chmp, struct vnode *vp,
     struct buf *bp)
@@ -1069,10 +1120,12 @@ chfs_read_data(struct chfs_mount* chmp, struct vnode *vp,
 
 	memset(bp->b_data, 0, bp->b_bcount);
 
+	/* Calculate the size of the file from its fragtree. */
 	ofs = bp->b_blkno * PAGE_SIZE;
 	frag = (struct chfs_node_frag *)rb_tree_find_node_leq(&ip->fragtree, &ofs);
 
 	if (!frag || frag->ofs > ofs || frag->ofs + frag->size <= ofs) {
+		bp->b_resid = 0;
 		dbg("not found in frag tree\n");
 		return 0;
 	}
@@ -1083,11 +1136,11 @@ chfs_read_data(struct chfs_mount* chmp, struct vnode *vp,
 	}
 
 	nref = frag->node->nref;
-
 	size = sizeof(*dnode) + frag->size;
 
 	buf = kmem_alloc(size, KM_SLEEP);
 
+	/* Read node from flash. */
 	dbg("reading from lnr: %u, offset: %u, size: %zu\n", nref->nref_lnr, CHFS_GET_OFS(nref->nref_offset), size);
 	err = chfs_read_leb(chmp, nref->nref_lnr, buf, CHFS_GET_OFS(nref->nref_offset), size, &retlen);
 	if (err) {
@@ -1100,6 +1153,7 @@ chfs_read_data(struct chfs_mount* chmp, struct vnode *vp,
 		goto out;
 	}
 
+	/* Read data from flash. */
 	dnode = (struct chfs_flash_data_node *)buf;
 	crc = crc32(0, (uint8_t *)dnode, CHFS_NODE_HDR_SIZE - 4);
 	if (crc != le32toh(dnode->hdr_crc)) {
@@ -1107,19 +1161,23 @@ chfs_read_data(struct chfs_mount* chmp, struct vnode *vp,
 		err = EIO;
 		goto out;
 	}
-	//check header magic bitmask
+
+	/* Check header magic bitmask. */
 	if (le16toh(dnode->magic) != CHFS_FS_MAGIC_BITMASK) {
 		chfs_err("Wrong magic bitmask.\n");
 		err = EIO;
 		goto out;
 	}
-	//check node crc
+
+	/* Check crc of node. */
 	crc = crc32(0, (uint8_t *)dnode, sizeof(*dnode) - 4);
 	if (crc != le32toh(dnode->node_crc)) {
 		chfs_err("Node CRC check failed. calc: 0x%x orig: 0x%x\n", crc, le32toh(dnode->node_crc));
 		err = EIO;
 		goto out;
 	}
+
+	/* Check crc of data. */
 	crc = crc32(0, (uint8_t *)dnode->data, dnode->data_length);
 	if (crc != le32toh(dnode->data_crc)) {
 		chfs_err("Data CRC check failed. calc: 0x%x orig: 0x%x\n", crc, le32toh(dnode->data_crc));

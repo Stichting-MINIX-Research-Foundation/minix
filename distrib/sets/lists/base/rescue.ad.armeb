@@ -1,3 +1,0 @@
-# $NetBSD: rescue.ad.armeb,v 1.3 2004/03/03 16:41:17 thorpej Exp $
-# No armeb rescue files.  DO NOT DELETE THIS EMPTY FILE!  If you
-# do, then armeb will incorrectly use the generic arm rescue files.

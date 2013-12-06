@@ -33,10 +33,6 @@
 
 #include <sys/errno.h>
 
-#ifndef	ELAST
-#define	ELAST	256	/* XXX temporary hack... need revisiting! */
-#endif
-
 extern int errno;
 
 /* special stand error codes */

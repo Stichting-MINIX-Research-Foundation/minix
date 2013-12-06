@@ -1,4 +1,4 @@
-/*	$NetBSD: edit.c,v 1.20 2009/04/11 12:10:02 lukem Exp $	*/
+/*	$NetBSD: edit.c,v 1.21 2011/08/31 16:24:57 plunky Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)edit.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: edit.c,v 1.20 2009/04/11 12:10:02 lukem Exp $");
+__RCSID("$NetBSD: edit.c,v 1.21 2011/08/31 16:24:57 plunky Exp $");
 #endif
 #endif /* not lint */
 
@@ -151,13 +151,8 @@ verify(char *tempname, struct passwd *pw)
 	int len, fd;
 	static char buf[LINE_MAX];
 
-#ifdef __minix
-	if ((fd = open(tempname, O_RDONLY)) == -1 ||
-	    (fp = fdopen(fd, "r")) == NULL)
-#else
 	if ((fd = open(tempname, O_RDONLY|O_NOFOLLOW)) == -1 ||
 	    (fp = fdopen(fd, "r")) == NULL)
-#endif
 		(*Pw_error)(tempname, 1, 1);
 	if (fstat(fd, &sb))
 		(*Pw_error)(tempname, 1, 1);
@@ -223,5 +218,5 @@ bad:					(void)fclose(fp);
 		warnx("entries too long");
 		return (0);
 	}
-	return (pw_scan(buf, pw, (int *)NULL));
+	return (pw_scan(buf, pw, NULL));
 }

@@ -44,11 +44,11 @@ ulimit(int cmd, ...)
 {
 	va_list ap;
 	struct rlimit rlimit;
-#ifndef __minix
+#if !defined(__minix)
 	long int new_limit, result;
 #else
 	long int result;
-#endif
+#endif /* !defined(__minix) */
 
 	va_start(ap, cmd);
 
@@ -58,14 +58,14 @@ ulimit(int cmd, ...)
 		if (getrlimit(RLIMIT_FSIZE, &rlimit) == 0)
 			result = (long int)(rlimit.rlim_cur / 512);
 		break;
-#ifndef __minix
+#if !defined(__minix)
 	case UL_SETFSIZE:
 		new_limit = va_arg(ap, long int);
 		rlimit.rlim_cur = rlimit.rlim_max = (rlim_t)new_limit * 512;
 		if (setrlimit(RLIMIT_FSIZE, &rlimit) == 0)
 			result = new_limit;
 		break;
-#endif
+#endif /* !defined(__minix) */
 	default:
 		errno = EINVAL;
 	}

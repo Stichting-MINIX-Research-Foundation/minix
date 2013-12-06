@@ -55,7 +55,3 @@ time(time_t *t)
 		*t = (time_t)tt.tv_sec;
 	return (time_t)tt.tv_sec;
 }
-
-#if defined(__minix) && defined(__weak_alias)
-__weak_alias(time, __time50)
-#endif

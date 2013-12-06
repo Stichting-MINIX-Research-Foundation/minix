@@ -1,4 +1,4 @@
-/*	$NetBSD: ldd.c,v 1.15 2010/10/16 10:27:08 skrll Exp $	*/
+/*	$NetBSD: ldd.c,v 1.21 2013/03/20 15:18:42 macallan Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ldd.c,v 1.15 2010/10/16 10:27:08 skrll Exp $");
+__RCSID("$NetBSD: ldd.c,v 1.21 2013/03/20 15:18:42 macallan Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -89,6 +89,10 @@ __RCSID("$NetBSD: ldd.c,v 1.15 2010/10/16 10:27:08 skrll Exp $");
  */
 static char *error_message;	/* Message for dlopen(), or NULL */
 bool _rtld_trust;		/* False for setuid and setgid programs */
+/*
+ * This may be ELF64 or ELF32 but since they are used opaquely it doesn't
+ * really matter.
+ */
 Obj_Entry *_rtld_objlist;	/* Head of linked list of shared objects */
 Obj_Entry **_rtld_objtail = &_rtld_objlist;
 				/* Link field of last object in list */
@@ -161,9 +165,9 @@ main(int argc, char **argv)
 		}
 		if (elf_ldd(fd, *argv, fmt1, fmt2) == -1
 		    /* Alpha never had 32 bit support. */
-#if defined(_LP64) && !defined(__alpha__)
+#if (defined(_LP64) && !defined(__alpha__)) || defined(MIPS_N32)
 		    && elf32_ldd(fd, *argv, fmt1, fmt2) == -1
-#ifdef __mips__
+#if defined(__mips__) && 0 /* XXX this is still hosed for some reason */
 		    && elf32_ldd_compat(fd, *argv, fmt1, fmt2) == -1
 #endif
 #endif
@@ -200,106 +204,31 @@ dlerror()
 }
 
 void
-fmtprint(const char *libname, Obj_Entry *obj, const char *fmt1,
-    const char *fmt2)
+_rtld_die(void)
 {
-	const char *libpath = obj ? obj->path : "not found";
-	char libnamebuf[200];
-	char *libmajor = NULL;
-	const char *fmt;
-	char *cp;
-	int c;
+	const char *msg = dlerror();
 
-	if (strncmp(libname, "lib", 3) == 0 &&
-	    (cp = strstr(libname, ".so")) != NULL) {
-		int i = cp - (libname + 3);
-
-		if (i >= sizeof(libnamebuf))
-			i = sizeof(libnamebuf) - 1;
-		(void)memcpy(libnamebuf, libname + 3, i);
-		libnamebuf[i] = '\0';
-		if (cp[3] && isdigit((unsigned char)cp[4]))
-			libmajor = &cp[4];
-		libname = libnamebuf;
-	}
-
-	if (fmt1 == NULL)
-		fmt1 = libmajor != NULL ?
-		    "\t-l%o.%m => %p\n" :
-		    "\t-l%o => %p\n";
-	if (fmt2 == NULL)
-		fmt2 = "\t%o => %p\n";
-
-	fmt = libname == libnamebuf ? fmt1 : fmt2;
-	while ((c = *fmt++) != '\0') {
-		switch (c) {
-		default:
-			putchar(c);
-			continue;
-		case '\\':
-			switch (c = *fmt) {
-			case '\0':
-				continue;
-			case 'n':
-				putchar('\n');
-				break;
-			case 't':
-				putchar('\t');
-				break;
-			}
-			break;
-		case '%':
-			switch (c = *fmt) {
-			case '\0':
-				continue;
-			case '%':
-			default:
-				putchar(c);
-				break;
-			case 'A':
-				printf("%s", main_local);
-				break;
-			case 'a':
-				printf("%s", main_progname);
-				break;
-			case 'o':
-				printf("%s", libname);
-				break;
-			case 'm':
-				printf("%s", libmajor);
-				break;
-			case 'n':
-				/* XXX: not supported for elf */
-				break;
-			case 'p':
-				printf("%s", libpath);
-				break;
-			case 'x':
-				printf("%p", obj ? obj->mapbase : 0);
-				break;
-			}
-			break;
-		}
-		++fmt;
-	}
+	if (msg == NULL)
+		msg = "Fatal error";
+	xerrx(1, "%s", msg);
 }
 
 void
-print_needed(Obj_Entry *obj, const char *fmt1, const char *fmt2)
+_rtld_shared_enter(void)
 {
-	const Needed_Entry *needed;
+}
 
-	for (needed = obj->needed; needed != NULL; needed = needed->next) {
-		const char *libname = obj->strtab + needed->name;
+void
+_rtld_shared_exit(void)
+{
+}
 
-		if (needed->obj != NULL) {
-			if (!needed->obj->printed) {
-				fmtprint(libname, needed->obj, fmt1, fmt2);
-				needed->obj->printed = 1;
-				print_needed(needed->obj, fmt1, fmt2);
-			}
-		} else {
-			fmtprint(libname, needed->obj, fmt1, fmt2);
-		}
-	}
+void
+_rtld_exclusive_enter(sigset_t *mask)
+{
+}
+
+void
+_rtld_exclusive_exit(sigset_t *mask)
+{
 }

@@ -1,3 +1,24 @@
+Changes in version 0.7
+======================
+
+Experimental version released on October 18th, 2013.
+
+* Made failures from testers more resilent.  If a tester fails, the
+  corresponding test case will be marked as broken instead of causing
+  kyua to exit.
+
+* Added the '--results-filter' option to the 'report-html' command and
+  set its default value to skip passed results from HTML reports.  This
+  is to keep these reports more succint and to avoid generating tons of
+  detail files that will be, in general, useless.
+
+* Switched to use Lutok 0.3 to gain compatibility with Lua 5.2.
+
+* Issue 69: Cope with the lack of AM_PROG_AR in configure.ac, which
+  first appeared in Automake 1.11.2.  Fixes a problem in Ubuntu 10.04
+  LTS, which appears stuck in 1.11.1.
+
+
 Changes in version 0.6
 ======================
 
@@ -52,8 +73,8 @@ Experimental version released on February 22nd, 2013.
 * Removed the GDB build-time configuration variable.  This is now part
   of the kyua-testers package.
 
-* Rewrote the Kyuafile parsing code in C++, which results in a much
-  simpler implementation.  As a side-effect, this gets rid of the
+* Issue 31: Rewrote the Kyuafile parsing code in C++, which results in
+  a much simpler implementation.  As a side-effect, this gets rid of the
   external Lua files required by 'kyua', which in turn make the tool
   self-contained.
 

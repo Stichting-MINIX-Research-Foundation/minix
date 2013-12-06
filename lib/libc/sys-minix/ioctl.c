@@ -1,16 +1,13 @@
 #include <sys/cdefs.h>
 #include "namespace.h"
 #include <lib.h>
+#include <stdarg.h>
 
 #include <sys/ioctl.h>
 #include <minix/i2c.h>
 #include <string.h>
 #include <sys/ioccom.h>
 #include <stdarg.h>
-
-#ifdef __weak_alias
-__weak_alias(ioctl, _ioctl)
-#endif
 
 static void rewrite_i2c_netbsd_to_minix(minix_i2c_ioctl_exec_t *out,
     i2c_ioctl_exec_t *in);

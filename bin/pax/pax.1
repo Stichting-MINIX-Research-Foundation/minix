@@ -1,4 +1,4 @@
-.\"    $NetBSD: pax.1,v 1.61 2011/06/19 07:34:24 wiz Exp $
+.\"    $NetBSD: pax.1,v 1.63 2013/11/14 07:45:05 wiz Exp $
 .\"
 .\" Copyright (c) 1992 Keith Muller.
 .\" Copyright (c) 1992, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)pax.1	8.4 (Berkeley) 4/18/94
 .\"
-.Dd June 18, 2011
+.Dd November 13, 2013
 .Dt PAX 1
 .Os
 .Sh NAME
@@ -740,6 +740,8 @@ as the result of any specific archive format restrictions.
 The individual archive formats may impose additional restrictions on use.
 Typical archive format restrictions include (but are not limited to):
 file pathname length, file size, link pathname length and the type of the file.
+.It Fl Fl gnu
+Recognize GNU tar extensions.
 .It Fl Fl xz
 Use
 .Xr xz 1

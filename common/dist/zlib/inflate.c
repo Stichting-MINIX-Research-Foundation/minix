@@ -82,10 +82,6 @@
  * The history for versions after 1.2.0 are in ChangeLog in zlib distribution.
  */
 
-#if defined(__minix) && defined(_STANDALONE)
-#include <lib/libkern/libkern.h>
-#endif
-
 #include "zutil.h"
 #include "inftrees.h"
 #include "inflate.h"

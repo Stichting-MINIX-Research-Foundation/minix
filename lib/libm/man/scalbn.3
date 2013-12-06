@@ -1,0 +1,108 @@
+.\" $NetBSD: scalbn.3,v 1.2 2011/09/18 05:33:14 jruoho Exp $
+.\"
+.\" Copyright (c) 2011 Jukka Ruohonen <jruohonen@iki.fi>
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd September 18, 2011
+.Dt SCALBN 3
+.Os
+.Sh NAME
+.Nm scalbn ,
+.Nm scalbnf ,
+.Nm scalbnl
+.Nd exponent using FLT_RADIX
+.Sh LIBRARY
+.Lb libm
+.Sh SYNOPSIS
+.In math.h
+.Ft double
+.Fn scalbn "double x" "int n"
+.Ft float
+.Fn scalbnf "float x" "int n"
+.Ft long double
+.Fn scalbnl "long double x" "int n"
+.Sh DESCRIPTION
+The
+.Fn scalbn ,
+.Fn scalbnf ,
+and
+.Fn scalbnl
+functions compute
+.Fa x
+*
+.Fa r^n ,
+where
+.Fa r
+is the radix of the machine's floating point arithmetic, defined by the
+.Dv FLT_RADIX
+constant in
+.In float.h .
+The rationale is efficiency;
+.Fa r^n
+is not computed explicitly.
+.Sh RETURN VALUES
+As described above, upon successful completion, the described functions return
+the exponent computed using
+.Dv FLT_RADIX .
+Otherwise the following may occur:
+.Pp
+.Bl -enum -offset indent
+.It
+When the result would cause an overflow, a range error occurs and
+.Dv \*(Pm\*HHUGE_VAL ,
+.Dv \*(Pm\*HHUGE_VALF ,
+or
+.Dv \*(Pm\*HHUGE_VALL
+is returned according to the sign of
+.Fa x
+and the return type of the corresponding function.
+.It
+When the correct value would cause an underflow
+and it is not representable, a range error occurs and
+either 0.0 or an implementation-defined value is returned.
+When an underflow occurs but the correct value is representable,
+a range error occurs but the correct value is returned.
+.It
+If
+.Fa x
+is \*(Pm0 or \*(Pm\Inf,
+.Fa x
+is returned.
+Likewise, if
+.Fa n
+is zero,
+.Fa x
+is returned.
+If
+.Fa x
+is \*(Na, \*(Na is returned.
+.El
+.Sh SEE ALSO
+.Xr exp 3 ,
+.Xr frexp 3 ,
+.Xr ldexp 3 ,
+.Xr math 3
+.Sh STANDARDS
+The described functions conform to
+.St -isoC-99 .

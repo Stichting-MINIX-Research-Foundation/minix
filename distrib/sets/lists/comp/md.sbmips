@@ -1,4 +1,4 @@
-# $NetBSD: md.sbmips,v 1.14 2011/07/17 20:54:31 joerg Exp $
+# $NetBSD: md.sbmips,v 1.15 2012/11/25 21:55:50 alnsn Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sbmips				comp-c-include
 ./usr/include/sbmips/_G_config.h		comp-obsolete		obsolete
@@ -48,6 +48,7 @@
 ./usr/include/sbmips/rwlock.h			comp-c-include
 ./usr/include/sbmips/setjmp.h			comp-c-include
 ./usr/include/sbmips/signal.h			comp-c-include
+./usr/include/sbmips/sljitarch.h		comp-c-include
 ./usr/include/sbmips/stdarg.h			comp-obsolete		obsolete
 ./usr/include/sbmips/trap.h			comp-c-include
 ./usr/include/sbmips/types.h			comp-c-include

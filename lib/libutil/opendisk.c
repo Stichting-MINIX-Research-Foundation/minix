@@ -48,19 +48,19 @@ static int
 __opendisk(const char *path, int flags, char *buf, size_t buflen, int iscooked,
 	int (*ofn)(const char *, int, ...))
 {
-#ifndef __minix
+#if !defined(__minix)
 	int f, rawpart;
 #else
 	int f;
-#endif 
+#endif /* !defined(__minix) */
 
-#ifdef __minix
+#if defined(__minix)
 	/*
 	 * MINIX does not have the cooked/raw distinction.  Do not prepend 'r'
 	 * to the device name when generating a full path.
 	 */
 	iscooked = 1;
-#endif
+#endif /* defined(__minix) */
 
 	if (buf == NULL) {
 		errno = EFAULT;
@@ -73,22 +73,22 @@ __opendisk(const char *path, int flags, char *buf, size_t buflen, int iscooked,
 		return (-1);
 	}
 
-#ifndef __minix
+#if !defined(__minix)
 	rawpart = getrawpartition();
 	if (rawpart < 0)
 		return (-1);	/* sysctl(3) in getrawpartition sets errno */
-#endif
+#endif /* !defined(__minix) */
 
 	f = ofn(buf, flags, 0);
 	if (f != -1 || errno != ENOENT)
 		return (f);
 
-#ifndef __minix
+#if !defined(__minix)
 	snprintf(buf, buflen, "%s%c", path, 'a' + rawpart);
 	f = ofn(buf, flags, 0);
 	if (f != -1 || errno != ENOENT)
 		return (f);
-#endif
+#endif /* !defined(__minix) */
 
 	if (strchr(path, '/') != NULL)
 		return (-1);
@@ -98,11 +98,11 @@ __opendisk(const char *path, int flags, char *buf, size_t buflen, int iscooked,
 	if (f != -1 || errno != ENOENT)
 		return (f);
 
-#ifndef __minix
+#if !defined(__minix)
 	snprintf(buf, buflen, "%s%s%s%c", _PATH_DEV, iscooked ? "" : "r", path,
 	    'a' + rawpart);
 	f = ofn(buf, flags, 0);
-#endif
+#endif /* !defined(__minix) */
 	return (f);
 }
 

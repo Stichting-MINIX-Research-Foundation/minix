@@ -1,4 +1,4 @@
-/*	$NetBSD: fork.S,v 1.7 2003/08/07 16:42:14 agc Exp $	*/
+/*	$NetBSD: fork.S,v 1.8 2013/07/16 22:15:55 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
 #if 0
 	RCSID("from: @(#)fork.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: fork.S,v 1.7 2003/08/07 16:42:14 agc Exp $")
+	RCSID("$NetBSD: fork.S,v 1.8 2013/07/16 22:15:55 matt Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -47,3 +47,4 @@ _SYSCALL(__fork,fork)
 	subql	#1,%d1	/* from 1 to 0 in child, 0 to -1 in parent */
 	andl	%d1,%d0
 	rts		/* pid = fork() */
+END(__fork)

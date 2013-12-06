@@ -9,7 +9,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: s_copysign.S,v 1.6 2003/07/26 19:25:01 salo Exp $")
+RCSID("$NetBSD: s_copysign.S,v 1.7 2011/06/18 20:49:26 joerg Exp $")
 
 #ifdef __x86_64__
 .Lpos:
@@ -29,25 +29,10 @@ ENTRY(copysign)
 	movl	%eax,8(%esp)
 	fldl	4(%esp)
 #else
-#if 0
-	/*
-	 * XXXfvdl gas doesn't grok this yet.
-	 */
 	movq	.Lpos(%rip),%xmm2
 	movq	.Lneg(%rip),%xmm3
 	pand	%xmm2,%xmm1
 	pand	%xmm3,%xmm0
 	por	%xmm1,%xmm0
-#else
-	movsd	%xmm0,-8(%rsp)
-	movsd	%xmm1,-16(%rsp)
-	movl	-12(%rsp),%edx
-	andl	$0x80000000,%edx
-	movl	-4(%rsp),%eax
-	andl	$0x7fffffff,%eax
-	orl	%edx,%eax
-	movl	%eax,-4(%rsp)
-	movsd	-8(%rsp),%xmm0
-#endif
 #endif
 	ret

@@ -344,15 +344,20 @@ mparse_buf_r(struct mparse *curp, struct buf blk, int start)
 				continue;
 			}
 
-			/* Trailing backslash = a plain char. */
+			/* Expand registers inline */
+			if ('\\' == blk.buf[i] && 'n' == blk.buf[i + 1]) {
+				roff_expand_nr(curp->roff,
+				    blk.buf, &i, blk.sz, &ln.buf, &pos, &ln.sz);
+				continue;
+			}
 
+			/* Trailing backslash = a plain char. */
 			if ('\\' != blk.buf[i] || i + 1 == (int)blk.sz) {
 				if (pos >= (int)ln.sz)
 					resize_buf(&ln, 256);
 				ln.buf[pos++] = blk.buf[i++];
 				continue;
 			}
-
 			/*
 			 * Found escape and at least one other character.
 			 * When it's a newline character, skip it.

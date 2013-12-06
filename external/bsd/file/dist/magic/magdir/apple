@@ -1,6 +1,6 @@
 
 #------------------------------------------------------------------------------
-# $File: apple,v 1.25 2012/04/06 21:18:09 christos Exp $
+# $File: apple,v 1.27 2013/03/09 22:36:00 christos Exp $
 # apple:  file(1) magic for Apple file formats
 #
 0	search/1/t	FiLeStArTfIlEsTaRt	binscii (apple ][) text
@@ -106,8 +106,13 @@
 # This is incredibly sloppy, but will be true if the program was
 # written at its usual memory location of 2048 and its first line
 # number is less than 256.  Yuck.
+# update by Joerg Jenderek at Feb 2013
 
-0       belong&0xff00ff 0x80000 Applesoft BASIC program data
+# GRR: this test is still too general as it catches also Gujin BOOT144.SYS (0xfa080000)
+#0       belong&0xff00ff 0x80000 Applesoft BASIC program data
+0	belong&0x00ff00ff	0x00080000	
+# assuming that line number must be positive
+>2	leshort			>0		Applesoft BASIC program data, first line number %d
 #>2     leshort         x       \b, first line number %d
 
 # ORCA/EZ assembler:
@@ -260,14 +265,14 @@
 >>20	beshort x			\b, descriptors %d
 # Assume 	8 partitions each at a multiple of the sector size.
 # We could glean this from the partition descriptors, but they are empty!?!?
-# >>(2.S*1)	indirect		\b, contains[@0x%x]: 
-# >>(2.S*2)	indirect		\b, contains[@0x%x]: 
-# >>(2.S*3)	indirect		\b, contains[@0x%x]: 
-# >>(2.S*4)	indirect		\b, contains[@0x%x]: 
-# >>(2.S*5)	indirect		\b, contains[@0x%x]: 
-# >>(2.S*6)	indirect		\b, contains[@0x%x]: 
-# >>(2.S*7)	indirect		\b, contains[@0x%x]: 
-# >>(2.S*8)	indirect		\b, contains[@0x%x]: 
+>>(2.S*1)	indirect		\b, contains[@0x%x]: 
+>>(2.S*2)	indirect		\b, contains[@0x%x]: 
+>>(2.S*3)	indirect		\b, contains[@0x%x]: 
+>>(2.S*4)	indirect		\b, contains[@0x%x]: 
+>>(2.S*5)	indirect		\b, contains[@0x%x]: 
+>>(2.S*6)	indirect		\b, contains[@0x%x]: 
+>>(2.S*7)	indirect		\b, contains[@0x%x]: 
+>>(2.S*8)	indirect		\b, contains[@0x%x]: 
 
 # Yes, the 3rd and 4th bytes are reserved, but we use them to make the
 # magic stronger.
@@ -291,3 +296,7 @@
 >92	belong	& 512			\b, chain driver
 >92	belong	& 1024			\b, mount at startup
 >92	belong	& 2048			\b, is the startup partition
+
+#http://wiki.mozilla.org/DS_Store_File_Format`
+#http://en.wikipedia.org/wiki/.DS_Store
+0	string	\0\0\0\1Bud1\0		Apple Desktop Services Store

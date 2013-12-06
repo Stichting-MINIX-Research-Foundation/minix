@@ -1,0 +1,3 @@
+# $NetBSD: ad.mips,v 1.1 2013/04/30 23:41:24 matt Exp $
+./@MODULEDIR@/exec_elf32			base-kernel-modules	kmod
+./@MODULEDIR@/exec_elf32/exec_elf32.kmod	base-kernel-modules	kmod

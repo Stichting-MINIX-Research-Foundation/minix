@@ -52,7 +52,8 @@ namespace engine {
 /// A filter is one of: the name of a directory containing test cases, the name
 /// of a test program, or the name of a test program plus the name of a test
 /// case.
-struct test_filter {
+class test_filter {
+public:
     /// The name of the test program or subdirectory to match.
     utils::fs::path test_program;
 

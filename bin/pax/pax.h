@@ -37,9 +37,9 @@
 
 #if ! HAVE_NBTOOL_CONFIG_H
 #define HAVE_LUTIMES 1
-#ifndef __minix
+#if !defined(__minix)
 #define HAVE_STRUCT_STAT_ST_FLAGS 1
-#endif
+#endif /* !defined(__minix) */
 #endif
 
 /*
@@ -246,7 +246,6 @@ typedef struct oplist {
 
 #ifdef HOSTPROG
 # include "pack_dev.h"			/* explicitly use NetBSD's macros */
-
 # define MAJOR(x)	major_netbsd(x)
 # define MINOR(x)	minor_netbsd(x)
 # define TODEV(x, y)	makedev_netbsd((x), (y))

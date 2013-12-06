@@ -1,4 +1,4 @@
-/*	$NetBSD: ctype_.c,v 1.19 2010/12/14 02:28:57 joerg Exp $	*/
+/*	$NetBSD: ctype_.c,v 1.20 2013/04/13 10:21:20 joerg Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -39,7 +39,7 @@
 #if 0
 /*static char *sccsid = "from: @(#)ctype_.c	5.6 (Berkeley) 6/1/90";*/
 #else
-__RCSID("$NetBSD: ctype_.c,v 1.19 2010/12/14 02:28:57 joerg Exp $");
+__RCSID("$NetBSD: ctype_.c,v 1.20 2013/04/13 10:21:20 joerg Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -51,16 +51,17 @@ __RCSID("$NetBSD: ctype_.c,v 1.19 2010/12/14 02:28:57 joerg Exp $");
 #error "EOF != -1"
 #endif
 
-#define	_U	_CTYPE_U
-#define	_L	_CTYPE_L
-#define	_N	_CTYPE_N
-#define	_S	_CTYPE_S
-#define	_P	_CTYPE_P
-#define	_C	_CTYPE_C
-#define	_X	_CTYPE_X
-#define	_B	_CTYPE_B
+#ifdef __BUILD_LEGACY
+#define	_C	_COMPAT_C
+#define	_S	_COMPAT_S
+#define	_U	_COMPAT_U
+#define	_X	_COMPAT_X
+#define	_L	_COMPAT_L
+#define	_P	_COMPAT_P
+#define	_B	_COMPAT_B
+#define	_N	_COMPAT_N
 
-const unsigned char _C_ctype_[1 + _CTYPE_NUM_CHARS] = {
+const unsigned char _C_compat_bsdctype[1 + _CTYPE_NUM_CHARS] = {
 	0,
 	_C,	_C,	_C,	_C,	_C,	_C,	_C,	_C,
 	_C,	_C|_S,	_C|_S,	_C|_S,	_C|_S,	_C|_S,	_C,	_C,
@@ -80,4 +81,80 @@ const unsigned char _C_ctype_[1 + _CTYPE_NUM_CHARS] = {
 	_L,	_L,	_L,	_P,	_P,	_P,	_P,	_C
 };
 
-const unsigned char *_ctype_ = &_C_ctype_[0];
+#undef _C
+#undef _S
+#undef _U
+#undef _X
+#undef _L
+#undef _P
+#undef _B
+#undef _N
+
+#ifdef __weak_alias
+__weak_alias(_C_ctype_, _C_compat_bsdctype)
+#endif
+
+const unsigned char *_ctype_ = &_C_compat_bsdctype[0];
+#endif /* __BUILD_LEGACY */
+
+#define	_A	_CTYPE_A
+#define	_BL	_CTYPE_BL
+#define	_C	_CTYPE_C
+#define	_D	_CTYPE_D
+#define	_G	_CTYPE_G
+#define	_L	_CTYPE_L
+#define	_P	_CTYPE_P
+#define	_R	_CTYPE_R
+#define	_S	_CTYPE_S
+#define	_U	_CTYPE_U
+#define	_X	_CTYPE_X
+
+const unsigned short _C_ctype_tab_[1 + _CTYPE_NUM_CHARS] = {
+	0,
+	_C,		_C,		_C,		_C,
+	_C,		_C,		_C,		_C,
+	_C,		_BL|_C|_S,	_C|_S,		_C|_S,
+	_C|_S,		_C|_S,		_C,		_C,
+	_C,		_C,		_C,		_C,
+	_C,		_C,		_C,		_C,
+	_C,		_C,		_C,		_C,
+	_C,		_C,		_C,		_C,
+	_BL|_R|_S,	_G|_R|_P,	_G|_R|_P,	_G|_R|_P,
+	_G|_R|_P,	_G|_R|_P,	_G|_R|_P,	_G|_R|_P,
+	_G|_R|_P,	_G|_R|_P,	_G|_R|_P,	_G|_R|_P,
+	_G|_R|_P,	_G|_R|_P,	_G|_R|_P,	_G|_R|_P,
+	_D|_G|_R|_X,	_D|_G|_R|_X,	_D|_G|_R|_X,	_D|_G|_R|_X,
+	_D|_G|_R|_X,	_D|_G|_R|_X,	_D|_G|_R|_X,	_D|_G|_R|_X,
+	_D|_G|_R|_X,	_D|_G|_R|_X,	_G|_R|_P,	_G|_R|_P,
+	_G|_R|_P,	_G|_R|_P,	_G|_R|_P,	_G|_R|_P,
+	_G|_R|_P,	_A|_G|_R|_U|_X,	_A|_G|_R|_U|_X,	_A|_G|_R|_U|_X,
+	_A|_G|_R|_U|_X,	_A|_G|_R|_U|_X,	_A|_G|_R|_U|_X,	_A|_G|_R|_U,
+	_A|_G|_R|_U,	_A|_G|_R|_U,	_A|_G|_R|_U,	_A|_G|_R|_U,
+	_A|_G|_R|_U,	_A|_G|_R|_U,	_A|_G|_R|_U,	_A|_G|_R|_U,
+	_A|_G|_R|_U,	_A|_G|_R|_U,	_A|_G|_R|_U,	_A|_G|_R|_U,
+	_A|_G|_R|_U,	_A|_G|_R|_U,	_A|_G|_R|_U,	_A|_G|_R|_U,
+	_A|_G|_R|_U,	_A|_G|_R|_U,	_A|_G|_R|_U,	_G|_R|_P,
+	_G|_R|_P,	_G|_R|_P,	_G|_R|_P,	_G|_R|_P,
+	_G|_R|_P,	_A|_G|_L|_R|_X,	_A|_G|_L|_R|_X,	_A|_G|_L|_R|_X,
+	_A|_G|_L|_R|_X,	_A|_G|_L|_R|_X,	_A|_G|_L|_R|_X,	_A|_G|_L|_R,
+	_A|_G|_L|_R,	_A|_G|_L|_R,	_A|_G|_L|_R,	_A|_G|_L|_R,
+	_A|_G|_L|_R,	_A|_G|_L|_R,	_A|_G|_L|_R,	_A|_G|_L|_R,
+	_A|_G|_L|_R,	_A|_G|_L|_R,	_A|_G|_L|_R,	_A|_G|_L|_R,
+	_A|_G|_L|_R,	_A|_G|_L|_R,	_A|_G|_L|_R,	_A|_G|_L|_R,
+	_A|_G|_L|_R,	_A|_G|_L|_R,	_A|_G|_L|_R,	_G|_R|_P,
+	_G|_R|_P,	_G|_R|_P,	_G|_R|_P,	_C,
+};
+
+#undef _A
+#undef _BL
+#undef _C
+#undef _D
+#undef _G
+#undef _L
+#undef _P
+#undef _R
+#undef _S
+#undef _U
+#undef _X
+
+const unsigned short *_ctype_tab_ = &_C_ctype_tab_[0];

@@ -1,4 +1,3 @@
-
 ./boot/minix/.temp/mod07_tty		minix-sys
 ./boot/minix/.temp/mod08_mfs		minix-sys
 ./boot/minix/.temp/mod09_vm		minix-sys
@@ -99,12 +98,14 @@
 ./usr/include/i386/ports.h		minix-sys
 ./usr/include/i386/proc.h		minix-sys
 ./usr/include/i386/profile.h		minix-sys
+./usr/include/i386/ptrace.h		minix-sys
 ./usr/include/i386/rwlock.h		minix-sys
 ./usr/include/i386/segments.h		minix-sys
 ./usr/include/i386/setjmp.h		minix-sys
 ./usr/include/i386/signal.h		minix-sys
 ./usr/include/i386/stackframe.h		minix-sys
 ./usr/include/i386/sysarch.h		minix-sys
+./usr/include/i386/trap.h		minix-sys
 ./usr/include/i386/tss.h		minix-sys
 ./usr/include/i386/types.h		minix-sys
 ./usr/include/i386/vm.h			minix-sys
@@ -142,8 +143,8 @@
 ./usr/lib/libhgfs_pic.a			minix-sys
 ./usr/lib/libm387.a			minix-sys
 ./usr/lib/libm387_pic.a			minix-sys
-./usr/lib/libm387.so.0.0		minix-sys
 ./usr/lib/libm387.so.0			minix-sys
+./usr/lib/libm387.so.0.1		minix-sys
 ./usr/lib/libm387.so			minix-sys
 ./usr/lib/libvassert.a			minix-sys
 ./usr/lib/libvboxfs.a			minix-sys
@@ -154,6 +155,7 @@
 ./usr/mdec/boot_monitor			minix-sys
 ./usr/mdec/bootxx_cd9660		minix-sys
 ./usr/mdec/bootxx_ext2fs		minix-sys
+./usr/mdec/bootxx_ffsv1			minix-sys
 ./usr/mdec/bootxx_minixfs3		minix-sys
 ./usr/mdec/gptmbr.bin			minix-sys
 ./usr/mdec/mbr				minix-sys

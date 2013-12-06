@@ -1,21 +1,6 @@
-# $NetBSD: md.netwinder,v 1.7 2010/03/14 23:19:18 mrg Exp $
+# $NetBSD: md.netwinder,v 1.8 2013/01/16 16:01:08 christos Exp $
 ./usr/X11R6/include/xf86Optrec.h			-unknown-	x11
 ./usr/X11R6/include/xf86Parser.h			-unknown-	x11
 ./usr/X11R6/man/cat4/fpit.0				-unknown-	.cat,x11
 ./usr/X11R6/man/html4/fpit.html				-unknown-	html,x11
 ./usr/X11R6/man/man4/fpit.4				-unknown-	.man,x11
-./usr/libdata/debug/usr/X11R6/bin/XFree86.debug		-unknown-	debug,x11
-./usr/libdata/debug/usr/X11R6/bin/Xvfb.debug		-unknown-	debug,x11
-./usr/libdata/debug/usr/X11R6/bin/gtf.debug		-unknown-	debug,x11
-./usr/libdata/debug/usr/X11R6/bin/ioport.debug		-unknown-	debug,x11
-./usr/libdata/debug/usr/X11R6/bin/kbd_mode.debug	-unknown-	debug,x11
-./usr/libdata/debug/usr/X11R6/bin/mmapr.debug		-unknown-	debug,x11
-./usr/libdata/debug/usr/X11R6/bin/mmapw.debug		-unknown-	debug,x11
-./usr/libdata/debug/usr/X11R6/bin/pcitweak.debug	-unknown-	debug,x11
-./usr/libdata/debug/usr/X11R6/bin/scanpci.debug		-unknown-	debug,x11
-./usr/libdata/debug/usr/X11R6/bin/xf86cfg.debug		-unknown-	debug,x11
-./usr/libdata/debug/usr/X11R6/bin/xf86config.debug	-unknown-	debug,x11
-./usr/libdata/debug/usr/X11R7/bin/Xorg.debug		-unknown-	debug,xorg
-./usr/libdata/debug/usr/X11R7/bin/cvt.debug		-unknown-	debug,xorg
-./usr/libdata/debug/usr/X11R7/bin/gtf.debug		-unknown-	debug,xorg
-./usr/libdata/debug/usr/X11R7/bin/xorgconfig.debug	-unknown-	obsolete

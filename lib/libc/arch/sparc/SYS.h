@@ -33,7 +33,7 @@
  *	@(#)SYS.h	8.1 (Berkeley) 6/4/93
  *
  *	from: Header: SYS.h,v 1.2 92/07/03 18:57:00 torek Exp
- *	$NetBSD: SYS.h,v 1.18 2011/03/28 11:19:12 martin Exp $
+ *	$NetBSD: SYS.h,v 1.19 2013/09/12 15:36:16 joerg Exp $
  */
 
 #include <machine/asm.h>
@@ -57,7 +57,7 @@
 /*
  * ERROR branches to cerror.
  */
-#ifdef PIC
+#ifdef __PIC__
 #define CALL(name)				\
 	PIC_PROLOGUE(%g1, %g5);			\
 	set	name, %g5;			\

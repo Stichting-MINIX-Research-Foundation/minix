@@ -43,6 +43,14 @@ UT_OK=good
 UT_OKDIR=unit-tests
 UT_TEST=export-all
 UT_ZOO=hoopie
+make:
+UT_TEST=export-env
+UT_ENV=not-exported
+UT_EXP=not-exported
+env:
+UT_TEST=export-env
+UT_ENV=exported
+UT_EXP=exported
 At first, I am
 happy
 and now: sad
@@ -310,6 +318,9 @@ LIST:tw:C/ /,/g="one two three four five six"
 LIST:tw:C/ /,/1g="one two three four five six"
 LIST:tw:tW:C/ /,/="one,two three four five six"
 LIST:tW:tw:C/ /,/="one two three four five six"
+Making the.c
+Making the.h
+Making the.o from the.h the.c
 .TARGET="phony" .PREFIX="phony" .IMPSRC=""
 .TARGET="all" .PREFIX="all" .IMPSRC=""
 .TARGET="ok" .PREFIX="ok" .IMPSRC=""
@@ -338,6 +349,9 @@ Now we expect an error...
 *** Error code 1 (continuing)
 `all' not remade because of errors.
 V.i386 ?= OK
+TEST1=hello
+TEST2=bye
+TEST3=later
 FOOBAR =
 FOOBAR = foobar fubar
 fun

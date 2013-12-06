@@ -5,10 +5,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#ifdef __weak_alias
-__weak_alias(unlink, _unlink)
-#endif
-
 int unlink(name)
 const char *name;
 {

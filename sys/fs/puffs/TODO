@@ -1,0 +1,10 @@
+	$NetBSD: TODO,v 1.1 2009/05/18 15:47:28 pooka Exp $
+
+  General:
+* reference counting fix (reclaim)
+
+  puffs_msgif:
+* do use of struct vattr (except maybe when negotiated to be safe)
+* do not use dev_t
+* get rid of extra types such as voff_t
+* do something sane with componentname

@@ -741,7 +741,8 @@ hist_finish()
 {
   static int once;
   int fd;
-#if !defined(O_EXLOCK) && defined(LOCK_EX)
+#if defined(__minix)
+  /* LSC: FIXME: Minix doesn't implement O_EXLOCK yet. */
   int rc;
 #endif
   FILE *fh;
@@ -760,13 +761,8 @@ hist_finish()
   else
     hp = histlist;
 
-  fd = open(hname, O_WRONLY | O_CREAT | O_TRUNC
-#ifdef O_EXLOCK
-					| O_EXLOCK
-#endif
-					, 0777);
-
-#if !defined(O_EXLOCK) && defined(LOCK_EX)
+  fd = open(hname, O_WRONLY | O_CREAT | O_TRUNC | O_EXLOCK, 0777);
+#if defined(__minix)
   do {
     rc = flock(fd, LOCK_EX);
     if (rc == -1 && errno != EINTR)
@@ -779,7 +775,7 @@ hist_finish()
   if (fd >= 0 && (fh = fdopen(fd, "w"))) {
     for (i = 0; hp + i <= histptr && hp[i]; i++)
       fprintf(fh, "%s%c", hp[i], '\0');
-#if !defined(O_EXLOCK) && defined(LOCK_EX)
+#if defined(__minix)
     flock(fd, LOCK_UN);
 #endif
     fclose(fh);

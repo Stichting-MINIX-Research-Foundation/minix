@@ -46,7 +46,7 @@ extern	void	freetr(Node *);
 extern	int	hexstr(const uschar **);
 extern	int	quoted(const uschar **);
 extern	char	*cclenter(const char *);
-extern	void	overflo(const char *) __dead;
+extern	void	overflo(const char *) __attribute__((__noreturn__));
 extern	void	cfoll(fa *, Node *);
 extern	int	first(Node *);
 extern	void	follow(Node *);
@@ -123,7 +123,7 @@ extern	void	makefields(int, int);
 extern	void	growfldtab(int n);
 extern	int	getrec(uschar **, int *, int);
 extern	void	nextfile(void);
-extern	int	readrec(uschar **buf, int *bufsize, FILE *inf, int newflag);
+extern	int	readrec(uschar **buf, int *, FILE *, int);
 extern	char	*getargv(int);
 extern	void	setclvar(char *);
 extern	void	fldbld(void);
@@ -139,7 +139,7 @@ extern	void	bcheck2(int, int, int);
 extern	void	SYNTAX(const char *, ...)
     __attribute__((__format__(__printf__, 1, 2)));
 extern	void	FATAL(const char *, ...) __dead
-    __attribute__((__format__(__printf__, 1, 2)));
+    __attribute__((__format__(__printf__, 1, 2), __noreturn__));
 extern	void	WARNING(const char *, ...)
     __attribute__((__format__(__printf__, 1, 2)));
 extern	void	error(void);
@@ -149,7 +149,7 @@ extern	double	errcheck(double, const char *);
 extern	int	isclvar(const char *);
 extern	int	is_number(const char *);
 
-extern	int	adjbuf(uschar **pb, int *sz, int min, int q, uschar **pbp, const char *what);
+extern	int	adjbuf(uschar **, int *, int, int, uschar **, const char *);
 extern	void	run(Node *);
 extern	Cell	*execute(Node *);
 extern	Cell	*program(Node **, int);

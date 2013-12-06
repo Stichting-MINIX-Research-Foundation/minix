@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs.3,v 1.42.4.2 2009/10/16 12:07:23 sborrill Exp $
+.\"	$NetBSD: puffs.3,v 1.58 2013/07/20 21:39:57 wiz Exp $
 .\"
 .\" Copyright (c) 2006, 2007, 2008 Antti Kantee.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd September 6, 2008
+.Dd August 16, 2012
 .Dt PUFFS 3
 .Os
 .Sh NAME
@@ -82,12 +82,14 @@
 .Ft int
 .Fn puffs_mainloop "struct puffs_usermount *pu"
 .Ft int
+.Fn puffs_unmountonsignal "int sig" "bool ignoresig"
+.Ft int
 .Fo puffs_dispatch_create
 .Fa "struct puffs_usermount *pu" "struct puffs_framebuf *pb"
 .Fa "struct puffs_cc **pccp"
 .Fc
 .Ft int
-.Fn puffs_dispatch_exec .Fa "struct puffs_cc *pcc" "struct puffs_framebuf **pbp"
+.Fn puffs_dispatch_exec "struct puffs_cc *pcc" "struct puffs_framebuf **pbp"
 .Sh DESCRIPTION
 .Nm
 provides a framework for creating file systems as userspace servers.
@@ -233,6 +235,34 @@ to avoid doing a full comparison for every path equal in length to
 the one searched for.
 Especially if the file system uses the abovementioned function, it
 is a good idea to define this flag.
+.It Dv PUFFS_FLAG_PNCOOKIE
+Tell puffs that cookies map to
+.Vt struct pnode .
+This is automagically set if
+.Fn puffs_pn_new
+is called.
+.It Dv PUFFS_KFLAG_CACHE_FS_TTL
+Enforce name and attribute caches based on file system-supplied TTL.
+In lookup, create, mknod, mkdir, and symlink, the file system must
+update the node attributes, their TTL, and the node name TTL through
+.Fn puffs_newinfo_setva ,
+.Fn puffs_newinfo_setvattl ,
+and
+.Fn puffs_newinfo_setcnttl .
+.Pp
+Additionally,
+.Fn puffs_node_getattr_ttl
+and
+.Fn puffs_node_setattr_ttl
+will be called instead of
+.Fn puffs_node_getattr
+and
+.Fn puffs_node_setattr .
+.It Dv PUFFS_KFLAG_CACHE_DOTDOT
+Never send lookups for
+.Dq ..
+to the filesystem.
+Parent vnodes are all kept active until their children are reclaimed.
 .It Dv PUFFS_FLAG_OPDUMP
 This option makes the framework dump a textual representation of
 each operation before executing it.
@@ -426,6 +456,9 @@ This call synchronizes with
 .Fn puffs_mount
 and the foreground process does not exit before the file system mount
 call has returned from the kernel.
+Since this routine internally calls fork, it has to be called
+.Em before
+.Fn puffs_mount .
 .It Fn puffs_mainloop pu flags
 Handle all requests automatically until the file system is unmounted.
 It returns 0 if the file system was successfully unmounted or \-1 if it
@@ -435,6 +468,22 @@ In case
 .Xr puffs_framebuf 3
 has been initialized, I/O from the relevant descriptors is processed
 automatically by the eventloop.
+.It Fn puffs_unmountonsignal signum ignoresig
+Cause all file servers within the process to initiate unmount upon
+receipt of signal
+.Ar signum .
+This works only for servers which call
+.Fn puffs_mainloop
+and must be called before any server within the process enters the mainloop.
+The process signal handler is still called before starting the unmount
+procedure.
+The parameter
+.Ar ignoresig
+is provided as a convenience and tells if to install a signal handler
+to ignore
+.Ar sig
+so that the process will not e.g. terminate based on the default action
+before the file system unmount can be initiated.
 .It Fn puffs_dispatch_create pu pb pccp
 .It Fn puffs_dispatch_exec pcc pbp
 In case the use of
@@ -500,7 +549,6 @@ to provide an alternative cookie-to-node mapping function.
 .Xr puffs_node 3 ,
 .Xr puffs_ops 3 ,
 .Xr puffs_path 3 ,
-.Xr puffs_suspend 3 ,
 .Xr refuse 3 ,
 .Xr puffs 4
 .Rs
@@ -539,4 +587,4 @@ first appeared in
 A stable version appeared in
 .Nx 5.0 .
 .Sh AUTHORS
-.An Antti Kantee Aq pooka@iki.fi
+.An Antti Kantee Aq Mt pooka@iki.fi

@@ -1,4 +1,4 @@
-/*	$NetBSD: vsscanf.c,v 1.19 2012/03/27 15:05:42 christos Exp $	*/
+/*	$NetBSD: vsscanf.c,v 1.21 2013/05/17 12:55:57 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,16 +37,22 @@
 #if 0
 static char sccsid[] = "@(#)vsscanf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: vsscanf.c,v 1.19 2012/03/27 15:05:42 christos Exp $");
+__RCSID("$NetBSD: vsscanf.c,v 1.21 2013/05/17 12:55:57 joerg Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
+
 #include <assert.h>
 #include <errno.h>
+#include <locale.h>
 #include <stdio.h>
 #include <string.h>
 #include "reentrant.h"
+#include "setlocale_local.h"
 #include "local.h"
+
+__weak_alias(vsscanf_l, _vsscanf_l)
 
 /* ARGSUSED */
 static ssize_t
@@ -56,7 +62,7 @@ eofread(void *cookie, void *buf, size_t len)
 }
 
 int
-vsscanf(const char *str, const char *fmt, va_list ap)
+vsscanf_l(const char *str, locale_t loc, const char *fmt, va_list ap)
 {
 	FILE f;
 	struct __sfileext fext;
@@ -73,5 +79,11 @@ vsscanf(const char *str, const char *fmt, va_list ap)
 	f._bf._size = f._r = (int)len;
 	f._read = eofread;
 	_UB(&f)._base = NULL;
-	return __svfscanf_unlocked(&f, fmt, ap);
+	return __svfscanf_unlocked_l(&f, loc, fmt, ap);
+}
+
+int
+vsscanf(const char *str, const char *fmt, va_list ap)
+{
+	return vsscanf_l(str, _current_locale(), fmt, ap);
 }

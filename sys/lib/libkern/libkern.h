@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.104 2011/11/28 08:05:06 tls Exp $	*/
+/*	$NetBSD: libkern.h,v 1.108 2013/08/28 16:20:38 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -190,6 +190,8 @@ tolower(int ch)
 #endif
 
 #define	CTASSERT(x)		__CTASSERT(x)
+#define	CTASSERT_SIGNED(x)	__CTASSERT(((typeof(x))-1) < 0)
+#define	CTASSERT_UNSIGNED(x)	__CTASSERT(((typeof(x))-1) >= 0)
 
 #ifndef DIAGNOSTIC
 #define _DIAGASSERT(a)	(void)0
@@ -343,4 +345,7 @@ unsigned int	popcountl(unsigned long) __constfunc;
 unsigned int	popcountll(unsigned long long) __constfunc;
 unsigned int	popcount32(uint32_t) __constfunc;
 unsigned int	popcount64(uint64_t) __constfunc;
+
+void	*explicit_memset(void *, int, size_t);
+int	consttime_memequal(const void *, const void *, size_t);
 #endif /* !_LIB_LIBKERN_LIBKERN_H_ */

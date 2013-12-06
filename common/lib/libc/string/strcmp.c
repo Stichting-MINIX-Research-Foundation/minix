@@ -1,4 +1,4 @@
-/*	$NetBSD: strcmp.c,v 1.2 2007/06/04 18:19:27 christos Exp $	*/
+/*	$NetBSD: strcmp.c,v 1.3 2013/07/01 20:51:59 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)strcmp.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strcmp.c,v 1.2 2007/06/04 18:19:27 christos Exp $");
+__RCSID("$NetBSD: strcmp.c,v 1.3 2013/07/01 20:51:59 joerg Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -47,6 +47,8 @@ __RCSID("$NetBSD: strcmp.c,v 1.2 2007/06/04 18:19:27 christos Exp $");
 #else
 #include <lib/libkern/libkern.h>
 #endif
+
+#undef strcmp
 
 /*
  * Compare strings.

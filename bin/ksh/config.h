@@ -1,3 +1,5 @@
+/*	$NetBSD: config.h,v 1.8 2004/08/19 23:00:22 christos Exp $	*/
+
 /* config.h.  Generated automatically by configure.  */
 /* config.h.in.  Generated automatically from configure.in by autoheader.  */
 /*
@@ -8,7 +10,6 @@
 
 #ifndef CONFIG_H
 #define CONFIG_H
-
 
 /* Define if on AIX 3.
    System headers sometimes define this.
@@ -23,12 +24,11 @@
 /* Define to empty if the keyword does not work.  */
 /* #undef const */
 
-
 /* Define to `int' if <sys/types.h> doesn't define.  */
 /* #undef gid_t */
 
 /* Define if you have a working `mmap' system call.  */
-/* #undef HAVE_MMAP */
+#define HAVE_MMAP 1
 
 /* Define if your struct stat has st_rdev.  */
 #define HAVE_ST_RDEV 1
@@ -53,10 +53,10 @@
 
 /* Define if the system does not provide POSIX.1 features except
    with this defined.  */
-#define _POSIX_1_SOURCE 2
+/* #undef _POSIX_1_SOURCE */
 
 /* Define if you need to in order for stat and other things to work.  */
-#define _POSIX_SOURCE 1
+/* #undef _POSIX_SOURCE */
 
 /* Define as the return type of signal handlers (int or void).  */
 #define RETSIGTYPE void
@@ -76,7 +76,7 @@
 /* Define if the closedir function returns void instead of int.  */
 /* #undef VOID_CLOSEDIR */
 
-/* Define if your kernal doesn't handle scripts starting with #! */
+/* Define if your kernel doesn't handle scripts starting with #! */
 /* #undef SHARPBANG */
 
 /* Define if dup2() preserves the close-on-exec flag (ultrix does this) */
@@ -146,7 +146,7 @@
 #define SYS_ERRLIST_DECLARED 1
 
 /* Define if sys_siglist[] is in the C library */
-/* #undef HAVE_SYS_SIGLIST */
+#define HAVE_SYS_SIGLIST 1
 
 /* Define if you have a sane <termios.h> header file */
 #define HAVE_TERMIOS_H 1
@@ -158,7 +158,7 @@
 #define HAVE_MEMMOVE 1
 
 /* Define if you have a bcopy() function in your C library */
-/* #undef HAVE_BCOPY */
+#define HAVE_BCOPY
 
 /* Define if you have a lstat() function in your C library */
 #define HAVE_LSTAT 1
@@ -172,6 +172,9 @@
 /* Define if opendir() will open non-directory files */
 /* #undef OPENDIR_DOES_NONDIR */
 
+/* Define if you have a dup2() function in your C library */
+#define	HAVE_DUP2 1
+
 /* Define if the pgrp of setpgrp() can't be the pid of a zombie process */
 /* #undef NEED_PGRP_SYNC */
 
@@ -184,50 +187,54 @@
 /* Define if you arg running OS2 with the EMX library */
 /* #undef OS2 */
 
-/* Define if you have a POSIX.1 compatiable <sys/wait.h> */
+/* Define if you have a POSIX.1 compatible <sys/wait.h> */
 #define POSIX_SYS_WAIT 1
 
 /* Define if your OS maps references to /dev/fd/n to file descriptor n */
 /* #undef HAVE_DEV_FD */
 
+/* Default PATH */
+#ifdef RESCUEDIR
+#define DEFAULT_PATH RESCUEDIR ":/bin:/usr/bin:/sbin:/usr/sbin"
+#else
+#define DEFAULT_PATH "/bin:/usr/bin:/sbin:/usr/sbin"
+#endif
+
 /* Define if your C library's getwd/getcwd function dumps core in unreadable
  * directories.  */
 /* #undef HPUX_GETWD_BUG */
 
-/* Default PATH (see comments in configure.in for more details) */
-#define DEFAULT_PATH "/bin:/usr/bin:/usr/ucb"
-
-/* Include ksh features? (see comments in configure.in for more details) */
+/* Include ksh features? */
 #define KSH 1
 
-/* Include emacs editing? (see comments in configure.in for more details) */
+/* Include emacs editing? */
 #define EMACS 1
 
-/* Include vi editing? (see comments in configure.in for more details) */
+/* Include vi editing? */
 #define VI 1
 
-/* Include job control? (see comments in configure.in for more details) */
+/* Include job control? */
 #define JOBS 1
 
-/* Include brace-expansion? (see comments in configure.in for more details) */
+/* Include brace-expansion? */
 #define BRACE_EXPAND 1
 
-/* Include any history? (see comments in configure.in for more details) */
+/* Include any history? */
 #define HISTORY 1
 
-/* Include complex history? (see comments in configure.in for more details) */
+/* Include complex history? */
 /* #undef COMPLEX_HISTORY */
 
-/* Strict POSIX behaviour? (see comments in configure.in for more details) */
-/* #undef POSIXLY_CORRECT */
+/* Strict POSIX behaviour? */
+#define POSIXLY_CORRECT 1
 
-/* Specify default $ENV? (see comments in configure.in for more details) */
-/* #undef DEFAULT_ENV */
+/* Specify default $ENV? */
+#define DEFAULT_ENV	"$HOME/.kshrc"
 
-/* Include shl(1) support? (see comments in configure.in for more details) */
+/* Include shl(1) support? */
 /* #undef SWTCH */
 
-/* Include game-of-life? (see comments in configure.in for more details) */
+/* Include game-of-life? */
 /* #undef SILLY */
 
 /* The number of bytes in a int.  */
@@ -237,13 +244,10 @@
 #define SIZEOF_LONG 4
 
 /* Define if you have the _setjmp function.  */
-/* #undef HAVE__SETJMP */
+#define HAVE__SETJMP
 
 /* Define if you have the confstr function.  */
 /* #undef HAVE_CONFSTR */
-
-/* Define if you have the dup2 function.  */
-#define HAVE_DUP2 1
 
 /* Define if you have the flock function.  */
 #define HAVE_FLOCK 1
@@ -261,7 +265,7 @@
 /* #undef HAVE_GETRUSAGE */
 
 /* Define if you have the getwd function.  */
-/* #undef HAVE_GETWD */
+#define HAVE_GETWD 1
 
 /* Define if you have the killpg function.  */
 #define HAVE_KILLPG 1
@@ -281,11 +285,6 @@
 /* Define if you have the strerror function.  */
 #define HAVE_STRERROR 1
 
-/* Define if you have the strlcat function.  */
-#define HAVE_STRLCAT 1
-/* Define if you have the strlcpy function.  */
-#define HAVE_STRLCPY 1
-
 /* Define if you have the strstr function.  */
 #define HAVE_STRSTR 1
 
@@ -296,7 +295,7 @@
 #define HAVE_TCSETPGRP 1
 
 /* Define if you have the ulimit function.  */
-#define HAVE_ULIMIT 1
+#define HAVE_ULIMIT
 
 /* Define if you have the valloc function.  */
 #define HAVE_VALLOC 1
@@ -335,7 +334,7 @@
 #define HAVE_STRING_H 1
 
 /* Define if you have the <sys/dir.h> header file.  */
-/* #undef HAVE_SYS_DIR_H */
+#define HAVE_SYS_DIR_H
 
 /* Define if you have the <sys/ndir.h> header file.  */
 /* #undef HAVE_SYS_NDIR_H */
@@ -353,7 +352,7 @@
 #define HAVE_SYS_WAIT_H 1
 
 /* Define if you have the <ulimit.h> header file.  */
-#define HAVE_ULIMIT_H 1
+#define HAVE_ULIMIT_H
 
 /* Define if you have the <values.h> header file.  */
 /* #undef HAVE_VALUES_H */

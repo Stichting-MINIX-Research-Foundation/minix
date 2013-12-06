@@ -170,9 +170,9 @@ main(int argc, char *argv[])
 			    debug_flags |= 1 << (optarg[i] & 31);
 			break;
 		case 'd': case 'f': case 'i': case 'n': case 'l':
-#ifdef __minix
+#if defined(__minix)
 		case 'x':
-#endif
+#endif /* defined(__minix) */
 			fldtab[0].flags |= optval(ch, 0);
 			break;
 		case 'H':

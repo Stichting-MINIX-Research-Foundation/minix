@@ -38,11 +38,6 @@ __RCSID("$NetBSD: closedir.c,v 1.16 2010/09/26 02:26:59 yamt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
-#ifdef __minix
-/* NetBSD BUG: reentrant.h defines includes. */
-#include <sys/types.h>
-#endif /* !__minix */
-
 #include "namespace.h"
 #include "reentrant.h"
 #include "extern.h"

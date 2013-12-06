@@ -1,4 +1,4 @@
-/*      $NetBSD: memcmp.S,v 1.1 2005/12/20 19:28:49 christos Exp $ */
+/*      $NetBSD: memcmp.S,v 1.3 2013/08/19 06:23:59 matt Exp $ */
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -64,7 +64,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: memcmp.S,v 1.1 2005/12/20 19:28:49 christos Exp $")
+RCSID("$NetBSD: memcmp.S,v 1.3 2013/08/19 06:23:59 matt Exp $")
 
 ENTRY(memcmp)
 	mov	ip, r0
@@ -76,7 +76,7 @@ ENTRY(memcmp)
 
 	/* Are both addresses aligned the same way? */
 	cmp	r2, #0x00
-	eornes	r3, ip, r1
+	eorsne	r3, ip, r1
 	RETc(eq)			/* len == 0, or same addresses! */
 	tst	r3, #0x03
 	subne	r2, r2, #0x01
@@ -157,24 +157,25 @@ ENTRY(memcmp)
 	ldrb	r0, [ip, #0x00]		/* r0 = b1#0 */
 	ldrb	r2, [r1, #0x01]		/* r2 = b2#1 */
 	subs	r0, r0, r3		/* r0 = b1#0 - b2#0 */
-	ldreqb	r3, [ip, #0x01]		/* r3 = b1#1 */
+	ldrbeq	r3, [ip, #0x01]		/* r3 = b1#1 */
 	RETc(ne)			/* Return if mismatch on #0 */
 	subs	r0, r3, r2		/* r0 = b1#1 - b2#1 */
-	ldreqb	r3, [r1, #0x02]		/* r3 = b2#2 */
-	ldreqb	r0, [ip, #0x02]		/* r0 = b1#2 */
+	ldrbeq	r3, [r1, #0x02]		/* r3 = b2#2 */
+	ldrbeq	r0, [ip, #0x02]		/* r0 = b1#2 */
 	RETc(ne)			/* Return if mismatch on #1 */
 	ldrb	r2, [r1, #0x03]		/* r2 = b2#3 */
 	subs	r0, r0, r3		/* r0 = b1#2 - b2#2 */
-	ldreqb	r3, [ip, #0x03]		/* r3 = b1#3 */
+	ldrbeq	r3, [ip, #0x03]		/* r3 = b1#3 */
 	RETc(ne)			/* Return if mismatch on #2 */
 	subs	r0, r3, r2		/* r0 = b1#3 - b2#3 */
-	ldreqb	r3, [r1, #0x04]		/* r3 = b2#4 */
-	ldreqb	r0, [ip, #0x04]		/* r0 = b1#4 */
+	ldrbeq	r3, [r1, #0x04]		/* r3 = b2#4 */
+	ldrbeq	r0, [ip, #0x04]		/* r0 = b1#4 */
 	RETc(ne)			/* Return if mismatch on #3 */
 	ldrb	r2, [r1, #0x05]		/* r2 = b2#5 */
 	subs	r0, r0, r3		/* r0 = b1#4 - b2#4 */
-	ldreqb	r3, [ip, #0x05]		/* r3 = b1#5 */
+	ldrbeq	r3, [ip, #0x05]		/* r3 = b1#5 */
 	RETc(ne)			/* Return if mismatch on #4 */
 	sub	r0, r3, r2		/* r0 = b1#5 - b2#5 */
 	RET
 #endif
+END(memcmp)

@@ -1,4 +1,4 @@
-/* $NetBSD: findcc.c,v 1.5 2009/04/12 14:23:30 lukem Exp $ */
+/* $NetBSD: findcc.c,v 1.6 2011/09/04 20:30:06 joerg Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #if !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\
  All rights reserved.");
-__RCSID("$NetBSD: findcc.c,v 1.5 2009/04/12 14:23:30 lukem Exp $");
+__RCSID("$NetBSD: findcc.c,v 1.6 2011/09/04 20:30:06 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -49,8 +49,7 @@ __RCSID("$NetBSD: findcc.c,v 1.5 2009/04/12 14:23:30 lukem Exp $");
 #include "findcc.h"
 
 char *
-findcc(progname)
-	const char	*progname;
+findcc(const char *progname)
 {
 	char   *path, *dir, *next;
 	char   buffer[MAXPATHLEN];

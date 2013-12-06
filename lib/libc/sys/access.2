@@ -1,4 +1,4 @@
-.\"	$NetBSD: access.2,v 1.26 2010/05/03 05:53:56 jruoho Exp $
+.\"	$NetBSD: access.2,v 1.32 2013/01/13 08:15:02 dholland Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,11 +29,12 @@
 .\"
 .\"     @(#)access.2	8.2 (Berkeley) 4/1/94
 .\"
-.Dd May 3, 2010
+.Dd January 12, 2013
 .Dt ACCESS 2
 .Os
 .Sh NAME
-.Nm access
+.Nm access ,
+.Nm faccessat
 .Nd check access permissions of a file or pathname
 .Sh LIBRARY
 .Lb libc
@@ -41,59 +42,58 @@
 .In unistd.h
 .Ft int
 .Fn access "const char *path" "int mode"
+.In fcntl.h
+.Ft int
+.Fn faccessat "int fd" "const char *path" "int mode" "int flags"
 .Sh DESCRIPTION
 The
 .Fn access
 function checks the accessibility of the
 file named by
+.Fa path .
+The
+.Fn faccessat
+function checks the accessibility of the file named by
 .Fa path
-for the access permissions indicated by
-.Fa mode .
-The value of
-.Fa mode
-is the bitwise inclusive OR of the access permissions to be
-checked
-.Pf ( Dv R_OK
-for read permission,
-.Dv W_OK
-for write permission and
-.Dv X_OK
-for execute/search permission) or the existence test,
-.Dv F_OK .
+using
+.Fa fd
+as the starting point for relative pathnames.
+If
+.Fa fd
+is
+.Dv AT_FDCWD
+the current directory is used.
+Calling
+.Fn access
+is equivalent to calling
+.Fn faccessat
+with
+.Fa fd
+set to
+.Dv AT_FDCWD
+and
+.Fa flags
+set to 0.
+.Pp
+The form of access to check is specified by the bitwise or of the
+following values for
+.Fa mode :
+.Bl -tag -width W_OK
+.It Dv R_OK
+Check for read permission.
+.It Dv W_OK
+Check for write permission.
+.It Dv X_OK
+Check for execute/search permission.
+.It Dv F_OK
+Check only for existence.
+.El
+.Pp
 All components of the pathname
 .Fa path
-are checked for access permissions (including
-.Dv F_OK ) .
+are checked for access permissions as well.
 .Pp
-The real user ID is used in place of the effective user ID
-and the real group access list
-(including the real group ID) are
-used in place of the effective ID for verifying permission.
-.Pp
-If a process has super-user privileges and indicates success for
-.Dv R_OK
-or
-.Dv W_OK ,
-the file may not actually have read or write permission bits set.
-If a process has super-user privileges and indicates success for
-.Dv X_OK ,
-at least one of the user, group, or other execute bits is set.
-(However, the file may still not be executable.
-See
-.Xr execve 2 . )
-.Sh RETURN VALUES
-If
-.Fa path
-cannot be found or if any of the desired access modes would
-not be granted, then a \-1 value is returned; otherwise
-a 0 value is returned.
-.Sh ERRORS
-Access to the file is denied if:
-.Bl -tag -width Er
-.It Bq Er EACCES
-Permission bits of the file mode do not permit the requested
-access, or search permission is denied on a component of the
-path prefix.
+.\" Maybe this paragraph should be removed...
 The owner of a file has permission checked with respect to the
 .Dq owner
 read, write, and execute mode bits, members of the file's group
@@ -103,9 +103,115 @@ mode bits, and all others have permissions checked with respect to
 the
 .Dq other
 mode bits.
+.Pp
+The file descriptor
+.Fa fd
+must name a directory.
+Search permission is required on this directory.
+.\"    (These alternatives await a decision about the semantics of O_SEARCH)
+.\" Search permission is required on this directory, except if
+.\" .Fa fd
+.\" was opened with the
+.\" .Dv O_SEARCH
+.\" flag.
+.\"    - or -
+.\" The directory referred to by
+.\" .Fa fd
+.\" must have been opened with the
+.\" .Dv O_SEARCH
+.\" flag.
+.\"    - or -
+.\" The directory referred to by
+.\" .Fa fd
+.\" must have been opened with the
+.\" .Dv O_SEARCH
+.\" flag or must be searchable by the current process at the time the
+.\" call is made.
+.Pp
+The
+.Fa flags
+argument to
+.Fn faccessat
+can specify the following optional behavior:
+.Bl -tag -width AT_SYMLINK_NOFOLLOW
+.It AT_EACCESS
+Use the effective user and group IDs instead of the real user and
+group IDs for checking permission.
+See discussion below.
+.It AT_SYMLINK_NOFOLLOW
+Do not follow a symbolic link encountered as the last component in
+.Fa path .
+.El
+.Pp
+For
+.Fn access ,
+and
+.Fn faccessat
+when the
+.Dv AT_EACCESS
+flag is not passed, the real user ID and the real group ID are used
+for checking permission in place of the effective user ID and
+effective group ID.
+This affects only set-user-ID and set-group-ID programs, which should
+not use these functions.
+(For other programs, the real and effective IDs are the same.)
+.Pp
+For processes running with super-user privileges, these functions may
+return success for read and write checks regardless of whether read
+and write permission bits are actually set.
+This reflects the fact that the super-user may read and write all
+files regardless of permission settings.
+However, even for the super-user, an execute check using
+.Dv X_OK
+will succeed only if the target object has at least one of its
+execute permission bits set.
+.\" XXX: Is this true of search permission and directories? (I believe so.)
+(This does not guarantee that the target object can necessarily be
+successfully executed.
+See
+.Xr execve 2 . )
+.Sh RETURN VALUES
+The
+.Fn access
+and
+.Fn faccessat
+functions succeed and return 0 if, at some point in the recent past,
+the target object named by
+.Fa path
+existed and its permission settings allowed the requested access as
+described above.
+If the requested access would not have been granted, the object did
+not exist, or the path lookup failed, the value \-1 is returned
+and the value of
+.Va errno
+is set to reflect what went wrong.
+.Sh ERRORS
+These functions fail if:
+.Bl -tag -width Er
+.It Bq Er EACCES
+Search permission is denied for
+.Fa fd ,
+or for the current directory, or for a directory in the prefix of
+.Fa path ;
+or the permission bits on the target file system object do not permit
+the requested access.
+.It Bq Er EBADF
+The file descriptor
+.Fa fd
+is not open and is not
+.Dv AT_FDCWD .
+.\"    (possibly -- future)
+.\" or was not opened for searching with
+.\" .Dv O_SEARCH .
 .It Bq Er EFAULT
 .Fa path
 points outside the process's allocated address space.
+.It Bq Er EINVAL
+The
+.Fa mode
+or
+.Fa flags
+argument contained an invalid value.
 .It Bq Er EIO
 An I/O error occurred while reading from or writing to the file system.
 .It Bq Er ELOOP
@@ -119,7 +225,10 @@ characters.
 .It Bq Er ENOENT
 The named file does not exist.
 .It Bq Er ENOTDIR
-A component of the path prefix is not a directory.
+The file descriptor
+.Fa fd
+does not name a directory, or a component of the path prefix is not a
+directory.
 .It Bq Er EROFS
 Write access is requested for a file on a read-only file system.
 .It Bq Er ETXTBSY
@@ -136,19 +245,47 @@ The
 .Fn access
 function conforms to
 .St -p1003.1-90 .
-.Sh SECURITY CONSIDERATIONS
-The
-.Fn access
-system call is a potential security hole due to race conditions.
-It should never be used.
-Set-user-ID and set-group-ID applications should restore the
-effective user or group ID, and perform actions directly rather than use
-.Fn access
-to simulate access checks for the real user or group ID.
+.Fn faccessat
+function conforms to
+.St -p1003.1-2008 .
+.\" This paragraph could be moved to the end of DESCRIPTION if people
+.\" don't like having it here.
 .Pp
-The
+Note that
+.Fn faccessat
+violates the historic convention that system calls whose names begin
+with `f' operate on file handles rather than paths.
+There is no equivalent to
 .Fn access
-system call may however have some value in providing clues to users as to
-whether certain operations make sense for a particular filesystem object.
-Arguably it also allows a cheaper file existence test than
-.Xr stat 2 .
+for checking access properties of an already-opened file.
+.Sh SECURITY CONSIDERATIONS
+Because the results of these calls reflect the state of the file
+system at the time they ran, and the file system can potentially be
+modified between that time and the time the caller attempts to act on
+the results, they should
+.Em never
+be used for security enforcement.
+.Pp
+Privileged programs that need to restrict their actions to files or
+directories properly accessible to unprivileged users
+.Em must
+do this by assuming or restoring an unprivileged state (see
+.Xr seteuid 2 )
+when performing the pertinent actions.
+Checking in advance (with
+.Fn access
+or any other method) and performing such actions while privileged
+introduces a race condition that in most cases is easily exploitable
+by even a naive adversary.
+.Pp
+Even for non-privileged programs, the opportunity for the world to
+change after the call runs makes
+.Fn access
+and
+.Fn faccessat
+not very useful.
+In general only
+.Dv F_OK
+should be used, and that sparingly.
+The other checks may occasionally be useful for user interface or
+diagnostic purposes.

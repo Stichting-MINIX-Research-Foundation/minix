@@ -1,4 +1,4 @@
-/*	$NetBSD: power.h,v 1.17 2012/07/15 18:31:35 pgoyette Exp $	*/
+/*	$NetBSD: power.h,v 1.19 2013/03/30 19:05:20 christos Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -97,6 +97,20 @@
 #define		PSWITCH_HK_EJECT_BUTTON		"eject-button"
 #define		PSWITCH_HK_ZOOM_BUTTON		"zoom-button"
 #define		PSWITCH_HK_VENDOR_BUTTON	"vendor-button"
+#ifndef THINKPAD_NORMAL_HOTKEYS
+#define		PSWITCH_HK_FNF1_BUTTON		"fnf1-button"
+#define		PSWITCH_HK_WIRELESS_BUTTON	"wireless-button"
+#define		PSWITCH_HK_WWAN_BUTTON		"wWAN-button"
+#define		PSWITCH_HK_POINTER_BUTTON	"pointer-button"
+#define		PSWITCH_HK_FNF10_BUTTON		"fnf10-button"
+#define		PSWITCH_HK_FNF11_BUTTON		"fnf11-button"
+#define		PSWITCH_HK_BRIGHTNESS_UP	"brightness-up"
+#define		PSWITCH_HK_BRIGHTNESS_DOWN	"brightness-down"
+#define		PSWITCH_HK_THINKLIGHT		"thinklight"
+#define		PSWITCH_HK_VOLUME_UP		"volume-up"
+#define		PSWITCH_HK_VOLUME_DOWN		"volume-down"
+#define		PSWITCH_HK_VOLUME_MUTE		"volume-mute"
+#endif /* THINKPAD_NORMAL_HOTKEYS */
 
 #define	PSWITCH_EVENT_PRESSED	0	/* button pressed, lid closed, AC off */
 #define	PSWITCH_EVENT_RELEASED	1	/* button released, lid open, AC on */
@@ -145,7 +159,7 @@ struct pswitch_state {
 #define PENVSYS_TYPE_INDICATOR		17
 
 /*
- * The following events apply for temperatures, power, resistance, 
+ * The following events apply for temperatures, power, resistance,
  * voltages, battery and fan sensors:
  *
  * 	PENVSYS_EVENT_CRITICAL		A critical limit.

@@ -10,7 +10,7 @@
 
 #include <minix/vfsif.h>
 
-#include "puffs_msgif.h"
+#include <fs/puffs/puffs_msgif.h>
 
 EXTERN struct puffs_usermount *global_pu;
 

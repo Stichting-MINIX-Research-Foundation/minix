@@ -1,4 +1,4 @@
-/*	$NetBSD: tstp.c,v 1.39 2011/08/29 11:07:38 christos Exp $	*/
+/*	$NetBSD: tstp.c,v 1.40 2013/10/15 13:00:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tstp.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: tstp.c,v 1.39 2011/08/29 11:07:38 christos Exp $");
+__RCSID("$NetBSD: tstp.c,v 1.40 2013/10/15 13:00:52 christos Exp $");
 #endif
 #endif				/* not lint */
 
@@ -234,8 +234,8 @@ __stopwin(void)
 		    (int) curscr->maxy - 1, 0, 0);
 	}
 
-	if (meta_off != NULL)
-		(void) tputs(meta_off, 0, __cputchar);
+	if (meta_on != NULL)
+		(void) tputs(meta_on, 0, __cputchar);
 
 	if ((curscr != NULL) && (curscr->flags & __KEYPAD))
 		(void) tputs(keypad_local, 0, __cputchar);

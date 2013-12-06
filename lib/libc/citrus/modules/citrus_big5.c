@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_big5.c,v 1.13 2011/05/23 14:53:46 joerg Exp $	*/
+/*	$NetBSD: citrus_big5.c,v 1.14 2013/05/28 16:57:56 joerg Exp $	*/
 
 /*-
  * Copyright (c)2002, 2006 Citrus Project,
@@ -60,7 +60,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_big5.c,v 1.13 2011/05/23 14:53:46 joerg Exp $");
+__RCSID("$NetBSD: citrus_big5.c,v 1.14 2013/05/28 16:57:56 joerg Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/queue.h>
@@ -115,8 +115,10 @@ typedef struct {
 		_BIG5State	s_mbrtowc;
 		_BIG5State	s_mbtowc;
 		_BIG5State	s_mbsrtowcs;
+		_BIG5State	s_mbsnrtowcs;
 		_BIG5State	s_wcrtomb;
 		_BIG5State	s_wcsrtombs;
+		_BIG5State	s_wcsnrtombs;
 		_BIG5State	s_wctomb;
 	} states;
 } _BIG5CTypeInfo;

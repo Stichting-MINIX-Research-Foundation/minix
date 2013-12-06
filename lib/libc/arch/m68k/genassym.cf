@@ -1,0 +1,52 @@
+#	$NetBSD: genassym.cf,v 1.1 2013/07/17 01:41:17 matt Exp $
+
+#
+# Copyright (c) 2013 The NetBSD Foundation, Inc.
+# All rights reserved.
+#
+# This code is derived from software contributed to The NetBSD Foundation
+# by Matt Thomas <matt@3am-sfotware.com>.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+# ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+# TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+# PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+# BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+
+include <sys/types.h>
+include <machine/reg.h>
+include <ucontext.h>
+include <signal.h>
+
+define	UC_LINK		offsetof(ucontext_t, uc_link)
+define	UC_SIGMASK	offsetof(ucontext_t, uc_sigmask)
+define	UC_MCONTEXT_D0	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_D0])
+define	UC_MCONTEXT_SP	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_A7])
+define	UC_MCONTEXT_PC	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_PC])
+define	UC_SIZE		sizeof(ucontext_t)
+
+define	SC_ONSTACK	offsetof(struct sigcontext, sc_onstack)
+define	SC___MASK13	offsetof(struct sigcontext, __sc_mask13)
+define	SC_SP		offsetof(struct sigcontext, sc_sp)
+define	SC_FP		offsetof(struct sigcontext, sc_fp)
+define	SC_AP		offsetof(struct sigcontext, sc_ap)
+define	SC_PC		offsetof(struct sigcontext, sc_pc)
+define	SC_PS		offsetof(struct sigcontext, sc_ps)
+define	SC_MASK		offsetof(struct sigcontext, sc_mask)
+define	SC_SIZE		sizeof(struct sigcontext)

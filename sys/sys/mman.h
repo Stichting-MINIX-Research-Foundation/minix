@@ -68,9 +68,9 @@ typedef	__off_t		off_t;		/* file offset */
  * Flags contain sharing type and options.
  * Sharing types; choose one.
  */
-#ifndef __minix
+#if !defined(__minix)
 #define	MAP_SHARED	0x0001	/* share changes */
-#endif
+#endif /* !defined(__minix) */
 #define	MAP_PRIVATE	0x0002	/* changes are private */
 
 #ifdef _KERNEL
@@ -113,7 +113,7 @@ typedef	__off_t		off_t;		/* file offset */
 #define	MAP_ALIGNMENT_256TB	MAP_ALIGNED(48)	/* 2^48 */
 #define	MAP_ALIGNMENT_64PB	MAP_ALIGNED(56)	/* 2^56 */
 
-#ifdef __minix
+#if defined(__minix)
 /*
  * Minix-specific flags
  */
@@ -123,7 +123,7 @@ typedef	__off_t		off_t;		/* file offset */
 #define MAP_LOWER16M		0x200000        /* physically below 16MB */
 #define MAP_LOWER1M		0x400000        /* physically below 16MB */
 #define MAP_THIRDPARTY		0x800000        /* perform on behalf of any process */
-#endif
+#endif /* defined(__minix) */
 
 /*
  * Error indicator returned by mmap(2)
@@ -200,14 +200,14 @@ void *	mremap(void *, size_t, void *, size_t, int);
 #endif
 int	posix_madvise(void *, size_t, int);
 
-#ifdef __minix
+#if defined(__minix)
 #include <minix/endpoint.h>
 void *         vm_remap(endpoint_t d, endpoint_t s, void *da, void *sa, size_t si);
 void *         vm_remap_ro(endpoint_t d, endpoint_t s, void *da, void *sa, size_t si);
 int            vm_unmap(endpoint_t endpt, void *addr);
 unsigned long  vm_getphys(endpoint_t endpt, void *addr);
 u8_t           vm_getrefcount(endpoint_t endpt, void *addr);
-#endif
+#endif /* defined(__minix) */
 
 __END_DECLS
 

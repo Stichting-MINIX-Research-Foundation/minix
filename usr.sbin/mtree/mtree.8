@@ -1,4 +1,4 @@
-.\"	$NetBSD: mtree.8,v 1.63 2012/10/05 09:18:02 wiz Exp $
+.\"	$NetBSD: mtree.8,v 1.69 2013/02/03 19:16:06 christos Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -56,7 +56,7 @@
 .\"
 .\"     @(#)mtree.8	8.2 (Berkeley) 12/11/93
 .\"
-.Dd October 4, 2012
+.Dd February 3, 2013
 .Dt MTREE 8
 .Os
 .Sh NAME
@@ -64,14 +64,16 @@
 .Nd map a directory hierarchy
 .Sh SYNOPSIS
 .Nm
-.Op Fl CcDdejLlMnPqrSUuWx
+.Op Fl bCcDdejLlMnPqrStUuWx
 .Op Fl i | Fl m
 .Op Fl E Ar tags
+.Op Fl F Ar flavor
 .Op Fl f Ar spec
 .Op Fl I Ar tags
 .Op Fl K Ar keywords
 .Op Fl k Ar keywords
 .Op Fl N Ar dbdir
+.Op Fl O Ar onlyfile
 .Op Fl p Ar path
 .Op Fl R Ar keywords
 .Op Fl s Ar seed
@@ -92,6 +94,8 @@ missing from either the file hierarchy or the specification.
 .Pp
 The options are as follows:
 .Bl -tag -width Xxxexcludexfilexx
+.It Fl b
+Suppress blank lines before entering and after exiting directories.
 .It Fl C
 Convert a specification into
 a format that's easier to parse with various tools.
@@ -140,6 +144,29 @@ and
 .It Fl e
 Don't complain about files that are in the file hierarchy, but not in the
 specification.
+.It Fl F Ar flavor
+Set the compatibility flavor of the
+.Nm
+utility.
+The
+.Ar flavor
+can be one of
+.Sy mtree ,
+.Sy freebsd9 ,
+or
+.Sy netbsd6 .
+The default is
+.Sy mtree .
+The
+.Sy freebsd9
+and
+.Sy netbsd6
+flavors attempt to preserve output compatiblity and command line option
+backward compatibility with
+.Fx 9.0
+and
+.Nx 6.0
+respectively.
 .It Fl f Ar spec
 Read the specification from
 .Ar file  ,
@@ -247,6 +274,8 @@ rather than using the results from the system's
 and
 .Xr getgrnam 3
 (and related) library calls.
+.It Fl O Ar onlypaths
+Only include files included in this list of pathnames.
 .It Fl P
 Don't follow symbolic links in the file hierarchy, instead consider
 the symbolic link itself in any comparisons.
@@ -681,6 +710,35 @@ option can be used in combination with
 or
 .Fl u
 to create directory hierarchies for, for example, distributions.
+.Sh COMPATIBILITY
+The compatibility shims provided by the
+.Fl F
+option are incomplete by design.
+Known limitations are described below.
+.Pp
+The
+.Sy freebsd9
+flavor retains the default handling of lookup failures for the
+.Sy uname
+and
+.Sy group
+keywords by replacing them with appropriate
+.Sy uid
+and
+.Sy gid
+keywords rather than failing and reporting an error.
+The related
+.Fl w
+flag is a no-op rather than causing a warning to be printed and no
+keyword to be emitted.
+The latter behavior is not emulated as it is potentially dangerous in
+the face of /set statements.
+.Pp
+The
+.Sy netbsd6
+flavor does not replicate the historical bug that reported time as
+seconds.nanoseconds without zero padding nanosecond values less than
+100000000.
 .Sh SEE ALSO
 .Xr chflags 1 ,
 .Xr chgrp 1 ,

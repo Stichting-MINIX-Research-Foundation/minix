@@ -26,15 +26,19 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)ceil.3	5.1 (Berkeley) 5/2/91
-.\"	$NetBSD: ceil.3,v 1.17 2003/08/07 16:44:47 agc Exp $
+.\"	$NetBSD: ceil.3,v 1.20 2013/11/12 00:10:29 joerg Exp $
 .\"
-.Dd March 10, 1994
+.Dd November 12, 2013
 .Dt CEIL 3
 .Os
 .Sh NAME
 .Nm ceil ,
-.Nm ceilf
-.Nd "round to smallest integral value greater than or equal to x"
+.Nm ceilf ,
+.Nm ceill ,
+.Nm floor ,
+.Nm floorf
+.Nm floorl
+.Nd ceiling and floor
 .Sh LIBRARY
 .Lb libm
 .Sh SYNOPSIS
@@ -43,23 +47,37 @@
 .Fn ceil "double x"
 .Ft float
 .Fn ceilf "float x"
+.Ft long double
+.Fn ceill "long double x"
+.Ft double
+.Fn floor "double x"
+.Ft float
+.Fn floorf "float x"
+.Ft long double
+.Fn floorl "long double x"
 .Sh DESCRIPTION
 The
-.Fn ceil
+.Fn ceil ,
+.Fn ceilf ,
 and
-.Fn ceilf
+.Fn ceill
 functions return the smallest integral value
 greater than or equal to
+.Fa x .
+Conversely, the
+.Fn floor ,
+.Fn floorf ,
+and
+.Fn floorl
+functions return the largest integral value
+less than or equal to
 .Fa x .
 .Sh SEE ALSO
 .Xr abs 3 ,
 .Xr fabs 3 ,
-.Xr floor 3 ,
-.Xr ieee 3 ,
 .Xr math 3 ,
+.Xr nextafter 3 ,
 .Xr rint 3
 .Sh STANDARDS
-The
-.Fn ceil
-function conforms to
-.St -ansiC .
+The described functions conform to
+.St -isoC-99 .

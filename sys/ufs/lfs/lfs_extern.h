@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.96 2008/06/28 01:34:05 rumble Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.100 2013/07/20 19:59:31 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -94,13 +94,15 @@ struct timeval;
 struct inode;
 struct uio;
 struct mbuf;
-struct ufs1_dinode;
+struct ulfs1_dinode;
 struct buf;
 struct vnode;
 struct dlfs;
 struct lfs;
 struct segment;
 struct block_info;
+
+__BEGIN_DECLS
 
 #if defined(_KERNEL)
 
@@ -119,7 +121,6 @@ extern int lfs_debug_log_subsys[];
 extern kcondvar_t lfs_writing_cv;
 extern kcondvar_t locked_queue_cv;
 
-__BEGIN_DECLS
 /* lfs_alloc.c */
 void lfs_vcreate(struct mount *, ino_t, struct vnode *);
 int lfs_valloc(struct vnode *, int, kauth_cred_t, struct vnode **);
@@ -152,7 +153,7 @@ int lfs_reserve(struct lfs *, struct vnode *, struct vnode *, int);
 int lfs_bwrite_log(struct buf *, const char *, int);
 void lfs_dumplog(void);
 void lfs_dump_super(struct lfs *);
-void lfs_dump_dinode(struct ufs1_dinode *);
+void lfs_dump_dinode(struct ulfs1_dinode *);
 void lfs_check_bpp(struct lfs *, struct segment *, char *, int);
 void lfs_check_segsum(struct lfs *, struct segment *, char *, int);
 void lfs_debug_log(int, const char *, ...);
@@ -162,9 +163,12 @@ void lfs_debug_log(int, const char *, ...);
 int lfs_update(struct vnode *, const struct timespec *, const struct timespec *,
     int);
 int lfs_truncate(struct vnode *, off_t, int, kauth_cred_t);
-struct ufs1_dinode *lfs_ifind(struct lfs *, ino_t, struct buf *);
+struct ulfs1_dinode *lfs_ifind(struct lfs *, ino_t, struct buf *);
 void lfs_finalize_ino_seguse(struct lfs *, struct inode *);
 void lfs_finalize_fs_seguse(struct lfs *);
+
+/* lfs_rename.c */
+int lfs_rename(void *);
 
 /* lfs_rfw.c */
 int lfs_rf_valloc(struct lfs *, ino_t, int, struct lwp *, struct vnode **);
@@ -211,7 +215,7 @@ void lfs_writer_leave(struct lfs *);
 void lfs_wakeup_cleaner(struct lfs *);
 
 /* lfs_syscalls.c */
-int lfs_fastvget(struct mount *, ino_t, daddr_t, struct vnode **, struct ufs1_dinode *);
+int lfs_fastvget(struct mount *, ino_t, daddr_t, struct vnode **, struct ulfs1_dinode *);
 struct buf *lfs_fakebuf(struct lfs *, struct vnode *, int, size_t, void *);
 int lfs_do_segclean(struct lfs *, unsigned long);
 int lfs_segwait(fsid_t *, struct timeval *);
@@ -240,8 +244,8 @@ int lfs_gop_alloc(struct vnode *, off_t, off_t, int, kauth_cred_t);
 void lfs_gop_size(struct vnode *, off_t, off_t *, int);
 int lfs_putpages_ext(void *, int);
 int lfs_gatherpages(struct vnode *);
-void lfs_flush_dirops(struct lfs *);
-void lfs_flush_pchain(struct lfs *);
+int lfs_flush_dirops(struct lfs *);
+int lfs_flush_pchain(struct lfs *);
 
 int lfs_bwrite	 (void *);
 int lfs_fsync	 (void *);

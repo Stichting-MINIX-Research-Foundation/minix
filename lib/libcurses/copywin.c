@@ -118,7 +118,7 @@ int copywin(const WINDOW *srcwin, WINDOW *dstwin,
 				cc.elements = 1;
 				np = sp->nsp;
 				if (np) {
-					/* MINIX: off-by one error, has to be strictly less than. */
+					/* MINIX: off by one error, has to be strictly less than. */
 					while (np && cc.elements <
 					    CURSES_CCHAR_MAX) {
 						cc.vals[cc.elements++] = np->ch;

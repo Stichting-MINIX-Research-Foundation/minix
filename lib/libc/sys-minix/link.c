@@ -5,10 +5,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#ifdef __weak_alias
-__weak_alias(link, _link)
-#endif
-
 int link(const char *name, const char *name2)
 {
   message m;

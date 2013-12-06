@@ -1,4 +1,4 @@
-/*	$NetBSD: n_fmod.c,v 1.5 2003/08/07 16:44:51 agc Exp $	*/
+/*	$NetBSD: n_fmod.c,v 1.7 2013/11/22 10:59:31 martin Exp $	*/
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -66,6 +66,13 @@ static char sccsid[] = "@(#)fmod.c	8.1 (Berkeley) 6/4/93";
 extern int isnan(),finite();
 #endif	/* !defined(__vax__) && !defined(tahoe) */
 
+#if DBL_MANT_DIG == LDBL_MANT_DIG && DBL_MIN_EXP == LDBL_MIN_EXP \
+	 && DBL_MIN_EXP == LDBL_MIN_EXP
+#ifdef __weak_alias
+__weak_alias(fmodl, fmod);
+#endif
+#endif
+
 #ifdef TEST_FMOD
 static double
 _fmod(double x, double y)
@@ -93,6 +100,12 @@ fmod(double x, double y)
 		r -= w <= r ? w : w*(double)0.5;
 	}
 	return x >= (double)0 ? r : -r;
+}
+
+float
+fmodf(float x, float y)
+{
+	return fmod(x, y);
 }
 
 #ifdef TEST_FMOD

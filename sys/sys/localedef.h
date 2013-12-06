@@ -1,4 +1,4 @@
-/*	$NetBSD: localedef.h,v 1.9 2008/05/17 03:49:54 ginsbach Exp $	*/
+/*	$NetBSD: localedef.h,v 1.10 2013/08/18 20:03:48 joerg Exp $	*/
 
 /*
  * Copyright (c) 1994 Winning Strategies, Inc.
@@ -40,10 +40,6 @@ typedef struct {
 	const char *nostr;
 } _MessagesLocale;
 
-extern const _MessagesLocale *_CurrentMessagesLocale;
-extern const _MessagesLocale  _DefaultMessagesLocale;
-
-
 typedef struct {
 	const char *int_curr_symbol;
 	const char *currency_symbol;
@@ -68,19 +64,11 @@ typedef struct {
 	char int_n_sign_posn;
 } _MonetaryLocale;
 
-extern const _MonetaryLocale *_CurrentMonetaryLocale;
-extern const _MonetaryLocale  _DefaultMonetaryLocale;
-
-
 typedef struct {
 	const char *decimal_point;
 	const char *thousands_sep;
 	const char *grouping;
 } _NumericLocale;
-
-extern const _NumericLocale *_CurrentNumericLocale;
-extern const _NumericLocale  _DefaultNumericLocale;
-
 
 typedef struct {
 	const char *abday[7];
@@ -93,8 +81,5 @@ typedef struct {
 	const char *t_fmt;
 	const char *t_fmt_ampm;
 } _TimeLocale;
-
-extern const _TimeLocale *_CurrentTimeLocale;
-extern const _TimeLocale  _DefaultTimeLocale;
 
 #endif /* !_SYS_LOCALEDEF_H_ */

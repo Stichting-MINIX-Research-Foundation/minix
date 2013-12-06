@@ -1,6 +1,6 @@
 
 #------------------------------------------------------------------------------
-# $File: convex,v 1.7 2009/09/19 16:28:08 christos Exp $
+# $File: convex,v 1.8 2012/10/03 23:44:43 christos Exp $
 # convex:  file(1) magic for Convex boxes
 #
 # Convexes are big-endian.
@@ -30,8 +30,6 @@
 # The restore program uses these number to determine how the data is
 # to be extracted.
 #
-24	belong	=60011	dump format, 4.1 BSD or earlier
-24	belong	=60012	dump format, 4.2 or 4.3 BSD without IDC
 24	belong	=60013	dump format, 4.2 or 4.3 BSD (IDC compatible)
 24	belong	=60014	dump format, Convex Storage Manager by-reference dump
 #

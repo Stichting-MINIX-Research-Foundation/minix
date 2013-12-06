@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.143 2012/07/29 18:05:48 mlelstv Exp $	*/
+/*	$NetBSD: conf.h,v 1.144 2012/10/27 17:18:40 chs Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -44,6 +44,7 @@
  */
 
 #include <sys/queue.h>
+#include <sys/device_if.h>
 
 struct buf;
 struct knote;
@@ -264,8 +265,7 @@ void mm_init(void);
 #endif /* _KERNEL */
 
 #ifdef _KERNEL
-struct	device;
-void	setroot(struct device *, int);
+void	setroot(device_t, int);
 void	rootconf(void);
 void	swapconf(void);
 #endif /* _KERNEL */

@@ -1,4 +1,4 @@
-/*	$NetBSD: fixunsdfsi.S,v 1.4 2003/08/07 16:42:27 agc Exp $	*/
+/*	$NetBSD: fixunsdfsi.S,v 1.5 2013/09/12 15:36:16 joerg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -42,7 +42,7 @@
 #if 0
 	.asciz "@(#)fixunsdfsi.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: fixunsdfsi.S,v 1.4 2003/08/07 16:42:27 agc Exp $")
+	RCSID("$NetBSD: fixunsdfsi.S,v 1.5 2013/09/12 15:36:16 joerg Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -65,7 +65,7 @@ Lbig:
 ENTRY(__dtoul)
 	sub	%sp, 16, %sp
 	std	%f2, [%sp + 64 + BIAS + 8]
-#ifdef PIC
+#ifdef __PIC__
 	PICCY_SET(Lbig, %g1, %o0)
 	ldd	[%g1], %f2
 #else

@@ -1,5 +1,6 @@
-# $NetBSD: ad.sh3,v 1.28 2011/07/18 17:39:05 dyoung Exp $
+# $NetBSD: ad.sh3,v 1.29 2013/11/01 07:48:31 mrg Exp $
 ./usr/include/gcc-4.5/tgmath.h			comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.8/tgmath.h			comp-c-include		gcccmds,gcc=48
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sh3				comp-c-include
 ./usr/include/sh3/ansi.h			comp-c-include

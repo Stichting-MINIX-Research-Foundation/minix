@@ -14,10 +14,6 @@
 #include <errno.h>
 #include <unistd.h>
 
-#ifdef __weak_alias
-__weak_alias(flock, _flock)
-#endif
-
 /*
  *	Name:		int flock(int fd, int mode);
  *	Function:	Implements the flock function in Minix.

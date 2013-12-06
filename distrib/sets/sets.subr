@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.138 2012/08/08 14:08:01 christos Exp $
+#	$NetBSD: sets.subr,v 1.156 2013/10/14 16:00:16 joerg Exp $
 #
 
 #
@@ -19,7 +19,7 @@
 #	HAVE_BINUTILS
 #	HAVE_GCC
 #	HAVE_GDB
-#	HAS_SSP
+#	HAVE_SSP
 #	TOOLCHAIN_MISSING
 #	OBJECT_FMT
 # as well as:
@@ -144,6 +144,13 @@ if [ "${MKATF}" = "no" ]; then
 else
 	testset="tests"
 fi
+if [ "${MKDEBUG}" = "no" ]; then
+	debugset=""
+	xdebugset=""
+else
+	debugset="debug"
+	xdebugset="xdebug"
+fi
 # Determine lib type. Do this first so stlib also gets set.
 if [ "${OBJECT_FMT}" = "ELF" ]; then
 	shlib=elf
@@ -156,9 +163,9 @@ if [ "${MKPIC}" = "no" ]; then
 	shlib=no
 fi
 # LSC for Minix
-#nlists="base comp etc games man misc $modset $testset text"
 nlists="minix $testset"
-xlists="xbase xcomp xetc xfont xserver"
+#nlists="base comp $debugset etc games man misc $modset $testset text"
+xlists="xbase xcomp $xdebugset xetc xfont xserver"
 extlists="extbase extcomp extetc"
 
 OSRELEASE=$(${HOST_SH} ${NETBSDSRCDIR}/sys/conf/osrelease.sh -k)
@@ -174,7 +181,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.138 2012/08/08 14:08:01 christos Exp $
+# 	# $NetBSD: sets.subr,v 1.156 2013/10/14 16:00:16 joerg Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
@@ -223,12 +230,18 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 #	kyua			${MKKYUA} != no
 #	ldap			${MKLDAP} != no
 #	lint			${MKLINT} != no
+#	libcxx			${MKLIBCXX} != no
+#	libgcc			${HAVE_LIBGCC} != no
+#	libstdcxx		${MKLIBSTDCXX} != no
+#	lld			${MKLLD} != no
+#	lldb			${MKLLDB} != no
 #	llvm			${MKLLVM} != no
 #	lvm			${MKLVM} != no
 #	makemandb		${MKMAKEMANDB} != no
 #	man			${MKMAN} != no
 #	manpages		${MKMANPAGES} != no
 #	manz			${MKMANZ} != no
+#	mclinker		${MKMCLINKER} != no
 #	mdns			${MKMDNS} != no
 #	nls			${MKNLS} != no
 #	nvi			${MKNVI} != no
@@ -242,13 +255,18 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 #	rump			${MKRUMP} != no
 #	share			${MKSHARE} != no
 #	skey			${MKSKEY} != no
+#	sljit			${MKSLJIT} != no
+#	softfloat		${MKSOFTFLOAT} != no
 #	solaris			${MKDTRACE} != no or ${MKZFS} != no
-#	ssp			${HAS_SSP} != no
+#	ssp			${HAVE_SSP} != no
+#	tpm			${MKTPM} != no
 #	x11			${MKX11} != no && ${X11FLAVOUR} != "Xorg"
 #	xorg			${MKX11} != no && ${X11FLAVOUR} == "Xorg"
+#	xorg_server		${MKXORG_SERVER} != no
 #	yp			${MKYP} != no
 #	zfs			${MKZFS} != no
 #
+#	endian=<n>		<n> = value of ${TARGET_ENDIANNESS}
 #	binutils=<n>		<n> = value of ${HAVE_BINUTILS}
 #	gcc=<n>			<n> = value of ${HAVE_GCC}
 #	gdb=<n>			<n> = value of ${HAVE_GDB}
@@ -281,8 +299,9 @@ list_set_files()
 				nv = needvars[vi]
 				kw = tolower(nv)
 				sub(/^mk/, "", kw)
-				sub(/^has_/, "", kw)
-				if (ENVIRON[nv] != "no")
+				sub(/^have_/, "", kw)
+				sub(/^target_endianness/, "endian", kw)
+				if (nv != "HAVE_GCC" && ENVIRON[nv] != "no")
 					wanted[kw] = 1 
 			}
 
@@ -298,6 +317,8 @@ list_set_files()
 				wanted[".cat"] = 1
 			if (("man" in wanted) && ("manpages" in wanted))
 				wanted[".man"] = 1
+			if ("endian" in wanted)
+				wanted["endian=" "'"${TARGET_ENDIANNESS}"'"] = 1
 		}
 
 		/^#/ {

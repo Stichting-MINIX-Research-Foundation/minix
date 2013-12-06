@@ -1,4 +1,4 @@
-/* $NetBSD: strtoull.c,v 1.5 2008/09/10 18:08:58 joerg Exp $ */
+/* $NetBSD: strtoull.c,v 1.6 2013/04/16 21:44:06 joerg Exp $ */
 
 /*-
  * Copyright (c) 2005 The DragonFly Project.  All rights reserved.
@@ -32,7 +32,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: strtoull.c,v 1.5 2008/09/10 18:08:58 joerg Exp $");
+__RCSID("$NetBSD: strtoull.c,v 1.6 2013/04/16 21:44:06 joerg Exp $");
 
 #ifdef _LIBC
 #include "namespace.h"
@@ -62,4 +62,5 @@ __RCSID("$NetBSD: strtoull.c,v 1.5 2008/09/10 18:08:58 joerg Exp $");
 
 #ifdef _LIBC
 __weak_alias(strtoull, _strtoull)
+__weak_alias(strtoull_l, _strtoull_l)
 #endif

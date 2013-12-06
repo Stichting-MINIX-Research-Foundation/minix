@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.c,v 1.49 2010/02/24 13:56:07 hannken Exp $	*/
+/*	$NetBSD: fsck.c,v 1.51 2012/04/07 04:52:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas. All rights reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsck.c,v 1.49 2010/02/24 13:56:07 hannken Exp $");
+__RCSID("$NetBSD: fsck.c,v 1.51 2012/04/07 04:52:20 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -89,7 +89,7 @@ static void maketypelist(char *);
 static void catopt(char **, const char *);
 static void mangle(char *, int *, const char ** volatile *, int *);
 static const char *getfslab(const char *);
-static void usage(void);
+__dead static void usage(void);
 static void *isok(struct fstab *);
 
 int
@@ -100,6 +100,7 @@ main(int argc, char *argv[])
 	const char *vfstype = NULL;
 	char globopt[3];
 	int ret = FSCK_EXIT_OK;
+	char buf[MAXPATHLEN];
 
 	globopt[0] = '-';
 	globopt[2] = '\0';
@@ -183,11 +184,10 @@ main(int argc, char *argv[])
 	if (flags & CHECK_PROGRESS)
 		maxrun = 1;
 
-#ifdef __minix
+#if defined(__minix)
 	/* parallel checking heuristic doesn't work for minix currently */
 	maxrun = 1;
-#endif
-
+#endif /* !defined(__minix) */
 	argc -= optind;
 	argv += optind;
 
@@ -217,7 +217,9 @@ main(int argc, char *argv[])
 			type = vfstype;
 		}
 		else {
-			spec = fs->fs_spec;
+			spec = getfsspecname(buf, sizeof(buf), fs->fs_spec);
+			if (spec == NULL)
+				err(FSCK_EXIT_CHECK_FAILED, "%s", buf);
 			type = fs->fs_vfstype;
 			if (BADTYPE(fs->fs_type))
 				errx(FSCK_EXIT_CHECK_FAILED,
@@ -265,9 +267,9 @@ checkfs(const char *vfst, const char *spec, const char *mntpt, void *auxarg,
 #endif
 		_PATH_SBIN,
 		_PATH_USRSBIN,
-#ifdef __minix
+#if defined(__minix)
 		"/usr/pkg/sbin/",
-#endif
+#endif /* defined(__minix) */
 		NULL
 	};
 	const char ** volatile argv, **edir;
@@ -276,7 +278,7 @@ checkfs(const char *vfst, const char *spec, const char *mntpt, void *auxarg,
 	int argc, i, status, maxargc;
 	char *optb;
 	char *volatile optbuf;
-	char execname[MAXPATHLEN + 1], execbase1[MAXPATHLEN], execbase2[MAXPATHLEN];
+	char execname[MAXPATHLEN + 1], execbase[MAXPATHLEN];
 	const char *extra = getoptions(vfstype);
 
 	if (!strcmp(vfstype, "ufs"))
@@ -292,10 +294,9 @@ checkfs(const char *vfst, const char *spec, const char *mntpt, void *auxarg,
 	maxargc = 64;
 	argv = emalloc(sizeof(char *) * maxargc);
 
-	(void) snprintf(execbase1, sizeof(execbase1), "fsck_%s", vfstype);
-	(void) snprintf(execbase2, sizeof(execbase2), "fsck.%s", vfstype);
+	(void) snprintf(execbase, sizeof(execbase), "fsck_%s", vfstype);
 	argc = 0;
-	argv[argc++] = execbase1;
+	argv[argc++] = execbase;
 	if (optbuf)
 		mangle(optbuf, &argc, &argv, &maxargc);
 	argv[argc++] = spec;
@@ -318,7 +319,6 @@ checkfs(const char *vfst, const char *spec, const char *mntpt, void *auxarg,
 		return FSCK_EXIT_CHECK_FAILED;
 
 	case 0:					/* Child. */
-#ifndef __minix
 		if ((flags & CHECK_FORCE) == 0) {
 			struct statvfs	sfs;
 
@@ -339,7 +339,6 @@ checkfs(const char *vfst, const char *spec, const char *mntpt, void *auxarg,
 					_exit(FSCK_EXIT_CHECK_FAILED);	/* fsck [[-p] ...] */
 			}
 		}
-#endif
 
 		if (flags & CHECK_DEBUG)
 			_exit(FSCK_EXIT_OK);
@@ -348,16 +347,7 @@ checkfs(const char *vfst, const char *spec, const char *mntpt, void *auxarg,
 		edir = edirs;
 		do {
 			(void)snprintf(execname,
-			    sizeof(execname), "%s/%s", *edir, execbase1);
-			execv(execname, (char * const *)__UNCONST(argv));
-			if (errno != ENOENT) {
-				if (spec)
-					warn("exec %s for %s", execname, spec);
-				else
-					warn("exec %s", execname);
-			}
-			(void)snprintf(execname,
-			    sizeof(execname), "%s/%s", *edir, execbase2);
+			    sizeof(execname), "%s/%s", *edir, execbase);
 			execv(execname, (char * const *)__UNCONST(argv));
 			if (errno != ENOENT) {
 				if (spec)
@@ -557,7 +547,7 @@ mangle(char *opts, int *argcp, const char ** volatile *argvp, int *maxargcp)
 static const char *
 getfslab(const char *str)
 {
-#ifdef __minix
+#if defined(__minix)
 	errx(1, "cannot determine vfstype under minix");
 #else
 	static struct dkwedge_info dkw;
@@ -597,7 +587,7 @@ getfslab(const char *str)
 		    fstypenames[t], str);
 
 	return vfstype;
-#endif
+#endif /* defined(__minix) */
 }
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.40 2011/06/16 13:16:20 joerg Exp $	*/
+/*	$NetBSD: asm.h,v 1.41 2013/09/12 15:36:17 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -41,7 +41,7 @@
 #include "opt_multiprocessor.h"
 #endif
 
-#ifdef PIC
+#ifdef __PIC__
 #define PIC_PROLOGUE	\
 	pushl	%ebx;	\
 	call	1f;	\
@@ -215,9 +215,9 @@
 	.popsection
 #endif /* __STDC__ */
 
-#ifdef __minix
+#if defined(__minix)
 #define IMPORT(sym)               \
         .extern _C_LABEL(sym)
-#endif
+#endif /* defined(__minix) */
 
 #endif /* !_I386_ASM_H_ */

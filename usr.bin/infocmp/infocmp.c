@@ -1,4 +1,4 @@
-/* $NetBSD: infocmp.c,v 1.7 2010/02/22 23:05:39 roy Exp $ */
+/* $NetBSD: infocmp.c,v 1.8 2013/10/01 09:01:49 roy Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: infocmp.c,v 1.7 2010/02/22 23:05:39 roy Exp $");
+__RCSID("$NetBSD: infocmp.c,v 1.8 2013/10/01 09:01:49 roy Exp $");
 
 #include <sys/ioctl.h>
 
@@ -40,10 +40,6 @@ __RCSID("$NetBSD: infocmp.c,v 1.7 2010/02/22 23:05:39 roy Exp $");
 #include <term_private.h>
 #include <term.h>
 #include <unistd.h>
-
-#ifdef __minix
-#include <sys/ttycom.h>
-#endif
 
 #define SW 8
 
@@ -727,7 +723,7 @@ main(int argc, char **argv)
 				printf("internal database\n");
 			else
 				printf("%s%s\n", _ti_database,
-				    *_ti_database == '/' ? ".db" : "");
+				    *_ti_database == '/' ? ".cdb" : "");
 		}
 		printf("%s", t->name);
 		if (t->_alias != NULL && *t->_alias != '\0')

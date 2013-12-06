@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.5 2008/04/28 20:23:03 martin Exp $	*/
+/*	$NetBSD: expand.c,v 1.6 2013/05/06 08:02:20 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: expand.c,v 1.5 2008/04/28 20:23:03 martin Exp $");
+__RCSID("$NetBSD: expand.c,v 1.6 2013/05/06 08:02:20 skrll Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -62,13 +62,13 @@ static const struct {
 	ADD(PLATFORM)	/* uname -p */
 };
 
-#ifndef __minix
+#if !defined(__minix)
 static int mib[3][2] = {
 	{ CTL_KERN, KERN_OSTYPE },
 	{ CTL_KERN, KERN_OSRELEASE },
 	{ CTL_HW, HW_MACHINE_ARCH },
 };
-#endif
+#endif /* !defined(__minix) */
 
 static size_t
 expand(char *buf, const char *execname, int what, size_t bl)
@@ -92,18 +92,18 @@ expand(char *buf, const char *execname, int what, size_t bl)
 			xerr(1, "bad execname `%s' in AUX vector", execname);
 		break;
 
-#ifndef __minix
+#if !defined(__minix)
 	case 3:	/* OSNAME */
 	case 4:	/* OSREL */
 	case 5:	/* PLATFORM */
-		len = sizeof(name);	
+		len = sizeof(name);
 		if (sysctl(mib[what - 3], 2, name, &len, NULL, 0) == -1) {
 			xwarn("sysctl");
 			return 0;
 		}
 		ep = (p = name) + len - 1;
 		break;
-#endif
+#endif /* !defined(__minix) */
 	default:
 		return 0;
 	}
@@ -113,7 +113,7 @@ expand(char *buf, const char *execname, int what, size_t bl)
 
 	return bp - buf;
 }
-		
+
 
 size_t
 _rtld_expand_path(char *buf, size_t bufsize, const char *execname,

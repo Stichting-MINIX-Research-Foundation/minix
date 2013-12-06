@@ -1,4 +1,4 @@
-/*      $NetBSD: n_pow.c,v 1.7 2003/08/07 16:44:52 agc Exp $ */
+/*      $NetBSD: n_pow.c,v 1.9 2013/11/24 14:46:18 martin Exp $ */
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -128,6 +128,12 @@ powf(float x, float y)
    return pow((double) x, (double) (y));
 }
 
+long double
+powl(long double x, long double y)
+{
+   return pow((double) x, (double) (y));
+}
+
 double
 pow(double x, double y)
 {
@@ -176,7 +182,7 @@ static double
 pow_P(double x, double y)
 {
 	struct Double s, t;
-	double  huge = 1e300, tiny = 1e-300;
+	double  huge = _HUGE, tiny = _TINY;
 
 	if (x == zero) {
 		if (y > zero)

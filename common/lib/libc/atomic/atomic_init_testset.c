@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_init_testset.c,v 1.8 2012/02/28 20:41:19 joerg Exp $	*/
+/*	$NetBSD: atomic_init_testset.c,v 1.9 2013/08/21 03:00:56 matt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: atomic_init_testset.c,v 1.8 2012/02/28 20:41:19 joerg Exp $");
+__RCSID("$NetBSD: atomic_init_testset.c,v 1.9 2013/08/21 03:00:56 matt Exp $");
 
 #include "atomic_op_namespace.h"
 
@@ -109,7 +109,7 @@ _atomic_cas_32(volatile uint32_t *ptr, uint32_t old, uint32_t new)
 	return (*_atomic_cas_fn)(ptr, old, new);
 }
 
-void
+void __section(".text.startup")
 __libc_atomic_init(void)
 {
 #if !defined(__minix)

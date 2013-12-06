@@ -36,9 +36,9 @@
 
 #include <sys/types.h>
 #include <sys/exec.h>
-#ifndef __minix
+#if !defined(__minix)
 #include <sys/syscall.h>
-#endif
+#endif /* !defined(__minix) */
 
 #include <stdlib.h>
 #ifdef DYNAMIC

@@ -1,4 +1,4 @@
-/*	$NetBSD: paths.c,v 1.40 2009/05/19 20:44:52 christos Exp $	 */
+/*	$NetBSD: paths.c,v 1.41 2013/05/06 08:02:20 skrll Exp $	 */
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: paths.c,v 1.40 2009/05/19 20:44:52 christos Exp $");
+__RCSID("$NetBSD: paths.c,v 1.41 2013/05/06 08:02:20 skrll Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -49,9 +49,9 @@ __RCSID("$NetBSD: paths.c,v 1.40 2009/05/19 20:44:52 christos Exp $");
 #include <sys/gmon.h>
 #include <sys/socket.h>
 #include <sys/mount.h>
-#ifndef __minix
+#if !defined(__minix)
 #include <sys/mbuf.h>
-#endif
+#endif /* !defined(__minix) */
 #include <sys/resource.h>
 #include <machine/cpu.h>
 
@@ -237,7 +237,7 @@ _rtld_add_paths(const char *execname, Search_Path **path_p, const char *pathstr)
 #if !defined(__minix)
 /*
  * Process library mappings of the form:
- *	<library_name>	<machdep_variable> <value,...:library_name,...> ... 
+ *	<library_name>	<machdep_variable> <value,...:library_name,...> ...
  */
 static void
 _rtld_process_mapping(Library_Xform **lib_p, const char *bp, const char *ep)
@@ -245,7 +245,7 @@ _rtld_process_mapping(Library_Xform **lib_p, const char *bp, const char *ep)
 	Library_Xform *hwptr = NULL;
 	const char *ptr, *key, *ekey, *lib, *elib, *l;
 	int i, j;
-	
+
 	dbg((" processing mapping \"%.*s\"", (int)(ep - bp), bp));
 
 	if ((ptr = getword(&bp, ep, WS)) == NULL || ptr == bp)
@@ -318,7 +318,7 @@ no_more:
 			if (i == RTLD_MAX_ENTRY)
 				goto no_more;
 			if (i != j)
-				(void)memcpy(hwptr->entry[i].library, 
+				(void)memcpy(hwptr->entry[i].library,
 				    hwptr->entry[j].library,
 				    sizeof(hwptr->entry[j].library));
 			hwptr->entry[i].value = exstrdup(l, key);
@@ -347,7 +347,7 @@ _rtld_process_hints(const char *execname, Search_Path **path_p,
     Library_Xform **lib_p, const char *fname)
 {
 
-#ifdef __minix
+#if defined(__minix)
 	/* Minix doesn't support MAP_SHARED. */
 	return;
 #else
@@ -421,10 +421,10 @@ _rtld_process_hints(const char *execname, Search_Path **path_p,
 
 	if (buf != small)
 		(void)munmap(buf, sz);
-#endif
+#endif /* defined(__minix) */
 }
 
-#ifndef __minix
+#if !defined(__minix)
 /* Basic name -> sysctl MIB translation */
 int
 _rtld_sysctl(const char *name, void *oldp, size_t *oldlen)
@@ -493,4 +493,4 @@ bad:
 	xfree(result);
 	return (-1);
 }
-#endif
+#endif /* !defined(__minix) */

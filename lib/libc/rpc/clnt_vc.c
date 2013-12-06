@@ -1,32 +1,34 @@
-/*	$NetBSD: clnt_vc.c,v 1.18 2012/03/13 21:13:44 christos Exp $	*/
+/*	$NetBSD: clnt_vc.c,v 1.24 2013/10/17 23:58:05 christos Exp $	*/
 
 /*
- * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
- * unrestricted use provided that this legend is included on all tape
- * media and as a part of the software program in whole or part.  Users
- * may copy or modify Sun RPC without charge, but are not authorized
- * to license or distribute it to anyone else except as part of a product or
- * program developed by the user.
- * 
- * SUN RPC IS PROVIDED AS IS WITH NO WARRANTIES OF ANY KIND INCLUDING THE
- * WARRANTIES OF DESIGN, MERCHANTIBILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE, OR ARISING FROM A COURSE OF DEALING, USAGE OR TRADE PRACTICE.
- * 
- * Sun RPC is provided with no support and without any obligation on the
- * part of Sun Microsystems, Inc. to assist in its use, correction,
- * modification or enhancement.
- * 
- * SUN MICROSYSTEMS, INC. SHALL HAVE NO LIABILITY WITH RESPECT TO THE
- * INFRINGEMENT OF COPYRIGHTS, TRADE SECRETS OR ANY PATENTS BY SUN RPC
- * OR ANY PART THEREOF.
- * 
- * In no event will Sun Microsystems, Inc. be liable for any lost revenue
- * or profits or other special, indirect and consequential damages, even if
- * Sun has been advised of the possibility of such damages.
- * 
- * Sun Microsystems, Inc.
- * 2550 Garcia Avenue
- * Mountain View, California  94043
+ * Copyright (c) 2010, Oracle America, Inc.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above
+ *       copyright notice, this list of conditions and the following
+ *       disclaimer in the documentation and/or other materials
+ *       provided with the distribution.
+ *     * Neither the name of the "Oracle America, Inc." nor the names of its
+ *       contributors may be used to endorse or promote products derived
+ *       from this software without specific prior written permission.
+ *
+ *   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ *   "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ *   LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ *   FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ *   COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+ *   INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ *   DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ *   GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *   INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ *   WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ *   NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <sys/cdefs.h>
@@ -36,7 +38,7 @@ static char *sccsid = "@(#)clnt_tcp.c 1.37 87/10/05 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)clnt_tcp.c	2.2 88/08/01 4.0 RPCSRC";
 static char sccsid[] = "@(#)clnt_vc.c 1.19 89/03/16 Copyr 1988 Sun Micro";
 #else
-__RCSID("$NetBSD: clnt_vc.c,v 1.18 2012/03/13 21:13:44 christos Exp $");
+__RCSID("$NetBSD: clnt_vc.c,v 1.24 2013/10/17 23:58:05 christos Exp $");
 #endif
 #endif
  
@@ -77,6 +79,7 @@ __RCSID("$NetBSD: clnt_vc.c,v 1.18 2012/03/13 21:13:44 christos Exp $");
 
 #include <rpc/rpc.h>
 
+#include "svc_fdset.h"
 #include "rpc_internal.h"
 
 #ifdef __weak_alias
@@ -141,6 +144,33 @@ static cond_t   *vc_cv;
 #define __rpc_lock_value 0
 #endif
 
+static __inline void
+htonlp(void *dst, const void *src)
+{
+#if 0
+	uint32_t tmp;
+	memcpy(&tmp, src, sizeof(tmp));
+	tmp = htonl(tmp);
+	memcpy(dst, &tmp, sizeof(tmp));
+#else
+	/* We are aligned, so we think */
+	*(uint32_t *)dst = htonl(*(const uint32_t *)src);
+#endif
+}
+
+static __inline void
+ntohlp(void *dst, const void *src)
+{
+#if 0
+	uint32_t tmp;
+	memcpy(&tmp, src, sizeof(tmp));
+	tmp = ntohl(tmp);
+	memcpy(dst, &tmp, sizeof(tmp));
+#else
+	/* We are aligned, so we think */
+	*(uint32_t *)dst = htonl(*(const uint32_t *)src);
+#endif
+}
 
 /*
  * Create a client handle for a connection.
@@ -191,7 +221,7 @@ clnt_vc_create(
 		goto fooy;
 	}
 
-	sigfillset(&newmask);
+	__clnt_sigfillset(&newmask);
 	thr_sigsetmask(SIG_SETMASK, &newmask, &mask);
 #ifdef _REENTRANT
 	mutex_lock(&clnt_fd_lock);
@@ -202,9 +232,7 @@ clnt_vc_create(
 		fd_allocsz = dtbsize * sizeof (int);
 		vc_fd_locks = mem_alloc(fd_allocsz);
 		if (vc_fd_locks == NULL) {
-			mutex_unlock(&clnt_fd_lock);
-			thr_sigsetmask(SIG_SETMASK, &(mask), NULL);
-			goto fooy;
+			goto blooy;
 		} else
 			memset(vc_fd_locks, '\0', fd_allocsz);
 
@@ -214,9 +242,7 @@ clnt_vc_create(
 		if (vc_cv == NULL) {
 			mem_free(vc_fd_locks, fd_allocsz);
 			vc_fd_locks = NULL;
-			mutex_unlock(&clnt_fd_lock);
-			thr_sigsetmask(SIG_SETMASK, &(mask), NULL);
-			goto fooy;
+			goto blooy;
 		} else {
 			int i;
 
@@ -235,16 +261,12 @@ clnt_vc_create(
 		if (errno != ENOTCONN) {
 			rpc_createerr.cf_stat = RPC_SYSTEMERROR;
 			rpc_createerr.cf_error.re_errno = errno;
-			mutex_unlock(&clnt_fd_lock);
-			thr_sigsetmask(SIG_SETMASK, &(mask), NULL);
-			goto fooy;
+			goto blooy;
 		}
 		if (connect(fd, (struct sockaddr *)raddr->buf, raddr->len) < 0){
 			rpc_createerr.cf_stat = RPC_SYSTEMERROR;
 			rpc_createerr.cf_error.re_errno = errno;
-			mutex_unlock(&clnt_fd_lock);
-			thr_sigsetmask(SIG_SETMASK, &(mask), NULL);
-			goto fooy;
+			goto blooy;
 		}
 	}
 	mutex_unlock(&clnt_fd_lock);
@@ -263,8 +285,8 @@ clnt_vc_create(
 	ct->ct_addr.buf = malloc((size_t)raddr->maxlen);
 	if (ct->ct_addr.buf == NULL)
 		goto fooy;
-	memcpy(ct->ct_addr.buf, &raddr->buf, (size_t)raddr->len);
-	ct->ct_addr.len = raddr->maxlen;
+	memcpy(ct->ct_addr.buf, raddr->buf, (size_t)raddr->len);
+	ct->ct_addr.len = raddr->len;
 	ct->ct_addr.maxlen = raddr->maxlen;
 
 	/*
@@ -303,6 +325,9 @@ clnt_vc_create(
 	    h->cl_private, read_vc, write_vc);
 	return (h);
 
+blooy:
+	mutex_unlock(&clnt_fd_lock);
+	thr_sigsetmask(SIG_SETMASK, &(mask), NULL);
 fooy:
 	/*
 	 * Something goofed, free stuff and barf
@@ -341,7 +366,7 @@ clnt_vc_call(
 	ct = (struct ct_data *) h->cl_private;
 
 #ifdef _REENTRANT
-	sigfillset(&newmask);
+	__clnt_sigfillset(&newmask);
 	thr_sigsetmask(SIG_SETMASK, &newmask, &mask);
 	mutex_lock(&clnt_fd_lock);
 	while (vc_fd_locks[ct->ct_fd])
@@ -480,7 +505,7 @@ clnt_vc_freeres(
 	ct = (struct ct_data *)cl->cl_private;
 	xdrs = &(ct->ct_xdrs);
 
-	sigfillset(&newmask);
+	__clnt_sigfillset(&newmask);
 	thr_sigsetmask(SIG_SETMASK, &newmask, &mask);
 	mutex_lock(&clnt_fd_lock);
 #ifdef _REENTRANT
@@ -521,7 +546,7 @@ clnt_vc_control(
 
 	ct = (struct ct_data *)cl->cl_private;
 
-	sigfillset(&newmask);
+	__clnt_sigfillset(&newmask);
 	thr_sigsetmask(SIG_SETMASK, &newmask, &mask);
 	mutex_lock(&clnt_fd_lock);
 #ifdef _REENTRANT
@@ -580,13 +605,12 @@ clnt_vc_control(
 		 * first element in the call structure
 		 * This will get the xid of the PREVIOUS call
 		 */
-		*(u_int32_t *)(void *)info =
-		    ntohl(*(u_int32_t *)(void *)&ct->ct_u.ct_mcalli);
+		ntohlp(info, &ct->ct_u.ct_mcalli);
 		break;
 	case CLSET_XID:
 		/* This will set the xid of the NEXT call */
-		*(u_int32_t *)(void *)&ct->ct_u.ct_mcalli =
-		    htonl(*((u_int32_t *)(void *)info) + 1);
+		htonlp(&ct->ct_u.ct_mcalli, (const char *)info +
+		    sizeof(uint32_t));
 		/* increment by 1 as clnt_vc_call() decrements once */
 		break;
 	case CLGET_VERS:
@@ -596,15 +620,11 @@ clnt_vc_control(
 		 * begining of the RPC header. MUST be changed if the
 		 * call_struct is changed
 		 */
-		*(u_int32_t *)(void *)info =
-		    ntohl(*(u_int32_t *)(void *)(ct->ct_u.ct_mcallc +
-		    4 * BYTES_PER_XDR_UNIT));
+		ntohlp(info, ct->ct_u.ct_mcallc + 4 * BYTES_PER_XDR_UNIT);
 		break;
 
 	case CLSET_VERS:
-		*(u_int32_t *)(void *)(ct->ct_u.ct_mcallc +
-		    4 * BYTES_PER_XDR_UNIT) =
-		    htonl(*(u_int32_t *)(void *)info);
+		htonlp(ct->ct_u.ct_mcallc + 4 * BYTES_PER_XDR_UNIT, info);
 		break;
 
 	case CLGET_PROG:
@@ -614,15 +634,11 @@ clnt_vc_control(
 		 * begining of the RPC header. MUST be changed if the
 		 * call_struct is changed
 		 */
-		*(u_int32_t *)(void *)info =
-		    ntohl(*(u_int32_t *)(void *)(ct->ct_u.ct_mcallc +
-		    3 * BYTES_PER_XDR_UNIT));
+		ntohlp(info, ct->ct_u.ct_mcallc + 3 * BYTES_PER_XDR_UNIT);
 		break;
 
 	case CLSET_PROG:
-		*(u_int32_t *)(void *)(ct->ct_u.ct_mcallc +
-		    3 * BYTES_PER_XDR_UNIT) =
-		    htonl(*(u_int32_t *)(void *)info);
+		htonlp(ct->ct_u.ct_mcallc + 3 * BYTES_PER_XDR_UNIT, info);
 		break;
 
 	default:
@@ -649,7 +665,7 @@ clnt_vc_destroy(CLIENT *cl)
 	ct = (struct ct_data *) cl->cl_private;
 	ct_fd = ct->ct_fd;
 
-	sigfillset(&newmask);
+	__clnt_sigfillset(&newmask);
 	thr_sigsetmask(SIG_SETMASK, &newmask, &mask);
 	mutex_lock(&clnt_fd_lock);
 #ifdef _REENTRANT
@@ -710,7 +726,7 @@ read_vc(char *ctp, char *buf, int len)
 		/* premature eof */
 		ct->ct_error.re_errno = ECONNRESET;
 		ct->ct_error.re_status = RPC_CANTRECV;
-		len = -1;  /* it's really an error */
+		nread = -1;  /* it's really an error */
 		break;
 
 	case -1:
@@ -750,7 +766,7 @@ clnt_vc_ops(void)
 
 	/* VARIABLES PROTECTED BY ops_lock: ops */
 
-	sigfillset(&newmask);
+	__clnt_sigfillset(&newmask);
 	thr_sigsetmask(SIG_SETMASK, &newmask, &mask);
 	mutex_lock(&ops_lock);
 	if (ops.cl_call == NULL) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: softfloat.h,v 1.9 2011/07/07 07:14:57 matt Exp $	*/
+/*	$NetBSD: softfloat.h,v 1.10 2013/04/24 18:04:46 matt Exp $	*/
 
 /* This is a derivative work. */
 
@@ -44,6 +44,7 @@ the `FLOAT128' macro and the quadruple-precision format `float128'.
 /* #define FLOATX80 */
 /* #define FLOAT128 */
 
+#include <stdint.h>
 #include <machine/ieeefp.h>
 
 /*

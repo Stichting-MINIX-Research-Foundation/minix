@@ -1,4 +1,4 @@
-/* $NetBSD: memcmp.S,v 1.3 2011/01/15 07:31:12 matt Exp $ */
+/* $NetBSD: memcmp.S,v 1.4 2013/07/04 20:57:59 matt Exp $ */
 
 /* stropt/memcmp.S, pl_string_common, pl_linux 10/11/04 11:45:35
  * ==========================================================================
@@ -206,7 +206,7 @@ bbb:
 
 	cmplw	%r8, %r6
 
-	bdnzt+	eq, bbb
+	bdnzt	eq, bbb
 
 	bne	all_done
 

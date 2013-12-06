@@ -1,4 +1,4 @@
-/*	$NetBSD: rtldenv.h,v 1.11 2011/12/11 11:05:11 joerg Exp $	 */
+/*	$NetBSD: rtldenv.h,v 1.12 2013/05/06 08:02:20 skrll Exp $	 */
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -70,7 +70,7 @@ int	xunsetenv(const char *);
 # include <assert.h>
 # include <stdio.h>
 # include <err.h>
- 
+
 # define xprintf	printf
 # define xvprintf	vprintf
 # define xsnprintf	snprintf

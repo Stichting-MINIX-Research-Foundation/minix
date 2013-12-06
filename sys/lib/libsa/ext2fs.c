@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs.c,v 1.13 2012/05/21 21:34:16 dsl Exp $	*/
+/*	$NetBSD: ext2fs.c,v 1.19 2013/10/20 17:17:30 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -115,7 +115,7 @@
 #endif
 typedef uint32_t	ino32_t;
 #ifndef FSBTODB
-#define FSBTODB(fs, indp) fsbtodb(fs, indp)
+#define FSBTODB(fs, indp) EXT2_FSBTODB(fs, indp)
 #endif
 
 /*
@@ -240,37 +240,37 @@ block_map(struct open_file *f, indp_t file_block, indp_t *disk_block_p)
 	/*
 	 * Index structure of an inode:
 	 *
-	 * e2di_blocks[0..NDADDR-1]
-	 *			hold block numbers for blocks
-	 *			0..NDADDR-1
+	 * e2di_blocks[0..EXT2FS_NDADDR-1]
+	 *		hold block numbers for blocks
+	 *		0..EXT2FS_NDADDR-1
 	 *
-	 * e2di_blocks[NDADDR+0]
-	 *			block NDADDR+0 is the single indirect block
-	 *			holds block numbers for blocks
-	 *			NDADDR .. NDADDR + NINDIR(fs)-1
+	 * e2di_blocks[EXT2FS_NDADDR+0]
+	 *		block EXT2FS_NDADDR+0 is the single indirect block
+	 *		holds block numbers for blocks
+	 *		EXT2FS_NDADDR .. EXT2FS_NDADDR + EXT2_NINDIR(fs)-1
 	 *
-	 * e2di_blocks[NDADDR+1]
-	 *			block NDADDR+1 is the double indirect block
-	 *			holds block numbers for INDEX blocks for blocks
-	 *			NDADDR + NINDIR(fs) ..
-	 *			NDADDR + NINDIR(fs) + NINDIR(fs)**2 - 1
+	 * e2di_blocks[EXT2FS_NDADDR+1]
+	 *		block EXT2FS_NDADDR+1 is the double indirect block
+	 *		holds block numbers for INDEX blocks for blocks
+	 *		EXT2FS_NDADDR + EXT2_NINDIR(fs) ..
+	 *		EXT2FS_NDADDR + EXT2_NINDIR(fs) + EXT2_NINDIR(fs)**2 - 1
 	 *
-	 * e2di_blocks[NDADDR+2]
-	 *			block NDADDR+2 is the triple indirect block
-	 *			holds block numbers for	double-indirect
-	 *			blocks for blocks
-	 *			NDADDR + NINDIR(fs) + NINDIR(fs)**2 ..
-	 *			NDADDR + NINDIR(fs) + NINDIR(fs)**2
-	 *				+ NINDIR(fs)**3 - 1
+	 * e2di_blocks[EXT2FS_NDADDR+2]
+	 *		block EXT2FS_NDADDR+2 is the triple indirect block
+	 *		holds block numbers for	double-indirect
+	 *		blocks for blocks
+	 *		EXT2FS_NDADDR + EXT2_NINDIR(fs) + EXT2_NINDIR(fs)**2 ..
+	 *		EXT2FS_NDADDR + EXT2_NINDIR(fs) + EXT2_NINDIR(fs)**2
+	 *			+ EXT2_NINDIR(fs)**3 - 1
 	 */
 
-	if (file_block < NDADDR) {
+	if (file_block < EXT2FS_NDADDR) {
 		/* Direct block. */
 		*disk_block_p = fs2h32(fp->f_di.e2di_blocks[file_block]);
 		return 0;
 	}
 
-	file_block -= NDADDR;
+	file_block -= EXT2FS_NDADDR;
 
 	ind_cache = file_block >> LN2_IND_CACHE_SZ;
 	if (ind_cache == fp->f_ind_cache_block) {
@@ -283,14 +283,15 @@ block_map(struct open_file *f, indp_t file_block, indp_t *disk_block_p)
 		level += fp->f_nishift;
 		if (file_block < (indp_t)1 << level)
 			break;
-		if (level > NIADDR * fp->f_nishift)
+		if (level > EXT2FS_NIADDR * fp->f_nishift)
 			/* Block number too high */
 			return EFBIG;
 		file_block -= (indp_t)1 << level;
 	}
 
 	ind_block_num =
-	    fs2h32(fp->f_di.e2di_blocks[NDADDR + (level / fp->f_nishift - 1)]);
+	    fs2h32(fp->f_di.e2di_blocks[EXT2FS_NDADDR +
+	    (level / fp->f_nishift - 1)]);
 
 	for (;;) {
 		level -= fp->f_nishift;
@@ -340,12 +341,12 @@ buf_read_file(struct open_file *f, char **buf_p, size_t *size_p)
 	struct m_ext2fs *fs = fp->f_fs;
 	long off;
 	indp_t file_block;
-	indp_t disk_block;
+	indp_t disk_block = 0;	/* XXX: gcc */
 	size_t block_size;
 	int rc;
 
-	off = blkoff(fs, fp->f_seekp);
-	file_block = lblkno(fs, fp->f_seekp);
+	off = ext2_blkoff(fs, fp->f_seekp);
+	file_block = ext2_lblkno(fs, fp->f_seekp);
 	block_size = fs->e2fs_bsize;	/* no fragment */
 
 	if (file_block != fp->f_buf_blkno) {
@@ -569,7 +570,7 @@ ext2fs_open(const char *path, struct open_file *f)
 		 * of divide and remainder and avoinds pulling in the
 		 * 64bit division routine into the boot code.
 		 */
-		mult = NINDIR(fs);
+		mult = EXT2_NINDIR(fs);
 #ifdef DEBUG
 		if (!powerof2(mult)) {
 			/* Hummm was't a power of 2 */
@@ -1003,7 +1004,7 @@ void e2fs_i_bswap(struct ext2fs_dinode *old, struct ext2fs_dinode *new)
 	new->e2di_dacl		=	bswap32(old->e2di_dacl);
 	new->e2di_faddr		=	bswap32(old->e2di_faddr);
 	memcpy(&new->e2di_blocks[0], &old->e2di_blocks[0],
-	    (NDADDR + NIADDR) * sizeof(uint32_t));
+	    (EXT2FS_NDADDR + EXT2FS_NIADDR) * sizeof(uint32_t));
 }
 #endif
 

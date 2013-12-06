@@ -1,24 +1,21 @@
-#	$NetBSD: Makefile,v 1.31 2012/06/16 19:19:14 joerg Exp $
+#	$NetBSD: Makefile,v 1.33 2013/09/10 16:45:33 matt Exp $
 
 .include <bsd.own.mk>
 
-LD+= ${${HAVE_GOLD:Uno} != "no":? --script ${LDS_RELOC}:}
-
 .if ${USE_COMPILERCRTSTUFF} != "yes"
 
-.if defined(CSU_MACHINE_ARCH)
-.  if !exists(${.CURDIR}/arch/${CSU_MACHINE_ARCH}/Makefile.inc)
-.  error CSU_MACHINE_ARCH (${CSU_MACHINE_ARCH}) is unsupported
-.  endif
-.elif exists(${.CURDIR}/arch/${MACHINE_ARCH}/Makefile.inc)
-CSU_MACHINE_ARCH=	${MACHINE_ARCH}
+CSU_MACHINE_ARCH?=	${MACHINE_ARCH}
+
+.if !empty(CSU_MACHINE_ARCH:Mearm*)
+ARCHDIR:=	${.CURDIR}/arch/earm
+.elif exists(${.CURDIR}/arch/${CSU_MACHINE_ARCH}/Makefile.inc)
+ARCHDIR:=	${.CURDIR}/arch/${CSU_MACHINE_ARCH}
 .elif exists(${.CURDIR}/arch/${MACHINE_CPU}/Makefile.inc)
-CSU_MACHINE_ARCH=	${MACHINE_CPU}
+ARCHDIR:=	${.CURDIR}/arch/${MACHINE_CPU}
 .else
-.error Architecture (${MACHINE_ARCH} or ${MACHINE_CPU}) unsupported
+.error Architecture (${CSU_MACHINE_ARCH} or ${MACHINE_CPU}) unsupported
 .endif
 
-ARCHDIR:=	${.CURDIR}/arch/${CSU_MACHINE_ARCH}
 
 .PATH:	${ARCHDIR}
 .  include "${ARCHDIR}/Makefile.inc"

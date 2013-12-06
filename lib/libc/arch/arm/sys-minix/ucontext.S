@@ -11,6 +11,7 @@ IMPORT(resumecontext)
  *	Initialise the structure pointed to by ucp to the current user context
  *	of the calling thread. */
 ENTRY(getcontext)
+ENTRY(_getcontext)
 	/* In case a process does not use the FPU and is neither interested in
 	 * saving its signal mask, then we can skip the context switch to
 	 * PM and kernel altogether and only save general-purpose registers. */

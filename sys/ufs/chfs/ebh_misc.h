@@ -1,4 +1,4 @@
-/*	$NetBSD: ebh_misc.h,v 1.1 2011/11/24 15:51:32 ahoka Exp $	*/
+/*	$NetBSD: ebh_misc.h,v 1.2 2012/10/19 12:44:39 ttoth Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -33,20 +33,15 @@
 #ifndef EBH_MISC_H_
 #define EBH_MISC_H_
 
-/******************************************************************************/
-/* EBH specific functions													  */
-/******************************************************************************/
+/* EBH specific functions */
 
 #define CHFS_GET_MEMBER_POS(type, member)				      \
 	((unsigned long)(&((type *)0)->member))
 
 #define CHFS_GET_LID(lid) (le32toh(lid) & CHFS_LID_DIRTY_BIT_MASK)
 
-/**
+/*
  * EBH_TREE_DESTROY - destroys an RB-tree and frees the memory of its elements.
- * @name - the RB-tree structure's name
- * @head - pointer to the RB-tree's head
- * @type - type of the elements
  */
 #define EBH_TREE_DESTROY(name, head, type)				      \
 	{								      \
@@ -70,11 +65,8 @@
 		}							      \
 	}
 
-/**
+/*
  * EBH_QUEUE_DESTROY - destroys a TAILQ and frees the memory of its elements.
- * @head: pointer to the head of the queue
- * @type: type of the elements
- * @entry: name of TAILQ_ENTRY
  */
 #define EBH_QUEUE_DESTROY(head, type, entry)				      \
 	{								      \

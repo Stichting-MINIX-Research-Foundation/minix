@@ -1,4 +1,4 @@
-/* $NetBSD: ctanf.c,v 1.1 2007/08/20 16:01:38 drochner Exp $ */
+/* $NetBSD: ctanf.c,v 1.2 2011/07/03 06:45:24 mrg Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -32,9 +32,10 @@
 #include "../src/namespace.h"
 #include <complex.h>
 #include <math.h>
+#include <float.h>
 #include "cephes_subrf.h"
 
-#define MAXNUMF 1.0e38f
+#define MAXNUMF FLT_MAX
 
 float complex
 ctanf(float complex z)

@@ -2,5 +2,8 @@
 WARNS ?= 4
 CWARNFLAGS+= -Wno-missing-noreturn
 
+.if defined(__MINIX)
+LDSTATIC= -dynamic
 NOGCCERROR=yes
 NOCLANGERROR=yes
+.endif # defined(__MINIX)

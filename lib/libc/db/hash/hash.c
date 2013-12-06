@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.32 2012/03/13 21:13:32 christos Exp $	*/
+/*	$NetBSD: hash.c,v 1.33 2013/12/01 00:22:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hash.c,v 1.32 2012/03/13 21:13:32 christos Exp $");
+__RCSID("$NetBSD: hash.c,v 1.33 2013/12/01 00:22:48 christos Exp $");
 
 #include "namespace.h"
 #include <sys/param.h>
@@ -128,12 +128,8 @@ __hash_open(const char *file, int flags, mode_t mode, const HASHINFO *info,
 		new_table = 1;
 	}
 	if (file) {
-		if ((hashp->fp = open(file, flags, mode)) == -1)
+		if ((hashp->fp = __dbopen(file, flags, mode, &statbuf)) == -1)
 			RETURN_ERROR(errno, error0);
-		if (fcntl(hashp->fp, F_SETFD, FD_CLOEXEC) == -1)
-			RETURN_ERROR(errno, error1);
-		if (fstat(hashp->fp, &statbuf) == -1)
-			RETURN_ERROR(errno, error1);
 		new_table |= statbuf.st_size == 0;
 	}
 	if (new_table) {
@@ -196,7 +192,7 @@ __hash_open(const char *file, int flags, mode_t mode, const HASHINFO *info,
 	hashp->new_file = new_table;
 	hashp->save_file = file && (hashp->flags & O_RDWR);
 	hashp->cbucket = -1;
-	if (!(dbp = malloc(sizeof(DB)))) {
+	if (!(dbp = malloc(sizeof(*dbp)))) {
 		save_errno = errno;
 		hdestroy(hashp);
 		errno = save_errno;

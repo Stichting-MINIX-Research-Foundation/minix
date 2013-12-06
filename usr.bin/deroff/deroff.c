@@ -1,4 +1,4 @@
-/*	$NetBSD: deroff.c,v 1.9 2011/08/31 13:38:19 joerg Exp $	*/
+/*	$NetBSD: deroff.c,v 1.11 2013/10/18 20:47:06 christos Exp $	*/
 
 /* taken from: OpenBSD: deroff.c,v 1.6 2004/06/02 14:58:46 tom Exp */
 
@@ -64,21 +64,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef lint
-static const char copyright[] =
-"@(#) Copyright (c) 1988, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static const char sccsid[] = "@(#)deroff.c	8.1 (Berkeley) 6/6/93";
-#else
-static const char rcsid[] = "$NetBSD: deroff.c,v 1.9 2011/08/31 13:38:19 joerg Exp $";
-#endif
-#endif /* not lint */
-
 #include <sys/cdefs.h>
+__RCSID("$NetBSD: deroff.c,v 1.11 2013/10/18 20:47:06 christos Exp $");
+
 #include <err.h>
 #include <limits.h>
 #include <stddef.h>
@@ -178,7 +166,7 @@ typedef	int pacmac;		/* compressed macro name */
 static int	argconcat = 0;	/* concat arguments together (-me only) */
 
 #define	tomac(c1, c2)		((((c1) & 0xFF) << 8) | ((c2) & 0xFF))
-#define	frommac(src, c1, c2)	(((c1)=((src)>>8)&0xFF),((c2) =(src)&0xFF))
+#define	frommac(src, c1, c2)	(((c1)=((src)>>8)&0xFF),((c2) =(src)&0xFF), __USE(c1), __USE(c2))
 
 struct mactab {
 	int	condition;

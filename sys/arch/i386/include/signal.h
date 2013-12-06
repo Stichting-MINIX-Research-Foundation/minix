@@ -36,9 +36,9 @@
 
 #include <sys/featuretest.h>
 
-#ifdef __minix
+#if defined(__minix)
 #include <machine/fpu.h>
-#endif
+#endif /* defined(__minix) */
 
 typedef int sig_atomic_t;
 
@@ -108,13 +108,13 @@ struct sigcontext {
 	int	sc_err;
 
 	sigset_t sc_mask;		/* signal mask to restore (new style) */
-#ifdef __minix
+#if defined(__minix)
 	union fpu_state_u sc_fpu_state;
 	int trap_style;		/* KTS_* method of entering kernel */
 	int sc_flags;			/* MF_FPU_INITIALIZED if fpu state valid */
 #define SC_MAGIC 0xc0ffee1
 	int sc_magic;
-#endif
+#endif /* defined(__minix) */
 };
 #endif /* _KERNEL */
 

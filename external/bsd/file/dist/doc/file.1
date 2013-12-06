@@ -1,7 +1,7 @@
-.\"	$NetBSD: file.1,v 1.9 2012/02/22 17:53:50 christos Exp $
+.\"	$NetBSD: file.1,v 1.12 2013/03/23 16:15:57 christos Exp $
 .\"
-.\" $File: file.man,v 1.98 2011/12/08 12:12:46 rrt Exp $
-.Dd October 17, 2011
+.\" $File: file.man,v 1.102 2013/01/04 15:39:22 christos Exp $
+.Dd October 25, 2012
 .Dt FILE 1
 .Os
 .Sh NAME
@@ -26,7 +26,7 @@
 .Nm
 .Op Fl Fl help
 .Sh DESCRIPTION
-This manual page documents version 5.11 of the
+This manual page documents version 5.14 of the
 .Nm
 command.
 .Pp
@@ -261,8 +261,16 @@ prepended.
 (If you want a newline, see the
 .Fl r
 option.)
+The magic pattern with the highest strength (see the
+.Fl l
+option) comes first.
 .It Fl l , Fl Fl list
-Print information about the strength of each magic pattern.
+Shows a list of patterns and their strength sorted descending by
+.Xr magic 4
+strength
+which is used for the matching (see also the
+.Fl k
+option).
 .It Fl L , Fl Fl dereference
 option causes symlinks to be followed, as the like-named option in
 .Xr ls 1
@@ -270,8 +278,6 @@ option causes symlinks to be followed, as the like-named option in
 This is the default if the environment variable
 .Ev POSIXLY_CORRECT
 is defined.
-.It Fl l
-Shows sorted patterns list in the order which is used for the matching.
 .It Fl m , Fl Fl magic-file Ar magicfiles
 Specify an alternate list of files and directories containing magic.
 This can be a single item, or a colon-separated list.
@@ -553,16 +559,20 @@ or the mailing list at
 .Sh TODO
 .Pp
 Fix output so that tests for MIME and APPLE flags are not needed all
-over the place, and actual output is only done in one place. This
-needs a design. Suggestion: push possible outputs on to a list, then
-pick the last-pushed (most specific, one hopes) value at the end, or
-use a default if the list is empty. This should not slow down evaluation.
+over the place, and actual output is only done in one place.
+This needs a design.
+Suggestion: push possible outputs on to a list, then pick the
+last-pushed (most specific, one hopes) value at the end, or
+use a default if the list is empty.
+This should not slow down evaluation.
 .Pp
-Continue to squash all magic bugs. See Debian BTS for a good source.
+Continue to squash all magic bugs.
+See Debian BTS for a good source.
 .Pp
 Store arbitrarily long strings, for example for %s patterns, so that
-they can be printed out. Fixes Debian bug #271672. Would require more
-complex store/load code in apprentice.
+they can be printed out.
+Fixes Debian bug #271672.
+Would require more complex store/load code in apprentice.
 .Pp
 Add syntax for relative offsets after current level (Debian bug #466037).
 .Pp
@@ -572,6 +582,30 @@ Add a zip library so we can peek inside Office2007 documents to
 figure out what they are.
 .Pp
 Add an option to print URLs for the sources of the file descriptions.
+.Pp
+Combine script searches and add a way to map executable names to MIME
+types (e.g. have a magic value for !:mime which causes the resulting
+string to be looked up in a table).
+This would avoid adding the same magic repeatedly for each new
+hash-bang interpreter.
+.Pp
+Fix
+.Dq name
+and
+.Dq use
+to check for consistency at compile time (duplicate 
+.Dq name ,
+.Dq use
+pointing to undefined
+.Dq name
+).
+Make 
+.Dq name
+/
+.Dq use 
+more efficient by keeping a sorted list of names.
+Special-case ^ to flip endianness in the parser so that it does not
+have to be escaped, and document it.
 .Sh AVAILABILITY
 You can obtain the original author's latest version by anonymous FTP
 on

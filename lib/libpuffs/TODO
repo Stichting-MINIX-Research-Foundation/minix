@@ -1,0 +1,42 @@
+	$NetBSD: TODO,v 1.3 2007/07/19 07:48:10 pooka Exp $
+
+Document some possible user-visible changes that may take place.
+For a complete list, please dump my brain and excavate.
+
+  * figure out what do to with struct vattr, maybe introduce some
+    vattr-like puffs-specific structure (translation costs?) instead
+    of direct exposure
+
+  * make puffs_node opaque outside the library
+
+  * make it possible to cache symlink names and getattr results in
+    the kernel ... although I'm not as critically concerned with the
+    kernel caching as I am with userlevel caching
+
+  * try to implement a kernel policy for VOP_ACCESS, it's called
+    very very often - but this requires some kernel caching
+
+    + also try to figure out how to implement it in cases where it's
+      more difficult to do, e.g. how can we know readdir on sshfs will
+      fail without actually trying to read the directory?  If we fail
+      readdir itself, it's treated as success
+
+  * implement file system layering .. this will most likely bring
+    massive changes to how the ops vector is handled, for instance.
+    pcc/pu division should stay quite like the way it is now, but
+    maybe there will be layer specific ops.
+
+  * make puffs more like kernel vfs - or make kernel vfs more like puffs
+
+  * decide what to do about setback operations.  they kind of violate
+    the transparency of FAF for op handling
+
+  * remove flags parameter to puffs_init and replace with something
+    more generic
+
+  * fix incoming requests to not require memcpy with continuations
+    (not user-visible?)
+
+  * make continuations play with libpthread, lib/36011 (not user-visible?)
+
+  * clean up the request dispatching / continuation code (not user-visible?)

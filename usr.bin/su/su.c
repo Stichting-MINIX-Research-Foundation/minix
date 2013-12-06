@@ -1,4 +1,4 @@
-/*	$NetBSD: su.c,v 1.69 2011/08/31 16:24:58 plunky Exp $	*/
+/*	$NetBSD: su.c,v 1.70 2012/04/12 15:35:07 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988\
 #if 0
 static char sccsid[] = "@(#)su.c	8.3 (Berkeley) 4/2/94";*/
 #else
-__RCSID("$NetBSD: su.c,v 1.69 2011/08/31 16:24:58 plunky Exp $");
+__RCSID("$NetBSD: su.c,v 1.70 2012/04/12 15:35:07 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -462,7 +462,7 @@ kerberos5(char *username, const char *user, uid_t uid)
 		warnx("kerberos5: not in %s's ACL.", user);
 		goto fail;
 	}
-	ret = krb5_cc_gen_new(context, &krb5_mcc_ops, &ccache);
+	ret = krb5_cc_new_unique(context, krb5_mcc_ops.prefix, NULL, &ccache);
 	if (ret)
 		goto fail;
 	ret = krb5_verify_user_lrealm(context, princ, ccache, NULL, TRUE,
@@ -482,7 +482,7 @@ kerberos5(char *username, const char *user, uid_t uid)
 		}
 		goto fail;
 	}
-	ret = krb5_cc_gen_new(context, &krb5_fcc_ops, &ccache2);
+	ret = krb5_cc_new_unique(context, krb5_mcc_ops.prefix, NULL, &ccache2);
 	if (ret) {
 		krb5_cc_destroy(context, ccache);
 		goto fail;

@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.68 2012/09/25 06:55:10 skrll Exp $
+#	$NetBSD: mknative-gcc,v 1.74 2013/11/28 12:08:57 mrg Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of gcc.
@@ -9,9 +9,10 @@
 
 _TMPDIR=$2
 _TOP=$3
-_PLATFORM=$4
-_DESTDIR=$5
-_ABI=$6
+_SRC=$4
+_PLATFORM=$5
+_DESTDIR=$6
+_ABI=$7
 _VPATH=`grep VPATH ${_TMPDIR}/Makefile | sed 's,^.*=[ 	]*,,'`
 _GNU_DIST=`cd ${_VPATH}; pwd`
 
@@ -26,6 +27,15 @@ fi
 _OUTDIR="$_TOP/gnu"
 _OUTDIRBASE="gnu"
 
+sanitise_includes () {
+	sed \
+		-e "s,-I$_DESTDIR/usr/include,,g" \
+		-e "s,-I$_SRC/external/lgpl3/mpfr/dist,,g" \
+		-e "s,-I$_SRC/external/lgpl3/mpc/dist/src,,g" \
+		-e "s,-I$_SRC/external/lgpl3/gmp/lib/libgmp/arch/$MACHINE_ARCH,,g" \
+		-e "s,-I/usr/include/[^ 	]*,,"
+}
+
 ##### gnu/lib/crtstuff #####
 
 get_crtstuff () {
@@ -35,7 +45,7 @@ get_crtstuff () {
 	getvars gcc/Makefile \
 		INCLUDES CRTSTUFF_CFLAGS CRTSTUFF_T_CFLAGS CRTSTUFF_T_CFLAGS_S \
 		tm_defines xm_file xm_defines \
-		| sed "s,-I$_DESTDIR/usr/include,,g" \
+		| sanitise_includes \
 		| write_mk $_OUTDIRBASE/lib/$_subdir/arch/$MACHINE_ARCH.mk
 }
 
@@ -394,8 +404,8 @@ get_libgcc () {
 			SHLIB_MAPFILES SHLIB_NM_FLAGS \
 			EXTRA_HEADERS xm_defines \
 			tm_defines ${_extravars}
-	} | sed "s,-I$_DESTDIR/usr/include,,g" \
-	| write_mk $_OUTDIRBASE/lib/lib$_subdir/arch${_archsubdir}/$MACHINE_ARCH.mk
+	}	| sanitise_includes \
+		| write_mk $_OUTDIRBASE/lib/lib$_subdir/arch${_archsubdir}/$MACHINE_ARCH.mk
 
 	# Generate new style files.
 	if [ -n "${MKNATIVE_LIBGCC_NEW}" ]; then
@@ -546,7 +556,7 @@ get_libstdcxx_v3 () {
 	} | write_mk $_OUTDIRBASE/lib/$_subdir/arch/$MACHINE_ARCH/defs.mk
 }
 
-##### gnu/usr.bin/gcc3 #####
+##### gnu/usr.bin/gcc* #####
 
 get_gcc_bootstrap () {
 	_subdir="$1"
@@ -569,7 +579,7 @@ get_gcc () {
 		_extravars2="tm_file_list build_xm_include_list"
 		_extravars3="tm_p_include_list"
 		;;
-		
+
 	gcc)
 		_buildname="BUILD_"
 		_libcppsubdir=""
@@ -600,7 +610,7 @@ get_gcc () {
 			tm_defines host_xm_file host_xm_defines tm_p_file \
 			target_cpu_default ${_extravars} ${_extravars2} \
 			lang_specs_files ${_extravars3} \
-				| sed "s,-I$_DESTDIR/usr/include,,g"
+				| sanitise_includes
 		getvars gcc/Makefile \
 			LIB2ADDEHDEP | sed 's/unwind.inc//'
 		getvars gcc/Makefile \
@@ -611,10 +621,6 @@ get_gcc () {
 		gcc4 | gcc)
 			getvars libcpp/Makefile \
 				libcpp_a_OBJS
-			;;
-		gcc3)
-			getvars gcc/Makefile \
-				LIBCPP_OBJS LIBCPP_H
 			;;
 		esac
 		getvars gcc/Makefile \
@@ -687,11 +693,6 @@ __EOF__
 
 case "$1" in
 # .mk and .h files for libgcc bootstrap (from host build)
-libgcc)
-	get_libgcc gcc3
-	get_crtstuff crtstuff3
-	exit 0
-	;;
 
 libgcc4)
 	get_libgcc gcc4

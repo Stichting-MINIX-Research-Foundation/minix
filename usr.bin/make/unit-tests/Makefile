@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.34 2012/06/19 23:25:53 sjg Exp $
+# $NetBSD: Makefile,v 1.38 2013/08/28 21:56:50 sjg Exp $
 #
 # Unit tests for make(1)
 # The main targets are:
@@ -24,6 +24,7 @@ SUBFILES= \
 	error \
 	export \
 	export-all \
+	export-env \
 	doterror \
 	dotwait \
 	forloop \
@@ -36,9 +37,11 @@ SUBFILES= \
 	modorder \
 	modts \
 	modword \
+	order \
 	phony-end \
 	posix \
 	qequals \
+	sunshcmd \
 	sysv \
 	ternary \
 	unexport \
@@ -48,6 +51,7 @@ SUBFILES= \
 all: ${SUBFILES}
 
 flags.doterror=
+flags.order=-j1
 
 # the tests are actually done with sub-makes.
 .PHONY: ${SUBFILES}
@@ -76,7 +80,7 @@ LANG= C
 test:
 	@echo "${TEST_MAKE} -f ${MAKEFILE} > ${.TARGET}.out 2>&1"
 	@cd ${.OBJDIR} && ${TEST_MAKE} -f ${MAKEFILE} 2>&1 | \
-	${TOOL_SED} -e 's,^${TEST_MAKE:T:C/\./\\\./g}:,make:,' \
+	${TOOL_SED} -e 's,^${TEST_MAKE:T:C/\./\\\./g}[^:]*:,make:,' \
 	-e '/stopped/s, /.*, unit-tests,' \
 	-e 's,${.CURDIR:C/\./\\\./g}/,,g' \
 	-e 's,${UNIT_TESTS:C/\./\\\./g}/,,g' > ${.TARGET}.out || { \

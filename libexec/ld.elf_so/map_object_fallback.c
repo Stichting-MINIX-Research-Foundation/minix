@@ -1,4 +1,4 @@
-/*	$NetBSD: map_object.c,v 1.45 2012/10/13 21:13:07 dholland Exp $	 */
+/*	$NetBSD: map_object.c,v 1.52 2013/08/03 13:17:05 skrll Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: map_object.c,v 1.45 2012/10/13 21:13:07 dholland Exp $");
+__RCSID("$NetBSD: map_object.c,v 1.52 2013/08/03 13:17:05 skrll Exp $");
 #endif /* not lint */
 
 #include <errno.h>
@@ -213,11 +213,6 @@ _rtld_map_object_fallback(const char *path, int fd, const struct stat *sb)
 				segs[nsegs] = phdr;
 			++nsegs;
 
-#if ELFSIZE == 64
-#define	PRImemsz	PRIu64
-#else
-#define PRImemsz	PRIu32
-#endif
 			dbg(("%s: %s %p phsize %" PRImemsz, obj->path, "PT_LOAD",
 			    (void *)(uintptr_t)phdr->p_vaddr, phdr->p_memsz));
 			break;
@@ -228,7 +223,7 @@ _rtld_map_object_fallback(const char *path, int fd, const struct stat *sb)
 			dbg(("%s: %s %p phsize %" PRImemsz, obj->path, "PT_PHDR",
 			    (void *)(uintptr_t)phdr->p_vaddr, phdr->p_memsz));
 			break;
-		
+
 		case PT_DYNAMIC:
 			obj->dynamic = (void *)(uintptr_t)phdr->p_vaddr;
 			dbg(("%s: %s %p phsize %" PRImemsz, obj->path, "PT_DYNAMIC",
@@ -240,6 +235,12 @@ _rtld_map_object_fallback(const char *path, int fd, const struct stat *sb)
 			phtls = phdr;
 			dbg(("%s: %s %p phsize %" PRImemsz, obj->path, "PT_TLS",
 			    (void *)(uintptr_t)phdr->p_vaddr, phdr->p_memsz));
+			break;
+#endif
+#ifdef __ARM_EABI__
+		case PT_ARM_EXIDX:
+			obj->exidx_start = (void *)(uintptr_t)phdr->p_vaddr;
+			obj->exidx_sz = phdr->p_memsz;
 			break;
 #endif
 		}
@@ -433,6 +434,10 @@ _rtld_map_object_fallback(const char *path, int fd, const struct stat *sb)
 		obj->interp = (void *)(obj->relocbase + (Elf_Addr)(uintptr_t)obj->interp);
 	if (obj->phdr_loaded)
 		obj->phdr =  (void *)(obj->relocbase + (Elf_Addr)(uintptr_t)obj->phdr);
+#ifdef __ARM_EABI__
+	if (obj->exidx_start)
+		obj->exidx_start = (void *)(obj->relocbase + (Elf_Addr)(uintptr_t)obj->exidx_start);
+#endif
 
 	return obj;
 
@@ -462,5 +467,11 @@ protflags(int elfflags)
 #endif
 	if (elfflags & PF_X)
 		prot |= PROT_EXEC;
+#if defined(__minix)
+	/* Minix has to map it writable so we can do relocations
+	 * as we don't have mprotect() yet.
+	 */
+	prot |= PROT_WRITE;
+#endif /* defined(__minix) */
 	return prot;
 }

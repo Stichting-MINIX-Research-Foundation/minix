@@ -1,0 +1,78 @@
+$NetBSD: README,v 1.60 2013/05/02 12:09:40 kiyohara Exp $
+
+acorn26	arm	20000509	Acorn ARM2- and ARM3-based machines
+acorn32	arm	20011118	Acorn computers Ltd. ARM 6/7/SA based machines
+algor	mipsel,mips64el	20010528	Algorithmics, Ltd. MIPS evaluation boards
+alpha	alpha	19950213	Compaq (formerly Digital Equipment Corp.) Alpha
+amd64	x86_64	20010619	AMD's x86 64 bit architecture
+amiga	m68k	19930902	Commodore et al. Amiga
+amigappc	powerpc	20000525	Phase 5 Amiga
+arc	mipsel,mips64el	20000123	MIPS Advanced Risc Computing spec machines
+atari	m68k	19950326	Atari TT30, Falcon, and Hades
+bebox	powerpc	19971014	Be Inc. BeBox
+cats	arm	19981005	Chalice Technologies, CATS motherboard
+cesfic	m68k	20010514	FIC8234 VME processor board
+cobalt	mipsel,mips64el	20000319	Cobalt Networks Microservers
+dreamcast	sh3el	20010107	SEGA Dreamcast
+emips	mipseb	20110126	Machines based on Extensible MIPS
+epoc32	arm	20130502	32bit EPOC OS machines
+evbarm	armeb	20010905	ARM-based eval boards
+evbmips	mipseb,mipsel,mips64eb,mips64el	20020307	MIPS-based eval boards
+evbppc	powerpc,powerpc64	20021209	PowerPC-based eval boards
+evbsh3	sh3eb,sh3el	20010206	Hitachi SuperH(TM) sh3 and sh4 eval boards
+ews4800mips	mipseb	20051229	NEC's MIPS based EWS4800 workstations
+hp300	m68k	19930512	Hewlett Packard 300- and 400-series machines
+hp700	hppa	20020606	Hewlett Packard 700-series machines
+hpcarm	arm	20010220	ARM based handheld PCs
+hpcmips	mipsel	19990925	MIPS based handheld PCs
+hpcsh	sh3el	20010117	Hitachi SuperH(TM) based handheld PCs
+i386	i386	19930321	Intel/AMD etc. x86 processor line
+ia64	ia64	00000000	Intel Itanium/Itanium2 processor based workstations
+ibmnws	powerpc	00000000	IBM Network Station Thin Clients
+iyonix	arm	20040713	Castle Technology xscale based workstations
+landisk	sh3el	20060901	SH4 processor based NAS appliances by I-O DATA
+luna68k	m68k	20000105	LUNA product line of OMRON Tateisi Electronics
+mac68k	m68k	19930929	Apple Macintosh
+macppc	powerpc,powerpc64	19980515	Apple Power Macintosh and clones
+mipsco	mipseb	20000812	MIPS Corp Magnum 3000 computers
+mmeye	sh3eb	19990913	Hitachi SuperH(TM) computer controlled camera
+mvme68k	m68k	19950725	Motorola's VMEbus 68K based single board computers
+mvmeppc	powerpc	20020227	Motorola's PowerPC machines running older PPCBUG
+netwinder	arm	20010609	StrongARM based Netwinder machines
+news68k	m68k	19991209	Sony's m68k based NET WORK STATION
+newsmips	mipseb	19980218	Sony's MIPS based NET WORK STATION
+next68k	m68k	19980609	NeXT Computer's cubes and slabs
+ofppc	powerpc,powerpc64	19980528	Open Firmware based PowerPC machines
+pmax	mipsel,mips64el	19931012	Digital Equipment Corp. MIPS based machines
+prep	powerpc	20000229	PowerPC Reference Platform machines
+rs6000	powerpc	20071217	MCA-based IBM RS/6000 wokstations
+sandpoint	powerpc	20010211	Motorola Sandpoint based NAS systems
+sbmips	mipseb,mipsel,mips64eb,mips64el	20020306	Broadcom's SiByte processor evaluation boards
+sgimips	mipseb,mips64eb	20000614	MIPS based Silicon Graphics machines
+shark	arm	19960131	Digital Network Appliance Reference Design ("Shark")
+sparc	sparc	19931002	Sun Microsystems SPARC (sun4, sun4c, sun4m) 32 bit machines
+sparc64	sparc64/sparc	19980620	Sun Microsystems UltraSPARC 64 bit machines
+sun2	m68000	20010328	Sun m68010 based machines
+sun3	m68k	19930625	Sun m680[23]0 based machines
+vax	vax	19940802	Digital Equipment Corp. VAX machines
+x68k	m68k	19960505	Sharp X68000, X68030
+xen	xen	20040311	Xen virtual machine monitor
+zaurus	arm	20061217	Sharp Zaurus C7x0/860/1000/3x00 PDAs
+
+Generic cpu features shared among multiple ports
+arm:		ARM CPU based platform files
+hppa:		Hewlett Packard PA-RISC CPU based platform files
+m68k:		Motorola 680x0 CPU based platform files
+mips:		MIPS CPU based platform files
+powerpc:	PowerPC CPU based platform files
+sh3:		Hitachi SuperH(TM) sh3 and sh4 CPU based platform files
+sparc:		Sun Microsystems SPARC(TM) CPU based platform files
+x86:		Intel x86 based platform files.
+
+Generic architectural features shared among multiple ports
+hpc:		Handheld PC reference platform files
+sun68k:		Sun Microsystems Motorola 680x0 CPU based platform files
+
+Single port cpu families
+alpha:		Digital Equipment Alpha processor
+ia64:		Intel Itanium/Itanium2 processor

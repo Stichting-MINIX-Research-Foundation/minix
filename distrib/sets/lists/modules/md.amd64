@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.35 2012/10/13 19:42:02 alnsn Exp $
+# $NetBSD: md.amd64,v 1.38 2013/11/17 18:58:28 alnsn Exp $
 ./@MODULEDIR@/acpiacad				base-kernel-modules	kmod
 ./@MODULEDIR@/acpiacad/acpiacad.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/acpibat				base-kernel-modules	kmod
@@ -39,16 +39,18 @@
 ./@MODULEDIR@/auvitek/auvitek.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/azalia				base-kernel-modules	kmod
 ./@MODULEDIR@/azalia/azalia.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/bpfjit				base-kernel-modules	kmod,sljit
+./@MODULEDIR@/bpfjit/bpfjit.kmod		base-kernel-modules	kmod,sljit
 ./@MODULEDIR@/compat_linux			base-kernel-modules	kmod
 ./@MODULEDIR@/compat_linux/compat_linux.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/compat_linux32			base-kernel-modules	kmod
 ./@MODULEDIR@/compat_linux32/compat_linux32.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/compat_netbsd32			base-kernel-modules	kmod
 ./@MODULEDIR@/compat_netbsd32/compat_netbsd32.kmod	base-kernel-modules	kmod
-./@MODULEDIR@/coretemp				base-kernel-modules	kmod
-./@MODULEDIR@/coretemp/coretemp.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/coram				base-kernel-modules	kmod
 ./@MODULEDIR@/coram/coram.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/coretemp				base-kernel-modules	kmod
+./@MODULEDIR@/coretemp/coretemp.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/cx24227				base-kernel-modules	kmod
 ./@MODULEDIR@/cx24227/cx24227.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/cxdtv				base-kernel-modules	kmod
@@ -105,8 +107,8 @@
 ./@MODULEDIR@/powernow/powernow.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/pwdog				base-kernel-modules	kmod
 ./@MODULEDIR@/pwdog/pwdog.kmod			base-kernel-modules	kmod
-./@MODULEDIR@/sljit				base-kernel-modules	kmod
-./@MODULEDIR@/sljit/sljit.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/sljit				base-kernel-modules	kmod,sljit
+./@MODULEDIR@/sljit/sljit.kmod			base-kernel-modules	kmod,sljit
 ./@MODULEDIR@/syscallemu			base-kernel-modules	kmod
 ./@MODULEDIR@/syscallemu/syscallemu.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/thinkpad				base-kernel-modules	kmod

@@ -1,4 +1,4 @@
-.\" $NetBSD: ptsname.3,v 1.5 2008/04/30 13:10:51 martin Exp $
+.\" $NetBSD: ptsname.3,v 1.6 2012/10/19 10:44:34 apb Exp $
 .\"
 .\" Copyright (c) 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -85,7 +85,7 @@ The
 function is equivalent to:
 .Bd -literal
 	struct ptmget pm;
-	return ioctl(masterfd, TIOCPTSNAME, \*[Am]pm) == -1 ? NULL : pm.ps;
+	return ioctl(masterfd, TIOCPTSNAME, \*[Am]pm) == -1 ? NULL : pm.sn;
 .Ed
 .Sh SEE ALSO
 .Xr ioctl 2 ,

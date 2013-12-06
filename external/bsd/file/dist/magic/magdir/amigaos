@@ -1,6 +1,6 @@
 
 #------------------------------------------------------------------------------
-# $File: amigaos,v 1.14 2009/09/19 16:28:07 christos Exp $
+# $File: amigaos,v 1.15 2012/06/21 01:13:59 christos Exp $
 # amigaos:  file(1) magic for AmigaOS binary formats:
 
 #
@@ -63,3 +63,6 @@
 # From: Alex Beregszaszi <alex@fsn.hu>
 0	string		LZX		LZX compressed archive (Amiga)
 
+# From: Przemek Kramarczyk <pkramarczyk@gmail.com>
+0	string 		.KEY		AmigaDOS script
+0	string 		.key		AmigaDOS script

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.177 2012/09/15 17:33:28 plunky Exp $
+# $NetBSD: mi,v 1.185 2013/08/11 22:29:03 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -361,6 +361,7 @@
 ./usr/share/doc/html/postfix/mailq.1.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/master.5.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/master.8.html	misc-postfix-htmldoc	postfix,doc
+./usr/share/doc/html/postfix/memcache_table.5.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/motivation.html	misc-obsolete		obsolete
 ./usr/share/doc/html/postfix/mysql_table.5.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/newaliases.1.html	misc-postfix-htmldoc	postfix,doc
@@ -420,6 +421,21 @@
 ./usr/share/doc/html/postfix/verify.8.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/virtual.5.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/virtual.8.html	misc-postfix-htmldoc	postfix,doc
+./usr/share/doc/kyua-atf-compat			misc-kyua-doc
+./usr/share/doc/kyua-atf-compat/AUTHORS		misc-kyua-doc		doc,kyua
+./usr/share/doc/kyua-atf-compat/COPYING		misc-kyua-doc		doc,kyua
+./usr/share/doc/kyua-atf-compat/NEWS		misc-kyua-doc		doc,kyua
+./usr/share/doc/kyua-atf-compat/README		misc-kyua-doc		doc,kyua
+./usr/share/doc/kyua-cli			misc-kyua-doc
+./usr/share/doc/kyua-cli/AUTHORS		misc-kyua-doc		doc,kyua
+./usr/share/doc/kyua-cli/COPYING		misc-kyua-doc		doc,kyua
+./usr/share/doc/kyua-cli/NEWS			misc-kyua-doc		doc,kyua
+./usr/share/doc/kyua-cli/README			misc-kyua-doc		doc,kyua
+./usr/share/doc/kyua-testers			misc-kyua-doc
+./usr/share/doc/kyua-testers/AUTHORS		misc-kyua-doc		doc,kyua
+./usr/share/doc/kyua-testers/COPYING		misc-kyua-doc		doc,kyua
+./usr/share/doc/kyua-testers/NEWS		misc-kyua-doc		doc,kyua
+./usr/share/doc/kyua-testers/README		misc-kyua-doc		doc,kyua
 ./usr/share/doc/psd/00.contents			misc-psd-doc		doc
 ./usr/share/doc/psd/05.sysman/0.t		misc-psd-doc		doc
 ./usr/share/doc/psd/05.sysman/1.0.t		misc-psd-doc		doc
@@ -678,8 +694,10 @@
 ./usr/share/examples/asm/hello/Makefile		misc-asm-examples	share
 ./usr/share/examples/asm/hello/powerpc.s	misc-asm-examples	share
 ./usr/share/examples/atf			misc-atf-examples
-./usr/share/examples/atf/atf-run.hooks		misc-atf-examples	share,atf
-./usr/share/examples/atf/tests-results.css	misc-atf-examples	share,atf
+./usr/share/examples/atf/atf-run.hooks		misc-atf-examples	share,atf,!kyua
+./usr/share/examples/atf/atf-run.hooks		misc-obsolete		share,kyua,obsolete
+./usr/share/examples/atf/tests-results.css	misc-atf-examples	share,atf,!kyua
+./usr/share/examples/atf/tests-results.css	misc-obsolete		share,kyua,obsolete
 ./usr/share/examples/dhcp/dhcpd.conf		misc-dhcpd-examples	share
 ./usr/share/examples/disktab/disktab		misc-sys-examples	share
 ./usr/share/examples/emul/linux/etc/LINUX_MAKEDEV	misc-sys-examples	share
@@ -745,10 +763,12 @@
 ./usr/share/examples/isdn/isdnd.rates.UK.BT	misc-isdn-examples	share
 ./usr/share/examples/isdn/isdnd.rc.sample	misc-isdn-examples	share
 ./usr/share/examples/kerberos/krb5.conf		misc-krb5-examples	kerberos,share
+./usr/share/examples/kyua-cli			misc-kyua-examples
+./usr/share/examples/kyua-cli/Kyuafile.top	misc-kyua-examples	share,kyua
+./usr/share/examples/kyua-cli/kyua.conf		misc-kyua-examples	share,kyua
 ./usr/share/examples/libsaslc			misc-libsaslc-examples	share
 ./usr/share/examples/libsaslc/README		misc-libsaslc-examples	share
 ./usr/share/examples/libsaslc/mech		misc-libsaslc-examples	share
-./usr/share/examples/libsaslc/saslc.conf	misc-libsaslc-examples	share
 ./usr/share/examples/libsaslc/mech/ANONYMOUS.conf	misc-libsaslc-examples	share
 ./usr/share/examples/libsaslc/mech/CRAM-MD5.conf	misc-libsaslc-examples	share
 ./usr/share/examples/libsaslc/mech/DIGEST-MD5.conf	misc-libsaslc-examples	share
@@ -756,6 +776,12 @@
 ./usr/share/examples/libsaslc/mech/GSSAPI.conf	misc-libsaslc-examples	share
 ./usr/share/examples/libsaslc/mech/LOGIN.conf	misc-libsaslc-examples	share
 ./usr/share/examples/libsaslc/mech/PLAIN.conf	misc-libsaslc-examples	share
+./usr/share/examples/libsaslc/saslc.conf	misc-libsaslc-examples	share
+./usr/share/examples/lutok			misc-lutok-examples
+./usr/share/examples/lutok/bindings.cpp		misc-lutok-examples	share,kyua
+./usr/share/examples/lutok/hello.cpp		misc-lutok-examples	share,kyua
+./usr/share/examples/lutok/interpreter.cpp	misc-lutok-examples	share,kyua
+./usr/share/examples/lutok/raii.cpp		misc-lutok-examples	share,kyua
 ./usr/share/examples/mount_portal/advanced.1	misc-sys-examples	share
 ./usr/share/examples/mount_portal/advanced.1.conf	misc-sys-examples	share
 ./usr/share/examples/mount_portal/cvs.1		misc-sys-examples	share
@@ -806,6 +832,7 @@
 ./usr/share/examples/postfix/LMTP_README	misc-obsolete	obsolete
 ./usr/share/examples/postfix/LOCAL_RECIPIENT_README	misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/MAILDROP_README	misc-postfix-examples	postfix,doc
+./usr/share/examples/postfix/MEMCACHE_README	misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/MILTER_README	misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/MULTI_INSTANCE_README	misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/MYSQL_README	misc-postfix-examples	postfix,doc
@@ -936,8 +963,11 @@
 ./usr/share/postfix				misc-obsolete		obsolete
 ./usr/share/xml					misc-xml-share
 ./usr/share/xml/atf				misc-atf-share
-./usr/share/xml/atf/tests-results.dtd		misc-atf-share		share,atf
-./usr/share/xml/catalog				misc-xml-share		share
+./usr/share/xml/atf/tests-results.dtd		misc-atf-share		share,atf,!kyua
+./usr/share/xml/atf/tests-results.dtd		misc-obsolete		share,kyua,obsolete
+./usr/share/xml/catalog				misc-obsolete		share,kyua,obsolete
+./usr/share/xml/catalog				misc-xml-share		share,!kyua
 ./usr/share/xsl					misc-xml-share
 ./usr/share/xsl/atf				misc-atf-share
-./usr/share/xsl/atf/tests-results.xsl		misc-atf-share		share,atf
+./usr/share/xsl/atf/tests-results.xsl		misc-atf-share		share,atf,!kyua
+./usr/share/xsl/atf/tests-results.xsl		misc-obsolete		share,kyua,obsolete

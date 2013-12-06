@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.52 2012/04/20 22:23:24 rmind Exp $	*/
+/*	$NetBSD: pmap.h,v 1.55 2013/10/17 20:59:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -140,9 +140,6 @@ extern struct pool_cache pmap_pdp_cache;
  * pm_lock is the same as the lock for vm object 0.  Changes to
  * the other objects may only be made if that lock has been taken
  * (the other object locks are only used when uvm_pagealloc is called)
- *
- * XXX If we ever support processor numbers higher than 31, we'll have
- * XXX to rethink the CPU mask.
  */
 
 struct pmap {
@@ -222,7 +219,7 @@ extern long nkptp[PTP_LEVELS];
 
 #define pmap_clear_modify(pg)		pmap_clear_attrs(pg, PG_M)
 #define pmap_clear_reference(pg)	pmap_clear_attrs(pg, PG_U)
-#define pmap_copy(DP,SP,D,L,S)
+#define pmap_copy(DP,SP,D,L,S)		__USE(L)
 #define pmap_is_modified(pg)		pmap_test_attrs(pg, PG_M)
 #define pmap_is_referenced(pg)		pmap_test_attrs(pg, PG_U)
 #define pmap_move(DP,SP,D,L,S)
@@ -255,6 +252,7 @@ void		pmap_load(void);
 paddr_t		pmap_init_tmp_pgtbl(paddr_t);
 void		pmap_remove_all(struct pmap *);
 void		pmap_ldt_sync(struct pmap *);
+void		pmap_kremove_local(vaddr_t, vsize_t);
 
 void		pmap_emap_enter(vaddr_t, paddr_t, vm_prot_t);
 void		pmap_emap_remove(vaddr_t, vsize_t);

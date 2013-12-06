@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_utf7.c,v 1.5 2006/08/23 12:57:24 tnozaki Exp $	*/
+/*	$NetBSD: citrus_utf7.c,v 1.6 2013/05/28 16:57:56 joerg Exp $	*/
 
 /*-
  * Copyright (c)2004, 2005 Citrus Project,
@@ -29,7 +29,7 @@
  
 #include <sys/cdefs.h>
 #if defined(LIB_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_utf7.c,v 1.5 2006/08/23 12:57:24 tnozaki Exp $");
+__RCSID("$NetBSD: citrus_utf7.c,v 1.6 2013/05/28 16:57:56 joerg Exp $");
 #endif /* LIB_SCCS and not lint */
 
 #include <assert.h>
@@ -79,8 +79,10 @@ typedef struct {
 		_UTF7State	s_mbrtowc;
 		_UTF7State	s_mbtowc;
 		_UTF7State	s_mbsrtowcs;
+		_UTF7State	s_mbsnrtowcs;
 		_UTF7State	s_wcrtomb;
 		_UTF7State	s_wcsrtombs;
+		_UTF7State	s_wcsnrtombs;
 		_UTF7State	s_wctomb;
 	} states;
 } _UTF7CTypeInfo;

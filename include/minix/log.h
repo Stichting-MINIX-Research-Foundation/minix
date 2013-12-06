@@ -91,14 +91,14 @@ default_log(struct log *driver,
 	}
 	/* If the wanted level is debug also display line/method information */
 	if (driver->log_level >= LEVEL_DEBUG) {
-		fprintf(stderr, "%s(%s):%s+%d(%s):", driver->name,
+		printf("%s(%s):%s+%d(%s):", driver->name,
 		    level_string[level], file, line, function);
 	} else {
-		fprintf(stderr, "%s(%s)", driver->name, level_string[level]);
+		printf("%s(%s)", driver->name, level_string[level]);
 	}
 
 	va_start(args, fmt);
-	vfprintf(stderr, fmt, args);
+	vprintf(fmt, args);
 	va_end(args);
 }
 

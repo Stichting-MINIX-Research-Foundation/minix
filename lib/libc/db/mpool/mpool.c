@@ -1,4 +1,4 @@
-/*	$NetBSD: mpool.c,v 1.19 2009/04/22 18:44:06 christos Exp $	*/
+/*	$NetBSD: mpool.c,v 1.20 2013/11/22 16:25:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mpool.c,v 1.19 2009/04/22 18:44:06 christos Exp $");
+__RCSID("$NetBSD: mpool.c,v 1.20 2013/11/22 16:25:51 christos Exp $");
 
 #include "namespace.h"
 #include <sys/queue.h>
@@ -93,9 +93,9 @@ mpool_open(void *key, int fd, pgno_t pagesize, pgno_t maxcache)
 	/* Allocate and initialize the MPOOL cookie. */
 	if ((mp = (MPOOL *)calloc(1, sizeof(MPOOL))) == NULL)
 		return (NULL);
-	CIRCLEQ_INIT(&mp->lqh);
+	TAILQ_INIT(&mp->lqh);
 	for (entry = 0; entry < HASHSIZE; ++entry)
-		CIRCLEQ_INIT(&mp->hqh[entry]);
+		TAILQ_INIT(&mp->hqh[entry]);
 	mp->maxcache = maxcache;
 	mp->npages = (pgno_t)(sb.st_size / pagesize);
 	mp->pagesize = pagesize;
@@ -144,8 +144,8 @@ mpool_new( MPOOL *mp, pgno_t *pgnoaddr)
 	bp->flags = MPOOL_PINNED;
 
 	head = &mp->hqh[HASHKEY(bp->pgno)];
-	CIRCLEQ_INSERT_HEAD(head, bp, hq);
-	CIRCLEQ_INSERT_TAIL(&mp->lqh, bp, q);
+	TAILQ_INSERT_HEAD(head, bp, hq);
+	TAILQ_INSERT_TAIL(&mp->lqh, bp, q);
 	return (bp->page);
 }
 
@@ -186,10 +186,10 @@ mpool_get(MPOOL *mp, pgno_t pgno, u_int flags)
 		 * of the lru chain.
 		 */
 		head = &mp->hqh[HASHKEY(bp->pgno)];
-		CIRCLEQ_REMOVE(head, bp, hq);
-		CIRCLEQ_INSERT_HEAD(head, bp, hq);
-		CIRCLEQ_REMOVE(&mp->lqh, bp, q);
-		CIRCLEQ_INSERT_TAIL(&mp->lqh, bp, q);
+		TAILQ_REMOVE(head, bp, hq);
+		TAILQ_INSERT_HEAD(head, bp, hq);
+		TAILQ_REMOVE(&mp->lqh, bp, q);
+		TAILQ_INSERT_TAIL(&mp->lqh, bp, q);
 
 		/* Return a pinned page. */
 		bp->flags |= MPOOL_PINNED;
@@ -220,8 +220,8 @@ mpool_get(MPOOL *mp, pgno_t pgno, u_int flags)
 	 * of the lru chain.
 	 */
 	head = &mp->hqh[HASHKEY(bp->pgno)];
-	CIRCLEQ_INSERT_HEAD(head, bp, hq);
-	CIRCLEQ_INSERT_TAIL(&mp->lqh, bp, q);
+	TAILQ_INSERT_HEAD(head, bp, hq);
+	TAILQ_INSERT_TAIL(&mp->lqh, bp, q);
 
 	/* Run through the user's filter. */
 	if (mp->pgin != NULL)
@@ -266,8 +266,9 @@ mpool_close(MPOOL *mp)
 	BKT *bp;
 
 	/* Free up any space allocated to the lru pages. */
-	while ((bp = mp->lqh.cqh_first) != (void *)&mp->lqh) {
-		CIRCLEQ_REMOVE(&mp->lqh, mp->lqh.cqh_first, q);
+	while (!TAILQ_EMPTY(&mp->lqh)) {
+		bp = TAILQ_FIRST(&mp->lqh);
+		TAILQ_REMOVE(&mp->lqh, bp, q);
 		free(bp);
 	}
 
@@ -286,8 +287,7 @@ mpool_sync(MPOOL *mp)
 	BKT *bp;
 
 	/* Walk the lru chain, flushing any dirty pages to disk. */
-	for (bp = mp->lqh.cqh_first;
-	    bp != (void *)&mp->lqh; bp = bp->q.cqe_next)
+	TAILQ_FOREACH(bp, &mp->lqh, q)
 		if (bp->flags & MPOOL_DIRTY &&
 		    mpool_write(mp, bp) == RET_ERROR)
 			return (RET_ERROR);
@@ -316,8 +316,7 @@ mpool_bkt(MPOOL *mp)
 	 * off any lists.  If we don't find anything we grow the cache anyway.
 	 * The cache never shrinks.
 	 */
-	for (bp = mp->lqh.cqh_first;
-	    bp != (void *)&mp->lqh; bp = bp->q.cqe_next)
+	TAILQ_FOREACH(bp, &mp->lqh, q)
 		if (!(bp->flags & MPOOL_PINNED)) {
 			/* Flush if dirty. */
 			if (bp->flags & MPOOL_DIRTY &&
@@ -328,8 +327,8 @@ mpool_bkt(MPOOL *mp)
 #endif
 			/* Remove from the hash and lru queues. */
 			head = &mp->hqh[HASHKEY(bp->pgno)];
-			CIRCLEQ_REMOVE(head, bp, hq);
-			CIRCLEQ_REMOVE(&mp->lqh, bp, q);
+			TAILQ_REMOVE(head, bp, hq);
+			TAILQ_REMOVE(&mp->lqh, bp, q);
 #ifdef DEBUG
 			{
 				void *spage = bp->page;
@@ -399,7 +398,7 @@ mpool_look(MPOOL *mp, pgno_t pgno)
 	BKT *bp;
 
 	head = &mp->hqh[HASHKEY(pgno)];
-	for (bp = head->cqh_first; bp != (void *)head; bp = bp->hq.cqe_next)
+	TAILQ_FOREACH(bp, head, hq)
 		if (bp->pgno == pgno) {
 #ifdef STATISTICS
 			++mp->cachehit;
@@ -443,8 +442,7 @@ mpool_stat(mp)
 
 	sep = "";
 	cnt = 0;
-	for (bp = mp->lqh.cqh_first;
-	    bp != (void *)&mp->lqh; bp = bp->q.cqe_next) {
+	TAILQ_FOREACH(bp, &mp->lqh, q) {
 		(void)fprintf(stderr, "%s%d", sep, bp->pgno);
 		if (bp->flags & MPOOL_DIRTY)
 			(void)fprintf(stderr, "d");

@@ -92,11 +92,11 @@ main(int argc, char *argv[])
 			nflag = 1;
 			break;
 		case 'd':
-#ifndef __minix
+#if !defined(__minix)
 			rflag = 1;
 			tval = parsedate(optarg, NULL, NULL);
 			if (tval == -1) 
-#endif
+#endif /* !defined(__minix) */
 badarg:				 errx(EXIT_FAILURE,
 				    "Cannot parse `%s'", optarg);
 			break;
@@ -311,19 +311,12 @@ setthetime(const char *p)
 	/* set the time */
 	if (nflag || netsettime(new_time)) {
 		logwtmp("|", "date", "");
-#if HAVE_ADJTIME
 		if (aflag) {
 			tv.tv_sec = new_time - tval;
 			tv.tv_usec = 0;
 			if (adjtime(&tv, NULL))
 				err(EXIT_FAILURE, "adjtime");
-		}
-#else
-		if (aflag) {
-			err(EXIT_FAILURE, "no adjtime");
-		}
-#endif
-		else {
+		} else {
 			tval = new_time;
 			tv.tv_sec = tval;
 			tv.tv_usec = 0;

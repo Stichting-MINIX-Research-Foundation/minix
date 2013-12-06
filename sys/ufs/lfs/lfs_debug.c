@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_debug.c,v 1.39 2011/07/17 20:54:54 joerg Exp $	*/
+/*	$NetBSD: lfs_debug.c,v 1.43 2013/06/18 18:18:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_debug.c,v 1.39 2011/07/17 20:54:54 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_debug.c,v 1.43 2013/06/18 18:18:58 christos Exp $");
 
 #ifdef DEBUG
 
@@ -73,7 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_debug.c,v 1.39 2011/07/17 20:54:54 joerg Exp $")
 #include <sys/syslog.h>
 #include <sys/proc.h>
 
-#include <ufs/ufs/inode.h>
+#include <ufs/lfs/ulfs_inode.h>
 #include <ufs/lfs/lfs.h>
 #include <ufs/lfs/lfs_extern.h>
 
@@ -188,7 +188,7 @@ lfs_dump_super(struct lfs *lfsp)
 }
 
 void
-lfs_dump_dinode(struct ufs1_dinode *dip)
+lfs_dump_dinode(struct ulfs1_dinode *dip)
 {
 	int i;
 
@@ -201,12 +201,12 @@ lfs_dump_dinode(struct ufs1_dinode *dip)
 	       "blocks ", dip->di_blocks);
 	printf("inum  %d\n", dip->di_inumber);
 	printf("Direct Addresses\n");
-	for (i = 0; i < NDADDR; i++) {
+	for (i = 0; i < ULFS_NDADDR; i++) {
 		printf("\t%x", dip->di_db[i]);
 		if ((i % 6) == 5)
 			printf("\n");
 	}
-	for (i = 0; i < NIADDR; i++)
+	for (i = 0; i < ULFS_NIADDR; i++)
 		printf("\t%x", dip->di_ib[i]);
 	printf("\n");
 }
@@ -240,7 +240,7 @@ lfs_check_segsum(struct lfs *fs, struct segment *sp, char *file, int line)
 		/* amount taken up by FINFOs */
 		- ((char *)&(sp->fip->fi_blocks[sp->fip->fi_nblocks]) - (char *)(sp->segsum))
 			/* amount taken up by inode blocks */
-			- sizeof(int32_t)*((sp->ninodes+INOPB(fs)-1) / INOPB(fs));
+			- sizeof(int32_t)*((sp->ninodes+LFS_INOPB(fs)-1) / LFS_INOPB(fs));
 #if 0
 	if (actual - sp->sum_bytes_left < offset)
 	{
@@ -259,7 +259,7 @@ lfs_check_segsum(struct lfs *fs, struct segment *sp, char *file, int line)
 #endif
 	if (sp->sum_bytes_left > 0
 	   && ((char *)(sp->segsum))[fs->lfs_sumsize
-				     - sizeof(int32_t) * ((sp->ninodes+INOPB(fs)-1) / INOPB(fs))
+				     - sizeof(int32_t) * ((sp->ninodes+LFS_INOPB(fs)-1) / LFS_INOPB(fs))
 				     - sp->sum_bytes_left] != '\0') {
 		printf("%s:%d: warning: segsum overwrite at %d (-%d => %d)\n",
 		       file, line, sp->sum_bytes_left,
@@ -299,7 +299,7 @@ lfs_check_bpp(struct lfs *fs, struct segment *sp, char *file, int line)
 				       (*bpp)->b_blkno);
 			}
 		}
-		blkno += fsbtodb(fs, btofsb(fs, (*bpp)->b_bcount));
+		blkno += LFS_FSBTODB(fs, lfs_btofsb(fs, (*bpp)->b_bcount));
 	}
 }
 

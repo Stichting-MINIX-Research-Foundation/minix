@@ -57,6 +57,10 @@ __RCSID("$NetBSD: cdbr.c,v 1.4 2012/09/27 00:37:43 joerg Exp $");
 #include <string.h>
 #include <unistd.h>
 
+#if defined(__minix) && !defined(MAP_SHARED)
+#define MAP_SHARED MAP_PRIVATE /* LSC: We lose some memory, but it's OK as this is RO. */
+#endif /* defined(__minix) && !defined(MAP_SHARED) */
+
 #ifdef __weak_alias
 __weak_alias(cdbr_close,_cdbr_close)
 __weak_alias(cdbr_find,_cdbr_find)
@@ -132,21 +136,7 @@ cdbr_open(const char *path, int flags)
 		cdbr->index_size = 4;
 
 	cdbr->mmap_size = (size_t)sb.st_size;
-#ifdef __minix
-	if(!(cdbr->mmap_base = malloc(cdbr->mmap_size))) {
-		free(cdbr);
-		return NULL;
-	}
-
-	if ((size_t)read(fd, cdbr->mmap_base, cdbr->mmap_size) != cdbr->mmap_size)
-	{
-		free(cdbr->mmap_base);
-		free(cdbr);
-		return NULL;
-	}
-#else /* !__minix */
 	cdbr->mmap_base = mmap(NULL, cdbr->mmap_size, PROT_READ, MAP_FILE|MAP_SHARED, fd, 0);
-#endif /* __minix */
 	close(fd);
 
 	if (cdbr->mmap_base == MAP_FAILED) {
@@ -269,10 +259,6 @@ cdbr_find(struct cdbr *cdbr, const void *key, size_t key_len,
 void
 cdbr_close(struct cdbr *cdbr)
 {
-#ifdef __minix
-	free(cdbr->mmap_base);
-#else
 	munmap(cdbr->mmap_base, cdbr->mmap_size);
-#endif
 	free(cdbr);
 }

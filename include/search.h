@@ -1,4 +1,4 @@
-/*	$NetBSD: search.h,v 1.19 2011/09/14 23:34:26 christos Exp $	*/
+/*	$NetBSD: search.h,v 1.20 2013/04/27 21:35:25 joerg Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@NetBSD.org>
@@ -9,6 +9,7 @@
 #define _SEARCH_H_
 
 #include <sys/cdefs.h>
+#include <sys/featuretest.h>
 #include <machine/ansi.h>
 
 #ifdef	_BSD_SIZE_T_

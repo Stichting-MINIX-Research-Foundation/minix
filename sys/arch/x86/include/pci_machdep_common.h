@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep_common.h,v 1.9 2012/06/15 13:58:34 yamt Exp $	*/
+/*	$NetBSD: pci_machdep_common.h,v 1.12 2013/07/31 14:05:33 soren Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -42,7 +42,7 @@
 #endif
 
 /*
- * i386-specific PCI structure and type definitions.
+ * x86-specific PCI structure and type definitions.
  * NOT TO BE USED DIRECTLY BY MACHINE INDEPENDENT CODE.
  *
  * Configuration tag; created from a {bus,device,function} triplet by
@@ -90,10 +90,9 @@ struct pci_chipset_tag {
 };
 
 /*
- * i386-specific PCI variables and functions.
+ * x86-specific PCI variables and functions.
  * NOT TO BE USED DIRECTLY BY MACHINE INDEPENDENT CODE.
  */
-int		pci_bus_flags(void);
 int		pci_mode_detect(void);
 void		pci_mode_set(int);
 
@@ -139,11 +138,11 @@ int		pchb_get_bus_number(pci_chipset_tag_t, pcitag_t);
 void pci_device_foreach(pci_chipset_tag_t, int,
 			void (*)(pci_chipset_tag_t, pcitag_t, void*),
 			void *);
-        
+
 void pci_device_foreach_min(pci_chipset_tag_t, int, int,
 			    void (*)(pci_chipset_tag_t, pcitag_t, void*),
 			    void *);
-        
+
 void pci_bridge_foreach(pci_chipset_tag_t, int, int,
 	void (*) (pci_chipset_tag_t, pcitag_t, void *), void *);
 

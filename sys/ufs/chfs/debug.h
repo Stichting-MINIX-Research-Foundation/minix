@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.h,v 1.1 2011/11/24 15:51:32 ahoka Exp $	*/
+/*	$NetBSD: debug.h,v 1.2 2012/04/12 15:31:01 ttoth Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -28,19 +28,6 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- */
-
-/*
- * XipFFS -- Xip Flash File System
- *
- * Copyright (C) 2009  Ferenc Havasi <havasi@inf.u-szeged.hu>,
- *                     Zoltan Sogor <weth@inf.u-szeged.hu>,
- *                     ...
- *                     University of Szeged, Hungary
- *
- *
- * For licensing information, see the file 'LICENCE' in this directory.
- *
  */
 
 #ifndef __CHFS_DEBUG_H__

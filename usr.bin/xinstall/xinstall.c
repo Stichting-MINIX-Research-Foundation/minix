@@ -384,14 +384,14 @@ main(int argc, char *argv[])
 		 * off the append/immutable bits -- if we fail, go ahead,
 		 * it might work.
 		 */
-#ifndef __minix
+#if !defined(__minix)
 #if ! HAVE_NBTOOL_CONFIG_H
 #define	NOCHANGEBITS	(UF_IMMUTABLE | UF_APPEND | SF_IMMUTABLE | SF_APPEND)
 		if (to_sb.st_flags & NOCHANGEBITS)
 			(void)chflags(to_name,
 			    to_sb.st_flags & ~(NOCHANGEBITS));
 #endif
-#endif
+#endif /* !defined(__minix) */
 		if (dobackup)
 			backup(to_name);
 		else if (!dorename)
@@ -671,13 +671,13 @@ install(char *from_name, char *to_name, u_int flags)
 	 * off the append/immutable bits -- if we fail, go ahead,
 	 * it might work.
 	 */
-#ifndef __minix
+#if !defined(__minix)
 #if ! HAVE_NBTOOL_CONFIG_H
 	if (stat(to_name, &to_sb) == 0 &&
 	    to_sb.st_flags & (NOCHANGEBITS))
 		(void)chflags(to_name, to_sb.st_flags & ~(NOCHANGEBITS));
 #endif
-#endif
+#endif /* !defined(__minix) */
 	if (dorename) {
 		(void)snprintf(tmpl, sizeof(tmpl), "%s.inst.XXXXXX", to_name);
 		oto_name = to_name;
@@ -793,7 +793,7 @@ install(char *from_name, char *to_name, u_int flags)
 	 * If provided a set of flags, set them, otherwise, preserve the
 	 * flags, except for the dump flag.
 	 */
-#ifndef __minix
+#if !defined(__minix)
 #if ! HAVE_NBTOOL_CONFIG_H
 	if (!dounpriv && chflags(to_name,
 	    flags & SETFLAGS ? fileflags : from_sb.st_flags & ~UF_NODUMP) == -1)
@@ -802,7 +802,7 @@ install(char *from_name, char *to_name, u_int flags)
 			warn("%s: chflags", to_name);
 	}
 #endif
-#endif
+#endif /* !defined(__minix) */
 
 	metadata_log(to_name, "file", tv, NULL, digestresult, size);
 	free(digestresult);
@@ -819,9 +819,9 @@ copy(int from_fd, char *from_name, int to_fd, char *to_name, off_t size)
 {
 	ssize_t	nr, nw;
 	int	serrno;
-#ifndef __minix
+#if !defined(__minix)
 	u_char	*p;
-#endif
+#endif /* !defined(__minix) */
 	u_char	buf[MAXBSIZE];
 	MD5_CTX		ctxMD5;
 	RMD160_CTX	ctxRMD160;
@@ -868,7 +868,7 @@ copy(int from_fd, char *from_name, int to_fd, char *to_name, off_t size)
 		 */
 
 		if (size <= 8 * 1048576) {
-#ifdef __minix
+#if defined(__minix)
 			goto mmap_failed;
 #else
 			if ((p = mmap(NULL, (size_t)size, PROT_READ,
@@ -911,7 +911,7 @@ copy(int from_fd, char *from_name, int to_fd, char *to_name, off_t size)
 				break;
 			}
 			(void)munmap(p, size);
-#endif
+#endif /* defined(__minix) */
 		} else {
  mmap_failed:
 			while ((nr = read(from_fd, buf, sizeof(buf))) > 0) {

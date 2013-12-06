@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.59 2012/09/30 05:08:08 dholland Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.61 2012/10/31 10:17:34 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -70,10 +70,10 @@ struct ether_addr {
 	uint8_t ether_addr_octet[ETHER_ADDR_LEN];
 } __packed;
 
-#ifdef __minix
+#if defined(__minix)
 #define ea_addr ether_addr_octet
 typedef struct ether_addr ether_addr_t;
-#endif
+#endif /* defined(__minix) */
 
 /*
  * Structure of a 10Mb/s Ethernet header.
@@ -158,7 +158,7 @@ struct ethercom;
 
 typedef int (*ether_cb_t)(struct ethercom *);
 
-#ifndef __minix
+#if !defined(__minix)
 /*
  * Structure shared between the ethernet driver modules and
  * the multicast list code.  For example, each ec_softc or il_softc
@@ -188,11 +188,26 @@ struct ethercom {
 	struct	mowner ec_tx_mowner;		/* mbufs transmitted */
 #endif
 };
-#endif
+#endif /* !defined(__minix) */
 
 #define	ETHERCAP_VLAN_MTU	0x00000001	/* VLAN-compatible MTU */
 #define	ETHERCAP_VLAN_HWTAGGING	0x00000002	/* hardware VLAN tag support */
 #define	ETHERCAP_JUMBO_MTU	0x00000004	/* 9000 byte MTU supported */
+
+#if !defined(__minix)
+#define	ECCAPBITS		\
+	"\020"			\
+	"\1VLAN_MTU"		\
+	"\2VLAN_HWTAGGING"	\
+	"\3JUMBO_MTU"
+
+/* ioctl() for Ethernet capabilities */
+struct eccapreq {
+	char		eccr_name[IFNAMSIZ];	/* if name, e.g. "en0" */
+	int		eccr_capabilities;	/* supported capabiliites */
+	int		eccr_capenable;		/* capabilities enabled */
+};
+#endif /* !defined(__minix) */
 
 #ifdef	_KERNEL
 extern const uint8_t etherbroadcastaddr[ETHER_ADDR_LEN];
@@ -205,9 +220,10 @@ int	ether_ioctl(struct ifnet *, u_long, void *);
 int	ether_addmulti(const struct sockaddr *, struct ethercom *);
 int	ether_delmulti(const struct sockaddr *, struct ethercom *);
 int	ether_multiaddr(const struct sockaddr *, uint8_t[], uint8_t[]);
+void    ether_input(struct ifnet *, struct mbuf *);
 #endif /* _KERNEL */
 
-#ifndef __minix
+#if !defined(__minix)
 /*
  * Ethernet multicast address structure.  There is one of these for each
  * multicast address or range of multicast addresses that we are supposed
@@ -220,7 +236,7 @@ struct ether_multi {
 	u_int	 enm_refcount;		/* no. claims to this addr/range */
 	LIST_ENTRY(ether_multi) enm_list;
 };
-#endif
+#endif /* !defined(__minix) */
 
 /*
  * Structure used by macros below to remember position when stepping through

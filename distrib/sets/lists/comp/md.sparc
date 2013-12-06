@@ -1,5 +1,7 @@
-# $NetBSD: md.sparc,v 1.76 2011/07/17 20:54:31 joerg Exp $
+# $NetBSD: md.sparc,v 1.82 2013/11/06 00:53:39 mrg Exp $
 ./usr/include/gcc-4.5/tgmath.h			comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.8/tgmath.h			comp-c-include		gcccmds,gcc=48
+./usr/include/gcc-4.8/visintrin.h		comp-c-include		gcccmds,gcc=48
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sparc				comp-c-include
 ./usr/include/sparc/_G_config.h			comp-obsolete		obsolete
@@ -57,7 +59,9 @@
 ./usr/include/sparc/rwlock.h			comp-c-include
 ./usr/include/sparc/setjmp.h			comp-c-include
 ./usr/include/sparc/signal.h			comp-c-include
+./usr/include/sparc/sljitarch.h			comp-c-include
 ./usr/include/sparc/stdarg.h			comp-obsolete		obsolete
+./usr/include/sparc/sxreg.h			comp-c-include
 ./usr/include/sparc/tctrl.h			comp-c-include
 ./usr/include/sparc/trap.h			comp-c-include
 ./usr/include/sparc/types.h			comp-c-include
@@ -95,12 +99,12 @@
 ./usr/include/sparc64/ieee.h			comp-c-include
 ./usr/include/sparc64/ieeefp.h			comp-c-include
 ./usr/include/sparc64/instr.h			comp-c-include
-./usr/include/sparc64/intr.h			comp-c-include
 ./usr/include/sparc64/int_const.h		comp-c-include
 ./usr/include/sparc64/int_fmtio.h		comp-c-include
 ./usr/include/sparc64/int_limits.h		comp-c-include
 ./usr/include/sparc64/int_mwgwtypes.h		comp-c-include
 ./usr/include/sparc64/int_types.h		comp-c-include
+./usr/include/sparc64/intr.h			comp-c-include
 ./usr/include/sparc64/joystick.h		comp-c-include
 ./usr/include/sparc64/kbd.h			comp-c-include
 ./usr/include/sparc64/kbio.h			comp-c-include
@@ -136,12 +140,3 @@
 ./usr/include/sparc64/vuid_event.h		comp-c-include
 ./usr/include/sparc64/wchar_limits.h		comp-c-include
 ./usr/include/sparc64/z8530var.h		comp-c-include
-./usr/libdata/debug/sbin/edlabel.debug		comp-sysutil-debug	obsolete
-./usr/libdata/debug/sbin/ldconfig.debug		comp-sysutil-debug	debug,pic
-./usr/libdata/debug/usr/bin/fdformat.debug	comp-util-debug		debug
-./usr/libdata/debug/usr/lib/libsparc_v8.so.0.0.debug	comp-sys-debug	debug,pic
-./usr/libdata/debug/usr/sbin/apm.debug		comp-sysutil-debug	debug
-./usr/libdata/debug/usr/sbin/apmd.debug		comp-sysutil-debug	debug
-./usr/libdata/debug/usr/sbin/eeprom.debug	comp-sysutil-debug	debug
-./usr/libdata/debug/usr/sbin/ofctl.debug	comp-sysutil-debug	debug
-./usr/libdata/debug/usr/sbin/tadpolectl.debug	comp-sysutil-debug	debug

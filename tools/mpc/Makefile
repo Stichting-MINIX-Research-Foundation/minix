@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.2 2012/04/15 08:37:32 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2013/11/28 12:08:57 mrg Exp $
 #
 
-GNUHOSTDIST=	${.CURDIR}/../../external/lgpl2/mpc/dist
+GNUHOSTDIST=	${.CURDIR}/../../external/lgpl3/mpc/dist
 
 CONFIGURE_ARGS+=	--with-gmp=${TOOLDIR:Q} \
 			--with-mpfr=${TOOLDIR:Q}

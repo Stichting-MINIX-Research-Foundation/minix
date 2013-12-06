@@ -33,6 +33,7 @@
 #define UTILS_CMDLINE_EXCEPTIONS_HPP
 
 #include <stdexcept>
+#include <string>
 
 namespace utils {
 namespace cmdline {

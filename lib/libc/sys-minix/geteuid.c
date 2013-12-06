@@ -5,10 +5,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#ifdef __weak_alias
-__weak_alias(geteuid, _geteuid)
-#endif
-
 uid_t geteuid(void)
 {
   message m;

@@ -1,4 +1,4 @@
-.\"	$NetBSD: chflags.2,v 1.27 2011/08/06 11:28:24 jruoho Exp $
+.\"	$NetBSD: chflags.2,v 1.28 2013/06/08 06:05:03 kardel Exp $
 .\"
 .\" Copyright (c) 1989, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -98,8 +98,6 @@ The
 and
 .Dv SF_APPEND
 flags may only be set or unset by the super-user.
-Attempts by the non-super-user to set the super-user only flags
-are silently ignored.
 These flags may be set at any time, but normally may only be unset when
 the system is in single-user mode.
 (See

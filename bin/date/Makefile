@@ -7,9 +7,6 @@ DPADD+=	${LIBUTIL}
 LDADD+=	-lutil
 CPPFLAGS+=-I${.CURDIR}
 
-TZDIR=  /usr/share/zoneinfo
-CPPFLAGS+= -DHAVE_ADJTIME=0 -DTZDIR=\"$(TZDIR)\"
-
 COPTS.date.c = -Wno-format-nonliteral
 
 .include <bsd.prog.mk>

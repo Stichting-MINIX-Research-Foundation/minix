@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_Ovfork.S,v 1.1 2005/10/16 17:27:50 christos Exp $	*/
+/*	$NetBSD: compat_Ovfork.S,v 1.3 2013/08/19 22:11:50 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -43,14 +43,12 @@ WARN_REFERENCES(vfork, \
  * r1 == 0 in parent process, r1 == 1 in child process.
  * r0 == pid of child in parent, r0 == pid of parent in child.
  */
-	.text
-	.align	0
-
 ENTRY(vfork)
-	mov	r2, r14
+	mov	r2, lr
 	SYSTRAP(vfork)
-	bcs	PIC_SYM(CERROR, PLT)
-	mov	r14, r2
-	sub	r1, r1, #1	/* r1 == 0xffffffff if parent, 0 if child */
-	and	r0, r0, r1	/* r0 == 0 if child, else unchanged */
+	_INVOKE_CERROR()
+	mov	lr, r2
+	subs	r1, r1, #1	/* r1 == 0xffffffff if parent, 0 if child */
+	ands	r0, r0, r1	/* r0 == 0 if child, else unchanged */
 	RET
+END(vfork)

@@ -1,4 +1,4 @@
-/* $NetBSD: fenv.c,v 1.3 2010/08/01 06:34:38 taca Exp $ */
+/* $NetBSD: fenv.c,v 1.6 2013/11/11 00:31:51 joerg Exp $ */
 
 /*-
  * Copyright (c) 2004-2005 David Schultz <das@FreeBSD.ORG>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: fenv.c,v 1.3 2010/08/01 06:34:38 taca Exp $");
+__RCSID("$NetBSD: fenv.c,v 1.6 2013/11/11 00:31:51 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -115,18 +115,25 @@ fenv_t __fe_dfl_env = {
  */
 static int __HAS_SSE = 0;
 
-static void __test_sse(void) __attribute__ ((constructor));
+static void __init_libm(void) __attribute__ ((constructor, used));
 
-static void __test_sse(void)
+static void __init_libm(void)
 {
-#ifndef __minix
+#if !defined(__minix)
 	size_t oldlen = sizeof(__HAS_SSE);
 	int rv;
+	uint16_t control;
 
 	rv = sysctlbyname("machdep.sse", &__HAS_SSE, &oldlen, NULL, 0);
 	if (rv == -1)
-#endif
 		__HAS_SSE = 0;
+#else
+	uint16_t control;
+	__HAS_SSE = 0;
+#endif /* !defined(__minix) */
+
+	__fnstcw(&control);
+	__fe_dfl_env.x87.control = control;
 }
 
 /*
@@ -474,7 +481,7 @@ feenableexcept(int mask)
 		__ldmxcsr(mxcsr);
 	}
 
-	return (~omask);
+	return (FE_ALL_EXCEPT & ~omask);
 }
 
 int
@@ -498,7 +505,7 @@ fedisableexcept(int mask)
 		__ldmxcsr(mxcsr);
 	}
 
-	return (~omask);
+	return (FE_ALL_EXCEPT & ~omask);
 }
 
 int
@@ -512,5 +519,5 @@ fegetexcept(void)
 	 */
 	__fnstcw(&control);
 
-	return (control & FE_ALL_EXCEPT);
+	return (~control & FE_ALL_EXCEPT);
 }

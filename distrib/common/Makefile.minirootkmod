@@ -1,0 +1,56 @@
+#	$NetBSD: Makefile.minirootkmod,v 1.1 2012/10/16 08:19:36 apb Exp $
+#
+# Makefile snippet to build a miniroot kernel module (e.g. miniroot.kmod)
+#
+# Required variables:
+#	NETBSDSRCDIR	top level of src tree (set by <bsd.own.mk>)
+#
+# Optional variables:
+#	MINIROOT	Basename of the kernel module to be created.
+#			".kmod" will be appended to get the file name.
+#			[default: miniroot]
+#	RAMDISK		Basename of the ramdisk to be embedded in the
+#			kernel module.  This is used as both a directory
+#			name (${.CURDIR}/../ramdisks/${RAMDISK}) and
+#			as a file name within the .OBJDIR of that
+#			directory (${RAMDISK}.fs).  [default: ramdisk]
+#
+
+MINIROOT?=	miniroot
+RAMDISK?=	ramdisk
+
+.include <bsd.own.mk>
+.include "${.PARSEDIR}/Makefile.distrib"
+
+MKMAN=		no
+PROG=		${MINIROOT}.kmod
+
+# SRCMOD is a skeleton version of miniroot.kmod, without an embedded ramdisk.
+# It should already have been created by "make install" in
+# .../sys/modules/miniroot, and its name includes literal "miniroot",
+# not variable ${MINIROOT}.
+#
+# DSTMOD is a copy of SRCMOD that is modified to include an embedded ramdisk.
+# It will be created by rules in this Makefile.
+#
+# RAMDISKFS is the ramdisk image to be included inside DSTMOD.  It should
+# already have been created by the Makefile in RAMDISKSRCDIR.
+#
+SRCMOD=		${DESTDIR}/stand/${MACHINE}/${MODULEVER}/modules/miniroot/miniroot.kmod
+DSTMOD=		${.OBJDIR}/${MINIROOT}.kmod
+RAMDISKSRCDIR=	${.CURDIR}/../ramdisks/${RAMDISK}
+RAMDISKOBJDIR!=	cd ${RAMDISKSRCDIR} && ${PRINTOBJDIR}
+RAMDISKFS=	${RAMDISKOBJDIR}/${RAMDISK}.fs
+
+${MINIROOT}.kmod:	${RAMDISKFS} ${SRCMOD}
+		${OBJCOPY} --add-section miniroot=${RAMDISKFS} \
+		    --set-section-flags miniroot=alloc,contents,load,data \
+		    ${SRCMOD} ${DSTMOD}.tmp
+		gzip -9nc < ${DSTMOD}.tmp > ${DSTMOD}
+		rm -f ${DSTMOD}.tmp
+
+.include <bsd.prog.mk>
+
+release:	${PROG}
+		${HOST_INSTALL_FILE} -m ${BINMODE} ${PROG}  \
+		    ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/miniroot/

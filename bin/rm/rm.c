@@ -1,4 +1,4 @@
-/* $NetBSD: rm.c,v 1.50 2011/08/29 14:48:46 joerg Exp $ */
+/* $NetBSD: rm.c,v 1.53 2013/04/26 18:43:22 christos Exp $ */
 
 /*-
  * Copyright (c) 1990, 1993, 1994, 2003
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)rm.c	8.8 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: rm.c,v 1.50 2011/08/29 14:48:46 joerg Exp $");
+__RCSID("$NetBSD: rm.c,v 1.53 2013/04/26 18:43:22 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,28 +54,32 @@ __RCSID("$NetBSD: rm.c,v 1.50 2011/08/29 14:48:46 joerg Exp $");
 #include <grp.h>
 #include <locale.h>
 #include <pwd.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
 static int dflag, eval, fflag, iflag, Pflag, stdin_ok, vflag, Wflag;
+static int xflag;
+static sig_atomic_t pinfo;
 
 static int	check(char *, char *, struct stat *);
 static void	checkdot(char **);
+static void	progress(int);
 static void	rm_file(char **);
 static int	rm_overwrite(char *, struct stat *);
 static void	rm_tree(char **);
 __dead static void	usage(void);
 
-#ifdef __minix
+#if defined(__minix)
 # ifndef O_SYNC
 #  define O_SYNC 0
 # endif
 # ifndef O_RSYNC
 #  define O_RSYNC 0
 # endif
-#endif
+#endif /* defined(__minix) */
 
 /*
  * For the sake of the `-f' flag, check whether an error number indicates the
@@ -100,8 +104,8 @@ main(int argc, char *argv[])
 	setprogname(argv[0]);
 	(void)setlocale(LC_ALL, "");
 
-	Pflag = rflag = 0;
-	while ((ch = getopt(argc, argv, "dfiPRrvW")) != -1)
+	Pflag = rflag = xflag = 0;
+	while ((ch = getopt(argc, argv, "dfiPRrvWx")) != -1)
 		switch (ch) {
 		case 'd':
 			dflag = 1;
@@ -124,6 +128,9 @@ main(int argc, char *argv[])
 		case 'v':
 			vflag = 1;
 			break;
+		case 'x':
+			xflag = 1;
+			break;
 		case 'W':
 			Wflag = 1;
 			break;
@@ -139,6 +146,8 @@ main(int argc, char *argv[])
 			return 0;
 		usage();
 	}
+
+	(void)signal(SIGINFO, progress);
 
 	checkdot(argv);
 
@@ -177,10 +186,12 @@ rm_tree(char **argv)
 	flags = FTS_PHYSICAL;
 	if (!needstat)
 		flags |= FTS_NOSTAT;
-#ifndef __minix
+#if !defined(__minix)
 	if (Wflag)
 		flags |= FTS_WHITEOUT;
-#endif
+#endif /* !defined(__minix) */
+	if (xflag)
+		flags |= FTS_XDEV;
 	if ((fts = fts_open(argv, flags, NULL)) == NULL)
 		err(1, "fts_open failed");
 	while ((p = fts_read(fts)) != NULL) {
@@ -244,13 +255,13 @@ rm_tree(char **argv)
 				continue;
 			break;
 
-#ifndef __minix
+#if !defined(__minix)
 		case FTS_W:
 			rval = undelete(p->fts_accpath);
 			if (rval != 0 && fflag && errno == ENOENT)
 				continue;
 			break;
-#endif
+#endif /* !defined(__minix) */
 
 		default:
 			if (Pflag) {
@@ -265,8 +276,10 @@ rm_tree(char **argv)
 		if (rval != 0) {
 			warn("%s", p->fts_path);
 			eval = 1;
-		} else if (vflag)
+		} else if (vflag || pinfo) {
+			pinfo = 0;
 			(void)printf("%s\n", p->fts_path);
+		}
 	}
 	if (errno)
 		err(1, "fts_read");
@@ -288,11 +301,11 @@ rm_file(char **argv)
 		/* Assume if can't stat the file, can't unlink it. */
 		if (lstat(f, &sb)) {
 			if (Wflag) {
-#ifdef __minix
+#if defined(__minix)
 				sb.st_mode = S_IWUSR|S_IRUSR;
 #else
 				sb.st_mode = S_IFWHT|S_IWUSR|S_IRUSR;
-#endif
+#endif /* defined(__minix) */
 			} else {
 				if (!fflag || !NONEXISTENT(errno)) {
 					warn("%s", f);
@@ -311,17 +324,17 @@ rm_file(char **argv)
 			eval = 1;
 			continue;
 		}
-#ifndef __minix
+#if !defined(__minix)
 		if (!fflag && !S_ISWHT(sb.st_mode) && !check(f, f, &sb))
 #else
 		if (!fflag && !check(f, f, &sb))
-#endif
+#endif /* !defined(__minix) */
 			continue;
-#ifndef __minix
+#if !defined(__minix)
 		if (S_ISWHT(sb.st_mode))
 			rval = undelete(f);
 		else
-#endif
+#endif /* !defined(__minix) */
 		if (S_ISDIR(sb.st_mode))
 			rval = rmdir(f);
 		else {
@@ -397,7 +410,7 @@ rm_file(char **argv)
 static int
 rm_overwrite(char *file, struct stat *sbp)
 {
-	struct stat sb;
+	struct stat sb, sb2;
 	int fd, randint;
 	char randchar;
 
@@ -411,8 +424,18 @@ rm_overwrite(char *file, struct stat *sbp)
 		return 0;
 
 	/* flags to try to defeat hidden caching by forcing seeks */
-	if ((fd = open(file, O_RDWR|O_SYNC|O_RSYNC, 0)) == -1)
+	if ((fd = open(file, O_RDWR|O_SYNC|O_RSYNC|O_NOFOLLOW, 0)) == -1)
 		goto err;
+
+	if (fstat(fd, &sb2)) {
+		goto err;
+	}
+
+	if (sb2.st_dev != sbp->st_dev || sb2.st_ino != sbp->st_ino ||
+	    !S_ISREG(sb2.st_mode)) {
+		errno = EPERM;
+		goto err;
+	}
 
 #define RAND_BYTES	1
 #define THIS_BYTE	0
@@ -598,8 +621,15 @@ static void
 usage(void)
 {
 
-	(void)fprintf(stderr, "usage: %s [-f|-i] [-dPRrvW] file ...\n",
+	(void)fprintf(stderr, "usage: %s [-f|-i] [-dPRrvWx] file ...\n",
 	    getprogname());
 	exit(1);
 	/* NOTREACHED */
+}
+
+static void
+progress(int sig __unused)
+{
+	
+	pinfo++;
 }

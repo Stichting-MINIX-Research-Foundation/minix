@@ -1,4 +1,4 @@
-/*	$NetBSD: stack_protector.c,v 1.8 2012/03/13 21:13:39 christos Exp $	*/
+/*	$NetBSD: stack_protector.c,v 1.9 2013/08/19 22:14:37 matt Exp $	*/
 /*	$OpenBSD: stack_protector.c,v 1.10 2006/03/31 05:34:44 deraadt Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  *
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: stack_protector.c,v 1.8 2012/03/13 21:13:39 christos Exp $");
+__RCSID("$NetBSD: stack_protector.c,v 1.9 2013/08/19 22:14:37 matt Exp $");
 
 #ifdef _LIBC
 #include "namespace.h"
@@ -53,30 +53,30 @@ static void __fail(const char *) __attribute__((__noreturn__));
 __dead void __stack_chk_fail_local(void);
 void __guard_setup(void);
 
-void
+void __section(".text.startup")
 __guard_setup(void)
 {
-#ifndef __minix
+#if !defined(__minix)
 	static const int mib[2] = { CTL_KERN, KERN_ARND };
 	size_t len;
-#endif
+#endif /* !defined(__minix) */
 
 	if (__stack_chk_guard[0] != 0)
 		return;
 
-#ifndef __minix
+#if !defined(__minix)
 	len = sizeof(__stack_chk_guard);
 	if (__sysctl(mib, (u_int)__arraycount(mib), __stack_chk_guard, &len,
 	    NULL, 0) == -1 || len != sizeof(__stack_chk_guard)) {
-#endif
+#endif /* !defined(__minix) */
 		/* If sysctl was unsuccessful, use the "terminator canary". */
 		((unsigned char *)(void *)__stack_chk_guard)[0] = 0;
 		((unsigned char *)(void *)__stack_chk_guard)[1] = 0;
 		((unsigned char *)(void *)__stack_chk_guard)[2] = '\n';
 		((unsigned char *)(void *)__stack_chk_guard)[3] = 255;
-#ifndef __minix
+#if !defined(__minix)
 	}
-#endif
+#endif /* !defined(__minix) */
 }
 
 /*ARGSUSED*/
@@ -85,6 +85,7 @@ __fail(const char *msg)
 {
 #ifdef _LIBC
 	struct syslog_data sdata = SYSLOG_DATA_INIT;
+/* MINIX: #endif */
 	struct sigaction sa;
 	sigset_t mask;
 
@@ -93,20 +94,21 @@ __fail(const char *msg)
 	(void)sigdelset(&mask, SIGABRT);
 	(void)sigprocmask(SIG_BLOCK, &mask, NULL);
 
+/* MINIX: #ifdef _LIBC */
 	/* This may fail on a chroot jail... */
 	syslog_ss(LOG_CRIT, &sdata, "%s", msg);
 #else
 	xprintf("%s: %s\n", getprogname(), msg);
 #endif
 
-#ifdef _LIBC
+#if defined(__minix) && defined(_LIBC)
 	(void)memset(&sa, 0, sizeof(sa));
 	(void)sigemptyset(&sa.sa_mask);
 	sa.sa_flags = 0;
 	sa.sa_handler = SIG_DFL;
 	(void)sigaction(SIGABRT, &sa, NULL);
 	(void)raise(SIGABRT);
-#endif
+#endif /* defined(__minix) && defined(_LIBC) */
 	_exit(127);
 }
 

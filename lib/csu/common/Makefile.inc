@@ -1,6 +1,9 @@
-#	$NetBSD: Makefile.inc,v 1.7 2012/03/25 06:55:19 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.23 2013/11/17 11:16:09 martin Exp $
 
 .include <bsd.own.mk>
+
+# XXX: FIXME: This is defined in bsd.lib.mk
+PICFLAGS ?= -fPIC
 
 COMMON_DIR:=	${.CURDIR}/common
 .PATH:		${COMMON_DIR}
@@ -8,26 +11,52 @@ COMMON_DIR:=	${.CURDIR}/common
 CPPFLAGS+=	-I${NETBSDSRCDIR}/libexec/ld.elf_so -I${COMMON_DIR} -I.
 
 OBJS+=		crt0.o gcrt0.o crti.o crtn.o
-OBJS+=		crtbegin.o crtbeginS.o crtend.o
+OBJS+=		crtbegin.o crtend.o
 
-# BJG - for backwards compatability with minix gcc
-# which links with crt1.o instead of crt0.o
-SYMLINKS+=     crt0.o ${LIBDIR}/crt1.o
+.if ${MKPIC} == "yes"
+OBJS+=		crtbeginS.o
+CFLAGS.crtbegin.c+= -fPIE
+.endif
+.if ${MACHINE_ARCH} == "alpha"
+OBJS+=		crtfm.o
+.endif
+
+.if ${CSU_MACHINE_ARCH} == "sparc64"
+# create helper objects for the compiler to mark compiler memory models
+.for m in medlow medmid medany
+sparc_mc${m}.o:	compident.S sysident_assym.h
+	${CC} ${ASFLAGS} -I. -DCONTENT=\"${m}\\0\\0\" -DCONTENTLENGTH=8 -c \
+		-o $@ ${COMMON_DIR}/compident.S
+.endfor
+OBJS += sparc_mcmedlow.o sparc_mcmedmid.o sparc_mcmedany.o
+.endif
 
 realall: ${OBJS}
 
+.if exists(${ARCHDIR}/crtbegin.S)
 crtbegin.o: crtbegin.S
 	${_MKTARGET_COMPILE}
 	${COMPILE.S} ${ARCHDIR}/crtbegin.S -o ${.TARGET}.o
+.else
+crtbegin.o: crtbegin.c crtbegin.h
+	${_MKTARGET_COMPILE}
+	${COMPILE.c} ${CFLAGS.crtbegin.c} ${COMMON_DIR}/crtbegin.c -o ${.TARGET}.o
+.endif
 	${LD} -x -r -o ${.TARGET} ${.TARGET}.o
 	rm -f ${.TARGET}.o
 .if ${MKSTRIPIDENT} != "no"
 	${OBJCOPY} -R .ident ${.TARGET}
 .endif
 
+.if exists(${ARCHDIR}/crtbegin.S)
 crtbeginS.o: crtbegin.S
 	${_MKTARGET_COMPILE}
-	${COMPILE.S} -DPIC -DSHARED ${ARCHDIR}/crtbegin.S -o ${.TARGET}.o
+	${COMPILE.S} ${PICFLAGS} -DSHARED ${ARCHDIR}/crtbegin.S -o ${.TARGET}.o
+.else
+crtbeginS.o: crtbegin.c crtbegin.h
+	${_MKTARGET_COMPILE}
+	${COMPILE.c} ${PICFLAGS} -DSHARED ${COMMON_DIR}/crtbegin.c -o ${.TARGET}.o
+.endif
 	${LD} -x -r -o ${.TARGET} ${.TARGET}.o
 	rm -f ${.TARGET}.o
 .if ${MKSTRIPIDENT} != "no"
@@ -44,15 +73,15 @@ crtend.o: crtend.S
 .endif
 
 .if ${MKPIC} != "no"
-PICFLAGS=	-fPIC
+MY_PICFLAGS=	${PICFLAGS}
 .else
-PICFLAGS=
+MY_PICFLAGS=
 .endif
 
 crt0.o: crt0.S crt0-common.c
 	${_MKTARGET_COMPILE}
 	${COMPILE.S} ${ARCHDIR}/crt0.S -o ${.TARGET}.S.o
-	${COMPILE.c} ${PICFLAGS} ${COMMON_DIR}/crt0-common.c -o ${.TARGET}.c.o
+	${COMPILE.c} ${MY_PICFLAGS} ${COMMON_DIR}/crt0-common.c -o ${.TARGET}.c.o
 	${LD} -x -r -o ${.TARGET} ${.TARGET}.S.o ${.TARGET}.c.o
 	rm -f ${.TARGET}.S.o ${.TARGET}.c.o
 .if ${MKSTRIPIDENT} != "no"
@@ -62,14 +91,24 @@ crt0.o: crt0.S crt0-common.c
 gcrt0.o: crt0.S crt0-common.c
 	${_MKTARGET_COMPILE}
 	${COMPILE.S} ${ARCHDIR}/crt0.S -o ${.TARGET}.S.o
-	${COMPILE.c} ${PICFLAGS} -DMCRT0 ${COMMON_DIR}/crt0-common.c -o ${.TARGET}.c.o
+	${COMPILE.c} ${MY_PICFLAGS} -DMCRT0 ${COMMON_DIR}/crt0-common.c -o ${.TARGET}.c.o
 	${LD} -x -r -o ${.TARGET} ${.TARGET}.S.o ${.TARGET}.c.o
 	rm -f ${.TARGET}.S.o ${.TARGET}.c.o
 .if ${MKSTRIPIDENT} != "no"
 	${OBJCOPY} -R .ident ${.TARGET}
 .endif
 
-sysident_assym.h: ${GENASSYM_CONF} ${GENASSYM_EXTRAS}
+.if ${MACHINE_ARCH} == "alpha"
+# can't do this in Makefile.inc otherwise it will before realall:
+crtfm.o: crtfm.c
+	${_MKTARGET_COMPILE}
+	${COMPILE.c} ${.ALLSRC} -o ${.TARGET}.o
+	${LD} -x -r -o ${.TARGET} ${.TARGET}.o
+	rm -f ${.TARGET}.o
+.endif
+
+GENASSYM_CONF=	${COMMON_DIR}/sysident_assym.cf 
+sysident_assym.h: ${GENASSYM_CONF} ${GENASSYM_EXTRAS} ${NETBSDSRCDIR}/sys/sys/param.h
 	${_MKTARGET_CREATE}
 	cat ${COMMON_DIR}/sysident_assym.cf | \
 	    ${TOOL_GENASSYM} -- ${CC} ${CFLAGS:N-Wa,*} ${CPPFLAGS} ${PROF} \
@@ -78,13 +117,16 @@ sysident_assym.h: ${GENASSYM_CONF} ${GENASSYM_EXTRAS}
 
 CLEANFILES+=	sysident_assym.h
 
-crti.o: crti.S sysident_assym.h
+crti.o: crti.S sysident_assym.h sysident.S
 crtn.o: crtn.S
 
 FILES=${OBJS}
 FILESDIR=${LIBDIR}
 CLEANFILES+=${OBJS}
+
+.if ${MKPIC} == "yes"
 SYMLINKS+=	crtbegin.o ${LIBDIR}/crtbeginT.o
 SYMLINKS+=	crtend.o ${LIBDIR}/crtendS.o
+.endif
 
 .include <bsd.prog.mk>

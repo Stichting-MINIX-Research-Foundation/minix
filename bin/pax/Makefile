@@ -3,10 +3,6 @@
 
 .include <bsd.own.mk>
 
-.if defined(__MINIX)
-WARNS=2
-.endif
-
 PROG=   pax
 SRCS=	ar_io.c ar_subs.c buf_subs.c file_subs.c ftree.c\
 	gen_subs.c getoldopt.c options.c pat_rep.c pax.c sel_subs.c tables.c\

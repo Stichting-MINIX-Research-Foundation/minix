@@ -5,10 +5,6 @@
 #include <string.h>
 #include <sys/statvfs.h>
 
-#ifdef __weak_alias
-__weak_alias(getvfsstat, _getvfsstat)
-#endif
-
 int getvfsstat(struct statvfs *buf, size_t bufsize, int flags)
 {
   message m;

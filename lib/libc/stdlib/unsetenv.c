@@ -104,7 +104,3 @@ unsetenv(const char *name)
 	(void)__unlockenv();
 	return 0;
 }
-
-#if defined(__minix) && defined(__weak_alias)
-__weak_alias(unsetenv, __unsetenv13)
-#endif

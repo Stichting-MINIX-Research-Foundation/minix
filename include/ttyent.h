@@ -1,4 +1,4 @@
-/*	$NetBSD: ttyent.h,v 1.14 2006/04/17 23:29:21 salo Exp $	*/
+/*	$NetBSD: ttyent.h,v 1.15 2013/04/27 21:35:25 joerg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,6 +35,7 @@
 #define	_TTYENT_H_
 
 #include <sys/cdefs.h>
+#include <sys/featuretest.h>
 
 #define	_PATH_TTYS	"/etc/ttys"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: nl_types.h,v 1.12 2008/04/28 20:22:54 martin Exp $	*/
+/*	$NetBSD: nl_types.h,v 1.13 2013/08/19 08:03:33 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -83,9 +83,18 @@ typedef long	nl_item;
 
 __BEGIN_DECLS
 nl_catd  catopen(const char *, int);
-char    *catgets(nl_catd, int, int, const char *)
-	__attribute__((__format_arg__(4)));
+char    *catgets(nl_catd, int, int, const char *) __format_arg(4);
 int	 catclose(nl_catd);
 __END_DECLS
+
+#if defined(_NETBSD_SOURCE)
+#  ifndef __LOCALE_T_DECLARED
+typedef struct _locale		*locale_t;
+#  define __LOCALE_T_DECLARED
+#  endif
+__BEGIN_DECLS
+nl_catd  catopen_l(const char *, int, locale_t);
+__END_DECLS
+#endif
 
 #endif	/* _NL_TYPES_H_ */

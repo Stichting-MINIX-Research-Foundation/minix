@@ -1,6 +1,6 @@
 
 #------------------------------------------------------------------------------
-# $File: digital,v 1.10 2011/05/03 01:44:17 christos Exp $
+# $File: digital,v 1.11 2013/01/11 16:45:23 christos Exp $
 #  Digital UNIX - Info
 #
 0	string	=!<arch>\n________64E	Alpha archive
@@ -8,20 +8,20 @@
 #
 
 0	leshort		0603
->>24	leshort		0410		COFF format alpha pure
->>24	leshort		0413		COFF format alpha demand paged
->>>22	leshort&030000	!020000		executable
->>>22	leshort&020000	!0		dynamically linked
->>>16	lelong		!0		not stripped
->>>16	lelong		0		stripped
->>>27	byte		x		- version %d
->>>26	byte		x		\b.%d
->>>28	byte		x		\b-%d
->>24	leshort		0407		COFF format alpha object
->>>22	leshort&030000	020000		shared library
->>>27	byte		x		- version %d
->>>26	byte		x		\b.%d
->>>28	byte		x		\b-%d
+>24	leshort		0410		COFF format alpha pure
+>24	leshort		0413		COFF format alpha demand paged
+>>22	leshort&030000	!020000		executable
+>>22	leshort&020000	!0		dynamically linked
+>>16	lelong		!0		not stripped
+>>16	lelong		0		stripped
+>>27	byte		x		- version %d
+>>26	byte		x		\b.%d
+>>28	byte		x		\b-%d
+>24	leshort		0407		COFF format alpha object
+>>22	leshort&030000	020000		shared library
+>>27	byte		x		- version %d
+>>26	byte		x		\b.%d
+>>28	byte		x		\b-%d
 
 # Basic recognition of Digital UNIX core dumps - Mike Bremford <mike@opac.bl.uk>
 #

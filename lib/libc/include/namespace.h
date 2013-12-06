@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.156 2012/08/20 21:38:10 dsl Exp $	*/
+/*	$NetBSD: namespace.h,v 1.169 2013/08/28 17:47:07 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -37,6 +37,7 @@
 #define catclose	_catclose
 #define catgets		_catgets
 #define catopen		_catopen
+#define catopen_l	_catopen_l
 #define daylight	_daylight
 #define difftime	_difftime
 #define devname_r	_devname_r
@@ -48,26 +49,31 @@
 #define fork		_fork
 #define fseeko		_fseeko
 #define ftello		_ftello
-#ifndef __minix
 #define getcontext	_getcontext
-#endif /* !__minix */
 #define getenv_r	_getenv_r
 #define imaxabs		_imaxabs
 #define imaxdiv		_imaxdiv
 #define inet_aton	_inet_aton
 #define inet_pton	_inet_pton
 #define pipe		_pipe
-#define pipe2		_pipe2
 #define sbrk		_sbrk
+#define strerror_l	_strerror_l
 #define strerror_r	_strerror_r
 #define strlcat		_strlcat
 #define strlcpy		_strlcpy
+#define strtod_l	_strtod_l
 #define strtof		_strtof
+#define strtof_l	_strtof_l
 #define strtoimax	_strtoimax
+#define strtoimax_l	_strtoimax_l
 #define strtold		_strtold
+#define strtold_l	_strtold_l
 #define strtoll		_strtoll
+#define strtoll_l	_strtoll_l
 #define strtoull	_strtoull
+#define strtoull_l	_strtoull_l
 #define strtoumax	_strtoumax
+#define strtoumax_l	_strtoumax_l
 #define sys_errlist	_sys_errlist
 #define sys_nerr	_sys_nerr
 #define sys_siglist	_sys_siglist
@@ -164,6 +170,7 @@
 #define arc4random_uniform	_arc4random_uniform
 #define asctime_r		_asctime_r
 #define asprintf		_asprintf
+#define asprintf_l		_asprintf_l
 #define atoll			_atoll
 #define authnone_create		_authnone_create
 #define authunix_create		_authunix_create
@@ -226,17 +233,20 @@
 #define closelog		_closelog
 #define closelog_r		_closelog_r
 #define confstr			_confstr
+#define consttime_memequal	_consttime_memequal
 #define csetexpandtc		_csetexpandtc
 #define ctermid			_ctermid
-#define ctime_r			__ctime_r50
-#define ctime_rz		__ctime_rz50
+#define ctime_r			_ctime_r
+#define ctime_rz		_ctime_rz
 #define daemon			_daemon
 #define dbopen			_dbopen
 #define devname			_devname
 #define difftime		_difftime
 #define dirname			_dirname
 #define dn_expand		_dn_expand
+#define dprintf_l		_dprintf_l
 #define drand48			_drand48
+#define duplocale		_duplocale
 #define endfsent		_endfsent
 #define endgrent		_endgrent
 #define endhostent		_endhostent
@@ -263,6 +273,7 @@
 #define execlp			_execlp
 #define execv			_execv
 #define execvp			_execvp
+#define explicit_memset		_explicit_memset
 #define fdopen			_fdopen
 #define fgetln			_fgetln
 #define fgetwln			_fgetwln
@@ -272,6 +283,7 @@
 #define funlockfile		_funlockfile
 #define fnmatch			_fnmatch
 #define fparseln		_fparseln
+#define fprintf_l		_fprintf_l
 #define fpgetmask		_fpgetmask
 #define fpgetprec		_fpgetprec
 #define fpgetround		_fpgetround
@@ -283,8 +295,9 @@
 #define freenetconfigent	_freenetconfigent
 #define freeaddrinfo		_freeaddrinfo
 #define freeifaddrs		_freeifaddrs
+#define freelocale		_freelocale
+#define fscanf_l		_fscanf_l
 #define fstatvfs		_fstatvfs
-#define fstatvfs1		_fstatvfs1
 #define ftok			_ftok
 #define ftruncate		_ftruncate
 #define fts_children		_fts_children
@@ -292,6 +305,8 @@
 #define fts_open		_fts_open
 #define fts_read		_fts_read
 #define fts_set			_fts_set
+#define fwprintf_l		_fwprintf_l
+#define fwscanf_l		_fwscanf_l
 #define gai_strerror		_gai_strerror
 #define get_myaddress		_get_myaddress
 #define getaddrinfo		_getaddrinfo
@@ -367,7 +382,6 @@
 #define getttyent		_getttyent
 #define getttynam		_getttynam
 #define getusershell		_getusershell
-#define getvfsstat		_getvfsstat
 #define glob			_glob
 #define globfree		_globfree
 #define gmtime_r		_gmtime_r
@@ -446,8 +460,8 @@
 #define lcong48			_lcong48
 #define llabs			_llabs
 #define lldiv			_lldiv
-#define localtime_r		__localtime_r50
-#define localtime_rz		__localtime_rz50
+#define localtime_r		_localtime_r
+#define localtime_rz		_localtime_rz
 #define lockf			_lockf
 #define lrand48			_lrand48
 #define lseek			_lseek
@@ -455,7 +469,8 @@
 #define mergesort		_mergesort
 #define mi_vector_hash		_mi_vector_hash
 #define mkstemp			_mkstemp
-#define mktime_z		__mktime_z50
+#define mktime_z		_mktime_z
+#define mmap			_mmap
 #define mpool_close		_mpool_close
 #define mpool_filter		_mpool_filter
 #define mpool_get		_mpool_get
@@ -470,10 +485,12 @@
 #define nc_perror		_nc_perror
 #define nc_sperror		_nc_sperror
 #define nanosleep		_nanosleep
+#define newlocale		_newlocale
 #define nice			_nice
 #if 0
 #define nlist			_nlist
 #endif
+#define nl_langinfo_l		_nl_langinfo_l
 #define nrand48			_nrand48
 #define ntp_adjtime		_ntp_adjtime
 #define nsdispatch		_nsdispatch
@@ -491,9 +508,10 @@
 #define pmap_unset		_pmap_unset
 #define pollts			_pollts
 #define popen			_popen
-#define posix2time		__posix2time50
-#define posix2time_z		__posix2time_z50
+#define posix2time		_posix2time
+#define posix2time_z		_posix2time_z
 #define pread			_pread
+#define printf_l		_printf_l
 #define pselect			_pselect
 #define psignal			_psignal
 #define pthread_atfork		_pthread_atfork
@@ -542,6 +560,7 @@
 #define rpcb_uaddr2taddr	_rpcb_uaddr2taddr
 #define rpcb_unset		_rpcb_unset
 #define scandir			_scandir
+#define scanf_l			_scanf_l
 #define seed48			_seed48
 #define seekdir			_seekdir
 #define select			_select
@@ -590,19 +609,25 @@
 #ifndef snprintf
 #define snprintf		_snprintf
 #endif
+#define snprintf_l		_snprintf_l
 #define snprintf_ss		_snprintf_ss
+#define sprintf_l		_sprintf_l
 #define sradixsort		_sradixsort
 #define srand48			_srand48
 #define srandom			_srandom
+#define sscanf_l		_sscanf_l
 #define statvfs(a, b)		_statvfs(a, b)
-#define statvfs1		_statvfs1
 #define strcasecmp		_strcasecmp
+#define strcoll_l		_strcoll_l
 #define strdup			_strdup
 #define stresep			_stresep
+#define strftime_l		_strftime_l
+#define strftime_lz		_strftime_lz
 #define strftime_z		_strftime_z
 #define strndup			_strndup
 #define strncasecmp		_strncasecmp
 #define strptime		_strptime
+#define strptime_l		_strptime_l
 #define strsep			_strsep
 #define strsignal		_strsignal
 #define strsuftoll	 	_strsuftoll
@@ -610,6 +635,7 @@
 #define strtok_r		_strtok_r
 #define strnunvisx		_strnunvisx
 #define strvisx			_strvisx
+#define strxfrm_l		_strxfrm_l
 #define svc_auth_reg		_svc_auth_reg
 #define svc_create		_svc_create
 #define svc_dg_create		_svc_dg_create
@@ -642,6 +668,8 @@
 #define svcudp_create		_svcudp_create
 #define svcudp_enablecache	_svcudp_enablecache
 #define sysarch			_sys_sysarch
+#define swprintf_l		_swprintf_l
+#define swscanf_l		_swscanf_l
 #define sysctl			_sysctl
 #define sysctlbyname		_sysctlbyname
 #define sysctlgetmibinfo	_sysctlgetmibinfo
@@ -685,12 +713,26 @@
 #define uuid_create_nil		_uuid_create_nil
 #define uuid_is_nil		_uuid_is_nil
 #define valloc			_valloc
-#define vdprintf		_vdprintf
+#define vasprintf		_vasprintf
+#define vasprintf_l		_vasprintf_l
 #define	vdprintf		_vdprintf
 #ifndef vsnprintf
 #define vsnprintf		_vsnprintf
 #endif
+#define vdprintf_l		_vdprintf_l
+#define vdprintf_l		_vdprintf_l
+#define vfprintf_l		_vfprintf_l
+#define vfwprintf_l		_vfwprintf_l
+#define vprintf_l		_vprintf_l
+#define vscanf_l		_vscanf_l
+#define vsscanf_l		_vsscanf_l
+#define vswscanf_l		_vswscanf_l
+#define vsnprintf_l		_vsnprintf_l
 #define vsnprintf_ss		_vsnprintf_ss
+#define vsprintf_l		_vsprintf_l
+#define vswprintf_l		_vswprintf_l
+#define vwprintf_l		_vwprintf_l
+#define vwscanf_l		_vwscanf_l
 #define vsyslog			_vsyslog
 #define vsyslog_r		_vsyslog_r
 #define vsyslog_ss		_vsyslog_ss
@@ -702,12 +744,21 @@
 #define wait4			_wait4
 #define waitpid			_waitpid
 #define wcscasecmp		_wcscasecmp
+#define wcscasecmp_l		_wcscasecmp_l
 #define wcsdup			_wcsdup
+#define wcsftime_l		_wcsftime_l
 #define wcsncasecmp		_wcsncasecmp
+#define wcsncasecmp_l		_wcsncasecmp_l
 #define wcstof			_wcstof
+#define wcstof_l		_wcstof_l
 #define wcstod			_wcstod
+#define wcstod_l		_wcstod_l
 #define wcstold			_wcstold
+#define wcstold_l		_wcstold_l
 #define wcwidth			_wcwidth
+#define wcwidth_l		_wcwidth_l
+#define wprintf_l		_wprintf_l
+#define wscanf_l		_wscanf_l
 #define xdr_accepted_reply	_xdr_accepted_reply
 #define xdr_array		_xdr_array
 #define xdr_authunix_parms	_xdr_authunix_parms
@@ -858,76 +909,10 @@
 
 #define __learn_tree		___learn_tree
 
-#ifdef __minix
-#define _exit __exit
-#define access _access
-#define bind _bind
-#define chdir _chdir
-#define chmod _chmod
-#define chroot _chroot
-#define close _close
-#define dup _dup
-#define dup2 _dup2
-#define execve _execve
-#define fchdir _fchdir
-#define fchmod _fchmod
-#define fcntl _fcntl
-#define flock _flock
-#define fstatfs _fstatfs
-#define fsync _fsync
-#define fpathconf _fpathconf
-#define getegid _getegid
-#define geteuid _geteuid
-#define getgroups _getgroups
-#define getpid _getpid
-#define getpgrp _getpgrp
-#define getppid _getppid
-#define gettimeofday _gettimeofday
-#define getgid _getgid
-#define getuid _getuid
-#define ioctl _ioctl
-#define link _link
-#define mount _mount
-#define mkdir _mkdir
-#define mkfifo _mkfifo
-#define mknod _mknod
-#define open _open
-#define pathconf _pathconf
-#define ptrace _ptrace
-#define readv _readv
-#define rmdir _rmdir
-#define setegid _setegid
-#define seteuid _seteuid
-#define setgid _setgid
-#define setgroups _setgroups
-#define setprogname _setprogname
-#define setsid _setsid
-#define setuid _setuid
-#define shmat _shmat
-#define shmdt _shmdt
-#define shmget _shmget
-#define shutdown _shutdown
-#define sigreturn	_sigreturn
-#define socket _socket
-#define socketpair _socketpair
-#define symlink _symlink
-#define sync _sync
-#define stime _stime
-#define umask _umask
-#define umount _umount
-#define unlink _unlink
-#define vm_remap _vm_remap
-#define vm_unmap _vm_unmap
-#define vm_getphys _vm_getphys
-#define vm_getrefcount _vm_getrefcount
-#define truncate _truncate
-#define write _write
-#define writev _writev
-#define mmap _mmap
-#define munmap _munmap
-#define vfork __vfork14
-#endif /* __minix */
-
+#if defined(__minix)
+/* Needed to allow RS and VM to provide their own implementations. */
+#define munmap			_munmap
+#endif /* defined(__minix) */
 #endif /* __weak_alias */
 #endif /* !__lint__ */
 

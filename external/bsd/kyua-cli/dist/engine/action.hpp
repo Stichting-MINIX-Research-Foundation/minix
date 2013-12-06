@@ -33,7 +33,8 @@
 #define ENGINE_ACTION_HPP
 
 #include <ostream>
-#include <tr1/memory>
+
+#include "utils/shared_ptr.hpp"
 
 namespace engine {
 
@@ -50,7 +51,7 @@ class action {
     struct impl;
 
     /// Pointer to the shared internal implementation.
-    std::tr1::shared_ptr< impl > _pimpl;
+    std::shared_ptr< impl > _pimpl;
 
 public:
     explicit action(const context&);

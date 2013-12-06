@@ -5,10 +5,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#ifdef __weak_alias
-__weak_alias(write, _write)
-#endif
-
 ssize_t write(int fd, const void *buffer, size_t nbytes)
 {
   message m;

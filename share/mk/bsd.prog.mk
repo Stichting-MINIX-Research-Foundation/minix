@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.278 2012/08/24 20:26:24 jmmv Exp $
+#	$NetBSD: bsd.prog.mk,v 1.286 2013/11/11 10:24:53 joerg Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -34,12 +34,18 @@ CLEANFILES+=strings
 .c.o:
 	${CC} -E ${CPPFLAGS} ${CFLAGS} ${.IMPSRC} | xstr -c -
 	@${CC} ${CPPFLAGS} ${CFLAGS} -c x.c -o ${.TARGET}
+.if defined(CTFCONVERT)
+	${CTFCONVERT} ${CTFFLAGS} ${.TARGET}
+.endif
 	@rm -f x.c
 
 .cc.o .cpp.o .cxx.o .C.o:
 	${CXX} -E ${CPPFLAGS} ${CXXFLAGS} ${.IMPSRC} | xstr -c -
 	@mv -f x.c x.cc
 	@${CXX} ${CPPFLAGS} ${CXXFLAGS} -c x.cc -o ${.TARGET}
+.if defined(CTFCONVERT)
+	${CTFCONVERT} ${CTFFLAGS} ${.TARGET}
+.endif
 	@rm -f x.cc
 .endif
 
@@ -50,6 +56,9 @@ LDFLAGS+=	${PIE_LDFLAGS}
 .endif
 
 CFLAGS+=	${COPTS}
+.if defined(MKDEBUG) && (${MKDEBUG} != "no")
+CFLAGS+=	-g
+.endif
 OBJCFLAGS+=	${OBJCOPTS}
 MKDEP_SUFFIXES?=	.o .ln
 
@@ -75,6 +84,11 @@ LIBCRT0=	${DESTDIR}/usr/lib/crt0.o
 .MADE: ${LIBCRT0}
 .endif
 
+.ifndef LIBCRTI
+LIBCRTI=	${DESTDIR}/usr/lib/crti.o
+.MADE: ${LIBCRTI}
+.endif
+
 ##### Installed system library definitions
 #
 #	E.g.
@@ -85,26 +99,108 @@ LIBCRT0=	${DESTDIR}/usr/lib/crt0.o
 
 .for _lib in \
 	archive \
+	asn1 \
 	atf_c \
 	atf_cxx \
+	bind9 \
+	bluetooth \
+	bsdmalloc \
 	bz2 \
 	c \
 	c_pic \
-	crt0 \
+	com_err \
+	compat \
 	crypt \
+	crypto \
+	crypto_idea \
+	crypto_mdc2 \
+	crypto_rc5 \
 	curses \
+	dbm \
+	des \
+	dns \
 	edit \
+	event \
 	expat \
+	fetch \
+	fl \
+	form \
+	g2c \
+	gcc \
+	gnumalloc \
+	gssapi \
+	hdb \
+	heimbase \
+	heimntlm \
+	hx509 \
+	intl \
+	ipsec \
+	isc \
+	isccc \
+	isccfg \
+	kadm5clnt \
+	kadm5srv \
+	kafs \
+	krb5 \
+	kvm \
 	l \
+	lber \
+	ldap \
+	ldap_r \
 	lua \
+	lwres \
 	m \
 	magic \
+	menu \
 	objc \
+	ossaudio \
+	pam \
+	pcap \
+	pci \
+	pmc \
+	posix \
+	pthread \
+	pthread_dbg \
+	puffs \
+	quota \
+	radius \
+	resolv \
 	rmt \
+	roken \
+	rpcsvc \
+	rt \
+	rump \
+	rumpfs_cd9660fs \
+	rumpfs_efs \
+	rumpfs_ext2fs \
+	rumpfs_ffs \
+	rumpfs_hfs \
+	rumpfs_lfs \
+	rumpfs_msdosfs \
+	rumpfs_nfs \
+	rumpfs_ntfs \
+	rumpfs_syspuffs \
+	rumpfs_tmpfs \
+	rumpfs_udf \
+	rumpfs_ufs \
+	rumpuser \
+	saslc \
+	skey \
+	sl \
 	sqlite3 \
+	ss \
+	ssh \
+	ssl \
+	ssp \
 	stdcxx \
+	supcxx \
 	terminfo \
+	tre \
+	usbhid \
 	util \
+	wind \
+	wrap \
+	y \
 	z 
 
 .ifndef LIB${_lib:tu}
@@ -159,6 +255,11 @@ PAM_STATIC_LDADD=
 PAM_STATIC_DPADD=
 .endif
 
+.if defined(__MINIX) && ${MACHINE_ARCH} == "earm"
+# LSC: On ARM, when compiling statically, with gcc, lgcc_eh is required
+LDFLAGS+= ${${ACTIVE_CC} == "gcc":? -lgcc_eh:}
+.endif # defined(__MINIX) && ${MACHINE_ARCH} == "earm"
+
 #	NB:	If you are a library here, add it in bsd.README
 .for _lib in \
 	FS \
@@ -201,6 +302,10 @@ LIB${_lib:tu}=	${DESTDIR}${X11USRLIBDIR}/lib${_lib}.a
 .MADE:		${LIB${_lib:tu}}	# Note: ${DESTDIR} will be expanded
 .endif
 .endfor
+
+# Ugly one-offs
+LIBX11_XCB=	${DESTDIR}${X11USRLIBDIR}/libX11-xcb.a
+LIBXCB=	${DESTDIR}${X11USRLIBDIR}/libxcb.a
 
 .if defined(RESCUEDIR)
 CPPFLAGS+=	-DRESCUEDIR=\"${RESCUEDIR}\"
@@ -246,10 +351,6 @@ _APPEND_SRCS=yes
 _CCLINKFLAGS=
 
 .if defined(PROG_CXX)
-#.if defined(__MINIX) # LSC: Can't test as bsd.own.mk may not have been sourced
-LDADD+=	-lgcc_s
-DPADD+=	${DESTDIR}/usr/lib/libgcc_s.a
-#.endif # defined(__MINIX)
 PROG=		${PROG_CXX}
 _CCLINK=	${CXX} ${_CCLINKFLAGS}
 .endif
@@ -314,6 +415,23 @@ PROGS=		${PROG}
 .  endif
 .endif
 
+##### Libraries that this may depend upon.
+.if defined(PROGDPLIBS) 						# {
+.for _lib _dir in ${PROGDPLIBS}
+.if !defined(BINDO.${_lib})
+PROGDO.${_lib}!=	cd "${_dir}" && ${PRINTOBJDIR}
+.MAKEOVERRIDES+=PROGDO.${_lib}
+.endif
+LDADD+=		-L${PROGDO.${_lib}} -l${_lib}
+.if exists(${PROGDO.${_lib}}/lib${_lib}_pic.a)
+DPADD+=		${PROGDO.${_lib}}/lib${_lib}_pic.a
+.elif exists(${PROGDO.${_lib}}/lib${_lib}.so)
+DPADD+=		${PROGDO.${_lib}}/lib${_lib}.so
+.else
+DPADD+=		${PROGDO.${_lib}}/lib${_lib}.a
+.endif
+.endfor
+.endif									# }
 #
 # Per-program definitions and targets.
 #
@@ -338,12 +456,6 @@ _CCLINK.${_P}=	${CXX} ${_CCLINKFLAGS}
 # Language-independent definitions.
 .if defined(__MINIX) && ${USE_BITCODE:Uno} == "yes"
 CFLAGS+= -flto
-.endif
-
-.for _P in ${PROGS} ${PROGS_CXX}					# {
-
-.if defined(__MINIX) && ${HAVE_GOLD:U} != ""
-
 
 .  if ${LD_STATIC:U} != "-static"
 GOLDLINKERSCRIPT?= ${LDS_DYNAMIC_BIN}
@@ -351,6 +463,11 @@ GOLDLINKERSCRIPT?= ${LDS_DYNAMIC_BIN}
 GOLDLINKERSCRIPT?= ${LDS_STATIC_BIN}
 .  endif
 
+.endif
+
+.for _P in ${PROGS} ${PROGS_CXX}					# {
+
+.if defined(__MINIX) && ${HAVE_GOLD:U} != ""
 GOLDLINKERSCRIPT.${_P}?= ${GOLDLINKERSCRIPT}
 
 .  if ${GOLDLINKERSCRIPT.${_P}:U} != ""
@@ -412,7 +529,8 @@ NODPSRCS+=	${f}
 .endif
 .endfor
 
-${_P}: .gdbinit ${LIBCRT0} ${XOBJS.${_P}} ${SRCS.${_P}} ${DPSRCS} ${LIBC} ${LIBCRTBEGIN} ${LIBCRTEND} ${_DPADD.${_P}}
+${_P}: .gdbinit ${LIBCRT0} ${LIBCRTI} ${XOBJS.${_P}} ${SRCS.${_P}} \
+    ${DPSRCS} ${LIBC} ${LIBCRTBEGIN} ${LIBCRTEND} ${_DPADD.${_P}}
 	${_MKTARGET_LINK}
 .if defined(DESTDIR)
 	${_CCLINK.${_P}} -Wl,-nostdlib \
@@ -445,21 +563,20 @@ CLEANFILES+=	${_P}.d
 
 ${OBJS.${_P}} ${LOBJS.${_P}}: ${DPSRCS}
 
-.if defined(__MINIX)
+.if defined(__MINIX) && ${USE_BITCODE:Uno} == "yes"
 CLEANFILES+= ${_P}.opt.bcl ${_P}.bcl ${_P}.bcl.o
-.endif # defined(__MINIX)
 
-.if !commands(${_P})
-.if ${USE_BITCODE:Uno} == "yes"
-
-.if ${LLVM_PASS:UNO_PASS} != "NO_PASS"
+# We may (or not) be using a pass.
+. if ${LLVM_PASS:UNO_PASS} != "NO_PASS"
 _LLVM_PASS_ARGS=	-load ${LLVM_PASS} ${LLVM_PASS_ARGS}
 _TARGET_BCL=	${_P}.opt.bcl
-.else
+.  else
 _TARGET_BCL=	${_P}.bcl
-.endif # ${LLVM_PASS:UNO_PASS} != "NO_PASS"
+. endif # ${LLVM_PASS:UNO_PASS} != "NO_PASS"
 
-${_P}.bcl: .gdbinit ${LIBCRT0} ${OBJS.${_P}} ${LIBC} ${LIBCRTBEGIN} ${LIBCRTEND} ${_DPADD.${_P}}
+
+${_P}.bcl: .gdbinit ${LIBCRT0} ${LIBCRTI} ${OBJS.${_P}} ${LIBC} ${LIBCRTBEGIN} \
+    ${LIBCRTEND} ${_DPADD.${_P}}
 	${_MKTARGET_LINK}
 	${_CCLINK.${_P}} \
 		-o ${.TARGET} \
@@ -489,13 +606,13 @@ ${_P}: ${_P}.bcl.o
 		-Wl,-plugin=/usr/pkg/lib/bfd-plugins/LLVMgold.so,-plugin-opt=-disable-opt,-plugin-opt=-disable-inlining
 
 .else
-${_P}: .gdbinit ${LIBCRT0} ${OBJS.${_P}} ${LIBC} ${LIBCRTBEGIN} ${LIBCRTEND} ${_DPADD.${_P}}
+${_P}: .gdbinit ${LIBCRT0} ${LIBCRTI} ${OBJS.${_P}} ${LIBC} ${LIBCRTBEGIN} \
+    ${LIBCRTEND} ${_DPADD.${_P}}
+.if !commands(${_P})
 	${_MKTARGET_LINK}
 	${_CCLINK.${_P}} \
 	    ${_LDFLAGS.${_P}} ${_LDSTATIC.${_P}} -o ${.TARGET} \
-	    ${OBJS.${_P}} ${_LDADD.${_P}} \
-	    ${_PROGLDOPTS}
-.endif # ${USE_BITCODE:Uno} == "yes"
+	    ${OBJS.${_P}} ${_PROGLDOPTS} ${_LDADD.${_P}}
 .if defined(CTFMERGE)
 	${CTFMERGE} ${CTFMFLAGS} -o ${.TARGET} ${OBJS.${_P}}
 .endif
@@ -505,9 +622,8 @@ ${_P}: .gdbinit ${LIBCRT0} ${OBJS.${_P}} ${LIBC} ${LIBCRTBEGIN} ${LIBCRTEND} ${_
 .if ${MKSTRIPIDENT} != "no"
 	${OBJCOPY} -R .ident ${.TARGET}
 .endif
-.else
-${_P}: .gdbinit ${LIBCRT0} ${OBJS.${_P}} ${LIBC} ${LIBCRTBEGIN} ${LIBCRTEND} ${_DPADD.${_P}}
 .endif	# !commands(${_P})
+.endif  # defined(__MINIX) && ${USE_BITCODE:Uno} == "yes"
 .endif	# USE_COMBINE
 
 ${_P}.ro: ${OBJS.${_P}} ${_DPADD.${_P}}

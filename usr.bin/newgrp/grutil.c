@@ -1,4 +1,4 @@
-/*	$NetBSD: grutil.c,v 1.2 2008/04/28 20:24:14 martin Exp $	*/
+/*	$NetBSD: grutil.c,v 1.3 2013/01/24 17:46:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: grutil.c,v 1.2 2008/04/28 20:24:14 martin Exp $");
+__RCSID("$NetBSD: grutil.c,v 1.3 2013/01/24 17:46:30 christos Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -137,7 +137,8 @@ addgid(gid_t *groups, int ngroups, int ngroupsmax, gid_t gid, int makespace)
 static addgrp_ret_t
 addgrp(gid_t newgid, int makespace)
 {
-	int ngroups, ngroupsmax, rval;
+	int ngroups, ngroupsmax;
+	addgrp_ret_t rval;
 	gid_t *groups;
 	gid_t oldgid;
 

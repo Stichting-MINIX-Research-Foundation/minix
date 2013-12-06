@@ -1,4 +1,4 @@
-/*	$NetBSD: vsprintf.c,v 1.17 2012/03/15 18:22:31 christos Exp $	*/
+/*	$NetBSD: vsprintf.c,v 1.19 2013/05/17 12:55:57 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,23 +37,31 @@
 #if 0
 static char sccsid[] = "@(#)vsprintf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: vsprintf.c,v 1.17 2012/03/15 18:22:31 christos Exp $");
+__RCSID("$NetBSD: vsprintf.c,v 1.19 2013/05/17 12:55:57 joerg Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <assert.h>
 #include <errno.h>
 #include <limits.h>
+#include <locale.h>
 #include <stdio.h>
+
 #include "reentrant.h"
+#include "setlocale_local.h"
 #include "local.h"
 
 #ifdef _FORTIFY_SOURCE
 #undef vsprintf
+#undef sprintf
 #endif
 
+__weak_alias(sprintf_l, _sprintf_l)
+__weak_alias(vsprintf_l, _vsprintf_l)
+
 int
-vsprintf(char *str, const char *fmt, va_list ap)
+vsprintf_l(char *str, locale_t loc, const char *fmt, va_list ap)
 {
 	int ret;
 	FILE f;
@@ -67,7 +75,39 @@ vsprintf(char *str, const char *fmt, va_list ap)
 	f._flags = __SWR | __SSTR;
 	f._bf._base = f._p = (unsigned char *)str;
 	f._bf._size = f._w = INT_MAX;
-	ret = __vfprintf_unlocked(&f, fmt, ap);
+	ret = __vfprintf_unlocked_l(&f, loc, fmt, ap);
 	*f._p = 0;
+	return ret;
+}
+
+int
+vsprintf(char *str, const char *fmt, va_list ap)
+{
+	return vsprintf_l(str, _current_locale(), fmt, ap);
+}
+
+int
+sprintf_l(char *str, locale_t loc, char const *fmt, ...)
+{
+	int ret;
+	va_list ap;
+
+	va_start(ap, fmt);
+	ret = vsprintf_l(str, loc, fmt, ap);
+	va_end(ap);
+
+	return ret;
+}
+
+int
+sprintf(char *str, char const *fmt, ...)
+{
+	int ret;
+	va_list ap;
+
+	va_start(ap, fmt);
+	ret = vsprintf(str, fmt, ap);
+	va_end(ap);
+
 	return ret;
 }

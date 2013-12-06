@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.106 2012/04/04 10:59:47 joerg Exp $
+#	$NetBSD: bsd.x11.mk,v 1.108 2013/06/05 23:14:13 mrg Exp $
 
 .include <bsd.init.mk>
 
@@ -130,13 +130,13 @@ X11FLAGS.LOADABLE=	-DXFree86LOADER -DIN_MODULE -DXFree86Module \
 .if ${X11FLAVOUR} == "Xorg"
 XVENDORNAMESHORT=	'"X.Org"'
 XVENDORNAME=		'"The X.Org Foundation"'
-XORG_RELEASE=		'"Release 1.10.3"'
+XORG_RELEASE=		'"Release 1.10.6"'
 __XKBDEFRULES__=	'"xorg"'
 XLOCALE.DEFINES=	-DXLOCALEDIR=\"${X11LIBDIR}/locale\" \
 			-DXLOCALELIBDIR=\"${X11LIBDIR}/locale\"
 
 # XXX oh yeah, fix me later
-XORG_VERSION_CURRENT="(((1) * 10000000) + ((10) * 100000) + ((3) * 1000) + 0)"
+XORG_VERSION_CURRENT="(((1) * 10000000) + ((10) * 100000) + ((6) * 1000) + 0)"
 .endif
 
 PRINT_PACKAGE_VERSION=	awk '/^PACKAGE_VERSION=/ {			\
@@ -229,7 +229,8 @@ pkgconfig-install:
 realall:	${_PKGCONFIG_FILES:O:u}
 realinstall:	pkgconfig-install
 
-.for _pkg in ${PKGCONFIG:O:u}
+.for _pkg in ${PKGCONFIG:O:u}	# {
+
 PKGDIST.${_pkg}?=	${X11SRCDIR.${PKGDIST:U${_pkg}}}
 _PKGDEST.${_pkg}=	${DESTDIR}${X11USRLIBDIR}/pkgconfig/${_pkg}.pc
 
@@ -241,7 +242,14 @@ FILESMODE_${_pkg}.pc=	${NONBINMODE}
 
 ${_PKGDEST.${_pkg}}: ${_pkg}.pc __fileinstall
 pkgconfig-install: ${_PKGDEST.${_pkg}}
-.endfor
+
+# Add a dependancy on the configure file if it exists; this way we
+# will rebuild the .pc file if the version in configure changes.
+.if exists(${PKGDIST.${_pkg}}/configure)
+${_pkg}.pc: ${PKGDIST.${_pkg}}/configure
+.endif
+
+.endfor				# }
 
 # XXX
 # The sed script is very, very ugly.  What we actually need is a

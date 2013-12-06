@@ -1,10 +1,11 @@
-/*	$NetBSD: skeleton.c,v 1.10 2011/09/10 21:29:04 christos Exp $	*/
-/* Id: skeleton.c,v 1.31 2011/09/07 09:37:59 tom Exp */
+/*	$NetBSD: skeleton.c,v 1.13 2013/09/13 18:53:29 joerg Exp $	*/
+
+/* Id: skeleton.c,v 1.32 2013/03/04 23:19:39 tom Exp  */
 
 #include "defs.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: skeleton.c,v 1.10 2011/09/10 21:29:04 christos Exp $");
+__RCSID("$NetBSD: skeleton.c,v 1.13 2013/09/13 18:53:29 joerg Exp $");
 
 /*  The definition of yysccsid in the banner should be replaced with	*/
 /*  a #pragma ident directive if the target C compiler supports		*/
@@ -21,6 +22,9 @@ __RCSID("$NetBSD: skeleton.c,v 1.10 2011/09/10 21:29:04 christos Exp $");
 const char *const banner[] =
 {
     "#ifndef lint",
+    "#if __GNUC__ - 0 >= 4 || (__GNUC__ - 0 == 3 && __GNUC_MINOR__ >= 1)",
+    "__attribute__((__used__))",
+    "#endif",
     "static const char yysccsid[] = \"@(#)yaccpar	1.9 (Berkeley) 02/21/93\";",
     "#endif",
     "",
@@ -166,7 +170,7 @@ const char *const body_1[] =
     "    else if ((newsize *= 2) > YYMAXDEPTH)",
     "        newsize = YYMAXDEPTH;",
     "",
-    "    i = data->s_mark - data->s_base;",
+    "    i = (int) (data->s_mark - data->s_base);",
     "    newss = (short *)realloc(data->s_base, newsize * sizeof(*newss));",
     "    if (newss == 0)",
     "        return -1;",

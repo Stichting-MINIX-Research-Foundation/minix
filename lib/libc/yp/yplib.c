@@ -182,10 +182,8 @@ again:
 			}
 			(void)memset(&ysd->dom_server_addr, 0,
 				     sizeof ysd->dom_server_addr);
-#ifndef __minix
 			ysd->dom_server_addr.sin_len =
 				sizeof(struct sockaddr_in);
-#endif /* !__minix */
 			ysd->dom_server_addr.sin_family = AF_INET;
 			bn = &ybr.ypbind_respbody.ypbind_bindinfo;
 			ysd->dom_server_addr.sin_port =
@@ -209,9 +207,7 @@ trynet:
 	if (ysd->dom_vers == -1 || ysd->dom_vers == 0) {
 		struct ypbind_binding *bn;
 		(void)memset(&clnt_sin, 0, sizeof clnt_sin);
-#ifndef __minix
 		clnt_sin.sin_len = sizeof(struct sockaddr_in);
-#endif /* !__minix */
 		clnt_sin.sin_family = AF_INET;
 		clnt_sin.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
 
@@ -248,9 +244,7 @@ trynet:
 
 		(void)memset(&ysd->dom_server_addr, 0, 
 			     sizeof ysd->dom_server_addr);
-#ifndef __minix
 		ysd->dom_server_addr.sin_len = sizeof(struct sockaddr_in);
-#endif /* !__minix */
 		ysd->dom_server_addr.sin_family = AF_INET;
 		bn = &ypbr.ypbind_respbody.ypbind_bindinfo;
 		ysd->dom_server_addr.sin_port =

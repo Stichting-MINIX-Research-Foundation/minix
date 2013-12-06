@@ -15,6 +15,10 @@ __RCSID("$NetBSD: bswap64.c,v 1.3 2009/03/16 05:59:21 cegger Exp $");
 
 #undef bswap64
 
+#if defined(__minix) && defined(_STANDALONE)
+#undef bswap32
+#endif /* defined(__minix) && defined(_STANDALONE) */
+
 uint64_t
 bswap64(uint64_t x)
 {

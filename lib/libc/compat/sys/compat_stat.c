@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_stat.c,v 1.2 2009/01/11 02:46:27 christos Exp $	*/
+/*	$NetBSD: compat_stat.c,v 1.4 2013/10/04 21:07:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Frank van der Linden
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat_stat.c,v 1.2 2009/01/11 02:46:27 christos Exp $");
+__RCSID("$NetBSD: compat_stat.c,v 1.4 2013/10/04 21:07:37 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #define __LIBC12_SOURCE__
@@ -57,6 +57,10 @@ __warn_references(lstat,
  */
 
 static void cvtstat(const struct stat *, struct stat12 *);
+
+__strong_alias(stat, __compat_stat)
+__strong_alias(lstat, __compat_lstat)
+__strong_alias(fstat, __compat_fstat)
 
 static void
 cvtstat(const struct stat *st, struct stat12 *ost)
@@ -86,7 +90,7 @@ cvtstat(const struct stat *st, struct stat12 *ost)
 }
 
 int
-stat(const char *file, struct stat12 *ost)
+__compat_stat(const char *file, struct stat12 *ost)
 {
 	struct stat nst;
 	int ret;
@@ -98,7 +102,7 @@ stat(const char *file, struct stat12 *ost)
 }
 
 int
-fstat(int f, struct stat12 *ost)
+__compat_fstat(int f, struct stat12 *ost)
 {
 	struct stat nst;
 	int ret;
@@ -110,7 +114,7 @@ fstat(int f, struct stat12 *ost)
 }
 
 int
-lstat(const char *file, struct stat12 *ost)
+__compat_lstat(const char *file, struct stat12 *ost)
 {
 	struct stat nst;
 	int ret;

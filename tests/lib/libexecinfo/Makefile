@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2013/07/04 23:53:13 joerg Exp $
+# $NetBSD: Makefile,v 1.4 2013/07/21 15:29:04 tron Exp $
 
 .include <bsd.own.mk>
 
@@ -8,5 +8,7 @@ TESTS_C+=	t_backtrace
 
 LDADD+=		-lexecinfo -lelf
 DPADD+=		${LIBEXECINFO} ${LIBELF}
+
+COPTS.t_backtrace.c=	-Wno-stack-protector
 
 .include <bsd.test.mk>

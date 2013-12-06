@@ -1,4 +1,4 @@
-/*	$NetBSD: vfwprintf.c,v 1.30 2012/03/27 15:05:42 christos Exp $	*/
+/*	$NetBSD: vfwprintf.c,v 1.33 2013/09/23 12:41:37 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 static char sccsid[] = "@(#)vfprintf.c	8.1 (Berkeley) 6/4/93";
 __FBSDID("$FreeBSD: src/lib/libc/stdio/vfwprintf.c,v 1.27 2007/01/09 00:28:08 imp Exp $");
 #else
-__RCSID("$NetBSD: vfwprintf.c,v 1.30 2012/03/27 15:05:42 christos Exp $");
+__RCSID("$NetBSD: vfwprintf.c,v 1.33 2013/09/23 12:41:37 pooka Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -64,6 +64,7 @@ __RCSID("$NetBSD: vfwprintf.c,v 1.30 2012/03/27 15:05:42 christos Exp $");
 #include <wctype.h>
 
 #include "reentrant.h"
+#include "setlocale_local.h"
 #include "local.h"
 #include "extern.h"
 #include "fvwrite.h"
@@ -73,7 +74,7 @@ __RCSID("$NetBSD: vfwprintf.c,v 1.30 2012/03/27 15:05:42 christos Exp $");
 #define CHAR_T		wchar_t
 #define STRLEN(a)	wcslen(a)
 #define MEMCHR(a, b, c)	wmemchr(a, b, c)
-#define SCONV(a, b)	__mbsconv(a, b)
+#define SCONV(a, b, loc)	__mbsconv(a, b, loc)
 #define STRCONST(a)	L ## a
 #define WDECL(a, b)	a ## w ## b
 #define END_OF_FILE	WEOF
@@ -83,7 +84,7 @@ __RCSID("$NetBSD: vfwprintf.c,v 1.30 2012/03/27 15:05:42 christos Exp $");
 #define CHAR_T		char
 #define STRLEN(a)	strlen(a)
 #define MEMCHR(a, b, c)	memchr(a, b, c)
-#define SCONV(a, b)	__wcsconv(a, b)
+#define SCONV(a, b, loc)	__wcsconv(a, b, loc)
 #define STRCONST(a)	a
 #define WDECL(a, b)	a ## b
 #define END_OF_FILE	EOF
@@ -131,16 +132,20 @@ enum typeid {
 	T_DOUBLE, T_LONG_DOUBLE, T_WINT, TP_WCHAR
 };
 
-static int	__sbprintf(FILE *, const CHAR_T *, va_list);
+#ifdef NARROW
+__printflike(3, 0)
+#endif
+static int	__sbprintf(FILE *, locale_t, const CHAR_T *, va_list);
+
 static CHAR_T	*__ujtoa(uintmax_t, CHAR_T *, int, int, const char *, int,
 		    char, const char *);
 static CHAR_T	*__ultoa(u_long, CHAR_T *, int, int, const char *, int,
 		    char, const char *);
 #ifndef NARROW
-static CHAR_T	*__mbsconv(char *, int);
-static wint_t	__xfputwc(CHAR_T, FILE *);
+static CHAR_T	*__mbsconv(char *, int, locale_t);
+static wint_t	__xfputwc(CHAR_T, FILE *, locale_t);
 #else
-static char	*__wcsconv(wchar_t *, int);
+static char	*__wcsconv(wchar_t *, int, locale_t);
 static int	__sprint(FILE *, struct __suio *);
 #endif
 static int	__find_arguments(const CHAR_T *, va_list, union arg **);
@@ -152,7 +157,7 @@ static int	__grow_type_table(size_t, enum typeid **, size_t *);
  * worries about ungetc buffers and so forth.
  */
 static int
-__sbprintf(FILE *fp, const CHAR_T *fmt, va_list ap)
+__sbprintf(FILE *fp, locale_t loc, const CHAR_T *fmt, va_list ap)
 {
 	int ret;
 	FILE fake;
@@ -178,7 +183,7 @@ __sbprintf(FILE *fp, const CHAR_T *fmt, va_list ap)
 	fake._lbfsize = 0;	/* not actually used, but Just In Case */
 
 	/* do the work, then copy any error status */
-	ret = WDECL(__vf,printf_unlocked)(&fake, fmt, ap);
+	ret = WDECL(__vf,printf_unlocked_l)(&fake, loc, fmt, ap);
 	if (ret >= 0 && fflush(&fake))
 		ret = END_OF_FILE;
 	if (fake._flags & __SERR)
@@ -192,7 +197,7 @@ __sbprintf(FILE *fp, const CHAR_T *fmt, va_list ap)
  * File must already be locked.
  */
 static wint_t
-__xfputwc(wchar_t wc, FILE *fp)
+__xfputwc(wchar_t wc, FILE *fp, locale_t loc)
 {
 	static const mbstate_t initial;
 	mbstate_t mbs;
@@ -205,7 +210,7 @@ __xfputwc(wchar_t wc, FILE *fp)
 		return __fputwc_unlock(wc, fp);
 
 	mbs = initial;
-	if ((len = wcrtomb(buf, wc, &mbs)) == (size_t)-1) {
+	if ((len = wcrtomb_l(buf, wc, &mbs, loc)) == (size_t)-1) {
 		fp->_flags |= __SERR;
 		return END_OF_FILE;
 	}
@@ -412,7 +417,7 @@ __ujtoa(uintmax_t val, CHAR_T *endp, int base, int octzero,
  * that the multibyte char. string ends in a null character.
  */
 static wchar_t *
-__mbsconv(char *mbsarg, int prec)
+__mbsconv(char *mbsarg, int prec, locale_t loc)
 {
 	static const mbstate_t initial;
 	mbstate_t mbs;
@@ -436,7 +441,7 @@ __mbsconv(char *mbsarg, int prec)
 		insize = nchars = nconv = 0;
 		mbs = initial;
 		while (nchars != (size_t)prec) {
-			nconv = mbrlen(p, MB_CUR_MAX, &mbs);
+			nconv = mbrlen_l(p, MB_CUR_MAX_L(loc), &mbs, loc);
 			if (nconv == 0 || nconv == (size_t)-1 ||
 			    nconv == (size_t)-2)
 				break;
@@ -462,7 +467,7 @@ __mbsconv(char *mbsarg, int prec)
 	mbs = initial;
 	nconv = 0;
 	while (insize != 0) {
-		nconv = mbrtowc(wcp, p, insize, &mbs);
+		nconv = mbrtowc_l(wcp, p, insize, &mbs, loc);
 		if (nconv == 0 || nconv == (size_t)-1 || nconv == (size_t)-2)
 			break;
 		wcp++;
@@ -485,7 +490,7 @@ __mbsconv(char *mbsarg, int prec)
  * string ends is null-terminated.
  */
 static char *
-__wcsconv(wchar_t *wcsarg, int prec)
+__wcsconv(wchar_t *wcsarg, int prec, locale_t loc)
 {
 	static const mbstate_t initial;
 	mbstate_t mbs;
@@ -498,7 +503,7 @@ __wcsconv(wchar_t *wcsarg, int prec)
 	if (prec < 0) {
 		p = wcsarg;
 		mbs = initial;
-		nbytes = wcsrtombs(NULL, (void *)&p, 0, &mbs);
+		nbytes = wcsrtombs_l(NULL, (void *)&p, 0, &mbs, loc);
 		if (nbytes == (size_t)-1)
 			return NULL;
 	} else {
@@ -514,7 +519,7 @@ __wcsconv(wchar_t *wcsarg, int prec)
 			p = wcsarg;
 			mbs = initial;
 			for (;;) {
-				clen = wcrtomb(buf, *p++, &mbs);
+				clen = wcrtomb_l(buf, *p++, &mbs, loc);
 				if (clen == 0 || clen == (size_t)-1 ||
 				    nbytes + clen > (size_t)prec)
 					break;
@@ -528,8 +533,8 @@ __wcsconv(wchar_t *wcsarg, int prec)
 	/* Fill the output buffer. */
 	p = wcsarg;
 	mbs = initial;
-	if ((nbytes = wcsrtombs(convbuf, (void *)&p,
-	    nbytes, &mbs)) == (size_t)-1) {
+	if ((nbytes = wcsrtombs_l(convbuf, (void *)&p,
+	    nbytes, &mbs, loc)) == (size_t)-1) {
 		free(convbuf);
 		return NULL;
 	}
@@ -547,7 +552,19 @@ WDECL(vf,printf)(FILE * __restrict fp, const CHAR_T * __restrict fmt0, va_list a
 	int ret;
 
 	FLOCKFILE(fp);
-	ret = WDECL(__vf,printf_unlocked)(fp, fmt0, ap);
+	ret = WDECL(__vf,printf_unlocked_l)(fp, _current_locale(), fmt0, ap);
+	FUNLOCKFILE(fp);
+	return ret;
+}
+
+int
+WDECL(vf,printf_l)(FILE * __restrict fp, locale_t loc, const CHAR_T * __restrict fmt0,
+    va_list ap)
+{
+	int ret;
+
+	FLOCKFILE(fp);
+	ret = WDECL(__vf,printf_unlocked_l)(fp, loc, fmt0, ap);
 	FUNLOCKFILE(fp);
 	return ret;
 }
@@ -600,7 +617,7 @@ static char *cvt(double, int, int, char *, int *, int, int *);
  * Non-MT-safe version
  */
 int
-WDECL(__vf,printf_unlocked)(FILE *fp, const CHAR_T *fmt0, va_list ap)
+WDECL(__vf,printf_unlocked_l)(FILE *fp, locale_t loc, const CHAR_T *fmt0, va_list ap)
 {
 	CHAR_T *fmt;		/* format string */
 	int ch;			/* character from fmt */
@@ -695,7 +712,7 @@ WDECL(__vf,printf_unlocked)(FILE *fp, const CHAR_T *fmt0, va_list ap)
 #ifndef NARROW
 #define	PRINT(ptr, len)	do {			\
 	for (n3 = 0; n3 < (len); n3++)		\
-		__xfputwc((ptr)[n3], fp);	\
+		__xfputwc((ptr)[n3], fp, loc);	\
 } while (/*CONSTCOND*/0)
 #define FLUSH()
 #else
@@ -804,13 +821,12 @@ WDECL(__vf,printf_unlocked)(FILE *fp, const CHAR_T *fmt0, va_list ap)
 
 	_SET_ORIENTATION(fp, -1);
 
-	ndig = -1;	/* XXX gcc */
-
 	thousands_sep = '\0';
 	grouping = NULL;
 #ifndef NO_FLOATING_POINT
-	decimal_point = localeconv()->decimal_point;
+	decimal_point = localeconv_l(loc)->decimal_point;
 	expsize = 0;		/* XXXGCC -Wuninitialized [sh3,m68000] */
+	ndig = -1;	/* XXX gcc */
 #endif
 	convbuf = NULL;
 	/* sorry, f{w,}printf(read_only_file, L"") returns {W,}EOF, not 0 */
@@ -822,7 +838,7 @@ WDECL(__vf,printf_unlocked)(FILE *fp, const CHAR_T *fmt0, va_list ap)
 	/* optimise fprintf(stderr) (and other unbuffered Unix files) */
 	if ((fp->_flags & (__SNBF|__SWR|__SRW)) == (__SNBF|__SWR) &&
 	    __sfileno(fp) != -1)
-		return __sbprintf(fp, fmt0, ap);
+		return __sbprintf(fp, loc, fmt0, ap);
 
 	fmt = (CHAR_T *)__UNCONST(fmt0);
 	argtable = NULL;
@@ -862,9 +878,11 @@ WDECL(__vf,printf_unlocked)(FILE *fp, const CHAR_T *fmt0, va_list ap)
 		prec = -1;
 		sign = '\0';
 		ox[1] = '\0';
+#ifndef NO_FLOATING_POINT
 		expchar = '\0';
 		lead = 0;
 		nseps = nrepeats = 0;
+#endif
 		ulval = 0;
 		ujval = 0;
 		xdigs = NULL;
@@ -903,8 +921,8 @@ reswitch:	switch (ch) {
 			goto rflag;
 		case '\'':
 			flags |= GROUPING;
-			thousands_sep = *(localeconv()->thousands_sep);
-			grouping = localeconv()->grouping;
+			thousands_sep = *(localeconv_l(loc)->thousands_sep);
+			grouping = localeconv_l(loc)->grouping;
 			/* If the locale doesn't define the above, use sane
 			 * defaults - otherwise silly things happen! */
 			if (thousands_sep == 0)
@@ -992,8 +1010,8 @@ reswitch:	switch (ch) {
 				size_t mbseqlen;
 
 				mbs = initial;
-				mbseqlen = wcrtomb(buf,
-				    (wchar_t)GETARG(wint_t), &mbs);
+				mbseqlen = wcrtomb_l(buf,
+				    (wchar_t)GETARG(wint_t), &mbs, loc);
 				if (mbseqlen == (size_t)-1) {
 					fp->_flags |= __SERR;
 					goto error;
@@ -1007,7 +1025,7 @@ reswitch:	switch (ch) {
 			if (flags & LONGINT)
 				*buf = (wchar_t)GETARG(wint_t);
 			else
-				*buf = (wchar_t)btowc(GETARG(int));
+				*buf = (wchar_t)btowc_l(GETARG(int), loc);
 			size = 1;
 #endif
 			result = buf;
@@ -1074,7 +1092,7 @@ reswitch:	switch (ch) {
 			if (convbuf != NULL)
 				free(convbuf);
 #ifndef NARROW
-			result = convbuf = __mbsconv(dtoaresult, -1);
+			result = convbuf = __mbsconv(dtoaresult, -1, loc);
 #else
 			/*XXX inefficient*/
 			result = convbuf = strdup(dtoaresult);
@@ -1123,7 +1141,7 @@ fp_begin:
 			if (convbuf != NULL)
 				free(convbuf);
 #ifndef NARROW
-			result = convbuf = __mbsconv(dtoaresult, -1);
+			result = convbuf = __mbsconv(dtoaresult, -1, loc);
 #else
 			/*XXX inefficient*/
 			result = convbuf = strdup(dtoaresult);
@@ -1195,7 +1213,7 @@ fp_common:
 			if (convbuf != NULL)
 				free(convbuf);
 #ifndef NARROW
-			result = convbuf = __mbsconv(dtoaresult, -1);
+			result = convbuf = __mbsconv(dtoaresult, -1, loc);
 #else
 			/*XXX inefficient*/
 			result = convbuf = strdup(dtoaresult);
@@ -1323,7 +1341,7 @@ fp_common:
 				if ((mc = GETARG(MCHAR_T *)) == NULL)
 					result = STRCONST("(null)");
 				else {
-					convbuf = SCONV(mc, prec);
+					convbuf = SCONV(mc, prec, loc);
 					if (convbuf == NULL) {
 						fp->_flags |= __SERR;
 						goto error;

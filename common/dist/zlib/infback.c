@@ -12,10 +12,6 @@
    inflate_fast() can be used with either inflate.c or infback.c.
  */
 
-#if defined(__minix) && defined(_STANDALONE)
-#include <lib/libkern/libkern.h>
-#endif
-
 #include "zutil.h"
 #include "inftrees.h"
 #include "inflate.h"

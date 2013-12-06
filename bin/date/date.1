@@ -1,4 +1,4 @@
-.\"	$NetBSD: date.1,v 1.41 2010/02/04 22:56:11 wiz Exp $
+.\"	$NetBSD: date.1,v 1.42 2012/04/06 11:36:56 wiz Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -84,7 +84,7 @@ The utility
 .Xr timed 8
 is used to synchronize the clocks on groups of machines.
 By default, if
-timed
+.Xr timed 8
 is running,
 .Nm
 will set the time on all of the machines in the local group.
@@ -153,7 +153,7 @@ The second of the minute, from 00 to 61.
 .Pp
 Everything but the minutes is optional.
 .Pp
-Time changes for Daylight Saving and Standard time and leap seconds
+Time changes for Daylight Saving and Standard Time and leap seconds
 and years are handled automatically.
 .Sh ENVIRONMENT
 The following environment variables affect the execution of
@@ -217,12 +217,13 @@ On these occasions,
 prints:
 .Ql Network time being set .
 The message
-.Ql Communication error with timed
+.Ql Communication error with
+.Xr timed 8
 occurs when the communication
 between
 .Nm
 and
-timed
+.Xr timed 8
 fails.
 .Sh SEE ALSO
 .Xr adjtime 2 ,
@@ -231,6 +232,7 @@ fails.
 .Xr parsedate 3 ,
 .Xr strftime 3 ,
 .Xr utmp 5 ,
+.Xr environ 7 ,
 .Xr timed 8
 .Rs
 .%T "TSP: The Time Synchronization Protocol for UNIX 4.3BSD"

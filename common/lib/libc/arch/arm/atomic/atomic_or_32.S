@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_or_32.S,v 1.3 2012/08/31 23:41:52 matt Exp $	*/
+/*	$NetBSD: atomic_or_32.S,v 1.6 2013/11/08 22:42:52 matt Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,42 +33,46 @@
 #ifdef _ARM_ARCH_6
 
 ENTRY_NP(_atomic_or_32)
-	mov	r3, r0			/* need r0 for return value */
-1:	ldrex	r0, [r3]		/* load old value (to be returned) */
-	orr	r2, r0, r1		/* calculate new value */
-	strex	ip, r2, [r3]		/* try to store */
-	cmp	ip, #0			/*   succeed? */
+	mov	ip, r0
+1:	ldrex	r0, [ip]		/* load old value (to be returned) */
+	orrs	r3, r0, r1		/* calculate new value */
+	strex	r2, r3, [ip]		/* try to store */
+	cmp	r2, #0			/*   succeed? */
 	bne	1b			/*     no, try again */
 #ifdef _ARM_ARCH_7
 	dmb
 #else
-	mcr	p15, 0, ip, c7, c10, 5	/* data memory barrier */
+	mcr	p15, 0, r2, c7, c10, 5	/* data memory barrier */
 #endif
 	RET				/* return old value */
-	END(_atomic_or_32)
+END(_atomic_or_32)
+
 ATOMIC_OP_ALIAS(atomic_or_32,_atomic_or_32)
 ATOMIC_OP_ALIAS(atomic_or_uint,_atomic_or_32)
 ATOMIC_OP_ALIAS(atomic_or_ulong,_atomic_or_32)
+STRONG_ALIAS(__sync_fetch_and_or_4,_atomic_or_32)
 STRONG_ALIAS(_atomic_or_uint,_atomic_or_32)
 STRONG_ALIAS(_atomic_or_ulong,_atomic_or_32)
 
 ENTRY_NP(_atomic_or_32_nv)
-	mov	r3, r0			/* need r0 for return value */
-1:	ldrex	r0, [r3]		/* load old value */
-	orr	r0, r0, r1		/* calculate new value (return value) */
-	strex	r2, r0, [r3]		/* try to store */
+	mov	ip, r0			/* need r0 for return value */
+1:	ldrex	r0, [ip]		/* load old value */
+	orrs	r0, r0, r1		/* calculate new value (return value) */
+	strex	r2, r0, [ip]		/* try to store */
 	cmp	r2, #0			/*   succeed? */
 	bne	1b			/*     no, try again? */
 #ifdef _ARM_ARCH_7
 	dmb
 #else
-	mcr	p15, 0, ip, c7, c10, 5	/* data memory barrier */
+	mcr	p15, 0, r2, c7, c10, 5	/* data memory barrier */
 #endif
 	RET				/* return new value */
-	END(_atomic_or_32_nv)
+END(_atomic_or_32_nv)
+
 ATOMIC_OP_ALIAS(atomic_or_32_nv,_atomic_or_32_nv)
 ATOMIC_OP_ALIAS(atomic_or_uint_nv,_atomic_or_32_nv)
 ATOMIC_OP_ALIAS(atomic_or_ulong_nv,_atomic_or_32_nv)
+STRONG_ALIAS(__sync_or_and_fetch_4,_atomic_or_32_nv)
 STRONG_ALIAS(_atomic_or_uint_nv,_atomic_or_32_nv)
 STRONG_ALIAS(_atomic_or_ulong_nv,_atomic_or_32_nv)
 

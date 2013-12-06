@@ -1,4 +1,4 @@
-/* $NetBSD: i386.c,v 1.37 2011/08/14 17:50:17 christos Exp $ */
+/* $NetBSD: i386.c,v 1.40 2013/06/14 03:54:43 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: i386.c,v 1.37 2011/08/14 17:50:17 christos Exp $");
+__RCSID("$NetBSD: i386.c,v 1.40 2013/06/14 03:54:43 msaitoh Exp $");
 #endif /* !__lint */
 
 #include <sys/param.h>
@@ -79,21 +79,19 @@ struct ib_mach ib_mach_i386 =
 	{ "i386", i386_setboot, no_clearboot, i386_editboot,
 		IB_RESETVIDEO | IB_CONSOLE | IB_CONSPEED | IB_CONSADDR |
 		IB_KEYMAP | IB_PASSWORD | IB_TIMEOUT |
+#if !defined(__minix)
+		IB_MODULES | IB_BOOTCONF |
+		IB_STAGE1START };
+#else
 		IB_MODULES | IB_BOOTCONF };
-
-#ifdef __minix
-struct ib_mach ib_mach_i686 =
-	{ "i686", i386_setboot, no_clearboot, i386_editboot,
-		IB_RESETVIDEO | IB_CONSOLE | IB_CONSPEED | IB_CONSADDR |
-		IB_KEYMAP | IB_PASSWORD | IB_TIMEOUT |
-		IB_MODULES | IB_BOOTCONF };
-#endif
+#endif /* !defined(__minix) */
 
 struct ib_mach ib_mach_amd64 =
 	{ "amd64", i386_setboot, no_clearboot, i386_editboot,
 		IB_RESETVIDEO | IB_CONSOLE | IB_CONSPEED | IB_CONSADDR |
 		IB_KEYMAP | IB_PASSWORD | IB_TIMEOUT |
-		IB_MODULES | IB_BOOTCONF };
+		IB_MODULES | IB_BOOTCONF |
+		IB_STAGE1START };
 
 /*
  * Attempting to write the 'labelsector' (or a sector near it - within 8k?)
@@ -191,7 +189,7 @@ write_boot_area(ib_params *params, uint8_t *buf, size_t len)
   bad_write:
 	if (rv == -1)
 		warn("Writing `%s'", params->filesystem);
-	else 
+	else
 		warnx("Writing `%s': short write, %u bytes",
 			params->filesystem, rv);
 	return 0;
@@ -257,7 +255,7 @@ update_i386_boot_params(ib_params *params, struct x86_boot_params  *bpp)
 		if (i == __arraycount(consoles)) {
 			warnx("invalid console name, valid names are:");
 			(void)fprintf(stderr, "\t%s", consoles[0].name);
-			for (i = 1; consoles[i].name != NULL; i++)
+			for (i = 1; i < __arraycount(consoles); i++)
 				(void)fprintf(stderr, ", %s", consoles[i].name);
 			(void)fprintf(stderr, "\n");
 			return 1;
@@ -448,6 +446,9 @@ i386_setboot(ib_params *params)
 				/* Old BPB is shorter, leave zero filled */
 				u = disk_buf.b[1];
 			}
+			if (params->s1start != 0)
+				/* Fixup physical offset of filesytem */
+				bpb->bpbHiddenSecs = htole32(params->s1start);
 			memcpy(bootstrap.b + 2, disk_buf.b + 2, u);
 		}
 		#undef USE_F

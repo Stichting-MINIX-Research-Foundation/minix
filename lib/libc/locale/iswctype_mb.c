@@ -1,4 +1,4 @@
-/* $NetBSD: iswctype_mb.c,v 1.11 2010/06/13 04:14:57 tnozaki Exp $ */
+/* $NetBSD: iswctype_mb.c,v 1.13 2013/05/17 12:55:57 joerg Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: iswctype_mb.c,v 1.11 2010/06/13 04:14:57 tnozaki Exp $");
+__RCSID("$NetBSD: iswctype_mb.c,v 1.13 2013/05/17 12:55:57 joerg Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -47,20 +47,26 @@ __RCSID("$NetBSD: iswctype_mb.c,v 1.11 2010/06/13 04:14:57 tnozaki Exp $");
 #include "_wctype_local.h"
 #include "_wctrans_local.h"
 
-#define _RUNE_LOCALE() ((_RuneLocale const *) \
-    (*_current_locale())->part_impl[(size_t)LC_CTYPE])
+#define _RUNE_LOCALE(loc) ((_RuneLocale const *) \
+    (loc)->part_impl[(size_t)LC_CTYPE])
 
 #define _ISWCTYPE_FUNC(name, index)			\
 int							\
-isw##name(wint_t wc)					\
+isw##name##_l(wint_t wc, locale_t loc)			\
 {							\
 	_RuneLocale const *rl;				\
 	_WCTypeEntry const *te;				\
 							\
-	rl = _RUNE_LOCALE();				\
+	rl = _RUNE_LOCALE(loc);				\
 	te = &rl->rl_wctype[index];			\
 	return _iswctype_priv(rl, wc, te);		\
+}							\
+int							\
+isw##name(wint_t wc)					\
+{							\
+	return isw##name##_l(wc, _current_locale());	\
 }
+
 _ISWCTYPE_FUNC(alnum,  _WCTYPE_INDEX_ALNUM)
 _ISWCTYPE_FUNC(alpha,  _WCTYPE_INDEX_ALPHA)
 _ISWCTYPE_FUNC(blank,  _WCTYPE_INDEX_BLANK)
@@ -76,25 +82,30 @@ _ISWCTYPE_FUNC(xdigit, _WCTYPE_INDEX_XDIGIT)
 
 #define _TOWCTRANS_FUNC(name, index)			\
 wint_t							\
-tow##name(wint_t wc)					\
+tow##name##_l(wint_t wc, locale_t loc)			\
 {							\
 	_RuneLocale const *rl;				\
 	_WCTransEntry const *te;			\
 							\
-	rl = _RUNE_LOCALE();				\
+	rl = _RUNE_LOCALE(loc);				\
 	te = &rl->rl_wctrans[index];			\
 	return _towctrans_priv(wc, te);			\
+}							\
+wint_t							\
+tow##name(wint_t wc)					\
+{							\
+	return tow##name##_l(wc, _current_locale());	\
 }
 _TOWCTRANS_FUNC(upper, _WCTRANS_INDEX_UPPER)
 _TOWCTRANS_FUNC(lower, _WCTRANS_INDEX_LOWER)
 
 wctype_t
-wctype(const char *charclass)
+wctype_l(const char *charclass, locale_t loc)
 {
 	_RuneLocale const *rl;
 	size_t i;
 
-	rl = _RUNE_LOCALE();
+	rl = _RUNE_LOCALE(loc);
 	for (i = 0; i < _WCTYPE_NINDEXES; ++i) {
 		if (!strcmp(rl->rl_wctype[i].te_name, charclass))
 			return (wctype_t)__UNCONST(&rl->rl_wctype[i]);
@@ -102,13 +113,19 @@ wctype(const char *charclass)
 	return (wctype_t)NULL;
 }
 
+wctype_t
+wctype(const char *charclass)
+{
+	return wctype_l(charclass, _current_locale());
+}
+
 wctrans_t
-wctrans(const char *charmap)
+wctrans_l(const char *charmap, locale_t loc)
 {
 	_RuneLocale const *rl;
 	size_t i;
 
-	rl = _RUNE_LOCALE();
+	rl = _RUNE_LOCALE(loc);
 	for (i = 0; i < _WCTRANS_NINDEXES; ++i) {
 		_DIAGASSERT(rl->rl_wctrans[i].te_name != NULL);
 		if (!strcmp(rl->rl_wctrans[i].te_name, charmap))
@@ -117,8 +134,14 @@ wctrans(const char *charmap)
 	return (wctrans_t)NULL;
 }
 
+wctrans_t
+wctrans(const char *charmap)
+{
+	return wctrans_l(charmap, _current_locale());
+}
+
 int
-iswctype(wint_t wc, wctype_t charclass)
+iswctype_l(wint_t wc, wctype_t charclass, locale_t loc)
 {
 	_RuneLocale const *rl;
 	_WCTypeEntry const *te;
@@ -127,9 +150,16 @@ iswctype(wint_t wc, wctype_t charclass)
 		errno = EINVAL;
 		return 0;
 	}
-	rl = _RUNE_LOCALE();
+
+	rl = _RUNE_LOCALE(loc);
 	te = (_WCTypeEntry const *)(void *)charclass;
 	return _iswctype_priv(rl, wc, te);
+}
+
+int
+iswctype(wint_t wc, wctype_t charclass)
+{
+	return iswctype_l(wc, charclass, _current_locale());
 }
 
 wint_t
@@ -145,17 +175,26 @@ towctrans(wint_t wc, wctrans_t charmap)
 	return _towctrans_priv(wc, te);
 }
 
+/* ARGSUSED */
+wint_t
+towctrans_l(wint_t wc, wctrans_t charmap, locale_t loc)
+{
+	return towctrans(wc, charmap);
+}
+
 __weak_alias(wcwidth,_wcwidth)
+__weak_alias(wcwidth_l,_wcwidth_l)
 
 int
-wcwidth(wchar_t wc)
+wcwidth_l(wchar_t wc, locale_t loc)
 {
 	_RuneLocale const *rl;
 	_RuneType x;
 
 	if (wc == L'\0')
 		return 0;
-	rl = _RUNE_LOCALE();
+
+	rl = _RUNE_LOCALE(loc);
 	x = _runetype_priv(rl, wc);
 	if (x & _RUNETYPE_R)
 		return ((unsigned)x & _RUNETYPE_SWM) >> _RUNETYPE_SWS;
@@ -163,7 +202,13 @@ wcwidth(wchar_t wc)
 }
 
 int
-wcswidth(const wchar_t * __restrict ws, size_t wn)
+wcwidth(wchar_t wc)
+{
+	return wcwidth_l(wc, _current_locale());
+}
+
+int
+wcswidth_l(const wchar_t * __restrict ws, size_t wn, locale_t loc)
 {
 	_RuneLocale const *rl;
 	_RuneType x;
@@ -171,7 +216,7 @@ wcswidth(const wchar_t * __restrict ws, size_t wn)
 
 	_DIAGASSERT(ws != NULL);
 
-	rl = _RUNE_LOCALE();
+	rl = _RUNE_LOCALE(loc);
 	width = 0;
 	while (wn > 0 && *ws != L'\0') {
 		x = _runetype_priv(rl, *ws);
@@ -181,4 +226,10 @@ wcswidth(const wchar_t * __restrict ws, size_t wn)
 		++ws, --wn;
 	}
 	return width;
+}
+
+int
+wcswidth(const wchar_t * __restrict ws, size_t wn)
+{
+	return wcswidth_l(ws, wn, _current_locale());
 }

@@ -18,10 +18,11 @@ flag __eqdf2(float64, float64);
 flag
 __eqdf2(float64 a, float64 b)
 {
+
 #if defined(__minix) && defined(__arm__)
 	return float64_eq(a, b);
 #else
 	/* libgcc1.c says !(a == b) */
 	return !float64_eq(a, b);
-#endif
+#endif /* defined(__minix) */
 }

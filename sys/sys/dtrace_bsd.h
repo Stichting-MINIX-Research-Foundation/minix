@@ -1,4 +1,4 @@
-/*	$NetBSD: dtrace_bsd.h,v 1.5 2012/01/30 23:31:27 matt Exp $	*/
+/*	$NetBSD: dtrace_bsd.h,v 1.7 2012/12/02 01:05:16 chs Exp $	*/
 
 /*-
  * Copyright (c) 2007-2008 John Birrell (jb@freebsd.org)
@@ -55,15 +55,8 @@ struct ucred;
  * Cyclic clock function type definition used to hook the cyclic
  * subsystem into the appropriate timer interrupt.
  */
-typedef	void (*cyclic_clock_func_t)(struct trapframe *);
-
-/*
- * These external variables are actually machine-dependent, so
- * they might not actually exist.
- *
- * Defining them here avoids a proliferation of header files.
- */
-extern cyclic_clock_func_t     lapic_cyclic_clock_func[];
+typedef	void (*cyclic_clock_func_t)(struct clockframe *);
+extern cyclic_clock_func_t	cyclic_clock_func[];
 
 /*
  * The dtrace module handles traps that occur during a DTrace probe.

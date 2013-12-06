@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs.h,v 1.4 2011/11/28 12:50:07 ahoka Exp $	*/
+/*	$NetBSD: chfs.h,v 1.8 2012/10/19 12:44:39 ttoth Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -38,9 +38,12 @@
 #ifndef __CHFS_H__
 #define __CHFS_H__
 
+
+#ifdef _KERNEL
+
 #if 0
-#define DBG_MSG
-#define DBG_MSG_GC
+#define DBG_MSG			/* debug messages */
+#define DBG_MSG_GC		/* garbage collector's debug messages */
 #endif
 
 #include <sys/param.h>
@@ -71,26 +74,34 @@
 TAILQ_HEAD(chfs_dirent_list, chfs_dirent);
 
 #include "chfs_pool.h"
+#endif /* _KERNEL */
+
 #include "ebh.h"
 #include "media.h"
 #include "chfs_inode.h"
 
+/* padding - last two bits used for node masks */
+#define CHFS_PAD(x) (((x)+3)&~3)
+
+#ifdef _KERNEL
+
 #ifndef MOUNT_CHFS
 #define MOUNT_CHFS "chfs"
-#endif
+#endif /* MOUNT_CHFS */
 
-#define CHFS_ROOTINO ROOTINO    /* ROOTINO == 2 */
-
+/* state of a vnode */
 enum {
-	VNO_STATE_UNCHECKED,	/* CRC checks not yet done */
-	VNO_STATE_CHECKING,	/* CRC checks in progress */
-	VNO_STATE_PRESENT,	/* In core */
-	VNO_STATE_CHECKEDABSENT,/* Checked, cleared again */
-	VNO_STATE_GC,		/* GCing a 'pristine' node */
-	VNO_STATE_READING,	/* In read_inode() */
-	VNO_STATE_CLEARING	/* In clear_inode() */
+	VNO_STATE_UNCHECKED,		/* CRC checks not yet done */
+	VNO_STATE_CHECKING,			/* CRC checks in progress */
+	VNO_STATE_PRESENT,			/* In core */
+	VNO_STATE_CHECKEDABSENT,	/* Checked, cleared again */
+	VNO_STATE_GC,				/* GCing a 'pristine' node */
+	VNO_STATE_READING,			/* In read_inode() */
+	VNO_STATE_CLEARING			/* In clear_inode() */
 };
 
+
+/* size of the vnode cache (hashtable) */
 #define VNODECACHE_SIZE 128
 
 #define MAX_READ_FREE(chmp) (((chmp)->chm_ebh)->eb_size / 8)
@@ -98,8 +109,7 @@ enum {
 #define MAX_DIRTY_TO_CLEAN 255
 #define VERY_DIRTY(chmp, size) ((size) >= (((chmp)->chm_ebh)->eb_size / 2))
 
-#define CHFS_PAD(x) (((x)+3)&~3)
-
+/* node errors */
 enum {
 	CHFS_NODE_OK = 0,
 	CHFS_NODE_BADMAGIC,
@@ -107,6 +117,7 @@ enum {
 	CHFS_NODE_BADNAMECRC
 };
 
+/* eraseblock states */
 enum {
 	CHFS_BLK_STATE_FREE = 100,
 	CHFS_BLK_STATE_CLEAN,
@@ -117,25 +128,23 @@ enum {
 extern struct pool chfs_inode_pool;
 extern const struct genfs_ops chfs_genfsops;
 
-/**
- * struct chfs_node_ref - a reference to a node
- * @lnr: logical identifier of the eraseblock where the node is
- * @offset: offset int hte eraseblock where the node starts
- * @next: used at data and dirent nodes, it points to the next data node which
- * 		  belongs to the same vnode
- */
+/* struct chfs_node_ref - a reference to a node which is on the media */
 struct chfs_node_ref
 {
-	struct chfs_node_ref *nref_next;
-	uint32_t nref_lnr;
-	uint32_t nref_offset;
+	struct chfs_node_ref *nref_next;	/* next data node which belongs to the same vnode */
+	uint32_t nref_lnr;					/* nref's LEB number */
+	uint32_t nref_offset;				/* nref's offset */
 };
 
-/* Constants  for allocating node refs */
+/*
+ * constants for allocating node refs 
+ * they're allocated in blocks
+ */
 #define REFS_BLOCK_LEN (255/sizeof(struct chfs_node_ref))
 #define REF_EMPTY_NODE (UINT_MAX)
 #define REF_LINK_TO_NEXT (UINT_MAX - 1)
 
+/* node masks - last two bits of the nodes ("state" of an nref) */
 enum {
 	CHFS_NORMAL_NODE_MASK,
 	CHFS_UNCHECKED_NODE_MASK,
@@ -152,83 +161,84 @@ enum {
 
 #define CHFS_GET_OFS(ofs) (ofs & ~ 3)
 
+/*
+ * Nrefs are allocated in blocks, get the (in-memory) next. Usually the next
+ * doesn't belongs to the same vnode.
+ */
 static inline struct chfs_node_ref *
 node_next(struct chfs_node_ref *nref)
 {
-	//dbg("node next: %u : %u\n", nref->nref_lnr, nref->nref_offset);
+	/* step to the next nref in the same block */
 	nref++;
-	//dbg("nref++: %u : %u\n", nref->nref_lnr, nref->nref_offset);
 
+	/* REF_LINK_TO_NEXT means that the next node will be in the next block */
 	if (nref->nref_lnr == REF_LINK_TO_NEXT) {
-		//dbg("link to next\n");
 		nref = nref->nref_next;
 		if (!nref)
 			return nref;
 	}
 
+	/* REF_EMPTY_NODE means that this is the last node */
 	if (nref->nref_lnr == REF_EMPTY_NODE) {
-		//dbg("empty\n");
 		return NULL;
 	}
 
 	return nref;
 }
 
-/**
- * struct chfs_dirent - full representation of a directory entry
- */
+/* struct chfs_dirent - full representation of a directory entry */
 struct chfs_dirent
 {
-	struct chfs_node_ref *nref;
-//	struct chfs_dirent *next;
-	TAILQ_ENTRY(chfs_dirent) fds;
-	uint64_t version;
-	ino_t vno;
-	uint32_t nhash;
-	enum vtype type;
-	uint8_t  nsize;
-	uint8_t  name[0];
-
-	/* used by chfs_alloc_dirent and free counterpart */
-//	size_t alloc_size;
+	struct chfs_node_ref *nref;		/* nref of the dirent */
+	TAILQ_ENTRY(chfs_dirent) fds;	/* directory entries */
+	uint64_t version;				/* version */
+	ino_t vno;						/* vnode number */
+	uint32_t nhash;					/* name hash */
+	enum chtype type;				/* type of the dirent */
+	uint8_t  nsize;					/* length of its name */
+	uint8_t  name[0];				/* name of the directory */
 };
 
+/* struct chfs_tmp_dnode - used temporarly while building a data node */
 struct chfs_tmp_dnode {
-	struct chfs_full_dnode *node;
-	uint64_t version;
-	uint32_t data_crc;
-	//uint32_t partial_crc;
-	//uint16_t csize;
-	uint16_t overlapped;
-	struct chfs_tmp_dnode *next;
+	struct chfs_full_dnode *node;	/* associated full dnode */
+	uint64_t version;				/* version of the tmp node */
+	uint32_t data_crc;				/* CRC of the data */
+	uint16_t overlapped;			/* is overlapped */
+	struct chfs_tmp_dnode *next;	/* next tmp node */
 };
 
+/* struct chfs_tmp_dnode_info - tmp nodes are stored in rb trees */
 struct chfs_tmp_dnode_info {
-	struct rb_node rb_node;
-	struct chfs_tmp_dnode *tmpnode;
+	struct rb_node rb_node;			/* rb tree entry */
+	struct chfs_tmp_dnode *tmpnode;	/* associated tmp node */
 };
 
+/* struct chfs_readinode_info - collection of tmp_dnodes */
 struct chfs_readinode_info {
-	struct rb_tree tdi_root;
-	struct chfs_tmp_dnode_info *mdata_tn;
-	uint64_t highest_version;
-	struct chfs_node_ref *latest_ref;
+	struct rb_tree tdi_root;				/* root of the rb tree */
+	struct chfs_tmp_dnode_info *mdata_tn;	/* metadata (eg: symlink) */
+	uint64_t highest_version;				/* highest version of the nodes */
+	struct chfs_node_ref *latest_ref;		/* latest node reference */
 };
 
+/* struct chfs_full_dnode - full data node */
 struct chfs_full_dnode {
-	struct chfs_node_ref *nref;
-	uint64_t ofs;
-	uint32_t size;
-	uint32_t frags;
+	struct chfs_node_ref *nref;		/* nref of the node */
+	uint64_t ofs;					/* offset of the data node */
+	uint32_t size;					/* size of the data node */
+	uint32_t frags;					/* number of fragmentations */
 };
 
+/* struct chfs_node_frag - a fragment of a data node */
 struct chfs_node_frag {
-	struct rb_node rb_node;
-	struct chfs_full_dnode *node;
-	uint32_t size;
-	uint64_t ofs;
+	struct rb_node rb_node;			/* rb tree entry */
+	struct chfs_full_dnode *node;	/* associated full dnode */
+	uint32_t size;					/* size of the fragment */
+	uint64_t ofs;					/* offset of the fragment */
 };
 
+/* find the first fragment of a data node */
 static inline struct chfs_node_frag *
 frag_first(struct rb_tree *tree)
 {
@@ -239,6 +249,7 @@ frag_first(struct rb_tree *tree)
 	return frag;
 }
 
+/* find the last fragment of a data node */
 static inline struct chfs_node_frag *
 frag_last(struct rb_tree *tree)
 {
@@ -249,149 +260,129 @@ frag_last(struct rb_tree *tree)
 	return frag;
 }
 
+/* iterate the fragtree */
 #define frag_next(tree, frag) (struct chfs_node_frag *)rb_tree_iterate(tree, frag, RB_DIR_RIGHT)
 #define frag_prev(tree, frag) (struct chfs_node_frag *)rb_tree_iterate(tree, frag, RB_DIR_LEFT)
 
 
-/* XXX hack
-   #ifndef CHFS_FRAG_TREE
-   #define CHFS_FRAG_TREE
-   RB_HEAD(chfs_frag_tree, chfs_node_frag);
-   #endif
-*/
-
-/* for prototypes, properly defined in chfs_inode.h */
-//struct chfs_inode_ext;
-
-/**
- * struct chfs_vnode_cache - in memory representation of a vnode
- * @v: pointer to the vnode info node
- * @dnode: pointer to the list of data nodes
- * @dirents: pointer to the list of directory entries
- * @vno_version: used only during scan, holds the current version number of
- * 				 chfs_flash_vnode
- * @scan_dirents: used only during scan, holds the full representation of
- * 				  directory entries of this vnode
- * @pvno: parent vnode number
- * @nlink: number of links to this vnode
- */
+/* struct chfs_vnode_cache - in memory representation of a file or directory */
 struct chfs_vnode_cache {
-//	struct chfs_dirent *scan_dirents;
+	/* 
+	 * void *p must be the first field of the structure
+	 * but I can't remember where we use it and exactly for what
+	 */
 	void *p;
-	struct chfs_dirent_list scan_dirents;
+	struct chfs_dirent_list scan_dirents;	/* used during scanning */
 
-	struct chfs_node_ref *v;
-	struct chfs_node_ref *dnode;
-	struct chfs_node_ref *dirents;
+	struct chfs_node_ref *v;			/* list of node informations */
+	struct chfs_node_ref *dnode;		/* list of data nodes */
+	struct chfs_node_ref *dirents;		/* list of directory entries */
 
-	uint64_t *vno_version;
-	uint64_t highest_version;
+	uint64_t *vno_version;				/* version of the vnode */
+	uint64_t highest_version;			/* highest version of dnodes */
 
-	uint8_t flags;
-	uint16_t state;
-	ino_t vno;
-	ino_t pvno;
-	struct chfs_vnode_cache* next;
-	uint32_t nlink;
+	uint8_t flags;						/* flags */
+	uint16_t state;						/* actual state */
+	ino_t vno;							/* vnode number */
+	ino_t pvno;							/* vnode number of parent */
+	struct chfs_vnode_cache* next;		/* next element of vnode cache */
+	uint32_t nlink;						/* number of links to the file */
 };
 
+/* struct chfs_eraseblock - representation of an eraseblock */
 struct chfs_eraseblock
 {
-	uint32_t lnr;
+	uint32_t lnr;		/* LEB number of the block*/
 
-	TAILQ_ENTRY(chfs_eraseblock) queue;
-	//uint32_t bad_count;
-	uint32_t unchecked_size;
-	uint32_t used_size;
-	uint32_t dirty_size;
-	uint32_t free_size;
-	uint32_t wasted_size;
+	TAILQ_ENTRY(chfs_eraseblock) queue;	/* queue entry */
 
-	struct chfs_node_ref *first_node;
-	struct chfs_node_ref *last_node;
+	uint32_t unchecked_size;			/* GC doesn't checked yet */
+	uint32_t used_size;					/* size of nodes */
+	uint32_t dirty_size;				/* size of obsoleted nodes */
+	uint32_t free_size;					/* available size */
+	uint32_t wasted_size;				/* paddings */
 
-	/* Next block to be garbage collected */
-	struct chfs_node_ref *gc_node;
+	struct chfs_node_ref *first_node;	/* first node of the block */
+	struct chfs_node_ref *last_node;	/* last node of the block */
+
+	struct chfs_node_ref *gc_node;		/* next node from the block 
+										   which isn't garbage collected yet */
 };
 
+/* eraseblock queue */
 TAILQ_HEAD(chfs_eraseblock_queue, chfs_eraseblock);
 
-#define ALLOC_NORMAL    0
-#define ALLOC_DELETION	1
-#define ALLOC_GC        2
+/* space allocation types */
+#define ALLOC_NORMAL    0	/* allocating for normal usage (write, etc.) */
+#define ALLOC_DELETION	1	/* allocating for deletion */
+#define ALLOC_GC        2	/* allocating for the GC */
 
+/* struct garbage_collector_thread - descriptor of GC thread */
 struct garbage_collector_thread {
 	lwp_t *gcth_thread;
 	kcondvar_t gcth_wakeup;
 	bool gcth_running;
 };
 
+/* states of mounting */
 #define CHFS_MP_FLAG_SCANNING 2
 #define CHFS_MP_FLAG_BUILDING 4
 
-/**
- * struct chfs_mount - CHFS main descriptor structure
- * @ebh: eraseblock handler
- * @fl_index: index of flash device in the flash layer
- * @fs_version: filesystem version descriptor
- * @gbl_version: global version number
- * @max_vno: max vnode id
- * @chm_lock_mountfields:
- * @vnocache_hash: hash table of vnode caches
- * @vnocache_lock:
- * @blocks: array of eraseblocks on flash
- * @chm_root: used to protect all fields
- * @free_size: free size on the flash
- * @dirty_size: dirtied size on flash
- * @unchecked_size: size of unchecked data on flash
- * @free_queue: queue of free eraseblocks
- * @clean_queue: queue of clean eraseblocks
- * @dirty_queue: queue of dirty eraseblocks
- * @very_dirty_queue: queue of very dirty eraseblocks
- * @erase_pending_queue: queue of eraseblocks waiting for erasing
- * @erasable_pending_wbuf_queue: queue of eraseblocks waiting for erasing and
- * 			      	 have data to write to them
- * @nextblock: next eraseblock to write to
- * @nr_free_blocks: number of free blocks on the free_queue
- * @nr_erasable_blocks: number of blocks that can be erased and are on the
- *			erasable_queue
- */
+/* struct chfs_mount - CHFS main descriptor structure */
 struct chfs_mount {
-	struct mount *chm_fsmp;
-	struct chfs_ebh *chm_ebh;
-	int chm_fs_version;
-	uint64_t chm_gbl_version;
-	ino_t chm_max_vno;
-	ino_t chm_checked_vno;
-	unsigned int chm_flags;
+	struct mount *chm_fsmp;		/* general mount descriptor */
+	struct chfs_ebh *chm_ebh;	/* eraseblock handler */
+	int chm_fs_version;			/* version of the FS */
+	uint64_t chm_gbl_version;	/* */
+	ino_t chm_max_vno;			/* maximum of vnode numbers */
+	ino_t chm_checked_vno;		/* vnode number of the last checked node */
+	unsigned int chm_flags;		/* filesystem flags */
 
-	/* chm_lock_mountfields:
-	 * Used to protect all the following fields. */
+	/* 
+	 * chm_lock_mountfields:
+	 * Used to protect all the following fields.
+	 */
 	kmutex_t chm_lock_mountfields;
 
-	struct chfs_vnode_cache **chm_vnocache_hash;
-	/* chm_lock_vnocache:
+	struct chfs_vnode_cache **chm_vnocache_hash;	/* hash table 
+													   of vnode caches */
+
+	/* 
+	 * chm_lock_vnocache:
 	 * Used to protect the vnode cache.
 	 * If you have to lock chm_lock_mountfields and also chm_lock_vnocache,
-	 * you must lock chm_lock_mountfields first. */
+	 * you must lock chm_lock_mountfields first.
+	 */
 	kmutex_t chm_lock_vnocache;
 
-	struct chfs_eraseblock *chm_blocks;
+	struct chfs_eraseblock *chm_blocks;		/* list of eraseblocks */
 
-	struct chfs_node *chm_root;
+	struct chfs_node *chm_root;		/* root node */
 
-	uint32_t chm_free_size;
-	uint32_t chm_dirty_size;
-	uint32_t chm_unchecked_size;
-	uint32_t chm_used_size;
-	uint32_t chm_wasted_size;
-	/* chm_lock_sizes:
+	uint32_t chm_free_size;			/* available space */
+	uint32_t chm_dirty_size;		/* size of contained obsoleted nodes */
+	uint32_t chm_unchecked_size;	/* GC doesn't checked yet */
+	uint32_t chm_used_size;			/* size of contained nodes */
+	uint32_t chm_wasted_size;		/* padding */
+
+	/*
+	 * chm_lock_sizes:
 	 * Used to protect the (free, used, etc.) sizes of the FS
 	 * (and also the sizes of each eraseblock).
 	 * If you have to lock chm_lock_mountfields and also chm_lock_sizes,
-	 * you must lock chm_lock_mountfields first. */
+	 * you must lock chm_lock_mountfields first.
+	 */
 	kmutex_t chm_lock_sizes;
 
+	/*
+	 * eraseblock queues
+	 * free: completly free
+	 * clean: contains only valid data
+	 * dirty: contains valid and deleted data
+	 * very_dirty: contains mostly deleted data (should be GC'd)
+	 * erasable: doesn't contain valid data (should be erased)
+	 * erase_pending: we can erase blocks from this queue
+	 */
 	struct chfs_eraseblock_queue chm_free_queue;
 	struct chfs_eraseblock_queue chm_clean_queue;
 	struct chfs_eraseblock_queue chm_dirty_queue;
@@ -399,22 +390,26 @@ struct chfs_mount {
 	struct chfs_eraseblock_queue chm_erasable_pending_wbuf_queue;
 	struct chfs_eraseblock_queue chm_erase_pending_queue;
 
+	/* reserved blocks */
 	uint8_t chm_resv_blocks_deletion;
 	uint8_t chm_resv_blocks_write;
 	uint8_t chm_resv_blocks_gctrigger;
 	uint8_t chm_resv_blocks_gcmerge;
 	uint8_t chm_nospc_dirty;
 
-	uint8_t chm_vdirty_blocks_gctrigger;
+	uint8_t chm_vdirty_blocks_gctrigger;	/* GC trigger if the filesystem is
+											   very dirty */
 
-	struct chfs_eraseblock *chm_nextblock;
+	struct chfs_eraseblock *chm_nextblock;	/* next block for usage */
 
-	struct garbage_collector_thread chm_gc_thread;
-	struct chfs_eraseblock *chm_gcblock;
+	struct garbage_collector_thread chm_gc_thread;	/* descriptor of 
+													   GC thread */
+	struct chfs_eraseblock *chm_gcblock;	/* next block for GC */
 
-	int chm_nr_free_blocks;
-	int chm_nr_erasable_blocks;
+	int chm_nr_free_blocks;		/* number of free blocks */
+	int chm_nr_erasable_blocks;	/* number of eraseable blocks */
 
+	/* FS constants, used during writing */
 	int32_t chm_fs_bmask;
 	int32_t chm_fs_bsize;
 	int32_t chm_fs_qbmask;
@@ -425,21 +420,22 @@ struct chfs_mount {
 	/* TODO will we use these? */
 	unsigned int		chm_pages_max;
 	unsigned int		chm_pages_used;
-	unsigned int		chm_nodes_max;
-	unsigned int		chm_nodes_cnt;
 	struct chfs_pool	chm_dirent_pool;
 	struct chfs_pool	chm_node_pool;
 	struct chfs_str_pool	chm_str_pool;
 	/**/
 
-	size_t chm_wbuf_pagesize;
-	unsigned char* chm_wbuf;
-	size_t chm_wbuf_ofs;
-	size_t chm_wbuf_len;
-	/* chm_lock_wbuf:
+	size_t chm_wbuf_pagesize;	/* writebuffer's size */
+	unsigned char* chm_wbuf;	/* writebuffer */
+	size_t chm_wbuf_ofs;		/* actual offset of writebuffer */
+	size_t chm_wbuf_len;		/* actual length of writebuffer */
+
+	/*
+	 * chm_lock_wbuf:
 	 * Used to protect the write buffer.
 	 * If you have to lock chm_lock_mountfields and also chm_lock_wbuf,
-	 * you must lock chm_lock_mountfields first. */
+	 * you must lock chm_lock_mountfields first.
+	 */
 	krwlock_t chm_lock_wbuf;
 };
 
@@ -449,10 +445,11 @@ struct chfs_mount {
  * specific ones.
  */
 
-#define	CHFS_OFFSET_DOT		0
-#define	CHFS_OFFSET_DOTDOT	1
-#define CHFS_OFFSET_EOF		2
-#define CHFS_OFFSET_FIRST	3
+/* directory entry offsets */
+#define	CHFS_OFFSET_DOT		0	/* this */
+#define	CHFS_OFFSET_DOTDOT	1	/* parent */
+#define CHFS_OFFSET_EOF		2	/* after last */
+#define CHFS_OFFSET_FIRST	3	/* first */
 
 
 /*---------------------------------------------------------------------------*/
@@ -488,6 +485,10 @@ int chfs_update_eb_dirty(struct chfs_mount *,
     struct chfs_eraseblock *, uint32_t);
 void chfs_add_node_to_list(struct chfs_mount *, struct chfs_vnode_cache *,
     struct chfs_node_ref *, struct chfs_node_ref **);
+void chfs_remove_node_from_list(struct chfs_mount *, struct chfs_vnode_cache *,
+    struct chfs_node_ref *, struct chfs_node_ref **);
+void chfs_remove_and_obsolete(struct chfs_mount *, struct chfs_vnode_cache *,
+    struct chfs_node_ref *, struct chfs_node_ref **);
 void chfs_add_fd_to_inode(struct chfs_mount *,
     struct chfs_inode *, struct chfs_dirent *);
 void chfs_add_vnode_ref_to_vc(struct chfs_mount *, struct chfs_vnode_cache *,
@@ -502,28 +503,26 @@ int chfs_reserve_space_gc(struct chfs_mount *, uint32_t);
 int chfs_reserve_space(struct chfs_mount *, uint32_t);
 void chfs_mark_node_obsolete(struct chfs_mount *, struct chfs_node_ref *);
 
+/*
+ * Find out the corresponding vnode cache from an nref.
+ * Every last element of a linked list of nrefs is the vnode cache.
+ */
 static inline struct chfs_vnode_cache *
 chfs_nref_to_vc(struct chfs_node_ref *nref)
 {
+	/* iterate the whole list */
 	while (nref->nref_next) {
 		nref = nref->nref_next;
-		//dbg("lnr: %u, ofs: %u\n", nref->nref_lnr, nref->nref_offset);
-		//dbg("vno: %llu\n", ((struct chfs_vnode_cache *)(nref))->vno);
-		//dbg("scan_dirents: %p\n", ((struct chfs_vnode_cache *)(nref))->scan_dirents);
 		if (nref->nref_lnr == REF_LINK_TO_NEXT) {
 			dbg("Link to next!\n");
 		} else if (nref->nref_lnr == REF_EMPTY_NODE) {
 			dbg("Empty!\n");
 		}
 	}
-	//dbg("vno: %llu\n", ((struct chfs_vnode_cache *)(nref))->vno);
 
-	//dbg("NREF_TO_VC: GET IT\n");
-	//dbg("nref_next: %p, lnr: %u, ofs: %u\n", nref->nref_next, nref->nref_lnr, nref->nref_offset);
 	struct chfs_vnode_cache *vc = (struct chfs_vnode_cache *) nref;
 	dbg("vno: %ju, pvno: %ju, hv: %ju, nlink: %u\n", (intmax_t )vc->vno,
 	    (intmax_t )vc->pvno, (intmax_t )vc->highest_version, vc->nlink);
-	//return ((struct chfs_vnode_cache *)nref);
 	return vc;
 }
 
@@ -558,7 +557,9 @@ void chfs_free_tmp_dnode_info(struct chfs_tmp_dnode_info *);
 /* chfs_readinode.c */
 int chfs_read_inode(struct chfs_mount *, struct chfs_inode *);
 int chfs_read_inode_internal(struct chfs_mount *, struct chfs_inode *);
-void chfs_kill_fragtree(struct rb_tree *);
+void chfs_remove_frags_of_node(struct chfs_mount *, struct rb_tree *,
+	struct chfs_node_ref *);
+void chfs_kill_fragtree(struct chfs_mount *, struct rb_tree *);
 uint32_t chfs_truncate_fragtree(struct chfs_mount *,
 	struct rb_tree *, uint32_t);
 int chfs_add_full_dnode_to_inode(struct chfs_mount *,
@@ -631,7 +632,7 @@ int chfs_readvnode(struct mount *, ino_t, struct vnode **);
 int chfs_readdirent(struct mount *, struct chfs_node_ref *,
     struct chfs_inode *);
 int chfs_makeinode(int, struct vnode *, struct vnode **,
-    struct componentname *, int );
+    struct componentname *, enum vtype );
 void chfs_set_vnode_size(struct vnode *, size_t);
 void chfs_change_size_free(struct chfs_mount *,
 	struct chfs_eraseblock *, int);
@@ -647,8 +648,6 @@ void chfs_change_size_wasted(struct chfs_mount *,
 /* chfs_vnode_cache.c */
 struct chfs_vnode_cache **chfs_vnocache_hash_init(void);
 void chfs_vnocache_hash_destroy(struct chfs_vnode_cache **);
-void chfs_vnode_cache_set_state(struct chfs_mount *,
-    struct chfs_vnode_cache *, int);
 struct chfs_vnode_cache* chfs_vnode_cache_get(struct chfs_mount *, ino_t);
 void chfs_vnode_cache_add(struct chfs_mount *, struct chfs_vnode_cache *);
 void chfs_vnode_cache_remove(struct chfs_mount *, struct chfs_vnode_cache *);
@@ -665,7 +664,7 @@ int chfs_write_flash_dirent(struct chfs_mount *, struct chfs_inode *,
 int chfs_write_flash_dnode(struct chfs_mount *, struct vnode *,
     struct buf *, struct chfs_full_dnode *);
 int chfs_do_link(struct chfs_inode *,
-    struct chfs_inode *, const char *, int, enum vtype);
+    struct chfs_inode *, const char *, int, enum chtype);
 int chfs_do_unlink(struct chfs_inode *,
     struct chfs_inode *, const char *, int);
 
@@ -673,18 +672,19 @@ int chfs_do_unlink(struct chfs_inode *,
 size_t chfs_mem_info(bool);
 struct chfs_dirent * chfs_dir_lookup(struct chfs_inode *,
     struct componentname *);
-int chfs_filldir (struct uio *, ino_t, const char *, int, enum vtype);
+int chfs_filldir (struct uio *, ino_t, const char *, int, enum chtype);
 int chfs_chsize(struct vnode *, u_quad_t, kauth_cred_t);
 int chfs_chflags(struct vnode *, int, kauth_cred_t);
 void chfs_itimes(struct chfs_inode *, const struct timespec *,
     const struct timespec *, const struct timespec *);
 int	chfs_update(struct vnode *, const struct timespec *,
     const struct timespec *, int);
-//int	chfs_truncate(struct vnode *, off_t);
 
 /*---------------------------------------------------------------------------*/
 
 /* Some inline functions temporarily placed here */
+
+/* chfs_map_leb - corresponds to ebh_map_leb */
 static inline int
 chfs_map_leb(struct chfs_mount *chmp, int lnr)
 {
@@ -698,6 +698,7 @@ chfs_map_leb(struct chfs_mount *chmp, int lnr)
 
 }
 
+/* chfs_unmap_leb - corresponds to ebh_unmap_leb */
 static inline int
 chfs_unmap_leb(struct chfs_mount *chmp, int lnr)
 {
@@ -710,6 +711,7 @@ chfs_unmap_leb(struct chfs_mount *chmp, int lnr)
 	return err;
 }
 
+/* chfs_read_leb - corresponds to ebh_read_leb */
 static inline int
 chfs_read_leb(struct chfs_mount *chmp, int lnr, char *buf,
     int offset, int len, size_t *retlen)
@@ -724,6 +726,7 @@ chfs_read_leb(struct chfs_mount *chmp, int lnr, char *buf,
 	return err;
 }
 
+/* chfs_write_leb - corresponds to ebh_write_leb */
 static inline int chfs_write_leb(struct chfs_mount *chmp, int lnr, char *buf,
     int offset, int len, size_t *retlen)
 {
@@ -736,9 +739,6 @@ static inline int chfs_write_leb(struct chfs_mount *chmp, int lnr, char *buf,
 	return err;
 }
 
-/******************************************************************************/
-/* Code from dummyfs.h														  */
-/******************************************************************************/
 /* --------------------------------------------------------------------- */
 
 #define CHFS_PAGES_RESERVED (4 * 1024 * 1024 / PAGE_SIZE)
@@ -765,4 +765,5 @@ CHFS_PAGES_MAX(struct chfs_mount *chmp)
 #define IMPLIES(a, b) (!(a) || (b))
 #define IFF(a, b) (IMPLIES(a, b) && IMPLIES(b, a))
 
+#endif /* _KERNEL */
 #endif /* __CHFS_H__ */

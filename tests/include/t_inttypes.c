@@ -1,4 +1,4 @@
-/*	$NetBSD: t_inttypes.c,v 1.2 2010/07/18 12:16:19 jmmv Exp $	*/
+/*	$NetBSD: t_inttypes.c,v 1.3 2013/10/19 17:44:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,34 +37,34 @@ ATF_TC_BODY(int_fmtio, tc)
 {
 	char buf[64];
 
-	int8_t i8;
-	int16_t i16;
-	int32_t i32;
-	int64_t i64;
-	int_least8_t il8;
-	int_least16_t il16;
-	int_least32_t il32;
-	int_least64_t il64;
-	int_fast8_t if8;
-	int_fast16_t if16;
-	int_fast32_t if32;
-	int_fast64_t if64;
-	intmax_t im;
-	intptr_t ip;
-	uint8_t ui8;
-	uint16_t ui16;
-	uint32_t ui32;
-	uint64_t ui64;
-	uint_least8_t uil8;
-	uint_least16_t uil16;
-	uint_least32_t uil32;
-	uint_least64_t uil64;
-	uint_fast8_t uif8;
-	uint_fast16_t uif16;
-	uint_fast32_t uif32;
-	uint_fast64_t uif64;
-	uintmax_t uim;
-	uintptr_t uip;
+	int8_t i8 = 0;
+	int16_t i16 = 0;
+	int32_t i32 = 0;
+	int64_t i64 = 0;
+	int_least8_t il8 = 0;
+	int_least16_t il16 = 0;
+	int_least32_t il32 = 0;
+	int_least64_t il64 = 0;
+	int_fast8_t if8 = 0;
+	int_fast16_t if16 = 0;
+	int_fast32_t if32 = 0;
+	int_fast64_t if64 = 0;
+	intmax_t im = 0;
+	intptr_t ip = 0;
+	uint8_t ui8 = 0;
+	uint16_t ui16 = 0;
+	uint32_t ui32 = 0;
+	uint64_t ui64 = 0;
+	uint_least8_t uil8 = 0;
+	uint_least16_t uil16 = 0;
+	uint_least32_t uil32 = 0;
+	uint_least64_t uil64 = 0;
+	uint_fast8_t uif8 = 0;
+	uint_fast16_t uif16 = 0;
+	uint_fast32_t uif32 = 0;
+	uint_fast64_t uif64 = 0;
+	uintmax_t uim = 0;
+	uintptr_t uip = 0;
 
 #define	PRINT(fmt, var) \
 	snprintf(buf, sizeof(buf), "%" fmt, var)

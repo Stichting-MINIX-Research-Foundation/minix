@@ -1,29 +1,46 @@
-#	$NetBSD: Makefile,v 1.266 2012/08/08 14:13:46 christos Exp $
+#	$NetBSD: Makefile,v 1.268 2013/11/28 22:34:44 christos Exp $
 #	from: @(#)Makefile	5.20 (Berkeley) 6/12/93
 
 .include <bsd.own.mk>
 
 SUBDIR= \
+	\
 	chroot \
+	\
+	\
+	\
+	\
+	\
 	i2cscan installboot \
+	\
+	\
 	link \
+	\
 	mtree \
+	\
+	\
 	pwd_mkdb postinstall \
+	\
+	\
 	rdate \
+	\
+	\
+	\
+	\
 	unlink user \
-	vipw \
-	vnconfig \
+	vipw vnconfig \
+	\
 	zic
 
+.if defined(__MINIX)
 # LSC MINIX Specific
 SUBDIR+= mkfs.mfs \
 	mkproto
-
-.if !defined(__MINIX)
+.else
 .if ${MKMAKEMANDB} != "no"
 SUBDIR+= makemandb
 .endif
-.endif # !defined(__MINIX)
+.endif # defined(__MINIX)
 
 .if (${MKYP} != "no")
 SUBDIR+= rpc.yppasswdd ypbind yppoll ypserv ypset

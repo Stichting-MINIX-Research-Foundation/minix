@@ -1,4 +1,4 @@
-/*	$NetBSD: strptime.c,v 1.36 2012/03/13 21:13:48 christos Exp $	*/
+/*	$NetBSD: strptime.c,v 1.38 2013/05/17 12:55:57 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2005, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strptime.c,v 1.36 2012/03/13 21:13:48 christos Exp $");
+__RCSID("$NetBSD: strptime.c,v 1.38 2013/05/17 12:55:57 joerg Exp $");
 #endif
 
 #include "namespace.h"
@@ -42,12 +42,15 @@ __RCSID("$NetBSD: strptime.c,v 1.36 2012/03/13 21:13:48 christos Exp $");
 #include <time.h>
 #include <tzfile.h>
 #include "private.h"
+#include "setlocale_local.h"
 
 #ifdef __weak_alias
 __weak_alias(strptime,_strptime)
+__weak_alias(strptime_l, _strptime_l)
 #endif
 
-#define	_ctloc(x)		(_CurrentTimeLocale->x)
+#define _TIME_LOCALE(loc) \
+    ((_TimeLocale *)((loc)->part_impl[(size_t)LC_TIME]))
 
 /*
  * We do not implement alternate representations. However, we always
@@ -71,9 +74,14 @@ static const u_char *conv_num(const unsigned char *, int *, uint, uint);
 static const u_char *find_string(const u_char *, int *, const char * const *,
 	const char * const *, int);
 
-
 char *
 strptime(const char *buf, const char *fmt, struct tm *tm)
+{
+	return strptime_l(buf, fmt, tm, _current_locale());
+}
+
+char *
+strptime_l(const char *buf, const char *fmt, struct tm *tm, locale_t loc)
 {
 	unsigned char c;
 	const unsigned char *bp, *ep;
@@ -124,7 +132,7 @@ literal:
 		 * "Complex" conversion rules, implemented through recursion.
 		 */
 		case 'c':	/* Date and time, using the locale's format. */
-			new_fmt = _ctloc(d_t_fmt);
+			new_fmt = _TIME_LOCALE(loc)->d_t_fmt;
 			goto recurse;
 
 		case 'D':	/* The date as "%m/%d/%y". */
@@ -143,7 +151,7 @@ literal:
 			goto recurse;
 
 		case 'r':	/* The time in 12-hour clock representation. */
-			new_fmt =_ctloc(t_fmt_ampm);
+			new_fmt = _TIME_LOCALE(loc)->t_fmt_ampm;
 			LEGAL_ALT(0);
 			goto recurse;
 
@@ -153,11 +161,11 @@ literal:
 			goto recurse;
 
 		case 'X':	/* The time, using the locale's format. */
-			new_fmt =_ctloc(t_fmt);
+			new_fmt = _TIME_LOCALE(loc)->t_fmt;
 			goto recurse;
 
 		case 'x':	/* The date, using the locale's format. */
-			new_fmt =_ctloc(d_fmt);
+			new_fmt = _TIME_LOCALE(loc)->d_fmt;
 		    recurse:
 			bp = (const u_char *)strptime((const char *)bp,
 							    new_fmt, tm);
@@ -169,16 +177,17 @@ literal:
 		 */
 		case 'A':	/* The day of week, using the locale's form. */
 		case 'a':
-			bp = find_string(bp, &tm->tm_wday, _ctloc(day),
-					_ctloc(abday), 7);
+			bp = find_string(bp, &tm->tm_wday,
+			    _TIME_LOCALE(loc)->day, _TIME_LOCALE(loc)->abday, 7);
 			LEGAL_ALT(0);
 			continue;
 
 		case 'B':	/* The month, using the locale's form. */
 		case 'b':
 		case 'h':
-			bp = find_string(bp, &tm->tm_mon, _ctloc(mon),
-					_ctloc(abmon), 12);
+			bp = find_string(bp, &tm->tm_mon,
+			    _TIME_LOCALE(loc)->mon, _TIME_LOCALE(loc)->abmon,
+			    12);
 			LEGAL_ALT(0);
 			continue;
 
@@ -238,7 +247,8 @@ literal:
 			continue;
 
 		case 'p':	/* The locale's equivalent of AM/PM. */
-			bp = find_string(bp, &i, _ctloc(am_pm), NULL, 2);
+			bp = find_string(bp, &i, _TIME_LOCALE(loc)->am_pm,
+			    NULL, 2);
 			if (tm->tm_hour > 11)
 				return NULL;
 			tm->tm_hour += i * 12;

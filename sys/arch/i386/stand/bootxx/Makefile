@@ -1,7 +1,7 @@
 # $NetBSD: Makefile,v 1.14 2010/12/29 17:44:03 jakllsch Exp $
 
 .if defined(__MINIX)
-SUBDIR= bootxx_minixfs3
+SUBDIR= bootxx_ffsv1 .WAIT bootxx_minixfs3
 .else
 SUBDIR=	bootxx_ffsv1 .WAIT bootxx_ffsv2 bootxx_lfsv1 bootxx_lfsv2
 SUBDIR+=bootxx_msdos bootxx_ustarfs

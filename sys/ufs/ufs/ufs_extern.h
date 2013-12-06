@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extern.h,v 1.66 2011/07/17 22:07:59 dholland Exp $	*/
+/*	$NetBSD: ufs_extern.h,v 1.73 2013/06/16 13:33:30 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -139,6 +139,29 @@ int	ufs_parentcheck(struct vnode *, struct vnode *, kauth_cred_t,
 			int *, struct vnode **);
 int	ufs_blkatoff(struct vnode *, off_t, char **, struct buf **, bool);
 
+/* ufs_rename.c -- for lfs */
+bool	ufs_gro_directory_empty_p(struct mount *, kauth_cred_t,
+	    struct vnode *, struct vnode *);
+int	ufs_gro_rename_check_possible(struct mount *,
+	    struct vnode *, struct vnode *, struct vnode *, struct vnode *);
+int	ufs_gro_rename_check_permitted(struct mount *, kauth_cred_t,
+	    struct vnode *, struct vnode *, struct vnode *, struct vnode *);
+int	ufs_gro_remove_check_possible(struct mount *,
+	    struct vnode *, struct vnode *);
+int	ufs_gro_remove_check_permitted(struct mount *, kauth_cred_t,
+	    struct vnode *, struct vnode *);
+int	ufs_gro_rename(struct mount *, kauth_cred_t,
+	    struct vnode *, struct componentname *, void *, struct vnode *,
+	    struct vnode *, struct componentname *, void *, struct vnode *);
+int	ufs_gro_remove(struct mount *, kauth_cred_t,
+	    struct vnode *, struct componentname *, void *, struct vnode *);
+int	ufs_gro_lookup(struct mount *, struct vnode *,
+	    struct componentname *, void *, struct vnode **);
+int	ufs_gro_genealogy(struct mount *, kauth_cred_t,
+	    struct vnode *, struct vnode *, struct vnode **);
+int	ufs_gro_lock_directory(struct mount *, struct vnode *);
+
+
 /* ufs_quota.c */
 /*
  * Flags to chkdq() and chkiq()
@@ -148,7 +171,9 @@ void	ufsquota_init(struct inode *);
 void	ufsquota_free(struct inode *);
 int	chkdq(struct inode *, int64_t, kauth_cred_t, int);
 int	chkiq(struct inode *, int32_t, kauth_cred_t, int);
-int	quota_handle_cmd(struct mount *, struct lwp *, prop_dictionary_t);
+int	quota_handle_cmd(struct mount *, struct lwp *,
+			 struct quotactl_args *);
+
 int	qsync(struct mount *);
 
 /* ufs_quota1.c */
@@ -163,7 +188,7 @@ void	ufs_reinit(void);
 void	ufs_done(void);
 int	ufs_start(struct mount *, int);
 int	ufs_root(struct mount *, struct vnode **);
-int	ufs_quotactl(struct mount *, prop_dictionary_t);
+int	ufs_quotactl(struct mount *, struct quotactl_args *);
 int	ufs_fhtovp(struct mount *, struct ufid *, struct vnode **);
 
 /* ufs_vnops.c */
@@ -173,12 +198,6 @@ int	ufs_makeinode(int, struct vnode *, const struct ufs_lookup_results *,
 		      struct vnode **, struct componentname *);
 int	ufs_gop_alloc(struct vnode *, off_t, off_t, int, kauth_cred_t);
 void	ufs_gop_markupdate(struct vnode *, int);
-
-/*
- * Snapshot function prototypes.
- */
-
-void	ffs_snapgone(struct inode *);
 
 __END_DECLS
 

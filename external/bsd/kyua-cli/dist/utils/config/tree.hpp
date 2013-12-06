@@ -34,12 +34,12 @@
 
 #include <map>
 #include <string>
-#include <tr1/memory>
 
 #include <lutok/state.hpp>
 
 #include "utils/config/keys.hpp"
 #include "utils/config/nodes.hpp"
+#include "utils/shared_ptr.hpp"
 
 namespace utils {
 namespace config {
@@ -82,7 +82,7 @@ typedef std::map< std::string, std::string > properties_map;
 /// deep_copy().
 class tree {
     /// The root of the tree.
-    std::tr1::shared_ptr< detail::static_inner_node > _root;
+    std::shared_ptr< detail::static_inner_node > _root;
 
     explicit tree(detail::static_inner_node*);
 

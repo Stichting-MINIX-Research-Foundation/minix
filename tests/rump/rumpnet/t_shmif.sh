@@ -1,4 +1,4 @@
-#	$NetBSD: t_shmif.sh,v 1.1 2011/03/10 14:09:46 pooka Exp $
+#	$NetBSD: t_shmif.sh,v 1.2 2013/09/09 19:27:49 pooka Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -27,9 +27,11 @@
 
 atf_test_case crossping cleanup
 
+NKERN=8
+
 crossping_head()
 {
-	atf_set "descr" "start 16 rump kernels on one shmif bus and crossping"
+	atf_set "descr" "run $NKERN rump kernels on one shmif bus and crossping"
 }
 
 startserver()
@@ -51,11 +53,11 @@ pingothers()
 crossping_body()
 {
 
-	for x in `jot 16` ; do startserver $x ; done
-	for x in `jot 16`
+	for x in `jot ${NKERN}` ; do startserver $x ; done
+	for x in `jot ${NKERN}`
 	do
 		export RUMP_SERVER=unix://sock${x}
-		for y in `jot 16`
+		for y in `jot ${NKERN}`
 		do
 			[ ${y} -eq ${x} ] && continue
 			atf_check -s exit:0 -o ignore -e ignore \
@@ -67,7 +69,7 @@ crossping_body()
 crossping_cleanup()
 {
 
-	for x in `jot 16` ; do RUMP_SERVER=unix://sock${x} rump.halt ; done
+	for x in `jot ${NKERN}` ; do RUMP_SERVER=unix://sock${x} rump.halt ;done
 	:
 }
 

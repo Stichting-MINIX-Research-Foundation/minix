@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_object.c,v 1.28 2012/07/27 09:10:59 pooka Exp $	*/
+/*	$NetBSD: prop_object.c,v 1.29 2013/10/18 18:26:20 martin Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -1001,7 +1001,7 @@ void
 prop_object_retain(prop_object_t obj)
 {
 	struct _prop_object *po = obj;
-	uint32_t ncnt;
+	uint32_t ncnt __unused;
 
 	_PROP_ATOMIC_INC32_NV(&po->po_refcnt, ncnt);
 	_PROP_ASSERT(ncnt != 0);

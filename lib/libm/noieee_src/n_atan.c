@@ -1,4 +1,4 @@
-/*	$NetBSD: n_atan.c,v 1.5 2003/08/07 16:44:50 agc Exp $	*/
+/*	$NetBSD: n_atan.c,v 1.6 2013/11/24 14:41:53 martin Exp $	*/
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -85,3 +85,11 @@ atan(double x)
 	double one=1.0;
 	return(atan2(x,one));
 }
+
+float
+atanf(float x)
+{
+	float one=1.0;
+	return (float)atan2(x,one);
+}
+

@@ -1,4 +1,4 @@
-/* $NetBSD: strtodg.c,v 1.10 2012/03/22 13:09:12 he Exp $ */
+/* $NetBSD: strtodg.c,v 1.12 2013/04/19 10:41:53 joerg Exp $ */
 
 /****************************************************************
 
@@ -319,13 +319,8 @@ mantbits(U *d)
 #endif /* !VAX */
 
  int
-strtodg
-#ifdef KR_headers
-	(s00, se, fpi, expt, bits)
-	CONST char *s00; char **se; CONST FPI *fpi; Long *expt; ULong *bits;
-#else
-	(CONST char *s00, char **se, CONST FPI *fpi, Long *expt, ULong *bits)
-#endif
+strtodg(CONST char *s00, char **se, CONST FPI *fpi, Long *expt, ULong *bits,
+	locale_t loc)
 {
 	int abe, abits, asub;
 #ifdef INFNAN_CHECK
@@ -342,25 +337,8 @@ strtodg
 	ULong *b, *be, y, z;
 	Bigint *ab, *bb, *bb1, *bd, *bd0, *bs, *delta, *rvb, *rvb0;
 #ifdef USE_LOCALE /*{{*/
-#ifdef NO_LOCALE_CACHE
-	char *decimalpoint = localeconv()->decimal_point;
+	char *decimalpoint = localeconv_l(loc)->decimal_point;
 	size_t dplen = strlen(decimalpoint);
-#else
-	char *decimalpoint;
-	static char *decimalpoint_cache;
-	static size_t dplen;
-	if (!(s0 = decimalpoint_cache)) {
-		s0 = localeconv()->decimal_point;
-		if ((decimalpoint_cache = MALLOC(strlen(s0) + 1)) != NULL) {
-			strcpy(decimalpoint_cache, s0);
-			s0 = decimalpoint_cache;
-			}
-		dplen = strlen(s0);
-		}
-	decimalpoint = __UNCONST(s0);
-#endif /*NO_LOCALE_CACHE*/
-#else  /*USE_LOCALE}{*/
-#define dplen 1
 #endif /*USE_LOCALE}}*/
 
 	e2 = 0;	/* XXX gcc */
@@ -399,7 +377,7 @@ strtodg
 		switch(s[1]) {
 		  case 'x':
 		  case 'X':
-			irv = gethex(&s, fpi, expt, &rvb, sign);
+			irv = gethex(&s, fpi, expt, &rvb, sign, loc);
 			if (irv == STRTOG_NoNumber) {
 				s = s00;
 				sign = 0;

@@ -1,4 +1,4 @@
-/* $NetBSD: citrus_lc_ctype.c,v 1.10 2012/03/04 21:14:55 tnozaki Exp $ */
+/* $NetBSD: citrus_lc_ctype.c,v 1.15 2013/09/13 13:13:32 joerg Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_lc_ctype.c,v 1.10 2012/03/04 21:14:55 tnozaki Exp $");
+__RCSID("$NetBSD: citrus_lc_ctype.c,v 1.15 2013/09/13 13:13:32 joerg Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "reentrant.h"
@@ -96,30 +96,18 @@ _citrus_LC_CTYPE_create_impl(const char * __restrict root,
 }
 
 static __inline void
-_PREFIX(build_cache)(struct _locale_cache_t * __restrict cache,
-    _RuneLocale * __restrict data)
-{
-	_DIAGASSERT(cache != NULL);
-	_DIAGASSERT(cache->items != NULL);
-	_DIAGASSERT(data != NULL);
-
-	cache->ctype_tab = data->rl_ctype_tab;
-	cache->tolower_tab = data->rl_tolower_tab;
-	cache->toupper_tab = data->rl_toupper_tab;
-	cache->mb_cur_max = _citrus_ctype_get_mb_cur_max(data->rl_citrus_ctype);
-	cache->items[(size_t)CODESET] = data->rl_codeset;
-}
-
-static __inline void
-_PREFIX(fixup)(_RuneLocale *data)
+_PREFIX(update_global)(_RuneLocale *data)
 {
 	_DIAGASSERT(data != NULL);
 
 	__mb_cur_max = _citrus_ctype_get_mb_cur_max(data->rl_citrus_ctype);
-	_ctype_ = data->rl_ctype_tab;
+	_ctype_tab_ = data->rl_ctype_tab;
 	_tolower_tab_ = data->rl_tolower_tab;
 	_toupper_tab_ = data->rl_toupper_tab;
-	_CurrentRuneLocale = data;
+
+#ifdef __BUILD_LEGACY
+	_ctype_ = data->rl_compat_bsdctype;
+#endif
 }
 
 /*
@@ -127,6 +115,5 @@ _PREFIX(fixup)(_RuneLocale *data)
  */
 #define _CATEGORY_ID		LC_CTYPE
 #define _CATEGORY_NAME		"LC_CTYPE"
-#define _CATEGORY_DEFAULT	_DefaultRuneLocale
 
 #include "nb_lc_template.h"

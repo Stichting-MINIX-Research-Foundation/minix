@@ -11,10 +11,6 @@
 #include <sys/stat.h>
 #include <sys/un.h>
 
-#ifdef __weak_alias
-__weak_alias(socketpair, _socketpair)
-#endif
-
 #define DEBUG 0
 
 static int _uds_socketpair(int type, int protocol, int sv[2]);

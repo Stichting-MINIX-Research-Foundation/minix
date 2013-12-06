@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_vnode_cache.c,v 1.1 2011/11/24 15:51:32 ahoka Exp $	*/
+/*	$NetBSD: chfs_vnode_cache.c,v 1.3 2012/10/19 12:44:39 ttoth Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -35,6 +35,9 @@
 #include "chfs.h"
 #include <sys/pool.h>
 
+/* vnode cache is a hashtable for vnodes */
+
+/* chfs_vnocache_hash_init - initializing the hashtable */
 struct chfs_vnode_cache **
 chfs_vnocache_hash_init(void)
 {
@@ -42,25 +45,8 @@ chfs_vnocache_hash_init(void)
 	    sizeof(struct chfs_vnode_cache *), KM_SLEEP);
 }
 
-/**
- * chfs_set_vnode_cache_state - set state of a vnode_cache
- * @chmp: fs super block info
- * @vc: vnode_cache
- * @state: new state
- */
-void
-chfs_vnode_cache_set_state(struct chfs_mount *chmp,
-    struct chfs_vnode_cache* vc, int state)
-{
-	/* XXX do we really need locking here? */
-	KASSERT(mutex_owned(&chmp->chm_lock_vnocache));
-	vc->state = state;
-}
-
-/**
- * chfs_get_vnode_cache - get a vnode_cache from the vnocache_hash
- * @chmp: fs super block info
- * @ino: inode for search
+/*
+ * chfs_vnode_cache_get - get a vnode_cache from the hashtable
  * Returns the vnode_cache.
  */
 struct chfs_vnode_cache *
@@ -87,11 +73,7 @@ chfs_vnode_cache_get(struct chfs_mount *chmp, ino_t vno)
 	return ret;
 }
 
-/**
- * chfs_add_vnode_cache - add a vnode_cache to the vnocache_hash
- * @chmp: fs super block info
- * @new: new vnode_cache
- */
+/* chfs_vnode_cache_add - add a vnode_cache to the hashtable */
 void
 chfs_vnode_cache_add(struct chfs_mount *chmp,
     struct chfs_vnode_cache* new)
@@ -113,11 +95,7 @@ chfs_vnode_cache_add(struct chfs_mount *chmp,
 	*prev = new;
 }
 
-/**
- * chfs_del_vnode_cache - del a vnode_cache from the vnocache_hash
- * @chmp: fs super block info
- * @old: old vnode_cache
- */
+/* chfs_vnode_cache_remove - removes a vnode_cache from the hashtable */
 void
 chfs_vnode_cache_remove(struct chfs_mount *chmp,
     struct chfs_vnode_cache* old)
@@ -141,16 +119,14 @@ chfs_vnode_cache_remove(struct chfs_mount *chmp,
 	}
 }
 
-/**
- * chfs_free_vnode_caches - free the vnocache_hash
- * @chmp: fs super block info
- */
+/* chfs_vnocache_hash_destroy - destroying the vnode cache */
 void
 chfs_vnocache_hash_destroy(struct chfs_vnode_cache **hash)
 {
 	struct chfs_vnode_cache *this, *next;
 	int i;
 
+	/* free every row */
 	for (i = 0; i < VNODECACHE_SIZE; i++) {
 		this = hash[i];
 		while (this) {
@@ -161,5 +137,4 @@ chfs_vnocache_hash_destroy(struct chfs_vnode_cache **hash)
 		hash[i] = NULL;
 	}
 }
-
 

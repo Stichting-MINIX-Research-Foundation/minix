@@ -1,4 +1,4 @@
-/* $NetBSD: pmf.h,v 1.18 2010/02/24 22:38:10 dyoung Exp $ */
+/* $NetBSD: pmf.h,v 1.21 2013/08/06 06:10:57 matt Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -46,7 +46,12 @@ typedef enum {
 	PMFE_AUDIO_VOLUME_DOWN,
 	PMFE_AUDIO_VOLUME_TOGGLE,
 	PMFE_CHASSIS_LID_CLOSE,
-	PMFE_CHASSIS_LID_OPEN
+	PMFE_CHASSIS_LID_OPEN,
+	PMFE_RADIO_ON,
+	PMFE_RADIO_OFF,
+	PMFE_RADIO_TOGGLE,
+	PMFE_POWER_CHANGED,
+	PMFE_SPEED_CHANGED
 } pmf_generic_event_t;
 
 struct pmf_qual {

@@ -35,7 +35,11 @@ CLEANFILES+=	mandoc_eqn.7 mandoc_man.7 mandoc_mdoc.7 \
 
 .if (${MKHTML} != "no") && (${MKMAN} != "no")
 FILES=		${DISTDIR}/example.style.css
+.if defined(__MINIX)
 FILESDIR=	/usr/man
+.else
+FILESDIR=	/usr/share/man
+.endif # defined(__MINIX)
 FILESNAME=	style.css
 .endif
 

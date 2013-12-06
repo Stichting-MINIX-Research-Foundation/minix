@@ -1,4 +1,4 @@
-/*	$NetBSD: syslimits.h,v 1.26 2011/09/27 01:51:42 christos Exp $	*/
+/*	$NetBSD: syslimits.h,v 1.27 2012/12/07 07:06:39 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -34,15 +34,9 @@
 #ifndef _SYS_SYSLIMITS_H_
 #define _SYS_SYSLIMITS_H_
 
-#if defined(_STANDALONE) && defined(__minix)
-/* LSC: In NetBSD this gets pulled in through libkern.h */
-#include <sys/null.h>
-uint32_t crc32(uint32_t, const uint8_t *, size_t);
-#endif /* defined(_STANDALONE) */
-
-#ifdef __minix
+#if defined(__minix)
 #define OPEN_MAX 255
-#endif
+#endif /* !defined(__minix) */
 
 #include <sys/featuretest.h>
 
@@ -57,7 +51,7 @@ uint32_t crc32(uint32_t, const uint8_t *, size_t);
 #define	MAX_CANON		  255	/* max bytes in term canon input line */
 #define	MAX_INPUT		  255	/* max bytes in terminal input */
 #define	NAME_MAX		  511	/* max bytes in a file name, must be */
-					/* kept in sync with MAXPATHLEN */
+					/* kept in sync with MAXNAMLEN */
 #define	NGROUPS_MAX		   16	/* max supplemental group id's */
 #define	UID_MAX		   2147483647U	/* max value for a uid_t (2^31-2) */
 #ifndef OPEN_MAX
@@ -66,7 +60,7 @@ uint32_t crc32(uint32_t, const uint8_t *, size_t);
 #define	PATH_MAX		 1024	/* max bytes in pathname */
 
 #ifdef __minix
-#define        PIPE_BUF                32768   /* max bytes for atomic pipe wri
+#define	PIPE_BUF                32768   /* max bytes for atomic pipe writes */
 #else
 #define	PIPE_BUF		  512	/* max bytes for atomic pipe writes */
 #endif
@@ -98,11 +92,4 @@ uint32_t crc32(uint32_t, const uint8_t *, size_t);
 
 #endif /* !_ANSI_SOURCE */
 
-#ifdef __minix
-#define STREAM_MAX 8 /* == _POSIX_STREAM_MAX */
-#define TZNAME_MAX 6 /* == _POSIX_TZNAME_MAX */
-#define TIME_MAX  LONG_MAX
-#endif
-
 #endif /* !_SYS_SYSLIMITS_H_ */
-

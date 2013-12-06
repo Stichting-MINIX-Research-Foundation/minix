@@ -6,7 +6,7 @@ test_suite("kyua")
 atf_test_program{name="cli_test"}
 atf_test_program{name="env_test"}
 atf_test_program{name="error_test"}
-atf_test_program{name="fs_test"}
+-- MINIX:FIXME not installed atf_test_program{name="fs_test"}
 atf_test_program{name="result_test"}
 atf_test_program{name="run_test"}
 atf_test_program{name="stacktrace_test"}

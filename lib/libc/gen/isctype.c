@@ -1,4 +1,4 @@
-/* $NetBSD: isctype.c,v 1.21 2010/12/14 02:28:57 joerg Exp $ */
+/* $NetBSD: isctype.c,v 1.25 2013/08/19 22:43:28 joerg Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: isctype.c,v 1.21 2010/12/14 02:28:57 joerg Exp $");
+__RCSID("$NetBSD: isctype.c,v 1.25 2013/08/19 22:43:28 joerg Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -44,46 +44,59 @@ __RCSID("$NetBSD: isctype.c,v 1.21 2010/12/14 02:28:57 joerg Exp $");
 #error "EOF != -1"
 #endif
 
+#include "runetype_local.h"
 #include "setlocale_local.h"
 
-#define _CTYPE_TAB(table, i)	((_current_cache()->table + 1)[i])
+#define _RUNE_LOCALE(loc) \
+    ((_RuneLocale *)((loc)->part_impl[(size_t)LC_CTYPE]))
 
 #define _ISCTYPE_FUNC(name, bit) \
 int \
 is##name(int c) \
 { \
-	return (int)(_CTYPE_TAB(ctype_tab, c) & (bit)); \
+	return (int)_ctype_tab_[c + 1] & (bit); \
+} \
+int \
+is##name ## _l(int c, locale_t loc) \
+{ \
+	return (int)((_RUNE_LOCALE(loc)->rl_ctype_tab[c + 1]) & (bit)); \
 }
 
-_ISCTYPE_FUNC(alnum,  _CTYPE_U|_CTYPE_L|_CTYPE_N      )
-_ISCTYPE_FUNC(alpha,  _CTYPE_U|_CTYPE_L         )
+_ISCTYPE_FUNC(alnum, (_CTYPE_A|_CTYPE_D))
+_ISCTYPE_FUNC(alpha,  _CTYPE_A)
+_ISCTYPE_FUNC(blank,  _CTYPE_BL)
 _ISCTYPE_FUNC(cntrl,  _CTYPE_C            )
-_ISCTYPE_FUNC(digit,  _CTYPE_N            )
-_ISCTYPE_FUNC(graph,  _CTYPE_P|_CTYPE_U|_CTYPE_L|_CTYPE_N   )
+_ISCTYPE_FUNC(digit,  _CTYPE_D)
+_ISCTYPE_FUNC(graph,  _CTYPE_G)
 _ISCTYPE_FUNC(lower,  _CTYPE_L            )
-_ISCTYPE_FUNC(print,  _CTYPE_P|_CTYPE_U|_CTYPE_L|_CTYPE_N|_CTYPE_B)
+_ISCTYPE_FUNC(print,  _CTYPE_R)
 _ISCTYPE_FUNC(punct,  _CTYPE_P            )
 _ISCTYPE_FUNC(space,  _CTYPE_S            )
 _ISCTYPE_FUNC(upper,  _CTYPE_U            )
-_ISCTYPE_FUNC(xdigit, _CTYPE_N|_CTYPE_X         )
-
-int
-isblank(int c)
-{
-	/* XXX: FIXME */
-        return c == ' ' || c == '\t';
-}
+_ISCTYPE_FUNC(xdigit, _CTYPE_X)
 
 int
 toupper(int c)
 {
-	return (int)_CTYPE_TAB(toupper_tab, c);
+	return (int)_toupper_tab_[c + 1];
+}
+
+int
+toupper_l(int c, locale_t loc)
+{
+	return (int)(_RUNE_LOCALE(loc)->rl_toupper_tab[c + 1]);
 }
 
 int
 tolower(int c)
 {
-	return (int)_CTYPE_TAB(tolower_tab, c);
+	return (int)_tolower_tab_[c + 1];
+}
+
+int
+tolower_l(int c, locale_t loc)
+{
+	return (int)(_RUNE_LOCALE(loc)->rl_tolower_tab[c + 1]);
 }
 
 int

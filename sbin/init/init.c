@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.103 2012/03/20 18:50:31 matt Exp $	*/
+/*	$NetBSD: init.c,v 1.105 2012/11/09 06:27:17 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: init.c,v 1.103 2012/03/20 18:50:31 matt Exp $");
+__RCSID("$NetBSD: init.c,v 1.105 2012/11/09 06:27:17 msaitoh Exp $");
 #endif
 #endif /* not lint */
 
@@ -68,6 +68,12 @@ __RCSID("$NetBSD: init.c,v 1.103 2012/03/20 18:50:31 matt Exp $");
 #include <util.h>
 #include <paths.h>
 #include <err.h>
+#ifdef SUPPORT_UTMP
+#include <utmp.h>
+#endif
+#ifdef SUPPORT_UTMPX
+#include <utmpx.h>
+#endif
 
 #include <stdarg.h>
 
@@ -109,14 +115,12 @@ static void warning(const char *, ...) __printflike(1, 2);
 static void emergency(const char *, ...) __printflike(1, 2);
 __dead static void disaster(int);
 
-#ifdef __minix
+#if defined(__minix)
 static void minixreboot(int);
 static void minixpowerdown(int);
-#endif
-
-#ifndef __minix
+#else
 static void badsys(int);
-#endif
+#endif /* defined(__minix) */
 
 /*
  * We really need a recursive typedef...
@@ -255,10 +259,10 @@ main(int argc, char **argv)
 	 * Establish an initial user so that programs running
 	 * single user do not freak out and die (like passwd).
 	 */
-#ifndef __minix
+#if !defined(__minix)
 	if (setlogin("root") < 0)
 		warn("setlogin() failed");
-#endif
+#endif /* !defined(__minix) */
 
 
 #ifdef MFS_DEV_IF_NO_CONSOLE
@@ -303,7 +307,7 @@ main(int argc, char **argv)
 	 * We catch or block signals rather than ignore them,
 	 * so that they get reset on exec.
 	 */
-#ifndef __minix
+#if !defined(__minix)
 	handle(badsys, SIGSYS, 0);
 	handle(disaster, SIGABRT, SIGFPE, SIGILL, SIGSEGV,
 	       SIGBUS, SIGXCPU, SIGXFSZ, 0);
@@ -311,17 +315,17 @@ main(int argc, char **argv)
 	handle(minixreboot, SIGABRT, 0);
 	handle(minixpowerdown, SIGUSR1, 0);
 	handle(disaster, SIGFPE, SIGILL, SIGSEGV, SIGBUS, 0);
-#endif
+#endif /* !defined(__minix) */
 	handle(transition_handler, SIGHUP, SIGTERM, SIGTSTP, 0);
 	handle(alrm_handler, SIGALRM, 0);
 	(void)sigfillset(&mask);
-#ifndef __minix
+#if !defined(__minix)
 	delset(&mask, SIGABRT, SIGFPE, SIGILL, SIGSEGV, SIGBUS, SIGSYS,
 	    SIGXCPU, SIGXFSZ, SIGHUP, SIGTERM, SIGTSTP, SIGALRM, 0);
 #else
 	delset(&mask, SIGABRT, SIGFPE, SIGILL, SIGSEGV, SIGBUS,
 	    SIGHUP, SIGTERM, SIGTSTP, SIGALRM, 0);
-#endif
+#endif /* !defined(__minix) */
 	(void)sigprocmask(SIG_SETMASK, &mask, NULL);
 	(void)sigemptyset(&sa.sa_mask);
 	sa.sa_flags = 0;
@@ -476,7 +480,7 @@ emergency(const char *message, ...)
 	closelog();
 }
 
-#ifndef __minix
+#if !defined(__minix)
 /*
  * Catch a SIGSYS signal.
  *
@@ -492,7 +496,7 @@ badsys(int sig)
 		return;
 	disaster(sig);
 }
-#endif
+#endif /* !defined(__minix) */
 
 /*
  * Catch an unexpected signal.
@@ -503,12 +507,10 @@ disaster(int sig)
 
 	emergency("fatal signal: %s", strsignal(sig));
 	(void)sleep(STALL_TIMEOUT);
-
 	_exit(sig);		/* reboot */
 }
 
-#ifdef __minix
-
+#if defined(__minix)
 /*
  * controlled reboot - minix tradition, SIGABRT by tty
  */
@@ -534,8 +536,7 @@ minixpowerdown(int sig)
 		_exit(1);
 	}
 }
-
-#endif
+#endif /* defined(__minix) */
 
 /*
  * Check if securelevel is present.
@@ -543,7 +544,7 @@ minixpowerdown(int sig)
 static int
 has_securelevel(void)
 {
-#ifdef __minix
+#if defined(__minix)
 	return 0;
 #else
 #ifdef KERN_SECURELVL
@@ -562,7 +563,7 @@ has_securelevel(void)
 #else
 	return 0;
 #endif
-#endif
+#endif /* defined(__minix) */
 }
 
 /*
@@ -674,12 +675,12 @@ setctty(const char *name)
 {
 	int fd;
 
-#ifndef __minix
+#if !defined(__minix)
 	(void)revoke(name);
 #else
 	if (setsid() < 0)
 		warn("child setsid() failed");
-#endif
+#endif /* !defined(__minix) */
 	(void)nanosleep(&dtrtime, NULL);	/* leave DTR low for a bit */
 	if ((fd = open(name, O_RDWR)) == -1) {
 		stall("can't open %s: %m", name);
@@ -1160,8 +1161,10 @@ new_session(session_t *sprev, int session_index, struct ttyent *typ)
 	sp->se_index = session_index;
 
 	(void)asprintf(&sp->se_device, "%s%s", _PATH_DEV, typ->ty_name);
-	if (!sp->se_device)
+	if (!sp->se_device) {
+		free(sp);
 		return NULL;
+	}
 
 	if (setupargv(sp, typ) == 0) {
 		free_session(sp);
@@ -1364,7 +1367,6 @@ start_getty(session_t *sp)
 	(void)sigprocmask(SIG_SETMASK, &mask, (sigset_t *) 0);
 
 	(void)execv(sp->se_getty_argv[0], sp->se_getty_argv);
-
 	stall("can't exec getty `%s' for port `%s': %m",
 	    sp->se_getty_argv[0], sp->se_device);
 	_exit(8);
@@ -1813,7 +1815,7 @@ do_setttyent(void)
 static int
 createsysctlnode(void)
 {
-#ifndef __minix
+#if !defined(__minix)
 	struct sysctlnode node;
 	int mib[2];
 	size_t len;
@@ -1855,8 +1857,7 @@ createsysctlnode(void)
 		warning("could not create init.root node: %m");
 		return -1;
 	}
-
-#endif
+#endif /* !defined(__minix) */
 
 	return 0;
 }
@@ -1864,7 +1865,7 @@ createsysctlnode(void)
 static int
 shouldchroot(void)
 {
-#ifndef __minix
+#if !defined(__minix)
 	struct sysctlnode node;
 	size_t len, cnt;
 	int mib;
@@ -1901,10 +1902,11 @@ shouldchroot(void)
 
 	if (strcmp(rootdir, "/") == 0)
 		return 0;
+
 	return 1;
 #else
 	return 0;
-#endif
+#endif /* !defined(__minix) */
 }
 
 #endif /* !LETS_GET_SMALL && CHROOT */

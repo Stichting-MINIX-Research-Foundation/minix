@@ -40,11 +40,11 @@
 
 #include <ostream>
 #include <string>
-#include <tr1/memory>
 #include <vector>
 
 #include "engine/test_case.hpp"
 #include "utils/fs/path.hpp"
+#include "utils/shared_ptr.hpp"
 
 namespace engine {
 
@@ -61,7 +61,7 @@ class test_program {
     struct impl;
 
     /// Pointer to the shared internal implementation.
-    std::tr1::shared_ptr< impl > _pimpl;
+    std::shared_ptr< impl > _pimpl;
 
 public:
     test_program(const std::string&, const utils::fs::path&,
@@ -89,7 +89,7 @@ std::ostream& operator<<(std::ostream&, const test_program&);
 
 
 /// Pointer to a test program.
-typedef std::tr1::shared_ptr< test_program > test_program_ptr;
+typedef std::shared_ptr< test_program > test_program_ptr;
 
 
 /// Collection of test programs.

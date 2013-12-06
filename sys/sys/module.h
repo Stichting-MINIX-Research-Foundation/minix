@@ -1,4 +1,4 @@
-/*	$NetBSD: module.h,v 1.31 2012/08/07 01:19:06 jnemeth Exp $	*/
+/*	$NetBSD: module.h,v 1.34 2013/10/23 18:57:40 mbalmer Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@ typedef struct module {
 	modsrc_t		mod_source;
 	time_t			mod_autotime;
 	void 			*mod_ctf;
-	u_int			mod_fbtentries;	/* DTrace FBT entrie count */
+	u_int			mod_fbtentries;	/* DTrace FBT entry count */
 	int			mod_flags;
 #define MODFLG_MUST_FORCE	0x01
 #define MODFLG_AUTO_LOADED	0x02

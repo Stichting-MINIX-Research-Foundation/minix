@@ -65,11 +65,11 @@ tcsetattr(int fd, int opt, const struct termios *t)
 	}
 	switch (opt & ~TCSASOFT) {
 	case TCSANOW:
-		return (ioctl(fd, TIOCSETA, __UNCONST(t)));
+		return (ioctl(fd, TIOCSETA, t));
 	case TCSADRAIN:
-		return (ioctl(fd, TIOCSETAW, __UNCONST(t)));
+		return (ioctl(fd, TIOCSETAW, t));
 	case TCSAFLUSH:
-		return (ioctl(fd, TIOCSETAF, __UNCONST(t)));
+		return (ioctl(fd, TIOCSETAF, t));
 	default:
 		errno = EINVAL;
 		return (-1);

@@ -7,23 +7,18 @@
 
 /* INCLUDES HERE */
 
-#ifdef __weak_alias
-__weak_alias(vm_remap, _vm_remap)
-__weak_alias(vm_unmap, _vm_unmap)
-__weak_alias(vm_getphys, _vm_getphys)
-__weak_alias(vm_getrefcount, _vm_getrefcount)
-__weak_alias(mmap, _mmap)
-__weak_alias(munmap, _munmap)
-#endif
-
-
 #include <sys/mman.h>
 #include <stdarg.h>
 #include <string.h>
 #include <errno.h>
 
+#ifdef __weak_alias
+__weak_alias(mmap, _mmap)
+__weak_alias(munmap, _munmap)
+#endif
+
 void *minix_mmap_for(endpoint_t forwhom,
-	void *addr, size_t len, int prot, int flags, int fd, u64_t offset)
+	void *addr, size_t len, int prot, int flags, int fd, off_t offset)
 {
 	message m;
 	int r;

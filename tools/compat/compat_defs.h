@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.86 2012/06/04 10:18:01 joerg Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.93 2013/10/24 13:59:47 apb Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -62,6 +62,10 @@
 #include <stddef.h>
 #endif
 
+#if HAVE_RPC_TYPES_H
+#include <rpc/types.h>
+#endif
+
 #ifdef _NETBSD_SOURCE
 #error _NETBSD_SOURCE is *not* to be defined.
 #endif
@@ -121,12 +125,16 @@ struct group;
 #define __dead
 #undef __printflike
 #define __printflike(x,y)
+#undef __format_arg
+#define __format_arg(x)
 #undef __restrict
 #define __restrict
 #undef __unused
 #define __unused
 #undef __arraycount
 #define	__arraycount(__x)	(sizeof(__x) / sizeof(__x[0]))
+#undef __USE
+#define __USE(a) ((void)(a))
 
 /* Dirent support. */
 
@@ -164,6 +172,11 @@ typedef unsigned int id_t;
 #endif
 
 #if !HAVE_SOCKLEN_T
+/*
+ * This is defined as int for compatibility with legacy systems (and not
+ * unsigned int), since universally it was int in most systems that did not
+ * define it.
+ */
 typedef int socklen_t;
 #endif
 
@@ -262,6 +275,9 @@ int evasprintf(char **, const char *, va_list);
 
 #if !HAVE_FGETLN || defined(__NetBSD__) || defined(__minix)
 char *fgetln(FILE *, size_t *);
+#endif
+#if !HAVE_DPRINTF
+int dprintf(int, const char *, ...);
 #endif
 
 #if !HAVE_FLOCK
@@ -432,6 +448,11 @@ int setpassent(int);
 #if !HAVE_SETPROGNAME || defined(__NetBSD__) || defined(__minix)
 const char *getprogname(void);
 void setprogname(const char *);
+#endif
+
+#if !HAVE_SNPRINTB_M
+int snprintb(char *, size_t, const char *, uint64_t);
+int snprintb_m(char *, size_t, const char *, uint64_t, size_t);
 #endif
 
 #if !HAVE_SNPRINTF

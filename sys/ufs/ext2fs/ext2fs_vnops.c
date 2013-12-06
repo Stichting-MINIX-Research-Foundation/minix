@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.101 2011/11/18 21:18:51 christos Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.107 2013/03/18 19:35:47 plunky Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.101 2011/11/18 21:18:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.107 2013/03/18 19:35:47 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -253,8 +253,9 @@ ext2fs_check_permitted(struct vnode *vp, struct inode *ip, mode_t mode,
     kauth_cred_t cred)
 {
 
-	return genfs_can_access(vp->v_type, ip->i_e2fs_mode & ALLPERMS,
-	    ip->i_uid, ip->i_gid, mode, cred);
+	return kauth_authorize_vnode(cred, KAUTH_ACCESS_ACTION(mode, vp->v_type,
+	    ip->i_e2fs_mode & ALLPERMS), vp, NULL, genfs_can_access(vp->v_type,
+	    ip->i_e2fs_mode & ALLPERMS, ip->i_uid, ip->i_gid, mode, cred));
 }
 
 int
@@ -325,7 +326,7 @@ ext2fs_getattr(void *v)
 		vap->va_blocksize = MAXBSIZE;
 	else
 		vap->va_blocksize = vp->v_mount->mnt_stat.f_iosize;
-	vap->va_bytes = dbtob((u_quad_t)ip->i_e2fs_nblock);
+	vap->va_bytes = dbtob(ext2fs_nblock(ip));
 	vap->va_type = vp->v_type;
 	vap->va_filerev = ip->i_modrev;
 	return (0);
@@ -348,6 +349,8 @@ ext2fs_setattr(void *v)
 	kauth_cred_t cred = ap->a_cred;
 	struct lwp *l = curlwp;
 	int error;
+	kauth_action_t action = KAUTH_VNODE_WRITE_FLAGS;
+	bool changing_sysflags = false;
 
 	/*
 	 * Check for unsettable attributes.
@@ -361,24 +364,38 @@ ext2fs_setattr(void *v)
 	if (vap->va_flags != VNOVAL) {
 		if (vp->v_mount->mnt_flag & MNT_RDONLY)
 			return (EROFS);
-		if (kauth_cred_geteuid(cred) != ip->i_uid &&
-		    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-		    NULL)))
-			return (error);
+
+		/*
+		 * Check if we're allowed to change the flags.
+		 * If EXT2FS_SYSTEM_FLAGS is set, then the flags are treated
+		 * as system flags, otherwise they're considered to be user
+		 * flags.
+		 */
 #ifdef EXT2FS_SYSTEM_FLAGS
-		if (kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-		    NULL) == 0) {
-			if ((ip->i_e2fs_flags &
-			    (EXT2_APPEND | EXT2_IMMUTABLE)) &&
-			    kauth_authorize_system(l->l_cred,
-			     KAUTH_SYSTEM_CHSYSFLAGS, 0, NULL, NULL, NULL))
-				return (EPERM);
-			ip->i_e2fs_flags &= ~(EXT2_APPEND | EXT2_IMMUTABLE);
-			ip->i_e2fs_flags |=
-			    (vap->va_flags & SF_APPEND) ?  EXT2_APPEND : 0 |
-			    (vap->va_flags & SF_IMMUTABLE) ? EXT2_IMMUTABLE : 0;
-		} else
-			return (EPERM);
+		/* Indicate we're changing system flags if we are. */
+		if ((vap->va_flags & SF_APPEND) ||
+		     (vap->va_flags & SF_IMMUTABLE)) {
+			action |= KAUTH_VNODE_WRITE_SYSFLAGS;
+			changing_sysflags = true;
+		}
+
+		/* Indicate the node has system flags if it does. */
+		if (ip->i_e2fs_flags & (EXT2_APPEND | EXT2_IMMUTABLE)) {
+			action |= KAUTH_VNODE_HAS_SYSFLAGS;
+		}
+#endif /* EXT2FS_SYSTEM_FLAGS */
+
+		error = kauth_authorize_vnode(cred, action, vp, NULL,
+		    genfs_can_chflags(cred, vp->v_type, ip->i_uid,
+		    changing_sysflags));
+		if (error)
+			return (error);
+
+#ifdef EXT2FS_SYSTEM_FLAGS
+		ip->i_e2fs_flags &= ~(EXT2_APPEND | EXT2_IMMUTABLE);
+		ip->i_e2fs_flags |=
+		    (vap->va_flags & SF_APPEND) ?  EXT2_APPEND : 0 |
+		    (vap->va_flags & SF_IMMUTABLE) ? EXT2_IMMUTABLE : 0;
 #else
 		ip->i_e2fs_flags &= ~(EXT2_APPEND | EXT2_IMMUTABLE);
 		ip->i_e2fs_flags |=
@@ -425,7 +442,9 @@ ext2fs_setattr(void *v)
 	if (vap->va_atime.tv_sec != VNOVAL || vap->va_mtime.tv_sec != VNOVAL) {
 		if (vp->v_mount->mnt_flag & MNT_RDONLY)
 			return (EROFS);
-		error = genfs_can_chtimes(vp, vap->va_vaflags, ip->i_uid, cred);
+		error = kauth_authorize_vnode(cred, KAUTH_VNODE_WRITE_TIMES, vp,
+		    NULL, genfs_can_chtimes(vp, vap->va_vaflags, ip->i_uid,
+		    cred));
 		if (error)
 			return (error);
 		if (vap->va_atime.tv_sec != VNOVAL)
@@ -461,7 +480,9 @@ ext2fs_chmod(struct vnode *vp, int mode, kauth_cred_t cred, struct lwp *l)
 	struct inode *ip = VTOI(vp);
 	int error;
 
-	error = genfs_can_chmod(vp, cred, ip->i_uid, ip->i_gid, mode);
+	error = kauth_authorize_vnode(cred, KAUTH_VNODE_WRITE_SECURITY, vp,
+	    NULL, genfs_can_chmod(vp->v_type, cred, ip->i_uid, ip->i_gid,
+	    mode));
 	if (error)
 		return (error);
 
@@ -489,7 +510,8 @@ ext2fs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
 	if (gid == (gid_t)VNOVAL)
 		gid = ip->i_gid;
 
-	error = genfs_can_chown(vp, cred, ip->i_uid, ip->i_gid, uid, gid);
+	error = kauth_authorize_vnode(cred, KAUTH_VNODE_CHANGE_OWNERSHIP, vp,
+	    NULL, genfs_can_chown(cred, ip->i_uid, ip->i_gid, uid, gid));
 	if (error)
 		return (error);
 
@@ -509,11 +531,13 @@ ext2fs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
 		ext2fs_set_inode_guid(ip);
 		ip->i_flag |= IN_CHANGE;
 	}
-	if (ouid != uid && kauth_authorize_generic(cred,
-	    KAUTH_GENERIC_ISSUSER, NULL) != 0)
+	if (ouid != uid && (ip->i_e2fs_mode & ISUID) &&
+	    kauth_authorize_vnode(cred, KAUTH_VNODE_RETAIN_SUID,
+	    vp, NULL, EPERM) != 0)
 		ip->i_e2fs_mode &= ~ISUID;
-	if (ogid != gid && kauth_authorize_generic(cred,
-	    KAUTH_GENERIC_ISSUSER, NULL) != 0)
+	if (ogid != gid && (ip->i_e2fs_mode & ISGID) &&
+	    kauth_authorize_vnode(cred, KAUTH_VNODE_RETAIN_SGID,
+	    vp, NULL, EPERM) != 0)
 		ip->i_e2fs_mode &= ~ISGID;
 	return (0);
 }
@@ -616,424 +640,6 @@ out2:
 	VN_KNOTE(vp, NOTE_LINK);
 	VN_KNOTE(dvp, NOTE_WRITE);
 	vput(dvp);
-	return (error);
-}
-
-/*
- * Rename system call.
- *	rename("foo", "bar");
- * is essentially
- *	unlink("bar");
- *	link("foo", "bar");
- *	unlink("foo");
- * but ``atomically''.  Can't do full commit without saving state in the
- * inode on disk which isn't feasible at this time.  Best we can do is
- * always guarantee the target exists.
- *
- * Basic algorithm is:
- *
- * 1) Bump link count on source while we're linking it to the
- *    target.  This also ensure the inode won't be deleted out
- *    from underneath us while we work (it may be truncated by
- *    a concurrent `trunc' or `open' for creation).
- * 2) Link source to destination.  If destination already exists,
- *    delete it first.
- * 3) Unlink source reference to inode if still around. If a
- *    directory was moved and the parent of the destination
- *    is different from the source, patch the ".." entry in the
- *    directory.
- */
-int
-ext2fs_rename(void *v)
-{
-	struct vop_rename_args  /* {
-		struct vnode *a_fdvp;
-		struct vnode *a_fvp;
-		struct componentname *a_fcnp;
-		struct vnode *a_tdvp;
-		struct vnode *a_tvp;
-		struct componentname *a_tcnp;
-	} */ *ap = v;
-	struct vnode *tvp = ap->a_tvp;
-	struct vnode *tdvp = ap->a_tdvp;
-	struct vnode *fvp = ap->a_fvp;
-	struct vnode *fdvp = ap->a_fdvp;
-	struct componentname *tcnp = ap->a_tcnp;
-	struct componentname *fcnp = ap->a_fcnp;
-	struct inode *ip, *xp, *dp;
-	struct ext2fs_dirtemplate dirbuf;
-	int doingdirectory = 0, oldparent = 0, newparent = 0;
-	int error = 0;
-	u_char namlen;
-
-	/*
-	 * Check for cross-device rename.
-	 */
-	if ((fvp->v_mount != tdvp->v_mount) ||
-	    (tvp && (fvp->v_mount != tvp->v_mount))) {
-		error = EXDEV;
-abortit:
-		VOP_ABORTOP(tdvp, tcnp); /* XXX, why not in NFS? */
-		if (tdvp == tvp)
-			vrele(tdvp);
-		else
-			vput(tdvp);
-		if (tvp)
-			vput(tvp);
-		VOP_ABORTOP(fdvp, fcnp); /* XXX, why not in NFS? */
-		vrele(fdvp);
-		vrele(fvp);
-		return (error);
-	}
-
-	/*
-	 * Check if just deleting a link name.
-	 */
-	if (tvp && ((VTOI(tvp)->i_e2fs_flags & (EXT2_IMMUTABLE | EXT2_APPEND)) ||
-	    (VTOI(tdvp)->i_e2fs_flags & EXT2_APPEND))) {
-		error = EPERM;
-		goto abortit;
-	}
-	if (fvp == tvp) {
-		if (fvp->v_type == VDIR) {
-			error = EINVAL;
-			goto abortit;
-		}
-
-		/* Release destination completely. */
-		VOP_ABORTOP(tdvp, tcnp);
-		vput(tdvp);
-		vput(tvp);
-
-		/* Delete source. */
-		vrele(fvp);
-		fcnp->cn_flags &= ~(MODMASK);
-		fcnp->cn_flags |= LOCKPARENT | LOCKLEAF;
-		fcnp->cn_nameiop = DELETE;
-		vn_lock(fdvp, LK_EXCLUSIVE | LK_RETRY);
-		if ((error = relookup(fdvp, &fvp, fcnp, 0))) {
-			vput(fdvp);
-			return (error);
-		}
-		return (VOP_REMOVE(fdvp, fvp, fcnp));
-	}
-	if ((error = vn_lock(fvp, LK_EXCLUSIVE)) != 0)
-		goto abortit;
-	dp = VTOI(fdvp);
-	ip = VTOI(fvp);
-	if ((nlink_t) ip->i_e2fs_nlink >= LINK_MAX) {
-		VOP_UNLOCK(fvp);
-		error = EMLINK;
-		goto abortit;
-	}
-	if ((ip->i_e2fs_flags & (EXT2_IMMUTABLE | EXT2_APPEND)) ||
-		(dp->i_e2fs_flags & EXT2_APPEND)) {
-		VOP_UNLOCK(fvp);
-		error = EPERM;
-		goto abortit;
-	}
-	if ((ip->i_e2fs_mode & IFMT) == IFDIR) {
-		error = VOP_ACCESS(fvp, VWRITE, tcnp->cn_cred);
-		if (!error && tvp)
-			error = VOP_ACCESS(tvp, VWRITE, tcnp->cn_cred);
-		if (error) {
-			VOP_UNLOCK(fvp);
-			error = EACCES;
-			goto abortit;
-		}
-		/*
-		 * Avoid ".", "..", and aliases of "." for obvious reasons.
-		 */
-		if ((fcnp->cn_namelen == 1 && fcnp->cn_nameptr[0] == '.') ||
-		    dp == ip ||
-		    (fcnp->cn_flags & ISDOTDOT) ||
-		    (tcnp->cn_flags & ISDOTDOT) ||
-		    (ip->i_flag & IN_RENAME)) {
-			VOP_UNLOCK(fvp);
-			error = EINVAL;
-			goto abortit;
-		}
-		ip->i_flag |= IN_RENAME;
-		oldparent = dp->i_number;
-		doingdirectory = 1;
-	}
-	VN_KNOTE(fdvp, NOTE_WRITE);		/* XXXLUKEM/XXX: right place? */
-
-	/*
-	 * When the target exists, both the directory
-	 * and target vnodes are returned locked.
-	 */
-	dp = VTOI(tdvp);
-	xp = NULL;
-	if (tvp)
-		xp = VTOI(tvp);
-
-	/*
-	 * 1) Bump link count while we're moving stuff
-	 *    around.  If we crash somewhere before
-	 *    completing our work, the link count
-	 *    may be wrong, but correctable.
-	 */
-	ip->i_e2fs_nlink++;
-	ip->i_flag |= IN_CHANGE;
-	if ((error = ext2fs_update(fvp, NULL, NULL, UPDATE_WAIT)) != 0) {
-		VOP_UNLOCK(fvp);
-		goto bad;
-	}
-
-	/*
-	 * If ".." must be changed (ie the directory gets a new
-	 * parent) then the source directory must not be in the
-	 * directory hierarchy above the target, as this would
-	 * orphan everything below the source directory. Also
-	 * the user must have write permission in the source so
-	 * as to be able to change "..". We must repeat the call
-	 * to namei, as the parent directory is unlocked by the
-	 * call to checkpath().
-	 */
-	error = VOP_ACCESS(fvp, VWRITE, tcnp->cn_cred);
-	VOP_UNLOCK(fvp);
-	if (oldparent != dp->i_number)
-		newparent = dp->i_number;
-	if (doingdirectory && newparent) {
-		if (error)	/* write access check above */
-			goto bad;
-		if (xp != NULL)
-			vput(tvp);
-		vref(tdvp);     /* compensate for the ref checkpath loses */
-		error = ext2fs_checkpath(ip, dp, tcnp->cn_cred);
-		if (error != 0) {
-			vrele(tdvp);
-			goto out;
-		}
-		vn_lock(tdvp, LK_EXCLUSIVE | LK_RETRY);
-		if ((error = relookup(tdvp, &tvp, tcnp, 0)) != 0) {
-			vput(tdvp);
-			goto out;
-		}
-		dp = VTOI(tdvp);
-		xp = NULL;
-		if (tvp)
-			xp = VTOI(tvp);
-	}
-	/*
-	 * 2) If target doesn't exist, link the target
-	 *    to the source and unlink the source.
-	 *    Otherwise, rewrite the target directory
-	 *    entry to reference the source inode and
-	 *    expunge the original entry's existence.
-	 */
-	if (xp == NULL) {
-		if (dp->i_dev != ip->i_dev)
-			panic("rename: EXDEV");
-		/*
-		 * Account for ".." in new directory.
-		 * When source and destination have the same
-		 * parent we don't fool with the link count.
-		 */
-		if (doingdirectory && newparent) {
-			if ((nlink_t)dp->i_e2fs_nlink >= LINK_MAX) {
-				error = EMLINK;
-				goto bad;
-			}
-			dp->i_e2fs_nlink++;
-			dp->i_flag |= IN_CHANGE;
-			if ((error = ext2fs_update(tdvp, NULL, NULL,
-			    UPDATE_WAIT)) != 0)
-				goto bad;
-		}
-		error = ext2fs_direnter(ip, tdvp, &VTOI(tdvp)->i_crap, tcnp);
-		if (error != 0) {
-			if (doingdirectory && newparent) {
-				dp->i_e2fs_nlink--;
-				dp->i_flag |= IN_CHANGE;
-				(void)ext2fs_update(tdvp, NULL, NULL,
-				    UPDATE_WAIT);
-			}
-			goto bad;
-		}
-		VN_KNOTE(tdvp, NOTE_WRITE);
-		vput(tdvp);
-	} else {
-		if (xp->i_dev != dp->i_dev || xp->i_dev != ip->i_dev)
-			panic("rename: EXDEV");
-		/*
-		 * Short circuit rename(foo, foo).
-		 */
-		if (xp->i_number == ip->i_number)
-			panic("rename: same file");
-		/*
-		 * If the parent directory is "sticky", then the user must
-		 * own the parent directory, or the destination of the rename,
-		 * otherwise the destination may not be changed (except by
-		 * root). This implements append-only directories.
-		 */
-		if ((dp->i_e2fs_mode & S_ISTXT) &&
-		    kauth_authorize_generic(tcnp->cn_cred,
-		     KAUTH_GENERIC_ISSUSER, NULL) != 0 &&
-		    kauth_cred_geteuid(tcnp->cn_cred) != dp->i_uid &&
-		    xp->i_uid != kauth_cred_geteuid(tcnp->cn_cred)) {
-			error = EPERM;
-			goto bad;
-		}
-		/*
-		 * Target must be empty if a directory and have no links
-		 * to it. Also, ensure source and target are compatible
-		 * (both directories, or both not directories).
-		 */
-		if ((xp->i_e2fs_mode & IFMT) == IFDIR) {
-			if (!ext2fs_dirempty(xp, dp->i_number, tcnp->cn_cred) ||
-				xp->i_e2fs_nlink > 2) {
-				error = ENOTEMPTY;
-				goto bad;
-			}
-			if (!doingdirectory) {
-				error = ENOTDIR;
-				goto bad;
-			}
-			cache_purge(tdvp);
-		} else if (doingdirectory) {
-			error = EISDIR;
-			goto bad;
-		}
-		error = ext2fs_dirrewrite(dp, &dp->i_crap, ip, tcnp);
-		if (error != 0)
-			goto bad;
-		/*
-		 * If the target directory is in the same
-		 * directory as the source directory,
-		 * decrement the link count on the parent
-		 * of the target directory.
-		 */
-		 if (doingdirectory && !newparent) {
-			dp->i_e2fs_nlink--;
-			dp->i_flag |= IN_CHANGE;
-		}
-		/*
-		 * Adjust the link count of the target to
-		 * reflect the dirrewrite above.  If this is
-		 * a directory it is empty and there are
-		 * no links to it, so we can squash the inode and
-		 * any space associated with it.  We disallowed
-		 * renaming over top of a directory with links to
-		 * it above, as the remaining link would point to
-		 * a directory without "." or ".." entries.
-		 */
-		xp->i_e2fs_nlink--;
-		if (doingdirectory) {
-			if (--xp->i_e2fs_nlink != 0)
-				panic("rename: linked directory");
-			error = ext2fs_truncate(tvp, (off_t)0, IO_SYNC,
-			    tcnp->cn_cred);
-		}
-		xp->i_flag |= IN_CHANGE;
-		VN_KNOTE(tdvp, NOTE_WRITE);
-		vput(tdvp);
-		VN_KNOTE(tvp, NOTE_DELETE);
-		vput(tvp);
-		xp = NULL;
-	}
-
-	/*
-	 * 3) Unlink the source.
-	 */
-	fcnp->cn_flags &= ~(MODMASK);
-	fcnp->cn_flags |= LOCKPARENT | LOCKLEAF;
-	vn_lock(fdvp, LK_EXCLUSIVE | LK_RETRY);
-	if ((error = relookup(fdvp, &fvp, fcnp, 0))) {
-		vput(fdvp);
-		vrele(ap->a_fvp);
-		return (error);
-	}
-	if (fvp != NULL) {
-		xp = VTOI(fvp);
-		dp = VTOI(fdvp);
-	} else {
-		/*
-		 * From name has disappeared.
-		 */
-		if (doingdirectory)
-			panic("ext2fs_rename: lost dir entry");
-		vrele(ap->a_fvp);
-		return (0);
-	}
-	/*
-	 * Ensure that the directory entry still exists and has not
-	 * changed while the new name has been entered. If the source is
-	 * a file then the entry may have been unlinked or renamed. In
-	 * either case there is no further work to be done. If the source
-	 * is a directory then it cannot have been rmdir'ed; its link
-	 * count of three would cause a rmdir to fail with ENOTEMPTY.
-	 * The IRENAME flag ensures that it cannot be moved by another
-	 * rename.
-	 */
-	if (xp != ip) {
-		if (doingdirectory)
-			panic("ext2fs_rename: lost dir entry");
-	} else {
-		/*
-		 * If the source is a directory with a
-		 * new parent, the link count of the old
-		 * parent directory must be decremented
-		 * and ".." set to point to the new parent.
-		 */
-		if (doingdirectory && newparent) {
-			KASSERT(dp != NULL);
-			dp->i_e2fs_nlink--;
-			dp->i_flag |= IN_CHANGE;
-			error = vn_rdwr(UIO_READ, fvp, (void *)&dirbuf,
-				sizeof (struct ext2fs_dirtemplate), (off_t)0,
-				UIO_SYSSPACE, IO_NODELOCKED,
-				tcnp->cn_cred, (size_t *)0, NULL);
-			if (error == 0) {
-					namlen = dirbuf.dotdot_namlen;
-				if (namlen != 2 ||
-				    dirbuf.dotdot_name[0] != '.' ||
-				    dirbuf.dotdot_name[1] != '.') {
-					ufs_dirbad(xp, (doff_t)12,
-					    "ext2fs_rename: mangled dir");
-				} else {
-					dirbuf.dotdot_ino = h2fs32(newparent);
-					(void) vn_rdwr(UIO_WRITE, fvp,
-					    (void *)&dirbuf,
-					    sizeof (struct dirtemplate),
-					    (off_t)0, UIO_SYSSPACE,
-					    IO_NODELOCKED|IO_SYNC,
-					    tcnp->cn_cred, (size_t *)0,
-					    NULL);
-					cache_purge(fdvp);
-				}
-			}
-		}
-		error = ext2fs_dirremove(fdvp, &VTOI(fdvp)->i_crap, fcnp);
-		if (!error) {
-			xp->i_e2fs_nlink--;
-			xp->i_flag |= IN_CHANGE;
-		}
-		xp->i_flag &= ~IN_RENAME;
-	}
-	VN_KNOTE(fvp, NOTE_RENAME);
-	if (dp)
-		vput(fdvp);
-	if (xp)
-		vput(fvp);
-	vrele(ap->a_fvp);
-	return (error);
-
-bad:
-	if (xp)
-		vput(ITOV(xp));
-	vput(ITOV(dp));
-out:
-	if (doingdirectory)
-		ip->i_flag &= ~IN_RENAME;
-	if (vn_lock(fvp, LK_EXCLUSIVE) == 0) {
-		ip->i_e2fs_nlink--;
-		ip->i_flag |= IN_CHANGE;
-		vput(fvp);
-	} else
-		vrele(fvp);
-	vrele(fdvp);
 	return (error);
 }
 
@@ -1316,7 +922,7 @@ ext2fs_readlink(void *v)
 
 	isize = ext2fs_size(ip);
 	if (isize < ump->um_maxsymlinklen ||
-	    (ump->um_maxsymlinklen == 0 && ip->i_e2fs_nblock == 0)) {
+	    (ump->um_maxsymlinklen == 0 && ext2fs_nblock(ip) == 0)) {
 		uiomove((char *)ip->i_din.e2fs_din->e2di_shortlink, isize, ap->a_uio);
 		return (0);
 	}
@@ -1361,7 +967,7 @@ ext2fs_fsync(void *v)
 	if (vp->v_type == VBLK)
 		error = spec_fsync(v);
 	else
-		error = vflushbuf(vp, wait);
+		error = vflushbuf(vp, ap->a_flags);
 	if (error == 0 && (ap->a_flags & FSYNC_DATAONLY) == 0)
 		error = ext2fs_update(vp, NULL, NULL, wait ? UPDATE_WAIT : 0);
 
@@ -1405,7 +1011,7 @@ ext2fs_vinit(struct mount *mntp, int (**specops)(void *),
 	case VREG:
 		break;
 	}
-	if (ip->i_number == ROOTINO)
+	if (ip->i_number == UFS_ROOTINO)
                 vp->v_vflag |= VV_ROOT;
 	/*
 	 * Initialize modrev times
@@ -1426,7 +1032,7 @@ ext2fs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
 {
 	struct inode *ip, *pdir;
 	struct vnode *tvp;
-	int error, ismember = 0;
+	int error;
 	struct ufs_lookup_results *ulr;
 
 	pdir = VTOI(dvp);
@@ -1459,10 +1065,15 @@ ext2fs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
 	ip->i_e2fs_mode = mode;
 	tvp->v_type = IFTOVT(mode);	/* Rest init'd in getnewvnode(). */
 	ip->i_e2fs_nlink = 1;
-	if ((ip->i_e2fs_mode & ISGID) && (kauth_cred_ismember_gid(cnp->cn_cred,
-	    ip->i_gid, &ismember) != 0 || !ismember) &&
-	    kauth_authorize_generic(cnp->cn_cred, KAUTH_GENERIC_ISSUSER, NULL))
-		ip->i_e2fs_mode &= ~ISGID;
+
+	/* Authorize setting SGID if needed. */
+	if (ip->i_e2fs_mode & ISGID) {
+		error = kauth_authorize_vnode(cnp->cn_cred, KAUTH_VNODE_WRITE_SECURITY,
+		    tvp, NULL, genfs_can_chmod(tvp->v_type, cnp->cn_cred, ip->i_uid,
+		    ip->i_gid, mode));
+		if (error)
+			ip->i_e2fs_mode &= ~ISGID;
+	}
 
 	/*
 	 * Make sure inode goes to disk before directory entry.

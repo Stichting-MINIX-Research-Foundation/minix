@@ -3,8 +3,4 @@
 
 PROG=	uname
 
-.if defined(__MINIX)
-LINKS+=	${BINDIR}/uname ${BINDIR}/arch
-.endif # __MINIX
-
 .include <bsd.prog.mk>

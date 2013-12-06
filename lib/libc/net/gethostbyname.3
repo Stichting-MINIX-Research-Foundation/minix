@@ -1,4 +1,4 @@
-.\"	$NetBSD: gethostbyname.3,v 1.28 2006/10/07 21:30:39 apb Exp $
+.\"	$NetBSD: gethostbyname.3,v 1.29 2013/08/19 07:18:42 christos Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)gethostbyname.3   8.4 (Berkeley) 5/25/95
 .\"
-.Dd October 7, 2006
+.Dd August 19, 2013
 .Dt GETHOSTBYNAME 3
 .Os
 .Sh NAME
@@ -52,7 +52,7 @@
 .Ft struct hostent *
 .Fn gethostbyname2 "const char *name" "int af"
 .Ft struct hostent *
-.Fn gethostbyaddr "const char *addr" "socklen_t len" "int type"
+.Fn gethostbyaddr "const void *addr" "socklen_t len" "int type"
 .Ft struct hostent *
 .Fn gethostent void
 .Ft void

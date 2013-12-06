@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.netbsd-gmp,v 1.1 2011/10/30 01:50:32 mrg Exp $
+# $NetBSD: Makefile.netbsd-gmp,v 1.3 2013/07/18 22:40:58 matt Exp $
 
 # hack makefile to help build gmp ./configure
 
@@ -6,7 +6,7 @@
 
 CCADDFLAGS=	--sysroot=${DESTDIR} -L${DESTDIR}/lib -L${DESTDIR}/usr/lib -B${DESTDIR}/usr/lib/ -I${.OBJDIR}/.native/gcc/include
 
-TARGET=hppa-netbsd
+TARGET?=${MACHINE_GNU_PLATFORM}
 #TARGET=mips64el-netbsd
 ENV_ARGS=\
 			CC=${CC:Q}' '${CCADDFLAGS:Q} \
@@ -16,4 +16,4 @@ ENV_ARGS=\
 			LIBS=-lintl
 
 all:
-	env ${ENV_ARGS} /usr/src3/external/lgpl3/gmp/dist/configure --host=${TARGET} --target=${TARGET}
+	env ${ENV_ARGS} ${NETBSDSRCDIR}/external/lgpl3/gmp/dist/configure --host=${TARGET} --target=${TARGET}

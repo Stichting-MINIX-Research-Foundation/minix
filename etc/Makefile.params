@@ -1,0 +1,130 @@
+#	$NetBSD: Makefile.params,v 1.7 2013/11/01 11:09:05 apb Exp $
+#
+# Makefile fragment for printing build parameters.
+#
+# Public variables:
+#	RELEASEVARS
+#		List of variables whose value should be printed.
+#
+#	PRINT_PARAMS
+#		A command to print the desired variables and values
+#		to stdout, without any additional debugging information.
+#		Values are printed as single-quoted strings, with
+#		embedded quotes and newlines escaped in a way that's
+#		acceptable to sh(1).  Undefined values are printed
+#		as "(undefined)" (without quotation marks).
+#
+# Internal targets:
+# 	_params:
+#		Prints the names and values of all the variables
+#		listed in ${RELEASEVARS}.  The desired results may be
+#		redirected somewhere other than stdout, for example by
+#		setting _params_redirect='>&3'.	 stdout and stderr may
+#		contain unwanted debugging information, from make and
+#		the shell.
+#
+# Internal variables:
+#	_params_redirect:
+#		If set, this should be a shell redirection specification, such
+#		as '>&3', controlling where the output from "make _params" will
+#		be sent.
+#
+# Example:
+#	. ${NETBSDSRCDIR}/etc/Makefile.params
+#	show-params: .MAKE .PHONY # print params to stdout
+#		@${PRINT_PARAMS}
+#
+
+.include <bsd.own.mk>	# for some variables
+.include <bsd.sys.mk>	# for more variables
+
+RELEASEVARS=	BSDOBJDIR BSDSRCDIR BUILDID \
+		DESTDIR DISTRIBVER EXTERNAL_TOOLCHAIN HAVE_GCC HAVE_GDB \
+		HAVE_LLVM HAVE_PCC INSTALLWORLDDIR \
+		KERNARCHDIR KERNCONFDIR KERNOBJDIR KERNSRCDIR \
+		MACHINE MACHINE_ARCH MAKE MAKECONF MAKEFLAGS \
+		MAKEOBJDIR MAKEOBJDIRPREFIX MAKEVERBOSE \
+		MKATF MKBFD MKBINUTILS MKCATPAGES \
+		MKCRYPTO MKCRYPTO_RC5 MKCVS \
+		MKDEBUG MKDEBUGLIB MKDOC MKDTRACE MKDYNAMICROOT \
+		MKGCC MKGCCCMDS MKGDB \
+		MKHESIOD MKHTML MKIEEEFP MKINET6 MKINFO MKIPFILTER \
+		MKKERBEROS MKKYUA MKLDAP MKLINKLIB MKLINT MKLLVM \
+		MKMAN MKMANZ MKMDNS MKNLS MKNPF MKOBJ MKOBJDIRS \
+		MKPAM MKPCC MKPF MKPIC MKPICINSTALL MKPICLIB MKPOSTFIX \
+		MKPROFILE \
+		MKSHARE MKSKEY MKSOFTFLOAT MKSTATICLIB \
+		MKUNPRIVED MKUPDATE MKX11 MKYP \
+		NBUILDJOBS NETBSDSRCDIR \
+		NOCLEANDIR NODISTRIBDIRS NOINCLUDES \
+		OBJMACHINE \
+		RELEASEDIR RELEASEMACHINEDIR TOOLCHAIN_MISSING TOOLDIR \
+		USE_HESIOD USE_INET6 USE_JEMALLOC USE_KERBEROS USE_LDAP \
+		USE_PAM USE_SKEY USE_YP \
+		USETOOLS USR_OBJMACHINE \
+		X11SRCDIR X11FLAVOUR
+
+
+#
+# Duplicate the DISTRIBVER setting from src/etc/Makefile.
+#
+.ifndef DISTRIBVER
+DISTRIBVER!=	${HOST_SH} ${NETBSDSRCDIR}/sys/conf/osrelease.sh
+.endif
+
+#
+# _params does the printing.
+#
+_params_redirect?= # empty
+
+_params: .PHONY
+.for var in ${RELEASEVARS}
+.if defined(${var})
+	@printf "%20s = '%-s'\n" ${var} ${${var}:C/'/'\\\\''/gW:Q} \
+	    ${_params_redirect}
+.else
+	@printf "%20s = (undefined)\n" ${var} \
+	    ${_params_redirect}
+.endif
+.endfor
+
+# PRINT_PARAMS:
+#
+# The output from the "make _params" can include the following types of
+# unwanted lines:
+#
+#     make -j prints "--- _params ---";
+#
+#     if MAKEVERBOSE is set to 3 or more then make prints each "printf"
+#     command in addition to executing it;
+#
+#     if MAKEVERBOSE is set to 4 then the shell prints each command
+#     (prefixed with "+").
+#
+# So the resulting output can look like this:
+#
+#	--- _params ---
+#	+ echo 'printf "%20s = '\''%-s'\''\n" BSDOBJDIR /usr/obj'
+#	printf "%20s = '%-s'\n" BSDOBJDIR /usr/obj
+#	+ printf '%20s = '\''%-s'\''\n' BSDOBJDIR /usr/obj
+#	           BSDOBJDIR = '/usr/obj'
+#	+ echo 'printf "%20s = '\''%-s'\''\n" BSDSRCDIR /usr/src'
+#	printf "%20s = '%-s'\n" BSDSRCDIR /usr/src
+#	+ printf '%20s = '\''%-s'\''\n' BSDSRCDIR /usr/src
+#	           BSDSRCDIR = '/usr/src'
+#	[...]
+#
+# where what we want is just this:
+#
+#	           BSDOBJDIR = '/usr/obj'
+#	           BSDSRCDIR = '/usr/src'
+#	           [...]
+#
+# The shell redirections in ${PRINT_PARAMS} ensure that the unwanted
+# noise is discarded (via ">/dev/null"), while the desired information
+# ends up on the subshell's stdout (via ">&3" and "3>&1").  The value
+# of _params_redirect is passed in the environment instead of on the
+# command line, to prevent it from appearing in MAKEFLAGS (which would
+# appear in the output).
+#
+PRINT_PARAMS:=	(_params_redirect='>&3' ${MAKE} -f ${.PARSEDIR:Q}/${.PARSEFILE:Q} _params 3>&1 >/dev/null)

@@ -38,7 +38,6 @@ beforedepend:
 	${HOST_INSTALL_DIR} ${TOOLDIR}/include/nbinclude
 	${HOST_INSTALL_DIR} ${TOOLDIR}/include/nbinclude/sys
 	${HOST_INSTALL_DIR} ${TOOLDIR}/include/nbinclude/ufs
-.if !defined(__MINIX)
 	cd ${_ARCHDIR} && \
 	    ${TOOL_PAX} -s /include\\/// -rw ${_ARCH_INCS} \
 	    ${TOOLDIR}/include/nbinclude
@@ -48,6 +47,5 @@ beforedepend:
 	    ${TOOL_PAX} -rw ${_SYSINCS} ${TOOLDIR}/include/nbinclude/sys
 	cd ${_UFSDIR} && \
 	    ${TOOL_PAX} -rw ${_UFS_INCS} ${TOOLDIR}/include/nbinclude/ufs
-.endif
 	cd ${TOOLDIR}/include/nbinclude && rm -f machine && \
 	    ${HOST_INSTALL_SYMLINK} ${MACHINE} machine

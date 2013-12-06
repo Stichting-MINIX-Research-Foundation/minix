@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_data.h,v 1.35 2012/09/01 00:24:44 matt Exp $	*/
+/*	$NetBSD: cpu_data.h,v 1.36 2013/11/25 03:02:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -71,7 +71,6 @@ struct cpu_data {
 	kcondvar_t	cpu_xcall;		/* cross-call support */
 	int		cpu_xcall_pending;	/* cross-call support */
 	lwp_t		*cpu_onproc;		/* bottom level LWP */
-	CIRCLEQ_ENTRY(cpu_info) cpu_qchain;	/* circleq of all CPUs */
 
 	cpuid_t		cpu_package_id;
 	cpuid_t		cpu_core_id;

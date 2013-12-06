@@ -1,4 +1,4 @@
-.\" $NetBSD: round.3,v 1.5 2006/03/25 20:01:36 uwe Exp $
+.\" $NetBSD: round.3,v 1.7 2013/11/12 00:10:29 joerg Exp $
 .\"
 .\" Copyright (c) 2003, Steven G. Kargl
 .\" All rights reserved.
@@ -26,12 +26,13 @@
 .\"
 .\" $FreeBSD: src/lib/msun/man/round.3,v 1.2 2004/06/20 09:27:17 das Exp $
 .\"
-.Dd July 15, 2004
+.Dd November 12, 2013
 .Dt ROUND 3
 .Os
 .Sh NAME
 .Nm round ,
-.Nm roundf
+.Nm roundf ,
+.Nm roundl
 .Nd round to nearest integral value
 .Sh LIBRARY
 .Lb libm
@@ -41,11 +42,14 @@
 .Fn round "double x"
 .Ft float
 .Fn roundf "float x"
+.Ft long double
+.Fn roundl "long double x"
 .Sh DESCRIPTION
 The
-.Fn round
+.Fn round ,
+.Fn roundf ,
 and
-.Fn roundf
+.Fn roundl
 functions return the nearest integral value to
 .Fa x ;
 if
@@ -56,7 +60,6 @@ absolute value (i.e., they round away from zero).
 .Sh SEE ALSO
 .Xr ceil 3 ,
 .Xr floor 3 ,
-.Xr ieee 3 ,
 .Xr math 3 ,
 .Xr rint 3 ,
 .Xr trunc 3

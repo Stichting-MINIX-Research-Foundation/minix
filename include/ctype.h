@@ -1,4 +1,4 @@
-/*	$NetBSD: ctype.h,v 1.31 2010/06/01 13:52:08 tnozaki Exp $	*/
+/*	$NetBSD: ctype.h,v 1.34 2013/04/28 19:39:56 joerg Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -57,6 +57,28 @@ int	isxdigit(int);
 int	tolower(int);
 int	toupper(int);
 
+#if (_POSIX_C_SOURCE - 0) >= 200809L || defined(_NETBSD_SOURCE)
+#  ifndef __LOCALE_T_DECLARED
+typedef struct _locale		*locale_t;
+#  define __LOCALE_T_DECLARED
+#  endif
+
+int	isalnum_l(int, locale_t);
+int	isalpha_l(int, locale_t);
+int	isblank_l(int, locale_t);
+int	iscntrl_l(int, locale_t);
+int	isdigit_l(int, locale_t);
+int	isgraph_l(int, locale_t);
+int	islower_l(int, locale_t);
+int	isprint_l(int, locale_t);
+int	ispunct_l(int, locale_t);
+int	isspace_l(int, locale_t);
+int	isupper_l(int, locale_t);
+int	isxdigit_l(int, locale_t);
+int	tolower_l(int, locale_t);
+int	toupper_l(int, locale_t);
+#endif
+
 #if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
 int	isascii(int);
 int	toascii(int);
@@ -70,8 +92,11 @@ int	isblank(int);
 #endif
 __END_DECLS
 
-#if defined(_NETBSD_SOURCE) && !defined(_CTYPE_NOINLINE)
+#if defined(_NETBSD_SOURCE) && !defined(_CTYPE_NOINLINE) && \
+    !defined(__cplusplus)
 #include <sys/ctype_inline.h>
+#else
+#include <sys/ctype_bits.h>
 #endif
 
 #endif /* !_CTYPE_H_ */

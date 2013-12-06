@@ -9,4 +9,6 @@ SRCS=	\
 
 WARNS?=	5
 
+CFLAGS+= -fno-builtin
+
 .include <bsd.lib.mk>

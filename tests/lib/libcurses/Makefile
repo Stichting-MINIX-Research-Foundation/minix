@@ -26,5 +26,10 @@ realall: ${TERMINFO_DB}.cdb
 ${TERMINFO_DB}.cdb: ${TOOL_TIC} ${TEST_TERMINFO}
 	${TOOL_TIC} -o ${.TARGET} ${.CURDIR}/${TEST_TERMINFO}
 
+.if defined(__MINIX) && ${USETOOLS:Uno} != "yes"
+tic:
+	true
+.endif # defined(__MINIX) && ${USETOOLS:Uno} == "no"
+
 .include <bsd.test.mk>
 #.include <bsd.subdir.mk>

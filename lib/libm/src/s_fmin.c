@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: s_fmin.c,v 1.1 2009/10/04 22:04:30 christos Exp $");
+__RCSID("$NetBSD: s_fmin.c,v 1.2 2013/11/29 22:16:10 joerg Exp $");
 #ifdef notdef
 __FBSDID("$FreeBSD: src/lib/msun/src/s_fmin.c,v 1.1 2004/06/30 07:04:01 das Exp $");
 #endif
@@ -33,6 +33,10 @@ __FBSDID("$FreeBSD: src/lib/msun/src/s_fmin.c,v 1.1 2004/06/30 07:04:01 das Exp 
 #include <math.h>
 
 #include <machine/ieee.h>
+
+#ifndef __HAVE_LONG_DOUBLE
+__strong_alias(fminl, fmin)
+#endif
 
 double
 fmin(double x, double y)

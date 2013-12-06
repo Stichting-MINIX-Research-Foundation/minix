@@ -4,7 +4,7 @@
 # gen sources
 .if defined(__MINIX)
 .PATH: ${.CURDIR}/gen/minix
-.endif
+.endif # defined(__MINIX)
 .PATH: ${ARCHDIR}/gen ${.CURDIR}/gen
 
 .if defined(__MINIX)
@@ -19,9 +19,6 @@
 #
 # Not useful but portable
 #	disklabel.c
-#
-# Already in getprogname
-#	setprogname.c
 
 SRCS+= 	_errno.c alarm.c alphasort.c arc4random.c assert.c basename.c clock.c \
 	closedir.c \
@@ -42,7 +39,7 @@ SRCS+= 	_errno.c alarm.c alphasort.c arc4random.c assert.c basename.c clock.c \
 	psignal.c \
 	ptree.c pwcache.c pw_scan.c raise.c randomid.c rb.c readdir.c \
 	rewinddir.c scandir.c seekdir.c \
-	setjmperr.c setmode.c \
+	setjmperr.c setmode.c setprogname.c \
 	shquote.c shquotev.c sighold.c sigignore.c siginterrupt.c \
 	sysctl.c sysctlbyname.c sysctlgetmibinfo.c sysctlnametomib.c \
 	siglist.c signal.c signame.c sigrelse.c \

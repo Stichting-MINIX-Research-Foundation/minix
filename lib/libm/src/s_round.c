@@ -26,13 +26,18 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_round.c,v 1.2 2007/08/21 20:10:27 drochner Exp $");
+__RCSID("$NetBSD: s_round.c,v 1.3 2013/11/11 23:57:34 joerg Exp $");
 #if 0
 __FBSDID("$FreeBSD: src/lib/msun/src/s_round.c,v 1.1 2004/06/07 08:05:36 das Exp $");
 #endif
 #endif
 
 #include <math.h>
+
+#ifndef __HAVE_LONG_DOUBLE
+__strong_alias(_roundl, round)
+__weak_alias(roundl, round)
+#endif
 
 double
 round(double x)

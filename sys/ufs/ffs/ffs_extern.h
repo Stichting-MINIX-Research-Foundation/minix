@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extern.h,v 1.78 2011/06/17 14:23:52 manu Exp $	*/
+/*	$NetBSD: ffs_extern.h,v 1.80 2013/06/16 13:33:30 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -98,6 +98,8 @@ daddr_t	ffs_blkpref_ufs2(struct inode *, daddr_t, int, int, int64_t *);
 int	ffs_blkalloc(struct inode *, daddr_t, long);
 int	ffs_blkalloc_ump(struct ufsmount *, daddr_t, long);
 void	ffs_blkfree(struct fs *, struct vnode *, daddr_t, long, ino_t);
+void	*ffs_discard_init(struct vnode *, struct fs *);
+void	ffs_discard_finish(void *, int);
 void	ffs_blkfree_snap(struct fs *, struct vnode *, daddr_t, long, ino_t);
 int	ffs_vfree(struct vnode *, ino_t, int);
 int	ffs_checkfreefile(struct fs *, struct vnode *, ino_t);
@@ -151,7 +153,7 @@ void	ffs_snapremove(struct vnode *);
 int	ffs_snapshot(struct mount *, struct vnode *, struct timespec *);
 void	ffs_snapshot_mount(struct mount *);
 void	ffs_snapshot_unmount(struct mount *);
-void	ffs_snapgone(struct inode *);
+void	ffs_snapgone(struct vnode *);
 int	ffs_snapshot_read(struct vnode *, struct uio *, int);
 
 /* Write Ahead Physical Block Logging */

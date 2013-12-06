@@ -1,4 +1,4 @@
-/* $NetBSD: quota2.h,v 1.5 2011/06/07 14:56:13 bouyer Exp $ */
+/* $NetBSD: quota2.h,v 1.9 2012/02/05 14:19:04 dholland Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -28,7 +28,6 @@
 #ifndef _UFS_UFS_QUOTA2_H_
 #define _UFS_UFS_QUOTA2_H_
 #include <ufs/ufs/quota.h>
-#include <quota/quota.h>
 
 
 /* New disk quota implementation. In this implementation, the quota datas
@@ -55,23 +54,6 @@ struct quota2_val {
 	int64_t q2v_grace; /* allowed time for softlimit overflow */
 };
 
-/* NAMES for the above in the plist */
-#define INITQVNAMES_ALL { \
-    QUOTADICT_LIMIT_HARD, \
-    QUOTADICT_LIMIT_SOFT, \
-    QUOTADICT_LIMIT_USAGE, \
-    QUOTADICT_LIMIT_ETIME, \
-    QUOTADICT_LIMIT_GTIME \
-    }
-#define INITQVNAMES_LIMITSONLY { \
-    QUOTADICT_LIMIT_HARD, \
-    QUOTADICT_LIMIT_SOFT, \
-    NULL, \
-    NULL, \
-    QUOTADICT_LIMIT_GTIME \
-    }
-
-#define N_QV 5
 /*
  * On-disk description of a user or group quota
  * These entries are keept as linked list, either in one of the hash HEAD,
@@ -81,7 +63,10 @@ struct quota2_val {
 #define N_QL 2
 #define QL_BLOCK 0
 #define QL_FILE 1
-#define INITQLNAMES {QUOTADICT_LTYPE_BLOCK, QUOTADICT_LTYPE_FILE}
+#define INITQLNAMES { \
+	[QL_BLOCK] = "block",	\
+	[QL_FILE] =  "file",	\
+}
 
 struct quota2_entry {
 	/* block & inode limits and status */
@@ -122,10 +107,21 @@ void quota2_create_blk0(uint64_t, void *bp, int, int, int);
 void quota2_ufs_rwq2v(const struct quota2_val *, struct quota2_val *, int);
 void quota2_ufs_rwq2e(const struct quota2_entry *, struct quota2_entry *, int);
 
-__inline static int __unused
-quota2_check_limit(struct quota2_val *q2v, uint64_t change, time_t now)
-{
-	return quota_check_limit(q2v->q2v_cur, change, q2v->q2v_softlimit,
-	    q2v->q2v_hardlimit, q2v->q2v_time, now);
-}
+/*
+ * Return codes for quota_check_limit()
+ */
+
+#define QL_S_ALLOW_OK	0x00 /* below soft limit */
+#define QL_S_ALLOW_SOFT	0x01 /* over soft limit */
+#define QL_S_DENY_GRACE	0x02 /* over soft limit, grace time expired */
+#define QL_S_DENY_HARD	0x03 /* over hard limit */
+ 
+#define QL_F_CROSS	0x80 /* crossing soft limit */
+
+#define QL_STATUS(x)	((x) & 0x0f)
+#define QL_FLAGS(x)	((x) & 0xf0)
+
+/* check a quota usage against limits (assumes UFS semantic) */
+int quota_check_limit(uint64_t, uint64_t,  uint64_t, uint64_t, time_t, time_t);
+
 #endif /*  _UFS_UFS_QUOTA2_H_ */

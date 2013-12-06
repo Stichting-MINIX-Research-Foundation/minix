@@ -1,4 +1,4 @@
-/*	$NetBSD: dfa.c,v 1.1.1.1 2009/10/26 00:25:56 christos Exp $	*/
+/*	$NetBSD: dfa.c,v 1.1.1.2 2013/04/06 14:05:42 christos Exp $	*/
 
 /* dfa - DFA construction routines */
 
@@ -163,7 +163,7 @@ void dump_associated_rules (file, ds)
 		}
 	}
 
-	bubble (rule_set, num_associated_rules);
+	qsort (&rule_set [1], num_associated_rules, sizeof (rule_set [1]), intcmp);
 
 	fprintf (file, _(" associated rule line numbers:"));
 
@@ -837,10 +837,8 @@ int snstods (sns, numstates, accset, nacc, hashval, newds_addr)
 				if (!didsort) {
 					/* We sort the states in sns so we
 					 * can compare it to oldsns quickly.
-					 * We use bubble because there probably
-					 * aren't very many states.
 					 */
-					bubble (sns, numstates);
+					qsort (&sns [1], numstates, sizeof (sns [1]), intcmp);
 					didsort = 1;
 				}
 
@@ -875,7 +873,7 @@ int snstods (sns, numstates, accset, nacc, hashval, newds_addr)
 	 */
 
 	if (!didsort)
-		bubble (sns, numstates);
+		qsort (&sns [1], numstates, sizeof (sns [1]), intcmp);
 
 	for (i = 1; i <= numstates; ++i)
 		dss[newds][i] = sns[i];
@@ -895,11 +893,10 @@ int snstods (sns, numstates, accset, nacc, hashval, newds_addr)
 	else if (reject) {
 		/* We sort the accepting set in increasing order so the
 		 * disambiguating rule that the first rule listed is considered
-		 * match in the event of ties will work.  We use a bubble
-		 * sort since the list is probably quite small.
+		 * match in the event of ties will work.
 		 */
 
-		bubble (accset, nacc);
+		qsort (&accset [1], nacc, sizeof (accset [1]), intcmp);
 
 		dfaacc[newds].dfaacc_set =
 			allocate_integer_array (nacc + 1);

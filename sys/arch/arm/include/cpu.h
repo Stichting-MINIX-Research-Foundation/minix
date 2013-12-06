@@ -66,75 +66,21 @@
  * Kernel-only definitions
  */
 
-#if !defined(_LKM) && defined(_KERNEL_OPT)
+#if !defined(_MODULE) && defined(_KERNEL_OPT)
 #include "opt_multiprocessor.h"
 #include "opt_cpuoptions.h"
 #include "opt_lockdebug.h"
 #include "opt_cputypes.h"
-#endif /* !_LKM && _KERNEL_OPT */
-
-#include <arm/cpuconf.h>
+#endif /* !_MODULE && _KERNEL_OPT */
 
 #ifndef _LOCORE
-#include <machine/frame.h>
-#endif	/* !_LOCORE */
-
+#if defined(TPIDRPRW_IS_CURLWP) || defined(TPIDRPRW_IS_CURCPU)
 #include <arm/armreg.h>
+#endif
 
-
-#ifndef _LOCORE
 /* 1 == use cpu_sleep(), 0 == don't */
 extern int cpu_do_powersave;
-#endif
-
-#ifdef _LOCORE
-
-#if defined(_ARM_ARCH_6)
-#define IRQdisable	cpsid	i
-#define IRQenable	cpsie	i
-#elif defined(__PROG32)
-#define IRQdisable \
-	stmfd	sp!, {r0} ; \
-	mrs	r0, cpsr ; \
-	orr	r0, r0, #(I32_bit) ; \
-	msr	cpsr_c, r0 ; \
-	ldmfd	sp!, {r0}
-
-#define IRQenable \
-	stmfd	sp!, {r0} ; \
-	mrs	r0, cpsr ; \
-	bic	r0, r0, #(I32_bit) ; \
-	msr	cpsr_c, r0 ; \
-	ldmfd	sp!, {r0}		
-#else
-/* Not yet used in 26-bit code */
-#endif
-
-#if defined (TPIDRPRW_IS_CURCPU)
-#define GET_CURCPU(rX)		mrc	p15, 0, rX, c13, c0, 4
-#define GET_CURLWP(rX)		GET_CURCPU(rX); ldr rX, [rX, #CI_CURLWP]
-#elif defined (TPIDRPRW_IS_CURLWP)
-#define GET_CURLWP(rX)		mrc	p15, 0, rX, c13, c0, 4
-#define GET_CURCPU(rX)		GET_CURLWP(rX); ldr rX, [rX, #L_CPU]
-#elif !defined(MULTIPROCESSOR)
-#define GET_CURCPU(rX)		ldr rX, =_C_LABEL(cpu_info_store)
-#define GET_CURLWP(rX)		GET_CURCPU(rX); ldr rX, [rX, #CI_CURLWP]
-#endif
-#define GET_CURPCB(rX)		GET_CURLWP(rX); ldr rX, [rX, #L_PCB]
-
-#else /* !_LOCORE */
-
-#ifdef __PROG32
-#define IRQdisable __set_cpsr_c(I32_bit, I32_bit);
-#define IRQenable __set_cpsr_c(I32_bit, 0);
-#else
-#define IRQdisable set_r15(R15_IRQ_DISABLE, R15_IRQ_DISABLE);
-#define IRQenable set_r15(R15_IRQ_DISABLE, 0);
-#endif
-
-#endif /* !_LOCORE */
-
-#ifndef _LOCORE
+extern int cpu_fpu_present;
 
 /* All the CLKF_* macros take a struct clockframe * as an argument. */
 
@@ -143,22 +89,22 @@ extern int cpu_do_powersave;
  * frame came from USR mode or not.
  */
 #ifdef __PROG32
-#define CLKF_USERMODE(frame)	((frame->cf_tf.tf_spsr & PSR_MODE) == PSR_USR32_MODE)
+#define CLKF_USERMODE(cf) (((cf)->cf_tf.tf_spsr & PSR_MODE) == PSR_USR32_MODE)
 #else
-#define CLKF_USERMODE(frame)	((frame->cf_if.if_r15 & R15_MODE) == R15_MODE_USR)
+#define CLKF_USERMODE(cf) (((cf)->cf_if.if_r15 & R15_MODE) == R15_MODE_USR)
 #endif
 
 /*
  * CLKF_INTR: True if we took the interrupt from inside another
  * interrupt handler.
  */
-#ifdef __PROG32
+#if defined(__PROG32) && !defined(__ARM_EABI__)
 /* Hack to treat FPE time as interrupt time so we can measure it */
-#define CLKF_INTR(frame)						\
-	((curcpu()->ci_intr_depth > 1) ||				\
-	    (frame->cf_tf.tf_spsr & PSR_MODE) == PSR_UND32_MODE)
+#define CLKF_INTR(cf)						\
+	((curcpu()->ci_intr_depth > 1) ||			\
+	    ((cf)->cf_tf.tf_spsr & PSR_MODE) == PSR_UND32_MODE)
 #else
-#define CLKF_INTR(frame)	(curcpu()->ci_intr_depth > 1) 
+#define CLKF_INTR(cf)	((void)(cf), curcpu()->ci_intr_depth > 1) 
 #endif
 
 /*
@@ -180,50 +126,18 @@ extern int cpu_do_powersave;
 #endif
 
 /*
- * Validate a PC or PSR for a user process.  Used by various system calls
- * that take a context passed by the user and restore it.
- */
-
-#ifdef __PROG32
-#define VALID_R15_PSR(r15,psr)						\
-	(((psr) & PSR_MODE) == PSR_USR32_MODE &&			\
-		((psr) & (I32_bit | F32_bit)) == 0)
-#else
-#define VALID_R15_PSR(r15,psr)						\
-	(((r15) & R15_MODE) == R15_MODE_USR &&				\
-		((r15) & (R15_IRQ_DISABLE | R15_FIQ_DISABLE)) == 0)
-#endif
-
-
-
-/* The address of the vector page. */
-extern vaddr_t vector_page;
-#ifdef __PROG32
-void	arm32_vector_init(vaddr_t, int);
-
-#define	ARM_VEC_RESET			(1 << 0)
-#define	ARM_VEC_UNDEFINED		(1 << 1)
-#define	ARM_VEC_SWI			(1 << 2)
-#define	ARM_VEC_PREFETCH_ABORT		(1 << 3)
-#define	ARM_VEC_DATA_ABORT		(1 << 4)
-#define	ARM_VEC_ADDRESS_EXCEPTION	(1 << 5)
-#define	ARM_VEC_IRQ			(1 << 6)
-#define	ARM_VEC_FIQ			(1 << 7)
-
-#define	ARM_NVEC			8
-#define	ARM_VEC_ALL			0xffffffff
-#endif
-
-/*
  * Per-CPU information.  For now we assume one CPU.
  */
 static inline int curcpl(void);
 static inline void set_curcpl(int);
 static inline void cpu_dosoftints(void);
 
+#ifdef _KMEMUSER
+#include <sys/intr.h>
+#endif
+#include <sys/cpu_data.h>
 #include <sys/device_if.h>
 #include <sys/evcnt.h>
-#include <sys/cpu_data.h>
 
 struct cpu_info {
 	struct cpu_data ci_data;	/* MI per-cpu data */
@@ -238,26 +152,23 @@ struct cpu_info {
 	int ci_want_resched;		/* resched() was called */
 	int ci_intr_depth;		/* */
 	struct cpu_softc *ci_softc;	/* platform softc */
-#ifdef __HAVE_FAST_SOFTINTS
 	lwp_t *ci_softlwps[SOFTINT_COUNT];
 	volatile uint32_t ci_softints;
-#endif
 	lwp_t *ci_curlwp;		/* current lwp */
 	struct evcnt ci_arm700bugcount;
 	int32_t ci_mtx_count;
 	int ci_mtx_oldspl;
 	register_t ci_undefsave[3];
 	uint32_t ci_vfp_id;
-#if defined(_ARM_ARCH_7)
 	uint64_t ci_lastintr;
-#endif
-	struct evcnt ci_abt_evs[FAULT_TYPE_MASK+1];
+	struct evcnt ci_abt_evs[16];
 #if defined(MP_CPU_INFO_MEMBERS)
 	MP_CPU_INFO_MEMBERS
 #endif
 };
 
 extern struct cpu_info cpu_info_store;
+
 #if defined(TPIDRPRW_IS_CURLWP)
 static inline struct lwp *
 _curlwp(void)
@@ -306,7 +217,7 @@ void cpu_boot_secondary_processors(void);
 
 #define CPU_IS_PRIMARY(ci)	true
 #define CPU_INFO_FOREACH(cii, ci)			\
-	cii = 0, ci = curcpu(); ci != NULL; ci = NULL
+	cii = 0, __USE(cii), ci = curcpu(); ci != NULL; ci = NULL
 #endif
 
 #define	LWP0_CPU_INFO	(&cpu_info_store)
@@ -375,42 +286,7 @@ vaddr_t cpu_uarea_alloc_idlelwp(struct cpu_info *);
 void	cpu_attach(device_t, cpuid_t);
 #endif
 
-/*
- * Random cruft
- */
-
-struct lwp;
-
-/* locore.S */
-void atomic_set_bit(u_int *, u_int);
-void atomic_clear_bit(u_int *, u_int);
-
-/* cpuswitch.S */
-struct pcb;
-void	savectx(struct pcb *);
-
-/* ast.c */
-void userret(register struct lwp *);
-
-/* *_machdep.c */
-void bootsync(void);
-
-/* fault.c */
-int badaddr_read(void *, size_t, void *);
-
-/* syscall.c */
-void swi_handler(trapframe_t *);
-
-/* arm_machdep.c */
-void ucas_ras_check(trapframe_t *);
-
-/* vfp_init.c */
-void vfp_attach(void);
-void vfp_discardcontext(void);
-void vfp_savecontext(void);
-extern const pcu_ops_t arm_vfp_ops;
-
-#endif	/* !_LOCORE */
+#endif /* !_LOCORE */
 
 #endif /* _KERNEL */
 

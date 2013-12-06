@@ -26,9 +26,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)su.1	8.2 (Berkeley) 4/18/94
-.\"	$NetBSD: su.1,v 1.49 2009/05/18 09:37:44 wiz Exp $
+.\"	$NetBSD: su.1,v 1.50 2012/11/21 19:30:53 pgoyette Exp $
 .\"
-.Dd October 27, 2007
+.Dd November 20, 2012
 .Dt SU 1
 .Os
 .Sh NAME
@@ -186,6 +186,12 @@ is imported from your current environment.
 The invoked shell is the target login's, and
 .Nm
 will change directory to the target login's home directory.
+The
+.Xr utmp 5 ,
+.Xr wtmp 5 ,
+and
+.Xr lastlogin 5
+databases are not updated.
 .It Fl
 Same as
 .Fl l .

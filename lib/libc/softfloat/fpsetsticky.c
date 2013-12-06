@@ -1,4 +1,4 @@
-/* $NetBSD: fpsetsticky.c,v 1.3 2008/04/28 20:23:00 martin Exp $ */
+/* $NetBSD: fpsetsticky.c,v 1.4 2013/01/10 08:16:10 matt Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fpsetsticky.c,v 1.3 2008/04/28 20:23:00 martin Exp $");
+__RCSID("$NetBSD: fpsetsticky.c,v 1.4 2013/01/10 08:16:10 matt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -50,9 +50,11 @@ __weak_alias(fpsetsticky,_fpsetsticky)
 fp_except
 fpsetsticky(fp_except except)
 {
-	fp_except old;
-
-	old = float_exception_flags;
+#ifdef set_float_exception_flags
+	return set_float_exception_flags(except, 1);
+#else
+	const fp_except old = float_exception_flags;
 	float_exception_flags = except;
 	return old;
+#endif
 }

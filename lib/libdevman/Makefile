@@ -1,3 +1,6 @@
+NOGCCERROR=yes
+NOCLANGERROR=yes
+
 LIB = devman
 
 SRCS = generic.c \

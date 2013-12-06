@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.gnuhost,v 1.39 2012/06/19 21:48:33 hans Exp $
+#	$NetBSD: Makefile.gnuhost,v 1.42 2013/08/13 20:41:25 drochner Exp $
 #
 # Rules used when building a GNU host package.  Expects MODULE to be set.
 #
@@ -26,6 +26,7 @@ MAKE_PROGRAM?=	${MAKE}
 
 GNUHOSTDIST?=	${.CURDIR}/../../gnu/dist/${MODULE}
 
+.if defined(__MINIX)
 # AL - MINIX /usr/src does not have the sources for the GNU utilities
 # in-tree (they are much bigger than Minix itself!) So to successfully
 # use them while cross-compiling, we have to fetch them. The success of
@@ -39,6 +40,15 @@ ${GNUHOSTDIST:H}/.gitignore: ${GNUHOSTDIST:H}/fetch.sh
 	@echo ${GNUHOSTDIST:T} >> $@
 _gnu_get_src=${GNUHOSTDIST:H}/.gitignore
 .endif # exists(GNUHOSTDIST:H/fetch.sh) on MINIX
+
+# AL - Special target for MINIX, reset the source tree as pristine
+.if ${CLEANFETCHED:Uno} == "yes" && exists(${GNUHOSTDIST:H}/fetch.sh)
+cleandir: clean_gnu_src
+clean_gnu_src:
+	-rm -r -f ${GNUHOSTDIST} ${GNUHOSTDIST:H}/.gitignore
+# XXX CHECKME: could have used the content of .gitignore as well?
+.endif # CLEANFETCHED == yes
+.endif # defined(__MINIX)
 
 FIND_ARGS+=	\! \( -type d \( \
 			-name 'CVS' -o \
@@ -65,6 +75,7 @@ CONFIGURE_ENV+= \
 		AWK=${TOOL_AWK:Q} \
 		CC=${HOST_CC:Q} \
 		CFLAGS=${HOST_CFLAGS:Q} \
+		CONFIG_SHELL=${HOST_SH:Q} \
 		CPPFLAGS=${HOST_CPPFLAGS:Q} \
 		CXX=${HOST_CXX:Q} \
 		CXXFLAGS=${HOST_CXXFLAGS:Q} \
@@ -151,13 +162,5 @@ realinstall: .install_done
 clean: clean.gnu
 clean.gnu:
 	-rm -r -f .*_done build
-
-# AL - Special target for MINIX, reset the source tree as pristine
-.if ${CLEANFETCHED:Uno} == "yes" && exists(${GNUHOSTDIST:H}/fetch.sh)
-cleandir: clean_gnu_src
-clean_gnu_src:
-	-rm -r -f ${GNUHOSTDIST} ${GNUHOSTDIST:H}/.gitignore
-# XXX CHECKME: could have used the content of .gitignore as well?
-.endif # CLEANFETCHED == yes
 
 .include <bsd.hostprog.mk>

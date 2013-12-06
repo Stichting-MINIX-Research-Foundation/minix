@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.9 2009/01/04 17:54:29 pooka Exp $
+#	$NetBSD: Makefile.inc,v 1.10 2013/07/18 19:49:00 matt Exp $
 
 #
 # Note: The atomic operations here in these assembly files are atomic
@@ -11,7 +11,7 @@
 
 .if defined(LIB) && (${LIB} == "kern" || ${LIB} == "c" || ${LIB} == "pthread" \
 	|| ${LIB} == "rump")
-.if ${MACHINE_ARCH} != "m68000"
+.if ${MACHINE_ARCH} == "m68k"
 
 SRCS+=	atomic_add.S atomic_and.S atomic_cas.S atomic_dec.S \
 	atomic_inc.S atomic_or.S atomic_swap.S membar_ops_nop.c
@@ -27,7 +27,7 @@ SRCS+=  atomic_add_32_cas.c atomic_add_32_nv_cas.c atomic_and_32_cas.c \
 .endif
 
 .if defined(LIB) && (${LIB} == "c" || ${LIB} == "pthread")
-.if ${MACHINE_ARCH} != "m68000"
+.if ${MACHINE_ARCH} == "m68k"
 
 SRCS+=	atomic_init_cas.c
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbrk.S,v 1.9 2003/08/07 16:42:30 agc Exp $	*/
+/*	$NetBSD: sbrk.S,v 1.11 2013/09/14 05:38:00 nakayama Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
 #if 0
 	.asciz "@(#)sbrk.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: sbrk.S,v 1.9 2003/08/07 16:42:30 agc Exp $")
+	RCSID("$NetBSD: sbrk.S,v 1.11 2013/09/14 05:38:00 nakayama Exp $")
 #endif
 #endif /* SYSLIBC_SCCS and not lint */
 
@@ -59,9 +59,9 @@ _C_LABEL(__curbrk):
 	.xword	_C_LABEL(_end)
 	.text
 
+#if __PIC__ - 0 >= 2
+
 ENTRY(_sbrk)
-#ifdef PIC
-#ifdef BIGPIC
 	PIC_PROLOGUE(%o5,%o4)
 	set	_C_LABEL(__curbrk), %o3
 	ldx	[%o5 + %o3], %o2
@@ -76,7 +76,10 @@ ENTRY(_sbrk)
 1:
 	retl					/* and update curbrk */
 	 stx	%o4, [%o2]
-#else
+
+#elif __PIC__ - 0 >= 1
+
+ENTRY(_sbrk)
 	PIC_PROLOGUE(%o5,%o4)
 	ldx	[%o5 + _C_LABEL(__curbrk)], %o2
 	ldx	[%o2], %o3			/* %o3 = old break */
@@ -90,8 +93,10 @@ ENTRY(_sbrk)
 1:
 	retl					/* and update curbrk */
 	 stx	%o4, [%o2]
-#endif
+
 #else
+
+ENTRY(_sbrk)
 	sethi	%hi(_C_LABEL(__curbrk)), %o2
 	ldx	[%o2 + %lo(_C_LABEL(__curbrk))], %o3	/* %o3 = old break */
 	add	%o3, %o0, %o4			/* %o4 = new break */
@@ -104,4 +109,5 @@ ENTRY(_sbrk)
 1:
 	retl					/* and update curbrk */
 	 stx	%o4, [%o2 + %lo(_C_LABEL(__curbrk))]
-#endif
+
+#endif /* __PIC__ */

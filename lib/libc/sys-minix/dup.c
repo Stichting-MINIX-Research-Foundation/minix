@@ -5,10 +5,6 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-#ifdef __weak_alias
-__weak_alias(dup, _dup)
-#endif
-
 int dup(fd)
 int fd;
 {

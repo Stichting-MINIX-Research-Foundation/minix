@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.boot,v 1.58 2012/08/10 12:18:15 joerg Exp $
+# $NetBSD: Makefile.boot,v 1.60 2013/08/21 17:15:26 matt Exp $
 
 S=	${.CURDIR}/../../../../..
 
@@ -52,11 +52,7 @@ CPUFLAGS=  -march=i386 -mtune=i386
 CFLAGS+=   -mno-sse -mno-sse2 -mno-sse3
 
 COPTS+=    -ffreestanding
-.if defined(__MINIX)
-CFLAGS+= -Wmissing-prototypes -Wstrict-prototypes
-.else
 CFLAGS+= -Wall -Wmissing-prototypes -Wstrict-prototypes
-.endif
 CPPFLAGS+= -nostdinc -D_STANDALONE
 CPPFLAGS+= -I$S
 
@@ -94,18 +90,6 @@ CPPFLAGS+=	-Wno-pointer-sign
 # CPPFLAGS+= -DBOOTXX_RAID1_SUPPORT
 
 I386_STAND_DIR?= $S/arch/i386/stand
-
-CLEANFILES+= machine x86
-
-.if !make(obj) && !make(clean) && !make(cleandir)
-.BEGIN:
-	-rm -f machine && ln -s $S/arch/i386/include machine
-	-rm -f x86 && ln -s $S/arch/x86/include x86
-.ifdef LIBOBJ
-	-rm -f lib && ln -s ${LIBOBJ}/lib lib
-	mkdir -p ${LIBOBJ}/lib
-.endif
-.endif
 
 ### find out what to use for libi386
 I386DIR= ${I386_STAND_DIR}/lib
@@ -179,3 +163,5 @@ ${PROG}: ${OBJS} ${LIBLIST} ${.CURDIR}/../Makefile.boot
 	${OBJCOPY} -O binary ${PROG}.syms ${PROG}
 
 .include <bsd.prog.mk>
+KLINK_MACHINE=	i386
+.include <bsd.klinks.mk>

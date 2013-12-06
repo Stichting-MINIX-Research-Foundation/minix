@@ -1,4 +1,4 @@
-/*	$NetBSD: pmax.c,v 1.14 2009/04/05 11:55:39 lukem Exp $	*/
+/*	$NetBSD: pmax.c,v 1.15 2013/10/21 15:37:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: pmax.c,v 1.14 2009/04/05 11:55:39 lukem Exp $");
+__RCSID("$NetBSD: pmax.c,v 1.15 2013/10/21 15:37:46 christos Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -188,7 +188,7 @@ pmax_setboot(ib_params *params)
 	uint32_t		startblock;
 	int			retval;
 	char			*bootstrapbuf;
-	size_t			bootstrapsize;
+	size_t			bootstrapsize = 0;	/* XXX: gcc */
 	uint32_t		bootstrapload, bootstrapexec;
 	ssize_t			rv;
 

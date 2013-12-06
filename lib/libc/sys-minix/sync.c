@@ -4,10 +4,6 @@
 
 #include <string.h>
 
-#ifdef __weak_alias
-__weak_alias(sync, _sync)
-#endif
-
 #include <unistd.h>
 
 void sync(void)

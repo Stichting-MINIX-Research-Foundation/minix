@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.106 2012/10/12 23:35:02 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.109 2013/08/28 08:05:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.106 2012/10/12 23:35:02 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.109 2013/08/28 08:05:21 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -84,6 +84,14 @@ VFunction *rl_event_hook = NULL;
 KEYMAP_ENTRY_ARRAY emacs_standard_keymap,
     emacs_meta_keymap,
     emacs_ctlx_keymap;
+/*
+ * The following is not implemented; we always catch signals in the
+ * libedit fashion: set handlers on entry to el_gets() and clear them
+ * on the way out. This simplistic approach works for most cases; if
+ * it does not work for your application, please let us know.
+ */
+int rl_catch_signals = 1;
+int rl_catch_sigwinch = 1;
 
 int history_base = 1;		/* probably never subject to change */
 int history_length = 0;
@@ -109,7 +117,6 @@ char *rl_terminal_name = NULL;
 int rl_already_prompted = 0;
 int rl_filename_completion_desired = 0;
 int rl_ignore_completion_duplicates = 0;
-int rl_catch_signals = 1;
 int readline_echoing_p = 1;
 int _rl_print_completions_horizontally = 0;
 VFunction *rl_redisplay_function = NULL;
@@ -229,13 +236,20 @@ static const char *
 _default_history_file(void)
 {
 	struct passwd *p;
-	static char path[PATH_MAX];
+	static char *path;
+	size_t len;
 
-	if (*path)
+	if (path)
 		return path;
+
 	if ((p = getpwuid(getuid())) == NULL)
 		return NULL;
-	(void)snprintf(path, sizeof(path), "%s/.history", p->pw_dir);
+
+	len = strlen(p->pw_dir) + sizeof("/.history");
+	if ((path = malloc(len)) == NULL)
+		return NULL;
+
+	(void)snprintf(path, len, "%s/.history", p->pw_dir);
 	return path;
 }
 
@@ -2104,9 +2118,9 @@ void
 rl_get_screen_size(int *rows, int *cols)
 {
 	if (rows)
-		el_get(e, EL_GETTC, "li", rows, NULL);
+		el_get(e, EL_GETTC, "li", rows, (void *)0);
 	if (cols)
-		el_get(e, EL_GETTC, "co", cols, NULL);
+		el_get(e, EL_GETTC, "co", cols, (void *)0);
 }
 
 void

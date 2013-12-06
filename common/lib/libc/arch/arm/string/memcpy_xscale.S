@@ -1,4 +1,4 @@
-/*	$NetBSD: memcpy_xscale.S,v 1.2 2007/06/21 21:37:04 scw Exp $	*/
+/*	$NetBSD: memcpy_xscale.S,v 1.4 2013/08/19 01:08:53 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -51,12 +51,12 @@ ENTRY(memcpy)
 	ldrb	ip, [r1], #0x01
 	sub	r2, r2, #0x01
 	strb	ip, [r3], #0x01
-	ldrleb	ip, [r1], #0x01
+	ldrble	ip, [r1], #0x01
 	suble	r2, r2, #0x01
-	strleb	ip, [r3], #0x01
-	ldrltb	ip, [r1], #0x01
+	strble	ip, [r3], #0x01
+	ldrblt	ip, [r1], #0x01
 	sublt	r2, r2, #0x01
-	strltb	ip, [r3], #0x01
+	strblt	ip, [r3], #0x01
 
 	/* Destination buffer is now word aligned */
 .Lmemcpy_wordaligned:
@@ -66,7 +66,7 @@ ENTRY(memcpy)
 	/* Quad-align the destination buffer */
 	tst	r3, #0x07		/* Already quad aligned? */
 	ldrne	ip, [r1], #0x04
-	stmfd	sp!, {r4-r9}		/* Free up some registers */
+	push	{r4-r9}		/* Free up some registers */
 	subne	r2, r2, #0x04
 	strne	ip, [r3], #0x04
 
@@ -133,8 +133,8 @@ ENTRY(memcpy)
 
 .Lmemcpy_w_lessthan128:
 	adds	r2, r2, #0x80		/* Adjust for extra sub */
-	ldmeqfd	sp!, {r4-r9}
-	bxeq	lr			/* Return now if done */
+	popeq	{r4-r9}
+	RETc(eq)			/* Return now if done */
 	subs	r2, r2, #0x20
 	blt	.Lmemcpy_w_lessthan32
 
@@ -158,8 +158,8 @@ ENTRY(memcpy)
 
 .Lmemcpy_w_lessthan32:
 	adds	r2, r2, #0x20		/* Adjust for extra sub */
-	ldmeqfd	sp!, {r4-r9}
-	bxeq	lr			/* Return now if done */
+	popeq	{r4-r9}
+	RETc(eq)			/* Return now if done */
 
 	and	r4, r2, #0x18
 	rsbs	r4, r4, #0x18
@@ -185,21 +185,21 @@ ENTRY(memcpy)
 	strd	r4, [r3], #0x08
 
 	/* Less than 8 bytes remaining */
-	ldmfd	sp!, {r4-r9}
-	bxeq	lr			/* Return now if done */
+	pop	{r4-r9}
+	RETc(eq)			/* Return now if done */
 	subs	r2, r2, #0x04
 	ldrge	ip, [r1], #0x04
 	strge	ip, [r3], #0x04
-	bxeq	lr			/* Return now if done */
+	RETc(eq)			/* Return now if done */
 	addlt	r2, r2, #0x04
 	ldrb	ip, [r1], #0x01
 	cmp	r2, #0x02
-	ldrgeb	r2, [r1], #0x01
+	ldrbge	r2, [r1], #0x01
 	strb	ip, [r3], #0x01
-	ldrgtb	ip, [r1]
-	strgeb	r2, [r3], #0x01
-	strgtb	ip, [r3]
-	bx	lr
+	ldrbgt	ip, [r1]
+	strbge	r2, [r3], #0x01
+	strbgt	ip, [r3]
+	RET
 
 
 /*
@@ -207,7 +207,7 @@ ENTRY(memcpy)
  * The destination buffer is word aligned, but the source buffer is not.
  */
 .Lmemcpy_bad_align:
-	stmfd	sp!, {r4-r7}
+	push	{r4-r7}
 	bic	r1, r1, #0x03
 	cmp	ip, #2
 	ldr	ip, [r1], #0x04
@@ -287,8 +287,8 @@ ENTRY(memcpy)
 	str	r6, [r3], #0x04
 	str	r7, [r3], #0x04
 	subs	r2, r2, #0x10
-	ldmeqfd	sp!, {r4-r7}
-	bxeq	lr			/* Return now if done */
+	popeq	{r4-r7}
+	RETc(eq)			/* Return now if done */
 
 .Lmemcpy_bad1_loop16_short:
 	subs	r2, r2, #0x04
@@ -385,8 +385,8 @@ ENTRY(memcpy)
 	str	r6, [r3], #0x04
 	str	r7, [r3], #0x04
 	subs	r2, r2, #0x10
-	ldmeqfd	sp!, {r4-r7}
-	bxeq	lr			/* Return now if done */
+	popeq	{r4-r7}
+	RETc(eq)			/* Return now if done */
 
 .Lmemcpy_bad2_loop16_short:
 	subs	r2, r2, #0x04
@@ -483,8 +483,8 @@ ENTRY(memcpy)
 	str	r6, [r3], #0x04
 	str	r7, [r3], #0x04
 	subs	r2, r2, #0x10
-	ldmeqfd	sp!, {r4-r7}
-	bxeq	lr			/* Return now if done */
+	popeq	{r4-r7}
+	RETc(eq)			/* Return now if done */
 
 .Lmemcpy_bad3_loop16_short:
 	subs	r2, r2, #0x04
@@ -509,17 +509,17 @@ ENTRY(memcpy)
 	sub	r1, r1, #0x01
 
 .Lmemcpy_bad_done:
-	ldmfd	sp!, {r4-r7}
+	pop	{r4-r7}
 	adds	r2, r2, #0x04
-	bxeq	lr
+	RETc(eq)
 	ldrb	ip, [r1], #0x01
 	cmp	r2, #0x02
-	ldrgeb	r2, [r1], #0x01
+	ldrbge	r2, [r1], #0x01
 	strb	ip, [r3], #0x01
-	ldrgtb	ip, [r1]
-	strgeb	r2, [r3], #0x01
-	strgtb	ip, [r3]
-	bx	lr
+	ldrbgt	ip, [r1]
+	strbge	r2, [r3], #0x01
+	strbgt	ip, [r3]
+	RET
 
 
 /*
@@ -531,7 +531,7 @@ ENTRY(memcpy)
 #ifndef _STANDALONE
 	add	pc, pc, r2, lsl #2
 	nop
-	bx	lr			/* 0x00 */
+	RET				/* 0x00 */
 	b	.Lmemcpy_bytewise	/* 0x01 */
 	b	.Lmemcpy_bytewise	/* 0x02 */
 	b	.Lmemcpy_bytewise	/* 0x03 */
@@ -550,9 +550,9 @@ ENTRY(memcpy)
 	ldrb	ip, [r1], #0x01
 1:	subs	r2, r2, #0x01
 	strb	ip, [r3], #0x01
-	ldrneb	ip, [r1], #0x01
+	ldrbne	ip, [r1], #0x01
 	bne	1b
-	bx	lr
+	RET
 
 #ifndef _STANDALONE
 /******************************************************************************
@@ -573,7 +573,7 @@ ENTRY(memcpy)
  */
 	ldr	r2, [r1]
 	str	r2, [r0]
-	bx	lr
+	RET
 	LMEMCPY_4_PAD
 
 /*
@@ -589,7 +589,7 @@ ENTRY(memcpy)
 	orr	r3, r3, r2, lsl #24	/* r3 = 3210 */
 #endif
 	str	r3, [r0]
-	bx	lr
+	RET
 	LMEMCPY_4_PAD
 
 /*
@@ -604,7 +604,7 @@ ENTRY(memcpy)
 #endif
 	orr	r3, r2, r3, lsl #16
 	str	r3, [r0]
-	bx	lr
+	RET
 	LMEMCPY_4_PAD
 
 /*
@@ -620,7 +620,7 @@ ENTRY(memcpy)
 	orr	r3, r3, r2, lsl #8	/* r3 = 3210 */
 #endif
 	str	r3, [r0]
-	bx	lr
+	RET
 	LMEMCPY_4_PAD
 
 /*
@@ -639,7 +639,7 @@ ENTRY(memcpy)
 	strb	r1, [r0, #0x03]
 #endif
 	strh	r3, [r0, #0x01]
-	bx	lr
+	RET
 	LMEMCPY_4_PAD
 
 /*
@@ -651,7 +651,7 @@ ENTRY(memcpy)
 	strb	r2, [r0]
 	strh	r3, [r0, #0x01]
 	strb	r1, [r0, #0x03]
-	bx	lr
+	RET
 	LMEMCPY_4_PAD
 
 /*
@@ -672,7 +672,7 @@ ENTRY(memcpy)
 #endif
 	strh	r2, [r0, #0x01]
 	strb	r3, [r0, #0x03]
-	bx	lr
+	RET
 	LMEMCPY_4_PAD
 
 /*
@@ -684,7 +684,7 @@ ENTRY(memcpy)
 	strb	r2, [r0]
 	strh	r3, [r0, #0x01]
 	strb	r1, [r0, #0x03]
-	bx	lr
+	RET
 	LMEMCPY_4_PAD
 
 /*
@@ -700,7 +700,7 @@ ENTRY(memcpy)
 	mov	r3, r2, lsr #16
 	strh	r3, [r0, #0x02]
 #endif
-	bx	lr
+	RET
 	LMEMCPY_4_PAD
 
 /*
@@ -718,7 +718,7 @@ ENTRY(memcpy)
 	orr	r2, r2, r3, lsl #8	/* r2 = xx32 */
 #endif
 	strh	r2, [r0, #0x02]
-	bx	lr
+	RET
 	LMEMCPY_4_PAD
 
 /*
@@ -728,7 +728,7 @@ ENTRY(memcpy)
 	ldrh	r3, [r1, #0x02]
 	strh	r2, [r0]
 	strh	r3, [r0, #0x02]
-	bx	lr
+	RET
 	LMEMCPY_4_PAD
 
 /*
@@ -746,7 +746,7 @@ ENTRY(memcpy)
 	orr	r3, r3, r2, lsr #24	/* r3 = 3210 */
 #endif
 	strh	r3, [r0]
-	bx	lr
+	RET
 	LMEMCPY_4_PAD
 
 /*
@@ -766,7 +766,7 @@ ENTRY(memcpy)
 	strh	r3, [r0, #0x01]
 	strb	r1, [r0, #0x03]
 #endif
-	bx	lr
+	RET
 	LMEMCPY_4_PAD
 
 /*
@@ -778,7 +778,7 @@ ENTRY(memcpy)
 	strb	r2, [r0]
 	strh	r3, [r0, #0x01]
 	strb	r1, [r0, #0x03]
-	bx	lr
+	RET
 	LMEMCPY_4_PAD
 
 /*
@@ -803,7 +803,7 @@ ENTRY(memcpy)
 	mov	r3, r3, lsr #8		/* r3 = ...3 */
 	strb	r3, [r0, #0x03]
 #endif
-	bx	lr
+	RET
 	LMEMCPY_4_PAD
 
 /*
@@ -815,7 +815,7 @@ ENTRY(memcpy)
 	strb	r2, [r0]
 	strh	r3, [r0, #0x01]
 	strb	r1, [r0, #0x03]
-	bx	lr
+	RET
 	LMEMCPY_4_PAD
 
 
@@ -839,7 +839,7 @@ ENTRY(memcpy)
 	ldrh	r3, [r1, #0x04]
 	str	r2, [r0]
 	strh	r3, [r0, #0x04]
-	bx	lr
+	RET
 	LMEMCPY_6_PAD
 
 /*
@@ -857,7 +857,7 @@ ENTRY(memcpy)
 	mov	r3, r3, lsr #8		/* BE:r3 = .345  LE:r3 = .x54 */
 	str	r2, [r0]
 	strh	r3, [r0, #0x04]
-	bx	lr
+	RET
 	LMEMCPY_6_PAD
 
 /*
@@ -876,7 +876,7 @@ ENTRY(memcpy)
 	str	r2, [r0]
 	strh	r1, [r0, #0x04]
 #endif
-	bx	lr
+	RET
 	LMEMCPY_6_PAD
 
 /*
@@ -898,7 +898,7 @@ ENTRY(memcpy)
 #endif
 	str	r2, [r0]
 	strh	r1, [r0, #0x04]
-	bx	lr
+	RET
 	LMEMCPY_6_PAD
 
 /*
@@ -921,7 +921,7 @@ ENTRY(memcpy)
 #endif
 	strh	r3, [r0, #0x03]
 	strb	r2, [r0, #0x05]
-	bx	lr
+	RET
 	LMEMCPY_6_PAD
 
 /*
@@ -935,7 +935,7 @@ ENTRY(memcpy)
 	strh	r3, [r0, #0x01]
 	strh	ip, [r0, #0x03]
 	strb	r1, [r0, #0x05]
-	bx	lr
+	RET
 	LMEMCPY_6_PAD
 
 /*
@@ -962,7 +962,7 @@ ENTRY(memcpy)
 	orr	r3, r3, r1, lsl #8	/* r3 = 4321 */
 	strh	r3, [r0, #0x01]
 #endif
-	bx	lr
+	RET
 	LMEMCPY_6_PAD
 
 /*
@@ -976,7 +976,7 @@ ENTRY(memcpy)
 	strh	r3, [r0, #0x01]
 	strh	ip, [r0, #0x03]
 	strb	r1, [r0, #0x05]
-	bx	lr
+	RET
 	LMEMCPY_6_PAD
 
 /*
@@ -997,7 +997,7 @@ ENTRY(memcpy)
 	strh	r3, [r0]
 	str	r2, [r0, #0x02]
 #endif
-	bx	lr
+	RET
 	LMEMCPY_6_PAD
 
 /*
@@ -1015,7 +1015,7 @@ ENTRY(memcpy)
 #endif
 	strh	r1, [r0]
 	str	r2, [r0, #0x02]
-	bx	lr
+	RET
 	LMEMCPY_6_PAD
 
 /*
@@ -1025,7 +1025,7 @@ ENTRY(memcpy)
 	ldr	r3, [r1, #0x02]
 	strh	r2, [r0]
 	str	r3, [r0, #0x02]
-	bx	lr
+	RET
 	LMEMCPY_6_PAD
 
 /*
@@ -1045,7 +1045,7 @@ ENTRY(memcpy)
 #endif
 	strh	r3, [r0]
 	str	r1, [r0, #0x02]
-	bx	lr
+	RET
 	LMEMCPY_6_PAD
 
 /*
@@ -1066,7 +1066,7 @@ ENTRY(memcpy)
 #endif
 	str	r2, [r0, #0x01]
 	strb	r1, [r0, #0x05]
-	bx	lr
+	RET
 	LMEMCPY_6_PAD
 
 /*
@@ -1080,7 +1080,7 @@ ENTRY(memcpy)
 	strh	r3, [r0, #0x01]
 	strh	ip, [r0, #0x03]
 	strb	r1, [r0, #0x05]
-	bx	lr
+	RET
 	LMEMCPY_6_PAD
 
 /*
@@ -1101,7 +1101,7 @@ ENTRY(memcpy)
 #endif
 	str	r2, [r0, #0x01]
 	strb	r1, [r0, #0x05]
-	bx	lr
+	RET
 	LMEMCPY_6_PAD
 
 /*
@@ -1113,7 +1113,7 @@ ENTRY(memcpy)
 	strb	r2, [r0]
 	str	r3, [r0, #0x01]
 	strb	r1, [r0, #0x05]
-	bx	lr
+	RET
 	LMEMCPY_6_PAD
 
 
@@ -1137,7 +1137,7 @@ ENTRY(memcpy)
 	ldr	r3, [r1, #0x04]
 	str	r2, [r0]
 	str	r3, [r0, #0x04]
-	bx	lr
+	RET
 	LMEMCPY_8_PAD
 
 /*
@@ -1158,7 +1158,7 @@ ENTRY(memcpy)
 #endif
 	str	r3, [r0]
 	str	r2, [r0, #0x04]
-	bx	lr
+	RET
 	LMEMCPY_8_PAD
 
 /*
@@ -1178,7 +1178,7 @@ ENTRY(memcpy)
 #endif
 	str	r2, [r0]
 	str	r3, [r0, #0x04]
-	bx	lr
+	RET
 	LMEMCPY_8_PAD
 
 /*
@@ -1199,7 +1199,7 @@ ENTRY(memcpy)
 #endif
 	str	r3, [r0]
 	str	r2, [r0, #0x04]
-	bx	lr
+	RET
 	LMEMCPY_8_PAD
 
 /*
@@ -1224,7 +1224,7 @@ ENTRY(memcpy)
 #endif
 	strh	r1, [r0, #0x01]
 	str	r3, [r0, #0x03]
-	bx	lr
+	RET
 	LMEMCPY_8_PAD
 
 /*
@@ -1238,7 +1238,7 @@ ENTRY(memcpy)
 	strh	r3, [r0, #0x01]
 	str	ip, [r0, #0x03]
 	strb	r1, [r0, #0x07]
-	bx	lr
+	RET
 	LMEMCPY_8_PAD
 
 /*
@@ -1266,7 +1266,7 @@ ENTRY(memcpy)
 #endif
 	strh	ip, [r0, #0x01]
 	str	r3, [r0, #0x03]
-	bx	lr
+	RET
 	LMEMCPY_8_PAD
 
 /*
@@ -1287,7 +1287,7 @@ ENTRY(memcpy)
 #endif
 	str	r2, [r0, #0x03]
 	strb	r1, [r0, #0x07]
-	bx	lr
+	RET
 	LMEMCPY_8_PAD
 
 /*
@@ -1307,7 +1307,7 @@ ENTRY(memcpy)
 #endif
 	str	r2, [r0, #0x02]
 	strh	r3, [r0, #0x06]
-	bx	lr
+	RET
 	LMEMCPY_8_PAD
 
 /*
@@ -1330,7 +1330,7 @@ ENTRY(memcpy)
 #endif
 	str	r1, [r0, #0x02]
 	strh	r3, [r0, #0x06]
-	bx	lr
+	RET
 	LMEMCPY_8_PAD
 
 /*
@@ -1342,7 +1342,7 @@ ENTRY(memcpy)
 	strh	r2, [r0]
 	str	ip, [r0, #0x02]
 	strh	r3, [r0, #0x06]
-	bx	lr
+	RET
 	LMEMCPY_8_PAD
 
 /*
@@ -1365,7 +1365,7 @@ ENTRY(memcpy)
 #endif
 	str	r3, [r0, #0x02]
 	strh	r2, [r0]
-	bx	lr
+	RET
 	LMEMCPY_8_PAD
 
 /*
@@ -1390,7 +1390,7 @@ ENTRY(memcpy)
 	orr	r2, r2, r3, lsl #24	/* r2 = 4321 */
 	str	r2, [r0, #0x01]
 #endif
-	bx	lr
+	RET
 	LMEMCPY_8_PAD
 
 /*
@@ -1411,7 +1411,7 @@ ENTRY(memcpy)
 #endif
 	str	r2, [r0, #0x01]
 	strb	r1, [r0, #0x07]
-	bx	lr
+	RET
 	LMEMCPY_8_PAD
 
 /*
@@ -1439,7 +1439,7 @@ ENTRY(memcpy)
 #endif
 	str	ip, [r0, #0x01]
 	strh	r1, [r0, #0x05]
-	bx	lr
+	RET
 	LMEMCPY_8_PAD
 
 /*
@@ -1453,7 +1453,7 @@ ENTRY(memcpy)
 	str	ip, [r0, #0x01]
 	strh	r3, [r0, #0x05]
 	strb	r1, [r0, #0x07]
-	bx	lr
+	RET
 	LMEMCPY_8_PAD
 
 /******************************************************************************
@@ -1478,7 +1478,7 @@ ENTRY(memcpy)
 	str	r2, [r0]
 	str	r3, [r0, #0x04]
 	str	r1, [r0, #0x08]
-	bx	lr
+	RET
 	LMEMCPY_C_PAD
 
 /*
@@ -1506,7 +1506,7 @@ ENTRY(memcpy)
 #endif
 	str	r2, [r0, #0x04]
 	str	r1, [r0]
-	bx	lr
+	RET
 	LMEMCPY_C_PAD
 
 /*
@@ -1533,7 +1533,7 @@ ENTRY(memcpy)
 #endif
 	str	r3, [r0, #0x04]
 	str	r1, [r0, #0x08]
-	bx	lr
+	RET
 	LMEMCPY_C_PAD
 
 /*
@@ -1561,7 +1561,7 @@ ENTRY(memcpy)
 #endif
 	str	r3, [r0, #0x04]
 	str	r1, [r0, #0x08]
-	bx	lr
+	RET
 	LMEMCPY_C_PAD
 
 /*
@@ -1590,7 +1590,7 @@ ENTRY(memcpy)
 	str	r2, [r0, #0x03]
 	str	r1, [r0, #0x07]
 	strb	ip, [r0, #0x0b]
-	bx	lr
+	RET
 	LMEMCPY_C_PAD
 
 /*
@@ -1606,7 +1606,7 @@ ENTRY(memcpy)
 	str	ip, [r0, #0x03]
 	str	r2, [r0, #0x07]
 	strb	r1, [r0, #0x0b]
-	bx	lr
+	RET
 	LMEMCPY_C_PAD
 
 /*
@@ -1640,7 +1640,7 @@ ENTRY(memcpy)
 	str	r3, [r0, #0x03]
 	str	r2, [r0, #0x07]
 	strb	r1, [r0, #0x0b]
-	bx	lr
+	RET
 	LMEMCPY_C_PAD
 
 /*
@@ -1670,7 +1670,7 @@ ENTRY(memcpy)
 	str	r3, [r0, #0x03]
 	str	ip, [r0, #0x07]
 	strb	r1, [r0, #0x0b]
-	bx	lr
+	RET
 	LMEMCPY_C_PAD
 
 /*
@@ -1696,7 +1696,7 @@ ENTRY(memcpy)
 	str	r1, [r0, #0x02]
 	str	r3, [r0, #0x06]
 	strh	r2, [r0, #0x0a]
-	bx	lr
+	RET
 	LMEMCPY_C_PAD
 
 /*
@@ -1725,7 +1725,7 @@ ENTRY(memcpy)
 	str	r2, [r0, #0x02]
 	str	r3, [r0, #0x06]
 	strh	r1, [r0, #0x0a]
-	bx	lr
+	RET
 	LMEMCPY_C_PAD
 
 /*
@@ -1739,7 +1739,7 @@ ENTRY(memcpy)
 	str	r3, [r0, #0x02]
 	str	ip, [r0, #0x06]
 	strh	r1, [r0, #0x0a]
-	bx	lr
+	RET
 	LMEMCPY_C_PAD
 
 /*
@@ -1768,7 +1768,7 @@ ENTRY(memcpy)
 	str	r2, [r0, #0x06]
 	str	r3, [r0, #0x02]
 	strh	r1, [r0]
-	bx	lr
+	RET
 	LMEMCPY_C_PAD
 
 /*
@@ -1802,7 +1802,7 @@ ENTRY(memcpy)
 	mov	r1, r1, lsr #16		/* r1 = ...B */
 	strb	r1, [r0, #0x0b]
 #endif
-	bx	lr
+	RET
 	LMEMCPY_C_PAD
 
 /*
@@ -1832,7 +1832,7 @@ ENTRY(memcpy)
 	str	r3, [r0, #0x05]
 	str	ip, [r0, #0x01]
 	strb	r1, [r0]
-	bx	lr
+	RET
 	LMEMCPY_C_PAD
 
 /*
@@ -1873,7 +1873,7 @@ ENTRY(memcpy)
 	strh	ip, [r0, #0x09]
 	strb	r1, [r0, #0x0b]
 #endif
-	bx	lr
+	RET
 	LMEMCPY_C_PAD
 
 /*
@@ -1889,5 +1889,6 @@ ENTRY(memcpy)
 	str	ip, [r0, #0x05]
 	strh	r2, [r0, #0x09]
 	strb	r1, [r0, #0x0b]
-	bx	lr
+	RET
+END(memcpy)
 #endif	/* !_STANDALONE */

@@ -1,4 +1,4 @@
-/*      $Vendor-Id: mandocdb.h,v 1.5 2011/12/25 16:53:51 schwarze Exp $ */
+/*      $Vendor-Id: mandocdb.h,v 1.6 2012/03/23 02:52:33 kristaps Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -17,8 +17,8 @@
 #ifndef MANDOCDB_H
 #define MANDOCDB_H
 
-#define	MANDOC_DB	"whatis.db"
-#define	MANDOC_IDX	"whatis.index"
+#define	MANDOC_DB	"mandocdb.db"
+#define	MANDOC_IDX	"mandocdb.index"
 
 #define	TYPE_An		0x0000000000000001ULL
 #define	TYPE_Ar		0x0000000000000002ULL

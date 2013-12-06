@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.15 2011/02/09 04:37:54 jmcneill Exp $
+$NetBSD: version,v 1.16 2013/08/30 16:43:33 jmcneill Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
 file is important - make sure the entries are appended on end, last item
@@ -47,3 +47,4 @@ is taken as the current.
 5.7:	Recognize 64-bit LBA from bootxx.
 5.8:	Support for splash images.
 5.9:	VESA VBE/DDC EDID support.
+5.10:	Support for using raw file-system images as memory disks.

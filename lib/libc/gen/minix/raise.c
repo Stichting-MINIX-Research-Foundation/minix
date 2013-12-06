@@ -10,12 +10,12 @@
 #include	<signal.h>
 
 int _kill(int pid, int sig);
-pid_t _getpid(void);
+pid_t getpid(void);
 
 int
 raise(int sig)
 {
 	if (sig < 0 || sig >= _NSIG)
 		return -1;
-	return _kill(_getpid(), sig);
+	return _kill(getpid(), sig);
 }

@@ -1,0 +1,210 @@
+#!/bin/ksh
+#	$NetBSD: checkvers,v 1.7 2008/04/30 13:10:50 martin Exp $
+#
+# Copyright (c) 1998 The NetBSD Foundation, Inc.
+# All rights reserved.
+#
+# This code is derived from software contributed to The NetBSD Foundation
+# by Eric Haszlakiewicz.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+# ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+# TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+# PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+# BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+
+#--------------------------------------------------------------------#
+# checkvers [-q] [systemlibdir [library name]]
+#
+# This is a wrapper script around checkver.  It will find
+# all directories withing the current directory containing
+# a shlib_version file and call checkver for each.
+#
+# As with checkver, a list of directories of installed libraries
+# may be specified.  This will replace the default of "/usr/lib"
+# and search there instead.
+#
+# A library name may also be specified.  However, this script
+# will not work correctly if it finds shlib_version files
+# corresponding to a different library.
+#
+# This script produces no output if all library version are ok.
+# If the versions aren't ok the header will be displayed once
+# followed by a list of problematic libraries.
+#
+
+# checkvers:
+#	if "-s", build list, pass with -f to checkver.
+#	if "-d", build list, pass with -f to checkver.
+#	if "-f", pass with -f to checkver.
+
+
+# Cleanup on exit.
+TMP=/tmp/checkvers.$$
+trap "exit 2" 1 2 3 4 5 6 7 8 10 11 12 13 14 15
+trap "rm -rf $TMP" 0
+
+Usage ( ) {
+    echo "Usage: $1 [-q] -d [installedlibdir [library name]]"
+    echo "       $1 [-q] -s [setlistdir [library name]]"
+    echo "       $1 [-q] -f liblistfile [library name]"
+}
+
+basedir=/usr/src
+setsdir=$basedir/distrib/sets/lists
+libdir=/usr/lib
+
+error=0
+quiet=0
+usedir=0
+usefile=0
+usesets=0
+CWD=`pwd`
+args=`getopt "df:shq" "$@"`
+if [ $? -ne 0 ] ; then
+    Usage $0
+    exit 0
+fi
+
+set -- $args
+
+while . ; do
+    case "$1" in
+	-d) usedir=1 ; shift
+	    if [ $usefile -eq 1 -o $usesets -eq 1 ]; then
+		Usage $0 ; exit 2
+	    fi;;
+	-f) usefile=1 ; arg1=$2 ; shift ; shift
+	    if [ $usedir -eq 1 -o $usesets -eq 1 ]; then
+		Usage $0 ; exit 2
+	    fi;;
+	-s) usesets=1 ; shift
+	    if [ $usedir -eq 1 -o $usefile -eq 1 ]; then
+		Usage $0 ; exit 2
+	    fi;;
+	-h) Usage $0 ; exit 0;;
+	-q) quiet=1 ; shift;;
+	--) shift ; break;;
+    esac
+done
+
+if [ $usedir -eq 0 -a $usefile -eq 0 -a $usesets -eq 0 ] ; then
+    Usage $0 ; exit 2
+fi
+if [ $usefile -eq 0 -a $# -gt 2 ] ; then
+    Usage $0 ; exit 2
+fi
+if [ $usefile -eq 1 -a $# -gt 1 ] ; then
+    Usage $0 ; exit 2
+fi
+
+#-------------------------#
+
+QUIET=
+LIBNAME=
+
+# Supress header.
+if [ quiet -eq 1 ] ; then
+    QUIET="-q"
+fi
+
+if ! mkdir -m 700 $TMP ; then
+    echo "$0: Unable to create temp directory."
+    exit 2
+fi
+
+if [ $usefile -eq 1 ] ; then
+    # Just pass the file name to checkver.
+    LIBLIST="$arg1"
+else
+    LIBLIST=$TMP/libs.lst
+fi
+
+# Build list from the installed libraries.
+if [ $usedir -eq 1 ] ; then
+    if [ "X$1" != "X" ] ; then
+	libdir="$1"
+    fi
+    for f in $libdir ; do
+	ls $f/lib*.so.*.*
+    done > $LIBLIST 2> /dev/null
+fi
+
+# Build list from set lists.  Parameter may be either
+# the "lists" directory or the top of the source tree.
+if [ $usesets -eq 1 ] ; then
+    if [ "X$1" != "X" ] ; then
+	setsdir="$1"
+	if [ -d "$setsdir/distrib/sets/lists" ] ; then
+	    setsdir="$setsdir/distrib/sets/lists"
+	fi
+    fi
+    (cd $setsdir ;
+     cat */[a-z]* | grep '^./usr/lib/lib.*\.so\.[0-9][0-9]*\.[0-9][0-9]*' \
+		  | sort -u > $LIBLIST
+    )
+fi
+
+if [ "X$2" != "X" ] ; then
+    LIBNAME="$2"
+fi
+
+EXECDIR=`eval "(cd \`dirname $0\` ; pwd)"`
+
+CWD=`pwd`
+VERFILES=`find $CWD -name shlib_version -print`
+
+for f in $VERFILES ; do
+    # Call checkver.  We always have a list of libraries
+    # here, whether given to us or built, so always
+    # pass the -f flag.
+    (cd `dirname $f` ;
+    "sh $EXECDIR"/checkver $QUIET -f "$LIBLIST" "$LIBNAME" ;
+    exit $?)
+    ERR=$?
+    if [ $ERR -eq 2 ] ; then
+	echo "$0: checkver failed. LIBLIST=$LIBLIST $LIBNAME=$LIBNAME"
+	exit 2
+    fi
+    if [ $ERR -ne 0 ] ; then
+	QUIET="-q"
+	error=1
+    fi
+
+    if [ "X$LIBNAME" = "X" ] ; then
+	# Build the library name from the directory it's in.
+	libname=`dirname $f`
+	libname=`basename $libname`
+	if ! echo $libname | grep -q "^lib" ; then
+	    libname="lib$libname"
+	fi
+    else
+	libname="$LIBNAME"
+    fi
+
+    if [ -e $TMP/$libname ] ; then
+	echo "Warning: $libname sources encountered multiple times."
+	echo "         Previous location: `cat $TMP/$libname`"
+	echo "         Current location: `dirname $f`"
+    fi
+    echo "`dirname $f`" > $TMP/$libname
+
+done
+
+exit $error

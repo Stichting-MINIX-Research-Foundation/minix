@@ -1,4 +1,4 @@
-/*	$NetBSD: swapcontext.S,v 1.8 2012/09/27 11:20:20 skrll Exp $	*/
+/*	$NetBSD: swapcontext.S,v 1.14 2013/11/30 20:20:42 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -33,22 +33,63 @@
 #include "assym.h"
 
 #if defined(LIBC_SCCS) && !defined(lint)
-        RCSID("$NetBSD: swapcontext.S,v 1.8 2012/09/27 11:20:20 skrll Exp $")
+        RCSID("$NetBSD: swapcontext.S,v 1.14 2013/11/30 20:20:42 joerg Exp $")
 #endif /* LIBC_SCCS && !lint */
 
 ENTRY(swapcontext)
-	stmfd	sp!, {r0-r1, lr}	/* Must save oucp, ucp, lr. */
-	sub	sp, #4
-	bl	PIC_SYM(_C_LABEL(_getcontext), PLT)  /* getcontext(oucp) */
+#if defined(__ARM_EABI__) && defined(__UNWIND_TABLES__)
+	.fnstart
+	.cfi_startproc
+#endif
+	push	{r0-r2, lr}	/* Must save oucp, ucp, lr. */
+#if defined(__ARM_EABI__) && defined(__UNWIND_TABLES__)
+	.save	{r0-r2, lr}
+	.cfi_def_cfa_offset 16
+	.cfi_offset 14, -4
+	.cfi_offset 2, -8
+	.cfi_offset 1, -12
+	.cfi_offset 0, -16
+#endif
+	bl	PLT_SYM(_C_LABEL(_getcontext))  /* getcontext(oucp) */
 	cmp	r0, #0
-	add	sp, #4
-	ldmfd	sp!, {r0-r1, lr}
+#if !defined(__thumb__)
+	pop	{r0-r2, lr}
+#if defined(__ARM_EABI__) && defined(__UNWIND_TABLES__)
+	.cfi_def_cfa_offset 0
+#endif
 	RETc(ne)
+#else
+	pop	{r0-r3}
+	beq	1f
+#if defined(__ARM_EABI__) && defined(__UNWIND_TABLES__)
+	.cfi_def_cfa_offset 0
+	.cfi_register 14, 3
+#endif
+	RETr(r3)
+1:
+#endif
+#if !defined(__thumb__)
 	str	sp, [r0, #_UC_REGS_SP]	/* Adjust saved SP. */
-	str	lr, [r0, #_UC_REGS_PC]	/* Adjust saved PC. */
+	str	lr, [r0, #_UC_REGS_PC]	/* Adjust saved SP. */
+#else
+	mov	r2, sp
+	str	r2, [r0, #_UC_REGS_SP]	/* Adjust saved SP. */
+	str	r3, [r0, #_UC_REGS_PC]	/* Adjust saved PC. */
+	mov	lr, r3
+#endif
 #ifdef SOFTFLOAT
 	/* Ahem. */
 #endif
 	mov	r0, r1
-	bl	PIC_SYM(_C_LABEL(setcontext), PLT)
-	RET
+#if !defined(__thumb__) || defined(_ARM_ARCH_T2)
+	b	PLT_SYM(_C_LABEL(setcontext))
+#else
+	push	{lr}
+	bl	PLT_SYM(_C_LABEL(setcontext))
+	pop	{pc}
+#endif
+#if defined(__ARM_EABI__) && defined(__UNWIND_TABLES__)
+	.cfi_endproc
+	.fnend
+#endif
+END(swapcontext)

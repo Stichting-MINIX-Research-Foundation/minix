@@ -1,6 +1,6 @@
 
 #------------------------------------------------------------------------------
-# $File: geo,v 1.1 2010/02/23 23:40:07 christos Exp $
+# $File: geo,v 1.3 2013/01/04 00:47:02 christos Exp $
 # Geo- files from Kurt Schwehr <schwehr@ccom.unh.edu>
 
 ######################################################################
@@ -103,3 +103,15 @@
 
 # https://midas.psi.ch/elog/
 0	string	$@MID@$	elog journal entry
+
+# Geospatial Designs http://www.geospatialdesigns.com/surfer6_format.htm
+0	string		DSBB	Surfer 6 binary grid file
+>4	leshort		x	\b, %d
+>6	leshort		x	\bx%d
+>8	ledouble	x	\b, minx=%g
+>16	ledouble	x	\b, maxx=%g
+>24	ledouble	x	\b, miny=%g
+>32	ledouble	x	\b, maxy=%g
+>40	ledouble	x	\b, minz=%g
+>48	ledouble	x	\b, maxz=%g
+

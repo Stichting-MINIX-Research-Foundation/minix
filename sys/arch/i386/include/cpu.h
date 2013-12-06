@@ -92,11 +92,11 @@ void cpu_alloc_l3_page(struct cpu_info *);
 
 #endif	/* _KERNEL */
 
-#ifdef __minix
+#if defined(__minix)
 #include <x86/psl.h>
 /* User flags are S (Status) and C (Control) flags. */
 #define X86_FLAGS_USER (PSL_C | PSL_PF | PSL_AF | PSL_Z | \
 	PSL_N | PSL_D | PSL_V)
-#endif
+#endif /* defined(__minix) */
 
 #endif /* !_I386_CPU_H_ */

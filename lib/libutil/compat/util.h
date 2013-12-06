@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.2 2009/01/11 02:57:18 christos Exp $	*/
+/*	$NetBSD: util.h,v 1.3 2012/11/04 13:08:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995
@@ -34,10 +34,15 @@
 
 #include <sys/cdefs.h>
 #include <sys/types.h>
-#include <compat/include/pwd.h>
-#include <compat/include/utmp.h>
-#include <compat/include/utmpx.h>
-#include <machine/ansi.h>
+#include <sys/inttypes.h>
+#include <sys/ansi.h>
+
+struct utmp50;
+struct utmpx50;
+struct passwd50;
+struct utmp;
+struct utmpx;
+struct passwd;
 
 void		login(const struct utmp50 *);
 void		loginx(const struct utmpx50 *);

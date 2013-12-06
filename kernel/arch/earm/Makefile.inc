@@ -5,52 +5,56 @@ HERE=${.CURDIR}/arch/${MACHINE_ARCH}
 .PATH:	${HERE}
 
 # objects we want unpaged from -lminlib
-MINLIB_OBJS_UNPAGED=get_bp.o
+MINLIB_OBJS_UNPAGED= get_bp.o
 get_bp.o:	${NETBSDSRCDIR}/lib/libminlib/${MACHINE_ARCH}/get_bp.S
 
 # objects we want unpaged from -lsys
-SYS_OBJS_UNPAGED=assert.o kprintf.o stacktrace.o vprintf.o
+SYS_OBJS_UNPAGED=assert.o stacktrace.o
 assert.o:	${NETBSDSRCDIR}/lib/libsys/assert.c
-kprintf.o:	${NETBSDSRCDIR}/lib/libsys/kprintf.c
 stacktrace.o:	${NETBSDSRCDIR}/lib/libsys/stacktrace.c
-vprintf.o:	${NETBSDSRCDIR}/lib/libsys/vprintf.c
 
 # objects we want unpaged from -lminc
-MINC_OBJS_UNPAGED=findfp.o strcat.o strlen.o memcpy.o strcpy.o strncmp.o \
-	memset.o memmove.o strcmp.o atoi.o ctype_.o strtol.o \
-	_errno.o errno.o udivdi3.o umoddi3.o qdivrem.o
-MINC_OBJS_UNPAGED+= divsi3.o __aeabi_uldivmod.o 
-#_udivsi3.o _divdi3.o  _udivdi3.o _umoddi3.o _dvmd_tls.o _clzsi2.o bpabi.o
-memcpy.o:	${NETBSDSRCDIR}/common/lib/libc/string/memcpy.c
-memmove.o:	${NETBSDSRCDIR}/common/lib/libc/string/memmove.c
-memset.o:	${NETBSDSRCDIR}/common/lib/libc/string/memset.c
-strcat.o:	${NETBSDSRCDIR}/common/lib/libc/string/strcat.c
-strlen.o:	${NETBSDSRCDIR}/common/lib/libc/string/strlen.c
-strcpy.o:	${NETBSDSRCDIR}/common/lib/libc/string/strcpy.c
-strcmp.o:	${NETBSDSRCDIR}/common/lib/libc/string/strcmp.c
+MINC_OBJS_UNPAGED= atoi.o \
+	printf.o subr_prf.o \
+	strcmp.o strcpy.o strlen.o strncmp.o \
+	memcpy.o memmove.o memset.o \
+	udivdi3.o umoddi3.o qdivrem.o
+MINC_OBJS_UNPAGED+= __aeabi_ldiv0.o __aeabi_idiv0.o __aeabi_uldivmod.o divide.o divsi3.o udivsi3.o
+atoi.o:		${NETBSDSRCDIR}/lib/libminc/atoi.c
+printf.o:	${NETBSDSRCDIR}/sys/lib/libsa/printf.c
+subr_prf.o:	${NETBSDSRCDIR}/sys/lib/libsa/subr_prf.c
+memcpy.o:	${NETBSDSRCDIR}/common/lib/libc/arch/arm/string/memcpy.S
+memmove.o:	${NETBSDSRCDIR}/common/lib/libc/arch/arm/string/memmove.S
+memset.o:	${NETBSDSRCDIR}/common/lib/libc/arch/arm/string/memset.S
+strlen.o:	${NETBSDSRCDIR}/common/lib/libc/arch/arm/string/strlen.S
+strcpy.o:	${NETBSDSRCDIR}/common/lib/libc/arch/arm/string/strcpy.S
+strcmp.o:	${NETBSDSRCDIR}/common/lib/libc/arch/arm/string/strcmp.S
+
+#strcat.o:	${NETBSDSRCDIR}/common/lib/libc/string/strcat.c
+__aeabi_idiv0.o:	${NETBSDSRCDIR}/common/lib/libc/arch/arm/gen/__aeabi_idiv0.c
+__aeabi_ldiv0.o:	${NETBSDSRCDIR}/common/lib/libc/arch/arm/gen/__aeabi_ldiv0.c
+__aeabi_uldivmod.o:	${NETBSDSRCDIR}/common/lib/libc/arch/arm/quad/__aeabi_uldivmod.S
+divide.o:	${NETBSDSRCDIR}/common/lib/libc/arch/arm/gen/divide.S
+divsi3.o:	${NETBSDSRCDIR}/common/lib/libc/arch/arm/gen/divsi3.S
+udivsi3.o:	${NETBSDSRCDIR}/common/lib/libc/arch/arm/gen/udivsi3.S
+
+# the following is required by pre_init.c
 strncmp.o:	${NETBSDSRCDIR}/common/lib/libc/string/strncmp.c
+
+# these are required by kprintn.o:
 udivdi3.o:	${NETBSDSRCDIR}/common/lib/libc/quad/udivdi3.c
 umoddi3.o:	${NETBSDSRCDIR}/common/lib/libc/quad/umoddi3.c
 qdivrem.o:	${NETBSDSRCDIR}/common/lib/libc/quad/qdivrem.c
-atoi.o:		${NETBSDSRCDIR}/lib/libc/stdlib/atoi.c
-strtol.o:	${NETBSDSRCDIR}/lib/libc/stdlib/strtol.c
-findfp.o:	${NETBSDSRCDIR}/lib/libc/stdio/findfp.c
-ctype_.o:	${NETBSDSRCDIR}/lib/libc/gen/ctype_.c
-_errno.o:	${NETBSDSRCDIR}/lib/libc/gen/_errno.c
-errno.o:	${NETBSDSRCDIR}/lib/libc/gen/errno.c
-divsi3.o:	${NETBSDSRCDIR}/common/lib/libc/arch/${MACHINE_GNU_ARCH}/gen/divsi3.S
-__aeabi_uldivmod.o:	${NETBSDSRCDIR}/common/lib/libc/arch/${MACHINE_GNU_ARCH}/quad/__aeabi_uldivmod.S
 
-# Specific flags needed to compile a few of the object files.
-CPPFLAGS.strtol.c+= -I ${NETBSDSRCDIR}/common/lib/libc/stdlib
-CPPFLAGS.ctype_.c+= -I ${NETBSDSRCDIR}/lib/libc/locale
-CPPFLAGS._errno.c+= -I ${NETBSDSRCDIR}/lib/libc/include
-CPPFLAGS.assert.c+= -I ${NETBSDSRCDIR}/lib/libc/include
-CPPFLAGS.findfp.c+= -I ${NETBSDSRCDIR}/lib/libc/include
+CPPFLAGS.__aeabi_idiv0.c+= -D_STANDALONE
+CPPFLAGS.__aeabi_ldiv0.c+= -D_STANDALONE
 
+# LSC: putchar and kputc have the same signature. A bit hackish.
+CPPFLAGS.subr_prf.c+= -Dputchar=kputc
 
+# Activate optional support, may be deactivated.
+CPPFLAGS.subr_prf.c+= -DLIBSA_PRINTF_LONGLONG_SUPPORT -DLIBSA_PRINTF_WIDTH_SUPPORT
 
-.PATH: ${NETBSDSRCDIR}/include/arch/${MACHINE_ARCH}/bsp/include
 .include "bsp/ti/Makefile.inc"
 
 # some object files we give a symbol prefix (or namespace) of __k_unpaged_
@@ -72,6 +76,7 @@ SRCS+=	mpx.S arch_clock.c arch_do_vmctl.c arch_system.c do_padconf.c \
 	exception.c hw_intr.c klib.S memory.c \
 	protect.c direct_tty_utils.c arch_reset.c \
 	pg_utils.c phys_copy.S phys_memset.S exc.S
+
 OBJS.kernel+=	${UNPAGED_OBJS}
 
 klib.o mpx.o head.o: procoffsets.h

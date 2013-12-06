@@ -1,4 +1,4 @@
-/*	$NetBSD: yp_prot.h,v 1.17 2007/10/06 16:17:34 yamt Exp $	*/
+/*	$NetBSD: yp_prot.h,v 1.18 2013/01/23 17:27:35 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -287,7 +287,7 @@ struct yppushresp_xfr {
 #define YPPUSH_AGE	((unsigned int)2)	/* Master's version not newer */
 #define YPPUSH_NOMAP 	((unsigned int)-1)	/* Can't find server for map */
 #define YPPUSH_NODOM 	((unsigned int)-2)	/* Domain not supported */
-#define YPPUSH_RSRC 	((unsigned int)-3)	/* Local resouce alloc failure */
+#define YPPUSH_RSRC 	((unsigned int)-3)	/* Local resource alloc failure */
 #define YPPUSH_RPC 	((unsigned int)-4)	/* RPC failure talking to server */
 #define YPPUSH_MADDR	((unsigned int)-5)	/* Can't get master address */
 #define YPPUSH_YPERR 	((unsigned int)-6)	/* YP server/map db error */

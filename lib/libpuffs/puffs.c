@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.92.4.4 2009/10/27 20:37:38 bouyer Exp $	*/
+/*	$NetBSD: puffs.c,v 1.117 2011/11/14 01:27:42 chs Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -29,37 +29,41 @@
  * SUCH DAMAGE.
  */
 
-/* TODO: We don't support PUFFS_COMFD used in original puffs_mount,
- * add it to the docs if any.
- *
- */
-
-#include "fs.h"
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.92.4.4 2009/10/27 20:37:38 bouyer Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.117 2011/11/14 01:27:42 chs Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
 #include <sys/mount.h>
 
+#if defined(__minix)
+#include "fs.h"
 #include <minix/endpoint.h>
 #include <minix/vfsif.h>
+#endif /* defined(__minix) */
 
 #include <assert.h>
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <mntopts.h>
 #include <paths.h>
+#include <puffs.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
 #include <unistd.h>
 
-#include "puffs.h"
 #include "puffs_priv.h"
 
+/* Most file systems want this for opts, so just give it to them */
+const struct mntopt puffsmopts[] = {
+	MOPT_STDOPTS,
+	PUFFSMOPT_STD,
+	MOPT_NULL,
+};
 #ifdef PUFFS_WITH_THREADS
 #include <pthread.h>
 pthread_mutex_t pu_lock = PTHREAD_MUTEX_INITIALIZER;
@@ -134,10 +138,11 @@ do {									\
 		opmask[PUFFS_VN_##upper] = 1;				\
 } while (/*CONSTCOND*/0)
 static void
-fillvnopmask(struct puffs_ops *pops, uint8_t *opmask)
+fillvnopmask(struct puffs_ops *pops, struct puffs_kargs *pa)
 {
+	uint8_t *opmask = pa->pa_vnopmask;
 
-	memset(opmask, 0, PUFFS_VN_MAX);
+	memset(opmask, 0, sizeof(pa->pa_vnopmask));
 
 	FILLOP(create,   CREATE);
 	FILLOP(mknod,    MKNOD);
@@ -146,7 +151,7 @@ fillvnopmask(struct puffs_ops *pops, uint8_t *opmask)
 	FILLOP(access,   ACCESS);
 	FILLOP(getattr,  GETATTR);
 	FILLOP(setattr,  SETATTR);
-	FILLOP(poll,     POLL); /* XXX: not ready in kernel */
+	FILLOP(poll,     POLL);
 	FILLOP(mmap,     MMAP);
 	FILLOP(fsync,    FSYNC);
 	FILLOP(seek,     SEEK);
@@ -190,8 +195,7 @@ puffs_getstate(struct puffs_usermount *pu)
 void
 puffs_setstacksize(struct puffs_usermount *pu, size_t ss)
 {
-	size_t minsize;
-	int psize;
+	long psize, minsize;
 	int stackshift;
 	int bonus;
 
@@ -199,7 +203,7 @@ puffs_setstacksize(struct puffs_usermount *pu, size_t ss)
 
 	psize = sysconf(_SC_PAGESIZE);
 	minsize = 4*psize;
-	if (ss < minsize || ss == PUFFS_STACKSIZE_MIN) {
+	if (ss < (size_t)minsize || ss == PUFFS_STACKSIZE_MIN) {
 		if (ss != PUFFS_STACKSIZE_MIN)
 			lpuffs_debug("puffs_setstacksize: adjusting "
 			    "stacksize to minimum %ld\n", minsize);
@@ -414,48 +418,50 @@ int
 puffs_mount(struct puffs_usermount *pu, const char *dir, int mntflags,
 	puffs_cookie_t cookie)
 {
-        endpoint_t src;
-        int error, ind;
+#if defined(__minix)
+	endpoint_t src;
+	int error, ind;
 
-        pu->pu_kargp->pa_root_cookie = cookie;
+	pu->pu_kargp->pa_root_cookie = cookie;
 	
-        src = fs_m_in.m_source;
-        error = OK;
-        caller_uid = INVAL_UID; /* To trap errors */
-        caller_gid = INVAL_GID;
-        req_nr = fs_m_in.m_type;
+	src = fs_m_in.m_source;
+	error = OK;
+	caller_uid = INVAL_UID; /* To trap errors */
+	caller_gid = INVAL_GID;
+	req_nr = fs_m_in.m_type;
 
-        if (req_nr < FS_BASE) {
-                fs_m_in.m_type += FS_BASE;
-                req_nr = fs_m_in.m_type;
+	if (req_nr < FS_BASE) {
+		fs_m_in.m_type += FS_BASE;
+		req_nr = fs_m_in.m_type;
         }
-        ind = req_nr - FS_BASE;
+	ind = req_nr - FS_BASE;
 
-        assert(ind == REQ_READ_SUPER);
+	assert(ind == REQ_READ_SUPER);
 
-        if (ind < 0 || ind >= NREQS) {
-                error = EINVAL;
-        } else {
-                error = (*fs_call_vec[ind])();
-        }
+	if (ind < 0 || ind >= NREQS) {
+		error = EINVAL;
+	} else {
+		error = (*fs_call_vec[ind])();
+	}
 
-        fs_m_out.m_type = error;
+	fs_m_out.m_type = error;
 	if (IS_VFS_FS_TRANSID(last_request_transid)) {
 		/* If a transaction ID was set, reset it */
 		fs_m_out.m_type = TRNS_ADD_ID(fs_m_out.m_type,
-					      last_request_transid);
+						last_request_transid);
 	}
-        reply(src, &fs_m_out);
+	reply(src, &fs_m_out);
 
-        if (error) {
-                free(pu->pu_kargp);
-                pu->pu_kargp = NULL;
-                errno = error;
-                return -1;
-        }
+	if (error) {
+		free(pu->pu_kargp);
+		pu->pu_kargp = NULL;
+		errno = error;
+		return -1;
+	}
 
-        PU_SETSTATE(pu, PUFFS_STATE_RUNNING);
-        return 0;
+	PU_SETSTATE(pu, PUFFS_STATE_RUNNING);
+	return 0;
+#endif /* defined(__minix) */
 }
 
 /*ARGSUSED*/
@@ -484,7 +490,7 @@ _puffs_init(int dummy, struct puffs_ops *pops, const char *mntfromname,
 		goto failfree;
 	memset(pargs, 0, sizeof(struct puffs_kargs));
 
-	pargs->pa_vers = PUFFSDEVELVERS | PUFFSVERSION;
+	pargs->pa_vers = PUFFSVERSION;
 	pargs->pa_flags = PUFFS_FLAG_KERN(pflags);
 	fillvnopmask(pops, pargs->pa_vnopmask);
 	puffs_setmntinfo(pu, mntfromname, puffsname);
@@ -495,6 +501,10 @@ _puffs_init(int dummy, struct puffs_ops *pops, const char *mntfromname,
 	pargs->pa_root_vsize = 0;
 	pargs->pa_root_rdev = 0;
 	pargs->pa_maxmsglen = 0;
+	if (/*CONSTCOND*/ sizeof(time_t) == 4)
+		pargs->pa_time32 = 1;
+	else
+		pargs->pa_time32 = 0;
 
 	pu->pu_flags = pflags;
 	buildpath = pu->pu_flags & PUFFS_FLAG_BUILDPATH; /* XXX */
@@ -513,11 +523,11 @@ _puffs_init(int dummy, struct puffs_ops *pops, const char *mntfromname,
 	/* defaults for some user-settable translation functions */
 	pu->pu_cmap = NULL; /* identity translation */
 
-        pu->pu_pathbuild = puffs_stdpath_buildpath;
-        pu->pu_pathfree = puffs_stdpath_freepath;
-        pu->pu_pathcmp = puffs_stdpath_cmppath;
-        pu->pu_pathtransform = NULL;
-        pu->pu_namemod = NULL;
+	pu->pu_pathbuild = puffs_stdpath_buildpath;
+	pu->pu_pathfree = puffs_stdpath_freepath;
+	pu->pu_pathcmp = puffs_stdpath_cmppath;
+	pu->pu_pathtransform = NULL;
+	pu->pu_namemod = NULL;
 
         pu->pu_errnotify = puffs_defaulterror;
 
@@ -538,6 +548,7 @@ _puffs_init(int dummy, struct puffs_ops *pops, const char *mntfromname,
 void
 puffs_cancel(struct puffs_usermount *pu, int error)
 {
+
 	assert(puffs_getstate(pu) < PUFFS_STATE_RUNNING);
 	free(pu);
 }
@@ -628,7 +639,6 @@ puffs__theloop(struct puffs_cc *pcc)
 	 * Now we just return to the caller.
 	 */
 }
-
 int
 puffs_mainloop(struct puffs_usermount *pu)
 {
@@ -669,7 +679,7 @@ puffs_mainloop(struct puffs_usermount *pu)
 		return 0;
 }
 
-
+#if defined(__minix)
 /*===========================================================================*
  *			       sef_local_startup			     *
  *===========================================================================*/
@@ -772,4 +782,4 @@ static void reply(
 
   last_request_transid = 0;
 }
-
+#endif /* defined(__minix) */

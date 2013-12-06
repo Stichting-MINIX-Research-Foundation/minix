@@ -38,9 +38,8 @@
 #include <set>
 #include <string>
 
-#include <tr1/memory>
-
 #include "utils/noncopyable.hpp"
+#include "utils/shared_ptr.hpp"
 
 namespace utils {
 namespace config { class tree; }
@@ -73,7 +72,7 @@ class metadata {
     struct impl;
 
     /// Pointer to the shared internal implementation.
-    std::tr1::shared_ptr< impl > _pimpl;
+    std::shared_ptr< impl > _pimpl;
 
     friend class metadata_builder;
 

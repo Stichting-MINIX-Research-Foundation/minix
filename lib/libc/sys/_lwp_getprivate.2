@@ -1,4 +1,4 @@
-.\"	$NetBSD: _lwp_getprivate.2,v 1.4 2008/04/30 13:10:51 martin Exp $
+.\"	$NetBSD: _lwp_getprivate.2,v 1.6 2013/10/05 09:18:56 njoly Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 16, 2003
+.Dd September 7, 2013
 .Dt _LWP_GETPRIVATE 2
 .Os
 .Sh NAME
@@ -50,6 +50,27 @@ in a location private to the LWP.
 .Pp
 .Fn _lwp_getprivate
 returns the pointer to private data for the LWP.
+.Pp
+Some platforms provide alternative ways quicker than
+.Fn _lwp_getprivate
+to use the pointer.
+.Bl -tag -width amd64
+.It alpha
+The pointer can be retrieved by call_pal PAL_rdunique.
+.It amd64
+The base address of
+.Dv %fs
+register is set to the pointer so that the private data can be
+accessed using the selector.
+.It i386
+The base address of
+.Dv %gs
+register is set to the pointer so that the private data can be
+accessed using the selector.
+.It sparc
+.Dv %g7
+register is set to the pointer.
+.El
 .Sh ERRORS
 The
 .Fn _lwp_getprivate

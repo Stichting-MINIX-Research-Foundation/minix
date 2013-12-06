@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.hostprog.mk,v 1.71 2013/06/14 16:10:02 tsutsui Exp $
+#	$NetBSD: bsd.hostprog.mk,v 1.72 2013/10/29 16:11:46 joerg Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .include <bsd.init.mk>
@@ -82,11 +82,13 @@ LIBRUMPFS_UDF?=		/usr/lib/librumpfs_udf.a
 LIBRUMPFS_UFS?=		/usr/lib/librumpfs_ufs.a
 
 HOST_MKDEP?=	CC=${HOST_CC:Q} mkdep
+HOST_MKDEPCXX?=	CC=${HOST_CXX:Q} mkdep
 MKDEP_SUFFIXES?=	.lo .ln
 
 # Override these:
 INSTALL:=	${INSTALL:NSTRIP=*}
 MKDEP:=		${HOST_MKDEP}
+MKDEPCXX:=	${HOST_MKDEPCXX}
 
 .if ${TOOLCHAIN_MISSING} == "no" || defined(EXTERNAL_TOOLCHAIN)
 OBJHOSTMACHINE=	# set

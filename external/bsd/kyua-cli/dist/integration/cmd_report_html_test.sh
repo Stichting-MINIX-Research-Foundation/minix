@@ -80,7 +80,7 @@ check_in_file() {
         if grep "${1}" "${file}" >/dev/null; then
             :
         else
-            atf_fail "Test case output not found in HTML page"
+            atf_fail "Test case output not found in HTML page ${file}"
         fi
         shift
     done
@@ -114,26 +114,13 @@ default_behavior__ok_body() {
     for f in \
         html/index.html \
         html/context.html \
-        html/simple_all_pass_pass.html \
         html/simple_all_pass_skip.html \
-        html/simple_some_fail_fail.html \
-        html/simple_some_fail_pass.html \
-        html/metadata_no_properties.html \
-        html/metadata_one_property.html \
-        html/metadata_many_properties.html \
-        html/metadata_with_cleanup.html
+        html/simple_some_fail_fail.html
     do
         test -f "${f}" || atf_fail "Missing ${f}"
     done
 
     atf_check -o match:"2 TESTS FAILING" cat html/index.html
-
-    check_in_file html/simple_all_pass_pass.html \
-        "This is the stdout of pass" "This is the stderr of pass"
-    check_not_in_file html/simple_all_pass_pass.html \
-        "This is the stdout of skip" "This is the stderr of skip" \
-        "This is the stdout of fail" "This is the stderr of fail" \
-        "Test case did not write anything to"
 
     check_in_file html/simple_all_pass_skip.html \
         "This is the stdout of skip" "This is the stderr of skip"
@@ -148,14 +135,6 @@ default_behavior__ok_body() {
         "This is the stdout of pass" "This is the stderr of pass" \
         "This is the stdout of skip" "This is the stderr of skip" \
         "Test case did not write anything to"
-
-    check_in_file html/simple_some_fail_pass.html \
-        "Test case did not write anything to stdout" \
-        "Test case did not write anything to stderr"
-    check_not_in_file html/simple_some_fail_pass.html \
-        "This is the stdout of pass" "This is the stderr of pass" \
-        "This is the stdout of skip" "This is the stderr of skip" \
-        "This is the stdout of fail" "This is the stderr of fail"
 
     check_in_file html/metadata_one_property.html \
         "description = Does nothing but has one metadata property"
@@ -251,6 +230,54 @@ output__explicit_body() {
 }
 
 
+utils_test_case results_filter__ok
+results_filter__ok_body() {
+    utils_install_timestamp_wrapper
+
+    run_tests "mock1"
+
+    atf_check -s exit:0 -o ignore -e empty kyua report-html \
+        --results-filter=passed
+    for f in \
+        html/index.html \
+        html/context.html \
+        html/simple_all_pass_pass.html \
+        html/simple_some_fail_pass.html \
+        html/metadata_no_properties.html \
+        html/metadata_with_cleanup.html
+    do
+        test -f "${f}" || atf_fail "Missing ${f}"
+    done
+
+    atf_check -o match:"2 TESTS FAILING" cat html/index.html
+
+    check_in_file html/simple_all_pass_pass.html \
+        "This is the stdout of pass" "This is the stderr of pass"
+    check_not_in_file html/simple_all_pass_pass.html \
+        "This is the stdout of skip" "This is the stderr of skip" \
+        "This is the stdout of fail" "This is the stderr of fail" \
+        "Test case did not write anything to"
+
+    check_in_file html/simple_some_fail_pass.html \
+        "Test case did not write anything to stdout" \
+        "Test case did not write anything to stderr"
+    check_not_in_file html/simple_some_fail_pass.html \
+        "This is the stdout of pass" "This is the stderr of pass" \
+        "This is the stdout of skip" "This is the stderr of skip" \
+        "This is the stdout of fail" "This is the stderr of fail"
+}
+
+
+utils_test_case results_filter__invalid
+results_filter__invalid_body() {
+    kyua db-exec "SELECT * FROM actions"
+
+    echo "kyua: E: Unknown result type 'foo-bar'." >experr
+    atf_check -s exit:2 -o empty -e file:experr kyua report-html \
+        --results-filter=passed,foo-bar
+}
+
+
 atf_init_test_cases() {
     atf_add_test_case default_behavior__ok
     atf_add_test_case default_behavior__no_actions
@@ -263,4 +290,7 @@ atf_init_test_cases() {
     atf_add_test_case force__no
 
     atf_add_test_case output__explicit
+
+    atf_add_test_case results_filter__ok
+    atf_add_test_case results_filter__invalid
 }

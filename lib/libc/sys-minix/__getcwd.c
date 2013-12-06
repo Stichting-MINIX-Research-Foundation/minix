@@ -3,7 +3,6 @@
  *								30 Apr 1989
  */
 
-#define chdir _chdir
 #include <sys/cdefs.h>
 #include "namespace.h"
 

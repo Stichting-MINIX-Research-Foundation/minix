@@ -36,8 +36,6 @@ __RCSID("$NetBSD: strcat_chk.c,v 1.4 2009/11/17 20:44:26 drochner Exp $");
 #include <ssp/ssp.h>
 #include <string.h>
 
-#if __SSP_FORTIFY_LEVEL > 0
-
 char *
 __strcat_chk(char * __restrict dst, const char * __restrict src, size_t slen)
 {
@@ -60,5 +58,3 @@ __strcat_chk(char * __restrict dst, const char * __restrict src, size_t slen)
 	*d = '\0';
 	return dst;
 }
-
-#endif

@@ -1,0 +1,80 @@
+.\" $NetBSD: pow.3,v 1.1 2011/09/17 10:51:53 jruoho Exp $
+.\"
+.\" Copyright (c) 2011 Jukka Ruohonen <jruohonen@iki.fi>
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd September 13, 2011
+.Dt POW 3
+.Os
+.Sh NAME
+.Nm pow ,
+.Nm powf
+.Nd power functions
+.Sh LIBRARY
+.Lb libm
+.Sh SYNOPSIS
+.In math.h
+.Ft double
+.Fn pow "double x" "double y"
+.Ft float
+.Fn powf "float x" "float y"
+.Sh DESCRIPTION
+The
+.Fn pow
+family of functions return
+.Fa x
+raised to the power of
+.Fa y .
+.Pp
+If
+.Fa x
+is negative and
+.Fa y
+is not an integer, the global variable
+.Va errno
+is set to
+.Er EDOM ,
+and on
+.Tn VAX
+a reserved operand fault is generated.
+A portable application should nevertheless ensure that
+.Fa y
+is an integer value whenever
+.Fa x
+is negative.
+.Sh RETURN VALUES
+.\"
+.\" XXX: List also the special return values?
+.\"
+Upon successful completion, the described functions return
+.Fa x^y .
+.Sh SEE ALSO
+.Xr exp 3 ,
+.Xr log 3
+.Sh STANDARDS
+The described functions conform to
+.St -isoC-99 .
+.Sh HISTORY
+The history of the power functions dates back to
+.At v6 .

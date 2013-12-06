@@ -7,7 +7,6 @@
 #include <string.h>
 
 #ifdef __weak_alias
-__weak_alias(statvfs1, _statvfs1)
 __weak_alias(statvfs, _statvfs)
 #endif
 

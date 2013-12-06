@@ -1,4 +1,4 @@
-/* $NetBSD: gdtoaimp.h,v 1.13 2012/03/13 21:13:34 christos Exp $ */
+/* $NetBSD: gdtoaimp.h,v 1.14 2013/04/19 10:41:53 joerg Exp $ */
 
 /****************************************************************
 
@@ -601,7 +601,7 @@ extern void memcpy_D2A ANSI((void*, const void*, size_t));
  extern char *dtoa ANSI((double d, int mode, int ndigits,
 			int *decpt, int *sign, char **rve));
  extern char *g__fmt ANSI((char*, char*, char*, int, ULong, size_t));
- extern int gethex ANSI((CONST char**, CONST FPI*, Long*, Bigint**, int));
+ extern int gethex ANSI((CONST char**, CONST FPI*, Long*, Bigint**, int, locale_t));
  extern void hexdig_init_D2A(Void);
  extern int hexnan ANSI((CONST char**, CONST FPI*, ULong*));
  extern int hi0bits_D2A ANSI((ULong));

@@ -6,10 +6,6 @@
 #include <sys/statfs.h>
 #include <sys/statvfs.h>
 
-#ifdef __weak_alias
-__weak_alias(fstatfs, _fstatfs)
-#endif
-
 int fstatfs(int fd, struct statfs *buffer)
 {
   struct statvfs svbuffer;

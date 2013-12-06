@@ -1,6 +1,7 @@
-# $NetBSD: md.vax,v 1.37 2011/11/10 17:18:22 chs Exp $
-./usr/include/ieeefp.h				comp-obsolete		obsolete
+# $NetBSD: md.vax,v 1.40 2013/11/01 07:48:31 mrg Exp $
 ./usr/include/gcc-4.5/tgmath.h			comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.8/tgmath.h			comp-c-include		gcccmds,gcc=48
+./usr/include/ieeefp.h				comp-obsolete		obsolete
 ./usr/include/vax				comp-c-include
 ./usr/include/vax/_G_config.h			comp-obsolete		obsolete
 ./usr/include/vax/ansi.h			comp-c-include
@@ -41,8 +42,8 @@
 ./usr/include/vax/macros.h			comp-c-include
 ./usr/include/vax/math.h			comp-c-include
 ./usr/include/vax/mcontext.h			comp-c-include
-./usr/include/vax/mutex.h			comp-c-include
 ./usr/include/vax/mtpr.h			comp-c-include
+./usr/include/vax/mutex.h			comp-c-include
 ./usr/include/vax/nexus.h			comp-c-include
 ./usr/include/vax/param.h			comp-c-include
 ./usr/include/vax/pcb.h				comp-c-include
@@ -76,4 +77,3 @@
 ./usr/include/vax/wchar_limits.h		comp-c-include
 ./usr/lib/c++rt0.o				comp-obsolete		obsolete
 ./usr/lib/scrt0.o				comp-obsolete		obsolete
-./usr/libdata/debug/sbin/ldconfig.debug		comp-sysutil-debug	debug,pic

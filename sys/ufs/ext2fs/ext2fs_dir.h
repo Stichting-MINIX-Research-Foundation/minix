@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_dir.h,v 1.18 2009/10/19 18:41:17 bouyer Exp $	*/
+/*	$NetBSD: ext2fs_dir.h,v 1.19 2012/05/09 00:21:18 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -66,6 +66,8 @@
 
 #ifndef _UFS_EXT2FS_EXT2FS_DIR_H_
 #define	_UFS_EXT2FS_EXT2FS_DIR_H_
+
+#include <ufs/ext2fs/ext2fs_dinode.h>
 
 /*
  * Theoretically, directories can be more than 2Gb in length, however, in

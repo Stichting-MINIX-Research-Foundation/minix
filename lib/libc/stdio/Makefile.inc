@@ -1,12 +1,12 @@
 #	from: @(#)Makefile.inc	5.7 (Berkeley) 6/27/91
-#	$NetBSD: Makefile.inc,v 1.41 2012/03/27 15:05:42 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.42 2013/04/19 15:22:25 joerg Exp $
 
 # stdio sources
 .PATH: ${.CURDIR}/stdio
 
 CPPFLAGS+=-DWIDE_DOUBLE
 
-SRCS+=	asprintf.c clrerr.c dprintf.c fclose.c fdopen.c feof.c ferror.c \
+SRCS+=	clrerr.c dprintf.c fclose.c fdopen.c feof.c ferror.c \
 	fflush.c fgetc.c fgetln.c fgetpos.c fgets.c fgetstr.c fgetwc.c \
 	fgetwln.c fgetws.c fileno.c findfp.c flags.c flockfile.c fopen.c \
 	fparseln.c fprintf.c fpurge.c fputc.c fputs.c fputwc.c fputws.c \
@@ -15,7 +15,7 @@ SRCS+=	asprintf.c clrerr.c dprintf.c fclose.c fdopen.c feof.c ferror.c \
 	getc.c getchar.c getdelim.c getline.c gettemp.c getw.c getwc.c \
 	getwchar.c makebuf.c mkdtemp.c mkstemp.c perror.c printf.c putc.c \
 	putchar.c puts.c putw.c putwc.c putwchar.c refill.c remove.c rewind.c \
-	rget.c scanf.c setbuf.c setbuffer.c setvbuf.c snprintf.c snprintf_ss.c \
+	rget.c scanf.c setbuf.c setbuffer.c setvbuf.c snprintf_ss.c \
 	sscanf.c stdio.c swprintf.c swscanf.c tmpfile.c ungetc.c ungetwc.c \
 	vasprintf.c vdprintf.c vfprintf.c vfscanf.c vfwprintf.c vfwscanf.c \
 	vprintf.c vscanf.c vsnprintf.c vsnprintf_ss.c vsscanf.c vswprintf.c \
@@ -23,7 +23,7 @@ SRCS+=	asprintf.c clrerr.c dprintf.c fclose.c fdopen.c feof.c ferror.c \
 SRCS+=	fmemopen.c
 
 .if !defined(AUDIT)
-SRCS+=	gets.c sprintf.c vsprintf.c tempnam.c tmpnam.c mktemp.c
+SRCS+=	gets.c vsprintf.c tempnam.c tmpnam.c mktemp.c
 .endif
 
 # namespace purity wrappers

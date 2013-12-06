@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.53 2012/08/01 15:24:22 martin Exp $	*/
+/*	$NetBSD: unistd.h,v 1.54 2012/11/02 21:41:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -62,12 +62,12 @@
 #define	_POSIX_VERSION			200112L
 #define	_POSIX2_VERSION			200112L
 
-#ifndef __minix
+#if !defined(__minix)
 /*
  * We support the posix_spawn() family of functions (unconditionally).
  */
 #define	_POSIX_SPAWN			200809L
-#endif
+#endif /* !defined(__minix) */
 
 /* execution-time symbolic constants */
 
@@ -307,6 +307,9 @@
 
 /* This is implemented */
 #define	_SC_SPAWN			86
+
+/* Extensions found in Solaris and Linux. */
+#define	_SC_PHYS_PAGES		121
 
 #ifdef _NETBSD_SOURCE
 /* Commonly provided sysconf() extensions */

@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.h,v 1.90 2011/09/24 00:05:38 christos Exp $	*/
+/*	$NetBSD: tty.h,v 1.91 2013/02/24 06:20:24 matt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -148,6 +148,7 @@ struct tty {
 	sigset_t t_sigs[TTYSIG_COUNT];	/* Pending signals */
 	int	t_sigcount;		/* # pending signals */
 	TAILQ_ENTRY(tty) t_sigqueue;	/* entry on pending signal list */
+	void	*t_softc;		/* pointer to driver's softc. */
 };
 
 #define	t_cc		t_termios.c_cc

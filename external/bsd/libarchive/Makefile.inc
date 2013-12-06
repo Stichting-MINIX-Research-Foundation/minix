@@ -6,9 +6,6 @@ USE_FORT?=	yes # complex string handling
 
 LIBARCHIVEDIR=	${NETBSDSRCDIR}/external/bsd/libarchive/dist
 
-.if defined(__MINIX)
-CPPFLAGS+=	-isystem ${DESTDIR}/usr/include
-.endif
 CPPFLAGS+=	-I${NETBSDSRCDIR}/external/bsd/libarchive/include
 CPPFLAGS+=	-DPLATFORM_CONFIG_H=\"config_netbsd.h\"
 

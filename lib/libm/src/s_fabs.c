@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_fabs.c,v 1.10 2002/05/26 22:01:55 wiz Exp $");
+__RCSID("$NetBSD: s_fabs.c,v 1.11 2013/11/29 22:16:10 joerg Exp $");
 #endif
 
 /*
@@ -21,6 +21,10 @@ __RCSID("$NetBSD: s_fabs.c,v 1.10 2002/05/26 22:01:55 wiz Exp $");
 
 #include "math.h"
 #include "math_private.h"
+
+#ifndef __HAVE_LONG_DOUBLE
+__strong_alias(fabsl, fabs)
+#endif
 
 double
 fabs(double x)

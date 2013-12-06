@@ -13,8 +13,5 @@ FILESDIR=${BINDIR}/misc
 terminfo.cdb: terminfo ${TOOL_TIC}
 	${_MKTARGET_CREATE}
 	${TOOL_TIC} -ax -o ${.TARGET} "${.CURDIR}/terminfo" 
-#LSC FIXME: Hack, on some platform TOOL_TIC automatically add 
-#           .db to the filename...
-	test -e ${.TARGET}.db && mv ${.TARGET}.db ${.TARGET}
 
 .include <bsd.prog.mk>

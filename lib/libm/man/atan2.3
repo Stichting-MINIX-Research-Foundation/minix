@@ -26,14 +26,15 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)atan2.3	5.1 (Berkeley) 5/2/91
-.\"	$NetBSD: atan2.3,v 1.16 2003/08/07 16:44:46 agc Exp $
+.\"	$NetBSD: atan2.3,v 1.18 2013/04/26 18:18:22 njoly Exp $
 .\"
-.Dd May 2, 1991
+.Dd January 29, 2013
 .Dt ATAN2 3
 .Os
 .Sh NAME
 .Nm atan2 ,
-.Nm atan2f
+.Nm atan2f ,
+.Nm atan2l
 .Nd arc tangent function of two variables
 .Sh LIBRARY
 .Lb libm
@@ -43,11 +44,14 @@
 .Fn atan2 "double y" "double x"
 .Ft float
 .Fn atan2f "float y" "float x"
+.Ft long double
+.Fn atan2l "long double y" "long double x"
 .Sh DESCRIPTION
 The
-.Fn atan2
+.Fn atan2 ,
+.Fn atan2f ,
 and
-.Fn atan2f
+.Fn atan2l
 functions compute the principal value of the arc tangent of
 .Ar y/ Ns Ar x ,
 using the signs of both arguments to determine the quadrant of
@@ -80,7 +84,7 @@ if
 .Ar x
 \*[Gt] 0,
 .It Ta sign( Ns Ar y Ns )*(\*(Pi -
-.Fn atan "\\*(Bay/x\\*(Ba" ) Ta
+.Fn atan "\*(Bay/x\*(Ba" ) Ta
 if
 .Ar x
 \*[Lt] 0,
@@ -88,7 +92,7 @@ if
 .No 0 Ta
 if x = y = 0, or
 .It Ta
-.Pf sign( Ar y Ns )*\\*(Pi/2 Ta
+.Pf sign( Ar y Ns )*\*(Pi/2 Ta
 if
 .Ar x
 = 0 \*(!=
@@ -189,4 +193,4 @@ r := \(sr(x\(**x+y\(**y);\0\0if r = 0 then x := copysign(1,x);
 The
 .Fn atan2
 function conforms to
-.St -ansiC .
+.St -isoC-99 .

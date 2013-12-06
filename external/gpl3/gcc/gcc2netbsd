@@ -1,0 +1,71 @@
+#! /bin/sh
+#
+#	$NetBSD: gcc2netbsd,v 1.2 2013/10/05 18:38:03 christos Exp $
+#
+# Copyright (c) 2011 The NetBSD Foundation, Inc.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+# ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+# TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+# PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+# BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+# gcc2netbsd:  convert a file source tree into a
+# format suitable for import.  Works on current dir.
+# You can run this only once if you want it to work.
+#
+# based on file 2netbsd
+#
+PROG="$(basename "$0")"
+
+if [ -z "$1" ]
+then
+	echo "Usage: $PROG <directory>" 1>&2
+	exit 1
+fi
+FILE="$1"
+
+### Remove the $'s around RCS tags
+cleantags "$FILE"
+
+RM="
+gcc/java
+gcc/ada
+gcc/fortran
+gcc/testsuite/ada
+gcc/testsuite/gfortran.dg
+gcc/testsuite/gfortran.fortran-torture
+libffi
+zlib
+boehm-gc
+libjava
+libada
+libgfortran
+"
+
+find "$FILE" -name .cvsignore -exec rm -f {} +
+find "$FILE" -name .gitignore -exec rm -f {} +
+for i in $RM; do
+	rm -fr "$FILE/$i"
+done
+
+echo You can import now.  Use the following command:
+echo cvs import src/external/gpl3/gcc/dist FSF gcc-X-Y-Z
+
+exit 0

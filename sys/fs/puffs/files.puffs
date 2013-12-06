@@ -1,0 +1,10 @@
+#	$NetBSD: files.puffs,v 1.5 2010/07/06 16:13:57 pooka Exp $
+
+deffs	PUFFS
+
+file	fs/puffs/puffs_compat.c		puffs
+file	fs/puffs/puffs_msgif.c		puffs
+file	fs/puffs/puffs_node.c		puffs
+file	fs/puffs/puffs_subr.c		puffs
+file	fs/puffs/puffs_vfsops.c		puffs
+file	fs/puffs/puffs_vnops.c		puffs

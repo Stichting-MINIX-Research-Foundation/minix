@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.149 2012/01/20 16:31:29 joerg Exp $
+#	$NetBSD: Makefile,v 1.160 2013/10/14 16:00:17 joerg Exp $
 #	@(#)Makefile	8.2 (Berkeley) 2/3/94
 #
 # All library objects contain sccsid strings by default; they may be
@@ -19,6 +19,8 @@
 
 .include "Makefile.inc"
 
+LIBC_MACHINE_ARCH?=	${MACHINE_ARCH}		# for MKCOMPAT
+
 LIB=		c
 CPPFLAGS+=	-I${.CURDIR}/include -I${.CURDIR}
 
@@ -35,22 +37,24 @@ CLEANFILES+=	assym.h assym.h.tmp
 
 assym.h: ${ARCHDIR}/genassym.cf
 	${_MKTARGET_CREATE}
-	${TOOL_GENASSYM} -- ${CC} ${CFLAGS} \
+	${TOOL_GENASSYM} -- ${CC} ${CFLAGS:N-Wa,--fatal-warnings} \
 		${CPPFLAGS} ${CPPFLAGS.assym.h} ${PROF} \
 		< ${ARCHDIR}/genassym.cf > assym.h.tmp && \
 	mv -f assym.h.tmp assym.h
 .endif
 
 # The following controls how to build compatibility code for old NetBSD
-# binaries. If BUILDCOLD is yes, then we build a separate library; otherwise
+# binaries. If BUILD_LEGACY is yes, then we build a separate library; otherwise
 # we include the code in libc.
-BUILDCOLD?= no
-.if "${BUILDCOLD}" == "yes"
+BUILD_LEGACY?= no
+.if "${BUILD_LEGACY}" == "yes"
 SUBDIR=compat
 .include <bsd.subdir.mk>
 .else
 COMPATDIR=${.CURDIR}/compat
 .include "${.CURDIR}/compat/Makefile.inc"
+# Marker for compat code that can't be easily isolated
+CPPFLAGS+=	-D__BUILD_LEGACY
 .endif
 
 .if defined(__MINIX)
@@ -64,6 +68,9 @@ SUBDIR+= pkgconfig
 .include "${.CURDIR}/db/Makefile.inc"
 .include "${.CURDIR}/citrus/Makefile.inc"
 .include "${.CURDIR}/compat-43/Makefile.inc"
+.if ${HAVE_LIBGCC} == "no"
+.include "${.CURDIR}/compiler_rt/Makefile.inc"
+.endif
 .include "${.CURDIR}/dlfcn/Makefile.inc"
 .include "${.CURDIR}/gdtoa/Makefile.inc"
 .include "${.CURDIR}/gen/Makefile.inc"
@@ -109,6 +116,9 @@ SUBDIR+= pkgconfig
 .include "${.CURDIR}/tls/Makefile.inc"
 .endif
 .include "${.CURDIR}/sys/Makefile.inc"
+.if ${HAVE_LIBGCC} == "no"
+.include "${NETBSDSRCDIR}/sys/lib/libunwind/Makefile.inc"
+.endif
 .include "${.CURDIR}/uuid/Makefile.inc"
 .if (${MKYP} != "no")
 .include "${.CURDIR}/yp/Makefile.inc"
@@ -167,3 +177,6 @@ CSHLIBFLAGS+=	-D_I18N_DYNAMIC
 
 # force the dynamic linker to initialize libc first
 SHLIB_SHFLAGS+=	-Wl,-z,initfirst
+.if ${HAVE_LIBGCC} == "no"
+SHLIB_SHFLAGS+= -Wl,-z,defs
+.endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: n_asincos.c,v 1.7 2003/08/07 16:44:50 agc Exp $	*/
+/*	$NetBSD: n_asincos.c,v 1.8 2013/11/24 14:41:53 martin Exp $	*/
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -103,6 +103,12 @@ asin(double x)
 
 }
 
+float
+asinf(float x)
+{
+	return (float)asin(x);
+}
+
 /* ACOS(X)
  * RETURNS ARC COS OF X
  * DOUBLE PRECISION (IEEE DOUBLE 53 bits, VAX D FORMAT 56 bits)
@@ -167,4 +173,10 @@ acos(double x)
 	else
 	    t=atan2(one,0.0);	/* t = PI/2 */
 	return(t+t);
+}
+
+float
+acosf(float x)
+{
+	return (float)acos(x);
 }

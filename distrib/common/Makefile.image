@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.image,v 1.31 2009/04/03 22:36:35 perry Exp $
+#	$NetBSD: Makefile.image,v 1.32 2013/05/24 21:34:19 christos Exp $
 #
 # Makefile snippet to build a tree from the provided lists,
 # and make an ffs file system image from that tree
@@ -82,12 +82,13 @@ CLEANFILES+=	${WORKSPEC} ${WORKSPEC}.tmp
 .endif	# ! target (${WORKSPEC})				# }
 
 .if defined(IMAGE)						# {
+IMGMAKEFSOPTIONS?= -o bsize=4096,fsize=512
 ${IMAGE}: ${WORKBUILT}
 	[ "${.OODATE}" = ${WORKBUILT} -a -f ${IMAGE} -a ! ${IMAGE} -ot ${WORKBUILT} ]  || { \
 	${_MKSHMSG_CREATE} ${.CURDIR:T}/${.TARGET}; \
 	rm -f ${.TARGET} ${.TARGET}.tmp; \
 	${TOOL_MAKEFS} -t ffs -B ${IMAGEENDIAN} -s ${IMAGESIZE} -F ${WORKSPEC} \
-	    -N ${NETBSDSRCDIR}/etc -o bsize=4096,fsize=512 \
+	    -N ${NETBSDSRCDIR}/etc ${IMGMAKEFSOPTIONS} \
 	    -o optimization=space,minfree=0 \
 	    ${MAKEFS_FLAGS} ${.TARGET}.tmp ${WORKDIR} \
 	&& mv -f ${.TARGET}.tmp ${.TARGET}; \

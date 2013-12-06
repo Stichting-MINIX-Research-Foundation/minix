@@ -13,11 +13,6 @@
 #include <unistd.h>
 #define OK	0
 
-#ifdef __weak_alias
-__weak_alias(mount, _mount)
-__weak_alias(umount, _umount)
-#endif
-
 #define FSDEFAULT "mfs"
 
 static char fspath[] = "/sbin/:/usr/pkg/bin/"; /* Must include trailing '/' */

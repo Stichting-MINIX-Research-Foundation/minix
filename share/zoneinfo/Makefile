@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.43 2009/04/10 16:16:12 apb Exp $
+#	$NetBSD: Makefile,v 1.44 2013/03/06 17:32:51 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -97,9 +97,16 @@ afterinstall: ${DATA} ${REDO} ${TABDATA}
 	    find . -type f -print | xargs ${TOOL_STAT} -qf '%d,%i %N' | sort \
 	| while read devino tzfile; do \
 		destfile=${DESTDIR}${TZDIR}/$${tzfile#./}; \
+		destdir=$$(dirname $${destfile}); \
+		if [ ! -d "$$destdir" ]; then \
+			${_MKSHMSG_INSTALL} $$destdir; \
+			${_MKSHECHO} ${INSTALL_DIR} -o ${BINOWN} -g ${BINGRP} \
+			$$destdir; \
+			${INSTALL_DIR} -o ${BINOWN} -g ${BINGRP} $$destdir; \
+		fi; \
 		if [ "$$devino" = "$$lastdevino" ]; then \
-			if  ldevino=`${TOOL_STAT} -qf '%d %i' $$lastfile` && \
-			    tdevino=`${TOOL_STAT} -qf '%d %i' $$destfile` && \
+			if  ldevino=$$(${TOOL_STAT} -qf '%d %i' $$lastfile) && \
+			    tdevino=$$(${TOOL_STAT} -qf '%d %i' $$destfile) && \
 			    [ "$$ldevino" = "$$tdevino" ]; then \
 				continue; \
 			fi; \

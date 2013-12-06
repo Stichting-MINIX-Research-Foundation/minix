@@ -1,4 +1,4 @@
-/* $NetBSD: __setjmp14.S,v 1.5 2011/06/12 05:44:36 matt Exp $ */
+/* $NetBSD: __setjmp14.S,v 1.6 2013/03/12 19:38:20 martin Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -55,6 +55,7 @@ LEAF(__setjmp14, 1)
 	stq	s6, (SC_REGS+_REG_S6)(a0)
 	stq	ra, (SC_REGS+_REG_RA)(a0)
 	stq	sp, (SC_REGS+_REG_SP)(a0)
+	stq	gp, (SC_REGS+_REG_GP)(a0)
 
 	/*
 	 * get signal information

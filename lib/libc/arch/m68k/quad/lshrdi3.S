@@ -1,4 +1,4 @@
-/*	$NetBSD: lshrdi3.S,v 1.5 2008/04/28 20:22:56 martin Exp $	*/
+/*	$NetBSD: lshrdi3.S,v 1.8 2013/07/18 21:18:36 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,11 +37,11 @@
 | d3 offset (32 - shift)
 
 ENTRY(__lshrdi3)
-	link	%a6,#0
-	moveml	%d2-%d4,%sp@-
-	movel	%a6@(8),%d0
-	movel	%a6@(12),%d1
-	movel	%a6@(16),%d2
+	link	%fp,#-12
+	moveml	%d2-%d4,(%sp)
+	movel	8(%fp),%d0
+	movel	12(%fp),%d1
+	movel	16(%fp),%d2
 	moveq	#32,%d3
 	subl	%d2,%d3
 	jgt	L2
@@ -55,6 +55,7 @@ L2:	lsrl	%d2,%d1
 	asll	%d3,%d4
 	orl	%d4,%d1
 	lsrl	%d2,%d0
-L3:	moveml	%a6@(-12),%d2-%d4
-	unlk	%a6
+L3:	moveml	-12(%fp),%d2-%d4
+	unlk	%fp
 	rts
+END(__lshrdi3)

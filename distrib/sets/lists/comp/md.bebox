@@ -1,4 +1,4 @@
-# $NetBSD: md.bebox,v 1.35 2011/08/10 07:56:59 kiyohara Exp $
+# $NetBSD: md.bebox,v 1.37 2013/11/17 14:34:11 alnsn Exp $
 ./usr/include/bebox				comp-c-include
 ./usr/include/bebox/_G_config.h			comp-obsolete		obsolete
 ./usr/include/bebox/ansi.h			comp-c-include
@@ -56,6 +56,7 @@
 ./usr/include/bebox/rwlock.h			comp-c-include
 ./usr/include/bebox/setjmp.h			comp-c-include
 ./usr/include/bebox/signal.h			comp-c-include
+./usr/include/bebox/sljitarch.h			comp-c-include
 ./usr/include/bebox/spkr.h			comp-c-include
 ./usr/include/bebox/spr.h			comp-obsolete		obsolete
 ./usr/include/bebox/stdarg.h			comp-obsolete		obsolete
@@ -66,5 +67,3 @@
 ./usr/include/bebox/vmparam.h			comp-c-include
 ./usr/include/bebox/wchar_limits.h		comp-c-include
 ./usr/include/ieeefp.h				comp-c-include
-./usr/libdata/debug/usr/bin/fdformat.debug	comp-util-debug		debug
-./usr/libdata/debug/usr/mdec/mkbootimage.debug	comp-sysutil-debug	debug

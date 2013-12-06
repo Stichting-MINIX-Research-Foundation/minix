@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.163 2012/07/03 21:03:40 sjg Exp $	*/
+/*	$NetBSD: job.c,v 1.176 2013/08/04 16:48:15 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.163 2012/07/03 21:03:40 sjg Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.176 2013/08/04 16:48:15 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.163 2012/07/03 21:03:40 sjg Exp $");
+__RCSID("$NetBSD: job.c,v 1.176 2013/08/04 16:48:15 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -139,6 +139,7 @@ __RCSID("$NetBSD: job.c,v 1.163 2012/07/03 21:03:40 sjg Exp $");
 #include <sys/time.h>
 #include <sys/wait.h>
 
+#include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
 #ifndef USE_SELECT
@@ -299,6 +300,7 @@ static Shell *commandShell = &shells[DEFSHELL_INDEX]; /* this is the shell to
 const char *shellPath = NULL,		  	  /* full pathname of
 						   * executable image */
            *shellName = NULL;		      	  /* last component of shell */
+char *shellErrFlag = NULL;
 static const char *shellArgv = NULL;		  /* Custom shell args */
 
 
@@ -330,7 +332,7 @@ static Job childExitJob;	/* child exit pseudo-job */
 
 #define TARG_FMT  "%s %s ---\n" /* Default format */
 #define MESSAGE(fp, gn) \
-	if (maxJobs != 1) \
+	if (maxJobs != 1 && targPrefix && *targPrefix) \
 	    (void)fprintf(fp, TARG_FMT, targPrefix, gn->name)
 
 static sigset_t caught_signals;	/* Set of signals we handle */
@@ -400,6 +402,15 @@ JobCreatePipe(Job *job, int minfd)
     if (pipe(job->jobPipe) == -1)
 	Punt("Cannot create pipe: %s", strerror(errno));
 
+    for (i = 0; i < 2; i++) {
+       /* Avoid using low numbered fds */
+       fd = fcntl(job->jobPipe[i], F_DUPFD, minfd);
+       if (fd != -1) {
+	   close(job->jobPipe[i]);
+	   job->jobPipe[i] = fd;
+       }
+    }
+    
     /* Set close-on-exec flag for both */
     (void)fcntl(job->jobPipe[0], F_SETFD, 1);
     (void)fcntl(job->jobPipe[1], F_SETFD, 1);
@@ -412,15 +423,6 @@ JobCreatePipe(Job *job, int minfd)
      */
     fcntl(job->jobPipe[0], F_SETFL, 
 	fcntl(job->jobPipe[0], F_GETFL, 0) | O_NONBLOCK);
-
-    for (i = 0; i < 2; i++) {
-       /* Avoid using low numbered fds */
-       fd = fcntl(job->jobPipe[i], F_DUPFD, minfd);
-       if (fd != -1) {
-	   close(job->jobPipe[i]);
-	   job->jobPipe[i] = fd;
-       }
-    }
 }
 
 /*-
@@ -477,7 +479,8 @@ JobCondPassSig(int signo)
 static void
 JobChildSig(int signo MAKE_ATTR_UNUSED)
 {
-    write(childExitJob.outPipe, CHILD_EXIT, 1);
+    while (write(childExitJob.outPipe, CHILD_EXIT, 1) == -1 && errno == EAGAIN)
+	continue;
 }
 
 
@@ -504,7 +507,9 @@ JobContinueSig(int signo MAKE_ATTR_UNUSED)
      * Defer sending to SIGCONT to our stopped children until we return
      * from the signal handler.
      */
-    write(childExitJob.outPipe, DO_JOB_RESUME, 1);
+    while (write(childExitJob.outPipe, DO_JOB_RESUME, 1) == -1 &&
+	errno == EAGAIN)
+	continue;
 }
 
 /*-
@@ -675,7 +680,6 @@ JobPrintCommand(void *cmdp, void *jobp)
     char	  *escCmd = NULL;    /* Command with quotes/backticks escaped */
     char     	  *cmd = (char *)cmdp;
     Job           *job = (Job *)jobp;
-    char	  *cp, *tmp;
     int           i, j;
 
     noSpecials = NoExecute(job->node);
@@ -847,11 +851,6 @@ JobPrintCommand(void *cmdp, void *jobp)
 	    job->flags |= JOB_TRACED;
     }
     
-    if ((cp = Check_Cwd_Cmd(cmd)) != NULL) {
-	    DBPRINTF("test -d %s && ", cp);
-	    DBPRINTF("cd %s\n", cp);
-    }
-
     DBPRINTF(cmdTemplate, cmd);
     free(cmdStart);
     if (escCmd)
@@ -870,10 +869,6 @@ JobPrintCommand(void *cmdp, void *jobp)
     }
     if (shutUp && commandShell->hasEchoCtl) {
 	DBPRINTF("%s\n", commandShell->echoOn);
-    }
-    if (cp != NULL) {
-	    DBPRINTF("test -d %s && ", cp);
-	    DBPRINTF("cd %s\n", Var_Value(".OBJDIR", VAR_GLOBAL, &tmp));
     }
     return 0;
 }
@@ -1171,7 +1166,8 @@ Job_Touch(GNode *gn, Boolean silent)
 		 */
 		if (read(streamID, &c, 1) == 1) {
 		    (void)lseek(streamID, (off_t)0, SEEK_SET);
-		    (void)write(streamID, &c, 1);
+		    while (write(streamID, &c, 1) == -1 && errno == EAGAIN)
+			continue;
 		}
 
 		(void)close(streamID);
@@ -1237,8 +1233,10 @@ Job_CheckCommands(GNode *gn, void (*abortProc)(const char *, ...))
 	    static const char msg[] = ": don't know how to make";
 
 	    if (gn->flags & FROM_DEPEND) {
-		fprintf(stdout, "%s: ignoring stale %s for %s\n",
-			progname, makeDependfile, gn->name);
+		if (!Job_RunTarget(".STALE", gn->fname))
+		    fprintf(stdout, "%s: %s, %d: ignoring stale %s for %s\n",
+			progname, gn->fname, gn->lineno, makeDependfile,
+			gn->name);
 		return TRUE;
 	    }
 
@@ -1381,11 +1379,13 @@ JobExec(Job *job, char **argv)
 	 * we can kill it and all its descendants in one fell swoop,
 	 * by killing its process family, but not commit suicide.
 	 */
+#if defined(MAKE_NATIVE) || defined(HAVE_SETPGID)
 #if defined(SYSV) || defined(__minix)
 	/* XXX: dsl - I'm sure this should be setpgrp()... */
 	(void)setsid();
 #else
 	(void)setpgid(0, getpid());
+#endif
 #endif
 
 	Var_ExportVars();
@@ -2051,31 +2051,45 @@ Job_CatchOutput(void)
     (void)fflush(stdout);
 
     /* The first fd in the list is the job token pipe */
-    nready = poll(fds + 1 - wantToken, nfds - 1 + wantToken, POLL_MSEC);
+    do {
+	nready = poll(fds + 1 - wantToken, nfds - 1 + wantToken, POLL_MSEC);
+    } while (nready < 0 && errno == EINTR);
 
-    if (nready < 0 || readyfd(&childExitJob)) {
+    if (nready < 0)
+	Punt("poll: %s", strerror(errno));
+
+    if (nready > 0 && readyfd(&childExitJob)) {
 	char token = 0;
-	nready -= 1;
-	(void)read(childExitJob.inPipe, &token, 1);
-	if (token == DO_JOB_RESUME[0])
-	    /* Complete relay requested from our SIGCONT handler */
-	    JobRestartJobs();
-	Job_CatchChildren();
+	ssize_t count;
+	count = read(childExitJob.inPipe, &token, 1);
+	switch (count) {
+	case 0:
+	    Punt("unexpected eof on token pipe");
+	case -1:
+	    Punt("token pipe read: %s", strerror(errno));
+	case 1:
+	    if (token == DO_JOB_RESUME[0])
+		/* Complete relay requested from our SIGCONT handler */
+		JobRestartJobs();
+	    break;
+	default:
+	    abort();
+	}
+	--nready;
     }
 
-    if (nready <= 0)
-	return;
-
-    if (wantToken && readyfd(&tokenWaitJob))
-	nready--;
+    Job_CatchChildren();
+    if (nready == 0)
+	    return;
 
     for (i = 2; i < nfds; i++) {
 	if (!fds[i].revents)
 	    continue;
 	job = jobfds[i];
-	if (job->job_state != JOB_ST_RUNNING)
-	    continue;
-	JobDoOutput(job, FALSE);
+	if (job->job_state == JOB_ST_RUNNING)
+	    JobDoOutput(job, FALSE);
+	if (--nready == 0)
+		return;
     }
 }
 
@@ -2123,6 +2137,24 @@ Shell_Init(void)
     if (commandShell->echo == NULL) {
 	commandShell->echo = "";
     }
+    if (commandShell->hasErrCtl && *commandShell->exit) {
+	if (shellErrFlag &&
+	    strcmp(commandShell->exit, &shellErrFlag[1]) != 0) {
+	    free(shellErrFlag);
+	    shellErrFlag = NULL;
+	}
+	if (!shellErrFlag) {
+	    int n = strlen(commandShell->exit) + 2;
+
+	    shellErrFlag = bmake_malloc(n);
+	    if (shellErrFlag) {
+		snprintf(shellErrFlag, n, "-%s", commandShell->exit);
+	    }
+	}
+    } else if (shellErrFlag) {
+	free(shellErrFlag);
+	shellErrFlag = NULL;
+    }
 }
 
 /*-
@@ -2166,8 +2198,7 @@ Job_SetPrefix(void)
 void
 Job_Init(void)
 {
-    GNode         *begin;     /* node for commands to do at the very start */
-
+    Job_SetPrefix();
     /* Allocate space for all the job info */
     job_table = bmake_malloc(maxJobs * sizeof *job_table);
     memset(job_table, 0, maxJobs * sizeof *job_table);
@@ -2243,15 +2274,7 @@ Job_Init(void)
     ADDSIG(SIGCONT, JobContinueSig)
 #undef ADDSIG
 
-    begin = Targ_FindNode(".BEGIN", TARG_NOCREATE);
-
-    if (begin != NULL) {
-	JobRun(begin);
-	if (begin->made == ERROR) {
-	    PrintOnError(begin, "\n\nStop.");
-	    exit(1);
-	}
-    }
+    (void)Job_RunTarget(".BEGIN", NULL);
     postCommands = Targ_FindNode(".END", TARG_CREATE);
 }
 
@@ -2477,6 +2500,8 @@ Job_ParseShell(char *line)
 	    commandShell = bmake_malloc(sizeof(Shell));
 	    *commandShell = newShell;
 	}
+	/* this will take care of shellErrFlag */
+	Shell_Init();
     }
 
     if (commandShell->echoOn && commandShell->echoOff) {
@@ -2787,7 +2812,8 @@ JobTokenAdd(void)
     if (DEBUG(JOB))
 	fprintf(debug_file, "(%d) aborting %d, deposit token %c\n",
 	    getpid(), aborting, JOB_TOKENS[aborting]);
-    write(tokenWaitJob.outPipe, &tok, 1);
+    while (write(tokenWaitJob.outPipe, &tok, 1) == -1 && errno == EAGAIN)
+	continue;
 }
 
 /*-
@@ -2808,6 +2834,8 @@ Job_ServerStart(int max_tokens, int jp_0, int jp_1)
 	/* Pipe passed in from parent */
 	tokenWaitJob.inPipe = jp_0;
 	tokenWaitJob.outPipe = jp_1;
+	(void)fcntl(jp_0, F_SETFD, 1);
+	(void)fcntl(jp_1, F_SETFD, 1);
 	return;
     }
 
@@ -2900,17 +2928,51 @@ Job_TokenWithdraw(void)
 	while (read(tokenWaitJob.inPipe, &tok1, 1) == 1)
 	    continue;
 	/* And put the stopper back */
-	write(tokenWaitJob.outPipe, &tok, 1);
+	while (write(tokenWaitJob.outPipe, &tok, 1) == -1 && errno == EAGAIN)
+	    continue;
 	Fatal("A failure has been detected in another branch of the parallel make");
     }
 
     if (count == 1 && jobTokensRunning == 0)
 	/* We didn't want the token really */
-	write(tokenWaitJob.outPipe, &tok, 1);
+	while (write(tokenWaitJob.outPipe, &tok, 1) == -1 && errno == EAGAIN)
+	    continue;
 
     jobTokensRunning++;
     if (DEBUG(JOB))
 	fprintf(debug_file, "(%d) withdrew token\n", getpid());
+    return TRUE;
+}
+
+/*-
+ *-----------------------------------------------------------------------
+ * Job_RunTarget --
+ *	Run the named target if found. If a filename is specified, then
+ *	set that to the sources.
+ *
+ * Results:
+ *	None
+ *
+ * Side Effects:
+ * 	exits if the target fails.
+ *
+ *-----------------------------------------------------------------------
+ */
+Boolean
+Job_RunTarget(const char *target, const char *fname) {
+    GNode *gn = Targ_FindNode(target, TARG_NOCREATE);
+
+    if (gn == NULL)
+	return FALSE;
+
+    if (fname)
+	Var_Set(ALLSRC, fname, gn, 0);
+
+    JobRun(gn);
+    if (gn->made == ERROR) {
+	PrintOnError(gn, "\n\nStop.");
+	exit(1);
+    }
     return TRUE;
 }
 

@@ -1,6 +1,6 @@
 
 #------------------------------------------------------------------------------
-# $File: sniffer,v 1.18 2011/08/08 08:49:27 christos Exp $
+# $File: sniffer,v 1.19 2013/01/06 01:11:04 christos Exp $
 # sniffer:  file(1) magic for packet capture files
 #
 # From: guy@alum.mit.edu (Guy Harris)
@@ -17,6 +17,7 @@
 >6	leshort		2		(Token Ring)
 >6	leshort		3		(FDDI)
 >6	leshort		4		(ATM)
+>6	leshort		>4		(type %d)
 
 #
 # Microsoft Network Monitor 2.x capture files.
@@ -29,6 +30,12 @@
 >6	leshort		2		(Token Ring)
 >6	leshort		3		(FDDI)
 >6	leshort		4		(ATM)
+>6	leshort		5		(IP-over-IEEE 1394)
+>6	leshort		6		(802.11)
+>6	leshort		7		(Raw IP)
+>6	leshort		8		(Raw IP)
+>6	leshort		9		(Raw IP)
+>6	leshort		>9		(type %d)
 
 #
 # Network General Sniffer capture files.
@@ -57,6 +64,7 @@
 # Sorry, make that "Network Associates Sniffer Basic, and Windows
 # Sniffer Pro", capture files."
 # Sorry, make that "Network General Sniffer capture files."
+# Sorry, make that "NetScout Sniffer capture files."
 #
 0	string		XCP\0		NetXRay capture file
 >4	string		>\0		- version %s
@@ -73,8 +81,7 @@
 # the main program that uses that format, but there are other programs
 # that use "libpcap", or that use the same capture file format.)
 #
-0	ubelong		0xa1b2c3d4	tcpdump capture file (big-endian)
-!:mime	application/vnd.tcpdump.pcap
+0	name		pcap-be
 >4	beshort		x		- version %d
 >6	beshort		x		\b.%d
 >20	belong		0		(No link-layer encapsulation
@@ -116,8 +123,10 @@
 >20	belong		127		(802.11 with radiotap header
 >20	belong		129		(Linux ARCNET
 >20	belong		138		(Apple IP over IEEE 1394
+>20	belong		139		(MTP2 with pseudo-header
 >20	belong		140		(MTP2
 >20	belong		141		(MTP3
+>20	belong		142		(SCCP
 >20	belong		143		(DOCSIS
 >20	belong		144		(IrDA
 >20	belong		147		(Private use 0
@@ -137,72 +146,53 @@
 >20	belong		161		(Private use 14
 >20	belong		162		(Private use 15
 >20	belong		163		(802.11 with AVS header
+>20	belong		165		(BACnet MS/TP
+>20	belong		166		(PPPD
+>20	belong		169		(GPRS LLC
+>20	belong		177		(Linux LAPD
+>20	belong		187		(Bluetooth HCI H4
+>20	belong		189		(Linux USB
+>20	belong		192		(PPI
+>20	belong		195		(802.15.4
+>20	belong		196		(SITA
+>20	belong		197		(Endace ERF
+>20	belong		201		(Bluetooth HCI H4 with pseudo-header
+>20	belong		202		(AX.25 with KISS header
+>20	belong		203		(LAPD
+>20	belong		204		(PPP with direction pseudo-header
+>20	belong		205		(Cisco HDLC with direction pseudo-header
+>20	belong		206		(Frame Relay with direction pseudo-header
+>20	belong		209		(Linux IPMB
+>20	belong		215		(802.15.4 with non-ASK PHY header
+>20	belong		220		(Memory-mapped Linux USB
+>20	belong		224		(Fibre Channel FC-2
+>20	belong		225		(Fibre Channel FC-2 with frame delimiters
+>20	belong		226		(Solaris IPNET
+>20	belong		227		(SocketCAN
+>20	belong		228		(Raw IPv4
+>20	belong		229		(Raw IPv6
+>20	belong		230		(802.15.4 without FCS
+>20	belong		231		(D-Bus messages
+>20	belong		235		(DVB-CI
+>20	belong		236		(MUX27010
+>20	belong		237		(STANAG 5066 D_PDUs
+>20	belong		239		(Linux netlink NFLOG messages
+>20	belong		240		(Hilscher netAnalyzer
+>20	belong		241		(Hilscher netAnalyzer with delimiters
+>20	belong		242		(IP-over-Infiniband
+>20	belong		243		(MPEG-2 Transport Stream packets
+>20	belong		244		(ng4t ng40
+>20	belong		245		(NFC LLCP
+>20	belong		247		(Infiniband
+>20	belong		248		(SCTP
 >16	belong		x		\b, capture length %d)
+
+0	ubelong		0xa1b2c3d4	tcpdump capture file (big-endian)
+!:mime	application/vnd.tcpdump.pcap
+>0	use	pcap-be
 0	ulelong		0xa1b2c3d4	tcpdump capture file (little-endian)
 !:mime	application/vnd.tcpdump.pcap
->4	leshort		x		- version %d
->6	leshort		x		\b.%d
->20	lelong		0		(No link-layer encapsulation
->20	lelong		1		(Ethernet
->20	lelong		2		(3Mb Ethernet
->20	lelong		3		(AX.25
->20	lelong		4		(ProNET
->20	lelong		5		(CHAOS
->20	lelong		6		(Token Ring
->20	lelong		7		(ARCNET
->20	lelong		8		(SLIP
->20	lelong		9		(PPP
->20	lelong		10		(FDDI
->20	lelong		11		(RFC 1483 ATM
->20	lelong		12		(raw IP
->20	lelong		13		(BSD/OS SLIP
->20	lelong		14		(BSD/OS PPP
->20	lelong		19		(Linux ATM Classical IP
->20	lelong		50		(PPP or Cisco HDLC
->20	lelong		51		(PPP-over-Ethernet
->20	lelong		99		(Symantec Enterprise Firewall
->20	lelong		100		(RFC 1483 ATM
->20	lelong		101		(raw IP
->20	lelong		102		(BSD/OS SLIP
->20	lelong		103		(BSD/OS PPP
->20	lelong		104		(BSD/OS Cisco HDLC
->20	lelong		105		(802.11
->20	lelong		106		(Linux Classical IP over ATM
->20	lelong		107		(Frame Relay
->20	lelong		108		(OpenBSD loopback
->20	lelong		109		(OpenBSD IPsec encrypted
->20	lelong		112		(Cisco HDLC
->20	lelong		113		(Linux "cooked"
->20	lelong		114		(LocalTalk
->20	lelong		117		(OpenBSD PFLOG
->20	lelong		119		(802.11 with Prism header
->20	lelong		122		(RFC 2625 IP over Fibre Channel
->20	lelong		123		(SunATM
->20	lelong		127		(802.11 with radiotap header
->20	lelong		129		(Linux ARCNET
->20	lelong		138		(Apple IP over IEEE 1394
->20	lelong		140		(MTP2
->20	lelong		141		(MTP3
->20	lelong		143		(DOCSIS
->20	lelong		144		(IrDA
->20	lelong		147		(Private use 0
->20	lelong		148		(Private use 1
->20	lelong		149		(Private use 2
->20	lelong		150		(Private use 3
->20	lelong		151		(Private use 4
->20	lelong		152		(Private use 5
->20	lelong		153		(Private use 6
->20	lelong		154		(Private use 7
->20	lelong		155		(Private use 8
->20	lelong		156		(Private use 9
->20	lelong		157		(Private use 10
->20	lelong		158		(Private use 11
->20	lelong		159		(Private use 12
->20	lelong		160		(Private use 13
->20	lelong		161		(Private use 14
->20	lelong		162		(Private use 15
->20	lelong		163		(802.11 with AVS header
->16	lelong		x		\b, capture length %d)
+>0	use	\^pcap-be
 
 #
 # "libpcap"-with-Alexey-Kuznetsov's-patches capture files.
@@ -211,43 +201,9 @@
 # that use "libpcap", or that use the same capture file format.)
 #
 0	ubelong		0xa1b2cd34	extended tcpdump capture file (big-endian)
->4	beshort		x		- version %d
->6	beshort		x		\b.%d
->20	belong		0		(No link-layer encapsulation
->20	belong		1		(Ethernet
->20	belong		2		(3Mb Ethernet
->20	belong		3		(AX.25
->20	belong		4		(ProNET
->20	belong		5		(CHAOS
->20	belong		6		(Token Ring
->20	belong		7		(ARCNET
->20	belong		8		(SLIP
->20	belong		9		(PPP
->20	belong		10		(FDDI
->20	belong		11		(RFC 1483 ATM
->20	belong		12		(raw IP
->20	belong		13		(BSD/OS SLIP
->20	belong		14		(BSD/OS PPP
->16	belong		x		\b, capture length %d)
+>0	use	pcap-be
 0	ulelong		0xa1b2cd34	extended tcpdump capture file (little-endian)
->4	leshort		x		- version %d
->6	leshort		x		\b.%d
->20	lelong		0		(No link-layer encapsulation
->20	lelong		1		(Ethernet
->20	lelong		2		(3Mb Ethernet
->20	lelong		3		(AX.25
->20	lelong		4		(ProNET
->20	lelong		5		(CHAOS
->20	lelong		6		(Token Ring
->20	lelong		7		(ARCNET
->20	lelong		8		(SLIP
->20	lelong		9		(PPP
->20	lelong		10		(FDDI
->20	lelong		11		(RFC 1483 ATM
->20	lelong		12		(raw IP
->20	lelong		13		(BSD/OS SLIP
->20	lelong		14		(BSD/OS PPP
->16	lelong		x		\b, capture length %d)
+>0	use	\^pcap-be
 
 #
 # "pcap-ng" capture files.
@@ -295,9 +251,9 @@
 >8	lelong		x		\b, %d stations found
 
 #
-# EtherPeek/AiroPeek "version 9" capture files.
+# *Peek tagged capture files.
 #
-0	string		\177ver		EtherPeek/AiroPeek capture file
+0	string		\177ver		EtherPeek/AiroPeek/OmniPeek capture file
 
 #
 # Visual Networks traffic capture files.

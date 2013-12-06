@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.238 2011/09/20 14:01:33 chs Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.259 2013/10/18 15:15:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.238 2011/09/20 14:01:33 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.259 2013/10/18 15:15:22 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -88,10 +88,10 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.238 2011/09/20 14:01:33 chs Exp $");
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/specfs/specdev.h>
 
-#include <ufs/ufs/inode.h>
-#include <ufs/ufs/dir.h>
-#include <ufs/ufs/ufsmount.h>
-#include <ufs/ufs/ufs_extern.h>
+#include <ufs/lfs/ulfs_inode.h>
+#include <ufs/lfs/ulfsmount.h>
+#include <ufs/lfs/ulfs_bswap.h>
+#include <ufs/lfs/ulfs_extern.h>
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_pmap.h>
@@ -99,56 +99,70 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.238 2011/09/20 14:01:33 chs Exp $");
 #include <uvm/uvm_pager.h>
 
 #include <ufs/lfs/lfs.h>
+#include <ufs/lfs/lfs_kernel.h>
 #include <ufs/lfs/lfs_extern.h>
 
 extern pid_t lfs_writer_daemon;
 int lfs_ignore_lazy_sync = 1;
 
+static int lfs_openextattr(void *v);
+static int lfs_closeextattr(void *v);
+static int lfs_getextattr(void *v);
+static int lfs_setextattr(void *v);
+static int lfs_listextattr(void *v);
+static int lfs_deleteextattr(void *v);
+
 /* Global vfs data structures for lfs. */
 int (**lfs_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc lfs_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
-	{ &vop_lookup_desc, ufs_lookup },		/* lookup */
+	{ &vop_lookup_desc, ulfs_lookup },		/* lookup */
 	{ &vop_create_desc, lfs_create },		/* create */
-	{ &vop_whiteout_desc, ufs_whiteout },		/* whiteout */
+	{ &vop_whiteout_desc, ulfs_whiteout },		/* whiteout */
 	{ &vop_mknod_desc, lfs_mknod },			/* mknod */
-	{ &vop_open_desc, ufs_open },			/* open */
+	{ &vop_open_desc, ulfs_open },			/* open */
 	{ &vop_close_desc, lfs_close },			/* close */
-	{ &vop_access_desc, ufs_access },		/* access */
+	{ &vop_access_desc, ulfs_access },		/* access */
 	{ &vop_getattr_desc, lfs_getattr },		/* getattr */
 	{ &vop_setattr_desc, lfs_setattr },		/* setattr */
 	{ &vop_read_desc, lfs_read },			/* read */
 	{ &vop_write_desc, lfs_write },			/* write */
-	{ &vop_ioctl_desc, ufs_ioctl },			/* ioctl */
+	{ &vop_ioctl_desc, ulfs_ioctl },		/* ioctl */
 	{ &vop_fcntl_desc, lfs_fcntl },			/* fcntl */
-	{ &vop_poll_desc, ufs_poll },			/* poll */
+	{ &vop_poll_desc, ulfs_poll },			/* poll */
 	{ &vop_kqfilter_desc, genfs_kqfilter },		/* kqfilter */
-	{ &vop_revoke_desc, ufs_revoke },		/* revoke */
+	{ &vop_revoke_desc, ulfs_revoke },		/* revoke */
 	{ &vop_mmap_desc, lfs_mmap },			/* mmap */
 	{ &vop_fsync_desc, lfs_fsync },			/* fsync */
-	{ &vop_seek_desc, ufs_seek },			/* seek */
+	{ &vop_seek_desc, ulfs_seek },			/* seek */
 	{ &vop_remove_desc, lfs_remove },		/* remove */
 	{ &vop_link_desc, lfs_link },			/* link */
 	{ &vop_rename_desc, lfs_rename },		/* rename */
 	{ &vop_mkdir_desc, lfs_mkdir },			/* mkdir */
 	{ &vop_rmdir_desc, lfs_rmdir },			/* rmdir */
 	{ &vop_symlink_desc, lfs_symlink },		/* symlink */
-	{ &vop_readdir_desc, ufs_readdir },		/* readdir */
-	{ &vop_readlink_desc, ufs_readlink },		/* readlink */
-	{ &vop_abortop_desc, ufs_abortop },		/* abortop */
+	{ &vop_readdir_desc, ulfs_readdir },		/* readdir */
+	{ &vop_readlink_desc, ulfs_readlink },		/* readlink */
+	{ &vop_abortop_desc, ulfs_abortop },		/* abortop */
 	{ &vop_inactive_desc, lfs_inactive },		/* inactive */
 	{ &vop_reclaim_desc, lfs_reclaim },		/* reclaim */
-	{ &vop_lock_desc, ufs_lock },			/* lock */
-	{ &vop_unlock_desc, ufs_unlock },		/* unlock */
-	{ &vop_bmap_desc, ufs_bmap },			/* bmap */
+	{ &vop_lock_desc, ulfs_lock },			/* lock */
+	{ &vop_unlock_desc, ulfs_unlock },		/* unlock */
+	{ &vop_bmap_desc, ulfs_bmap },			/* bmap */
 	{ &vop_strategy_desc, lfs_strategy },		/* strategy */
-	{ &vop_print_desc, ufs_print },			/* print */
-	{ &vop_islocked_desc, ufs_islocked },		/* islocked */
-	{ &vop_pathconf_desc, ufs_pathconf },		/* pathconf */
-	{ &vop_advlock_desc, ufs_advlock },		/* advlock */
+	{ &vop_print_desc, ulfs_print },		/* print */
+	{ &vop_islocked_desc, ulfs_islocked },		/* islocked */
+	{ &vop_pathconf_desc, ulfs_pathconf },		/* pathconf */
+	{ &vop_advlock_desc, ulfs_advlock },		/* advlock */
 	{ &vop_bwrite_desc, lfs_bwrite },		/* bwrite */
 	{ &vop_getpages_desc, lfs_getpages },		/* getpages */
 	{ &vop_putpages_desc, lfs_putpages },		/* putpages */
+	{ &vop_openextattr_desc, lfs_openextattr },	/* openextattr */
+	{ &vop_closeextattr_desc, lfs_closeextattr },	/* closeextattr */
+	{ &vop_getextattr_desc, lfs_getextattr },	/* getextattr */
+	{ &vop_setextattr_desc, lfs_setextattr },	/* setextattr */
+	{ &vop_listextattr_desc, lfs_listextattr },	/* listextattr */
+	{ &vop_deleteextattr_desc, lfs_deleteextattr },	/* deleteextattr */
 	{ NULL, NULL }
 };
 const struct vnodeopv_desc lfs_vnodeop_opv_desc =
@@ -162,13 +176,13 @@ const struct vnodeopv_entry_desc lfs_specop_entries[] = {
 	{ &vop_mknod_desc, spec_mknod },		/* mknod */
 	{ &vop_open_desc, spec_open },			/* open */
 	{ &vop_close_desc, lfsspec_close },		/* close */
-	{ &vop_access_desc, ufs_access },		/* access */
+	{ &vop_access_desc, ulfs_access },		/* access */
 	{ &vop_getattr_desc, lfs_getattr },		/* getattr */
 	{ &vop_setattr_desc, lfs_setattr },		/* setattr */
-	{ &vop_read_desc, ufsspec_read },		/* read */
-	{ &vop_write_desc, ufsspec_write },		/* write */
+	{ &vop_read_desc, ulfsspec_read },		/* read */
+	{ &vop_write_desc, ulfsspec_write },		/* write */
 	{ &vop_ioctl_desc, spec_ioctl },		/* ioctl */
-	{ &vop_fcntl_desc, ufs_fcntl },			/* fcntl */
+	{ &vop_fcntl_desc, ulfs_fcntl },		/* fcntl */
 	{ &vop_poll_desc, spec_poll },			/* poll */
 	{ &vop_kqfilter_desc, spec_kqfilter },		/* kqfilter */
 	{ &vop_revoke_desc, spec_revoke },		/* revoke */
@@ -186,17 +200,23 @@ const struct vnodeopv_entry_desc lfs_specop_entries[] = {
 	{ &vop_abortop_desc, spec_abortop },		/* abortop */
 	{ &vop_inactive_desc, lfs_inactive },		/* inactive */
 	{ &vop_reclaim_desc, lfs_reclaim },		/* reclaim */
-	{ &vop_lock_desc, ufs_lock },			/* lock */
-	{ &vop_unlock_desc, ufs_unlock },		/* unlock */
+	{ &vop_lock_desc, ulfs_lock },			/* lock */
+	{ &vop_unlock_desc, ulfs_unlock },		/* unlock */
 	{ &vop_bmap_desc, spec_bmap },			/* bmap */
 	{ &vop_strategy_desc, spec_strategy },		/* strategy */
-	{ &vop_print_desc, ufs_print },			/* print */
-	{ &vop_islocked_desc, ufs_islocked },		/* islocked */
+	{ &vop_print_desc, ulfs_print },		/* print */
+	{ &vop_islocked_desc, ulfs_islocked },		/* islocked */
 	{ &vop_pathconf_desc, spec_pathconf },		/* pathconf */
 	{ &vop_advlock_desc, spec_advlock },		/* advlock */
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
 	{ &vop_getpages_desc, spec_getpages },		/* getpages */
 	{ &vop_putpages_desc, spec_putpages },		/* putpages */
+	{ &vop_openextattr_desc, lfs_openextattr },	/* openextattr */
+	{ &vop_closeextattr_desc, lfs_closeextattr },	/* closeextattr */
+	{ &vop_getextattr_desc, lfs_getextattr },	/* getextattr */
+	{ &vop_setextattr_desc, lfs_setextattr },	/* setextattr */
+	{ &vop_listextattr_desc, lfs_listextattr },	/* listextattr */
+	{ &vop_deleteextattr_desc, lfs_deleteextattr },	/* deleteextattr */
 	{ NULL, NULL }
 };
 const struct vnodeopv_desc lfs_specop_opv_desc =
@@ -210,13 +230,13 @@ const struct vnodeopv_entry_desc lfs_fifoop_entries[] = {
 	{ &vop_mknod_desc, vn_fifo_bypass },		/* mknod */
 	{ &vop_open_desc, vn_fifo_bypass },		/* open */
 	{ &vop_close_desc, lfsfifo_close },		/* close */
-	{ &vop_access_desc, ufs_access },		/* access */
+	{ &vop_access_desc, ulfs_access },		/* access */
 	{ &vop_getattr_desc, lfs_getattr },		/* getattr */
 	{ &vop_setattr_desc, lfs_setattr },		/* setattr */
-	{ &vop_read_desc, ufsfifo_read },		/* read */
-	{ &vop_write_desc, ufsfifo_write },		/* write */
+	{ &vop_read_desc, ulfsfifo_read },		/* read */
+	{ &vop_write_desc, ulfsfifo_write },		/* write */
 	{ &vop_ioctl_desc, vn_fifo_bypass },		/* ioctl */
-	{ &vop_fcntl_desc, ufs_fcntl },			/* fcntl */
+	{ &vop_fcntl_desc, ulfs_fcntl },		/* fcntl */
 	{ &vop_poll_desc, vn_fifo_bypass },		/* poll */
 	{ &vop_kqfilter_desc, vn_fifo_bypass },		/* kqfilter */
 	{ &vop_revoke_desc, vn_fifo_bypass },		/* revoke */
@@ -234,16 +254,22 @@ const struct vnodeopv_entry_desc lfs_fifoop_entries[] = {
 	{ &vop_abortop_desc, vn_fifo_bypass },		/* abortop */
 	{ &vop_inactive_desc, lfs_inactive },		/* inactive */
 	{ &vop_reclaim_desc, lfs_reclaim },		/* reclaim */
-	{ &vop_lock_desc, ufs_lock },			/* lock */
-	{ &vop_unlock_desc, ufs_unlock },		/* unlock */
+	{ &vop_lock_desc, ulfs_lock },			/* lock */
+	{ &vop_unlock_desc, ulfs_unlock },		/* unlock */
 	{ &vop_bmap_desc, vn_fifo_bypass },		/* bmap */
 	{ &vop_strategy_desc, vn_fifo_bypass },		/* strategy */
-	{ &vop_print_desc, ufs_print },			/* print */
-	{ &vop_islocked_desc, ufs_islocked },		/* islocked */
+	{ &vop_print_desc, ulfs_print },		/* print */
+	{ &vop_islocked_desc, ulfs_islocked },		/* islocked */
 	{ &vop_pathconf_desc, vn_fifo_bypass },		/* pathconf */
 	{ &vop_advlock_desc, vn_fifo_bypass },		/* advlock */
 	{ &vop_bwrite_desc, lfs_bwrite },		/* bwrite */
 	{ &vop_putpages_desc, vn_fifo_bypass },		/* putpages */
+	{ &vop_openextattr_desc, lfs_openextattr },	/* openextattr */
+	{ &vop_closeextattr_desc, lfs_closeextattr },	/* closeextattr */
+	{ &vop_getextattr_desc, lfs_getextattr },	/* getextattr */
+	{ &vop_setextattr_desc, lfs_setextattr },	/* setextattr */
+	{ &vop_listextattr_desc, lfs_listextattr },	/* listextattr */
+	{ &vop_deleteextattr_desc, lfs_deleteextattr },	/* deleteextattr */
 	{ NULL, NULL }
 };
 const struct vnodeopv_desc lfs_fifoop_opv_desc =
@@ -252,7 +278,7 @@ const struct vnodeopv_desc lfs_fifoop_opv_desc =
 static int check_dirty(struct lfs *, struct vnode *, off_t, off_t, off_t, int, int, struct vm_page **);
 
 #define	LFS_READWRITE
-#include <ufs/ufs/ufs_readwrite.c>
+#include <ufs/lfs/ulfs_readwrite.c>
 #undef	LFS_READWRITE
 
 /*
@@ -340,7 +366,7 @@ lfs_fsync(void *v)
 }
 
 /*
- * Take IN_ADIROP off, then call ufs_inactive.
+ * Take IN_ADIROP off, then call ulfs_inactive.
  */
 int
 lfs_inactive(void *v)
@@ -363,28 +389,21 @@ lfs_inactive(void *v)
 		return 0;
 	}
 
-	return ufs_inactive(v);
+#ifdef DEBUG
+	/*
+	 * This might happen on unmount.
+	 * XXX If it happens at any other time, it should be a panic.
+	 */
+	if (ap->a_vp->v_uflag & VU_DIROP) {
+		struct inode *ip = VTOI(ap->a_vp);
+		printf("lfs_inactive: inactivating VU_DIROP? ino = %d\n", (int)ip->i_number);
+	}
+#endif /* DIAGNOSTIC */
+
+	return ulfs_inactive(v);
 }
 
-/*
- * These macros are used to bracket UFS directory ops, so that we can
- * identify all the pages touched during directory ops which need to
- * be ordered and flushed atomically, so that they may be recovered.
- *
- * Because we have to mark nodes VU_DIROP in order to prevent
- * the cache from reclaiming them while a dirop is in progress, we must
- * also manage the number of nodes so marked (otherwise we can run out).
- * We do this by setting lfs_dirvcount to the number of marked vnodes; it
- * is decremented during segment write, when VU_DIROP is taken off.
- */
-#define	MARK_VNODE(vp)			lfs_mark_vnode(vp)
-#define	UNMARK_VNODE(vp)		lfs_unmark_vnode(vp)
-#define	SET_DIROP_CREATE(dvp, vpp)	lfs_set_dirop_create((dvp), (vpp))
-#define	SET_DIROP_REMOVE(dvp, vp)	lfs_set_dirop((dvp), (vp))
-static int lfs_set_dirop_create(struct vnode *, struct vnode **);
-static int lfs_set_dirop(struct vnode *, struct vnode *);
-
-static int
+int
 lfs_set_dirop(struct vnode *dvp, struct vnode *vp)
 {
 	struct lfs *fs;
@@ -426,7 +445,6 @@ lfs_set_dirop(struct vnode *dvp, struct vnode *vp)
 	}
 
 	if (lfs_dirvcount > LFS_MAX_DIROP) {
-		mutex_exit(&lfs_lock);
 		DLOG((DLOG_DIROP, "lfs_set_dirop: sleeping with dirops=%d, "
 		      "dirvcount=%d\n", fs->lfs_dirops, lfs_dirvcount));
 		if ((error = mtsleep(&lfs_dirvcount,
@@ -438,7 +456,7 @@ lfs_set_dirop(struct vnode *dvp, struct vnode *vp)
 	}
 
 	++fs->lfs_dirops;
-	fs->lfs_doifile = 1;
+	/* fs->lfs_doifile = 1; */ /* XXX why? --ks */
 	mutex_exit(&lfs_lock);
 
 	/* Hold a reference so SET_ENDOP will be happy */
@@ -464,13 +482,13 @@ lfs_set_dirop(struct vnode *dvp, struct vnode *vp)
  * NB: this means we have to clear the new vnodes on error.  Fortunately
  * SET_ENDOP is there to do that for us.
  */
-static int
+int
 lfs_set_dirop_create(struct vnode *dvp, struct vnode **vpp)
 {
 	int error;
 	struct lfs *fs;
 
-	fs = VFSTOUFS(dvp->v_mount)->um_lfs;
+	fs = VFSTOULFS(dvp->v_mount)->um_lfs;
 	ASSERT_NO_SEGLOCK(fs);
 	if (fs->lfs_ronly)
 		return EROFS;
@@ -491,49 +509,6 @@ lfs_set_dirop_create(struct vnode *dvp, struct vnode **vpp)
 	return 0;
 }
 
-#define	SET_ENDOP_BASE(fs, dvp, str)					\
-	do {								\
-		mutex_enter(&lfs_lock);				\
-		--(fs)->lfs_dirops;					\
-		if (!(fs)->lfs_dirops) {				\
-			if ((fs)->lfs_nadirop) {			\
-				panic("SET_ENDOP: %s: no dirops but "	\
-					" nadirop=%d", (str),		\
-					(fs)->lfs_nadirop);		\
-			}						\
-			wakeup(&(fs)->lfs_writer);			\
-			mutex_exit(&lfs_lock);				\
-			lfs_check((dvp), LFS_UNUSED_LBN, 0);		\
-		} else							\
-			mutex_exit(&lfs_lock);				\
-	} while(0)
-#define SET_ENDOP_CREATE(fs, dvp, nvpp, str)				\
-	do {								\
-		UNMARK_VNODE(dvp);					\
-		if (nvpp && *nvpp)					\
-			UNMARK_VNODE(*nvpp);				\
-		/* Check for error return to stem vnode leakage */	\
-		if (nvpp && *nvpp && !((*nvpp)->v_uflag & VU_DIROP))	\
-			ungetnewvnode(*(nvpp));				\
-		SET_ENDOP_BASE((fs), (dvp), (str));			\
-		lfs_reserve((fs), (dvp), NULL, -LFS_NRESERVE(fs));	\
-		vrele(dvp);						\
-	} while(0)
-#define SET_ENDOP_CREATE_AP(ap, str)					\
-	SET_ENDOP_CREATE(VTOI((ap)->a_dvp)->i_lfs, (ap)->a_dvp,		\
-			 (ap)->a_vpp, (str))
-#define SET_ENDOP_REMOVE(fs, dvp, ovp, str)				\
-	do {								\
-		UNMARK_VNODE(dvp);					\
-		if (ovp)						\
-			UNMARK_VNODE(ovp);				\
-		SET_ENDOP_BASE((fs), (dvp), (str));			\
-		lfs_reserve((fs), (dvp), (ovp), -LFS_NRESERVE(fs));	\
-		vrele(dvp);						\
-		if (ovp)						\
-			vrele(ovp);					\
-	} while(0)
-
 void
 lfs_mark_vnode(struct vnode *vp)
 {
@@ -543,14 +518,18 @@ lfs_mark_vnode(struct vnode *vp)
 	mutex_enter(&lfs_lock);
 	if (!(ip->i_flag & IN_ADIROP)) {
 		if (!(vp->v_uflag & VU_DIROP)) {
+			mutex_exit(&lfs_lock);
 			mutex_enter(vp->v_interlock);
-			(void)lfs_vref(vp);
+			if (lfs_vref(vp) != 0)
+				panic("lfs_mark_vnode: could not vref");
+			mutex_enter(&lfs_lock);
 			++lfs_dirvcount;
 			++fs->lfs_dirvcount;
 			TAILQ_INSERT_TAIL(&fs->lfs_dchainhd, ip, i_lfs_dchain);
 			vp->v_uflag |= VU_DIROP;
 		}
 		++fs->lfs_nadirop;
+		ip->i_flag &= ~IN_CDIROP;
 		ip->i_flag |= IN_ADIROP;
 	} else
 		KASSERT(vp->v_uflag & VU_DIROP);
@@ -562,13 +541,13 @@ lfs_unmark_vnode(struct vnode *vp)
 {
 	struct inode *ip = VTOI(vp);
 
+	mutex_enter(&lfs_lock);
 	if (ip && (ip->i_flag & IN_ADIROP)) {
 		KASSERT(vp->v_uflag & VU_DIROP);
-		mutex_enter(&lfs_lock);
 		--ip->i_lfs->lfs_nadirop;
-		mutex_exit(&lfs_lock);
 		ip->i_flag &= ~IN_ADIROP;
 	}
+	mutex_exit(&lfs_lock);
 }
 
 int
@@ -587,7 +566,7 @@ lfs_symlink(void *v)
 		vput(ap->a_dvp);
 		return error;
 	}
-	error = ufs_symlink(ap);
+	error = ulfs_symlink(ap);
 	SET_ENDOP_CREATE_AP(ap, "symlink");
 	return (error);
 }
@@ -601,46 +580,57 @@ lfs_mknod(void *v)
 		struct componentname *a_cnp;
 		struct vattr *a_vap;
 	} */ *ap = v;
-	struct vattr *vap = ap->a_vap;
-	struct vnode **vpp = ap->a_vpp;
+	struct vattr *vap;
+	struct vnode **vpp;
 	struct inode *ip;
 	int error;
 	struct mount	*mp;
 	ino_t		ino;
-	struct ufs_lookup_results *ulr;
+	struct ulfs_lookup_results *ulr;
+
+	vap = ap->a_vap;
+	vpp = ap->a_vpp;
 
 	/* XXX should handle this material another way */
 	ulr = &VTOI(ap->a_dvp)->i_crap;
-	UFS_CHECK_CRAPCOUNTER(VTOI(ap->a_dvp));
+	ULFS_CHECK_CRAPCOUNTER(VTOI(ap->a_dvp));
 
 	if ((error = SET_DIROP_CREATE(ap->a_dvp, ap->a_vpp)) != 0) {
 		vput(ap->a_dvp);
 		return error;
 	}
-	error = ufs_makeinode(MAKEIMODE(vap->va_type, vap->va_mode),
+
+	fstrans_start(ap->a_dvp->v_mount, FSTRANS_SHARED);
+	error = ulfs_makeinode(MAKEIMODE(vap->va_type, vap->va_mode),
 			      ap->a_dvp, ulr, vpp, ap->a_cnp);
 
 	/* Either way we're done with the dirop at this point */
 	SET_ENDOP_CREATE_AP(ap, "mknod");
 
-	if (error)
+	if (error) {
+		fstrans_done(ap->a_dvp->v_mount);
+		*vpp = NULL;
 		return (error);
+	}
 
+	VN_KNOTE(ap->a_dvp, NOTE_WRITE);
 	ip = VTOI(*vpp);
 	mp  = (*vpp)->v_mount;
 	ino = ip->i_number;
 	ip->i_flag |= IN_ACCESS | IN_CHANGE | IN_UPDATE;
 	if (vap->va_rdev != VNOVAL) {
+		struct ulfsmount *ump = ip->i_ump;
+		struct lfs *fs = ip->i_lfs;
 		/*
 		 * Want to be able to use this to make badblock
 		 * inodes, so don't truncate the dev number.
 		 */
-#if 0
-		ip->i_ffs1_rdev = ufs_rw32(vap->va_rdev,
-					   UFS_MPNEEDSWAP((*vpp)->v_mount));
-#else
-		ip->i_ffs1_rdev = vap->va_rdev;
-#endif
+		if (ump->um_fstype == ULFS1)
+			ip->i_ffs1_rdev = ulfs_rw32(vap->va_rdev,
+			    ULFS_MPNEEDSWAP(fs));
+		else
+			ip->i_ffs2_rdev = ulfs_rw64(vap->va_rdev,
+			    ULFS_MPNEEDSWAP(fs));
 	}
 
 	/*
@@ -663,11 +653,12 @@ lfs_mknod(void *v)
 	 */
 	/* Used to be vput, but that causes us to call VOP_INACTIVE twice. */
 
-	VOP_UNLOCK(*vpp);
 	(*vpp)->v_type = VNON;
+	VOP_UNLOCK(*vpp);
 	vgone(*vpp);
 	error = VFS_VGET(mp, ino, vpp);
 
+	fstrans_done(ap->a_dvp->v_mount);
 	if (error != 0) {
 		*vpp = NULL;
 		return (error);
@@ -690,7 +681,7 @@ lfs_create(void *v)
 		vput(ap->a_dvp);
 		return error;
 	}
-	error = ufs_create(ap);
+	error = ulfs_create(ap);
 	SET_ENDOP_CREATE_AP(ap, "create");
 	return (error);
 }
@@ -710,7 +701,7 @@ lfs_mkdir(void *v)
 		vput(ap->a_dvp);
 		return error;
 	}
-	error = ufs_mkdir(ap);
+	error = ulfs_mkdir(ap);
 	SET_ENDOP_CREATE_AP(ap, "mkdir");
 	return (error);
 }
@@ -738,7 +729,7 @@ lfs_remove(void *v)
 		vput(dvp);
 		return error;
 	}
-	error = ufs_remove(ap);
+	error = ulfs_remove(ap);
 	if (ip->i_nlink == 0)
 		lfs_orphan(ip->i_lfs, ip->i_number);
 	SET_ENDOP_REMOVE(ip->i_lfs, dvp, ap->a_vp, "remove");
@@ -768,7 +759,7 @@ lfs_rmdir(void *v)
 		vput(vp);
 		return error;
 	}
-	error = ufs_rmdir(ap);
+	error = ulfs_rmdir(ap);
 	if (ip->i_nlink == 0)
 		lfs_orphan(ip->i_lfs, ip->i_number);
 	SET_ENDOP_REMOVE(ip->i_lfs, ap->a_dvp, ap->a_vp, "rmdir");
@@ -790,109 +781,8 @@ lfs_link(void *v)
 		vput(ap->a_dvp);
 		return error;
 	}
-	error = ufs_link(ap);
+	error = ulfs_link(ap);
 	SET_ENDOP_CREATE(VTOI(ap->a_dvp)->i_lfs, ap->a_dvp, vpp, "link");
-	return (error);
-}
-
-int
-lfs_rename(void *v)
-{
-	struct vop_rename_args	/* {
-		struct vnode *a_fdvp;
-		struct vnode *a_fvp;
-		struct componentname *a_fcnp;
-		struct vnode *a_tdvp;
-		struct vnode *a_tvp;
-		struct componentname *a_tcnp;
-	} */ *ap = v;
-	struct vnode *tvp, *fvp, *tdvp, *fdvp;
-	struct componentname *tcnp, *fcnp;
-	int error;
-	struct lfs *fs;
-
-	fs = VTOI(ap->a_fdvp)->i_lfs;
-	tvp = ap->a_tvp;
-	tdvp = ap->a_tdvp;
-	tcnp = ap->a_tcnp;
-	fvp = ap->a_fvp;
-	fdvp = ap->a_fdvp;
-	fcnp = ap->a_fcnp;
-
-	/*
-	 * Check for cross-device rename.
-	 * If it is, we don't want to set dirops, just error out.
-	 * (In particular note that MARK_VNODE(tdvp) will DTWT on
-	 * a cross-device rename.)
-	 *
-	 * Copied from ufs_rename.
-	 */
-	if ((fvp->v_mount != tdvp->v_mount) ||
-	    (tvp && (fvp->v_mount != tvp->v_mount))) {
-		error = EXDEV;
-		goto errout;
-	}
-
-	/*
-	 * Check to make sure we're not renaming a vnode onto itself
-	 * (deleting a hard link by renaming one name onto another);
-	 * if we are we can't recursively call VOP_REMOVE since that
-	 * would leave us with an unaccounted-for number of live dirops.
-	 *
-	 * Inline the relevant section of ufs_rename here, *before*
-	 * calling SET_DIROP_REMOVE.
-	 */
-	if (tvp && ((VTOI(tvp)->i_flags & (IMMUTABLE | APPEND)) ||
-		    (VTOI(tdvp)->i_flags & APPEND))) {
-		error = EPERM;
-		goto errout;
-	}
-	if (fvp == tvp) {
-		if (fvp->v_type == VDIR) {
-			error = EINVAL;
-			goto errout;
-		}
-
-		/* Release destination completely. */
-		VOP_ABORTOP(tdvp, tcnp);
-		vput(tdvp);
-		vput(tvp);
-
-		/* Delete source. */
-		vrele(fvp);
-		fcnp->cn_flags &= ~(MODMASK);
-		fcnp->cn_flags |= LOCKPARENT | LOCKLEAF;
-		fcnp->cn_nameiop = DELETE;
-		vn_lock(fdvp, LK_EXCLUSIVE | LK_RETRY);
-		if ((error = relookup(fdvp, &fvp, fcnp, 0))) {
-			vput(fdvp);
-			return (error);
-		}
-		return (VOP_REMOVE(fdvp, fvp, fcnp));
-	}
-
-	if ((error = SET_DIROP_REMOVE(tdvp, tvp)) != 0)
-		goto errout;
-	MARK_VNODE(fdvp);
-	MARK_VNODE(fvp);
-
-	error = ufs_rename(ap);
-	UNMARK_VNODE(fdvp);
-	UNMARK_VNODE(fvp);
-	SET_ENDOP_REMOVE(fs, tdvp, tvp, "rename");
-	return (error);
-
-  errout:
-	VOP_ABORTOP(tdvp, ap->a_tcnp); /* XXX, why not in NFS? */
-	if (tdvp == tvp)
-		vrele(tdvp);
-	else
-		vput(tdvp);
-	if (tvp)
-		vput(tvp);
-	VOP_ABORTOP(fdvp, ap->a_fcnp); /* XXX, why not in NFS? */
-	vrele(fdvp);
-	vrele(fvp);
 	return (error);
 }
 
@@ -909,12 +799,14 @@ lfs_getattr(void *v)
 	struct inode *ip = VTOI(vp);
 	struct vattr *vap = ap->a_vap;
 	struct lfs *fs = ip->i_lfs;
+
+	fstrans_start(vp->v_mount, FSTRANS_SHARED);
 	/*
 	 * Copy from inode table
 	 */
 	vap->va_fsid = ip->i_dev;
 	vap->va_fileid = ip->i_number;
-	vap->va_mode = ip->i_mode & ~IFMT;
+	vap->va_mode = ip->i_mode & ~LFS_IFMT;
 	vap->va_nlink = ip->i_nlink;
 	vap->va_uid = ip->i_uid;
 	vap->va_gid = ip->i_gid;
@@ -935,15 +827,16 @@ lfs_getattr(void *v)
 		vap->va_blocksize = MAXBSIZE;
 	else
 		vap->va_blocksize = vp->v_mount->mnt_stat.f_iosize;
-	vap->va_bytes = fsbtob(fs, (u_quad_t)ip->i_lfs_effnblks);
+	vap->va_bytes = lfs_fsbtob(fs, (u_quad_t)ip->i_lfs_effnblks);
 	vap->va_type = vp->v_type;
 	vap->va_filerev = ip->i_modrev;
+	fstrans_done(vp->v_mount);
 	return (0);
 }
 
 /*
  * Check to make sure the inode blocks won't choke the buffer
- * cache, then call ufs_setattr as usual.
+ * cache, then call ulfs_setattr as usual.
  */
 int
 lfs_setattr(void *v)
@@ -956,7 +849,7 @@ lfs_setattr(void *v)
 	struct vnode *vp = ap->a_vp;
 
 	lfs_check(vp, LFS_UNUSED_LBN, 0);
-	return ufs_setattr(v);
+	return ulfs_setattr(v);
 }
 
 /*
@@ -991,7 +884,9 @@ lfs_wrapgo(struct lfs *fs, struct inode *ip, int waitfor)
 }
 
 /*
- * Close called
+ * Close called.
+ *
+ * Update the times on the inode.
  */
 /* ARGSUSED */
 int
@@ -1006,7 +901,7 @@ lfs_close(void *v)
 	struct inode *ip = VTOI(vp);
 	struct lfs *fs = ip->i_lfs;
 
-	if ((ip->i_number == ROOTINO || ip->i_number == LFS_IFILE_INUM) &&
+	if ((ip->i_number == ULFS_ROOTINO || ip->i_number == LFS_IFILE_INUM) &&
 	    fs->lfs_stoplwp == curlwp) {
 		mutex_enter(&lfs_lock);
 		log(LOG_NOTICE, "lfs_close: releasing log wrap control\n");
@@ -1018,9 +913,11 @@ lfs_close(void *v)
 	    vp->v_mount->mnt_iflag & IMNT_UNMOUNT)
 		return 0;
 
+	fstrans_start(vp->v_mount, FSTRANS_SHARED);
 	if (vp->v_usecount > 1 && vp != ip->i_lfs->lfs_ivnode) {
 		LFS_ITIMES(ip, NULL, NULL, NULL);
 	}
+	fstrans_done(vp->v_mount);
 	return (0);
 }
 
@@ -1098,7 +995,7 @@ lfs_reclaim(void *v)
 	mutex_enter(&lfs_lock);
 	LFS_CLR_UINO(ip, IN_ALLMOD);
 	mutex_exit(&lfs_lock);
-	if ((error = ufs_reclaim(vp)))
+	if ((error = ulfs_reclaim(vp)))
 		return (error);
 
 	/*
@@ -1131,12 +1028,16 @@ lfs_reclaim(void *v)
 
 /*
  * Read a block from a storage device.
+ *
+ * Calculate the logical to physical mapping if not done already,
+ * then call the device strategy routine.
+ *
  * In order to avoid reading blocks that are in the process of being
  * written by the cleaner---and hence are not mutexed by the normal
  * buffer cache / page cache mechanisms---check for collisions before
  * reading.
  *
- * We inline ufs_strategy to make sure that the VOP_BMAP occurs *before*
+ * We inline ulfs_strategy to make sure that the VOP_BMAP occurs *before*
  * the active cleaner test.
  *
  * XXX This code assumes that lfs_markv makes synchronous checkpoints.
@@ -1153,7 +1054,8 @@ lfs_strategy(void *v)
 	struct vnode	*vp;
 	struct inode	*ip;
 	daddr_t		tbn;
-	int		i, sn, error, slept;
+#define MAXLOOP 25
+	int		i, sn, error, slept, loopcount;
 
 	bp = ap->a_bp;
 	vp = ap->a_vp;
@@ -1185,6 +1087,7 @@ lfs_strategy(void *v)
 	}
 
 	slept = 1;
+	loopcount = 0;
 	mutex_enter(&lfs_lock);
 	while (slept && fs->lfs_seglock) {
 		mutex_exit(&lfs_lock);
@@ -1195,30 +1098,37 @@ lfs_strategy(void *v)
 		 * Since the cleaner is synchronous, we can trust
 		 * the list of intervals to be current.
 		 */
-		tbn = dbtofsb(fs, bp->b_blkno);
-		sn = dtosn(fs, tbn);
+		tbn = LFS_DBTOFSB(fs, bp->b_blkno);
+		sn = lfs_dtosn(fs, tbn);
 		slept = 0;
 		for (i = 0; i < fs->lfs_cleanind; i++) {
-			if (sn == dtosn(fs, fs->lfs_cleanint[i]) &&
+			if (sn == lfs_dtosn(fs, fs->lfs_cleanint[i]) &&
 			    tbn >= fs->lfs_cleanint[i]) {
 				DLOG((DLOG_CLEAN,
 				      "lfs_strategy: ino %d lbn %" PRId64
 				      " ind %d sn %d fsb %" PRIx32
 				      " given sn %d fsb %" PRIx64 "\n",
 				      ip->i_number, bp->b_lblkno, i,
-				      dtosn(fs, fs->lfs_cleanint[i]),
+				      lfs_dtosn(fs, fs->lfs_cleanint[i]),
 				      fs->lfs_cleanint[i], sn, tbn));
 				DLOG((DLOG_CLEAN,
 				      "lfs_strategy: sleeping on ino %d lbn %"
 				      PRId64 "\n", ip->i_number, bp->b_lblkno));
 				mutex_enter(&lfs_lock);
 				if (LFS_SEGLOCK_HELD(fs) && fs->lfs_iocount) {
-					/* Cleaner can't wait for itself */
-					mtsleep(&fs->lfs_iocount,
-						(PRIBIO + 1) | PNORELOCK,
-						"clean2", 0,
-						&lfs_lock);
+					/*
+					 * Cleaner can't wait for itself.
+					 * Instead, wait for the blocks
+					 * to be written to disk.
+					 * XXX we need pribio in the test
+					 * XXX here.
+					 */
+ 					mtsleep(&fs->lfs_iocount,
+ 						(PRIBIO + 1) | PNORELOCK,
+						"clean2", hz/10 + 1,
+ 						&lfs_lock);
 					slept = 1;
+					++loopcount;
 					break;
 				} else if (fs->lfs_seglock) {
 					mtsleep(&fs->lfs_seglock,
@@ -1232,45 +1142,50 @@ lfs_strategy(void *v)
 			}
 		}
 		mutex_enter(&lfs_lock);
+		if (loopcount > MAXLOOP) {
+			printf("lfs_strategy: breaking out of clean2 loop\n");
+			break;
+		}
 	}
 	mutex_exit(&lfs_lock);
 
 	vp = ip->i_devvp;
-	VOP_STRATEGY(vp, bp);
-	return (0);
+	return VOP_STRATEGY(vp, bp);
 }
 
-void
+/*
+ * Inline lfs_segwrite/lfs_writevnodes, but just for dirops.
+ * Technically this is a checkpoint (the on-disk state is valid)
+ * even though we are leaving out all the file data.
+ */
+int
 lfs_flush_dirops(struct lfs *fs)
 {
 	struct inode *ip, *nip;
 	struct vnode *vp;
 	extern int lfs_dostats;
 	struct segment *sp;
+	int flags = 0;
+	int error = 0;
 
 	ASSERT_MAYBE_SEGLOCK(fs);
 	KASSERT(fs->lfs_nadirop == 0);
 
 	if (fs->lfs_ronly)
-		return;
+		return EROFS;
 
 	mutex_enter(&lfs_lock);
 	if (TAILQ_FIRST(&fs->lfs_dchainhd) == NULL) {
 		mutex_exit(&lfs_lock);
-		return;
+		return 0;
 	} else
 		mutex_exit(&lfs_lock);
 
 	if (lfs_dostats)
 		++lfs_stats.flush_invoked;
 
-	/*
-	 * Inline lfs_segwrite/lfs_writevnodes, but just for dirops.
-	 * Technically this is a checkpoint (the on-disk state is valid)
-	 * even though we are leaving out all the file data.
-	 */
 	lfs_imtime(fs);
-	lfs_seglock(fs, SEGM_CKP);
+	lfs_seglock(fs, flags);
 	sp = fs->lfs_sp;
 
 	/*
@@ -1293,6 +1208,8 @@ lfs_flush_dirops(struct lfs *fs)
 		vp = ITOV(ip);
 
 		KASSERT((ip->i_flag & IN_ADIROP) == 0);
+		KASSERT(vp->v_uflag & VU_DIROP);
+		KASSERT(!(vp->v_iflag & VI_XLOCK));
 
 		/*
 		 * All writes to directories come from dirops; all
@@ -1300,9 +1217,7 @@ lfs_flush_dirops(struct lfs *fs)
 		 * cache, which we're not touching.  Reads to files
 		 * and/or directories will not be affected by writing
 		 * directory blocks inodes and file inodes.  So we don't
-		 * really need to lock.	 If we don't lock, though,
-		 * make sure that we don't clear IN_MODIFIED
-		 * unnecessarily.
+		 * really need to lock.
 		 */
 		if (vp->v_iflag & VI_XLOCK) {
 			mutex_enter(&lfs_lock);
@@ -1313,23 +1228,36 @@ lfs_flush_dirops(struct lfs *fs)
 		 */
 		if (vp->v_type != VREG &&
 		    ((ip->i_flag & IN_ALLMOD) || !VPISEMPTY(vp))) {
-			lfs_writefile(fs, sp, vp);
+			error = lfs_writefile(fs, sp, vp);
 			if (!VPISEMPTY(vp) && !WRITEINPROG(vp) &&
 			    !(ip->i_flag & IN_ALLMOD)) {
 			    	mutex_enter(&lfs_lock);
 				LFS_SET_UINO(ip, IN_MODIFIED);
 			    	mutex_exit(&lfs_lock);
 			}
+			if (error && (sp->seg_flags & SEGM_SINGLE)) {
+				mutex_enter(&lfs_lock);
+				error = EAGAIN;
+				break;
+			}
 		}
 		KDASSERT(ip->i_number != LFS_IFILE_INUM);
-		(void) lfs_writeinode(fs, sp, ip);
+		error = lfs_writeinode(fs, sp, ip);
 		mutex_enter(&lfs_lock);
+		if (error && (sp->seg_flags & SEGM_SINGLE)) {
+			error = EAGAIN;
+			break;
+		}
+
 		/*
-		 * XXX
-		 * LK_EXCLOTHER is dead -- what is intended here?
-		 * if (waslocked == LK_EXCLOTHER)
-		 *	LFS_SET_UINO(ip, IN_MODIFIED);
+		 * We might need to update these inodes again,
+		 * for example, if they have data blocks to write.
+		 * Make sure that after this flush, they are still
+		 * marked IN_MODIFIED so that we don't forget to
+		 * write them.
 		 */
+		/* XXX only for non-directories? --KS */
+		LFS_SET_UINO(ip, IN_MODIFIED);
 	}
 	mutex_exit(&lfs_lock);
 	/* We've written all the dirops there are */
@@ -1337,6 +1265,8 @@ lfs_flush_dirops(struct lfs *fs)
 	lfs_finalize_fs_seguse(fs);
 	(void) lfs_writeseg(fs, sp);
 	lfs_segunlock(fs);
+
+	return error;
 }
 
 /*
@@ -1346,29 +1276,30 @@ lfs_flush_dirops(struct lfs *fs)
  * for any reason, just skip it; if we have to wait for the cleaner,
  * abort.  The writer daemon will call us again later.
  */
-void
+int
 lfs_flush_pchain(struct lfs *fs)
 {
 	struct inode *ip, *nip;
 	struct vnode *vp;
 	extern int lfs_dostats;
 	struct segment *sp;
-	int error;
+	int error, error2;
 
 	ASSERT_NO_SEGLOCK(fs);
 
 	if (fs->lfs_ronly)
-		return;
+		return EROFS;
 
 	mutex_enter(&lfs_lock);
 	if (TAILQ_FIRST(&fs->lfs_pchainhd) == NULL) {
 		mutex_exit(&lfs_lock);
-		return;
+		return 0;
 	} else
 		mutex_exit(&lfs_lock);
 
 	/* Get dirops out of the way */
-	lfs_flush_dirops(fs);
+	if ((error = lfs_flush_dirops(fs)) != 0)
+		return error;
 
 	if (lfs_dostats)
 		++lfs_stats.flush_invoked;
@@ -1422,12 +1353,12 @@ lfs_flush_pchain(struct lfs *fs)
 		    	mutex_exit(&lfs_lock);
 		}
 		KDASSERT(ip->i_number != LFS_IFILE_INUM);
-		(void) lfs_writeinode(fs, sp, ip);
+		error2 = lfs_writeinode(fs, sp, ip);
 
 		VOP_UNLOCK(vp);
 		lfs_vunref(vp);
 
-		if (error == EAGAIN) {
+		if (error == EAGAIN || error2 == EAGAIN) {
 			lfs_writeseg(fs, sp);
 			mutex_enter(&lfs_lock);
 			break;
@@ -1437,6 +1368,8 @@ lfs_flush_pchain(struct lfs *fs)
 	mutex_exit(&lfs_lock);
 	(void) lfs_writeseg(fs, sp);
 	lfs_segunlock(fs);
+
+	return 0;
 }
 
 /*
@@ -1457,7 +1390,7 @@ lfs_fcntl(void *v)
 	BLOCK_INFO *blkiov;
 	CLEANERINFO *cip;
 	SEGUSE *sup;
-	int blkcnt, error, oclean;
+	int blkcnt, error;
 	size_t fh_size;
 	struct lfs_fcntl_markv blkvp;
 	struct lwp *l;
@@ -1466,11 +1399,12 @@ lfs_fcntl(void *v)
 	struct buf *bp;
 	fhandle_t *fhp;
 	daddr_t off;
+	int oclean;
 
 	/* Only respect LFS fcntls on fs root or Ifile */
-	if (VTOI(ap->a_vp)->i_number != ROOTINO &&
+	if (VTOI(ap->a_vp)->i_number != ULFS_ROOTINO &&
 	    VTOI(ap->a_vp)->i_number != LFS_IFILE_INUM) {
-		return ufs_fcntl(v);
+		return ulfs_fcntl(v);
 	}
 
 	/* Avoid locking a draining lock */
@@ -1481,8 +1415,8 @@ lfs_fcntl(void *v)
 	/* LFS control and monitoring fcntls are available only to root */
 	l = curlwp;
 	if (((ap->a_command & 0xff00) >> 8) == 'L' &&
-	    (error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-					     NULL)) != 0)
+	    (error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_LFS,
+	     KAUTH_REQ_SYSTEM_LFS_FCNTL, NULL, NULL, NULL)) != 0)
 		return (error);
 
 	fs = VTOI(ap->a_vp)->i_lfs;
@@ -1576,6 +1510,9 @@ segwait_common:
 		      fs->lfs_offset - off, cip->clean - oclean,
 		      fs->lfs_activesb));
 		LFS_SYNC_CLEANERINFO(cip, fs, bp, 0);
+#else
+		__USE(oclean);
+		__USE(off);
 #endif
 
 		return 0;
@@ -1682,7 +1619,8 @@ segwait_common:
 		/* Wait for the log to wrap, if asked */
 		if (*(int *)ap->a_data) {
 			mutex_enter(ap->a_vp->v_interlock);
-			lfs_vref(ap->a_vp);
+			if (lfs_vref(ap->a_vp) != 0)
+				panic("LFCNWRAPPASS: lfs_vref failed");
 			VTOI(ap->a_vp)->i_lfs_iflags |= LFSI_WRAPWAIT;
 			log(LOG_NOTICE, "LFCNPASS waiting for log wrap\n");
 			error = mtsleep(&fs->lfs_nowrap, PCATCH | PUSER,
@@ -1701,7 +1639,7 @@ segwait_common:
 		return 0;
 
 	    default:
-		return ufs_fcntl(v);
+		return ulfs_fcntl(v);
 	}
 	return 0;
 }
@@ -1746,6 +1684,7 @@ lfs_getpages(void *v)
 static void
 wait_for_page(struct vnode *vp, struct vm_page *pg, const char *label)
 {
+	KASSERT(mutex_owned(vp->v_interlock));
 	if ((pg->flags & PG_BUSY) == 0)
 		return;		/* Nothing to wait for! */
 
@@ -1786,6 +1725,7 @@ static void
 write_and_wait(struct lfs *fs, struct vnode *vp, struct vm_page *pg,
 	       int seglocked, const char *label)
 {
+	KASSERT(mutex_owned(vp->v_interlock));
 #ifndef BUSYWAIT
 	struct inode *ip = VTOI(vp);
 	struct segment *sp = fs->lfs_sp;
@@ -1814,12 +1754,15 @@ write_and_wait(struct lfs *fs, struct vnode *vp, struct vm_page *pg,
 		mutex_enter(vp->v_interlock);
 		wait_for_page(vp, pg, label);
 	}
-	if (label != NULL && count > 1)
-		printf("lfs_putpages[%d]: %s: %sn = %d\n", curproc->p_pid,
-		       label, (count > 0 ? "looping, " : ""), count);
+	if (label != NULL && count > 1) {
+		DLOG((DLOG_PAGE, "lfs_putpages[%d]: %s: %sn = %d\n",
+		      curproc->p_pid, label, (count > 0 ? "looping, " : ""),
+		      count));
+	}
 #else
 	preempt(1);
 #endif
+	KASSERT(mutex_owned(vp->v_interlock));
 }
 
 /*
@@ -1849,6 +1792,7 @@ check_dirty(struct lfs *fs, struct vnode *vp,
 	int pages_per_block = fs->lfs_bsize >> PAGE_SHIFT;
 	int pagedaemon = (curlwp == uvm.pagedaemon_lwp);
 
+	KASSERT(mutex_owned(vp->v_interlock));
 	ASSERT_MAYBE_SEGLOCK(fs);
   top:
 	by_list = (vp->v_uobj.uo_npages <=
@@ -1891,6 +1835,7 @@ check_dirty(struct lfs *fs, struct vnode *vp,
 		 */
 		nonexistent = dirty = 0;
 		for (i = 0; i == 0 || i < pages_per_block; i++) {
+			KASSERT(mutex_owned(vp->v_interlock));
 			if (by_list && pages_per_block <= 1) {
 				pgs[i] = pg = curpg;
 			} else {
@@ -1916,13 +1861,16 @@ check_dirty(struct lfs *fs, struct vnode *vp,
 				DLOG((DLOG_PAGE, "lfs_putpages: avoiding 3-way or pagedaemon deadlock\n"));
 				if (pgp)
 					*pgp = pg;
+				KASSERT(mutex_owned(vp->v_interlock));
 				return -1;
 			}
 
 			while (pg->flags & PG_BUSY) {
 				wait_for_page(vp, pg, NULL);
+				KASSERT(mutex_owned(vp->v_interlock));
 				if (i > 0)
 					uvm_page_unbusy(pgs, i);
+				KASSERT(mutex_owned(vp->v_interlock));
 				goto top;
 			}
 			pg->flags |= PG_BUSY;
@@ -1944,6 +1892,7 @@ check_dirty(struct lfs *fs, struct vnode *vp,
 
 		any_dirty += dirty;
 		KASSERT(nonexistent == 0);
+		KASSERT(mutex_owned(vp->v_interlock));
 
 		/*
 		 * If any are dirty make all dirty; unbusy them,
@@ -1952,8 +1901,10 @@ check_dirty(struct lfs *fs, struct vnode *vp,
 		 * they're on their way to disk.
 		 */
 		for (i = 0; i == 0 || i < pages_per_block; i++) {
+			KASSERT(mutex_owned(vp->v_interlock));
 			pg = pgs[i];
 			KASSERT(!((pg->flags & PG_CLEAN) && (pg->flags & PG_DELWRI)));
+			KASSERT(pg->flags & PG_BUSY);
 			if (dirty) {
 				pg->flags &= ~PG_CLEAN;
 				if (flags & PGO_FREE) {
@@ -1985,6 +1936,7 @@ check_dirty(struct lfs *fs, struct vnode *vp,
 		}
 	}
 
+	KASSERT(mutex_owned(vp->v_interlock));
 	return any_dirty;
 }
 
@@ -2048,9 +2000,11 @@ lfs_putpages(void *v)
 	struct segment *sp;
 	off_t origoffset, startoffset, endoffset, origendoffset, blkeof;
 	off_t off, max_endoffset;
-	bool seglocked, sync, pagedaemon;
+	bool seglocked, sync, pagedaemon, reclaim;
 	struct vm_page *pg, *busypg;
 	UVMHIST_FUNC("lfs_putpages"); UVMHIST_CALLED(ubchist);
+	int oreclaim = 0;
+	int donewriting = 0;
 #ifdef DEBUG
 	int debug_n_again, debug_n_dirtyclean;
 #endif
@@ -2059,7 +2013,10 @@ lfs_putpages(void *v)
 	ip = VTOI(vp);
 	fs = ip->i_lfs;
 	sync = (ap->a_flags & PGO_SYNCIO) != 0;
+	reclaim = (ap->a_flags & PGO_RECLAIM) != 0;
 	pagedaemon = (curlwp == uvm.pagedaemon_lwp);
+
+	KASSERT(mutex_owned(vp->v_interlock));
 
 	/* Putpages does nothing for metadata. */
 	if (vp == fs->lfs_ivnode || vp->v_type != VREG) {
@@ -2086,19 +2043,24 @@ lfs_putpages(void *v)
 			TAILQ_REMOVE(&fs->lfs_pchainhd, ip, i_lfs_pchain);
 		}
 		mutex_exit(&lfs_lock);
+
+		KASSERT(!mutex_owned(vp->v_interlock));
 		return 0;
 	}
 
-	blkeof = blkroundup(fs, ip->i_size);
+	blkeof = lfs_blkroundup(fs, ip->i_size);
 
 	/*
 	 * Ignore requests to free pages past EOF but in the same block
-	 * as EOF, unless the request is synchronous.  (If the request is
-	 * sync, it comes from lfs_truncate.)
-	 * XXXUBC Make these pages look "active" so the pagedaemon won't
-	 * XXXUBC bother us with them again.
+	 * as EOF, unless the vnode is being reclaimed or the request
+	 * is synchronous.  (If the request is sync, it comes from
+	 * lfs_truncate.)
+	 *
+	 * To avoid being flooded with this request, make these pages
+	 * look "active".
 	 */
-	if (!sync && ap->a_offlo >= ip->i_size && ap->a_offlo < blkeof) {
+	if (!sync && !reclaim &&
+	    ap->a_offlo >= ip->i_size && ap->a_offlo < blkeof) {
 		origoffset = ap->a_offlo;
 		for (off = origoffset; off < blkeof; off += fs->lfs_bsize) {
 			pg = uvm_pagelookup(&vp->v_uobj, off);
@@ -2135,7 +2097,7 @@ lfs_putpages(void *v)
 		origendoffset = endoffset;
 	} else {
 		origendoffset = round_page(ap->a_offhi);
-		endoffset = round_page(blkroundup(fs, origendoffset));
+		endoffset = round_page(lfs_blkroundup(fs, origendoffset));
 	}
 
 	KASSERT(startoffset > 0 || endoffset >= startoffset);
@@ -2154,8 +2116,13 @@ lfs_putpages(void *v)
 	 * If not cleaning, just send the pages through genfs_putpages
 	 * to be returned to the pool.
 	 */
-	if (!(ap->a_flags & PGO_CLEANIT))
-		return genfs_putpages(v);
+	if (!(ap->a_flags & PGO_CLEANIT)) {
+		DLOG((DLOG_PAGE, "lfs_putpages: no cleanit vn %p ino %d (flags %x)\n",
+		      vp, (int)ip->i_number, ap->a_flags));
+		int r = genfs_putpages(v);
+		KASSERT(!mutex_owned(vp->v_interlock));
+		return r;
+	}
 
 	/* Set PGO_BUSYFAIL to avoid deadlocks */
 	ap->a_flags |= PGO_BUSYFAIL;
@@ -2169,6 +2136,7 @@ lfs_putpages(void *v)
 #endif
 	do {
 		int r;
+		KASSERT(mutex_owned(vp->v_interlock));
 
 		/* Count the number of dirty pages */
 		r = check_dirty(fs, vp, startoffset, endoffset, blkeof,
@@ -2191,8 +2159,10 @@ lfs_putpages(void *v)
 		r = genfs_do_putpages(vp, startoffset, endoffset,
 				       ap->a_flags & ~PGO_SYNCIO, &busypg);
 		ip->i_lfs_iflags &= ~LFSI_NO_GOP_WRITE;
-		if (r != EDEADLK)
-			return r;
+		if (r != EDEADLK) {
+			KASSERT(!mutex_owned(vp->v_interlock));
+ 			return r;
+		}
 
 		/* One of the pages was busy.  Start over. */
 		mutex_enter(vp->v_interlock);
@@ -2204,8 +2174,8 @@ lfs_putpages(void *v)
 
 #ifdef DEBUG
 	if (debug_n_dirtyclean > TOOMANY)
-		printf("lfs_putpages: dirtyclean: looping, n = %d\n",
-		       debug_n_dirtyclean);
+		DLOG((DLOG_PAGE, "lfs_putpages: dirtyclean: looping, n = %d\n",
+		      debug_n_dirtyclean));
 #endif
 
 	/*
@@ -2228,6 +2198,7 @@ lfs_putpages(void *v)
 		wakeup(&lfs_writer_daemon);
 		mutex_exit(&lfs_lock);
 		preempt();
+		KASSERT(!mutex_owned(vp->v_interlock));
 		return EWOULDBLOCK;
 	}
 
@@ -2239,26 +2210,28 @@ lfs_putpages(void *v)
 	 */
 	if ((ap->a_flags & (PGO_CLEANIT|PGO_LOCKED)) == PGO_CLEANIT &&
 	    (vp->v_uflag & VU_DIROP)) {
-		int locked;
-
 		DLOG((DLOG_PAGE, "lfs_putpages: flushing VU_DIROP\n"));
-		/* XXX VOP_ISLOCKED() may not be used for lock decisions. */
-		locked = (VOP_ISLOCKED(vp) == LK_EXCLUSIVE);
+
+ 		lfs_writer_enter(fs, "ppdirop");
+
+		/* Note if we hold the vnode locked */
+		if (VOP_ISLOCKED(vp) == LK_EXCLUSIVE)
+		{
+		    DLOG((DLOG_PAGE, "lfs_putpages: dirop inode already locked\n"));
+		} else {
+		    DLOG((DLOG_PAGE, "lfs_putpages: dirop inode not locked\n"));
+		}
 		mutex_exit(vp->v_interlock);
-		lfs_writer_enter(fs, "ppdirop");
-		if (locked)
-			VOP_UNLOCK(vp); /* XXX why? */
 
 		mutex_enter(&lfs_lock);
 		lfs_flush_fs(fs, sync ? SEGM_SYNC : 0);
 		mutex_exit(&lfs_lock);
 
-		if (locked)
-			VOP_LOCK(vp, LK_EXCLUSIVE);
 		mutex_enter(vp->v_interlock);
 		lfs_writer_leave(fs);
 
-		/* XXX the flush should have taken care of this one too! */
+		/* The flush will have cleaned out this vnode as well,
+		   no need to do more to it. */
 	}
 
 	/*
@@ -2286,14 +2259,22 @@ lfs_putpages(void *v)
 	if (!seglocked) {
 		mutex_exit(vp->v_interlock);
 		error = lfs_seglock(fs, SEGM_PROT | (sync ? SEGM_SYNC : 0));
-		if (error != 0)
-			return error;
+		if (error != 0) {
+			KASSERT(!mutex_owned(vp->v_interlock));
+ 			return error;
+		}
 		mutex_enter(vp->v_interlock);
 		lfs_acquire_finfo(fs, ip->i_number, ip->i_gen);
 	}
 	sp = fs->lfs_sp;
 	KASSERT(sp->vp == NULL);
 	sp->vp = vp;
+
+	/* Note segments written by reclaim; only for debugging */
+	if ((vp->v_iflag & VI_XLOCK) != 0) {
+		sp->seg_flags |= SEGM_RECLAIM;
+		fs->lfs_reclino = ip->i_number;
+	}
 
 	/*
 	 * Ensure that the partial segment is marked SS_DIROP if this
@@ -2313,10 +2294,11 @@ lfs_putpages(void *v)
 #endif
 	do {
 		busypg = NULL;
+		KASSERT(mutex_owned(vp->v_interlock));
 		if (check_dirty(fs, vp, startoffset, endoffset, blkeof,
 				ap->a_flags, 0, &busypg) < 0) {
 			mutex_exit(vp->v_interlock);
-
+			/* XXX why? --ks */
 			mutex_enter(vp->v_interlock);
 			write_and_wait(fs, vp, busypg, seglocked, NULL);
 			if (!seglocked) {
@@ -2330,29 +2312,53 @@ lfs_putpages(void *v)
 		}
 	
 		busypg = NULL;
+		KASSERT(!mutex_owned(&uvm_pageqlock));
+		oreclaim = (ap->a_flags & PGO_RECLAIM);
+		ap->a_flags &= ~PGO_RECLAIM;
 		error = genfs_do_putpages(vp, startoffset, endoffset,
 					   ap->a_flags, &busypg);
+		ap->a_flags |= oreclaim;
 	
 		if (error == EDEADLK || error == EAGAIN) {
 			DLOG((DLOG_PAGE, "lfs_putpages: genfs_putpages returned"
 			      " %d ino %d off %x (seg %d)\n", error,
 			      ip->i_number, fs->lfs_offset,
-			      dtosn(fs, fs->lfs_offset)));
+			      lfs_dtosn(fs, fs->lfs_offset)));
 
-			mutex_enter(vp->v_interlock);
-			write_and_wait(fs, vp, busypg, seglocked, "again");
+			if (oreclaim) {
+				mutex_enter(vp->v_interlock);
+				write_and_wait(fs, vp, busypg, seglocked, "again");
+				mutex_exit(vp->v_interlock);
+			} else {
+				if ((sp->seg_flags & SEGM_SINGLE) &&
+				    fs->lfs_curseg != fs->lfs_startseg)
+					donewriting = 1;
+			}
+		} else if (error) {
+			DLOG((DLOG_PAGE, "lfs_putpages: genfs_putpages returned"
+			      " %d ino %d off %x (seg %d)\n", error,
+			      (int)ip->i_number, fs->lfs_offset,
+			      lfs_dtosn(fs, fs->lfs_offset)));
 		}
+		/* genfs_do_putpages loses the interlock */
 #ifdef DEBUG
 		++debug_n_again;
 #endif
-	} while (error == EDEADLK);
+		if (oreclaim && error == EAGAIN) {
+			DLOG((DLOG_PAGE, "vp %p ino %d vi_flags %x a_flags %x avoiding vclean panic\n",
+			      vp, (int)ip->i_number, vp->v_iflag, ap->a_flags));
+			mutex_enter(vp->v_interlock);
+		}
+		if (error == EDEADLK)
+			mutex_enter(vp->v_interlock);
+	} while (error == EDEADLK || (oreclaim && error == EAGAIN));
 #ifdef DEBUG
 	if (debug_n_again > TOOMANY)
-		printf("lfs_putpages: again: looping, n = %d\n", debug_n_again);
+		DLOG((DLOG_PAGE, "lfs_putpages: again: looping, n = %d\n", debug_n_again));
 #endif
 
 	KASSERT(sp != NULL && sp->vp == vp);
-	if (!seglocked) {
+	if (!seglocked && !donewriting) {
 		sp->vp = NULL;
 
 		/* Write indirect blocks as well */
@@ -2376,8 +2382,10 @@ lfs_putpages(void *v)
 	 * If we were called from lfs_writefile, we don't need to clean up
 	 * the FIP or unlock the segment lock.	We're done.
 	 */
-	if (seglocked)
+	if (seglocked) {
+		KASSERT(!mutex_owned(vp->v_interlock));
 		return error;
+	}
 
 	/* Clean up FIP and send it to disk. */
 	lfs_release_finfo(fs);
@@ -2417,6 +2425,7 @@ lfs_putpages(void *v)
 		}
 		mutex_exit(vp->v_interlock);
 	}
+	KASSERT(!mutex_owned(vp->v_interlock));
 	return error;
 }
 
@@ -2433,12 +2442,12 @@ lfs_gop_size(struct vnode *vp, off_t size, off_t *eobp, int flags)
 	struct lfs *fs = ip->i_lfs;
 	daddr_t olbn, nlbn;
 
-	olbn = lblkno(fs, ip->i_size);
-	nlbn = lblkno(fs, size);
-	if (!(flags & GOP_SIZE_MEM) && nlbn < NDADDR && olbn <= nlbn) {
-		*eobp = fragroundup(fs, size);
+	olbn = lfs_lblkno(fs, ip->i_size);
+	nlbn = lfs_lblkno(fs, size);
+	if (!(flags & GOP_SIZE_MEM) && nlbn < ULFS_NDADDR && olbn <= nlbn) {
+		*eobp = lfs_fragroundup(fs, size);
 	} else {
-		*eobp = blkroundup(fs, size);
+		*eobp = lfs_blkroundup(fs, size);
 	}
 }
 
@@ -2474,5 +2483,173 @@ lfs_mmap(void *v)
 
 	if (VTOI(ap->a_vp)->i_number == LFS_IFILE_INUM)
 		return EOPNOTSUPP;
-	return ufs_mmap(v);
+	return ulfs_mmap(v);
+}
+
+static int
+lfs_openextattr(void *v)
+{
+	struct vop_openextattr_args /* {
+		struct vnode *a_vp;
+		kauth_cred_t a_cred;
+		struct proc *a_p;
+	} */ *ap = v;
+	struct inode *ip = VTOI(ap->a_vp);
+	struct ulfsmount *ump = ip->i_ump;
+	//struct lfs *fs = ip->i_lfs;
+
+	/* Not supported for ULFS1 file systems. */
+	if (ump->um_fstype == ULFS1)
+		return (EOPNOTSUPP);
+
+	/* XXX Not implemented for ULFS2 file systems. */
+	return (EOPNOTSUPP);
+}
+
+static int
+lfs_closeextattr(void *v)
+{
+	struct vop_closeextattr_args /* {
+		struct vnode *a_vp;
+		int a_commit;
+		kauth_cred_t a_cred;
+		struct proc *a_p;
+	} */ *ap = v;
+	struct inode *ip = VTOI(ap->a_vp);
+	struct ulfsmount *ump = ip->i_ump;
+	//struct lfs *fs = ip->i_lfs;
+
+	/* Not supported for ULFS1 file systems. */
+	if (ump->um_fstype == ULFS1)
+		return (EOPNOTSUPP);
+
+	/* XXX Not implemented for ULFS2 file systems. */
+	return (EOPNOTSUPP);
+}
+
+static int
+lfs_getextattr(void *v)
+{
+	struct vop_getextattr_args /* {
+		struct vnode *a_vp;
+		int a_attrnamespace;
+		const char *a_name;
+		struct uio *a_uio;
+		size_t *a_size;
+		kauth_cred_t a_cred;
+		struct proc *a_p;
+	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
+	struct inode *ip = VTOI(vp);
+	struct ulfsmount *ump = ip->i_ump;
+	//struct lfs *fs = ip->i_lfs;
+	int error;
+
+	if (ump->um_fstype == ULFS1) {
+#ifdef LFS_EXTATTR
+		fstrans_start(vp->v_mount, FSTRANS_SHARED);
+		error = ulfs_getextattr(ap);
+		fstrans_done(vp->v_mount);
+#else
+		error = EOPNOTSUPP;
+#endif
+		return error;
+	}
+
+	/* XXX Not implemented for ULFS2 file systems. */
+	return (EOPNOTSUPP);
+}
+
+static int
+lfs_setextattr(void *v)
+{
+	struct vop_setextattr_args /* {
+		struct vnode *a_vp;
+		int a_attrnamespace;
+		const char *a_name;
+		struct uio *a_uio;
+		kauth_cred_t a_cred;
+		struct proc *a_p;
+	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
+	struct inode *ip = VTOI(vp);
+	struct ulfsmount *ump = ip->i_ump;
+	//struct lfs *fs = ip->i_lfs;
+	int error;
+
+	if (ump->um_fstype == ULFS1) {
+#ifdef LFS_EXTATTR
+		fstrans_start(vp->v_mount, FSTRANS_SHARED);
+		error = ulfs_setextattr(ap);
+		fstrans_done(vp->v_mount);
+#else
+		error = EOPNOTSUPP;
+#endif
+		return error;
+	}
+
+	/* XXX Not implemented for ULFS2 file systems. */
+	return (EOPNOTSUPP);
+}
+
+static int
+lfs_listextattr(void *v)
+{
+	struct vop_listextattr_args /* {
+		struct vnode *a_vp;
+		int a_attrnamespace;
+		struct uio *a_uio;
+		size_t *a_size;
+		kauth_cred_t a_cred;
+		struct proc *a_p;
+	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
+	struct inode *ip = VTOI(vp);
+	struct ulfsmount *ump = ip->i_ump;
+	//struct lfs *fs = ip->i_lfs;
+	int error;
+
+	if (ump->um_fstype == ULFS1) {
+#ifdef LFS_EXTATTR
+		fstrans_start(vp->v_mount, FSTRANS_SHARED);
+		error = ulfs_listextattr(ap);
+		fstrans_done(vp->v_mount);
+#else
+		error = EOPNOTSUPP;
+#endif
+		return error;
+	}
+
+	/* XXX Not implemented for ULFS2 file systems. */
+	return (EOPNOTSUPP);
+}
+
+static int
+lfs_deleteextattr(void *v)
+{
+	struct vop_deleteextattr_args /* {
+		struct vnode *a_vp;
+		int a_attrnamespace;
+		kauth_cred_t a_cred;
+		struct proc *a_p;
+	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
+	struct inode *ip = VTOI(vp);
+	struct ulfsmount *ump = ip->i_ump;
+	//struct fs *fs = ip->i_lfs;
+	int error;
+
+	if (ump->um_fstype == ULFS1) {
+#ifdef LFS_EXTATTR
+		fstrans_start(vp->v_mount, FSTRANS_SHARED);
+		error = ulfs_deleteextattr(ap);
+		fstrans_done(vp->v_mount);
+#else
+		error = EOPNOTSUPP;
+#endif
+		return error;
+	}
+
+	/* XXX Not implemented for ULFS2 file systems. */
+	return (EOPNOTSUPP);
 }

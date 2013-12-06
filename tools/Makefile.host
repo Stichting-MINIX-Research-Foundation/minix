@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.host,v 1.28 2011/04/10 16:52:36 joerg Exp $
+#	$NetBSD: Makefile.host,v 1.31 2013/06/14 16:10:02 tsutsui Exp $
 
 NOINFO=		# defined
 NOLINT=		# defined
@@ -7,13 +7,15 @@ NOMAN=		# defined
 .include <bsd.own.mk>
 
 .ifndef NOCOMPATLIB
-COMPATOBJ!=	cd ${.CURDIR}/../compat && ${PRINTOBJDIR}
-.-include	"${COMPATOBJ}/defs.mk"
+# Use TOOLDIR copy of libnbcompat and associated *.h files
+.-include	"${TOOLDIR}/share/compat/defs.mk"
+.elif !empty(.MAKE.OS:M*CYGWIN*)
+HOSTEXEEXT=.exe
 .endif
 
 .if ${HOST_OSTYPE:C/\-.*//} == "Minix"
 LDADD+= -lcompat_minix
-.endif
+.endif # ${HOST_OSTYPE:C/\-.*//} == "Minix"
 
 # Resolve pathnames in variables.
 _RESOLVE_VARS=	CFLAGS CPPFLAGS DPADD HOST_CPPFLAGS LDADD
@@ -47,6 +49,7 @@ HOSTPROGNAME?=	${HOSTPROG}
 HOST_BINDIR?=	${TOOLDIR}/bin
 HOST_CPPFLAGS:=	${HOST_CPPFLAGS} ${CPPFLAGS}
 HOST_CPPFLAGS:=	${HOST_CPPFLAGS:N-Wp,-iremap,*:N--sysroot=*}
+HOST_INSTALLPROG?=${HOST_BINDIR}/${HOSTPROGNAME}${HOSTEXEEXT}
 .undef LINKS
 
 SRCS?=		${HOSTPROG}.c
@@ -56,14 +59,17 @@ SRCS+=		${HOST_SRCS}
 
 # Install rule.
 realinstall: install.host install.files
-install.host: ${HOST_BINDIR}/${HOSTPROGNAME}
-${HOST_BINDIR}/${HOSTPROGNAME}:: ${HOSTPROG}
+install.host: ${HOST_INSTALLPROG}
+${HOST_INSTALLPROG}:: ${HOSTPROG}
 	${_MKTARGET_INSTALL}
 	mkdir -p ${HOST_BINDIR}
 	${HOST_INSTALL_FILE} -m ${BINMODE} ${HOSTPROG}${HOSTEXEEXT} ${.TARGET}
+.if !empty(.MAKE.OS:M*CYGWIN*)
+	${HOST_SH} ${NETBSDSRCDIR}/tools/binstall/mkmanifest ${.TARGET}
+.endif
 
 .if ${MKUPDATE} == "no"
-.PHONY:		${HOST_BINDIR}/${HOSTPROGNAME}
+.PHONY:		${HOST_INSTALLPROG}
 .endif
 
 install.files:

@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_add_64.S,v 1.3 2012/09/13 00:36:12 matt Exp $	*/
+/*	$NetBSD: atomic_add_64.S,v 1.10 2013/11/30 20:43:53 joerg Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,50 +32,31 @@
 
 #ifdef _ARM_ARCH_6
 
-ENTRY_NP(_atomic_add_64)
-	str	r4, [sp, #-4]!		/* save temporary */
-	mov	r4, r0			/* need r0 for return value */
-#ifndef __ARM_EABI__
-	mov	r3, r2
-	mov	r2, r1
-#endif
-1:	ldrexd	r0, [r4]		/* load old value (to be returned) */
-	adds	NLO, LO, NLO		/* calculate new value */
-	adc	NHI, HI, NHI		/* calculate new value */
-	strexd	ip, r2, [r4]		/* try to store */
-	cmp	ip, #0			/*   succeed? */
-	bne	1b			/*     no, try again */
-#ifdef _ARM_ARCH_7
-	dmb
-#else
-	mcr	p15, 0, ip, c7, c10, 5	/* data memory barrier */
-#endif
-	ldr	r4, [sp], #4		/* restore temporary */
-	RET				/* return old value */
-	END(_atomic_add_64)
-ATOMIC_OP_ALIAS(atomic_add_64,_atomic_add_64)
-
 ENTRY_NP(_atomic_add_64_nv)
-	str	r4, [sp, #-4]!		/* save temporary */
-	mov	r4, r0			/* need r0 for return value */
+	push	{r3,r4}			/* save temporary */
+	mov	ip, r0			/* need r0 for return value */
 #ifndef __ARM_EABI__
 	mov	r3, r2
 	mov	r2, r1
 #endif
-1:	ldrexd	r0, [r4]		/* load old value */
+1:	ldrexd	r0, r1, [ip]		/* load old value */
 	adds	LO, LO, NLO		/* calculate new value lo */
-	adc	HI, HI, NHI		/* calculate new value hi */
-	strexd	ip, r0, [r4]		/* try to store */
-	cmp	ip, #0			/*   succeed? */
+	adcs	HI, HI, NHI		/* calculate new value hi */
+	strexd	r4, r0, r1, [ip]	/* try to store */
+	cmp	r4, #0			/*   succeed? */
 	bne	1b			/*     no, try again? */
 #ifdef _ARM_ARCH_7
 	dmb
 #else
-	mcr	p15, 0, ip, c7, c10, 5	/* data memory barrier */
+	mcr	p15, 0, r4, c7, c10, 5	/* data memory barrier */
 #endif
-	ldr	r4, [sp], #4		/* restore temporary */
+	pop	{r3,r4}			/* restore temporary */
 	RET				/* return new value */
-	END(_atomic_add_64_nv)
+END(_atomic_add_64_nv)
+
+STRONG_ALIAS(_atomic_add_64,_atomic_add_64_nv)
 ATOMIC_OP_ALIAS(atomic_add_64_nv,_atomic_add_64_nv)
+ATOMIC_OP_ALIAS(atomic_add_64,_atomic_add_64)
+STRONG_ALIAS(__sync_add_and_fetch_8,_atomic_add_64_nv)
 
 #endif /* _ARM_ARCH_6 */

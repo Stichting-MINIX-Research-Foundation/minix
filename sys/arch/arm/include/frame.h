@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.17 2012/08/16 17:35:01 matt Exp $	*/
+/*	$NetBSD: frame.h,v 1.18 2013/08/18 05:07:19 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -52,7 +52,7 @@
 
 typedef struct trapframe {
 	register_t tf_spsr; /* Zero on arm26 */
-	register_t tf_fill; /* fill here so r0 will dword aligned */
+	register_t tf_fill; /* fill here so r0 will be dword aligned */
 	register_t tf_r0;
 	register_t tf_r1;
 	register_t tf_r2;
@@ -90,13 +90,12 @@ typedef struct trapframe {
  */
 #if defined(COMPAT_16) || defined(__minix)
 struct sigframe_sigcontext {
-#ifdef __minix
+#if defined(__minix)
 	struct	sigcontext *sf_scp;	/* Let sigreturn find sigcontext */
-#endif
+#endif /* defined(__minix) */
 	struct	sigcontext sf_sc;
 };
 #endif
-
 
 /* the pointers are use in the trampoline code to locate the ucontext */
 struct sigframe_siginfo {

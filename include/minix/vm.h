@@ -27,6 +27,12 @@ int minix_vfs_mmap(endpoint_t who, off_t offset, size_t len,
         dev_t dev, ino_t ino, int fd, u32_t vaddr, u16_t clearend, u16_t
 	flags);
 
+void *minix_mmap_for(endpoint_t forwhom,
+        void *addr, size_t len, int prot, int flags, int fd, off_t offset);
+int minix_vfs_mmap(endpoint_t who, off_t offset, size_t len,
+        dev_t dev, ino_t ino, int fd, u32_t vaddr, u16_t clearend,
+        u16_t flags);
+
 /* minix vfs mmap flags */
 #define MVM_WRITABLE	0x8000
 

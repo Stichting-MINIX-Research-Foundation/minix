@@ -1,4 +1,4 @@
-/*	$NetBSD: arc4random.c,v 1.20 2012/08/20 21:38:09 dsl Exp $	*/
+/*	$NetBSD: arc4random.c,v 1.21 2013/10/17 23:56:17 christos Exp $	*/
 /*	$OpenBSD: arc4random.c,v 1.6 2001/06/05 05:05:38 pvalchev Exp $	*/
 
 /*
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: arc4random.c,v 1.20 2012/08/20 21:38:09 dsl Exp $");
+__RCSID("$NetBSD: arc4random.c,v 1.21 2013/10/17 23:56:17 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -125,7 +125,7 @@ arc4_addrandom(struct arc4_stream *as, u_char *dat, int datlen)
 static __noinline void
 arc4_stir(struct arc4_stream *as)
 {
-#ifdef __minix
+#if defined(__minix)
 	/* LSC: We do not have a compatibility layer for the 
 	 * KERN_URND call, so use the old way... */
 	int fd;
@@ -164,7 +164,7 @@ arc4_stir(struct arc4_stream *as)
 		if (sysctl(mib, 2, &rdat[i], &len, NULL, 0) == -1)
 			abort();
 	}
-#endif
+#endif /* !defined(__minix) */
 
 	arc4_addrandom(as, (void *) &rdat, (int)sizeof(rdat));
 
@@ -179,7 +179,7 @@ arc4_stir(struct arc4_stream *as)
 	as->stirred = 1;
 }
 
-static __always_inline uint8_t
+static __inline uint8_t
 arc4_getbyte_ij(struct arc4_stream *as, uint8_t *i, uint8_t *j)
 {
 	uint8_t si, sj;

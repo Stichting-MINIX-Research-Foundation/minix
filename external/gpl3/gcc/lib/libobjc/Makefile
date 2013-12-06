@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2011/07/01 10:04:36 mrg Exp $
+#	$NetBSD: Makefile,v 1.7 2013/08/22 00:16:54 matt Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -8,6 +8,7 @@ UNSUPPORTED_COMPILER.clang=	# defined
 .include <bsd.own.mk>
 
 LIB=		objc
+GCC_MACHINE_ARCH?=	${MACHINE_ARCH:S/earmv5/earm/}
 
 .if ${MKGCC} != "no"
 
@@ -15,9 +16,9 @@ SHLIB_MAJOR=	3
 SHLIB_MINOR=	0
 
 # XXX just while all platforms defs.mk are updated..
-.if exists(${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk)
+.if exists(${.CURDIR}/arch/${GCC_MACHINE_ARCH}/defs.mk)
 # Machine-dependent definitions (include file names).
-.include "${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk"
+.include "${.CURDIR}/arch/${GCC_MACHINE_ARCH}/defs.mk"
 EXTRA_FAKEHEADERS=
 .else
 # Machine-independent definitions (include file names).
@@ -29,18 +30,18 @@ LIBGCCOBJ!=    cd ${.CURDIR}/../libgcc/libgcc && ${PRINTOBJDIR}
 
 DIST=		${NETBSDSRCDIR}/external/gpl3/gcc/dist
 GNUHOSTDIST=	${NETBSDSRCDIR}/external/gpl3/gcc/dist
-GCCARCH=	${NETBSDSRCDIR}/external/gpl3/gcc/usr.bin/gcc/arch/${MACHINE_ARCH}
-LIBOBJCARCH=	${NETBSDSRCDIR}/external/gpl3/gcc/lib/libobjc/arch/${MACHINE_ARCH}
-GCCLIBXX=	${NETBSDSRCDIR}/external/gpl3/gcc/lib/libstdc++-v3/arch/${MACHINE_ARCH}
+GCCARCH=	${NETBSDSRCDIR}/external/gpl3/gcc/usr.bin/gcc/arch/${GCC_MACHINE_ARCH}
+LIBOBJCARCH=	${NETBSDSRCDIR}/external/gpl3/gcc/lib/libobjc/arch/${GCC_MACHINE_ARCH}
+GCCLIBXX=	${NETBSDSRCDIR}/external/gpl3/gcc/lib/libstdc++-v3/arch/${GCC_MACHINE_ARCH}
 
 SRCS=		${G_OBJS:N[A-Z]*:Nlinking.lo:.lo=.c} ${G_OBJS:M[A-Z]*:.lo=.m} linking.m
 
 GCPPFLAGS=	${G_ALL_CFLAGS} ${G_INCLUDES}
-CPPFLAGS+=	-I. -I${.CURDIR}/arch/${MACHINE_ARCH}
+CPPFLAGS+=	-I. -I${.CURDIR}/arch/${GCC_MACHINE_ARCH}
 CPPFLAGS+=	-I${GCCARCH} ${GCPPFLAGS:M-D*} ${GCPPFLAGS:M-I*:N-I.*}
 CPPFLAGS+=	-I${GCCLIBXX}
 
-BUILDSYMLINKS=	${.CURDIR}/../libstdc++-v3/arch/${MACHINE_ARCH} bits
+BUILDSYMLINKS=	${.CURDIR}/../libstdc++-v3/arch/${GCC_MACHINE_ARCH} bits
 DPSRCS+=	bits
 
 .for f in Protocol.m Object.m NXConstStr.m linking.m
@@ -80,7 +81,7 @@ DPSRCS+=	unwind.h
 .include "../Makefile.hacks"
 
 # XXX just while all platforms defs.mk are updated..
-.if exists(${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk)
+.if exists(${.CURDIR}/arch/${GCC_MACHINE_ARCH}/defs.mk)
 optionlist: ${G_ALL_OPT_FILES} ${LIBOBJCARCH}/defs.mk Makefile ${DIST}/gcc/opt-gather.awk
 	${TOOL_AWK} -f ${DIST}/gcc/opt-gather.awk ${G_ALL_OPT_FILES} \
 		> ${.TARGET}

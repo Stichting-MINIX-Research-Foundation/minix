@@ -56,12 +56,11 @@ typedef	__uint32_t	__fd_mask;
  */
 
 #ifndef	FD_SETSIZE
-#ifdef __minix
-#include <sys/syslimits.h>
-#define	FD_SETSIZE	OPEN_MAX
+#if defined(__minix)
+#define	FD_SETSIZE	255
 #else
 #define	FD_SETSIZE	256
-#endif
+#endif /* defined(__minix) */
 #endif
 
 #define	__NFD_SIZE	(((FD_SETSIZE) + (__NFDBITS - 1)) / __NFDBITS)

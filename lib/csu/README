@@ -1,3 +1,26 @@
+Introduction
+
+This document covers the native NetBSD compiler runtime. The full support
+for the native runtime is enabled by setting USE_COMPILERCRTSTUFF to no
+in bsd.own.mk.
+
+Machine independent sources can be found in common. The crtbegin.c in
+that directory is a useful template for deriving compact assembler
+versions. That is preferable to decouple the result from changes in the
+compiler logic.
+
+A new platform should provide the following content in
+arch/${MACHINE_ARCH} or arch/${MACHINE_CPU}:
+- Makefile.inc: provides ELFSIZE corresponding to 32/64bit file format.
+  If using the common C code instead of crtbegin.S also provide a -I option
+  to find crtbegin.h in your arch subdir.
+- crt0.S: provides setup code and the call to ___start.
+- crtbegin.S or crtbegin.h: see below
+- crtend.S: see below, most likely just a copy of an existing architecture
+- crti.S: prefix part of .init/.fini sections, i.e. to ensure stack alignment
+- crtn.S: suffix part of the .init/.fini sections, i.e. return to caller.
+
+
 Overview of the common runtime support
 
 The common runtime support contains two modules, crtbegin and crtend.
@@ -61,3 +84,10 @@ Deinitialisation (called from .fini):
     Call the pointers as void (*)(void) functions.
 5.  If __deregister_frame_info is NULL, return.
 6.  Call __deregister_frame_info with the start of .eh_frame as the argument.
+
+
+Since most of this can easily be done in C code, instead of providing a
+crtbegin.S you can also chose to use the generic C implementation. Provide
+a crtbegin.h file instead of crtbegin.S. In there put inline assembler
+stubs (mostly copied from some other arch) and implement calls to the
+helper functions __do_global_ctors_aux/__do_global_dtors_aux.

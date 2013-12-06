@@ -1,4 +1,4 @@
-/*	$NetBSD: boot2.c,v 1.58 2012/08/04 03:51:27 riastradh Exp $	*/
+/*	$NetBSD: boot2.c,v 1.60 2013/08/30 16:42:17 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -120,6 +120,9 @@ void	command_quit(char *);
 void	command_boot(char *);
 void	command_dev(char *);
 void	command_consdev(char *);
+#ifndef SMALL
+void	command_menu(char *);
+#endif
 void	command_modules(char *);
 void	command_multiboot(char *);
 #ifdef __minix
@@ -134,6 +137,9 @@ const struct bootblk_command commands[] = {
 	{ "boot",	command_boot },
 	{ "dev",	command_dev },
 	{ "consdev",	command_consdev },
+#ifndef SMALL
+	{ "menu",	command_menu },
+#endif
 	{ "modules",	command_modules },
 	{ "load",	module_add },
 #ifdef __minix
@@ -143,6 +149,7 @@ const struct bootblk_command commands[] = {
 	{ "vesa",	command_vesa },
 	{ "splash",	splash_add },
 	{ "rndseed",	rnd_add },
+	{ "fs",		fs_add },
 	{ "userconf",	userconf_add },
 	{ NULL,		NULL },
 };
@@ -407,11 +414,14 @@ command_help(char *arg)
 	       "dev xd[N[x]]:\n"
 	       "consdev {pc|com[0123]|com[0123]kbd|auto}\n"
 	       "vesa {modenum|on|off|enabled|disabled|list}\n"
+#ifndef SMALL
+	       "menu (reenters boot menu, if defined in boot.cfg)\n"
+#endif
 	       "modules {on|off|enabled|disabled}\n"
 	       "load {path_to_module}\n"
-#ifdef __minix
+#if defined(__minix)
 	       "load_mods {path_to_modules}, pattern might be used\n"
-#endif
+#endif /* defined(__minix) */
 	       "multiboot [xdNx:][filename] [<args>]\n"
 	       "userconf {command}\n"
 	       "rndseed {path_to_rndseed_file}\n"
@@ -425,15 +435,15 @@ command_ls(char *arg)
 	const char *save = default_filename;
 
 	default_filename = "/";
-#ifndef __minix
+#if !defined(__minix)
 	ls(arg);
 #else
 	ls(arg, NULL);
-#endif
+#endif /* !defined(__minix) */
 	default_filename = save;
 }
 
-#ifdef __minix
+#if defined(__minix)
 void
 command_load_mods(char *arg)
 {
@@ -443,7 +453,7 @@ command_load_mods(char *arg)
 	ls(arg, module_add);
 	default_filename = save;
 }
-#endif
+#endif /* defined(__minix) */
 
 /* ARGSUSED */
 void
@@ -471,6 +481,10 @@ command_boot(char *arg)
 		bootit(filename, howto, tell);
 	} else {
 		int i;
+
+#ifndef SMALL
+		bootdefault();
+#endif
 		for (i = 0; i < NUMNAMES; i++) {
 			bootit(names[i][0], howto, tell);
 			bootit(names[i][1], howto, tell);
@@ -535,6 +549,21 @@ command_consdev(char *arg)
 	}
 	printf("invalid console device.\n");
 }
+
+#ifndef SMALL
+/* ARGSUSED */
+void
+command_menu(char *arg)
+{
+
+	if (bootconf.nummenu > 0) {
+		/* Does not return */
+		doboottypemenu();
+	} else {
+		printf("No menu defined in boot.cfg\n");
+	}
+}
+#endif /* !SMALL */
 
 void
 command_modules(char *arg)

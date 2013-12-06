@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.217 2012/10/02 01:46:40 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.221 2013/11/09 13:05:59 njoly Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 .if defined(__MINIX)
@@ -34,7 +34,7 @@ SRCS+=	posix_fadvise.c posix_madvise.c sched.c sigqueue.c sigtimedwait.c \
 # glue to provide compatibility between GCC 1.X and 2.X and for compat
 # with old syscall interfaces.
 GLUE+= ftruncate.c lseek.c mmap.c pread.c preadv.c pwrite.c \
-	pwritev.c truncate.c ntp_adjtime.c
+	pwritev.c truncate.c ntp_adjtime.c mknodat.c
 
 GLUE50+= adjtime.c clock_settime.c settimeofday.c
 
@@ -106,12 +106,12 @@ ASM=	access.S acct.S \
 	lchflags.S lchmod.S lchown.S lfs_bmapv.S lfs_markv.S lfs_segclean.S \
 		__lfs_segwait50.S link.S linkat.S listen.S __lstat50.S \
 		__lutimes50.S _lwp_create.S _lwp_exit.S _lwp_kill.S \
-		___lwp_park50.S _lwp_self.S _lwp_wait.S _lwp_unpark.S \
+		_lwp_self.S _lwp_wait.S _lwp_unpark.S \
 		_lwp_unpark_all.S _lwp_suspend.S _lwp_continue.S \
 		_lwp_wakeup.S _lwp_detach.S _lwp_setprivate.S \
 		_lwp_setname.S _lwp_getname.S _lwp_ctl.S \
 	madvise.S mincore.S minherit.S mkdir.S mkdirat.S mkfifo.S mkfifoat.S \
-		__mknod50.S mknodat.S mlock.S mlockall.S modctl.S __mount50.S \
+		__mknod50.S mlock.S mlockall.S modctl.S __mount50.S \
 		mprotect.S __msgctl50.S msgget.S munlock.S munlockall.S \
 		munmap.S \
 	nfssvc.S __ntp_gettime50.S \
@@ -221,14 +221,14 @@ LintSysPseudoNoerr.c: ${LIBCDIR}/sys/makelintstub \
 .endif # !defined(__MINIX)
 
 .if !defined(__MINIX)
-MAN+=	accept.2 access.2 acct.2 bind.2 brk.2 chdir.2 \
-	chflags.2 chmod.2 chown.2 chroot.2 clone.2 close.2 \
+MAN+=	accept.2 access.2 acct.2 adjtime.2 bind.2 brk.2 chdir.2 \
+	chflags.2 chmod.2 chown.2 chroot.2 clock_settime.2 clone.2 close.2 \
 	connect.2 dup.2 execve.2 _exit.2 extattr_get_file.2 \
 	fcntl.2 fdatasync.2 fhopen.2 \
 	flock.2 fork.2 fsync.2 getcontext.2 getdents.2 \
-	getfh.2 getgid.2 getgroups.2 \
+	getfh.2 getvfsstat.2 getgid.2 getgroups.2 \
 	getitimer.2 getlogin.2 getpeername.2 getpgrp.2 getpid.2 \
-	getpriority.2 getrlimit.2 getsid.2 getsockname.2 \
+	getpriority.2 getrlimit.2 getrusage.2 getsid.2 getsockname.2 \
 	getsockopt.2 gettimeofday.2 getuid.2 intro.2 ioctl.2 issetugid.2 \
 	kill.2 kqueue.2 ktrace.2 \
 	lfs_bmapv.2 lfs_markv.2 lfs_segclean.2 lfs_segwait.2 \
@@ -272,7 +272,6 @@ MLINKS+=chmod.2 fchmod.2 chmod.2 lchmod.2
 MLINKS+=chown.2 fchown.2 chown.2 lchown.2
 MLINKS+=chroot.2 fchroot.2
 .else
-MAN+=	statvfs.2
 MLINKS+=clock_settime.2 clock_gettime.2
 MLINKS+=clock_settime.2 clock_getres.2
 .endif # !defined(__MINIX)
@@ -288,7 +287,11 @@ MLINKS+=extattr_get_file.2 extattr_set_file.2 \
 	extattr_get_file.2 extattr_set_link.2 \
 	extattr_get_file.2 extattr_delete_link.2 \
 	extattr_get_file.2 extattr_list_link.2
+MLINKS+=access.2 faccessat.2
+MLINKS+=chmod.2 fchmodat.2
+MLINKS+=chown.2 fchownat.2
 MLINKS+=fhopen.2 fhstat.2 fhopen.2 fhstatvfs.2 fhopen.2 fhstatvfs1.2
+MLINKS+=stat.2 fstatat.2
 MLINKS+=fsync.2 fsync_range.2
 MLINKS+=getcontext.2 setcontext.2
 MLINKS+=getgid.2 getegid.2
@@ -312,18 +315,25 @@ MLINKS+=_lwp_getprivate.2 _lwp_setprivate.2
 MLINKS+=madvise.2 posix_madvise.2
 MLINKS+=mlock.2 munlock.2
 MLINKS+=mlockall.2 munlockall.2
+MLINKS+=mkdir.2 mkdirat.2
+MLINKS+=mkfifo.2 mkfifoat.2
+MLINKS+=mknod.2 mknodat.2
 MLINKS+=mount.2 unmount.2
+MLINKS+=open.2 openat.2
 MLINKS+=ntp_adjtime.2 ntp_gettime.2
 MLINKS+=pathconf.2 fpathconf.2
 MLINKS+=pmc_control.2 pmc_get_info.2
 MLINKS+=poll.2 pollts.2
 MLINKS+=read.2 readv.2 read.2 pread.2 read.2 preadv.2
+MLINKS+=readlink.2 readlinkat.2
 MLINKS+=recv.2 recvfrom.2 recv.2 recvmsg.2 recv.2 recvmmsg.2
+MLINKS+=rename.2 renameat.2
 MLINKS+=select.2 pselect.2
 MLINKS+=send.2 sendmsg.2 send.2 sendto.2 send.2 sendmmsg.2
 MLINKS+=setpgid.2 setpgrp.2
 MLINKS+=setuid.2 setegid.2 setuid.2 seteuid.2 setuid.2 setgid.2
 MLINKS+=shmat.2 shmdt.2
+MLINKS+=symlink.2 symlinkat.2
 MLINKS+=timer_settime.2 timer_gettime.2 timer_settime.2 timer_getoverrun.2
 MLINKS+=sigqueue.2 sigqueueinfo.2
 MLINKS+=sigtimedwait.2 sigwaitinfo.2
@@ -334,12 +344,15 @@ MLINKS+=statvfs.2 statvfs1.2
 MLINKS+=statvfs.2 fstatvfs1.2
 MLINKS+=syscall.2 __syscall.2
 MLINKS+=truncate.2 ftruncate.2
+MLINKS+=unlink.2 unlinkat.2
 MLINKS+=utimes.2 futimes.2 utimes.2 lutimes.2
-MLINKS+=utimes.2 futimens.2 utimes.2 utimensat.2
+MLINKS+=utimes.2 utimens.2 utimes.2 futimens.2 utimes.2 lutimens.2
+MLINKS+=utimes.2 utimensat.2
 MLINKS+=wait.2 wait3.2 wait.2 wait4.2 wait.2 waitpid.2
 MLINKS+=write.2 writev.2 write.2 pwrite.2 write.2 pwritev.2
 .else
 MLINKS+=pipe.2 pipe2.2
+MAN+=	statvfs.2
 MLINKS+=statvfs.2 fstatvfs.2
 MLINKS+=statvfs.2 statvfs1.2
 MLINKS+=statvfs.2 fstatvfs1.2

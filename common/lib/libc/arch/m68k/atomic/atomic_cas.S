@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_cas.S,v 1.5 2008/05/25 15:56:11 chs Exp $	*/
+/*	$NetBSD: atomic_cas.S,v 1.7 2013/07/16 23:24:18 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -34,13 +34,14 @@
 	.text
 
 ENTRY(_atomic_cas_32)
-	movl	%sp@(4), %a0
-	movl	%sp@(8), %d0
-	movl	%sp@(12), %d1
-	casl	%d0, %d1, %a0@
+	movl	4(%sp), %a0
+	movl	8(%sp), %d0
+	movl	12(%sp), %d1
+	casl	%d0, %d1, (%a0)
 	/* %d0 now contains the old value */
 	movl	%d0, %a0	/* pointers return also in %a0 */
 	rts
+END(_atomic_cas_32)
 
 ATOMIC_OP_ALIAS(atomic_cas_32,_atomic_cas_32)
 ATOMIC_OP_ALIAS(atomic_cas_uint,_atomic_cas_32)

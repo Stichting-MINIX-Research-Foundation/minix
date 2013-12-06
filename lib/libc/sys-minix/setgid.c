@@ -4,11 +4,6 @@
 
 #include <string.h>
 
-#ifdef __weak_alias
-__weak_alias(setgid, _setgid)
-__weak_alias(setegid, _setegid)
-#endif
-
 #include <unistd.h>
 
 int setgid(gid_t grp)

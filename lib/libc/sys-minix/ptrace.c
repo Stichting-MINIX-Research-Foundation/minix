@@ -5,10 +5,6 @@
 #include <string.h>
 #include <sys/ptrace.h>
 
-#ifdef __weak_alias
-__weak_alias(ptrace, _ptrace)
-#endif
-
 int ptrace(int req, pid_t pid, void *addr, int data)
 {
   message m;

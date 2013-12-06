@@ -1,4 +1,4 @@
-/*	$NetBSD: fields.c,v 1.32 2010/12/18 23:09:48 christos Exp $	*/
+/*	$NetBSD: fields.c,v 1.33 2013/01/20 10:12:58 apb Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 
 #include "sort.h"
 
-__RCSID("$NetBSD: fields.c,v 1.32 2010/12/18 23:09:48 christos Exp $");
+__RCSID("$NetBSD: fields.c,v 1.33 2013/01/20 10:12:58 apb Exp $");
 
 #define SKIP_BLANKS(ptr) {					\
 	if (BLANK & d_mask[*(ptr)])				\
@@ -82,9 +82,9 @@ static u_char *enterfield(u_char *, const u_char *, struct field *, int);
 static u_char *number(u_char *, const u_char *, u_char *, u_char *, int);
 static u_char *length(u_char *, const u_char *, u_char *, u_char *, int);
 
-#ifdef __minix
+#if defined(__minix)
 static u_char *numhex(u_char *, const u_char *, u_char *, u_char *, int);
-#endif
+#endif /* defined(__minix) */
 
 #define DECIMAL_POINT '.'
 
@@ -209,10 +209,10 @@ enterfield(u_char *tablepos, const u_char *endkey, struct field *cur_fld,
 		return length(tablepos, endkey, start, end, flags);
 	if (flags & N)
 		return number(tablepos, endkey, start, end, flags);
-#ifdef __minix
+#if defined(__minix)
 	if (flags & X)
 		return numhex(tablepos, endkey, start, end, flags);
-#endif
+#endif /* defined(__minix) */
 
 	/* Bound check space - assuming nothing is skipped */
 	if (tablepos + (end - start) + 1 >= endkey)
@@ -283,7 +283,10 @@ number(u_char *pos, const u_char *bufend, u_char *line, u_char *lineend,
 	if (*line == '-') {	/* set the sign */
 		negate ^= 0xff;
 		line++;
+	} else if (*line == '+') {
+		line++;
 	}
+
 	/* eat initial zeroes */
 	for (; *line == '0' && line < lineend; line++)
 		continue;
@@ -384,7 +387,7 @@ length(u_char *pos, const u_char *bufend, u_char *line, u_char *lineend,
 	return number(pos, bufend, buf, buf + l, flag);
 }
 
-#ifdef __minix
+#if defined(__minix)
 static u_char *
 numhex(u_char *pos, const u_char *bufend, u_char *line, u_char *lineend,
     int flag)
@@ -397,4 +400,4 @@ numhex(u_char *pos, const u_char *bufend, u_char *line, u_char *lineend,
 	l = snprintf((char *)buf, sizeof(buf), "%lld", n);
 	return number(pos, bufend, buf, buf + l, flag);
 }
-#endif
+#endif /* defined(__minix) */

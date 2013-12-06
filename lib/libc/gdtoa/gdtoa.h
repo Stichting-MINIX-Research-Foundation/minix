@@ -1,4 +1,4 @@
-/* $NetBSD: gdtoa.h,v 1.9 2011/03/20 23:15:35 christos Exp $ */
+/* $NetBSD: gdtoa.h,v 1.10 2013/04/18 21:54:10 joerg Exp $ */
 
 /****************************************************************
 
@@ -37,6 +37,11 @@ THIS SOFTWARE.
 #include "arith.h"
 #include <stddef.h> /* for size_t */
 #include <stdint.h>
+
+#ifndef __LOCALE_T_DECLARED
+typedef struct _locale		*locale_t;
+#define __LOCALE_T_DECLARED
+#endif
 
 #ifndef Long
 #define Long int32_t
@@ -133,7 +138,8 @@ extern char* gdtoa ANSI((FPI *fpi, int be, ULong *bits, int *kindp,
 extern void freedtoa ANSI((char*));
 extern float  strtof ANSI((CONST char *, char **));
 extern double strtod ANSI((CONST char *, char **));
-extern int strtodg ANSI((CONST char*, char**, CONST FPI*, Long*, ULong*));
+extern int strtodg ANSI((CONST char*, char**, CONST FPI*, Long*, ULong*,
+                         locale_t));
 
 extern char*	g_ddfmt  ANSI((char*, double*, int, size_t));
 extern char*	g_dfmt   ANSI((char*, double*, int, size_t));
@@ -148,7 +154,7 @@ extern int	strtoIf  ANSI((CONST char*, char**, float*, float*));
 extern int	strtoIQ  ANSI((CONST char*, char**, void*, void*));
 extern int	strtoIx  ANSI((CONST char*, char**, void*, void*));
 extern int	strtoIxL ANSI((CONST char*, char**, void*, void*));
-extern int	strtord  ANSI((CONST char*, char**, int, double*));
+extern int	strtord  ANSI((CONST char*, char**, int, double*, locale_t));
 extern int	strtordd ANSI((CONST char*, char**, int, double*));
 extern int	strtorf  ANSI((CONST char*, char**, int, float*));
 extern int	strtorQ  ANSI((CONST char*, char**, int, void*));
@@ -159,9 +165,9 @@ extern int	strtodI  ANSI((CONST char*, char**, double*));
 extern int	strtopd  ANSI((CONST char*, char**, double*));
 extern int	strtopdd ANSI((CONST char*, char**, double*));
 extern int	strtopf  ANSI((CONST char*, char**, float*));
-extern int	strtopQ  ANSI((CONST char*, char**, void*));
-extern int	strtopx  ANSI((CONST char*, char**, void*));
-extern int	strtopxL ANSI((CONST char*, char**, void*));
+extern int	strtopQ  ANSI((CONST char*, char**, void*, locale_t));
+extern int	strtopx  ANSI((CONST char*, char**, void*, locale_t));
+extern int	strtopxL ANSI((CONST char*, char**, void*, locale_t));
 #else
 #define strtopd(s,se,x) strtord(s,se,1,x)
 #define strtopdd(s,se,x) strtordd(s,se,1,x)

@@ -1,0 +1,64 @@
+@comment  Copyright (c) 1994
+@comment      The Regents of the University of California.  All rights reserved.
+@comment  Copyright (c) 1994, 1995, 1996
+@comment 	Keith Bostic.  All rights reserved.
+@comment 
+@comment  See the LICENSE file for redistribution information.
+@comment 
+@comment      Id: ref.texi,v 8.1 2001/08/18 20:43:48 skimo Exp  (Berkeley) Date: 2001/08/18 20:43:48 
+@comment 
+@comment 
+@comment  indented paragraph, with spaces between the items, bold font
+@macro IP{item}
+@item @strong{\item\}
+@comment @deffn {Command} {\item\}
+@comment @end deffn
+@end macro
+@comment  indented paragraph, no spaces between the items, bold font
+@comment .de Ip
+@comment .tm arg 1 \\$1 arg 2 \\$2 arg 3 \\$3
+@macro Ip{item}
+@itemx @strong{\item\}
+@end macro
+@comment  typewriter font
+@macro LI{command}
+@code{\command\}
+@end macro
+@comment  ex/vi names in command font
+@macro EV{ex,vi}
+@strong{\ex\}/@strong{\vi\}
+@end macro
+@comment  command names
+@macro CO{command}
+@strong{\command\}
+@end macro
+@comment  option names
+@macro OP{option}
+@code{\option\}
+@end macro
+@comment  paren quoted (typewriter font)
+@macro PQ{command}
+``@code{\command\}''
+@end macro
+@comment  quoted bold
+@macro QB{command}
+``@strong{\command\}''
+@end macro
+@comment  quoted command
+@macro QC{command}
+``@strong{\command\}''
+@end macro
+@comment  quoted option
+@comment  quoted (no font change)
+@macro QQ{command}
+``\command\''
+@end macro
+@comment  quoted (typewriter font)
+@macro QT{command}
+``@code{\command\}''
+@end macro
+@comment  section macro to build TOC
+@comment  manual section
+@macro XR{command,section}
+@command{\command\}(\section\)
+@end macro

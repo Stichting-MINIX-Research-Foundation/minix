@@ -2,165 +2,215 @@
 # Minimal libc for servers and drivers.
 #
 
+# LSC: TODO: Explaination of how this works
+#.for f in \
+#${f}:	${NETBSDSRCDIR}//${f:C/\.o/.S/}
+#OBJS+=	${f}
+#CLEANFILES+= ${f}
+#.endfor
+
 .include <bsd.own.mk>
 
 LIB=		minc
 
-CPPFLAGS.sched_start.c+=	-I${NETBSDSRCDIR}
+MKPIC=		no # Never used as a dynamic library
 
+LIBSADIR=	${NETBSDSRCDIR}/sys/lib/libsa
+LIBSYSDIR=	${NETBSDSRCDIR}/lib/libsys
 LIBCDIR=	${NETBSDSRCDIR}/lib/libc
-CPPFLAGS+=      -I${LIBCDIR}/include -I${LIBCDIR}
+LIBCARCHDIR=	${LIBCDIR}/arch/${MACHINE_CPU}
+LIBCOMMONCDIR=	${NETBSDSRCDIR}/common/lib/libc
+LIBCOMMONCARCHDIR= ${LIBCOMMONCDIR}/arch/${MACHINE_CPU}
+
+CPPFLAGS+=	-I${LIBCDIR}/include -I${LIBCDIR}
 CPPFLAGS+=	-D_LIBMINC
 
-ARCHDIR?=  ${LIBCDIR}/arch/${MACHINE_CPU}
+CFLAGS+=	-fno-builtin
+
 #
 # Customized versions of libc functions.
 #
-SRCS+= 	fputs.c
+SRCS+= atoi.c fputs.c _snprintf.c strtol.c
+CPPFLAGS._snprintf.c+=	-I${LIBSADIR}
 
+CPPFLAGS.strtol.c+=	-D_STANDALONE
+CPPFLAGS.strtol.c+=	-I${LIBCOMMONCDIR}/stdlib
+CPPFLAGS.strtol.c+=	-I${NETBSDSRCDIR}/sys
+
+########################################################################
+#
+# Functions imported from libsa (StandAlone)
+#
+.for f in \
+	errno.o printf.o sprintf.o strerror.o subr_prf.o
+${f}:	${LIBSADIR}/${f:C/\.o/.c/}
+OBJS+=	${f}
+CLEANFILES+= ${f}
+.endfor
+
+# LSC: I would like not to have to copy te file, but I can't
+#      have libsa appear first in the .PATH, for a lot of files
+#      would be taken from there, which is not the intention ATM.
+CPPFLAGS.strerror.c+= -I${LIBSADIR}
+
+# LSC: putchar and kputc have the same role / signature.
+CPPFLAGS.subr_prf.c+= -Dputchar=kputc
+
+# Activate optional support, may be deactivated.
+CPPFLAGS.subr_prf.c+= -DLIBSA_PRINTF_LONGLONG_SUPPORT
+CPPFLAGS.subr_prf.c+= -DLIBSA_PRINTF_WIDTH_SUPPORT
+
+########################################################################
+#
+# Imports from libsys
+#
+.for f in \
+	kputc.o sys_diagctl.o
+${f}:	${LIBSYSDIR}/${f:C/\.o/.c/}
+OBJS+=	${f}
+CLEANFILES+= ${f}
+.endfor
+
+########################################################################
 #
 # Shared libc with userspace (/common/lib/libc)
 #
-.include "${NETBSDSRCDIR}/common/lib/libc/Makefile.inc"
+
+.for f in \
+	bswap64.o rb.o
+${f}:	${LIBCOMMONCDIR}/gen/${f:C/\.o/.c/}
+OBJS+=	${f}
+CLEANFILES+= ${f}
+.endfor
+
+CPPFLAGS.bswap64.c+=	-D_STANDALONE
+CPPFLAGS.rb.c+=		-D_LIBC
+
+.for f in \
+	sha2.o
+${f}:	${LIBCOMMONCDIR}/hash/sha2/${f:C/\.o/.c/}
+OBJS+=	${f}
+CLEANFILES+= ${f}
+.endfor
+
+CPPFLAGS.sha2.c+=	-D_STANDALONE
+CPPFLAGS.sha2.c+=	-I${NETBSDSRCDIR}/sys
+
+.for f in \
+	divdi3.o moddi3.o udivdi3.o umoddi3.o qdivrem.o
+${f}:	${LIBCOMMONCDIR}/quad/${f:C/\.o/.c/}
+OBJS+=	${f}
+CLEANFILES+= ${f}
+.endfor
+
+.for f in \
+	random.o strtoul.o
+${f}:	${LIBCOMMONCDIR}/stdlib/${f:C/\.o/.c/}
+OBJS+=	${f}
+CLEANFILES+= ${f}
+.endfor
+
+CPPFLAGS.strtoul.c+=	-D_STANDALONE
+CPPFLAGS.strtoul.c+=	-I${NETBSDSRCDIR}/sys
+
+.for f in \
+	strcasecmp.o strncasecmp.o strnlen.o strlcat.o
+${f}:	${LIBCOMMONCDIR}/string/${f:C/\.o/.c/}
+OBJS+=	${f}
+CLEANFILES+= ${f}
+.endfor
+
+########################################################################
+#
+# Functions imported directly from libc.
+#
+
 .include "${.CURDIR}/arch/${MACHINE_ARCH}/Makefile.libc.inc"
 
-.if empty(SRCS:Mbyte_swap_8.*)
-SRCS+= bswap64.c
-.endif
+# This file is specifically generated
+SRCS+= errlist.c
 
-.if empty(SRCS:Mmemset2.*)
-SRCS+=	memset.c
-.endif
-
-# Quad support
-.if (${MACHINE_ARCH} != "alpha") && \
-    (${MACHINE_ARCH} != "mips64eb") && \
-    (${MACHINE_ARCH} != "mips64el") && \
-    (${MACHINE_ARCH} != "powerpc64") && \
-    (${MACHINE_ARCH} != "sparc64") && \
-    (${MACHINE_ARCH} != "x86_64")
-SRCS+= 	adddi3.c anddi3.c ashldi3.c ashrdi3.c cmpdi2.c divdi3.c \
-	iordi3.c lshldi3.c lshrdi3.c moddi3.c muldi3.c negdi2.c \
-	notdi2.c qdivrem.c subdi3.c ucmpdi2.c udivdi3.c umoddi3.c \
-	xordi3.c
-.endif
-
-.for i in \
-	random.c strtoll.c strtoul.c strtoull.c strtoumax.c \
-	memchr.c memcmp.c memcpy.c memmove.c popcount32.c popcount64.c \
-	strcasecmp.c strcat.c strchr.c strcmp.c strcpy.c strlcat.c \
-	strlcpy.c strlen.c strncasecmp.c strncmp.c strncpy.c strnlen.c \
-	strrchr.c strsep.c strstr.c ptree.c rb.c sha1.c sha2.c
-SRCS+= ${i}
-.endfor
-CPPFLAGS.sha2.c+= -D_LIBC
-CPPFLAGS.rb.c+= -D_LIBC
-CPPFLAGS.strlcpy.c+= -D_LIBC
-
-#
-# Functions imported directly from the libc.
-#
-
-# Import from misc (_libc_init symbols)
-.for i in initfini.c stack_protector.c
-.PATH.c: ${LIBCDIR}/misc
-SRCS+= ${i}
-CPPFLAGS.${i}+= -Dxprintf=printf
-.endfor
-
-# Import from stdio
-.for i in findfp.c sprintf.c fprintf.c perror.c vsnprintf.c snprintf.c \
-	_rand48.c lrand48.c srand48.c
-.PATH.c: ${LIBCDIR}/stdio
-CPPFLAGS.${i}= -I${LIBCDIR}/stdio
-SRCS+=	${i}
-.endfor
-
-# Import from stdlib
-.for i in abort.c atexit.c atoi.c exit.c getenv.c \
-	getopt.c ldiv.c malloc.c
-.PATH.c: ${LIBCDIR}/stdlib
-SRCS+= ${i}
-CPPFLAGS.${i}+= -I${LIBCDIR}/stdlib
-.endfor
-
-# Import from gen
 errlist.c: ${LIBCDIR}/gen/errlist.awk \
 	   ${NETBSDSRCDIR}/sys/sys/errno.h
 	${TOOL_CAT} ${NETBSDSRCDIR}/sys/sys/errno.h | ${TOOL_SED} 's/(_SIGN//' | ${TOOL_AWK} -f ${LIBCDIR}/gen/errlist.awk > ${.TARGET}
 CLEANFILES+=	errlist.c
 
-.for i in assert.c _errno.c errno.c _env.c errlist.c \
-	execle.c getprogname.c sleep.c time.c \
-	ctype_.c isctype.c tolower_.c toupper_.c usleep.c \
-	infinityf_ieee754.c infinity_ieee754.c \
-	fpclassifyf_ieee754.c fpclassifyd_ieee754.c \
-	isinff_ieee754.c isinfd_ieee754.c \
-	isnanf_ieee754.c isnand_ieee754.c \
-	isfinitef_ieee754.c isfinited_ieee754.c \
-	signbitf_ieee754.c signbitd_ieee754.c \
-	nanf.c sigsetops.c
-.PATH.c .PATH.S: ${ARCHDIR}/gen ${LIBCDIR}/gen/minix \
-	${LIBCDIR}/gen ${LIBCDIR}
-SRCS+= ${i}
+.for f in \
+	_errno.o \
+	getprogname.o setprogname.o execle.o sleep.o time.o \
+	ctype_.o tolower_.o toupper_.o usleep.o sigsetops.o
+${f}:	${LIBCDIR}/gen/${f:C/\.o/.c/}
+OBJS+=	${f}
+CLEANFILES+= ${f}
 .endfor
+
 CPPFLAGS.ctype_.c+= -I${LIBCDIR}/locale
 CPPFLAGS.isctype.c+= -I${LIBCDIR}/locale
 CPPFLAGS.tolower_.c+= -I${LIBCDIR}/locale
 CPPFLAGS.toupper_.c+= -I${LIBCDIR}/locale
 
-# Import from regex
-.for i in regcomp.c regerror.c regexec.c regfree.c
-.PATH.c: ${LIBCDIR}/regex
-SRCS+= ${i}
+.for f in \
+	waitpid.o
+${f}:	${LIBCDIR}/gen/minix/${f:C/\.o/.c/}
+OBJS+=	${f}
+CLEANFILES+= ${f}
 .endfor
 
-# Import from string
-.for i in strcspn.c strerror.c strerror_r.c strtol.c \
-	bcopy.S bzero.S
-.PATH.S: ${ARCHDIR}/string
-.PATH.c: ${LIBCDIR}/string
-SRCS+= ${i}
-CPPFLAGS.${i}+= -D_LIBC
-.endfor
-CPPFLAGS.strtol.c+=     -I${LIBCDIR}/../../common/lib/libc/stdlib
-
-# Import from time
-.for i in asctime.c localtime.c strftime.c
-.PATH.c: ${LIBCDIR}/time
-SRCS+= ${i}
+.for f in \
+	initfini.o stack_protector.o
+${f}:	${LIBCDIR}/misc/${f:C/\.o/.c/}
+OBJS+=	${f}
+CLEANFILES+= ${f}
 .endfor
 
-.if (${MACHINE_ARCH} == "earm")
-SRCS += __aeabi_ldivmod.S __aeabi_uldivmod.S
-.endif
+CPPFLAGS.stack_protector.c+= -Dxprintf=printf
 
-# Import from locale
-.for i in _def_time.c
-.PATH.c: ${LIBCDIR}/locale
-SRCS+= ${i}
-CPPFLAGS.${i}+= -I${LIBCDIR}/locale
+.for f in \
+	regcomp.o regerror.o regexec.o regfree.o
+${f}:	${LIBCDIR}/regex/${f:C/\.o/.c/}
+OBJS+=	${f}
+CLEANFILES+= ${f}
 .endfor
 
-# Import from sys-minix
-.for i in access.c brk.c close.c environ.c execve.c fork.c fsync.c \
-	getgid.c getpid.c geteuid.c getuid.c gettimeofday.c getvfsstat.c \
-	init.c link.c loadname.c lseek.c _mcontext.c mknod.c \
-	mmap.c nanosleep.c open.c pread.c pwrite.c read.c sbrk.c \
-	select.c setuid.c sigprocmask.c stack_utils.c stat.c stime.c \
-	syscall.c _ucontext.c umask.c unlink.c waitpid.c write.c \
-	brksize.S _do_kernel_call_intr.S get_minix_kerninfo.S _ipc.S ucontext.S \
-	kill.c
-.PATH.c: ${LIBCDIR}/sys-minix
-.PATH.S: ${ARCHDIR}/sys-minix
-SRCS+= ${i}
+.for f in \
+	abort.o atexit.o _env.o exit.o getenv.o \
+	ldiv.o malloc.o \
+	_rand48.o lrand48.o srand48.o
+${f}:	${LIBCDIR}/stdlib/${f:C/\.o/.c/}
+OBJS+=	${f}
+CLEANFILES+= ${f}
+# LSC FIXME: Try to get this out of the loop
+CPPFLAGS.${i}+=	-I${LIBCDIR}/stdlib
 .endfor
 
-CPPFLAGS+= -D_LIBSYS
+.for f in \
+	strcspn.o
+${f}:	${LIBCDIR}/string/${f:C/\.o/.c/}
+OBJS+=	${f}
+CLEANFILES+= ${f}
+.endfor
+CPPFLAGS.strcspn.c+=	-D_LIBC
 
-.if exists (${ARCHDIR}/Makefile.inc)
-.PATH:  ${ARCHDIR}
-.include "${ARCHDIR}/Makefile.inc"
-.endif
+.for f in \
+	access.o brk.o close.o environ.o execve.o fork.o fsync.o \
+	getgid.o getpid.o geteuid.o getuid.o gettimeofday.o getvfsstat.o \
+	init.o link.o loadname.o lseek.o _mcontext.o mknod.o \
+	mmap.o nanosleep.o open.o pread.o pwrite.o read.o sbrk.o \
+	select.o setuid.o sigprocmask.o stack_utils.o stat.o stime.o \
+	syscall.o _ucontext.o umask.o unlink.o write.o \
+	kill.o
+${f}:	${LIBCDIR}/sys-minix/${f:C/\.o/.c/}
+OBJS+=	${f}
+CLEANFILES+= ${f}
+.endfor
+
+CPPFLAGS.malloc.c+= -D_LIBSYS
+
+.for f in \
+	brksize.o _do_kernel_call_intr.o get_minix_kerninfo.o _ipc.o ucontext.o
+${f}:	${LIBCARCHDIR}/sys-minix/${f:C/\.o/.S/}
+OBJS+=	${f}
+CLEANFILES+= ${f}
+.endfor
 
 .include <bsd.lib.mk>

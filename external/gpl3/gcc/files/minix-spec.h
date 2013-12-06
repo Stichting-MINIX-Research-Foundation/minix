@@ -71,6 +71,26 @@
 /* Define the default MINIX-specific per-CPU hook code.  */
 #define MINIX_TARGET_CPU_CPP_BUILTINS() do {} while (0)
 
+/* Look for the include files in the system-defined places.  */
+
+#define MINIX_GPLUSPLUS_INCLUDE_DIR "/usr/include/g++"
+
+#define MINIX_GPLUSPLUS_BACKWARD_INCLUDE_DIR "/usr/include/g++/backward"
+
+/*
+ * XXX figure out a better way to do this
+ */
+#define MINIX_GCC_INCLUDE_DIR "/usr/include/gcc-4.5"
+
+#define MINIX_INCLUDE_DEFAULTS						\
+  {									\
+    { MINIX_GPLUSPLUS_INCLUDE_DIR, "G++", 1, 1, 1 },			\
+    { MINIX_GPLUSPLUS_BACKWARD_INCLUDE_DIR, "G++", 1, 1, 1 },		\
+    { MINIX_GCC_INCLUDE_DIR, "GCC", 0, 0, 1 },				\
+    { "/usr/include", "GCC", 0, 0, 1 },					\
+    { 0, 0, 0, 0 }							\
+  }
+
 /* Provide a CPP_SPEC appropriate for MINIX.  We just deal with the GCC 
    option `-posix'.  */
 #define MINIX_CPP_SPEC "%{posix:-D_POSIX_SOURCE}"
@@ -90,8 +110,8 @@
  *    *crt*.o files is the /usr/lib directory.  */
 #define MINIX_STANDARD_STARTFILE_PREFIX	"/usr/lib/"
 
-/* suppress -lgcc - don't include %G (-lgcc) in the libraries */
-#define MINIX_LINK_GCC_C_SEQUENCE_SPEC "%L"
+#define MINIX_LINK_GCC_C_SEQUENCE_SPEC \
+	"%{static:--start-group} %G %L %{static:--end-group}%{!static:%G}"
 
 /* Provide a STARTFILE_SPEC appropriate for MINIX.  Here we add
    the magical crtbegin.o file (see crtstuff.c) which provides part 
@@ -161,3 +181,5 @@ is built with the --enable-threads configure-time option.}		\
       %{rdynamic:-export-dynamic}					\
       %{!dynamic-linker:-dynamic-linker %(minix_dynamic_linker) }}	\
     %{static:-Bstatic}}"
+
+#define MINIX_TARGET_UNWIND_TABLES_DEFAULT true

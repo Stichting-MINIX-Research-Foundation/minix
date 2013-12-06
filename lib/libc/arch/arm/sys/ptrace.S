@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.S,v 1.8 2004/08/21 11:30:17 rearnsha Exp $ */
+/*	$NetBSD: ptrace.S,v 1.12 2013/11/30 20:20:42 joerg Exp $ */
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,41 +35,52 @@
 
 ENTRY(ptrace)
 #ifdef _REENTRANT
-	stmfd	sp!, {r0-r3, lr}
-	sub	sp, sp, #4	/* align stack */
-	bl	PIC_SYM(_C_LABEL(__errno), PLT)
-	add	sp, sp, #4	/* unalign stack */
-	mov	r1, #0x00000000
-	str	r1, [r0]
-	ldmfd	sp!, {r0-r3, lr}
+#if !defined(__thumb__) || defined(_ARM_ARCH_T2)
+	push	{r0-r3, lr}
 #else
-	stmfd	sp!, {r0, r1}
-#ifdef PIC
+	push	{r0-r4}
+	mov	r4, lr
+#endif
+	sub	sp, sp, #4	/* align stack */
+	bl	PLT_SYM(_C_LABEL(__errno))
+	add	sp, sp, #4	/* unalign stack */
+	movs	r1, #0
+	str	r1, [r0]
+#if !defined(__thumb__) || defined(_ARM_ARCH_T2)
+	pop	{r0-r3, lr}
+#else
+	mov	lr, r4
+	pop	{r0-r4}
+#endif
+#else
+	push	{r0, r1}
+#ifdef __PIC__
 	/* Setup the GOT */
 	ldr	r0, .Lgot
-	add	r0, pc, r0
-.L1:
+	adr	r1, .Lgot
+	add	r0, r0, r1
 	ldr	r1, .Lerrno
 	ldr	r1, [r0, r1]
 #else
 	ldr	r1, .Lerrno
-#endif /* PIC */
-	mov	r0, #0x00000000
+#endif /* __PIC__ */
+	movs	r0, #0
 	str	r0, [r1]
-	ldmfd	sp!, {r0, r1}
+	pop	{r0, r1}
 #endif /* _REENTRANT */
 
 	SYSTRAP(ptrace)
-	bcs	PIC_SYM(CERROR, PLT)
+	_INVOKE_CERROR()
 	RET
 
 #ifndef _REENTRANT
-#ifdef PIC
+#ifdef __PIC__
 	.align	0
 .Lgot:
-	.word	_C_LABEL(_GLOBAL_OFFSET_TABLE_) + (. - (.L1+4))
-#endif /* PIC */
+	.word	_C_LABEL(_GLOBAL_OFFSET_TABLE_) - .Lgot
+#endif /* __PIC__ */
 
 .Lerrno:
 	.word	PIC_SYM(_C_LABEL(errno), GOT)
 #endif /* !_REENTRANT */
+END(ptrace)

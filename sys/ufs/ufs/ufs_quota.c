@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.70 2011/03/24 17:05:46 bouyer Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.115 2013/11/16 17:04:53 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.70 2011/03/24 17:05:46 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.115 2013/11/16 17:04:53 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -50,15 +50,16 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.70 2011/03/24 17:05:46 bouyer Exp $"
 #include <sys/mount.h>
 #include <sys/kauth.h>
 
+#include <sys/quotactl.h>
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/ufsmount.h>
 #include <ufs/ufs/ufs_extern.h>
 #include <ufs/ufs/ufs_quota.h>
-#include <quota/quotaprop.h>
 
 kmutex_t dqlock;
 kcondvar_t dqcv;
+const char *quotatypes[MAXQUOTAS] = INITQFNAMES;
 
 /*
  * Code pertaining to management of the in-core dquot data structures.
@@ -70,20 +71,35 @@ static u_long dqhash;
 static pool_cache_t dquot_cache;
 
 
-static int quota_handle_cmd_get_version(struct mount *, struct lwp *,
-    prop_dictionary_t, prop_array_t);
+static int quota_handle_cmd_stat(struct mount *, struct lwp *,
+    struct quotactl_args *args);
+static int quota_handle_cmd_idtypestat(struct mount *, struct lwp *,
+    struct quotactl_args *args);
+static int quota_handle_cmd_objtypestat(struct mount *, struct lwp *,
+    struct quotactl_args *args);
 static int quota_handle_cmd_get(struct mount *, struct lwp *,
-    prop_dictionary_t, int, prop_array_t);
-static int quota_handle_cmd_set(struct mount *, struct lwp *,
-    prop_dictionary_t, int, prop_array_t);
-static int quota_handle_cmd_getall(struct mount *, struct lwp *,
-    prop_dictionary_t, int, prop_array_t);
-static int quota_handle_cmd_clear(struct mount *, struct lwp *,
-    prop_dictionary_t, int, prop_array_t);
+    struct quotactl_args *args);
+static int quota_handle_cmd_put(struct mount *, struct lwp *,
+    struct quotactl_args *args);
+static int quota_handle_cmd_cursorget(struct mount *, struct lwp *,
+    struct quotactl_args *args);
+static int quota_handle_cmd_delete(struct mount *, struct lwp *,
+    struct quotactl_args *args);
 static int quota_handle_cmd_quotaon(struct mount *, struct lwp *, 
-    prop_dictionary_t, int, prop_array_t);
+    struct quotactl_args *args);
 static int quota_handle_cmd_quotaoff(struct mount *, struct lwp *, 
-    prop_dictionary_t, int, prop_array_t);
+    struct quotactl_args *args);
+static int quota_handle_cmd_cursoropen(struct mount *, struct lwp *,
+    struct quotactl_args *args);
+static int quota_handle_cmd_cursorclose(struct mount *, struct lwp *,
+    struct quotactl_args *args);
+static int quota_handle_cmd_cursorskipidtype(struct mount *, struct lwp *,
+    struct quotactl_args *args);
+static int quota_handle_cmd_cursoratend(struct mount *, struct lwp *,
+    struct quotactl_args *args);
+static int quota_handle_cmd_cursorrewind(struct mount *, struct lwp *,
+    struct quotactl_args *args);
+
 /*
  * Initialize the quota fields of an inode.
  */
@@ -152,119 +168,174 @@ chkiq(struct inode *ip, int32_t change, kauth_cred_t cred, int flags)
 }
 
 int
-quota_handle_cmd(struct mount *mp, struct lwp *l, prop_dictionary_t cmddict)
+quota_handle_cmd(struct mount *mp, struct lwp *l,
+		 struct quotactl_args *args)
 {
 	int error = 0;
-	const char *cmd, *type;
-	prop_array_t datas;
-	int q2type;
 
-	if (!prop_dictionary_get_cstring_nocopy(cmddict, "command", &cmd))
-		return EINVAL;
-	if (!prop_dictionary_get_cstring_nocopy(cmddict, "type", &type))
-		return EINVAL;
-	if (!strcmp(type, QUOTADICT_CLASS_USER)) {
-		q2type = USRQUOTA;
-	} else if (!strcmp(type, QUOTADICT_CLASS_GROUP)) {
-		q2type = GRPQUOTA;
-	} else
-		return EOPNOTSUPP;
-	datas = prop_dictionary_get(cmddict, "data");
-	if (datas == NULL || prop_object_type(datas) != PROP_TYPE_ARRAY)
-		return EINVAL;
+	switch (args->qc_op) {
+	    case QUOTACTL_STAT:
+		error = quota_handle_cmd_stat(mp, l, args);
+		break;
+	    case QUOTACTL_IDTYPESTAT:
+		error = quota_handle_cmd_idtypestat(mp, l, args);
+		break;
+	    case QUOTACTL_OBJTYPESTAT:
+		error = quota_handle_cmd_objtypestat(mp, l, args);
+		break;
+	    case QUOTACTL_QUOTAON:
+		error = quota_handle_cmd_quotaon(mp, l, args);
+		break;
+	    case QUOTACTL_QUOTAOFF:
+		error = quota_handle_cmd_quotaoff(mp, l, args);
+		break;
+	    case QUOTACTL_GET:
+		error = quota_handle_cmd_get(mp, l, args);
+		break;
+	    case QUOTACTL_PUT:
+		error = quota_handle_cmd_put(mp, l, args);
+		break;
+	    case QUOTACTL_CURSORGET:
+		error = quota_handle_cmd_cursorget(mp, l, args);
+		break;
+	    case QUOTACTL_DELETE:
+		error = quota_handle_cmd_delete(mp, l, args);
+		break;
+	    case QUOTACTL_CURSOROPEN:
+		error = quota_handle_cmd_cursoropen(mp, l, args);
+		break;
+	    case QUOTACTL_CURSORCLOSE:
+		error = quota_handle_cmd_cursorclose(mp, l, args);
+		break;
+	    case QUOTACTL_CURSORSKIPIDTYPE:
+		error = quota_handle_cmd_cursorskipidtype(mp, l, args);
+		break;
+	    case QUOTACTL_CURSORATEND:
+		error = quota_handle_cmd_cursoratend(mp, l, args);
+		break;
+	    case QUOTACTL_CURSORREWIND:
+		error = quota_handle_cmd_cursorrewind(mp, l, args);
+		break;
+	    default:
+		panic("Invalid quotactl operation %d\n", args->qc_op);
+	}
 
-	prop_object_retain(datas);
-	prop_dictionary_remove(cmddict, "data"); /* prepare for return */
-
-	if (strcmp(cmd, "get version") == 0) {
-		error = quota_handle_cmd_get_version(mp, l, cmddict, datas);
-		goto end;
-	}
-	if (strcmp(cmd, "quotaon") == 0) {
-		error = quota_handle_cmd_quotaon(mp, l, cmddict,
-		    q2type, datas);
-		goto end;
-	}
-	if (strcmp(cmd, "quotaoff") == 0) {
-		error = quota_handle_cmd_quotaoff(mp, l, cmddict,
-		    q2type, datas);
-		goto end;
-	}
-	if (strcmp(cmd, "get") == 0) {
-		error = quota_handle_cmd_get(mp, l, cmddict, q2type, datas);
-		goto end;
-	}
-	if (strcmp(cmd, "set") == 0) {
-		error = quota_handle_cmd_set(mp, l, cmddict, q2type, datas);
-		goto end;
-	}
-	if (strcmp(cmd, "getall") == 0) {
-		error = quota_handle_cmd_getall(mp, l, cmddict, q2type, datas);
-		goto end;
-	}
-	if (strcmp(cmd, "clear") == 0) {
-		error = quota_handle_cmd_clear(mp, l, cmddict, q2type, datas);
-		goto end;
-	}
-	error = EOPNOTSUPP;
-end:
-	error = (prop_dictionary_set_int8(cmddict, "return",
-	    error) ? 0 : ENOMEM);
-	prop_object_release(datas);
 	return error;
 }
 
 static int 
-quota_handle_cmd_get_version(struct mount *mp, struct lwp *l, 
-    prop_dictionary_t cmddict, prop_array_t datas)
+quota_handle_cmd_stat(struct mount *mp, struct lwp *l, 
+    struct quotactl_args *args)
 {
 	struct ufsmount *ump = VFSTOUFS(mp);
-	prop_array_t replies;
-	prop_dictionary_t data;
-	int error = 0;
+	struct quotastat *info;
+
+	KASSERT(args->qc_op == QUOTACTL_STAT);
+	info = args->u.stat.qc_info;
 
 	if ((ump->um_flags & (UFS_QUOTA|UFS_QUOTA2)) == 0)
 		return EOPNOTSUPP;
 
-	replies = prop_array_create();
-	if (replies == NULL)
-		return ENOMEM;
-
-	data = prop_dictionary_create();
-	if (data == NULL) {
-		prop_object_release(replies);
-		return ENOMEM;
-	}
-
 #ifdef QUOTA
 	if (ump->um_flags & UFS_QUOTA) {
-		if (!prop_dictionary_set_int8(data, "version", 1))
-			error = ENOMEM;
+		strcpy(info->qs_implname, "ufs/ffs quota v1");
+		info->qs_numidtypes = MAXQUOTAS;
+		/* XXX no define for this */
+		info->qs_numobjtypes = 2;
+		info->qs_restrictions = 0;
+		info->qs_restrictions |= QUOTA_RESTRICT_NEEDSQUOTACHECK;
+		info->qs_restrictions |= QUOTA_RESTRICT_UNIFORMGRACE;
+		info->qs_restrictions |= QUOTA_RESTRICT_32BIT;
 	} else
 #endif
 #ifdef QUOTA2
 	if (ump->um_flags & UFS_QUOTA2) {
-		if (!prop_dictionary_set_int8(data, "version", 2))
-			error = ENOMEM;
+		strcpy(info->qs_implname, "ufs/ffs quota v2");
+		info->qs_numidtypes = MAXQUOTAS;
+		info->qs_numobjtypes = N_QL;
+		info->qs_restrictions = 0;
 	} else
 #endif
-		error = 0;
-	if (error)
-		prop_object_release(data);
-	else if (!prop_array_add_and_rel(replies, data))
-		error = ENOMEM;
-	if (error)
-		prop_object_release(replies);
-	else if (!prop_dictionary_set_and_rel(cmddict, "data", replies))
-		error = ENOMEM;
-	return error;
+		return EOPNOTSUPP;
+
+	return 0;
+}
+
+static int 
+quota_handle_cmd_idtypestat(struct mount *mp, struct lwp *l, 
+    struct quotactl_args *args)
+{
+	struct ufsmount *ump = VFSTOUFS(mp);
+	int idtype;
+	struct quotaidtypestat *info;
+	const char *name;
+
+	KASSERT(args->qc_op == QUOTACTL_IDTYPESTAT);
+	idtype = args->u.idtypestat.qc_idtype;
+	info = args->u.idtypestat.qc_info;
+
+	if ((ump->um_flags & (UFS_QUOTA|UFS_QUOTA2)) == 0)
+		return EOPNOTSUPP;
+
+	/*
+	 * These are the same for both QUOTA and QUOTA2.
+	 */
+	switch (idtype) {
+	    case QUOTA_IDTYPE_USER:
+		name = "user";
+		break;
+	    case QUOTA_IDTYPE_GROUP:
+		name = "group";
+		break;
+	    default:
+		return EINVAL;
+	}
+	strlcpy(info->qis_name, name, sizeof(info->qis_name));
+	return 0;
+}
+
+static int 
+quota_handle_cmd_objtypestat(struct mount *mp, struct lwp *l, 
+    struct quotactl_args *args)
+{
+	struct ufsmount *ump = VFSTOUFS(mp);
+	int objtype;
+	struct quotaobjtypestat *info;
+	const char *name;
+	int isbytes;
+
+	KASSERT(args->qc_op == QUOTACTL_OBJTYPESTAT);
+	objtype = args->u.objtypestat.qc_objtype;
+	info = args->u.objtypestat.qc_info;
+
+	if ((ump->um_flags & (UFS_QUOTA|UFS_QUOTA2)) == 0)
+		return EOPNOTSUPP;
+
+	/*
+	 * These are the same for both QUOTA and QUOTA2.
+	 */
+	switch (objtype) {
+	    case QUOTA_OBJTYPE_BLOCKS:
+		name = "block";
+		isbytes = 1;
+		break;
+	    case QUOTA_OBJTYPE_FILES:
+		name = "file";
+		isbytes = 0;
+		break;
+	    default:
+		return EINVAL;
+	}
+	strlcpy(info->qos_name, name, sizeof(info->qos_name));
+	info->qos_isbytes = isbytes;
+	return 0;
 }
 
 /* XXX shouldn't all this be in kauth ? */
 static int
 quota_get_auth(struct mount *mp, struct lwp *l, uid_t id) {
 	/* The user can always query about his own quota. */
-	if (id == kauth_cred_getuid(l->l_cred))
+	if (id == kauth_cred_geteuid(l->l_cred))
 		return 0;
 	return kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_FS_QUOTA,
 	    KAUTH_REQ_SYSTEM_FS_QUOTA_GET, mp, KAUTH_ARG(id), NULL);
@@ -272,193 +343,119 @@ quota_get_auth(struct mount *mp, struct lwp *l, uid_t id) {
 
 static int 
 quota_handle_cmd_get(struct mount *mp, struct lwp *l, 
-    prop_dictionary_t cmddict, int type, prop_array_t datas)
+    struct quotactl_args *args)
 {
-	prop_array_t replies;
-	prop_object_iterator_t iter;
-	prop_dictionary_t data;
-	uint32_t id;
 	struct ufsmount *ump = VFSTOUFS(mp);
-	int error, defaultq = 0;
-	const char *idstr;
+	int error;
+	const struct quotakey *qk;
+	struct quotaval *qv;
+
+	KASSERT(args->qc_op == QUOTACTL_GET);
+	qk = args->u.get.qc_key;
+	qv = args->u.get.qc_val;
 
 	if ((ump->um_flags & (UFS_QUOTA|UFS_QUOTA2)) == 0)
 		return EOPNOTSUPP;
 	
-	replies = prop_array_create();
-	if (replies == NULL)
-		return ENOMEM;
-
-	iter = prop_array_iterator(datas);
-	if (iter == NULL) {
-		prop_object_release(replies);
-		return ENOMEM;
-	}
-	while ((data = prop_object_iterator_next(iter)) != NULL) {
-		if (!prop_dictionary_get_uint32(data, "id", &id)) {
-			if (!prop_dictionary_get_cstring_nocopy(data, "id",
-			    &idstr))
-				continue;
-			if (strcmp(idstr, "default")) {
-				error = EINVAL;
-				goto err;
-			}
-			id = 0;
-			defaultq = 1;
-		} else {
-			defaultq = 0;
-		}
-		error = quota_get_auth(mp, l, id);
-		if (error == EPERM)
-			continue;
-		if (error != 0) 
-			goto err;
+	error = quota_get_auth(mp, l, qk->qk_id);
+	if (error != 0) 
+		return error;
 #ifdef QUOTA
-		if (ump->um_flags & UFS_QUOTA)
-			error = quota1_handle_cmd_get(ump, type, id, defaultq,
-			    replies);
-		else
+	if (ump->um_flags & UFS_QUOTA) {
+		error = quota1_handle_cmd_get(ump, qk, qv);
+	} else
 #endif
 #ifdef QUOTA2
-		if (ump->um_flags & UFS_QUOTA2) {
-			error = quota2_handle_cmd_get(ump, type, id, defaultq,
-			    replies);
-		} else
+	if (ump->um_flags & UFS_QUOTA2) {
+		error = quota2_handle_cmd_get(ump, qk, qv);
+	} else
 #endif
-			panic("quota_handle_cmd_get: no support ?");
+		panic("quota_handle_cmd_get: no support ?");
 		
-		if (error == ENOENT)
-			continue;
-		if (error != 0)
-			goto err;
-	}
-	prop_object_iterator_release(iter);
-	if (!prop_dictionary_set_and_rel(cmddict, "data", replies)) {
-		error = ENOMEM;
-	} else {
-		error = 0;
-	}
-	return error;
-err:
-	prop_object_iterator_release(iter);
-	prop_object_release(replies);
+	if (error != 0)
+		return error;
+
 	return error;
 }
 
 static int 
-quota_handle_cmd_set(struct mount *mp, struct lwp *l, 
-    prop_dictionary_t cmddict, int type, prop_array_t datas)
+quota_handle_cmd_put(struct mount *mp, struct lwp *l, 
+    struct quotactl_args *args)
 {
-	prop_array_t replies;
-	prop_object_iterator_t iter;
-	prop_dictionary_t data;
-	uint32_t id;
 	struct ufsmount *ump = VFSTOUFS(mp);
-	int error, defaultq = 0;
-	const char *idstr;
+	const struct quotakey *qk;
+	const struct quotaval *qv;
+	id_t kauth_id;
+	int error;
+
+	KASSERT(args->qc_op == QUOTACTL_PUT);
+	qk = args->u.put.qc_key;
+	qv = args->u.put.qc_val;
 
 	if ((ump->um_flags & (UFS_QUOTA|UFS_QUOTA2)) == 0)
 		return EOPNOTSUPP;
-	
-	replies = prop_array_create();
-	if (replies == NULL)
-		return ENOMEM;
 
-	iter = prop_array_iterator(datas);
-	if (iter == NULL) {
-		prop_object_release(replies);
-		return ENOMEM;
+	kauth_id = qk->qk_id;
+	if (kauth_id == QUOTA_DEFAULTID) {
+		kauth_id = 0;
 	}
-	while ((data = prop_object_iterator_next(iter)) != NULL) {
-		if (!prop_dictionary_get_uint32(data, "id", &id)) {
-			if (!prop_dictionary_get_cstring_nocopy(data, "id",
-			    &idstr))
-				continue;
-			if (strcmp(idstr, "default"))
-				continue;
-			id = 0;
-			defaultq = 1;
-		} else {
-			defaultq = 0;
-		}
-		error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_FS_QUOTA,
-		    KAUTH_REQ_SYSTEM_FS_QUOTA_MANAGE, mp, KAUTH_ARG(id), NULL);
-		if (error != 0)
-			goto err;
+
+	error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_FS_QUOTA,
+	    KAUTH_REQ_SYSTEM_FS_QUOTA_MANAGE, mp, KAUTH_ARG(kauth_id),
+	    NULL);
+	if (error != 0) {
+		return error;
+	}
+
 #ifdef QUOTA
-		if (ump->um_flags & UFS_QUOTA)
-			error = quota1_handle_cmd_set(ump, type, id, defaultq,
-			    data);
-		else
+	if (ump->um_flags & UFS_QUOTA)
+		error = quota1_handle_cmd_put(ump, qk, qv);
+	else
 #endif
 #ifdef QUOTA2
-		if (ump->um_flags & UFS_QUOTA2) {
-			error = quota2_handle_cmd_set(ump, type, id, defaultq,
-			    data);
-		} else
+	if (ump->um_flags & UFS_QUOTA2) {
+		error = quota2_handle_cmd_put(ump, qk, qv);
+	} else
 #endif
-			panic("quota_handle_cmd_get: no support ?");
+		panic("quota_handle_cmd_get: no support ?");
 		
-		if (error && error != ENOENT)
-			goto err;
-	}
-	prop_object_iterator_release(iter);
-	if (!prop_dictionary_set_and_rel(cmddict, "data", replies)) {
-		error = ENOMEM;
-	} else {
+	if (error == ENOENT) {
 		error = 0;
 	}
-	return error;
-err:
-	prop_object_iterator_release(iter);
-	prop_object_release(replies);
+
 	return error;
 }
 
 static int 
-quota_handle_cmd_clear(struct mount *mp, struct lwp *l, 
-    prop_dictionary_t cmddict, int type, prop_array_t datas)
+quota_handle_cmd_delete(struct mount *mp, struct lwp *l, 
+    struct quotactl_args *args)
 {
-	prop_array_t replies;
-	prop_object_iterator_t iter;
-	prop_dictionary_t data;
-	uint32_t id;
 	struct ufsmount *ump = VFSTOUFS(mp);
-	int error, defaultq = 0;
-	const char *idstr;
+	const struct quotakey *qk;
+	id_t kauth_id;
+	int error;
+
+	KASSERT(args->qc_op == QUOTACTL_DELETE);
+	qk = args->u.delete.qc_key;
+
+	kauth_id = qk->qk_id;
+	if (kauth_id == QUOTA_DEFAULTID) {
+		kauth_id = 0;
+	}
 
 	if ((ump->um_flags & UFS_QUOTA2) == 0)
 		return EOPNOTSUPP;
-	
-	replies = prop_array_create();
-	if (replies == NULL)
-		return ENOMEM;
 
-	iter = prop_array_iterator(datas);
-	if (iter == NULL) {
-		prop_object_release(replies);
-		return ENOMEM;
-	}
-	while ((data = prop_object_iterator_next(iter)) != NULL) {
-		if (!prop_dictionary_get_uint32(data, "id", &id)) {
-			if (!prop_dictionary_get_cstring_nocopy(data, "id",
-			    &idstr))
-				continue;
-			if (strcmp(idstr, "default"))
-				continue;
-			id = 0;
-			defaultq = 1;
-		} else {
-			defaultq = 0;
-		}
+	/* avoid whitespace changes */
+	{
 		error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_FS_QUOTA,
-		    KAUTH_REQ_SYSTEM_FS_QUOTA_MANAGE, mp, KAUTH_ARG(id), NULL);
+		    KAUTH_REQ_SYSTEM_FS_QUOTA_MANAGE, mp, KAUTH_ARG(kauth_id),
+		    NULL);
 		if (error != 0)
 			goto err;
 #ifdef QUOTA2
 		if (ump->um_flags & UFS_QUOTA2) {
-			error = quota2_handle_cmd_clear(ump, type, id, defaultq,
-			    data);
+			error = quota2_handle_cmd_delete(ump, qk);
 		} else
 #endif
 			panic("quota_handle_cmd_get: no support ?");
@@ -466,26 +463,20 @@ quota_handle_cmd_clear(struct mount *mp, struct lwp *l,
 		if (error && error != ENOENT)
 			goto err;
 	}
-	prop_object_iterator_release(iter);
-	if (!prop_dictionary_set_and_rel(cmddict, "data", replies)) {
-		error = ENOMEM;
-	} else {
-		error = 0;
-	}
-	return error;
-err:
-	prop_object_iterator_release(iter);
-	prop_object_release(replies);
+
+	return 0;
+ err:
 	return error;
 }
 
 static int 
-quota_handle_cmd_getall(struct mount *mp, struct lwp *l, 
-    prop_dictionary_t cmddict, int type, prop_array_t datas)
+quota_handle_cmd_cursorget(struct mount *mp, struct lwp *l, 
+    struct quotactl_args *args)
 {
-	prop_array_t replies;
 	struct ufsmount *ump = VFSTOUFS(mp);
 	int error;
+
+	KASSERT(args->qc_op == QUOTACTL_CURSORGET);
 
 	if ((ump->um_flags & UFS_QUOTA2) == 0)
 		return EOPNOTSUPP;
@@ -495,53 +486,166 @@ quota_handle_cmd_getall(struct mount *mp, struct lwp *l,
 	if (error)
 		return error;
 		
-	replies = prop_array_create();
-	if (replies == NULL)
-		return ENOMEM;
+#ifdef QUOTA2
+	if (ump->um_flags & UFS_QUOTA2) {
+		struct quotakcursor *cursor = args->u.cursorget.qc_cursor;
+		struct quotakey *keys = args->u.cursorget.qc_keys;
+		struct quotaval *vals = args->u.cursorget.qc_vals;
+		unsigned maxnum = args->u.cursorget.qc_maxnum;
+		unsigned *ret = args->u.cursorget.qc_ret;
+
+		error = quota2_handle_cmd_cursorget(ump, cursor, keys, vals,
+						    maxnum, ret);
+	} else
+#endif
+		panic("quota_handle_cmd_cursorget: no support ?");
+
+	return error;
+}
+
+static int 
+quota_handle_cmd_cursoropen(struct mount *mp, struct lwp *l, 
+    struct quotactl_args *args)
+{
+#ifdef QUOTA2
+	struct ufsmount *ump = VFSTOUFS(mp);
+	struct quotakcursor *cursor = args->u.cursoropen.qc_cursor;
+#endif
+	int error;
+
+	KASSERT(args->qc_op == QUOTACTL_CURSOROPEN);
+
+	error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_FS_QUOTA,
+	    KAUTH_REQ_SYSTEM_FS_QUOTA_GET, mp, NULL, NULL);
+	if (error)
+		return error;
 
 #ifdef QUOTA2
 	if (ump->um_flags & UFS_QUOTA2) {
-		error = quota2_handle_cmd_getall(ump, type, replies);
+		error = quota2_handle_cmd_cursoropen(ump, cursor);
 	} else
 #endif
-		panic("quota_handle_cmd_getall: no support ?");
-	if (!prop_dictionary_set_and_rel(cmddict, "data", replies)) {
-		error = ENOMEM;
-	} else {
-		error = 0;
-	}
+		error = EOPNOTSUPP;
+
+	return error;
+}
+
+static int 
+quota_handle_cmd_cursorclose(struct mount *mp, struct lwp *l, 
+    struct quotactl_args *args)
+{
+#ifdef QUOTA2
+	struct ufsmount *ump = VFSTOUFS(mp);
+	struct quotakcursor *cursor = args->u.cursorclose.qc_cursor;
+#endif
+	int error;
+
+	KASSERT(args->qc_op == QUOTACTL_CURSORCLOSE);
+
+	error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_FS_QUOTA,
+	    KAUTH_REQ_SYSTEM_FS_QUOTA_GET, mp, NULL, NULL);
+	if (error)
+		return error;
+
+#ifdef QUOTA2
+	if (ump->um_flags & UFS_QUOTA2) {
+		error = quota2_handle_cmd_cursorclose(ump, cursor);
+	} else
+#endif
+		error = EOPNOTSUPP;
+
+	return error;
+}
+
+static int 
+quota_handle_cmd_cursorskipidtype(struct mount *mp, struct lwp *l, 
+    struct quotactl_args *args)
+{
+#ifdef QUOTA2
+	struct ufsmount *ump = VFSTOUFS(mp);
+	struct quotakcursor *cursor = args->u.cursorskipidtype.qc_cursor;
+	int idtype = args->u.cursorskipidtype.qc_idtype;
+#endif
+	int error;
+
+	KASSERT(args->qc_op == QUOTACTL_CURSORSKIPIDTYPE);
+
+#ifdef QUOTA2
+	if (ump->um_flags & UFS_QUOTA2) {
+		error = quota2_handle_cmd_cursorskipidtype(ump, cursor, idtype);
+	} else
+#endif
+		error = EOPNOTSUPP;
+
+	return error;
+}
+
+static int 
+quota_handle_cmd_cursoratend(struct mount *mp, struct lwp *l, 
+    struct quotactl_args *args)
+{
+#ifdef QUOTA2
+	struct ufsmount *ump = VFSTOUFS(mp);
+	struct quotakcursor *cursor = args->u.cursoratend.qc_cursor;
+	unsigned *ret = args->u.cursoratend.qc_ret;
+#endif
+	int error;
+
+	KASSERT(args->qc_op == QUOTACTL_CURSORATEND);
+
+#ifdef QUOTA2
+	if (ump->um_flags & UFS_QUOTA2) {
+		error = quota2_handle_cmd_cursoratend(ump, cursor, ret);
+	} else
+#endif
+		error = EOPNOTSUPP;
+
+	return error;
+}
+
+static int 
+quota_handle_cmd_cursorrewind(struct mount *mp, struct lwp *l, 
+    struct quotactl_args *args)
+{
+#ifdef QUOTA2
+	struct ufsmount *ump = VFSTOUFS(mp);
+	struct quotakcursor *cursor = args->u.cursorrewind.qc_cursor;
+#endif
+	int error;
+
+	KASSERT(args->qc_op == QUOTACTL_CURSORREWIND);
+
+#ifdef QUOTA2
+	if (ump->um_flags & UFS_QUOTA2) {
+		error = quota2_handle_cmd_cursorrewind(ump, cursor);
+	} else
+#endif
+		error = EOPNOTSUPP;
+
 	return error;
 }
 
 static int 
 quota_handle_cmd_quotaon(struct mount *mp, struct lwp *l, 
-    prop_dictionary_t cmddict, int type, prop_array_t datas)
+    struct quotactl_args *args)
 {
-	prop_dictionary_t data;
 	struct ufsmount *ump = VFSTOUFS(mp);
 	int error;
-	const char *qfile;
+
+	KASSERT(args->qc_op == QUOTACTL_QUOTAON);
 
 	if ((ump->um_flags & UFS_QUOTA2) != 0)
 		return EBUSY;
 	
-	if (prop_array_count(datas) != 1)
-		return EINVAL;
-
-	data = prop_array_get(datas, 0);
-	if (data == NULL)
-		return ENOMEM;
-	if (!prop_dictionary_get_cstring_nocopy(data, "quotafile",
-	    &qfile))
-		return EINVAL;
-
 	error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_FS_QUOTA,
 	    KAUTH_REQ_SYSTEM_FS_QUOTA_ONOFF, mp, NULL, NULL);
 	if (error != 0) {
 		return error;
 	}
 #ifdef QUOTA
-	error = quota1_handle_cmd_quotaon(l, ump, type, qfile);
+	int idtype = args->u.quotaon.qc_idtype;
+	const char *qfile = args->u.quotaon.qc_quotafile;
+	error = quota1_handle_cmd_quotaon(l, ump, idtype, qfile);
 #else
 	error = EOPNOTSUPP;
 #endif
@@ -551,24 +655,24 @@ quota_handle_cmd_quotaon(struct mount *mp, struct lwp *l,
 
 static int 
 quota_handle_cmd_quotaoff(struct mount *mp, struct lwp *l, 
-    prop_dictionary_t cmddict, int type, prop_array_t datas)
+    struct quotactl_args *args)
 {
 	struct ufsmount *ump = VFSTOUFS(mp);
 	int error;
 
+	KASSERT(args->qc_op == QUOTACTL_QUOTAOFF);
+
 	if ((ump->um_flags & UFS_QUOTA2) != 0)
 		return EOPNOTSUPP;
 	
-	if (prop_array_count(datas) != 0)
-		return EINVAL;
-
 	error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_FS_QUOTA,
 	    KAUTH_REQ_SYSTEM_FS_QUOTA_ONOFF, mp, NULL, NULL);
 	if (error != 0) {
 		return error;
 	}
 #ifdef QUOTA
-	error = quota1_handle_cmd_quotaoff(l, ump, type);
+	int idtype = args->u.quotaoff.qc_idtype;
+	error = quota1_handle_cmd_quotaoff(l, ump, idtype);
 #else
 	error = EOPNOTSUPP;
 #endif

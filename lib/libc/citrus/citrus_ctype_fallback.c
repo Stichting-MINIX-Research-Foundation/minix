@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_ctype_fallback.c,v 1.2 2003/06/27 14:52:25 yamt Exp $	*/
+/*	$NetBSD: citrus_ctype_fallback.c,v 1.3 2013/05/28 16:57:56 joerg Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,13 +28,14 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_ctype_fallback.c,v 1.2 2003/06/27 14:52:25 yamt Exp $");
+__RCSID("$NetBSD: citrus_ctype_fallback.c,v 1.3 2013/05/28 16:57:56 joerg Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 
 #include <sys/types.h>
 #include <assert.h>
+#include <errno.h>
 #include <wchar.h>
 #include <stdio.h>
 #include <string.h>
@@ -107,4 +108,122 @@ _citrus_ctype_wctob_fallback(_citrus_ctype_rec_t * __restrict cc,
 		*cresult = EOF;
 
 	return 0;
+}
+
+/*
+ * for ABI version >= 0x00000003
+ */ 
+
+int
+_citrus_ctype_mbsnrtowcs_fallback(_citrus_ctype_rec_t * __restrict cc,
+    wchar_t * __restrict pwcs, const char ** __restrict s, size_t in,
+    size_t n, void * __restrict psenc, size_t * __restrict nresult)
+{
+	int err;
+	size_t cnt, siz;
+	const char *s0, *se;
+
+	_DIAGASSERT(nresult != 0);
+	_DIAGASSERT(psenc != NULL);
+	_DIAGASSERT(s != NULL);
+	_DIAGASSERT(*s != NULL);
+
+	/* if pwcs is NULL, ignore n */
+	if (pwcs == NULL)
+		n = 1; /* arbitrary >0 value */
+
+	err = 0;
+	cnt = 0;
+	se = *s + in;
+	s0 = *s; /* to keep *s unchanged for now, use copy instead. */
+	while (s0 < se && n > 0) {
+		err = _citrus_ctype_mbrtowc(cc, pwcs, s0, (size_t)(se - s0),
+		    psenc, &siz);
+		if (err) {
+			cnt = (size_t)-1;
+			goto bye;
+		}
+		if (siz == (size_t)-2) {
+			s0 = se;
+			goto bye;
+		}
+		switch (siz) {
+		case 0:
+			if (pwcs) {
+				size_t dum;
+				_citrus_ctype_mbrtowc(cc, NULL, NULL, 0, psenc,
+				    &dum);
+			}
+			s0 = 0;
+			goto bye;
+		default:
+			if (pwcs) {
+				pwcs++;
+				n--;
+			}
+			s0 += siz;
+			cnt++;
+			break;
+		}
+	}
+bye:
+	if (pwcs)
+		*s = s0;
+
+	*nresult = cnt;
+
+	return err;
+}
+
+int
+_citrus_ctype_wcsnrtombs_fallback(_citrus_ctype_rec_t * __restrict cc,
+    char * __restrict s, const wchar_t ** __restrict pwcs, size_t in,
+    size_t n, void * __restrict psenc, size_t * __restrict nresult)
+{
+	size_t cnt = 0;
+	int err;
+	char buf[MB_LEN_MAX];
+	size_t siz;
+	const wchar_t* pwcs0;
+	mbstate_t state;
+
+	pwcs0 = *pwcs;
+
+	if (!s)
+		n = 1;
+
+	while (in > 0 && n > 0) {
+		memcpy(&state, psenc, sizeof(state));
+		err = _citrus_ctype_wcrtomb(cc, buf, *pwcs0, psenc, &siz);
+		if (siz == (size_t)-1) {
+			*nresult = siz;
+			return (err);
+		}
+
+		if (s) {
+			if (n < siz) {
+				memcpy(psenc, &state, sizeof(state));
+				break;
+			}
+			memcpy(s, buf, siz);
+			s += siz;
+			n -= siz;
+		}
+		cnt += siz;
+		if (!*pwcs0) {
+			if (s) {
+				memset(psenc, 0, sizeof(state));
+			}
+			pwcs0 = 0;
+			cnt--; /* don't include terminating null */
+			break;
+		}
+		pwcs0++;
+		--in;
+	}
+	if (s)
+		*pwcs = pwcs0;
+
+	*nresult = cnt;
+	return (0);
 }

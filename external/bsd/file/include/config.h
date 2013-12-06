@@ -1,14 +1,23 @@
 /* config.h.  Generated from config.h.in by configure.  */
 /* config.h.in.  Generated from configure.ac by autoheader.  */
 
+/* Define if building universal (internal helper macro) */
+/* #undef AC_APPLE_UNIVERSAL_BUILD */
+
 /* Define in built-in ELF support is used */
 #define BUILTIN_ELF 1
 
 /* Define for ELF core file support */
 #define ELFCORE 1
 
+/* Define to 1 if you have the `asctime_r' function. */
+#define HAVE_ASCTIME_R 1
+
 /* Define to 1 if you have the `asprintf' function. */
 #define HAVE_ASPRINTF 1
+
+/* Define to 1 if you have the `ctime_r' function. */
+#define HAVE_CTIME_R 1
 
 /* HAVE_DAYLIGHT */
 #define HAVE_DAYLIGHT 1
@@ -45,11 +54,8 @@
 /* Define to 1 if you have the `getopt_long' function. */
 #define HAVE_GETOPT_LONG 1
 
-/* Define to 1 if the system has the type `int32_t'. */
-#define HAVE_INT32_T 1
-
-/* Define to 1 if the system has the type `int64_t'. */
-#define HAVE_INT64_T 1
+/* Define to 1 if you have the `getpagesize' function. */
+#define HAVE_GETPAGESIZE 1
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #define HAVE_INTTYPES_H 1
@@ -66,7 +72,7 @@
 /* Define to 1 if you have the <locale.h> header file. */
 #define HAVE_LOCALE_H 1
 
-/* Define to 1 if you have the `mbrtowc' function. */
+/* Define to 1 if mbrtowc and mbstate_t are properly declared. */
 #define HAVE_MBRTOWC 1
 
 /* Define to 1 if <wchar.h> declares mbstate_t. */
@@ -75,14 +81,20 @@
 /* Define to 1 if you have the <memory.h> header file. */
 #define HAVE_MEMORY_H 1
 
+/* Define to 1 if you have the `mkostemp' function. */
+/* #undef HAVE_MKOSTEMP */
+
 /* Define to 1 if you have the `mkstemp' function. */
 #define HAVE_MKSTEMP 1
 
 /* Define to 1 if you have the `mmap' function. */
 /* #undef HAVE_MMAP */
 
-/* Define to 1 if the system has the type `pid_t'. */
-#define HAVE_PID_T 1
+/* Define to 1 if you have the `pread' function. */
+#define HAVE_PREAD 1
+
+/* Define to 1 if you have the <stddef.h> header file. */
+#define HAVE_STDDEF_H 1
 
 /* Define to 1 if you have the <stdint.h> header file. */
 #define HAVE_STDINT_H 1
@@ -117,17 +129,20 @@
 /* HAVE_STRUCT_OPTION */
 #define HAVE_STRUCT_OPTION 1
 
-/* Define to 1 if `struct stat' is a member of `st_rdev'. */
+/* Define to 1 if `st_rdev' is a member of `struct stat'. */
 #define HAVE_STRUCT_STAT_ST_RDEV 1
 
-/* Define to 1 if `struct tm' is a member of `tm_gmtoff'. */
+/* Define to 1 if `tm_gmtoff' is a member of `struct tm'. */
 #define HAVE_STRUCT_TM_TM_GMTOFF 1
 
-/* Define to 1 if `struct tm' is a member of `tm_zone'. */
+/* Define to 1 if `tm_zone' is a member of `struct tm'. */
 #define HAVE_STRUCT_TM_TM_ZONE 1
 
 /* Define to 1 if you have the <sys/mman.h> header file. */
 /* #undef HAVE_SYS_MMAN_H */
+
+/* Define to 1 if you have the <sys/param.h> header file. */
+#define HAVE_SYS_PARAM_H 1
 
 /* Define to 1 if you have the <sys/stat.h> header file. */
 #define HAVE_SYS_STAT_H 1
@@ -153,18 +168,6 @@
 /* HAVE_TZNAME */
 #define HAVE_TZNAME 1
 
-/* Define to 1 if the system has the type `uint16_t'. */
-#define HAVE_UINT16_T 1
-
-/* Define to 1 if the system has the type `uint32_t'. */
-#define HAVE_UINT32_T 1
-
-/* Define to 1 if the system has the type `uint64_t'. */
-#define HAVE_UINT64_T 1
-
-/* Define to 1 if the system has the type `uint8_t'. */
-#define HAVE_UINT8_T 1
-
 /* Define to 1 if you have the <unistd.h> header file. */
 #define HAVE_UNISTD_H 1
 
@@ -180,6 +183,16 @@
 /* Define to 1 if you have the `vasprintf' function. */
 #define HAVE_VASPRINTF 1
 
+/* Define to 1 if you have the `vfork' function. */
+#define HAVE_VFORK 1
+
+/* Define to 1 if you have the <vfork.h> header file. */
+/* #undef HAVE_VFORK_H */
+
+/* Define to 1 or 0, depending whether the compiler supports simple visibility
+   declarations. */
+#define HAVE_VISIBILITY 1
+
 /* Define to 1 if you have the <wchar.h> header file. */
 #define HAVE_WCHAR_H 1
 
@@ -188,6 +201,12 @@
 
 /* Define to 1 if you have the `wcwidth' function. */
 #define HAVE_WCWIDTH 1
+
+/* Define to 1 if `fork' works. */
+#define HAVE_WORKING_FORK 1
+
+/* Define to 1 if `vfork' works. */
+#define HAVE_WORKING_VFORK 1
 
 /* Define to 1 if you have the <zlib.h> header file. */
 #define HAVE_ZLIB_H 1
@@ -217,7 +236,7 @@
 #define PACKAGE_NAME "file"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "file 5.11"
+#define PACKAGE_STRING "file 5.14"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "file"
@@ -226,10 +245,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "5.11"
-
-/* The size of `long long', as computed by sizeof. */
-#define SIZEOF_LONG_LONG 8
+#define PACKAGE_VERSION "5.14"
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
@@ -260,7 +276,24 @@
 
 
 /* Version number of package */
-#define VERSION "5.11"
+#define VERSION "5.14"
+
+/* Define WORDS_BIGENDIAN to 1 if your processor stores words with the most
+   significant byte first (like Motorola and SPARC, unlike Intel). */
+#if defined AC_APPLE_UNIVERSAL_BUILD
+# if defined __BIG_ENDIAN__
+#  define WORDS_BIGENDIAN 1
+# endif
+#else
+# ifndef WORDS_BIGENDIAN
+/* #  undef WORDS_BIGENDIAN */
+# endif
+#endif
+
+/* Enable large inode numbers on Mac OS X 10.5.  */
+#ifndef _DARWIN_USE_64_BIT_INODE
+# define _DARWIN_USE_64_BIT_INODE 1
+#endif
 
 /* Number of bits in a file offset, on hosts where this is settable. */
 /* #undef _FILE_OFFSET_BITS */
@@ -281,8 +314,31 @@
 /* Define to 1 if you need to in order for `stat' and other things to work. */
 /* #undef _POSIX_SOURCE */
 
+/* Define for Solaris 2.5.1 so the uint32_t typedef from <sys/synch.h>,
+   <pthread.h>, or <semaphore.h> is not used. If the typedef were allowed, the
+   #define below would cause a syntax error. */
+/* #undef _UINT32_T */
+
+/* Define for Solaris 2.5.1 so the uint64_t typedef from <sys/synch.h>,
+   <pthread.h>, or <semaphore.h> is not used. If the typedef were allowed, the
+   #define below would cause a syntax error. */
+/* #undef _UINT64_T */
+
+/* Define for Solaris 2.5.1 so the uint8_t typedef from <sys/synch.h>,
+   <pthread.h>, or <semaphore.h> is not used. If the typedef were allowed, the
+   #define below would cause a syntax error. */
+/* #undef _UINT8_T */
+
 /* Define to empty if `const' does not conform to ANSI C. */
 /* #undef const */
+
+/* Define to the type of a signed integer type of width exactly 32 bits if
+   such a type exists and the standard includes do not define it. */
+/* #undef int32_t */
+
+/* Define to the type of a signed integer type of width exactly 64 bits if
+   such a type exists and the standard includes do not define it. */
+/* #undef int64_t */
 
 /* Define to a type if <wchar.h> does not define. */
 /* #undef mbstate_t */
@@ -290,34 +346,27 @@
 /* Define to `long int' if <sys/types.h> does not define. */
 /* #undef off_t */
 
+/* Define to `int' if <sys/types.h> does not define. */
+/* #undef pid_t */
+
 /* Define to `unsigned int' if <sys/types.h> does not define. */
 /* #undef size_t */
 
+/* Define to the type of an unsigned integer type of width exactly 16 bits if
+   such a type exists and the standard includes do not define it. */
+/* #undef uint16_t */
 
-#ifndef HAVE_UINT8_T
-typedef unsigned char uint8_t;
-#endif
-#ifndef HAVE_UINT16_T
-typedef unsigned short uint16_t;
-#endif
-#ifndef HAVE_UINT32_T
-typedef unsigned int uint32_t;
-#endif
-#ifndef HAVE_INT32_T
-typedef int int32_t;
-#endif
-#ifndef HAVE_UINT64_T
-#if SIZEOF_LONG_LONG == 8
-typedef unsigned long long uint64_t;
-#else
-typedef unsigned long uint64_t;
-#endif
-#endif
-#ifndef HAVE_INT64_T
-#if SIZEOF_LONG_LONG == 8
-typedef long long int64_t;
-#else
-typedef long int64_t;
-#endif
-#endif
+/* Define to the type of an unsigned integer type of width exactly 32 bits if
+   such a type exists and the standard includes do not define it. */
+/* #undef uint32_t */
 
+/* Define to the type of an unsigned integer type of width exactly 64 bits if
+   such a type exists and the standard includes do not define it. */
+/* #undef uint64_t */
+
+/* Define to the type of an unsigned integer type of width exactly 8 bits if
+   such a type exists and the standard includes do not define it. */
+/* #undef uint8_t */
+
+/* Define as `fork' if `vfork' does not work. */
+/* #undef vfork */

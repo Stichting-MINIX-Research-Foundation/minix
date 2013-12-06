@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1009 2012/09/18 15:14:40 skrll Exp $
+# $NetBSD: mi,v 1.1051 2013/12/01 09:13:55 martin Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -99,6 +99,7 @@
 ./etc/iscsi					base-sysutil-root
 ./etc/kerberosIV				base-obsolete		obsolete
 ./etc/kerberosV					base-krb5-root
+./etc/kyua					base-kyua-root
 ./etc/mail					base-postfix-bin
 ./etc/mtree					base-sys-root
 ./etc/mtree/set.base				base-sys-root
@@ -126,8 +127,14 @@
 ./lib						base-sys-root
 ./lib/libdes.so					base-obsolete		obsolete
 ./lib/libssp.so					base-obsolete		obsolete
+./lib/npf					base-sys-root
 ./libdata					base-sys-root
 ./libdata/firmware				base-firmware-root
+./libdata/firmware/if_athn			base-firmware-root
+./libdata/firmware/if_athn/athn-ar7010		base-firmware-root
+./libdata/firmware/if_athn/athn-ar7010-11	base-firmware-root
+./libdata/firmware/if_athn/athn-ar9271		base-firmware-root
+./libdata/firmware/if_athn/athn-license		base-firmware-root
 ./libdata/firmware/if_ipw			base-firmware-root
 ./libdata/firmware/if_ipw/LICENSE		base-firmware-root
 ./libdata/firmware/if_ipw/ipw2100-1.2-i.fw	base-firmware-root
@@ -145,6 +152,7 @@
 ./libdata/firmware/if_iwn/LICENSE.iwlwifi-5150-ucode	base-firmware-root
 ./libdata/firmware/if_iwn/LICENSE.iwlwifi-6000-ucode	base-firmware-root
 ./libdata/firmware/if_iwn/LICENSE.iwlwifi-6000g2a-ucode	base-firmware-root
+./libdata/firmware/if_iwn/LICENSE.iwlwifi-6000g2b-ucode	base-firmware-root
 ./libdata/firmware/if_iwn/LICENSE.iwlwifi-6050-ucode	base-firmware-root
 ./libdata/firmware/if_iwn/README.iwlwifi-1000-ucode	base-firmware-root
 ./libdata/firmware/if_iwn/README.iwlwifi-4965-ucode	base-firmware-root
@@ -152,6 +160,7 @@
 ./libdata/firmware/if_iwn/README.iwlwifi-5150-ucode	base-firmware-root
 ./libdata/firmware/if_iwn/README.iwlwifi-6000-ucode	base-firmware-root
 ./libdata/firmware/if_iwn/README.iwlwifi-6000g2a-ucode	base-firmware-root
+./libdata/firmware/if_iwn/README.iwlwifi-6000g2b-ucode	base-firmware-root
 ./libdata/firmware/if_iwn/README.iwlwifi-6050-ucode	base-firmware-root
 ./libdata/firmware/if_iwn/iwlwifi-1000-3.ucode	base-firmware-root
 ./libdata/firmware/if_iwn/iwlwifi-4965-1.ucode	base-obsolete		obsolete
@@ -161,6 +170,7 @@
 ./libdata/firmware/if_iwn/iwlwifi-5150-2.ucode	base-firmware-root
 ./libdata/firmware/if_iwn/iwlwifi-6000-4.ucode	base-firmware-root
 ./libdata/firmware/if_iwn/iwlwifi-6000g2a-5.ucode	base-firmware-root
+./libdata/firmware/if_iwn/iwlwifi-6000g2b-6.ucode	base-firmware-root
 ./libdata/firmware/if_iwn/iwlwifi-6050-5.ucode	base-firmware-root
 ./libdata/firmware/if_otus			base-firmware-root
 ./libdata/firmware/if_otus/otus-init		base-firmware-root
@@ -201,14 +211,17 @@
 ./libexec					base-sys-root
 ./libexec/devpubd-hooks				base-sysutil-root
 ./libexec/devpubd-hooks/01-makedev		base-sysutil-root
+./libexec/devpubd-hooks/02-wedgenames		base-sysutil-root
 ./libexec/devpubd-run-hooks			base-sysutil-root
 ./libexec/dhcpcd-hooks				base-dhcpcd-root
 ./libexec/dhcpcd-hooks/01-test			base-dhcpcd-root
 ./libexec/dhcpcd-hooks/02-dump			base-dhcpcd-root
 ./libexec/dhcpcd-hooks/10-mtu			base-dhcpcd-root
 ./libexec/dhcpcd-hooks/10-resolv.conf		base-obsolete			obsolete
+./libexec/dhcpcd-hooks/10-wpa_supplicant	base-dhcpcd-root
 ./libexec/dhcpcd-hooks/14-lookup-hostname	base-obsolete			obsolete
 ./libexec/dhcpcd-hooks/15-hostname		base-obsolete			obsolete
+./libexec/dhcpcd-hooks/15-timezone		base-dhcpcd-root
 ./libexec/dhcpcd-hooks/20-resolv.conf		base-dhcpcd-root
 ./libexec/dhcpcd-hooks/29-lookup-hostname	base-dhcpcd-root
 ./libexec/dhcpcd-hooks/30-hostname		base-dhcpcd-root
@@ -270,6 +283,7 @@
 ./sbin/iscsid					base-iscsi-bin		iscsi
 ./sbin/ispppcontrol				base-obsolete		obsolete
 ./sbin/lmcctl					base-obsolete		obsolete
+./sbin/luactl					base-sysutil-root
 ./sbin/lvm					base-lvm-root		lvm
 ./sbin/mbrlabel					base-sysutil-root
 ./sbin/mknod					base-sysutil-root
@@ -321,6 +335,7 @@
 ./sbin/nfsd					base-obsolete		obsolete
 ./sbin/nfsiod					base-obsolete		obsolete
 ./sbin/nologin					base-sysutil-root
+./sbin/npfctl					base-npf-bin		npf
 ./sbin/pdisk					base-sysutil-root
 ./sbin/pfctl					base-pf-root		pf
 ./sbin/pflogd					base-pf-root		pf
@@ -386,15 +401,20 @@
 ./usr/bin/arpaname				base-bind-bin
 ./usr/bin/at					base-cron-bin
 ./usr/bin/atf-check				base-obsolete		obsolete
-./usr/bin/atf-config				base-atf-bin		atf
+./usr/bin/atf-config				base-atf-bin		atf,!kyua
+./usr/bin/atf-config				base-obsolete		kyua,obsolete
 ./usr/bin/atf-report				base-atf-bin		atf
+./usr/bin/atf-report				base-kyua-bin		kyua
 ./usr/bin/atf-run				base-atf-bin		atf
+./usr/bin/atf-run				base-kyua-bin		kyua
 ./usr/bin/atf-sh				base-atf-bin		atf
-./usr/bin/atf-version				base-atf-bin		atf
+./usr/bin/atf-version				base-atf-bin		atf,!kyua
+./usr/bin/atf-version				base-obsolete		kyua,obsolete
+./usr/bin/atf2kyua				base-kyua-bin		kyua
 ./usr/bin/atq					base-cron-bin
 ./usr/bin/atrm					base-cron-bin
-./usr/bin/audioctl				base-audio-bin
 ./usr/bin/audiocfg				base-audio-bin
+./usr/bin/audioctl				base-audio-bin
 ./usr/bin/audioplay				base-audio-bin
 ./usr/bin/audiorecord				base-audio-bin
 ./usr/bin/awk					base-util-bin
@@ -422,9 +442,9 @@
 ./usr/bin/chsh					base-util-bin
 ./usr/bin/ci					base-rcs-bin
 ./usr/bin/cksum					base-util-bin
+./usr/bin/cleantags				base-util-bin
 ./usr/bin/clear					base-util-bin
 ./usr/bin/cmp					base-util-bin
-./usr/bin/cleantags				base-util-bin
 ./usr/bin/co					base-rcs-bin
 ./usr/bin/col					base-util-bin
 ./usr/bin/colcrt				base-util-bin
@@ -462,6 +482,7 @@
 ./usr/bin/fincore				base-util-bin
 ./usr/bin/find					base-util-bin
 ./usr/bin/finger				base-util-bin
+./usr/bin/flock					base-util-bin
 ./usr/bin/fmt					base-util-bin
 ./usr/bin/fold					base-util-bin
 ./usr/bin/from					base-mail-bin
@@ -515,6 +536,7 @@
 ./usr/bin/krb5-config				base-krb5-bin		kerberos
 ./usr/bin/ktrace				base-debug-bin
 ./usr/bin/ktruss				base-debug-bin
+./usr/bin/kyua					base-kyua-bin		kyua
 ./usr/bin/lam					base-util-bin
 ./usr/bin/last					base-util-bin
 ./usr/bin/lastcomm				base-util-bin
@@ -559,6 +581,7 @@
 ./usr/bin/mailx					base-mail-bin
 ./usr/bin/make					base-util-bin
 ./usr/bin/man					base-man-bin
+./usr/bin/mandoc				base-man-bin
 ./usr/bin/md2					base-util-bin
 ./usr/bin/md4					base-util-bin
 ./usr/bin/md5					base-util-bin
@@ -706,6 +729,9 @@
 ./usr/bin/top					base-util-bin
 ./usr/bin/touch					base-util-bin
 ./usr/bin/tpfmt					base-util-bin
+./usr/bin/tpm_sealdata				base-tpm-bin		tpm
+./usr/bin/tpm_unsealdata			base-tpm-bin		tpm
+./usr/bin/tpm_version				base-tpm-bin		tpm
 ./usr/bin/tput					base-util-bin
 ./usr/bin/tr					base-util-bin
 ./usr/bin/true					base-util-bin
@@ -775,6 +801,7 @@
 ./usr/bin/zfgrep				base-util-bin
 ./usr/bin/zforce				base-util-bin
 ./usr/bin/zgrep					base-util-bin
+./usr/bin/zless					base-util-bin
 ./usr/bin/zmore					base-util-bin
 ./usr/bin/znew					base-util-bin
 ./usr/bin/ztest					base-zfs-bin		zfs
@@ -784,9 +811,14 @@
 ./usr/include/adosfs				base-c-usr
 ./usr/include/altq				base-c-usr
 ./usr/include/arpa				base-c-usr
+./usr/include/c++				base-cxx-usr
+./usr/include/c++/experimental			base-cxx-usr
+./usr/include/c++/ext				base-cxx-usr
 ./usr/include/cdk				base-obsolete		obsolete
 ./usr/include/clang-3.0				base-obsolete		obsolete
-./usr/include/clang-3.2				base-c-usr
+./usr/include/clang-3.2				base-obsolete		obsolete
+./usr/include/clang-3.3				base-obsolete		obsolete
+./usr/include/clang-3.4				base-c-usr
 ./usr/include/compat				base-obsolete		obsolete
 ./usr/include/crypto				base-c-usr
 ./usr/include/dev				base-c-usr
@@ -796,8 +828,8 @@
 ./usr/include/dev/dm	                        base-c-usr
 ./usr/include/dev/dmover			base-c-usr
 ./usr/include/dev/dtv				base-c-usr
-./usr/include/dev/filemon			base-c-usr
 ./usr/include/dev/eisa				base-obsolete		obsolete
+./usr/include/dev/filemon			base-c-usr
 ./usr/include/dev/hpc				base-c-usr
 ./usr/include/dev/i2c				base-c-usr
 ./usr/include/dev/i2o				base-c-usr
@@ -829,6 +861,7 @@
 ./usr/include/dev/vinum				base-obsolete		obsolete
 ./usr/include/dev/vme				base-c-usr
 ./usr/include/dev/wscons			base-c-usr
+./usr/include/event2				base-c-usr
 ./usr/include/filecorefs			base-c-usr
 ./usr/include/fs				base-c-usr
 ./usr/include/fs/efs				base-c-usr
@@ -848,15 +881,45 @@
 ./usr/include/g++/debug				base-cxx-usr
 ./usr/include/g++/decimal			base-cxx-usr
 ./usr/include/g++/ext				base-cxx-usr
+./usr/include/g++/ext/pb_ds			base-cxx-usr
+./usr/include/g++/ext/pb_ds/detail			base-cxx-usr
+./usr/include/g++/ext/pb_ds/detail/bin_search_tree_	base-cxx-usr
+./usr/include/g++/ext/pb_ds/detail/binary_heap_		base-cxx-usr
+./usr/include/g++/ext/pb_ds/detail/binomial_heap_	base-cxx-usr
+./usr/include/g++/ext/pb_ds/detail/binomial_heap_base_	base-cxx-usr
+./usr/include/g++/ext/pb_ds/detail/branch_policy	base-cxx-usr
+./usr/include/g++/ext/pb_ds/detail/cc_hash_table_map_	base-cxx-usr
+./usr/include/g++/ext/pb_ds/detail/eq_fn		base-cxx-usr
+./usr/include/g++/ext/pb_ds/detail/gp_hash_table_map_	base-cxx-usr
+./usr/include/g++/ext/pb_ds/detail/hash_fn		base-cxx-usr
+./usr/include/g++/ext/pb_ds/detail/left_child_next_sibling_heap_	base-cxx-usr
+./usr/include/g++/ext/pb_ds/detail/list_update_map_	base-cxx-usr
+./usr/include/g++/ext/pb_ds/detail/list_update_policy	base-cxx-usr
+./usr/include/g++/ext/pb_ds/detail/ov_tree_map_		base-cxx-usr
+./usr/include/g++/ext/pb_ds/detail/pairing_heap_	base-cxx-usr
+./usr/include/g++/ext/pb_ds/detail/pat_trie_		base-cxx-usr
+./usr/include/g++/ext/pb_ds/detail/rb_tree_map_		base-cxx-usr
+./usr/include/g++/ext/pb_ds/detail/rc_binomial_heap_	base-cxx-usr
+./usr/include/g++/ext/pb_ds/detail/resize_policy	base-cxx-usr
+./usr/include/g++/ext/pb_ds/detail/splay_tree_		base-cxx-usr
+./usr/include/g++/ext/pb_ds/detail/thin_heap_		base-cxx-usr
+./usr/include/g++/ext/pb_ds/detail/tree_policy		base-cxx-usr
+./usr/include/g++/ext/pb_ds/detail/trie_policy		base-cxx-usr
+./usr/include/g++/ext/pb_ds/detail/unordered_iterator	base-cxx-usr
 ./usr/include/g++/gen				base-obsolete		obsolete
 ./usr/include/g++/parallel			base-cxx-usr
+./usr/include/g++/profile			base-cxx-usr
+./usr/include/g++/profile/impl			base-cxx-usr
 ./usr/include/g++/std				base-obsolete		obsolete
 ./usr/include/g++/tr1				base-cxx-usr
 ./usr/include/g++/tr1_impl			base-cxx-usr
-./usr/include/gcc-4.1				base-obsolete		!gcc,obsolete
+./usr/include/g++/tr2				base-cxx-usr
 ./usr/include/gcc-4.1				base-c-usr		gcc=4
+./usr/include/gcc-4.1				base-obsolete		!gcc,obsolete
 ./usr/include/gcc-4.1				base-obsolete		gcc=45,obsolete
+./usr/include/gcc-4.1				base-obsolete		gcc=48,obsolete
 ./usr/include/gcc-4.5				base-c-usr
+./usr/include/gcc-4.8				base-c-usr
 ./usr/include/gssapi				base-c-usr
 ./usr/include/gssapi/rpc			base-obsolete		obsolete
 ./usr/include/isofs				base-c-usr
@@ -893,11 +956,12 @@
 ./usr/include/netinet6				base-c-usr
 ./usr/include/netipsec				base-c-usr
 ./usr/include/netisdn				base-c-usr
-./usr/include/netiso				base-c-usr
+./usr/include/netiso				base-obsolete		obsolete
 ./usr/include/netkey				base-c-usr
 ./usr/include/netmpls				base-c-usr
 ./usr/include/netnatm				base-c-usr
 ./usr/include/netns				base-obsolete		obsolete
+./usr/include/netpgp				base-c-usr
 ./usr/include/netsmb				base-c-usr
 ./usr/include/nfs				base-c-usr
 ./usr/include/ntfs				base-c-usr
@@ -935,7 +999,7 @@
 ./usr/lib/libusb.so				base-obsolete		obsolete
 ./usr/lib/lua					base-sys-usr
 ./usr/lib/lua/5.1				base-sys-usr
-./usr/lib/npf					base-sys-usr
+./usr/lib/npf					base-obsolete		obsolete
 ./usr/lib/runemodule				base-obsolete		obsolete
 ./usr/lib/runemodule/libBIG5.a			base-obsolete		obsolete
 ./usr/lib/runemodule/libBIG5.so			base-obsolete		obsolete
@@ -969,6 +1033,8 @@
 ./usr/libdata					base-sys-usr
 ./usr/libdata/debug				base-sys-usr
 ./usr/libdata/debug/bin				base-sys-usr
+./usr/libdata/debug/lib				base-sys-usr
+./usr/libdata/debug/lib/npf			base-sys-usr
 ./usr/libdata/debug/libexec			base-sys-usr
 ./usr/libdata/debug/sbin			base-sys-usr
 ./usr/libdata/debug/usr				base-sys-usr
@@ -976,7 +1042,7 @@
 ./usr/libdata/debug/usr/games			base-sys-usr
 ./usr/libdata/debug/usr/lib			base-sys-usr
 ./usr/libdata/debug/usr/lib/i18n		base-i18n-root
-./usr/libdata/debug/usr/lib/npf			base-sys-usr
+./usr/libdata/debug/usr/lib/npf			base-obsolete		obsolete
 ./usr/libdata/debug/usr/libexec			base-sys-usr
 ./usr/libdata/debug/usr/libexec/ching		base-sys-usr
 ./usr/libdata/debug/usr/libexec/lpr		base-sys-usr
@@ -1056,6 +1122,8 @@
 ./usr/libexec/kdc				base-obsolete		obsolete
 ./usr/libexec/kfd				base-obsolete		obsolete
 ./usr/libexec/kpasswdd				base-krb5-bin		kerberos
+./usr/libexec/kyua-atf-tester			base-kyua-bin		kyua
+./usr/libexec/kyua-plain-tester			base-kyua-bin		kyua
 ./usr/libexec/lfs_cleanerd			base-obsolete		obsolete
 ./usr/libexec/locate.bigram			base-sysutil-bin
 ./usr/libexec/locate.code			base-sysutil-bin
@@ -1220,6 +1288,7 @@
 ./usr/sbin/dnssec-settime			base-bind-bin
 ./usr/sbin/dnssec-signkey			base-obsolete		obsolete
 ./usr/sbin/dnssec-signzone			base-bind-bin
+./usr/sbin/dnssec-verify			base-bind-bin
 ./usr/sbin/download-vulnerability-list		base-pkgutil-bin	crypto
 ./usr/sbin/dtmfdecode				base-isdn-bin
 ./usr/sbin/dtrace				base-debug-bin		dtrace
@@ -1311,6 +1380,7 @@
 ./usr/sbin/mailwrapper				base-mailwrapper-bin
 ./usr/sbin/makedbm				base-nis-bin		yp
 ./usr/sbin/makefs				base-sysutil-bin
+./usr/sbin/makemandb				base-man-bin		makemandb
 ./usr/sbin/makemap				base-obsolete		obsolete
 ./usr/sbin/map-mbone				base-netutil-bin
 ./usr/sbin/mbrlabel				base-obsolete		obsolete
@@ -1356,7 +1426,7 @@
 ./usr/sbin/netgroup_mkdb			base-nis-bin
 ./usr/sbin/nfsd					base-nfsserver-bin
 ./usr/sbin/nfsiod				base-obsolete		obsolete
-./usr/sbin/npfctl				base-npf-bin		npf
+./usr/sbin/npfctl				base-obsolete		obsolete
 ./usr/sbin/npftest				base-npf-bin		npf,rump,pic
 ./usr/sbin/nsec3hash				base-bind-bin
 ./usr/sbin/nslookup				base-obsolete		obsolete
@@ -1495,8 +1565,30 @@
 ./usr/sbin/tcpdmatch				base-netutil-bin
 ./usr/sbin/tcpdrop				base-netutil-bin
 ./usr/sbin/tcpdump				base-netutil-bin
+./usr/sbin/tcsd					base-tpm-bin		tpm
 ./usr/sbin/timed				base-timed-bin
 ./usr/sbin/timedc				base-timed-bin
+./usr/sbin/tpm_changeownerauth			base-tpm-bin		tpm
+./usr/sbin/tpm_clear				base-tpm-bin		tpm
+./usr/sbin/tpm_createek				base-tpm-bin		tpm
+./usr/sbin/tpm_getpubek				base-tpm-bin		tpm
+./usr/sbin/tpm_nvdefine				base-tpm-bin		tpm
+./usr/sbin/tpm_nvinfo				base-tpm-bin		tpm
+./usr/sbin/tpm_nvread				base-tpm-bin		tpm
+./usr/sbin/tpm_nvrelease			base-tpm-bin		tpm
+./usr/sbin/tpm_nvwrite				base-tpm-bin		tpm
+./usr/sbin/tpm_resetdalock			base-tpm-bin		tpm
+./usr/sbin/tpm_restrictpubek			base-tpm-bin		tpm
+./usr/sbin/tpm_restrictsrk			base-tpm-bin		tpm
+./usr/sbin/tpm_revokeek				base-tpm-bin		tpm
+./usr/sbin/tpm_selftest				base-tpm-bin		tpm
+./usr/sbin/tpm_setactive			base-tpm-bin		tpm
+./usr/sbin/tpm_setclearable			base-tpm-bin		tpm
+./usr/sbin/tpm_setenable			base-tpm-bin		tpm
+./usr/sbin/tpm_setoperatorauth			base-tpm-bin		tpm
+./usr/sbin/tpm_setownable			base-tpm-bin		tpm
+./usr/sbin/tpm_setpresence			base-tpm-bin		tpm
+./usr/sbin/tpm_takeownership			base-tpm-bin		tpm
 ./usr/sbin/tprof				base-sysutil-bin
 ./usr/sbin/traceroute				base-netutil-bin
 ./usr/sbin/traceroute6				base-netutil-bin	use_inet6
@@ -1514,6 +1606,7 @@
 ./usr/sbin/veriexecgen				base-sysutil-bin
 ./usr/sbin/vipw					base-sysutil-bin
 ./usr/sbin/vnconfig				base-sysutil-bin
+./usr/sbin/vndconfig				base-sysutil-bin
 ./usr/sbin/wake					base-obsolete		obsolete
 ./usr/sbin/wakeonlan				base-netutil-bin
 ./usr/sbin/wiconfig				base-sysutil-bin
@@ -1540,8 +1633,9 @@
 ./usr/sbin/zdump				base-sysutil-bin
 ./usr/sbin/zic					base-sysutil-bin
 ./usr/share					base-sys-share
-./usr/share/atf					base-atf-share		
-./usr/share/atf/atf-run.hooks			base-atf-bin		share,atf
+./usr/share/atf					base-atf-share
+./usr/share/atf/atf-run.hooks			base-atf-bin		share,atf,!kyua
+./usr/share/atf/atf-run.hooks			base-obsolete		share,kyua,obsolete
 ./usr/share/atf/atf.config.subr			base-obsolete		obsolete
 ./usr/share/atf/atf.footer.subr			base-obsolete		obsolete
 ./usr/share/atf/atf.header.subr			base-obsolete		obsolete
@@ -1676,9 +1770,10 @@
 ./usr/share/examples/mount_portal		base-miscfs-examples
 ./usr/share/examples/named			base-obsolete	obsolete
 ./usr/share/examples/npf			base-netutil-examples
-./usr/share/examples/npf/host-npf.conf		base-netutil-examples
-./usr/share/examples/npf/soho_gw-npf.conf	base-netutil-examples
 ./usr/share/examples/npf/hashtablefile		base-netutil-examples
+./usr/share/examples/npf/host-npf.conf		base-netutil-examples
+./usr/share/examples/npf/l2tp_gw-npf.conf	base-netutil-examples
+./usr/share/examples/npf/soho_gw-npf.conf	base-netutil-examples
 ./usr/share/examples/npf/treetablefile		base-netutil-examples
 ./usr/share/examples/openssl			base-crypto-examples
 ./usr/share/examples/pf				base-netutil-examples
@@ -2488,6 +2583,18 @@
 ./usr/share/keymaps/amiga			base-sys-share
 ./usr/share/keymaps/atari			base-sys-share
 ./usr/share/keymaps/x68k			base-sys-share
+./usr/share/kyua-atf-compat			base-kyua-bin
+./usr/share/kyua-atf-compat/lib.subr		base-kyua-bin		kyua
+./usr/share/kyua-atf-compat/tests_lib.subr	base-kyua-bin		kyua
+./usr/share/kyua-cli				base-kyua-bin
+./usr/share/kyua-cli/misc			base-kyua-bin
+./usr/share/kyua-cli/misc/context.html		base-kyua-bin		share,kyua
+./usr/share/kyua-cli/misc/index.html		base-kyua-bin		share,kyua
+./usr/share/kyua-cli/misc/report.css		base-kyua-bin		share,kyua
+./usr/share/kyua-cli/misc/test_result.html	base-kyua-bin		share,kyua
+./usr/share/kyua-cli/store			base-kyua-bin
+./usr/share/kyua-cli/store/migrate_v1_v2.sql	base-kyua-bin		share,kyua
+./usr/share/kyua-cli/store/schema_v2.sql	base-kyua-bin		share,kyua
 ./usr/share/ldscripts				base-obsolete		obsolete
 ./usr/share/legal				base-sys-share
 ./usr/share/legal/COPYRIGHT			base-sys-share		share
@@ -2534,6 +2641,13 @@
 ./usr/share/locale/af_ZA.ISO8859-15/LC_MONETARY	base-locale-af		nls
 ./usr/share/locale/af_ZA.ISO8859-15/LC_NUMERIC	base-locale-af		nls
 ./usr/share/locale/af_ZA.ISO8859-15/LC_TIME	base-locale-af		nls
+./usr/share/locale/af_ZA.UTF-8			base-locale-af
+./usr/share/locale/af_ZA.UTF-8/LC_CTYPE		base-locale-af		nls
+./usr/share/locale/af_ZA.UTF-8/LC_MESSAGES	base-locale-af		nls
+./usr/share/locale/af_ZA.UTF-8/LC_MESSAGES/SYS_LC_MESSAGES		base-locale-af		nls
+./usr/share/locale/af_ZA.UTF-8/LC_MONETARY	base-locale-af		nls
+./usr/share/locale/af_ZA.UTF-8/LC_NUMERIC	base-locale-af		nls
+./usr/share/locale/af_ZA.UTF-8/LC_TIME		base-locale-af		nls
 ./usr/share/locale/be				base-locale-be
 ./usr/share/locale/be/LC_MESSAGES		base-locale-be
 ./usr/share/locale/be_BY.CP1251			base-locale-be
@@ -2550,6 +2664,13 @@
 ./usr/share/locale/be_BY.ISO8859-5/LC_MONETARY	base-locale-be		nls
 ./usr/share/locale/be_BY.ISO8859-5/LC_NUMERIC	base-locale-be		nls
 ./usr/share/locale/be_BY.ISO8859-5/LC_TIME	base-locale-be		nls
+./usr/share/locale/be_BY.UTF-8			base-locale-be
+./usr/share/locale/be_BY.UTF-8/LC_CTYPE		base-locale-be		nls
+./usr/share/locale/be_BY.UTF-8/LC_MESSAGES	base-locale-be		nls
+./usr/share/locale/be_BY.UTF-8/LC_MESSAGES/SYS_LC_MESSAGES		base-locale-be		nls
+./usr/share/locale/be_BY.UTF-8/LC_MONETARY	base-locale-be		nls
+./usr/share/locale/be_BY.UTF-8/LC_NUMERIC	base-locale-be		nls
+./usr/share/locale/be_BY.UTF-8/LC_TIME		base-locale-be		nls
 ./usr/share/locale/bg_BG.CP1251			base-locale-bg
 ./usr/share/locale/bg_BG.CP1251/LC_CTYPE	base-locale-bg		nls
 ./usr/share/locale/bg_BG.CP1251/LC_MESSAGES	base-locale-bg
@@ -2557,6 +2678,13 @@
 ./usr/share/locale/bg_BG.CP1251/LC_MONETARY	base-locale-bg		nls
 ./usr/share/locale/bg_BG.CP1251/LC_NUMERIC	base-locale-bg		nls
 ./usr/share/locale/bg_BG.CP1251/LC_TIME		base-locale-bg		nls
+./usr/share/locale/bg_BG.UTF-8			base-locale-bg
+./usr/share/locale/bg_BG.UTF-8/LC_CTYPE		base-locale-bg		nls
+./usr/share/locale/bg_BG.UTF-8/LC_MESSAGES	base-locale-bg		nls
+./usr/share/locale/bg_BG.UTF-8/LC_MESSAGES/SYS_LC_MESSAGES		base-locale-bg		nls
+./usr/share/locale/bg_BG.UTF-8/LC_MONETARY	base-locale-bg		nls
+./usr/share/locale/bg_BG.UTF-8/LC_NUMERIC	base-locale-bg		nls
+./usr/share/locale/bg_BG.UTF-8/LC_TIME		base-locale-bg		nls
 ./usr/share/locale/ca				base-locale-ca
 ./usr/share/locale/ca/LC_MESSAGES		base-locale-ca
 ./usr/share/locale/ca_ES.ISO8859-1		base-locale-ca
@@ -2573,6 +2701,13 @@
 ./usr/share/locale/ca_ES.ISO8859-15/LC_MONETARY	base-locale-ca		nls
 ./usr/share/locale/ca_ES.ISO8859-15/LC_NUMERIC	base-locale-ca		nls
 ./usr/share/locale/ca_ES.ISO8859-15/LC_TIME	base-locale-ca		nls
+./usr/share/locale/ca_ES.UTF-8			base-locale-ca
+./usr/share/locale/ca_ES.UTF-8/LC_CTYPE		base-locale-ca		nls
+./usr/share/locale/ca_ES.UTF-8/LC_MESSAGES	base-locale-ca		nls
+./usr/share/locale/ca_ES.UTF-8/LC_MESSAGES/SYS_LC_MESSAGES		base-locale-ca		nls
+./usr/share/locale/ca_ES.UTF-8/LC_MONETARY	base-locale-ca		nls
+./usr/share/locale/ca_ES.UTF-8/LC_NUMERIC	base-locale-ca		nls
+./usr/share/locale/ca_ES.UTF-8/LC_TIME		base-locale-ca		nls
 ./usr/share/locale/cs				base-locale-cs
 ./usr/share/locale/cs/LC_MESSAGES		base-locale-cs
 ./usr/share/locale/cs/LC_MESSAGES/grep.mo	base-util_locale-cs	nls,!bsdgrep
@@ -2586,6 +2721,13 @@
 ./usr/share/locale/cs_CZ.ISO8859-2/LC_MONETARY	base-locale-cs		nls
 ./usr/share/locale/cs_CZ.ISO8859-2/LC_NUMERIC	base-locale-cs		nls
 ./usr/share/locale/cs_CZ.ISO8859-2/LC_TIME	base-locale-cs		nls
+./usr/share/locale/cs_CZ.UTF-8			base-locale-cs
+./usr/share/locale/cs_CZ.UTF-8/LC_CTYPE		base-locale-cs		nls
+./usr/share/locale/cs_CZ.UTF-8/LC_MESSAGES	base-locale-cs		nls
+./usr/share/locale/cs_CZ.UTF-8/LC_MESSAGES/SYS_LC_MESSAGES		base-locale-cs		nls
+./usr/share/locale/cs_CZ.UTF-8/LC_MONETARY	base-locale-cs		nls
+./usr/share/locale/cs_CZ.UTF-8/LC_NUMERIC	base-locale-cs		nls
+./usr/share/locale/cs_CZ.UTF-8/LC_TIME		base-locale-cs		nls
 ./usr/share/locale/da				base-locale-da
 ./usr/share/locale/da/LC_MESSAGES		base-locale-da
 ./usr/share/locale/da/LC_MESSAGES/tar.mo	base-obsolete		obsolete
@@ -2604,6 +2746,13 @@
 ./usr/share/locale/da_DK.ISO8859-15/LC_MONETARY	base-locale-da		nls
 ./usr/share/locale/da_DK.ISO8859-15/LC_NUMERIC	base-locale-da		nls
 ./usr/share/locale/da_DK.ISO8859-15/LC_TIME	base-locale-da		nls
+./usr/share/locale/da_DK.UTF-8			base-locale-da
+./usr/share/locale/da_DK.UTF-8/LC_CTYPE		base-locale-da		nls
+./usr/share/locale/da_DK.UTF-8/LC_MESSAGES	base-locale-da		nls
+./usr/share/locale/da_DK.UTF-8/LC_MESSAGES/SYS_LC_MESSAGES		base-locale-da		nls
+./usr/share/locale/da_DK.UTF-8/LC_MONETARY	base-locale-da		nls
+./usr/share/locale/da_DK.UTF-8/LC_NUMERIC	base-locale-da		nls
+./usr/share/locale/da_DK.UTF-8/LC_TIME		base-locale-da		nls
 ./usr/share/locale/de				base-locale-de
 ./usr/share/locale/de/LC_MESSAGES		base-locale-de
 ./usr/share/locale/de/LC_MESSAGES/grep.mo	base-util_locale-de	nls,!bsdgrep
@@ -2625,6 +2774,13 @@
 ./usr/share/locale/de_AT.ISO8859-15/LC_MONETARY	base-locale-de		nls
 ./usr/share/locale/de_AT.ISO8859-15/LC_NUMERIC	base-locale-de		nls
 ./usr/share/locale/de_AT.ISO8859-15/LC_TIME	base-locale-de		nls
+./usr/share/locale/de_AT.UTF-8			base-locale-de
+./usr/share/locale/de_AT.UTF-8/LC_CTYPE		base-locale-de		nls
+./usr/share/locale/de_AT.UTF-8/LC_MESSAGES	base-locale-de		nls
+./usr/share/locale/de_AT.UTF-8/LC_MESSAGES/SYS_LC_MESSAGES		base-locale-de		nls
+./usr/share/locale/de_AT.UTF-8/LC_MONETARY	base-locale-de		nls
+./usr/share/locale/de_AT.UTF-8/LC_NUMERIC	base-locale-de		nls
+./usr/share/locale/de_AT.UTF-8/LC_TIME		base-locale-de		nls
 ./usr/share/locale/de_AT/LC_MESSAGES		base-locale-de
 ./usr/share/locale/de_AT/LC_MESSAGES/texinfo.mo	base-texinfo_locale-de	nls
 ./usr/share/locale/de_CH.ISO8859-1		base-locale-de
@@ -2641,6 +2797,13 @@
 ./usr/share/locale/de_CH.ISO8859-15/LC_MONETARY	base-locale-de		nls
 ./usr/share/locale/de_CH.ISO8859-15/LC_NUMERIC	base-locale-de		nls
 ./usr/share/locale/de_CH.ISO8859-15/LC_TIME	base-locale-de		nls
+./usr/share/locale/de_CH.UTF-8			base-locale-de
+./usr/share/locale/de_CH.UTF-8/LC_CTYPE		base-locale-de		nls
+./usr/share/locale/de_CH.UTF-8/LC_MESSAGES	base-locale-de		nls
+./usr/share/locale/de_CH.UTF-8/LC_MESSAGES/SYS_LC_MESSAGES		base-locale-de		nls
+./usr/share/locale/de_CH.UTF-8/LC_MONETARY	base-locale-de		nls
+./usr/share/locale/de_CH.UTF-8/LC_NUMERIC	base-locale-de		nls
+./usr/share/locale/de_CH.UTF-8/LC_TIME		base-locale-de		nls
 ./usr/share/locale/de_DE.ISO8859-1		base-locale-de
 ./usr/share/locale/de_DE.ISO8859-1/LC_CTYPE	base-locale-de		nls
 ./usr/share/locale/de_DE.ISO8859-1/LC_MESSAGES	base-locale-de
@@ -2655,6 +2818,13 @@
 ./usr/share/locale/de_DE.ISO8859-15/LC_MONETARY	base-locale-de		nls
 ./usr/share/locale/de_DE.ISO8859-15/LC_NUMERIC	base-locale-de		nls
 ./usr/share/locale/de_DE.ISO8859-15/LC_TIME	base-locale-de		nls
+./usr/share/locale/de_DE.UTF-8			base-locale-de
+./usr/share/locale/de_DE.UTF-8/LC_CTYPE		base-locale-de		nls
+./usr/share/locale/de_DE.UTF-8/LC_MESSAGES	base-locale-de		nls
+./usr/share/locale/de_DE.UTF-8/LC_MESSAGES/SYS_LC_MESSAGES		base-locale-de		nls
+./usr/share/locale/de_DE.UTF-8/LC_MONETARY	base-locale-de		nls
+./usr/share/locale/de_DE.UTF-8/LC_NUMERIC	base-locale-de		nls
+./usr/share/locale/de_DE.UTF-8/LC_TIME		base-locale-de		nls
 ./usr/share/locale/el				base-locale-el
 ./usr/share/locale/el/LC_MESSAGES		base-locale-el
 ./usr/share/locale/el/LC_MESSAGES/grep.mo	base-util_locale-el	nls,!bsdgrep
@@ -2665,6 +2835,13 @@
 ./usr/share/locale/el_GR.ISO8859-7/LC_MONETARY	base-locale-el		nls
 ./usr/share/locale/el_GR.ISO8859-7/LC_NUMERIC	base-locale-el		nls
 ./usr/share/locale/el_GR.ISO8859-7/LC_TIME	base-locale-el		nls
+./usr/share/locale/el_GR.UTF-8			base-locale-el
+./usr/share/locale/el_GR.UTF-8/LC_CTYPE		base-locale-el		nls
+./usr/share/locale/el_GR.UTF-8/LC_MESSAGES	base-locale-el		nls
+./usr/share/locale/el_GR.UTF-8/LC_MESSAGES/SYS_LC_MESSAGES		base-locale-el		nls
+./usr/share/locale/el_GR.UTF-8/LC_MONETARY	base-locale-el		nls
+./usr/share/locale/el_GR.UTF-8/LC_NUMERIC	base-locale-el		nls
+./usr/share/locale/el_GR.UTF-8/LC_TIME		base-locale-el		nls
 ./usr/share/locale/en@boldquot			base-locale-en
 ./usr/share/locale/en@boldquot/LC_MESSAGES	base-locale-en
 ./usr/share/locale/en@quot			base-locale-en
@@ -2683,6 +2860,13 @@
 ./usr/share/locale/en_AU.ISO8859-15/LC_MONETARY	base-locale-en		nls
 ./usr/share/locale/en_AU.ISO8859-15/LC_NUMERIC	base-locale-en		nls
 ./usr/share/locale/en_AU.ISO8859-15/LC_TIME	base-locale-en		nls
+./usr/share/locale/en_AU.UTF-8			base-locale-en
+./usr/share/locale/en_AU.UTF-8/LC_CTYPE		base-locale-en		nls
+./usr/share/locale/en_AU.UTF-8/LC_MESSAGES	base-locale-en		nls
+./usr/share/locale/en_AU.UTF-8/LC_MESSAGES/SYS_LC_MESSAGES		base-locale-en		nls
+./usr/share/locale/en_AU.UTF-8/LC_MONETARY	base-locale-en		nls
+./usr/share/locale/en_AU.UTF-8/LC_NUMERIC	base-locale-en		nls
+./usr/share/locale/en_AU.UTF-8/LC_TIME		base-locale-en		nls
 ./usr/share/locale/en_CA.ISO8859-1		base-locale-en
 ./usr/share/locale/en_CA.ISO8859-1/LC_CTYPE	base-locale-en		nls
 ./usr/share/locale/en_CA.ISO8859-1/LC_MESSAGES	base-locale-en
@@ -2697,6 +2881,13 @@
 ./usr/share/locale/en_CA.ISO8859-15/LC_MONETARY	base-locale-en		nls
 ./usr/share/locale/en_CA.ISO8859-15/LC_NUMERIC	base-locale-en		nls
 ./usr/share/locale/en_CA.ISO8859-15/LC_TIME	base-locale-en		nls
+./usr/share/locale/en_CA.UTF-8			base-locale-en
+./usr/share/locale/en_CA.UTF-8/LC_CTYPE		base-locale-en		nls
+./usr/share/locale/en_CA.UTF-8/LC_MESSAGES	base-locale-en		nls
+./usr/share/locale/en_CA.UTF-8/LC_MESSAGES/SYS_LC_MESSAGES		base-locale-en		nls
+./usr/share/locale/en_CA.UTF-8/LC_MONETARY	base-locale-en		nls
+./usr/share/locale/en_CA.UTF-8/LC_NUMERIC	base-locale-en		nls
+./usr/share/locale/en_CA.UTF-8/LC_TIME		base-locale-en		nls
 ./usr/share/locale/en_GB.ISO8859-1		base-locale-en
 ./usr/share/locale/en_GB.ISO8859-1/LC_CTYPE	base-locale-en		nls
 ./usr/share/locale/en_GB.ISO8859-1/LC_MESSAGES	base-locale-en
@@ -2711,6 +2902,13 @@
 ./usr/share/locale/en_GB.ISO8859-15/LC_MONETARY	base-locale-en		nls
 ./usr/share/locale/en_GB.ISO8859-15/LC_NUMERIC	base-locale-en		nls
 ./usr/share/locale/en_GB.ISO8859-15/LC_TIME	base-locale-en		nls
+./usr/share/locale/en_GB.UTF-8			base-locale-en
+./usr/share/locale/en_GB.UTF-8/LC_CTYPE		base-locale-en		nls
+./usr/share/locale/en_GB.UTF-8/LC_MESSAGES	base-locale-en		nls
+./usr/share/locale/en_GB.UTF-8/LC_MESSAGES/SYS_LC_MESSAGES		base-locale-en		nls
+./usr/share/locale/en_GB.UTF-8/LC_MONETARY	base-locale-en		nls
+./usr/share/locale/en_GB.UTF-8/LC_NUMERIC	base-locale-en		nls
+./usr/share/locale/en_GB.UTF-8/LC_TIME		base-locale-en		nls
 ./usr/share/locale/en_NZ.ISO8859-1		base-locale-en
 ./usr/share/locale/en_NZ.ISO8859-1/LC_CTYPE	base-locale-en		nls
 ./usr/share/locale/en_NZ.ISO8859-1/LC_MESSAGES	base-locale-en
@@ -2725,6 +2923,13 @@
 ./usr/share/locale/en_NZ.ISO8859-15/LC_MONETARY	base-locale-en		nls
 ./usr/share/locale/en_NZ.ISO8859-15/LC_NUMERIC	base-locale-en		nls
 ./usr/share/locale/en_NZ.ISO8859-15/LC_TIME	base-locale-en		nls
+./usr/share/locale/en_NZ.UTF-8			base-locale-en
+./usr/share/locale/en_NZ.UTF-8/LC_CTYPE		base-locale-en		nls
+./usr/share/locale/en_NZ.UTF-8/LC_MESSAGES	base-locale-en		nls
+./usr/share/locale/en_NZ.UTF-8/LC_MESSAGES/SYS_LC_MESSAGES		base-locale-en		nls
+./usr/share/locale/en_NZ.UTF-8/LC_MONETARY	base-locale-en		nls
+./usr/share/locale/en_NZ.UTF-8/LC_NUMERIC	base-locale-en		nls
+./usr/share/locale/en_NZ.UTF-8/LC_TIME		base-locale-en		nls
 ./usr/share/locale/en_US.ISO8859-1		base-locale-en
 ./usr/share/locale/en_US.ISO8859-1/LC_CTYPE	base-locale-en		nls
 ./usr/share/locale/en_US.ISO8859-1/LC_MESSAGES	base-locale-en
@@ -2777,6 +2982,13 @@
 ./usr/share/locale/es_ES.ISO8859-15/LC_MONETARY	base-locale-es		nls
 ./usr/share/locale/es_ES.ISO8859-15/LC_NUMERIC	base-locale-es		nls
 ./usr/share/locale/es_ES.ISO8859-15/LC_TIME	base-locale-es		nls
+./usr/share/locale/es_ES.UTF-8			base-locale-es
+./usr/share/locale/es_ES.UTF-8/LC_CTYPE		base-locale-es		nls
+./usr/share/locale/es_ES.UTF-8/LC_MESSAGES	base-locale-es		nls
+./usr/share/locale/es_ES.UTF-8/LC_MESSAGES/SYS_LC_MESSAGES		base-locale-es		nls
+./usr/share/locale/es_ES.UTF-8/LC_MONETARY	base-locale-es		nls
+./usr/share/locale/es_ES.UTF-8/LC_NUMERIC	base-locale-es		nls
+./usr/share/locale/es_ES.UTF-8/LC_TIME		base-locale-es		nls
 ./usr/share/locale/et				base-locale-et
 ./usr/share/locale/et/LC_MESSAGES		base-locale-et
 ./usr/share/locale/et/LC_MESSAGES/grep.mo	base-util_locale-et	nls,!bsdgrep
@@ -2788,6 +3000,13 @@
 ./usr/share/locale/et_EE.ISO8859-15/LC_MONETARY	base-locale-et		nls
 ./usr/share/locale/et_EE.ISO8859-15/LC_NUMERIC	base-locale-et		nls
 ./usr/share/locale/et_EE.ISO8859-15/LC_TIME	base-locale-et		nls
+./usr/share/locale/et_EE.UTF-8			base-locale-ee
+./usr/share/locale/et_EE.UTF-8/LC_CTYPE		base-locale-ee		nls
+./usr/share/locale/et_EE.UTF-8/LC_MESSAGES	base-locale-ee		nls
+./usr/share/locale/et_EE.UTF-8/LC_MESSAGES/SYS_LC_MESSAGES		base-locale-ee		nls
+./usr/share/locale/et_EE.UTF-8/LC_MONETARY	base-locale-ee		nls
+./usr/share/locale/et_EE.UTF-8/LC_NUMERIC	base-locale-ee		nls
+./usr/share/locale/et_EE.UTF-8/LC_TIME		base-locale-ee		nls
 ./usr/share/locale/eu_ES.ISO8859-1		base-locale-eu
 ./usr/share/locale/eu_ES.ISO8859-1/LC_CTYPE	base-locale-eu		nls
 ./usr/share/locale/eu_ES.ISO8859-1/LC_MESSAGES	base-locale-eu
@@ -2802,6 +3021,13 @@
 ./usr/share/locale/eu_ES.ISO8859-15/LC_MONETARY	base-locale-eu		nls
 ./usr/share/locale/eu_ES.ISO8859-15/LC_NUMERIC	base-locale-eu		nls
 ./usr/share/locale/eu_ES.ISO8859-15/LC_TIME	base-locale-eu		nls
+./usr/share/locale/eu_ES.UTF-8			base-locale-eu
+./usr/share/locale/eu_ES.UTF-8/LC_CTYPE		base-locale-eu		nls
+./usr/share/locale/eu_ES.UTF-8/LC_MESSAGES	base-locale-eu		nls
+./usr/share/locale/eu_ES.UTF-8/LC_MESSAGES/SYS_LC_MESSAGES		base-locale-eu		nls
+./usr/share/locale/eu_ES.UTF-8/LC_MONETARY	base-locale-eu		nls
+./usr/share/locale/eu_ES.UTF-8/LC_NUMERIC	base-locale-eu		nls
+./usr/share/locale/eu_ES.UTF-8/LC_TIME		base-locale-eu		nls
 ./usr/share/locale/fi				base-locale-fi
 ./usr/share/locale/fi/LC_MESSAGES		base-locale-fi
 ./usr/share/locale/fi_FI.ISO8859-1		base-locale-fi
@@ -2818,6 +3044,13 @@
 ./usr/share/locale/fi_FI.ISO8859-15/LC_MONETARY	base-locale-fi		nls
 ./usr/share/locale/fi_FI.ISO8859-15/LC_NUMERIC	base-locale-fi		nls
 ./usr/share/locale/fi_FI.ISO8859-15/LC_TIME	base-locale-fi		nls
+./usr/share/locale/fi_FI.UTF-8			base-locale-fi
+./usr/share/locale/fi_FI.UTF-8/LC_CTYPE		base-locale-fi		nls
+./usr/share/locale/fi_FI.UTF-8/LC_MESSAGES	base-locale-fi		nls
+./usr/share/locale/fi_FI.UTF-8/LC_MESSAGES/SYS_LC_MESSAGES		base-locale-fi		nls
+./usr/share/locale/fi_FI.UTF-8/LC_MONETARY	base-locale-fi		nls
+./usr/share/locale/fi_FI.UTF-8/LC_NUMERIC	base-locale-fi		nls
+./usr/share/locale/fi_FI.UTF-8/LC_TIME		base-locale-fi		nls
 ./usr/share/locale/fr				base-locale-fr
 ./usr/share/locale/fr/LC_MESSAGES		base-locale-fr
 ./usr/share/locale/fr/LC_MESSAGES/grep.mo	base-util_locale-fr	nls,!bsdgrep
@@ -2924,6 +3157,13 @@
 ./usr/share/locale/hr_HR.ISO8859-2/LC_MONETARY	base-locale-hr		nls
 ./usr/share/locale/hr_HR.ISO8859-2/LC_NUMERIC	base-locale-hr		nls
 ./usr/share/locale/hr_HR.ISO8859-2/LC_TIME	base-locale-hr		nls
+./usr/share/locale/hr_HR.UTF-8			base-locale-hr
+./usr/share/locale/hr_HR.UTF-8/LC_CTYPE		base-locale-hr		nls
+./usr/share/locale/hr_HR.UTF-8/LC_MESSAGES	base-locale-hr		nls
+./usr/share/locale/hr_HR.UTF-8/LC_MESSAGES/SYS_LC_MESSAGES		base-locale-hr		nls
+./usr/share/locale/hr_HR.UTF-8/LC_MONETARY	base-locale-hr		nls
+./usr/share/locale/hr_HR.UTF-8/LC_NUMERIC	base-locale-hr		nls
+./usr/share/locale/hr_HR.UTF-8/LC_TIME		base-locale-hr		nls
 ./usr/share/locale/hu_HU.ISO8859-2		base-locale-hu
 ./usr/share/locale/hu_HU.ISO8859-2/LC_CTYPE	base-locale-hu		nls
 ./usr/share/locale/hu_HU.ISO8859-2/LC_MESSAGES	base-locale-hu
@@ -2931,6 +3171,13 @@
 ./usr/share/locale/hu_HU.ISO8859-2/LC_MONETARY	base-locale-hu		nls
 ./usr/share/locale/hu_HU.ISO8859-2/LC_NUMERIC	base-locale-hu		nls
 ./usr/share/locale/hu_HU.ISO8859-2/LC_TIME	base-locale-hu		nls
+./usr/share/locale/hu_HU.UTF-8			base-locale-hu
+./usr/share/locale/hu_HU.UTF-8/LC_CTYPE		base-locale-hu		nls
+./usr/share/locale/hu_HU.UTF-8/LC_MESSAGES	base-locale-hu		nls
+./usr/share/locale/hu_HU.UTF-8/LC_MESSAGES/SYS_LC_MESSAGES		base-locale-hu		nls
+./usr/share/locale/hu_HU.UTF-8/LC_MONETARY	base-locale-hu		nls
+./usr/share/locale/hu_HU.UTF-8/LC_NUMERIC	base-locale-hu		nls
+./usr/share/locale/hu_HU.UTF-8/LC_TIME		base-locale-hu		nls
 ./usr/share/locale/hy_AM.ARMSCII-8		base-locale-hy
 ./usr/share/locale/hy_AM.ARMSCII-8/LC_CTYPE	base-locale-hy		nls
 ./usr/share/locale/hy_AM.ARMSCII-8/LC_MESSAGES	base-locale-hy
@@ -2938,6 +3185,13 @@
 ./usr/share/locale/hy_AM.ARMSCII-8/LC_MONETARY	base-locale-hy		nls
 ./usr/share/locale/hy_AM.ARMSCII-8/LC_NUMERIC	base-locale-hy		nls
 ./usr/share/locale/hy_AM.ARMSCII-8/LC_TIME	base-locale-hy		nls
+./usr/share/locale/hy_AM.UTF-8			base-locale-hy
+./usr/share/locale/hy_AM.UTF-8/LC_CTYPE		base-locale-hy		nls
+./usr/share/locale/hy_AM.UTF-8/LC_MESSAGES	base-locale-hy		nls
+./usr/share/locale/hy_AM.UTF-8/LC_MESSAGES/SYS_LC_MESSAGES		base-locale-hy		nls
+./usr/share/locale/hy_AM.UTF-8/LC_MONETARY	base-locale-hy		nls
+./usr/share/locale/hy_AM.UTF-8/LC_NUMERIC	base-locale-hy		nls
+./usr/share/locale/hy_AM.UTF-8/LC_TIME		base-locale-hy		nls
 ./usr/share/locale/id				base-locale-id
 ./usr/share/locale/id/LC_MESSAGES		base-locale-id
 ./usr/share/locale/id/LC_MESSAGES/grep.mo	base-util_locale-id	nls,!bsdgrep
@@ -2956,6 +3210,13 @@
 ./usr/share/locale/is_IS.ISO8859-15/LC_MONETARY	base-locale-is		nls
 ./usr/share/locale/is_IS.ISO8859-15/LC_NUMERIC	base-locale-is		nls
 ./usr/share/locale/is_IS.ISO8859-15/LC_TIME	base-locale-is		nls
+./usr/share/locale/is_IS.UTF-8			base-locale-is
+./usr/share/locale/is_IS.UTF-8/LC_CTYPE		base-locale-is		nls
+./usr/share/locale/is_IS.UTF-8/LC_MESSAGES	base-locale-is		nls
+./usr/share/locale/is_IS.UTF-8/LC_MESSAGES/SYS_LC_MESSAGES		base-locale-is		nls
+./usr/share/locale/is_IS.UTF-8/LC_MONETARY	base-locale-is		nls
+./usr/share/locale/is_IS.UTF-8/LC_NUMERIC	base-locale-is		nls
+./usr/share/locale/is_IS.UTF-8/LC_TIME		base-locale-is		nls
 ./usr/share/locale/it				base-locale-it
 ./usr/share/locale/it/LC_MESSAGES		base-locale-it
 ./usr/share/locale/it/LC_MESSAGES/grep.mo	base-util_locale-it	nls,!bsdgrep
@@ -2975,6 +3236,13 @@
 ./usr/share/locale/it_CH.ISO8859-15/LC_MONETARY	base-locale-it		nls
 ./usr/share/locale/it_CH.ISO8859-15/LC_NUMERIC	base-locale-it		nls
 ./usr/share/locale/it_CH.ISO8859-15/LC_TIME	base-locale-it		nls
+./usr/share/locale/it_CH.UTF-8			base-locale-it
+./usr/share/locale/it_CH.UTF-8/LC_CTYPE		base-locale-it		nls
+./usr/share/locale/it_CH.UTF-8/LC_MESSAGES	base-locale-it		nls
+./usr/share/locale/it_CH.UTF-8/LC_MESSAGES/SYS_LC_MESSAGES		base-locale-it		nls
+./usr/share/locale/it_CH.UTF-8/LC_MONETARY	base-locale-it		nls
+./usr/share/locale/it_CH.UTF-8/LC_NUMERIC	base-locale-it		nls
+./usr/share/locale/it_CH.UTF-8/LC_TIME		base-locale-it		nls
 ./usr/share/locale/it_IT.ISO8859-1		base-locale-it
 ./usr/share/locale/it_IT.ISO8859-1/LC_CTYPE	base-locale-it		nls
 ./usr/share/locale/it_IT.ISO8859-1/LC_MESSAGES	base-locale-it
@@ -2989,6 +3257,13 @@
 ./usr/share/locale/it_IT.ISO8859-15/LC_MONETARY	base-locale-it		nls
 ./usr/share/locale/it_IT.ISO8859-15/LC_NUMERIC	base-locale-it		nls
 ./usr/share/locale/it_IT.ISO8859-15/LC_TIME	base-locale-it		nls
+./usr/share/locale/it_IT.UTF-8			base-locale-it
+./usr/share/locale/it_IT.UTF-8/LC_CTYPE		base-locale-it		nls
+./usr/share/locale/it_IT.UTF-8/LC_MESSAGES	base-locale-it		nls
+./usr/share/locale/it_IT.UTF-8/LC_MESSAGES/SYS_LC_MESSAGES		base-locale-it		nls
+./usr/share/locale/it_IT.UTF-8/LC_MONETARY	base-locale-it		nls
+./usr/share/locale/it_IT.UTF-8/LC_NUMERIC	base-locale-it		nls
+./usr/share/locale/it_IT.UTF-8/LC_TIME		base-locale-it		nls
 ./usr/share/locale/ja				base-locale-ja
 ./usr/share/locale/ja/LC_MESSAGES		base-locale-ja
 ./usr/share/locale/ja/LC_MESSAGES/grep.mo	base-util_locale-ja	nls,!bsdgrep
@@ -3019,6 +3294,13 @@
 ./usr/share/locale/ja_JP.SJIS/LC_MONETARY	base-locale-ja		nls
 ./usr/share/locale/ja_JP.SJIS/LC_NUMERIC	base-locale-ja		nls
 ./usr/share/locale/ja_JP.SJIS/LC_TIME		base-locale-ja		nls
+./usr/share/locale/ja_JP.UTF-8			base-locale-ja
+./usr/share/locale/ja_JP.UTF-8/LC_CTYPE		base-locale-ja		nls
+./usr/share/locale/ja_JP.UTF-8/LC_MESSAGES	base-locale-ja		nls
+./usr/share/locale/ja_JP.UTF-8/LC_MESSAGES/SYS_LC_MESSAGES		base-locale-ja		nls
+./usr/share/locale/ja_JP.UTF-8/LC_MONETARY	base-locale-ja		nls
+./usr/share/locale/ja_JP.UTF-8/LC_NUMERIC	base-locale-ja		nls
+./usr/share/locale/ja_JP.UTF-8/LC_TIME		base-locale-ja		nls
 ./usr/share/locale/ja_JP.ct			base-locale-ja
 ./usr/share/locale/ja_JP.ct/LC_CTYPE		base-locale-ja		nls
 ./usr/share/locale/ja_JP.ct/LC_MESSAGES		base-locale-ja
@@ -3040,12 +3322,24 @@
 ./usr/share/locale/kk_KZ.PT154/LC_MONETARY	base-locale-kk		nls
 ./usr/share/locale/kk_KZ.PT154/LC_NUMERIC	base-locale-kk		nls
 ./usr/share/locale/kk_KZ.PT154/LC_TIME		base-locale-kk		nls
+./usr/share/locale/kk_KZ.UTF-8			base-locale-kk
+./usr/share/locale/kk_KZ.UTF-8/LC_CTYPE		base-locale-kk		nls
+./usr/share/locale/kk_KZ.UTF-8/LC_MESSAGES	base-locale-kk		nls
+./usr/share/locale/kk_KZ.UTF-8/LC_MESSAGES/SYS_LC_MESSAGES		base-locale-kk		nls
+./usr/share/locale/kk_KZ.UTF-8/LC_MONETARY	base-locale-kk		nls
+./usr/share/locale/kk_KZ.UTF-8/LC_NUMERIC	base-locale-kk		nls
+./usr/share/locale/kk_KZ.UTF-8/LC_TIME		base-locale-kk		nls
 ./usr/share/locale/ko				base-locale-ko
 ./usr/share/locale/ko/LC_MESSAGES		base-locale-ko
 ./usr/share/locale/ko/LC_MESSAGES/grep.mo	base-locale-ko		nls,!bsdgrep
 ./usr/share/locale/ko/LC_MESSAGES/tar.mo	base-obsolete		obsolete
-./usr/share/locale/ko_KR.UTF-8			base-obsolete		obsolete
-./usr/share/locale/ko_KR.UTF-8/LC_CTYPE		base-obsolete		obsolete
+./usr/share/locale/ko_KR.UTF-8			base-locale-ko		nls
+./usr/share/locale/ko_KR.UTF-8/LC_CTYPE		base-locale-ko		nls
+./usr/share/locale/ko_KR.UTF-8/LC_MESSAGES	base-locale-ko		nls
+./usr/share/locale/ko_KR.UTF-8/LC_MESSAGES/SYS_LC_MESSAGES		base-locale-ko		nls
+./usr/share/locale/ko_KR.UTF-8/LC_MONETARY	base-locale-ko		nls
+./usr/share/locale/ko_KR.UTF-8/LC_NUMERIC	base-locale-ko		nls
+./usr/share/locale/ko_KR.UTF-8/LC_TIME		base-locale-ko		nls
 ./usr/share/locale/ko_KR.eucKR			base-locale-ko
 ./usr/share/locale/ko_KR.eucKR/LC_CTYPE		base-locale-ko		nls
 ./usr/share/locale/ko_KR.eucKR/LC_MESSAGES	base-locale-ko
@@ -3068,9 +3362,37 @@
 ./usr/share/locale/lt_LT.ISO8859-4/LC_MONETARY	base-locale-lt		nls
 ./usr/share/locale/lt_LT.ISO8859-4/LC_NUMERIC	base-locale-lt		nls
 ./usr/share/locale/lt_LT.ISO8859-4/LC_TIME	base-locale-lt		nls
+./usr/share/locale/lt_LT.UTF-8			base-locale-lt
+./usr/share/locale/lt_LT.UTF-8/LC_CTYPE		base-locale-lt		nls
+./usr/share/locale/lt_LT.UTF-8/LC_MESSAGES	base-locale-lt		nls
+./usr/share/locale/lt_LT.UTF-8/LC_MESSAGES/SYS_LC_MESSAGES		base-locale-lt		nls
+./usr/share/locale/lt_LT.UTF-8/LC_MONETARY	base-locale-lt		nls
+./usr/share/locale/lt_LT.UTF-8/LC_NUMERIC	base-locale-lt		nls
+./usr/share/locale/lt_LT.UTF-8/LC_TIME		base-locale-lt		nls
 ./usr/share/locale/nb				base-locale-nb
 ./usr/share/locale/nb/LC_MESSAGES		base-locale-nb
 ./usr/share/locale/nb/LC_MESSAGES/texinfo.mo	base-texinfo_locale-nb	nls
+./usr/share/locale/nb_NO.ISO8859-1		base-locale-nb
+./usr/share/locale/nb_NO.ISO8859-1/LC_CTYPE	base-locale-nb		nls
+./usr/share/locale/nb_NO.ISO8859-1/LC_MESSAGES	base-locale-nb		nls
+./usr/share/locale/nb_NO.ISO8859-1/LC_MESSAGES/SYS_LC_MESSAGES		base-locale-nb		nls
+./usr/share/locale/nb_NO.ISO8859-1/LC_MONETARY	base-locale-nb		nls
+./usr/share/locale/nb_NO.ISO8859-1/LC_NUMERIC	base-locale-nb		nls
+./usr/share/locale/nb_NO.ISO8859-1/LC_TIME	base-locale-nb		nls
+./usr/share/locale/nb_NO.ISO8859-15		base-locale-nb
+./usr/share/locale/nb_NO.ISO8859-15/LC_CTYPE	base-locale-nb		nls
+./usr/share/locale/nb_NO.ISO8859-15/LC_MESSAGES	base-locale-nb		nls
+./usr/share/locale/nb_NO.ISO8859-15/LC_MESSAGES/SYS_LC_MESSAGES		base-locale-nb		nls
+./usr/share/locale/nb_NO.ISO8859-15/LC_MONETARY	base-locale-nb		nls
+./usr/share/locale/nb_NO.ISO8859-15/LC_NUMERIC	base-locale-nb		nls
+./usr/share/locale/nb_NO.ISO8859-15/LC_TIME	base-locale-nb		nls
+./usr/share/locale/nb_NO.UTF-8			base-locale-nb
+./usr/share/locale/nb_NO.UTF-8/LC_CTYPE		base-locale-nb		nls
+./usr/share/locale/nb_NO.UTF-8/LC_MESSAGES	base-locale-nb		nls
+./usr/share/locale/nb_NO.UTF-8/LC_MESSAGES/SYS_LC_MESSAGES		base-locale-nb		nls
+./usr/share/locale/nb_NO.UTF-8/LC_MONETARY	base-locale-nb		nls
+./usr/share/locale/nb_NO.UTF-8/LC_NUMERIC	base-locale-nb		nls
+./usr/share/locale/nb_NO.UTF-8/LC_TIME		base-locale-nb		nls
 ./usr/share/locale/nl				base-locale-nl
 ./usr/share/locale/nl/LC_MESSAGES		base-locale-nl
 ./usr/share/locale/nl/LC_MESSAGES/grep.mo	base-locale-nl		nls,!bsdgrep
@@ -3090,6 +3412,13 @@
 ./usr/share/locale/nl_BE.ISO8859-15/LC_MONETARY	base-locale-nl		nls
 ./usr/share/locale/nl_BE.ISO8859-15/LC_NUMERIC	base-locale-nl		nls
 ./usr/share/locale/nl_BE.ISO8859-15/LC_TIME	base-locale-nl		nls
+./usr/share/locale/nl_BE.UTF-8			base-locale-nl
+./usr/share/locale/nl_BE.UTF-8/LC_CTYPE		base-locale-nl		nls
+./usr/share/locale/nl_BE.UTF-8/LC_MESSAGES	base-locale-nl		nls
+./usr/share/locale/nl_BE.UTF-8/LC_MESSAGES/SYS_LC_MESSAGES		base-locale-nl		nls
+./usr/share/locale/nl_BE.UTF-8/LC_MONETARY	base-locale-nl		nls
+./usr/share/locale/nl_BE.UTF-8/LC_NUMERIC	base-locale-nl		nls
+./usr/share/locale/nl_BE.UTF-8/LC_TIME		base-locale-nl		nls
 ./usr/share/locale/nl_NL.ISO8859-1		base-locale-nl
 ./usr/share/locale/nl_NL.ISO8859-1/LC_CTYPE	base-locale-nl		nls
 ./usr/share/locale/nl_NL.ISO8859-1/LC_MESSAGES	base-locale-nl
@@ -3104,6 +3433,13 @@
 ./usr/share/locale/nl_NL.ISO8859-15/LC_MONETARY	base-locale-nl		nls
 ./usr/share/locale/nl_NL.ISO8859-15/LC_NUMERIC	base-locale-nl		nls
 ./usr/share/locale/nl_NL.ISO8859-15/LC_TIME	base-locale-nl		nls
+./usr/share/locale/nl_NL.UTF-8			base-locale-nl
+./usr/share/locale/nl_NL.UTF-8/LC_CTYPE		base-locale-nl		nls
+./usr/share/locale/nl_NL.UTF-8/LC_MESSAGES	base-locale-nl		nls
+./usr/share/locale/nl_NL.UTF-8/LC_MESSAGES/SYS_LC_MESSAGES		base-locale-nl		nls
+./usr/share/locale/nl_NL.UTF-8/LC_MONETARY	base-locale-nl		nls
+./usr/share/locale/nl_NL.UTF-8/LC_NUMERIC	base-locale-nl		nls
+./usr/share/locale/nl_NL.UTF-8/LC_TIME		base-locale-nl		nls
 ./usr/share/locale/nn				base-locale-nn
 ./usr/share/locale/nn/LC_MESSAGES		base-locale-nn
 ./usr/share/locale/nn_NO.ISO8859-1		base-locale-nn
@@ -3120,6 +3456,13 @@
 ./usr/share/locale/nn_NO.ISO8859-15/LC_MONETARY	base-locale-nn		nls
 ./usr/share/locale/nn_NO.ISO8859-15/LC_NUMERIC	base-locale-nn		nls
 ./usr/share/locale/nn_NO.ISO8859-15/LC_TIME	base-locale-nn		nls
+./usr/share/locale/nn_NO.UTF-8			base-locale-nn
+./usr/share/locale/nn_NO.UTF-8/LC_CTYPE		base-locale-nn		nls
+./usr/share/locale/nn_NO.UTF-8/LC_MESSAGES	base-locale-nn		nls
+./usr/share/locale/nn_NO.UTF-8/LC_MESSAGES/SYS_LC_MESSAGES		base-locale-nn		nls
+./usr/share/locale/nn_NO.UTF-8/LC_MONETARY	base-locale-nn		nls
+./usr/share/locale/nn_NO.UTF-8/LC_NUMERIC	base-locale-nn		nls
+./usr/share/locale/nn_NO.UTF-8/LC_TIME		base-locale-nn		nls
 ./usr/share/locale/no				base-locale-no
 ./usr/share/locale/no/LC_MESSAGES		base-locale-no
 ./usr/share/locale/no/LC_MESSAGES/grep.mo	base-locale-no		nls,!bsdgrep
@@ -3127,20 +3470,20 @@
 ./usr/share/locale/no/LC_MESSAGES/texinfo.mo	base-texinfo_locale-no	nls
 ./usr/share/locale/no@nynorsk			base-locale-no
 ./usr/share/locale/no@nynorsk/LC_MESSAGES	base-locale-no
-./usr/share/locale/no_NO.ISO8859-1		base-locale-no
-./usr/share/locale/no_NO.ISO8859-1/LC_CTYPE	base-locale-no		nls
-./usr/share/locale/no_NO.ISO8859-1/LC_MESSAGES	base-locale-no
-./usr/share/locale/no_NO.ISO8859-1/LC_MESSAGES/SYS_LC_MESSAGES	base-locale-no	nls
-./usr/share/locale/no_NO.ISO8859-1/LC_MONETARY	base-locale-no		nls
-./usr/share/locale/no_NO.ISO8859-1/LC_NUMERIC	base-locale-no		nls
-./usr/share/locale/no_NO.ISO8859-1/LC_TIME	base-locale-no		nls
-./usr/share/locale/no_NO.ISO8859-15		base-locale-no
-./usr/share/locale/no_NO.ISO8859-15/LC_CTYPE	base-locale-no		nls
-./usr/share/locale/no_NO.ISO8859-15/LC_MESSAGES	base-locale-no
-./usr/share/locale/no_NO.ISO8859-15/LC_MESSAGES/SYS_LC_MESSAGES	base-locale-no	nls
-./usr/share/locale/no_NO.ISO8859-15/LC_MONETARY	base-locale-no		nls
-./usr/share/locale/no_NO.ISO8859-15/LC_NUMERIC	base-locale-no		nls
-./usr/share/locale/no_NO.ISO8859-15/LC_TIME	base-locale-no		nls
+./usr/share/locale/no_NO.ISO8859-1		base-obsolete		obsolete
+./usr/share/locale/no_NO.ISO8859-1/LC_CTYPE	base-obsolete		obsolete
+./usr/share/locale/no_NO.ISO8859-1/LC_MESSAGES	base-obsolete		obsolete
+./usr/share/locale/no_NO.ISO8859-1/LC_MESSAGES/SYS_LC_MESSAGES		base-obsolete		obsolete
+./usr/share/locale/no_NO.ISO8859-1/LC_MONETARY	base-obsolete		obsolete
+./usr/share/locale/no_NO.ISO8859-1/LC_NUMERIC	base-obsolete		obsolete
+./usr/share/locale/no_NO.ISO8859-1/LC_TIME	base-obsolete		obsolete
+./usr/share/locale/no_NO.ISO8859-15		base-obsolete		obsolete
+./usr/share/locale/no_NO.ISO8859-15/LC_CTYPE	base-obsolete		obsolete
+./usr/share/locale/no_NO.ISO8859-15/LC_MESSAGES	base-obsolete		obsolete
+./usr/share/locale/no_NO.ISO8859-15/LC_MESSAGES/SYS_LC_MESSAGES		base-obsolete		obsolete
+./usr/share/locale/no_NO.ISO8859-15/LC_MONETARY	base-obsolete		obsolete
+./usr/share/locale/no_NO.ISO8859-15/LC_NUMERIC	base-obsolete		obsolete
+./usr/share/locale/no_NO.ISO8859-15/LC_TIME	base-obsolete		obsolete
 ./usr/share/locale/pl				base-locale-pl
 ./usr/share/locale/pl/LC_MESSAGES		base-locale-pl
 ./usr/share/locale/pl/LC_MESSAGES/grep.mo	base-locale-pl		nls,!bsdgrep
@@ -3153,6 +3496,13 @@
 ./usr/share/locale/pl_PL.ISO8859-2/LC_MONETARY	base-locale-pl		nls
 ./usr/share/locale/pl_PL.ISO8859-2/LC_NUMERIC	base-locale-pl		nls
 ./usr/share/locale/pl_PL.ISO8859-2/LC_TIME	base-locale-pl		nls
+./usr/share/locale/pl_PL.UTF-8			base-locale-pl
+./usr/share/locale/pl_PL.UTF-8/LC_CTYPE		base-locale-pl		nls
+./usr/share/locale/pl_PL.UTF-8/LC_MESSAGES	base-locale-pl		nls
+./usr/share/locale/pl_PL.UTF-8/LC_MESSAGES/SYS_LC_MESSAGES		base-locale-pl		nls
+./usr/share/locale/pl_PL.UTF-8/LC_MONETARY	base-locale-pl		nls
+./usr/share/locale/pl_PL.UTF-8/LC_NUMERIC	base-locale-pl		nls
+./usr/share/locale/pl_PL.UTF-8/LC_TIME		base-locale-pl		nls
 ./usr/share/locale/pt				base-locale-pt
 ./usr/share/locale/pt/LC_MESSAGES		base-locale-pt
 ./usr/share/locale/pt/LC_MESSAGES/tar.mo	base-obsolete		obsolete
@@ -3164,6 +3514,13 @@
 ./usr/share/locale/pt_BR.ISO8859-1/LC_MONETARY	base-locale-pt		nls
 ./usr/share/locale/pt_BR.ISO8859-1/LC_NUMERIC	base-locale-pt		nls
 ./usr/share/locale/pt_BR.ISO8859-1/LC_TIME	base-locale-pt		nls
+./usr/share/locale/pt_BR.UTF-8			base-locale-pt
+./usr/share/locale/pt_BR.UTF-8/LC_CTYPE		base-locale-pt		nls
+./usr/share/locale/pt_BR.UTF-8/LC_MESSAGES	base-locale-pt		nls
+./usr/share/locale/pt_BR.UTF-8/LC_MESSAGES/SYS_LC_MESSAGES		base-locale-pt		nls
+./usr/share/locale/pt_BR.UTF-8/LC_MONETARY	base-locale-pt		nls
+./usr/share/locale/pt_BR.UTF-8/LC_NUMERIC	base-locale-pt		nls
+./usr/share/locale/pt_BR.UTF-8/LC_TIME		base-locale-pt		nls
 ./usr/share/locale/pt_BR/LC_MESSAGES		base-locale-pt
 ./usr/share/locale/pt_BR/LC_MESSAGES/grep.mo	base-locale-pt		nls,!bsdgrep
 ./usr/share/locale/pt_BR/LC_MESSAGES/tar.mo	base-obsolete		obsolete
@@ -3181,6 +3538,13 @@
 ./usr/share/locale/pt_PT.ISO8859-15/LC_MONETARY	base-locale-pt		nls
 ./usr/share/locale/pt_PT.ISO8859-15/LC_NUMERIC	base-locale-pt		nls
 ./usr/share/locale/pt_PT.ISO8859-15/LC_TIME	base-locale-pt		nls
+./usr/share/locale/pt_PT.UTF-8			base-locale-pt
+./usr/share/locale/pt_PT.UTF-8/LC_CTYPE		base-locale-pt		nls
+./usr/share/locale/pt_PT.UTF-8/LC_MESSAGES	base-locale-pt		nls
+./usr/share/locale/pt_PT.UTF-8/LC_MESSAGES/SYS_LC_MESSAGES		base-locale-pt		nls
+./usr/share/locale/pt_PT.UTF-8/LC_MONETARY	base-locale-pt		nls
+./usr/share/locale/pt_PT.UTF-8/LC_NUMERIC	base-locale-pt		nls
+./usr/share/locale/pt_PT.UTF-8/LC_TIME		base-locale-pt		nls
 ./usr/share/locale/ro				base-locale-ro
 ./usr/share/locale/ro/LC_MESSAGES		base-locale-ro
 ./usr/share/locale/ro/LC_MESSAGES/texinfo.mo	base-texinfo_locale-ro	nls
@@ -3191,6 +3555,13 @@
 ./usr/share/locale/ro_RO.ISO8859-2/LC_MONETARY	base-locale-ro		nls
 ./usr/share/locale/ro_RO.ISO8859-2/LC_NUMERIC	base-locale-ro		nls
 ./usr/share/locale/ro_RO.ISO8859-2/LC_TIME	base-locale-ro		nls
+./usr/share/locale/ro_RO.UTF-8			base-locale-ro
+./usr/share/locale/ro_RO.UTF-8/LC_CTYPE		base-locale-ro		nls
+./usr/share/locale/ro_RO.UTF-8/LC_MESSAGES	base-locale-ro		nls
+./usr/share/locale/ro_RO.UTF-8/LC_MESSAGES/SYS_LC_MESSAGES		base-locale-ro		nls
+./usr/share/locale/ro_RO.UTF-8/LC_MONETARY	base-locale-ro		nls
+./usr/share/locale/ro_RO.UTF-8/LC_NUMERIC	base-locale-ro		nls
+./usr/share/locale/ro_RO.UTF-8/LC_TIME		base-locale-ro		nls
 ./usr/share/locale/ru				base-locale-ru
 ./usr/share/locale/ru/LC_MESSAGES		base-locale-ru
 ./usr/share/locale/ru/LC_MESSAGES/grep.mo	base-locale-ru		nls,!bsdgrep
@@ -3203,6 +3574,13 @@
 ./usr/share/locale/ru_BY.CP1251/LC_MONETARY	base-locale-ru		nls
 ./usr/share/locale/ru_BY.CP1251/LC_NUMERIC	base-locale-ru		nls
 ./usr/share/locale/ru_BY.CP1251/LC_TIME		base-locale-ru		nls
+./usr/share/locale/ru_BY.UTF-8			base-locale-ru
+./usr/share/locale/ru_BY.UTF-8/LC_CTYPE		base-locale-ru		nls
+./usr/share/locale/ru_BY.UTF-8/LC_MESSAGES	base-locale-ru		nls
+./usr/share/locale/ru_BY.UTF-8/LC_MESSAGES/SYS_LC_MESSAGES		base-locale-ru		nls
+./usr/share/locale/ru_BY.UTF-8/LC_MONETARY	base-locale-ru		nls
+./usr/share/locale/ru_BY.UTF-8/LC_NUMERIC	base-locale-ru		nls
+./usr/share/locale/ru_BY.UTF-8/LC_TIME		base-locale-ru		nls
 ./usr/share/locale/ru_RU.CP1251			base-locale-ru
 ./usr/share/locale/ru_RU.CP1251/LC_CTYPE	base-locale-ru		nls
 ./usr/share/locale/ru_RU.CP1251/LC_MESSAGES	base-locale-ru
@@ -3231,6 +3609,13 @@
 ./usr/share/locale/ru_RU.KOI8-R/LC_MONETARY	base-locale-ru		nls
 ./usr/share/locale/ru_RU.KOI8-R/LC_NUMERIC	base-locale-ru		nls
 ./usr/share/locale/ru_RU.KOI8-R/LC_TIME		base-locale-ru		nls
+./usr/share/locale/ru_RU.UTF-8			base-locale-ru
+./usr/share/locale/ru_RU.UTF-8/LC_CTYPE		base-locale-ru		nls
+./usr/share/locale/ru_RU.UTF-8/LC_MESSAGES	base-locale-ru		nls
+./usr/share/locale/ru_RU.UTF-8/LC_MESSAGES/SYS_LC_MESSAGES		base-locale-ru		nls
+./usr/share/locale/ru_RU.UTF-8/LC_MONETARY	base-locale-ru		nls
+./usr/share/locale/ru_RU.UTF-8/LC_NUMERIC	base-locale-ru		nls
+./usr/share/locale/ru_RU.UTF-8/LC_TIME		base-locale-ru		nls
 ./usr/share/locale/ru_SU.CP866			base-obsolete		obsolete
 ./usr/share/locale/ru_SU.CP866/LC_CTYPE		base-obsolete		obsolete
 ./usr/share/locale/ru_SU.ISO8859-5		base-obsolete		obsolete
@@ -3246,6 +3631,13 @@
 ./usr/share/locale/sk_SK.ISO8859-2/LC_MONETARY	base-locale-sk		nls
 ./usr/share/locale/sk_SK.ISO8859-2/LC_NUMERIC	base-locale-sk		nls
 ./usr/share/locale/sk_SK.ISO8859-2/LC_TIME	base-locale-sk		nls
+./usr/share/locale/sk_SK.UTF-8			base-locale-sk
+./usr/share/locale/sk_SK.UTF-8/LC_CTYPE		base-locale-sk		nls
+./usr/share/locale/sk_SK.UTF-8/LC_MESSAGES	base-locale-sk		nls
+./usr/share/locale/sk_SK.UTF-8/LC_MESSAGES/SYS_LC_MESSAGES		base-locale-sk		nls
+./usr/share/locale/sk_SK.UTF-8/LC_MONETARY	base-locale-sk		nls
+./usr/share/locale/sk_SK.UTF-8/LC_NUMERIC	base-locale-sk		nls
+./usr/share/locale/sk_SK.UTF-8/LC_TIME		base-locale-sk		nls
 ./usr/share/locale/sl				base-locale-sl
 ./usr/share/locale/sl/LC_MESSAGES		base-locale-sl
 ./usr/share/locale/sl/LC_MESSAGES/grep.mo	base-locale-sl		nls,!bsdgrep
@@ -3257,36 +3649,99 @@
 ./usr/share/locale/sl_SI.ISO8859-2/LC_MONETARY	base-locale-sl		nls
 ./usr/share/locale/sl_SI.ISO8859-2/LC_NUMERIC	base-locale-sl		nls
 ./usr/share/locale/sl_SI.ISO8859-2/LC_TIME	base-locale-sl		nls
+./usr/share/locale/sl_SI.UTF-8			base-locale-sl
+./usr/share/locale/sl_SI.UTF-8/LC_CTYPE		base-locale-sl		nls
+./usr/share/locale/sl_SI.UTF-8/LC_MESSAGES	base-locale-sl		nls
+./usr/share/locale/sl_SI.UTF-8/LC_MESSAGES/SYS_LC_MESSAGES		base-locale-sl		nls
+./usr/share/locale/sl_SI.UTF-8/LC_MONETARY	base-locale-sl		nls
+./usr/share/locale/sl_SI.UTF-8/LC_NUMERIC	base-locale-sl		nls
+./usr/share/locale/sl_SI.UTF-8/LC_TIME		base-locale-sl		nls
 ./usr/share/locale/sr				base-locale-sr
 ./usr/share/locale/sr/LC_MESSAGES		base-locale-sr
-./usr/share/locale/sr_ME.ISO8859-2		base-locale-sr
-./usr/share/locale/sr_ME.ISO8859-2/LC_CTYPE	base-locale-sr		nls
-./usr/share/locale/sr_ME.ISO8859-2/LC_MESSAGES	base-locale-sr
-./usr/share/locale/sr_ME.ISO8859-2/LC_MESSAGES/SYS_LC_MESSAGES	base-locale-sr	nls
-./usr/share/locale/sr_ME.ISO8859-2/LC_MONETARY	base-locale-sr		nls
-./usr/share/locale/sr_ME.ISO8859-2/LC_NUMERIC	base-locale-sr		nls
-./usr/share/locale/sr_ME.ISO8859-2/LC_TIME	base-locale-sr		nls
-./usr/share/locale/sr_ME.ISO8859-5		base-locale-sr
-./usr/share/locale/sr_ME.ISO8859-5/LC_CTYPE	base-locale-sr		nls
-./usr/share/locale/sr_ME.ISO8859-5/LC_MESSAGES	base-locale-sr
-./usr/share/locale/sr_ME.ISO8859-5/LC_MESSAGES/SYS_LC_MESSAGES	base-locale-sr	nls
-./usr/share/locale/sr_ME.ISO8859-5/LC_MONETARY	base-locale-sr		nls
-./usr/share/locale/sr_ME.ISO8859-5/LC_NUMERIC	base-locale-sr		nls
-./usr/share/locale/sr_ME.ISO8859-5/LC_TIME	base-locale-sr		nls
-./usr/share/locale/sr_RS.ISO8859-2		base-locale-sr
-./usr/share/locale/sr_RS.ISO8859-2/LC_CTYPE	base-locale-sr		nls
-./usr/share/locale/sr_RS.ISO8859-2/LC_MESSAGES	base-locale-sr
-./usr/share/locale/sr_RS.ISO8859-2/LC_MESSAGES/SYS_LC_MESSAGES	base-locale-sr	nls
-./usr/share/locale/sr_RS.ISO8859-2/LC_MONETARY	base-locale-sr		nls
-./usr/share/locale/sr_RS.ISO8859-2/LC_NUMERIC	base-locale-sr		nls
-./usr/share/locale/sr_RS.ISO8859-2/LC_TIME	base-locale-sr		nls
-./usr/share/locale/sr_RS.ISO8859-5		base-locale-sr
-./usr/share/locale/sr_RS.ISO8859-5/LC_CTYPE	base-locale-sr		nls
-./usr/share/locale/sr_RS.ISO8859-5/LC_MESSAGES	base-locale-sr
-./usr/share/locale/sr_RS.ISO8859-5/LC_MESSAGES/SYS_LC_MESSAGES	base-locale-sr	nls
-./usr/share/locale/sr_RS.ISO8859-5/LC_MONETARY	base-locale-sr		nls
-./usr/share/locale/sr_RS.ISO8859-5/LC_NUMERIC	base-locale-sr		nls
-./usr/share/locale/sr_RS.ISO8859-5/LC_TIME	base-locale-sr		nls
+./usr/share/locale/sr_Cyrl_ME.ISO8859-5		base-locale-sr
+./usr/share/locale/sr_Cyrl_ME.ISO8859-5/LC_CTYPE	base-locale-sr		nls
+./usr/share/locale/sr_Cyrl_ME.ISO8859-5/LC_MESSAGES	base-locale-sr
+./usr/share/locale/sr_Cyrl_ME.ISO8859-5/LC_MESSAGES/SYS_LC_MESSAGES	base-locale-sr	nls
+./usr/share/locale/sr_Cyrl_ME.ISO8859-5/LC_MONETARY	base-locale-sr		nls
+./usr/share/locale/sr_Cyrl_ME.ISO8859-5/LC_NUMERIC	base-locale-sr		nls
+./usr/share/locale/sr_Cyrl_ME.ISO8859-5/LC_TIME	base-locale-sr		nls
+./usr/share/locale/sr_Cyrl_ME.UTF-8			base-locale-sr
+./usr/share/locale/sr_Cyrl_ME.UTF-8/LC_CTYPE		base-locale-sr		nls
+./usr/share/locale/sr_Cyrl_ME.UTF-8/LC_MESSAGES	base-locale-sr		nls
+./usr/share/locale/sr_Cyrl_ME.UTF-8/LC_MESSAGES/SYS_LC_MESSAGES		base-locale-sr		nls
+./usr/share/locale/sr_Cyrl_ME.UTF-8/LC_MONETARY	base-locale-sr		nls
+./usr/share/locale/sr_Cyrl_ME.UTF-8/LC_NUMERIC	base-locale-sr		nls
+./usr/share/locale/sr_Cyrl_ME.UTF-8/LC_TIME		base-locale-sr		nls
+./usr/share/locale/sr_Cyrl_RS.ISO8859-5		base-locale-sr
+./usr/share/locale/sr_Cyrl_RS.ISO8859-5/LC_CTYPE	base-locale-sr		nls
+./usr/share/locale/sr_Cyrl_RS.ISO8859-5/LC_MESSAGES	base-locale-sr
+./usr/share/locale/sr_Cyrl_RS.ISO8859-5/LC_MESSAGES/SYS_LC_MESSAGES	base-locale-sr	nls
+./usr/share/locale/sr_Cyrl_RS.ISO8859-5/LC_MONETARY	base-locale-sr		nls
+./usr/share/locale/sr_Cyrl_RS.ISO8859-5/LC_NUMERIC	base-locale-sr		nls
+./usr/share/locale/sr_Cyrl_RS.ISO8859-5/LC_TIME	base-locale-sr		nls
+./usr/share/locale/sr_Cyrl_RS.UTF-8			base-locale-sr
+./usr/share/locale/sr_Cyrl_RS.UTF-8/LC_CTYPE		base-locale-sr		nls
+./usr/share/locale/sr_Cyrl_RS.UTF-8/LC_MESSAGES	base-locale-sr		nls
+./usr/share/locale/sr_Cyrl_RS.UTF-8/LC_MESSAGES/SYS_LC_MESSAGES		base-locale-sr		nls
+./usr/share/locale/sr_Cyrl_RS.UTF-8/LC_MONETARY	base-locale-sr		nls
+./usr/share/locale/sr_Cyrl_RS.UTF-8/LC_NUMERIC	base-locale-sr		nls
+./usr/share/locale/sr_Cyrl_RS.UTF-8/LC_TIME		base-locale-sr		nls
+./usr/share/locale/sr_Latn_ME.ISO8859-2		base-locale-sr
+./usr/share/locale/sr_Latn_ME.ISO8859-2/LC_CTYPE	base-locale-sr		nls
+./usr/share/locale/sr_Latn_ME.ISO8859-2/LC_MESSAGES	base-locale-sr
+./usr/share/locale/sr_Latn_ME.ISO8859-2/LC_MESSAGES/SYS_LC_MESSAGES	base-locale-sr	nls
+./usr/share/locale/sr_Latn_ME.ISO8859-2/LC_MONETARY	base-locale-sr		nls
+./usr/share/locale/sr_Latn_ME.ISO8859-2/LC_NUMERIC	base-locale-sr		nls
+./usr/share/locale/sr_Latn_ME.ISO8859-2/LC_TIME	base-locale-sr		nls
+./usr/share/locale/sr_Latn_ME.UTF-8			base-locale-sr
+./usr/share/locale/sr_Latn_ME.UTF-8/LC_CTYPE		base-locale-sr		nls
+./usr/share/locale/sr_Latn_ME.UTF-8/LC_MESSAGES	base-locale-sr		nls
+./usr/share/locale/sr_Latn_ME.UTF-8/LC_MESSAGES/SYS_LC_MESSAGES		base-locale-sr		nls
+./usr/share/locale/sr_Latn_ME.UTF-8/LC_MONETARY	base-locale-sr		nls
+./usr/share/locale/sr_Latn_ME.UTF-8/LC_NUMERIC	base-locale-sr		nls
+./usr/share/locale/sr_Latn_ME.UTF-8/LC_TIME		base-locale-sr		nls
+./usr/share/locale/sr_Latn_RS.ISO8859-2		base-locale-sr
+./usr/share/locale/sr_Latn_RS.ISO8859-2/LC_CTYPE	base-locale-sr		nls
+./usr/share/locale/sr_Latn_RS.ISO8859-2/LC_MESSAGES	base-locale-sr
+./usr/share/locale/sr_Latn_RS.ISO8859-2/LC_MESSAGES/SYS_LC_MESSAGES	base-locale-sr	nls
+./usr/share/locale/sr_Latn_RS.ISO8859-2/LC_MONETARY	base-locale-sr		nls
+./usr/share/locale/sr_Latn_RS.ISO8859-2/LC_NUMERIC	base-locale-sr		nls
+./usr/share/locale/sr_Latn_RS.ISO8859-2/LC_TIME	base-locale-sr		nls
+./usr/share/locale/sr_Latn_RS.UTF-8			base-locale-sr
+./usr/share/locale/sr_Latn_RS.UTF-8/LC_CTYPE		base-locale-sr		nls
+./usr/share/locale/sr_Latn_RS.UTF-8/LC_MESSAGES	base-locale-sr		nls
+./usr/share/locale/sr_Latn_RS.UTF-8/LC_MESSAGES/SYS_LC_MESSAGES		base-locale-sr		nls
+./usr/share/locale/sr_Latn_RS.UTF-8/LC_MONETARY	base-locale-sr		nls
+./usr/share/locale/sr_Latn_RS.UTF-8/LC_NUMERIC	base-locale-sr		nls
+./usr/share/locale/sr_Latn_RS.UTF-8/LC_TIME		base-locale-sr		nls
+./usr/share/locale/sr_ME.ISO8859-2		base-obsolete		obsolete
+./usr/share/locale/sr_ME.ISO8859-2/LC_CTYPE	base-obsolete		obsolete
+./usr/share/locale/sr_ME.ISO8859-2/LC_MESSAGES	base-obsolete		obsolete
+./usr/share/locale/sr_ME.ISO8859-2/LC_MESSAGES/SYS_LC_MESSAGES	base-obsolete		obsolete
+./usr/share/locale/sr_ME.ISO8859-2/LC_MONETARY	base-obsolete		obsolete
+./usr/share/locale/sr_ME.ISO8859-2/LC_NUMERIC	base-obsolete		obsolete
+./usr/share/locale/sr_ME.ISO8859-2/LC_TIME	base-obsolete		obsolete
+./usr/share/locale/sr_ME.ISO8859-5		base-obsolete		obsolete
+./usr/share/locale/sr_ME.ISO8859-5/LC_CTYPE	base-obsolete		obsolete
+./usr/share/locale/sr_ME.ISO8859-5/LC_MESSAGES	base-obsolete		obsolete
+./usr/share/locale/sr_ME.ISO8859-5/LC_MESSAGES/SYS_LC_MESSAGES	base-obsolete		obsolete
+./usr/share/locale/sr_ME.ISO8859-5/LC_MONETARY	base-obsolete		obsolete
+./usr/share/locale/sr_ME.ISO8859-5/LC_NUMERIC	base-obsolete		obsolete
+./usr/share/locale/sr_ME.ISO8859-5/LC_TIME	base-obsolete		obsolete
+./usr/share/locale/sr_RS.ISO8859-2		base-obsolete		obsolete
+./usr/share/locale/sr_RS.ISO8859-2/LC_CTYPE	base-obsolete		obsolete
+./usr/share/locale/sr_RS.ISO8859-2/LC_MESSAGES	base-obsolete		obsolete
+./usr/share/locale/sr_RS.ISO8859-2/LC_MESSAGES/SYS_LC_MESSAGES	base-obsolete		obsolete
+./usr/share/locale/sr_RS.ISO8859-2/LC_MONETARY	base-obsolete		obsolete
+./usr/share/locale/sr_RS.ISO8859-2/LC_NUMERIC	base-obsolete		obsolete
+./usr/share/locale/sr_RS.ISO8859-2/LC_TIME	base-obsolete		obsolete
+./usr/share/locale/sr_RS.ISO8859-5		base-obsolete		obsolete
+./usr/share/locale/sr_RS.ISO8859-5/LC_CTYPE	base-obsolete		obsolete
+./usr/share/locale/sr_RS.ISO8859-5/LC_MESSAGES	base-obsolete		obsolete
+./usr/share/locale/sr_RS.ISO8859-5/LC_MESSAGES/SYS_LC_MESSAGES	base-obsolete		obsolete
+./usr/share/locale/sr_RS.ISO8859-5/LC_MONETARY	base-obsolete		obsolete
+./usr/share/locale/sr_RS.ISO8859-5/LC_NUMERIC	base-obsolete		obsolete
+./usr/share/locale/sr_RS.ISO8859-5/LC_TIME	base-obsolete		obsolete
 ./usr/share/locale/sr_YU.ISO8859-2		base-obsolete		obsolete
 ./usr/share/locale/sr_YU.ISO8859-2/LC_CTYPE	base-obsolete		obsolete
 ./usr/share/locale/sr_YU.ISO8859-5		base-obsolete		obsolete
@@ -3310,6 +3765,13 @@
 ./usr/share/locale/sv_SE.ISO8859-15/LC_MONETARY	base-locale-sv		nls
 ./usr/share/locale/sv_SE.ISO8859-15/LC_NUMERIC	base-locale-sv		nls
 ./usr/share/locale/sv_SE.ISO8859-15/LC_TIME	base-locale-sv		nls
+./usr/share/locale/sv_SE.UTF-8			base-locale-sv
+./usr/share/locale/sv_SE.UTF-8/LC_CTYPE		base-locale-sv		nls
+./usr/share/locale/sv_SE.UTF-8/LC_MESSAGES	base-locale-sv		nls
+./usr/share/locale/sv_SE.UTF-8/LC_MESSAGES/SYS_LC_MESSAGES		base-locale-sv		nls
+./usr/share/locale/sv_SE.UTF-8/LC_MONETARY	base-locale-sv		nls
+./usr/share/locale/sv_SE.UTF-8/LC_NUMERIC	base-locale-sv		nls
+./usr/share/locale/sv_SE.UTF-8/LC_TIME		base-locale-sv		nls
 ./usr/share/locale/tr				base-locale-tr
 ./usr/share/locale/tr/LC_MESSAGES		base-locale-tr
 ./usr/share/locale/tr/LC_MESSAGES/tar.mo	base-obsolete		obsolete
@@ -3321,6 +3783,13 @@
 ./usr/share/locale/tr_TR.ISO8859-9/LC_MONETARY	base-locale-tr		nls
 ./usr/share/locale/tr_TR.ISO8859-9/LC_NUMERIC	base-locale-tr		nls
 ./usr/share/locale/tr_TR.ISO8859-9/LC_TIME	base-locale-tr		nls
+./usr/share/locale/tr_TR.UTF-8			base-locale-tr
+./usr/share/locale/tr_TR.UTF-8/LC_CTYPE		base-locale-tr		nls
+./usr/share/locale/tr_TR.UTF-8/LC_MESSAGES	base-locale-tr		nls
+./usr/share/locale/tr_TR.UTF-8/LC_MESSAGES/SYS_LC_MESSAGES		base-locale-tr		nls
+./usr/share/locale/tr_TR.UTF-8/LC_MONETARY	base-locale-tr		nls
+./usr/share/locale/tr_TR.UTF-8/LC_NUMERIC	base-locale-tr		nls
+./usr/share/locale/tr_TR.UTF-8/LC_TIME		base-locale-tr		nls
 ./usr/share/locale/uk				base-locale-uk
 ./usr/share/locale/uk/LC_MESSAGES		base-locale-uk
 ./usr/share/locale/uk_UA.CP1251			base-locale-uk
@@ -3344,6 +3813,13 @@
 ./usr/share/locale/uk_UA.KOI8-U/LC_MONETARY	base-locale-uk		nls
 ./usr/share/locale/uk_UA.KOI8-U/LC_NUMERIC	base-locale-uk		nls
 ./usr/share/locale/uk_UA.KOI8-U/LC_TIME		base-locale-uk		nls
+./usr/share/locale/uk_UA.UTF-8			base-locale-uk
+./usr/share/locale/uk_UA.UTF-8/LC_CTYPE		base-locale-uk		nls
+./usr/share/locale/uk_UA.UTF-8/LC_MESSAGES	base-locale-uk		nls
+./usr/share/locale/uk_UA.UTF-8/LC_MESSAGES/SYS_LC_MESSAGES		base-locale-uk		nls
+./usr/share/locale/uk_UA.UTF-8/LC_MONETARY	base-locale-uk		nls
+./usr/share/locale/uk_UA.UTF-8/LC_NUMERIC	base-locale-uk		nls
+./usr/share/locale/uk_UA.UTF-8/LC_TIME		base-locale-uk		nls
 ./usr/share/locale/zh_CN			base-locale-zh
 ./usr/share/locale/zh_CN.GB18030		base-locale-zh
 ./usr/share/locale/zh_CN.GB18030/LC_CTYPE	base-locale-zh		nls
@@ -3352,6 +3828,13 @@
 ./usr/share/locale/zh_CN.GB18030/LC_MONETARY	base-locale-zh		nls
 ./usr/share/locale/zh_CN.GB18030/LC_NUMERIC	base-locale-zh		nls
 ./usr/share/locale/zh_CN.GB18030/LC_TIME	base-locale-zh		nls
+./usr/share/locale/zh_CN.UTF-8			base-locale-zh
+./usr/share/locale/zh_CN.UTF-8/LC_CTYPE		base-locale-zh		nls
+./usr/share/locale/zh_CN.UTF-8/LC_MESSAGES	base-locale-zh		nls
+./usr/share/locale/zh_CN.UTF-8/LC_MESSAGES/SYS_LC_MESSAGES		base-locale-zh		nls
+./usr/share/locale/zh_CN.UTF-8/LC_MONETARY	base-locale-zh		nls
+./usr/share/locale/zh_CN.UTF-8/LC_NUMERIC	base-locale-zh		nls
+./usr/share/locale/zh_CN.UTF-8/LC_TIME		base-locale-zh		nls
 ./usr/share/locale/zh_CN.eucCN			base-locale-zh
 ./usr/share/locale/zh_CN.eucCN/LC_CTYPE		base-locale-zh		nls
 ./usr/share/locale/zh_CN.eucCN/LC_MESSAGES	base-locale-zh
@@ -3370,6 +3853,13 @@
 ./usr/share/locale/zh_HK.Big5hkscs/LC_MONETARY	base-locale-zh		nls
 ./usr/share/locale/zh_HK.Big5hkscs/LC_NUMERIC	base-locale-zh		nls
 ./usr/share/locale/zh_HK.Big5hkscs/LC_TIME	base-locale-zh		nls
+./usr/share/locale/zh_HK.UTF-8			base-locale-zh
+./usr/share/locale/zh_HK.UTF-8/LC_CTYPE		base-locale-zh		nls
+./usr/share/locale/zh_HK.UTF-8/LC_MESSAGES	base-locale-zh		nls
+./usr/share/locale/zh_HK.UTF-8/LC_MESSAGES/SYS_LC_MESSAGES		base-locale-zh		nls
+./usr/share/locale/zh_HK.UTF-8/LC_MONETARY	base-locale-zh		nls
+./usr/share/locale/zh_HK.UTF-8/LC_NUMERIC	base-locale-zh		nls
+./usr/share/locale/zh_HK.UTF-8/LC_TIME		base-locale-zh		nls
 ./usr/share/locale/zh_TW			base-locale-zh
 ./usr/share/locale/zh_TW.BIG5			base-obsolete		obsolete
 ./usr/share/locale/zh_TW.BIG5/LC_CTYPE		base-obsolete		obsolete
@@ -3380,6 +3870,13 @@
 ./usr/share/locale/zh_TW.Big5/LC_MONETARY	base-locale-zh		nls
 ./usr/share/locale/zh_TW.Big5/LC_NUMERIC	base-locale-zh		nls
 ./usr/share/locale/zh_TW.Big5/LC_TIME		base-locale-zh		nls
+./usr/share/locale/zh_TW.UTF-8			base-locale-zh
+./usr/share/locale/zh_TW.UTF-8/LC_CTYPE		base-locale-zh		nls
+./usr/share/locale/zh_TW.UTF-8/LC_MESSAGES	base-locale-zh		nls
+./usr/share/locale/zh_TW.UTF-8/LC_MESSAGES/SYS_LC_MESSAGES	base-locale-zh	nls
+./usr/share/locale/zh_TW.UTF-8/LC_MONETARY	base-locale-zh		nls
+./usr/share/locale/zh_TW.UTF-8/LC_NUMERIC	base-locale-zh		nls
+./usr/share/locale/zh_TW.UTF-8/LC_TIME		base-locale-zh		nls
 ./usr/share/locale/zh_TW.eucTW			base-locale-zh
 ./usr/share/locale/zh_TW.eucTW/LC_CTYPE		base-locale-zh		nls
 ./usr/share/locale/zh_TW.eucTW/LC_MESSAGES	base-locale-zh
@@ -3401,6 +3898,7 @@
 ./usr/share/man/cat3				base-man-share
 ./usr/share/man/cat3/atari			base-obsolete		obsolete
 ./usr/share/man/cat3f				base-obsolete		obsolete
+./usr/share/man/cat3lua				base-man-share
 ./usr/share/man/cat4				base-man-share
 ./usr/share/man/cat4/acorn26			base-man-share
 ./usr/share/man/cat4/acorn32			base-man-share
@@ -3520,6 +4018,7 @@
 ./usr/share/man/cat9/vax			base-man-share
 ./usr/share/man/cat9/x68k			base-man-share
 ./usr/share/man/cat9/x86			base-man-share
+./usr/share/man/cat9lua				base-man-share
 ./usr/share/man/html1				base-man-share
 ./usr/share/man/html1/atari			base-man-share
 ./usr/share/man/html1/hp300			base-man-share
@@ -3527,6 +4026,7 @@
 ./usr/share/man/html2				base-man-share
 ./usr/share/man/html3				base-man-share
 ./usr/share/man/html3f				base-man-share
+./usr/share/man/html3lua			base-man-share
 ./usr/share/man/html4				base-man-share
 ./usr/share/man/html4/acorn26			base-man-share
 ./usr/share/man/html4/acorn32			base-man-share
@@ -3645,6 +4145,7 @@
 ./usr/share/man/html9/vax			base-man-share
 ./usr/share/man/html9/x68k			base-man-share
 ./usr/share/man/html9/x86			base-man-share
+./usr/share/man/html9lua			base-man-share
 ./usr/share/man/makewhatis.sed			base-man-share		!makemandb,share
 ./usr/share/man/man1				base-man-share
 ./usr/share/man/man1/atari			base-man-share
@@ -3654,6 +4155,7 @@
 ./usr/share/man/man3				base-man-share
 ./usr/share/man/man3/atari			base-obsolete		obsolete
 ./usr/share/man/man3f				base-man-share
+./usr/share/man/man3lua				base-man-share
 ./usr/share/man/man4				base-man-share
 ./usr/share/man/man4/acorn26			base-man-share
 ./usr/share/man/man4/acorn32			base-man-share
@@ -3773,6 +4275,7 @@
 ./usr/share/man/man9/vax			base-man-share
 ./usr/share/man/man9/x68k			base-man-share
 ./usr/share/man/man9/x86			base-man-share
+./usr/share/man/man9lua				base-man-share
 ./usr/share/man/whatis.db			base-man-share		man,!makemandb
 ./usr/share/me					base-groff-share
 ./usr/share/misc				base-terminfo-share
@@ -3797,6 +4300,7 @@
 ./usr/share/misc/vgrindefs.db			base-groff-share	share
 ./usr/share/mk					base-util-share
 ./usr/share/mk/bsd.README			base-mk-share		share
+./usr/share/mk/bsd.buildinstall.mk			base-mk-share		share
 ./usr/share/mk/bsd.clang-analyze.mk		base-mk-share		share
 ./usr/share/mk/bsd.clean.mk			base-mk-share		share
 ./usr/share/mk/bsd.crypto.mk			base-obsolete		obsolete
@@ -4379,9 +4883,9 @@
 ./usr/share/zoneinfo/America/Coral_Harbour	base-sys-share		share
 ./usr/share/zoneinfo/America/Cordoba		base-sys-share		share
 ./usr/share/zoneinfo/America/Costa_Rica		base-sys-share		share
+./usr/share/zoneinfo/America/Creston		base-sys-share		share
 ./usr/share/zoneinfo/America/Cuiaba		base-sys-share		share
 ./usr/share/zoneinfo/America/Curacao		base-sys-share		share
-./usr/share/zoneinfo/America/Creston		base-sys-share		share
 ./usr/share/zoneinfo/America/Danmarkshavn	base-sys-share		share
 ./usr/share/zoneinfo/America/Dawson		base-sys-share		share
 ./usr/share/zoneinfo/America/Dawson_Creek	base-sys-share		share
@@ -4563,6 +5067,7 @@
 ./usr/share/zoneinfo/Asia/Kashgar		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Kathmandu		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Katmandu		base-sys-share		share
+./usr/share/zoneinfo/Asia/Khandyga		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Kolkata		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Krasnoyarsk		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Kuala_Lumpur		base-sys-share		share
@@ -4608,6 +5113,7 @@
 ./usr/share/zoneinfo/Asia/Ulaanbaatar		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Ulan_Bator		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Urumqi		base-sys-share		share
+./usr/share/zoneinfo/Asia/Ust-Nera		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Vientiane		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Vladivostok		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Yakutsk		base-sys-share		share
@@ -4723,6 +5229,7 @@
 ./usr/share/zoneinfo/Europe/Brussels		base-sys-share		share
 ./usr/share/zoneinfo/Europe/Bucharest		base-sys-share		share
 ./usr/share/zoneinfo/Europe/Budapest		base-sys-share		share
+./usr/share/zoneinfo/Europe/Busingen		base-sys-share		share
 ./usr/share/zoneinfo/Europe/Chisinau		base-sys-share		share
 ./usr/share/zoneinfo/Europe/Copenhagen		base-sys-share		share
 ./usr/share/zoneinfo/Europe/Dublin		base-sys-share		share
@@ -4970,6 +5477,10 @@
 ./var/chroot/ntpd/var/run			base-ntp-root
 ./var/chroot/pflogd				base-sys-root
 ./var/chroot/pfspamd				base-obsolete		obsolete
+./var/chroot/rtadvd				base-sys-root
+./var/chroot/rtadvd/etc				base-sys-root
+./var/chroot/rtadvd/var				base-sys-root
+./var/chroot/rtadvd/var/run			base-sys-root
 ./var/chroot/spamd				base-obsolete		obsolete
 ./var/chroot/sshd				base-sys-root
 ./var/chroot/tcpdump				base-sys-root
@@ -4984,6 +5495,7 @@
 ./var/db/obsolete				base-sys-root
 ./var/db/obsolete/base				base-sys-root
 ./var/db/obsolete/comp				base-sys-root
+./var/db/obsolete/debug				base-sys-root		debug
 ./var/db/obsolete/etc				base-sys-root
 ./var/db/obsolete/games				base-sys-root
 ./var/db/obsolete/man				base-sys-root
@@ -5024,6 +5536,7 @@
 ./var/run/lwresd				base-bind-root
 ./var/run/named					base-bind-root
 ./var/rwho					base-netutil-root
+./var/shm					base-sys-root
 ./var/spool					base-sys-root
 ./var/spool/ftp					base-netutil-root
 ./var/spool/ftp/bin				base-netutil-root

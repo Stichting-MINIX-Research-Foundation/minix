@@ -1,6 +1,2 @@
-# $NetBSD: md.acorn32,v 1.12 2009/02/14 22:46:05 abs Exp $
+# $NetBSD: md.acorn32,v 1.13 2013/05/02 03:56:38 matt Exp $
 ./dev/beep					base-obsolete		obsolete
-./usr/mdec/boot32				base-sysutil-bin
-./usr/mdec/boot32,ffa				base-sysutil-bin
-./usr/mdec/nbfs					base-sysutil-bin
-./usr/mdec/nbfs,ffa				base-sysutil-bin

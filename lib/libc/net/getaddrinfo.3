@@ -1,4 +1,4 @@
-.\"	$NetBSD: getaddrinfo.3,v 1.55 2010/04/17 20:28:47 wiz Exp $
+.\"	$NetBSD: getaddrinfo.3,v 1.57 2013/05/03 21:13:34 wiz Exp $
 .\"	$KAME: getaddrinfo.3,v 1.36 2005/01/05 03:23:05 itojun Exp $
 .\"	$OpenBSD: getaddrinfo.3,v 1.35 2004/12/21 03:40:31 jaredy Exp $
 .\"
@@ -17,7 +17,7 @@
 .\" OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 .\" PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd April 17, 2010
+.Dd April 30, 2013
 .Dt GETADDRINFO 3
 .Os
 .Sh NAME
@@ -199,6 +199,9 @@ loopback address if
 is the null pointer and
 .Dv AI_PASSIVE
 is not set.
+.It Dv AI_SRV
+Perform SRV (RFC 2782) record lookups first.
+This is a non-portable extension.
 .El
 .El
 .Pp

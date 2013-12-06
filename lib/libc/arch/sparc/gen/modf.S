@@ -1,4 +1,4 @@
-/*	$NetBSD: modf.S,v 1.6 2003/08/07 16:42:23 agc Exp $	*/
+/*	$NetBSD: modf.S,v 1.7 2013/09/12 15:36:16 joerg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
 #if 0
 	.asciz "@(#)modf.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: modf.S,v 1.6 2003/08/07 16:42:23 agc Exp $")
+	RCSID("$NetBSD: modf.S,v 1.7 2013/09/12 15:36:16 joerg Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -103,7 +103,7 @@ ENTRY(modf)
 	sethi	%hi(0x80000000), %l1	! sign bit
 	andn	%i0, %l1, %l0
 	st	%l0, [%fp - 16]
-#ifdef PIC
+#ifdef __PIC__
 	PICCY_SET(Lmagic, %l0, %o7)
 	ldd	[%l0], %f2
 #else
@@ -184,7 +184,7 @@ Lbig:
 	 * case the integer part is the original value, and the
 	 * fractional part is 0.
 	 */
-#ifdef PIC
+#ifdef __PIC__
 	PICCY_SET(L0, %l0, %o7)
 	std	%f0, [%i2]		! *ival = val;
 	ldd	[%l0], %f0		! return 0.0;

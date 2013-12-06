@@ -31,7 +31,7 @@ ETC=		system.conf master.passwd group
 EXTRA=		rc
 PROTO_FILES=	proto.common.etc proto.common.dynamic
 PROG_DRIVERS=
-PROG_COMMANDS=	mount umount grep fsck.mfs sh service loadramdisk sysenv
+PROG_COMMANDS=	mount umount grep fsck_mfs sh service loadramdisk sysenv
 PROG_SERVERS=	input mfs procfs
 PROG_BIN=
 PROG_SBIN=
@@ -129,6 +129,7 @@ ${PROGROOT}/lib/${lib}/${lib}.so.0:
 
 # Generate dependencies rules for binaries
 dir.sh:= ash
+dir.fsck_mfs:= fsck.mfs
 .for srcdir in bin sbin commands drivers libexec servers usr.bin usr.sbin
 .for prog in ${PROG_${srcdir:tu}}
 ${prog}: ${PROGROOT}/${srcdir}/${dir.${prog}:U${prog}}/${prog}

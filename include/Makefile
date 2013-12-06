@@ -42,7 +42,6 @@ INCS+=	ieeefp.h
 INCS+=  env.h fetch.h lib.h libutil.h varargs.h
 .endif
 
-
 .include <bsd.own.mk>
 
 
@@ -53,16 +52,15 @@ INCSDIR=	/usr/include
 # rpcgen, which can be compiled if needed.
 .else
 SUBDIR=		rpc
-.endif
+.endif # defined(__MINIX)
 SUBDIR+=	../common/include/prop
 
 .if defined(__MINIX)
 SUBDIR+= 	arch sys minix
 SUBDIR+= 	net
 SUBDIR+= 	ddekit
-.else
+.endif # defined(__MINIX)
 SUBDIR+=	../common/include/ppath
-.endif
 
 .include <bsd.prog.mk>
 .include <bsd.subdir.mk>

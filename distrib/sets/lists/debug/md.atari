@@ -1,0 +1,11 @@
+# $NetBSD: md.atari,v 1.1 2013/01/16 16:01:07 christos Exp $
+./usr/libdata/debug/sbin/ahdilabel.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/sbin/binpatch.debug		comp-sysutil-debug	debug
+./usr/libdata/debug/sbin/edahdi.debug		comp-sysutil-debug	debug
+./usr/libdata/debug/sbin/edlabel.debug		comp-sysutil-debug	obsolete
+./usr/libdata/debug/usr/bin/fdformat.debug	comp-util-debug		debug
+./usr/libdata/debug/usr/bin/msconfig.debug	comp-util-debug		debug
+./usr/libdata/debug/usr/mdec/installboot.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/bootpref.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/iteconfig.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/loadkmap.debug	comp-sysutil-debug	debug

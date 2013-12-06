@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.114 2012/08/09 11:05:59 christos Exp $	*/
+/*	$NetBSD: options.c,v 1.115 2013/11/14 04:00:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: options.c,v 1.114 2012/08/09 11:05:59 christos Exp $");
+__RCSID("$NetBSD: options.c,v 1.115 2013/11/14 04:00:48 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -128,8 +128,9 @@ static int get_line_error;
 #define	OPT_STRICT			15
 #define	OPT_SPARSE			16
 #define OPT_XZ				17
+#define OPT_GNU				18
 #if !HAVE_NBTOOL_CONFIG_H
-#define	OPT_CHROOT			18
+#define	OPT_CHROOT			19
 #endif
 
 /*
@@ -248,6 +249,8 @@ struct option pax_longopts[] = {
 						OPT_USE_COMPRESS_PROGRAM },
 	{ "xz",			no_argument,		0,
 						OPT_XZ },
+	{ "gnu",		no_argument,		0,
+						OPT_GNU },
 	{ 0,			0,			0,
 						0 },
 };
@@ -654,6 +657,9 @@ pax_options(int argc, char **argv)
 			break;
 		case OPT_XZ:
 			gzip_program = XZ_CMD;
+			break;
+		case OPT_GNU:
+			is_gnutar = 1;
 			break;
 		case '?':
 		default:

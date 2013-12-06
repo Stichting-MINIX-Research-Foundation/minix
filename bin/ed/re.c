@@ -1,4 +1,4 @@
-/*	$NetBSD: re.c,v 1.19 2005/02/17 16:29:26 xtraeme Exp $	*/
+/*	$NetBSD: re.c,v 1.20 2013/06/28 15:04:35 joerg Exp $	*/
 
 /* re.c: This file contains the regular expression interface routines for
    the ed line editor. */
@@ -33,7 +33,7 @@
 #if 0
 static char *rcsid = "@(#)re.c,v 1.6 1994/02/01 00:34:43 alm Exp";
 #else
-__RCSID("$NetBSD: re.c,v 1.19 2005/02/17 16:29:26 xtraeme Exp $");
+__RCSID("$NetBSD: re.c,v 1.20 2013/06/28 15:04:35 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -95,7 +95,7 @@ extract_pattern(int delimiter)
 		default:
 			break;
 		case '[':
-			if ((nd = parse_char_class(++nd)) == NULL) {
+			if ((nd = parse_char_class(nd + 1)) == NULL) {
 				sprintf(errmsg, "unbalanced brackets ([])");
 				return NULL;
 			}

@@ -1,4 +1,4 @@
-.\"	$NetBSD: symlink.2,v 1.20 2010/05/31 12:16:20 njoly Exp $
+.\"	$NetBSD: symlink.2,v 1.26 2013/07/29 11:40:04 njoly Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,11 +29,12 @@
 .\"
 .\"     @(#)symlink.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd June 4, 1993
+.Dd July 29, 2013
 .Dt SYMLINK 2
 .Os
 .Sh NAME
-.Nm symlink
+.Nm symlink ,
+.Nm symlinkat
 .Nd make symbolic link to a file
 .Sh LIBRARY
 .Lb libc
@@ -41,6 +42,8 @@
 .In unistd.h
 .Ft int
 .Fn symlink "const char *name1" "const char *name2"
+.Ft int
+.Fn symlinkat "const char *name1" "int fd" "const char *name2"
 .Sh DESCRIPTION
 A symbolic link
 .Fa name2
@@ -54,18 +57,72 @@ is the string
 used in creating the symbolic link).
 Either name may be an arbitrary path name; the files need neither
 to be on the same file system nor to exist.
+.Pp
+.Fn symlinkat
+works the same way as
+.Fn symlink
+except if
+.Fa path2
+is relative.
+In that case, it is looked up from a directory whose file
+descriptor was passed as
+.Fa fd .
+Search permission is required on this directory.
+.\"    (These alternatives await a decision about the semantics of O_SEARCH)
+.\" Search permission is required on this directory
+.\" except if
+.\" .Fa fd
+.\" was opened with the
+.\" .Dv O_SEARCH
+.\" flag.
+.\"    - or -
+.\" This file descriptor must have been opened with the
+.\" .Dv O_SEARCH
+.\" flag.
+.Fa fd
+can be set to
+.Dv AT_FDCWD
+in order to specify the current directory.
 .Sh RETURN VALUES
-Upon successful completion, a zero value is returned.
-If an error occurs, the error code is stored in
-.Va errno
-and a \-1 value is returned.
+.Rv -std symlink symlinkat
 .Sh ERRORS
-The symbolic link succeeds unless:
+.Fn symlink
+and
+.Fn symlinkat
+will fail and no link will be created if:
 .Bl -tag -width Er
-.It Bq Er ENOTDIR
+.It Bq Er EACCES
 A component of the
 .Fa name2
-prefix is not a directory.
+path prefix denies search permission.
+.It Bq Er EDQUOT
+The directory in which the entry for the new symbolic link
+is being placed cannot be extended because the
+user's quota of disk blocks on the file system
+containing the directory has been exhausted.
+Or, the new symbolic link cannot be created because the user's
+quota of disk blocks on the file system that will
+contain the symbolic link has been exhausted.
+Or, the user's quota of inodes on the file system on
+which the symbolic link is being created has been exhausted.
+.It Bq Er EEXIST
+.Fa name2
+already exists.
+.It Bq Er EFAULT
+.Fa name1
+or
+.Fa name2
+points outside the process's allocated address space.
+.It Bq Er EIO
+An I/O error occurred while making the directory entry for
+.Fa name2 ,
+or allocating the inode for
+.Fa name2 ,
+or writing out the link contents of
+.Fa name2 .
+Or, an I/O error occurred while making the directory entry or allocating the inode.
+.It Bq Er ELOOP
+Too many symbolic links were encountered in translating the pathname.
 .It Bq Er ENAMETOOLONG
 A component of a pathname exceeded
 .Brq Dv NAME_MAX
@@ -76,56 +133,41 @@ characters.
 A component of the
 .Fa name2
 path does not exist.
-.It Bq Er EACCES
-A component of the
-.Fa name2
-path prefix denies search permission.
-.It Bq Er ELOOP
-Too many symbolic links were encountered in translating the pathname.
-.It Bq Er EEXIST
-.Fa name2
-already exists.
-.It Bq Er EIO
-An I/O error occurred while making the directory entry for
-.Fa name2 ,
-or allocating the inode for
-.Fa name2 ,
-or writing out the link contents of
-.Fa name2 .
-.It Bq Er EROFS
-The file
-.Fa name2
-would reside on a read-only file system.
 .It Bq Er ENOSPC
 The directory in which the entry for the new symbolic link is being placed
 cannot be extended because there is no space left on the file
 system containing the directory.
-.It Bq Er ENOSPC
-The new symbolic link cannot be created because there
+Or, the new symbolic link cannot be created because there
 there is no space left on the file
 system that will contain the symbolic link.
-.It Bq Er ENOSPC
-There are no free inodes on the file system on which the
+Or, there are no free inodes on the file system on which the
 symbolic link is being created.
-.It Bq Er EDQUOT
-The directory in which the entry for the new symbolic link
-is being placed cannot be extended because the
-user's quota of disk blocks on the file system
-containing the directory has been exhausted.
-.It Bq Er EDQUOT
-The new symbolic link cannot be created because the user's
-quota of disk blocks on the file system that will
-contain the symbolic link has been exhausted.
-.It Bq Er EDQUOT
-The user's quota of inodes on the file system on
-which the symbolic link is being created has been exhausted.
-.It Bq Er EIO
-An I/O error occurred while making the directory entry or allocating the inode.
-.It Bq Er EFAULT
-.Fa name1
-or
+.It Bq Er ENOTDIR
+A component of the
 .Fa name2
-points outside the process's allocated address space.
+prefix is not a directory.
+.It Bq Er EROFS
+The file
+.Fa name2
+would reside on a read-only file system.
+.El
+.Pp
+In addition,
+.Fn symlinkat
+will fail if:
+.Bl -tag -width Er
+.It Bq Er EBADF
+.Fa name2
+does not specify an absolute path and
+.Fa fd
+is neither
+.Dv AT_FDCWD
+nor a valid file descriptor open for reading or searching.
+.It Bq Er ENOTDIR
+.Fa name2
+is not an absolute path and
+.Fa fd
+is a file descriptor associated with a non-directory file.
 .El
 .Sh SEE ALSO
 .Xr ln 1 ,
@@ -133,6 +175,14 @@ points outside the process's allocated address space.
 .Xr readlink 2 ,
 .Xr unlink 2 ,
 .Xr symlink 7
+.Sh STANDARDS
+The
+.Fn symlink
+function conforms to
+.St -p1003.1-90 .
+.Fn symlinkat
+conforms to
+.St -p1003.1-2008 .
 .Sh HISTORY
 The
 .Fn symlink

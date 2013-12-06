@@ -24,7 +24,7 @@ TESTS_C+=	atf_inttest
 TESTS_C+=	cli_test
 TESTS_C+=	env_test
 TESTS_C+=	error_test
-#LSC FIXME: Requires tmpfs to work correctly, maybe a workaround
+#LSC FIXME: (MINIX) Requires tmpfs to work correctly, maybe a workaround
 # with a ramdisk may be used.
 #TESTS_C+=	fs_test
 TESTS_C+=	plain_inttest

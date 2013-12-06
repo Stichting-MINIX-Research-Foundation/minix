@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.36 2012/08/29 17:13:22 drochner Exp $	*/
+/*	$NetBSD: cpu.h,v 1.39 2013/11/25 03:06:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007 YAMAMOTO Takashi,
@@ -45,9 +45,9 @@ void cpu_idle(void);
 #ifdef CPU_UCODE
 #include <sys/cpuio.h>
 #include <dev/firmload.h>
-
-/* XXX ifdef COMPAT */
+#ifdef COMPAT_60
 #include <compat/sys/cpuio.h>
+#endif
 #endif
 
 /*
@@ -91,12 +91,10 @@ void	cpu_intr_redistribute(void);
 u_int	cpu_intr_count(struct cpu_info *);
 #endif
 
-CIRCLEQ_HEAD(cpuqueue, cpu_info);
-
 #ifdef _KERNEL
 extern kmutex_t cpu_lock;
 extern u_int maxcpus;
-extern struct cpuqueue cpu_queue;
+extern struct cpu_info **cpu_infos;
 extern kcpuset_t *kcpuset_attached;
 extern kcpuset_t *kcpuset_running;
 
@@ -120,11 +118,11 @@ struct cpu_ucode_softc {
 };
 
 int cpu_ucode_get_version(struct cpu_ucode_version *);
-/* XXX ifdef COMPAT */
-int compat6_cpu_ucode_get_version(struct compat6_cpu_ucode *);
 int cpu_ucode_apply(const struct cpu_ucode *);
-/* XXX ifdef COMPAT */
+#ifdef COMPAT_60
+int compat6_cpu_ucode_get_version(struct compat6_cpu_ucode *);
 int compat6_cpu_ucode_apply(const struct compat6_cpu_ucode *);
+#endif
 int cpu_ucode_load(struct cpu_ucode_softc *, const char *);
 int cpu_ucode_md_open(firmware_handle_t *, int, const char *);
 #endif

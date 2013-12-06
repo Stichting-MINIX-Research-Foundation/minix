@@ -1,6 +1,6 @@
 
 #------------------------------------------------------------------------------
-# $File: claris,v 1.5 2009/09/19 16:28:08 christos Exp $
+# $File: claris,v 1.6 2012/06/20 21:19:05 christos Exp $
 # claris:  file(1) magic for claris
 # "H. Nanosecond" <aldomel@ix.netcom.com>
 # Claris Works a word processor, etc.
@@ -11,10 +11,10 @@
 #*
 #0001000 #010 250 377 377 377 377 000 213 000 230 000 021 002 377 014 000
 #null to byte 1000 octal
-514	string	\377\377\377\377\000	Claris clip art?
->0	string	\0\0\0\0\0\0\0\0\0\0\0\0\0	yes.
-514	string	\377\377\377\377\001	Claris clip art?
->0	string	\0\0\0\0\0\0\0\0\0\0\0\0\0	yes.
+514	string	\377\377\377\377\000
+>0	string	\0\0\0\0\0\0\0\0\0\0\0\0\0	Claris clip art
+514	string	\377\377\377\377\001
+>0	string	\0\0\0\0\0\0\0\0\0\0\0\0\0	Claris clip art
 
 # Claris works files
 # .cwk

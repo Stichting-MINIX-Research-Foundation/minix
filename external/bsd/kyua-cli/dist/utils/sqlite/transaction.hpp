@@ -32,7 +32,7 @@
 #if !defined(UTILS_SQLITE_TRANSACTION_HPP)
 #define UTILS_SQLITE_TRANSACTION_HPP
 
-#include <tr1/memory>
+#include "utils/shared_ptr.hpp"
 
 namespace utils {
 namespace sqlite {
@@ -49,7 +49,7 @@ class transaction {
     struct impl;
 
     /// Pointer to the shared internal implementation.
-    std::tr1::shared_ptr< impl > _pimpl;
+    std::shared_ptr< impl > _pimpl;
 
     explicit transaction(database&);
     friend class database;

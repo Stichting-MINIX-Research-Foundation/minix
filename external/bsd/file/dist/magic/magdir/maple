@@ -1,6 +1,6 @@
 
 #------------------------------------------------------------------------------
-# $File: maple,v 1.6 2009/09/19 16:28:10 christos Exp $
+# $File: maple,v 1.7 2013/01/11 16:45:23 christos Exp $
 # maple:  file(1) magic for maple files
 # "H. Nanosecond" <aldomel@ix.netcom.com>
 # Maple V release 4, a multi-purpose math program
@@ -33,7 +33,7 @@
 # that is {VERSION major_version miunor_version computer_type version_string}
 0	string	{VERSION\ 	Maple worksheet
 >9	string	>\0	version %.1s.
->>>11	string	>\0	%.1s
+>>11	string	>\0	%.1s
 
 # .mps
 0	string	\0\0\001$	Maple something

@@ -12,8 +12,14 @@
 /* SUPPRESS 287 on yaccpar_sccsid *//* Unused static variable */
 /* SUPPRESS 288 on yyerrlab *//* Label unused */
 
+#include <sys/cdefs.h>
+#ifdef __RCSID
+__RCSID("$NetBSD: parsedate.y,v 1.16 2013/06/12 01:46:07 yamt Exp $");
+#endif
+
 #include <stdio.h>
 #include <ctype.h>
+#include <errno.h>
 #include <string.h>
 #include <time.h>
 #include <util.h>
@@ -148,8 +154,8 @@ cvsstamp: tUNUMBER '.' tUNUMBER '.' tUNUMBER '.' tUNUMBER '.' tUNUMBER '.' tUNUM
 	}
 	;
 
-epochdate: AT_SIGN tUNUMBER {
-            time_t    when = $2;
+epochdate: AT_SIGN at_number {
+            time_t    when = $<Number>2;
             struct tm tmbuf;
             if (gmtime_r(&when, &tmbuf) != NULL) {
 		param->yyYear = tmbuf.tm_year + 1900;
@@ -172,6 +178,8 @@ epochdate: AT_SIGN tUNUMBER {
 	    param->yyTimezone = 0;
 	}
 	;
+
+at_number : tUNUMBER | tSNUMBER ;
 
 time	: tUNUMBER tMERIDIAN {
 	    param->yyHour = $1;
@@ -367,7 +375,7 @@ o_merid	: /* NULL */ {
 %%
 
 /* Month and day table. */
-static const TABLE const MonthDayTable[] = {
+static const TABLE MonthDayTable[] = {
     { "january",	tMONTH,  1 },
     { "february",	tMONTH,  2 },
     { "march",		tMONTH,  3 },
@@ -396,7 +404,7 @@ static const TABLE const MonthDayTable[] = {
 };
 
 /* Time units table. */
-static const TABLE const UnitsTable[] = {
+static const TABLE UnitsTable[] = {
     { "year",		tMONTH_UNIT,	12 },
     { "month",		tMONTH_UNIT,	1 },
     { "fortnight",	tMINUTE_UNIT,	14 * 24 * 60 },
@@ -411,7 +419,7 @@ static const TABLE const UnitsTable[] = {
 };
 
 /* Assorted relative-time words. */
-static const TABLE const OtherTable[] = {
+static const TABLE OtherTable[] = {
     { "tomorrow",	tMINUTE_UNIT,	1 * 24 * 60 },
     { "yesterday",	tMINUTE_UNIT,	-1 * 24 * 60 },
     { "today",		tMINUTE_UNIT,	0 },
@@ -449,7 +457,7 @@ static const TABLE const OtherTable[] = {
 
 /* The timezone table. */
 /* Some of these are commented out because a time_t can't store a float. */
-static const TABLE const TimezoneTable[] = {
+static const TABLE TimezoneTable[] = {
     { "gmt",	tZONE,     HOUR( 0) },	/* Greenwich Mean */
     { "ut",	tZONE,     HOUR( 0) },	/* Universal (Coordinated) */
     { "utc",	tZONE,     HOUR( 0) },
@@ -533,7 +541,7 @@ static const TABLE const TimezoneTable[] = {
 };
 
 /* Military timezone table. */
-static const TABLE const MilitaryTable[] = {
+static const TABLE MilitaryTable[] = {
     { "a",	tZONE,	HOUR(  1) },
     { "b",	tZONE,	HOUR(  2) },
     { "c",	tZONE,	HOUR(  3) },
@@ -585,12 +593,13 @@ Convert(
     time_t	Hours,		/* Hour of day [0-24] */
     time_t	Minutes,	/* Minute of hour [0-59] */
     time_t	Seconds,	/* Second of minute [0-60] */
-    time_t	Timezone,	/* Timezone as seconds west of UTC */
+    time_t	Timezone,	/* Timezone as minutes east of UTC */
     MERIDIAN	Meridian,	/* Hours are am/pm/24 hour clock */
     DSTMODE	DSTmode		/* DST on/off/maybe */
 )
 {
-    struct tm tm;
+    struct tm tm = {.tm_sec = 0};
+    time_t result;
 
     /* XXX Y2K */
     if (Year < 0)
@@ -611,9 +620,11 @@ Convert(
     case DSToff: tm.tm_isdst = 0; break;
     default:     tm.tm_isdst = -1; break;
     }
-    tm.tm_gmtoff = -Timezone;
 
-    return mktime(&tm);
+    /* We rely on mktime_z(NULL, ...) working in UTC, not in local time. */
+    result = mktime_z(NULL, &tm);
+    result += Timezone * 60;
+    return result;
 }
 
 
@@ -880,6 +891,10 @@ parsedate(const char *p, const time_t *now, const int *zone)
     time_t		Start;
     time_t		tod, rm;
     struct dateinfo	param;
+    int			saved_errno;
+    
+    saved_errno = errno;
+    errno = 0;
 
     if (now == NULL || zone == NULL) {
         now = &nowt;
@@ -924,14 +939,16 @@ parsedate(const char *p, const time_t *now, const int *zone)
     param.yyHaveZone = 0;
 
     if (yyparse(&param, &p) || param.yyHaveTime > 1 || param.yyHaveZone > 1 ||
-	param.yyHaveDate > 1 || param.yyHaveDay > 1)
+	param.yyHaveDate > 1 || param.yyHaveDay > 1) {
+	errno = EINVAL;
 	return -1;
+    }
 
     if (param.yyHaveDate || param.yyHaveTime || param.yyHaveDay) {
 	Start = Convert(param.yyMonth, param.yyDay, param.yyYear, param.yyHour,
 	    param.yyMinutes, param.yySeconds, param.yyTimezone,
 	    param.yyMeridian, param.yyDSTmode);
-	if (Start == -1)
+	if (Start == -1 && errno != 0)
 	    return -1;
     }
     else {
@@ -942,7 +959,7 @@ parsedate(const char *p, const time_t *now, const int *zone)
 
     Start += param.yyRelSeconds;
     rm = RelativeMonth(Start, param.yyRelMonth, param.yyTimezone);
-    if (rm == -1)
+    if (rm == -1 && errno != 0)
 	return -1;
     Start += rm;
 
@@ -951,6 +968,8 @@ parsedate(const char *p, const time_t *now, const int *zone)
 	Start += tod;
     }
 
+    if (errno == 0)
+	errno = saved_errno;
     return Start;
 }
 
@@ -959,21 +978,21 @@ parsedate(const char *p, const time_t *now, const int *zone)
 
 /* ARGSUSED */
 int
-main(ac, av)
-    int		ac;
-    char	*av[];
+main(int ac, char *av[])
 {
     char	buff[128];
     time_t	d;
 
     (void)printf("Enter date, or blank line to exit.\n\t> ");
     (void)fflush(stdout);
-    while (gets(buff) && buff[0]) {
+    while (fgets(buff, sizeof(buff), stdin) && buff[0] != '\n') {
+	errno = 0;
 	d = parsedate(buff, NULL, NULL);
-	if (d == -1)
-	    (void)printf("Bad format - couldn't convert.\n");
+	if (d == -1 && errno != 0)
+	    (void)printf("Bad format - couldn't convert: %s\n",
+	        strerror(errno));
 	else
-	    (void)printf("%s", ctime(&d));
+	    (void)printf("%jd\t%s", (intmax_t)d, ctime(&d));
 	(void)printf("\t> ");
 	(void)fflush(stdout);
     }

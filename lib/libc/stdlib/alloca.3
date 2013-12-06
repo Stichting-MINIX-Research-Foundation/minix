@@ -1,4 +1,4 @@
-.\"	$NetBSD: alloca.3,v 1.14 2011/03/21 04:42:50 jruoho Exp $
+.\"	$NetBSD: alloca.3,v 1.16 2012/10/24 22:56:27 wiz Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     from: @(#)alloca.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd March 21, 2011
+.Dd October 24, 2012
 .Dt ALLOCA 3
 .Os
 .Sh NAME
@@ -58,36 +58,54 @@ If the allocation failed, a
 .Dv NULL
 pointer is returned.
 .Sh SEE ALSO
+.Xr cc 1 ,
 .Xr brk 2 ,
 .Xr calloc 3 ,
 .Xr getpagesize 3 ,
 .Xr malloc 3 ,
-.Xr realloc 3
+.Xr realloc 3 ,
+.Xr security 7
 .Sh CAVEATS
 Few limitations can be mentioned:
 .Bl -bullet
 .It
 The
 .Fn alloca
-function
-is machine dependent; its use is discouraged.
+function is not part of any C standard and its use is not portable.
 .It
 The
 .Fn alloca
-function is slightly unsafe because it cannot ensure that the pointer
+function should be supplied by the compiler because the compiler is allowed to
+make assumptions about the stack and frame pointers.
+The libc
+.Fn alloca
+implementation cannot account for those assumptions.
+While there is a
+machine dependent implementation of
+.Fn alloca
+in libc, its use is discouraged and in most cases it will not work.
+Using this implementation will produce linker warnings.
+.It
+The
+.Fn alloca
+function is unsafe because it cannot ensure that the pointer
 returned points to a valid and usable block of memory.
 The allocation made may exceed the bounds of the stack, or even go
 further into other objects in memory, and
 .Fn alloca
 cannot determine such an error.
-Avoid
+For that all
 .Fn alloca
-with large unbounded allocations.
+allocations should be bounded and limited to a small size.
 .It
 Since
 .Fn alloca
-modifies the stack at runtime,
-it causes problems to certain security features.
+modifies the stack at runtime and the stack usage of each function frame
+cannot be predicted, it makes many compiler security features
+(such as
+.Xr cc 1
+.Fl fstack-protector )
+useless for the calling function.
 See
 .Xr security 7
 for a discussion.

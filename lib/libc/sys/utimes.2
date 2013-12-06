@@ -1,4 +1,4 @@
-.\"	$NetBSD: utimes.2,v 1.30 2011/10/25 09:26:53 wiz Exp $
+.\"	$NetBSD: utimes.2,v 1.40 2013/10/05 21:24:36 ast Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,13 +29,15 @@
 .\"
 .\"     @(#)utimes.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd August 17, 2011
+.Dd September 14, 2013
 .Dt UTIMES 2
 .Os
 .Sh NAME
 .Nm utimes ,
 .Nm lutimes ,
 .Nm futimes ,
+.Nm utimens ,
+.Nm lutimens ,
 .Nm futimens ,
 .Nm utimensat
 .Nd set file access and modification times
@@ -49,10 +51,18 @@
 .Fn lutimes "const char *path" "const struct timeval times[2]"
 .Ft int
 .Fn futimes "int fd" "const struct timeval times[2]"
+.In sys/stat.h
+.Ft int
+.Fn utimens "const char *path" "const struct timespec times[2]"
+.Ft int
+.Fn lutimens "const char *path" "const struct timespec times[2]"
 .Ft int
 .Fn futimens "int fd" "const struct timespec times[2]"
+.In sys/stat.h
+.In fcntl.h
 .Ft int
-.Fn utimensat "int fd" "const char *path" "const struct timespec times[2]" "int flag"
+.Fn utimensat "int fd" "const char *path" "const struct timespec times[2]" \
+ "int flag"
 .Sh DESCRIPTION
 The access and modification times of the file named by
 .Fa path
@@ -100,24 +110,56 @@ while
 .Fn utimes
 changes the times of the file the link references.
 .Pp
+.Fn utimens ,
+.Fn lutimens ,
+and
 .Fn futimens
-is like
+are like
+.Fn utimes ,
+.Fn lutimes ,
+and
 .Fn futimes
-except that time is specified with nanosecond instead of microseconds.
+respectively except that time is specified with nanosecond instead of
+microsecond precision.
 .Pp
 .Fn utimensat
-also allows time to be specifed with nanoseconds.
-When it operates on a symbolic link, it will change the target's time if
-.Ar follow
-is unset.
-If
-.Ar follow
-is set to
-.Dv AT_SYMLINK_NOFOLLOW ,
-the symbolic link's dates are changed.
+works the same way as
+.Fn utimens
+except if
+.Fa path
+is relative.
+In that case, it is looked up from a directory whose file
+descriptor was passed as
+.Fa fd .
+Search permission is required on this directory.
+.\"    (These alternatives await a decision about the semantics of O_SEARCH)
+.\" Search permission is required on this directory
+.\" except if
+.\" .Fa fd
+.\" was opened with the
+.\" .Dv O_SEARCH
+.\" flag.
+.\"    - or -
+.\" This file descriptor must have been opened with the
+.\" .Dv O_SEARCH
+.\" flag.
+.Fa fd
+can be set to
+.Dv AT_FDCWD
+in order to specify the current directory.
+.Pp
+When it operates on a symbolic link,
+.Fn utimensat
+will change the target's time unless
+.Dv AT_SYMLINK_NOFOLLOW
+is set in
+.Fa flag .
+In that later case, the symbolic link's dates are changed.
 .Pp
 The nanosecond fields for
-.Fn futimens
+.Fn utimens ,
+.Fn lutimens ,
+.Fn futimens ,
 and
 .Fn utimensat
 can be set to the special value
@@ -126,23 +168,13 @@ to set the current time, or to
 .Dv UTIME_OMIT
 to let the time unchanged (this allows changing access time but not
 modification time, and vice-versa).
-.Pp
-.Fn utimensat
-is partially implemented.
-It will return
-.Er ENOSYS
-for
-.Fa fd
-values different than
-.Dv AT_FDCWD .
 .Sh RETURN VALUES
-Upon successful completion, a value of 0 is returned.
-Otherwise, a value of \-1 is returned and
-.Va errno
-is set to indicate the error.
+.Rv -std utimes lutimes futimes utimens lutimens futimens utimensat
 .Sh ERRORS
 .Fn utimes ,
 .Fn lutimes ,
+.Fn utimens ,
+.Fn lutimens ,
 and
 .Fn utimensat
 will fail if:
@@ -184,6 +216,24 @@ and the calling process's effective user ID
 does not match the owner of the file and is not the super-user.
 .It Bq Er EROFS
 The file system containing the file is mounted read-only.
+.El
+.Pp
+In addition,
+.Fn utimensat
+will fail if:
+.Bl -tag -width Er
+.It Bq Er EBADF
+.Fa path
+does not specify an absolute path and
+.Fa fd
+is neither
+.Dv AT_FDCWD
+nor a valid file descriptor open for reading or searching.
+.It Bq Er ENOTDIR
+.Fa path
+is not an absolute path and
+.Fa fd
+is a file descriptor associated with a non-directory file.
 .El
 .Pp
 .Fn futimes
@@ -252,8 +302,5 @@ Birthtime setting support was added in
 .Fn futimens
 and
 .Fn utimensat
-functions calls appreared in
+functions calls appeared in
 .Nx 6.0 .
-.Sh BUGS
-.Fn utimensat
-is partially implemented.

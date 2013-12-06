@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.159 2012/10/01 03:03:46 riastradh Exp $	 */
+/*	$NetBSD: rtld.c,v 1.171 2013/11/20 07:18:23 skrll Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.159 2012/10/01 03:03:46 riastradh Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.171 2013/11/20 07:18:23 skrll Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -157,7 +157,7 @@ _rtld_call_fini_function(Obj_Entry *obj, sigset_t *mask, u_int cur_objgen)
 		dbg (("calling fini function %s at %p%s", obj->path,
 		    (void *)obj->fini,
 		    obj->z_initfirst ? " (DF_1_INITFIRST)" : ""));
-		obj->fini_called = 1; 
+		obj->fini_called = 1;
 		_rtld_call_initfini_function(obj->fini, mask);
 	}
 #ifdef HAVE_INITFINI_ARRAY
@@ -340,7 +340,7 @@ _rtld_init(caddr_t mapbase, caddr_t relocbase, const char *execname)
 #else
 	_rtld_relocate_plt_objects(&_rtld_objself);
 #endif
-#if !defined(__mips__) && !defined(__hppa__) && !defined(HAVE_GOLD)
+#if !defined(__mips__) && !defined(__hppa__)
 	assert(!_rtld_objself.pltgot);
 #endif
 #if !defined(__arm__) && !defined(__mips__) && !defined(__sh__)
@@ -356,12 +356,7 @@ _rtld_init(caddr_t mapbase, caddr_t relocbase, const char *execname)
 	    RTLD_DEFAULT_LIBRARY_PATH "/" RTLD_ARCH_SUBDIR);
 #endif
 
-	/*
-	 * Set up the _rtld_objlist pointer, so that rtld symbols can be found.
-	 */
-	_rtld_objlist = &_rtld_objself;
-
-	/* Make the object list empty again. */
+	/* Make the object list empty. */
 	_rtld_objlist = NULL;
 	_rtld_objtail = &_rtld_objlist;
 	_rtld_objcount = 0;
@@ -447,11 +442,10 @@ _rtld(Elf_Addr *sp, Elf_Addr relocbase)
 	debug = 1;
 	dbg(("sp = %p, argc = %ld, argv = %p <%s> relocbase %p", sp,
 	    (long)sp[2], &sp[3], (char *) sp[3], (void *)relocbase));
-#if 0
+#ifndef __x86_64__
 	dbg(("got is at %p, dynamic is at %p", _GLOBAL_OFFSET_TABLE_,
 	    &_DYNAMIC));
 #endif
-	dbg(("_ctype_ is %p", _ctype_));
 #endif
 
 	sp += 2;		/* skip over return argument space */
@@ -638,7 +632,7 @@ _rtld(Elf_Addr *sp, Elf_Addr relocbase)
 	}
 
 	_rtld_objmain->mainprog = true;
-	
+
 	/*
 	 * Get the actual dynamic linker pathname from the executable if
 	 * possible.  (It should always be possible.)  That ensures that
@@ -646,10 +640,12 @@ _rtld(Elf_Addr *sp, Elf_Addr relocbase)
 	 * one is being used.
 	 */
 	if (_rtld_objmain->interp != NULL &&
-	    strcmp(_rtld_objmain->interp, _rtld_objself.path) != 0)
+	    strcmp(_rtld_objmain->interp, _rtld_objself.path) != 0) {
 		_rtld_objself.path = xstrdup(_rtld_objmain->interp);
+		_rtld_objself.pathlen = strlen(_rtld_objself.path);
+	}
 	dbg(("actual dynamic linker is %s", _rtld_objself.path));
-	
+
 	_rtld_digest_dynamic(execname, _rtld_objmain);
 
 	/* Link the main program into the list of objects. */
@@ -997,7 +993,7 @@ dlopen(const char *name, int mode)
 
 	flags |= (mode & RTLD_GLOBAL) ? _RTLD_GLOBAL : 0;
 	flags |= (mode & RTLD_NOLOAD) ? _RTLD_NOLOAD : 0;
-	
+
 	nodelete = (mode & RTLD_NODELETE) ? true : false;
 	now = ((mode & RTLD_MODEMASK) == RTLD_NOW) ? true : false;
 
@@ -1108,7 +1104,7 @@ do_dlsym(void *handle, const char *name, const Ver_Entry *ventry, void *retaddr)
 	hash = _rtld_elf_hash(name);
 	def = NULL;
 	defobj = NULL;
-	
+
 	switch ((intptr_t)handle) {
 	case (intptr_t)NULL:
 	case (intptr_t)RTLD_NEXT:
@@ -1178,7 +1174,7 @@ do_dlsym(void *handle, const char *name, const Ver_Entry *ventry, void *retaddr)
 
 		break;
 	}
-	
+
 	if (def != NULL) {
 		void *p;
 #ifdef __HAVE_FUNCTION_DESCRIPTORS
@@ -1193,7 +1189,7 @@ do_dlsym(void *handle, const char *name, const Ver_Entry *ventry, void *retaddr)
 		lookup_mutex_exit();
 		return p;
 	}
-	
+
 	_rtld_error("Undefined symbol \"%s\"", name);
 	lookup_mutex_exit();
 	return NULL;
@@ -1270,7 +1266,7 @@ dladdr(const void *addr, Dl_info *info)
 	info->dli_fbase = obj->mapbase;
 	info->dli_saddr = (void *)0;
 	info->dli_sname = NULL;
-	
+
 	/*
 	 * Walk the symbol list looking for the symbol whose address is
 	 * closest to the address sent in.
@@ -1300,6 +1296,7 @@ dladdr(const void *addr, Dl_info *info)
 		info->dli_saddr = symbol_addr;
 		best_def = def;
 
+
 		/* Exact match? */
 		if (info->dli_saddr == addr)
 			break;
@@ -1307,8 +1304,10 @@ dladdr(const void *addr, Dl_info *info)
 
 #ifdef __HAVE_FUNCTION_DESCRIPTORS
 	if (best_def != NULL && ELF_ST_TYPE(best_def->st_info) == STT_FUNC)
-		info->dli_saddr = (void *)_rtld_function_descriptor_alloc(obj, 
+		info->dli_saddr = (void *)_rtld_function_descriptor_alloc(obj,
 		    best_def, 0);
+#else
+	__USE(best_def);
 #endif /* __HAVE_FUNCTION_DESCRIPTORS */
 
 	lookup_mutex_exit();
@@ -1377,8 +1376,9 @@ dl_iterate_phdr(int (*callback)(struct dl_phdr_info *, size_t, void *), void *pa
 
 	for (obj = _rtld_objlist;  obj != NULL;  obj = obj->next) {
 		phdr_info.dlpi_addr = (Elf_Addr)obj->relocbase;
-		phdr_info.dlpi_name = STAILQ_FIRST(&obj->names) ?
-		    STAILQ_FIRST(&obj->names)->name : obj->path;
+		/* XXX: wrong but not fixing it yet */
+		phdr_info.dlpi_name = SIMPLEQ_FIRST(&obj->names) ?
+		    SIMPLEQ_FIRST(&obj->names)->name : obj->path;
 		phdr_info.dlpi_phdr = obj->phdr;
 		phdr_info.dlpi_phnum = obj->phsize / sizeof(obj->phdr[0]);
 #if defined(__HAVE_TLS_VARIANT_I) || defined(__HAVE_TLS_VARIANT_II)
@@ -1478,7 +1478,7 @@ static Obj_Entry *
 _rtld_obj_from_addr(const void *addr)
 {
 	Obj_Entry *obj;
-	
+
 	for (obj = _rtld_objlist;  obj != NULL;  obj = obj->next) {
 		if (addr < (void *) obj->mapbase)
 			continue;
@@ -1502,7 +1502,7 @@ static void
 _rtld_objlist_remove(Objlist *list, Obj_Entry *obj)
 {
 	Objlist_Entry *elm;
-	
+
 	if ((elm = _rtld_objlist_find(list, obj)) != NULL) {
 		SIMPLEQ_REMOVE(list, elm, Struct_Objlist_Entry, link);
 		xfree(elm);
@@ -1556,7 +1556,7 @@ _rtld_shared_enter(void)
 		 */
 		if ((_rtld_mutex & RTLD_EXCLUSIVE_MASK) ||
 		    _rtld_waiter_exclusive)
-			_lwp_park(NULL, -1, __UNVOLATILE(&_rtld_mutex), NULL);
+			_lwp_park(NULL, 0, __UNVOLATILE(&_rtld_mutex), NULL);
 		/* Try to remove us from the waiter list. */
 		atomic_cas_uint(&_rtld_waiter_shared, self, 0);
 		if (waiter)
@@ -1612,7 +1612,7 @@ _rtld_exclusive_enter(sigset_t *mask)
 			_rtld_die();
 		}
 		if (cur)
-			_lwp_park(NULL, -1, __UNVOLATILE(&_rtld_mutex), NULL);
+			_lwp_park(NULL, 0, __UNVOLATILE(&_rtld_mutex), NULL);
 		atomic_cas_uint(&_rtld_waiter_exclusive, self, 0);
 		if (waiter)
 			_lwp_unpark(waiter, __UNVOLATILE(&_rtld_mutex));

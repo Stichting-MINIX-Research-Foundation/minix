@@ -1,4 +1,4 @@
-/*	$NetBSD: cksum.c,v 1.45 2011/08/29 14:12:29 joerg Exp $	*/
+/*	$NetBSD: cksum.c,v 1.46 2013/10/18 20:47:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)cksum.c	8.2 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: cksum.c,v 1.45 2011/08/29 14:12:29 joerg Exp $");
+__RCSID("$NetBSD: cksum.c,v 1.46 2013/10/18 20:47:06 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -149,7 +149,7 @@ __dead static void	usage(void);
 int
 main(int argc, char **argv)
 {
-	int ch, fd, rval, dosum, pflag, nohashstdin;
+	int ch, fd, rval, pflag, nohashstdin;
 	u_int32_t val;
 	off_t len;
 	char *fn;
@@ -161,7 +161,7 @@ main(int argc, char **argv)
 
 	cfncn = NULL;
 	pfncn = NULL;
-	dosum = pflag = nohashstdin = 0;
+	pflag = nohashstdin = 0;
 	normal = 0;
 	check_warn = 0;
 	do_check = 0;
@@ -178,7 +178,6 @@ main(int argc, char **argv)
 		hash = NULL;
 
 		if (!strcmp(progname, "sum")) {
-			dosum = 1;
 			cfncn = csum1;
 			pfncn = psum1;
 		} else {

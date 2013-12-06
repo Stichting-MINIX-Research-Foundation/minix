@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile.inc,v 1.3 2003/01/18 11:33:18 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.4 2013/04/05 20:15:42 christos Exp $
 
 .include <bsd.own.mk>
 
 # Our sources
 .PATH: ${.CURDIR}/thread-stub
 
-SRCS+=	__isthreaded.c thread-stub.c
+SRCS+=	__isthreaded.c thread-stub.c thread-stub-init.c

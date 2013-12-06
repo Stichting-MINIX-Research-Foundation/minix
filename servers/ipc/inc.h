@@ -15,6 +15,7 @@
 #include <sys/shm.h>
 #include <sys/sem.h>
 #include <sys/mman.h>
+#include <machine/param.h>
 #include <machine/vm.h>
 #include <machine/vmparam.h>
 #include <sys/vm.h>

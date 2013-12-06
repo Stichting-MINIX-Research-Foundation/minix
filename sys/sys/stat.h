@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.h,v 1.63 2011/09/04 10:02:33 christos Exp $	*/
+/*	$NetBSD: stat.h,v 1.68 2013/10/17 18:01:11 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -42,7 +42,17 @@
 #include <sys/featuretest.h>
 #include <sys/types.h>		/* XXX */
 
-#if defined(_NETBSD_SOURCE)
+#if (_POSIX_C_SOURCE - 0) >= 200809L || (_XOPEN_SOURCE - 0) >= 700 || \
+    defined(_NETBSD_SOURCE)
+/*
+ * POSIX:2008 / XPG7 requires struct timespec to be declared in
+ * this header, but does not provide the usual exemption
+ * "inclusion of this header may make visible symbols defined in <time.h>".
+ *
+ * This is a Standard omission, acknowledged by the committee and
+ * scheduled to be corrected in Technical Corrigendum 2, according to
+ * http://austingroupbugs.net/view.php?id=531
+ */
 #include <sys/time.h>
 #endif
 
@@ -54,11 +64,12 @@ struct stat {
 	uid_t	  st_uid;		/* user ID of the file's owner */
 	gid_t	  st_gid;		/* group ID of the file's group */
 	dev_t	  st_rdev;		/* device type */
-#if defined(_NETBSD_SOURCE)
-	struct	  timespec st_atimespec;/* time of last access */
-	struct	  timespec st_mtimespec;/* time of last data modification */
-	struct	  timespec st_ctimespec;/* time of last file status change */
-	struct 	  timespec st_birthtimespec; /* time of creation */
+#if (_POSIX_C_SOURCE - 0) >= 200809L || (_XOPEN_SOURCE - 0) >= 700 || \
+    defined(_NETBSD_SOURCE)
+	struct	  timespec st_atim;	/* time of last access */
+	struct	  timespec st_mtim;	/* time of last data modification */
+	struct	  timespec st_ctim;	/* time of last file status change */
+	struct	  timespec st_birthtim;	/* time of creation */
 #else
 	time_t	  st_atime;		/* time of last access */
 	long	  st_atimensec;		/* nsec of last access */
@@ -77,14 +88,23 @@ struct stat {
 	uint32_t  st_spare[2];
 };
 
+#if (_POSIX_C_SOURCE - 0) >= 200809L || (_XOPEN_SOURCE - 0) >= 700 || \
+    defined(_NETBSD_SOURCE)
+/* Standard-mandated compatibility */
+#define	st_atime		st_atim.tv_sec
+#define	st_mtime		st_mtim.tv_sec
+#define	st_ctime		st_ctim.tv_sec
+#define	st_birthtime		st_birthtim.tv_sec
+#endif
+
 #if defined(_NETBSD_SOURCE)
-#define	st_atime		st_atimespec.tv_sec
-#define	st_atimensec		st_atimespec.tv_nsec
-#define	st_mtime		st_mtimespec.tv_sec
-#define	st_mtimensec		st_mtimespec.tv_nsec
-#define	st_ctime		st_ctimespec.tv_sec
-#define	st_ctimensec		st_ctimespec.tv_nsec
-#define st_birthtime		st_birthtimespec.tv_sec
+#define	st_atimespec		st_atim
+#define	st_atimensec		st_atim.tv_nsec
+#define	st_mtimespec		st_mtim
+#define	st_mtimensec		st_mtim.tv_nsec
+#define	st_ctimespec		st_ctim
+#define	st_ctimensec		st_ctim.tv_nsec
+#define	st_birthtimespec        st_birthtim
 #define st_birthtimensec	st_birthtimespec.tv_nsec
 #endif
 
@@ -207,11 +227,14 @@ struct stat {
 #endif /* _KERNEL */
 #endif /* _NETBSD_SOURCE */
 
+#if (_POSIX_C_SOURCE - 0) >= 200809L || (_XOPEN_SOURCE - 0) >= 700 || \
+    defined(_NETBSD_SOURCE)
 /*
  * Special values for utimensat and futimens
  */
 #define UTIME_NOW	((1 << 30) - 1)
 #define UTIME_OMIT	((1 << 30) - 2)
+#endif
 
 #if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <sys/cdefs.h>
@@ -225,10 +248,15 @@ int	stat(const char *, struct stat *) __RENAME(__stat50);
 int	fstat(int, struct stat *) __RENAME(__fstat50);
 #endif
 mode_t	umask(mode_t);
+#if (_POSIX_C_SOURCE - 0) >= 200112L || defined(_XOPEN_SOURCE) || \
+    defined(_NETBSD_SOURCE)
+#ifndef __LIBC12_SOURCE__
+int	lstat(const char *, struct stat *) __RENAME(__lstat50);
+#endif
+#endif /* _POSIX_C_SOURCE >= 200112L || _XOPEN_SOURCE || _NETBSD_SOURCE */
 #if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
 int	fchmod(int, mode_t);
 #ifndef __LIBC12_SOURCE__
-int	lstat(const char *, struct stat *) __RENAME(__lstat50);
 int	mknod(const char *, mode_t, dev_t) __RENAME(__mknod50);
 #endif
 #endif /* defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE) */
@@ -244,12 +272,25 @@ int	lchmod(const char *, mode_t);
 /*
  * X/Open Extended API set 2 (a.k.a. C063)
  */
-#if defined(_INCOMPLETE_XOPEN_C063)  || defined(__minix)
+#if (_POSIX_C_SOURCE - 0) >= 200809L || (_XOPEN_SOURCE - 0) >= 700 || \
+    defined(_NETBSD_SOURCE) || defined(_INCOMPLETE_XOPEN_C063)
+int     fchmodat(int, const char *, mode_t, int);
 int     fstatat(int, const char *, struct stat *, int);
+int     mkdirat(int, const char *, mode_t);
+int     mkfifoat(int, const char *, mode_t);
+int     mknodat(int, const char *, mode_t, dev_t);
 int     utimensat(int, const char *, const struct timespec *, int);
 #endif
 
+#ifdef _NETBSD_SOURCE
+int utimens(const char *, const struct timespec *);
+int lutimens(const char *, const struct timespec *);
+#endif
+
+#if (_POSIX_C_SOURCE - 0) >= 200809L || (_XOPEN_SOURCE - 0) >= 700 || \
+    defined(_NETBSD_SOURCE)
 int futimens(int, const struct timespec *);
+#endif
 #endif
 
 __END_DECLS

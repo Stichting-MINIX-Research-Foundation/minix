@@ -1,10 +1,10 @@
-/*	$NetBSD: ptrace.S,v 1.6 2011/01/16 02:43:10 matt Exp $	*/
+/*	$NetBSD: ptrace.S,v 1.7 2013/09/12 15:36:15 joerg Exp $	*/
 
 #include "SYS.h"
 #include "assym.h"
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: ptrace.S,v 1.6 2011/01/16 02:43:10 matt Exp $")
+__RCSID("$NetBSD: ptrace.S,v 1.7 2013/09/12 15:36:15 joerg Exp $")
 #endif /* LIBC_SCCS && !lint */
 
 #define	XCALLFRAMELEN		((((2+5)*SZREG) + CALLFRAMELEN - 1) & -CALLFRAMELEN)
@@ -23,7 +23,7 @@ ENTRY(ptrace)
 	stw	%r4,XCALLFRAME_PID(%r1)
 	stw	%r5,XCALLFRAME_ADDR(%r1)
 	stw	%r6,XCALLFRAME_DATA(%r1)
-#ifdef PIC
+#ifdef __PIC__
 	stw	%r30,XCALLFRAME_R30(%r1)
 	PIC_TOCSETUP(ptrace, %r30)
 #endif
@@ -32,7 +32,7 @@ ENTRY(ptrace)
 	li	%r7,0
 	stw	%r7,0(%r3)
 
-#ifdef PIC
+#ifdef __PIC__
 	lwz	%r30,XCALLFRAME_R30(%r1)
 #endif
 	lwz	%r6,XCALLFRAME_DATA(%r1)
@@ -43,7 +43,7 @@ ENTRY(ptrace)
 	lwz	%r0,CALLFRAME_LR(%r1)
 	mtlr	%r0
 #else
-#ifdef PIC
+#ifdef __PIC__
 	mflr	%r0
 	PIC_GOTSETUP(%r7)
 	lwz	%r7,_C_LABEL(errno)@got(%r7)
@@ -54,7 +54,7 @@ ENTRY(ptrace)
 	lis	%r7,_C_LABEL(errno)@ha
 	li	%r8,0
 	stw	%r8,_C_LABEL(errno)@l(%r7)
-#endif /* PIC */
+#endif /* __PIC__ */
 #endif /* _REENTRANT */
 	_DOSYSCALL(ptrace)
 	bnslr

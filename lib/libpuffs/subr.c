@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.c,v 1.23 2008/08/12 19:44:39 pooka Exp $	*/
+/*	$NetBSD: subr.c,v 1.27 2011/02/17 17:55:36 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006 Antti Kantee.  All Rights Reserved.
@@ -27,24 +27,23 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: subr.c,v 1.23 2008/08/12 19:44:39 pooka Exp $");
+__RCSID("$NetBSD: subr.c,v 1.27 2011/02/17 17:55:36 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
-#include <sys/dirent.h>
 #include <sys/time.h>
+#include <sys/vnode.h>
+#include <sys/dirent.h>
 
 #include <assert.h>
 #include <errno.h>
+#include <puffs.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <stddef.h>
 #include <string.h>
 #include <unistd.h>
 
-#include "puffs.h"
 #include "puffs_priv.h"
-
 
 int
 puffs_gendotdent(struct dirent **dent, ino_t id, int dotdot, size_t *reslen)
@@ -62,32 +61,17 @@ puffs_nextdent(struct dirent **dent, const char *name, ino_t id, uint8_t dtype,
 	size_t *reslen)
 {
 	struct dirent *d = *dent;
-        unsigned int len, reclen;
-        int o;
-	char *cp;
 
 	/* check if we have enough room for our dent-aligned dirent */
 	if (_DIRENT_RECLEN(d, strlen(name)) > *reslen)
 		return 0;
 
-	d->d_ino = id;
-
-	/* Compute the length of the name */
-	cp = memchr(name, '\0', NAME_MAX);
-	if (cp == NULL)
-		len = NAME_MAX;
-	else
-		len = cp - (name);
-
-	/* Compute record length */
-	reclen = offsetof(struct dirent, d_name) + len + 1;
-	o = (reclen % sizeof(long));
-	if (o != 0)
-		reclen += sizeof(long) - o;
-
-	d->d_reclen = (unsigned short) reclen;
-        (void)memcpy(d->d_name, name, (size_t)len);
-        d->d_name[len] = '\0';
+	d->d_fileno = id;
+	d->d_type = dtype;
+	d->d_namlen = (uint16_t)strlen(name);
+	(void)memcpy(&d->d_name, name, (size_t)d->d_namlen);
+	d->d_name[d->d_namlen] = '\0';
+	d->d_reclen = (uint16_t)_DIRENT_SIZE(d);
 
 	*reslen -= d->d_reclen;
 	*dent = _DIRENT_NEXT(d);
@@ -118,12 +102,13 @@ int
 puffs_fsnop_statvfs(struct puffs_usermount *dontuse1, struct statvfs *sbp)
 {
 
-	/* FIXME: implement me
-	sbp->f_bsize = sbp->f_frsize = sbp->f_iosize = 512;
+	sbp->f_bsize = sbp->f_frsize = sbp->f_iosize = DEV_BSIZE;
 
 	sbp->f_bfree=sbp->f_bavail=sbp->f_bresvd=sbp->f_blocks = (fsblkcnt_t)0;
 	sbp->f_ffree=sbp->f_favail=sbp->f_fresvd=sbp->f_files = (fsfilcnt_t)0;
-	*/
+
+	sbp->f_namemax = MAXNAMLEN;
+
 	return 0;
 }
 
@@ -177,7 +162,7 @@ puffs_setvattr(struct vattr *vap, const struct vattr *sva)
 	SETIFVAL(va_nlink, nlink_t);
 	SETIFVAL(va_uid, uid_t);
 	SETIFVAL(va_gid, gid_t);
-	SETIFVAL(va_fsid, long);
+	SETIFVAL(va_fsid, dev_t);
 	SETIFVAL(va_size, u_quad_t);
 	SETIFVAL(va_fileid, ino_t);
 	SETIFVAL(va_blocksize, long);
@@ -211,7 +196,7 @@ puffs_vattr_null(struct vattr *vap)
 	vap->va_nlink = (nlink_t)PUFFS_VNOVAL;
 	vap->va_uid = (uid_t)PUFFS_VNOVAL;
 	vap->va_gid = (gid_t)PUFFS_VNOVAL;
-	vap->va_fsid = PUFFS_VNOVAL;
+	vap->va_fsid = (dev_t)PUFFS_VNOVAL;
 	vap->va_fileid = (ino_t)PUFFS_VNOVAL;
 	vap->va_size = (u_quad_t)PUFFS_VNOVAL;
 	vap->va_blocksize = sysconf(_SC_PAGESIZE);
@@ -289,15 +274,15 @@ puffs_stat2vattr(struct vattr *va, const struct stat *sb)
 	va->va_fsid = sb->st_dev;
 	va->va_fileid = sb->st_ino;
 	va->va_size = sb->st_size;
+	va->va_blocksize = sb->st_blksize;
 	va->va_atime = sb->st_atimespec;
 	va->va_ctime = sb->st_ctimespec;
 	va->va_mtime = sb->st_mtimespec;
-	va->va_blocksize = sb->st_blksize;
 	va->va_birthtime = sb->st_birthtimespec;
 	va->va_gen = sb->st_gen;
 	va->va_flags = sb->st_flags;
 	va->va_rdev = sb->st_rdev;
-	va->va_bytes = sb->st_blocks * sb->st_blksize;
+	va->va_bytes = sb->st_blocks << DEV_BSHIFT;
 	va->va_filerev = 0;
 	va->va_vaflags = 0;
 }
@@ -312,6 +297,21 @@ puffs_addvtype2mode(mode_t mode, enum vtype type)
 		break;
 	case VBLK:
 		mode |= S_IFBLK;
+		break;
+	case VSOCK:
+		mode |= S_IFSOCK;
+		break;
+	case VFIFO:
+		mode |= S_IFIFO;
+		break;
+	case VREG:
+		mode |= S_IFREG;
+		break;
+	case VLNK:
+		mode |= S_IFLNK;
+		break;
+	case VDIR:
+		mode |= S_IFDIR;
 		break;
 	default:
 		break;

@@ -18,13 +18,12 @@
 #define ZLIB_INTERNAL
 #include "zlib.h"
 
-#if defined(__NetBSD__) && (defined(_KERNEL) || defined(_STANDALONE))
+#if (defined(__minix) || defined(__NetBSD__)) && (defined(_KERNEL) || defined(_STANDALONE))
 
 /* XXX doesn't seem to need anything at all, but this is for consistency. */
 #  include <lib/libkern/libkern.h>
 
 #else
-#if defined(__minix) && !defined(_STANDALONE)
 #ifdef STDC
 #  ifndef _WIN32_WCE
 #    include <stddef.h>
@@ -47,7 +46,6 @@
 #    include <errno.h>
 #  endif
 #endif
-#endif /* defined(__minix) && !defined(_STANDALONE) */
 #endif /* __NetBSD__ && (_KERNEL || _STANDALONE) */
 
 #ifndef local

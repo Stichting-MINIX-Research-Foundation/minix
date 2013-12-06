@@ -1,4 +1,4 @@
-/*	$NetBSD: quota1.h,v 1.5 2011/11/25 16:55:05 dholland Exp $	*/
+/*	$NetBSD: quota1.h,v 1.7 2012/08/26 02:32:14 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -45,14 +45,6 @@
  * is deprecated. the newer implementation is defined in quota2.h
  * and friends
  */
-
-/*
- * Definitions for the default names of the quotas files/quota types.
- */
-#define INITQFNAMES { \
-	"user",		/* USRQUOTA */ \
-	"group",	/* GRPQUOTA */ \
-}
 
 /*
  * Definitions for disk quotas imposed on the average user
@@ -104,8 +96,9 @@ struct dqblk {
 };
 
 /* quota1_subr.c */
-struct quota2_entry;
-void dqblk_to_quotaval(const struct dqblk *, struct quotaval *);
-void quotaval_to_dqblk(const struct quotaval *, struct dqblk *);
+void dqblk_to_quotavals(const struct dqblk *,
+			struct quotaval *, struct quotaval *);
+void quotavals_to_dqblk(const struct quotaval *, const struct quotaval *,
+			struct dqblk *);
 
 #endif /* !_UFS_UFS_QUOTA1_H_ */

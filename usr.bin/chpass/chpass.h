@@ -1,4 +1,4 @@
-/*	$NetBSD: chpass.h,v 1.12 2005/02/17 17:09:48 xtraeme Exp $	*/
+/*	$NetBSD: chpass.h,v 1.13 2011/08/29 14:08:39 joerg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -72,7 +72,7 @@ int	 verify(char *, struct passwd *);
 #ifdef YP
 int	check_yppasswdd(void);
 int	pw_yp(struct passwd *, uid_t);
-void	yppw_error(const char *name, int, int);
+__dead void	yppw_error(const char *name, int, int);
 void	yppw_prompt(void);
 struct passwd *ypgetpwnam(const char *);
 struct passwd *ypgetpwuid(uid_t);

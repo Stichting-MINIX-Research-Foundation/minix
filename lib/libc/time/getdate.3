@@ -1,6 +1,6 @@
-.\"	$NetBSD: getdate.3,v 1.2 2011/04/14 05:50:49 jruoho Exp $
+.\"	$NetBSD: getdate.3,v 1.8 2012/12/14 23:26:17 uwe Exp $
 .\"
-.\" Copyright (c) 2009, The NetBSD Foundation.
+.\" Copyright (c) 2009, 2011, 2012, The NetBSD Foundation.
 .\" All Rights Reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 14, 2011
+.Dd December 14, 2012
 .Dt GETDATE 3
 .Os
 .Sh NAME
@@ -49,7 +49,7 @@ The
 function converts a date or time character string pointed to by
 .Fa str
 into a static
-.Va tm
+.Vt tm
 structure described in
 .Xr tm 3 .
 .Pp
@@ -83,7 +83,7 @@ If only the year is given, the values of the
 and
 .Fa tm_isdst
 members of the returned
-.Va "struct tm"
+.Vt "struct tm"
 are unspecified.
 .It
 If the century is given, but the year within the century is not given,
@@ -105,7 +105,7 @@ environment timezone.
 If successful, the
 .Fn getdate
 function returns a pointer to a static
-.Va tm
+.Vt tm
 structure containing the broken-down time.
 Otherwise, a null pointer is returned and
 .Va getdate_err
@@ -131,10 +131,9 @@ Cannot allocate memory.
 .It 7
 Input string does not match any line in the template file.
 .It 8
-Input string is invalid
-.Pq for example February 31
+Input string is invalid (for example, February 31)
 or could not be represented in a
-.Va time_t .
+.Vt time_t .
 .El
 .Sh ENVIRONMENT
 .Bl -tag -width DATEMSK
@@ -169,7 +168,7 @@ The following are examples of valid input for the above template:
 .Bd -literal -offset indent -compact
 10/1/87 4 PM
 Friday
-Firday September 18, 1987, 10:30:30
+Friday September 18, 1987, 10:30:30
 24,9,1986 10:30
 at monday the 1st of december in 1986
 run job at 3 PM, december 2nd
@@ -178,12 +177,12 @@ run job at 3 PM, december 2nd
 The following examples show how local data and time specification can be
 defined in the template.
 .Pp
-.Bl -column -offset indent ".Sy Input String" ".Sy Line in Template"
+.Bl -column -offset indent ".Li Friday 12:00:00" ".Sy Line in Template"
 .It Sy "Input String" Ta Sy "Line in Template"
 .It Li 11/27/86 Ta Li \&%m/\&%d/\&%y
-.It Li 27.11.86 Ta Li \&%d.\&%m/\&%y
+.It Li 27.11.86 Ta Li \&%d.\&%m.\&%y
 .It Li 86-11-27 Ta Li \&%y-\&%m-\&%d
-.It Li "Friday 12:00:00" Ta "\&%A \&%H:\&%M:\&%S"
+.It Li "Friday 12:00:00" Ta Li "\&%A \&%H:\&%M:\&%S"
 .El
 .Pp
 The following examples illustrate the Internal Format Conversion rules
@@ -193,17 +192,17 @@ and the
 .Ev LC_TIME
 environment variable is set to the default C locale.
 .Pp
-.Bl -column -offset indent ".Sy Input String" ".Sy Line in Template" ".Sy Date"
+.Bl -column -offset indent ".Li Jan Wed 1989" ".Sy Line in Template" ".Sy Date"
 .It Sy Input String Ta Sy Line in Template Ta Sy Date
 .It Li Mon Ta Li \&%a Ta Li "Mon Sep 22 12:19:47 EDT 1986"
 .It Li Sun Ta Li \&%a Ta Li "Sun Sep 28 12:19:47 EDT 1986"
-.It Li Fri Ta Li \&%a Ta Li "Sun Sep 26 12:19:47 EDT 1986"
+.It Li Fri Ta Li \&%a Ta Li "Fri Sep 26 12:19:47 EDT 1986"
 .It Li September Ta Li \&%B Ta Li "Mon Sep  1 12:19:47 EDT 1986"
 .It Li January Ta Li \&%B Ta Li "Thu Jan  1 12:19:47 EST 1987"
-.It Li December Ta Li \&%B Ta Li "Mon Dec  1 12:19:47 EST 1987"
+.It Li December Ta Li \&%B Ta Li "Mon Dec  1 12:19:47 EST 1986"
 .It Li "Sep Mon" Ta Li "\&%b %a" Ta Li "Mon Sep  1 12:19:47 EDT 1986"
-.It Li "Jan Fri" Ta Li "\&%b %a" Ta Li "Fri Jan  2 12:19:47 EDT 1987"
-.It Li "Dec Mon" Ta Li "\&%b %a" Ta Li "Mon Dec  1 12:19:47 EDT 1986"
+.It Li "Jan Fri" Ta Li "\&%b %a" Ta Li "Fri Jan  2 12:19:47 EST 1987"
+.It Li "Dec Mon" Ta Li "\&%b %a" Ta Li "Mon Dec  1 12:19:47 EST 1986"
 .It Li "Jan Wed 1989" Ta Li "\&%b \&%a \&%Y" Ta Li "Wed Jan  4 12:19:47 EST 1989"
 .It Li "Fri 9" Ta Li "\&%a \&%H" Ta Li "Fri Sep 26 09:00:00 EDT 1986"
 .It Li "Feb 10:30" Ta Li "\&%b \&%H:\&%S" Ta Li "Sun Feb  1 10:00:30 EST 1987"

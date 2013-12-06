@@ -259,7 +259,11 @@ putchar(int c)
 }
 
 int
+#if !defined(__minix)
+getchar(void)
+#else
 getchar_ex(void)
+#endif /* !defined(__minix) */
 {
 	int c;
 #ifdef SUPPORT_SERIAL
@@ -272,9 +276,17 @@ getchar_ex(void)
 		c = congetc();
 #ifdef CONSOLE_KEYMAP
 		{
+#if !defined(__minix)
+			char *cp = strchr(CONSOLE_KEYMAP, c);
+#else
 			char *cp = strchr(CONSOLE_KEYMAP, c & 0xff);
+#endif /* !defined(__minix) */
 			if (cp != 0 && cp[1] != 0)
+#if !defined(__minix)
+				c = cp[1];
+#else
 				c = cp[1] | (c & 0xff00);
+#endif /* !defined(__minix) */
 		}
 #endif
 		return c;
@@ -302,11 +314,13 @@ getchar_ex(void)
 #endif /* SUPPORT_SERIAL */
 }
 
+#if defined(__minix)
 int
 getchar(void)
 {
 	return getchar_ex() & 0xff;
 }
+#endif /* defined(__minix) */
 
 int
 iskey(int intr)

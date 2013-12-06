@@ -9,10 +9,6 @@ gettimeofday.c
 #include <string.h>
 #include <sys/time.h>
 
-#ifdef __weak_alias
-__weak_alias(gettimeofday, _gettimeofday)
-#endif
-
 int gettimeofday(struct timeval *__restrict tp, void *__restrict tzp)
 {
   message m;

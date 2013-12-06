@@ -1,0 +1,4 @@
+# $NetBSD: module.mi,v 1.1 2013/01/16 16:01:08 christos Exp $
+./usr/libdata/debug/usr/tests/modules/k_helper3.debug	tests-sys-debug		debug,atf,rump
+./usr/libdata/debug/usr/tests/modules/t_builtin.debug	tests-sys-debug		debug,atf,rump
+./usr/libdata/debug/usr/tests/modules/t_modctl.debug	tests-sys-debug		debug,atf,rump

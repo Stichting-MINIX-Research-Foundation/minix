@@ -68,11 +68,55 @@ const cmdline::path_option cli::kyuafile_option(
     "file", "Kyuafile");
 
 
+/// Standard definition of the option to specify filters on test results.
+const cmdline::list_option cli::results_filter_option(
+    "results-filter", "Comma-separated list of result types to include in "
+    "the report", "types", "skipped,xfail,broken,failed");
+
+
 /// Standard definition of the option to specify the store.
 const cmdline::path_option cli::store_option(
     's', "store",
     "Path to the store database",
     "file", "~/.kyua/store.db");
+
+
+namespace {
+
+
+/// Converts a set of result type names to identifiers.
+///
+/// \param names The collection of names to process; may be empty.
+///
+/// \return The result type identifiers corresponding to the input names.
+///
+/// \throw std::runtime_error If any name in the input names is invalid.
+static cli::result_types
+parse_types(const std::vector< std::string >& names)
+{
+    using engine::test_result;
+    typedef std::map< std::string, test_result::result_type > types_map;
+    types_map valid_types;
+    valid_types["broken"] = test_result::broken;
+    valid_types["failed"] = test_result::failed;
+    valid_types["passed"] = test_result::passed;
+    valid_types["skipped"] = test_result::skipped;
+    valid_types["xfail"] = test_result::expected_failure;
+
+    cli::result_types types;
+    for (std::vector< std::string >::const_iterator iter = names.begin();
+         iter != names.end(); ++iter) {
+        const types_map::const_iterator match = valid_types.find(*iter);
+        if (match == valid_types.end())
+            throw std::runtime_error(F("Unknown result type '%s'") % *iter);
+        else
+            types.push_back((*match).second);
+    }
+    return types;
+}
+
+
+}  // anonymous namespace
 
 
 /// Gets the path to the build root, if any.
@@ -126,6 +170,29 @@ cli::kyuafile_path(const cmdline::parsed_cmdline& cmdline)
 {
     return cmdline.get_option< cmdline::path_option >(
         kyuafile_option.long_name());
+}
+
+
+/// Gets the filters for the result types.
+///
+/// \param cmdline The parsed command line.
+///
+/// \return A collection of result types to be used for filtering.
+///
+/// \throw std::runtime_error If any of the user-provided filters is invalid.
+cli::result_types
+cli::get_result_types(const utils::cmdline::parsed_cmdline& cmdline)
+{
+    result_types types = parse_types(
+        cmdline.get_option< cmdline::list_option >("results-filter"));
+    if (types.empty()) {
+        types.push_back(engine::test_result::passed);
+        types.push_back(engine::test_result::skipped);
+        types.push_back(engine::test_result::expected_failure);
+        types.push_back(engine::test_result::broken);
+        types.push_back(engine::test_result::failed);
+    }
+    return types;
 }
 
 

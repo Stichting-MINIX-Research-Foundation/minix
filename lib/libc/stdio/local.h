@@ -1,4 +1,4 @@
-/*	$NetBSD: local.h,v 1.34 2012/03/27 15:05:42 christos Exp $	*/
+/*	$NetBSD: local.h,v 1.37 2013/10/04 20:49:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -65,10 +65,12 @@ extern int	__swsetup(FILE *);
 extern int	__sflags(const char *, int *);
 extern int	__svfscanf(FILE * __restrict, const char * __restrict,
     va_list) __scanflike(2, 0);
-extern int	__svfscanf_unlocked(FILE * __restrict, const char * __restrict,
-    va_list) __scanflike(2, 0);
-extern int	__vfprintf_unlocked(FILE * __restrict, const char * __restrict,
-    va_list) __printflike(2, 0);
+extern int	__svfscanf_l(FILE * __restrict, locale_t,
+    const char * __restrict, va_list) __scanflike(3, 0);
+extern int	__svfscanf_unlocked_l(FILE * __restrict, locale_t,
+    const char * __restrict, va_list) __scanflike(3, 0);
+extern int	__vfprintf_unlocked_l(FILE * __restrict, locale_t,
+    const char * __restrict, va_list) __printflike(3, 0);
 
 
 extern int	__sdidinit;
@@ -81,8 +83,8 @@ extern wint_t	__fputwc_unlock(wchar_t, FILE *);
 extern ssize_t	__getdelim(char **__restrict, size_t *__restrict, int,
     FILE *__restrict);
 extern char	*__fgetstr(FILE * __restrict, size_t * __restrict, int);
-extern int 	 __vfwprintf_unlocked(FILE *, const wchar_t *, va_list);
-extern int	 __vfwscanf_unlocked(FILE * __restrict,
+extern int 	 __vfwprintf_unlocked_l(FILE *, locale_t, const wchar_t *, va_list);
+extern int	 __vfwscanf_unlocked_l(FILE * __restrict, locale_t,
     const wchar_t * __restrict, va_list);
 
 /*
@@ -114,6 +116,8 @@ extern int	 __vfwscanf_unlocked(FILE * __restrict,
 
 extern void __flockfile_internal(FILE *, int);
 extern void __funlockfile_internal(FILE *, int);
+
+extern char *__gets(char *);
 
 /*
  * Detect if the current file position fits in a long int.

@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "from: @(#)fsplit.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: fsplit.c,v 1.28 2011/09/16 15:39:26 joerg Exp $");
+__RCSID("$NetBSD: fsplit.c,v 1.29 2013/01/23 20:39:46 riastradh Exp $");
 #endif
 #endif /* not lint */
 
@@ -235,9 +235,10 @@ saveit(const char *name)
 	}
 	strlcpy(fname, name, sizeof(fname));
 	fnamelen = strlen(fname);
+        /* Guaranteed by scan_name.  */
 	assert(fnamelen > 2);
-	assert(fname[fnamelen-2] = '.');
-	assert(fname[fnamelen-1] = 'f');
+	assert(fname[fnamelen-2] == '.');
+	assert(fname[fnamelen-1] == 'f');
 	fname[fnamelen-2] = '\0';
 
 	for (i = 0; i < numextonly; i++) {

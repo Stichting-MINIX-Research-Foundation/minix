@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.87 2012/06/22 14:54:35 christos Exp $	*/
+/*	$NetBSD: in.h,v 1.89 2013/06/27 19:38:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -39,6 +39,7 @@
 #ifndef _NETINET_IN_H_
 #define	_NETINET_IN_H_
 
+#include <sys/featuretest.h>
 #include <machine/int_types.h>
 
 #ifndef uint8_t
@@ -286,6 +287,17 @@ struct ip_opts {
 #endif
 #define	IP_RECVTTL		23   /* bool; receive IP TTL w/dgram */
 #define	IP_MINTTL		24   /* minimum TTL for packet or drop */
+#define	IP_PKTINFO		25   /* int; send interface and src addr */
+#define	IP_RECVPKTINFO		26   /* int; send interface and dst addr */
+
+/*
+ * Information sent in the control message of a datagram socket for
+ * IP_PKTINFO and IP_RECVPKTINFO.
+ */
+struct in_pktinfo {
+	struct in_addr	ipi_addr;	/* src/dst address */
+	unsigned int ipi_ifindex;	/* interface index */
+};
 
 /*
  * Defaults and limits for options

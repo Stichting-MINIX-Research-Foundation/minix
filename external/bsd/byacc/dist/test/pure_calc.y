@@ -1,4 +1,4 @@
-/*	$NetBSD: pure_calc.y,v 1.1.1.3 2011/09/10 21:22:10 christos Exp $	*/
+/*	$NetBSD: pure_calc.y,v 1.1.1.4 2013/04/06 14:45:27 christos Exp $	*/
 
 %{
 # include <stdio.h>
@@ -6,6 +6,15 @@
 
 int regs[26];
 int base;
+
+#ifdef YYBISON
+#define YYSTYPE int
+#define YYLEX_PARAM &yylval
+#define YYLEX_DECL() yylex(YYSTYPE *yylval)
+#define YYERROR_DECL() yyerror(const char *s)
+int YYLEX_DECL();
+static void YYERROR_DECL();
+#endif
 
 %}
 
@@ -65,8 +74,7 @@ number:  DIGIT
 %% /* start of programs */
 
 #ifdef YYBYACC
-extern int YYLEX_DECL();
-static void YYERROR_DECL();
+static int YYLEX_DECL();
 #endif
 
 int
@@ -79,13 +87,13 @@ main (void)
 }
 
 static void
-yyerror(const char *s)
+YYERROR_DECL()
 {
     fprintf(stderr, "%s\n", s);
 }
 
 int
-yylex(YYSTYPE *value)
+YYLEX_DECL()
 {
 	/* lexical analysis routine */
 	/* returns LETTER for a lower case letter, yylval = 0 through 25 */
@@ -99,11 +107,11 @@ yylex(YYSTYPE *value)
     /* c is now nonblank */
 
     if( islower( c )) {
-	*value = c - 'a';
+	*yylval = c - 'a';
 	return ( LETTER );
     }
     if( isdigit( c )) {
-	*value = c - '0';
+	*yylval = c - '0';
 	return ( DIGIT );
     }
     return( c );

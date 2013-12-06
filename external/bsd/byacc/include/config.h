@@ -1,10 +1,53 @@
 /* config.h.  Generated automatically by configure.  */
-/* @configure_input@ */
-/* $Id: config.h,v 1.2 2011/09/10 21:32:25 christos Exp $ */
+/* config_h.in.  Generated automatically from configure.in by autoheader.  */
 
-#define SYSTEM_NAME "netbsd"
-#define MIXEDCASE_FILENAMES 1
-#define CC_HAS_PROTOS 1
+/* Define to noreturn-attribute for gcc */
+/* #undef GCC_NORETURN */
+
+/* Define to 1 if the compiler supports gcc-like printf attribute. */
+/* #undef GCC_PRINTF */
+
+/* Define to printf-attribute for gcc */
+/* #undef GCC_PRINTFLIKE */
+
+/* Define to 1 if the compiler supports gcc-like scanf attribute. */
+/* #undef GCC_SCANF */
+
+/* Define to sscanf-attribute for gcc */
+/* #undef GCC_SCANFLIKE */
+
+/* Define to unused-attribute for gcc */
+/* #undef GCC_UNUSED */
+
+/* Define if you have the <fcntl.h> header file. */
 #define HAVE_FCNTL_H 1
-#define HAVE_ATEXIT 1
+
+/* Define if you have the `dbmalloc' library (-ldbmalloc). */
+/* #undef HAVE_LIBDBMALLOC */
+
+/* Define if you have the `dmalloc' library (-ldmalloc). */
+/* #undef HAVE_LIBDMALLOC */
+
+/* Define to 1 if mkstemp() is available and working. */
 #define HAVE_MKSTEMP 1
+
+/* Define to 1 if filesystem supports mixed-case filenames. */
+#define MIXEDCASE_FILENAMES 1
+
+/* Define to 1 if you want to perform memory-leak testing. */
+/* #undef NO_LEAKS */
+
+/* Define to the system name. */
+#define SYSTEM_NAME "minix"
+
+/* "Define to 1 if you want to use dbmalloc for testing." */
+/* #undef USE_DBMALLOC */
+
+/* "Define to 1 if you want to use dmalloc for testing." */
+/* #undef USE_DMALLOC */
+
+/* "Define to 1 if you want to use valgrind for testing." */
+/* #undef USE_VALGRIND */
+
+/* Define to 1 if you want to perform memory-leak testing. */
+/* #undef YY_NO_LEAKS */

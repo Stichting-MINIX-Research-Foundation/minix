@@ -1,4 +1,4 @@
-/* $NetBSD: setupterm.c,v 1.3 2011/10/03 19:18:55 roy Exp $ */
+/* $NetBSD: setupterm.c,v 1.4 2013/06/07 13:16:18 roy Exp $ */
 
 /*
  * Copyright (c) 2009, 2011 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: setupterm.c,v 1.3 2011/10/03 19:18:55 roy Exp $");
+__RCSID("$NetBSD: setupterm.c,v 1.4 2013/06/07 13:16:18 roy Exp $");
 
 #include <assert.h>
 #include <err.h>
@@ -67,7 +67,7 @@ ti_setupterm(TERMINAL **nterm, const char *term, int fildes, int *errret)
 
 	_DIAGASSERT(nterm != NULL);
 
-       	if (term == NULL)
+	if (term == NULL)
 		term = getenv("TERM");
 	if (term == NULL || *term == '\0') {
 		*nterm = NULL;
@@ -75,7 +75,7 @@ ti_setupterm(TERMINAL **nterm, const char *term, int fildes, int *errret)
 	}
 	if (fildes == STDOUT_FILENO && !isatty(fildes))
 		fildes = STDERR_FILENO;
-	
+
 	*nterm = calloc(1, sizeof(**nterm));
 	if (*nterm == NULL)
 		reterr(-1, "not enough memory to create terminal structure");
@@ -98,7 +98,7 @@ ti_setupterm(TERMINAL **nterm, const char *term, int fildes, int *errret)
 			/* NOTREACHED */
 		}
 	}
-	
+
 	(*nterm)->fildes = fildes;
 	_ti_setospeed(*nterm);
 	if (t_generic_type(*nterm))

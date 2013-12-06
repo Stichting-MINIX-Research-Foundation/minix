@@ -1,11 +1,11 @@
-/*	$NetBSD: namei.h,v 1.82 2012/10/13 17:47:11 dholland Exp $	*/
+/*	$NetBSD: namei.h,v 1.87 2012/11/18 18:25:50 dholland Exp $	*/
 
 
 /*
  * WARNING: GENERATED FILE.  DO NOT EDIT
  * (edit namei.src and run make namei in src/sys/sys)
  *   by:   NetBSD: gennameih.awk,v 1.5 2009/12/23 14:17:19 pooka Exp 
- *   from: NetBSD: namei.src,v 1.27 2012/10/13 17:46:50 dholland Exp 
+ *   from: NetBSD: namei.src,v 1.31 2012/11/18 18:25:08 dholland Exp 
  */
 
 /*
@@ -91,7 +91,7 @@ struct nameidata {
 	/*
 	 * Arguments to namei/lookup.
 	 */
-	struct vnode *ni_startdir;	/* starting dir, cwd if null */
+	struct vnode *ni_atdir;		/* startup dir, cwd if null */
 	struct pathbuf *ni_pathbuf;	/* pathname container */
 	char *ni_pnbuf;			/* extra pathname buffer ref (XXX) */
 	/*
@@ -127,7 +127,6 @@ struct nameidata {
 		 */
 		const char 	*cn_nameptr;	/* pointer to looked up name */
 		size_t		cn_namelen;	/* length of looked up comp */
-		u_long		cn_hash;	/* hash val of looked up name */
 		size_t		cn_consume;	/* chars to consume in lookup */
 	} ni_cnd;
 };
@@ -177,7 +176,7 @@ struct nameidata {
 #define NDINIT(ndp, op, flags, pathbuf) { \
 	(ndp)->ni_cnd.cn_nameiop = op; \
 	(ndp)->ni_cnd.cn_flags = flags; \
-	(ndp)->ni_startdir = NULL; \
+	(ndp)->ni_atdir = NULL; \
 	(ndp)->ni_pathbuf = pathbuf; \
 	(ndp)->ni_cnd.cn_cred = kauth_cred_get(); \
 }
@@ -186,7 +185,7 @@ struct nameidata {
  * Use this to set the start directory for openat()-type operations.
  */
 #define NDAT(ndp, dir) {			\
-	(ndp)->ni_startdir = (dir);		\
+	(ndp)->ni_atdir = (dir);		\
 }
 
 #endif
@@ -234,7 +233,7 @@ extern pool_cache_t pnbuf_cache;	/* pathname buffer cache */
 #define	PNBUF_PUT(pnb)	pool_cache_put(pnbuf_cache, (pnb))
 
 /*
- * Typesafe flags for namei_simple.
+ * Typesafe flags for namei_simple/nameiat_simple.
  *
  * This encoding is not optimal but serves the important purpose of
  * not being type-compatible with the regular namei flags.
@@ -248,11 +247,13 @@ extern const namei_simple_flags_t
 	NSM_FOLLOW_TRYEMULROOT;
 
 /*
- * namei_simple_* - the simple cases of namei, with no struct
- *                  nameidata involved.
+ * namei(at)?_simple_* - the simple cases of namei, with no struct
+ *                       nameidata involved.
  *
  * namei_simple_kernel takes a kernel-space path as the first argument.
  * namei_simple_user takes a user-space path as the first argument.
+ * The nameiat_simple_* variants handle relative path using the given 
+ * directory vnode instead of current directory.
  *
  * A namei call can be converted to namei_simple_* if:
  *    - the second arg to NDINIT is LOOKUP;
@@ -262,21 +263,27 @@ extern const namei_simple_flags_t
  */
 int namei_simple_kernel(const char *, namei_simple_flags_t, struct vnode **);
 int namei_simple_user(const char *, namei_simple_flags_t, struct vnode **);
+int nameiat_simple_kernel(struct vnode *, const char *, namei_simple_flags_t,
+    struct vnode **);
+int nameiat_simple_user(struct vnode *, const char *, namei_simple_flags_t, 
+    struct vnode **);
 
 int	namei(struct nameidata *);
 uint32_t namei_hash(const char *, const char **);
 int	lookup_for_nfsd(struct nameidata *, struct vnode *, int neverfollow);
 int	lookup_for_nfsd_index(struct nameidata *, struct vnode *);
 int	relookup(struct vnode *, struct vnode **, struct componentname *, int);
-void	cache_purge1(struct vnode *, const struct componentname *, int);
+void	cache_purge1(struct vnode *, const char *, size_t, int);
 #define	PURGE_PARENTS	1
 #define	PURGE_CHILDREN	2
-#define	cache_purge(vp)	cache_purge1((vp), NULL, PURGE_PARENTS|PURGE_CHILDREN)
-int	cache_lookup(struct vnode *, struct vnode **, struct componentname *);
-int	cache_lookup_raw(struct vnode *, struct vnode **,
-			 struct componentname *);
+#define	cache_purge(vp)	cache_purge1((vp),NULL,0,PURGE_PARENTS|PURGE_CHILDREN)
+int	cache_lookup(struct vnode *, const char *, size_t, uint32_t, uint32_t,
+			int *, struct vnode **);
+int	cache_lookup_raw(struct vnode *, const char *, size_t, uint32_t,
+			int *, struct vnode **);
 int	cache_revlookup(struct vnode *, struct vnode **, char **, char *);
-void	cache_enter(struct vnode *, struct vnode *, struct componentname *);
+void	cache_enter(struct vnode *, struct vnode *,
+			const char *, size_t, uint32_t);
 void	nchinit(void);
 void	nchreinit(void);
 void	cache_cpu_init(struct cpu_info *);

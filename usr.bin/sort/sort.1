@@ -1,4 +1,4 @@
-.\"	$NetBSD: sort.1,v 1.32 2010/12/18 23:36:23 wiz Exp $
+.\"	$NetBSD: sort.1,v 1.34 2013/05/29 15:00:35 wiz Exp $
 .\"
 .\" Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -59,14 +59,14 @@
 .\"
 .\"     @(#)sort.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd December 18, 2010
+.Dd May 29, 2013
 .Dt SORT 1
 .Os
 .Sh NAME
 .Nm sort
 .Nd sort or merge text files
 .Sh SYNOPSIS
-.Nm sort
+.Nm
 .Op Fl bcdfHilmnrSsu
 .Oo
 .Fl k
@@ -99,6 +99,8 @@ returns 0.
 .Nm
 .Fl c
 produces no output.
+See also
+.Fl u .
 .It Fl H
 Ignored for compatibility with earlier versions of
 .Nm .
@@ -159,7 +161,7 @@ Ignore all non-printable characters.
 Sort by the string length of the field, not by the field itself.
 .It Fl n
 An initial numeric string, consisting of optional blank space, optional
-minus sign, and zero or more digits (including decimal point)
+plus or minus sign, and zero or more digits (including decimal point)
 .\" with
 .\" optional radix character and thousands
 .\" separator
@@ -220,7 +222,7 @@ considered part of a field when determining key offsets.
 .Ar char
 is used as the record separator character.
 This should be used with discretion;
-.Fl R Ar \*[Lt]alphanumeric\*[Gt]
+.Fl R Aq Ar alphanumeric
 usually produces undesirable results.
 The default record separator is newline.
 .It Fl k Ar field1 Ns Op Li \&, Ns Ar field2

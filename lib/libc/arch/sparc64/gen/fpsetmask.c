@@ -1,4 +1,4 @@
-/*	$NetBSD: fpsetmask.c,v 1.6 2012/03/17 21:35:06 martin Exp $	*/
+/*	$NetBSD: fpsetmask.c,v 1.7 2013/10/28 01:06:36 mrg Exp $	*/
 
 /*
  * Written by J.T. Conklin, Apr 10, 1995
@@ -7,7 +7,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fpsetmask.c,v 1.6 2012/03/17 21:35:06 martin Exp $");
+__RCSID("$NetBSD: fpsetmask.c,v 1.7 2013/10/28 01:06:36 mrg Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -24,8 +24,7 @@ extern fp_except _softfloat_float_exception_mask;
 #endif
 
 fp_except
-fpsetmask(mask)
-	fp_except mask;
+fpsetmask(fp_except mask)
 {
 	fp_except old;
 	fp_except new;

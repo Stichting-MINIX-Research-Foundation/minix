@@ -1,4 +1,4 @@
-/*	$NetBSD: wcsxfrm.c,v 1.3 2012/06/25 22:32:44 abs Exp $	*/
+/*	$NetBSD: wcsxfrm.c,v 1.5 2013/05/17 12:55:57 joerg Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,23 +28,26 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: wcsxfrm.c,v 1.3 2012/06/25 22:32:44 abs Exp $");
+__RCSID("$NetBSD: wcsxfrm.c,v 1.5 2013/05/17 12:55:57 joerg Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 
 #include <assert.h>
 #include <wchar.h>
+#include <locale.h>
+#include "setlocale_local.h"
 
 /*
  * Compare strings with using collating information.
  */
 size_t
-wcsxfrm(wchar_t *s1, const wchar_t *s2, size_t n)
+wcsxfrm_l(wchar_t *s1, const wchar_t *s2, size_t n, locale_t loc)
 {
 	size_t len;
 
 	/* XXX: LC_COLLATE should be implemented. */
+	/* LINTED */(void)loc;
 
 	len = wcslen(s2);
 	if (len<n)
@@ -59,4 +62,10 @@ wcsxfrm(wchar_t *s1, const wchar_t *s2, size_t n)
 	}
 
 	return (len);
+}
+
+size_t
+wcsxfrm(wchar_t *s1, const wchar_t *s2, size_t n)
+{
+	return wcsxfrm_l(s1, s2, n, _current_locale());
 }

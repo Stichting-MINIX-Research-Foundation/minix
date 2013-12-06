@@ -5,8 +5,10 @@
 
 .if !defined(__MINIX)
 MODULE_SHLIB_MAJOR!= . ${NETBSDSRCDIR}/lib/i18n_module/shlib_version ; echo $$major
-CPPFLAGS.citrus_module.c+=-DI18NMODULE_MAJOR=${MODULE_SHLIB_MAJOR}
+.else
+MODULE_SHLIB_MAJOR=1
 .endif # !defined(__MINIX)
+CPPFLAGS.citrus_module.c+=-DI18NMODULE_MAJOR=${MODULE_SHLIB_MAJOR}
 SRCS+=	citrus_bcs.c citrus_bcs_strtol.c citrus_bcs_strtoul.c \
 	citrus_csmapper.c citrus_ctype.c citrus_ctype_fallback.c \
 	citrus_db.c citrus_db_hash.c citrus_esdb.c citrus_hash.c \

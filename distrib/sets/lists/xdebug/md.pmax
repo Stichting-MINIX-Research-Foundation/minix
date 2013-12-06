@@ -1,0 +1,3 @@
+# $NetBSD: md.pmax,v 1.1 2013/01/16 21:11:17 christos Exp $
+./usr/libdata/debug/usr/X11R6/bin/XdecNetBSD.debug	-unknown-	debug,x11
+./usr/libdata/debug/usr/X11R6/bin/Xvfb.debug		-unknown-	debug,x11

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs.c,v 1.58 2012/05/21 21:34:16 dsl Exp $	*/
+/*	$NetBSD: ufs.c,v 1.64 2013/10/20 17:17:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -136,8 +136,18 @@ struct fs {
 #define indp_t		int32_t
 #endif
 typedef uint32_t	ino32_t;
+
 #ifndef FSBTODB
-#define FSBTODB(fs, indp) fsbtodb(fs, indp)
+#define FSBTODB(fs, indp) FFS_FSBTODB(fs, indp)
+#endif
+#ifndef UFS_NINDIR
+#define UFS_NINDIR FFS_NINDIR
+#endif
+#ifndef ufs_blkoff
+#define ufs_blkoff ffs_blkoff
+#endif
+#ifndef ufs_lblkno
+#define ufs_lblkno ffs_lblkno
 #endif
 
 /*
@@ -257,7 +267,7 @@ read_inode(ino32_t inumber, struct open_file *f)
 	char *buf;
 	size_t rsize;
 	int rc;
-	daddr_t inode_sector;
+	daddr_t inode_sector = 0; /* XXX: gcc */
 #ifdef LIBSA_LFS
 	struct ufs_dinode *dip;
 	int cnt;
@@ -324,33 +334,33 @@ block_map(struct open_file *f, indp_t file_block, indp_t *disk_block_p)
 	/*
 	 * Index structure of an inode:
 	 *
-	 * di_db[0..NDADDR-1]	hold block numbers for blocks
-	 *			0..NDADDR-1
+	 * di_db[0..UFS_NDADDR-1]	hold block numbers for blocks
+	 *			0..UFS_NDADDR-1
 	 *
 	 * di_ib[0]		index block 0 is the single indirect block
 	 *			holds block numbers for blocks
-	 *			NDADDR .. NDADDR + NINDIR(fs)-1
+	 *			UFS_NDADDR .. UFS_NDADDR + UFS_NINDIR(fs)-1
 	 *
 	 * di_ib[1]		index block 1 is the double indirect block
 	 *			holds block numbers for INDEX blocks for blocks
-	 *			NDADDR + NINDIR(fs) ..
-	 *			NDADDR + NINDIR(fs) + NINDIR(fs)**2 - 1
+	 *			UFS_NDADDR + UFS_NINDIR(fs) ..
+	 *			UFS_NDADDR + UFS_NINDIR(fs) + UFS_NINDIR(fs)**2 - 1
 	 *
 	 * di_ib[2]		index block 2 is the triple indirect block
 	 *			holds block numbers for double-indirect
 	 *			blocks for blocks
-	 *			NDADDR + NINDIR(fs) + NINDIR(fs)**2 ..
-	 *			NDADDR + NINDIR(fs) + NINDIR(fs)**2
-	 *				+ NINDIR(fs)**3 - 1
+	 *			UFS_NDADDR + UFS_NINDIR(fs) + UFS_NINDIR(fs)**2 ..
+	 *			UFS_NDADDR + UFS_NINDIR(fs) + UFS_NINDIR(fs)**2
+	 *				+ UFS_NINDIR(fs)**3 - 1
 	 */
 
-	if (file_block < NDADDR) {
+	if (file_block < UFS_NDADDR) {
 		/* Direct block. */
 		*disk_block_p = fp->f_di.di_db[file_block];
 		return 0;
 	}
 
-	file_block -= NDADDR;
+	file_block -= UFS_NDADDR;
 
 	ind_cache = file_block >> LN2_IND_CACHE_SZ;
 	if (ind_cache == fp->f_ind_cache_block) {
@@ -362,7 +372,7 @@ block_map(struct open_file *f, indp_t file_block, indp_t *disk_block_p)
 		level += fp->f_nishift;
 		if (file_block < (indp_t)1 << level)
 			break;
-		if (level > NIADDR * fp->f_nishift)
+		if (level > UFS_NIADDR * fp->f_nishift)
 			/* Block number too high */
 			return EFBIG;
 		file_block -= (indp_t)1 << level;
@@ -418,19 +428,19 @@ buf_read_file(struct open_file *f, char **buf_p, size_t *size_p)
 	struct fs *fs = fp->f_fs;
 	long off;
 	indp_t file_block;
-	indp_t disk_block;
 	size_t block_size;
 	int rc;
 
-	off = blkoff(fs, fp->f_seekp);
-	file_block = lblkno(fs, fp->f_seekp);
+	off = ufs_blkoff(fs, fp->f_seekp);
+	file_block = ufs_lblkno(fs, fp->f_seekp);
 #ifdef LIBSA_LFS
 	block_size = dblksize(fs, &fp->f_di, file_block);
 #else
-	block_size = sblksize(fs, (int64_t)fp->f_di.di_size, file_block);
+	block_size = ffs_sblksize(fs, (int64_t)fp->f_di.di_size, file_block);
 #endif
 
 	if (file_block != fp->f_buf_blkno) {
+		indp_t disk_block = 0; /* XXX: gcc */
 		rc = block_map(f, file_block, &disk_block);
 		if (rc)
 			return rc;
@@ -625,7 +635,7 @@ ufs_open(const char *path, struct open_file *f)
 		 * of divide and remainder and avoinds pulling in the
 		 * 64bit division routine into the boot code.
 		 */
-		mult = NINDIR(fs);
+		mult = UFS_NINDIR(fs);
 #ifdef DEBUG
 		if (mult & (mult - 1)) {
 			/* Hummm was't a power of 2 */
@@ -641,7 +651,7 @@ ufs_open(const char *path, struct open_file *f)
 
 	/* alloc a block sized buffer used for all fs transfers */
 	fp->f_buf = alloc(fs->fs_bsize);
-	inumber = ROOTINO;
+	inumber = UFS_ROOTINO;
 	if ((rc = read_inode(inumber, f)) != 0)
 		goto out;
 
@@ -740,7 +750,7 @@ ufs_open(const char *path, struct open_file *f)
 			if (*cp != '/')
 				inumber = parent_inumber;
 			else
-				inumber = (ino32_t)ROOTINO;
+				inumber = (ino32_t)UFS_ROOTINO;
 
 			if ((rc = read_inode(inumber, f)) != 0)
 				goto out;
@@ -770,8 +780,8 @@ ufs_open(const char *path, struct open_file *f)
 out:
 	if (rc)
 		ufs_close(f);
-	else {
-#ifdef FSMOD
+	else { //LSC: FIXME: Do we still need fsmod2??
+#ifdef FSMOD		/* Only defined for lfs */
 		fsmod = FSMOD;
 #endif
 #ifdef FSMOD2
@@ -900,7 +910,7 @@ ufs_ls(struct open_file *f, const char *pattern,
 		if (rc)
 			goto out;
 		/* some firmware might use block size larger than DEV_BSIZE */
-		if (buf_size < DIRBLKSIZ)
+		if (buf_size < UFS_DIRBLKSIZ)
 			goto out;
 
 		dp = (struct direct *)buf;

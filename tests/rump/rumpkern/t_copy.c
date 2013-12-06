@@ -1,4 +1,4 @@
-/*	$NetBSD: t_copy.c,v 1.1 2010/11/09 15:25:20 pooka Exp $	*/
+/*	$NetBSD: t_copy.c,v 1.2 2013/07/26 16:09:48 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -56,14 +56,16 @@ ATF_TC_HEAD(copyoutstr, tc)
 	atf_tc_set_md_var(tc, "descr", "Tests copyoutstr()");
 }
 
-typedef int (copy_fn)(const void *, void *, size_t, size_t *);
+typedef int (copystr_fn)(const void *, void *, size_t, size_t *);
+typedef int (copy_fn)(const void *, void *, size_t);
 
-extern copy_fn rumpns_copystr, rumpns_copyinstr, rumpns_copyoutstr;
+extern copystr_fn rumpns_copystr, rumpns_copyinstr, rumpns_copyoutstr;
+extern copy_fn rumpns_copyin, rumpns_copyout;
 
 #define TESTSTR "jippii, lisaa puuroa"
 
 static void
-dotest(copy_fn *thefun)
+dotest(copystr_fn *thefun)
 {
 	char buf[sizeof(TESTSTR)+1];
 	size_t len;
@@ -108,12 +110,30 @@ ATF_TC_BODY(copyoutstr, tc)
 	dotest(rumpns_copyoutstr);
 }
 
+ATF_TC(copy_efault);
+ATF_TC_HEAD(copy_efault, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr", "Tests that copy(9) functions can return EFAULT");
+}
+ATF_TC_BODY(copy_efault, tc)
+{
+	char buf[1024];
+
+	ATF_REQUIRE_EQ(rumpns_copyin(NULL, buf, sizeof(buf)), EFAULT);
+	ATF_REQUIRE_EQ(rumpns_copyout(buf, NULL, sizeof(buf)), EFAULT);
+
+	ATF_REQUIRE_EQ(rumpns_copyinstr(NULL, buf, sizeof(buf), NULL), EFAULT);
+	ATF_REQUIRE_EQ(rumpns_copyoutstr(buf, NULL, sizeof(buf), NULL), EFAULT);
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 
 	ATF_TP_ADD_TC(tp, copystr);
 	ATF_TP_ADD_TC(tp, copyinstr);
 	ATF_TP_ADD_TC(tp, copyoutstr);
+	ATF_TP_ADD_TC(tp, copy_efault);
 
 	return atf_no_error();
 }

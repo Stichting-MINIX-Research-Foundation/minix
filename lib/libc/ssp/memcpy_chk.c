@@ -36,8 +36,6 @@ __RCSID("$NetBSD: memcpy_chk.c,v 1.4 2008/04/28 20:23:00 martin Exp $");
 #include <ssp/ssp.h>
 #include <string.h>
 
-#if __SSP_FORTIFY_LEVEL > 0
-
 #undef memcpy
 
 void *
@@ -48,5 +46,3 @@ __memcpy_chk(void * __restrict dst, const void * __restrict src, size_t len,
 		__chk_fail();
 	return memcpy(dst, src, len);
 }
-
-#endif

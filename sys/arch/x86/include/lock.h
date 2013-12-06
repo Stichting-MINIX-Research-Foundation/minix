@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.26 2012/10/11 11:12:21 apb Exp $	*/
+/*	$NetBSD: lock.h,v 1.27 2013/01/22 22:09:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006 The NetBSD Foundation, Inc.
@@ -65,33 +65,25 @@ __cpu_simple_lock_clear(__cpu_simple_lock_t *__ptr)
 }
 
 #ifdef _HARDKERNEL
+# include <machine/cpufunc.h>
+# define SPINLOCK_SPIN_HOOK	/* nothing */
+# ifdef SPINLOCK_BACKOFF_HOOK
+#  undef SPINLOCK_BACKOFF_HOOK
+# endif
+# define SPINLOCK_BACKOFF_HOOK	x86_pause()
+# define SPINLOCK_INLINE
+#else /* !_HARDKERNEL */
+# define SPINLOCK_BODY
+# define SPINLOCK_INLINE static __inline __unused
+#endif /* _HARDKERNEL */
 
-#include <machine/cpufunc.h>
+SPINLOCK_INLINE void	__cpu_simple_lock_init(__cpu_simple_lock_t *);
+SPINLOCK_INLINE void	__cpu_simple_lock(__cpu_simple_lock_t *);
+SPINLOCK_INLINE int	__cpu_simple_lock_try(__cpu_simple_lock_t *);
+SPINLOCK_INLINE void	__cpu_simple_unlock(__cpu_simple_lock_t *);
 
-void	__cpu_simple_lock_init(__cpu_simple_lock_t *);
-void	__cpu_simple_lock(__cpu_simple_lock_t *);
-int	__cpu_simple_lock_try(__cpu_simple_lock_t *);
-void	__cpu_simple_unlock(__cpu_simple_lock_t *);
-
-#define	SPINLOCK_SPIN_HOOK	/* nothing */
-
-#ifdef SPINLOCK_BACKOFF_HOOK
-#undef SPINLOCK_BACKOFF_HOOK
-#endif
-#define	SPINLOCK_BACKOFF_HOOK	x86_pause()
-
-#else
-
-static __inline void __cpu_simple_lock_init(__cpu_simple_lock_t *)
-	__unused;
-static __inline void __cpu_simple_lock(__cpu_simple_lock_t *)
-	__unused;
-static __inline int __cpu_simple_lock_try(__cpu_simple_lock_t *)
-	__unused;
-static __inline void __cpu_simple_unlock(__cpu_simple_lock_t *)
-	__unused;
-
-static __inline void
+#ifdef SPINLOCK_BODY
+SPINLOCK_INLINE void
 __cpu_simple_lock_init(__cpu_simple_lock_t *lockp)
 {
 
@@ -99,7 +91,7 @@ __cpu_simple_lock_init(__cpu_simple_lock_t *lockp)
 	__insn_barrier();
 }
 
-static __inline int
+SPINLOCK_INLINE int
 __cpu_simple_lock_try(__cpu_simple_lock_t *lockp)
 {
 	uint8_t val;
@@ -112,7 +104,7 @@ __cpu_simple_lock_try(__cpu_simple_lock_t *lockp)
 	return val == __SIMPLELOCK_UNLOCKED;
 }
 
-static __inline void
+SPINLOCK_INLINE void
 __cpu_simple_lock(__cpu_simple_lock_t *lockp)
 {
 
@@ -173,7 +165,7 @@ __cpu_simple_lock(__cpu_simple_lock_t *lockp)
  *		reordered, however stores act as load fences, meaning that
  *		loads can not be reordered around stores.
  */
-static __inline void
+SPINLOCK_INLINE void
 __cpu_simple_unlock(__cpu_simple_lock_t *lockp)
 {
 
@@ -181,6 +173,6 @@ __cpu_simple_unlock(__cpu_simple_lock_t *lockp)
 	*lockp = __SIMPLELOCK_UNLOCKED;
 }
 
-#endif	/* _HARDKERNEL */
+#endif	/* SPINLOCK_BODY */
 
 #endif /* _X86_LOCK_H_ */

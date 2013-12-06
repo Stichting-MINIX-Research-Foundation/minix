@@ -40,7 +40,8 @@ namespace passwd {
 
 
 /// Represents a system user.
-struct user {
+class user {
+public:
     /// The name of the user.
     std::string name;
 

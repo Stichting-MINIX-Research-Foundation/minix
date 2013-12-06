@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs_subr.c,v 1.3 2011/03/01 15:19:49 pooka Exp $	*/
+/*	$NetBSD: dtfs_subr.c,v 1.4 2013/10/19 17:45:00 christos Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -81,7 +81,7 @@ struct puffs_node *
 dtfs_genfile(struct puffs_node *dir, const struct puffs_cn *pcn,
 	enum vtype type)
 {
-	struct dtfs_file *df_dir, *dff;
+	struct dtfs_file *dff;
 	struct dtfs_dirent *dfd;
 	struct dtfs_mount *dtm;
 	struct puffs_node *newpn;
@@ -107,7 +107,6 @@ dtfs_genfile(struct puffs_node *dir, const struct puffs_cn *pcn,
 		errx(1, "getnewpnode");
 	dtfs_baseattrs(&newpn->pn_va, type, dtm->dtm_nextfileid++);
 
-	df_dir = dir->pn_data;
 	dfd = emalloc(sizeof(struct dtfs_dirent));
 	dfd->dfd_node = newpn;
 	dfd->dfd_name = estrndup(pcn->pcn_name, pcn->pcn_namelen);

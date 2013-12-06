@@ -318,7 +318,7 @@ checkfilesys(const char *filesys, char *mntpt, long auxdata, int child)
 		printf("\n***** FILE SYSTEM WAS MODIFIED *****\n");
 	if (rerun)
 		printf("\n***** PLEASE RERUN FSCK *****\n");
-#ifndef __minix
+#if !defined(__minix)
 	if (hotroot()) {
 		struct statvfs stfs_buf;
 		/*
@@ -342,7 +342,7 @@ checkfilesys(const char *filesys, char *mntpt, long auxdata, int child)
 		sync();
 		return FSCK_EXIT_ROOT_CHANGED;
 	}
-#endif
+#endif /* !defined(__minix) */
 	return FSCK_EXIT_OK;
 }
 

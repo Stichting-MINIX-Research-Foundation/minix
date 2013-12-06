@@ -1,3 +1,3 @@
-# $NetBSD: shlib_version,v 1.1 2013/02/16 21:29:47 jmmv Exp $
-major=1
+# $NetBSD: shlib_version,v 1.2 2013/10/18 23:36:10 jmmv Exp $
+major=2
 minor=0

@@ -34,7 +34,7 @@
 #ifndef	_SYS_IOCCOM_H_
 #define	_SYS_IOCCOM_H_
 
-#ifndef __minix
+#if !defined(__minix)
 /*
  * Ioctl's have the command encoded in the lower word, and the size of
  * any in or out parameters in the upper word.  The high 3 bits of the
@@ -59,7 +59,7 @@
 #define	IOCPARM_MASK	0xfff		/* parameter length, at most 12 bits */
 #define IOCPARM_MASK_BIG       0xFFFFF	/* or 20 bits, if IOC_BIG is set */
 #define	IOCPARM_SHIFT_BIG	8	
-#endif
+#endif /* !defined(__minix) */
 
 #define	IOCPARM_SHIFT	16
 #define	IOCGROUP_SHIFT	8
@@ -75,7 +75,6 @@
 				/* copy parameters in */
 #define	IOC_IN		(unsigned long)0x80000000
 				/* copy parameters in and out */
-
 #define	IOC_INOUT	(IOC_IN|IOC_OUT)
 				/* mask for IN/OUT/VOID */
 #define	IOC_DIRMASK	(unsigned long)0xe0000000
@@ -89,7 +88,7 @@
 /* this should be _IORW, but stdio got there first */
 #define	_IOWR(g,n,t)	_IOC(IOC_INOUT,	(g), (n), sizeof(t))
 
-#ifdef __minix
+#if defined(__minix)
 #define _IOW_BIG(y,t)  (y | ((sizeof(t) & IOCPARM_MASK_BIG) << IOCPARM_SHIFT_BIG) \
         | IOC_IN | IOC_BIG)
 #define _IOR_BIG(y,t)  (y | ((sizeof(t) & IOCPARM_MASK_BIG) << IOCPARM_SHIFT_BIG) \
@@ -106,6 +105,6 @@
 /* Recognize and decode size of a 'big' ioctl call. */
 #define _MINIX_IOCTL_BIG(i)             ((i) & IOC_BIG)
 #define _MINIX_IOCTL_SIZE_BIG(i)        (((i) >> IOCPARM_SHIFT_BIG) & IOCPARM_MASK_BIG)
-#endif
+#endif /* defined(__minix) */
 
 #endif /* !_SYS_IOCCOM_H_ */

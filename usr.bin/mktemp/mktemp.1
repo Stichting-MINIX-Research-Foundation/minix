@@ -1,4 +1,4 @@
-.\" $NetBSD: mktemp.1,v 1.19 2009/08/15 20:44:56 wiz Exp $
+.\" $NetBSD: mktemp.1,v 1.21 2012/11/04 10:10:03 apb Exp $
 .\" From: $FreeBSD: src/usr.bin/mktemp/mktemp.1,v 1.5 1999/08/28 01:04:13 peter Exp $
 .\" From: $OpenBSD: mktemp.1,v 1.8 1998/03/19 06:13:37 millert Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\" $FreeBSD: src/usr.bin/mktemp/mktemp.1,v 1.5 1999/08/28 01:04:13 peter Exp $
 .\"
-.Dd August 15, 2009
+.Dd November 4, 2012
 .Dt MKTEMP 1
 .Os
 .Sh NAME
@@ -49,26 +49,55 @@
 .Sh DESCRIPTION
 The
 .Nm
-utility takes each of the given file name templates and overwrites a
-portion of it to create a file name.
-This file name is unique and suitable for use by the application.
-The template may be any file name with some number of
-.Ql X Ns s
-appended to it, for example
-.Pa /tmp/temp.XXXX .
+utility
+is provided to allow shell scripts to safely use temporary files.
+It creates temporary files or directories using unique names,
+and prints the names.
+.Pp
+The name of each temporary file or directory is derived from a
+template that includes several trailing
+.Ql X
+characters, such as
+.Pa /tmp/prefix.XXXX .
 The trailing
-.Ql X Ns s
-are replaced with the current process number and/or a
-unique letter combination.
+.Ql X
+characters in the template are replaced by unique values derived from
+the current process number and additional letters or numbers.
+Any
+.Ql X
+characters other than at the end of the template are taken literally.
 The number of unique file names
 .Nm
-can return depends on the number of
+can return depends on the number of trailing
 .Ql X Ns s
-provided; six
+in the template; six
 .Ql X Ns s
 will result in
 .Nm
 testing roughly 26 ** 6 combinations.
+.Pp
+The templates used to create the unique names are derived from the
+.Fl t Ar prefix
+option, or the
+.Ar template
+arguments, possibly modified by other options.
+Any number of temporary files or directories may be created
+in a single invocation using multiple
+.Ar template
+arguments.
+It is possible to specify both a
+.Fl t Ar prefix
+option and one or more
+.Ar template
+arguments,
+but this is not usually done.
+.Pp
+If neither a
+.Fl t Ar prefix
+option, nor any
+.Ar template
+arguments are specified, then the default is equivalent to
+.Fl t Li mktemp .
 .Pp
 If
 .Nm
@@ -76,87 +105,75 @@ can successfully generate a unique file name, the file
 is created with mode 0600 (unless the
 .Fl u
 flag is given) and the filename is printed to standard output.
-.Pp
-If the
-.Fl t Ar prefix
-option is given,
-.Nm
-will generate a template string based on the
-.Ar prefix
-and the
-.Ev TMPDIR
-environment variable, if set.
-The default location if
-.Ev TMPDIR
-is not set is
-.Pa /tmp .
-The default location of the temporary directory can be overridden with the
-.Fl p Ar tmpdir
-option.
-The template string created will consist of the
-.Ar prefix
-followed by a
-.So . Sc
-and an eight character unique letter combination.
-.Ql X Ns s
-in the
-.Ar prefix
-string will be treated as literal.
-If an additional
-.Ar template
-argument is passed, a second file will be created.
-Care should be taken to ensure that it is appropriate to use an
-environment variable potentially supplied by the user.
-.Pp
-Any number of temporary files may be created in a single invocation
-using multiple
-.Ar template
-arguments, also a single one based on the internal template with the
-.Fl t
-option value as filename prefix.
-.Pp
-At least one
-.Ar template
-argument or the
-.Fl t
-option must be present.
-.Pp
-.Nm
-is provided to allow shell scripts to safely use temporary files.
-Traditionally, many shell scripts take the name of the program with
-the pid as a suffix and use that as a temporary file name.
-This kind of naming scheme is predictable and the race condition
-it creates is easy for an attacker to win.
-A safer, though still inferior, approach
-is to make a temporary directory using the same naming scheme.
-While this does allow one to guarantee that a temporary file will
-not be subverted, it still allows a simple denial of service attack.
-For these reasons it is suggested that
-.Nm
-be used instead.
 .Sh OPTIONS
 The available options are as follows:
 .Bl -tag -width indent
 .It Fl d
 Make a directory instead of a file.
+.It Fl p Ar tmpdir
+Specifies a directory in which temporary files should be created.
+If this option is specified, then it applies to all temporary files,
+including those created as a result of a
+.Fl t Ar prefix
+option, and those created as a result of a
+.Ar template
+argument.
+.Pp
+If the
+.Fl p Ar tmpdir
+option is not specified, then
+temporary files created as a result of a
+.Fl t Ar prefix
+option will use a default temporary directory
+(as described under the
+.Fl t
+option),
+but temporary files created as a result of a
+.Ar template
+argument will not use a default temporary directory
+(so they will be created relative to the current working directory, if the
+.Ar template
+does not begin with
+.Ql \&/ ) .
+.It Fl t Ar prefix
+Generate a template using an appropriate directory name, followed by the
+supplied
+.Ar prefix ,
+followed by
+.Ql \&.XXXXXXXX .
+Any
+.Ql X
+characters in the supplied
+.Ar prefix
+are taken literally, but the trailing
+.Ql X
+characters in the appended
+.Ql \&.XXXXXXXX
+are replaced by unique values.
+.Pp
+The directory name used for the template generated by the
+.Fl t Ar prefix
+option is taken from the
+.Fl p Ar tmpdir
+option, or from the
+.Ev TMPDIR
+environment variable, or
+.Pa /tmp
+as a default.
+.Pp
+If one or more
+.Ar template
+arguments are used in addition to the
+.Fl t Ar prefix
+option, then the
+.Ar prefix
+does not apply to the
+.Ar template
+arguments.
 .It Fl q
 Fail silently if an error occurs.
 This is useful if
 a script does not want error output to go to standard error.
-.It Fl t Ar prefix
-Generate a template (using the supplied
-.Ar prefix
-and
-.Ev TMPDIR
-if set) to create a filename template.
-If
-.Fl t Ar prefix
-and
-.Ar template
-are both given,
-.Ar prefix
-will not apply to
-.Ar template .
 .It Fl u
 Operate in
 .Dq unsafe
@@ -169,6 +186,32 @@ This is slightly better than
 but still introduces a race condition.
 Use of this option is not encouraged.
 .El
+.Sh NOTES
+.Nm
+takes care to create the files or directories in a way that is
+safe from race conditions (provided the
+.Fl u
+option is not used).
+.Pp
+Traditionally, without
+.Nm ,
+many shell scripts created temporary files
+using the name of the program with
+the pid as a suffix.
+This kind of naming scheme is predictable and creates a race condition that
+allows an attacker to subvert the program by
+creating a different file, directory, or symbolic link
+under the same name.
+A safer, though still inferior, approach
+is to make a temporary directory using the same naming schem
+While this does allow one to guarantee that a temporary file will
+not be subverted, it still allows a simple denial of service attack.
+For these reasons it is recommended that
+.Nm
+should be used instead of simpler schemes.
+.Pp
+Care should be taken to ensure that it is appropriate to use an
+environment variable potentially supplied by the user.
 .Sh EXIT STATUS
 The
 .Nm

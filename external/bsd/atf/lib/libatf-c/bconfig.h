@@ -62,7 +62,7 @@
 #define HAVE_UNISTD_H 1
 
 /* Define to 1 if you have the `unmount' function. */
-/* #undef HAVE_UNMOUNT */
+#define HAVE_UNMOUNT 1
 
 /* Define to 1 if you have the `unsetenv' function. */
 #define HAVE_UNSETENV 1

@@ -1,4 +1,4 @@
-/* $NetBSD: cat.c,v 1.48 2012/03/17 23:35:28 christos Exp $	*/
+/* $NetBSD: cat.c,v 1.52 2012/11/19 19:41:31 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)cat.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: cat.c,v 1.48 2012/03/17 23:35:28 christos Exp $");
+__RCSID("$NetBSD: cat.c,v 1.52 2012/11/19 19:41:31 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,11 +61,11 @@ __RCSID("$NetBSD: cat.c,v 1.48 2012/03/17 23:35:28 christos Exp $");
 #include <string.h>
 #include <unistd.h>
 
-int bflag, eflag, fflag, lflag, nflag, sflag, tflag, vflag;
-int rval;
-const char *filename;
+static int bflag, eflag, fflag, lflag, nflag, sflag, tflag, vflag;
+static size_t bsize;
+static int rval;
+static const char *filename;
 
-int main(int, char *[]);
 void cook_args(char *argv[]);
 void cook_buf(FILE *);
 void raw_args(char *argv[]);
@@ -80,8 +80,11 @@ main(int argc, char *argv[])
 	setprogname(argv[0]);
 	(void)setlocale(LC_ALL, "");
 
-	while ((ch = getopt(argc, argv, "beflnstuv")) != -1)
+	while ((ch = getopt(argc, argv, "B:beflnstuv")) != -1)
 		switch (ch) {
+		case 'B':
+			bsize = (size_t)strtol(optarg, NULL, 0);
+			break;
 		case 'b':
 			bflag = nflag = 1;	/* -b implies -n */
 			break;
@@ -112,9 +115,9 @@ main(int argc, char *argv[])
 		default:
 		case '?':
 			(void)fprintf(stderr,
-			    "usage: cat [-beflnstuv] [-] [file ...]\n");
-			exit(EXIT_FAILURE);
-			/* NOTREACHED */
+			    "Usage: %s [-beflnstuv] [-B bsize] [-] "
+			    "[file ...]\n", getprogname());
+			return EXIT_FAILURE;
 		}
 	argv += optind;
 
@@ -133,7 +136,7 @@ main(int argc, char *argv[])
 		raw_args(argv);
 	if (fclose(stdout))
 		err(EXIT_FAILURE, "stdout");
-	return (rval);
+	return rval;
 }
 
 void
@@ -286,7 +289,6 @@ raw_cat(int rfd)
 {
 	static char *buf;
 	static char fb_buf[BUFSIZ];
-	static size_t bsize;
 
 	ssize_t nr, nw, off;
 	int wfd;
@@ -295,10 +297,15 @@ raw_cat(int rfd)
 	if (buf == NULL) {
 		struct stat sbuf;
 
-		if (fstat(wfd, &sbuf) == 0 && sbuf.st_blksize > 0 &&
-		    (size_t)sbuf.st_blksize > sizeof(fb_buf)) {
-			bsize = sbuf.st_blksize;
+		if (bsize == 0) {
+			if (fstat(wfd, &sbuf) == 0 && sbuf.st_blksize > 0 &&
+			    (size_t)sbuf.st_blksize > sizeof(fb_buf))
+				bsize = sbuf.st_blksize;
+		}
+		if (bsize > sizeof(fb_buf)) {
 			buf = malloc(bsize);
+			if (buf == NULL)
+				warnx("malloc, using %zu buffer", bsize);
 		}
 		if (buf == NULL) {
 			bsize = sizeof(fb_buf);

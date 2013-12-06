@@ -1,4 +1,4 @@
-/*	$NetBSD: tar.h,v 1.9 2004/05/11 17:12:26 christos Exp $	*/
+/*	$NetBSD: tar.h,v 1.10 2013/01/24 17:43:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -59,6 +59,8 @@
 #define	DIRTYPE		'5'		/* Directory */
 #define	FIFOTYPE	'6'		/* FIFO */
 #define	CONTTYPE	'7'		/* high perf file */
+#define GLOBXTYPE	'g'		/* global extended header */
+#define FILEXTYPE	'x'		/* file extended header */
 
 /*
  * GNU tar compatibility;

@@ -1,4 +1,4 @@
-/* $NetBSD: term.c,v 1.16 2012/06/06 13:36:58 joerg Exp $ */
+/* $NetBSD: term.c,v 1.17 2013/06/07 13:16:18 roy Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2011 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: term.c,v 1.16 2012/06/06 13:36:58 joerg Exp $");
+__RCSID("$NetBSD: term.c,v 1.17 2013/06/07 13:16:18 roy Exp $");
 
 #include <sys/stat.h>
 
@@ -44,11 +44,11 @@ __RCSID("$NetBSD: term.c,v 1.16 2012/06/06 13:36:58 joerg Exp $");
 #include <term_private.h>
 #include <term.h>
 
-#ifndef __minix
+#if !defined(__minix)
 #define _PATH_TERMINFO		"/usr/share/misc/terminfo"
 #else
 #define _PATH_TERMINFO		"/usr/share/terminfo/terminfo"
-#endif
+#endif /* !defined(__minix) */
 
 static char database[PATH_MAX];
 static char pathbuf[PATH_MAX];
@@ -123,7 +123,7 @@ _ti_readterm(TERMINAL *term, const char *cap, size_t caplen, int flags)
 				term->flags[ind] = 0;
 		}
 	}
-	
+
 	num = le16dec(cap);
 	cap += sizeof(uint16_t);
 	if (num != 0) {
@@ -138,7 +138,7 @@ _ti_readterm(TERMINAL *term, const char *cap, size_t caplen, int flags)
 			cap += sizeof(uint16_t);
 		}
 	}
-	
+
 	num = le16dec(cap);
 	cap += sizeof(uint16_t);
 	if (num != 0) {
@@ -158,7 +158,7 @@ _ti_readterm(TERMINAL *term, const char *cap, size_t caplen, int flags)
 			cap += len;
 		}
 	}
-	
+
 	num = le16dec(cap);
 	cap += sizeof(uint16_t);
 	if (num != 0) {
@@ -247,7 +247,7 @@ _ti_dbgetterm(TERMINAL *term, const char *path, const char *name, int flags)
 		data8 = data;
 		if (data8[0] != 1)
 			goto fail;
-	} else 	if (data8[0] != 1)
+	} else if (data8[0] != 1)
 		goto fail;
 	else if (klen + 3 >= len || le16dec(data8 + 1) != klen)
 		goto fail;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pass1.c,v 1.21 2010/02/04 23:55:42 christos Exp $	*/
+/*	$NetBSD: pass1.c,v 1.24 2013/06/19 17:51:25 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -58,7 +58,7 @@
 #if 0
 static char sccsid[] = "@(#)pass1.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: pass1.c,v 1.21 2010/02/04 23:55:42 christos Exp $");
+__RCSID("$NetBSD: pass1.c,v 1.24 2013/06/19 17:51:25 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -170,7 +170,7 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 	if (mode == 0 || (dp->e2di_dtime != 0 && dp->e2di_nlink == 0)) {
 		if (mode == 0 && (
 		    memcmp(dp->e2di_blocks, zino.e2di_blocks,
-		    (NDADDR + NIADDR) * sizeof(u_int32_t)) ||
+		    (EXT2FS_NDADDR + EXT2FS_NIADDR) * sizeof(u_int32_t)) ||
 		    dp->e2di_mode || inosize(dp))) {
 			pfatal("PARTIALLY ALLOCATED INODE I=%llu",
 			    (unsigned long long)inumber);
@@ -241,30 +241,30 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 		if (inosize(dp) < EXT2_MAXSYMLINKLEN ||
 		    (EXT2_MAXSYMLINKLEN == 0 && dp->e2di_blocks == 0)) {
 			ndb = howmany(inosize(dp), sizeof(u_int32_t));
-			if (ndb > NDADDR) {
-				j = ndb - NDADDR;
+			if (ndb > EXT2FS_NDADDR) {
+				j = ndb - EXT2FS_NDADDR;
 				for (ndb = 1; j > 1; j--)
-					ndb *= NINDIR(&sblock);
-				ndb += NDADDR;
+					ndb *= EXT2_NINDIR(&sblock);
+				ndb += EXT2FS_NDADDR;
 			}
 		}
 	}
 	/* Linux puts things in blocks for FIFO, so skip this check */
 	if (mode != IFIFO) {
-		for (j = ndb; j < NDADDR; j++)
+		for (j = ndb; j < EXT2FS_NDADDR; j++)
 			if (dp->e2di_blocks[j] != 0) {
 				if (debug)
 					printf("bad direct addr: %d\n",
 					    fs2h32(dp->e2di_blocks[j]));
 				goto unknown;
 			}
-		for (j = 0, ndb -= NDADDR; ndb > 0; j++)
-			ndb /= NINDIR(&sblock);
-		for (; j < NIADDR; j++) {
-			if (dp->e2di_blocks[j+NDADDR] != 0) {
+		for (j = 0, ndb -= EXT2FS_NDADDR; ndb > 0; j++)
+			ndb /= EXT2_NINDIR(&sblock);
+		for (; j < EXT2FS_NIADDR; j++) {
+			if (dp->e2di_blocks[j+EXT2FS_NDADDR] != 0) {
 				if (debug)
 					printf("bad indirect addr: %d\n",
-					    fs2h32(dp->e2di_blocks[j+NDADDR]));
+					    fs2h32(dp->e2di_blocks[j+EXT2FS_NDADDR]));
 				goto unknown;
 			}
 		}
@@ -302,16 +302,17 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 	idesc->id_number = inumber;
 	(void)ckinode(dp, idesc);
 	idesc->id_entryno *= btodb(sblock.e2fs_bsize);
-	if (fs2h32(dp->e2di_nblock) != (uint32_t)idesc->id_entryno) {
-		pwarn("INCORRECT BLOCK COUNT I=%llu (%d should be %d)",
-		    (unsigned long long)inumber, fs2h32(dp->e2di_nblock),
+	if (inonblock(dp) != (uint32_t)idesc->id_entryno) {
+		pwarn("INCORRECT BLOCK COUNT I=%llu (%llu should be %d)",
+		    (unsigned long long)inumber,
+		    (unsigned long long)inonblock(dp),
 		    idesc->id_entryno);
 		if (preen)
 			printf(" (CORRECTED)\n");
 		else if (reply("CORRECT") == 0)
 			return;
 		dp = ginode(inumber);
-		dp->e2di_nblock = h2fs32(idesc->id_entryno);
+		inosnblock(dp, idesc->id_entryno);
 		inodirty();
 	}
 	return;

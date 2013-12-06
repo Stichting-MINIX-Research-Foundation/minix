@@ -1,4 +1,4 @@
-/*	$NetBSD: internals.c,v 1.35 2011/05/23 20:43:02 joerg Exp $	*/
+/*	$NetBSD: internals.c,v 1.37 2013/11/26 01:17:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: internals.c,v 1.35 2011/05/23 20:43:02 joerg Exp $");
+__RCSID("$NetBSD: internals.c,v 1.37 2013/11/26 01:17:00 christos Exp $");
 
 #include <limits.h>
 #include <ctype.h>
@@ -390,8 +390,8 @@ _formi_pos_first_field(FORM *form)
 	cur = form->fields[form->page_starts[form->page].first];
 	while ((cur->opts & (O_VISIBLE | O_ACTIVE))
 	       != (O_VISIBLE | O_ACTIVE)) {
-		cur = CIRCLEQ_NEXT(cur, glue);
-		if (cur == (void *) &form->sorted_fields) {
+		cur = TAILQ_NEXT(cur, glue);
+		if (cur == NULL) {
 			form->page = old_page;
 			return E_REQUEST_DENIED;
 		}
@@ -420,9 +420,10 @@ _formi_pos_new_field(FORM *form, unsigned direction, unsigned use_sorted)
 		if (direction == _FORMI_FORWARD) {
 			if (use_sorted == TRUE) {
 				if ((form->wrap == FALSE) &&
-				    (cur == CIRCLEQ_LAST(&form->sorted_fields)))
+				    (cur == TAILQ_LAST(&form->sorted_fields,
+					_formi_sort_head)))
 					return E_REQUEST_DENIED;
-				cur = CIRCLEQ_NEXT(cur, glue);
+				cur = TAILQ_NEXT(cur, glue);
 				i = cur->index;
 			} else {
 				if ((form->wrap == FALSE) &&
@@ -435,9 +436,9 @@ _formi_pos_new_field(FORM *form, unsigned direction, unsigned use_sorted)
 		} else {
 			if (use_sorted == TRUE) {
 				if ((form->wrap == FALSE) &&
-				    (cur == CIRCLEQ_FIRST(&form->sorted_fields)))
+				    (cur == TAILQ_FIRST(&form->sorted_fields)))
 					return E_REQUEST_DENIED;
-				cur = CIRCLEQ_PREV(cur, glue);
+				cur = TAILQ_PREV(cur, _formi_sort_head, glue);
 				i = cur->index;
 			} else {
 				if ((form->wrap == FALSE) && (i <= 0))
@@ -2995,7 +2996,7 @@ _formi_manipulate_field(FORM *form, int c)
 }
 
 /*
- * Validate the give character by passing it to any type character
+ * Validate the given character by passing it to any type character
  * checking routines, if they exist.
  */
 int
@@ -3242,9 +3243,9 @@ _formi_sort_fields(FORM *form)
 	FIELD **sort_area;
 	int i;
 	
-	CIRCLEQ_INIT(&form->sorted_fields);
+	TAILQ_INIT(&form->sorted_fields);
 
-	if ((sort_area = (FIELD **) malloc(sizeof(FIELD *) * form->field_count))
+	if ((sort_area = malloc(sizeof(*sort_area) * form->field_count))
 	    == NULL)
 		return;
 
@@ -3254,7 +3255,7 @@ _formi_sort_fields(FORM *form)
 	      field_sort_compare);
 	
 	for (i = 0; i < form->field_count; i++)
-		CIRCLEQ_INSERT_TAIL(&form->sorted_fields, sort_area[i], glue);
+		TAILQ_INSERT_TAIL(&form->sorted_fields, sort_area[i], glue);
 
 	free(sort_area);
 }
@@ -3272,7 +3273,7 @@ _formi_stitch_fields(FORM *form)
 	   * check if the sorted fields circle queue is empty, just
 	   * return if it is.
 	   */
-	if (CIRCLEQ_EMPTY(&form->sorted_fields))
+	if (TAILQ_EMPTY(&form->sorted_fields))
 		return;
 	
 	  /* initially nothing is above..... */
@@ -3281,41 +3282,41 @@ _formi_stitch_fields(FORM *form)
 	above = NULL;
 
 	  /* set up the first field as the current... */
-	cur = CIRCLEQ_FIRST(&form->sorted_fields);
+	cur = TAILQ_FIRST(&form->sorted_fields);
 	cur_row = cur->form_row;
 	
 	  /* find the first field on the next row if any */
-	below = CIRCLEQ_NEXT(cur, glue);
+	below = TAILQ_NEXT(cur, glue);
 	below_row = -1;
 	end_below = TRUE;
 	real_end = TRUE;
-	while (below != (void *)&form->sorted_fields) {
+	while (below != NULL) {
 		if (below->form_row != cur_row) {
 			below_row = below->form_row;
 			end_below = FALSE;
 			real_end = FALSE;
 			break;
 		}
-		below = CIRCLEQ_NEXT(below, glue);
+		below = TAILQ_NEXT(below, glue);
 	}
 
 	  /* walk the sorted fields, setting the neighbour pointers */
-	while (cur != (void *) &form->sorted_fields) {
-		if (cur == CIRCLEQ_FIRST(&form->sorted_fields))
+	while (cur != NULL) {
+		if (cur == TAILQ_FIRST(&form->sorted_fields))
 			cur->left = NULL;
 		else
-			cur->left = CIRCLEQ_PREV(cur, glue);
+			cur->left = TAILQ_PREV(cur, _formi_sort_head, glue);
 
-		if (cur == CIRCLEQ_LAST(&form->sorted_fields))
+		if (cur == TAILQ_LAST(&form->sorted_fields, _formi_sort_head))
 			cur->right = NULL;
 		else
-			cur->right = CIRCLEQ_NEXT(cur, glue);
+			cur->right = TAILQ_NEXT(cur, glue);
 
 		if (end_above == TRUE)
 			cur->up = NULL;
 		else {
 			cur->up = above;
-			above = CIRCLEQ_NEXT(above, glue);
+			above = TAILQ_NEXT(above, glue);
 			if (above_row != above->form_row) {
 				end_above = TRUE;
 				above_row = above->form_row;
@@ -3326,8 +3327,8 @@ _formi_stitch_fields(FORM *form)
 			cur->down = NULL;
 		else {
 			cur->down = below;
-			below = CIRCLEQ_NEXT(below, glue);
-			if (below == (void *) &form->sorted_fields) {
+			below = TAILQ_NEXT(below, glue);
+			if (below == NULL) {
 				end_below = TRUE;
 				real_end = TRUE;
 			} else if (below_row != below->form_row) {
@@ -3336,20 +3337,21 @@ _formi_stitch_fields(FORM *form)
 			}
 		}
 
-		cur = CIRCLEQ_NEXT(cur, glue);
-		if ((cur != (void *) &form->sorted_fields)
+		cur = TAILQ_NEXT(cur, glue);
+		if ((cur != NULL)
 		    && (cur_row != cur->form_row)) {
 			cur_row = cur->form_row;
 			if (end_above == FALSE) {
-				for (; above != CIRCLEQ_FIRST(&form->sorted_fields);
-				     above = CIRCLEQ_NEXT(above, glue)) {
+				for (; above !=
+				    TAILQ_FIRST(&form->sorted_fields);
+				    above = TAILQ_NEXT(above, glue)) {
 					if (above->form_row != above_row) {
 						above_row = above->form_row;
 						break;
 					}
 				}
 			} else if (above == NULL) {
-				above = CIRCLEQ_FIRST(&form->sorted_fields);
+				above = TAILQ_FIRST(&form->sorted_fields);
 				end_above = FALSE;
 				above_row = above->form_row;
 			} else
@@ -3357,17 +3359,15 @@ _formi_stitch_fields(FORM *form)
 
 			if (end_below == FALSE) {
 				while (below_row == below->form_row) {
-					below = CIRCLEQ_NEXT(below,
-							     glue);
-					if (below ==
-					    (void *)&form->sorted_fields) {
+					below = TAILQ_NEXT(below, glue);
+					if (below == NULL) {
 						real_end = TRUE;
 						end_below = TRUE;
 						break;
 					}
 				}
 
-				if (below != (void *)&form->sorted_fields)
+				if (below != NULL)
 					below_row = below->form_row;
 			} else if (real_end == FALSE)
 				end_below = FALSE;

@@ -1,4 +1,4 @@
-/* $NetBSD: t_cdefs.c,v 1.2 2012/03/23 23:12:28 matt Exp $ */
+/* $NetBSD: t_cdefs.c,v 1.3 2013/09/05 09:01:27 gsutre Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_cdefs.c,v 1.2 2012/03/23 23:12:28 matt Exp $");
+__RCSID("$NetBSD: t_cdefs.c,v 1.3 2013/09/05 09:01:27 gsutre Exp $");
 
 #include <atf-c.h>
 #include <sys/types.h>
@@ -206,8 +206,8 @@ ATF_TC_BODY(stypefit, tc)
 	CHECK(signed long long, -1, 0);
 	CHECK(signed long long, 1, 0);
 	CHECK(signed long long, 0x7fffffffffffffffLL, 0);
-	CHECK(signed long long, 0x8000000000000000LL, 0);
-	CHECK(signed long long, 0xffffffffffffffffLL, 0);
+	CHECK(signed long long, 0x8000000000000000LL, 1);
+	CHECK(signed long long, 0xffffffffffffffffLL, 1);
 
 #undef CHECK
 }

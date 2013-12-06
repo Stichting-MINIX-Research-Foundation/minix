@@ -1,3 +1,6 @@
+NOGCCERROR=yes
+NOCLANGERROR=yes
+
 .include <bsd.own.mk>
 
 .PATH: 	${.CURDIR} ${.CURDIR}/${MACHINE_ARCH}

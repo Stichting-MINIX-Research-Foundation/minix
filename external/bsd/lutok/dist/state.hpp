@@ -33,7 +33,12 @@
 #define LUTOK_STATE_HPP
 
 #include <string>
+
+#if defined(_LIBCPP_VERSION) || __cplusplus >= 201103L
+#include <memory>
+#else
 #include <tr1/memory>
+#endif
 
 namespace lutok {
 
@@ -50,8 +55,8 @@ class state;
 typedef int (*cxx_function)(state&);
 
 
-/// Stack index constant pointing to the globals table (_G).
-extern const int globals_index;
+/// Stack index constant pointing to the registry table.
+extern const int registry_index;
 
 
 /// A RAII model for the Lua state.
@@ -72,7 +77,11 @@ class state {
     struct impl;
 
     /// Pointer to the shared internal implementation.
+#if defined(_LIBCPP_VERSION) || __cplusplus >= 201103L
+    std::shared_ptr< impl > _pimpl;
+#else
     std::tr1::shared_ptr< impl > _pimpl;
+#endif
 
     void* new_userdata_voidp(const size_t);
     void* to_userdata_voidp(const int);
@@ -87,6 +96,7 @@ public:
 
     void close(void);
     void get_global(const std::string&);
+    void get_global_table(void);
     bool get_metafield(const int, const std::string&);
     bool get_metatable(const int = -1);
     void get_table(const int = -2);

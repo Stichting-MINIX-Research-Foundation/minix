@@ -40,13 +40,13 @@
 #define _GROUP_COMPAT	/* "group" defaults to compat, so always provide it */
 
 
-#ifndef __minix /* should be _REENTRANT */
+#if defined(__minix) && defined(_REENTRANT)
 	/*
 	 * mutex to serialize the public group(5) functions use of the
 	 * back-end implementations, which may not be reentrant.
 	 */
 extern 	mutex_t		__grmutex;
-#endif
+#endif /* defined(__minix) */
 
 	/*
 	 * files methods

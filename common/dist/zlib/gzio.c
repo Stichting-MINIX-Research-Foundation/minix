@@ -1,4 +1,4 @@
-/*	$NetBSD: gzio.c,v 1.3 2011/05/19 22:23:12 tsutsui Exp $	*/
+/*	$NetBSD: gzio.c,v 1.4 2013/11/07 17:26:13 christos Exp $	*/
 
 /* gzio.c -- IO on .gz files
  * Copyright (C) 1995-2005 Jean-loup Gailly.
@@ -157,6 +157,8 @@ local gzFile gz_open (path, mode, fd)
     if (s->mode == 'w') {
 #ifdef NO_GZCOMPRESS
         err = Z_STREAM_ERROR;
+	__USE(level);
+	__USE(strategy);
 #else
         err = deflateInit2(&(s->stream), level,
                            Z_DEFLATED, -MAX_WBITS, DEF_MEM_LEVEL, strategy);

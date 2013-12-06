@@ -1,4 +1,4 @@
-/* $NetBSD: t_cbrt.c,v 1.1 2011/10/16 08:25:40 jruoho Exp $ */
+/* $NetBSD: t_cbrt.c,v 1.2 2013/11/19 19:24:33 joerg Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_cbrt.c,v 1.1 2011/10/16 08:25:40 jruoho Exp $");
+__RCSID("$NetBSD: t_cbrt.c,v 1.2 2013/11/19 19:24:33 joerg Exp $");
 
 #include <atf-c.h>
 #include <math.h>
@@ -261,6 +261,119 @@ ATF_TC_BODY(cbrtf_zero_pos, tc)
 #endif
 }
 
+/*
+ * cbrtl(3)
+ */
+ATF_TC(cbrtl_nan);
+ATF_TC_HEAD(cbrtl_nan, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test cbrtl(NaN) == NaN");
+}
+
+ATF_TC_BODY(cbrtl_nan, tc)
+{
+#ifndef __vax__
+	const long double x = 0.0L / 0.0L;
+
+	ATF_CHECK(isnan(x) != 0);
+	ATF_CHECK(isnan(cbrtl(x)) != 0);
+#endif
+}
+
+ATF_TC(cbrtl_powl);
+ATF_TC_HEAD(cbrtl_powl, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test cbrtl(3) vs. powl(3)");
+}
+
+ATF_TC_BODY(cbrtl_powl, tc)
+{
+#ifndef __vax__
+	const long double x[] = { 0.0, 0.005, 1.0, 99.0, 123.123, 9999.0 };
+	const long double eps = 1.0e-15;
+	long double y, z;
+	size_t i;
+
+	for (i = 0; i < __arraycount(x); i++) {
+
+		y = cbrtl(x[i]);
+		z = powl(x[i], 1.0 / 3.0);
+
+		if (fabsl(y - z) > eps * fabsl(1 + x[i]))
+			atf_tc_fail_nonfatal("cbrtl(%0.03Lf) != "
+			    "powl(%0.03Lf, 1/3)\n", x[i], x[i]);
+	}
+#endif
+}
+
+ATF_TC(cbrtl_inf_neg);
+ATF_TC_HEAD(cbrtl_inf_neg, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test cbrtl(-Inf) == -Inf");
+}
+
+ATF_TC_BODY(cbrtl_inf_neg, tc)
+{
+#ifndef __vax__
+	const long double x = -1.0L / 0.0L;
+	long double y = cbrtl(x);
+
+	ATF_CHECK(isinf(y) != 0);
+	ATF_CHECK(signbit(y) != 0);
+#endif
+}
+
+ATF_TC(cbrtl_inf_pos);
+ATF_TC_HEAD(cbrtl_inf_pos, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test cbrtl(+Inf) == +Inf");
+}
+
+ATF_TC_BODY(cbrtl_inf_pos, tc)
+{
+#ifndef __vax__
+	const long double x = 1.0L / 0.0L;
+	long double y = cbrtl(x);
+
+	ATF_CHECK(isinf(y) != 0);
+	ATF_CHECK(signbit(y) == 0);
+#endif
+}
+
+ATF_TC(cbrtl_zero_neg);
+ATF_TC_HEAD(cbrtl_zero_neg, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test cbrtl(-0.0) == -0.0");
+}
+
+ATF_TC_BODY(cbrtl_zero_neg, tc)
+{
+#ifndef __vax__
+	const long double x = -0.0L;
+	long double y = cbrtl(x);
+
+	if (fabsl(y) > 0.0 || signbit(y) == 0)
+		atf_tc_fail_nonfatal("cbrtl(-0.0) != -0.0");
+#endif
+}
+
+ATF_TC(cbrtl_zero_pos);
+ATF_TC_HEAD(cbrtl_zero_pos, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test cbrtl(+0.0) == +0.0");
+}
+
+ATF_TC_BODY(cbrtl_zero_pos, tc)
+{
+#ifndef __vax__
+	const long double x = 0.0L;
+	long double y = cbrtl(x);
+
+	if (fabsl(y) > 0.0 || signbit(y) != 0)
+		atf_tc_fail_nonfatal("cbrtl(+0.0) != +0.0");
+#endif
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 
@@ -277,6 +390,13 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, cbrtf_inf_pos);
 	ATF_TP_ADD_TC(tp, cbrtf_zero_neg);
 	ATF_TP_ADD_TC(tp, cbrtf_zero_pos);
+
+	ATF_TP_ADD_TC(tp, cbrtl_nan);
+	ATF_TP_ADD_TC(tp, cbrtl_powl);
+	ATF_TP_ADD_TC(tp, cbrtl_inf_neg);
+	ATF_TP_ADD_TC(tp, cbrtl_inf_pos);
+	ATF_TP_ADD_TC(tp, cbrtl_zero_neg);
+	ATF_TP_ADD_TC(tp, cbrtl_zero_pos);
 
 	return atf_no_error();
 }

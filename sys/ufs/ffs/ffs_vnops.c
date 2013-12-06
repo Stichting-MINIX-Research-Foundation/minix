@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.120 2011/06/27 16:34:47 manu Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.123 2013/06/23 07:28:37 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.120 2011/06/27 16:34:47 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.123 2013/06/23 07:28:37 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -333,7 +333,7 @@ ffs_fsync(void *v)
 	} */ *ap = v;
 	struct buf *bp;
 	int num, error, i;
-	struct indir ia[NIADDR + 1];
+	struct indir ia[UFS_NIADDR + 1];
 	int bsize;
 	daddr_t blk_high;
 	struct vnode *vp;
@@ -405,7 +405,7 @@ ffs_fsync(void *v)
 	 * Then, flush indirect blocks.
 	 */
 
-	if (blk_high >= NDADDR) {
+	if (blk_high >= UFS_NDADDR) {
 		error = ufs_getlbns(vp, blk_high, ia, &num);
 		if (error)
 			goto out;
@@ -455,35 +455,35 @@ int
 ffs_full_fsync(struct vnode *vp, int flags)
 {
 	int error, i, uflags;
-	struct mount *mp;
 
 	KASSERT(vp->v_tag == VT_UFS);
 	KASSERT(VTOI(vp) != NULL);
 	KASSERT(vp->v_type != VCHR && vp->v_type != VBLK);
 
-	error = 0;
 	uflags = UPDATE_CLOSE | ((flags & FSYNC_WAIT) ? UPDATE_WAIT : 0);
 
-	mp = vp->v_mount;
-
-	/*
-	 * Flush all dirty data associated with the vnode.
-	 */
-	if (vp->v_type == VREG) {
-		int pflags = PGO_ALLPAGES | PGO_CLEANIT;
-
-		if ((flags & FSYNC_WAIT))
-			pflags |= PGO_SYNCIO;
-		if (fstrans_getstate(mp) == FSTRANS_SUSPENDING)
-			pflags |= PGO_FREE;
-		mutex_enter(vp->v_interlock);
-		error = VOP_PUTPAGES(vp, 0, 0, pflags);
-		if (error)
-			return error;
-	}
-
 #ifdef WAPBL
+	struct mount *mp = vp->v_mount;
 	if (mp && mp->mnt_wapbl) {
+
+		/*
+		 * Flush all dirty data associated with the vnode.
+		 */
+		if (vp->v_type == VREG) {
+			int pflags = PGO_ALLPAGES | PGO_CLEANIT;
+
+			if ((flags & FSYNC_LAZY))
+				pflags |= PGO_LAZY;
+			if ((flags & FSYNC_WAIT))
+				pflags |= PGO_SYNCIO;
+			if (fstrans_getstate(mp) == FSTRANS_SUSPENDING)
+				pflags |= PGO_FREE;
+			mutex_enter(vp->v_interlock);
+			error = VOP_PUTPAGES(vp, 0, 0, pflags);
+			if (error)
+				return error;
+		}
+
 		/*
 		 * Don't bother writing out metadata if the syncer is
 		 * making the request.  We will let the sync vnode
@@ -500,6 +500,8 @@ ffs_full_fsync(struct vnode *vp, int flags)
 				return error;
 			error = ffs_update(vp, NULL, NULL, uflags);
 			UFS_WAPBL_END(mp);
+		} else {
+			error = 0;
 		}
 		if (error || (flags & FSYNC_NOLOG) != 0)
 			return error;
@@ -525,7 +527,7 @@ ffs_full_fsync(struct vnode *vp, int flags)
 	}
 #endif /* WAPBL */
 
-	error = vflushbuf(vp, (flags & FSYNC_WAIT) != 0);
+	error = vflushbuf(vp, flags);
 	if (error == 0)
 		error = ffs_update(vp, NULL, NULL, uflags);
 	if (error == 0 && (flags & FSYNC_CACHE) != 0) {
@@ -609,12 +611,12 @@ ffs_gop_size(struct vnode *vp, off_t size, off_t *eobp, int flags)
 	struct fs *fs = ip->i_fs;
 	daddr_t olbn, nlbn;
 
-	olbn = lblkno(fs, ip->i_size);
-	nlbn = lblkno(fs, size);
-	if (nlbn < NDADDR && olbn <= nlbn) {
-		*eobp = fragroundup(fs, size);
+	olbn = ffs_lblkno(fs, ip->i_size);
+	nlbn = ffs_lblkno(fs, size);
+	if (nlbn < UFS_NDADDR && olbn <= nlbn) {
+		*eobp = ffs_fragroundup(fs, size);
 	} else {
-		*eobp = blkroundup(fs, size);
+		*eobp = ffs_blkroundup(fs, size);
 	}
 }
 

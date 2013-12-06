@@ -1,5 +1,5 @@
-.\"	$NetBSD: tzset.3,v 1.25 2010/12/17 01:29:45 wiz Exp $
-.Dd April 1, 2001
+.\"	$NetBSD: tzset.3,v 1.26 2013/09/20 19:06:54 christos Exp $
+.Dd September 20, 2013
 .Dt TZSET 3
 .Os
 .Sh NAME
@@ -31,8 +31,10 @@ is used by
 If
 .Ev TZ
 appears in the environment but its value is a null string,
-Coordinated Universal Time (UTC) is used (without leap second
-correction).
+Universal Time (UT) is used, with the abbreviation
+.Dq UTC
+and without leap second correction; please see
+.Xr ctime 3 .
 If
 .Ev TZ
 appears in the environment and its value is not a null string:
@@ -151,6 +153,10 @@ Each
 .Cm time
 field describes when, in current local time, the change to the other
 time is made.
+As an extension to POSIX, daylight saving is assumed to be in effect
+all year if it begins January 1 at 00:00 and ends December 31 at
+24:00 plus the difference between daylight saving and standard time,
+leaving no room for standard time in the calendar.
 The format of
 .Fa date
 is one of the following:
@@ -199,16 +205,57 @@ The
 .Cm time
 has the same format as
 .Cm offset
-except that no leading sign
+except that POSIX does not allow a leading sign
 .Dq -
 or
 .Dq +
 is allowed.
+As an extension to POSIX, the hours part of
+.Cm time
+can range from \(mi167 through 167; this allows for unusual rules such as
+.Dq the Saturday before the first Sunday of March .
 The default, if
 .Cm time
 is not given, is
 .Cm 02:00:00 .
 .El
+.Pp
+Here are some examples of
+.Va TZ
+values that directly specify the time zone rules; they use some of the
+extensions to POSIX.
+.Bl -tag
+.It EST5
+stands for US eastern
+time (EST), 5 hours behind UTC, without daylight saving.
+.It FJT\(mi12FJST,M10.3.1/146,M1.3.4/75
+stands for Fiji Time (FJT) and Fiji Summer Time (FJST), 12 hours ahead
+of UTC, springing forward on October's third Monday at
+146:00 (i.e., 02:00 on the first Sunday on or after October 21), and
+falling back on January's third Thursday at 75:00 (i.e., 03:00 on the
+first Sunday on or after January 18).
+.It IST\(mi2IDT,M3.4.4/26,M10.5.0
+stands for Israel Standard Time (IST) and Israel Daylight Time (IDT),
+2 hours ahead of UTC, springing forward on March's fourth
+Tuesday at 26:00 (i.e., 02:00 on the first Friday on or after March
+23), and falling back on October's last Sunday at 02:00.
+.It WART4WARST,J1/0,J365/25
+stands for Western Argentina Summer Time (WARST), 3 hours behind UTC.
+There is a dummy fall-back transition on December 31 at 25:00 daylight
+saving time (i.e., 24:00 standard time, equivalent to January 1 at
+00:00 standard time), and a simultaneous spring-forward transition on
+January 1 at 00:00 standard time, so daylight saving time is in effect
+all year and the initial
+.Em WART
+is a placeholder.
+.It WGT3WGST,M3.5.0/\(mi2,M10.5.0/\(mi1
+stands for Western Greenland time (WGT) and Western Greenland Summer
+Time (WGST), 3 hours behind UTC, where clocks follow the EU rules of
+springing forward on March's last Sunday at 01:00 UTC (\(mi02:00 local
+time) and falling back on October's last Sunday at 01:00 UTC
+(\(mi01:00 local time).
+.El
+.Pp
 If no
 .Cm rule
 is present in

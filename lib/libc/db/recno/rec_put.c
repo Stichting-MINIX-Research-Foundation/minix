@@ -1,4 +1,4 @@
-/*	$NetBSD: rec_put.c,v 1.19 2011/06/26 22:18:16 christos Exp $	*/
+/*	$NetBSD: rec_put.c,v 1.20 2013/12/01 00:22:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rec_put.c,v 1.19 2011/06/26 22:18:16 christos Exp $");
+__RCSID("$NetBSD: rec_put.c,v 1.20 2013/12/01 00:22:48 christos Exp $");
 
 #include "namespace.h"
 #include <sys/types.h>
@@ -146,8 +146,7 @@ einval:		errno = EINVAL;
 			return (RET_ERROR);
 		if (nrec > t->bt_nrecs + 1) {
 			if (F_ISSET(t, R_FIXLEN)) {
-				if ((tdata.data =
-				    (void *)malloc(t->bt_reclen)) == NULL)
+				if ((tdata.data = malloc(t->bt_reclen)) == NULL)
 					return (RET_ERROR);
 				tdata.size = t->bt_reclen;
 				memset(tdata.data, t->bt_bval, tdata.size);

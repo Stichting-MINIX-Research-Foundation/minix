@@ -1,4 +1,4 @@
-/*	$NetBSD: timevar.h,v 1.32 2012/10/02 01:44:29 christos Exp $	*/
+/*	$NetBSD: timevar.h,v 1.33 2013/03/29 01:09:45 christos Exp $	*/
 
 /*
  *  Copyright (c) 2005, 2008 The NetBSD Foundation.
@@ -145,7 +145,7 @@ void	getnanotime(struct timespec *);
 void	getmicrotime(struct timeval *);
 
 /* Other functions */
-int	abstimeout2timo(struct timespec *, int *);
+int	ts2timo(clockid_t, int, struct timespec *, int *, struct timespec *);
 void	adjtime1(const struct timeval *, struct timeval *, struct proc *);
 int	clock_getres1(clockid_t, struct timespec *);
 int	clock_gettime1(clockid_t, struct timespec *);

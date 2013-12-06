@@ -1,4 +1,4 @@
-# $NetBSD: md.sandpoint,v 1.16 2011/07/17 20:54:31 joerg Exp $
+# $NetBSD: md.sandpoint,v 1.17 2013/11/17 14:34:11 alnsn Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sandpoint				comp-c-include
 ./usr/include/sandpoint/_G_config.h		comp-obsolete		obsolete
@@ -53,6 +53,7 @@
 ./usr/include/sandpoint/rwlock.h		comp-c-include
 ./usr/include/sandpoint/setjmp.h		comp-c-include
 ./usr/include/sandpoint/signal.h		comp-c-include
+./usr/include/sandpoint/sljitarch.h		comp-c-include
 ./usr/include/sandpoint/spr.h			comp-obsolete		obsolete
 ./usr/include/sandpoint/stdarg.h		comp-obsolete		obsolete
 ./usr/include/sandpoint/trap.h			comp-c-include

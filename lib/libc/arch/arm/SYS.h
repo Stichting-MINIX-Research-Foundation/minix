@@ -1,4 +1,4 @@
-/*	$NetBSD: SYS.h,v 1.10 2011/01/14 06:12:16 matt Exp $	*/
+/*	$NetBSD: SYS.h,v 1.15 2013/08/19 22:13:34 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -34,31 +34,63 @@
  *	from: @(#)SYS.h	5.5 (Berkeley) 5/7/91
  */
 
+#define _TEXT_SECTION	.section .text.hot, "ax"
+
 #include <machine/asm.h>
 #include <sys/syscall.h>
 #include <arm/swi.h>
 
-#ifdef __STDC__
-#define SYSTRAP(x)	swi SWI_OS_NETBSD | SYS_ ## x
-#else
-#define SYSTRAP(x)	swi SWI_OS_NETBSD | SYS_/**/x
+#ifndef __STDC__
+#error __STDC__ not defined
 #endif
 
-#ifdef __ELF__
+#if !defined(__thumb__)
+#define SYSTRAP(x)	svc #SWI_OS_NETBSD | SYS_ ## x
+#else
+.macro	emitsvc	x
+	mov	ip, r0
+.ifeq	\x / 256
+	movs	r0, #\x
+.else
+#if defined(_ARM_ARCH_7)
+	movw	r0, #\x
+#else
+.ifeq (\x & 3)
+	movs	r0, #(\x / 4)
+	lsls	r0, r0, #3
+.else
+.ifeq (\x & 1)
+	movs	r0, #(\x / 2)
+	lsls	r0, r0, #1
+.else
+	movs	r0, #(\x / 256)
+	lsls	r0, r0, #8
+	adds	r0, r0, #(\x & 255)
+.endif
+.endif
+#endif /* !_ARM_ARCH_7 */
+.endif
+	svc	#255
+.endm
+#define SYSTRAP(x)	emitsvc SYS_ ## x
+#endif /* __thumb__ */
+
 #define	CERROR		_C_LABEL(__cerror)
 #define	CURBRK		_C_LABEL(__curbrk)
-#else
-#define	CERROR		_ASM_LABEL(cerror)
-#define	CURBRK		_ASM_LABEL(curbrk)
-#endif
 
 #define _SYSCALL_NOERROR(x,y)						\
 	ENTRY(x);							\
 	SYSTRAP(y)
 
+#if  !defined(__thumb__) || defined(_ARM_ARCH_T2)
+#define	_INVOKE_CERROR()	bcs CERROR
+#else
+#define	_INVOKE_CERROR()	\
+	bcc 86f; push {r3,lr}; bl CERROR; pop {r3,pc}; 86:
+#endif
 #define _SYSCALL(x, y)							\
 	_SYSCALL_NOERROR(x,y);						\
-	bcs CERROR
+	_INVOKE_CERROR()
 
 #define SYSCALL_NOERROR(x)						\
 	_SYSCALL_NOERROR(x,x)
@@ -69,11 +101,13 @@
 
 #define PSEUDO_NOERROR(x,y)						\
 	_SYSCALL_NOERROR(x,y);						\
-	RET
+	RET;								\
+	END(x)
 
 #define PSEUDO(x,y)							\
 	_SYSCALL(x,y);							\
-	RET
+	RET;								\
+	END(x)
 
 
 #define RSYSCALL_NOERROR(x)						\
@@ -91,4 +125,5 @@
 	PSEUDO(weak,weak)
 #endif
 
+	.hidden	CERROR
 	.globl	CERROR

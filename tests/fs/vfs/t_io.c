@@ -1,4 +1,4 @@
-/*	$NetBSD: t_io.c,v 1.11 2013/06/12 12:08:08 pooka Exp $	*/
+/*	$NetBSD: t_io.c,v 1.12 2013/08/04 11:02:02 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -168,6 +168,60 @@ shrinkfile(const atf_tc_t *tc, const char *mp)
 	FSTEST_EXIT();
 }
 
+#define TBSIZE 9000
+static void
+read_after_unlink(const atf_tc_t *tc, const char *mp)
+{
+	char buf[TBSIZE], buf2[TBSIZE];
+	int fd;
+
+	FSTEST_ENTER();
+
+	/* create file and put some content into it */
+	RL(fd = rump_sys_open("file", O_RDWR|O_CREAT, 0666));
+	memset(buf, 'D', TBSIZE);
+	ATF_REQUIRE_EQ(rump_sys_write(fd, buf, TBSIZE), TBSIZE);
+	rump_sys_close(fd);
+
+	/* flush buffers from UBC to file system */
+	ATF_REQUIRE_ERRNO(EBUSY, rump_sys_unmount(mp, 0) == -1);
+
+	RL(fd = rump_sys_open("file", O_RDWR));
+	RL(rump_sys_unlink("file"));
+
+	ATF_REQUIRE_EQ(rump_sys_read(fd, buf2, TBSIZE), TBSIZE);
+	ATF_REQUIRE_EQ(memcmp(buf, buf2, TBSIZE), 0);
+	rump_sys_close(fd);
+
+	FSTEST_EXIT();
+}
+
+static void
+wrrd_after_unlink(const atf_tc_t *tc, const char *mp)
+{
+	int value = 0x11;
+	int v2;
+	int fd;
+
+	FSTEST_ENTER();
+
+	RL(fd = rump_sys_open("file", O_RDWR|O_CREAT, 0666));
+	RL(rump_sys_unlink("file"));
+
+	RL(rump_sys_pwrite(fd, &value, sizeof(value), 654321));
+
+	/*
+	 * We can't easily invalidate the buffer since we hold a
+	 * reference, but try to get them to flush anyway.
+	 */
+	RL(rump_sys_fsync(fd));
+	RL(rump_sys_pread(fd, &v2, sizeof(v2), 654321));
+	rump_sys_close(fd);
+
+	ATF_REQUIRE_EQ(value, v2);
+	FSTEST_EXIT();
+}
+
 ATF_TC_FSAPPLY(holywrite, "create a sparse file and fill hole");
 ATF_TC_FSAPPLY(extendfile, "check that extending a file works");
 ATF_TC_FSAPPLY(extendfile_append, "check that extending a file works "
@@ -176,6 +230,8 @@ ATF_TC_FSAPPLY(overwrite512, "write a 512 byte file twice");
 ATF_TC_FSAPPLY(overwrite64k, "write a 64k byte file twice");
 ATF_TC_FSAPPLY(overwrite_trunc, "write 64k + truncate + rewrite");
 ATF_TC_FSAPPLY(shrinkfile, "shrink file");
+ATF_TC_FSAPPLY(read_after_unlink, "contents can be read off disk after unlink");
+ATF_TC_FSAPPLY(wrrd_after_unlink, "file can be written and read after unlink");
 
 ATF_TP_ADD_TCS(tp)
 {
@@ -187,6 +243,8 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_FSAPPLY(overwrite64k);
 	ATF_TP_FSAPPLY(overwrite_trunc);
 	ATF_TP_FSAPPLY(shrinkfile);
+	ATF_TP_FSAPPLY(read_after_unlink);
+	ATF_TP_FSAPPLY(wrrd_after_unlink);
 
 	return atf_no_error();
 }

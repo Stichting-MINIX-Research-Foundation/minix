@@ -1,4 +1,4 @@
-.\"	$NetBSD: rm.1,v 1.24 2006/09/02 23:28:32 wiz Exp $
+.\"	$NetBSD: rm.1,v 1.27 2013/04/26 19:34:34 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994, 2003
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	@(#)rm.1	8.5 (Berkeley) 12/5/94
 .\"
-.Dd August 25, 2006
+.Dd April 26, 2013
 .Dt RM 1
 .Os
 .Sh NAME
@@ -41,7 +41,7 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl f | Fl i
-.Op Fl dPRrvW
+.Op Fl dPRrvWx
 .Ar
 .Sh DESCRIPTION
 The
@@ -99,7 +99,6 @@ each directory's contents are processed (as well as before the attempt
 is made to remove the directory).
 If the user does not respond affirmatively, the file hierarchy rooted in
 that directory is skipped.
-.Pp
 .It Fl r
 Equivalent to
 .Fl R .
@@ -111,6 +110,8 @@ to be verbose, showing files as they are processed.
 Attempts to undelete the named files.
 Currently, this option can only be used to recover
 files covered by whiteouts.
+.It Fl x
+When removing a hierarchy, do not cross mount points.
 .El
 .Pp
 The
@@ -145,6 +146,18 @@ can be accomplished as follows:
 or
 .Pp
 .Ic "rm ./-file"
+.Sh COMPATIBILITY
+The
+.Nm
+utility differs from historical implementations in that the
+.Fl f
+option only masks attempts to remove non-existent files instead of
+masking a large variety of errors.
+.Pp
+Also, historical
+.Bx
+implementations prompted on the standard output,
+not the standard error output.
 .Sh SEE ALSO
 .Xr rmdir 1 ,
 .Xr undelete 2 ,
@@ -152,6 +165,31 @@ or
 .Xr fts 3 ,
 .Xr getopt 3 ,
 .Xr symlink 7
+.Sh STANDARDS
+The
+.Nm
+utility is expected to be
+.St -p1003.2
+compatible.
+The
+.Fl v
+and
+.Fl x
+options are extensions.
+.Pp
+The
+.Fl P
+option attempts to conform to U.S. DoD 5220-22.M, "National Industrial
+Security Program Operating Manual" ("NISPOM") as updated by Change
+2 and the July 23, 2003 "Clearing \*[Am] Sanitization Matrix".
+However, unlike earlier revisions of NISPOM, the 2003 matrix imposes
+requirements which make it clear that the standard does not and
+can not apply to the erasure of individual files, in particular
+requirements relating to spare sector management for an entire
+magnetic disk.
+.Em Because these requirements are not met, the
+.Fl P
+.Em option does not conform to the standard .
 .Sh BUGS
 The
 .Fl P
@@ -170,38 +208,3 @@ too costly for default operation.
 However, it will at least prevent the recovery of data from FFS
 volumes with
 .Xr fsdb 8 .
-.Sh COMPATIBILITY
-The
-.Nm
-utility differs from historical implementations in that the
-.Fl f
-option only masks attempts to remove non-existent files instead of
-masking a large variety of errors.
-.Pp
-Also, historical
-.Bx
-implementations prompted on the standard output,
-not the standard error output.
-.Sh STANDARDS
-The
-.Nm
-utility is expected to be
-.St -p1003.2
-compatible.
-The
-.Fl v
-option is an extension.
-.Pp
-The
-.Fl P
-option attempts to conform to U.S. DoD 5220-22.M, "National Industrial
-Security Program Operating Manual" ("NISPOM") as updated by Change
-2 and the July 23, 2003 "Clearing \*[Am] Sanitization Matrix".
-However, unlike earlier revisions of NISPOM, the 2003 matrix imposes
-requirements which make it clear that the standard does not and
-can not apply to the erasure of individual files, in particular
-requirements relating to spare sector management for an entire
-magnetic disk.
-.Em Because these requirements are not met, the
-.Fl P
-.Em option does not conform to the standard .

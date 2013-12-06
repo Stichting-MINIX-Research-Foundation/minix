@@ -1,4 +1,4 @@
-.\"	$NetBSD: chpass.1,v 1.23 2006/10/07 20:09:09 elad Exp $
+.\"	$NetBSD: chpass.1,v 1.25 2012/04/21 12:27:29 roy Exp $
 .\"
 .\" Copyright (c) 1988, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)chpass.1	8.2 (Berkeley) 12/30/93
 .\"
-.Dd October 7, 2006
+.Dd April 5, 2012
 .Dt CHPASS 1
 .Os
 .Sh NAME
@@ -78,7 +78,7 @@ option attempts to change the user's shell to
 This option causes the password to be updated only in the local
 password file.
 When changing only the local password,
-.Xr pwd_mkdb  8
+.Xr pwd_mkdb 8
 is used to update the password databases.
 .It Fl y
 This forces the YP password database entry to be changed, even if
@@ -180,7 +180,7 @@ field is a key for a user's login class.
 Login classes are defined in
 .Xr login.conf 5 ,
 which is a
-.Xr termcap 5
+.Xr capfile 5
 style database of user attributes, accounting, resource and
 environment settings.
 .Pp

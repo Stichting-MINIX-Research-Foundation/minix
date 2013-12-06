@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.139 2012/08/05 01:43:59 matt Exp $	*/
+/*	$NetBSD: exec.h,v 1.142 2013/11/14 12:07:11 martin Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -216,6 +216,8 @@ struct exec_package {
 	char	*ep_path;		/* absolute path of executable */
 	void	(*ep_emul_arg_free)(void *);
 					/* free ep_emul_arg */
+	uint32_t ep_osversion;		/* OS version */
+	char	ep_machine_arch[12];	/* from MARCH note */
 };
 #define	EXEC_INDIR	0x0001		/* script handling already done */
 #define	EXEC_HASFD	0x0002		/* holding a shell script */
@@ -224,6 +226,7 @@ struct exec_package {
 #define	EXEC_DESTR	0x0010		/* destructive ops performed */
 #define	EXEC_32		0x0020		/* 32-bit binary emulation */
 #define	EXEC_FORCEAUX	0x0040		/* always use ELF AUX vector */
+#define	EXEC_TOPDOWN_VM	0x0080		/* may use top-down VM layout */
 
 struct exec_vmcmd {
 	int	(*ev_proc)(struct lwp *, struct exec_vmcmd *);

@@ -1,13 +1,13 @@
 #!/bin/sh
 #
-# $NetBSD: maketars,v 1.74 2010/08/15 07:27:33 mrg Exp $
+# $NetBSD: maketars,v 1.80 2013/02/07 16:27:41 christos Exp $
 #
 # Make release tar files for some or all lists.  Usage:
 # maketars [-b] [-x] [-i installdir] [-a arch] [-m machine] [-s setsdir]
 #	[-M metalog] [-N etcdir] [-d destdir] [-t tardir] [setname ...]
 #
-# The default sets are "base comp etc games man misc tests text"
-# The X sets are "xbase xcomp xetc xfont xserver"
+# The default sets are "base comp debug etc games man misc tests text"
+# The X sets are "xbase xcomp xdebug xetc xfont xserver"
 # The extsrc sets are "extbase extcomp extetc"
 #
 # If '-i installdir' is given, copy the given sets to installdir
@@ -28,6 +28,7 @@ installdir=
 etcdir=
 setfilesonly=false
 quiet=false
+skipkeys=time,md5,sha1,sha384,sha512,rmd160,cksum
 
 usage()
 {
@@ -166,8 +167,8 @@ for setname in ${lists}; do
 		echo >&2 "makeflist output is empty for ${setname}"
 		exit 1
 	fi
+	${setfilesonly} && msg "Creating ${setlistdir}/set.${setname}"
 	if [ -n "${metalog}" ]; then
-		${setfilesonly} && msg "Creating ${setlistdir}/set.${setname}"
 		${AWK} -f "${rundir}/getdirs.awk" "${SDIR}/flist.${setname}" \
 		    > "${SDIR}/flist.${setname}.full" \
 		    || exit 1
@@ -176,21 +177,27 @@ for setname in ${lists}; do
 			${AWK} -f "${rundir}/join.awk" \
 				"${SDIR}/flist.${setname}.full" "${metalog}"
 			echo "./etc/mtree/set.${setname} type=file mode=0444"
-		) | ${MTREE} -CS -k all -R time -N "${etcdir}" \
+		) | ${MTREE} -CS -k all -R "${skipkeys}" -N "${etcdir}" \
 		    > "${setlistdir}/set.${setname}" \
 		    || exit 1
 		# We deliberately do not add set.${setname} to ${metalog},
 		# because we depend on it as an input.
-	elif ! cmp -s "${SDIR}/flist.${setname}" \
-			"${setlistdir}/set.${setname}" >/dev/null 2>&1; then
-		rm -f "${setlistdir}/set.${setname}"
-		cp "${SDIR}/flist.${setname}" "${setlistdir}/set.${setname}" \
-		    || exit 1
+	else
+		${MTREE} -c -p "${dest}" -k all -R "${skipkeys}" \
+		    -O "${SDIR}/flist.${setname}" | ${MTREE} -C -k all > \
+		    "${setlistdir}/set.${setname}"
 	fi
 done
 if ${setfilesonly}; then		# exit after creating the set lists
 	exit 0
 fi
+
+runpax() {
+	local s="$1"
+	shift
+	(cd "${dest}" && 
+	    ${PAX} -dOw -N"${etcdir}" -M "$@" < "${setlistdir}/set.${s}")
+}
 
 #
 # now build the tarfiles
@@ -203,9 +210,7 @@ for setname in ${lists:-${nlists}}; do
 	out="${setname}.tgz"
 	if [ -n "${installdir}" ]; then
 		msg "Copying set ${setname}"
-		( cd "${dest}"; \
-		    ${PAX} -O -rwpe -d -N"${etcdir}" ${metalog:+-M} \
-			"${installdir}" < "${setlistdir}/set.${setname}" )
+		runpax "${setname}" -rpe "${installdir}"
 	else
 		if [ -n "${metalog}" -a "${tars}/${out}" -nt "${metalog}" ]
 		then
@@ -215,11 +220,8 @@ for setname in ${lists:-${nlists}}; do
 		msg "Creating ${out}"
 		rm -f "${tars}/${out}"
 		TMPFILES="${TMPFILES} ${tars}/${out}.tmp"
-		( cd "${dest}"; \
-		    ${PAX} -O -w -d -z -N"${etcdir}" ${metalog:+-M} \
-			--use-compress-program ${COMPRESS_PROGRAM} \
-			< "${setlistdir}/set.${setname}" ) \
-			> "${tars}/${out}.tmp" &&
+		runpax "${setname}" -z --use-compress-program \
+		    ${COMPRESS_PROGRAM} > "${tars}/${out}.tmp" &&
 		mv "${tars}/${out}.tmp" "${tars}/${out}"
 	fi
 	es=$((${es} + $?))

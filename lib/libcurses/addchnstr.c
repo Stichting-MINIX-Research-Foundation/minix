@@ -1,4 +1,4 @@
-/*	$NetBSD: addchnstr.c,v 1.5 2012/09/28 06:00:39 blymn Exp $	*/
+/*	$NetBSD: addchnstr.c,v 1.6 2013/11/09 11:16:59 blymn Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: addchnstr.c,v 1.5 2012/09/28 06:00:39 blymn Exp $");
+__RCSID("$NetBSD: addchnstr.c,v 1.6 2013/11/09 11:16:59 blymn Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -135,7 +135,7 @@ waddchnstr(WINDOW *win, const chtype *chstr, int n)
 	const chtype *chp;
 	attr_t	attr;
 	char	*ocp, *cp, *start;
-	int i, ret;
+	int i, ret, ox, oy;
 
 #ifdef DEBUG
 	__CTRACE(__CTRACE_INPUT, "waddchnstr: win = %p, chstr = %p, n = %d\n",
@@ -158,6 +158,8 @@ waddchnstr(WINDOW *win, const chtype *chstr, int n)
 	start = ocp;
 	i = 0;
 	attr = (*chp) & __ATTRIBUTES;
+	ox = win->curx;
+	oy = win->cury;
 	while (len) {
 		*cp = (*chp) & __CHARTEXT;
 		cp++;
@@ -166,7 +168,7 @@ waddchnstr(WINDOW *win, const chtype *chstr, int n)
 		len--;
 		if (((*chp) & __ATTRIBUTES) != attr) {
 			*cp = '\0';
-			if (__waddbytes(win, start, i, attr) == ERR) {
+			if (_cursesi_waddbytes(win, start, i, attr, 0) == ERR) {
 				free(ocp);
 				return ERR;
 			}
@@ -176,7 +178,8 @@ waddchnstr(WINDOW *win, const chtype *chstr, int n)
 		}
 	}
 	*cp = '\0';
-	ret = __waddbytes(win, start, i, attr);
+	ret = _cursesi_waddbytes(win, start, i, attr, 0);
 	free(ocp);
+	wmove(win, oy, ox);
 	return ret;
 }

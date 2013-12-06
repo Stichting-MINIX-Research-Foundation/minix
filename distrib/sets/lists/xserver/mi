@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.32 2011/03/09 18:55:56 mrg Exp $
+# $NetBSD: mi,v 1.33 2013/02/09 17:17:36 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -54,8 +54,8 @@
 ./usr/X11R6/man/man1/xvidtune.1				-unknown-	.man,x11
 ./usr/X11R7/bin/Xnest					-unknown-	xorg
 ./usr/X11R7/bin/Xvfb					-unknown-	xorg
-./usr/X11R7/lib/modules/dri/mesa_dri.so			-unknown-	xorg
-./usr/X11R7/lib/modules/dri/mesa_dri.so.0		-unknown-	xorg
+./usr/X11R7/lib/modules/dri/libmesa_dri.so		-unknown-	xorg
+./usr/X11R7/lib/modules/dri/libmesa_dri.so.0		-unknown-	xorg
 ./usr/X11R7/lib/modules/dri/swrast_dri.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/dri/swrast_dri.so.0		-unknown-	xorg
 ./usr/X11R7/man/cat1/Xmark.0				-unknown-	.cat,xorg

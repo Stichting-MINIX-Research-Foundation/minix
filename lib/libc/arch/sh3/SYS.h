@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)SYS.h	5.5 (Berkeley) 5/7/91
- *	$NetBSD: SYS.h,v 1.10 2011/01/23 14:08:53 joerg Exp $
+ *	$NetBSD: SYS.h,v 1.11 2013/09/12 15:36:15 joerg Exp $
  */
 
 #include <machine/asm.h>
@@ -61,7 +61,7 @@
 		ENTRY(x);				\
 		SYSTRAP(y)
 
-#ifdef PIC
+#ifdef __PIC__
 
 #define JUMP_CERROR					\
 		mov	r0, r4;				\
@@ -76,7 +76,7 @@
 	912:	.long	_GLOBAL_OFFSET_TABLE_;		\
 	913:	.long	PIC_GOT(cerror)
 
-#else  /* !PIC */
+#else  /* !__PIC__ */
 
 #define JUMP_CERROR					\
 		mov.l	912f, r3;			\
@@ -85,7 +85,7 @@
 		.align	2;				\
 	912:	.long	cerror
 
-#endif /* !PIC */
+#endif /* !__PIC__ */
 
 #define _SYSCALL(x,y)					\
 		.text;					\

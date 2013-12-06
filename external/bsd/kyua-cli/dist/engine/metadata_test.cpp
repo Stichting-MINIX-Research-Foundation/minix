@@ -338,7 +338,7 @@ ATF_TEST_CASE_BODY(output__some_values)
     ATF_REQUIRE_EQ(
         "metadata{allowed_architectures='abc', allowed_platforms='', "
         "description='', has_cleanup='false', required_configs='', "
-        "required_files='bar foo', required_memory='1024', "
+        "required_files='bar foo', required_memory='1.00K', "
         "required_programs='', required_user='', timeout='300'}",
         str.str());
 }

@@ -6,10 +6,6 @@
 #include <stdarg.h>
 #include <string.h>
 
-#ifdef __weak_alias
-__weak_alias(open, _open)
-#endif
-
 int open(const char *name, int flags, ...)
 {
   va_list argp;

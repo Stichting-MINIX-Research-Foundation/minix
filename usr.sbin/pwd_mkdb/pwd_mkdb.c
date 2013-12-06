@@ -1,4 +1,4 @@
-/*	$NetBSD: pwd_mkdb.c,v 1.53 2011/01/04 10:01:51 wiz Exp $	*/
+/*	$NetBSD: pwd_mkdb.c,v 1.56 2012/11/26 20:13:54 pooka Exp $	*/
 
 /*
  * Copyright (c) 2000, 2009 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@ __COPYRIGHT("@(#) Copyright (c) 2000, 2009\
  The NetBSD Foundation, Inc.  All rights reserved.\
   Copyright (c) 1991, 1993, 1994\
  The Regents of the University of California.  All rights reserved.");
-__RCSID("$NetBSD: pwd_mkdb.c,v 1.53 2011/01/04 10:01:51 wiz Exp $");
+__RCSID("$NetBSD: pwd_mkdb.c,v 1.56 2012/11/26 20:13:54 pooka Exp $");
 #endif /* not lint */
 
 #if HAVE_NBTOOL_CONFIG_H
@@ -119,7 +119,10 @@ __RCSID("$NetBSD: pwd_mkdb.c,v 1.53 2011/01/04 10:01:51 wiz Exp $");
 #include <stdarg.h>
 #include <string.h>
 #include <unistd.h>
+
+#ifndef HAVE_NBTOOL_CONFIG_H
 #include <util.h>
+#endif
 
 #define	MAX_CACHESIZE	8*1024*1024
 #define	MIN_CACHESIZE	2*1024*1024
@@ -167,13 +170,13 @@ static int	warning;
 static struct pwddb sdb, idb;
 
 
-void	bailout(void) __attribute__((__noreturn__));
+void	bailout(void) __dead;
 void	cp(const char *, const char *, mode_t);
 void	deldbent(struct pwddb *, int, void *);
-void	mkpw_error(const char *, ...);
+void	mkpw_error(const char *, ...) __dead;
 void	mkpw_warning(const char *, ...);
 int	getdbent(struct pwddb *, int, void *, struct passwd **);
-void	inconsistency(void);
+void	inconsistency(void) __dead;
 void	install(const char *, const char *);
 int	main(int, char **);
 void	putdbents(struct pwddb *, struct passwd *, const char *, int, int,
@@ -181,8 +184,8 @@ void	putdbents(struct pwddb *, struct passwd *, const char *, int, int,
 void	putyptoken(struct pwddb *);
 void	rm(const char *);
 int	scan(FILE *, struct passwd *, int *, int *);
-void	usage(void) __attribute__((__noreturn__));
-void	wr_error(const char *);
+void	usage(void) __dead;
+void	wr_error(const char *) __dead;
 uint32_t getversion(const char *);
 void	setversion(struct pwddb *);
 
@@ -345,7 +348,7 @@ main(int argc, char *argv[])
 	(void)sigaddset(&set, SIGINT);
 	(void)sigaddset(&set, SIGQUIT);
 	(void)sigaddset(&set, SIGTERM);
-	(void)sigprocmask(SIG_BLOCK, &set, (sigset_t *)NULL);
+	(void)sigprocmask(SIG_BLOCK, &set, NULL);
 
 	/* We don't care what the user wants. */
 	(void)umask(0);
@@ -436,7 +439,7 @@ main(int argc, char *argv[])
 		 * Create original format password file entry.
 		 */
 		if (makeold) {
-#ifdef __minix
+#if defined(__minix)
 			(void)fprintf(oldfp, "%s:##%s:%d:%d:%s:%s:%s\n",
 			    pwd.pw_name, pwd.pw_name, pwd.pw_uid, pwd.pw_gid,
 			    pwd.pw_gecos, pwd.pw_dir, pwd.pw_shell);
@@ -444,7 +447,7 @@ main(int argc, char *argv[])
 			(void)fprintf(oldfp, "%s:*:%d:%d:%s:%s:%s\n",
 			    pwd.pw_name, pwd.pw_uid, pwd.pw_gid, pwd.pw_gecos,
 			    pwd.pw_dir, pwd.pw_shell);
-#endif
+#endif /* defined(__minix) */
 			if (ferror(oldfp))
 				wr_error(oldpwdfile);
 		}
@@ -1046,7 +1049,7 @@ putyptoken(struct pwddb *db)
 
 	key.data = __UNCONST(__yp_token);
 	key.size = strlen(__yp_token);
-	data.data = (u_char *)NULL;
+	data.data = NULL;
 	data.size = 0;
 
 	if ((*db->db->put)(db->db, &key, &data, R_NOOVERWRITE) == -1)

@@ -1,10 +1,6 @@
 #include <sys/cdefs.h>
 #include "namespace.h"
 
-#ifdef __weak_alias
-__weak_alias(bind, _bind)
-#endif
-
 #include <unistd.h>
 #include <stdint.h>
 #include <stdlib.h>

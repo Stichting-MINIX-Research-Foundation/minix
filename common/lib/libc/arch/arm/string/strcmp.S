@@ -1,4 +1,4 @@
-/*      $NetBSD: strcmp.S,v 1.1 2005/12/20 19:28:49 christos Exp $ */
+/*      $NetBSD: strcmp.S,v 1.2 2013/08/19 00:56:12 matt Exp $ */
 
 /*
  * Copyright (c) 2002 ARM Ltd
@@ -30,14 +30,24 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: strcmp.S,v 1.1 2005/12/20 19:28:49 christos Exp $")
+RCSID("$NetBSD: strcmp.S,v 1.2 2013/08/19 00:56:12 matt Exp $")
 
 ENTRY(strcmp)
-1:
-	ldrb	r2, [r0], #1
+#if !defined(__thumb__)
+1:	ldrb	r2, [r0], #1
 	ldrb	r3, [r1], #1
 	cmp	r2, #1
 	cmpcs	r2, r3
+#else
+	subs	r1, r1, r0	/* this allows us to only one increment */
+1:	ldrb	r2, [r0]
+	ldrb	r3, [r1, r0]
+	adds	r0, r0, #1	/* increment */
+	cmp	r2, #1
+	bcc	2f
+	cmp	r2, r3
+#endif
 	beq	1b
-	sub	r0, r2, r3
+2:	subs	r0, r2, r3
 	RET
+END(strcmp)

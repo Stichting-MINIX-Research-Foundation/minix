@@ -131,10 +131,8 @@
 /* Define to 1 if you have the `strtol' function. */
 #define HAVE_STRTOL 1
 
-#ifndef __minix
 /* Define to 1 if struct dirent has member d_namlen */
 #define HAVE_STRUCT_DIRENT_D_NAMLEN 1
-#endif
 
 /* Define to 1 if you have the `strunvis' function. */
 #define HAVE_STRUNVIS 1

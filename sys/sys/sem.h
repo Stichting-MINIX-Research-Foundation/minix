@@ -206,11 +206,11 @@ extern struct semid_ds *sema;		/* semaphore id pool */
 
 #endif /* _KERNEL */
 
-#ifdef __minix
+#if defined(__minix)
 /* ipcs ctl cmds */
 # define SEM_STAT 18
 # define SEM_INFO 19
-#endif
+#endif /* defined(__minix) */
 
 #ifndef _KERNEL
 #include <sys/cdefs.h>

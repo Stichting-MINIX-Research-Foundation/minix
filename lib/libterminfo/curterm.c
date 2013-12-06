@@ -1,4 +1,4 @@
-/* $NetBSD: curterm.c,v 1.8 2011/10/05 10:46:08 roy Exp $ */
+/* $NetBSD: curterm.c,v 1.10 2013/11/18 20:51:03 joerg Exp $ */
 
 /*
  * Copyright (c) 2009, 2011 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: curterm.c,v 1.8 2011/10/05 10:46:08 roy Exp $");
+__RCSID("$NetBSD: curterm.c,v 1.10 2013/11/18 20:51:03 joerg Exp $");
 
 #include <assert.h>
 #include <stdlib.h>
@@ -64,7 +64,7 @@ _ti_setospeed(TERMINAL *term)
 	size_t i;
 
 	_DIAGASSERT(term != NULL);
-	
+
 	term->_ospeed = 0;
 	if (tcgetattr(term->fildes, &termios) == 0) {
 		os = cfgetospeed(&termios);
@@ -151,7 +151,7 @@ termname(void)
 	return __UNCONST(cur_term->name);
 }
 
-static const char * nullname = '\0';
+static const char * nullname = "";
 
 char *
 longname(void)

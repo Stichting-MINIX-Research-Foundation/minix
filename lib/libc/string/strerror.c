@@ -1,4 +1,4 @@
-/*	$NetBSD: strerror.c,v 1.14 2006/01/26 11:13:42 kleink Exp $	*/
+/*	$NetBSD: strerror.c,v 1.16 2013/09/02 07:59:32 joerg Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -30,30 +30,66 @@
  */
 
 #include <sys/cdefs.h>
-#if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char *sccsid = "@(#)strerror.c	5.6 (Berkeley) 5/4/91";
-#else
-__RCSID("$NetBSD: strerror.c,v 1.14 2006/01/26 11:13:42 kleink Exp $");
-#endif
-#endif /* LIBC_SCCS and not lint */
+__RCSID("$NetBSD: strerror.c,v 1.16 2013/09/02 07:59:32 joerg Exp $");
+
+#define __SETLOCALE_SOURCE__
 
 #include "namespace.h"
-#include <string.h>
-#include <limits.h>
 #include <errno.h>
-#include "extern.h"
+#include <limits.h>
+#include <locale.h>
+#include <stdlib.h>
+#include <string.h>
 
-/*
- * Since perror() is not allowed to change the contents of strerror()'s
- * static buffer, both functions supply their own buffers to strerror_r()
- */
+#include "extern.h"
+#ifdef _REENTRANT
+#include "reentrant.h"
+#endif
+#include "setlocale_local.h"
+
+__weak_alias(strerror_l, _strerror_l)
 
 __aconst char *
 strerror(int num)
 {
+
+	return strerror_l(num, _current_locale());
+}
+
+#ifdef _REENTRANT
+static thread_key_t strerror_key;
+static once_t strerror_once = ONCE_INITIALIZER;
+
+static void
+strerror_setup(void)
+{
+
+	thr_keycreate(&strerror_key, free);
+}
+#endif
+
+__aconst char *
+strerror_l(int num, locale_t loc)
+{
+	int error;
+#ifdef _REENTRANT
+	char *buf;
+
+	thr_once(&strerror_once, strerror_setup);
+	buf = thr_getspecific(strerror_key);
+	if (buf == NULL) {
+		buf = malloc(NL_TEXTMAX);
+		if (buf == NULL) {
+			static char fallback_buf[NL_TEXTMAX];
+			buf = fallback_buf;
+		}
+		thr_setspecific(strerror_key, buf);
+	}
+#else
 	static char buf[NL_TEXTMAX];
-	int error = strerror_r(num, buf, sizeof(buf));
+#endif
+
+	error = _strerror_lr(num, buf, NL_TEXTMAX, loc);
 	if (error)
 		errno = error;
 	return buf;

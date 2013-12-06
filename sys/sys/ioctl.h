@@ -61,7 +61,7 @@ struct ttysize {
 #include <sys/filio.h>
 #include <sys/sockio.h>
 
-#ifdef __minix
+#if defined(__minix)
 /* ioctls */
 #include <sys/ioc_net.h>	/* 'n'			*/
 #include <sys/ioc_disk.h>	/* 'd'			*/
@@ -74,7 +74,7 @@ struct ttysize {
 #include <sys/ioc_fb.h>		/* 'V'			*/
 #include <dev/vndvar.h>		/* 'F'			*/
 #include <dev/i2c/i2c_io.h>
-#endif
+#endif /* defined(__minix) */
 
 /*
  * Passthrough ioctl commands. These are passed through to devices
@@ -108,7 +108,7 @@ __END_DECLS
 #endif /* !_KERNEL */
 #endif /* !_SYS_IOCTL_H_ */
 
-#ifndef __minix
+#if !defined(__minix)
 /*
  * Keep outside _SYS_IOCTL_H_
  * Compatibility with old terminal driver
@@ -131,5 +131,5 @@ __END_DECLS
     defined(COMPAT_SVR4) || defined(COMPAT_FREEBSD) || defined(COMPAT_OSF1) || \
     defined(COMPAT_IBCS2) || defined(MODULAR)
 #include <sys/ioctl_compat.h>
-#endif
+#endif /* !defined(__minix) */
 #endif

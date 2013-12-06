@@ -29,13 +29,13 @@
 #include "libmandoc.h"
 #include "libroff.h"
 
-static	int		 data(struct tbl_node *, struct tbl_span *, 
+static	int		 getdata(struct tbl_node *, struct tbl_span *, 
 				int, const char *, int *);
 static	struct tbl_span	*newspan(struct tbl_node *, int, 
 				struct tbl_row *);
 
 static int
-data(struct tbl_node *tbl, struct tbl_span *dp, 
+getdata(struct tbl_node *tbl, struct tbl_span *dp, 
 		int ln, const char *p, int *pos)
 {
 	struct tbl_dat	*dat;
@@ -154,7 +154,7 @@ tbl_cdata(struct tbl_node *tbl, int ln, const char *p)
 		if (p[pos] == tbl->opts.tab) {
 			tbl->part = TBL_PART_DATA;
 			pos++;
-			return(data(tbl, tbl->last_span, ln, p, &pos));
+			return(getdata(tbl, tbl->last_span, ln, p, &pos));
 		} else if ('\0' == p[pos]) {
 			tbl->part = TBL_PART_DATA;
 			return(1);
@@ -269,7 +269,7 @@ tbl_data(struct tbl_node *tbl, int ln, const char *p)
 	/* This returns 0 when TBL_PART_CDATA is entered. */
 
 	while ('\0' != p[pos])
-		if ( ! data(tbl, dp, ln, p, &pos))
+		if ( ! getdata(tbl, dp, ln, p, &pos))
 			return(0);
 
 	return(1);

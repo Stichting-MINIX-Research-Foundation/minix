@@ -1,4 +1,4 @@
--- Id: README,v 1.2 2004/03/28 17:24:53 tom Exp
+-- Id: README,v 1.2 2004/03/28 17:24:53 tom Exp 
 
 The original README is below.  I've updated this version of Berkeley Yacc
 to make it ANSI C compliant - Thomas Dickey

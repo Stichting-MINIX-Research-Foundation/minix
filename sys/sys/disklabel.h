@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.112 2012/01/16 18:47:58 christos Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.116 2013/11/05 00:36:02 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -46,10 +46,11 @@
  * disk geometry, filesystem partitions, and drive specific information.
  * The location of the label, as well as the number of partitions the
  * label can describe and the number of the "whole disk" (raw)
- * paritition are machine dependent.
+ * partition are machine dependent.
  */
 #if HAVE_NBTOOL_CONFIG_H
-#include <nbinclude/machine/disklabel.h>
+#undef MAXPARTITIONS
+#define MAXPARTITIONS		MAXMAXPARTITIONS
 #else
 #include <machine/disklabel.h>
 #endif /* HAVE_NBTOOL_CONFIG_H */
@@ -267,7 +268,7 @@ struct olddisklabel {
 	.set	d_ncylinders,52
 	.set	d_secpercyl,56
 	.set	d_secperunit,60
-	.set	d_end_,276		/* size of disk label */
+	.set	d_end_,148+(MAXPARTITIONS*16)
 #endif /* _LOCORE */
 
 /*

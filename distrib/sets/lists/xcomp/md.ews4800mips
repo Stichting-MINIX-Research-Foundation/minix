@@ -1,6 +1,1 @@
-# $NetBSD: md.ews4800mips,v 1.1 2011/02/09 13:41:00 tsutsui Exp $
-./usr/libdata/debug/usr/X11R6/bin/Xews4800mips.debug	-unknown-	debug,x11
-./usr/libdata/debug/usr/X11R6/bin/Xvfb.debug		-unknown-	debug,x11
-./usr/libdata/debug/usr/X11R7/bin/Xorg.debug		-unknown-	debug,xorg
-./usr/libdata/debug/usr/X11R7/bin/cvt.debug		-unknown-	debug,xorg
-./usr/libdata/debug/usr/X11R7/bin/gtf.debug		-unknown-	debug,xorg
+# $NetBSD: md.ews4800mips,v 1.2 2013/01/16 16:01:08 christos Exp $

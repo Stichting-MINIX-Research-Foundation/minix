@@ -17,6 +17,8 @@
 
 #include <minix/hash.h>
 
+#include <machine/vmparam.h>
+
 #include "proto.h"
 #include "vm.h"
 #include "region.h"

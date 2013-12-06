@@ -1,7 +1,7 @@
-/*	$NetBSD: sqlite.c,v 1.5 2012/11/02 12:24:52 mbalmer Exp $ */
+/*	$NetBSD: sqlite.c,v 1.6 2013/10/27 12:38:08 mbalmer Exp $ */
 
 /*
- * Copyright (c) 2011 Marc Balmer <marc@msys.ch>
+ * Copyright (c) 2011, 2013 Marc Balmer <marc@msys.ch>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -81,11 +81,14 @@ sqlite_open(lua_State *L)
 	sqlite3 **db;
 
 	db = lua_newuserdata(L, sizeof(sqlite3 *));
-	lua_pushinteger(L, sqlite3_open_v2(luaL_checkstring(L, -3), db,
-	    (int)luaL_checkinteger(L, -2), NULL));
-
 	luaL_getmetatable(L, SQLITE_DB_METATABLE);
-	lua_setmetatable(L, -3);
+	lua_setmetatable(L, -2);
+
+	if (lua_gettop(L) > 2)
+		lua_pushinteger(L, sqlite3_open_v2(luaL_checkstring(L, -3), db,
+		    (int)luaL_checkinteger(L, -2), NULL));
+	else
+		lua_pushinteger(L, sqlite3_open(luaL_checkstring(L, -2), db));
 	return 2;
 
 }
@@ -362,8 +365,10 @@ static const struct constant sqlite_constant[] = {
 	{ "INTERRUPT",		SQLITE_INTERRUPT },
 	{ "IOERR",		SQLITE_IOERR },
 	{ "CORRUPT",		SQLITE_CORRUPT },
+	{ "NOTFOUND",		SQLITE_NOTFOUND },
 	{ "FULL",		SQLITE_FULL },
 	{ "CANTOPEN",		SQLITE_CANTOPEN },
+	{ "PROTOCOL",		SQLITE_PROTOCOL },
 	{ "EMPTY",		SQLITE_EMPTY },
 	{ "SCHEMA",		SQLITE_SCHEMA },
 	{ "TOOBIG",		SQLITE_TOOBIG },
@@ -375,14 +380,13 @@ static const struct constant sqlite_constant[] = {
 	{ "FORMAT",		SQLITE_FORMAT },
 	{ "RANGE",		SQLITE_RANGE },
 	{ "NOTADB",		SQLITE_NOTADB },
-
 	{ "ROW",		SQLITE_ROW },
 	{ "DONE",		SQLITE_DONE },
 
 	/* File modes */
 	{ "OPEN_READONLY",	SQLITE_OPEN_READONLY },
 	{ "OPEN_READWRITE",	SQLITE_OPEN_READWRITE },
-	{ "OPEN_CREATE",	SQLITE_OPEN_CREATE },
+	{ "OPEN_CREATE",	SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE },
 
 	{ NULL,			0 }
 };
@@ -391,14 +395,14 @@ static void
 gpio_set_info(lua_State *L)
 {
 	lua_pushliteral(L, "_COPYRIGHT");
-	lua_pushliteral(L, "Copyright (C) 2011, 2012 by "
+	lua_pushliteral(L, "Copyright (C) 2011, 2012, 2013 by "
 	    "Marc Balmer <marc@msys.ch>");
 	lua_settable(L, -3);
 	lua_pushliteral(L, "_DESCRIPTION");
 	lua_pushliteral(L, "SQLite interface for Lua");
 	lua_settable(L, -3);
 	lua_pushliteral(L, "_VERSION");
-	lua_pushliteral(L, "sqlite 1.0.2");
+	lua_pushliteral(L, "sqlite 1.0.3");
 	lua_settable(L, -3);
 }
 
@@ -443,6 +447,8 @@ luaopen_sqlite(lua_State* L)
 	sqlite3_initialize();
 
 	luaL_register(L, "sqlite", sqlite_methods);
+	luaL_register(L, NULL, db_methods);
+	luaL_register(L, NULL, stmt_methods);
 	gpio_set_info(L);
 
 	/* The database connection metatable */

@@ -33,6 +33,7 @@
 #define UTILS_FORMAT_EXCEPTIONS_HPP
 
 #include <stdexcept>
+#include <string>
 
 namespace utils {
 namespace format {

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.7 2012/09/15 16:22:58 plunky Exp $
+# $NetBSD: Makefile,v 1.8 2013/08/16 15:29:45 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -6,6 +6,7 @@ MKMAN=	no
 
 #LSC: Unsupported on MINIX
 #TESTS_SUBDIRS+=	getaddrinfo
+FILES+=hosts
 
 TESTSDIR=	${TESTSBASE}/lib/libc/net
 
@@ -21,6 +22,7 @@ aton_ether_subr.c: gen_ether_subr ${NETBSDSRCDIR}/sys/net/if_ethersubr.c
 TESTS_SH+=	t_nsdispatch
 TESTS_SH+=	t_protoent
 TESTS_SH+=	t_servent
+TESTS_SH+=	t_hostent
 
 BINDIR=		${TESTSDIR}
 
@@ -28,6 +30,13 @@ BINDIR=		${TESTSDIR}
 #PROGS+=		h_nsd_recurse
 PROGS+=		h_protoent
 PROGS+=		h_servent
+PROGS+=		h_hostent
+CPPFLAGS.h_hostent.c += -I${NETBSDSRCDIR}/lib/libc/net
+
+# For easy debugging, without installing libc
+#.PATH.c:${NETBSDSRCDIR}/lib/libc/net
+#SRCS.h_hostent = h_hostent.c gethnamaddr.c
+#DBG=-g3
 
 LDADD.h_nsd_recurse+=	-lpthread
 

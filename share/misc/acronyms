@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.209 2011/11/19 17:40:19 mbalmer Exp $
+$NetBSD: acronyms,v 1.221 2013/09/28 17:58:53 dholland Exp $
 10Q	thank you
 10X	thanks
 1337	elite ("leet")
@@ -6,16 +6,20 @@ $NetBSD: acronyms,v 1.209 2011/11/19 17:40:19 mbalmer Exp $
 31337	elite ("eleet")
 4TW	for the win
 AAMOF	as a matter of fact
+ABD	all but dissertation
 AC	audible chuckle
+ADD	attention deficit disorder
+ADHD	attention deficit (and) hyperactivity disorder
 ADN	any day now
+ADOS	attention deficit ... oh, shiny!
 AEAP	as early as possible
 AFAIAC	as far as I am concerned
 AFAIC	as far as I'm concerned
-AFAICR	as far as I can recall
+AFAICR	as far as I can {recall,remember}
 AFAICS	as far as I can see
 AFAICT	as far as I can tell
 AFAIK	as far as I know
-AFAIR	as far as I {recall, remember}
+AFAIR	as far as I {recall,remember}
 AFAIU	as far as I understand
 AFD	away from desktop
 AFK	away from keyboard
@@ -27,14 +31,15 @@ AISE	as I see it
 AIU	as I understand
 AIUI	as I understand it
 AKA	also known as
+AM	ante meridiem
 AMOL	a mountain of love
 ASAIC	as soon as I can
 ASAP	as soon as possible
 ATEOTD	at the end of the day
 ATM	at the moment
-ATM	automatic teller machine
+ATM	{automated,automatic} teller machine
 ATW	around the world
-AWK	Aho Weinberger Kernighan
+AWK	Aho, Weinberger, [and] Kernighan
 AWOL	absent without official leave
 AYBABTU	all your base are belong to us
 AYF	all your fault
@@ -45,6 +50,7 @@ B/S	bullshit
 B/W	bandwidth
 B/W	between
 BAK	back at keyboard
+BAMF	bad-ass motherfucker
 BBIAB	be back in a bit
 BBL	[I'll] be back later
 BBR	burnt beyond repair
@@ -52,9 +58,9 @@ BBS	be back soon
 BBT	be back tomorrow
 BCNU	be seeing you
 BCNUL8R	be seeing you later
+BCP	best current practice
 BF	best friend
 BF	boyfriend
-BCP	best current practice
 BFD	big fucking deal
 BFF	best friend forever
 BFH	big fucking hammer
@@ -78,6 +84,7 @@ BTFT	been there, fixed that
 BTTH	boot to the head
 BTW	by the way
 CC	credit card
+CEO	chief executive officer
 CFV	call for votes
 CFY	calling for you
 CG	center of gravity
@@ -88,14 +95,18 @@ COTS	commercial off-the-shelf
 CPC	cost per click
 CTN	can't talk now
 CU	see you
+CUL	see you later
 CYA	see you around
 CYE	check your email
+D/B/A	doing business as
 D/L	download
+DBA	doing business as
 DBEYR	don't believe everything you read
 DGAS	don't give a shit
 DIAFYO	did I ask for your opinion?
 DIY	do it yourself
 DKDC	don't know, don't care
+DM	dungeon master
 DMZ	demilitarized zone
 DND	do not disturb
 DOA	dead on arrival
@@ -103,8 +114,8 @@ DRY	don't repeat yourself
 DSTM	don't shoot the messenger
 DTRT	do the right thing
 DTWT	do the wrong thing
-DYK	do you know?
 DWIM	do what I mean
+DYK	do you know?
 ECR	electronic cash register
 EDS	eternal downward spiral
 EFT	electronic funds transfer
@@ -112,34 +123,35 @@ EG	evil grin
 EIE	enough is enough
 EMSG	email message
 EOB	end of business [day]
-EOD	end of {day, discussion}
+EOD	end of {day,discussion}
 EOL	end of life
 EOM	end of message
 EOS	end of story
-ETA	estimated time of arrival
 ETA	edited to add
+ETA	estimated time of arrival
 ETLA	extended three letter acronym
 ETR	early to rise
 EWAG	experienced wild-ass guess
 F9	fine
 FAQ	frequently asked question
 FBOW	for better or worse
+FCFS	first come, first served
 FCOL	for crying out loud
-FCFS	first come first served
 FFS	for fuck's sake
 FFS	free for shipping
 FIGJAM	fuck I'm good, just ask me
-FIIK	fuck[ed] if I know
-FIIR	fuck[ed] if I remember
+FIIK	{fuck,fucked} if I know
+FIIR	{fuck,fucked} if I {recall,remember}
 FITB	fill in the blank
 FM	fucking magic
 FML	fuck my life
-FNO	from now on
 FNO	for nerds only
-FOAD	{fuck off,fall over} and die
+FNO	from now on
+FOAD	{fall over,fuck off} and die
 FOC	free of charge
 FOS	full of shit
 FPS	first person shooter
+FPS	frames per second
 FSCK	fuck
 FSDO	for some definition of
 FSVO	for some value of
@@ -148,13 +160,14 @@ FTFA	from the fucking article
 FTFM	fuck the fuckin' manual!
 FTFY	fixed that for you
 FTHOI	for the {heck,hell} of it
+FTL	faster than light
 FTL	for the loss
 FTMFW	for the motherfucking win
 FTS	fuck that shit
 FTTT	from time to time
 FTW	for the win
 FUBAR	fucked up beyond all recognition
-FUD	fear, uncertainty and doubt
+FUD	fear, uncertainty, [and] doubt
 FWIW	for what it's worth
 FYEO	for your eyes only
 FYI	for your information
@@ -167,25 +180,26 @@ GAL	get a life
 GBTW	get back to work
 GF	girlfriend
 GFU	good for you
-GFY	good for you
 GFY	go fuck yourself
+GFY	good for you
 GG	good game
 GGWP	good game, well played
 GIGO	garbage in, garbage out
-GIYF	google is your friend
+GIYF	Google is your friend
 GJ	good job
 GL	good luck
 GLHF	good luck, have fun
 GLWT	good luck with that
+GM	game master
 GMTA	great minds think alike
-GOK	god only knows
+GOK	God only knows
 GOWI	get on with it
 GPS	global positioning system
 GR8	great
 GTFO	get the fuck out
 GTG	got to go
 GTH	go to hell
-GTSY	{good, glad} to see you
+GTSY	{glad,good} to see you
 GWS	get well soon
 H8	hate
 HAND	have a nice day
@@ -207,7 +221,7 @@ IAWTC	I agree with this comment
 IAY	I adore you
 IB	I'm back
 IC	I see
-ICBW	I could be {wrong, worse}
+ICBW	I could be {worse,wrong}
 ICCL	I couldn't care less
 ICUR	I see you are
 IDC	I don't care
@@ -222,7 +236,7 @@ IHAFC	I haven't a fucking clue
 IHBW	I have been wrong
 IHNFC	I have no fucking clue
 IIANM	if I am not mistaken
-IIRC	if I recall correctly
+IIRC	if I {recall,remember} correctly
 IIUC	if I understand correctly
 IKWYM	I know what you mean
 ILU	I love you
@@ -235,15 +249,15 @@ IMNSHO	in my not so humble opinion
 IMO	in my opinion
 INPO	in no particular order
 IOW	in other words
-IQ	intelligence quotient
 IPML	I pissed myself laughing
+IQ	intelligence quotient
 IRL	in real life
 IRT	in real time
 IRT	in regards to
 ISAGN	I see a great need
-ISBN	international standard book number
+ISBN	International Standard Book Number
 ISTM	it seems to me
-ISTR	I seem to recall
+ISTR	I seem to {recall,remember}
 ITYM	I think you mean
 IUD	insert usual disclaimers
 IUSS	if you say so
@@ -256,12 +270,14 @@ IYSWIM	if you see what I mean
 J/K	just kidding
 JAM	just a minute
 JAS	just a second
+JFGI	just fucking Google it
 JFK	John Fitzgerald Kennedy
 JFTR	just for the record
 JFW	just fucking works
-JGI	just got it
+JFYI	just for your information
 JGI	just Google it
-JHD	just hit ``delete''
+JGI	just got it
+JHD	just hit delete
 JIC	just in case
 JJA	just joking around
 JK	just kidding
@@ -272,8 +288,8 @@ JW	just wondering
 KISS	keep it simple, stupid
 KITA	kick in the ass
 KK	okay, okay
-KMA	keep moving ahead
 KMA	keep me advised
+KMA	keep moving ahead
 KMA	kill me already
 KNF	kernel normal form
 KOS	kill on sight
@@ -281,7 +297,7 @@ KTHX	okay, thanks
 KWIM	know what I mean?
 L8	late
 L8R	later
-LART	luser attitude readjustment tool (ie, hammer)
+LART	luser attitude readjustment tool
 LBNL	last but not least
 LGTM	looks good to me
 LJBF	let's just be friends
@@ -294,7 +310,7 @@ LMK	let me know
 LMNO	laughing my nuts off
 LMSO	laughing my socks off
 LOL	laughing out loud
-LP	long playing (record)
+LP	long playing [record]
 LTNS	long time no see
 LWYL	laugh with you later
 M8	mate
@@ -307,6 +323,7 @@ MOTOS	member of the opposite sex
 MOTSS	member of the same sex
 MTF	more to follow
 MYOB	mind your own business
+N/A	not {applicable,available}
 N/M	never mind
 NAFAIK	not as far as I know
 NBD	no big deal
@@ -326,9 +343,10 @@ NOOB	newbie
 NOYB	none of your business
 NOYFB	none of your fucking business
 NP	no problem
+NPC	non-player character
 NRFPT	not ready for prime time
-NRN	not right now
 NRN	no reply necessary
+NRN	not right now
 NSFW	not suitable for work
 NTN	no thanks needed
 NUNP	no users, no problems
@@ -336,14 +354,14 @@ NVM	never mind
 NW	no way
 NXT	next
 O2W	off to work
+OAO	over and out
 OH	other half
 OIC	oh, I see
-OMFG	oh my fucking god
-OMG	oh, my god
+OMFG	oh my fucking God
+OMG	oh my God
 OMW	on my way
 ONNA	oh no, not again
 ONNTA	oh no, not this again
-OAO	over and out
 OOB	out of bounds
 OOC	out of curiosity
 OOI	out of interest
@@ -351,12 +369,19 @@ OOSOOM	out of sight, out of mind
 OT	off topic
 OTL	out to lunch
 OTOH	on the other hand
+OTP	one true pairing
 OTS	off the shelf
 OTT	over the top
 OTTOMH	off the top of my head
 OWTTE	or words to that effect
+PC	player character
+PC	politically correct
+PCB	polychlorinated biphenyl(s)
+PD	police department
+PDA	public display of affection
 PDQ	pretty darn quick
 PDS	please don't shout
+PEBCAK	problem exists between chair and keyboard
 PEBKAC	problem exists between keyboard and chair
 PFI	pay for inclusion
 PFO	please fuck off
@@ -386,6 +411,7 @@ PTV	parental tunnel vision
 QED	quod erat demonstrandum
 QFT	quoted for truth
 RA	residential advisor
+REMF	rear echelon motherfucker
 RFC	request for comments
 RFD	request for discussion
 RFE	request for enhancements
@@ -395,19 +421,21 @@ RLC	rod length check
 RMS	Richard Matthew Stallman
 ROFL	rolling on floor laughing
 ROFLMAO	rolling on floor laughing my ass off
-ROTFL	rolling on the floor laughing
 ROI	return on investment
+ROTFL	rolling on the floor laughing
 RP	responsible person
 RR	railroad
 RSI	repetitive strain injury
 RSN	real soon now
-RSVP	repondez s'il vous plait (please reply)
-RTFB	read the fine/fucking book
-RTFC	read the fine/fucking code
-RTFD	read the fine/fucking documentation
-RTFM	read the fine/fucking manual
-RTFMP	read the fine/fucking man page
-RTFS	read the fine/fucking source
+RSVP	respondez s'il vous plait ("reply please")
+RTFB	read the {fine,fucking} book
+RTFC	read the {fine,fucking} code
+RTFD	read the {fine,fucking} documentation
+RTFM	read the {fine,fucking} manual
+RTFMP	read the {fine,fucking} man page
+RTFS	read the {fine,fucking} source
+S/T	self titled
+SAR	search and rescue
 SAR	some assembly required
 SCNR	sorry, could not resist
 SEP	someone else's problem
@@ -423,7 +451,6 @@ SMOP	simple matter of programming
 SNAFU	situation normal, all fucked up
 SNERT	snot-nosed egotistical rude teenager
 SNMP	sorry, not my problem
-SNR	signal to noise ratio
 SO	significant other
 SOB	son of [a] bitch
 SOL	shit out [of] luck
@@ -439,7 +466,7 @@ SUX	sucks
 SUX2BU	sucks to be you
 SWAG	silly, wild-assed guess
 SWAHBI	silly, wild-assed hare-brained idea
-SWFG	search with fucking google
+SWFG	search with fucking Google
 SWMBO	she who must be obeyed
 SYS	see you soon
 TA	teaching assistant
@@ -451,6 +478,7 @@ TBH	to be honest
 TBOMK	the best of my knowledge
 TCB	taking care of business
 TCO	taken care of
+TCO	total cost of ownership
 THNX	thanks
 THX	thanks
 TIA	thanks in advance
@@ -477,6 +505,7 @@ TOC	table of contents
 TOCTOU	time of check to time of use
 TOEFL	test of english as a foreign language
 TOH	to other half
+TP	toilet paper
 TPTB	the powers that be
 TRT	the right thing
 TTBOMK	to the best of my knowledge
@@ -512,23 +541,24 @@ WMNC	watch me not care
 WOFTAM	waste of fucking time and money
 WOMBAT	waste of money, brain, and time
 WRT	with respect to
-WTB	{want,willing,waiting} to buy
+WTB	{waiting,want,willing} to buy
 WTF	{what,when,where,who,why} the fuck
 WTFRUD	what the fuck are you doing
 WTG	way to go
 WTH	{what,when,where,who,why} the hell
-WTS	{want,willing,waiting} to sell
-WTT	{want,willing,waiting} to trade
-WYSIWYG	what you see is what you get
+WTS	{waiting,want,willing} to sell
+WTT	{waiting,want,willing} to trade
 WWJD	what would Jesus do?
-YAOTM	yet another off-topic message
 YAGNI	you ain't gonna need it
 YALIMO	you are lame, in my opinion
+YAOTM	yet another off-topic message
 YGM	you got mail
 YHBT	you have been trolled
 YHL	you have lost
 YKWIM	you know what I mean
 YMA	yo momma's ass
 YMMV	your mileage may vary
+YOLO	you only live once
+YTF	why the fuck
 YW	you're welcome
 YWSYLS	you win some, you lose some

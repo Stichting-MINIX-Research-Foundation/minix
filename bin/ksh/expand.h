@@ -1,9 +1,9 @@
-/*	$NetBSD: expand.h,v 1.4 2001/07/26 15:05:07 wiz Exp $	*/
+/*	$NetBSD: expand.h,v 1.5 2013/10/18 19:53:34 christos Exp $	*/
 
 /*
  * Expanding strings
  */
-/* $Id: expand.h,v 1.4 2001/07/26 15:05:07 wiz Exp $ */
+/* $Id: expand.h,v 1.5 2013/10/18 19:53:34 christos Exp $ */
 
 #define X_EXTRA		8	/* this many extra bytes in X string */
 
@@ -40,6 +40,7 @@ typedef char * XStringP;
 			(xs).beg = alloc((xs).len + X_EXTRA, (xs).areap); \
 			(xs).end = (xs).beg + (xs).len; \
 			xp = (xs).beg; \
+			__USE(xp); \
 		} while (0)
 
 /* stuff char into string */

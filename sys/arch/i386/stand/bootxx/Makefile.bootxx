@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.bootxx,v 1.43 2012/08/10 12:18:15 joerg Exp $
+# $NetBSD: Makefile.bootxx,v 1.46 2013/11/01 00:18:24 christos Exp $
 
 S=	${.CURDIR}/../../../../..
 
@@ -97,18 +97,6 @@ CPPFLAGS+= -DLIBSA_SINGLE_FILESYSTEM=xxfs \
 
 I386_STAND_DIR?= $S/arch/i386/stand
 
-CLEANFILES+= machine x86
-
-.if !make(obj) && !make(clean) && !make(cleandir)
-.BEGIN:
-	-rm -f machine && ln -s $S/arch/i386/include machine
-	-rm -f x86 && ln -s $S/arch/x86/include x86
-.ifdef LIBOBJ
-	-rm -f lib && ln -s ${LIBOBJ}/lib lib
-	mkdir -p ${LIBOBJ}/lib
-.endif
-.endif
-
 ### find out what to use for libi386
 I386DIR= ${I386_STAND_DIR}/lib
 .include "${I386DIR}/Makefile.inc"
@@ -139,6 +127,7 @@ USE_BITCODE=no
 LIBKERN= ${DESTDIR}/usr/lib/libminc.a
 .endif
 
+LDSCRIPT ?= $S/arch/i386/conf/stand.ldscript
 
 cleandir distclean: .WAIT cleanlibdir
 
@@ -152,7 +141,7 @@ CLEANFILES+= ${PROG}.sym ${PROG}.map
 ${PROG}: ${OBJS} ${LIBLIST}
 	${_MKTARGET_LINK}
 	${CC} -o ${PROG}.sym ${LDFLAGS} -Wl,-Ttext,${PRIMARY_LOAD_ADDRESS} \
-		-Wl,-Map,${PROG}.map -Wl,-cref ${OBJS} ${LIBLIST}
+		-T ${LDSCRIPT} -Wl,-Map,${PROG}.map -Wl,-cref ${OBJS} ${LIBLIST}
 	${OBJCOPY} -O binary ${PROG}.sym ${PROG}
 	@ sz=$$(${TOOL_STAT} -f '%z' ${PROG}); \
 	if [ "$$sz" -gt "${BOOTXX_MAXSIZE}" ]; then \
@@ -168,3 +157,5 @@ ${PROG}: ${OBJS} ${LIBLIST}
 	fi
 
 .include <bsd.prog.mk>
+KLINK_MACHINE=	i386
+.include <bsd.klinks.mk>

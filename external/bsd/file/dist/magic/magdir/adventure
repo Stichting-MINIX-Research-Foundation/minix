@@ -1,6 +1,6 @@
 
 #------------------------------------------------------------------------------
-# $File: adventure,v 1.13 2010/12/31 16:32:54 christos Exp $
+# $File: adventure,v 1.14 2012/06/21 01:32:26 christos Exp $
 # adventure: file(1) magic for Adventure game files
 #
 # from Allen Garvin <earendil@faeryland.tamu-commerce.edu>
@@ -33,10 +33,14 @@
 #
 0	ubyte			>0
 >0	ubyte			<9
->>16	belong&0xfe00f0f0	0x3030	Infocom game data
->>>0	ubyte			x	(Z-machine %d,
->>>>2	ubeshort		x	Release %d /
->>>>18	string			>\0	Serial %.6s)
+>>16	belong&0xfe00f0f0	0x3030
+>>>0	ubyte			< 10
+>>>>2	ubeshort		< 10
+>>>>>18	regex			[0-9][0-9][0-9][0-9][0-9][0-9]
+>>>>>>0	ubyte			< 10	Infocom (Z-machine %d,
+>>>>>>>2	ubeshort	< 10 	Release %d /
+>>>>>>>>18	string		>\0	Serial %.6s)
+!:strength + 40
 
 #------------------------------------------------------------------------------
 # Glulx:  file(1) magic for Glulx binaries.

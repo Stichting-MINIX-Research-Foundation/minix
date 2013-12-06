@@ -1,4 +1,4 @@
-$NetBSD: README.mknative,v 1.13 2012/09/27 11:29:49 skrll Exp $
+$NetBSD: README.mknative,v 1.17 2013/11/28 12:08:57 mrg Exp $
 
 This file describes how to bootstrap the native toolchain on a new NetBSD
 platform (and how to update the new toolchain files, if needed).  These
@@ -22,8 +22,11 @@ work.
    gets built, eliciting proper HAVE_*GETTEXT* defns in config.h files.)
 
 2. Build and install a cross toolchain (via "build.sh -m MACHINE tools").
+   Note that while PR #47353 is not fixed, you can not use the -O option
+   to build.sh. Use -M instead. (The differences are in layout and pathname
+   prefixes in the object directory pointed to by each option.)
 
-3. In src/tools/gcc, do "nbmake-MACHINE bootstrap-libgcc".
+3. In src/tools/gcc, do "nbmake-MACHINE HAVE_GCC=45 bootstrap-libgcc".
 
    This will create just enough glue in src/external/gpl3/gcc/lib/libgcc/arch
    to make it possible to build, based on the toolchain built in
@@ -33,8 +36,11 @@ work.
    will regenerate the "proper" libgcc config files.
 
 4. At top level, do
-   "nbmake-MACHINE obj do-distrib-dirs MKGCC=no MKBINUTILS=no", and
-   "nbmake-MACHINE includes HAVE_GCC= MKGCC=no MKBINUTILS=no".
+   "nbmake-MACHINE obj do-distrib-dirs MKGCC=no MKBINUTILS=no HAVE_GCC=45", and
+   "nbmake-MACHINE includes HAVE_GCC= MKGCC=no MKBINUTILS=no HAVE_GCC=45".
+   (Note: replace 45 [for gcc 4.5.x] with the appropriate version you are
+   going to mknative-for, the MKGCC=no prevents the standard makefiles from
+   picking up any gcc version info automatically)
 
 5. In src/lib/csu, do
    "nbmake-MACHINE dependall". and "nbmake-MACHINE install".
@@ -47,15 +53,11 @@ work.
    "nbmake-MACHINE obj includes dependall install".
 
 8. In each of src/external/lgpl3/gmp/lib/libgmp,
-   src/external/lgpl3/mpfr/lib/libmpfr, src/external/lgpl2/mpc/lib/libmpc
-   do "nbmake-MACHINE obj includes LIBISPRIVATE=no", and
-   "nbmake-MACHINE dependall install".
-
-   It is important to have LIBISPRIVATE=no while doing includes as this
-   installs a header file that is not part of standard build.
+   src/external/lgpl3/mpfr/lib/libmpfr, src/external/lgpl3/mpc/lib/libmpc
+   do "nbmake-MACHINE obj dependall".
 
 9. In src/lib, do
-   "nbmake-MACHINE dependall install MKGCC=no".
+   "nbmake-MACHINE dependall install MKGCC=no HAVE_GCC=45".
 
    Optionally, all of the following may be set in the environment to reduce
    the amount of code needed to build at this step.  Basically, it must be
@@ -67,6 +69,7 @@ work.
    MKLINT=no
    MKPROFILE=no
    MKSHARE=no
+   MKRUMP=no
 
 10. In src/tools/gcc, do "nbmake-MACHINE native-gcc".
 

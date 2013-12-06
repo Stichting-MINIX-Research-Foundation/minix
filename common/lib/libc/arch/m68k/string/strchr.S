@@ -1,4 +1,4 @@
-/*	$NetBSD: strchr.S,v 1.2 2009/07/17 19:37:57 dsl Exp $	*/
+/*	$NetBSD: strchr.S,v 1.4 2013/07/16 23:24:19 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,17 +39,17 @@
 #if 0
 	RCSID("from: @(#)index.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: strchr.S,v 1.2 2009/07/17 19:37:57 dsl Exp $")
+	RCSID("$NetBSD: strchr.S,v 1.4 2013/07/16 23:24:19 matt Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 ENTRY(strchr)
-	movl	%sp@(4),%a0		| string
-	movb	%sp@(11),%d0		| char to look for
+	movl	4(%sp),%a0		| string
+	movb	11(%sp),%d0		| char to look for
 ixloop:
-	cmpb	%a0@,%d0		| found our char?
+	cmpb	(%a0),%d0		| found our char?
 	jeq	ixfound			| yes, break out
-	tstb	%a0@+			| null?
+	tstb	(%a0)+			| null?
 	jne	ixloop			| no, keep going
 	moveq	#0,%d0			| not found, return null
 #ifdef __SVR4_ABI__
@@ -59,5 +59,6 @@ ixloop:
 ixfound:
 	movl	%a0,%d0			| found, return pointer
 	rts
+END(strchr)
 
 STRONG_ALIAS(index,strchr)

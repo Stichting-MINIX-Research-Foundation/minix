@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.1 2013/02/23 14:16:49 jmmv Exp $
+# $NetBSD: Makefile.inc,v 1.2 2013/10/18 23:41:40 jmmv Exp $
 
 .include <bsd.own.mk>
 
@@ -20,7 +20,20 @@ KYUA_TESTSDIR=		${TESTSBASE}
 
 KYUA_TARNAME!=	grep 'define PACKAGE_TARNAME' ${TOPDIR}/config.h \
 		| cut -d '"' -f 2
+cookie-tarname: cookie-tarname-2
+	@cmp -s cookie-tarname cookie-tarname-2 \
+	    || cp cookie-tarname-2 cookie-tarname
+cookie-tarname-2: .PHONY
+	@echo "${KYUA_TARNAME}" >cookie-tarname-2
+CLEANFILES+=	cookie-tarname cookie-tarname-2
+	
 KYUA_VERSION!=	grep 'define VERSION' ${TOPDIR}/config.h | cut -d '"' -f 2
+cookie-version: cookie-version-2
+	@cmp -s cookie-version cookie-version-2 \
+	    || cp cookie-version-2 cookie-version
+cookie-version-2: .PHONY
+	@echo "${KYUA_VERSION}" >cookie-version-2
+CLEANFILES+=	cookie-version cookie-version-2
 
 CPPFLAGS+=	-DHAVE_CONFIG_H
 
@@ -50,11 +63,11 @@ DPADD+=		${LIBLUTOK} ${LIBSQLITE}
 .endif
 
 .if defined(__MINIX)
-LDADD+=         -llua -lstdc++ -lgcc_s
-DPADD+=         ${LIBLUA} ${LIBSTDCXX} ${LIBGCC_S}
-LDFLAGS+=       -Wl,--allow-multiple-definition
+LDADD+=         -llua
+DPADD+=         ${LIBLUA}
 .endif # defined(__MINIX)
 
+MANPAGE_DEPS = cookie-tarname cookie-version
 BUILD_MANPAGE = \
 	sed -e 's,__CONFDIR__,${KYUA_CONFDIR},g' \
 	    -e 's,__DOCDIR__,${KYUA_DOCDIR},g' \

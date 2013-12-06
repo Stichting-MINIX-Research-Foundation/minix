@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: k_standard.c,v 1.16 2010/09/01 10:44:28 drochner Exp $");
+__RCSID("$NetBSD: k_standard.c,v 1.19 2013/11/19 19:24:34 joerg Exp $");
 #endif
 
 #include "math.h"
@@ -370,7 +370,7 @@ __kernel_standard(double x, double y, int type)
 		if (_LIB_VERSION == _SVID_)
 		  exc.retval = -HUGE;
 		else
-		  exc.retval = -HUGE_VAL;
+		  exc.retval = zero/zero;
 		if (_LIB_VERSION == _POSIX_)
 		  errno = EDOM;
 		else if (!matherr(&exc)) {
@@ -406,7 +406,7 @@ __kernel_standard(double x, double y, int type)
 		if (_LIB_VERSION == _SVID_)
 		  exc.retval = -HUGE;
 		else
-		  exc.retval = -HUGE_VAL;
+		  exc.retval = zero/zero;
 		if (_LIB_VERSION == _POSIX_)
 		  errno = EDOM;
 		else if (!matherr(&exc)) {
@@ -514,9 +514,15 @@ __kernel_standard(double x, double y, int type)
 		break;
 	    case 26:
 	    case 126:
+	    case 226:
 		/* sqrt(x<0) */
 		exc.type = DOMAIN;
-		exc.name = type < 100 ? "sqrt" : "sqrtf";
+		if (type == 26)
+			exc.name = "sqrt";
+		else if (type == 126)
+			exc.name = "sqrtf";
+		else
+			exc.name = "sqrtl";
 		if (_LIB_VERSION == _SVID_)
 		  exc.retval = zero;
 		else
@@ -532,9 +538,15 @@ __kernel_standard(double x, double y, int type)
 		break;
             case 27:
 	    case 127:
+	    case 227:
                 /* fmod(x,0) */
                 exc.type = DOMAIN;
-                exc.name = type < 100 ? "fmod" : "fmodf";
+		if (type == 27)
+			exc.name = "fmod";
+		else if (type == 127)
+			exc.name = "fmodf";
+		else
+			exc.name = "fmodl";
                 if (_LIB_VERSION == _SVID_)
                     exc.retval = x;
 		else
@@ -800,7 +812,7 @@ __kernel_standard(double x, double y, int type)
 		if (_LIB_VERSION == _SVID_)
 		  exc.retval = -HUGE;
 		else
-		  exc.retval = -HUGE_VAL;
+		  exc.retval = zero/zero;
 		if (_LIB_VERSION == _POSIX_)
 		  errno = EDOM;
 		else if (!matherr(&exc)) {

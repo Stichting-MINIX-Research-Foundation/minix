@@ -1,4 +1,4 @@
-# $NetBSD: md.mvme68k,v 1.36 2011/07/17 20:54:31 joerg Exp $
+# $NetBSD: md.mvme68k,v 1.37 2013/01/16 16:01:06 christos Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/mvme68k				comp-c-include
 ./usr/include/mvme68k/_G_config.h		comp-obsolete		obsolete
@@ -52,5 +52,3 @@
 ./usr/include/mvme68k/vmparam.h			comp-c-include
 ./usr/include/mvme68k/wchar_limits.h		comp-c-include
 ./usr/include/mvme68k/z8530var.h		comp-c-include
-./usr/libdata/debug/sbin/edlabel.debug		comp-sysutil-debug	obsolete
-./usr/libdata/debug/usr/mdec/installboot.debug	comp-sysutil-debug	debug

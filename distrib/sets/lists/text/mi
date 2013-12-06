@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.42 2012/02/07 19:13:29 joerg Exp $
+# $NetBSD: mi,v 1.43 2013/07/02 02:15:14 jnemeth Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -22,7 +22,6 @@
 ./usr/bin/lkbib					text-groff-bin		groff
 ./usr/bin/lookbib				text-groff-bin		groff
 ./usr/bin/makeinfo				text-texinfo-bin
-./usr/bin/mandoc				text-mdocml-bin
 ./usr/bin/neqn					text-groff-bin		groff
 ./usr/bin/nroff					text-groff-bin		groff
 ./usr/bin/pfbtops				text-groff-bin		groff
@@ -40,7 +39,6 @@
 ./usr/bin/troff					text-groff-bin		groff
 ./usr/bin/vgrind				text-groff-bin
 ./usr/libexec/vfontedpr				text-groff-bin
-./usr/sbin/makemandb				base-man-bin		makemandb
 ./usr/share/doc/groff				text-groff-doc
 ./usr/share/doc/groff/mom			text-groff-doc
 ./usr/share/doc/groff/mom/README.txt		text-groff-doc		share,groff

@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.142 2012/07/07 16:15:21 tsutsui Exp $ */
+/* $NetBSD: device.h,v 1.144 2013/10/12 16:49:01 christos Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -321,19 +321,6 @@ struct cfattach {
 };
 LIST_HEAD(cfattachlist, cfattach);
 
-#define	CFATTACH_DECL(name, ddsize, matfn, attfn, detfn, actfn) \
-struct cfattach __CONCAT(name,_ca) = {					\
-	.ca_name		= ___STRING(name),			\
-	.ca_devsize		= ddsize,				\
-	.ca_flags		= 0,					\
-	.ca_match 		= matfn,				\
-	.ca_attach		= attfn,				\
-	.ca_detach		= detfn,				\
-	.ca_activate		= actfn,				\
-	.ca_rescan		= NULL,					\
-	.ca_childdetached	= NULL,					\
-}
-
 #define	CFATTACH_DECL3_NEW(name, ddsize, matfn, attfn, detfn, actfn, \
 	rescanfn, chdetfn, __flags) \
 struct cfattach __CONCAT(name,_ca) = {					\
@@ -427,7 +414,7 @@ extern int booted_partition;		/* the partition on that device */
 extern daddr_t booted_startblk;		/* or the start of a wedge */
 extern uint64_t booted_nblks;		/* and the size of that wedge */
 
-struct vnode *opendisk(struct device *);
+struct vnode *opendisk(device_t);
 int getdisksize(struct vnode *, uint64_t *, unsigned int *);
 struct dkwedge_info;
 int getdiskinfo(struct vnode *, struct dkwedge_info *);
@@ -482,8 +469,8 @@ void	config_defer(device_t, void (*)(device_t));
 void	config_deferred(device_t);
 void	config_interrupts(device_t, void (*)(device_t));
 void	config_mountroot(device_t, void (*)(device_t));
-void	config_pending_incr(void);
-void	config_pending_decr(void);
+void	config_pending_incr(device_t);
+void	config_pending_decr(device_t);
 void	config_create_interruptthreads(void);
 void	config_create_mountrootthreads(void);
 

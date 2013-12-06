@@ -335,8 +335,8 @@ static struct
 	{ "32768", 32768, 1, 0,           0                  },
 	{ "65535", 65535, 1, 0,           0                  },
 	{ "echo",      7, 0, 0,           0                  },
-	{ "ftp",      21, 0, SOCK_STREAM, 0                  },
-	{ "tftp",     69, 0, SOCK_DGRAM , 0                  },
+	{ "ftp",      21, 0, 0, 0                  },
+	{ "tftp",     69, 0, 0, 0                  },
 	{ "-1",        0, 1, 0,           (1<<EAI_NONAME) | (1<<EAI_SERVICE) },
 	{ "",          0, 1, 0,           (1<<EAI_NONAME) | (1<<EAI_SERVICE) },
 	{ "65537",     0, 1, 0,           (1 << EAI_SERVICE) },
@@ -473,6 +473,8 @@ static struct
 	const char *servnum;
 	unsigned short port;
 	int socktype;
+	struct servent *se_tcp; /* getservbyport() s_name on this port with "tcp" */
+	struct servent *se_udp; /* getservbyport() s_name on this port with "udp" */
 } ports[] = {
 	{ "0",      "0",         0, 0           },
 	{ "tcpmux", "1",         1, SOCK_STREAM },
@@ -490,6 +492,33 @@ static void test_getnameinfo_all(void)
 	int flag_NUMERICHOST, flag_NAMEREQD, flag_NUMERICSERV, flag_DGRAM;
 	int exp_results, flags, i, j, k, l, socktypemismatch;
 	const char *nodename, *servname;
+
+	/* set ports servent structs */
+	for (j = 0; j < LENGTH(ports);   j++) {
+		struct servent *se_tcp, *se_udp;
+
+		se_tcp = getservbyport(htons(ports[j].port), "tcp");
+		ports[j].se_tcp = se_tcp;
+
+		if(ports[j].se_tcp) {
+			ports[j].se_tcp = malloc(sizeof(struct servent));
+			memcpy(ports[j].se_tcp, se_tcp, sizeof(*se_tcp));
+			assert(ports[j].se_tcp->s_name);
+			ports[j].se_tcp->s_name = strdup(ports[j].se_tcp->s_name);
+			assert(ports[j].se_tcp->s_name);
+		}
+
+		se_udp = getservbyport(htons(ports[j].port), "udp");
+		ports[j].se_udp = se_udp;
+
+		if(ports[j].se_udp) {
+			ports[j].se_udp = malloc(sizeof(struct servent));
+			memcpy(ports[j].se_udp, se_udp, sizeof(*se_udp));
+			assert(ports[j].se_udp->s_name);
+			ports[j].se_udp->s_name = strdup(ports[j].se_udp->s_name);
+			assert(ports[j].se_udp->s_name);
+		}
+	}
 
 	/* loop through various parameter values */
 	for (i = 0; i < LENGTH(ipaddrs); i++)
@@ -517,8 +546,12 @@ static void test_getnameinfo_all(void)
 		socktypemismatch =
 			(flag_DGRAM && ports[j].socktype == SOCK_STREAM) ||
 			(!flag_DGRAM && ports[j].socktype == SOCK_DGRAM);
-		servname = (flag_NUMERICSERV || socktypemismatch) ? 
-			ports[j].servnum : ports[j].servname;
+
+		struct servent *se = flag_DGRAM ? ports[j].se_udp : ports[j].se_tcp;
+
+		servname = (flag_NUMERICSERV) ?
+			ports[j].servnum : (se ? se->s_name : ports[j].servname);
+
 		if (buflens[l] > 0 && buflens[l] <= strlen(servname))
 			exp_results |= (1 << EAI_OVERFLOW) | (1 << EAI_MEMORY);
 

@@ -1,4 +1,4 @@
-# $NetBSD: md.atari,v 1.58 2011/07/17 20:54:31 joerg Exp $
+# $NetBSD: md.atari,v 1.59 2013/01/16 16:01:06 christos Exp $
 ./usr/include/atari				comp-c-include
 ./usr/include/atari/_G_config.h			comp-obsolete		obsolete
 ./usr/include/atari/ahdilabel.h			comp-c-include
@@ -58,13 +58,3 @@
 ./usr/include/atari/vuid_event.h		comp-c-include
 ./usr/include/atari/wchar_limits.h		comp-c-include
 ./usr/include/ieeefp.h				comp-c-include
-./usr/libdata/debug/sbin/ahdilabel.debug	comp-sysutil-debug	debug
-./usr/libdata/debug/sbin/binpatch.debug		comp-sysutil-debug	debug
-./usr/libdata/debug/sbin/edahdi.debug		comp-sysutil-debug	debug
-./usr/libdata/debug/sbin/edlabel.debug		comp-sysutil-debug	obsolete
-./usr/libdata/debug/usr/bin/fdformat.debug	comp-util-debug		debug
-./usr/libdata/debug/usr/bin/msconfig.debug	comp-util-debug		debug
-./usr/libdata/debug/usr/mdec/installboot.debug	comp-sysutil-debug	debug
-./usr/libdata/debug/usr/sbin/bootpref.debug	comp-sysutil-debug	debug
-./usr/libdata/debug/usr/sbin/iteconfig.debug	comp-sysutil-debug	debug
-./usr/libdata/debug/usr/sbin/loadkmap.debug	comp-sysutil-debug	debug

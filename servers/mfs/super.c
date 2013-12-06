@@ -17,6 +17,7 @@
 #include <minix/com.h>
 #include <minix/u64.h>
 #include <minix/bdev.h>
+#include <machine/param.h>
 #include <machine/vmparam.h>
 #include "buf.h"
 #include "inode.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: t_socket.c,v 1.1 2011/07/07 05:50:27 jruoho Exp $	*/
+/*	$NetBSD: t_socket.c,v 1.3 2013/10/19 17:45:00 christos Exp $	*/
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -83,7 +83,7 @@ ATF_TC_BODY(cmsg_sendfd, tc)
 	struct cmsghdr *cmp;
 	struct msghdr msg;
 	struct sockaddr_un sun;
-	struct lwp *l1, *l2;
+	struct lwp *l1;
 	struct iovec iov;
 	socklen_t sl;
 	int s1, s2, sgot;
@@ -109,7 +109,7 @@ ATF_TC_BODY(cmsg_sendfd, tc)
 
 	/* create second process for test */
 	RZ(rump_pub_lwproc_rfork(RUMP_RFCFDG));
-	l2 = rump_pub_lwproc_curlwp();
+	(void)rump_pub_lwproc_curlwp();
 
 	/* connect to unix domain socket */
 	memset(&sun, 0, sizeof(sun));
@@ -179,10 +179,27 @@ ATF_TC_BODY(cmsg_sendfd, tc)
 		atf_tc_fail("expected \"%s\", got \"%s\"", MAGICSTRING, buf);
 }
 
+ATF_TC(sock_cloexec);
+ATF_TC_HEAD(sock_cloexec, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "SOCK_CLOEXEC kernel invariant failure");
+}
+
+ATF_TC_BODY(sock_cloexec, tc)
+{
+
+	rump_init();
+	rump_pub_lwproc_rfork(RUMP_RFFDG);
+	if (rump_sys_socket(-1, SOCK_CLOEXEC, 0) != -1)
+		atf_tc_fail("invalid socket parameters unexpectedly worked");
+	rump_pub_lwproc_releaselwp();
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 	ATF_TP_ADD_TC(tp, cmsg_sendfd);
 	ATF_TP_ADD_TC(tp, cmsg_sendfd_bounds);
+	ATF_TP_ADD_TC(tp, sock_cloexec);
 
 	return atf_no_error();
 }

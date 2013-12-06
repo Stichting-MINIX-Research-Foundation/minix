@@ -49,7 +49,8 @@ namespace debug_test {
 
 
 /// Tuple containing the results of this driver.
-struct result {
+class result {
+public:
     /// A filter matching the executed test case only.
     test_filter test_case;
 

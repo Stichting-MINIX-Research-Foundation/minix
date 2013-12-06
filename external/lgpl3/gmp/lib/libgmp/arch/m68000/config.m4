@@ -30,7 +30,7 @@ changequote(`,')
 ifdef(`__CONFIG_M4_INCLUDED__',,`
 include(CONFIG_TOP_SRCDIR`/mpn/asm-defs.m4')
 include_mpn(`m68k/m68k-defs.m4')
-define_not_for_expansion(`HAVE_HOST_CPU_m68k')
+define_not_for_expansion(`HAVE_HOST_CPU_m68010')
 define_not_for_expansion(`HAVE_ABI_standard')
 define_not_for_expansion(`HAVE_LIMB_BIG_ENDIAN')
 define_not_for_expansion(`HAVE_DOUBLE_IEEE_BIG_ENDIAN')

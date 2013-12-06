@@ -1,4 +1,4 @@
-/*	$NetBSD: t_sysv.c,v 1.2 2012/11/06 18:31:53 pgoyette Exp $	*/
+/*	$NetBSD: t_sysv.c,v 1.3 2013/07/24 11:44:10 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -252,11 +252,11 @@ ATF_TC_BODY(msg, tc)
 		 */
 		m.mtype = MTYPE_1;
 		strcpy(m.mtext, m1_str);
-		ATF_REQUIRE_MSG(msgsnd(sender_msqid, &m, sizeof(m), 0) != -1,
-		    "sender: msgsnd 1: %d", errno);
+		ATF_REQUIRE_MSG(msgsnd(sender_msqid, &m, MESSAGE_TEXT_LEN,
+		    0) != -1, "sender: msgsnd 1: %d", errno);
 
-		ATF_REQUIRE_MSG(msgrcv(sender_msqid, &m, sizeof(m),
-				       MTYPE_1_ACK, 0) == sizeof(m),
+		ATF_REQUIRE_MSG(msgrcv(sender_msqid, &m, MESSAGE_TEXT_LEN,
+				       MTYPE_1_ACK, 0) == MESSAGE_TEXT_LEN,
 		    "sender: msgrcv 1 ack: %d", errno);
 
 		print_msqid_ds(&m_ds, 0600);
@@ -266,11 +266,11 @@ ATF_TC_BODY(msg, tc)
 		 */
 		m.mtype = MTYPE_2;
 		strcpy(m.mtext, m2_str);
-		ATF_REQUIRE_MSG(msgsnd(sender_msqid, &m, sizeof(m), 0) != -1,
+		ATF_REQUIRE_MSG(msgsnd(sender_msqid, &m, MESSAGE_TEXT_LEN, 0) != -1,
 		    "sender: msgsnd 2: %d", errno);
 
-		ATF_REQUIRE_MSG(msgrcv(sender_msqid, &m, sizeof(m),
-				       MTYPE_2_ACK, 0) == sizeof(m),
+		ATF_REQUIRE_MSG(msgrcv(sender_msqid, &m, MESSAGE_TEXT_LEN,
+				       MTYPE_2_ACK, 0) == MESSAGE_TEXT_LEN,
 		    "sender: msgrcv 2 ack: %d", errno);
 	}
 
@@ -361,7 +361,7 @@ receiver()
 		/*
 		 * Receive the first message, print it, and send an ACK.
 		 */
-		if (msgrcv(msqid, &m, sizeof(m), MTYPE_1, 0) != sizeof(m))
+		if (msgrcv(msqid, &m, MESSAGE_TEXT_LEN, MTYPE_1, 0) != MESSAGE_TEXT_LEN)
 			err(1, "receiver: msgrcv 1");
 
 		printf("%s\n", m.mtext);
@@ -370,14 +370,14 @@ receiver()
 
 		m.mtype = MTYPE_1_ACK;
 
-		if (msgsnd(msqid, &m, sizeof(m), 0) == -1)
+		if (msgsnd(msqid, &m, MESSAGE_TEXT_LEN, 0) == -1)
 			err(1, "receiver: msgsnd ack 1");
 
 		/*
 		 * Receive the second message, print it, and send an ACK.
 		 */
 
-		if (msgrcv(msqid, &m, sizeof(m), MTYPE_2, 0) != sizeof(m))
+		if (msgrcv(msqid, &m, MESSAGE_TEXT_LEN, MTYPE_2, 0) != MESSAGE_TEXT_LEN)
 			err(1, "receiver: msgrcv 2");
 
 		printf("%s\n", m.mtext);
@@ -386,7 +386,7 @@ receiver()
 
 		m.mtype = MTYPE_2_ACK;
 
-		if (msgsnd(msqid, &m, sizeof(m), 0) == -1)
+		if (msgsnd(msqid, &m, MESSAGE_TEXT_LEN, 0) == -1)
 			err(1, "receiver: msgsnd ack 2");
 	}
 

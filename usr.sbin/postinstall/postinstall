@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.147 2012/09/22 09:20:06 ast Exp $
+# $NetBSD: postinstall,v 1.158 2013/09/09 15:04:12 prlw1 Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -172,17 +172,18 @@ check_dir()
 	return 0
 }
 
-# check_ids op type file id [...]
+# check_ids op type file start id [...]
 #	Check if file of type "users" or "groups" contains the relevant IDs
 #	Returns 0 if ok, 1 otherwise.
 #	
 check_ids()
 {
-	[ $# -ge 4 ] || err 3 "USAGE: checks_ids op type file id [...]"
+	[ $# -ge 5 ] || err 3 "USAGE: checks_ids op type file start id [...]"
 	_op="$1"
 	_type="$2"
 	_file="$3"
-	shift 3
+	_start="$4"
+	shift 4
 	#_ids="$@"
 
 	if [ ! -f "${_file}" ]; then
@@ -197,24 +198,33 @@ check_ids()
 	if [ "${_op}" = "fix" ]; then
 		_notfixed="${NOT_FIXED}"
 	fi
-	_missing="$(${AWK} -F: '
+	_missing="$(${AWK} -v start=$_start -F: '
 		BEGIN {
-			for (x = 1; x < ARGC; x++)
-				idlist[ARGV[x]]++
+			for (x = 1; x < ARGC; x++) {
+				if (ARGV[x] == "SKIP")
+					continue;
+				idlist[ARGV[x]]++;
+				value[ARGV[x]] = start + x - 1;
+			}
 			ARGC=1
 		}
 		{
 			found[$1]++
+			number[$1] = $3
 		}
 		END {
 			for (id in idlist) {
-				if (! (id in found))
-					print id
+				if (!(id in found))
+					printf("%s (missing)\n", id)
+				else if (number[id] != value[id])
+					printf("%s (%d != %d)\n", id,
+					    number[id], value[id])
+				start++;
 			}
 		}
 	' "$@" < "${_file}")"	|| return 1
 	if [ -n "${_missing}" ]; then
-		msg "Missing ${_type}${_notfixed}:" $(echo ${_missing})
+		msg "Error ${_type}${_notfixed}:" $(echo ${_missing})
 		return 1
 	fi
 	return 0
@@ -752,7 +762,7 @@ do_defaults()
 
 	compare_dir "$op" "${SRC_DIR}/etc/defaults" "${DEST_DIR}/etc/defaults" \
 		444 \
-		daily.conf monthly.conf security.conf \
+		daily.conf monthly.conf pkgpath.conf security.conf \
 		weekly.conf ${extra_scripts}
 	failed=$(( ${failed} + $? ))
 
@@ -818,12 +828,56 @@ do_fontconfig()
 	op="$1"
 	failed=0
 
-	if [ -f "${DEST_DIR}/etc/fonts/conf.d/10-unhinted.conf" -a \
-	     -f "${DEST_DIR}/etc/fonts/conf.d/10-autohint.conf" ]; then
-		failed=1
+	# First, check for updates we can handle.
+	if ! $SOURCEMODE; then
+		FONTCONFIG_DIR="${SRC_DIR}/etc/fonts/conf.avail" 
+	else
+		FONTCONFIG_DIR="${XSRC_DIR}/external/mit/fontconfig/dist/conf.d"
 	fi
 
-	if [ "$failed" = 1 ]; then
+	populate_dir "$op" false "${FONTCONFIG_DIR}" "${DEST_DIR}/etc/fonts/conf.avail" 444 \
+		10-autohint.conf \
+		10-no-sub-pixel.conf \
+		10-scale-bitmap-fonts.conf \
+		10-sub-pixel-bgr.conf \
+		10-sub-pixel-rgb.conf \
+		10-sub-pixel-vbgr.conf \
+		10-sub-pixel-vrgb.conf \
+		10-unhinted.conf \
+		11-lcdfilter-default.conf \
+		11-lcdfilter-legacy.conf \
+		11-lcdfilter-light.conf \
+		20-unhint-small-vera.conf \
+		25-unhint-nonlatin.conf \
+		30-metric-aliases.conf \
+		30-urw-aliases.conf \
+		40-nonlatin.conf \
+		45-latin.conf \
+		49-sansserif.conf \
+		50-user.conf \
+		51-local.conf \
+		60-latin.conf \
+		65-fonts-persian.conf \
+		65-khmer.conf \
+		65-nonlatin.conf \
+		69-unifont.conf \
+		70-no-bitmaps.conf \
+		70-yes-bitmaps.conf \
+		80-delicious.conf \
+		90-synthetic.conf
+	failed=$(( ${failed} + $? ))
+		
+	# We can't modify conf.d easily; someone might have removed a file.
+
+	conf_d_failed=0
+	# Look for old files that need to be deleted.
+	if [ -f "${DEST_DIR}/etc/fonts/conf.d/10-unhinted.conf" -a \
+	     -f "${DEST_DIR}/etc/fonts/conf.d/10-autohint.conf" ]; then
+		conf_d_failed=1
+		failed=$(( ${failed} + 1 ))
+	fi
+
+	if [ "$conf_d_failed" = 1 ]; then
 		msg \
     "Broken fontconfig configuration found; please delete these files"
 		msg \
@@ -853,9 +907,9 @@ do_gid()
 {
 	[ -n "$1" ] || err 3 "USAGE: do_gid  fix|check"
 
-	check_ids "$1" groups "${DEST_DIR}/etc/group" \
-	    named ntpd sshd authpf _pflogd _rwhod _proxy _timedc \
-	    _sdpd _httpd _mdnsd _tests _tcpdump _tss
+	check_ids "$1" groups "${DEST_DIR}/etc/group" 14 \
+	    named ntpd sshd SKIP _pflogd _rwhod staff _proxy _timedc \
+	    _sdpd _httpd _mdnsd _tests _tcpdump _tss _gpio _rtadvd
 }
 
 #
@@ -998,7 +1052,7 @@ do_mtree()
 	if ! $SOURCEMODE; then
 		MTREE_DIR="${SRC_DIR}/etc/mtree"
 	else
-		${MAKE} -C "${SRC_DIR}/etc/mtree" emit_dist_file > \
+		${MAKE} -s -C "${SRC_DIR}/etc/mtree" emit_dist_file > \
 		    "${SCRATCHDIR}/NetBSD.dist"
 		MTREE_DIR="${SCRATCHDIR}"
 	fi
@@ -1150,7 +1204,7 @@ do_rc()
 		DAEMON DISKS LOGIN NETWORKING SERVERS \
 		accounting altqd amd apmd \
 		bluetooth bootconf.sh bootparams \
-		ccd cgd cleartmp cron \
+		ccd cgd cleartmp cron devpubd \
 		dhclient dhcpcd dhcpd dhcrelay dmesg downinterfaces envsys \
 		fsck fsck_root ftp_proxy ftpd \
 		gpio \
@@ -1158,16 +1212,16 @@ do_rc()
 		identd ifwatchd inetd ipfilter ipfs ipmon ipnat ipsec \
 		irdaattach iscsi_target isdnd isibootd \
 		kdc \
-		ldconfig ldpd local lpd lvm\
+		ldconfig ldpd local lpd lvm \
 		makemandb mdnsd mixerctl mopd motd mountall mountcritlocal \
 		mountcritremote mountd moused mrouted \
-		named ndbootd network newsyslog nfsd nfslocking npf \
-		ntpd ntpdate \
+		named ndbootd network newsyslog nfsd nfslocking npf ntpd \
+		ntpdate \
 		perusertmp pf pf_boot pflogd postfix powerd ppp pwcheck \
 		quota \
-		racoon rpcbind raidframe raidframeparity random_seed \
-		rarpd rbootd rndctl \
-		root route6d routed rtadvd rtclocaltime rtsold rwho \
+		racoon rpcbind raidframe raidframeparity random_seed rarpd \
+		rbootd rndctl root route6d routed rtadvd rtclocaltime \
+		rtsold rwho \
 		savecore screenblank securelevel sshd \
 		staticroute swap1 swap2 sysctl sysdb syslogd \
 		timed tpctl ttys \
@@ -1529,9 +1583,9 @@ do_uid()
 {
 	[ -n "$1" ] || err 3 "USAGE: do_uid  fix|check"
 
-	check_ids "$1" users "${DEST_DIR}/etc/master.passwd" \
-	    named ntpd postfix sshd _pflogd _rwhod _proxy _timedc \
-	    _sdpd _httpd _mdnsd _tests _tcpdump _tss
+	check_ids "$1" users "${DEST_DIR}/etc/master.passwd" 12 \
+	    postfix SKIP named ntpd sshd SKIP _pflogd _rwhod SKIP _proxy \
+	    _timedc _sdpd _httpd _mdnsd _tests _tcpdump _tss SKIP _rtadvd
 }
 
 
@@ -1818,7 +1872,7 @@ do_ptyfsoldnodes()
 usage()
 {
 	cat 1>&2 << _USAGE_
-Usage: ${PROGNAME} [-s srcdir] [-d destdir] [-m mach] [-a arch] op [item [...]]
+Usage: ${PROGNAME} [-s srcdir] [-x xsrcdir] [-d destdir] [-m mach] [-a arch] op [item [...]]
 	Perform post-installation checks and/or fixes on a system's
 	configuration files.
 	If no items are provided, a default set of checks or fixes is applied.
@@ -1833,7 +1887,10 @@ Usage: ${PROGNAME} [-s srcdir] [-d destdir] [-m mach] [-a arch] op [item [...]]
                           multiple such files;
 			* A temporary directory in which one or both of
 			  "etc.tgz" and "xetc.tgz" have been extracted.
-							[${SRC_DIR:-/}]
+							[${SRC_DIR:-/usr/src}]
+	-x xsrcdir      Location of the X11 source files.  This must be
+			a directory that contains a NetBSD xsrc tree.
+							[${XSRC_DIR:-/usr/src/../xsrc}]
 	-d destdir	Destination directory to check. [${DEST_DIR:-/}]
 	-m mach		MACHINE.			[${MACHINE}]
 	-a arch		MACHINE_ARCH.			[${MACHINE_ARCH}]
@@ -1876,12 +1933,13 @@ main()
 	TGZLIST=		# quoted list list of tgz files
 	SRC_ARGLIST=		# quoted list of one or more "-s" args
 	SRC_DIR="${SRC_ARG}"	# set default value for early usage()
+	XSRC_DIR="${SRC_ARG}/../xsrc"
 	N_SRC_ARGS=0		# number of "-s" args
 	TGZMODE=false		# true if "-s" specifies a tgz file
 	DIRMODE=false		# true if "-s" specified a directory
 	SOURCEMODE=false	# true if "-s" specified a source directory
 
-	while getopts s:d:m:a: ch; do
+	while getopts s:x:d:m:a: ch; do
 		case "${ch}" in
 		s)
 			qarg="$(shell_quote "${OPTARG}")"
@@ -1910,6 +1968,14 @@ main()
 				fi
 			else
 				err 2 "Invalid argument for -s option"
+			fi
+			;;
+		x)
+			if [ -d "${OPTARG}" ]; then
+				# arg refers to a directory.
+				XSRC_DIR="${OPTARG}"
+			else
+				err 2 "Not a directory for -x option"
 			fi
 			;;
 		d)

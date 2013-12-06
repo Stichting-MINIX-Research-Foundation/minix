@@ -12,11 +12,17 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_cbrt.c,v 1.11 2002/05/26 22:01:54 wiz Exp $");
+__RCSID("$NetBSD: s_cbrt.c,v 1.13 2013/11/20 12:29:13 joerg Exp $");
 #endif
 
+#include "namespace.h"
 #include "math.h"
 #include "math_private.h"
+
+#ifndef __HAVE_LONG_DOUBLE
+__strong_alias(_cbrtl, cbrt)
+__weak_alias(cbrtl, _cbrtl)
+#endif
 
 /* cbrt(x)
  * Return cube root of x

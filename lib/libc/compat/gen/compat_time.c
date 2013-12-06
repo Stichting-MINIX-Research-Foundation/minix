@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_time.c,v 1.2 2009/01/11 02:46:25 christos Exp $	*/
+/*	$NetBSD: compat_time.c,v 1.4 2013/10/04 21:07:37 christos Exp $	*/
 
 /*
  * Written by Jason R. Thorpe <thorpej@NetBSD.org>, October 21, 1997.
@@ -24,4 +24,7 @@ __warn_references(time,
 
 #define timeval timeval50
 #define time_t int32_t
+
+#define gettimeofday __compat_gettimeofday
+
 #include "gen/time.c"

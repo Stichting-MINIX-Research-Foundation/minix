@@ -1,20 +1,27 @@
-/*	$NetBSD: swab.S,v 1.7 1999/10/25 23:48:16 thorpej Exp $	*/
+/*	$NetBSD: swab.S,v 1.10 2013/07/18 21:37:47 matt Exp $	*/
 
 #include <machine/asm.h>
 
 ENTRY(swab)
-	movl	%sp@(4),%a0		| source
-	movl	%sp@(8),%a1		| destination
-	movl	%sp@(12),%d0		| count
+	movl	4(%sp),%a0		| source
+	movl	8(%sp),%a1		| destination
+	movl	12(%sp),%d0		| count
 	lsrl	#1,%d0			| count is in bytes; we need words
 	jeq	swdone
 
 swloop:
-	movw	%a0@+,%d1
+#ifdef __mcoldfire__
+	movb	(%a0)+,1(%a1)
+	movb	(%a0)+,(%a1)
+	addql	#2,%a1
+#else
+	movw	(%a0)+,%d1
 	rorw	#8,%d1
-	movw	%d1,%a1@+
+	movw	%d1,(%a1)+
+#endif
 	subql	#1,%d0
 	jne	swloop
 
 swdone:
 	rts
+END(swab)

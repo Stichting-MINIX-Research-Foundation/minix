@@ -1,4 +1,4 @@
-/*	$NetBSD: timepps.h,v 1.20 2012/03/21 05:42:26 matt Exp $	*/
+/*	$NetBSD: timepps.h,v 1.21 2013/05/26 18:07:42 kardel Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone
@@ -133,6 +133,15 @@ typedef struct {
 
 #include <sys/mutex.h>
 
+/* flags for pps_ref_event() - bitmask but only 1 bit allowed */
+#define PPS_REFEVNT_CAPTURE	0x01 /* use captume time stamp */
+#define PPS_REFEVNT_CURRENT	0x02 /* use current time stamp */
+#define PPS_REFEVNT_CAPCUR	0x04 /* use average of above */
+#define PPS_REFEVNT_RMASK       0x0F /* mask reference bits */
+
+#define PPS_REFEVNT_PPS		0x10 /* guess PPS second from */
+                                     /* capture timestamp */
+
 extern kmutex_t timecounter_lock;
 
 struct pps_state {
@@ -140,6 +149,7 @@ struct pps_state {
 	struct timehands *capth;
 	unsigned	capgen;
 	u_int64_t	capcount;
+	struct bintime  ref_time;
 
 	/* State information. */
 	pps_params_t	ppsparam;
@@ -152,6 +162,7 @@ struct pps_state {
 
 void pps_capture(struct pps_state *);
 void pps_event(struct pps_state *, int);
+void pps_ref_event(struct pps_state *, int, struct bintime *, int);
 void pps_init(struct pps_state *);
 int pps_ioctl(unsigned long, void *, struct pps_state *);
 

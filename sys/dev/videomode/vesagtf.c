@@ -1,4 +1,4 @@
-/* $NetBSD: vesagtf.c,v 1.1 2006/05/11 01:49:53 gdamore Exp $ */
+/* $NetBSD: vesagtf.c,v 1.2 2013/09/15 15:56:07 martin Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -153,7 +153,7 @@
 #ifdef	_KERNEL
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: vesagtf.c,v 1.1 2006/05/11 01:49:53 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vesagtf.c,v 1.2 2013/09/15 15:56:07 martin Exp $");
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -226,12 +226,12 @@ vesagtf_mode_params(unsigned h_pixels, unsigned v_lines, unsigned freq,
     unsigned interlace;
     uint64_t h_period_est;
     unsigned vsync_plus_bp;
-    unsigned v_back_porch;
+    unsigned v_back_porch __unused;
     unsigned total_v_lines;
     uint64_t v_field_est;
     uint64_t h_period;
     unsigned v_field_rate;
-    unsigned v_frame_rate;
+    unsigned v_frame_rate __unused;
     unsigned left_margin;
     unsigned right_margin;
     unsigned total_active_pixels;
@@ -660,7 +660,7 @@ vesagtf_mode(unsigned x, unsigned y, unsigned refresh, struct videomode *vmp)
 
 /* print_xf86_mode() - print the XFree86 modeline, given mode timings. */
 
-#ifndef __minix
+#if !defined(__minix)
 #ifndef _KERNEL
 void
 print_xf86_mode (struct videomode *vmp)
@@ -701,4 +701,4 @@ main (int argc, char *argv[])
     
 }
 #endif
-#endif /* !__minix */
+#endif /* !defined(__minix) */

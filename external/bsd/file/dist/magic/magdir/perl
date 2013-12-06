@@ -1,5 +1,5 @@
 #------------------------------------------------------------------------------
-# $File: perl,v 1.17 2011/12/16 16:24:40 rrt Exp $
+# $File: perl,v 1.20 2012/06/21 01:16:49 christos Exp $
 # perl:  file(1) magic for Larry Wall's perl language.
 #
 # The `eval' lines recognizes an outrageously clever hack.
@@ -28,12 +28,12 @@
 # check the first line
 0	search/1	package
 >0	regex		\^package[\ \t]+[0-9A-Za-z_:]+\ *;	Perl5 module source text
+!:strength + 10
 # not 'p', check other lines
 0	search/1	!p
 >0	regex		\^package[\ \t]+[0-9A-Za-z_:]+\ *;
 >>0	regex		\^1\ *;|\^(use|sub|my)\ .*[(;{=]	Perl5 module source text
-
-
+!:strength + 10
 
 # Perl POD documents
 # From: Tom Hukins <tom@eborcom.com>
@@ -43,6 +43,9 @@
 0	search/1/W	\n\=head1\ 	Perl POD document text
 0	search/1/W	\=head2\ 	Perl POD document text
 0	search/1/W	\n\=head2\ 	Perl POD document text
+0	search/1/W	\=encoding\ 	Perl POD document text
+0	search/1/W	\n\=encoding\ 	Perl POD document text
+
 
 # Perl Storable data files.
 0	string	perl-store	perl Storable (v0.6) data

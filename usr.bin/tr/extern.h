@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.7 2011/09/06 18:33:46 joerg Exp $	*/
+/*	$NetBSD: extern.h,v 1.11 2013/08/11 00:39:22 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -31,18 +31,13 @@
  *	@(#)extern.h	8.1 (Berkeley) 6/6/93
  */
 
-typedef struct {
-	enum { STRING1, STRING2 } which;
-	enum { EOS, INFINITE, NORMAL, RANGE, SEQUENCE, SET } state;
-	int	 cnt;			/* character count */
-	int	 lastch;		/* last character */
-	int	equiv[2];		/* equivalence set */
-	int	*set;			/* set of characters */
-	unsigned char	*str;		/* user's string */
-} STR;
+struct str;
+typedef struct str STR;
 
 #include <limits.h>
 #define	NCHARS	(UCHAR_MAX + 1)		/* Number of possible characters. */
 #define	OOBCH	(UCHAR_MAX + 1)		/* Out of band character value. */
 
-int	 next(STR *);
+STR *str_create(int, const char *);
+void str_destroy(STR *);
+int	 next(STR *, int *);

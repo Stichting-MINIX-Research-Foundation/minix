@@ -1,4 +1,4 @@
-/*	$NetBSD: getttyent.c,v 1.24 2011/10/15 23:00:01 christos Exp $	*/
+/*	$NetBSD: getttyent.c,v 1.26 2013/06/30 10:07:43 martin Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getttyent.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getttyent.c,v 1.24 2011/10/15 23:00:01 christos Exp $");
+__RCSID("$NetBSD: getttyent.c,v 1.26 2013/06/30 10:07:43 martin Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -48,6 +48,9 @@ __RCSID("$NetBSD: getttyent.c,v 1.24 2011/10/15 23:00:01 christos Exp $");
 #include <errno.h>
 #include <err.h>
 #include <stdlib.h>
+
+#include <sys/sysctl.h>
+#include <sys/utsname.h>
 
 #ifdef __weak_alias
 __weak_alias(endttyent,_endttyent)
@@ -98,7 +101,7 @@ getttyent(void)
 		line = fparseln(tf, &len, &lineno, NULL, FPARSELN_UNESCALL);
 		if (line == NULL) {
 			if (errno != 0)
-				warn("%s", __func__);
+				warn(__func__);
 			return NULL;
 		}
 		for (p = line; *p && isspace((unsigned char)*p); p++)
@@ -223,7 +226,27 @@ setttyentpath(const char *path)
 	if (tf) {
 		rewind(tf);
 		return 1;
-	} else if ((tf = fopen(path, "r")) != NULL)
+	}
+
+	/*
+	 * Try <path>.$MACHINE (e.g. etc/ttys.amd64)
+	 */
+	{
+		char machine[_SYS_NMLN];
+		const int mib[] = { [0] = CTL_HW, [1] = HW_MACHINE, };
+		size_t len = sizeof(machine);
+
+		if (sysctl(mib, (u_int)__arraycount(mib), machine, &len,
+		     NULL, 0) != -1) {
+			char npath[PATH_MAX];
+			(void)snprintf(npath, sizeof(npath), "%s.%s", path,
+			    machine);
+			if ((tf = fopen(npath, "re")) != NULL)
+				return 1;
+		}
+	}
+
+	if ((tf = fopen(path, "re")) != NULL)
 		return 1;
 	return 0;
 }

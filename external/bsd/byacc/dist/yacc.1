@@ -1,9 +1,23 @@
-.\"	$NetBSD: yacc.1,v 1.4 2011/09/10 21:29:04 christos Exp $
+.\"	$NetBSD: yacc.1,v 1.5 2013/04/06 14:52:24 christos Exp $
 .\"
-.\" Id: yacc.1,v 1.12 2011/09/08 00:40:44 tom Exp
+.\" Id: yacc.1,v 1.18 2012/01/15 18:12:28 tom Exp 
 .\"
 .\" .TH YACC 1 "July\ 15,\ 1990"
 .\" .UC 6
+.de ES
+.ne 8
+.nf
+.sp
+.in +4
+..
+.de EE
+.in -4
+.fi
+..
+.\" Bulleted paragraph
+.de bP
+.IP \(bu 4
+..
 .TH YACC 1 "September 7, 2011" "Berkeley Yacc" "User Commands"
 .SH NAME
 Yacc \- an LALR(1) parser generator
@@ -26,7 +40,7 @@ normally writes the parse tables and the driver routine to the file
 .IR y.tab.c.
 .PP
 The following options are available:
-.TP
+.TP 5
 \fB\-b \fP\fIfile_prefix\fR
 The
 .B \-b
@@ -107,6 +121,31 @@ and the tables file is named
 .IR y.tab.c.
 The prefix "\fIy.\fP" can be overridden using the \fB\-b\fP option.
 .TP
+.B \-s
+suppress "\fB#define\fP" statements generated for string literals in
+a "\fB%token\fP" statement, to more closely match original \fByacc\fP behavior.
+.IP
+Normally when \fByacc\fP sees a line such as
+.ES
+%token OP_ADD "ADD"
+.EE
+.IP
+it notices that the quoted "ADD" is a valid C identifier,
+and generates a #define not only for OP_ADD,
+but for ADD as well,
+e.g.,
+.ES
+#define OP_ADD 257
+.br
+#define ADD 258
+.EE
+.IP
+The original \fByacc\fP does not generate the second "\fB#define\fP".
+The \fB\-s\fP option suppresses this "\fB#define\fP".
+.IP
+POSIX (IEEE 1003.1 2004) documents only names and numbers for "\fB%token\fP",
+though original \fByacc\fP and bison also accept string literals.
+.TP
 .B \-t
 The
 .B \-t
@@ -123,6 +162,10 @@ be written to the file
 .TP
 .B \-V
 print the version number to the standard output.
+.TP
+.B \-y
+\fByacc\fP ignores this option,
+which bison supports for ostensible POSIX compatibility.
 .SH EXTENSIONS
 .B yacc
 provides some extensions for compatibility with bison and other implementations
@@ -142,13 +185,57 @@ By default, the lexer accepts no parameters, e.g., \fByylex()\fP.
 Use this directive to add parameter declarations for your customized lexer.
 .TP
 \fB %parse-param\fP { \fIargument-declaration\fP }
-By default, the parser accepts no parameters, e.g., \fByyparse()\fP. 
+By default, the parser accepts no parameters, e.g., \fByyparse()\fP.
 Use this directive to add parameter declarations for your customized parser.
 .TP
 \fB %pure-parser\fP
 Most variables (other than \fByydebug\fP and \fByynerrs\fP) are
 allocated on the stack within \fByyparse\fP, making the parser reasonably
 reentrant.
+.SH PORTABILITY
+According to Robert Corbett,
+.ES
+    Berkeley Yacc is an LALR(1) parser generator.  Berkeley Yacc has been made
+as compatible as possible with AT&T Yacc.  Berkeley Yacc can accept any input
+specification that conforms to the AT&T Yacc documentation.  Specifications
+that take advantage of undocumented features of AT&T Yacc will probably be
+rejected.
+.EE
+.PP
+The rationale in
+.ES
+http://pubs.opengroup.org/onlinepubs/9699919799/utilities/yacc.html
+.EE
+.PP
+documents some features of AT&T yacc which are no longer required for POSIX
+compliance.
+.PP
+That said, you may be interested in reusing grammary files with some
+other implementation which is not strictly compatible with AT&T yacc.
+For instance, there is bison.
+Here are a few differences:
+.bP
+\fBYacc\fP accepts an equals mark preceding the left curly brace
+of an action (as in the original grammar file \fBftp.y\fP):
+.ES
+	|	STAT CRLF
+		= {
+			statcmd();
+		}
+.EE
+.bP
+\fBYacc\fP and bison emit code in different order, and in particular bison
+makes forward reference to common functions such as yylex, yyparse and
+yyerror without providing prototypes.
+.bP
+Bison's support for "%expect" is broken in more than one release.
+For best results using bison, delete that directive.
+.bP
+Bison has no equivalent for some of \fByacc\fP's commmand-line options,
+relying on directives embedded in the grammar file.
+.bP
+Bison's "\fB\-y\fP" option does not affect bison's lack of support for
+features of AT&T yacc which were deemed obsolescent.
 .
 .SH DIAGNOSTICS
 If there are rules that are never reduced, the number of such rules is

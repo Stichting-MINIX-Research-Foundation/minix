@@ -30,7 +30,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: newgrp.c,v 1.6 2008/04/28 20:24:14 martin Exp $");
+__RCSID("$NetBSD: newgrp.c,v 1.7 2011/09/16 15:39:27 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -52,7 +52,7 @@ __RCSID("$NetBSD: newgrp.c,v 1.6 2008/04/28 20:24:14 martin Exp $");
 
 #include "grutil.h"
 
-static void
+__dead static void
 usage(void)
 {
 	(void)fprintf(stderr, "usage: %s [-l] [group]\n", getprogname());

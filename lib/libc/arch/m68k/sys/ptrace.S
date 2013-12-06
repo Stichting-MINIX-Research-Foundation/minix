@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.S,v 1.11 2003/08/07 16:42:14 agc Exp $	*/
+/*	$NetBSD: ptrace.S,v 1.15 2013/09/12 15:36:15 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
 #if 0
 	RCSID("from: @(#)ptrace.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: ptrace.S,v 1.11 2003/08/07 16:42:14 agc Exp $")
+	RCSID("$NetBSD: ptrace.S,v 1.15 2013/09/12 15:36:15 joerg Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -51,36 +51,21 @@
 
 ENTRY(ptrace)
 #ifdef	_REENTRANT
-#if defined(PIC) && !defined(__ELF__)
-	movl	#_C_LABEL(_GLOBAL_OFFSET_TABLE_),%a0
-	lea	%pc@(0,%a0:l),%a0
-	movl	%a0@(_C_LABEL(__errno):l),%a0
-	jsr	%a0@
-#else
 	jbsr	PIC_PLT(_C_LABEL(__errno))
-#endif	/* PIC */
 #ifndef	__SVR4_ABI__
 	movl	%d0,%a0
 #endif
-	clrl	%a0@
+	clrl	(%a0)
 #else
-#ifdef	PIC
-#ifdef	__ELF__
-	lea	%pc@(_GLOBAL_OFFSET_TABLE_@GOTPC),%a0
-	movl	%a0@(_C_LABEL(errno)@GOT:w),%a0
-#else
-	movl	#_C_LABEL(_GLOBAL_OFFSET_TABLE_),%a0
-	lea	%pc@(0,%a0:l),%a0
-	movl	%a0@(_C_LABEL(errno):w),%a0
-#endif
-	clrl	%a0@
+#ifdef __PIC__
+	GOT_SETUP(%a0)
+	movl	_C_LABEL(errno)@GOT:w(%a0),%a0
+	clrl	(%a0)
 #else
 	clrl	_C_LABEL(errno)
-#endif	/* PIC */
+#endif	/* __PIC__ */
 #endif	/* _REENTRANT */
-	movl	#SYS_ptrace,%d0
-	trap	#0
-	jcs	err
+	SYSTRAP(ptrace)
+	jcs	CERROR
 	rts
-err:
-	jra	PIC_PLT(CERROR)
+END(ptrace)

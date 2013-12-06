@@ -1,0 +1,113 @@
+.\"	$NetBSD: puffs_flush.3,v 1.8 2009/02/20 14:26:56 pooka Exp $
+.\"
+.\" Copyright (c) 2007 Antti Kantee.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.Dd April 7, 2007
+.Dt PUFFS_FLUSH 3
+.Os
+.Sh NAME
+.Nm puffs_flush
+.Nd puffs kernel cache flushing and invalidation routines
+.Sh LIBRARY
+.Lb libpuffs
+.Sh SYNOPSIS
+.In puffs.h
+.Ft int
+.Fo puffs_inval_namecache_dir
+.Fa "struct puffs_usermount *pu" "puffs_cookie_t cookie"
+.Fc
+.Ft int
+.Fn puffs_inval_namecache_all "struct puffs_usermount *pu"
+.Ft int
+.Fo puffs_inval_pagecache_node
+.Fa "struct puffs_usermount *pu" "puffs_cookie_t cookie"
+.Fc
+.Ft int
+.Fo puffs_inval_pagecache_node_range
+.Fa "struct puffs_usermount *pu" "puffs_cookie_t cookie" "off_t start"
+.Fa "off_t end"
+.Fc
+.Ft int
+.Fo puffs_flush_pagecache_node
+.Fa "struct puffs_usermount *pu" "puffs_cookie_t cookie"
+.Fc
+.Ft int
+.Fo puffs_flush_pagecache_node_range
+.Fa "struct puffs_usermount *pu" "puffs_cookie_t cookie" "off_t start"
+.Fa "off_t end"
+.Fc
+.Sh DESCRIPTION
+These routines are used inform the kernel that any information it might
+have cached is no longer valid.
+.Fn puffs_inval_namecache_dir
+invalidates the name cache for a given directory.
+The argument
+.Va cookie
+should describe an existing and valid directory cookie for the file
+system.
+Similarly,
+.Fn puffs_inval_namecache_all
+invalidates the name cache for the entire file system
+(this routine might go away).
+.Pp
+The cached pages (file contents) for a regular file described by
+.Va cookie
+are invalidated using
+.Fn puffs_inval_pagecache_node .
+A specific range can be invalidated using
+.Fn puffs_inval_pagecache_node_range
+for a platform specific page level granularity.
+The offset
+.Va start
+will be
+.Em truncated
+to a page boundary while
+.Va end
+will be
+.Em "rounded up"
+to the next page boundary.
+As a special case, specifying 0 as
+.Va end
+will invalidate all contents from
+.Va start
+to the end of the file.
+.Pp
+It is especially important to note that these routines will not only
+invalidate data in the "read cache", but also data in the "write back"
+cache (conceptually speaking; in reality they are the same cache), which
+has not yet been flushed to the file server.
+Therefore any unflushed data will be lost.
+.Pp
+The counterparts of the invalidation routines are the flushing routines
+.Fn puffs_flush_pagecache_node
+and
+.Fn puffs_flush_pagecache_node_range ,
+which force unwritten data from the kernel page cache to be written.
+For the flush range version, the same range rules as with the
+invalidation routine apply.
+The data is flushed asynchronously, i.e. if the routine returns
+successfully, all the caller knows is that the data has been queued
+for writing.
+.Sh SEE ALSO
+.Xr puffs 3

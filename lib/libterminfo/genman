@@ -1,7 +1,7 @@
 #!/bin/sh
-# $NetBSD: genman,v 1.4 2010/10/12 12:57:51 christos Exp $
+# $NetBSD: genman,v 1.5 2013/01/25 12:52:45 roy Exp $
 
-# Copyright (c) 2009 The NetBSD Foundation, Inc.
+# Copyright (c) 2009, 2013 The NetBSD Foundation, Inc.
 #
 # This code is derived from software contributed to The NetBSD Foundation
 # by Roy Marples.
@@ -47,7 +47,8 @@ gentab()
 	$ti | $TOOL_SORT | while read name code foo; do
 		cap=$($TOOL_SED -ne "s/.*{ \"\(..\)\", TICODE_$code }.*/\1/p" \
 		    $tc | head -n 1)
-		echo ".It Li \"$name\" Ta Sy \"\\&$code\" Ta Sy \"\\&$cap\""
+		desc=$($TOOL_SED -ne "s/ \* $name\: \(.*\)/\1/p" $ti)
+		echo ".It \"\\&$name\" Ta Sy \"\\&$code\" Ta Sy \"\\&$cap\" Ta \"\\&$desc\""
 	done
 }
 

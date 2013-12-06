@@ -5,10 +5,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#ifdef __weak_alias
-__weak_alias(getppid, _getppid)
-#endif
-
 pid_t getppid(void)
 {
   message m;

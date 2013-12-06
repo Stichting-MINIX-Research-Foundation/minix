@@ -1,4 +1,4 @@
-/*	$NetBSD: makewhatis.c,v 1.48 2013/06/24 12:56:22 christos Exp $	*/
+/*	$NetBSD: makewhatis.c,v 1.49 2013/06/24 20:57:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #if !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1999\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: makewhatis.c,v 1.48 2013/06/24 12:56:22 christos Exp $");
+__RCSID("$NetBSD: makewhatis.c,v 1.49 2013/06/24 20:57:47 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -107,9 +107,9 @@ static void	dumpwhatis(FILE *, whatis *);
 static int	makewhatis(char * const *manpath);
 
 static char * const default_manpath[] = {
-#ifdef __minix
+#if defined(__minix)
 	"/usr/man",
-#endif
+#endif /* defined(__minix) */
 	"/usr/share/man",
 	NULL
 };
@@ -886,10 +886,7 @@ parsemanpage(const char *name, gzFile *in, int defaultsection)
 
 		/*
 		 * Skip over lines in man pages that have been generated
-		 * by Pod, until we find the TITLE. This makewhatis cannot
-		 * deal with it (and as * a result the man page would not
-		 * appear in whatis.db)
-		 * Modified by Robert Kovacic, June 23 2013.
+		 * by Pod, until we find the TITLE.
 		 */
 		if (strncasecmp(buffer, POD, sizeof(POD) - 1) == 0) {
 			do {

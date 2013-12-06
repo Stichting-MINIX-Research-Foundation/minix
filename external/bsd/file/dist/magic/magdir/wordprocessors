@@ -1,6 +1,6 @@
 
 #------------------------------------------------------------------------------
-# $File: wordprocessors,v 1.15 2010/09/20 19:19:17 rrt Exp $
+# $File: wordprocessors,v 1.17 2013/02/06 14:18:52 christos Exp $
 # wordprocessors:  file(1) magic fo word processors.
 #
 ####### PWP file format used on Smith Corona Personal Word Processors:
@@ -110,7 +110,7 @@
 512	string		R\0o\0o\0t\0	Hangul (Korean) Word Processor File 2000
 !:mime	application/x-hwp
 
-# CosmicBook, from Benoît Rouits
+# CosmicBook, from Benoit Rouits
 0       string  CSBK    Ted Neslson's CosmicBook hypertext file
 
 2       string  EYWR    AmigaWriter file
@@ -161,3 +161,7 @@
 0	string	\<SCRIBUSUTF8\ Version		Scribus Document
 0	string	\<SCRIBUSUTF8NEW\ Version	Scribus Document
 !:mime	application/x-scribus
+
+# help files .hlp compiled from html and used by gfxboot added by Joerg Jenderek
+# markups page=0x04,label=0x12, followed by strings like "opt" or "main" and title=0x14
+0	ulelong&0x8080FFFF	0x00001204	gfxboot compiled html help file

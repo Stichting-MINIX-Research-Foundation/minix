@@ -163,6 +163,7 @@ base-texinfo_locale-tr Turkish language support for the GNU texinfo software
 base-texinfo_locale-zh Chinese language support for the GNU texinfo software
 base-timed-bin utilities for the timed(8) network time daemon
 base-tn3270-bin utilities for connecting to IBM VM/CMS systems
+base-tpm-bin	utilities for the Trusted Platform Module
 base-usd-share directory structure for the User's Supplementary Documentation
 base-util-bin standard utilities for use by users
 base-util-root root file system support for standard user utilities
@@ -433,6 +434,9 @@ man-timed-catman formatted manual pages for the timed(8) network time daemon
 man-timed-man manual pages source for the timed(8) network time daemon
 man-tn3270-catman formatted manual pages for utilities for connecting to IBM VM/CMS systems
 man-tn3270-man manual pages source for utilities for connecting to IBM VM/CMS systems
+man-tpm-catman	formated manual pages for the Trusted Platform Module utilities
+man-tpm-htmlman	HTML documentation for the Trusted Platform Module utilities
+man-tpm-man	documentation for the Trusted Platform Module utilities
 man-util-catman formatted manual pages for basic user utilities
 man-util-info the GNU texinfo software
 man-util-man manual pages source for basic user utilities

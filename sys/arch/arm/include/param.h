@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.17 2012/08/03 08:11:40 matt Exp $	*/
+/*	$NetBSD: param.h,v 1.19 2013/10/26 18:07:52 matt Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -52,29 +52,97 @@
  */
 
 #if defined(_KERNEL)
-#ifndef MACHINE_ARCH			/* XXX For now */
-#ifndef __ARMEB__
-#define	_MACHINE_ARCH	arm
-#define	MACHINE_ARCH	"arm"
+# ifndef MACHINE_ARCH			/* XXX For now */
+#  ifndef __ARMEB__
+#   ifdef __ARM_EABI__
+#    define	_MACHINE_ARCH	earm
+#    define	MACHINE_ARCH	"earm"
+#   else
+#    define	_MACHINE_ARCH	arm
+#    define	MACHINE_ARCH	"arm"
+#   endif
+#  else
+#   ifdef __ARM_EABI__
+#    define	_MACHINE_ARCH	earmeb
+#    define	MACHINE_ARCH	"earmeb"
+#   else
+#    define	_MACHINE_ARCH	armeb
+#    define	MACHINE_ARCH	"armeb"
+#   endif
+#  endif /* __ARMEB__ */
+# endif /* MACHINE_ARCH */
 #else
-#define	_MACHINE_ARCH	armeb
-#define	MACHINE_ARCH	"armeb"
-#endif /* __ARMEB__ */
-#endif /* MACHINE_ARCH */
-#else
-#undef _MACHINE
-#undef MACHINE
-#undef _MACHINE_ARCH
-#undef MACHINE_ARCH
-#define	_MACHINE	arm
-#define	MACHINE		"arm"
-#ifndef __ARMEB__
-#define	_MACHINE_ARCH	arm
-#define	MACHINE_ARCH	"arm"
-#else
-#define	_MACHINE_ARCH	armeb
-#define	MACHINE_ARCH	"armeb"
-#endif /* __ARMEB__ */
+# undef _MACHINE
+# undef MACHINE
+# undef _MACHINE_ARCH
+# undef MACHINE_ARCH
+# define	_MACHINE	arm
+# define	MACHINE		"arm"
+# ifndef __ARMEB__
+#  ifdef __ARM_EABI__
+#   ifdef __ARM_PCS_VFP
+#    ifdef _ARM_ARCH_7
+#     define	_MACHINE_ARCH	earmv7hf
+#     define	MACHINE_ARCH	"earmv7hf"
+#    elif defined(_ARM_ARCH_6)
+#     define	_MACHINE_ARCH	earmv6hf
+#     define	MACHINE_ARCH	"earmv6hf"
+#    else
+#     define	_MACHINE_ARCH	earmhf
+#     define	MACHINE_ARCH	"earmhf"
+#    endif
+#   else
+#    ifdef _ARM_ARCH_7
+#     define	_MACHINE_ARCH	earmv7
+#     define	MACHINE_ARCH	"earmv7"
+#    elif defined(_ARM_ARCH_6)
+#     define	_MACHINE_ARCH	earmv6
+#     define	MACHINE_ARCH	"earmv6"
+#    elif !defined(_ARM_ARCH_5T)
+#     define	_MACHINE_ARCH	earmv4
+#     define	MACHINE_ARCH	"earmv4"
+#    else
+#     define	_MACHINE_ARCH	earm
+#     define	MACHINE_ARCH	"earm"
+#    endif
+#   endif
+#  else
+#   define	_MACHINE_ARCH	arm
+#   define	MACHINE_ARCH	"arm"
+#  endif
+# else
+#  ifdef __ARM_EABI__
+#   ifdef __ARM_PCS_VFP
+#    ifdef _ARM_ARCH_7
+#     define	_MACHINE_ARCH	earmv7hfeb
+#     define	MACHINE_ARCH	"earmv7hfeb"
+#    elif defined(_ARM_ARCH_6)
+#     define	_MACHINE_ARCH	earmv6hfeb
+#     define	MACHINE_ARCH	"earmv6hfeb"
+#    else
+#     define	_MACHINE_ARCH	earmhfeb
+#     define	MACHINE_ARCH	"earmhfeb"
+#    endif
+#  else
+#    ifdef _ARM_ARCH_7
+#     define	_MACHINE_ARCH	earmv7eb
+#     define	MACHINE_ARCH	"earmv7eb"
+#    elif defined(_ARM_ARCH_6)
+#     define	_MACHINE_ARCH	earmv6eb
+#     define	MACHINE_ARCH	"earmv6eb"
+#    elif !defined(_ARM_ARCH_5T)
+#     define	_MACHINE_ARCH	earmv4eb
+#     define	MACHINE_ARCH	"earmv4eb"
+#    else
+#     define	_MACHINE_ARCH	earmeb
+#     define	MACHINE_ARCH	"earmeb"
+#    endif
+#   endif
+#  else
+#   define	_MACHINE_ARCH	armeb
+#   define	MACHINE_ARCH	"armeb"
+#  endif
+# endif /* __ARMEB__ */
 #endif /* !_KERNEL */
 
 #define	MID_MACHINE	MID_ARM6
@@ -124,20 +192,8 @@
 #endif
 #endif /* _KERNEL */
 
-#ifdef __minix
-/* Minix expect to find in this file PAGE_* defines. */
-#include <machine/vmparam.h>
-
-#define	PGSHIFT		12		/* LOG2(NBPG) */
-#define	NBPG		(1 << PGSHIFT)	/* bytes/page */
-#define	PGOFSET		(NBPG-1)	/* byte offset into page */
-
-#define	arm_round_page(x)	((((paddr_t)(x)) + PGOFSET) & ~PGOFSET)
-#define	arm_trunc_page(x)	((paddr_t)(x) & ~PGOFSET)
-
-#define trunc_page(x) arm_trunc_page(x)
-#define round_page(x) arm_round_page(x)
-
-#endif
-
+#if defined(__minix)
+/* LSC: FIXME This is a hack. Good enough for now, as we only have ARMv7 targets. */
+#include <arm/arm32/param.h>
+#endif /* defined(__minix) */
 #endif /* _ARM_PARAM_H_ */

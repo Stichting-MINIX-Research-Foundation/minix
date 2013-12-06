@@ -1,4 +1,4 @@
-# $NetBSD: rc.subr,v 1.88 2011/08/11 22:52:47 apb Exp $
+# $NetBSD: rc.subr,v 1.92 2012/12/17 18:17:27 apb Exp $
 #
 # Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -152,7 +152,7 @@ mount_critical_filesystems()
 				# multiple lines can't be good,
 				# not even if $_optional is true
 				;;
-			*'unknown special file or file system'*)
+			*[uU]'nknown special file or file system'*)
 				if $_optional; then
 					# ignore this error
 					print_rc_metadata \
@@ -1254,6 +1254,34 @@ collapse_backslash_newline()
 			;;
 		esac
 	done
+}
+
+# Shell implementations of basename and dirname, usable before
+# the /usr file system is mounted.
+#
+basename()
+{
+	local file="$1"
+	local suffix="$2"
+	local base
+
+	base="${file##*/}"		# remove up to and including last '/'
+	base="${base%${suffix}}"	# remove suffix, if any
+	command printf "%s\n" "${base}"
+}
+
+dirname()
+{
+	local file="$1"
+	local dir
+
+	case "$file" in
+	/*/*)	dir="${file%/*}" ;;	# common case: absolute path
+	/*)	dir="/" ;;		# special case: name in root dir
+	*/*)	dir="${file%/*}" ;;	# common case: relative path with '/'
+	*)	dir="." ;;		# special case: name without '/'
+	esac
+	command printf "%s\n" "${dir}"
 }
 
 # Override the normal "echo" and "printf" commands, so that

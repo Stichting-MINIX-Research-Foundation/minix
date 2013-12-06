@@ -1,4 +1,4 @@
-/*	$NetBSD: sbrk.S,v 1.9 2006/01/06 03:58:31 uwe Exp $	*/
+/*	$NetBSD: sbrk.S,v 1.10 2013/09/12 15:36:16 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,7 +36,7 @@
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: sbrk.S,v 1.9 2006/01/06 03:58:31 uwe Exp $")
+	RCSID("$NetBSD: sbrk.S,v 1.10 2013/09/12 15:36:16 joerg Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -54,7 +54,7 @@ curbrk:	.long	_end
 
 ENTRY(_sbrk)
 	mov	r4, r2
-#ifdef PIC
+#ifdef __PIC__
 	mova	L_GOT, r0
 	mov.l	L_GOT, r3
 	add	r0, r3
@@ -68,7 +68,7 @@ ENTRY(_sbrk)
 	mov.l	LSYS_break, r0
 	trapa	#0x80
 	bf	err
-#ifdef PIC
+#ifdef __PIC__
 	mov.l	Lcurbrk, r0
 	mov.l	@(r0, r3), r1
 #else
@@ -83,7 +83,7 @@ err:
 
 	.align	2
 LSYS_break:	.long	SYS_break
-#ifdef PIC
+#ifdef __PIC__
 L_GOT:		.long	_GLOBAL_OFFSET_TABLE_
 Lcurbrk:	.long	curbrk@GOT
 #else

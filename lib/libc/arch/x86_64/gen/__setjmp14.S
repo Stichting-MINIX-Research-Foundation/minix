@@ -1,4 +1,4 @@
-/*	$NetBSD: __setjmp14.S,v 1.1 2001/06/19 00:25:02 fvdl Exp $	*/
+/*	$NetBSD: __setjmp14.S,v 1.2 2013/09/12 15:36:16 joerg Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
 #include <machine/setjmp.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: __setjmp14.S,v 1.1 2001/06/19 00:25:02 fvdl Exp $")
+	RCSID("$NetBSD: __setjmp14.S,v 1.2 2013/09/12 15:36:16 joerg Exp $")
 #endif
 
 /*
@@ -68,7 +68,7 @@ ENTRY(__setjmp14)
 	xorl	%edi,%edi
 	xorq	%rsi,%rsi
 
-#ifdef PIC
+#ifdef __PIC__
 	call	PIC_PLT(_C_LABEL(__sigprocmask14))
 #else
 	call	_C_LABEL(__sigprocmask14)
@@ -85,7 +85,7 @@ ENTRY(__longjmp14)
 	xorq	%rdx,%rdx
 
 	pushq	%r8
-#ifdef PIC
+#ifdef __PIC__
 	call	PIC_PLT(_C_LABEL(__sigprocmask14))
 #else
 	call	_C_LABEL(__sigprocmask14)

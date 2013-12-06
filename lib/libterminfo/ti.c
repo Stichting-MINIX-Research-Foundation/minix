@@ -1,4 +1,4 @@
-/* $NetBSD: ti.c,v 1.2 2010/02/04 09:46:26 roy Exp $ */
+/* $NetBSD: ti.c,v 1.3 2013/06/07 13:16:18 roy Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ti.c,v 1.2 2010/02/04 09:46:26 roy Exp $");
+__RCSID("$NetBSD: ti.c,v 1.3 2013/06/07 13:16:18 roy Exp $");
 
 #include <assert.h>
 #include <string.h>
@@ -60,7 +60,7 @@ int
 tigetflag(const char *id)
 {
 
-	_DIAGASSERT(id != NULL);	
+	_DIAGASSERT(id != NULL);
 	if (cur_term != NULL)
 		return ti_getflag(cur_term, id);
 	return ABSENT_BOOLEAN;
@@ -96,8 +96,8 @@ ti_getnum(const TERMINAL *term, const char *id)
 int
 tigetnum(const char *id)
 {
-	
-	_DIAGASSERT(id != NULL);	
+
+	_DIAGASSERT(id != NULL);
 	if (cur_term != NULL)
 		return ti_getnum(cur_term, id);
 	return CANCELLED_NUMERIC;
@@ -127,7 +127,7 @@ ti_getstr(const TERMINAL *term, const char *id)
 char *
 tigetstr(const char *id)
 {
-	
+
 	_DIAGASSERT(id != NULL);
 	if (cur_term != NULL)
 		return __UNCONST(ti_getstr(cur_term, id));

@@ -1,4 +1,4 @@
-# $NetBSD: country,v 1.15 2009/12/15 03:39:19 christos Exp $
+# $NetBSD: country,v 1.16 2012/09/07 21:08:03 ginsbach Exp $
 #
 # ISO 3166-1 Country Codes
 #
@@ -6,8 +6,7 @@
 # <Name><TAB><Alpha-2-code><TAB><Alpha-3-code><TAB><Numeric-3-code><TAB><FIPS>
 #
 # Further information can be found at the ISO 3166 Maintenance Agency
-# (ISO 3166/MA) web site,
-# <http://www.iso.org/iso/en/prods-services/iso3166ma/index.html>.
+# (ISO 3166/MA) web site, <http://www.iso.org/iso/country_codes>.
 #
 # FIPS 10-4 codes compiled from several sources, including
 # http://www.statoids.com/wab.html
@@ -16,7 +15,7 @@
 # blank entry in the column. FIPS 10-4 codes without a corresponding
 # ISO 3166-1 entity are excluded.
 #
-# This list is up-to-date as of 2009-12-14
+# This list is up-to-date as of 2012-09-07
 #
 Aaland	AX	ALA	248	
 Afghanistan	AF	AFG	004	AF
@@ -45,6 +44,7 @@ Benin	BJ	BEN	204	BN
 Bermuda	BM	BMU	060	BD
 Bhutan	BT	BTN	064	BT
 Bolivia	BO	BOL	068	BL
+Bonaire, Sint Eustatius and Saba	BQ	BES	535	NL
 Bosnia and Herzegovina	BA	BIH	070	BK
 Botswana	BW	BWA	072	BC
 Bouvet Island	BV	BVT	074	BV
@@ -74,6 +74,7 @@ Costa Rica	CR	CRI	188	CS
 Cote d'Ivoire	CI	CIV	384	IV
 Croatia	HR	HRV	191	HR
 Cuba	CU	CUB	192	CU
+Curaçao	CW	CUW	531	UC
 Cyprus	CY	CYP	196	CY
 Czech Republic	CZ	CZE	203	EZ
 Denmark	DK	DNK	208	DA
@@ -172,7 +173,6 @@ Namibia	NA	NAM	516	WA
 Nauru	NR	NRU	520	NR
 Nepal	NP	NPL	524	NP
 Netherlands	NL	NLD	528	NL
-Netherlands Antilles	AN	ANT	530	NT
 New Caledonia	NC	NCL	540	NC
 New Zealand	NZ	NZL	554	NZ
 Nicaragua	NI	NIC	558	NU
@@ -216,15 +216,17 @@ Serbia	RS	SRB	688	RI KV
 Seychelles	SC	SYC	690	SE
 Sierra Leone	SL	SLE	694	SL
 Singapore	SG	SGP	702	SN
+Sint Maarten	SX	SXM	534	NN
 Slovakia	SK	SVK	703	LO
 Slovenia	SI	SVN	705	SI
 Solomon Islands	SB	SLB	090	BP
 Somalia	SO	SOM	706	SO
 South Africa	ZA	ZAF	710	SF
 South Georgia and South Sandwich Islands	GS	SGS	239	SX
+South Sudan	SS	SSD	728	OD
 Spain	ES	ESP	724	SP
 Sri Lanka	LK	LKA	144	CE
-Sudan	SD	SDN	736	SU
+Sudan	SD	SDN	729	SU
 Suriname	SR	SUR	740	NS
 Svalbard and Jan Mayen Islands	SJ	SJM	744	SV JN
 Swaziland	SZ	SWZ	748	WZ

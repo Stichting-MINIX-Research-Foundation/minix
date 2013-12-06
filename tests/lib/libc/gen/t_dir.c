@@ -1,4 +1,4 @@
-/* $NetBSD: t_dir.c,v 1.5 2012/03/18 07:14:08 jruoho Exp $ */
+/* $NetBSD: t_dir.c,v 1.6 2013/10/19 17:45:00 christos Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -122,7 +122,6 @@ ATF_TC_HEAD(telldir_leak, tc)
 ATF_TC_BODY(telldir_leak, tc)
 {
 	DIR *dp;
-	long loc;
 	char *memused;
 	int i;
 	int oktouse = 4096;
@@ -131,7 +130,7 @@ ATF_TC_BODY(telldir_leak, tc)
 	if (dp == NULL)
 		atf_tc_fail("Could not open current directory");
 
-	loc = telldir(dp);
+	(void)telldir(dp);
 	memused = sbrk(0);
 	closedir(dp);
 
@@ -140,7 +139,7 @@ ATF_TC_BODY(telldir_leak, tc)
 		if (dp == NULL)
 			atf_tc_fail("Could not open current directory");
 
-		loc = telldir(dp);
+		(void)telldir(dp);
 		closedir(dp);
 
 		if ((char *)sbrk(0) - memused > oktouse) {

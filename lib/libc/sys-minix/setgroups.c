@@ -3,11 +3,6 @@
 #include "namespace.h"
 
 #include <string.h>
-
-#ifdef __weak_alias
-__weak_alias(setgroups, _setgroups)
-#endif
-
 #include <unistd.h>
 
 int setgroups(int ngroups, const gid_t *gidset)

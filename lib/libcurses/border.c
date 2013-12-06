@@ -1,4 +1,4 @@
-/*	$NetBSD: border.c,v 1.14 2010/12/25 09:59:52 blymn Exp $	*/
+/*	$NetBSD: border.c,v 1.15 2013/05/05 14:23:16 jdc Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: border.c,v 1.14 2010/12/25 09:59:52 blymn Exp $");
+__RCSID("$NetBSD: border.c,v 1.15 2013/05/05 14:23:16 jdc Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -261,20 +261,36 @@ int wborder_set(WINDOW *win, const cchar_t *ls, const cchar_t *rs,
 	/* Merge window attributes */
 	left.attributes |= (left.attributes & __COLOR) ?
 		(win->wattr & ~__COLOR) : win->wattr;
+	left.attributes |= (left.attributes & __COLOR) ?
+		(win->battr & ~__COLOR) : win->battr;
 	right.attributes |= (right.attributes & __COLOR) ?
 		(win->wattr & ~__COLOR) : win->wattr;
+	right.attributes |= (right.attributes & __COLOR) ?
+		(win->battr & ~__COLOR) : win->battr;
 	top.attributes |= (top.attributes & __COLOR) ?
 		(win->wattr & ~__COLOR) : win->wattr;
+	top.attributes |= (top.attributes & __COLOR) ?
+		(win->battr & ~__COLOR) : win->battr;
 	bottom.attributes |= (bottom.attributes & __COLOR) ?
 		(win->wattr & ~__COLOR) : win->wattr;
+	bottom.attributes |= (bottom.attributes & __COLOR) ?
+		(win->battr & ~__COLOR) : win->battr;
 	topleft.attributes |= (topleft.attributes & __COLOR) ?
 		(win->wattr & ~__COLOR) : win->wattr;
+	topleft.attributes |= (topleft.attributes & __COLOR) ?
+		(win->battr & ~__COLOR) : win->battr;
 	topright.attributes |= (topright.attributes & __COLOR) ?
 		(win->wattr & ~__COLOR) : win->wattr;
+	topright.attributes |= (topright.attributes & __COLOR) ?
+		(win->battr & ~__COLOR) : win->battr;
 	botleft.attributes |= (botleft.attributes & __COLOR) ?
 		(win->wattr & ~__COLOR) : win->wattr;
+	botleft.attributes |= (botleft.attributes & __COLOR) ?
+		(win->battr & ~__COLOR) : win->battr;
 	botright.attributes |= (botright.attributes & __COLOR) ?
 		(win->wattr & ~__COLOR) : win->wattr;
+	botright.attributes |= (botright.attributes & __COLOR) ?
+		(win->battr & ~__COLOR) : win->battr;
 
 	endx = win->maxx - 1;
 	endy = win->maxy - 1;

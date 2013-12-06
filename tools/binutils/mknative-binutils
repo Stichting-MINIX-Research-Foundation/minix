@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-binutils,v 1.8 2011/09/25 04:00:58 christos Exp $
+#	$NetBSD: mknative-binutils,v 1.9 2013/10/01 15:41:17 skrll Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of src/external/gpl3/binutils
@@ -122,6 +122,8 @@ get_binutils () {
 			DEFS EMUL EMULATION_OFILES INCLUDES OFILES STRINGIFY TEXINFOS
 		getvars ld/Makefile \
 			target_alias | sed 's,[\._0-9A-Z]*$,,'
+		getvars	ld/Makefile \
+			enable_initfini_array
 	} | write_mk external/gpl3/binutils/usr.bin/ld/arch/$MACHINE_ARCH/defs.mk
 
 	for f in config ldemul-list; do

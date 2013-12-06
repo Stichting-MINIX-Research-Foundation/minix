@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.6 2003/08/07 09:46:41 agc Exp $	*/
+/*	$NetBSD: extern.h,v 1.7 2013/08/11 05:42:41 dholland Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -34,17 +34,17 @@
 struct delayval;
 
 int	 adelay(int, struct delayval *);
-char	*autobaud(void);
+const char *autobaud(void);
 int	 delaybits(void);
-void	 edithost(char *);
+void	 edithost(const char *);
 void	 gendefaults(void);
 int	 getent(char *, char *);
 int	 getflag(char *);
 long	 getnum(char *);
 char	*getstr(char *, char **);
-void	 gettable(char *, char *);
+void	 gettable(const char *, char *);
 void	 makeenv(char *[]);
-char	*portselector(void);
+const char *portselector(void);
 void	 set_ttydefaults(int);
 void	 setchars(void);
 void	 setdefaults(void);

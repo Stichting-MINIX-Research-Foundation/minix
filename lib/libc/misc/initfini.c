@@ -1,4 +1,4 @@
-/* 	$NetBSD: initfini.c,v 1.10 2012/02/16 23:00:39 joerg Exp $	 */
+/* 	$NetBSD: initfini.c,v 1.11 2013/08/19 22:14:37 matt Exp $	 */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: initfini.c,v 1.10 2012/02/16 23:00:39 joerg Exp $");
+__RCSID("$NetBSD: initfini.c,v 1.11 2013/08/19 22:14:37 matt Exp $");
 
 #ifdef _LIBC
 #include "namespace.h"
@@ -38,9 +38,9 @@ __RCSID("$NetBSD: initfini.c,v 1.10 2012/02/16 23:00:39 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/exec.h>
-#ifndef __minix
+#if !defined(__minix)
 #include <sys/tls.h>
-#endif
+#endif /* !defined(__minix) */
 #include <stdbool.h>
 
 void	_libc_init(void) __attribute__((__constructor__, __used__));
@@ -82,7 +82,7 @@ struct ps_strings *__ps_strings;
  * _libc_init is called twice.  The first time explicitly by crt0.o
  * (for newer versions) and the second time as indirectly via _init().
  */
-void
+void __section(".text.startup")
 _libc_init(void)
 {
 

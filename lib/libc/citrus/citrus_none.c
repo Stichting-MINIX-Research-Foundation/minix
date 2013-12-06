@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_none.c,v 1.18 2008/06/14 16:01:07 tnozaki Exp $	*/
+/*	$NetBSD: citrus_none.c,v 1.19 2013/05/28 16:57:56 joerg Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_none.c,v 1.18 2008/06/14 16:01:07 tnozaki Exp $");
+__RCSID("$NetBSD: citrus_none.c,v 1.19 2013/05/28 16:57:56 joerg Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -185,6 +185,47 @@ _citrus_NONE_ctype_mbsrtowcs(void * __restrict cl, wchar_t * __restrict pwcs,
 }
 
 static int
+/*ARGSUSED*/
+_citrus_NONE_ctype_mbsnrtowcs(_citrus_ctype_rec_t * __restrict cc,
+			     wchar_t * __restrict pwcs,
+			     const char ** __restrict s, size_t in, size_t n,
+			     void * __restrict pspriv,
+			     size_t * __restrict nresult)
+{
+	int cnt;
+	const char *s0;
+
+	/* if pwcs is NULL, ignore n */
+	if (pwcs == NULL)
+		n = 1; /* arbitrary >0 value */
+
+	cnt = 0;
+	s0 = *s; /* to keep *s unchanged for now, use copy instead. */
+	while (in > 0 && n > 0) {
+		if (pwcs != NULL) {
+			*pwcs = (wchar_t)(unsigned char)*s0;
+		}
+		if (*s0 == '\0') {
+			s0 = NULL;
+			break;
+		}
+		s0++;
+		--in;
+		if (pwcs != NULL) {
+			pwcs++;
+			n--;
+		}
+		cnt++;
+	}
+	if (pwcs)
+		*s = s0;
+
+	*nresult = (size_t)cnt;
+
+	return (0);
+}
+
+static int
 _citrus_NONE_ctype_mbstowcs(void * __restrict cl, wchar_t * __restrict wcs,
 			    const char * __restrict s, size_t n,
 			    size_t * __restrict nresult)
@@ -272,6 +313,48 @@ _citrus_NONE_ctype_wcsrtombs(void * __restrict cl, char * __restrict s,
 		}
 		count++;
 		pwcs0++;
+	}
+	if (s != NULL)
+		*pwcs = pwcs0;
+
+	*nresult = count;
+
+	return (0);
+}
+
+static int
+/*ARGSUSED*/
+_citrus_NONE_ctype_wcsnrtombs(_citrus_ctype_rec_t * __restrict cc,
+			     char * __restrict s,
+			     const wchar_t ** __restrict pwcs, size_t in,
+			     size_t n, void * __restrict pspriv,
+			     size_t * __restrict nresult)
+{
+	size_t count;
+	const wchar_t *pwcs0;
+
+	pwcs0 = *pwcs;
+	count = 0;
+
+	if (s == NULL)
+		n = 1;
+
+	while (in > 0 && n > 0) {
+		if ((*pwcs0 & ~0xFFU) != 0) {
+			*nresult = (size_t)-1;
+			return (EILSEQ);
+		}
+		if (s != NULL) {
+			*s++ = (char)*pwcs0;
+			n--;
+		}
+		if (*pwcs0 == L'\0') {
+			pwcs0 = NULL;
+			break;
+		}
+		count++;
+		pwcs0++;
+		--in;
 	}
 	if (s != NULL)
 		*pwcs = pwcs0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_dirhash.c,v 1.34 2009/10/05 23:48:08 rmind Exp $	*/
+/*	$NetBSD: ufs_dirhash.c,v 1.35 2013/06/09 17:57:09 dholland Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Ian Dowse.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_dirhash.c,v 1.34 2009/10/05 23:48:08 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_dirhash.c,v 1.35 2013/06/09 17:57:09 dholland Exp $");
 
 /*
  * This implements a hash-based lookup scheme for UFS directories.
@@ -146,7 +146,7 @@ ufsdirhash_build(struct inode *ip)
 	vp = ip->i_vnode;
 	/* Allocate 50% more entries than this dir size could ever need. */
 	KASSERT(ip->i_size >= dirblksiz);
-	nslots = ip->i_size / DIRECTSIZ(1);
+	nslots = ip->i_size / UFS_DIRECTSIZ(1);
 	nslots = (nslots * 3 + 1) / 2;
 	narrays = howmany(nslots, DH_NBLKOFF);
 	nslots = narrays * DH_NBLKOFF;
@@ -239,7 +239,7 @@ ufsdirhash_build(struct inode *ip)
 				slot = WRAPINCR(slot, dh->dh_hlen);
 			dh->dh_hused++;
 			DH_ENTRY(dh, slot) = pos;
-			ufsdirhash_adjfree(dh, pos, -DIRSIZ(0, ep, needswap),
+			ufsdirhash_adjfree(dh, pos, -UFS_DIRSIZ(0, ep, needswap),
 			    dirblksiz);
 		}
 		pos += ep->d_reclen;
@@ -316,7 +316,7 @@ ufsdirhash_free(struct inode *ip)
  * If successful, the directory offset is stored in *offp, and a
  * pointer to a struct buf containing the entry is stored in *bpp. If
  * prevoffp is non-NULL, the offset of the previous entry within
- * the DIRBLKSIZ-sized block is stored in *prevoffp (if the entry
+ * the UFS_DIRBLKSIZ-sized block is stored in *prevoffp (if the entry
  * is the first in a block, the start of the block is used).
  */
 int
@@ -448,7 +448,7 @@ restart:
 			/* Check for sequential access, and update offset. */
 			if (dh->dh_seqopt == 0 && dh->dh_seqoff == offset)
 				dh->dh_seqopt = 1;
-			dh->dh_seqoff = offset + DIRSIZ(0, dp, needswap);
+			dh->dh_seqoff = offset + UFS_DIRSIZ(0, dp, needswap);
 			DIRHASH_UNLOCK(dh);
 
 			*bpp = bp;
@@ -483,7 +483,7 @@ restart:
  * the offset of the directory entry that begins the free space.
  * This will either be the offset of an existing entry that has free
  * space at the end, or the offset of an entry with d_ino == 0 at
- * the start of a DIRBLKSIZ block.
+ * the start of a UFS_DIRBLKSIZ block.
  *
  * To use the space, the caller may need to compact existing entries in
  * the directory. The total number of bytes in all of the entries involved
@@ -540,7 +540,7 @@ ufsdirhash_findfree(struct inode *ip, int slotneeded, int *slotsize)
 			brelse(bp, 0);
 			return (-1);
 		}
-		if (dp->d_ino == 0 || dp->d_reclen > DIRSIZ(0, dp, needswap))
+		if (dp->d_ino == 0 || dp->d_reclen > UFS_DIRSIZ(0, dp, needswap))
 			break;
 		i += dp->d_reclen;
 		dp = (struct direct *)((char *)dp + dp->d_reclen);
@@ -557,7 +557,7 @@ ufsdirhash_findfree(struct inode *ip, int slotneeded, int *slotsize)
 	while (i < dirblksiz && freebytes < slotneeded) {
 		freebytes += dp->d_reclen;
 		if (dp->d_ino != 0)
-			freebytes -= DIRSIZ(0, dp, needswap);
+			freebytes -= UFS_DIRSIZ(0, dp, needswap);
 		if (dp->d_reclen == 0) {
 			DIRHASH_UNLOCK(dh);
 			brelse(bp, 0);
@@ -655,7 +655,7 @@ ufsdirhash_add(struct inode *ip, struct direct *dirp, doff_t offset)
 	DH_ENTRY(dh, slot) = offset;
 
 	/* Update the per-block summary info. */
-	ufsdirhash_adjfree(dh, offset, -DIRSIZ(0, dirp, needswap), dirblksiz);
+	ufsdirhash_adjfree(dh, offset, -UFS_DIRSIZ(0, dirp, needswap), dirblksiz);
 	DIRHASH_UNLOCK(dh);
 }
 
@@ -690,7 +690,7 @@ ufsdirhash_remove(struct inode *ip, struct direct *dirp, doff_t offset)
 	ufsdirhash_delslot(dh, slot);
 
 	/* Update the per-block summary info. */
-	ufsdirhash_adjfree(dh, offset, DIRSIZ(0, dirp, needswap), dirblksiz);
+	ufsdirhash_adjfree(dh, offset, UFS_DIRSIZ(0, dirp, needswap), dirblksiz);
 	DIRHASH_UNLOCK(dh);
 }
 
@@ -724,7 +724,7 @@ ufsdirhash_move(struct inode *ip, struct direct *dirp, doff_t oldoff,
 
 /*
  * Inform dirhash that the directory has grown by one block that
- * begins at offset (i.e. the new length is offset + DIRBLKSIZ).
+ * begins at offset (i.e. the new length is offset + UFS_DIRBLKSIZ).
  */
 void
 ufsdirhash_newblk(struct inode *ip, doff_t offset)
@@ -868,7 +868,7 @@ ufsdirhash_checkblock(struct inode *ip, char *sbuf, doff_t offset)
 		/* Check that the entry	exists (will panic if it doesn't). */
 		ufsdirhash_findslot(dh, dp->d_name, dp->d_namlen, offset + i);
 
-		nfree += dp->d_reclen - DIRSIZ(0, dp, needswap);
+		nfree += dp->d_reclen - UFS_DIRSIZ(0, dp, needswap);
 	}
 	if (i != dirblksiz)
 		panic("ufsdirhash_checkblock: bad dir end");
@@ -1000,7 +1000,7 @@ ufsdirhash_delslot(struct dirhash *dh, int slot)
 
 /*
  * Given a directory entry and its offset, find the offset of the
- * previous entry in the same DIRBLKSIZ-sized block. Returns an
+ * previous entry in the same UFS_DIRBLKSIZ-sized block. Returns an
  * offset, or -1 if there is no previous entry in the block or some
  * other problem occurred.
  */

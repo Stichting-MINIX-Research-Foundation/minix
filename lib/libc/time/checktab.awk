@@ -1,4 +1,4 @@
-#	$NetBSD: checktab.awk,v 1.5 2012/08/09 12:38:25 christos Exp $
+#	$NetBSD: checktab.awk,v 1.6 2013/09/20 19:06:54 christos Exp $
 
 # Check tz tables for consistency.
 
@@ -10,6 +10,9 @@ BEGIN {
 	if (!iso_table) iso_table = "iso3166.tab"
 	if (!zone_table) zone_table = "zone.tab"
 	if (!want_warnings) want_warnings = -1
+
+	# A special (and we hope temporary) case.
+	tztab["America/Montreal"] = 1
 
 	while (getline <iso_table) {
 		iso_NR++
@@ -71,13 +74,10 @@ BEGIN {
 			status = 1
 		}
 		cc0 = cc
-		if (tz2cc[tz]) {
-			printf "%s:%d: %s: duplicate TZ column\n", \
-				zone_table, zone_NR, tz >>"/dev/stderr"
-			status = 1
-		}
-		tz2cc[tz] = cc
-		tz2comments[tz] = comments
+		cctz = cc tz
+		cctztab[cctz] = 1
+		tztab[tz] = 1
+		tz2comments[cctz] = comments
 		tz2NR[tz] = zone_NR
 		if (cc2name[cc]) {
 			cc_used[cc]++
@@ -94,16 +94,19 @@ BEGIN {
 		}
 	}
 
-	for (tz in tz2cc) {
-		if (cc_used[tz2cc[tz]] == 1) {
-			if (tz2comments[tz]) {
+	for (cctz in cctztab) {
+		cc = substr (cctz, 1, 2)
+		tz = substr (cctz, 3)
+		if (cc_used[cc] == 1) {
+			if (tz2comments[cctz]) {
 				printf "%s:%d: unnecessary comment `%s'\n", \
-					zone_table, tz2NR[tz], tz2comments[tz] \
+					zone_table, tz2NR[tz], \
+					tz2comments[cctz] \
 					>>"/dev/stderr"
 				status = 1
 			}
 		} else {
-			if (!tz2comments[tz]) {
+			if (!tz2comments[cctz]) {
 				printf "%s:%d: missing comment\n", \
 					zone_table, tz2NR[tz] >>"/dev/stderr"
 				status = 1
@@ -127,7 +130,7 @@ BEGIN {
 		if (src != dst) tz = $3
 	}
 	if (tz && tz ~ /\//) {
-		if (!tz2cc[tz]) {
+		if (!tztab[tz]) {
 			printf "%s: no data for `%s'\n", zone_table, tz \
 				>>"/dev/stderr"
 			status = 1

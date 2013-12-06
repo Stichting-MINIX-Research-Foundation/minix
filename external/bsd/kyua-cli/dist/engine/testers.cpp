@@ -304,6 +304,7 @@ engine::tester::test(const fs::path& program, const std::string& test_case_name,
         }
     } else {
         INV(status.signaled());
-        throw engine::error("Tester received a signal; this is a bug");
+        throw engine::error(F("Tester received signal %s; this is a bug") %
+                            status.termsig());
     }
 }

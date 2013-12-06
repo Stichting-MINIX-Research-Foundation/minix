@@ -1,4 +1,4 @@
-/*	$NetBSD: strcat.S,v 1.1 2005/12/20 19:28:49 christos Exp $	*/
+/*	$NetBSD: strcat.S,v 1.4 2013/09/07 19:06:29 chs Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,22 +39,23 @@
 #if 0
 	RCSID("from: @(#)strcpy.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: strcat.S,v 1.1 2005/12/20 19:28:49 christos Exp $")
+	RCSID("$NetBSD: strcat.S,v 1.4 2013/09/07 19:06:29 chs Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 ENTRY(strcat)
-	movl	%sp@(8),%a0		| a0 = fromaddr
-	movl	%sp@(4),%d0		| return value is toaddr
+	movl	8(%sp),%a0		| a0 = fromaddr
+	movl	4(%sp),%d0		| return value is toaddr
 	movl	%d0,%a1			| a1 = toaddr
-Lslloop:
-	tstb	%a1@+			| null?
-	jne	Lslloop			| no, keep going
+.Lslloop:
+	tstb	(%a1)+			| null?
+	jne	.Lslloop		| no, keep going
 	subql	#1,%a1
-Lscloop:
-	movb	%a0@+,%a1@+		| copy a byte
-	jne	Lscloop			| copied non-null, keep going
+.Lscloop:
+	movb	(%a0)+,(%a1)+		| copy a byte
+	jne	.Lscloop		| copied non-null, keep going
 #ifdef __SVR4_ABI__
 	moveal	%d0,%a0
 #endif
 	rts
+END(strcat)

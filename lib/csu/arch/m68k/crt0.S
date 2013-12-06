@@ -35,18 +35,14 @@
  * <<Id: LICENSE,v 1.2 2000/06/14 15:57:33 cgd Exp>>
  */
 
-RCSID("$NetBSD: crt0.S,v 1.1 2010/08/07 18:01:34 joerg Exp $")
+RCSID("$NetBSD: crt0.S,v 1.4 2013/07/26 19:49:19 matt Exp $")
 
 STRONG_ALIAS(_start,__start)
 
 _ENTRY(__start)
-	movl	(%sp),%d0
 	movl	%a2,-(%sp)		| ps_strings
 	movl	%a0,-(%sp)		| obj
 	movl	%a1,-(%sp)		| cleanup
-	movl	%d0,%d1
-	lsll	#2,%d1
-	pea	(16+4)(%sp,%d1.l)	| envp = &argv[argc + 1]
-	pea	20(%sp)			| argv
-	movl	%d0,-(%sp)		| argc
-	jsr	___start
+	| call: ___start(cleanup, obj, ps_strings)
+	jbsr	___start
+END(__start)

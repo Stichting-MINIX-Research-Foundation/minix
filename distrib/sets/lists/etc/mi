@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.228 2012/02/07 19:13:28 joerg Exp $
+# $NetBSD: mi,v 1.232 2013/08/11 22:29:03 joerg Exp $
 #
 # Note: end-user configuration files that are moved to another location
 #	should not be marked "obsolete"; they should just be removed from
@@ -17,11 +17,6 @@
 ./etc/atf/atf-run.hooks				etc-atf-etc		atf
 ./etc/atf/common.conf				etc-atf-etc		atf
 ./etc/audit-packages.conf			etc-obsolete		obsolete
-./etc/bootptab					etc-bootserver-etc
-./etc/changelist				etc-sys-etc
-./etc/csh.cshrc					etc-util-etc
-./etc/csh.login					etc-util-etc
-./etc/csh.logout				etc-util-etc
 ./etc/bluetooth					etc-sys-etc
 ./etc/bluetooth/bluetooth.conf			etc-obsolete		obsolete
 ./etc/bluetooth/btattach.conf			etc-sys-etc
@@ -29,6 +24,11 @@
 ./etc/bluetooth/btuartd.conf			etc-obsolete		obsolete
 ./etc/bluetooth/hosts				etc-sys-etc
 ./etc/bluetooth/protocols			etc-sys-etc
+./etc/bootptab					etc-bootserver-etc
+./etc/changelist				etc-sys-etc
+./etc/csh.cshrc					etc-util-etc
+./etc/csh.login					etc-util-etc
+./etc/csh.logout				etc-util-etc
 ./etc/daily					etc-sys-etc
 ./etc/daily.conf				etc-sys-etc
 ./etc/default					etc-obsolete		obsolete
@@ -40,6 +40,7 @@
 ./etc/defaults/daily.conf			etc-sys-defaults
 ./etc/defaults/monthly.conf			etc-sys-defaults
 ./etc/defaults/pf.boot.conf			etc-pf-defaults		pf
+./etc/defaults/pkgpath.conf			etc-sys-defaults
 ./etc/defaults/rc.conf				etc-sys-defaults
 ./etc/defaults/security.conf			etc-sys-defaults
 ./etc/defaults/weekly.conf			etc-sys-defaults
@@ -73,6 +74,7 @@
 ./etc/inetd.conf				etc-netutil-etc
 ./etc/iscsi/auths				etc-iscsi-etc		iscsi
 ./etc/iscsi/targets				etc-iscsi-etc		iscsi
+./etc/kyua/kyua.conf				etc-kyua-etc		kyua
 ./etc/lkm.conf					etc-obsolete		obsolete
 ./etc/localtime					etc-sys-etc
 ./etc/locate.conf				etc-sys-etc
@@ -92,6 +94,7 @@
 ./etc/mtree/special				etc-sys-etc
 ./etc/named.conf				etc-bind-etc
 ./etc/namedb/127				etc-bind-etc
+./etc/namedb/bind.keys				etc-bind-etc
 ./etc/namedb/localhost				etc-bind-etc
 ./etc/namedb/loopback.v6			etc-bind-etc
 ./etc/namedb/root.cache				etc-bind-etc
@@ -131,6 +134,7 @@
 ./etc/pf.conf					etc-pf-etc		pf
 ./etc/pf.os					etc-pf-etc		pf
 ./etc/phones					etc-sys-etc
+./etc/pkgpath.conf				etc-sys-etc
 ./etc/postfix/README				etc-postfix-etc		postfix
 ./etc/postfix/main.cf				etc-postfix-etc		postfix
 ./etc/postfix/master.cf				etc-postfix-etc		postfix
@@ -193,14 +197,14 @@
 ./etc/rc.d/envsys				etc-sys-rc
 ./etc/rc.d/fixsb				etc-obsolete		obsolete
 ./etc/rc.d/fsck					etc-sys-rc
-./etc/rc.d/fsck_root				etc-sys-rc
 ./etc/rc.d/fsck.sh				etc-obsolete		obsolete
+./etc/rc.d/fsck_root				etc-sys-rc
 ./etc/rc.d/ftp_proxy				etc-net-rc
 ./etc/rc.d/ftpd					etc-net-rc
-./etc/rc.d/hostapd				etc-net-rc
-./etc/rc.d/httpd				etc-net-rc
 ./etc/rc.d/gated				etc-obsolete		obsolete
 ./etc/rc.d/gpio					etc-sys-rc
+./etc/rc.d/hostapd				etc-net-rc
+./etc/rc.d/httpd				etc-net-rc
 ./etc/rc.d/identd				etc-net-rc
 ./etc/rc.d/ifwatchd				etc-net-rc
 ./etc/rc.d/inetd				etc-net-rc
@@ -305,10 +309,10 @@
 ./etc/rpc					etc-net-etc
 ./etc/saslc.d					etc-libsaslc-etc
 ./etc/saslc.d/mech				obsolete		obsolete
-./etc/saslc.d/saslc				etc-libsaslc-etc
-./etc/saslc.d/saslc/mech			etc-libsaslc-etc
 ./etc/saslc.d/postfix				etc-libsaslc-postfix
 ./etc/saslc.d/postfix/mech			etc-libsaslc-postfix
+./etc/saslc.d/saslc				etc-libsaslc-etc
+./etc/saslc.d/saslc/mech			etc-libsaslc-etc
 ./etc/security					etc-sys-etc
 ./etc/security.conf				etc-sys-etc
 ./etc/services					etc-net-etc

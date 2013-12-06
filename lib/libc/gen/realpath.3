@@ -1,4 +1,4 @@
-.\"	$NetBSD: realpath.3,v 1.14 2012/06/21 21:35:25 wiz Exp $
+.\"	$NetBSD: realpath.3,v 1.18 2013/05/24 09:35:11 wiz Exp $
 .\"
 .\" Copyright (c) 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"     from: @(#)realpath.3	8.2 (Berkeley) 2/16/94
 .\"
-.Dd June 21, 2012
+.Dd May 24, 2013
 .Dt REALPATH 3
 .Os
 .Sh NAME
@@ -65,7 +65,8 @@ argument
 .Em must
 refer to a buffer capable of storing at least
 .Dv MAXPATHLEN
-characters.
+characters, or be
+.Dv NULL .
 .Pp
 The
 .Fn realpath
@@ -74,7 +75,7 @@ and return the absolute pathname corresponding to
 .Fa pathname .
 .Sh RETURN VALUES
 If
-.Fa resolvednamed
+.Fa resolvedname
 is
 .Dv NULL ,
 it will be allocated and the returned pointer can be deallocated using
@@ -91,7 +92,7 @@ returns
 and
 .Fa resolvedname
 was not allocated by
-.Nm ,
+.Fn realpath ,
 it will contain the pathname which caused the problem.
 .Sh ERRORS
 The function
@@ -99,15 +100,35 @@ The function
 may fail and set the external variable
 .Va errno
 for any of the errors specified for the library functions
-.Xr chdir 2 ,
-.Xr close 2 ,
-.Xr fchdir 2 ,
+.\" First sorted by section, then by name.
 .Xr lstat 2 ,
-.Xr malloc 3 ,
-.Xr open 2 ,
-.Xr readlink 2
+.Xr readlink 2 ,
+.Xr getcwd 3
 and
-.Xr getcwd 3 .
+.Xr malloc 3 .
+.Pp
+In addition, the following errors may be reported:
+.Bl -tag -width Er
+.It Bq Er EINVAL
+The value of the
+.Fa pathname
+argument is
+.Dv NULL .
+.It Bq Er ELOOP
+Too many symbolic links were encountered in translating the
+.Fa pathname .
+.It Bq Er ENAMETOOLONG
+The resulting absolute pathname exceeds
+.Dv MAXPATHLEN
+characters.
+.It Bq Er ENOENT
+The value of the
+.Fa pathname
+argument is an empty string;
+or a symbolic link to an empty string is encountered.
+.It Bq Er ENOTDIR
+A component of the path prefix is not a directory.
+.El
 .Sh SEE ALSO
 .Xr getcwd 3
 .Sh STANDARDS

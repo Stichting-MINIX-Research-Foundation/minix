@@ -1,6 +1,6 @@
 #!@BSHELL@ -
 #
-#	$NetBSD: host-mkdep.in,v 1.21 2012/08/26 22:37:19 jmmv Exp $
+#	$NetBSD: host-mkdep.in,v 1.30 2013/09/02 08:37:11 joerg Exp $
 #
 # Copyright (c) 1991, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -73,7 +73,7 @@ set_objlist()
 # (don't trust the shell builtin getopts to be in a known state on error)
 while [ $# -gt 0 ]; do
 	option="${1#-}"
-	[ "x$option" = "x$1" -o -z "$option" ] && break
+	[ "x$option" = "x$1" -o -z "$option" ] && break # LSC: Prevents error on Minix
 	while
 		optarg="${option#?}"
 		option="${option%$optarg}"
@@ -84,6 +84,7 @@ while [ $# -gt 0 ]; do
 		-o)	OPTIONAL=true; AWK_OPTIONAL='print ".OPTIONAL:" $0';;
 		-p)	NEWEXT=;;
 		-q)	QUIET=true;;
+		-[iv])	;;
 
 		-[fPs])	# Options with arguments
 			[ -z "$optarg" ] && {
@@ -161,6 +162,11 @@ else
 				shift 2
 				cppargs=${cppargs%xx}
 				;;
+		-std=*)
+				set -- "$@" "$1"
+				shift
+				cppargs=${cppargs%x}
+				;;
 
 		-no-cpp-precomp)	# This is a Darwin-specific option.
 				set -- "$@" "$1"
@@ -177,7 +183,12 @@ else
 				shift
 				cppargs=${cppargs%x}
 				;;
-
+		--sysroot*)
+				shift
+				;;
+		-[iv])
+				shift
+				;;
 		-*)		
 				echo "$0: Unknown option: $1" 1>&2 # all other -options
 				exit 1
@@ -225,7 +236,7 @@ else
 		file=${file%.*}
 		set_objlist $file
 
-		@CPP@ "$@" $f | @AWK@ '
+		( (@CPP@ "$@" $f; echo $? >&3) | @AWK@ '
 			/^#/ {
 				# Be as tolerant as possible.
 				sub(/^#(line)? [ 0-9]*\"?/, "")
@@ -241,7 +252,7 @@ else
 				print "'"$objlist"'" ": " $0
 				'"$AWK_OPTIONAL"'
 			}
-		' >> $TMP
+		' >> $TMP) 3>&1 | (read a; exit $a)
 	done
 fi
 

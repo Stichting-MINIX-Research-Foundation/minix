@@ -34,12 +34,12 @@
 
 #include <ostream>
 #include <string>
-#include <tr1/memory>
 
 #include "engine/metadata.hpp"
 #include "utils/config/tree.hpp"
 #include "utils/fs/path.hpp"
 #include "utils/optional.hpp"
+#include "utils/shared_ptr.hpp"
 
 namespace engine {
 
@@ -71,7 +71,7 @@ class test_case {
     struct impl;
 
     /// Pointer to the shared internal implementation.
-    std::tr1::shared_ptr< impl > _pimpl;
+    std::shared_ptr< impl > _pimpl;
 
 public:
     test_case(const std::string&, const test_program&,
@@ -96,7 +96,7 @@ std::ostream& operator<<(std::ostream&, const test_case&);
 
 
 /// Pointer to a test case.
-typedef std::tr1::shared_ptr< test_case > test_case_ptr;
+typedef std::shared_ptr< test_case > test_case_ptr;
 
 
 test_result debug_test_case(const test_case*, const utils::config::tree&,

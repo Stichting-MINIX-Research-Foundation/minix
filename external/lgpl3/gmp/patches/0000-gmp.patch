@@ -1,18 +1,113 @@
-diff -r -x CVS -N -U 3 dist/ansi2knr.c dist.orig/ansi2knr.c
---- dist/ansi2knr.c	2011-05-08 11:49:29.000000000 +0200
-+++ dist.orig/ansi2knr.c	2011-06-20 07:54:33.000000000 +0200
-@@ -1,6 +1,6 @@
- /* Copyright (C) 1989, 2000 Aladdin Enterprises.  All rights reserved. */
+Binary files dist.orig/ChangeLog and dist.nbsd/ChangeLog differ
+diff -rNU3 dist.orig/Makefile.am dist.nbsd/Makefile.am
+--- dist.orig/Makefile.am	Mon May 20 14:59:56 2013
++++ dist.nbsd/Makefile.am	Wed Feb 19 16:34:37 2014
+@@ -74,6 +74,7 @@
+ #        5.1.0   11:0:1    7:0:3     -
+ #        5.1.1   11:1:1    7:1:3     -
+ #        5.1.2   11:2:1    7:2:3     -
++#        5.1.3   11:3:1    7:3:3     -
+ #
+ # Starting at 3:0:0 is a slight abuse of the versioning system, but it
+ # ensures we're past soname libgmp.so.2, which was used on Debian GNU/Linux
+@@ -87,11 +88,11 @@
+ # libgmpxx.so.3.0.4) incrementing, to make it clear which GMP it's from.
  
--/*$Id$*/
-+/*$Id: ansi2knr.c,v 1.1.1.1 2011/06/20 05:54:33 mrg Exp $*/
- /* Convert ANSI C function definitions to K&R ("traditional C") syntax */
+ LIBGMP_LT_CURRENT    = 11
+-LIBGMP_LT_REVISION   = 2
++LIBGMP_LT_REVISION   = 3
+ LIBGMP_LT_AGE        = 1
  
- /*
-diff -r -x CVS -N -U 3 dist/config.guess dist.orig/config.guess
---- dist/config.guess	2011-05-08 11:49:29.000000000 +0200
-+++ dist.orig/config.guess	2012-03-27 23:56:04.000000000 +0200
-@@ -833,8 +833,8 @@
+ LIBGMPXX_LT_CURRENT  = 7
+-LIBGMPXX_LT_REVISION = 2
++LIBGMPXX_LT_REVISION = 3
+ LIBGMPXX_LT_AGE      = 3
+ 
+ 
+diff -rNU3 dist.orig/Makefile.in dist.nbsd/Makefile.in
+--- dist.orig/Makefile.in	Mon May 20 15:00:04 2013
++++ dist.nbsd/Makefile.in	Wed Feb 19 16:34:37 2014
+@@ -86,6 +86,7 @@
+ #        5.1.0   11:0:1    7:0:3     -
+ #        5.1.1   11:1:1    7:1:3     -
+ #        5.1.2   11:2:1    7:2:3     -
++#        5.1.3   11:3:1    7:3:3     -
+ #
+ # Starting at 3:0:0 is a slight abuse of the versioning system, but it
+ # ensures we're past soname libgmp.so.2, which was used on Debian GNU/Linux
+@@ -446,10 +447,10 @@
+ top_builddir = @top_builddir@
+ top_srcdir = @top_srcdir@
+ LIBGMP_LT_CURRENT = 11
+-LIBGMP_LT_REVISION = 2
++LIBGMP_LT_REVISION = 3
+ LIBGMP_LT_AGE = 1
+ LIBGMPXX_LT_CURRENT = 7
+-LIBGMPXX_LT_REVISION = 2
++LIBGMPXX_LT_REVISION = 3
+ LIBGMPXX_LT_AGE = 3
+ SUBDIRS = tests mpn mpz mpq mpf printf scanf rand cxx demos tune doc
+ 
+@@ -1165,7 +1166,8 @@
+ uninstall: uninstall-recursive
+ 
+ install-am: all-am
+-	@$(MAKE) $(AM_MAKEFLAGS) install-exec-am install-data-am
++	@$(MAKE) $(AM_MAKEFLAGS) install-exec-am
++	@$(MAKE) $(AM_MAKEFLAGS) install-data-am
+ 
+ installcheck: installcheck-recursive
+ install-strip:
+diff -rNU3 dist.orig/NEWS dist.nbsd/NEWS
+--- dist.orig/NEWS	Mon May 20 14:59:56 2013
++++ dist.nbsd/NEWS	Wed Feb 19 16:34:37 2014
+@@ -5,6 +5,29 @@
+ medium, provided this notice is preserved.
+ 
+ 
++Changes between GMP version 5.1.2 and 5.1.3
++
++  BUGS FIXED
++  * The internal functions mpn_sbpi1_div_qr_sec mpn_sbpi1_div_r_sec could
++    compute garbage with a low probability.  They are now rewritten, and the
++    test code has been improved.
++
++  * A bug in the ia64 implementation of mpn_divrem_2, clobbering some
++    callee-save registers, has been fixed. This is an internal
++    function, with the bug manifesting itself as miscomputation in,
++    e.g., mpn_sqrtrem.
++
++  * The documentation now correctly says 'const' for input arguments.
++
++  SPEEDUPS
++  * None.
++
++  FEATURES
++  * None.
++
++  MISC
++  * None.
++
+ Changes between GMP version 5.1.1 and 5.1.2
+ 
+   BUGS FIXED
+diff -rNU3 dist.orig/acinclude.m4 dist.nbsd/acinclude.m4
+--- dist.orig/acinclude.m4	Mon May 20 14:59:56 2013
++++ dist.nbsd/acinclude.m4	Wed Feb 19 16:34:37 2014
+@@ -33,6 +33,9 @@
+ define(IA64_PATTERN,
+ [[ia64*-*-* | itanium-*-* | itanium2-*-*]])
+ 
++define(M5407_PATTERN,
++[[m5407-*-*]])
++
+ dnl  Need to be careful not to match m6811, m6812, m68hc11 and m68hc12, all
+ dnl  of which config.sub accepts.  (Though none of which are likely to work
+ dnl  with GMP.)
+diff -rNU3 dist.orig/config.guess dist.nbsd/config.guess
+--- dist.orig/config.guess	Mon May 20 14:59:56 2013
++++ dist.nbsd/config.guess	Wed Feb 19 16:34:37 2014
+@@ -945,8 +945,8 @@
  
  # -------------------------------------------------------------------------
  # Use an exact cpu, if possible
@@ -23,9 +118,142 @@ diff -r -x CVS -N -U 3 dist/config.guess dist.orig/config.guess
    echo "$exact_cpu$guess_rest"
  else
    echo "$guess_full"
-diff -r -x CVS -N -U 3 dist/configure.in dist.orig/configure.in
---- dist/configure.in	2011-05-08 11:49:29.000000000 +0200
-+++ dist.orig/configure.in	2011-06-20 07:54:31.000000000 +0200
+diff -rNU3 dist.orig/configfsf.sub dist.nbsd/configfsf.sub
+--- dist.orig/configfsf.sub	Mon May 20 14:59:56 2013
++++ dist.nbsd/configfsf.sub	Wed Feb 19 16:34:37 2014
+@@ -124,7 +124,7 @@
+ case $maybe_os in
+   nto-qnx* | linux-gnu* | linux-android* | linux-dietlibc | linux-newlib* | \
+   linux-musl* | linux-uclibc* | uclinux-uclibc* | uclinux-gnu* | kfreebsd*-gnu* | \
+-  knetbsd*-gnu* | netbsd*-gnu* | \
++  knetbsd*-gnu* | netbsd*-gnu* | netbsd*-*eabi* | \
+   kopensolaris*-gnu* | \
+   storm-chaos* | os2-emx* | rtmk-nova*)
+     os=-$maybe_os
+@@ -334,7 +334,8 @@
+ 		basic_machine=$basic_machine-unknown
+ 		os=-none
+ 		;;
+-	m88110 | m680[12346]0 | m683?2 | m68360 | m5200 | v70 | w65 | z8k)
++	m88110 | m680[12346]0 | m683?2 | m68360 | m5200 | m5407 \
++	| v70 | w65 | z8k)
+ 		;;
+ 	ms1)
+ 		basic_machine=mt-unknown
+@@ -390,6 +391,7 @@
+ 	| le32-* | le64-* \
+ 	| lm32-* \
+ 	| m32c-* | m32r-* | m32rle-* \
++	| m5200-* | m5407-* \
+ 	| m68000-* | m680[012346]0-* | m68360-* | m683?2-* | m68k-* \
+ 	| m88110-* | m88k-* | maxq-* | mcore-* | metag-* \
+ 	| microblaze-* | microblazeel-* \
+diff -rNU3 dist.orig/configure dist.nbsd/configure
+--- dist.orig/configure	Mon May 20 15:00:02 2013
++++ dist.nbsd/configure	Wed Feb 19 16:34:37 2014
+@@ -1,7 +1,7 @@
+ #! /bin/sh
+ # From configure.ac Revision.
+ # Guess values for system-dependent variables and create Makefiles.
+-# Generated by GNU Autoconf 2.69 for GNU MP 5.1.2.
++# Generated by GNU Autoconf 2.69 for GNU MP 5.1.3.
+ #
+ # Report bugs to <gmp-bugs@gmplib.org, see http://gmplib.org/manual/Reporting-Bugs.html>.
+ #
+@@ -613,8 +613,8 @@
+ # Identity of this package.
+ PACKAGE_NAME='GNU MP'
+ PACKAGE_TARNAME='gmp'
+-PACKAGE_VERSION='5.1.2'
+-PACKAGE_STRING='GNU MP 5.1.2'
++PACKAGE_VERSION='5.1.3'
++PACKAGE_STRING='GNU MP 5.1.3'
+ PACKAGE_BUGREPORT='gmp-bugs@gmplib.org, see http://gmplib.org/manual/Reporting-Bugs.html'
+ PACKAGE_URL='http://www.gnu.org/software/gmp/'
+ 
+@@ -1395,7 +1395,7 @@
+   # Omit some internal or obsolete options to make the list less imposing.
+   # This message is too long to be a string in the A/UX 3.1 sh.
+   cat <<_ACEOF
+-\`configure' configures GNU MP 5.1.2 to adapt to many kinds of systems.
++\`configure' configures GNU MP 5.1.3 to adapt to many kinds of systems.
+ 
+ Usage: $0 [OPTION]... [VAR=VALUE]...
+ 
+@@ -1465,7 +1465,7 @@
+ 
+ if test -n "$ac_init_help"; then
+   case $ac_init_help in
+-     short | recursive ) echo "Configuration of GNU MP 5.1.2:";;
++     short | recursive ) echo "Configuration of GNU MP 5.1.3:";;
+    esac
+   cat <<\_ACEOF
+ 
+@@ -1597,7 +1597,7 @@
+ test -n "$ac_init_help" && exit $ac_status
+ if $ac_init_version; then
+   cat <<\_ACEOF
+-GNU MP configure 5.1.2
++GNU MP configure 5.1.3
+ generated by GNU Autoconf 2.69
+ 
+ Copyright (C) 2012 Free Software Foundation, Inc.
+@@ -2639,7 +2639,7 @@
+ This file contains any messages produced by compilers while
+ running configure, to aid debugging if configure makes a mistake.
+ 
+-It was created by GNU MP $as_me 5.1.2, which was
++It was created by GNU MP $as_me 5.1.3, which was
+ generated by GNU Autoconf 2.69.  Invocation command line was
+ 
+   $ $0 $@
+@@ -3566,7 +3566,7 @@
+ 
+ # Define the identity of the package.
+  PACKAGE='gmp'
+- VERSION='5.1.2'
++ VERSION='5.1.3'
+ 
+ 
+ cat >>confdefs.h <<_ACEOF
+@@ -4377,6 +4377,16 @@
+     ;;
+ 
+ 
++  # Motorola Coldfire
++  #
++  m5407-*-*)
++
++    gcc_cflags="$gcc_cflags $fomit_frame_pointer"
++    gcc_cflags_optlist="arch"
++    gcc_cflags_arch="-m5407"
++  ;;
++
++
+   # Motorola 68k
+   #
+   m68k-*-* | m68[0-9][0-9][0-9]-*-*)
+@@ -30111,7 +30121,7 @@
+ # report actual input values of CONFIG_FILES etc. instead of their
+ # values after options handling.
+ ac_log="
+-This file was extended by GNU MP $as_me 5.1.2, which was
++This file was extended by GNU MP $as_me 5.1.3, which was
+ generated by GNU Autoconf 2.69.  Invocation command line was
+ 
+   CONFIG_FILES    = $CONFIG_FILES
+@@ -30183,7 +30193,7 @@
+ cat >>$CONFIG_STATUS <<_ACEOF || ac_write_fail=1
+ ac_cs_config="`$as_echo "$ac_configure_args" | sed 's/^ //; s/[\\""\`\$]/\\\\&/g'`"
+ ac_cs_version="\\
+-GNU MP config.status 5.1.2
++GNU MP config.status 5.1.3
+ configured by $0, generated by GNU Autoconf 2.69,
+   with options \\"\$ac_cs_config\\"
+ 
+diff -rNU3 dist.orig/configure.ac dist.nbsd/configure.ac
+--- dist.orig/configure.ac	Mon May 20 14:59:56 2013
++++ dist.nbsd/configure.ac	Wed Feb 19 16:34:37 2014
 @@ -25,7 +25,7 @@
  AC_COPYRIGHT(GMP_COPYRIGHT)
  AH_TOP(/*GMP_COPYRIGHT*/)
@@ -33,26 +261,2068 @@ diff -r -x CVS -N -U 3 dist/configure.in dist.orig/configure.in
 -AC_REVISION($Revision$)
 +AC_REVISION($Revision: 1.1.1.1 $)
  AC_PREREQ(2.59)
- AC_INIT(GNU MP, GMP_VERSION, gmp-bugs@gmplib.org, gmp)
+ AC_INIT(GNU MP, GMP_VERSION, [gmp-bugs@gmplib.org, see http://gmplib.org/manual/Reporting-Bugs.html], gmp)
  AC_CONFIG_SRCDIR(gmp-impl.h)
-diff -r -x CVS -N -U 3 dist/gmp-h.in dist.orig/gmp-h.in
---- dist/gmp-h.in	2011-05-08 11:49:29.000000000 +0200
-+++ dist.orig/gmp-h.in	2011-07-02 16:05:03.000000000 +0200
-@@ -1661,6 +1661,10 @@
+diff -rNU3 dist.orig/demos/calc/calc.c dist.nbsd/demos/calc/calc.c
+--- dist.orig/demos/calc/calc.c	Mon May 20 15:00:17 2013
++++ dist.nbsd/demos/calc/calc.c	Wed Feb 19 16:34:37 2014
+@@ -1,8 +1,8 @@
+-/* A Bison parser, made by GNU Bison 2.5.1.  */
++/* A Bison parser, made by GNU Bison 2.7.12-4996.  */
+ 
+ /* Bison implementation for Yacc-like parsers in C
+    
+-      Copyright (C) 1984, 1989-1990, 2000-2012 Free Software Foundation, Inc.
++      Copyright (C) 1984, 1989-1990, 2000-2013 Free Software Foundation, Inc.
+    
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+@@ -44,7 +44,7 @@
+ #define YYBISON 1
+ 
+ /* Bison version.  */
+-#define YYBISON_VERSION "2.5.1"
++#define YYBISON_VERSION "2.7.12-4996"
+ 
+ /* Skeleton name.  */
+ #define YYSKELETON_NAME "yacc.c"
+@@ -58,14 +58,11 @@
+ /* Pull parsers.  */
+ #define YYPULL 1
+ 
+-/* Using locations.  */
+-#define YYLSP_NEEDED 0
+ 
+ 
+ 
+ /* Copy the first part of user declarations.  */
+-
+-/* Line 268 of yacc.c  */
++/* Line 371 of yacc.c  */
+ #line 1 "calc.y"
+ 
+ /* A simple integer desk calculator using yacc and gmp.
+@@ -207,10 +204,9 @@
+     }
+ 
+ 
++/* Line 371 of yacc.c  */
++#line 209 "calc.c"
+ 
+-/* Line 268 of yacc.c  */
+-#line 213 "calc.c"
+-
+ # ifndef YY_NULL
+ #  if defined __cplusplus && 201103L <= __cplusplus
+ #   define YY_NULL nullptr
+@@ -219,11 +215,6 @@
+ #  endif
+ # endif
+ 
+-/* Enabling traces.  */
+-#ifndef YYDEBUG
+-# define YYDEBUG 0
+-#endif
+-
+ /* Enabling verbose error messages.  */
+ #ifdef YYERROR_VERBOSE
+ # undef YYERROR_VERBOSE
+@@ -232,12 +223,18 @@
+ # define YYERROR_VERBOSE 0
+ #endif
+ 
+-/* Enabling the token table.  */
+-#ifndef YYTOKEN_TABLE
+-# define YYTOKEN_TABLE 0
++/* In a future release of Bison, this section will be replaced
++   by #include "y.tab.h".  */
++#ifndef YY_YY_Y_TAB_H_INCLUDED
++# define YY_YY_Y_TAB_H_INCLUDED
++/* Enabling traces.  */
++#ifndef YYDEBUG
++# define YYDEBUG 0
+ #endif
++#if YYDEBUG
++extern int yydebug;
++#endif
+ 
+-
+ /* Tokens.  */
+ #ifndef YYTOKENTYPE
+ # define YYTOKENTYPE
+@@ -306,34 +303,47 @@
+ 
+ 
+ 
+-
+ #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
+ typedef union YYSTYPE
+ {
+-
+-/* Line 295 of yacc.c  */
++/* Line 387 of yacc.c  */
+ #line 142 "calc.y"
+ 
+   char  *str;
+   int   var;
+ 
+ 
+-
+-/* Line 295 of yacc.c  */
+-#line 324 "calc.c"
++/* Line 387 of yacc.c  */
++#line 318 "calc.c"
+ } YYSTYPE;
+ # define YYSTYPE_IS_TRIVIAL 1
+ # define yystype YYSTYPE /* obsolescent; will be withdrawn */
+ # define YYSTYPE_IS_DECLARED 1
+ #endif
+ 
++extern YYSTYPE yylval;
+ 
+-/* Copy the second part of user declarations.  */
++#ifdef YYPARSE_PARAM
++#if defined __STDC__ || defined __cplusplus
++int yyparse (void *YYPARSE_PARAM);
++#else
++int yyparse ();
++#endif
++#else /* ! YYPARSE_PARAM */
++#if defined __STDC__ || defined __cplusplus
++int yyparse (void);
++#else
++int yyparse ();
++#endif
++#endif /* ! YYPARSE_PARAM */
+ 
++#endif /* !YY_YY_Y_TAB_H_INCLUDED  */
+ 
+-/* Line 345 of yacc.c  */
+-#line 336 "calc.c"
++/* Copy the second part of user declarations.  */
+ 
++/* Line 390 of yacc.c  */
++#line 346 "calc.c"
++
+ #ifdef short
+ # undef short
+ #endif
+@@ -385,24 +395,33 @@
+ # if defined YYENABLE_NLS && YYENABLE_NLS
+ #  if ENABLE_NLS
+ #   include <libintl.h> /* INFRINGES ON USER NAME SPACE */
+-#   define YY_(msgid) dgettext ("bison-runtime", msgid)
++#   define YY_(Msgid) dgettext ("bison-runtime", Msgid)
+ #  endif
+ # endif
+ # ifndef YY_
+-#  define YY_(msgid) msgid
++#  define YY_(Msgid) Msgid
+ # endif
+ #endif
+ 
++#ifndef __attribute__
++/* This feature is available in gcc versions 2.5 and later.  */
++# if (! defined __GNUC__ || __GNUC__ < 2 \
++      || (__GNUC__ == 2 && __GNUC_MINOR__ < 5))
++#  define __attribute__(Spec) /* empty */
++# endif
++#endif
++
+ /* Suppress unused-variable warnings by "using" E.  */
+ #if ! defined lint || defined __GNUC__
+-# define YYUSE(e) ((void) (e))
++# define YYUSE(E) ((void) (E))
+ #else
+-# define YYUSE(e) /* empty */
++# define YYUSE(E) /* empty */
+ #endif
+ 
++
+ /* Identity function, used to suppress warnings about constant conditions.  */
+ #ifndef lint
+-# define YYID(n) (n)
++# define YYID(N) (N)
+ #else
+ #if (defined __STDC__ || defined __C99__FUNC__ \
+      || defined __cplusplus || defined _MSC_VER)
+@@ -651,7 +670,7 @@
+ };
+ #endif
+ 
+-#if YYDEBUG || YYERROR_VERBOSE || YYTOKEN_TABLE
++#if YYDEBUG || YYERROR_VERBOSE || 0
+ /* YYTNAME[SYMBOL-NUM] -- String name of the symbol SYMBOL-NUM.
+    First, the terminals, then, starting at YYNTOKENS, nonterminals.  */
+ static const char *const yytname[] =
+@@ -812,11 +831,11 @@
+        0,    59,    60
+ };
+ 
+-#define yypact_value_is_default(yystate) \
+-  ((yystate) == (-39))
++#define yypact_value_is_default(Yystate) \
++  (!!((Yystate) == (-39)))
+ 
+-#define yytable_value_is_error(yytable_value) \
+-  ((yytable_value) == (-8))
++#define yytable_value_is_error(Yytable_value) \
++  (!!((Yytable_value) == (-8)))
+ 
+ static const yytype_int8 yycheck[] =
+ {
+@@ -940,46 +959,18 @@
+     }								\
+ while (YYID (0))
+ 
+-
++/* Error token number */
+ #define YYTERROR	1
+ #define YYERRCODE	256
+ 
+ 
+-/* YYLLOC_DEFAULT -- Set CURRENT to span from RHS[1] to RHS[N].
+-   If N is 0, then set CURRENT to the empty location which ends
+-   the previous symbol: RHS[0] (always defined).  */
+-
+-#define YYRHSLOC(Rhs, K) ((Rhs)[K])
+-#ifndef YYLLOC_DEFAULT
+-# define YYLLOC_DEFAULT(Current, Rhs, N)				\
+-    do									\
+-      if (YYID (N))                                                    \
+-	{								\
+-	  (Current).first_line   = YYRHSLOC (Rhs, 1).first_line;	\
+-	  (Current).first_column = YYRHSLOC (Rhs, 1).first_column;	\
+-	  (Current).last_line    = YYRHSLOC (Rhs, N).last_line;		\
+-	  (Current).last_column  = YYRHSLOC (Rhs, N).last_column;	\
+-	}								\
+-      else								\
+-	{								\
+-	  (Current).first_line   = (Current).last_line   =		\
+-	    YYRHSLOC (Rhs, 0).last_line;				\
+-	  (Current).first_column = (Current).last_column =		\
+-	    YYRHSLOC (Rhs, 0).last_column;				\
+-	}								\
+-    while (YYID (0))
+-#endif
+-
+-
+ /* This macro is provided for backward compatibility. */
+-
+ #ifndef YY_LOCATION_PRINT
+ # define YY_LOCATION_PRINT(File, Loc) ((void) 0)
+ #endif
+ 
+ 
+ /* YYLEX -- calling `yylex' with the right arguments.  */
+-
+ #ifdef YYLEX_PARAM
+ # define YYLEX yylex (YYLEX_PARAM)
+ #else
+@@ -1039,11 +1030,7 @@
+ # else
+   YYUSE (yyoutput);
+ # endif
+-  switch (yytype)
+-    {
+-      default:
+-	break;
+-    }
++  YYUSE (yytype);
+ }
+ 
+ 
+@@ -1284,7 +1271,6 @@
+ {
+   YYSIZE_T yysize0 = yytnamerr (YY_NULL, yytname[yytoken]);
+   YYSIZE_T yysize = yysize0;
+-  YYSIZE_T yysize1;
+   enum { YYERROR_VERBOSE_ARGS_MAXIMUM = 5 };
+   /* Internationalized format string. */
+   const char *yyformat = YY_NULL;
+@@ -1347,11 +1333,13 @@
+                     break;
+                   }
+                 yyarg[yycount++] = yytname[yyx];
+-                yysize1 = yysize + yytnamerr (YY_NULL, yytname[yyx]);
+-                if (! (yysize <= yysize1
+-                       && yysize1 <= YYSTACK_ALLOC_MAXIMUM))
+-                  return 2;
+-                yysize = yysize1;
++                {
++                  YYSIZE_T yysize1 = yysize + yytnamerr (YY_NULL, yytname[yyx]);
++                  if (! (yysize <= yysize1
++                         && yysize1 <= YYSTACK_ALLOC_MAXIMUM))
++                    return 2;
++                  yysize = yysize1;
++                }
+               }
+         }
+     }
+@@ -1371,10 +1359,12 @@
+ # undef YYCASE_
+     }
+ 
+-  yysize1 = yysize + yystrlen (yyformat);
+-  if (! (yysize <= yysize1 && yysize1 <= YYSTACK_ALLOC_MAXIMUM))
+-    return 2;
+-  yysize = yysize1;
++  {
++    YYSIZE_T yysize1 = yysize + yystrlen (yyformat);
++    if (! (yysize <= yysize1 && yysize1 <= YYSTACK_ALLOC_MAXIMUM))
++      return 2;
++    yysize = yysize1;
++  }
+ 
+   if (*yymsg_alloc < yysize)
+     {
+@@ -1430,36 +1420,26 @@
+     yymsg = "Deleting";
+   YY_SYMBOL_PRINT (yymsg, yytype, yyvaluep, yylocationp);
+ 
+-  switch (yytype)
+-    {
+-
+-      default:
+-	break;
+-    }
++  YYUSE (yytype);
+ }
+ 
+ 
+-/* Prevent warnings from -Wmissing-prototypes.  */
+-#ifdef YYPARSE_PARAM
+-#if defined __STDC__ || defined __cplusplus
+-int yyparse (void *YYPARSE_PARAM);
+-#else
+-int yyparse ();
+-#endif
+-#else /* ! YYPARSE_PARAM */
+-#if defined __STDC__ || defined __cplusplus
+-int yyparse (void);
+-#else
+-int yyparse ();
+-#endif
+-#endif /* ! YYPARSE_PARAM */
+ 
+ 
+ /* The lookahead symbol.  */
+ int yychar;
+ 
++
++#ifndef YY_IGNORE_MAYBE_UNINITIALIZED_BEGIN
++# define YY_IGNORE_MAYBE_UNINITIALIZED_BEGIN
++# define YY_IGNORE_MAYBE_UNINITIALIZED_END
++#endif
++#ifndef YY_INITIAL_VALUE
++# define YY_INITIAL_VALUE(Value) /* Nothing. */
++#endif
++
+ /* The semantic value of the lookahead symbol.  */
+-YYSTYPE yylval;
++YYSTYPE yylval YY_INITIAL_VALUE(yyval_default);
+ 
+ /* Number of syntax errors so far.  */
+ int yynerrs;
+@@ -1517,7 +1497,7 @@
+   int yyn;
+   int yyresult;
+   /* Lookahead token as an internal (translated) token number.  */
+-  int yytoken;
++  int yytoken = 0;
+   /* The variables used to return semantic value and location from the
+      action routines.  */
+   YYSTYPE yyval;
+@@ -1535,9 +1515,8 @@
+      Keep to zero when no symbol should be popped.  */
+   int yylen = 0;
+ 
+-  yytoken = 0;
+-  yyss = yyssa;
+-  yyvs = yyvsa;
++  yyssp = yyss = yyssa;
++  yyvsp = yyvs = yyvsa;
+   yystacksize = YYINITDEPTH;
+ 
+   YYDPRINTF ((stderr, "Starting parse\n"));
+@@ -1546,14 +1525,6 @@
+   yyerrstatus = 0;
+   yynerrs = 0;
+   yychar = YYEMPTY; /* Cause a token to be read.  */
+-
+-  /* Initialize stack pointers.
+-     Waste one element of value and location stack
+-     so that they stay on the same level as the state stack.
+-     The wasted elements are never initialized.  */
+-  yyssp = yyss;
+-  yyvsp = yyvs;
+-
+   goto yysetstate;
+ 
+ /*------------------------------------------------------------.
+@@ -1694,7 +1665,9 @@
+   yychar = YYEMPTY;
+ 
+   yystate = yyn;
++  YY_IGNORE_MAYBE_UNINITIALIZED_BEGIN
+   *++yyvsp = yylval;
++  YY_IGNORE_MAYBE_UNINITIALIZED_END
+ 
+   goto yynewstate;
+ 
+@@ -1731,15 +1704,13 @@
+   switch (yyn)
+     {
+         case 6:
+-
+-/* Line 1810 of yacc.c  */
++/* Line 1787 of yacc.c  */
+ #line 173 "calc.y"
+     { sp = stack[0]; yyerrok; }
+     break;
+ 
+   case 8:
+-
+-/* Line 1810 of yacc.c  */
++/* Line 1787 of yacc.c  */
+ #line 177 "calc.y"
+     {
+       mpz_out_str (stdout, obase, sp); putchar ('\n');
+@@ -1749,8 +1720,7 @@
+     break;
+ 
+   case 9:
+-
+-/* Line 1810 of yacc.c  */
++/* Line 1787 of yacc.c  */
+ #line 182 "calc.y"
+     {
+       CHECK_VARIABLE ((yyvsp[(1) - (3)].var));
+@@ -1761,234 +1731,202 @@
+     break;
+ 
+   case 10:
+-
+-/* Line 1810 of yacc.c  */
++/* Line 1787 of yacc.c  */
+ #line 188 "calc.y"
+     { calc_help (); }
+     break;
+ 
+   case 11:
+-
+-/* Line 1810 of yacc.c  */
++/* Line 1787 of yacc.c  */
+ #line 189 "calc.y"
+     { ibase = 16; obase = -16; }
+     break;
+ 
+   case 12:
+-
+-/* Line 1810 of yacc.c  */
++/* Line 1787 of yacc.c  */
+ #line 190 "calc.y"
+     { ibase = 0;  obase = 10; }
+     break;
+ 
+   case 13:
+-
+-/* Line 1810 of yacc.c  */
++/* Line 1787 of yacc.c  */
+ #line 191 "calc.y"
+     { exit (0); }
+     break;
+ 
+   case 15:
+-
+-/* Line 1810 of yacc.c  */
++/* Line 1787 of yacc.c  */
+ #line 198 "calc.y"
+     { sp--; mpz_add    (sp, sp, sp+1); }
+     break;
+ 
+   case 16:
+-
+-/* Line 1810 of yacc.c  */
++/* Line 1787 of yacc.c  */
+ #line 199 "calc.y"
+     { sp--; mpz_sub    (sp, sp, sp+1); }
+     break;
+ 
+   case 17:
+-
+-/* Line 1810 of yacc.c  */
++/* Line 1787 of yacc.c  */
+ #line 200 "calc.y"
+     { sp--; mpz_mul    (sp, sp, sp+1); }
+     break;
+ 
+   case 18:
+-
+-/* Line 1810 of yacc.c  */
++/* Line 1787 of yacc.c  */
+ #line 201 "calc.y"
+     { sp--; mpz_fdiv_q (sp, sp, sp+1); }
+     break;
+ 
+   case 19:
+-
+-/* Line 1810 of yacc.c  */
++/* Line 1787 of yacc.c  */
+ #line 202 "calc.y"
+     { sp--; mpz_fdiv_r (sp, sp, sp+1); }
+     break;
+ 
+   case 20:
+-
+-/* Line 1810 of yacc.c  */
++/* Line 1787 of yacc.c  */
+ #line 203 "calc.y"
+     { CHECK_UI ("Exponent", sp);
+                     sp--; mpz_pow_ui (sp, sp, mpz_get_ui (sp+1)); }
+     break;
+ 
+   case 21:
+-
+-/* Line 1810 of yacc.c  */
++/* Line 1787 of yacc.c  */
+ #line 205 "calc.y"
+     { CHECK_UI ("Shift count", sp);
+                     sp--; mpz_mul_2exp (sp, sp, mpz_get_ui (sp+1)); }
+     break;
+ 
+   case 22:
+-
+-/* Line 1810 of yacc.c  */
++/* Line 1787 of yacc.c  */
+ #line 207 "calc.y"
+     { CHECK_UI ("Shift count", sp);
+                     sp--; mpz_fdiv_q_2exp (sp, sp, mpz_get_ui (sp+1)); }
+     break;
+ 
+   case 23:
+-
+-/* Line 1810 of yacc.c  */
++/* Line 1787 of yacc.c  */
+ #line 209 "calc.y"
+     { CHECK_UI ("Factorial", sp);
+                     mpz_fac_ui (sp, mpz_get_ui (sp)); }
+     break;
+ 
+   case 24:
+-
+-/* Line 1810 of yacc.c  */
++/* Line 1787 of yacc.c  */
+ #line 211 "calc.y"
+     { mpz_neg (sp, sp); }
+     break;
+ 
+   case 25:
+-
+-/* Line 1810 of yacc.c  */
++/* Line 1787 of yacc.c  */
+ #line 213 "calc.y"
+     { sp--; mpz_set_ui (sp, mpz_cmp (sp, sp+1) <  0); }
+     break;
+ 
+   case 26:
+-
+-/* Line 1810 of yacc.c  */
++/* Line 1787 of yacc.c  */
+ #line 214 "calc.y"
+     { sp--; mpz_set_ui (sp, mpz_cmp (sp, sp+1) <= 0); }
+     break;
+ 
+   case 27:
+-
+-/* Line 1810 of yacc.c  */
++/* Line 1787 of yacc.c  */
+ #line 215 "calc.y"
+     { sp--; mpz_set_ui (sp, mpz_cmp (sp, sp+1) == 0); }
+     break;
+ 
+   case 28:
+-
+-/* Line 1810 of yacc.c  */
++/* Line 1787 of yacc.c  */
+ #line 216 "calc.y"
+     { sp--; mpz_set_ui (sp, mpz_cmp (sp, sp+1) != 0); }
+     break;
+ 
+   case 29:
+-
+-/* Line 1810 of yacc.c  */
++/* Line 1787 of yacc.c  */
+ #line 217 "calc.y"
+     { sp--; mpz_set_ui (sp, mpz_cmp (sp, sp+1) >= 0); }
+     break;
+ 
+   case 30:
+-
+-/* Line 1810 of yacc.c  */
++/* Line 1787 of yacc.c  */
+ #line 218 "calc.y"
+     { sp--; mpz_set_ui (sp, mpz_cmp (sp, sp+1) >  0); }
+     break;
+ 
+   case 31:
+-
+-/* Line 1810 of yacc.c  */
++/* Line 1787 of yacc.c  */
+ #line 220 "calc.y"
+     { sp--; mpz_set_ui (sp, mpz_sgn (sp) && mpz_sgn (sp+1)); }
+     break;
+ 
+   case 32:
+-
+-/* Line 1810 of yacc.c  */
++/* Line 1787 of yacc.c  */
+ #line 221 "calc.y"
+     { sp--; mpz_set_ui (sp, mpz_sgn (sp) || mpz_sgn (sp+1)); }
+     break;
+ 
+   case 33:
+-
+-/* Line 1810 of yacc.c  */
++/* Line 1787 of yacc.c  */
+ #line 223 "calc.y"
+     { mpz_abs (sp, sp); }
+     break;
+ 
+   case 34:
+-
+-/* Line 1810 of yacc.c  */
++/* Line 1787 of yacc.c  */
+ #line 224 "calc.y"
+     { sp--; CHECK_UI ("Binomial base", sp+1);
+                                    mpz_bin_ui (sp, sp, mpz_get_ui (sp+1)); }
+     break;
+ 
+   case 35:
+-
+-/* Line 1810 of yacc.c  */
++/* Line 1787 of yacc.c  */
+ #line 226 "calc.y"
+     { CHECK_UI ("Fibonacci", sp);
+                                    mpz_fib_ui (sp, mpz_get_ui (sp)); }
+     break;
+ 
+   case 37:
+-
+-/* Line 1810 of yacc.c  */
++/* Line 1787 of yacc.c  */
+ #line 229 "calc.y"
+     { sp--; mpz_set_si (sp,
+                                          mpz_kronecker (sp, sp+1)); }
+     break;
+ 
+   case 39:
+-
+-/* Line 1810 of yacc.c  */
++/* Line 1787 of yacc.c  */
+ #line 232 "calc.y"
+     { CHECK_UI ("Lucas number", sp);
+                                    mpz_lucnum_ui (sp, mpz_get_ui (sp)); }
+     break;
+ 
+   case 40:
+-
+-/* Line 1810 of yacc.c  */
++/* Line 1787 of yacc.c  */
+ #line 234 "calc.y"
+     { mpz_nextprime (sp, sp); }
+     break;
+ 
+   case 41:
+-
+-/* Line 1810 of yacc.c  */
++/* Line 1787 of yacc.c  */
+ #line 235 "calc.y"
+     { sp -= 2; mpz_powm (sp, sp, sp+1, sp+2); }
+     break;
+ 
+   case 42:
+-
+-/* Line 1810 of yacc.c  */
++/* Line 1787 of yacc.c  */
+ #line 236 "calc.y"
+     { sp--; CHECK_UI ("Nth-root", sp+1);
+                                    mpz_root (sp, sp, mpz_get_ui (sp+1)); }
+     break;
+ 
+   case 43:
+-
+-/* Line 1810 of yacc.c  */
++/* Line 1787 of yacc.c  */
+ #line 238 "calc.y"
+     { mpz_sqrt (sp, sp); }
+     break;
+ 
+   case 44:
+-
+-/* Line 1810 of yacc.c  */
++/* Line 1787 of yacc.c  */
+ #line 240 "calc.y"
+     {
+         sp++;
+@@ -1999,8 +1937,7 @@
+     break;
+ 
+   case 45:
+-
+-/* Line 1810 of yacc.c  */
++/* Line 1787 of yacc.c  */
+ #line 246 "calc.y"
+     {
+         sp++;
+@@ -2014,23 +1951,20 @@
+     break;
+ 
+   case 47:
+-
+-/* Line 1810 of yacc.c  */
++/* Line 1787 of yacc.c  */
+ #line 258 "calc.y"
+     { sp--; mpz_gcd (sp, sp, sp+1); }
+     break;
+ 
+   case 49:
+-
+-/* Line 1810 of yacc.c  */
++/* Line 1787 of yacc.c  */
+ #line 262 "calc.y"
+     { sp--; mpz_lcm (sp, sp, sp+1); }
+     break;
+ 
+ 
+-
+-/* Line 1810 of yacc.c  */
+-#line 2034 "calc.c"
++/* Line 1787 of yacc.c  */
++#line 1968 "calc.c"
+       default: break;
+     }
+   /* User semantic actions sometimes alter yychar, and that requires
+@@ -2193,7 +2127,9 @@
+       YY_STACK_PRINT (yyss, yyssp);
+     }
+ 
++  YY_IGNORE_MAYBE_UNINITIALIZED_BEGIN
+   *++yyvsp = yylval;
++  YY_IGNORE_MAYBE_UNINITIALIZED_END
+ 
+ 
+   /* Shift the error token.  */
+@@ -2259,8 +2195,7 @@
+ }
+ 
+ 
+-
+-/* Line 2071 of yacc.c  */
++/* Line 2050 of yacc.c  */
+ #line 264 "calc.y"
+ 
+ 
+@@ -2317,4 +2252,3 @@
+ 
+   return yyparse ();
+ }
+-
+diff -rNU3 dist.orig/demos/calc/calc.h dist.nbsd/demos/calc/calc.h
+--- dist.orig/demos/calc/calc.h	Mon May 20 15:00:17 2013
++++ dist.nbsd/demos/calc/calc.h	Wed Feb 19 16:34:37 2014
+@@ -1,8 +1,8 @@
+-/* A Bison parser, made by GNU Bison 2.5.1.  */
++/* A Bison parser, made by GNU Bison 2.7.12-4996.  */
+ 
+ /* Bison interface for Yacc-like parsers in C
+    
+-      Copyright (C) 1984, 1989-1990, 2000-2012 Free Software Foundation, Inc.
++      Copyright (C) 1984, 1989-1990, 2000-2013 Free Software Foundation, Inc.
+    
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+@@ -30,6 +30,15 @@
+    This special exception was added by the Free Software Foundation in
+    version 2.2 of Bison.  */
+ 
++#ifndef YY_YY_CALC_H_INCLUDED
++# define YY_YY_CALC_H_INCLUDED
++/* Enabling traces.  */
++#ifndef YYDEBUG
++# define YYDEBUG 0
++#endif
++#if YYDEBUG
++extern int yydebug;
++#endif
+ 
+ /* Tokens.  */
+ #ifndef YYTOKENTYPE
+@@ -99,21 +108,18 @@
+ 
+ 
+ 
+-
+ #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
+ typedef union YYSTYPE
+ {
+-
+-/* Line 2072 of yacc.c  */
++/* Line 2053 of yacc.c  */
+ #line 142 "calc.y"
+ 
+   char  *str;
+   int   var;
+ 
+ 
+-
+-/* Line 2072 of yacc.c  */
+-#line 117 "calc.h"
++/* Line 2053 of yacc.c  */
++#line 123 "calc.h"
+ } YYSTYPE;
+ # define YYSTYPE_IS_TRIVIAL 1
+ # define yystype YYSTYPE /* obsolescent; will be withdrawn */
+@@ -122,4 +128,18 @@
+ 
+ extern YYSTYPE yylval;
+ 
++#ifdef YYPARSE_PARAM
++#if defined __STDC__ || defined __cplusplus
++int yyparse (void *YYPARSE_PARAM);
++#else
++int yyparse ();
++#endif
++#else /* ! YYPARSE_PARAM */
++#if defined __STDC__ || defined __cplusplus
++int yyparse (void);
++#else
++int yyparse ();
++#endif
++#endif /* ! YYPARSE_PARAM */
+ 
++#endif /* !YY_YY_CALC_H_INCLUDED  */
+Binary files dist.orig/doc/gmp.info and dist.nbsd/doc/gmp.info differ
+Binary files dist.orig/doc/gmp.info-1 and dist.nbsd/doc/gmp.info-1 differ
+Binary files dist.orig/doc/gmp.info-2 and dist.nbsd/doc/gmp.info-2 differ
+diff -rNU3 dist.orig/doc/gmp.texi dist.nbsd/doc/gmp.texi
+--- dist.orig/doc/gmp.texi	Mon May 20 14:59:56 2013
++++ dist.nbsd/doc/gmp.texi	Wed Feb 19 16:34:37 2014
+@@ -713,7 +713,7 @@
+ other members, older or newer.  The best idea is always to build GMP for the
+ exact machine type you intend to run it on.
+ 
+-The following CPUs have specific support.  See @file{configure.in} for details
++The following CPUs have specific support.  See @file{configure.ac} for details
+ of what code and compiler options they select.
+ 
+ @itemize @bullet
+@@ -2647,19 +2647,20 @@
+ 
+ @item Valgrind
+ @cindex Valgrind
+-The valgrind program (@uref{http://valgrind.org/}) is a memory
+-checker for x86s.  It translates and emulates machine instructions to do
++Valgrind (@uref{http://valgrind.org/}) is a memory checker for x86, ARM, MIPS,
++PowerPC, and S/390.  It translates and emulates machine instructions to do
+ strong checks for uninitialized data (at the level of individual bits), memory
+ accesses through bad pointers, and memory leaks.
+ 
+-Recent versions of Valgrind are getting support for MMX and SSE/SSE2
+-instructions, for past versions GMP will need to be configured not to use
+-those, i.e.@: for an x86 without them (for instance plain @samp{i486}).
++Valgrind does not always support every possible instruction, in particular
++ones recently added to an ISA.  Valgrind might therefore be incompatible with
++a recent GMP or even a less recent GMP which is compiled using a recent GCC.
+ 
+ GMP's assembly code sometimes promotes a read of the limbs to some larger size,
+ for efficiency.  GMP will do this even at the start and end of a multilimb
+-operand, using naturaly aligned operations on the larger type.  This may lead
+-to benign reads outside of allocated areas, triggering complants from Valgrind.
++operand, using naturally aligned operations on the larger type.  This may lead
++to benign reads outside of allocated areas, triggering complaints from
++Valgrind.  Valgrind's option @samp{--partial-loads-ok=yes} should help.
+ 
+ @item Other Problems
+ Any suspected bug in GMP itself should be isolated to make sure it's not an
+@@ -2882,9 +2883,12 @@
+ Please do not send core dumps, executables or @command{strace}s.
+ 
+ @item
+-The configuration options you used when building GMP, if any.
++The @samp{configure} options you used when building GMP, if any.
+ 
+ @item
++The output from @samp{configure}, as printed to stdout, with any options used.
++
++@item
+ The name of the compiler and its version.  For @command{gcc}, get the version
+ with @samp{gcc -v}, otherwise perhaps @samp{what `which cc`}, or similar.
+ 
+@@ -3030,19 +3034,19 @@
+ These functions assign new values to already initialized integers
+ (@pxref{Initializing Integers}).
+ 
+-@deftypefun void mpz_set (mpz_t @var{rop}, mpz_t @var{op})
++@deftypefun void mpz_set (mpz_t @var{rop}, const mpz_t @var{op})
+ @deftypefunx void mpz_set_ui (mpz_t @var{rop}, unsigned long int @var{op})
+ @deftypefunx void mpz_set_si (mpz_t @var{rop}, signed long int @var{op})
+ @deftypefunx void mpz_set_d (mpz_t @var{rop}, double @var{op})
+-@deftypefunx void mpz_set_q (mpz_t @var{rop}, mpq_t @var{op})
+-@deftypefunx void mpz_set_f (mpz_t @var{rop}, mpf_t @var{op})
++@deftypefunx void mpz_set_q (mpz_t @var{rop}, const mpq_t @var{op})
++@deftypefunx void mpz_set_f (mpz_t @var{rop}, const mpf_t @var{op})
+ Set the value of @var{rop} from @var{op}.
+ 
+ @code{mpz_set_d}, @code{mpz_set_q} and @code{mpz_set_f} truncate @var{op} to
+ make it an integer.
+ @end deftypefun
+ 
+-@deftypefun int mpz_set_str (mpz_t @var{rop}, char *@var{str}, int @var{base})
++@deftypefun int mpz_set_str (mpz_t @var{rop}, const char *@var{str}, int @var{base})
+ Set the value of @var{rop} from @var{str}, a null-terminated C string in base
+ @var{base}.  White space is allowed in the string, and is simply ignored.
+ 
+@@ -3101,7 +3105,7 @@
+ integer functions.  Don't use an initialize-and-set function on a variable
+ already initialized!
+ 
+-@deftypefun void mpz_init_set (mpz_t @var{rop}, mpz_t @var{op})
++@deftypefun void mpz_init_set (mpz_t @var{rop}, const mpz_t @var{op})
+ @deftypefunx void mpz_init_set_ui (mpz_t @var{rop}, unsigned long int @var{op})
+ @deftypefunx void mpz_init_set_si (mpz_t @var{rop}, signed long int @var{op})
+ @deftypefunx void mpz_init_set_d (mpz_t @var{rop}, double @var{op})
+@@ -3109,7 +3113,7 @@
+ @var{op}.
+ @end deftypefun
+ 
+-@deftypefun int mpz_init_set_str (mpz_t @var{rop}, char *@var{str}, int @var{base})
++@deftypefun int mpz_init_set_str (mpz_t @var{rop}, const char *@var{str}, int @var{base})
+ Initialize @var{rop} and set its value like @code{mpz_set_str} (see its
+ documentation above for details).
+ 
+@@ -3129,7 +3133,7 @@
+ types.  Functions for converting @emph{to} GMP integers are described in
+ @ref{Assigning Integers} and @ref{I/O of Integers}.
+ 
+-@deftypefun {unsigned long int} mpz_get_ui (mpz_t @var{op})
++@deftypefun {unsigned long int} mpz_get_ui (const mpz_t @var{op})
+ Return the value of @var{op} as an @code{unsigned long}.
+ 
+ If @var{op} is too big to fit an @code{unsigned long} then just the least
+@@ -3137,7 +3141,7 @@
+ only the absolute value is used.
+ @end deftypefun
+ 
+-@deftypefun {signed long int} mpz_get_si (mpz_t @var{op})
++@deftypefun {signed long int} mpz_get_si (const mpz_t @var{op})
+ If @var{op} fits into a @code{signed long int} return the value of @var{op}.
+ Otherwise return the least significant part of @var{op}, with the same sign
+ as @var{op}.
+@@ -3147,7 +3151,7 @@
+ the function @code{mpz_fits_slong_p}.
+ @end deftypefun
+ 
+-@deftypefun double mpz_get_d (mpz_t @var{op})
++@deftypefun double mpz_get_d (const mpz_t @var{op})
+ Convert @var{op} to a @code{double}, truncating if necessary (i.e.@: rounding
+ towards zero).
+ 
+@@ -3156,7 +3160,7 @@
+ may or may not occur.
+ @end deftypefun
+ 
+-@deftypefun double mpz_get_d_2exp (signed long int *@var{exp}, mpz_t @var{op})
++@deftypefun double mpz_get_d_2exp (signed long int *@var{exp}, const mpz_t @var{op})
+ Convert @var{op} to a @code{double}, truncating if necessary (i.e.@: rounding
+ towards zero), and returning the exponent separately.
+ 
+@@ -3170,7 +3174,7 @@
+ Functions,,, libc, The GNU C Library Reference Manual}).
+ @end deftypefun
+ 
+-@deftypefun {char *} mpz_get_str (char *@var{str}, int @var{base}, mpz_t @var{op})
++@deftypefun {char *} mpz_get_str (char *@var{str}, int @var{base}, const mpz_t @var{op})
+ Convert @var{op} to a string of digits in base @var{base}.  The base argument
+ may vary from 2 to 62 or from @minus{}2 to @minus{}36.
+ 
+@@ -3201,45 +3205,45 @@
+ @cindex Integer arithmetic functions
+ @cindex Arithmetic functions
+ 
+-@deftypefun void mpz_add (mpz_t @var{rop}, mpz_t @var{op1}, mpz_t @var{op2})
+-@deftypefunx void mpz_add_ui (mpz_t @var{rop}, mpz_t @var{op1}, unsigned long int @var{op2})
++@deftypefun void mpz_add (mpz_t @var{rop}, const mpz_t @var{op1}, const mpz_t @var{op2})
++@deftypefunx void mpz_add_ui (mpz_t @var{rop}, const mpz_t @var{op1}, unsigned long int @var{op2})
+ Set @var{rop} to @math{@var{op1} + @var{op2}}.
+ @end deftypefun
+ 
+-@deftypefun void mpz_sub (mpz_t @var{rop}, mpz_t @var{op1}, mpz_t @var{op2})
+-@deftypefunx void mpz_sub_ui (mpz_t @var{rop}, mpz_t @var{op1}, unsigned long int @var{op2})
+-@deftypefunx void mpz_ui_sub (mpz_t @var{rop}, unsigned long int @var{op1}, mpz_t @var{op2})
++@deftypefun void mpz_sub (mpz_t @var{rop}, const mpz_t @var{op1}, const mpz_t @var{op2})
++@deftypefunx void mpz_sub_ui (mpz_t @var{rop}, const mpz_t @var{op1}, unsigned long int @var{op2})
++@deftypefunx void mpz_ui_sub (mpz_t @var{rop}, unsigned long int @var{op1}, const mpz_t @var{op2})
+ Set @var{rop} to @var{op1} @minus{} @var{op2}.
+ @end deftypefun
+ 
+-@deftypefun void mpz_mul (mpz_t @var{rop}, mpz_t @var{op1}, mpz_t @var{op2})
+-@deftypefunx void mpz_mul_si (mpz_t @var{rop}, mpz_t @var{op1}, long int @var{op2})
+-@deftypefunx void mpz_mul_ui (mpz_t @var{rop}, mpz_t @var{op1}, unsigned long int @var{op2})
++@deftypefun void mpz_mul (mpz_t @var{rop}, const mpz_t @var{op1}, const mpz_t @var{op2})
++@deftypefunx void mpz_mul_si (mpz_t @var{rop}, const mpz_t @var{op1}, long int @var{op2})
++@deftypefunx void mpz_mul_ui (mpz_t @var{rop}, const mpz_t @var{op1}, unsigned long int @var{op2})
+ Set @var{rop} to @math{@var{op1} @GMPtimes{} @var{op2}}.
+ @end deftypefun
+ 
+-@deftypefun void mpz_addmul (mpz_t @var{rop}, mpz_t @var{op1}, mpz_t @var{op2})
+-@deftypefunx void mpz_addmul_ui (mpz_t @var{rop}, mpz_t @var{op1}, unsigned long int @var{op2})
++@deftypefun void mpz_addmul (mpz_t @var{rop}, const mpz_t @var{op1}, const mpz_t @var{op2})
++@deftypefunx void mpz_addmul_ui (mpz_t @var{rop}, const mpz_t @var{op1}, unsigned long int @var{op2})
+ Set @var{rop} to @math{@var{rop} + @var{op1} @GMPtimes{} @var{op2}}.
+ @end deftypefun
+ 
+-@deftypefun void mpz_submul (mpz_t @var{rop}, mpz_t @var{op1}, mpz_t @var{op2})
+-@deftypefunx void mpz_submul_ui (mpz_t @var{rop}, mpz_t @var{op1}, unsigned long int @var{op2})
++@deftypefun void mpz_submul (mpz_t @var{rop}, const mpz_t @var{op1}, const mpz_t @var{op2})
++@deftypefunx void mpz_submul_ui (mpz_t @var{rop}, const mpz_t @var{op1}, unsigned long int @var{op2})
+ Set @var{rop} to @math{@var{rop} - @var{op1} @GMPtimes{} @var{op2}}.
+ @end deftypefun
+ 
+-@deftypefun void mpz_mul_2exp (mpz_t @var{rop}, mpz_t @var{op1}, mp_bitcnt_t @var{op2})
++@deftypefun void mpz_mul_2exp (mpz_t @var{rop}, const mpz_t @var{op1}, mp_bitcnt_t @var{op2})
+ @cindex Bit shift left
+ Set @var{rop} to @m{@var{op1} \times 2^{op2}, @var{op1} times 2 raised to
+ @var{op2}}.  This operation can also be defined as a left shift by @var{op2}
+ bits.
+ @end deftypefun
+ 
+-@deftypefun void mpz_neg (mpz_t @var{rop}, mpz_t @var{op})
++@deftypefun void mpz_neg (mpz_t @var{rop}, const mpz_t @var{op})
+ Set @var{rop} to @minus{}@var{op}.
+ @end deftypefun
+ 
+-@deftypefun void mpz_abs (mpz_t @var{rop}, mpz_t @var{op})
++@deftypefun void mpz_abs (mpz_t @var{rop}, const mpz_t @var{op})
+ Set @var{rop} to the absolute value of @var{op}.
+ @end deftypefun
+ 
+@@ -3260,43 +3264,43 @@
+ @c  between each, and seem to let tex do a better job of page breaks than an
+ @c  @sp 1 in the middle of one big set.
+ 
+-@deftypefun void mpz_cdiv_q (mpz_t @var{q}, mpz_t @var{n}, mpz_t @var{d})
+-@deftypefunx void mpz_cdiv_r (mpz_t @var{r}, mpz_t @var{n}, mpz_t @var{d})
+-@deftypefunx void mpz_cdiv_qr (mpz_t @var{q}, mpz_t @var{r}, mpz_t @var{n}, mpz_t @var{d})
++@deftypefun void mpz_cdiv_q (mpz_t @var{q}, const mpz_t @var{n}, const mpz_t @var{d})
++@deftypefunx void mpz_cdiv_r (mpz_t @var{r}, const mpz_t @var{n}, const mpz_t @var{d})
++@deftypefunx void mpz_cdiv_qr (mpz_t @var{q}, mpz_t @var{r}, const mpz_t @var{n}, const mpz_t @var{d})
+ @maybepagebreak
+-@deftypefunx {unsigned long int} mpz_cdiv_q_ui (mpz_t @var{q}, mpz_t @var{n}, @w{unsigned long int @var{d}})
+-@deftypefunx {unsigned long int} mpz_cdiv_r_ui (mpz_t @var{r}, mpz_t @var{n}, @w{unsigned long int @var{d}})
+-@deftypefunx {unsigned long int} mpz_cdiv_qr_ui (mpz_t @var{q}, mpz_t @var{r}, @w{mpz_t @var{n}}, @w{unsigned long int @var{d}})
+-@deftypefunx {unsigned long int} mpz_cdiv_ui (mpz_t @var{n}, @w{unsigned long int @var{d}})
++@deftypefunx {unsigned long int} mpz_cdiv_q_ui (mpz_t @var{q}, const mpz_t @var{n}, @w{unsigned long int @var{d}})
++@deftypefunx {unsigned long int} mpz_cdiv_r_ui (mpz_t @var{r}, const mpz_t @var{n}, @w{unsigned long int @var{d}})
++@deftypefunx {unsigned long int} mpz_cdiv_qr_ui (mpz_t @var{q}, mpz_t @var{r}, @w{const mpz_t @var{n}}, @w{unsigned long int @var{d}})
++@deftypefunx {unsigned long int} mpz_cdiv_ui (const mpz_t @var{n}, @w{unsigned long int @var{d}})
+ @maybepagebreak
+-@deftypefunx void mpz_cdiv_q_2exp (mpz_t @var{q}, mpz_t @var{n}, @w{mp_bitcnt_t @var{b}})
+-@deftypefunx void mpz_cdiv_r_2exp (mpz_t @var{r}, mpz_t @var{n}, @w{mp_bitcnt_t @var{b}})
++@deftypefunx void mpz_cdiv_q_2exp (mpz_t @var{q}, const mpz_t @var{n}, @w{mp_bitcnt_t @var{b}})
++@deftypefunx void mpz_cdiv_r_2exp (mpz_t @var{r}, const mpz_t @var{n}, @w{mp_bitcnt_t @var{b}})
+ @end deftypefun
+ 
+-@deftypefun void mpz_fdiv_q (mpz_t @var{q}, mpz_t @var{n}, mpz_t @var{d})
+-@deftypefunx void mpz_fdiv_r (mpz_t @var{r}, mpz_t @var{n}, mpz_t @var{d})
+-@deftypefunx void mpz_fdiv_qr (mpz_t @var{q}, mpz_t @var{r}, mpz_t @var{n}, mpz_t @var{d})
++@deftypefun void mpz_fdiv_q (mpz_t @var{q}, const mpz_t @var{n}, const mpz_t @var{d})
++@deftypefunx void mpz_fdiv_r (mpz_t @var{r}, const mpz_t @var{n}, const mpz_t @var{d})
++@deftypefunx void mpz_fdiv_qr (mpz_t @var{q}, mpz_t @var{r}, const mpz_t @var{n}, const mpz_t @var{d})
+ @maybepagebreak
+-@deftypefunx {unsigned long int} mpz_fdiv_q_ui (mpz_t @var{q}, mpz_t @var{n}, @w{unsigned long int @var{d}})
+-@deftypefunx {unsigned long int} mpz_fdiv_r_ui (mpz_t @var{r}, mpz_t @var{n}, @w{unsigned long int @var{d}})
+-@deftypefunx {unsigned long int} mpz_fdiv_qr_ui (mpz_t @var{q}, mpz_t @var{r}, @w{mpz_t @var{n}}, @w{unsigned long int @var{d}})
+-@deftypefunx {unsigned long int} mpz_fdiv_ui (mpz_t @var{n}, @w{unsigned long int @var{d}})
++@deftypefunx {unsigned long int} mpz_fdiv_q_ui (mpz_t @var{q}, const mpz_t @var{n}, @w{unsigned long int @var{d}})
++@deftypefunx {unsigned long int} mpz_fdiv_r_ui (mpz_t @var{r}, const mpz_t @var{n}, @w{unsigned long int @var{d}})
++@deftypefunx {unsigned long int} mpz_fdiv_qr_ui (mpz_t @var{q}, mpz_t @var{r}, @w{const mpz_t @var{n}}, @w{unsigned long int @var{d}})
++@deftypefunx {unsigned long int} mpz_fdiv_ui (const mpz_t @var{n}, @w{unsigned long int @var{d}})
+ @maybepagebreak
+-@deftypefunx void mpz_fdiv_q_2exp (mpz_t @var{q}, mpz_t @var{n}, @w{mp_bitcnt_t @var{b}})
+-@deftypefunx void mpz_fdiv_r_2exp (mpz_t @var{r}, mpz_t @var{n}, @w{mp_bitcnt_t @var{b}})
++@deftypefunx void mpz_fdiv_q_2exp (mpz_t @var{q}, const mpz_t @var{n}, @w{mp_bitcnt_t @var{b}})
++@deftypefunx void mpz_fdiv_r_2exp (mpz_t @var{r}, const mpz_t @var{n}, @w{mp_bitcnt_t @var{b}})
+ @end deftypefun
+ 
+-@deftypefun void mpz_tdiv_q (mpz_t @var{q}, mpz_t @var{n}, mpz_t @var{d})
+-@deftypefunx void mpz_tdiv_r (mpz_t @var{r}, mpz_t @var{n}, mpz_t @var{d})
+-@deftypefunx void mpz_tdiv_qr (mpz_t @var{q}, mpz_t @var{r}, mpz_t @var{n}, mpz_t @var{d})
++@deftypefun void mpz_tdiv_q (mpz_t @var{q}, const mpz_t @var{n}, const mpz_t @var{d})
++@deftypefunx void mpz_tdiv_r (mpz_t @var{r}, const mpz_t @var{n}, const mpz_t @var{d})
++@deftypefunx void mpz_tdiv_qr (mpz_t @var{q}, mpz_t @var{r}, const mpz_t @var{n}, const mpz_t @var{d})
+ @maybepagebreak
+-@deftypefunx {unsigned long int} mpz_tdiv_q_ui (mpz_t @var{q}, mpz_t @var{n}, @w{unsigned long int @var{d}})
+-@deftypefunx {unsigned long int} mpz_tdiv_r_ui (mpz_t @var{r}, mpz_t @var{n}, @w{unsigned long int @var{d}})
+-@deftypefunx {unsigned long int} mpz_tdiv_qr_ui (mpz_t @var{q}, mpz_t @var{r}, @w{mpz_t @var{n}}, @w{unsigned long int @var{d}})
+-@deftypefunx {unsigned long int} mpz_tdiv_ui (mpz_t @var{n}, @w{unsigned long int @var{d}})
++@deftypefunx {unsigned long int} mpz_tdiv_q_ui (mpz_t @var{q}, const mpz_t @var{n}, @w{unsigned long int @var{d}})
++@deftypefunx {unsigned long int} mpz_tdiv_r_ui (mpz_t @var{r}, const mpz_t @var{n}, @w{unsigned long int @var{d}})
++@deftypefunx {unsigned long int} mpz_tdiv_qr_ui (mpz_t @var{q}, mpz_t @var{r}, @w{const mpz_t @var{n}}, @w{unsigned long int @var{d}})
++@deftypefunx {unsigned long int} mpz_tdiv_ui (const mpz_t @var{n}, @w{unsigned long int @var{d}})
+ @maybepagebreak
+-@deftypefunx void mpz_tdiv_q_2exp (mpz_t @var{q}, mpz_t @var{n}, @w{mp_bitcnt_t @var{b}})
+-@deftypefunx void mpz_tdiv_r_2exp (mpz_t @var{r}, mpz_t @var{n}, @w{mp_bitcnt_t @var{b}})
++@deftypefunx void mpz_tdiv_q_2exp (mpz_t @var{q}, const mpz_t @var{n}, @w{mp_bitcnt_t @var{b}})
++@deftypefunx void mpz_tdiv_r_2exp (mpz_t @var{r}, const mpz_t @var{n}, @w{mp_bitcnt_t @var{b}})
+ @cindex Bit shift right
+ 
+ @sp 1
+@@ -3344,8 +3348,8 @@
+ effectively treats @var{n} as sign and magnitude.
+ @end deftypefun
+ 
+-@deftypefun void mpz_mod (mpz_t @var{r}, mpz_t @var{n}, mpz_t @var{d})
+-@deftypefunx {unsigned long int} mpz_mod_ui (mpz_t @var{r}, mpz_t @var{n}, @w{unsigned long int @var{d}})
++@deftypefun void mpz_mod (mpz_t @var{r}, const mpz_t @var{n}, const mpz_t @var{d})
++@deftypefunx {unsigned long int} mpz_mod_ui (mpz_t @var{r}, const mpz_t @var{n}, @w{unsigned long int @var{d}})
+ Set @var{r} to @var{n} @code{mod} @var{d}.  The sign of the divisor is
+ ignored; the result is always non-negative.
+ 
+@@ -3354,8 +3358,8 @@
+ the return value is wanted.
+ @end deftypefun
+ 
+-@deftypefun void mpz_divexact (mpz_t @var{q}, mpz_t @var{n}, mpz_t @var{d})
+-@deftypefunx void mpz_divexact_ui (mpz_t @var{q}, mpz_t @var{n}, unsigned long @var{d})
++@deftypefun void mpz_divexact (mpz_t @var{q}, const mpz_t @var{n}, const mpz_t @var{d})
++@deftypefunx void mpz_divexact_ui (mpz_t @var{q}, const mpz_t @var{n}, unsigned long @var{d})
+ @cindex Exact division functions
+ Set @var{q} to @var{n}/@var{d}.  These functions produce correct results only
+ when it is known in advance that @var{d} divides @var{n}.
+@@ -3365,9 +3369,9 @@
+ rational to lowest terms.
+ @end deftypefun
+ 
+-@deftypefun int mpz_divisible_p (mpz_t @var{n}, mpz_t @var{d})
+-@deftypefunx int mpz_divisible_ui_p (mpz_t @var{n}, unsigned long int @var{d})
+-@deftypefunx int mpz_divisible_2exp_p (mpz_t @var{n}, mp_bitcnt_t @var{b})
++@deftypefun int mpz_divisible_p (const mpz_t @var{n}, const mpz_t @var{d})
++@deftypefunx int mpz_divisible_ui_p (const mpz_t @var{n}, unsigned long int @var{d})
++@deftypefunx int mpz_divisible_2exp_p (const mpz_t @var{n}, mp_bitcnt_t @var{b})
+ @cindex Divisibility functions
+ Return non-zero if @var{n} is exactly divisible by @var{d}, or in the case of
+ @code{mpz_divisible_2exp_p} by @m{2^b,2^@var{b}}.
+@@ -3378,9 +3382,9 @@
+ that only 0 is considered divisible by 0.
+ @end deftypefun
+ 
+-@deftypefun int mpz_congruent_p (mpz_t @var{n}, mpz_t @var{c}, mpz_t @var{d})
+-@deftypefunx int mpz_congruent_ui_p (mpz_t @var{n}, unsigned long int @var{c}, unsigned long int @var{d})
+-@deftypefunx int mpz_congruent_2exp_p (mpz_t @var{n}, mpz_t @var{c}, mp_bitcnt_t @var{b})
++@deftypefun int mpz_congruent_p (const mpz_t @var{n}, const mpz_t @var{c}, const mpz_t @var{d})
++@deftypefunx int mpz_congruent_ui_p (const mpz_t @var{n}, unsigned long int @var{c}, unsigned long int @var{d})
++@deftypefunx int mpz_congruent_2exp_p (const mpz_t @var{n}, const mpz_t @var{c}, mp_bitcnt_t @var{b})
+ @cindex Divisibility functions
+ @cindex Congruence functions
+ Return non-zero if @var{n} is congruent to @var{c} modulo @var{d}, or in the
+@@ -3401,8 +3405,8 @@
+ @cindex Exponentiation functions
+ @cindex Powering functions
+ 
+-@deftypefun void mpz_powm (mpz_t @var{rop}, mpz_t @var{base}, mpz_t @var{exp}, mpz_t @var{mod})
+-@deftypefunx void mpz_powm_ui (mpz_t @var{rop}, mpz_t @var{base}, unsigned long int @var{exp}, mpz_t @var{mod})
++@deftypefun void mpz_powm (mpz_t @var{rop}, const mpz_t @var{base}, const mpz_t @var{exp}, const mpz_t @var{mod})
++@deftypefunx void mpz_powm_ui (mpz_t @var{rop}, const mpz_t @var{base}, unsigned long int @var{exp}, const mpz_t @var{mod})
+ Set @var{rop} to @m{base^{exp} \bmod mod, (@var{base} raised to @var{exp})
+ modulo @var{mod}}.
+ 
+@@ -3411,7 +3415,7 @@
+ If an inverse doesn't exist then a divide by zero is raised.
+ @end deftypefun
+ 
+-@deftypefun void mpz_powm_sec (mpz_t @var{rop}, mpz_t @var{base}, mpz_t @var{exp}, mpz_t @var{mod})
++@deftypefun void mpz_powm_sec (mpz_t @var{rop}, const mpz_t @var{base}, const mpz_t @var{exp}, const mpz_t @var{mod})
+ Set @var{rop} to @m{base^{exp} \bmod mod, (@var{base} raised to @var{exp})
+ modulo @var{mod}}.
+ 
+@@ -3424,7 +3428,7 @@
+ resilience to side-channel attacks is desired.
+ @end deftypefun
+ 
+-@deftypefun void mpz_pow_ui (mpz_t @var{rop}, mpz_t @var{base}, unsigned long int @var{exp})
++@deftypefun void mpz_pow_ui (mpz_t @var{rop}, const mpz_t @var{base}, unsigned long int @var{exp})
+ @deftypefunx void mpz_ui_pow_ui (mpz_t @var{rop}, unsigned long int @var{base}, unsigned long int @var{exp})
+ Set @var{rop} to @m{base^{exp}, @var{base} raised to @var{exp}}.  The case
+ @math{0^0} yields 1.
+@@ -3437,25 +3441,25 @@
+ @cindex Integer root functions
+ @cindex Root extraction functions
+ 
+-@deftypefun int mpz_root (mpz_t @var{rop}, mpz_t @var{op}, unsigned long int @var{n})
++@deftypefun int mpz_root (mpz_t @var{rop}, const mpz_t @var{op}, unsigned long int @var{n})
+ Set @var{rop} to @m{\lfloor\root n \of {op}\rfloor@C{},} the truncated integer
+ part of the @var{n}th root of @var{op}.  Return non-zero if the computation
+ was exact, i.e., if @var{op} is @var{rop} to the @var{n}th power.
+ @end deftypefun
+ 
+-@deftypefun void mpz_rootrem (mpz_t @var{root}, mpz_t @var{rem}, mpz_t @var{u}, unsigned long int @var{n})
++@deftypefun void mpz_rootrem (mpz_t @var{root}, mpz_t @var{rem}, const mpz_t @var{u}, unsigned long int @var{n})
+ Set @var{root} to @m{\lfloor\root n \of {u}\rfloor@C{},} the truncated
+ integer part of the @var{n}th root of @var{u}.  Set @var{rem} to the
+ remainder, @m{(@var{u} - @var{root}^n),
+ @var{u}@minus{}@var{root}**@var{n}}.
+ @end deftypefun
+ 
+-@deftypefun void mpz_sqrt (mpz_t @var{rop}, mpz_t @var{op})
++@deftypefun void mpz_sqrt (mpz_t @var{rop}, const mpz_t @var{op})
+ Set @var{rop} to @m{\lfloor\sqrt{@var{op}}\rfloor@C{},} the truncated
+ integer part of the square root of @var{op}.
+ @end deftypefun
+ 
+-@deftypefun void mpz_sqrtrem (mpz_t @var{rop1}, mpz_t @var{rop2}, mpz_t @var{op})
++@deftypefun void mpz_sqrtrem (mpz_t @var{rop1}, mpz_t @var{rop2}, const mpz_t @var{op})
+ Set @var{rop1} to @m{\lfloor\sqrt{@var{op}}\rfloor, the truncated integer part
+ of the square root of @var{op}}, like @code{mpz_sqrt}.  Set @var{rop2} to the
+ remainder @m{(@var{op} - @var{rop1}^2),
+@@ -3466,7 +3470,7 @@
+ undefined.
+ @end deftypefun
+ 
+-@deftypefun int mpz_perfect_power_p (mpz_t @var{op})
++@deftypefun int mpz_perfect_power_p (const mpz_t @var{op})
+ @cindex Perfect power functions
+ @cindex Root testing functions
+ Return non-zero if @var{op} is a perfect power, i.e., if there exist integers
+@@ -3478,7 +3482,7 @@
+ perfect powers.
+ @end deftypefun
+ 
+-@deftypefun int mpz_perfect_square_p (mpz_t @var{op})
++@deftypefun int mpz_perfect_square_p (const mpz_t @var{op})
+ @cindex Perfect square functions
+ @cindex Root testing functions
+ Return non-zero if @var{op} is a perfect square, i.e., if the square root of
+@@ -3492,7 +3496,7 @@
+ @section Number Theoretic Functions
+ @cindex Number theoretic functions
+ 
+-@deftypefun int mpz_probab_prime_p (mpz_t @var{n}, int @var{reps})
++@deftypefun int mpz_probab_prime_p (const mpz_t @var{n}, int @var{reps})
+ @cindex Prime testing functions
+ @cindex Probable prime testing functions
+ Determine whether @var{n} is prime.  Return 2 if @var{n} is definitely prime,
+@@ -3511,7 +3515,7 @@
+ which pass are considered probably prime.
+ @end deftypefun
+ 
+-@deftypefun void mpz_nextprime (mpz_t @var{rop}, mpz_t @var{op})
++@deftypefun void mpz_nextprime (mpz_t @var{rop}, const mpz_t @var{op})
+ @cindex Next prime function
+ Set @var{rop} to the next prime greater than @var{op}.
+ 
+@@ -3522,7 +3526,7 @@
+ 
+ @c mpz_prime_p not implemented as of gmp 3.0.
+ 
+-@c @deftypefun int mpz_prime_p (mpz_t @var{n})
++@c @deftypefun int mpz_prime_p (const mpz_t @var{n})
+ @c Return non-zero if @var{n} is prime and zero if @var{n} is a non-prime.
+ @c This function is far slower than @code{mpz_probab_prime_p}, but then it
+ @c never returns non-zero for composite numbers.
+@@ -3533,7 +3537,7 @@
+ @c prime, if the @var{reps} argument is in the suggested range.)
+ @c @end deftypefun
+ 
+-@deftypefun void mpz_gcd (mpz_t @var{rop}, mpz_t @var{op1}, mpz_t @var{op2})
++@deftypefun void mpz_gcd (mpz_t @var{rop}, const mpz_t @var{op1}, const mpz_t @var{op2})
+ @cindex Greatest common divisor functions
+ @cindex GCD functions
+ Set @var{rop} to the greatest common divisor of @var{op1} and @var{op2}.  The
+@@ -3541,7 +3545,7 @@
+ Except if both inputs are zero; then this function defines @math{gcd(0,0) = 0}.
+ @end deftypefun
+ 
+-@deftypefun {unsigned long int} mpz_gcd_ui (mpz_t @var{rop}, mpz_t @var{op1}, unsigned long int @var{op2})
++@deftypefun {unsigned long int} mpz_gcd_ui (mpz_t @var{rop}, const mpz_t @var{op1}, unsigned long int @var{op2})
+ Compute the greatest common divisor of @var{op1} and @var{op2}.  If
+ @var{rop} is not @code{NULL}, store the result there.
+ 
+@@ -3551,7 +3555,7 @@
+ is non-zero.
+ @end deftypefun
+ 
+-@deftypefun void mpz_gcdext (mpz_t @var{g}, mpz_t @var{s}, mpz_t @var{t}, mpz_t @var{a}, mpz_t @var{b})
++@deftypefun void mpz_gcdext (mpz_t @var{g}, mpz_t @var{s}, mpz_t @var{t}, const mpz_t @var{a}, const mpz_t @var{b})
+ @cindex Extended GCD
+ @cindex GCD extended
+ Set @var{g} to the greatest common divisor of @var{a} and @var{b}, and in
+@@ -3578,8 +3582,8 @@
+ If @var{t} is @code{NULL} then that value is not computed.
+ @end deftypefun
+ 
+-@deftypefun void mpz_lcm (mpz_t @var{rop}, mpz_t @var{op1}, mpz_t @var{op2})
+-@deftypefunx void mpz_lcm_ui (mpz_t @var{rop}, mpz_t @var{op1}, unsigned long @var{op2})
++@deftypefun void mpz_lcm (mpz_t @var{rop}, const mpz_t @var{op1}, const mpz_t @var{op2})
++@deftypefunx void mpz_lcm_ui (mpz_t @var{rop}, const mpz_t @var{op1}, unsigned long @var{op2})
+ @cindex Least common multiple functions
+ @cindex LCM functions
+ Set @var{rop} to the least common multiple of @var{op1} and @var{op2}.
+@@ -3587,7 +3591,7 @@
+ @var{op2}.  @var{rop} will be zero if either @var{op1} or @var{op2} is zero.
+ @end deftypefun
+ 
+-@deftypefun int mpz_invert (mpz_t @var{rop}, mpz_t @var{op1}, mpz_t @var{op2})
++@deftypefun int mpz_invert (mpz_t @var{rop}, const mpz_t @var{op1}, const mpz_t @var{op2})
+ @cindex Modular inverse functions
+ @cindex Inverse modulo functions
+ Compute the inverse of @var{op1} modulo @var{op2} and put the result in
+@@ -3597,24 +3601,24 @@
+ this function is undefined when @var{op2} is zero.
+ @end deftypefun
+ 
+-@deftypefun int mpz_jacobi (mpz_t @var{a}, mpz_t @var{b})
++@deftypefun int mpz_jacobi (const mpz_t @var{a}, const mpz_t @var{b})
+ @cindex Jacobi symbol functions
+ Calculate the Jacobi symbol @m{\left(a \over b\right),
+ (@var{a}/@var{b})}.  This is defined only for @var{b} odd.
+ @end deftypefun
+ 
+-@deftypefun int mpz_legendre (mpz_t @var{a}, mpz_t @var{p})
++@deftypefun int mpz_legendre (const mpz_t @var{a}, const mpz_t @var{p})
+ @cindex Legendre symbol functions
+ Calculate the Legendre symbol @m{\left(a \over p\right),
+ (@var{a}/@var{p})}.  This is defined only for @var{p} an odd positive
+ prime, and for such @var{p} it's identical to the Jacobi symbol.
+ @end deftypefun
+ 
+-@deftypefun int mpz_kronecker (mpz_t @var{a}, mpz_t @var{b})
+-@deftypefunx int mpz_kronecker_si (mpz_t @var{a}, long @var{b})
+-@deftypefunx int mpz_kronecker_ui (mpz_t @var{a}, unsigned long @var{b})
+-@deftypefunx int mpz_si_kronecker (long @var{a}, mpz_t @var{b})
+-@deftypefunx int mpz_ui_kronecker (unsigned long @var{a}, mpz_t @var{b})
++@deftypefun int mpz_kronecker (const mpz_t @var{a}, const mpz_t @var{b})
++@deftypefunx int mpz_kronecker_si (const mpz_t @var{a}, long @var{b})
++@deftypefunx int mpz_kronecker_ui (const mpz_t @var{a}, unsigned long @var{b})
++@deftypefunx int mpz_si_kronecker (long @var{a}, const mpz_t @var{b})
++@deftypefunx int mpz_ui_kronecker (unsigned long @var{a}, const mpz_t @var{b})
+ @cindex Kronecker symbol functions
+ Calculate the Jacobi symbol @m{\left(a \over b\right),
+ (@var{a}/@var{b})} with the Kronecker extension @m{\left(a \over
+@@ -3630,7 +3634,7 @@
+ @file{demos/qcn.c} which uses @code{mpz_kronecker_ui}.
+ @end deftypefun
+ 
+-@deftypefun {mp_bitcnt_t} mpz_remove (mpz_t @var{rop}, mpz_t @var{op}, mpz_t @var{f})
++@deftypefun {mp_bitcnt_t} mpz_remove (mpz_t @var{rop}, const mpz_t @var{op}, const mpz_t @var{f})
+ @cindex Remove factor functions
+ @cindex Factor removal functions
+ Remove all occurrences of the factor @var{f} from @var{op} and store the
+@@ -3653,7 +3657,7 @@
+ prime numbers @math{@le{}@var{n}}.
+ @end deftypefun
+ 
+-@deftypefun void mpz_bin_ui (mpz_t @var{rop}, mpz_t @var{n}, unsigned long int @var{k})
++@deftypefun void mpz_bin_ui (mpz_t @var{rop}, const mpz_t @var{n}, unsigned long int @var{k})
+ @deftypefunx void mpz_bin_uiui (mpz_t @var{rop}, unsigned long int @var{n}, @w{unsigned long int @var{k}})
+ @cindex Binomial coefficient functions
+ Compute the binomial coefficient @m{\left({n}\atop{k}\right), @var{n} over
+@@ -3702,10 +3706,10 @@
+ @cindex Integer comparison functions
+ @cindex Comparison functions
+ 
+-@deftypefn Function int mpz_cmp (mpz_t @var{op1}, mpz_t @var{op2})
+-@deftypefnx Function int mpz_cmp_d (mpz_t @var{op1}, double @var{op2})
+-@deftypefnx Macro int mpz_cmp_si (mpz_t @var{op1}, signed long int @var{op2})
+-@deftypefnx Macro int mpz_cmp_ui (mpz_t @var{op1}, unsigned long int @var{op2})
++@deftypefn Function int mpz_cmp (const mpz_t @var{op1}, const mpz_t @var{op2})
++@deftypefnx Function int mpz_cmp_d (const mpz_t @var{op1}, double @var{op2})
++@deftypefnx Macro int mpz_cmp_si (const mpz_t @var{op1}, signed long int @var{op2})
++@deftypefnx Macro int mpz_cmp_ui (const mpz_t @var{op1}, unsigned long int @var{op2})
+ Compare @var{op1} and @var{op2}.  Return a positive value if @math{@var{op1} >
+ @var{op2}}, zero if @math{@var{op1} = @var{op2}}, or a negative value if
+ @math{@var{op1} < @var{op2}}.
+@@ -3715,9 +3719,9 @@
+ but results are undefined for a NaN.
+ @end deftypefn
+ 
+-@deftypefn Function int mpz_cmpabs (mpz_t @var{op1}, mpz_t @var{op2})
+-@deftypefnx Function int mpz_cmpabs_d (mpz_t @var{op1}, double @var{op2})
+-@deftypefnx Function int mpz_cmpabs_ui (mpz_t @var{op1}, unsigned long int @var{op2})
++@deftypefn Function int mpz_cmpabs (const mpz_t @var{op1}, const mpz_t @var{op2})
++@deftypefnx Function int mpz_cmpabs_d (const mpz_t @var{op1}, double @var{op2})
++@deftypefnx Function int mpz_cmpabs_ui (const mpz_t @var{op1}, unsigned long int @var{op2})
+ Compare the absolute values of @var{op1} and @var{op2}.  Return a positive
+ value if @math{@GMPabs{@var{op1}} > @GMPabs{@var{op2}}}, zero if
+ @math{@GMPabs{@var{op1}} = @GMPabs{@var{op2}}}, or a negative value if
+@@ -3727,7 +3731,7 @@
+ for a NaN.
+ @end deftypefn
+ 
+-@deftypefn Macro int mpz_sgn (mpz_t @var{op})
++@deftypefn Macro int mpz_sgn (const mpz_t @var{op})
+ @cindex Sign tests
+ @cindex Integer sign tests
+ Return @math{+1} if @math{@var{op} > 0}, 0 if @math{@var{op} = 0}, and
+@@ -3750,30 +3754,30 @@
+ sign-magnitude is the actual implementation).  The least significant bit is
+ number 0.
+ 
+-@deftypefun void mpz_and (mpz_t @var{rop}, mpz_t @var{op1}, mpz_t @var{op2})
++@deftypefun void mpz_and (mpz_t @var{rop}, const mpz_t @var{op1}, const mpz_t @var{op2})
+ Set @var{rop} to @var{op1} bitwise-and @var{op2}.
+ @end deftypefun
+ 
+-@deftypefun void mpz_ior (mpz_t @var{rop}, mpz_t @var{op1}, mpz_t @var{op2})
++@deftypefun void mpz_ior (mpz_t @var{rop}, const mpz_t @var{op1}, const mpz_t @var{op2})
+ Set @var{rop} to @var{op1} bitwise inclusive-or @var{op2}.
+ @end deftypefun
+ 
+-@deftypefun void mpz_xor (mpz_t @var{rop}, mpz_t @var{op1}, mpz_t @var{op2})
++@deftypefun void mpz_xor (mpz_t @var{rop}, const mpz_t @var{op1}, const mpz_t @var{op2})
+ Set @var{rop} to @var{op1} bitwise exclusive-or @var{op2}.
+ @end deftypefun
+ 
+-@deftypefun void mpz_com (mpz_t @var{rop}, mpz_t @var{op})
++@deftypefun void mpz_com (mpz_t @var{rop}, const mpz_t @var{op})
+ Set @var{rop} to the one's complement of @var{op}.
+ @end deftypefun
+ 
+-@deftypefun {mp_bitcnt_t} mpz_popcount (mpz_t @var{op})
++@deftypefun {mp_bitcnt_t} mpz_popcount (const mpz_t @var{op})
+ If @math{@var{op}@ge{}0}, return the population count of @var{op}, which is the
+ number of 1 bits in the binary representation.  If @math{@var{op}<0}, the
+ number of 1s is infinite, and the return value is the largest possible
+ @code{mp_bitcnt_t}.
+ @end deftypefun
+ 
+-@deftypefun {mp_bitcnt_t} mpz_hamdist (mpz_t @var{op1}, mpz_t @var{op2})
++@deftypefun {mp_bitcnt_t} mpz_hamdist (const mpz_t @var{op1}, const mpz_t @var{op2})
+ If @var{op1} and @var{op2} are both @math{@ge{}0} or both @math{<0}, return the
+ hamming distance between the two operands, which is the number of bit positions
+ where @var{op1} and @var{op2} have different bit values.  If one operand is
+@@ -3781,8 +3785,8 @@
+ infinite, and the return value is the largest possible @code{mp_bitcnt_t}.
+ @end deftypefun
+ 
+-@deftypefun {mp_bitcnt_t} mpz_scan0 (mpz_t @var{op}, mp_bitcnt_t @var{starting_bit})
+-@deftypefunx {mp_bitcnt_t} mpz_scan1 (mpz_t @var{op}, mp_bitcnt_t @var{starting_bit})
++@deftypefun {mp_bitcnt_t} mpz_scan0 (const mpz_t @var{op}, mp_bitcnt_t @var{starting_bit})
++@deftypefunx {mp_bitcnt_t} mpz_scan1 (const mpz_t @var{op}, mp_bitcnt_t @var{starting_bit})
+ @cindex Bit scanning functions
+ @cindex Scan bit functions
+ Scan @var{op}, starting from bit @var{starting_bit}, towards more significant
+@@ -3809,7 +3813,7 @@
+ Complement bit @var{bit_index} in @var{rop}.
+ @end deftypefun
+ 
+-@deftypefun int mpz_tstbit (mpz_t @var{op}, mp_bitcnt_t @var{bit_index})
++@deftypefun int mpz_tstbit (const mpz_t @var{op}, mp_bitcnt_t @var{bit_index})
+ Test bit @var{bit_index} in @var{op} and return 0 or 1 accordingly.
+ @end deftypefun
+ 
+@@ -3832,7 +3836,7 @@
+ 
+ See also @ref{Formatted Output} and @ref{Formatted Input}.
+ 
+-@deftypefun size_t mpz_out_str (FILE *@var{stream}, int @var{base}, mpz_t @var{op})
++@deftypefun size_t mpz_out_str (FILE *@var{stream}, int @var{base}, const mpz_t @var{op})
+ Output @var{op} on stdio stream @var{stream}, as a string of digits in base
+ @var{base}.  The base argument may vary from 2 to 62 or from @minus{}2 to
+ @minus{}36.
+@@ -3860,7 +3864,7 @@
+ Return the number of bytes read, or if an error occurred, return 0.
+ @end deftypefun
+ 
+-@deftypefun size_t mpz_out_raw (FILE *@var{stream}, mpz_t @var{op})
++@deftypefun size_t mpz_out_raw (FILE *@var{stream}, const mpz_t @var{op})
+ Output @var{op} on stdio stream @var{stream}, in raw binary format.  The
+ integer is written in a portable format, with 4 bytes of size information, and
+ that many bytes of limbs.  Both the size and the limbs are written in
+@@ -3907,7 +3911,7 @@
+ invoking this function.
+ @end deftypefun
+ 
+-@deftypefun void mpz_urandomm (mpz_t @var{rop}, gmp_randstate_t @var{state}, mpz_t @var{n})
++@deftypefun void mpz_urandomm (mpz_t @var{rop}, gmp_randstate_t @var{state}, const mpz_t @var{n})
+ Generate a uniform random integer in the range 0 to @math{@var{n}-1},
+ inclusive.
+ 
+@@ -3990,7 +3994,7 @@
+ @code{8*sizeof(int)-INT_BIT}.
+ @end deftypefun
+ 
+-@deftypefun {void *} mpz_export (void *@var{rop}, size_t *@var{countp}, int @var{order}, size_t @var{size}, int @var{endian}, size_t @var{nails}, mpz_t @var{op})
++@deftypefun {void *} mpz_export (void *@var{rop}, size_t *@var{countp}, int @var{order}, size_t @var{size}, int @var{endian}, size_t @var{nails}, const mpz_t @var{op})
+ @cindex Integer export
+ @cindex Export
+ Fill @var{rop} with word data from @var{op}.
+@@ -4041,24 +4045,24 @@
+ @cindex Miscellaneous integer functions
+ @cindex Integer miscellaneous functions
+ 
+-@deftypefun int mpz_fits_ulong_p (mpz_t @var{op})
+-@deftypefunx int mpz_fits_slong_p (mpz_t @var{op})
+-@deftypefunx int mpz_fits_uint_p (mpz_t @var{op})
+-@deftypefunx int mpz_fits_sint_p (mpz_t @var{op})
+-@deftypefunx int mpz_fits_ushort_p (mpz_t @var{op})
+-@deftypefunx int mpz_fits_sshort_p (mpz_t @var{op})
++@deftypefun int mpz_fits_ulong_p (const mpz_t @var{op})
++@deftypefunx int mpz_fits_slong_p (const mpz_t @var{op})
++@deftypefunx int mpz_fits_uint_p (const mpz_t @var{op})
++@deftypefunx int mpz_fits_sint_p (const mpz_t @var{op})
++@deftypefunx int mpz_fits_ushort_p (const mpz_t @var{op})
++@deftypefunx int mpz_fits_sshort_p (const mpz_t @var{op})
+ Return non-zero iff the value of @var{op} fits in an @code{unsigned long int},
+ @code{signed long int}, @code{unsigned int}, @code{signed int}, @code{unsigned
+ short int}, or @code{signed short int}, respectively.  Otherwise, return zero.
+ @end deftypefun
+ 
+-@deftypefn Macro int mpz_odd_p (mpz_t @var{op})
+-@deftypefnx Macro int mpz_even_p (mpz_t @var{op})
++@deftypefn Macro int mpz_odd_p (const mpz_t @var{op})
++@deftypefnx Macro int mpz_even_p (const mpz_t @var{op})
+ Determine whether @var{op} is odd or even, respectively.  Return non-zero if
+ yes, zero if no.  These macros evaluate their argument more than once.
+ @end deftypefn
+ 
+-@deftypefun size_t mpz_sizeinbase (mpz_t @var{op}, int @var{base})
++@deftypefun size_t mpz_sizeinbase (const mpz_t @var{op}, int @var{base})
+ @cindex Size in digits
+ @cindex Digits in an integer
+ Return the size of @var{op} measured in number of digits in the given
+@@ -4152,7 +4156,7 @@
+ @code{_mpz_realloc} takes its size in limbs.
+ @end deftypefun
+ 
+-@deftypefun mp_limb_t mpz_getlimbn (mpz_t @var{op}, mp_size_t @var{n})
++@deftypefun mp_limb_t mpz_getlimbn (const mpz_t @var{op}, mp_size_t @var{n})
+ Return limb number @var{n} from @var{op}.  The sign of @var{op} is ignored,
+ just the absolute value is used.  The least significant limb is number 0.
+ 
+@@ -4161,7 +4165,7 @@
+ @code{mpz_size(@var{op})-1}.
+ @end deftypefun
+ 
+-@deftypefun size_t mpz_size (mpz_t @var{op})
++@deftypefun size_t mpz_size (const mpz_t @var{op})
+ Return the size of @var{op} measured in number of limbs.  If @var{op} is zero,
+ the returned value will be zero.
+ @c (@xref{Nomenclature}, for an explanation of the concept @dfn{limb}.)
+@@ -4230,8 +4234,8 @@
+ Free the space occupied by a NULL-terminated list of @code{mpq_t} variables.
+ @end deftypefun
+ 
+-@deftypefun void mpq_set (mpq_t @var{rop}, mpq_t @var{op})
+-@deftypefunx void mpq_set_z (mpq_t @var{rop}, mpz_t @var{op})
++@deftypefun void mpq_set (mpq_t @var{rop}, const mpq_t @var{op})
++@deftypefunx void mpq_set_z (mpq_t @var{rop}, const mpz_t @var{op})
+ Assign @var{rop} from @var{op}.
+ @end deftypefun
+ 
+@@ -4242,7 +4246,7 @@
+ @code{mpq_canonicalize} before any operations are performed on @var{rop}.
+ @end deftypefun
+ 
+-@deftypefun int mpq_set_str (mpq_t @var{rop}, char *@var{str}, int @var{base})
++@deftypefun int mpq_set_str (mpq_t @var{rop}, const char *@var{str}, int @var{base})
+ Set @var{rop} from a null-terminated string @var{str} in the given @var{base}.
+ 
+ The string can be an integer like ``41'' or a fraction like ``41/152''.  The
+@@ -4274,7 +4278,7 @@
+ @cindex Rational conversion functions
+ @cindex Conversion functions
+ 
+-@deftypefun double mpq_get_d (mpq_t @var{op})
++@deftypefun double mpq_get_d (const mpq_t @var{op})
+ Convert @var{op} to a @code{double}, truncating if necessary (i.e.@: rounding
+ towards zero).
+ 
+@@ -4285,12 +4289,12 @@
+ @end deftypefun
+ 
+ @deftypefun void mpq_set_d (mpq_t @var{rop}, double @var{op})
+-@deftypefunx void mpq_set_f (mpq_t @var{rop}, mpf_t @var{op})
++@deftypefunx void mpq_set_f (mpq_t @var{rop}, const mpf_t @var{op})
+ Set @var{rop} to the value of @var{op}.  There is no rounding, this conversion
+ is exact.
+ @end deftypefun
+ 
+-@deftypefun {char *} mpq_get_str (char *@var{str}, int @var{base}, mpq_t @var{op})
++@deftypefun {char *} mpq_get_str (char *@var{str}, int @var{base}, const mpq_t @var{op})
+ Convert @var{op} to a string of digits in base @var{base}.  The base may vary
+ from 2 to 36.  The string will be of the form @samp{num/den}, or if the
+ denominator is 1 then just @samp{num}.
+@@ -4322,42 +4326,42 @@
+ @cindex Rational arithmetic functions
+ @cindex Arithmetic functions
+ 
+-@deftypefun void mpq_add (mpq_t @var{sum}, mpq_t @var{addend1}, mpq_t @var{addend2})
++@deftypefun void mpq_add (mpq_t @var{sum}, const mpq_t @var{addend1}, const mpq_t @var{addend2})
+ Set @var{sum} to @var{addend1} + @var{addend2}.
+ @end deftypefun
+ 
+-@deftypefun void mpq_sub (mpq_t @var{difference}, mpq_t @var{minuend}, mpq_t @var{subtrahend})
++@deftypefun void mpq_sub (mpq_t @var{difference}, const mpq_t @var{minuend}, const mpq_t @var{subtrahend})
+ Set @var{difference} to @var{minuend} @minus{} @var{subtrahend}.
+ @end deftypefun
+ 
+-@deftypefun void mpq_mul (mpq_t @var{product}, mpq_t @var{multiplier}, mpq_t @var{multiplicand})
++@deftypefun void mpq_mul (mpq_t @var{product}, const mpq_t @var{multiplier}, const mpq_t @var{multiplicand})
+ Set @var{product} to @math{@var{multiplier} @GMPtimes{} @var{multiplicand}}.
+ @end deftypefun
+ 
+-@deftypefun void mpq_mul_2exp (mpq_t @var{rop}, mpq_t @var{op1}, mp_bitcnt_t @var{op2})
++@deftypefun void mpq_mul_2exp (mpq_t @var{rop}, const mpq_t @var{op1}, mp_bitcnt_t @var{op2})
+ Set @var{rop} to @m{@var{op1} \times 2^{op2}, @var{op1} times 2 raised to
+ @var{op2}}.
+ @end deftypefun
+ 
+-@deftypefun void mpq_div (mpq_t @var{quotient}, mpq_t @var{dividend}, mpq_t @var{divisor})
++@deftypefun void mpq_div (mpq_t @var{quotient}, const mpq_t @var{dividend}, const mpq_t @var{divisor})
+ @cindex Division functions
+ Set @var{quotient} to @var{dividend}/@var{divisor}.
+ @end deftypefun
+ 
+-@deftypefun void mpq_div_2exp (mpq_t @var{rop}, mpq_t @var{op1}, mp_bitcnt_t @var{op2})
++@deftypefun void mpq_div_2exp (mpq_t @var{rop}, const mpq_t @var{op1}, mp_bitcnt_t @var{op2})
+ Set @var{rop} to @m{@var{op1}/2^{op2}, @var{op1} divided by 2 raised to
+ @var{op2}}.
+ @end deftypefun
+ 
+-@deftypefun void mpq_neg (mpq_t @var{negated_operand}, mpq_t @var{operand})
++@deftypefun void mpq_neg (mpq_t @var{negated_operand}, const mpq_t @var{operand})
+ Set @var{negated_operand} to @minus{}@var{operand}.
+ @end deftypefun
+ 
+-@deftypefun void mpq_abs (mpq_t @var{rop}, mpq_t @var{op})
++@deftypefun void mpq_abs (mpq_t @var{rop}, const mpq_t @var{op})
+ Set @var{rop} to the absolute value of @var{op}.
+ @end deftypefun
+ 
+-@deftypefun void mpq_inv (mpq_t @var{inverted_number}, mpq_t @var{number})
++@deftypefun void mpq_inv (mpq_t @var{inverted_number}, const mpq_t @var{number})
+ Set @var{inverted_number} to 1/@var{number}.  If the new denominator is
+ zero, this routine will divide by zero.
+ @end deftypefun
+@@ -4368,7 +4372,7 @@
+ @cindex Rational comparison functions
+ @cindex Comparison functions
+ 
+-@deftypefun int mpq_cmp (mpq_t @var{op1}, mpq_t @var{op2})
++@deftypefun int mpq_cmp (const mpq_t @var{op1}, const mpq_t @var{op2})
+ Compare @var{op1} and @var{op2}.  Return a positive value if @math{@var{op1} >
+ @var{op2}}, zero if @math{@var{op1} = @var{op2}}, and a negative value if
+ @math{@var{op1} < @var{op2}}.
+@@ -4377,8 +4381,8 @@
+ @code{mpq_cmp}.
+ @end deftypefun
+ 
+-@deftypefn Macro int mpq_cmp_ui (mpq_t @var{op1}, unsigned long int @var{num2}, unsigned long int @var{den2})
+-@deftypefnx Macro int mpq_cmp_si (mpq_t @var{op1}, long int @var{num2}, unsigned long int @var{den2})
++@deftypefn Macro int mpq_cmp_ui (const mpq_t @var{op1}, unsigned long int @var{num2}, unsigned long int @var{den2})
++@deftypefnx Macro int mpq_cmp_si (const mpq_t @var{op1}, long int @var{num2}, unsigned long int @var{den2})
+ Compare @var{op1} and @var{num2}/@var{den2}.  Return a positive value if
+ @math{@var{op1} > @var{num2}/@var{den2}}, zero if @math{@var{op1} =
+ @var{num2}/@var{den2}}, and a negative value if @math{@var{op1} <
+@@ -4390,7 +4394,7 @@
+ multiple times.
+ @end deftypefn
+ 
+-@deftypefn Macro int mpq_sgn (mpq_t @var{op})
++@deftypefn Macro int mpq_sgn (const mpq_t @var{op})
+ @cindex Sign tests
+ @cindex Rational sign tests
+ Return @math{+1} if @math{@var{op} > 0}, 0 if @math{@var{op} = 0}, and
+@@ -4400,7 +4404,7 @@
+ argument multiple times.
+ @end deftypefn
+ 
+-@deftypefun int mpq_equal (mpq_t @var{op1}, mpq_t @var{op2})
++@deftypefun int mpq_equal (const mpq_t @var{op1}, const mpq_t @var{op2})
+ Return non-zero if @var{op1} and @var{op2} are equal, zero if they are
+ non-equal.  Although @code{mpq_cmp} can be used for the same purpose, this
+ function is much faster.
+@@ -4421,16 +4425,16 @@
+ (@pxref{Rational Number Functions}) then @code{mpq_canonicalize} must be
+ called before any other @code{mpq} functions are applied to that @code{mpq_t}.
+ 
+-@deftypefn Macro mpz_t mpq_numref (mpq_t @var{op})
+-@deftypefnx Macro mpz_t mpq_denref (mpq_t @var{op})
++@deftypefn Macro mpz_t mpq_numref (const mpq_t @var{op})
++@deftypefnx Macro mpz_t mpq_denref (const mpq_t @var{op})
+ Return a reference to the numerator and denominator of @var{op}, respectively.
+ The @code{mpz} functions can be used on the result of these macros.
+ @end deftypefn
+ 
+-@deftypefun void mpq_get_num (mpz_t @var{numerator}, mpq_t @var{rational})
+-@deftypefunx void mpq_get_den (mpz_t @var{denominator}, mpq_t @var{rational})
+-@deftypefunx void mpq_set_num (mpq_t @var{rational}, mpz_t @var{numerator})
+-@deftypefunx void mpq_set_den (mpq_t @var{rational}, mpz_t @var{denominator})
++@deftypefun void mpq_get_num (mpz_t @var{numerator}, const mpq_t @var{rational})
++@deftypefunx void mpq_get_den (mpz_t @var{denominator}, const mpq_t @var{rational})
++@deftypefunx void mpq_set_num (mpq_t @var{rational}, const mpz_t @var{numerator})
++@deftypefunx void mpq_set_den (mpq_t @var{rational}, const mpz_t @var{denominator})
+ Get or set the numerator or denominator of a rational.  These functions are
+ equivalent to calling @code{mpz_set} with an appropriate @code{mpq_numref} or
+ @code{mpq_denref}.  Direct use of @code{mpq_numref} or @code{mpq_denref} is
+@@ -4458,7 +4462,7 @@
+ 
+ See also @ref{Formatted Output} and @ref{Formatted Input}.
+ 
+-@deftypefun size_t mpq_out_str (FILE *@var{stream}, int @var{base}, mpq_t @var{op})
++@deftypefun size_t mpq_out_str (FILE *@var{stream}, int @var{base}, const mpq_t @var{op})
+ Output @var{op} on stdio stream @var{stream}, as a string of digits in base
+ @var{base}.  The base may vary from 2 to 36.  Output is in the form
+ @samp{num/den} or if the denominator is 1 then just @samp{num}.
+@@ -4621,7 +4625,7 @@
+ iterative algorithms like Newton-Raphson, making the computation precision
+ closely match the actual accurate part of the numbers.
+ 
+-@deftypefun {mp_bitcnt_t} mpf_get_prec (mpf_t @var{op})
++@deftypefun {mp_bitcnt_t} mpf_get_prec (const mpf_t @var{op})
+ Return the current precision of @var{op}, in bits.
+ @end deftypefun
+ 
+@@ -4670,16 +4674,16 @@
+ These functions assign new values to already initialized floats
+ (@pxref{Initializing Floats}).
+ 
+-@deftypefun void mpf_set (mpf_t @var{rop}, mpf_t @var{op})
++@deftypefun void mpf_set (mpf_t @var{rop}, const mpf_t @var{op})
+ @deftypefunx void mpf_set_ui (mpf_t @var{rop}, unsigned long int @var{op})
+ @deftypefunx void mpf_set_si (mpf_t @var{rop}, signed long int @var{op})
+ @deftypefunx void mpf_set_d (mpf_t @var{rop}, double @var{op})
+-@deftypefunx void mpf_set_z (mpf_t @var{rop}, mpz_t @var{op})
+-@deftypefunx void mpf_set_q (mpf_t @var{rop}, mpq_t @var{op})
++@deftypefunx void mpf_set_z (mpf_t @var{rop}, const mpz_t @var{op})
++@deftypefunx void mpf_set_q (mpf_t @var{rop}, const mpq_t @var{op})
+ Set the value of @var{rop} from @var{op}.
+ @end deftypefun
+ 
+-@deftypefun int mpf_set_str (mpf_t @var{rop}, char *@var{str}, int @var{base})
++@deftypefun int mpf_set_str (mpf_t @var{rop}, const char *@var{str}, int @var{base})
+ Set the value of @var{rop} from the string in @var{str}.  The string is of the
+ form @samp{M@@N} or, if the base is 10 or less, alternatively @samp{MeN}.
+ @samp{M} is the mantissa and @samp{N} is the exponent.  The mantissa is always
+@@ -4734,7 +4738,7 @@
+ float functions.  Don't use an initialize-and-set function on a variable
+ already initialized!
+ 
+-@deftypefun void mpf_init_set (mpf_t @var{rop}, mpf_t @var{op})
++@deftypefun void mpf_init_set (mpf_t @var{rop}, const mpf_t @var{op})
+ @deftypefunx void mpf_init_set_ui (mpf_t @var{rop}, unsigned long int @var{op})
+ @deftypefunx void mpf_init_set_si (mpf_t @var{rop}, signed long int @var{op})
+ @deftypefunx void mpf_init_set_d (mpf_t @var{rop}, double @var{op})
+@@ -4744,7 +4748,7 @@
+ set by @code{mpf_set_default_prec}.
+ @end deftypefun
+ 
+-@deftypefun int mpf_init_set_str (mpf_t @var{rop}, char *@var{str}, int @var{base})
++@deftypefun int mpf_init_set_str (mpf_t @var{rop}, const char *@var{str}, int @var{base})
+ Initialize @var{rop} and set its value from the string in @var{str}.  See
+ @code{mpf_set_str} above for details on the assignment operation.
+ 
+@@ -4762,7 +4766,7 @@
+ @cindex Float conversion functions
+ @cindex Conversion functions
+ 
+-@deftypefun double mpf_get_d (mpf_t @var{op})
++@deftypefun double mpf_get_d (const mpf_t @var{op})
+ Convert @var{op} to a @code{double}, truncating if necessary (i.e.@: rounding
+ towards zero).
+ 
+@@ -4772,7 +4776,7 @@
+ underflow and denorm traps may or may not occur.
+ @end deftypefun
+ 
+-@deftypefun double mpf_get_d_2exp (signed long int *@var{exp}, mpf_t @var{op})
++@deftypefun double mpf_get_d_2exp (signed long int *@var{exp}, const mpf_t @var{op})
+ Convert @var{op} to a @code{double}, truncating if necessary (i.e.@: rounding
+ towards zero), and with an exponent returned separately.
+ 
+@@ -4786,8 +4790,8 @@
+ Functions,,, libc, The GNU C Library Reference Manual}).
+ @end deftypefun
+ 
+-@deftypefun long mpf_get_si (mpf_t @var{op})
+-@deftypefunx {unsigned long} mpf_get_ui (mpf_t @var{op})
++@deftypefun long mpf_get_si (const mpf_t @var{op})
++@deftypefunx {unsigned long} mpf_get_ui (const mpf_t @var{op})
+ Convert @var{op} to a @code{long} or @code{unsigned long}, truncating any
+ fraction part.  If @var{op} is too big for the return type, the result is
+ undefined.
+@@ -4796,7 +4800,7 @@
+ (@pxref{Miscellaneous Float Functions}).
+ @end deftypefun
+ 
+-@deftypefun {char *} mpf_get_str (char *@var{str}, mp_exp_t *@var{expptr}, int @var{base}, size_t @var{n_digits}, mpf_t @var{op})
++@deftypefun {char *} mpf_get_str (char *@var{str}, mp_exp_t *@var{expptr}, int @var{base}, size_t @var{n_digits}, const mpf_t @var{op})
+ Convert @var{op} to a string of digits in base @var{base}.  The base argument
+ may vary from 2 to 62 or from @minus{}2 to @minus{}36.  Up to @var{n_digits}
+ digits will be generated.  Trailing zeros are not returned.  No more digits
+@@ -4838,19 +4842,19 @@
+ @cindex Float arithmetic functions
+ @cindex Arithmetic functions
+ 
+-@deftypefun void mpf_add (mpf_t @var{rop}, mpf_t @var{op1}, mpf_t @var{op2})
+-@deftypefunx void mpf_add_ui (mpf_t @var{rop}, mpf_t @var{op1}, unsigned long int @var{op2})
++@deftypefun void mpf_add (mpf_t @var{rop}, const mpf_t @var{op1}, const mpf_t @var{op2})
++@deftypefunx void mpf_add_ui (mpf_t @var{rop}, const mpf_t @var{op1}, unsigned long int @var{op2})
+ Set @var{rop} to @math{@var{op1} + @var{op2}}.
+ @end deftypefun
+ 
+-@deftypefun void mpf_sub (mpf_t @var{rop}, mpf_t @var{op1}, mpf_t @var{op2})
+-@deftypefunx void mpf_ui_sub (mpf_t @var{rop}, unsigned long int @var{op1}, mpf_t @var{op2})
+-@deftypefunx void mpf_sub_ui (mpf_t @var{rop}, mpf_t @var{op1}, unsigned long int @var{op2})
++@deftypefun void mpf_sub (mpf_t @var{rop}, const mpf_t @var{op1}, const mpf_t @var{op2})
++@deftypefunx void mpf_ui_sub (mpf_t @var{rop}, unsigned long int @var{op1}, const mpf_t @var{op2})
++@deftypefunx void mpf_sub_ui (mpf_t @var{rop}, const mpf_t @var{op1}, unsigned long int @var{op2})
+ Set @var{rop} to @var{op1} @minus{} @var{op2}.
+ @end deftypefun
+ 
+-@deftypefun void mpf_mul (mpf_t @var{rop}, mpf_t @var{op1}, mpf_t @var{op2})
+-@deftypefunx void mpf_mul_ui (mpf_t @var{rop}, mpf_t @var{op1}, unsigned long int @var{op2})
++@deftypefun void mpf_mul (mpf_t @var{rop}, const mpf_t @var{op1}, const mpf_t @var{op2})
++@deftypefunx void mpf_mul_ui (mpf_t @var{rop}, const mpf_t @var{op1}, unsigned long int @var{op2})
+ Set @var{rop} to @math{@var{op1} @GMPtimes{} @var{op2}}.
+ @end deftypefun
+ 
+@@ -4859,39 +4863,39 @@
+ lets the user handle arithmetic exceptions in these functions in the same
+ manner as other arithmetic exceptions.
+ 
+-@deftypefun void mpf_div (mpf_t @var{rop}, mpf_t @var{op1}, mpf_t @var{op2})
+-@deftypefunx void mpf_ui_div (mpf_t @var{rop}, unsigned long int @var{op1}, mpf_t @var{op2})
+-@deftypefunx void mpf_div_ui (mpf_t @var{rop}, mpf_t @var{op1}, unsigned long int @var{op2})
++@deftypefun void mpf_div (mpf_t @var{rop}, const mpf_t @var{op1}, const mpf_t @var{op2})
++@deftypefunx void mpf_ui_div (mpf_t @var{rop}, unsigned long int @var{op1}, const mpf_t @var{op2})
++@deftypefunx void mpf_div_ui (mpf_t @var{rop}, const mpf_t @var{op1}, unsigned long int @var{op2})
+ @cindex Division functions
+ Set @var{rop} to @var{op1}/@var{op2}.
+ @end deftypefun
+ 
+-@deftypefun void mpf_sqrt (mpf_t @var{rop}, mpf_t @var{op})
++@deftypefun void mpf_sqrt (mpf_t @var{rop}, const mpf_t @var{op})
+ @deftypefunx void mpf_sqrt_ui (mpf_t @var{rop}, unsigned long int @var{op})
+ @cindex Root extraction functions
+ Set @var{rop} to @m{\sqrt{@var{op}}, the square root of @var{op}}.
+ @end deftypefun
+ 
+-@deftypefun void mpf_pow_ui (mpf_t @var{rop}, mpf_t @var{op1}, unsigned long int @var{op2})
++@deftypefun void mpf_pow_ui (mpf_t @var{rop}, const mpf_t @var{op1}, unsigned long int @var{op2})
+ @cindex Exponentiation functions
+ @cindex Powering functions
+ Set @var{rop} to @m{@var{op1}^{op2}, @var{op1} raised to the power @var{op2}}.
+ @end deftypefun
+ 
+-@deftypefun void mpf_neg (mpf_t @var{rop}, mpf_t @var{op})
++@deftypefun void mpf_neg (mpf_t @var{rop}, const mpf_t @var{op})
+ Set @var{rop} to @minus{}@var{op}.
+ @end deftypefun
+ 
+-@deftypefun void mpf_abs (mpf_t @var{rop}, mpf_t @var{op})
++@deftypefun void mpf_abs (mpf_t @var{rop}, const mpf_t @var{op})
+ Set @var{rop} to the absolute value of @var{op}.
+ @end deftypefun
+ 
+-@deftypefun void mpf_mul_2exp (mpf_t @var{rop}, mpf_t @var{op1}, mp_bitcnt_t @var{op2})
++@deftypefun void mpf_mul_2exp (mpf_t @var{rop}, const mpf_t @var{op1}, mp_bitcnt_t @var{op2})
+ Set @var{rop} to @m{@var{op1} \times 2^{op2}, @var{op1} times 2 raised to
+ @var{op2}}.
+ @end deftypefun
+ 
+-@deftypefun void mpf_div_2exp (mpf_t @var{rop}, mpf_t @var{op1}, mp_bitcnt_t @var{op2})
++@deftypefun void mpf_div_2exp (mpf_t @var{rop}, const mpf_t @var{op1}, mp_bitcnt_t @var{op2})
+ Set @var{rop} to @m{@var{op1}/2^{op2}, @var{op1} divided by 2 raised to
+ @var{op2}}.
+ @end deftypefun
+@@ -4902,10 +4906,10 @@
+ @cindex Float comparison functions
+ @cindex Comparison functions
+ 
+-@deftypefun int mpf_cmp (mpf_t @var{op1}, mpf_t @var{op2})
+-@deftypefunx int mpf_cmp_d (mpf_t @var{op1}, double @var{op2})
+-@deftypefunx int mpf_cmp_ui (mpf_t @var{op1}, unsigned long int @var{op2})
+-@deftypefunx int mpf_cmp_si (mpf_t @var{op1}, signed long int @var{op2})
++@deftypefun int mpf_cmp (const mpf_t @var{op1}, const mpf_t @var{op2})
++@deftypefunx int mpf_cmp_d (const mpf_t @var{op1}, double @var{op2})
++@deftypefunx int mpf_cmp_ui (const mpf_t @var{op1}, unsigned long int @var{op2})
++@deftypefunx int mpf_cmp_si (const mpf_t @var{op1}, signed long int @var{op2})
+ Compare @var{op1} and @var{op2}.  Return a positive value if @math{@var{op1} >
+ @var{op2}}, zero if @math{@var{op1} = @var{op2}}, and a negative value if
+ @math{@var{op1} < @var{op2}}.
+@@ -4914,7 +4918,7 @@
+ a NaN.
+ @end deftypefun
+ 
+-@deftypefun int mpf_eq (mpf_t @var{op1}, mpf_t @var{op2}, mp_bitcnt_t op3)
++@deftypefun int mpf_eq (const mpf_t @var{op1}, const mpf_t @var{op2}, mp_bitcnt_t op3)
+ Return non-zero if the first @var{op3} bits of @var{op1} and @var{op2} are
+ equal, zero otherwise.  I.e., test if @var{op1} and @var{op2} are approximately
+ equal.
+@@ -4927,12 +4931,12 @@
+ really just one ulp off, and should be considered equal.
+ @end deftypefun
+ 
+-@deftypefun void mpf_reldiff (mpf_t @var{rop}, mpf_t @var{op1}, mpf_t @var{op2})
++@deftypefun void mpf_reldiff (mpf_t @var{rop}, const mpf_t @var{op1}, const mpf_t @var{op2})
+ Compute the relative difference between @var{op1} and @var{op2} and store the
+ result in @var{rop}.  This is @math{@GMPabs{@var{op1}-@var{op2}}/@var{op1}}.
+ @end deftypefun
+ 
+-@deftypefn Macro int mpf_sgn (mpf_t @var{op})
++@deftypefn Macro int mpf_sgn (const mpf_t @var{op})
+ @cindex Sign tests
+ @cindex Float sign tests
+ Return @math{+1} if @math{@var{op} > 0}, 0 if @math{@var{op} = 0}, and
+@@ -4961,7 +4965,7 @@
+ 
+ See also @ref{Formatted Output} and @ref{Formatted Input}.
+ 
+-@deftypefun size_t mpf_out_str (FILE *@var{stream}, int @var{base}, size_t @var{n_digits}, mpf_t @var{op})
++@deftypefun size_t mpf_out_str (FILE *@var{stream}, int @var{base}, size_t @var{n_digits}, const mpf_t @var{op})
+ Print @var{op} to @var{stream}, as a string of digits.  Return the number of
+ bytes written, or if an error occurred, return 0.
+ 
+@@ -5001,7 +5005,7 @@
+ Return the number of bytes read, or if an error occurred, return 0.
+ @end deftypefun
+ 
+-@c @deftypefun void mpf_out_raw (FILE *@var{stream}, mpf_t @var{float})
++@c @deftypefun void mpf_out_raw (FILE *@var{stream}, const mpf_t @var{float})
+ @c Output @var{float} on stdio stream @var{stream}, in raw binary
+ @c format.  The float is written in a portable format, with 4 bytes of
+ @c size information, and that many bytes of limbs.  Both the size and the
+@@ -5020,9 +5024,9 @@
+ @cindex Miscellaneous float functions
+ @cindex Float miscellaneous functions
+ 
+-@deftypefun void mpf_ceil (mpf_t @var{rop}, mpf_t @var{op})
+-@deftypefunx void mpf_floor (mpf_t @var{rop}, mpf_t @var{op})
+-@deftypefunx void mpf_trunc (mpf_t @var{rop}, mpf_t @var{op})
++@deftypefun void mpf_ceil (mpf_t @var{rop}, const mpf_t @var{op})
++@deftypefunx void mpf_floor (mpf_t @var{rop}, const mpf_t @var{op})
++@deftypefunx void mpf_trunc (mpf_t @var{rop}, const mpf_t @var{op})
+ @cindex Rounding functions
+ @cindex Float rounding functions
+ Set @var{rop} to @var{op} rounded to an integer.  @code{mpf_ceil} rounds to the
+@@ -5030,16 +5034,16 @@
+ to the integer towards zero.
+ @end deftypefun
+ 
+-@deftypefun int mpf_integer_p (mpf_t @var{op})
++@deftypefun int mpf_integer_p (const mpf_t @var{op})
+ Return non-zero if @var{op} is an integer.
+ @end deftypefun
+ 
+-@deftypefun int mpf_fits_ulong_p (mpf_t @var{op})
+-@deftypefunx int mpf_fits_slong_p (mpf_t @var{op})
+-@deftypefunx int mpf_fits_uint_p (mpf_t @var{op})
+-@deftypefunx int mpf_fits_sint_p (mpf_t @var{op})
+-@deftypefunx int mpf_fits_ushort_p (mpf_t @var{op})
+-@deftypefunx int mpf_fits_sshort_p (mpf_t @var{op})
++@deftypefun int mpf_fits_ulong_p (const mpf_t @var{op})
++@deftypefunx int mpf_fits_slong_p (const mpf_t @var{op})
++@deftypefunx int mpf_fits_uint_p (const mpf_t @var{op})
++@deftypefunx int mpf_fits_sint_p (const mpf_t @var{op})
++@deftypefunx int mpf_fits_ushort_p (const mpf_t @var{op})
++@deftypefunx int mpf_fits_sshort_p (const mpf_t @var{op})
+ Return non-zero if @var{op} would fit in the respective C data type, when
+ truncated to an integer.
+ @end deftypefun
+@@ -5065,7 +5069,7 @@
+ random numbers are generated when @var{max_size} is negative.
+ @end deftypefun
+ 
+-@c @deftypefun size_t mpf_size (mpf_t @var{op})
++@c @deftypefun size_t mpf_size (const mpf_t @var{op})
+ @c Return the size of @var{op} measured in number of limbs.  If @var{op} is
+ @c zero, the returned value will be zero.  (@xref{Nomenclature}, for an
+ @c explanation of the concept @dfn{limb}.)
+@@ -5690,7 +5694,7 @@
+ fast and has good randomness properties.
+ @end deftypefun
+ 
+-@deftypefun void gmp_randinit_lc_2exp (gmp_randstate_t @var{state}, mpz_t @var{a}, @w{unsigned long @var{c}}, @w{mp_bitcnt_t @var{m2exp}})
++@deftypefun void gmp_randinit_lc_2exp (gmp_randstate_t @var{state}, const mpz_t @var{a}, @w{unsigned long @var{c}}, @w{mp_bitcnt_t @var{m2exp}})
+ @cindex Linear congruential random numbers
+ Initialize @var{state} with a linear congruential algorithm @m{X = (@var{a}X +
+ @var{c}) @bmod 2^{m2exp}, X = (@var{a}*X + @var{c}) mod 2^@var{m2exp}}.
+@@ -5758,7 +5762,7 @@
+ @cindex Random number seeding
+ @cindex Seeding random numbers
+ 
+-@deftypefun void gmp_randseed (gmp_randstate_t @var{state}, mpz_t @var{seed})
++@deftypefun void gmp_randseed (gmp_randstate_t @var{state}, const mpz_t @var{seed})
+ @deftypefunx void gmp_randseed_ui (gmp_randstate_t @var{state}, @w{unsigned long int @var{seed}})
+ Set an initial seed value into @var{state}.
+ 
+diff -rNU3 dist.orig/doc/stamp-vti dist.nbsd/doc/stamp-vti
+--- dist.orig/doc/stamp-vti	Mon May 20 15:00:17 2013
++++ dist.nbsd/doc/stamp-vti	Wed Feb 19 16:34:37 2014
+@@ -1,4 +1,4 @@
+-@set UPDATED 20 May 2013
+-@set UPDATED-MONTH May 2013
+-@set EDITION 5.1.2
+-@set VERSION 5.1.2
++@set UPDATED 30 September 2013
++@set UPDATED-MONTH September 2013
++@set EDITION 5.1.3
++@set VERSION 5.1.3
+diff -rNU3 dist.orig/doc/version.texi dist.nbsd/doc/version.texi
+--- dist.orig/doc/version.texi	Mon May 20 15:00:17 2013
++++ dist.nbsd/doc/version.texi	Wed Feb 19 16:34:37 2014
+@@ -1,4 +1,4 @@
+-@set UPDATED 20 May 2013
+-@set UPDATED-MONTH May 2013
+-@set EDITION 5.1.2
+-@set VERSION 5.1.2
++@set UPDATED 30 September 2013
++@set UPDATED-MONTH September 2013
++@set EDITION 5.1.3
++@set VERSION 5.1.3
+diff -rNU3 dist.orig/gmp-h.in dist.nbsd/gmp-h.in
+--- dist.orig/gmp-h.in	Mon May 20 14:59:56 2013
++++ dist.nbsd/gmp-h.in	Wed Feb 19 16:34:37 2014
+@@ -359,11 +359,9 @@
+     GCC 4.3 and above with -std=c99 or -std=gnu99 implements ISO C99
+     inline semantics, unless -fgnu89-inline is used.  */
+ #ifdef __GNUC__
+-#if (defined __GNUC_STDC_INLINE__) || (__GNUC__ == 4 && __GNUC_MINOR__ == 2) \
+-  || (defined __GNUC_GNU_INLINE__ && defined __cplusplus)
++#if (defined __GNUC_STDC_INLINE__) || \
++    (__GNUC__ == 4 && __GNUC_MINOR__ >= 2) || (__GNUC__ > 4)
+ #define __GMP_EXTERN_INLINE extern __inline__ __attribute__ ((__gnu_inline__))
+-#else
+-#define __GMP_EXTERN_INLINE      extern __inline__
+ #endif
+ #define __GMP_INLINE_PROTOTYPES  1
+ #endif
+@@ -1610,6 +1608,10 @@
  #define mpn_zero __MPN(zero)
- __GMP_DECLSPEC void mpn_zero __GMP_PROTO ((mp_ptr, mp_size_t));
+ __GMP_DECLSPEC void mpn_zero (mp_ptr, mp_size_t);
  
 +#define mpn_udiv_w_sdiv __MPN(udiv_w_sdiv)
-+__GMP_DECLSPEC mp_limb_t mpn_udiv_w_sdiv __GMP_PROTO ((mp_limb_t *, mp_limb_t, mp_limb_t, mp_limb_t));
++__GMP_DECLSPEC mp_limb_t mpn_udiv_w_sdiv (mp_limb_t *, mp_limb_t, mp_limb_t, mp_limb_t);
 +
 +
  /**************** mpz inlines ****************/
  
  /* The following are provided as inlines where possible, but always exist as
-diff -r -x CVS -N -U 3 dist/gmp-impl.h dist.orig/gmp-impl.h
---- dist/gmp-impl.h	2011-05-08 11:49:29.000000000 +0200
-+++ dist.orig/gmp-impl.h	2011-06-23 14:07:41.000000000 +0200
-@@ -162,7 +162,9 @@
+@@ -2222,7 +2224,7 @@
+ /* Major version number is the value of __GNU_MP__ too, above and in mp.h. */
+ #define __GNU_MP_VERSION            5
+ #define __GNU_MP_VERSION_MINOR      1
+-#define __GNU_MP_VERSION_PATCHLEVEL 2
++#define __GNU_MP_VERSION_PATCHLEVEL 3
+ #define __GNU_MP_RELEASE (__GNU_MP_VERSION * 10000 + __GNU_MP_VERSION_MINOR * 100 + __GNU_MP_VERSION_PATCHLEVEL)
+ 
+ #define __GMP_H__
+diff -rNU3 dist.orig/gmp-impl.h dist.nbsd/gmp-impl.h
+--- dist.orig/gmp-impl.h	Mon May 20 14:59:56 2013
++++ dist.nbsd/gmp-impl.h	Wed Feb 19 16:34:37 2014
+@@ -196,7 +196,9 @@
  #     if defined (_AIX) || defined (_IBMR2)
   #pragma alloca
  #     else
@@ -63,38 +2333,10 @@ diff -r -x CVS -N -U 3 dist/gmp-impl.h dist.orig/gmp-impl.h
  #     endif
  #    endif
  #   endif
-diff -r -x CVS -N -U 3 dist/Makefile.in dist.orig/Makefile.in
---- dist/Makefile.in	2011-05-08 11:49:35.000000000 +0200
-+++ dist.orig/Makefile.in	2011-07-02 15:26:39.000000000 +0200
-@@ -1242,7 +1242,8 @@
- uninstall: uninstall-recursive
- 
- install-am: all-am
--	@$(MAKE) $(AM_MAKEFLAGS) install-exec-am install-data-am
-+	@$(MAKE) $(AM_MAKEFLAGS) install-exec-am
-+	@$(MAKE) $(AM_MAKEFLAGS) install-data-am
- 
- installcheck: installcheck-recursive
- install-strip:
-diff -r -x CVS -N -U 3 dist/mpn/arm/invert_limb.asm dist.orig/mpn/arm/invert_limb.asm
---- dist/mpn/arm/invert_limb.asm	2011-05-08 11:49:29.000000000 +0200
-+++ dist.orig/mpn/arm/invert_limb.asm	2011-07-09 17:00:08.000000000 +0200
-@@ -42,7 +42,10 @@
- 	adds	r1, r3, r0
- 	adc	r12, r12, r0
- 	rsb	r0, r12, r2
--	bx	lr
-+ifdef(`ARM_THUMB_MODE',
-+`	bx	lr
-+',`	mov	pc, lr
-+')
- 
- 	ALIGN(4)
- L(4):	.word	approx_tab-8-512-L(2)
-diff -r -x CVS -N -U 3 dist/mpn/Makefile.in dist.orig/mpn/Makefile.in
---- dist/mpn/Makefile.in	2011-05-08 11:49:34.000000000 +0200
-+++ dist.orig/mpn/Makefile.in	2011-09-14 18:35:22.000000000 +0200
-@@ -994,7 +994,7 @@
+diff -rNU3 dist.orig/mpn/Makefile.in dist.nbsd/mpn/Makefile.in
+--- dist.orig/mpn/Makefile.in	Mon May 20 15:00:03 2013
++++ dist.nbsd/mpn/Makefile.in	Wed Feb 19 16:34:37 2014
+@@ -631,7 +631,7 @@
  	$(CCAS) $(COMPILE_FLAGS) tmp-$*.s -o $@
  	$(RM_TMP) tmp-$*.s
  .S.lo:
@@ -103,7 +2345,7 @@ diff -r -x CVS -N -U 3 dist/mpn/Makefile.in dist.orig/mpn/Makefile.in
  
  # .asm assembler, preprocessed with m4.
  #
-@@ -1022,7 +1022,7 @@
+@@ -659,7 +659,7 @@
  	$(CCAS) $(COMPILE_FLAGS) tmp-$*.s -o $@
  	$(RM_TMP) tmp-$*.s
  .asm.lo:
@@ -112,9 +2354,558 @@ diff -r -x CVS -N -U 3 dist/mpn/Makefile.in dist.orig/mpn/Makefile.in
  
  # Tell versions [3.59,3.63) of GNU make to not export all variables.
  # Otherwise a system limit (for SysV at least) may be exceeded.
-diff -r -x CVS -N -U 3 dist/mpn/powerpc32/elf.m4 dist.orig/mpn/powerpc32/elf.m4
---- dist/mpn/powerpc32/elf.m4	2011-05-08 11:49:29.000000000 +0200
-+++ dist.orig/mpn/powerpc32/elf.m4	2011-07-03 05:30:19.000000000 +0200
+diff -rNU3 dist.orig/mpn/arm/aorscnd_n.asm dist.nbsd/mpn/arm/aorscnd_n.asm
+--- dist.orig/mpn/arm/aorscnd_n.asm	Mon May 20 14:59:56 2013
++++ dist.nbsd/mpn/arm/aorscnd_n.asm	Wed Feb 19 16:34:37 2014
+@@ -117,5 +117,8 @@
+ 
+ L(end):	RETVAL
+ 	pop	{r4-r11}
+-	bx	r14
++ifdef(`ARM_THUMB_MODE',
++`	bx	r14
++',`	mov	pc, r14
++')
+ EPILOGUE()
+diff -rNU3 dist.orig/mpn/arm/aorslsh1_n.asm dist.nbsd/mpn/arm/aorslsh1_n.asm
+--- dist.orig/mpn/arm/aorslsh1_n.asm	Mon May 20 14:59:56 2013
++++ dist.nbsd/mpn/arm/aorslsh1_n.asm	Wed Feb 19 16:34:37 2014
+@@ -151,5 +151,8 @@
+ 	REVCY(r12)
+ L(rt0):	RETVAL(	r14)
+ 	pop	{r4-r10r11, r14}
+-	bx	r14
++ifdef(`ARM_THUMB_MODE',
++`	bx	r14
++',`	mov	pc, r14
++')
+ EPILOGUE()
+diff -rNU3 dist.orig/mpn/arm/bdiv_dbm1c.asm dist.nbsd/mpn/arm/bdiv_dbm1c.asm
+--- dist.orig/mpn/arm/bdiv_dbm1c.asm	Mon May 20 14:59:56 2013
++++ dist.nbsd/mpn/arm/bdiv_dbm1c.asm	Wed Feb 19 16:34:37 2014
+@@ -97,5 +97,8 @@
+ 	str	r5, [qp]
+ 	sbc	r0, r5, r12
+ 	pop	{r4, r5, r6, r7, r8}
+-	bx	lr
++ifdef(`ARM_THUMB_MODE',
++`	bx	lr
++',`	mov	pc, lr
++')
+ EPILOGUE()
+diff -rNU3 dist.orig/mpn/arm/com.asm dist.nbsd/mpn/arm/com.asm
+--- dist.orig/mpn/arm/com.asm	Mon May 20 14:59:56 2013
++++ dist.nbsd/mpn/arm/com.asm	Wed Feb 19 16:34:37 2014
+@@ -59,5 +59,9 @@
+ 	bne	L(top)
+ 
+ 	ldmfd	sp!, { r7, r8, r9 }		C restore regs from stack
+-L(rtn):	bx	lr
++L(rtn):
++ifdef(`ARM_THUMB_MODE',
++`	bx	lr
++',`	mov	pc, lr
++')
+ EPILOGUE()
+diff -rNU3 dist.orig/mpn/arm/copyd.asm dist.nbsd/mpn/arm/copyd.asm
+--- dist.orig/mpn/arm/copyd.asm	Mon May 20 14:59:56 2013
++++ dist.nbsd/mpn/arm/copyd.asm	Wed Feb 19 16:34:37 2014
+@@ -57,5 +57,9 @@
+ 	bne	L(top)
+ 
+ 	ldmfd	sp!, { r7, r8, r9 }		C restore regs from stack
+-L(rtn):	bx	lr
++L(rtn):
++ifdef(`ARM_THUMB_MODE',
++`	bx	lr
++',`	mov	pc, lr
++')
+ EPILOGUE()
+diff -rNU3 dist.orig/mpn/arm/copyi.asm dist.nbsd/mpn/arm/copyi.asm
+--- dist.orig/mpn/arm/copyi.asm	Mon May 20 14:59:56 2013
++++ dist.nbsd/mpn/arm/copyi.asm	Wed Feb 19 16:34:37 2014
+@@ -52,5 +52,9 @@
+ 	bne	L(top)
+ 
+ 	ldmfd	sp!, { r7, r8, r9 }		C restore regs from stack
+-L(rtn):	bx	lr
++L(rtn):
++ifdef(`ARM_THUMB_MODE',
++`	bx	lr
++',`	mov	pc, lr
++')
+ EPILOGUE()
+diff -rNU3 dist.orig/mpn/arm/invert_limb.asm dist.nbsd/mpn/arm/invert_limb.asm
+--- dist.orig/mpn/arm/invert_limb.asm	Mon May 20 14:59:56 2013
++++ dist.nbsd/mpn/arm/invert_limb.asm	Wed Feb 19 16:34:37 2014
+@@ -41,7 +41,10 @@
+ 	adds	r1, r12, r0
+ 	adc	r3, r3, r0
+ 	rsb	r0, r3, r2
+-	bx	lr
++ifdef(`ARM_THUMB_MODE',
++`	bx	lr
++',`	mov	pc, lr
++')
+ EPILOGUE()
+ 
+ 	.section .rodata
+diff -rNU3 dist.orig/mpn/arm/logops_n.asm dist.nbsd/mpn/arm/logops_n.asm
+--- dist.orig/mpn/arm/logops_n.asm	Mon May 20 14:59:56 2013
++++ dist.nbsd/mpn/arm/logops_n.asm	Wed Feb 19 16:34:37 2014
+@@ -123,5 +123,8 @@
+ 	pop	{ r4, r5, r6, r7 }	C popping r8-r10 here strangely fails
+ 
+ L(rtn):	pop	{ r8, r9, r10 }
+-	bx	r14
++ifdef(`ARM_THUMB_MODE',
++`	bx	r14
++',`	mov	pc, r14
++')
+ EPILOGUE()
+diff -rNU3 dist.orig/mpn/arm/lshift.asm dist.nbsd/mpn/arm/lshift.asm
+--- dist.orig/mpn/arm/lshift.asm	Mon May 20 14:59:56 2013
++++ dist.nbsd/mpn/arm/lshift.asm	Wed Feb 19 16:34:37 2014
+@@ -72,5 +72,8 @@
+ L(1):	str	r7, [rp, #-4]
+ 	lsr	r0, r4, tnc
+ 	pop	{r4, r6, r7, r8}
+-	bx	r14
++ifdef(`ARM_THUMB_MODE',
++`	bx	r14
++',`	mov	pc, r14
++')
+ EPILOGUE()
+diff -rNU3 dist.orig/mpn/arm/lshiftc.asm dist.nbsd/mpn/arm/lshiftc.asm
+--- dist.orig/mpn/arm/lshiftc.asm	Mon May 20 14:59:56 2013
++++ dist.nbsd/mpn/arm/lshiftc.asm	Wed Feb 19 16:34:37 2014
+@@ -79,5 +79,8 @@
+ 	str	r7, [rp, #-4]
+ 	lsr	r0, r4, tnc
+ 	pop	{r4, r6, r7, r8}
+-	bx	r14
++ifdef(`ARM_THUMB_MODE',
++`	bx	r14
++',`	mov	pc, r14
++')
+ EPILOGUE()
+diff -rNU3 dist.orig/mpn/arm/mod_34lsub1.asm dist.nbsd/mpn/arm/mod_34lsub1.asm
+--- dist.orig/mpn/arm/mod_34lsub1.asm	Mon May 20 14:59:56 2013
++++ dist.nbsd/mpn/arm/mod_34lsub1.asm	Wed Feb 19 16:34:37 2014
+@@ -94,7 +94,10 @@
+ 	add	r0, r0, r12, lsr #8
+ 
+ 	pop	{ r4, r5, r6, r7 }
+-	bx	lr
++ifdef(`ARM_THUMB_MODE',
++`	bx	lr
++',`	mov	pc, lr
++')
+ 
+ L(le2):	cmn	n, #1
+ 	bne	L(1)
+@@ -105,5 +108,8 @@
+ 	bic	r0, r2, #0xff000000
+ 	add	r0, r0, r2, lsr #24
+ 	pop	{ r4, r5, r6, r7 }
+-	bx	lr
++ifdef(`ARM_THUMB_MODE',
++`	bx	lr
++',`	mov	pc, lr
++')
+ EPILOGUE()
+diff -rNU3 dist.orig/mpn/arm/mode1o.asm dist.nbsd/mpn/arm/mode1o.asm
+--- dist.orig/mpn/arm/mode1o.asm	Mon May 20 14:59:56 2013
++++ dist.nbsd/mpn/arm/mode1o.asm	Wed Feb 19 16:34:37 2014
+@@ -68,5 +68,8 @@
+ 	addcc	r0, r0, #1
+ 
+ 	ldmfd	sp!, {r4, r5}
+-	bx	r14
++ifdef(`ARM_THUMB_MODE',
++`	bx	r14
++',`	mov	pc, r14
++')
+ EPILOGUE()
+diff -rNU3 dist.orig/mpn/arm/rsh1aors_n.asm dist.nbsd/mpn/arm/rsh1aors_n.asm
+--- dist.orig/mpn/arm/rsh1aors_n.asm	Mon May 20 14:59:56 2013
++++ dist.nbsd/mpn/arm/rsh1aors_n.asm	Wed Feb 19 16:34:37 2014
+@@ -108,5 +108,8 @@
+ 	str	r4, [rp, #0]
+ 	mov	r0, r11
+ 	pop	{r4-r11}
+-	bx	r14
++ifdef(`ARM_THUMB_MODE',
++`	bx	r14
++',`	mov	pc, r14
++')
+ EPILOGUE()
+diff -rNU3 dist.orig/mpn/arm/rshift.asm dist.nbsd/mpn/arm/rshift.asm
+--- dist.orig/mpn/arm/rshift.asm	Mon May 20 14:59:56 2013
++++ dist.nbsd/mpn/arm/rshift.asm	Wed Feb 19 16:34:37 2014
+@@ -70,5 +70,8 @@
+ L(1):	str	r7, [rp], #4
+ 	lsl	r0, r4, tnc
+ 	pop	{r4, r6, r7, r8}
+-	bx	r14
++ifdef(`ARM_THUMB_MODE',
++`	bx	r14
++',`	mov	pc, r14
++')
+ EPILOGUE()
+diff -rNU3 dist.orig/mpn/arm/udiv.asm dist.nbsd/mpn/arm/udiv.asm
+--- dist.orig/mpn/arm/udiv.asm	Mon May 20 14:59:56 2013
++++ dist.nbsd/mpn/arm/udiv.asm	Wed Feb 19 16:34:37 2014
+@@ -50,7 +50,10 @@
+ 
+ 	str	n1, [rem_ptr]		C store remainder
+ 	adc	r0, n0, n0		C quotient: add last carry from divstep
+-	bx	lr
++ifdef(`ARM_THUMB_MODE',
++`	bx	lr
++',`	mov	pc, lr
++')
+ 
+ L(_large_divisor):
+ 	stmfd	sp!, { r8, lr }
+Binary files dist.orig/mpn/generic/div_qr_2.c and dist.nbsd/mpn/generic/div_qr_2.c differ
+diff -rNU3 dist.orig/mpn/generic/divrem_2.c dist.nbsd/mpn/generic/divrem_2.c
+--- dist.orig/mpn/generic/divrem_2.c	Mon May 20 14:59:57 2013
++++ dist.nbsd/mpn/generic/divrem_2.c	Wed Feb 19 16:34:37 2014
+@@ -98,7 +98,7 @@
+       for (i = qxn - 1; i >= 0; i--)
+ 	{
+ 	  mp_limb_t q;
+-	  udiv_qr_3by2 (q, r1, r0, r1, r0, 0, d1, d0, di.inv32);
++	  udiv_qr_3by2 (q, r1, r0, r1, r0, CNST_LIMB(0), d1, d0, di.inv32);
+ 	  qp[i] = q;
+ 	}
+     }
+diff -rNU3 dist.orig/mpn/generic/get_d.c dist.nbsd/mpn/generic/get_d.c
+--- dist.orig/mpn/generic/get_d.c	Mon May 20 14:59:57 2013
++++ dist.nbsd/mpn/generic/get_d.c	Wed Feb 19 16:34:37 2014
+@@ -135,7 +135,7 @@
+      overflow.  After this exp can of course be reduced to anywhere within
+      the {up,size} region without underflow.  */
+   if (UNLIKELY ((unsigned long) (GMP_NUMB_BITS * size)
+-		> (unsigned long) (LONG_MAX - exp)))
++		> ((unsigned long) LONG_MAX - exp)))
+     {
+ #if _GMP_IEEE_FLOATS
+       goto ieee_infinity;
+@@ -209,7 +209,7 @@
+ 	      x <<= GMP_NAIL_BITS;
+ 	      mhi |= x >> nbits >> 11;
+ 
+-	      mlo = x << GMP_LIMB_BITS - nbits - 11;
++	      mlo = x << (GMP_LIMB_BITS - nbits - 11);
+ 	      nbits = nbits + 11 - GMP_NAIL_BITS;
+ 	    }
+ 	  else
+Binary files dist.orig/mpn/generic/mod_1_1.c and dist.nbsd/mpn/generic/mod_1_1.c differ
+diff -rNU3 dist.orig/mpn/generic/mod_1_2.c dist.nbsd/mpn/generic/mod_1_2.c
+--- dist.orig/mpn/generic/mod_1_2.c	Mon May 20 14:59:57 2013
++++ dist.nbsd/mpn/generic/mod_1_2.c	Wed Feb 19 16:34:37 2014
+@@ -51,10 +51,10 @@
+   ASSERT (B1modb <= b);		/* NB: not fully reduced mod b */
+   cps[2] = B1modb >> cnt;
+ 
+-  udiv_rnnd_preinv (B2modb, B1modb, 0, b, bi);
++  udiv_rnnd_preinv (B2modb, B1modb, CNST_LIMB(0), b, bi);
+   cps[3] = B2modb >> cnt;
+ 
+-  udiv_rnnd_preinv (B3modb, B2modb, 0, b, bi);
++  udiv_rnnd_preinv (B3modb, B2modb, CNST_LIMB(0), b, bi);
+   cps[4] = B3modb >> cnt;
+ 
+ #if WANT_ASSERT
+diff -rNU3 dist.orig/mpn/generic/mod_1_3.c dist.nbsd/mpn/generic/mod_1_3.c
+--- dist.orig/mpn/generic/mod_1_3.c	Mon May 20 14:59:57 2013
++++ dist.nbsd/mpn/generic/mod_1_3.c	Wed Feb 19 16:34:37 2014
+@@ -51,13 +51,13 @@
+   ASSERT (B1modb <= b);		/* NB: not fully reduced mod b */
+   cps[2] = B1modb >> cnt;
+ 
+-  udiv_rnnd_preinv (B2modb, B1modb, 0, b, bi);
++  udiv_rnnd_preinv (B2modb, B1modb, CNST_LIMB(0), b, bi);
+   cps[3] = B2modb >> cnt;
+ 
+-  udiv_rnnd_preinv (B3modb, B2modb, 0, b, bi);
++  udiv_rnnd_preinv (B3modb, B2modb, CNST_LIMB(0), b, bi);
+   cps[4] = B3modb >> cnt;
+ 
+-  udiv_rnnd_preinv (B4modb, B3modb, 0, b, bi);
++  udiv_rnnd_preinv (B4modb, B3modb, CNST_LIMB(0), b, bi);
+   cps[5] = B4modb >> cnt;
+ 
+ #if WANT_ASSERT
+diff -rNU3 dist.orig/mpn/generic/mod_1_4.c dist.nbsd/mpn/generic/mod_1_4.c
+--- dist.orig/mpn/generic/mod_1_4.c	Mon May 20 14:59:57 2013
++++ dist.nbsd/mpn/generic/mod_1_4.c	Wed Feb 19 16:34:37 2014
+@@ -51,16 +51,16 @@
+   ASSERT (B1modb <= b);		/* NB: not fully reduced mod b */
+   cps[2] = B1modb >> cnt;
+ 
+-  udiv_rnnd_preinv (B2modb, B1modb, 0, b, bi);
++  udiv_rnnd_preinv (B2modb, B1modb, CNST_LIMB(0), b, bi);
+   cps[3] = B2modb >> cnt;
+ 
+-  udiv_rnnd_preinv (B3modb, B2modb, 0, b, bi);
++  udiv_rnnd_preinv (B3modb, B2modb, CNST_LIMB(0), b, bi);
+   cps[4] = B3modb >> cnt;
+ 
+-  udiv_rnnd_preinv (B4modb, B3modb, 0, b, bi);
++  udiv_rnnd_preinv (B4modb, B3modb, CNST_LIMB(0), b, bi);
+   cps[5] = B4modb >> cnt;
+ 
+-  udiv_rnnd_preinv (B5modb, B4modb, 0, b, bi);
++  udiv_rnnd_preinv (B5modb, B4modb, CNST_LIMB(0), b, bi);
+   cps[6] = B5modb >> cnt;
+ 
+ #if WANT_ASSERT
+diff -rNU3 dist.orig/mpn/generic/sb_div_sec.c dist.nbsd/mpn/generic/sb_div_sec.c
+--- dist.orig/mpn/generic/sb_div_sec.c	Mon May 20 14:59:57 2013
++++ dist.nbsd/mpn/generic/sb_div_sec.c	Wed Feb 19 16:34:37 2014
+@@ -81,18 +81,9 @@
+       np2 = np;
+     }
+ 
+-  if (dn == 1)
+-    {
+-      d0 = dp2[dn - 1];
+-      invert_limb (inv32, d0);
+-    }
+-  else
+-    {
+-      d1 = dp2[dn - 1];
+-      d0 = dp2[dn - 2];
+-      invert_pi1 (dinv, d1, d0);
+-      inv32 = dinv.inv32;
+-    }
++  d0 = dp2[dn - 1];
++  d0 += (~d0 != 0);
++  invert_limb (inv32, d0);
+ 
+   /* We add nn + dn to tp here, not nn + 1 + dn, as expected.  This is since nn
+      here will have been incremented.  */
+diff -rNU3 dist.orig/mpn/generic/sbpi1_div_sec.c dist.nbsd/mpn/generic/sbpi1_div_sec.c
+--- dist.orig/mpn/generic/sbpi1_div_sec.c	Mon May 20 14:59:57 2013
++++ dist.nbsd/mpn/generic/sbpi1_div_sec.c	Wed Feb 19 16:34:37 2014
+@@ -8,7 +8,7 @@
+    SAFE TO REACH THEM THROUGH DOCUMENTED INTERFACES.  IN FACT, IT IS ALMOST
+    GUARANTEED THAT THEY WILL CHANGE OR DISAPPEAR IN A FUTURE GNU MP RELEASE.
+ 
+-Copyright 2011, 2012 Free Software Foundation, Inc.
++Copyright 2011, 2012, 2013 Free Software Foundation, Inc.
+ 
+ This file is part of the GNU MP Library.
+ 
+@@ -29,6 +29,28 @@
+ #include "gmp-impl.h"
+ #include "longlong.h"
+ 
++/* This side-channel silent division algorithm reduces the partial remainder by
++   GMP_NUMB_BITS/2 bits at a time, compared to GMP_NUMB_BITS for the main
++   division algorithm.  We do not insists on reducing by exactly
++   GMP_NUMB_BITS/2, but may leave a partial remainder that is D*B^i to 3D*B^i
++   too large (B is the limb base, D is the divisor, and i is the induction
++   variable); the subsequent step will handle the extra partial remainder bits.
++
++   With that partial remainder reduction, each step generates a quotient "half
++   limb".  The outer loop generates two quotient half limbs, an upper (q1h) and
++   a lower (q0h) which are stored sparsely in separate limb arrays.  These
++   arrays are added at the end; using separate arrays avoids data-dependent
++   carry propagation which could else pose a side-channel leakage problem.
++
++   The quotient half limbs may be between -3 to 0 from the accurate value
++   ("accurate" being the one which corresponds to a reduction to a principal
++   partial remainder).  Too small quotient half limbs correspond to too large
++   remainders, which we reduce later, as described above.
++
++   In order to keep quotients from getting too big, corresponding to a negative
++   partial remainder, we use an inverse which is slightly smaller than usually.
++*/
++
+ #if OPERATION_sbpi1_div_qr_sec
+ /* Needs (dn + 1) + (nn - dn) + (nn - dn) = 2nn - dn + 1 limbs at tp. */
+ #define FNAME mpn_sbpi1_div_qr_sec
+@@ -49,7 +71,7 @@
+        mp_limb_t dinv,
+        mp_ptr tp)
+ {
+-  mp_limb_t nh, cy, q1h, q0h, dummy, h;
++  mp_limb_t nh, cy, q1h, q0h, dummy, cnd;
+   mp_size_t i;
+   mp_ptr hp;
+ #if OPERATION_sbpi1_div_qr_sec
+@@ -74,75 +96,64 @@
+ 
+   /* Create a divisor copy shifted half a limb.  */
+   hp = tp;					/* (dn + 1) limbs */
+-  cy = mpn_lshift (hp, dp, dn, GMP_NUMB_BITS / 2);
+-  hp[dn] = dp[dn - 1] >> GMP_NUMB_BITS / 2;
++  hp[dn] = mpn_lshift (hp, dp, dn, GMP_NUMB_BITS / 2);
+ 
+ #if OPERATION_sbpi1_div_qr_sec
+   qlp = tp + (dn + 1);				/* (nn - dn) limbs */
+   qhp = tp + (nn + 1);				/* (nn - dn) limbs */
+ #endif
+ 
+-  np += nn;
+-
+-  /* Main loop.  Develop one full limb per iteration, but do it in two steps in
+-     order to avoid conditionals.  Quotient bits will be either correct or
+-     underestimates.  When a quotient is underestimated, the next quotient will
+-     compensate, since quotients are to be added at consecutive weight distance
+-     GMP_NUMB_BITS/2.  We make two quotient arrays, each with GMP_NUMB_BITS/2+2
+-     bits per entry.  The arrays are added late after the loop.  Separate
+-     arrays avoid data-dependent carry propagation.  */
++  np += nn - dn;
+   nh = 0;
++
+   for (i = nn - dn - 1; i >= 0; i--)
+     {
+       np--;
+ 
+-      nh = (nh << GMP_NUMB_BITS/2) + (np[0] >> GMP_NUMB_BITS/2);
++      nh = (nh << GMP_NUMB_BITS/2) + (np[dn] >> GMP_NUMB_BITS/2);
+       umul_ppmm (q1h, dummy, nh, dinv);
+       q1h += nh;
+ #if OPERATION_sbpi1_div_qr_sec
+       qhp[i] = q1h;
+ #endif
+-      cy = mpn_submul_1 (np - dn, hp, dn + 1, q1h);
++      mpn_submul_1 (np, hp, dn + 1, q1h);
+ 
+-      nh = np[0];
++      nh = np[dn];
+       umul_ppmm (q0h, dummy, nh, dinv);
+       q0h += nh;
+ #if OPERATION_sbpi1_div_qr_sec
+       qlp[i] = q0h;
+ #endif
+-      cy = mpn_submul_1 (np - dn, dp, dn, q0h);
+-
+-      nh -= cy;
++      nh -= mpn_submul_1 (np, dp, dn, q0h);
+     }
+ 
+-  np[0] = nh;
+-
+-  np -= dn;
+-
+   /* 1st adjustment depends on extra high remainder limb.  */
+-  h = np[dn];
++  cnd = nh != 0;				/* FIXME: cmp-to-int */
+ #if OPERATION_sbpi1_div_qr_sec
+-  qlp[0] += h;
++  qlp[0] += cnd;
+ #endif
+-  h -= mpn_subcnd_n (np, np, dp, dn, h);
++  nh -= mpn_subcnd_n (np, np, dp, dn, cnd);
+ 
+-  /* 2nd adjustment depends on remainder/divisor comparision as well as whether
++  /* 2nd adjustment depends on remainder/divisor comparison as well as whether
+      extra remainder limb was nullified by previous subtract.  */
+   cy = mpn_sub_n (np, np, dp, dn);
+-  cy = cy == h;				/* FIXME: might leak on some archs */
++  cy = cy - nh;
+ #if OPERATION_sbpi1_div_qr_sec
+-  qlp[0] += cy;
++  qlp[0] += 1 - cy;
+ #endif
+-  mpn_addcnd_n (np, np, dp, dn, 1 - cy);
++  mpn_addcnd_n (np, np, dp, dn, cy);
+ 
+-  /* Combine quotient halves into final quotient.  */
++  /* 3rd adjustment depends on remainder/divisor comparison.  */
++  cy = mpn_sub_n (np, np, dp, dn);
+ #if OPERATION_sbpi1_div_qr_sec
+-  qh = 0;
+-  if (nn - dn != 0)
+-    {
+-      qh = mpn_lshift (qhp, qhp, nn - dn, GMP_NUMB_BITS/2);
+-      qh += mpn_add_n (qp, qhp, qlp, nn - dn);
+-    }
++  qlp[0] += 1 - cy;
++#endif
++  mpn_addcnd_n (np, np, dp, dn, cy);
++
++#if OPERATION_sbpi1_div_qr_sec
++  /* Combine quotient halves into final quotient.  */
++  qh = mpn_lshift (qhp, qhp, nn - dn, GMP_NUMB_BITS/2);
++  qh += mpn_add_n (qp, qhp, qlp, nn - dn);
+ 
+   return qh;
+ #else
+Binary files dist.orig/mpn/generic/toom_interpolate_7pts.c and dist.nbsd/mpn/generic/toom_interpolate_7pts.c differ
+diff -rNU3 dist.orig/mpn/ia64/divrem_2.asm dist.nbsd/mpn/ia64/divrem_2.asm
+--- dist.orig/mpn/ia64/divrem_2.asm	Mon May 20 14:59:57 2013
++++ dist.nbsd/mpn/ia64/divrem_2.asm	Wed Feb 19 16:34:37 2014
+@@ -1,6 +1,6 @@
+ dnl  IA-64 mpn_divrem_2 -- Divide an mpn number by a normalized 2-limb number.
+ 
+-dnl  Copyright 2010 Free Software Foundation, Inc.
++dnl  Copyright 2010, 2013 Free Software Foundation, Inc.
+ 
+ dnl  This file is part of the GNU MP Library.
+ 
+@@ -98,17 +98,17 @@
+ 	br.call.sptk.many b0 = mpn_invert_limb
+ 	;;
+ 	setf.sig f11 = r8		// di (non-final)
+-	setf.sig f18 = r39		// d1
+-	setf.sig f17 = r36		// d0
++	setf.sig f34 = r39		// d1
++	setf.sig f33 = r36		// d0
+ 	mov	 r1 = r43
+ 	;;
+ 	mov	 r17 = 1
+ 	setf.sig f9 = r38		// n2
+-	xma.l	 f6 = f11, f18, f0	// t0 = LO(di * d1)
++	xma.l	 f6 = f11, f34, f0	// t0 = LO(di * d1)
+ 	;;
+ 	setf.sig f10 = r37		// n1
+ 	setf.sig f15 = r17		// 1
+-	xma.hu	 f8 = f11, f17, f0	// s0 = HI(di * d0)
++	xma.hu	 f8 = f11, f33, f0	// s0 = HI(di * d0)
+ 	;;
+ 	getf.sig r17 = f6
+ 	getf.sig r16 = f8
+@@ -178,7 +178,7 @@
+   (p9)	br.cond.dptk .L52
+ .L46:
+ ')
+-	setf.sig f16 = r8		// di
++	setf.sig f32 = r8		// di
+ 	shladd	 r32 = r35, 3, r32
+ 	;;
+ 
+@@ -189,8 +189,8 @@
+ 	;;
+  (p8)	mov	 r37 = r0
+  (p9)	ld8	 r37 = [r34], -8
+-	xma.hu	 f8 = f9, f16, f10	//				0,29
+-	xma.l	 f12 = f9, f16, f10	//				0
++	xma.hu	 f8 = f9, f32, f10	//				0,29
++	xma.l	 f12 = f9, f32, f10	//				0
+ 	;;
+ 	getf.sig r20 = f12		// q0				4
+ 	xma.l	 f13 = f15, f8, f9	// q += n2			4
+@@ -198,8 +198,8 @@
+ 	;;
+ 	getf.sig r18 = f13		//				8
+ 	xma.l	 f7 = f14, f13, f10	//				8
+-	xma.l	 f6 = f17, f13, f17	// t0 = LO(d0*q+d0)		8
+-	xma.hu	 f9 = f17, f13, f17	// t1 = HI(d0*q+d0)		9
++	xma.l	 f6 = f33, f13, f33	// t0 = LO(d0*q+d0)		8
++	xma.hu	 f9 = f33, f13, f33	// t1 = HI(d0*q+d0)		9
+ 	;;
+ 	getf.sig r38 = f7		// n1				12
+ 	getf.sig r16 = f6		//				13
+diff -rNU3 dist.orig/mpn/powerpc32/elf.m4 dist.nbsd/mpn/powerpc32/elf.m4
+--- dist.orig/mpn/powerpc32/elf.m4	Mon May 20 14:59:57 2013
++++ dist.nbsd/mpn/powerpc32/elf.m4	Wed Feb 19 16:34:37 2014
 @@ -41,9 +41,11 @@
  m4_assert_numargs(2)
  `ifdef(`PIC',`
@@ -129,15 +2920,319 @@ diff -r -x CVS -N -U 3 dist/mpn/powerpc32/elf.m4 dist.orig/mpn/powerpc32/elf.m4
  	lwz	$1, $2@got($1)
  ',`
  	lis	$1, $2@ha
-diff -r -x CVS -N -U 3 dist/tests/rand/findlc.c dist.orig/tests/rand/findlc.c
---- dist/tests/rand/findlc.c	2011-05-08 11:49:29.000000000 +0200
-+++ dist.orig/tests/rand/findlc.c	2011-06-20 07:54:47.000000000 +0200
+diff -rNU3 dist.orig/mpn/powerpc64/p6/lshift.asm dist.nbsd/mpn/powerpc64/p6/lshift.asm
+--- dist.orig/mpn/powerpc64/p6/lshift.asm	Mon May 20 14:59:57 2013
++++ dist.nbsd/mpn/powerpc64/p6/lshift.asm	Wed Feb 19 16:34:37 2014
+@@ -1,6 +1,6 @@
+ dnl  PowerPC-64 mpn_lshift -- rp[] = up[] << cnt
+ 
+-dnl  Copyright 2003, 2005, 2010 Free Software Foundation, Inc.
++dnl  Copyright 2003, 2005, 2010, 2013 Free Software Foundation, Inc.
+ 
+ dnl  This file is part of the GNU MP Library.
+ 
+@@ -27,8 +27,7 @@
+ 
+ C TODO
+ C  * Micro-optimise header code
+-C  * Write analogous lshiftc.asm
+-C  * Perhaps do 4-way unrolling, for 2.5 c/l on POWER6.  The code is 4248
++C  * Perhaps do 4-way unrolling, for 2.5 c/l on POWER6.  The code is 4236
+ C    bytes, 4-way code would become about 50% larger.
+ 
+ C INPUT PARAMETERS
+@@ -43,45 +42,49 @@
+ 
+ ASM_START()
+ PROLOGUE(mpn_lshift)
++
++ifdef(`HAVE_ABI_mode32',`
++	rldicl	n, n, 0,32		C FIXME: avoid this zero extend
++')
+ 	mflr	r12
+-	bcl	20, 31, L(r)		C get pc using a local "call"
+-L(r):	mflr	r11
+-	sldi	r0, n, 3
++	sldi	r8, n, 3
+ 	sldi	r10, cnt, 6		C multiply cnt by size of a SHIFT block
+-	addi	r11, r11, L(e1)-Lr-64	C address of L(e1) label in SHIFT(1)
+-	add	up, up, r0		C make up point at end of up[]
++	LEAL(	r11, L(e1))		C address of L(e1) label in SHIFT(1)
++	add	up, up, r8		C make up point at end of up[]
+ 	add	r11, r11, r10		C address of L(oN) for N = cnt
+-	add	rp, rp_param, r0	C make rp point at end of rp[]
++	srdi	r10, n, 1
++	add	rp, rp_param, r8	C make rp point at end of rp[]
+ 	subfic	tnc, cnt, 64
+-	rlwinm.  r8, n, 0,31,31		C extract bit 0
++	rlwinm.	r8, n, 0,31,31		C extract bit 0
++	mtctr	r10
+ 	beq	L(evn)
+ 
+ L(odd):	ld	r9, -8(up)
+ 	cmpdi	cr0, n, 1		C n = 1?
+ 	beq	L(1)
+ 	ld	r8, -16(up)
+-	addi	r11, r11, L(o1)-L(e1)
++	addi	r11, r11, -84		C L(o1) - L(e1) - 64
+ 	mtlr	r11
+-	srdi	r11, n, 1
+ 	srd	r3, r9, tnc		C retval
+ 	addi	up, up, 8
+ 	addi	rp, rp, -8
+-	mtctr	r11
+ 	blr				C branch to L(oN)
+ 
+ L(evn):	ld	r8, -8(up)
+ 	ld	r9, -16(up)
++	addi	r11, r11, -64
+ 	mtlr	r11
+-	addi	n, n, 1
+-	srdi	r10, n, 1
+ 	srd	r3, r8, tnc		C retval
+-	mtctr	r10
+ 	blr				C branch to L(eN)
+ 
+ L(1):	srd	r3, r9, tnc		C retval
+ 	sld	r8, r9, cnt
+ 	std	r8, -8(rp)
+ 	mtlr	r12
++ifdef(`HAVE_ABI_mode32',
++`	mr	r4, r3
++	srdi	r3, r3, 32
++')
+ 	blr
+ 
+ 
+@@ -109,5 +112,10 @@
+ 
+ L(com):	std	r10, -16(rp)
+ 	mtlr	r12
++ifdef(`HAVE_ABI_mode32',
++`	mr	r4, r3
++	srdi	r3, r3, 32
++')
+ 	blr
+ EPILOGUE()
++ASM_END()
+diff -rNU3 dist.orig/mpn/powerpc64/p6/lshiftc.asm dist.nbsd/mpn/powerpc64/p6/lshiftc.asm
+--- dist.orig/mpn/powerpc64/p6/lshiftc.asm	Mon May 20 14:59:57 2013
++++ dist.nbsd/mpn/powerpc64/p6/lshiftc.asm	Wed Feb 19 16:34:37 2014
+@@ -1,6 +1,6 @@
+ dnl  PowerPC-64 mpn_lshiftc -- rp[] = ~up[] << cnt
+ 
+-dnl  Copyright 2003, 2005, 2010 Free Software Foundation, Inc.
++dnl  Copyright 2003, 2005, 2010, 2013 Free Software Foundation, Inc.
+ 
+ dnl  This file is part of the GNU MP Library.
+ 
+@@ -27,7 +27,7 @@
+ 
+ C TODO
+ C  * Micro-optimise header code
+-C  * Perhaps do 4-way unrolling, for 2.5 c/l on POWER6.  The code is 4248
++C  * Perhaps do 4-way unrolling, for 2.5 c/l on POWER6.  The code is 4236
+ C    bytes, 4-way code would become about 50% larger.
+ 
+ C INPUT PARAMETERS
+@@ -42,39 +42,39 @@
+ 
+ ASM_START()
+ PROLOGUE(mpn_lshiftc)
++
++ifdef(`HAVE_ABI_mode32',`
++	rldicl	n, n, 0,32		C FIXME: avoid this zero extend
++')
+ 	mflr	r12
+-	bcl	20, 31, L(r)		C get pc using a local "call"
+-L(r):	mflr	r11
+-	sldi	r0, n, 3
++	sldi	r8, n, 3
+ 	sldi	r10, cnt, 6		C multiply cnt by size of a SHIFT block
+-	addi	r11, r11, L(e1)-Lr-64	C address of L(e1) label in SHIFT(1)
+-	add	up, up, r0		C make up point at end of up[]
++	LEAL(	r11, L(e1))		C address of L(e1) label in SHIFT(1)
++	add	up, up, r8		C make up point at end of up[]
+ 	add	r11, r11, r10		C address of L(oN) for N = cnt
+-	add	rp, rp_param, r0	C make rp point at end of rp[]
++	srdi	r10, n, 1
++	add	rp, rp_param, r8	C make rp point at end of rp[]
+ 	subfic	tnc, cnt, 64
+-	rlwinm.  r8, n, 0,31,31		C extract bit 0
++	rlwinm.	r8, n, 0,31,31		C extract bit 0
++	mtctr	r10
+ 	beq	L(evn)
+ 
+ L(odd):	ld	r9, -8(up)
+ 	cmpdi	cr0, n, 1		C n = 1?
+ 	beq	L(1)
+ 	ld	r8, -16(up)
+-	addi	r11, r11, L(o1)-L(e1)
++	addi	r11, r11, -88		C L(o1) - L(e1) - 64
+ 	mtlr	r11
+-	srdi	r11, n, 1
+ 	srd	r3, r9, tnc		C retval
+ 	addi	up, up, 8
+ 	addi	rp, rp, -8
+-	mtctr	r11
+ 	blr				C branch to L(oN)
+ 
+ L(evn):	ld	r8, -8(up)
+ 	ld	r9, -16(up)
++	addi	r11, r11, -64
+ 	mtlr	r11
+-	addi	n, n, 1
+-	srdi	r10, n, 1
+ 	srd	r3, r8, tnc		C retval
+-	mtctr	r10
+ 	blr				C branch to L(eN)
+ 
+ L(1):	srd	r3, r9, tnc		C retval
+@@ -82,6 +82,10 @@
+ 	nor	r8, r8, r8
+ 	std	r8, -8(rp)
+ 	mtlr	r12
++ifdef(`HAVE_ABI_mode32',
++`	mr	r4, r3
++	srdi	r3, r3, 32
++')
+ 	blr
+ 
+ 
+@@ -112,5 +116,10 @@
+ 	std	r11, -8(rp)
+ 	std	r10, -16(rp)
+ 	mtlr	r12
++ifdef(`HAVE_ABI_mode32',
++`	mr	r4, r3
++	srdi	r3, r3, 32
++')
+ 	blr
+ EPILOGUE()
++ASM_END()
+diff -rNU3 dist.orig/mpn/powerpc64/p6/rshift.asm dist.nbsd/mpn/powerpc64/p6/rshift.asm
+--- dist.orig/mpn/powerpc64/p6/rshift.asm	Mon May 20 14:59:57 2013
++++ dist.nbsd/mpn/powerpc64/p6/rshift.asm	Wed Feb 19 16:34:37 2014
+@@ -1,6 +1,6 @@
+ dnl  PowerPC-64 mpn_rshift -- rp[] = up[] << cnt
+ 
+-dnl  Copyright 2003, 2005, 2010 Free Software Foundation, Inc.
++dnl  Copyright 2003, 2005, 2010, 2013 Free Software Foundation, Inc.
+ 
+ dnl  This file is part of the GNU MP Library.
+ 
+@@ -42,44 +42,48 @@
+ 
+ ASM_START()
+ PROLOGUE(mpn_rshift)
++
++ifdef(`HAVE_ABI_mode32',`
++	rldicl	n, n, 0,32		C FIXME: avoid this zero extend
++')
+ 	mflr	r12
+-	bcl	20, 31, L(r)		C get pc using a local "call"
+-L(r):	mflr	r11
+-	addi	r11, r11, L(e1)-Lr-64	C address of L(e1) label in SHIFT(1)
++	LEAL(	r11, L(e1))		C address of L(e1) label in SHIFT(1)
+ 	sldi	r10, cnt, 6		C multiply cnt by size of a SHIFT block
+ 	add	r11, r11, r10		C address of L(oN) for N = cnt
++	srdi	r10, n, 1
+ 	mr	rp, rp_param
+ 	subfic	tnc, cnt, 64
+-	rlwinm.  r8, n, 0,31,31		C extract bit 0
++	rlwinm.	r8, n, 0,31,31		C extract bit 0
++	mtctr	r10
+ 	beq	L(evn)
+ 
+ L(odd):	ld	r9, 0(up)
+ 	cmpdi	cr0, n, 1		C n = 1?
+ 	beq	L(1)
+ 	ld	r8, 8(up)
+-	addi	r11, r11, L(o1)-L(e1)
++	addi	r11, r11, -84		C L(o1) - L(e1) - 64
+ 	mtlr	r11
+-	srdi	r11, n, 1
+ 	sld	r3, r9, tnc		C retval
+ 	addi	up, up, 8
+ 	addi	rp, rp, 8
+-	mtctr	r11
+ 	blr				C branch to L(oN)
+ 
+ L(evn):	ld	r8, 0(up)
+ 	ld	r9, 8(up)
++	addi	r11, r11, -64
+ 	mtlr	r11
+-	addi	n, n, 1
+-	srdi	r10, n, 1
+ 	sld	r3, r8, tnc		C retval
+ 	addi	up, up, 16
+-	mtctr	r10
+ 	blr				C branch to L(eN)
+ 
+ L(1):	sld	r3, r9, tnc		C retval
+ 	srd	r8, r9, cnt
+ 	std	r8, 0(rp)
+ 	mtlr	r12
++ifdef(`HAVE_ABI_mode32',
++`	mr	r4, r3
++	srdi	r3, r3, 32
++')
+ 	blr
+ 
+ 
+@@ -107,5 +111,10 @@
+ 
+ L(com):	std	r10, 8(rp)
+ 	mtlr	r12
++ifdef(`HAVE_ABI_mode32',
++`	mr	r4, r3
++	srdi	r3, r3, 32
++')
+ 	blr
+ EPILOGUE()
++ASM_END()
+diff -rNU3 dist.orig/mpz/kronzs.c dist.nbsd/mpz/kronzs.c
+--- dist.orig/mpz/kronzs.c	Mon May 20 14:59:58 2013
++++ dist.nbsd/mpz/kronzs.c	Wed Feb 19 16:34:37 2014
+@@ -50,7 +50,7 @@
+ #endif
+ 
+   result_bit1 = JACOBI_BSGN_SS_BIT1 (a_size, b);
+-  b_limb = (unsigned long) ABS (b);
++  b_limb = ABS_CAST (unsigned long, b);
+   a_ptr = PTR(a);
+ 
+   if ((b_limb & 1) == 0)
+diff -rNU3 dist.orig/tests/mpz/t-mfac_uiui.c dist.nbsd/tests/mpz/t-mfac_uiui.c
+--- dist.orig/tests/mpz/t-mfac_uiui.c	Mon May 20 14:59:58 2013
++++ dist.nbsd/tests/mpz/t-mfac_uiui.c	Wed Feb 19 16:34:37 2014
+@@ -66,7 +66,7 @@
+       MPZ_CHECK_FORMAT (res);
+       if (mpz_cmp (ref[m], res) != 0)
+         {
+-          printf ("mpz_mfac_uiui(%lu,&i) wrong\n", n, MULTIFAC_WHEEL);
++          printf ("mpz_mfac_uiui(%lu,%d) wrong\n", n, MULTIFAC_WHEEL);
+           printf ("  got  "); mpz_out_str (stdout, 10, res); printf("\n");
+           printf ("  want "); mpz_out_str (stdout, 10, ref[m]); printf("\n");
+           abort ();
+@@ -75,7 +75,7 @@
+       MPZ_CHECK_FORMAT (res);
+       if (mpz_cmp (ref2[m2], res) != 0)
+         {
+-          printf ("mpz_mfac_uiui(%lu,&i) wrong\n", n, MULTIFAC_WHEEL2);
++          printf ("mpz_mfac_uiui(%lu,%d) wrong\n", n, MULTIFAC_WHEEL2);
+           printf ("  got  "); mpz_out_str (stdout, 10, res); printf("\n");
+           printf ("  want "); mpz_out_str (stdout, 10, ref2[m2]); printf("\n");
+           abort ();
+diff -rNU3 dist.orig/tests/rand/findlc.c dist.nbsd/tests/rand/findlc.c
+--- dist.orig/tests/rand/findlc.c	Mon May 20 14:59:58 2013
++++ dist.nbsd/tests/rand/findlc.c	Wed Feb 19 16:34:37 2014
 @@ -27,7 +27,7 @@
  #define RCSID(msg) \
  static /**/const char *const rcsid[] = { (char *)rcsid, "\100(#)" msg }
  
 -RCSID("$Id$");
-+RCSID("$Id: findlc.c,v 1.1.1.1 2011/06/20 05:54:47 mrg Exp $");
++RCSID("$Id: findlc.c,v 1.1.1.2 2013/11/29 07:49:48 mrg Exp $");
  
  int g_debug = 0;
  

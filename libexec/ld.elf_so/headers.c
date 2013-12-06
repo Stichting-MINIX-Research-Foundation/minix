@@ -1,4 +1,4 @@
-/*	$NetBSD: headers.c,v 1.43 2012/08/15 03:46:06 matt Exp $	 */
+/*	$NetBSD: headers.c,v 1.52 2013/08/03 13:17:05 skrll Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: headers.c,v 1.43 2012/08/15 03:46:06 matt Exp $");
+__RCSID("$NetBSD: headers.c,v 1.52 2013/08/03 13:17:05 skrll Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -68,6 +68,7 @@ _rtld_digest_dynamic(const char *execname, Obj_Entry *obj)
 {
 	Elf_Dyn        *dynp;
 	Needed_Entry  **needed_tail = &obj->needed;
+	const Elf_Dyn  *dyn_soname = NULL;
 	const Elf_Dyn  *dyn_rpath = NULL;
 	bool		use_pltrel = false;
 	bool		use_pltrela = false;
@@ -75,7 +76,9 @@ _rtld_digest_dynamic(const char *execname, Obj_Entry *obj)
 	Elf_Addr	pltrel = 0, pltrelsz = 0;
 	Elf_Addr	init = 0, fini = 0;
 
+	dbg(("headers: digesting PT_DYNAMIC at %p", obj->dynamic));
 	for (dynp = obj->dynamic; dynp->d_tag != DT_NULL; ++dynp) {
+		dbg(("  d_tag %ld at %p", (long)dynp->d_tag, dynp));
 		switch (dynp->d_tag) {
 
 		case DT_REL:
@@ -220,7 +223,7 @@ _rtld_digest_dynamic(const char *execname, Obj_Entry *obj)
 			break;
 
 		case DT_SONAME:
-			/* Not used by the dynamic linker. */
+			dyn_soname = dynp;
 			break;
 
 		case DT_INIT:
@@ -231,10 +234,14 @@ _rtld_digest_dynamic(const char *execname, Obj_Entry *obj)
 		case DT_INIT_ARRAY:
 			obj->init_array =
 			    (fptr_t *)(obj->relocbase + dynp->d_un.d_ptr);
+			dbg(("headers: DT_INIT_ARRAY at %p",
+			    obj->init_array));
 			break;
 
 		case DT_INIT_ARRAYSZ:
 			obj->init_arraysz = dynp->d_un.d_val / sizeof(fptr_t);
+			dbg(("headers: DT_INIT_ARRAYZ %zu",
+			    obj->init_arraysz));
 			break;
 #endif
 
@@ -246,10 +253,14 @@ _rtld_digest_dynamic(const char *execname, Obj_Entry *obj)
 		case DT_FINI_ARRAY:
 			obj->fini_array =
 			    (fptr_t *)(obj->relocbase + dynp->d_un.d_ptr);
+			dbg(("headers: DT_FINI_ARRAY at %p",
+			    obj->fini_array));
 			break;
 
 		case DT_FINI_ARRAYSZ:
-			obj->fini_arraysz = dynp->d_un.d_val / sizeof(fptr_t); 
+			obj->fini_arraysz = dynp->d_un.d_val / sizeof(fptr_t);
+			dbg(("headers: DT_FINI_ARRAYZ %zu",
+			    obj->fini_arraysz));
 			break;
 #endif
 
@@ -348,6 +359,10 @@ _rtld_digest_dynamic(const char *execname, Obj_Entry *obj)
 		_rtld_add_paths(execname, &obj->rpaths, obj->strtab +
 		    dyn_rpath->d_un.d_val);
 	}
+	if (dyn_soname != NULL) {
+		_rtld_object_add_name(obj, obj->strtab +
+		    dyn_soname->d_un.d_val);
+	}
 }
 
 /*
@@ -370,21 +385,24 @@ _rtld_digest_phdr(const Elf_Phdr *phdr, int phnum, caddr_t entry)
 	for (ph = phdr; ph < phlimit; ++ph) {
 		if (ph->p_type != PT_PHDR)
 			continue;
-		
-		obj->phdr = (void *)(uintptr_t)phdr->p_vaddr;
-		obj->phsize = phdr->p_memsz;
+
+		obj->phdr = (void *)(uintptr_t)ph->p_vaddr;
+		obj->phsize = ph->p_memsz;
 		obj->relocbase = (caddr_t)((uintptr_t)phdr - (uintptr_t)ph->p_vaddr);
-		dbg(("headers: phdr %p phsize %zu relocbase %lx", obj->phdr,
-		    obj->phsize, (long)obj->relocbase));
+		dbg(("headers: phdr %p (%p) phsize %zu relocbase %p",
+		    obj->phdr, phdr, obj->phsize, obj->relocbase));
 		break;
 	}
-	
+
 	for (ph = phdr; ph < phlimit; ++ph) {
 		vaddr = (Elf_Addr)(uintptr_t)(obj->relocbase + ph->p_vaddr);
 		switch (ph->p_type) {
 
 		case PT_INTERP:
 			obj->interp = (const char *)(uintptr_t)vaddr;
+			dbg(("headers: %s %p phsize %" PRImemsz,
+			    "PT_INTERP", (void *)(uintptr_t)vaddr,
+			     ph->p_memsz));
 			break;
 
 		case PT_LOAD:
@@ -399,10 +417,16 @@ _rtld_digest_phdr(const Elf_Phdr *phdr, int phnum, caddr_t entry)
 				    obj->vaddrbase;
 			}
 			++nsegs;
+			dbg(("headers: %s %p phsize %" PRImemsz,
+			    "PT_LOAD", (void *)(uintptr_t)vaddr,
+			     ph->p_memsz));
 			break;
 
 		case PT_DYNAMIC:
 			obj->dynamic = (Elf_Dyn *)(uintptr_t)vaddr;
+			dbg(("headers: %s %p phsize %" PRImemsz,
+			    "PT_DYNAMIC", (void *)(uintptr_t)vaddr,
+			     ph->p_memsz));
 			break;
 
 #if defined(__HAVE_TLS_VARIANT_I) || defined(__HAVE_TLS_VARIANT_II)
@@ -412,6 +436,18 @@ _rtld_digest_phdr(const Elf_Phdr *phdr, int phnum, caddr_t entry)
 			obj->tlsalign = ph->p_align;
 			obj->tlsinitsize = ph->p_filesz;
 			obj->tlsinit = (void *)(uintptr_t)ph->p_vaddr;
+			dbg(("headers: %s %p phsize %" PRImemsz,
+			    "PT_TLS", (void *)(uintptr_t)vaddr,
+			     ph->p_memsz));
+			break;
+#endif
+#ifdef __ARM_EABI__
+		case PT_ARM_EXIDX:
+			obj->exidx_start = (void *)(uintptr_t)vaddr;
+			obj->exidx_sz = ph->p_memsz;
+			dbg(("headers: %s %p phsize %" PRImemsz,
+			    "PT_ARM_EXIDX", (void *)(uintptr_t)vaddr,
+			     ph->p_memsz));
 			break;
 #endif
 		}

@@ -1,4 +1,4 @@
-.\"	$NetBSD: terminfo.3,v 1.8 2011/10/04 11:01:14 roy Exp $
+.\"	$NetBSD: terminfo.3,v 1.11 2013/07/20 21:39:56 wiz Exp $
 .\"
 .\" Copyright (c) 2009, 2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 4, 2011
+.Dd January 25, 2013
 .Dt TERMINFO 3
 .Os
 .Sh NAME
@@ -187,6 +187,12 @@ a
 pointer inside a
 .Vt long
 can use them.
+For platforms which don't support this,
+.Dv NULL
+is returned and
+.Va errno
+is set to
+.Er ENOTSUPP .
 The string encoding and parameter application is described in
 .Xr terminfo 5 .
 .Pp
@@ -213,11 +219,12 @@ always goes to stdout.
 The
 .Fn tiparm
 function allows variadic parameters instead of 9 fixed longs.
-Numeric parameters must be integers (int) instead of longs.
-String parameters can be used even if the platform cannot fit a
+Numeric parameters must be passed as
+.Vt int .
+String parameters must be passed as
 .Vt char *
-into a
-.Vt long .
+and works on all platforms, unlike
+.Fn tparm .
 .Pp
 The
 .Fn ti_*
@@ -238,4 +245,4 @@ and
 .Xr curses 3 ,
 .Xr terminfo 5
 .Sh AUTHORS
-.An Roy Marples Aq roy@NetBSD.org
+.An Roy Marples Aq Mt roy@NetBSD.org

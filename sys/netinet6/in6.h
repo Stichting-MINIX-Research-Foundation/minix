@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.h,v 1.70 2012/06/22 14:54:35 christos Exp $	*/
+/*	$NetBSD: in6.h,v 1.75 2013/10/19 15:44:29 christos Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -63,6 +63,8 @@
 
 #ifndef _NETINET6_IN6_H_
 #define _NETINET6_IN6_H_
+
+#include <sys/featuretest.h>
 
 #ifndef __KAME_NETINET_IN_H_INCLUDED_
 #error "do not include netinet6/in6.h directly, include netinet/in.h.  see RFC2553"
@@ -141,9 +143,9 @@ struct in6_addr {
 #define SIN6_LEN
 #endif
 struct sockaddr_in6 {
-#ifndef __minix
+#if !defined(__minix)
 	uint8_t		sin6_len;	/* length of this struct(socklen_t)*/
-#endif /* !__minix */
+#endif /* !defined(__minix) */
 	sa_family_t	sin6_family;	/* AF_INET6 (sa_family_t) */
 	in_port_t	sin6_port;	/* Transport layer port */
 	uint32_t	sin6_flowinfo;	/* IP6 flow information */
@@ -151,7 +153,7 @@ struct sockaddr_in6 {
 	uint32_t	sin6_scope_id;	/* scope zone index */
 };
 
-#ifndef __minix
+#if !defined(__minix)
 /*
  * Local definition for masks
  */
@@ -201,7 +203,7 @@ extern const struct in6_addr in6mask128;
 #define IPV6_ADDR_INT16_MLL	0x02ff
 #endif
 #endif
-#endif /* !__minix */
+#endif /* !defined(__minix) */
 
 /*
  * Definition of some useful macros to handle IP6 addresses
@@ -367,7 +369,7 @@ extern const struct in6_addr in6addr_linklocal_allrouters;
 	 (a)->ia6_lifetime.ia6t_vltime)
 #endif
 
-#ifndef __minix 
+#if !defined(__minix)
 /*
  * Options for use with [gs]etsockopt at the IPV6 level.
  * First word of comment is data type; bool is stored in int.
@@ -703,7 +705,10 @@ void	in6_delayed_cksum(struct mbuf *);
 int	in6_localaddr(const struct in6_addr *);
 int	in6_addrscope(const struct in6_addr *);
 struct	in6_ifaddr *in6_ifawithifp(struct ifnet *, struct in6_addr *);
+extern void in6_if_link_up(struct ifnet *);
+extern void in6_if_link_down(struct ifnet *);
 extern void in6_if_up(struct ifnet *);
+extern void in6_if_down(struct ifnet *);
 #ifndef __FreeBSD__
 extern int in6_src_sysctl(void *, size_t *, void *, size_t);
 #endif
@@ -771,6 +776,12 @@ void	in6_sin_2_v4mapsin6(struct sockaddr_in *, struct sockaddr_in6 *);
 void	in6_sin6_2_sin_in_sock(struct sockaddr *);
 void	in6_sin_2_v4mapsin6_in_sock(struct sockaddr **);
 
+#define INET6_IS_ADDR_LINKLOCAL		1
+#define INET6_IS_ADDR_MC_LINKLOCAL	2
+#define INET6_IS_ADDR_SITELOCAL		4
+void	inet6_getscopeid(struct sockaddr_in6 *, int);
+void	inet6_putscopeid(struct sockaddr_in6 *, int);
+
 extern int inet6_option_space(int);
 extern int inet6_option_init(void *, struct cmsghdr **, int);
 extern int inet6_option_append(struct cmsghdr *, const uint8_t *,
@@ -810,6 +821,6 @@ extern int inet6_rth_segments(const void *);
 extern struct in6_addr *inet6_rth_getaddr(const void *, int);
 __END_DECLS
 #endif /* _NETBSD_SOURCE */
-#endif /* !__minix */
+#endif /* !defined(__minix) */
 
 #endif /* !_NETINET6_IN6_H_ */

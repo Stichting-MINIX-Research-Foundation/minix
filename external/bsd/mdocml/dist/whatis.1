@@ -1,6 +1,6 @@
-.\"	$Vendor-Id: whatis.1,v 1.7 2011/12/25 19:35:44 kristaps Exp $
+.\"	$Vendor-Id: whatis.1,v 1.8 2012/03/24 01:54:43 kristaps Exp $
 .\"
-.\" Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
+.\" Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd December 25, 2011
+.Dd March 24, 2012
 .Dt WHATIS 1
 .Os
 .Sh NAME
@@ -47,6 +47,8 @@ searches for
 .Xr mandocdb 8
 databases in the default paths stipulated by
 .Xr man 1 .
+If standard output is a TTY, a result may be selected from a list and
+its manual displayed with the pager.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -95,13 +97,21 @@ If an architecture is specified for the manual, it is displayed as
 .Pp
 .D1 title(cat/arch) \- description
 .Pp
-Resulting manuals may be accessed as
+If on a TTY, results are prefixed with a numeric identifier.
 .Pp
-.Dl $ man \-s sec title
+.D1 [index] title(cat) \- description
 .Pp
-If an architecture is specified in the output, use
-.Pp
-.Dl $ man \-s sec \-S arch title
+One may choose a manual be entering the index at the prompt.
+Valid choices are displayed using
+.Ev MANPAGER ,
+or failing that ,
+.Ev PAGER
+or just
+.Xr more 1 .
+Source pages are formatted with
+.Xr mandoc 1 ;
+preformatted pages with
+.Xr cat 1 .
 .Pp
 .Nm
 is identical to running
@@ -111,6 +121,14 @@ as follows:
 .Dl $ apropos -- -i 'Nm~[[:<:]]term[[:>:]]'
 .Sh ENVIRONMENT
 .Bl -tag -width Ds
+.It Ev MANPAGER
+Default pager for manuals.
+If this is unset, falls back to
+.Ev Pager .
+.It Ev PAGER
+The second choice for a manual pager.
+If this is unset, use
+.Xr more 1 .
 .It Ev MANPATH
 Colon-separated paths modifying the default list of paths searched for
 manual databases.

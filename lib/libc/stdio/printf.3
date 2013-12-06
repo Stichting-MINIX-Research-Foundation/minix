@@ -1,4 +1,4 @@
-.\"	$NetBSD: printf.3,v 1.58 2010/12/26 12:39:54 jnemeth Exp $
+.\"	$NetBSD: printf.3,v 1.63 2013/05/04 19:17:38 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)printf.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd December 26, 2010
+.Dd May 4, 2013
 .Dt PRINTF 3
 .Os
 .Sh NAME
@@ -42,6 +42,7 @@
 .Nm dprintf
 .Nm sprintf ,
 .Nm snprintf ,
+.Nm snprintf_ss ,
 .Nm asprintf ,
 .Nm vprintf ,
 .Nm vfprintf ,
@@ -65,6 +66,8 @@
 .Fn sprintf "char * restrict str" "const char * restrict format" ...
 .Ft int
 .Fn snprintf "char * restrict str" "size_t size" "const char * restrict format" ...
+.Ft int
+.Fn snprintf_ss "char * restrict str" "size_t size" "const char * restrict format" ...
 .Ft int
 .Fn asprintf "char ** restrict ret" "const char * restrict format" ...
 .In stdarg.h
@@ -104,10 +107,11 @@ write output to the given output
 .Fn dprintf
 and
 .Fn vdprintf
-write output to the give file descriptor
+write output to the given file descriptor
 .Fa fd ;
 .Fn sprintf ,
 .Fn snprintf ,
+.Fn snprintf_ss ,
 .Fn vsprintf ,
 .Fn vsnprintf ,
 and
@@ -128,9 +132,11 @@ string that specifies how subsequent arguments
 .Xr stdarg 3 )
 are converted for output.
 .Pp
+.Fn snprintf_ss
+and
 .Fn vsnprintf_ss
-is a signal-safe standalone version that does not handle
-floating point formats.
+are signal-safe standalone versions that do not handle
+floating point formats, positional arguments, and wide characters.
 .Pp
 .Fn asprintf
 and
@@ -772,14 +778,14 @@ To allocate a 128 byte string and print into it:
 #include \*[Lt]stdarg.h\*[Gt]
 char *newfmt(const char *fmt, ...)
 {
-		char *p;
-		va_list ap;
-		if ((p = malloc(128)) == NULL)
-			return (NULL);
-		va_start(ap, fmt);
-		(void) vsnprintf(p, 128, fmt, ap);
-		va_end(ap);
-		return (p);
+	char *p;
+	va_list ap;
+	if ((p = malloc(128)) == NULL)
+		return (NULL);
+	va_start(ap, fmt);
+	(void) vsnprintf(p, 128, fmt, ap);
+	va_end(ap);
+	return (p);
 }
 .Ed
 .Sh ERRORS
@@ -884,7 +890,9 @@ Be sure to use the proper secure idiom:
 snprintf(buffer, sizeof(buffer), "%s", string);
 .Ed
 .Pp
-There is no way for printf to know the size of each argument passed.
+There is no way for
+.Fn printf
+to know the size of each argument passed.
 If you use positional arguments you must ensure that all parameters, up to the
 last positionally specified parameter, are used in the format string.
 This allows for the format string to be parsed for this information.

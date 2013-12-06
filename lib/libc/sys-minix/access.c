@@ -5,10 +5,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#ifdef __weak_alias
-__weak_alias(access, _access)
-#endif
-
 int access(name, mode)
 const char *name;
 int mode;

@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_dictionary.c,v 1.38 2012/07/27 09:10:59 pooka Exp $	*/
+/*	$NetBSD: prop_dictionary.c,v 1.39 2013/10/18 18:26:20 martin Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -338,7 +338,7 @@ _prop_dict_keysym_alloc(const char *key)
 	rpdk = _prop_rb_tree_insert_node(&_prop_dict_keysym_tree, pdk);
 	_PROP_ASSERT(rpdk == pdk);
 	_PROP_MUTEX_UNLOCK(_prop_dict_keysym_tree_mutex);
-	return (pdk);
+	return (rpdk);
 }
 
 static _prop_object_free_rv_t
@@ -655,9 +655,9 @@ static void
 _prop_dictionary_iterator_reset(void *v)
 {
 	struct _prop_dictionary_iterator *pdi = v;
-#ifdef _REENTRANT
+#if defined(__minix) && defined(_REENTRANT)
 	prop_dictionary_t pd _PROP_ARG_UNUSED = pdi->pdi_base.pi_obj;
-#endif
+#endif /* defined(__minix) && defined(_REENTRANT) */
 
 	_PROP_RWLOCK_RDLOCK(pd->pd_rwlock);
 	_prop_dictionary_iterator_reset_locked(pdi);

@@ -55,9 +55,6 @@ struct ib_mach
     ib_mach_hp300,
     ib_mach_hp700,
     ib_mach_i386,
-#ifdef __minix
-    ib_mach_i686,
-#endif
     ib_mach_landisk,
     ib_mach_macppc,
     ib_mach_news68k,
@@ -80,9 +77,6 @@ struct ib_mach * const machines[] = {
     &ib_mach_hp300,
     &ib_mach_hp700,
     &ib_mach_i386,
-#ifdef __minix
-    &ib_mach_i686,
-#endif
     &ib_mach_landisk,
     &ib_mach_macppc,
     &ib_mach_news68k,

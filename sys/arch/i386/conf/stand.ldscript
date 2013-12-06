@@ -1,0 +1,64 @@
+/*	$NetBSD: stand.ldscript,v 1.1 2013/11/01 00:19:04 christos Exp $	*/
+
+OUTPUT_FORMAT("elf32-i386-minix", "elf32-i386-minix",
+	      "elf32-i386-minix")
+OUTPUT_ARCH(i386)
+ENTRY(_start)
+SECTIONS
+{
+   /* Read-only sections, merged into text segment: */
+   .text :
+   AT (ADDR(.text) & 0x0fffffff)
+   {
+     *(.text)
+     *(.text.*)
+     *(.stub)
+   } =0
+   _etext = . ;
+   PROVIDE (etext = .) ;
+
+   .rodata :
+   AT (LOADADDR(.text) + (ADDR(.rodata) - ADDR(.text)))
+   {
+     *(.rodata)
+     *(.rodata.*)
+   }
+
+   __data_start = . ;
+   .data :
+   AT (LOADADDR(.text) + (ADDR(.data) - ADDR(.text)))
+   {
+     *(.data)
+   }
+   .data.cacheline_aligned :
+   AT (LOADADDR(.text) + (ADDR(.data.cacheline_aligned) - ADDR(.text)))
+   {
+     *(.data.cacheline_aligned)
+   }
+   .data.read_mostly :
+   AT (LOADADDR(.text) + (ADDR(.data.read_mostly) - ADDR(.text)))
+   {
+     *(.data.read_mostly)
+   }
+   _edata = . ;
+   PROVIDE (edata = .) ;
+   __bss_start = . ;
+   .bss :
+   AT (LOADADDR(.text) + (ADDR(.bss) - ADDR(.text)))
+   {
+     *(.bss)
+     *(.bss.*)
+     *(COMMON)
+     . = ALIGN(32 / 8);
+   }
+   . = ALIGN(32 / 8);
+  _end = . ;
+  PROVIDE (end = .) ;
+  /DISCARD/ : {
+    *(.eh_frame_hdr)
+    *(.eh_frame)
+    *(.rel.eh_frame)
+    *(.rela.eh_frame)
+    *(.note.netbsd.ident)
+  }
+}

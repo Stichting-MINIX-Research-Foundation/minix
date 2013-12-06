@@ -1,4 +1,4 @@
-/*	$NetBSD: login_cap.c,v 1.30 2012/04/07 16:16:34 christos Exp $	*/
+/*	$NetBSD: login_cap.c,v 1.31 2013/06/29 04:52:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995,1997 Berkeley Software Design, Inc. All rights reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: login_cap.c,v 1.30 2012/04/07 16:16:34 christos Exp $");
+__RCSID("$NetBSD: login_cap.c,v 1.31 2013/06/29 04:52:55 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
  
 #include <sys/types.h>
@@ -417,11 +417,12 @@ static struct {
 	{ RLIMIT_FSIZE,		R_CSIZE, "filesize", },
 	{ RLIMIT_DATA,		R_CSIZE, "datasize", },
 	{ RLIMIT_STACK,		R_CSIZE, "stacksize", },
-#ifndef __minix
+#if !defined(__minix)
 	{ RLIMIT_RSS,		R_CSIZE, "memoryuse", },
 	{ RLIMIT_MEMLOCK,	R_CSIZE, "memorylocked", },
 	{ RLIMIT_NPROC,		R_CNUMB, "maxproc", },
-#endif
+	{ RLIMIT_NTHR,		R_CNUMB, "maxthread", },
+#endif /* !defined(__minix) */
 	{ RLIMIT_NOFILE,	R_CNUMB, "openfiles", },
 	{ RLIMIT_CORE,		R_CSIZE, "coredumpsize", },
 #ifdef RLIMIT_SBSIZE
@@ -476,13 +477,13 @@ gsetrl(login_cap_t *lc, int what, const char *name, int type)
 		return (-1);
 	}
 
-#ifndef __minix
+#if !defined(__minix)
 	if (setrlimit(what, &rl)) {
 		syslog(LOG_ERR, "%s: setting resource limit %s: %m",
 		    lc->lc_class, name);
 		return (-1);
 	}
-#endif
+#endif /* !defined(__minix) */
 #undef	RCUR
 #undef	RMAX
 	return (0);
@@ -697,7 +698,7 @@ setusercontext(login_cap_t *lc, struct passwd *pwd, uid_t uid, u_int flags)
 	}
 	errno = 0;
 
-#ifndef __minix
+#if !defined(__minix)
 	if (flags & LOGIN_SETLOGIN)
 		if (setlogin(pwd->pw_name) == -1) {
 			syslog(LOG_ERR, "setlogin(%s) failure: %m",
@@ -705,7 +706,7 @@ setusercontext(login_cap_t *lc, struct passwd *pwd, uid_t uid, u_int flags)
 			login_close(flc);
 			return (-1);
 		}
-#endif
+#endif /* !defined(__minix) */
 
 	if (flags & LOGIN_SETUSER)
 		if (setuid(uid) == -1) {
@@ -993,8 +994,3 @@ multiply(u_quad_t n1, u_quad_t n2)
 
 	return (m);
 }
-
-#if defined(__minix) && defined(__weak_alias)
-__weak_alias(login_getpwclass, __login_getpwclass50)
-__weak_alias(setusercontext, __setusercontext50)
-#endif

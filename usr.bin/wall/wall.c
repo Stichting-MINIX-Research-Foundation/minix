@@ -65,7 +65,6 @@ __RCSID("$NetBSD: wall.c,v 1.29 2011/09/06 18:45:21 joerg Exp $");
 #include <util.h>
 
 #include "utmpentry.h"
-
 #include "term_chk.h"
 
 static void	addgroup(char *);

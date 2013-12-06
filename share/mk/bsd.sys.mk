@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.220 2012/09/23 19:20:44 joerg Exp $
+#	$NetBSD: bsd.sys.mk,v 1.230 2013/11/06 19:57:17 christos Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -38,9 +38,7 @@ CFLAGS+=	-Wno-sign-compare
 CFLAGS+=	${${ACTIVE_CC} != "clang":? -Wno-traditional :}
 .if !defined(NOGCCERROR)
 # Set assembler warnings to be fatal
-#CFLAGS+=	-Wa,--fatal-warnings
-# LSC Clang version 2.9 those not support this flag
-CFLAGS+=       ${${HAVE_LLVM:U"0.0"} != "2.9":? -Wa,--fatal-warnings:}
+CFLAGS+=	-Wa,--fatal-warnings
 .endif
 # Set linker warnings to be fatal
 # XXX no proper way to avoid "FOO is a patented algorithm" warnings
@@ -71,6 +69,9 @@ CXXFLAGS+=	${${ACTIVE_CXX} == "gcc":? -Wno-non-template-friend -Wno-pmf-conversi
 .if ${WARNS} > 4
 CFLAGS+=	-Wold-style-definition
 .endif
+.if ${WARNS} > 5 && !(defined(HAVE_GCC) && ${HAVE_GCC} <= 45)
+CFLAGS+=	-Wconversion
+.endif
 CFLAGS+=	-Wsign-compare -Wformat=2
 CFLAGS+=	${${ACTIVE_CC} == "clang":? -Wno-error=format-nonliteral :}
 CFLAGS+=	${${ACTIVE_CC} == "gcc":? -Wno-format-zero-length :}
@@ -78,14 +79,18 @@ CFLAGS+=	${${ACTIVE_CC} == "gcc":? -Wno-format-zero-length :}
 .if ${WARNS} > 3 && defined(HAVE_LLVM)
 CFLAGS+=	${${ACTIVE_CC} == "clang":? -Wpointer-sign -Wmissing-noreturn :}
 .endif
-.if (defined(HAVE_GCC) && ${HAVE_GCC} == 45 \
-     && (${MACHINE_ARCH} == "sh3eb" || \
+.if (defined(HAVE_GCC) && ${HAVE_GCC} >= 45 \
+     && (${MACHINE_ARCH} == "coldfire" || \
+	 ${MACHINE_ARCH} == "sh3eb" || \
 	 ${MACHINE_ARCH} == "sh3el" || \
 	 ${MACHINE_ARCH} == "m68k" || \
 	 ${MACHINE_ARCH} == "m68000"))
 # XXX GCC 4.5 for sh3 and m68k (which we compile with -Os) is extra noisy for
 # cases it should be better with
 CFLAGS+=	-Wno-uninitialized
+.if ${HAVE_GCC} >= 48
+CFLAGS+=	-Wno-maybe-uninitialized
+.endif
 .endif
 .endif
 
@@ -96,38 +101,21 @@ _NOWERROR=	${defined(NOGCCERROR) || (${ACTIVE_CC} == "clang" && defined(NOCLANGE
 CFLAGS+=	${${_NOWERROR} == "no" :?-Werror:} ${CWARNFLAGS}
 LINTFLAGS+=	${DESTDIR:D-d ${DESTDIR}/usr/include}
 
-.if (${MACHINE_ARCH} == "alpha") || \
-    (${MACHINE_ARCH} == "hppa") || \
-    (${MACHINE_ARCH} == "ia64") || \
-    (${MACHINE_ARCH} == "mipsel") || (${MACHINE_ARCH} == "mipseb") || \
-    (${MACHINE_ARCH} == "mips64el") || (${MACHINE_ARCH} == "mips64eb")
-HAS_SSP=	no
-.else
-HAS_SSP=	yes
-.endif
-
-.if ${USE_FORT:Uno} != "no"
-USE_SSP?=	yes
+.if (${USE_SSP:Uno} != "no") && (${BINDIR:Ux} != "/usr/mdec")
 .if !defined(KERNSRCDIR) && !defined(KERN) # not for kernels nor kern modules
 CPPFLAGS+=	-D_FORTIFY_SOURCE=2
 .endif
-.endif
-
-.if (${USE_SSP:Uno} != "no") && (${BINDIR:Ux} != "/usr/mdec")
-.if ${HAS_SSP} == "yes"
 COPTS+=	-fstack-protector -Wstack-protector 
-.if defined(__MINIX)
-COPTS+=	${${ACTIVE_CC} == "clang":? -mllvm -stack-protector-buffer-size=1 :}
-.else
 COPTS+=	${${ACTIVE_CC} == "clang":? --param ssp-buffer-size=1 :}
-.endif # defined(__MINIX)
 COPTS+=	${${ACTIVE_CC} == "gcc":? --param ssp-buffer-size=1 :}
-.endif
 .endif
 
 .if ${MKSOFTFLOAT:Uno} != "no"
 COPTS+=		-msoft-float
 FOPTS+=		-msoft-float
+.elif ${MACHINE_ARCH} == "coldfire"
+COPTS+=		-mhard-float
+FOPTS+=		-mhard-float
 .endif
 
 .if ${MKIEEEFP:Uno} != "no"
@@ -160,9 +148,9 @@ AFLAGS+=	${CPUFLAGS}
 
 .if !defined(LDSTATIC) || ${LDSTATIC} != "-static"
 # Position Independent Executable flags
-PIE_CFLAGS?=        -fPIC -DPIC
+PIE_CFLAGS?=        -fPIC
 PIE_LDFLAGS?=       -Wl,-pie -shared-libgcc
-PIE_AFLAGS?=	    -fPIC -DPIC
+PIE_AFLAGS?=	    -fPIC
 .endif
 
 # Helpers for cross-compiling
@@ -170,8 +158,9 @@ HOST_CC?=	cc
 HOST_CFLAGS?=	-O
 HOST_COMPILE.c?=${HOST_CC} ${HOST_CFLAGS} ${HOST_CPPFLAGS} -c
 HOST_COMPILE.cc?=      ${HOST_CXX} ${HOST_CXXFLAGS} ${HOST_CPPFLAGS} -c
-.if defined(HOSTPROG_CXX) 
-HOST_LINK.c?=	${HOST_CXX} ${HOST_CXXFLAGS} ${HOST_CPPFLAGS} ${HOST_LDFLAGS}
+HOST_LINK.cc?=  ${HOST_CXX} ${HOST_CXXFLAGS} ${HOST_CPPFLAGS} ${HOST_LDFLAGS}
+.if defined(HOSTPROG_CXX)
+HOST_LINK.c?=   ${HOST_LINK.cc}
 .else
 HOST_LINK.c?=	${HOST_CC} ${HOST_CFLAGS} ${HOST_CPPFLAGS} ${HOST_LDFLAGS}
 .endif
@@ -195,6 +184,7 @@ HOST_SH?=	/bin/sh
 
 ELF2ECOFF?=	elf2ecoff
 MKDEP?=		mkdep
+MKDEPCXX?=	mkdep
 OBJCOPY?=	objcopy
 OBJDUMP?=	objdump
 PAXCTL?=	paxctl

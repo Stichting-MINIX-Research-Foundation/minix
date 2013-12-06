@@ -40,13 +40,6 @@ __RCSID("$NetBSD: opendir.c,v 1.38 2011/10/15 23:00:01 christos Exp $");
 
 #include "namespace.h"
 #include "reentrant.h"
-
-#ifdef __minix
-#include <sys/cdefs.h>
-#include <sys/types.h>
-
-#endif
-
 #include "extern.h"
 
 #include <sys/param.h>
@@ -67,10 +60,6 @@ static DIR	*__opendir_common(int, const char *, int);
 
 __weak_alias(fdopendir,_fdopendir)
 
-#if defined(__weak_alias) && defined(__minix)
-__weak_alias(opendir,__opendir230)
-#endif
-
 /*
  * Open a directory.
  */
@@ -90,7 +79,6 @@ __opendir2(const char *name, int flags)
 
 	if ((fd = open(name, O_RDONLY | O_NONBLOCK | O_CLOEXEC)) == -1)
 		return NULL;
-
 	return __opendir_common(fd, name, flags);
 }
 
@@ -111,9 +99,9 @@ __opendir_common(int fd, const char *name, int flags)
 	DIR *dirp = NULL;
 	int serrno;
 	struct stat sb;
-#ifndef __minix
+#if !defined(__minix)
 	struct statvfs sfb;
-#endif
+#endif /* !defined(__minix) */
 	int error;
 
 	if (fstat(fd, &sb) || !S_ISDIR(sb.st_mode)) {
@@ -136,7 +124,7 @@ __opendir_common(int fd, const char *name, int flags)
 	 * Tweak flags for the underlying filesystem.
 	 */
 
-#ifdef __minix
+#if defined(__minix)
 	/* MOUNT_UNION and MOUNT_NFS not supported */
 	flags &= ~DTF_NODUP;
 #else
@@ -154,7 +142,7 @@ __opendir_common(int fd, const char *name, int flags)
 	if (!strncmp(sfb.f_fstypename, MOUNT_NFS, sizeof(sfb.f_fstypename))) {
 		flags |= __DTF_READALL | __DTF_RETRY_ON_BADCOOKIE;
 	}
-#endif
+#endif /* !defined(__minix) */
 
 	dirp->dd_flags = flags;
 	error = _initdir(dirp, fd, name);

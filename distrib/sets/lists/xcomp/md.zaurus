@@ -1,4 +1,1 @@
-# $NetBSD: md.zaurus,v 1.1 2010/03/14 23:19:18 mrg Exp $
-./usr/libdata/debug/usr/X11R7/bin/Xorg.debug		-unknown-	debug,xorg
-./usr/libdata/debug/usr/X11R7/bin/cvt.debug		-unknown-	debug,xorg
-./usr/libdata/debug/usr/X11R7/bin/gtf.debug		-unknown-	debug,xorg
+# $NetBSD: md.zaurus,v 1.2 2013/01/16 16:01:08 christos Exp $

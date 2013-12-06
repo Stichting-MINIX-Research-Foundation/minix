@@ -1,4 +1,4 @@
-/*	$NetBSD: umodsi3.S,v 1.1 2012/10/10 02:16:54 christos Exp $	*/
+/*	$NetBSD: umodsi3.S,v 1.4 2013/08/15 21:40:11 matt Exp $	*/
 
 /*
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
@@ -16,15 +16,22 @@
 
 #include <machine/asm.h>
 
+#ifndef __ARM_EABI__
 /* 
  * stack is aligned as there's a possibility of branching to .L_overflow
  * which makes a C call
  */
 
 ENTRY(__umodsi3)
-	stmfd	sp!, {lr}
-	sub	sp, sp, #4	/* align stack */
+#ifdef __ARM_ARCH_EXT_IDIV__
+	udiv	r3, r0, r1
+	mls	r0, r3, r1, r0
+#else
+	str	lr, [sp, #-8]!	/* push lr */
 	bl	PIC_SYM(__udivsi3, PLT)
-	add	sp, sp, #4	/* unalign stack */
 	mov	r0, r1
-	ldmfd	sp!, {pc}
+	ldr	lr, [sp], #8	/* pop lr */
+#endif
+	RET
+END(__umodsi3)
+#endif

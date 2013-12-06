@@ -17,6 +17,7 @@
 #include	<minix/sysutil.h>
 #include	<minix/timers.h>
 #include	<machine/pci.h>
+#include	<machine/vmparam.h>
 #include 	<minix/ds.h>
 #include	<minix/endpoint.h>
 #include	"kernel/const.h"

@@ -1,4 +1,4 @@
-/* $NetBSD: stty.c,v 1.22 2012/06/20 10:09:43 wiz Exp $ */
+/* $NetBSD: stty.c,v 1.23 2013/09/12 19:47:23 christos Exp $ */
 
 /*-
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)stty.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: stty.c,v 1.22 2012/06/20 10:09:43 wiz Exp $");
+__RCSID("$NetBSD: stty.c,v 1.23 2013/09/12 19:47:23 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -57,8 +57,6 @@ __RCSID("$NetBSD: stty.c,v 1.22 2012/06/20 10:09:43 wiz Exp $");
 
 #include "stty.h"
 #include "extern.h"
-
-int main(int, char *[]);
 
 int
 main(int argc, char *argv[])
@@ -99,12 +97,14 @@ main(int argc, char *argv[])
 args:	argc -= optind;
 	argv += optind;
 
-	if (ioctl(i.fd, TIOCGETD, &i.ldisc) < 0)
-		err(1, "TIOCGETD");
+	if (ioctl(i.fd, TIOCGLINED, i.ldisc) < 0)
+		err(1, "TIOCGLINED");
 	if (tcgetattr(i.fd, &i.t) < 0)
 		err(1, "tcgetattr");
 	if (ioctl(i.fd, TIOCGWINSZ, &i.win) < 0)
 		warn("TIOCGWINSZ");
+	if (ioctl(i.fd, TIOCGQSIZE, &i.queue) < 0)
+		warn("TIOCGQSIZE");
 
 	switch(fmt) {
 	case STTY_NOTSET:
@@ -113,7 +113,7 @@ args:	argc -= optind;
 		/* FALLTHROUGH */
 	case STTY_BSD:
 	case STTY_POSIX:
-		print(&i.t, &i.win, i.ldisc, fmt);
+		print(&i.t, &i.win, i.queue, i.ldisc, fmt);
 		break;
 	case STTY_GFLAG:
 		gprint(&i.t);

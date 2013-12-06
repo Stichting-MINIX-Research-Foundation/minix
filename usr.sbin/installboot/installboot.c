@@ -40,7 +40,6 @@ __RCSID("$NetBSD: installboot.c,v 1.36 2011/11/03 20:46:41 martin Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/utsname.h>
-#include <sys/ttycom.h>
 
 #include <assert.h>
 #include <err.h>
@@ -193,7 +192,11 @@ main(int argc, char *argv[])
 	if (params->machine == NULL) {
 		if (uname(&utsname) == -1)
 			err(1, "Determine uname");
+#if !defined(__minix)
 		getmachine(params, utsname.machine, "uname()");
+#else
+		getmachine(params, utsname.arch, "uname()");
+#endif /* !defined(__minix) */
 	}
 
 	/* Check that options are supported by this system */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pset.h,v 1.3 2008/05/26 17:45:51 rmind Exp $	*/
+/*	$NetBSD: pset.h,v 1.4 2013/04/27 21:35:24 joerg Exp $	*/
 
 /*
  * Copyright (c) 2008, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -30,6 +30,7 @@
 #define _SYS_PSET_H_
 
 #include <sys/cdefs.h>
+#include <sys/featuretest.h>
 #include <sys/types.h>
 
 /* Types of processor-sets */

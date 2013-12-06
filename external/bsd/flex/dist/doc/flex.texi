@@ -1,9 +1,9 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $NetBSD: flex.texi,v 1.1.1.1 2009/10/26 00:27:40 christos Exp $
+@c $NetBSD: flex.texi,v 1.1.1.2 2013/04/06 14:05:50 christos Exp $
 @c %**start of header
 @setfilename flex.info
-@settitle Lexical Analysis With Flex
 @include version.texi
+@settitle Lexical Analysis With Flex, for Flex @value{VERSION}
 @set authors Vern Paxson, Will Estes and John Millaway
 @c  "Macro Hooks" index
 @defindex hk
@@ -20,8 +20,8 @@
 The flex manual is placed under the same licensing conditions as the
 rest of flex:
 
-Copyright @copyright{} 2001, 2002, 2003, 2004, 2005, 2006, 2007 The Flex
-Project.
+Copyright @copyright{} 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2012
+The Flex Project.
 
 Copyright @copyright{} 1990, 1997 The Regents of the University of California.
 All rights reserved.
@@ -59,7 +59,7 @@ PURPOSE.
 @end copying
 
 @titlepage
-@title @value{title}
+@title Lexical Analysis with Flex
 @subtitle Edition @value{EDITION}, @value{UPDATED}
 @author @value{authors}
 @page
@@ -355,7 +355,8 @@ Here's another simple example:
     .       ++num_chars;
 
     %%
-    main()
+
+    int main()
             {
             yylex();
             printf( "# of lines = %d, # of chars = %d\n",
@@ -383,7 +384,7 @@ A somewhat more complicated example:
 
     %{
     /* need this for the call to atof() below */
-    #include math.h>
+    #include <math.h>
     %}
 
     DIGIT    [0-9]
@@ -417,9 +418,7 @@ A somewhat more complicated example:
 
     %%
 
-    main( argc, argv )
-    int argc;
-    char **argv;
+    int main( int argc, char **argv )
         {
         ++argv, --argc;  /* skip over program name */
         if ( argc > 0 )
@@ -1440,12 +1439,12 @@ avoid a name clash with the @code{C++} stream by the name of
 @code{input}.)
 
 @cindex flushing the internal buffer
-@cindex YY_FLUSH_BUFFER()
-@code{YY_FLUSH_BUFFER()} flushes the scanner's internal buffer so that
+@cindex YY_FLUSH_BUFFER
+@code{YY_FLUSH_BUFFER;} flushes the scanner's internal buffer so that
 the next time the scanner attempts to match a token, it will first
 refill the buffer using @code{YY_INPUT()} (@pxref{Generated Scanner}).
 This action is a special case of the more general
-@code{yy_flush_buffer()} function, described below (@pxref{Multiple
+@code{yy_flush_buffer;} function, described below (@pxref{Multiple
 Input Buffers})
 
 @cindex yyterminate()
@@ -1577,8 +1576,8 @@ condition remains unchanged; it does @emph{not} revert to
 @code{INITIAL}.
 
 @cindex yywrap, default for
-@cindex nowrap, %option
-@cindex %option nowrap
+@cindex noyywrap, %option
+@cindex %option noyywrapp
 If you do not supply your own version of @code{yywrap()}, then you must
 either use @code{%option noyywrap} (in which case the scanner behaves as
 though @code{yywrap()} returned 1), or you must link with @samp{-lfl} to
@@ -1758,7 +1757,7 @@ treat it as a single token, the floating-point number @samp{123.456}:
     %%
     expect-floats        BEGIN(expect);
 
-    <expect>[0-9]+@samp{.}[0-9]+      {
+    <expect>[0-9]+.[0-9]+      {
                 printf( "found a float, = %f\n",
                         atof( yytext ) );
                 }
@@ -3403,7 +3402,7 @@ which degrade performance.  These are, from most expensive to least:
     %option interactive
     %option always-interactive
 
-    @samp{^} beginning-of-line operator
+    ^ beginning-of-line operator
     yymore()
 @end verbatim
 @end example
@@ -3888,11 +3887,15 @@ Here is an example of a simple C++ scanner:
 @cindex C++ scanners, use of
 @example
 @verbatim
-        // An example of using the flex C++ scanner class.
+     // An example of using the flex C++ scanner class.
 
     %{
+    #include <iostream>
+    using namespace std;
     int mylineno = 0;
     %}
+
+    %option noyywrap
 
     string  \"[^\n"]+\"
 
@@ -3917,7 +3920,7 @@ Here is an example of a simple C++ scanner:
                 if(c == '\n')
                     ++mylineno;
 
-                else if(c == @samp{*})
+                else if(c == '*')
                     {
                     if((c = yyinput()) == '/')
                         break;
@@ -3927,23 +3930,23 @@ Here is an example of a simple C++ scanner:
                 }
             }
 
-    {number}  cout  "number "  YYText()  '\n';
+    {number}  cout << "number " << YYText() << '\n';
 
     \n        mylineno++;
 
-    {name}    cout  "name "  YYText()  '\n';
+    {name}    cout << "name " << YYText() << '\n';
 
-    {string}  cout  "string "  YYText()  '\n';
+    {string}  cout << "string " << YYText() << '\n';
 
     %%
 
     int main( int /* argc */, char** /* argv */ )
-        {
-        @code{flex}Lexer* lexer = new yyFlexLexer;
+    {
+        FlexLexer* lexer = new yyFlexLexer;
         while(lexer->yylex() != 0)
             ;
         return 0;
-        }
+    }
 @end verbatim
 @end example
 
@@ -4272,7 +4275,7 @@ it when done:
 
         yylex_init(&scanner);
 
-        while ((tok=yylex()) > 0)
+        while ((tok=yylex(scanner)) > 0)
             printf("tok=%d  yytext=%s\n", tok, yyget_text(scanner));
 
         yylex_destroy(scanner);
@@ -4566,7 +4569,7 @@ called again, you may get the following message:
 @cindex error messages, end of buffer missed
 @example
 @verbatim
-    fatal @code{flex} scanner internal error--end of buffer missed
+    fatal flex scanner internal error--end of buffer missed
 @end verbatim
 @end example
 
@@ -4810,7 +4813,7 @@ to change this in the near future, but we reserve the right to do so if we ever 
 API. 
 
 @item 64kb for the REJECT state. This will only be allocated if you use REJECT.
-The size is the large enough to hold the same number of states as characters in the input buffer. If you override the size of the
+The size is  large enough to hold the same number of states as characters in the input buffer. If you override the size of the
 input buffer (via @code{YY_BUF_SIZE}), then you automatically override the size of this buffer as well.
 
 @item 100 bytes for the start condition stack.
@@ -5084,8 +5087,8 @@ indexed by name, as described below. The file format is as follows:
                 +-------------------------------+
         Table 1 | uint16          td_id;        |
                 | uint16          td_flags;     |
-                | uint32          td_lolen;     |
                 | uint32          td_hilen;     |
+                | uint32          td_lolen;     |
                 | void            td_data[];    |
                 | uint8           td_pad64[];   |
                 +-------------------------------+
@@ -5204,11 +5207,6 @@ two integers. There is no padding between struct elements or between structs.
 The type of each member is determined by the @code{YYTD_DATA*} bits.
 @end table
 
-@item td_lolen
-Specifies the number of elements in the lowest dimension array. If this is
-a one-dimensional array, then it is simply the number of elements in this array.
-The element size is determined by the @code{td_flags} field.
-
 @item td_hilen
 If @code{td_hilen} is non-zero, then the data is a two-dimensional array.
 Otherwise, the data is a one-dimensional array. @code{td_hilen} contains the
@@ -5222,11 +5220,16 @@ by the @code{td_flags} field.  It is possible for both @code{td_lolen} and
 array, and no data is loaded, i.e., this table is simply skipped. Flex does not
 currently generate tables of zero length.
 
+@item td_lolen
+Specifies the number of elements in the lowest dimension array. If this is
+a one-dimensional array, then it is simply the number of elements in this array.
+The element size is determined by the @code{td_flags} field.
+
 @item td_data[]
 The table data. This array may be a one- or two-dimensional array, of type
 @code{int8}, @code{int16}, @code{int32}, @code{struct yy_trans_info}, or
 @code{struct yy_trans_info*},  depending upon the values in the
-@code{td_flags}, @code{td_lolen}, and @code{td_hilen} fields.
+@code{td_flags}, @code{td_hilen}, and @code{td_lolen} fields.
 
 @item td_pad64[]
 Zero or more NULL bytes, padding the entire table to the next 64-bit boundary as
@@ -8429,7 +8432,7 @@ in your scanner.
 @code{0[xX][[:xdigit:]]+}
 
 @item C99 octal constant
-@code{0[0123456]*}
+@code{0[01234567]*}
 
 @item C99 floating point constant
 @verbatim
@@ -8516,24 +8519,36 @@ more efficient when used with automatic line number processing. @xref{option-yyl
 @table @asis
 
 @item IPv4 Address
-@code{(([[:digit:]]@{1,3@}".")@{3@}([[:digit:]]@{1,3@}))}
+@verbatim
+dec-octet     [0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5]
+IPv4address   {dec-octet}\.{dec-octet}\.{dec-octet}\.{dec-octet}
+@end verbatim
 
 @item IPv6 Address
 @verbatim
-hex4         ([[:xdigit:]]{1,4})
-hexseq       ({hex4}(:{hex4}*))
-hexpart      ({hexseq}|({hexseq}::({hexseq}?))|::{hexseq})
-IPv6address  ({hexpart}(":"{IPv4address})?)
+h16           [0-9A-Fa-f]{1,4}
+ls32          {h16}:{h16}|{IPv4address}
+IPv6address   ({h16}:){6}{ls32}|
+              ::({h16}:){5}{ls32}|
+              ({h16})?::({h16}:){4}{ls32}|
+              (({h16}:){0,1}{h16})?::({h16}:){3}{ls32}|
+              (({h16}:){0,2}{h16})?::({h16}:){2}{ls32}|
+              (({h16}:){0,3}{h16})?::{h16}:{ls32}|
+              (({h16}:){0,4}{h16})?::{ls32}|
+              (({h16}:){0,5}{h16})?::{h16}|
+              (({h16}:){0,6}{h16})?::
 @end verbatim
 
-See RFC2373 for details.
+See @uref{http://www.ietf.org/rfc/rfc2373.txt, RFC 2373} for details.
+Note that you have to fold the definition of @code{IPv6address} into one
+line and that it also matches the ``unspecified address'' ``::''.
 
 @item URI
 @code{(([^:/?#]+):)?("//"([^/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))?}
 
-This pattern is nearly useless, since it allows just about any character to
-appear in a URI, including spaces and control characters.  See RFC2396 for
-details.
+This pattern is nearly useless, since it allows just about any character
+to appear in a URI, including spaces and control characters.  See
+@uref{http://www.ietf.org/rfc/rfc2396.txt, RFC 2396} for details.
 
 @end table
 

@@ -1,4 +1,4 @@
-# $NetBSD: md.macppc,v 1.36 2012/04/06 22:46:16 christos Exp $
+# $NetBSD: md.macppc,v 1.38 2013/11/17 14:34:11 alnsn Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/macppc				comp-c-include
 ./usr/include/macppc/_G_config.h		comp-obsolete		obsolete
@@ -56,6 +56,7 @@
 ./usr/include/macppc/rwlock.h			comp-c-include
 ./usr/include/macppc/setjmp.h			comp-c-include
 ./usr/include/macppc/signal.h			comp-c-include
+./usr/include/macppc/sljitarch.h		comp-c-include
 ./usr/include/macppc/spr.h			comp-obsolete		obsolete
 ./usr/include/macppc/stdarg.h			comp-obsolete		obsolete
 ./usr/include/macppc/trap.h			comp-c-include
@@ -64,7 +65,3 @@
 ./usr/include/macppc/vmparam.h			comp-c-include
 ./usr/include/macppc/wchar_limits.h		comp-c-include
 ./usr/include/macppc/z8530var.h			comp-obsolete		obsolete
-./usr/libdata/debug/usr/sbin/apm.debug		comp-sysutil-debug	debug
-./usr/libdata/debug/usr/sbin/apmd.debug		comp-sysutil-debug	debug
-./usr/libdata/debug/usr/sbin/eeprom.debug	comp-sysutil-debug	debug
-./usr/libdata/debug/usr/sbin/ofctl.debug	comp-sysutil-debug	debug

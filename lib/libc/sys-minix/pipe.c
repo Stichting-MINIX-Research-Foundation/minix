@@ -7,7 +7,6 @@
 
 #ifdef __weak_alias
 __weak_alias(pipe, _pipe)
-__weak_alias(pipe2, _pipe2)
 #endif
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: tzfile.h,v 1.10 2012/08/09 12:38:25 christos Exp $	*/
+/*	$NetBSD: tzfile.h,v 1.12 2013/09/20 19:06:54 christos Exp $	*/
 
 #ifndef TZFILE_H
 #define TZFILE_H
@@ -40,7 +40,7 @@
 
 struct tzhead {
 	char	tzh_magic[4];		/* TZ_MAGIC */
-	char	tzh_version[1];		/* '\0' or '2' as of 2005 */
+	char	tzh_version[1];		/* '\0' or '2' or '3' as of 2013 */
 	char	tzh_reserved[15];	/* reserved--must be zero */
 	char	tzh_ttisgmtcnt[4];	/* coded number of trans. time flags */
 	char	tzh_ttisstdcnt[4];	/* coded number of trans. time flags */
@@ -56,7 +56,7 @@ struct tzhead {
 **	tzh_timecnt (char [4])s		coded transition times a la time(2)
 **	tzh_timecnt (unsigned char)s	types of local time starting at above
 **	tzh_typecnt repetitions of
-**		one (char [4])		coded UTC offset in seconds
+**		one (char [4])		coded UT offset in seconds
 **		one (unsigned char)	used to set tm_isdst
 **		one (unsigned char)	that's an abbreviation list index
 **	tzh_charcnt (char)s		'\0'-terminated zone abbreviations
@@ -69,7 +69,7 @@ struct tzhead {
 **					if absent, transition times are
 **					assumed to be wall clock time
 **	tzh_ttisgmtcnt (char)s		indexed by type; if TRUE, transition
-**					time is UTC, if FALSE,
+**					time is UT, if FALSE,
 **					transition time is local time
 **					if absent, transition times are
 **					assumed to be local time
@@ -83,6 +83,13 @@ struct tzhead {
 ** instants after the last transition time stored in the file
 ** (with nothing between the newlines if there is no POSIX representation for
 ** such instants).
+**
+** If tz_version is '3' or greater, the above is extended as follows.
+** First, the POSIX TZ string's hour offset may range from -167
+** through 167 as compared to the POSIX-required 0 through 24.
+** Second, its DST start time may be January 1 at 00:00 and its stop
+** time December 31 at 24:00 plus the difference between DST and
+** standard time, indicating DST all year.
 */
 
 /*
@@ -123,7 +130,7 @@ struct tzhead {
 #define DAYSPERNYEAR	365
 #define DAYSPERLYEAR	366
 #define SECSPERHOUR	(SECSPERMIN * MINSPERHOUR)
-#define SECSPERDAY	((long) SECSPERHOUR * HOURSPERDAY)
+#define SECSPERDAY	((int_fast32_t) SECSPERHOUR * HOURSPERDAY)
 #define MONSPERYEAR	12
 
 #define TM_SUNDAY	0

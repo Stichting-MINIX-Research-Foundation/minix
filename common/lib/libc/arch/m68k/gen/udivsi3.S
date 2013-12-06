@@ -1,4 +1,4 @@
-/*	$NetBSD: udivsi3.S,v 1.2 2006/01/05 22:33:34 he Exp $	*/
+/*	$NetBSD: udivsi3.S,v 1.4 2013/07/16 23:24:18 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,20 +39,22 @@
 #if 0
 	RCSID("from: @(#)udivsi3.s	5.1 (Berkeley) 6/7/90")
 #else
-	RCSID("$NetBSD: udivsi3.S,v 1.2 2006/01/05 22:33:34 he Exp $")
+	RCSID("$NetBSD: udivsi3.S,v 1.4 2013/07/16 23:24:18 matt Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 /* unsigned / unsigned */
-ENTRY(__udivsi3)
 #ifndef __mc68010__
-	movel	%sp@(4),%d0
-	divul	%sp@(8),%d0
+ENTRY(__udivsi3)
+	movel	4(%sp),%d0
+	divul	8(%sp),%d0
 	rts
+END(__udivsi3)
 #else
-	movel	%d2, %sp@-	| save %d2
-	movel	%sp@(12), %d0	| load divisor
-	movel	%sp@(8), %d1	| load dividend
+ENTRY(__udivsi3)
+	movel	%d2, -(%sp)	| save %d2
+	movel	12(%sp), %d0	| load divisor
+	movel	8(%sp), %d1	| load dividend
 
 | first, we divide the divisor and dividend by two until 
 | the divisor fits into 16 bits:
@@ -100,7 +102,7 @@ ENTRY(__udivsi3)
 | as in mulsi3, we have to do the multiply in stages to avoid 
 | overflow:
 
-	movel	%sp@(12), %d2	| load divisor
+	movel	12(%sp), %d2	| load divisor
 	swap	%d2
 	movel	%d0, %d1
 	muluw	%d2, %d1	| high(divisor) * low(guess)
@@ -116,11 +118,12 @@ ENTRY(__udivsi3)
 	muluw	%d0, %d2	| low(guess) * low(divisor)
 	addl	%d1, %d2	| %d2 = guess * divisor
 	
-	movel	%sp@(8), %d1	| load original dividend
+	movel	8(%sp), %d1	| load original dividend
 	subl	%d2, %d1	| subtract
 	bcc	3f
 	subql	#1, %d0		| adjust quotient
 	addl	%a1, %d1	| adjust remainder
-3:	movel	%sp@+, %d2	| restore %d2
+3:	movel	(%sp)+, %d2	| restore %d2
 	rts
+END(__udivsi3)
 #endif /* __mc68010__ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.111 2011/06/12 03:36:01 rmind Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.119 2013/07/28 01:25:05 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.111 2011/06/12 03:36:01 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.119 2013/07/28 01:25:05 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -80,13 +80,14 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.111 2011/06/12 03:36:01 rmind Exp $"
 #include <sys/tree.h>
 #include <sys/kauth.h>
 
-#include <ufs/ufs/quota.h>
-#include <ufs/ufs/inode.h>
-#include <ufs/ufs/ufsmount.h>
-#include <ufs/ufs/ufs_extern.h>
+#include <ufs/lfs/ulfs_quotacommon.h>
+#include <ufs/lfs/ulfs_inode.h>
+#include <ufs/lfs/ulfsmount.h>
+#include <ufs/lfs/ulfs_extern.h>
 
 #include <ufs/lfs/lfs.h>
 #include <ufs/lfs/lfs_extern.h>
+#include <ufs/lfs/lfs_kernel.h>
 
 /* Constants for inode free bitmap */
 #define BMSHIFT 5	/* 2 ** 5 = 32 */
@@ -126,7 +127,7 @@ lfs_extend_ifile(struct lfs *fs, kauth_cred_t cred)
 
 	vp = fs->lfs_ivnode;
 	ip = VTOI(vp);
-	blkno = lblkno(fs, ip->i_size);
+	blkno = lfs_lblkno(fs, ip->i_size);
 	if ((error = lfs_balloc(vp, ip->i_size, fs->lfs_bsize, cred, 0,
 				&bp)) != 0) {
 		return (error);
@@ -207,7 +208,6 @@ lfs_valloc(struct vnode *pvp, int mode, kauth_cred_t cred,
 	ASSERT_NO_SEGLOCK(fs);
 
 	lfs_seglock(fs, SEGM_PROT);
-	vn_lock(fs->lfs_ivnode, LK_EXCLUSIVE);
 
 	/* Get the head of the freelist. */
 	LFS_GET_HEADFREE(fs, cip, cbp, &new_ino);
@@ -236,7 +236,6 @@ lfs_valloc(struct vnode *pvp, int mode, kauth_cred_t cred,
 	if (fs->lfs_freehd == LFS_UNUSED_INUM) {
 		if ((error = lfs_extend_ifile(fs, cred)) != 0) {
 			LFS_PUT_HEADFREE(fs, cip, cbp, new_ino);
-			VOP_UNLOCK(fs->lfs_ivnode);
 			lfs_segunlock(fs);
 			return error;
 		}
@@ -252,7 +251,6 @@ lfs_valloc(struct vnode *pvp, int mode, kauth_cred_t cred,
 	mutex_exit(&lfs_lock);
 	++fs->lfs_nfiles;
 
-	VOP_UNLOCK(fs->lfs_ivnode);
 	lfs_segunlock(fs);
 
 	return lfs_ialloc(fs, pvp, new_ino, new_gen, vpp);
@@ -271,7 +269,7 @@ lfs_ialloc(struct lfs *fs, struct vnode *pvp, ino_t new_ino, int new_gen,
 	ASSERT_NO_SEGLOCK(fs);
 
 	vp = *vpp;
-	mutex_enter(&ufs_hashlock);
+	mutex_enter(&ulfs_hashlock);
 	/* Create an inode to associate with the vnode. */
 	lfs_vcreate(pvp->v_mount, new_ino, vp);
 
@@ -292,14 +290,14 @@ lfs_ialloc(struct lfs *fs, struct vnode *pvp, ino_t new_ino, int new_gen,
 	}
 
 	/* Insert into the inode hash table. */
-	ufs_ihashins(ip);
-	mutex_exit(&ufs_hashlock);
+	ulfs_ihashins(ip);
+	mutex_exit(&ulfs_hashlock);
 
-	ufs_vinit(vp->v_mount, lfs_specop_p, lfs_fifoop_p, vpp);
+	ulfs_vinit(vp->v_mount, lfs_specop_p, lfs_fifoop_p, vpp);
 	vp = *vpp;
 	ip = VTOI(vp);
 
-	memset(ip->i_lfs_fragsize, 0, NDADDR * sizeof(*ip->i_lfs_fragsize));
+	memset(ip->i_lfs_fragsize, 0, ULFS_NDADDR * sizeof(*ip->i_lfs_fragsize));
 
 	uvm_vnp_setsize(vp, 0);
 	lfs_mark_vnode(vp);
@@ -313,11 +311,11 @@ void
 lfs_vcreate(struct mount *mp, ino_t ino, struct vnode *vp)
 {
 	struct inode *ip;
-	struct ufs1_dinode *dp;
-	struct ufsmount *ump;
+	struct ulfs1_dinode *dp;
+	struct ulfsmount *ump;
 
 	/* Get a pointer to the private mount structure. */
-	ump = VFSTOUFS(mp);
+	ump = VFSTOULFS(mp);
 
 	ASSERT_NO_SEGLOCK(ump->um_lfs);
 
@@ -340,8 +338,8 @@ lfs_vcreate(struct mount *mp, ino_t ino, struct vnode *vp)
 	SPLAY_INIT(&ip->i_lfs_lbtree);
 	ip->i_lfs_nbtree = 0;
 	LIST_INIT(&ip->i_lfs_segdhd);
-#ifdef QUOTA
-	ufsquota_init(ip);
+#if defined(LFS_QUOTA) || defined(LFS_QUOTA2)
+	ulfsquota_init(ip);
 #endif
 }
 
@@ -440,7 +438,6 @@ lfs_vfree(struct vnode *vp, ino_t ino, int mode)
 	mutex_exit(vp->v_interlock);
 
 	lfs_seglock(fs, SEGM_PROT);
-	vn_lock(fs->lfs_ivnode, LK_EXCLUSIVE);
 
 	lfs_unmark_vnode(vp);
 	mutex_enter(&lfs_lock);
@@ -553,20 +550,20 @@ lfs_vfree(struct vnode *vp, ino_t ino, int mode)
 	}
 #endif /* DIAGNOSTIC */
 	if (old_iaddr != LFS_UNUSED_DADDR) {
-		LFS_SEGENTRY(sup, fs, dtosn(fs, old_iaddr), bp);
+		LFS_SEGENTRY(sup, fs, lfs_dtosn(fs, old_iaddr), bp);
 #ifdef DIAGNOSTIC
-		if (sup->su_nbytes < sizeof (struct ufs1_dinode)) {
+		if (sup->su_nbytes < sizeof (struct ulfs1_dinode)) {
 			printf("lfs_vfree: negative byte count"
 			       " (segment %" PRIu32 " short by %d)\n",
-			       dtosn(fs, old_iaddr),
-			       (int)sizeof (struct ufs1_dinode) -
+			       lfs_dtosn(fs, old_iaddr),
+			       (int)sizeof (struct ulfs1_dinode) -
 				    sup->su_nbytes);
 			panic("lfs_vfree: negative byte count");
-			sup->su_nbytes = sizeof (struct ufs1_dinode);
+			sup->su_nbytes = sizeof (struct ulfs1_dinode);
 		}
 #endif
-		sup->su_nbytes -= sizeof (struct ufs1_dinode);
-		LFS_WRITESEGENTRY(sup, fs, dtosn(fs, old_iaddr), bp); /* Ifile */
+		sup->su_nbytes -= sizeof (struct ulfs1_dinode);
+		LFS_WRITESEGENTRY(sup, fs, lfs_dtosn(fs, old_iaddr), bp); /* Ifile */
 	}
 
 	/* Set superblock modified bit and decrement file count. */
@@ -575,7 +572,6 @@ lfs_vfree(struct vnode *vp, ino_t ino, int mode)
 	mutex_exit(&lfs_lock);
 	--fs->lfs_nfiles;
 
-	VOP_UNLOCK(fs->lfs_ivnode);
 	lfs_segunlock(fs);
 
 	return (0);
@@ -623,10 +619,10 @@ lfs_order_freelist(struct lfs *fs)
 		    VFS_VGET(fs->lfs_ivnode->v_mount, ino, &vp) == 0) {
 			lfs_truncate(vp, 0, 0, NOCRED);
 			vput(vp);
-			LFS_SEGENTRY(sup, fs, dtosn(fs, ifp->if_daddr), bp);
+			LFS_SEGENTRY(sup, fs, lfs_dtosn(fs, ifp->if_daddr), bp);
 			KASSERT(sup->su_nbytes >= DINODE1_SIZE);
 			sup->su_nbytes -= DINODE1_SIZE;
-			LFS_WRITESEGENTRY(sup, fs, dtosn(fs, ifp->if_daddr), bp);
+			LFS_WRITESEGENTRY(sup, fs, lfs_dtosn(fs, ifp->if_daddr), bp);
 
 			/* Set up to fall through to next section */
 			ifp->if_daddr = LFS_UNUSED_DADDR;

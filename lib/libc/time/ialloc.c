@@ -1,4 +1,4 @@
-/*	$NetBSD: ialloc.c,v 1.7 2010/01/02 10:42:49 tsutsui Exp $	*/
+/*	$NetBSD: ialloc.c,v 1.9 2012/10/26 18:29:34 christos Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2006-07-17 by Arthur David Olson.
@@ -13,47 +13,16 @@
 #if 0
 static char	elsieid[] = "@(#)ialloc.c	8.30";
 #else
-__RCSID("$NetBSD: ialloc.c,v 1.7 2010/01/02 10:42:49 tsutsui Exp $");
+__RCSID("$NetBSD: ialloc.c,v 1.9 2012/10/26 18:29:34 christos Exp $");
 #endif
 
 #include "private.h"
 
-#define nonzero(n)	(((n) == 0) ? 1 : (n))
-
 char *
-imalloc(n)
-const int	n;
+icatalloc(char *const old, const char *const new)
 {
-	return malloc((size_t) nonzero(n));
-}
-
-char *
-icalloc(nelem, elsize)
-int	nelem;
-int	elsize;
-{
-	if (nelem == 0 || elsize == 0)
-		nelem = elsize = 1;
-	return calloc((size_t) nelem, (size_t) elsize);
-}
-
-void *
-irealloc(pointer, size)
-void * const	pointer;
-const int	size;
-{
-	if (pointer == NULL)
-		return imalloc(size);
-	return realloc((void *) pointer, (size_t) nonzero(size));
-}
-
-char *
-icatalloc(old, new)
-char * const		old;
-const char * const	new;
-{
-	register char *	result;
-	register int	oldsize, newsize;
+	char *	result;
+	int	oldsize, newsize;
 
 	newsize = (new == NULL) ? 0 : strlen(new);
 	if (old == NULL)
@@ -62,31 +31,14 @@ const char * const	new;
 		return old;
 	else
 		oldsize = strlen(old);
-	if ((result = irealloc(old, oldsize + newsize + 1)) != NULL)
+	if ((result = realloc(old, oldsize + newsize + 1)) != NULL)
 		if (new != NULL)
 			(void) strcpy(result + oldsize, new); /* XXX strcpy is safe */
 	return result;
 }
 
 char *
-icpyalloc(string)
-const char * const	string;
+icpyalloc(const char *const string)
 {
-	return icatalloc((char *) NULL, string);
-}
-
-void
-ifree(p)
-char * const	p;
-{
-	if (p != NULL)
-		(void) free(p);
-}
-
-void
-icfree(p)
-char * const	p;
-{
-	if (p != NULL)
-		(void) free(p);
+	return icatalloc(NULL, string);
 }

@@ -26,14 +26,15 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)fmod.3	5.1 (Berkeley) 5/2/91
-.\"	$NetBSD: fmod.3,v 1.11 2003/08/07 16:44:47 agc Exp $
+.\"	$NetBSD: fmod.3,v 1.12 2013/11/12 16:48:39 joerg Exp $
 .\"
-.Dd May 2, 1991
+.Dd November 12, 2013
 .Dt FMOD 3
 .Os
 .Sh NAME
 .Nm fmod ,
-.Nm fmodf
+.Nm fmodf ,
+.Nm fmodl
 .Nd floating-point remainder function
 .Sh LIBRARY
 .Lb libm
@@ -43,6 +44,8 @@
 .Fn fmod "double x" "double y"
 .Ft float
 .Fn fmodf "float x" "float y"
+.Ft long double
+.Fn fmodl "long double x" "long double y"
 .Sh DESCRIPTION
 The
 .Fn fmod
@@ -50,9 +53,10 @@ function computes the floating-point remainder of
 .Fa x Ns / Fa y .
 .Sh RETURN VALUES
 The
-.Fn fmod
+.Fn fmod ,
+.Fn fmodf ,
 and
-.Fn fmodf
+.Fn fmodl
 functions return the value
 .Sm off
 .Fa x - Em i * Fa y ,

@@ -1,4 +1,4 @@
-/*	$NetBSD: bswap64.S,v 1.1 2005/12/20 19:28:49 christos Exp $	*/
+/*	$NetBSD: bswap64.S,v 1.4 2013/07/18 22:42:50 matt Exp $	*/
 
 /*
  * Copyright (C) 1996 Scott Reynolds.  All rights reserved.
@@ -29,12 +29,36 @@
 #include <machine/asm.h>
 
 ENTRY(bswap64)
-	movl	%sp@(4),%d1
-	movl	%sp@(8),%d0
+	movl	4(%sp),%d1
+	movl	8(%sp),%d0
+#ifdef __mcfisac__
+	byterev	%d0
+	byterev	%d1
+#elif defined(__mcoldfire__)
+	movl	%d3,-(%sp)
+	movl	%d2,-(%sp)
+	movl	#0x00ff00ff, %d3
+	movl	%d0,%d2
+	andl	%d3,%d2
+	lsll	#8,%d2
+	lsrl	#8,%d0
+	andl	%d3,%d0
+	orl	%d2,%d0
+	movl	%d1,%d2
+	andl	%d3,%d2
+	lsll	#8,%d2
+	lsrl	#8,%d1
+	andl	%d3,%d1
+	orl	%d2,%d1
+	movl	(%sp)+,%d2
+	movl	(%sp)+,%d3
+#else
 	rolw	#8,%d1
 	rolw	#8,%d0
 	swap	%d1
 	swap	%d0
 	rolw	#8,%d0
 	rolw	#8,%d1
+#endif
 	rts
+END(bswap64)

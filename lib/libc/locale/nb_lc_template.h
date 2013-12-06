@@ -1,4 +1,4 @@
-/* $NetBSD: nb_lc_template.h,v 1.4 2012/03/04 21:14:56 tnozaki Exp $ */
+/* $NetBSD: nb_lc_template.h,v 1.8 2013/09/13 13:13:32 joerg Exp $ */
 
 /*-
  * Copyright (c)1999, 2008 Citrus Project,
@@ -92,8 +92,6 @@
 
 #define _nb_part_t		_PREFIX(part_t)
 #define _nb_part_cache		_PREFIX(part_cache)
-#define _nb_default_c		_PREFIX(default_c)
-#define _nb_default_posix	_PREFIX(default_posix)
 #define _nb_mutex		_PREFIX(mutex)
 
 typedef struct _nb_part_t {
@@ -105,46 +103,43 @@ typedef struct _nb_part_t {
 static SIMPLEQ_HEAD(, _nb_part_t) _nb_part_cache =
     SIMPLEQ_HEAD_INITIALIZER(_nb_part_cache);
 
-static const _nb_part_t _nb_default_c = {
-    _C_LOCALE,
-    __UNCONST(&_CATEGORY_DEFAULT),
-    { NULL },
-};
-
-static const _nb_part_t _nb_default_posix = {
-    _POSIX_LOCALE,
-    __UNCONST(&_CATEGORY_DEFAULT),
-    { NULL },
-};
-
 #ifdef _REENTRANT
 static mutex_t _nb_mutex = MUTEX_INITIALIZER;
 #endif
 
 static int
 _PREFIX(load_sub)(const char * __restrict name, const char * __restrict real,
-    _nb_part_t ** __restrict part, int force)
+    const char ** __restrict out_name, _CATEGORY_TYPE ** __restrict out_impl,
+    int force)
 {
-	_nb_part_t *p, *q;
+	const char *cached_name;
+	_CATEGORY_TYPE *cached_impl;
+	_nb_part_t *p;
 	int ret;
 
 	_DIAGASSERT(name != NULL);
-	_DIAGASSERT(part != NULL);
+	_DIAGASSERT(out_name != NULL);
+	_DIAGASSERT(out_impl != NULL);
 
 	if (!strcmp(_C_LOCALE, name)) {
-		p = __UNCONST(&_nb_default_c);
+		cached_name = _lc_C_locale.part_name[_CATEGORY_ID];
+		cached_impl = _lc_C_locale.part_impl[_CATEGORY_ID];
 	} else if (!strcmp(_POSIX_LOCALE, name)) {
-		p = __UNCONST(&_nb_default_posix);
+		cached_name = _POSIX_LOCALE;
+		cached_impl = _lc_C_locale.part_impl[_CATEGORY_ID];
 	} else {
 		SIMPLEQ_FOREACH(p, &_nb_part_cache, entry) {
-			if (!strcmp((const char *)&p->name[0], name))
+			if (!strcmp((const char *)&p->name[0], name)) {
+				cached_name = p->name;
+				cached_impl = p->impl;
 				goto found;
+			}
 		}
 		p = malloc(sizeof(*p));
 		if (p == NULL)
 			return ENOMEM;
 		if (force) {
-			p->impl = __UNCONST(&_CATEGORY_DEFAULT);
+			p->impl = _lc_C_locale.part_impl[_CATEGORY_ID];
 		} else {
 			_DIAGASSERT(_PathLocale != NULL);
 			ret = _PREFIX(create_impl)((const char *)_PathLocale,
@@ -156,24 +151,27 @@ _PREFIX(load_sub)(const char * __restrict name, const char * __restrict real,
 		}
 		strlcpy(&p->name[0], name, sizeof(p->name));
 		SIMPLEQ_INSERT_TAIL(&_nb_part_cache, p, entry);
+		cached_name = p->name;
+		cached_impl = p->impl;
 	}
 found:
 	if (real != NULL) {
-		q = malloc(sizeof(*q));
-		if (q == NULL)
+		p = malloc(sizeof(*p));
+		if (p == NULL)
 			return ENOMEM;
-		strlcpy(&q->name[0], real, sizeof(p->name));
-		q->impl = p->impl;
-		SIMPLEQ_INSERT_TAIL(&_nb_part_cache, q, entry);
-		p = q;
+		strlcpy(&p->name[0], real, sizeof(p->name));
+		cached_name = p->name;
+		p->impl = cached_impl;
+		SIMPLEQ_INSERT_TAIL(&_nb_part_cache, p, entry);
 	}
-	*part = p;
+	*out_name = cached_name;
+	*out_impl = cached_impl;
 	return 0;
 }
 
 static __inline int
 _PREFIX(load)(const char * __restrict name,
-    _nb_part_t ** __restrict part)
+    const char ** __restrict out_name, _CATEGORY_TYPE ** __restrict out_impl)
 {
 	int ret, force;
 	char path[PATH_MAX + 1], loccat[PATH_MAX + 1], buf[PATH_MAX + 1];
@@ -184,8 +182,10 @@ do {									\
 	alias = __unaliasname(aliaspath, key, &buf[0], sizeof(buf));	\
 	if (alias != NULL) {						\
 		ret = (force = !__isforcemapping(alias))		\
-		    ? _PREFIX(load_sub)(name, NULL, part, force)	\
-		    : _PREFIX(load_sub)(alias, name, part, force);	\
+		    ? _PREFIX(load_sub)(name, NULL, out_name, out_impl, \
+				        force)	\
+		    : _PREFIX(load_sub)(alias, name, out_name, out_impl, \
+				        force);	\
 		_DIAGASSERT(!ret || !force);				\
 		goto done;						\
 	}								\
@@ -193,7 +193,7 @@ do {									\
 
 	/* (1) non-aliased file */
 	mutex_lock(&_nb_mutex);
-	ret = _PREFIX(load_sub)(name, NULL, part, 0);
+	ret = _PREFIX(load_sub)(name, NULL, out_name, out_impl, 0);
 	if (ret != ENOENT)
 		goto done;
 
@@ -216,9 +216,10 @@ done:
 
 const char *
 _PREFIX(setlocale)(const char * __restrict name,
-    struct _locale_impl_t * __restrict locale)
+    struct _locale * __restrict locale)
 {
-	_nb_part_t *part;
+	const char *loaded_name;
+	_CATEGORY_TYPE *loaded_impl;
 
 	/* name may be NULL */
 	_DIAGASSERT(locale != NULL);
@@ -229,15 +230,12 @@ _PREFIX(setlocale)(const char * __restrict name,
 		_DIAGASSERT(name != NULL);
 		_DIAGASSERT(locale->part_name[(size_t)_CATEGORY_ID] != NULL);
 		if (strcmp(name, locale->part_name[(size_t)_CATEGORY_ID])) {
-			if (_PREFIX(load)(name, &part))
+			if (_PREFIX(load)(name, &loaded_name, &loaded_impl))
 				return NULL;
-			locale->part_name[(size_t)_CATEGORY_ID]
-			    = &part->name[0];
-			locale->part_impl[(size_t)_CATEGORY_ID]
-			    = part->impl;
-			_PREFIX(build_cache)(locale->cache, part->impl);
-			if (locale == &_global_locale)
-				_PREFIX(fixup)(part->impl);
+			locale->part_name[(size_t)_CATEGORY_ID] = loaded_name;
+			locale->part_impl[(size_t)_CATEGORY_ID] = loaded_impl;
+			if (locale == &_lc_global_locale)
+				_PREFIX(update_global)(loaded_impl);
 		}
 	}
 	return locale->part_name[(size_t)_CATEGORY_ID];

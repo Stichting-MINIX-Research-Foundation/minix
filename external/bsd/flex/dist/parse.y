@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.y,v 1.2 2009/10/26 04:27:15 christos Exp $	*/
+/*	$NetBSD: parse.y,v 1.3 2013/04/06 14:27:52 christos Exp $	*/
 
 /* parse.y - parser for flex input */
 
@@ -725,11 +725,9 @@ singleton	:  singleton '*'
 
 		|  fullccl
 			{
-				/* Sort characters for fast searching.  We
-				 * use a shell sort since this list could
-				 * be large.
+				/* Sort characters for fast searching.
 				 */
-				cshell( ccltbl + cclmap[$1], ccllen[$1], true );
+				qsort( ccltbl + cclmap[$1], ccllen[$1], sizeof (*ccltbl), cclcmp );
 
 			if ( useecs )
 				mkeccl( ccltbl + cclmap[$1], ccllen[$1],
@@ -970,6 +968,10 @@ void build_eof_action()
 		else
 			{
 			sceof[scon_stk[i]] = true;
+
+			if (previous_continued_action /* && previous action was regular */)
+				add_action("YY_RULE_SETUP\n");
+
 			snprintf( action_text, sizeof(action_text), "case YY_STATE_EOF(%s):\n",
 				scname[scon_stk[i]] );
 			add_action( action_text );

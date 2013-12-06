@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.17 2012/02/04 17:56:16 para Exp $	*/
+/*	$NetBSD: param.h,v 1.20 2013/05/29 23:29:44 rkujawa Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -57,7 +57,7 @@
 #define USPACE          (UPAGES * NBPG) /* total size of u-area */
 
 #ifndef MSGBUFSIZE
-#define MSGBUFSIZE	NBPG		/* default message buffer size */
+#define MSGBUFSIZE	16384	 	/* default message buffer size */
 #endif
 
 /*
@@ -72,17 +72,13 @@
 /*
  * The USPACE area contains :
  * 1. the pcb structure for the process
- * 2. the fp context for FP emulation
- * 3. the kernel (svc) stack
+ * 2. the kernel (svc) stack
  *
  * The layout of the area looks like this
  *
- * | uarea | FP context | kernel stack |
+ * | uarea | kernel stack |
  *
  * The size of the uarea is known.
- * The size of the FP context is variable depending of the FP emulator
- * in use and whether there is hardware FP support. However we can put
- * an upper limit on it.
  * The kernel stack should be at least 4K is size.
  *
  * The stack top addresses are used to set the stack pointers. The stack bottom
@@ -90,12 +86,11 @@
  *
  */
 
-#define FPCONTEXTSIZE			(0x100)
 #define USPACE_SVC_STACK_TOP		(USPACE)
-#define USPACE_SVC_STACK_BOTTOM		(sizeof(struct pcb) + FPCONTEXTSIZE + 10)
+#define USPACE_SVC_STACK_BOTTOM		(sizeof(struct pcb))
 
-#define arm_btop(x)			((x) >> PGSHIFT)
-#define arm_ptob(x)			((x) << PGSHIFT)
+#define arm_btop(x)			((unsigned)(x) >> PGSHIFT)
+#define arm_ptob(x)			((unsigned)(x) << PGSHIFT)
 #define arm_trunc_page(x)		((unsigned)(x) & ~PGOFSET)
     
 #ifdef _KERNEL

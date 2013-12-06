@@ -1,4 +1,4 @@
-SRCS=	mkfs.c
+SRCS=		mkfs.c
 BINDIR?=	/usr/sbin
 MAN?=
 
@@ -10,8 +10,12 @@ MAN?=
 CPPFLAGS+=	-I${.CURDIR}
 
 .if ${HOST_OSTYPE:C/\-.*//:U} == "Minix" || !defined(HOSTPROGNAME)
-#DPADD
+#LSC: FIXME This should not be required, more so only on Minix...
 LDADD+= -lminlib -lcompat_minix
+DPADD+= ${MINLIB} ${COMPAT_MINIX}
 .endif
+
+NOGCCERROR?=    yes
+NOCLANGERROR?=  yes
 
 .include <bsd.prog.mk>

@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.74 2011/04/24 18:46:24 rmind Exp $	*/
+/*	$NetBSD: file.h,v 1.75 2013/01/02 19:35:43 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -116,6 +116,8 @@ struct file {
 	SLIST_ENTRY(file) f_unplist;	/* deferred close: see uipc_usrreq.c */
 };
 
+#endif
+
 /*
  * Descriptor types.
  */
@@ -132,6 +134,8 @@ struct file {
 #define DTYPE_NAMES	\
     "0", "file", "socket", "pipe", "kqueue", "misc", "crypto", "mqueue", \
     "semaphore"
+
+#ifdef _KERNEL
 
 /*
  * Flags for fo_read and fo_write and do_fileread/write/v

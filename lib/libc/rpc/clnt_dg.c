@@ -1,32 +1,34 @@
-/*	$NetBSD: clnt_dg.c,v 1.26 2012/03/20 17:14:50 matt Exp $	*/
+/*	$NetBSD: clnt_dg.c,v 1.29 2013/05/07 21:08:44 christos Exp $	*/
 
 /*
- * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
- * unrestricted use provided that this legend is included on all tape
- * media and as a part of the software program in whole or part.  Users
- * may copy or modify Sun RPC without charge, but are not authorized
- * to license or distribute it to anyone else except as part of a product or
- * program developed by the user.
- * 
- * SUN RPC IS PROVIDED AS IS WITH NO WARRANTIES OF ANY KIND INCLUDING THE
- * WARRANTIES OF DESIGN, MERCHANTIBILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE, OR ARISING FROM A COURSE OF DEALING, USAGE OR TRADE PRACTICE.
- * 
- * Sun RPC is provided with no support and without any obligation on the
- * part of Sun Microsystems, Inc. to assist in its use, correction,
- * modification or enhancement.
- * 
- * SUN MICROSYSTEMS, INC. SHALL HAVE NO LIABILITY WITH RESPECT TO THE
- * INFRINGEMENT OF COPYRIGHTS, TRADE SECRETS OR ANY PATENTS BY SUN RPC
- * OR ANY PART THEREOF.
- * 
- * In no event will Sun Microsystems, Inc. be liable for any lost revenue
- * or profits or other special, indirect and consequential damages, even if
- * Sun has been advised of the possibility of such damages.
- * 
- * Sun Microsystems, Inc.
- * 2550 Garcia Avenue
- * Mountain View, California  94043
+ * Copyright (c) 2010, Oracle America, Inc.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above
+ *       copyright notice, this list of conditions and the following
+ *       disclaimer in the documentation and/or other materials
+ *       provided with the distribution.
+ *     * Neither the name of the "Oracle America, Inc." nor the names of its
+ *       contributors may be used to endorse or promote products derived
+ *       from this software without specific prior written permission.
+ *
+ *   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ *   "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ *   LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ *   FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ *   COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+ *   INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ *   DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ *   GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *   INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ *   WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ *   NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
  * Copyright (c) 1986-1991 by Sun Microsystems Inc. 
@@ -39,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)clnt_dg.c 1.19 89/03/16 Copyr 1988 Sun Micro";
 #else
-__RCSID("$NetBSD: clnt_dg.c,v 1.26 2012/03/20 17:14:50 matt Exp $");
+__RCSID("$NetBSD: clnt_dg.c,v 1.29 2013/05/07 21:08:44 christos Exp $");
 #endif
 #endif
 
@@ -62,6 +64,8 @@ __RCSID("$NetBSD: clnt_dg.c,v 1.26 2012/03/20 17:14:50 matt Exp $");
 #include <signal.h>
 #include <unistd.h>
 #include <err.h>
+
+#include "svc_fdset.h"
 #include "rpc_internal.h"
 
 #ifdef __weak_alias
@@ -171,7 +175,7 @@ clnt_dg_create(
 	struct __rpc_sockinfo si;
 	int one = 1;
 
-	sigfillset(&newmask);
+	__clnt_sigfillset(&newmask);
 	thr_sigsetmask(SIG_SETMASK, &newmask, &mask);
 	mutex_lock(&clnt_fd_lock);
 	if (dg_fd_locks == NULL) {
@@ -184,9 +188,7 @@ clnt_dg_create(
 		fd_allocsz = dtbsize * sizeof (int);
 		dg_fd_locks = mem_alloc(fd_allocsz);
 		if (dg_fd_locks == NULL) {
-			mutex_unlock(&clnt_fd_lock);
-			thr_sigsetmask(SIG_SETMASK, &(mask), NULL);
-			goto err1;
+			goto err0;
 		} else
 			memset(dg_fd_locks, '\0', fd_allocsz);
 
@@ -196,9 +198,7 @@ clnt_dg_create(
 		if (dg_cv == NULL) {
 			mem_free(dg_fd_locks, fd_allocsz);
 			dg_fd_locks = NULL;
-			mutex_unlock(&clnt_fd_lock);
-			thr_sigsetmask(SIG_SETMASK, &(mask), NULL);
-			goto err1;
+			goto err0;
 		} else {
 			int i;
 
@@ -247,8 +247,13 @@ clnt_dg_create(
 	cu->cu_rlen = svcaddr->len;
 	cu->cu_outbuf = &cu->cu_inbuf[recvsz];
 	/* Other values can also be set through clnt_control() */
+#ifdef RUMP_RPC
 	cu->cu_wait.tv_sec = 15;	/* heuristically chosen */
 	cu->cu_wait.tv_usec = 0;
+#else
+	cu->cu_wait.tv_sec = 0;		/* for testing, 10x / second */
+	cu->cu_wait.tv_usec = 100000;
+#endif
 	cu->cu_total.tv_sec = -1;
 	cu->cu_total.tv_usec = -1;
 	cu->cu_sendsz = sendsz;
@@ -285,6 +290,9 @@ clnt_dg_create(
 	cl->cl_tp = NULL;
 	cl->cl_netid = NULL;
 	return (cl);
+err0:
+	mutex_unlock(&clnt_fd_lock);
+	thr_sigsetmask(SIG_SETMASK, &(mask), NULL);
 err1:
 	warnx(mem_err_clnt_dg);
 	rpc_createerr.cf_stat = RPC_SYSTEMERROR;
@@ -332,7 +340,7 @@ clnt_dg_call(
 
 	cu = (struct cu_data *)cl->cl_private;
 
-	sigfillset(&newmask);
+	__clnt_sigfillset(&newmask);
 	thr_sigsetmask(SIG_SETMASK, &newmask, &mask);
 	mutex_lock(&clnt_fd_lock);
 	while (dg_fd_locks[cu->cu_fd])
@@ -523,7 +531,7 @@ clnt_dg_freeres(CLIENT *cl, xdrproc_t xdr_res, caddr_t res_ptr)
 	cu = (struct cu_data *)cl->cl_private;
 	xdrs = &(cu->cu_outxdrs);
 
-	sigfillset(&newmask);
+	__clnt_sigfillset(&newmask);
 	thr_sigsetmask(SIG_SETMASK, &newmask, &mask);
 	mutex_lock(&clnt_fd_lock);
 	while (dg_fd_locks[cu->cu_fd])
@@ -557,7 +565,7 @@ clnt_dg_control(CLIENT *cl, u_int request, char *info)
 
 	cu = (struct cu_data *)cl->cl_private;
 
-	sigfillset(&newmask);
+	__clnt_sigfillset(&newmask);
 	thr_sigsetmask(SIG_SETMASK, &newmask, &mask);
 	mutex_lock(&clnt_fd_lock);
 	while (dg_fd_locks[cu->cu_fd])
@@ -697,7 +705,7 @@ clnt_dg_destroy(CLIENT *cl)
 	cu = (struct cu_data *)cl->cl_private;
 	cu_fd = cu->cu_fd;
 
-	sigfillset(&newmask);
+	__clnt_sigfillset(&newmask);
 	thr_sigsetmask(SIG_SETMASK, &newmask, &mask);
 	mutex_lock(&clnt_fd_lock);
 	while (dg_fd_locks[cu_fd])
@@ -728,7 +736,7 @@ clnt_dg_ops(void)
 
 /* VARIABLES PROTECTED BY ops_lock: ops */
 
-	sigfillset(&newmask);
+	__clnt_sigfillset(&newmask);
 	thr_sigsetmask(SIG_SETMASK, &newmask, &mask);
 	mutex_lock(&ops_lock);
 	if (ops.cl_call == NULL) {

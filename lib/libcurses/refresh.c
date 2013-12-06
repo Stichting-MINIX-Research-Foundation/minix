@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.76 2012/04/21 11:33:16 blymn Exp $	*/
+/*	$NetBSD: refresh.c,v 1.77 2013/05/05 14:22:07 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.76 2012/04/21 11:33:16 blymn Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.77 2013/05/05 14:22:07 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -233,8 +233,10 @@ _cursesi_wnoutrefresh(SCREEN *screen, WINDOW *win, int begy, int begx,
 #ifdef DEBUG
 				__CTRACE(__CTRACE_REFRESH,
 				    "_wnoutrefresh: copy from %d, "
-				    "%d to %d, %d\n",
-				    wy, wx, y_off, x_off);
+				    "%d to %d, %d: %s, 0x%x",
+				    wy, wx, y_off, x_off,
+				    unctrl(wlp->line[wx].ch),
+				    wlp->line[wx].attr);
 #endif
 				/* Copy character */
 				vlp->line[x_off].ch = wlp->line[wx].ch;
@@ -256,6 +258,11 @@ _cursesi_wnoutrefresh(SCREEN *screen, WINDOW *win, int begy, int begx,
 						return ERR;
 				}
 #endif /* HAVE_WCHAR */
+#ifdef DEBUG
+				__CTRACE(__CTRACE_REFRESH, " = %s, 0x%x\n",
+				    unctrl(vlp->line[x_off].ch),
+				    vlp->line[x_off].attr);
+#endif
 				wx++;
 				x_off++;
 			}

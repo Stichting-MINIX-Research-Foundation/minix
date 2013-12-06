@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_cas_68000.S,v 1.3 2008/05/25 15:56:11 chs Exp $	*/
+/*	$NetBSD: atomic_cas_68000.S,v 1.5 2013/07/16 23:24:18 matt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -37,13 +37,13 @@
 ENTRY(_atomic_cas_up)
 	.hidden	_C_LABEL(_atomic_cas_up)
 
-	movl	%sp@(4), %a0		/* Fetch ptr */
+	movl	4(%sp), %a0		/* Fetch ptr */
 
 RAS_START_ASM_HIDDEN(_atomic_cas)
-	movl	%a0@, %d0		/* d0 = *ptr */
-	cmpl	%sp@(8), %d0		/* Same as old? */
+	movl	(%a0), %d0		/* d0 = *ptr */
+	cmpl	8(%sp), %d0		/* Same as old? */
 	jne	1f			/* Nope */
-	movl	%sp@(12), %a0@		/* *ptr = new */
+	movl	12(%sp), (%a0)		/* *ptr = new */
 RAS_END_ASM_HIDDEN(_atomic_cas)
 1:	rts
-
+END(_atomic_cas_up)

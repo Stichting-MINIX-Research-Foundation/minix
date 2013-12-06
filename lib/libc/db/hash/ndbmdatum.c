@@ -159,11 +159,3 @@ dbm_store(DBM *db, datum key, datum data, int flags)
 	return ((db->put)(db, &dbtkey, &dbtdata,
 	    (u_int)((flags == DBM_INSERT) ? R_NOOVERWRITE : 0)));
 }
-
-#if defined(__minix) && defined(__weak_alias)
-__weak_alias(dbm_delete, __dbm_delete13)
-__weak_alias(dbm_fetch, __dbm_fetch13)
-__weak_alias(dbm_firstkey, __dbm_firstkey13)
-__weak_alias(dbm_nextkey, __dbm_nextkey13)
-__weak_alias(dbm_store, __dbm_store13)
-#endif

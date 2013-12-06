@@ -1,4 +1,4 @@
-/*	$NetBSD: swapcontext.S,v 1.6 2011/01/16 02:43:10 matt Exp $	*/
+/*	$NetBSD: swapcontext.S,v 1.7 2013/09/12 15:36:15 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "SYS.h"
 #include "assym.h"
 
-__RCSID("$NetBSD: swapcontext.S,v 1.6 2011/01/16 02:43:10 matt Exp $")
+__RCSID("$NetBSD: swapcontext.S,v 1.7 2013/09/12 15:36:15 joerg Exp $")
 
 #define	XCALLFRAMELEN	(((2+3)*SZREG + CALLFRAMELEN - 1) & -CALLFRAMELEN)
 #define	XCALLFRAME_R30	(XCALLFRAMELEN-1*SZREG)
@@ -45,7 +45,7 @@ ENTRY(swapcontext)
 	stw	%r0,XCALLFRAMELEN+CALLFRAME_LR(%r1)	# save link register
 	stw	%r3,XCALLFRAME_OUCP(%r1)	# must save oucp
 	stw	%r4,XCALLFRAME_UCP(%r1)		# must save ucp
-#ifdef PIC
+#ifdef __PIC__
 	stw	%r30,XCALLFRAME_R30(%r1)	# must save r30
 	PIC_TOCSETUP(swapcontext,%r30)		# setup toc pointer
 #endif
@@ -61,7 +61,7 @@ ENTRY(swapcontext)
 	bl	PIC_PLT(_C_LABEL(setcontext))	# setcontext(ucp)
 1:
 	lwz	%r0,XCALLFRAMELEN+CALLFRAME_LR(%r1)
-#ifdef PIC
+#ifdef __PIC__
 	lwz	%r30,XCALLFRAME_R30(%r1)
 #endif
 	mtlr	%r0

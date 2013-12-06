@@ -1,0 +1,4 @@
+# $NetBSD: md.hpcsh,v 1.2 2013/01/16 21:11:08 christos Exp $
+./usr/libdata/debug/usr/sbin/apm.debug		comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/apmd.debug		comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/tpctl.debug	comp-sysutil-debug	debug

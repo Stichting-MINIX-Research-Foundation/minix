@@ -1,4 +1,4 @@
-/*	$NetBSD: compat___sigtramp1.S,v 1.2 2008/04/28 20:22:58 martin Exp $	*/
+/*	$NetBSD: compat___sigtramp1.S,v 1.3 2013/07/16 23:00:15 matt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -43,9 +43,10 @@
  *	sp->	signal number				[0]
  */
 ENTRY_NOPROFILE(__sigtramp_sigcontext_1)
-	leal	%sp@(12),%a0	/* get pointer to sigcontext */
-	movl	%a0,%sp@(4)	/* put it in the argument slot */
+	leal	12(%sp),%a0	/* get pointer to sigcontext */
+	movl	%a0,4(%sp)	/* put it in the argument slot */
 				/* fake return address already there */
 	trap	#3		/* special sigreturn trap */
-	movl	%d0,%sp@(4)	/* failed, exit with errno */
+	movl	%d0,4(%sp)	/* failed, exit with errno */
 	SYSTRAP(exit)
+END(__sigtramp_sigcontext_1)

@@ -1,3 +1,6 @@
+NOGCCERROR=yes
+NOCLANGERROR=yes
+
 # Makefile for libminixfs
 .include <bsd.own.mk>
 LIB=		minixfs

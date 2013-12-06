@@ -1,4 +1,4 @@
-.\" $NetBSD: iconv.3,v 1.14 2010/05/05 22:07:58 wiz Exp $
+.\" $NetBSD: iconv.3,v 1.21 2013/05/12 10:44:23 wiz Exp $
 .\"
 .\" Copyright (c)2003 Citrus Project,
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd May 5, 2010
+.Dd March 11, 2013
 .Dt ICONV 3
 .Os
 .\" ----------------------------------------------------------------------
@@ -118,11 +118,15 @@ and the conversion is continued.
 returns the number of such
 .Dq invalid conversions .
 .Pp
-If the source and/or destination codesets are stateful,
+If
+.Fa src
+or
+.Fa *src
+is
+.Dv NULL
+and the source and/or destination codesets are stateful,
 .Fn iconv
 places these into their initial state.
-There are two special cases of
-.Fn iconv :
 .Bl -enum -offset indent
 .It
 If both
@@ -234,6 +238,35 @@ and
 .Fn iconv
 conform to
 .St -p1003.1-2001 .
+.Pp
+Historically, the definition of
+.Ft iconv
+has not been consistent across operating systems.
+This is due to an unfortunate historical mistake, documented in
+.Lk https://www5.opengroup.org/sophocles2/show_mail.tpl?&source=L&listname=austin-group-l&id=7404 "this e-mail".
+The standards page for the header file
+.In iconv.h
+defined the second argument of
+.Fn iconv
+as
+.Ft char ** ,
+but the standards page for the
+.Fn iconv
+implementation defined it as
+.Ft const char ** .
+The standards committee later chose to change the function definition to
+follow the header file definition
+.Pq without const ,
+even though the version with const is arguably more correct.
+.Nx
+has always used the const form.
+It was decided to reject the committee's regression and become
+.Pq technically
+incompatible.
+GNU libiconv has taken the
+.Lk http://www.gnu.org/savannah-checkouts/gnu/libiconv/documentation/libiconv-1.14/ "same route".
+Most third party software affected by this issue already handles it
+during configuration.
 .\" ----------------------------------------------------------------------
 .Sh BUGS
 If

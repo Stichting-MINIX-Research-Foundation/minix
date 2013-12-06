@@ -1,4 +1,4 @@
-/*	$NetBSD: membar_ops.S,v 1.3 2012/08/16 16:49:10 matt Exp $	*/
+/*	$NetBSD: membar_ops.S,v 1.4 2013/11/08 22:42:52 matt Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -39,7 +39,7 @@ ENTRY_NP(_membar_producer)
 	mcr	p15, 0, r0, c7, c10, 4	 /* Data Synchronization Barrier */
 #endif
 	RET
-	END(_membar_producer)
+END(_membar_producer)
 ATOMIC_OP_ALIAS(membar_producer,_membar_producer)
 ATOMIC_OP_ALIAS(membar_write,_membar_producer)
 STRONG_ALIAS(_membar_write,_membar_producer)
@@ -51,12 +51,13 @@ ENTRY_NP(_membar_sync)
 	mcr	p15, 0, r0, c7, c10, 5	/* Data Memory Barrier */
 #endif
 	RET
-	END(_membar_sync)
+END(_membar_sync)
 ATOMIC_OP_ALIAS(membar_sync,_membar_sync)
 ATOMIC_OP_ALIAS(membar_enter,_membar_sync)
 ATOMIC_OP_ALIAS(membar_exit,_membar_sync)
 ATOMIC_OP_ALIAS(membar_consumer,_membar_sync)
 ATOMIC_OP_ALIAS(membar_read,_membar_sync)
+STRONG_ALIAS(__sync_synchronize,_membar_sync)
 STRONG_ALIAS(_membar_enter,_membar_sync)
 STRONG_ALIAS(_membar_exit,_membar_sync)
 STRONG_ALIAS(_membar_consumer,_membar_sync)

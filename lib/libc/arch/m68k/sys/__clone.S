@@ -1,4 +1,4 @@
-/*	$NetBSD: __clone.S,v 1.3 2008/04/28 20:22:56 martin Exp $	*/
+/*	$NetBSD: __clone.S,v 1.5 2013/07/16 23:00:15 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -40,26 +40,27 @@ WEAK_ALIAS(clone, __clone)
  * int clone(int (*fn)(void *), void *stack, int flags, void *arg);
  */
 ENTRY(__clone)
-	movl	%sp@(4),%d0	/* NULL function pointer? */
+	movl	4(%sp),%d0	/* NULL function pointer? */
 	jeq	2f		/* Yup, bomb out */
 	movl	%d0,%a1
-	movl	%sp@(8),%d0	/* NULL stack? */
+	movl	8(%sp),%d0	/* NULL stack? */
 	jeq	2f		/* Yup, bomb out */
 	movl	%d0,%a0
-	movl	%sp@(16),%a0@-	/* Push clone's `arg' on its new stack */
-	lea	%a0@(-12),%a0	/* Fake syscall args for the clone */
-	movl	%a0,%sp@-	/* Syscall arg: stack */
-	movl	%sp@(16),%sp@-	/* Syscall arg: flags */
-	clrl	%sp@-		/* Fake return address */
-	SYSTRAP(__clone)	/* Note: `fn' in a1@ is preserved */
-	lea	%sp@(12),%sp	/* Zap syscall args */
+	movl	16(%sp),-(%a0)	/* Push clone's `arg' on its new stack */
+	lea	-12(%a0),%a0	/* Fake syscall args for the clone */
+	movl	%a0,-(%sp)	/* Syscall arg: stack */
+	movl	16(%sp),-(%sp)	/* Syscall arg: flags */
+	clrl	-(%sp)		/* Fake return address */
+	SYSTRAP(__clone)	/* Note: `fn' in (a1) is preserved */
+	lea	12(%sp),%sp	/* Zap syscall args */
 	jcs	3f		/* Punt if syscall failed */
 	tstl	%d0
 	jne	1f		/* We're the parent, just return. */
-	jsr	%a1@		/* We're the clone, call the function */
-	movl	%d0,%sp@-	/* If clone returns, invoke _exit(3) */
+	jsr	(%a1)		/* We're the clone, call the function */
+	movl	%d0,-(%sp)	/* If clone returns, invoke _exit(3) */
 	jbsr	PIC_PLT(_C_LABEL(_exit))
 	/* NOTREACHED */
 1:	rts
 2:	movl	#EINVAL,%d0
-3:	jra	PIC_PLT(CERROR)
+3:	jbra	CERROR
+END(__clone)

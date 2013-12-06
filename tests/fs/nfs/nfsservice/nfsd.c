@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsd.c,v 1.3 2010/07/28 15:12:17 pooka Exp $	*/
+/*	$NetBSD: nfsd.c,v 1.4 2013/10/19 17:45:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)nfsd.c	8.9 (Berkeley) 3/29/95";
 #else
-__RCSID("$NetBSD: nfsd.c,v 1.3 2010/07/28 15:12:17 pooka Exp $");
+__RCSID("$NetBSD: nfsd.c,v 1.4 2013/10/19 17:45:00 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -149,18 +149,17 @@ nfsd_main(argc, argv)
 	struct sockaddr_in inetpeer;
 	struct pollfd set[4];
 	socklen_t len;
-	int ch, cltpflag, connect_type_cnt, i, maxsock, msgsock;
+	int ch, connect_type_cnt, i, msgsock;
 	int nfsdcnt, on = 1, reregister, sock, tcpflag, tcpsock;
 	int tcp6sock, ip6flag;
-	int tp4cnt, tp4flag, tpipcnt, tpipflag, udpflag, ecode, s;
+	int tp4cnt, tp4flag, tpipcnt, udpflag, ecode, s;
 	int error = 0;
 
 #define	DEFNFSDCNT	 4
 	nfsdcnt = DEFNFSDCNT;
-	cltpflag = reregister = tcpflag = tp4cnt = tp4flag = tpipcnt = 0;
-	tpipflag = udpflag = ip6flag = 0;
+	reregister = tcpflag = tp4cnt = tp4flag = tpipcnt = 0;
+	udpflag = ip6flag = 0;
 	nconf_udp = nconf_tcp = nconf_udp6 = nconf_tcp6 = NULL;
-	maxsock = 0;
 	tcpsock = tcp6sock = -1;
 #define	GETOPT	"6n:rtu"
 #define	USAGE	"[-rtu] [-n num_servers]"

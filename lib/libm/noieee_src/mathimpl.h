@@ -1,4 +1,4 @@
-/*	$NetBSD: mathimpl.h,v 1.9 2008/05/01 15:33:15 christos Exp $	*/
+/*	$NetBSD: mathimpl.h,v 1.10 2011/11/02 02:34:56 christos Exp $	*/
 /*
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -98,6 +98,17 @@
 #endif
 
 #endif	/* defined(__vax__)||defined(tahoe) */
+
+#ifdef __vax__
+#include <machine/float.h>
+#define _TINY	DBL_EPSILON
+#define _TINYER	DBL_EPSILON
+#define _HUGE	DBL_MAX
+#else
+#define _TINY	1e-300
+#define _TINYER	1e-308
+#define _HUGE	1e+300
+#endif
 
 
 /*

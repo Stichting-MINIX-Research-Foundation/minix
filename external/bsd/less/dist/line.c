@@ -1,13 +1,12 @@
-/*	$NetBSD: line.c,v 1.3 2011/07/03 20:14:13 tron Exp $	*/
+/*	$NetBSD: line.c,v 1.4 2013/09/04 19:44:21 tron Exp $	*/
 
 /*
- * Copyright (C) 1984-2011  Mark Nudelman
+ * Copyright (C) 1984-2012  Mark Nudelman
  *
  * You may distribute under the terms of either the GNU General Public
  * License or the Less License, as specified in the README file.
  *
- * For more information about less, or for information on how to 
- * contact the author, see the README file.
+ * For more information, see the README file.
  */
 
 
@@ -29,6 +28,7 @@ public int hshift;		/* Desired left-shift of output line buffer */
 public int tabstops[TABSTOP_MAX] = { 0 }; /* Custom tabstops */
 public int ntabstops = 1;	/* Number of tabstops */
 public int tabdefault = 8;	/* Default repeated tabstops */
+public POSITION highest_hilite;	/* Pos of last hilite in file found so far */
 
 static int curr;		/* Index into linebuf */
 static int column;		/* Printable length, accounting for
@@ -586,7 +586,12 @@ store_char(ch, a, rep, pos)
 			 * Override the attribute passed in.
 			 */
 			if (a != AT_ANSI)
+			{
+				if (highest_hilite != NULL_POSITION &&
+				    pos > highest_hilite)
+				    	highest_hilite = pos;
 				a |= AT_HILITE;
+			}
 		}
 	}
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: atexit.c,v 1.24 2009/10/08 16:33:45 pooka Exp $	*/
+/*	$NetBSD: atexit.c,v 1.26 2013/08/19 22:14:37 matt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: atexit.c,v 1.24 2009/10/08 16:33:45 pooka Exp $");
+__RCSID("$NetBSD: atexit.c,v 1.26 2013/08/19 22:14:37 matt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "reentrant.h"
@@ -74,7 +74,7 @@ static struct atexit_handler *atexit_handler_stack;
 
 #ifdef _REENTRANT
 /* ..and a mutex to protect it all. */
-static mutex_t atexit_mutex;
+mutex_t __atexit_mutex;
 #endif /* _REENTRANT */
 
 void	__libc_atexit_init(void) __attribute__ ((visibility("hidden")));
@@ -85,7 +85,7 @@ void	__libc_atexit_init(void) __attribute__ ((visibility("hidden")));
  * if possible. cxa_atexit handlers are never allocated from the static
  * pool.
  *
- * atexit_mutex must be held.
+ * __atexit_mutex must be held.
  */
 static struct atexit_handler *
 atexit_handler_alloc(void *dso)
@@ -105,7 +105,7 @@ atexit_handler_alloc(void *dso)
 
 	/*
 	 * Either no static slot was free, or this is a cxa_atexit
-	 * handler.  Allocate a new one.  We keep the atexit_mutex
+	 * handler.  Allocate a new one.  We keep the __atexit_mutex
 	 * held to prevent handlers from being run while we (potentially)
 	 * block in malloc().
 	 */
@@ -114,17 +114,17 @@ atexit_handler_alloc(void *dso)
 }
 
 /*
- * Initialize atexit_mutex with the PTHREAD_MUTEX_RECURSIVE attribute.
+ * Initialize __atexit_mutex with the PTHREAD_MUTEX_RECURSIVE attribute.
  * Note that __cxa_finalize may generate calls to __cxa_atexit.
  */
-void
+void __section(".text.startup")
 __libc_atexit_init(void)
 {
 #ifdef _REENTRANT /* !__minix */
 	mutexattr_t atexit_mutex_attr;
 	mutexattr_init(&atexit_mutex_attr);
 	mutexattr_settype(&atexit_mutex_attr, PTHREAD_MUTEX_RECURSIVE);
-	mutex_init(&atexit_mutex, &atexit_mutex_attr);
+	mutex_init(&__atexit_mutex, &atexit_mutex_attr);
 #endif /* _REENTRANT */
 }
 
@@ -142,11 +142,11 @@ __cxa_atexit(void (*func)(void *), void *arg, void *dso)
 
 	_DIAGASSERT(func != NULL);
 
-	mutex_lock(&atexit_mutex);
+	mutex_lock(&__atexit_mutex);
 
 	ah = atexit_handler_alloc(dso);
 	if (ah == NULL) {
-		mutex_unlock(&atexit_mutex);
+		mutex_unlock(&__atexit_mutex);
 		return (-1);
 	}
 
@@ -157,7 +157,7 @@ __cxa_atexit(void (*func)(void *), void *arg, void *dso)
 	ah->ah_next = atexit_handler_stack;
 	atexit_handler_stack = ah;
 
-	mutex_unlock(&atexit_mutex);
+	mutex_unlock(&__atexit_mutex);
 	return (0);
 }
 
@@ -177,7 +177,7 @@ __cxa_finalize(void *dso)
 	void (*cxa_func)(void *);
 	void (*atexit_func)(void);
 
-	mutex_lock(&atexit_mutex);
+	mutex_lock(&__atexit_mutex);
 	call_depth++;
 
 	/*
@@ -222,7 +222,7 @@ again:
 			prevp = &ah->ah_next;
 	}
 	call_depth--;
-	mutex_unlock(&atexit_mutex);
+	mutex_unlock(&__atexit_mutex);
 
 	if (call_depth > 0)
 		return;

@@ -1,12 +1,24 @@
-/*	$NetBSD: grammar.y,v 1.1.1.4 2011/09/10 21:22:07 christos Exp $	*/
+/*	$NetBSD: grammar.y,v 1.1.1.5 2013/04/06 14:45:27 christos Exp $	*/
 
-/* Id: grammar.y,v 1.3 2010/11/23 01:28:47 tom Exp
+/* Id: grammar.y,v 1.5 2012/01/15 20:00:59 tom Exp 
  *
  * yacc grammar for C function prototype generator
  * This was derived from the grammar in Appendix A of
  * "The C Programming Language" by Kernighan and Ritchie.
  */
 %expect 1
+%{
+#ifdef YYBISON
+#include <stdlib.h>
+#define YYSTYPE_IS_DECLARED
+#define yyerror yaccError
+#endif
+
+#if defined(YYBISON) || !defined(YYBYACC)
+static void yyerror(const char *s);
+#endif
+%}
+
 %token <text> '(' '*' '&'
 	/* identifiers that are not reserved words */
 	T_IDENTIFIER T_TYPEDEF_NAME T_DEFINE_NAME
@@ -269,8 +281,6 @@ extern void track_in        (void);
 extern boolean file_comments;
 extern FuncDefStyle func_style;
 extern char base_file[];
-
-#define YYMAXDEPTH 150
 
 extern	int	yylex (void);
 

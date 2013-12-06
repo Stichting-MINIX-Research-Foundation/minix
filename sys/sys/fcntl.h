@@ -1,4 +1,4 @@
-/*	$NetBSD: fcntl.h,v 1.42 2012/01/25 00:28:35 christos Exp $	*/
+/*	$NetBSD: fcntl.h,v 1.46 2013/09/15 10:41:20 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990, 1993
@@ -82,7 +82,9 @@
 #define	O_APPEND	0x00000008	/* set append mode */
 #if defined(_NETBSD_SOURCE)
 #define	O_SHLOCK	0x00000010	/* open with shared file lock */
+#if !defined(__minix) || 1
 #define	O_EXLOCK	0x00000020	/* open with exclusive file lock */
+#endif /* !defined(__minix) */
 #define	O_ASYNC		0x00000040	/* signal pgrp when data ready */
 #endif
 #if (_POSIX_C_SOURCE - 0) >= 199309L || \
@@ -114,7 +116,8 @@
 
 #define	O_DIRECTORY	0x00200000	/* fail if not a directory */
 #define	O_CLOEXEC	0x00400000	/* set close on exec */
-#if defined(_INCOMPLETE_XOPEN_C063) || defined(_KERNEL)
+#if (_POSIX_C_SOURCE - 0) >= 200809L || (_XOPEN_SOURCE - 0 >= 700) || \
+    defined(_INCOMPLETE_XOPEN_C063) || defined(_NETBSD_SOURCE)
 #define	O_SEARCH	0x00800000	/* skip search permission checks */
 #endif
 #if defined(_NETBSD_SOURCE)
@@ -289,7 +292,8 @@ struct flock {
 /*
  * Constants for X/Open Extended API set 2 (a.k.a. C063)
  */
-#if defined(_INCOMPLETE_XOPEN_C063) || defined(_KERNEL) || defined(__minix)
+#if (_POSIX_C_SOURCE - 0) >= 200809L || (_XOPEN_SOURCE - 0 >= 700) || \
+    defined(_INCOMPLETE_XOPEN_C063) || defined(_NETBSD_SOURCE)
 #define	AT_FDCWD		-100	/* Use cwd for relative link target */
 #define	AT_EACCESS		0x100	/* Use euig/egid for access checks */
 #define	AT_SYMLINK_NOFOLLOW	0x200	/* Do not follow symlinks */
@@ -313,14 +317,15 @@ int	posix_fadvise(int, off_t, off_t, int);
 /*
  * X/Open Extended API set 2 (a.k.a. C063)
  */
-#if defined(_INCOMPLETE_XOPEN_C063)
-int	openat(int, const char *, int oflags, ...);
+#if (_POSIX_C_SOURCE - 0) >= 200809L || (_XOPEN_SOURCE - 0 >= 700) || \
+    defined(_INCOMPLETE_XOPEN_C063) || defined(_NETBSD_SOURCE)
+int	openat(int, const char *, int, ...);
 #endif
 __END_DECLS
 #endif /* !_KERNEL */
 
-#ifdef __minix
+#if defined(__minix)
 #define F_FREESP       100
-#endif
+#endif /* defined(__minix) */
 
 #endif /* !_SYS_FCNTL_H_ */

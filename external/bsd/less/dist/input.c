@@ -1,13 +1,12 @@
-/*	$NetBSD: input.c,v 1.2 2011/07/03 19:51:26 tron Exp $	*/
+/*	$NetBSD: input.c,v 1.3 2013/09/04 19:44:21 tron Exp $	*/
 
 /*
- * Copyright (C) 1984-2011  Mark Nudelman
+ * Copyright (C) 1984-2012  Mark Nudelman
  *
  * You may distribute under the terms of either the GNU General Public
  * License or the Less License, as specified in the README file.
  *
- * For more information about less, or for information on how to 
- * contact the author, see the README file.
+ * For more information, see the README file.
  */
 
 
@@ -418,7 +417,7 @@ get_back_line:
 		goto get_back_line;
 	}
 
-	if (status_col && is_hilited(base_pos, ch_tell()-1, 1, NULL))
+	if (status_col && curr_pos > 0 && is_hilited(base_pos, curr_pos-1, 1, NULL))
 		set_status_col('*');
 #endif
 

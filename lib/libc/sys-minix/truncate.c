@@ -2,10 +2,6 @@
 #include "namespace.h"
 #include <lib.h>
 
-#ifdef __weak_alias
-__weak_alias(truncate, _truncate)
-#endif
-
 #include <minix/u64.h>
 #include <string.h>
 #include <unistd.h>

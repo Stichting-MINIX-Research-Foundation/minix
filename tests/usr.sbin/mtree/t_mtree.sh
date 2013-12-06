@@ -29,6 +29,9 @@
 # are expected to differ from one run to another.
 #
 
+# mtree is not in the default user PATH on MINIX
+export PATH=$PATH:/usr/sbin
+
 h_postprocess()
 {
 	sed -e '

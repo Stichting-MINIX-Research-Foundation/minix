@@ -42,10 +42,6 @@
 #include "error.h"
 #include "result.h"
 
-#if !defined(WCOREDUMP) && defined(__minix)
-#define WCOREDUMP(x) ((x) & 0x80)
-#endif /*!defined(WCOREDUMP) && defined(__minix) */
-
 
 // Enumeration of the different result types returned by an ATF test case.
 enum atf_status {

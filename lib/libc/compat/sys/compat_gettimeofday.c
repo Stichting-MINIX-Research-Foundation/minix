@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_gettimeofday.c,v 1.2 2009/01/11 02:46:26 christos Exp $	*/
+/*	$NetBSD: compat_gettimeofday.c,v 1.4 2013/10/04 21:07:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat_gettimeofday.c,v 1.2 2009/01/11 02:46:26 christos Exp $");
+__RCSID("$NetBSD: compat_gettimeofday.c,v 1.4 2013/10/04 21:07:37 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #define __LIBC12_SOURCE__
@@ -44,11 +44,13 @@ __RCSID("$NetBSD: compat_gettimeofday.c,v 1.2 2009/01/11 02:46:26 christos Exp $
 __warn_references(gettimeofday,
     "warning: reference to compatibility gettimeofday(); include <sys/time.h> to generate correct reference")
 
+__strong_alias(gettimeofday, __compat_gettimeofday)
+
 /*
  * libc12 compatible gettimeofday routine.
  */
 int
-gettimeofday(struct timeval50 *tv50, void *tzp)
+__compat_gettimeofday(struct timeval50 *tv50, void *tzp)
 {
 	struct timeval tv;
 	int rv;

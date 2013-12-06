@@ -1,4 +1,6 @@
 /* VirtualBox driver - by D.C. van Moolenbroek */
+#include <machine/vmparam.h>
+
 #include <minix/drivers.h>
 #include <minix/vboxtype.h>
 #include <minix/vboxif.h>

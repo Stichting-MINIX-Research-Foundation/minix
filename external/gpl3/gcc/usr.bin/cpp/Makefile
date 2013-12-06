@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2011/07/19 15:59:02 tron Exp $
+#	$NetBSD: Makefile,v 1.5 2013/08/22 00:17:48 matt Exp $
 
 # For ../Makefile.inc and bsd.own.mk
 .include <bsd.init.mk>
@@ -7,11 +7,11 @@ PROG=		cpp
 SRCS=		gcc.c cppspec.c prefix.c version.c
 
 # XXX
-.if ${MACHINE_ARCH} == "x86_64" || ${MACHINE_ARCH} == "i386"
+.if ${GCC_MACHINE_ARCH} == "x86_64" || ${GCC_MACHINE_ARCH} == "i386"
 SRCS+=		driver-i386.c
 .PATH:		${DIST}/gcc/config/i386
 .endif
-.if ${MACHINE_ARCH} == "powerpc" || ${MACHINE_ARCH} == "powerpc64"
+.if ${GCC_MACHINE_ARCH} == "powerpc" || ${GCC_MACHINE_ARCH} == "powerpc64"
 SRCS+=		driver-rs6000.c
 .PATH:		${DIST}/gcc/config/rs6000
 .endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: ksem.h,v 1.13 2012/03/10 21:52:00 joerg Exp $	*/
+/*	$NetBSD: ksem.h,v 1.14 2012/11/25 01:05:04 christos Exp $	*/
 
 /*
  * Copyright (c) 2002 Alfred Perlstein <alfred@FreeBSD.org>
@@ -35,6 +35,21 @@ struct timespec;
 
 #ifdef _KERNEL
 #define	KSEM_MAX	128
+
+typedef struct ksem {
+	LIST_ENTRY(ksem)	ks_entry;	/* global list entry */
+	kmutex_t		ks_lock;	/* lock on this ksem */
+	kcondvar_t		ks_cv;		/* condition variable */
+	u_int			ks_ref;		/* number of references */
+	u_int			ks_value;	/* current value */
+	u_int			ks_waiters;	/* number of waiters */
+	char *			ks_name;	/* name, if named */
+	size_t			ks_namelen;	/* length of name */
+	int			ks_flags;	/* for KS_UNLINKED */
+	mode_t			ks_mode;	/* protection bits */
+	uid_t			ks_uid;		/* creator uid */
+	gid_t			ks_gid;		/* creator gid */
+} ksem_t;
 
 int do_ksem_init(struct lwp *, unsigned int, intptr_t *, copyout_t);
 int do_ksem_open(struct lwp *, const char *, int, mode_t, unsigned int,

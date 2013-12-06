@@ -193,6 +193,7 @@ are:
 
 	\e	escape
 	\n	new line
+	\r	carriage return
 	\t	tab
 	\\	\ character
 	\nnn	Where nnn is three octal digits, the character

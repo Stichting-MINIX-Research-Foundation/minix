@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.17 2007/12/03 09:54:24 isaki Exp $	*/
+/*	$NetBSD: init.c,v 1.18 2013/08/11 05:42:41 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)init.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: init.c,v 1.17 2007/12/03 09:54:24 isaki Exp $");
+__RCSID("$NetBSD: init.c,v 1.18 2013/08/11 05:42:41 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -44,6 +44,7 @@ __RCSID("$NetBSD: init.c,v 1.17 2007/12/03 09:54:24 isaki Exp $");
  * Melbourne getty.
  */
 
+#include <stddef.h>
 #include <termios.h>
 
 #include "gettytab.h"
@@ -55,92 +56,92 @@ extern	char hostname[];
 #define M(a) ((char *)&tmode.c_cc[a])
 
 struct	gettystrs gettystrs[] = {
-	{ "nx" },		/* next table */
-	{ "cl" },		/* screen clear characters */
-	{ "im" },		/* initial message */
-	{ "lm", "login: " },	/* login message */
-	{ "er", M(VERASE) },	/* erase character */
-	{ "kl", M(VKILL) },	/* kill character */
-	{ "et", M(VEOF) },	/* eof chatacter (eot) */
-	{ "pc", "" },		/* pad character */
-	{ "tt" },		/* terminal type */
-	{ "ev" },		/* environment */
-	{ "lo", _PATH_LOGIN },	/* login program */
-	{ "hn", hostname },	/* host name */
-	{ "he" },		/* host name edit */
-	{ "in", M(VINTR) },	/* interrupt char */
-	{ "qu", M(VQUIT) },	/* quit char */
-	{ "xn", M(VSTART) },	/* XON (start) char */
-	{ "xf", M(VSTOP) },	/* XOFF (stop) char */
-	{ "bk", M(VEOL) },	/* brk char (alt \n) */
-	{ "su", M(VSUSP) },	/* suspend char */
-	{ "ds", M(VDSUSP) },	/* delayed suspend */
-	{ "rp", M(VREPRINT) },	/* reprint char */
-	{ "fl", M(VDISCARD) },	/* flush output */
-	{ "we", M(VWERASE) },	/* word erase */
-	{ "ln", M(VLNEXT) },	/* literal next */
-	{ "st", M(VSTATUS) },	/* status */
-	{ "b2", M(VEOL2) },	/* alt brk char */
-	{ "pp" },		/* ppp login program */
-	{ "if" },		/* sysv-like 'issue' filename */
-	{ "al" },		/* user to auto-login */
-	{ 0 }
+	{ "nx", NULL,        NULL },	/* next table */
+	{ "cl", NULL,        NULL },	/* screen clear characters */
+	{ "im", NULL,        NULL },	/* initial message */
+	{ "lm", "login: ",   NULL },	/* login message */
+	{ "er", M(VERASE),   NULL },	/* erase character */
+	{ "kl", M(VKILL),    NULL },	/* kill character */
+	{ "et", M(VEOF),     NULL },	/* eof chatacter (eot) */
+	{ "pc", "",          NULL },	/* pad character */
+	{ "tt", NULL,        NULL },	/* terminal type */
+	{ "ev", NULL,        NULL },	/* environment */
+	{ "lo", _PATH_LOGIN, NULL },	/* login program */
+	{ "hn", hostname,    NULL },	/* host name */
+	{ "he", NULL,        NULL },	/* host name edit */
+	{ "in", M(VINTR),    NULL },	/* interrupt char */
+	{ "qu", M(VQUIT),    NULL },	/* quit char */
+	{ "xn", M(VSTART),   NULL },	/* XON (start) char */
+	{ "xf", M(VSTOP),    NULL },	/* XOFF (stop) char */
+	{ "bk", M(VEOL),     NULL },	/* brk char (alt \n) */
+	{ "su", M(VSUSP),    NULL },	/* suspend char */
+	{ "ds", M(VDSUSP),   NULL },	/* delayed suspend */
+	{ "rp", M(VREPRINT), NULL },	/* reprint char */
+	{ "fl", M(VDISCARD), NULL },	/* flush output */
+	{ "we", M(VWERASE),  NULL },	/* word erase */
+	{ "ln", M(VLNEXT),   NULL },	/* literal next */
+	{ "st", M(VSTATUS),  NULL },	/* status */
+	{ "b2", M(VEOL2),    NULL },	/* alt brk char */
+	{ "pp", NULL,        NULL },	/* ppp login program */
+	{ "if", NULL,        NULL },	/* sysv-like 'issue' filename */
+	{ "al", NULL,        NULL },	/* user to auto-login */
+	{ NULL, NULL, NULL }
 };
 
 struct	gettynums gettynums[] = {
-	{ "is" },			/* input speed */
-	{ "os" },			/* output speed */
-	{ "sp" },			/* both speeds */
-	{ "nd" },			/* newline delay */
-	{ "cd" },			/* carriage-return delay */
-	{ "td" },			/* tab delay */
-	{ "fd" },			/* form-feed delay */
-	{ "bd" },			/* backspace delay */
-	{ "to" },			/* timeout */
-	{ "f0" },			/* output flags */
-	{ "f1" },			/* input flags */
-	{ "f2" },			/* user mode flags */
-	{ "pf" },			/* delay before flush at 1st prompt */
-	{ "c0" },			/* output c_flags */
-	{ "c1" },			/* input c_flags */
-	{ "c2" },			/* user mode c_flags */
-	{ "i0" },			/* output i_flags */
-	{ "i1" },			/* input i_flags */
-	{ "i2" },			/* user mode i_flags */
-	{ "l0" },			/* output l_flags */
-	{ "l1" },			/* input l_flags */
-	{ "l2" },			/* user mode l_flags */
-	{ "o0" },			/* output o_flags */
-	{ "o1" },			/* input o_flags */
-	{ "o2" },			/* user mode o_flags */
-	{ 0 }
+	{ "is", 0,0,0 },		/* input speed */
+	{ "os", 0,0,0 },		/* output speed */
+	{ "sp", 0,0,0 },		/* both speeds */
+	{ "nd", 0,0,0 },		/* newline delay */
+	{ "cd", 0,0,0 },		/* carriage-return delay */
+	{ "td", 0,0,0 },		/* tab delay */
+	{ "fd", 0,0,0 },		/* form-feed delay */
+	{ "bd", 0,0,0 },		/* backspace delay */
+	{ "to", 0,0,0 },		/* timeout */
+	{ "f0", 0,0,0 },		/* output flags */
+	{ "f1", 0,0,0 },		/* input flags */
+	{ "f2", 0,0,0 },		/* user mode flags */
+	{ "pf", 0,0,0 },		/* delay before flush at 1st prompt */
+	{ "c0", 0,0,0 },		/* output c_flags */
+	{ "c1", 0,0,0 },		/* input c_flags */
+	{ "c2", 0,0,0 },		/* user mode c_flags */
+	{ "i0", 0,0,0 },		/* output i_flags */
+	{ "i1", 0,0,0 },		/* input i_flags */
+	{ "i2", 0,0,0 },		/* user mode i_flags */
+	{ "l0", 0,0,0 },		/* output l_flags */
+	{ "l1", 0,0,0 },		/* input l_flags */
+	{ "l2", 0,0,0 },		/* user mode l_flags */
+	{ "o0", 0,0,0 },		/* output o_flags */
+	{ "o1", 0,0,0 },		/* input o_flags */
+	{ "o2", 0,0,0 },		/* user mode o_flags */
+	{ 0,0,0,0 }
 };
 
 struct	gettyflags gettyflags[] = {
-	{ "ht",	0 },			/* has tabs */
-	{ "nl",	1 },			/* has newline char */
-	{ "ep",	0 },			/* even parity */
-	{ "op",	0 },			/* odd parity */
-	{ "ap",	0 },			/* any parity */
-	{ "ec",	1 },			/* no echo */
-	{ "co",	0 },			/* console special */
-	{ "cb",	0 },			/* crt backspace */
-	{ "ck",	0 },			/* crt kill */
-	{ "ce",	0 },			/* crt erase */
-	{ "pe",	0 },			/* printer erase */
-	{ "rw",	1 },			/* don't use raw */
-	{ "xc",	1 },			/* don't ^X ctl chars */
-	{ "lc",	0 },			/* terminal las lower case */
-	{ "uc",	0 },			/* terminal has no lower case */
-	{ "ig",	0 },			/* ignore garbage */
-	{ "ps",	0 },			/* do port selector speed select */
-	{ "hc",	1 },			/* don't set hangup on close */
-	{ "ub", 0 },			/* unbuffered output */
-	{ "ab", 0 },			/* auto-baud detect with '\r' */
-	{ "dx", 0 },			/* set decctlq */
-	{ "np", 0 },			/* no parity at all (8bit chars) */
-	{ "mb", 0 },			/* do MDMBUF flow control */
-	{ "cs", 0 },			/* clear screen based on term type */
-	{ "nn", 0 },			/* don't prompt for login name */
-	{ 0 }
+	{ "ht",	0, 0,0,0 },		/* has tabs */
+	{ "nl",	1, 0,0,0 },		/* has newline char */
+	{ "ep",	0, 0,0,0 },		/* even parity */
+	{ "op",	0, 0,0,0 },		/* odd parity */
+	{ "ap",	0, 0,0,0 },		/* any parity */
+	{ "ec",	1, 0,0,0 },		/* no echo */
+	{ "co",	0, 0,0,0 },		/* console special */
+	{ "cb",	0, 0,0,0 },		/* crt backspace */
+	{ "ck",	0, 0,0,0 },		/* crt kill */
+	{ "ce",	0, 0,0,0 },		/* crt erase */
+	{ "pe",	0, 0,0,0 },		/* printer erase */
+	{ "rw",	1, 0,0,0 },		/* don't use raw */
+	{ "xc",	1, 0,0,0 },		/* don't ^X ctl chars */
+	{ "lc",	0, 0,0,0 },		/* terminal las lower case */
+	{ "uc",	0, 0,0,0 },		/* terminal has no lower case */
+	{ "ig",	0, 0,0,0 },		/* ignore garbage */
+	{ "ps",	0, 0,0,0 },		/* do port selector speed select */
+	{ "hc",	1, 0,0,0 },		/* don't set hangup on close */
+	{ "ub", 0, 0,0,0 },		/* unbuffered output */
+	{ "ab", 0, 0,0,0 },		/* auto-baud detect with '\r' */
+	{ "dx", 0, 0,0,0 },		/* set decctlq */
+	{ "np", 0, 0,0,0 },		/* no parity at all (8bit chars) */
+	{ "mb", 0, 0,0,0 },		/* do MDMBUF flow control */
+	{ "cs", 0, 0,0,0 },		/* clear screen based on term type */
+	{ "nn", 0, 0,0,0 },		/* don't prompt for login name */
+	{ NULL,0,0,0,0 }
 };

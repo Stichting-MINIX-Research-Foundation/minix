@@ -1,0 +1,3 @@
+# $NetBSD: md.acorn32,v 1.1 2013/01/16 21:11:12 christos Exp $
+./usr/libdata/debug/usr/X11R6/bin/Xarm32VIDC.debug		-unknown-	debug,x11
+./usr/libdata/debug/usr/X11R6/bin/Xvfb.debug			-unknown-	debug,x11

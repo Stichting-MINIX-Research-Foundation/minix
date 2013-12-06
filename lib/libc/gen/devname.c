@@ -49,7 +49,7 @@ __RCSID("$NetBSD: devname.c,v 1.22 2012/06/03 21:42:46 joerg Exp $");
 __weak_alias(devname_r,_devname_r)
 #endif
 
-#ifndef __minix
+#if !defined(__minix)
 static once_t db_opened = ONCE_INITIALIZER;
 static struct cdbr *db;
 static devmajor_t pts;
@@ -102,7 +102,7 @@ devname_ptslookup(dev_t dev, mode_t type, char *path, size_t len)
 		return ERANGE;
 	return 0;
 }
-#endif
+#endif /* !defined(__minix) */
 
 static int
 devname_fts(dev_t dev, mode_t type, char *path, size_t len)
@@ -142,7 +142,7 @@ devname_r(dev_t dev, mode_t type, char *path, size_t len)
 {
 	int rv;
 
-#ifndef __minix
+#if !defined(__minix)
 	thr_once(&db_opened, devname_dbopen);
 
 	if (db != NULL) {
@@ -157,7 +157,7 @@ devname_r(dev_t dev, mode_t type, char *path, size_t len)
 
 	if (db != NULL)
 		return ENOENT;
-#endif
+#endif /* !defined(__minix) */
 	rv = devname_fts(dev, type, path, len);
 	return rv;
 }

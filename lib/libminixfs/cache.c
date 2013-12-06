@@ -6,6 +6,8 @@
 #include <math.h>
 #include <stdlib.h>
 
+#include <machine/vmparam.h>
+
 #include <sys/param.h>
 #include <sys/mman.h>
 

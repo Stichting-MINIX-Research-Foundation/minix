@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk.c,v 1.42 2012/07/03 15:24:37 tsutsui Exp $	*/
+/*	$NetBSD: biosdisk.c,v 1.43 2013/10/31 20:31:04 christos Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998
@@ -118,6 +118,8 @@ static struct btinfo_bootdisk bi_disk;
 static struct btinfo_bootwedge bi_wedge;
 #endif
 
+#define MBR_PARTS(buf) ((char *)(buf) + offsetof(struct mbr_sector, mbr_parts))
+
 #define	RF_PROTECTED_SECTORS	64	/* XXX refer to <.../rf_optnames.h> */
 
 int
@@ -231,7 +233,7 @@ check_gpt(struct biosdisk *d, daddr_t sector)
 		return EIO;
 	}
 
-	gpth = *(const struct gpt_hdr *)d->buf;
+	memcpy(&gpth, d->buf, sizeof(gpth));
 
 	if (memcmp(GPT_HDR_SIG, gpth.hdr_sig, sizeof(gpth.hdr_sig)))
 		return -1;
@@ -423,7 +425,7 @@ read_minix_subp(struct biosdisk *d, struct disklabel* dflt_lbl,
 	if ((uint8_t)d->buf[510] != 0x55 || (uint8_t)d->buf[511] != 0xAA) {
 		return -1;
 	}
-	memcpy(&mbr, ((struct mbr_sector *)d->buf)->mbr_parts, sizeof(mbr));
+	memcpy(&mbr, MBR_PARTS(d->buf), sizeof(mbr));
 	for (i = 0; i < MBR_PART_COUNT; i++) {
 		typ = mbr[i].mbrp_type;
 		if (typ == 0)
@@ -478,8 +480,7 @@ read_label(struct biosdisk *d)
 #endif
 			return EIO;
 		}
-		memcpy(&mbr, ((struct mbr_sector *)d->buf)->mbr_parts,
-		       sizeof(mbr));
+		memcpy(&mbr, MBR_PARTS(d->buf), sizeof(mbr));
 		/* Look for NetBSD partition ID */
 		for (i = 0; i < MBR_PART_COUNT; i++) {
 			typ = mbr[i].mbrp_type;

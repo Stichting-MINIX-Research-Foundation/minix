@@ -1,13 +1,12 @@
-/*	$NetBSD: filename.c,v 1.3 2011/07/03 20:14:12 tron Exp $	*/
+/*	$NetBSD: filename.c,v 1.4 2013/09/04 19:44:21 tron Exp $	*/
 
 /*
- * Copyright (C) 1984-2011  Mark Nudelman
+ * Copyright (C) 1984-2012  Mark Nudelman
  *
  * You may distribute under the terms of either the GNU General Public
  * License or the Less License, as specified in the README file.
  *
- * For more information about less, or for information on how to 
- * contact the author, see the README file.
+ * For more information, see the README file.
  */
 
 
@@ -815,6 +814,27 @@ lglob(filename)
 }
 
 /*
+ * Return number of %s escapes in a string.
+ * Return a large number if there are any other % escapes besides %s.
+ */
+	static int
+num_pct_s(lessopen)
+	char *lessopen;
+{
+	int num;
+
+	for (num = 0;; num++)
+	{
+		lessopen = strchr(lessopen, '%');
+		if (lessopen == NULL)
+			break;
+		if (*++lessopen != 's')
+			return (999);
+	}
+	return (num);
+}
+
+/*
  * See if we should open a "replacement file" 
  * instead of the file we're about to open.
  */
@@ -840,7 +860,7 @@ open_altfile(filename, pf, pfd)
 	ch_ungetchar(-1);
 	if ((lessopen = lgetenv("LESSOPEN")) == NULL)
 		return (NULL);
-	if (*lessopen == '|')
+	while (*lessopen == '|')
 	{
 		/*
 		 * If LESSOPEN starts with a |, it indicates 
@@ -851,7 +871,7 @@ open_altfile(filename, pf, pfd)
 		return (NULL);
 #else
 		lessopen++;
-		returnfd = 1;
+		returnfd++;
 #endif
 	}
 	if (*lessopen == '-') {
@@ -862,6 +882,11 @@ open_altfile(filename, pf, pfd)
 	} else {
 		if (strcmp(filename, "-") == 0)
 			return (NULL);
+	}
+	if (num_pct_s(lessopen) > 1)
+	{
+		error("Invalid LESSOPEN variable", NULL_PARG);
+		return (NULL);
 	}
 
 	len = strlen(lessopen) + strlen(filename) + 2;
@@ -891,9 +916,18 @@ open_altfile(filename, pf, pfd)
 		if (read(f, &c, 1) != 1)
 		{
 			/*
-			 * Pipe is empty.  This means there is no alt file.
+			 * Pipe is empty.
+			 * If more than 1 pipe char was specified,
+			 * the exit status tells whether the file itself 
+			 * is empty, or if there is no alt file.
+			 * If only one pipe char, just assume no alt file.
 			 */
-			pclose(fd);
+			int status = pclose(fd);
+			if (returnfd > 1 && status == 0) {
+				*pfd = NULL;
+				*pf = -1;
+				return (save(FAKE_EMPTYFILE));
+			}
 			return (NULL);
 		}
 		ch_ungetchar(c);
@@ -943,6 +977,11 @@ close_altfile(altfilename, filename, pipefd)
 	}
 	if ((lessclose = lgetenv("LESSCLOSE")) == NULL)
 	     	return;
+	if (num_pct_s(lessclose) > 2) 
+	{
+		error("Invalid LESSCLOSE variable");
+		return;
+	}
 	len = strlen(lessclose) + strlen(filename) + strlen(altfilename) + 2;
 	cmd = (char *) ecalloc(len, sizeof(char));
 	SNPRINTF2(cmd, len, lessclose, filename, altfilename);

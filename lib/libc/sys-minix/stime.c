@@ -1,13 +1,11 @@
 #include <sys/cdefs.h>
-#include <lib.h>
+
 #include "namespace.h"
 
+#include <minix/sysutil.h>
+#include <lib.h>
 #include <string.h>
 #include <time.h>
-
-#ifdef __weak_alias
-__weak_alias(stime, _stime)
-#endif
 
 int stime(time_t *top)
 {

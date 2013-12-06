@@ -66,7 +66,7 @@ static void root_loadavg(void)
 	avg[1] = ldiv(100L * loads[1].proc_load / loads[1].ticks, 100);
 	avg[2] = ldiv(100L * loads[2].proc_load / loads[2].ticks, 100);
 
-	buf_printf("%ld.%0.2ld %ld.%02ld %ld.%02ld\n",
+	buf_printf("%ld.%02ld %ld.%02ld %ld.%02ld\n",
 		avg[0].quot, avg[0].rem, avg[1].quot, avg[1].rem,
 		avg[2].quot, avg[2].rem);
 }

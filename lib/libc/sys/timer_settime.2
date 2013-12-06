@@ -1,4 +1,4 @@
-.\"	$NetBSD: timer_settime.2,v 1.6 2010/05/17 07:22:03 jruoho Exp $
+.\"	$NetBSD: timer_settime.2,v 1.9 2012/11/06 23:25:44 wiz Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -62,7 +62,7 @@ If the argument
 .Ar otim
 is not
 .Dv NULL
-the old timer settingas are returned.
+the old timer settings are returned.
 .Pp
 If the
 .Ar flags
@@ -121,7 +121,7 @@ argument of
 .Fn timer_settime
 or in the
 .Ar tim
-argment of
+argument of
 .Fn timer_gettime
 are subject to the above rounding effect and might not exactly match the
 requested values by the user.
@@ -169,3 +169,4 @@ structure specified a value less than zero or greater than or equal to 10e9.
 .Sh STANDARDS
 .St -p1003.1b-93 ,
 .St -p1003.1i-95
+.\"  LocalWords:  gettime settime

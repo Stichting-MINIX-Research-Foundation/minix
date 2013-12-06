@@ -1,4 +1,4 @@
-/* $NetBSD: quota1_subr.c,v 1.6 2011/11/25 16:55:05 dholland Exp $ */
+/* $NetBSD: quota1_subr.c,v 1.7 2012/01/29 06:23:20 dholland Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -26,13 +26,12 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: quota1_subr.c,v 1.6 2011/11/25 16:55:05 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: quota1_subr.c,v 1.7 2012/01/29 06:23:20 dholland Exp $");
 
 #include <sys/types.h>
 #include <machine/limits.h>
 
 #include <sys/quota.h>
-#include <quota/quotaprop.h>
 #include <ufs/ufs/quota1.h>
 
 static uint64_t
@@ -54,42 +53,36 @@ q2e2dqblk_limit(uint64_t lim)
 }
 
 void
-dqblk_to_quotaval(const struct dqblk *dqblk, struct quotaval *qv)
+dqblk_to_quotavals(const struct dqblk *dqblk,
+		   struct quotaval *blocks, struct quotaval *files)
 {
 	/* XXX is qv_grace getting handled correctly? */
 
-	qv[QUOTA_LIMIT_BLOCK].qv_hardlimit =
-	    dqblk2q2e_limit(dqblk->dqb_bhardlimit);
-	qv[QUOTA_LIMIT_BLOCK].qv_softlimit =
-	    dqblk2q2e_limit(dqblk->dqb_bsoftlimit);
-	qv[QUOTA_LIMIT_BLOCK].qv_usage       = dqblk->dqb_curblocks;
-	qv[QUOTA_LIMIT_BLOCK].qv_expiretime      = dqblk->dqb_btime;
+	blocks->qv_hardlimit  = dqblk2q2e_limit(dqblk->dqb_bhardlimit);
+	blocks->qv_softlimit  = dqblk2q2e_limit(dqblk->dqb_bsoftlimit);
+	blocks->qv_usage      = dqblk->dqb_curblocks;
+	blocks->qv_expiretime = dqblk->dqb_btime;
 
-	qv[QUOTA_LIMIT_FILE].qv_hardlimit =
-	    dqblk2q2e_limit(dqblk->dqb_ihardlimit);
-	qv[QUOTA_LIMIT_FILE].qv_softlimit =
-	    dqblk2q2e_limit(dqblk->dqb_isoftlimit);
-	qv[QUOTA_LIMIT_FILE].qv_usage       = dqblk->dqb_curinodes;
-	qv[QUOTA_LIMIT_FILE].qv_expiretime      = dqblk->dqb_itime;
+	files->qv_hardlimit  = dqblk2q2e_limit(dqblk->dqb_ihardlimit);
+	files->qv_softlimit  = dqblk2q2e_limit(dqblk->dqb_isoftlimit);
+	files->qv_usage      = dqblk->dqb_curinodes;
+	files->qv_expiretime = dqblk->dqb_itime;
 }
 
 void
-quotaval_to_dqblk(const struct quotaval *qv, struct dqblk *dqblk)
+quotavals_to_dqblk(const struct quotaval *blocks, const struct quotaval *files,
+		   struct dqblk *dqblk)
 {
 	/* XXX is qv_grace getting handled correctly? */
 
-	dqblk->dqb_bhardlimit =
-	    q2e2dqblk_limit(qv[QUOTA_LIMIT_BLOCK].qv_hardlimit);
-	dqblk->dqb_bsoftlimit =
-	    q2e2dqblk_limit(qv[QUOTA_LIMIT_BLOCK].qv_softlimit);
-	dqblk->dqb_curblocks  = qv[QUOTA_LIMIT_BLOCK].qv_usage;
-	dqblk->dqb_btime      = qv[QUOTA_LIMIT_BLOCK].qv_expiretime;
+	dqblk->dqb_bhardlimit = q2e2dqblk_limit(blocks->qv_hardlimit);
+	dqblk->dqb_bsoftlimit = q2e2dqblk_limit(blocks->qv_softlimit);
+	dqblk->dqb_curblocks  = blocks->qv_usage;
+	dqblk->dqb_btime      = blocks->qv_expiretime;
 
-	dqblk->dqb_ihardlimit =
-	    q2e2dqblk_limit(qv[QUOTA_LIMIT_FILE].qv_hardlimit);
-	dqblk->dqb_isoftlimit =
-	    q2e2dqblk_limit(qv[QUOTA_LIMIT_FILE].qv_softlimit);
-	dqblk->dqb_curinodes  = qv[QUOTA_LIMIT_FILE].qv_usage;
-	dqblk->dqb_itime      = qv[QUOTA_LIMIT_FILE].qv_expiretime;
+	dqblk->dqb_ihardlimit = q2e2dqblk_limit(files->qv_hardlimit);
+	dqblk->dqb_isoftlimit = q2e2dqblk_limit(files->qv_softlimit);
+	dqblk->dqb_curinodes  = files->qv_usage;
+	dqblk->dqb_itime      = files->qv_expiretime;
 }
 

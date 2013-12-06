@@ -1,4 +1,4 @@
-/*	$NetBSD: strerror_r.c,v 1.2 2005/07/30 15:21:21 christos Exp $	*/
+/*	$NetBSD: strerror_r.c,v 1.3 2013/08/19 13:03:12 joerg Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -30,38 +30,27 @@
  */
 
 #include <sys/cdefs.h>
-#if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char *sccsid = "@(#)strerror.c	5.6 (Berkeley) 5/4/91";
-#else
-__RCSID("$NetBSD: strerror_r.c,v 1.2 2005/07/30 15:21:21 christos Exp $");
-#endif
-#endif /* LIBC_SCCS and not lint */
+__RCSID("$NetBSD: strerror_r.c,v 1.3 2013/08/19 13:03:12 joerg Exp $");
 
 #include "namespace.h"
-#ifdef NLS
-#include <limits.h>
-#include <nl_types.h>
-#endif
-
 #include <assert.h>
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
+#ifdef NLS
+#include <limits.h>
+#include <nl_types.h>
+#define __SETLOCALE_SOURCE__
+#include <locale.h>
+#include "setlocale_local.h"
+#endif
+
 #include "extern.h"
 
-#ifdef _LIBC
-# ifdef __weak_alias
 __weak_alias(strerror_r, _strerror_r)
-# endif
-#endif
 
 int
-#ifdef _LIBC
-_strerror_r(int num, char *buf, size_t buflen)
-#else
-strerror_r(int num, char *buf, size_t buflen)
-#endif
+_strerror_lr(int num, char *buf, size_t buflen, locale_t loc)
 {
 #define	UPREFIX	"Unknown error: %u"
 	unsigned int errnum = num;
@@ -70,7 +59,7 @@ strerror_r(int num, char *buf, size_t buflen)
 #ifdef NLS
 	int saved_errno = errno;
 	nl_catd catd;
-	catd = catopen("libc", NL_CAT_LOCALE);
+	catd = catopen_l("libc", NL_CAT_LOCALE, loc);
 #endif
 	_DIAGASSERT(buf != NULL);
 
@@ -83,7 +72,7 @@ strerror_r(int num, char *buf, size_t buflen)
 #endif
 	} else {
 #ifdef NLS
-		slen = snprintf(buf, buflen, 
+		slen = snprintf_l(buf, buflen, loc,
 		    catgets(catd, 1, 0xffff, UPREFIX), errnum);
 #else
 		slen = snprintf(buf, buflen, UPREFIX, errnum);
@@ -100,4 +89,14 @@ strerror_r(int num, char *buf, size_t buflen)
 #endif
 
 	return retval;
+}
+
+int
+strerror_r(int num, char *buf, size_t buflen)
+{
+#ifdef NLS
+	return _strerror_lr(num, buf, buflen, _current_locale());
+#else
+	return _strerror_lr(num, buf, buflen, NULL);
+#endif
 }

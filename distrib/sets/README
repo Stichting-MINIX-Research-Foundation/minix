@@ -1,4 +1,4 @@
-# $NetBSD: README,v 1.11 2009/09/12 09:24:32 jnemeth Exp $
+# $NetBSD: README,v 1.13 2013/08/06 22:33:59 soren Exp $
 
 the scripts should be run from the directory where they reside.
 
@@ -43,6 +43,9 @@ the sets are as follows:
 		within.  Also, includes all library and system call
 		manual pages.
 
+	debug:	Debugging libraries (_g.a/MKDEBUGLIB) and (.debug/MKDEBUG)
+		binaries.
+
 	etc:	/etc, and associated files (/var/cron/tabs, /root,
 		etc.).  things that shouldn't be blindly reinstalled
 		on an upgrade.
@@ -64,16 +67,6 @@ the sets are as follows:
 
 	text:	text processing tools.  groff and all of its friends.
 		includes man pages for all bins contained within.
-
-
-as noted, in addition to the "standard" files in each dir, there's
-a file called 'md_share' in lists/man.  it's the list of man pages
-that are installed from /usr/src/share, which are machine-dependent.
-(note that ones that are installed from elsewhere, and thus are
-installed on only one architecture, are listed in the md.${ARCH}
-file.)  basically, it's grepped through, to see which of the
-machine-dependent man pages that are always installed should go
-in the 'man' set, and which should go into the 'misc' set.
 
 Each set must contain "./etc/mtree/set.<set name>" within the mi
 list.  Failure to add this will break unprivileged builds.

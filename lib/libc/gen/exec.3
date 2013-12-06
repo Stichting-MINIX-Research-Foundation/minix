@@ -1,4 +1,4 @@
-.\"	$NetBSD: exec.3,v 1.21 2010/03/22 19:30:53 joerg Exp $
+.\"	$NetBSD: exec.3,v 1.22 2012/11/22 16:19:49 abs Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -59,7 +59,7 @@
 .Fn execvp "const char *file" "char *const argv[]"
 .Sh DESCRIPTION
 The
-.Nm exec
+.Fn exec
 family of functions replaces the current process image with a
 new process image.
 The functions described in this manual page are front-ends for the function
@@ -185,7 +185,7 @@ executes a file with the program tracing facilities enabled (see
 .Xr ptrace 2 ) .
 .Sh RETURN VALUES
 If any of the
-.Nm exec
+.Fn exec
 functions returns, an error will have occurred.
 The return value is \-1, and the global variable
 .Va errno
@@ -195,33 +195,6 @@ will be set to indicate the error.
 .It Pa /bin/sh
 The shell.
 .El
-.Sh ERRORS
-.Fn execl ,
-.Fn execle ,
-.Fn execlp
-and
-.Fn execvp
-may fail and set
-.Va errno
-for any of the errors specified for the library functions
-.Xr execve 2
-and
-.Xr malloc 3 .
-.Pp
-.Fn exect
-and
-.Fn execv
-may fail and set
-.Va errno
-for any of the errors specified for the library function
-.Xr execve 2 .
-.Sh SEE ALSO
-.Xr sh 1 ,
-.Xr execve 2 ,
-.Xr fork 2 ,
-.Xr ptrace 2 ,
-.Xr environ 7 ,
-.Xr script 7
 .Sh COMPATIBILITY
 Historically, the default path for the
 .Fn execlp
@@ -251,6 +224,33 @@ and
 .Er E2BIG ,
 upon which they returned.
 They now return if any error other than the ones described above occurs.
+.Sh ERRORS
+.Fn execl ,
+.Fn execle ,
+.Fn execlp
+and
+.Fn execvp
+may fail and set
+.Va errno
+for any of the errors specified for the library functions
+.Xr execve 2
+and
+.Xr malloc 3 .
+.Pp
+.Fn exect
+and
+.Fn execv
+may fail and set
+.Va errno
+for any of the errors specified for the library function
+.Xr execve 2 .
+.Sh SEE ALSO
+.Xr sh 1 ,
+.Xr execve 2 ,
+.Xr fork 2 ,
+.Xr ptrace 2 ,
+.Xr environ 7 ,
+.Xr script 7
 .Sh STANDARDS
 .Fn execl ,
 .Fn execv ,

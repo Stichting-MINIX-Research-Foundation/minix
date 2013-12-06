@@ -1,4 +1,4 @@
-/*	$NetBSD: calc1.tab.c,v 1.1.1.3 2011/09/10 21:22:08 christos Exp $	*/
+/*	$NetBSD: calc1.tab.c,v 1.1.1.4 2013/04/06 14:45:29 christos Exp $	*/
 
 #ifndef lint
 static const char yysccsid[] = "@(#)yaccpar	1.9 (Berkeley) 02/21/93";
@@ -115,12 +115,15 @@ INTERVAL;
 INTERVAL vmul(double, double, INTERVAL);
 INTERVAL vdiv(double, double, INTERVAL);
 
+extern int yylex(void);
+static void yyerror(const char *s);
+
 int dcheck(INTERVAL);
 
 double dreg[26];
 INTERVAL vreg[26];
 
-#line 28 "calc1.y"
+#line 31 "calc1.y"
 #ifdef YYSTYPE
 #undef  YYSTYPE_IS_DECLARED
 #define YYSTYPE_IS_DECLARED 1
@@ -134,7 +137,7 @@ typedef union
 	INTERVAL vval;
 } YYSTYPE;
 #endif /* !YYSTYPE_IS_DECLARED */
-#line 136 "calc1.tab.c"
+#line 139 "calc1.tab.c"
 
 /* compatibility with bison */
 #ifdef YYPARSE_PARAM
@@ -158,8 +161,12 @@ typedef union
 #endif
 
 /* Parameters sent to yyerror. */
+#ifndef YYERROR_DECL
 #define YYERROR_DECL() yyerror(const char *s)
+#endif
+#ifndef YYERROR_CALL
 #define YYERROR_CALL(msg) yyerror(msg)
+#endif
 
 extern int YYPARSE_DECL();
 
@@ -346,13 +353,8 @@ typedef struct {
 } YYSTACKDATA;
 /* variables for the parser stack */
 static YYSTACKDATA yystack;
-#line 173 "calc1.y"
+#line 176 "calc1.y"
 	/* beginning of subroutines section */
-
-#ifdef YYBYACC
-extern int YYLEX_DECL();
-static void YYERROR_DECL();
-#endif
 
 #define BSZ 50			/* buffer size for floating point numbers */
 
@@ -393,7 +395,7 @@ yylex(void)
 	for (; (cp - buf) < BSZ; ++cp, c = getchar())
 	{
 
-	    *cp = c;
+	    *cp = (char) c;
 	    if (isdigit(c))
 		continue;
 	    if (c == '.')
@@ -482,7 +484,7 @@ vdiv(double a, double b, INTERVAL v)
 {
     return (hilo(a / v.hi, a / v.lo, b / v.hi, b / v.lo));
 }
-#line 484 "calc1.tab.c"
+#line 486 "calc1.tab.c"
 
 #if YYDEBUG
 #include <stdio.h>		/* needed for printf */
@@ -506,7 +508,7 @@ static int yygrowstack(YYSTACKDATA *data)
     else if ((newsize *= 2) > YYMAXDEPTH)
         newsize = YYMAXDEPTH;
 
-    i = data->s_mark - data->s_base;
+    i = (int) (data->s_mark - data->s_base);
     newss = (short *)realloc(data->s_base, newsize * sizeof(*newss));
     if (newss == 0)
         return -1;
@@ -689,85 +691,85 @@ yyreduce:
     switch (yyn)
     {
 case 3:
-#line 54 "calc1.y"
+#line 57 "calc1.y"
 	{
 		(void) printf("%15.8f\n", yystack.l_mark[-1].dval);
 	}
 break;
 case 4:
-#line 58 "calc1.y"
+#line 61 "calc1.y"
 	{
 		(void) printf("(%15.8f, %15.8f)\n", yystack.l_mark[-1].vval.lo, yystack.l_mark[-1].vval.hi);
 	}
 break;
 case 5:
-#line 62 "calc1.y"
+#line 65 "calc1.y"
 	{
 		dreg[yystack.l_mark[-3].ival] = yystack.l_mark[-1].dval;
 	}
 break;
 case 6:
-#line 66 "calc1.y"
+#line 69 "calc1.y"
 	{
 		vreg[yystack.l_mark[-3].ival] = yystack.l_mark[-1].vval;
 	}
 break;
 case 7:
-#line 70 "calc1.y"
+#line 73 "calc1.y"
 	{
 		yyerrok;
 	}
 break;
 case 9:
-#line 77 "calc1.y"
+#line 80 "calc1.y"
 	{
 		yyval.dval = dreg[yystack.l_mark[0].ival];
 	}
 break;
 case 10:
-#line 81 "calc1.y"
+#line 84 "calc1.y"
 	{
 		yyval.dval = yystack.l_mark[-2].dval + yystack.l_mark[0].dval;
 	}
 break;
 case 11:
-#line 85 "calc1.y"
+#line 88 "calc1.y"
 	{
 		yyval.dval = yystack.l_mark[-2].dval - yystack.l_mark[0].dval;
 	}
 break;
 case 12:
-#line 89 "calc1.y"
+#line 92 "calc1.y"
 	{
 		yyval.dval = yystack.l_mark[-2].dval * yystack.l_mark[0].dval;
 	}
 break;
 case 13:
-#line 93 "calc1.y"
+#line 96 "calc1.y"
 	{
 		yyval.dval = yystack.l_mark[-2].dval / yystack.l_mark[0].dval;
 	}
 break;
 case 14:
-#line 97 "calc1.y"
+#line 100 "calc1.y"
 	{
 		yyval.dval = -yystack.l_mark[0].dval;
 	}
 break;
 case 15:
-#line 101 "calc1.y"
+#line 104 "calc1.y"
 	{
 		yyval.dval = yystack.l_mark[-1].dval;
 	}
 break;
 case 16:
-#line 107 "calc1.y"
+#line 110 "calc1.y"
 	{
 		yyval.vval.hi = yyval.vval.lo = yystack.l_mark[0].dval;
 	}
 break;
 case 17:
-#line 111 "calc1.y"
+#line 114 "calc1.y"
 	{
 		yyval.vval.lo = yystack.l_mark[-3].dval;
 		yyval.vval.hi = yystack.l_mark[-1].dval;
@@ -779,79 +781,79 @@ case 17:
 	}
 break;
 case 18:
-#line 121 "calc1.y"
+#line 124 "calc1.y"
 	{
 		yyval.vval = vreg[yystack.l_mark[0].ival];
 	}
 break;
 case 19:
-#line 125 "calc1.y"
+#line 128 "calc1.y"
 	{
 		yyval.vval.hi = yystack.l_mark[-2].vval.hi + yystack.l_mark[0].vval.hi;
 		yyval.vval.lo = yystack.l_mark[-2].vval.lo + yystack.l_mark[0].vval.lo;
 	}
 break;
 case 20:
-#line 130 "calc1.y"
+#line 133 "calc1.y"
 	{
 		yyval.vval.hi = yystack.l_mark[-2].dval + yystack.l_mark[0].vval.hi;
 		yyval.vval.lo = yystack.l_mark[-2].dval + yystack.l_mark[0].vval.lo;
 	}
 break;
 case 21:
-#line 135 "calc1.y"
+#line 138 "calc1.y"
 	{
 		yyval.vval.hi = yystack.l_mark[-2].vval.hi - yystack.l_mark[0].vval.lo;
 		yyval.vval.lo = yystack.l_mark[-2].vval.lo - yystack.l_mark[0].vval.hi;
 	}
 break;
 case 22:
-#line 140 "calc1.y"
+#line 143 "calc1.y"
 	{
 		yyval.vval.hi = yystack.l_mark[-2].dval - yystack.l_mark[0].vval.lo;
 		yyval.vval.lo = yystack.l_mark[-2].dval - yystack.l_mark[0].vval.hi;
 	}
 break;
 case 23:
-#line 145 "calc1.y"
+#line 148 "calc1.y"
 	{
 		yyval.vval = vmul( yystack.l_mark[-2].vval.lo, yystack.l_mark[-2].vval.hi, yystack.l_mark[0].vval );
 	}
 break;
 case 24:
-#line 149 "calc1.y"
+#line 152 "calc1.y"
 	{
 		yyval.vval = vmul (yystack.l_mark[-2].dval, yystack.l_mark[-2].dval, yystack.l_mark[0].vval );
 	}
 break;
 case 25:
-#line 153 "calc1.y"
+#line 156 "calc1.y"
 	{
 		if (dcheck(yystack.l_mark[0].vval)) YYERROR;
 		yyval.vval = vdiv ( yystack.l_mark[-2].vval.lo, yystack.l_mark[-2].vval.hi, yystack.l_mark[0].vval );
 	}
 break;
 case 26:
-#line 158 "calc1.y"
+#line 161 "calc1.y"
 	{
 		if (dcheck ( yystack.l_mark[0].vval )) YYERROR;
 		yyval.vval = vdiv (yystack.l_mark[-2].dval, yystack.l_mark[-2].dval, yystack.l_mark[0].vval );
 	}
 break;
 case 27:
-#line 163 "calc1.y"
+#line 166 "calc1.y"
 	{
 		yyval.vval.hi = -yystack.l_mark[0].vval.lo;
 		yyval.vval.lo = -yystack.l_mark[0].vval.hi;
 	}
 break;
 case 28:
-#line 168 "calc1.y"
+#line 171 "calc1.y"
 	{
 		yyval.vval = yystack.l_mark[-1].vval;
 	}
 break;
-#line 853 "calc1.tab.c"
+#line 855 "calc1.tab.c"
     }
     yystack.s_mark -= yym;
     yystate = *yystack.s_mark;

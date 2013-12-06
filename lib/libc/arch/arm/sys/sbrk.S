@@ -1,4 +1,4 @@
-/*	$NetBSD: sbrk.S,v 1.9 2011/05/13 23:14:36 nonaka Exp $	*/
+/*	$NetBSD: sbrk.S,v 1.12 2013/09/12 15:36:15 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -41,46 +41,40 @@ WEAK_ALIAS(sbrk, _sbrk)
 
 	.data
 	.align	0
-	.globl	CURBRK
-	.type	CURBRK,#object
-CURBRK:
+	.globl	_C_LABEL(__curbrk)
+	.hidden	_C_LABEL(__curbrk)
+	.type	_C_LABEL(__curbrk),#object
+_C_LABEL(__curbrk):
 	.word	_C_LABEL(_end)
 
 /*
  * Change the data segment size
  */
 ENTRY(_sbrk)
-#ifdef PIC
-	/* Setup the GOT */
-	ldr	r3, .Lgot
-	add	r3, pc, r3
-.L1:
+	/* get address or offset to __curbrk */
 	ldr	r2, .Lcurbrk
-	ldr	r2, [r3, r2]
-#else
-	ldr	r2, .Lcurbrk
+#ifdef __PIC__
+	add	r2, r2, pc	/* pc = &.LPIC0 */
 #endif
+
 	/* Get the current brk address */
 	ldr	r1, [r2]
 
 	/* Calculate new value */
-	mov	r3, r0
-	add	r0, r0, r1
+.LPIC0:	mov	r3, r0
+	adds	r0, r0, r1
 	SYSTRAP(break)
-	bcs	PIC_SYM(CERROR, PLT)
+	_INVOKE_CERROR()
 
 	/* Store new curbrk value */
 	ldr	r0, [r2]
-	add	r1, r0, r3
+	adds	r1, r0, r3
 	str	r1, [r2]
 
 	/* Return old curbrk value */
 	RET
 
 	.align	0
-#ifdef PIC
-.Lgot:
-	.word	_C_LABEL(_GLOBAL_OFFSET_TABLE_) + (. - (.L1+4))
-#endif
 .Lcurbrk:
-	.word	PIC_SYM(CURBRK, GOT)
+	.word	REL_SYM(_C_LABEL(__curbrk), .LPIC0)
+END(_sbrk)

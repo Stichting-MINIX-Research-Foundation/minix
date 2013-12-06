@@ -1,4 +1,4 @@
-/*	$NetBSD: ucontext.h,v 1.17 2012/09/12 02:00:54 manu Exp $	*/
+/*	$NetBSD: ucontext.h,v 1.18 2013/03/06 18:16:58 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2003 The NetBSD Foundation, Inc.
@@ -57,11 +57,11 @@ struct __ucontext {
 #define _UC_STACK	0x02		/* valid uc_stack */
 #define _UC_CPU		0x04		/* valid GPR context in uc_mcontext */
 #define _UC_FPU		0x08		/* valid FPU context in uc_mcontext */
-#ifdef __minix
+#if defined(__minix)
 #define	_UC_SWAPPED	0x10000
 #define _UC_IGNFPU      0x20000
 #define _UC_IGNSIGM     0x40000
-#endif
+#endif /* defined(__minix) */
 #define	_UC_MD		0x400f0020	/* MD bits.  see below */
 
 /*
@@ -109,23 +109,20 @@ struct __ucontext {
 #ifdef _KERNEL
 struct lwp;
 
-#if defined(__UCONTEXT_SIZE) && !defined(__minix)
-__CTASSERT(sizeof(ucontext_t) == __UCONTEXT_SIZE);
-#endif
-
 void	getucontext(struct lwp *, ucontext_t *);
 int	setucontext(struct lwp *, const ucontext_t *);
 void	cpu_getmcontext(struct lwp *, mcontext_t *, unsigned int *);
 int	cpu_setmcontext(struct lwp *, const mcontext_t *, unsigned int);
 int	cpu_mcontext_validate(struct lwp *, const mcontext_t *);
+
+#if defined(__UCONTEXT_SIZE) && !defined(__minix)
+__CTASSERT(sizeof(ucontext_t) == __UCONTEXT_SIZE);
+#endif
 #endif /* _KERNEL */
 
 #ifdef __minix
 __BEGIN_DECLS
 void resumecontext(ucontext_t *ucp);
-#if defined(__UCONTEXT_SIZE) && !defined(__minix)
-__CTASSERT(sizeof(ucontext_t) == __UCONTEXT_SIZE);
-#endif
  
 /* These functions get and set ucontext structure through PM/kernel. They don't
  * manipulate the stack. */

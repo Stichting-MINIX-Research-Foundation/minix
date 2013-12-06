@@ -199,13 +199,11 @@ __END_DECLS
 
 #endif /* !_KERNEL */
 
-#ifdef __minix
+#if defined(__minix)
 /* ipcs ctl commands */
 #define SHM_STAT       13
 #define SHM_INFO       14
-#endif
 
-#ifdef __minix
 struct shm_info
 {
        int used_ids;
@@ -223,6 +221,6 @@ struct shm_info
 #define SHM_DEST 01000                 /* segment will be destroyed on last detach */
 #define SHM_LOCKED 02000               /* segment will not be swapped */
 
-#endif
+#endif /* defined(__minix) */
 
 #endif /* !_SYS_SHM_H_ */

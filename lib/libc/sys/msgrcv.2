@@ -1,4 +1,4 @@
-.\"	$NetBSD: msgrcv.2,v 1.20 2012/05/15 11:37:01 reinoud Exp $
+.\"	$NetBSD: msgrcv.2,v 1.22 2013/07/24 11:54:04 skrll Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 26, 2009
+.Dd July 24, 2013
 .Dt MSGRCV 2
 .Os
 .Sh NAME
@@ -90,8 +90,10 @@ less than or equal to the absolute value of
 will be received.
 .El
 .Pp
+The argument
 .Fa msgsz
-specifies the maximum length of the requested message.
+specifies the size in bytes of
+.Va mtext .
 If the received message has a length greater than
 .Fa msgsz
 it will be silently truncated if the

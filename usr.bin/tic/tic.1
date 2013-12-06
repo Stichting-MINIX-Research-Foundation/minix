@@ -1,4 +1,4 @@
-.\"	$NetBSD: tic.1,v 1.8 2010/02/11 13:44:14 wiz Exp $
+.\"	$NetBSD: tic.1,v 1.11 2013/07/20 21:40:00 wiz Exp $
 .\"
 .\" Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 11, 2010
+.Dd June 3, 2012
 .Dt TIC 1
 .Os
 .Sh NAME
@@ -45,7 +45,7 @@ The
 utility compiles
 .Xr terminfo 5
 source into a database for use by other programs.
-The created database path name is the same as the source but with .db appended.
+The created database path name is the same as the source but with .cdb appended.
 .Pp
 The following options are available:
 .Bl -tag -width Fl
@@ -55,16 +55,16 @@ Do not discard commented out capabilities.
 Only check for errors, don't write the final database.
 .It Fl o Ar file
 Write the database to
-.Ar file Ns .db
+.Ar file
 instead of
-.Ar source Ns .db .
+.Ar source Ns .cdb .
 .It Fl S
 For
 .Ar term1 , term2 , ...
 output a C structure containing name, compiled description, and compiled size.
-This can be used to embed terminal descriptons into a program.
+This can be used to embed terminal descriptions into a program.
 .It Fl s
-Display the number of terminal descritions written to the database.
+Display the number of terminal descriptions written to the database.
 .It Fl x
 Include non standard capabilities defined in the
 .Ar source .
@@ -102,4 +102,4 @@ utility works with terminfo files that conform to the
 .St -xcurses4.2
 standard.
 .Sh AUTHORS
-.An Roy Marples Aq roy@NetBSD.org
+.An Roy Marples Aq Mt roy@NetBSD.org

@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.129 2012/02/01 02:27:23 matt Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.131 2013/08/29 17:49:21 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -204,7 +204,6 @@ do {									\
 #define	SS_ISDISCONNECTED	0x800	/* socket disconnected from peer */
 
 #define	SS_ASYNC		0x100	/* async i/o notify */
-#define	SS_ISCONFIRMING		0x200	/* deciding to accept connection req */
 #define	SS_MORETOCOME		0x400	/*
 					 * hint from sosend to lower layer;
 					 * more data coming
@@ -272,6 +271,8 @@ void	sbcheck(struct sockbuf *);
 void	sbcompress(struct sockbuf *, struct mbuf *, struct mbuf *);
 struct mbuf *
 	sbcreatecontrol(void *, int, int, int);
+struct mbuf *
+	sbcreatecontrol1(void **, int, int, int, int);
 void	sbdrop(struct sockbuf *, int);
 void	sbdroprecord(struct sockbuf *);
 void	sbflush(struct sockbuf *);
@@ -305,7 +306,7 @@ void	soisdisconnected(struct socket *);
 void	soisdisconnecting(struct socket *);
 int	solisten(struct socket *, int, struct lwp *);
 struct socket *
-	sonewconn(struct socket *, int);
+	sonewconn(struct socket *, bool);
 void	soqinsque(struct socket *, struct socket *, int);
 int	soqremque(struct socket *, int);
 int	soreceive(struct socket *, struct mbuf **, struct uio *,

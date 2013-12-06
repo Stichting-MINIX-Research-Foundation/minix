@@ -84,10 +84,11 @@ public:
 };
 
 
+std::istream& operator>>(std::istream&, bytes&);
+std::ostream& operator<<(std::ostream&, const bytes&);
+
+
 }  // namespace units
 }  // namespace utils
-
-std::istream& operator>>(std::istream&, utils::units::bytes&);
-std::ostream& operator<<(std::ostream&, const utils::units::bytes&);
 
 #endif  // !defined(UTILS_UNITS_HPP)

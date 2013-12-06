@@ -26,14 +26,15 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)ieee.3	6.4 (Berkeley) 5/6/91
-.\"	$NetBSD: ieee_test.3,v 1.10 2003/08/07 16:44:48 agc Exp $
+.\"	$NetBSD: ieee_test.3,v 1.12 2011/09/13 07:11:43 njoly Exp $
 .\"
-.Dd March 10, 1994
+.Dd August 3, 2011
 .Dt IEEE_TEST 3
 .Os
 .Sh NAME
 .Nm logb ,
 .Nm logbf ,
+.Nm logbl ,
 .Nm scalb ,
 .Nm scalbf ,
 .Nm significand ,
@@ -47,6 +48,8 @@
 .Fn logb "double x"
 .Ft float
 .Fn logbf "float x"
+.Ft long double
+.Fn logbl "long double x"
 .Ft double
 .Fn scalb "double x" "double n"
 .Ft float
@@ -90,7 +93,6 @@ is not defined when
 .Fa x
 is 0, \*(Pm\*(If, or \*(Na.
 .Sh SEE ALSO
-.Xr ieee 3 ,
 .Xr math 3
 .Sh STANDARDS
 .St -ieee754

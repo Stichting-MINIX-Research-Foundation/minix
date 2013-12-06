@@ -49,11 +49,11 @@
 #define TTYDEF_OFLAG	(OPOST | ONLCR | OXTABS)
 #define TTYDEF_LFLAG	(ECHO | ICANON | ISIG | IEXTEN | ECHOE|ECHOKE|ECHOCTL)
 #define TTYDEF_CFLAG	(CREAD | CS8 | HUPCL)
-#ifdef __minix
-#define TTYDEF_SPEED   (B115200)
+#if defined(__minix)
+#define TTYDEF_SPEED	(B115200)
 #else
-#define TTYDEF_SPEED   (B9600)
-#endif
+#define TTYDEF_SPEED	(B9600)
+#endif /* defined(__minix) */
 
 /*
  * Control Character Defaults

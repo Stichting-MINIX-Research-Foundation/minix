@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2009/05/08 17:28:01 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2013/03/23 16:15:57 christos Exp $
 
 .include <bsd.own.mk>
 .include <bsd.sys.mk>
@@ -19,6 +19,9 @@ CLEANFILES+=	magic.mgc
 .if ${MKSHARE} != "no"
 realall:	file magic.mgc
 .endif
+
+LIBMAGIC!= cd ${.CURDIR}/../lib && ${PRINTOBJDIR}
+CPPFLAGS+=-I${LIBMAGIC}
 
 .if ${MKSHARE} != "no"
 magic.mgc: ${TOOL_MKMAGIC}

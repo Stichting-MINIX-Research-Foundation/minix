@@ -1,4 +1,4 @@
-/*	 $NetBSD: wcsftime.c,v 1.3 2007/05/21 15:32:17 tnozaki Exp $	*/
+/*	 $NetBSD: wcsftime.c,v 1.5 2013/08/19 20:41:15 joerg Exp $	*/
 /*-
  * Copyright (c) 2002 Tim J. Robbins
  * All rights reserved.
@@ -26,19 +26,20 @@
  */
 
 #include <sys/cdefs.h>
-#if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-__FBSDID("$FreeBSD: src/lib/libc/locale/wcsftime.c,v 1.4 2004/04/07 09:47:56 tjr Exp $");
-#else
-__RCSID("$NetBSD: wcsftime.c,v 1.3 2007/05/21 15:32:17 tnozaki Exp $");
-#endif
-#endif /* LIBC_SCCS and not lint */
+__RCSID("$NetBSD: wcsftime.c,v 1.5 2013/08/19 20:41:15 joerg Exp $");
 
+#define __SETLOCALE_SOURCE__
+#include "namespace.h"
 #include <errno.h>
 #include <limits.h>
+#include <locale.h>
 #include <stdlib.h>
 #include <time.h>
 #include <wchar.h>
+
+#include "setlocale_local.h"
+
+__weak_alias(wcsftime_l, _wcsftime_l)
 
 /*
  * Convert date and time to a wide-character string.
@@ -57,6 +58,13 @@ size_t
 wcsftime(wchar_t *wcs, size_t maxsize,
     const wchar_t *format, const struct tm *timeptr)
 {
+	return wcsftime_l(wcs, maxsize, format, timeptr, _current_locale());
+}
+
+size_t
+wcsftime_l(wchar_t *wcs, size_t maxsize,
+    const wchar_t *format, const struct tm *timeptr, locale_t loc)
+{
 	char *dst, *dstp, *sformat;
 	size_t n, sflen;
 	int sverrno;
@@ -67,12 +75,12 @@ wcsftime(wchar_t *wcs, size_t maxsize,
 	 * Convert the supplied format string to a multibyte representation
 	 * for strftime(), which only handles single-byte characters.
 	 */
-	sflen = wcstombs(NULL, format, 0);
+	sflen = wcstombs_l(NULL, format, 0, loc);
 	if (sflen == (size_t)-1)
 		goto error;
 	if ((sformat = malloc(sflen + 1)) == NULL)
 		goto error;
-	wcstombs(sformat, format, sflen + 1);
+	wcstombs_l(sformat, format, sflen + 1, loc);
 
 	/*
 	 * Allocate memory for longest multibyte sequence that will fit
@@ -80,18 +88,18 @@ wcsftime(wchar_t *wcs, size_t maxsize,
 	 * Then, copy and convert the result back into wide characters in
 	 * the caller's buffer.
 	 */
-	if (SIZE_T_MAX / MB_CUR_MAX <= maxsize) {
+	if (SIZE_T_MAX / MB_CUR_MAX_L(loc) <= maxsize) {
 		/* maxsize is preposterously large - avoid int. overflow. */
 		errno = EINVAL;
 		goto error;
 	}
-	dst = malloc(maxsize * MB_CUR_MAX);
+	dst = malloc(maxsize * MB_CUR_MAX_L(loc));
 	if (dst == NULL)
 		goto error;
-	if (strftime(dst, maxsize, sformat, timeptr) == 0)
+	if (strftime_l(dst, maxsize, sformat, timeptr, loc) == 0)
 		goto error;
 	dstp = dst;
-	n = mbstowcs(wcs, dstp, maxsize);
+	n = mbstowcs_l(wcs, dstp, maxsize, loc);
 	if (n == (size_t)-2 || n == (size_t)-1)
 		goto error;
 

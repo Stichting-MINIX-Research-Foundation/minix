@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_inode.h,v 1.1 2011/11/24 15:51:31 ahoka Exp $	*/
+/*	$NetBSD: chfs_inode.h,v 1.7 2013/01/22 09:39:15 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -35,18 +35,51 @@
 #ifndef __CHFS_INODE_H__
 #define __CHFS_INODE_H__
 
+#ifdef _KERNEL
 #include <sys/vnode.h>
 #include <sys/stat.h>
 #include <ufs/ufs/ufsmount.h>
 #include <miscfs/genfs/genfs_node.h>
+#endif /* _KERNEL */
 
+#define CHFS_ROOTINO 2
+
+/* chfs file types */
+enum chtype {
+	CHT_BLANK,	/* empty type */
+	CHT_REG,	/* regular file */
+	CHT_DIR,	/* directory */
+	CHT_BLK,	/* block device */
+	CHT_CHR,	/* character device */
+	CHT_LNK,	/* link */
+	CHT_SOCK,	/* socket */
+	CHT_FIFO,	/* fifo */
+	CHT_BAD		/* bad type */
+};
+
+/* these macros are needed because the compatibility */
+#define CHTTOVT(ch_type)	(enum vtype)(ch_type)
+#define VTTOCHT(v_type)		(enum chtype)(v_type)
+
+/* vtype replaced with chtype, these are only for backward compatibility */
+static const enum chtype iftocht_tab[16] = {
+	CHT_BLANK, CHT_FIFO, CHT_CHR, CHT_BLANK,
+	CHT_DIR, CHT_BLANK, CHT_BLK, CHT_BLANK,
+	CHT_REG, CHT_BLANK, CHT_LNK, CHT_BLANK,
+	CHT_SOCK, CHT_BLANK, CHT_BLANK, CHT_BAD,
+};
+
+#define	IFTOCHT(mode)	(iftocht_tab[((mode) & S_IFMT) >> 12])
+
+#ifdef _KERNEL
 struct chfs_inode
 {
-	kmutex_t inode_lock;	/* lock the fields of chfs_inode */
+	struct genfs_node	gnode;
+	kmutex_t inode_lock;		/* lock the fields of chfs_inode */
 
-	LIST_ENTRY(chfs_inode) hash_entry;	/* Hash chain. */
+	LIST_ENTRY(chfs_inode) hash_entry;	/* hash chain */
 
-	struct ufsmount *ump;			/* ufs mount - TODO we should remove it */
+	struct ufsmount *ump;		/* ufs mount - TODO we should remove it */
 	struct chfs_mount *chmp;	/* chfs mount point - TODO we should remove it */
 
 	struct vnode *vp;	/* vnode associated with this inode */
@@ -57,30 +90,28 @@ struct chfs_inode
 	
 	struct chfs_vnode_cache *chvc;	/* vnode cache of this node */
 
-	struct chfs_dirent *fd;	/* full dirent of this node */
-//	struct chfs_dirent *dents;	/* directory entries */
+	struct chfs_dirent *fd;			/* full dirent of this node */
 	struct chfs_dirent_list dents;
 
-	struct rb_tree fragtree;	        /* fragtree of inode */
+	struct rb_tree fragtree;		/* fragtree of inode */
 
-	uint64_t version;			/* version number */
-	//uint64_t highest_version;	/* highest vers. num. (used at data nodes) */
+	uint64_t version;		/* version number */
 	
-	uint32_t mode;		/* mode */
-	//int16_t nlink;		/* link count */
-	uint64_t size;		/* file byte count */
+	uint32_t mode;			/* mode */
+	enum chtype ch_type;	/* chfs file type */
+	uint64_t size;			/* file byte count */
 	uint64_t write_size;	/* increasing while write the file out to the flash */
-	uint32_t uid;		/* file owner */
-	uint32_t gid;		/* file group */
-	uint32_t atime;		/* access time */
-	uint32_t mtime;		/* modify time */
-	uint32_t ctime;		/* creation time */
+	uint32_t uid;			/* file owner */
+	uint32_t gid;			/* file group */
+	uint32_t atime;			/* access time */
+	uint32_t mtime;			/* modify time */
+	uint32_t ctime;			/* creation time */
 	
-	uint32_t iflag;		/* flags, see below */
-	uint32_t flags;		/* status flags (chflags) */
+	uint32_t iflag;			/* flags, see below */
+	uint32_t flags;			/* status flags (chflags) */
 
-	dev_t rdev;			/* used if type is VCHR or VBLK or VFIFO*/
-	char *target;		/* used if type is VLNK */
+	dev_t rdev;				/* used if type is VCHR or VBLK or VFIFO*/
+	char *target;			/* used if type is VLNK */
 };
 
 /* These flags are kept in chfs_inode->iflag. */
@@ -106,13 +137,16 @@ struct chfs_inode
 # undef ITOV
 #endif
 
+/* struct vnode to struct chfs_inode */
 #define	VTOI(vp)	((struct chfs_inode *)(vp)->v_data)
+/* struct chfs_inode to struct vnode */
 #define	ITOV(ip)	((ip)->vp)
 
-/* copied from ufs_dinode.h */
-#define	NDADDR	12			/* Direct addresses in inode. */
+/* XXX copied from ufs_dinode.h and should not be duplicated here */
+#define	UFS_NDADDR	12		/* Direct addresses in inode. */
 
-#define	ROOTINO	((ino_t)2)
+/* XXX this should not be duplicated here */
+#define	UFS_ROOTINO	((ino_t)2)
 
 /* File permissions. */
 #define	IEXEC		0000100		/* Executable. */
@@ -133,4 +167,5 @@ struct chfs_inode
 #define	IFSOCK		0140000		/* UNIX domain socket. */
 #define	IFWHT		0160000		/* Whiteout. */
 
+#endif /* _KERNEL */
 #endif /* __CHFS_INODE_H__ */

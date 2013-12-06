@@ -8,10 +8,6 @@
 #include <errno.h>
 #include <unistd.h>
 
-#ifdef __weak_alias
-__weak_alias(pathconf, _pathconf)
-#endif
-
 long pathconf(path, name)
 const char *path;		/* name of file being interrogated */
 int name;			/* property being inspected */

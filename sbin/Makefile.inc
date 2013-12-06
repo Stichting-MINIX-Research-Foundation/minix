@@ -5,7 +5,6 @@
 
 WARNS?=		5
 BINDIR?=	/sbin
-CPPFLAGS+= -D_NETBSD_SOURCE
 
 .if (${MKDYNAMICROOT} == "no")
 LDSTATIC?=	-static

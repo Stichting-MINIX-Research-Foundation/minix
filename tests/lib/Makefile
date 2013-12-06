@@ -3,7 +3,7 @@
 .include <bsd.own.mk>
 
 # LSC: Only relevant libraries
-TESTS_SUBDIRS=	csu libc libcrypt libcurses \
+TESTS_SUBDIRS=	csu libc libcrypt libcurses libexecinfo \
 		libm libprop \
 		libutil
 

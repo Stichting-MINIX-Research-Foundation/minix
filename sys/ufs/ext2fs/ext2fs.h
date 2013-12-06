@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs.h,v 1.29 2009/11/27 11:16:54 tsutsui Exp $	*/
+/*	$NetBSD: ext2fs.h,v 1.36 2013/06/23 07:28:37 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -198,15 +198,57 @@ struct m_ext2fs {
 
 /* compatible/incompatible features */
 #define EXT2F_COMPAT_PREALLOC		0x0001
+#define EXT2F_COMPAT_AFS		0x0002
 #define EXT2F_COMPAT_HASJOURNAL		0x0004
+#define EXT2F_COMPAT_EXTATTR		0x0008
 #define EXT2F_COMPAT_RESIZE		0x0010
+#define EXT2F_COMPAT_DIRHASHINDEX	0x0020
+#define	EXT2F_COMPAT_BITS \
+	"\20" \
+	"\06COMPAT_DIRHASHINDEX" \
+	"\05COMPAT_RESIZE" \
+	"\04COMPAT_EXTATTR" \
+	"\03COMPAT_HASJOURNAL" \
+	"\02COMPAT_AFS" \
+	"\01COMPAT_PREALLOC"
 
 #define EXT2F_ROCOMPAT_SPARSESUPER	0x0001
 #define EXT2F_ROCOMPAT_LARGEFILE	0x0002
 #define EXT2F_ROCOMPAT_BTREE_DIR	0x0004
+#define EXT2F_ROCOMPAT_HUGE_FILE	0x0008
+#define EXT2F_ROCOMPAT_GDT_CSUM		0x0010
+#define EXT2F_ROCOMPAT_DIR_NLINK	0x0020
+#define EXT2F_ROCOMPAT_EXTRA_ISIZE	0x0040
+#define	EXT2F_ROCOMPAT_BITS \
+	"\20" \
+	"\07ROCOMPAT_EXTRA_ISIZE" \
+	"\06ROCOMPAT_DIR_NLINK" \
+	"\05ROCOMPAT_GDT_CSUM" \
+	"\04ROCOMPAT_HUGE_FILE" \
+	"\03ROCOMPAT_BTREE_DIR" \
+	"\02ROCOMPAT_LARGEFILE" \
+	"\01ROCOMPAT_SPARSESUPER"
 
 #define EXT2F_INCOMPAT_COMP		0x0001
 #define EXT2F_INCOMPAT_FTYPE		0x0002
+#define	EXT2F_INCOMPAT_REPLAY_JOURNAL	0x0004
+#define	EXT2F_INCOMPAT_USES_JOURNAL	0x0008
+#define EXT2F_INCOMPAT_META_BG		0x0010
+#define EXT2F_INCOMPAT_EXTENTS		0x0040
+#define EXT2F_INCOMPAT_64BIT		0x0080
+#define EXT2F_INCOMPAT_MMP		0x0100
+#define EXT2F_INCOMPAT_FLEX_BG		0x0200
+#define	EXT2F_INCOMPAT_BITS \
+	"\20" \
+	"\012INCOMPAT_FLEX_BG" \
+	"\011INCOMPAT_MMP" \
+	"\010INCOMPAT_64BIT" \
+	"\07INCOMPAT_EXTENTS" \
+	"\05INCOMPAT_META_BG" \
+	"\04INCOMPAT_USES_JOURNAL" \
+	"\03INCOMPAT_REPLAY_JOURNAL" \
+	"\02INCOMPAT_FTYPE" \
+	"\01INCOMPAT_COMP"
 
 /*
  * Features supported in this implementation
@@ -223,7 +265,8 @@ struct m_ext2fs {
  */
 #define EXT2F_COMPAT_SUPP		0x0000
 #define EXT2F_ROCOMPAT_SUPP		(EXT2F_ROCOMPAT_SPARSESUPER \
-					 | EXT2F_ROCOMPAT_LARGEFILE)
+					 | EXT2F_ROCOMPAT_LARGEFILE \
+					 | EXT2F_ROCOMPAT_HUGE_FILE)
 #define EXT2F_INCOMPAT_SUPP		EXT2F_INCOMPAT_FTYPE
 
 /*
@@ -319,8 +362,8 @@ void e2fs_cg_bswap(struct ext2_gd *, struct ext2_gd *, int);
  * Turn file system block numbers into disk block addresses.
  * This maps file system blocks to device size blocks.
  */
-#define fsbtodb(fs, b)	((b) << (fs)->e2fs_fsbtodb)
-#define dbtofsb(fs, b)	((b) >> (fs)->e2fs_fsbtodb)
+#define EXT2_FSBTODB(fs, b)	((b) << (fs)->e2fs_fsbtodb)
+#define EXT2_DBTOFSB(fs, b)	((b) >> (fs)->e2fs_fsbtodb)
 
 /*
  * Macros for handling inode numbers:
@@ -347,15 +390,15 @@ void e2fs_cg_bswap(struct ext2_gd *, struct ext2_gd *, int);
  * quantities by using shifts and masks in place of divisions
  * modulos and multiplications.
  */
-#define blkoff(fs, loc)		/* calculates (loc % fs->e2fs_bsize) */ \
+#define ext2_blkoff(fs, loc)	/* calculates (loc % fs->e2fs_bsize) */ \
 	((loc) & (fs)->e2fs_qbmask)
-#define lblktosize(fs, blk)	/* calculates (blk * fs->e2fs_bsize) */ \
+#define ext2_lblktosize(fs, blk) /* calculates (blk * fs->e2fs_bsize) */ \
 	((blk) << (fs)->e2fs_bshift)
-#define lblkno(fs, loc)		/* calculates (loc / fs->e2fs_bsize) */ \
+#define ext2_lblkno(fs, loc)	/* calculates (loc / fs->e2fs_bsize) */ \
 	((loc) >> (fs)->e2fs_bshift)
-#define blkroundup(fs, size)	/* calculates roundup(size, fs->e2fs_bsize) */ \
+#define ext2_blkroundup(fs, size) /* calculates roundup(size, fs->e2fs_bsize) */ \
 	(((size) + (fs)->e2fs_qbmask) & (fs)->e2fs_bmask)
-#define fragroundup(fs, size)	/* calculates roundup(size, fs->e2fs_bsize) */ \
+#define ext2_fragroundup(fs, size) /* calculates roundup(size, fs->e2fs_bsize) */ \
 	(((size) + (fs)->e2fs_qbmask) & (fs)->e2fs_bmask)
 /*
  * Determine the number of available frags given a
@@ -367,6 +410,6 @@ void e2fs_cg_bswap(struct ext2_gd *, struct ext2_gd *, int);
 /*
  * Number of indirects in a file system block.
  */
-#define	NINDIR(fs)	((fs)->e2fs_bsize / sizeof(uint32_t))
+#define	EXT2_NINDIR(fs)	((fs)->e2fs_bsize / sizeof(uint32_t))
 
 #endif /* !_UFS_EXT2FS_EXT2FS_H_ */

@@ -211,7 +211,7 @@ __END_DECLS
 
 #endif /* !_KERNEL */
 
-#ifdef __minix
+#if defined(__minix)
 /* Trace options. */
 #define TO_TRACEFORK   0x1     /* automatically attach to forked children */
 #define TO_ALTEXEC     0x2     /* send SIGSTOP on successful exec() */
@@ -256,6 +256,6 @@ struct ptrace_range {
 #define T_GETRANGE     106       /* get range of values */
 #define T_SETRANGE     107       /* set range of values */
 
-#endif
+#endif /* defined(__minix) */
 
 #endif	/* !_SYS_PTRACE_H_ */

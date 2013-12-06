@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_priv.h,v 1.41 2008/08/11 16:23:37 pooka Exp $	*/
+/*	$NetBSD: puffs_priv.h,v 1.45 2012/04/18 00:57:22 manu Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Antti Kantee.  All Rights Reserved.
@@ -29,11 +29,15 @@
 #define _PUFFS_PRIVATE_H_
 
 #include <sys/types.h>
+#include <fs/puffs/puffs_msgif.h>
+
+#if !defined(__minix)
+#include <pthread.h>
+#endif /* !defined(__minix) */
+#include <puffs.h>
 #include <ucontext.h>
 
-/* FIXME: fs/puffs/puffs_msgif.h? */
-#include "puffs_msgif.h"
-#include "puffs.h"
+#if defined(__minix)
 
 /* XXX: MINIX */
 #define IGN_PERM            0
@@ -47,15 +51,17 @@
 
 #define REQ_READ_SUPER   28
 
-#ifdef PUFFS_WITH_THREADS
-#include <pthread.h>
+#define NUL(str,l,m) mfs_nul_f(__FILE__,__LINE__,(str), (l), (m))
+
+#else
 extern pthread_mutex_t pu_lock;
 #define PU_LOCK() pthread_mutex_lock(&pu_lock)
 #define PU_UNLOCK() pthread_mutex_unlock(&pu_lock)
-#else
-#define PU_LOCK()
-#define PU_UNLOCK()
-#endif
+#endif /* defined(__minix) */
+#if defined(__minix)
+#define PU_LOCK() /* nothing */
+#define PU_UNLOCK()  /* nothing */
+#endif /* defined(__minix) */
 
 #define PU_CMAP(pu, c) (pu->pu_cmap ? pu->pu_cmap(pu,c) : (struct puffs_node*)c)
 
@@ -128,16 +134,19 @@ struct puffs_usermount {
 #define PU_HASKQ	0x0400
 #define PU_PUFFSDAEMON	0x0800
 #define PU_MAINRESTORE	0x1000
+#define PU_DONEXIT	0x2000
 #define PU_SETSTATE(pu, s) (pu->pu_state = (s) | (pu->pu_state & ~PU_STATEMASK))
 #define PU_SETSFLAG(pu, s) (pu->pu_state |= (s))
 #define PU_CLRSFLAG(pu, s) \
-    (pu->pu_state = ((pu->pu_state &= ~(s)) | (pu->pu_state & PU_STATEMASK)))
+    (pu->pu_state = ((pu->pu_state & ~(s)) | (pu->pu_state & PU_STATEMASK)))
 	int			pu_dpipe[2];
 
 	struct puffs_node	*pu_pn_root;
 
 	LIST_HEAD(, puffs_node)	pu_pnodelst;
+#if defined(__minix) // LSC TO KEEP??
 	LIST_HEAD(, puffs_node)	pu_pnode_removed_lst;
+#endif /* defined(__minix) */
 
 	LIST_HEAD(, puffs_cc)	pu_ccmagazin;
 	TAILQ_HEAD(, puffs_cc)	pu_lazyctx;
@@ -162,7 +171,7 @@ struct puffs_usermount {
 	LIST_HEAD(, puffs_fctrl_io) pu_ios;
 	LIST_HEAD(, puffs_fctrl_io) pu_ios_rmlist;
 	struct kevent		*pu_evs;
-	size_t			pu_nfds;
+	size_t			pu_nevs;
 
 	puffs_ml_loop_fn	pu_ml_lfn;
 	struct timespec		pu_ml_timeout;
@@ -217,6 +226,9 @@ struct puffs_newinfo {
 	enum vtype	*pni_vtype;
 	voff_t		*pni_size;
 	dev_t		*pni_rdev;
+	struct vattr	*pni_va;
+	struct timespec	*pni_va_ttl;
+	struct timespec	*pni_cn_ttl;
 };
 
 #define PUFFS_MAKEKCRED(to, from)					\
@@ -270,7 +282,5 @@ void	puffs__fsframe_gotframe(struct puffs_usermount *,
 			        struct puffs_framebuf *);
 
 __END_DECLS
-
-#define NUL(str,l,m) mfs_nul_f(__FILE__,__LINE__,(str), (l), (m))
 
 #endif /* _PUFFS_PRIVATE_H_ */

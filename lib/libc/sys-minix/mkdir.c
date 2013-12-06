@@ -5,10 +5,6 @@
 #include <sys/stat.h>
 #include <string.h>
 
-#ifdef __weak_alias
-__weak_alias(mkdir, _mkdir)
-#endif
-
 int mkdir(const char *name, mode_t mode)
 {
   message m;

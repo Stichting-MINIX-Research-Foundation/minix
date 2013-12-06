@@ -1,4 +1,4 @@
-/*	$NetBSD: checknr.c,v 1.20 2008/07/21 14:19:21 lukem Exp $	*/
+/*	$NetBSD: checknr.c,v 1.24 2013/08/12 14:03:18 joerg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)checknr.c	8.1 (Berkeley) 6/6/93";
 #else 
-__RCSID("$NetBSD: checknr.c,v 1.20 2008/07/21 14:19:21 lukem Exp $");
+__RCSID("$NetBSD: checknr.c,v 1.24 2013/08/12 14:03:18 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -63,20 +63,20 @@ __RCSID("$NetBSD: checknr.c,v 1.20 2008/07/21 14:19:21 lukem Exp $");
 /*
  * The stack on which we remember what we've seen so far.
  */
-struct stkstr {
+static struct stkstr {
 	int opno;	/* number of opening bracket */
 	int pl;		/* '+', '-', ' ' for \s, 1 for \f, 0 for .ft */
 	int parm;	/* parm to size, font, etc */
 	int lno;	/* line number the thing came in in */
 } stk[MAXSTK];
-int stktop;
+static int stktop;
 
 /*
  * The kinds of opening and closing brackets.
  */
-struct brstr {
-	char *opbr;
-	char *clbr;
+static struct brstr {
+	const char *opbr;
+	const char *clbr;
 } br[MAXBR] = {
 	/* A few bare bones troff commands */
 #define SZ	0
@@ -146,7 +146,7 @@ struct brstr {
  * All commands known to nroff, plus macro packages.
  * Used so we can complain about unrecognized commands.
  */
-char *knowncmds[MAXCMDS] = {
+static const char *knowncmds[MAXCMDS] = {
 "$c", "$f", "$h", "$p", "$s", "%A", "%B", "%C", "%D", "%I", "%J", "%N",
 "%O", "%P", "%Q", "%R", "%T", "%V", "(b", "(c", "(d", "(f", "(l", "(q",
 "(t", "(x", "(z", ")b", ")c", ")d", ")f", ")l", ")q", ")t", ")x",
@@ -191,27 +191,26 @@ char *knowncmds[MAXCMDS] = {
 "uf", "uh", "ul", "vs", "wh", "xp", "yr", 0
 };
 
-int	lineno;		/* current line number in input file */
-char	*cfilename;	/* name of current file */
-int	nfiles;		/* number of files to process */
-int	fflag;		/* -f: ignore \f */
-int	sflag;		/* -s: ignore \s */
-int	ncmds;		/* size of knowncmds */
-int	slot;		/* slot in knowncmds found by binsrch */
+static int lineno;		/* current line number in input file */
+static const char *cfilename;	/* name of current file */
+static int nfiles;		/* number of files to process */
+static int fflag;		/* -f: ignore \f */
+static int sflag;		/* -s: ignore \s */
+static int ncmds;		/* size of knowncmds */
+static int slot;		/* slot in knowncmds found by binsrch */
 
-void	addcmd(char *);
-void	addmac(char *);
-int	binsrch(char *);
-void	checkknown(char *);
-void	chkcmd(char *, char *);
-void	complain(int);
-int	eq(const void *, const void *);
-int	main(int, char **);
-void	nomatch(char *);
-void	pe(int);
-void	process(FILE *);
-void	prop(int);
-void	usage(void);
+static void addcmd(char *);
+static void addmac(const char *);
+static int binsrch(const char *);
+static void checkknown(const char *);
+static void chkcmd(const char *);
+static void complain(int);
+static int eq(const char *, const char *);
+static void nomatch(const char *);
+static void pe(int);
+static void process(FILE *);
+static void prop(int);
+static void usage(void) __dead;
 
 int
 main(int argc, char **argv)
@@ -236,14 +235,18 @@ main(int argc, char **argv)
 			for (i=0; br[i].opbr; i++)
 				;
 			for (cp=argv[1]+3; cp[-1]; cp += 6) {
+				char *tmp;
+
 				if (i >= MAXBR)
 					errx(1, "too many pairs");
-				if ((br[i].opbr = malloc(3)) == NULL)
+				if ((tmp = malloc(3)) == NULL)
 					err(1, "malloc");
-				strlcpy(br[i].opbr, cp, 3);
-				if ((br[i].clbr = malloc(3)) == NULL)
+				strlcpy(tmp, cp, 3);
+				br[i].opbr = tmp;
+				if ((tmp = malloc(3)) == NULL)
 					err(1, "malloc");
-				strlcpy(br[i].clbr, cp+3, 3);
+				strlcpy(tmp, cp+3, 3);
+				br[i].clbr = tmp;
 				addmac(br[i].opbr);	/* knows pairs are also known cmds */
 				addmac(br[i].clbr);
 				i++;
@@ -298,7 +301,7 @@ main(int argc, char **argv)
 	exit(0);
 }
 
-void
+static void
 usage(void)
 {
 	(void)fprintf(stderr,
@@ -307,7 +310,7 @@ usage(void)
 	exit(1);
 }
 
-void
+static void
 process(FILE *f)
 {
 	int i, n;
@@ -345,7 +348,7 @@ process(FILE *f)
 			if (eq(mac, "de"))
 				addcmd(line);
 
-			chkcmd(line, mac);
+			chkcmd(mac);
 		}
 
 		/*
@@ -406,7 +409,7 @@ process(FILE *f)
 	}
 }
 
-void
+static void
 complain(int i)
 {
 	pe(stk[i].lno);
@@ -415,7 +418,7 @@ complain(int i)
 	printf("\n");
 }
 
-void
+static void
 prop(int i)
 {
 	if (stk[i].pl == 0)
@@ -434,8 +437,8 @@ prop(int i)
 	}
 }
 
-void
-chkcmd(char *line, char *mac)
+static void
+chkcmd(const char *mac)
 {
 	int i;
 
@@ -470,8 +473,8 @@ chkcmd(char *line, char *mac)
 	}
 }
 
-void
-nomatch(char *mac)
+static void
+nomatch(const char *mac)
 {
 	int i, j;
 
@@ -515,14 +518,14 @@ nomatch(char *mac)
 }
 
 /* eq: are two strings equal? */
-int
-eq(const void *s1, const void *s2)
+static int
+eq(const char *s1, const char *s2)
 {
-	return (strcmp((char *)s1, (char *)s2) == 0);
+	return strcmp(s1, s2) == 0;
 }
 
 /* print the first part of an error message, given the line number */
-void
+static void
 pe(int pelineno)
 {
 	if (nfiles > 1)
@@ -530,8 +533,8 @@ pe(int pelineno)
 	printf("%d: ", pelineno);
 }
 
-void
-checkknown(char *mac)
+static void
+checkknown(const char *mac)
 {
 
 	if (eq(mac, "."))
@@ -548,7 +551,7 @@ checkknown(char *mac)
 /*
  * We have a .de xx line in "line".  Add xx to the list of known commands.
  */
-void
+static void
 addcmd(char *line)
 {
 	char *mac;
@@ -579,10 +582,10 @@ addcmd(char *line)
  * me someday?)  Anyway, I claim that .de is fairly rare in user
  * nroff programs, and the register loop below is pretty fast.
  */
-void
-addmac(char *mac)
+static void
+addmac(const char *mac)
 {
-	char **src, **dest, **loc;
+	const char **src, **dest, **loc;
 
 	if (binsrch(mac) >= 0){	/* it's OK to redefine something */
 #ifdef DEBUG
@@ -613,10 +616,10 @@ addmac(char *mac)
  * Do a binary search in knowncmds for mac.
  * If found, return the index.  If not, return -1.
  */
-int
-binsrch(char *mac)
+static int
+binsrch(const char *mac)
 {
-	char *p;	/* pointer to current cmd in list */
+	const char *p;	/* pointer to current cmd in list */
 	int d;		/* difference if any */
 	int mid;	/* mid point in binary search */
 	int top, bot;	/* boundaries of bin search, inclusive */

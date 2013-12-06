@@ -3,7 +3,3 @@
 
 BINDIR?=	/usr/sbin
 WARNS?=		4
-
-# BJG too many warnings here
-NOGCCERROR?=    yes
-NOCLANGERROR?=  yes

@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.51 2012/06/29 12:51:38 yamt Exp $	*/
+/*	$NetBSD: print.c,v 1.52 2013/05/02 22:43:55 zafer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.5 (Berkeley) 7/28/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.51 2012/06/29 12:51:38 yamt Exp $");
+__RCSID("$NetBSD: print.c,v 1.52 2013/05/02 22:43:55 zafer Exp $");
 #endif
 #endif /* not lint */
 
@@ -461,4 +461,3 @@ printlink(FTSENT *p)
 	else
 		(void)printf("%s", path);
 }
-

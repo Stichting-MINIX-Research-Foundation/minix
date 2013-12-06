@@ -1,4 +1,4 @@
-#ifndef _MACHINE_MULTIBOOT_H
+#ifndef _MACHINE_MULTIBOOT_H /* LSC: FIXME: In MINIX this header is included everywhere... */
 #define _MACHINE_MULTIBOOT_H 1
 
 /*	$NetBSD: multiboot.h,v 1.8 2009/02/22 18:05:42 ahoka Exp $	*/
@@ -43,7 +43,7 @@
 #define MULTIBOOT_HEADER_HAS_VBE	0x00000004
 #define MULTIBOOT_HEADER_HAS_ADDR	0x00010000
 
-#ifndef __ASSEMBLY__
+#if defined(__minix) && !defined(__ASSEMBLY__)
 
 #if !defined(_LOCORE)
 struct multiboot_header {
@@ -73,7 +73,7 @@ struct multiboot_header {
 extern struct multiboot_header *Multiboot_Header;
 #endif /* !defined(_LOCORE) && defined(_KERNEL) */
 
-#endif /* __ASSEMBLY__ */
+#endif /* defined(__minix) && !defined(__ASSEMBLY__) */
 
 /* --------------------------------------------------------------------- */
 
@@ -94,7 +94,7 @@ extern struct multiboot_header *Multiboot_Header;
 #define MULTIBOOT_INFO_HAS_APM_TABLE	0x00000400
 #define MULTIBOOT_INFO_HAS_VBE		0x00000800
 
-#ifndef __ASSEMBLY__
+#if defined(__minix) && !defined(__ASSEMBLY__)
 
 #if !defined(_LOCORE)
 struct multiboot_info {
@@ -195,11 +195,11 @@ struct multiboot_module {
 	uint32_t	mmo_reserved;
 };
 
-#endif
+#endif /* !defined(_LOCORE) */
 
-#endif /* __ASSEMBLY__ */
+#endif /* defined(__minix) && !defined(__ASSEMBLY__) */
 
-#ifdef __minix
+#if defined(__minix)
 
 #ifndef __ASSEMBLY__
 typedef struct multiboot_info multiboot_info_t;
@@ -223,7 +223,8 @@ typedef struct multiboot_mmap multiboot_memory_map_t;
 #define MULTIBOOT_CONSOLE_LINES 25
 #define MULTIBOOT_CONSOLE_COLS 80
 
-#endif 
+#define MULTIBOOT_PARAM_BUF_SIZE 1024
+#endif /* defined(__minix) */
 
 /* --------------------------------------------------------------------- */
 
@@ -239,8 +240,4 @@ bool		multiboot_ksyms_addsyms_elf(void);
 
 /* --------------------------------------------------------------------- */
 
-#ifdef __minix
-#define MULTIBOOT_PARAM_BUF_SIZE 1024
-#endif
-
-#endif
+#endif /* _MACHINE_MULTIBOOT_H */

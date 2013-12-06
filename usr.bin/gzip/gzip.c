@@ -1074,10 +1074,10 @@ copymodes(int fd, const struct stat *sbp, const char *file)
 		maybe_warn("couldn't fchmod: %s", file);
 
 	/* only try flags if they exist already */
-#ifndef __minix
+#if !defined(__minix)
         if (sb.st_flags != 0 && fchflags(fd, sb.st_flags) < 0)
 		maybe_warn("couldn't fchflags: %s", file);
-#endif
+#endif /* !defined(__minix) */
 
 	TIMESPEC_TO_TIMEVAL(&times[0], &sb.st_atimespec);
 	TIMESPEC_TO_TIMEVAL(&times[1], &sb.st_mtimespec);

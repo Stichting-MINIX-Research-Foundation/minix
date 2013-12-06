@@ -1,4 +1,4 @@
-/* $NetBSD: test.c,v 1.39 2012/03/15 02:02:21 joerg Exp $ */
+/* $NetBSD: test.c,v 1.40 2013/05/04 06:26:44 uebayasi Exp $ */
 
 /*
  * test(1); version 7-like  --  author Erik Baalbergen
@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: test.c,v 1.39 2012/03/15 02:02:21 joerg Exp $");
+__RCSID("$NetBSD: test.c,v 1.40 2013/05/04 06:26:44 uebayasi Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -694,7 +694,7 @@ newerf(const char *f1, const char *f2)
 
 	return (stat(f1, &b1) == 0 &&
 		stat(f2, &b2) == 0 &&
-		b1.st_mtime > b2.st_mtime);
+		timespeccmp(&b1.st_mtim, &b2.st_mtim, >));
 }
 
 static int
@@ -704,7 +704,7 @@ olderf(const char *f1, const char *f2)
 
 	return (stat(f1, &b1) == 0 &&
 		stat(f2, &b2) == 0 &&
-		b1.st_mtime < b2.st_mtime);
+		timespeccmp(&b1.st_mtim, &b2.st_mtim, <));
 }
 
 static int

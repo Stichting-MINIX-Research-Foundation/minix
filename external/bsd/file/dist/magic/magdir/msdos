@@ -1,6 +1,6 @@
 
 #------------------------------------------------------------------------------
-# $File: msdos,v 1.77 2011/12/07 22:05:05 christos Exp $
+# $File: msdos,v 1.85 2013/03/09 22:36:00 christos Exp $
 # msdos:  file(1) magic for MS-DOS files
 #
 
@@ -83,6 +83,7 @@
 >>>(0x3c.l+4)	leshort		0x1a6	Hitachi SH4
 >>>(0x3c.l+4)	leshort		0x1c0	ARM
 >>>(0x3c.l+4)	leshort		0x1c2	ARM Thumb
+>>>(0x3c.l+4)	leshort		0x1c4	ARMv7 Thumb
 >>>(0x3c.l+4)	leshort		0x1f0	PowerPC
 >>>(0x3c.l+4)	leshort		0x200	Intel Itanium
 >>>(0x3c.l+4)	leshort		0x266	MIPS16
@@ -312,7 +313,7 @@
 >5	ubyte		>0		
 >>8	string		x		\b, name=%-.2s
 0	string	\xffKEYB\ \ \ \0\0\0\0	
->12	string	\0\0\0\0`\360		MS-DOS KEYBoard Layout file
+>12	string	\0\0\0\0`\004\360	MS-DOS KEYBoard Layout file
 
 # .COM formats (Daniel Quinlan, quinlan@yggdrasil.com)
 # Uncommenting only the first two lines will cover about 2/3 of COM files,
@@ -498,11 +499,18 @@
 !:mime	application/msword
 0	string/b	\333\245-\0\0\0			Microsoft Office Document
 !:mime	application/msword
-512	string/b		\354\245\301		Microsoft Word Document
+512	string/b	\354\245\301			Microsoft Word Document
 !:mime	application/msword
+
+#
+0	string/b	\xDB\xA5\x2D\x00		Microsoft WinWord 2.0 Document
+!:mime application/msword
 #
 2080	string	Microsoft\ Excel\ 5.0\ Worksheet	%s
 !:mime	application/vnd.ms-excel
+#
+0	string/b	\xDB\xA5\x2D\x00		Microsoft WinWord 2.0 Document
+!:mime application/msword
 
 2080	string	Foglio\ di\ lavoro\ Microsoft\ Exce	%s
 !:mime	application/vnd.ms-excel
@@ -637,16 +645,8 @@
 0	lelong		0x08086b70	TurboC BGI file
 0	lelong		0x08084b50	TurboC Font file
 
-# WARNING: below line conflicts with Infocom game data Z-machine 3
-0	byte		0x03
->0x02	byte		<0x13		DBase 3 data file
->>0x04	lelong		0		(no records)
->>0x04	lelong		>0		(%ld records)
-0	byte		0x83
->0x02	byte		<0x13		DBase 3 data file with memo(s)
->>0x04	lelong		0		(no records)
->>0x04	lelong		>0		(%ld records)
-0	leshort		0x0006		DBase 3 index file
+# tests for DBase files moved, updated and merged to database
+
 0	string		PMCC		Windows 3.x .GRP file
 1	string		RDC-meg		MegaDots 
 >8	byte		>0x2F		version %c
@@ -701,6 +701,15 @@
 # Microsoft Outlook's Transport Neutral Encapsulation Format (TNEF)
 0	leshort		0x223e9f78	TNEF
 !:mime	application/vnd.ms-tnef
+
+# 4DOS help (.HLP) files added by Joerg Jenderek from source TPHELP.PAS 
+# of http://www.4dos.info/
+# pointer,HelpID[8]=4DHnnnmm
+0	ulelong	0x48443408		4DOS help file
+>4	string	x			\b, version %-4.4s
+
+# old binary Microsoft (.HLP) files added by Joerg Jenderek from http://file-extension.net/seeker/file_extension_hlp
+0	ulequad	0x3a000000024e4c	MS Advisor help file
 
 # HtmlHelp files (.chm)
 0	string/b	ITSF\003\000\000\000\x60\000\000\000\001\000\000\000	MS Windows HtmlHelp Data
@@ -815,6 +824,16 @@
 
 0	string/b	QEVM		QEMU suspend to disk image
 
+# QEMU QED Image
+# http://wiki.qemu.org/Features/QED/Specification
+0	string/b	QED\0		QEMU QED Image
+
+# VDI Image
+64	string/b	\x7f\x10\xda\xbe	VDI Image
+>68	string/b	\x01\x00\x01\x00	version 1.1
+>0	string		>\0			(%s)
+>368	lequad		x			 \b, %lld bytes
+
 0	string/b	Bochs\ Virtual\ HD\ Image	Bochs disk image,
 >32	string	x				type %s,
 >48	string	x				subtype %s
@@ -874,3 +893,15 @@
 
 # Windows Imaging (WIM) Image
 0	string/b	MSWIM\000\000\000	Windows imaging (WIM) image
+
+# The second byte of these signatures is a file version; I don't know what, 
+# if anything, produced files with version numbers 0-2.
+# From: John Elliott <johne@seasip.demon.co.uk>
+0	string	\xfc\x03\x00	Mallard BASIC program data (v1.11)
+0	string	\xfc\x04\x00	Mallard BASIC program data (v1.29+)
+0	string	\xfc\x03\x01	Mallard BASIC protected program data (v1.11)
+0	string	\xfc\x04\x01	Mallard BASIC protected program data (v1.29+)
+
+0	string	MIOPEN		Mallard BASIC Jetsam data
+0	string	Jetsam0		Mallard BASIC Jetsam index data
+

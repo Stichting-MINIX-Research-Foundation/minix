@@ -1,11 +1,11 @@
-# $NetBSD: mi,v 1.18 2011/02/18 00:42:20 jmcneill Exp $
+# $NetBSD: mi,v 1.23 2013/08/11 22:29:03 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
 ./etc/X11/fs/config					-unknown-	x11
 ./etc/X11/fs/config					-unknown-	xorg
-./etc/X11/lbxproxy/AtomControl				-unknown-	x11
 ./etc/X11/lbxproxy/AtomControl				-obsolete-	obsolete,xorg
+./etc/X11/lbxproxy/AtomControl				-unknown-	x11
 ./etc/X11/proxymngr/pmconfig				-unknown-	x11
 ./etc/X11/proxymngr/pmconfig				-unknown-	xorg
 ./etc/X11/rstart/commands/@List				-unknown-	x11
@@ -30,9 +30,9 @@
 ./etc/X11/xdm/TakeConsole				-unknown-	xorg
 ./etc/X11/xdm/Xaccess					-unknown-	x11
 ./etc/X11/xdm/Xaccess					-unknown-	xorg
+./etc/X11/xdm/Xreset					-unknown-	xorg
 ./etc/X11/xdm/Xresources				-unknown-	x11
 ./etc/X11/xdm/Xresources				-unknown-	xorg
-./etc/X11/xdm/Xreset					-unknown-	xorg
 ./etc/X11/xdm/Xservers					-unknown-	x11
 ./etc/X11/xdm/Xservers					-unknown-	xorg
 ./etc/X11/xdm/Xservers.fs				-unknown-	x11
@@ -57,12 +57,16 @@
 ./etc/X11/xsm/system.xsm				-unknown-	xorg
 ./etc/fonts/conf.avail/10-autohint.conf			-unknown-	xorg
 ./etc/fonts/conf.avail/10-no-sub-pixel.conf		-unknown-	xorg
+./etc/fonts/conf.avail/10-scale-bitmap-fonts.conf	-unknown-	xorg
 ./etc/fonts/conf.avail/10-sub-pixel-bgr.conf		-unknown-	xorg
 ./etc/fonts/conf.avail/10-sub-pixel-rgb.conf		-unknown-	xorg
 ./etc/fonts/conf.avail/10-sub-pixel-vbgr.conf		-unknown-	xorg
 ./etc/fonts/conf.avail/10-sub-pixel-vrgb.conf		-unknown-	xorg
 ./etc/fonts/conf.avail/10-unhinted.conf			-unknown-	xorg
-./etc/fonts/conf.avail/20-fix-globaladvance.conf	-unknown-	xorg
+./etc/fonts/conf.avail/11-lcdfilter-default.conf	-unknown-	xorg
+./etc/fonts/conf.avail/11-lcdfilter-legacy.conf		-unknown-	xorg
+./etc/fonts/conf.avail/11-lcdfilter-light.conf		-unknown-	xorg
+./etc/fonts/conf.avail/20-fix-globaladvance.conf	-unknown-	obsolete
 ./etc/fonts/conf.avail/20-unhint-small-vera.conf	-unknown-	xorg
 ./etc/fonts/conf.avail/25-unhint-nonlatin.conf		-unknown-	xorg
 ./etc/fonts/conf.avail/30-metric-aliases.conf		-unknown-	xorg
@@ -81,7 +85,8 @@
 ./etc/fonts/conf.avail/70-yes-bitmaps.conf		-unknown-	xorg
 ./etc/fonts/conf.avail/80-delicious.conf		-unknown-	xorg
 ./etc/fonts/conf.avail/90-synthetic.conf		-unknown-	xorg
-./etc/fonts/conf.d/20-fix-globaladvance.conf		-unknown-	xorg
+./etc/fonts/conf.d/10-scale-bitmap-fonts.conf		-unknown-	xorg
+./etc/fonts/conf.d/20-fix-globaladvance.conf		-unknown-	obsolete
 ./etc/fonts/conf.d/20-unhint-small-vera.conf		-unknown-	xorg
 ./etc/fonts/conf.d/30-metric-aliases.conf		-unknown-	xorg
 ./etc/fonts/conf.d/30-urw-aliases.conf			-unknown-	xorg
@@ -102,9 +107,9 @@
 ./etc/fonts/fonts.dtd					-unknown-	xorg
 ./etc/mtree/set.xetc					xetc-sys-root	x11
 ./etc/mtree/set.xetc					xetc-sys-root	xorg
+./etc/rc.d/fccache					etc-x11-rc	x11
+./etc/rc.d/fccache					etc-x11-rc	xorg
 ./etc/rc.d/xdm						etc-x11-rc	x11
 ./etc/rc.d/xdm						etc-x11-rc	xorg
 ./etc/rc.d/xfs						etc-x11-rc	x11
 ./etc/rc.d/xfs						etc-x11-rc	xorg
-./etc/rc.d/fccache					etc-x11-rc	x11
-./etc/rc.d/fccache					etc-x11-rc	xorg

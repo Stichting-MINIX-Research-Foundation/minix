@@ -1,4 +1,4 @@
-/*	$NetBSD: compat___sigreturn14.S,v 1.1 2006/03/09 16:20:55 christos Exp $	*/
+/*	$NetBSD: compat___sigreturn14.S,v 1.2 2013/07/16 23:00:15 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
 #if 0
 	RCSID("from: @(#)sigreturn.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: compat___sigreturn14.S,v 1.1 2006/03/09 16:20:55 christos Exp $")
+	RCSID("$NetBSD: compat___sigreturn14.S,v 1.2 2013/07/16 23:00:15 matt Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -47,20 +47,14 @@
  * We must preserve the state of the registers as the user has set them up.
  */
 #ifdef GPROF
-#undef ENTRY
-#ifdef __STDC__
-#define ENTRY(x) \
-	.globl _C_LABEL(x); .even; _C_LABEL(x):; moveml #0xC0C0,%sp@-; .data; \
-	PROF ## x:; .long 0; .text; lea PROF ## x,%a0; jbsr MCOUNT_ENTRY; \
-	moveml %sp@+,#0x0303
-#else
-#define	ENTRY(x) \
-	.globl _C_LABEL(x); .even; _C_LABEL(x):; moveml #0xC0C0,%sp@-; .data; \
-	PROF/**/x:; .long 0; .text; lea PROF/**/x,%a0; jbsr MCOUNT_ENTRY; \
-	moveml %sp@+,#0x0303
-#endif /* __STDC__ */
-#endif /* GPROF */
+#undef _PROF_PROLOG
+#define _PROF_PROLOG \
+	.data; 1: .long 0; \
+	.text; INTERRUPT_SAVEREG; LEA_LCL(1b,%a0); jbsr MCOUNT_ENTRY; \
+	INTERRUPT_RESTOREREG
+#endif
 
 ENTRY(__sigreturn14)
 	trap	#3		/* special sigreturn syscall entry point */
-	jra	PIC_PLT(CERROR)
+	jbra	CERROR
+END(__sigreturn14)

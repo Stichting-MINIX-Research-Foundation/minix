@@ -10,14 +10,14 @@ SRCDIR/gcc/config/dbxelf.h
 SRCDIR/gcc/config/elfos.h
 SRCDIR/gcc/config/arm/unknown-elf.h
 SRCDIR/gcc/config/arm/elf.h
+SRCDIR/gcc/config/arm/aout.h
+SRCDIR/gcc/config/arm/arm.h
 SRCDIR/gcc/config/arm/bpabi.h
 SRCDIR/gcc/config/arm/eabi.h
 SRCDIR/gcc/config/newlib-stdint.h
 SRCDIR/gcc/config/minix-spec.h
 SRCDIR/gcc/config/arm/minix.h
 SRCDIR/gcc/config/minix.h
-SRCDIR/gcc/config/arm/aout.h
-SRCDIR/gcc/config/arm/arm.h
 SRCDIR/gcc/defaults.h
 SRCDIR/gcc/../include/hashtab.h
 SRCDIR/gcc/../include/splay-tree.h

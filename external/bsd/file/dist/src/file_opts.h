@@ -1,4 +1,4 @@
-/*	$NetBSD: file_opts.h,v 1.1.1.2 2011/05/12 20:46:54 christos Exp $	*/
+/*	$NetBSD: file_opts.h,v 1.1.1.3 2013/01/03 16:27:52 christos Exp $	*/
 
 /*
  * Table of command-line options
@@ -25,7 +25,7 @@ OPT('c', "checking-printout", 0, "    print the parsed form of the magic file, u
     "                               before installing it\n")
 OPT('e', "exclude", 1, " TEST         exclude TEST from the list of test to be\n"
     "                               performed for file. Valid tests are:\n"
-    "                               ascii, apptype, compress, elf, soft, tar, tokens, troff\n")
+    "                               %o\n")
 OPT('f', "files-from", 1, " FILE      read the filenames to be examined from FILE\n")
 OPT('F', "separator", 1, " STRING     use string as separator instead of `:'\n")
 OPT('i', "mime", 0, "                 output MIME type strings (--mime-type and\n"

@@ -150,8 +150,7 @@ fseeko(FILE *fp, off_t offset, int whence)
 			fp->_flags |= __SNPT;
 			goto dumb;
 		}
-			fp->_blksize = st.st_blksize;
-
+		fp->_blksize = st.st_blksize;
 		fp->_flags |= __SOPT;
 	}
 

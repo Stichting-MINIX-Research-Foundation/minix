@@ -1,4 +1,4 @@
-/*	$NetBSD: conv.c,v 1.13 2010/02/09 14:06:37 drochner Exp $	*/
+/*	$NetBSD: conv.c,v 1.14 2013/02/09 02:49:36 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)conv.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: conv.c,v 1.13 2010/02/09 14:06:37 drochner Exp $");
+__RCSID("$NetBSD: conv.c,v 1.14 2013/02/09 02:49:36 jakllsch Exp $");
 #endif
 #endif /* not lint */
 
@@ -105,7 +105,7 @@ conv_u(PR *pr, u_char *p)
 	static const char *list[] = {
 		"nul", "soh", "stx", "etx", "eot", "enq", "ack", "bel",
 		 "bs",  "ht",  "lf",  "vt",  "ff",  "cr",  "so",  "si",
-		"dle", "dcl", "dc2", "dc3", "dc4", "nak", "syn", "etb",
+		"dle", "dc1", "dc2", "dc3", "dc4", "nak", "syn", "etb",
 		"can",  "em", "sub", "esc",  "fs",  "gs",  "rs",  "us",
 	};
 

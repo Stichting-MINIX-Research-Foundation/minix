@@ -1,4 +1,4 @@
-.\"	$NetBSD: stat.1,v 1.34 2011/09/22 20:23:55 apb Exp $
+.\"	$NetBSD: stat.1,v 1.36 2012/12/03 07:49:21 wiz Exp $
 .\"
 .\" Copyright (c) 2002-2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 22, 2011
+.Dd December 2, 2012
 .Dt STAT 1
 .Os
 .Sh NAME
@@ -168,6 +168,17 @@ suitable for initializing variables.
 When run as
 .Nm readlink ,
 suppress error messages.
+This is equivalent to specifying
+.Bd -literal
+FMT="st_dev=%d st_ino=%i st_mode=%#p st_nlink=%l st_uid=%u st_gid=%g"
+FMT="$FMT st_rdev=%r st_size=%z st_atime=%Sa st_mtime=%Sm st_ctime=%Sc"
+FMT="$FMT st_birthtime=%SB st_blksize=%k st_blocks=%b st_flags=%f"
+stat -t %s -f "$FMT" .
+.Ed
+Note that if you use a timeformat that contains embedded whitespace or shell
+meta-characters you will need to include appropriate quoting so the
+.Fl s
+output remains valid.
 .It Fl t Ar timefmt
 Display timestamps using the specified format.
 This format is

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_bswap.c,v 1.35 2011/03/06 17:08:38 bouyer Exp $	*/
+/*	$NetBSD: ffs_bswap.c,v 1.37 2013/06/09 17:55:46 dholland Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -30,7 +30,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_bswap.c,v 1.35 2011/03/06 17:08:38 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_bswap.c,v 1.37 2013/06/09 17:55:46 dholland Exp $");
 
 #include <sys/param.h>
 #if defined(_KERNEL)
@@ -119,8 +119,8 @@ ffs_dinode1_swap(struct ufs1_dinode *o, struct ufs1_dinode *n)
 
 	n->di_mode = bswap16(o->di_mode);
 	n->di_nlink = bswap16(o->di_nlink);
-	n->di_u.oldids[0] = bswap16(o->di_u.oldids[0]);
-	n->di_u.oldids[1] = bswap16(o->di_u.oldids[1]);
+	n->di_oldids[0] = bswap16(o->di_oldids[0]);
+	n->di_oldids[1] = bswap16(o->di_oldids[1]);
 	n->di_size = bswap64(o->di_size);
 	n->di_atime = bswap32(o->di_atime);
 	n->di_atimensec = bswap32(o->di_atimensec);
@@ -128,7 +128,7 @@ ffs_dinode1_swap(struct ufs1_dinode *o, struct ufs1_dinode *n)
 	n->di_mtimensec = bswap32(o->di_mtimensec);
 	n->di_ctime = bswap32(o->di_ctime);
 	n->di_ctimensec = bswap32(o->di_ctimensec);
-	memcpy(n->di_db, o->di_db, (NDADDR + NIADDR) * sizeof(u_int32_t));
+	memcpy(n->di_db, o->di_db, (UFS_NDADDR + UFS_NIADDR) * sizeof(u_int32_t));
 	n->di_flags = bswap32(o->di_flags);
 	n->di_blocks = bswap32(o->di_blocks);
 	n->di_gen = bswap32(o->di_gen);
@@ -158,7 +158,7 @@ ffs_dinode2_swap(struct ufs2_dinode *o, struct ufs2_dinode *n)
 	n->di_kernflags = bswap32(o->di_kernflags);
 	n->di_flags = bswap32(o->di_flags);
 	n->di_extsize = bswap32(o->di_extsize);
-	memcpy(n->di_extb, o->di_extb, (NXADDR + NDADDR + NIADDR) * 8);
+	memcpy(n->di_extb, o->di_extb, (UFS_NXADDR + UFS_NDADDR + UFS_NIADDR) * 8);
 }
 
 void

@@ -6,8 +6,7 @@ NOMAN=		# defined
 
 TESTSDIR=		${TESTSBASE}/include/sys
 
-#LSC: Unsupported on Minix t_bitops
-TESTS_C=		t_bootblock t_cdefs t_tree t_types
+TESTS_C=		t_bitops t_bootblock t_cdefs t_tree t_types
 
 LDADD.t_bitops+=	-lm
 

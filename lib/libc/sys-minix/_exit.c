@@ -6,7 +6,7 @@
 #include <unistd.h>
 
 #ifdef __weak_alias
-__weak_alias(_exit, __exit)
+__weak_alias(_Exit, _exit)
 #endif
 
 __dead void _exit(status)

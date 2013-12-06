@@ -1,29 +1,39 @@
+diff -r -x CVS -N -U 3 dist.orig/gcc/config/t-minix dist/gcc/config/t-minix
+--- dist.orig/gcc/config/t-minix	1970-01-01 01:00:00.000000000 +0100
++++ dist/gcc/config/t-minix	2013-12-11 15:12:25.998875226 +0100
+@@ -0,0 +1,5 @@
++# Compile crtbeginS.o and crtendS.o with pic.
++CRTSTUFF_T_CFLAGS_S = $(CRTSTUFF_T_CFLAGS) -fPIC
++
++# Compile libgcc.a with pic.
++TARGET_LIBGCC2_CFLAGS += -fPIC
 diff -r -x CVS -N -U 3 dist.orig/gcc/config.gcc dist/gcc/config.gcc
---- dist.orig/gcc/config.gcc	2013-07-10 19:52:43.574614401 +0200
-+++ dist/gcc/config.gcc	2013-07-10 19:53:27.218820689 +0200
-@@ -799,7 +799,7 @@
- 	tmake_file="arm/t-arm arm/t-arm-elf"
+--- dist.orig/gcc/config.gcc	2013-12-11 14:53:00.134506110 +0100
++++ dist/gcc/config.gcc	2013-12-11 23:21:36.316937279 +0100
+@@ -839,6 +839,22 @@
+ 	tm_file="${tm_file} arm/aout.h arm/arm.h"
  	tmake_file="${tmake_file} arm/t-arm-softfp soft-fp/t-softfp"
  	;;
--arm*-*-eabi* | arm*-*-symbianelf* )
-+arm*-*-eabi* | arm*-*-symbianelf* | arm*-*-minix*)
- 	# The BPABI long long divmod functions return a 128-bit value in
- 	# registers r0-r3.  Correctly modeling that requires the use of
- 	# TImode.
-@@ -814,6 +814,12 @@
- 	  extra_options="${extra_options} arm/eabi.opt"
- 	  use_gcc_stdint=wrap
- 	  ;;
-+	arm*-*-minix*)
-+	  tm_file="$tm_file arm/eabi.h newlib-stdint.h minix-spec.h arm/minix.h minix.h"
-+	  tmake_file="${tmake_file} arm/t-bpabi t-minix"
-+	  extra_options="${extra_options} arm/eabi.opt"
-+	  use_gcc_stdint=wrap
-+	  ;;
- 	arm*-*-symbianelf*)
- 	  tm_file="${tm_file} arm/symbian.h"
- 	  # We do not include t-bpabi for Symbian OS because the system
-@@ -1148,6 +1154,13 @@
++arm*-*-minix*)
++	# The BPABI long long divmod functions return a 128-bit value in
++	# registers r0-r3.  Correctly modeling that requires the use of
++	# TImode.
++	need_64bit_hwint=yes
++	default_use_cxa_atexit=yes
++	tm_file="dbxelf.h elfos.h arm/unknown-elf.h arm/elf.h arm/aout.h arm/arm.h arm/bpabi.h"
++	tmake_file="arm/t-arm arm/t-arm-elf"
++
++	tm_file="$tm_file arm/eabi.h newlib-stdint.h minix-spec.h arm/minix.h minix.h"
++	tmake_file="${tmake_file} arm/t-bpabi t-minix"
++	#extra_options="${extra_options} arm/eabi.opt"
++	#use_gcc_stdint=wrap
++
++	tmake_file="${tmake_file} arm/t-arm-softfp soft-fp/t-softfp"
++ 	;;
+ arm*-*-rtems*)
+ 	tm_file="dbxelf.h elfos.h arm/unknown-elf.h arm/elf.h arm/aout.h arm/arm.h arm/rtems-elf.h rtems.h newlib-stdint.h"
+ 	tmake_file="arm/t-arm arm/t-arm-elf t-rtems arm/t-rtems"
+@@ -1163,6 +1179,13 @@
  	tm_file="${tm_file} i386/unix.h i386/att.h dbxelf.h elfos.h ${fbsd_tm_file} i386/x86-64.h i386/freebsd.h i386/freebsd64.h"
  	tmake_file="${tmake_file} i386/t-crtstuff"
  	;;
@@ -38,8 +48,8 @@ diff -r -x CVS -N -U 3 dist.orig/gcc/config.gcc dist/gcc/config.gcc
  	tm_file="${tm_file} i386/unix.h i386/att.h dbxelf.h elfos.h netbsd.h netbsd-elf.h i386/netbsd-elf.h"
  	tmake_file="${tmake_file} i386/t-crtstuff"
 diff -r -x CVS -N -U 3 dist.orig/gcc/gcov.c dist/gcc/gcov.c
---- dist.orig/gcc/gcov.c	2013-07-10 19:52:45.114645204 +0200
-+++ dist/gcc/gcov.c	2013-07-10 19:53:27.218820689 +0200
+--- dist.orig/gcc/gcov.c	2013-12-11 14:53:22.194840755 +0100
++++ dist/gcc/gcov.c	2013-12-11 15:12:25.988875073 +0100
 @@ -58,6 +58,10 @@
  
  #define STRING_SIZE 200
@@ -52,21 +62,20 @@ diff -r -x CVS -N -U 3 dist.orig/gcc/gcov.c dist/gcc/gcov.c
  struct block_info;
  struct source_info;
 diff -r -x CVS -N -U 3 dist.orig/gcc/ginclude/stddef.h dist/gcc/ginclude/stddef.h
---- dist.orig/gcc/ginclude/stddef.h	2013-07-10 19:52:43.677949802 +0200
-+++ dist/gcc/ginclude/stddef.h	2013-07-10 19:53:27.218820689 +0200
-@@ -60,6 +60,9 @@
- #if defined (__FreeBSD__) && (__FreeBSD__ >= 5)
- #include <sys/_types.h>
- #endif
-+#if defined (__minix)
-+#include <sys/types.h>
-+#endif
+--- dist.orig/gcc/ginclude/stddef.h	2013-12-11 14:53:05.001246600 +0100
++++ dist/gcc/ginclude/stddef.h	2013-12-11 19:48:19.010387258 +0100
+@@ -51,7 +51,7 @@
  
- /* In 4.3bsd-net2, machine/ansi.h defines these symbols, which are
-    defined if the corresponding type is *not* defined.
+ /* On 4.3bsd-net2, make sure ansi.h is included, so we have
+    one less case to deal with in the following.  */
+-#if defined (__BSD_NET2__) || defined (____386BSD____) || (defined (__FreeBSD__) && (__FreeBSD__ < 5)) || defined(__NetBSD__)
++#if defined (__BSD_NET2__) || defined (____386BSD____) || (defined (__FreeBSD__) && (__FreeBSD__ < 5)) || defined(__NetBSD__) || defined(__minix)
+ #ifndef inhibit_libc
+ #include <machine/ansi.h>
+ #endif
 diff -r -x CVS -N -U 3 dist.orig/gcc/libgcov.c dist/gcc/libgcov.c
---- dist.orig/gcc/libgcov.c	2013-07-10 19:52:43.681283201 +0200
-+++ dist/gcc/libgcov.c	2013-07-10 19:53:27.218820689 +0200
+--- dist.orig/gcc/libgcov.c	2013-12-11 14:53:05.064580896 +0100
++++ dist/gcc/libgcov.c	2013-12-11 15:12:25.988875073 +0100
 @@ -40,6 +40,11 @@
  #define GCOV_LINKAGE /* nothing */
  #endif
@@ -98,8 +107,8 @@ diff -r -x CVS -N -U 3 dist.orig/gcc/libgcov.c dist/gcc/libgcov.c
        info->next = gcov_list;
        gcov_list = info;
 diff -r -x CVS -N -U 3 dist.orig/libcpp/configure dist/libcpp/configure
---- dist.orig/libcpp/configure	2013-07-10 19:52:46.844679808 +0200
-+++ dist/libcpp/configure	2013-07-10 19:55:08.447512095 +0200
+--- dist.orig/libcpp/configure	2013-12-11 14:53:25.704893999 +0100
++++ dist/libcpp/configure	2013-12-11 15:12:25.988875073 +0100
 @@ -6870,6 +6870,7 @@
  case $target in
  	alpha*-*-* | \
@@ -109,8 +118,8 @@ diff -r -x CVS -N -U 3 dist.orig/libcpp/configure dist/libcpp/configure
  	x86_64-*-* | \
  	ia64-*-* | \
 diff -r -x CVS -N -U 3 dist.orig/libgcc/config.host dist/libgcc/config.host
---- dist.orig/libgcc/config.host	2013-07-10 19:52:52.828132820 +0200
-+++ dist/libgcc/config.host	2013-07-10 19:53:27.218820689 +0200
+--- dist.orig/libgcc/config.host	2013-12-11 14:54:49.009491158 +0100
++++ dist/libgcc/config.host	2013-12-11 15:12:25.988875073 +0100
 @@ -203,6 +203,8 @@
  	;;
  arm*-*-freebsd*)

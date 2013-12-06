@@ -40,11 +40,8 @@ __RCSID("$NetBSD: tcsendbreak.c,v 1.10 2012/06/25 22:32:46 abs Exp $");
 
 #include "namespace.h"
 #include <sys/types.h>
-#ifdef __minix
-#include <sys/time.h>
-#endif
-#include <sys/types.h>
 #include <sys/ioctl.h>
+#include <sys/time.h>
 
 #include <assert.h>
 #include <errno.h>

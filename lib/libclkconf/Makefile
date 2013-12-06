@@ -1,3 +1,6 @@
+NOGCCERROR=yes
+NOCLANGERROR=yes
+#
 # Makefile for libclkconf
 
 CPPFLAGS+= -D_SYSTEM

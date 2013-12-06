@@ -1,4 +1,4 @@
-/* $NetBSD: t_fmemopen.c,v 1.3 2011/08/22 00:33:16 dholland Exp $ */
+/* $NetBSD: t_fmemopen.c,v 1.4 2013/10/19 17:45:00 christos Exp $ */
 
 /*-
  * Copyright (c)2010 Takehiko NOZAKI,
@@ -463,13 +463,12 @@ ATF_TC_HEAD(test10, tc)
 ATF_TC_BODY(test10, tc)
 {
 	struct testcase *t;
-	off_t len, i;
+	off_t i;
 	const char **p;
 	char buf[BUFSIZ];
 	FILE *fp;
 
 	for (t = &testcases[0]; t->s != NULL; ++t) {
-		len = (off_t)strnlen(t->s, t->n);
 		for (p = &mode_rw[0]; *p != NULL; ++p) {
 
 			memcpy(&buf[0], t->s, t->n);
@@ -630,15 +629,13 @@ ATF_TC_HEAD(test13, tc)
 ATF_TC_BODY(test13, tc)
 {
 	struct testcase *t;
-	off_t len, rest, i;
+	off_t i;
 	const char **p;
 	char buf[BUFSIZ];
 	FILE *fp;
 
 	/* test fmemopen_seek(SEEK_END) */
 	for (t = &testcases[0]; t->s != NULL; ++t) {
-		len = (off_t)strnlen(t->s, t->n);
-		rest = t->n - len;
 		for (p = &mode_w[0]; *p != NULL; ++p) {
 
 			memcpy(buf, t->s, t->n);
@@ -938,14 +935,12 @@ ATF_TC_HEAD(test19, tc)
 ATF_TC_BODY(test19, tc)
 {
 	struct testcase *t;
-	size_t len;
 	int i;
 	const char **p;
 	char buf[BUFSIZ];
 	FILE *fp;
 
 	for (t = &testcases[0]; t->s != NULL; ++t) {
-		len = strnlen(t->s, t->n);
 		for (p = &mode_rw2[0]; *p != NULL; ++p) {
 
 			memcpy(&buf[0], t->s, t->n);
@@ -998,13 +993,11 @@ ATF_TC_HEAD(test20, tc)
 ATF_TC_BODY(test20, tc)
 {
 	struct testcase *t;
-	size_t len;
 	const char **p;
 	char buf[BUFSIZ];
 	FILE *fp;
 
 	for (t = &testcases[0]; t->s != NULL; ++t) {
-		len = strnlen(t->s, t->n);
 		for (p = &mode_rw2[0]; *p != NULL; ++p) {
 
 			memcpy(&buf[0], t->s, t->n);

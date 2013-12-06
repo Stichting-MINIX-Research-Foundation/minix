@@ -67,10 +67,10 @@ int name;			/* property being inspected */
 		return (long) _POSIX_VERSION;
 
 	case _SC_STREAM_MAX:
-		return (long) STREAM_MAX;
+		return (long) _POSIX_STREAM_MAX;
 
 	case _SC_TZNAME_MAX:
-		return (long) TZNAME_MAX;
+		return (long) _POSIX_TZNAME_MAX;
 
 	case _SC_PAGESIZE:
 		return getpagesize();

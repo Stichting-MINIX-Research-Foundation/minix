@@ -1,10 +1,10 @@
 
 #-----------------------------------------------------------------------------
-# $File: natinst,v 1.4 2009/09/19 16:28:11 christos Exp $
+# $File: natinst,v 1.5 2013/02/06 14:18:52 christos Exp $
 # natinst:  file(1) magic for National Instruments Code Files
 
 #
-# From <egamez@fcfm.buap.mx> Enrique Gámez-Flores
+# From <egamez@fcfm.buap.mx> Enrique Gamez-Flores
 # version 1
 # Many formats still missing, we use, for the moment LabVIEW
 # We guess VXI format file. VISA, LabWindowsCVI, BridgeVIEW, etc, are missing

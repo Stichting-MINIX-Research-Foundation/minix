@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.9 2012/09/21 14:21:57 matt Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.10 2012/10/27 17:17:39 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -45,13 +45,12 @@ struct arm32_isa_chipset {
 
 typedef struct arm32_isa_chipset *isa_chipset_tag_t;
 
-struct device;			/* XXX */
 struct isabus_attach_args;	/* XXX */
 
 /*
  * Functions provided to machine-independent ISA code.
  */
-void	isa_attach_hook(struct device *, struct device *,
+void	isa_attach_hook(device_t, device_t,
 	    struct isabus_attach_args *);
 void	isa_detach_hook(isa_chipset_tag_t, device_t);
 const struct evcnt *isa_intr_evcnt(isa_chipset_tag_t ic, int irq);

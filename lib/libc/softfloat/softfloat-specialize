@@ -1,4 +1,4 @@
-/*	$NetBSD: softfloat-specialize,v 1.7 2012/03/21 02:32:26 christos Exp $	*/
+/*	$NetBSD: softfloat-specialize,v 1.8 2013/01/10 08:16:10 matt Exp $	*/
 
 /* This is a derivative work. */
 
@@ -56,16 +56,28 @@ should be simply `float_exception_flags |= flags;'.
 -------------------------------------------------------------------------------
 */
 #ifdef SOFTFLOAT_FOR_GCC
+#ifndef set_float_exception_mask
 #define float_exception_mask	_softfloat_float_exception_mask
 #endif
+#endif
+#ifndef set_float_exception_mask
 fp_except float_exception_mask = 0;
-void float_raise( fp_except flags )
+#endif
+void
+float_raise( fp_except flags )
 {
     siginfo_t info;
+    fp_except mask = float_exception_mask;
 
+#ifdef set_float_exception_mask
+    flags |= set_float_exception_flags(flags, 0);
+#else
     float_exception_flags |= flags;
+    flags = float_exception_flags;
+#endif
 
-    if ( flags & float_exception_mask ) {
+    flags &= mask;
+    if ( flags ) {
 	memset(&info, 0, sizeof info);
 	info.si_signo = SIGFPE;
 	info.si_pid = getpid();

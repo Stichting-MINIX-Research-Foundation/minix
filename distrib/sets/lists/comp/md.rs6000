@@ -1,4 +1,4 @@
-# $NetBSD: md.rs6000,v 1.5 2011/07/17 20:54:31 joerg Exp $
+# $NetBSD: md.rs6000,v 1.7 2013/11/17 14:34:11 alnsn Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/rs6000				comp-c-include
 ./usr/include/rs6000/ansi.h			comp-c-include
@@ -44,6 +44,7 @@
 ./usr/include/rs6000/rwlock.h			comp-c-include
 ./usr/include/rs6000/setjmp.h			comp-c-include
 ./usr/include/rs6000/signal.h			comp-c-include
+./usr/include/rs6000/sljitarch.h		comp-c-include
 ./usr/include/rs6000/spr.h			comp-obsolete		obsolete
 ./usr/include/rs6000/stdarg.h			comp-obsolete		obsolete
 ./usr/include/rs6000/trap.h			comp-c-include
@@ -51,4 +52,3 @@
 ./usr/include/rs6000/varargs.h			comp-obsolete		obsolete
 ./usr/include/rs6000/vmparam.h			comp-c-include
 ./usr/include/rs6000/wchar_limits.h		comp-c-include
-./usr/libdata/debug/usr/mdec/mkbootimage.debug	comp-sysutil-debug	debug

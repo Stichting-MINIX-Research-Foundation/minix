@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_window.3,v 1.15 2011/09/15 12:01:18 wiz Exp $
+.\"	$NetBSD: curses_window.3,v 1.16 2013/10/15 22:15:17 roy Exp $
 .\"
 .\" Copyright (c) 2002
 .\"	Brett Lymn (blymn@NetBSD.org, brett_lymn@yahoo.com.au)
@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"
-.Dd September 15, 2011
+.Dd October 15, 2013
 .Dt CURSES_WINDOW 3
 .Os
 .Sh NAME
@@ -143,6 +143,11 @@ A window may deleted and all resources freed by calling the
 .Fn delwin
 function with the pointer to the window to be deleted in
 .Fa win .
+If
+.Fa win
+is
+.Dv NULL ,
+then no action occurs.
 .Pp
 A window can be moved to a new position by calling the
 .Fn mvwin

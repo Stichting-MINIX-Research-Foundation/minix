@@ -1,4 +1,4 @@
-/*	$NetBSD: file_subs.c,v 1.62 2009/04/07 19:52:35 perry Exp $	*/
+/*	$NetBSD: file_subs.c,v 1.63 2013/07/29 17:46:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)file_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: file_subs.c,v 1.62 2009/04/07 19:52:35 perry Exp $");
+__RCSID("$NetBSD: file_subs.c,v 1.63 2013/07/29 17:46:36 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,9 +62,9 @@ __RCSID("$NetBSD: file_subs.c,v 1.62 2009/04/07 19:52:35 perry Exp $");
 #include "extern.h"
 #include "options.h"
 
-#ifdef __minix
+#if defined(__minix)
 #include <utime.h>
-#endif
+#endif /* defined(__minix) */
 
 char *xtmp_name;
 
@@ -164,7 +164,7 @@ file_creat(ARCHD *arcn, int write_to_hardlink)
 		 * in the path until chk_path() finds that it cannot fix
 		 * anything further.  if that happens we just give up.
 		 */
-#ifdef __minix
+#if defined(__minix)
 		{
 			/* For minix, generate the temporary filename
 			 * conservatively - just write Xes into the last component.
@@ -179,7 +179,7 @@ file_creat(ARCHD *arcn, int write_to_hardlink)
 #else
 		(void)snprintf(arcn->tmp_name, arcn->nlen + 8, "%s.XXXXXX",
 		    arcn->name);
-#endif
+#endif /* defined(__minix) */
 		fd = mkstemp(arcn->tmp_name);
 		if (fd >= 0)
 			break;
@@ -809,9 +809,9 @@ set_ftime(char *fnm, time_t mtime, time_t atime, int frc, int slk)
 	struct timeval tv[2];
 	struct stat sb;
 
-	tv[0].tv_sec = (long)atime;
+	tv[0].tv_sec = atime;
 	tv[0].tv_usec = 0;
-	tv[1].tv_sec = (long)mtime;
+	tv[1].tv_sec = mtime;
 	tv[1].tv_usec = 0;
 	if (!frc && (!patime || !pmtime)) {
 		/*

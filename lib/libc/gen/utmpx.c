@@ -1,4 +1,4 @@
-/*	$NetBSD: utmpx.c,v 1.30 2012/06/24 15:26:03 christos Exp $	 */
+/*	$NetBSD: utmpx.c,v 1.31 2013/09/05 17:35:11 pooka Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 #include <sys/cdefs.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: utmpx.c,v 1.30 2012/06/24 15:26:03 christos Exp $");
+__RCSID("$NetBSD: utmpx.c,v 1.31 2013/09/05 17:35:11 pooka Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -82,11 +82,12 @@ old2new(struct utmpx *utx)
 static void
 new2old(struct utmpx *utx)
 {
-	struct timeval tv;
-	struct otimeval *otv = (void *)&utx->ut_tv;
-	(void)memcpy(&tv, otv, sizeof(tv));
-	otv->tv_sec = (long)tv.tv_sec;
-	otv->tv_usec = (long)tv.tv_usec;
+	struct timeval otv;
+	struct timeval *tv = &utx->ut_tv;
+
+	otv.tv_sec = (long)tv->tv_sec;
+	otv.tv_usec = (long)tv->tv_usec;
+	(void)memcpy(tv, &otv, sizeof(otv));
 }
 
 void
@@ -342,27 +343,17 @@ updwtmpx(const char *file, const struct utmpx *utx)
 	_DIAGASSERT(file != NULL);
 	_DIAGASSERT(utx != NULL);
 
-#ifndef __minix
 	fd = open(file, O_WRONLY|O_APPEND|O_SHLOCK);
-#else
-	fd = open(file, O_WRONLY|O_APPEND);
-#endif
 
 	if (fd == -1) {
-#ifndef __minix
 		if ((fd = open(file, O_CREAT|O_WRONLY|O_EXLOCK, 0644)) == -1)
 			return -1;
-#else
-		if ((fd = open(file, O_CREAT|O_WRONLY, 0644)) < 0)
-			return -1;
-#endif
 		(void)memset(&ut, 0, sizeof(ut));
 		ut.ut_type = SIGNATURE;
 		(void)memcpy(ut.ut_user, vers, sizeof(vers));
 		if (write(fd, &ut, sizeof(ut)) == -1)
 			goto failed;
 	}
-
 	if (write(fd, utx, sizeof(*utx)) == -1)
 		goto failed;
 	if (close(fd) == -1)
@@ -441,11 +432,7 @@ getlastlogx(const char *fname, uid_t uid, struct lastlogx *ll)
 	_DIAGASSERT(fname != NULL);
 	_DIAGASSERT(ll != NULL);
 
-#ifdef __minix
-	db = dbopen(fname, O_RDONLY, 0, DB_HASH, NULL);
-#else
 	db = dbopen(fname, O_RDONLY|O_SHLOCK, 0, DB_HASH, NULL);
-#endif
 
 	if (db == NULL)
 		return NULL;
@@ -484,11 +471,7 @@ updlastlogx(const char *fname, uid_t uid, struct lastlogx *ll)
 	_DIAGASSERT(fname != NULL);
 	_DIAGASSERT(ll != NULL);
 
-#ifndef __minix
 	db = dbopen(fname, O_RDWR|O_CREAT|O_EXLOCK, 0644, DB_HASH, NULL);
-#else 
-	db = dbopen(fname, O_RDWR|O_CREAT, 0644, DB_HASH, NULL);
-#endif
 
 	if (db == NULL)
 		return -1;
@@ -503,15 +486,3 @@ updlastlogx(const char *fname, uid_t uid, struct lastlogx *ll)
 	(db->close)(db);
 	return error;
 }
-
-#if defined(__minix) && defined(__weak_alias)
-__weak_alias(getlastlogx, __getlastlogx50)
-__weak_alias(getutmp, __getutmp50)
-__weak_alias(getutmpx, __getutmpx50)
-__weak_alias(getutxent, __getutxent50)
-__weak_alias(getutxid, __getutxid50)
-__weak_alias(getutxline, __getutxline50)
-__weak_alias(pututxline, __pututxline50)
-__weak_alias(updlastlogx, __updlastlogx50)
-__weak_alias(updwtmpx, __updwtmpx50)
-#endif

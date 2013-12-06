@@ -56,7 +56,7 @@ int	__sdidinit;
 
 #define	NDYNAMIC 10		/* add ten more whenever necessary */
 
-#if !defined(_LIBMINC) && !defined(__kernel__)
+#if !defined(_LIBMINC) && !defined(__kernel__) && defined(__minix)
 
 #define	std(flags, file) { \
 	._p = NULL, \
@@ -132,7 +132,7 @@ FILE __sF[3] = {
 	std(__SWR|__SNBF, STDERR_FILENO)	/* stderr */
 };
 
-#if !defined(__kernel__)
+#if !defined(__kernel__) && defined(__minix)
 struct glue __sglue = { &uglue, 3, __sF };
 
 void f_prealloc(void);
@@ -221,7 +221,7 @@ found:
 void
 f_prealloc(void)
 {
-#if !defined(_LIBMINC)
+#if !defined(_LIBMINC) && defined(__minix)
 	struct glue *g;
 	int n;
 
@@ -243,7 +243,7 @@ f_prealloc(void)
 void
 _cleanup(void)
 {
-#if !defined(_LIBMINC)
+#if !defined(_LIBMINC) && defined(__minix)
 	/* (void) _fwalk(fclose); */
 	(void) fflush(NULL);			/* `cheating' */
 #endif /* !defined(_LIBMINC) */

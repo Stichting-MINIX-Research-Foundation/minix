@@ -74,6 +74,10 @@ PROGS+=	t10a t11a t11b t40a t40b t40c t40d t40e t40f t40g t60a t60b \
 
 SCRIPTS+= run testinterp.sh testsh1.sh testsh2.sh testmfs.sh testisofs.sh testvnd.sh
 
+# test57loop.S is not linked into the .bcl file.
+# This way, we can link it in when linking the final binary
+LDADD.test57+= ${${USE_BITCODE:Uno} != "no":? test57loop.o -Wl,-allow-multiple-definition:}
+
 .if ${MKPIC} == "yes"
 # Build them as dynamic executables by default if shared libraries
 # are available; so that the building and executing of dynamic
@@ -93,10 +97,6 @@ mod.o: mod.c
 
 common.o: common.c
 	${COMPILE.c} -fPIC ${.IMPSRC}
-
-# test57loop.S is not linked into the .bcl file.
-# This way, we can link it in when linking the final binary
-LDADD.test57+= ${${USE_BITCODE:Uno} != "no":? test57loop.o -Wl,-allow-multiple-definition:}
 
 # Add test that must be linked dynamically, and its dynamically loaded
 # module

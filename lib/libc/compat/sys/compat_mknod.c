@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_mknod.c,v 1.2 2009/01/11 02:46:26 christos Exp $ */
+/*	$NetBSD: compat_mknod.c,v 1.4 2013/10/04 21:07:37 christos Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat_mknod.c,v 1.2 2009/01/11 02:46:26 christos Exp $");
+__RCSID("$NetBSD: compat_mknod.c,v 1.4 2013/10/04 21:07:37 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -50,8 +50,10 @@ __RCSID("$NetBSD: compat_mknod.c,v 1.2 2009/01/11 02:46:26 christos Exp $");
 __warn_references(mknod,
     "warning: reference to compatibility mknod(); include <time.h> to generate correct reference")
 
+__strong_alias(mknod, __compat_mknod)
+
 int
-mknod(const char *path, mode_t mode, uint32_t dev)
+__compat_mknod(const char *path, mode_t mode, uint32_t dev)
 {
 	return __mknod50(path, mode, dev);
 }

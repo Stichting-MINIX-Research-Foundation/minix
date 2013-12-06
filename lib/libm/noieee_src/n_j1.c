@@ -1,4 +1,4 @@
-/*	$NetBSD: n_j1.c,v 1.6 2003/08/07 16:44:51 agc Exp $	*/
+/*	$NetBSD: n_j1.c,v 1.7 2011/11/02 02:34:56 christos Exp $	*/
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -123,7 +123,7 @@ static char sccsid[] = "@(#)j1.c	8.2 (Berkeley) 11/30/93";
 static double pone (double), qone (double);
 
 static const double
-huge    = 1e300,
+huge    = _HUGE,
 zero    = 0.0,
 one	= 1.0,
 invsqrtpi= 5.641895835477562869480794515607725858441e-0001,
@@ -149,9 +149,11 @@ j1(double x)
 	double z, s,c,ss,cc,r,u,v,y;
 	y = fabs(x);
 	if (!finite(x)) {		/* Inf or NaN */
-		if (_IEEE && x != x)
+#if _IEEE
+		if (x != x)
 			return(x);
 		else
+#endif
 			return (copysign(x, zero));
 	}
 	y = fabs(x);
@@ -212,19 +214,27 @@ y1(double x)
 	double z, s, c, ss, cc, u, v;
     /* if Y1(NaN) is NaN, Y1(-inf) is NaN, Y1(inf) is 0 */
 	if (!finite(x)) {
-		if (!_IEEE) return (infnan(EDOM));
-		else if (x < 0)
+#if _IEEE
+		if (x < 0)
 			return(zero/zero);
 		else if (x > 0)
 			return (0);
 		else
 			return(x);
+#else
+		return (infnan(EDOM));
+#endif
 	}
 	if (x <= 0) {
-		if (_IEEE && x == 0) return -one/zero;
-		else if(x == 0) return(infnan(-ERANGE));
-		else if(_IEEE) return (zero/zero);
-		else return(infnan(EDOM));
+#if _IEEE
+		if (x == 0) return -one/zero;
+#endif
+		if(x == 0) return(infnan(-ERANGE));
+#if _IEEE
+		return (zero/zero);
+#else
+		return(infnan(EDOM));
+#endif
 	}
         if (x >= 2) {			 /* |x| >= 2.0 */
                 s = sin(x);
@@ -247,9 +257,12 @@ y1(double x)
          *              sin(x) +- cos(x) = -cos(2x)/(sin(x) -+ cos(x))
          * to compute the worse one.
          */
-                if (_IEEE && x>two_129) {
+#if _IEEE
+                if (x>two_129) {
 			z = (invsqrtpi*ss)/sqrt(x);
-                } else {
+                } else
+#endif
+		{
                     u = pone(x); v = qone(x);
                     z = invsqrtpi*(u*ss+v*cc)/sqrt(x);
                 }

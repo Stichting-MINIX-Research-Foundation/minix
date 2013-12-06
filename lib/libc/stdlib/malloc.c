@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.c,v 1.54 2011/05/18 01:59:39 christos Exp $	*/
+/*	$NetBSD: malloc.c,v 1.55 2012/12/30 21:23:20 dholland Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -13,8 +13,10 @@
  */
 
 #ifdef __minix
+#include "extern.h"
 #ifdef _LIBSYS
 #include <minix/sysutil.h>
+#include <machine/param.h>
 #include <machine/vmparam.h>
 #define MALLOC_NO_SYSCALLS
 #define wrtwarning(w) printf("libminc malloc warning: %s\n", w)
@@ -107,7 +109,7 @@ void utrace(struct ut *, int);
 #include <sys/cdefs.h>
 #include "extern.h"
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: malloc.c,v 1.54 2011/05/18 01:59:39 christos Exp $");
+__RCSID("$NetBSD: malloc.c,v 1.55 2012/12/30 21:23:20 dholland Exp $");
 #endif /* LIBC_SCCS and not lint */
 int utrace(const char *, void *, size_t);
 
@@ -227,11 +229,13 @@ static size_t malloc_pagemask;
 #define INIT_MMAP()
 #endif
 
-#ifndef __minix
+#if !defined(__minix)
 #ifndef MADV_FREE
 #define MADV_FREE MADV_DONTNEED
 #endif
-#endif /* !__minix */
+#else
+#undef MADV_FREE
+#endif /* !defined(__minix) */
 
 /* Number of free pages we cache */
 static size_t malloc_cache = 16;
@@ -513,10 +517,10 @@ malloc_init(void)
 		case '<': malloc_cache   >>= 1; break;
 		case 'a': malloc_abort   = 0; break;
 		case 'A': malloc_abort   = 1; break;
-#ifndef __minix
+#if !defined(__minix)
 		case 'h': malloc_hint    = 0; break;
 		case 'H': malloc_hint    = 1; break;
-#endif /* !__minix */
+#endif /* !defined(__minix) */
 		case 'r': malloc_realloc = 0; break;
 		case 'R': malloc_realloc = 1; break;
 		case 'j': malloc_junk    = 0; break;
@@ -963,10 +967,10 @@ free_pages(void *ptr, size_t idx, struct pginfo *info)
     if (malloc_junk)
 	memset(ptr, SOME_JUNK, l);
 
-#ifndef __minix
+#if !defined(__minix)
     if (malloc_hint)
 	madvise(ptr, l, MADV_FREE);
-#endif /* !__minix */
+#endif /* !defined(__minix) */
 
     tail = (char *)ptr+l;
 
@@ -1161,7 +1165,7 @@ ifree(void *ptr)
     return;
 }
 
-static int malloc_active; /* Recusion flag for public interface. */
+static int malloc_active; /* Recursion flag for public interface. */
 static unsigned malloc_started; /* Set when initialization has been done */
 
 static void *

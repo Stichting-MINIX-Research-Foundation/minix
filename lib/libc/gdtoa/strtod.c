@@ -1,4 +1,4 @@
-/* $NetBSD: strtod.c,v 1.11 2012/03/22 15:34:14 christos Exp $ */
+/* $NetBSD: strtod.c,v 1.14 2013/05/17 12:55:57 joerg Exp $ */
 
 /****************************************************************
 
@@ -31,13 +31,15 @@ THIS SOFTWARE.
 /* Please send bug reports to David M. Gay (dmg at acm dot org,
  * with " at " changed at "@" and " dot " changed to ".").	*/
 
+#include "namespace.h"
 #include "gdtoaimp.h"
 #ifndef NO_FENV_H
 #include <fenv.h>
 #endif
 
 #ifdef USE_LOCALE
-#include "locale.h"
+#include <locale.h>
+#include "setlocale_local.h"
 #endif
 
 #ifdef IEEE_Arith
@@ -62,6 +64,8 @@ static CONST double tinytens[] = { 1e-16, 1e-32, 1e-64, 1e-128,
 #ifndef __HAVE_LONG_DOUBLE
 __strong_alias(_strtold, strtod)
 __weak_alias(strtold, _strtold)
+__strong_alias(_strtold_l, strtod_l)
+__weak_alias(strtold_l, _strtold_l)
 #endif
 
 #ifdef Avoid_Underflow /*{*/
@@ -86,13 +90,8 @@ sulp
 	}
 #endif /*}*/
 
- double
-strtod
-#ifdef KR_headers
-	(s00, se) CONST char *s00; char **se;
-#else
-	(CONST char *s00, char **se)
-#endif
+static double
+_int_strtod_l(CONST char *s00, char **se, locale_t loc)
 {
 #ifdef Avoid_Underflow
 	int scale;
@@ -116,25 +115,8 @@ strtod
 	int inexact, oldinexact;
 #endif
 #ifdef USE_LOCALE /*{{*/
-#ifdef NO_LOCALE_CACHE
-	char *decimalpoint = localeconv()->decimal_point;
+	char *decimalpoint = localeconv_l(loc)->decimal_point;
 	size_t dplen = strlen(decimalpoint);
-#else
-	char *decimalpoint;
-	static char *decimalpoint_cache;
-	static size_t dplen;
-	if (!(s0 = decimalpoint_cache)) {
-		s0 = localeconv()->decimal_point;
-		if ((decimalpoint_cache = MALLOC(strlen(s0) + 1)) != NULL) {
-			strcpy(decimalpoint_cache, s0);
-			s0 = decimalpoint_cache;
-			}
-		dplen = strlen(s0);
-		}
-	decimalpoint = __UNCONST(s0);
-#endif /*NO_LOCALE_CACHE*/
-#else  /*USE_LOCALE}{*/
-#define dplen 1
 #endif /*USE_LOCALE}}*/
 
 #ifdef Honor_FLT_ROUNDS /*{*/
@@ -193,7 +175,7 @@ strtod
 #else
 #define fpi1 fpi
 #endif
-			switch((i = gethex(&s, &fpi1, &expt, &bb, sign)) & STRTOG_Retmask) {
+			switch((i = gethex(&s, &fpi1, &expt, &bb, sign, loc)) & STRTOG_Retmask) {
 			  case STRTOG_NoNumber:
 				s = s00;
 				sign = 0;
@@ -1118,3 +1100,18 @@ strtod
 	return sign ? -dval(&rv) : dval(&rv);
 	}
 
+double
+strtod(CONST char *s, char **sp)
+{
+	return _int_strtod_l(s, sp, _current_locale());
+}
+
+#ifdef __weak_alias
+__weak_alias(strtod_l, _strtod_l)
+#endif
+
+double
+strtod_l(CONST char *s, char **sp, locale_t loc)
+{
+	return _int_strtod_l(s, sp, loc);
+}

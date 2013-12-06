@@ -1,4 +1,4 @@
-/*	$NetBSD: bswap32.S,v 1.2 2007/09/19 20:31:34 he Exp $	*/
+/*	$NetBSD: bswap32.S,v 1.5 2013/07/18 22:42:50 matt Exp $	*/
 
 /*
  * Copyright (C) 1996 Scott Reynolds.  All rights reserved.
@@ -29,12 +29,27 @@
 #include <machine/asm.h>
 
 #if defined(_KERNEL) || defined(_STANDALONE)
-_ENTRY(_C_LABEL(bswap32))
+#define BSWAP32 _C_LABEL(bswap32)
 #else /* defined(_KERNEL) || defined(_STANDALONE) */
-_ENTRY(_C_LABEL(__bswap32))
+#define BSWAP32 _C_LABEL(__bswap32)
 #endif /* defined(_KERNEL) || defined(_STANDALONE) */
-	movl	%sp@(4),%d0
+
+_ENTRY(BSWAP32)
+	movl	4(%sp),%d0
+#ifdef __mcfisac__
+	byterev	%d0
+#elif defined(__mcoldfire__)
+	movl	%d0,%d1
+	lsrl	#8,%d0		| ABCD -> 0ABC
+	andl	#0x00ff00ff,%d0	| 0ABC -> 0A0C
+	andl	#0x00ff00ff,%d1	| ABCD -> 0B0D
+	lsll	#8,%d1		| 0B0D -> B0D0
+	orl	%d1,%d0		| 0A0C | B0D0 -> BADC
+	swap	%d0		| BADC -> DCBA
+#else
+ 	rolw	#8,%d0
+ 	swap	%d0
 	rolw	#8,%d0
-	swap	%d0
-	rolw	#8,%d0
+#endif
 	rts
+END(BSWAP32)

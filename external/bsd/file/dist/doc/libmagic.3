@@ -1,6 +1,6 @@
-.\"	$NetBSD: libmagic.3,v 1.10 2012/02/22 17:53:50 christos Exp $
+.\"	$NetBSD: libmagic.3,v 1.11 2013/03/23 16:15:57 christos Exp $
 .\"
-.\" $File: libmagic.man,v 1.26 2011/12/19 17:49:31 christos Exp $
+.\" $File: libmagic.man,v 1.27 2013/01/06 20:56:52 christos Exp $
 .\"
 .\" Copyright (c) Christos Zoulas 2003.
 .\" All Rights Reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd December 19, 2011
+.Dd January 6, 2012
 .Dt LIBMAGIC 3
 .Os
 .Sh NAME
@@ -39,7 +39,9 @@
 .Nm magic_setflags ,
 .Nm magic_check ,
 .Nm magic_compile ,
-.Nm magic_load
+.Nm magic_list ,
+.Nm magic_load ,
+.Nm magic_version
 .Nd Magic number recognition library
 .Sh LIBRARY
 .Lb libmagic
@@ -69,6 +71,8 @@
 .Fn magic_list "magic_t cookie" "const char *filename"
 .Ft int
 .Fn magic_load "magic_t cookie" "const char *filename"
+.Ft int
+.Fn magic_version "void"
 .Sh DESCRIPTION
 These functions
 operate on the magic database file
@@ -249,6 +253,16 @@ If that variable is not set, the default database file name is
 adds
 .Dq .mgc
 to the database filename as appropriate.
+.Pp
+The
+.Fn magic_version
+command returns the version number of this library which is compiled into
+the shared library using the constant
+.Dv MAGIC_VERSION
+from
+.In magic.h .
+This can be used by client programs to verify that the version they compile
+against is the same as the version that they run against.
 .Sh RETURN VALUES
 The function
 .Fn magic_open
@@ -279,6 +293,9 @@ function returns a textual description of the errors of the above
 functions, or
 .Dv NULL
 if there was no error.
+The
+.Fn magic_version
+always returns the version number of the library.
 Finally,
 .Fn magic_setflags
 returns \-1 on systems that don't support

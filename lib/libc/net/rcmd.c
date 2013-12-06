@@ -48,9 +48,9 @@ __RCSID("$NetBSD: rcmd.c,v 1.68 2012/07/14 15:06:26 darrenr Exp $");
 #include <sys/wait.h>
 
 #include <netinet/in.h>
-#ifndef __minix
+#if !defined(__minix)
 #include <rpc/rpc.h>
-#endif
+#endif /* !defined(__minix) */
 #include <arpa/inet.h>
 #include <netgroup.h>
 
@@ -196,11 +196,11 @@ resrcmd(struct addrinfo *res, char **ahost, u_int32_t rport,
 	struct addrinfo *r;
 	struct sockaddr_storage from;
 	struct pollfd reads[2];
-#ifdef __minix
+#if defined(__minix)
 	/* No support for OOB data in Minix. */
 #else
 	sigset_t nmask, omask;
-#endif /* !__minix */
+#endif /* defined(__minix) */
 	pid_t pid;
 	int s, lport, timo;
 	int pollr;
@@ -217,14 +217,14 @@ resrcmd(struct addrinfo *res, char **ahost, u_int32_t rport,
 	r = res;
 	refused = 0;
 	pid = getpid();
-#ifndef __minix
+#if !defined(__minix)
 	/* Minix has no support for OOB data, 
 	   no need to block SIGURG. */
 	sigemptyset(&nmask);
 	sigaddset(&nmask, SIGURG);
 	if (sigprocmask(SIG_BLOCK, &nmask, &omask) == -1)
 		return -1;
-#endif /* !__minix */
+#endif /* !defined(__minix) */
 	for (timo = 1, lport = IPPORT_RESERVED - 1;;) {
 		s = rresvport_af(&lport, r->ai_family);
 		if (s < 0) {
@@ -236,16 +236,16 @@ resrcmd(struct addrinfo *res, char **ahost, u_int32_t rport,
 				r = r->ai_next;
 				continue;
 			} else {
-#ifndef __minix
+#if !defined(__minix)
 				(void)sigprocmask(SIG_SETMASK, &omask, NULL);
-#endif /* !__minix */
+#endif /* !defined(__minix) */
 				return -1;
 			}
 		}
-#ifndef __minix
+#if !defined(__minix)
 		/* No OOB support in Minix. */
 		fcntl(s, F_SETOWN, pid);
-#endif /* !__minix */
+#endif /* !defined(__minix) */
 		if (connect(s, r->ai_addr, r->ai_addrlen) >= 0)
 			break;
 		(void)close(s);
@@ -284,10 +284,10 @@ resrcmd(struct addrinfo *res, char **ahost, u_int32_t rport,
 		}
 		(void)fprintf(stderr, "%s: %s\n", res->ai_canonname,
 		    strerror(errno));
-#ifndef __minix
+#if !defined(__minix)
 		/* No OOB support in Minix. */
 		(void)sigprocmask(SIG_SETMASK, &omask, NULL);
-#endif /* !__minix */
+#endif /* !defined(__minix) */
 		return -1;
 	}
 	lport--;
@@ -367,18 +367,18 @@ resrcmd(struct addrinfo *res, char **ahost, u_int32_t rport,
 		}
 		goto bad2;
 	}
-#ifndef __minix
+#if !defined(__minix)
 	(void)sigprocmask(SIG_SETMASK, &omask, NULL);
-#endif /* __minix */
+#endif /* !defined(__minix) */
 	return s;
 bad2:
 	if (lport)
 		(void)close(*fd2p);
 bad:
 	(void)close(s);
-#ifndef __minix
+#if !defined(__minix)
 	(void)sigprocmask(SIG_SETMASK, &omask, NULL);
-#endif /* __minix */
+#endif /* !defined(__minix) */
 	return -1;
 }
 

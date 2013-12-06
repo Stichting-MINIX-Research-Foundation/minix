@@ -1,6 +1,6 @@
-.\"	$NetBSD: editline.3,v 1.77 2012/09/11 20:29:58 christos Exp $
+.\"	$NetBSD: editline.3,v 1.80 2013/07/12 17:48:29 christos Exp $
 .\"
-.\" Copyright (c) 1997-2003 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This file was contributed to The NetBSD Foundation by Luke Mewburn.
@@ -26,12 +26,13 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 11, 2012
+.Dd July 12, 2013
 .Dt EDITLINE 3
 .Os
 .Sh NAME
 .Nm editline ,
 .Nm el_init ,
+.Nm el_init_fd ,
 .Nm el_end ,
 .Nm el_reset ,
 .Nm el_gets ,
@@ -48,6 +49,7 @@
 .Nm el_wget ,
 .Nm el_source ,
 .Nm el_resize ,
+.Nm el_cursor ,
 .Nm el_line ,
 .Nm el_wline ,
 .Nm el_insertstr ,
@@ -77,6 +79,8 @@
 .In histedit.h
 .Ft EditLine *
 .Fn el_init "const char *prog" "FILE *fin" "FILE *fout" "FILE *ferr"
+.Ft EditLine *
+.Fn el_init_fd "const char *prog" "FILE *fin" "FILE *fout" "FILE *ferr" "int fdin" "int fdout" "int fderr"
 .Ft void
 .Fn el_end "EditLine *e"
 .Ft void
@@ -109,8 +113,12 @@
 .Fn el_source "EditLine *e" "const char *file"
 .Ft void
 .Fn el_resize "EditLine *e"
+.Fn int
+.Fn el_cursor "EditLine *e" "int count"
 .Ft const LineInfo *
 .Fn el_line "EditLine *e"
+.Ft const LineInfoW *
+.Fn el_wline "EditLine *e"
 .Ft int
 .Fn el_insertstr "EditLine *e" "const char *str"
 .Ft int
@@ -170,6 +178,8 @@ The line editing functions use a common data structure,
 .Fa EditLine ,
 which is created by
 .Fn el_init
+or
+.Fn el_init_fd
 and freed by
 .Fn el_end .
 .Pp
@@ -193,11 +203,20 @@ are the input, output, and error streams (respectively) to use.
 In this documentation, references to
 .Dq the tty
 are actually to this input/output stream combination.
+.It Fn el_init_fd
+Like
+.Fn el_init
+but allows specifying file descriptors for the
+.Xr stdio 3
+corresponding streams, in case those were created with
+.Xr funopen 3 .
 .It Fn el_end
 Clean up and finish with
 .Fa e ,
 assumed to have been created with
-.Fn el_init .
+.Fn el_init
+or
+.Fn el_init_fd .
 .It Fn el_reset
 Reset the tty and the parser.
 This should be called after an error which may have upset the tty's
@@ -581,8 +600,6 @@ If
 is
 .Dv NULL ,
 try
-.Pa $PWD/.editrc
-then
 .Pa $HOME/.editrc .
 Refer to
 .Xr editrc 5
@@ -598,6 +615,11 @@ then this is done automatically.
 Otherwise, it's the responsibility of the application to call
 .Fn el_resize
 on the appropriate occasions.
+.It Fn el_cursor
+Move the cursor to the right (if positive) or to the left (if negative)
+.Fa count
+characters.
+Returns the resulting offset of the cursor from the beginning of the line.
 .It Fn el_line
 Return the editing information for the current line in a
 .Fa LineInfo

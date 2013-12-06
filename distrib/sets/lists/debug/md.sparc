@@ -1,0 +1,10 @@
+# $NetBSD: md.sparc,v 1.2 2013/01/16 21:11:09 christos Exp $
+./usr/libdata/debug/sbin/edlabel.debug		comp-sysutil-debug	obsolete
+./usr/libdata/debug/sbin/ldconfig.debug		comp-sysutil-debug	debug,pic
+./usr/libdata/debug/usr/bin/fdformat.debug	comp-util-debug		debug
+./usr/libdata/debug/usr/lib/libsparc_v8.so.0.0.debug	comp-sys-debug	debug,pic
+./usr/libdata/debug/usr/sbin/apm.debug		comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/apmd.debug		comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/eeprom.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/ofctl.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/tadpolectl.debug	comp-sysutil-debug	debug

@@ -1,7 +1,7 @@
-/* $NetBSD: term.h,v 1.12 2012/05/29 00:27:59 dholland Exp $ */
+/* $NetBSD: term.h,v 1.16 2013/06/07 13:16:18 roy Exp $ */
 
 /*
- * Copyright (c) 2009, 2010, 2011 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009, 2010, 2011, 2013 The NetBSD Foundation, Inc.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Roy Marples.
@@ -37,7 +37,7 @@
 
 /* Define available terminfo flags */
 enum TIFLAGS {
-       	TICODE_bw,
+	TICODE_bw,
 	TICODE_am,
 	TICODE_bce,
 	TICODE_ccc,
@@ -153,6 +153,48 @@ enum TIFLAGS {
 #define transparent_underline		t_transparent_underline(cur_term)
 #define xon_xoff			t_xon_xoff(cur_term)
 
+/*
+ * BOOLEAN DESCRIPTIONS
+ *
+ * auto_left_margin: cub1 wraps from column 0 to last column
+ * auto_right_margin: Terminal has automatic margins
+ * back_color_erase: Screen erased with background colour
+ * can_change: Terminal can re-define existing colour
+ * ceol_standout_glitch: Standout not erased by overwriting (hp)
+ * col_addr_glitch: Only positive motion for hpa/mhba caps
+ * cpi_changes_res: Changing character pitch changes resolution
+ * cr_cancels_micro_mode: Using cr turns off micro mode
+ * dest_tabs_magic_smso: Destructive tabs, magic smso char (t1061)
+ * eat_newline_glitch: Newline ignored after 80 columns (Concept)
+ * erase_overstrike: Can erase overstrikes with a blank line
+ * generic_type: Generic line type (e.g. dialup, switch)
+ * hard_copy: Hardcopy terminal
+ * hard_cursor: Cursor is hard to see
+ * has_meta_key: Has a meta key (shift, sets parity bit)
+ * has_print_wheel: Printer needs operator to change character set
+ * has_status_line: Has extra "status line"
+ * hue_light_saturation: Terminal only uses HLS colour notion (Tektronix)
+ * insert_null_glitch: Insert mode distinguishes nulls
+ * lpi_changes_yes: Changing line pitch changes resolution
+ * memory_above: Display may be retained above the screen
+ * memory_below: Display may be retained below the screen
+ * move_insert_mode: Safe to move while in insert mode
+ * move_standout_mode: Safe to move in standout modes
+ * needs_xon_xoff: Padding won't work, xon/xoff required
+ * no_esc_ctlc: Beehive (f1=escape, f2=ctrl C)
+ * no_pad_char: Pad character doesn't exist
+ * non_dest_scroll_region: Scrolling region is nondestructive
+ * non_rev_rmcup: smcup does not reverse rmcup
+ * over_strike: Terminal overstrikes on hard-copy terminal
+ * prtr_silent: Printer won't echo on screen
+ * row_addr_glitch: Only positive motion for vpa/mvpa caps
+ * semi_auto_right_margin: Printing in last column causes cr
+ * status_line_esc_ok: Escape can be used on the status line
+ * tilde_glitch: Hazeltine; can't print tilde (~)
+ * transparent_underline: Underline character overstrikes
+ * xon_xoff: Terminal uses xon/xoff handshaking
+*/
+
 /* Define available terminfo numbers */
 enum TINUMS {
 	TICODE_bitwin,
@@ -258,6 +300,44 @@ enum TINUMS {
 #define virtual_terminal		 t_virtual_terminal(cur_term)
 #define wide_char_size			 t_wide_char_size(cur_term)
 #define width_status_line		 t_width_status_line(cur_term)
+
+/*
+ * NUMBER DESCRIPTIONS
+ *
+ * bit_image_entwining: Number of passes for each bit-map row
+ * bit_image_type: Type of bit image device
+ * buffer_capacity: Number of bytes buffered before printing
+ * buttons: Number of buttons on the mouse
+ * columns: Number of columns in a line
+ * dot_horz_spacing: Spacing of dots horizontally in dots per inch
+ * dot_vert_spacing: Spacing of pins vertically in pins per inch
+ * init_tabs: Tabs initially every #1 spaces
+ * label_height: Number of rows in each label
+ * label_width: Numbre of columns in each label
+ * lines: Number of lines on a screen or a page
+ * lines_of_memory: Lines of memory of > lines; 0 means varies
+ * max_attributes: Maximum combined video attributes terminal can display
+ * magic_cookie_glitch: Number of blank characters left by smso or rmso
+ * max_colors: Maximum number of colours on the screen
+ * max_micro_address: Maximum value in micro_..._addresss
+ * max_micro_jump: Maximum value in parm_..._micro
+ * max_pairs: Maximum number of colour-pairs on the screen
+ * maximum_windows: Maximum number of definable windows
+ * micro_col_size: Character step size when in micro mode
+ * micro_line_size: Line step size when in micro mode
+ * no_color_video: Video attributes that can't be used with colours
+ * num_labels: Number of labels on screen (start at 1)
+ * number_of_pins: Number of pins in print-head
+ * output_res_char: Horizontal resolution in units per character
+ * output_res_line: Vertical resolution in units per line
+ * output_res_horz_inch: Horizontal resolution in units per inch
+ * output_res_vert_inch: Vertical resolution in units per inch
+ * padding_baud_rate: Lowest baud rate where padding needed
+ * print_rate: Print rate in characters per second
+ * virtual_terminal: Virtual terminal number
+ * wide_char_size: Character step size when in double-wide mode
+ * width_status_line: Number of columns in status line
+ */
 
 /* Define available terminfo strings */
 enum TISTRS{
@@ -1448,6 +1528,405 @@ enum TISTRS{
 #define xon_character			 t_xon_character(cur_term)
 #define zero_motion			 t_zero_motion(cur_term)
 
+/*
+ * STRING DESCRIPTIONS
+ *
+ * acs_chars: Graphic charset pairs aAbBcC
+ * alt_scancode_esc: Alternate escape for scancode emulation
+ * back_tab: Back tab
+ * bell: Audible signal (bell)
+ * bit_image_carriage_return: Move to beginning of same row
+ * bit_image_newline: Move to next row of the bit image
+ * bit_image_repeat: Repeat bit-image cell #1 #2 times
+ * carriage_return: Carriage return
+ * change_char_pitch: Change number of characters per inch
+ * change_line_pitch: Change number of lines per inch
+ * change_res_horz: Change horizontal resolution
+ * change_res_vert: Change vertical resolution
+ * change_scroll_region: Change to lines #1 through #2 (VT100)
+ * char_padding: Like ip but when in replace mode
+ * char_set_names: Returns a list of character set names
+ * clear_all_tabs: Clear all tab stops
+ * clear_margins: Clear all margins (top, bottom and sides)
+ * clear_screen: Clear screen and home cursor
+ * clr_bol: Clear to beginning of line, inclusive
+ * clr_eol: Clear to end of line
+ * clr_eos: Clear to end of display
+ * code_set_init: Init sequence for multiple codesets
+ * color_names: Give name for colour #1
+ * column_address: Set horizontal position to absolute #1
+ * command_character: Terminal settable cmd character in prototype
+ * create_window: Define win #1 to go from #2,#3 to #4,#5
+ * cursor_address: Move to row #1, col #2
+ * cursor_down: Down one line
+ * cursor_home: Home cursor (if no cup)
+ * cursor_invisible: Make cursor invisible
+ * cursor_left: Move left one space
+ * cursor_mem_address: Memory relative cursor addressing
+ * cursor_normal: Make cursor appear normal (under vs/vi)
+ * cursor_right: Non-destructive space (cursor or carriage right)
+ * cursor_to_ll: Last line, first column (if no cup)
+ * cursor_up: Upline (cursor up)
+ * cursor_visible: Make cursor very visible
+ * define_bit_image_region: Define rectangular bit-image region
+ * define_char: Define a character in a character set
+ * delete_character: Delete character
+ * delete_line: Delete line
+ * device_type: Indicate language/codeset support
+ * dial_phone: Dial phone number #1
+ * dis_status_line: Disable status line
+ * display_clock: Display time-of-day clock
+ * display_pc_char: Display PC character
+ * down_half_time: Half-line down (forward 1/2 linefeed)
+ * ena_acs: Enable alternate character set
+ * end_bit_image_region: End a bit-image region
+ * enter_alt_charset_mode: Start alternate character set
+ * enter_am_mode: Turn on automatic margins
+ * enter_blink_mode: Turn on blinking
+ * enter_bold_mode: Turn on bold (extra bright) mode
+ * enter_ca_mode: String to begin programs that use cup
+ * enter_delete_mode: Delete mode (enter)
+ * enter_dim_mode: Turn on half-bright mode
+ * enter_doublewide_mode: Enable double wide printing
+ * enter_draft_quality: Set draft qualify print
+ * enter_horizontal_hl_mode: Turn on horizontal highlight mode
+ * enter_insert_mode: Insert mode (enter)
+ * enter_italics_mode: Enable italics
+ * enter_left_hl_mode: Turn on left highlight mode
+ * enter_leftward_mode: Enable leftward carriage motion
+ * enter_low_hl_mode: Turn on low highlight mode
+ * enter_micro_mode: Enable micro motion capabilities
+ * enter_near_quality_letter: Set near-letter quality print
+ * enter_normal_quality: Set normal quality print
+ * enter_pc_charset_mode: Enter PC character display mode
+ * enter_protected_mode: Turn on protected mode
+ * enter_reverse_mode: Turn on reverse video mode
+ * enter_right_hl_mode: Turn on right highlight mode
+ * enter_scancode_mode: Enter PC scancode mode
+ * enter_secure_mode: Turn on blank mode (characters invisible)
+ * enter_shadow_mode: Enable shadow printing
+ * enter_standout_mode: Begin standout mode
+ * enter_subscript_mode: Enable subscript printing
+ * enter_superscript_mode: Enable superscript printing
+ * enter_top_hl_mode: Turn on top highlight mode
+ * enter_underline_mode: Start underscore mode
+ * enter_upward_mode: Enable upward carriage motion
+ * enter_vertical_hl_mode: Turn on verticle highlight mode
+ * enter_xon_mode: Turn on xon/xoff handshaking
+ * erase_chars: Erase #1 characters
+ * exit_alt_charset_mode: End alternate character set
+ * exit_am_mode: Turn off automatic margins
+ * exit_attribute_mode: Turn off all attributes
+ * exit_ca_mode: String to end programs that use cup
+ * exit_delete_mode: End delete mode
+ * exit_doublewide_mode: Disable double wide printing
+ * exit_insert_mode: End insert mode
+ * exit_italics_mode: Disable italics
+ * exit_leftward_mode: Enable rightward (normal) carriage motion
+ * exit_micro_mode: Disable micro motion capabilities
+ * exit_pc_charset_mode: Disable PC character display mode
+ * exit_scancode_mode: Disable PC scancode mode
+ * exit_shadow_mode: Disable shadow printing
+ * exit_standout_mode: End standout mode
+ * exit_subscript_mode: Disable subscript printing
+ * exit_superscript_mode: Disable superscript printing
+ * exit_underline_mode: End underscore mode
+ * exit_upward_mode: Enable downward (normal) carriage motion
+ * exit_xon_mode: Turn off xon/xoff handshaking
+ * fixed_pause: Pause for 2-3 seconds
+ * flash_hook: Flash the switch hook
+ * flash_screen: Visible bell (may move cursor)
+ * form_feed: Hardcopy terminal eject page
+ * from_status_line: Return from status line
+ * get_mouse: Curses should get button events
+ * goto_window: Go to window #1
+ * hangup: Hang-up phone
+ * init_1string: Terminal or printer initialisation string
+ * init_2string: Terminal or printer initialisation string
+ * init_3string: Terminal or printer initialisation string
+ * init_file: Name of initialisation file
+ * init_prog: Path name of program for initialisation
+ * initialize_color: Set colour #1 to RGB #2, #3, #4
+ * initialize_pair: Set colour-pair #1 to fg #2, bg #3
+ * insert_character: Insert character
+ * insert_line: Add new blank line
+ * insert_padding: Insert pad after character inserted
+ * key_a1: upper left of keypad
+ * key_a3: upper right of keypad
+ * key_b2: center of keypad
+ * key_backspace: set by backspace key
+ * key_beg: 1
+ * key_btab: sent by back-tab key
+ * key_c1: lower left of keypad
+ * key_c3: lower right of keypad
+ * key_cancel: 2
+ * key_catab: sent by clear-all-tabs key
+ * key_clear: sent by clear-screen or erase key
+ * key_close: 3
+ * key_command: 4
+ * key_copy: 5
+ * key_create: 6
+ * key_ctab: sent by clear-tab key
+ * key_dc: sent by delete-character key
+ * key_dl: sent by delete-line key
+ * key_down: sent by terminal down-arrow key
+ * key_eic: sent by rmir or smir in insert mode
+ * key_end: 7
+ * key_enter: 8
+ * key_eol: sent by clear-to-end-of-line key
+ * key_eos: sent by clear-to-end-of-screen key
+ * key_exit: 9
+ * key_f0: sent by function key f0
+ * key_f1: sent by function key f1
+ * key_f2: sent by function key f2
+ * key_f3: sent by function key f3
+ * key_f4: sent by function key f4
+ * key_f5: sent by function key f5
+ * key_f6: sent by function key f6
+ * key_f7: sent by function key f7
+ * key_f8: sent by function key f8
+ * key_f9: sent by function key f9
+ * key_f10: sent by function key f10
+ * key_f11: sent by function key f11
+ * key_f12: sent by function key f12
+ * key_f13: sent by function key f13
+ * key_f14: sent by function key f14
+ * key_f15: sent by function key f15
+ * key_f16: sent by function key f16
+ * key_f17: sent by function key f17
+ * key_f18: sent by function key f18
+ * key_f19: sent by function key f19
+ * key_f20: sent by function key f20
+ * key_f21: sent by function key f21
+ * key_f22: sent by function key f22
+ * key_f23: sent by function key f23
+ * key_f24: sent by function key f24
+ * key_f25: sent by function key f25
+ * key_f26: sent by function key f26
+ * key_f27: sent by function key f27
+ * key_f28: sent by function key f28
+ * key_f29: sent by function key f29
+ * key_f30: sent by function key f30
+ * key_f31: sent by function key f31
+ * key_f32: sent by function key f32
+ * key_f33: sent by function key f33
+ * key_f34: sent by function key f34
+ * key_f35: sent by function key f35
+ * key_f36: sent by function key f36
+ * key_f37: sent by function key f37
+ * key_f38: sent by function key f38
+ * key_f39: sent by function key f39
+ * key_f40: sent by function key f40
+ * key_f41: sent by function key f41
+ * key_f42: sent by function key f42
+ * key_f43: sent by function key f43
+ * key_f44: sent by function key f44
+ * key_f45: sent by function key f45
+ * key_f46: sent by function key f46
+ * key_f47: sent by function key f47
+ * key_f48: sent by function key f48
+ * key_f49: sent by function key f49
+ * key_f50: sent by function key f50
+ * key_f51: sent by function key f51
+ * key_f52: sent by function key f52
+ * key_f53: sent by function key f53
+ * key_f54: sent by function key f54
+ * key_f55: sent by function key f55
+ * key_f56: sent by function key f56
+ * key_f57: sent by function key f57
+ * key_f58: sent by function key f58
+ * key_f59: sent by function key f59
+ * key_f60: sent by function key f60
+ * key_f61: sent by function key f61
+ * key_f62: sent by function key f62
+ * key_f63: sent by function key f63
+ * key_find: 0
+ * key_help: sent by help key
+ * key_home: sent by home key
+ * key_ic: sent by ins-char/enter ins-mode key
+ * key_il: sent by insert-line key
+ * key_left: sent by terminal left-arrow key
+ * key_ll: sent by home-down key
+ * key_mark: sent by mark key
+ * key_message: sent by message key
+ * key_mouse: 0631, Mouse event has occured
+ * key_move: sent by move key
+ * key_next: sent by next-object key
+ * key_npage: sent by next-page key
+ * key_open: sent by open key
+ * key_options: sent by options key
+ * key_ppage: sent by previous-page key
+ * key_previous: sent by previous-object key
+ * key_print: sent by print or copy key
+ * key_redo: sent by redo key
+ * key_reference: sent by ref(erence) key
+ * key_refresh: sent by refresh key
+ * key_replace: sent by replace key
+ * key_restart: sent by restart key
+ * key_resume: sent by resume key
+ * key_right: sent by terminal right-arrow key
+ * key_save: sent by save key
+ * key_sbeg: sent by shifted beginning key
+ * key_scancel: sent by shifted cancel key
+ * key_scommand: sent by shifted command key
+ * key_scopy: sent by shifted copy key
+ * key_screate: sent by shifted create key
+ * key_sdc: sent by shifted delete-char key
+ * key_sdl: sent by shifted delete-line key
+ * key_select: sent by select key
+ * key_send: sent by shifted end key
+ * key_seol: sent by shifted clear-line key
+ * key_sexit: sent by shited exit key
+ * key_sf: sent by scroll-forward/down key
+ * key_sfind: sent by shifted find key
+ * key_shelp: sent by shifted help key
+ * key_shome: sent by shifted home key
+ * key_sic: sent by shifted input key
+ * key_sleft: sent by shifted left-arrow key
+ * key_smessage: sent by shifted message key
+ * key_smove: sent by shifted move key
+ * key_snext: sent by shifted next key
+ * key_soptions: sent by shifted options key
+ * key_sprevious: sent by shifted prev key
+ * key_sprint: sent by shifted print key
+ * key_sr: sent by scroll-backwards/up key
+ * key_sredo: sent by shifted redo key
+ * key_sreplace: sent by shifted replace key
+ * key_sright: sent by shifted right-arrow key
+ * key_srsume: sent by shifted resume key
+ * key_ssave: sent by shifted save key
+ * key_ssuspend: sent by shifted suspend key
+ * key_stab: sent by set-tab key
+ * key_sundo: sent by shifted undo key
+ * key_suspend: sent by suspend key
+ * key_undo: sent by undo key
+ * key_up: sent by terminal up-arrow key
+ * keypad_local: Out of "keypad-transmit" mode
+ * keypad_xmit: Put terminal in "keypad-transmit" mode
+ * lab_f0: Labels on function key f0 if not f0
+ * lab_f1: Labels on function key f1 if not f1
+ * lab_f2: Labels on function key f2 if not f2 
+ * lab_f3: Labels on function key f3 if not f3
+ * lab_f4: Labels on function key f4 if not f4
+ * lab_f5: Labels on function key f5 if not f5
+ * lab_f6: Labels on function key f6 if not f6
+ * lab_f7: Labels on function key f7 if not f7
+ * lab_f8: Labels on function key f8 if not f8
+ * lab_f9: Labels on function key f9 if not f9
+ * lab_f10: Labels on function key f10 if not f10
+ * label_format: Label format
+ * label_off: Turn off soft labels
+ * label_on: Turn on soft labels
+ * meta_off: Turn off "meta mode"
+ * meta_on: Turn on "meta mode" (8th bit)
+ * micro_column_address: Like column_address for micro adjustment
+ * micro_down: Like cursor_down for micro adjustment
+ * micro_left: Like cursor_left for micro adjustment
+ * micro_right: Like cursor_right for micro adjustment
+ * micro_row_address: Like row_address for micro adjustment
+ * micro_up: Like cursor_up for micro adjustment
+ * mouse_info: Mouse status information
+ * newline: Newline (behaves like cr followed by lf)
+ * order_of_pins: Matches software bits to print-head pins
+ * orig_colors: Set all colour(-pair)s to original ones
+ * orig_pair: Set default colour-pair to the original one
+ * pad_char: Pad character (rather than NULL)
+ * parm_dch: Delete #1 chars
+ * parm_delete_line: Delete #1 lines
+ * parm_down_cursor: Move down #1 lines
+ * parm_down_micro: Like parm_down_cursor for micro adjustment
+ * parm_ich: Insert #1 blank chars
+ * parm_index: Scroll forward #1 lines
+ * parm_insert_line: Add #1 new blank lines
+ * parm_left_cursor: Move cursor left #1 lines
+ * parm_left_micro: Like parm_left_cursor for micro adjustment
+ * parm_right_cursor: Move right #1 spaces
+ * parm_right_micro: Like parm_right_cursor for micro adjustment
+ * parm_rindex: Scroll backward #1 lines
+ * parm_up_cursor: Move cursor up #1 lines
+ * parm_up_micro: Like parm_up_cursor for micro adjustment
+ * pc_term_options: PC terminal options
+ * pkey_key: Prog funct key #1 to type string #2
+ * pkey_local: Prog funct key #1 to execute string #2
+ * pkey_plab: Prog key #1 to xmit string #2 and show string #3
+ * pkey_xmit: Prog funct key #1 to xmit string #2
+ * pkey_norm: Prog label #1 to show string #3
+ * print_screen: Print contents of screen
+ * ptr_non: Turn off printer for #1 bytes
+ * ptr_off: Turn off the printer
+ * ptr_on: Turn on the printer
+ * pulse: Select pulse dialing
+ * quick_dial: Dial phone number #1, without progress detection
+ * remove_clock: Remove time-of-day clock
+ * repeat_char: Repeat char #1 #2 times
+ * req_for_input: Send next input char (for ptys)
+ * req_mouse_pos: Request mouse position report
+ * reset_1string: Reset terminal completely to sane modes
+ * reset_2string: Reset terminal completely to sane modes
+ * reset_3string: Reset terminal completely to sane modes
+ * reset_file: Name of file containing reset string
+ * restore_cursor: Restore cursor to position of last sc
+ * row_address: Set vertical position to absolute #1
+ * save_cursor: Save cursor position
+ * scancode_escape: Escape for scancode emulation
+ * scroll_forward: Scroll text up
+ * scroll_reverse: Scroll text down
+ * select_char_set: Select character set
+ * set0_des_seq: Shift into codeset 0 (EUC set 0, ASCII)
+ * set1_des_seq: Shift into codeset 1
+ * set2_des_seq: Shift into codeset 2
+ * set3_des_seq: Shift into codeset 3
+ * set_a_attributes: Define second set of video attributes #1-#6
+ * set_a_background: Set background colour to #1 using ANSI escape
+ * set_a_foreground: Set foreground colour to #1 using ANSI escape
+ * set_attributes: Define first set of video attributes #1-#9
+ * set_background: Set background colour to #1
+ * set_bottom_margin: Set bottom margin at current line
+ * set_bottom_margin_parm: Set bottom margin at line #1 or #2 lines from bottom
+ * set_clock: Set clock to hours (#1), minutes (#2), seconds (#3)
+ * set_color_band: Change ribbon to colour #1
+ * set_color_pair: Set current colour pair to #1
+ * set_foreground: Set foreground colour to #1
+ * set_left_margin: Set left margin at current column
+ * set_left_margin_parm: Set left (right) margin at column #1 (#2)
+ * set_lr_margin: Sets both left and right margins
+ * set_page_length: Set page length to #1 lines
+ * set_pglen_inch: Set page length to #1 hundredth of an inch
+ * set_right_margin: Set right margin at current column
+ * set_right_margin_parm: Set right margin at #1
+ * set_tab: Set a tab in all rows, current column
+ * set_tb_margin: Sets both top and bottom margins
+ * set_top_margin: Set top margin at current line
+ * set_top_margin_parm: Set top (bottom) margin at line #1 (#2)
+ * set_window: Current window is lines #1-#2 cols #3-#4
+ * start_bit_image: Start printing bit image graphics
+ * start_char_set_def: Start definition of a character set
+ * stop_bit_image: End printing bit image graphics
+ * stop_char_set_def: End definition of a character set
+ * subscript_characters: List of "subscript-able" characters
+ * superscript_characters: List of "superscript-able" characters
+ * tab: Tab to next 8-space hardware tab stop
+ * these_cause_cr: Printing any of these characters causes cr
+ * to_status_line: Go to status line, col #1
+ * tone: Select tone touch dialing
+ * user0: User string 0
+ * user1: User string 1
+ * user2: User string 2
+ * user3: User string 3
+ * user4: User string 4
+ * user5: User string 5
+ * user6: User string 6
+ * user7: User string 7
+ * user8: User string 8
+ * user9: User string 9
+ * underline_char: Underscore one char and move past it
+ * up_half_line: Half-line up (reverse 1/2 linefeed)
+ * wait_tone: Wait for dial tone
+ * xoff_character: X-off character
+ * xon_character: X-on character
+ * zero_motion: No motion for the subsequent character
+ */
+
 #ifndef _TERMINFO
 typedef struct {
 	int fildes;
@@ -1495,11 +1974,19 @@ int		ti_puts(const TERMINAL *, const char *, int,
     int (*)(int, void *), void *);
 int		ti_putp(const TERMINAL *, const char *);
 
-/* Using tparm can be kunkly, so provide a variadic function */
+/* Using tparm can be kunkly, so provide a variadic function
+ * Numbers have to be passed as int */
 /* This is not standard, but ncurses also provides this */
 char *		tiparm(const char *, ...);
 /* And a thread safe version */
 char *		ti_tiparm(TERMINAL *, const char *, ...);
+
+#ifdef TPARM_TLPARM
+/* Same as the above, but numbers have to be passed as long */
+char *		tlparm(const char *, ...);
+/* And a thread safe version */
+char *		ti_tlparm(TERMINAL *, const char *, ...);
+#endif
 
 /* Default to X/Open tparm, but allow it to be variadic also */
 #ifdef TPARM_VARARGS

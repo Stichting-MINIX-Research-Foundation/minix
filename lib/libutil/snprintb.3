@@ -1,4 +1,4 @@
-.\"     $NetBSD: snprintb.3,v 1.14 2009/05/13 02:50:32 pgoyette Exp $
+.\"     $NetBSD: snprintb.3,v 1.16 2013/08/07 23:22:28 pgoyette Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -225,14 +225,14 @@ total number of bytes.
 Two examples of the old formatting style:
 .Bd -literal -offset indent
 snprintb(buf, buflen, "\e10\e2BITTWO\e1BITONE", 3)
-\(rA "3\*[Lt]BITTWO,BITONE\*[Gt]"
+\(rA "03<BITTWO,BITONE>"
 
 snprintb(buf, buflen,
-       "\e20\ex10NOTBOOT\ex0fFPP\ex0eSDVMA\ex0cVIDEO"
-       "\ex0bLORES\ex0aFPA\ex09DIAG\ex07CACHE"
-       "\ex06IOCACHE\ex05LOOPBACK\ex04DBGCACHE",
+       "\e20\ex10NOTBOOT\ex0f" "FPP\ex0eSDVMA\ex0cVIDEO"
+       "\ex0bLORES\ex0a" "FPA\ex09" "DIAG\ex07" "CACHE"
+       "\ex06IOCACHE\ex05LOOPBACK\ex04" "DBGCACHE",
        0xe860)
-\(rA "e860\*[Lt]NOTBOOT,FPP,SDVMA,VIDEO,CACHE,IOCACHE\*[Gt]"
+\(rA "0xe860<NOTBOOT,FPP,SDVMA,VIDEO,CACHE,IOCACHE>"
 .Ed
 .Pp
 An example of the new formatting style:
@@ -242,7 +242,17 @@ snprintb(buf, buflen,
        "f\ex10\e4BURST\e0=\e4FOUR\e0=\exfSIXTEEN\e0"
        "b\ex1fMSB\e0\e0",
        0x800f0701)
-\(rA "800f0701\*[Lt]LSB,NIBBLE2=0,BURST=f=SIXTEEN,MSB\*[Gt]"
+\(rA "0x800f0701<LSB,NIBBLE2=0x0,BURST=0xf=SIXTEEN,MSB>"
+.Ed
+.Pp
+An example using snprintb_m:
+.Bd -literal -offset indent
+snprintb_m(buf, buflen,
+       "\e177\e020b\e0LSB\e0b\e1_BITONE\e0f\e4\e4NIBBLE2\e0"
+       "f\ex10\e4BURST\e0=\e4FOUR\e0=\exfSIXTEEN\e0"
+       "b\ex1fMSB\e0\e0",
+       0x800f0701, 34)
+\(rA "0x800f0701<LSB,NIBBLE2=0x0>\e00x800f0701<BURST=0xf=SIXTEEN,MSB>\e0"
 .Ed
 .Sh ERRORS
 .Fn snprintb

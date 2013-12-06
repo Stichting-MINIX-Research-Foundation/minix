@@ -1,6 +1,7 @@
-/* $NetBSD: atomic_cas_8.S,v 1.3 2012/08/31 23:41:52 matt Exp $ */
+/* $NetBSD: atomic_cas_8.S,v 1.6 2013/11/08 22:42:52 matt Exp $ */
+
 /*-
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -36,24 +37,29 @@
  * and kernel.
  */
 ENTRY_NP(_atomic_cas_8)
-	mov	r3, r0			/* we need r0 for return value */
+	mov	ip, r0			/* we need r0 for return value */
 1:
-	ldrexb	r0, [r3]		/* load old value */
-	teq	r0, r1			/*   compare? */
+	ldrexb	r0, [ip]		/* load old value */
+	cmp	r0, r1			/*   compare? */
+#ifdef __thumb__
+	bne	2f
+#else
 	RETc(ne)			/*     return if different */
-	strexb	ip, r2, [r3]		/* store new value */
-	cmp	ip, #0			/*   succeed? */
+#endif
+	strexb	r3, r2, [ip]		/* store new value */
+	cmp	r3, #0			/*   succeed? */
 	bne	1b			/*     nope, try again. */
 #ifdef _ARM_ARCH_7
 	dsb				/* data synchronization barrier */
 #else
-	mcr	p15, 0, ip, c7, c10, 4	/* data synchronization barrier */
+	mcr	p15, 0, r3, c7, c10, 4	/* data synchronization barrier */
 #endif
-	RET				/* return. */
+2:	RET				/* return. */
 	END(_atomic_cas_8)
 
 ATOMIC_OP_ALIAS(atomic_cas_8,_atomic_cas_8)
 STRONG_ALIAS(_atomic_cas_char,_atomic_cas_8)
 STRONG_ALIAS(_atomic_cas_uchar,_atomic_cas_8)
+STRONG_ALIAS(__sync_val_compare_and_swap_1,_atomic_cas_8)
 
-#endif /* _ARCH_ARM_6 */
+#endif /* _ARM_ARCH_6 */

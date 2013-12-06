@@ -1,6 +1,6 @@
 
 #------------------------------------------------------------
-# $File: java,v 1.13 2011/12/08 12:12:46 rrt Exp $
+# $File: java,v 1.14 2013/02/08 16:54:45 christos Exp $
 # Java ByteCode and Mach-O binaries (e.g., Mac OS X) use the
 # same magic number, 0xcafebabe, so they are both handled
 # in the entry called "cafebabe".
@@ -27,3 +27,13 @@
 # Java source
 0	regex	^import.*;$	Java source
 !:mime	text/x-java
+
+# http://android.stackexchange.com/questions/23357/\
+# is-there-a-way-to-look-inside-and-modify-an-adb-backup-created-file/\
+# 23608#23608
+0	string	ANDROID\040BACKUP\n	Android Backup
+>15	string	1\n			\b, version 1
+>17	string	0\n			\b, uncompressed
+>17	string	1\n			\b, compressed
+>19	string	none\n			\b, unencrypted
+>19	string	AES-256\n		\b, encrypted AES-256

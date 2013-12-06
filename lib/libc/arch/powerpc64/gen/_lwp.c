@@ -1,4 +1,4 @@
-/*	$NetBSD: _lwp.c,v 1.2 2006/07/05 18:05:45 ross Exp $	*/
+/*	$NetBSD: _lwp.c,v 1.3 2012/11/24 15:20:58 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: _lwp.c,v 1.2 2006/07/05 18:05:45 ross Exp $");
+__RCSID("$NetBSD: _lwp.c,v 1.3 2012/11/24 15:20:58 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -46,6 +46,7 @@ __RCSID("$NetBSD: _lwp.c,v 1.2 2006/07/05 18:05:45 ross Exp $");
 #include <lwp.h>
 #include <stdlib.h>
 
+/*ARGSUSED*/
 void
 _lwp_makecontext(ucontext_t *u, void (*start)(void *), void *arg,
 	void *private, caddr_t stack_base, size_t stack_size)
@@ -58,7 +59,7 @@ _lwp_makecontext(ucontext_t *u, void (*start)(void *), void *arg,
 	u->uc_stack.ss_sp = stack_base;
 	u->uc_stack.ss_size = stack_size;
 
-	sp = (void **) (stack_base + stack_size);
+	sp = (void *)(stack_base + stack_size);
 
 	u->uc_mcontext.__gregs[3] = (__greg_t) arg;		/* arg1 */
 	u->uc_mcontext.__gregs[1] = ((__greg_t) sp) - 112;	/* stack */

@@ -1,4 +1,4 @@
-/*	$NetBSD: nbperf.c,v 1.4 2011/10/21 23:47:11 joerg Exp $	*/
+/*	$NetBSD: nbperf.c,v 1.5 2013/01/31 16:32:02 joerg Exp $	*/
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: nbperf.c,v 1.4 2011/10/21 23:47:11 joerg Exp $");
+__RCSID("$NetBSD: nbperf.c,v 1.5 2013/01/31 16:32:02 joerg Exp $");
 
 #include <sys/endian.h>
 #include <err.h>
@@ -135,12 +135,14 @@ main(int argc, char **argv)
 	while ((ch = getopt(argc, argv, "a:c:h:i:m:n:o:ps")) != -1) {
 		switch (ch) {
 		case 'a':
+			/* Accept bdz as alias for netbsd-6 compat. */
 			if (strcmp(optarg, "chm") == 0)
 				build_hash = chm_compute;
 			else if (strcmp(optarg, "chm3") == 0)
 				build_hash = chm3_compute;
-			else if (strcmp(optarg, "bdz") == 0)
-				build_hash = bdz_compute;
+			else if (strcmp(optarg, "bpz") == 0 ||
+			         strcmp(optarg, "bdz") == 0)
+				build_hash = bpz_compute;
 			else
 				errx(1, "Unsupport algorithm: %s", optarg);
 			break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: t_pktinfo.c,v 1.1 2013/06/27 20:01:24 christos Exp $	*/
+/*	$NetBSD: t_pktinfo.c,v 1.2 2013/10/19 17:45:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_pktinfo.c,v 1.1 2013/06/27 20:01:24 christos Exp $");
+__RCSID("$NetBSD: t_pktinfo.c,v 1.2 2013/10/19 17:45:01 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -141,6 +141,7 @@ receive(int s) {
 		printf("%s message received on address %s at interface %d\n",
 		    m, inet_ntoa(ipi->ipi_addr), ipi->ipi_ifindex);
 #else
+		__USE(m);
 		ATF_REQUIRE_MSG(ipi->ipi_addr.s_addr == htonl(INADDR_LOOPBACK),
 			"address 0x%x != 0x%x", ipi->ipi_addr.s_addr,
 			htonl(INADDR_LOOPBACK));

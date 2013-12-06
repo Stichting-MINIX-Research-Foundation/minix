@@ -1,4 +1,4 @@
-/*	$NetBSD: h_tls_dynamic.c,v 1.3 2012/01/17 20:34:57 joerg Exp $	*/
+/*	$NetBSD: h_tls_dynamic.c,v 1.5 2013/10/21 19:11:17 joerg Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: h_tls_dynamic.c,v 1.3 2012/01/17 20:34:57 joerg Exp $");
+__RCSID("$NetBSD: h_tls_dynamic.c,v 1.5 2013/10/21 19:11:17 joerg Exp $");
 
 #include <unistd.h>
 #include <sys/tls.h>

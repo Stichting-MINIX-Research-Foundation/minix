@@ -13,7 +13,9 @@
 #		building.  See library's Makefile for more details about
 #		supported flags and their default values.
 
+.if defined(__MINIX)
 USE_BITCODE=no
+.endif # defined(__MINIX)
 
 # Default values:
 I386DST?=		${.OBJDIR}/lib/i386

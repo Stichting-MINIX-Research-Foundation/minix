@@ -374,13 +374,13 @@ sig_cleanup(int which_sig)
 static int
 gen_init(void)
 {
-#ifndef __minix
+#if !defined(__minix)
 	struct rlimit reslimit;
-#endif
+#endif /* !defined(__minix) */
 	struct sigaction n_hand;
 	struct sigaction o_hand;
 
-#ifndef __minix
+#if !defined(__minix)
 	/*
 	 * Really needed to handle large archives. We can run out of memory for
 	 * internal tables really fast when we have a whole lot of files...
@@ -416,7 +416,7 @@ gen_init(void)
 		(void)setrlimit(RLIMIT_RSS , &reslimit);
 	}
 #endif
-#endif /* __minix */
+#endif /* !defined(__minix) */
 
 	/*
 	 * Handle posix locale

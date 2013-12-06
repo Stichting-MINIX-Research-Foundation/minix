@@ -1,4 +1,4 @@
-/*	$NetBSD: wchar_limits.h,v 1.3 2008/04/28 20:23:14 martin Exp $	*/
+/*	$NetBSD: wchar_limits.h,v 1.4 2013/01/24 10:17:00 matt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,11 +37,39 @@
  */
 
 /* limits of wchar_t */
+
+#ifdef __WCHAR_MIN__
+#define	WCHAR_MIN	__WCHAR_MIN__			/* wchar_t	  */
+#elif __WCHAR_UNSIGNED__
+#define	WCHAR_MIN	0U				/* wchar_t	  */
+#else
 #define	WCHAR_MIN	(-0x7fffffff-1)			/* wchar_t	  */
+#endif
+
+#ifdef __WCHAR_MAX__
+#define	WCHAR_MAX	__WCHAR_MAX__			/* wchar_t	  */
+#elif __WCHAR_UNSIGNED__
+#define	WCHAR_MAX	0xffffffffU			/* wchar_t	  */
+#else
 #define	WCHAR_MAX	0x7fffffff			/* wchar_t	  */
+#endif
 
 /* limits of wint_t */
+
+#ifdef __WINT_MIN__
+#define	WINT_MIN	__WINT_MIN__			/* wint_t	  */
+#elif __WINT_UNSIGNED__
+#define	WINT_MIN	0U				/* wint_t	  */
+#else
 #define	WINT_MIN	(-0x7fffffff-1)			/* wint_t	  */
+#endif
+
+#ifdef __WINT_MAX__
+#define	WINT_MAX	__WINT_MAX__			/* wint_t	  */
+#elif __WINT_UNSIGNED__
+#define	WINT_MAX	0xffffffffU			/* wint_t	  */
+#else
 #define	WINT_MAX	0x7fffffff			/* wint_t	  */
+#endif
 
 #endif /* !_ARM_WCHAR_LIMITS_H_ */

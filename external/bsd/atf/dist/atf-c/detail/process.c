@@ -621,7 +621,7 @@ atf_process_exec_array(atf_process_status_t *s,
                        void (*prehook)(void))
 {
     atf_error_t err;
-    atf_process_child_t c = { .m_pid = 0, .m_stdout = 1, .m_stderr = 2 };
+    atf_process_child_t c = { .m_pid = 0, .m_stdout = 1, .m_stderr = 2 }; /* MINIX: Complain in -O3 */
     struct exec_args ea = { prog, argv, prehook };
 
     PRE(outsb == NULL ||

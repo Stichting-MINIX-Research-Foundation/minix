@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.198 2012/06/19 06:06:34 dholland Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.200 2013/07/31 19:50:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1988, 1990, 1992, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.198 2012/06/19 06:06:34 dholland Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.200 2013/07/31 19:50:47 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -261,11 +261,11 @@ static int	 write_data(int, char *, size_t, off_t *, struct timeval *,
 		     int);
 static enum send_status
 		 send_data_with_read(int, int, const struct stat *, int);
-#ifndef __minix
+#if !defined(__minix)
 static enum send_status
 		 send_data_with_mmap(int, int, const struct stat *, int);
 static void	 logrusage(const struct rusage *, const struct rusage *);
-#endif
+#endif /* !defined(__minix) */
 static void	 logout_utmp(void);
 
 int	main(int, char *[]);
@@ -482,7 +482,7 @@ main(int argc, char *argv[])
 #endif
 	}
 	errno = 0;
-#ifndef __minix
+#if !defined(__minix)
 	l = sysconf(_SC_LOGIN_NAME_MAX);
 	if (l == -1 && errno != 0) {
 		syslog(LOG_ERR, "sysconf _SC_LOGIN_NAME_MAX: %m");
@@ -494,7 +494,7 @@ main(int argc, char *argv[])
 		curname_len = (size_t)l;
 #else
 	curname_len = _POSIX_LOGIN_NAME_MAX;
-#endif
+#endif /* !defined(__minix) */
 	curname = malloc(curname_len);
 	if (curname == NULL) {
 		syslog(LOG_ERR, "malloc: %m");
@@ -704,7 +704,7 @@ main(int argc, char *argv[])
 	sa.sa_handler = toolong;
 	(void) sigaction(SIGALRM, &sa, NULL);
 	sa.sa_handler = sigurg;
-#ifndef __minix
+#if !defined(__minix)
 	(void) sigaction(SIGURG, &sa, NULL);
 
 	/* Try to handle urgent data inline */
@@ -719,7 +719,7 @@ main(int argc, char *argv[])
 	    sizeof(int)) < 0)
 		syslog(LOG_WARNING, "setsockopt (SO_KEEPALIVE): %m");
 #endif
-#endif
+#endif /* !defined(__minix) */
 
 #ifdef	F_SETOWN
 	if (fcntl(fileno(stdin), F_SETOWN, getpid()) == -1)
@@ -1606,10 +1606,10 @@ do_pass(int pass_checked, int pass_rval, const char *passwd)
 	}
 #ifndef LOGIN_CAP
 	setsid();
-#ifndef __minix
+#if !defined(__minix)
 	setlogin(pw->pw_name);
 #endif
-#endif
+#endif /* !defined(__minix) */
 	if (dropprivs ||
 	    (curclass.type != CLASS_REAL && 
 	    ntohs(ctrl_addr.su_port) > IPPORT_RESERVED + 1)) {
@@ -1694,9 +1694,9 @@ retrieve(const char *argv[], const char *name)
 	int (*closefunc)(FILE *) = NULL;
 	int dolog, sendrv, closerv, stderrfd, isconversion, isdata, isls;
 	struct timeval start, finish, td, *tdp;
-#ifndef __minix
+#if !defined(__minix)
 	struct rusage rusage_before, rusage_after;
-#endif
+#endif /* !defined(__minix) */
 	const char *dispname;
 	const char *error;
 
@@ -1777,25 +1777,25 @@ retrieve(const char *argv[], const char *name)
 	if (dout == NULL)
 		goto done;
 
-#ifndef __minix
+#if !defined(__minix)
 	(void)getrusage(RUSAGE_SELF, &rusage_before);
-#endif
+#endif /* !defined(__minix) */
 	(void)gettimeofday(&start, NULL);
 	sendrv = send_data(fin, dout, &st, isdata);
 	(void)gettimeofday(&finish, NULL);
-#ifndef __minix
+#if !defined(__minix)
 	(void)getrusage(RUSAGE_SELF, &rusage_after);
-#endif
+#endif /* !defined(__minix) */
 	closedataconn(dout);		/* close now to affect timing stats */
 	timersub(&finish, &start, &td);
 	tdp = &td;
  done:
 	if (dolog) {
 		logxfer("get", byte_count, name, NULL, tdp, error);
-#ifndef __minix
+#if !defined(__minix)
 		if (tdp != NULL)
 			logrusage(&rusage_before, &rusage_after);
-#endif
+#endif /* !defined(__minix) */
 	}
 	closerv = (*closefunc)(fin);
 	if (sendrv == 0) {
@@ -2014,7 +2014,7 @@ dataconn(const char *name, off_t size, const char *fmode)
 		}
 		(void) close(pdata);
 		pdata = s;
-#ifndef __minix
+#if !defined(__minix)
 		switch (from.su_family) {
 		case AF_INET:
 #ifdef IP_TOS
@@ -2026,7 +2026,7 @@ dataconn(const char *name, off_t size, const char *fmode)
 			break;
 #endif
 		}
-#endif
+#endif /* !defined(__minix) */
 		/* Set keepalives on the socket to detect dropped conns. */
 #ifdef SO_KEEPALIVE
 		keepalive = 1;
@@ -2169,7 +2169,7 @@ send_data_with_read(int filefd, int netfd, const struct stat *st, int isdata)
 		(void)gettimeofday(&then, NULL);
 	} else
 		bufrem = readsize;
-	while (1) {
+	for (;;) {
 		(void) alarm(curclass.timeout);
 		c = read(filefd, buf, readsize);
 		if (c == 0)
@@ -2232,7 +2232,7 @@ send_data_with_mmap(int filefd, int netfd, const struct stat *st, int isdata)
 		(void)gettimeofday(&then, NULL);
 	} else
 		bufrem = winsize;
-#ifndef __minix
+#if !defined(__minix)
 	while (1) {
 		mapsize = MIN(filesize - off, winsize);
 		if (mapsize == 0)
@@ -2257,7 +2257,7 @@ send_data_with_mmap(int filefd, int netfd, const struct stat *st, int isdata)
 	}
 	return (SS_SUCCESS);
 
-#endif
+#endif /* !defined(__minix) */
  try_read:
 	return (send_data_with_read(filefd, netfd, st, isdata));
 }
@@ -2414,7 +2414,7 @@ receive_data(FILE *instr, FILE *outstr)
 		(void) alarm(curclass.timeout);
 		if (curclass.readsize)
 			readsize = curclass.readsize;
-		else if (fstat(filefd, &st))
+		else if (fstat(filefd, &st) != -1)
 			readsize = (ssize_t)st.st_blksize;
 		else
 			readsize = BUFSIZ;
@@ -2852,7 +2852,6 @@ reply(int n, const char *fmt, ...)
 	size_t	b;
 	va_list	ap;
 
-	b = 0;
 	if (n == 0)
 		b = snprintf(msg, sizeof(msg), "    ");
 	else if (n < 0)
@@ -3671,7 +3670,7 @@ logxfer(const char *command, off_t bytes, const char *file1, const char *file2,
 	}
 }
 
-#ifndef __minix
+#if !defined(__minix)
 /*
  * Log the resource usage.
  *
@@ -3696,7 +3695,7 @@ logrusage(const struct rusage *rusage_before,
 	    rusage_after->ru_majflt - rusage_before->ru_majflt,
 	    rusage_after->ru_nswap - rusage_before->ru_nswap);
 }
-#endif
+#endif /* !defined(__minix) */
 
 /*
  * Determine if `password' is valid for user given in `pw'.

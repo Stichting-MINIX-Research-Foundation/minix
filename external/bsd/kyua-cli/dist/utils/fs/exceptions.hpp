@@ -33,6 +33,7 @@
 #define UTILS_FS_EXCEPTIONS_HPP
 
 #include <stdexcept>
+#include <string>
 
 namespace utils {
 namespace fs {

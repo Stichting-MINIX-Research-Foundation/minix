@@ -1,4 +1,4 @@
-/*	$NetBSD: vndvar.h,v 1.31 2011/06/29 09:12:42 hannken Exp $	*/
+/*	$NetBSD: vndvar.h,v 1.33 2013/06/03 16:42:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -70,9 +70,9 @@
 #ifndef _SYS_DEV_VNDVAR_H_
 #define _SYS_DEV_VNDVAR_H_
 
-#ifndef __minix
+#if !defined(__minix)
 #include <sys/pool.h>
-#endif
+#endif /* defined(__minix) */
 
 /*
  * Vnode disk pseudo-geometry information.
@@ -88,16 +88,16 @@ struct vndgeom {
  * Ioctl definitions for file (vnode) disk pseudo-device.
  */
 struct vnd_ioctl {
-#ifndef __minix
+#if !defined(__minix)
 	char		*vnd_file;	/* pathname of file to mount */
 #else
 	int		vnd_fildes;	/* file descriptor of file to mount */
-#endif
+#endif /* !defined(__minix)*/
 	int		vnd_flags;	/* flags; see below */
 	struct vndgeom	vnd_geom;	/* geometry to emulate */
-#ifndef __minix
+#if !defined(__minix)
 	unsigned int	vnd_osize;	/* (returned) size of disk */
-#endif
+#endif /* !defined(__minix)*/
 	uint64_t	vnd_size;	/* (returned) size of disk */
 };
 
@@ -106,7 +106,7 @@ struct vnd_ioctl {
 #define	VNDIOF_READONLY	0x02		/* as read-only device */
 #define	VNDIOF_FORCE	0x04		/* force close */
 
-#ifndef __minix
+#if !defined(__minix)
 #ifdef _KERNEL
 
 struct vnode;
@@ -117,11 +117,12 @@ struct vnode;
 struct vnd_softc {
 	device_t         sc_dev;
 	int		 sc_flags;	/* flags */
-	size_t		 sc_size;	/* size of vnd */
+	uint64_t	 sc_size;	/* size of vnd */
 	struct vnode	*sc_vp;		/* vnode */
 	kauth_cred_t	 sc_cred;	/* credentials */
 	int		 sc_maxactive;	/* max # of active requests */
 	struct bufq_state *sc_tab;	/* transfer queue */
+	int		 sc_pending;	/* number of pending transfers */
 	int		 sc_active;	/* number of active transfers */
 	struct disk	 sc_dkdev;	/* generic disk device info */
 	struct vndgeom	 sc_geom;	/* virtual geometry */
@@ -160,7 +161,7 @@ struct vnd_comp_header
 	u_int32_t block_size;
 	u_int32_t num_blocks;
 };
-#endif
+#endif /* !defined(__minix) */
 
 /*
  * A simple structure for describing which vnd units are in use.

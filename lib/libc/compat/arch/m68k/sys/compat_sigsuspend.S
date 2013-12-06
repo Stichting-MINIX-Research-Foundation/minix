@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_sigsuspend.S,v 1.1 2006/03/09 16:20:55 christos Exp $	*/
+/*	$NetBSD: compat_sigsuspend.S,v 1.3 2013/07/25 22:08:15 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
 #if 0
 	RCSID("from: @(#)sigsuspend.s	5.2 (Berkeley) 6/6/90")
 #else
-	RCSID("$NetBSD: compat_sigsuspend.S,v 1.1 2006/03/09 16:20:55 christos Exp $")
+	RCSID("$NetBSD: compat_sigsuspend.S,v 1.3 2013/07/25 22:08:15 matt Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -47,12 +47,10 @@ WARN_REFERENCES(sigsuspend, \
     "warning: reference to compatibility sigsuspend(); include <signal.h> for correct reference")
 
 ENTRY(sigsuspend)
-	movl	%sp@(4),%a0
-	movl	%a0@,%sp@(4)		/* indirect to mask arg */
-	movl	#SYS_compat_13_sigsuspend13,%d0
-	trap	#0
-	jcs	err
+	movl	4(%sp),%a0
+	movl	(%a0),4(%sp)		/* indirect to mask arg */
+	SYSTRAP(compat_13_sigsuspend13)
+	jcs	CERROR
 	clrl	%d0			/* shouldn't happen */
 	rts
-err:
-	jra	PIC_PLT(CERROR)
+END(sigsuspend)

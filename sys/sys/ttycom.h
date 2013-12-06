@@ -1,4 +1,4 @@
-/*	$NetBSD: ttycom.h,v 1.19 2011/09/24 00:05:39 christos Exp $	*/
+/*	$NetBSD: ttycom.h,v 1.20 2012/10/19 16:49:21 apb Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994
@@ -39,6 +39,7 @@
 #ifndef	_SYS_TTYCOM_H_
 #define	_SYS_TTYCOM_H_
 
+#include <sys/syslimits.h>
 #include <sys/ioccom.h>
 
 /*
@@ -57,12 +58,12 @@ struct winsize {
 	unsigned short	ws_ypixel;	/* vertical size, pixels */
 };
 
-/* ptmget, for /dev/ptm pty getting ioctl PTMGET */
+/* ptmget, for /dev/ptm pty getting ioctl TIOCPTMGET, and for TIOCPTSNAME */
 struct ptmget {
 	int	cfd;
 	int	sfd;
-	char	cn[16];
-	char	sn[16];
+	char	cn[PATH_MAX];
+	char	sn[PATH_MAX];
 };
 
 #define _PATH_PTMDEV	"/dev/ptm"
@@ -163,9 +164,7 @@ typedef char linedn_t[TTLINEDNAMELEN];
 #define	STRIPDISC	6		/* metricom wireless IP discipline */
 #define	HDLCDISC	9		/* HDLC discipline */
 
-#ifdef __minix
-
-#include <minix/ioctl.h>
+#if defined(__minix)
 
 /* Terminal ioctls. Use big T. */
 #define TIOCSFON        _IOW_BIG(1, u8_t [8192])	/* new font */
@@ -178,6 +177,6 @@ typedef char linedn_t[TTLINEDNAMELEN];
 /* /dev/video ioctls. */
 #define TIOCMAPMEM      _IOWR('v', 1, struct mapreqvm)
 #define TIOCUNMAPMEM    _IOWR('v', 2, struct mapreqvm)
-#endif
+#endif /* defined(__minix) */
 
 #endif /* !_SYS_TTYCOM_H_ */

@@ -77,7 +77,8 @@ public:
 
 
 /// Tuple containing the results of this driver.
-struct result {
+class result {
+public:
     /// The identifier assigned to the operation.
     int64_t action_id;
 

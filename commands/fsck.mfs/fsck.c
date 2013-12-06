@@ -403,7 +403,7 @@ void devio(bno, dir)
 block_nr bno;
 int dir;
 {
-  int r;
+  off_t r;
 
   if(!block_size) fatal("devio() with unknown block size");
   if (dir == READING && bno == thisblk) return;
@@ -413,7 +413,7 @@ int dir;
 printf("%s at block %5d\n", dir == READING ? "reading " : "writing", bno);
 #endif
   r= lseek(dev, btoa64(bno), SEEK_SET);
-  if (r < 0)
+  if (r == (off_t)-1)
 	fatal("lseek failed");
   if (dir == READING) {
 	if (read(dev, rwbuf, block_size) == block_size)

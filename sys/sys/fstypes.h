@@ -1,4 +1,4 @@
-/*	$NetBSD: fstypes.h,v 1.30 2011/11/18 21:17:45 christos Exp $	*/
+/*	$NetBSD: fstypes.h,v 1.32 2012/11/26 16:22:21 drochner Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -84,7 +84,6 @@ typedef struct fhandle	fhandle_t;
  */
 
 #define	__MNT_UNUSED1	0x00200000
-#define	__MNT_UNUSED2	0x00800000
 
 #define	MNT_RDONLY	0x00000001	/* read only filesystem */
 #define	MNT_SYNCHRONOUS	0x00000002	/* file system written synchronously */
@@ -96,6 +95,7 @@ typedef struct fhandle	fhandle_t;
 #define	MNT_NOCOREDUMP	0x00008000	/* don't write core dumps to this FS */
 #define	MNT_RELATIME	0x00020000	/* only update access time if mod/ch */
 #define	MNT_IGNORE	0x00100000	/* don't show entry in df */
+#define	MNT_DISCARD	0x00800000	/* use DISCARD/TRIM if supported */
 #define	MNT_EXTATTR	0x01000000	/* enable extended attributes */
 #define	MNT_LOG		0x02000000	/* Use logging */
 #define	MNT_NOATIME	0x04000000	/* Never update access times in fs */
@@ -105,6 +105,7 @@ typedef struct fhandle	fhandle_t;
 
 #define	__MNT_BASIC_FLAGS \
 	{ MNT_ASYNC,		0,	"asynchronous" }, \
+	{ MNT_DISCARD,		0,	"discard" }, \
 	{ MNT_EXTATTR,		0,	"extattr" }, \
 	{ MNT_IGNORE,		0,	"hidden" }, \
 	{ MNT_LOG,		0,	"log" }, \
@@ -121,9 +122,9 @@ typedef struct fhandle	fhandle_t;
 	{ MNT_SYNCHRONOUS,	0,	"synchronous" }, \
 	{ MNT_UNION,		0,	"union" }, \
 
-#define MNT_BASIC_FLAGS (MNT_ASYNC | MNT_EXTATTR | MNT_LOG | MNT_NOATIME | \
-    MNT_NOCOREDUMP | MNT_NODEV | MNT_NODEVMTIME | MNT_NOEXEC | MNT_NOSUID | \
-    MNT_RDONLY | MNT_RELATIME | MNT_SOFTDEP | MNT_SYMPERM | \
+#define MNT_BASIC_FLAGS (MNT_ASYNC | MNT_DISCARD | MNT_EXTATTR | MNT_LOG | \
+    MNT_NOATIME | MNT_NOCOREDUMP | MNT_NODEV | MNT_NODEVMTIME | MNT_NOEXEC | \
+    MNT_NOSUID | MNT_RDONLY | MNT_RELATIME | MNT_SOFTDEP | MNT_SYMPERM | \
     MNT_SYNCHRONOUS | MNT_UNION)
 /*
  * exported mount flags.
@@ -170,6 +171,7 @@ typedef struct fhandle	fhandle_t;
      MNT_ASYNC | \
      MNT_NOCOREDUMP | \
      MNT_IGNORE | \
+     MNT_DISCARD | \
      MNT_NOATIME | \
      MNT_SYMPERM | \
      MNT_NODEVMTIME | \
@@ -235,7 +237,7 @@ typedef struct fhandle	fhandle_t;
 	"\33MNT_NOATIME" \
 	"\32MNT_LOG" \
 	"\31MNT_EXTATTR" \
-	"\30MNT_UNUSED" \
+	"\30MNT_DISCARD" \
 	"\27MNT_GETARGS" \
 	"\26MNT_UNUSED" \
 	"\25MNT_IGNORE" \

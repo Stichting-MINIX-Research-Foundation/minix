@@ -66,9 +66,9 @@ int	__libc_sigaction14(int, const struct sigaction * __restrict,
     defined(_NETBSD_SOURCE)
 int	pthread_sigmask(int, const sigset_t * __restrict,
 	    sigset_t * __restrict);
-#ifndef __minix
+#if !defined(__minix)
 int	pthread_kill(pthread_t, int);
-#endif
+#endif /* !defined(__minix) */
 int	__libc_thr_sigsetmask(int, const sigset_t * __restrict,
 	    sigset_t * __restrict);
 #ifndef __LIBPTHREAD_SOURCE__
@@ -85,7 +85,7 @@ int	sigdelset(sigset_t *, int) __RENAME(__sigdelset14);
 int	sigemptyset(sigset_t *) __RENAME(__sigemptyset14);
 int	sigfillset(sigset_t *) __RENAME(__sigfillset14);
 int	sigismember(const sigset_t *, int) __RENAME(__sigismember14);
-#endif
+#endif /* defined(__minix) && !defined(_SYSTEM) */
 int	sigpending(sigset_t *) __RENAME(__sigpending14);
 int	sigprocmask(int, const sigset_t * __restrict, sigset_t * __restrict)
     __RENAME(__sigprocmask14);
@@ -165,7 +165,7 @@ sigfillset(sigset_t *set)
 	__sigfillset(set);
 	return (0);
 }
-#endif
+#endif /* defined(__minix) && defined(_SYSTEM) */
 #endif /* __c99inline */
 #endif /* !__LIBC12_SOURCE__ */
 

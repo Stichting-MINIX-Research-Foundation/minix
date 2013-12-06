@@ -28,7 +28,7 @@ else	echo "Can't find a compiler, skipping test"
 	exit 0
 fi
 
-ARCH=`arch`
+ARCH=`uname -p`
 
 echo -n  "Shell test  2 "
 rm -rf $TESTDIR

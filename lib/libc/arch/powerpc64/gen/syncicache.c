@@ -1,4 +1,4 @@
-/*	$NetBSD: syncicache.c,v 1.1 2006/07/01 16:37:20 ross Exp $	*/
+/*	$NetBSD: syncicache.c,v 1.2 2012/11/24 07:16:04 christos Exp $	*/
 
 /*
  * Copyright (C) 1995-1997, 1999 Wolfgang Solfrank.
@@ -74,17 +74,16 @@ __getcachelinesize(void)
 	if (_cachelinesize)
 		return _cachelinesize;
 
-	if (sysctl(cacheinfomib, sizeof(cacheinfomib) / sizeof(cacheinfomib[0]),
-		&_cache_info, &clen, NULL, 0) == 0) {
+	if (sysctl(cacheinfomib, (u_int)__arraycount(cacheinfomib),
+	    &_cache_info, &clen, NULL, 0) == 0) {
 		_cachelinesize = _cache_info.dcache_line_size;
 		return _cachelinesize;
 	}
 
 	/* Try older deprecated sysctl */
 	clen = sizeof(_cachelinesize);
-	if (sysctl(cachemib, sizeof(cachemib) / sizeof(cachemib[0]),
-		   &_cachelinesize, &clen, NULL, 0) < 0
-	    || !_cachelinesize)
+	if (sysctl(cachemib, (u_int)__arraycount(cachemib),
+	    &_cachelinesize, &clen, NULL, 0) < 0 || !_cachelinesize)
 		abort();
 
 	_cache_info.dcache_size = _cachelinesize;

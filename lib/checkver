@@ -1,0 +1,232 @@
+#!/bin/sh
+#	$NetBSD: checkver,v 1.16 2013/02/17 02:36:21 christos Exp $
+#
+# Copyright (c) 1998 The NetBSD Foundation, Inc.
+# All rights reserved.
+#
+# This code is derived from software contributed to The NetBSD Foundation
+# by Eric Haszlakiewicz.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+# ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+# TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+# PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+# BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+
+#--------------------------------------------------------------------#
+# checkver - 
+#	Check for libraries that appear to be newer than the
+#	one we're about to install.
+#
+# checkver [-q] [-v shlib_version_file] -d [installedlibdir [library name]]"
+# checkver [-q] [-v shlib_version_file] -s [setlistdir [library name]]"
+# checkver [-q] [-v shlib_version_file] -f liblistfile [library name]"
+#
+# One of -d, -s or -f must be specified.
+#
+# all: If library name is not specified it is assumed to
+#	be the name of the current directory.
+#
+# -d: Checks the version against the installed libraries.
+#	If no further arguments are given "/usr/lib" is
+#	used as the location of installed libraries.
+#
+# -s: Checks the version against the sets.  If no argument
+#	follows the sets directory defaults to "/usr/src/distrib/sets/lists".
+#	The directory may be specified as either the top of the
+#	source tree or as the lists directory.
+#
+# -f: Checks the version against the provided list.  A filename
+#	must be supplied.
+#
+# -v: Specify the filename of the shlib_version file.  Defaults
+#     to "./shlib_version".
+#
+# This script produces no output if all library version are not
+# large than the source version.  If an installed library with a
+# version greater than the source is found, checkver prints a
+# header and a list of the names of the offending installed libraries.
+#
+# The header may be supressed by passing "-q" as the first argument.
+#
+
+TMP=/tmp/checkver.$$
+PROG="$(basename "$0")"
+# Can't trap 11 (SEGV) in the Real Bourne Shell, since it uses it for
+# internal malloc!
+trap "exit 2" 1 2 3 4 5 6 7 8 10 12 13 14 15
+trap "[ -d $TMP ] && rm -rf $TMP" 0
+
+Usage() {
+cat << EOF 1>&2
+Usage: $PROG [-q] [-v version_file] -d [installedlibdir [library name]]
+       $PROG [-q] [-v version_file] -s [setlistdir [library name]]
+       $PROG [-q] [-v version_file] -f liblistfile [library name]
+       $PROG is a script that looks for installed libraries with
+       versions greater than that in the version file.
+       For more information, read the comments.
+EOF
+	exit 1
+}
+
+basedir=/usr/src
+setsdir=$basedir/distrib/sets/lists
+libdir=/usr/lib
+shlib_version=./shlib_version
+
+error=0
+quiet=0
+usedir=0
+usefile=0
+usesets=0
+CWD=$(pwd)
+
+fixone() {
+	local instmajor=$(basename $1 | awk 'BEGIN { FS="." } { print $3 }')
+	local instminor=$(basename $1 | awk 'BEGIN { FS="." } { print $4 }')
+	local instteeny=$(basename $1 | awk 'BEGIN { FS="." } { print $5 + 0 }')
+	local ms="The following libraries have versions greater than the source"
+
+	# If they're greater than the source, complain.
+	if [ "0$major" -eq "0$instmajor" ]; then
+		if [ "0$minor" -eq "0$instminor" ]; then
+			if [ "0$teeny" -lt "0$instteeny" ]; then
+				if [ $error -eq 0 -a $quiet -eq 0 ]; then
+					echo "$ms" 1>&2
+				fi
+				echo $1 1>&2
+				error=1
+			fi
+		elif [ "0$minor" -lt "0$instminor" ]; then
+			if [ $error -eq 0 -a $quiet -eq 0 ]; then
+				echo "$ms" 1>&2
+			fi
+			echo $1 1>&2
+			error=1
+		fi
+	elif [ "0$major" -lt "0$instmajor" ]; then
+		if [ $error -eq 0 -a $quiet -eq 0 ]; then
+			echo "$ms" 1>&2
+		fi
+		echo $1 1>&2
+		error=1
+	fi
+}
+
+while getopts df:shqv: f; do
+	case $f in
+	d)	usedir=1 
+		if [ $usefile -eq 1 -o $usesets -eq 1 ]; then
+			Usage
+		fi;;
+	f)	usefile=1; arg1=$OPTARG
+		if [ $usedir -eq 1 -o $usesets -eq 1 ]; then
+			Usage 
+		fi;;
+	s)	usesets=1 
+		if [ $usedir -eq 1 -o $usefile -eq 1 ]; then
+			Usage
+		fi;;
+	v)	shlib_version=$OPTARG;;
+	q)	quiet=1;;
+	*)	Usage;;
+	esac
+done
+
+shift $(($OPTIND - 1))
+
+if [ $usedir -eq 0 -a $usefile -eq 0 -a $usesets -eq 0 ]; then
+	Usage
+fi
+
+if [ $usefile -eq 1 ]; then
+	LIBLIST="$arg1"
+else
+	if ! mkdir -m 0700 $TMP; then
+		echo "$PROG: Unable to create temp directory." 1>&2
+		exit 2
+	fi
+	LIBLIST=$TMP/libs.lst
+fi
+
+# Build list from the installed libraries.
+if [ $usedir -eq 1 ]; then
+	if [ -n "$1" ]; then
+		libdir="$1"
+	fi
+	for f in $libdir; do
+		ls $f/lib*.so.*.*
+	done > $LIBLIST 2> /dev/null
+fi
+
+# Build list from set lists.  Parameter may be either
+# the "lists" directory or the top of the source tree.
+if [ $usesets -eq 1 ]; then
+	if [ -n "$1" ]; then
+		setsdir="$1"
+		if [ -d "$setsdir/distrib/sets/lists" ]; then
+			setsdir="$setsdir/distrib/sets/lists"
+		fi
+	fi
+	(cd $setsdir;
+	 cat */[a-z]* |
+	 grep '^./usr/lib/lib.*\.so\.[0-9][0-9]*\.[0-9][0-9]*' |
+	 sort -u > $LIBLIST)
+fi
+
+#
+# The file $LIBLIST now contains a list of libraries.
+#
+if [ -z "$2" ]; then
+	makefile=$CWD/Makefile
+	libname=$(grep '^LIB=' $makefile | sed -e 's/^LIB=[[:space:]]*//')
+
+	# Assume the library name is the name of the current directory.
+	if [ -z "$libname" ]; then
+		libname=$(basename $CWD)
+	fi
+else
+	    libname="$2"
+fi
+echo $libname | grep "^lib" 1>&2 2> /dev/null
+if [ $? != 0 ]; then
+	libname="lib$libname"
+fi
+
+
+if [ ! -f $shlib_version ]; then
+	echo "$PROG: unable to find $shlib_version" 1>&2
+	exit 2
+fi
+
+# Grab major and minor numbers from the source.
+. $shlib_version
+
+if [ -z "$minor" -o -z "$major" ]; then
+	echo "$PROG: $shlib_version doesn't contain the version." 1>&2
+	exit 2
+fi
+
+# Find every shared object library with the same base name.
+for instlib in $(grep $libname.so "$LIBLIST"); do
+	# Grab the major and minor from the installed library.
+	fixone "$instlib"
+done
+
+exit $error

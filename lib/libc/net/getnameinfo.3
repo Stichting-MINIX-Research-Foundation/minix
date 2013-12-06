@@ -1,4 +1,4 @@
-.\"	$NetBSD: getnameinfo.3,v 1.39 2012/09/26 23:13:00 christos Exp $
+.\"	$NetBSD: getnameinfo.3,v 1.41 2013/08/18 10:40:06 wiz Exp $
 .\"	$KAME: getnameinfo.3,v 1.37 2005/01/05 03:23:05 itojun Exp $
 .\"	$OpenBSD: getnameinfo.3,v 1.36 2004/12/21 09:48:20 jmc Exp $
 .\"
@@ -17,7 +17,7 @@
 .\" OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 .\" PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd September 26, 2012
+.Dd August 18, 2013
 .Dt GETNAMEINFO 3
 .Os
 .Sh NAME
@@ -263,11 +263,7 @@ if (error == 0) {
 	    NULL, 0, NI_NUMERICHOST);
 }
 .Ed
-.Sh BUGS
-The implementation of
-.Fn getnameinfo
-is not thread-safe.
-.\".Pp
+.\".Sh BUGS
 .\".Ox
 .\"intentionally uses a different
 .\".Dv NI_MAXHOST

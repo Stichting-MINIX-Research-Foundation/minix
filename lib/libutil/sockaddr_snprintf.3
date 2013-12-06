@@ -1,4 +1,4 @@
-.\"     $NetBSD: sockaddr_snprintf.3,v 1.7 2009/04/11 16:13:49 joerg Exp $
+.\"     $NetBSD: sockaddr_snprintf.3,v 1.8 2013/06/07 17:23:26 christos Exp $
 .\"
 .\" Copyright (c) 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 9, 2005
+.Dd June 7, 2013
 .Dt SOCKADDR_SNPRINTF 3
 .Os
 .Sh NAME
@@ -109,6 +109,10 @@ this is the hostname associated with the address.
 For all other address families, it is the same as the
 .Dq a
 format.
+.It D
+Debugging output:
+For all addresses, print all their fields as
+.Dq field_name=value .
 .It f
 The numeric value of the family of the address is printed.
 .It l

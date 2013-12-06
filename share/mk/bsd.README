@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.318 2013/06/02 11:02:40 mbalmer Exp $
+#	$NetBSD: bsd.README,v 1.322 2013/11/11 10:24:53 joerg Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -352,7 +352,7 @@ MKSKEY		If "no", disables building of S/key authentication
 		infrastructure (libraries and support programs).
 		Default: yes
 
-MKSLJIT		If "no", disables buildin of sljit (stack-less platform
+MKSLJIT		If "no", disables building of sljit (stack-less platform
 		independent JIT compiler) private library and tests.
 		Default: yes on amd64, i386 and sparc, no elsewhere.
 
@@ -1485,6 +1485,7 @@ DPADD		Additional dependencies for the program.  Usually used for
 		LIBCOMPAT?=	${DESTDIR}/usr/lib/libcompat.a
 		LIBCOM_ERR?=	${DESTDIR}/usr/lib/libcom_err.a
 		LIBCRT0?=	${DESTDIR}/usr/lib/crt0.o
+		LIBCRTI?=	${DESTDIR}/usr/lib/crti.o
 		LIBCRYPT?=	${DESTDIR}/usr/lib/libcrypt.a
 		LIBCRYPTO?=	${DESTDIR}/usr/lib/libcrypto.a
 		LIBCRYPTO_IDEA?=${DESTDIR}/usr/lib/libcrypto_idea.a
@@ -1594,6 +1595,7 @@ DPADD		Additional dependencies for the program.  Usually used for
 		LIBXTRAP?=	${DESTDIR}/usr/X11R7/lib/libXTrap.a
 		LIBXAU?=	${DESTDIR}/usr/X11R7/lib/libXau.a
 		LIBXAW?=	${DESTDIR}/usr/X11R7/lib/libXaw.a
+		LIBXCB?=	${DESTDIR}/usr/X11R7/lib/libxcb.a
 		LIBXDMCP?=	${DESTDIR}/usr/X11R7/lib/libXdmcp.a
 		LIBXEXT?=	${DESTDIR}/usr/X11R7/lib/libXext.a
 		LIBXFONT?=	${DESTDIR}/usr/X11R7/lib/libXfont.a
@@ -1807,6 +1809,8 @@ LORDER		List dependencies for object files.  [lorder]
 MAKE		make(1).  [make]
 
 MKDEP		Construct Makefile dependency list.  [mkdep]
+
+MKDEPCXX	Construct Makefile dependency list for C++ files.  [mkdep]
 
 NM		List symbols from object files.  [nm]
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.c,v 1.36 2011/09/22 20:23:56 apb Exp $ */
+/*	$NetBSD: stat.c,v 1.38 2013/01/03 13:28:41 dsl Exp $ */
 
 /*
  * Copyright (c) 2002-2011 The NetBSD Foundation, Inc.
@@ -31,11 +31,13 @@
 
 #if HAVE_NBTOOL_CONFIG_H
 #include "nbtool_config.h"
+/* config checked libc, we need the prototype as well */
+#undef HAVE_DEVNAME
 #endif
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: stat.c,v 1.36 2011/09/22 20:23:56 apb Exp $");
+__RCSID("$NetBSD: stat.c,v 1.38 2013/01/03 13:28:41 dsl Exp $");
 #endif
 
 #if ! HAVE_NBTOOL_CONFIG_H
@@ -76,7 +78,7 @@ __RCSID("$NetBSD: stat.c,v 1.36 2011/09/22 20:23:56 apb Exp $");
 #if HAVE_STRUCT_STAT_ST_BIRTHTIME
 #define DEF_B "\"%SB\" "
 #define RAW_B "%B "
-#define SHELL_B "st_birthtime=%B "
+#define SHELL_B "st_birthtime=%SB "
 #else /* HAVE_STRUCT_STAT_ST_BIRTHTIME */
 #define DEF_B
 #define RAW_B
@@ -99,7 +101,7 @@ __RCSID("$NetBSD: stat.c,v 1.36 2011/09/22 20:23:56 apb Exp $");
 #define SHELL_FORMAT \
 	"st_dev=%d st_ino=%i st_mode=%#p st_nlink=%l " \
 	"st_uid=%u st_gid=%g st_rdev=%r st_size=%z " \
-	"st_atime=%a st_mtime=%m st_ctime=%c " SHELL_B \
+	"st_atime=%Sa st_mtime=%Sm st_ctime=%Sc " SHELL_B \
 	"st_blksize=%k st_blocks=%b" SHELL_F
 #define LINUX_FORMAT \
 	"  File: \"%N\"%n" \
@@ -299,6 +301,8 @@ main(int argc, char *argv[])
 		break;
 	case 's':
 		statfmt = SHELL_FORMAT;
+		if (timefmt == NULL)
+			timefmt = "%s";
 		break;
 	case 'x':
 		statfmt = LINUX_FORMAT;
@@ -605,9 +609,9 @@ format1(const struct stat *st,
 		sdata = (what == SHOW_st_dev) ?
 		    devname(st->st_dev, S_IFBLK) :
 		    devname(st->st_rdev, 
-		    S_ISCHR(st->st_mode) ? S_IFCHR :
-		    S_ISBLK(st->st_mode) ? S_IFBLK :
-		    0U);
+			S_ISCHR(st->st_mode) ? S_IFCHR :
+			S_ISBLK(st->st_mode) ? S_IFBLK :
+			0U);
 		if (sdata == NULL)
 			sdata = "???";
 #endif /* HAVE_DEVNAME */

@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_swap.S,v 1.4 2012/08/31 23:41:52 matt Exp $	*/
+/*	$NetBSD: atomic_swap.S,v 1.8 2013/11/08 22:42:52 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007,2012 The NetBSD Foundation, Inc.
@@ -45,42 +45,58 @@
  */
 
 ENTRY_NP(_atomic_swap_32)
-	mov	r2, r0
+	mov	ip, r0
 1:
 #ifdef _ARM_ARCH_6
-	ldrex	r0, [r2]
+	ldrex	r0, [ip]
 	cmp	r0, r1
-	strexne	ip, r1, [r2]
+#ifdef __thumb__
+	beq	99f
+	strex	r3, r1, [ip]
+	cmp	r3, #0
 #else
-	swp	r0, r1, [r2]
-	cmp	r0, r1
-	movsne	ip, #0
+	strexne	r3, r1, [ip]
+	cmpne	r3, #0
 #endif
-	cmpne	ip, #0
+#else
+	swp	r0, r1, [ip]
+	cmp	r0, r1
+	movnes	r3, #0
+	cmpne	r3, #0
+#endif
 	bne	1b
 #ifdef _ARM_ARCH_7
 	dmb
 #else
-	mcr	p15, 0, ip, c7, c10, 5	/* data memory barrier */
+	mcr	p15, 0, r3, c7, c10, 5	/* data memory barrier */
 #endif
+99:
 	RET
-	END(_atomic_swap_32)
+END(_atomic_swap_32)
+
 ATOMIC_OP_ALIAS(atomic_swap_32,_atomic_swap_32)
 ATOMIC_OP_ALIAS(atomic_swap_uint,_atomic_swap_32)
 ATOMIC_OP_ALIAS(atomic_swap_ulong,_atomic_swap_32)
 ATOMIC_OP_ALIAS(atomic_swap_ptr,_atomic_swap_32)
+STRONG_ALIAS(__sync_lock_test_and_set_4,_atomic_swap_32)
 STRONG_ALIAS(_atomic_swap_uint,_atomic_swap_32)
 STRONG_ALIAS(_atomic_swap_ulong,_atomic_swap_32)
 STRONG_ALIAS(_atomic_swap_ptr,_atomic_swap_32)
 
+ENTRY_NP(__sync_lock_release_4)
+	mov	r1, #0
+	strb	r1, [r0]
+	RET
+END(__sync_lock_release_4)
+
 ENTRY_NP(_atomic_swap_8)
-	mov	r2, r0
+	mov	ip, r0
 1:
 #ifdef _ARM_ARCH_6
-	ldrexb	r0, [r2]
-	strexb	r3, r1, [r2]
+	ldrexb	r0, [ip]
+	strexb	r3, r1, [ip]
 #else
-	swpb	r0, r1, [r2]
+	swpb	r0, r1, [ip]
 	mov	r3, #0
 #endif
 	cmp	r3, #0
@@ -91,9 +107,17 @@ ENTRY_NP(_atomic_swap_8)
 	mcr	p15, 0, ip, c7, c10, 5	/* data memory barrier */
 #endif
 	RET
-	END(_atomic_swap_8)
+END(_atomic_swap_8)
+
 ATOMIC_OP_ALIAS(atomic_swap_8,_atomic_swap_8)
 ATOMIC_OP_ALIAS(atomic_swap_char,_atomic_swap_8)
 ATOMIC_OP_ALIAS(atomic_swap_uchar,_atomic_swap_8)
+STRONG_ALIAS(__sync_lock_test_and_set_1,_atomic_swap_8)
 STRONG_ALIAS(_atomic_swap_char,_atomic_swap_8)
 STRONG_ALIAS(_atomic_swap_uchar,_atomic_swap_8)
+
+ENTRY_NP(__sync_lock_release_1)
+	mov	r1, #0
+	strb	r1, [r0]
+	RET
+END(__sync_lock_release_1)

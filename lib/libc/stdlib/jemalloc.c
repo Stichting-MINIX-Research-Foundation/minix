@@ -1,4 +1,4 @@
-/*	$NetBSD: jemalloc.c,v 1.28 2012/03/21 14:32:22 christos Exp $	*/
+/*	$NetBSD: jemalloc.c,v 1.29 2013/09/12 15:35:15 joerg Exp $	*/
 
 /*-
  * Copyright (C) 2006,2007 Jason Evans <jasone@FreeBSD.org>.
@@ -118,7 +118,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/lib/libc/stdlib/malloc.c,v 1.147 2007/06/15 22:00:16 jasone Exp $"); */ 
-__RCSID("$NetBSD: jemalloc.c,v 1.28 2012/03/21 14:32:22 christos Exp $");
+__RCSID("$NetBSD: jemalloc.c,v 1.29 2013/09/12 15:35:15 joerg Exp $");
 
 #ifdef __FreeBSD__
 #include "libc_private.h"
@@ -289,7 +289,7 @@ __strerror_r(int e, char *s, size_t l)
 #endif
 
 /* We can't use TLS in non-PIC programs, since TLS relies on loader magic. */
-#if (!defined(PIC) && !defined(NO_TLS))
+#if (!defined(PIC) && !defined(NO_TLS)) && defined(__minix)
 #  define NO_TLS
 #endif
 

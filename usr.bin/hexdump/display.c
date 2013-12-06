@@ -1,4 +1,4 @@
-/*	$NetBSD: display.c,v 1.21 2009/01/18 21:34:32 apb Exp $	*/
+/*	$NetBSD: display.c,v 1.22 2013/10/18 20:19:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)display.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: display.c,v 1.21 2009/01/18 21:34:32 apb Exp $");
+__RCSID("$NetBSD: display.c,v 1.22 2013/10/18 20:19:03 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -344,7 +344,9 @@ doskip(const char *fname, int statok)
 			skip -= sb.st_size;
 			return;
 		}
-	}
+	} else
+		sb.st_mode = S_IFIFO;
+
 	if (S_ISREG(sb.st_mode)) {
 		if (fseek(stdin, skip, SEEK_SET))
 			err(1, "fseek %s", fname);

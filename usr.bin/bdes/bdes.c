@@ -1,4 +1,4 @@
-/*	$NetBSD: bdes.c,v 1.8 2009/04/14 10:11:28 lukem Exp $	*/
+/*	$NetBSD: bdes.c,v 1.9 2013/08/15 20:48:56 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)bdes.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: bdes.c,v 1.8 2009/04/14 10:11:28 lukem Exp $");
+__RCSID("$NetBSD: bdes.c,v 1.9 2013/08/15 20:48:56 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -141,44 +141,46 @@ typedef char Desbuf[8];
  */
 #define KEY_DEFAULT		0	/* interpret radix of key from key */
 #define KEY_ASCII		1	/* key is in ASCII characters */
-int keybase = KEY_DEFAULT;		/* how to interpret the key */
+static int keybase = KEY_DEFAULT;	/* how to interpret the key */
 
-enum { 					/* encrypt, decrypt, authenticate */
+static enum { 				/* encrypt, decrypt, authenticate */
 	MODE_ENCRYPT, MODE_DECRYPT, MODE_AUTHENTICATE
 } mode = MODE_ENCRYPT;
-enum {					/* ecb, cbc, cfb, cfba, ofb? */
+static enum {				/* ecb, cbc, cfb, cfba, ofb? */
 	ALG_ECB, ALG_CBC, ALG_CFB, ALG_OFB, ALG_CFBA
 } alg = ALG_CBC;
 
-Desbuf ivec;				/* initialization vector */
-char bits[] = {				/* used to extract bits from a char */
+static Desbuf ivec;				/* initialization vector */
+static const char bits[] = {				/* used to extract bits from a char */
 	'\200', '\100', '\040', '\020', '\010', '\004', '\002', '\001'
 };
-int inverse;				/* 0 to encrypt, 1 to decrypt */
-int macbits = -1;			/* number of bits in authentication */
-int fbbits = -1;			/* number of feedback bits */
-int pflag;				/* 1 to preserve parity bits */
+static int inverse;				/* 0 to encrypt, 1 to decrypt */
+static int macbits = -1;			/* number of bits in authentication */
+static int fbbits = -1;			/* number of feedback bits */
+static int pflag;				/* 1 to preserve parity bits */
 
-int	setbits(char *, int);
-void	bdes_err(int, const char *);
-int	tobinhex(char, int);
-void	cvtkey(char *, char *);
-void	makekey(Desbuf);
-void	ecbenc(void);
-void	ecbdec(void);
-void	cbcenc(void);
-void	cbcdec(void);
-void	cbcauth(void);
-void	cfbenc(void);
-void	cfbdec(void);
-void	cfbaenc(void);
-void	cfbadec(void);
-void	ofbenc(void);
-void	ofbdec(void);
-void	cfbauth(void);
-void	expand(Desbuf, char *);
-void	compress(char *, Desbuf);
-void	usage(void);
+static int	setbits(char *, int);
+static void	bdes_err(int, const char *) __dead;
+static int	tobinhex(char, int);
+static void	cvtkey(char *, char *);
+static void	makekey(Desbuf);
+static void	ecbenc(void);
+static void	ecbdec(void);
+static void	cbcenc(void);
+static void	cbcdec(void);
+static void	cbcauth(void);
+static void	cfbenc(void);
+static void	cfbdec(void);
+static void	cfbaenc(void);
+static void	cfbadec(void);
+static void	ofbenc(void);
+static void	ofbdec(void);
+static void	cfbauth(void);
+#ifndef FASTWAY
+static void	expand(Desbuf, char *);
+static void	compress(char *, Desbuf);
+#endif
+static void	usage(void) __dead;
 
 int
 main(int ac, char *av[])
@@ -357,7 +359,7 @@ main(int ac, char *av[])
 /*
  * print a warning message and, possibly, terminate
  */
-void
+static void
 bdes_err(int n, const char *s)
 {
 	if (n > 0)
@@ -371,7 +373,7 @@ bdes_err(int n, const char *s)
 /*
  * map a hex character to an integer
  */
-int
+static int
 tobinhex(char c, int radix)
 {
 	switch(c) {
@@ -401,7 +403,7 @@ tobinhex(char c, int radix)
 /*
  * convert the key to a bit pattern
  */
-void
+static void
 cvtkey(char *obuf, char *ibuf)
 {
 	register int i, j;		/* counter in a for loop */
@@ -468,7 +470,7 @@ cvtkey(char *obuf, char *ibuf)
  * 2. must be a valid decimal number
  * 3. must be a multiple of mult
  */
-int
+static int
 setbits(char *s, int mult)
 {
 	char *p;
@@ -497,7 +499,7 @@ setbits(char *s, int mult)
  * systems set the parity (high) bit of each character to 0, and the
  * DES ignores the low order bit of each character.
  */
-void
+static void
 makekey(Desbuf buf)
 {
 	register int i, j;			/* counter in a for loop */
@@ -525,7 +527,7 @@ makekey(Desbuf buf)
 /*
  * This encrypts using the Electronic Code Book mode of DES
  */
-void
+static void
 ecbenc(void)
 {
 	register int n;		/* number of bytes actually read */
@@ -554,7 +556,7 @@ ecbenc(void)
 /*
  * This decrypts using the Electronic Code Book mode of DES
  */
-void
+static void
 ecbdec(void)
 {
 	register int n;		/* number of bytes actually read */
@@ -587,7 +589,7 @@ ecbdec(void)
 /*
  * This encrypts using the Cipher Block Chaining mode of DES
  */
-void
+static void
 cbcenc(void)
 {
 	register int n;		/* number of bytes actually read */
@@ -621,7 +623,7 @@ cbcenc(void)
 /*
  * This decrypts using the Cipher Block Chaining mode of DES
  */
-void
+static void
 cbcdec(void)
 {
 	register int n;		/* number of bytes actually read */
@@ -659,7 +661,7 @@ cbcdec(void)
 /*
  * This authenticates using the Cipher Block Chaining mode of DES
  */
-void
+static void
 cbcauth(void)
 {
 	register int n, j;		/* number of bytes actually read */
@@ -704,7 +706,7 @@ cbcauth(void)
 /*
  * This encrypts using the Cipher FeedBack mode of DES
  */
-void
+static void
 cfbenc(void)
 {
 	register int n;		/* number of bytes actually read */
@@ -746,7 +748,7 @@ cfbenc(void)
 /*
  * This decrypts using the Cipher Block Chaining mode of DES
  */
-void
+static void
 cfbdec(void)
 {
 	register int n;		/* number of bytes actually read */
@@ -793,7 +795,7 @@ cfbdec(void)
 /*
  * This encrypts using the alternative Cipher FeedBack mode of DES
  */
-void
+static void
 cfbaenc(void)
 {
 	register int n;		/* number of bytes actually read */
@@ -839,7 +841,7 @@ cfbaenc(void)
 /*
  * This decrypts using the alternative Cipher Block Chaining mode of DES
  */
-void
+static void
 cfbadec(void)
 {
 	register int n;		/* number of bytes actually read */
@@ -887,7 +889,7 @@ cfbadec(void)
 /*
  * This encrypts using the Output FeedBack mode of DES
  */
-void
+static void
 ofbenc(void)
 {
 	register int n;		/* number of bytes actually read */
@@ -933,7 +935,7 @@ ofbenc(void)
 /*
  * This decrypts using the Output Block Chaining mode of DES
  */
-void
+static void
 ofbdec(void)
 {
 	register int n;		/* number of bytes actually read */
@@ -983,7 +985,7 @@ ofbdec(void)
 /*
  * This authenticates using the Cipher FeedBack mode of DES
  */
-void
+static void
 cfbauth(void)
 {
 	register int n, j;	/* number of bytes actually read */
@@ -1035,7 +1037,7 @@ cfbauth(void)
 /*
  * change from 8 bits/Uchar to 1 bit/Uchar
  */
-void
+static void
 expand(Desbuf from, char *to)
 {
 	register int i, j;		/* counters in for loop */
@@ -1048,7 +1050,7 @@ expand(Desbuf from, char *to)
 /*
  * change from 1 bit/char to 8 bits/Uchar
  */
-void
+static void
 compress(char *from, Desbuf to)
 {
 	register int i, j;		/* counters in for loop */
@@ -1064,7 +1066,7 @@ compress(char *from, Desbuf to)
 /*
  * message about usage
  */
-void
+static void
 usage(void)
 {
 

@@ -58,45 +58,6 @@ using utils::optional;
 namespace {
 
 
-/// Collection of result types.
-///
-/// This is a vector rather than a set because we want to respect the order in
-/// which the user provided the types.
-typedef std::vector< engine::test_result::result_type > result_types;
-
-
-/// Converts a set of result type names to identifiers.
-///
-/// \param names The collection of names to process; may be empty.
-///
-/// \return The result type identifiers corresponding to the input names.
-///
-/// \throw std::runtime_error If any name in the input names is invalid.
-static result_types
-parse_types(const std::vector< std::string >& names)
-{
-    using engine::test_result;
-    typedef std::map< std::string, test_result::result_type > types_map;
-    types_map valid_types;
-    valid_types["broken"] = test_result::broken;
-    valid_types["failed"] = test_result::failed;
-    valid_types["passed"] = test_result::passed;
-    valid_types["skipped"] = test_result::skipped;
-    valid_types["xfail"] = test_result::expected_failure;
-
-    result_types types;
-    for (std::vector< std::string >::const_iterator iter = names.begin();
-         iter != names.end(); ++iter) {
-        const types_map::const_iterator match = valid_types.find(*iter);
-        if (match == valid_types.end())
-            throw std::runtime_error(F("Unknown result type '%s'") % *iter);
-        else
-            types.push_back((*match).second);
-    }
-    return types;
-}
-
-
 /// Generates a plain-text report intended to be printed to the console.
 class console_hooks : public scan_action::base_hooks {
     /// Indirection to print the output to the correct file stream.
@@ -106,7 +67,7 @@ class console_hooks : public scan_action::base_hooks {
     const bool _show_context;
 
     /// Collection of result types to include in the report.
-    const result_types& _results_filters;
+    const cli::result_types& _results_filters;
 
     /// The action ID loaded.
     int64_t _action_id;
@@ -218,7 +179,7 @@ public:
     ///     Cannot be empty.
     console_hooks(cmdline::ui* ui_, const fs::path& outfile_,
                   const bool show_context_,
-                  const result_types& results_filters_) :
+                  const cli::result_types& results_filters_) :
         _writer(ui_, outfile_),
         _show_context(show_context_),
         _results_filters(results_filters_)
@@ -265,7 +226,7 @@ public:
         titles[engine::test_result::passed] = "Passed tests";
         titles[engine::test_result::skipped] = "Skipped tests";
 
-        for (result_types::const_iterator iter = _results_filters.begin();
+        for (cli::result_types::const_iterator iter = _results_filters.begin();
              iter != _results_filters.end(); ++iter) {
             const types_map::const_iterator match = titles.find(*iter);
             INV_MSG(match != titles.end(), "Conditional does not match user "
@@ -350,9 +311,7 @@ cmd_report::cmd_report(void) : cli_command(
     add_option(cmdline::path_option(
         "output", "The file to which to write the report",
         "path", "/dev/stdout"));
-    add_option(cmdline::list_option(
-        "results-filter", "Comma-separated list of result types to include in "
-        "the report", "types", "skipped,xfail,broken,failed"));
+    add_option(results_filter_option);
 }
 
 
@@ -372,16 +331,7 @@ cmd_report::run(cmdline::ui* ui, const cmdline::parsed_cmdline& cmdline,
     if (cmdline.has_option("action"))
         action_id = cmdline.get_option< cmdline::int_option >("action");
 
-    result_types types = parse_types(
-        cmdline.get_option< cmdline::list_option >("results-filter"));
-    if (types.empty()) {
-        types.push_back(engine::test_result::passed);
-        types.push_back(engine::test_result::skipped);
-        types.push_back(engine::test_result::expected_failure);
-        types.push_back(engine::test_result::broken);
-        types.push_back(engine::test_result::failed);
-    }
-
+    const result_types types = get_result_types(cmdline);
     console_hooks hooks(
         ui, cmdline.get_option< cmdline::path_option >("output"),
         cmdline.has_option("show-context"), types);

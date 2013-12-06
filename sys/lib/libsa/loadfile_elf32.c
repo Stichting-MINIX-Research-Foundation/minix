@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile_elf32.c,v 1.29 2011/02/17 21:15:31 christos Exp $ */
+/* $NetBSD: loadfile_elf32.c,v 1.30 2013/11/27 17:33:03 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 1997, 2008 The NetBSD Foundation, Inc.
@@ -273,6 +273,7 @@ ELFNAMEEND(loadfile)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 		uint8_t		desc[ELF_NOTE_NETBSD_DESCSZ];
 	} note;
 	char *shstr = NULL;
+	size_t shstrsz = 0;
 	int boot_load_ctf = 1;
 
 	/* some ports dont use the offset */
@@ -432,6 +433,7 @@ ELFNAMEEND(loadfile)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 				}
 
 				shstr = ALLOC(shp[elf->e_shstrndx].sh_size);
+				shstrsz = shp[elf->e_shstrndx].sh_size;
 				if (lseek(fd, shp[elf->e_shstrndx].sh_offset,
 				    SEEK_SET) == -1) {
 					WARN(("lseek symbols"));
@@ -556,7 +558,7 @@ ELFNAMEEND(loadfile)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 	}
 	
 	if (shstr) {
-	    DEALLOC(shstr, shp[elf->e_shstrndx].sh_size);
+	    DEALLOC(shstr, shstrsz);
 	}
 
 	/*

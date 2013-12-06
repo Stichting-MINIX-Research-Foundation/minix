@@ -1,4 +1,4 @@
-/* $NetBSD: t_threads.m,v 1.1 2010/07/18 12:41:51 jmmv Exp $ */
+/* $NetBSD: t_threads.m,v 1.2 2013/10/31 21:02:11 christos Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -35,8 +35,11 @@
 #include <atf-c.h>
 
 #include <objc/objc.h>
-#include <objc/objc-api.h>
+#include <objc/thr.h>
 #include <objc/Object.h>
+#if __GNUC_PREREQ__(4,8)
+#include <objc/runtime.h>
+#endif
 
 static int IsMultithreaded = 0;
 static objc_mutex_t Mutex;
@@ -46,6 +49,12 @@ static objc_condition_t Condition;
 {
 }
 -(void)start;
+#if __GNUC_PREREQ__(4,8)
+-init;
++new;
++alloc;
+-free;
+#endif
 @end
 
 @implementation MyClass
@@ -55,6 +64,27 @@ static objc_condition_t Condition;
 
 	objc_condition_signal(Condition);
 }
+#if __GNUC_PREREQ__(4,8)
+-init
+{
+	return self;
+}
+
++new
+{
+	return [[self alloc] init];
+}
+
++alloc
+{
+	return class_createInstance(self, 0);
+}
+
+-free
+{
+	return object_dispose(self);
+}
+#endif
 @end
 
 static void

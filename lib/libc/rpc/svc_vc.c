@@ -1,32 +1,34 @@
-/*	$NetBSD: svc_vc.c,v 1.26 2012/03/20 17:14:50 matt Exp $	*/
+/*	$NetBSD: svc_vc.c,v 1.30 2013/03/11 20:19:29 tron Exp $	*/
 
 /*
- * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
- * unrestricted use provided that this legend is included on all tape
- * media and as a part of the software program in whole or part.  Users
- * may copy or modify Sun RPC without charge, but are not authorized
- * to license or distribute it to anyone else except as part of a product or
- * program developed by the user.
- * 
- * SUN RPC IS PROVIDED AS IS WITH NO WARRANTIES OF ANY KIND INCLUDING THE
- * WARRANTIES OF DESIGN, MERCHANTIBILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE, OR ARISING FROM A COURSE OF DEALING, USAGE OR TRADE PRACTICE.
- * 
- * Sun RPC is provided with no support and without any obligation on the
- * part of Sun Microsystems, Inc. to assist in its use, correction,
- * modification or enhancement.
- * 
- * SUN MICROSYSTEMS, INC. SHALL HAVE NO LIABILITY WITH RESPECT TO THE
- * INFRINGEMENT OF COPYRIGHTS, TRADE SECRETS OR ANY PATENTS BY SUN RPC
- * OR ANY PART THEREOF.
- * 
- * In no event will Sun Microsystems, Inc. be liable for any lost revenue
- * or profits or other special, indirect and consequential damages, even if
- * Sun has been advised of the possibility of such damages.
- * 
- * Sun Microsystems, Inc.
- * 2550 Garcia Avenue
- * Mountain View, California  94043
+ * Copyright (c) 2010, Oracle America, Inc.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above
+ *       copyright notice, this list of conditions and the following
+ *       disclaimer in the documentation and/or other materials
+ *       provided with the distribution.
+ *     * Neither the name of the "Oracle America, Inc." nor the names of its
+ *       contributors may be used to endorse or promote products derived
+ *       from this software without specific prior written permission.
+ *
+ *   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ *   "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ *   LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ *   FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ *   COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+ *   INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ *   DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ *   GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *   INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ *   WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ *   NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <sys/cdefs.h>
@@ -35,7 +37,7 @@
 static char *sccsid = "@(#)svc_tcp.c 1.21 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc_tcp.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc_vc.c,v 1.26 2012/03/20 17:14:50 matt Exp $");
+__RCSID("$NetBSD: svc_vc.c,v 1.30 2013/03/11 20:19:29 tron Exp $");
 #endif
 #endif
 
@@ -68,6 +70,7 @@ __RCSID("$NetBSD: svc_vc.c,v 1.26 2012/03/20 17:14:50 matt Exp $");
 
 #include <rpc/rpc.h>
 
+#include "svc_fdset.h"
 #include "rpc_internal.h"
 
 #ifdef __weak_alias
@@ -145,7 +148,7 @@ svc_vc_create(int fd, u_int sendsize, u_int recvsize)
 
 	r = mem_alloc(sizeof(*r));
 	if (r == NULL) {
-		warnx("svc_vc_create: out of memory");
+		warn("%s: out of memory", __func__);
 		return NULL;
 	}
 	r->sendsize = __rpc_get_t_size(si.si_af, si.si_proto, (int)sendsize);
@@ -153,7 +156,7 @@ svc_vc_create(int fd, u_int sendsize, u_int recvsize)
 	r->maxrec = __svc_maxrec;
 	xprt = mem_alloc(sizeof(SVCXPRT));
 	if (xprt == NULL) {
-		warnx("svc_vc_create: out of memory");
+		warn("%s: out of memory", __func__);
 		goto cleanup_svc_vc_create;
 	}
 	xprt->xp_tp = NULL;
@@ -167,7 +170,7 @@ svc_vc_create(int fd, u_int sendsize, u_int recvsize)
 
 	slen = sizeof (struct sockaddr_storage);
 	if (getsockname(fd, (struct sockaddr *)(void *)&sslocal, &slen) < 0) {
-		warnx("svc_vc_create: could not retrieve local addr");
+		warn("%s: could not retrieve local addr", __func__);
 		goto cleanup_svc_vc_create;
 	}
 
@@ -182,13 +185,14 @@ svc_vc_create(int fd, u_int sendsize, u_int recvsize)
 	xprt->xp_ltaddr.maxlen = xprt->xp_ltaddr.len = sslocal.ss_len;
 	xprt->xp_ltaddr.buf = mem_alloc((size_t)sslocal.ss_len);
 	if (xprt->xp_ltaddr.buf == NULL) {
-		warnx("svc_vc_create: no mem for local addr");
+		warn("%s: out of memory", __func__);
 		goto cleanup_svc_vc_create;
 	}
 	memcpy(xprt->xp_ltaddr.buf, &sslocal, (size_t)sslocal.ss_len);
 
 	xprt->xp_rtaddr.maxlen = sizeof (struct sockaddr_storage);
-	xprt_register(xprt);
+	if (!xprt_register(xprt))
+		goto cleanup_svc_vc_create;
 	return xprt;
 cleanup_svc_vc_create:
 	if (xprt)
@@ -217,26 +221,26 @@ svc_fd_create(int fd, u_int sendsize, u_int recvsize)
 
 	slen = sizeof (struct sockaddr_storage);
 	if (getsockname(fd, (struct sockaddr *)(void *)&ss, &slen) < 0) {
-		warnx("svc_fd_create: could not retrieve local addr");
+		warn("%s: could not retrieve local addr", __func__);
 		goto freedata;
 	}
 	ret->xp_ltaddr.maxlen = ret->xp_ltaddr.len = ss.ss_len;
 	ret->xp_ltaddr.buf = mem_alloc((size_t)ss.ss_len);
 	if (ret->xp_ltaddr.buf == NULL) {
-		warnx("svc_fd_create: no mem for local addr");
+		warn("%s: out of memory", __func__);
 		goto freedata;
 	}
 	memcpy(ret->xp_ltaddr.buf, &ss, (size_t)ss.ss_len);
 
 	slen = sizeof (struct sockaddr_storage);
 	if (getpeername(fd, (struct sockaddr *)(void *)&ss, &slen) < 0) {
-		warnx("svc_fd_create: could not retrieve remote addr");
+		warn("%s: could not retrieve remote addr", __func__);
 		goto freedata;
 	}
 	ret->xp_rtaddr.maxlen = ret->xp_rtaddr.len = ss.ss_len;
 	ret->xp_rtaddr.buf = mem_alloc((size_t)ss.ss_len);
 	if (ret->xp_rtaddr.buf == NULL) {
-		warnx("svc_fd_create: no mem for local addr");
+		warn("%s: out of memory", __func__);
 		goto freedata;
 	}
 	memcpy(ret->xp_rtaddr.buf, &ss, (size_t)ss.ss_len);
@@ -268,11 +272,11 @@ makefd_xprt(int fd, u_int sendsize, u_int recvsize)
 
 	xprt = mem_alloc(sizeof(SVCXPRT));
 	if (xprt == NULL)
-		goto out;
+		goto outofmem;
 	memset(xprt, 0, sizeof *xprt);
 	cd = mem_alloc(sizeof(struct cf_conn));
 	if (cd == NULL)
-		goto out;
+		goto outofmem;
 	cd->strm_stat = XPRT_IDLE;
 	xdrrec_create(&(cd->xdrs), sendsize, recvsize,
 	    (caddr_t)(void *)xprt, read_vc, write_vc);
@@ -283,12 +287,15 @@ makefd_xprt(int fd, u_int sendsize, u_int recvsize)
 	xprt->xp_fd = fd;
 	if (__rpc_fd2sockinfo(fd, &si) && __rpc_sockinfo2netid(&si, &netid))
 		if ((xprt->xp_netid = strdup(netid)) == NULL)
-			goto out;
+			goto outofmem;
 
-	xprt_register(xprt);
+	if (!xprt_register(xprt))
+		goto out;
 	return xprt;
-out:
+
+outofmem:
 	warn("svc_tcp: makefd_xprt");
+out:
 	if (xprt)
 		mem_free(xprt, sizeof(SVCXPRT));
 	return NULL;
@@ -322,7 +329,7 @@ again:
 		 * running out.
 		 */
 		if (errno == EMFILE || errno == ENFILE) {
-			cleanfds = svc_fdset;
+			cleanfds = *get_fdset();
 			if (__svc_clean_idle(&cleanfds, 0, FALSE))
 				goto again;
 		}

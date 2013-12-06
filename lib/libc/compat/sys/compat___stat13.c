@@ -1,4 +1,4 @@
-/*	$NetBSD: compat___stat13.c,v 1.4 2009/01/11 02:46:26 christos Exp $	*/
+/*	$NetBSD: compat___stat13.c,v 1.6 2013/10/04 21:07:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Frank van der Linden
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat___stat13.c,v 1.4 2009/01/11 02:46:26 christos Exp $");
+__RCSID("$NetBSD: compat___stat13.c,v 1.6 2013/10/04 21:07:37 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #define __LIBC12_SOURCE__
@@ -58,6 +58,10 @@ __warn_references(__lstat13,
 __warn_references(fhstat,
     "warning: reference to compatibility fhstat(); include <sys/mount.h> to generate correct reference")
 
+__strong_alias(__stat13, __compat___stat13)
+__strong_alias(__fstat13, __compat___fstat13)
+__strong_alias(__lstat13, __compat___lstat13)
+__strong_alias(fhstat, __compat_fhstat)
 
 /*
  * Convert from a new to an old stat structure.
@@ -92,7 +96,7 @@ cvtstat(struct stat13 *ost, const struct stat *st)
 }
 
 int
-__stat13(const char *file, struct stat13 *ost)
+__compat___stat13(const char *file, struct stat13 *ost)
 {
 	struct stat nst;
 	int ret;
@@ -104,7 +108,7 @@ __stat13(const char *file, struct stat13 *ost)
 }
 
 int
-__fstat13(int f, struct stat13 *ost)
+__compat___fstat13(int f, struct stat13 *ost)
 {
 	struct stat nst;
 	int ret;
@@ -116,7 +120,7 @@ __fstat13(int f, struct stat13 *ost)
 }
 
 int
-__lstat13(const char *file, struct stat13 *ost)
+__compat___lstat13(const char *file, struct stat13 *ost)
 {
 	struct stat nst;
 	int ret;
@@ -128,7 +132,7 @@ __lstat13(const char *file, struct stat13 *ost)
 }
 
 int
-fhstat(const struct compat_30_fhandle *fh, struct stat13 *ost)
+__compat_fhstat(const struct compat_30_fhandle *fh, struct stat13 *ost)
 {
 	struct stat nst;
 	int ret;

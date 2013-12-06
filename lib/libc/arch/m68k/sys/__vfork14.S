@@ -1,4 +1,4 @@
-/*	$NetBSD: __vfork14.S,v 1.9 2003/08/07 16:42:14 agc Exp $	*/
+/*	$NetBSD: __vfork14.S,v 1.12 2013/09/12 15:36:15 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
 #if 0
 	RCSID("from: @(#)Ovfork.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: __vfork14.S,v 1.9 2003/08/07 16:42:14 agc Exp $")
+	RCSID("$NetBSD: __vfork14.S,v 1.12 2013/09/12 15:36:15 joerg Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -60,48 +60,35 @@
  */
 
 ENTRY(__vfork14)
-	movl	%sp@+,%a1
-	movl	#SYS___vfork14,%d0
-	trap	#0
+	movl	(%sp)+,%a1
+	SYSTRAP(__vfork14)
 	jcs	err
 	subql	#1,%d1	/* from 1 to 0 in child, 0 to -1 in parent */
 	andl	%d1,%d0
-	jmp	%a1@
+	jmp	(%a1)
 err:
 #ifdef	_REENTRANT
 	.globl	_C_LABEL(__errno)
-	movl	%a1,%sp@-
-	movl	%d0,%sp@-
-#if defined(PIC) && !defined(__ELF__)
-	movl	#_C_LABEL(_GLOBAL_OFFSET_TABLE_),%a1
-	lea	%pc@(0,a1:l),%a1
-	movl	%a1@(_C_LABEL(__errno):l),%a1
-	jsr	%a1@
-#else
+	movl	%a1,-(%sp)
+	movl	%d0,-(%sp)
 	jbsr	PIC_PLT(_C_LABEL(__errno))
-#endif	/* PIC */
 #ifdef	__SVR4_ABI__
-	movl	%sp@+,%a0@
+	movl	(%sp)+,(%a0)
 #else
 	movl	%d0,%a1
-	movl	%sp@+,%a1@
+	movl	(%sp)+,(%a1)
 #endif
-	movl	%sp@+,%a1
+	movl	(%sp)+,%a1
+#else
+#ifdef __PIC__
+	GOT_SETUP(%a0)
+	movl	_C_LABEL(errno)@GOT:w(%a0),%a0
+	movl	%d0,(%a0)
 #else
 	.globl	_C_LABEL(errno)
-#ifdef	PIC
-#ifdef	__ELF__
-	lea	%pc@(_GLOBAL_OFFSET_TABLE_@GOTPC),%a0
-	movl	%a0@(_C_LABEL(errno)@GOT:w),%a0
-#else
-	movl	#_C_LABEL(_GLOBAL_OFFSET_TABLE_),%a0
-	lea	%pc@(0,a0:l),%a0
-	movl	%a0@(_C_LABEL(errno):w),%a0
-#endif
-	movl	%d0,%a0@
-#else
 	movl	%d0,_C_LABEL(errno)
-#endif	/* PIC */
+#endif	/* __PIC__ */
 #endif	/* _REENTRANT */
 	moveq	#-1,%d0
-	jmp	%a1@
+	jmp	(%a1)
+END(__vfork14)

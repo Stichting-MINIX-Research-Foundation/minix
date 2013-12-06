@@ -151,13 +151,4 @@
 #define	x86_btop(x)		((paddr_t)(x) >> PGSHIFT)
 #define	x86_ptob(x)		((paddr_t)(x) << PGSHIFT)
 
-#ifdef __minix
-/* Minix expect to find in this file PAGE_* defines. */
-#include <machine/vmparam.h>
-
-#define trunc_page(x) x86_trunc_page(x)
-#define round_page(x) x86_round_page(x)
-
-#endif
-
 #endif /* _I386_PARAM_H_ */

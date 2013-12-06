@@ -1,7 +1,7 @@
-/* $NetBSD: tparm.c,v 1.8 2012/06/02 19:10:33 roy Exp $ */
+/* $NetBSD: tparm.c,v 1.15 2013/06/07 13:16:18 roy Exp $ */
 
 /*
- * Copyright (c) 2009, 2011 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009, 2011, 2013 The NetBSD Foundation, Inc.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Roy Marples.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tparm.c,v 1.8 2012/06/02 19:10:33 roy Exp $");
+__RCSID("$NetBSD: tparm.c,v 1.15 2013/06/07 13:16:18 roy Exp $");
 #include <sys/param.h>
 
 #include <assert.h>
@@ -41,23 +41,30 @@ __RCSID("$NetBSD: tparm.c,v 1.8 2012/06/02 19:10:33 roy Exp $");
 #include <term_private.h>
 #include <term.h>
 
+#define LONG_STR_MAX ((CHAR_BIT * sizeof(long)) / 3)
+#define BUFINC 128	/* Size to increament the terminal buffer by */
+
+#define VA_LONG_LONG	1
+#define VA_CHAR_INT	2
+//#define VA_CHAR_LONG	3	/* No need for this yet */
+
 static TERMINAL *dumbterm; /* For non thread safe functions */
 
 typedef struct {
-	int nums[20];
+	long nums[20];
 	char *strings[20];
 	size_t offset;
 } TPSTACK;
 
 typedef struct {
-	int num;
+	long num;
 	char *string;
 } TPVAR;
 
 static int
-push(int num, char *string, TPSTACK *stack)
+push(long num, char *string, TPSTACK *stack)
 {
-	if (stack->offset > sizeof(stack->nums)) {
+	if (stack->offset >= sizeof(stack->nums)) {
 		errno = E2BIG;
 		return -1;
 	}
@@ -68,7 +75,7 @@ push(int num, char *string, TPSTACK *stack)
 }
 
 static int
-pop(int *num, char **string, TPSTACK *stack)
+pop(long *num, char **string, TPSTACK *stack)
 {
 	if (stack->offset == 0) {
 		if (num)
@@ -90,9 +97,9 @@ static char *
 checkbuf(TERMINAL *term, size_t len)
 {
 	char *buf;
-	
+
 	if (term->_bufpos + len >= term->_buflen) {
-		len = term->_buflen + MAX(len, BUFSIZ);
+		len = term->_buflen + MAX(len, BUFINC);
 		buf = realloc(term->_buf, len);
 		if (buf == NULL)
 			return NULL;
@@ -115,32 +122,76 @@ ochar(TERMINAL *term, int c)
 }
 
 static size_t
-onum(TERMINAL *term, const char *fmt, int num, int len)
+onum(TERMINAL *term, const char *fmt, int num, unsigned int len)
 {
 	size_t l;
 
-	/* Assume we never have natural number longer than 64 chars */
-	if (len < 64)
-		len = 64;
-	if (checkbuf(term, (size_t)len + 1) == NULL)
+	if (len < LONG_STR_MAX)
+		len = LONG_STR_MAX;
+	if (checkbuf(term, len + 2) == NULL)
 		return 0;
 	l = sprintf(term->_buf + term->_bufpos, fmt, num);
 	term->_bufpos += l;
 	return l;
 }
 
-static char *
-_ti_tiparm(TERMINAL *term, const char *str, va_list parms)
+/*
+  Make a pass through the string so we can work out
+  which parameters are ints and which are char *.
+  Basically we only use char * if %p[1-9] is followed by %l or %s.
+*/
+int
+_ti_parm_analyse(const char *str, int *piss, int piss_len)
 {
-	const char *sp;
+	int nparm, lpop;
+	char c;
+
+	nparm = 0;
+	lpop = -1;
+	while ((c = *str++) != '\0') {
+		if (c != '%')
+			continue;
+		c = *str++;
+		switch (c) {
+			case 'l': /* FALLTHROUGH */
+			case 's':
+				if (lpop > 0) {
+					if (lpop <= piss_len)
+						piss[lpop - 1] = 1;
+					else if (piss)
+						errno = E2BIG;
+				}
+				break;
+			case 'p':
+				c = *str++;
+				if (c < '1' || c > '9') {
+					errno = EINVAL;
+					continue;
+				} else {
+					lpop = c - '0';
+					if (lpop > nparm)
+						nparm = lpop;
+				}
+				break;
+			default:
+				lpop = -1;
+		}
+	}
+
+	return nparm;
+}
+
+static char *
+_ti_tiparm(TERMINAL *term, const char *str, int va_type, va_list parms)
+{
 	char c, fmt[64], *fp, *ostr;
-	int val, val2;
-	int dnums[26]; /* dynamic variables a-z, not preserved */
+	long val, val2;
+	long dnums[26]; /* dynamic variables a-z, not preserved */
 	size_t l, max;
 	TPSTACK stack;
-	TPVAR params[9];
-	int done, dot, minus, width, precision, olen;
-	int piss[9]; /* Parameter IS String - piss ;) */
+	TPVAR params[TPARM_MAX];
+	unsigned int done, dot, minus, width, precision, olen;
+	int piss[TPARM_MAX]; /* Parameter IS String - piss ;) */
 
 	if (str == NULL)
 		return NULL;
@@ -151,7 +202,6 @@ _ti_tiparm(TERMINAL *term, const char *str, va_list parms)
 	  still work with non thread safe functions (which sadly are still the
 	  norm and standard).
 	*/
-
 	if (term == NULL) {
 		if (dumbterm == NULL) {
 			dumbterm = malloc(sizeof(*dumbterm));
@@ -165,57 +215,39 @@ _ti_tiparm(TERMINAL *term, const char *str, va_list parms)
 	term->_bufpos = 0;
 	/* Ensure we have an initial buffer */
 	if (term->_buflen == 0) {
-		term->_buf = malloc(BUFSIZ);
+		term->_buf = malloc(BUFINC);
 		if (term->_buf == NULL)
 			return NULL;
-		term->_buflen = BUFSIZ;
+		term->_buflen = BUFINC;
 	}
 
-	/*
-	  Make a first pass through the string so we can work out
-	  which parameters are ints and which are char *.
-	  Basically we only use char * if %p[1-9] is followed by %l or %s.
-	*/
 	memset(&piss, 0, sizeof(piss));
-	max = 0;
-	sp = str;
-	while ((c = *sp++) != '\0') {
-		if (c != '%')
-			continue;
-		c = *sp++;
-		if (c == '\0')
-			break;
-		if (c != 'p')
-			continue;
-		c = *sp++;
-		if (c < '1' || c > '9') {
-			errno = EINVAL;
-			continue;
-		}
-		l = c - '0';
-		if (l > max)
-			max = l;
-		if (*sp != '%')
-			continue;
-		/* Skip formatting */
-		sp++;
-		while (*sp == '.' || *sp == '#' || *sp == ' ' || *sp == ':' ||
-		    *sp == '-' || isdigit((unsigned char)*sp))
-			sp++;
-		if (*sp == 'l' || *sp == 's')
-			piss[l - 1] = 1;
-	}
+	max = _ti_parm_analyse(str, piss, TPARM_MAX);
 
 	/* Put our parameters into variables */
 	memset(&params, 0, sizeof(params));
 	for (l = 0; l < max; l++) {
-		if (piss[l] == 0)
-			params[l].num = va_arg(parms, int);
-		else
-			params[l].string = va_arg(parms, char *);
+		if (piss[l]) {
+			if (va_type == VA_LONG_LONG) {
+				/* This only works if char * fits into a long
+				 * on this platform. */
+				if (sizeof(char *) <= sizeof(long)/*CONSTCOND*/)
+					params[l].string =
+					    (char *)va_arg(parms, long);
+				else {
+					errno = ENOTSUP;
+					return NULL;
+				}
+			} else
+				params[l].string = va_arg(parms, char *);
+		} else {
+			if (va_type == VA_CHAR_INT)
+				params[l].num = (long)va_arg(parms, int);
+			else
+				params[l].num = va_arg(parms, long);
+		}
 	}
 
-	term->_bufpos = 0;
 	memset(&stack, 0, sizeof(stack));
 	while ((c = *str++) != '\0') {
 		if (c != '%' || (c = *str++) == '%') {
@@ -234,11 +266,15 @@ _ti_tiparm(TERMINAL *term, const char *str, va_list parms)
 		while (done == 0 && (size_t)(fp - fmt) < sizeof(fmt)) {
 			switch (c) {
 			case 'c': /* FALLTHROUGH */
+			case 's':
+				*fp++ = c;
+				done = 1;
+				break;
 			case 'd': /* FALLTHROUGH */
 			case 'o': /* FALLTHROUGH */
 			case 'x': /* FALLTHROUGH */
 			case 'X': /* FALLTHROUGH */
-			case 's':
+				*fp++ = 'l';
 				*fp++ = c;
 				done = 1;
 				break;
@@ -287,7 +323,7 @@ _ti_tiparm(TERMINAL *term, const char *str, va_list parms)
 				width = val;
 			else
 				precision = val;
-			olen = (width > precision) ? width : precision;
+			olen = MAX(width, precision);
 		}
 		*fp++ = '\0';
 
@@ -317,15 +353,19 @@ _ti_tiparm(TERMINAL *term, const char *str, va_list parms)
 				l = 0;
 			else
 				l = strlen(ostr);
-			if (onum(term, "%d", (int)l, 0) == 0)
+#ifdef NCURSES_COMPAT_57
+			if (onum(term, "%ld", (long)l, 0) == 0)
 				return NULL;
+#else
+			push((long)l, NULL, &stack);
+#endif
 			break;
 		case 'd': /* FALLTHROUGH */
 		case 'o': /* FALLTHROUGH */
 		case 'x': /* FALLTHROUGH */
 		case 'X':
 			pop(&val, NULL, &stack);
-			if (onum(term, fmt, val, olen) == 0)
+			if (onum(term, fmt, (int)val, olen) == 0)
 				return NULL;
 			break;
 		case 'p':
@@ -359,7 +399,7 @@ _ti_tiparm(TERMINAL *term, const char *str, va_list parms)
 				params[1].num++;
 			break;
 		case '\'':
-			if (push((int)(unsigned char)*str++, NULL, &stack))
+			if (push((long)(unsigned char)*str++, NULL, &stack))
 				return NULL;
 			while (*str != '\0' && *str != '\'')
 				str++;
@@ -439,7 +479,7 @@ _ti_tiparm(TERMINAL *term, const char *str, va_list parms)
 		case '!':
 		case '~':
 			pop(&val, NULL, &stack);
-			switch (*str) {
+			switch (c) {
 			case '!':
 				val = !val;
 				break;
@@ -454,7 +494,7 @@ _ti_tiparm(TERMINAL *term, const char *str, va_list parms)
 			break;
 		case 't': /* then */
 			pop(&val, NULL, &stack);
-			if (val != 0) {
+			if (val == 0) {
 				l = 0;
 				for (; *str != '\0'; str++) {
 					if (*str != '%')
@@ -465,10 +505,14 @@ _ti_tiparm(TERMINAL *term, const char *str, va_list parms)
 					else if (*str == ';') {
 						if (l > 0)
 							l--;
-						else
+						else {
+							str++;
 							break;
-					} else if (*str == 'e' && l == 0)
+						}
+					} else if (*str == 'e' && l == 0) {
+						str++;
 						break;
+					}
 				}
 			}
 			break;
@@ -483,8 +527,10 @@ _ti_tiparm(TERMINAL *term, const char *str, va_list parms)
 				else if (*str == ';') {
 					if (l > 0)
 						l--;
-					else
+					else {
+						str++;
 						break;
+					}
 				}
 			}
 			break;
@@ -506,7 +552,7 @@ ti_tiparm(TERMINAL *term, const char *str, ...)
 	_DIAGASSERT(str != NULL);
 
 	va_start(va, str);
-	ret = _ti_tiparm(term, str, va);
+	ret = _ti_tiparm(term, str, VA_CHAR_INT, va);
 	va_end(va);
 	return ret;
 }
@@ -516,22 +562,65 @@ tiparm(const char *str, ...)
 {
 	va_list va;
 	char *ret;
-	
+
 	_DIAGASSERT(str != NULL);
 
 	va_start(va, str);
-        ret = _ti_tiparm(NULL, str, va);
+	ret = _ti_tiparm(NULL, str, VA_CHAR_INT, va);
+	va_end(va);
+	return ret;
+}
+
+#ifdef VA_CHAR_LONG
+char *
+ti_tlparm(TERMINAL *term, const char *str, ...)
+{
+	va_list va;
+	char *ret;
+
+	_DIAGASSERT(term != NULL);
+	_DIAGASSERT(str != NULL);
+
+	va_start(va, str);
+	ret = _ti_tiparm(term, str, VA_CHAR_LONG, va);
+	va_end(va);
+	return ret;
+}
+
+char *
+tlparm(const char *str, ...)
+{
+	va_list va;
+	char *ret;
+
+	_DIAGASSERT(str != NULL);
+
+	va_start(va, str);
+	ret = _ti_tiparm(NULL, str, VA_CHAR_LONG, va);
+	va_end(va);
+	return ret;
+}
+#endif
+
+static char *
+_tparm(const char *str, ...)
+{
+	va_list va;
+	char *ret;
+
+	_DIAGASSERT(str != NULL);
+
+	va_start(va, str);
+	ret = _ti_tiparm(NULL, str, VA_LONG_LONG, va);
 	va_end(va);
 	return ret;
 }
 
 char *
 tparm(const char *str,
-    long lp1, long lp2, long lp3, long lp4, long lp5,
-    long lp6, long lp7, long lp8, long lp9)
+    long p1, long p2, long p3, long p4, long p5,
+    long p6, long p7, long p8, long p9)
 {
-	int p1 = lp1, p2 = lp2, p3 = lp3, p4 = lp4, p5 = lp5;
-	int p6 = lp6, p7 = lp7, p8 = lp8, p9 = lp9;
 
-	return tiparm(str, p1, p2, p3, p4, p5, p6, p7, p8, p9);
+	return _tparm(str, p1, p2, p3, p4, p5, p6, p7, p8, p9);
 }

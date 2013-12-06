@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_balloc.c,v 1.34 2009/10/19 18:41:17 bouyer Exp $	*/
+/*	$NetBSD: ext2fs_balloc.c,v 1.39 2013/06/23 07:28:37 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_balloc.c,v 1.34 2009/10/19 18:41:17 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_balloc.c,v 1.39 2013/06/23 07:28:37 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_uvmhist.h"
@@ -96,12 +96,12 @@ ext2fs_balloc(struct inode *ip, daddr_t bn, int size,
 	daddr_t nb;
 	struct buf *bp, *nbp;
 	struct vnode *vp = ITOV(ip);
-	struct indir indirs[NIADDR + 2];
+	struct indir indirs[EXT2FS_NIADDR + 2];
 	daddr_t newb, lbn, pref;
 	int32_t *bap;	/* XXX ondisk32 */
 	int num, i, error;
 	u_int deallocated;
-	daddr_t *blkp, *allocblk, allociblk[NIADDR + 1];
+	daddr_t *blkp, *allocblk, allociblk[EXT2FS_NIADDR + 1];
 	int32_t *allocib;	/* XXX ondisk32 */
 	int unwindidx = -1;
 	UVMHIST_FUNC("ext2fs_balloc"); UVMHIST_CALLED(ubchist);
@@ -117,9 +117,9 @@ ext2fs_balloc(struct inode *ip, daddr_t bn, int size,
 	lbn = bn;
 
 	/*
-	 * The first NDADDR blocks are direct blocks
+	 * The first EXT2FS_NDADDR blocks are direct blocks
 	 */
-	if (bn < NDADDR) {
+	if (bn < EXT2FS_NDADDR) {
 		/* XXX ondisk32 */
 		nb = fs2h32(ip->i_e2fs_blocks[bn]);
 		if (nb != 0) {
@@ -132,7 +132,6 @@ ext2fs_balloc(struct inode *ip, daddr_t bn, int size,
 				error = bread(vp, bn, fs->e2fs_bsize, NOCRED,
 					      B_MODIFY, &bp);
 				if (error) {
-					brelse(bp, 0);
 					return (error);
 				}
 				*bpp = bp;
@@ -156,7 +155,7 @@ ext2fs_balloc(struct inode *ip, daddr_t bn, int size,
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 		if (bpp != NULL) {
 			bp = getblk(vp, bn, fs->e2fs_bsize, 0, 0);
-			bp->b_blkno = fsbtodb(fs, newb);
+			bp->b_blkno = EXT2_FSBTODB(fs, newb);
 			if (flags & B_CLRBUF)
 				clrbuf(bp);
 			*bpp = bp;
@@ -178,7 +177,7 @@ ext2fs_balloc(struct inode *ip, daddr_t bn, int size,
 	 */
 	--num;
 	/* XXX ondisk32 */
-	nb = fs2h32(ip->i_e2fs_blocks[NDADDR + indirs[0].in_off]);
+	nb = fs2h32(ip->i_e2fs_blocks[EXT2FS_NDADDR + indirs[0].in_off]);
 	allocib = NULL;
 	allocblk = allociblk;
 	if (nb == 0) {
@@ -190,7 +189,7 @@ ext2fs_balloc(struct inode *ip, daddr_t bn, int size,
 		*allocblk++ = nb;
 		ip->i_e2fs_last_blk = newb;
 		bp = getblk(vp, indirs[1].in_lbn, fs->e2fs_bsize, 0, 0);
-		bp->b_blkno = fsbtodb(fs, newb);
+		bp->b_blkno = EXT2_FSBTODB(fs, newb);
 		clrbuf(bp);
 		/*
 		 * Write synchronously so that indirect blocks
@@ -199,7 +198,7 @@ ext2fs_balloc(struct inode *ip, daddr_t bn, int size,
 		if ((error = bwrite(bp)) != 0)
 			goto fail;
 		unwindidx = 0;
-		allocib = &ip->i_e2fs_blocks[NDADDR + indirs[0].in_off];
+		allocib = &ip->i_e2fs_blocks[EXT2FS_NDADDR + indirs[0].in_off];
 		/* XXX ondisk32 */
 		*allocib = h2fs32((int32_t)newb);
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
@@ -211,7 +210,6 @@ ext2fs_balloc(struct inode *ip, daddr_t bn, int size,
 		error = bread(vp,
 		    indirs[i].in_lbn, (int)fs->e2fs_bsize, NOCRED, 0, &bp);
 		if (error) {
-			brelse(bp, 0);
 			goto fail;
 		}
 		bap = (int32_t *)bp->b_data;	/* XXX ondisk32 */
@@ -233,7 +231,7 @@ ext2fs_balloc(struct inode *ip, daddr_t bn, int size,
 		*allocblk++ = nb;
 		ip->i_e2fs_last_blk = newb;
 		nbp = getblk(vp, indirs[i].in_lbn, fs->e2fs_bsize, 0, 0);
-		nbp->b_blkno = fsbtodb(fs, nb);
+		nbp->b_blkno = EXT2_FSBTODB(fs, nb);
 		clrbuf(nbp);
 		/*
 		 * Write synchronously so that indirect blocks
@@ -284,7 +282,7 @@ ext2fs_balloc(struct inode *ip, daddr_t bn, int size,
 		}
 		if (bpp != NULL) {
 			nbp = getblk(vp, lbn, fs->e2fs_bsize, 0, 0);
-			nbp->b_blkno = fsbtodb(fs, nb);
+			nbp->b_blkno = EXT2_FSBTODB(fs, nb);
 			if (flags & B_CLRBUF)
 				clrbuf(nbp);
 			*bpp = nbp;
@@ -297,12 +295,11 @@ ext2fs_balloc(struct inode *ip, daddr_t bn, int size,
 			error = bread(vp, lbn, (int)fs->e2fs_bsize, NOCRED,
 				      B_MODIFY, &nbp);
 			if (error) {
-				brelse(nbp, 0);
 				goto fail;
 			}
 		} else {
 			nbp = getblk(vp, lbn, fs->e2fs_bsize, 0, 0);
-			nbp->b_blkno = fsbtodb(fs, nb);
+			nbp->b_blkno = EXT2_FSBTODB(fs, nb);
 		}
 		*bpp = nbp;
 	}
@@ -326,7 +323,6 @@ fail:
 			    (int)fs->e2fs_bsize, NOCRED, B_MODIFY, &bp);
 			if (r) {
 				panic("Could not unwind indirect block, error %d", r);
-				brelse(bp, 0);
 			} else {
 				bap = (int32_t *)bp->b_data; /* XXX ondisk32 */
 				bap[indirs[unwindidx].in_off] = 0;
@@ -343,7 +339,7 @@ fail:
 		}
 	}
 	if (deallocated) {
-		ip->i_e2fs_nblock -= btodb(deallocated);
+		ext2fs_setnblock(ip, ext2fs_nblock(ip) - btodb(deallocated));
 		ip->i_e2fs_flags |= IN_CHANGE | IN_UPDATE;
 	}
 	return error;
@@ -370,7 +366,7 @@ ext2fs_gop_alloc(struct vnode *vp, off_t off, off_t len, int flags,
 		UVMHIST_LOG(ubchist, "off 0x%x len 0x%x bsize 0x%x",
 			    off, len, bsize, 0);
 
-		error = ext2fs_balloc(ip, lblkno(fs, off), bsize, cred,
+		error = ext2fs_balloc(ip, ext2_lblkno(fs, off), bsize, cred,
 		    NULL, flags);
 		if (error) {
 			UVMHIST_LOG(ubchist, "error %d", error, 0,0,0);

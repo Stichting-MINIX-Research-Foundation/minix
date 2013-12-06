@@ -1,4 +1,4 @@
-/*	$NetBSD: mremap.S,v 1.2 2008/04/28 20:22:56 martin Exp $	*/
+/*	$NetBSD: mremap.S,v 1.3 2013/07/16 22:15:55 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -33,3 +33,4 @@ SYSCALL(mremap)
 	movl	%d0,%a0
 #endif
 	rts
+END(mremap)

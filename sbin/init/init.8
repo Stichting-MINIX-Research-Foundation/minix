@@ -1,4 +1,4 @@
-.\"	$NetBSD: init.8,v 1.57 2009/05/18 14:17:31 wiz Exp $
+.\"	$NetBSD: init.8,v 1.59 2013/10/02 22:07:56 apb Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"     @(#)init.8	8.6 (Berkeley) 5/26/95
 .\"
-.Dd November 10, 2008
+.Dd October 2, 2013
 .Dt INIT 8
 .Os
 .Sh NAME
@@ -40,22 +40,38 @@
 .Nd process control initialization
 .Sh SYNOPSIS
 .Nm
+.Op Fl s
 .Sh DESCRIPTION
 The
 .Nm
-program is the last stage of the boot process (after the kernel loads
-and initializes all the devices).
+program is the last stage of the boot process.
 It normally begins multi-user operation.
+.Pp
+.Nm
+is executed automatically by the kernel,
+after the kernel has initialised all devices
+and mounted the root file system.
+The kernel may try multiple possible paths for
+.Nm ,
+including
+.Pa /sbin/init ,
+.Pa /sbin/oinit ,
+.Pa /sbin/init.bak ,
+and
+.Pa /rescue/init .
 .Pp
 The following table describes the state machine used by
 .Nm :
 .Bl -enum
 .It
 Single user shell.
-.Nm
-may be passed
+If the kernel is booted in single user mode (see
+.Xr boothowto 9 ) ,
+then the kernel will pass the
 .Fl s
-from the boot program to prevent the system from going multi-user and
+option to
+.Nm
+to prevent the system from going multi-user and
 to instead execute a single user shell without starting the normal
 daemons.
 If the kernel is in a secure mode,

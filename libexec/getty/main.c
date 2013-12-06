@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.59 2012/06/28 08:55:10 roy Exp $	*/
+/*	$NetBSD: main.c,v 1.64 2013/08/12 13:54:33 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -40,13 +40,11 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.1 (Berkeley) 6/20/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.59 2012/06/28 08:55:10 roy Exp $");
+__RCSID("$NetBSD: main.c,v 1.64 2013/08/12 13:54:33 joerg Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
-#include <sys/stat.h>
-#include <termios.h>
 #include <sys/ioctl.h>
 #include <sys/resource.h>
 #include <sys/utsname.h>
@@ -58,10 +56,12 @@ __RCSID("$NetBSD: main.c,v 1.59 2012/06/28 08:55:10 roy Exp $");
 #include <pwd.h>
 #include <setjmp.h>
 #include <signal.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
 #include <term.h>
+#include <termios.h>
 #include <time.h>
 #include <ttyent.h>
 #include <unistd.h>
@@ -135,34 +135,34 @@ const unsigned char partab[] = {
 
 static void	clearscreen(void);
 
-jmp_buf timeout;
+sigjmp_buf timeout;
 
-static void
+__dead static void
 /*ARGSUSED*/
 dingdong(int signo)
 {
 
 	(void)alarm(0);
 	(void)signal(SIGALRM, SIG_DFL);
-	longjmp(timeout, 1);
+	siglongjmp(timeout, 1);
 }
 
-jmp_buf	intrupt;
+sigjmp_buf intrupt;
 
-static void
+__dead static void
 /*ARGSUSED*/
 interrupt(int signo)
 {
 
 	(void)signal(SIGINT, interrupt);
-	longjmp(intrupt, 1);
+	siglongjmp(intrupt, 1);
 }
 
-#ifndef __minix
+#if !defined(__minix)
 /*
  * Action to take when getty is running too long.
  */
-static void
+__dead static void
 /*ARGSUSED*/
 timeoverrun(int signo)
 {
@@ -170,7 +170,7 @@ timeoverrun(int signo)
 	syslog(LOG_ERR, "getty exiting due to excessive running time");
 	exit(1);
 }
-#endif
+#endif /* !defined(__minix) */
 
 static int	getname(void);
 static void	oflush(void);
@@ -185,11 +185,14 @@ int
 main(int argc, char *argv[], char *envp[])
 {
 	const char *progname;
-	char *tname;
-	int repcnt = 0, failopenlogged = 0, uugetty = 0, first_time = 1;
+	int repcnt = 0, failopenlogged = 0, first_time = 1;
 	struct rlimit limit;
 	struct passwd *pw;
 	int rval;
+	/* this is used past the siglongjmp, so make sure it is not cached
+	   in registers that might become invalid. */
+	volatile int uugetty = 0;
+	const char * volatile tname = "default";
 
 	(void)signal(SIGINT, SIG_IGN);
 	openlog("getty", LOG_PID, LOG_AUTH);
@@ -214,12 +217,12 @@ main(int argc, char *argv[], char *envp[])
 	/*
 	 * Limit running time to deal with broken or dead lines.
 	 */
-#ifndef __minix
+#if !defined(__minix)
 	(void)signal(SIGXCPU, timeoverrun);
 	limit.rlim_max = RLIM_INFINITY;
 	limit.rlim_cur = GETTY_TIMEOUT;
 	(void)setrlimit(RLIMIT_CPU, &limit);
-#endif
+#endif /* !defined(__minix) */
 
 	/*
 	 * The following is a work around for vhangup interactions
@@ -257,9 +260,9 @@ main(int argc, char *argv[], char *envp[])
 		if (strcmp(argv[0], "+") != 0) {
 			(void)chown(ttyn, ttyowner, 0);
 			(void)chmod(ttyn, 0600);
-#ifndef __minix
+#if !defined(__minix)
 			(void)revoke(ttyn);
-#endif
+#endif /* !defined(__minix) */
 			if (ttyaction(ttyn, "getty", "root"))
 				syslog(LOG_WARNING, "%s: ttyaction failed",
 					ttyn);
@@ -298,7 +301,6 @@ main(int argc, char *argv[], char *envp[])
 
 	gettable("default", defent);
 	gendefaults();
-	tname = "default";
 	if (argc > 1)
 		tname = argv[1];
 	for (;;) {
@@ -314,7 +316,7 @@ main(int argc, char *argv[], char *envp[])
 #ifndef  __minix
 		(void)ioctl(0, FIONBIO, &off);	/* turn off non-blocking mode */
 		(void)ioctl(0, FIOASYNC, &off);	/* ditto for async mode */
-#endif
+#endif /* !defined(__minix) */
 
 		if (IS)
 			(void)cfsetispeed(&tmode, (speed_t)IS);
@@ -363,7 +365,7 @@ main(int argc, char *argv[], char *envp[])
 		if (IM && *IM)
 			putf(IM);
 		oflush();
-		if (setjmp(timeout)) {
+		if (sigsetjmp(timeout, 1)) {
 			tmode.c_ispeed = tmode.c_ospeed = 0;
 			(void)tcsetattr(0, TCSANOW, &tmode);
 			exit(1);
@@ -430,9 +432,9 @@ main(int argc, char *argv[], char *envp[])
 
 			limit.rlim_max = RLIM_INFINITY;
 			limit.rlim_cur = RLIM_INFINITY;
-#ifndef __minix
+#if !defined(__minix)
 			(void)setrlimit(RLIMIT_CPU, &limit);
-#endif
+#endif /* !defined(__minix) */
 			if (NN)
 				(void)execle(LO, "login", AL ? "-fp" : "-p",
 				    NULL, env);
@@ -463,7 +465,7 @@ getname(void)
 	/*
 	 * Interrupt may happen if we use CBREAK mode
 	 */
-	if (setjmp(intrupt)) {
+	if (sigsetjmp(intrupt, 1)) {
 		(void)signal(SIGINT, SIG_IGN);
 		return (0);
 	}

@@ -24,5 +24,5 @@ __eqsf2(float32 a, float32 b)
 #else
 	/* libgcc1.c says !(a == b) */
 	return !float32_eq(a, b);
-#endif
+#endif /* defined(__minix) */
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: reentrant.h,v 1.15 2012/06/03 21:27:30 joerg Exp $	*/
+/*	$NetBSD: reentrant.h,v 1.17 2013/04/12 18:12:58 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2003 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@
  *
  */
 
-#ifdef _REENTRANT
+#if defined(_REENTRANT) && defined(__minix)
 
 /*
  * Abstract thread interface for thread-safe libraries.  These routines
@@ -221,6 +221,56 @@ __END_DECLS
 #define	thr_enabled()		(__isthreaded)
 #define thr_setcancelstate(n, o) __libc_thr_setcancelstate((n),(o))
 #define thr_curcpu()		__libc_thr_curcpu()
+
+#else /* __LIBC_THREAD_STUBS */
+
+__BEGIN_DECLS
+void	__libc_thr_init_stub(void);
+
+int	__libc_mutex_init_stub(mutex_t *, const mutexattr_t *);
+int	__libc_mutex_lock_stub(mutex_t *);
+int	__libc_mutex_trylock_stub(mutex_t *);
+int	__libc_mutex_unlock_stub(mutex_t *);
+int	__libc_mutex_destroy_stub(mutex_t *);
+
+int	__libc_mutexattr_init_stub(mutexattr_t *); 
+int	__libc_mutexattr_destroy_stub(mutexattr_t *);
+int	__libc_mutexattr_settype_stub(mutexattr_t *, int);
+
+int	__libc_cond_init_stub(cond_t *, const condattr_t *);
+int	__libc_cond_signal_stub(cond_t *);
+int	__libc_cond_broadcast_stub(cond_t *);
+int	__libc_cond_wait_stub(cond_t *, mutex_t *);
+int	__libc_cond_timedwait_stub(cond_t *, mutex_t *,
+				   const struct timespec *);
+int	__libc_cond_destroy_stub(cond_t *);
+
+int	__libc_rwlock_init_stub(rwlock_t *, const rwlockattr_t *);
+int	__libc_rwlock_rdlock_stub(rwlock_t *);
+int	__libc_rwlock_wrlock_stub(rwlock_t *);
+int	__libc_rwlock_tryrdlock_stub(rwlock_t *);
+int	__libc_rwlock_trywrlock_stub(rwlock_t *);
+int	__libc_rwlock_unlock_stub(rwlock_t *);
+int	__libc_rwlock_destroy_stub(rwlock_t *);
+
+int	__libc_thr_keycreate_stub(thread_key_t *, void (*)(void *));
+int	__libc_thr_setspecific_stub(thread_key_t, const void *);
+void	*__libc_thr_getspecific_stub(thread_key_t);
+int	__libc_thr_keydelete_stub(thread_key_t);
+
+int	__libc_thr_once_stub(once_t *, void (*)(void));
+int	__libc_thr_sigsetmask_stub(int, const sigset_t *, sigset_t *);
+thr_t	__libc_thr_self_stub(void);
+int	__libc_thr_yield_stub(void);
+int	__libc_thr_create_stub(thr_t *, const thrattr_t *,
+	    void *(*)(void *), void *);
+void	__libc_thr_exit_stub(void *) __dead;
+int	*__libc_thr_errno_stub(void);
+int	__libc_thr_setcancelstate_stub(int, int *);
+int	__libc_thr_equal_stub(pthread_t, pthread_t);
+unsigned int	__libc_thr_curcpu_stub(void);
+__END_DECLS
+
 #endif /* __LIBC_THREAD_STUBS */
 
 #define	FLOCKFILE(fp)		__flockfile_internal(fp, 1)

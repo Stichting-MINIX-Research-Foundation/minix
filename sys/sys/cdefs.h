@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.100 2012/08/24 05:47:51 dholland Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.116 2013/10/25 14:54:25 apb Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -148,8 +148,8 @@
 #else
 #define	__CTASSERT(x)		__CTASSERT0(x, __ctassert, __LINE__)
 #endif
-#define	__CTASSERT0(x, y, z)	__CTASSERT1(x, y, z)
-#define	__CTASSERT1(x, y, z)	typedef char y ## z[/*CONSTCOND*/(x) ? 1 : -1]
+#define	__CTASSERT0(x, y, z)	__CTASSERT1(x, y, z) 
+#define	__CTASSERT1(x, y, z)	typedef char y ## z[/*CONSTCOND*/(x) ? 1 : -1] __unused
 
 /*
  * The following macro is used to remove const cast-away warnings
@@ -250,16 +250,43 @@
 #define	__noclone	/* nothing */
 #endif
 
+/*
+ * __unused: Note that item or function might be unused.
+ */
 #if __GNUC_PREREQ__(2, 7)
 #define	__unused	__attribute__((__unused__))
 #else
 #define	__unused	/* delete */
 #endif
 
+/*
+ * __used: Note that item is needed, even if it appears to be unused.
+ */
 #if __GNUC_PREREQ__(3, 1)
 #define	__used		__attribute__((__used__))
 #else
 #define	__used		__unused
+#endif
+
+/*
+ * __diagused: Note that item is used in diagnostic code, but may be
+ * unused in non-diagnostic code.
+ */
+#if (defined(_KERNEL) && defined(DIAGNOSTIC)) \
+ || (!defined(_KERNEL) && !defined(NDEBUG))
+#define	__diagused	/* empty */
+#else
+#define	__diagused	__unused
+#endif
+
+/*
+ * __debugused: Note that item is used in debug code, but may be
+ * unused in non-debug code.
+ */
+#if defined(DEBUG)
+#define	__debugused	/* empty */
+#else
+#define	__debugused	__unused
 #endif
 
 #if __GNUC_PREREQ__(3, 1)
@@ -279,7 +306,7 @@
 #endif
 
 /* LSC: Clang/llvm also defines GNUC_PREREQ, but it actually does not
- *      Support those pragma. Make sure it is not used then.*/
+ *      Support those pragma. Make sure it is not used then. (MINIX) */
 #if __GNUC_PREREQ__(4, 0) && !defined(__clang__)
 #  define __dso_public	__attribute__((__visibility__("default")))
 #  define __dso_hidden	__attribute__((__visibility__("hidden")))
@@ -296,6 +323,11 @@
 #  define __END_PUBLIC_DECLS	__END_EXTERN_C
 #  define __BEGIN_HIDDEN_DECLS	__BEGIN_EXTERN_C
 #  define __END_HIDDEN_DECLS	__END_EXTERN_C
+#endif
+#if __GNUC_PREREQ__(4, 2)
+#  define __dso_protected	__attribute__((__visibility__("protected")))
+#else
+#  define __dso_protected
 #endif
 
 #define	__BEGIN_DECLS		__BEGIN_PUBLIC_DECLS
@@ -470,7 +502,7 @@
  *
  *	__link_set_decl(set, ptype)
  *		Provide an extern declaration of the set `set', which
- *		contains an array of the pointer type `ptype'.  This
+ *		contains an array of pointers to type `ptype'.  This
  *		macro must be used by any code which wishes to reference
  *		the elements of a link set.
  *
@@ -500,11 +532,21 @@
 #define	__link_set_entry(set, idx)	(__link_set_start(set)[idx])
 
 /*
+ * Return the natural alignment in bytes for the given type
+ */
+#if __GNUC_PREREQ__(4, 1)
+#define	__alignof(__t)  __alignof__(__t)
+#else
+#define __alignof(__t) (sizeof(struct { char __x; __t __y; }) - sizeof(__t))
+#endif
+
+/*
  * Return the number of elements in a statically-allocated array,
  * __x.
  */
 #define	__arraycount(__x)	(sizeof(__x) / sizeof(__x[0]))
 
+#ifndef __ASSEMBLER__
 /* __BIT(n): nth bit, where __BIT(0) == 0x1. */
 #define	__BIT(__n)	\
     (((uintmax_t)(__n) >= NBBY * sizeof(uintmax_t)) ? 0 : ((uintmax_t)1 << (uintmax_t)(__n)))
@@ -512,6 +554,7 @@
 /* __BITS(m, n): bits m through n, m < n. */
 #define	__BITS(__m, __n)	\
 	((__BIT(MAX((__m), (__n)) + 1) - 1) ^ (__BIT(MIN((__m), (__n))) - 1))
+#endif /* !__ASSEMBLER__ */
 
 /* find least significant bit that is set */
 #define	__LOWEST_SET_BIT(__mask) ((((__mask) - 1) & (__mask)) ^ (__mask))
@@ -536,16 +579,20 @@
 #define __CAST(__dt, __st)	((__dt)(__st))
 #endif
 
+#define __USE(a) ((void)(a))
+
 #define __type_mask(t) (/*LINTED*/sizeof(t) < sizeof(intmax_t) ? \
     (~((1ULL << (sizeof(t) * NBBY)) - 1)) : 0ULL)
 
 #ifndef __ASSEMBLER__
 static __inline long long __zeroll(void) { return 0; }
-static __inline int __negative_p(double x) { return x < 0; }
+static __inline unsigned long long __zeroull(void) { return 0; }
 #else
 #define __zeroll() (0LL)
-#define __negative_p(x) ((x) < 0)
+#define __zeroull() (0ULL)
 #endif
+
+#define __negative_p(x) (!((x) > 0) && ((x) != 0))
 
 #define __type_min_s(t) ((t)((1ULL << (sizeof(t) * NBBY - 1))))
 #define __type_max_s(t) ((t)~((1ULL << (sizeof(t) * NBBY - 1))))
@@ -556,12 +603,13 @@ static __inline int __negative_p(double x) { return x < 0; }
 #define __type_max(t) (__type_is_signed(t) ? __type_max_s(t) : __type_max_u(t))
 
 
-#define __type_fit_u(t, a) (/*LINTED*/sizeof(t) < sizeof(intmax_t) ? \
-    (((a) & __type_mask(t)) == 0) : !__negative_p(a))
+#define __type_fit_u(t, a) (/*LINTED*/!__negative_p(a) && \
+    (uintmax_t)((a) + __zeroull()) <= (uintmax_t)__type_max_u(t))
 
 #define __type_fit_s(t, a) (/*LINTED*/__negative_p(a) ? \
     ((intmax_t)((a) + __zeroll()) >= (intmax_t)__type_min_s(t)) : \
-    ((intmax_t)((a) + __zeroll()) <= (intmax_t)__type_max_s(t)))
+    ((intmax_t)((a) + __zeroll()) >= (intmax_t)0 && \
+     (intmax_t)((a) + __zeroll()) <= (intmax_t)__type_max_s(t)))
 
 /*
  * return true if value 'a' fits in type 't'

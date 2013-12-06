@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.706 2012/08/16 05:30:55 matt Exp $
+#	$NetBSD: bsd.own.mk,v 1.755 2013/10/29 16:11:46 joerg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -23,9 +23,11 @@ MANGRP?=	operator
 INFOGRP?=	operator
 DOCGRP?=	operator
 
-MKBINUTILS?=	no
+MKKYUA?=	yes
+
 MKGCC?=		no
 MKGCCCMDS?=	no
+MKLIBSTDCXX?=	no
 MKPROFILE?=	no
 MKSLJIT?=	no
 
@@ -58,7 +60,6 @@ MKRUMP:=	no
 MKSKEY:=	no
 MKYP:=		no
 
-# LSC MINIX SMP Support?
 .ifdef CONFIG_SMP
 SMP_FLAGS += -DCONFIG_SMP
 .ifdef CONFIG_MAX_CPUS
@@ -72,6 +73,8 @@ __uname_s!= uname -s
 .if ${__uname_s:Uunknown} == "Minix" 
 USETOOLS?=	never
 .  if ${USETOOLS:Uno} != "yes"
+# LSC: We have to use a temporary variable, as some test are done simply on the
+#      definition (ifdef) of it.
 .    if ${_HAVE_LLVM:U} == ""
        _HAVE_LLVM!= (exec 2>&1; clang --version || echo "")
        _HAVE_LLVM:= ${_HAVE_LLVM:M[0-9]\.[0-9]}
@@ -103,6 +106,8 @@ USETOOLS?=	never
           LDFLAGS+= -L${DESTDIR}/usr/lib
 .	endif
 .    endif # ${DESTDIR:U} != ""
+
+     MKTOOLS?=no
 .  endif # ${USETOOLS:Uno} != "yes"
 
 .  if !defined(HOSTPROG) && !defined(HOSTLIB)
@@ -111,8 +116,47 @@ USETOOLS?=	never
 .    if ${MACHINE_ARCH} == "i386"
        MACHINE:= i386
 .    endif
+# LSC FIXME: On a native ARM system MACHINE_ARCH is earmv7 instead of earm...
+.    if !empty(${MACHINE_ARCH:Mearm*})
+       MACHINE_ARCH:= earm
+.    endif
 .  endif # !defined(HOSTPROG) && !defined(HOSTLIB)
 .endif # __uname_s == "Minix"
+
+.if ${MKKYUA:Uno} == "yes" || ${MKATF:Uyes} == "yes"
+.  if ${MKLIBCXX:Uno} == "no" && ${HAVE_GCC:Dyes} != "yes"
+# No libc++ available, so we have to fallback on libstdc++.
+# This implies that the compiler is GCC on a native system, or we are building
+# GCC.
+# If HAVE_GCC is not defined, then it is a crossbuild, and we have to build
+# LIBSTDC++, otherwise we will simply use the system one.
+MKLIBSTDCXX:=	yes # required for Kyua / ATF
+.  endif # ${MKLIBCXX:Uno} == "no" && ${HAVE_GCC:Dyes} != "yes"
+
+# If we need LIBSTDC++, then we are using the in-tree GCC.
+.  if ${MKLIBSTDCXX} == "yes"
+CXXFLAGS+=	-I${DESTDIR}/usr/include/g++
+MKGCCCMDS:=	yes
+.  endif # ${MKLIBSTDCXX} == "yes"
+
+.  if ${HAVE_GCC:Dyes} == "yes" && ${MKLIBCXX:Uno} != "yes"
+# Specify the C++ system header for libstdc++
+CXXFLAGS+=	-I/usr/include/g++
+.  endif # ${HAVE_GCC:Dyes} == "yes" && ${MKLIBCXX:Uno} != "yes"
+.endif # ${MKKYUA:Uno} == "yes" || ${MKATF:Uyes} == "yes"
+
+# MKGCCCMDS == yes implies MKGCC == yes
+.if ${MKGCCCMDS} == "yes"
+MKGCC:=		yes
+MKBINUTILS?=	yes # We are installing GCC, so trigger binutils.
+.endif # ${MKGCCCMDS} == "yes"
+
+# The default value of MKBINUTILS cannot be set before the previous test.
+MKBINUTILS?=	no
+
+.if ${MKGCC} == "yes"
+HAVE_GCC:=	45 # The in-tree gcc version is 4.5
+.endif # ${MKGCC} == "yes"
 
 #
 # linker script files that have to be specified explicitely for the gold linker
@@ -124,18 +168,6 @@ LDS_DYNAMIC_BIN=	${LDS_PATH}/elf_${MACHINE_ARCH}_minix.xc
 LDS_RELOC=		${LDS_PATH}/elf_${MACHINE_ARCH}_minix.xr
 LDS_SHARED_LIB=		${LDS_PATH}/elf_${MACHINE_ARCH}_minix.xsc
 LDS_N=			${LDS_PATH}/elf_${MACHINE_ARCH}_minix.xbn
-
-AFLAGS+=	-D__ASSEMBLY__
-CFLAGS+=	-fno-builtin
-
-# Compile Kyua only if we have MKGCCCMDS, as we need libstdc++ from GCC
-.if ${MKGCCCMDS:Uno} == "no"
-MKATF:=		no
-.else
-# For C++ programs, only if we have the GCC sources
-CXXFLAGS+=	-I${DESTDIR}/usr/include/g++
-MKKYUA?=	yes
-.endif #  ${MKGCCCMDS:Uno} == "no"
 
 #LSC FIXME: Needed by clang for now
 .if ${MACHINE_ARCH} == "i386"
@@ -149,7 +181,7 @@ MAKECONF?=	/etc/mk.conf
 #
 # CPU model, derived from MACHINE_ARCH
 #
-MACHINE_CPU=	${MACHINE_ARCH:C/mipse[bl]/mips/:C/mips64e[bl]/mips/:C/sh3e[bl]/sh3/:S/m68000/m68k/:S/armeb/arm/:S/earm/arm/:S/earmeb/arm/:S/powerpc64/powerpc/}
+MACHINE_CPU=	${MACHINE_ARCH:C/mipse[bl]/mips/:C/mips64e[bl]/mips/:C/sh3e[bl]/sh3/:S/coldfire/m68k/:S/m68000/m68k/:C/arm.*/arm/:C/earm.*/arm/:S/earm/arm/:S/powerpc64/powerpc/}
 
 #
 # Subdirectory used below ${RELEASEDIR} when building a release
@@ -193,32 +225,25 @@ HAVE_GCC?=    45
 .endif
 .endif
 
-.if \
-    ${MACHINE_CPU} == "arm" || \
-    ${MACHINE_ARCH} == "i386" || \
-    ${MACHINE_ARCH} == "powerpc" || \
-    ${MACHINE_CPU} == "sh3" || \
-    ${MACHINE_ARCH} == "x86_64"
+
+.if ${MACHINE_ARCH} == "ia64"
+USE_COMPILERCRTSTUFF?=	yes
+.else
 USE_COMPILERCRTSTUFF?=	no
 .endif
-USE_COMPILERCRTSTUFF?=	yes
 
-
-#
-# Platforms still using GDB 6
-#
-.if ${MACHINE_CPU}  == "mips"
-HAVE_GDB?= 6
+.if ${MKLLVM:Uno} == "yes" && (${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64")
+HAVE_LIBGCC?=	no
 .else
-# Otherwise, default to GDB7
-HAVE_GDB?=	7
+HAVE_LIBGCC?=	yes
 .endif
+
+HAVE_GDB?=	7
 
 .if (${MACHINE_ARCH} == "alpha") || \
     (${MACHINE_ARCH} == "hppa") || \
     (${MACHINE_ARCH} == "ia64") || \
-    (${MACHINE_ARCH} == "mipsel") || (${MACHINE_ARCH} == "mipseb") || \
-    (${MACHINE_ARCH} == "mips64el") || (${MACHINE_ARCH} == "mips64eb")
+    (${MACHINE_CPU} == "mips")
 HAVE_SSP?=	no
 .else
 HAVE_SSP?=	yes
@@ -227,15 +252,14 @@ USE_SSP?=	yes
 .endif
 .endif
 
-
-.if empty(.MAKEFLAGS:M-V*)
+.if empty(.MAKEFLAGS:tW:M*-V .OBJDIR*)
 .if defined(MAKEOBJDIRPREFIX) || defined(MAKEOBJDIR)
 PRINTOBJDIR=	${MAKE} -r -V .OBJDIR -f /dev/null xxx
 .else
 PRINTOBJDIR=	${MAKE} -V .OBJDIR
 .endif
 .else
-PRINTOBJDIR=	echo # prevent infinite recursion
+PRINTOBJDIR=	echo /error/bsd.own.mk/PRINTOBJDIR # avoid infinite recursion
 .endif
 
 #
@@ -255,8 +279,11 @@ _SRC_TOP_!= cd "${.CURDIR}"; while :; do \
 .endif					# }
 
 #
-# If _SRC_TOP_ != "", we're within the NetBSD source tree, so set
-# defaults for NETBSDSRCDIR and _SRC_TOP_OBJ_.
+# If _SRC_TOP_ != "", we're within the NetBSD source tree.
+# * Set defaults for NETBSDSRCDIR and _SRC_TOP_OBJ_.
+# * Define _NETBSD_VERSION_DEPENDS.  Targets that depend on the
+#   NetBSD version, or on variables defined at build time, can
+#   declare a dependency on ${_NETBSD_VERSION_DEPENDS}.
 #
 .if (${_SRC_TOP_} != "")		# {
 
@@ -266,6 +293,12 @@ NETBSDSRCDIR?=	${_SRC_TOP_}
 _SRC_TOP_OBJ_!=		cd "${_SRC_TOP_}" && ${PRINTOBJDIR}
 .MAKEOVERRIDES+=	_SRC_TOP_OBJ_
 .endif
+
+_NETBSD_VERSION_DEPENDS=	${_SRC_TOP_OBJ_}/params
+_NETBSD_VERSION_DEPENDS+=	${NETBSDSRCDIR}/sys/sys/param.h
+_NETBSD_VERSION_DEPENDS+=	${NETBSDSRCDIR}/sys/conf/newvers.sh
+_NETBSD_VERSION_DEPENDS+=	${NETBSDSRCDIR}/sys/conf/osrelease.sh
+${_SRC_TOP_OBJ_}/params: .NOTMAIN .OPTIONAL # created by top level "make build"
 
 .endif	# _SRC_TOP_ != ""		# }
 
@@ -341,6 +374,11 @@ TOOL_CPP.gcc=		${EXTERNAL_TOOLCHAIN}/bin/${MACHINE_GNU_PLATFORM}-cpp
 TOOL_CXX.gcc=		${EXTERNAL_TOOLCHAIN}/bin/${MACHINE_GNU_PLATFORM}-c++
 TOOL_FC.gcc=		${EXTERNAL_TOOLCHAIN}/bin/${MACHINE_GNU_PLATFORM}-g77
 TOOL_OBJC.gcc=		${EXTERNAL_TOOLCHAIN}/bin/${MACHINE_GNU_PLATFORM}-gcc
+
+TOOL_CC.clang=		${EXTERNAL_TOOLCHAIN}/bin/${MACHINE_GNU_PLATFORM}-clang
+TOOL_CPP.clang=		${EXTERNAL_TOOLCHAIN}/bin/${MACHINE_GNU_PLATFORM}-clang-cpp
+TOOL_CXX.clang=		${EXTERNAL_TOOLCHAIN}/bin/${MACHINE_GNU_PLATFORM}-clang++
+TOOL_OBJC.clang=	${EXTERNAL_TOOLCHAIN}/bin/${MACHINE_GNU_PLATFORM}-clang
 .else									# } {
 # Define default locations for common tools.
 .if ${USETOOLS_BINUTILS:Uyes} == "yes"					#  {
@@ -391,6 +429,7 @@ LDFLAGS+=	--sysroot=/
 .endif	# EXTERNAL_TOOLCHAIN						# }
 
 HOST_MKDEP=	${TOOLDIR}/bin/${_TOOL_PREFIX}host-mkdep
+HOST_MKDEPCXX=	${TOOLDIR}/bin/${_TOOL_PREFIX}host-mkdep
 
 DBSYM=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-dbsym
 ELF2AOUT=	${TOOLDIR}/bin/${_TOOL_PREFIX}m68k-elf2aout
@@ -400,6 +439,7 @@ LEX=		${TOOLDIR}/bin/${_TOOL_PREFIX}lex
 LINT=		CC=${CC:Q} ${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-lint
 LORDER=		NM=${NM:Q} MKTEMP=${TOOL_MKTEMP:Q} ${TOOLDIR}/bin/${_TOOL_PREFIX}lorder
 MKDEP=		CC=${CC:Q} ${TOOLDIR}/bin/${_TOOL_PREFIX}mkdep
+MKDEPCXX=	CC=${CXX:Q} ${TOOLDIR}/bin/${_TOOL_PREFIX}mkdep
 PAXCTL=		${TOOLDIR}/bin/${_TOOL_PREFIX}paxctl
 TSORT=		${TOOLDIR}/bin/${_TOOL_PREFIX}tsort -q
 YACC=		${TOOLDIR}/bin/${_TOOL_PREFIX}yacc
@@ -420,7 +460,7 @@ TOOL_CTAGS=		${TOOLDIR}/bin/${_TOOL_PREFIX}ctags
 TOOL_CTFCONVERT=	${TOOLDIR}/bin/${_TOOL_PREFIX}ctfconvert
 TOOL_CTFMERGE=		${TOOLDIR}/bin/${_TOOL_PREFIX}ctfmerge
 TOOL_DB=		${TOOLDIR}/bin/${_TOOL_PREFIX}db
-TOOL_DISKLABEL=		${TOOLDIR}/bin/nbdisklabel-${MAKEWRAPPERMACHINE}
+TOOL_DISKLABEL=		${TOOLDIR}/bin/nbdisklabel
 TOOL_EQN=		${TOOLDIR}/bin/${_TOOL_PREFIX}eqn
 TOOL_FDISK=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-fdisk
 TOOL_FGEN=		${TOOLDIR}/bin/${_TOOL_PREFIX}fgen
@@ -454,8 +494,10 @@ TOOL_MKESDB=		${TOOLDIR}/bin/${_TOOL_PREFIX}mkesdb
 TOOL_MKFSMFS=		${TOOLDIR}/bin/${_TOOL_PREFIX}mkfs.mfs
 TOOL_MKLOCALE=		${TOOLDIR}/bin/${_TOOL_PREFIX}mklocale
 TOOL_MKMAGIC=		${TOOLDIR}/bin/${_TOOL_PREFIX}file
+TOOL_MKNOD=		${TOOLDIR}/bin/${_TOOL_PREFIX}mknod
 TOOL_MKTEMP=		${TOOLDIR}/bin/${_TOOL_PREFIX}mktemp
 TOOL_MKUBOOTIMAGE=	${TOOLDIR}/bin/${_TOOL_PREFIX}mkubootimage
+TOOL_ELFTOSB=		${TOOLDIR}/bin/${_TOOL_PREFIX}elftosb
 TOOL_MSGC=		MSGDEF=${TOOLDIR}/share/misc ${TOOLDIR}/bin/${_TOOL_PREFIX}msgc
 TOOL_MTREE=		${TOOLDIR}/bin/${_TOOL_PREFIX}mtree
 TOOL_NBPERF=		${TOOLDIR}/bin/${_TOOL_PREFIX}perf
@@ -544,7 +586,7 @@ TOOL_MAKEFS=		makefs
 TOOL_MAKEINFO=		makeinfo
 TOOL_MAKEWHATIS=	/usr/libexec/makewhatis
 TOOL_MANDOC_ASCII=	mandoc -Tascii
-TOOL_MANDOC_HTML=	mandoc -Thtml -Oman=../html%S/%N.html -Ostyle=../style.css
+TOOL_MANDOC_HTML=	mandoc -Thtml
 TOOL_MANDOC_LINT=	mandoc -Tlint
 TOOL_MDSETIMAGE=	mdsetimage
 TOOL_MENUC=		menuc
@@ -555,8 +597,10 @@ TOOL_MKESDB=		mkesdb
 TOOL_MKFSMFS=		mkfs.mfs
 TOOL_MKLOCALE=		mklocale
 TOOL_MKMAGIC=		file
+TOOL_MKNOD=		mknod
 TOOL_MKTEMP=		mktemp
 TOOL_MKUBOOTIMAGE=	mkubootimage
+TOOL_ELFTOSB=		elftosb
 TOOL_MSGC=		msgc
 TOOL_MTREE=		mtree
 TOOL_NBPERF=		nbperf
@@ -608,6 +652,11 @@ CXX=		${TOOL_CXX.${ACTIVE_CXX}}
 FC=		${TOOL_FC.${ACTIVE_FC}}
 OBJC=		${TOOL_OBJC.${ACTIVE_OBJC}}
 
+.if exists(/usr/bin/${TOOL_CTFCONVERT}) || exists(${TOOL_CTFCONVERT})
+CTFCONVERT=	${TOOL_CTFCONVERT}
+CTFMERGE=	${TOOL_CTFMERGE}
+.endif
+
 # OBJCOPY flags to create a.out binaries for old firmware
 # shared among src/distrib and ${MACHINE}/conf/Makefile.${MACHINE}.inc
 .if ${MACHINE_CPU} == "arm"
@@ -616,17 +665,19 @@ OBJCOPY_ELF2AOUT_FLAGS?=	\
 	-R .ident		\
 	-R .ARM.attributes	\
 	-R .ARM.exidx		\
+	-R .ARM.extab		\
 	-R .arm.atpcs		\
 	-R .comment		\
 	-R .debug_abbrev	\
+	-R .debug_aranges	\
 	-R .debug_info		\
 	-R .debug_line		\
 	-R .debug_frame		\
 	-R .debug_loc		\
 	-R .debug_pubnames	\
-	-R .debug_aranges	\
-	-R .debug_str		\
 	-R .debug_pubtypes	\
+	-R .debug_str		\
+	-R .eh_frame		\
 	-R .note.netbsd.ident
 .endif
 
@@ -809,28 +860,49 @@ SHLIB_VERSION_FILE?= ${.CURDIR}/shlib_version
 #
 # GNU sources and packages sometimes see architecture names differently.
 #
-GNU_ARCH.coldfire=m68k
-# MINIX/arm default
+GNU_ARCH.coldfire=m5407
 GNU_ARCH.earm=arm
-GCC_CONFIG_ARCH.earm=armv7-a
+GNU_ARCH.earmhf=arm
 GNU_ARCH.earmeb=armeb
-# MINIX/intel default
-GNU_ARCH.i386=i586
-GCC_CONFIG_ARCH.i386=i586
+GNU_ARCH.earmhfeb=armeb
+GNU_ARCH.earmv4=armv4
+GNU_ARCH.earmv4eb=armv4eb
+GNU_ARCH.earmv5=arm
+GNU_ARCH.earmv5eb=armeb
+GNU_ARCH.earmv6=armv6
+GNU_ARCH.earmv6hf=armv6
+GNU_ARCH.earmv6eb=armv6eb
+GNU_ARCH.earmv6hfeb=armv6eb
+GNU_ARCH.earmv7=armv7
+GNU_ARCH.earmv7hf=armv7
+GNU_ARCH.earmv7eb=armv7eb
+GNU_ARCH.earmv7hfeb=armv7eb
+GNU_ARCH.i386=i486
+GCC_CONFIG_ARCH.i386=i486
 GCC_CONFIG_TUNE.i386=nocona
 GCC_CONFIG_TUNE.x86_64=nocona
 GNU_ARCH.m68000=m68010
 GNU_ARCH.sh3eb=sh
 GNU_ARCH.sh3el=shle
 GNU_ARCH.mips64eb=mips64
+
+.if defined(__MINIX)
+# MINIX/arm default
+GCC_CONFIG_ARCH.earm=armv7-a
+
+# MINIX/intel default
+GNU_ARCH.i386=i586
+GCC_CONFIG_ARCH.i386=i586
+.endif # defined(__MINIX)
+
 MACHINE_GNU_ARCH=${GNU_ARCH.${MACHINE_ARCH}:U${MACHINE_ARCH}}
 
 #
 # In order to identify NetBSD to GNU packages, we sometimes need
 # an "elf" tag for historically a.out platforms.
 #
-.if ${MACHINE_ARCH} == "earm" || ${MACHINE_ARCH} == "earmeb"
-MACHINE_GNU_PLATFORM?=${MACHINE_GNU_ARCH}--netbsdelf-eabi
+.if (!empty(MACHINE_ARCH:Mearm*))
+MACHINE_GNU_PLATFORM?=${MACHINE_GNU_ARCH}--netbsdelf-${MACHINE_ARCH:C/eb//:C/v[4-7]//:S/earm/eabi/}
 .elif (${MACHINE_GNU_ARCH} == "arm" || \
      ${MACHINE_GNU_ARCH} == "armeb" || \
      ${MACHINE_ARCH} == "i386" || \
@@ -927,6 +999,8 @@ MK${var}:=	yes
 .if ${MACHINE_ARCH} == "x86_64" || ${MACHINE_ARCH} == "sparc64" || \
     ${MACHINE_ARCH} == "mips64eb" || ${MACHINE_ARCH} == "mips64el"
 MKCOMPAT?=	yes
+.elif !empty(MACHINE_ARCH:Mearm*)
+MKCOMPAT?=	no
 .else
 # Don't let this build where it really isn't supported.
 MKCOMPAT:=	no
@@ -942,9 +1016,13 @@ MKCOMPATMODULES:=	no
 
 #
 # Default mips64 to softfloat now.
+# arm is always softfloat unless it isn't
 # emips is always softfloat.
+# coldfire is always softfloat
 #
 .if ${MACHINE_ARCH} == "mips64eb" || ${MACHINE_ARCH} == "mips64el" || \
+    (${MACHINE_CPU} == "arm" && ${MACHINE_ARCH:M*hf*} == "") || \
+    ${MACHINE_ARCH} == "coldfire" || \
     ${MACHINE} == "emips"
 MKSOFTFLOAT?=	yes
 .endif
@@ -975,9 +1053,6 @@ MKBINUTILS?=	${MKBFD}
 MKZFS?=		yes
 .endif
 
-# LSC: MINIX: Has to be here, otherwise libgcc_s.a is not found!?
-MKSTATICLIB:=	yes
-
 #
 # MK* options which default to "yes".
 #
@@ -991,7 +1066,7 @@ _MKVARS.yes= \
 	MKIEEEFP MKINET6 MKINFO MKIPFILTER MKISCSI \
 	MKKERBEROS \
 	MKKMOD \
-	MKLDAP MKLINKLIB MKLINT MKLVM \
+	MKLDAP MKLIBSTDCXX MKLINKLIB MKLVM \
 	MKMAN MKMANDOC \
 	MKMDNS \
 	MKMAKEMANDB \
@@ -1032,18 +1107,18 @@ _MKVARS.no= \
 	MKBSDGREP MKBSDTAR \
 	MKCATPAGES MKCRYPTO_RC5 MKDEBUG \
 	MKDEBUGLIB MKDTRACE MKEXTSRC \
-	MKKYUA \
-	MKMANZ MKOBJDIRS \
-	MKLLVM MKPCC \
+	MKKYUA MKLLD MKLLDB MKLINT \
+	MKMANZ MKMCLINKER MKOBJDIRS \
+	MKLIBCXX MKLLVM MKPCC \
 	MKPIGZGZIP \
 	MKREPRO \
-	MKSOFTFLOAT MKSTRIPIDENT \
-	MKUNPRIVED MKUPDATE MKX11 MKZFS
+	MKSOFTFLOAT MKSTRIPIDENT MKTPM \
+	MKUNPRIVED MKUPDATE MKX11 MKX11MOTIF MKZFS
 
 #MINIX-specific vars
 _MKVARS.no+= \
 	MKIMAGEONLY MKSMALL MKBITCODE
-.if (${MACHINE_ARCH} == "earm")
+.if !empty(MACHINE_ARCH:Mearm*)
 _MKVARS.no+= \
 	MKWATCHDOG MKACPI MKAPIC MKDEBUGREG MKINSTALLBOOT MKPCI
 .endif
@@ -1068,6 +1143,41 @@ ${var}?=no
 X11FLAVOUR?=	XFree86
 .else
 X11FLAVOUR?=	Xorg
+.endif
+
+#
+# Which platforms build the xorg-server drivers (as opposed
+# to just Xnest and Xvfb.)
+#
+.if ${X11FLAVOUR} == "Xorg"	&& \
+    ${MACHINE} == "alpha"	|| \
+    ${MACHINE} == "amd64"	|| \
+    ${MACHINE} == "bebox"	|| \
+    ${MACHINE} == "cats"	|| \
+    ${MACHINE} == "dreamcast"	|| \
+    ${MACHINE} == "ews4800mips"	|| \
+    ${MACHINE} == "evbarm"	|| \
+    ${MACHINE} == "evbmips"	|| \
+    ${MACHINE} == "hp300"	|| \
+    ${MACHINE} == "hpcarm"	|| \
+    ${MACHINE} == "hpcmips"	|| \
+    ${MACHINE} == "hpcsh"	|| \
+    ${MACHINE} == "i386"	|| \
+    ${MACHINE} == "luna68k"	|| \
+    ${MACHINE} == "macppc"	|| \
+    ${MACHINE} == "netwinder"	|| \
+    ${MACHINE} == "newsmips"	|| \
+    ${MACHINE} == "prep"	|| \
+    ${MACHINE} == "ofppc"	|| \
+    ${MACHINE} == "sgimips"	|| \
+    ${MACHINE} == "shark"	|| \
+    ${MACHINE} == "sparc"	|| \
+    ${MACHINE} == "sparc64"	|| \
+    ${MACHINE} == "vax"		|| \
+    ${MACHINE} == "zaurus"
+MKXORG_SERVER?=yes
+.else
+MKXORG_SERVER?=no
 .endif
 
 #
@@ -1288,7 +1398,7 @@ X11SRCDIR.${_proto}proto?=		${X11SRCDIRMIT}/${_proto}proto/dist
 	xsetmode xsetpointer xsetroot xsm xstdcmap xvidtune xvinfo \
 	xwininfo xwud xprehashprinterlist xplsprinters xkbprint xkbevd \
 	xterm xwd xfs xfsinfo xphelloworld xtrap xkbutils xkbcomp \
-	xkeyboard-config xinput xcb-util \
+	xkeyboard-config xinput xcb-util xorg-docs \
 	font-adobe-100dpi font-adobe-75dpi font-adobe-utopia-100dpi \
 	font-adobe-utopia-75dpi font-adobe-utopia-type1 \
 	font-alias \

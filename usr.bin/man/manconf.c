@@ -1,4 +1,4 @@
-/*	$NetBSD: manconf.c,v 1.6 2008/03/08 15:48:27 christos Exp $	*/
+/*	$NetBSD: manconf.c,v 1.7 2013/07/18 15:39:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -45,7 +45,7 @@
 #if 0
 static char sccsid[] = "@(#)config.c	8.8 (Berkeley) 1/31/95";
 #else
-__RCSID("$NetBSD: manconf.c,v 1.6 2008/03/08 15:48:27 christos Exp $");
+__RCSID("$NetBSD: manconf.c,v 1.7 2013/07/18 15:39:08 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -172,8 +172,8 @@ config(const char *fname)
 			 * section entries can either be all absolute
 			 * paths or all relative paths, but not both.
 			 */
-			type = (TAILQ_FIRST(&tp->entrylist) != NULL) ?
-			    *(TAILQ_FIRST(&tp->entrylist)->s) : 0;
+			type = (char)((TAILQ_FIRST(&tp->entrylist) != NULL) ?
+			    *(TAILQ_FIRST(&tp->entrylist)->s) : '\0');
 
 			for (++t; (p = strtok(t, " \t\n")) != NULL; t = NULL) {
 

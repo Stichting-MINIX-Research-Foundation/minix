@@ -96,16 +96,15 @@ ATF_TEST_CASE_BODY(reset__ok)
 }
 
 
-ATF_TEST_CASE_WITHOUT_HEAD(reset__immutable);
-ATF_TEST_CASE_BODY(reset__immutable)
+ATF_TEST_CASE_WITHOUT_HEAD(reset__invalid);
+ATF_TEST_CASE_BODY(reset__invalid)
 {
-    ATF_REQUIRE_THROW(signals::system_error, signals::reset(SIGKILL));
-    ATF_REQUIRE_THROW(signals::system_error, signals::reset(SIGSTOP));
+    ATF_REQUIRE_THROW(signals::system_error, signals::reset(-1));
 }
 
 
 ATF_INIT_TEST_CASES(tcs)
 {
     ATF_ADD_TEST_CASE(tcs, reset__ok);
-    ATF_ADD_TEST_CASE(tcs, reset__immutable);
+    ATF_ADD_TEST_CASE(tcs, reset__invalid);
 }

@@ -8,8 +8,4 @@ BINOWN=	root
 BINGRP=	operator
 BINMODE=4554
 
-.if defined(__MINIX)
-WARNS=2
-.endif
-
 .include <bsd.prog.mk>

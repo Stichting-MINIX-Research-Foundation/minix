@@ -1,4 +1,4 @@
-/*	$NetBSD: telldir.c,v 1.19 2008/05/04 18:53:26 tonnerre Exp $	*/
+/*	$NetBSD: telldir.c,v 1.20 2013/03/06 11:27:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,17 +34,12 @@
 #if 0
 static char sccsid[] = "@(#)telldir.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: telldir.c,v 1.19 2008/05/04 18:53:26 tonnerre Exp $");
+__RCSID("$NetBSD: telldir.c,v 1.20 2013/03/06 11:27:28 yamt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #include "reentrant.h"
-
-#ifdef __minix
-#include <sys/types.h>
-#endif
-
 #include "extern.h"
 #include <sys/param.h>
 
@@ -66,11 +61,11 @@ telldir(DIR *dirp)
 #ifdef _REENTRANT
 	if (__isthreaded) {
 		mutex_lock((mutex_t *)dirp->dd_lock);
-		rv = (intptr_t)_telldir_unlocked(dirp);
+		rv = _telldir_unlocked(dirp);
 		mutex_unlock((mutex_t *)dirp->dd_lock);
 	} else
 #endif
-		rv = (intptr_t)_telldir_unlocked(dirp);
+		rv = _telldir_unlocked(dirp);
 	return rv;
 }
 

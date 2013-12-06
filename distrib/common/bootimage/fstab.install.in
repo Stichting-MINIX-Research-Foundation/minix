@@ -1,2 +1,2 @@
-/dev/@@BOOTDISK@@a	/		ffs	rw,log		1 1
+/dev/@@BOOTDISK@@a	/		ffs	rw		1 1
 tmpfs			/tmp		tmpfs	rw		0 0

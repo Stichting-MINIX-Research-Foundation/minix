@@ -1,6 +1,6 @@
 
 #------------------------------------------------------------------------------
-# $File: msooxml,v 1.1 2011/01/25 18:36:19 christos Exp $
+# $File: msooxml,v 1.2 2013/01/25 23:04:37 christos Exp $
 # msooxml:  file(1) magic for Microsoft Office XML
 # From: Ralf Brown <ralf.brown@gmail.com>
 
@@ -23,11 +23,13 @@
 >>>&26          search/1000     PK\003\004
 # and check the subdirectory name to determine which type of OOXML
 #   file we have
+#   Correct the mimetype with the registered ones:
+#     http://technet.microsoft.com/en-us/library/cc179224.aspx
 >>>>&26         string          word/           Microsoft Word 2007+
-!:mime application/msword
+!:mime application/vnd.openxmlformats-officedocument.wordprocessingml.document
 >>>>&26         string          ppt/            Microsoft PowerPoint 2007+
-!:mime application/vnd.ms-powerpoint
+!:mime application/vnd.openxmlformats-officedocument.presentationml.presentation
 >>>>&26         string          xl/             Microsoft Excel 2007+
-!:mime application/vnd.ms-excel
+!:mime application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
 >>>>&26         default         x               Microsoft OOXML
 !:strength +10

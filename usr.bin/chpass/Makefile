@@ -3,10 +3,6 @@
 
 .include <bsd.own.mk>
 
-.if defined(__MINIX)
-WARNS=3
-.endif
-
 USE_FORT?= yes	# setuid
 PROG=	chpass
 SRCS=	chpass.c edit.c field.c table.c util.c

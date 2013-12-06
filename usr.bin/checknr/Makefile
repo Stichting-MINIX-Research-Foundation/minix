@@ -1,7 +1,5 @@
-#	$NetBSD: Makefile,v 1.5 2009/04/14 22:15:18 lukem Exp $
+#	$NetBSD: Makefile,v 1.6 2013/08/11 06:39:47 dholland Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
-
-WARNS?=	2	# fails -Wcast-qual
 
 PROG=	checknr
 

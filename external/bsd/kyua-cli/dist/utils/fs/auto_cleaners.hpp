@@ -33,9 +33,9 @@
 #define UTILS_FS_AUTO_CLEANERS_HPP
 
 #include <string>
-#include <tr1/memory>
 
 #include "utils/fs/path.hpp"
+#include "utils/shared_ptr.hpp"
 
 namespace utils {
 namespace fs {
@@ -48,7 +48,7 @@ namespace fs {
 class auto_directory {
     struct impl;
     /// Reference-counted, shared implementation.
-    std::tr1::shared_ptr< impl > _pimpl;
+    std::shared_ptr< impl > _pimpl;
 
 public:
     explicit auto_directory(const path&);
@@ -68,7 +68,7 @@ public:
 class auto_file {
     struct impl;
     /// Reference-counted, shared implementation.
-    std::tr1::shared_ptr< impl > _pimpl;
+    std::shared_ptr< impl > _pimpl;
 
 public:
     explicit auto_file(const path&);

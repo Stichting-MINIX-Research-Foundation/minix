@@ -1,6 +1,6 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.96 2013/03/21 19:17:51 christos Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.98 2013/08/11 03:53:12 dholland Exp $
 
-# LSC Do not take for granted that the last thing done in the previous file 
+# LSC: Do not take for granted that the last thing done in the previous file 
 # was standard directories...
 /set type=dir uid=0 gid=0 mode=0755
 
@@ -330,6 +330,7 @@
 ./usr/tests/net/icmp
 ./usr/tests/net/if
 ./usr/tests/net/if_loop
+./usr/tests/net/mpls
 ./usr/tests/net/net
 ./usr/tests/net/npf
 ./usr/tests/net/route
@@ -388,6 +389,7 @@
 ./usr/tests/usr.bin/shmif_dumpbus
 ./usr/tests/usr.bin/sort
 ./usr/tests/usr.bin/tmux
+./usr/tests/usr.bin/tr
 ./usr/tests/usr.bin/unifdef
 ./usr/tests/usr.bin/xlint
 ./usr/tests/usr.bin/xlint/lint1

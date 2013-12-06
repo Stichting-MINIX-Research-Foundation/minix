@@ -1,4 +1,4 @@
-/*	$NetBSD: tables.c,v 1.30 2008/01/10 04:24:51 tls Exp $	*/
+/*	$NetBSD: tables.c,v 1.31 2013/10/18 19:53:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tables.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: tables.c,v 1.30 2008/01/10 04:24:51 tls Exp $");
+__RCSID("$NetBSD: tables.c,v 1.31 2013/10/18 19:53:34 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1155,7 +1155,9 @@ add_dir(char *name, int nlen, struct stat *psb, int frc_mode)
 			return;
 		}
 		name = rp;
+#ifdef DIRS_USE_FILE
 		nlen = strlen(name);
+#endif
 	}
 
 #ifdef DIRS_USE_FILE

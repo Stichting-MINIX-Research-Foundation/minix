@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.c,v 1.7 2011/04/23 16:40:08 joerg Exp $	*/
+/*	$NetBSD: tls.c,v 1.9 2013/10/21 19:14:15 joerg Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,12 +29,13 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tls.c,v 1.7 2011/04/23 16:40:08 joerg Exp $");
+__RCSID("$NetBSD: tls.c,v 1.9 2013/10/21 19:14:15 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/ucontext.h>
 #include <lwp.h>
 #include <string.h>
+#include "debug.h"
 #include "rtld.h"
 
 #if defined(__HAVE_TLS_VARIANT_I) || defined(__HAVE_TLS_VARIANT_II)
@@ -100,6 +101,7 @@ _rtld_tls_initial_allocation(void)
 	_rtld_tls_static_space = roundup2(_rtld_tls_static_space,
 	    sizeof(void *));
 #endif
+	dbg(("_rtld_tls_static_space %zu", _rtld_tls_static_space));
 
 	tcb = _rtld_tls_allocate_locked();
 #ifdef __HAVE___LWP_SETTCB
@@ -132,18 +134,21 @@ _rtld_tls_allocate_locked(void)
 	tcb = (struct tls_tcb *)p;
 	tcb->tcb_self = tcb;
 #endif
+	dbg(("tcb %p", tcb));
 	tcb->tcb_dtv = xcalloc(sizeof(*tcb->tcb_dtv) * (2 + _rtld_tls_max_index));
 	++tcb->tcb_dtv;
 	SET_DTV_MAX_INDEX(tcb->tcb_dtv, _rtld_tls_max_index);
 	SET_DTV_GENERATION(tcb->tcb_dtv, _rtld_tls_dtv_generation);
 
 	for (obj = _rtld_objlist; obj != NULL; obj = obj->next) {
-		if (obj->tlssize) {
+		if (obj->tlsinitsize && obj->tls_done) {
 #ifdef __HAVE_TLS_VARIANT_I
 			q = p + obj->tlsoffset;
 #else
 			q = p - obj->tlsoffset;
 #endif
+			dbg(("obj %p dtv %p tlsoffset %zu",
+			    obj, q, obj->tlsoffset));
 			memcpy(q, obj->tlsinit, obj->tlsinitsize);
 			tcb->tcb_dtv[obj->tlsindex] = q;
 		}

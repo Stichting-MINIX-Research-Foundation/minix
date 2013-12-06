@@ -1,22 +1,12 @@
 
 #------------------------------------------------------------------------------
-# $File: bsdi,v 1.5 2009/09/19 16:28:08 christos Exp $
+# $File: bsdi,v 1.6 2013/01/09 22:37:24 christos Exp $
 # bsdi:  file(1) magic for BSD/OS (from BSDI) objects
+# Some object/executable formats use the same magic numbers as are used
+# in other OSes; those are handled by entries in aout.
 #
 
 0	lelong		0314		386 compact demand paged pure executable
->16	lelong		>0		not stripped
->32	byte		0x6a		(uses shared libs)
-
-0	lelong		0407		386 executable
->16	lelong		>0		not stripped
->32	byte		0x6a		(uses shared libs)
-
-0	lelong		0410		386 pure executable
->16	lelong		>0		not stripped
->32	byte		0x6a		(uses shared libs)
-
-0	lelong		0413		386 demand paged pure executable
 >16	lelong		>0		not stripped
 >32	byte		0x6a		(uses shared libs)
 

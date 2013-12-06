@@ -1,4 +1,4 @@
-/*	$NetBSD: exect.S,v 1.7 2003/08/07 16:42:14 agc Exp $	*/
+/*	$NetBSD: exect.S,v 1.8 2013/07/16 22:20:35 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,11 +40,11 @@
 #if 0
 	RCSID("from: @(#)exect.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: exect.S,v 1.7 2003/08/07 16:42:14 agc Exp $")
+	RCSID("$NetBSD: exect.S,v 1.8 2013/07/16 22:20:35 matt Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 ENTRY(exect)
-	movl	#SYS_execve,%d0
-	trap	#0
-	jra	PIC_PLT(CERROR)	/* exect(file, argv, env) */
+	SYSTRAP(execve)
+	jbra	CERROR		/* exect(file, argv, env) */
+END(exect)

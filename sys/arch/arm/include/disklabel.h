@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.10 2011/08/30 12:39:53 bouyer Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.12 2013/05/27 07:37:20 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -47,12 +47,28 @@
 #define _ARM_DISKLABEL_H_
 
 #ifndef LABELUSESMBR
-#define LABELUSESMBR	0		/* no MBR partitionning */
+#define LABELUSESMBR		1	/* use MBR partitionning */
 #endif
-#define LABELSECTOR	1		/* sector containing label */
-#define LABELOFFSET	0		/* offset of label in sector */
-#define MAXPARTITIONS	8		/* number of partitions */
-#define RAW_PART	2		/* raw partition: XX?c */
+#define LABELSECTOR		1	/* sector containing label */
+#define LABELOFFSET		0	/* offset of label in sector */
+#define MAXPARTITIONS		16	/* number of partitions */
+#define OLDMAXPARTITIONS	8	/* old number of partitions */
+#ifndef RAW_PART
+#define RAW_PART		2	/* raw partition: XX?c */
+#endif
+
+/*
+ * We use the highest bit of the minor number for the partition number.
+ * This maintains backward compatibility with device nodes created before
+ * MAXPARTITIONS was increased.
+ */
+#define	__ARM_MAXDISKS	((1 << 20) / MAXPARTITIONS)
+#define	DISKUNIT(dev)	((minor(dev) / OLDMAXPARTITIONS) % __ARM_MAXDISKS)
+#define	DISKPART(dev)	((minor(dev) % OLDMAXPARTITIONS) + \
+    ((minor(dev) / (__ARM_MAXDISKS * OLDMAXPARTITIONS)) * OLDMAXPARTITIONS))
+#define	DISKMINOR(unit, part) \
+    (((unit) * OLDMAXPARTITIONS) + ((part) % OLDMAXPARTITIONS) + \
+     ((part) / OLDMAXPARTITIONS) * (__ARM_MAXDISKS * OLDMAXPARTITIONS))
 
 #if HAVE_NBTOOL_CONFIG_H
 #include <nbinclude/sys/dkbad.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.103 2011/06/12 03:36:01 rmind Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.104 2013/11/23 13:35:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.103 2011/06/12 03:36:01 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.104 2013/11/23 13:35:37 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -227,9 +227,7 @@ mfs_mountroot(void)
 		kmem_free(mfsp, sizeof(*mfsp));
 		return (error);
 	}
-	mutex_enter(&mountlist_lock);
-	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
-	mutex_exit(&mountlist_lock);
+	mountlist_append(mp);
 	mp->mnt_vnodecovered = NULLVP;
 	ump = VFSTOUFS(mp);
 	fs = ump->um_fs;

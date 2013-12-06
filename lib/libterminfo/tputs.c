@@ -1,4 +1,4 @@
-/* $NetBSD: tputs.c,v 1.2 2010/02/12 10:36:07 martin Exp $ */
+/* $NetBSD: tputs.c,v 1.3 2013/06/07 13:16:18 roy Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tputs.c,v 1.2 2010/02/12 10:36:07 martin Exp $");
+__RCSID("$NetBSD: tputs.c,v 1.3 2013/06/07 13:16:18 roy Exp $");
 
 #include <assert.h>
 #include <ctype.h>
@@ -53,8 +53,8 @@ static int
 _ti_calcdelay(const char **str, int affcnt, int *mand)
 {
 	int i;
-	
-       	i = 0;
+
+	i = 0;
 	/* Convert the delay */
 	while (isdigit(*(const unsigned char *)*str))
 		i = i * 10 + *(*str)++ - '0';
@@ -85,7 +85,7 @@ _ti_outputdelay(int delay, short os, char pc,
 
 	if (delay < 1 || os < 1 || (size_t)os >= __arraycount(tmspc10))
 		return;
-	
+
 	mspc10 = tmspc10[os];
 	delay += mspc10 / 2;
 	for (delay /= mspc10; delay > 0; delay--)
@@ -137,7 +137,7 @@ ti_puts(const TERMINAL *term, const char *str, int affcnt,
 	_DIAGASSERT(term != NULL);
 	_DIAGASSERT(str != NULL);
 	_DIAGASSERT(outc != NULL);
-	
+
 	dodelay = (str == t_bell(term) ||
 	    str == t_flash_screen(term) ||
 	    (t_xon_xoff(term) == 0 && t_padding_baud_rate(term) != 0));
@@ -168,7 +168,7 @@ tputs(const char *str, int affcnt, int (*outc)(int))
 	return _ti_puts(1, ospeed, PC, str, affcnt,
 	    (int (*)(int, void *))outc, NULL);
 }
-	
+
 int
 putp(const char *str)
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: strcoll.c,v 1.10 2012/06/25 22:32:46 abs Exp $	*/
+/*	$NetBSD: strcoll.c,v 1.12 2013/05/17 12:55:57 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,12 +37,18 @@
 #if 0
 static char sccsid[] = "@(#)strcoll.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strcoll.c,v 1.10 2012/06/25 22:32:46 abs Exp $");
+__RCSID("$NetBSD: strcoll.c,v 1.12 2013/05/17 12:55:57 joerg Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
+
 #include <assert.h>
+#include <locale.h>
 #include <string.h>
+#include "setlocale_local.h"
+
+__weak_alias(strcoll_l, _strcoll_l)
 
 /*
  * Compare strings according to LC_COLLATE category of current locale.
@@ -51,9 +57,16 @@ int
 strcoll(const char *s1, const char *s2)
 {
 
+	return strcoll_l(s1, s2, _current_locale());
+}
+
+int
+strcoll_l(const char *s1, const char *s2, locale_t loc)
+{
 	_DIAGASSERT(s1 != NULL);
 	_DIAGASSERT(s2 != NULL);
 
 	/* LC_COLLATE is unimplemented, hence always "C" */
+	/* LINTED */ (void)loc;
 	return (strcmp(s1, s2));
 }

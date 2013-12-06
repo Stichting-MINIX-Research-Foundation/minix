@@ -1,4 +1,4 @@
-.\"	$NetBSD: atexit.3,v 1.9 2003/08/07 16:43:38 agc Exp $
+.\"	$NetBSD: atexit.3,v 1.11 2013/04/26 19:37:04 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -68,7 +68,9 @@ No memory was available to add the function to the list.
 The existing list of functions is unmodified.
 .El
 .Sh SEE ALSO
-.Xr exit 3
+.Xr at_quick_exit 3 ,
+.Xr exit 3 ,
+.Xr quick_exit 3
 .Sh STANDARDS
 The
 .Fn atexit

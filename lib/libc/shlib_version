@@ -1,12 +1,15 @@
-#	$NetBSD: shlib_version,v 1.235 2012/08/24 06:12:52 dholland Exp $
+#	$NetBSD: shlib_version,v 1.244 2013/11/10 20:59:27 joerg Exp $
 #	Remember to update distrib/sets/lists/base/shl.* when changing
 #
 # things we wish to do on next major version bump:
+# - remove code under BUILD_LEGACY
+# - remove BCS code in citrus and replace it with use of the C locale
 # - libc/net/rcmd.c: make __ivaliduser() and __ivaliduser_sa() static
 # - libc/net: resolver update to BIND8/9?
 # - md2, md4, md5, rmd160 & sha1 functions should take the same arguments AFAP
 # - Crypto hashes have name overlap with libcrypto, rename them
 # - libc/gen/assert.c: __{diag,}assert13() -> __{diag,}assert()
+# - lib/libc/net/iso_addr.c: remove
 # - libc/gen/times.c: remove; __times13() -> times()
 # - libc/gen/timezone.c: remove; __timezone13 -> timezone
 # - libc/net/getaddrinfo.c, netdb.h: remove __ai_pad0
@@ -28,11 +31,11 @@
 #   for example in assembler code.
 # - kill sigcontext: never request version 0 or 1 signal trampoline.
 #   always request version 2 trampoline. (on vax, 3).
-# - change _ctype_ table in ctype.h and gen/ctype_.c 8bit -> 16 or 32bit.
-#   it's insufficient bitwidth to implement all ctype class.
-#   see isblank's comment in ctype.h.
 # - remove gets(); it is finally dead in c11.
 # - make __cerror (spelled CERROR) hidden again
 # - remove ruserok() and friends to libcompat (or entirely)
-major=0
-minor=0
+# - remove alloca fallback and expect compiler to provide a builtin version.
+# - switch to DT_INIT_ARRAY on all platforms
+# - consolidate ownership with crt0.o and avoid common symbols
+major=12
+minor=187

@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_sigprocmask.S,v 1.1 2006/03/09 16:20:55 christos Exp $	*/
+/*	$NetBSD: compat_sigprocmask.S,v 1.4 2013/07/25 22:08:15 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
 #if 0
 	RCSID("from: @(#)sigprocmask.s	5.2 (Berkeley) 6/6/90")
 #else
-	RCSID("$NetBSD: compat_sigprocmask.S,v 1.1 2006/03/09 16:20:55 christos Exp $")
+	RCSID("$NetBSD: compat_sigprocmask.S,v 1.4 2013/07/25 22:08:15 matt Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -47,24 +47,23 @@ WARN_REFERENCES(sigprocmask, \
     "warning: reference to compatibility sigprocmask(); include <signal.h> for correct reference")
 
 ENTRY(sigprocmask)
-	tstl	%sp@(8)			/* check new sigset pointer */
+	tstl	8(%sp)			/* check new sigset pointer */
 	jne	gotptr			/* if not null, indirect */
-/*	movl	#0,%sp@(8)		/* null mask pointer: block empty set */
-	movl	#1,%sp@(4)		/* SIG_BLOCK */
+/*	movl	#0,8(%sp)		/* null mask pointer: block empty set */
+	movql	#1,%d0			/* SIG_BLOCK */
+	movl	%d0,4(%sp)
 	jra	doit
 gotptr:
-	movl	%sp@(8),%a0
-	movl	%a0@,%sp@(8)		/* indirect to new mask arg */
+	movl	8(%sp),%a0
+	movl	(%a0),8(%sp)		/* indirect to new mask arg */
 doit:
-	movl	#SYS_compat_13_sigprocmask13,%d0
-	trap	#0
-	jcs	err
-	tstl	%sp@(12)		/* test if old mask requested */
+	SYSTRAP(compat_13_sigprocmask13)
+	jcs	CERROR
+	tstl	12(%sp)		/* test if old mask requested */
 	jeq	out
-	movl	%sp@(12),%a0
-	movl	%d0,%a0@		/* store old mask */
+	movl	12(%sp),%a0
+	movl	%d0,(%a0)		/* store old mask */
 out:
 	clrl	%d0
 	rts
-err:
-	jra	PIC_PLT(CERROR)
+END(sigprocmask)

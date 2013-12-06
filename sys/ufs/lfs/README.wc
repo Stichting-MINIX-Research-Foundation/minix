@@ -1,0 +1,26 @@
+Line counts.
+
+(Part of the premise of splitting lfs from ufs is that in the long run
+the size of a standalone lfs will be substantially smaller than the
+size of lfs plus the size of ufs. This file is for keeping track of
+this proposition.)
+
+As of 20130604 (before the split):
+		.h	.c	total
+lfs		1467	13858	15325
+ufs		2056	12919	14975
+
+As of 20130605 (copied all ufs files verbatim):
+
+lfs-native	1467	13858	15325
+lfs-ulfs	2070	12938	15008
+lfs-total	3537	26796	30333
+
+A few extra lines appeared copying ufs because I preserved a copy of
+the old rcsids.
+
+As of 20130606 (committed the initial split and made things buildable):
+
+lfs-native	1482	13858	15340
+lfs-ulfs	1994	13028	15022
+lfs-total	3476	26886	30362

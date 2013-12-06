@@ -1,7 +1,7 @@
-# $NetBSD: md.sparc,v 1.80 2010/03/10 23:13:09 abs Exp $
-./sbin/edlabel					base-sysutil-root	obsolete
+# $NetBSD: md.sparc,v 1.81 2013/08/11 22:29:02 joerg Exp $
 ./lib/libsparc_v8.so.0				base-sys-shlib		dynamicroot,pic
 ./lib/libsparc_v8.so.0.0			base-sys-shlib		dynamicroot,pic
+./sbin/edlabel					base-sysutil-root	obsolete
 ./sbin/ldconfig					base-sysutil-root	pic
 ./usr/bin/fdformat				base-util-bin
 ./usr/lib/libsparc_v8.so.0			base-sys-shlib		pic
@@ -18,9 +18,9 @@
 ./usr/mdec/installboot				base-obsolete		obsolete
 ./usr/mdec/ofwboot				base-sysutil-bin
 ./usr/mdec/ofwboot.net				base-sysutil-bin
-./usr/sbin/apmd					base-sysutil-bin
 ./usr/sbin/apm					base-sysutil-bin
-./usr/sbin/zzz					base-sysutil-bin
+./usr/sbin/apmd					base-sysutil-bin
 ./usr/sbin/eeprom				base-sysutil-bin
-./usr/sbin/tadpolectl				base-sysutil-bin
 ./usr/sbin/ofctl				base-sysutil-bin
+./usr/sbin/tadpolectl				base-sysutil-bin
+./usr/sbin/zzz					base-sysutil-bin

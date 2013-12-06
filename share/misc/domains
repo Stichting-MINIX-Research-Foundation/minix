@@ -1,4 +1,4 @@
-# $NetBSD: domains,v 1.7 2007/09/29 15:40:58 hubertf Exp $
+# $NetBSD: domains,v 1.8 2013/06/02 16:37:37 rodent Exp $
 # ISO 3166 country codes, from http://www.iana.org/root-whois/index.html
 # Last update: Sat Sep 29 17:40:22 CEST 2007
 #
@@ -211,6 +211,7 @@ sr Suriname
 st Sao Tome and Principe
 su Soviet Union (being phased out)
 sv El Salvador
+sx Sint Maarten
 sy Syrian Arab Republic
 sz Swaziland
 tc Turks and Caicos Islands
@@ -248,7 +249,6 @@ wf Wallis and Futuna Islands
 ws Samoa
 ye Yemen
 yt Mayotte
-yu Yugoslavia (being phased out)
 za South Africa
 zm Zambia
 zw Zimbabwe

@@ -1,22 +1,19 @@
 #	$NetBSD: Makefile.inc,v 1.16 2006/04/24 17:15:06 drochner Exp $
 #	from: @(#)Makefile.inc	8.1 (Berkeley) 6/2/93
 
+# Unsupported by Minix
+#	gethostid.c \
+#	sethostid.c setpgrp.c \
+#	setrgid.c setruid.c sigcompat.c
+
 # compat-43 sources
 .PATH: ${ARCHDIR}/compat-43 ${.CURDIR}/compat-43
 
-.if defined(__MINIX)
-# Unsupported by Minix
-#	gethostid.c sethostid.c setpgrp.c setrgid.c setruid.c sigcompat.c
+SRCS+=	creat.c getdtablesize.c \
+	killpg.c \
 
-SRCS+=	creat.c getdtablesize.c killpg.c
-
-.else
-SRCS+=	creat.c getdtablesize.c gethostid.c \
-	killpg.c sethostid.c setpgrp.c \
-	setrgid.c setruid.c sigcompat.c
 .if !defined(AUDIT)
 SRCS+=	getwd.c
-.endif
 .endif
 
 # XXX this is to get <compat/sys/signal.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: libi386.h,v 1.38 2011/11/28 07:56:54 tls Exp $	*/
+/*	$NetBSD: libi386.h,v 1.40 2013/11/24 17:20:00 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -35,7 +35,7 @@ void pbzero(void *, size_t);
 physaddr_t vtophys(void *);
 
 ssize_t pread(int, void *, size_t);
-void startprog(physaddr_t, int, unsigned long *, physaddr_t);
+void startprog(physaddr_t, uint32_t, uint32_t *, physaddr_t);
 void multiboot(physaddr_t, physaddr_t, physaddr_t);
 
 int exec_netbsd(const char *, physaddr_t, int, int, void (*)(void));
@@ -95,7 +95,7 @@ void docommand(char *);
 #if defined(__minix)
 void editline(char *, size_t, char *);
 void prompt(int);
-#endif
+#endif /* defined(__minix) */
 
 /* in "user code": */
 void command_help(char *);
@@ -120,7 +120,7 @@ void conclr(void);
 
 #if defined(__minix)
 int getchar_ex(void);
-#endif
+#endif /* defined(__minix) */
 
 int getextmem2(int *);
 __compactcall int getextmemps2(void *);
@@ -147,6 +147,7 @@ extern int doserrno;	/* in dos_file.S */
 void module_add(char *);
 void splash_add(char *);
 void rnd_add(char *);
+void fs_add(char *);
 void userconf_add(char *);
 
 struct btinfo_framebuffer;

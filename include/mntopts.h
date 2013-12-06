@@ -1,4 +1,4 @@
-/*	$NetBSD: mntopts.h,v 1.14 2011/06/17 14:23:50 manu Exp $	*/
+/*	$NetBSD: mntopts.h,v 1.15 2012/10/19 17:09:06 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -58,6 +58,7 @@ struct mntopt {
 #define MOPT_LOG		{ "log",	0, MNT_LOG, 0 }
 #define MOPT_IGNORE		{ "hidden",	0, MNT_IGNORE, 0 }
 #define MOPT_EXTATTR		{ "extattr",	0, MNT_EXTATTR, 0 }
+#define MOPT_DISCARD		{ "discard",	0, MNT_DISCARD, 0 }
 
 /* Control flags. */
 #define MOPT_FORCE		{ "force",	0, MNT_FORCE, 0 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: inttypes.h,v 1.5 2008/04/28 20:24:10 martin Exp $	*/
+/*	$NetBSD: inttypes.h,v 1.6 2013/04/22 21:26:48 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,8 @@
 
 #include <sys/stdint.h>
 
-#if !defined(__cplusplus) || defined(__STDC_FORMAT_MACROS)
+#if !defined(__cplusplus) || defined(__STDC_FORMAT_MACROS) || \
+    (__cplusplus >= 201103L)
 #include <machine/int_fmtio.h>
 #endif
 

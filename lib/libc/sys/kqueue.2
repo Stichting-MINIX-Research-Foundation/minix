@@ -1,4 +1,4 @@
-.\"	$NetBSD: kqueue.2,v 1.32 2012/01/25 00:28:35 christos Exp $
+.\"	$NetBSD: kqueue.2,v 1.33 2012/11/24 15:16:52 christos Exp $
 .\"
 .\" Copyright (c) 2000 Jonathan Lemon
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" $FreeBSD: src/lib/libc/sys/kqueue.2,v 1.22 2001/06/27 19:55:57 dd Exp $
 .\"
-.Dd January 23, 2012
+.Dd November 24, 2012
 .Dt KQUEUE 2
 .Os
 .Sh NAME
@@ -604,6 +604,10 @@ The specified time limit or filter is invalid.
 The event could not be found to be modified or deleted.
 .It Bq Er ENOMEM
 No memory was available to register the event.
+.It Bq Er EOPNOTSUPP
+This type of file descriptor is not supported for
+.Fn kevent
+operations.
 .It Bq Er ESRCH
 The specified process to attach to does not exist.
 .El

@@ -1,4 +1,4 @@
-# $NetBSD: md.evbppc,v 1.12 2011/07/17 20:54:31 joerg Exp $
+# $NetBSD: md.evbppc,v 1.13 2013/11/17 14:34:11 alnsn Exp $
 ./usr/include/evbppc				comp-c-include
 ./usr/include/evbppc/_G_config.h		comp-obsolete		obsolete
 ./usr/include/evbppc/ansi.h			comp-c-include
@@ -48,6 +48,7 @@
 ./usr/include/evbppc/rwlock.h			comp-c-include
 ./usr/include/evbppc/setjmp.h			comp-c-include
 ./usr/include/evbppc/signal.h			comp-c-include
+./usr/include/evbppc/sljitarch.h		comp-c-include
 ./usr/include/evbppc/spr.h			comp-obsolete		obsolete
 ./usr/include/evbppc/stdarg.h			comp-obsolete		obsolete
 ./usr/include/evbppc/trap.h			comp-c-include

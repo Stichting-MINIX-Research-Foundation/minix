@@ -1,4 +1,4 @@
-/*	$NetBSD: sdt.h,v 1.2 2011/12/08 22:27:36 dholland Exp $	*/
+/*	$NetBSD: sdt.h,v 1.4 2013/10/07 07:11:40 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@ typedef struct {
  * This type definition must match that of dtrace_probe. It is defined this
  * way to avoid having to rely on CDDL code.
  */
-typedef	void (*sdt_probe_func_t)(u_int32_t, uintptr_t arg0, uintptr_t arg1,
+typedef	void (*sdt_probe_func_t)(uint32_t, uintptr_t arg0, uintptr_t arg1,
     uintptr_t arg2, uintptr_t arg3, uintptr_t arg4);
 
 /*
@@ -78,7 +78,7 @@ extern sdt_probe_func_t	sdt_probe_func;
 
 #ifdef KDTRACE_HOOKS
 /*
- * SDT_PROBE_DEFINE(prov, mod, func, name,
+ * SDT_PROBE_DEFINE(prov, mod, func, name, sname,
  *		    arg0, argx0, arg1, argx1,
  *		    arg2, argx2, arg3, argx3, arg4, argx4)
  *
@@ -86,6 +86,7 @@ extern sdt_probe_func_t	sdt_probe_func;
  * 	mod	- module name
  * 	func	- function name
  * 	name	- probe name
+ * 	sname	- probe name as exposed to userland
  * 	arg0 - arg4, argument types as strings, or NULL.
  * 	argx0 - argx4, translation types for arg0 - arg4
  *
@@ -97,11 +98,11 @@ extern sdt_probe_func_t	sdt_probe_func;
  *	This is used in the target module to define probes to be used.
  *	The translation type should be set to NULL if not used.
  */
-#define SDT_PROBE_DEFINE(prov, mod, func, name, \
+#define SDT_PROBE_DEFINE(prov, mod, func, name, sname, \
 	    arg0, argx0, arg1, argx1, arg2, argx2, \
 	    arg3, argx3, arg4, argx4) \
     	sdt_probe_t SDT_NAME(prov, mod, func, name) = { \
-	    0, 0, 0, #prov, #mod, #func, #name, \
+	    0, 0, 0, #prov, #mod, #func, #sname, \
 	    { arg0, arg1, arg2, arg3, arg4 }, \
 	    { NULL, NULL, NULL, NULL, NULL } \
 	}
@@ -118,7 +119,7 @@ extern sdt_probe_func_t	sdt_probe_func;
 		    (uintptr_t)(arg3), (uintptr_t)(arg4)); \
 	}
 #else
-#define SDT_PROBE_DEFINE(prov, mod, func, name, \
+#define SDT_PROBE_DEFINE(prov, mod, func, name, sname, \
 	    arg0, argx0, arg1, argx1, arg2, argx2, \
 	    arg3, argx3, arg4, argx4)
 #define SDT_PROBE_DECLARE(prov, mod, func, name)

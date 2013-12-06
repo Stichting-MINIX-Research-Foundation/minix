@@ -1,4 +1,4 @@
-/*	$NetBSD: limits.h,v 1.32 2012/03/28 17:04:41 christos Exp $	*/
+/*	$NetBSD: limits.h,v 1.33 2012/11/18 17:41:53 manu Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -144,21 +144,7 @@
  * we are done implementing them.
  */
 #if !defined(_INCOMPLETE_XOPEN_C063)
-#define __stub_linkat
-#define __stub_renameat
-#define __stub_mkfifoat
-#define __stub_mknodat
-#define __stub_mkdirat
-#define __stub_faccessat
-#define __stub_fchmodat
-#define __stub_fchownat
 #define __stub_fexecve
-#define __stub_fstatat
-#define __stub_utimensat
-#define __stub_openat
-#define __stub_readlinkat
-#define __stub_symlinkat
-#define __stub_unlinkat
 #endif
 
 #include <machine/limits.h>

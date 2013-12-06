@@ -1,4 +1,4 @@
-/*	$NetBSD: stpcpy.c,v 1.1 2009/05/01 17:27:01 perry Exp $	*/
+/*	$NetBSD: stpcpy.c,v 1.2 2013/11/06 21:05:27 tron Exp $	*/
 
 /*
  * Copyright (c) 1999
@@ -36,12 +36,16 @@
 #if 0
 static char sccsid[] = "@(#)strcpy.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: stpcpy.c,v 1.1 2009/05/01 17:27:01 perry Exp $");
+__RCSID("$NetBSD: stpcpy.c,v 1.2 2013/11/06 21:05:27 tron Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 /* FreeBSD: src/lib/libc/string/stpcpy.c,v 1.2 2009/02/28 06:05:37 das Exp */
 
 #include <string.h>
+
+#ifdef _FORTIFY_SOURCE
+#undef stpcpy
+#endif
 
 char *
 stpcpy(char * __restrict to, const char * __restrict from)
