@@ -111,6 +111,7 @@ static int _tcp_getsockname(int fd, struct sockaddr *__restrict address,
 	sin.sin_family= AF_INET;
 	sin.sin_addr.s_addr= tcpconf->nwtc_locaddr ;
 	sin.sin_port= tcpconf->nwtc_locport;
+	sin.sin_len= sizeof(sin);
 
 	len= *address_len;
 	if (len > sizeof(sin))
@@ -140,6 +141,7 @@ static int _udp_getsockname(int fd, struct sockaddr *__restrict address,
 	sin.sin_family= AF_INET;
 	sin.sin_addr.s_addr= udpopt->nwuo_locaddr ;
 	sin.sin_port= udpopt->nwuo_locport;
+	sin.sin_len= sizeof(sin);
 
 	len= *address_len;
 	if (len > sizeof(sin))

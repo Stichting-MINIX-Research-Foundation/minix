@@ -2,7 +2,7 @@
 #include "namespace.h"
 
 #ifdef __weak_alias
-__weak_alias(socket, _socket)
+__weak_alias(socket, __socket30)
 #endif
 
 #include <errno.h>

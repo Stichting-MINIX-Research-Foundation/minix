@@ -117,6 +117,7 @@ static ssize_t _tcp_recvfrom(int sock, void *__restrict buffer, size_t length,
 		sin.sin_family= AF_INET;
 		sin.sin_addr.s_addr= tcpconfp->nwtc_remaddr;
 		sin.sin_port= tcpconfp->nwtc_remport;
+		sin.sin_len= sizeof(sin);
 		len= *address_len;
 		if (len > sizeof(sin))
 			len= sizeof(sin);
@@ -170,6 +171,7 @@ static ssize_t _udp_recvfrom(int sock, void *__restrict buffer, size_t length,
 			sin.sin_family= AF_INET;
 			sin.sin_addr.s_addr= udpoptp->nwuo_remaddr;
 			sin.sin_port= udpoptp->nwuo_remport;
+			sin.sin_len= sizeof(sin);
 			len= *address_len;
 			if (len > sizeof(sin))
 				len= sizeof(sin);
@@ -216,6 +218,7 @@ static ssize_t _udp_recvfrom(int sock, void *__restrict buffer, size_t length,
 		sin.sin_family= AF_INET;
 		sin.sin_addr.s_addr= io_hdrp->uih_src_addr;
 		sin.sin_port= io_hdrp->uih_src_port;
+		sin.sin_len= sizeof(sin);
 		len= *address_len;
 		if (len > sizeof(sin))
 			len= sizeof(sin);

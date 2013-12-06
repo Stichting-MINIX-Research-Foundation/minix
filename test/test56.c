@@ -45,6 +45,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
+#include <sys/ucred.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/types.h>
@@ -306,8 +307,8 @@ void test_header(void)
 		test_fail("SUN_LEN(&sun) should be 5");
 	}
 
-	if (PF_UNIX != PF_LOCAL || PF_UNIX != PF_FILE || PF_UNIX != AF_UNIX) {
-		test_fail("PF_UNIX, PF_LOCAL, PF_FILE, and AF_UNIX");
+	if (PF_UNIX != PF_LOCAL || PF_UNIX != AF_UNIX) {
+		test_fail("PF_UNIX, PF_LOCAL and AF_UNIX");
 	}
 }
 
@@ -2242,7 +2243,7 @@ void test_scm_credentials(void)
 					cmsg = CMSG_NXTHDR(&msg2, cmsg)) {
 
 		if (cmsg->cmsg_level == SOL_SOCKET &&
-				cmsg->cmsg_type == SCM_CREDENTIALS) {
+				cmsg->cmsg_type == SCM_CREDS) {
 
 			memcpy(&cred, CMSG_DATA(cmsg), sizeof(struct uucred));
 			break;

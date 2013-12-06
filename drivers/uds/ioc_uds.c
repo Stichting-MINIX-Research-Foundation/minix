@@ -791,7 +791,7 @@ recv_cred(devminor_t minor, struct ancillary *data,
 
 	cmsg->cmsg_len = CMSG_LEN(sizeof(struct uucred));
 	cmsg->cmsg_level = SOL_SOCKET;
-	cmsg->cmsg_type = SCM_CREDENTIALS;
+	cmsg->cmsg_type = SCM_CREDS;
 	memcpy(CMSG_DATA(cmsg), &data->cred, sizeof(struct uucred));
 
 	return OK;

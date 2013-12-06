@@ -95,6 +95,7 @@ static int _tcp_getpeername(int sock, struct sockaddr *__restrict address,
 	sin.sin_family= AF_INET;
 	sin.sin_addr.s_addr= tcpconfp->nwtc_remaddr;
 	sin.sin_port= tcpconfp->nwtc_remport;
+	sin.sin_len = sizeof(sin);
 
 	len= *address_len;
 	if (len > sizeof(sin))
@@ -122,6 +123,7 @@ static int _udp_getpeername(int sock, struct sockaddr *__restrict address,
 	sin.sin_family= AF_INET;
 	sin.sin_addr.s_addr= udpopt->nwuo_remaddr;
 	sin.sin_port= udpopt->nwuo_remport;
+	sin.sin_len = sizeof(sin);
 
 	len= *address_len;
 	if (len > sizeof(sin))

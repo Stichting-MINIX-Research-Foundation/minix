@@ -113,10 +113,8 @@ __RCSID("$NetBSD: ftpd.c,v 1.198 2012/06/19 06:06:34 dholland Exp $");
 #include <sys/resource.h>
 
 #include <netinet/in.h>
-#ifndef __minix
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
-#endif
 
 #define	FTP_NAMES
 #include <arpa/ftp.h>

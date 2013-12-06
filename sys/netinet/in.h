@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.86 2009/09/14 10:36:50 degroote Exp $	*/
+/*	$NetBSD: in.h,v 1.87 2012/06/22 14:54:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -234,14 +234,6 @@ struct in_addr {
 /*
  * Socket address, internet style.
  */
-#ifdef __minix
-struct sockaddr_in
-{
-	sa_family_t	sin_family;
-	in_port_t	sin_port;
-	struct in_addr	sin_addr;
-};
-#else /* !__minix */
 struct sockaddr_in {
 	uint8_t		sin_len;
 	sa_family_t	sin_family;
@@ -249,11 +241,9 @@ struct sockaddr_in {
 	struct in_addr	sin_addr;
 	__int8_t	sin_zero[8];
 };
-#endif /* !__minix */
 
 #define	INET_ADDRSTRLEN                 16
 
-#ifndef __minix
 /*
  * Structure used to describe IP options.
  * Used to store options internally, to pass them to a process,
@@ -269,13 +259,11 @@ struct ip_opts {
 	__int8_t	ip_opts[40];	/* actually variable in size */
 #endif
 };
-#endif /* __minix */
 
 /*
  * Options for use with [gs]etsockopt at the IP level.
  * First word of comment is data type; bool is stored in int.
  */
-#ifndef __minix
 #define	IP_OPTIONS		1    /* buf/ip_opts; set/get IP options */
 #define	IP_HDRINCL		2    /* int; header is included with data */
 #define	IP_TOS			3    /* int; IP type of service and preced. */
@@ -287,10 +275,9 @@ struct ip_opts {
 #define	IP_MULTICAST_IF		9    /* in_addr; set/get IP multicast i/f  */
 #define	IP_MULTICAST_TTL	10   /* u_char; set/get IP multicast ttl */
 #define	IP_MULTICAST_LOOP	11   /* u_char; set/get IP multicast loopback */
-#endif /* !__minix */
 #define	IP_ADD_MEMBERSHIP	12   /* ip_mreq; add an IP group membership */
 #define	IP_DROP_MEMBERSHIP	13   /* ip_mreq; drop an IP group membership */
-#ifndef __minix
+#define	IP_PORTALGO		18   /* int; port selection algo (rfc6056) */
 #define	IP_PORTRANGE		19   /* int; range to use for ephemeral port */
 #define	IP_RECVIF		20   /* bool; receive reception if w/dgram */
 #define	IP_ERRORMTU		21   /* int; get MTU of last xmit = EMSGSIZE */
@@ -299,16 +286,13 @@ struct ip_opts {
 #endif
 #define	IP_RECVTTL		23   /* bool; receive IP TTL w/dgram */
 #define	IP_MINTTL		24   /* minimum TTL for packet or drop */
-#endif /* !__minix */
 
-#ifndef __minix
 /*
  * Defaults and limits for options
  */
 #define	IP_DEFAULT_MULTICAST_TTL  1	/* normally limit m'casts to 1 hop  */
 #define	IP_DEFAULT_MULTICAST_LOOP 1	/* normally hear sends if a member  */
 #define	IP_MAX_MEMBERSHIPS	20	/* per socket; must fit in one mbuf */
-#endif /* !__minix */
 
 /*
  * Argument structure for IP_ADD_MEMBERSHIP and IP_DROP_MEMBERSHIP.
@@ -318,7 +302,6 @@ struct ip_mreq {
 	struct	in_addr imr_interface;	/* local IP address of interface */
 };
 
-#ifndef __minix
 /*
  * Argument for IP_PORTRANGE:
  * - which range to search when port is unspecified at bind() or connect()
@@ -502,14 +485,12 @@ struct ip_mreq {
 	{ "stats", CTLTYPE_STRUCT }, \
 }
 #endif /* _NETBSD_SOURCE */
-#endif /* __minix */
 
 /* INET6 stuff */
 #define	__KAME_NETINET_IN_H_INCLUDED_
 #include <netinet6/in6.h>
 #undef __KAME_NETINET_IN_H_INCLUDED_
 
-#ifndef __minix
 #ifdef _KERNEL
 /*
  * in_cksum_phdr:
@@ -617,6 +598,5 @@ sockaddr_in_alloc(const struct in_addr *addr, in_port_t port, int flags)
 	return sa;
 }
 #endif /* _KERNEL */
-#endif /* __minix */
 
 #endif /* !_NETINET_IN_H_ */

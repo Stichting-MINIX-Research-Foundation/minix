@@ -2,6 +2,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/socket.h>
+#include <sys/ucred.h>
 
 /*
  * get the effective user ID and effective group ID of a peer

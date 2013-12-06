@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp.h,v 1.28 2007/12/25 18:33:47 perry Exp $	*/
+/*	$NetBSD: tcp.h,v 1.30 2012/01/07 20:20:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -37,29 +37,30 @@
 #include <sys/featuretest.h>
 
 #if defined(_NETBSD_SOURCE)
+#include <sys/types.h>
 
-typedef u_int32_t tcp_seq;
+typedef uint32_t tcp_seq;
 /*
  * TCP header.
  * Per RFC 793, September, 1981.
  * Updated by RFC 3168, September, 2001.
  */
 struct tcphdr {
-	u_int16_t th_sport;		/* source port */
-	u_int16_t th_dport;		/* destination port */
+	uint16_t th_sport;		/* source port */
+	uint16_t th_dport;		/* destination port */
 	tcp_seq	  th_seq;		/* sequence number */
 	tcp_seq	  th_ack;		/* acknowledgement number */
 #if BYTE_ORDER == LITTLE_ENDIAN
 	/*LINTED non-portable bitfields*/
-	u_int8_t  th_x2:4,		/* (unused) */
+	uint8_t  th_x2:4,		/* (unused) */
 		  th_off:4;		/* data offset */
 #endif
 #if BYTE_ORDER == BIG_ENDIAN
 	/*LINTED non-portable bitfields*/
-	u_int8_t  th_off:4,		/* data offset */
+	uint8_t  th_off:4,		/* data offset */
 		  th_x2:4;		/* (unused) */
 #endif
-	u_int8_t  th_flags;
+	uint8_t  th_flags;
 #define	TH_FIN	  0x01
 #define	TH_SYN	  0x02
 #define	TH_RST	  0x04
@@ -68,9 +69,9 @@ struct tcphdr {
 #define	TH_URG	  0x20
 #define	TH_ECE	  0x40
 #define	TH_CWR	  0x80
-	u_int16_t th_win;			/* window */
-	u_int16_t th_sum;			/* checksum */
-	u_int16_t th_urp;			/* urgent pointer */
+	uint16_t th_win;			/* window */
+	uint16_t th_sum;			/* checksum */
+	uint16_t th_urp;			/* urgent pointer */
 } __packed;
 
 #define	TCPOPT_EOL		0
@@ -115,5 +116,18 @@ struct tcphdr {
  * User-settable options (used with setsockopt).
  */
 #define	TCP_NODELAY	1	/* don't delay send to coalesce packets */
+#define	TCP_MAXSEG	2	/* set maximum segment size */
+#define	TCP_KEEPIDLE	3
+#ifdef notyet
+#define	TCP_NOPUSH	4	/* reserved for FreeBSD compat */
+#endif
+#define	TCP_KEEPINTVL	5
+#define	TCP_KEEPCNT	6
+#define	TCP_KEEPINIT	7
+#ifdef notyet
+#define	TCP_NOOPT	8	/* reserved for FreeBSD compat */
+#endif
+#define	TCP_MD5SIG	0x10	/* use MD5 digests (RFC2385) */
+#define	TCP_CONGCTL	0x20	/* selected congestion control */
 
 #endif /* !_NETINET_TCP_H_ */
