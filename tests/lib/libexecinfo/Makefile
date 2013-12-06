@@ -2,6 +2,10 @@
 
 .include <bsd.own.mk>
 
+.if defined(__MINIX)
+USE_BITCODE:=	no # LSC: can't use bitcode for this.
+.endif # defined(__MINIX)
+
 TESTSDIR=	${TESTSBASE}/lib/libexecinfo
 
 TESTS_C+=	t_backtrace

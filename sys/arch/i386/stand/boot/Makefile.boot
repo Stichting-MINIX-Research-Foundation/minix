@@ -110,8 +110,6 @@ KERN_AS= library
 LIBKERN= ${KERNLIB}
 .else
 
-# When using gold linker, specify the linker script
-GOLDLINKERSCRIPT?= ${LDS_N}
 USE_BITCODE=no
 
 # use MINIX minc

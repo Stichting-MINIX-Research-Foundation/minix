@@ -161,8 +161,12 @@ Memory::protectMappedMemory(const MemoryBlock &M, unsigned Flags) {
 
   int Protect = getPosixProtectionFlags(Flags);
 
+#if !defined(__minix)
   int Result = ::mprotect(M.Address, M.Size, Protect);
   if (Result != 0)
+#else
+  errno = ENOSYS;
+#endif /* !defined(__minix) */
     return error_code(errno, system_category());
 
   if (Flags & MF_EXEC)

@@ -562,7 +562,11 @@ error_code mapped_file_region::init(int FD, bool CloseFD, uint64_t Offset) {
       return error_code(errno, system_category());
   }
 
+#if !defined(__minix)
   int flags = (Mode == readwrite) ? MAP_SHARED : MAP_PRIVATE;
+#else
+  int flags = MAP_PRIVATE;
+#endif /* ! defined(__minix) */
   int prot = (Mode == readonly) ? PROT_READ : (PROT_READ | PROT_WRITE);
 #ifdef MAP_FILE
   flags |= MAP_FILE;
@@ -737,7 +741,11 @@ error_code map_file_pages(const Twine &path, off_t file_offset, size_t size,
   if ( ofd == -1 )
     return error_code(errno, system_category());
   AutoFD fd(ofd);
+#if !defined(__minix)
   int flags = map_writable ? MAP_SHARED : MAP_PRIVATE;
+#else
+  int flags = MAP_PRIVATE;
+#endif /* !defined(__minix) */
   int prot = map_writable ? (PROT_READ|PROT_WRITE) : PROT_READ;
 #ifdef MAP_FILE
   flags |= MAP_FILE;

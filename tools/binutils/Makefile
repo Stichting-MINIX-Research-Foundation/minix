@@ -32,7 +32,10 @@ INSTALL_TARGET+=install-gold
 CONFIGURE_ARGS+=	\
 	--enable-lto \
 	--enable-plugins
-.if ${USE_BITCODE:Uno} == "yes"
+# LSC: Here we use the MK variable, as we have to select the right default
+#      linker. Problem is, when Gold is not seen, USE_BITCODE is forced to
+#      "no".
+.if ${MKBITCODE:Uno} == "yes"
 CONFIGURE_ARGS+= \
 	--enable-ld=yes \
 	--enable-gold=default
@@ -40,7 +43,7 @@ CONFIGURE_ARGS+= \
 CONFIGURE_ARGS+= \
 	--enable-ld=default \
 	--enable-gold=yes
-.endif # ${USE_BITCODE:Uno} == "yes"
+.endif # ${MKBITCODE:Uno} == "yes"
 .endif # defined(__MINIX)
 .include "${.CURDIR}/../Makefile.gnuhost"
 

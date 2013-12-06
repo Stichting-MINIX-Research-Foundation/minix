@@ -230,6 +230,7 @@ void InitHeaderSearch::AddDefaultCIncludePaths(const llvm::Triple &triple,
     case llvm::Triple::FreeBSD:
     case llvm::Triple::NetBSD:
     case llvm::Triple::OpenBSD:
+    case llvm::Triple::Minix:
     case llvm::Triple::Bitrig:
       break;
     default:
@@ -436,10 +437,6 @@ AddDefaultCPlusPlusIncludePaths(const llvm::Triple &triple, const HeaderSearchOp
                                 t, "", "", triple);
     break;
   }
-  case llvm::Triple::Minix:
-    AddGnuCPlusPlusIncludePaths("/usr/gnu/include/c++/4.4.3",
-                                "", "", "", triple);
-    break;
   case llvm::Triple::Solaris:
     AddGnuCPlusPlusIncludePaths("/usr/gcc/4.5/include/c++/4.5.2/",
                                 "i386-pc-solaris2.11", "", "", triple);

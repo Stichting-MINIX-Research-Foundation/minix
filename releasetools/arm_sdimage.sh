@@ -22,7 +22,7 @@ fi
 : ${DESTDIR=${OBJ}/destdir.$ARCH}
 : ${RELEASETOOLSDIR=./releasetools/}
 : ${FSTAB=${DESTDIR}/etc/fstab}
-: ${BUILDVARS=}
+: ${BUILDVARS=-V MKGCCCMDS=yes -V MKLLVM=no}
 : ${BUILDSH=build.sh}
 
 #

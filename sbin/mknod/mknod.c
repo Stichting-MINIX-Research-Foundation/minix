@@ -331,6 +331,9 @@ callPack(pack_t *f, int n, u_long *numbers)
 
 #ifdef KERN_DRIVERS
 static void
+#if defined(__minix)
+__dead
+#endif /* defined(__minix) */
 get_device_info(void)
 {
 #if defined(__minix)

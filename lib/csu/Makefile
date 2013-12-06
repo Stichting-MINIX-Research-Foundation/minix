@@ -2,6 +2,10 @@
 
 .include <bsd.own.mk>
 
+.if defined(__MINIX)
+USE_BITCODE:=	no
+.endif # defined(__MINIX)
+
 .if ${USE_COMPILERCRTSTUFF} != "yes"
 
 CSU_MACHINE_ARCH?=	${MACHINE_ARCH}

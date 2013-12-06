@@ -68,7 +68,7 @@
 #define MEMORY_QUERY_SYSCTL_MIB "hw.usermem64"
 
 /* Define to the memory query type */
-#define MEMORY_QUERY_TYPE "sysctlbyname"
+#define MEMORY_QUERY_TYPE "sysctl"
 
 /* Name of package */
 #define PACKAGE "kyua-cli"

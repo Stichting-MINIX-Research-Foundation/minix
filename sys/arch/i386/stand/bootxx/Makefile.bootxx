@@ -5,6 +5,9 @@ S=	${.CURDIR}/../../../../..
 AFLAGS.bootxx.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 AFLAGS.label.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 AFLAGS.pbr.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
+.if defined(__MINIX)
+AFLAGS.bootxx.S+= -Wa,--divide
+.endif
 
 PIE_CFLAGS=
 PIE_LDFLAGS=
@@ -70,11 +73,7 @@ CPPFLAGS+= -DEPIA_HACK
 CPUFLAGS=  -march=i386 -mtune=i386
 .endif
 
-.if defined(__MINIX)
-CFLAGS+= -Wmissing-prototypes -Wstrict-prototypes
-.else
 CFLAGS+= -Wall -Wmissing-prototypes -Wstrict-prototypes
-.endif
 CPPFLAGS+= -nostdinc -D_STANDALONE
 CPPFLAGS+= -I$S
 
@@ -105,10 +104,6 @@ LIBI386= ${I386LIB}
 ### find out what to use for libsa
 SA_AS= library
 SAMISCMAKEFLAGS+="SA_USE_LOADFILE=yes"
-.if defined(__MINIX)
-SAMISCMAKEFLAGS+="SA_INCLUDE_NET=no"
-AFLAGS+=       -Wa,--divide
-.endif
 .include "${S}/lib/libsa/Makefile.inc"
 LIBSA= ${SALIB}
 
@@ -119,8 +114,8 @@ KERN_AS=        library
 LIBKERN=        ${KERNLIB}
 .else
 
-# When using gold linker, specify the linker script
-GOLDLINKERSCRIPT?= ${LDS_N}
+SAMISCMAKEFLAGS+="SA_INCLUDE_NET=no"
+
 USE_BITCODE=no
 
 # use MINIX minc

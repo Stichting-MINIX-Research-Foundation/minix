@@ -203,19 +203,20 @@ LIBSTRIPSHLIBOBJS=	yes
 .endif
 
 .if defined(__MINIX) && ${USE_BITCODE:Uno} == "yes"
-
-SHLIB_SHFLAGS+=		${${HAVE_GOLD:Uno} != "no":? -Wl,--script,${LDS_SHARED_LIB}:}
+SHLIB_SHFLAGS+= -L ${DESTDIR}/usr/lib
+SHLIB_SHFLAGS+= -Wl,-plugin=${GOLD_PLUGIN} \
+		-Wl,-plugin-opt=-disable-opt
 
 .S.bc: ${.TARGET:.bc=.o}
 	rm -f ${.TARGET}
 	ln ${.TARGET:.bc=.o} ${.TARGET}
 .c.bc:
 	${_MKTARGET_COMPILE}
-	${COMPILE.c} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC} -o - \
-		-Qunused-arguments -E -D"__weak_alias(X, Y)=__weak_alias2( __WEAK__ ## X, __WEAK__ ## Y)" \
-	| sed 's/__WEAK__//g' \
-	| ${COMPILE.c} -flto ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} -x c - \
-		-o ${.TARGET} -D"STRINGIFY(a)=#a" -D"__weak_alias2(X, Y)=_Pragma(STRINGIFY(weak X = Y))"
+	${COMPILE.c} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC} -o ${.TARGET} -flto
+
+.cc.bc .cxx.bc .cpp.bc:
+	${_MKTARGET_COMPILE}
+	${COMPILE.cc} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC} -o ${.TARGET} -flto
 .endif # defined(__MINIX) && ${USE_BITCODE:Uno} == "yes"
 .c.o:
 	${_MKTARGET_COMPILE}
@@ -549,7 +550,11 @@ _INSTRANLIB=
 .else
 _ARFL=crs
 _ARRANFL=s
+.if ${USE_BITCODE:Uno} == "yes"
+_INSTRANLIB=${empty(PRESERVE):?-a "${AR} --plugin ${GOLD_PLUGIN} -s":}
+.else
 _INSTRANLIB=${empty(PRESERVE):?-a "${RANLIB} -t":}
+.endif # ${USE_BITCODE:Uno} == "yes"
 .endif
 
 # If you change this, please consider reflecting the change in
@@ -578,11 +583,20 @@ CLEANFILES+=	${_YLSRCS}
 ${STOBJS} ${POBJS} ${GOBJS} ${SOBJS} ${LOBJS}: ${DPSRCS}
 
 .if ${USE_BITCODE:Uno} == "yes"
-BCOBJS+=${OBJS:.o=.bc}
-${LIB_bc.a}:: ${BCOBJS}
+
+.if !target(__archivebuildbc)
+__archivebuildbc: .USE
 	${_MKTARGET_BUILD}
 	rm -f ${.TARGET}
-	${AR} ${_ARFL} ${.TARGET} `NM=${NM} ${LORDER} ${.ALLSRC:M*bc} | ${TSORT}`
+	${AR} ${_ARFL} --plugin ${GOLD_PLUGIN} ${.TARGET} ${.ALLSRC:M*bc}
+.endif
+
+# LSC: Ignore libunwind in the bitcode archive, otherwise final linking chokes
+#      on libunwind hidden assembly symbols.
+BCOBJS+=${OBJS:Nlibunwind.*:.o=.bc}
+ALLOBJS+=${BCOBJS}
+${_LIB_bc.a}:: ${BCOBJS} __archivebuildbc
+
 .endif # ${USE_BITCODE:Uno} == "yes"
 
 ${_LIB.a}:: ${STOBJS} __archivebuild
@@ -625,7 +639,6 @@ LDLIBC ?= -nodefaultlibs
 LDADD+= -lgcc
 .else
 LDADD+= ${${ACTIVE_CC} == "gcc":? -lgcc:}
-LDADD+= ${${ACTIVE_CC} == "clang":?-lCompilerRT-Generic:}
 .if ${MACHINE_ARCH} == "earm"
 LDADD+= ${${ACTIVE_CC} == "gcc":? -lgcc_eh:}
 .endif # ${MACHINE_ARCH} == "earm"
@@ -656,7 +669,6 @@ ${_LIB.so.full}: ${SOLIB} ${DPADD} ${DPLIBC} \
 	rm -f ${.TARGET}
 	${LIBCC} ${LDLIBC} -Wl,-x -shared ${SHLIB_SHFLAGS} \
 	    ${_LDFLAGS.${_LIB}} -o ${.TARGET} ${_LIBLDOPTS} \
-	    ${${USE_BITCODE:Uno} == "yes":? -Wl,-plugin=/usr/pkg/lib/bfd-plugins/LLVMgold.so -Wl,-plugin-opt=-disable-opt:} \
 	    -Wl,--whole-archive ${SOLIB} \
 	    -Wl,--no-whole-archive ${_LDADD.${_LIB}}
 #  We don't use INSTALL_SYMLINK here because this is just
@@ -741,19 +753,19 @@ LIBCLEANFILES6+= ${_LIB_bc.a} ${BCOBJS} ${BCOBJS:=.tmp}
 libinstall::
 
 .if ${USE_BITCODE:Uno} == "yes"
-libinstall:: ${_DEST.LIB}/bc/${_LIB_bc.a}
-.PRECIOUS: ${_DEST.LIB}/bc/${_LIB_bc.a}
+libinstall:: ${_DEST.LIB}/bc/${_LIB.a}
+.PRECIOUS: ${_DEST.LIB}/bc/${_LIB.a}
 
 .if ${MKUPDATE} == "no"
 .if !defined(BUILD) && !make(all) && !make(${_LIB_bc.a})
-${_DEST.LIB}/bc/${_LIB_bc.a}! .MADE
+${_DEST.LIB}/bc/${_LIB.a}! .MADE
 .endif
-${_DEST.LIB}/bc/${_LIB_bc.a}! ${_LIB_bc.a} __archiveinstall
+${_DEST.LIB}/bc/${_LIB.a}! ${_LIB_bc.a} __archiveinstall
 .else
 .if !defined(BUILD) && !make(all) && !make(${_LIB_bc.a})
-${_DEST.LIB}/bc/${_LIB_bc.a}: .MADE
+${_DEST.LIB}/bc/${_LIB.a}: .MADE
 .endif
-${_DEST.LIB}/bc/${_LIB_bc.a}: ${_LIB_bc.a} __archiveinstall
+${_DEST.LIB}/bc/${_LIB.a}: ${_LIB_bc.a} __archiveinstall
 .endif
 .endif # ${USE_BITCODE:Uno} == "yes"
 

@@ -474,26 +474,19 @@ _CCLINK.${_P}=	${CXX} ${_CCLINKFLAGS}
 .endfor
 
 # Language-independent definitions.
-.if defined(__MINIX) && ${USE_BITCODE:Uno} == "yes"
+.if defined(__MINIX)
+.if ${USE_BITCODE:Uno} == "yes"
 CFLAGS+= -flto
+.endif # ${USE_BITCODE:Uno} == "yes"
 
-.  if ${LD_STATIC:U} != "-static"
-GOLDLINKERSCRIPT?= ${LDS_DYNAMIC_BIN}
-.  else
-GOLDLINKERSCRIPT?= ${LDS_STATIC_BIN}
-.  endif
-
-.endif
+.if ${USE_BITCODE:Uyes} == "no"
+#LSC Gold linker seems to require the library directory to be set up if
+#    a sysroot parameter has been given.
+LDFLAGS+= -L ${DESTDIR}/usr/lib
+.endif # ${USE_BITCODE:U} == "no"
+.endif # defined(__MINIX)
 
 .for _P in ${PROGS} ${PROGS_CXX}					# {
-
-.if defined(__MINIX) && ${HAVE_GOLD:U} != ""
-GOLDLINKERSCRIPT.${_P}?= ${GOLDLINKERSCRIPT}
-
-.  if ${GOLDLINKERSCRIPT.${_P}:U} != ""
-LDFLAGS.${_P}:=-Wl,--script,${GOLDLINKERSCRIPT.${_P}} ${LDFLAGS.${_P}}
-.  endif
-.endif # defined(__MINIX) && ${HAVE_GOLD:U} == ""
 
 BINDIR.${_P}?=		${BINDIR}
 PROGNAME.${_P}?=	${_P}
@@ -586,44 +579,38 @@ ${OBJS.${_P}} ${LOBJS.${_P}}: ${DPSRCS}
 .if defined(__MINIX) && ${USE_BITCODE:Uno} == "yes"
 CLEANFILES+= ${_P}.opt.bcl ${_P}.bcl ${_P}.bcl.o
 
-# We may (or not) be using a pass.
-. if ${LLVM_PASS:UNO_PASS} != "NO_PASS"
-_LLVM_PASS_ARGS=	-load ${LLVM_PASS} ${LLVM_PASS_ARGS}
-_TARGET_BCL=	${_P}.opt.bcl
-.  else
-_TARGET_BCL=	${_P}.bcl
-. endif # ${LLVM_PASS:UNO_PASS} != "NO_PASS"
-
-
 ${_P}.bcl: .gdbinit ${LIBCRT0} ${LIBCRTI} ${OBJS.${_P}} ${LIBC} ${LIBCRTBEGIN} \
     ${LIBCRTEND} ${_DPADD.${_P}}
 	${_MKTARGET_LINK}
 	${_CCLINK.${_P}} \
 		-o ${.TARGET} \
 		-nostartfiles \
-		-L/usr/lib/bc \
+		-L${DESTDIR}/usr/lib/bc \
 		${OBJS.${_P}} ${LLVM_LINK_ARGS} ${_LDADD.${_P}:N-shared} \
-		${_LDSTATIC.${_P}} \
+		${_LDSTATIC.${_P}} ${_PROGLDOPTS} \
 		-Wl,-r \
-		-Wl,-plugin=/usr/pkg/lib/bfd-plugins/LLVMgold.so,-plugin-opt=-disable-opt,-plugin-opt=-disable-inlining,-plugin-opt=emit-llvm
+		${BITCODE_LD_FLAGS} \
+		-Wl,-plugin-opt=emit-llvm
 
 ${_P}.opt.bcl: ${_P}.bcl ${LLVM_PASS}
 	${_MKTARGET_LINK}
-	opt -disable-opt ${_LLVM_PASS_ARGS} -o ${.TARGET} ${_P}.bcl
+	${OPT} ${OPTFLAGS} -o ${.TARGET} ${_P}.bcl
 
-${_P}.bcl.o: ${_TARGET_BCL}
+${_P}.bcl.o: ${_P}.opt.bcl
 	${_MKTARGET_LINK}
-	llc -O1 -filetype=obj -o ${.TARGET} ${.ALLSRC}
+	${LLC} -O1 -march=x86 -mcpu=i586 -filetype=obj -o ${.TARGET} ${.ALLSRC}
 
 ${_P}: ${_P}.bcl.o
+.if !commands(${_P})
 	${_MKTARGET_LINK}
 	${_CCLINK.${_P}} \
-		-o ${.TARGET} \
-		-L/usr/lib/bc \
-		${.TARGET}.bcl.o ${_LDADD.${_P}} \
-		${_LDSTATIC.${_P}} \
-		-Wl,--script,${GOLDLINKERSCRIPT.${_P}} \
-		-Wl,-plugin=/usr/pkg/lib/bfd-plugins/LLVMgold.so,-plugin-opt=-disable-opt,-plugin-opt=-disable-inlining
+		${_LDFLAGS.${_P}} \
+		-L${DESTDIR}/usr/lib \
+		${_LDSTATIC.${_P}} -o ${.TARGET} \
+		${.TARGET}.bcl.o ${_PROGLDOPTS} ${_LDADD.${_P}} \
+		${BITCODE_LD_FLAGS} \
+		-Wl,--allow-multiple-definition
+.endif	# !commands(${_P})
 
 .else
 ${_P}: .gdbinit ${LIBCRT0} ${LIBCRTI} ${OBJS.${_P}} ${LIBC} ${LIBCRTBEGIN} \

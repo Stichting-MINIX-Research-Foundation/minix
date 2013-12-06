@@ -52,11 +52,12 @@ static ssize_t hello_read(devminor_t UNUSED(minor), u64_t position,
     u64_t dev_size;
     char *ptr;
     int ret;
+    char *buf = HELLO_MESSAGE;
 
     printf("hello_read()\n");
 
     /* This is the total size of our device. */
-    dev_size = (u64_t) strlen(HELLO_MESSAGE);
+    dev_size = (u64_t) strlen(buf);
 
     /* Check for EOF, and possibly limit the read size. */
     if (position >= dev_size) return 0;		/* EOF */
@@ -64,7 +65,7 @@ static ssize_t hello_read(devminor_t UNUSED(minor), u64_t position,
         size = (size_t)(dev_size - position);	/* limit size */
 
     /* Copy the requested part to the caller. */
-    ptr = HELLO_MESSAGE + (size_t)position;
+    ptr = buf + (size_t)position;
     if ((ret = sys_safecopyto(endpt, grant, 0, (vir_bytes) ptr, size)) != OK)
         return ret;
 

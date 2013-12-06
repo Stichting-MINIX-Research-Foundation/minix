@@ -1,0 +1,12 @@
+ /set type=dir uid=0 gid=0 mode=0755
+
+./usr/include/c++
+./usr/include/c++/backward
+./usr/include/c++/bits
+./usr/include/c++/debug
+./usr/include/c++/decimal
+./usr/include/c++/ext
+./usr/include/c++/experimental
+./usr/include/c++/parallel
+./usr/include/c++/tr1
+./usr/include/c++/tr1_impl

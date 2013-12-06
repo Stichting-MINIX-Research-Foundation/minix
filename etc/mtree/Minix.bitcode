@@ -1,0 +1,8 @@
+ /set type=dir uid=0 gid=0 mode=0755
+
+./usr/tests/lib
+./usr/tests/lib/csu
+./usr/tests/lib/csu/bc
+./usr/tests/lib/libc
+./usr/tests/lib/libc/tls
+./usr/tests/lib/libc/tls/bc

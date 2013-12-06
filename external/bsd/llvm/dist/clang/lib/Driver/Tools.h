@@ -474,9 +474,10 @@ namespace gnutools {
   /// minix -- Directly call GNU Binutils assembler and linker
 namespace minix {
   class LLVM_LIBRARY_VISIBILITY Assemble : public Tool  {
+
   public:
-    Assemble(const ToolChain &TC) : Tool("minix::Assemble", "assembler",
-                                         TC) {}
+    Assemble(const ToolChain &TC)
+      : Tool("minix::Assemble", "assembler", TC) {}
 
     virtual bool hasIntegratedCPP() const { return false; }
 
@@ -487,8 +488,10 @@ namespace minix {
                               const char *LinkingOutput) const;
   };
   class LLVM_LIBRARY_VISIBILITY Link : public Tool  {
+
   public:
-    Link(const ToolChain &TC) : Tool("minix::Link", "linker", TC) {}
+    Link(const ToolChain &TC)
+      : Tool("minix::Link", "linker", TC) {}
 
     virtual bool hasIntegratedCPP() const { return false; }
     virtual bool isLinkJob() const { return true; }

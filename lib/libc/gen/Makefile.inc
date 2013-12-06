@@ -11,7 +11,7 @@
 # Unsupported by Minix.
 # 	closefrom.c confstr.c extattr.c getdevmajor.c \
 #	pthread_atfork.c setdomainname.c setproctitle.c \
-#	sysctl.c sysctlbyname.c sysctlgetmibinfo.c sysctlnametomib.c \
+#	sysctlbyname.c sysctlgetmibinfo.c sysctlnametomib.c
 #	wait3.c
 
 # To be ported
@@ -41,10 +41,9 @@ SRCS+= 	_errno.c alarm.c alphasort.c arc4random.c assert.c basename.c clock.c \
 	rewinddir.c scandir.c seekdir.c \
 	sethostname.c setjmperr.c setmode.c setprogname.c \
 	shquote.c shquotev.c sighold.c sigignore.c siginterrupt.c \
-	sysctl.c sysctlbyname.c sysctlgetmibinfo.c sysctlnametomib.c \
 	siglist.c signal.c signame.c sigrelse.c \
 	sigset.c sigsetops.c sleep.c \
-	stringlist.c sysconf.c \
+	stringlist.c sysconf.c sysctl.c \
 	syslog.c telldir.c time.c \
 	times.c toascii.c tolower_.c ttyname.c ttyslot.c toupper_.c ualarm.c \
 	ulimit.c uname.c unvis.c usleep.c utime.c utimens.c utmp.c \

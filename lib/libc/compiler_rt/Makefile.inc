@@ -11,8 +11,10 @@ COMPILER_RT_ARCH_DIR=	${COMPILER_RT_SRCDIR}/lib/${MACHINE_ARCH}
 .endif
 
 
+.if !defined(__MINIX)
 .PATH: ${COMPILER_RT_CPU_DIR}
 .PATH: ${COMPILER_RT_ARCH_DIR}
+.endif # !defined(__MINIX)
 .PATH: ${COMPILER_RT_SRCDIR}/lib
 
 # Complex support needs parts of libm
@@ -155,6 +157,7 @@ GENERIC_SRCS+= \
 	gcc_qsub.c
 .endif
 
+.if !defined(__MINIX)
 .for src in ${GENERIC_SRCS}
 .  if exists(${COMPILER_RT_CPU_DIR}/${src:R}.S) || \
       exists(${COMPILER_RT_ARCH_DIR}/${src:R}.S)
@@ -164,3 +167,14 @@ SRCS+=	${src}
 COPTS.${src}+=	-Wno-error=missing-prototypes
 .  endif
 .endfor
+.else
+# For MINIX: do not pull in the assembly symbols, as they are not PIC ready
+.for src in ${GENERIC_SRCS}
+SRCS+=	${src}
+COPTS.${src}+=	-Wno-error=missing-prototypes
+.endfor
+
+.for src in muldc3.c
+COPTS.${src}+=	-fbuiltin
+.endfor
+.endif # !defined(__MINIX)

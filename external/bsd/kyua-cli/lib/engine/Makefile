@@ -29,4 +29,7 @@ SRCS+=		debug_test.cpp \
 		run_tests.cpp \
 		scan_action.cpp
 
+.if defined(__MINIX)
+NOCLANGERROR=	yes
+.endif # defined(__MINIX)
 .include <bsd.lib.mk>

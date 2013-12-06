@@ -50,6 +50,8 @@ int printf(const char *fmt, ...);
 void kputc(int c);
 __dead void panic(const char *fmt, ...)
      __attribute__((__format__(__printf__,1,2)));
+void panic_hook(void);
+void __panic_hook(void);
 int getuptime(clock_t *ticks, clock_t *realtime, time_t *boottime);
 int getticks(clock_t *ticks);
 int tickdelay(clock_t ticks);

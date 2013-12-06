@@ -130,7 +130,9 @@ static char *disktype = NULL;
 #endif /* !defined(__minix) */
 static char device[MAXPATHLEN];
 
+#if !defined(__minix)
 static const char lmsg[] = "%s: can't read disk label";
+#endif /* !defined(__minix) */
 
 int
 main(int argc, char *argv[])

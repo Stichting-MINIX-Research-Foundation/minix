@@ -2078,8 +2078,17 @@ void NetBSD::AddClangCXXStdlibIncludeArgs(const ArgList &DriverArgs,
 
 Minix::Minix(const Driver &D, const llvm::Triple& Triple, const ArgList &Args)
   : Generic_ELF(D, Triple, Args) {
-  getFilePaths().push_back(getDriver().Dir + "/../lib");
-  getFilePaths().push_back("/usr/lib");
+   if (getDriver().UseStdLib) {
+    // When targeting a 32-bit platform, try the special directory used on
+    // 64-bit hosts, and only fall back to the main library directory if that
+    // doesn't work.
+    // FIXME: It'd be nicer to test if this directory exists, but I'm not sure
+    // what all logic is needed to emulate the '=' prefix here.
+    if (Triple.getArch() == llvm::Triple::x86)
+      getFilePaths().push_back("=/usr/lib/i386");
+
+    getFilePaths().push_back("=/usr/lib");
+  }
 }
 
 Tool *Minix::buildAssembler() const {
@@ -2088,6 +2097,52 @@ Tool *Minix::buildAssembler() const {
 
 Tool *Minix::buildLinker() const {
   return new tools::minix::Link(*this);
+}
+
+ToolChain::CXXStdlibType
+Minix::GetCXXStdlibType(const ArgList &Args) const {
+  if (Arg *A = Args.getLastArg(options::OPT_stdlib_EQ)) {
+    StringRef Value = A->getValue();
+    if (Value == "libstdc++")
+      return ToolChain::CST_Libstdcxx;
+    if (Value == "libc++")
+      return ToolChain::CST_Libcxx;
+
+    getDriver().Diag(diag::err_drv_invalid_stdlib_name)
+      << A->getAsString(Args);
+  }
+
+#if 0 /* LSC: We only us libcxx by default */
+  unsigned Major, Minor, Micro;
+  getTriple().getOSVersion(Major, Minor, Micro);
+  if (Major >= 7 || (Major == 6 && Minor == 99 && Micro >= 23) || Major == 0) {
+    if (getArch() == llvm::Triple::x86 || getArch() == llvm::Triple::x86_64)
+      return ToolChain::CST_Libcxx;
+  }
+  return ToolChain::CST_Libstdcxx;
+#else
+  return ToolChain::CST_Libcxx;
+#endif /* 0 */
+}
+
+void Minix::AddClangCXXStdlibIncludeArgs(const ArgList &DriverArgs,
+                                          ArgStringList &CC1Args) const {
+  if (DriverArgs.hasArg(options::OPT_nostdlibinc) ||
+      DriverArgs.hasArg(options::OPT_nostdincxx))
+    return;
+
+  switch (GetCXXStdlibType(DriverArgs)) {
+  case ToolChain::CST_Libcxx:
+    addSystemInclude(DriverArgs, CC1Args,
+                     getDriver().SysRoot + "/usr/include/c++/");
+    break;
+  case ToolChain::CST_Libstdcxx:
+    addSystemInclude(DriverArgs, CC1Args,
+                     getDriver().SysRoot + "/usr/include/g++");
+    addSystemInclude(DriverArgs, CC1Args,
+                     getDriver().SysRoot + "/usr/include/g++/backward");
+    break;
+  }
 }
 
 /// AuroraUX - AuroraUX tool chain which can call as(1) and ld(1) directly.

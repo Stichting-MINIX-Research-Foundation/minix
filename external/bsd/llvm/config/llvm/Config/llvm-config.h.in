@@ -27,7 +27,7 @@
 #define LLVM_DATADIR "/usr/share/llvm"
 
 /* Target triple LLVM will generate code for by default */
-#define LLVM_DEFAULT_TARGET_TRIPLE "x86_64--netbsd"
+#define LLVM_DEFAULT_TARGET_TRIPLE "i586-elf32-minix"
 
 /* Installation directory for documentation */
 #define LLVM_DOCSDIR "/usr/share/doc/llvm"
@@ -42,7 +42,7 @@
 #define LLVM_HAS_ATOMICS 1
 
 /* Host triple LLVM will be executed on */
-#define LLVM_HOST_TRIPLE "x86_64--netbsd"
+#define LLVM_HOST_TRIPLE "i586-elf32-minix"
 
 /* Installation directory for include files */
 #define LLVM_INCLUDEDIR "/usr/include"

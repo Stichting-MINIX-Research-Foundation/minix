@@ -36,7 +36,7 @@ CFLAGS+=	-Wall -Wstrict-prototypes -Wmissing-prototypes -Wpointer-arith
 # we wanted, and now we don't get anymore.
 CFLAGS+=	-Wno-sign-compare
 CFLAGS+=	${${ACTIVE_CC} != "clang":? -Wno-traditional :}
-.if !defined(NOGCCERROR)
+.if !defined(NOGCCERROR) && !defined(USE_BITCODE)
 # Set assembler warnings to be fatal
 CFLAGS+=	-Wa,--fatal-warnings
 .endif
@@ -46,7 +46,7 @@ CFLAGS+=	-Wa,--fatal-warnings
 .if (!defined(MKPIC) || ${MKPIC} != "no") && \
     (!defined(LDSTATIC) || ${LDSTATIC} != "-static")
 # XXX there are some strange problems not yet resolved
-. if !defined(HAVE_GCC) || defined(HAVE_LLVM)
+. if !defined(HAVE_GCC) || (defined(HAVE_LLVM) && !defined(USE_BITCODE))
 LDFLAGS+=	-Wl,--fatal-warnings
 . endif
 .endif
@@ -98,6 +98,9 @@ CWARNFLAGS+=	${CWARNFLAGS.${ACTIVE_CC}}
 
 CPPFLAGS+=	${AUDIT:D-D__AUDIT__}
 _NOWERROR=	${defined(NOGCCERROR) || (${ACTIVE_CC} == "clang" && defined(NOCLANGERROR)):?yes:no}
+.if defined(__MINIX) && ${USE_BITCODE:Uno} == "yes"
+_NOWERROR=	yes
+.endif # defined(__MINIX) && ${USE_BITCODE} == "yes"
 CFLAGS+=	${${_NOWERROR} == "no" :?-Werror:} ${CWARNFLAGS}
 LINTFLAGS+=	${DESTDIR:D-d ${DESTDIR}/usr/include}
 

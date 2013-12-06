@@ -56,11 +56,9 @@
     __asm(".global " _C_LABEL_STRING(#alias) "\n"			\
 	    _C_LABEL_STRING(#alias) " = " _C_LABEL_STRING(#sym));
 
-#if defined(__minix) && !defined(__weak_alias) /* For bitcode support */
 #define	__weak_alias(alias,sym)						\
     __asm(".weak " _C_LABEL_STRING(#alias) "\n"			\
 	    _C_LABEL_STRING(#alias) " = " _C_LABEL_STRING(#sym));
-#endif
 
 /* Do not use __weak_extern, use __weak_reference instead */
 #define	__weak_extern(sym)						\

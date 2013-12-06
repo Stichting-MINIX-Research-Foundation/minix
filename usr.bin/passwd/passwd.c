@@ -231,7 +231,11 @@ static struct pw_module_s {
 	{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
 };
  
+#if defined(__minix)
+static __dead void
+#else
 static void
+#endif /* defined(__minix) */
 usage(void)
 {
 	int i;

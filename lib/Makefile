@@ -128,20 +128,19 @@ SUBDIR+=	../external/public-domain/xz/lib
 . if ${HAVE_GCC} == 4
 #SUBDIR+=	../gnu/lib/libobjc4
 . else
-.   if !defined(__MINIX) || ${MKGCCCMDS} == "yes"
+.   if !defined(__MINIX) || ${MKLIBSTDCXX} == "yes"
 SUBDIR+=	../external/gpl3/gcc/lib/libobjc
 SUBDIR+=	../external/gpl3/gcc/lib/libgomp
-.   endif # !defined(__MINIX) || ${MKGCCCMDS} == "yes"
+.   endif # !defined(__MINIX) || ${MKLIBSTDCXX} == "yes"
 . endif
-# LSC: Replaced __MINIX test with MKGCCCMDS, as we do not want gcc by default
-#      nor the libraries, but we still want to retain the possibility of
-#      installing GCC from the base system.
-. if ${HAVE_GCC} >= 45 && !defined(MLIBDIR) && ${MKGCCCMDS} == "yes"
+. if ${HAVE_GCC} >= 45 && !defined(MLIBDIR)
+.   if !defined(__MINIX) || ${MKLIBSTDCXX} == "yes"
 # Should probably move GMP, MPFR and MPC builds into the GCC >= 4.5
 # specific build area, but we get better parallelism this way.
 SUBDIR+=	../external/lgpl3/gmp/lib/libgmp
 SUBDIR+=	../external/lgpl3/mpfr/lib/libmpfr
 SUBDIR+=	../external/lgpl3/mpc/lib/libmpc
+.   endif # !defined(__MINIX) || ${MKLIBSTDCXX} == "yes"
 . endif
 .endif
 
@@ -202,7 +201,6 @@ SUBDIR+=	../external/bsd/libc++
 .endif
 
 .if (${MKGCC} != "no" && ${MKCXX} != "no" && ${MKLIBSTDCXX} != "no")
-.if (defined(__MINIX) && ${MKGCCCMDS} == "yes")
 . if ${HAVE_GCC} == 4
 SUBDIR+=	../gnu/lib/libstdc++-v3_4	# depends on libm
 SUBDIR+=	../gnu/lib/libsupc++4
@@ -210,7 +208,6 @@ SUBDIR+=	../gnu/lib/libsupc++4
 SUBDIR+=	../external/gpl3/gcc/lib/libstdc++-v3
 SUBDIR+=	../external/gpl3/gcc/lib/libsupc++
 . endif
-.endif # (defined(__MINIX) && ${MKGCCCMDS} == "yes")
 .endif
 
 #==================== 2nd library dependency barrier ====================

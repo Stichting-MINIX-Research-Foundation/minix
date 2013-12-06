@@ -1,3 +1,6 @@
+NOGCCERROR:=	yes
+NOCLANGERROR:=	yes
+
 BINDIR?=	/usr/tests/minix-posix
 FILESDIR?=	/usr/tests/minix-posix
 WARNS?=		1
@@ -28,7 +31,6 @@ COPTS.test52.c=	-mhard-float
 
 CPPFLAGS.test56.c += -D_MINIX_SYSTEM=1
 
-WARNS=
 COPTS.test9.c=	-O0
 COPTS.test37.c=	-O0
 COPTS.test53.c=	-O0
@@ -87,12 +89,7 @@ LDADD.test57+= ${${USE_BITCODE:Uno} != "no":? test57loop.o -Wl,-allow-multiple-d
 # executables is tested
 LDSTATIC=	-dynamic
 
-# use the shared linkerscript for mod when using the gold linker
-GOLDLINKERSCRIPT.mod?= ${${HAVE_GOLD:Uno} != "no":? ${LDS_SHARED_LIB} :}
 LDFLAGS.mod+=	-shared		# make shared object
-
-# LSC FIXME: THe bitcode rules need to take into account LDFLAGS
-LDADD.mod+= ${${USE_BITCODE:Uno} != "no":? -shared:}
 
 # Files which have to be compiled with -fPIC
 mod.o: mod.c

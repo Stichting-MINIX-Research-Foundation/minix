@@ -48,6 +48,10 @@ _BSD_LUA_MK_=1
 .include <bsd.shlib.mk>
 .include <bsd.gcc.mk>
 
+.if defined(__MINIX) && ${USE_BITCODE:Uno} == "yes"
+LDFLAGS+= -L${DESTDIR}/usr/lib
+.endif # defined(__MINIX) && ${USE_BITCODE:Uno} == "yes"
+
 ##
 ##### Basic targets
 realinstall:	.PHONY lua-install

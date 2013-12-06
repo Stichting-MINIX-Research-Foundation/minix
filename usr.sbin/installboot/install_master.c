@@ -33,7 +33,7 @@ static void report(const char *label)
 	fprintf(stderr, "installboot: %s: %s\n", label, strerror(errno));
 }
 
-static void fatal(const char *label)
+static __dead void fatal(const char *label)
 {
 	report(label);
 	exit(1);

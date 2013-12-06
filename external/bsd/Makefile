@@ -19,11 +19,9 @@ SUBDIR+=ipf
 .if (${MKISCSI} != "no")
 SUBDIR+= iscsi 
 .endif
-.if (defined(__MINIX) && ${MKGCCCMDS} == "yes")
 .if (${MKKYUA} != "no")
 SUBDIR+= lutok kyua-testers kyua-cli kyua-atf-compat
 .endif
-.endif # (defined(__MINIX) && ${MKGCCCMDS} == "yes")
 .if (${MKLDAP} != "no")
 SUBDIR+= openldap
 .endif

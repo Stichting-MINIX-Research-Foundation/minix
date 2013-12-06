@@ -1,30 +1,25 @@
 # Makefile for kernel
 .include <bsd.own.mk>
 
-USE_BITCODE:=no
-
-BINDIR=	/usr/sbin
+PROG=		kernel
+BINDIR=		/usr/sbin
 MAN=
-PROG=	kernel
+USE_BITCODE=	no
 
 .include "arch/${MACHINE_ARCH}/Makefile.inc"
 
 SRCS+=	clock.c cpulocals.c interrupt.c main.c proc.c system.c \
 	table.c utility.c usermapped_data.c
 
-DPADD+=	${LIBTIMERS} ${LIBSYS} ${LIBEXEC} ${LIBMINLIB}
-LDADD+=	-ltimers -lsys -lexec -lminlib -L/usr/lib
+LDADD+=	-ltimers -lsys -lexec -lminlib
 
 LINKERSCRIPT= ${.CURDIR}/arch/${MACHINE_ARCH}/kernel.lds
 
 .if ${HAVE_GOLD:U} != ""
-GOLDLINKERSCRIPT=${LINKERSCRIPT}
-LDFLAGS+= -Wl,--allow-multiple-definition
-CFLAGS += -fno-common
-.else
-LDFLAGS+= -T ${LINKERSCRIPT}
+CFLAGS+= -fno-common
 .endif
-LDFLAGS+= -nostdlib 
+LDFLAGS+= -T ${LINKERSCRIPT}
+LDFLAGS+= -nostdlib -L${DESTDIR}/usr/lib
 CFLAGS += -fno-stack-protector
 
 CPPFLAGS+= -D__kernel__ 

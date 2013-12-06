@@ -11,8 +11,16 @@ EXTRA_DIST_FILES=	${.CURDIR}/NetBSD.dist.XFree86
 .endif
 
 .if defined(__MINIX)
-.if ${MKGCCCMDS} == "yes"
-EXTRA_DIST_FILES+=	${.CURDIR}/Minix.gcccmds
+.if ${MKLIBSTDCXX} == "yes"
+EXTRA_DIST_FILES+=	${.CURDIR}/Minix.libstdcxx
+.endif
+
+.if ${MKLIBCXX} == "yes"
+EXTRA_DIST_FILES+=	${.CURDIR}/Minix.libcxx
+.endif
+
+.if ${MKBITCODE} == "yes"
+EXTRA_DIST_FILES+=	${.CURDIR}/Minix.bitcode
 .endif
 .endif # defined(__MINIX)
 

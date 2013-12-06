@@ -552,6 +552,23 @@ public:
   Minix(const Driver &D, const llvm::Triple &Triple,
         const llvm::opt::ArgList &Args);
 
+  virtual bool IsMathErrnoDefault() const { return false; }
+  virtual bool IsObjCNonFragileABIDefault() const { return true; }
+
+  virtual CXXStdlibType GetCXXStdlibType(const llvm::opt::ArgList &Args) const;
+
+  virtual void
+  AddClangCXXStdlibIncludeArgs(const llvm::opt::ArgList &DriverArgs,
+                               llvm::opt::ArgStringList &CC1Args) const;
+  virtual bool IsUnwindTablesDefault() const {
+    return true;
+  }
+  virtual bool IsIntegratedAssemblerDefault() const {
+    if (getTriple().getArch() == llvm::Triple::ppc)
+      return true;
+    return Generic_ELF::IsIntegratedAssemblerDefault();
+  }
+
 protected:
   virtual Tool *buildAssembler() const;
   virtual Tool *buildLinker() const;

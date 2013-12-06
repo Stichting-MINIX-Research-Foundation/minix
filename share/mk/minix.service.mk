@@ -14,17 +14,15 @@ COPTS+= -fno-builtin
 # 1. No default libs
 LDADD:= -nodefaultlibs ${LDADD}
 
-# 2. Compiler-specific libs
-.if !empty(CC:M*gcc)
+# 2. Services system library
 LDADD+= -lsys
 DPADD+= ${LIBSYS}
-.elif !empty(CC:M*clang)
-LDADD+= -L/usr/pkg/compiler-rt/lib -lCompilerRT-Generic -lsys -lCompilerRT-Generic
-.endif
 
-# 3. Minimal C library
+# 3. Minimal C library, if libc had not yet been added
+.if ${LDADD:M-lc} == ""
 LDADD+= -lminc
 DPADD+= ${LIBMINC}
+.endif # empty(${LDADD:M-lc})
 
 .if ${MACHINE_ARCH} == "earm"
 

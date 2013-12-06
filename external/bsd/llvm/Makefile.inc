@@ -65,6 +65,7 @@ LDFLAGS+=	-Wl,--gc-sections
 CPPFLAGS+=	-I${LLVM_INCLUDE_OBJDIR} -I${LLVM_INCLUDE_CONFIG} \
 		-I${CLANG_INCLUDE_CONFIG} -I${MCLINKER_INCLUDE_CONFIG}
 
+.if !defined(__MINIX)
 LLVM_CONFIGURE_ARGS=	\
 	--enable-targets=x86,powerpc,sparc,aarch64,arm,mips \
 	--with-c-include-dirs=/usr/include/clang-${CLANG_VERSION}:/usr/include \
@@ -72,6 +73,31 @@ LLVM_CONFIGURE_ARGS=	\
 	--with-clang-srcdir=${CLANG_SRCDIR} \
 	--host=${MACHINE_GNU_PLATFORM} \
 	llvm_cv_gnu_make_command=${MAKE}
+.else
+# LSC: Compile LLVM only with the target platform
+.if ${MACHINE_ARCH:Mi*86} != ""
+_LLVM_TARGET:=x86
+.elif ${MACHINE_ARCH:M*arm*} != ""
+_LLVM_TARGET:=arm
+.else
+.error Modify this or add support for all platform, at your convenience.
+.endif
+
+LLVM_CONFIGURE_ARGS=	\
+	--enable-targets=${_LLVM_TARGET} \
+	--with-c-include-dirs=/usr/include/clang-${CLANG_VERSION}:/usr/include \
+	--disable-timestamps --prefix=/usr --sysconfdir=/etc/llvm \
+	--with-clang-srcdir=${CLANG_SRCDIR} \
+	--host=${MACHINE_GNU_PLATFORM} \
+	--with-binutils-include=${NETBSDSRCDIR}/external/gpl3/binutils/dist/include \
+	--disable-debug-symbols --enable-assertions --enable-bindings=none \
+	llvm_cv_gnu_make_command=${MAKE}
+
+.if ${HOST_OSTYPE:C/\-.*//} == "Minix"
+LLVM_CONFIGURE_ARGS+= --disable-threads
+CPPFLAGS+= -D_NLS_PRIVATE=1
+.endif # ${HOST_OSTYPE:C/\-.*//} == "Minix"
+.endif # !defined(__MINIX)
 
 .for tool in circo dot dotty fdp neato twopi xdot
 LLVM_CONFIGURE_ARGS+= ac_cv_path_${tool:tu}="echo ${tool}"

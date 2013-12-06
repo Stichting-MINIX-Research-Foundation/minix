@@ -97,6 +97,12 @@ SUBDIR+= \
 	libLLVMLTO
 .endif
 
+.if defined(__MINIX)
+SUBDIR+= \
+	 libLLVMLTO \
+	 libLLVMgold
+.endif # defined(__MINIX)
+
 SUBDIR+= \
 	libclangAnalysis \
 	libclangARCMigrate \

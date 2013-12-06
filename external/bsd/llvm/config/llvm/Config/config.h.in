@@ -218,7 +218,7 @@
 /* #undef HAVE_LIBPSAPI */
 
 /* Define to 1 if you have the `pthread' library (-lpthread). */
-#define HAVE_LIBPTHREAD 1
+/* MINIX: #define HAVE_LIBPTHREAD 1 */
 
 /* Define to 1 if you have the `shell32' library (-lshell32). */
 /* #undef HAVE_LIBSHELL32 */
@@ -289,7 +289,7 @@
 /* #undef HAVE_MMAP_ANONYMOUS */
 
 /* Define if mmap() can map files into memory */
-#define HAVE_MMAP_FILE 
+#define HAVE_MMAP_FILE 1
 
 /* Define to 1 if you have the <ndir.h> header file, and it defines `DIR'. */
 /* #undef HAVE_NDIR_H */
@@ -304,7 +304,7 @@
 #define HAVE_OPENDIR 1
 
 /* Define to 1 if you have the `posix_spawn' function. */
-#define HAVE_POSIX_SPAWN 1
+/* MINIX: #define HAVE_POSIX_SPAWN 1 */
 
 /* Define to 1 if you have the `powf' function. */
 #define HAVE_POWF 1
@@ -319,16 +319,16 @@
 #define HAVE_PRINTF_A 1
 
 /* Have pthread_getspecific */
-#define HAVE_PTHREAD_GETSPECIFIC 1
+/* MINIX: #define HAVE_PTHREAD_GETSPECIFIC 1 */
 
 /* Define to 1 if you have the <pthread.h> header file. */
-#define HAVE_PTHREAD_H 1
+/* MINIX: #define HAVE_PTHREAD_H 1 */
 
 /* Have pthread_mutex_lock */
-#define HAVE_PTHREAD_MUTEX_LOCK 1
+/* MINIX: #define HAVE_PTHREAD_MUTEX_LOCK 1 */
 
 /* Have pthread_rwlock_init */
-#define HAVE_PTHREAD_RWLOCK_INIT 1
+/* MINIX: #define HAVE_PTHREAD_RWLOCK_INIT 1 */
 
 /* Define to 1 if srand48/lrand48/drand48 exist in <stdlib.h> */
 #define HAVE_RAND48 1
@@ -361,7 +361,7 @@
 #define HAVE_SETJMP_H 1
 
 /* Define to 1 if you have the `setrlimit' function. */
-#define HAVE_SETRLIMIT 1
+/* MINIX: #define HAVE_SETRLIMIT 1 */
 
 /* Define if you have the shl_load function. */
 /* #undef HAVE_SHL_LOAD */
@@ -409,7 +409,7 @@
 #define HAVE_STRTOQ 1
 
 /* Define to 1 if you have the `sysconf' function. */
-#define HAVE_SYSCONF 1
+/* #define HAVE_SYSCONF 1 */
 
 /* Define to 1 if you have the <sys/dir.h> header file, and it defines `DIR'.
    */
@@ -543,13 +543,13 @@
 #define LLVM_DATADIR "/usr/share/llvm"
 
 /* Target triple LLVM will generate code for by default */
-#define LLVM_DEFAULT_TARGET_TRIPLE "x86_64--netbsd"
+#define LLVM_DEFAULT_TARGET_TRIPLE "i586-elf32-minix"
 
 /* Installation directory for documentation */
 #define LLVM_DOCSDIR "/usr/share/doc/llvm"
 
 /* Define if threads enabled */
-#define LLVM_ENABLE_THREADS 1
+/* MINIX: #define LLVM_ENABLE_THREADS 1 */
 
 /* Define if zlib is enabled */
 #define LLVM_ENABLE_ZLIB 1
@@ -561,7 +561,7 @@
 #define LLVM_HAS_ATOMICS 1
 
 /* Host triple LLVM will be executed on */
-#define LLVM_HOST_TRIPLE "x86_64--netbsd"
+#define LLVM_HOST_TRIPLE "i586-elf32-minix"
 
 /* Installation directory for include files */
 #define LLVM_INCLUDEDIR "/usr/include"

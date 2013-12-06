@@ -975,6 +975,9 @@ _prop_object_internalize_map_file(const char *fname)
  *	Unmap a file previously mapped for internalizing.
  */
 void
+#if defined(__minix)
+__dead
+#endif /* defined(__minix) */
 _prop_object_internalize_unmap_file(
     struct _prop_object_internalize_mapped_file *mf)
 {

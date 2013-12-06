@@ -250,6 +250,10 @@
 ./usr/bin/chsh				minix-sys
 ./usr/bin/ci				minix-sys
 ./usr/bin/cksum				minix-sys
+./usr/bin/clang++			minix-sys	llvm
+./usr/bin/clang				minix-sys	llvm
+./usr/bin/clang-cpp			minix-sys	llvm
+./usr/bin/clang-tblgen			minix-sys	llvm
 ./usr/bin/cleantmp			minix-sys
 ./usr/bin/clear				minix-sys
 ./usr/bin/cmp				minix-sys
@@ -356,6 +360,7 @@
 ./usr/bin/lessecho			minix-sys
 ./usr/bin/lesskey			minix-sys
 ./usr/bin/lex				minix-sys
+./usr/bin/llvm-tblgen			minix-sys	llvm
 ./usr/bin/loadfont			minix-sys
 ./usr/bin/loadramdisk			minix-sys
 ./usr/bin/lock				minix-sys
@@ -615,8 +620,151 @@
 ./usr/include/bitstring.h		minix-sys
 ./usr/include/bm.h			minix-sys
 ./usr/include/bzlib.h			minix-sys
+./usr/include/c++			minix-sys	libcxx
+./usr/include/c++/algorithm		minix-sys	libcxx
+./usr/include/c++/array			minix-sys	libcxx
+./usr/include/c++/atomic		minix-sys	libcxx
+./usr/include/c++/backward		minix-sys	libcxx
+./usr/include/c++/__bit_reference	minix-sys	libcxx
+./usr/include/c++/bits			minix-sys	libcxx
+./usr/include/c++/bitset		minix-sys	libcxx
+./usr/include/c++/cassert		minix-sys	libcxx
+./usr/include/c++/ccomplex		minix-sys	libcxx
+./usr/include/c++/cctype		minix-sys	libcxx
+./usr/include/c++/cerrno		minix-sys	libcxx
+./usr/include/c++/cfenv			minix-sys	libcxx
+./usr/include/c++/cfloat		minix-sys	libcxx
+./usr/include/c++/chrono		minix-sys	libcxx
+./usr/include/c++/cinttypes		minix-sys	libcxx
+./usr/include/c++/ciso646		minix-sys	libcxx
+./usr/include/c++/climits		minix-sys	libcxx
+./usr/include/c++/clocale		minix-sys	libcxx
+./usr/include/c++/cmath			minix-sys	libcxx
+./usr/include/c++/codecvt		minix-sys	libcxx
+./usr/include/c++/complex		minix-sys	libcxx
+./usr/include/c++/complex.h		minix-sys	libcxx
+./usr/include/c++/condition_variable	minix-sys	libcxx
+./usr/include/c++/__config		minix-sys	libcxx
+./usr/include/c++/csetjmp		minix-sys	libcxx
+./usr/include/c++/csignal		minix-sys	libcxx
+./usr/include/c++/cstdarg		minix-sys	libcxx
+./usr/include/c++/cstdbool		minix-sys	libcxx
+./usr/include/c++/cstddef		minix-sys	libcxx
+./usr/include/c++/cstdint		minix-sys	libcxx
+./usr/include/c++/cstdio		minix-sys	libcxx
+./usr/include/c++/cstdlib		minix-sys	libcxx
+./usr/include/c++/cstring		minix-sys	libcxx
+./usr/include/c++/ctgmath		minix-sys	libcxx
+./usr/include/c++/ctime			minix-sys	libcxx
+./usr/include/c++/cwchar		minix-sys	libcxx
+./usr/include/c++/cwctype		minix-sys	libcxx
+./usr/include/c++/cxxabi.h		minix-sys	libcxx
+./usr/include/c++/__debug		minix-sys	libcxx
+./usr/include/c++/debug			minix-sys	libcxx
+./usr/include/c++/decimal		minix-sys	libcxx
+./usr/include/c++/deque			minix-sys	libcxx
+./usr/include/c++/exception		minix-sys	libcxx
+./usr/include/c++/experimental		minix-sys	libcxx
+./usr/include/c++/experimental/dynarray	minix-sys	libcxx
+./usr/include/c++/experimental/optional	minix-sys	libcxx
+./usr/include/c++/ext			minix-sys	libcxx
+./usr/include/c++/ext/__hash		minix-sys	libcxx
+./usr/include/c++/ext/hash_map		minix-sys	libcxx
+./usr/include/c++/ext/hash_set		minix-sys	libcxx
+./usr/include/c++/forward_list		minix-sys	libcxx
+./usr/include/c++/fstream		minix-sys	libcxx
+./usr/include/c++/__functional_03	minix-sys	libcxx
+./usr/include/c++/functional		minix-sys	libcxx
+./usr/include/c++/__functional_base_03	minix-sys	libcxx
+./usr/include/c++/__functional_base	minix-sys	libcxx
+./usr/include/c++/future		minix-sys	libcxx
+./usr/include/c++/__hash_table		minix-sys	libcxx
+./usr/include/c++/initializer_list	minix-sys	libcxx
+./usr/include/c++/iomanip		minix-sys	libcxx
+./usr/include/c++/ios			minix-sys	libcxx
+./usr/include/c++/iosfwd		minix-sys	libcxx
+./usr/include/c++/iostream		minix-sys	libcxx
+./usr/include/c++/istream		minix-sys	libcxx
+./usr/include/c++/iterator		minix-sys	libcxx
+./usr/include/c++/limits		minix-sys	libcxx
+./usr/include/c++/list			minix-sys	libcxx
+./usr/include/c++/__locale		minix-sys	libcxx
+./usr/include/c++/locale		minix-sys	libcxx
+./usr/include/c++/map			minix-sys	libcxx
+./usr/include/c++/memory		minix-sys	libcxx
+./usr/include/c++/mutex			minix-sys	libcxx
+./usr/include/c++/__mutex_base		minix-sys	libcxx
+./usr/include/c++/new			minix-sys	libcxx
+./usr/include/c++/numeric		minix-sys	libcxx
+./usr/include/c++/ostream		minix-sys	libcxx
+./usr/include/c++/parallel		minix-sys	libcxx
+./usr/include/c++/queue			minix-sys	libcxx
+./usr/include/c++/random		minix-sys	libcxx
+./usr/include/c++/ratio			minix-sys	libcxx
+./usr/include/c++/regex			minix-sys	libcxx
+./usr/include/c++/scoped_allocator	minix-sys	libcxx
+./usr/include/c++/set			minix-sys	libcxx
+./usr/include/c++/shared_mutex		minix-sys	libcxx
+./usr/include/c++/__split_buffer	minix-sys	libcxx
+./usr/include/c++/__sso_allocator	minix-sys	libcxx
+./usr/include/c++/sstream		minix-sys	libcxx
+./usr/include/c++/stack			minix-sys	libcxx
+./usr/include/c++/stdexcept		minix-sys	libcxx
+./usr/include/c++/__std_stream		minix-sys	libcxx
+./usr/include/c++/streambuf		minix-sys	libcxx
+./usr/include/c++/string		minix-sys	libcxx
+./usr/include/c++/strstream		minix-sys	libcxx
+./usr/include/c++/system_error		minix-sys	libcxx
+./usr/include/c++/tgmath.h		minix-sys	libcxx
+./usr/include/c++/thread		minix-sys	libcxx
+./usr/include/c++/tr1			minix-sys	libcxx
+./usr/include/c++/tr1_impl		minix-sys	libcxx
+./usr/include/c++/__tree		minix-sys	libcxx
+./usr/include/c++/__tuple_03		minix-sys	libcxx
+./usr/include/c++/__tuple		minix-sys	libcxx
+./usr/include/c++/tuple			minix-sys	libcxx
+./usr/include/c++/typeindex		minix-sys	libcxx
+./usr/include/c++/typeinfo		minix-sys	libcxx
+./usr/include/c++/type_traits		minix-sys	libcxx
+./usr/include/c++/__undef_min_max	minix-sys	libcxx
+./usr/include/c++/unordered_map		minix-sys	libcxx
+./usr/include/c++/unordered_set		minix-sys	libcxx
+./usr/include/c++/utility		minix-sys	libcxx
+./usr/include/c++/valarray		minix-sys	libcxx
+./usr/include/c++/vector		minix-sys	libcxx
 ./usr/include/cdbr.h			minix-sys
 ./usr/include/cdbw.h			minix-sys
+./usr/include/clang-3.4			minix-sys
+./usr/include/clang-3.4/ammintrin.h	minix-sys	llvm
+./usr/include/clang-3.4/avx2intrin.h	minix-sys	llvm
+./usr/include/clang-3.4/avxintrin.h	minix-sys	llvm
+./usr/include/clang-3.4/bmi2intrin.h	minix-sys	llvm
+./usr/include/clang-3.4/bmiintrin.h	minix-sys	llvm
+./usr/include/clang-3.4/emmintrin.h	minix-sys	llvm
+./usr/include/clang-3.4/f16cintrin.h	minix-sys	llvm
+./usr/include/clang-3.4/fma4intrin.h	minix-sys	llvm
+./usr/include/clang-3.4/fmaintrin.h	minix-sys	llvm
+./usr/include/clang-3.4/immintrin.h	minix-sys	llvm
+./usr/include/clang-3.4/lzcntintrin.h	minix-sys	llvm
+./usr/include/clang-3.4/mm3dnow.h	minix-sys	llvm
+./usr/include/clang-3.4/mmintrin.h	minix-sys	llvm
+./usr/include/clang-3.4/mm_malloc.h	minix-sys	llvm
+./usr/include/clang-3.4/nmmintrin.h	minix-sys	llvm
+./usr/include/clang-3.4/pmmintrin.h	minix-sys	llvm
+./usr/include/clang-3.4/popcntintrin.h	minix-sys	llvm
+./usr/include/clang-3.4/prfchwintrin.h	minix-sys	llvm
+./usr/include/clang-3.4/rdseedintrin.h	minix-sys	llvm
+./usr/include/clang-3.4/rtmintrin.h	minix-sys	llvm
+./usr/include/clang-3.4/shaintrin.h	minix-sys	llvm
+./usr/include/clang-3.4/smmintrin.h	minix-sys	llvm
+./usr/include/clang-3.4/tbmintrin.h	minix-sys	llvm
+./usr/include/clang-3.4/tmmintrin.h	minix-sys	llvm
+./usr/include/clang-3.4/__wmmintrin_aes.h	minix-sys	llvm
+./usr/include/clang-3.4/wmmintrin.h	minix-sys	llvm
+./usr/include/clang-3.4/__wmmintrin_pclmul.h	minix-sys	llvm
+./usr/include/clang-3.4/x86intrin.h	minix-sys	llvm
+./usr/include/clang-3.4/xmmintrin.h	minix-sys	llvm
+./usr/include/clang-3.4/xopintrin.h	minix-sys	llvm
 ./usr/include/compat			minix-sys
 ./usr/include/compat/machine		minix-sys
 ./usr/include/complex.h			minix-sys
@@ -1669,6 +1817,66 @@
 ./usr/include/zlib.h			minix-sys
 ./usr/lib				minix-sys
 ./usr/lib/bc				minix-sys
+./usr/lib/bc/libarchive.a		minix-sys	bitcode
+./usr/lib/bc/libasyn.a			minix-sys	bitcode
+./usr/lib/bc/libatf-c.a			minix-sys	bitcode,atf
+./usr/lib/bc/libatf-c++.a		minix-sys	bitcode,atf
+./usr/lib/bc/libaudiodriver.a		minix-sys	bitcode
+./usr/lib/bc/libbdev.a			minix-sys	bitcode
+./usr/lib/bc/libbfd.a			minix-sys	bitcode,binutils
+./usr/lib/bc/libblockdriver.a		minix-sys	bitcode
+./usr/lib/bc/libbz2.a			minix-sys	bitcode
+./usr/lib/bc/libc.a			minix-sys	bitcode
+./usr/lib/bc/libc++.a			minix-sys	bitcode
+./usr/lib/bc/libchardriver.a		minix-sys	bitcode
+./usr/lib/bc/libcompat_minix.a		minix-sys	bitcode
+./usr/lib/bc/libcrypt.a			minix-sys	bitcode
+./usr/lib/bc/libcurses.a		minix-sys	bitcode
+./usr/lib/bc/libddekit.a		minix-sys	bitcode
+./usr/lib/bc/libddekit_usb_client.a	minix-sys	bitcode
+./usr/lib/bc/libddekit_usb_server.a	minix-sys	bitcode
+./usr/lib/bc/libdevman.a		minix-sys	bitcode
+./usr/lib/bc/libedit.a			minix-sys	bitcode
+./usr/lib/bc/libelf.a			minix-sys	bitcode
+./usr/lib/bc/libexec.a			minix-sys	bitcode
+./usr/lib/bc/libexecinfo.a		minix-sys	bitcode
+./usr/lib/bc/libfetch.a			minix-sys	bitcode
+./usr/lib/bc/libform.a			minix-sys	bitcode
+./usr/lib/bc/libhgfs.a			minix-sys	bitcode
+./usr/lib/bc/libiberty.a		minix-sys	bitcode,binutils
+./usr/lib/bc/libinputdriver.a		minix-sys	bitcode
+./usr/lib/bc/libl.a			minix-sys	bitcode
+./usr/lib/bc/liblua.a			minix-sys	bitcode
+./usr/lib/bc/liblutok.a			minix-sys	bitcode,atf
+./usr/lib/bc/liblwip.a			minix-sys	bitcode
+./usr/lib/bc/liblzma.a			minix-sys	bitcode
+./usr/lib/bc/libm387.a			minix-sys	bitcode
+./usr/lib/bc/libm.a			minix-sys	bitcode
+./usr/lib/bc/libmagic.a			minix-sys	bitcode
+./usr/lib/bc/libmenu.a			minix-sys	bitcode
+./usr/lib/bc/libminc.a			minix-sys	bitcode
+./usr/lib/bc/libminixfs.a		minix-sys	bitcode
+./usr/lib/bc/libminlib.a		minix-sys	bitcode
+./usr/lib/bc/libmthread.a		minix-sys	bitcode
+./usr/lib/bc/libnetdriver.a		minix-sys	bitcode
+./usr/lib/bc/libnetsock.a		minix-sys	bitcode
+./usr/lib/bc/libopcodes.a		minix-sys	bitcode,binutils
+./usr/lib/bc/libprop.a			minix-sys	bitcode
+./usr/lib/bc/libpuffs.a			minix-sys	bitcode
+./usr/lib/bc/librefuse.a		minix-sys	bitcode
+./usr/lib/bc/librmt.a			minix-sys	bitcode
+./usr/lib/bc/libsffs.a			minix-sys	bitcode
+./usr/lib/bc/libsqlite3.a		minix-sys	bitcode
+./usr/lib/bc/libsys.a			minix-sys	bitcode
+./usr/lib/bc/libterminfo.a		minix-sys	bitcode
+./usr/lib/bc/libtimers.a		minix-sys	bitcode
+./usr/lib/bc/libusb.a			minix-sys	bitcode
+./usr/lib/bc/libutil.a			minix-sys	bitcode
+./usr/lib/bc/libvassert.a		minix-sys	bitcode
+./usr/lib/bc/libvboxfs.a		minix-sys	bitcode
+./usr/lib/bc/libvirtio.a		minix-sys	bitcode
+./usr/lib/bc/libvtreefs.a		minix-sys	bitcode
+./usr/lib/bc/libz.a			minix-sys	bitcode
 ./usr/lib/cawf				minix-sys
 ./usr/lib/cawf/common			minix-sys
 ./usr/lib/cawf/device.cf		minix-sys
@@ -1752,6 +1960,7 @@
 ./usr/lib/libbz2.so.1			minix-sys
 ./usr/lib/libbz2.so.1.1			minix-sys
 ./usr/lib/libc.a			minix-sys
+./usr/lib/libc++.a			minix-sys	libcxx
 ./usr/lib/libchardriver.a		minix-sys
 ./usr/lib/libchardriver_pic.a		minix-sys
 ./usr/lib/libcompat_minix.a		minix-sys
@@ -1761,12 +1970,16 @@
 ./usr/lib/libcompat_minix.so		minix-sys
 ./usr/lib/libc.pc			minix-sys
 ./usr/lib/libc_pic.a			minix-sys
+./usr/lib/libc++_pic.a			minix-sys	libcxx
 ./usr/lib/libcrypt.a			minix-sys
 ./usr/lib/libcrypt_pic.a		minix-sys
 ./usr/lib/libcrypt.so			minix-sys
 ./usr/lib/libcrypt.so.1.0		minix-sys
 ./usr/lib/libcrypt.so.1			minix-sys
 ./usr/lib/libc.so			minix-sys
+./usr/lib/libc++.so			minix-sys	libcxx
+./usr/lib/libc++.so.1.0			minix-sys	libcxx
+./usr/lib/libc++.so.1			minix-sys	libcxx
 ./usr/lib/libc.so.12			minix-sys
 ./usr/lib/libc.so.12.187		minix-sys
 ./usr/lib/libcurses.a			minix-sys
@@ -5789,8 +6002,16 @@
 ./usr/src/src.tar.gz			minix-sys	src
 ./usr/tests				minix-sys
 ./usr/tests/atf/atf-c++/detail/auto_array_test	minix-sys	atf
+./usr/tests/lib				minix-sys	bitcode
+./usr/tests/lib/csu			minix-sys	bitcode
+./usr/tests/lib/csu/bc			minix-sys	bitcode
+./usr/tests/lib/csu/bc/h_initfini3_dso.a	minix-sys	bitcode,atf
+./usr/tests/lib/libc			minix-sys	bitcode
 ./usr/tests/lib/libc/stdio/t_mktemp	minix-sys	atf
 ./usr/tests/lib/libc/stdio/t_printf	minix-sys	atf
+./usr/tests/lib/libc/tls		minix-sys	bitcode
+./usr/tests/lib/libc/tls/bc		minix-sys	bitcode
+./usr/tests/lib/libc/tls/bc/libh_tls_dynamic.a	minix-sys	bitcode,atf
 ./usr/tests/lib/libcurses/director	minix-sys	atf
 ./usr/tests/lib/libpthread/dlopen	minix-sys	atf
 ./usr/tests/libexec/Atffile		minix-sys	atf

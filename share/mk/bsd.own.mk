@@ -29,7 +29,6 @@ MKMCLINKER?=	no
 MKCLANGRT?=	no
 MKGCC?=		no
 MKGCCCMDS?=	no
-MKLIBSTDCXX?=	no
 MKPROFILE?=	no
 MKSLJIT?=	no
 
@@ -62,6 +61,24 @@ MKRUMP:=	no
 MKSKEY:=	no
 MKYP:=		no
 
+WEAKALIASOVERRIDEPASS?=${NETBSDSRCDIR}/external/bsd/llvm/passes/lib/WeakAliasModuleOverride.so
+GOLD_PLUGIN?=${NETBSDSRCDIR}/external/bsd/llvm/passes/lib/LLVMgold.so
+
+# By default when running LLVM passes:
+#  -  do not run optimization while running LLVM passes
+#  -  run the passe which allows assembly weak symbols to be
+#     overriden by bitcode functions
+OPTFLAGS?=	-disable-opt \
+		-load ${WEAKALIASOVERRIDEPASS} -weak-alias-module-override
+
+# Whitout -Wl,--no-ctors-in-init-array, golds moves the constructors out of
+# .ctors into .init_array, which is bad on intel.
+BITCODE_LD_FLAGS?= \
+		-Wl,--no-ctors-in-init-array \
+		-Wl,-plugin=${GOLD_PLUGIN} \
+		-Wl,-plugin-opt=-disable-opt \
+		-Wl,-plugin-opt=-disable-inlining \
+
 .ifdef CONFIG_SMP
 SMP_FLAGS += -DCONFIG_SMP
 .ifdef CONFIG_MAX_CPUS
@@ -85,28 +102,12 @@ USETOOLS?=	never
 .      endif
 .    endif # ${_HAVE_LLVM:U} == ""
 
-.    if ${_HAVE_GOLD:U} == ""
-       _HAVE_GOLD!= (exec 2>&1; ld --version || echo "")
-       _GOLD_MATCH:=${_HAVE_GOLD:Mgold}
-       _HAVE_GOLD:= ${_HAVE_GOLD:M[0-9]\.[0-9][0-9]}
-.      if ${_GOLD_MATCH} != "" && ${_HAVE_GOLD} != ""
-          HAVE_GOLD?= ${_HAVE_GOLD}
-          CFLAGS+= -DHAVE_GOLD=${_HAVE_GOLD}
-          AFLAGS+= -DHAVE_GOLD=${_HAVE_GOLD}
-.      else
-          MKBITCODE:=no
-.      endif
-.    endif # ${_HAVE_GOLD:U} == ""
-
 # If DESTDIR was specified, and we are not using the tools, then make sure to
 # build out-of-tree and to refer only DESTDIR for target binaries
 # The case when using tools is already handled below.
 .    if ${DESTDIR:U} != ""
         CPPFLAGS+= --sysroot=${DESTDIR}
         LDFLAGS+= --sysroot=${DESTDIR}
-.	if defined(HAVE_LLVM)
-          LDFLAGS+= -L${DESTDIR}/usr/lib
-.	endif
 .    endif # ${DESTDIR:U} != ""
 
      MKTOOLS?=no
@@ -125,61 +126,60 @@ USETOOLS?=	never
 .  endif # !defined(HOSTPROG) && !defined(HOSTLIB)
 .endif # __uname_s == "Minix"
 
-.if ${MKKYUA:Uno} == "yes" || ${MKATF:Uyes} == "yes"
-.  if ${MKLIBCXX:Uno} == "no" && ${HAVE_GCC:Dyes} != "yes"
-# No libc++ available, so we have to fallback on libstdc++.
-# This implies that the compiler is GCC on a native system, or we are building
-# GCC.
-# If HAVE_GCC is not defined, then it is a crossbuild, and we have to build
-# LIBSTDC++, otherwise we will simply use the system one.
-MKLIBSTDCXX:=	yes # required for Kyua / ATF
-.  endif # ${MKLIBCXX:Uno} == "no" && ${HAVE_GCC:Dyes} != "yes"
+.if ${HAVE_GCC:Dyes} == "yes" || \
+    (${MKGCCCMDS:Uno} == "yes" && ${MKLLVM:Uyes} == "no")
+# We are building with GCC, means we cannot build LIBCXX, and need LIBSTDCXX
+MKLIBCXX?=	no # Can't compile with GCC.
 
-# If we need LIBSTDC++, then we are using the in-tree GCC.
-.  if ${MKLIBSTDCXX} == "yes"
+.  if ${USETOOLS:Uno} == "yes" || ${MKLIBSTDCXX:Uno} == "yes"
+# When cross-compiling, or building MKLIBSTDCXX, use the in-tree LIBSTDCXX
+MKLIBSTDCXX?=	yes
 CXXFLAGS+=	-I${DESTDIR}/usr/include/g++
-MKGCCCMDS:=	yes
-.  endif # ${MKLIBSTDCXX} == "yes"
+.  endif # ${USETOOLS:Uno} == "yes"
 
-.  if ${HAVE_GCC:Dyes} == "yes" && ${MKLIBCXX:Uno} != "yes"
-# Specify the C++ system header for libstdc++
+.  if ${MKLIBSTDCXX:Uno} == "no"
+# Specify the C++ system header for the host libstdc++, as we are not building
+# LIBSTDCXX
 CXXFLAGS+=	-I/usr/include/g++
-.  endif # ${HAVE_GCC:Dyes} == "yes" && ${MKLIBCXX:Uno} != "yes"
-.endif # ${MKKYUA:Uno} == "yes" || ${MKATF:Uyes} == "yes"
+.  endif # ${MKLIBSTDCXX:Uno} == "no"
 
-.if ${MKLLVM:Uno} == "yes"
-HAVE_LLVM?=34 # The in-tree LLVM version 3.4
-MKBINUTILS?=	yes # We are installing clang, so trigger binutils.
-.endif # ${MKLLVM:Uno} == "yes"
+.endif # ${HAVE_GCC:Dyes} == "yes" || \
+       # (${MKGCCCMDS:Uno} == "yes" && ${MKLLVM:Uyes} == "no")
 
 # MKGCCCMDS == yes implies MKGCC == yes
 .if ${MKGCCCMDS} == "yes"
-MKGCC:=		yes
+MKGCC=		yes
 MKBINUTILS?=	yes # We are installing GCC, so trigger binutils.
+MKLIBSTDCXX?=	yes # Also install the GNU C++ library
 .endif # ${MKGCCCMDS} == "yes"
+
+# The default value of MKLIBSTDCXX cannot be set before the previous test.
+MKLIBSTDCXX?=	no
+
+.if ${MKGCC} == "yes"
+HAVE_GCC?=	45 # The in-tree gcc version is 4.5
+.endif # ${MKGCC} == "yes"
+
+.if ${USETOOLS:Uno} == "yes"
+MKLLVM?=	yes
+.endif # ${USETOOLS:Uno} == "yes"
+
+.if ${MKLLVM:Uno} == "yes"
+HAVE_LLVM?=	34 # The in-tree LLVM version is 3.4
+MKBINUTILS?=	yes # We are installing clang, so trigger binutils.
+.endif # ${MKLLVM:Uno} == "yes"
+
+.if ${HAVE_LLVM:Dyes} == "yes"
+HAVE_LIBGCC?=	no
+.endif # ${HAVE_LLVM:Dyes} == "yes"
+
+# The default value has to be set after we have figured out if we are using GCC
+# or not.
+MKLIBCXX?=	yes # Build by default libc++
 
 # The default value of MKBINUTILS cannot be set before the previous test.
 MKBINUTILS?=	no
 
-.if ${MKGCC} == "yes"
-HAVE_GCC:=	45 # The in-tree gcc version is 4.5
-.endif # ${MKGCC} == "yes"
-
-#
-# linker script files that have to be specified explicitely for the gold linker
-#
-
-LDS_PATH=		${NETBSDSRCDIR}/external/gpl3/binutils/ldscripts
-LDS_STATIC_BIN=		${LDS_PATH}/elf_${MACHINE_ARCH}_minix.xc
-LDS_DYNAMIC_BIN=	${LDS_PATH}/elf_${MACHINE_ARCH}_minix.xc
-LDS_RELOC=		${LDS_PATH}/elf_${MACHINE_ARCH}_minix.xr
-LDS_SHARED_LIB=		${LDS_PATH}/elf_${MACHINE_ARCH}_minix.xsc
-LDS_N=			${LDS_PATH}/elf_${MACHINE_ARCH}_minix.xbn
-
-#LSC FIXME: Needed by clang for now
-.if ${MACHINE_ARCH} == "i386"
-CPUFLAGS+=	-march=i586
-.endif
 .endif # defined(__MINIX)
 
 MAKECONF?=	/etc/mk.conf
@@ -386,6 +386,8 @@ TOOL_CC.clang=		${EXTERNAL_TOOLCHAIN}/bin/${MACHINE_GNU_PLATFORM}-clang
 TOOL_CPP.clang=		${EXTERNAL_TOOLCHAIN}/bin/${MACHINE_GNU_PLATFORM}-clang-cpp
 TOOL_CXX.clang=		${EXTERNAL_TOOLCHAIN}/bin/${MACHINE_GNU_PLATFORM}-clang++
 TOOL_OBJC.clang=	${EXTERNAL_TOOLCHAIN}/bin/${MACHINE_GNU_PLATFORM}-clang
+TOOL_OPT.clang=		${EXTERNAL_TOOLCHAIN}/bin/opt
+TOOL_LLC.clang=		${EXTERNAL_TOOLCHAIN}/bin/llc
 .else									# } {
 # Define default locations for common tools.
 .if ${USETOOLS_BINUTILS:Uyes} == "yes"					#  {
@@ -412,6 +414,8 @@ TOOL_CC.clang=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-clang
 TOOL_CPP.clang=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-clang-cpp
 TOOL_CXX.clang=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-clang++
 TOOL_OBJC.clang=	${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-clang
+TOOL_OPT.clang=		${TOOLDIR}/bin/opt
+TOOL_LLC.clang=		${TOOLDIR}/bin/llc
 
 # PCC supports C and Fortran
 TOOL_CC.pcc=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-pcc
@@ -542,6 +546,8 @@ TOOL_CC.clang=		clang
 TOOL_CPP.clang=		clang-cpp
 TOOL_CXX.clang=		clang++
 TOOL_OBJC.clang=	clang
+TOOL_OPT.clang=		opt
+TOOL_LLC.clang=		llc
 
 # GCC supports C, C++, Fortran and Objective C
 TOOL_CC.gcc=	gcc
@@ -562,7 +568,13 @@ TOOL_AWK=		awk
 TOOL_CAP_MKDB=		cap_mkdb
 TOOL_CAT=		cat
 TOOL_CKSUM=		cksum
+.if defined(__MINIX)
+# LSC: A full path has to be provided, as this is also, used as a make
+#      target.
+TOOL_CLANG_TBLGEN=	/usr/bin/clang-tblgen
+.else
 TOOL_CLANG_TBLGEN=	clang-tblgen
+.endif # defined(__MINIX)
 TOOL_COMPILE_ET=	compile_et
 TOOL_CONFIG=		config
 TOOL_CRUNCHGEN=		crunchgen
@@ -586,7 +598,13 @@ TOOL_INDXBIB=		indxbib
 TOOL_INSTALLBOOT=	installboot
 TOOL_INSTALL_INFO=	install-info
 TOOL_JOIN=		join
+.if defined(__MINIX)
+# LSC: A full path has to be provided, as this is also, used as a make
+#      target.
+TOOL_LLVM_TBLGEN=	/usr/bin/llvm-tblgen
+.else
 TOOL_LLVM_TBLGEN=	llvm-tblgen
+.endif # defined(__MINIX)
 TOOL_M4=		m4
 TOOL_MACPPCFIXCOFF=	macppc-fixcoff
 TOOL_MAKEFS=		makefs
@@ -645,10 +663,12 @@ TOOL_CPP.false=		false
 TOOL_CXX.false=		false
 TOOL_FC.false=		false
 TOOL_OBJC.false=	false
+TOOL_OPT.false=		false
+TOOL_LLC.false=		false
 
 AVAILABLE_COMPILER?=	${HAVE_PCC:Dpcc} ${HAVE_LLVM:Dclang} ${HAVE_GCC:Dgcc} false
 
-.for _t in CC CPP CXX FC OBJC
+.for _t in CC CPP CXX FC OBJC OPT LLC
 ACTIVE_${_t}=	${AVAILABLE_COMPILER:@.c.@ ${ !defined(UNSUPPORTED_COMPILER.${.c.}) && defined(TOOL_${_t}.${.c.}) :? ${.c.} : }@:[1]}
 SUPPORTED_${_t}=${AVAILABLE_COMPILER:Nfalse:@.c.@ ${ !defined(UNSUPPORTED_COMPILER.${.c.}) && defined(TOOL_${_t}.${.c.}) :? ${.c.} : }@}
 .endfor
@@ -658,6 +678,8 @@ CPP=		${TOOL_CPP.${ACTIVE_CPP}}
 CXX=		${TOOL_CXX.${ACTIVE_CXX}}
 FC=		${TOOL_FC.${ACTIVE_FC}}
 OBJC=		${TOOL_OBJC.${ACTIVE_OBJC}}
+OPT=		${TOOL_OPT.${ACTIVE_OPT}}
+LLC=		${TOOL_LLC.${ACTIVE_LLC}}
 
 .if exists(/usr/bin/${TOOL_CTFCONVERT}) || exists(${TOOL_CTFCONVERT})
 CTFCONVERT=	${TOOL_CTFCONVERT}
@@ -900,6 +922,7 @@ GCC_CONFIG_ARCH.earm=armv7-a
 # MINIX/intel default
 GNU_ARCH.i386=i586
 GCC_CONFIG_ARCH.i386=i586
+
 .endif # defined(__MINIX)
 
 MACHINE_GNU_ARCH=${GNU_ARCH.${MACHINE_ARCH}:U${MACHINE_ARCH}}
@@ -926,6 +949,20 @@ MACHINE_GNU_PLATFORM?=${MACHINE_GNU_ARCH}--netbsd
 .if defined(__MINIX)
 # We have a simpler toolchain naming scheme
 MACHINE_GNU_PLATFORM:=${MACHINE_GNU_ARCH}-elf32-minix
+
+# We need to check for HAVE_GOLD after LD has been set
+.if ${_HAVE_GOLD:U} == ""
+   _HAVE_GOLD!= (exec 2>&1; ${LD} --version || echo "")
+   _GOLD_MATCH:=${_HAVE_GOLD:Mgold}
+   _HAVE_GOLD:= ${_HAVE_GOLD:M[0-9]\.[0-9][0-9]}
+.  if ${_GOLD_MATCH} != "" && ${_HAVE_GOLD} != ""
+      HAVE_GOLD?= ${_HAVE_GOLD}
+#     CFLAGS+= -DHAVE_GOLD=${_HAVE_GOLD}
+#     AFLAGS+= -DHAVE_GOLD=${_HAVE_GOLD}
+.  else
+      USE_BITCODE:=no
+.  endif
+.endif # ${_HAVE_GOLD:U} == ""
 .endif # defined(__MINIX)
 
 #

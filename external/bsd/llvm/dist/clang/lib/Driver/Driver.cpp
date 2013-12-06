@@ -1889,8 +1889,7 @@ static llvm::Triple computeTargetTriple(StringRef DefaultTargetTriple,
 
   // Skip further flag support on OSes which don't support '-m32' or '-m64'.
   if (Target.getArchName() == "tce" ||
-      Target.getOS() == llvm::Triple::AuroraUX ||
-      Target.getOS() == llvm::Triple::Minix)
+      Target.getOS() == llvm::Triple::AuroraUX)
     return Target;
 
   // Handle pseudo-target flags '-m32' and '-m64'.

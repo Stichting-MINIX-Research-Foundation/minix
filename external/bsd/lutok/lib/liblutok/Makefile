@@ -20,6 +20,10 @@ CPPFLAGS+=	-DHAVE_CONFIG_H
 
 WARNS?=		4
 
+.if defined(__MINIX)
+NOCLANGERROR:= yes
+.endif # defined(__MINIX)
+
 SRCS=		c_gate.cpp \
 		debug.cpp \
 		exceptions.cpp \

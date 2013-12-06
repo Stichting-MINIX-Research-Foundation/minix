@@ -112,9 +112,11 @@ void LLIChildTarget::makeSectionExecutable(uint64_t Addr, uint32_t Size) {
   // FIXME: We have to mark the memory as RWX because multiple code chunks may
   // be on the same page.  The RemoteTarget interface should be changed to
   // work around that.
+#if !defined(__minix)
   int Result = ::mprotect((void*)Addr, Size, PROT_READ | PROT_WRITE | PROT_EXEC);
   if (Result != 0)
     InvalidateInstructionCache((const void *)Addr, Size);
+#endif /* !defined(__minix) */
 }
 
 /// InvalidateInstructionCache - Before the JIT can run a block of code

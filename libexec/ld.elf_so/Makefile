@@ -45,10 +45,8 @@ M=		${.CURDIR}/arch/${ARCHSUBDIR}
 
 LDFLAGS+=	${${ACTIVE_CC} == "clang":? -Wl,-Bsymbolic : -symbolic} \
 		-shared -nostartfiles -nodefaultlibs
-.if defined(__MINIX) && ${HAVE_GOLD:Uno} != "yes"
-LDFLAGS+=	-Wl,--script ${LDS_SHARED_LIB}
-.else
-LDFLAGS+=	-Wl,-static
+.if defined(__MINIX) && ${HAVE_GOLD:Uno} == "no"
+LDFLAGS+=      -Wl,-static
 .endif
 LDFLAGS+=	-Wl,--warn-shared-textrel
 

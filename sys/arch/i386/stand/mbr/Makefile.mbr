@@ -26,16 +26,6 @@ BINMODE=	444
 
 LDFLAGS+=	-nostdlib -Wl,-e,start
 CPPFLAGS+=	-I. -I${.CURDIR}/../../lib -I${S}
-.if defined(__MINIX)
-CPPFLAGS+= -DLOADADDR=${LOADADDR}
-AFLAGS+=       -Wa,--divide
-
-BUILDSYMLINKS+= \
-	${NETBSDSRCDIR}/include/arch/i386/include/stackframe.h machine/stackframe.h \
-	${NETBSDSRCDIR}/include/arch/i386/include/fpu.h machine/fpu.h
-
-DPSRCS+= machine/stackframe.h  machine/fpu.h
-.endif # defined(__MINIX)
 
 .if ${MACHINE_ARCH} == "x86_64"
 LDFLAGS+=	-Wl,-m,elf_i386
@@ -53,6 +43,17 @@ LOADADDR=	0x8800
 
 AFLAGS.mbr.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 AFLAGS.gpt.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
+
+.if defined(__MINIX)
+CPPFLAGS+= -DLOADADDR=${LOADADDR}
+AFLAGS.mbr.S+=	-Wa,--divide
+
+BUILDSYMLINKS+= \
+	${NETBSDSRCDIR}/include/arch/i386/include/stackframe.h machine/stackframe.h \
+	${NETBSDSRCDIR}/include/arch/i386/include/fpu.h machine/fpu.h
+
+DPSRCS+= machine/stackframe.h  machine/fpu.h
+.endif # defined(__MINIX)
 
 ${PROG}: ${OBJS}
 	${_MKTARGET_LINK}

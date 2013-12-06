@@ -321,14 +321,11 @@ protected:
     // Minix defines
 
     Builder.defineMacro("__minix", "3");
-    Builder.defineMacro("_EM_WSIZE", "4");
-    Builder.defineMacro("_EM_PSIZE", "4");
-    Builder.defineMacro("_EM_SSIZE", "2");
-    Builder.defineMacro("_EM_LSIZE", "4");
-    Builder.defineMacro("_EM_FSIZE", "4");
-    Builder.defineMacro("_EM_DSIZE", "8");
+    Builder.defineMacro("__minix__", "3");
+    Builder.defineMacro("__unix__");
     Builder.defineMacro("__ELF__");
-    DefineStd(Builder, "unix", Opts);
+    if (Opts.POSIXThreads)
+      Builder.defineMacro("_POSIX_THREADS");
   }
 public:
   MinixTargetInfo(const llvm::Triple &Triple) : OSTargetInfo<Target>(Triple) {
@@ -5554,6 +5551,8 @@ static TargetInfo *AllocateTarget(const llvm::Triple &Triple) {
       return new FreeBSDTargetInfo<ARMTargetInfo>(Triple);
     case llvm::Triple::NetBSD:
       return new NetBSDTargetInfo<ARMTargetInfo>(Triple);
+    case llvm::Triple::Minix:
+      return new MinixTargetInfo<ARMTargetInfo>(Triple);
     case llvm::Triple::OpenBSD:
       return new OpenBSDTargetInfo<ARMTargetInfo>(Triple);
     case llvm::Triple::Bitrig:

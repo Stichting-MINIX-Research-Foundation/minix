@@ -3,6 +3,9 @@
 S=		${.CURDIR}/../../../..
 
 AFLAGS.cdboot.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
+.if defined(__MINIX)
+AFLAGS.cdboot.S+=	-Wa,--divide
+.endif # defined(__MINIX)
 
 PIE_CFLAGS=
 PIE_LDFLAGS=
@@ -10,10 +13,6 @@ PIE_AFLAGS=
 
 NOMAN=		# defined
 .include <bsd.own.mk>
-
-.if defined(__MINIX)
-AFLAGS+=       -Wa,--divide
-.endif # defined(__MINIX)
 
 STRIPFLAG=	# nothing
 

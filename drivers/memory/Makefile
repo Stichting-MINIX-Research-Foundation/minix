@@ -10,8 +10,8 @@ OBJS=	${SRCS:N*.h:R:S/$/.o/g}
 MKBUILDEXT2RD?=	no
 
 RAMDISK_PATH= ${NETBSDSRCDIR}/drivers/ramdisk
-DPADD+=	${LIBBLOCKDRIVER} ${LIBCHARDRIVER} ${LIBSYS}
-LDADD+=	-lblockdriver -lchardriver -lsys
+DPADD+=	${LIBBLOCKDRIVER} ${LIBCHARDRIVER}
+LDADD+=	-lblockdriver -lchardriver
 
 MAN=
 

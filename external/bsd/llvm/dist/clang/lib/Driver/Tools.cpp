@@ -1318,6 +1318,7 @@ static const char *getX86TargetCPU(const ArgList &Args,
   case llvm::Triple::OpenBSD:
     return "i486";
   case llvm::Triple::Haiku:
+  case llvm::Triple::Minix:
     return "i586";
   case llvm::Triple::Bitrig:
     return "i686";
@@ -6543,11 +6544,24 @@ void gnutools::Link::ConstructJob(Compilation &C, const JobAction &JA,
 }
 
 void minix::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
-                                   const InputInfo &Output,
-                                   const InputInfoList &Inputs,
-                                   const ArgList &Args,
-                                   const char *LinkingOutput) const {
+                                     const InputInfo &Output,
+                                     const InputInfoList &Inputs,
+                                     const ArgList &Args,
+                                     const char *LinkingOutput) const {
   ArgStringList CmdArgs;
+
+  // When building 32-bit code on NetBSD/amd64, we have to explicitly
+  // instruct as in the base system to assemble 32-bit code.
+  if (getToolChain().getArch() == llvm::Triple::x86)
+    CmdArgs.push_back("--32");
+
+#if 0 /* LSC: Not needed for MINIX (no mips port) but kept to ease comparison with NetBSD. */
+  // Set byte order explicitly
+  if (getToolChain().getArch() == llvm::Triple::mips)
+    CmdArgs.push_back("-EB");
+  else if (getToolChain().getArch() == llvm::Triple::mipsel)
+    CmdArgs.push_back("-EL");
+#endif /* 0 */
 
   Args.AddAllArgValues(CmdArgs, options::OPT_Wa_COMMA,
                        options::OPT_Xassembler);
@@ -6561,18 +6575,43 @@ void minix::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back(II.getFilename());
   }
 
-  const char *Exec =
-    Args.MakeArgString(getToolChain().GetProgramPath("as"));
+  const char *Exec = Args.MakeArgString((getToolChain().GetProgramPath("as")));
   C.addCommand(new Command(JA, *this, Exec, CmdArgs));
 }
 
 void minix::Link::ConstructJob(Compilation &C, const JobAction &JA,
-                               const InputInfo &Output,
-                               const InputInfoList &Inputs,
-                               const ArgList &Args,
-                               const char *LinkingOutput) const {
+                                 const InputInfo &Output,
+                                 const InputInfoList &Inputs,
+                                 const ArgList &Args,
+                                 const char *LinkingOutput) const {
   const Driver &D = getToolChain().getDriver();
   ArgStringList CmdArgs;
+
+  if (!D.SysRoot.empty())
+    CmdArgs.push_back(Args.MakeArgString("--sysroot=" + D.SysRoot));
+
+  if (Args.hasArg(options::OPT_static)) {
+    CmdArgs.push_back("-Bstatic");
+  } else {
+    if (Args.hasArg(options::OPT_rdynamic))
+      CmdArgs.push_back("-export-dynamic");
+    CmdArgs.push_back("--eh-frame-hdr");
+    if (Args.hasArg(options::OPT_shared)) {
+      CmdArgs.push_back("-Bshareable");
+    } else {
+      CmdArgs.push_back("-dynamic-linker");
+      // LSC: Small deviation from the NetBSD version.
+      //      Use the same linker path as gcc.
+      CmdArgs.push_back("/usr/libexec/ld.elf_so");
+    }
+  }
+
+  // When building 32-bit code on NetBSD/amd64, we have to explicitly
+  // instruct ld in the base system to link 32-bit code.
+  if (getToolChain().getArch() == llvm::Triple::x86) {
+    CmdArgs.push_back("-m");
+    CmdArgs.push_back("elf_i386_minix");
+  }
 
   if (Output.isFilename()) {
     CmdArgs.push_back("-o");
@@ -6583,38 +6622,89 @@ void minix::Link::ConstructJob(Compilation &C, const JobAction &JA,
 
   if (!Args.hasArg(options::OPT_nostdlib) &&
       !Args.hasArg(options::OPT_nostartfiles)) {
-      CmdArgs.push_back(Args.MakeArgString(getToolChain().GetFilePath("crt1.o")));
-      CmdArgs.push_back(Args.MakeArgString(getToolChain().GetFilePath("crti.o")));
-      CmdArgs.push_back(Args.MakeArgString(getToolChain().GetFilePath("crtbegin.o")));
-      CmdArgs.push_back(Args.MakeArgString(getToolChain().GetFilePath("crtn.o")));
+    if (!Args.hasArg(options::OPT_shared)) {
+      CmdArgs.push_back(Args.MakeArgString(
+                              getToolChain().GetFilePath("crt0.o")));
+      CmdArgs.push_back(Args.MakeArgString(
+                              getToolChain().GetFilePath("crti.o")));
+      CmdArgs.push_back(Args.MakeArgString(
+                              getToolChain().GetFilePath("crtbegin.o")));
+    } else {
+      CmdArgs.push_back(Args.MakeArgString(
+                              getToolChain().GetFilePath("crti.o")));
+      CmdArgs.push_back(Args.MakeArgString(
+                              getToolChain().GetFilePath("crtbeginS.o")));
+    }
   }
 
   Args.AddAllArgs(CmdArgs, options::OPT_L);
   Args.AddAllArgs(CmdArgs, options::OPT_T_Group);
   Args.AddAllArgs(CmdArgs, options::OPT_e);
+  Args.AddAllArgs(CmdArgs, options::OPT_s);
+  Args.AddAllArgs(CmdArgs, options::OPT_t);
+  Args.AddAllArgs(CmdArgs, options::OPT_Z_Flag);
+  Args.AddAllArgs(CmdArgs, options::OPT_r);
 
   AddLinkerInputs(getToolChain(), Inputs, Args, CmdArgs);
 
-  addProfileRT(getToolChain(), Args, CmdArgs, getToolChain().getTriple());
+#if 0 /* LSC: Not needed for MINIX, but kept to ease comparison with NetBSD. */
+  unsigned Major, Minor, Micro;
+  getToolChain().getTriple().getOSVersion(Major, Minor, Micro);
+  bool useLibgcc = true;
+  if (Major >= 7 || (Major == 6 && Minor == 99 && Micro >= 23) || Major == 0) {
+    if (getToolChain().getArch() == llvm::Triple::x86 ||
+        getToolChain().getArch() == llvm::Triple::x86_64)
+      useLibgcc = false;
+  }
+#endif /* 0 */
 
   if (!Args.hasArg(options::OPT_nostdlib) &&
       !Args.hasArg(options::OPT_nodefaultlibs)) {
     if (D.CCCIsCXX()) {
       getToolChain().AddCXXStdlibLibArgs(Args, CmdArgs);
       CmdArgs.push_back("-lm");
+
+      /* LSC: Hack as lc++ is linked against mthread. */
+      CmdArgs.push_back("-lmthread");
     }
+    if (Args.hasArg(options::OPT_pthread))
+      CmdArgs.push_back("-lpthread");
+    CmdArgs.push_back("-lc");
+
+#if 0 /* LSC: Minix always use CompilerRT-Generic. */
+    if (useLibgcc) {
+      if (Args.hasArg(options::OPT_static)) {
+        // libgcc_eh depends on libc, so resolve as much as possible,
+        // pull in any new requirements from libc and then get the rest
+        // of libgcc.
+        CmdArgs.push_back("-lgcc_eh");
+        CmdArgs.push_back("-lc");
+        CmdArgs.push_back("-lgcc");
+      } else {
+        CmdArgs.push_back("-lgcc");
+        CmdArgs.push_back("--as-needed");
+        CmdArgs.push_back("-lgcc_s");
+        CmdArgs.push_back("--no-as-needed");
+      }
+    }
+#else
+    //CmdArgs.push_back("-lCompilerRT-Generic");
+#endif /* 0 */
   }
 
   if (!Args.hasArg(options::OPT_nostdlib) &&
       !Args.hasArg(options::OPT_nostartfiles)) {
-    if (Args.hasArg(options::OPT_pthread))
-      CmdArgs.push_back("-lpthread");
-    CmdArgs.push_back("-lc");
-    CmdArgs.push_back("-lCompilerRT-Generic");
-    CmdArgs.push_back("-L/usr/pkg/compiler-rt/lib");
-    CmdArgs.push_back(
-         Args.MakeArgString(getToolChain().GetFilePath("crtend.o")));
+    if (!Args.hasArg(options::OPT_shared))
+      CmdArgs.push_back(Args.MakeArgString(getToolChain().GetFilePath(
+                                                                  "crtend.o")));
+    else
+      CmdArgs.push_back(Args.MakeArgString(getToolChain().GetFilePath(
+                                                                 "crtendS.o")));
+    CmdArgs.push_back(Args.MakeArgString(getToolChain().GetFilePath(
+                                                                    "crtn.o")));
   }
+
+  addProfileRT(getToolChain(), Args, CmdArgs, getToolChain().getTriple());
 
   const char *Exec = Args.MakeArgString(getToolChain().GetProgramPath("ld"));
   C.addCommand(new Command(JA, *this, Exec, CmdArgs));
