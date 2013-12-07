@@ -1780,6 +1780,7 @@
 ./usr/include/ulimit.h			minix-sys
 ./usr/include/unctrl.h			minix-sys
 ./usr/include/unistd.h			minix-sys
+./usr/include/unwind.h			minix-sys	llvm
 ./usr/include/util.h			minix-sys
 ./usr/include/utime.h			minix-sys
 ./usr/include/utmp.h			minix-sys
