@@ -58,8 +58,8 @@ struct memory *mem_chunks)                      /* store mem chunks here */
   /* Obtain and parse memory from kernel environment. */
   /* XXX Any memory chunk in excess of NR_MEMS is silently ignored. */
   for(i = 0; i < MIN(MAXMEMMAP, NR_MEMS); i++) {
-  	mem_chunks[i].base = kernel_boot_info.memmap[i].addr;
-  	mem_chunks[i].size = kernel_boot_info.memmap[i].len;
+  	mem_chunks[i].base = kernel_boot_info.memmap[i].mm_base_addr;
+  	mem_chunks[i].size = kernel_boot_info.memmap[i].mm_length;
   }
 
   /* Round physical memory to clicks. Round start up, round end down. */

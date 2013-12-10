@@ -187,7 +187,7 @@ void setup_mbi(multiboot_info_t *mbi, char *bootargs)
 	memset(mbi, 0, sizeof(*mbi));
 	mbi->flags = MULTIBOOT_INFO_MODS | MULTIBOOT_INFO_MEM_MAP |
 			MULTIBOOT_INFO_CMDLINE;
-	mbi->mods_count = MB_MODS_NR;
+	mbi->mi_mods_count = MB_MODS_NR;
 	mbi->mods_addr = (u32_t)&mb_modlist;
 
 	int i;
@@ -205,8 +205,8 @@ void setup_mbi(multiboot_info_t *mbi, char *bootargs)
 	mbi->mmap_length = sizeof(mb_memmap);
 
 	mb_memmap.size = sizeof(multiboot_memory_map_t);
-	mb_memmap.addr = MB_MMAP_START;
-	mb_memmap.len  = MB_MMAP_SIZE;
+	mb_memmap.mm_base_addr = MB_MMAP_START;
+	mb_memmap.mm_length  = MB_MMAP_SIZE;
 	mb_memmap.type = MULTIBOOT_MEMORY_AVAILABLE;
 }
 
@@ -286,10 +286,10 @@ void get_parameters(kinfo_t *cbi, char *bootargs)
 	assert(!(cbi->bootstrap_start % ARM_PAGE_SIZE));
 	cbi->bootstrap_len = rounddown(cbi->bootstrap_len, ARM_PAGE_SIZE);
 	assert(mbi->flags & MULTIBOOT_INFO_MODS);
-	assert(mbi->mods_count < MULTIBOOT_MAX_MODS);
-	assert(mbi->mods_count > 0);
+	assert(mbi->mi_mods_count < MULTIBOOT_MAX_MODS);
+	assert(mbi->mi_mods_count > 0);
 	memcpy(&cbi->module_list, (void *) mbi->mods_addr,
-		mbi->mods_count * sizeof(multiboot_module_t));
+		mbi->mi_mods_count * sizeof(multiboot_module_t));
 	
 	memset(cbi->memmap, 0, sizeof(cbi->memmap));
 	/* mem_map has a variable layout */
@@ -300,7 +300,7 @@ void get_parameters(kinfo_t *cbi, char *bootargs)
        	       mmap = (multiboot_memory_map_t *) 
 		      	((unsigned long) mmap + mmap->size + sizeof(mmap->size))) {
 			if(mmap->type != MULTIBOOT_MEMORY_AVAILABLE) continue;
-			add_memmap(cbi, mmap->addr, mmap->len);
+			add_memmap(cbi, mmap->mm_base_addr, mmap->mm_length);
 		}
 	} else {
 		assert(mbi->flags & MULTIBOOT_INFO_MEMORY);
@@ -312,11 +312,11 @@ void get_parameters(kinfo_t *cbi, char *bootargs)
 	 * with each other. Pretend the kernel is an extra module for a
 	 * second.
 	 */
-	k = mbi->mods_count;
+	k = mbi->mi_mods_count;
 	assert(k < MULTIBOOT_MAX_MODS);
 	cbi->module_list[k].mod_start = kernbase;
 	cbi->module_list[k].mod_end = kernbase + kernsize;
-	cbi->mods_with_kernel = mbi->mods_count+1;
+	cbi->mods_with_kernel = mbi->mi_mods_count+1;
 	cbi->kern_mod = k;
 
 	for(m = 0; m < cbi->mods_with_kernel; m++) {

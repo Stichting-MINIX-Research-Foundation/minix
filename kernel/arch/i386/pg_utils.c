@@ -23,7 +23,7 @@ void print_memmap(kinfo_t *cbi)
         int m;
         assert(cbi->mmap_size < MAXMEMMAP);
         for(m = 0; m < cbi->mmap_size; m++) {
-		phys_bytes addr = cbi->memmap[m].addr, endit = cbi->memmap[m].addr + cbi->memmap[m].len;
+		phys_bytes addr = cbi->memmap[m].mm_base_addr, endit = cbi->memmap[m].mm_base_addr + cbi->memmap[m].mm_length;
                 printf("%08lx-%08lx ",addr, endit);
         }
         printf("\nsize %08lx\n", cbi->mmap_size);
@@ -43,8 +43,8 @@ void cut_memmap(kinfo_t *cbi, phys_bytes start, phys_bytes end)
 
         for(m = 0; m < cbi->mmap_size; m++) {
                 phys_bytes substart = start, subend = end;
-                phys_bytes memaddr = cbi->memmap[m].addr,
-                        memend = cbi->memmap[m].addr + cbi->memmap[m].len;
+                phys_bytes memaddr = cbi->memmap[m].mm_base_addr,
+                        memend = cbi->memmap[m].mm_base_addr + cbi->memmap[m].mm_length;
 
                 /* adjust cut range to be a subset of the free memory */
                 if(substart < memaddr) substart = memaddr;
@@ -54,7 +54,7 @@ void cut_memmap(kinfo_t *cbi, phys_bytes start, phys_bytes end)
                 /* if there is any overlap, forget this one and add
                  * 1-2 subranges back
                  */
-                cbi->memmap[m].addr = cbi->memmap[m].len = 0;
+                cbi->memmap[m].mm_base_addr = cbi->memmap[m].mm_length = 0;
                 if(substart > memaddr)
                         add_memmap(cbi, memaddr, substart-memaddr);
                 if(subend < memend)
@@ -74,8 +74,8 @@ phys_bytes alloc_lowest(kinfo_t *cbi, phys_bytes len)
 	assert(kernel_may_alloc);
 
 	for(m = 0; m < cbi->mmap_size; m++) {
-		if(cbi->memmap[m].len < len) continue;
-		if(cbi->memmap[m].addr < lowest) lowest = cbi->memmap[m].addr;
+		if(cbi->memmap[m].mm_length < len) continue;
+		if(cbi->memmap[m].mm_base_addr < lowest) lowest = cbi->memmap[m].mm_base_addr;
 	}
 	assert(lowest != EMPTY);
 	cut_memmap(cbi, lowest, len);
@@ -103,10 +103,10 @@ void add_memmap(kinfo_t *cbi, u64_t addr, u64_t len)
 
         for(m = 0; m < MAXMEMMAP; m++) {
 		phys_bytes highmark;
-                if(cbi->memmap[m].len) continue;
-                cbi->memmap[m].addr = addr;
-                cbi->memmap[m].len = len;
-                cbi->memmap[m].type = MULTIBOOT_MEMORY_AVAILABLE;
+                if(cbi->memmap[m].mm_length) continue;
+                cbi->memmap[m].mm_base_addr = addr;
+                cbi->memmap[m].mm_length = len;
+                cbi->memmap[m].mm_type = MULTIBOOT_MEMORY_AVAILABLE;
                 if(m >= cbi->mmap_size)
                         cbi->mmap_size = m+1;
 		highmark = addr + len;
@@ -144,16 +144,16 @@ phys_bytes pg_alloc_page(kinfo_t *cbi)
 
 	for(m = cbi->mmap_size-1; m >= 0; m--) {
 		mmap = &cbi->memmap[m];
-		if(!mmap->len) continue;
-		assert(mmap->len > 0);
-		assert(!(mmap->len % I386_PAGE_SIZE));
-		assert(!(mmap->addr % I386_PAGE_SIZE));
+		if(!mmap->mm_length) continue;
+		assert(mmap->mm_length > 0);
+		assert(!(mmap->mm_length % I386_PAGE_SIZE));
+		assert(!(mmap->mm_base_addr % I386_PAGE_SIZE));
 
-		mmap->len -= I386_PAGE_SIZE;
+		mmap->mm_length -= I386_PAGE_SIZE;
 
                 cbi->kernel_allocated_bytes_dynamic += I386_PAGE_SIZE;
 
-		return mmap->addr + mmap->len;
+		return mmap->mm_base_addr + mmap->mm_length;
 	}
 
 	panic("can't find free memory");

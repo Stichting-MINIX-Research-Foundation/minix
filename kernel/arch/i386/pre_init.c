@@ -129,12 +129,12 @@ void get_parameters(u32_t ebx, kinfo_t *cbi)
 	cbi->serial_debug_baud = 115200;
 
 	/* parse boot command line */
-	if (mbi->flags&MULTIBOOT_INFO_CMDLINE) {
+	if (mbi->mi_flags & MULTIBOOT_INFO_HAS_CMDLINE) {
 		static char var[BUF];
 		static char value[BUF];
 
 		/* Override values with cmdline argument */
-		memcpy(cmdline, (void *) mbi->cmdline, BUF);
+		memcpy(cmdline, (void *) mbi->mi_cmdline, BUF);
 		p = cmdline;
 		while (*p) {
 			var_i = 0;
@@ -172,38 +172,38 @@ void get_parameters(u32_t ebx, kinfo_t *cbi)
 
 	assert(!(cbi->bootstrap_start % I386_PAGE_SIZE));
 	cbi->bootstrap_len = rounddown(cbi->bootstrap_len, I386_PAGE_SIZE);
-	assert(mbi->flags & MULTIBOOT_INFO_MODS);
-	assert(mbi->mods_count < MULTIBOOT_MAX_MODS);
-	assert(mbi->mods_count > 0);
-	memcpy(&cbi->module_list, (void *) mbi->mods_addr,
-		mbi->mods_count * sizeof(multiboot_module_t));
+	assert(mbi->mi_flags & MULTIBOOT_INFO_HAS_MODS);
+	assert(mbi->mi_mods_count < MULTIBOOT_MAX_MODS);
+	assert(mbi->mi_mods_count > 0);
+	memcpy(&cbi->module_list, (void *) mbi->mi_mods_addr,
+		mbi->mi_mods_count * sizeof(multiboot_module_t));
 	
 	memset(cbi->memmap, 0, sizeof(cbi->memmap));
 	/* mem_map has a variable layout */
-	if(mbi->flags & MULTIBOOT_INFO_MEM_MAP) {
+	if(mbi->mi_flags & MULTIBOOT_INFO_HAS_MMAP) {
 		cbi->mmap_size = 0;
 	        for (mmap = (multiboot_memory_map_t *) mbi->mmap_addr;
        	     (unsigned long) mmap < mbi->mmap_addr + mbi->mmap_length;
        	       mmap = (multiboot_memory_map_t *) 
-		      	((unsigned long) mmap + mmap->size + sizeof(mmap->size))) {
-			if(mmap->type != MULTIBOOT_MEMORY_AVAILABLE) continue;
-			add_memmap(cbi, mmap->addr, mmap->len);
+		      	((unsigned long) mmap + mmap->mm_size + sizeof(mmap->mm_size))) {
+			if(mmap->mm_type != MULTIBOOT_MEMORY_AVAILABLE) continue;
+			add_memmap(cbi, mmap->mm_base_addr, mmap->mm_length);
 		}
 	} else {
-		assert(mbi->flags & MULTIBOOT_INFO_MEMORY);
-		add_memmap(cbi, 0, mbi->mem_lower_unused*1024);
-		add_memmap(cbi, 0x100000, mbi->mem_upper_unused*1024);
+		assert(mbi->mi_flags & MULTIBOOT_INFO_HAS_MEMORY);
+		add_memmap(cbi, 0, mbi->mi_mem_lower*1024);
+		add_memmap(cbi, 0x100000, mbi->mi_mem_upper*1024);
 	}
 
 	/* Sanity check: the kernel nor any of the modules may overlap
 	 * with each other. Pretend the kernel is an extra module for a
 	 * second.
 	 */
-	k = mbi->mods_count;
+	k = mbi->mi_mods_count;
 	assert(k < MULTIBOOT_MAX_MODS);
 	cbi->module_list[k].mod_start = kernbase;
 	cbi->module_list[k].mod_end = kernbase + kernsize;
-	cbi->mods_with_kernel = mbi->mods_count+1;
+	cbi->mods_with_kernel = mbi->mi_mods_count+1;
 	cbi->kern_mod = k;
 
 	for(m = 0; m < cbi->mods_with_kernel; m++) {
@@ -229,7 +229,7 @@ kinfo_t *pre_init(u32_t magic, u32_t ebx)
 	 */
 	get_parameters(ebx, &kinfo);
 
-	assert(magic == MULTIBOOT_BOOTLOADER_MAGIC);
+	assert(magic == MULTIBOOT_INFO_MAGIC);
 
 	/* Make and load a pagetable that will map the kernel
 	 * to where it should be; but first a 1:1 mapping so

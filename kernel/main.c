@@ -152,9 +152,9 @@ void kmain(kinfo_t *local_cbi)
 
    proc_init();
 
-   if(NR_BOOT_MODULES != kinfo.mbi.mods_count)
+   if(NR_BOOT_MODULES != kinfo.mbi.mi_mods_count)
    	panic("expecting %d boot processes/modules, found %d",
-		NR_BOOT_MODULES, kinfo.mbi.mods_count);
+		NR_BOOT_MODULES, kinfo.mbi.mi_mods_count);
 
   /* Set up proc table entries for processes in boot image. */
   for (i=0; i < NR_BOOT_PROCS; ++i) {

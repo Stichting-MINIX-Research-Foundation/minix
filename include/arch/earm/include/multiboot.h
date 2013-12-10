@@ -292,7 +292,7 @@ struct multiboot_info
 	/* Kernel command line */
 	u32_t cmdline;
 	/* Boot-Module list */
-	u32_t mods_count;
+	u32_t mi_mods_count;
 	u32_t mods_addr;
 	union
 	{
@@ -338,8 +338,8 @@ typedef struct multiboot_mod_list multiboot_module_t;
 struct multiboot_mmap_entry
 {
 	u32_t size;
-	u64_t addr;
-	u64_t len;
+	u64_t mm_base_addr;
+	u64_t mm_length;
 #define MULTIBOOT_MEMORY_AVAILABLE              1
 #define MULTIBOOT_MEMORY_RESERVED               2
 	u32_t type;

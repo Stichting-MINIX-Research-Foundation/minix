@@ -7,6 +7,7 @@
 #include <string.h>
 
 #include <minix/cpufeature.h>
+#include <sys/types.h>
 #include <machine/multiboot.h>
 #include "kernel/kernel.h"
 
@@ -286,7 +287,7 @@ multiboot_module_t *bootmod(int pnr)
 		p = i - NR_TASKS;
 		if(image[i].proc_nr == pnr) {
 			assert(p < MULTIBOOT_MAX_MODS);
-			assert(p < kinfo.mbi.mods_count);
+			assert(p < kinfo.mbi.mi_mods_count);
 			return &kinfo.module_list[p];
 		}
 	}
