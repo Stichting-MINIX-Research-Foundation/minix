@@ -69,8 +69,8 @@ struct statvfs {
 	unsigned long	f_frsize;	/* fundamental file system block size */
 	unsigned long	f_iosize;	/* optimal file system block size */
 
-	/* The following are in units of f_frsize */
 	fsblkcnt_t	f_blocks;	/* number of blocks in file system, */
+					/*   (in units of f_frsize) */
 	fsblkcnt_t	f_bfree;	/* free blocks avail in file system */
 	fsblkcnt_t	f_bavail;	/* free blocks avail to non-root */
 	fsblkcnt_t	f_bresvd;	/* blocks reserved for root */
@@ -106,14 +106,51 @@ struct statvfs {
 #endif
 
 #define	ST_RDONLY	MNT_RDONLY
+#define	ST_SYNCHRONOUS	MNT_SYNCHRONOUS
+#define	ST_NOEXEC	MNT_NOEXEC
 #define	ST_NOSUID	MNT_NOSUID
-#ifdef __minix
-#define	ST_NOTRUNC	__MNT_UNUSED1
-#endif /* !__minix*/
+#define	ST_NODEV	MNT_NODEV
+#define	ST_UNION	MNT_UNION
+#define	ST_ASYNC	MNT_ASYNC
+#define	ST_NOCOREDUMP	MNT_NOCOREDUMP
+#define	ST_RELATIME	MNT_RELATIME
+#define	ST_IGNORE	MNT_IGNORE
+#define	ST_NOATIME	MNT_NOATIME
+#define	ST_SYMPERM	MNT_SYMPERM
+#define	ST_NODEVMTIME	MNT_NODEVMTIME
+#define	ST_SOFTDEP	MNT_SOFTDEP
+#define	ST_LOG		MNT_LOG
+#define	ST_EXTATTR	MNT_EXTATTR
+
+#define	ST_EXRDONLY	MNT_EXRDONLY
+#define	ST_EXPORTED	MNT_EXPORTED
+#define	ST_DEFEXPORTED	MNT_DEFEXPORTED
+#define	ST_EXPORTANON	MNT_EXPORTANON
+#define	ST_EXKERB	MNT_EXKERB
+#define	ST_EXNORESPORT	MNT_EXNORESPORT
+#define	ST_EXPUBLIC	MNT_EXPUBLIC
+
+#define	ST_LOCAL	MNT_LOCAL
+#define	ST_QUOTA	MNT_QUOTA
+#define	ST_ROOTFS	MNT_ROOTFS
+
 
 #define	ST_WAIT		MNT_WAIT
 #define	ST_NOWAIT	MNT_NOWAIT
 
+#ifdef __minix
+#define        ST_NOTRUNC      __MNT_UNUSED1
+#endif /* !__minix*/
+
+#if defined(_KERNEL) || defined(_STANDALONE)
+struct mount;
+struct lwp;
+
+int	set_statvfs_info(const char *, int, const char *, int,
+    const char *, struct mount *, struct lwp *);
+void	copy_statvfs_info(struct statvfs *, const struct mount *);
+int	dostatvfs(struct mount *, struct statvfs *, struct lwp *, int, int);
+#else
 __BEGIN_DECLS
 int	statvfs(const char *__restrict, struct statvfs *__restrict);
 int	fstatvfs(int, struct statvfs *);
@@ -121,9 +158,26 @@ int	getvfsstat(struct statvfs *, size_t, int);
 #ifndef __LIBC12_SOURCE__
 int	getmntinfo(struct statvfs **, int) __RENAME(__getmntinfo13);
 #endif /* __LIBC12_SOURCE__ */
+#if defined(_NETBSD_SOURCE)
+#ifndef __LIBC12_SOURCE__
+int	fhstatvfs(const void *, size_t, struct statvfs *) 
+    __RENAME(__fhstatvfs40);
+#endif
 
 int	statvfs1(const char *__restrict, struct statvfs *__restrict, int);
 int	fstatvfs1(int, struct statvfs *, int);
+#ifndef __LIBC12_SOURCE__
+int	fhstatvfs1(const void *, size_t, struct statvfs *, int)
+    __RENAME(__fhstatvfs140);
+#endif
+#endif /* _NETBSD_SOURCE */
 __END_DECLS
+#endif /* _KERNEL || _STANDALONE */
+
+#if defined(_KERNEL)
+#include <sys/kmem.h>
+#define	STATVFSBUF_GET()	kmem_alloc(sizeof(struct statvfs), KM_SLEEP)
+#define	STATVFSBUF_PUT(sb)	kmem_free(sb, sizeof(struct statvfs))
+#endif /* defined(_KERNEL) */
 
 #endif /* !_SYS_STATVFS_H_ */

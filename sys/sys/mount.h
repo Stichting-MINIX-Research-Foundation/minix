@@ -191,7 +191,15 @@ struct mount {
 }
 
 #if defined(_KERNEL)
-#include <prop/proplib.h>
+
+struct quotactl_args;		/* in sys/quotactl.h */
+struct quotastat;		/* in sys/quotactl.h */
+struct quotaidtypestat;		/* in sys/quotactl.h */
+struct quotaobjtypestat;	/* in sys/quotactl.h */
+struct quotakcursor;		/* in sys/quotactl.h */
+struct quotakey;		/* in sys/quota.h */
+struct quotaval;		/* in sys/quota.h */
+
 #if __STDC__
 struct nameidata;
 #endif
@@ -208,7 +216,7 @@ struct vfsops {
 	int	(*vfs_start)	(struct mount *, int);
 	int	(*vfs_unmount)	(struct mount *, int);
 	int	(*vfs_root)	(struct mount *, struct vnode **);
-	int	(*vfs_quotactl)	(struct mount *, prop_dictionary_t);
+	int	(*vfs_quotactl)	(struct mount *, struct quotactl_args *);
 	int	(*vfs_statvfs)	(struct mount *, struct statvfs *);
 	int	(*vfs_sync)	(struct mount *, int, struct kauth_cred *);
 	int	(*vfs_vget)	(struct mount *, ino_t, struct vnode **);
@@ -243,7 +251,7 @@ int	VFS_MOUNT(struct mount *, const char *, void *, size_t *);
 int	VFS_START(struct mount *, int);
 int	VFS_UNMOUNT(struct mount *, int);
 int	VFS_ROOT(struct mount *, struct vnode **);
-int	VFS_QUOTACTL(struct mount *, prop_dictionary_t);
+int	VFS_QUOTACTL(struct mount *, struct quotactl_args *);
 int	VFS_STATVFS(struct mount *, struct statvfs *);
 int	VFS_SYNC(struct mount *, int, struct kauth_cred *);
 int	VFS_FHTOVP(struct mount *, struct fid *, struct vnode **);
@@ -269,7 +277,7 @@ int	fsname##_mount(struct mount *, const char *, void *,		\
 int	fsname##_start(struct mount *, int);				\
 int	fsname##_unmount(struct mount *, int);				\
 int	fsname##_root(struct mount *, struct vnode **);			\
-int	fsname##_quotactl(struct mount *, prop_dictionary_t);		\
+int	fsname##_quotactl(struct mount *, int, struct quotactl_args *);	\
 int	fsname##_statvfs(struct mount *, struct statvfs *);		\
 int	fsname##_sync(struct mount *, int, struct kauth_cred *);	\
 int	fsname##_vget(struct mount *, ino_t, struct vnode **);		\
@@ -407,6 +415,24 @@ struct mount *vfs_mountalloc(struct vfsops *, struct vnode *);
 int	vfs_stdextattrctl(struct mount *, int, struct vnode *,
 	    int, const char *);
 void	vfs_insmntque(struct vnode *, struct mount *);
+int	vfs_quotactl_stat(struct mount *, struct quotastat *);
+int	vfs_quotactl_idtypestat(struct mount *, int, struct quotaidtypestat *);
+int	vfs_quotactl_objtypestat(struct mount *,int,struct quotaobjtypestat *);
+int	vfs_quotactl_get(struct mount *, const struct quotakey *,
+	    struct quotaval *);
+int	vfs_quotactl_put(struct mount *, const struct quotakey *,
+	    const struct quotaval *);
+int	vfs_quotactl_delete(struct mount *, const struct quotakey *);
+int	vfs_quotactl_cursoropen(struct mount *, struct quotakcursor *);
+int	vfs_quotactl_cursorclose(struct mount *, struct quotakcursor *);
+int	vfs_quotactl_cursorskipidtype(struct mount *, struct quotakcursor *,
+            int);
+int	vfs_quotactl_cursorget(struct mount *, struct quotakcursor *,
+            struct quotakey *, struct quotaval *, unsigned, unsigned *);
+int	vfs_quotactl_cursoratend(struct mount *, struct quotakcursor *, int *);
+int	vfs_quotactl_cursorrewind(struct mount *, struct quotakcursor *);
+int	vfs_quotactl_quotaon(struct mount *, int, const char *);
+int	vfs_quotactl_quotaoff(struct mount *, int);
 
 extern	CIRCLEQ_HEAD(mntlist, mount) mountlist;	/* mounted filesystem list */
 extern	struct vfsops *vfssw[];			/* filesystem type table */
@@ -450,15 +476,15 @@ int	getfh(const char *, void *, size_t *)
 	__RENAME(__getfh30);
 #endif
 
-#if !defined(__minix)
+#ifndef __minix
 int	unmount(const char *, int);
-#endif /* !defined(__minix) */
+#endif
+
 #if defined(_NETBSD_SOURCE)
 #ifndef __LIBC12_SOURCE__
-#if !defined(__minix)
-/* LSC FIXME: we should remove our definition, and make sure all the tools uses the new one*/
+#ifndef __minix
 int mount(const char *, const char *, int, void *, size_t) __RENAME(__mount50);
-#endif /* !defined(__minix) */
+#endif
 int	fhopen(const void *, size_t, int) __RENAME(__fhopen40);
 int	fhstat(const void *, size_t, struct stat *) __RENAME(__fhstat50);
 #endif
