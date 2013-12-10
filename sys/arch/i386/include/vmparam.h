@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.72 2010/11/14 13:33:21 uebayasi Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.75 2012/08/15 08:10:28 sborrill Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -37,6 +37,9 @@
 #ifndef _I386_VMPARAM_H_
 #define _I386_VMPARAM_H_
 
+#include <sys/tree.h>
+#include <sys/mutex.h>
+
 /*
  * Machine dependent constants for 386.
  */
@@ -48,5 +51,86 @@
 #define	PAGE_SHIFT	12
 #define	PAGE_SIZE	(1 << PAGE_SHIFT)
 #define	PAGE_MASK	(PAGE_SIZE - 1)
+
+/*
+ * Virtual address space arrangement. On 386, both user and kernel
+ * share the address space, not unlike the vax.
+ * USRSTACK is the top (end) of the user stack. Immediately above the
+ * user stack is the page table map, and then kernel address space.
+ */
+#define	USRSTACK	VM_MAXUSER_ADDRESS
+
+/*
+ * Virtual memory related constants, all in bytes
+ */
+#define	MAXTSIZ		(256*1024*1024)		/* max text size */
+#ifndef DFLDSIZ
+#define	DFLDSIZ		(256*1024*1024)		/* initial data size limit */
+#endif
+#ifndef MAXDSIZ
+#define	MAXDSIZ		(3U*1024*1024*1024)	/* max data size */
+#endif
+#ifndef	DFLSSIZ
+#define	DFLSSIZ		(2*1024*1024)		/* initial stack size limit */
+#endif
+#ifndef	MAXSSIZ
+#define	MAXSSIZ		(64*1024*1024)		/* max stack size */
+#endif
+
+/*
+ * IA-32 can't do per-page execute permission, so instead we implement
+ * two executable segments for %cs, one that covers everything and one
+ * that excludes some of the address space (currently just the stack).
+ * I386_MAX_EXE_ADDR is the upper boundary for the smaller segment.
+ */
+#define I386_MAX_EXE_ADDR	(USRSTACK - MAXSSIZ)
+
+/*
+ * Size of User Raw I/O map
+ */
+#define	USRIOSIZE 	300
+
+/*
+ * Mach derived constants
+ */
+
+/* user/kernel map constants */
+#define VM_MIN_ADDRESS		((vaddr_t)0)
+#define	VM_MAXUSER_ADDRESS	((vaddr_t)(PDIR_SLOT_PTE << L2_SHIFT))
+#define	VM_MAX_ADDRESS		\
+	((vaddr_t)((PDIR_SLOT_PTE << L2_SHIFT) + (PDIR_SLOT_PTE << L1_SHIFT)))
+#define	VM_MIN_KERNEL_ADDRESS	((vaddr_t)(PDIR_SLOT_KERN << L2_SHIFT))
+#define	VM_MAX_KERNEL_ADDRESS	((vaddr_t)((PDIR_SLOT_KERN + NKL2_MAX_ENTRIES) << L2_SHIFT))
+
+/*
+ * The address to which unspecified mapping requests default
+ */
+#ifdef _KERNEL_OPT
+#include "opt_uvm.h"
+#include "opt_xen.h"
+#endif
+#define __USE_TOPDOWN_VM
+#define VM_DEFAULT_ADDRESS(da, sz) \
+	trunc_page(USRSTACK - MAXSSIZ - (sz))
+
+/* XXX max. amount of KVM to be used by buffers. */
+#ifndef VM_MAX_KERNEL_BUF
+#define VM_MAX_KERNEL_BUF	(384 * 1024 * 1024)
+#endif
+
+/* virtual sizes (bytes) for various kernel submaps */
+#define VM_PHYS_SIZE		(USRIOSIZE*PAGE_SIZE)
+
+#define VM_PHYSSEG_STRAT	VM_PSTRAT_BIGFIRST
+
+#ifdef XEN
+#define	VM_PHYSSEG_MAX		1
+#define	VM_NFREELIST		1
+#else
+#define	VM_PHYSSEG_MAX		16	/* 1 "hole" + 15 free lists */
+#define	VM_NFREELIST		2
+#define	VM_FREELIST_FIRST16	1
+#endif /* XEN */
+#define	VM_FREELIST_DEFAULT	0
 
 #endif /* _I386_VMPARAM_H_ */

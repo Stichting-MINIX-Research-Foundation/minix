@@ -32,11 +32,7 @@
 #ifndef	_EVBARM_VMPARAM_H_
 #define	_EVBARM_VMPARAM_H_
 
-#if defined(__minix)
-#include <arm/arm32/vmparam.h>
-#endif /* defined(__minix) */
-
-#if defined(_KERNEL) || defined(_KMEMUSER)
+#if defined(_KERNEL) || defined(_KMEMUSER) || defined(__minix)
 
 #include <arm/arm32/vmparam.h>
 

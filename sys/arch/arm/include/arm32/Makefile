@@ -2,6 +2,6 @@
 
 INCSDIR= /usr/include/arm/arm32
 
-INCS=	param.h types.h vmparam.h
+INCS=	param.h types.h vmparam.h pte.h
 
 .include <bsd.kinc.mk>

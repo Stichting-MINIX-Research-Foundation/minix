@@ -2,6 +2,7 @@
 getpagesize.c
 */
 #include <sys/cdefs.h>
+#include <sys/types.h>
 #include "namespace.h"
 
 #include <machine/vmparam.h>
