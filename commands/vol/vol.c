@@ -273,17 +273,17 @@ int fd;
 		exit(1);
 	}
   } else {
-	if (mtget.mt_blksize > SSIZE_MAX) {
+	if (mtget.mt_blksiz > SSIZE_MAX) {
 		fprintf(stderr,
 		"vol: %s: tape block size (%lu) is too large to handle\n",
-			name, (unsigned long) mtget.mt_blksize);
+			name, (unsigned long) mtget.mt_blksiz);
 		exit(1);
 	}
-	if (mtget.mt_blksize == 0) {
+	if (mtget.mt_blksiz == 0) {
 		variable = 1;
 	} else {
 		/* fixed */
-		block_size = mtget.mt_blksize;
+		block_size = mtget.mt_blksiz;
 	}
   }
 }

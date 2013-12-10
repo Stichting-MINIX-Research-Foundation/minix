@@ -53,9 +53,9 @@ tape_operation_t tapeops[] = {
 	{ SELF,	   "status",   IGN },	/* Tape Status */
 	{ MTRETEN, "retension",IGN },	/* Retension the tape */
 	{ MTERASE, "erase",    IGN },	/* Erase the tape */
-	{ MTMODE,  "density",  NNG },	/* Select density */
-	{ MTBLKZ,  "blksize",  NNG },	/* Select block size */
-	{ MTBLKZ,  "blocksize",NNG },	/* Same */
+	{ MTSETDNSTY,  "density",  NNG },	/* Select density */
+	{ MTSETBSIZ,  "blksize",  NNG },	/* Select block size */
+	{ MTSETBSIZ,  "blocksize",NNG },	/* Same */
 };
 
 #define arraysize(a)	(sizeof(a)/sizeof((a)[0]))
@@ -199,8 +199,8 @@ SCSI tape drive %s:\n\
 				(long) mtget.mt_fileno,
 				(long) mtget.mt_blkno,
 				(long) mtget.mt_resid);
-			printf(mtget.mt_blksize == 0 ? "variable\n" : "%d\n",
-				mtget.mt_blksize);
+			printf(mtget.mt_blksiz == 0 ? "variable\n" : "%d\n",
+				mtget.mt_blksiz);
 		}
 	}
 	if (r < 0) {
