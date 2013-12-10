@@ -11,11 +11,6 @@ server/ip/gen/ether.h
 #define ETH_HDR_SIZE			  14
 #define ETH_CRC_SIZE			   4
 
-typedef struct ether_addr
-{
-	u8_t ea_addr[6];
-} ether_addr_t;
-
 typedef u16_t ether_type_t;
 
 #define ETH_ARP_PROTO	 0x806

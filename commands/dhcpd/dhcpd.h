@@ -6,6 +6,7 @@
 #define nil ((void*)0)
 
 #include <minix/paths.h>
+#include <net/if_ether.h>
 
 /* Paths to files. */
 #define PATH_DHCPCONF	_PATH_DHCPCONF

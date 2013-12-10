@@ -5,6 +5,8 @@ server/gen/ip/eth_io.h
 #ifndef __SERVER__IP__GEN__ETH_IO_H__
 #define __SERVER__IP__GEN__ETH_IO_H__
 
+#include <net/if_ether.h>
+
 typedef struct nwio_ethopt
 {
 	u32_t nweo_flags;
