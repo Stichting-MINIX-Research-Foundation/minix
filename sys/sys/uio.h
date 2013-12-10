@@ -34,6 +34,12 @@
 #ifndef _SYS_UIO_H_
 #define	_SYS_UIO_H_
 
+#ifdef _KERNEL
+#ifndef __UIO_EXPOSE
+#define __UIO_EXPOSE
+#endif
+#endif
+
 #include <machine/ansi.h>
 #include <sys/featuretest.h>
 
@@ -53,6 +59,37 @@ struct iovec {
 };
 
 #if defined(_NETBSD_SOURCE)
+#include <sys/ansi.h>
+
+#ifndef	off_t
+typedef	__off_t		off_t;	/* file offset */
+#define	off_t		__off_t
+#endif
+
+enum	uio_rw { UIO_READ, UIO_WRITE };
+
+/* Segment flag values. */
+enum uio_seg {
+	UIO_USERSPACE,		/* from user data space */
+	UIO_SYSSPACE		/* from system space */
+};
+
+#ifdef __UIO_EXPOSE
+
+struct vmspace;
+
+struct uio {
+	struct	iovec *uio_iov;	/* pointer to array of iovecs */
+	int	uio_iovcnt;	/* number of iovecs in array */
+	off_t	uio_offset;	/* offset into file this uio corresponds to */
+	size_t	uio_resid;	/* residual i/o count */
+	enum	uio_rw uio_rw;	/* see above */
+	struct	vmspace *uio_vmspace;
+};
+#define	UIO_SETUP_SYSSPACE(uio)	uio_setup_sysspace(uio)
+
+#endif /* __UIO_EXPOSE */
+
 /*
  * Limits
  */
@@ -60,11 +97,27 @@ struct iovec {
 #define UIO_MAXIOV	1024		/* max 1K of iov's */
 #endif /* _NETBSD_SOURCE */
 
+#ifdef _KERNEL
+
+/* 8 on stack, more will be dynamically allocated. */
+#define UIO_SMALLIOV	8
+
+void uio_setup_sysspace(struct uio *);
+#endif
+
+#ifndef	_KERNEL
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
+#if defined(_NETBSD_SOURCE)
+ssize_t preadv(int, const struct iovec *, int, off_t);
+ssize_t pwritev(int, const struct iovec *, int, off_t);
+#endif /* _NETBSD_SOURCE */
 ssize_t	readv(int, const struct iovec *, int);
 ssize_t	writev(int, const struct iovec *, int);
 __END_DECLS
+#else
+int ureadc(int, struct uio *);
+#endif /* !_KERNEL */
 
 #endif /* !_SYS_UIO_H_ */

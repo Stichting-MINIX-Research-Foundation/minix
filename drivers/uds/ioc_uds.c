@@ -69,7 +69,8 @@ do_accept(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 	for (i = 0; i < NR_FDS; i++) {
 		if (uds_fd_table[i].addr.sun_family == AF_UNIX &&
 		    !strncmp(addr.sun_path, uds_fd_table[i].addr.sun_path,
-		    UNIX_PATH_MAX) && uds_fd_table[i].listening == 1)
+		    sizeof(uds_fd_table[i].addr.sun_path)) &&
+			uds_fd_table[i].listening == 1)
 			break;
 	}
 
@@ -167,7 +168,7 @@ do_connect(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 		return rc;
 
 	if ((rc = checkperms(uds_fd_table[minor].owner, addr.sun_path,
-	    UNIX_PATH_MAX)) != OK)
+	    sizeof(addr.sun_path))) != OK)
 		return rc;
 
 	/*
@@ -182,7 +183,7 @@ do_connect(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 		if (uds_fd_table[i].addr.sun_family != AF_UNIX)
 			continue;
 		if (strncmp(addr.sun_path, uds_fd_table[i].addr.sun_path,
-		    UNIX_PATH_MAX))
+		    sizeof(uds_fd_table[i].addr.sun_path)))
 			continue;
 
 		/* Found a matching socket. */
@@ -356,14 +357,14 @@ do_bind(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 		return ENOENT;
 
 	if ((rc = checkperms(uds_fd_table[minor].owner, addr.sun_path,
-	    UNIX_PATH_MAX)) != OK)
+		sizeof(addr.sun_path))) != OK)
 		return rc;
 
 	/* Make sure the address isn't already in use by another socket. */
 	for (i = 0; i < NR_FDS; i++) {
 		if (uds_fd_table[i].addr.sun_family == AF_UNIX &&
 		    !strncmp(addr.sun_path, uds_fd_table[i].addr.sun_path,
-		    UNIX_PATH_MAX)) {
+		    sizeof(uds_fd_table[i].addr.sun_path))) {
 			/* Another socket is bound to this sun_path. */
 			return EADDRINUSE;
 		}
@@ -612,7 +613,7 @@ do_sendto(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 		return EINVAL;
 
 	if ((rc = checkperms(uds_fd_table[minor].owner, addr.sun_path,
-	    UNIX_PATH_MAX)) != OK)
+	    sizeof(addr.sun_path))) != OK)
 		return rc;
 
 	memcpy(&uds_fd_table[minor].target, &addr, sizeof(struct sockaddr_un));
@@ -826,7 +827,8 @@ do_sendmsg(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 			if (uds_fd_table[i].type == SOCK_DGRAM &&
 			    uds_fd_table[i].addr.sun_family == AF_UNIX &&
 			    !strncmp(uds_fd_table[minor].target.sun_path,
-			    uds_fd_table[i].addr.sun_path, UNIX_PATH_MAX)) {
+			    uds_fd_table[i].addr.sun_path,
+			    sizeof(uds_fd_table[i].addr.sun_path))) {
 				peer = i;
 				break;
 			}

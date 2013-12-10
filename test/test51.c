@@ -13,14 +13,22 @@
 #include <string.h>
 #include <ucontext.h>
 #include <math.h>
+#ifndef __arm__
 #include <fenv.h>
+#else
+#include <ieeefp.h>
+#endif
 
 #include <sys/signal.h>
+
+/* We can't use a global subtest variable reliably, because threads might
+   change the value when we reenter a thread (i.e., report wrong subtest
+   number). */
+#define err(st, en) do { subtest = st; e(en); } while(0)
 
 void do_calcs(void);
 void do_child(void);
 void do_parent(void);
-void err(int subtest, int error_no);
 void func1(int a, int b, int c, int d, int e, int f, int g, int h, int
 	i, int j, int k, int l, int m, int n, int o, int p, int q, int r, int s,
 	int t, int u, int v, int w, int x, int y, int z, int aa, int bb);
@@ -311,14 +319,5 @@ int main(void)
 
   quit();
   return(-1);
-}
-
-/* We can't use a global subtest variable reliably, because threads might
-   change the value when we reenter a thread (i.e., report wrong subtest
-   number). */
-void err(int sub, int error_no)
-{
-  subtest = sub;
-  e(error_no);
 }
 

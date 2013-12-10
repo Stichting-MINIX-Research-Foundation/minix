@@ -25,13 +25,13 @@ int setuctx(const ucontext_t *ucp)
 	return(-1);
   }
 
-  if (!(ucp->uc_flags & UCF_IGNSIGM)) {
+  if (!(ucp->uc_flags & _UC_IGNSIGM)) {
 	/* Set signal mask */
 	if ((r = sigprocmask(SIG_SETMASK, &ucp->uc_sigmask, NULL)) == -1)
 		return(r);
   }
 
-  if (!(ucp->uc_flags & UCF_IGNFPU)) {
+  if (!(ucp->uc_flags & _UC_IGNFPU)) {
 	if ((r = setmcontext(&(ucp->uc_mcontext))) == -1)
 		return(r);
   }
@@ -52,13 +52,13 @@ int getuctx(ucontext_t *ucp)
 	return(-1);
   }
 
-  if (!(ucp->uc_flags & UCF_IGNSIGM)) {
+  if (!(ucp->uc_flags & _UC_IGNSIGM)) {
 	/* Get signal mask */
 	if ((r = sigprocmask(0, NULL, &ucp->uc_sigmask)) == -1)
 		return(r);
   }
 
-  if (!(ucp->uc_flags & UCF_IGNFPU)) {
+  if (!(ucp->uc_flags & _UC_IGNFPU)) {
 	if ((r = getmcontext(&(ucp->uc_mcontext))) != 0)
 		return(r);
   }
@@ -232,10 +232,10 @@ int swapcontext(ucontext_t *oucp, const ucontext_t *ucp)
 	return(-1);
   } 
 
-  oucp->uc_flags &= ~UCF_SWAPPED;
+  oucp->uc_flags &= ~_UC_SWAPPED;
   r = getcontext(oucp);
-  if ((r == 0) && !(oucp->uc_flags & UCF_SWAPPED)) {
-	oucp->uc_flags |= UCF_SWAPPED;
+  if ((r == 0) && !(oucp->uc_flags & _UC_SWAPPED)) {
+	oucp->uc_flags |= _UC_SWAPPED;
 	r = setcontext(ucp);
   }
 

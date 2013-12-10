@@ -391,7 +391,8 @@ uds_perform_write(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant,
 			if (uds_fd_table[i].type == SOCK_DGRAM &&
 			    uds_fd_table[i].addr.sun_family == AF_UNIX &&
 			    !strncmp(uds_fd_table[minor].target.sun_path,
-			    uds_fd_table[i].addr.sun_path, UNIX_PATH_MAX)) {
+			    uds_fd_table[i].addr.sun_path,
+			    sizeof(uds_fd_table[i].addr.sun_path))) {
 				peer = i;
 				break;
 			}

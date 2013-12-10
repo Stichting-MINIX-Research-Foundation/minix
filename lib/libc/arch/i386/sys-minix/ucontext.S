@@ -7,19 +7,6 @@ IMPORT(resumecontext)
 
 	.globl	_C_LABEL(__errno)
 
-/* MCF_MAGIC value from <mcontext.h> */
-#define MCF_MAGIC	0xc0ffee
-
-/* Values from <sys/ucontext.h> */
-#define UCF_IGNFPU	0x002
-#define UCF_IGNSIGM	0x004
-
-
-/* EINVAL from errno.h */
-#define EFAULT		14
-#define EINVAL 		22
-
-
 /* int getcontext(ucontext_t *ucp) 
  *	Initialise the structure pointed to by ucp to the current user context
  *	of the calling thread. */
@@ -42,8 +29,9 @@ ENTRY(getcontext)
 	
 3:	/* Check flags */
 	mov UC_FLAGS(%edx), %eax	/* eax = ucp->uc_flags */
-	xor $[UCF_IGNFPU|UCF_IGNSIGM], %eax /* toggle both flags */
-	jz 5f				/* Both were set, skip getuctx */
+	and $[_UC_IGNFPU|_UC_IGNSIGM], %eax
+	cmp $[_UC_IGNFPU|_UC_IGNSIGM], %eax
+	jz 5f				/* Ignore both, skip getuctx */
 	PIC_PROLOGUE
 	push %edx		 
 	call PIC_PLT(_C_LABEL(getuctx))	/* getuctx(ucp) */
@@ -101,8 +89,9 @@ ENTRY(setcontext)
 
 
 4:	mov UC_FLAGS(%edx), %eax	/* eax = ucp->uc_flags */
-	xor $[UCF_IGNFPU|UCF_IGNSIGM], %eax /* toggle both flags */
-	jz 5f			/* Both are set, so don't bother restoring FPU
+	and $[_UC_IGNFPU|_UC_IGNSIGM], %eax
+	cmp $[_UC_IGNFPU|_UC_IGNSIGM], %eax
+	jz 5f			/* Ignore both, so don't bother restoring FPU
 				 * state and signal mask */
 
 	PIC_PROLOGUE

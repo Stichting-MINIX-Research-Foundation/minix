@@ -828,9 +828,10 @@ size_t pathlen;
   struct fproc *rfp;
   char canon_path[PATH_MAX];
   struct lookup resolve;
+  struct sockaddr_un sun;
 
   if (isokendpt(ep, &slot) != OK) return(EINVAL);
-  if (pathlen < UNIX_PATH_MAX || pathlen >= PATH_MAX) return(EINVAL);
+  if (pathlen < sizeof(sun.sun_path) || pathlen >= PATH_MAX) return(EINVAL);
 
   rfp = &(fproc[slot]);
   r = sys_safecopyfrom(who_e, io_gr, (vir_bytes) 0, (vir_bytes) canon_path,

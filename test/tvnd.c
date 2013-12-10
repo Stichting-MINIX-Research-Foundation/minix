@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <string.h>
 
 /*
  * For now, just test the most dreaded case: the driver being told to use the

@@ -20,7 +20,7 @@ ucontext_t *ctx;
   /* We're not interested in FPU state nor signals, so ignore them. 
    * Coincidentally, this significantly speeds up performance.
    */
-  ctx->uc_flags |= (UCF_IGNFPU | UCF_IGNSIGM);
+  ctx->uc_flags |= _UC_IGNSIGM | _UC_IGNFPU;
   return getcontext(ctx);
 }
 

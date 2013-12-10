@@ -7,18 +7,6 @@ IMPORT(setuctx)
 IMPORT(resumecontext)
 
 
-/* MCF_MAGIC value from <mcontext.h> */
-#define MCF_MAGIC	0xc0ffee
-
-/* Values from <sys/ucontext.h> */
-#define UCF_IGNFPU	0x002
-#define UCF_IGNSIGM	0x004
-
-
-/* EINVAL from errno.h */
-#define EFAULT		14
-#define EINVAL 		22
-
 /* int getcontext(ucontext_t *ucp)
  *	Initialise the structure pointed to by ucp to the current user context
  *	of the calling thread. */
@@ -45,9 +33,9 @@ ENTRY(getcontext)
 
 3:	/* Check flags */
 	ldr r1, [r0, #UC_FLAGS]		/* r1 = ucp->uc_flags */
-	mov r2, #(UCF_IGNFPU | UCF_IGNSIGM)
-	cmp r1, r2			/* is UCF_IGNFPU or UCF_IGNSIGM set? */
-	beq 1f				/* Both are set, skip getuctx */
+	and r1, r1, #[_UC_IGNFPU|_UC_IGNSIGM]
+	cmp r1, #[_UC_IGNFPU|_UC_IGNSIGM] /* Allowed to ignore both? */
+	beq 1f				/* If so, skip getuctx */
 
 0:
 	push {r0, r3}
@@ -116,9 +104,9 @@ ENTRY(setcontext)
 
 
 4:	ldr r1, [r0, #UC_FLAGS]		/* r1 = ucp->uc_flags */
-	mov r2, #(UCF_IGNFPU | UCF_IGNSIGM)
-	cmp r1, r2		/* Are UCF_IGNFPU and UCF_IGNSIGM flags set? */
-	beq 1f			/* Both are set, so don't bother restoring FPU
+	and r1, r1, #[_UC_IGNFPU|_UC_IGNSIGM]
+	cmp r1, #[_UC_IGNFPU|_UC_IGNSIGM] /* Allowed to ignore both? */
+	beq 1f			/* Neither are set, so don't bother restoring FPU
 				 * state and signal mask */
 
 	push {r0, r3}
