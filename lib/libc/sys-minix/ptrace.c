@@ -9,7 +9,7 @@
 __weak_alias(ptrace, _ptrace)
 #endif
 
-long ptrace(int req, pid_t pid, long addr, long data)
+int ptrace(int req, pid_t pid, void *addr, int data)
 {
   message m;
 

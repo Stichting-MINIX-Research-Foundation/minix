@@ -17,7 +17,7 @@ INCS=	ansi.h asm.h \
 	limits.h \
 	math.h mcontext.h mutex.h multiboot.h \
 	npx.h \
-	param.h pio.h profile.h \
+	param.h pio.h profile.h ptrace.h \
 	\
 	rwlock.h \
 	setjmp.h signal.h \
