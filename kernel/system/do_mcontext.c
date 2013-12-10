@@ -10,6 +10,7 @@
 
 #include "kernel/system.h"
 #include <string.h>
+#include <assert.h>
 #include <machine/mcontext.h>
 
 #if USE_MCONTEXT 
@@ -35,17 +36,18 @@ int do_getmcontext(struct proc * caller, message * m_ptr)
 
   /* Get the mcontext structure into our address space.  */
   if ((r = data_copy(m_ptr->PR_ENDPT, (vir_bytes) m_ptr->PR_CTX_PTR, KERNEL,
-		(vir_bytes) &mc, (phys_bytes) sizeof(struct __mcontext))) != OK)
+		(vir_bytes) &mc, (phys_bytes) sizeof(mcontext_t))) != OK)
 	return(r);
 
+  mc.mc_flags = 0;
 #if defined(__i386__)
   /* Copy FPU state */
-  mc.mc_fpu_flags = 0;
   if (proc_used_fpu(rp)) {
 	/* make sure that the FPU context is saved into proc structure first */
 	save_fpu(rp);
-	mc.mc_fpu_flags = rp->p_misc_flags & MF_FPU_INITIALIZED;
-	memcpy(&(mc.mc_fpu_state), rp->p_seg.fpu_state, FPU_XFP_SIZE);
+	mc.mc_flags = (rp->p_misc_flags & MF_FPU_INITIALIZED) ? _MC_FPU_SAVED : 0;
+	assert(sizeof(mc.__fpregs.__fp_reg_set) == FPU_XFP_SIZE);
+	memcpy(&(mc.__fpregs.__fp_reg_set), rp->p_seg.fpu_state, FPU_XFP_SIZE);
   } 
 #endif
 
@@ -53,7 +55,7 @@ int do_getmcontext(struct proc * caller, message * m_ptr)
   /* Copy the mcontext structure to the user's address space. */
   if ((r = data_copy(KERNEL, (vir_bytes) &mc, m_ptr->PR_ENDPT, 
 	(vir_bytes) m_ptr->PR_CTX_PTR,
-	(phys_bytes) sizeof(struct __mcontext))) != OK)
+	(phys_bytes) sizeof(mcontext_t))) != OK)
 	return(r);
 
   return(OK);
@@ -76,14 +78,15 @@ int do_setmcontext(struct proc * caller, message * m_ptr)
 
   /* Get the mcontext structure into our address space.  */
   if ((r = data_copy(m_ptr->PR_ENDPT, (vir_bytes) m_ptr->PR_CTX_PTR, KERNEL,
-		(vir_bytes) &mc, (phys_bytes) sizeof(struct __mcontext))) != OK)
+		(vir_bytes) &mc, (phys_bytes) sizeof(mcontext_t))) != OK)
 	return(r);
 
 #if defined(__i386__)
   /* Copy FPU state */
-  if (mc.mc_fpu_flags & MF_FPU_INITIALIZED) {
+  if (mc.mc_flags & _MC_FPU_SAVED) {
 	rp->p_misc_flags |= MF_FPU_INITIALIZED;
-	memcpy(rp->p_seg.fpu_state, &(mc.mc_fpu_state), FPU_XFP_SIZE);
+	assert(sizeof(mc.__fpregs.__fp_reg_set) == FPU_XFP_SIZE);
+	memcpy(rp->p_seg.fpu_state, &(mc.__fpregs.__fp_reg_set), FPU_XFP_SIZE);
   } else
 	rp->p_misc_flags &= ~MF_FPU_INITIALIZED;
   /* force reloading FPU in either case */

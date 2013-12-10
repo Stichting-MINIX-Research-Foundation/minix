@@ -84,7 +84,7 @@ void makecontext(ucontext_t *ucp, void (*func)(void), int argc, ...)
   } else if ((ucp->uc_stack.ss_sp == NULL) || 
 	     (ucp->uc_stack.ss_size < MINSIGSTKSZ)) {
 	ucp->uc_mcontext.mc_magic = 0; 
-	ucp->uc_mcontext.mc_p_reg.sp = 0;
+	_UC_MACHINE_SET_STACK(ucp, 0);
 	return;
   }
 
@@ -121,9 +121,9 @@ void makecontext(ucontext_t *ucp, void (*func)(void), int argc, ...)
 
 	/* Adjust the machine context to point to the top of this stack and the
 	   program counter to the context start wrapper. */
-	ucp->uc_mcontext.mc_p_reg.fp = 0; /* Clear frame pointer */
-	ucp->uc_mcontext.mc_p_reg.sp = (reg_t) stack_top;
-	ucp->uc_mcontext.mc_p_reg.pc = (reg_t) ctx_start;
+	_UC_MACHINE_SET_EBP(ucp, 0); /* Clear frame pointer */
+	_UC_MACHINE_SET_STACK(ucp, (reg_t) stack_top);
+	_UC_MACHINE_SET_PC(ucp, (reg_t) ctx_start);
 
 	*stack_top++ = (uintptr_t) func;
 
@@ -140,13 +140,14 @@ void makecontext(ucontext_t *ucp, void (*func)(void), int argc, ...)
 	/* Set ESI to point to the base of the stack where ucp is stored, so
 	   that the wrapper function knows how to clean up the stack after
 	   calling `func' (i.e., how to adjust ESP). */
-	ucp->uc_mcontext.mc_p_reg.si = (reg_t) stack_top;
+	_UC_MACHINE_SET_ESI(ucp, (reg_t) stack_top);
 	
 
 	/* If we ran out of stack space, invalidate stack pointer. Eventually,
 	   swapcontext will choke on this and return ENOMEM. */
-	if (stack_top == ucp->uc_stack.ss_sp)
-		ucp->uc_mcontext.mc_p_reg.sp = 0;
+	if (stack_top == ucp->uc_stack.ss_sp) {
+		_UC_MACHINE_SET_STACK(ucp, 0);
+	}
 #elif defined(__arm__)
 	/* The caller provides a pointer to a stack that we can use to run our
 	   context on. When the context starts, control is given to the
@@ -180,23 +181,23 @@ void makecontext(ucontext_t *ucp, void (*func)(void), int argc, ...)
 	/* Adjust the machine context to point to the top of this stack and the
 	   program counter to the 'func' entry point. Set lr to ctx_start, so
 	   ctx_start runs after 'func'. Save ucp in r4 */
-	ucp->uc_mcontext.mc_p_reg.fp = 0; /* Clear frame pointer */
-	ucp->uc_mcontext.mc_p_reg.sp = (reg_t) stack_top;
-	ucp->uc_mcontext.mc_p_reg.pc = (reg_t) func;
-	ucp->uc_mcontext.mc_p_reg.lr = (reg_t) ctx_start;
-	ucp->uc_mcontext.mc_p_reg.r4 = (reg_t) ucp;
+	_UC_MACHINE_SET_FP(ucp, 0); /* Clear frame pointer */
+	_UC_MACHINE_SET_STACK(ucp, (reg_t) stack_top);
+	_UC_MACHINE_SET_PC(ucp, (reg_t) func);
+	_UC_MACHINE_SET_LR(ucp, (reg_t) ctx_start);
+	_UC_MACHINE_SET_R4(ucp, (reg_t) ucp);
 
 	/* Copy arguments to r0-r3 and stack. */
 	va_start(ap, argc);
 	/* Pass up to four arguments in registers. */
 	if (argc-- > 0)
-		ucp->uc_mcontext.mc_p_reg.retreg = va_arg(ap, uintptr_t);
+		_UC_MACHINE_SET_R0(ucp, va_arg(ap, uintptr_t));
 	if (argc-- > 0)
-		ucp->uc_mcontext.mc_p_reg.r1 = va_arg(ap, uintptr_t);
+		_UC_MACHINE_SET_R1(ucp, va_arg(ap, uintptr_t));
 	if (argc-- > 0)
-		ucp->uc_mcontext.mc_p_reg.r2 = va_arg(ap, uintptr_t);
+		_UC_MACHINE_SET_R2(ucp, va_arg(ap, uintptr_t));
 	if (argc-- > 0)
-		ucp->uc_mcontext.mc_p_reg.r3 = va_arg(ap, uintptr_t);
+		_UC_MACHINE_SET_R3(ucp, va_arg(ap, uintptr_t));
 	/* Pass the rest on the stack. */
 	while (argc-- > 0) {
 		*stack_top++ = va_arg(ap, uintptr_t);
@@ -205,8 +206,9 @@ void makecontext(ucontext_t *ucp, void (*func)(void), int argc, ...)
 
 	/* If we ran out of stack space, invalidate stack pointer. Eventually,
 	   swapcontext will choke on this and return ENOMEM. */
-	if (stack_top == ucp->uc_stack.ss_sp)
-		ucp->uc_mcontext.mc_p_reg.sp = 0;
+	if (stack_top == ucp->uc_stack.ss_sp) {
+		_UC_MACHINE_SET_STACK(ucp, 0);
+	}
 #else
 # error "Unsupported platform"
 #endif
@@ -226,7 +228,7 @@ int swapcontext(ucontext_t *oucp, const ucontext_t *ucp)
 	return(-1);
   }
 
-  if (ucp->uc_mcontext.mc_p_reg.sp == 0) {
+  if (_UC_MACHINE_STACK(ucp) == 0) {
 	/* No stack space. Bail out. */
 	errno = ENOMEM;
 	return(-1);

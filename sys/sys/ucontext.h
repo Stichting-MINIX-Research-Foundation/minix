@@ -109,7 +109,7 @@ struct __ucontext {
 #ifdef _KERNEL
 struct lwp;
 
-#ifdef __UCONTEXT_SIZE
+#if defined(__UCONTEXT_SIZE) && !defined(__minix)
 __CTASSERT(sizeof(ucontext_t) == __UCONTEXT_SIZE);
 #endif
 
@@ -123,7 +123,7 @@ int	cpu_mcontext_validate(struct lwp *, const mcontext_t *);
 #ifdef __minix
 __BEGIN_DECLS
 void resumecontext(ucontext_t *ucp);
-#ifdef __UCONTEXT_SIZE
+#if defined(__UCONTEXT_SIZE) && !defined(__minix)
 __CTASSERT(sizeof(ucontext_t) == __UCONTEXT_SIZE);
 #endif
  

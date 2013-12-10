@@ -116,11 +116,10 @@ void mthread_stats(void)
  *===========================================================================*/
 void mthread_stacktrace(mthread_thread_t t)
 {
+#ifdef __i386__ /* stacktrace only implemented on x86 */
   unsigned long bp, hbp, pc;
   mthread_tcb_t *tcb;
   ucontext_t *ctx;
-  mcontext_t *mtx;
-  struct stackframe_s *frame;
 
   tcb = mthread_find_tcb(t);
   ctx = &tcb->m_context;
@@ -130,9 +129,7 @@ void mthread_stacktrace(mthread_thread_t t)
 
   printf("thread %d: ", t);
 
-  mtx = &ctx->uc_mcontext;
-  frame = &mtx->mc_p_reg;
-  bp = frame->fp;
+  bp = _UC_MACHINE_EBP(ctx);
 
   while (bp) {
 	pc = ((unsigned long *) bp)[1];
@@ -149,6 +146,7 @@ void mthread_stacktrace(mthread_thread_t t)
   }
 
   printf("\n");
+#endif
 }
 
 /*===========================================================================*
