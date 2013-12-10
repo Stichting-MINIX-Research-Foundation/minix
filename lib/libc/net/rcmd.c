@@ -575,7 +575,7 @@ rresvport_af_addr(int *alport, int family, void *addr)
 	s = socket(family, SOCK_STREAM, 0);
 	if (s < 0)
 		return -1;
-#ifdef BSD4_4
+#if defined(BSD4_4) && !defined(__minix)
 	switch (family) {
 	case AF_INET:
 	case AF_INET6:
