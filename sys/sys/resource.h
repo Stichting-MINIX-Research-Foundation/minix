@@ -78,36 +78,65 @@ struct	rusage {
 /*
  * Resource limits
  */
-#define RLIMIT_CORE	1
-#define RLIMIT_CPU	2
-#define RLIMIT_DATA	3
-#define RLIMIT_FSIZE	4
-#define RLIMIT_NOFILE	5
-#define RLIMIT_STACK	6
-#define RLIMIT_AS	7
+#define	RLIMIT_CPU	0		/* cpu time in milliseconds */
+#define	RLIMIT_FSIZE	1		/* maximum file size */
+#define	RLIMIT_DATA	2		/* data size */
+#define	RLIMIT_STACK	3		/* stack size */
+#define	RLIMIT_CORE	4		/* core file size */
+#define	RLIMIT_RSS	5		/* resident set size */
+#define	RLIMIT_MEMLOCK	6		/* locked-in-memory address space */
+#define	RLIMIT_NPROC	7		/* number of processes */
+#define	RLIMIT_NOFILE	8		/* number of open files */
+#define	RLIMIT_SBSIZE	9		/* maximum size of all socket buffers */
+#define	RLIMIT_AS	10		/* virtual process size (inclusive of mmap) */
 #define	RLIMIT_VMEM	RLIMIT_AS	/* common alias */
+#define	RLIMIT_NTHR	11		/* number of threads */
 
 #if defined(_NETBSD_SOURCE)
-#define	RLIM_NLIMITS	8		/* number of resource limits */
+#define	RLIM_NLIMITS	12		/* number of resource limits */
 #endif
 
-#define RLIM_INFINITY ((rlim_t) -1)
-#define RLIM_SAVED_CUR RLIM_INFINITY
-#define RLIM_SAVED_MAX RLIM_INFINITY
+#define	RLIM_INFINITY	(~((u_quad_t)1 << 63))	/* no limit */
+#define	RLIM_SAVED_MAX	RLIM_INFINITY	/* unrepresentable hard limit */
+#define	RLIM_SAVED_CUR	RLIM_INFINITY	/* unrepresentable soft limit */
 
-struct rlimit
-{
-	rlim_t rlim_cur;
-	rlim_t rlim_max;
+#if defined(_KERNEL)
+/* 4.3BSD compatibility rlimit argument structure. */
+struct orlimit {
+	int32_t	rlim_cur;		/* current (soft) limit */
+	int32_t	rlim_max;		/* maximum value for rlim_cur */
+};
+#endif
+
+struct rlimit {
+	rlim_t	rlim_cur;		/* current (soft) limit */
+	rlim_t	rlim_max;		/* maximum value for rlim_cur */
 };
 
+#if defined(_NETBSD_SOURCE)
+/* Load average structure. */
+struct loadavg {
+	fixpt_t	ldavg[3];
+	long	fscale;
+};
+#endif
+
+#ifdef _KERNEL
+extern struct loadavg averunnable;
+struct pcred;
+int	dosetrlimit(struct lwp *, struct proc *, int, struct rlimit *);
+#else
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-int	getpriority(int, int);
+int	getpriority(int, id_t);
 int	getrlimit(int, struct rlimit *);
-int	getrusage(int, struct rusage *);
-int	setpriority(int, int, int);
+#ifndef __LIBC12_SOURCE__
+int	getrusage(int, struct rusage *) __RENAME(__getrusage50);
+#endif
+int	setpriority(int, id_t, int);
+int	setrlimit(int, const struct rlimit *);
 __END_DECLS
 
+#endif	/* _KERNEL */
 #endif	/* !_SYS_RESOURCE_H_ */

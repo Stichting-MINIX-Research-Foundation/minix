@@ -13,7 +13,7 @@ priority.c
 #include <stddef.h>
 
 
-int getpriority(int which, int who)
+int getpriority(int which, id_t who)
 {
 	int v;
 	message m;
@@ -36,7 +36,7 @@ int getpriority(int which, int who)
 	return v + PRIO_MIN;
 }
 
-int setpriority(int which, int who, int prio)
+int setpriority(int which, id_t who, int prio)
 {
 	message m;
 
