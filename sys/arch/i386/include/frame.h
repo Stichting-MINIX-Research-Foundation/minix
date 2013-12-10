@@ -144,15 +144,26 @@ struct switchframe {
 	int	sf_eip;
 };
 
-#ifdef _KERNEL
+#if defined(_KERNEL) || defined(__minix)
 /*
  * Old-style signal frame
  */
 struct sigframe_sigcontext {
+#ifdef __minix
+	/* ret addr + stackframe for handler */
+	int	sf_ra_sigreturn;	/* first return to sigreturn */
+#else
 	int	sf_ra;			/* return address for handler */
+#endif
 	int	sf_signum;		/* "signum" argument for handler */
 	int	sf_code;		/* "code" argument for handler */
 	struct	sigcontext *sf_scp;	/* "scp" argument for handler */
+#ifdef __minix
+	/* ret addr + stackframe for sigreturn */
+	uint32_t sf_fp;			/* saved FP */
+	int	sf_ra;			/* actual return address for handler */
+	struct	sigcontext *sf_scpcopy;	/* minix scp copy */
+#endif
 	struct	sigcontext sf_sc;	/* actual saved context */
 };
 #endif

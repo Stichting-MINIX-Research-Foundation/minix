@@ -538,7 +538,9 @@ void arch_proc_setcontext(struct proc *p, struct stackframe_s *state,
 
 	/* someone wants to totally re-initialize process state */
 	assert(sizeof(p->p_reg) == sizeof(*state));
-	memcpy(&p->p_reg, state, sizeof(*state));
+	if(state != &p->p_reg) {
+		memcpy(&p->p_reg, state, sizeof(*state));
+	}
 
 	/* further code is instructed to not touch the context
 	 * any more
@@ -614,7 +616,7 @@ void restore_user_context(struct proc *p)
         NOT_REACHABLE;
 }
 
-void fpu_sigcontext(struct proc *pr, struct sigframe *fr, struct sigcontext *sc)
+void fpu_sigcontext(struct proc *pr, struct sigframe_sigcontext *fr, struct sigcontext *sc)
 {
 	int fp_error;
 

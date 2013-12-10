@@ -22,12 +22,12 @@ struct stackframe_s {
 	reg_t di;                     /* di through cx are not accessed in C */
 	reg_t si;                     /* order is to match pusha/popa */
 	reg_t fp;                     /* bp */
-	reg_t st;                     /* hole for another copy of sp */
+/*	reg_t st; */                     /* hole for another copy of sp */
 	reg_t bx;                     /*  | */
 	reg_t dx;                     /*  | */
 	reg_t cx;                     /*  | */
 	reg_t retreg;                 /* ax and above are all pushed by save */
-	reg_t retadr;                 /* return address for assembly code save() */
+/*	reg_t retadr; */                 /* return address for assembly code save() */
 	reg_t pc;                     /*  ^  last item pushed by interrupt */
 	reg_t cs;                     /*  | */
 	reg_t psw;                    /*  | */

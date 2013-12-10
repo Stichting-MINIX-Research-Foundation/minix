@@ -5,6 +5,5 @@
 
 IMPORT(_sigreturn)
 ENTRY(__sigreturn)
-	add	sp, sp, #24	/* make sp point to sigframe.sf_scpcopy */
-	pop	{r0}		/* load it into r0 as parameter */
+	pop	{r0}		/* load sigframe.sf_scp into r0 as parameter */
 	b	_C_LABEL(_sigreturn)	/* _sigreturn(struct sigcontext *sf_scpcopy) */

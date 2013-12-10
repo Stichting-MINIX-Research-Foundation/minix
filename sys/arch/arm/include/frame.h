@@ -88,11 +88,15 @@ typedef struct trapframe {
 /*
  * Signal frame.  Pushed onto user stack before calling sigcode.
  */
-#ifdef COMPAT_16
+#if defined(COMPAT_16) || defined(__minix)
 struct sigframe_sigcontext {
+#ifdef __minix
+	struct	sigcontext *sf_scp;	/* Let sigreturn find sigcontext */
+#endif
 	struct	sigcontext sf_sc;
 };
 #endif
+
 
 /* the pointers are use in the trampoline code to locate the ucontext */
 struct sigframe_siginfo {

@@ -7,6 +7,7 @@
 #include <minix/ipc.h>
 #include <minix/com.h>
 #include <minix/syslib.h>
+#include <machine/stackframe.h>
 #include "vassert.h"
 
 VAssert_StateWrapper vassert_state ALIGNED(VASSERT_PAGE_SIZE);

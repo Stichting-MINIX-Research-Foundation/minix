@@ -2,6 +2,7 @@
 #include <lib.h>
 #include "namespace.h"
 
+#include <sys/types.h>
 #include <sys/statvfs.h>
 #include <string.h>
 

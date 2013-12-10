@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <machine/frame.h>
 
 int max_error = 4;
 #include "common.h"
@@ -17,12 +18,12 @@ int max_error = 4;
 
 static void signal_handler(int signum)
 {
-	struct sigframe *sigframe;
+	struct sigframe_sigcontext *sigframe;
 	
 	/* report signal */
-	sigframe = (struct sigframe *) ((char *) &signum - 
-		(char *) &((struct sigframe *) NULL)->sf_signo);
-	printf("Signal %d at 0x%x\n", signum, sigframe->sf_scp->sc_regs.pc);
+	sigframe = (struct sigframe_sigcontext *) ((char *) &signum - 
+		(char *) &((struct sigframe_sigcontext *) NULL)->sf_signum);
+	printf("Signal %d at 0x%x\n", signum, sigframe->sf_scp->sc_eip);
 	
 	/* count as error */
 	e(0);

@@ -35,8 +35,7 @@
 	movl	(8 + displ)(%esp), tmp			;\
 	movl	tmp, PSWREG(pptr)			;\
 	movl	(12 + displ)(%esp), tmp			;\
-	movl	tmp, SPREG(pptr)			;\
-	movl	tmp, STREG(pptr)
+	movl	tmp, SPREG(pptr)
 
 /*
  * restore kernel segments. %cs is already set and %fs, %gs are not used */

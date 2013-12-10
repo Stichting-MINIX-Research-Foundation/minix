@@ -22,8 +22,7 @@ int do_sigsend(struct proc * caller, message * m_ptr)
 
   struct sigmsg smsg;
   register struct proc *rp;
-  struct sigcontext sc, *scp;
-  struct sigframe fr, *frp;
+  struct sigframe_sigcontext fr, *frp;
   int proc_nr, r;
 
   if (!isokendpt(m_ptr->m_sigcalls.endpt, &proc_nr)) return EINVAL;
@@ -36,17 +35,41 @@ int do_sigsend(struct proc * caller, message * m_ptr)
 		(vir_bytes)&smsg, (phys_bytes) sizeof(struct sigmsg))) != OK)
 	return r;
 
-  /* Compute the user stack pointer where sigcontext will be stored. */
+  /* Compute the user stack pointer where sigframe will start. */
   smsg.sm_stkptr = arch_get_sp(rp);
-  scp = (struct sigcontext *) smsg.sm_stkptr - 1;
+  frp = (struct sigframe_sigcontext *) smsg.sm_stkptr - 1;
 
   /* Copy the registers to the sigcontext structure. */
-  memcpy(&sc.sc_regs, (char *) &rp->p_reg, sizeof(sigregs));
+  memset(&fr, 0, sizeof(fr));
+  fr.sf_scp = &frp->sf_sc;
 
 #if defined(__i386__)
-  sc.trap_style = rp->p_seg.p_kern_trap_style;
+  fr.sf_sc.sc_gs = rp->p_reg.gs;
+  fr.sf_sc.sc_fs = rp->p_reg.fs;
+  fr.sf_sc.sc_es = rp->p_reg.es;
+  fr.sf_sc.sc_ds = rp->p_reg.ds;
+  fr.sf_sc.sc_edi = rp->p_reg.di;
+  fr.sf_sc.sc_esi = rp->p_reg.si;
+  fr.sf_sc.sc_ebp = rp->p_reg.fp;
+  fr.sf_sc.sc_ebx = rp->p_reg.bx;
+  fr.sf_sc.sc_edx = rp->p_reg.dx;
+  fr.sf_sc.sc_ecx = rp->p_reg.cx;
+  fr.sf_sc.sc_eax = rp->p_reg.retreg;
+  fr.sf_sc.sc_eip = rp->p_reg.pc;
+  fr.sf_sc.sc_cs = rp->p_reg.cs;
+  fr.sf_sc.sc_eflags = rp->p_reg.psw;
+  fr.sf_sc.sc_esp = rp->p_reg.sp;
+  fr.sf_sc.sc_ss = rp->p_reg.ss;
+  fr.sf_fp = rp->p_reg.fp;
+  fr.sf_signum = smsg.sm_signo;
+  rp->p_reg.fp = (reg_t) &frp->sf_fp;
+  fr.sf_scpcopy = fr.sf_scp;
+  fr.sf_ra_sigreturn = smsg.sm_sigreturn;
+  fr.sf_ra= rp->p_reg.pc;
 
-  if (sc.trap_style == KTS_NONE) {
+  fr.sf_sc.trap_style = rp->p_seg.p_kern_trap_style;
+
+  if (fr.sf_sc.trap_style == KTS_NONE) {
   	printf("do_sigsend: sigsend an unsaved process\n");
 	return EINVAL;
   }
@@ -54,43 +77,50 @@ int do_sigsend(struct proc * caller, message * m_ptr)
     if (proc_used_fpu(rp)) {
 	    /* save the FPU context before saving it to the sig context */
 	    save_fpu(rp);
-	    memcpy(&sc.sc_fpu_state, rp->p_seg.fpu_state, FPU_XFP_SIZE);
+	    memcpy(&fr.sf_sc.sc_fpu_state, rp->p_seg.fpu_state, FPU_XFP_SIZE);
     }
 #endif
 
-  /* Finish the sigcontext initialization. */
-  sc.sc_mask = smsg.sm_mask;
-  sc.sc_flags = rp->p_misc_flags & MF_FPU_INITIALIZED;
+#if defined(__arm__)
+  fr.sf_sc.sc_spsr = rp->p_reg.psr;
+  fr.sf_sc.sc_r0 = rp->p_reg.retreg;
+  fr.sf_sc.sc_r1 = rp->p_reg.r1;
+  fr.sf_sc.sc_r2 = rp->p_reg.r2;
+  fr.sf_sc.sc_r3 = rp->p_reg.r3;
+  fr.sf_sc.sc_r4 = rp->p_reg.r4;
+  fr.sf_sc.sc_r5 = rp->p_reg.r5;
+  fr.sf_sc.sc_r6 = rp->p_reg.r6;
+  fr.sf_sc.sc_r7 = rp->p_reg.r7;
+  fr.sf_sc.sc_r8 = rp->p_reg.r8;
+  fr.sf_sc.sc_r9 = rp->p_reg.r9;
+  fr.sf_sc.sc_r10 = rp->p_reg.r10;
+  fr.sf_sc.sc_r11 = rp->p_reg.fp;
+  fr.sf_sc.sc_r12 = rp->p_reg.r12;
+  fr.sf_sc.sc_usr_sp = rp->p_reg.sp;
+  fr.sf_sc.sc_usr_lr = rp->p_reg.lr;
+  fr.sf_sc.sc_svc_lr = 0;	/* ? */
+  fr.sf_sc.sc_pc = rp->p_reg.pc;	/* R15 */
+#endif
 
-  /* Copy the sigcontext structure to the user's stack. */
-  if ((r = data_copy_vmcheck(caller, KERNEL, (vir_bytes)&sc,
-		m_ptr->m_sigcalls.endpt, (vir_bytes)scp,
-		(vir_bytes)sizeof(struct sigcontext))) != OK)
-      return r;
+  /* Finish the sigcontext initialization. */
+  fr.sf_sc.sc_mask = smsg.sm_mask;
+  fr.sf_sc.sc_flags = rp->p_misc_flags & MF_FPU_INITIALIZED;
+  fr.sf_sc.sc_magic = SC_MAGIC;
 
   /* Initialize the sigframe structure. */
-  frp = (struct sigframe *) scp - 1;
-  fr.sf_scpcopy = scp;
-  fr.sf_retadr2= (void (*)()) rp->p_reg.pc;
-  fr.sf_fp = rp->p_reg.fp;
-  rp->p_reg.fp = (reg_t) &frp->sf_fp;
-  fr.sf_scp = scp;
 
-  fpu_sigcontext(rp, &fr, &sc);
-
-  fr.sf_signo = smsg.sm_signo;
-  fr.sf_retadr = (void (*)()) smsg.sm_sigreturn;
+  fpu_sigcontext(rp, &fr, &fr.sf_sc);
 
 #if defined(__arm__)
   /* use the ARM link register to set the return address from the signal
    * handler
    */
-  rp->p_reg.lr = (reg_t) fr.sf_retadr;
+  rp->p_reg.lr = (reg_t) smsg.sm_sigreturn;
   if(rp->p_reg.lr & 1) { printf("sigsend: LSB LR makes no sense.\n"); }
 
   /* pass signal handler parameters in registers */
-  rp->p_reg.retreg = (reg_t) fr.sf_signo;
-  rp->p_reg.r1 = (reg_t) fr.sf_code;
+  rp->p_reg.retreg = (reg_t) smsg.sm_signo;
+  rp->p_reg.r1 = 0;	/* sf_code */
   rp->p_reg.r2 = (reg_t) fr.sf_scp;
   rp->p_misc_flags |= MF_CONTEXT_SET;
 #endif
@@ -98,7 +128,7 @@ int do_sigsend(struct proc * caller, message * m_ptr)
   /* Copy the sigframe structure to the user's stack. */
   if ((r = data_copy_vmcheck(caller, KERNEL, (vir_bytes)&fr,
 		m_ptr->m_sigcalls.endpt, (vir_bytes)frp,
-		(vir_bytes)sizeof(struct sigframe))) != OK)
+		(vir_bytes)sizeof(struct sigframe_sigcontext))) != OK)
       return r;
 
   /* Reset user registers to execute the signal handler. */

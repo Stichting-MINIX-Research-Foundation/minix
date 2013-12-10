@@ -8,6 +8,8 @@
 
 #include <minix/safecopies.h>
 #include <machine/archtypes.h>
+#include <machine/signal.h>
+#include <machine/frame.h>
 
 /* Struct declarations. */
 struct proc;
@@ -35,7 +37,7 @@ void context_stop_idle(void);
 int restore_fpu(struct proc *);
 void save_fpu(struct proc *);
 void save_local_fpu(struct proc *, int retain);
-void fpu_sigcontext(struct proc *, struct sigframe *fr, struct
+void fpu_sigcontext(struct proc *, struct sigframe_sigcontext *fr, struct
 	sigcontext *sc);
 
 /* main.c */

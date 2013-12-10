@@ -4,6 +4,7 @@
 #include <lib.h>
 
 #include <string.h>
+#include <assert.h>
 #include <signal.h>
 #include <string.h>
 #include <sys/signal.h>

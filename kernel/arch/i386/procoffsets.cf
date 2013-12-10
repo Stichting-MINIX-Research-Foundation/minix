@@ -5,12 +5,10 @@ struct proc
 member DIREG p_reg.di
 member SIREG p_reg.si
 member BPREG p_reg.fp
-member STREG p_reg.st
 member BXREG p_reg.bx
 member DXREG p_reg.dx
 member CXREG p_reg.cx
 member AXREG p_reg.retreg
-member RETADR p_reg.retadr
 member PCREG p_reg.pc
 member CSREG p_reg.cs
 member PSWREG p_reg.psw

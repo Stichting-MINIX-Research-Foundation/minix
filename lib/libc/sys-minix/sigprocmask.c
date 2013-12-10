@@ -1,6 +1,7 @@
 #include <sys/cdefs.h>
-#include <sys/signal.h>
+#include <sys/types.h>
 #include <sys/sigtypes.h>
+#include <sys/signal.h>
 #include <lib.h>
 #include <string.h>
 #include "namespace.h"
