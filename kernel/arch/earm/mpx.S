@@ -27,6 +27,7 @@
 #include <machine/multiboot.h>
 #include <machine/ipcconst.h>
 #include <machine/cpu.h>
+#include <arm/armreg.h>
 #include "bsp_intr.h"
 
 #include "arch_proto.h" /* K_STACK_SIZE */
@@ -46,11 +47,11 @@ IMPORT(svc_stack)
  */
 .macro switch_to_svc lr_offset
 	sub	lr, lr, #\lr_offset	/* do the adjustment */
-	srsdb	sp!, #MODE_SVC		/* store the saved the return */
+	srsdb	sp!, #PSR_SVC32_MODE	/* store the saved the return */
 					/* address and program status */
 					/* register onto the kernel stack */
 					/* Also modify the stack pointer. */
-	cps	#MODE_SVC		/* do the switch to SVC. */
+	cps	#PSR_SVC32_MODE		/* do the switch to SVC. */
 .endm
 
 /*
@@ -63,8 +64,8 @@ IMPORT(svc_stack)
 	ldr	r3, [sp, #8] 			/* get spsr. */
 	orr	r3, r3, #(PSR_F | PSR_I)	/* mask interrupts on return. */
 	str	r3, [sp, #8]			/* store spsr. */
-	and	r3, r3, #PSR_MODE_MASK		/* mask the ARM mode. */
-	cmp	r3, #MODE_USR			/* compare it to user mode. */
+	and	r3, r3, #PSR_MODE		/* mask the ARM mode. */
+	cmp	r3, #PSR_USR32_MODE		/* compare it to user mode. */
 	pop	{r3}
 	bne	\label				/* In-kernel handling. */
 .endm
@@ -171,7 +172,7 @@ irq_entry_from_kernel:
  */
 ENTRY(svc_entry)
 	/*  Store the LR and the SPSR of the current mode onto the SVC stack */
-	srsdb	sp!, #MODE_SVC
+	srsdb	sp!, #PSR_SVC32_MODE
 	save_process_ctx
 
 	/* save the pointer to the current process */

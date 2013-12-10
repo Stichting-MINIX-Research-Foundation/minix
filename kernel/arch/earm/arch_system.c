@@ -9,6 +9,7 @@
 #include <assert.h>
 #include <signal.h>
 #include <machine/vm.h>
+#include <arm/armreg.h>
 
 #include <minix/u64.h>
 

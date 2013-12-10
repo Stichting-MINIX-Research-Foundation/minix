@@ -5,6 +5,7 @@
 #include "kernel/kernel.h"
 #include "arch_proto.h"
 #include <machine/cpu.h>
+#include <arm/armreg.h>
 
 #include <string.h>
 #include <minix/type.h>
@@ -214,21 +215,21 @@ void vm_enable_paging(void)
 	sctlr = read_sctlr();
 
 	/* Enable MMU */
-	sctlr |= SCTLR_M;
+	sctlr |= CPU_CONTROL_MMU_ENABLE;
 
 	/* TRE set to zero (default reset value): TEX[2:0] are used, plus C and B bits.*/
-	sctlr &= ~SCTLR_TRE;
+	sctlr &= ~CPU_CONTROL_TR_ENABLE;
 
 	/* AFE set to zero (default reset value): not using simplified model. */
-	sctlr &= ~SCTLR_AFE;
+	sctlr &= ~CPU_CONTROL_AF_ENABLE;
 
 	/* Enable instruction ,data cache and branch prediction */
-	sctlr |= SCTLR_C;
-	sctlr |= SCTLR_I;
-	sctlr |= SCTLR_Z;
+	sctlr |= CPU_CONTROL_DC_ENABLE;
+	sctlr |= CPU_CONTROL_IC_ENABLE;
+	sctlr |= CPU_CONTROL_BPRD_ENABLE;
 
 	/* Enable barriers */
-	sctlr |= SCTLR_CP15BEN;
+	sctlr |= CPU_CONTROL_32BD_ENABLE;
 
 	/* Enable L2 cache (cortex-a8) */
 	#define CORTEX_A8_L2EN   (0x02)

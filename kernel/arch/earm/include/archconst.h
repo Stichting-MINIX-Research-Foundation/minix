@@ -5,10 +5,11 @@
 #include <machine/interrupt.h>
 #include <machine/memory.h>
 #include <machine/cpu.h>
+#include <arm/armreg.h>
 
 /* Program stack words and masks. */
-#define INIT_PSR      (MODE_USR | PSR_F)    /* initial psr */
-#define INIT_TASK_PSR (MODE_SVC | PSR_F)    /* initial psr for tasks */
+#define INIT_PSR      (PSR_USR32_MODE | PSR_F)    /* initial psr */
+#define INIT_TASK_PSR (PSR_SVC32_MODE | PSR_F)    /* initial psr for tasks */
 
 /* Exception vector numbers */
 #define RESET_VECTOR                  0

@@ -2,7 +2,7 @@
 
 INCSDIR= /usr/include/arm
 
-INCS=	aeabi.h ansi.h asm.h \
+INCS=	aeabi.h ansi.h armreg.h asm.h \
 	bswap.h byte_swap.h \
 	cdefs.h cpu.h \
 	disklabel.h \
