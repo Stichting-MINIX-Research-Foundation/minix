@@ -98,7 +98,7 @@ union semun {
 #if defined (__GNU_LIBRARY__) && __GNU_LIBRARY__ > 1
 #define KEY __key
 #else
-#define KEY key
+#define KEY _key
 #endif
 
 #define LIMITS 1

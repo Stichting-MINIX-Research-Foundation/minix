@@ -75,68 +75,120 @@
 
 #define	SHM_RDONLY	010000	/* Attach read-only (else read-write) */
 #define	SHM_RND		020000	/* Round attach address to SHMLBA */
+#ifdef _KERNEL
+#define _SHM_RMLINGER	040000	/* Attach even if segment removed */
+#endif
 
 /* Segment low boundry address multiple */
-#define	SHMLBA		getpagesize()
-#define SHMMNI	4096
-#define SHMSEG	32		/* max shared segs per process */
+#if defined(_KERNEL) || defined(_STANDALONE) || defined(_MODULE)
+#define	SHMLBA		PAGE_SIZE
+#else
+/*
+ * SHMLBA uses libc's internal __sysconf() to retrieve the machine's
+ * page size. The value of _SC_PAGESIZE is 28 -- we hard code it so we do not
+ * need to include unistd.h
+ */
+__BEGIN_DECLS
+long __sysconf(int);
+__END_DECLS
+#define	SHMLBA		(__sysconf(28))
+#endif
 
 typedef unsigned int	shmatt_t;
 
 struct shmid_ds {
 	struct ipc_perm	shm_perm;	/* operation permission structure */
 	size_t		shm_segsz;	/* size of segment in bytes */
+	pid_t		shm_lpid;	/* process ID of last shm operation */
+	pid_t		shm_cpid;	/* process ID of creator */
+	shmatt_t	shm_nattch;	/* number of current attaches */
 	time_t		shm_atime;	/* time of last shmat() */
 	time_t		shm_dtime;	/* time of last shmdt() */
 	time_t		shm_ctime;	/* time of last change by shmctl() */
-	pid_t		shm_cpid;	/* process ID of creator */
-	pid_t		shm_lpid;	/* process ID of last shm operation */
-	shmatt_t	shm_nattch;	/* number of current attaches */
+
+	/*
+	 * These members are private and used only in the internal
+	 * implementation of this interface.
+	 */
+	void		*_shm_internal;
 };
 
+#if defined(_NETBSD_SOURCE)
+/*
+ * Some systems (e.g. HP-UX) take these as the second (cmd) arg to shmctl().
+ */
+#define	SHM_LOCK	3	/* Lock segment in memory. */
+#define	SHM_UNLOCK	4	/* Unlock a segment locked by SHM_LOCK. */
+#endif /* _NETBSD_SOURCE */
 
-/* shm_mode upper byte flags */
-#define SHM_DEST 01000			/* segment will be destroyed on last detach */
-#define SHM_LOCKED 02000		/* segment will not be swapped */
-
-/* ipcs ctl commands */
-#define SHM_STAT	13
-#define SHM_INFO	14
-
-
-#if defined(_NETBSD_SOURCE) || defined(__minix)
+#if defined(_NETBSD_SOURCE)
 /*
  * Permission definitions used in shmflag arguments to shmat(2) and shmget(2).
  * Provided for source compatibility only; do not use in new code!
  */
-#define	SHM_R		0400
-#define	SHM_W		0200
+#define	SHM_R		IPC_R	/* S_IRUSR, R for owner */
+#define	SHM_W		IPC_W	/* S_IWUSR, W for owner */
 
 /*
  * System 5 style catch-all structure for shared memory constants that
  * might be of interest to user programs.  Do we really want/need this?
  */
 struct shminfo {
-	unsigned long int shmmax;	/* max shared memory segment size (bytes) */
-	unsigned long int shmmin;	/* min shared memory segment size (bytes) */
-	unsigned long int shmmni;	/* max number of shared memory identifiers */
-	unsigned long int shmseg;	/* max shared memory segments per process */
-	unsigned long int shmall;	/* max amount of shared memory (pages) */
+	uint64_t	shmmax;	/* max shared memory segment size (bytes) */
+	uint32_t	shmmin;	/* min shared memory segment size (bytes) */
+	uint32_t	shmmni;	/* max number of shared memory identifiers */
+	uint32_t	shmseg;	/* max shared memory segments per process */
+	uint32_t	shmall;	/* max amount of shared memory (pages) */
 };
 
-#ifdef __minix
-struct shm_info
-{
-	int used_ids;
-	unsigned long int shm_tot;  /* total allocated shm */
-	unsigned long int shm_rss;  /* total resident shm */
-	unsigned long int shm_swp;  /* total swapped shm */
-	unsigned long int swap_attempts;
-	unsigned long int swap_successes;
+/* Warning: 64-bit structure padding is needed here */
+struct shmid_ds_sysctl {
+	struct		ipc_perm_sysctl shm_perm;
+	uint64_t	shm_segsz;
+	pid_t		shm_lpid;
+	pid_t		shm_cpid;
+	time_t		shm_atime;
+	time_t		shm_dtime;
+	time_t		shm_ctime;
+	uint32_t	shm_nattch;
 };
-#endif /* __minix */
-
+struct shm_sysctl_info {
+	struct	shminfo shminfo;
+	struct	shmid_ds_sysctl shmids[1];
+};
 #endif /* _NETBSD_SOURCE */
+
+#ifdef _KERNEL
+extern struct shminfo shminfo;
+extern struct shmid_ds *shmsegs;
+extern int shm_nused;
+
+#define	SHMSEG_FREE		0x0200
+#define	SHMSEG_REMOVED		0x0400
+#define	SHMSEG_ALLOCATED	0x0800
+#define	SHMSEG_WANTED		0x1000
+#define	SHMSEG_RMLINGER		0x2000
+#define	SHMSEG_WIRED		0x4000
+
+struct vmspace;
+
+void	shminit(void);
+void	shmfork(struct vmspace *, struct vmspace *);
+void	shmexit(struct vmspace *);
+int	shmctl1(struct lwp *, int, int, struct shmid_ds *);
+
+#define SYSCTL_FILL_SHM(src, dst) do { \
+	SYSCTL_FILL_PERM((src).shm_perm, (dst).shm_perm); \
+	(dst).shm_segsz = (src).shm_segsz; \
+	(dst).shm_lpid = (src).shm_lpid; \
+	(dst).shm_cpid = (src).shm_cpid; \
+	(dst).shm_atime = (src).shm_atime; \
+	(dst).shm_dtime = (src).shm_dtime; \
+	(dst).shm_ctime = (src).shm_ctime; \
+	(dst).shm_nattch = (src).shm_nattch; \
+} while (/*CONSTCOND*/ 0)
+
+#else /* !_KERNEL */
 
 __BEGIN_DECLS
 void	*shmat(int, const void *, int);
@@ -144,5 +196,33 @@ int	shmctl(int, int, struct shmid_ds *) __RENAME(__shmctl50);
 int	shmdt(const void *);
 int	shmget(key_t, size_t, int);
 __END_DECLS
+
+#endif /* !_KERNEL */
+
+#ifdef __minix
+/* ipcs ctl commands */
+#define SHM_STAT       13
+#define SHM_INFO       14
+#endif
+
+#ifdef __minix
+struct shm_info
+{
+       int used_ids;
+       unsigned long int shm_tot;  /* total allocated shm */
+       unsigned long int shm_rss;  /* total resident shm */
+       unsigned long int shm_swp;  /* total swapped shm */
+       unsigned long int swap_attempts;
+       unsigned long int swap_successes;
+};
+
+#define SHMMNI 4096
+#define SHMSEG 32              /* max shared segs per process */
+
+/* shm_mode upper byte flags */
+#define SHM_DEST 01000                 /* segment will be destroyed on last detach */
+#define SHM_LOCKED 02000               /* segment will not be swapped */
+
+#endif
 
 #endif /* !_SYS_SHM_H_ */

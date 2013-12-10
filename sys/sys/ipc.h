@@ -51,16 +51,40 @@
 #include <sys/featuretest.h>
 #include <sys/types.h>
 
-/* Data structure used to pass permission information to IPC operations. */
 struct ipc_perm {
-	key_t key;			/* Key. */
 	uid_t		uid;	/* user id */
 	gid_t		gid;	/* group id */
 	uid_t		cuid;	/* creator user id */
 	gid_t		cgid;	/* creator group id */
-	unsigned short int mode;	/* Reader/write permission. */
-	unsigned short int __seq;	/* Sequence number. */
+	mode_t		mode;	/* r/w permission */
+
+	/*
+	 * These members are private and used only in the internal
+	 * implementation of this interface.
+	 */
+	unsigned short	_seq;	/* sequence # (to generate unique
+				   msg/sem/shm id) */
+	key_t		_key;	/* user specified msg/sem/shm key */
 };
+
+#if defined(_NETBSD_SOURCE)
+/* Warning: 64-bit structure padding is needed here */
+struct ipc_perm_sysctl {
+	uint64_t	_key;
+	uid_t		uid;
+	gid_t		gid;
+	uid_t		cuid;
+	gid_t		cgid;
+	mode_t		mode;
+	int16_t		_seq;
+	int16_t		pad;
+};
+#endif /* _NETBSD_SOURCE */
+
+/* Common access type bits, used with ipcperm(). */
+#define	IPC_R		000400	/* read permission */
+#define	IPC_W		000200	/* write/alter permission */
+#define	IPC_M		010000	/* permission to change control info */
 
 /* X/Open required constants (same values as system 5) */
 #define	IPC_CREAT	001000	/* create entry if key does not exist */
@@ -74,7 +98,7 @@ struct ipc_perm {
 #define	IPC_STAT	2	/* get options */
 
 #ifdef __minix
-#define IPC_INFO	3	/* See ipcs. */
+#define IPC_INFO       500       /* See ipcs. */
 #endif /* !__minix */
 
 /*
@@ -86,10 +110,36 @@ struct ipc_perm {
 #define	IXSEQ_TO_IPCID(ix,perm)	(((perm._seq) << 16) | (ix & 0xffff))
 #endif
 
+#ifdef _KERNEL
+#define	IPCID_TO_IX(id)		((id) & 0xffff)
+#define	IPCID_TO_SEQ(id)	(((id) >> 16) & 0xffff)
+
+struct kauth_cred;
+int	ipcperm(struct kauth_cred *, struct ipc_perm *, int);
+
+void	sysvipcinit(void);
+
+/*
+ * sysctl helper routine for kern.ipc.sysvipc_info subtree.
+ */
+
+#define SYSCTL_FILL_PERM(src, dst) do { \
+	(dst)._key = (src)._key; \
+	(dst).uid = (src).uid; \
+	(dst).gid = (src).gid; \
+	(dst).cuid = (src).cuid; \
+	(dst).cgid = (src).cgid; \
+	(dst).mode = (src).mode; \
+	(dst)._seq = (src)._seq; \
+} while (/*CONSTCOND*/ 0);
+
+#endif /* _KERNEL */
+
+#ifndef _KERNEL
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
 key_t	ftok(const char *, int);
 __END_DECLS
-
+#endif
 #endif /* !_SYS_IPC_H_ */
