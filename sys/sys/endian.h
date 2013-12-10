@@ -127,10 +127,10 @@ __END_DECLS
 #define	htonl(x)	bswap32(__CAST(uint32_t, (x)))
 #define	htons(x)	bswap16(__CAST(uint16_t, (x)))
 
-#define	NTOHL(x)	ntohl(__CAST(uint32_t, (x)))
-#define	NTOHS(x)	ntohs(__CAST(uint16_t, (x)))
-#define	HTONL(x)	htonl(__CAST(uint32_t, (x)))
-#define	HTONS(x)	htons(__CAST(uint16_t, (x)))
+#define	NTOHL(x)	(x) = ntohl(__CAST(uint32_t, (x)))
+#define	NTOHS(x)	(x) = ntohs(__CAST(uint16_t, (x)))
+#define	HTONL(x)	(x) = htonl(__CAST(uint32_t, (x)))
+#define	HTONS(x)	(x) = htons(__CAST(uint16_t, (x)))
 #endif	/* LITTLE_ENDIAN || !defined(__lint__) */
 
 /*
