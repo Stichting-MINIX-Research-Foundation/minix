@@ -34,6 +34,7 @@
 #ifndef	_SYS_IOCCOM_H_
 #define	_SYS_IOCCOM_H_
 
+#ifndef __minix
 /*
  * Ioctl's have the command encoded in the lower word, and the size of
  * any in or out parameters in the upper word.  The high 3 bits of the
@@ -45,6 +46,21 @@
  *	+---------------------------------------------------------------+
  */
 #define	IOCPARM_MASK	0x1fff		/* parameter length, at most 13 bits */
+#else
+/* For Minix, reserve one extra flag bit: the 'big' size flag. 
+ * We have big ioctls and can't help it.
+ *
+ *	 31   28 27                     16 15            8 7             0
+ *	+----------------------------------------------------------------+
+ *	| I/O/B | Parameter Length       | Command Group | Command       |
+ *	+----------------------------------------------------------------+
+ */
+#define IOC_BIG		(unsigned long)0x10000000
+#define	IOCPARM_MASK	0xfff		/* parameter length, at most 12 bits */
+#define IOCPARM_MASK_BIG       0xFFFFF	/* or 20 bits, if IOC_BIG is set */
+#define	IOCPARM_SHIFT_BIG	8	
+#endif
+
 #define	IOCPARM_SHIFT	16
 #define	IOCGROUP_SHIFT	8
 #define	IOCPARM_LEN(x)	(((x) >> IOCPARM_SHIFT) & IOCPARM_MASK)
@@ -59,6 +75,7 @@
 				/* copy parameters in */
 #define	IOC_IN		(unsigned long)0x80000000
 				/* copy parameters in and out */
+
 #define	IOC_INOUT	(IOC_IN|IOC_OUT)
 				/* mask for IN/OUT/VOID */
 #define	IOC_DIRMASK	(unsigned long)0xe0000000
@@ -71,5 +88,24 @@
 #define	_IOW(g,n,t)	_IOC(IOC_IN,	(g), (n), sizeof(t))
 /* this should be _IORW, but stdio got there first */
 #define	_IOWR(g,n,t)	_IOC(IOC_INOUT,	(g), (n), sizeof(t))
+
+#ifdef __minix
+#define _IOW_BIG(y,t)  (y | ((sizeof(t) & IOCPARM_MASK_BIG) << IOCPARM_SHIFT_BIG) \
+        | IOC_IN | IOC_BIG)
+#define _IOR_BIG(y,t)  (y | ((sizeof(t) & IOCPARM_MASK_BIG) << IOCPARM_SHIFT_BIG) \
+        | IOC_OUT | IOC_BIG)
+#define _IORW_BIG(y,t) (y | ((sizeof(t) & IOCPARM_MASK_BIG) << IOCPARM_SHIFT_BIG) \
+        | IOC_INOUT | IOC_BIG)
+
+/* Decode an ioctl call. */
+#define _MINIX_IOCTL_SIZE(i)            (((i) >> IOCPARM_SHIFT) & IOCPARM_MASK)
+#define _MINIX_IOCTL_IOR(i)             ((i) & IOC_OUT)
+#define _MINIX_IOCTL_IORW(i)            ((i) & IOC_INOUT)
+#define _MINIX_IOCTL_IOW(i)             ((i) & IOC_IN)
+
+/* Recognize and decode size of a 'big' ioctl call. */
+#define _MINIX_IOCTL_BIG(i)             ((i) & IOC_BIG)
+#define _MINIX_IOCTL_SIZE_BIG(i)        (((i) >> IOCPARM_SHIFT_BIG) & IOCPARM_MASK_BIG)
+#endif
 
 #endif /* !_SYS_IOCCOM_H_ */

@@ -9,8 +9,9 @@
  * ioctl(2) function will translate to/from the Minix version of the struct.
  */
 
-#include <minix/ioctl.h>
+#include <sys/types.h>
 #include <dev/i2c/i2c_io.h>
+#include <minix/ioctl.h>
 
 typedef struct minix_i2c_ioctl_exec {
 	i2c_op_t iie_op;		/* operation to perform */
@@ -21,6 +22,6 @@ typedef struct minix_i2c_ioctl_exec {
 	size_t iie_buflen;		/* length of data buffer */
 } minix_i2c_ioctl_exec_t;
 
-#define	MINIX_I2C_IOCTL_EXEC		 _IORW('I', 1, minix_i2c_ioctl_exec_t)
+#define	MINIX_I2C_IOCTL_EXEC		 _IOWR('I', 1, minix_i2c_ioctl_exec_t)
 
 #endif /* __MINIX_I2C_H */

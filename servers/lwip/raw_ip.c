@@ -318,7 +318,7 @@ static int raw_ip_op_ioctl(struct socket * sock, struct sock_req * req,
 			get_sock_num(sock),
 			(unsigned char) (req->req >> 8),
 			req->req & 0xff,
-			(req->req >> 16) & _IOCPARM_MASK);
+			_MINIX_IOCTL_SIZE(req->req));
 	
 	switch (req->req) {
 	case NWIOSIPOPT:

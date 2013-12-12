@@ -24,6 +24,7 @@
 #include <minix/audio_fw.h>
 #include <minix/endpoint.h>
 #include <minix/ds.h>
+#include <sys/ioccom.h>
 
 
 static int msg_open(devminor_t minor_dev_nr, int access,
@@ -49,7 +50,7 @@ static special_file_t* get_special_file(int minor_dev_nr);
 static void tell_dev(vir_bytes buf, size_t size, int pci_bus, int
 	pci_dev, int pci_func);
 
-static char io_ctl_buf[_IOCPARM_MASK];
+static char io_ctl_buf[IOCPARM_MASK];
 static int irq_hook_id = 0;	/* id of irq hook at the kernel */
 static int irq_hook_set = FALSE;
 
@@ -369,7 +370,7 @@ static int msg_ioctl(devminor_t minor, unsigned long request, endpoint_t endpt,
 		return EIO;
 	}
 
-	if (request & _IOC_IN) { /* if there is data for us, copy it */
+	if (request & IOC_IN) { /* if there is data for us, copy it */
 		len = io_ctl_length(request);
 
 		if (sys_safecopyfrom(endpt, grant, 0, (vir_bytes)io_ctl_buf,
@@ -381,8 +382,8 @@ static int msg_ioctl(devminor_t minor, unsigned long request, endpoint_t endpt,
 	/* all ioctl's are passed to the device specific part of the driver */
 	status = drv_io_ctl(request, (void *)io_ctl_buf, &len, chan);
 
-	/* _IOC_OUT bit -> user expects data */
-	if (status == OK && request & _IOC_OUT) {
+	/* IOC_OUT bit -> user expects data */
+	if (status == OK && request & IOC_OUT) {
 		/* copy result back to user */
 
 		if (sys_safecopyto(endpt, grant, 0, (vir_bytes)io_ctl_buf,
@@ -812,7 +813,7 @@ static int init_buffers(sub_dev_t *sub_dev_ptr)
 
 static int io_ctl_length(int io_request) {
 	io_request >>= 16; 
-	return io_request & _IOCPARM_MASK;
+	return io_request & IOCPARM_MASK;
 }
 
 

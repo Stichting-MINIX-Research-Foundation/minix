@@ -240,7 +240,7 @@ static int sr_rwio(sr_req_t *req)
 		break;
 	case SRR_IOCTL:
 		request= m->mq_req.srr_req;
-		size= (request >> 16) & _IOCPARM_MASK;
+		size= _MINIX_IOCTL_SIZE(request);
 		if (size>MAX_IOCTL_S)
 		{
 			DBLOCK(1, printf("replying EINVAL\n"));

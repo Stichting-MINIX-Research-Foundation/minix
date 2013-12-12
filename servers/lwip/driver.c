@@ -597,8 +597,7 @@ static int nic_do_ioctl(struct socket * sock, struct nic * nic,
 	debug_print("device /dev/%s req %c %ld %ld",
 			nic->name,
 			(unsigned char) (req->req >> 8),
-			req->req & 0xff,
-			(req->req >> 16) & _IOCPARM_MASK);
+			req->req & 0xff, _MINIX_IOCTL_SIZE(req->req));
 	
 	debug_drv_print("socket %ld", sock ? get_sock_num(sock) : -1);
 

@@ -22,13 +22,13 @@
 #define DSPIORESUME		_IO ('s', 33)
 
 /* Soundcard mixer ioctls. */
-#define MIXIOGETVOLUME		_IORW('s', 10, struct volume_level)
-#define MIXIOGETINPUTLEFT	_IORW('s', 11, struct inout_ctrl)
-#define MIXIOGETINPUTRIGHT	_IORW('s', 12, struct inout_ctrl)
-#define MIXIOGETOUTPUT		_IORW('s', 13, struct inout_ctrl)
-#define MIXIOSETVOLUME		_IORW('s', 20, struct volume_level)
-#define MIXIOSETINPUTLEFT	_IORW('s', 21, struct inout_ctrl)
-#define MIXIOSETINPUTRIGHT	_IORW('s', 22, struct inout_ctrl)
-#define MIXIOSETOUTPUT		_IORW('s', 23, struct inout_ctrl)
+#define MIXIOGETVOLUME		_IOWR('s', 10, struct volume_level)
+#define MIXIOGETINPUTLEFT	_IOWR('s', 11, struct inout_ctrl)
+#define MIXIOGETINPUTRIGHT	_IOWR('s', 12, struct inout_ctrl)
+#define MIXIOGETOUTPUT		_IOWR('s', 13, struct inout_ctrl)
+#define MIXIOSETVOLUME		_IOWR('s', 20, struct volume_level)
+#define MIXIOSETINPUTLEFT	_IOWR('s', 21, struct inout_ctrl)
+#define MIXIOSETINPUTRIGHT	_IOWR('s', 22, struct inout_ctrl)
+#define MIXIOSETOUTPUT		_IOWR('s', 23, struct inout_ctrl)
 
 #endif /* _S_I_SOUND_H */

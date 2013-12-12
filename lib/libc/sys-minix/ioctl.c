@@ -4,6 +4,9 @@
 
 #include <sys/ioctl.h>
 #include <minix/i2c.h>
+#include <string.h>
+#include <sys/ioccom.h>
+#include <stdarg.h>
 
 #ifdef __weak_alias
 __weak_alias(ioctl, _ioctl)
@@ -44,14 +47,16 @@ static void rewrite_i2c_minix_to_netbsd(i2c_ioctl_exec_t *out,
   }
 }
 
-int ioctl(fd, request, data)
-int fd;
-unsigned long request;
-void *data;
+int     ioctl(int fd, unsigned long request, ...)
 {
   int r, request_save;
   message m;
   void *addr;
+  void *data;
+  va_list ap;
+
+  va_start(ap, request);
+  data = va_arg(ap, void *);
 
   /*
    * To support compatibility with interfaces on other systems, certain
@@ -89,6 +94,8 @@ void *data;
 		/* Nothing to do */
 		break;
   }
+
+  va_end(ap);
 
   return r;
 }

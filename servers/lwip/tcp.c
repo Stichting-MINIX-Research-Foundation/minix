@@ -1035,8 +1035,7 @@ static int tcp_op_ioctl(struct socket * sock, struct sock_req * req,
 	debug_tcp_print("socket num %ld req %c %ld %ld",
 			get_sock_num(sock),
 			(unsigned char) (req->req >> 8),
-			req->req & 0xff,
-			(req->req >> 16) & _IOCPARM_MASK);
+			req->req & 0xff, _MINIX_IOCTL_SIZE(req->req));
 	
 	switch (req->req) {
 	case NWIOGTCPCONF:

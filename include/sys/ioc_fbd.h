@@ -61,6 +61,6 @@ enum {
 /* The I/O control requests. */
 #define FBDCADDRULE	_IOW('B', 1, struct fbd_rule)	/* add a rule */
 #define FBDCDELRULE	_IOW('B', 2, fbd_rulenum_t)	/* delete a rule */
-#define FBDCGETRULE	_IORW('B', 3, struct fbd_rule)	/* retrieve a rule */
+#define FBDCGETRULE	_IOWR('B', 3, struct fbd_rule)	/* retrieve a rule */
 
 #endif /* _S_I_FBD_H */

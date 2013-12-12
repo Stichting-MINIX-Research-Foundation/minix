@@ -11,7 +11,7 @@
 #define DIOCSETP	_IOW('d', 3, struct part_geom)
 #define DIOCGETP	_IOR('d', 4, struct part_geom)
 #define DIOCEJECT	_IO ('d', 5)
-#define DIOCTIMEOUT	_IORW('d', 6, int)
+#define DIOCTIMEOUT	_IOWR('d', 6, int)
 #define DIOCOPENCT	_IOR('d', 7, int)
 #define DIOCFLUSH	_IO ('d', 8)
 #define DIOCSETWC	_IOW('d', 9, int)

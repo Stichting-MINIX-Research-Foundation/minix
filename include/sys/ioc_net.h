@@ -30,8 +30,8 @@ struct msg_control
 #define NWIOGETHOPT	_IOR('n', 17, struct nwio_ethopt)
 #define NWIOGETHSTAT	_IOR('n', 18, struct nwio_ethstat)
 
-#define NWIOARPGIP	_IORW('n',20, struct nwio_arp)
-#define NWIOARPGNEXT	_IORW('n',21, struct nwio_arp)
+#define NWIOARPGIP	_IOWR('n',20, struct nwio_arp)
+#define NWIOARPGNEXT	_IOWR('n',21, struct nwio_arp)
 #define NWIOARPSIP	_IOW ('n',22, struct nwio_arp)
 #define NWIOARPDIP	_IOW ('n',23, struct nwio_arp)
 
@@ -42,10 +42,10 @@ struct msg_control
 #define NWIOSIPOPT	_IOW('n', 34, struct nwio_ipopt)
 #define NWIOGIPOPT	_IOR('n', 35, struct nwio_ipopt)
 
-#define NWIOGIPOROUTE	_IORW('n', 40, struct nwio_route)
+#define NWIOGIPOROUTE	_IOWR('n', 40, struct nwio_route)
 #define NWIOSIPOROUTE	_IOW ('n', 41, struct nwio_route)
 #define NWIODIPOROUTE	_IOW ('n', 42, struct nwio_route)
-#define NWIOGIPIROUTE	_IORW('n', 43, struct nwio_route)
+#define NWIOGIPIROUTE	_IOWR('n', 43, struct nwio_route)
 #define NWIOSIPIROUTE	_IOW ('n', 44, struct nwio_route)
 #define NWIODIPIROUTE	_IOW ('n', 45, struct nwio_route)
 
@@ -79,7 +79,7 @@ struct msg_control
 #define NWIOSUDSPAIR	_IOW ('n', 76, dev_t)		  /* socketpair() */
 #define NWIOSUDSACCEPT	_IOW ('n', 77, struct sockaddr_un) /* accept() */
 #define NWIOSUDSCTRL	_IOW ('n', 78, struct msg_control) /* sendmsg() */
-#define NWIOGUDSCTRL	_IORW('n', 79, struct msg_control) /* recvmsg() */
+#define NWIOGUDSCTRL	_IOWR('n', 79, struct msg_control) /* recvmsg() */
 
 #define NWIOSPSIPOPT	_IOW('n', 80, struct nwio_psipopt)
 #define NWIOGPSIPOPT	_IOR('n', 81, struct nwio_psipopt)

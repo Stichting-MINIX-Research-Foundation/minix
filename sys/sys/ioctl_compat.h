@@ -1,3 +1,4 @@
+#ifndef __minix
 /*	$NetBSD: ioctl_compat.h,v 1.15 2005/12/03 17:10:46 christos Exp $	*/
 
 /*
@@ -163,3 +164,4 @@ struct sgttyb {
 #define	NTTYDISC	2
 
 #endif /* !_SYS_IOCTL_COMPAT_H_ */
+#endif

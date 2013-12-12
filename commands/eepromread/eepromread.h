@@ -1,6 +1,10 @@
 #ifndef __EEPROMREAD_H
 #define __EEPROMREAD_H
 
+#include <sys/ioctl.h>
+#include <minix/i2cdriver.h>
+#include <minix/i2c.h>
+
 enum device_types { I2C_DEVICE, EEPROM_DEVICE };
 #define DEFAULT_DEVICE I2C_DEVICE
 
