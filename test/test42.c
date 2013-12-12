@@ -9,6 +9,7 @@
 #include <sys/wait.h>
 #include <sys/select.h>
 #include <sys/ptrace.h>
+#include <sys/syslimits.h>
 
 #define ITERATIONS 3
 int max_error = 4;

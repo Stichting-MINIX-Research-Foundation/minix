@@ -29,7 +29,7 @@ extern int optind;
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#define NAMELEN		(NAME_MAX+5)
+#define NAMELEN		500
 #define ISONAMELEN	12	/* XXX could easily be 31 */
 #define PLATFORM_80X86	0
 

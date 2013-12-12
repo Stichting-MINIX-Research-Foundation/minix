@@ -34,16 +34,15 @@
 #ifndef _SYS_SYSLIMITS_H_
 #define _SYS_SYSLIMITS_H_
 
-#if defined(__minix)
-#define __MINIX_OPEN_MAX	255 /* a process may have 255 files open */
-#define __MINIX_PATH_MAX	1024/* a pathname may contain 1023 chars (+ '\0')*/
-
-#if defined(_STANDALONE)
+#if defined(_STANDALONE) && defined(__minix)
 /* LSC: In NetBSD this gets pulled in through libkern.h */
 #include <sys/null.h>
 uint32_t crc32(uint32_t, const uint8_t *, size_t);
 #endif /* defined(_STANDALONE) */
-#endif /* defined(__minix) */
+
+#ifdef __minix
+#define OPEN_MAX 255
+#endif
 
 #include <sys/featuretest.h>
 
@@ -53,19 +52,24 @@ uint32_t crc32(uint32_t, const uint8_t *, size_t);
 #ifndef CHILD_MAX
 #define	CHILD_MAX		  160	/* max simultaneous processes */
 #endif
-#define	GID_MAX		   USHRT_MAX	/* max value for a gid_t (2^31-2) */
+#define	GID_MAX		   2147483647U	/* max value for a gid_t (2^31-2) */
 #define	LINK_MAX		32767	/* max file link count */
 #define	MAX_CANON		  255	/* max bytes in term canon input line */
 #define	MAX_INPUT		  255	/* max bytes in terminal input */
-#define	NAME_MAX		  255	/* max bytes in a file name, must be */
+#define	NAME_MAX		  511	/* max bytes in a file name, must be */
 					/* kept in sync with MAXPATHLEN */
-#define	NGROUPS_MAX		   8	/* max supplemental group id's */
-#define UID_MAX       USHRT_MAX  /* max value for a uid_t */
+#define	NGROUPS_MAX		   16	/* max supplemental group id's */
+#define	UID_MAX		   2147483647U	/* max value for a uid_t (2^31-2) */
 #ifndef OPEN_MAX
-#define	OPEN_MAX __MINIX_OPEN_MAX	/* max open files per process */
+#define	OPEN_MAX		  128	/* max open files per process */
 #endif
-#define	PATH_MAX     __MINIX_PATH_MAX	/* max bytes in pathname */
-#define	PIPE_BUF		32768	/* max bytes for atomic pipe writes */
+#define	PATH_MAX		 1024	/* max bytes in pathname */
+
+#ifdef __minix
+#define        PIPE_BUF                32768   /* max bytes for atomic pipe wri
+#else
+#define	PIPE_BUF		  512	/* max bytes for atomic pipe writes */
+#endif
 
 #define	BC_BASE_MAX	      INT_MAX	/* max ibase/obase values in bc(1) */
 #define	BC_DIM_MAX		65535	/* max array elements in bc(1) */

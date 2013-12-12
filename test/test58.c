@@ -20,6 +20,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
+#include <sys/syslimits.h>
 
 int subtest = -1;
 int max_error = 999;	/* Effectively no limit. This is necessary as this

@@ -4,6 +4,7 @@
 #include <errno.h>
 #include <sys/stat.h>
 #include <sys/bootblock.h>
+#include <sys/syslimits.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <string.h>

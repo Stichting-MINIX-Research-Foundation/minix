@@ -9,6 +9,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <sys/statvfs.h>
+#include <sys/syslimits.h>
 
 #include "common.h"
 

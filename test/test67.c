@@ -3,6 +3,7 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <sys/syslimits.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <netdb.h>

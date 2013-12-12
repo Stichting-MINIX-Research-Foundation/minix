@@ -17,6 +17,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <sys/select.h>
+#include <sys/syslimits.h>
 #include <errno.h>
 #include <sys/wait.h>
 #include <string.h>

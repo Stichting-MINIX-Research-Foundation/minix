@@ -6,6 +6,7 @@
 #include <signal.h>
 #include <termios.h>
 #include <sys/wait.h>
+#include <sys/syslimits.h>
 #include <paths.h>
 #include <fcntl.h>
 #include <util.h>

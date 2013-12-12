@@ -5,6 +5,7 @@
 #include <sys/wait.h>
 #include <sys/socket.h>
 #include <sys/utsname.h>
+#include <sys/syslimits.h>
 #include <netinet/in.h>
 #include <signal.h>
 #include <unistd.h>

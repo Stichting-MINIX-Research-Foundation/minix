@@ -58,7 +58,7 @@ typedef	__uint32_t	__fd_mask;
 #ifndef	FD_SETSIZE
 #ifdef __minix
 #include <sys/syslimits.h>
-#define	FD_SETSIZE	__MINIX_OPEN_MAX
+#define	FD_SETSIZE	OPEN_MAX
 #else
 #define	FD_SETSIZE	256
 #endif

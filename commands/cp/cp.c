@@ -15,6 +15,7 @@
 #include <fcntl.h>
 #include <time.h>
 #include <sys/stat.h>
+#include <sys/syslimits.h>
 #include <utime.h>
 #include <dirent.h>
 #include <errno.h>
