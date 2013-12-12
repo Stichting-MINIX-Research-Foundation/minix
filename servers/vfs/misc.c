@@ -148,7 +148,7 @@ int do_fcntl(void)
 
     case F_SETFL:
 	/* Set file status flags (O_NONBLOCK and O_APPEND). */
-	fl = O_NONBLOCK | O_APPEND | O_REOPEN;
+	fl = O_NONBLOCK | O_APPEND;
 	f->filp_flags = (f->filp_flags & ~fl) | (fcntl_argx & fl);
 	break;
 

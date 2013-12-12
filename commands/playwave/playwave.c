@@ -73,7 +73,7 @@ int open_audio(unsigned int *fragment_size, unsigned int channels,
   int audio;
 
   /* Open DSP */
-  if ((audio = open("/dev/audio", O_RDWR | O_REOPEN)) < 0)
+  if ((audio = open("/dev/audio", O_RDWR)) < 0)
   {
     printf("Cannot open /dev/audio: %s\n", strerror(errno));
     exit(-1);

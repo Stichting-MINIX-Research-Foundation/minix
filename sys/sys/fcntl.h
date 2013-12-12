@@ -121,10 +121,6 @@
 #define	O_NOSIGPIPE	0x01000000	/* don't deliver sigpipe */
 #endif
 
-#ifdef __minix
-#define O_REOPEN      0x10000000 /* automatically re-open after driver crash */
-#endif
-
 #ifdef _KERNEL
 /* convert from open() flags to/from fflags; convert O_RD/WR to FREAD/FWRITE */
 #define	FFLAGS(oflags)	((oflags) + 1)
@@ -195,10 +191,6 @@
 #define	F_DUPFD_CLOEXEC	12		/* close on exec duplicated fd */
 #define	F_GETNOSIGPIPE	13		/* get SIGPIPE disposition */
 #define	F_SETNOSIGPIPE	14		/* set SIGPIPE disposition */
-#endif
-
-#ifdef __minix
-#define F_FREESP	100
 #endif
 
 /* file descriptor flags (F_GETFD, F_SETFD) */
@@ -326,5 +318,9 @@ int	openat(int, const char *, int oflags, ...);
 #endif
 __END_DECLS
 #endif /* !_KERNEL */
+
+#ifdef __minix
+#define F_FREESP       100
+#endif
 
 #endif /* !_SYS_FCNTL_H_ */
