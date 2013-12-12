@@ -182,8 +182,8 @@ typedef union siginfo {
 #define	ILL_BADSTK	8	/* Internal stack error			*/
 
 /* SIGFPE */
-#define FPE_INTOVF      1      /* integer divide by zero */
-#define FPE_INTDIV      2      /* integer overflow */
+#define	FPE_INTDIV	1	/* Integer divide by zero		*/
+#define	FPE_INTOVF	2	/* Integer overflow			*/
 #define	FPE_FLTDIV	3	/* Floating point divide by zero	*/
 #define	FPE_FLTOVF	4	/* Floating point overflow		*/
 #define	FPE_FLTUND	5	/* Floating point underflow		*/
