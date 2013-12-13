@@ -12,6 +12,7 @@
 #include <minix/padconf.h>
 #include <minix/sysutil.h>
 #include <minix/type.h>
+#include <minix/board.h>
 #include <minix/spin.h>
 
 /* device headers */
@@ -782,6 +783,8 @@ omap_interface_setup(int (**process) (minix_i2c_ioctl_exec_t * ioctl_exec),
 	int r;
 	int i2c_rev, major, minor;
 	struct minix_mem_range mr;
+	struct machine machine;
+	sys_getmachine(&machine);
 
 	/* Fill in the function pointer */
 
@@ -789,15 +792,15 @@ omap_interface_setup(int (**process) (minix_i2c_ioctl_exec_t * ioctl_exec),
 
 	/* Select the correct i2c definition for this SoC */
 
-#if defined(AM335X)
-	omap_i2c_buses = am335x_i2c_buses;
-	omap_i2c_nbuses = AM335X_OMAP_NBUSES;
-#elif defined(DM37XX)
-	omap_i2c_buses = dm37xx_i2c_buses;
-	omap_i2c_nbuses = DM37XX_OMAP_NBUSES;
-#else
-#error				/* Unsupported SoC */
-#endif
+	if (BOARD_IS_BBXM(machine.board_id)){
+		omap_i2c_buses = dm37xx_i2c_buses;
+		omap_i2c_nbuses = DM37XX_OMAP_NBUSES;
+	} else if (BOARD_IS_BB(machine.board_id)){
+		omap_i2c_buses = am335x_i2c_buses;
+		omap_i2c_nbuses = AM335X_OMAP_NBUSES;
+	} else {
+		return EINVAL;
+	}
 
 	if (i2c_bus_id < 0 || i2c_bus_id >= omap_i2c_nbuses) {
 		return EINVAL;
