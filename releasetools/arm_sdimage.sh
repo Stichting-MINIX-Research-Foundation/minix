@@ -153,27 +153,20 @@ mkfs.vfat ${IMG_DIR}/fat.img
 # Create a uEnv.txt file
 # -n default to network boot
 # -p add a prefix to the network booted files (e.g. xm/"
-./releasetools/gen_uEnv.txt.sh > ${IMG_DIR}/uEnv.txt
-
-#
-# Generate the MINIX command line
-# 
-# options:
 # -c set console e.g. tty02 or tty00
 # -v set verbosity e.g. 0 to 3
-./releasetools/gen_cmdline.txt.sh -c ${CONSOLE} > ${IMG_DIR}/cmdline.txt
+#./releasetools/gen_uEnv.txt.sh -c ${CONSOLE} -n -p bb/ > ${IMG_DIR}/uEnv.txt
+./releasetools/gen_uEnv.txt.sh -c ${CONSOLE}  > ${IMG_DIR}/uEnv.txt
 
 echo "Copying configuration kernel and boot modules"
 mcopy -bsp -i ${IMG_DIR}/fat.img  ${IMG_DIR}/$MLO ::MLO
 mcopy -bsp -i ${IMG_DIR}/fat.img ${IMG_DIR}/$UBOOT ::u-boot.img
 mcopy -bsp -i ${IMG_DIR}/fat.img ${IMG_DIR}/uEnv.txt ::uEnv.txt
-mcopy -bsp -i ${IMG_DIR}/fat.img ${IMG_DIR}/cmdline.txt ::cmdline.txt
 
 #
 # For tftp booting
 #
 cp ${IMG_DIR}/uEnv.txt ${OBJ}/
-cp ${IMG_DIR}/cmdline.txt ${OBJ}/
 
 #
 # Do some last processing of the kernel and servers before also putting
