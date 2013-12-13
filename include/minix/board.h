@@ -19,9 +19,9 @@
 #define MINIX_BOARD_SHIFT              (8)
 #define MINIX_BOARD_VARIANT_SHIFT      (0)
 
-/* 8 bits */
+/* 4 bits */
 #define MINIX_BOARD_ARCH_MASK \
-	(0XFF << MINIX_BOARD_ARCH_SHIFT)
+	(0XF << MINIX_BOARD_ARCH_SHIFT)
 /* 4 bits */
 #define MINIX_BOARD_ARCH_VARIANT_MASK \
 	(0XF << MINIX_BOARD_ARCH_VARIANT_SHIFT)
@@ -142,11 +142,12 @@ struct shortname2id
 	unsigned int id;
 };
 
+
 /* mapping from fields given by the bootloader to board id's */
 static struct shortname2id shortname2id[] = {
 	{.name = "BBXM",.id = BOARD_ID_BBXM},
 	{.name = "A335BONE",.id = BOARD_ID_BBW},
-	{.name = "BBB",.id = BOARD_ID_BBB},
+	{.name = "A335BNLT",.id = BOARD_ID_BBB},
 };
 
 struct board_id2name
@@ -163,6 +164,17 @@ static struct board_id2name board_id2name[] = {
 	{.id = BOARD_ID_BBB,.name = "ARM-ARMV7-TI-BB-BLACK"},
 };
 
+struct board_arch2arch
+{
+	unsigned int board_arch;
+	const char arch[40];
+};
+/* Mapping from board_arch to arch */
+static struct board_arch2arch board_arch2arch[] = {
+	{.board_arch = MINIX_BOARD_ARCH_ARM ,.arch = "earm"},
+	{.board_arch = MINIX_BOARD_ARCH_X86 ,.arch = "i386"},
+};
+
 /* returns 0 if no board was found that match that id */
 static int
 get_board_id_by_short_name(const char *name)
@@ -171,6 +183,19 @@ get_board_id_by_short_name(const char *name)
 	for (x = 0; x < sizeof(shortname2id) / sizeof(shortname2id[0]); x++) {
 		if (strncmp(name, shortname2id[x].name, 15) == 0) {
 			return shortname2id[x].id;
+		}
+	}
+	return 0;
+}
+
+/* returns 0 if no board was found that match that id */
+static int
+get_board_id_by_name(const char *name)
+{
+	int x;
+	for (x = 0; x < sizeof(board_id2name) / sizeof(board_id2name[0]); x++) {
+		if (strncmp(name, board_id2name[x].name, 40) == 0) {
+			return board_id2name[x].id;
 		}
 	}
 	return 0;
@@ -185,6 +210,20 @@ get_board_name(unsigned int id)
 	for (x = 0; x < sizeof(board_id2name) / sizeof(board_id2name[0]); x++) {
 		if (board_id2name[x].id == id) {
 			return board_id2name[x].name;
+		}
+	}
+	return NULL;
+}
+
+/* convert a board id to a board name to use later 
+   returns NULL if no board was found that match that id */
+static const char *
+get_board_arch_name(unsigned int id)
+{
+	int x;
+	for (x = 0; x < sizeof(board_arch2arch) / sizeof(board_arch2arch[0]); x++) {
+		if (board_arch2arch[x].board_arch == (id & MINIX_BOARD_ARCH_MASK) ) {
+			return board_arch2arch[x].arch;
 		}
 	}
 	return NULL;
