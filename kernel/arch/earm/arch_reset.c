@@ -11,6 +11,7 @@
 #include <io.h>
 
 #include <minix/reboot.h>
+#include <minix/board.h>
 #include <minix/u64.h>
 
 #include "archconst.h"
@@ -51,7 +52,7 @@ poweroff(void)
  * The only way to pull the pin low is via ALARM2 (see TRM 20.3.3.8).
  * At this point PM should have already signaled readclock to set the alarm.
  */
-#ifdef AM335X
+ if (BOARD_IS_BB(machine.board_id)){
 
 	/* Powers down the SoC within 3 seconds */
 	direct_print("PMIC Power-Off in 3 Seconds\n");
@@ -62,7 +63,7 @@ poweroff(void)
 	/* wait for the alarm to go off and PMIC to disable power to SoC */
 	while (1);
 
-#endif /* AM335X */
+  }
 
 	/* fallback option: hang */
 	direct_print("Unable to power-off this device.");

@@ -2,6 +2,7 @@
 #include <sys/types.h>
 #include <machine/cpu.h>
 #include <minix/type.h>
+#include <minix/board.h>
 #include <io.h>
 
 #include "kernel/kernel.h"
@@ -41,13 +42,13 @@ static kern_phys_map serial_phys_map;
  * The serial driver also gets used in the "pre_init" stage before the kernel is loaded
  * in high memory so keep in mind there are two copies of this code in the kernel.
  */
-void omap3_ser_init(){
-#ifdef DM37XX
+void omap3_ser_init()
+{
+    if(BOARD_IS_BBXM(machine.board_id)){
 	omap_serial.base = OMAP3_DM37XX_DEBUG_UART_BASE;
-#endif
-#ifdef AM335X
+    } else if (BOARD_IS_BB(machine.board_id)){
 	omap_serial.base = OMAP3_AM335X_DEBUG_UART_BASE;
-#endif
+    } 
     omap_serial.size = 0x1000 ; /* 4k */
 
 

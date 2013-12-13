@@ -5,15 +5,12 @@
  * The base must be page aligned, so we round down and the kernel adds the
  * offset. The size must be a multiple of ARM_PAGE_SIZE, so we round up to 4KB.
  */
-#ifdef AM335X
-#define PADCONF_REGISTERS_BASE 0x44E10000
-#define PADCONF_REGISTERS_OFFSET 0x0000
-#define PADCONF_REGISTERS_SIZE 0x1000 /* OFFSET + highest reg, rounded up */
-#elif DM37XX
-#define PADCONF_REGISTERS_BASE 0x48002000
-#define PADCONF_REGISTERS_OFFSET 0x0030
-#define PADCONF_REGISTERS_SIZE 0x1000 /* OFFSET + highest reg, rounded up */
-#endif
+#define PADCONF_AM335X_REGISTERS_BASE 0x44E10000
+#define PADCONF_AM335X_REGISTERS_OFFSET 0x0000
+#define PADCONF_AM335X_REGISTERS_SIZE 0x1000 /* OFFSET + highest reg, rounded up */
+#define PADCONF_DM37XX_REGISTERS_BASE 0x48002000
+#define PADCONF_DM37XX_REGISTERS_OFFSET 0x0030
+#define PADCONF_DM37XX_REGISTERS_SIZE 0x1000 /* OFFSET + highest reg, rounded up */
 
 #define PADCONF_MUXMODE(X)  (X & 0x7)	/* mode 1 til 7 [2:0] */
 #define PADCONF_PULL_MODE(X)  ((X & 0x3) << 3)	/* 2 bits[4:3] */

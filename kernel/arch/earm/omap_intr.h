@@ -1,16 +1,12 @@
 #ifndef _OMAP_INTR_H
 #define _OMAP_INTR_H
 
-#ifdef DM37XX
 /* Interrupt controller memory map */
 #define OMAP3_DM37XX_INTR_BASE 0x48200000 /* INTCPS physical address */
 
-#endif /* DM37XX */
 
-#ifdef AM335X
 /* Interrupt controller memory map */
 #define OMAP3_AM335X_INTR_BASE 0x48200000 /* INTCPS physical address */
-#endif /* AM335X */
 
 /* Interrupt controller registers */
 #define OMAP3_INTCPS_REVISION     0x000 /* IP revision code */
@@ -59,7 +55,6 @@
 
 
 
-#ifdef DM37XX
 
 #define OMAP3_DM337X_NR_IRQ_VECTORS    96
 
@@ -135,9 +130,7 @@
 #define OMAP3_HSUSB_DMA_IRQ 93  /* High-speed USB OTG DMA */
 #define OMAP3_MMC3_IRQ      94  /* MMC/SD module 3 */
 
-#endif
 
-#ifdef AM335X
 #define AM335X_INT_EMUINT                         0	/* Emulation interrupt (EMUICINTR) */
 #define AM335X_INT_COMMTX                         1	/* CortexA8 COMMTX */
 #define AM335X_INT_COMMRX                         2	/* CortexA8 COMMRX */
@@ -239,7 +232,6 @@
 #define AM335X_INT_SPI1INT                        125	/* McSPI1  SINTERRUPTN */
 
 #define OMAP3_AM335X_NR_IRQ_VECTORS    125 
-#endif
 
 #ifndef __ASSEMBLY__
 
