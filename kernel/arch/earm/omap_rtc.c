@@ -9,6 +9,7 @@
 #include <sys/types.h>
 #include <machine/cpu.h>
 #include <minix/type.h>
+#include <minix/board.h>
 #include <io.h>
 
 #include "kernel/kernel.h"
@@ -39,17 +40,17 @@ static kern_phys_map rtc_phys_map;
 void
 omap3_rtc_init(void)
 {
-#ifdef AM335X
+  if (BOARD_IS_BB(machine.board_id)){
 	kern_phys_map_ptr(omap_rtc.base, omap_rtc.size, &rtc_phys_map,
 	    (vir_bytes) &omap_rtc.base);
-#endif /* AM335X */
+  }
 }
 
 void
 omap3_rtc_run(void)
 {
-#ifdef AM335X
+  if (BOARD_IS_BB(machine.board_id)){
 	/* Setting the stop bit starts the RTC running */
 	mmio_set((omap_rtc.base + RTC_CTRL_REG), (1 << RTC_CTRL_RTC_STOP_BIT));
-#endif /* AM335X */
+  }
 }

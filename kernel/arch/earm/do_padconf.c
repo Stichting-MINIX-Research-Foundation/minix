@@ -4,9 +4,7 @@
 #if USE_PADCONF
 
 /* get arch specific arch_padconf_set() */
-#if defined(AM335X) || defined(DM37XX)
 #include "omap_padconf.h"
-#endif
 
 /*===========================================================================*
  *                                do_padconf                                 *
