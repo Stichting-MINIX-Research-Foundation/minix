@@ -36,13 +36,11 @@ fi
 
 # Beagleboard-xm
 : ${U_BOOT_BIN_DIR=build/omap3_beagle/}
-: ${FLAG=-DDM37XX}
 : ${CONSOLE=tty02}
 
 
 # BeagleBone (and black)
 #: ${U_BOOT_BIN_DIR=build/am335x_evm/}
-#: ${FLAG=-DAM335X}
 #: ${CONSOLE=tty00}
 
 #
