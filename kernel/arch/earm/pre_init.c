@@ -30,7 +30,7 @@ struct kmessages kmessages;
 /* pg_utils.c uses this; in this phase, there is a 1:1 mapping. */
 phys_bytes vir2phys(void *addr) { return (phys_bytes) addr; } 
 
-static void setup_mbi(multiboot_info_t *mbi);
+static void setup_mbi(multiboot_info_t *mbi, char *bootargs);
 
 /* String length used for mb_itoa */
 #define ITOA_BUFFER_SIZE 20
@@ -103,7 +103,6 @@ int overlaps(multiboot_module_t *mod, int n, int cmp_mod)
 /* XXX: hard-coded stuff for modules */
 #define MB_MODS_NR 12
 #define MB_MODS_BASE  0x82000000
-#define MB_PARAM_MOD  0x88000000
 #define MB_MODS_ALIGN 0x00800000 /* 8 MB */
 #define MB_MMAP_START 0x80000000
 #define MB_MMAP_SIZE  0x10000000 /* 256 MB */
@@ -111,7 +110,7 @@ int overlaps(multiboot_module_t *mod, int n, int cmp_mod)
 multiboot_module_t mb_modlist[MB_MODS_NR];
 multiboot_memory_map_t mb_memmap;
 
-void setup_mbi(multiboot_info_t *mbi)
+void setup_mbi(multiboot_info_t *mbi, char *bootargs)
 {
 	memset(mbi, 0, sizeof(*mbi));
 	mbi->flags = MULTIBOOT_INFO_MODS | MULTIBOOT_INFO_MEM_MAP |
@@ -127,8 +126,8 @@ void setup_mbi(multiboot_info_t *mbi)
 	    mb_modlist[i].cmdline = 0;
 	}
 
-	/* Final 'module' is actually a string holding the boot cmdline */
-	mbi->cmdline = MB_PARAM_MOD;
+	/* morph the bootargs into multiboot */
+	mbi->cmdline = (u32_t) bootargs;
 
 	mbi->mmap_addr =(u32_t)&mb_memmap;
 	mbi->mmap_length = sizeof(mb_memmap);
@@ -139,7 +138,7 @@ void setup_mbi(multiboot_info_t *mbi)
 	mb_memmap.type = MULTIBOOT_MEMORY_AVAILABLE;
 }
 
-void get_parameters(u32_t ebx, kinfo_t *cbi) 
+void get_parameters(kinfo_t *cbi, char *bootargs) 
 {
 	multiboot_memory_map_t *mmap;
 	multiboot_info_t *mbi = &cbi->mbi;
@@ -153,8 +152,7 @@ void get_parameters(u32_t ebx, kinfo_t *cbi)
 	static char cmdline[BUF];
 
 	/* get our own copy of the multiboot info struct and module list */
-	//memcpy((void *) mbi, (void *) ebx, sizeof(*mbi));
-	setup_mbi(mbi);
+	setup_mbi(mbi, bootargs);
 
 	/* Set various bits of info for the higher-level kernel. */
 	cbi->mem_high_phys = 0;
@@ -277,16 +275,33 @@ void get_parameters(u32_t ebx, kinfo_t *cbi)
 	}
 }
 
-kinfo_t *pre_init(u32_t magic, u32_t ebx)
+/* 
+ * During low level init many things are not supposed to work
+ * serial being one of them. We therefore can't rely on the
+ * serial to debug. POORMANS_FAILURE_NOTIFICATION can be used
+ * before we setup our own vector table and will result in calling
+ * the bootloader's debugging methods that will hopefully show some
+ * information like the currnet PC at on the serial.
+ */
+#define POORMANS_FAILURE_NOTIFICATION  asm volatile("svc #00\n")
+
+kinfo_t *pre_init(u32_t argc, char **argv)
 {
 	/* Clear BSS */
 	memset(&_edata, 0, (u32_t)&_end - (u32_t)&_edata);
 
+	/* we get called in a c like fashion where the first arg 
+         * is the program name (load address) and the rest are 
+	 * arguments. by convention the second argument is the 
+	 *  command line */
+	if (argc != 2){
+		POORMANS_FAILURE_NOTIFICATION;
+	}
 	omap3_ser_init();	
 	/* Get our own copy boot params pointed to by ebx.
 	 * Here we find out whether we should do serial output.
 	 */
-	get_parameters(ebx, &kinfo);
+	get_parameters(&kinfo, argv[1]);
 
 	/* Make and load a pagetable that will map the kernel
 	 * to where it should be; but first a 1:1 mapping so
