@@ -29,12 +29,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _NBCOMPAT_POLL_H_
-#define	_NBCOMPAT_POLL_H_
+#ifndef _SYS_POLL_H_
+#define	_SYS_POLL_H_
+
+#include <sys/featuretest.h>
 
 typedef unsigned int	nfds_t;
-
-#define INFTIM -1
 
 struct pollfd {
 	int	fd;		/* file descriptor */
@@ -60,8 +60,42 @@ struct pollfd {
 #define	POLLHUP		0x0010
 #define	POLLNVAL	0x0020
 
+#if defined(_NETBSD_SOURCE)
+/*
+ * Infinite timeout value.
+ */
+#define	INFTIM		-1
+#endif
+
+#ifdef _KERNEL
+#include <sys/signal.h>		/* for sigset_t */
+
+struct lwp;
+struct timespec;
+
+int	pollcommon(register_t *, struct pollfd *, u_int,
+    struct timespec *, sigset_t *);
+
+#else
+#include <sys/cdefs.h>
+
 __BEGIN_DECLS
 int	poll(struct pollfd *, nfds_t, int);
 __END_DECLS
 
-#endif /* !_NBCOMPAT_POLL_H_ */
+#ifdef _NETBSD_SOURCE
+#include <sys/sigtypes.h>	/* for sigset_t */
+struct timespec;
+
+__BEGIN_DECLS
+#ifndef __LIBC12_SOURCE__
+int	pollts(struct pollfd * __restrict, nfds_t,
+    const struct timespec * __restrict, const sigset_t * __restrict)
+    __RENAME(__pollts50);
+#endif /* __LIBC12_SOURCE__ */
+__END_DECLS
+#endif /* _NETBSD_SOURCE */
+
+#endif /* _KERNEL */
+
+#endif /* !_SYS_POLL_H_ */
