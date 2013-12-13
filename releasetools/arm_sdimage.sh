@@ -20,6 +20,7 @@ fi
 : ${CROSS_PREFIX=${CROSS_TOOLS}/arm-elf32-minix-}
 : ${JOBS=1}
 : ${DESTDIR=${OBJ}/destdir.$ARCH}
+: ${RELEASETOOLSDIR=./releasetools/}
 : ${FSTAB=${DESTDIR}/etc/fstab}
 : ${BUILDVARS=}
 : ${BUILDSH=build.sh}
@@ -33,16 +34,31 @@ fi
 : ${UBOOT=u-boot.img}
 
 
-# beagleboard-xm
-: ${BASE_URL=http://www.minix3.org/arm/beagleboard-xm}
+# Beagleboard-xm
+: ${U_BOOT_BIN_DIR=build/omap3_beagle/}
 : ${FLAG=-DDM37XX}
 : ${CONSOLE=tty02}
 
 
-#beaglebone (and black)
-#: ${BASE_URL=http://www.minix3.org/arm/beaglebone}
+# BeagleBone (and black)
+#: ${U_BOOT_BIN_DIR=build/am335x_evm/}
 #: ${FLAG=-DAM335X}
 #: ${CONSOLE=tty00}
+
+#
+#
+# We host u-boot binaries.
+U_BOOT_GIT_VERSION=cb5178f12787c690cb1c888d88733137e5a47b15
+
+if [ -n "$BASE_URL" ]
+then
+	#we no longer download u-boot but do a checkout
+	#BASE_URL used to be the base url for u-boot
+	#Downloads
+	echo "Warning:** Setting BASE_URL (u-boot) is no longer possible use U_BOOT_BIN_DIR"
+	echo "Look in ./releasetools/arm_sdimage.sh for suggested values"
+	exit 1
+fi
 
 if [ ! -f ${BUILDSH} ]
 then	echo "Please invoke me from the root source dir, where ${BUILDSH} is."
@@ -51,7 +67,7 @@ fi
 
 export PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:$PATH
 
-for needed in mcopy dd wget mkfs.vfat
+for needed in mcopy dd mkfs.vfat git
 do
 	if ! which $needed 2>&1 > /dev/null
 	then
@@ -68,19 +84,9 @@ mkdir -p $IMG_DIR
 #
 # Download the stage 1 bootloader  and u-boot
 #
-for i in ${MLO} ${UBOOT} 
-do
-	if [ ! -f ${IMG_DIR}/${i} ]
-	then
-		if ! wget -O ${IMG_DIR}/$i ${BASE_URL}/$i
-		then
-			echo "Failed to download $i"
-			rm -f ${IMG_DIR}/$i
-			exit 1
-		fi
-		
-	fi
-done
+./releasetools/fetch_u-boot.sh -o ${RELEASETOOLSDIR}/u-boot -n $U_BOOT_GIT_VERSION
+cp ${RELEASETOOLSDIR}/u-boot/${U_BOOT_BIN_DIR}/u-boot.img ${IMG_DIR}/
+cp ${RELEASETOOLSDIR}/u-boot/${U_BOOT_BIN_DIR}/MLO ${IMG_DIR}/
 
 #
 # Call build.sh using a sloppy file list so we don't need to remove the installed /etc/fstag
