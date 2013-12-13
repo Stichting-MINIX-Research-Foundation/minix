@@ -41,6 +41,13 @@
  * Machine dependent constants for Intel 386.
  */
 
+/*
+ * MAXCPUS must be defined before cpu.h inclusion.  Note: i386 might
+ * support more CPUs, but due to the limited KVA space available on
+ * i386, such support would be inefficient.  Use amd64 instead.
+ */
+#define	MAXCPUS		32
+
 #ifdef _KERNEL
 #include <machine/cpu.h>
 #endif
@@ -58,10 +65,6 @@
 #define	PGOFSET		(NBPG-1)	/* byte offset into page */
 #define	NPTEPG		(NBPG/(sizeof (pt_entry_t)))
 
-#ifndef MAXPHYS
-#define MAXPHYS                (64 * 1024)     /* max raw I/O transfer size */
-#endif
-
 #if defined(_KERNEL_OPT)
 #include "opt_kernbase.h"
 #endif /* defined(_KERNEL_OPT) */
@@ -70,8 +73,70 @@
 #error "You should only re-define KERNBASE"
 #endif
 
-#define DEV_BSHIFT      9               /* log2(DEV_BSIZE) */
-#define DEV_BSIZE       (1 << DEV_BSHIFT)
+#ifndef	KERNBASE
+#define	KERNBASE	0xc0000000UL	/* start of kernel virtual space */
+#endif
+
+#define	KERNTEXTOFF	(KERNBASE + 0x100000) /* start of kernel text */
+#define	BTOPKERNBASE	(KERNBASE >> PGSHIFT)
+
+#define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
+#define	DEV_BSIZE	(1 << DEV_BSHIFT)
+#define	BLKDEV_IOSIZE	2048
+#ifndef	MAXPHYS
+#define	MAXPHYS		(64 * 1024)	/* max raw I/O transfer size */
+#endif
+
+#define	SSIZE		1		/* initial stack size/NBPG */
+#define	SINCR		1		/* increment of stack/NBPG */
+
+#ifndef UPAGES
+# ifdef DIAGNOSTIC
+#  define	UPAGES		3	/* 2 + 1 page for redzone */
+# else
+#  define	UPAGES		2	/* normal pages of u-area */
+# endif /* DIAGNOSTIC */
+#endif /* !defined(UPAGES) */
+#define	USPACE		(UPAGES * NBPG)	/* total size of u-area */
+#define	INTRSTACKSIZE	8192
+
+#ifndef MSGBUFSIZE
+#define MSGBUFSIZE	8*NBPG		/* default message buffer size */
+#endif
+
+/*
+ * Constants related to network buffer management.
+ * MCLBYTES must be no larger than NBPG (the software page size), and,
+ * on machines that exchange pages of input or output buffers with mbuf
+ * clusters (MAPPED_MBUFS), MCLBYTES must also be an integral multiple
+ * of the hardware page size.
+ */
+#define	MSIZE		256		/* size of an mbuf */
+
+#ifndef MCLSHIFT
+#define	MCLSHIFT	11		/* convert bytes to m_buf clusters */
+					/* 2K cluster can hold Ether frame */
+#endif	/* MCLSHIFT */
+
+#define	MCLBYTES	(1 << MCLSHIFT)	/* size of a m_buf cluster */
+
+#ifndef NMBCLUSTERS_MAX
+#define	NMBCLUSTERS_MAX	(0x2000000 / MCLBYTES)	/* Limit to 64MB for clusters */
+#endif
+
+#ifndef NFS_RSIZE
+#define NFS_RSIZE	32768
+#endif
+#ifndef NFS_WSIZE
+#define NFS_WSIZE	32768
+#endif
+
+/*
+ * Minimum and maximum sizes of the kernel malloc arena in PAGE_SIZE-sized
+ * logical pages.
+ */
+#define	NKMEMPAGES_MIN_DEFAULT	((16 * 1024 * 1024) >> PAGE_SHIFT)
+#define	NKMEMPAGES_MAX_DEFAULT	((360 * 1024 * 1024) >> PAGE_SHIFT)
 
 /*
  * Mach derived conversion macros
