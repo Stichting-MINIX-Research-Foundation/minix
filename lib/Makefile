@@ -120,7 +120,7 @@ SUBDIR+=	../external/bsd/libelf/lib
 #SUBDIR+=	../external/bsd/liblzf/lib
 #SUBDIR+=	../external/bsd/libpcap/lib
 
-#SUBDIR+=	../external/mit/expat/lib
+SUBDIR+=	../external/mit/expat/lib
 
 SUBDIR+=	../external/public-domain/sqlite/lib
 SUBDIR+=	../external/public-domain/xz/lib

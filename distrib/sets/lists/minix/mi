@@ -569,6 +569,7 @@
 ./usr/bin/write				minix-sys
 ./usr/bin/writeisofs			minix-sys
 ./usr/bin/xargs				minix-sys
+./usr/bin/xmlwf				minix-sys
 ./usr/bin/xstr				minix-sys
 ./usr/bin/xz				minix-sys
 ./usr/bin/xzcat				minix-sys
@@ -884,6 +885,8 @@
 ./usr/include/evrpc.h			minix-sys
 ./usr/include/evutil.h			minix-sys
 ./usr/include/execinfo.h		minix-sys
+./usr/include/expat_external.h		minix-sys
+./usr/include/expat.h			minix-sys
 ./usr/include/fcntl.h			minix-sys
 ./usr/include/fenv.h			minix-sys
 ./usr/include/fetch.h			minix-sys
@@ -2101,6 +2104,11 @@
 ./usr/lib/libexecinfo.so.0		minix-sys
 ./usr/lib/libexecinfo.so		minix-sys
 ./usr/lib/libexec_pic.a			minix-sys
+./usr/lib/libexpat.a			minix-sys
+./usr/lib/libexpat_pic.a		minix-sys
+./usr/lib/libexpat.so			minix-sys
+./usr/lib/libexpat.so.2			minix-sys
+./usr/lib/libexpat.so.2.1		minix-sys
 ./usr/lib/libfetch.a			minix-sys
 ./usr/lib/libfl.a			minix-sys
 ./usr/lib/libform.a			minix-sys
@@ -2626,6 +2634,7 @@
 ./usr/man/man1/worldstone.1		minix-sys
 ./usr/man/man1/write.1			minix-sys
 ./usr/man/man1/xargs.1			minix-sys
+./usr/man/man1/xmlwf.1			minix-sys
 ./usr/man/man1/xstr.1			minix-sys
 ./usr/man/man1/xz.1			minix-sys
 ./usr/man/man1/xzcat.1			minix-sys
