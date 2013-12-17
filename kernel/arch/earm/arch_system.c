@@ -45,11 +45,12 @@ void arch_proc_reset(struct proc *pr)
 	assert(pr->p_nr < NR_PROCS);
 
 	/* Clear process state. */
-        memset(&pr->p_reg, 0, sizeof(pr->p_reg));
-        if(iskerneln(pr->p_nr))
-        	pr->p_reg.psr = INIT_TASK_PSR;
-        else
-        	pr->p_reg.psr = INIT_PSR;
+	memset(&pr->p_reg, 0, sizeof(pr->p_reg));
+	if(iskerneln(pr->p_nr)) {
+		pr->p_reg.psr = INIT_TASK_PSR;
+	} else {
+		pr->p_reg.psr = INIT_PSR;
+	}
 }
 
 void arch_proc_setcontext(struct proc *p, struct stackframe_s *state,

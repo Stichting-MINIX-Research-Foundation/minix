@@ -1,4 +1,3 @@
-
 /* ARM-specific clock functions. */
 
 #include "kernel/kernel.h"
@@ -30,9 +29,9 @@ int init_local_timer(unsigned freq)
 	omap3_timer_init(freq);
 	omap3_frclock_init();
 
-	if (BOARD_IS_BBXM(machine.board_id)){
+	if (BOARD_IS_BBXM(machine.board_id)) {
 		tsc_per_ms[0] = 16250;
-	} else if (BOARD_IS_BB(machine.board_id)){
+	} else if (BOARD_IS_BB(machine.board_id)) {
 		tsc_per_ms[0] = 15000;
 	} else {
 		panic("Can not do the clock setup. machine (0x%08x) is unknown\n",machine.board_id);

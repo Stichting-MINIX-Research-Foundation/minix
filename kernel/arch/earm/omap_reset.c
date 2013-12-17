@@ -37,11 +37,10 @@ static kern_phys_map reset_phys_map;
 void
 omap3_reset_init(void)
 {
-
-	if(BOARD_IS_BBXM(machine.board_id)){
+	if(BOARD_IS_BBXM(machine.board_id)) {
 		omap_reset.base = DM37XX_CM_BASE;
 		omap_reset.size = DM37XX_CM_SIZE;
-	} else if(BOARD_IS_BB(machine.board_id)){
+	} else if(BOARD_IS_BB(machine.board_id)) {
 		omap_reset.base = AM335X_CM_BASE;
 		omap_reset.size = AM335X_CM_SIZE;
 	}
@@ -53,9 +52,9 @@ omap3_reset_init(void)
 void
 omap3_reset(void)
 {
-	if(BOARD_IS_BBXM(machine.board_id)){
+	if(BOARD_IS_BBXM(machine.board_id)) {
 		mmio_set((omap_reset.base + DM37XX_PRM_RSTCTRL_REG), (1 << DM37XX_RST_DPLL3_BIT));
-	} else if(BOARD_IS_BB(machine.board_id)){
+	} else if(BOARD_IS_BB(machine.board_id)) {
 		mmio_set((omap_reset.base + AM335X_PRM_DEVICE_OFFSET + AM335X_PRM_RSTCTRL_REG), (1 << AM335X_RST_GLOBAL_WARM_SW_BIT));
 	}
 }

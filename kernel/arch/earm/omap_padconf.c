@@ -24,7 +24,7 @@ struct omap_padconf
 };
 
 
-struct omap_padconf omap_padconfs[] = {
+static struct omap_padconf omap_padconfs[] = {
   {
 	.base = PADCONF_DM37XX_REGISTERS_BASE,
 	.offset = PADCONF_DM37XX_REGISTERS_OFFSET,
@@ -66,8 +66,8 @@ arch_padconf_init(void)
 	int x;
 	omap_padconf = NULL;
 	/* find the correct padconf */
-	for (x =0 ; x < sizeof(omap_padconfs)/sizeof(omap_padconfs[0]) ; x++){
-		if ( (omap_padconfs[x].board_filter_mask & machine.board_id) == omap_padconfs[x].board_filter_value){
+	for (x =0 ; x < sizeof(omap_padconfs)/sizeof(omap_padconfs[0]) ; x++) {
+		if ( (omap_padconfs[x].board_filter_mask & machine.board_id) == omap_padconfs[x].board_filter_value) {
 			omap_padconf = &omap_padconfs[x];
 			break;
 		}

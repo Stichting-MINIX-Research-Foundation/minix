@@ -51,8 +51,6 @@ struct proc *p;
 	}
   }
 
-
-
   printf("arch_do_vmctl: strange param %d\n", m_ptr->SVMCTL_PARAM);
   return EINVAL;
 }
