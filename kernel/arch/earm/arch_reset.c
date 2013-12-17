@@ -1,4 +1,3 @@
-
 #include "kernel/kernel.h"
 
 #include <unistd.h>
@@ -52,8 +51,7 @@ poweroff(void)
  * The only way to pull the pin low is via ALARM2 (see TRM 20.3.3.8).
  * At this point PM should have already signaled readclock to set the alarm.
  */
- if (BOARD_IS_BB(machine.board_id)){
-
+ if (BOARD_IS_BB(machine.board_id)) {
 	/* Powers down the SoC within 3 seconds */
 	direct_print("PMIC Power-Off in 3 Seconds\n");
 

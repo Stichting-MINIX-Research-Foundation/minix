@@ -15,8 +15,8 @@
 
 
 struct omap_serial {
-	vir_bytes base;		
-	vir_bytes size;		
+	vir_bytes base;
+	vir_bytes size;
 };
 
 static struct omap_serial omap_serial = {
@@ -44,35 +44,37 @@ static kern_phys_map serial_phys_map;
  */
 void omap3_ser_init()
 {
-    if(BOARD_IS_BBXM(machine.board_id)){
-	omap_serial.base = OMAP3_DM37XX_DEBUG_UART_BASE;
-    } else if (BOARD_IS_BB(machine.board_id)){
-	omap_serial.base = OMAP3_AM335X_DEBUG_UART_BASE;
-    } 
-    omap_serial.size = 0x1000 ; /* 4k */
+	if(BOARD_IS_BBXM(machine.board_id)) {
+		omap_serial.base = OMAP3_DM37XX_DEBUG_UART_BASE;
+	} else if (BOARD_IS_BB(machine.board_id)) {
+		omap_serial.base = OMAP3_AM335X_DEBUG_UART_BASE;
+	}
+	omap_serial.size = 0x1000 ; /* 4k */
 
-
-    kern_phys_map_ptr(omap_serial.base,omap_serial.size,
-	&serial_phys_map, (vir_bytes) &omap_serial.base);
-    assert(omap_serial.base);
+	kern_phys_map_ptr(omap_serial.base,omap_serial.size,
+	    &serial_phys_map, (vir_bytes) &omap_serial.base);
+	assert(omap_serial.base);
 }
 
 void omap3_ser_putc(char c)
 {
-    assert(omap_serial.base);
+	int i;
+	assert(omap_serial.base);
 
-    int i;
+	/* Wait until FIFO's empty */
+	for (i = 0; i < 100000; i++) {
+		if (mmio_read(omap_serial.base +  OMAP3_LSR) & OMAP3_LSR_THRE) {
+			break;
+		}
+	}
 
-    /* Wait until FIFO's empty */
-    for (i = 0; i < 100000; i++)
-	if (mmio_read(omap_serial.base +  OMAP3_LSR) & OMAP3_LSR_THRE)
-	    break;
+	/* Write character */
+	mmio_write(omap_serial.base + OMAP3_THR, c);
 
-    /* Write character */
-    mmio_write(omap_serial.base + OMAP3_THR, c);
-
-    /* And wait again until FIFO's empty to prevent TTY from overwriting */
-    for (i = 0; i < 100000; i++)
-	if (mmio_read(omap_serial.base + OMAP3_LSR) & (OMAP3_LSR_THRE | OMAP3_LSR_TEMT))
-	    break;
+	/* And wait again until FIFO's empty to prevent TTY from overwriting */
+	for (i = 0; i < 100000; i++) {
+		if (mmio_read(omap_serial.base + OMAP3_LSR) & (OMAP3_LSR_THRE | OMAP3_LSR_TEMT)) {
+			break;
+		}
+	}
 }

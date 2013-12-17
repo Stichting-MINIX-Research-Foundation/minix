@@ -22,18 +22,18 @@ static kern_phys_map intr_phys_map;
 
 int intr_init(const int auto_eoi)
 {
-    if (BOARD_IS_BBXM(machine.board_id)){
-	omap_intr.base = OMAP3_DM37XX_INTR_BASE;
-    } else if (BOARD_IS_BB(machine.board_id)){
-	omap_intr.base = OMAP3_AM335X_INTR_BASE;
-    } else {
-	panic("Can not do the interrupt setup. machine (0x%08x) is unknown\n",machine.board_id);
-    };
-    omap_intr.size = 0x1000 ; /* 4K */
+	if (BOARD_IS_BBXM(machine.board_id)) {
+		omap_intr.base = OMAP3_DM37XX_INTR_BASE;
+	} else if (BOARD_IS_BB(machine.board_id)) {
+		omap_intr.base = OMAP3_AM335X_INTR_BASE;
+	} else {
+		panic("Can not do the interrupt setup. machine (0x%08x) is unknown\n",machine.board_id);
+	};
+	omap_intr.size = 0x1000 ; /* 4K */
 
-    kern_phys_map_ptr(omap_intr.base,omap_intr.size,
-	&intr_phys_map, (vir_bytes) &omap_intr.base);
-    return 0;
+	kern_phys_map_ptr(omap_intr.base,omap_intr.size,
+	    &intr_phys_map, (vir_bytes) &omap_intr.base);
+	return 0;
 }
 
 void omap3_irq_handle(void) {
@@ -44,16 +44,15 @@ void omap3_irq_handle(void) {
 	/* handle irq */
 	irq_handle(irq);
 	/* re-enable. this should not trigger interrupts due to current cpsr state */
-    	mmio_write(omap_intr.base + OMAP3_INTCPS_CONTROL,OMAP3_INTR_NEWIRQAGR);
-	
+	mmio_write(omap_intr.base + OMAP3_INTCPS_CONTROL,OMAP3_INTR_NEWIRQAGR);
 }
 
 void omap3_irq_unmask(int irq)
 {
-    mmio_write(OMAP3_INTR_MIR_CLEAR(omap_intr.base, irq >> 5), 1 << (irq & 0x1f));
+	mmio_write(OMAP3_INTR_MIR_CLEAR(omap_intr.base, irq >> 5), 1 << (irq & 0x1f));
 }
 
 void omap3_irq_mask(const int irq)
 {
-    mmio_write(OMAP3_INTR_MIR_SET(omap_intr.base, irq >> 5), 1 << (irq & 0x1f));
+	mmio_write(OMAP3_INTR_MIR_SET(omap_intr.base, irq >> 5), 1 << (irq & 0x1f));
 }
