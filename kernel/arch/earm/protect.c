@@ -22,9 +22,10 @@ int prot_init_done = 0;
 
 phys_bytes vir2phys(void *vir)
 {
-	extern char _kern_vir_base, _kern_phys_base;	/* in kernel.lds */
+	/* defined in kernel.lds */
+	extern char _kern_vir_base, _kern_phys_base;
 	u32_t offset = (vir_bytes) &_kern_vir_base -
-		(vir_bytes) &_kern_phys_base;
+	    (vir_bytes) &_kern_phys_base;
 	return (phys_bytes)vir - offset;
 }
 
@@ -74,39 +75,39 @@ int booting_cpu = 0;
 
 void prot_init()
 {
-  write_vbar((reg_t)&exc_vector_table);
+	write_vbar((reg_t)&exc_vector_table);
 
-  /* Set up a new post-relocate bootstrap pagetable so that
-   * we can map in VM, and we no longer rely on pre-relocated
-   * data.
-   */
+	/* Set up a new post-relocate bootstrap pagetable so that
+	 * we can map in VM, and we no longer rely on pre-relocated
+	 * data.
+	 */
 
-  pg_clear();
-  pg_identity(&kinfo); /* Still need 1:1 for device memory . */
-  pg_mapkernel();
-  pg_load();
+	pg_clear();
+	pg_identity(&kinfo); /* Still need 1:1 for device memory . */
+	pg_mapkernel();
+	pg_load();
 
-  prot_init_done = 1;
+	prot_init_done = 1;
 }
 
 static int alloc_for_vm = 0;
 
 void arch_post_init(void)
 {
-  /* Let memory mapping code know what's going on at bootstrap time */
-  struct proc *vm;
-  vm = proc_addr(VM_PROC_NR);
-  get_cpulocal_var(ptproc) = vm;
-  pg_info(&vm->p_seg.p_ttbr, &vm->p_seg.p_ttbr_v);
+	/* Let memory mapping code know what's going on at bootstrap time */
+	struct proc *vm;
+	vm = proc_addr(VM_PROC_NR);
+	get_cpulocal_var(ptproc) = vm;
+	pg_info(&vm->p_seg.p_ttbr, &vm->p_seg.p_ttbr_v);
 }
 
 int libexec_pg_alloc(struct exec_info *execi, off_t vaddr, size_t len)
 {
-        pg_map(PG_ALLOCATEME, vaddr, vaddr+len, &kinfo);
-  	pg_load();
-        memset((char *) vaddr, 0, len);
+	pg_map(PG_ALLOCATEME, vaddr, vaddr+len, &kinfo);
+	pg_load();
+	memset((char *) vaddr, 0, len);
 	alloc_for_vm += len;
-        return OK;
+	return OK;
 }
 
 void arch_boot_proc(struct boot_image *ip, struct proc *rp)
