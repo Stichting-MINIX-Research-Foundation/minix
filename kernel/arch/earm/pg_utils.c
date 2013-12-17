@@ -1,4 +1,3 @@
-
 #include <minix/cpufeature.h>
 
 #include <minix/type.h>
@@ -23,61 +22,67 @@ static u32_t pagedir[4096]  __aligned(16384);
 
 void print_memmap(kinfo_t *cbi)
 {
-        int m;
-        assert(cbi->mmap_size < MAXMEMMAP);
-        for(m = 0; m < cbi->mmap_size; m++) {
+	int m;
+	assert(cbi->mmap_size < MAXMEMMAP);
+	for(m = 0; m < cbi->mmap_size; m++) {
 		phys_bytes addr = cbi->memmap[m].addr, endit = cbi->memmap[m].addr + cbi->memmap[m].len;
-                printf("%08lx-%08lx ",addr, endit);
-        }
-        printf("\nsize %08lx\n", cbi->mmap_size);
+		printf("%08lx-%08lx ",addr, endit);
+	}
+	printf("\nsize %08lx\n", cbi->mmap_size);
 }
 
 void cut_memmap(kinfo_t *cbi, phys_bytes start, phys_bytes end)
 {
-        int m;
-        phys_bytes o;
+	int m;
+	phys_bytes o;
 
-        if((o=start % ARM_PAGE_SIZE))
-                start -= o;
-        if((o=end % ARM_PAGE_SIZE))
-                end += ARM_PAGE_SIZE - o;
+	if((o=start % ARM_PAGE_SIZE))
+		start -= o;
+	if((o=end % ARM_PAGE_SIZE))
+		end += ARM_PAGE_SIZE - o;
 
 	assert(kernel_may_alloc);
 
-        for(m = 0; m < cbi->mmap_size; m++) {
-                phys_bytes substart = start, subend = end;
-                phys_bytes memaddr = cbi->memmap[m].addr,
-                        memend = cbi->memmap[m].addr + cbi->memmap[m].len;
+	for(m = 0; m < cbi->mmap_size; m++) {
+		phys_bytes substart = start, subend = end;
+		phys_bytes memaddr = cbi->memmap[m].addr,
+		    memend = cbi->memmap[m].addr + cbi->memmap[m].len;
 
-                /* adjust cut range to be a subset of the free memory */
-                if(substart < memaddr) substart = memaddr;
-                if(subend > memend) subend = memend;
-                if(substart >= subend) continue;
+		/* adjust cut range to be a subset of the free memory */
+		if(substart < memaddr) substart = memaddr;
+		if(subend > memend) subend = memend;
+		if(substart >= subend) continue;
 
-                /* if there is any overlap, forget this one and add
-                 * 1-2 subranges back
-                 */
-                cbi->memmap[m].addr = cbi->memmap[m].len = 0;
-                if(substart > memaddr)
-                        add_memmap(cbi, memaddr, substart-memaddr);
-                if(subend < memend)
-                        add_memmap(cbi, subend, memend-subend);
-        }
+		/* if there is any overlap, forget this one and add
+		 * 1-2 subranges back
+		 */
+		cbi->memmap[m].addr = cbi->memmap[m].len = 0;
+		if(substart > memaddr)
+			add_memmap(cbi, memaddr, substart-memaddr);
+		if(subend < memend)
+			add_memmap(cbi, subend, memend-subend);
+	}
 }
 
 void add_memmap(kinfo_t *cbi, u64_t addr, u64_t len)
 {
-        int m;
+	int m;
 #define LIMIT 0xFFFFF000
-        /* Truncate available memory at 4GB as the rest of minix
-         * currently can't deal with any bigger.
-         */
-        if(addr > LIMIT) return;
-        if(addr + len > LIMIT) {
-                len -= (addr + len - LIMIT);
-        }
-        assert(cbi->mmap_size < MAXMEMMAP);
-        if(len == 0) return;
+	/* Truncate available memory at 4GB as the rest of minix
+	 * currently can't deal with any bigger.
+	 */
+	if(addr > LIMIT) {
+		return;
+	}
+
+	if(addr + len > LIMIT) {
+		len -= (addr + len - LIMIT);
+	}
+
+	assert(cbi->mmap_size < MAXMEMMAP);
+	if(len == 0) {
+		return;
+	}
 	addr = roundup(addr, ARM_PAGE_SIZE);
 	len = rounddown(len, ARM_PAGE_SIZE);
 
@@ -85,21 +90,23 @@ void add_memmap(kinfo_t *cbi, u64_t addr, u64_t len)
 
         for(m = 0; m < MAXMEMMAP; m++) {
 		phys_bytes highmark;
-                if(cbi->memmap[m].len) continue;
-                cbi->memmap[m].addr = addr;
-                cbi->memmap[m].len = len;
-                cbi->memmap[m].type = MULTIBOOT_MEMORY_AVAILABLE;
-                if(m >= cbi->mmap_size)
-                        cbi->mmap_size = m+1;
+		if(cbi->memmap[m].len) {
+			continue;
+		}
+		cbi->memmap[m].addr = addr;
+		cbi->memmap[m].len = len;
+		cbi->memmap[m].type = MULTIBOOT_MEMORY_AVAILABLE;
+		if(m >= cbi->mmap_size) {
+			cbi->mmap_size = m+1;
+		}
 		highmark = addr + len;
 		if(highmark > cbi->mem_high_phys) {
 			cbi->mem_high_phys = highmark;
 		}
-
-                return;
+		return;
         }
 
-        panic("no available memmap slot");
+	panic("no available memmap slot");
 }
 
 u32_t *alloc_pagetable(phys_bytes *ph)
@@ -108,7 +115,9 @@ u32_t *alloc_pagetable(phys_bytes *ph)
 #define PG_PAGETABLES 24
 	static u32_t pagetables[PG_PAGETABLES][256]  __aligned(1024);
 	static int pt_inuse = 0;
-	if(pt_inuse >= PG_PAGETABLES) panic("no more pagetables");
+	if(pt_inuse >= PG_PAGETABLES) {
+		panic("no more pagetables");
+	}
 	assert(sizeof(pagetables[pt_inuse]) == 1024);
 	ret = pagetables[pt_inuse++];
 	*ph = vir2phys(ret);
@@ -126,7 +135,9 @@ phys_bytes pg_alloc_page(kinfo_t *cbi)
 
 	for(m = 0; m < cbi->mmap_size; m++) {
 		mmap = &cbi->memmap[m];
-		if(!mmap->len) continue;
+		if(!mmap->len) {
+			continue;
+		}
 		assert(mmap->len > 0);
 		assert(!(mmap->len % ARM_PAGE_SIZE));
 		assert(!(mmap->addr % ARM_PAGE_SIZE));
@@ -161,7 +172,7 @@ void pg_identity(kinfo_t *cbi)
 
 		phys = i * ARM_SECTION_SIZE;
 		/* mark mormal memory as cacheable. TODO: fix hard coded values */
-		if (phys >= PHYS_MEM_BEGIN && phys <= PHYS_MEM_END){
+		if (phys >= PHYS_MEM_BEGIN && phys <= PHYS_MEM_END) {
 			pagedir[i] =  phys | flags | ARM_VM_SECTION_CACHED;
 		} else {
 			pagedir[i] =  phys | flags | ARM_VM_SECTION_DEVICE;
@@ -192,8 +203,8 @@ int pg_mapkernel(void)
 
 void vm_enable_paging(void)
 {
-        u32_t sctlr;
-        u32_t actlr;
+	u32_t sctlr;
+	u32_t actlr;
 
 	write_ttbcr(0);
 
@@ -231,7 +242,7 @@ void vm_enable_paging(void)
 phys_bytes pg_load()
 {
 	phys_bytes phpagedir = vir2phys(pagedir);
-        write_ttbr0(phpagedir);
+	write_ttbr0(phpagedir);
 	return phpagedir;
 }
 
@@ -243,8 +254,9 @@ void pg_clear(void)
 phys_bytes pg_rounddown(phys_bytes b)
 {
 	phys_bytes o;
-	if(!(o = b % ARM_PAGE_SIZE))
+	if(!(o = b % ARM_PAGE_SIZE)) {
 		return b;
+	}
 	return b  - o;
 }
 
@@ -291,8 +303,9 @@ void pg_map(phys_bytes phys, vir_bytes vaddr, vir_bytes vaddr_end,
 			| ARM_VM_PTE_CACHED
 			| ARM_VM_PTE_USER;
 		vaddr += ARM_PAGE_SIZE;
-		if(phys != PG_ALLOCATEME)
+		if(phys != PG_ALLOCATEME) {
 			phys += ARM_PAGE_SIZE;
+		}
 	}
 }
 
