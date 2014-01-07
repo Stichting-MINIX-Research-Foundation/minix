@@ -128,5 +128,3 @@
 ./usr/share/beaglebone/weather/style.css		minix-sys
 ./usr/share/beaglebone/weather/weatherstation.js	minix-sys
 ./usr/share/beaglebone/weather/weatherstation.lua	minix-sys
-./usr/tests/minix-posix/mod		minix-sys
-./usr/tests/minix-posix/test63		minix-sys
