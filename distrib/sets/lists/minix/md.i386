@@ -187,9 +187,7 @@
 ./usr/sbin/ti1225			minix-sys
 ./usr/sbin/vbox				minix-sys
 ./usr/sbin/virtio_net			minix-sys
-./usr/tests/minix-posix/mod		minix-sys
 ./usr/tests/minix-posix/test47		minix-sys
 ./usr/tests/minix-posix/test51		minix-sys
 ./usr/tests/minix-posix/test57		minix-sys
 ./usr/tests/minix-posix/test62		minix-sys
-./usr/tests/minix-posix/test63		minix-sys
