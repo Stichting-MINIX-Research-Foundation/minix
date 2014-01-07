@@ -5566,6 +5566,7 @@
 ./usr/tests/lib/libpthread/dlopen	minix-sys	atf
 ./usr/tests/libexec/Atffile		minix-sys	atf
 ./usr/tests/minix-posix			minix-sys
+./usr/tests/minix-posix/mod		minix-sys	pic
 ./usr/tests/minix-posix/run		minix-sys
 ./usr/tests/minix-posix/t10a		minix-sys
 ./usr/tests/minix-posix/t11a		minix-sys
@@ -5638,6 +5639,7 @@
 ./usr/tests/minix-posix/test60		minix-sys
 ./usr/tests/minix-posix/test6		minix-sys
 ./usr/tests/minix-posix/test61		minix-sys
+./usr/tests/minix-posix/test63		minix-sys	pic
 ./usr/tests/minix-posix/test64		minix-sys
 ./usr/tests/minix-posix/test65		minix-sys
 ./usr/tests/minix-posix/test66		minix-sys
