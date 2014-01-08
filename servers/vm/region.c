@@ -1102,8 +1102,7 @@ int map_unmap_region(struct vmproc *vmp, struct vir_region *r,
 		region_remove(&vmp->vm_regions_avl, r->vaddr);
 
 		USE(r,
-		r->vaddr += len;
-		r->length -= len;);
+		r->vaddr += len;);
 
 		remslots = phys_slot(r->length);
 
@@ -1113,15 +1112,17 @@ int map_unmap_region(struct vmproc *vmp, struct vir_region *r,
 		 * point to the same addresses, make them shrink by the
 		 * same amount.
 		 */
-		for(voffset = offset; voffset < r->length;
+		for(voffset = len; voffset < r->length;
 			voffset += VM_PAGE_SIZE) {
 			if(!(pr = physblock_get(r, voffset))) continue;
 			assert(pr->offset >= offset);
+			assert(pr->offset >= len);
 			USE(pr, pr->offset -= len;);
 		}
 		if(remslots)
 			memmove(r->physblocks, r->physblocks + freeslots,
 				remslots * sizeof(struct phys_region *));
+		USE(r, r->length -= len;);
 	} else if(offset + len == r->length) {
 		assert(len <= r->length);
 		r->length -= len;
