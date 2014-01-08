@@ -75,12 +75,29 @@ readblock(int b, int blocksize, u32_t seed, char *data)
 
 void testend(void) { }
 
+void basic_regression(void)
+{
+	void *block;
+#define BLOCKSIZE (PAGE_SIZE*10)
+	block = minix_mmap(0, BLOCKSIZE, PROT_READ | PROT_WRITE,
+		MAP_PRIVATE | MAP_ANON, -1, 0);
+
+	if(block == MAP_FAILED) { e(1); exit(1); }
+
+	memset(block, 0, BLOCKSIZE);
+
+	/* shrink from bottom */
+	minix_munmap(block, PAGE_SIZE);
+}
+
 int
 main(int argc, char *argv[])
 {
 	int iter = 2;
 
 	start(74);
+
+	basic_regression();
 
 	makefiles(MAXFILES);
 
