@@ -379,6 +379,27 @@ omap_message_hook(message * m)
 	return OK;
 }
 
+static int revision_matches(u32_t board_id,u32_t rev) {
+	/* figures out if the collected resition matches the one expected
+	 * from the board */
+	if (BOARD_IS_BBXM(board_id)){
+		if(
+		   DM37XX_GPIO_REVISION_MAJOR(rev) != 2
+		   || DM37XX_GPIO_REVISION_MINOR(rev) !=  5
+		   ) {
+			return 0;
+		}
+	} else if (BOARD_IS_BB(board_id)){
+		if (
+		    AM335X_GPIO_REVISION_MAJOR(rev) != 0
+		    || AM335X_GPIO_REVISION_MINOR(rev) != 1
+		    ) {
+			return 0;
+		}
+	}
+	return 1;
+}
+
 static int
 omap_gpio_init(struct gpio_driver *gpdrv)
 {
@@ -422,22 +443,9 @@ omap_gpio_init(struct gpio_driver *gpdrv)
 			return EPERM;	/* fixme */
 		}
 
-		revision = 0;
 		revision = read32(bank->base_address + regs->REVISION);
-		unsigned int expected_major = 0;
-		unsigned int expected_minor = 0;
-		if (BOARD_IS_BBXM(machine.board_id)){
-			expected_major = 2;
-			expected_minor = 5;
-		} else if (BOARD_IS_BB(machine.board_id)){
-			expected_major = 0;
-			expected_minor = 1;
-		}
 		/* test if we can access it */
-		if (
-		    AM335X_GPIO_REVISION_MAJOR(revision) != expected_major
-		    || AM335X_GPIO_REVISION_MINOR(revision) != expected_minor
-		    ) {
+		if (! revision_matches(machine.board_id,revision)) {
 			log_warn(&log,
 			    "Failed to read the revision of GPIO bank %s.. disabling\n",
 			    bank->name);

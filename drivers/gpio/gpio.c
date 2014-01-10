@@ -53,7 +53,7 @@ struct gpio_cbdata
 {
 	struct gpio *gpio;	/* obtained from the driver */
 	int type;		/* read=0/on=1/off=2 */
-	    TAILQ_ENTRY(gpio_cbdata) next;
+	TAILQ_ENTRY(gpio_cbdata) next;
 };
 
 /* list of inodes used in this driver */
