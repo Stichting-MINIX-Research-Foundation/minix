@@ -238,11 +238,11 @@ start)
 	done
 	echo .
 
-	BOARD_NAME=`eepromread -i | sed -n 's/^BOARD_NAME      : \(.*\)$/\1/p'`
+	BOARD_NAME=`sysenv board`
 	case "${BOARD_NAME}" in
 
-		A335BONE)
-			echo "Detected BeagleBone"
+		ARM-ARMV7-TI-BB-WHITE)
+			echo "Running on a BeagleBone"
 			echo -n "Starting i2c device drivers: "
 
 			# start EEPROM driver for reading board info
@@ -278,8 +278,8 @@ start)
 
 			;;
 
-		A335BNLT)
-			echo "Detected BeagleBone Black"
+		ARM-ARMV7-TI-BB-BLACK)
+			echo "Running on a BeagleBone Black"
 			echo -n "Starting i2c device drivers: "
 
 			# start EEPROM driver for reading board info
@@ -306,8 +306,8 @@ start)
 
 			;;
 
-		UNKNOWN)
-			echo "Unable to detect board -- assuming BeagleBoard-xM"
+		ARM-ARMV7-TI-BBXM-GENERIC)
+			echo "Running on a BeagleBoard-xM"
 			echo -n "Starting i2c device drivers: "
 
 			# Start TPS65950 driver for power management.
