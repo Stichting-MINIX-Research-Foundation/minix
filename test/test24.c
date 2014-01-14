@@ -243,6 +243,7 @@ void test24b()
   if ((dep2 = readdir(dirp[2])) == DIRENT0) e(25);	/* can't effect 2 */
   if (strcmp(dep2->d_name, name) == 0) e(26);	/* Must be next */
   if (closedir(dirp[2]) != 0) e(27);
+  free(name);
 }
 
 void test24c()
