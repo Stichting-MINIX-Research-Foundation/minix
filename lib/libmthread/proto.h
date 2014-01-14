@@ -38,10 +38,8 @@ void mthread_init_valid_mutexes(void);
 
 #ifdef MTHREAD_STRICT
 int mthread_mutex_valid(mthread_mutex_t *mutex);
-# define MTHREAD_CHECK_INIT()	mthread_init()
 #else
 # define mthread_mutex_valid(x) ((*x)->mm_magic == MTHREAD_INIT_MAGIC)
-# define MTHREAD_CHECK_INIT()
 #endif
 
 #ifdef MDEBUG

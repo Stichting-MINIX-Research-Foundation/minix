@@ -1836,6 +1836,9 @@
 ./usr/lib/libm.so			minix-sys
 ./usr/lib/libmthread.a			minix-sys
 ./usr/lib/libmthread_pic.a		minix-sys
+./usr/lib/libmthread.so.0.0		minix-sys
+./usr/lib/libmthread.so.0		minix-sys
+./usr/lib/libmthread.so			minix-sys
 ./usr/lib/libnetdriver.a		minix-sys
 ./usr/lib/libnetdriver_pic.a		minix-sys
 ./usr/lib/libnetsock.a			minix-sys

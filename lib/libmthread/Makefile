@@ -5,14 +5,15 @@ LIB=	mthread
 SRCS=	\
 	allocate.c \
 	attribute.c \
-	mutex.c \
-	event.c \
-	rwlock.c \
-	misc.c \
-	queue.c \
 	condition.c \
+	event.c \
+	key.c \
+	misc.c \
+	mutex.c \
+	pthread_compat.c \
+	queue.c \
+	rwlock.c \
 	scheduler.c \
-	key.c
 
 WARNS?=	4
 

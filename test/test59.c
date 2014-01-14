@@ -1116,7 +1116,6 @@ int main(void)
   once = MTHREAD_ONCE_INIT;
 
   start(59);
-  mthread_init(); 
   test_scheduling();
   test_mutex();
   test_event();

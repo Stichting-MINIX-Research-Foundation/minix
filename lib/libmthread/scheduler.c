@@ -38,8 +38,6 @@ void mthread_schedule(void)
   mthread_tcb_t *new_tcb, *old_tcb;
   ucontext_t *new_ctx, *old_ctx;
 
-  MTHREAD_CHECK_INIT();	/* Make sure libmthread is initialized */
-
   old_thread = current_thread;
 
   if (mthread_queue_isempty(&run_queue)) {
@@ -154,8 +152,6 @@ int mthread_yield(void)
   mthread_tcb_t *tcb;
   mthread_thread_t t;
 
-  MTHREAD_CHECK_INIT();	/* Make sure libmthread is initialized */
-
   /* Detached threads cannot clean themselves up. This is a perfect moment to
    * do it */
   for (t = (mthread_thread_t) 0; need_reset > 0 && t < no_threads; t++) {
@@ -192,8 +188,6 @@ void mthread_yield_all(void)
  * this function will lead to a deadlock.
  */
 
-  MTHREAD_CHECK_INIT();	/* Make sure libmthread is initialized */
-
   if (yield_all) mthread_panic("Deadlock: two threads trying to yield_all");
   yield_all = 1;
 
@@ -213,4 +207,9 @@ void mthread_yield_all(void)
   /* Done yielding all threads. */
   yield_all = 0;
 }
+
+/* pthread compatibility layer. */
+__weak_alias(pthread_yield, mthread_yield)
+__weak_alias(sched_yield, mthread_yield)
+__weak_alias(pthread_yield_all, mthread_yield_all)
 

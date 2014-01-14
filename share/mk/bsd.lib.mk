@@ -614,7 +614,7 @@ DPLIBC ?= ${DESTDIR}${LIBC_SO}
 .endif
 .else
 .if ${LIB} != "c" && ${LIB:Mgcc*} == "" \
-    && ${LIB} != "minlib" && ${LIB} != "sys" && ${LIB} != "minc" # Minix-specific libs
+    && ${LIB} != "minlib" && ${LIB} != "sys" && ${LIB} != "minc" && ${LIB} != "mthread" # Minix-specific libs
 .if !empty(LIBC_SO)
 DPLIBC ?= ${DESTDIR}${LIBC_SO}
 .endif

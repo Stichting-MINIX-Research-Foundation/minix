@@ -46,8 +46,6 @@ mthread_attr_t *attr;
 {
 /* Invalidate attribute and deallocate resources. */
 
-  MTHREAD_CHECK_INIT();	/* Make sure mthreads is initialized */
-
   if (attr == NULL)
   	return(EINVAL);
 
@@ -71,8 +69,6 @@ mthread_attr_t *attr;	/* Attribute */
 {
 /* Initialize the attribute to a known state. */
   struct __mthread_attr *a;
-
-  MTHREAD_CHECK_INIT();	/* Make sure mthreads is initialized */
 
   if (attr == NULL) 
   	return(EAGAIN);
@@ -102,8 +98,6 @@ int *detachstate;
 /* Get detachstate of a thread attribute */
   struct __mthread_attr *a;
 
-  MTHREAD_CHECK_INIT();	/* Make sure mthreads is initialized */
-
   if (attr == NULL) 
   	return(EINVAL);
 
@@ -126,8 +120,6 @@ int detachstate;
 {
 /* Set detachstate of a thread attribute */
   struct __mthread_attr *a;
-
-  MTHREAD_CHECK_INIT();	/* Make sure mthreads is initialized */
 
   if (attr == NULL) 
   	return(EINVAL);
@@ -156,8 +148,6 @@ size_t *stacksize;
 /* Get stack attribute */
   struct __mthread_attr *a;
 
-  MTHREAD_CHECK_INIT();	/* Make sure mthreads is initialized */
-
   if (attr == NULL) 
   	return(EINVAL);
 
@@ -182,8 +172,6 @@ size_t *stacksize;
 /* Get stack size attribute */
   struct __mthread_attr *a;
 
-  MTHREAD_CHECK_INIT();	/* Make sure mthreads is initialized */
-
   if (attr == NULL)
   	return(EINVAL);
 
@@ -207,8 +195,6 @@ size_t stacksize;
 {
 /* Set stack attribute */
   struct __mthread_attr *a;
-
-  MTHREAD_CHECK_INIT();	/* Make sure mthreads is initialized */
 
   if (attr == NULL) 
   	return(EINVAL);
@@ -238,8 +224,6 @@ size_t stacksize;
 {
 /* Set stack size attribute */
   struct __mthread_attr *a;
-
-  MTHREAD_CHECK_INIT();	/* Make sure mthreads is initialized */
 
   if (attr == NULL)
   	return(EINVAL);
@@ -283,8 +267,6 @@ mthread_attr_t *a;
 /* Check to see if attribute is on the list of valid attributes */
   struct __mthread_attr *loopitem;
 
-  MTHREAD_CHECK_INIT();	/* Make sure mthreads is initialized */
-
   loopitem = va_front;
 
   while (loopitem != NULL) {
@@ -307,8 +289,6 @@ int mthread_attr_verify(void)
 /* Return true when no attributes are in use */
   struct __mthread_attr *loopitem;
 
-  MTHREAD_CHECK_INIT();	/* Make sure mthreads is initialized */
-
   loopitem = va_front;
 
   while (loopitem != NULL) {
@@ -320,4 +300,13 @@ int mthread_attr_verify(void)
 }
 #endif
 
+/* pthread compatibility layer. */
+__weak_alias(pthread_attr_destroy, mthread_attr_destroy)
+__weak_alias(pthread_attr_getdetachstate, mthread_attr_getdetachstate)
+__weak_alias(pthread_attr_getstack, mthread_attr_getstack)
+__weak_alias(pthread_attr_getstacksize, mthread_attr_getstacksize)
+__weak_alias(pthread_attr_init, mthread_attr_init)
+__weak_alias(pthread_attr_setdetachstate, mthread_attr_setdetachstate)
+__weak_alias(pthread_attr_setstack, mthread_attr_setstack)
+__weak_alias(pthread_attr_setstacksize, mthread_attr_setstacksize)
 

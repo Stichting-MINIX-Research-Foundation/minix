@@ -24,7 +24,6 @@ void worker_init(void)
   struct worker_thread *wp;
   int i;
 
-  threads_init();
   if (mthread_attr_init(&tattr) != 0)
 	panic("failed to initialize attribute");
   if (mthread_attr_setstacksize(&tattr, TH_STACKSIZE) != 0)

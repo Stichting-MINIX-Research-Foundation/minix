@@ -56,8 +56,6 @@ mthread_mutex_t *mutex;
   mthread_thread_t t;
   mthread_tcb_t *tcb;
 
-  MTHREAD_CHECK_INIT();	/* Make sure mthreads is initialized */
-
   if (mutex == NULL)
   	return(EINVAL);
 
@@ -95,8 +93,6 @@ mthread_mutexattr_t *mattr;	/* Mutex attribute */
 
   struct __mthread_mutex *m;
 
-  MTHREAD_CHECK_INIT();	/* Make sure mthreads is initialized */
-
   if (mutex == NULL)
   	return(EAGAIN);
   else if (mattr != NULL)
@@ -126,8 +122,6 @@ mthread_mutex_t *mutex;	/* Mutex that is to be locked */
  * FIFO queue associated with this mutex and suspend the thread. */
 
   struct __mthread_mutex *m;
-
-  MTHREAD_CHECK_INIT();	/* Make sure mthreads is initialized */
 
   if (mutex == NULL)
   	return(EINVAL);
@@ -180,8 +174,6 @@ mthread_mutex_t *mutex;	/* Mutex that is to be locked */
 
   struct __mthread_mutex *m;
 
-  MTHREAD_CHECK_INIT();	/* Make sure mthreads is initialized */
-
   if (mutex == NULL) 
   	return(EINVAL);
 
@@ -210,8 +202,6 @@ mthread_mutex_t *mutex;	/* Mutex that is to be unlocked */
 
   struct __mthread_mutex *m;
 
-  MTHREAD_CHECK_INIT();	/* Make sure mthreads is initialized */
-
   if (mutex == NULL) 
 	return(EINVAL);
 
@@ -237,8 +227,6 @@ mthread_mutex_t *m;
 /* Check to see if mutex is on the list of valid mutexes */
   struct __mthread_mutex *loopitem;
 
-  MTHREAD_CHECK_INIT();	/* Make sure mthreads is initialized */
-
   loopitem = vm_front;
 
   while (loopitem != NULL) {
@@ -262,8 +250,6 @@ int mthread_mutex_verify(void)
   int r = 1;
   struct __mthread_mutex *loopitem;
 
-  MTHREAD_CHECK_INIT();	/* Make sure mthreads is initialized */
-
 #ifdef MTHREAD_STRICT
   loopitem = vm_front;
 
@@ -277,5 +263,3 @@ int mthread_mutex_verify(void)
   return(r);
 }
 #endif
-
-

@@ -34,7 +34,6 @@ int mthread_key_create(mthread_key_t *key, void (*destructor)(void *))
  */
   mthread_key_t k;
 
-  MTHREAD_CHECK_INIT();	/* Make sure libmthread is initialized */
   keys_used = 1;
 
   /* We do not yet allocate storage space for the values here, because we can
@@ -65,8 +64,6 @@ int mthread_key_delete(mthread_key_t key)
 /* Free up a key, as well as any associated storage space.
  */
 
-  MTHREAD_CHECK_INIT();	/* Make sure libmthread is initialized */
-
   if (key < 0 || key >= MTHREAD_KEYS_MAX || !keys[key].used)
 	return(EINVAL);
 
@@ -84,8 +81,6 @@ void *mthread_getspecific(mthread_key_t key)
 {
 /* Get this thread's local value for the given key. The default is NULL.
  */
-
-  MTHREAD_CHECK_INIT();	/* Make sure libmthread is initialized */
 
   if (key < 0 || key >= MTHREAD_KEYS_MAX || !keys[key].used)
 	return(NULL);
@@ -108,8 +103,6 @@ int mthread_setspecific(mthread_key_t key, void *value)
  * necessary.
  */
   void **p;
-
-  MTHREAD_CHECK_INIT();	/* Make sure libmthread is initialized */
 
   if (key < 0 || key >= MTHREAD_KEYS_MAX || !keys[key].used)
 	return(EINVAL);
@@ -188,3 +181,10 @@ void mthread_cleanup_values(void)
 	}
   } while (found);
 }
+
+/* pthread compatibility layer. */
+__weak_alias(pthread_key_create, mthread_key_create)
+__weak_alias(pthread_key_delete, mthread_key_delete)
+__weak_alias(pthread_getspecific, mthread_getspecific)
+__weak_alias(pthread_setspecific, mthread_setspecific)
+

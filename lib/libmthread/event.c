@@ -124,3 +124,11 @@ mthread_event_t *event; /* The event to be fired */
 
   return mthread_mutex_unlock(&event->mutex);
 }
+
+/* pthread compatibility layer. */
+__weak_alias(pthread_event_destroy, mthread_event_destroy)
+__weak_alias(pthread_event_init, mthread_event_init)
+__weak_alias(pthread_event_wait, mthread_event_wait)
+__weak_alias(pthread_event_fire, mthread_event_fire)
+__weak_alias(pthread_event_fire_all, mthread_event_fire_all)
+

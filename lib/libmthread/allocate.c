@@ -36,7 +36,6 @@ mthread_thread_t l;
 mthread_thread_t r;
 {
 /* Compare two thread ids */
-  MTHREAD_CHECK_INIT();	/* Make sure mthreads is initialized */
 
   return(l == r);
 }
@@ -53,8 +52,6 @@ void *arg;
 {
 /* Register procedure proc for execution in a thread. */
   mthread_thread_t thread;
-
-  MTHREAD_CHECK_INIT();	/* Make sure mthreads is initialized */
 
   if (proc == NULL)
 	return(EINVAL);
@@ -88,7 +85,6 @@ mthread_thread_t detach;
  * this thread are automatically freed.
  */
   mthread_tcb_t *tcb;
-  MTHREAD_CHECK_INIT();	/* Make sure libmthread is initialized */
 
   if (!isokthreadid(detach)) 
   	return(ESRCH);
@@ -115,8 +111,6 @@ void *value;
 {
 /* Make a thread stop running and store the result value. */
   mthread_tcb_t *tcb;
-
-  MTHREAD_CHECK_INIT();	/* Make sure libmthread is initialized */
 
   tcb = mthread_find_tcb(current_thread);
 
@@ -226,7 +220,7 @@ static int mthread_increase_thread_pool(void)
 /*===========================================================================*
  *				mthread_init				     *
  *===========================================================================*/
-void mthread_init(void)
+static void __attribute__((__constructor__, __used__)) mthread_init(void)
 {
 /* Initialize thread system; allocate thread structures and start creating
  * threads.
@@ -266,8 +260,6 @@ void **value;
 /* Wait for a thread to stop running and copy the result. */
 
   mthread_tcb_t *tcb;
-
-  MTHREAD_CHECK_INIT();	/* Make sure libmthread is initialized */
 
   if (!isokthreadid(join))
   	return(ESRCH);
@@ -323,8 +315,6 @@ void (*proc)(void);
 {
 /* Run procedure proc just once */
 
-  MTHREAD_CHECK_INIT();	/* Make sure libmthread is initialized */
-
   if (once == NULL || proc == NULL) 
   	return(EINVAL);
 
@@ -340,8 +330,6 @@ void (*proc)(void);
 mthread_thread_t mthread_self(void)
 {
 /* Return the thread id of the thread calling this function. */
-
-  MTHREAD_CHECK_INIT();	/* Make sure libmthread is initialized */
 
   return(current_thread);
 }
@@ -528,4 +516,13 @@ static void mthread_trampoline(void)
   r = (tcb->m_proc)(tcb->m_arg);
   mthread_exit(r); 
 }
+
+/* pthread compatibility layer. */
+__weak_alias(pthread_create, mthread_create)
+__weak_alias(pthread_detach, mthread_detach)
+__weak_alias(pthread_equal, mthread_equal)
+__weak_alias(pthread_exit, mthread_exit)
+__weak_alias(pthread_join, mthread_join)
+__weak_alias(pthread_once, mthread_once)
+__weak_alias(pthread_self, mthread_self)
 

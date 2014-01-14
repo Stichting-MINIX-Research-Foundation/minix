@@ -7,7 +7,6 @@
 #define cond_t		mthread_cond_t
 #define attr_t		mthread_attr_t
 
-#define threads_init	mthread_init
 #define yield		mthread_yield
 #define yield_all	mthread_yield_all
 

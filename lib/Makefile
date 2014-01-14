@@ -19,11 +19,14 @@ SUBDIR+=	../external/gpl3/gcc/lib/libgcc .WAIT
 . endif
 .endif
 
-#LSC MINIX libc depends on libminlib because of minix/malloc-debug.c
+#LSC MINIX libc depends on
+# - libminlib because of minix/malloc-debug.c
+# - libmthread because of sys/lib/libunwind
 SUBDIR+=	libminlib
 SUBDIR+=	.WAIT
 
 SUBDIR+=	libsys
+SUBDIR+=	libmthread
 SUBDIR+=	.WAIT
 
 SUBDIR+=	libc
@@ -43,7 +46,6 @@ SUBDIR+=	libasyn \
 		libinputdriver \
 		libminc \
 		libminixfs \
-		libmthread \
 		libnetdriver \
 		libsffs \
 		libtimers \

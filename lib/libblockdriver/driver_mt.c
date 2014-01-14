@@ -343,8 +343,6 @@ static void master_init(struct blockdriver *bdp)
   assert(bdp != NULL);
   assert(bdp->bdr_device != NULL);
 
-  mthread_init();
-
   bdtab = bdp;
 
   /* Initialize device-specific data structures. */

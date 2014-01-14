@@ -221,6 +221,7 @@ LIB${_lib:tu}=	${DESTDIR}/usr/lib/lib${_lib:S/xx/++/:S/atf_c/atf-c/}.a
 	devman \
 	minc \
 	minlib \
+	mthread \
 	netdriver \
 	sffs \
 	sys \

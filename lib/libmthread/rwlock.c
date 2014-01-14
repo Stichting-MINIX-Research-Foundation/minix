@@ -128,3 +128,10 @@ mthread_rwlock_t *rwlock; /* The rwlock to be unlocked */
 
   return r;
 }
+
+/* pthread compatibility layer. */
+__weak_alias(pthread_rwlock_destroy, mthread_rwlock_destroy)
+__weak_alias(pthread_rwlock_rdlock, mthread_rwlock_rdlock)
+__weak_alias(pthread_rwlock_wrlock, mthread_rwlock_wrlock)
+__weak_alias(pthread_rwlock_unlock, mthread_rwlock_unlock)
+
