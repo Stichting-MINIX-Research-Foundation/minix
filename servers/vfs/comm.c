@@ -1,27 +1,29 @@
 #include "fs.h"
 #include <minix/vfsif.h>
 #include <assert.h>
+#include <string.h>
 
-static int sendmsg(struct vmnt *vmp, struct worker_thread *wp);
+static int sendmsg(struct vmnt *vmp, endpoint_t dst, struct worker_thread *wp);
 static int queuemsg(struct vmnt *vmp);
 
 /*===========================================================================*
  *				sendmsg					     *
  *===========================================================================*/
-static int sendmsg(struct vmnt *vmp, struct worker_thread *wp)
+static int sendmsg(struct vmnt *vmp, endpoint_t dst, struct worker_thread *wp)
 {
-/* This is the low level function that sends requests to FS processes.
+/* This is the low level function that sends requests.
+ * Currently to FSes or VM.
  */
   int r, transid;
 
-  vmp->m_comm.c_cur_reqs++;	/* One more request awaiting a reply */
+  if(vmp) vmp->m_comm.c_cur_reqs++;	/* One more request awaiting a reply */
   transid = wp->w_tid + VFS_TRANSID;
-  wp->w_fs_sendrec->m_type = TRNS_ADD_ID(wp->w_fs_sendrec->m_type, transid);
-  wp->w_task = vmp->m_fs_e;
-  if ((r = asynsend3(vmp->m_fs_e, wp->w_fs_sendrec, AMF_NOREPLY)) != OK) {
+  wp->w_sendrec->m_type = TRNS_ADD_ID(wp->w_sendrec->m_type, transid);
+  wp->w_task = dst;
+  if ((r = asynsend3(dst, wp->w_sendrec, AMF_NOREPLY)) != OK) {
 	printf("VFS: sendmsg: error sending message. "
-		"FS_e: %d req_nr: %d err: %d\n", vmp->m_fs_e,
-		wp->w_fs_sendrec->m_type, r);
+		"dest: %d req_nr: %d err: %d\n", dst,
+			wp->w_sendrec->m_type, r);
 	util_stacktrace();
 	return(r);
   }
@@ -78,7 +80,7 @@ void fs_sendmore(struct vmnt *vmp)
   worker->w_next = NULL;
   sending--;
   assert(sending >= 0);
-  (void) sendmsg(vmp, worker);
+  (void) sendmsg(vmp, vmp->m_fs_e, worker);
 }
 
 /*===========================================================================*
@@ -139,13 +141,13 @@ int fs_sendrec(endpoint_t fs_e, message *reqmp)
   }
   if (fs_e == fp->fp_endpoint) return(EDEADLK);
 
-  self->w_fs_sendrec = reqmp;	/* Where to store request and reply */
+  self->w_sendrec = reqmp;	/* Where to store request and reply */
 
   /* Find out whether we can send right away or have to enqueue */
   if (	!(vmp->m_flags & VMNT_CALLBACK) &&
 	vmp->m_comm.c_cur_reqs < vmp->m_comm.c_max_reqs) {
 	/* There's still room to send more and no proc is queued */
-	r = sendmsg(vmp, self);
+	r = sendmsg(vmp, vmp->m_fs_e, self);
   } else {
 	r = queuemsg(vmp);
   }
@@ -156,6 +158,53 @@ int fs_sendrec(endpoint_t fs_e, message *reqmp)
   worker_wait();	/* Yield execution until we've received the reply. */
 
   return(reqmp->m_type);
+}
+
+/*===========================================================================*
+ *				vm_sendrec				     *
+ *===========================================================================*/
+int vm_sendrec(message *reqmp)
+{
+  int r;
+
+  assert(self);
+  assert(reqmp);
+
+  self->w_sendrec = reqmp;	/* Where to store request and reply */
+
+  r = sendmsg(NULL, VM_PROC_NR, self);
+
+  self->w_next = NULL;	/* End of list */
+
+  if (r != OK) return(r);
+
+  worker_wait();	/* Yield execution until we've received the reply. */
+
+  return(reqmp->m_type);
+}
+
+
+/*===========================================================================*
+ *                                vm_vfs_procctl_handlemem                   *
+ *===========================================================================*/
+int vm_vfs_procctl_handlemem(endpoint_t ep,
+        vir_bytes mem, vir_bytes len, int flags)
+{
+    message m;
+
+    /* main thread can not be suspended */
+    if(!self) return EFAULT;
+
+    memset(&m, 0, sizeof(m));
+
+    m.m_type = VM_PROCCTL;
+    m.VMPCTL_WHO = ep;
+    m.VMPCTL_PARAM = VMPPARAM_HANDLEMEM;
+    m.VMPCTL_M1 = mem;
+    m.VMPCTL_LEN = len;
+    m.VMPCTL_FLAGS = flags;
+
+    return vm_sendrec(&m);
 }
 
 /*===========================================================================*

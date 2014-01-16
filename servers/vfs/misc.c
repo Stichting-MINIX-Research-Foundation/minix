@@ -89,7 +89,7 @@ int do_getsysinfo(void)
   if (len != buf_size)
 	return(EINVAL);
 
-  return sys_datacopy(SELF, src_addr, who_e, dst_addr, len);
+  return sys_datacopy_wrapper(SELF, src_addr, who_e, dst_addr, len);
 }
 
 /*===========================================================================*
@@ -170,7 +170,7 @@ int do_fcntl(void)
 	else if (!(f->filp_mode & W_BIT)) r = EBADF;
 	else {
 		/* Copy flock data from userspace. */
-		r = sys_datacopy(who_e, (vir_bytes) scratch(fp).io.io_buffer,
+		r = sys_datacopy_wrapper(who_e, (vir_bytes) scratch(fp).io.io_buffer,
 			SELF, (vir_bytes) &flock_arg, sizeof(flock_arg));
 	}
 
@@ -709,7 +709,7 @@ gid_t *groups;
   rfp = &fproc[slot];
   if (ngroups * sizeof(gid_t) > sizeof(rfp->fp_sgroups))
 	panic("VFS: pm_setgroups: too much data to copy");
-  if (sys_datacopy(who_e, (vir_bytes) groups, SELF, (vir_bytes) rfp->fp_sgroups,
+  if (sys_datacopy_wrapper(who_e, (vir_bytes) groups, SELF, (vir_bytes) rfp->fp_sgroups,
 		   ngroups * sizeof(gid_t)) == OK) {
 	rfp->fp_ngroups = ngroups;
   } else
@@ -775,7 +775,7 @@ int do_svrctl(void)
 		int r, s;
 
 		/* Copy sysgetenv structure to VFS */
-		if (sys_datacopy(who_e, ptr, SELF, (vir_bytes) &sysgetenv,
+		if (sys_datacopy_wrapper(who_e, ptr, SELF, (vir_bytes) &sysgetenv,
 				 sizeof(sysgetenv)) != OK)
 			return(EFAULT);
 
@@ -790,7 +790,7 @@ int do_svrctl(void)
 		}
 
 		/* Copy parameter "key" */
-		if ((s = sys_datacopy(who_e, (vir_bytes) sysgetenv.key,
+		if ((s = sys_datacopy_wrapper(who_e, (vir_bytes) sysgetenv.key,
 				      SELF, (vir_bytes) search_key,
 				      sysgetenv.keylen)) != OK)
 			return(s);
@@ -800,7 +800,7 @@ int do_svrctl(void)
 		if (svrctl == VFSSETPARAM) {
 			if (!strcmp(search_key, "verbose")) {
 				int verbose_val;
-				if ((s = sys_datacopy(who_e,
+				if ((s = sys_datacopy_wrapper(who_e,
 				    (vir_bytes) sysgetenv.val, SELF,
 				    (vir_bytes) &val, sysgetenv.vallen)) != OK)
 					return(s);
@@ -832,12 +832,12 @@ int do_svrctl(void)
 			}
 
 			if (r == OK) {
-				if ((s = sys_datacopy(SELF,
+				if ((s = sys_datacopy_wrapper(SELF,
 				    (vir_bytes) &sysgetenv, who_e, ptr,
 				    sizeof(sysgetenv))) != OK)
 					return(s);
 				if (sysgetenv.val != 0) {
-					if ((s = sys_datacopy(SELF,
+					if ((s = sys_datacopy_wrapper(SELF,
 					    (vir_bytes) small_buf, who_e,
 					    (vir_bytes) sysgetenv.val,
 					    sysgetenv.vallen)) != OK)
@@ -875,7 +875,7 @@ int pm_dumpcore(int csig, vir_bytes exe_name)
   if (core_fd < 0) { r = core_fd; goto core_exit; }
 
   /* get process' name */
-  r = sys_datacopy(PM_PROC_NR, exe_name, VFS_PROC_NR, (vir_bytes) proc_name,
+  r = sys_datacopy_wrapper(PM_PROC_NR, exe_name, VFS_PROC_NR, (vir_bytes) proc_name,
 			PROC_NAME_LEN);
   if (r != OK) goto core_exit;
   proc_name[PROC_NAME_LEN - 1] = '\0';
@@ -943,7 +943,7 @@ int do_getrusage(void)
 	int res;
 	struct rusage r_usage;
 
-	if ((res = sys_datacopy(who_e, (vir_bytes) m_in.RU_RUSAGE_ADDR, SELF,
+	if ((res = sys_datacopy_wrapper(who_e, (vir_bytes) m_in.RU_RUSAGE_ADDR, SELF,
 		(vir_bytes) &r_usage, (vir_bytes) sizeof(r_usage))) < 0)
 		return res;
 
@@ -953,6 +953,6 @@ int do_getrusage(void)
 	r_usage.ru_idrss = fp->data_size;
 	r_usage.ru_isrss = DEFAULT_STACK_LIMIT;
 
-	return sys_datacopy(SELF, (vir_bytes) &r_usage, who_e,
+	return sys_datacopy_wrapper(SELF, (vir_bytes) &r_usage, who_e,
 		(vir_bytes) m_in.RU_RUSAGE_ADDR, (phys_bytes) sizeof(r_usage));
 }

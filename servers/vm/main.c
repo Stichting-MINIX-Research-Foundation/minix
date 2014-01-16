@@ -15,6 +15,7 @@
 #include <minix/const.h>
 #include <minix/bitmap.h>
 #include <minix/rs.h>
+#include <minix/vfsif.h>
 
 #include <sys/exec.h>
 
@@ -90,7 +91,8 @@ int main(void)
   /* This is VM's main loop. */
   while (TRUE) {
 	int r, c;
-	int type, param;
+	int type;
+	int transid = 0;	/* VFS transid if any */
 
 	SANITYCHECK(SCL_TOP);
 	if(missing_spares > 0) {
@@ -109,13 +111,22 @@ int main(void)
 	if(vm_isokendpt(who_e, &caller_slot) != OK)
 		panic("invalid caller %d", who_e);
 
-	type = param = msg.m_type;
-	type &= 0x0000FFFF;
-	param >>= 16;
+	/* We depend on this being false for the initialized value. */
+	assert(!IS_VFS_FS_TRANSID(transid));
+
+	type = msg.m_type;
 	c = CALLNUMBER(type);
 	result = ENOSYS; /* Out of range or restricted calls return this. */
-	
-	if(msg.m_type == RS_INIT && msg.m_source == RS_PROC_NR) {
+
+	transid = TRNS_GET_ID(msg.m_type);
+
+	if((msg.m_source == VFS_PROC_NR) && IS_VFS_FS_TRANSID(transid)) {
+		/* If it's a request from VFS, it might have a transaction id. */
+		msg.m_type = TRNS_DEL_ID(msg.m_type);
+
+		/* Calls that use the transid */
+		result = do_procctl(&msg, transid);
+	} else if(msg.m_type == RS_INIT && msg.m_source == RS_PROC_NR) {
 		result = do_rs_init(&msg);
 	} else if (msg.m_type == VM_PAGEFAULT) {
 		if (!IPC_STATUS_FLAGS_TEST(rcv_sts, IPC_FLG_MSG_FROM_KERNEL)) {
@@ -147,6 +158,9 @@ int main(void)
 	 */
 	if(result != SUSPEND) {
 		msg.m_type = result;
+
+		assert(!IS_VFS_FS_TRANSID(transid));
+
 		if((r=ipc_send(who_e, &msg)) != OK) {
 			printf("VM: couldn't send %d to %d (err %d)\n",
 				msg.m_type, who_e, r);
@@ -223,7 +237,7 @@ static int libexec_copy_physcopy(struct exec_info *execi,
 	end = ei->ip->start_addr + ei->ip->len;
 	assert(ei->ip->start_addr + off + len <= end);
 	return sys_physcopy(NONE, ei->ip->start_addr + off,
-		execi->proc_e, vaddr, len);
+		execi->proc_e, vaddr, len, 0);
 }
 
 static void boot_alloc(struct exec_info *execi, off_t vaddr,
@@ -279,7 +293,7 @@ static void exec_bootproc(struct vmproc *vmp, struct boot_image *ip)
 		panic("VM: pt_bind failed");
 
 	if(sys_physcopy(NONE, ip->start_addr, SELF,
-		(vir_bytes) hdr, sizeof(hdr)) != OK)
+		(vir_bytes) hdr, sizeof(hdr), 0) != OK)
 		panic("can't look at boot proc header");
 
 	execi->stack_high = kernel_boot_info.user_sp;
@@ -320,7 +334,7 @@ static void exec_bootproc(struct vmproc *vmp, struct boot_image *ip)
 	minix_stack_fill(path, argc, argv, envc, envp, frame_size, frame, &vsp,
 		&psp);
 
-	if(handle_memory(vmp, vsp, frame_size, 1, NULL, NULL, 0) != OK)
+	if(handle_memory_once(vmp, vsp, frame_size, 1) != OK)
 		panic("vm: could not map stack for boot process %s (ep=%d)\n",
 			execi->progname, vmp->vm_endpoint);
 
@@ -336,6 +350,15 @@ static void exec_bootproc(struct vmproc *vmp, struct boot_image *ip)
 	/* make it runnable */
 	if(sys_vmctl(vmp->vm_endpoint, VMCTL_BOOTINHIBIT_CLEAR, 0) != OK)
 		panic("VMCTL_BOOTINHIBIT_CLEAR failed");
+}
+
+static int do_procctl_notrans(message *msg)
+{
+	int transid = 0;
+
+	assert(!IS_VFS_FS_TRANSID(transid));
+
+	return do_procctl(msg, transid);
 }
 
 void init_vm(void)
@@ -459,6 +482,8 @@ void init_vm(void)
 	CALLMAP(VM_WILLEXIT, do_willexit);
 	CALLMAP(VM_NOTIFY_SIG, do_notify_sig);
 
+	CALLMAP(VM_PROCCTL, do_procctl_notrans);
+
 	/* Calls from VFS. */
 	CALLMAP(VM_VFS_REPLY, do_vfs_reply);
 	CALLMAP(VM_VFS_MMAP, do_vfs_mmap);
@@ -467,9 +492,6 @@ void init_vm(void)
 	CALLMAP(VM_RS_SET_PRIV, do_rs_set_priv);
 	CALLMAP(VM_RS_UPDATE, do_rs_update);
 	CALLMAP(VM_RS_MEMCTL, do_rs_memctl);
-
-	/* Calls from RS/VFS */
-	CALLMAP(VM_PROCCTL, do_procctl);
 
 	/* Generic calls. */
 	CALLMAP(VM_REMAP, do_remap);

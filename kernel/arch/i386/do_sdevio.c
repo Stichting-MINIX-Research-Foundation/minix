@@ -72,7 +72,7 @@ int do_sdevio(struct proc * caller, message *m_ptr)
 	count,
 	req_dir == _DIO_INPUT ? CPF_WRITE : CPF_READ,
 	(vir_bytes) m_ptr->DIO_OFFSET, 
-	&newoffset, &newep) != OK) {
+	&newoffset, &newep, NULL) != OK) {
 	printf("do_sdevio: verify_grant failed\n");
 	return EPERM;
     }

@@ -284,7 +284,8 @@ static int fill_statvfs(struct vmnt *vmp, endpoint_t endpt, vir_bytes buf_addr,
   strlcpy(buf.f_mntonname, vmp->m_mount_path, sizeof(buf.f_mntonname));
   strlcpy(buf.f_mntfromname, vmp->m_mount_dev, sizeof(buf.f_mntfromname));
 
-  return sys_datacopy(SELF, (vir_bytes) &buf, endpt, buf_addr, sizeof(buf));
+  return sys_datacopy_wrapper(SELF, (vir_bytes) &buf,
+	endpt, buf_addr, sizeof(buf));
 }
 
 /*===========================================================================*

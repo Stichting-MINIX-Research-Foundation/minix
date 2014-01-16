@@ -421,7 +421,8 @@ size_t vm_lookup_range(const struct proc *proc, vir_bytes vir_addr,
  *                              vm_suspend                                *
  *===========================================================================*/
 static void vm_suspend(struct proc *caller, const struct proc *target,
-	const vir_bytes linaddr, const vir_bytes len, const int type)
+	const vir_bytes linaddr, const vir_bytes len, const int type,
+	const int writeflag)
 {
 	/* This range is not OK for this process. Set parameters  
 	 * of the request and notify VM about the pending request. 
@@ -437,7 +438,7 @@ static void vm_suspend(struct proc *caller, const struct proc *target,
 	caller->p_vmrequest.target = target->p_endpoint;
 	caller->p_vmrequest.params.check.start = linaddr;
 	caller->p_vmrequest.params.check.length = len;
-	caller->p_vmrequest.params.check.writeflag = 1;
+	caller->p_vmrequest.params.check.writeflag = writeflag;
 	caller->p_vmrequest.type = type;
 							
 	/* Connect caller on vmrequest wait queue. */	
@@ -451,7 +452,7 @@ static void vm_suspend(struct proc *caller, const struct proc *target,
  *				vm_check_range				     *
  *===========================================================================*/
 int vm_check_range(struct proc *caller, struct proc *target,
-	vir_bytes vir_addr, size_t bytes)
+	vir_bytes vir_addr, size_t bytes, int writeflag)
 {
 	/* Public interface to vm_suspend(), for use by kernel calls. On behalf
 	 * of 'caller', call into VM to check linear virtual address range of
@@ -467,7 +468,8 @@ int vm_check_range(struct proc *caller, struct proc *target,
 			(r = caller->p_vmrequest.vmresult) != OK)
 		return r;
 
-	vm_suspend(caller, target, vir_addr, bytes, VMSTYPE_KERNELCALL);
+	vm_suspend(caller, target, vir_addr, bytes, VMSTYPE_KERNELCALL,
+		writeflag);
 
 	return VMSUSPEND;
 }
@@ -619,7 +621,7 @@ int vm_memset(struct proc* caller, endpoint_t who, phys_bytes ph, int c,
 			/* If a process pagefaults, VM may help out */
 			if (whoptr) {
 				vm_suspend(caller, whoptr, ph, count,
-						   VMSTYPE_KERNELCALL);
+						   VMSTYPE_KERNELCALL, 1);
 				assert(catch_pagefaults);
 				catch_pagefaults = 0;
 				return VMSUSPEND;
@@ -688,6 +690,7 @@ int vmcheck;			/* if nonzero, can return VMSUSPEND */
 
   if((r=lin_lin_copy(procs[_SRC_], vir_addr[_SRC_]->offset,
   	procs[_DST_], vir_addr[_DST_]->offset, bytes)) != OK) {
+	int writeflag;
   	struct proc *target = NULL;
   	phys_bytes lin;
   	if(r != EFAULT_SRC && r != EFAULT_DST)
@@ -699,9 +702,11 @@ int vmcheck;			/* if nonzero, can return VMSUSPEND */
   	if(r == EFAULT_SRC) {
   		lin = vir_addr[_SRC_]->offset;
   		target = procs[_SRC_];
+		writeflag = 0;
   	} else if(r == EFAULT_DST) {
   		lin = vir_addr[_DST_]->offset;
   		target = procs[_DST_];
+		writeflag = 1;
   	} else {
   		panic("r strange: %d",  r);
   	}
@@ -709,7 +714,7 @@ int vmcheck;			/* if nonzero, can return VMSUSPEND */
 	assert(caller);
 	assert(target);
 
-	vm_suspend(caller, target, lin, bytes, VMSTYPE_KERNELCALL);
+	vm_suspend(caller, target, lin, bytes, VMSTYPE_KERNELCALL, writeflag);
 	return VMSUSPEND;
   }
 

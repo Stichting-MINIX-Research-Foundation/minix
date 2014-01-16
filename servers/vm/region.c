@@ -165,7 +165,7 @@ static int map_sanitycheck_pt(struct vmproc *vmp,
 /*===========================================================================*
  *				map_sanitycheck			     *
  *===========================================================================*/
-void map_sanitycheck(char *file, int line)
+void map_sanitycheck(const char *file, int line)
 {
 	struct vmproc *vmp;
 
@@ -723,7 +723,9 @@ int map_pf(struct vmproc *vmp,
 		}
 
 		if(r != OK) {
+#if 0
 			printf("map_pf: pagefault in %s failed\n", ph->memtype->name);
+#endif
 			if(ph)
 				pb_unreferenced(region, ph, 1);
 			return r;
@@ -812,7 +814,7 @@ struct vir_region *map_copy_region(struct vmproc *vmp, struct vir_region *vr)
 	struct phys_region *ph;
 	int r;
 #if SANITYCHECKS
-	int cr;
+	unsigned int cr;
 	cr = physregions(vr);
 #endif
 	vir_bytes p;

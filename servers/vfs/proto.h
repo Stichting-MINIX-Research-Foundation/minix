@@ -24,8 +24,10 @@ struct job;
 int drv_sendrec(endpoint_t drv_e, message *reqm);
 void fs_cancel(struct vmnt *vmp);
 int fs_sendrec(endpoint_t fs_e, message *reqm);
+int vm_sendrec(message *reqm);
 void fs_sendmore(struct vmnt *vmp);
 void send_work(void);
+int vm_vfs_procctl_handlemem(endpoint_t ep, vir_bytes mem, vir_bytes len, int flags);
 
 /* device.c */
 int cdev_open(dev_t dev, int flags);
@@ -277,6 +279,8 @@ int copy_path(char *dest, size_t size);
 int fetch_name(vir_bytes path, size_t len, char *dest);
 int isokendpt_f(const char *f, int l, endpoint_t e, int *p, int ft);
 int in_group(struct fproc *rfp, gid_t grp);
+int sys_datacopy_wrapper(endpoint_t src, vir_bytes srcv, endpoint_t dst, vir_bytes dstv,
+	size_t len);
 
 #define okendpt(e, p) isokendpt_f(__FILE__, __LINE__, (e), (p), 1)
 #define isokendpt(e, p) isokendpt_f(__FILE__, __LINE__, (e), (p), 0)

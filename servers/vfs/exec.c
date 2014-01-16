@@ -228,7 +228,7 @@ int pm_exec(vir_bytes path, size_t path_len, vir_bytes frame, size_t frame_len,
   if (frame_len > ARG_MAX)
 	FAILCHECK(ENOMEM); /* stack too big */
 
-  r = sys_datacopy(fp->fp_endpoint, (vir_bytes) frame, SELF, (vir_bytes) mbuf,
+  r = sys_datacopy_wrapper(fp->fp_endpoint, (vir_bytes) frame, SELF, (vir_bytes) mbuf,
 		   (size_t) frame_len);
   if (r != OK) { /* can't fetch stack (e.g. bad virtual addr) */
         printf("VFS: pm_exec: sys_datacopy failed\n");
@@ -362,7 +362,7 @@ int pm_exec(vir_bytes path, size_t path_len, vir_bytes frame, size_t frame_len,
   if(makestack) FAILCHECK(makestack(&execi, mbuf, &frame_len, &vsp));
 
   /* Copy the stack from VFS to new core image. */
-  FAILCHECK(sys_datacopy(SELF, (vir_bytes) mbuf, fp->fp_endpoint,
+  FAILCHECK(sys_datacopy_wrapper(SELF, (vir_bytes) mbuf, fp->fp_endpoint,
 	(vir_bytes) vsp, (phys_bytes)frame_len));
 
   /* Return new stack pointer to caller */

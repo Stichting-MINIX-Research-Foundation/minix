@@ -138,7 +138,7 @@ void hook_ipc_clear(struct proc *proc);
 
 /* system/do_safecopy.c */
 int verify_grant(endpoint_t, endpoint_t, cp_grant_id_t, vir_bytes, int,
-	vir_bytes, vir_bytes *, endpoint_t *);
+	vir_bytes, vir_bytes *, endpoint_t *, u32_t *);
 
 /* system/do_diagctl.c */
 int do_diagctl(struct proc * caller, message *m);
@@ -211,7 +211,7 @@ int arch_phys_map_reply(int index, vir_bytes addr);
 reg_t arch_get_sp(struct proc *p);
 int arch_enable_paging(struct proc * caller);
 int vm_check_range(struct proc *caller,
-       struct proc *target, vir_bytes vir_addr, size_t bytes);
+       struct proc *target, vir_bytes vir_addr, size_t bytes, int writable);
 
 int copy_msg_from_user(message * user_mbuf, message * dst);
 int copy_msg_to_user(message * src, message * user_mbuf);

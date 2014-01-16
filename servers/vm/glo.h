@@ -25,7 +25,7 @@ EXTERN kinfo_t kernel_boot_info;
 EXTERN int nocheck;
 EXTERN int incheck;
 EXTERN int sc_lastline;
-EXTERN char *sc_lastfile;
+EXTERN const char *sc_lastfile;
 #endif
 
 extern struct minix_kerninfo *_minix_kerninfo;

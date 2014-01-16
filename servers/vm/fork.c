@@ -101,10 +101,10 @@ int do_fork(message *msg)
 	 * and its return value needn't be checked.
 	 */
 	vir = msgaddr;
-	if (handle_memory(vmc, vir, sizeof(message), 1, NULL, 0, 0) != OK)
+	if (handle_memory_once(vmc, vir, sizeof(message), 1) != OK)
 	    panic("do_fork: handle_memory for child failed\n");
 	vir = msgaddr;
-	if (handle_memory(vmp, vir, sizeof(message), 1, NULL, 0, 0) != OK)
+	if (handle_memory_once(vmp, vir, sizeof(message), 1) != OK)
 	    panic("do_fork: handle_memory for parent failed\n");
   }
 

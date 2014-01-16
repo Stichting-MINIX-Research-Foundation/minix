@@ -47,7 +47,7 @@ void check_vnode_locks_by_me(struct fproc *rfp)
 
   for (vp = &vnode[0]; vp < &vnode[NR_VNODES]; vp++) {
 	if (tll_locked_by_me(&vp->v_lock)) {
-		panic("Thread %d still holds vnode lock on vp %x call_nr=%d\n",
+		panic("Thread %d still holds vnode lock on vp %p call_nr=%d\n",
 		      mthread_self(), vp, job_call_nr);
 	}
   }

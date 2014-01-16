@@ -20,7 +20,7 @@ static int mappedfile_unreference(struct phys_region *pr);
 static int mappedfile_pagefault(struct vmproc *vmp, struct vir_region *region, 
        struct phys_region *ph, int write, vfs_callback_t callback, void *state,
        int len, int *io);
-static int mappedfile_sanitycheck(struct phys_region *pr, char *file, int line);
+static int mappedfile_sanitycheck(struct phys_region *pr, const char *file, int line);
 static int mappedfile_writable(struct phys_region *pr);
 static int mappedfile_copy(struct vir_region *vr, struct vir_region *newvr);
 static int mappedfile_lowshrink(struct vir_region *vr, vir_bytes len);
@@ -124,7 +124,9 @@ static int mappedfile_pagefault(struct vmproc *vmp, struct vir_region *region,
 		}
 
 		if(!cb) {
+#if 0
 			printf("VM: mem_file: no callback, returning EFAULT\n");
+#endif
 			sys_diagctl_stacktrace(vmp->vm_endpoint);
 			return EFAULT;
 		}
@@ -139,14 +141,16 @@ static int mappedfile_pagefault(struct vmproc *vmp, struct vir_region *region,
 	}
 
 	if(!write) {
+#if 0
 		printf("mappedfile_pagefault: nonwrite fault?\n");
-		return EFAULT;
+#endif
+		return OK;
 	}
 
 	return cow_block(vmp, region, ph, 0);
 }
 
-static int mappedfile_sanitycheck(struct phys_region *pr, char *file, int line)
+static int mappedfile_sanitycheck(struct phys_region *pr, const char *file, int line)
 {
 	MYASSERT(usedpages_add(pr->ph->phys, VM_PAGE_SIZE) == OK);
 	return OK;

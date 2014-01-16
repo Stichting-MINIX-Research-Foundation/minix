@@ -17,7 +17,7 @@ static int shared_unreference(struct phys_region *pr);
 static int shared_pagefault(struct vmproc *vmp, struct vir_region *region, 
 	struct phys_region *ph, int write, vfs_callback_t cb, void *state,
 	int len, int *io);
-static int shared_sanitycheck(struct phys_region *pr, char *file, int line);
+static int shared_sanitycheck(struct phys_region *pr, const char *file, int line);
 static int shared_writable(struct phys_region *pr);
 static void shared_delete(struct vir_region *region);
 static u32_t shared_regionid(struct vir_region *region);
@@ -149,7 +149,7 @@ static int shared_pagefault(struct vmproc *vmp, struct vir_region *region,
 	return OK;
 }
 
-static int shared_sanitycheck(struct phys_region *pr, char *file, int line)
+static int shared_sanitycheck(struct phys_region *pr, const char *file, int line)
 {
 	return OK;
 }

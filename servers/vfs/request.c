@@ -25,26 +25,18 @@
 
 
 /*===========================================================================*
- *			req_breadwrite					     *
+ *			req_breadwrite_actual				     *
  *===========================================================================*/
-int req_breadwrite(
-  endpoint_t fs_e,
-  endpoint_t user_e,
-  dev_t dev,
-  off_t pos,
-  unsigned int num_of_bytes,
-  vir_bytes user_addr,
-  int rw_flag,
-  off_t *new_pos,
-  unsigned int *cum_iop
-)
+static int req_breadwrite_actual(endpoint_t fs_e, endpoint_t user_e, dev_t dev, off_t pos,
+        unsigned int num_of_bytes, vir_bytes user_addr, int rw_flag,
+        off_t *new_pos, unsigned int *cum_iop, int cpflag)
 {
   int r;
   cp_grant_id_t grant_id;
   message m;
 
   grant_id = cpf_grant_magic(fs_e, user_e, user_addr, num_of_bytes,
-			(rw_flag == READING ? CPF_WRITE : CPF_READ));
+			(rw_flag == READING ? CPF_WRITE : CPF_READ) | cpflag);
   if(grant_id == -1)
 	  panic("req_breadwrite: cpf_grant_magic failed");
 
@@ -65,6 +57,28 @@ int req_breadwrite(
   *cum_iop = m.RES_NBYTES;
 
   return(OK);
+}
+
+int req_breadwrite(endpoint_t fs_e, endpoint_t user_e, dev_t dev, off_t pos,
+        unsigned int num_of_bytes, vir_bytes user_addr, int rw_flag,
+        off_t *new_pos, unsigned int *cum_iop)
+{
+	int r;
+
+	r = req_breadwrite_actual(fs_e, user_e, dev, pos, num_of_bytes,
+		user_addr, rw_flag, new_pos, cum_iop, CPF_TRY);
+
+	if(r == EFAULT) {
+		if((r=vm_vfs_procctl_handlemem(user_e, user_addr, num_of_bytes,
+			rw_flag == READING)) != OK) {
+			return r;
+		}
+
+		r = req_breadwrite_actual(fs_e, user_e, dev, pos, num_of_bytes,
+			user_addr, rw_flag, new_pos, cum_iop, 0);
+	}
+
+	return r;
 }
 
 /*===========================================================================*
@@ -267,16 +281,17 @@ int req_ftrunc(endpoint_t fs_e, ino_t inode_nr, off_t start, off_t end)
 
 
 /*===========================================================================*
- *				req_getdents	     			     *
+ *				req_getdents_actual    			     *
  *===========================================================================*/
-int req_getdents(
+static int req_getdents_actual(
   endpoint_t fs_e,
   ino_t inode_nr,
   off_t pos,
   char *buf,
   size_t size,
   off_t *new_pos,
-  int direct
+  int direct,
+  int cpflag
 )
 {
   int r;
@@ -291,7 +306,7 @@ int req_getdents(
 	grant_id = cpf_grant_direct(fs_e, (vir_bytes) buf, size, CPF_WRITE);
   } else {
 	grant_id = cpf_grant_magic(fs_e, who_e, (vir_bytes) buf, size,
-				   CPF_WRITE);
+				   CPF_WRITE | cpflag);
   }
 
   if (grant_id < 0)
@@ -317,6 +332,36 @@ int req_getdents(
   }
 
   return(r);
+}
+
+/*===========================================================================*
+ *				req_getdents	     			     *
+ *===========================================================================*/
+int req_getdents(
+  endpoint_t fs_e,
+  ino_t inode_nr,
+  off_t pos,
+  char *buf,
+  size_t size,
+  off_t *new_pos,
+  int direct)
+{
+	int r;
+
+	r = req_getdents_actual(fs_e, inode_nr, pos, buf, size, new_pos,
+		direct, CPF_TRY);
+
+	if(r == EFAULT && !direct) {
+		if((r=vm_vfs_procctl_handlemem(who_e, (vir_bytes) buf,
+			size, 1)) != OK) {
+			return r;
+		}
+
+		r = req_getdents_actual(fs_e, inode_nr, pos, buf, size,
+			new_pos, direct, 0);
+	}
+
+	return r;
 }
 
 /*===========================================================================*
@@ -665,15 +710,12 @@ int count;
 
 
 /*===========================================================================*
- *				req_rdlink	     			     *
+ *				req_rdlink_actual     			     *
  *===========================================================================*/
-int req_rdlink(fs_e, inode_nr, proc_e, buf, len, direct)
-endpoint_t fs_e;
-ino_t inode_nr;
-endpoint_t proc_e;
-vir_bytes buf;
-size_t len;
-int direct; /* set to 1 to use direct grants instead of magic grants */
+static int req_rdlink_actual(endpoint_t fs_e, ino_t inode_nr,
+	endpoint_t proc_e, vir_bytes buf, size_t len,
+	int direct, /* set to 1 to use direct grants instead of magic grants */
+	int cpflag)
 {
   message m;
   int r;
@@ -682,7 +724,7 @@ int direct; /* set to 1 to use direct grants instead of magic grants */
   if (direct) {
 	grant_id = cpf_grant_direct(fs_e, buf, len, CPF_WRITE);
   } else {
-	grant_id = cpf_grant_magic(fs_e, proc_e, buf, len, CPF_WRITE);
+	grant_id = cpf_grant_magic(fs_e, proc_e, buf, len, CPF_WRITE | cpflag);
   }
   if (grant_id == -1)
 	  panic("req_rdlink: cpf_grant_magic failed");
@@ -702,6 +744,30 @@ int direct; /* set to 1 to use direct grants instead of magic grants */
   return(r);
 }
 
+/*===========================================================================*
+ *				req_rdlink	     			     *
+ *===========================================================================*/
+int req_rdlink(endpoint_t fs_e, ino_t inode_nr, endpoint_t proc_e,
+	vir_bytes buf, size_t len,
+	int direct /* set to 1 to use direct grants instead of magic grants */
+)
+{
+	int r;
+
+	r = req_rdlink_actual(fs_e, inode_nr, proc_e, buf, len, direct,
+		CPF_TRY);
+
+	if(r == EFAULT && !direct) {
+		if((r=vm_vfs_procctl_handlemem(proc_e, buf, len, 1)) != OK) {
+			return r;
+		}
+
+		r = req_rdlink_actual(fs_e, inode_nr, proc_e, buf, len,
+			direct, 0);
+	}
+
+	return r;
+}
 
 /*===========================================================================*
  *				req_readsuper	                  	     *
@@ -758,18 +824,12 @@ int req_readsuper(
 
 
 /*===========================================================================*
- *				req_readwrite				     *
+ *				req_readwrite_actual			     *
  *===========================================================================*/
-int req_readwrite(
-endpoint_t fs_e,
-ino_t inode_nr,
-off_t pos,
-int rw_flag,
-endpoint_t user_e,
-vir_bytes user_addr,
-unsigned int num_of_bytes,
-off_t *new_posp,
-unsigned int *cum_iop)
+static int req_readwrite_actual(endpoint_t fs_e, ino_t inode_nr, off_t pos,
+	int rw_flag, endpoint_t user_e, vir_bytes user_addr,
+	unsigned int num_of_bytes, off_t *new_posp, unsigned int *cum_iop,
+	int cpflag)
 {
   struct vmnt *vmp;
   int r;
@@ -779,7 +839,7 @@ unsigned int *cum_iop)
   vmp = find_vmnt(fs_e);
 
   grant_id = cpf_grant_magic(fs_e, user_e, user_addr, num_of_bytes,
-			     (rw_flag==READING ? CPF_WRITE:CPF_READ));
+			     (rw_flag==READING ? CPF_WRITE:CPF_READ) | cpflag);
   if (grant_id == -1)
 	  panic("req_readwrite: cpf_grant_magic failed");
 
@@ -804,6 +864,31 @@ unsigned int *cum_iop)
   }
 
   return(r);
+}
+
+/*===========================================================================*
+ *				req_readwrite				     *
+ *===========================================================================*/
+int req_readwrite(endpoint_t fs_e, ino_t inode_nr, off_t pos,
+	int rw_flag, endpoint_t user_e, vir_bytes user_addr,
+	unsigned int num_of_bytes, off_t *new_posp, unsigned int *cum_iop)
+{
+	int r;
+
+	r = req_readwrite_actual(fs_e, inode_nr, pos, rw_flag, user_e,
+		user_addr, num_of_bytes, new_posp, cum_iop, CPF_TRY);
+
+	if(r == EFAULT) {
+		if((r=vm_vfs_procctl_handlemem(user_e, (vir_bytes) user_addr, num_of_bytes,
+			rw_flag == READING)) != OK) {
+			return r;
+		}
+
+		r = req_readwrite_actual(fs_e, inode_nr, pos, rw_flag, user_e,
+			user_addr, num_of_bytes, new_posp, cum_iop, 0);
+	}
+
+	return r;
 }
 
 /*===========================================================================*
@@ -905,9 +990,9 @@ char *lastc;
 
 
 /*===========================================================================*
- *				req_slink	      			     *
+ *				req_slink_actual      			     *
  *===========================================================================*/
-int req_slink(
+static int req_slink_actual(
   endpoint_t fs_e,
   ino_t inode_nr,
   char *lastc,
@@ -915,7 +1000,8 @@ int req_slink(
   vir_bytes path_addr,
   size_t path_length,
   uid_t uid,
-  gid_t gid
+  gid_t gid,
+  int cpflag
 )
 {
   int r;
@@ -928,7 +1014,9 @@ int req_slink(
   if (gid_name == GRANT_INVALID)
 	  panic("req_slink: cpf_grant_direct failed");
 
-  gid_buf = cpf_grant_magic(fs_e, proc_e, path_addr, path_length, CPF_READ);
+  gid_buf = cpf_grant_magic(fs_e, proc_e, path_addr, path_length,
+	CPF_READ | cpflag);
+
   if (gid_buf == GRANT_INVALID) {
 	  cpf_revoke(gid_name);
 	  panic("req_slink: cpf_grant_magic failed");
@@ -952,18 +1040,51 @@ int req_slink(
   return(r);
 }
 
+/*===========================================================================*
+ *				req_slink	      			     *
+ *===========================================================================*/
+int req_slink(
+  endpoint_t fs_e,
+  ino_t inode_nr,
+  char *lastc,
+  endpoint_t proc_e,
+  vir_bytes path_addr,
+  size_t path_length,
+  uid_t uid,
+  gid_t gid
+)
+{
+	int r;
+
+	r = req_slink_actual(fs_e, inode_nr, lastc, proc_e, path_addr,
+		path_length, uid, gid, CPF_TRY);
+
+	if(r == EFAULT) {
+		if((r=vm_vfs_procctl_handlemem(proc_e, (vir_bytes) path_addr,
+			path_length, 0)) != OK) {
+			return r;
+		}
+
+		r = req_slink_actual(fs_e, inode_nr, lastc, proc_e, path_addr,
+			path_length, uid, gid, 0);
+	}
+
+	return r;
+}
 
 /*===========================================================================*
- *				req_stat	       			     *
+ *				req_stat_actual	       			     *
  *===========================================================================*/
-int req_stat(endpoint_t fs_e, ino_t inode_nr, endpoint_t proc_e, vir_bytes buf)
+int req_stat_actual(endpoint_t fs_e, ino_t inode_nr, endpoint_t proc_e,
+	vir_bytes buf, int cpflag)
 {
   cp_grant_id_t grant_id;
   int r;
   message m;
 
   /* Grant FS access to copy straight into user provided buffer */
-  grant_id = cpf_grant_magic(fs_e, proc_e, buf, sizeof(struct stat), CPF_WRITE);
+  grant_id = cpf_grant_magic(fs_e, proc_e, buf, sizeof(struct stat),
+	CPF_WRITE | cpflag);
 
   if (grant_id < 0)
 	panic("req_stat: cpf_grant_* failed");
@@ -980,6 +1101,28 @@ int req_stat(endpoint_t fs_e, ino_t inode_nr, endpoint_t proc_e, vir_bytes buf)
   return(r);
 }
 
+
+/*===========================================================================*
+ *				req_stat	       			     *
+ *===========================================================================*/
+int req_stat(endpoint_t fs_e, ino_t inode_nr, endpoint_t proc_e,
+	vir_bytes buf)
+{
+	int r;
+
+	r = req_stat_actual(fs_e, inode_nr, proc_e, buf, CPF_TRY);
+
+	if(r == EFAULT) {
+		if((r=vm_vfs_procctl_handlemem(proc_e, (vir_bytes) buf,
+			sizeof(struct stat), 1)) != OK) {
+			return r;
+		}
+
+		r = req_stat_actual(fs_e, inode_nr, proc_e, buf, 0);
+	}
+
+	return r;
+}
 
 /*===========================================================================*
  *				req_sync	       			     *

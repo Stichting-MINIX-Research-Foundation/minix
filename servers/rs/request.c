@@ -913,7 +913,7 @@ message *m_ptr;
 		return EINVAL;
 	}
 
-	if((r=sys_vircopy(m_ptr->m_source, (vir_bytes) m_ptr->RS_NAME,
+	if((r=sys_datacopy(m_ptr->m_source, (vir_bytes) m_ptr->RS_NAME,
 		SELF, (vir_bytes) namebuf, len)) != OK) {
 		printf("RS: name copy failed\n");
 		return r;

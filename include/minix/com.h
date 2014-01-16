@@ -356,12 +356,11 @@
 #define CP_DST_ENDPT	m5_i2	/* process to copy to */
 #define CP_DST_ADDR	m5_l2	/* address where data go to */
 #define CP_NR_BYTES	m5_l3	/* number of bytes to copy */
+#define CP_FLAGS	m5_s2	/* number of bytes to copy */
+
+#define CP_FLAG_TRY	0x01	/* do not transparently map */
 
 #define UMAP_SEG 	m5_s1
-
-/* only used for backwards compatability */
-#define CP_SRC_SPACE_OBSOLETE 	m5_s1	/* T or D space (stack is also D) */
-#define CP_DST_SPACE_OBSOLETE	m5_s2	/* T or D space (stack is also D) */
 
 /* Field names for SYS_VUMAP. */
 #define VUMAP_ENDPT	m10_i1	/* grant owner, or SELF for local addresses */
@@ -476,7 +475,6 @@
 
 /* Field names for SYS_SAFECOPY* */
 #define SCP_FROM_TO	m2_i1	/* from/to whom? */
-#define SCP_SEG_OBSOLETE m2_i2	/* my own segment */
 #define SCP_GID		m2_i3	/* grant id */
 #define SCP_OFFSET	m2_l1	/* offset within grant */
 #define SCP_ADDRESS	m2_p1	/* my own address */
@@ -492,8 +490,6 @@
 /* Field names for SYS_VSAFECOPY* */
 #define VSCP_VEC_ADDR	m2_p1	/* start of vector */
 #define VSCP_VEC_SIZE	m2_l2	/* elements in vector */
-
-#define SMAP_SEG_OBSOLETE	m2_p1
 
 /* Field names for SYS_SPROF, _CPROF, _PROFBUF. */
 #define PROF_ACTION    m7_i1    /* start/stop/reset/get */
@@ -936,10 +932,14 @@
 /* same args as VM_REMAP */
 
 #define VM_PROCCTL		(VM_RQ_BASE+45)
-#define VMPCTL_PARAM		m1_i1
-#define VMPCTL_WHO		m1_i2
+#define VMPCTL_PARAM		m9_l1
+#define VMPCTL_WHO		m9_l2
+#define VMPCTL_M1		m9_l3
+#define VMPCTL_LEN		m9_l4
+#define VMPCTL_FLAGS		m9_l5
 
 #define VMPPARAM_CLEAR		1	/* values for VMPCTL_PARAM */
+#define VMPPARAM_HANDLEMEM	2
 
 #define VM_VFS_MMAP             (VM_RQ_BASE+46)
 

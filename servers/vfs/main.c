@@ -35,7 +35,7 @@ EXTERN unsigned long calls_stats[NR_VFS_CALLS];
 #endif
 
 /* Thread related prototypes */
-static void do_fs_reply(struct worker_thread *wp);
+static void do_reply(struct worker_thread *wp);
 static void do_work(void);
 static void do_init_root(void);
 static void handle_work(void (*func)(void));
@@ -86,7 +86,7 @@ int main(void)
 			continue;
 		}
 		m_in.m_type = TRNS_DEL_ID(m_in.m_type);
-		do_fs_reply(wp);
+		do_reply(wp);
 		continue;
 	} else if (who_e == PM_PROC_NR) { /* Calls from PM */
 		/* Special control messages from PM */
@@ -179,22 +179,22 @@ static void handle_work(void (*func)(void))
 
 
 /*===========================================================================*
- *			       do_fs_reply				     *
+ *			       do_reply				             *
  *===========================================================================*/
-static void do_fs_reply(struct worker_thread *wp)
+static void do_reply(struct worker_thread *wp)
 {
-  struct vmnt *vmp;
+  struct vmnt *vmp = NULL;
 
-  if ((vmp = find_vmnt(who_e)) == NULL)
+  if(who_e != VM_PROC_NR && (vmp = find_vmnt(who_e)) == NULL)
 	panic("Couldn't find vmnt for endpoint %d", who_e);
 
   if (wp->w_task != who_e) {
-	printf("VFS: expected %d to reply, not %d\n", wp->w_task, who_e);
-	return;
+	printf("VFS: tid %d: expected %d to reply, not %d\n",
+		wp->w_tid, wp->w_task, who_e);
   }
-  *wp->w_fs_sendrec = m_in;
+  *wp->w_sendrec = m_in;
   wp->w_task = NONE;
-  vmp->m_comm.c_cur_reqs--; /* We've got our reply, make room for others */
+  if(vmp) vmp->m_comm.c_cur_reqs--; /* We've got our reply, make room for others */
   worker_signal(wp); /* Continue this thread */
 }
 

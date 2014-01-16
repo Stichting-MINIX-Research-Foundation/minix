@@ -13,7 +13,7 @@ static int anon_contig_unreference(struct phys_region *pr);
 static int anon_contig_pagefault(struct vmproc *vmp, struct vir_region *region, 
 	struct phys_region *ph, int write, vfs_callback_t cb, void *state,
 	int len, int *io);
-static int anon_contig_sanitycheck(struct phys_region *pr, char *file, int line);
+static int anon_contig_sanitycheck(struct phys_region *pr, const char *file, int line);
 static int anon_contig_writable(struct phys_region *pr);
 static int anon_contig_resize(struct vmproc *vmp, struct vir_region *vr, vir_bytes l);
 static int anon_contig_new(struct vir_region *vr);
@@ -111,7 +111,7 @@ static int anon_contig_unreference(struct phys_region *pr)
 	return mem_type_anon.ev_unreference(pr);
 }
 
-static int anon_contig_sanitycheck(struct phys_region *pr, char *file, int line)
+static int anon_contig_sanitycheck(struct phys_region *pr, const char *file, int line)
 {
 	return mem_type_anon.ev_sanitycheck(pr, file, line);
 }

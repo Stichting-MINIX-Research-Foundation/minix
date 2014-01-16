@@ -53,8 +53,6 @@
 #define SEGMENT_TYPE  0xFF00	/* bit mask to get segment type */
 #define SEGMENT_INDEX 0x00FF	/* bit mask to get segment index */
 
-#define D_OBSOLETE         1	/* proc[i].mem_map[D] is for data */
-
 #define PHYS_SEG      0x0400	/* flag indicating entire physical memory */
 
 #define LOCAL_VM_SEG  0x1000	/* same as LOCAL_SEG, but with vm lookup */

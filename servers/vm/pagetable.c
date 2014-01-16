@@ -65,10 +65,13 @@ struct vmproc *vmprocess = &vmproc[VM_PROC_NR];
 # define SPAREPAGES 150
 # define STATIC_SPAREPAGES 140 
 #else
-static u32_t global_bit = 0;
 # define SPAREPAGES 20
 # define STATIC_SPAREPAGES 15 
 #endif /* __arm__ */
+#endif
+
+#ifdef __i386__
+static u32_t global_bit = 0;
 #endif
 
 #define SPAREPAGEDIRS 1
@@ -115,7 +118,7 @@ static char static_sparepagedirs[ARCH_PAGEDIR_SIZE*STATIC_SPAREPAGEDIRS + ARCH_P
 /*===========================================================================*
  *				pt_sanitycheck		     		     *
  *===========================================================================*/
-void pt_sanitycheck(pt_t *pt, char *file, int line)
+void pt_sanitycheck(pt_t *pt, const char *file, int line)
 {
 /* Basic pt sanity check. */
 	int slot;
@@ -1234,10 +1237,10 @@ void pt_init(void)
 		panic("VM: sys_vmctl_get_pdbr failed");
 #if defined(__i386__)
 	if(sys_vircopy(NONE, mypdbr, SELF,
-		(vir_bytes) currentpagedir, VM_PAGE_SIZE) != OK)
+		(vir_bytes) currentpagedir, VM_PAGE_SIZE, 0) != OK)
 #elif defined(__arm__)
 	if(sys_vircopy(NONE, myttbr, SELF,
-		(vir_bytes) currentpagedir, ARCH_PAGEDIR_SIZE) != OK)
+		(vir_bytes) currentpagedir, ARCH_PAGEDIR_SIZE, 0) != OK)
 #endif
 		panic("VM: sys_vircopy failed");
 

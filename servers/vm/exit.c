@@ -111,13 +111,13 @@ int do_willexit(message *msg)
 	return OK;
 }
 
-int do_procctl(message *msg)
+int do_procctl(message *msg, int transid)
 {
 	endpoint_t proc;
 	struct vmproc *vmp;
 
 	if(vm_isokendpt(msg->VMPCTL_WHO, &proc) != OK) {
-		printf("VM: bogus endpoint VM_PROCCTL %d\n",
+		printf("VM: bogus endpoint VM_PROCCTL %ld\n",
 			msg->VMPCTL_WHO);
 		return EINVAL;
 	}
@@ -133,10 +133,20 @@ int do_procctl(message *msg)
 				panic("VMPPARAM_CLEAR: pt_new failed");
 			pt_bind(&vmp->vm_pt, vmp);
 			return OK;
+		case VMPPARAM_HANDLEMEM:
+		{
+			if(msg->m_source != VFS_PROC_NR)
+				return EPERM;
+
+                        handle_memory_start(vmp, msg->VMPCTL_M1,
+				msg->VMPCTL_LEN, msg->VMPCTL_FLAGS,
+                                VFS_PROC_NR, VFS_PROC_NR, transid, 1);
+
+			return SUSPEND;
+		}
 		default:
 			return EINVAL;
 	}
-
 
 	return OK;
 }

@@ -16,7 +16,7 @@
 #include <string.h>
 
 #define ACCESS_CHECK(a) { 			\
-	if((a) & ~(CPF_READ|CPF_WRITE)) {	\
+	if((a) & ~(CPF_READ|CPF_WRITE|CPF_TRY)) {	\
 		errno = EINVAL;			\
 		return -1;			\
 	}					\

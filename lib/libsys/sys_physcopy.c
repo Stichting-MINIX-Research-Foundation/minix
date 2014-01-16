@@ -1,11 +1,12 @@
 #include "syslib.h"
 
-int sys_physcopy(src_proc, src_vir, dst_proc, dst_vir, bytes)
+int sys_physcopy(src_proc, src_vir, dst_proc, dst_vir, bytes, flags)
 endpoint_t src_proc;		/* source process */
 vir_bytes src_vir;		/* source virtual address */
 endpoint_t dst_proc;		/* destination process */
 vir_bytes dst_vir;		/* destination virtual address */
 phys_bytes bytes;		/* how many bytes */
+int flags;			/* copy flags */
 {
 /* Transfer a block of data.  The source and destination can each either be a
  * process number or SELF (to indicate own process number). Virtual addresses 
@@ -21,12 +22,7 @@ phys_bytes bytes;		/* how many bytes */
   copy_mess.CP_DST_ENDPT = dst_proc;
   copy_mess.CP_DST_ADDR = (long) dst_vir;
   copy_mess.CP_NR_BYTES = (long) bytes;
-
-  /* provide backwards compatability arguments to old
-   * kernels based on process id's; NONE <=> physical
-   */
-  copy_mess.CP_DST_SPACE_OBSOLETE = (dst_proc == NONE ? PHYS_SEG : D_OBSOLETE);
-  copy_mess.CP_SRC_SPACE_OBSOLETE = (src_proc == NONE ? PHYS_SEG : D_OBSOLETE);
+  copy_mess.CP_FLAGS = flags;
 
   return(_kernel_call(SYS_PHYSCOPY, &copy_mess));
 }

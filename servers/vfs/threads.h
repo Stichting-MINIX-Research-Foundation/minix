@@ -31,7 +31,7 @@ struct worker_thread {
   message w_m_in;
   message w_m_out;
   int w_err_code;
-  message *w_fs_sendrec;
+  message *w_sendrec;
   message *w_drv_sendrec;
   endpoint_t w_task;
   struct dmap *w_dmap;

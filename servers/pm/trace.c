@@ -175,11 +175,11 @@ int do_trace()
 	if (req == T_GETRANGE)
 		r = sys_vircopy(child->mp_endpoint, (vir_bytes) pr.pr_addr,
 			who_e, (vir_bytes) pr.pr_ptr,
-			(phys_bytes) pr.pr_size);
+			(phys_bytes) pr.pr_size, 0);
 	else
 		r = sys_vircopy(who_e, (vir_bytes) pr.pr_ptr,
 			child->mp_endpoint, (vir_bytes) pr.pr_addr,
-			(phys_bytes) pr.pr_size);
+			(phys_bytes) pr.pr_size, 0);
 
 	if (r != OK) return(r);
 

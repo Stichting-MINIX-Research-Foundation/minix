@@ -22,7 +22,7 @@ typedef struct mem_type {
 	void (*ev_split)(struct vmproc *vmp, struct vir_region *vr,
 		struct vir_region *r1, struct vir_region *r2);
 	int (*writable)(struct phys_region *pr);
-	int (*ev_sanitycheck)(struct phys_region *pr, char *file, int line);
+	int (*ev_sanitycheck)(struct phys_region *pr, const char *file, int line);
         int (*ev_copy)(struct vir_region *vr, struct vir_region *newvr);
         int (*ev_lowshrink)(struct vir_region *vr, vir_bytes len);
 	u32_t (*regionid)(struct vir_region *vr);

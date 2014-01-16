@@ -170,7 +170,7 @@ int do_info(message *m)
 	 * deadlock. Note that no memory mapping can be undone without the
 	 * involvement of VM, so we are safe until we're done.
 	 */
-	r = handle_memory(vmp, ptr, size, 1 /*wrflag*/, NULL, NULL, 0);
+	r = handle_memory_once(vmp, ptr, size, 1 /*wrflag*/);
 	if (r != OK) return r;
 
 	/* Now that we know the copy out will succeed, perform the actual copy

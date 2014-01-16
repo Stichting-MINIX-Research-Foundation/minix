@@ -19,11 +19,6 @@ int sys_safecopyfrom(endpoint_t src_e,
   copy_mess.SCP_ADDRESS = (char *) address;
   copy_mess.SCP_BYTES = (long) bytes;
 
-  /* for older kernels that still need the 'seg' field
-   * provide the right value.
-   */
-  copy_mess.SCP_SEG_OBSOLETE = D_OBSOLETE;
-
   return(_kernel_call(SYS_SAFECOPYFROM, &copy_mess));
 
 }
@@ -43,11 +38,6 @@ int sys_safecopyto(endpoint_t dst_e,
   copy_mess.SCP_OFFSET = (long) offset;
   copy_mess.SCP_ADDRESS = (char *) address;
   copy_mess.SCP_BYTES = (long) bytes;
-
-  /* for older kernels that still need the 'seg' field
-   * provide the right value.
-   */
-  copy_mess.SCP_SEG_OBSOLETE = D_OBSOLETE;
 
   return(_kernel_call(SYS_SAFECOPYTO, &copy_mess));
 

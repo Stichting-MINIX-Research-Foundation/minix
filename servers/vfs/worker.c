@@ -37,6 +37,7 @@ void worker_init(void)
 
 	wp->w_fp = NULL;		/* Mark not in use */
 	wp->w_next = NULL;
+	wp->w_task = NONE;
 	if (mutex_init(&wp->w_event_mutex, NULL) != 0)
 		panic("failed to initialize mutex");
 	if (cond_init(&wp->w_event, NULL) != 0)
@@ -397,8 +398,8 @@ void worker_stop(struct worker_thread *worker)
 	/* This thread is communicating with a driver or file server */
 	if (worker->w_drv_sendrec != NULL) {			/* Driver */
 		worker->w_drv_sendrec->m_type = EIO;
-	} else if (worker->w_fs_sendrec != NULL) {		/* FS */
-		worker->w_fs_sendrec->m_type = EIO;
+	} else if (worker->w_sendrec != NULL) {		/* FS */
+		worker->w_sendrec->m_type = EIO;
 	} else {
 		panic("reply storage consistency error");	/* Oh dear */
 	}

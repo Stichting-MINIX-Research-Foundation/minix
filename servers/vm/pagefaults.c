@@ -14,6 +14,9 @@
 #include <minix/syslib.h>
 #include <minix/safecopies.h>
 #include <minix/bitmap.h>
+#include <minix/vfsif.h>
+
+#include <machine/vmparam.h>
 
 #include <errno.h>
 #include <string.h>
@@ -27,6 +30,29 @@
 #include "proto.h"
 #include "util.h"
 #include "region.h"
+
+struct pf_state {
+        endpoint_t ep;
+        vir_bytes vaddr;
+	u32_t err;
+};
+
+struct hm_state {
+	endpoint_t caller;	/* KERNEL or process? if NONE, no callback */
+	endpoint_t requestor;	/* on behalf of whom? */
+	int transid;		/* VFS transaction id if valid */
+	struct vmproc *vmp;	/* target address space */
+	vir_bytes mem, len;	/* memory range */
+	int wrflag;		/* must it be writable or not */
+	int valid;		/* sanity check */
+	int vfs_avail;		/* may vfs be called to satisfy this range? */
+#define VALID	0xc0ff1
+};
+
+static void handle_memory_continue(struct vmproc *vmp, message *m,
+        void *arg, void *statearg);
+static int handle_memory_step(struct hm_state *hmstate);
+static void handle_memory_final(struct hm_state *state, int result);
 
 /*===========================================================================*
  *				pf_errstr	     		     	*
@@ -44,23 +70,9 @@ char *pf_errstr(u32_t err)
 	return buf;
 }
 
-struct pf_state {
-        endpoint_t ep;
-        vir_bytes vaddr;
-	u32_t err;
-};
-
-struct hm_state {
-	endpoint_t requestor;
-	struct vmproc *vmp;
-	vir_bytes mem;
-	vir_bytes len;
-	int wrflag;
-};
-
 static void pf_cont(struct vmproc *vmp, message *m, void *arg, void *statearg);
 
-static void hm_cont(struct vmproc *vmp, message *m, void *arg, void *statearg);
+static void handle_memory_continue(struct vmproc *vmp, message *m, void *arg, void *statearg);
 
 static void handle_pagefault(endpoint_t ep, vir_bytes addr, u32_t err, int retry)
 {
@@ -156,25 +168,65 @@ static void pf_cont(struct vmproc *vmp, message *m,
 	handle_pagefault(state->ep, state->vaddr, state->err, 1);
 }
 
-static void hm_cont(struct vmproc *vmp, message *m,
+static void handle_memory_continue(struct vmproc *vmp, message *m,
         void *arg, void *statearg)
 {
 	int r;
 	struct hm_state *state = statearg;
-	printf("hm_cont: result %d\n", m->VMV_RESULT);
-	r = handle_memory(vmp, state->mem, state->len, state->wrflag,
-		hm_cont, &state, sizeof(state));
-	if(r == SUSPEND) {
-		printf("VM: hm_cont: damnit: hm_cont: more SUSPEND\n");
+	assert(state);
+	assert(state->caller != NONE);
+	assert(state->valid == VALID);
+
+	if(m->VMV_RESULT != OK) {
+		printf("VM: handle_memory_continue: vfs request failed\n");
+		handle_memory_final(state, m->VMV_RESULT);
 		return;
 	}
 
-	printf("VM: hm_cont: ok, result %d, requestor %d\n", r, state->requestor);
+	r = handle_memory_step(state);
 
-	if(sys_vmctl(state->requestor, VMCTL_MEMREQ_REPLY, r) != OK)
-		panic("hm_cont: sys_vmctl failed: %d", r);
+	assert(state->valid == VALID);
 
-	printf("MEMREQ_REPLY sent\n");
+	if(r == SUSPEND) {
+		return;
+	}
+
+	assert(state->valid == VALID);
+
+	handle_memory_final(state, r);
+}
+
+static void handle_memory_final(struct hm_state *state, int result)
+{
+	int r;
+
+	assert(state);
+	assert(state->valid == VALID);
+
+	if(state->caller == KERNEL) {
+		if((r=sys_vmctl(state->requestor, VMCTL_MEMREQ_REPLY, result)) != OK)
+			panic("handle_memory_continue: sys_vmctl failed: %d", r);
+	} else if(state->caller != NONE) {
+		/* Send a reply msg */
+		message msg;
+		memset(&msg, 0, sizeof(msg));
+		msg.m_type = result;
+
+		if(IS_VFS_FS_TRANSID(state->transid)) {
+			assert(state->caller == VFS_PROC_NR);
+			/* If a transaction ID was set, reset it */
+			msg.m_type = TRNS_ADD_ID(msg.m_type, state->transid);
+		}
+
+		if(asynsend3(state->caller, &msg, 0) != OK) {
+			panic("handle_memory_final: asynsend3 failed");
+		}
+
+		assert(state->valid == VALID);
+
+		/* fail fast if anyone tries to access this state again */
+		memset(state, 0, sizeof(*state));
+	}
 }
 
 /*===========================================================================*
@@ -183,6 +235,52 @@ static void hm_cont(struct vmproc *vmp, message *m,
 void do_pagefaults(message *m)
 {
 	handle_pagefault(m->m_source, m->VPF_ADDR, m->VPF_FLAGS, 0);
+}
+
+int handle_memory_once(struct vmproc *vmp, vir_bytes mem, vir_bytes len,
+	int wrflag)
+{
+	int r;
+	r = handle_memory_start(vmp, mem, len, wrflag, NONE, NONE, 0, 0);
+	assert(r != SUSPEND);
+	return r;
+}
+
+int handle_memory_start(struct vmproc *vmp, vir_bytes mem, vir_bytes len,
+	int wrflag, endpoint_t caller, endpoint_t requestor, int transid,
+	int vfs_avail)
+{
+	int r;
+	struct hm_state state;
+	vir_bytes o;
+
+	if((o = mem % PAGE_SIZE)) {
+		mem -= o;
+		len += o;
+	}
+
+	len = roundup(len, PAGE_SIZE);
+
+	state.vmp = vmp;
+	state.mem = mem;
+	state.len = len;
+	state.wrflag = wrflag;
+	state.requestor = requestor;
+	state.caller = caller;
+	state.transid = transid;
+	state.valid = VALID;
+	state.vfs_avail = vfs_avail;
+
+	r = handle_memory_step(&state);
+
+	if(r == SUSPEND) {
+		assert(caller != NONE);
+		assert(vfs_avail);
+	} else {
+		handle_memory_final(&state, r);
+	}
+
+	return r;
 }
 
 /*===========================================================================*
@@ -205,21 +303,21 @@ void do_memory(void)
 		switch(r) {
 		case VMPTYPE_CHECK:
 		{
-			struct hm_state state;
+			int transid = 0;
+			int vfs_avail;
 
 			if(vm_isokendpt(who, &p) != OK)
 				panic("do_memory: bad endpoint: %d", who);
 			vmp = &vmproc[p];
 
+			assert(!IS_VFS_FS_TRANSID(transid));
 
-			state.vmp = vmp;
-			state.mem = mem;
-			state.len = len;
-			state.wrflag = wrflag;
-			state.requestor = requestor;
+			/* is VFS blocked? */
+			if(requestor == VFS_PROC_NR) vfs_avail = 0;
+			else vfs_avail = 1;
 
-			r = handle_memory(vmp, mem, len,
-				wrflag, hm_cont, &state, sizeof(state));
+			handle_memory_start(vmp, mem, len, wrflag,
+				KERNEL, requestor, transid, vfs_avail);
 
 			break;
 		}
@@ -227,69 +325,56 @@ void do_memory(void)
 		default:
 			return;
 		}
-
-		if(r != SUSPEND) {
-		   if(sys_vmctl(requestor, VMCTL_MEMREQ_REPLY, r) != OK)
-			panic("do_memory: sys_vmctl failed: %d", r);
-		}
 	}
 }
 
-int handle_memory(struct vmproc *vmp, vir_bytes mem, vir_bytes len, int wrflag,
-	vfs_callback_t callback, void *state, int statelen)
+static int handle_memory_step(struct hm_state *hmstate)
 {
 	struct vir_region *region;
-	vir_bytes o;
-	struct hm_state *hmstate = (struct hm_state *) state;
 
 	/* Page-align memory and length. */
-	o = mem % VM_PAGE_SIZE;
-	mem -= o;
-	len += o;
-	o = len % VM_PAGE_SIZE;
-	if(o > 0) len += VM_PAGE_SIZE - o;
+	assert(hmstate);
+	assert(hmstate->valid == VALID);
+	assert(!(hmstate->mem % VM_PAGE_SIZE));
+	assert(!(hmstate->len % VM_PAGE_SIZE));
 
-	while(len > 0) {
+	while(hmstate->len > 0) {
 		int r;
-		if(!(region = map_lookup(vmp, mem, NULL))) {
+		if(!(region = map_lookup(hmstate->vmp, hmstate->mem, NULL))) {
 #if VERBOSE
-			map_printmap(vmp);
+			map_printmap(hmstate->vmp);
 			printf("VM: do_memory: memory doesn't exist\n");
 #endif
-			r = EFAULT;
-		} else if(!(region->flags & VR_WRITABLE) && wrflag) {
+			return EFAULT;
+		} else if(!(region->flags & VR_WRITABLE) && hmstate->wrflag) {
 #if VERBOSE
 			printf("VM: do_memory: write to unwritable map\n");
 #endif
-			r = EFAULT;
+			return EFAULT;
 		} else {
 			vir_bytes offset, sublen;
-			assert(region->vaddr <= mem);
+			assert(region->vaddr <= hmstate->mem);
 			assert(!(region->vaddr % VM_PAGE_SIZE));
-			offset = mem - region->vaddr;
-			sublen = len;
+			offset = hmstate->mem - region->vaddr;
+			sublen = hmstate->len;
 			if(offset + sublen > region->length)
 				sublen = region->length - offset;
 	
-			if(hmstate && hmstate->requestor == VFS_PROC_NR
-			   && region->def_memtype == &mem_type_mappedfile) {
-				r = map_handle_memory(vmp, region, offset,
-				   sublen, wrflag, NULL, NULL, 0);
+			if((region->def_memtype == &mem_type_mappedfile &&
+			  !hmstate->vfs_avail) || hmstate->caller == NONE) {
+				r = map_handle_memory(hmstate->vmp, region, offset,
+				   sublen, hmstate->wrflag, NULL, NULL, 0);
+				assert(r != SUSPEND);
 			} else {
-				r = map_handle_memory(vmp, region, offset,
-				   sublen, wrflag, callback, state, sizeof(state));
+				r = map_handle_memory(hmstate->vmp, region, offset,
+				   sublen, hmstate->wrflag, handle_memory_continue,
+					hmstate, sizeof(*hmstate));
 			}
 
-			len -= sublen;
-			mem += sublen;
-		}
-	
-		if(r != OK) {
-#if VERBOSE
-			printf("VM: memory range 0x%lx-0x%lx not available in %d\n",
-				mem, mem+len, vmp->vm_endpoint);
-#endif
-			return r;
+			if(r != OK) return r;
+
+			hmstate->len -= sublen;
+			hmstate->mem += sublen;
 		}
 	}
 

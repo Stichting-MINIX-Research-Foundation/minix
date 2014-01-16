@@ -10,7 +10,9 @@
  */
 
 #include "kernel/system.h"
+#include "kernel/vm.h"
 #include <minix/type.h>
+#include <assert.h>
 
 #if (USE_VIRCOPY || USE_PHYSCOPY)
 
@@ -75,8 +77,16 @@ int do_copy(struct proc * caller, message * m_ptr)
   if (bytes != (phys_bytes) (vir_bytes) bytes) return(E2BIG);
 
   /* Now try to make the actual virtual copy. */
-  return( virtual_copy_vmcheck(caller, &vir_addr[_SRC_],
+  if(m_ptr->CP_FLAGS & CP_FLAG_TRY) {
+	int r;
+	assert(caller->p_endpoint == VFS_PROC_NR);
+	r = virtual_copy(&vir_addr[_SRC_], &vir_addr[_DST_], bytes);
+	if(r == EFAULT_SRC || r == EFAULT_DST) return r = EFAULT;
+	return r;
+  } else {
+	return( virtual_copy_vmcheck(caller, &vir_addr[_SRC_],
 			  	&vir_addr[_DST_], bytes) );
+  }
 }
 #endif /* (USE_VIRCOPY || USE_PHYSCOPY) */
 

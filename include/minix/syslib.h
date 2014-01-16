@@ -123,14 +123,15 @@ int sys_vtimer(endpoint_t proc_nr, int which, clock_t *newval, clock_t
 int sys_irqctl(int request, int irq_vec, int policy, int *irq_hook_id);
 
 /* Shorthands for sys_vircopy() and sys_physcopy() system calls. */
-#define sys_datacopy sys_vircopy
+#define sys_datacopy(p1, v1, p2, v2, len) sys_vircopy(p1, v1, p2, v2, len, 0)
+#define sys_datacopy_try(p1, v1, p2, v2, len) sys_vircopy(p1, v1, p2, v2, len, CP_FLAG_TRY)
 int sys_vircopy(endpoint_t src_proc, vir_bytes src_v,
-	endpoint_t dst_proc, vir_bytes dst_vir, phys_bytes bytes);
+	endpoint_t dst_proc, vir_bytes dst_vir, phys_bytes bytes, int flags);
 
 #define sys_abscopy(src_phys, dst_phys, bytes) \
-	sys_physcopy(NONE, src_phys, NONE, dst_phys, bytes)
+	sys_physcopy(NONE, src_phys, NONE, dst_phys, bytes, 0)
 int sys_physcopy(endpoint_t src_proc, vir_bytes src_vir,
-	endpoint_t dst_proc, vir_bytes dst_vir, phys_bytes bytes);
+	endpoint_t dst_proc, vir_bytes dst_vir, phys_bytes bytes, int flags);
 
 
 /* Grant-based copy functions. */

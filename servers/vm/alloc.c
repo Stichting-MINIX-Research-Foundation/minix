@@ -46,7 +46,7 @@ static phys_bytes alloc_pages(int pages, int flags);
 #if SANITYCHECKS
 struct {
 	int used;
-	char *file;
+	const char *file;
 	int line;
 } pagemap[NUMBER_PHYSICAL_PAGES];
 #endif
@@ -335,7 +335,7 @@ void mem_init(struct memory *chunks)
 }
 
 #if SANITYCHECKS
-void mem_sanitycheck(char *file, int line)
+void mem_sanitycheck(const char *file, int line)
 {
 	int i;
 	for(i = 0; i < NUMBER_PHYSICAL_PAGES; i++) {
@@ -506,7 +506,7 @@ void usedpages_reset(void)
 /*===========================================================================*
  *				usedpages_add				     *
  *===========================================================================*/
-int usedpages_add_f(phys_bytes addr, phys_bytes len, char *file, int line)
+int usedpages_add_f(phys_bytes addr, phys_bytes len, const char *file, int line)
 {
 	u32_t pagestart, pages;
 
@@ -525,7 +525,6 @@ int usedpages_add_f(phys_bytes addr, phys_bytes len, char *file, int line)
 		assert(pagestart > 0);
 		assert(pagestart < NUMBER_PHYSICAL_PAGES);
 		thisaddr = pagestart * VM_PAGE_SIZE;
-		assert(pagestart >= 0);
 		assert(pagestart < NUMBER_PHYSICAL_PAGES);
 		if(pagemap[pagestart].used) {
 			static int warnings = 0;

@@ -190,7 +190,7 @@ static struct slabdata *newslabdata(void)
 /*===========================================================================*
  *				checklist				     *
  *===========================================================================*/
-static int checklist(char *file, int line,
+static int checklist(const char *file, int line,
 	struct slabheader *s, int bytes)
 {
 	struct slabdata *n = s->list_head;
@@ -225,7 +225,7 @@ static int checklist(char *file, int line,
 /*===========================================================================*
  *				void slab_sanitycheck			     *
  *===========================================================================*/
-void slab_sanitycheck(char *file, int line)
+void slab_sanitycheck(const char *file, int line)
 {
 	int s;
 	for(s = 0; s < SLABSIZES; s++) {
@@ -236,7 +236,7 @@ void slab_sanitycheck(char *file, int line)
 /*===========================================================================*
  *				int slabsane				     *
  *===========================================================================*/
-int slabsane_f(char *file, int line, void *mem, int bytes)
+int slabsane_f(const char *file, int line, void *mem, int bytes)
 {
 	struct slabheader *s;
 	struct slabdata *f;

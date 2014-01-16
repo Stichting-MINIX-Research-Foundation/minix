@@ -78,7 +78,7 @@ int do_vumap(struct proc *caller, message *m_ptr)
 
 	if (source != SELF) {
 		r = verify_grant(source, endpt, vvec[i].vv_grant, size, access,
-			offset, &vir_addr, &granter);
+			offset, &vir_addr, &granter, NULL);
 		if (r != OK)
 			return r;
 	} else {
@@ -103,7 +103,7 @@ int do_vumap(struct proc *caller, message *m_ptr)
 			/* This call may suspend the current call, or return an
 			 * error for a previous invocation.
 			 */
-			return vm_check_range(caller, procp, vir_addr, size);
+			return vm_check_range(caller, procp, vir_addr, size, 1);
 		}
 
 		pvec[pcount].vp_addr = phys_addr;

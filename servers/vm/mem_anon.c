@@ -24,7 +24,7 @@ static int anon_unreference(struct phys_region *pr);
 static int anon_pagefault(struct vmproc *vmp, struct vir_region *region, 
 	struct phys_region *ph, int write, vfs_callback_t cb, void *state,
 	int len, int *io);
-static int anon_sanitycheck(struct phys_region *pr, char *file, int line);
+static int anon_sanitycheck(struct phys_region *pr, const char *file, int line);
 static int anon_writable(struct phys_region *pr);
 static int anon_resize(struct vmproc *vmp, struct vir_region *vr, vir_bytes l);
 static u32_t anon_regionid(struct vir_region *region);
@@ -87,8 +87,7 @@ static int anon_pagefault(struct vmproc *vmp, struct vir_region *region,
 	}
 
 	if(ph->ph->refcount < 2 || !write) {
-		printf("anon_pagefault: %d refcount, %d write - not handling pagefault\n",
-			ph->ph->refcount, write);
+		/* memory is ready already */
 		return OK;
 	}	
 
@@ -97,7 +96,7 @@ static int anon_pagefault(struct vmproc *vmp, struct vir_region *region,
 	return mem_cow(region, ph, new_page_cl, new_page);
 }
 
-static int anon_sanitycheck(struct phys_region *pr, char *file, int line)
+static int anon_sanitycheck(struct phys_region *pr, const char *file, int line)
 {
 	MYASSERT(usedpages_add(pr->ph->phys, VM_PAGE_SIZE) == OK);
 	return OK;

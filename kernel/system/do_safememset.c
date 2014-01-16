@@ -47,7 +47,7 @@ int do_safememset(struct proc *caller, message *m_ptr) {
 
 	/* Verify permission exists, memset always requires CPF_WRITE */
 	r = verify_grant(dst_endpt, caller_endpt, grantid, len, CPF_WRITE,
-			 g_offset, &v_offset, &new_granter);
+			 g_offset, &v_offset, &new_granter, NULL);
 
 	if (r != OK) {
 		printf("safememset: grant %d verify failed %d", grantid, r);

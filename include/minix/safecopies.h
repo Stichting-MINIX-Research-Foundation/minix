@@ -56,6 +56,9 @@ struct vscp_vec {
 #define CPF_READ	0x000001 /* Granted process may read. */
 #define CPF_WRITE	0x000002 /* Granted process may write. */
 
+/* Grant flags. */
+#define CPF_TRY		0x000010 /* Fail fast on unmapped memory. */
+
 /* Internal flags. */
 #define CPF_USED	0x000100 /* Grant slot in use. */
 #define CPF_DIRECT	0x000200 /* Grant from this process to another. */

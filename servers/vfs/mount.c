@@ -109,7 +109,7 @@ int do_mount(void)
   /* Get the label from the caller, and ask DS for the endpoint of the FS. */
   if (label_len > sizeof(mount_label))
 	return EINVAL;
-  r = sys_datacopy(who_e, label, SELF, (vir_bytes) mount_label,
+  r = sys_datacopy_wrapper(who_e, label, SELF, (vir_bytes) mount_label,
 	sizeof(mount_label));
   if (r != OK) return(r);
 
@@ -446,7 +446,7 @@ int do_umount(void)
    */
   if (strlen(label) >= label_len)
 	label[label_len-1] = 0;
-  return sys_datacopy(SELF, (vir_bytes) label, who_e, label_addr,
+  return sys_datacopy_wrapper(SELF, (vir_bytes) label, who_e, label_addr,
 	strlen(label) + 1);
 }
 

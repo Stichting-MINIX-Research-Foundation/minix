@@ -17,6 +17,7 @@
 
 #include "kernel/system.h"
 #include "kernel/kernel.h"
+#include "kernel/vm.h"
 
 #define MAX_INDIRECT_DEPTH 5	/* up to how many indirect grants to follow? */
 
@@ -32,7 +33,7 @@ static int safecopy(struct proc *, endpoint_t, endpoint_t,
  *				verify_grant				     *
  *===========================================================================*/
 int verify_grant(granter, grantee, grant, bytes, access,
-	offset_in, offset_result, e_granter)
+	offset_in, offset_result, e_granter, flags)
 endpoint_t granter, grantee;	/* copyee, copyer */
 cp_grant_id_t grant;		/* grant id */
 vir_bytes bytes;		/* copy size */
@@ -40,6 +41,7 @@ int access;			/* direction (read/write) */
 vir_bytes offset_in;		/* copy offset within grant */
 vir_bytes *offset_result;	/* copy offset within virtual address space */
 endpoint_t *e_granter;		/* new granter (magic grants) */
+u32_t *flags;			/* CPF_* */
 {
 	static cp_grant_t g;
 	static int proc_nr;
@@ -95,6 +97,8 @@ endpoint_t *e_granter;		/* new granter (magic grants) */
 			"verify_grant: grant verify: data_copy failed\n");
 			return EPERM;
 		}
+
+		if(flags) *flags = g.cp_flags;
 
 		/* Check validity. */
 		if((g.cp_flags & (CPF_USED | CPF_VALID)) !=
@@ -241,6 +245,7 @@ int access;			/* CPF_READ for a copy from granter to grantee, CPF_WRITE
 	endpoint_t new_granter, *src, *dst;
 	struct proc *granter_p;
 	int r;
+	u32_t flags;
 #if PERF_USE_COW_SAFECOPY
 	vir_bytes size;
 #endif
@@ -269,7 +274,7 @@ int access;			/* CPF_READ for a copy from granter to grantee, CPF_WRITE
 
 	/* Verify permission exists. */
 	if((r=verify_grant(granter, grantee, grantid, bytes, access,
-	    g_offset, &v_offset, &new_granter)) != OK) {
+	    g_offset, &v_offset, &new_granter, &flags)) != OK) {
 			printf(
 		"grant %d verify to copy %d->%d by %d failed: err %d\n",
 				grantid, *src, *dst, grantee, r);
@@ -298,6 +303,13 @@ int access;			/* CPF_READ for a copy from granter to grantee, CPF_WRITE
 	}
 
 	/* Do the regular copy. */
+	if(flags & CPF_TRY) {
+		int r;
+		/* Try copy without transparently faulting in pages. */
+		r = virtual_copy(&v_src, &v_dst, bytes);
+		if(r == EFAULT_SRC || r == EFAULT_DST) return EFAULT;
+		return r;
+	}
 	return virtual_copy_vmcheck(caller, &v_src, &v_dst, bytes);
 }
 

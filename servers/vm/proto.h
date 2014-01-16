@@ -28,12 +28,12 @@ void *reservedqueue_new(int, int, int, int);
 int reservedqueue_alloc(void *, phys_bytes *, void **);
 void reservedqueue_add(void *, void *, phys_bytes);
 void alloc_cycle(void);
-void mem_sanitycheck(char *file, int line);
+void mem_sanitycheck(const char *file, int line);
 phys_clicks alloc_mem(phys_clicks clicks, u32_t flags);
 void memstats(int *nodes, int *pages, int *largest);
 void printmemstats(void);
 void usedpages_reset(void);
-int usedpages_add_f(phys_bytes phys, phys_bytes len, char *file, int
+int usedpages_add_f(phys_bytes phys, phys_bytes len, const char *file, int
 	line);
 void free_mem(phys_clicks base, phys_clicks clicks);
 void mem_add_total_pages(int pages);
@@ -54,7 +54,7 @@ int do_getrusage(message *m);
 void clear_proc(struct vmproc *vmp);
 int do_exit(message *msg);
 int do_willexit(message *msg);
-int do_procctl(message *msg);
+int do_procctl(message *msg, int transid);
 void free_proc(struct vmproc *vmp);
 
 /* fork.c */
@@ -84,8 +84,11 @@ int do_vfs_mmap(message *m);
 void do_pagefaults(message *m);
 void do_memory(void);
 char *pf_errstr(u32_t err);
-int handle_memory(struct vmproc *vmp, vir_bytes mem, vir_bytes len, int
-	wrflag, vfs_callback_t cb, void *state, int statelen);
+int handle_memory_start(struct vmproc *vmp, vir_bytes mem, vir_bytes len,
+	int wrflag, endpoint_t caller, endpoint_t requestor, int transid,
+	int vfs_avail);
+int handle_memory_once(struct vmproc *vmp, vir_bytes mem, vir_bytes len,
+	int wrflag);
 
 /* $(ARCH)/pagetable.c */
 void pt_init(void);
@@ -115,21 +118,21 @@ int get_vm_self_pages(void);
 int pt_writable(struct vmproc *vmp, vir_bytes v);
 
 #if SANITYCHECKS
-void pt_sanitycheck(pt_t *pt, char *file, int line);
+void pt_sanitycheck(pt_t *pt, const char *file, int line);
 #endif
 
 /* slaballoc.c */
 void *slaballoc(int bytes);
 void slabfree(void *mem, int bytes);
 void slabstats(void);
-void slab_sanitycheck(char *file, int line);
+void slab_sanitycheck(const char *file, int line);
 #define SLABALLOC(var) (var = slaballoc(sizeof(*var)))
 #define SLABFREE(ptr) do { slabfree(ptr, sizeof(*(ptr))); (ptr) = NULL; } while(0)
 #if SANITYCHECKS
 
 void slabunlock(void *mem, int bytes);
 void slablock(void *mem, int bytes);
-int slabsane_f(char *file, int line, void *mem, int bytes);
+int slabsane_f(const char *file, int line, void *mem, int bytes);
 #endif
 
 /* region.c */
@@ -184,7 +187,7 @@ int get_region_info(struct vmproc *vmp, struct vm_region_info *vri, int
 int copy_abs2region(phys_bytes abs, struct vir_region *destregion,
 	phys_bytes offset, phys_bytes len);
 #if SANITYCHECKS
-void map_sanitycheck(char *file, int line);
+void map_sanitycheck(const char *file, int line);
 #endif
 
 /* rs.c */

@@ -27,7 +27,7 @@
 
 static int cache_reference(struct phys_region *pr, struct phys_region *pr2);
 static int cache_unreference(struct phys_region *pr);
-static int cache_sanitycheck(struct phys_region *pr, char *file, int line);
+static int cache_sanitycheck(struct phys_region *pr, const char *file, int line);
 static int cache_writable(struct phys_region *pr);
 static int cache_resize(struct vmproc *vmp, struct vir_region *vr, vir_bytes l);
 static int cache_pagefault(struct vmproc *vmp, struct vir_region *region, 
@@ -65,7 +65,7 @@ static int cache_unreference(struct phys_region *pr)
 	return mem_type_anon.ev_unreference(pr);
 }
 
-static int cache_sanitycheck(struct phys_region *pr, char *file, int line)
+static int cache_sanitycheck(struct phys_region *pr, const char *file, int line)
 {
 	MYASSERT(usedpages_add(pr->ph->phys, VM_PAGE_SIZE) == OK);
 	return OK;
