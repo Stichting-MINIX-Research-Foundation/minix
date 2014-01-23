@@ -21,8 +21,6 @@ unix?=		We run MINIX.
 CPPFLAGS+= -DNDEBUG
 DBG=	-Os
 .endif
-
-CPP?=	/usr/lib/cpp
 .endif # defined(__MINIX)
 
 .LIBS:		.a
