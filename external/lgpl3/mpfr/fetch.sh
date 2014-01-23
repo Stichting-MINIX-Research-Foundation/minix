@@ -7,7 +7,7 @@ cd `dirname $0`
 # Configure fetch method
 URL="http://www.minix3.org/distfiles-minix/mpfr-3.1.2.tar.bz2"
 BACKUP_URL="http://www.mpfr.org/mpfr-3.1.2/mpfr-3.1.2.tar.bz2"
-FETCH=wget
+FETCH=ftp
 which curl >/dev/null
 if [ $? -eq 0 ]; then
 	FETCH="curl -O -f"

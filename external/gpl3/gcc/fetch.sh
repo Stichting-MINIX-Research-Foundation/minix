@@ -7,7 +7,7 @@ cd `dirname $0`
 # Configure fetch method
 URL="http://www.minix3.org/distfiles-minix/gcc-4.5.3.tar.bz2"
 BACKUP_URL="ftp://ftp.gwdg.de/pub/misc/gcc/releases/gcc-4.5.3/gcc-4.5.3.tar.bz2"
-FETCH=wget
+FETCH=ftp
 which curl >/dev/null
 if [ $? -eq 0 ]; then
 	FETCH="curl -O -f"
