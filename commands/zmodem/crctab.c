@@ -126,8 +126,7 @@ static long cr3tab[] = { /* CRC polynomial 0xedb88320 */
 
 #ifdef NFGM
 long
-UPDC32(b, c)
-long c;
+UPDC32(int b, long c)
 {
 	return (cr3tab[((int)c ^ b) & 0xff] ^ ((c >> 8) & 0x00FFFFFF));
 }

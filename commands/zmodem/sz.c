@@ -95,6 +95,7 @@ extern int errno;
 #include <unistd.h>
 #include <utime.h>
 #include <stdio.h>
+#include <stdarg.h>
 
 #define PATHLEN 256
 #define OK 0
@@ -252,8 +253,7 @@ void countem(int argc , char **argv );
 void chartest(int m );
 
 /* called by signal interrupt or terminate to clean things up */
-void bibi(n)
-int n;
+void bibi(int n)
 {
 	canit(); fflush(stdout); mode(0);
 	fprintf(stderr, "sz: caught signal %d; exiting\n", n);
@@ -265,8 +265,7 @@ int n;
 	exit(128+n);
 }
 /* Called when ZMODEM gets an interrupt (^X) */
-void onintr(sig)
-int sig;
+void onintr(int sig)
 {
 	signal(SIGINT, SIG_IGN);
 	longjmp(intrjmp, -1);
@@ -279,9 +278,7 @@ int Zrwindow = 1400;	/* RX window size (controls garbage count) */
 #include "zm.c"
 
 
-int main(argc, argv)
-int argc;
-char *argv[];
+int main(int argc, char *argv[])
 {
 	register char *cp;
 	register int npats;
@@ -490,9 +487,7 @@ char *argv[];
 	/*NOTREACHED*/
 }
 
-int wcsend(argc, argp)
-int argc;
-char *argp[];
+int wcsend(int argc, char *argp[])
 {
 	register int n;
 
@@ -530,8 +525,7 @@ char *argp[];
 	return OK;
 }
 
-int wcs(oname)
-char *oname;
+int wcs(char *oname)
 {
 	register int c;
 	register char *p;
@@ -593,8 +587,7 @@ char *oname;
  *  as provided by the Unix fstat call.
  *  N.B.: modifies the passed name, may extend it!
  */
-int wctxpn(name)
-char *name;
+int wctxpn(char *name)
 {
 	register char *p, *q;
 	char name2[PATHLEN];
@@ -695,8 +688,7 @@ int getnak()
 }
 
 
-int wctx(flen)
-long flen;
+int wctx(long flen)
 {
 	register int thisblklen;
 	register int sectnum, attempts, firstch;
@@ -742,11 +734,10 @@ long flen;
 	else
 		return OK;
 }
-
-int wcputsec(buf, sectnum, cseclen)
-char *buf;
-int sectnum;
-int cseclen;	/* data length of this sector to send */
+/**
+ * @param cseclen :data length of this sector to send
+ */
+int wcputsec(char *buf, int sectnum, int cseclen)
 {
 	register int checksum, wcj;
 	register char *cp;
@@ -822,9 +813,7 @@ cancan:
 }
 
 /* fill buf with count chars padding with ^Z for CPM */
-int filbuf(buf, count)
-register char *buf;
-int count;
+int filbuf(char *buf, int count)
 {
 	register int c, m;
 
@@ -888,9 +877,7 @@ int zfilbuf()
 }
 
 #ifdef TXBSIZE
-int fooseek(fptr, pos, whence)
-FILE *fptr;
-long pos;
+int fooseek(FILE *fptr, long pos, int whence)
 {
 	int m, n;
 
@@ -947,20 +934,19 @@ long pos;
 #define fseek fooseek
 #endif
 
-
-/* VARARGS1 */
-void vfile(f, a, b, c)
-register char *f,*a,*b,*c;
+void vfile(const char *string, ...)
 {
 	if (Verbose > 2) {
-		fprintf(stderr, f, a, b, c);
+		va_list args;
+		va_start(args, string);
+		vfprintf(stderr, string, args);
+		va_end(args);
 		fprintf(stderr, "\n");
 	}
 }
 
 
-void alrm(sig)
-int sig;
+void alrm(int sig)
 {
 	longjmp(tohere, -1);
 }
@@ -971,8 +957,7 @@ int sig;
  * readline(timeout) reads character(s) from file descriptor 0
  * timeout is in tenths of seconds
  */
-int readline(timeout)
-int timeout;
+int readline(int timeout)
 {
 	register int c;
 	static char byt[1];
@@ -1035,8 +1020,7 @@ void canit()
  * Log an error
  */
 /*VARARGS1*/
-void zperr(s,p,u)
-char *s, *p, *u;
+void zperr(char *s, char *p, char *u)
 {
 	if (Verbose <= 0)
 		return;
@@ -1050,8 +1034,7 @@ char *s, *p, *u;
  * returns pointer to token within string if found, NULL otherwise
  */
 char *
-substr(s, t)
-register char *s,*t;
+substr(char *s, char *t)
 {
 	register char *ss,*tt;
 	/* search for first char of token */
@@ -1266,9 +1249,7 @@ int sendzsinit()
 }
 
 /* Send file name and related info */
-int zsendfile(buf, blen)
-char *buf;
-int blen;
+int zsendfile(char *buf, int blen)
 {
 	register int c;
 	register UNSL long crc;
@@ -1530,8 +1511,7 @@ gotack:
 /*
  * Respond to receiver's complaint, get back in sync with receiver
  */
-int getinsync(flag)
-int flag;
+int getinsync(int flag)
 {
 	register int c;
 
@@ -1599,17 +1579,14 @@ void saybibi()
 }
 
 /* Local screen character display function */
-void bttyout(c)
-int c;
+void bttyout(int c)
 {
 	if (Verbose)
 		putc(c, stderr);
 }
 
 /* Send command and related info */
-int zsendcmd(buf, blen)
-char *buf;
-int blen;
+int zsendcmd(char *buf, int blen)
 {
 	register int c;
 	long cmdnum;
@@ -1663,8 +1640,7 @@ listen:
 /*
  * If called as sb use YMODEM protocol
  */
-void chkinvok(s)
-char *s;
+void chkinvok(char *s)
 {
 #ifdef vax11c
 	Progname = "sz";
@@ -1690,9 +1666,7 @@ char *s;
 #endif
 }
 
-void countem(argc, argv)
-int argc;
-register char **argv;
+void countem(int argc, char **argv)
 {
 	register int c;
 	struct stat f;
@@ -1717,8 +1691,7 @@ register char **argv;
 		  Filesleft, Totalleft);
 }
 
-void chartest(m)
-int m;
+void chartest(int m)
 {
 	register int n;
 

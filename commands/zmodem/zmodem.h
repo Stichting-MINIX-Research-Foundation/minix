@@ -155,7 +155,7 @@ long rclhdr(char *hdr );
 
 /* rz.c sz.c */
 
-void vfile();
+void vfile(const char *s, ...);
 void bibi(int n );
 
 /* End of ZMODEM.H */

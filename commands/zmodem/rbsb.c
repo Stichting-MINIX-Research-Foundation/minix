@@ -107,7 +107,7 @@ int Twostop;		/* Use two stop bits */
 /*
  *  Return non 0 iff something to read from io descriptor f
  */
-int rdchk(f)
+int rdchk(int f)
 {
 	static long lf;
 
@@ -138,8 +138,7 @@ int rdchk(f)
 
 
 static unsigned
-getspeed(code)
-int code;
+getspeed(int code)
 {
 	register int n;
 
