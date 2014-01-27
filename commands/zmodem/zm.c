@@ -73,9 +73,7 @@ static char *frametypes[] = {
 static char badcrc[] = "Bad CRC";
 
 /* Send ZMODEM binary header hdr of type type */
-void zsbhdr(type, hdr)
-int type;
-register char *hdr;
+void zsbhdr(int type, char *hdr)
 {
 	register int n;
 	register unsigned short crc;
@@ -106,9 +104,7 @@ register char *hdr;
 
 
 /* Send ZMODEM binary header hdr of type type */
-void zsbh32(hdr, type)
-register char *hdr;
-int type;
+void zsbh32(char *hdr, int type)
 {
 	register int n;
 	register UNSL long crc;
@@ -128,9 +124,7 @@ int type;
 }
 
 /* Send ZMODEM HEX header hdr of type type */
-void zshhdr(type, hdr)
-int type;
-register char *hdr;
+void zshhdr(int type, char *hdr)
 {
 	register int n;
 	register unsigned short crc;
@@ -162,10 +156,7 @@ register char *hdr;
  */
 static char *Zendnames[] = { "ZCRCE", "ZCRCG", "ZCRCQ", "ZCRCW"};
 
-void zsdata(buf, length, frameend)
-register char *buf;
-int length;
-int frameend;
+void zsdata(char *buf, int length, int frameend)
 {
 	register unsigned short crc;
 
@@ -188,10 +179,7 @@ int frameend;
 	}
 }
 
-void zsda32(buf, length, frameend)
-register char *buf;
-int length;
-int frameend;
+void zsda32(char *buf, int length, int frameend)
 {
 	register int c;
 	register UNSL long crc;
@@ -219,9 +207,7 @@ int frameend;
  *  and CRC.  Returns the ending character or error code.
  *  NB: On errors may store length+1 bytes!
  */
-int zrdata(buf, length)
-register char *buf;
-int length;
+int zrdata(char *buf, int length)
 {
 	register int c;
 	register unsigned short crc;
@@ -273,9 +259,7 @@ crcfoo:
 	return ERROR;
 }
 
-int zrdat32(buf, length)
-register char *buf;
-int length;
+int zrdat32(char *buf, int length)
 {
 	register int c;
 	register UNSL long crc;
@@ -342,9 +326,7 @@ crcfoo:
  *   Otherwise return negative on error.
  *   Return ERROR instantly if ZCRCW sequence, for fast error recovery.
  */
-int zgethdr(hdr, eflag)
-char *hdr;
-int eflag;
+int zgethdr(char *hdr, int eflag)
 {
 	register int c, n, cancount;
 
@@ -461,8 +443,7 @@ fifi:
 }
 
 /* Receive a binary style header (type and position) */
-int zrbhdr(hdr)
-register char *hdr;
+int zrbhdr(char *hdr)
 {
 	register int c, n;
 	register unsigned short crc;
@@ -496,8 +477,7 @@ register char *hdr;
 }
 
 /* Receive a binary style header (type and position) with 32 bit FCS */
-int zrbhdr32(hdr)
-register char *hdr;
+int zrbhdr32(char *hdr)
 {
 	register int c, n;
 	register UNSL long crc;
@@ -540,8 +520,7 @@ register char *hdr;
 
 
 /* Receive a hex style header (type and position) */
-int zrhhdr(hdr)
-char *hdr;
+int zrhhdr(char *hdr)
 {
 	register int c;
 	register unsigned short crc;
@@ -585,8 +564,7 @@ char *hdr;
 }
 
 /* Send a byte as two hex digits */
-void zputhex(c)
-register int c;
+void zputhex(int c)
 {
 	static char	digits[]	= "0123456789abcdef";
 
@@ -600,8 +578,7 @@ register int c;
  * Send character c with ZMODEM escape sequence encoding.
  *  Escape XON, XOFF. Escape CR following @ (Telenet net escape)
  */
-void zsendline(c)
-int c;
+void zsendline(int c)
 {
 
 	/* Quick check for non control characters */
@@ -763,8 +740,7 @@ int noxrd7()
 }
 
 /* Store long integer pos in Txhdr */
-void stohdr(pos)
-long pos;
+void stohdr(long pos)
 {
 	Txhdr[ZP0] = pos;
 	Txhdr[ZP1] = pos>>8;
@@ -774,8 +750,7 @@ long pos;
 
 /* Recover a long integer from a header */
 long
-rclhdr(hdr)
-register char *hdr;
+rclhdr(char *hdr)
 {
 	register long l;
 

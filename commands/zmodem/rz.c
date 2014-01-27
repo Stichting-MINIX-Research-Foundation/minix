@@ -242,8 +242,7 @@ int sig;
 }
 
 /* called by signal interrupt or terminate to clean things up */
-void bibi(n)
-int n;
+void bibi(int n)
 {
 	if (Zmodem)
 		zmputs(Attn);
@@ -253,9 +252,7 @@ int n;
 	exit(128+n);
 }
 
-int main(argc, argv)
-int argc;
-char *argv[];
+int main(int argc, char *argv[])
 {
 	register char *cp;
 	register int npats;
@@ -398,9 +395,7 @@ int usage()
  *  Debugging information output interface routine
  */
 /* VARARGS1 */
-void vfile(f, a, b, c)
-register char *f,*a,*b,*c;
-
+void vfile(char *f, char *a, char *b, char *c)
 {
 	if (Verbose > 2) {
 		fprintf(stderr, f, a, b, c);
@@ -415,9 +410,7 @@ register char *f,*a,*b,*c;
 char *rbmsg =
 "%s ready. To begin transfer, type \"%s file ...\" to your modem program\r\n\n";
 
-int wcreceive(argc, argp)
-int argc;
-char **argp;
+int wcreceive(int argc, char **argp)
 {
 	register int c;
 
@@ -479,9 +472,10 @@ fubar:
  * Fetch a pathname from the other end as a C ctyle ASCIZ string.
  * Length is indeterminate as long as less than Blklen
  * A null string represents no more files (YMODEM)
+ *
+ * Parameter rpn is for receiving a pathname
  */
-int wcrxpn(rpn)
-char *rpn;	/* receive a pathname */
+int wcrxpn(char *rpn)
 {
 	register int c;
 
@@ -567,9 +561,7 @@ int wcrx()
  *    (Caller must do that when he is good and ready to get next sector)
  */
 
-int wcgetsec(rxbuf, maxtime)
-char *rxbuf;
-int maxtime;
+int wcgetsec(char *rxbuf, int maxtime)
 {
 	register int checksum, wcj, firstch;
 	register unsigned short oldcrc;
@@ -668,8 +660,7 @@ humbug:
  *
  * timeout is in tenths of seconds
  */
-int readline(timeout)
-int timeout;
+int readline(int timeout)
 {
 	register int n;
 	static char *cdq;	/* pointer for removing chars from linbuf */
@@ -730,8 +721,7 @@ void purgeline()
 /*
  * Process incoming file information header
  */
-int procheader(name)
-char *name;
+int procheader(char *name)
 {
 	register char *openmode, *p;
 
@@ -846,8 +836,7 @@ char *name;
  * it's because some required directory was not present, and if
  * so, create all required dirs.
  */
-int make_dirs(pathname)
-register char *pathname;
+int make_dirs(char *pathname)
 {
 	register char *p;		/* Points into path */
 	int madeone = 0;		/* Did we do anything yet? */
@@ -890,9 +879,7 @@ register char *pathname;
 /*
  * Make a directory.  Compatible with the mkdir() system call on 4.2BSD.
  */
-int makedir(dpath, dmode)
-char *dpath;
-int dmode;
+int makedir(char *dpath, int dmode)
 {
 	int cpid, status;
 	struct stat statbuf;
@@ -941,9 +928,7 @@ int dmode;
  *  If not in binary mode, carriage returns, and all characters
  *  starting with CPMEOF are discarded.
  */
-int putsec(buf, n)
-char *buf;
-register int n;
+int putsec(char *buf, int n)
 {
 	register char *p;
 
@@ -972,8 +957,7 @@ register int n;
 /*
  *  Send a character to modem.  Small is beautiful.
  */
-void sendline(c)
-int c;
+void sendline(int c)
 {
 	char d;
 
@@ -991,8 +975,7 @@ void flushmo() {}
 
 
 /* make string s lower case */
-void uncaps(s)
-register char *s;
+void uncaps(char *s)
 {
 	for ( ; *s; ++s)
 		if (isupper(*s))
@@ -1001,8 +984,7 @@ register char *s;
 /*
  * IsAnyLower returns TRUE if string s has lower case letters.
  */
-int IsAnyLower(s)
-register char *s;
+int IsAnyLower(char *s)
 {
 	for ( ; *s; ++s)
 		if (islower(*s))
@@ -1015,8 +997,7 @@ register char *s;
  * returns pointer to token within string if found, NULL otherwise
  */
 char *
-substr(s, t)
-register char *s,*t;
+substr(char *s, char *t)
 {
 	register char *ss,*tt;
 	/* search for first char of token */
@@ -1036,8 +1017,7 @@ register char *s,*t;
  * Log an error
  */
 /*VARARGS1*/
-void zperr(s,p,u)
-char *s, *p, *u;
+void zperr(char *s, char *p, char *u)
 {
 	if (Verbose <= 0)
 		return;
@@ -1064,8 +1044,7 @@ void canit()
 }
 
 
-void report(sct)
-int sct;
+void report(int sct)
 {
 	if (Verbose>1)
 		fprintf(stderr,"%03d%c",sct,sct%10? ' ' : '\r');
@@ -1077,8 +1056,7 @@ int sct;
  * If called as [-][dir/../]rzCOMMAND set the pipe flag
  * If called as rb use YMODEM protocol
  */
-void chkinvok(s)
-char *s;
+void chkinvok(char *s)
 {
 	register char *p;
 
@@ -1106,8 +1084,7 @@ char *s;
 /*
  * Totalitarian Communist pathname processing
  */
-void checkpath(name)
-char *name;
+void checkpath(char *name)
 {
 	if (Restricted) {
 		if (fopen(name, "r") != NULL) {
@@ -1436,8 +1413,7 @@ moredata:
  * Send a string to the modem, processing for \336 (sleep 1 sec)
  *   and \335 (break signal)
  */
-void zmputs(s)
-char *s;
+void zmputs(char *s)
 {
 	register int c;
 
@@ -1516,8 +1492,7 @@ void ackbibi()
 /*
  * Local console output simulation
  */
-void bttyout(c)
-int c;
+void bttyout(int c)
 {
 	if (Verbose || Fromcu)
 		putc(c, stderr);
@@ -1527,8 +1502,7 @@ int c;
 /*
  * Strip leading ! if present, do shell escape. 
  */
-int sys2(s)
-register char *s;
+int sys2(char *s)
 {
 	if (*s == '!')
 		++s;
@@ -1537,8 +1511,7 @@ register char *s;
 /*
  * Strip leading ! if present, do exec.
  */
-void exec2(s)
-register char *s;
+void exec2(char *s)
 {
 	if (*s == '!')
 		++s;
