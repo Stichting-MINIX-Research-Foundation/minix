@@ -1890,7 +1890,6 @@
 ./usr/lib/cawf/mnx.mac			minix-sys
 ./usr/lib/cawf/ms.mac			minix-sys
 ./usr/lib/compat_minix.pc		minix-sys
-./usr/lib/cpp				minix-sys
 ./usr/lib/crontab			minix-sys
 ./usr/lib/crt0.o			minix-sys
 ./usr/lib/crtbegin.o			minix-sys
