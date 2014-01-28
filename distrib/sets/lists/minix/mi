@@ -234,10 +234,12 @@
 ./usr/bin/bzip2				minix-sys
 ./usr/bin/bzip2recover			minix-sys
 ./usr/bin/c++				minix-sys	gcccmds
+./usr/bin/c++				minix-sys	llvm
 ./usr/bin/cal				minix-sys
 ./usr/bin/calendar			minix-sys
 ./usr/bin/cawf				minix-sys
 ./usr/bin/cc				minix-sys	gcccmds
+./usr/bin/cc				minix-sys	llvm
 ./usr/bin/cc1				minix-sys	gcccmds
 ./usr/bin/cc1obj			minix-sys	gcccmds
 ./usr/bin/cc1plus			minix-sys	gcccmds
@@ -266,6 +268,7 @@
 ./usr/bin/compress			minix-sys
 ./usr/bin/cpio				minix-sys
 ./usr/bin/cpp				minix-sys	gcccmds
+./usr/bin/cpp				minix-sys	llvm
 ./usr/bin/cprofalyze			minix-sys
 ./usr/bin/crc				minix-sys
 ./usr/bin/cron				minix-sys

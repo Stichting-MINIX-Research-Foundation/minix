@@ -10,7 +10,13 @@ NOMAN=		# defined
 
 CPPFLAGS+=	-I${BACKENDOBJ}
 
+.if defined(__MINIX)
+.if ${HAVE_LLVM:Uno} == "no"
+SYMLINKS+=	g++ ${BINDIR}/c++
+.endif # ${HAVE_LLVM:Uno} == "no"
+.else
 LINKS+=		${BINDIR}/g++ ${BINDIR}/c++
+.endif # defined(__MINIX)
 
 .include "../Makefile.frontend"
 

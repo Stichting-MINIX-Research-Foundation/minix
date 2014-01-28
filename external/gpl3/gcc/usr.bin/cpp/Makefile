@@ -3,7 +3,13 @@
 # For ../Makefile.inc and bsd.own.mk
 .include <bsd.init.mk>
 
+.if defined(__MINIX)
+# In case of installation of both clang and GCC, we want to be able to
+# switch which one is the default by adapting the cc, c++ & cpp symlinks
+PROG=		gcpp
+.else
 PROG=		cpp
+.endif # defined(__MINIX)
 SRCS=		gcc.c cppspec.c prefix.c version.c
 
 # XXX
@@ -26,7 +32,13 @@ CPPFLAGS.gcc.c+=	-I${GCCARCH} -I${BACKENDOBJ} -I. \
 		-DDEFAULT_TARGET_MACHINE=\"${MACHINE_GNU_PLATFORM}\" \
 		-DCONFIGURE_SPECS="\"\""
 
+.if defined(__MINIX)
+.if ${HAVE_LLVM:Uno} == "no"
+SYMLINKS=	gcpp ${BINDIR}/cpp
+.endif # ${HAVE_LLVM:Uno} == "no"
+.else
 LINKS=		${BINDIR}/cpp ${BINDIR}/gcpp
+.endif # defined(__MINIX)
 
 TEXINFO=	cpp.texi
 INFOFLAGS=	-I${DIST}/gcc/doc -I${DIST}/gcc/doc/include -I.

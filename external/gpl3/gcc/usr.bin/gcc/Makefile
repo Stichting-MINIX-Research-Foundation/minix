@@ -7,7 +7,13 @@ SRCS=		gccspec.c
 
 CPPFLAGS+=	-I${BACKENDOBJ}
 
+.if defined(__MINIX)
+.if ${HAVE_LLVM:Uno} == "no"
+SYMLINKS+=	gcc ${BINDIR}/cc
+.endif # ${HAVE_LLVM:Uno} == "no"
+.else
 LINKS+=		${BINDIR}/gcc ${BINDIR}/cc 
+.endif # defined(__MINIX)
 
 MAN=		gcc.1
 MLINKS=		gcc.1 cc.1 gcc.1 g++.1 gcc.1 c++.1

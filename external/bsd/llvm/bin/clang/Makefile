@@ -6,6 +6,12 @@ NOMAN=		yes
 .if !defined(HOSTPROG)
 SYMLINKS+=	clang ${BINDIR}/clang++
 SYMLINKS+=	clang ${BINDIR}/clang-cpp
+
+# if defined(__MINIX)
+SYMLINKS+=	clang ${BINDIR}/cc
+SYMLINKS+=	clang ${BINDIR}/c++
+SYMLINKS+=	clang ${BINDIR}/cpp
+# endif # defined(__MINIX)
 .endif
 
 .include <bsd.init.mk>
