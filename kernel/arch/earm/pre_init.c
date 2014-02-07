@@ -14,7 +14,7 @@
 #include "string.h"
 #include "arch_proto.h"
 #include "direct_utils.h"
-#include "serial.h"
+#include "bsp_serial.h"
 #include "glo.h"
 #include <machine/multiboot.h>
 
@@ -385,7 +385,7 @@ kinfo_t *pre_init(int argc, char **argv)
 
 	bootargs = argv[1];
 	set_machine_id(bootargs);
-	omap3_ser_init();
+	bsp_ser_init();
 	/* Get our own copy boot params pointed to by ebx.
 	 * Here we find out whether we should do serial output.
 	 */

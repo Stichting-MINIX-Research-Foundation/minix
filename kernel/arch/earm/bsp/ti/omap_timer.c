@@ -9,8 +9,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "arch_proto.h"
-#include "omap_timer.h"
-#include "omap_intr.h"
+#include "bsp_timer.h"
+#include "omap_timer_registers.h"
+#include "omap_intr_registers.h"
+#include "bsp_intr.h"
 
 /* interrupt handler hook */
 static irq_hook_t omap3_timer_hook;
@@ -129,7 +131,7 @@ static struct omap_timer *fr_timer;
 
 static int done = 0;
 
-int omap3_register_timer_handler(const irq_handler_t handler)
+int bsp_register_timer_handler(const irq_handler_t handler)
 {
 	/* Initialize the CLOCK's interrupt hook. */
 	omap3_timer_hook.proc_nr_e = NONE;
@@ -137,7 +139,7 @@ int omap3_register_timer_handler(const irq_handler_t handler)
 
 	put_irq_handler(&omap3_timer_hook, timer->irq_nr, handler);
 	/* only unmask interrupts after registering */
-	omap3_irq_unmask(timer->irq_nr);
+	bsp_irq_unmask(timer->irq_nr);
 
 	return 0;
 }
@@ -212,7 +214,7 @@ void omap3_frclock_stop()
 }
 
 
-void omap3_timer_init(unsigned freq)
+void bsp_timer_init(unsigned freq)
 {
 	/* we only support 1ms resolution */
 	u32_t tisr;
@@ -262,9 +264,11 @@ void omap3_timer_init(unsigned freq)
 	/* Start timer */
 	mmio_set(timer->base + timer->regs->TCLR,
 	    OMAP3_TCLR_OVF_TRG|OMAP3_TCLR_AR|OMAP3_TCLR_ST);
+	/* also initilize the free runnning timer */
+	omap3_frclock_init();
 }
 
-void omap3_timer_stop()
+void bsp_timer_stop()
 {
 	mmio_clear(timer->base + timer->regs->TCLR, OMAP3_TCLR_ST);
 }
@@ -302,7 +306,7 @@ static void frc_overflow_check(u32_t cur_frc)
 	prev_frc_valid = 1;
 }
 
-void omap3_timer_int_handler()
+void bsp_timer_int_handler()
 {
 	/* Clear all interrupts */
 	u32_t tisr,now;

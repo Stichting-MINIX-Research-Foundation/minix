@@ -19,7 +19,8 @@
 #include "arch_proto.h"
 #include "kernel/proto.h"
 #include "kernel/debug.h"
-#include "omap_timer.h"
+#include "bsp_timer.h"
+#include "bsp/ti/omap_timer_registers.h"
 
 
 #define HASPT(procptr) ((procptr)->p_seg.p_ttbr != 0)
@@ -681,6 +682,9 @@ void arch_proc_init(struct proc *pr, const u32_t ip, const u32_t sp, char *name)
 	pr->p_reg.sp = sp;
 }
 
+/* TODO keesj: rewrite the free running clock to use callbacks
+ * the current implementation introduces a two-way depedency
+*/
 static int frclock_index = -1,
 	usermapped_glo_index = -1,
 	usermapped_index = -1, first_um_idx = -1;
@@ -895,7 +899,8 @@ int kern_req_phys_map( phys_bytes base_address, vir_bytes io_size,
 /*
  * Callback implementation where the id given to the
  * kern_phys_map is a pointer to the io map base address.
- * this implementation will change that base address.
+ * this implementation will just change that base address.
+ * once that area is remapped.
  */
 int kern_phys_map_mapped_ptr(vir_bytes id, phys_bytes address){
 	*((vir_bytes*)id) = address;

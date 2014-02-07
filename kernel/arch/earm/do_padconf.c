@@ -4,14 +4,14 @@
 #if USE_PADCONF
 
 /* get arch specific arch_padconf_set() */
-#include "omap_padconf.h"
+#include "bsp_padconf.h"
 
 /*===========================================================================*
  *                                do_padconf                                 *
  *===========================================================================*/
 int do_padconf(struct proc *caller_ptr, message *m_ptr)
 {
-	return arch_padconf_set(m_ptr->PADCONF_PADCONF, m_ptr->PADCONF_MASK,
+	return bsp_padconf_set(m_ptr->PADCONF_PADCONF, m_ptr->PADCONF_MASK,
 	    m_ptr->PADCONF_VALUE);
 }
 

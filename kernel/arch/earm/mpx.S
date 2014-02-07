@@ -27,7 +27,7 @@
 #include <machine/multiboot.h>
 #include <machine/ipcconst.h>
 #include <machine/cpu.h>
-#include "omap_intr.h"
+#include "bsp_intr.h"
 
 #include "arch_proto.h" /* K_STACK_SIZE */
 
@@ -138,7 +138,7 @@ irq_entry_from_user:
 	bl	_C_LABEL(context_stop)
 
 	/* call handler */
-	bl	_C_LABEL(omap3_irq_handle)	/* omap3_irq_handle(void) */
+	bl	_C_LABEL(bsp_irq_handle)	/* bsp_irq_handle(void) */
 
 	add	sp, sp, #4
 	pop	{fp}    /* caller proc ptr */
@@ -153,7 +153,7 @@ irq_entry_from_kernel:
 	bl	_C_LABEL(context_stop_idle)
 
 	/* call handler */
-	bl	_C_LABEL(omap3_irq_handle)	/* omap3_irq_handle(void) */
+	bl	_C_LABEL(bsp_irq_handle)	/* bsp_irq_handle(void) */
 
 	/* data synchronization barrier */
 	dsb

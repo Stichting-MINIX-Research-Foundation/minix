@@ -19,15 +19,14 @@
 #include "kernel/smp.h"
 #endif
 
-#include "omap_timer.h"
-#include "omap_intr.h"
+#include "bsp_timer.h"
+#include "bsp_intr.h"
 
 static unsigned tsc_per_ms[CONFIG_MAX_CPUS];
 
 int init_local_timer(unsigned freq)
 {
-	omap3_timer_init(freq);
-	omap3_frclock_init();
+	bsp_timer_init(freq);
 
 	if (BOARD_IS_BBXM(machine.board_id)) {
 		tsc_per_ms[0] = 16250;
@@ -42,12 +41,12 @@ int init_local_timer(unsigned freq)
 
 void stop_local_timer(void)
 {
-	omap3_timer_stop();
+	bsp_timer_stop();
 }
 
 void arch_timer_int_handler(void)
 {
-	omap3_timer_int_handler();
+	bsp_timer_int_handler();
 }
 
 void cycles_accounting_init(void)
@@ -123,7 +122,7 @@ void restart_local_timer(void)
 
 int register_local_timer_handler(const irq_handler_t handler)
 {
-	return omap3_register_timer_handler(handler);
+	return bsp_register_timer_handler(handler);
 }
 
 u64_t ms_2_cpu_time(unsigned ms)
