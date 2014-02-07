@@ -3,7 +3,6 @@
  * similar to the read_tsc functions. On hardware we could actually make use
  * of the timer overflow counter, but emulator doesn't emulate it. */
 
-#include "omap_timer_registers.h"
 #include <minix/minlib.h>
 #include <minix/sysutil.h>
 #include <minix/type.h>

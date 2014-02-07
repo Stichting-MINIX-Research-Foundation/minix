@@ -15,9 +15,8 @@
 
 #include "archconst.h"
 #include "arch_proto.h"
-#include "serial.h"
-#include "omap_rtc.h"
-#include "omap_reset.h"
+#include "bsp_reset.h"
+#include "bsp_serial.h"
 #include "kernel/proc.h"
 #include "kernel/debug.h"
 #include "direct_utils.h"
@@ -35,7 +34,7 @@ halt_cpu(void)
 void
 reset(void)
 {
-	omap3_reset();
+	bsp_reset(); /* should not exit */
 	direct_print("Reset not supported.");
 	while (1);
 }
@@ -43,26 +42,7 @@ reset(void)
 void
 poweroff(void)
 {
-
-/*
- * The am335x can signal an external power management chip to cut the power
- * by toggling the PMIC_POWER_EN pin. It might fail if there isn't an
- * external PMIC or if the PMIC hasn't been configured to respond to toggles.
- * The only way to pull the pin low is via ALARM2 (see TRM 20.3.3.8).
- * At this point PM should have already signaled readclock to set the alarm.
- */
- if (BOARD_IS_BB(machine.board_id)) {
-	/* Powers down the SoC within 3 seconds */
-	direct_print("PMIC Power-Off in 3 Seconds\n");
-
-	/* rtc was frozen to prevent premature power-off, unfreeze it now */
-	omap3_rtc_run();
-
-	/* wait for the alarm to go off and PMIC to disable power to SoC */
-	while (1);
-
-  }
-
+	bsp_poweroff();
 	/* fallback option: hang */
 	direct_print("Unable to power-off this device.");
 	while (1);
@@ -97,7 +77,7 @@ arch_shutdown(int how)
 void
 ser_putc(char c)
 {
-	omap3_ser_putc(c);
+	bsp_ser_putc(c);
 }
 
 #endif

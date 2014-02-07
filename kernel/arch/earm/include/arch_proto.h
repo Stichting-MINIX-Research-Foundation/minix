@@ -113,6 +113,7 @@ int kern_req_phys_map( phys_bytes base_address, vir_bytes io_size,
 int kern_phys_map_ptr( phys_bytes base_address, vir_bytes io_size, 
 	kern_phys_map * priv, vir_bytes ptr);
 
+void arch_ser_init();
 
 /* functions defined in architecture-independent kernel source. */
 #include "kernel/proto.h"

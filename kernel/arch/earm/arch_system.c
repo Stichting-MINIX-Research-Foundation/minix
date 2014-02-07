@@ -14,19 +14,16 @@
 
 #include "archconst.h"
 #include "arch_proto.h"
-#include "serial.h"
 #include "kernel/proc.h"
 #include "kernel/debug.h"
-#include "omap_ccnt.h"
-#include "omap_padconf.h"
-#include "omap_rtc.h"
-#include "omap_reset.h"
+#include "ccnt.h"
+#include "bsp_init.h"
+#include "bsp_serial.h"
 
 #include "glo.h"
 
 void * k_stacks;
 
-static void ser_init(void);
 
 void fpu_init(void)
 {
@@ -112,31 +109,22 @@ void arch_init(void)
 	tss_init(0, get_k_stack_top(0));
 #endif
 
-	ser_init();
 
         /* enable user space access to cycle counter */
         /* set cycle counter to 0: ARM ARM B4.1.113 and B4.1.117 */
         asm volatile ("MRC p15, 0, %0, c9, c12, 0\t\n": "=r" (value));
-        value |= OMAP_PMCR_C; /* Reset counter */
-        value |= OMAP_PMCR_E; /* Enable counter hardware */
+        value |= PMU_PMCR_C; /* Reset counter */
+        value |= PMU_PMCR_E; /* Enable counter hardware */
         asm volatile ("MCR p15, 0, %0, c9, c12, 0\t\n": : "r" (value));
 
         /* enable CCNT counting: ARM ARM B4.1.116 */
-        value = OMAP_PMCNTENSET_C; /* Enable PMCCNTR cycle counter */
+        value = PMU_PMCNTENSET_C; /* Enable PMCCNTR cycle counter */
         asm volatile ("MCR p15, 0, %0, c9, c12, 1\t\n": : "r" (value));
 
         /* enable cycle counter in user mode: ARM ARM B4.1.124 */
-        value = OMAP_PMUSERENR_EN;
+        value = PMU_PMUSERENR_EN;
         asm volatile ("MCR p15, 0, %0, c9, c14, 0\t\n": : "r" (value));
-
-	/* map memory for padconf */
-	arch_padconf_init();
-
-	/* map memory for rtc */
-	omap3_rtc_init();
-
-	/* map memory for reset control */
-	omap3_reset_init();
+	bsp_init();
 }
 
 /*===========================================================================*
@@ -188,8 +176,9 @@ void get_randomness(struct k_randomness *rand, int source)
 {
 }
 
-static void ser_init(void)
+void arch_ser_init(void)
 {
+	bsp_ser_init();
 }
 
 /*===========================================================================*/

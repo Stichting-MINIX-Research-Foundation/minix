@@ -113,9 +113,6 @@ void bsp_finish_booting(void)
   NOT_REACHABLE;
 }
 
-#ifdef __arm__
-#include "omap_serial.h"
-#endif
 
 /*===========================================================================*
  *			kmain 	                             		*
@@ -136,7 +133,7 @@ void kmain(kinfo_t *local_cbi)
    machine.board_id = get_board_id_by_name(env_get(BOARDVARNAME));
 #ifdef __arm__
   /* We want to initialize serial before we do any output */
-  omap3_ser_init();
+  arch_ser_init();
 #endif
   /* We can talk now */
   printf("MINIX booting\n");

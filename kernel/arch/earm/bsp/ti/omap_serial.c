@@ -42,7 +42,7 @@ static kern_phys_map serial_phys_map;
  * The serial driver also gets used in the "pre_init" stage before the kernel is loaded
  * in high memory so keep in mind there are two copies of this code in the kernel.
  */
-void omap3_ser_init()
+void bsp_ser_init()
 {
 	if(BOARD_IS_BBXM(machine.board_id)) {
 		omap_serial.base = OMAP3_DM37XX_DEBUG_UART_BASE;
@@ -56,7 +56,7 @@ void omap3_ser_init()
 	assert(omap_serial.base);
 }
 
-void omap3_ser_putc(char c)
+void bsp_ser_putc(char c)
 {
 	int i;
 	assert(omap_serial.base);

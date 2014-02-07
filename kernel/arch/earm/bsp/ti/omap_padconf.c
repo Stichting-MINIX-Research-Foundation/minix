@@ -12,7 +12,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "omap_padconf.h"
+#include "bsp_padconf.h"
 
 struct omap_padconf
 {
@@ -48,7 +48,7 @@ static struct omap_padconf *omap_padconf;
 static kern_phys_map padconf_phys_map;
 
 int
-arch_padconf_set(u32_t padconf, u32_t mask, u32_t value)
+bsp_padconf_set(u32_t padconf, u32_t mask, u32_t value)
 {
 	/* check that the value will be inside the padconf memory range */
 	if (padconf >= (omap_padconf->size - omap_padconf->offset)) {
@@ -61,7 +61,7 @@ arch_padconf_set(u32_t padconf, u32_t mask, u32_t value)
 }
 
 void
-arch_padconf_init(void)
+bsp_padconf_init(void)
 {
 	int x;
 	omap_padconf = NULL;

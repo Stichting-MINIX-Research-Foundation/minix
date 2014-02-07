@@ -39,6 +39,7 @@ CPPFLAGS+= -I${.OBJDIR}/..
 # Machine-dependent headers, order is important! 
 CPPFLAGS+= -I${.CURDIR}/arch/${MACHINE_ARCH}
 CPPFLAGS+= -I${.CURDIR}/arch/${MACHINE_ARCH}/include
+CPPFLAGS+= -I${.CURDIR}/arch/${MACHINE_ARCH}/bsp/include
 CPPFLAGS+= -I${NETBSDSRCDIR}/include/arch/${MACHINE_ARCH}/include
 
 .include "system/Makefile.inc"

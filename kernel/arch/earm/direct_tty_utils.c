@@ -1,7 +1,7 @@
 
 #include "kernel/kernel.h"
 #include "direct_utils.h"
-#include "serial.h"
+#include "bsp_serial.h"
 #include "glo.h"
 
 void direct_cls(void)
@@ -12,7 +12,7 @@ void direct_cls(void)
 void direct_print_char(char c)
 {
 	if(c == '\n')
-		ser_putc('\r');
+		bsp_ser_putc('\r');
 	ser_putc(c);
 }
 

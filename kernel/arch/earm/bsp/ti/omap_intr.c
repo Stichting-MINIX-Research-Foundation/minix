@@ -11,7 +11,7 @@
 #include "arch_proto.h"
 #include "hw_intr.h"
 
-#include "omap_intr.h"
+#include "omap_intr_registers.h"
 static struct omap_intr {
 	vir_bytes base;
 	int size;
@@ -36,7 +36,7 @@ int intr_init(const int auto_eoi)
 	return 0;
 }
 
-void omap3_irq_handle(void) {
+void bsp_irq_handle(void) {
 	/* Function called from assembly to handle interrupts */
 
 	/* get irq */
@@ -47,12 +47,12 @@ void omap3_irq_handle(void) {
 	mmio_write(omap_intr.base + OMAP3_INTCPS_CONTROL,OMAP3_INTR_NEWIRQAGR);
 }
 
-void omap3_irq_unmask(int irq)
+void bsp_irq_unmask(int irq)
 {
 	mmio_write(OMAP3_INTR_MIR_CLEAR(omap_intr.base, irq >> 5), 1 << (irq & 0x1f));
 }
 
-void omap3_irq_mask(const int irq)
+void bsp_irq_mask(const int irq)
 {
 	mmio_write(OMAP3_INTR_MIR_SET(omap_intr.base, irq >> 5), 1 << (irq & 0x1f));
 }

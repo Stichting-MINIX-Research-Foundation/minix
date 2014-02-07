@@ -233,11 +233,4 @@
 
 #define OMAP3_AM335X_NR_IRQ_VECTORS    125 
 
-#ifndef __ASSEMBLY__
-
-void omap3_irq_unmask(int irq);
-void omap3_irq_mask(int irq);
-
-#endif /* __ASSEMBLY__ */
-
 #endif /* _OMAP_INTR_H */
