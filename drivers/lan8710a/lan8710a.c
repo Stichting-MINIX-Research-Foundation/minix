@@ -3,12 +3,12 @@
 #include <net/gen/ether.h>
 #include <net/gen/eth_io.h>
 #include <minix/sysutil.h>
+#include <minix/board.h>
 #include "assert.h"
 #include "lan8710a.h"
 #include "lan8710a_reg.h"
 
 /* Local functions */
-#ifdef AM335X
 static void lan8710a_readv_s(message *m, int from_int);
 static void lan8710a_writev_s(message *m, int from_int);
 static void lan8710a_conf(message *m);
@@ -45,7 +45,6 @@ static lan8710a_t lan8710a_state;
 static void sef_local_startup(void);
 static int sef_cb_init_fresh(int type, sef_init_info_t *info);
 static void sef_cb_signal_handler(int signal);
-#endif /* AM335X */
 
 /*============================================================================*
  *				main					      *
@@ -53,52 +52,56 @@ static void sef_cb_signal_handler(int signal);
 int
 main(int argc, char *argv[])
 {
-#ifdef AM335X
+	
 	/* Local variables */
 	message m;
 	int r;
 	int ipc_status;
+	struct machine  machine ;
 
-	/* SEF local startup */
-	env_setargs(argc, argv);
-	sef_local_startup();
+	sys_getmachine(&machine);
+	if ( BOARD_IS_BB(machine.board_id)) {
 
-	/* Main driver loop */
-	for (;;) {
-		r = netdriver_receive(ANY, &m, &ipc_status);
-		if (r != OK) {
-			panic("netdriver_receive failed: %d", r);
-		}
+		/* SEF local startup */
+		env_setargs(argc, argv);
+		sef_local_startup();
 
-		if (is_ipc_notify(ipc_status)) {
-			switch (_ENDPOINT_P(m.m_source)) {
-			case HARDWARE:
-				lan8710a_interrupt(&m);
-				break;
+		/* Main driver loop */
+		for (;;) {
+			r = netdriver_receive(ANY, &m, &ipc_status);
+			if (r != OK) {
+				panic("netdriver_receive failed: %d", r);
 			}
-		} else {
-			switch (m.m_type) {
-			case DL_WRITEV_S:
-				lan8710a_writev_s(&m, FALSE);
-				break;
-			case DL_READV_S:
-				lan8710a_readv_s(&m, FALSE);
-				break;
-			case DL_CONF:
-				lan8710a_conf(&m);
-				break;
-			case DL_GETSTAT_S:
-				lan8710a_getstat(&m);
-				break;
-			default:
-				panic("Illegal message: %d", m.m_type);
+
+			if (is_ipc_notify(ipc_status)) {
+				switch (_ENDPOINT_P(m.m_source)) {
+				case HARDWARE:
+					lan8710a_interrupt(&m);
+					break;
+				}
+			} else {
+				switch (m.m_type) {
+				case DL_WRITEV_S:
+					lan8710a_writev_s(&m, FALSE);
+					break;
+				case DL_READV_S:
+					lan8710a_readv_s(&m, FALSE);
+					break;
+				case DL_CONF:
+					lan8710a_conf(&m);
+					break;
+				case DL_GETSTAT_S:
+					lan8710a_getstat(&m);
+					break;
+				default:
+					panic("Illegal message: %d", m.m_type);
+				}
 			}
 		}
 	}
-#endif /* AM335X */
 	return EXIT_SUCCESS;
 }
-#ifdef AM335X
+
 /*============================================================================*
  *				sef_local_startup			      *
  *============================================================================*/
@@ -1236,4 +1239,3 @@ lan8710a_t *e;
 		panic("send() failed: %d", r);
 	}
 }
-#endif /* AM335X */
