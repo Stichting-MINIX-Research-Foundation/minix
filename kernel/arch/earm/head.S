@@ -28,20 +28,20 @@ MINIX:
 	b multiboot_init
 
 multiboot_init:
-	ldr	sp, =load_stack_start /* make usable stack */
+	ldr	sp, =load_stack_start	/* make usable stack */
 	mov	fp, #0
 	bl	_C_LABEL(pre_init)
 
 	/* Kernel is mapped high now and ready to go, with
-	 * the boot info pointer returned in r0. Set the
-	 * highly mapped stack, initialize it, push the boot
-	 * info pointer and jump to the highly mapped kernel.
+	 * the boot info pointer returned by pre_init in r0.
+	 * Set the highly mapped stack and initialize it.
+	 *
+	 * Afther that call kmain with r0 still pointing to boot info
 	 */
 	ldr	sp, =k_initial_stktop
 	mov	r1, #0
-	push	{r1}	/* Terminate stack */
-	/* r0 holds kinfo_t ptr */
-	ldr	r2, =_C_LABEL(kmain)
+	push	{r1}			/* Terminate stack */
+	ldr	r2, =_C_LABEL(kmain)	/* r0 holds kinfo_t ptr */
 	bx	r2
 
 	/* not reached */

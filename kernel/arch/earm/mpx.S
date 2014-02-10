@@ -34,42 +34,52 @@
 IMPORT(svc_stack)
 
 /*
- * Adjust lr, switch to SVC mode, and push pc/psr when exception triggered
- * The 'lr_offset' argument holds the adjustment. It differs based on
- * which mode the CPU is in.
+ * Adjust lr, push pc/psr when exception triggered and switch to SVC mode
+ * The 'lr_offset' argument holds the adjustment.
+ *
+ * When an instruction causes the ARM core to enter the exception handler
+ * the value of pc is stored in the link register (lr). By default on ARM
+ * the program counter is 3 instruction a head of the current instruction
+ * being executed (because of the 3 stage pipeline). Depending on where in
+ * the pipeline the exception happens lr will need to de adjusted to find
+ * the proper return address.
  */
 .macro switch_to_svc lr_offset
-	sub	lr, lr, #\lr_offset
-	srsdb	sp!, #MODE_SVC
-	cps	#MODE_SVC
+	sub	lr, lr, #\lr_offset	/* do the adjustment */
+	srsdb	sp!, #MODE_SVC		/* store the saved the return */
+					/* address and program status */
+					/* register onto the kernel stack */
+					/* Also modify the stack pointer. */
+	cps	#MODE_SVC		/* do the switch to SVC. */
 .endm
 
 /*
- * Test if the exception/interrupt occured in the kernel.
+ * Test if the exception/interrupt occurred in the kernel.
  * Jump to 'label' argument if it occurred in the kernel.
  *
- * NOTE: switch_to_svc must be called first
- */
+ * NOTE: switch_to_svc must be called first */
 .macro test_int_in_kernel, label
 	push	{r3}
-	ldr	r3, [sp, #8] /* spsr */
-	orr	r3, r3, #(PSR_F | PSR_I) /* mask interrupts on return */
-	str	r3, [sp, #8] /* spsr */
-	and	r3, r3, #PSR_MODE_MASK
-	cmp	r3, #MODE_USR
+	ldr	r3, [sp, #8] 			/* get spsr. */
+	orr	r3, r3, #(PSR_F | PSR_I)	/* mask interrupts on return. */
+	str	r3, [sp, #8]			/* store spsr. */
+	and	r3, r3, #PSR_MODE_MASK		/* mask the ARM mode. */
+	cmp	r3, #MODE_USR			/* compare it to user mode. */
 	pop	{r3}
-	bne	\label  /* In-kernel handling */
+	bne	\label				/* In-kernel handling. */
 .endm
 
 /* Save the register context to the proc structure */
 .macro save_process_ctx
-	add	sp, sp, #8	/* srsdb pushed cpsr and pc on the stack */
-	ldr	lr, [sp]	/* lr = proc_ptr */
-	stm	lr, {r0-r14}^	/* proc_ptr->p_reg.r0-r14 = r0-r14 */
-	ldr	r12, [sp, #-8]	/* r12 = pc stored on the stack */
-	str	r12, [lr, #PCREG] /* proc_ptr->p_reg.pc = r12 */
-	ldr	r12, [sp, #-4]	/* r12 = cpsr stored on the stack */
-	str	r12, [lr, #PSREG] /* proc_ptr->p_reg.psr = r12 */
+	add	sp, sp, #8		/* We expect srsdb pushed cpsr and lr on */
+					/* the stack. */
+	ldr	lr, [sp]		/* lr = proc_ptr. */
+	stm	lr, {r0-r14}^		/* store the user mode registers */
+					/* proc_ptr->p_reg.r0-r14 = r0-r14. */
+	ldr	r12, [sp, #-8]		/* r12 = pc stored on the stack. */
+	str	r12, [lr, #PCREG]	/* proc_ptr->p_reg.pc = r12. */
+	ldr	r12, [sp, #-4]		/* r12 = cpsr stored on the stack. */
+	str	r12, [lr, #PSREG]	/* proc_ptr->p_reg.psr = r12. */
 .endm
 
 .macro exception_handler exc_name, exc_num, lr_offset
@@ -80,14 +90,13 @@ ENTRY(\exc_name\()_entry)
 \exc_name\()entry_from_user:
 	save_process_ctx
 
-	/* save the pointer to the current process */
-	ldr	fp, [sp]
-	/* save the exception pc (saved lr_user) */
-	add	r4, fp, #PCREG
+	ldr	fp, [sp]	/* save the pointer to the current process. */
+	add	r4, fp, #PCREG	/* save the exception pc (saved lr_user) */
+				/* r4-r9 are callee save. */
 
 	/* stop user process cycles */
-	mov	r0, fp  /* first param: caller proc ptr */
-	mov	fp, #0  /* for stack trace */
+	mov	r0, fp		/* first param: caller proc ptr. */
+	mov	fp, #0		/* for stack trace. */
 	bl	_C_LABEL(context_stop)
 
 	/*
@@ -95,17 +104,16 @@ ENTRY(\exc_name\()_entry)
 	 * vector number pushed by the vector handler just before calling
 	 * exception_entry and call the exception handler.
 	 */
-	mov	r0, #0	/* it's not a nested exception */
-	mov	r1, r4          /* saved lr */
+	mov	r0, #0		/* it is not a nested exception. */
+	mov	r1, r4		/* saved lr. */
 	mov 	r2, #\exc_num	/* vector number */
 	bl 	_C_LABEL(exception_handler)
-
 	b	_C_LABEL(switch_to_user)
 
 \exc_name\()_entry_nested:
 	push	{r0-r12, lr}
-	mov	r0, #1  /* it's a nested exception */
-	add	r1, sp, #56     /* saved lr */
+	mov	r0, #1		/* it is a nested exception. */
+	add	r1, sp, #56	/* saved lr */
 	mov	r2, #\exc_num	/* vector number */
 	bl	_C_LABEL(exception_handler)
 	pop	{r0-r12, lr}
@@ -129,22 +137,20 @@ irq_entry_from_user:
 	/* save the pointer to the current process */
 	ldr	fp, [sp]
 
-	push	{fp}    /* save caller proc ptr */
-	sub	sp, sp, #4	/* maintain stack alignment */
+	push	{fp}				/* save caller proc ptr. */
+	sub	sp, sp, #4			/* maintain stack alignment. */
 
 	/* stop user process cycles */
-	mov	r0, fp  /* first param: caller proc ptr */
-	mov	fp, #0  /* for stack trace */
+	mov	r0, fp  			/* first param: caller proc ptr. */
+	mov	fp, #0				/* for stack trace. */
 	bl	_C_LABEL(context_stop)
 
 	/* call handler */
 	bl	_C_LABEL(bsp_irq_handle)	/* bsp_irq_handle(void) */
 
 	add	sp, sp, #4
-	pop	{fp}    /* caller proc ptr */
-
-	/* data synchronization barrier */
-	dsb
+	pop	{fp}				/* caller proc ptr. */
+	dsb					/* data synchronization barrier. */
 
 	b	_C_LABEL(switch_to_user)
 
@@ -153,11 +159,9 @@ irq_entry_from_kernel:
 	bl	_C_LABEL(context_stop_idle)
 
 	/* call handler */
-	bl	_C_LABEL(bsp_irq_handle)	/* bsp_irq_handle(void) */
+	bl	_C_LABEL(bsp_irq_handle)	/* bsp_irq_handle(void). */
 
-	/* data synchronization barrier */
-	dsb
-
+	/* data synchronization barrier */ dsb 
 	pop	{r0-r12, lr}
 	rfeia	sp!
 
@@ -166,6 +170,7 @@ irq_entry_from_kernel:
  * supervisor call (SVC) kernel entry point
  */
 ENTRY(svc_entry)
+	/*  Store the LR and the SPSR of the current mode onto the SVC stack */
 	srsdb	sp!, #MODE_SVC
 	save_process_ctx
 
@@ -187,20 +192,20 @@ ENTRY(svc_entry)
  */
 ENTRY(kernel_call_entry)
 	/*
-	 * pass the syscall arguments from userspace to the handler.
+	 * pass the syscall arguments from userspace to the handler. 
 	 * save_process_ctx() does not clobber these registers, they are still
-	 * set as the userspace has set them
+	 * set as the userspace has set them.
 	 */
-	push	{fp}    /* save caller proc ptr */
-	push	{r0}    /* save msg ptr so it's not clobbered */
+	push	{fp}			/* save caller proc ptr. */
+	push	{r0}			/* save msg ptr so it's not clobbered. */
 
 	/* stop user process cycles */
-	mov	r0, fp  /* first param: caller proc ptr */
-	mov	fp, #0  /* for stack trace */
+	mov	r0, fp			/* first param: caller proc ptr */
+	mov	fp, #0			/* for stack trace */
 	bl	_C_LABEL(context_stop)
 
-	pop	{r0} /* first param: msg ptr */
-	pop	{r1} /* second param: caller proc ptr */
+	pop	{r0} 			/* first param: msg ptr. */
+	pop	{r1} 			/* second param: caller proc ptr. */
 	bl	_C_LABEL(kernel_call)
 
 	b	_C_LABEL(switch_to_user)
@@ -214,19 +219,19 @@ ENTRY(ipc_entry)
 	 * save_process_ctx() does not clobber these registers, they are still
 	 * set as the userspace have set them
 	 */
-	push	{fp}    /* save caller proc ptr */
-	push	{r0-r2} /* save regs so they're not clobbered */
+	push	{fp}			/* save caller proc ptr. */
+	push	{r0-r2}			/* save regs so they're not clobbered. */
 
 	/* stop user process cycles */
-	mov	r0, fp  /* first param: caller proc ptr */
-	mov	fp, #0  /* for stack trace */
+	mov	r0, fp  		/* first param: caller proc ptr. */
+	mov	fp, #0  		/* for stack trace. */
 	bl	_C_LABEL(context_stop)
 
 	pop	{r0-r2} /* restore regs */
 	bl	_C_LABEL(do_ipc)
 
 	/* restore the current process pointer and save the return value */
-	pop	{fp}    /* caller proc ptr */
+	pop	{fp}			/* caller proc ptr. */
 	str	r0, [fp, #REG0]
 
 	b	_C_LABEL(switch_to_user)
@@ -240,7 +245,7 @@ ENTRY(restore_user_context)
 
 	/* Set SPSR and LR for return */
 	ldr r0, [sp, #PSREG]
-	msr spsr_fsxc, r0
+	msr spsr_fsxc, r0  		/* flags , status, extension control. */
 	ldr lr, [sp, #PCREG]
 
 	/* Restore user-mode registers from proc struct */
@@ -250,7 +255,7 @@ ENTRY(restore_user_context)
 	ldr sp, [sp]
 
 	/* To user mode! */
-	movs pc, lr
+	movs pc, lr		/* preferred way of returning from svc */
 
 /*===========================================================================*/
 /*				data					     */

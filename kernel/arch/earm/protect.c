@@ -75,6 +75,7 @@ int booting_cpu = 0;
 
 void prot_init()
 {
+	/* tell the HW where we stored our vector table */
 	write_vbar((reg_t)&exc_vector_table);
 
 	/* Set up a new post-relocate bootstrap pagetable so that
