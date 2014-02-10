@@ -4,6 +4,7 @@
 #include <minix/mmio.h>
 #include <minix/clkconf.h>
 #include <minix/sysutil.h>
+#include <minix/board.h>
 
 #include <sys/mman.h>
 #include <sys/types.h>
@@ -197,15 +198,18 @@ omap_rtc_init(void)
 	int rtc_rev, major, minor;
 	struct minix_mem_range mr;
 
-#ifndef AM335X
-	/* Only the am335x (BeagleBone & BeagleBone Black) is supported ATM.
-	 * The dm37xx (BeagleBoard-xM) doesn't have a real time clock
-	 * built-in. Instead, it uses the RTC on the PMIC. A driver for
-	 * the BeagleBoard-xM's PMIC still needs to be developed.
-	 */
-	log_warn(&log, "unsupported processor\n");
-	return ENOSYS;
-#endif /* !AM335X */
+	struct machine  machine ;
+	sys_getmachine(&machine);
+
+	if(! BOARD_IS_BB(machine.board_id)){
+		/* Only the am335x (BeagleBone & BeagleBone Black) is supported ATM.
+		 * The dm37xx (BeagleBoard-xM) doesn't have a real time clock
+		 * built-in. Instead, it uses the RTC on the PMIC. A driver for
+		 * the BeagleBoard-xM's PMIC still needs to be developed.
+		 */
+		log_warn(&log, "unsupported processor\n");
+		return ENOSYS;
+	}
 
 	if (pwr_off_in_progress)
 		return EINVAL;
