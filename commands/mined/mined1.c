@@ -1349,13 +1349,14 @@ int get_line(int fd, register char *buffer)
   if (read_chars <= 0) {
   	if (buffer == begin)
   		return ERRORS;
-  	if (*(buffer - 1) != '\n')
-  		if (loading == TRUE) /* Add '\n' to last line of file */
+  	if (*(buffer - 1) != '\n') {
+  		if (loading == TRUE) { /* Add '\n' to last line of file */
   			*buffer++ = '\n';
-  		else {
+  		} else {
   			*buffer = '\0';
   			return NO_LINE;
   		}
+	}
   }
 
   *buffer = '\0';
