@@ -26,14 +26,21 @@ INSTALL_TARGET+=install-gprof
 .endif
 
 .if defined(__MINIX)
+ALL_TARGET+=	all-gold
+INSTALL_TARGET+=install-gold
+
 CONFIGURE_ARGS+=	\
-	--with-ld=default \
-	--with-lto
-#LSC: FIXME Not yet gold, need to create
-# external/gpl3/binutils/usr.bin/gold directory & needed Makefiles
-#	--with-gold=yes
-#ALL_TARGET+=	all-gold
-#INSTALL_TARGET+=	install-gold
+	--enable-lto \
+	--enable-plugins
+.if ${USE_BITCODE:Uno} == "yes"
+CONFIGURE_ARGS+= \
+	--enable-ld=yes \
+	--enable-gold=default
+.else
+CONFIGURE_ARGS+= \
+	--enable-ld=default \
+	--enable-gold=yes
+.endif # ${USE_BITCODE:Uno} == "yes"
 .endif # defined(__MINIX)
 .include "${.CURDIR}/../Makefile.gnuhost"
 

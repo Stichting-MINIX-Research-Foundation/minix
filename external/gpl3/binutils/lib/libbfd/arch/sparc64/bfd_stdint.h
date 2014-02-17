@@ -2,7 +2,7 @@
 /* Generated from: 	NetBSD: mknative-binutils,v 1.8 2011/09/25 04:00:58 christos Exp  */
 /* Generated from: NetBSD: mknative.common,v 1.9 2007/02/05 18:26:01 apb Exp  */
 
-/* generated for  sparc64--netbsd-gcc (NetBSD nb1 20110620) 4.5.3 */
+/* generated for  sparc64--netbsd-gcc (NetBSD nb1 20120916) 4.5.4 */
 
 #ifndef GCC_GENERATED_STDINT_H
 #define GCC_GENERATED_STDINT_H 1

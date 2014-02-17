@@ -1,0 +1,13 @@
+--- dist/gold/i386.cc.orig	2014-03-03 15:51:57.725314830 +0100
++++ dist/gold/i386.cc	2014-03-03 16:09:42.514935341 +0100
+@@ -3813,8 +3813,8 @@
+ public:
+   Target_selector_i386()
+     : Target_selector_freebsd(elfcpp::EM_386, 32, false,
+-			      "elf32-i386", "elf32-i386-freebsd",
+-			      "elf_i386")
++			      "elf_i386_minix", "elf32-i386-freebsd",
++			      "elf_i386_minix")
+   { }
+ 
+   Target*

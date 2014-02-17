@@ -1,11 +1,9 @@
-#	$NetBSD: Makefile,v 1.1 2009/08/18 20:22:19 skrll Exp $
+#	$NetBSD: Makefile,v 1.2 2013/09/29 14:20:37 christos Exp $
 
 PROG=		objdump
 
-.if defined(__MINIX)
-CPPFLAGS.objdump.c+=	-DOBJDUMP_PRIVATE_VECTORS=""
-.endif # defined(__MINIX)
-
 .include <bsd.own.mk>
+
+CPPFLAGS+=-DOBJDUMP_PRIVATE_VECTORS=""
 
 .include "${.CURDIR}/../common/Makefile.prog"

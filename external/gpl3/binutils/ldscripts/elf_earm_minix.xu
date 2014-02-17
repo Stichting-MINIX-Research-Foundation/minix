@@ -60,8 +60,8 @@ SECTIONS
     }
   .init         0 :
   {
-    KEEP (*(.init))
-  } =0
+    KEEP (*(SORT_NONE(.init)))
+  }
   .plt          0 : { *(.plt) }
   .iplt         0 : { *(.iplt) }
   .text         0 :
@@ -69,11 +69,11 @@ SECTIONS
     *(.text .stub)
     /* .gnu.warning sections are handled specially by elf32.em.  */
     *(.gnu.warning)
-  } =0
+  }
   .fini         0 :
   {
-    KEEP (*(.fini))
-  } =0
+    KEEP (*(SORT_NONE(.fini)))
+  }
   .rodata       0 : { *(.rodata) }
   .rodata1      0 : { *(.rodata1) }
   .ARM.extab 0 : { *(.ARM.extab) }
@@ -154,6 +154,8 @@ SECTIONS
   /* DWARF 3 */
   .debug_pubtypes 0 : { *(.debug_pubtypes) }
   .debug_ranges   0 : { *(.debug_ranges) }
+  /* DWARF Extension.  */
+  .debug_macro    0 : { *(.debug_macro) }
     .stack        0 :
   {
     *(.stack)

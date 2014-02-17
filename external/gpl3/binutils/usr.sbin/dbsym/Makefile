@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2009/09/08 07:08:02 skrll Exp $
+#	$NetBSD: Makefile,v 1.11 2013/09/29 14:20:38 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -12,28 +12,29 @@ BFDSUBDIR=	lib
 PROG=		dbsym
 MAN=		dbsym.8
 
-CPPFLAGS+=	-I${BFDDIR} -I${DIST}/bfd -I${DIST}/binutils -I${DIST}/include
+CPPFLAGS+=	-I${DIST}/bfd -I${DIST}/binutils -I${DIST}/include
 
-.if !defined(HOSTPROG) && ${MKPICLIB} != "no"
-DPADD+=		${BFDDIR}/libbfd_pic.a
+.if !defined(HOSTPROG)
+PROGDPLIBS+=	bfd	${TOP}/${BFDSUBDIR}/libbfd
+PROGDPLIBS+=	iberty	${TOP}/${BFDSUBDIR}/libiberty
 .else
+CPPFLAGS+=	-I${BFDDIR}
 DPADD+=		${BFDDIR}/libbfd.a
-.endif
 LDADD+=		-L${BFDDIR} -lbfd
-
 DPADD+=		${IBERTYDIR}/libiberty.a
 LDADD+=		-L${IBERTYDIR} -liberty
+.endif
+
+.include <bsd.prog.mk>
 
 .ifndef HOSTPROG
-.include	"${TOP}/${BFDSUBDIR}/libbfd/arch/${MACHINE_ARCH}/defs.mk"
-
-BFDDIR!=	cd ${TOP}/${BFDSUBDIR}/libbfd && ${PRINTOBJDIR}
-IBERTYDIR!=	cd ${TOP}/${BFDSUBDIR}/libiberty && ${PRINTOBJDIR}
-
-CPPFLAGS+=	-I${TOP}/${BFDSUBDIR}/libbfd/arch/${MACHINE_ARCH} ${G_INCLUDES}
+.include	"${TOP}/${BFDSUBDIR}/libbfd/arch/${BINUTILS_MACHINE_ARCH}/defs.mk"
+CPPFLAGS+=	-I${TOP}/${BFDSUBDIR}/libbfd/arch/${BINUTILS_MACHINE_ARCH} ${G_INCLUDES}
 LDADD+=		-lintl
 DPADD+=		${LIBINTL}
 .endif # HOSTPROG
-.endif # MKBINUTILS != no
 
-.include <bsd.prog.mk>
+LDADD+=		-lz
+# No DPADD because we don't know the format and we didn't build it.
+
+.endif # MKBINUTILS != no

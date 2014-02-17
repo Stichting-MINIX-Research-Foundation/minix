@@ -1,10 +1,10 @@
-diff -rNU3 dist/binutils/dwarf.c dist.new/binutils/dwarf.c
---- dist/binutils/dwarf.c	Wed Nov  7 17:24:51 2012
-+++ dist.new/binutils/dwarf.c	Wed Nov  7 15:50:59 2012
-@@ -28,6 +28,7 @@
- #include "elf/common.h"
+diff -rNU3 dist/binutils/dwarf.c dist.mxm/binutils/dwarf.c
+--- dist/binutils/dwarf.c	2012-07-02 16:35:33.000000000 +0200
++++ dist.mxm/binutils/dwarf.c	2014-02-17 16:11:55.310119155 +0100
+@@ -29,6 +29,7 @@
  #include "dwarf2.h"
  #include "dwarf.h"
+ #include "gdb/gdb-index.h"
 +#include "getopt.h"
  
  static const char *regname (unsigned int regno, int row);

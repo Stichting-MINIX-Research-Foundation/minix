@@ -5,6 +5,13 @@
 /* config.h.  Generated from config.in by configure.  */
 /* config.in.  Generated from configure.in by autoheader.  */
 
+/* Check that config.h is #included before system headers
+   (this works only for glibc, but that should be enough).  */
+#if defined(__GLIBC__) && !defined(__FreeBSD_kernel__) && !defined(__CONFIG_H__)
+#  error config.h must be #included before system headers
+#endif
+#define __CONFIG_H__ 1
+
 /* Define if building universal (internal helper macro) */
 /* #undef AC_APPLE_UNIVERSAL_BUILD */
 
@@ -51,12 +58,36 @@
    */
 /* #undef HAVE_ALLOCA_H */
 
+/* Define to 1 if you have the declaration of `free', and to 0 if you don't.
+   */
+#define HAVE_DECL_FREE 1
+
+/* Define to 1 if you have the declaration of `getenv', and to 0 if you don't.
+   */
+#define HAVE_DECL_GETENV 1
+
 /* Is the prototype for getopt in <unistd.h> in the expected format? */
 #define HAVE_DECL_GETOPT 1
+
+/* Define to 1 if you have the declaration of `malloc', and to 0 if you don't.
+   */
+#define HAVE_DECL_MALLOC 1
 
 /* Define to 1 if you have the declaration of `mempcpy', and to 0 if you
    don't. */
 #define HAVE_DECL_MEMPCPY 0
+
+/* Define to 1 if you have the declaration of `realloc', and to 0 if you
+   don't. */
+#define HAVE_DECL_REALLOC 1
+
+/* Define to 1 if you have the declaration of `stpcpy', and to 0 if you don't.
+   */
+#define HAVE_DECL_STPCPY 1
+
+/* Define to 1 if you have the declaration of `strstr', and to 0 if you don't.
+   */
+#define HAVE_DECL_STRSTR 1
 
 /* Define to 1 if you have the declaration of `vsnprintf', and to 0 if you
    don't. */
@@ -71,8 +102,14 @@
 /* Define to 1 if you have the <inttypes.h> header file. */
 #define HAVE_INTTYPES_H 1
 
+/* Define if your <locale.h> file defines LC_MESSAGES. */
+#define HAVE_LC_MESSAGES 1
+
 /* Define to 1 if you have the <limits.h> header file. */
 #define HAVE_LIMITS_H 1
+
+/* Define to 1 if you have the <locale.h> header file. */
+#define HAVE_LOCALE_H 1
 
 /* Define to 1 if you have the <memory.h> header file. */
 #define HAVE_MEMORY_H 1
@@ -82,6 +119,9 @@
 
 /* Define to 1 if you have the `sbrk' function. */
 #define HAVE_SBRK 1
+
+/* Define to 1 if you have the `setlocale' function. */
+#define HAVE_SETLOCALE 1
 
 /* Define to 1 if you have the <stdint.h> header file. */
 #define HAVE_STDINT_H 1
@@ -96,10 +136,10 @@
 #define HAVE_STRING_H 1
 
 /* Define if <sys/stat.h> has struct stat.st_mtim.tv_nsec */
-/* #undef HAVE_ST_MTIM_TV_NSEC */
+#define HAVE_ST_MTIM_TV_NSEC 1
 
 /* Define if <sys/stat.h> has struct stat.st_mtim.tv_sec */
-/* #undef HAVE_ST_MTIM_TV_SEC */
+#define HAVE_ST_MTIM_TV_SEC 1
 
 /* Define to 1 if you have the <sys/stat.h> header file. */
 #define HAVE_SYS_STAT_H 1
@@ -224,6 +264,9 @@
 /* Using strict COFF? */
 /* #undef STRICTCOFF */
 
+/* Define if you can safely include both <string.h> and <strings.h>. */
+#define STRING_WITH_STRINGS 1
+
 /* Target alias. */
 #define TARGET_ALIAS "alpha--netbsd"
 
@@ -283,7 +326,7 @@
 /* #undef USING_CGEN */
 
 /* Version number of package */
-#define VERSION "2.21.1"
+#define VERSION "2.23.2"
 
 /* Define WORDS_BIGENDIAN to 1 if your processor stores words with the most
    significant byte first (like Motorola and SPARC, unlike Intel). */

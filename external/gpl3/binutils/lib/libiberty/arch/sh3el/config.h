@@ -114,6 +114,9 @@
 /* Define to 1 if you have the `getpagesize' function. */
 #define HAVE_GETPAGESIZE 1
 
+/* Define to 1 if you have the `getrlimit' function. */
+#define HAVE_GETRLIMIT 1
+
 /* Define to 1 if you have the `getrusage' function. */
 #define HAVE_GETRUSAGE 1
 
@@ -174,9 +177,6 @@
 /* Define to 1 if you have the `on_exit' function. */
 /* #undef HAVE_ON_EXIT */
 
-/* Define if you have prctl PR_SET_NAME */
-/* #undef HAVE_PRCTL_SET_NAME */
-
 /* Define to 1 if you have the <process.h> header file. */
 /* #undef HAVE_PROCESS_H */
 
@@ -212,6 +212,9 @@
 
 /* Define to 1 if you have the `setproctitle' function. */
 #define HAVE_SETPROCTITLE 1
+
+/* Define to 1 if you have the `setrlimit' function. */
+#define HAVE_SETRLIMIT 1
 
 /* Define to 1 if you have the `sigsetmask' function. */
 #define HAVE_SIGSETMASK 1
@@ -308,6 +311,9 @@
 
 /* Define to 1 if you have the <sys/param.h> header file. */
 #define HAVE_SYS_PARAM_H 1
+
+/* Define to 1 if you have the <sys/prctl.h> header file. */
+/* #undef HAVE_SYS_PRCTL_H */
 
 /* Define to 1 if you have the <sys/pstat.h> header file. */
 /* #undef HAVE_SYS_PSTAT_H */

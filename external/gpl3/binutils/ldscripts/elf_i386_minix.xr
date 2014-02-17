@@ -37,19 +37,19 @@ SECTIONS
     }
   .init         0 :
   {
-    KEEP (*(.init))
-  } =0x90909090
+    KEEP (*(SORT_NONE(.init)))
+  }
   .plt          0 : { *(.plt) *(.iplt) }
   .text         0 :
   {
     *(.text .stub)
     /* .gnu.warning sections are handled specially by elf32.em.  */
     *(.gnu.warning)
-  } =0x90909090
+  }
   .fini         0 :
   {
-    KEEP (*(.fini))
-  } =0x90909090
+    KEEP (*(SORT_NONE(.fini)))
+  }
   .rodata       0 : { *(.rodata) }
   .rodata1      0 : { *(.rodata1) }
   .eh_frame_hdr : { *(.eh_frame_hdr) }
@@ -128,5 +128,7 @@ SECTIONS
   /* DWARF 3 */
   .debug_pubtypes 0 : { *(.debug_pubtypes) }
   .debug_ranges   0 : { *(.debug_ranges) }
+  /* DWARF Extension.  */
+  .debug_macro    0 : { *(.debug_macro) }
   .gnu.attributes 0 : { KEEP (*(.gnu.attributes)) }
 }

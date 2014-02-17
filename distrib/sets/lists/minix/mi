@@ -1721,8 +1721,8 @@
 ./usr/lib/libaudiodriver_pic.a		minix-sys
 ./usr/lib/libbdev.a			minix-sys
 ./usr/lib/libbdev_pic.a			minix-sys
-./usr/lib/libbfd.so.12.0		minix-sys	binutils
-./usr/lib/libbfd.so.12			minix-sys	binutils
+./usr/lib/libbfd.so.13.0		minix-sys	binutils
+./usr/lib/libbfd.so.13			minix-sys	binutils
 ./usr/lib/libblockdriver.a		minix-sys
 ./usr/lib/libblockdriver_pic.a		minix-sys
 ./usr/lib/libbz2.a			minix-sys
@@ -1848,8 +1848,8 @@
 ./usr/lib/libobjc.so			minix-sys	gcccmds
 ./usr/lib/libobjc.so.3.0		minix-sys	gcccmds
 ./usr/lib/libobjc.so.3			minix-sys	gcccmds
-./usr/lib/libopcodes.so.5.0		minix-sys	binutils
-./usr/lib/libopcodes.so.5		minix-sys	binutils
+./usr/lib/libopcodes.so.6.0		minix-sys	binutils
+./usr/lib/libopcodes.so.6		minix-sys	binutils
 ./usr/lib/libprop.a			minix-sys
 ./usr/lib/libprop_pic.a			minix-sys
 ./usr/lib/libprop.so			minix-sys

@@ -5,6 +5,13 @@
 /* config.h.  Generated from config.in by configure.  */
 /* config.in.  Generated from configure.in by autoheader.  */
 
+/* Check that config.h is #included before system headers
+    (this works only for glibc, but that should be enough).  */
+#if defined(__GLIBC__) && !defined(__FreeBSD_kernel__) && !defined(__CONFIG_H__)
+#  error config.h must be #included before system headers
+#endif
+#define __CONFIG_H__ 1
+
 /* Name of host specific core header file to include in elf.c. */
 /* #undef CORE_HEADER */
 
@@ -138,7 +145,7 @@
 #define HAVE_MEMORY_H 1
 
 /* Define to 1 if you have a working `mmap' system call. */
-/* #undef HAVE_MMAP */
+#define HAVE_MMAP 1
 
 /* Define to 1 if you have the `mprotect' function. */
 /* #undef HAVE_MPROTECT */
@@ -250,6 +257,9 @@
 /* Define if <sys/procfs.h> has win32_pstatus_t. */
 /* #undef HAVE_WIN32_PSTATUS_T */
 
+/* Define to 1 if you have the <windows.h> header file. */
+/* #undef HAVE_WINDOWS_H */
+
 /* Define to 1 if you have the <zlib.h> header file. */
 #define HAVE_ZLIB_H 1
 
@@ -291,7 +301,7 @@
 #define SIZEOF_LONG_LONG 8
 
 /* The size of `off_t', as computed by sizeof. */
-#define SIZEOF_OFF_T 4
+#define SIZEOF_OFF_T 8
 
 /* The size of `short', as computed by sizeof. */
 /* #undef SIZEOF_SHORT */
@@ -349,7 +359,7 @@
 
 
 /* Version number of package */
-#define VERSION "2.22"
+#define VERSION "2.23.2"
 
 /* Number of bits in a file offset, on hosts where this is settable. */
 /* #undef _FILE_OFFSET_BITS */

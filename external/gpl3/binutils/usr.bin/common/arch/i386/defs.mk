@@ -2,13 +2,13 @@
 # Generated from: 	NetBSD: mknative-binutils,v 1.8 2011/09/25 04:00:58 christos Exp 
 # Generated from: NetBSD: mknative.common,v 1.9 2007/02/05 18:26:01 apb Exp 
 #
-G_VERSION=2.22
+G_VERSION=2.23.2
 G_DEFS=-DHAVE_CONFIG_H
 G_INCLUDES=
 G_PROGRAMS=size objdump ar  strings ranlib objcopy   addr2line readelf  elfedit nm-new strip-new cxxfilt
 G_man_MANS=addr2line.1  ar.1  dlltool.1  nlmconv.1  nm.1  objcopy.1  objdump.1  ranlib.1  readelf.1  size.1  strings.1  strip.1  elfedit.1  windres.1  windmc.1  c++filt.1
 G_TEXINFOS=binutils.texi
-G_PKGVERSION=(NetBSD Binutils nb1)
+G_PKGVERSION=(NetBSD Binutils nb1) 
 G_REPORT_BUGS_TEXI=@uref{http://www.NetBSD.org/support/send-pr.html}
 G_size_OBJECTS=size.o bucomm.o version.o filemode.o
 G_size_DEPENDENCIES= ../libiberty/libiberty.a ../bfd/libbfd.la

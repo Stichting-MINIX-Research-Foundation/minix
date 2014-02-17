@@ -24,8 +24,8 @@ SECTIONS
   .rela.fini      : { *(.rela.fini) }
   .rel.rodata     : { *(.rel.rodata .rel.rodata.* .rel.gnu.linkonce.r.*) }
   .rela.rodata    : { *(.rela.rodata .rela.rodata.* .rela.gnu.linkonce.r.*) }
-  .rel.data.rel.ro   : { *(.rel.data.rel.ro* .rel.gnu.linkonce.d.rel.ro.*) }
-  .rela.data.rel.ro   : { *(.rela.data.rel.ro* .rela.gnu.linkonce.d.rel.ro.*) }
+  .rel.data.rel.ro   : { *(.rel.data.rel.ro .rel.data.rel.ro.* .rel.gnu.linkonce.d.rel.ro.*) }
+  .rela.data.rel.ro   : { *(.rela.data.rel.ro .rela.data.rel.ro.* .rela.gnu.linkonce.d.rel.ro.*) }
   .rel.data       : { *(.rel.data .rel.data.* .rel.gnu.linkonce.d.*) }
   .rela.data      : { *(.rela.data .rela.data.* .rela.gnu.linkonce.d.*) }
   .rel.tdata	  : { *(.rel.tdata .rel.tdata.* .rel.gnu.linkonce.td.*) }
@@ -58,12 +58,13 @@ SECTIONS
     }
   .init           :
   {
-    KEEP (*(.init))
-  } =0
+    KEEP (*(SORT_NONE(.init)))
+  }
   .plt            : { *(.plt) }
   .iplt           : { *(.iplt) }
   .text           :
   {
+    PROVIDE_HIDDEN (__eprol = .);
     *(.text.unlikely .text.*_unlikely)
     *(.text.exit .text.exit.*)
     *(.text.startup .text.startup.*)
@@ -72,11 +73,11 @@ SECTIONS
     /* .gnu.warning sections are handled specially by elf32.em.  */
     *(.gnu.warning)
     *(.glue_7t) *(.glue_7) *(.vfp11_veneer) *(.v4_bx)
-  } =0
+  }
   .fini           :
   {
-    KEEP (*(.fini))
-  } =0
+    KEEP (*(SORT_NONE(.fini)))
+  }
   PROVIDE (__etext = .);
   PROVIDE (_etext = .);
   PROVIDE (etext = .);
@@ -95,7 +96,7 @@ SECTIONS
   .exception_ranges*) }
   /* Adjust the address for the data segment.  We want to adjust up to
      the same address within the page on the next page up.  */
-  . = ALIGN(CONSTANT (MAXPAGESIZE)) + (. & (CONSTANT (MAXPAGESIZE) - 1));
+  . = ALIGN (CONSTANT (MAXPAGESIZE)) - ((CONSTANT (MAXPAGESIZE) - .) & (CONSTANT (MAXPAGESIZE) - 1)); . = DATA_SEGMENT_ALIGN (CONSTANT (MAXPAGESIZE), CONSTANT (COMMONPAGESIZE));
   /* Exception handling  */
   .eh_frame       : ONLY_IF_RW { KEEP (*(.eh_frame)) }
   .gcc_except_table   : ONLY_IF_RW { *(.gcc_except_table .gcc_except_table.*) }
@@ -147,17 +148,19 @@ SECTIONS
     KEEP (*(.dtors))
   }
   .jcr            : { KEEP (*(.jcr)) }
-  .data.rel.ro : { *(.data.rel.ro.local* .gnu.linkonce.d.rel.ro.local.*) *(.data.rel.ro* .gnu.linkonce.d.rel.ro.*) }
+  .data.rel.ro : { *(.data.rel.ro.local* .gnu.linkonce.d.rel.ro.local.*) *(.data.rel.ro .data.rel.ro.* .gnu.linkonce.d.rel.ro.*) }
   .dynamic        : { *(.dynamic) }
+  . = DATA_SEGMENT_RELRO_END (0, .);
   .got            : { *(.got.plt) *(.igot.plt) *(.got) *(.igot) }
   .data           :
   {
-    __data_start = . ;
+    PROVIDE (__data_start = .);
     *(.data .data.* .gnu.linkonce.d.*)
     SORT(CONSTRUCTORS)
   }
   .data1          : { *(.data1) }
   _edata = .; PROVIDE (edata = .);
+  . = .;
   __bss_start = .;
   __bss_start__ = .;
   .bss            :
@@ -177,6 +180,7 @@ SECTIONS
   . = ALIGN(32 / 8);
   __end__ = . ;
   _end = .; PROVIDE (end = .);
+  . = DATA_SEGMENT_END (.);
   /* Stabs debugging sections.  */
   .stab          0 : { *(.stab) }
   .stabstr       0 : { *(.stabstr) }
@@ -213,6 +217,8 @@ SECTIONS
   /* DWARF 3 */
   .debug_pubtypes 0 : { *(.debug_pubtypes) }
   .debug_ranges   0 : { *(.debug_ranges) }
+  /* DWARF Extension.  */
+  .debug_macro    0 : { *(.debug_macro) }
     .stack         0x80000 :
   {
     _stack = .;

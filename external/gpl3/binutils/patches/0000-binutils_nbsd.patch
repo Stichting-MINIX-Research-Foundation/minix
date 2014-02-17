@@ -1,58 +1,301 @@
+diff -rNU3 dist.orig/bfd/aoutx.h dist.nbsd/bfd/aoutx.h
+--- dist.orig/bfd/aoutx.h	Tue May  1 16:07:33 2012
++++ dist.nbsd/bfd/aoutx.h	Wed Feb 19 16:39:32 2014
+@@ -762,7 +762,7 @@
+       break;
+ 
+     case bfd_arch_arm:
+-      if (machine == 0)
++      if (machine == 0 || machine == 5)
+ 	arch_flags = M_ARM;
+       break;
+ 
+diff -rNU3 dist.orig/bfd/archive.c dist.nbsd/bfd/archive.c
+--- dist.orig/bfd/archive.c	Mon Mar 25 08:06:19 2013
++++ dist.nbsd/bfd/archive.c	Wed Feb 19 16:39:32 2014
+@@ -157,6 +157,9 @@
+ #define ar_maxnamelen(abfd) ((abfd)->xvec->ar_max_namelen)
+ 
+ #define arch_eltdata(bfd) ((struct areltdata *) ((bfd)->arelt_data))
++
++static const char * normalize (bfd *, const char *);
++
+ #define arch_hdr(bfd) ((struct ar_hdr *) arch_eltdata (bfd)->arch_header)
+ 
+ /* True iff NAME designated a BSD 4.4 extended name.  */
+@@ -760,7 +763,9 @@
+       /* Pad to an even boundary...
+ 	 Note that last_file->origin can be odd in the case of
+ 	 BSD-4.4-style element with a long odd size.  */
+-      filestart += filestart % 2;
++      if (!strncmp(arch_hdr (last_file)->ar_name, "#1/", 3))
++	size += strlen(normalize(last_file, last_file->filename));
++      filestart += size % 2;
+     }
+ 
+   return _bfd_get_elt_at_filepos (archive, filestart);
+@@ -2180,11 +2185,22 @@
+        current = current->archive_next)
+     {
+       char buffer[DEFAULT_BUFFERSIZE];
+-      bfd_size_type remaining = arelt_size (current);
++      bfd_size_type saved_size = arelt_size (current);
++      bfd_size_type remaining = saved_size;
++      struct ar_hdr *hdr = arch_hdr (current);
+ 
+       /* Write ar header.  */
+       if (!_bfd_write_ar_hdr (arch, current))
+-	return FALSE;
++        return FALSE;
++      /* Write filename if it is a 4.4BSD extended file, and add to size.  */
++      if (!strncmp (hdr->ar_name, "#1/", 3))
++	{
++	  const char *normal = normalize (current, current->filename);
++	  unsigned int thislen = strlen (normal);
++	  if (bfd_write (normal, 1, thislen, arch) != thislen)
++	    return FALSE;
++	  saved_size += thislen;
++	}
+       if (bfd_is_thin_archive (arch))
+ 	continue;
+       if (bfd_seek (current, (file_ptr) 0, SEEK_SET) != 0)
+@@ -2457,11 +2473,19 @@
+ 	{
+ 	  do
+ 	    {
++#if 1
++	      bfd_size_type size = arelt_size (current);
++	      if (!strncmp(arch_hdr (current)->ar_name, "#1/", 3))
++		size += strlen(normalize(current, current->filename));
++	      firstreal += size + sizeof (struct ar_hdr);
++	      firstreal += size % 2;
++#else
+ 	      struct areltdata *ared = arch_eltdata (current);
+ 
+ 	      firstreal += (ared->parsed_size + ared->extra_size
+ 			    + sizeof (struct ar_hdr));
+ 	      firstreal += firstreal % 2;
++#endif
+ 	      current = current->archive_next;
+ 	    }
+ 	  while (current != map[count].u.abfd);
+diff -rNU3 dist.orig/bfd/bfd-in2.h dist.nbsd/bfd/bfd-in2.h
+--- dist.orig/bfd/bfd-in2.h	Tue Sep  4 12:53:41 2012
++++ dist.nbsd/bfd/bfd-in2.h	Wed Feb 19 16:39:32 2014
+@@ -5788,6 +5788,11 @@
+   /* This BFD has been created by the linker and doesn't correspond
+      to any input file.  */
+ #define BFD_LINKER_CREATED 0x2000
++  /* This may be set before writing out a BFD to request that it
++  be written using values for UIDs, GIDs, timestamps, etc. that
++  will be consistent from run to run.  */
++#define BFD_DETERMINISTIC_OUTPUT 0x4000
++
+ 
+   /* This may be set before writing out a BFD to request that it
+      be written using values for UIDs, GIDs, timestamps, etc. that
+diff -rNU3 dist.orig/bfd/coff-alpha.c dist.nbsd/bfd/coff-alpha.c
+--- dist.orig/bfd/coff-alpha.c	Fri Jul 13 14:22:42 2012
++++ dist.nbsd/bfd/coff-alpha.c	Wed Feb 19 16:39:32 2014
+@@ -642,7 +642,9 @@
+     case ALPHA_R_OP_STORE:
+       /* The STORE reloc needs the size and offset fields.  We store
+ 	 them in the addend.  */
++#if 0
+       BFD_ASSERT (intern->r_offset <= 256);
++#endif
+       rptr->addend = (intern->r_offset << 8) + intern->r_size;
+       break;
+ 
 diff -rNU3 dist.orig/bfd/config.bfd dist.nbsd/bfd/config.bfd
---- dist.orig/bfd/config.bfd	2011-07-29 00:35:13.000000000 +0200
-+++ dist.nbsd/bfd/config.bfd	2013-04-08 23:50:35.000000000 +0200
-@@ -523,7 +523,7 @@
-     targ_selvecs=i386bsd_vec
+--- dist.orig/bfd/config.bfd	Tue Sep  4 14:14:59 2012
++++ dist.nbsd/bfd/config.bfd	Wed Feb 19 16:39:32 2014
+@@ -86,6 +86,7 @@
+ i[3-7]86)	 targ_archs=bfd_i386_arch ;;
+ i370)		 targ_archs=bfd_i370_arch ;;
+ lm32)	         targ_archs=bfd_lm32_arch ;;
++m5200|m5407)	 targ_archs=bfd_m68k_arch ;;
+ m6811*|m68hc11*) targ_archs="bfd_m68hc11_arch bfd_m68hc12_arch bfd_m9s12x_arch bfd_m9s12xg_arch" ;;
+ m6812*|m68hc12*) targ_archs="bfd_m68hc12_arch bfd_m68hc11_arch bfd_m9s12x_arch bfd_m9s12xg_arch" ;;
+ m68*)		 targ_archs=bfd_m68k_arch ;;
+@@ -250,17 +251,17 @@
+     targ64_selvecs="bfd_elf32_x86_64_nacl_vec bfd_elf64_x86_64_nacl_vec"
+     targ_archs="$targ_archs bfd_i386_arch"
+     ;;
+-  armeb-*-netbsdelf*)
++  arm*eb-*-netbsdelf*)
+     targ_defvec=bfd_elf32_bigarm_vec
+-    targ_selvecs="bfd_elf32_littlearm_vec armnetbsd_vec"
++    targ_selvecs="bfd_elf32_littlearm_vec armnetbsd_vec armcoff_little_vec armcoff_big_vec"
+     ;;
+-  arm-*-netbsdelf*)
++  arm*-*-netbsdelf*)
+     targ_defvec=bfd_elf32_littlearm_vec
+-    targ_selvecs="bfd_elf32_bigarm_vec armnetbsd_vec"
++    targ_selvecs="bfd_elf32_bigarm_vec armnetbsd_vec armcoff_little_vec armcoff_big_vec"
+     ;;
+   arm-*-netbsd* | arm-*-openbsd*)
+     targ_defvec=armnetbsd_vec
+-    targ_selvecs="bfd_elf32_littlearm_vec bfd_elf32_bigarm_vec"
++    targ_selvecs="bfd_elf32_littlearm_vec bfd_elf32_bigarm_vec armcoff_little_vec armcoff_big_vec"
+     targ_underscore=yes
+     targ_cflags=-D__QNXTARGET__
+     ;;
+@@ -845,12 +846,12 @@
+     # targ_selvecs=m68kmach3_vec
+     # targ_cflags=-DSTAT_FOR_EXEC
+     ;;
+-  m68*-hp*-netbsd*)
++  m68k4k*-*-netbsd*)
+     targ_defvec=m68k4knetbsd_vec
+-    targ_selvecs="m68knetbsd_vec hp300bsd_vec sunos_big_vec"
++    targ_selvecs="m68knetbsd_vec hp300bsd_vec sunos_big_vec bfd_elf32_m68k_vec"
      targ_underscore=yes
      ;;
--  i[3-7]86-*-freebsd* | i[3-7]86-*-kfreebsd*-gnu)
-+  i[3-7]86-*-freebsd* | i[3-7]86-*-kfreebsd*-gnu | i[3-7]86-*-dragonfly*)
-     targ_defvec=bfd_elf32_i386_freebsd_vec
-     targ_selvecs="bfd_elf32_i386_vec i386pei_vec i386coff_vec"
-     targ64_selvecs="bfd_elf64_x86_64_freebsd_vec bfd_elf64_x86_64_vec x86_64pei_vec bfd_elf64_l1om_vec bfd_elf64_l1om_freebsd_vec bfd_elf64_k1om_vec bfd_elf64_k1om_freebsd_vec"
+-  m68*-*-netbsdelf*)
++  m68*-*-netbsdelf* | m5407-*-netbsdelf*)
+     targ_defvec=bfd_elf32_m68k_vec
+     targ_selvecs="m68knetbsd_vec m68k4knetbsd_vec hp300bsd_vec sunos_big_vec"
+     ;;
+@@ -923,6 +924,16 @@
+     targ_defvec=ecoff_big_vec
+     targ_selvecs=ecoff_little_vec
+     ;;
++#ifdef BFD64
++  mips64*el-*-netbsd*)
++    targ_defvec=bfd_elf32_ntradlittlemips_vec
++    targ_selvecs="bfd_elf64_tradbigmips_vec bfd_elf64_tradlittlemips_vec bfd_elf32_ntradbigmips_vec bfd_elf32_tradlittlemips_vec bfd_elf32_tradbigmips_vec"
++    ;;
++  mips64*-*-netbsd*)
++    targ_defvec=bfd_elf32_ntradbigmips_vec
++    targ_selvecs="bfd_elf64_tradbigmips_vec bfd_elf64_tradlittlemips_vec bfd_elf32_ntradlittlemips_vec bfd_elf32_tradlittlemips_vec bfd_elf32_tradbigmips_vec"
++    ;;
++#endif
+   mips*el-*-netbsd*)
+     targ_defvec=bfd_elf32_tradlittlemips_vec
+     targ_selvecs="bfd_elf32_tradbigmips_vec bfd_elf64_tradbigmips_vec bfd_elf64_tradlittlemips_vec ecoff_little_vec ecoff_big_vec"
+@@ -1347,6 +1358,8 @@
+     want64=true
+     ;;
+ 
++#endif
++
+   sh*l*-*-netbsdelf*)
+     targ_defvec=bfd_elf32_shlnbsd_vec
+     targ_selvecs="bfd_elf32_shnbsd_vec shcoff_vec shlcoff_vec bfd_elf32_sh64lnbsd_vec bfd_elf32_sh64nbsd_vec bfd_elf64_sh64lnbsd_vec bfd_elf64_sh64nbsd_vec"
+@@ -1357,8 +1370,6 @@
+     targ_selvecs="bfd_elf32_shlnbsd_vec shcoff_vec shlcoff_vec bfd_elf32_sh64lnbsd_vec bfd_elf32_sh64nbsd_vec bfd_elf64_sh64lnbsd_vec bfd_elf64_sh64nbsd_vec"
+     want64=true
+     ;;
+-#endif
+-
+   sh*-*-netbsdelf*)
+     targ_defvec=bfd_elf32_shnbsd_vec
+     targ_selvecs="bfd_elf32_shlnbsd_vec shcoff_vec shlcoff_vec"
+@@ -1448,11 +1459,11 @@
+     ;;
+   sparc-*-netbsdelf*)
+     targ_defvec=bfd_elf32_sparc_vec
+-    targ_selvecs=sparcnetbsd_vec
++    targ_selvecs="sparcnetbsd_vec sunos_big_vec"
+     ;;
+-  sparc-*-netbsdaout* | sparc-*-netbsd*)
++  sparc-*-netbsd*)
+     targ_defvec=sparcnetbsd_vec
+-    targ_selvecs=bfd_elf32_sparc_vec
++    targ_selvecs="bfd_elf32_sparc_vec sunos_big_vec"
+     targ_underscore=yes
+     ;;
+   sparc-*-openbsd[0-2].* | sparc-*-openbsd3.[0-1])
+@@ -1499,6 +1510,10 @@
+     targ_defvec=bfd_elf64_sparc_vec
+     targ_selvecs="bfd_elf32_sparc_vec sparclinux_vec sunos_big_vec"
+     want64=true
++    ;;
++  sparc64-*-netbsd*)
++    targ_defvec=bfd_elf64_sparc_vec
++    targ_selvecs="bfd_elf32_sparc_vec sparcnetbsd_vec sunos_big_vec"
+     ;;
+   sparc64-*-elf* | sparc64-*-rtems* )
+     targ_defvec=bfd_elf64_sparc_vec
 diff -rNU3 dist.orig/bfd/configure dist.nbsd/bfd/configure
---- dist.orig/bfd/configure	2011-11-21 12:55:48.000000000 +0100
-+++ dist.nbsd/bfd/configure	2013-04-08 23:52:18.000000000 +0200
-@@ -15210,6 +15210,7 @@
-     bfd_elf32_i370_vec)		tb="$tb elf32-i370.lo elf32.lo $elf" ;;
-     bfd_elf32_i386_sol2_vec)	tb="$tb elf32-i386.lo elf-ifunc.lo elf-vxworks.lo elf32.lo $elf" ;;
-     bfd_elf32_i386_freebsd_vec)	tb="$tb elf32-i386.lo elf-ifunc.lo elf-vxworks.lo elf32.lo $elf" ;;
-+    bfd_elf32_i386_dragonfly_vec) tb="$tb elf32-i386.lo elf-vxworks.lo elf32.lo $elf" ;;
-     bfd_elf32_i386_nacl_vec)	tb="$tb elf32-i386.lo elf-ifunc.lo elf-vxworks.lo elf32.lo $elf" ;;
-     bfd_elf32_i386_vxworks_vec)	tb="$tb elf32-i386.lo elf-ifunc.lo elf-vxworks.lo elf32.lo $elf" ;;
-     bfd_elf32_i386_vec)		tb="$tb elf32-i386.lo elf-ifunc.lo elf-vxworks.lo elf32.lo $elf" ;;
-@@ -15374,6 +15375,7 @@
-     x86_64coff_vec)		tb="$tb coff-x86_64.lo cofflink.lo"; target_size=64 ;;
-     i386dynix_vec)		tb="$tb i386dynix.lo aout32.lo" ;;
-     i386freebsd_vec)		tb="$tb i386freebsd.lo aout32.lo" ;;
-+    i386dragonfly_vec)		tb="$tb i386freebsd.lo aout32.lo" ;;
-     i386linux_vec)		tb="$tb i386linux.lo aout32.lo" ;;
-     i386lynx_aout_vec)		tb="$tb i386lynx.lo lynx-core.lo aout32.lo" ;;
-     i386lynx_coff_vec)		tb="$tb cf-i386lynx.lo cofflink.lo lynx-core.lo" ;;
-@@ -16517,6 +16519,8 @@
-   case $ac_option in
-   # Handling of the options.
-   -recheck | --recheck | --rechec | --reche | --rech | --rec | --re | --r)
-+	: Avoid regenerating within pkgsrc
-+	exit 0
-     ac_cs_recheck=: ;;
-   --version | --versio | --versi | --vers | --ver | --ve | --v | -V )
-     $as_echo "$ac_cs_version"; exit ;;
+--- dist.orig/bfd/configure	Mon Mar 25 09:08:07 2013
++++ dist.nbsd/bfd/configure	Wed Feb 19 16:39:32 2014
+@@ -12101,10 +12101,10 @@
+   withval=$with_pkgversion; case "$withval" in
+       yes) as_fn_error "package version not specified" "$LINENO" 5 ;;
+       no)  PKGVERSION= ;;
+-      *)   PKGVERSION="($withval) " ;;
++      *)   PKGVERSION="($withval)\ " ;;
+      esac
+ else
+-  PKGVERSION="(GNU Binutils) "
++  PKGVERSION="(GNU Binutils)\ "
+ 
+ fi
+ 
+@@ -13861,6 +13861,7 @@
+ 	COREFILE=netbsd-core.lo
+ 	;;
+   arm-*-riscix)		COREFILE=trad-core.lo ;;
++  arm*-*-netbsd*)	COREFILE=netbsd-core.lo ;;
+   hppa*-*-hpux*)	COREFILE=hpux-core.lo ;;
+   hppa*-*-hiux*)	COREFILE=hpux-core.lo ;;
+   hppa*-*-mpeix*)	COREFILE=hpux-core.lo ;;
+@@ -13923,7 +13924,7 @@
+ 	COREFILE=trad-core.lo
+ 	TRAD_HEADER='"hosts/i860mach3.h"'
+ 	;;
+-  mips-*-netbsd* | mips*-*-openbsd*)
++  mips*-*-netbsd* | mips*-*-openbsd*)
+ 	COREFILE=netbsd-core.lo
+ 	;;
+   mips-dec-*)
+diff -rNU3 dist.orig/bfd/configure.host dist.nbsd/bfd/configure.host
+--- dist.orig/bfd/configure.host	Fri Dec 31 11:00:52 2010
++++ dist.nbsd/bfd/configure.host	Wed Feb 19 16:39:32 2014
+@@ -57,6 +57,18 @@
+ 
+ m68*-hp-hpux*)		HDEFINES=-DHOST_HP300HPUX ;;
+ 
++sparc64*-*-netbsd*)	host64=true; HOST_64BIT_TYPE=long ;;
++
++x86_64*-*-netbsd*)	host64=true; HOST_64BIT_TYPE=long ;;
++
++*-*-aix*)		HOST_64BIT_TYPE="long long"
++			HOST_U_64BIT_TYPE="unsigned long long"
++			;;
++
++*-*-solaris*)		HOST_64BIT_TYPE="long long"
++			HOST_U_64BIT_TYPE="unsigned long long"
++			;;
++
+ # Some Solaris systems (osol0906 at least) have a libc that doesn't recognise
+ # the "MS-ANSI" code page name, so we define an override for CP_ACP (sets the
+ # default code page used by windres/windmc when not specified by a commandline
 diff -rNU3 dist.orig/bfd/configure.in dist.nbsd/bfd/configure.in
---- dist.orig/bfd/configure.in	2011-11-21 12:55:46.000000000 +0100
-+++ dist.nbsd/bfd/configure.in	2013-04-08 23:50:41.000000000 +0200
-@@ -644,7 +644,7 @@
- tb=
- 
- elf="elf.lo elflink.lo elf-attrs.lo elf-strtab.lo
--     elf-eh-frame.lo dwarf1.lo"
-+     elf-eh-frame.lo dwarf1.lo elf-ifunc.lo"
- 
- for vec in $selvecs
- do
+--- dist.orig/bfd/configure.in	Mon Mar 25 09:08:05 2013
++++ dist.nbsd/bfd/configure.in	Wed Feb 19 16:39:32 2014
+@@ -254,6 +254,7 @@
+ 	COREFILE=netbsd-core.lo
+ 	;;
+   arm-*-riscix)		COREFILE=trad-core.lo ;;
++  arm*-*-netbsd*)	COREFILE=netbsd-core.lo ;;
+   hppa*-*-hpux*)	COREFILE=hpux-core.lo ;;
+   hppa*-*-hiux*)	COREFILE=hpux-core.lo ;;
+   hppa*-*-mpeix*)	COREFILE=hpux-core.lo ;;
+@@ -340,7 +341,7 @@
+ 	COREFILE=trad-core.lo
+ 	TRAD_HEADER='"hosts/i860mach3.h"'
+ 	;;
+-  mips-*-netbsd* | mips*-*-openbsd*)
++  mips*-*-netbsd* | mips*-*-openbsd*)
+ 	COREFILE=netbsd-core.lo
+ 	;;
+   mips-dec-*)
 diff -rNU3 dist.orig/bfd/doc/Makefile.in dist.nbsd/bfd/doc/Makefile.in
---- dist.orig/bfd/doc/Makefile.in	2011-11-21 12:55:49.000000000 +0100
-+++ dist.nbsd/bfd/doc/Makefile.in	2013-04-09 08:17:18.000000000 +0200
+--- dist.orig/bfd/doc/Makefile.in	Mon Mar 25 09:08:08 2013
++++ dist.nbsd/bfd/doc/Makefile.in	Wed Feb 19 16:39:32 2014
 @@ -417,7 +417,9 @@
  clean-libtool:
  	-rm -rf .libs _libs
@@ -64,317 +307,2951 @@ diff -rNU3 dist.orig/bfd/doc/Makefile.in dist.nbsd/bfd/doc/Makefile.in
  	restore=: && backupdir="$(am__leading_dot)am$$$$" && \
  	rm -rf $$backupdir && mkdir $$backupdir && \
  	if ($(MAKEINFO) --version) >/dev/null 2>&1; then \
-diff -rNU3 dist.orig/bfd/doc/bfdver.texi dist.nbsd/bfd/doc/bfdver.texi
---- dist.orig/bfd/doc/bfdver.texi	2011-11-21 12:58:21.000000000 +0100
-+++ dist.nbsd/bfd/doc/bfdver.texi	2013-04-09 08:03:49.000000000 +0200
+diff -rNU3 dist.orig/bfd/doc/reloc.texi dist.nbsd/bfd/doc/reloc.texi
+--- dist.orig/bfd/doc/reloc.texi	Tue Nov 13 14:19:29 2012
++++ dist.nbsd/bfd/doc/reloc.texi	Wed Feb 19 16:39:32 2014
+@@ -570,6 +570,12 @@
+ @deffnx {} BFD_RELOC_68K_TLS_LE8
+ Relocations used by 68K ELF.
+ @end deffn
++@deffn {} BFD_RELOC_VAX_GLOB_DAT
++@deffnx {} BFD_RELOC_VAX_GLOB_REF
++@deffnx {} BFD_RELOC_VAX_JMP_SLOT
++@deffnx {} BFD_RELOC_VAX_RELATIVE
++Relocations used by VAX ELF.
++@end deffn
+ @deffn {} BFD_RELOC_32_BASEREL
+ @deffnx {} BFD_RELOC_16_BASEREL
+ @deffnx {} BFD_RELOC_LO16_BASEREL
+diff -rNU3 dist.orig/bfd/elf.c dist.nbsd/bfd/elf.c
+--- dist.orig/bfd/elf.c	Mon Mar 25 08:06:19 2013
++++ dist.nbsd/bfd/elf.c	Wed Feb 19 16:39:32 2014
+@@ -8756,6 +8756,23 @@
+ 	  return TRUE;
+ 	}
+ 
++      /* On SuperH, PT_GETREGS == mach+3 and PT_GETFPREGS == mach+5.
++	 There's also old PT___GETREGS40 == mach + 1 for old reg
++	 structure which lacks GBR.  */
++
++    case bfd_arch_sh:
++      switch (note->type)
++	{
++	case NT_NETBSDCORE_FIRSTMACH+3:
++	  return elfcore_make_note_pseudosection (abfd, ".reg", note);
++
++	case NT_NETBSDCORE_FIRSTMACH+5:
++	  return elfcore_make_note_pseudosection (abfd, ".reg2", note);
++
++	default:
++	  return TRUE;
++	}
++
+       /* On all other arch's, PT_GETREGS == mach+1 and
+ 	 PT_GETFPREGS == mach+3.  */
+ 
+diff -rNU3 dist.orig/bfd/elf32-arm.c dist.nbsd/bfd/elf32-arm.c
+--- dist.orig/bfd/elf32-arm.c	Mon Mar 25 08:06:19 2013
++++ dist.nbsd/bfd/elf32-arm.c	Wed Feb 19 16:39:32 2014
+@@ -13475,6 +13475,10 @@
+ 	{
+ 	  struct bfd_link_info *info = (struct bfd_link_info *) inf;
+ 
++          if (info->warn_shared_textrel)
++            (*_bfd_error_handler)
++              (_("warning: dynamic relocation in readonly section `%s'"),
++              h->root.root.string);
+ 	  info->flags |= DF_TEXTREL;
+ 
+ 	  /* Not an error, just cut short the traversal.  */
+diff -rNU3 dist.orig/bfd/elf32-hppa.c dist.nbsd/bfd/elf32-hppa.c
+--- dist.orig/bfd/elf32-hppa.c	Fri Jun 29 14:45:58 2012
++++ dist.nbsd/bfd/elf32-hppa.c	Wed Feb 19 16:39:32 2014
+@@ -2191,6 +2191,10 @@
+ 	{
+ 	  struct bfd_link_info *info = inf;
+ 
++          if (info->warn_shared_textrel)
++            (*_bfd_error_handler)
++              (_("warning: dynamic relocation in readonly section `%s'"),
++              eh->root.root.string);
+ 	  info->flags |= DF_TEXTREL;
+ 
+ 	  /* Not an error, just cut short the traversal.  */
+diff -rNU3 dist.orig/bfd/elf32-i386.c dist.nbsd/bfd/elf32-i386.c
+--- dist.orig/bfd/elf32-i386.c	Mon Mar 25 08:06:19 2013
++++ dist.nbsd/bfd/elf32-i386.c	Wed Feb 19 16:39:32 2014
+@@ -518,7 +518,7 @@
+ /* The name of the dynamic interpreter.  This is put in the .interp
+    section.  */
+ 
+-#define ELF_DYNAMIC_INTERPRETER "/usr/lib/libc.so.1"
++#define ELF_DYNAMIC_INTERPRETER "/libexec/ld.elf_so"
+ 
+ /* If ELIMINATE_COPY_RELOCS is non-zero, the linker will try to avoid
+    copying dynamic variables from a shared lib into an app's dynbss
+@@ -2552,7 +2552,10 @@
+       if (s != NULL && (s->flags & SEC_READONLY) != 0)
+ 	{
+ 	  struct bfd_link_info *info = (struct bfd_link_info *) inf;
+-
++	  if (info->warn_shared_textrel)
++	    (*_bfd_error_handler)
++	      (_("warning: dynamic relocation in readonly section `%s'"),
++	      h->root.root.string); 
+ 	  info->flags |= DF_TEXTREL;
+ 
+ 	  if (info->warn_shared_textrel && info->shared)
+diff -rNU3 dist.orig/bfd/elf32-m68k.c dist.nbsd/bfd/elf32-m68k.c
+--- dist.orig/bfd/elf32-m68k.c	Fri Jul 13 14:22:47 2012
++++ dist.nbsd/bfd/elf32-m68k.c	Wed Feb 19 16:39:33 2014
+@@ -2532,7 +2532,7 @@
+   if (ind->got_entry_key != 0)
+     {
+       BFD_ASSERT (dir->got_entry_key == 0);
+-      /* Assert that GOTs aren't partioned yet.  */
++      /* Assert that GOTs aren't partitioned yet.  */
+       BFD_ASSERT (ind->glist == NULL);
+ 
+       dir->got_entry_key = ind->got_entry_key;
+diff -rNU3 dist.orig/bfd/elf32-ppc.c dist.nbsd/bfd/elf32-ppc.c
+--- dist.orig/bfd/elf32-ppc.c	Mon Mar 25 08:06:19 2013
++++ dist.nbsd/bfd/elf32-ppc.c	Wed Feb 19 16:39:32 2014
+@@ -3898,7 +3898,7 @@
+ 	    sec->has_tls_get_addr_call = 1;
+ 	}
+ 
+-      switch (r_type)
++      switch ((int)r_type)
+ 	{
+ 	case R_PPC_TLSGD:
+ 	case R_PPC_TLSLD:
+@@ -7766,7 +7766,7 @@
+       howto = NULL;
+       if (r_type < R_PPC_max)
+ 	howto = ppc_elf_howto_table[r_type];
+-      switch (r_type)
++      switch ((int)r_type)
+ 	{
+ 	default:
+ 	  info->callbacks->einfo
+diff -rNU3 dist.orig/bfd/elf32-sh.c dist.nbsd/bfd/elf32-sh.c
+--- dist.orig/bfd/elf32-sh.c	Mon Mar 25 08:06:20 2013
++++ dist.nbsd/bfd/elf32-sh.c	Wed Feb 19 16:39:32 2014
+@@ -3285,6 +3285,10 @@
+ 	{
+ 	  struct bfd_link_info *info = (struct bfd_link_info *) inf;
+ 
++          if (info->warn_shared_textrel)
++            (*_bfd_error_handler)
++              (_("warning: dynamic relocation in readonly section `%s'"),
++              h->root.root.string);
+ 	  info->flags |= DF_TEXTREL;
+ 
+ 	  /* Not an error, just cut short the traversal.  */
+diff -rNU3 dist.orig/bfd/elf32-vax.c dist.nbsd/bfd/elf32-vax.c
+--- dist.orig/bfd/elf32-vax.c	Tue Sep  4 13:32:53 2012
++++ dist.nbsd/bfd/elf32-vax.c	Wed Feb 19 16:39:32 2014
+@@ -490,6 +490,24 @@
+   return TRUE;
+ }
+ 
++/* Copy vax-specific data from one module to another */
++static bfd_boolean
++elf32_vax_copy_private_bfd_data (bfd *ibfd, bfd *obfd)
++{
++  flagword in_flags;
++
++  if (bfd_get_flavour (ibfd) != bfd_target_elf_flavour
++      || bfd_get_flavour (obfd) != bfd_target_elf_flavour)
++    return TRUE;
++ 
++  in_flags = elf_elfheader (ibfd)->e_flags;
++ 
++  elf_elfheader (obfd)->e_flags = in_flags;
++  elf_flags_init (obfd) = TRUE;
++ 
++  return TRUE;
++}
++
+ /* Merge backend specific data from an object file to the output
+    object file when linking.  */
+ static bfd_boolean
+@@ -752,7 +770,13 @@
+ 		    return FALSE;
+ 
+ 		  if (sec->flags & SEC_READONLY)
+-		    info->flags |= DF_TEXTREL;
++		    {
++			if (info->warn_shared_textrel)
++			  (*_bfd_error_handler)
++			    (_("warning: dynamic relocation in readonly section `%s'"),
++			     sec->name);
++			info->flags |= DF_TEXTREL;
++		    }
+ 		}
+ 
+ 	      sreloc->size += sizeof (Elf32_External_Rela);
+@@ -1186,7 +1210,12 @@
+ 	continue;
+ 
+       /* Allocate memory for the section contents.  */
+-      s->contents = (bfd_byte *) bfd_alloc (dynobj, s->size);
++      /* FIXME: This should be a call to bfd_alloc not bfd_zalloc.
++	 Unused entries should be reclaimed before the section's contents
++	 are written out, but at the moment this does not happen.  Thus in
++	 order to prevent writing out garbage, we initialise the section's
++	 contents to zero.  */
++      s->contents = (bfd_byte *) bfd_zalloc (dynobj, s->size);
+       if (s->contents == NULL)
+ 	return FALSE;
+     }
+@@ -1285,6 +1314,7 @@
+ 
+   if (!elf_hash_table (info)->dynamic_sections_created
+       || (info->shared && info->symbolic)
++      || ELF_ST_VISIBILITY (h->other) != STV_DEFAULT
+       || h->forced_local)
+     {
+       h->got.refcount = 0;
+@@ -1305,9 +1335,7 @@
+ 
+       dyn = elf_hash_table (info)->dynamic_sections_created;
+       /* Allocate space in the .got and .rela.got sections.  */
+-      if (ELF_ST_VISIBILITY (h->other) == STV_DEFAULT
+-	  && (info->shared
+-	      || WILL_CALL_FINISH_DYNAMIC_SYMBOL (dyn, 0, h)))
++      if (info->shared || WILL_CALL_FINISH_DYNAMIC_SYMBOL (dyn, 0, h))
+ 	{
+ 	  sgot->size += 4;
+ 	  srelgot->size += sizeof (Elf32_External_Rela);
+@@ -1631,9 +1659,9 @@
+ 		    {
+ 		      relocate = TRUE;
+ 		      outrel.r_info = ELF32_R_INFO (0, R_VAX_RELATIVE);
+-		      BFD_ASSERT (bfd_get_signed_32 (input_bfd,
+-						     &contents[rel->r_offset]) == 0);
+-		      outrel.r_addend = relocation + rel->r_addend;
++		      outrel.r_addend = bfd_get_signed_32(input_bfd,
++							 &contents[rel->r_offset])
++					+ relocation + rel->r_addend;
+ 		    }
+ 		  else
+ 		    {
+@@ -1672,6 +1700,9 @@
+ 		    }
+ 		}
+ 
++	      if (input_section->flags & SEC_CODE)
++		 info->flags |= DF_TEXTREL;
++
+ 	      if ((input_section->flags & SEC_CODE) != 0
+ 		  || (ELF32_R_TYPE (outrel.r_info) != R_VAX_32
+ 		      && ELF32_R_TYPE (outrel.r_info) != R_VAX_RELATIVE
+@@ -2051,12 +2082,15 @@
+ #define TARGET_LITTLE_SYM		bfd_elf32_vax_vec
+ #define TARGET_LITTLE_NAME		"elf32-vax"
+ #define ELF_MACHINE_CODE		EM_VAX
+-#define ELF_MAXPAGESIZE			0x1000
++#define ELF_MAXPAGESIZE			0x10000
+ 
+ #define elf_backend_create_dynamic_sections \
+ 					_bfd_elf_create_dynamic_sections
+ #define bfd_elf32_bfd_link_hash_table_create \
+ 					elf_vax_link_hash_table_create
++#define bfd_elf32_bfd_copy_private_bfd_data \
++					elf32_vax_copy_private_bfd_data
++
+ #define bfd_elf32_bfd_final_link	bfd_elf_gc_common_final_link
+ 
+ #define elf_backend_check_relocs	elf_vax_check_relocs
+diff -rNU3 dist.orig/bfd/elf64-alpha.c dist.nbsd/bfd/elf64-alpha.c
+--- dist.orig/bfd/elf64-alpha.c	Tue Jul 24 21:06:58 2012
++++ dist.nbsd/bfd/elf64-alpha.c	Wed Feb 19 16:39:32 2014
+@@ -100,6 +100,11 @@
+ #define PLT_ENTRY_SIZE \
+   (elf64_alpha_use_secureplt ? NEW_PLT_ENTRY_SIZE : OLD_PLT_ENTRY_SIZE)
+ 
++/* ld --traditional-format uses this older format instead. */
++#define OLD_PLT_ENTRY_WORD1	0x279f0000	/* ldah $28, 0($31) */
++#define OLD_PLT_ENTRY_WORD2	0x239c0000	/* lda  $28, 0($28) */
++#define OLD_PLT_ENTRY_WORD3	0xc3e00000	/* br   $31, plt0   */
++
+ #define MAX_GOT_SIZE		(64*1024)
+ 
+ #define ELF_DYNAMIC_INTERPRETER "/usr/lib/ld.so"
+@@ -4820,6 +4825,32 @@
+ 
+ 		plt_index = ((gotent->plt_offset - NEW_PLT_HEADER_SIZE)
+ 			     / NEW_PLT_ENTRY_SIZE);
++	      }
++	    else if ((output_bfd->flags & BFD_TRADITIONAL_FORMAT) != 0)
++	      {
++	        long hi, lo;
++
++	        /* decompose the reloc offset for the plt for ldah+lda */
++	        hi = plt_index * sizeof(Elf64_External_Rela);
++	        lo = ((hi & 0xffff) ^ 0x8000) - 0x8000;
++	        hi = (hi - lo) >> 16;
++
++	        insn = INSN_ABO (INSN_LDAH, 28, 31, hi);
++		bfd_put_32 (output_bfd, insn,
++			    splt->contents + gotent->plt_offset);
++
++	        insn = INSN_ABO (INSN_LDA, 28, 28, lo);
++		bfd_put_32 (output_bfd, insn,
++			    splt->contents + gotent->plt_offset + 4);
++
++		disp = -(gotent->plt_offset + 12);
++		insn = INSN_AD (INSN_BR, 31, disp);
++
++		bfd_put_32 (output_bfd, insn,
++			    splt->contents + gotent->plt_offset + 8);
++
++		plt_index = ((gotent->plt_offset - OLD_PLT_HEADER_SIZE)
++			     / OLD_PLT_ENTRY_SIZE);
+ 	      }
+ 	    else
+ 	      {
+diff -rNU3 dist.orig/bfd/elf64-mips.c dist.nbsd/bfd/elf64-mips.c
+--- dist.orig/bfd/elf64-mips.c	Tue Sep  4 14:13:07 2012
++++ dist.nbsd/bfd/elf64-mips.c	Wed Feb 19 16:39:32 2014
+@@ -123,6 +123,8 @@
+   (bfd *, asymbol *, bfd_boolean, char **, bfd_vma *);
+ static bfd_boolean mips_elf64_object_p
+   (bfd *);
++static bfd_boolean mips_elf64_is_local_label_name
++  (bfd *, const char *);
+ static irix_compat_t elf64_mips_irix_compat
+   (bfd *);
+ static bfd_boolean elf64_mips_grok_prstatus
+@@ -3917,7 +3919,18 @@
+   bfd_default_set_arch_mach (abfd, bfd_arch_mips, mach);
+   return TRUE;
+ }
++
++/* MIPS ELF local labels start with "$L".  */
++static bfd_boolean
++mips_elf64_is_local_label_name (bfd *abfd, const char *name)
++{
++  if (name[0] == '$' && name[1] == 'L')
++    return TRUE;
+ 
++  /* We accept the generic ELF local label syntax as well.  */
++  return _bfd_elf_is_local_label_name (abfd, name);
++}
++
+ /* Depending on the target vector we generate some version of Irix
+    executables or "normal" MIPS ELF ABI executables.  */
+ static irix_compat_t
+diff -rNU3 dist.orig/bfd/elf64-ppc.c dist.nbsd/bfd/elf64-ppc.c
+--- dist.orig/bfd/elf64-ppc.c	Mon Mar 25 08:06:20 2013
++++ dist.nbsd/bfd/elf64-ppc.c	Wed Feb 19 16:39:33 2014
+@@ -9112,6 +9112,10 @@
+ 	{
+ 	  struct bfd_link_info *info = inf;
+ 
++          if (info->warn_shared_textrel)
++            (*_bfd_error_handler)
++              (_("warning: dynamic relocation in readonly section `%s'"),
++              h->root.root.string);
+ 	  info->flags |= DF_TEXTREL;
+ 
+ 	  /* Not an error, just cut short the traversal.  */
+diff -rNU3 dist.orig/bfd/elf64-x86-64.c dist.nbsd/bfd/elf64-x86-64.c
+--- dist.orig/bfd/elf64-x86-64.c	Mon Mar 25 08:06:20 2013
++++ dist.nbsd/bfd/elf64-x86-64.c	Wed Feb 19 16:39:32 2014
+@@ -2589,6 +2589,10 @@
+ 	{
+ 	  struct bfd_link_info *info = (struct bfd_link_info *) inf;
+ 
++          if (info->warn_shared_textrel)
++            (*_bfd_error_handler)
++              (_("warning: dynamic relocation in readonly section `%s'"),
++              h->root.root.string);
+ 	  info->flags |= DF_TEXTREL;
+ 
+ 	  if (info->warn_shared_textrel && info->shared)
+diff -rNU3 dist.orig/bfd/elflink.c dist.nbsd/bfd/elflink.c
+--- dist.orig/bfd/elflink.c	Mon Mar 25 08:06:20 2013
++++ dist.nbsd/bfd/elflink.c	Wed Feb 19 16:39:32 2014
+@@ -10183,7 +10183,14 @@
+   if (bed->s->arch_size == 32)
+     irel[0].r_info = ELF32_R_INFO (indx, howto->type);
+   else
+-    irel[0].r_info = ELF64_R_INFO (indx, howto->type);
++#ifdef BFD64
++          {
++            bfd_uint64_t indx64 = indx;
++            irel[0].r_info = ELF64_R_INFO (indx64, howto->type);
++          }
++#else
++          BFD_FAIL();
++#endif
+ 
+   rel_hdr = reldata->hdr;
+   erel = rel_hdr->contents;
+diff -rNU3 dist.orig/bfd/elfn32-mips.c dist.nbsd/bfd/elfn32-mips.c
+--- dist.orig/bfd/elfn32-mips.c	Tue Sep  4 14:13:08 2012
++++ dist.nbsd/bfd/elfn32-mips.c	Wed Feb 19 16:39:32 2014
+@@ -81,6 +81,8 @@
+   (bfd *, Elf_Internal_Note *);
+ static bfd_boolean elf32_mips_grok_psinfo
+   (bfd *, Elf_Internal_Note *);
++static bfd_boolean mips_elf_n32_is_local_label_name
++  (bfd *, const char *);
+ static irix_compat_t elf_n32_mips_irix_compat
+   (bfd *);
+ 
+@@ -3239,6 +3241,17 @@
+   }
+ 
+   return TRUE;
++}
++
++/* MIPS ELF local labels start with "$L".  */
++static bfd_boolean
++mips_elf_n32_is_local_label_name (bfd *abfd, const char *name)
++{
++  if (name[0] == '$' && name[1] == 'L')
++    return TRUE;
++
++  /* We accept the generic ELF local label syntax as well.  */
++  return _bfd_elf_is_local_label_name (abfd, name);
+ }
+ 
+ /* Depending on the target vector we generate some version of Irix
+diff -rNU3 dist.orig/bfd/elfxx-mips.c dist.nbsd/bfd/elfxx-mips.c
+--- dist.orig/bfd/elfxx-mips.c	Mon Mar 25 08:06:20 2013
++++ dist.nbsd/bfd/elfxx-mips.c	Wed Feb 19 16:39:32 2014
+@@ -8191,10 +8191,24 @@
+ 		     reloc types into the output file as R_MIPS_REL32
+ 		     relocs.  Make room for this reloc in .rel(a).dyn.  */
+ 		  mips_elf_allocate_dynamic_relocations (dynobj, info, 1);
+-		  if (MIPS_ELF_READONLY_SECTION (sec))
+-		    /* We tell the dynamic linker that there are
+-		       relocations against the text segment.  */
+-		    info->flags |= DF_TEXTREL;
++		  /* In the N32 and 64-bit ABIs there may be multiple
++		     consecutive relocations for the same offset.  If we have
++		     a R_MIPS_GPREL32 followed by a R_MIPS_64 then that
++		     relocation is complete and needs no futher adjustment.  */
++		  if ((rel == relocs
++		      || rel[-1].r_offset != rel->r_offset
++		      || r_type != R_MIPS_64
++		      || ELF_R_TYPE(abfd, rel[-1].r_info) != R_MIPS_GPREL32)
++		      && MIPS_ELF_READONLY_SECTION (sec))
++		    {
++		      /* We tell the dynamic linker that there are
++		         relocations against the text segment.  */
++		      info->flags |= DF_TEXTREL;
++		      info->callbacks->warning
++			(info,
++			 _("relocation emitted against readonly section"),
++			 NULL, abfd, sec, rel->r_offset);
++		    }
+ 		}
+ 	      else
+ 		{
+diff -rNU3 dist.orig/bfd/elfxx-sparc.c dist.nbsd/bfd/elfxx-sparc.c
+--- dist.orig/bfd/elfxx-sparc.c	Mon Mar 25 08:06:20 2013
++++ dist.nbsd/bfd/elfxx-sparc.c	Wed Feb 19 16:39:32 2014
+@@ -2508,6 +2508,10 @@
+ 	{
+ 	  struct bfd_link_info *info = (struct bfd_link_info *) inf;
+ 
++          if (info->warn_shared_textrel)
++            (*_bfd_error_handler)
++              (_("warning: dynamic relocation in readonly section `%s'"),
++              h->root.root.string);
+ 	  info->flags |= DF_TEXTREL;
+ 
+ 	  /* Not an error, just cut short the traversal.  */
+@@ -3460,10 +3464,8 @@
+ 		memset (&outrel, 0, sizeof outrel);
+ 	      /* h->dynindx may be -1 if the symbol was marked to
+ 		 become local.  */
+-	      else if (h != NULL &&
+-		       h->dynindx != -1
+-		       && (! is_plt
+-			   || !info->shared
++	      else if (h != NULL && h->dynindx != -1 && ! is_plt
++		       && (!info->shared
+ 			   || !SYMBOLIC_BIND (info, h)
+ 			   || !h->def_regular))
+ 		{
+diff -rNU3 dist.orig/bfd/libbfd.h dist.nbsd/bfd/libbfd.h
+--- dist.orig/bfd/libbfd.h	Tue Sep  4 12:53:42 2012
++++ dist.nbsd/bfd/libbfd.h	Wed Feb 19 16:39:32 2014
+@@ -2313,6 +2313,7 @@
+   "BFD_RELOC_XC16X_SEG",
+   "BFD_RELOC_XC16X_SOF",
+   "BFD_RELOC_VAX_GLOB_DAT",
++  "BFD_RELOC_VAX_GLOB_REF",
+   "BFD_RELOC_VAX_JMP_SLOT",
+   "BFD_RELOC_VAX_RELATIVE",
+   "BFD_RELOC_MT_PC16",
+diff -rNU3 dist.orig/bfd/reloc.c dist.nbsd/bfd/reloc.c
+--- dist.orig/bfd/reloc.c	Tue Sep  4 12:53:42 2012
++++ dist.nbsd/bfd/reloc.c	Wed Feb 19 16:39:32 2014
+@@ -1776,6 +1776,17 @@
+   Relocations used by 68K ELF.
+ 
+ ENUM
++  BFD_RELOC_VAX_GLOB_DAT
++ENUMX
++  BFD_RELOC_VAX_GLOB_REF
++ENUMX
++  BFD_RELOC_VAX_JMP_SLOT
++ENUMX
++  BFD_RELOC_VAX_RELATIVE
++ENUMDOC
++  Relocations used by VAX ELF.
++
++ENUM
+   BFD_RELOC_32_BASEREL
+ ENUMX
+   BFD_RELOC_16_BASEREL
+diff -rNU3 dist.orig/binutils/Makefile.in dist.nbsd/binutils/Makefile.in
+--- dist.orig/binutils/Makefile.in	Thu May 17 22:23:39 2012
++++ dist.nbsd/binutils/Makefile.in	Wed Feb 19 16:39:33 2014
 @@ -1,4 +1,4 @@
- @set VERSION 2.22
--@set VERSION_PACKAGE (GNU Binutils) 
-+@set VERSION_PACKAGE (GNU Binutils)\ 
- @set UPDATED November 2011
- @set BUGURL @uref{http://www.sourceware.org/bugzilla/}
-diff -rNU3 dist.orig/binutils/configure dist.nbsd/binutils/configure
---- dist.orig/binutils/configure	2011-05-31 10:54:47.000000000 +0200
-+++ dist.nbsd/binutils/configure	2013-04-08 23:29:28.000000000 +0200
-@@ -14672,6 +14672,8 @@
-   case $ac_option in
-   # Handling of the options.
-   -recheck | --recheck | --rechec | --reche | --rech | --rec | --re | --r)
-+	: Avoid regenerating within pkgsrc
-+	exit 0
-     ac_cs_recheck=: ;;
-   --version | --versio | --versi | --vers | --ver | --ve | --v | -V )
-     $as_echo "$ac_cs_version"; exit ;;
+-# Makefile.in generated by automake 1.11.1 from Makefile.am.
++# Makefile.in generated by automake 1.11 from Makefile.am.
+ # @configure_input@
+ 
+ # Copyright (C) 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002,
+@@ -49,10 +49,12 @@
+ DIST_COMMON = NEWS README ChangeLog $(srcdir)/Makefile.in \
+ 	$(srcdir)/Makefile.am $(top_srcdir)/configure \
+ 	$(am__configure_deps) $(srcdir)/config.in \
+-	$(srcdir)/../mkinstalldirs $(top_srcdir)/po/Make-in arparse.h \
+-	arparse.c arlex.c defparse.h defparse.c deflex.c nlmheader.h \
+-	nlmheader.c arparse.h arparse.c arlex.c mcparse.h mcparse.c \
+-	rcparse.h rcparse.c $(srcdir)/../depcomp $(srcdir)/../ylwrap
++	$(srcdir)/../mkinstalldirs $(srcdir)/../mkinstalldirs \
++	$(top_srcdir)/po/Make-in arparse.h arparse.c arlex.c \
++	defparse.h defparse.c deflex.c nlmheader.h nlmheader.c \
++	arparse.h arparse.c arlex.c mcparse.h mcparse.c rcparse.h \
++	rcparse.c $(srcdir)/../depcomp $(srcdir)/../depcomp \
++	$(srcdir)/../ylwrap $(srcdir)/../ylwrap
+ ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
+ am__aclocal_m4_deps = $(top_srcdir)/../bfd/acinclude.m4 \
+ 	$(top_srcdir)/../config/zlib.m4 \
+@@ -385,6 +387,7 @@
+ libexecdir = @libexecdir@
+ localedir = @localedir@
+ localstatedir = @localstatedir@
++lt_ECHO = @lt_ECHO@
+ mandir = @mandir@
+ mkdir_p = @mkdir_p@
+ oldincludedir = @oldincludedir@
+@@ -931,7 +934,7 @@
+ #     (which will cause the Makefiles to be regenerated when you run `make');
+ # (2) otherwise, pass the desired values on the `make' command line.
+ $(RECURSIVE_TARGETS):
+-	@fail= failcom='exit 1'; \
++	@failcom='exit 1'; \
+ 	for f in x $$MAKEFLAGS; do \
+ 	  case $$f in \
+ 	    *=* | --[!k]*);; \
+@@ -956,7 +959,7 @@
+ 	fi; test -z "$$fail"
+ 
+ $(RECURSIVE_CLEAN_TARGETS):
+-	@fail= failcom='exit 1'; \
++	@failcom='exit 1'; \
+ 	for f in x $$MAKEFLAGS; do \
+ 	  case $$f in \
+ 	    *=* | --[!k]*);; \
+diff -rNU3 dist.orig/binutils/aclocal.m4 dist.nbsd/binutils/aclocal.m4
+--- dist.orig/binutils/aclocal.m4	Thu May 17 22:23:39 2012
++++ dist.nbsd/binutils/aclocal.m4	Wed Feb 19 16:39:33 2014
+@@ -1,4 +1,4 @@
+-# generated automatically by aclocal 1.11.1 -*- Autoconf -*-
++# generated automatically by aclocal 1.11 -*- Autoconf -*-
+ 
+ # Copyright (C) 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004,
+ # 2005, 2006, 2007, 2008, 2009  Free Software Foundation, Inc.
+@@ -19,6 +19,31 @@
+ If you have problems, you may need to regenerate the build system entirely.
+ To do so, use the procedure documented by the package, typically `autoreconf'.])])
+ 
++# isc-posix.m4 serial 2 (gettext-0.11.2)
++dnl Copyright (C) 1995-2002 Free Software Foundation, Inc.
++dnl This file is free software; the Free Software Foundation
++dnl gives unlimited permission to copy and/or distribute it,
++dnl with or without modifications, as long as this notice is preserved.
++
++# This file is not needed with autoconf-2.53 and newer.  Remove it in 2005.
++
++# This test replaces the one in autoconf.
++# Currently this macro should have the same name as the autoconf macro
++# because gettext's gettext.m4 (distributed in the automake package)
++# still uses it.  Otherwise, the use in gettext.m4 makes autoheader
++# give these diagnostics:
++#   configure.in:556: AC_TRY_COMPILE was called before AC_ISC_POSIX
++#   configure.in:556: AC_TRY_RUN was called before AC_ISC_POSIX
++
++undefine([AC_ISC_POSIX])
++
++AC_DEFUN([AC_ISC_POSIX],
++  [
++    dnl This test replaces the obsolescent AC_ISC_POSIX kludge.
++    AC_CHECK_LIB(cposix, strerror, [LIBS="$LIBS -lcposix"])
++  ]
++)
++
+ # Copyright (C) 2002, 2003, 2005, 2006, 2007, 2008  Free Software Foundation, Inc.
+ #
+ # This file is free software; the Free Software Foundation
+@@ -34,7 +59,7 @@
+ [am__api_version='1.11'
+ dnl Some users find AM_AUTOMAKE_VERSION and mistake it for a way to
+ dnl require some minimum version.  Point them to the right macro.
+-m4_if([$1], [1.11.1], [],
++m4_if([$1], [1.11], [],
+       [AC_FATAL([Do not call $0, use AM_INIT_AUTOMAKE([$1]).])])dnl
+ ])
+ 
+@@ -50,7 +75,7 @@
+ # Call AM_AUTOMAKE_VERSION and AM_AUTOMAKE_VERSION so they can be traced.
+ # This function is AC_REQUIREd by AM_INIT_AUTOMAKE.
+ AC_DEFUN([AM_SET_CURRENT_AUTOMAKE_VERSION],
+-[AM_AUTOMAKE_VERSION([1.11.1])dnl
++[AM_AUTOMAKE_VERSION([1.11])dnl
+ m4_ifndef([AC_AUTOCONF_VERSION],
+   [m4_copy([m4_PACKAGE_VERSION], [AC_AUTOCONF_VERSION])])dnl
+ _AM_AUTOCONF_VERSION(m4_defn([AC_AUTOCONF_VERSION]))])
+diff -rNU3 dist.orig/binutils/bucomm.c dist.nbsd/binutils/bucomm.c
+--- dist.orig/binutils/bucomm.c	Fri Jun 29 12:59:49 2012
++++ dist.nbsd/binutils/bucomm.c	Wed Feb 19 16:39:33 2014
+@@ -580,7 +580,14 @@
+ 		   file_name, strerror (errno));
+     }  
+   else if (! S_ISREG (statbuf.st_mode))
+-    non_fatal (_("Warning: '%s' is not an ordinary file"), file_name);
++    {
++      if (!S_ISCHR(statbuf.st_mode))
++	{
++	  non_fatal (_("Warning: '%s' is not an ordinary file"), file_name);
++	  return 0;
++	}
++      return statbuf.st_size ? statbuf.st_size : 1;
++    }
+   else if (statbuf.st_size < 0)
+     non_fatal (_("Warning: '%s' has negative size, probably it is too large"),
+                file_name);
 diff -rNU3 dist.orig/binutils/doc/Makefile.am dist.nbsd/binutils/doc/Makefile.am
---- dist.orig/binutils/doc/Makefile.am	2010-01-06 17:52:14.000000000 +0100
-+++ dist.nbsd/binutils/doc/Makefile.am	2013-04-09 08:24:32.000000000 +0200
-@@ -41,112 +41,144 @@
- 		    -I "$(top_srcdir)/../bfd/doc" -I ../../bfd/doc
+--- dist.orig/binutils/doc/Makefile.am	Wed Jan  6 16:52:14 2010
++++ dist.nbsd/binutils/doc/Makefile.am	Wed Feb 19 16:39:33 2014
+@@ -42,6 +42,8 @@
  
  # Man page generation from texinfo
--addr2line.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
-+addr2line.1:
+ addr2line.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
 +	@echo "NOT REBUILDING $@"
-+NetBSD_DISABLED_addr2line.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
++NetBSD_DISABLED_addr2line.1:
  	touch $@
  	-$(TEXI2POD) $(MANCONF) -Daddr2line < $(binutils_TEXI) > addr2line.pod
  	-($(POD2MAN) addr2line.pod | sed -e '/^.if n .na/d' > $@.T$$$$ && \
- 		mv -f $@.T$$$$ $@) || (rm -f $@.T$$$$ && exit 1)
+@@ -49,6 +51,8 @@
  	rm -f addr2line.pod
  
--ar.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
-+ar.1:
+ ar.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
 +	@echo "NOT REBUILDING $@"
-+NetBSD_DISABLED_ar.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
++NetBSD_DISABLED_ar.1:
  	touch $@
  	-$(TEXI2POD) $(MANCONF) -Dar < $(binutils_TEXI) > ar.pod
  	-($(POD2MAN) ar.pod | sed -e '/^.if n .na/d' > $@.T$$$$ && \
- 		mv -f $@.T$$$$ $@) || (rm -f $@.T$$$$ && exit 1)
+@@ -56,6 +60,8 @@
  	rm -f ar.pod
  
--dlltool.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
-+dlltool.1:
+ dlltool.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
 +	@echo "NOT REBUILDING $@"
-+NetBSD_DISABLED_dlltool.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
++NetBSD_DISABLED_dlltool.1:
  	touch $@
  	-$(TEXI2POD) $(MANCONF) -Ddlltool < $(binutils_TEXI) > dlltool.pod
  	-($(POD2MAN) dlltool.pod | sed -e '/^.if n .na/d' > $@.T$$$$ && \
- 		mv -f $@.T$$$$ $@) || (rm -f $@.T$$$$ && exit 1)
+@@ -63,6 +69,8 @@
  	rm -f dlltool.pod
  
--nlmconv.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
-+nlmconv.1:
+ nlmconv.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
 +	@echo "NOT REBUILDING $@"
-+NetBSD_DISABLED_nlmconv.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
++NetBSD_DISABLED_nlmconv.1:
  	touch $@
  	-$(TEXI2POD) $(MANCONF) -Dnlmconv < $(binutils_TEXI) > nlmconv.pod
  	-($(POD2MAN) nlmconv.pod | sed -e '/^.if n .na/d' > $@.T$$$$ && \
- 		mv -f $@.T$$$$ $@) || (rm -f $@.T$$$$ && exit 1)
+@@ -70,6 +78,8 @@
  	rm -f nlmconv.pod
  
--nm.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
-+nm.1:
+ nm.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
 +	@echo "NOT REBUILDING $@"
-+NetBSD_DISABLED_nm.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
++NetBSD_DISABLED_nm.1:
  	touch $@
  	-$(TEXI2POD) $(MANCONF) -Dnm < $(binutils_TEXI) > nm.pod
  	-($(POD2MAN) nm.pod | sed -e '/^.if n .na/d' > $@.T$$$$ && \
- 		mv -f $@.T$$$$ $@) || (rm -f $@.T$$$$ && exit 1)
+@@ -77,6 +87,8 @@
  	rm -f nm.pod
  
--objcopy.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
-+objcopy.1:
+ objcopy.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
 +	@echo "NOT REBUILDING $@"
-+NetBSD_DISABLED_objcopy.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
++NetBSD_DISABLED_objcopy.1:
  	touch $@
  	-$(TEXI2POD) $(MANCONF) -Dobjcopy < $(binutils_TEXI) > objcopy.pod
  	-($(POD2MAN) objcopy.pod | sed -e '/^.if n .na/d' > $@.T$$$$ && \
- 		mv -f $@.T$$$$ $@) || (rm -f $@.T$$$$ && exit 1)
+@@ -84,6 +96,8 @@
  	rm -f objcopy.pod
  
--objdump.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
-+objdump.1:
+ objdump.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
 +	@echo "NOT REBUILDING $@"
-+NetBSD_DISABLED_objdump.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
++NetBSD_DISABLED_objdump.1:
  	touch $@
  	-$(TEXI2POD) $(MANCONF) -Dobjdump < $(binutils_TEXI) > objdump.pod
  	-($(POD2MAN) objdump.pod | sed -e '/^.if n .na/d' > $@.T$$$$ && \
- 		mv -f $@.T$$$$ $@) || (rm -f $@.T$$$$ && exit 1)
+@@ -91,6 +105,8 @@
  	rm -f objdump.pod
  
--ranlib.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
-+ranlib.1:
+ ranlib.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
 +	@echo "NOT REBUILDING $@"
-+NetBSD_DISABLED_ranlib.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
++NetBSD_DISABLED_ranlib.1:
  	touch $@
  	-$(TEXI2POD) $(MANCONF) -Dranlib < $(binutils_TEXI) > ranlib.pod
  	-($(POD2MAN) ranlib.pod | sed -e '/^.if n .na/d' > $@.T$$$$ && \
- 		mv -f $@.T$$$$ $@) || (rm -f $@.T$$$$ && exit 1)
+@@ -98,6 +114,8 @@
  	rm -f ranlib.pod
  
--readelf.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
-+readelf.1:
+ readelf.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
 +	@echo "NOT REBUILDING $@"
-+NetBSD_DISABLED_readelf.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
++NetBSD_DISABLED_readelf.1:
  	touch $@
  	-$(TEXI2POD) $(MANCONF) -Dreadelf < $(binutils_TEXI) > readelf.pod
  	-($(POD2MAN) readelf.pod | sed -e '/^.if n .na/d' > $@.T$$$$ && \
- 		mv -f $@.T$$$$ $@) || (rm -f $@.T$$$$ && exit 1)
+@@ -105,6 +123,8 @@
  	rm -f readelf.pod
  
--size.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
-+size.1:
+ size.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
 +	@echo "NOT REBUILDING $@"
-+NetBSD_DISABLED_size.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
++NetBSD_DISABLED_size.1:
  	touch $@
  	-$(TEXI2POD) $(MANCONF) -Dsize < $(binutils_TEXI) > size.pod
  	-($(POD2MAN) size.pod | sed -e '/^.if n .na/d' > $@.T$$$$ && \
- 		mv -f $@.T$$$$ $@) || (rm -f $@.T$$$$ && exit 1)
+@@ -112,6 +132,8 @@
  	rm -f size.pod
  
--strings.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
-+strings.1:
+ strings.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
 +	@echo "NOT REBUILDING $@"
-+NetBSD_DISABLED_strings.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
++NetBSD_DISABLED_strings.1:
  	touch $@
  	-$(TEXI2POD) $(MANCONF) -Dstrings < $(binutils_TEXI) > strings.pod
  	-($(POD2MAN) strings.pod | sed -e '/^.if n .na/d' > $@.T$$$$ && \
- 		mv -f $@.T$$$$ $@) || (rm -f $@.T$$$$ && exit 1)
+@@ -119,6 +141,8 @@
  	rm -f strings.pod
  
--strip.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
-+strip.1:
+ strip.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
 +	@echo "NOT REBUILDING $@"
-+NetBSD_DISABLED_strip.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
++NetBSD_DISABLED_strip.1:
  	touch $@
  	-$(TEXI2POD) $(MANCONF) -Dstrip < $(binutils_TEXI) > strip.pod
  	-($(POD2MAN) strip.pod | sed -e '/^.if n .na/d' > $@.T$$$$ && \
- 		mv -f $@.T$$$$ $@) || (rm -f $@.T$$$$ && exit 1)
- 	rm -f strip.pod
- 
--elfedit.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
-+elfedit.1:
-+	@echo "NOT REBUILDING $@"
-+NetBSD_DISABLED_elfedit.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
- 	touch $@
- 	-$(TEXI2POD) $(MANCONF) -Delfedit < $(binutils_TEXI) > elfedit.pod
- 	-($(POD2MAN) elfedit.pod | sed -e '/^.if n .na/d' > $@.T$$$$ && \
- 		mv -f $@.T$$$$ $@) || (rm -f $@.T$$$$ && exit 1)
+@@ -133,6 +157,8 @@
  	rm -f elfedit.pod
  
--windres.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
-+windres.1:
+ windres.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
 +	@echo "NOT REBUILDING $@"
-+NetBSD_DISABLED_windres.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
++NetBSD_DISABLED_windres.1:
  	touch $@
  	-$(TEXI2POD) $(MANCONF) -Dwindres < $(binutils_TEXI) > windres.pod
  	-($(POD2MAN) windres.pod | sed -e '/^.if n .na/d' > $@.T$$$$ && \
- 		mv -f $@.T$$$$ $@) || (rm -f $@.T$$$$ && exit 1)
+@@ -140,6 +166,8 @@
  	rm -f windres.pod
  
--windmc.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
-+windmc.1:
+ windmc.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
 +	@echo "NOT REBUILDING $@"
-+NetBSD_DISABLED_windmc.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
++NetBSD_DISABLED_windmc.1:
  	touch $@
  	-$(TEXI2POD) $(MANCONF) -Dwindmc < $(binutils_TEXI) > windmc.pod
  	-($(POD2MAN) windmc.pod | sed -e '/^.if n .na/d' > $@.T$$$$ && \
- 		mv -f $@.T$$$$ $@) || (rm -f $@.T$$$$ && exit 1)
+@@ -147,6 +175,8 @@
  	rm -f windmc.pod
  
--cxxfilt.man:	$(binutils_TEXI) $(binutils_TEXINFOS)
-+cxxfilt.man:
+ cxxfilt.man:	$(binutils_TEXI) $(binutils_TEXINFOS)
 +	@echo "NOT REBUILDING $@"
-+NetBSD_DISABLED_cxxfilt.man:	$(binutils_TEXI) $(binutils_TEXINFOS)
++NetBSD_DISABLED_cxxfilt.man:
  	touch $@
  	-$(TEXI2POD) $(MANCONF) -Dcxxfilt < $(binutils_TEXI) > $(DEMANGLER_NAME).pod
  	-($(POD2MAN) $(DEMANGLER_NAME).pod | sed -e '/^.if n .na/d' > $@.T$$$$ && \
-diff -rNU3 dist.orig/configure dist.nbsd/configure
---- dist.orig/configure	2011-08-14 14:28:15.000000000 +0200
-+++ dist.nbsd/configure	2013-04-09 08:46:02.000000000 +0200
-@@ -14663,6 +14663,8 @@
-   case $ac_option in
-   # Handling of the options.
-   -recheck | --recheck | --rechec | --reche | --rech | --rec | --re | --r)
-+	: Avoid regenerating within pkgsrc
-+	exit 0
-     ac_cs_recheck=: ;;
-   --version | --versio | --versi | --vers | --ver | --ve | --v | -V )
-     $as_echo "$ac_cs_version"; exit ;;
-diff -rNU3 dist.orig/etc/configure dist.nbsd/etc/configure
---- dist.orig/etc/configure	2009-08-22 18:56:38.000000000 +0200
-+++ dist.nbsd/etc/configure	2013-04-08 23:29:45.000000000 +0200
-@@ -2409,6 +2409,8 @@
-   case $ac_option in
-   # Handling of the options.
-   -recheck | --recheck | --rechec | --reche | --rech | --rec | --re | --r)
-+	: Avoid regenerating within pkgsrc
-+	exit 0
-     ac_cs_recheck=: ;;
-   --version | --versio | --versi | --vers | --ver | --ve | --v | -V )
-     $as_echo "$ac_cs_version"; exit ;;
-diff -rNU3 dist.orig/gas/configure dist.nbsd/gas/configure
---- dist.orig/gas/configure	2011-05-18 11:41:14.000000000 +0200
-+++ dist.nbsd/gas/configure	2013-04-08 23:50:57.000000000 +0200
-@@ -14827,6 +14827,8 @@
-   case $ac_option in
-   # Handling of the options.
-   -recheck | --recheck | --rechec | --reche | --rech | --rec | --re | --r)
-+	: Avoid regenerating within pkgsrc
-+	exit 0
-     ac_cs_recheck=: ;;
-   --version | --versio | --versi | --vers | --ver | --ve | --v | -V )
-     $as_echo "$ac_cs_version"; exit ;;
+diff -rNU3 dist.orig/binutils/doc/Makefile.in dist.nbsd/binutils/doc/Makefile.in
+--- dist.orig/binutils/doc/Makefile.in	Tue Sep  4 12:53:44 2012
++++ dist.nbsd/binutils/doc/Makefile.in	Wed Feb 19 16:39:33 2014
+@@ -1,4 +1,4 @@
+-# Makefile.in generated by automake 1.11.1 from Makefile.am.
++# Makefile.in generated by automake 1.11 from Makefile.am.
+ # @configure_input@
+ 
+ # Copyright (C) 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002,
+@@ -242,6 +242,7 @@
+ libexecdir = @libexecdir@
+ localedir = @localedir@
+ localstatedir = @localstatedir@
++lt_ECHO = @lt_ECHO@
+ mandir = @mandir@
+ mkdir_p = @mkdir_p@
+ oldincludedir = @oldincludedir@
+@@ -349,6 +350,8 @@
+ 	-rm -rf .libs _libs
+ 
+ binutils.info: binutils.texi 
++	@echo "NOT REBUILDING $@"
++NetBSD_DISABLED_binutils.info: binutils.texi 
+ 	restore=: && backupdir="$(am__leading_dot)am$$$$" && \
+ 	rm -rf $$backupdir && mkdir $$backupdir && \
+ 	if ($(MAKEINFO) --version) >/dev/null 2>&1; then \
+@@ -735,6 +738,8 @@
+ 
+ # Man page generation from texinfo
+ addr2line.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
++	@echo "NOT REBUILDING $@"
++NetBSD_DISABLED_addr2line.1:
+ 	touch $@
+ 	-$(TEXI2POD) $(MANCONF) -Daddr2line < $(binutils_TEXI) > addr2line.pod
+ 	-($(POD2MAN) addr2line.pod | sed -e '/^.if n .na/d' > $@.T$$$$ && \
+@@ -742,6 +747,8 @@
+ 	rm -f addr2line.pod
+ 
+ ar.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
++	@echo "NOT REBUILDING $@"
++NetBSD_DISABLED_ar.1:
+ 	touch $@
+ 	-$(TEXI2POD) $(MANCONF) -Dar < $(binutils_TEXI) > ar.pod
+ 	-($(POD2MAN) ar.pod | sed -e '/^.if n .na/d' > $@.T$$$$ && \
+@@ -749,6 +756,8 @@
+ 	rm -f ar.pod
+ 
+ dlltool.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
++	@echo "NOT REBUILDING $@"
++NetBSD_DISABLED_dlltool.1:
+ 	touch $@
+ 	-$(TEXI2POD) $(MANCONF) -Ddlltool < $(binutils_TEXI) > dlltool.pod
+ 	-($(POD2MAN) dlltool.pod | sed -e '/^.if n .na/d' > $@.T$$$$ && \
+@@ -756,6 +765,8 @@
+ 	rm -f dlltool.pod
+ 
+ nlmconv.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
++	@echo "NOT REBUILDING $@"
++NetBSD_DISABLED_nlmconv.1:
+ 	touch $@
+ 	-$(TEXI2POD) $(MANCONF) -Dnlmconv < $(binutils_TEXI) > nlmconv.pod
+ 	-($(POD2MAN) nlmconv.pod | sed -e '/^.if n .na/d' > $@.T$$$$ && \
+@@ -763,6 +774,8 @@
+ 	rm -f nlmconv.pod
+ 
+ nm.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
++	@echo "NOT REBUILDING $@"
++NetBSD_DISABLED_nm.1:
+ 	touch $@
+ 	-$(TEXI2POD) $(MANCONF) -Dnm < $(binutils_TEXI) > nm.pod
+ 	-($(POD2MAN) nm.pod | sed -e '/^.if n .na/d' > $@.T$$$$ && \
+@@ -770,6 +783,8 @@
+ 	rm -f nm.pod
+ 
+ objcopy.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
++	@echo "NOT REBUILDING $@"
++NetBSD_DISABLED_objcopy.1:
+ 	touch $@
+ 	-$(TEXI2POD) $(MANCONF) -Dobjcopy < $(binutils_TEXI) > objcopy.pod
+ 	-($(POD2MAN) objcopy.pod | sed -e '/^.if n .na/d' > $@.T$$$$ && \
+@@ -777,6 +792,8 @@
+ 	rm -f objcopy.pod
+ 
+ objdump.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
++	@echo "NOT REBUILDING $@"
++NetBSD_DISABLED_objdump.1:
+ 	touch $@
+ 	-$(TEXI2POD) $(MANCONF) -Dobjdump < $(binutils_TEXI) > objdump.pod
+ 	-($(POD2MAN) objdump.pod | sed -e '/^.if n .na/d' > $@.T$$$$ && \
+@@ -784,6 +801,8 @@
+ 	rm -f objdump.pod
+ 
+ ranlib.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
++	@echo "NOT REBUILDING $@"
++NetBSD_DISABLED_ranlib.1:
+ 	touch $@
+ 	-$(TEXI2POD) $(MANCONF) -Dranlib < $(binutils_TEXI) > ranlib.pod
+ 	-($(POD2MAN) ranlib.pod | sed -e '/^.if n .na/d' > $@.T$$$$ && \
+@@ -791,6 +810,8 @@
+ 	rm -f ranlib.pod
+ 
+ readelf.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
++	@echo "NOT REBUILDING $@"
++NetBSD_DISABLED_readelf.1:
+ 	touch $@
+ 	-$(TEXI2POD) $(MANCONF) -Dreadelf < $(binutils_TEXI) > readelf.pod
+ 	-($(POD2MAN) readelf.pod | sed -e '/^.if n .na/d' > $@.T$$$$ && \
+@@ -798,6 +819,8 @@
+ 	rm -f readelf.pod
+ 
+ size.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
++	@echo "NOT REBUILDING $@"
++NetBSD_DISABLED_size.1:
+ 	touch $@
+ 	-$(TEXI2POD) $(MANCONF) -Dsize < $(binutils_TEXI) > size.pod
+ 	-($(POD2MAN) size.pod | sed -e '/^.if n .na/d' > $@.T$$$$ && \
+@@ -805,6 +828,8 @@
+ 	rm -f size.pod
+ 
+ strings.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
++	@echo "NOT REBUILDING $@"
++NetBSD_DISABLED_strings.1:
+ 	touch $@
+ 	-$(TEXI2POD) $(MANCONF) -Dstrings < $(binutils_TEXI) > strings.pod
+ 	-($(POD2MAN) strings.pod | sed -e '/^.if n .na/d' > $@.T$$$$ && \
+@@ -812,6 +837,8 @@
+ 	rm -f strings.pod
+ 
+ strip.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
++	@echo "NOT REBUILDING $@"
++NetBSD_DISABLED_strip.1:
+ 	touch $@
+ 	-$(TEXI2POD) $(MANCONF) -Dstrip < $(binutils_TEXI) > strip.pod
+ 	-($(POD2MAN) strip.pod | sed -e '/^.if n .na/d' > $@.T$$$$ && \
+@@ -819,6 +846,8 @@
+ 	rm -f strip.pod
+ 
+ elfedit.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
++	@echo "NOT REBUILDING $@"
++NetBSD_DISABLED_elfedit.1:
+ 	touch $@
+ 	-$(TEXI2POD) $(MANCONF) -Delfedit < $(binutils_TEXI) > elfedit.pod
+ 	-($(POD2MAN) elfedit.pod | sed -e '/^.if n .na/d' > $@.T$$$$ && \
+@@ -826,6 +855,8 @@
+ 	rm -f elfedit.pod
+ 
+ windres.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
++	@echo "NOT REBUILDING $@"
++NetBSD_DISABLED_windres.1:
+ 	touch $@
+ 	-$(TEXI2POD) $(MANCONF) -Dwindres < $(binutils_TEXI) > windres.pod
+ 	-($(POD2MAN) windres.pod | sed -e '/^.if n .na/d' > $@.T$$$$ && \
+@@ -833,6 +864,8 @@
+ 	rm -f windres.pod
+ 
+ windmc.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
++	@echo "NOT REBUILDING $@"
++NetBSD_DISABLED_windmc.1:
+ 	touch $@
+ 	-$(TEXI2POD) $(MANCONF) -Dwindmc < $(binutils_TEXI) > windmc.pod
+ 	-($(POD2MAN) windmc.pod | sed -e '/^.if n .na/d' > $@.T$$$$ && \
+@@ -840,6 +873,8 @@
+ 	rm -f windmc.pod
+ 
+ cxxfilt.man:	$(binutils_TEXI) $(binutils_TEXINFOS)
++	@echo "NOT REBUILDING $@"
++NetBSD_DISABLED_cxxfilt.man:
+ 	touch $@
+ 	-$(TEXI2POD) $(MANCONF) -Dcxxfilt < $(binutils_TEXI) > $(DEMANGLER_NAME).pod
+ 	-($(POD2MAN) $(DEMANGLER_NAME).pod | sed -e '/^.if n .na/d' > $@.T$$$$ && \
+diff -rNU3 dist.orig/binutils/doc/strings.1 dist.nbsd/binutils/doc/strings.1
+--- dist.orig/binutils/doc/strings.1	Mon Mar 25 09:10:26 2013
++++ dist.nbsd/binutils/doc/strings.1	Wed Feb 19 16:39:33 2014
+@@ -208,7 +208,7 @@
+ characters (\s-1ASCII\s0, \s-1ISO\s0 8859, etc., default), \fBS\fR =
+ single\-8\-bit\-byte characters, \fBb\fR = 16\-bit bigendian, \fBl\fR =
+ 16\-bit littleendian, \fBB\fR = 32\-bit bigendian, \fBL\fR = 32\-bit
+-littleendian.  Useful for finding wide character strings. (\fBl\fR
++littleendian.  Useful for finding wide-character strings. (\fBl\fR
+ and \fBb\fR apply to, for example, Unicode \s-1UTF\-16/UCS\-2\s0 encodings).
+ .IP "\fB\-T\fR \fIbfdname\fR" 4
+ .IX Item "-T bfdname"
+diff -rNU3 dist.orig/binutils/objcopy.c dist.nbsd/binutils/objcopy.c
+--- dist.orig/binutils/objcopy.c	Mon Mar 25 08:06:21 2013
++++ dist.nbsd/binutils/objcopy.c	Wed Feb 19 16:39:33 2014
+@@ -30,6 +30,8 @@
+ #include "filenames.h"
+ #include "fnmatch.h"
+ #include "elf-bfd.h"
++#include <sys/stat.h>
++#include <ctype.h>
+ #include "libbfd.h"
+ #include "coff/internal.h"
+ #include "libcoff.h"
+diff -rNU3 dist.orig/binutils/readelf.c dist.nbsd/binutils/readelf.c
+--- dist.orig/binutils/readelf.c	Mon Mar 25 08:06:21 2013
++++ dist.nbsd/binutils/readelf.c	Wed Feb 19 16:39:33 2014
+@@ -3801,7 +3801,7 @@
+       if (elf_header.e_phnum > 1)
+ 	printf (_("\nProgram Headers:\n"));
+       else
+-	printf (_("\nProgram Headers:\n"));
++	printf (_("\nProgram Header:\n"));
+ 
+       if (is_32bit_elf)
+ 	printf
+@@ -6974,6 +6974,11 @@
+ 
+       remaining = 4;
+     }
++  else
++    {
++      addr.section = SHN_UNDEF;
++      addr.offset = 0;
++    }
+ 
+   if ((word & 0x80000000) == 0)
+     {
+@@ -12665,6 +12670,38 @@
+   return buff;
+ }
+ 
++static int 
++process_netbsd_elf_note (Elf_Internal_Note * pnote)
++{
++  unsigned int version;
++
++  switch (pnote->type)
++    {
++    case NT_NETBSD_IDENT:
++      version = byte_get((unsigned char *)pnote->descdata, sizeof(version));
++      if ((version / 10000) % 100)
++        printf ("  NetBSD\t0x%08lx\tIDENT %u (%u.%u%s%c)\n", pnote->descsz,
++		version, version / 100000000, (version / 1000000) % 100,
++		(version / 10000) % 100 > 26 ? "Z" : "",
++		'A' + (version / 10000) % 26); 
++      else
++	printf ("  NetBSD\t0x%08lx\tIDENT %u (%u.%u.%u)\n", pnote->descsz,
++	        version, version / 100000000, (version / 1000000) % 100,
++		(version / 100) % 100); 
++      return 1;
++    case NT_NETBSD_MARCH:
++      printf ("  NetBSD\t0x%08lx\tMARCH <%s>\n", pnote->descsz,
++	      pnote->descdata);
++      return 1;
++    default:
++      break;
++    }
++
++  printf ("  NetBSD\t0x%08lx\tUnknown note type: (0x%08lx)\n", pnote->descsz,
++	  pnote->type);
++  return 1;
++}
++
+ static int
+ print_gnu_note (Elf_Internal_Note *pnote)
+ {
+@@ -12765,6 +12802,23 @@
+ 	}
+       break;
+ 
++    /* On SuperH, PT_GETREGS == mach+3 and PT_GETFPREGS == mach+5.
++       There's also old PT___GETREGS40 == mach + 1 for old reg
++       structure which lacks GBR.  */
++    case EM_SH:
++      switch (e_type)
++	{
++	case NT_NETBSDCORE_FIRSTMACH + 1:
++	  return _("PT___GETREGS40 (old reg structure)");
++	case NT_NETBSDCORE_FIRSTMACH + 3:
++	  return _("PT_GETREGS (reg structure)");
++	case NT_NETBSDCORE_FIRSTMACH + 5:
++	  return _("PT_GETFPREGS (fpreg structure)");
++	default:
++	  break;
++	}
++      break;
++
+     /* On all other arch's, PT_GETREGS == mach+1 and
+        PT_GETFPREGS == mach+3.  */
+     default:
+@@ -12970,6 +13024,10 @@
+   else if (const_strneq (pnote->namedata, "GNU"))
+     /* GNU-specific object file notes.  */
+     nt = get_gnu_elf_note_type (pnote->type);
++
++  else if (const_strneq (pnote->namedata, "NetBSD"))
++    /* NetBSD-specific core file notes.  */
++    return process_netbsd_elf_note (pnote);
+ 
+   else if (const_strneq (pnote->namedata, "NetBSD-CORE"))
+     /* NetBSD-specific core file notes.  */
+diff -rNU3 dist.orig/binutils/strings.c dist.nbsd/binutils/strings.c
+--- dist.orig/binutils/strings.c	Thu Feb  9 04:51:44 2012
++++ dist.nbsd/binutils/strings.c	Wed Feb 19 16:39:33 2014
+@@ -598,7 +598,7 @@
+ 	    else
+ #elif !BFD_HOST_64BIT_LONG
+ 	    if (start != (unsigned long) start)
+-	      printf ("++%7ld ", (unsigned long) start);
++	      printf ("++%7llu ", (unsigned long) start);
+ 	    else
+ #endif
+ 	      printf ("%7ld ", (long) start);
+diff -rNU3 dist.orig/config.guess dist.nbsd/config.guess
+--- dist.orig/config.guess	Mon Jun  6 10:36:06 2011
++++ dist.nbsd/config.guess	Wed Feb 19 16:39:33 2014
+@@ -160,14 +160,28 @@
+ 	case "${UNAME_MACHINE_ARCH}" in
+ 	    armeb) machine=armeb-unknown ;;
+ 	    arm*) machine=arm-unknown ;;
++	    coldfire) machine=m5407-unknown ;;
++	    earm*eb*) machine=armeb-unknown ;;
++	    earm*) machine=arm-unknown ;;
+ 	    sh3el) machine=shl-unknown ;;
+ 	    sh3eb) machine=sh-unknown ;;
+ 	    sh5el) machine=sh5le-unknown ;;
+ 	    *) machine=${UNAME_MACHINE_ARCH}-unknown ;;
+ 	esac
+ 	# The Operating System including object format, if it has switched
+-	# to ELF recently, or will in the future.
++	# to ELF recently, or will in the future and ABI.
+ 	case "${UNAME_MACHINE_ARCH}" in
++	    coldfire) os=netbsdelf ;;
++	    earm*)
++		eval $set_cc_for_build
++		if echo __ARM_PCS_VFP | $CC_FOR_BUILD -E - 2>/dev/null \
++			| grep -q __ARM_PCS_VFP
++		then
++		    os=netbsdelf-eabi
++		else
++		    os=netbsdelf-eabihf
++		fi
++		;;
+ 	    arm*|i386|m68k|ns32k|sh3*|sparc|vax)
+ 		eval $set_cc_for_build
+ 		if echo __ELF__ | $CC_FOR_BUILD -E - 2>/dev/null \
+diff -rNU3 dist.orig/config.sub dist.nbsd/config.sub
+--- dist.orig/config.sub	Wed Apr 25 15:53:25 2012
++++ dist.nbsd/config.sub	Wed Feb 19 16:39:33 2014
+@@ -122,9 +122,9 @@
+ # Here we must recognize all the valid KERNEL-OS combinations.
+ maybe_os=`echo $1 | sed 's/^\(.*\)-\([^-]*-[^-]*\)$/\2/'`
+ case $maybe_os in
+-  nto-qnx* | linux-gnu* | linux-android* | linux-dietlibc | linux-newlib* | \
+-  linux-uclibc* | uclinux-uclibc* | uclinux-gnu* | kfreebsd*-gnu* | \
+-  knetbsd*-gnu* | netbsd*-gnu* | \
++  nto-qnx* | linux-gnu* | linux-dietlibc | linux-newlib* | linux-uclibc* | \
++  uclinux-uclibc* | uclinux-gnu* | kfreebsd*-gnu* | knetbsd*-gnu* | \
++  netbsd*-gnu* | netbsd*-eabi* | \
+   kopensolaris*-gnu* | \
+   storm-chaos* | os2-emx* | rtmk-nova*)
+     os=-$maybe_os
+@@ -332,7 +332,8 @@
+ 		basic_machine=$basic_machine-unknown
+ 		os=-none
+ 		;;
+-	m88110 | m680[12346]0 | m683?2 | m68360 | m5200 | v70 | w65 | z8k)
++	m88110 | m680[12346]0 | m683?2 | m68360 | m5200 | m5407 \
++	| v70 | w65 | z8k)
+ 		;;
+ 	ms1)
+ 		basic_machine=mt-unknown
+@@ -375,7 +376,7 @@
+ 	| avr-* | avr32-* \
+ 	| be32-* | be64-* \
+ 	| bfin-* | bs2000-* \
+-	| c[123]* | c30-* | [cjt]90-* | c4x-* \
++	| c[123]* | c30-* | [cjt]90-* | c4x-* | c54x-* | c55x-* | c6x-* \
+ 	| clipper-* | craynv-* | cydra-* \
+ 	| d10v-* | d30v-* | dlx-* \
+ 	| elxsi-* \
+@@ -388,6 +389,7 @@
+ 	| le32-* | le64-* \
+ 	| lm32-* \
+ 	| m32c-* | m32r-* | m32rle-* \
++	| m5200-* | m5407-* \
+ 	| m68000-* | m680[012346]0-* | m68360-* | m683?2-* | m68k-* \
+ 	| m88110-* | m88k-* | maxq-* | mcore-* | metag-* | microblaze-* \
+ 	| mips-* | mipsbe-* | mipseb-* | mipsel-* | mipsle-* \
+@@ -528,15 +530,6 @@
+ 		basic_machine=powerpc-ibm
+ 		os=-cnk
+ 		;;
+-	c54x-*)
+-		basic_machine=tic54x-`echo $basic_machine | sed 's/^[^-]*-//'`
+-		;;
+-	c55x-*)
+-		basic_machine=tic55x-`echo $basic_machine | sed 's/^[^-]*-//'`
+-		;;
+-	c6x-*)
+-		basic_machine=tic6x-`echo $basic_machine | sed 's/^[^-]*-//'`
+-		;;
+ 	c90)
+ 		basic_machine=c90-cray
+ 		os=-unicos
+@@ -1541,15 +1534,6 @@
+ 		os=-aout
+ 		;;
+ 	c4x-* | tic4x-*)
+-		os=-coff
+-		;;
+-	tic54x-*)
+-		os=-coff
+-		;;
+-	tic55x-*)
+-		os=-coff
+-		;;
+-	tic6x-*)
+ 		os=-coff
+ 		;;
+ 	# This must come before the *-dec entry.
+diff -rNU3 dist.orig/gas/atof-generic.c dist.nbsd/gas/atof-generic.c
+--- dist.orig/gas/atof-generic.c	Wed Sep  2 07:24:19 2009
++++ dist.nbsd/gas/atof-generic.c	Wed Feb 19 16:39:28 2014
+@@ -121,6 +121,32 @@
+ 
+   switch (first_digit[0])
+     {
++    case 's':
++    case 'S':
++      if (!strncasecmp ("snan", first_digit, 4))
++	{
++	  address_of_generic_floating_point_number->sign = 0;
++	  address_of_generic_floating_point_number->exponent = 0;
++	  address_of_generic_floating_point_number->leader =
++	    address_of_generic_floating_point_number->low;
++	  *address_of_string_pointer = first_digit + 4;
++	  return 0;
++	}
++      break;
++
++    case 'q':
++    case 'Q':
++      if (!strncasecmp ("qnan", first_digit, 4))
++	{
++	  address_of_generic_floating_point_number->sign = 0;
++	  address_of_generic_floating_point_number->exponent = 0;
++	  address_of_generic_floating_point_number->leader =
++	    address_of_generic_floating_point_number->low;
++	  *address_of_string_pointer = first_digit + 4;
++	  return 0;
++	}
++      break;
++
+     case 'n':
+     case 'N':
+       if (!strncasecmp ("nan", first_digit, 3))
+diff -rNU3 dist.orig/gas/config/atof-vax.c dist.nbsd/gas/config/atof-vax.c
+--- dist.orig/gas/config/atof-vax.c	Wed Oct 17 16:45:54 2007
++++ dist.nbsd/gas/config/atof-vax.c	Wed Feb 19 16:39:28 2014
+@@ -268,10 +268,27 @@
+ 	  int exponent_skippage;
+ 	  LITTLENUM_TYPE word1;
+ 
+-	  /* JF: Deal with new Nan, +Inf and -Inf codes.  */
+ 	  if (f->sign != '-' && f->sign != '+')
+ 	    {
+-	      make_invalid_floating_point_number (words);
++	      if (f->sign == 0)
++		{
++		  /* All NaNs are 0.  */
++		  memset (words, 0x00, sizeof (LITTLENUM_TYPE) * precision);
++		}
++	      else if (f->sign == 'P')
++		{
++		  /* Positive Infinity.  */
++		  memset (words, 0xff, sizeof (LITTLENUM_TYPE) * precision);
++		  words[0] &= 0x7fff;
++		}
++	      else if (f->sign == 'N')
++		{
++		  /* Negative Infinity.  */
++		  memset (words, 0x00, sizeof (LITTLENUM_TYPE) * precision);
++		  words[0] = 0x0080;
++		}
++	      else
++		make_invalid_floating_point_number (words);
+ 	      return return_value;
+ 	    }
+ 
+diff -rNU3 dist.orig/gas/config/tc-arm.c dist.nbsd/gas/config/tc-arm.c
+--- dist.orig/gas/config/tc-arm.c	Mon Mar 25 08:06:21 2013
++++ dist.nbsd/gas/config/tc-arm.c	Wed Feb 19 16:39:28 2014
+@@ -17290,12 +17290,16 @@
+   asection *sect;
+ 
+   for (sect = stdoutput->sections; sect != NULL; sect = sect->next)
+-    if (seg_info (sect)->tc_segment_info_data.current_it.state
+-	== MANUAL_IT_BLOCK)
+-      {
+-	as_warn (_("section '%s' finished with an open IT block."),
+-		 sect->name);
+-      }
++    {
++      segment_info_type *seginfo = seg_info (sect);
++
++      if (seginfo && seginfo->tc_segment_info_data.current_it.state
++	  == MANUAL_IT_BLOCK)
++        {
++	  as_warn (_("section '%s' finished with an open IT block."),
++		   sect->name);
++        }
++    }
+ #else
+   if (now_it.state == MANUAL_IT_BLOCK)
+     as_warn (_("file finished with an open IT block."));
+diff -rNU3 dist.orig/gas/config/tc-m68k.c dist.nbsd/gas/config/tc-m68k.c
+--- dist.orig/gas/config/tc-m68k.c	Wed May 16 10:26:47 2012
++++ dist.nbsd/gas/config/tc-m68k.c	Wed Feb 19 16:39:28 2014
+@@ -7426,12 +7426,12 @@
+ 	}
+     }
+   
+-  /* Remove 'm' or 'mc' prefix from 68k variants.  */
++  /* Remove 'm' or 'mc' prefix from 68k or coldfire variants.  */
+   if (allow_m)
+     {
+       if (arg[0] == 'm')
+ 	{
+-	  if (arg[1] == '6')
++	  if (arg[1] == '6' || arg[1] == '5')
+ 	    arg += 1;
+ 	  else if (arg[1] == 'c'  && arg[2] == '6')
+ 	    arg += 2;
+diff -rNU3 dist.orig/gas/config/tc-mips.c dist.nbsd/gas/config/tc-mips.c
+--- dist.orig/gas/config/tc-mips.c	Tue Sep  4 14:21:03 2012
++++ dist.nbsd/gas/config/tc-mips.c	Wed Feb 19 16:39:28 2014
+@@ -909,6 +909,9 @@
+   NUM_FIX_VR4120_CLASSES
+ };
+ 
++/* ...likewise -mtrap-zero-jump.  */
++static bfd_boolean mips_trap_zero_jump;
++
+ /* ...likewise -mfix-loongson2f-jump.  */
+ static bfd_boolean mips_fix_loongson2f_jump;
+ 
+@@ -941,6 +944,8 @@
+    efficient expansion.  */
+ 
+ static int mips_relax_branch;
++
++static int mips_fix_loongson2f_btb;
+ 
+ /* The expansion of many macros depends on the type of symbol that
+    they refer to.  For example, when generating position-dependent code,
+@@ -1316,6 +1321,7 @@
+ static void mips16_macro_build
+   (expressionS *, const char *, const char *, va_list *);
+ static void load_register (int, expressionS *, int);
++static void macro_build (expressionS *, const char *, const char *, ...);
+ static void macro_start (void);
+ static void macro_end (void);
+ static void macro (struct mips_cl_insn * ip);
+@@ -3626,6 +3632,35 @@
+   return nops;
+ }
+ 
++static void
++trap_zero_jump (struct mips_cl_insn * ip)
++{
++  if (strcmp (ip->insn_mo->name, "j") == 0
++      || strcmp (ip->insn_mo->name, "jr") == 0
++      || strcmp (ip->insn_mo->name, "jalr") == 0)
++    {
++      int sreg;
++
++      if (mips_opts.warn_about_macros)
++        return;
++
++      sreg = EXTRACT_OPERAND (0, RS, *ip);
++      if (mips_opts.isa == ISA_MIPS32
++          || mips_opts.isa == ISA_MIPS32R2
++          || mips_opts.isa == ISA_MIPS64
++          || mips_opts.isa == ISA_MIPS64R2)  
++	{
++	  expressionS ep;
++	  ep.X_op = O_constant;
++	  ep.X_add_number = 4096;
++	  macro_build (&ep, "tltiu", "s,j", sreg, BFD_RELOC_LO16);
++	}
++      else if (mips_opts.isa != ISA_UNKNOWN
++	       && mips_opts.isa != ISA_MIPS1)
++	macro_build (NULL, "teq", "s,t", sreg, 0);
++  }
++}
++
+ /* Fix NOP issue: Replace nops by "or at,at,zero".  */
+ 
+ static void
+@@ -3663,6 +3698,16 @@
+       ep.X_add_number = 0xffff;
+       macro_build (&ep, "ori", "t,r,i", ATREG, ATREG, BFD_RELOC_LO16);
+       macro_build (NULL, "and", "d,v,t", sreg, sreg, ATREG);
++      /* Hide these three instructions to avoid getting a ``macro expanded into
++         multiple instructions'' warning. */
++      if (mips_relax.sequence != 2) {
++        mips_macro_warning.sizes[0] -= 3 * 4;
++        mips_macro_warning.insns[0] -= 3;
++      }
++      if (mips_relax.sequence != 1) {
++        mips_macro_warning.sizes[1] -= 3 * 4;
++        mips_macro_warning.insns[1] -= 3;
++      }
+     }
+ }
+ 
+@@ -3718,6 +3763,11 @@
+   if (mips_opts.mips16 && history[0].fixp[0])
+     return FALSE;
+ 
++  if (mips_fix_loongson2f)
++    fix_loongson2f (ip);
++  if (mips_trap_zero_jump)
++    trap_zero_jump (ip);
++
+   /* If the branch is itself the target of a branch, we can not swap.
+      We cheat on this; all we check for is whether there is a label on
+      this instruction.  If there are any branches to anything other than
+@@ -4764,6 +4814,45 @@
+       r[i] = (bfd_reloc_code_real_type) va_arg (*args, int);
+ }
+ 
++/* Fix jump through register issue on loongson2f processor for kernel code:
++   force a BTB clear before the jump to prevent it from being incorrectly
++   prefetched by the branch prediction engine. */
++
++static void
++macro_build_jrpatch (expressionS *ep, unsigned int sreg)
++{
++  if (!mips_fix_loongson2f_btb)
++    return;
++
++  if (sreg == ZERO || sreg == KT0 || sreg == KT1 || sreg == AT)
++    return;
++
++  if (!mips_opts.at)
++    {
++      as_warn (_("unable to apply loongson2f BTB workaround when .set noat"));
++      return;
++    }
++
++  /* li $at, COP_0_BTB_CLEAR | COP_0_RAS_DISABLE */
++  ep->X_op = O_constant;
++  ep->X_add_number = 3;
++  macro_build (ep, "ori", "t,r,i", AT, ZERO, BFD_RELOC_LO16);
++
++  /* dmtc0 $at, COP_0_DIAG */
++  macro_build (NULL, "dmtc0", "t,G", AT, 22);
++
++  /* Hide these two instructions to avoid getting a ``macro expanded into
++     multiple instructions'' warning. */
++  if (mips_relax.sequence != 2) {
++    mips_macro_warning.sizes[0] -= 2 * 4;
++    mips_macro_warning.insns[0] -= 2;
++  }
++  if (mips_relax.sequence != 1) {
++    mips_macro_warning.sizes[1] -= 2 * 4;
++    mips_macro_warning.insns[0] -= 2;
++  }
++}
++
+ /* Build an instruction created by a macro expansion.  This is passed
+    a pointer to the count of instructions created so far, an
+    expression, the name of the instruction to build, an operand format
+@@ -7637,6 +7726,26 @@
+ 	macro_build (NULL, ADDRESS_ADD_INSN, "d,v,t", treg, tempreg, breg);
+       break;
+ 
++    case M_JR_S:
++      macro_build_jrpatch (&expr1, sreg);
++      macro_build (NULL, "jr", "s", sreg);
++      return;	/* didn't modify $at */
++
++    case M_J_S:
++      macro_build_jrpatch (&expr1, sreg);
++      macro_build (NULL, "j", "s", sreg);
++      return;	/* didn't modify $at */
++
++    case M_JALR_S:
++      macro_build_jrpatch (&expr1, sreg);
++      macro_build (NULL, "jalr", "s", sreg);
++      return;	/* didn't modify $at */
++
++    case M_JALR_DS:
++      macro_build_jrpatch (&expr1, sreg);
++      macro_build (NULL, "jalr", "d,s", dreg, sreg);
++      return;	/* didn't modify $at */
++
+     case M_MSGSND:
+       gas_assert (!mips_opts.micromips);
+       {
+@@ -14350,6 +14459,8 @@
+     OPTION_SINGLE_FLOAT,
+     OPTION_DOUBLE_FLOAT,
+     OPTION_32,
++    OPTION_TRAP_ZERO_JUMP,
++    OPTION_NO_TRAP_ZERO_JUMP,
+ #ifdef OBJ_ELF
+     OPTION_CALL_SHARED,
+     OPTION_CALL_NONPIC,
+@@ -14364,6 +14475,8 @@
+     OPTION_NO_PDR,
+     OPTION_MVXWORKS_PIC,
+ #endif /* OBJ_ELF */
++    OPTION_FIX_LOONGSON2F_BTB,
++    OPTION_NO_FIX_LOONGSON2F_BTB,
+     OPTION_END_OF_ENUM    
+   };
+   
+@@ -14421,6 +14534,8 @@
+   {"mno-fix-loongson2f-jump", no_argument, NULL, OPTION_NO_FIX_LOONGSON2F_JUMP},
+   {"mfix-loongson2f-nop", no_argument, NULL, OPTION_FIX_LOONGSON2F_NOP},
+   {"mno-fix-loongson2f-nop", no_argument, NULL, OPTION_NO_FIX_LOONGSON2F_NOP},
++  {"mfix-loongson2f-btb", no_argument, NULL, OPTION_FIX_LOONGSON2F_BTB},
++  {"mno-fix-loongson2f-btb", no_argument, NULL, OPTION_NO_FIX_LOONGSON2F_BTB},
+   {"mfix-vr4120",    no_argument, NULL, OPTION_FIX_VR4120},
+   {"mno-fix-vr4120", no_argument, NULL, OPTION_NO_FIX_VR4120},
+   {"mfix-vr4130",    no_argument, NULL, OPTION_FIX_VR4130},
+@@ -14459,6 +14574,9 @@
+      make testing easier.  */
+   {"32",          no_argument, NULL, OPTION_32},
+   
++  {"mtrap-zero-jump", no_argument, NULL, OPTION_TRAP_ZERO_JUMP},
++  {"mno-trap-zero-jump", no_argument, NULL, OPTION_NO_TRAP_ZERO_JUMP},
++
+   /* ELF-specific options.  */
+ #ifdef OBJ_ELF
+   {"KPIC",        no_argument, NULL, OPTION_CALL_SHARED},
+@@ -14750,6 +14868,14 @@
+       mips_fix_vr4130 = 0;
+       break;
+ 
++    case OPTION_FIX_LOONGSON2F_BTB:
++      mips_fix_loongson2f_btb = 1;
++      break;
++
++    case OPTION_NO_FIX_LOONGSON2F_BTB:
++      mips_fix_loongson2f_btb = 0;
++      break;
++
+     case OPTION_FIX_CN63XXP1:
+       mips_fix_cn63xxp1 = TRUE;
+       break;
+@@ -14782,6 +14908,14 @@
+       mips_opts.sym32 = FALSE;
+       break;
+ 
++    case OPTION_TRAP_ZERO_JUMP:
++      mips_trap_zero_jump = TRUE;
++      break;
++
++    case OPTION_NO_TRAP_ZERO_JUMP:
++      mips_trap_zero_jump = FALSE;
++      break;
++
+ #ifdef OBJ_ELF
+       /* When generating ELF code, we permit -KPIC and -call_shared to
+ 	 select SVR4_PIC, and -non_shared to select no PIC.  This is
+@@ -19411,6 +19545,7 @@
+   fprintf (stream, _("\
+ -mfix-loongson2f-jump	work around Loongson2F JUMP instructions\n\
+ -mfix-loongson2f-nop	work around Loongson2F NOP errata\n\
++-mfix-loongson2f-btb	work around Loongson2F BTB errata\n\
+ -mfix-vr4120		work around certain VR4120 errata\n\
+ -mfix-vr4130		work around VR4130 mflo/mfhi errata\n\
+ -mfix-24k		insert a nop after ERET and DERET instructions\n\
+diff -rNU3 dist.orig/gas/config/tc-vax.c dist.nbsd/gas/config/tc-vax.c
+--- dist.orig/gas/config/tc-vax.c	Mon Jun 28 14:06:57 2010
++++ dist.nbsd/gas/config/tc-vax.c	Wed Feb 19 16:39:28 2014
+@@ -392,6 +392,9 @@
+ 	      && (PLT_symbol == NULL || fragP->fr_symbol != PLT_symbol)
+ 	      && fragP->fr_symbol != NULL
+ 	      && flag_want_pic
++#ifdef OBJ_ELF
++	      && ELF_ST_VISIBILITY (S_GET_OTHER (fragP->fr_symbol)) != STV_HIDDEN
++#endif
+ 	      && (!S_IS_DEFINED (fragP->fr_symbol)
+ 	          || S_IS_WEAK (fragP->fr_symbol)
+ 	          || S_IS_EXTERNAL (fragP->fr_symbol)))
+@@ -1073,6 +1076,154 @@
+   return retval;
+ }
+ 
++#ifdef OBJ_AOUT
++#ifndef BFD_ASSEMBLER
++void
++tc_aout_fix_to_chars (where, fixP, segment_address_in_file)
++     char *where;
++     fixS *fixP;
++     relax_addressT segment_address_in_file;
++{
++  /*
++   * In: length of relocation (or of address) in chars: 1, 2 or 4.
++   * Out: GNU LD relocation length code: 0, 1, or 2.
++   */
++
++  static const unsigned char nbytes_r_length[] = {42, 0, 1, 42, 2};
++  int r_symbolnum;
++  int r_flags;
++
++  know (fixP->fx_addsy != NULL);
++
++  md_number_to_chars (where,
++       fixP->fx_frag->fr_address + fixP->fx_where - segment_address_in_file,
++		      4);
++
++  r_symbolnum = (S_IS_DEFINED (fixP->fx_addsy)
++		 ? S_GET_TYPE (fixP->fx_addsy)
++		 : fixP->fx_addsy->sy_number);
++  r_flags = (fixP->fx_pcrel ? 1 : 0)
++      | (!S_IS_DEFINED (fixP->fx_addsy) ? 8 : 0)	/* extern */
++      | ((nbytes_r_length[fixP->fx_size] & 3) << 1);
++
++#if 0
++  r_flags |= ((!S_IS_DEFINED(fixP->fx_addsy)
++      && fixP->fx_pcrel
++      && fixP->fx_addsy != GOT_symbol
++      && fixP->fx_addsy != PLT_symbol
++      && flags_want_pic) ? 0x10 : 0);
++#endif
++	
++  switch (fixP->fx_r_type) {
++	case NO_RELOC:
++		break;
++	case NO_RELOC2:
++		if (r_flags & 8)
++		    r_flags |= 0x80;		/* setting the copy bit */
++						/*   says we can convert */
++						/*   to gotslot if needed */
++		break;
++	case RELOC_32:
++		if (flag_want_pic && S_IS_EXTERNAL(fixP->fx_addsy)) {
++			r_symbolnum = fixP->fx_addsy->sy_number;  
++			r_flags |= 8;		/* set extern bit */
++		}
++		break;
++	case RELOC_JMP_SLOT:
++		if (flag_want_pic) {
++			r_flags |= 0x20;	/* set jmptable */
++			r_flags &= ~0x08;	/* clear extern bit */
++		}
++		break;
++	case RELOC_JMP_TBL:
++		if (flag_want_pic) {
++			r_flags |= 0x20;	/* set jmptable */
++			r_flags |= 0x08;	/* set extern bit */
++		}
++		break;
++	case RELOC_GLOB_DAT:
++		if (flag_want_pic) {
++			r_flags |= 0x10;	/* set baserel bit */
++			r_symbolnum = fixP->fx_addsy->sy_number;
++			if (S_IS_EXTERNAL(fixP->fx_addsy))
++				r_flags |= 8;	/* set extern bit */
++		}
++		break;
++  }
++
++  where[4] = (r_symbolnum >>  0) & 0xff;
++  where[5] = (r_symbolnum >>  8) & 0xff;
++  where[6] = (r_symbolnum >> 16) & 0xff;
++  where[7] = r_flags;
++}
++#endif /* !BFD_ASSEMBLER */
++#endif /* OBJ_AOUT */
++
++/*
++ *       BUGS, GRIPES,  APOLOGIA, etc.
++ *
++ * The opcode table 'votstrs' needs to be sorted on opcode frequency.
++ * That is, AFTER we hash it with hash_...(), we want most-used opcodes
++ * to come out of the hash table faster.
++ *
++ * I am sorry to inflict yet another VAX assembler on the world, but
++ * RMS says we must do everything from scratch, to prevent pin-heads
++ * restricting this software.
++ */
++
++/*
++ * This is a vaguely modular set of routines in C to parse VAX
++ * assembly code using DEC mnemonics. It is NOT un*x specific.
++ *
++ * The idea here is that the assembler has taken care of all:
++ *   labels
++ *   macros
++ *   listing
++ *   pseudo-ops
++ *   line continuation
++ *   comments
++ *   condensing any whitespace down to exactly one space
++ * and all we have to do is parse 1 line into a vax instruction
++ * partially formed. We will accept a line, and deliver:
++ *   an error message (hopefully empty)
++ *   a skeleton VAX instruction (tree structure)
++ *   textual pointers to all the operand expressions
++ *   a warning message that notes a silly operand (hopefully empty)
++ */
++
++/*
++ *		E D I T   H I S T O R Y
++ *
++ * 17may86 Dean Elsner. Bug if line ends immediately after opcode.
++ * 30apr86 Dean Elsner. New vip_op() uses arg block so change call.
++ *  6jan86 Dean Elsner. Crock vip_begin() to call vip_op_defaults().
++ *  2jan86 Dean Elsner. Invent synthetic opcodes.
++ *	Widen vax_opcodeT to 32 bits. Use a bit for VIT_OPCODE_SYNTHETIC,
++ *	which means this is not a real opcode, it is like a macro; it will
++ *	be relax()ed into 1 or more instructions.
++ *	Use another bit for VIT_OPCODE_SPECIAL if the op-code is not optimised
++ *	like a regular branch instruction. Option added to vip_begin():
++ *	exclude	synthetic opcodes. Invent synthetic_votstrs[].
++ * 31dec85 Dean Elsner. Invent vit_opcode_nbytes.
++ *	Also make vit_opcode into a char[]. We now have n-byte vax opcodes,
++ *	so caller's don't have to know the difference between a 1-byte & a
++ *	2-byte op-code. Still need vax_opcodeT concept, so we know how
++ *	big an object must be to hold an op.code.
++ * 30dec85 Dean Elsner. Widen typedef vax_opcodeT in "vax-inst.h"
++ *	because vax opcodes may be 16 bits. Our crufty C compiler was
++ *	happily initialising 8-bit vot_codes with 16-bit numbers!
++ *	(Wouldn't the 'phone company like to compress data so easily!)
++ * 29dec85 Dean Elsner. New static table vax_operand_width_size[].
++ *	Invented so we know hw many bytes a "I^#42" needs in its immediate
++ *	operand. Revised struct vop in "vax-inst.h": explicitly include
++ *	byte length of each operand, and it's letter-code datum type.
++ * 17nov85 Dean Elsner. Name Change.
++ *	Due to ar(1) truncating names, we learned the hard way that
++ *	"vax-inst-parse.c" -> "vax-inst-parse." dropping the "o" off
++ *	the archived object name. SO... we shortened the name of this
++ *	source file, and changed the makefile.
++ */
++
+ /* Parse a vax operand in DEC assembler notation.
+    For speed, expect a string of whitespace to be reduced to a single ' '.
+    This is the case for GNU AS, and is easy for other DEC-compatible
+@@ -3150,7 +3301,7 @@
+ 			  if (flag_want_pic && operandP->vop_mode == 8
+ 				&& this_add_symbol != NULL)
+ 			    {
+-			      as_warn (_("Symbol %s used as immediate operand in PIC mode."),
++			      as_warn (_("Symbol '%s' used as immediate operand in PIC mode."),
+ 				       S_GET_NAME (this_add_symbol));
+ 			    }
+ #endif
+@@ -3226,7 +3377,15 @@
+ 			      length = 4;
+ 			    }
+ 			}
++#ifdef OBJ_ELF
++		      if (flag_want_pic && this_add_symbol != NULL)
++		        {
++			  as_warn (_("Symbol '%s' used as displacement in PIC mode."),
++			       S_GET_NAME (this_add_symbol));
++		        }
++#endif
+ 		      p = frag_more (1 + length);
++		      know (operandP->vop_reg != 0xf);
+ 		      know (operandP->vop_reg >= 0);
+ 		      p[0] = operandP->vop_reg
+ 			| ((at | "?\12\14?\16"[length]) << 4);
+diff -rNU3 dist.orig/gas/config/te-armnbsd.h dist.nbsd/gas/config/te-armnbsd.h
+--- dist.orig/gas/config/te-armnbsd.h	Thu Jan  1 00:00:00 1970
++++ dist.nbsd/gas/config/te-armnbsd.h	Wed Feb 19 16:39:28 2014
+@@ -0,0 +1,22 @@
++/* Copyright 2004, 2005, 2007, 2009 Free Software Foundation, Inc.
++
++   This file is part of GAS, the GNU Assembler.
++
++   GAS is free software; you can redistribute it and/or modify
++   it under the terms of the GNU General Public License as
++   published by the Free Software Foundation; either version 3,
++   or (at your option) any later version.
++
++   GAS is distributed in the hope that it will be useful, but
++   WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
++   the GNU General Public License for more details.
++
++   You should have received a copy of the GNU General Public License
++   along with GAS; see the file COPYING.  If not, write to the Free
++   Software Foundation, 51 Franklin Street - Fifth Floor, Boston, MA
++   02110-1301, USA.  */
++
++#include "te-nbsd.h"
++
++#define CPU_DEFAULT ARM_ARCH_V4
+diff -rNU3 dist.orig/gas/config/te-armnbsdeabi.h dist.nbsd/gas/config/te-armnbsdeabi.h
+--- dist.orig/gas/config/te-armnbsdeabi.h	Thu Jan  1 00:00:00 1970
++++ dist.nbsd/gas/config/te-armnbsdeabi.h	Wed Feb 19 16:39:28 2014
+@@ -0,0 +1,25 @@
++/* Copyright 2004, 2005, 2007, 2009 Free Software Foundation, Inc.
++
++   This file is part of GAS, the GNU Assembler.
++
++   GAS is free software; you can redistribute it and/or modify
++   it under the terms of the GNU General Public License as
++   published by the Free Software Foundation; either version 3,
++   or (at your option) any later version.
++
++   GAS is distributed in the hope that it will be useful, but
++   WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
++   the GNU General Public License for more details.
++
++   You should have received a copy of the GNU General Public License
++   along with GAS; see the file COPYING.  If not, write to the Free
++   Software Foundation, 51 Franklin Street - Fifth Floor, Boston, MA
++   02110-1301, USA.  */
++
++#include "te-nbsd.h"
++
++/* The EABI requires the use of VFP.  */
++#define CPU_DEFAULT ARM_ARCH_V5TEJ
++#define FPU_DEFAULT FPU_ARCH_VFP
++#define EABI_DEFAULT EF_ARM_EABI_VER5
+diff -rNU3 dist.orig/gas/config/te-armnbsdeabihf.h dist.nbsd/gas/config/te-armnbsdeabihf.h
+--- dist.orig/gas/config/te-armnbsdeabihf.h	Thu Jan  1 00:00:00 1970
++++ dist.nbsd/gas/config/te-armnbsdeabihf.h	Wed Feb 19 16:39:28 2014
+@@ -0,0 +1,25 @@
++/* Copyright 2004, 2005, 2007, 2009 Free Software Foundation, Inc.
++
++   This file is part of GAS, the GNU Assembler.
++
++   GAS is free software; you can redistribute it and/or modify
++   it under the terms of the GNU General Public License as
++   published by the Free Software Foundation; either version 3,
++   or (at your option) any later version.
++
++   GAS is distributed in the hope that it will be useful, but
++   WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
++   the GNU General Public License for more details.
++
++   You should have received a copy of the GNU General Public License
++   along with GAS; see the file COPYING.  If not, write to the Free
++   Software Foundation, 51 Franklin Street - Fifth Floor, Boston, MA
++   02110-1301, USA.  */
++
++#include "te-nbsd.h"
++
++/* The EABI requires the use of VFP.  */
++#define CPU_DEFAULT ARM_ARCH_V5TEJ
++#define FPU_DEFAULT FPU_ARCH_VFP_V2
++#define EABI_DEFAULT EF_ARM_EABI_VER5
+diff -rNU3 dist.orig/gas/config/vax-inst.h dist.nbsd/gas/config/vax-inst.h
+--- dist.orig/gas/config/vax-inst.h	Wed Sep  2 07:24:21 2009
++++ dist.nbsd/gas/config/vax-inst.h	Wed Feb 19 16:39:28 2014
+@@ -66,6 +66,8 @@
+ #define VAX_WIDEN_WORD (0x20)	/* Add this to byte branch to get word br.  */
+ #define VAX_WIDEN_LONG (0x6)	/* Add this to byte branch to get long jmp.*/
+ /* Needs VAX_PC_RELATIVE_MODE byte after it*/
++#define	VAX_CALLS (0xFB)	/* Call with arg list on stack	           */
++#define	VAX_CALLG (0xFA)	/* Call with arg list in memory		   */
+ 
+ struct vit			/* vax instruction tree                    */
+ {
 diff -rNU3 dist.orig/gas/configure.tgt dist.nbsd/gas/configure.tgt
---- dist.orig/gas/configure.tgt	2011-06-20 15:23:21.000000000 +0200
-+++ dist.nbsd/gas/configure.tgt	2013-04-08 23:50:58.000000000 +0200
-@@ -201,7 +201,8 @@
-   i386-*-freebsd[12].*)			fmt=aout em=386bsd ;;
-   i386-*-freebsd[12])			fmt=aout em=386bsd ;;
-   i386-*-freebsd* \
--  | i386-*-kfreebsd*-gnu)		fmt=elf em=freebsd ;;
-+  | i386-*-kfreebsd*-gnu \
-+  | i386-*-dragonfly*)		fmt=elf em=freebsd ;;
-   i386-*-sysv*)				fmt=coff ;;
-   i386-*-sco3.2v5*coff)			fmt=coff ;;
-   i386-*-isc*)				fmt=coff ;;
-@@ -417,6 +418,7 @@
-   *-*-aout | *-*-scout)			fmt=aout ;;
-   *-*-dragonfly*)			fmt=elf em=dragonfly ;;
-   *-*-freebsd* | *-*-kfreebsd*-gnu)	fmt=elf em=freebsd ;;
-+  *-*-dragonfly*)			fmt=elf em=freebsd ;;
-   *-*-bsd*)				fmt=aout em=sun3 ;;
-   *-*-generic)				fmt=generic ;;
-   *-*-xray | *-*-hms)			fmt=coff ;;
-diff -rNU3 dist.orig/gold/configure dist.nbsd/gold/configure
---- dist.orig/gold/configure	2011-09-14 03:29:01.000000000 +0200
-+++ dist.nbsd/gold/configure	2013-04-08 23:32:19.000000000 +0200
-@@ -7999,6 +7999,8 @@
-   case $ac_option in
-   # Handling of the options.
-   -recheck | --recheck | --rechec | --reche | --rech | --rec | --re | --r)
-+	: Avoid regenerating within pkgsrc
-+	exit 0
-     ac_cs_recheck=: ;;
-   --version | --versio | --versi | --vers | --ver | --ve | --v | -V )
-     $as_echo "$ac_cs_version"; exit ;;
-diff -rNU3 dist.orig/gprof/configure dist.nbsd/gprof/configure
---- dist.orig/gprof/configure	2011-03-30 17:23:20.000000000 +0200
-+++ dist.nbsd/gprof/configure	2013-04-08 23:32:50.000000000 +0200
-@@ -12700,6 +12700,8 @@
-   case $ac_option in
-   # Handling of the options.
-   -recheck | --recheck | --rechec | --reche | --rech | --rec | --re | --r)
-+	: Avoid regenerating within pkgsrc
-+	exit 0
-     ac_cs_recheck=: ;;
-   --version | --versio | --versi | --vers | --ver | --ve | --v | -V )
-     $as_echo "$ac_cs_version"; exit ;;
-diff -rNU3 dist.orig/intl/configure dist.nbsd/intl/configure
---- dist.orig/intl/configure	2010-09-27 22:22:53.000000000 +0200
-+++ dist.nbsd/intl/configure	2013-04-08 23:33:07.000000000 +0200
-@@ -7182,6 +7182,8 @@
-   case $ac_option in
-   # Handling of the options.
-   -recheck | --recheck | --rechec | --reche | --rech | --rec | --re | --r)
-+	: Avoid regenerating within pkgsrc
-+	exit 0
-     ac_cs_recheck=: ;;
-   --version | --versio | --versi | --vers | --ver | --ve | --v | -V )
-     $as_echo "$ac_cs_version"; exit ;;
-diff -rNU3 dist.orig/ld/configure dist.nbsd/ld/configure
---- dist.orig/ld/configure	2011-03-28 12:27:07.000000000 +0200
-+++ dist.nbsd/ld/configure	2013-04-08 23:34:44.000000000 +0200
-@@ -17534,6 +17534,8 @@
-   case $ac_option in
-   # Handling of the options.
-   -recheck | --recheck | --rechec | --reche | --rech | --rec | --re | --r)
-+	: Avoid regenerating within pkgsrc
-+	exit 0
-     ac_cs_recheck=: ;;
-   --version | --versio | --versi | --vers | --ver | --ve | --v | -V )
-     $as_echo "$ac_cs_version"; exit ;;
-diff -rNU3 dist.orig/libiberty/configure dist.nbsd/libiberty/configure
---- dist.orig/libiberty/configure	2011-08-22 19:16:25.000000000 +0200
-+++ dist.nbsd/libiberty/configure	2013-04-08 23:36:09.000000000 +0200
-@@ -7538,6 +7538,8 @@
-   case $ac_option in
-   # Handling of the options.
-   -recheck | --recheck | --rechec | --reche | --rech | --rec | --re | --r)
-+	: Avoid regenerating within pkgsrc
-+	exit 0
-     ac_cs_recheck=: ;;
-   --version | --versio | --versi | --vers | --ver | --ve | --v | -V )
-     $as_echo "$ac_cs_version"; exit ;;
+--- dist.orig/gas/configure.tgt	Tue Sep  4 12:53:45 2012
++++ dist.nbsd/gas/configure.tgt	Wed Feb 19 16:39:28 2014
+@@ -51,7 +51,7 @@
+   m32c)			cpu_type=m32c endian=little ;;
+   m32r)			cpu_type=m32r endian=big ;;
+   m32rle)		cpu_type=m32r endian=little ;;
+-  m5200)		cpu_type=m68k ;;
++  m5200|m5407)		cpu_type=m68k ;;
+   m68008)		cpu_type=m68k ;;
+   m680[012346]0)	cpu_type=m68k ;;
+   m6811|m6812|m68hc12)	cpu_type=m68hc11 ;;
+@@ -111,9 +111,11 @@
+   arc-*-elf*)				fmt=elf ;;
+ 
+   arm-*-aout)				fmt=aout ;;
+-  arm-*-coff)				fmt=coff ;;
+-  arm-*-rtems*)				fmt=elf ;;
+-  arm-*-elf)				fmt=elf ;;
++  arm-*-coff | thumb-*-coff)		fmt=coff ;;
++  arm-*-rtems* | thumb-*-rtems*)	fmt=elf ;;
++  arm-*-elf | thumb-*-elf)		fmt=elf ;;
++  arm-*-netbsdelf*-*eabihf*)		fmt=elf em=armnbsdeabihf ;;
++  arm-*-netbsdelf*-*eabi*)		fmt=elf em=armnbsdeabi ;;
+   arm-*-eabi*)				fmt=elf em=armeabi ;;
+   arm-*-symbianelf*)			fmt=elf em=symbian ;;
+   arm-*-kaos*)				fmt=elf ;;
+@@ -124,8 +126,8 @@
+   arm-*-uclinux*eabi*)			fmt=elf  em=armlinuxeabi ;;
+   arm-*-uclinux*)			fmt=elf  em=linux ;;
+   arm-*-nacl*)				fmt=elf  em=nacl ;;
+-  arm-*-netbsdelf*)			fmt=elf  em=nbsd ;;
+-  arm-*-*n*bsd*)			fmt=aout em=nbsd ;;
++  arm-*-netbsdelf*)			fmt=elf  em=armnbsd ;;
++  arm-*-*n*bsd*)			fmt=aout em=armnbsd ;;
+   arm-*-nto*)				fmt=elf ;;
+   arm-epoc-pe)				fmt=coff em=epoc-pe ;;
+   arm-wince-pe | arm-*-wince | arm*-*-mingw32ce* | arm*-*-cegcc*)
+diff -rNU3 dist.orig/gas/doc/Makefile.am dist.nbsd/gas/doc/Makefile.am
+--- dist.orig/gas/doc/Makefile.am	Tue Sep  4 12:53:45 2012
++++ dist.nbsd/gas/doc/Makefile.am	Wed Feb 19 16:39:28 2014
+@@ -24,6 +24,8 @@
+ 		   -I "$(top_srcdir)/../bfd/doc" -I ../../bfd/doc
+ 
+ asconfig.texi: $(CONFIG).texi
++	@echo "NOT REBUILDING $@"
++NetBSD_DISABLED_asconfig.text:
+ 	rm -f asconfig.texi
+ 	cp $(srcdir)/$(CONFIG).texi ./asconfig.texi
+ 	chmod u+w ./asconfig.texi
+@@ -103,6 +105,8 @@
+ # The sed command removes the no-adjust Nroff command so that
+ # the man output looks standard.
+ as.1: $(srcdir)/as.texinfo asconfig.texi $(CPU_DOCS)
++	@echo "NOT REBUILDING $@"
++NetBSD_DISABLED_as.1:
+ 	touch $@
+ 	-$(TEXI2POD) $(MANCONF) < $(srcdir)/as.texinfo > as.pod
+ 	-($(POD2MAN) as.pod | \
+diff -rNU3 dist.orig/gas/doc/Makefile.in dist.nbsd/gas/doc/Makefile.in
+--- dist.orig/gas/doc/Makefile.in	Tue Sep  4 12:53:45 2012
++++ dist.nbsd/gas/doc/Makefile.in	Wed Feb 19 16:39:28 2014
+@@ -374,6 +374,8 @@
+ 	-rm -rf .libs _libs
+ 
+ as.info: as.texinfo $(as_TEXINFOS)
++	@echo "NOT REBUILDING $@"
++NetBSD_DISABLED_as.info: as.texinfo $(as_TEXINFOS)
+ 	restore=: && backupdir="$(am__leading_dot)am$$$$" && \
+ 	rm -rf $$backupdir && mkdir $$backupdir && \
+ 	if ($(MAKEINFO) --version) >/dev/null 2>&1; then \
+@@ -756,6 +758,8 @@
+ 
+ 
+ asconfig.texi: $(CONFIG).texi
++	@echo "NOT REBUILDING $@"
++NetBSD_DISABLED_asconfig.texi:
+ 	rm -f asconfig.texi
+ 	cp $(srcdir)/$(CONFIG).texi ./asconfig.texi
+ 	chmod u+w ./asconfig.texi
+@@ -773,6 +777,8 @@
+ # The sed command removes the no-adjust Nroff command so that
+ # the man output looks standard.
+ as.1: $(srcdir)/as.texinfo asconfig.texi $(CPU_DOCS)
++	@echo "NOT REBUILDING $@"
++NetBSD_DISABLED_as.1:
+ 	touch $@
+ 	-$(TEXI2POD) $(MANCONF) < $(srcdir)/as.texinfo > as.pod
+ 	-($(POD2MAN) as.pod | \
+Binary files dist.orig/gas/doc/as.info and dist.nbsd/gas/doc/as.info differ
+diff -rNU3 dist.orig/gas/doc/c-mips.texi dist.nbsd/gas/doc/c-mips.texi
+--- dist.orig/gas/doc/c-mips.texi	Tue Sep  4 14:16:07 2012
++++ dist.nbsd/gas/doc/c-mips.texi	Wed Feb 19 16:39:28 2014
+@@ -210,6 +210,14 @@
+ @itemx -mno-fix-vr4130
+ Insert nops to work around the VR4130 @samp{mflo}/@samp{mfhi} errata.
+ 
++@item -mfix-loongson2f-btb
++@itemx -mno-fix-loongson2f-btb
++Clear the Branch Target Buffer before any jump through a register.  This
++option is intended to be used on kernel code for the Loongson 2F processor
++only; userland code compiled with this option will fault, and kernel code
++compiled with this option run on another processor than Loongson 2F will
++yield unpredictable results.
++
+ @item -mfix-24k
+ @itemx -mno-fix-24k
+ Insert nops to work around the 24K @samp{eret}/@samp{deret} errata.
+diff -rNU3 dist.orig/gas/remap.c dist.nbsd/gas/remap.c
+--- dist.orig/gas/remap.c	Fri Mar 11 14:18:24 2011
++++ dist.nbsd/gas/remap.c	Wed Feb 19 16:39:30 2014
+@@ -84,8 +84,8 @@
+     return xstrdup (filename);
+   name = filename + map->old_len;
+   name_len = strlen (name) + 1;
+-  s = (char *) alloca (name_len + map->new_len);
++  s = (char *) xmalloc (name_len + map->new_len);
+   memcpy (s, map->new_prefix, map->new_len);
+   memcpy (s + map->new_len, name, name_len);
+-  return xstrdup (s);
++  return s;
+ }
+diff -rNU3 dist.orig/gprof/corefile.c dist.nbsd/gprof/corefile.c
+--- dist.orig/gprof/corefile.c	Tue Mar  6 13:54:59 2012
++++ dist.nbsd/gprof/corefile.c	Wed Feb 19 16:39:31 2014
+@@ -30,6 +30,8 @@
+ #include "corefile.h"
+ #include "safe-ctype.h"
+ 
++#include <stdlib.h>
++
+ bfd *core_bfd;
+ static int core_num_syms;
+ static asymbol **core_syms;
+diff -rNU3 dist.orig/gprof/gprof.c dist.nbsd/gprof/gprof.c
+--- dist.orig/gprof/gprof.c	Fri Jun 12 15:33:30 2009
++++ dist.nbsd/gprof/gprof.c	Wed Feb 19 16:39:31 2014
+@@ -47,6 +47,8 @@
+ 
+ static void usage (FILE *, int) ATTRIBUTE_NORETURN;
+ 
++#include <stdlib.h>
++
+ const char * whoami;
+ const char * function_mapping_file;
+ static const char * external_symbol_table;
+Binary files dist.orig/gprof/gprof.info and dist.nbsd/gprof/gprof.info differ
+diff -rNU3 dist.orig/include/bfdlink.h dist.nbsd/include/bfdlink.h
+--- dist.orig/include/bfdlink.h	Mon Apr  9 16:27:18 2012
++++ dist.nbsd/include/bfdlink.h	Wed Feb 19 16:39:28 2014
+@@ -435,6 +435,10 @@
+      option).  If this is NULL, no symbols are being wrapped.  */
+   struct bfd_hash_table *wrap_hash;
+ 
++  /* Hash table of symbols which may be left unresolved during
++     a link.  If this is NULL, no symbols can be left unresolved.  */
++  struct bfd_hash_table *ignore_hash;
++
+   /* The output BFD.  */
+   bfd *output_bfd;
+ 
+diff -rNU3 dist.orig/include/elf/common.h dist.nbsd/include/elf/common.h
+--- dist.orig/include/elf/common.h	Tue Sep  4 12:53:47 2012
++++ dist.nbsd/include/elf/common.h	Wed Feb 19 16:39:28 2014
+@@ -607,6 +607,7 @@
+ /* Values for NetBSD .note.netbsd.ident notes.  Note name is "NetBSD".  */
+ 
+ #define NT_NETBSD_IDENT		1
++#define NT_NETBSD_MARCH		5
+ 
+ /* Values for OpenBSD .note.openbsd.ident notes.  Note name is "OpenBSD".  */
+ 
+diff -rNU3 dist.orig/include/objalloc.h dist.nbsd/include/objalloc.h
+--- dist.orig/include/objalloc.h	Tue May 10 10:21:08 2005
++++ dist.nbsd/include/objalloc.h	Wed Feb 19 16:39:28 2014
+@@ -1,5 +1,5 @@
+ /* objalloc.h -- routines to allocate memory for objects
+-   Copyright 1997, 2001 Free Software Foundation, Inc.
++   Copyright 1997-2012 Free Software Foundation, Inc.
+    Written by Ian Lance Taylor, Cygnus Solutions.
+ 
+ This program is free software; you can redistribute it and/or modify it
+@@ -91,7 +91,7 @@
+      if (__len == 0)							\
+        __len = 1;							\
+      __len = (__len + OBJALLOC_ALIGN - 1) &~ (OBJALLOC_ALIGN - 1);	\
+-     (__len <= __o->current_space					\
++     (__len != 0 && __len <= __o->current_space				\
+       ? (__o->current_ptr += __len,					\
+ 	 __o->current_space -= __len,					\
+ 	 (void *) (__o->current_ptr - __len))				\
+diff -rNU3 dist.orig/include/opcode/mips.h dist.nbsd/include/opcode/mips.h
+--- dist.orig/include/opcode/mips.h	Tue Sep  4 14:21:05 2012
++++ dist.nbsd/include/opcode/mips.h	Wed Feb 19 16:39:28 2014
+@@ -1035,7 +1035,11 @@
+   M_DSUB_I,
+   M_DSUBU_I,
+   M_DSUBU_I_2,
++  M_JR_S,
++  M_J_S,
+   M_J_A,
++  M_JALR_S,
++  M_JALR_DS,
+   M_JAL_1,
+   M_JAL_2,
+   M_JAL_A,
+diff -rNU3 dist.orig/ld/Makefile.am dist.nbsd/ld/Makefile.am
+--- dist.orig/ld/Makefile.am	Mon Mar 25 08:06:23 2013
++++ dist.nbsd/ld/Makefile.am	Wed Feb 19 16:39:31 2014
+@@ -145,12 +145,14 @@
+ 	earmelf_linux_eabi.c \
+ 	earmelf_nacl.c \
+ 	earmelf_nbsd.c \
++	earmelf_nbsd_eabi.c \
+ 	earmelf_vxworks.c \
+ 	earmelfb.c \
+ 	earmelfb_linux.c \
+ 	earmelfb_linux_eabi.c \
+ 	earmelfb_nacl.c \
+ 	earmelfb_nbsd.c \
++	earmelfb_nbsd_eabi.c \
+ 	earmnbsd.c \
+ 	earmnto.c \
+ 	earmpe.c \
+@@ -731,6 +733,11 @@
+   $(ELF_DEPS) $(srcdir)/emultempl/armelf.em \
+   $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
+ 	${GENSCRIPTS} armelf_nbsd "$(tdir_armelf_nbsd)"
++earmelf_nbsd_abi.c: $(srcdir)/emulparams/armelf_nbsd_abi.sh \
++  $(srcdir)/emulparams/armelf.sh \
++  $(ELF_DEPS) $(srcdir)/emultempl/armelf.em \
++  $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
++	${GENSCRIPTS} armelf_nbsd_abi "$(tdir_armelf_nbsd_abi)"
+ earmelf_vxworks.c: $(srcdir)/emulparams/armelf_vxworks.sh \
+   $(srcdir)/emulparams/vxworks.sh $(srcdir)/emulparams/armelf.sh \
+   $(ELF_DEPS) $(srcdir)/emultempl/vxworks.em \
+@@ -766,6 +773,12 @@
+   $(ELF_DEPS) $(srcdir)/emultempl/armelf.em \
+   $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
+ 	${GENSCRIPTS} armelfb_nbsd "$(tdir_armelfb_nbsd)"
++earmelfb_nbsd_abi.c: $(srcdir)/emulparams/armelfb_nbsd_abi.sh \
++  $(srcdir)/emulparams/armelf_nbsd_abi.sh \
++  $(srcdir)/emulparams/armelf.sh \
++  $(ELF_DEPS) $(srcdir)/emultempl/armelf.em \
++  $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
++	${GENSCRIPTS} armelfb_nbsd_abi "$(tdir_armelfb_nbsd_abi)"
+ earmnbsd.c:	$(srcdir)/emulparams/armnbsd.sh \
+   $(srcdir)/emultempl/generic.em $(srcdir)/scripttempl/aout.sc ${GEN_DEPENDS}
+ 	${GENSCRIPTS} armnbsd "$(tdir_armnbsd)"
+@@ -2219,6 +2232,8 @@
+ # because almost all configs use "gen" version of manual.
+ #  Set DOCVER above to change.
+ configdoc.texi:	${DOCVER}-doc.texi
++	@echo "NOT REBUILDING $@"
++NetBSD_DISABLED_configdoc.texi:
+ 	cp ${srcdir}/${DOCVER}-doc.texi ./configdoc.texi
+ 	chmod u+w ./configdoc.texi
+ 
+@@ -2226,6 +2241,8 @@
+ # The sed command removes the no-adjust Nroff command so that
+ # the man output looks standard.
+ ld.1: $(srcdir)/ld.texinfo configdoc.texi
++	@echo "NOT REBUILDING $@"
++NetBSD_DISABLED_ld.1:
+ 	touch $@
+ 	-$(TEXI2POD) $(MANCONF) < $(srcdir)/ld.texinfo > ld.pod
+ 	-($(POD2MAN) ld.pod | \
+diff -rNU3 dist.orig/ld/Makefile.in dist.nbsd/ld/Makefile.in
+--- dist.orig/ld/Makefile.in	Mon Mar 25 08:06:23 2013
++++ dist.nbsd/ld/Makefile.in	Wed Feb 19 16:39:31 2014
+@@ -452,12 +452,14 @@
+ 	earmelf_linux_eabi.c \
+ 	earmelf_nacl.c \
+ 	earmelf_nbsd.c \
++	earmelf_nbsd_eabi.c \
+ 	earmelf_vxworks.c \
+ 	earmelfb.c \
+ 	earmelfb_linux.c \
+ 	earmelfb_linux_eabi.c \
+ 	earmelfb_nacl.c \
+ 	earmelfb_nbsd.c \
++	earmelfb_nbsd_eabi.c \
+ 	earmnbsd.c \
+ 	earmnto.c \
+ 	earmpe.c \
+@@ -1078,12 +1080,14 @@
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/earmelf_linux_eabi.Po@am__quote@
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/earmelf_nacl.Po@am__quote@
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/earmelf_nbsd.Po@am__quote@
++@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/earmelf_nbsd_abi.Po@am__quote@
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/earmelf_vxworks.Po@am__quote@
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/earmelfb.Po@am__quote@
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/earmelfb_linux.Po@am__quote@
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/earmelfb_linux_eabi.Po@am__quote@
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/earmelfb_nacl.Po@am__quote@
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/earmelfb_nbsd.Po@am__quote@
++@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/earmelfb_nbsd_eabi.Po@am__quote@
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/earmnbsd.Po@am__quote@
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/earmnto.Po@am__quote@
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/earmpe.Po@am__quote@
+@@ -1490,6 +1494,8 @@
+ 	-rm -f libtool config.lt
+ 
+ ld.info: ld.texinfo $(ld_TEXINFOS)
++	@echo "NOT REBUILDING $@"
++NetBSD_DISABLED_ld.info: ld.texinfo $(ld_TEXINFOS)
+ 	restore=: && backupdir="$(am__leading_dot)am$$$$" && \
+ 	rm -rf $$backupdir && mkdir $$backupdir && \
+ 	if ($(MAKEINFO) --version) >/dev/null 2>&1; then \
+@@ -2201,6 +2207,11 @@
+   $(ELF_DEPS) $(srcdir)/emultempl/armelf.em \
+   $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
+ 	${GENSCRIPTS} armelf_nbsd "$(tdir_armelf_nbsd)"
++earmelf_nbsd_eabi.c: $(srcdir)/emulparams/armelf_nbsd_eabi.sh \
++  $(srcdir)/emulparams/armelf.sh \
++  $(ELF_DEPS) $(srcdir)/emultempl/armelf.em \
++  $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
++	${GENSCRIPTS} armelf_nbsd_eabi "$(tdir_armelf_nbsd_eabi)"
+ earmelf_vxworks.c: $(srcdir)/emulparams/armelf_vxworks.sh \
+   $(srcdir)/emulparams/vxworks.sh $(srcdir)/emulparams/armelf.sh \
+   $(ELF_DEPS) $(srcdir)/emultempl/vxworks.em \
+@@ -2236,6 +2247,12 @@
+   $(ELF_DEPS) $(srcdir)/emultempl/armelf.em \
+   $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
+ 	${GENSCRIPTS} armelfb_nbsd "$(tdir_armelfb_nbsd)"
++earmelfb_nbsd_eabi.c: $(srcdir)/emulparams/armelfb_nbsd_eabi.sh \
++  $(srcdir)/emulparams/armelf_nbsd_eabi.sh \
++  $(srcdir)/emulparams/armelf.sh \
++  $(ELF_DEPS) $(srcdir)/emultempl/armelf.em \
++  $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
++	${GENSCRIPTS} armelfb_nbsd_eabi "$(tdir_armelfb_nbsd_eabi)"
+ earmnbsd.c:	$(srcdir)/emulparams/armnbsd.sh \
+   $(srcdir)/emultempl/generic.em $(srcdir)/scripttempl/aout.sc ${GEN_DEPENDS}
+ 	${GENSCRIPTS} armnbsd "$(tdir_armnbsd)"
+@@ -3632,6 +3649,8 @@
+ # because almost all configs use "gen" version of manual.
+ #  Set DOCVER above to change.
+ configdoc.texi:	${DOCVER}-doc.texi
++	@echo "NOT REBUILDING $@"
++NetBSD_DISABLED_configdoc.texi:
+ 	cp ${srcdir}/${DOCVER}-doc.texi ./configdoc.texi
+ 	chmod u+w ./configdoc.texi
+ 
+@@ -3639,6 +3658,8 @@
+ # The sed command removes the no-adjust Nroff command so that
+ # the man output looks standard.
+ ld.1: $(srcdir)/ld.texinfo configdoc.texi
++	@echo "NOT REBUILDING $@"
++NetBSD_DISABLED_ld.1:
+ 	touch $@
+ 	-$(TEXI2POD) $(MANCONF) < $(srcdir)/ld.texinfo > ld.pod
+ 	-($(POD2MAN) ld.pod | \
+diff -rNU3 dist.orig/ld/configdoc.texi dist.nbsd/ld/configdoc.texi
+--- dist.orig/ld/configdoc.texi	Tue Nov 13 14:19:33 2012
++++ dist.nbsd/ld/configdoc.texi	Thu Jan  1 00:00:00 1970
+@@ -1,27 +0,0 @@
+-@c ------------------------------ CONFIGURATION VARS:
+-@c 1. Inclusiveness of this manual
+-@set GENERIC
+-
+-@c 2. Specific target machines
+-@set ARM
+-@set C6X
+-@set H8300
+-@set HPPA
+-@set I960
+-@set M68HC11
+-@set M68K
+-@set MMIX
+-@set MSP430
+-@set POWERPC
+-@set POWERPC64
+-@set Renesas
+-@set SPU
+-@set TICOFF
+-@set WIN32
+-@set XTENSA
+-
+-@c 3. Properties of this configuration
+-@clear SingleFormat
+-@set UsesEnvVars
+-@c ------------------------------ end CONFIGURATION VARS
+-
+diff -rNU3 dist.orig/ld/configure.tgt dist.nbsd/ld/configure.tgt
+--- dist.orig/ld/configure.tgt	Tue Sep  4 12:53:47 2012
++++ dist.nbsd/ld/configure.tgt	Wed Feb 19 16:39:31 2014
+@@ -64,7 +64,13 @@
+ arm-*-freebsd* | arm-*-kfreebsd*-gnu)
+ 	       		targ_emul=armelf_fbsd
+ 			targ_extra_emuls="armelf" ;;
+-armeb-*-netbsdelf*)	targ_emul=armelfb_nbsd;
++arm*eb-*-netbsdelf*-*eabi*)
++			targ_emul=armelfb_nbsd_eabi;
++			targ_extra_emuls="armelf_nbsd_eabi armelf armnbsd" ;;
++arm*-*-netbsdelf*-*eabi*)
++			targ_emul=armelf_nbsd_eabi;
++			targ_extra_emuls="armelfb_nbsd_eabi armelf armnbsd" ;;
++arm*eb-*-netbsdelf*)	targ_emul=armelfb_nbsd;
+ 			targ_extra_emuls="armelf_nbsd armelf armnbsd" ;;
+ arm-*-netbsdelf*)	targ_emul=armelf_nbsd;
+ 			targ_extra_emuls="armelfb_nbsd armelf armnbsd" ;;
+@@ -379,7 +385,8 @@
+ m68*-*-gnu*)		targ_emul=m68kelf ;;
+ m68*-*-netbsd*4k*)	targ_emul=m68k4knbsd
+ 			targ_extra_emuls="m68knbsd m68kelfnbsd" ;;
+-m68*-*-netbsdelf*)	targ_emul=m68kelfnbsd
++m68*-*-netbsdelf* | m5407*-*-netbsdelf*)
++			targ_emul=m68kelfnbsd
+ 			targ_extra_emuls="m68knbsd m68k4knbsd" ;;
+ m68*-*-netbsdaout* | m68*-*-netbsd*)
+ 			targ_emul=m68knbsd
+@@ -409,12 +416,18 @@
+ mips*-sgi-irix*)	targ_emul=mipsbig ;;
+ mips*el-*-ecoff*)	targ_emul=mipsidtl ;;
+ mips*-*-ecoff*)		targ_emul=mipsidt ;;
++mips64*el-*-netbsd*)	targ_emul=elf32ltsmipn32
++			targ_extra_emuls="elf64btsmip elf64ltsmip elf32ltsmip elf32btsmipn32 elf32btsmip"
++			;;
++mips64*-*-netbsd*)	targ_emul=elf32btsmipn32
++			targ_extra_emuls="elf64ltsmip elf64btsmip elf32btsmip elf32ltsmipn32 elf32ltsmip"
++			;;
+ mips*el-*-netbsd*)	targ_emul=elf32ltsmip
+ 			targ_extra_emuls="elf32btsmip elf64ltsmip elf64btsmip"
+ 			;;
+ mips*-*-netbsd*)	targ_emul=elf32btsmip
+ 			targ_extra_emuls="elf32ltsmip elf64btsmip elf64ltsmip"
+-  			;;
++			;;
+ mips*-*-bsd*)		targ_emul=mipsbig ;;
+ mips*vr4300el-*-elf*)	targ_emul=elf32l4300 ;;
+ mips*vr4300-*-elf*)	targ_emul=elf32b4300 ;;
+@@ -654,10 +667,15 @@
+ 			tdir_sparclinux=${targ_alias}aout
+ 			tdir_elf64_sparc=`echo ${targ_alias} | sed -e 's/32//'`
+ 			tdir_sun4=sparc-sun-sunos4 ;;
+-sparc64-*-netbsd* | sparc64-*-openbsd*)
+-			targ_emul=elf64_sparc
+-			targ_extra_emuls="elf32_sparc" ;;
+-sparc*-*-netbsd*elf*)	targ_emul=elf32_sparc ;;
++sparc64-*-netbsd*)	targ_emul=elf64_sparc
++			targ_extra_emuls="elf32_sparc sparcnbsd"
++			;;
++sparc64-*-openbsd*)	targ_emul=elf64_sparc
++			targ_extra_emuls="elf32_sparc"
++			;;
++sparc*-*-netbsd*elf*)	targ_emul=elf32_sparc
++			targ_extra_emuls=sparcnbsd
++			;;
+ sparc*-*-netbsd*)	targ_emul=sparcnbsd ;;
+ sparc-*-solaris2.[0-6] | sparc-*-solaris2.[0-6].*)
+ 			targ_emul=elf32_sparc_sol2
+diff -rNU3 dist.orig/ld/emulparams/armelf_nbsd.sh dist.nbsd/ld/emulparams/armelf_nbsd.sh
+--- dist.orig/ld/emulparams/armelf_nbsd.sh	Tue May 30 16:45:32 2006
++++ dist.nbsd/ld/emulparams/armelf_nbsd.sh	Wed Feb 19 16:39:31 2014
+@@ -3,5 +3,12 @@
+ TEXT_START_ADDR=0x00008000
+ TARGET2_TYPE=got-rel
+ 
++unset DATA_START_SYMBOLS
+ unset STACK_ADDR
+ unset EMBEDDED
++
++case "$target" in
++  arm*-*-netbsdelf*-*eabi*)
++    LIB_PATH='=/usr/lib/oabi'
++    ;;
++esac
+diff -rNU3 dist.orig/ld/emulparams/armelf_nbsd_eabi.sh dist.nbsd/ld/emulparams/armelf_nbsd_eabi.sh
+--- dist.orig/ld/emulparams/armelf_nbsd_eabi.sh	Thu Jan  1 00:00:00 1970
++++ dist.nbsd/ld/emulparams/armelf_nbsd_eabi.sh	Wed Feb 19 16:39:31 2014
+@@ -0,0 +1,18 @@
++. ${srcdir}/emulparams/armelf_nbsd.sh
++
++# Use the ARM ABI-compliant exception-handling sections.
++OTHER_READONLY_SECTIONS="
++  .ARM.extab ${RELOCATING-0} : { *(.ARM.extab${RELOCATING+* .gnu.linkonce.armextab.*}) }
++  ${RELOCATING+ PROVIDE_HIDDEN (__exidx_start = .); }
++  .ARM.exidx ${RELOCATING-0} : { *(.ARM.exidx${RELOCATING+* .gnu.linkonce.armexidx.*}) }
++  ${RELOCATING+ PROVIDE_HIDDEN (__exidx_end = .); }"
++
++unset LIB_PATH
++
++case "$target" in
++  arm*-*-netbsdelf*-*eabi*)
++    ;;
++  arm*-*-netbsdelf*)
++    LIB_PATH='=/usr/lib/eabi'
++    ;;
++esac
+diff -rNU3 dist.orig/ld/emulparams/armelfb_nbsd_eabi.sh dist.nbsd/ld/emulparams/armelfb_nbsd_eabi.sh
+--- dist.orig/ld/emulparams/armelfb_nbsd_eabi.sh	Thu Jan  1 00:00:00 1970
++++ dist.nbsd/ld/emulparams/armelfb_nbsd_eabi.sh	Wed Feb 19 16:39:31 2014
+@@ -0,0 +1,2 @@
++. ${srcdir}/emulparams/armelf_nbsd_eabi.sh
++OUTPUT_FORMAT="elf32-bigarm"
+diff -rNU3 dist.orig/ld/emulparams/elf32_sparc.sh dist.nbsd/ld/emulparams/elf32_sparc.sh
+--- dist.orig/ld/emulparams/elf32_sparc.sh	Mon Sep 20 18:41:15 2010
++++ dist.nbsd/ld/emulparams/elf32_sparc.sh	Wed Feb 19 16:39:31 2014
+@@ -13,6 +13,7 @@
+ TEMPLATE_NAME=elf32
+ DATA_PLT=
+ GENERATE_SHLIB_SCRIPT=yes
++#ELFSIZE=32
+ GENERATE_PIE_SCRIPT=yes
+ NOP=0x01000000
+ NO_SMALL_DATA=yes
+diff -rNU3 dist.orig/ld/emulparams/elf32bmipn32-defs.sh dist.nbsd/ld/emulparams/elf32bmipn32-defs.sh
+--- dist.orig/ld/emulparams/elf32bmipn32-defs.sh	Tue Sep  4 14:14:28 2012
++++ dist.nbsd/ld/emulparams/elf32bmipn32-defs.sh	Wed Feb 19 16:39:31 2014
+@@ -6,6 +6,7 @@
+ 
+ # Handle both big- and little-ended 32-bit MIPS objects.
+ ARCH=mips
++MACHINE=
+ OUTPUT_FORMAT="elf32-bigmips"
+ BIG_OUTPUT_FORMAT="elf32-bigmips"
+ LITTLE_OUTPUT_FORMAT="elf32-littlemips"
+diff -rNU3 dist.orig/ld/emulparams/elf64alpha_nbsd.sh dist.nbsd/ld/emulparams/elf64alpha_nbsd.sh
+--- dist.orig/ld/emulparams/elf64alpha_nbsd.sh	Mon Dec 17 23:54:58 2001
++++ dist.nbsd/ld/emulparams/elf64alpha_nbsd.sh	Wed Feb 19 16:39:31 2014
+@@ -1,2 +1,8 @@
+ . ${srcdir}/emulparams/elf64alpha.sh
+ ENTRY=__start
++
++NOP=0x47ff041f
++# XXX binutils 2.13
++# Note that the number is always big-endian, thus we have to 
++# reverse the digit string.
++#NOP=0x0000fe2f1f04ff47		# unop; nop
+diff -rNU3 dist.orig/ld/emulparams/elf_i386.sh dist.nbsd/ld/emulparams/elf_i386.sh
+--- dist.orig/ld/emulparams/elf_i386.sh	Mon Jun 11 13:23:50 2012
++++ dist.nbsd/ld/emulparams/elf_i386.sh	Wed Feb 19 16:39:31 2014
+@@ -9,7 +9,14 @@
+ MACHINE=
+ TEMPLATE_NAME=elf32
+ GENERATE_SHLIB_SCRIPT=yes
++#ELFSIZE=32
+ GENERATE_PIE_SCRIPT=yes
+ NO_SMALL_DATA=yes
+ SEPARATE_GOTPLT="SIZEOF (.got.plt) >= 12 ? 12 : 0"
+ IREL_IN_PLT=
++
++case "$target" in
++  x86_64-*-netbsd*)
++    LIB_PATH='=/usr/lib/i386'
++    ;;
++esac
+diff -rNU3 dist.orig/ld/emulparams/hppalinux.sh dist.nbsd/ld/emulparams/hppalinux.sh
+--- dist.orig/ld/emulparams/hppalinux.sh	Fri Feb 18 18:20:29 2011
++++ dist.nbsd/ld/emulparams/hppalinux.sh	Wed Feb 19 16:39:31 2014
+@@ -1,5 +1,5 @@
+ # If you change this file, please also look at files which source this one:
+-# hppanbsd.sh
++# hppanbsd.sh hppaobsd.sh
+ 
+ SCRIPT_NAME=elf
+ ELFSIZE=32
+diff -rNU3 dist.orig/ld/emulparams/hppaobsd.sh dist.nbsd/ld/emulparams/hppaobsd.sh
+--- dist.orig/ld/emulparams/hppaobsd.sh	Tue May 30 16:45:32 2006
++++ dist.nbsd/ld/emulparams/hppaobsd.sh	Wed Feb 19 16:39:31 2014
+@@ -1,4 +1,4 @@
+-. ${srcdir}/emulparams/hppanbsd.sh
++. ${srcdir}/emulparams/hppalinux.sh
+ 
+ OUTPUT_FORMAT="elf32-hppa"
+ TEXT_START_ADDR=0x1000
+diff -rNU3 dist.orig/ld/emulparams/m68kelf.sh dist.nbsd/ld/emulparams/m68kelf.sh
+--- dist.orig/ld/emulparams/m68kelf.sh	Tue Sep 29 16:28:52 2009
++++ dist.nbsd/ld/emulparams/m68kelf.sh	Wed Feb 19 16:39:31 2014
+@@ -10,5 +10,6 @@
+ TEMPLATE_NAME=elf32
+ EXTRA_EM_FILE=m68kelf
+ GENERATE_SHLIB_SCRIPT=yes
++ELFSIZE=32
+ GENERATE_PIE_SCRIPT=yes
+ NO_SMALL_DATA=yes
+diff -rNU3 dist.orig/ld/emulparams/m68kelfnbsd.sh dist.nbsd/ld/emulparams/m68kelfnbsd.sh
+--- dist.orig/ld/emulparams/m68kelfnbsd.sh	Tue Dec 18 13:26:26 2001
++++ dist.nbsd/ld/emulparams/m68kelfnbsd.sh	Wed Feb 19 16:39:31 2014
+@@ -1,4 +1,4 @@
+ . ${srcdir}/emulparams/m68kelf.sh
+ TEXT_START_ADDR=0x2000
+ TARGET_PAGE_SIZE=0x2000
+-MACHINE=
++NONPAGED_TEXT_START_ADDR=${TEXT_START_ADDR}
+diff -rNU3 dist.orig/ld/emulparams/sh.sh dist.nbsd/ld/emulparams/sh.sh
+--- dist.orig/ld/emulparams/sh.sh	Thu Nov 22 09:08:04 2001
++++ dist.nbsd/ld/emulparams/sh.sh	Wed Feb 19 16:39:31 2014
+@@ -3,6 +3,6 @@
+ 
+ SCRIPT_NAME=sh
+ OUTPUT_FORMAT="coff-sh"
+-TEXT_START_ADDR=0x8000
+-TARGET_PAGE_SIZE=128
++TEXT_START_ADDR=0x1000
++TARGET_PAGE_SIZE=0x1000
+ ARCH=sh
+diff -rNU3 dist.orig/ld/emulparams/shelf_nbsd.sh dist.nbsd/ld/emulparams/shelf_nbsd.sh
+--- dist.orig/ld/emulparams/shelf_nbsd.sh	Tue Jan 15 23:05:46 2008
++++ dist.nbsd/ld/emulparams/shelf_nbsd.sh	Wed Feb 19 16:39:31 2014
+@@ -9,7 +9,11 @@
+ 
+ DATA_START_SYMBOLS='PROVIDE (__data_start = .);';
+ 
+-ENTRY=_start
++ENTRY=__start
+ 
+ unset EMBEDDED
+ unset OTHER_SECTIONS
++
++OTHER_READWRITE_SECTIONS='
++  .note.ABI-tag : { *(.note.ABI-tag) }
++'
+diff -rNU3 dist.orig/ld/emultempl/elf32.em dist.nbsd/ld/emultempl/elf32.em
+--- dist.orig/ld/emultempl/elf32.em	Mon Mar 25 08:06:23 2013
++++ dist.nbsd/ld/emultempl/elf32.em	Wed Feb 19 16:39:31 2014
+@@ -72,6 +72,9 @@
+ 
+ if [ "x${USE_LIBPATH}" = xyes ] ; then
+   case ${target} in
++    *-*-netbsd*)
++    ;;
++
+     *-*-linux-* | *-*-k*bsd*-* | *-*-gnu*)
+   fragment <<EOF
+ #ifdef HAVE_GLOB
+@@ -103,6 +106,7 @@
+ {
+   ldfile_set_output_arch ("${OUTPUT_ARCH}", bfd_arch_`echo ${ARCH} | sed -e 's/:.*//'`);
+   input_flags.dynamic = ${DYNAMIC_LINK-TRUE};
++  input_flags.add_DT_NEEDED_for_dynamic = TRUE;
+   config.has_shared = `if test -n "$GENERATE_SHLIB_SCRIPT" ; then echo TRUE ; else echo FALSE ; fi`;
+   config.separate_code = `if test "x${SEPARATE_CODE}" = xyes ; then echo TRUE ; else echo FALSE ; fi`;
+ }
+@@ -375,6 +379,9 @@
+ 
+ EOF
+ case ${target} in
++    *-*-netbsd*)
++    ;;
++
+   *-*-linux-* | *-*-k*bsd*-* | *-*-gnu*)
+     fragment <<EOF
+ 	  {
+@@ -454,15 +461,25 @@
+ 
+ static bfd_boolean
+ gld${EMULATION_NAME}_search_needed (const char *path,
+-				    struct dt_needed *n, int force)
++				    struct dt_needed *n, int force, int prepend_sysroot)
+ {
+   const char *s;
+   const char *name = n->name;
+   size_t len;
+   struct dt_needed needed;
+ 
+-  if (name[0] == '/')
++  if (name[0] == '/') {
++    if (prepend_sysroot && ld_sysroot) {
++      bfd_boolean rv;
++      needed.by = n->by;
++      char *filename= concat(ld_sysroot, n->name, (const char *)NULL);
++      needed.name = filename;
++      rv = gld${EMULATION_NAME}_try_needed (&needed, force);
++      free(filename);
++      return rv;
++    }
+     return gld${EMULATION_NAME}_try_needed (n, force);
++  }
+ 
+   if (path == NULL || *path == '\0')
+     return FALSE;
+@@ -501,6 +518,13 @@
+ 	}
+       strcpy (sset, name);
+ 
++      if (prepend_sysroot && filename[0] == '=')
++        abort();
++      if (filename[0] == '/' && prepend_sysroot && ld_sysroot) {
++        char *filename2 = concat(ld_sysroot, filename, (const char *)NULL);
++        free(filename);
++        filename = filename2;
++      }
+       needed.name = filename;
+       if (gld${EMULATION_NAME}_try_needed (&needed, force))
+ 	return TRUE;
+@@ -621,6 +645,9 @@
+     # FreeBSD
+     ;;
+ 
++    *-*-netbsd*)
++    ;;
++
+     *-*-linux-* | *-*-k*bsd*-* | *-*-gnu*)
+       fragment <<EOF
+ /* For a native linker, check the file /etc/ld.so.conf for directories
+@@ -1262,13 +1289,13 @@
+ fragment <<EOF
+ 
+ 	  if (gld${EMULATION_NAME}_search_needed (command_line.rpath_link,
+-						  &n, force))
++						  &n, force, 0))
+ 	    break;
+ EOF
+ if [ "x${USE_LIBPATH}" = xyes ] ; then
+ fragment <<EOF
+ 	  if (gld${EMULATION_NAME}_search_needed (command_line.rpath,
+-						  &n, force))
++						  &n, force, 1))
+ 	    break;
+ EOF
+ fi
+@@ -1279,11 +1306,11 @@
+ 	    {
+ 	      lib_path = (const char *) getenv ("LD_RUN_PATH");
+ 	      if (gld${EMULATION_NAME}_search_needed (lib_path, &n,
+-						      force))
++						      force, 0))
+ 		break;
+ 	    }
+ 	  lib_path = (const char *) getenv ("LD_LIBRARY_PATH");
+-	  if (gld${EMULATION_NAME}_search_needed (lib_path, &n, force))
++	  if (gld${EMULATION_NAME}_search_needed (lib_path, &n, force, 0))
+ 	    break;
+ EOF
+ fi
+@@ -1293,12 +1320,10 @@
+ 	  rp = bfd_elf_get_runpath_list (link_info.output_bfd, &link_info);
+ 	  for (; !found && rp != NULL; rp = rp->next)
+ 	    {
+-	      char *tmpname = gld${EMULATION_NAME}_add_sysroot (rp->name);
+ 	      found = (rp->by == l->by
+-		       && gld${EMULATION_NAME}_search_needed (tmpname,
++		       && gld${EMULATION_NAME}_search_needed (rp->name,
+ 							      &n,
+-							      force));
+-	      free (tmpname);
++							      force, 1));
+ 	    }
+ 	  if (found)
+ 	    break;
+@@ -1315,6 +1340,9 @@
+     # FreeBSD
+     ;;
+ 
++    *-*-netbsd*)
++    ;;
++
+     *-*-linux-* | *-*-k*bsd*-* | *-*-gnu*)
+     # Linux
+       fragment <<EOF
+@@ -1515,7 +1543,8 @@
+ 	   a dep audit entry.  */
+ 	if (audit_libs && *audit_libs != '\0')
+ 	  {
+-	    char *cp = xstrdup (audit_libs);
++	    char *cp, *fcp;
++	    fcp = cp = xstrdup (audit_libs);
+ 	    do
+ 	      {
+ 		int more = 0;
+@@ -1533,6 +1562,7 @@
+ 		cp = more ? ++cp2 : NULL;
+ 	      }
+ 	    while (cp != NULL);
++	    free (fcp);
+ 	  }
+       }
+ 
+diff -rNU3 dist.orig/ld/ldlex.h dist.nbsd/ld/ldlex.h
+--- dist.orig/ld/ldlex.h	Mon Mar 25 08:06:23 2013
++++ dist.nbsd/ld/ldlex.h	Wed Feb 19 16:39:31 2014
+@@ -136,6 +136,7 @@
+ #endif /* ENABLE_PLUGINS */
+   OPTION_DEFAULT_SCRIPT,
+   OPTION_PRINT_OUTPUT_FORMAT,
++  OPTION_IGNORE_UNRESOLVED_SYMBOL
+ };
+ 
+ /* The initial parser states.  */
+diff -rNU3 dist.orig/ld/ldlex.l dist.nbsd/ld/ldlex.l
+--- dist.orig/ld/ldlex.l	Tue Sep  4 14:14:15 2012
++++ dist.nbsd/ld/ldlex.l	Wed Feb 19 16:39:31 2014
+@@ -60,10 +60,6 @@
+ #undef YY_INPUT
+ #define YY_INPUT(buf,result,max_size) result = yy_input (buf, max_size)
+ 
+-#ifndef YY_NO_UNPUT
+-#define YY_NO_UNPUT
+-#endif
+-
+ #define MAX_INCLUDE_DEPTH 10
+ static YY_BUFFER_STATE include_stack[MAX_INCLUDE_DEPTH];
+ static const char *file_name_stack[MAX_INCLUDE_DEPTH];
+@@ -93,6 +89,8 @@
+ int yywrap (void) { return 1; }
+ #endif
+ %}
++
++%option nounput
+ 
+ %a 4000
+ %o 5000
+diff -rNU3 dist.orig/ld/ldmain.c dist.nbsd/ld/ldmain.c
+--- dist.orig/ld/ldmain.c	Mon Mar 25 08:06:23 2013
++++ dist.nbsd/ld/ldmain.c	Wed Feb 19 16:39:31 2014
+@@ -642,6 +642,23 @@
+     einfo (_("%P%F: bfd_hash_lookup failed: %E\n"));
+ }
+ 
++void
++add_ignoresym (const char *name)
++{
++  if (link_info.ignore_hash == NULL)
++    {
++      link_info.ignore_hash = xmalloc (sizeof (struct bfd_hash_table));
++      if (! bfd_hash_table_init_n (link_info.ignore_hash,
++				   bfd_hash_newfunc,
++				   sizeof (struct bfd_hash_entry),
++				   61))
++	einfo (_("%P%F: bfd_hash_table_init failed: %E\n"));
++    }
++
++  if (bfd_hash_lookup (link_info.ignore_hash, name, TRUE, TRUE) == NULL)
++    einfo (_("%P%F: bfd_hash_lookup failed: %E\n"));
++}
++
+ /* Record a symbol to be wrapped, from the --wrap option.  */
+ 
+ void
+@@ -1239,24 +1256,25 @@
+ 
+ #define MAX_ERRORS_IN_A_ROW 5
+ 
++  if (info->ignore_hash != NULL
++      && bfd_hash_lookup (info->ignore_hash, name, FALSE, FALSE) != NULL)
++    return TRUE;
++
+   if (config.warn_once)
+     {
+-      static struct bfd_hash_table *hash;
+-
+       /* Only warn once about a particular undefined symbol.  */
+-      if (hash == NULL)
++      if (info->ignore_hash == NULL)
+ 	{
+-	  hash = (struct bfd_hash_table *)
+-              xmalloc (sizeof (struct bfd_hash_table));
+-	  if (!bfd_hash_table_init (hash, bfd_hash_newfunc,
++	  info->ignore_hash = xmalloc (sizeof (struct bfd_hash_table));
++	  if (!bfd_hash_table_init (info->ignore_hash, bfd_hash_newfunc,
+ 				    sizeof (struct bfd_hash_entry)))
+ 	    einfo (_("%F%P: bfd_hash_table_init failed: %E\n"));
+ 	}
+ 
+-      if (bfd_hash_lookup (hash, name, FALSE, FALSE) != NULL)
++      if (bfd_hash_lookup (info->ignore_hash, name, FALSE, FALSE) != NULL)
+ 	return TRUE;
+ 
+-      if (bfd_hash_lookup (hash, name, TRUE, TRUE) == NULL)
++      if (bfd_hash_lookup (info->ignore_hash, name, TRUE, TRUE) == NULL)
+ 	einfo (_("%F%P: bfd_hash_lookup failed: %E\n"));
+     }
+ 
+diff -rNU3 dist.orig/ld/ldmain.h dist.nbsd/ld/ldmain.h
+--- dist.orig/ld/ldmain.h	Fri Jul 13 13:20:26 2012
++++ dist.nbsd/ld/ldmain.h	Wed Feb 19 16:39:31 2014
+@@ -41,6 +41,7 @@
+ 
+ extern void add_ysym (const char *);
+ extern void add_wrap (const char *);
++extern void add_ignoresym (const char *);
+ extern void add_keepsyms_file (const char *);
+ 
+ #endif
+diff -rNU3 dist.orig/ld/lexsup.c dist.nbsd/ld/lexsup.c
+--- dist.orig/ld/lexsup.c	Mon Mar 25 08:06:23 2013
++++ dist.nbsd/ld/lexsup.c	Wed Feb 19 16:39:31 2014
+@@ -398,7 +398,7 @@
+     ONE_DASH },
+   { {"shared", no_argument, NULL, OPTION_SHARED},
+     '\0', NULL, N_("Create a shared library"), ONE_DASH },
+-  { {"Bshareable", no_argument, NULL, OPTION_SHARED }, /* FreeBSD.  */
++  { {"Bshareable", no_argument, NULL, OPTION_SHARED }, /* FreeBSD, NetBSD.  */
+     '\0', NULL, NULL, ONE_DASH },
+   { {"pie", no_argument, NULL, OPTION_PIE},
+     '\0', NULL, N_("Create a position independent executable"), ONE_DASH },
+@@ -496,8 +496,14 @@
+   { {"whole-archive", no_argument, NULL, OPTION_WHOLE_ARCHIVE},
+     '\0', NULL, N_("Include all objects from following archives"),
+     TWO_DASHES },
++  { {"Bforcearchive", no_argument, NULL, OPTION_WHOLE_ARCHIVE},
++      '\0', NULL, NULL, TWO_DASHES },	/* NetBSD.  */
+   { {"wrap", required_argument, NULL, OPTION_WRAP},
+     '\0', N_("SYMBOL"), N_("Use wrapper functions for SYMBOL"), TWO_DASHES },
++  { {"ignore-unresolved-symbol", required_argument, NULL,
++    OPTION_IGNORE_UNRESOLVED_SYMBOL},
++    '\0', N_("SYMBOL"),
++    N_("Unresolved SYMBOL will not cause an error or warning"), TWO_DASHES },
+ };
+ 
+ #define OPTION_COUNT ARRAY_SIZE (ld_options)
+@@ -1343,6 +1349,9 @@
+ 	  break;
+ 	case OPTION_WRAP:
+ 	  add_wrap (optarg);
++	  break;
++	case OPTION_IGNORE_UNRESOLVED_SYMBOL:
++	  add_ignoresym (optarg);
+ 	  break;
+ 	case OPTION_DISCARD_NONE:
+ 	  link_info.discard = discard_none;
+diff -rNU3 dist.orig/ld/scripttempl/elf.sc dist.nbsd/ld/scripttempl/elf.sc
+--- dist.orig/ld/scripttempl/elf.sc	Mon Mar 25 08:06:23 2013
++++ dist.nbsd/ld/scripttempl/elf.sc	Wed Feb 19 16:39:31 2014
+@@ -94,6 +94,8 @@
+ #
+ #  Each of these can also have corresponding .rel.* and .rela.* sections.
+ 
++test -z "$TEXT_START_SYMBOLS" && TEXT_START_SYMBOLS="PROVIDE_HIDDEN (__eprol = .);"
++test -z "$ENTRY" && ENTRY=_start
+ if test -n "$NOP"; then
+   FILL="=$NOP"
+ else
+diff -rNU3 dist.orig/ld/scripttempl/sh.sc dist.nbsd/ld/scripttempl/sh.sc
+--- dist.orig/ld/scripttempl/sh.sc	Wed Sep 25 17:06:09 2002
++++ dist.nbsd/ld/scripttempl/sh.sc	Wed Feb 19 16:39:31 2014
+@@ -6,17 +6,14 @@
+     ___dtors = . ;
+     *(.dtors)
+     ___dtors_end = . ;
+-  } > ram"
++  }"
+ 
++
+ cat <<EOF
+ OUTPUT_FORMAT("${OUTPUT_FORMAT}")
+ OUTPUT_ARCH(${ARCH})
++${LIB_SEARCH_DIRS}
+ 
+-MEMORY
+-{
+-  ram : o = 0x1000, l = 512k
+-}
+-
+ SECTIONS
+ {
+   .text :
+@@ -24,9 +21,9 @@
+     *(.text)
+     *(.strings)
+     ${RELOCATING+ _etext = . ; }
+-  } ${RELOCATING+ > ram}
++  }
+   ${CONSTRUCTING+${TORS}}
+-  .data :
++  .data  ${RELOCATING+ ALIGN(${TARGET_PAGE_SIZE})} :
+   {
+     *(.data)
+     ${RELOCATING+*(.gcc_exc*)}
+@@ -35,19 +32,19 @@
+     ${RELOCATING+___EH_FRAME_END__ = . ;}
+     ${RELOCATING+LONG(0);}
+     ${RELOCATING+ _edata = . ; }
+-  } ${RELOCATING+ > ram}
+-  .bss :
++  }
++  .bss ${RELOCATING+ ALIGN(${TARGET_PAGE_SIZE})} :
+   {
+     ${RELOCATING+ _bss_start = . ; }
+     *(.bss)
+     *(COMMON)
+     ${RELOCATING+ _end = . ;  }
+-  } ${RELOCATING+ > ram}
+-  .stack ${RELOCATING+ 0x30000 }  :
++  }
++  .stack :
+   {
+     ${RELOCATING+ _stack = . ; }
+     *(.stack)
+-  } ${RELOCATING+ > ram}
++  }
+   .stab 0 ${RELOCATING+(NOLOAD)} :
+   {
+     *(.stab)
+diff -rNU3 dist.orig/libiberty/floatformat.c dist.nbsd/libiberty/floatformat.c
+--- dist.orig/libiberty/floatformat.c	Mon Jan  3 21:05:58 2011
++++ dist.nbsd/libiberty/floatformat.c	Wed Feb 19 16:39:33 2014
+@@ -489,7 +489,11 @@
+       if (nan)
+ 	dto = NAN;
+       else
++#ifdef __vax__
++	dto = HUGE_VAL;
++#else
+ 	dto = INFINITY;
++#endif
+ 
+       if (get_field (ufrom, fmt->byteorder, fmt->totalsize, fmt->sign_start, 1))
+ 	dto = -dto;
+diff -rNU3 dist.orig/libiberty/objalloc.c dist.nbsd/libiberty/objalloc.c
+--- dist.orig/libiberty/objalloc.c	Fri Jul 22 03:26:05 2005
++++ dist.nbsd/libiberty/objalloc.c	Wed Feb 19 16:39:33 2014
+@@ -1,5 +1,5 @@
+ /* objalloc.c -- routines to allocate memory for objects
+-   Copyright 1997 Free Software Foundation, Inc.
++   Copyright 1997-2012 Free Software Foundation, Inc.
+    Written by Ian Lance Taylor, Cygnus Solutions.
+ 
+ This program is free software; you can redistribute it and/or modify it
+@@ -112,14 +112,21 @@
+ /* Allocate space from an objalloc structure.  */
+ 
+ PTR
+-_objalloc_alloc (struct objalloc *o, unsigned long len)
++_objalloc_alloc (struct objalloc *o, unsigned long original_len)
+ {
++  unsigned long len = original_len;
++
+   /* We avoid confusion from zero sized objects by always allocating
+      at least 1 byte.  */
+   if (len == 0)
+     len = 1;
+ 
+   len = (len + OBJALLOC_ALIGN - 1) &~ (OBJALLOC_ALIGN - 1);
++
++  /* Check for overflow in the alignment operation above and the
++     malloc argument below. */
++  if (len + CHUNK_HEADER_SIZE < original_len)
++    return NULL;
+ 
+   if (len <= o->current_space)
+     {
+diff -rNU3 dist.orig/libiberty/strerror.c dist.nbsd/libiberty/strerror.c
+--- dist.orig/libiberty/strerror.c	Mon Mar 28 02:09:01 2005
++++ dist.nbsd/libiberty/strerror.c	Wed Feb 19 16:39:33 2014
+@@ -347,7 +347,7 @@
+   ENTRY(EPROTOTYPE, "EPROTOTYPE", "Protocol wrong type for socket"),
+ #endif
+ #if defined (ENOPROTOOPT)
+-  ENTRY(ENOPROTOOPT, "ENOPROTOOPT", "Protocol not available"),
++  ENTRY(ENOPROTOOPT, "ENOPROTOOPT", "Protocol option not available"),
+ #endif
+ #if defined (EPROTONOSUPPORT)
+   ENTRY(EPROTONOSUPPORT, "EPROTONOSUPPORT", "Protocol not supported"),
+diff -rNU3 dist.orig/opcodes/cgen.sh dist.nbsd/opcodes/cgen.sh
+--- dist.orig/opcodes/cgen.sh	Sun Jun 14 16:36:56 2009
++++ dist.nbsd/opcodes/cgen.sh	Wed Feb 19 16:39:30 2014
+@@ -61,6 +61,7 @@
+ shift ; extrafiles=$9
+ 
+ rootdir=${srcdir}/..
++move_if_change="${CONFIG_SHELL:-/bin/sh} ${rootdir}/move-if-change"
+ 
+ # $arch is $6, as passed on the command line.
+ # $ARCH is the same argument but in all uppercase.
 diff -rNU3 dist.orig/opcodes/configure dist.nbsd/opcodes/configure
---- dist.orig/opcodes/configure	2011-07-24 16:20:13.000000000 +0200
-+++ dist.nbsd/opcodes/configure	2013-04-08 23:36:31.000000000 +0200
-@@ -13171,6 +13171,8 @@
-   case $ac_option in
-   # Handling of the options.
-   -recheck | --recheck | --rechec | --reche | --rech | --rec | --re | --r)
-+	: Avoid regenerating within pkgsrc
-+	exit 0
-     ac_cs_recheck=: ;;
-   --version | --versio | --versi | --vers | --ver | --ve | --v | -V )
-     $as_echo "$ac_cs_version"; exit ;;
+--- dist.orig/opcodes/configure	Tue Sep  4 14:21:07 2012
++++ dist.nbsd/opcodes/configure	Wed Feb 19 16:39:30 2014
+@@ -12551,6 +12551,14 @@
+ 	  # specified, as in sh3-elf, sh3b-linux-gnu, etc.
+ 	  # Include it just for ELF targets, since the SH5 bfd:s are ELF only.
+ 	  for t in $target $canon_targets; do
++	    # For NetBSD we do NOT want SH5 support unless sh5 or sh64
++	    # is specified
++	    case $t in
++	      sh5*-* | sh64*-*) # let the case below handle it
++				;;
++	      sh*-*-netbsd* | sh*l*-*-netbsd*)
++				continue ;;
++	      esac
+ 	    case $t in
+ 	      all |  sh5*-* | sh64*-* | sh-*-*elf* | shl*-*-*elf* | \
+ 	      sh-*-linux* | shl-*-linux*)
+diff -rNU3 dist.orig/opcodes/configure.in dist.nbsd/opcodes/configure.in
+--- dist.orig/opcodes/configure.in	Mon Nov  5 16:29:08 2012
++++ dist.nbsd/opcodes/configure.in	Wed Feb 19 16:39:30 2014
+@@ -296,6 +296,14 @@
+ 	  # specified, as in sh3-elf, sh3b-linux-gnu, etc.
+ 	  # Include it just for ELF targets, since the SH5 bfd:s are ELF only.
+ 	  for t in $target $canon_targets; do
++	    # For NetBSD we do NOT want SH5 support unless sh5 or sh64
++	    # is specified
++	    case $t in
++	      sh5*-* | sh64*-*) # let the case below handle it
++				;;
++	      sh*-*-netbsd* | sh*l*-*-netbsd*)
++				continue ;;
++	      esac
+ 	    case $t in
+ 	      all |  sh5*-* | sh64*-* | sh-*-*elf* | shl*-*-*elf* | \
+ 	      sh-*-linux* | shl-*-linux*)
+diff -rNU3 dist.orig/opcodes/mips-opc.c dist.nbsd/opcodes/mips-opc.c
+--- dist.orig/opcodes/mips-opc.c	Tue Sep  4 14:21:10 2012
++++ dist.nbsd/opcodes/mips-opc.c	Wed Feb 19 16:39:30 2014
+@@ -791,10 +791,12 @@
+ {"hibernate","",        0x42000023, 0xffffffff,	0, 			0,		V1	},
+ {"ins",     "t,r,+A,+B", 0x7c000004, 0xfc00003f, WR_t|RD_s,    		0,		I33	},
+ {"iret",    "",		0x42000038, 0xffffffff,	NODS,			0,		MC	},
++{"jr",      "s",	0,        (int) M_JR_S, INSN_MACRO,		0,		I1	},
+ {"jr",      "s",	0x00000008, 0xfc1fffff,	UBD|RD_s,		0,		I1	},
+ /* jr.hb is officially MIPS{32,64}R2, but it works on R1 as jr with
+    the same hazard barrier effect.  */
+ {"jr.hb",   "s",	0x00000408, 0xfc1fffff,	UBD|RD_s,		0,		I32	},
++{"j",       "s",	0,         (int) M_J_S, INSN_MACRO,		0,		I1	},
+ {"j",       "s",	0x00000008, 0xfc1fffff,	UBD|RD_s,		0,		I1	}, /* jr */
+ /* SVR4 PIC code requires special handling for j, so it must be a
+    macro.  */
+@@ -803,7 +805,9 @@
+    assembler, but will never match user input (because the line above
+    will match first).  */
+ {"j",       "a",	0x08000000, 0xfc000000,	UBD,			0,		I1	},
++{"jalr",    "s",	0,      (int) M_JALR_S, INSN_MACRO,             0,		I1	},
+ {"jalr",    "s",	0x0000f809, 0xfc1fffff,	UBD|RD_s|WR_d,		0,		I1	},
++{"jalr",    "d,s",	0,     (int) M_JALR_DS, INSN_MACRO,		0,		I1	},
+ {"jalr",    "d,s",	0x00000009, 0xfc1f07ff,	UBD|RD_s|WR_d,		0,		I1	},
+ /* jalr.hb is officially MIPS{32,64}R2, but it works on R1 as jalr
+    with the same hazard barrier effect.  */
