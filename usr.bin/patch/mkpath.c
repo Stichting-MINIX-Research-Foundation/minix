@@ -34,6 +34,7 @@
  */
 
 #include <sys/cdefs.h>
+__RCSID("$NetBSD: mkpath.c,v 1.1 2008/09/19 18:33:34 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/stat.h>

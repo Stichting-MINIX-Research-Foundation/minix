@@ -1,7 +1,7 @@
 /*
  * $OpenBSD: inp.c,v 1.34 2006/03/11 19:41:30 otto Exp $
  * $DragonFly: src/usr.bin/patch/inp.c,v 1.6 2007/09/29 23:11:10 swildner Exp $
- * $NetBSD: inp.c,v 1.19 2008/09/19 18:33:34 joerg Exp $
+ * $NetBSD: inp.c,v 1.23 2009/10/21 17:16:11 joerg Exp $
  */
 
 /*
@@ -31,6 +31,7 @@
  */
 
 #include <sys/cdefs.h>
+__RCSID("$NetBSD: inp.c,v 1.23 2009/10/21 17:16:11 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/file.h>
@@ -38,6 +39,7 @@
 #include <sys/mman.h>
 
 #include <ctype.h>
+#include <fcntl.h>
 #include <libgen.h>
 #include <limits.h>
 #include <stddef.h>
@@ -45,7 +47,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <fcntl.h>
 
 #include "common.h"
 #include "util.h"
@@ -74,24 +75,6 @@ static bool	plan_a(const char *);
 
 static void	plan_b(const char *);
 
-static int readfile(int fd, char *buf, size_t s)
-{
-	int ntoread, nread;
-
-	ntoread = s;
-	nread = 0;
-
-	while(ntoread > 0) {
-		if((nread = read(fd, buf, ntoread)) < 0) {
-			return nread;
-		}
-		buf += nread;
-		ntoread -= nread;
-	}
-
-	return 0;
-}
-
 /* New patch--prepare to edit another file. */
 
 void
@@ -102,11 +85,7 @@ re_input(void)
 		free(i_ptr);
 		i_ptr = NULL;
 		if (i_womp != NULL) {
-#ifndef __minix
 			munmap(i_womp, i_size);
-#else
-			free(i_womp);
-#endif
 			i_womp = NULL;
 		}
 	} else {
@@ -143,11 +122,7 @@ reallocate_lines(size_t *lines_allocated)
 	new_size = *lines_allocated * 3 / 2;
 	p = realloc(i_ptr, (new_size + 2) * sizeof(char *));
 	if (p == NULL) {	/* shucks, it was a near thing */
-#ifndef __minix
 		munmap(i_womp, i_size);
-#else
-		free(i_womp);
-#endif
 		i_womp = NULL;
 		free(i_ptr);
 		i_ptr = NULL;
@@ -279,44 +254,30 @@ plan_a(const char *filename)
 		out_of_mem = false;
 		return false;	/* force plan b because plan a bombed */
 	}
-#ifndef __minix
-	if (i_size > SIZE_MAX) {
+	if ((uintmax_t)i_size > (uintmax_t)SIZE_MAX) {
 		say("block too large to mmap\n");
 		return false;
 	}
-#endif
 	if ((ifd = open(filename, O_RDONLY)) < 0)
 		pfatal("can't open file %s", filename);
 
-#ifndef __minix
-	i_womp = mmap(NULL, i_size, PROT_READ, MAP_PRIVATE, ifd, 0);
-	if (i_womp == MAP_FAILED) {
-		perror("mmap failed");
+	if (i_size) {
+		i_womp = mmap(NULL, i_size, PROT_READ, MAP_PRIVATE, ifd, 0);
+		if (i_womp == MAP_FAILED) {
+			perror("mmap failed");
+			i_womp = NULL;
+			close(ifd);
+			return false;
+		}
+	} else {
 		i_womp = NULL;
-		close(ifd);
-		return false;
 	}
-#else
-	i_womp = malloc(i_size);
-	if(i_size && i_womp == NULL) {
-		fprintf(stderr, "Malloc failed.\n");
-		i_womp = NULL;
-		close(ifd);
-		return false;
-	}
-	if(readfile(ifd, i_womp, i_size) < 0) {
-		perror("Readfile failed.");
-		i_womp = NULL;
-		close(ifd);
-		return false;
-	}
-#endif
 
 	close(ifd);
-#ifndef __minix
+#if !defined(__minix)
 	if (i_size)
 		madvise(i_womp, i_size, MADV_SEQUENTIAL);
-#endif
+#endif /* !defined(__minix) */
 
 	/* estimate the number of lines */
 	lines_allocated = i_size / 25;
@@ -349,11 +310,7 @@ plan_a(const char *filename)
 		if (p == NULL) {
 			free(i_ptr);
 			i_ptr = NULL;
-#ifndef __minix
 			munmap(i_womp, i_size);
-#else
-			free(i_womp);
-#endif
 			i_womp = NULL;
 			return false;
 		}

@@ -1,6 +1,6 @@
 .\"	$OpenBSD: patch.1,v 1.22 2008/06/06 20:44:00 jmc Exp $
 .\"	$DragonFly: src/usr.bin/patch/patch.1,v 1.10 2008/08/18 19:15:55 joerg Exp $
-.\"	$NetBSD: patch.1,v 1.13 2008/09/19 18:33:34 joerg Exp $
+.\"	$NetBSD: patch.1,v 1.16 2013/01/29 09:30:11 wiz Exp $
 .\" Copyright 1986, Larry Wall
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -29,7 +29,6 @@
 .Nd apply a diff file to an original
 .Sh SYNOPSIS
 .Nm
-.Bk -words
 .Op Fl bCcEeflNnRstuv
 .Op Fl B Ar backup-prefix
 .Op Fl D Ar symbol
@@ -44,7 +43,6 @@
 .Op Fl z Ar backup-ext
 .Op Fl Fl posix
 .Op Ar origfile Op Ar patchfile
-.Ek
 .Nm
 .Pf \*(Lt Ar patchfile
 .Sh DESCRIPTION
@@ -87,10 +85,7 @@ below).
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Xo
-.Fl B Ar backup-prefix ,
-.Fl Fl prefix Ar backup-prefix
-.Xc
+.It Fl B Ar backup-prefix , Fl Fl prefix Ar backup-prefix
 Causes the next argument to be interpreted as a prefix to the backup file
 name.
 If this argument is specified, any argument to
@@ -113,10 +108,7 @@ Checks that the patch would apply cleanly, but does not modify anything.
 Forces
 .Nm
 to interpret the patch file as a context diff.
-.It Xo
-.Fl D Ar symbol ,
-.Fl Fl ifdef Ar symbol
-.Xc
+.It Fl D Ar symbol , Fl Fl ifdef Ar symbol
 Causes
 .Nm
 to use the
@@ -126,10 +118,7 @@ The argument following will be used as the differentiating symbol.
 Note that, unlike the C compiler, there must be a space between the
 .Fl D
 and the argument.
-.It Xo
-.Fl d Ar directory ,
-.Fl Fl directory Ar directory
-.Xc
+.It Fl d Ar directory , Fl Fl directory Ar directory
 Causes
 .Nm
 to interpret the next argument as a directory,
@@ -145,10 +134,7 @@ Forces
 to interpret the patch file as an
 .Xr ed 1
 script.
-.It Xo
-.Fl F Ar max-fuzz ,
-.Fl Fl fuzz Ar max-fuzz
-.Xc
+.It Fl F Ar max-fuzz , Fl Fl fuzz Ar max-fuzz
 Sets the maximum fuzz factor.
 This option only applies to context diffs, and causes
 .Nm
@@ -170,12 +156,9 @@ and assume that patches are not reversed even if they look like they are.
 This option does not suppress commentary; use
 .Fl s
 for that.
-.It Xo
-.Fl i Ar patchfile ,
-.Fl Fl input Ar patchfile
-.Xc
+.It Fl i Ar patchfile , Fl Fl input Ar patchfile
 Causes the next argument to be interpreted as the input file name
-(i.e. a patchfile).
+(i.e., a patchfile).
 This option may be specified multiple times.
 .It Fl l , Fl Fl ignore-whitespace
 Causes the pattern matching to be done loosely, in case the tabs and
@@ -194,15 +177,9 @@ See also
 Forces
 .Nm
 to interpret the patch file as a normal diff.
-.It Xo
-.Fl o Ar out-file ,
-.Fl Fl output Ar out-file
-.Xc
+.It Fl o Ar out-file , Fl Fl output Ar out-file
 Causes the next argument to be interpreted as the output file name.
-.It Xo
-.Fl p Ar strip-count ,
-.Fl Fl strip Ar strip-count
-.Xc
+.It Fl p Ar strip-count , Fl Fl strip Ar strip-count
 Sets the pathname strip count,
 which controls how pathnames found in the patch file are treated,
 in case you keep your files in a different directory than the person who sent
@@ -263,21 +240,15 @@ If it can, you will be asked if you want to have the
 option set.
 If it can't, the patch will continue to be applied normally.
 (Note: this method cannot detect a reversed patch if it is a normal diff
-and if the first command is an append (i.e. it should have been a delete)
+and if the first command is an append (i.e., it should have been a delete)
 since appends always succeed, due to the fact that a null context will match
 anywhere.
 Luckily, most patches add or change lines rather than delete them, so most
 reversed normal diffs will begin with a delete, which will fail, triggering
 the heuristic.)
-.It Xo
-.Fl r Ar rej-name ,
-.Fl Fl reject-file Ar rej-name
-.Xc
+.It Fl r Ar rej-name , Fl Fl reject-file Ar rej-name
 Causes the next argument to be interpreted as the reject file name.
-.It Xo
-.Fl s , Fl Fl quiet ,
-.Fl Fl silent
-.Xc
+.It Fl s , Fl Fl quiet , Fl Fl silent
 Makes
 .Nm
 do its work silently, unless an error occurs.
@@ -295,10 +266,7 @@ and assume that patches are reversed if they look like they are.
 Forces
 .Nm
 to interpret the patch file as a unified context diff (a unidiff).
-.It Xo
-.Fl V Cm t | nil | never ,
-.Fl Fl version-control Cm t | nil | never
-.Xc
+.It Fl V Cm t | nil | never , Fl Fl version-control Cm t | nil | never
 Causes the next argument to be interpreted as a method for creating
 backup file names.
 The type of backups made can also be given in the
@@ -333,17 +301,11 @@ Always make simple backups.
 Causes
 .Nm
 to print out its revision header and patch level.
-.It Xo
-.Fl x Ar number ,
-.Fl Fl debug Ar number
-.Xc
+.It Fl x Ar number , Fl Fl debug Ar number
 Sets internal debugging flags, and is of interest only to
 .Nm
 patchers.
-.It Xo
-.Fl z Ar backup-ext ,
-.Fl Fl suffix Ar backup-ext
-.Xc
+.It Fl z Ar backup-ext , Fl Fl suffix Ar backup-ext
 Causes the next argument to be interpreted as the backup extension, to be
 used in place of
 .Qq .orig .

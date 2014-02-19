@@ -1,7 +1,7 @@
 /*
  * $OpenBSD: patch.c,v 1.45 2007/04/18 21:52:24 sobrado Exp $
  * $DragonFly: src/usr.bin/patch/patch.c,v 1.10 2008/08/10 23:39:56 joerg Exp $
- * $NetBSD: patch.c,v 1.27 2008/09/19 18:33:34 joerg Exp $
+ * $NetBSD: patch.c,v 1.29 2011/09/06 18:25:14 joerg Exp $
  */
 
 /*
@@ -31,6 +31,7 @@
  */
 
 #include <sys/cdefs.h>
+__RCSID("$NetBSD: patch.c,v 1.29 2011/09/06 18:25:14 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -105,7 +106,7 @@ static bool	spew_output(void);
 static void	dump_line(LINENUM, bool);
 static bool	patch_match(LINENUM, LINENUM, LINENUM);
 static bool	similar(const char *, const char *, int);
-static void	usage(void);
+__dead static void	usage(void);
 
 /* true if -E was specified on command line.  */
 static bool	remove_empty_files = false;
@@ -155,12 +156,10 @@ main(int argc, char *argv[])
 	LINENUM	where = 0, newwhere, fuzz, mymaxfuzz;
 	const	char *tmpdir;
 	char	*v;
-	int	alloclen;
 
 	setbuf(stderr, serrbuf);
 	for (i = 0; i < MAXFILEC; i++)
 		filearg[i] = NULL;
-
 
 	/* Cons up the names of the temporary files.  */
 	if ((tmpdir = getenv("TMPDIR")) == NULL || *tmpdir == '\0')
@@ -168,33 +167,25 @@ main(int argc, char *argv[])
 	for (i = strlen(tmpdir) - 1; i > 0 && tmpdir[i] == '/'; i--)
 		;
 	i++;
-
-	alloclen = i + 100;
-#define TMPALLOC(var) if(!(var = malloc(alloclen))) { fatal(#var); exit(1); } 
-	TMPALLOC(TMPOUTNAME);
-	TMPALLOC(TMPINNAME);
-	TMPALLOC(TMPREJNAME);
-	TMPALLOC(TMPPATNAME);
-
-	if (snprintf(TMPOUTNAME, alloclen, "%.*s/patchoXXXXXXXXXX", i, tmpdir) == -1)
+	if (asprintf(&TMPOUTNAME, "%.*s/patchoXXXXXXXXXX", i, tmpdir) == -1)
 		fatal("cannot allocate memory");
 	if ((fd = mkstemp(TMPOUTNAME)) < 0)
 		pfatal("can't create %s", TMPOUTNAME);
 	close(fd);
 
-	if (snprintf(TMPINNAME, alloclen, "%.*s/patchiXXXXXXXXXX", i, tmpdir) == -1)
+	if (asprintf(&TMPINNAME, "%.*s/patchiXXXXXXXXXX", i, tmpdir) == -1)
 		fatal("cannot allocate memory");
 	if ((fd = mkstemp(TMPINNAME)) < 0)
 		pfatal("can't create %s", TMPINNAME);
 	close(fd);
 
-	if (snprintf(TMPREJNAME, alloclen, "%.*s/patchrXXXXXXXXXX", i, tmpdir) == -1)
+	if (asprintf(&TMPREJNAME, "%.*s/patchrXXXXXXXXXX", i, tmpdir) == -1)
 		fatal("cannot allocate memory");
 	if ((fd = mkstemp(TMPREJNAME)) < 0)
 		pfatal("can't create %s", TMPREJNAME);
 	close(fd);
 
-	if (snprintf(TMPPATNAME, alloclen, "%.*s/patchpXXXXXXXXXX", i, tmpdir) == -1)
+	if (asprintf(&TMPPATNAME, "%.*s/patchpXXXXXXXXXX", i, tmpdir) == -1)
 		fatal("cannot allocate memory");
 	if ((fd = mkstemp(TMPPATNAME)) < 0)
 		pfatal("can't create %s", TMPPATNAME);
@@ -632,7 +623,7 @@ usage(void)
 "             [-r rej-name] [-V t | nil | never] [-x number] [-z backup-ext]\n"
 "             [--posix] [origfile [patchfile]]\n"
 "       patch <patchfile\n");
-	my_exit(EXIT_SUCCESS);
+	my_exit(EXIT_FAILURE);
 }
 
 /*

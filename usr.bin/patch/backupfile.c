@@ -22,6 +22,7 @@
  */
 
 #include <sys/cdefs.h>
+__RCSID("$NetBSD: backupfile.c,v 1.14 2008/09/19 18:33:34 joerg Exp $");
 
 #include <ctype.h>
 #include <dirent.h>
@@ -113,7 +114,7 @@ max_backup_version(const char *file, const char *dir)
 	file_name_length = strlen(file);
 
 	while ((dp = readdir(dirp)) != NULL) {
-		if (strlen(dp->d_name) <= file_name_length)
+		if (dp->d_namlen <= file_name_length)
 			continue;
 
 		this_version = version_number(file, dp->d_name, file_name_length);
@@ -132,14 +133,9 @@ static char *
 make_version_name(const char *file, int version)
 {
 	char	*backup_name;
-	int len = strlen(file)+20;
 
-	if(!(backup_name = malloc(len)))
+	if (asprintf(&backup_name, "%s.~%d~", file, version) == -1)
 		return NULL;
-
-	if (snprintf(backup_name, len, "%s.~%d~", file, version) == -1)
-		return NULL;
-
 	return backup_name;
 }
 
@@ -172,14 +168,9 @@ static char  *
 concat(const char *str1, const char *str2)
 {
 	char	*newstr;
-	int len = strlen(str1) + strlen(str2) + 1;
 
-	if(!(newstr = malloc(strlen(str1) + strlen(str2) + 1)))
+	if (asprintf(&newstr, "%s%s", str1, str2) == -1)
 		return NULL;
-
-	if (snprintf(newstr, len, "%s%s", str1, str2) == -1)
-		return NULL;
-
 	return newstr;
 }
 

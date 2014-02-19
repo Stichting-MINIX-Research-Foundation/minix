@@ -1,7 +1,7 @@
 /*
  * $OpenBSD: pch.c,v 1.37 2007/09/02 15:19:33 deraadt Exp $
  * $DragonFly: src/usr.bin/patch/pch.c,v 1.6 2008/08/10 23:35:40 joerg Exp $
- * $NetBSD: pch.c,v 1.23 2008/09/19 18:33:34 joerg Exp $
+ * $NetBSD: pch.c,v 1.25 2013/01/29 09:30:11 wiz Exp $
  */
 
 /*
@@ -31,6 +31,7 @@
  */
 
 #include <sys/cdefs.h>
+__RCSID("$NetBSD: pch.c,v 1.25 2013/01/29 09:30:11 wiz Exp $");
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -447,7 +448,7 @@ skip_to(LINENUM file_pos, LINENUM file_line)
 }
 
 /* Make this a function for better debugging.  */
-static void
+__dead static void
 malformed(void)
 {
 	fatal("malformed patch at line %ld: %s", p_input_line, buf);
@@ -455,7 +456,7 @@ malformed(void)
 }
 
 /*
- * True if the line has been discarded (i.e. it is a line saying
+ * True if the line has been discarded (i.e., it is a line saying
  *  "\ No newline at end of file".)
  */
 static bool

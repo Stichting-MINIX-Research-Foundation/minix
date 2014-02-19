@@ -1,7 +1,7 @@
 /*
  * $OpenBSD: util.h,v 1.15 2005/06/20 07:14:06 otto Exp $
  * $DragonFly: src/usr.bin/patch/util.h,v 1.2 2007/09/29 23:11:10 swildner Exp $
- * $NetBSD: util.h,v 1.11 2008/09/19 18:33:34 joerg Exp $
+ * $NetBSD: util.h,v 1.12 2011/09/06 18:25:14 joerg Exp $
  */
 
 /*
@@ -35,20 +35,16 @@ char		*checked_in(char *);
 int		backup_file(const char *);
 int		move_file(const char *, const char *);
 int		copy_file(const char *, const char *);
-void		say(const char *, ...)
-		    __attribute__((__format__(__printf__, 1, 2)));
-void		fatal(const char *, ...)
-		    __attribute__((__format__(__printf__, 1, 2)));
-void		pfatal(const char *, ...)
-		    __attribute__((__format__(__printf__, 1, 2)));
-void		ask(const char *, ...)
-		    __attribute__((__format__(__printf__, 1, 2)));
+void		say(const char *, ...) __printflike(1, 2);
+void		fatal(const char *, ...) __printflike(1, 2) __dead;
+void		pfatal(const char *, ...) __printflike(1, 2) __dead;
+void		ask(const char *, ...) __printflike(1, 2);
 char		*savestr(const char *);
 void		set_signals(int);
 void		ignore_signals(void);
 void		makedirs(const char *, bool);
-void		version(void);
-void		my_exit(int) __attribute__((noreturn));
+void		version(void) __dead;
+void		my_exit(int) __dead;
 
 /* in mkpath.c */
 extern int mkpath(char *);
