@@ -35,7 +35,7 @@ SUBDIR=	add_route arp ash at backup btrace \
 	atnormalize dosread fdisk loadfont \
 	autopart part partition playwave  \
 	recwave repartition screendump \
-	command echo expr false getopts read test true \
+	command echo expr getopts read test \
        	umask wait
 
 .if ${MACHINE_ARCH} == "earm"

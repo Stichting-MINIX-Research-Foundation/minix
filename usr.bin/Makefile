@@ -10,7 +10,7 @@ SUBDIR= asa \
 	column comm csplit ctags cut \
 	deroff dirname du \
 	env expand \
-	finger fold fpr from \
+	false finger fold fpr from \
 	fsplit ftp genassym getopt \
 	head hexdump id indent infocmp join jot \
 	lam last ldd leave \
@@ -26,7 +26,7 @@ SUBDIR= asa \
 	sdiff sed seq shlock \
 	shuffle  sort split stat su \
 	tee tic tput \
-	tr tsort tty ul uname unexpand unifdef \
+	tr true tsort tty ul uname unexpand unifdef \
 	uniq units unvis unzip users \
 	uuidgen vis \
 	\

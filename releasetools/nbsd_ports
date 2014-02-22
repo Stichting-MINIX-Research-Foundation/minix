@@ -177,6 +177,7 @@
 2013/12/1 12:00:00,usr.bin/du
 2013/12/1 12:00:00,usr.bin/expand
 2013/12/1 12:00:00,usr.bin/env
+2013/12/1 12:00:00,usr.bin/false
 2013/12/1 12:00:00,usr.bin/finger
 2013/12/1 12:00:00,usr.bin/fold
 2013/12/1 12:00:00,usr.bin/fpr
@@ -243,6 +244,7 @@
 2013/12/1 12:00:00,usr.bin/tic
 2013/12/1 12:00:00,usr.bin/tput
 2013/12/1 12:00:00,usr.bin/tr
+2013/12/1 12:00:00,usr.bin/true
 2013/12/1 12:00:00,usr.bin/tsort
 2013/12/1 12:00:00,usr.bin/tty
 2013/12/1 12:00:00,usr.bin/ul
