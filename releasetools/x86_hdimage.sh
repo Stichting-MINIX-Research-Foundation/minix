@@ -65,7 +65,7 @@ then
 	cd_root_changes	# uses $CDFILES and writes $CDFILES/boot.cfg
 	# start the image off with the iso image; reduce root size to reserve
 	${CROSS_TOOLS}/nbwriteisofs -s0x0 -l MINIX -B ${DESTDIR}/usr/mdec/bootxx_cd9660 -n ${CDFILES} ${IMG}
-	ISO_SIZE=$((`stat -c %s ${IMG}` / 512))
+	ISO_SIZE=$((`${CROSS_TOOLS}/nbstat -f %z ${IMG}` / 512))
 else
 	# just make an empty iso partition
 	ISO_SIZE=8
