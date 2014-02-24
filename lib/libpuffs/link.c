@@ -22,8 +22,8 @@ int fs_ftrunc(void)
   if ((pn = puffs_pn_nodewalk(global_pu, 0, &fs_m_in.REQ_INODE_NR)) == NULL)
           return(EINVAL);
 
-  start = fs_m_in.REQ_TRC_START_LO;
-  end = fs_m_in.REQ_TRC_END_LO;
+  start = fs_m_in.REQ_TRC_START;
+  end = fs_m_in.REQ_TRC_END;
 
   if (end == 0) {
 	struct vattr va;

@@ -498,8 +498,8 @@ int fs_ftrunc(void)
   if(rip->i_sp->s_rd_only) {
   	r = EROFS;
   } else {
-    start = fs_m_in.REQ_TRC_START_LO;
-    end = fs_m_in.REQ_TRC_END_LO;
+    start = fs_m_in.REQ_TRC_START;
+    end = fs_m_in.REQ_TRC_END;
 
     if (end == 0)
 	  r = truncate_inode(rip, start);

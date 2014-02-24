@@ -523,8 +523,8 @@ int fs_ftrunc(void)
   if( (rip = find_inode(fs_dev, (pino_t) fs_m_in.REQ_INODE_NR)) == NULL)
 	  return(EINVAL);
 
-  start = fs_m_in.REQ_TRC_START_LO;
-  end = fs_m_in.REQ_TRC_END_LO;
+  start = fs_m_in.REQ_TRC_START;
+  end = fs_m_in.REQ_TRC_END;
 
   if (end == 0)
 	  r = truncate_inode(rip, start);

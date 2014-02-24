@@ -252,25 +252,13 @@ int req_ftrunc(endpoint_t fs_e, ino_t inode_nr, off_t start, off_t end)
   /* Fill in request message */
   m.m_type = REQ_FTRUNC;
   m.REQ_INODE_NR = (pino_t) inode_nr;
+  m.REQ_TRC_START = start;
+  m.REQ_TRC_END = end;
 
-  m.REQ_TRC_START_LO = ex64lo(start);
-  if (vmp->m_fs_flags & RES_64BIT) {
-	m.REQ_TRC_START_HI = ex64hi(start);
-  } else if (start > INT_MAX) {
+  if (!(vmp->m_fs_flags & RES_64BIT) &&
+	((start > INT_MAX) || (end > INT_MAX))) {
 	/* FS does not support 64-bit off_t and 32 bits is not enough */
 	return EINVAL;
-  } else {
-	m.REQ_TRC_START_HI = 0;
-  }
-
-  m.REQ_TRC_END_LO = ex64lo(end);
-  if (vmp->m_fs_flags & RES_64BIT) {
-	m.REQ_TRC_END_HI = ex64hi(end);
-  } else if (end > INT_MAX) {
-	/* FS does not support 64-bit off_t and 32 bits is not enough */
-	return EINVAL;
-  } else {
-	m.REQ_TRC_END_HI = 0;
   }
 
   /* Send/rec request */

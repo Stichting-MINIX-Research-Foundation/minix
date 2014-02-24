@@ -31,10 +31,8 @@
 #define REQ_REN_OLD_DIR		m9_l3
 #define REQ_ROOT_INO		m9_l4
 #define REQ_SEEK_POS		m9_ull2
-#define REQ_TRC_END_HI		m9_l4
-#define REQ_TRC_END_LO		m9_l5
-#define REQ_TRC_START_HI	m9_l2
-#define REQ_TRC_START_LO	m9_l3
+#define REQ_TRC_START		m9_ull1
+#define REQ_TRC_END		m9_ull2
 #define REQ_UCRED_SIZE		m9_s4 
 #define REQ_UID			m9_s4
 

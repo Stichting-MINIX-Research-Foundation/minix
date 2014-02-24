@@ -131,8 +131,8 @@ int do_ftrunc(void)
 
   if (IS_DIR(ino)) return EISDIR;
 
-  start = make64(m_in.REQ_TRC_START_LO, m_in.REQ_TRC_START_HI);
-  end = make64(m_in.REQ_TRC_END_LO, m_in.REQ_TRC_END_HI);
+  start = m_in.REQ_TRC_START;
+  end = m_in.REQ_TRC_END;
 
   if (end == 0) {
 	/* Truncate or expand the file. */

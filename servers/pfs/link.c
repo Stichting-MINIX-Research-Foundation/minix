@@ -16,7 +16,7 @@ int fs_ftrunc(message *fs_m_in, message *fs_m_out)
 
   if( (rip = find_inode(inumb)) == NULL) return(EINVAL);
 
-  start = fs_m_in->REQ_TRC_START_LO;
+  start = fs_m_in->REQ_TRC_START;
 
   return truncate_inode(rip, start);
 }
