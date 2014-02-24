@@ -308,8 +308,7 @@ static void raw_xfer(dev_t minor, u64_t pos, iovec_s_t *iovec, int nr_req,
 	memset(&m, 0, sizeof(m));
 	m.m_type = write ? BDEV_SCATTER : BDEV_GATHER;
 	m.BDEV_MINOR = minor;
-	m.BDEV_POS_LO = ex64lo(pos);
-	m.BDEV_POS_HI = ex64hi(pos);
+	m.BDEV_POS = pos;
 	m.BDEV_COUNT = nr_req;
 	m.BDEV_GRANT = grant;
 	m.BDEV_ID = lrand48();
@@ -425,8 +424,7 @@ static void bad_read1(void)
 	memset(&mt, 0, sizeof(mt));
 	mt.m_type = BDEV_GATHER;
 	mt.BDEV_MINOR = driver_minor;
-	mt.BDEV_POS_LO = 0L;
-	mt.BDEV_POS_HI = 0L;
+	mt.BDEV_POS = 0LL;
 	mt.BDEV_COUNT = 1;
 	mt.BDEV_GRANT = grant;
 	mt.BDEV_ID = lrand48();

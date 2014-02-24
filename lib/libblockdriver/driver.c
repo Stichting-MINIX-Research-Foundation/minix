@@ -4,19 +4,19 @@
  * Field names are prefixed with BDEV_. Separate field names are used for the
  * "access", "request", and "user" fields.
  *
- *    m_type        MINOR     COUNT     GRANT   FLAGS    ID    POS_LO   POS_HI
+ *    m_type        MINOR     COUNT     GRANT   FLAGS    ID    REQUEST  POS
  * +--------------+--------+----------+-------+-------+------+---------+------+
  * | BDEV_OPEN    | minor  |  access  |       |       |  id  |         |      |
  * |--------------+--------+----------+-------+-------+------+---------+------|
  * | BDEV_CLOSE   | minor  |          |       |       |  id  |         |      |
  * |--------------+--------+----------+-------+-------+------+---------+------|
- * | BDEV_READ    | minor  |  bytes   | grant | flags |  id  |     position   |
+ * | BDEV_READ    | minor  |  bytes   | grant | flags |  id  |         | pos. |
  * |--------------+--------+----------+-------+-------+------+---------+------|
- * | BDEV_WRITE   | minor  |  bytes   | grant | flags |  id  |     position   |
+ * | BDEV_WRITE   | minor  |  bytes   | grant | flags |  id  |         | pos. |
  * |--------------+--------+----------+-------+-------+------+---------+------|
- * | BDEV_GATHER  | minor  | elements | grant | flags |  id  |     position   |
+ * | BDEV_GATHER  | minor  | elements | grant | flags |  id  |         | pos. |
  * |--------------+--------+----------+-------+-------+------+---------+------|
- * | BDEV_SCATTER | minor  | elements | grant | flags |  id  |     position   |
+ * | BDEV_SCATTER | minor  | elements | grant | flags |  id  |         | pos. |
  * |--------------+--------+----------+-------+-------+------+---------+------|
  * | BDEV_IOCTL   | minor  |          | grant | user  |  id  | request |      |
  * ----------------------------------------------------------------------------
@@ -207,7 +207,7 @@ static int do_rdwt(struct blockdriver *bdp, message *mp)
 
   /* Transfer bytes from/to the device. */
   do_write = (mp->m_type == BDEV_WRITE);
-  position = make64(mp->BDEV_POS_LO, mp->BDEV_POS_HI);
+  position = mp->BDEV_POS;
 
   r = (*bdp->bdr_transfer)(mp->BDEV_MINOR, do_write, position, mp->m_source,
 	&iovec1, 1, mp->BDEV_FLAGS);
@@ -248,7 +248,7 @@ static int do_vrdwt(struct blockdriver *bdp, message *mp, thread_id_t id)
 
   /* Transfer bytes from/to the device. */
   do_write = (mp->m_type == BDEV_SCATTER);
-  position = make64(mp->BDEV_POS_LO, mp->BDEV_POS_HI);
+  position = mp->BDEV_POS;
 
   r = (*bdp->bdr_transfer)(mp->BDEV_MINOR, do_write, position, mp->m_source,
 	iovec, nr_req, mp->BDEV_FLAGS);

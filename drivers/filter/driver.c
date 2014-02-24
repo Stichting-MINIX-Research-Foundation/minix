@@ -770,8 +770,8 @@ static int paired_sendrec(message *m1, message *m2, int both)
 	int r;
 
 #if DEBUG2
-	printf("paired_sendrec(%d) - <%d,%lx:%lx,%d> - %x,%x\n",
-		both, m1->m_type, m1->BDEV_POS_HI, m1->BDEV_POS_LO,
+	printf("paired_sendrec(%d) - <%d,%llx,%d> - %x,%x\n",
+		both, m1->m_type, m1->BDEV_POS,
 		m1->BDEV_COUNT, m1->BDEV_GRANT, m2->BDEV_GRANT);
 #endif
 
@@ -919,8 +919,7 @@ int read_write(u64_t pos, char *bufa, char *bufb, size_t *sizep, int request)
 	memset(&m1, 0, sizeof(m1));
 	m1.m_type = (request == FLT_WRITE) ? BDEV_SCATTER : BDEV_GATHER;
 	m1.BDEV_COUNT = count;
-	m1.BDEV_POS_LO = ex64lo(pos);
-	m1.BDEV_POS_HI = ex64hi(pos);
+	m1.BDEV_POS = pos;
 
 	m2 = m1;
 

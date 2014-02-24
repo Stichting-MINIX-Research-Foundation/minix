@@ -113,8 +113,7 @@ do_read(endpoint_t driver_endpt, uint8_t *buf, size_t bufsize)
 	m.BDEV_GRANT = grant_nr;
 	m.BDEV_FLAGS = BDEV_NOPAGE; /* the EEPROMs used for EDID are pageless */
 	m.BDEV_ID = 0;
-	m.BDEV_POS_LO = 0;
-	m.BDEV_POS_HI = 0;
+	m.BDEV_POS = 0;
 
 	r = ipc_sendrec(driver_endpt, &m);
 	cpf_revoke(grant_nr);

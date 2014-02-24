@@ -1252,8 +1252,7 @@
 #define BDEV_USER	m10_i4	/* user endpoint requesting I/O control */
 #define BDEV_ID		m10_l1	/* opaque request ID */
 #define BDEV_REQUEST	m10_l2	/* I/O control request */
-#define BDEV_POS_LO	m10_l2	/* transfer position (low bits) */
-#define BDEV_POS_HI	m10_l3	/* transfer position (high bits) */
+#define BDEV_POS	m10_ull1 /* transfer position */
 
 /* Bits in 'BDEV_ACCESS' field of block device open requests. */
 #  define BDEV_R_BIT		0x01	/* open with read access */

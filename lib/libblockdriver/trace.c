@@ -205,7 +205,7 @@ void trace_start(thread_id_t id, message *m_ptr)
   case BDEV_WRITE:
   case BDEV_GATHER:
   case BDEV_SCATTER:
-	pos = make64(m_ptr->BDEV_POS_LO, m_ptr->BDEV_POS_HI);
+	pos = m_ptr->BDEV_POS;
 	size = m_ptr->BDEV_COUNT;
 	flags = m_ptr->BDEV_FLAGS;
 
