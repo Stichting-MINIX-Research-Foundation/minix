@@ -20,13 +20,15 @@ static u64_t high_frc;
 
 struct omap_timer_registers;
 
-struct omap_timer {
+struct omap_timer
+{
 	vir_bytes base;
 	int irq_nr;
 	struct omap_timer_registers *regs;
 };
 
-struct omap_timer_registers {
+struct omap_timer_registers
+{
 	vir_bytes TIDR;
 	vir_bytes TIOCP_CFG;
 	vir_bytes TISTAT;
@@ -47,7 +49,7 @@ struct omap_timer_registers {
 	vir_bytes TCVR;
 	vir_bytes TOCR;
 	vir_bytes TOWR;
-	
+
 };
 
 static struct omap_timer_registers regs_v1 = {
@@ -91,11 +93,11 @@ static struct omap_timer_registers regs_v2 = {
 	.TCAR1 = AM335X_TIMER_TCAR1,
 	.TSICR = AM335X_TIMER_TSICR,
 	.TCAR2 = AM335X_TIMER_TCAR2,
-	.TPIR = -1 , /* UNDEF */
-	.TNIR = -1 , /* UNDEF */
-	.TCVR = -1 , /* UNDEF */
-	.TOCR = -1 , /* UNDEF */
-	.TOWR = -1  /* UNDEF */
+	.TPIR = -1,		/* UNDEF */
+	.TNIR = -1,		/* UNDEF */
+	.TCVR = -1,		/* UNDEF */
+	.TOCR = -1,		/* UNDEF */
+	.TOWR = -1		/* UNDEF */
 };
 
 static struct omap_timer dm37xx_timer = {
@@ -110,12 +112,12 @@ static struct omap_timer dm37xx_fr_timer = {
 	.irq_nr = OMAP3_GPT10_IRQ,
 	.regs = &regs_v1
 };
+
 /* normal timer */
 static struct omap_timer am335x_timer = {
 	.base = AM335X_DMTIMER1_1MS_BASE,
 	.irq_nr = AM335X_INT_TINT1_1MS,
 	.regs = &regs_v1
-
 };
 
 /* free running timer */
@@ -128,10 +130,10 @@ static struct omap_timer am335x_fr_timer = {
 static struct omap_timer *timer;
 static struct omap_timer *fr_timer;
 
-
 static int done = 0;
 
-int bsp_register_timer_handler(const irq_handler_t handler)
+int
+bsp_register_timer_handler(const irq_handler_t handler)
 {
 	/* Initialize the CLOCK's interrupt hook. */
 	omap3_timer_hook.proc_nr_e = NONE;
@@ -144,52 +146,63 @@ int bsp_register_timer_handler(const irq_handler_t handler)
 	return 0;
 }
 
-
 /* meta data for remapping */
 static kern_phys_map timer_phys_map;
 static kern_phys_map fr_timer_phys_map;
 
-void omap3_frclock_init(void)
+void
+omap3_frclock_init(void)
 {
-    u32_t tisr;
+	u32_t tisr;
 
-    /* enable the clock */
-	if(BOARD_IS_BBXM(machine.board_id)) {
+	/* enable the clock */
+	if (BOARD_IS_BBXM(machine.board_id)) {
 		fr_timer = &dm37xx_fr_timer;
-		kern_phys_map_ptr(fr_timer->base,ARM_PAGE_SIZE, &fr_timer_phys_map, (vir_bytes) &fr_timer->base);
+		kern_phys_map_ptr(fr_timer->base, ARM_PAGE_SIZE,
+		    &fr_timer_phys_map, (vir_bytes) & fr_timer->base);
 
 		/* Stop timer */
-		mmio_clear(fr_timer->base + fr_timer->regs->TCLR, OMAP3_TCLR_ST);
+		mmio_clear(fr_timer->base + fr_timer->regs->TCLR,
+		    OMAP3_TCLR_ST);
 
 		/* Use functional clock source for GPTIMER10 */
 		mmio_set(OMAP3_CM_CLKSEL_CORE, OMAP3_CLKSEL_GPT10);
 
-		/* Scale timer down to 13/8 = 1.625 Mhz to roughly get microsecond ticks */
-		/* The scale is computed as 2^(PTV+1). So if PTV == 2, we get 2^3 = 8.
-		*/
-		mmio_set(fr_timer->base + fr_timer->regs->TCLR, (2 << OMAP3_TCLR_PTV));
-	} else if(BOARD_IS_BB(machine.board_id)) {
+		/* Scale timer down to 13/8 = 1.625 Mhz to roughly get
+		 * microsecond ticks */
+		/* The scale is computed as 2^(PTV+1). So if PTV == 2, we get
+		 * 2^3 = 8. */
+		mmio_set(fr_timer->base + fr_timer->regs->TCLR,
+		    (2 << OMAP3_TCLR_PTV));
+	} else if (BOARD_IS_BB(machine.board_id)) {
 		fr_timer = &am335x_fr_timer;
-		kern_phys_map_ptr(fr_timer->base,ARM_PAGE_SIZE, &fr_timer_phys_map, (vir_bytes) &fr_timer->base);
+		kern_phys_map_ptr(fr_timer->base, ARM_PAGE_SIZE,
+		    &fr_timer_phys_map, (vir_bytes) & fr_timer->base);
 		/* Disable the module and wait for the module to be disabled */
-		set32(CM_PER_TIMER7_CLKCTRL, CM_MODULEMODE_MASK,CM_MODULEMODE_DISABLED);
-		while( (mmio_read(CM_PER_TIMER7_CLKCTRL) & CM_CLKCTRL_IDLEST) != CM_CLKCTRL_IDLEST_DISABLE);
+		set32(CM_PER_TIMER7_CLKCTRL, CM_MODULEMODE_MASK,
+		    CM_MODULEMODE_DISABLED);
+		while ((mmio_read(CM_PER_TIMER7_CLKCTRL) & CM_CLKCTRL_IDLEST)
+		    != CM_CLKCTRL_IDLEST_DISABLE);
 
-		set32(CLKSEL_TIMER7_CLK,CLKSEL_TIMER7_CLK_SEL_MASK, CLKSEL_TIMER7_CLK_SEL_SEL2);
-		while( (read32(CLKSEL_TIMER7_CLK) & CLKSEL_TIMER7_CLK_SEL_MASK) != CLKSEL_TIMER7_CLK_SEL_SEL2);
+		set32(CLKSEL_TIMER7_CLK, CLKSEL_TIMER7_CLK_SEL_MASK,
+		    CLKSEL_TIMER7_CLK_SEL_SEL2);
+		while ((read32(CLKSEL_TIMER7_CLK) & CLKSEL_TIMER7_CLK_SEL_MASK)
+		    != CLKSEL_TIMER7_CLK_SEL_SEL2);
 
 		/* enable the module and wait for the module to be ready */
-		set32(CM_PER_TIMER7_CLKCTRL,CM_MODULEMODE_MASK,CM_MODULEMODE_ENABLE);
-		while( (mmio_read(CM_PER_TIMER7_CLKCTRL) & CM_CLKCTRL_IDLEST) != CM_CLKCTRL_IDLEST_FUNC);
+		set32(CM_PER_TIMER7_CLKCTRL, CM_MODULEMODE_MASK,
+		    CM_MODULEMODE_ENABLE);
+		while ((mmio_read(CM_PER_TIMER7_CLKCTRL) & CM_CLKCTRL_IDLEST)
+		    != CM_CLKCTRL_IDLEST_FUNC);
 
 		/* Stop timer */
-		mmio_clear(fr_timer->base + fr_timer->regs->TCLR, OMAP3_TCLR_ST);
+		mmio_clear(fr_timer->base + fr_timer->regs->TCLR,
+		    OMAP3_TCLR_ST);
 
 		/* 24Mhz / 16 = 1.5 Mhz */
-		mmio_set(fr_timer->base + fr_timer->regs->TCLR, (3 << OMAP3_TCLR_PTV));
-    }
-
-
+		mmio_set(fr_timer->base + fr_timer->regs->TCLR,
+		    (3 << OMAP3_TCLR_PTV));
+	}
 
 	/* Start and auto-reload at 0 */
 	mmio_write(fr_timer->base + fr_timer->regs->TLDR, 0x0);
@@ -197,88 +210,100 @@ void omap3_frclock_init(void)
 
 	/* Set up overflow interrupt */
 	tisr = OMAP3_TISR_MAT_IT_FLAG | OMAP3_TISR_OVF_IT_FLAG |
-		OMAP3_TISR_TCAR_IT_FLAG;
+	    OMAP3_TISR_TCAR_IT_FLAG;
 	/* Clear interrupt status */
-	mmio_write(fr_timer->base + fr_timer->regs->TISR, tisr); 
-	mmio_write(fr_timer->base + fr_timer->regs->TIER, OMAP3_TIER_OVF_IT_ENA);
+	mmio_write(fr_timer->base + fr_timer->regs->TISR, tisr);
+	mmio_write(fr_timer->base + fr_timer->regs->TIER,
+	    OMAP3_TIER_OVF_IT_ENA);
 
 	/* Start timer */
 	mmio_set(fr_timer->base + fr_timer->regs->TCLR,
-	    OMAP3_TCLR_OVF_TRG|OMAP3_TCLR_AR|OMAP3_TCLR_ST|OMAP3_TCLR_PRE);
+	    OMAP3_TCLR_OVF_TRG | OMAP3_TCLR_AR | OMAP3_TCLR_ST |
+	    OMAP3_TCLR_PRE);
 	done = 1;
 }
 
-void omap3_frclock_stop()
+void
+omap3_frclock_stop()
 {
 	mmio_clear(fr_timer->base + fr_timer->regs->TCLR, OMAP3_TCLR_ST);
 }
 
-
-void bsp_timer_init(unsigned freq)
+void
+bsp_timer_init(unsigned freq)
 {
 	/* we only support 1ms resolution */
 	u32_t tisr;
-	if(BOARD_IS_BBXM(machine.board_id)) {
+	if (BOARD_IS_BBXM(machine.board_id)) {
 		timer = &dm37xx_timer;
-		kern_phys_map_ptr(timer->base,ARM_PAGE_SIZE, &timer_phys_map, (vir_bytes) &timer->base);
+		kern_phys_map_ptr(timer->base, ARM_PAGE_SIZE, &timer_phys_map,
+		    (vir_bytes) & timer->base);
 		/* Stop timer */
 		mmio_clear(timer->base + timer->regs->TCLR, OMAP3_TCLR_ST);
 
 		/* Use 32 KHz clock source for GPTIMER1 */
 		mmio_clear(OMAP3_CM_CLKSEL_WKUP, OMAP3_CLKSEL_GPT1);
-	} else if(BOARD_IS_BB(machine.board_id)) {
+	} else if (BOARD_IS_BB(machine.board_id)) {
 		timer = &am335x_timer;
-		kern_phys_map_ptr(timer->base,ARM_PAGE_SIZE, &timer_phys_map, (vir_bytes) &timer->base);
+		kern_phys_map_ptr(timer->base, ARM_PAGE_SIZE, &timer_phys_map,
+		    (vir_bytes) & timer->base);
 		/* disable the module and wait for the module to be disabled */
-		set32(CM_WKUP_TIMER1_CLKCTRL, CM_MODULEMODE_MASK,CM_MODULEMODE_DISABLED);
-		while( (mmio_read(CM_WKUP_TIMER1_CLKCTRL) & CM_CLKCTRL_IDLEST) != CM_CLKCTRL_IDLEST_DISABLE);
+		set32(CM_WKUP_TIMER1_CLKCTRL, CM_MODULEMODE_MASK,
+		    CM_MODULEMODE_DISABLED);
+		while ((mmio_read(CM_WKUP_TIMER1_CLKCTRL) & CM_CLKCTRL_IDLEST)
+		    != CM_CLKCTRL_IDLEST_DISABLE);
 
-
-		set32(CLKSEL_TIMER1MS_CLK,CLKSEL_TIMER1MS_CLK_SEL_MASK, CLKSEL_TIMER1MS_CLK_SEL_SEL2);
-		while( (read32(CLKSEL_TIMER1MS_CLK) & CLKSEL_TIMER1MS_CLK_SEL_MASK) != CLKSEL_TIMER1MS_CLK_SEL_SEL2);
-
+		set32(CLKSEL_TIMER1MS_CLK, CLKSEL_TIMER1MS_CLK_SEL_MASK,
+		    CLKSEL_TIMER1MS_CLK_SEL_SEL2);
+		while ((read32(CLKSEL_TIMER1MS_CLK) &
+			CLKSEL_TIMER1MS_CLK_SEL_MASK) !=
+		    CLKSEL_TIMER1MS_CLK_SEL_SEL2);
 
 		/* enable the module and wait for the module to be ready */
-		set32(CM_WKUP_TIMER1_CLKCTRL,CM_MODULEMODE_MASK,CM_MODULEMODE_ENABLE);
-		while( (mmio_read(CM_WKUP_TIMER1_CLKCTRL) & CM_CLKCTRL_IDLEST) != CM_CLKCTRL_IDLEST_FUNC);
+		set32(CM_WKUP_TIMER1_CLKCTRL, CM_MODULEMODE_MASK,
+		    CM_MODULEMODE_ENABLE);
+		while ((mmio_read(CM_WKUP_TIMER1_CLKCTRL) & CM_CLKCTRL_IDLEST)
+		    != CM_CLKCTRL_IDLEST_FUNC);
 
 		/* Stop timer */
 		mmio_clear(timer->base + timer->regs->TCLR, OMAP3_TCLR_ST);
 	}
 
-
 	/* Use 1-ms tick mode for GPTIMER1 TRM 16.2.4.2.1 */
 	mmio_write(timer->base + timer->regs->TPIR, 232000);
 	mmio_write(timer->base + timer->regs->TNIR, -768000);
-	mmio_write(timer->base + timer->regs->TLDR, 0xffffffff - (32768 / freq) +1);
-	mmio_write(timer->base + timer->regs->TCRR, 0xffffffff - (32768 / freq) +1);
-
+	mmio_write(timer->base + timer->regs->TLDR,
+	    0xffffffff - (32768 / freq) + 1);
+	mmio_write(timer->base + timer->regs->TCRR,
+	    0xffffffff - (32768 / freq) + 1);
 
 	/* Set up overflow interrupt */
 	tisr = OMAP3_TISR_MAT_IT_FLAG | OMAP3_TISR_OVF_IT_FLAG |
 	    OMAP3_TISR_TCAR_IT_FLAG;
 	/* Clear interrupt status */
-	mmio_write(timer->base + timer->regs->TISR, tisr); 
+	mmio_write(timer->base + timer->regs->TISR, tisr);
 	mmio_write(timer->base + timer->regs->TIER, OMAP3_TIER_OVF_IT_ENA);
 
 	/* Start timer */
 	mmio_set(timer->base + timer->regs->TCLR,
-	    OMAP3_TCLR_OVF_TRG|OMAP3_TCLR_AR|OMAP3_TCLR_ST);
+	    OMAP3_TCLR_OVF_TRG | OMAP3_TCLR_AR | OMAP3_TCLR_ST);
 	/* also initilize the free runnning timer */
 	omap3_frclock_init();
 }
 
-void bsp_timer_stop()
+void
+bsp_timer_stop()
 {
 	mmio_clear(timer->base + timer->regs->TCLR, OMAP3_TCLR_ST);
 }
 
-static u32_t read_frc(void)
+static u32_t
+read_frc(void)
 {
 	if (done == 0) {
 		return 0;
 	}
-	return mmio_read(fr_timer->base  +  fr_timer->regs->TCRR);
+	return mmio_read(fr_timer->base + fr_timer->regs->TCRR);
 }
 
 /*
@@ -295,26 +320,27 @@ static u32_t read_frc(void)
  *  compose the 64 bits time based on the current timer value
  *   and high_frc.
  */
-static void frc_overflow_check(u32_t cur_frc)
+static void
+frc_overflow_check(u32_t cur_frc)
 {
 	static int prev_frc_valid;
 	static u32_t prev_frc;
-	if(prev_frc_valid && prev_frc > cur_frc) {
+	if (prev_frc_valid && prev_frc > cur_frc) {
 		high_frc++;
 	}
 	prev_frc = cur_frc;
 	prev_frc_valid = 1;
 }
 
-void bsp_timer_int_handler()
+void
+bsp_timer_int_handler()
 {
 	/* Clear all interrupts */
-	u32_t tisr,now;
+	u32_t tisr, now;
 
-
-	/* when the kernel itself is running interrupts are disabled.
-	 * We should therefore also read the overflow counter to detect
-	 * this as to not miss events. */
+	/* when the kernel itself is running interrupts are disabled. We
+	 * should therefore also read the overflow counter to detect this as
+	 * to not miss events. */
 	tisr = OMAP3_TISR_MAT_IT_FLAG | OMAP3_TISR_OVF_IT_FLAG |
 	    OMAP3_TISR_TCAR_IT_FLAG;
 	mmio_write(timer->base + timer->regs->TISR, tisr);
@@ -324,7 +350,8 @@ void bsp_timer_int_handler()
 }
 
 /* Use the free running clock as TSC */
-void read_tsc_64(u64_t *t)
+void
+read_tsc_64(u64_t * t)
 {
 	u32_t now;
 	now = read_frc();

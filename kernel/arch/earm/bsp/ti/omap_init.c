@@ -4,7 +4,9 @@
 #include "omap_rtc.h"
 #include "bsp_reset.h"
 
-void bsp_init(){
+void
+bsp_init()
+{
 	/* map memory for padconf */
 	bsp_padconf_init();
 
