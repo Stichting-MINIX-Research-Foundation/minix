@@ -871,8 +871,7 @@
 #	define VFS_VMCALL_FD		m10_i2
 #	define VFS_VMCALL_REQID		m10_i3
 #	define VFS_VMCALL_ENDPOINT	m10_i4
-#	define VFS_VMCALL_OFFSET_LO	m10_l1
-#	define VFS_VMCALL_OFFSET_HI	m10_l2
+#	define VFS_VMCALL_OFFSET	m10_ull1
 #	define VFS_VMCALL_LENGTH	m10_l3
 
 /* Request codes to from VM to VFS */

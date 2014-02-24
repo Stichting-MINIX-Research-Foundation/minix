@@ -349,8 +349,7 @@ int do_vm_call(void)
 	int req_fd = job_m_in.VFS_VMCALL_FD;
 	u32_t req_id = job_m_in.VFS_VMCALL_REQID;
 	endpoint_t ep = job_m_in.VFS_VMCALL_ENDPOINT;
-	u64_t offset = make64(job_m_in.VFS_VMCALL_OFFSET_LO,
-		job_m_in.VFS_VMCALL_OFFSET_HI);
+	u64_t offset = job_m_in.VFS_VMCALL_OFFSET;
 	u32_t length = job_m_in.VFS_VMCALL_LENGTH;
 	int result = OK;
 	int slot;

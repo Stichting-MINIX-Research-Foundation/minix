@@ -86,8 +86,7 @@ int vfs_request(int reqno, int fd, struct vmproc *vmp, u64_t offset, u32_t len,
 	m->VFS_VMCALL_FD = fd;
 	m->VFS_VMCALL_REQID = reqid;
 	m->VFS_VMCALL_ENDPOINT = vmp->vm_endpoint;
-	m->VFS_VMCALL_OFFSET_LO = ex64lo(offset);
-	m->VFS_VMCALL_OFFSET_HI = ex64hi(offset);
+	m->VFS_VMCALL_OFFSET = offset;
 	m->VFS_VMCALL_LENGTH = len;
 
 	reqnode->who = vmp->vm_endpoint;
