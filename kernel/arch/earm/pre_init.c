@@ -415,6 +415,6 @@ void send_diag_sig(void) { }
 void minix_shutdown(minix_timer_t *t) { arch_shutdown(0); }
 void busy_delay_ms(int x) { }
 int raise(int n) { panic("raise(%d)\n", n); }
-int kern_phys_map_ptr( phys_bytes base_address, vir_bytes io_size, 
+int kern_phys_map_ptr( phys_bytes base_address, vir_bytes io_size, int vm_flags,
 struct kern_phys_map * priv, vir_bytes ptr) {};
 struct machine machine; /* pre init stage machine */

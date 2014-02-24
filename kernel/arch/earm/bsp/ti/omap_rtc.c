@@ -41,7 +41,8 @@ void
 omap3_rtc_init(void)
 {
 	if (BOARD_IS_BB(machine.board_id)) {
-		kern_phys_map_ptr(omap_rtc.base, omap_rtc.size, &rtc_phys_map,
+		kern_phys_map_ptr(omap_rtc.base, omap_rtc.size,
+		    VMMF_UNCACHED | VMMF_WRITE, &rtc_phys_map,
 		    (vir_bytes) & omap_rtc.base);
 	}
 }

@@ -149,6 +149,26 @@ bsp_register_timer_handler(const irq_handler_t handler)
 /* meta data for remapping */
 static kern_phys_map timer_phys_map;
 static kern_phys_map fr_timer_phys_map;
+static kern_phys_map fr_timer_user_phys_map;	/* struct for when the free */
+						/* running timer is mapped to */
+						/* userland */
+
+/* callback for when the free running clock gets mapped */
+int
+kern_phys_fr_user_mapped(vir_bytes id, phys_bytes address)
+{
+	/* the only thing we need to do at this stage is to set the address */
+	/* in the kerninfo struct */
+	if (BOARD_IS_BBXM(machine.board_id)) {
+		minix_kerninfo.minix_frclock_tcrr = address + OMAP3_TIMER_TCRR;
+		minix_kerninfo.minix_arm_frclock_hz = 1625000;
+	} else if (BOARD_IS_BB(machine.board_id)) {
+		minix_kerninfo.minix_frclock_tcrr =
+		    address + AM335X_TIMER_TCRR;
+		minix_kerninfo.minix_arm_frclock_hz = 1500000;
+	}
+	return 0;
+}
 
 void
 omap3_frclock_init(void)
@@ -158,8 +178,16 @@ omap3_frclock_init(void)
 	/* enable the clock */
 	if (BOARD_IS_BBXM(machine.board_id)) {
 		fr_timer = &dm37xx_fr_timer;
+
 		kern_phys_map_ptr(fr_timer->base, ARM_PAGE_SIZE,
-		    &fr_timer_phys_map, (vir_bytes) & fr_timer->base);
+		    VMMF_UNCACHED | VMMF_WRITE, &fr_timer_phys_map,
+		    (vir_bytes) & fr_timer->base);
+
+		/* the timer is also mapped in user space hence the this */
+		/* second mapping and callback to set kerninfo frclock_tcrr */
+		kern_req_phys_map(fr_timer->base, ARM_PAGE_SIZE,
+		    VMMF_UNCACHED | VMMF_USER,
+		    &fr_timer_user_phys_map, kern_phys_fr_user_mapped, 0);
 
 		/* Stop timer */
 		mmio_clear(fr_timer->base + fr_timer->regs->TCLR,
@@ -177,7 +205,14 @@ omap3_frclock_init(void)
 	} else if (BOARD_IS_BB(machine.board_id)) {
 		fr_timer = &am335x_fr_timer;
 		kern_phys_map_ptr(fr_timer->base, ARM_PAGE_SIZE,
+		    VMMF_UNCACHED | VMMF_WRITE,
 		    &fr_timer_phys_map, (vir_bytes) & fr_timer->base);
+
+		/* the timer is also mapped in user space hence the this */
+		/* second mapping and callback to set kerninfo frclock_tcrr */
+		kern_req_phys_map(fr_timer->base, ARM_PAGE_SIZE,
+		    VMMF_UNCACHED | VMMF_USER,
+		    &fr_timer_user_phys_map, kern_phys_fr_user_mapped, 0);
 		/* Disable the module and wait for the module to be disabled */
 		set32(CM_PER_TIMER7_CLKCTRL, CM_MODULEMODE_MASK,
 		    CM_MODULEMODE_DISABLED);
@@ -236,8 +271,9 @@ bsp_timer_init(unsigned freq)
 	u32_t tisr;
 	if (BOARD_IS_BBXM(machine.board_id)) {
 		timer = &dm37xx_timer;
-		kern_phys_map_ptr(timer->base, ARM_PAGE_SIZE, &timer_phys_map,
-		    (vir_bytes) & timer->base);
+		kern_phys_map_ptr(timer->base, ARM_PAGE_SIZE,
+		    VMMF_UNCACHED | VMMF_WRITE,
+		    &timer_phys_map, (vir_bytes) & timer->base);
 		/* Stop timer */
 		mmio_clear(timer->base + timer->regs->TCLR, OMAP3_TCLR_ST);
 
@@ -245,8 +281,9 @@ bsp_timer_init(unsigned freq)
 		mmio_clear(OMAP3_CM_CLKSEL_WKUP, OMAP3_CLKSEL_GPT1);
 	} else if (BOARD_IS_BB(machine.board_id)) {
 		timer = &am335x_timer;
-		kern_phys_map_ptr(timer->base, ARM_PAGE_SIZE, &timer_phys_map,
-		    (vir_bytes) & timer->base);
+		kern_phys_map_ptr(timer->base, ARM_PAGE_SIZE,
+		    VMMF_UNCACHED | VMMF_WRITE,
+		    &timer_phys_map, (vir_bytes) & timer->base);
 		/* disable the module and wait for the module to be disabled */
 		set32(CM_WKUP_TIMER1_CLKCTRL, CM_MODULEMODE_MASK,
 		    CM_MODULEMODE_DISABLED);

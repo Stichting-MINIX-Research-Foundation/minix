@@ -7,6 +7,7 @@
 #include <minix/mmio.h>
 #include <minix/padconf.h>
 #include <minix/board.h>
+#include <minix/com.h>
 #include <assert.h>
 #include <io.h>
 #include <stdlib.h>
@@ -75,6 +76,7 @@ bsp_padconf_init(void)
 	assert(omap_padconf);
 
 	kern_phys_map_ptr(omap_padconf->base, omap_padconf->size,
+	    VMMF_UNCACHED | VMMF_WRITE,
 	    &padconf_phys_map, (vir_bytes) & omap_padconf->base);
 
 	return;

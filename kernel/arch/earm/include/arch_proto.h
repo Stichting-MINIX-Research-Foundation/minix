@@ -54,7 +54,7 @@ extern void * k_stacks;
 
 
 /*
- * Definition of a callback used when a memory map changes it's base address
+ * Definition of a callback used when a memory map changed it's base address
  */
 typedef int (*kern_phys_map_mapped)(vir_bytes id, vir_bytes new_addr );
 
@@ -69,6 +69,7 @@ typedef struct kern_phys_map{
 	phys_bytes addr; /* The physical address to map */
 	vir_bytes size;  /* The size of the mapping */
 	vir_bytes id;	 /* an id passed to the callback */
+	int vm_flags;	 /* flags to be passed to vm map */
 	kern_phys_map_mapped cb; /* the callback itself */
 	phys_bytes vir; /* The virtual address once remapped */
 	int index; 	/* index */
@@ -103,15 +104,16 @@ typedef struct kern_phys_map{
  * the same reason.
  */
 int kern_req_phys_map( phys_bytes base_address, vir_bytes io_size,
-		   kern_phys_map * priv, kern_phys_map_mapped cb, 
-		   vir_bytes id);
+		   int vm_flags, kern_phys_map * priv,
+		   kern_phys_map_mapped cb, vir_bytes id);
 
 /*
  * Request a physical mapping and put the result in the given prt
  * Note that ptr will only be valid once the callback happened.
  */
 int kern_phys_map_ptr( phys_bytes base_address, vir_bytes io_size, 
-	kern_phys_map * priv, vir_bytes ptr);
+		       int vm_flags, kern_phys_map * priv, 
+		       vir_bytes ptr);
 
 void arch_ser_init();
 

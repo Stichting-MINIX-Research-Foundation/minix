@@ -35,6 +35,7 @@ intr_init(const int auto_eoi)
 	omap_intr.size = 0x1000;	/* 4K */
 
 	kern_phys_map_ptr(omap_intr.base, omap_intr.size,
+	    VMMF_UNCACHED | VMMF_WRITE,
 	    &intr_phys_map, (vir_bytes) & omap_intr.base);
 	return 0;
 }

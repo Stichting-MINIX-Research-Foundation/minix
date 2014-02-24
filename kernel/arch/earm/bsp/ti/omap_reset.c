@@ -47,8 +47,9 @@ bsp_reset_init(void)
 		omap_reset.size = AM335X_CM_SIZE;
 	}
 
-	kern_phys_map_ptr(omap_reset.base, omap_reset.size, &reset_phys_map,
-	    (vir_bytes) & omap_reset.base);
+	kern_phys_map_ptr(omap_reset.base, omap_reset.size,
+	    VMMF_UNCACHED | VMMF_WRITE,
+	    &reset_phys_map, (vir_bytes) & omap_reset.base);
 }
 
 void

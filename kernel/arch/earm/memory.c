@@ -20,7 +20,6 @@
 #include "kernel/proto.h"
 #include "kernel/debug.h"
 #include "bsp_timer.h"
-#include "bsp/ti/omap_timer_registers.h"
 
 
 #define HASPT(procptr) ((procptr)->p_seg.p_ttbr != 0)
@@ -684,11 +683,7 @@ void arch_proc_init(struct proc *pr, const u32_t ip, const u32_t sp,
 	pr->p_reg.retreg = ps_str; /* a.k.a r0*/
 }
 
-/* TODO keesj: rewrite the free running clock to use callbacks
- * the current implementation introduces a two-way depedency
-*/
-static int frclock_index = -1,
-	usermapped_glo_index = -1,
+static int usermapped_glo_index = -1,
 	usermapped_index = -1, first_um_idx = -1;
 
 
@@ -709,7 +704,6 @@ int arch_phys_map(const int index,
 
 	if(first) {
 		memset(&minix_kerninfo, 0, sizeof(minix_kerninfo));
-		frclock_index = freeidx++;
 		if(glo_len > 0) {
 			usermapped_glo_index = freeidx++;
 		}
@@ -742,26 +736,14 @@ int arch_phys_map(const int index,
 		*flags = VMMF_USER;
 		return OK;
 	}
-	else if (index == frclock_index) {
 
-		if (BOARD_IS_BBXM(machine.board_id)){
-			*addr = OMAP3_GPTIMER10_BASE;
-		} else if (BOARD_IS_BB(machine.board_id)){
-			*addr = AM335X_DMTIMER7_BASE;
-		} else {
-			panic("Can not do the clock setup. machine (0x%08x) is unknown\n",machine.board_id);
-		};
-		*len = ARM_PAGE_SIZE;
-		*flags = VMMF_UNCACHED | VMMF_USER;
-		return OK;
-	} 
 	/* if this all fails loop over the maps */
 	phys_maps = kern_phys_map_head;
 	while(phys_maps != NULL){
 		if(phys_maps->index == index){
 			*addr = phys_maps->addr;
 			*len =  phys_maps->size;
-			*flags = VMMF_UNCACHED | VMMF_WRITE;
+			*flags = phys_maps->vm_flags;
 			return OK;
 		}
 		phys_maps = phys_maps->next;
@@ -792,24 +774,10 @@ int arch_phys_map_reply(const int index, const vir_bytes addr)
 		minix_kerninfo.kerninfo_magic = KERNINFO_MAGIC;
 		minix_kerninfo.minix_feature_flags = minix_feature_flags;
 		minix_kerninfo_user = (vir_bytes) FIXEDPTR(&minix_kerninfo);
-
 		return OK;
 	}
 
 	if (index == usermapped_index) {
-		return OK;
-	}
-	else if (index == frclock_index) {
-		if (BOARD_IS_BBXM(machine.board_id)){
-			minix_kerninfo.minix_frclock_tcrr = addr + OMAP3_TIMER_TCRR;
-			minix_kerninfo.minix_arm_frclock_hz = 1625000;
-		} else if (BOARD_IS_BB(machine.board_id)){
-			minix_kerninfo.minix_frclock_tcrr = addr + AM335X_TIMER_TCRR;
-			minix_kerninfo.minix_arm_frclock_hz = 1500000;
-		} else {
-			panic("memory setup errot machine (0x%08x) is unhandled\n",machine.board_id);
-		};
-
 		return OK;
 	}
 
@@ -866,9 +834,9 @@ void release_address_space(struct proc *pr)
 /*
  * Request a physical mapping
  */
-int kern_req_phys_map( phys_bytes base_address, vir_bytes io_size,
-		   kern_phys_map * priv, kern_phys_map_mapped cb, 
-		   vir_bytes id)
+int kern_req_phys_map( phys_bytes base_address, vir_bytes io_size, 
+		       int vm_flags, kern_phys_map * priv, 
+		       kern_phys_map_mapped cb, vir_bytes id)
 {
 	/* Assign the values to the given struct and add priv
 	to the list */
@@ -878,6 +846,7 @@ int kern_req_phys_map( phys_bytes base_address, vir_bytes io_size,
 
 	priv->addr  = base_address;
 	priv->size  = io_size;
+	priv->vm_flags  = vm_flags;
 	priv->cb  = cb;
 	priv->id  = id;
 	priv->index = -1;
@@ -916,9 +885,10 @@ int kern_phys_map_mapped_ptr(vir_bytes id, phys_bytes address){
 int kern_phys_map_ptr(
 	phys_bytes base_address, 
 	vir_bytes io_size, 
+	int vm_flags, 
 	kern_phys_map * priv,
 	vir_bytes ptr)
 {
-	return kern_req_phys_map(base_address,io_size,priv,kern_phys_map_mapped_ptr,ptr);
+	return kern_req_phys_map(base_address,io_size,vm_flags,priv,kern_phys_map_mapped_ptr,ptr);
 }
 
