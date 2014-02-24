@@ -3,6 +3,6 @@
 
 SUBDIR=	cat date df echo ed expr \
 	kill ksh ln ls mkdir pax pwd rm rmdir \
-	stty sync test
+	sleep stty sync test
 
 .include <bsd.subdir.mk>

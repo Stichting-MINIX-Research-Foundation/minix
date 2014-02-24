@@ -44,6 +44,7 @@
 ./bin/service				minix-sys
 ./bin/setup				minix-sys
 ./bin/sh				minix-sys
+./bin/sleep				minix-sys
 ./bin/stty				minix-sys
 ./bin/sync				minix-sys
 ./bin/sysenv				minix-sys
@@ -453,7 +454,6 @@
 ./usr/bin/shlock			minix-sys
 ./usr/bin/shuffle			minix-sys
 ./usr/bin/size				minix-sys	binutils
-./usr/bin/sleep				minix-sys
 ./usr/bin/slip				minix-sys
 ./usr/bin/soelim			minix-sys
 ./usr/bin/sort				minix-sys
