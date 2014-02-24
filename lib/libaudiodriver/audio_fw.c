@@ -47,8 +47,8 @@ static int init_buffers(sub_dev_t *sub_dev_ptr);
 static int get_started(sub_dev_t *sub_dev_ptr);
 static int io_ctl_length(int io_request);
 static special_file_t* get_special_file(int minor_dev_nr);
-static void tell_dev(vir_bytes buf, size_t size, int pci_bus, int
-	pci_dev, int pci_func);
+static void tell_dev(vir_bytes buf, size_t size, int pci_bus,
+	int pci_dev, int pci_func);
 
 static char io_ctl_buf[IOCPARM_MASK];
 static int irq_hook_id = 0;	/* id of irq hook at the kernel */
@@ -90,7 +90,7 @@ int main(void)
 /*===========================================================================*
  *			       sef_local_startup			     *
  *===========================================================================*/
-static void sef_local_startup()
+static void sef_local_startup(void)
 {
   /* Register init callbacks. */
   sef_setcb_init_fresh(sef_cb_init_fresh);
@@ -832,12 +832,8 @@ static special_file_t* get_special_file(int minor_dev_nr) {
 	return NULL;
 }
 
-static void tell_dev(buf, size, pci_bus, pci_dev, pci_func)
-vir_bytes buf;
-size_t size;
-int pci_bus;
-int pci_dev;
-int pci_func;
+static void tell_dev(vir_bytes buf, size_t size, int pci_bus,
+                     int pci_dev, int pci_func)
 {
 	int r;
 	endpoint_t dev_e;

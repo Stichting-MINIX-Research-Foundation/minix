@@ -20,7 +20,7 @@ static int force_remove(char *path, int dir);
 /*===========================================================================*
  *				do_create				     *
  *===========================================================================*/
-int do_create()
+int do_create(void)
 {
 /* Create a new file.
  */
@@ -129,7 +129,7 @@ int do_create()
 /*===========================================================================*
  *				do_mkdir				     *
  *===========================================================================*/
-int do_mkdir()
+int do_mkdir(void)
 {
 /* Make a new directory.
  */
@@ -178,9 +178,10 @@ int do_mkdir()
 /*===========================================================================*
  *				force_remove				     *
  *===========================================================================*/
-static int force_remove(path, dir)
-char *path;				/* path to file or directory */
-int dir;				/* TRUE iff directory */
+static int force_remove(
+	char *path,	/* path to file or directory */
+	int dir	   	/* TRUE iff directory */
+)
 {
 /* Remove a file or directory. Wrapper around unlink and rmdir that makes the
  * target temporarily writable if the operation fails with an access denied
@@ -233,7 +234,7 @@ int dir;				/* TRUE iff directory */
 /*===========================================================================*
  *				do_unlink				     *
  *===========================================================================*/
-int do_unlink()
+int do_unlink(void)
 {
 /* Delete a file.
  */
@@ -280,7 +281,7 @@ int do_unlink()
 /*===========================================================================*
  *				do_rmdir				     *
  *===========================================================================*/
-int do_rmdir()
+int do_rmdir(void)
 {
 /* Remove an empty directory.
  */
@@ -328,7 +329,7 @@ int do_rmdir()
 /*===========================================================================*
  *				do_rename				     *
  *===========================================================================*/
-int do_rename()
+int do_rename(void)
 {
 /* Rename a file or directory.
  */

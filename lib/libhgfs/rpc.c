@@ -10,7 +10,7 @@ static struct channel rpc_chan;
 /*===========================================================================*
  *				rpc_open				     *
  *===========================================================================*/
-int rpc_open()
+int rpc_open(void)
 {
 /* Open a HGFS RPC backdoor channel to the VMware host, and make sure that it
  * is working. Return OK upon success, or a negative error code otherwise; in
@@ -32,7 +32,7 @@ int rpc_open()
 /*===========================================================================*
  *				rpc_query				     *
  *===========================================================================*/
-int rpc_query()
+int rpc_query(void)
 {
 /* Send a HGFS RPC query over the backdoor channel. Return OK upon success, or
  * a negative error code otherwise; EAGAIN is returned if shared folders are
@@ -70,7 +70,7 @@ int rpc_query()
 /*===========================================================================*
  *				rpc_test				     *
  *===========================================================================*/
-int rpc_test()
+int rpc_test(void)
 {
 /* Test whether HGFS communication is working. Return OK on success, EAGAIN if
  * shared folders are disabled, or another negative error code upon error.
@@ -86,7 +86,7 @@ int rpc_test()
 /*===========================================================================*
  *				rpc_close				     *
  *===========================================================================*/
-void rpc_close()
+void rpc_close(void)
 {
 /* Close the HGFS RPC backdoor channel.
  */

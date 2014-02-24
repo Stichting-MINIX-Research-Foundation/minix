@@ -35,7 +35,7 @@ static int parse_path(pino_t dir_ino, pino_t root_ino, int flags, struct
 /*===========================================================================*
  *                             fs_lookup				     *
  *===========================================================================*/
-int fs_lookup()
+int fs_lookup(void)
 {
   cp_grant_id_t grant;
   int r, r1, flags, symlinks;
@@ -129,13 +129,14 @@ int fs_lookup()
  *                             parse_path				     *
  *===========================================================================*/
 static int parse_path(
-pino_t dir_ino,
-pino_t root_ino,
-int flags,
-struct puffs_node **res_inop,
-size_t *offsetp,
-int *symlinkp
-) {
+	pino_t dir_ino,
+	pino_t root_ino,
+	int flags,
+	struct puffs_node **res_inop,
+	size_t *offsetp,
+	int *symlinkp
+)
+{
   /* Parse the path in user_path, starting at dir_ino. If the path is the empty
    * string, just return dir_ino. It is upto the caller to treat an empty
    * path in a special way. Otherwise, if the path consists of just one or
@@ -279,11 +280,12 @@ int *symlinkp
 /*===========================================================================*
  *                             ltraverse				     *
  *===========================================================================*/
-static int ltraverse(pn, suffix)
-register struct puffs_node *pn;/* symbolic link */
-char *suffix;			/* current remaining path. Has to point in the
+static int ltraverse(
+	struct puffs_node *pn,	/* symbolic link */
+	char *suffix		/* current remaining path. Has to point in the
 				 * user_path buffer
 				 */
+)
 {
 /* Traverse a symbolic link. Copy the link text from the pnode and insert
  * the text into the path. Return error code or report success. Base
@@ -292,8 +294,8 @@ char *suffix;			/* current remaining path. Has to point in the
  */
   int r;
   char sp[PATH_MAX];
-  size_t llen = PATH_MAX;/* length of link */
-  size_t slen;		/* length of suffix */
+  size_t llen = PATH_MAX; /* length of link */
+  size_t slen;	          /* length of suffix */
   PUFFS_MAKECRED(pcr, &global_kcred);
 
 
@@ -355,10 +357,12 @@ char *suffix;			/* current remaining path. Has to point in the
 /*===========================================================================*
  *				advance					     *
  *===========================================================================*/
-struct puffs_node *advance(pn_dir, string, chk_perm)
-struct puffs_node *pn_dir;	/* pnode for directory to be searched */
-char string[NAME_MAX + 1];	/* component name to look for */
-int chk_perm;			/* check permissions when string is looked up*/
+struct puffs_node *advance(
+	struct puffs_node *pn_dir,	/* pnode for directory to be searched */
+	char string[NAME_MAX + 1],	/* component name to look for */
+	int chk_perm			/* check permissions when string is
+					 * looked up*/
+)
 {
 /* Given a directory and a component of a path, look up the component in
  * the directory, find the pnode, open it, and return a pointer to its pnode
@@ -501,9 +505,10 @@ int chk_perm;			/* check permissions when string is looked up*/
 /*===========================================================================*
  *				get_name				     *
  *===========================================================================*/
-static char *get_name(path_name, string)
-char *path_name;		/* path name to parse */
-char string[NAME_MAX+1];	/* component extracted from 'old_name' */
+static char *get_name(
+	char *path_name,         /* path name to parse */
+	char string[NAME_MAX+1]  /* component extracted from 'old_name' */
+)
 {
 /* Given a pointer to a path name in fs space, 'path_name', copy the first
  * component to 'string' (truncated if necessary, always nul terminated).

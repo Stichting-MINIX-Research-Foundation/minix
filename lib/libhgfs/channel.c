@@ -19,9 +19,10 @@ enum {
 /*===========================================================================*
  *				channel_open				     *
  *===========================================================================*/
-int channel_open(ch, type)
-struct channel *ch;			/* struct describing the new channel */
-u32_t type;				/* channel type: CH_IN or CH_OUT */
+int channel_open(
+	struct channel *ch,	/* struct describing the new channel */
+	u32_t type         	/* channel type: CH_IN or CH_OUT */
+)
 {
 /* Open a new backdoor channel. Upon success, the given channel structure will
  * be filled with information and can be used in subsequent channel calls.
@@ -46,8 +47,9 @@ u32_t type;				/* channel type: CH_IN or CH_OUT */
 /*===========================================================================*
  *				channel_close				     *
  *===========================================================================*/
-void channel_close(ch)
-struct channel *ch;			/* backdoor channel to close */
+void channel_close(
+	struct channel *ch	/* backdoor channel to close */
+)
 {
 /* Close a previously opened backdoor channel.
  */
@@ -64,10 +66,11 @@ struct channel *ch;			/* backdoor channel to close */
 /*===========================================================================*
  *				channel_send				     *
  *===========================================================================*/
-int channel_send(ch, buf, len)
-struct channel *ch;			/* backdoor channel to send to */
-char *buf;				/* buffer to send data from */
-int len;				/* size of the data to send */
+int channel_send(
+	struct channel *ch,	/* backdoor channel to send to */
+	char *buf,         	/* buffer to send data from */
+	int len            	/* size of the data to send */
+)
 {
 /* Receive data over a backdoor channel. Return OK on success, or a negative
  * error code on error.
@@ -101,10 +104,11 @@ int len;				/* size of the data to send */
 /*===========================================================================*
  *				channel_recv				     *
  *===========================================================================*/
-int channel_recv(ch, buf, max)
-struct channel *ch;			/* backdoor channel to receive from */
-char *buf;				/* buffer to receive data into */
-int max;				/* size of the buffer */
+int channel_recv(
+	struct channel *ch,	/* backdoor channel to receive from */
+	char *buf,         	/* buffer to receive data into */
+	int max            	/* size of the buffer */
+)
 {
 /* Receive data on a backdoor channel. Return the number of bytes received, or
  * a negative error code on error.

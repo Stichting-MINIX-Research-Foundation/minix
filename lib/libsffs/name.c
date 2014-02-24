@@ -15,9 +15,7 @@
 /*===========================================================================*
  *				normalize_name				     *
  *===========================================================================*/
-void normalize_name(dst, src)
-char dst[NAME_MAX+1];
-char *src;
+void normalize_name(char dst[NAME_MAX+1], char *src)
 {
 /* Normalize the given path component name, storing the result in the given
  * buffer.
@@ -38,9 +36,7 @@ char *src;
 /*===========================================================================*
  *				compare_name				     *
  *===========================================================================*/
-int compare_name(name1, name2)
-char *name1;
-char *name2;
+int compare_name(char *name1, char *name2)
 {
 /* Return TRUE if the given path component names are equivalent, FALSE
  * otherwise.

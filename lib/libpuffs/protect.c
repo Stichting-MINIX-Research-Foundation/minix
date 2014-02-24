@@ -14,7 +14,7 @@ static int in_group(gid_t grp);
 /*===========================================================================*
  *				fs_chmod				     *
  *===========================================================================*/
-int fs_chmod()
+int fs_chmod(void)
 {
 /* Perform the chmod(name, mode) system call. */
   struct puffs_node *pn;
@@ -48,7 +48,7 @@ int fs_chmod()
 /*===========================================================================*
  *				fs_chown				     *
  *===========================================================================*/
-int fs_chown()
+int fs_chown(void)
 {
   struct puffs_node *pn;
   struct vattr va;

@@ -15,8 +15,7 @@
 /*===========================================================================*
  *				get_handle				     *
  *===========================================================================*/
-int get_handle(ino)
-struct inode *ino;
+int get_handle(struct inode *ino)
 {
 /* Get an open file or directory handle for an inode.
  */
@@ -55,8 +54,7 @@ struct inode *ino;
 /*===========================================================================*
  *				put_handle				     *
  *===========================================================================*/
-void put_handle(ino)
-struct inode *ino;
+void put_handle(struct inode *ino)
 {
 /* Close an open file or directory handle associated with an inode.
  */

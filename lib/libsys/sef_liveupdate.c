@@ -40,7 +40,7 @@ EXTERN int sef_self_first_receive_done;
 /*===========================================================================*
  *                         do_sef_lu_before_receive             	     *
  *===========================================================================*/
-void do_sef_lu_before_receive()
+void do_sef_lu_before_receive(void)
 {
 /* Handle SEF Live update before receive events. */
   int r;

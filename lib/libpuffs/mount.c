@@ -15,7 +15,7 @@
 /*===========================================================================*
  *				fs_readsuper				     *
  *===========================================================================*/
-int fs_readsuper()
+int fs_readsuper(void)
 {
   struct vattr *root_va;
 
@@ -42,7 +42,7 @@ int fs_readsuper()
 /*===========================================================================*
  *				fs_mountpoint				     *
  *===========================================================================*/
-int fs_mountpoint()
+int fs_mountpoint(void)
 {
 /* This function looks up the mount point, it checks the condition whether
  * the partition can be mounted on the pnode or not.
@@ -75,7 +75,7 @@ int fs_mountpoint()
 /*===========================================================================*
  *				fs_unmount				     *
  *===========================================================================*/
-int fs_unmount()
+int fs_unmount(void)
 {
   int error;
 

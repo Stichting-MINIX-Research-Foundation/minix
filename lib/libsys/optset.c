@@ -18,16 +18,12 @@
 #include <minix/const.h>
 #include <minix/optset.h>
 
-static void optset_parse_entry(struct optset *entry, char *ptr, int
-	len);
+static void optset_parse_entry(struct optset *entry, char *ptr, int len);
 
 /*===========================================================================*
  *				optset_parse_entry			     *
  *===========================================================================*/
-static void optset_parse_entry(entry, ptr, len)
-struct optset *entry;
-char *ptr;
-int len;
+static void optset_parse_entry(struct optset *entry, char *ptr, int len)
 {
 /* Parse and store the value of a single option.
  */
@@ -67,9 +63,7 @@ int len;
 /*===========================================================================*
  *				optset_parse				     *
  *===========================================================================*/
-void optset_parse(table, string)
-struct optset *table;
-char *string;
+void optset_parse(struct optset *table, char *string)
 {
 /* Parse a string of options, using the provided table of optset entries.
  */

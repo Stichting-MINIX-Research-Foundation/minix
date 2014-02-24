@@ -5,9 +5,7 @@
 /*===========================================================================*
  *				hgfs_opendir				     *
  *===========================================================================*/
-int hgfs_opendir(path, handle)
-char *path;
-sffs_dir_t *handle;
+int hgfs_opendir(char *path, sffs_dir_t *handle)
 {
 /* Open a directory. Store a directory handle upon success.
  */
@@ -28,12 +26,8 @@ sffs_dir_t *handle;
 /*===========================================================================*
  *				hgfs_readdir				     *
  *===========================================================================*/
-int hgfs_readdir(handle, index, buf, size, attr)
-sffs_dir_t handle;
-unsigned int index;
-char *buf;
-size_t size;
-struct sffs_attr *attr;
+int hgfs_readdir(sffs_dir_t handle, unsigned int index, char *buf,
+	size_t size, struct sffs_attr *attr)
 {
 /* Read a directory entry from an open directory, using a zero-based index
  * number. Upon success, the resulting path name is stored in the given buffer
@@ -66,8 +60,7 @@ struct sffs_attr *attr;
 /*===========================================================================*
  *				hgfs_closedir				     *
  *===========================================================================*/
-int hgfs_closedir(handle)
-sffs_dir_t handle;
+int hgfs_closedir(sffs_dir_t handle)
 {
 /* Close an open directory.
  */

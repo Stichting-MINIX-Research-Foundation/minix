@@ -14,7 +14,7 @@
 /*===========================================================================*
  *				no_sys					     *
  *===========================================================================*/
-int no_sys()
+int no_sys(void)
 {
 /* Somebody has used an illegal system call number */
   lpuffs_debug("no_sys: invalid call %d\n", req_nr);
@@ -38,7 +38,7 @@ void mfs_nul_f(const char *file, int line, char *str, unsigned int len,
 /*===========================================================================*
  *				clock_timespec				     *
  *===========================================================================*/
-struct timespec clock_timespec()
+struct timespec clock_timespec(void)
 {
 /* This routine returns the time in seconds since 1.1.1970.  MINIX is an
  * astrophysically naive system that assumes the earth rotates at a constant

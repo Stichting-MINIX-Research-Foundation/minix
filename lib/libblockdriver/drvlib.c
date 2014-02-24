@@ -11,22 +11,26 @@
 /* Extended partition? */
 #define ext_part(s)	((s) == 0x05 || (s) == 0x0F)
 
-static void parse_part_table(struct blockdriver *bdp, int device, int
-	style, int atapi, u8_t *tmp_buf);
-static void extpartition(struct blockdriver *bdp, int extdev, unsigned
-	long extbase, u8_t *tmp_buf);
-static int get_part_table(struct blockdriver *bdp, int device, unsigned
-	long offset, struct part_entry *table, u8_t *tmp_buf);
+static void parse_part_table(struct blockdriver *bdp, int device,
+	int style, int atapi, u8_t *tmp_buf);
+
+static void extpartition(struct blockdriver *bdp, int extdev,
+	unsigned long extbase, u8_t *tmp_buf);
+
+static int get_part_table(struct blockdriver *bdp, int device,
+	unsigned long offset, struct part_entry *table, u8_t *tmp_buf);
+
 static void sort(struct part_entry *table);
 
 /*============================================================================*
  *				partition				      *
  *============================================================================*/
-void partition(bdp, device, style, atapi)
-struct blockdriver *bdp;	/* device dependent entry points */
-int device;			/* device to partition */
-int style;			/* partitioning style: floppy, primary, sub. */
-int atapi;			/* atapi device */
+void partition(
+	struct blockdriver *bdp,	/* device dependent entry points */
+	int device,             	/* device to partition */
+	int style,              	/* partitioning style: floppy, primary, sub. */
+	int atapi               	/* atapi device */
+)
 {
 /* This routine is called on first open to initialize the partition tables
  * of a device.
@@ -51,12 +55,13 @@ int atapi;			/* atapi device */
 /*============================================================================*
  *				parse_part_table			      *
  *============================================================================*/
-static void parse_part_table(bdp, device, style, atapi, tmp_buf)
-struct blockdriver *bdp;	/* device dependent entry points */
-int device;			/* device to partition */
-int style;			/* partitioning style: floppy, primary, sub. */
-int atapi;			/* atapi device */
-u8_t *tmp_buf;			/* temporary buffer */
+static void parse_part_table(
+	struct blockdriver *bdp,	/* device dependent entry points */
+	int device,             	/* device to partition */
+	int style,              	/* partitioning style: floppy, primary, sub. */
+	int atapi,              	/* atapi device */
+	u8_t *tmp_buf           	/* temporary buffer */
+)
 {
 /* This routine reads and parses a partition table.  It may be called
  * recursively.  It makes sure that each partition falls safely within the
@@ -128,11 +133,12 @@ u8_t *tmp_buf;			/* temporary buffer */
 /*============================================================================*
  *				extpartition				      *
  *============================================================================*/
-static void extpartition(bdp, extdev, extbase, tmp_buf)
-struct blockdriver *bdp;	/* device dependent entry points */
-int extdev;			/* extended partition to scan */
-unsigned long extbase;		/* sector offset of the base ext. partition */
-u8_t *tmp_buf;			/* temporary buffer */
+static void extpartition(
+	struct blockdriver *bdp,	/* device dependent entry points */
+	int extdev,             	/* extended partition to scan */
+	unsigned long extbase,  	/* sector offset of the base ext. partition */
+	u8_t *tmp_buf           	/* temporary buffer */
+)
 {
 /* Extended partitions cannot be ignored alas, because people like to move
  * files to and from DOS partitions.  Avoid reading this code, it's no fun.
@@ -177,12 +183,12 @@ u8_t *tmp_buf;			/* temporary buffer */
 /*============================================================================*
  *				get_part_table				      *
  *============================================================================*/
-static int get_part_table(bdp, device, offset, table, tmp_buf)
-struct blockdriver *bdp;
-int device;
-unsigned long offset;		/* sector offset to the table */
-struct part_entry *table;	/* four entries */
-u8_t *tmp_buf;			/* temporary buffer */
+static int get_part_table(
+	struct blockdriver *bdp,
+	int device,
+	unsigned long offset,    	/* sector offset to the table */
+	struct part_entry *table,	/* four entries */
+	u8_t *tmp_buf)           	/* temporary buffer */
 {
 /* Read the partition table for the device, return true iff there were no
  * errors.
@@ -210,8 +216,7 @@ u8_t *tmp_buf;			/* temporary buffer */
 /*===========================================================================*
  *				sort					     *
  *===========================================================================*/
-static void sort(table)
-struct part_entry *table;
+static void sort(struct part_entry *table)
 {
 /* Sort a partition table. */
   struct part_entry *pe, tmp;

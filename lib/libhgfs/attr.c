@@ -7,8 +7,7 @@
 /*===========================================================================*
  *				attr_get				     *
  *===========================================================================*/
-void attr_get(attr)
-struct sffs_attr *attr;
+void attr_get(struct sffs_attr *attr)
 {
 /* Get attribute information from the RPC buffer, storing the requested parts
  * in the given attr structure.
@@ -35,9 +34,7 @@ struct sffs_attr *attr;
 /*===========================================================================*
  *				hgfs_getattr				     *
  *===========================================================================*/
-int hgfs_getattr(path, attr)
-char *path;
-struct sffs_attr *attr;
+int hgfs_getattr(char *path, struct sffs_attr *attr)
 {
 /* Get selected attributes of a file by path name.
  */
@@ -58,9 +55,7 @@ struct sffs_attr *attr;
 /*===========================================================================*
  *				hgfs_setattr				     *
  *===========================================================================*/
-int hgfs_setattr(path, attr)
-char *path;
-struct sffs_attr *attr;
+int hgfs_setattr(char *path, struct sffs_attr *attr)
 {
 /* Set selected attributes of a file by path name.
  */

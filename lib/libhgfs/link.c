@@ -7,9 +7,7 @@
 /*===========================================================================*
  *				hgfs_mkdir				     *
  *===========================================================================*/
-int hgfs_mkdir(path, mode)
-char *path;
-int mode;
+int hgfs_mkdir(char *path, int mode)
 {
 /* Create a new directory.
  */
@@ -25,8 +23,7 @@ int mode;
 /*===========================================================================*
  *				hgfs_unlink				     *
  *===========================================================================*/
-int hgfs_unlink(path)
-char *path;
+int hgfs_unlink(char *path)
 {
 /* Delete a file.
  */
@@ -41,8 +38,7 @@ char *path;
 /*===========================================================================*
  *				hgfs_rmdir				     *
  *===========================================================================*/
-int hgfs_rmdir(path)
-char *path;
+int hgfs_rmdir(char *path)
 {
 /* Remove an empty directory.
  */
@@ -57,9 +53,7 @@ char *path;
 /*===========================================================================*
  *				hgfs_rename				     *
  *===========================================================================*/
-int hgfs_rename(opath, npath)
-char *opath;
-char *npath;
+int hgfs_rename(char *opath, char *npath)
 {
 /* Rename a file or directory.
  */

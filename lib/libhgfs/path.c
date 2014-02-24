@@ -7,8 +7,7 @@
 /*===========================================================================*
  *				path_put				     *
  *===========================================================================*/
-void path_put(path)
-char *path;
+void path_put(char *path)
 {
 /* Append the given path name in HGFS format to the RPC buffer. Truncate it
  * if it is longer than PATH_MAX bytes.
@@ -42,9 +41,7 @@ char *path;
 /*===========================================================================*
  *				path_get				     *
  *===========================================================================*/
-int path_get(path, max)
-char *path;
-int max;
+int path_get(char *path, int max)
 {
 /* Retrieve a HGFS formatted path name from the RPC buffer. Returns EINVAL if
  * the path name is invalid. Returns ENAMETOOLONG if the path name is too

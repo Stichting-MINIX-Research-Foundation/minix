@@ -12,7 +12,7 @@
 /*===========================================================================*
  *				fs_sync					     *
  *===========================================================================*/
-int fs_sync()
+int fs_sync(void)
 {
 /* Perform the sync() system call.  Flush all the tables.
  * The order in which the various tables are flushed is critical.
@@ -35,7 +35,7 @@ int fs_sync()
 /*===========================================================================*
  *				fs_flush				     *
  *===========================================================================*/
-int fs_flush()
+int fs_flush(void)
 {
 /* Flush the blocks of a device from the cache after writing any dirty blocks
  * to disk.

@@ -14,11 +14,8 @@
 /*===========================================================================*
  *				verify_path				     *
  *===========================================================================*/
-int verify_path(path, ino, attr, stale)
-char path[PATH_MAX];
-struct inode *ino;
-struct sffs_attr *attr;
-int *stale;
+int verify_path(char path[PATH_MAX], struct inode *ino,
+	struct sffs_attr *attr, int *stale)
 {
 /* Given a path, and the inode associated with that path, verify if the inode
  * still matches the real world. Obtain the attributes of the file identified
@@ -61,10 +58,11 @@ int *stale;
 /*===========================================================================*
  *				verify_inode				     *
  *===========================================================================*/
-int verify_inode(ino, path, attr)
-struct inode *ino;		/* inode to verify */
-char path[PATH_MAX];		/* buffer in which to store the path */
-struct sffs_attr *attr;		/* buffer for attributes, or NULL */
+int verify_inode(
+	struct inode *ino,    	/* inode to verify */
+	char path[PATH_MAX],  	/* buffer in which to store the path */
+	struct sffs_attr *attr	/* buffer for attributes, or NULL */
+)
 {
 /* Given an inode, construct a path identifying the inode, and check whether
  * that path is still valid for that inode (as far as we can tell). As a side
@@ -88,11 +86,12 @@ struct sffs_attr *attr;		/* buffer for attributes, or NULL */
 /*===========================================================================*
  *				verify_dentry				     *
  *===========================================================================*/
-int verify_dentry(parent, name, path, res_ino)
-struct inode *parent;		/* parent inode: the inode to verify */
-char name[NAME_MAX+1];		/* the given directory entry path component */
-char path[PATH_MAX];		/* buffer to store the resulting path in */
-struct inode **res_ino;		/* pointer for addressed inode (or NULL) */
+int verify_dentry(
+	struct inode *parent, 	/* parent inode: the inode to verify */
+	char name[NAME_MAX+1],	/* the given directory entry path component */
+	char path[PATH_MAX],  	/* buffer to store the resulting path in */
+	struct inode **res_ino	/* pointer for addressed inode (or NULL) */
+)
 {
 /* Given a directory inode and a name, construct a path identifying that
  * directory entry, check whether the path to the parent is still valid, and

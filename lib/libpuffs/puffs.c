@@ -683,7 +683,7 @@ puffs_mainloop(struct puffs_usermount *pu)
 /*===========================================================================*
  *			       sef_local_startup			     *
  *===========================================================================*/
-static void sef_local_startup()
+static void sef_local_startup(void)
 {
   /* Register init callbacks. */
   sef_setcb_init_fresh(sef_cb_init_fresh);
@@ -735,8 +735,9 @@ static void sef_cb_signal_handler(int signo)
 /*===========================================================================*
  *				get_work				     *
  *===========================================================================*/
-static void get_work(m_in)
-message *m_in;				/* pointer to message */
+static void get_work(
+	message *m_in	/* pointer to message */
+)
 {
   int r, srcok = 0;
   endpoint_t src;

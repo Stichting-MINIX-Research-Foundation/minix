@@ -14,9 +14,7 @@
 /*===========================================================================*
  *				make_path				     *
  *===========================================================================*/
-int make_path(path, ino)
-char path[PATH_MAX];
-struct inode *ino;
+int make_path(char path[PATH_MAX], struct inode *ino)
 {
 /* Given an inode, construct the path identifying that inode.
  */
@@ -69,9 +67,7 @@ struct inode *ino;
 /*===========================================================================*
  *				push_path				     *
  *===========================================================================*/
-int push_path(path, name)
-char path[PATH_MAX];
-char *name;
+int push_path(char path[PATH_MAX], char *name)
 {
 /* Add a component to the end of a path.
  */
@@ -93,8 +89,7 @@ char *name;
 /*===========================================================================*
  *				pop_path				     *
  *===========================================================================*/
-void pop_path(path)
-char path[PATH_MAX];
+void pop_path(char path[PATH_MAX])
 {
 /* Remove the last component from a path.
  */

@@ -28,8 +28,7 @@ static int error_map[NERRS] = {
 /*===========================================================================*
  *				error_convert				     *
  *===========================================================================*/
-int error_convert(err)
-int err;
+int error_convert(int err)
 {
 /* Convert a HGFS error into an errno error code.
  */

@@ -20,7 +20,7 @@ static unsigned int hash_dentry(struct inode *parent, char *name);
 /*===========================================================================*
  *				init_dentry				     *
  *===========================================================================*/
-void init_dentry()
+void init_dentry(void)
 {
 /* Initialize the names hashtable.
  */
@@ -33,9 +33,7 @@ void init_dentry()
 /*===========================================================================*
  *				lookup_dentry				     *
  *===========================================================================*/
-struct inode *lookup_dentry(parent, name)
-struct inode *parent;
-char *name;
+struct inode *lookup_dentry(struct inode *parent, char *name)
 {
 /* Given a directory inode and a component name, look up the inode associated
  * with that directory entry. Return the inode (with increased reference
@@ -64,10 +62,7 @@ char *name;
 /*===========================================================================*
  *				add_dentry				     *
  *===========================================================================*/
-void add_dentry(parent, name, ino)
-struct inode *parent;
-char *name;
-struct inode *ino;
+void add_dentry(struct inode *parent, char *name, struct inode *ino)
 {
 /* Add an entry to a parent inode, in the form of a new inode, with the given
  * name. An entry with this name must not already exist.
@@ -92,8 +87,7 @@ struct inode *ino;
 /*===========================================================================*
  *				del_one_dentry				     *
  *===========================================================================*/
-static void del_one_dentry(ino)
-struct inode *ino;
+static void del_one_dentry(struct inode *ino)
 {
 /* This inode has become inaccessible by name. Disassociate it from its parent
  * and remove it from the names hash table.
@@ -123,8 +117,7 @@ struct inode *ino;
 /*===========================================================================*
  *				del_dentry				     *
  *===========================================================================*/
-void del_dentry(ino)
-struct inode *ino;
+void del_dentry(struct inode *ino)
 {
 /* Disassociate an inode from its parent, effectively deleting it. Recursively
  * delete all its children as well, fragmenting the deleted branch into single
@@ -167,9 +160,7 @@ struct inode *ino;
 /*===========================================================================*
  *				hash_dentry				     *
  *===========================================================================*/
-static unsigned int hash_dentry(parent, name)
-struct inode *parent;
-char *name;
+static unsigned int hash_dentry(struct inode *parent, char *name)
 {
 /* Generate a hash value for a given name. Normalize the name first, so that
  * different variations of the name will result in the same hash value.

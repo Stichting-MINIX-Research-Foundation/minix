@@ -9,9 +9,7 @@ static char *find_key(const char *params, const char *key);
 /*===========================================================================*
  *				env_setargs				     *
  *===========================================================================*/
-void env_setargs(arg_c, arg_v)
-int arg_c;
-char *arg_v[];
+void env_setargs(int arg_c, char *arg_v[])
 {
 	env_argc= arg_c;
 	env_argv= arg_v;
@@ -77,12 +75,10 @@ int env_get_param(const char *key, char *value, int max_len)
 /*==========================================================================*
  *				find_key					    *
  *==========================================================================*/
-static char *find_key(params,name)
-const char *params;
-const char *name;
+static char *find_key(const char *params, const char *name)
 {
-  register const char *namep;
-  register char *envp;
+  const char *namep;
+  char *envp;
 
   for (envp = (char *) params; *envp != 0;) {
 	for (namep = name; *namep != 0 && *namep == *envp; namep++, envp++)

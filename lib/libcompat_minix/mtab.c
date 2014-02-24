@@ -46,14 +46,13 @@ char *etc_mtab = "/etc/mtab";	  /* name of the /etc/mtab file */
 static char mtab_in[BUF_SIZE+1];  /* holds /etc/mtab when it is read in */
 static char *iptr = mtab_in;	  /* pointer to next line to feed out. */
 
-int load_mtab(char *prog_name );
+int load_mtab(char *prog_name);
 int get_mtab_entry(char dev[PATH_MAX], char mount_point[PATH_MAX],
 	char type[MNTNAMELEN], char flags[MNTFLAGLEN]);
-static void err(char *prog_name, char *str );
+static void err(char *prog_name, const char *str);
 
 
-int load_mtab(prog_name)
-char *prog_name;
+int load_mtab(char *prog_name)
 {
 /* Read in /etc/mtab and store it in /etc/mtab. */
 
@@ -114,9 +113,7 @@ int get_mtab_entry(char dev[PATH_MAX], char mount_point[PATH_MAX],
   
 }
 
-static void
-err(prog_name, str)
-char *prog_name, *str;
+static void err(char *prog_name, const char *str)
 {
   std_err(prog_name); 
   std_err(str);

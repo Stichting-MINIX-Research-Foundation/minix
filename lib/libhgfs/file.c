@@ -8,11 +8,12 @@
 /*===========================================================================*
  *				hgfs_open				     *
  *===========================================================================*/
-int hgfs_open(path, flags, mode, handle)
-char *path;			/* path name to open */
-int flags;			/* open flags to use */
-int mode;			/* mode to create (user bits only) */
-sffs_file_t *handle;		/* place to store resulting handle */
+int hgfs_open(
+	char *path,        	/* path name to open */
+	int flags,         	/* open flags to use */
+	int mode,          	/* mode to create (user bits only) */
+	sffs_file_t *handle	/* place to store resulting handle */
+)
 {
 /* Open a file. Store a file handle upon success.
  */
@@ -50,11 +51,12 @@ sffs_file_t *handle;		/* place to store resulting handle */
 /*===========================================================================*
  *				hgfs_read				     *
  *===========================================================================*/
-ssize_t hgfs_read(handle, buf, size, off)
-sffs_file_t handle;		/* handle to open file */
-char *buf;			/* data buffer or NULL */
-size_t size;			/* maximum number of bytes to read */
-u64_t off;			/* file offset */
+ssize_t hgfs_read(
+	sffs_file_t handle,	/* handle to open file */
+	char *buf,         	/* data buffer or NULL */
+	size_t size,       	/* maximum number of bytes to read */
+	u64_t off          	/* file offset */
+)
 {
 /* Read from an open file. Upon success, return the number of bytes read.
  */
@@ -84,11 +86,12 @@ u64_t off;			/* file offset */
 /*===========================================================================*
  *				hgfs_write				     *
  *===========================================================================*/
-ssize_t hgfs_write(handle, buf, len, off)
-sffs_file_t handle;		/* handle to open file */
-char *buf;			/* data buffer or NULL */
-size_t len;			/* number of bytes to write */
-u64_t off;			/* file offset */
+ssize_t hgfs_write(
+	sffs_file_t handle,	/* handle to open file */
+	char *buf,         	/* data buffer or NULL */
+	size_t len,        	/* number of bytes to write */
+	u64_t off          	/* file offset */
+)
 {
 /* Write to an open file. Upon success, return the number of bytes written.
  */
@@ -115,8 +118,9 @@ u64_t off;			/* file offset */
 /*===========================================================================*
  *				hgfs_close				     *
  *===========================================================================*/
-int hgfs_close(handle)
-sffs_file_t handle;		/* handle to open file */
+int hgfs_close(
+	sffs_file_t handle		/* handle to open file */
+)
 {
 /* Close an open file.
  */
@@ -130,8 +134,7 @@ sffs_file_t handle;		/* handle to open file */
 /*===========================================================================*
  *				hgfs_readbuf				     *
  *===========================================================================*/
-size_t hgfs_readbuf(ptr)
-char **ptr;
+size_t hgfs_readbuf(char **ptr)
 {
 /* Return information about the read buffer, for zero-copy purposes. Store a
  * pointer to the first byte of the read buffer, and return the maximum data
@@ -152,8 +155,7 @@ char **ptr;
 /*===========================================================================*
  *				hgfs_writebuf				     *
  *===========================================================================*/
-size_t hgfs_writebuf(ptr)
-char **ptr;
+size_t hgfs_writebuf(char **ptr)
 {
 /* Return information about the write buffer, for zero-copy purposes. Store a
  * pointer to the first byte of the write buffer, and return the maximum data

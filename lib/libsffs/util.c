@@ -14,10 +14,11 @@
 /*===========================================================================*
  *				get_name				     *
  *===========================================================================*/
-int get_name(grant, len, name)
-cp_grant_id_t grant;		/* memory grant for the path component */
-size_t len;			/* length of the name, including '\0' */
-char name[NAME_MAX+1];		/* buffer in which store the result */
+int get_name(
+	cp_grant_id_t grant, 	/* memory grant for the path component */
+	size_t len,          	/* length of the name, including '\0' */
+	char name[NAME_MAX+1]	/* buffer in which store the result */
+)
 {
 /* Retrieve a path component from the caller, using a given grant.
  */
@@ -43,7 +44,7 @@ char name[NAME_MAX+1];		/* buffer in which store the result */
 /*===========================================================================*
  *				do_noop					     *
  *===========================================================================*/
-int do_noop()
+int do_noop(void)
 {
 /* Generic handler for no-op system calls.
  */
@@ -54,7 +55,7 @@ int do_noop()
 /*===========================================================================*
  *				no_sys					     *
  *===========================================================================*/
-int no_sys()
+int no_sys(void)
 {
 /* Generic handler for unimplemented system calls.
  */

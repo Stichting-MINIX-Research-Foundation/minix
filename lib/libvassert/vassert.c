@@ -61,8 +61,7 @@ void libvassert_process_backdoor(uint32, uint32, uint32, reg_t *, reg_t *,
  *---------------------------------------------------------------------
  */
 
-static void
-sig_segv(int sig_no)
+static void sig_segv(int sig_no)
 {
    /* jumping to error handling in VAssert_IsInVM. */
    siglongjmp(segv_jmp, 1);
@@ -86,8 +85,7 @@ sig_segv(int sig_no)
  *---------------------------------------------------------------------
  */
 
-static Bool
-VAssert_IsInVM(void)
+static Bool VAssert_IsInVM(void)
 {
    uint32 eax, ebx, ecx, edx;
    static Bool inVM = FALSE;
@@ -128,8 +126,7 @@ VAssert_IsInVM(void)
  *---------------------------------------------------------------------
  */
 
-char
-VAssert_Init(void)
+char VAssert_Init(void)
 {
    uint32 eax, ebx, ecx, edx;
    VA page_address = (VA) &vassert_state.inReplay;
@@ -168,8 +165,7 @@ VAssert_Init(void)
  *---------------------------------------------------------------------
  */
 
-char
-VAssert_Uninit(void)
+char VAssert_Uninit(void)
 {
    unsigned int eax, ebx, ecx, edx;
    if (!VAssert_IsInVM()) {
@@ -197,8 +193,7 @@ VAssert_Uninit(void)
  *---------------------------------------------------------------------
  */
 
-void
-VAssert_LogMain(const char *format, ...)
+void VAssert_LogMain(const char *format, ...)
 {
    unsigned int eax, ebx, ecx, edx;
    char buf[LOG_MAX];
@@ -231,8 +226,7 @@ VAssert_LogMain(const char *format, ...)
  *---------------------------------------------------------------------
  */
 
-void
-VAssert_GoLiveMain()
+void VAssert_GoLiveMain(void)
 {
    unsigned int eax, ebx, ecx, edx;
    vassert_state.inReplay = 0;
@@ -256,8 +250,7 @@ VAssert_GoLiveMain()
  *---------------------------------------------------------------------
  */
 
-void
-VAssert_ReturnToReplayMain()
+void VAssert_ReturnToReplayMain(void)
 {
    unsigned int eax, ebx, ecx, edx;
    libvassert_process_backdoor(CMD_RETURN_REPLAY, 0, MAGIC_PORT, &eax, &ebx, &ecx, &edx);
@@ -281,8 +274,7 @@ VAssert_ReturnToReplayMain()
  *---------------------------------------------------------------------
  */
 
-char
-VAssert_SetRecordingMain(char start)
+char VAssert_SetRecordingMain(char start)
 {
    uint32 eax, ebx, ecx, edx;
    if (!VAssert_IsInVM()) {

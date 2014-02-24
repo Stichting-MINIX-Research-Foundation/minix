@@ -46,8 +46,7 @@ static int rdwt_err;
 
 static int quiet = 0;
 
-void
-lmfs_setquiet(int q) { quiet = q; }
+void lmfs_setquiet(int q) { quiet = q; }
 
 static u32_t fs_bufs_heuristic(int minbufs, u32_t btotal, u64_t bfree, 
          int blocksize, dev_t majordev)
@@ -115,26 +114,22 @@ void lmfs_blockschange(dev_t dev, int delta)
         }
 }
 
-void
-lmfs_markdirty(struct buf *bp)
+void lmfs_markdirty(struct buf *bp)
 {
 	bp->lmfs_flags |= VMMC_DIRTY;
 }
 
-void
-lmfs_markclean(struct buf *bp)
+void lmfs_markclean(struct buf *bp)
 {
 	bp->lmfs_flags &= ~VMMC_DIRTY;
 }
 
-int 
-lmfs_isclean(struct buf *bp)
+int lmfs_isclean(struct buf *bp)
 {
 	return !(bp->lmfs_flags & VMMC_DIRTY);
 }
 
-dev_t
-lmfs_dev(struct buf *bp)
+dev_t lmfs_dev(struct buf *bp)
 {
 	return bp->lmfs_dev;
 }
@@ -144,8 +139,7 @@ int lmfs_bytes(struct buf *bp)
 	return bp->lmfs_bytes;
 }
 
-static void
-free_unused_blocks(void)
+static void free_unused_blocks(void)
 {
 	struct buf *bp;
 
@@ -161,8 +155,7 @@ free_unused_blocks(void)
 	printf("libminixfs: freeing; %d blocks, %d bytes\n", freed, bytes);
 }
 
-static void
-lmfs_alloc_block(struct buf *bp)
+static void lmfs_alloc_block(struct buf *bp)
 {
   int len;
   ASSERT(!bp->data);
@@ -418,9 +411,10 @@ struct buf *lmfs_get_block_ino(dev_t dev, block_t block, int only_search,
 /*===========================================================================*
  *				lmfs_put_block				     *
  *===========================================================================*/
-void lmfs_put_block(bp, block_type)
-register struct buf *bp;	/* pointer to the buffer to be released */
-int block_type;			/* INODE_BLOCK, DIRECTORY_BLOCK, or whatever */
+void lmfs_put_block(
+  struct buf *bp,	/* pointer to the buffer to be released */
+  int block_type 	/* INODE_BLOCK, DIRECTORY_BLOCK, or whatever */
+)
 {
 /* Return a block to the list of available blocks.   Depending on 'block_type'
  * it may be put on the front or rear of the LRU chain.  Blocks that are
@@ -501,8 +495,9 @@ void lmfs_cache_reevaluate(dev_t dev)
 /*===========================================================================*
  *				read_block				     *
  *===========================================================================*/
-static void read_block(bp)
-register struct buf *bp;	/* buffer pointer */
+static void read_block(
+  struct buf *bp	/* buffer pointer */
+)
 {
 /* Read or write a disk block. This is the only routine in which actual disk
  * I/O is invoked. If an error occurs, a message is printed here, but the error
@@ -770,8 +765,7 @@ void lmfs_rw_scattered(
 /*===========================================================================*
  *				rm_lru					     *
  *===========================================================================*/
-static void rm_lru(bp)
-struct buf *bp;
+static void rm_lru(struct buf *bp)
 {
 /* Remove a block from its LRU chain. */
   struct buf *next_ptr, *prev_ptr;

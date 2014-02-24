@@ -16,11 +16,8 @@ static int write_file(struct inode *ino, u64_t *posp, size_t *countp,
 /*===========================================================================*
  *				write_file				     *
  *===========================================================================*/
-static int write_file(ino, posp, countp, grantp)
-struct inode *ino;
-u64_t *posp;
-size_t *countp;
-cp_grant_id_t *grantp;
+static int write_file(struct inode *ino, u64_t *posp, size_t *countp,
+	cp_grant_id_t *grantp)
 {
 /* Write data or zeroes to a file, depending on whether a valid pointer to
  * a data grant was provided.
@@ -79,7 +76,7 @@ cp_grant_id_t *grantp;
 /*===========================================================================*
  *				do_write				     *
  *===========================================================================*/
-int do_write()
+int do_write(void)
 {
 /* Write data to a file.
  */
@@ -116,7 +113,7 @@ int do_write()
 /*===========================================================================*
  *				do_ftrunc				     *
  *===========================================================================*/
-int do_ftrunc()
+int do_ftrunc(void)
 {
 /* Change file size or create file holes.
  */

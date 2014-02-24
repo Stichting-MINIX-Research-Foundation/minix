@@ -6,8 +6,7 @@ static char qbuf[8];
 
 char *itoa(int n);
 
-char *itoa(n)
-int n;
+char *itoa(int n)
 {
   register int r, k;
   int flag = 0;

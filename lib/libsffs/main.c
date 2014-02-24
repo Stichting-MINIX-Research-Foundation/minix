@@ -64,8 +64,7 @@ void sffs_signal(int signo)
 /*===========================================================================*
  *				get_work				     *
  *===========================================================================*/
-static int get_work(who_e)
-endpoint_t *who_e;
+static int get_work(endpoint_t *who_e)
 {
 /* Receive a request message from VFS. Return TRUE if a new message is ready
  * to be processed, or FALSE if sef_stop() was called from the signal handler.
@@ -86,9 +85,10 @@ endpoint_t *who_e;
 /*===========================================================================*
  *				send_reply				     *
  *===========================================================================*/
-static void send_reply(err, transid)
-int err;				/* resulting error code */
-int transid;
+static void send_reply(
+	int err,	/* resulting error code */
+	int transid
+)
 {
 /* Send a reply message to the requesting party, with the given error code.
  */

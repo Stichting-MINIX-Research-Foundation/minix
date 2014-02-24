@@ -182,7 +182,7 @@ int devman_del_device(struct devman_dev *dev)
 /****************************************************************************
  *     devman_get_ep                                                        *
  ***************************************************************************/
-endpoint_t devman_get_ep() 
+endpoint_t devman_get_ep(void)
 {
 	return devman_ep;
 }
@@ -190,7 +190,7 @@ endpoint_t devman_get_ep()
 /****************************************************************************
  *     devman_init                                                          *
  ***************************************************************************/
-int devman_init() 
+int devman_init(void)
 {
 	int res;
 

@@ -68,7 +68,7 @@ int fs_ftrunc(void)
 /*===========================================================================*
  *                              fs_link                                      *
  *===========================================================================*/
-int fs_link()
+int fs_link(void)
 {
 /* Perform the link(name1, name2) system call. */
 
@@ -152,7 +152,7 @@ int fs_link()
 /*===========================================================================*
  *                             fs_rdlink                                     *
  *===========================================================================*/
-int fs_rdlink()
+int fs_rdlink(void)
 {
   register int r;              /* return value */
   size_t copylen;
@@ -193,7 +193,7 @@ int fs_rdlink()
 /*===========================================================================*
  *                              fs_rename                                    *
  *===========================================================================*/
-int fs_rename()
+int fs_rename(void)
 {
 /* Perform the rename(name1, name2) system call. */
   struct puffs_node *old_dirp, *old_ip;      /* ptrs to old dir, file pnodes */
@@ -393,7 +393,7 @@ static int unlink_file(struct puffs_node *dirp, struct puffs_node *pn,
 /*===========================================================================*
  *                              fs_unlink                                    *
  *===========================================================================*/
-int fs_unlink()
+int fs_unlink(void)
 {
 /* Perform the unlink(name) or rmdir(name) system call. The code for these two
  * is almost the same.  They differ only in some condition testing.  Unlink()
@@ -467,10 +467,11 @@ int fs_unlink()
 /*===========================================================================*
  *				remove_dir				     *
  *===========================================================================*/
-static int remove_dir(pn_dir, pn, pcn)
-struct puffs_node *pn_dir;		/* parent directory */
-struct puffs_node *pn;			/* directory to be removed */
-struct puffs_cn *pcn;			/* Name, creads of directory */
+static int remove_dir(
+	struct puffs_node *pn_dir,	/* parent directory */
+	struct puffs_node *pn,    	/* directory to be removed */
+	struct puffs_cn *pcn      	/* Name, creads of directory */
+)
 {
   /* A directory file has to be removed. Five conditions have to met:
    * 	- The file must be a directory
@@ -525,10 +526,11 @@ struct puffs_cn *pcn;			/* Name, creads of directory */
 /*===========================================================================*
  *				unlink_file				     *
  *===========================================================================*/
-static int unlink_file(dirp, pn, pcn)
-struct puffs_node *dirp;	/* parent directory of file */
-struct puffs_node *pn;		/* pnode of file, may be NULL too. */
-struct puffs_cn *pcn;		/* Name, creads of file */
+static int unlink_file(
+	struct puffs_node *dirp,	/* parent directory of file */
+	struct puffs_node *pn,  	/* pnode of file, may be NULL too. */
+	struct puffs_cn *pcn    	/* Name, creads of file */
+)
 {
 /* Unlink 'file_name'; pn must be the pnode of 'file_name' */
   int	r;

@@ -45,7 +45,7 @@ static void reset(void);
 static void clear_tbl(void);
 
 
-void procentry (char *name)
+void procentry(char *name)
 {
   static int init = 0;
   unsigned hash = 0, x = 0;
@@ -168,7 +168,7 @@ void procentry (char *name)
 }
 
 
-void procexit (char *UNUSED(name))
+void procexit(char *UNUSED(name))
 {
   u64_t stop, spent;
   u32_t tsc_lo, tsc_hi;
@@ -224,7 +224,7 @@ void procexit (char *UNUSED(name))
 }
 
 
-static void cprof_init()
+static void cprof_init(void)
 {
   int i;
 
@@ -247,14 +247,14 @@ static void cprof_init()
 }
 
 
-static void reset()
+static void reset(void)
 {
   clear_tbl();
   control.reset = 0;
 }
 
 
-static void clear_tbl()
+static void clear_tbl(void)
 {
   int i;
 
