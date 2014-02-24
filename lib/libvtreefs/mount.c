@@ -29,8 +29,7 @@ int fs_readsuper(void)
 	/* Return the root inode's properties. */
 	fs_m_out.RES_INODE_NR = get_inode_number(root);
 	fs_m_out.RES_MODE = root->i_stat.mode;
-	fs_m_out.RES_FILE_SIZE_HI = 0;
-	fs_m_out.RES_FILE_SIZE_LO = root->i_stat.size;
+	fs_m_out.RES_FILE_SIZE = root->i_stat.size;
 	fs_m_out.RES_UID = root->i_stat.uid;
 	fs_m_out.RES_GID = root->i_stat.gid;
 	fs_m_out.RES_DEV = NO_DEV;

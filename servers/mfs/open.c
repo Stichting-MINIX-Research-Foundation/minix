@@ -54,7 +54,7 @@ int fs_create()
   /* Reply message */
   fs_m_out.RES_INODE_NR = rip->i_num;
   fs_m_out.RES_MODE = rip->i_mode;
-  fs_m_out.RES_FILE_SIZE_LO = rip->i_size;
+  fs_m_out.RES_FILE_SIZE = rip->i_size;
 
   /* These values are needed for the execution */
   fs_m_out.RES_UID = rip->i_uid;

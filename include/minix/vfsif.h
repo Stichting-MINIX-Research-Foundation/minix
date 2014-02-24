@@ -42,8 +42,7 @@
 #define RES_DEV			m9_ull1
 #define RES_GID			m9_s1
 #define RES_INODE_NR		m9_l1
-#define RES_FILE_SIZE_HI	m9_l2
-#define RES_FILE_SIZE_LO	m9_l3
+#define RES_FILE_SIZE		m9_ull2
 #define RES_MODE		m9_s2
 #define RES_NBYTES		m9_l5
 #define RES_OFFSET		m9_s2

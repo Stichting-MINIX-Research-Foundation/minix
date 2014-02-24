@@ -48,7 +48,7 @@ int fs_readsuper() {
   /* Return some root inode properties */
   fs_m_out.RES_INODE_NR = ID_DIR_RECORD(v_pri.dir_rec_root);
   fs_m_out.RES_MODE = v_pri.dir_rec_root->d_mode;
-  fs_m_out.RES_FILE_SIZE_LO = v_pri.dir_rec_root->d_file_size;
+  fs_m_out.RES_FILE_SIZE = v_pri.dir_rec_root->d_file_size;
   fs_m_out.RES_UID = SYS_UID; /* Always root */
   fs_m_out.RES_GID = SYS_GID; /* operator */
   fs_m_out.RES_FLAGS = RES_NOFLAGS;

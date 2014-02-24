@@ -101,7 +101,7 @@ int fs_create(void)
   /* Reply message */
   fs_m_out.RES_INODE_NR = pn->pn_va.va_fileid;
   fs_m_out.RES_MODE = pn->pn_va.va_mode;
-  fs_m_out.RES_FILE_SIZE_LO = pn->pn_va.va_size;
+  fs_m_out.RES_FILE_SIZE = pn->pn_va.va_size;
 
   /* This values are needed for the execution */
   fs_m_out.RES_UID = pn->pn_va.va_uid;

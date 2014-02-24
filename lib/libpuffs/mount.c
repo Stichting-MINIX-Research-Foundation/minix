@@ -30,7 +30,7 @@ int fs_readsuper(void)
   root_va = &global_pu->pu_pn_root->pn_va;
   fs_m_out.RES_INODE_NR = root_va->va_fileid;
   fs_m_out.RES_MODE = root_va->va_mode;
-  fs_m_out.RES_FILE_SIZE_LO = root_va->va_size;
+  fs_m_out.RES_FILE_SIZE = root_va->va_size;
   fs_m_out.RES_UID = root_va->va_uid;
   fs_m_out.RES_GID = root_va->va_gid;
   fs_m_out.RES_FLAGS = RES_NOFLAGS;

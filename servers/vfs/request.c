@@ -188,11 +188,7 @@ int req_create(
   res->fs_e	= m.m_source;
   res->inode_nr	= (ino_t) m.RES_INODE_NR;
   res->fmode	= (mode_t) m.RES_MODE;
-  if (vmp->m_fs_flags & RES_64BIT) {
-	res->fsize = make64(m.RES_FILE_SIZE_LO, m.RES_FILE_SIZE_HI);
-  } else {
-	res->fsize = m.RES_FILE_SIZE_LO;
-  }
+  res->fsize    = m.RES_FILE_SIZE;
   res->uid	= (uid_t) m.RES_UID;
   res->gid	= (gid_t) m.RES_GID;
   res->dev	= NO_DEV;
@@ -463,11 +459,7 @@ int req_lookup(
   case OK:
 	res->inode_nr = (ino_t) m.RES_INODE_NR;
 	res->fmode = (mode_t) m.RES_MODE;
-	if (vmp->m_fs_flags & RES_64BIT) {
-		res->fsize = make64(m.RES_FILE_SIZE_LO, m.RES_FILE_SIZE_HI);
-	} else {
-		res->fsize = m.RES_FILE_SIZE_LO;
-	}
+	res->fsize = m.RES_FILE_SIZE;
 	res->dev = m.RES_DEV;
 	res->uid = (uid_t) m.RES_UID;
 	res->gid = (gid_t) m.RES_GID;
@@ -620,11 +612,7 @@ int req_newnode(
   res->fs_e	= m.m_source;
   res->inode_nr = (ino_t) m.RES_INODE_NR;
   res->fmode	= (mode_t) m.RES_MODE;
-  if (vmp->m_fs_flags & RES_64BIT) {
-	res->fsize = make64(m.RES_FILE_SIZE_LO, m.RES_FILE_SIZE_HI);
-  } else {
-	res->fsize = m.RES_FILE_SIZE_LO;
-  }
+  res->fsize    = m.RES_FILE_SIZE;
   res->dev	= m.RES_DEV;
   res->uid	= (uid_t) m.RES_UID;
   res->gid	= (gid_t) m.RES_GID;
@@ -771,11 +759,7 @@ int req_readsuper(
 	res->fs_e = m.m_source;
 	res->inode_nr = (ino_t) m.RES_INODE_NR;
 	res->fmode = (mode_t) m.RES_MODE;
-	if (m.RES_FLAGS & RES_64BIT) {
-		res->fsize = make64(m.RES_FILE_SIZE_LO, m.RES_FILE_SIZE_HI);
-	} else {
-		res->fsize = m.RES_FILE_SIZE_LO;
-	}
+	res->fsize = m.RES_FILE_SIZE;
 	res->uid = (uid_t) m.RES_UID;
 	res->gid = (gid_t) m.RES_GID;
 	*fs_flags = m.RES_FLAGS;

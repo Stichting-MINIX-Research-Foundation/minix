@@ -303,8 +303,7 @@ int fs_lookup(void)
 	/* On success, leave the resulting file open and return its details. */
 	fs_m_out.RES_INODE_NR = get_inode_number(cur_ino);
 	fs_m_out.RES_MODE = cur_ino->i_stat.mode;
-	fs_m_out.RES_FILE_SIZE_HI = 0;
-	fs_m_out.RES_FILE_SIZE_LO = cur_ino->i_stat.size;
+	fs_m_out.RES_FILE_SIZE = cur_ino->i_stat.size;
 	fs_m_out.RES_UID = cur_ino->i_stat.uid;
 	fs_m_out.RES_GID = cur_ino->i_stat.gid;
 	fs_m_out.RES_DEV = cur_ino->i_stat.dev;

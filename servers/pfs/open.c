@@ -44,7 +44,7 @@ int fs_newnode(message *fs_m_in, message *fs_m_out)
 	/* Fill in the fields of the response message */
 	fs_m_out->RES_INODE_NR = rip->i_num;
 	fs_m_out->RES_MODE = rip->i_mode;
-	fs_m_out->RES_FILE_SIZE_LO = rip->i_size;
+	fs_m_out->RES_FILE_SIZE = rip->i_size;
 	fs_m_out->RES_UID = rip->i_uid;
 	fs_m_out->RES_GID = rip->i_gid;
 	fs_m_out->RES_DEV = dev;

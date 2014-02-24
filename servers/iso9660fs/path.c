@@ -60,7 +60,7 @@ int fs_lookup() {
 
   fs_m_out.RES_INODE_NR     = ID_DIR_RECORD(dir);
   fs_m_out.RES_MODE         = dir->d_mode;
-  fs_m_out.RES_FILE_SIZE_LO = dir->d_file_size; 
+  fs_m_out.RES_FILE_SIZE    = dir->d_file_size; 
   fs_m_out.RES_SYMLOOP      = 0;
   fs_m_out.RES_UID          = SYS_UID; 	/* root */
   fs_m_out.RES_GID          = SYS_GID;		/* operator */

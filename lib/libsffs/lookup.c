@@ -331,8 +331,7 @@ int do_lookup(void)
 
   m_out.RES_INODE_NR = INODE_NR(cur_ino);
   m_out.RES_MODE = get_mode(cur_ino, attr.a_mode);
-  m_out.RES_FILE_SIZE_HI = ex64hi(attr.a_size);
-  m_out.RES_FILE_SIZE_LO = ex64lo(attr.a_size);
+  m_out.RES_FILE_SIZE = attr.a_size;
   m_out.RES_UID = sffs_params->p_uid;
   m_out.RES_GID = sffs_params->p_gid;
   m_out.RES_DEV = NO_DEV;

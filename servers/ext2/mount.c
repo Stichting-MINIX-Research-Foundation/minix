@@ -155,7 +155,7 @@ int fs_readsuper()
   /* Root inode properties */
   fs_m_out.RES_INODE_NR = root_ip->i_num;
   fs_m_out.RES_MODE = root_ip->i_mode;
-  fs_m_out.RES_FILE_SIZE_LO = root_ip->i_size;
+  fs_m_out.RES_FILE_SIZE = root_ip->i_size;
   fs_m_out.RES_UID = root_ip->i_uid;
   fs_m_out.RES_GID = root_ip->i_gid;
   fs_m_out.RES_FLAGS = RES_HASPEEK;
