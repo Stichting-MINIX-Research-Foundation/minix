@@ -87,7 +87,7 @@ int fs_readwrite(message *fs_m_in, message *fs_m_out)
   if (rw_flag == READING) rip->i_update |= ATIME;
   if (rw_flag == WRITING) rip->i_update |= CTIME | MTIME;
   fs_m_out->RES_NBYTES = (size_t) cum_io;
-  fs_m_out->RES_SEEK_POS_LO = rip->i_size;
+  fs_m_out->RES_SEEK_POS = rip->i_size;
 
   put_inode(rip);
   put_block(rip->i_dev, rip->i_num);

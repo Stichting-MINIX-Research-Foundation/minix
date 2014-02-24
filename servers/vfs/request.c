@@ -61,7 +61,7 @@ int req_breadwrite(
   if (r != OK) return(r);
 
   /* Fill in response structure */
-  *new_pos = make64(m.RES_SEEK_POS_LO, m.RES_SEEK_POS_HI);
+  *new_pos = m.RES_SEEK_POS;
   *cum_iop = m.RES_NBYTES;
 
   return(OK);
@@ -328,11 +328,7 @@ int req_getdents(
   cpf_revoke(grant_id);
 
   if (r == OK) {
-	if (vmp->m_fs_flags & RES_64BIT) {
-		*new_pos = make64(m.RES_SEEK_POS_LO, m.RES_SEEK_POS_HI);
-	} else {
-		*new_pos = m.RES_SEEK_POS_LO;
-	}
+	*new_pos = m.RES_SEEK_POS;
 	r = m.RES_NBYTES;
   }
 
@@ -831,11 +827,7 @@ unsigned int *cum_iop)
 
   if (r == OK) {
 	/* Fill in response structure */
-	if (vmp->m_fs_flags & RES_64BIT) {
-		*new_posp = make64(m.RES_SEEK_POS_LO, m.RES_SEEK_POS_HI);
-	} else {
-		*new_posp = m.RES_SEEK_POS_LO;
-	}
+	*new_posp = m.RES_SEEK_POS;
 	*cum_iop = m.RES_NBYTES;
   }
 

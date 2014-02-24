@@ -47,8 +47,7 @@
 #define RES_MODE		m9_s2
 #define RES_NBYTES		m9_l5
 #define RES_OFFSET		m9_s2
-#define RES_SEEK_POS_HI		m9_l3
-#define RES_SEEK_POS_LO		m9_l4
+#define RES_SEEK_POS		m9_ull2
 #define RES_SYMLOOP		m9_s3
 #define RES_UID			m9_s4
 #define	RES_FLAGS		m9_s3

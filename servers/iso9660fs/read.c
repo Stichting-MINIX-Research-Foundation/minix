@@ -67,7 +67,7 @@ int fs_read(void) {
 	position += chunk;	/* position within the file */
   }
 
-  fs_m_out.RES_SEEK_POS_LO = position; 
+  fs_m_out.RES_SEEK_POS = position; 
   
   if (rdwt_err != OK) r = rdwt_err;	/* check for disk error */
   if (rdwt_err == END_OF_FILE) r = OK;
@@ -125,8 +125,7 @@ int fs_bread(void)
     position += chunk;	/* position within the file */
   }
   
-  fs_m_out.RES_SEEK_POS_LO = ex64lo(position); 
-  fs_m_out.RES_SEEK_POS_HI = ex64hi(position); 
+  fs_m_out.RES_SEEK_POS = position; 
   
   if (rdwt_err != OK) r = rdwt_err;	/* check for disk error */
   if (rdwt_err == END_OF_FILE) r = OK;
@@ -279,7 +278,7 @@ int fs_getdents(void)
   }
   
   fs_m_out.RES_NBYTES = userbuf_off;
-  fs_m_out.RES_SEEK_POS_LO = cur_pos;
+  fs_m_out.RES_SEEK_POS = cur_pos;
 
   release_dir_record(dir);		/* release the inode */
   return(OK);

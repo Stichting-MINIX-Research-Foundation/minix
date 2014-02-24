@@ -98,7 +98,7 @@ int fs_readwrite(void)
 
   if (r != OK) return(EINVAL);
 
-  fs_m_out.RES_SEEK_POS_LO = pos + bytes_done;
+  fs_m_out.RES_SEEK_POS = pos + bytes_done;
   fs_m_out.RES_NBYTES = bytes_done;
 
   return(r);
@@ -172,7 +172,7 @@ int fs_getdents(void)
   update_timens(pn, ATIME, NULL);
 
   fs_m_out.RES_NBYTES = written;
-  fs_m_out.RES_SEEK_POS_LO = pos;
+  fs_m_out.RES_SEEK_POS = pos;
 
   return(OK);
 }

@@ -103,8 +103,7 @@ int do_write(void)
   if ((r = write_file(ino, &pos, &count, &grant)) != OK)
 	return r;
 
-  m_out.RES_SEEK_POS_HI = ex64hi(pos);
-  m_out.RES_SEEK_POS_LO = ex64lo(pos);
+  m_out.RES_SEEK_POS = pos;
   m_out.RES_NBYTES = count;
 
   return OK;

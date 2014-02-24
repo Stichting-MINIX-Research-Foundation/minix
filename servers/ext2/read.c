@@ -106,7 +106,7 @@ int fs_readwrite(void)
 	position += (off_t) chunk;    /* position within the file */
   }
 
-  fs_m_out.RES_SEEK_POS_LO = position; /* It might change later and the VFS
+  fs_m_out.RES_SEEK_POS = position; /* It might change later and the VFS
                                            has to know this value */
 
   /* On write, update file size and access time. */
@@ -190,8 +190,7 @@ int fs_breadwrite(void)
 	  position += chunk;	/* position within the file */
   }
 
-  fs_m_out.RES_SEEK_POS_LO = ex64lo(position);
-  fs_m_out.RES_SEEK_POS_HI = ex64hi(position);
+  fs_m_out.RES_SEEK_POS = position;
 
   if (rdwt_err != OK) r = rdwt_err;     /* check for disk error */
   if (rdwt_err == END_OF_FILE) r = OK;
@@ -761,7 +760,7 @@ int fs_getdents(void)
 	r = EINVAL;           /* The user's buffer is too small */
   else {
 	fs_m_out.RES_NBYTES = userbuf_off;
-	fs_m_out.RES_SEEK_POS_LO = new_pos;
+	fs_m_out.RES_SEEK_POS = new_pos;
 	rip->i_update |= ATIME;
 	rip->i_dirt = IN_DIRTY;
 	r = OK;

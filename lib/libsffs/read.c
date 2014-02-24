@@ -67,8 +67,7 @@ int do_read(void)
   if (r < 0)
 	return r;
 
-  m_out.RES_SEEK_POS_HI = ex64hi(pos);
-  m_out.RES_SEEK_POS_LO = ex64lo(pos);
+  m_out.RES_SEEK_POS = pos;
   m_out.RES_NBYTES = off;
 
   return OK;
@@ -229,8 +228,7 @@ int do_getdents(void)
 	user_off += off;
   }
 
-  m_out.RES_SEEK_POS_HI = 0;
-  m_out.RES_SEEK_POS_LO = pos;
+  m_out.RES_SEEK_POS = pos;
   m_out.RES_NBYTES = user_off;
 
   return OK;

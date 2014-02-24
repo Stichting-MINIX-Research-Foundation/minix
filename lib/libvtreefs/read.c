@@ -57,8 +57,7 @@ int fs_read(void)
 	}
 
 	if (r == OK) {
-		fs_m_out.RES_SEEK_POS_HI = 0;
-		fs_m_out.RES_SEEK_POS_LO = pos + len;
+		fs_m_out.RES_SEEK_POS = pos + len;
 		fs_m_out.RES_NBYTES = len;
 	}
 
@@ -207,8 +206,7 @@ int fs_getdents(void)
 		user_off += off;
 	}
 
-	fs_m_out.RES_SEEK_POS_HI = 0;
-	fs_m_out.RES_SEEK_POS_LO = pos;
+	fs_m_out.RES_SEEK_POS = pos;
 	fs_m_out.RES_NBYTES = user_off;
 
 	return OK;
