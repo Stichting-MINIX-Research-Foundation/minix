@@ -17,9 +17,8 @@ lseek(int fd, off_t offset, int whence)
 
   memset(&m, 0, sizeof(m));
   m.VFS_LSEEK_FD = fd;
-  m.VFS_LSEEK_OFF_LO = ex64lo(offset);
-  m.VFS_LSEEK_OFF_HI = ex64hi(offset);
+  m.VFS_LSEEK_OFF = offset;
   m.VFS_LSEEK_WHENCE = whence;
   if (_syscall(VFS_PROC_NR, VFS_LSEEK, &m) < 0) return( (off_t) -1);
-  return( (off_t) make64(m.VFS_LSEEK_OFF_LO, m.VFS_LSEEK_OFF_HI));
+  return( (off_t) m.VFS_LSEEK_OFF);
 }

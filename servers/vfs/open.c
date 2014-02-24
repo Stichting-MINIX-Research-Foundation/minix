@@ -647,13 +647,12 @@ int do_lseek(void)
   int r;
 
   if ((r = actual_lseek(fp, job_m_in.VFS_LSEEK_FD,
-		job_m_in.VFS_LSEEK_WHENCE, make64(job_m_in.VFS_LSEEK_OFF_LO,
-		job_m_in.VFS_LSEEK_OFF_HI), &newpos)) != OK)
+		job_m_in.VFS_LSEEK_WHENCE, job_m_in.VFS_LSEEK_OFF,
+		&newpos)) != OK)
 	return r;
 
   /* insert the new position into the output message */
-  job_m_out.VFS_LSEEK_OFF_LO = ex64lo(newpos);
-  job_m_out.VFS_LSEEK_OFF_HI = ex64hi(newpos);
+  job_m_out.VFS_LSEEK_OFF = newpos;
   return OK;
 }
 

@@ -293,8 +293,7 @@
 
 /* Field names for the lseek(2) call. */
 #define VFS_LSEEK_FD		m2_i1	/* int */
-#define VFS_LSEEK_OFF_LO	m2_l1	/* off_t (low 32 bits) */
-#define VFS_LSEEK_OFF_HI	m2_l2	/* off_t (high 32 bits) */
+#define VFS_LSEEK_OFF		m2_ll1	/* off_t */
 #define VFS_LSEEK_WHENCE	m2_i2	/* int */
 
 /* Field names for the truncate(2) and ftruncate(2) calls. */
