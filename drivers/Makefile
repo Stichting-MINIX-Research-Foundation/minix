@@ -31,7 +31,7 @@ SUBDIR= bmp085 cat24c256 fb gpio i2c lan8710a \
 .endif
 
 # Drivers available on all platforms
-SUBDIR+= log mmc random tty uds vnd readclock
+SUBDIR+= log mmc pty random tty uds vnd readclock
 
 .endif # ${MKIMAGEONLY} != "yes"
 

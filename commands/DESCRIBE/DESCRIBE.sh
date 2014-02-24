@@ -126,18 +126,6 @@ do
 	;;
     4,125)	des="video output" dev=video
 	;;
-    4,12[89]|4,1[3-8]?|4,19[01])
-	p=`expr \\( $minor - 128 \\) / 16 | tr '0123' 'pqrs'`
-	n=`expr $minor % 16`
-	test $n -ge 10 && n=`expr $n - 10 | tr '012345' 'abcdef'`
-	des="pseudo tty `expr $minor - 128`" dev=tty$p$n
-	;;
-    4,???)
-	p=`expr \\( $minor - 192 \\) / 16 | tr '0123' 'pqrs'`
-	n=`expr $minor % 16`
-	test $n -ge 10 && n=`expr $n - 10 | tr '012345' 'abcdef'`
-	des="controller of tty$p$n" dev=pty$p$n
-	;;
     5,0)	des="anonymous tty" dev=tty
 	;;
     6,0)	des="line printer, parallel port" dev=lp
@@ -170,6 +158,18 @@ do
 		dev=$dev$n
 	    fi
 	esac
+	;;
+    9,12[89]|9,1[3-8]?|9,19[01])
+	p=`expr \\( $minor - 128 \\) / 16 | tr '0123' 'pqrs'`
+	n=`expr $minor % 16`
+	test $n -ge 10 && n=`expr $n - 10 | tr '012345' 'abcdef'`
+	des="pseudo tty `expr $minor - 128`" dev=tty$p$n
+	;;
+    9,???)
+	p=`expr \\( $minor - 192 \\) / 16 | tr '0123' 'pqrs'`
+	n=`expr $minor % 16`
+	test $n -ge 10 && n=`expr $n - 10 | tr '012345' 'abcdef'`
+	des="controller of tty$p$n" dev=pty$p$n
 	;;
     11,0)
 	des="block filter" dev=filter

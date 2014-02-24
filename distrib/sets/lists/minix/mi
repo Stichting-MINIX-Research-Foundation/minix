@@ -4892,6 +4892,7 @@
 ./usr/sbin/pfs				minix-sys
 ./usr/sbin/pm				minix-sys
 ./usr/sbin/postinstall			minix-sys
+./usr/sbin/pty				minix-sys
 ./usr/sbin/pwd_mkdb			minix-sys
 ./usr/sbin/rdate			minix-sys
 ./usr/sbin/rs				minix-sys

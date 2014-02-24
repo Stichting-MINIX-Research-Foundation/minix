@@ -418,8 +418,8 @@ do
 		minor_tty=`expr ${group} '*' 16 + ${pty} + 128`
 		minor_pty=`expr ${group} '*' 16 + ${pty} + 192`
 
-		makedev tty${dev} c 4 ${minor_tty} ${uname} tty 666
-		makedev pty${dev} c 4 ${minor_pty} ${uname} tty 666
+		makedev tty${dev} c 9 ${minor_tty} ${uname} tty 666
+		makedev pty${dev} c 9 ${minor_pty} ${uname} tty 666
 		;;
 	ttyc[1-7])
 		# Virtual consoles.

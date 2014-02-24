@@ -1,49 +1,19 @@
-/* This file contains the terminal driver, both for the IBM console and regular
- * ASCII terminals.  It handles only the device-independent part of a TTY, the
- * device dependent parts are in console.c, rs232.c, etc.  This file contains
- * two main entry points, tty_task() and tty_wakeup(), and several minor entry
- * points for use by the device-dependent code.
- *
- * The device-independent part accepts "keyboard" input from the device-
- * dependent part, performs input processing (special key interpretation),
- * and sends the input to a process reading from the TTY.  Output to a TTY
- * is sent to the device-dependent code for output processing and "screen"
- * display.  Input processing is done by the device by calling 'in_process'
- * on the input characters, output processing may be done by the device itself
- * or by calling 'out_process'.  The TTY takes care of input queuing, the
- * device does the output queuing.  If a device receives an external signal,
- * like an interrupt, then it causes tty_wakeup() to be run by the CLOCK task
- * to, you guessed it, wake up the TTY to check if input or output can
- * continue.
- *
- * Changes:
- *   Jan 20, 2004   moved TTY driver to user-space  (Jorrit N. Herder)
- *   Sep 20, 2004   local timer management/ sync alarms  (Jorrit N. Herder)
- *   Jul 13, 2004   support for function key observers  (Jorrit N. Herder)  
- */
-
+/* TTY part of PTY. */
 #include <assert.h>
 #include <minix/drivers.h>
 #include <minix/driver.h>
 #include <termios.h>
-#include <sys/kbdio.h>
 #include <sys/ttycom.h>
 #include <sys/ttydefaults.h>
 #include <sys/fcntl.h>
 #include <signal.h>
-#include <minix/keymap.h>
 #include "tty.h"
 
 #include <sys/time.h>
 #include <sys/select.h>
 
-unsigned long rs_irq_set = 0;
-
 /* Address of a tty structure. */
 #define tty_addr(line)	(&tty_table[line])
-
-/* Macros for magic tty types. */
-#define isconsole(tp)	((tp) < tty_addr(NR_CONS))
 
 /* Macros for magic tty structure pointers. */
 #define FIRST_TTY	tty_addr(0)
@@ -51,11 +21,6 @@ unsigned long rs_irq_set = 0;
 
 /* A device exists if at least its 'devread' function is defined. */
 #define tty_active(tp)	((tp)->tty_devread != NULL)
-
-/* RS232 lines or pseudo terminals can be completely configured out. */
-#if NR_RS_LINES == 0
-#define rs_init(tp)	((void) 0)
-#endif
 
 struct kmessages kmess;
 
@@ -69,12 +34,6 @@ static void reprint(tty_t *tp);
 static void dev_ioctl(tty_t *tp);
 static void setattr(tty_t *tp);
 static void tty_icancel(tty_t *tp);
-static void tty_init(void);
-static void do_new_kmess(void);
-static void set_console_line(char term[CONS_ARG]);
-static void set_kernel_color(char color[CONS_ARG]);
-static void set_color(tty_t *tp, int color);
-static void reset_color(tty_t *tp);
 
 static int do_open(devminor_t minor, int access, endpoint_t user_endpt);
 static int do_close(devminor_t minor);
@@ -126,19 +85,11 @@ static struct termios termios_defaults = {
 static struct winsize winsize_defaults;	/* = all zeroes */
 
 /* Global variables for the TTY task (declared extern in tty.h). */
-tty_t tty_table[NR_CONS+NR_RS_LINES];
-int ccurrent;			/* currently active console */
-struct machine machine;		/* kernel environment variables */
+tty_t tty_table[NR_PTYS];
 u32_t system_hz;
-u32_t consoleline = CONS_MINOR;
-u32_t kernel_msg_color = 0;
 
-/* SEF functions and variables. */
-static void sef_local_startup(void);
-static int sef_cb_init_fresh(int type, sef_init_info_t *info);
-static void sef_cb_signal_handler(int signo);
-
-extern struct minix_kerninfo *_minix_kerninfo;
+static void tty_startup(void);
+static int tty_init(int, sef_init_info_t *);
 
 /*===========================================================================*
  *				tty_task				     *
@@ -153,8 +104,8 @@ int main(void)
   int r;
   register tty_t *tp;
 
-  /* SEF local startup. */
-  sef_local_startup();
+  tty_startup();
+
   while (TRUE) {
 	/* Check for and handle any events on any of the ttys. */
 	for (tp = FIRST_TTY; tp < END_TTY; tp++) {
@@ -166,30 +117,9 @@ int main(void)
 	if (r != 0)
 		panic("driver_receive failed with: %d", r);
 
-	/* First handle all kernel notification types that the TTY supports. 
-	 *  - An alarm went off, expire all timers and handle the events. 
-	 *  - A hardware interrupt also is an invitation to check for events. 
-	 *  - A new kernel message is available for printing.
-	 *  - Reset the console on system shutdown. 
-	 * Then see if this message is different from a normal device driver
-	 * request and should be handled separately. These extra functions
-	 * do not operate on a device, in constrast to the driver requests. 
-	 */
-
 	if (is_ipc_notify(ipc_status)) {
 		switch (_ENDPOINT_P(tty_mess.m_source)) {
 			case CLOCK:
-				/* run watchdogs of expired timers */
-				expire_timers(tty_mess.m_notify.timestamp);
-				break;
-			case HARDWARE: 
-				/* hardware interrupt notification */
-
-#if NR_RS_LINES > 0
-				/* serial I/O */
-				if (tty_mess.m_notify.interrupts & rs_irq_set)
-					rs_interrupt(&tty_mess);
-#endif
 				/* run watchdogs of expired timers */
 				expire_timers(tty_mess.m_notify.timestamp);
 				break;
@@ -202,18 +132,6 @@ int main(void)
 		continue;
 	}
 
-	switch (tty_mess.m_type) { 
-	case TTY_FKEY_CONTROL:		/* (un)register a fkey observer */
-		do_fkey_ctl(&tty_mess);
-		continue;
-	case TTY_INPUT_UP:
-	case TTY_INPUT_EVENT:
-		do_input(&tty_mess);
-		continue;
-	default:			/* should be a driver request */
-		;			/* do nothing; end switch */
-	}
-
 	if (!IS_CDEV_RQ(tty_mess.m_type)) {
 		chardriver_process(&tty_tab, &tty_mess, ipc_status);
 		continue;
@@ -223,8 +141,13 @@ int main(void)
 	 * All requests have a minor device number.
 	 */
 	line = tty_mess.CDEV_MINOR;
-	if (line == VIDEO_MINOR) {
-		do_video(&tty_mess, ipc_status);
+	if (line - PTYPX_MINOR < NR_PTYS &&
+			tty_mess.m_type != CDEV_IOCTL) {
+		/* Terminals and pseudo terminals belong together. We can only
+		 * make a distinction between the two based on position in the
+		 * tty_table and not on minor number. Hence this special case.
+		 */
+		do_pty(&tty_mess, ipc_status);
 		continue;
 	}
 
@@ -235,29 +158,6 @@ int main(void)
   return 0;
 }
 
-static void
-set_color(tty_t *tp, int color)
-{
-	char buf[8];
-
-	buf[0] = '\033';
-	snprintf(&buf[1], sizeof(buf) - 1, "[1;%dm", color);
-	do_write(tp->tty_minor, 0, KERNEL, (cp_grant_id_t) buf, sizeof(buf),
-		CDEV_NONBLOCK, 0);
-}
-
-static void
-reset_color(tty_t *tp)
-{
-	char buf[8];
-
-#define SGR_COLOR_RESET	39
-	buf[0] = '\033';
-	snprintf(&buf[1], sizeof(buf) - 1, "[0;%dm", SGR_COLOR_RESET);
-	do_write(tp->tty_minor, 0, KERNEL, (cp_grant_id_t) buf, sizeof(buf),
-		CDEV_NONBLOCK, 0);
-}
-
 tty_t *
 line2tty(devminor_t line)
 {
@@ -265,203 +165,32 @@ line2tty(devminor_t line)
 
 	tty_t* tp;
 
-	/* /dev/log goes to /dev/console, and both may be redirected. */
-	if (line == CONS_MINOR || line == LOG_MINOR)
-		line = consoleline;
-
-	if (line == VIDEO_MINOR) {
-		return(NULL);
-	} else if ((line - CONS_MINOR) < NR_CONS) {
-		tp = tty_addr(line - CONS_MINOR);
-	} else if ((line - RS232_MINOR) < NR_RS_LINES) {
-		tp = tty_addr(line - RS232_MINOR + NR_CONS);
+	if ((line - TTYPX_MINOR) < NR_PTYS) {
+		tp = tty_addr(line - TTYPX_MINOR);
+	} else if ((line - PTYPX_MINOR) < NR_PTYS) {
+		tp = tty_addr(line - PTYPX_MINOR);
 	} else {
 		tp = NULL;
 	}
-
-	if (tp != NULL && !tty_active(tp))
-		tp = NULL;
 
 	return(tp);
 }
 
 /*===========================================================================*
- *			       sef_local_startup			     *
+ *			       tty_startup				     *
  *===========================================================================*/
-static void sef_local_startup()
+static void tty_startup(void)
 {
   /* Register init callbacks. */
-  sef_setcb_init_fresh(sef_cb_init_fresh);
-  sef_setcb_init_restart(sef_cb_init_fresh);
+  sef_setcb_init_fresh(tty_init);
+  sef_setcb_init_restart(tty_init);
 
   /* No live update support for now. */
 
-  /* Register signal callbacks. */
-  sef_setcb_signal_handler(sef_cb_signal_handler);
+  /* No signal support for now. */
 
   /* Let SEF perform startup. */
   sef_startup();
-}
-
-/*===========================================================================*
- *		            sef_cb_init_fresh                                *
- *===========================================================================*/
-static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
-{
-/* Initialize the tty driver. */
-  int r;
-  char val[CONS_ARG];
-
-  /* Get kernel environment (protected_mode, pc_at and ega are needed). */ 
-  if (OK != (r=sys_getmachine(&machine))) {
-    panic("Couldn't obtain kernel environment: %d", r);
-  }
-
-  if (env_get_param("console", val, sizeof(val)) == OK) {
-	set_console_line(val);
-  }
-
-  if ((r = env_get_param("kernelclr", val, sizeof(val))) == OK) {
-	set_kernel_color(val);
-  }
-
-  /* Initialize the TTY driver. */
-  tty_init();
-
-  /* Final one-time keyboard initialization. */
-  kb_init_once();
-
-  /* Register for diagnostics notifications. */
-  sys_diagctl_register();
-
-  return(OK);
-}
-
-static void
-set_console_line(char term[CONS_ARG])
-{
-/* Parse 'term' and redirect console output there. */
-	int i;
-
-	/* Console */
-	if (!strncmp(term, "console", CONS_ARG - 1)) {
-		consoleline = CONS_MINOR+0;
-	}
-
-	/* The other console terminals */
-	for (i = 1; i < NR_CONS; i++) {
-		char cons[6];
-		strlcpy(cons, "ttyc0", sizeof(cons));
-		cons[4] += i;
-		if (!strncmp(term, cons,
-		    CONS_ARG < sizeof(cons) ? CONS_ARG-1 : sizeof(cons) - 1))
-			consoleline = CONS_MINOR + i;
-	}
-
-	/* Serial lines */
-	assert(NR_RS_LINES <= 9);/* below assumes this is the case */
-	for (i = 0; i < NR_RS_LINES; i++) {
-		char sercons[6];
-		strlcpy(sercons, "tty00", sizeof(sercons));
-		sercons[4] += i;
-		if (!strncmp(term, sercons,
-		    CONS_ARG < sizeof(sercons) ? CONS_ARG-1:sizeof(sercons)-1))
-			consoleline = RS232_MINOR + i;
-	}
-}
-
-static void
-set_kernel_color(char color[CONS_ARG])
-{
-	int def_color;
-
-#define SGR_COLOR_START	30
-#define SGR_COLOR_END	37
-
-	def_color = atoi(color);
-	if ((SGR_COLOR_START + def_color) >= SGR_COLOR_START &&
-	    (SGR_COLOR_START + def_color) <= SGR_COLOR_END) {
-		kernel_msg_color = def_color + SGR_COLOR_START;
-	}
-}
-
-static void
-do_new_kmess(void)
-{
-/* Kernel wants to print a new message */
-	struct kmessages *kmess_ptr;	/* kmessages structure */
-	char kernel_buf_copy[_KMESS_BUF_SIZE];
-	static int prev_next = 0;
-	int next, bytes, copy, restore = 0;
-	tty_t *tp, rtp;
-
-	assert(_minix_kerninfo);
-	kmess_ptr = _minix_kerninfo->kmessages;
-
-	/* The kernel buffer is circular; print only the new part. Determine
-	 * how many new bytes there are with the help of current and
-	 * previous 'next' index. This works fine if less than _KMESS_BUF_SIZE
-	 * bytes is new data; else we miss % _KMESS_BUF_SIZE here. Obtain
-	 * 'next' only once, since we are operating on shared memory here.
-	 * Check for size being positive; the buffer might as well be emptied!
-	 */
-	next = kmess_ptr->km_next;
-	bytes = ((next + _KMESS_BUF_SIZE) - prev_next) % _KMESS_BUF_SIZE;
-	if (bytes > 0) {
-		/* Copy from current position toward end of buffer */
-		copy = MIN(_KMESS_BUF_SIZE - prev_next, bytes);
-		memcpy(kernel_buf_copy, &kmess_ptr->km_buf[prev_next], copy);
-
-		/* Copy remainder from start of buffer */
-		if (copy < bytes) {
-			memcpy(&kernel_buf_copy[copy], &kmess_ptr->km_buf[0],
-				bytes - copy);
-		}
-
-		tp = line2tty(consoleline);
-		if (tp == NULL)
-			panic("Don't know where to send kernel messages");
-		if (tp->tty_outleft > 0) {
-			/* Terminal is already printing */
-			rtp = *tp;	/* Make backup */
-			tp->tty_outleft = 0; /* So do_write is happy */
-			restore = 1;
-		}
-
-		if (kernel_msg_color != 0)
-			set_color(tp, kernel_msg_color);
-		do_write(tp->tty_minor, 0, KERNEL,
-			(cp_grant_id_t) kernel_buf_copy, bytes,
-			CDEV_NONBLOCK, 0);
-		if (kernel_msg_color != 0)
-			reset_color(tp);
-		if (restore) {
-			*tp = rtp;
-		}
-	}
-
-	/* Store 'next' pointer so that we can determine what part of the
-	 * kernel messages buffer to print next time a notification arrives.
-	 */
-	prev_next = next;
-}
-
-/*===========================================================================*
- *		           sef_cb_signal_handler                             *
- *===========================================================================*/
-static void sef_cb_signal_handler(int signo)
-{
-  /* Check for known signals, ignore anything else. */
-  switch(signo) {
-      /* There is a pending message from the kernel. */
-      case SIGKMESS:
-	  do_new_kmess();
-      break;
-      /* Switch to primary console on termination. */
-      case SIGTERM:
-          cons_stop();
-      break;
-  }
 }
 
 /*===========================================================================*
@@ -590,8 +319,6 @@ static int do_ioctl(devminor_t minor, unsigned long request, endpoint_t endpt,
 /* Perform an IOCTL on this terminal. POSIX termios calls are handled
  * by the IOCTL system call.
  */
-  kio_bell_t bell;
-  clock_t ticks;
   tty_t *tp;
   int i, r;
 
@@ -661,19 +388,6 @@ static int do_ioctl(devminor_t minor, unsigned long request, endpoint_t endpt,
 		sizeof(struct winsize));
 	sigchar(tp, SIGWINCH, 0);
 	break;
-    case KIOCBELL:
-	/* Sound bell (only /dev/console). */
-	if (!isconsole(tp))
-		break;
-	r = sys_safecopyfrom(endpt, grant, 0, (vir_bytes) &bell, sizeof(bell));
-	if (r != OK)
-		break;
-	ticks = bell.kb_duration.tv_usec * system_hz / 1000000;
-	ticks += bell.kb_duration.tv_sec * system_hz;
-	if (!ticks)
-		ticks++;
-	beep_x(bell.kb_pitch, ticks);
-	break;
     case TIOCGETD:	/* get line discipline */
     {
 	int disc = TTYDISC;
@@ -684,15 +398,6 @@ static int do_ioctl(devminor_t minor, unsigned long request, endpoint_t endpt,
     case TIOCSETD:	/* set line discipline */
 	printf("TTY: TIOCSETD: can't set any other line discipline.\n");
 	r = ENOTTY;
-	break;
-    case KIOCSMAP:
-	/* Load a new keymap (only /dev/console). */
-	if (isconsole(tp)) r = kbd_loadmap(endpt, grant);
-	break;
-
-    case TIOCSFON:
-	/* Load a font into an EGA or VGA card (hs@hck.hr) */
-	if (isconsole(tp)) r = con_loadfont(endpt, grant);
 	break;
 
     case TIOCSCTTY:
@@ -727,19 +432,14 @@ static int do_open(devminor_t minor, int access, endpoint_t user_endpt)
   if ((tp = line2tty(minor)) == NULL)
 	return ENXIO;
 
-  if (minor == LOG_MINOR && isconsole(tp)) {
-	/* The log device is a write-only diagnostics device. */
-	if (access & CDEV_R_BIT) return EACCES;
-  } else {
-	if (!(access & CDEV_NOCTTY)) {
-		tp->tty_pgrp = user_endpt;
-		r = CDEV_CTTY;
-	}
-	tp->tty_openct++;
-	if (tp->tty_openct == 1) {
-		/* Tell the device that the tty is opened */
-		(*tp->tty_open)(tp, 0);
-	}
+  if (!(access & CDEV_NOCTTY)) {
+	tp->tty_pgrp = user_endpt;
+	r = CDEV_CTTY;
+  }
+  tp->tty_openct++;
+  if (tp->tty_openct == 1) {
+	/* Tell the device that the tty is opened */
+	(*tp->tty_open)(tp, 0);
   }
 
   return r;
@@ -756,7 +456,7 @@ static int do_close(devminor_t minor)
   if ((tp = line2tty(minor)) == NULL)
 	return ENXIO;
 
-  if ((minor != LOG_MINOR || !isconsole(tp)) && --tp->tty_openct == 0) {
+  if (--tp->tty_openct == 0) {
 	tp->tty_pgrp = 0;
 	tty_icancel(tp);
 	(*tp->tty_ocancel)(tp, 0);
@@ -898,19 +598,7 @@ static int do_select(devminor_t minor, unsigned int ops, endpoint_t endpt)
 void handle_events(tp)
 tty_t *tp;			/* TTY to check for events. */
 {
-/* Handle any events pending on a TTY.  These events are usually device
- * interrupts.
- *
- * Two kinds of events are prominent:
- *	- a character has been received from the console or an RS232 line.
- *	- an RS232 line has completed a write request (on behalf of a user).
- * The interrupt handler may delay the interrupt message at its discretion
- * to avoid swamping the TTY task.  Messages may be overwritten when the
- * lines are fast or when there are races between different lines, input
- * and output, because MINIX only provides single buffering for interrupt
- * messages.  This is handled by explicitly checking each line for fresh input
- * and completed output on each interrupt.
- */
+/* Handle any events pending on a TTY. */
 
   do {
 	tp->tty_events = 0;
@@ -938,6 +626,7 @@ tty_t *tp;			/* TTY to check for events. */
   {
   	select_retry(tp);
   }
+  select_retry_pty(tp);
 }
 
 /*===========================================================================*
@@ -1529,7 +1218,7 @@ static int tty_devnop(tty_t *UNUSED(tp), int UNUSED(try))
 /*===========================================================================*
  *				tty_init				     *
  *===========================================================================*/
-static void tty_init()
+static int tty_init(int UNUSED(type), sef_init_info_t *UNUSED(info))
 {
 /* Initialize tty structure and call device initialization routines. */
 
@@ -1552,19 +1241,11 @@ static void tty_init()
   	tp->tty_termios = termios_defaults;
   	tp->tty_icancel = tp->tty_ocancel = tp->tty_ioctl = tp->tty_close =
 			  tp->tty_open = tty_devnop;
-  	if (tp < tty_addr(NR_CONS)) {
-		scr_init(tp);
-
-		/* Initialize the keyboard driver. */
-		kb_init(tp);
-
-  		tp->tty_minor = CONS_MINOR + s;
-  	} else {
-		rs_init(tp);
-  		tp->tty_minor = RS232_MINOR + s-NR_CONS;
-  	}
+	pty_init(tp);
+	tp->tty_minor = s + TTYPX_MINOR;
   }
 
+  return OK;
 }
 
 /*===========================================================================*

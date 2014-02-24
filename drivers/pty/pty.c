@@ -23,8 +23,6 @@
 #include <signal.h>
 #include "tty.h"
 
-#if NR_PTYS > 0
-
 /* PTY bookkeeping structure, one per pty/tty pair. */
 typedef struct pty {
   tty_t		*tty;		/* associated TTY structure */
@@ -618,7 +616,7 @@ void pty_init(tty_t *tp)
   int line;
 
   /* Associate PTY and TTY structures. */
-  line = tp - &tty_table[NR_CONS + NR_RS_LINES];
+  line = tp - tty_table;
   pp = tp->tty_priv = &pty_table[line];
   pp->tty = tp;
   pp->select_ops = 0;
@@ -638,5 +636,3 @@ void pty_init(tty_t *tp)
   tp->tty_close = pty_slave_close;
   tp->tty_select_ops = 0;
 }
-
-#endif /* NR_PTYS > 0 */
