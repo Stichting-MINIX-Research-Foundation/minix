@@ -322,7 +322,7 @@ static int do_transfer(struct chardriver *cdp, message *m_ptr, int do_write)
   ssize_t r;
 
   minor = m_ptr->CDEV_MINOR;
-  position = make64(m_ptr->CDEV_POS_LO, m_ptr->CDEV_POS_HI);
+  position = m_ptr->CDEV_POS;
   endpt = m_ptr->m_source;
   grant = (cp_grant_id_t) m_ptr->CDEV_GRANT;
   size = m_ptr->CDEV_COUNT;

@@ -286,8 +286,7 @@ int cdev_io(
 	dev_mess.CDEV_REQUEST = bytes;
 	dev_mess.CDEV_USER = proc_e;
   } else {
-	dev_mess.CDEV_POS_LO = ex64lo(pos);
-	dev_mess.CDEV_POS_HI = ex64hi(pos);
+	dev_mess.CDEV_POS = pos;
 	dev_mess.CDEV_COUNT = (size_t) bytes;
   }
   dev_mess.CDEV_ID = proc_e;

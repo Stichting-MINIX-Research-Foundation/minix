@@ -1196,8 +1196,7 @@
 #define CDEV_FLAGS	m10_i4	/* transfer flags */
 #define CDEV_ID		m10_l1	/* opaque request ID */
 #define CDEV_REQUEST	m10_l2	/* I/O control request */
-#define CDEV_POS_LO	m10_l2	/* transfer position (low bits) */
-#define CDEV_POS_HI	m10_l3	/* transfer position (high bits) */
+#define CDEV_POS	m10_ull1 /* transfer position */
 
 /* Bits in 'CDEV_ACCESS' field of block device open requests. */
 #  define CDEV_R_BIT		0x01	/* open with read access */
