@@ -301,8 +301,7 @@
 #define VFS_TRUNCATE_FD		m2_i1	/* int */
 #define VFS_TRUNCATE_NAME	m2_p1	/* const char * */
 #define VFS_TRUNCATE_LEN	m2_i1	/* size_t */
-#define VFS_TRUNCATE_OFF_LO	m2_l1	/* off_t (low 32 bits) */
-#define VFS_TRUNCATE_OFF_HI	m2_l2	/* off_t (high 32 bits) */
+#define VFS_TRUNCATE_OFF	m2_ll1	/* off_t */
 
 /* Field names for the pipe2(2) call. */
 #define VFS_PIPE2_FD0		m1_i1	/* int */

@@ -297,8 +297,7 @@ int do_truncate(void)
   resolve.l_vmnt_lock = VMNT_READ;
   resolve.l_vnode_lock = VNODE_WRITE;
 
-  length = (off_t) make64(job_m_in.VFS_TRUNCATE_OFF_LO,
-	job_m_in.VFS_TRUNCATE_OFF_HI);
+  length = (off_t) job_m_in.VFS_TRUNCATE_OFF;
   if (length < 0) return(EINVAL);
 
   /* Temporarily open file */
@@ -336,8 +335,7 @@ int do_ftruncate(void)
 
   scratch(fp).file.fd_nr = job_m_in.VFS_TRUNCATE_FD;
 
-  length = (off_t) make64(job_m_in.VFS_TRUNCATE_OFF_LO,
-	job_m_in.VFS_TRUNCATE_OFF_HI);
+  length = (off_t) job_m_in.VFS_TRUNCATE_OFF;
   if (length < 0) return(EINVAL);
 
   /* File is already opened; get a vnode pointer from filp */
