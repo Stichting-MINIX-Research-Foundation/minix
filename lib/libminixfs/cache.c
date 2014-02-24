@@ -937,7 +937,7 @@ int lmfs_do_bpeek(message *m)
 {
 	block_t startblock, b, limitblock;
 	dev_t dev = m->REQ_DEV;
-	off_t extra, pos = make64(m->REQ_SEEK_POS_LO, m->REQ_SEEK_POS_HI);
+	off_t extra, pos = m->REQ_SEEK_POS;
 	size_t len = m->REQ_NBYTES;
 	struct buf *bp;
 

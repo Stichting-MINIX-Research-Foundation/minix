@@ -94,7 +94,7 @@ int do_write(void)
 
   if (IS_DIR(ino)) return EISDIR;
 
-  pos = make64(m_in.REQ_SEEK_POS_LO, m_in.REQ_SEEK_POS_HI);
+  pos = m_in.REQ_SEEK_POS;
   count = m_in.REQ_NBYTES;
   grant = m_in.REQ_GRANT;
 

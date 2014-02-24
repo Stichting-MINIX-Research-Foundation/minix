@@ -21,9 +21,6 @@ int fs_read(void)
 	char *ptr;
 	int r;
 
-	if (fs_m_in.REQ_SEEK_POS_HI != 0)
-		return EIO;
-
 	/* Try to get inode by to its inode number. */
 	if ((node = find_inode(fs_m_in.REQ_INODE_NR)) == NULL)
 		return EINVAL;
@@ -34,7 +31,7 @@ int fs_read(void)
 
 	/* Get the values from the request message. */
 	gid = fs_m_in.REQ_GRANT;
-	pos = fs_m_in.REQ_SEEK_POS_LO;
+	pos = fs_m_in.REQ_SEEK_POS;
 
 	/* Call the read hook, if any. */
 	if (!is_inode_deleted(node) && vtreefs_hooks->read_hook != NULL) {
@@ -83,7 +80,7 @@ int fs_getdents(void)
 	int r, skip, get_next, indexed;
 	static char buf[GETDENTS_BUFSIZ];
 
-	if (fs_m_in.REQ_SEEK_POS_HI != 0)
+	if (fs_m_in.REQ_SEEK_POS >= ULONG_MAX)
 		return EIO;
 
 	if ((node = find_inode(fs_m_in.REQ_INODE_NR)) == NULL)
@@ -102,7 +99,7 @@ int fs_getdents(void)
 		if (r != OK) return r;
 	}
 
-	for (pos = fs_m_in.REQ_SEEK_POS_LO; ; pos++) {
+	for (pos = fs_m_in.REQ_SEEK_POS; ; pos++) {
 		/* Determine which inode and name to use for this entry. */
 		if (pos == 0) {
 			/* The "." entry. */

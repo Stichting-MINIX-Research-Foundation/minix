@@ -70,7 +70,7 @@ int fs_readwrite(void)
        default: panic("odd request");
   }
   gid = (cp_grant_id_t) fs_m_in.REQ_GRANT;
-  position = (off_t) fs_m_in.REQ_SEEK_POS_LO;
+  position = (off_t) fs_m_in.REQ_SEEK_POS;
   nrbytes = (size_t) fs_m_in.REQ_NBYTES;
 
   rdwt_err = OK;                /* set to EIO if disk error occurs */
@@ -160,8 +160,7 @@ int fs_breadwrite(void)
   /* Get the values from the request message */
   rw_flag = (fs_m_in.m_type == REQ_BREAD ? READING : WRITING);
   gid = (cp_grant_id_t) fs_m_in.REQ_GRANT;
-  position = make64((unsigned long) fs_m_in.REQ_SEEK_POS_LO,
-                    (unsigned long) fs_m_in.REQ_SEEK_POS_HI);
+  position = fs_m_in.REQ_SEEK_POS;
   nrbytes = (size_t) fs_m_in.REQ_NBYTES;
 
   block_size = get_block_size(fs_m_in.REQ_DEV);
@@ -633,7 +632,7 @@ int fs_getdents(void)
   ino = (pino_t) fs_m_in.REQ_INODE_NR;
   gid = (cp_grant_id_t) fs_m_in.REQ_GRANT;
   size = (size_t) fs_m_in.REQ_MEM_SIZE;
-  pos = (off_t) fs_m_in.REQ_SEEK_POS_LO;
+  pos = (off_t) fs_m_in.REQ_SEEK_POS;
 
   /* Check whether the position is properly aligned */
   if ((unsigned int) pos % DIR_ENTRY_ALIGN)

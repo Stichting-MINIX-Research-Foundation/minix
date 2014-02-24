@@ -45,7 +45,7 @@ int fs_readwrite(void)
   /* Get the values from the request message */
   rw_flag = (fs_m_in.m_type == REQ_READ ? READING : WRITING);
   gid = (cp_grant_id_t) fs_m_in.REQ_GRANT;
-  pos = (off_t) fs_m_in.REQ_SEEK_POS_LO;
+  pos = (off_t) fs_m_in.REQ_SEEK_POS;
   nrbytes = bytes_left = (size_t) fs_m_in.REQ_NBYTES;
 
   if (nrbytes > RW_BUFSIZ)
@@ -135,7 +135,7 @@ int fs_getdents(void)
   ino = (pino_t) fs_m_in.REQ_INODE_NR;
   gid = (cp_grant_id_t) fs_m_in.REQ_GRANT;
   size = buf_left = (size_t) fs_m_in.REQ_MEM_SIZE;
-  pos = (off_t) fs_m_in.REQ_SEEK_POS_LO;
+  pos = (off_t) fs_m_in.REQ_SEEK_POS;
 
   if ((pn = puffs_pn_nodewalk(global_pu, 0, &ino)) == NULL) {
 	lpuffs_debug("walk failed...\n");

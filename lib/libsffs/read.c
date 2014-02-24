@@ -36,7 +36,7 @@ int do_read(void)
   if ((r = get_handle(ino)) != OK)
 	return r;
 
-  pos = make64(m_in.REQ_SEEK_POS_LO, m_in.REQ_SEEK_POS_HI);
+  pos = m_in.REQ_SEEK_POS;
   count = m_in.REQ_NBYTES;
 
   assert(count > 0);
@@ -96,7 +96,7 @@ int do_getdents(void)
   if ((ino = find_inode(m_in.REQ_INODE_NR)) == NULL)
 	return EINVAL;
 
-  if (m_in.REQ_SEEK_POS_HI != 0) return EINVAL;
+  if(m_in.REQ_SEEK_POS >= ULONG_MAX) return EINVAL;
 
   if (!IS_DIR(ino)) return ENOTDIR;
 
@@ -115,7 +115,7 @@ int do_getdents(void)
    * the "." entry, the second position is for the ".." entry, and the next
    * position numbers each represent a file in the directory.
    */
-  for (pos = m_in.REQ_SEEK_POS_LO; ; pos++) {
+  for (pos = m_in.REQ_SEEK_POS; ; pos++) {
 	/* Determine which inode and name to use for this entry.
 	 * We have no idea whether the host will give us "." and/or "..",
 	 * so generate our own and skip those from the host.

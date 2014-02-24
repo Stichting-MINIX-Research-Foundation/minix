@@ -52,8 +52,7 @@ int req_breadwrite(
   m.m_type = rw_flag == READING ? REQ_BREAD : REQ_BWRITE;
   m.REQ_DEV = dev;
   m.REQ_GRANT = grant_id;
-  m.REQ_SEEK_POS_LO = ex64lo(pos);
-  m.REQ_SEEK_POS_HI = ex64hi(pos);
+  m.REQ_SEEK_POS = pos;
   m.REQ_NBYTES = num_of_bytes;
 
   /* Send/rec request */
@@ -80,8 +79,7 @@ int req_bpeek(endpoint_t fs_e, dev_t dev, off_t pos, unsigned int num_of_bytes)
   /* Fill in request message */
   m.m_type = REQ_BPEEK;
   m.REQ_DEV = dev;
-  m.REQ_SEEK_POS_LO = ex64lo(pos);
-  m.REQ_SEEK_POS_HI = ex64hi(pos);
+  m.REQ_SEEK_POS = pos;
   m.REQ_NBYTES = num_of_bytes;
 
   /* Send/rec request */
@@ -320,14 +318,10 @@ int req_getdents(
   m.REQ_INODE_NR = (pino_t) inode_nr;
   m.REQ_GRANT = grant_id;
   m.REQ_MEM_SIZE = size;
-  m.REQ_SEEK_POS_LO = ex64lo(pos);
-  if (vmp->m_fs_flags & RES_64BIT) {
-	m.REQ_SEEK_POS_HI = ex64hi(pos);
-  } else if (pos > INT_MAX) {
+  m.REQ_SEEK_POS = pos;
+  if (!(vmp->m_fs_flags & RES_64BIT) && (pos > INT_MAX)) {
 	/* FS does not support 64-bit off_t and 32 bits is not enough */
 	return EINVAL;
-  } else {
-	m.REQ_SEEK_POS_HI = 0;
   }
 
   r = fs_sendrec(fs_e, &m);
@@ -825,13 +819,9 @@ unsigned int *cum_iop)
   m.m_type = rw_flag == READING ? REQ_READ : REQ_WRITE;
   m.REQ_INODE_NR = (pino_t) inode_nr;
   m.REQ_GRANT = grant_id;
-  m.REQ_SEEK_POS_LO = ex64lo(pos);
-  if (vmp->m_fs_flags & RES_64BIT) {
-	m.REQ_SEEK_POS_HI = ex64hi(pos);
-  } else if (pos > INT_MAX) {
+  m.REQ_SEEK_POS = pos;
+  if ((!(vmp->m_fs_flags & RES_64BIT)) && (pos > INT_MAX)) {
 	return EINVAL;
-  } else {
-	m.REQ_SEEK_POS_HI = 0;
   }
   m.REQ_NBYTES = num_of_bytes;
 
@@ -868,8 +858,7 @@ int req_peek(endpoint_t fs_e, ino_t inode_nr, off_t pos, unsigned int bytes)
   m.m_type = REQ_PEEK;
   m.REQ_INODE_NR = inode_nr;
   m.REQ_GRANT = -1;
-  m.REQ_SEEK_POS_LO = ex64lo(pos);
-  m.REQ_SEEK_POS_HI = 0;	/* Not used for now, so clear it. */
+  m.REQ_SEEK_POS = pos;
   m.REQ_NBYTES = bytes;
 
   /* Send/rec request */

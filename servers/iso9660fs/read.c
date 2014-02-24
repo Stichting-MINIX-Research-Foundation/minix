@@ -34,7 +34,7 @@ int fs_read(void) {
   dir = get_dir_record(fs_m_in.REQ_INODE_NR);
   if (dir == NULL) return(EINVAL); /* no inode found */
 
-  position = fs_m_in.REQ_SEEK_POS_LO; 
+  position = fs_m_in.REQ_SEEK_POS; 
   nrbytes = (unsigned) fs_m_in.REQ_NBYTES; /* number of bytes to read */
   block_size = v_pri.logical_block_size_l;
   gid = fs_m_in.REQ_GRANT;
@@ -96,7 +96,7 @@ int fs_bread(void)
   
   rw_flag = (fs_m_in.m_type == REQ_BREAD ? READING : WRITING);
   gid = fs_m_in.REQ_GRANT;
-  position = make64(fs_m_in.REQ_SEEK_POS_LO, fs_m_in.REQ_SEEK_POS_HI);
+  position = fs_m_in.REQ_SEEK_POS;
   nrbytes = (unsigned) fs_m_in.REQ_NBYTES;
   block_size = v_pri.logical_block_size_l;
   dir = v_pri.dir_rec_root;
@@ -162,7 +162,7 @@ int fs_getdents(void)
   /* Get input parameters */
   ino = fs_m_in.REQ_INODE_NR;
   gid = fs_m_in.REQ_GRANT;
-  pos = fs_m_in.REQ_SEEK_POS_LO;
+  pos = fs_m_in.REQ_SEEK_POS;
 
   block_size = v_pri.logical_block_size_l;
   cur_pos = pos;		/* The current position */

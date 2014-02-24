@@ -30,8 +30,7 @@
 #define REQ_REN_NEW_DIR		m9_l4
 #define REQ_REN_OLD_DIR		m9_l3
 #define REQ_ROOT_INO		m9_l4
-#define REQ_SEEK_POS_HI		m9_l3
-#define REQ_SEEK_POS_LO		m9_l4
+#define REQ_SEEK_POS		m9_ull2
 #define REQ_TRC_END_HI		m9_l4
 #define REQ_TRC_END_LO		m9_l5
 #define REQ_TRC_START_HI	m9_l2
