@@ -348,6 +348,10 @@ static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
           if ((s = init_service(rp, SEF_INIT_FRESH)) != OK) {
               panic("unable to initialize %d: %d", boot_image_priv->endpoint, s);
           }
+          /* VM will still send an RS_INIT message, though. */
+          if (boot_image_priv->endpoint != RS_PROC_NR) {
+              nr_uncaught_init_srvs++;
+          }
           continue;
       }
 
