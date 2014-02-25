@@ -487,6 +487,7 @@ static int pt_ptalloc(pt_t *pt, int pde, u32_t flags)
 /* Allocate a page table and write its address into the page directory. */
 	int i;
 	phys_bytes pt_phys;
+	u32_t *p;
 
 	/* Argument must make sense. */
 	assert(pde >= 0 && pde < ARCH_VM_DIR_ENTRIES);
@@ -498,9 +499,18 @@ static int pt_ptalloc(pt_t *pt, int pde, u32_t flags)
 	assert(!(pt->pt_dir[pde] & ARCH_VM_PDE_PRESENT));
 	assert(!pt->pt_pt[pde]);
 
-	/* Get storage for the page table. */
-        if(!(pt->pt_pt[pde] = vm_allocpage(&pt_phys, VMP_PAGETABLE)))
+	/* Get storage for the page table. The allocation call may in fact
+	 * recursively create the directory entry as a side effect. In that
+	 * case, we free the newly allocated page and do nothing else.
+	 */
+	if (!(p = vm_allocpage(&pt_phys, VMP_PAGETABLE)))
 		return ENOMEM;
+	if (pt->pt_pt[pde]) {
+		vm_freepages((vir_bytes) p, 1);
+		assert(pt->pt_pt[pde]);
+		return OK;
+	}
+	pt->pt_pt[pde] = p;
 
 	for(i = 0; i < ARCH_VM_PT_ENTRIES; i++)
 		pt->pt_pt[pde][i] = 0;	/* Empty entry. */
