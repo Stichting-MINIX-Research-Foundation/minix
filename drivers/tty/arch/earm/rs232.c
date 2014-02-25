@@ -266,8 +266,9 @@ rs_write(register tty_t *tp, int try)
 		tp->tty_outcum += count;
 		if ((tp->tty_outleft -= count) == 0) {
 			/* Output is finished, reply to the writer. */
-			chardriver_reply_task(tp->tty_outcaller, tp->tty_outid,
-				tp->tty_outcum);
+			if (tp->tty_outcaller != KERNEL)
+				chardriver_reply_task(tp->tty_outcaller,
+					tp->tty_outid, tp->tty_outcum);
 			tp->tty_outcum = 0;
 			tp->tty_outcaller = NONE;
 		}
@@ -275,7 +276,9 @@ rs_write(register tty_t *tp, int try)
 	}
 	if (tp->tty_outleft > 0 && tp->tty_termios.c_ospeed == B0) {
 		/* Oops, the line has hung up. */
-		chardriver_reply_task(tp->tty_outcaller, tp->tty_outid, EIO);
+		if (tp->tty_outcaller != KERNEL)
+			chardriver_reply_task(tp->tty_outcaller, tp->tty_outid,
+				EIO);
 		tp->tty_outleft = tp->tty_outcum = 0;
 		tp->tty_outcaller = NONE;
 	}

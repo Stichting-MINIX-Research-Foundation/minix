@@ -223,10 +223,11 @@ int try;
 
   flush(cons);			/* transfer anything buffered to the screen */
 
-  /* Reply to the writer if all output is finished or if an error occured. */
+  /* Reply to the writer if all output is finished or if an error occurred. */
   if (tp->tty_outleft == 0 || result != OK) {
-	chardriver_reply_task(tp->tty_outcaller, tp->tty_outid,
-		result != OK ? result : tp->tty_outcum);
+	if (tp->tty_outcaller != KERNEL)
+		chardriver_reply_task(tp->tty_outcaller, tp->tty_outid,
+			result != OK ? result : tp->tty_outcum);
 	tp->tty_outcum = tp->tty_outleft = 0;
 	tp->tty_outcaller = NONE;
   }
