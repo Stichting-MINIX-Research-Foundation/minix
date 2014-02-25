@@ -23,7 +23,7 @@ void test39a()
   subtest = 1;
 
   for (g = 0; g <= _ENDPOINT_MAX_GENERATION; g++) {
-	for (p = -MAX_NR_TASKS; p < _NR_PROCS; p++) {
+	for (p = -MAX_NR_TASKS; p < MAX_NR_PROCS; p++) {
 		endpoint_t ept;
 		int mg, mp;
 		ept = _ENDPOINT(g, p);

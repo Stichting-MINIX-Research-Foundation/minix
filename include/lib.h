@@ -18,7 +18,7 @@
 #include <minix/com.h>
 #include <minix/type.h>
 #include <minix/callnr.h>
-
+#include <minix/endpoint.h>
 #include <minix/ipc.h>
 
 struct ps_strings; /* forward declaration for minix_stack_fill. */

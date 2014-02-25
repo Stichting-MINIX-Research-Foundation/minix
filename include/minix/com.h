@@ -36,26 +36,8 @@
 #define _MINIX_COM_H 
 
 /*===========================================================================*
- *          	    		Magic process numbers			     *
- *===========================================================================*/
-
-/* These may not be any valid endpoint (see <minix/endpoint.h>). */
-#define ANY	((endpoint_t) 0x7ace)	/* used to indicate 'any process' */
-#define NONE 	((endpoint_t) 0x6ace)   /* used to indicate 'no process at all' */
-#define SELF	((endpoint_t) 0x8ace) 	/* used to indicate 'own process' */
-#define _MAX_MAGIC_PROC (SELF)	/* used by <minix/endpoint.h> 
-				   to determine generation size */
-
-/*===========================================================================*
  *            	Process numbers of processes in the system image	     *
  *===========================================================================*/
-
-/* The values of several task numbers depend on whether they or other tasks
- * are enabled. They are defined as (PREVIOUS_TASK - ENABLE_TASK) in general.
- * ENABLE_TASK is either 0 or 1, so a task either gets a new number, or gets
- * the same number as the previous task and is further unused. Note that the
- * order should correspond to the order in the task table defined in table.c. 
- */
 
 /* Kernel tasks. These all run in the same address space. */
 #define ASYNCM	((endpoint_t) -5) /* notifies about finished async sends */
