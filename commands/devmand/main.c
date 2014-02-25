@@ -886,6 +886,15 @@ static void main_loop()
 
 		fd = fopen(ev_path, "r");
 		if (fd == NULL) {
+			/*
+			 * ENFILE is a temporary failure, often caused by
+			 * running the test set.  Don't die from that..
+			 */
+			if (errno == ENFILE) {
+				usleep(50000);
+				continue;
+			}
+
 			fprintf(stderr,"devmand error: could not open event "
 				"file %s bailing out\n", ev_path);
 			cleanup();
