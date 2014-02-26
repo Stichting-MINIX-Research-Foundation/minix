@@ -74,18 +74,19 @@ int fs_readwrite(message *fs_m_in, message *fs_m_out)
   if (r == OK) {
 	position += (signed) nrbytes; /* Update position */
 	cum_io += nrbytes;
+
+	/* On write, update file size and access time. */
+	if (rw_flag == WRITING) {
+		rip->i_size = position;
+	} else {
+		memmove(bp->b_data, bp->b_data+nrbytes, rip->i_size - nrbytes);
+		rip->i_size -= nrbytes;
+	}
+
+	if (rw_flag == READING) rip->i_update |= ATIME;
+	if (rw_flag == WRITING) rip->i_update |= CTIME | MTIME;
   }
 
-  /* On write, update file size and access time. */
-  if (rw_flag == WRITING) {
-	rip->i_size = position;
-  } else {
-	memmove(bp->b_data, bp->b_data+nrbytes, rip->i_size - nrbytes);
-	rip->i_size -= nrbytes;
-  }
-
-  if (rw_flag == READING) rip->i_update |= ATIME;
-  if (rw_flag == WRITING) rip->i_update |= CTIME | MTIME;
   fs_m_out->RES_NBYTES = (size_t) cum_io;
   fs_m_out->RES_SEEK_POS = rip->i_size;
 
