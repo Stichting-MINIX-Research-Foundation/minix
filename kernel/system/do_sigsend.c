@@ -24,6 +24,9 @@ int do_sigsend(struct proc * caller, message * m_ptr)
   register struct proc *rp;
   struct sigframe_sigcontext fr, *frp;
   int proc_nr, r;
+#if defined(__i386__)
+  reg_t new_fp;
+#endif
 
   if (!isokendpt(m_ptr->m_sigcalls.endpt, &proc_nr)) return EINVAL;
   if (iskerneln(proc_nr)) return EPERM;
@@ -34,6 +37,10 @@ int do_sigsend(struct proc * caller, message * m_ptr)
 		(vir_bytes)m_ptr->m_sigcalls.sigctx, KERNEL,
 		(vir_bytes)&smsg, (phys_bytes) sizeof(struct sigmsg))) != OK)
 	return r;
+
+  /* WARNING: the following code may be run more than once even for a single
+   * signal delivery. Do not change registers here. See the comment below.
+   */
 
   /* Compute the user stack pointer where sigframe will start. */
   smsg.sm_stkptr = arch_get_sp(rp);
@@ -62,7 +69,7 @@ int do_sigsend(struct proc * caller, message * m_ptr)
   fr.sf_sc.sc_ss = rp->p_reg.ss;
   fr.sf_fp = rp->p_reg.fp;
   fr.sf_signum = smsg.sm_signo;
-  rp->p_reg.fp = (reg_t) &frp->sf_fp;
+  new_fp = (reg_t) &frp->sf_fp;
   fr.sf_scpcopy = fr.sf_scp;
   fr.sf_ra_sigreturn = smsg.sm_sigreturn;
   fr.sf_ra= rp->p_reg.pc;
@@ -74,11 +81,11 @@ int do_sigsend(struct proc * caller, message * m_ptr)
 	return EINVAL;
   }
 
-    if (proc_used_fpu(rp)) {
-	    /* save the FPU context before saving it to the sig context */
-	    save_fpu(rp);
-	    memcpy(&fr.sf_sc.sc_fpu_state, rp->p_seg.fpu_state, FPU_XFP_SIZE);
-    }
+  if (proc_used_fpu(rp)) {
+	/* save the FPU context before saving it to the sig context */
+	save_fpu(rp);
+	memcpy(&fr.sf_sc.sc_fpu_state, rp->p_seg.fpu_state, FPU_XFP_SIZE);
+  }
 #endif
 
 #if defined(__arm__)
@@ -108,10 +115,28 @@ int do_sigsend(struct proc * caller, message * m_ptr)
   fr.sf_sc.sc_magic = SC_MAGIC;
 
   /* Initialize the sigframe structure. */
-
   fpu_sigcontext(rp, &fr, &fr.sf_sc);
 
-#if defined(__arm__)
+  /* Copy the sigframe structure to the user's stack. */
+  if ((r = data_copy_vmcheck(caller, KERNEL, (vir_bytes)&fr,
+		m_ptr->m_sigcalls.endpt, (vir_bytes)frp,
+		(vir_bytes)sizeof(struct sigframe_sigcontext))) != OK)
+      return r;
+
+  /* WARNING: up to the statement above, the code may run multiple times, since
+   * copying out the frame/context may fail with VMSUSPEND the first time. For
+   * that reason, changes to process registers *MUST* be deferred until after
+   * this last copy -- otherwise, these changes will be made several times,
+   * possibly leading to corrupted process state.
+   */
+
+  /* Reset user registers to execute the signal handler. */
+  rp->p_reg.sp = (reg_t) frp;
+  rp->p_reg.pc = (reg_t) smsg.sm_sighandler;
+
+#if defined(__i386__)
+  rp->p_reg.fp = new_fp;
+#elif defined(__arm__)
   /* use the ARM link register to set the return address from the signal
    * handler
    */
@@ -124,16 +149,6 @@ int do_sigsend(struct proc * caller, message * m_ptr)
   rp->p_reg.r2 = (reg_t) fr.sf_scp;
   rp->p_misc_flags |= MF_CONTEXT_SET;
 #endif
-
-  /* Copy the sigframe structure to the user's stack. */
-  if ((r = data_copy_vmcheck(caller, KERNEL, (vir_bytes)&fr,
-		m_ptr->m_sigcalls.endpt, (vir_bytes)frp,
-		(vir_bytes)sizeof(struct sigframe_sigcontext))) != OK)
-      return r;
-
-  /* Reset user registers to execute the signal handler. */
-  rp->p_reg.sp = (reg_t) frp;
-  rp->p_reg.pc = (reg_t) smsg.sm_sighandler;
 
   /* Signal handler should get clean FPU. */
   rp->p_misc_flags &= ~MF_FPU_INITIALIZED;
