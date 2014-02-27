@@ -5717,6 +5717,7 @@
 ./usr/spool/locks			minix-sys
 ./usr/spool/lpd				minix-sys
 ./usr/src				minix-sys
+./usr/src/src.tar.gz			minix-sys	src
 ./usr/tests				minix-sys
 ./usr/tests/atf/atf-c++/detail/auto_array_test	minix-sys	atf
 ./usr/tests/lib/libc/stdio/t_mktemp	minix-sys	atf

@@ -254,6 +254,11 @@ BUILDTARGETS+=	do-x11
 .if ${MKEXTSRC} != "no"
 BUILDTARGETS+=	do-extsrc
 .endif
+
+.if defined(__MINIX) && ${MKSRC} == "yes"
+BUILDTARGETS+=	do-installsrc
+.endif # defined(__MINIX)
+
 BUILDTARGETS+=	do-obsolete
 
 #
@@ -550,6 +555,13 @@ includes-${dir}: .PHONY
 install-${dir}: .PHONY
 	@true
 .endfor
+
+.if defined(__MINIX)
+SRCTAR=src.tar.gz
+do-installsrc:
+	cd ${.CURDIR} && git ls-tree -r HEAD --name-only | tar czf ${.OBJDIR}/$(SRCTAR) -T -
+	${INSTALL_FILE} ${.OBJDIR}/$(SRCTAR) ${DESTDIR}/usr/src/
+.endif # defined(__MINIX)
 
 #
 # XXX this needs to change when distrib Makefiles are recursion compliant
