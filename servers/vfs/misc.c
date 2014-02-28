@@ -223,6 +223,24 @@ int do_fcntl(void)
 	fl = (O_NOSIGPIPE);
 	f->filp_flags = (f->filp_flags & ~fl) | (fcntl_argx & fl);
 	break;
+    case F_FLUSH_FS_CACHE:
+    {
+	struct vnode *vn = f->filp_vno;
+	mode_t mode = f->filp_vno->v_mode;
+	if (!super_user) {
+		r = EPERM;
+	} else if (S_ISBLK(mode)) {
+		/* Block device; flush corresponding device blocks. */
+		r = req_flush(vn->v_bfs_e, vn->v_sdev);
+	} else if (S_ISREG(mode) || S_ISDIR(mode)) {
+		/* Directory or regular file; flush hosting FS blocks. */
+		r = req_flush(vn->v_fs_e, vn->v_dev);
+	} else {
+		/* Remaining cases.. Meaning unclear. */
+		r = ENODEV;
+	}
+	break;
+    }
     default:
 	r = EINVAL;
   }

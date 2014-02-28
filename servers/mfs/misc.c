@@ -39,7 +39,7 @@ int fs_flush()
  * to disk.
  */
   dev_t dev = fs_m_in.REQ_DEV;
-  if(dev == fs_dev) return(EBUSY);
+  if(dev == fs_dev && lmfs_bufs_in_use() > 0) return(EBUSY);
  
   lmfs_flushall();
   lmfs_invalidate(dev);

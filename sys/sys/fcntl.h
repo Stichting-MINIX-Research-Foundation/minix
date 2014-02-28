@@ -326,6 +326,7 @@ __END_DECLS
 
 #if defined(__minix)
 #define F_FREESP       100
+#define F_FLUSH_FS_CACHE	101	/* invalidate cache on associated FS */
 #endif /* defined(__minix) */
 
 #endif /* !_SYS_FCNTL_H_ */
