@@ -366,6 +366,9 @@ void sef_llvm_stack_refs_restore(char *stack_buff);
 int sef_llvm_state_transfer(sef_init_info_t *info);
 int sef_llvm_add_special_mem_region(void *addr, size_t len, const char* name);
 int sef_llvm_del_special_mem_region_by_addr(void *addr);
+void *sef_llvm_ac_mmap(void *buf, size_t len, int prot, int flags, int fd,
+	off_t offset);
+int sef_llvm_ac_munmap(void *buf, size_t len);
 
 int sef_llvm_ltckpt_enabled(void);
 int sef_llvm_get_ltckpt_offset(void);
