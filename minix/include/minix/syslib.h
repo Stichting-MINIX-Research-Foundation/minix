@@ -194,7 +194,7 @@ int sys_diagctl(int ctl, char *arg1, int arg2);
 int sys_getinfo(int request, void *val_ptr, int val_len, void *val_ptr2,
 	int val_len2);
 int sys_whoami(endpoint_t *ep, char *name, int namelen, int
-	*priv_flags);
+	*priv_flags, int* init_flags);
 
 /* Signal control. */
 int sys_kill(endpoint_t proc_ep, int sig);

@@ -125,6 +125,7 @@ int do_privctl(struct proc * caller, message * m_ptr)
 
 	/* Set defaults for privilege bitmaps. */
 	priv(rp)->s_flags= DSRV_F;           /* privilege flags */
+	priv(rp)->s_init_flags= DSRV_I;      /* initialization flags */
 	priv(rp)->s_trap_mask= DSRV_T;       /* allowed traps */
 	memset(&map, 0, sizeof(map));
 	ipc_to_m = DSRV_M;                   /* allowed targets */
@@ -325,8 +326,9 @@ static int update_priv(struct proc *rp, struct priv *priv)
 
   int i;
 
-  /* Copy s_flags and signal managers. */
+  /* Copy flags and signal managers. */
   priv(rp)->s_flags = priv->s_flags;
+  priv(rp)->s_init_flags = priv->s_init_flags;
   priv(rp)->s_sig_mgr = priv->s_sig_mgr;
   priv(rp)->s_bak_sig_mgr = priv->s_bak_sig_mgr;
 
