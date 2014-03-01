@@ -21,6 +21,7 @@ int sef_self_receiving;
 /* Extern variables. */
 EXTERN int sef_lu_state;
 EXTERN int __sef_st_before_receive_enabled;
+EXTERN __attribute__((weak)) int __vm_init_fresh;
 
 /* Debug. */
 #if SEF_INIT_DEBUG || SEF_LU_DEBUG || SEF_PING_DEBUG || SEF_SIGNAL_DEBUG
@@ -109,8 +110,8 @@ void sef_startup()
           panic("RS unable to complete init: %d", r);
       }
   }
-  else if(sef_self_endpoint == VM_PROC_NR) {
-  	/* VM handles initialization by RS later */
+  else if(sef_self_endpoint == VM_PROC_NR && __vm_init_fresh) {
+      /* VM handles fresh initialization by RS later */
   } else {
       message m;
 

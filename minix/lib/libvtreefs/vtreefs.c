@@ -53,7 +53,6 @@ sef_local_startup(void)
 {
 
 	sef_setcb_init_fresh(init_server);
-	sef_setcb_init_restart(init_server);
 
 	sef_setcb_signal_handler(got_signal);
 

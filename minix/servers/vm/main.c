@@ -60,12 +60,33 @@ struct {
 			((c) - VM_RQ_BASE) : -1)
 
 static int map_service(struct rprocpub *rpub);
-static int do_rs_init(message *m);
+
+static struct rprocpub rprocpub[NR_SYS_PROCS];
+int __vm_init_fresh;
 
 /* SEF functions and variables. */
+static void sef_local_startup(void);
+static int sef_cb_init_lu_restart(int type, sef_init_info_t *info);
+static int sef_cb_init_fresh(int type, sef_init_info_t *info);
 static void sef_cb_signal_handler(int signo);
 
 void init_vm(void);
+
+int do_sef_init_request(message *);
+
+/*===========================================================================*
+ *				is_first_time				     *
+ *===========================================================================*/
+static int is_first_time(void)
+{
+	struct proc rs_proc;
+	int r;
+
+	if ((r = sys_getproc(&rs_proc, RS_PROC_NR)) != OK)
+		panic("VM: couldn't get RS process data: %d", r);
+
+	return RTS_ISSET(&rs_proc, RTS_BOOTINHIBIT);
+}
 
 /*===========================================================================*
  *				main					     *
@@ -76,15 +97,15 @@ int main(void)
   int result, who_e, rcv_sts;
   int caller_slot;
 
-  /* Initialize system so that all processes are runnable */
-  init_vm();
+  /* Initialize system so that all processes are runnable the first time. */
+  if (is_first_time()) {
+	init_vm();
+	__vm_init_fresh=1;
+  }
 
-  /* Register init callbacks. */
-  sef_setcb_init_restart(sef_cb_init_fail);
-  sef_setcb_signal_handler(sef_cb_signal_handler);
-
-  /* Let SEF perform startup. */
-  sef_startup();
+  /* SEF local startup. */
+  sef_local_startup();
+  __vm_init_fresh=0;
 
   SANITYCHECK(SCL_TOP);
 
@@ -127,7 +148,9 @@ int main(void)
 		/* Calls that use the transid */
 		result = do_procctl(&msg, transid);
 	} else if(msg.m_type == RS_INIT && msg.m_source == RS_PROC_NR) {
-		result = do_rs_init(&msg);
+		result = do_sef_init_request(&msg);
+		if(result != OK) panic("do_sef_init_request failed!\n");
+		result = SUSPEND;	/* do not reply to RS */
 	} else if (msg.m_type == VM_PAGEFAULT) {
 		if (!IPC_STATUS_FLAGS_TEST(rcv_sts, IPC_FLG_MSG_FROM_KERNEL)) {
 			printf("VM: process %d faked VM_PAGEFAULT "
@@ -171,13 +194,26 @@ int main(void)
   return(OK);
 }
 
-static int do_rs_init(message *m)
+static void sef_local_startup(void)
+{
+	/* Register init callbacks. */
+	sef_setcb_init_fresh(sef_cb_init_fresh);
+	sef_setcb_init_lu(sef_cb_init_lu_restart);
+	sef_setcb_init_restart(sef_cb_init_lu_restart);
+
+	/* Register signal callbacks. */
+	sef_setcb_signal_handler(sef_cb_signal_handler);
+
+	/* Let SEF perform startup. */
+	sef_startup();
+}
+
+static int sef_cb_init_fresh(int type, sef_init_info_t *info)
 {
 	int s, i;
-	static struct rprocpub rprocpub[NR_BOOT_PROCS];
 
 	/* Map all the services in the boot image. */
-	if((s = sys_safecopyfrom(RS_PROC_NR, m->m_rs_init.rproctab_gid, 0,
+	if((s = sys_safecopyfrom(RS_PROC_NR, info->rproctab_gid, 0,
 		(vir_bytes) rprocpub, sizeof(rprocpub))) != OK) {
 		panic("vm: sys_safecopyfrom (rs) failed: %d", s);
 	}
@@ -190,11 +226,7 @@ static int do_rs_init(message *m)
 		}
 	}
 
-	/* RS expects this response that it then again wants to reply to: */
-	m->m_rs_init.result = OK;
-	ipc_sendrec(RS_PROC_NR, m);
-
-	return(SUSPEND);
+	return(OK);
 }
 
 static struct vmproc *init_proc(endpoint_t ep_nr)
@@ -526,6 +558,145 @@ void init_vm(void)
 	if(s < 0) {
 	    printf("VM: st_add_special_mmapped_region failed %d\n", s);
 	}
+}
+
+/*===========================================================================*
+ *			      sef_cb_init_vm_multi_lu			     *
+ *===========================================================================*/
+static int sef_cb_init_vm_multi_lu(int type, sef_init_info_t *info)
+{
+	message m;
+	int i, r;
+	ipc_filter_el_t ipc_filter[IPCF_MAX_ELEMENTS];
+	int num_elements;
+
+	if(type != SEF_INIT_LU || !(info->flags & SEF_LU_MULTI)) {
+	    return OK;
+	}
+
+	/* If this is a multi-component update, we need to perform the update
+	 * for services that need to be updated. In addition, make sure VM
+	 * can only receive messages from RS, tasks, and other services being
+	 * updated until RS specifically sends a special update cancel message.
+	 * This is necessary to limit the number of VM state changes to support
+	 * rollback. Allow only safe message types for safe updates.
+	 */
+	memset(ipc_filter, 0, sizeof(ipc_filter));
+	num_elements = 0;
+	ipc_filter[num_elements].flags = IPCF_MATCH_M_SOURCE;
+	ipc_filter[num_elements++].m_source = RS_PROC_NR;
+	if(info->flags & SEF_LU_UNSAFE) {
+	    ipc_filter[num_elements].flags = IPCF_MATCH_M_SOURCE;
+	    ipc_filter[num_elements++].m_source = ANY_TSK;
+	}
+	if((r = sys_safecopyfrom(RS_PROC_NR, info->rproctab_gid, 0,
+	    (vir_bytes) rprocpub, NR_SYS_PROCS*sizeof(struct rprocpub))) != OK) {
+	    panic("sys_safecopyfrom failed: %d", r);
+	}
+	m.m_source = VM_PROC_NR;
+	for(i=0;i < NR_SYS_PROCS;i++) {
+	    if(rprocpub[i].in_use && rprocpub[i].old_endpoint != NONE) {
+	        if(num_elements <= IPCF_MAX_ELEMENTS-3) {
+	            ipc_filter[num_elements].flags = IPCF_MATCH_M_SOURCE;
+	            ipc_filter[num_elements].m_source = rprocpub[i].old_endpoint;
+	            if(!(info->flags & SEF_LU_UNSAFE)) {
+	                ipc_filter[num_elements].flags |= IPCF_MATCH_M_TYPE;
+	                ipc_filter[num_elements].m_type = VM_BRK;
+	            }
+	            num_elements++;
+	            ipc_filter[num_elements].flags = IPCF_MATCH_M_SOURCE;
+	            ipc_filter[num_elements].m_source = rprocpub[i].new_endpoint;
+	            if(!(info->flags & SEF_LU_UNSAFE)) {
+	                ipc_filter[num_elements].flags |= IPCF_MATCH_M_TYPE;
+	                ipc_filter[num_elements].m_type = VM_BRK;
+	            }
+	            num_elements++;
+	            /* Make sure we can talk to any RS instance. */
+	            if(rprocpub[i].old_endpoint == RS_PROC_NR) {
+	                ipc_filter[num_elements].flags = IPCF_MATCH_M_SOURCE;
+	                ipc_filter[num_elements++].m_source = rprocpub[i].new_endpoint;
+	            }
+	            else if(rprocpub[i].new_endpoint == RS_PROC_NR) {
+	                ipc_filter[num_elements].flags = IPCF_MATCH_M_SOURCE;
+	                ipc_filter[num_elements++].m_source = rprocpub[i].old_endpoint;
+	            }
+	        }
+	        else {
+	            printf("sef_cb_init_vm_multi_lu: skipping ipc filter elements for %d and %d\n",
+	                rprocpub[i].old_endpoint, rprocpub[i].new_endpoint);
+	        }
+	        if(rprocpub[i].sys_flags & SF_VM_UPDATE) {
+	            m.m_lsys_vm_update.src = rprocpub[i].new_endpoint;
+	            m.m_lsys_vm_update.dst = rprocpub[i].old_endpoint;
+	            m.m_lsys_vm_update.flags = rprocpub[i].sys_flags;
+	            r = do_rs_update(&m);
+	            if(r != OK && r != SUSPEND) {
+	                printf("sef_cb_init_vm_multi_lu: do_rs_update failed: %d", r);
+	            }
+	        }
+	    }
+	}
+
+	r = sys_statectl(SYS_STATE_ADD_IPC_WL_FILTER, ipc_filter, num_elements*sizeof(ipc_filter_el_t));
+	if(r != OK) {
+	    printf("sef_cb_init_vm_multi_lu: sys_statectl failed: %d", r);
+	}
+
+	return OK;
+}
+
+/*===========================================================================*
+ *			     sef_cb_init_lu_restart			     *
+ *===========================================================================*/
+static int sef_cb_init_lu_restart(int type, sef_init_info_t *info)
+{
+/* Restart the vm server. */
+        int r;
+        endpoint_t old_e;
+        int old_p;
+        struct vmproc *old_vmp, *new_vmp;
+
+        /* Perform default state transfer first. Assume VM doesn't brk(). */
+        if(type == SEF_INIT_LU) {
+		sef_setcb_init_restart(SEF_CB_INIT_RESTART_DEFAULT);
+		r = SEF_CB_INIT_LU_DEFAULT(type, info);
+        }
+        else {
+		r = SEF_CB_INIT_RESTART_DEFAULT(type, info);
+        }
+        if(r != OK) {
+		return r;
+        }
+
+	/* Lookup slots for old process. */
+	old_e = info->old_endpoint;
+	if(vm_isokendpt(old_e, &old_p) != OK) {
+		printf("sef_cb_init_lu_restart: bad old endpoint %d\n", old_e);
+		return EINVAL;
+	}
+	old_vmp = &vmproc[old_p];
+	new_vmp = &vmproc[VM_PROC_NR];
+
+	/* Swap proc slots and dynamic data. */
+	if((r = swap_proc_slot(old_vmp, new_vmp)) != OK) {
+		printf("sef_cb_init_lu_restart: swap_proc_slot failed\n");
+		return r;
+	}
+        if((r = swap_proc_dyn_data(old_vmp, new_vmp, 0)) != OK) {
+		printf("sef_cb_init_lu_restart: swap_proc_dyn_data failed\n");
+		return r;
+	}
+
+	/* Rebind page tables. */
+	pt_bind(&new_vmp->vm_pt, new_vmp);
+	pt_bind(&old_vmp->vm_pt, old_vmp);
+	pt_clearmapcache();
+
+	/* Adjust process references. */
+	adjust_proc_refs();
+
+	/* Handle multi-component live update when necessary. */
+	return sef_cb_init_vm_multi_lu(type, info);
 }
 
 /*===========================================================================*
