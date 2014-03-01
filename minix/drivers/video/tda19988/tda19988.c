@@ -141,11 +141,6 @@ static struct log log = {
 	.log_func = default_log
 };
 
-static void sef_local_startup(void);
-static int sef_cb_lu_state_save(int);
-static int lu_state_restore(void);
-static int sef_cb_init(int type, sef_init_info_t * info);
-
 /* CEC Module */
 static int is_display_connected(void);
 static int enable_hdmi_module(void);
@@ -821,7 +816,7 @@ read_edid(uint8_t * buf, size_t count)
 }
 
 static int
-sef_cb_lu_state_save(int UNUSED(state))
+sef_cb_lu_state_save(int UNUSED(result), int UNUSED(flags))
 {
 	ds_publish_u32("cec_bus", cec_bus, DSF_OVERWRITE);
 	ds_publish_u32("hdmi_bus", hdmi_bus, DSF_OVERWRITE);

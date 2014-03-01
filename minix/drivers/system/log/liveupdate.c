@@ -68,7 +68,7 @@ int sef_cb_lu_prepare(int state)
 /*===========================================================================*
  *      		  sef_cb_lu_state_isvalid		             *
  *===========================================================================*/
-int sef_cb_lu_state_isvalid(int state)
+int sef_cb_lu_state_isvalid(int state, int UNUSED(flags))
 {
   return SEF_LU_STATE_IS_STANDARD(state) || LOG_STATE_IS_CUSTOM(state);
 }
