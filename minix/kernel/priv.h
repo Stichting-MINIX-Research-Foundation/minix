@@ -57,6 +57,8 @@ struct priv {
   int s_irq_tab[NR_IRQ];
   vir_bytes s_grant_table;	/* grant table address of process, or 0 */
   int s_grant_entries;		/* no. of entries, or 0 */
+  vir_bytes s_state_table;	/* state table address of process, or 0 */
+  int s_state_entries;		/* no. of entries, or 0 */
 };
 
 /* Guard word for task stacks. */

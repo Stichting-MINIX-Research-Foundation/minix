@@ -1177,8 +1177,10 @@ _ASSERT_MSG_SIZE(mess_lsys_krn_sys_sprof);
 
 typedef struct {
 	int request;
+	void *address;
+	int length;
 
-	uint8_t padding[52];
+	uint8_t padding[44];
 } mess_lsys_krn_sys_statectl;
 _ASSERT_MSG_SIZE(mess_lsys_krn_sys_statectl);
 
