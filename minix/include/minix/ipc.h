@@ -289,7 +289,8 @@ _ASSERT_MSG_SIZE(mess_krn_lsys_sys_fork);
 typedef struct {
 	endpoint_t endpt;
 	int privflags;
-	char name[48];
+	int initflags;
+	char name[44];
 
 } mess_krn_lsys_sys_getwhoami;
 _ASSERT_MSG_SIZE(mess_krn_lsys_sys_getwhoami);

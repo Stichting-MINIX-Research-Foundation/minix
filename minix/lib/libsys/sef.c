@@ -58,13 +58,13 @@ void sef_startup()
   int r, status;
   endpoint_t old_endpoint;
   int priv_flags;
+  int init_flags;
 
   /* Get information about self. */
   r = sys_whoami(&sef_self_endpoint, sef_self_name, SEF_SELF_NAME_MAXLEN,
-      &priv_flags);
+      &priv_flags, &init_flags);
   if ( r != OK) {
-      sef_self_endpoint = SELF;
-      strlcpy(sef_self_name, "Unknown", sizeof(sef_self_name));
+      panic("sef_startup: sys_whoami failed: %d\n", r);
   }
   sef_self_priv_flags = priv_flags;
   old_endpoint = NONE;

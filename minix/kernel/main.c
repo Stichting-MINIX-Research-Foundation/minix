@@ -211,6 +211,8 @@ void kmain(kinfo_t *local_cbi)
 	    else if(iskerneln(proc_nr)) {
                 /* Privilege flags. */
                 priv(rp)->s_flags = (proc_nr == IDLE ? IDL_F : TSK_F);
+                /* Init flags. */
+                priv(rp)->s_init_flags = TSK_I;
                 /* Allowed traps. */
                 priv(rp)->s_trap_mask = (proc_nr == CLOCK 
                     || proc_nr == SYSTEM  ? CSK_T : TSK_T);
@@ -221,6 +223,7 @@ void kmain(kinfo_t *local_cbi)
             else {
 	    	assert(isrootsysn(proc_nr));
                 priv(rp)->s_flags= RSYS_F;        /* privilege flags */
+                priv(rp)->s_init_flags = SRV_I;   /* init flags */
                 priv(rp)->s_trap_mask= SRV_T;     /* allowed traps */
                 ipc_to_m = SRV_M;                 /* allowed targets */
                 kcalls = SRV_KC;                  /* allowed kernel calls */

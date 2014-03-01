@@ -11,6 +11,7 @@
  * Upon return of the GETWHOAMI request the following parameters are used:
  *   m_krn_lsys_sys_getwhoami.endpt	(the caller endpoint)
  *   m_krn_lsys_sys_getwhoami.privflags	(the caller priviledes)
+ *   m_krn_lsys_sys_getwhoami.initflags (the caller initflags)
  *   m_krn_lsys_sys_getwhoami.name	(the caller process name)
  *
  */
@@ -136,6 +137,7 @@ int do_getinfo(struct proc * caller, message * m_ptr)
 	strncpy(m_ptr->m_krn_lsys_sys_getwhoami.name, caller->p_name, len);
 	m_ptr->m_krn_lsys_sys_getwhoami.name[len] = '\0';
 	m_ptr->m_krn_lsys_sys_getwhoami.privflags = priv(caller)->s_flags;
+        m_ptr->m_krn_lsys_sys_getwhoami.initflags = priv(caller)->s_init_flags;
 	return OK;
     }
     case GET_MONPARAMS: {
