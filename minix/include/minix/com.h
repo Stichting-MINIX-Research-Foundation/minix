@@ -432,6 +432,7 @@
 
 /* Subfunctions for SYS_STATECTL */
 #define SYS_STATE_CLEAR_IPC_REFS    1	/* clear IPC references */
+#define SYS_STATE_SET_STATE_TABLE   2	/* set state map */
 
 /* Subfunctions for SYS_SCHEDCTL */
 #  define SCHEDCTL_FLAG_KERNEL	1	/* mark kernel scheduler and remove 
