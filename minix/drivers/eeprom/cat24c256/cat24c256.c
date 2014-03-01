@@ -22,12 +22,6 @@ static i2c_addr_t valid_addrs[9] = {
 	0x50, 0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57, 0x00
 };
 
-/* SEF functions and variables. */
-static void sef_local_startup(void);
-static int sef_cb_init(int type, sef_init_info_t * info);
-static int sef_cb_lu_state_save(int);
-static int lu_state_restore(void);
-
 /* libblockdriver callbacks */
 static int cat24c256_blk_open(devminor_t minor, int access);
 static int cat24c256_blk_close(devminor_t minor);
@@ -396,7 +390,7 @@ cat24c256_write(uint16_t memaddr, void *buf, size_t buflen, int flags)
 }
 
 static int
-sef_cb_lu_state_save(int UNUSED(state))
+sef_cb_lu_state_save(int UNUSED(result), int UNUSED(flags))
 {
 	ds_publish_u32("bus", bus, DSF_OVERWRITE);
 	ds_publish_u32("address", address, DSF_OVERWRITE);

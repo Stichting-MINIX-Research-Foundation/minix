@@ -43,12 +43,6 @@ static int i2c_ioctl(devminor_t minor, unsigned long request, endpoint_t endpt,
 	cp_grant_id_t grant, int flags, endpoint_t user_endpt, cdev_id_t id);
 static void i2c_other(message * m, int ipc_status);
 
-/* SEF callbacks and driver state management */
-static int sef_cb_lu_state_save(int);
-static int lu_state_restore(void);
-static int sef_cb_init(int type, sef_init_info_t * info);
-static void sef_local_startup(void);
-
 /* Globals  */
 
 /* the bus that this instance of the driver is responsible for */
@@ -81,6 +75,25 @@ static struct chardriver i2c_tab = {
 	.cdr_ioctl	= i2c_ioctl,
 	.cdr_other	= i2c_other
 };
+
+static int
+sef_cb_lu_state_save(int UNUSED(result), int UNUSED(flags))
+{
+	int r;
+	char key[DS_MAX_KEYLEN];
+
+	memset(key, '\0', DS_MAX_KEYLEN);
+	snprintf(key, DS_MAX_KEYLEN, "i2c.%d.i2cdev", i2c_bus_id + 1);
+	r = ds_publish_mem(key, i2cdev, sizeof(i2cdev), DSF_OVERWRITE);
+	if (r != OK) {
+		log_warn(&log, "ds_publish_mem(%s) failed (r=%d)\n", key, r);
+		return r;
+	}
+
+	log_debug(&log, "State Saved\n");
+
+	return OK;
+}
 
 /*
  * Claim an unclaimed device for exclusive use by endpt. This function can
@@ -126,7 +139,7 @@ do_reserve(endpoint_t endpt, int slave_addr)
 	i2cdev[slave_addr].endpt = endpt;
 	memcpy(i2cdev[slave_addr].key, key, DS_MAX_KEYLEN);
 
-	sef_cb_lu_state_save(0);	/* save reservations */
+	sef_cb_lu_state_save(0, 0);	/* save reservations */
 
 	log_debug(&log, "Device 0x%x claimed by 0x%x key='%s'\n",
 	    slave_addr, endpt, key);
@@ -381,25 +394,6 @@ ds_event(void)
 }
 
 static int
-sef_cb_lu_state_save(int UNUSED(state))
-{
-	int r;
-	char key[DS_MAX_KEYLEN];
-
-	memset(key, '\0', DS_MAX_KEYLEN);
-	snprintf(key, DS_MAX_KEYLEN, "i2c.%d.i2cdev", i2c_bus_id + 1);
-	r = ds_publish_mem(key, i2cdev, sizeof(i2cdev), DSF_OVERWRITE);
-	if (r != OK) {
-		log_warn(&log, "ds_publish_mem(%s) failed (r=%d)\n", key, r);
-		return r;
-	}
-
-	log_debug(&log, "State Saved\n");
-
-	return OK;
-}
-
-static int
 lu_state_restore(void)
 {
 	int r;
@@ -465,7 +459,7 @@ sef_cb_init(int type, sef_init_info_t * UNUSED(info))
 	}
 
 	/* Save state */
-	sef_cb_lu_state_save(0);
+	sef_cb_lu_state_save(0, 0);
 
 	/* Initialization completed successfully. */
 	return OK;

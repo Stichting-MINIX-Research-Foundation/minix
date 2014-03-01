@@ -4,6 +4,9 @@
 
 /* SEF Live update variables. */
 static int sef_lu_state;
+static int sef_lu_flags;
+
+extern __attribute__((weak)) int st_do_state_cleanup(void);
 
 /* SEF Live update callbacks. */
 static struct sef_cbs {
@@ -83,19 +86,21 @@ void do_sef_lu_before_receive(void)
 int do_sef_lu_request(message *m_ptr)
 {
 /* Handle a SEF Live update request. */
-  int state, old_state, is_valid_state;
+  int state, old_state, flags, is_valid_state;
 
   sef_lu_debug_cycle = 0;
   old_state = sef_lu_state;
   state = m_ptr->m_rs_update.state;
+  flags = m_ptr->m_rs_update.flags;
 
   /* Deal with prepare cancel requests first. */
   is_valid_state = (state == SEF_LU_STATE_NULL);
 
   /* Otherwise only accept live update requests with a valid state. */
-  is_valid_state = is_valid_state || sef_cbs.sef_cb_lu_state_isvalid(state);
+  is_valid_state = SEF_LU_ALWAYS_ALLOW_DEBUG_STATES && SEF_LU_STATE_IS_DEBUG(state);
+  is_valid_state = is_valid_state || sef_cbs.sef_cb_lu_state_isvalid(state, flags);
   if(!is_valid_state) {
-      if(sef_cbs.sef_cb_lu_state_isvalid == SEF_CB_LU_STATE_ISVALID_NULL) {
+      if(sef_cbs.sef_cb_lu_state_isvalid == SEF_CB_LU_STATE_ISVALID_DEFAULT) {
           sef_lu_ready(ENOSYS);
       }
       else {
@@ -124,7 +129,7 @@ int do_sef_lu_request(message *m_ptr)
 static void sef_lu_ready(int result)
 {
   message m;
-  int old_state, r;
+  int old_state, r=EINVAL;
 
 #if SEF_LU_DEBUG
   sef_lu_debug_begin();
@@ -134,13 +139,19 @@ static void sef_lu_ready(int result)
   sef_lu_debug_end();
 #endif
 
-  /* If result is OK, let the callback code save
+  /* If result is OK, let the callback code cleanup and save
    * any state that must be carried over to the new version.
    */
   if(result == OK) {
-      r = sef_cbs.sef_cb_lu_state_save(sef_lu_state);
+      /* st_do_state_cleanup is a weak symbol. It is only defined if
+       * we are linked against magic */
+      if (st_do_state_cleanup)
+          r = st_do_state_cleanup();
+      if(r == OK) {
+          r = sef_cbs.sef_cb_lu_state_save(sef_lu_state, sef_lu_flags);
+      }
       if(r != OK) {
-          /* Abort update if callback returned error. */
+          /* Abort update in case of error. */
           result = r;
       }
   }
@@ -239,7 +250,7 @@ int sef_cb_lu_prepare_null(int UNUSED(state))
 /*===========================================================================*
  *      	         sef_cb_lu_state_isvalid_null		             *
  *===========================================================================*/
-int sef_cb_lu_state_isvalid_null(int UNUSED(state))
+int sef_cb_lu_state_isvalid_null(int UNUSED(state), int UNUSED(flags))
 {
   return FALSE;
 }
@@ -263,7 +274,7 @@ void sef_cb_lu_state_dump_null(int UNUSED(state))
 /*===========================================================================*
  *                       sef_cb_lu_state_save_null        		     *
  *===========================================================================*/
-int sef_cb_lu_state_save_null(int UNUSED(result))
+int sef_cb_lu_state_save_null(int UNUSED(result), int UNUSED(flags))
 {
   return OK;
 }
@@ -312,7 +323,7 @@ int sef_cb_lu_prepare_crash(int UNUSED(state))
 /*===========================================================================*
  *      	      sef_cb_lu_state_isvalid_standard                       *
  *===========================================================================*/
-int sef_cb_lu_state_isvalid_standard(int state)
+int sef_cb_lu_state_isvalid_standard(int state, int UNUSED(flags))
 {
   return SEF_LU_STATE_IS_STANDARD(state);
 }
@@ -320,9 +331,25 @@ int sef_cb_lu_state_isvalid_standard(int state)
 /*===========================================================================*
  *      	      sef_cb_lu_state_isvalid_workfree                       *
  *===========================================================================*/
-int sef_cb_lu_state_isvalid_workfree(int state)
+int sef_cb_lu_state_isvalid_workfree(int state, int UNUSED(flags))
 {
   return (state == SEF_LU_STATE_WORK_FREE);
+}
+
+/*===========================================================================*
+ *      	    sef_cb_lu_state_isvalid_workfree_self                    *
+ *===========================================================================*/
+int sef_cb_lu_state_isvalid_workfree_self(int state, int flags)
+{
+  return (state == SEF_LU_STATE_WORK_FREE) && (flags & (SEF_LU_SELF|SEF_LU_ASR));
+}
+
+/*===========================================================================*
+ *      	       sef_cb_lu_state_isvalid_generic                       *
+ *===========================================================================*/
+int sef_cb_lu_state_isvalid_generic(int state, int flags)
+{
+  return (state == SEF_LU_STATE_EVAL) || sef_cb_lu_state_isvalid_workfree(state, flags);
 }
 
 /*===========================================================================*

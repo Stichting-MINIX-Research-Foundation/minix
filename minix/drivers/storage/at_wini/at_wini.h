@@ -205,5 +205,5 @@
 #define ATA_IF_NATIVE1	(1L << 2)	/* second channel is in native mode */
 
 extern int sef_cb_lu_prepare(int state);
-extern int sef_cb_lu_state_isvalid(int state);
+extern int sef_cb_lu_state_isvalid(int state, int flags);
 extern void sef_cb_lu_state_dump(int state);

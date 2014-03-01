@@ -118,12 +118,6 @@ static ssize_t sht21_read(devminor_t minor, u64_t position, endpoint_t endpt,
     cp_grant_id_t grant, size_t size, int flags, cdev_id_t id);
 static void sht21_other(message * m, int ipc_status);
 
-/* SEF functions */
-static int sef_cb_lu_state_save(int);
-static int lu_state_restore(void);
-static int sef_cb_init(int type, sef_init_info_t * info);
-static void sef_local_startup(void);
-
 /* Entry points to this driver from libchardriver. */
 static struct chardriver sht21_tab = {
 	.cdr_read	= sht21_read,
@@ -376,7 +370,7 @@ sht21_other(message * m, int ipc_status)
 }
 
 static int
-sef_cb_lu_state_save(int UNUSED(state))
+sef_cb_lu_state_save(int UNUSED(result), int UNUSED(flags))
 {
 	ds_publish_u32("bus", bus, DSF_OVERWRITE);
 	ds_publish_u32("address", address, DSF_OVERWRITE);

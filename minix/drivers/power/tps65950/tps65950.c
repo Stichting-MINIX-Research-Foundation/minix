@@ -38,12 +38,6 @@ i2c_addr_t addresses[NADDRESSES] = {
 /* local functions */
 static int check_revision(void);
 
-/* SEF related functions */
-static void sef_local_startup(void);
-static int sef_cb_lu_state_save(int);
-static int lu_state_restore(void);
-static int sef_cb_init(int type, sef_init_info_t * info);
-
 /* functions for transfering struct tm to/from this driver and calling proc. */
 static int fetch_t(endpoint_t ep, cp_grant_id_t gid, struct tm *t);
 static int store_t(endpoint_t ep, cp_grant_id_t gid, struct tm *t);
@@ -148,7 +142,7 @@ check_revision(void)
 }
 
 static int
-sef_cb_lu_state_save(int UNUSED(state))
+sef_cb_lu_state_save(int UNUSED(result), int UNUSED(flags))
 {
 	/* The addresses are fixed/non-configurable so bus is the only state */
 	ds_publish_u32("bus", bus, DSF_OVERWRITE);

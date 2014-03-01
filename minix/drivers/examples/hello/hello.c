@@ -16,7 +16,7 @@ static ssize_t hello_read(devminor_t minor, u64_t position, endpoint_t endpt,
 /* SEF functions and variables. */
 static void sef_local_startup(void);
 static int sef_cb_init(int type, sef_init_info_t *info);
-static int sef_cb_lu_state_save(int);
+static int sef_cb_lu_state_save(int, int);
 static int lu_state_restore(void);
 
 /* Entry points to the hello driver. */
@@ -73,7 +73,7 @@ static ssize_t hello_read(devminor_t UNUSED(minor), u64_t position,
     return size;
 }
 
-static int sef_cb_lu_state_save(int UNUSED(state)) {
+static int sef_cb_lu_state_save(int UNUSED(state), int UNUSED(flags)) {
 /* Save the state. */
     ds_publish_u32("open_counter", open_counter, DSF_OVERWRITE);
 

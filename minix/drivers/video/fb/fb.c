@@ -40,12 +40,6 @@ static int do_get_fixscreeninfo(int minor, endpoint_t ep, cp_grant_id_t gid);
 static int do_pan_display(int minor, endpoint_t ep, cp_grant_id_t gid);
 static int keep_displaying_restarted(void);
 
-/* SEF functions and variables. */
-static void sef_local_startup(void);
-static int sef_cb_init(int type, sef_init_info_t *info);
-static int sef_cb_lu_state_save(int);
-static int lu_state_restore(void);
-
 /* Entry points to the fb driver. */
 static struct chardriver fb_tab =
 {
@@ -240,7 +234,8 @@ fb_write(devminor_t minor, u64_t pos, endpoint_t ep, cp_grant_id_t gid,
 }
 
 static int
-sef_cb_lu_state_save(int UNUSED(state)) {
+sef_cb_lu_state_save(int UNUSED(result), int UNUSED(flags))
+{
 /* Save the state. */
 	ds_publish_u32("open_counter", open_counter[0], DSF_OVERWRITE);
 
@@ -257,26 +252,6 @@ lu_state_restore() {
 	open_counter[0] = (int) value;
 
 	return OK;
-}
-
-static void
-sef_local_startup()
-{
-	/* Register init callbacks. Use the same function for all event types */
-	sef_setcb_init_fresh(sef_cb_init);
-	sef_setcb_init_lu(sef_cb_init);
-	sef_setcb_init_restart(sef_cb_init);
-
-	/* Register live update callbacks  */
-	/* - Agree to update immediately when LU is requested in a valid state*/
-	sef_setcb_lu_prepare(sef_cb_lu_prepare_always_ready);
-	/* - Support live update starting from any standard state */
-	sef_setcb_lu_state_isvalid(sef_cb_lu_state_isvalid_standard);
-	/* - Register a custom routine to save the state. */
-	sef_setcb_lu_state_save(sef_cb_lu_state_save);
-
-	/* Let SEF perform startup. */
-	sef_startup();
 }
 
 static int
@@ -312,6 +287,26 @@ sef_cb_init(int type, sef_init_info_t *UNUSED(info))
 
 	/* Initialization completed successfully. */
 	return OK;
+}
+
+static void
+sef_local_startup()
+{
+	/* Register init callbacks. Use the same function for all event types */
+	sef_setcb_init_fresh(sef_cb_init);
+	sef_setcb_init_lu(sef_cb_init);
+	sef_setcb_init_restart(sef_cb_init);
+
+	/* Register live update callbacks  */
+	/* - Agree to update immediately when LU is requested in a valid state*/
+	sef_setcb_lu_prepare(sef_cb_lu_prepare_always_ready);
+	/* - Support live update starting from any standard state */
+	sef_setcb_lu_state_isvalid(sef_cb_lu_state_isvalid_standard);
+	/* - Register a custom routine to save the state. */
+	sef_setcb_lu_state_save(sef_cb_lu_state_save);
+
+	/* Let SEF perform startup. */
+	sef_startup();
 }
 
 int

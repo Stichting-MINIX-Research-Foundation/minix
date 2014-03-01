@@ -125,10 +125,10 @@ void sef_cb_ping_reply_pong(endpoint_t source);
 
 /* Callback type definitions. */
 typedef  int(*sef_cb_lu_prepare_t)(int);
-typedef  int(*sef_cb_lu_state_isvalid_t)(int);
+typedef  int(*sef_cb_lu_state_isvalid_t)(int, int);
 typedef void(*sef_cb_lu_state_changed_t)(int, int);
 typedef void(*sef_cb_lu_state_dump_t)(int);
-typedef  int(*sef_cb_lu_state_save_t)(int);
+typedef  int(*sef_cb_lu_state_save_t)(int, int);
 typedef  int(*sef_cb_lu_response_t)(message *m_ptr);
 
 /* Callback registration helpers. */
@@ -141,17 +141,19 @@ void sef_setcb_lu_response(sef_cb_lu_response_t cb);
 
 /* Predefined callback implementations. */
 int sef_cb_lu_prepare_null(int state);
-int sef_cb_lu_state_isvalid_null(int state);
+int sef_cb_lu_state_isvalid_null(int state, int flags);
 void sef_cb_lu_state_changed_null(int old_state, int state);
 void sef_cb_lu_state_dump_null(int state);
-int sef_cb_lu_state_save_null(int state);
+int sef_cb_lu_state_save_null(int state, int flags);
 int sef_cb_lu_response_null(message *m_ptr);
 
 int sef_cb_lu_prepare_always_ready(int state);
 int sef_cb_lu_prepare_never_ready(int state);
 int sef_cb_lu_prepare_crash(int state);
-int sef_cb_lu_state_isvalid_standard(int state);
-int sef_cb_lu_state_isvalid_workfree(int state);
+int sef_cb_lu_state_isvalid_standard(int state, int flags);
+int sef_cb_lu_state_isvalid_workfree(int state, int flags);
+int sef_cb_lu_state_isvalid_workfree_self(int state, int flags);
+int sef_cb_lu_state_isvalid_generic(int state, int flags);
 int sef_cb_lu_response_rs_reply(message *m_ptr);
 
 /* Macros for predefined callback implementations. */
@@ -174,12 +176,39 @@ int sef_cb_lu_response_rs_reply(message *m_ptr);
 #define SEF_LU_STATE_WORK_FREE          1    /* no work in progress */
 #define SEF_LU_STATE_REQUEST_FREE       2    /* no request in progress */
 #define SEF_LU_STATE_PROTOCOL_FREE      3    /* no protocol in progress */
-#define SEF_LU_STATE_CUSTOM_BASE        (SEF_LU_STATE_PROTOCOL_FREE+1)
-#define SEF_LU_STATE_IS_STANDARD(s)     ((s) > SEF_LU_STATE_NULL \
+#define SEF_LU_STATE_EVAL               4    /* evaluate expression */
+
+#define SEF_LU_STATE_UNREACHABLE        5    /* unreachable state */
+#define SEF_LU_STATE_PREPARE_CRASH      6    /* crash at prepare time */
+
+#define SEF_LU_STATE_STD_BASE           (SEF_LU_STATE_WORK_FREE)
+#define SEF_LU_STATE_DEBUG_BASE         (SEF_LU_STATE_UNREACHABLE)
+#define SEF_LU_STATE_CUSTOM_BASE        (SEF_LU_STATE_PREPARE_CRASH+1)
+
+#define SEF_LU_STATE_IS_STANDARD(s)     ((s) >= SEF_LU_STATE_STD_BASE \
+    && (s) < SEF_LU_STATE_CUSTOM_BASE \
+    && (SEF_LU_ALWAYS_ALLOW_DEBUG_STATES || !SEF_LU_STATE_IS_DEBUG(s)))
+#define SEF_LU_STATE_IS_DEBUG(s)     ((s) >= SEF_LU_STATE_DEBUG_BASE \
     && (s) < SEF_LU_STATE_CUSTOM_BASE)
+
+#define SEF_LU_STATE_EVAL_MAX_LEN          512
+
+/* Live update flags (can be used as init flags as well). */
+#define SEF_LU_SELF          	      0x0100    /* this is a self update */
+#define SEF_LU_ASR           	      0x0200    /* this is an ASR update */
+#define SEF_LU_MULTI         	      0x0400    /* this is a multi-component update */
+#define SEF_LU_INCLUDES_VM     	      0x0800    /* the update includes VM */
+#define SEF_LU_INCLUDES_RS     	      0x1000    /* the update includes RS */
+#define SEF_LU_PREPARE_ONLY           0x2000    /* prepare only, no actual update taking place */
+#define SEF_LU_UNSAFE                 0x4000    /* unsafe update, rollback may not be possible */
+#define SEF_LU_NOMMAP	      	      0x8000    /* update doesn't inherit mmapped regions */
+#define SEF_LU_DETACHED      	     0x10000    /* update detaches the old instance */
+
+#define SEF_LU_IS_IDENTITY_UPDATE(F) (((F) & (SEF_LU_SELF|SEF_LU_NOMMAP|SEF_LU_ASR|SEF_INIT_ST)) == SEF_LU_SELF)
 
 /* Debug. */
 #define SEF_LU_DEBUG_DEFAULT 1
+#define SEF_LU_ALWAYS_ALLOW_DEBUG_STATES 1
 
 #ifndef SEF_LU_DEBUG
 #define SEF_LU_DEBUG            SEF_LU_DEBUG_DEFAULT

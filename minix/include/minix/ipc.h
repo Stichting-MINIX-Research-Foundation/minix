@@ -1629,7 +1629,8 @@ typedef struct {
 	int		result;
 	int		state;
 	int		prepare_maxtime;
-	uint8_t padding[44];
+	int		flags;
+	uint8_t padding[40];
 } mess_rs_update;
 _ASSERT_MSG_SIZE(mess_rs_update);
 
