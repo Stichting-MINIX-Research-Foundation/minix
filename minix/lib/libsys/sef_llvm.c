@@ -154,6 +154,46 @@ int sef_llvm_del_special_mem_region_by_addr(void *addr)
 }
 
 /*===========================================================================*
+ *				sef_llvm_ac_mmap			     *
+ *===========================================================================*/
+void* sef_llvm_ac_mmap(void *buf, size_t len, int prot, int flags, int fd,
+	off_t offset)
+{
+    int r;
+    extern void* __attribute__((weak))
+       _magic_real_mmap(void*, size_t, int, int, int, off_t);
+    if (!_magic_real_mmap)
+        return mmap(buf, len, prot, flags, fd, offset);
+
+    /* Avoid regular dsentries for non-relocatable regions (e.g., DMA buffers).
+     */
+    buf = _magic_real_mmap(buf, len, prot, flags, fd, offset);
+    if(buf == MAP_FAILED)
+        return buf;
+    r = sef_llvm_add_special_mem_region(buf, len, NULL);
+    if(r < 0)
+        printf("sef_llvm_add_special_mem_region failed: %d\n", r);
+    return buf;
+}
+
+/*===========================================================================*
+ *				sef_llvm_ac_munmap			     *
+ *===========================================================================*/
+int sef_llvm_ac_munmap(void *buf, size_t len)
+{
+    int r;
+    extern int __attribute__((weak)) _magic_real_munmap(void*, size_t);
+    if (!_magic_real_munmap)
+        return munmap(buf, len);
+
+    if ((r = _magic_real_munmap(buf, len)) != 0)
+        return r;
+    if ((r = sef_llvm_del_special_mem_region_by_addr(buf)) < 0)
+        printf("sef_llvm_del_special_mem_region_by_addr failed: %d\n", r);
+    return 0;
+}
+
+/*===========================================================================*
  *      	             sef_llvm_ltckpt_enabled                         *
  *===========================================================================*/
 int sef_llvm_ltckpt_enabled()
