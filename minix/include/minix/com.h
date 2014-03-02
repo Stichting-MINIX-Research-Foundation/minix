@@ -429,6 +429,9 @@
 /* Field names for SYS_UPDATE. */
 #define SYS_UPD_SRC_ENDPT	m1_i1	/* source endpoint */
 #define SYS_UPD_DST_ENDPT	m1_i2	/* destination endpoint */
+#define SYS_UPD_FLAGS		m1_i3	/* update flags */
+#  define SYS_UPD_ROLLBACK        0x1	/* update is rollback */
+
 
 /* Subfunctions for SYS_STATECTL */
 #define SYS_STATE_CLEAR_IPC_REFS    1	/* clear IPC references */

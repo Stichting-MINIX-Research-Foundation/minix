@@ -218,6 +218,7 @@ void build_cmd_dep(struct rproc *rp)
 int srv_update(endpoint_t src_e, endpoint_t dst_e)
 {
   int r;
+  int sys_upd_flags = 0;
 
   /* Ask VM to swap the slots of the two processes and tell the kernel to
    * do the same. If VM is the service being updated, only perform the kernel
@@ -225,10 +226,10 @@ int srv_update(endpoint_t src_e, endpoint_t dst_e)
    * initialization time.
    */
   if(src_e != VM_PROC_NR) {
-      r = vm_update(src_e, dst_e);
+      r = vm_update(src_e, dst_e, sys_upd_flags);
   }
   else {
-      r = sys_update(src_e, dst_e);
+      r = sys_update(src_e, dst_e, sys_upd_flags);
   }
 
   return r;
