@@ -1377,7 +1377,8 @@ _ASSERT_MSG_SIZE(mess_lsys_vm_unmap_phys);
 typedef struct {
 	endpoint_t src;
 	endpoint_t dst;
-	uint8_t		padding[48];
+	int flags;
+	uint8_t		padding[44];
 } mess_lsys_vm_update;
 _ASSERT_MSG_SIZE(mess_lsys_vm_update);
 

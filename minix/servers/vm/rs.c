@@ -14,6 +14,7 @@
 #include <minix/syslib.h>
 #include <minix/safecopies.h>
 #include <minix/bitmap.h>
+#include <minix/rs.h>
 
 #include <errno.h>
 #include <string.h>
@@ -71,10 +72,11 @@ int do_rs_update(message *m_ptr)
 	endpoint_t src_e, dst_e, reply_e;
 	int src_p, dst_p;
 	struct vmproc *src_vmp, *dst_vmp;
-	int r;
+	int r, sys_upd_flags;
 
 	src_e = m_ptr->m_lsys_vm_update.src;
 	dst_e = m_ptr->m_lsys_vm_update.dst;
+        sys_upd_flags = m_ptr->m_lsys_vm_update.flags;
 
 	/* Lookup slots for source and destination process. */
 	if(vm_isokendpt(src_e, &src_p) != OK) {
@@ -89,7 +91,8 @@ int do_rs_update(message *m_ptr)
 	dst_vmp = &vmproc[dst_p];
 
 	/* Let the kernel do the update first. */
-	r = sys_update(src_e, dst_e);
+	r = sys_update(src_e, dst_e,
+	    sys_upd_flags & SF_VM_ROLLBACK ? SYS_UPD_ROLLBACK : 0);
 	if(r != OK) {
 		return r;
 	}

@@ -4,6 +4,7 @@
  * The parameters for this kernel call are:
  *    m2_i1:	SYS_UPD_SRC_ENDPT 	(source process endpoint)
  *    m2_i2:	SYS_UPD_DST_ENDPT	(destination process endpoint)
+ *    m2_i3:	SYS_UPD_FLAGS		(update flags)
  */
 
 #include "kernel/system.h"

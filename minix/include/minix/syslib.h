@@ -48,7 +48,7 @@ int sys_schedctl(unsigned flags, endpoint_t proc_ep, int priority, int
 #define sys_resume(proc_ep) sys_runctl(proc_ep, RC_RESUME, 0)
 int sys_runctl(endpoint_t proc_ep, int action, int flags);
 
-int sys_update(endpoint_t src_ep, endpoint_t dst_ep);
+int sys_update(endpoint_t src_ep, endpoint_t dst_ep, int flags);
 int sys_statectl(int request, void* address, int length);
 int sys_privctl(endpoint_t proc_ep, int req, void *p);
 int sys_privquery_mem(endpoint_t proc_ep, phys_bytes physstart,

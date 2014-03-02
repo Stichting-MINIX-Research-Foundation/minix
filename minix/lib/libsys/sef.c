@@ -59,6 +59,7 @@ void sef_startup()
   endpoint_t old_endpoint;
   int priv_flags;
   int init_flags;
+  int sys_upd_flags = 0;
 
   /* Get information about self. */
   r = sys_whoami(&sef_self_endpoint, sef_self_name, SEF_SELF_NAME_MAXLEN,
@@ -72,7 +73,7 @@ void sef_startup()
 #if USE_LIVEUPDATE
   /* RS may wake up with the wrong endpoint, perfom the update in that case. */
   if((sef_self_priv_flags & ROOT_SYS_PROC) && sef_self_endpoint != RS_PROC_NR) {
-      r = vm_update(RS_PROC_NR, sef_self_endpoint);
+      r = vm_update(RS_PROC_NR, sef_self_endpoint, sys_upd_flags);
       if(r != OK) {
           panic("unable to update RS from instance %d to %d: %d",
               RS_PROC_NR, sef_self_endpoint, r);
