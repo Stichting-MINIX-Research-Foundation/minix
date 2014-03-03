@@ -79,6 +79,11 @@ int do_privctl(struct proc * caller, message * m_ptr)
 	RTS_SET(rp, RTS_NO_PRIV);
 	return(OK);
 
+  case SYS_PRIV_CLEAR_IPC_REFS:
+	/* Clear pending IPC for the process. */
+	clear_ipc_refs(rp, EDEADSRCDST);
+	return(OK);
+
   case SYS_PRIV_SET_SYS:
 	/* Set a privilege structure of a blocked system process. */
 	if (! RTS_ISSET(rp, RTS_NO_PRIV)) return(EPERM);
