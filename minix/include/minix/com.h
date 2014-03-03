@@ -346,6 +346,7 @@
 #define SYS_PRIV_QUERY_MEM	8	/* Verify memory privilege. */
 #define SYS_PRIV_UPDATE_SYS	9	/* Update a sys privilege structure. */
 #define SYS_PRIV_YIELD	       10	/* Allow process to run and suspend */
+#define SYS_PRIV_CLEAR_IPC_REFS 11	/* Clear pending IPC for the process */
 
 /* Constants for exec. FIXME: these do not belong here. */
 #define PMEF_AUXVECTORS	20
