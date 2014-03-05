@@ -392,7 +392,16 @@ int count;			/* max number of processes to release */
 		if (f->filp_count < 1 || !(f->filp_pipe_select_ops & selop) ||
 		    f->filp_vno != vp)
 			continue;
+
+		/* Do a pipe_check to see if we really want to callback this
+		 * select; a close() doesn't always warrant it.
+		 */
+		if(pipe_check(f, op == VFS_READ ? READING : WRITING,
+			f->filp_flags & ~O_NONBLOCK, 1, 1) == SUSPEND) {
+			continue;
+		}
 		select_callback(f, selop);
+
 		f->filp_pipe_select_ops &= ~selop;
 	}
   }
