@@ -1,3 +1,5 @@
+#define _MINIX_SYSTEM 1
+
 #include <sys/svrctl.h>
 #include <sys/types.h>
 #include <ctype.h>

@@ -2,6 +2,8 @@
 /* Author: Ben Gras <beng@few.vu.nl>  17 march 2006 */
 /* Modified for ProcFS by Alen Stojanov and David van Moolenbroek */
 
+#define _MINIX_SYSTEM 1
+
 #include <stdio.h>
 #include <unistd.h>
 #include <pwd.h>

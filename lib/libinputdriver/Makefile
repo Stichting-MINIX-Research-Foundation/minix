@@ -1,5 +1,6 @@
 # Makefile for libinputdriver
 .include <bsd.own.mk>
+CPPFLAGS+= -D_MINIX_SYSTEM
 
 LIB=	inputdriver
 

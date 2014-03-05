@@ -1,6 +1,6 @@
 # Makefile for libgpio
 
-CPPFLAGS+= -D_SYSTEM
+CPPFLAGS+= -D_SYSTEM -D_MINIX_SYSTEM
 
 LIB=	gpio
 

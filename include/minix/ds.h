@@ -3,6 +3,8 @@
 #ifndef _MINIX_DS_H
 #define _MINIX_DS_H
 
+#ifdef _MINIX_SYSTEM
+
 #include <sys/types.h>
 #include <minix/endpoint.h>
 
@@ -65,6 +67,8 @@ int ds_delete_label(const char *ds_name);
 /* Subscribe and check. */
 int ds_subscribe(const char *regex, int flags);
 int ds_check(char *ds_name, int *type, endpoint_t *owner_e);
+
+#endif /* _MINIX_SYSTEM */
 
 #endif /* _MINIX_DS_H */
 

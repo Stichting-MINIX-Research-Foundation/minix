@@ -3,6 +3,8 @@
  * Author: Lionel A. Sambuc. 
  */
 
+#define _MINIX_SYSTEM
+
 #include <sys/cdefs.h>
 #include "namespace.h"
 #include <lib.h>

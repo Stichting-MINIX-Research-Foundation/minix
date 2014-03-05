@@ -43,9 +43,12 @@
 #define MULTIBOOT_HEADER_HAS_VBE	0x00000004
 #define MULTIBOOT_HEADER_HAS_ADDR	0x00010000
 
-#if defined(__minix) && !defined(__ASSEMBLY__)
+#if defined(__minix) && !defined(__ASSEMBLY__) && (defined(_MINIX_SYSTEM) || defined(_STANDALONE))
 
 #if !defined(_LOCORE)
+
+#include <machine/types.h>
+
 struct multiboot_header {
 	uint32_t	mh_magic;
 	uint32_t	mh_flags;
@@ -73,7 +76,7 @@ struct multiboot_header {
 extern struct multiboot_header *Multiboot_Header;
 #endif /* !defined(_LOCORE) && defined(_KERNEL) */
 
-#endif /* defined(__minix) && !defined(__ASSEMBLY__) */
+#endif /* defined(__minix) && !defined(__ASSEMBLY__) && (defined(_MINIX_SYSTEM) || defined(_STANDALONE))*/
 
 /* --------------------------------------------------------------------- */
 
@@ -94,7 +97,7 @@ extern struct multiboot_header *Multiboot_Header;
 #define MULTIBOOT_INFO_HAS_APM_TABLE	0x00000400
 #define MULTIBOOT_INFO_HAS_VBE		0x00000800
 
-#if defined(__minix) && !defined(__ASSEMBLY__)
+#if defined(__minix) && !defined(__ASSEMBLY__) && (defined(_MINIX_SYSTEM) || defined(_STANDALONE))
 
 #if !defined(_LOCORE)
 struct multiboot_info {
@@ -197,7 +200,7 @@ struct multiboot_module {
 
 #endif /* !defined(_LOCORE) */
 
-#endif /* defined(__minix) && !defined(__ASSEMBLY__) */
+#endif /* defined(__minix) && !defined(__ASSEMBLY__) && (defined(_MINIX_SYSTEM) || defined(_STANDALONE))*/
 
 #if defined(__minix)
 

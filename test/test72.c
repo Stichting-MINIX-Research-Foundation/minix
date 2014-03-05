@@ -3,6 +3,8 @@
  * Exercise the caching functionality of libminixfs in isolation.
  */
 
+#define _MINIX_SYSTEM
+
 #include <minix/libminixfs.h>
 #include <minix/sysutil.h>
 #include <minix/syslib.h>

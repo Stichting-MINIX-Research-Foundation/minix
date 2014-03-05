@@ -4,6 +4,8 @@
  * in testvm.c, started as a service by this test program.
  */
 
+#define _MINIX_SYSTEM 1
+
 #include <minix/libminixfs.h>
 #include <minix/sysutil.h>
 #include <minix/syslib.h>

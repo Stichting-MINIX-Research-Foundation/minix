@@ -4,6 +4,8 @@ NOCLANGERROR=yes
 # Makefile for libsys
 .include <bsd.own.mk>
 
+CPPFLAGS+= -D_MINIX_SYSTEM -D_SYSTEM
+
 LIB=		sys
 
 CFLAGS+=	-fno-builtin

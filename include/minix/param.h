@@ -8,6 +8,7 @@
 /* Number of processes contained in the system image. */
 #define NR_BOOT_PROCS   (NR_TASKS + LAST_SPECIAL_PROC_NR + 1)
 
+#ifdef _MINIX_SYSTEM
 /* This is used to obtain system information through SYS_GETINFO. */
 #define MAXMEMMAP 40
 typedef struct kinfo {
@@ -44,5 +45,6 @@ typedef struct kinfo {
 	int kernel_allocated_bytes;		/* used by kernel */
 	int kernel_allocated_bytes_dynamic;	/* used by kernel (runtime) */
 } kinfo_t;
+#endif /* _MINIX_SYSTEM */
 
 #endif

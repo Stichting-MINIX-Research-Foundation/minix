@@ -3,7 +3,7 @@ NOCLANGERROR=yes
 #
 # Makefile for libclkconf
 
-CPPFLAGS+= -D_SYSTEM
+CPPFLAGS+= -D_SYSTEM -D_MINIX_SYSTEM
 
 LIB=	clkconf
 

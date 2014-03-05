@@ -39,6 +39,8 @@
  *	  user space and converted into a concatenated argument list).
  */
 
+#define _MINIX_SYSTEM 1
+
 #include <minix/config.h>
 #include <minix/endpoint.h>
 #include <minix/paths.h>

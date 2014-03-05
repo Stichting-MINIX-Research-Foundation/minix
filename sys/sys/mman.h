@@ -200,14 +200,14 @@ void *	mremap(void *, size_t, void *, size_t, int);
 #endif
 int	posix_madvise(void *, size_t, int);
 
-#if defined(__minix)
+#if defined(__minix) && defined(_MINIX_SYSTEM)
 #include <minix/endpoint.h>
 void *         vm_remap(endpoint_t d, endpoint_t s, void *da, void *sa, size_t si);
 void *         vm_remap_ro(endpoint_t d, endpoint_t s, void *da, void *sa, size_t si);
 int            vm_unmap(endpoint_t endpt, void *addr);
 unsigned long  vm_getphys(endpoint_t endpt, void *addr);
 u8_t           vm_getrefcount(endpoint_t endpt, void *addr);
-#endif /* defined(__minix) */
+#endif /* defined(__minix) && defined(_MINIX_SYSTEM) */
 
 __END_DECLS
 

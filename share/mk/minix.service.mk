@@ -35,4 +35,7 @@ LDFLAGS+= ${${ACTIVE_CC} == "gcc":? -lgcc_eh:}
 
 .endif # ${MACHINE_ARCH} == "earm"
 
+# Get (more) internal minix definitions and declarations.
+CPPFLAGS += -D_MINIX_SYSTEM=1
+
 .include <bsd.prog.mk>

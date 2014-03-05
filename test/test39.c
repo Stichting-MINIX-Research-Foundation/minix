@@ -1,4 +1,6 @@
 
+#define _MINIX_SYSTEM
+
 #include <stdio.h>
 #include <minix/endpoint.h>
 #include <minix/sys_config.h>

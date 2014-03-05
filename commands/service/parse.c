@@ -1,4 +1,6 @@
 
+#define _MINIX_SYSTEM 1
+
 #include <stdarg.h>
 #include <assert.h>
 #include <stdlib.h>
