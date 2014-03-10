@@ -27,7 +27,7 @@ extern struct minix_kerninfo minix_kerninfo;
 
 EXTERN struct k_randomness krandom; 	/* gather kernel random information */
 
-vir_bytes minix_kerninfo_user;
+EXTERN vir_bytes minix_kerninfo_user;
 
 #define kmess kmessages
 #define kloadinfo loadinfo
