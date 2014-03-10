@@ -11,7 +11,7 @@
 [gerrit]
 # The git-minix host is to be configured in your .ssh/config
 #
-host=git-minix
+host=gerrit.minix3.org
 port=2222
 project=minix
 defaultbranch=master
