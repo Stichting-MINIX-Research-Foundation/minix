@@ -224,12 +224,12 @@ void get_parameters(u32_t ebx, kinfo_t *cbi)
 
 kinfo_t *pre_init(u32_t magic, u32_t ebx)
 {
+	assert(magic == MULTIBOOT_INFO_MAGIC);
+
 	/* Get our own copy boot params pointed to by ebx.
 	 * Here we find out whether we should do serial output.
 	 */
 	get_parameters(ebx, &kinfo);
-
-	assert(magic == MULTIBOOT_INFO_MAGIC);
 
 	/* Make and load a pagetable that will map the kernel
 	 * to where it should be; but first a 1:1 mapping so
