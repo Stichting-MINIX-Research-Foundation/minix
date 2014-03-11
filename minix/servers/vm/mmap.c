@@ -484,12 +484,37 @@ int do_get_refcount(message *m)
 }
 
 /*===========================================================================*
+ *                             munmap_vm_lin                                 *
+ *===========================================================================*/
+int munmap_vm_lin(vir_bytes addr, size_t len)
+{
+	if(addr % VM_PAGE_SIZE) {
+		printf("munmap_vm_lin: offset not page aligned\n");
+		return EFAULT;
+	}
+
+	if(len % VM_PAGE_SIZE) {
+		printf("munmap_vm_lin: len not page aligned\n");
+		return EFAULT;
+	}
+
+	if(pt_writemap(NULL, &vmproc[VM_PROC_NR].vm_pt, addr, MAP_NONE, len, 0,
+		WMF_OVERWRITE | WMF_FREE) != OK) {
+		printf("munmap_vm_lin: pt_writemap failed\n");
+		return EFAULT;
+	}
+
+	return OK;
+}
+
+/*===========================================================================*
  *                              do_munmap                                    *
  *===========================================================================*/
 int do_munmap(message *m)
 {
         int r, n;
         struct vmproc *vmp;
+	struct vir_region *vr;
         vir_bytes addr, len;
 	endpoint_t target = SELF;
 
@@ -505,8 +530,24 @@ int do_munmap(message *m)
         if((r=vm_isokendpt(target, &n)) != OK) {
                 panic("do_mmap: message from strange source: %d", m->m_source);
         }
- 
+
         vmp = &vmproc[n];
+
+	if(m->m_source == VM_PROC_NR) {
+		/* VM munmap is a special case, the region we want to
+		 * munmap may or may not be there in our data structures,
+		 * depending on whether this is an updated VM instance or not.
+		 */
+		if(!region_search_root(&vmp->vm_regions_avl)) {
+			munmap_vm_lin(addr, m->VMUM_LEN);
+		}
+		else if((vr = map_lookup(vmp, addr, NULL))) {
+			if(map_unmap_region(vmp, vr, 0, m->VMUM_LEN) != OK) {
+				printf("VM: self map_unmap_region failed\n");
+			}
+		}
+		return SUSPEND;
+	}
 
 	if(m->m_type == VM_UNMAP_PHYS) {
 		addr = (vir_bytes) m->m_lsys_vm_unmap_phys.vaddr;

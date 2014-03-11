@@ -142,6 +142,9 @@ int do_info(message *m)
 		break;
 
 	case VMIW_REGION:
+		if(m->m_lsys_vm_info.ep == SELF) {
+			m->m_lsys_vm_info.ep = m->m_source;
+		}
 		if (vm_isokendpt(m->m_lsys_vm_info.ep, &pr) != OK)
 			return EINVAL;
 
