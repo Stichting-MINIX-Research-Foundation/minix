@@ -75,7 +75,7 @@ static struct vir_region *mmap_region(struct vmproc *vmp, vir_bytes addr,
 
 	if (!vr) {
 		/* No address given or address already in use. */
-		vr = map_page_region(vmp, VM_PAGE_SIZE, VM_DATATOP, len,
+		vr = map_page_region(vmp, VM_MMAPBASE, VM_MMAPTOP, len,
 			vrflags, mfflags, mt);
 	}
 
@@ -349,7 +349,7 @@ int do_map_phys(message *m)
 	if(len % VM_PAGE_SIZE)
 		len += VM_PAGE_SIZE - (len % VM_PAGE_SIZE);
 
-	if(!(vr = map_page_region(vmp, 0, VM_DATATOP, len, 
+	if(!(vr = map_page_region(vmp, VM_MMAPBASE, VM_MMAPTOP, len,
 		VR_DIRECT | VR_WRITABLE, 0, &mem_type_directphys))) {
 		return ENOMEM;
 	}
@@ -419,8 +419,8 @@ int do_remap(message *m)
 		vr = map_page_region(dvmp, da, 0, size, flags, 0,
 			&mem_type_shared);
 	else
-		vr = map_page_region(dvmp, 0, VM_DATATOP, size, flags, 0,
-			&mem_type_shared);
+		vr = map_page_region(dvmp, VM_MMAPBASE, VM_MMAPTOP, size,
+			flags, 0, &mem_type_shared);
 
 	if(!vr) {
 		printf("VM: re-map of shared area failed\n");

@@ -30,4 +30,25 @@
 /* for kputc() */
 #define END_OF_KMESS	0
 
+/* User limits. */
+#ifndef USR_DATATOP
+#ifndef _MINIX_MAGIC
+#define USR_DATATOP 0xF0000000
+#else
+#define USR_DATATOP 0xE0000000	/* TODO: is this necessary? */
+#endif
+#endif
+
+#ifndef USR_STACKTOP
+#define USR_STACKTOP USR_DATATOP
+#endif
+
+#ifndef USR_DATATOP_COMPACT
+#define USR_DATATOP_COMPACT USR_DATATOP
+#endif
+
+#ifndef USR_STACKTOP_COMPACT
+#define USR_STACKTOP_COMPACT 0x50000000
+#endif
+
 #endif /* CONST_H */
