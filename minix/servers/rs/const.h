@@ -43,8 +43,6 @@
 #define SF_NEED_REPL    0x010    /* set when process needs replica to start */
 #define SF_USE_REPL     0x020    /* set when process has a replica */
 #define SF_NO_BIN_EXP	0x040    /* set when we should ignore binary exp. offset */
-#define IMM_SF          \
-    (SF_NO_BIN_EXP | SF_CORE_SRV | SF_SYNCH_BOOT | SF_NEED_COPY | SF_NEED_REPL) /* immutable */
 
 /* Constants determining RS period and binary exponential backoff. */
 #define RS_INIT_T	(system_hz * 10)	/* allow T ticks for init */
