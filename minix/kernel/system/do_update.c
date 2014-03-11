@@ -20,6 +20,9 @@
     (RTS_ISSET(p, RTS_NO_PRIV) || RTS_ISSET(p, RTS_SIG_PENDING) \
     || (RTS_ISSET(p, RTS_RECEIVING) && !RTS_ISSET(p, RTS_SENDING)))
 
+static int inherit_priv_irq(struct proc *src_rp, struct proc *dst_rp);
+static int inherit_priv_io(struct proc *src_rp, struct proc *dst_rp);
+static int inherit_priv_mem(struct proc *src_rp, struct proc *dst_rp);
 static void adjust_proc_slot(struct proc *rp, struct proc *from_rp);
 static void adjust_priv_slot(struct priv *privp, struct priv
 	*from_privp);
@@ -42,7 +45,7 @@ int do_update(struct proc * caller, message * m_ptr)
   struct proc orig_dst_proc;
   struct priv orig_src_priv;
   struct priv orig_dst_priv;
-  int i;
+  int i, r;
 
   /* Lookup slots for source and destination process. */
   src_e = m_ptr->SYS_UPD_SRC_ENDPT;
@@ -81,6 +84,20 @@ int do_update(struct proc * caller, message * m_ptr)
   proc_stacktrace(dst_rp);
   printf("do_update: curr ptproc %d\n", get_cpulocal_var(ptproc)->p_endpoint);
 #endif
+
+  /* Let destination inherit allowed IRQ, I/O ranges, and memory ranges. */
+  r = inherit_priv_irq(src_rp, dst_rp);
+  if(r != OK) {
+      return r;
+  }
+  r = inherit_priv_io(src_rp, dst_rp);
+  if(r != OK) {
+      return r;
+  }
+  r = inherit_priv_mem(src_rp, dst_rp);
+  if(r != OK) {
+      return r;
+  }
 
   /* Let destination inherit the target mask from source. */
   for (i=0; i < NR_SYS_PROCS; i++) {
@@ -126,6 +143,54 @@ int do_update(struct proc * caller, message * m_ptr)
   bits_fill(src_rp->p_stale_tlb, CONFIG_MAX_CPUS);
   bits_fill(dst_rp->p_stale_tlb, CONFIG_MAX_CPUS);
 #endif
+
+  return OK;
+}
+
+/*===========================================================================*
+ *			     inherit_priv_irq 				     *
+ *===========================================================================*/
+int inherit_priv_irq(struct proc *src_rp, struct proc *dst_rp)
+{
+  int i, r;
+  for (i= 0; i<priv(src_rp)->s_nr_irq; i++) {
+      r = priv_add_irq(dst_rp, priv(src_rp)->s_irq_tab[i]); 
+      if(r != OK) {
+          return r;
+      }
+  }
+
+  return OK;
+}
+
+/*===========================================================================*
+ *			     inherit_priv_io 				     *
+ *===========================================================================*/
+ int inherit_priv_io(struct proc *src_rp, struct proc *dst_rp)
+{
+  int i, r;
+  for (i= 0; i<priv(src_rp)->s_nr_io_range; i++) {
+      r = priv_add_io(dst_rp, &(priv(src_rp)->s_io_tab[i])); 
+      if(r != OK) {
+          return r;
+      }
+  }
+
+  return OK;
+}
+
+/*===========================================================================*
+ *			     inherit_priv_mem 				     *
+ *===========================================================================*/
+int inherit_priv_mem(struct proc *src_rp, struct proc *dst_rp)
+{
+  int i, r;
+  for (i= 0; i<priv(src_rp)->s_nr_mem_range; i++) {
+      r = priv_add_mem(dst_rp, &(priv(src_rp)->s_mem_tab[i])); 
+      if(r != OK) {
+          return r;
+      }
+  }
 
   return OK;
 }

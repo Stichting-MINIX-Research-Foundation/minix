@@ -198,26 +198,8 @@ int do_privctl(struct proc * caller, message * m_ptr)
 	/* Get the I/O range */
 	data_copy(caller->p_endpoint, m_ptr->m_lsys_krn_sys_privctl.arg_ptr,
 		KERNEL, (vir_bytes) &io_range, sizeof(io_range));
-	priv(rp)->s_flags |= CHECK_IO_PORT;	/* Check I/O accesses */
-
-	for (i = 0; i < priv(rp)->s_nr_io_range; i++) {
-		if (priv(rp)->s_io_tab[i].ior_base == io_range.ior_base &&
-			priv(rp)->s_io_tab[i].ior_limit == io_range.ior_limit)
-			return OK;
-	}
-
-	i= priv(rp)->s_nr_io_range;
-	if (i >= NR_IO_RANGE) {
-		printf("do_privctl: %d already has %d i/o ranges.\n",
-			rp->p_endpoint, i);
-		return ENOMEM;
-	}
-
-	priv(rp)->s_io_tab[i].ior_base= io_range.ior_base;
-	priv(rp)->s_io_tab[i].ior_limit= io_range.ior_limit;
-	priv(rp)->s_nr_io_range++;
-
-	return OK;
+	/* Add the I/O range */
+	return priv_add_io(rp, &io_range);
 
   case SYS_PRIV_ADD_MEM:
 	if (RTS_ISSET(rp, RTS_NO_PRIV))
@@ -228,27 +210,8 @@ int do_privctl(struct proc * caller, message * m_ptr)
 		m_ptr->m_lsys_krn_sys_privctl.arg_ptr, KERNEL,
 		(vir_bytes) &mem_range, sizeof(mem_range))) != OK)
 		return r;
-	priv(rp)->s_flags |= CHECK_MEM;	/* Check memory mappings */
-
-	/* When restarting a driver, check if it already has the permission */
-	for (i = 0; i < priv(rp)->s_nr_mem_range; i++) {
-		if (priv(rp)->s_mem_tab[i].mr_base == mem_range.mr_base &&
-			priv(rp)->s_mem_tab[i].mr_limit == mem_range.mr_limit)
-			return OK;
-	}
-
-	i= priv(rp)->s_nr_mem_range;
-	if (i >= NR_MEM_RANGE) {
-		printf("do_privctl: %d already has %d mem ranges.\n",
-			rp->p_endpoint, i);
-		return ENOMEM;
-	}
-
-	priv(rp)->s_mem_tab[i].mr_base= mem_range.mr_base;
-	priv(rp)->s_mem_tab[i].mr_limit= mem_range.mr_limit;
-	priv(rp)->s_nr_mem_range++;
-
-	return OK;
+	/* Add the memory range */
+	return priv_add_mem(rp, &mem_range);
 
   case SYS_PRIV_ADD_IRQ:
 	if (RTS_ISSET(rp, RTS_NO_PRIV))
@@ -261,24 +224,9 @@ int do_privctl(struct proc * caller, message * m_ptr)
 #endif
 	data_copy(caller->p_endpoint, m_ptr->m_lsys_krn_sys_privctl.arg_ptr,
 		KERNEL, (vir_bytes) &irq, sizeof(irq));
-	priv(rp)->s_flags |= CHECK_IRQ;	/* Check IRQs */
+	/* Add the IRQ. */
+	return priv_add_irq(rp, irq);
 
-	/* When restarting a driver, check if it already has the permission */
-	for (i = 0; i < priv(rp)->s_nr_irq; i++) {
-		if (priv(rp)->s_irq_tab[i] == irq)
-			return OK;
-	}
-
-	i= priv(rp)->s_nr_irq;
-	if (i >= NR_IRQ) {
-		printf("do_privctl: %d already has %d irq's.\n",
-			rp->p_endpoint, i);
-		return ENOMEM;
-	}
-	priv(rp)->s_irq_tab[i]= irq;
-	priv(rp)->s_nr_irq++;
-
-	return OK;
   case SYS_PRIV_QUERY_MEM:
   {
 	phys_bytes addr, limit;
