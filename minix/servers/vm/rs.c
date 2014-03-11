@@ -168,6 +168,65 @@ static int rs_memctl_make_vm_instance(struct vmproc *new_vm_vmp)
 }
 
 /*===========================================================================*
+ *		           rs_memctl_heap_prealloc			     *
+ *===========================================================================*/
+static int rs_memctl_heap_prealloc(struct vmproc *vmp,
+	vir_bytes *addr, size_t *len)
+{
+
+	/*
+	 * XXX: Is this still needed?
+	 */
+
+	return OK;
+}
+
+/*===========================================================================*
+ *		           rs_memctl_map_prealloc			     *
+ *===========================================================================*/
+static int rs_memctl_map_prealloc(struct vmproc *vmp,
+	vir_bytes *addr, size_t *len)
+{
+#if 0
+	struct vir_region *vr;
+	if(*len <= 0) {
+		return EINVAL;
+	}
+	*len = CLICK_CEIL(*len);
+
+	if(!(vr = map_page_region(vmp, VM_DATATOP - *len, VM_DATATOP, *len,
+		MAP_NONE, VR_ANON|VR_WRITABLE|VR_CONTIG, MF_PREALLOC))) {
+		return ENOMEM;
+	}
+	map_region_set_tag(vr, VRT_PREALLOC_MAP);
+	*addr = arch_map2vir(vmp, vr->vaddr);
+#endif
+	return OK;
+}
+
+/*===========================================================================*
+ *		         rs_memctl_get_prealloc_map			     *
+ *===========================================================================*/
+static int rs_memctl_get_prealloc_map(struct vmproc *vmp,
+	vir_bytes *addr, size_t *len)
+{
+#if 0
+	struct vir_region *vr;
+
+	vr = map_region_lookup_tag(vmp, VRT_PREALLOC_MAP);
+	if(!vr) {
+		*addr = 0;
+		*len = 0;
+	}
+	else {
+		*addr = arch_map2vir(vmp, vr->vaddr);
+		*len = vr->length;
+	}
+#endif
+	return OK;
+}
+
+/*===========================================================================*
  *				do_rs_memctl	     			     *
  *===========================================================================*/
 int do_rs_memctl(message *m_ptr)
@@ -206,6 +265,15 @@ int do_rs_memctl(message *m_ptr)
 
 	case VM_RS_MEM_MAKE_VM:
 		r = rs_memctl_make_vm_instance(vmp);
+		return r;
+	case VM_RS_MEM_HEAP_PREALLOC:
+		r = rs_memctl_heap_prealloc(vmp, (vir_bytes*) &m_ptr->VM_RS_CTL_ADDR, (size_t*) &m_ptr->VM_RS_CTL_LEN);
+		return r;
+	case VM_RS_MEM_MAP_PREALLOC:
+		r = rs_memctl_map_prealloc(vmp, (vir_bytes*) &m_ptr->VM_RS_CTL_ADDR, (size_t*) &m_ptr->VM_RS_CTL_LEN);
+		return r;
+	case VM_RS_MEM_GET_PREALLOC_MAP:
+		r = rs_memctl_get_prealloc_map(vmp, (vir_bytes*) &m_ptr->VM_RS_CTL_ADDR, (size_t*) &m_ptr->VM_RS_CTL_LEN);
 		return r;
 	default:
 		printf("do_rs_memctl: bad request %d\n", req);

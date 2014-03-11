@@ -713,6 +713,11 @@
 #	define VM_RS_CTL_REQ		m1_i2
 #		define VM_RS_MEM_PIN	    0	/* pin memory */
 #		define VM_RS_MEM_MAKE_VM    1	/* make VM instance */
+#		define VM_RS_MEM_HEAP_PREALLOC 2 /* preallocate heap regions */
+#		define VM_RS_MEM_MAP_PREALLOC  3 /* preallocate mmaped regions */
+#		define VM_RS_MEM_GET_PREALLOC_MAP  4 /* get preallocated mmaped regions */
+#	define VM_RS_CTL_ADDR		m2_p1
+#	define VM_RS_CTL_LEN		m2_i3
 
 #define VM_WATCH_EXIT		(VM_RQ_BASE+43)
 

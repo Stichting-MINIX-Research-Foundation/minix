@@ -487,7 +487,7 @@ struct rproc *rp;
 	|| (s = sys_getpriv(&rp->r_priv, child_proc_nr_e)) != OK) {
 	printf("RS: unable to set privilege structure: %d\n", s);
 	cleanup_service(rp);
-	vm_memctl(RS_PROC_NR, VM_RS_MEM_PIN);
+	vm_memctl(RS_PROC_NR, VM_RS_MEM_PIN, 0, 0);
 	return ENOMEM;
   }
 
@@ -495,7 +495,7 @@ struct rproc *rp;
   if ((s = sched_init_proc(rp)) != OK) {
 	printf("RS: unable to start scheduling: %d\n", s);
 	cleanup_service(rp);
-	vm_memctl(RS_PROC_NR, VM_RS_MEM_PIN);
+	vm_memctl(RS_PROC_NR, VM_RS_MEM_PIN,0,0);
 	return s;
   }
 
@@ -511,7 +511,7 @@ struct rproc *rp;
       if ((s = read_exec(rp)) != OK) {
           printf("RS: read_exec failed: %d\n", s);
           cleanup_service(rp);
-          vm_memctl(RS_PROC_NR, VM_RS_MEM_PIN);
+          vm_memctl(RS_PROC_NR, VM_RS_MEM_PIN, 0, 0);
           return s;
       }
   }
@@ -519,7 +519,7 @@ struct rproc *rp;
         printf("RS: execing child with srv_execve()...\n");
   s = srv_execve(child_proc_nr_e, rp->r_exec, rp->r_exec_len, rp->r_argv,
         environ);
-  vm_memctl(RS_PROC_NR, VM_RS_MEM_PIN);
+  vm_memctl(RS_PROC_NR, VM_RS_MEM_PIN, 0, 0);
   if (s != OK) {
         printf("RS: srv_execve failed: %d\n", s);
         cleanup_service(rp);
@@ -534,7 +534,7 @@ struct rproc *rp;
       if(rs_verbose)
           printf("RS: informing VM of instance %s\n", srv_to_string(rp));
 
-      s = vm_memctl(rpub->endpoint, VM_RS_MEM_MAKE_VM);
+      s = vm_memctl(rpub->endpoint, VM_RS_MEM_MAKE_VM, 0, 0);
       if(s != OK) {
           printf("vm_memctl failed: %d\n", s);
           cleanup_service(rp);
@@ -1129,7 +1129,7 @@ static int run_script(struct rproc *rp)
 			return kill_service(rp,"can't let the script run",r);
 		}
 		/* Pin RS memory again after fork()ing. */
-		vm_memctl(RS_PROC_NR, VM_RS_MEM_PIN);
+		vm_memctl(RS_PROC_NR, VM_RS_MEM_PIN, 0, 0);
 	}
 	return OK;
 }
