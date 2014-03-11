@@ -83,6 +83,7 @@ int stime(time_t *_top);
 #define asynsend(ep, msg) asynsend3(ep, msg, 0)
 int asynsend3(endpoint_t ep, message *msg, int flags);
 int asyn_geterror(endpoint_t *dst, message *msg, int *err);
+int senda_reload(void);
 
 #define ASSERT(c) if(!(c)) { panic("%s:%d: assert %s failed", __FILE__, __LINE__, #c); }
 
