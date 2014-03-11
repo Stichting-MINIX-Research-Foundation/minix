@@ -36,6 +36,11 @@ acl_init(void)
 int
 acl_check(struct vmproc *vmp, int call)
 {
+
+	/* VM makes asynchronous calls to itself.  Always allow those. */
+	if (vmp->vm_endpoint == VM_PROC_NR)
+		return OK;
+
 	/* If the process has no ACL, all calls are allowed.. for now. */
 	if (vmp->vm_acl == NO_ACL) {
 		printf("VM: calling process %u has no ACL!\n",
