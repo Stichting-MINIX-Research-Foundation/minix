@@ -21,7 +21,7 @@ vm_memctl(endpoint_t ep, int req, void** addr, size_t *len)
 	if(addr) {
 		*addr = m.VM_RS_CTL_ADDR;
 	}
-	if(addr) {
+	if(len) {
 		*len = m.VM_RS_CTL_LEN;
 	}
 

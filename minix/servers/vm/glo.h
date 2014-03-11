@@ -40,3 +40,4 @@ EXTERN  mem_type_t mem_type_anon,       /* anonymous memory */
 
 /* total number of memory pages */
 EXTERN int total_pages;
+EXTERN int num_vm_instances;

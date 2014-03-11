@@ -83,8 +83,7 @@ static struct {
 	phys_bytes phys;
 } sparepagedirs[SPAREPAGEDIRS];
 
-extern char _end;	
-#define is_staticaddr(v) ((vir_bytes) (v) < (vir_bytes) &_end)
+#define is_staticaddr(v) ((vir_bytes) (v) < VM_OWN_HEAPSTART)
 
 #define MAX_KERNMAPPINGS 10
 static struct {
@@ -154,10 +153,8 @@ static u32_t findhole(int pages)
 	u32_t holev = NO_MEM;
 	int holesize = -1;
 
-	vmin = (vir_bytes) (&_end); /* marks end of VM BSS */
-	vmin += 1024*1024*1024;	/* reserve 1GB virtual address space for VM heap */
-	vmin &= ARCH_VM_ADDR_MASK; 
-	vmax = vmin + 100 * 1024 * 1024; /* allow 100MB of address space for VM */
+	vmin = VM_OWN_MMAPBASE;
+	vmax = VM_OWN_MMAPTOP;
 
 	/* Input sanity check. */
 	assert(vmin + VM_PAGE_SIZE >= vmin);
@@ -678,8 +675,7 @@ int pt_map_in_range(struct vmproc *src_vmp, struct vmproc *dst_vmp,
 int pt_ptmap(struct vmproc *src_vmp, struct vmproc *dst_vmp)
 {
 /* Transfer mappings to page dir and page tables from source process and
- * destination process. Make sure all the mappings are above the stack, not
- * to corrupt valid mappings in the data segment of the destination process.
+ * destination process.
  */
 	int pde, r;
 	phys_bytes physaddr;

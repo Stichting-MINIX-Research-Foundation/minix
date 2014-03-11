@@ -16,6 +16,8 @@
 #include <minix/bitmap.h>
 #include <minix/rs.h>
 
+#include <sys/mman.h>
+
 #include <errno.h>
 #include <string.h>
 #include <env.h>
@@ -77,6 +79,7 @@ int do_rs_update(message *m_ptr)
 	src_e = m_ptr->m_lsys_vm_update.src;
 	dst_e = m_ptr->m_lsys_vm_update.dst;
         sys_upd_flags = m_ptr->m_lsys_vm_update.flags;
+        reply_e = m_ptr->m_source;
 
 	/* Lookup slots for source and destination process. */
 	if(vm_isokendpt(src_e, &src_p) != OK) {
@@ -90,6 +93,14 @@ int do_rs_update(message *m_ptr)
 	}
 	dst_vmp = &vmproc[dst_p];
 
+	/* Check flags. */
+	if((sys_upd_flags & (SF_VM_ROLLBACK|SF_VM_NOMMAP)) == 0) {
+	        /* Can't preallocate when transfering mmapped regions. */
+	        if(map_region_lookup_type(dst_vmp, VR_PREALLOC_MAP)) {
+			return ENOSYS;
+	        }
+	}
+
 	/* Let the kernel do the update first. */
 	r = sys_update(src_e, dst_e,
 	    sys_upd_flags & SF_VM_ROLLBACK ? SYS_UPD_ROLLBACK : 0);
@@ -102,21 +113,22 @@ int do_rs_update(message *m_ptr)
 	if(r != OK) {
 		return r;
 	}
-	r = swap_proc_dyn_data(src_vmp, dst_vmp);
+	r = swap_proc_dyn_data(src_vmp, dst_vmp, sys_upd_flags);
 	if(r != OK) {
 		return r;
 	}
 	pt_bind(&src_vmp->vm_pt, src_vmp);
 	pt_bind(&dst_vmp->vm_pt, dst_vmp);
 
-	/* Reply, update-aware. */
-	reply_e = m_ptr->m_source;
-	if(reply_e == src_e) reply_e = dst_e;
-	else if(reply_e == dst_e) reply_e = src_e;
-	m_ptr->m_type = OK;
-	r = ipc_send(reply_e, m_ptr);
-	if(r != OK) {
-		panic("ipc_send() error");
+	/* Reply in case of external request, update-aware. */
+	if(reply_e != VM_PROC_NR) {
+            if(reply_e == src_e) reply_e = dst_e;
+            else if(reply_e == dst_e) reply_e = src_e;
+            m_ptr->m_type = OK;
+            r = ipc_send(reply_e, m_ptr);
+            if(r != OK) {
+                    panic("ipc_send() error");
+            }
 	}
 
 	return SUSPEND;
@@ -133,6 +145,17 @@ static int rs_memctl_make_vm_instance(struct vmproc *new_vm_vmp)
 	struct vmproc *this_vm_vmp;
 
 	this_vm_vmp = &vmproc[VM_PROC_NR];
+
+	/* Check if the operation is allowed. */
+	assert(num_vm_instances == 1 || num_vm_instances == 2);
+	if(num_vm_instances == 2) {
+		printf("VM can currently support no more than 2 VM instances at the time.");
+		return EPERM;
+	}
+
+	/* Copy settings from current VM. */
+	new_vm_vmp->vm_flags |= VMF_VM_INSTANCE;
+	num_vm_instances++;
 
 	/* Pin memory for the new VM instance. */
 	r = map_pin_memory(new_vm_vmp);
@@ -187,20 +210,26 @@ static int rs_memctl_heap_prealloc(struct vmproc *vmp,
 static int rs_memctl_map_prealloc(struct vmproc *vmp,
 	vir_bytes *addr, size_t *len)
 {
-#if 0
 	struct vir_region *vr;
+	vir_bytes base, top;
+	int is_vm;
+
 	if(*len <= 0) {
 		return EINVAL;
 	}
 	*len = CLICK_CEIL(*len);
 
-	if(!(vr = map_page_region(vmp, VM_DATATOP - *len, VM_DATATOP, *len,
-		MAP_NONE, VR_ANON|VR_WRITABLE|VR_CONTIG, MF_PREALLOC))) {
+	is_vm = (vmp->vm_endpoint == VM_PROC_NR);
+	base = is_vm ? VM_OWN_MMAPBASE : VM_MMAPBASE;
+	top = is_vm ? VM_OWN_MMAPTOP : VM_MMAPTOP;
+
+	if (!(vr = map_page_region(vmp, base, top, *len,
+	    VR_ANON|VR_WRITABLE|VR_UNINITIALIZED, MF_PREALLOC,
+	    &mem_type_anon))) {
 		return ENOMEM;
 	}
-	map_region_set_tag(vr, VRT_PREALLOC_MAP);
-	*addr = arch_map2vir(vmp, vr->vaddr);
-#endif
+	vr->flags |= VR_PREALLOC_MAP;
+	*addr = vr->vaddr;
 	return OK;
 }
 
@@ -210,19 +239,17 @@ static int rs_memctl_map_prealloc(struct vmproc *vmp,
 static int rs_memctl_get_prealloc_map(struct vmproc *vmp,
 	vir_bytes *addr, size_t *len)
 {
-#if 0
 	struct vir_region *vr;
 
-	vr = map_region_lookup_tag(vmp, VRT_PREALLOC_MAP);
+	vr = map_region_lookup_type(vmp, VR_PREALLOC_MAP);
 	if(!vr) {
 		*addr = 0;
 		*len = 0;
 	}
 	else {
-		*addr = arch_map2vir(vmp, vr->vaddr);
+		*addr = vr->vaddr;
 		*len = vr->length;
 	}
-#endif
 	return OK;
 }
 

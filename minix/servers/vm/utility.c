@@ -18,6 +18,7 @@
 #include <minix/syslib.h>
 #include <minix/type.h>
 #include <minix/bitmap.h>
+#include <minix/rs.h>
 #include <string.h>
 #include <errno.h>
 #include <env.h>
@@ -219,20 +220,22 @@ int swap_proc_slot(struct vmproc *src_vmp, struct vmproc *dst_vmp)
 /*===========================================================================*
  *			      swap_proc_dyn_data	     		     *
  *===========================================================================*/
-int swap_proc_dyn_data(struct vmproc *src_vmp, struct vmproc *dst_vmp)
+int swap_proc_dyn_data(struct vmproc *src_vmp, struct vmproc *dst_vmp,
+	int sys_upd_flags)
 {
 	int is_vm;
 	int r;
+	struct vir_region *start_vr, *end_vr;
 
 	is_vm = (dst_vmp->vm_endpoint == VM_PROC_NR);
 
-        /* For VM, transfer memory regions above the stack first. */
+        /* For VM, transfer memory mapped regions first. */
         if(is_vm) {
 #if LU_DEBUG
-		printf("VM: swap_proc_dyn_data: tranferring regions above the stack from old VM (%d) to new VM (%d)\n",
+		printf("VM: swap_proc_dyn_data: tranferring memory mapped regions from old (%d) to new VM (%d)\n",
 			src_vmp->vm_endpoint, dst_vmp->vm_endpoint);
 #endif
-		r = pt_map_in_range(src_vmp, dst_vmp, VM_STACKTOP, 0);
+		r = pt_map_in_range(src_vmp, dst_vmp, VM_OWN_HEAPBASE, VM_OWN_MMAPTOP);
 		if(r != OK) {
 			printf("swap_proc_dyn_data: pt_map_in_range failed\n");
 			return r;
@@ -249,23 +252,29 @@ int swap_proc_dyn_data(struct vmproc *src_vmp, struct vmproc *dst_vmp)
 	map_setparent(src_vmp);
 	map_setparent(dst_vmp);
 
-	/* For regular processes, transfer regions above the stack now.
-	 * In case of rollback, we need to skip this step. To sandbox the
-	 * new instance and prevent state corruption on rollback, we share all
-	 * the regions between the two instances as COW.
+	/* Don't transfer mmapped regions if not required. */
+	if(is_vm || (sys_upd_flags & (SF_VM_ROLLBACK|SF_VM_NOMMAP))) {
+		return OK;
+	}
+
+	/* Make sure regions are consistent. */
+	assert(region_search_root(&src_vmp->vm_regions_avl) && region_search_root(&dst_vmp->vm_regions_avl));
+
+	/* Transfer memory mapped regions now. To sandbox the new instance and
+	 * prevent state corruption on rollback, we share all the regions
+	 * between the two instances as COW.
 	 */
-	if(!is_vm) {
-		struct vir_region *vr;
-		vr = map_lookup(dst_vmp, VM_STACKTOP, NULL);
-		if(vr && !map_lookup(src_vmp, VM_STACKTOP, NULL)) {
+	start_vr = region_search(&dst_vmp->vm_regions_avl, VM_MMAPBASE, AVL_GREATER_EQUAL);
+	end_vr = region_search(&dst_vmp->vm_regions_avl, VM_MMAPTOP, AVL_LESS);
+	if(start_vr) {
 #if LU_DEBUG
-			printf("VM: swap_proc_dyn_data: tranferring regions above the stack from %d to %d\n",
-				src_vmp->vm_endpoint, dst_vmp->vm_endpoint);
+		printf("VM: swap_proc_dyn_data: tranferring memory mapped regions from %d to %d\n",
+			dst_vmp->vm_endpoint, src_vmp->vm_endpoint);
 #endif
-			r = map_proc_copy_from(src_vmp, dst_vmp, vr);
-			if(r != OK) {
-				return r;
-			}
+		assert(end_vr);
+		r = map_proc_copy_range(src_vmp, dst_vmp, start_vr, end_vr);
+		if(r != OK) {
+			return r;
 		}
 	}
 
@@ -355,3 +364,25 @@ int do_getrusage(message *m)
 	return sys_datacopy(SELF, (vir_bytes) &r_usage, m->m_source,
 		m->m_lc_vm_rusage.addr, (vir_bytes) sizeof(r_usage));
 }
+
+/*===========================================================================*
+ *                            adjust_proc_refs                              *
+ *===========================================================================*/
+void adjust_proc_refs()
+{
+       struct vmproc *vmp;
+       region_iter iter;
+
+       /* Fix up region parents. */
+       for(vmp = vmproc; vmp < &vmproc[VMP_NR]; vmp++) {
+               struct vir_region *vr;
+               if(!(vmp->vm_flags & VMF_INUSE))
+                       continue;
+               region_start_iter_least(&vmp->vm_regions_avl, &iter);
+               while((vr = region_get_iter(&iter))) {
+                       USE(vr, vr->parent = vmp;);
+                       region_incr_iter(&iter);
+               }
+       }
+}
+

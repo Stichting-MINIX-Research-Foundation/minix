@@ -75,6 +75,10 @@ SANITYCHECK(SCL_FUNCTIONS);
 		printf("VM: unannounced VM_EXIT %d\n", msg->VME_ENDPOINT);
 		return EINVAL;
 	}
+	if(vmp->vm_flags & VMF_VM_INSTANCE) {
+	    vmp->vm_flags &= ~VMF_VM_INSTANCE;
+	    num_vm_instances--;
+	}
 
 	{
 		/* Free pagetable and pages allocated by pt code. */
