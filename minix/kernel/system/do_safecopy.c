@@ -64,6 +64,23 @@ u32_t *flags;			/* CPF_* */
 		}
 		granter_proc = proc_addr(proc_nr);
 
+		/* If the granter has a temporary grant table, always allow
+		 * requests with unspecified access and return ENOTREADY if
+		 * no grant table is present or if the grantee's endpoint is not
+		 * the endpoint the table belongs to. When ENOTREADY is returned
+		 * the same verify_grant() request will be replayed again in a
+		 * while until the grant table is final. This is necessary to
+		 * avoid races at live update time.
+		 */
+		if(priv(granter_proc)->s_grant_endpoint != granter_proc->p_endpoint) {
+			if(!access) {
+				return OK;
+			}
+			else if(!HASGRANTTABLE(granter_proc) || grantee != priv(granter_proc)->s_grant_endpoint) {
+				return ENOTREADY;
+			}
+		}
+
 		/* If there is no priv. structure, or no grant table in the
 		 * priv. structure, or the grant table in the priv. structure
 		 * is too small for the grant, return EPERM.
@@ -255,14 +272,6 @@ int access;			/* CPF_READ for a copy from granter to grantee, CPF_WRITE
 		return EFAULT;
 	}
 
-	/* See if there is a reasonable grant table. */
-	if(!(granter_p = endpoint_lookup(granter))) return EINVAL;
-	if(!HASGRANTTABLE(granter_p)) {
-		printf(
-		"safecopy failed: granter %d has no grant table\n", granter);
-		return(EPERM);
-	}
-
 	/* Decide who is src and who is dst. */
 	if(access & CPF_READ) {
 		src = &granter;
@@ -275,6 +284,7 @@ int access;			/* CPF_READ for a copy from granter to grantee, CPF_WRITE
 	/* Verify permission exists. */
 	if((r=verify_grant(granter, grantee, grantid, bytes, access,
 	    g_offset, &v_offset, &new_granter, &flags)) != OK) {
+		if(r == ENOTREADY) return r;
 			printf(
 		"grant %d verify to copy %d->%d by %d failed: err %d\n",
 				grantid, *src, *dst, grantee, r);
