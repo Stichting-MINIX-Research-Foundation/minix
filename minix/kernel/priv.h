@@ -30,6 +30,7 @@ struct priv {
   size_t s_asynsize;		/* number of elements in table. 0 when not in
 				 * use
 				 */
+  endpoint_t s_asynendpoint;    /* the endpoint the asyn table belongs to. */
 
   short s_trap_mask;		/* allowed system call traps */
   sys_map_t s_ipc_to;		/* allowed destination processes */

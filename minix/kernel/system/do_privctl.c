@@ -126,6 +126,7 @@ int do_privctl(struct proc * caller, message * m_ptr)
 	reset_kernel_timer(&priv(rp)->s_alarm_timer);	/* - alarm */
 	priv(rp)->s_asyntab= -1;			/* - asynsends */
 	priv(rp)->s_asynsize= 0;
+	priv(rp)->s_asynendpoint = rp->p_endpoint;
 	priv(rp)->s_diag_sig = FALSE;		/* no request for diag sigs */
 
 	/* Set defaults for privilege bitmaps. */
