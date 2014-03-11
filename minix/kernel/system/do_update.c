@@ -86,6 +86,8 @@ int do_update(struct proc * caller, message * m_ptr)
   proc_stacktrace(src_rp);
   proc_stacktrace(dst_rp);
   printf("do_update: curr ptproc %d\n", get_cpulocal_var(ptproc)->p_endpoint);
+  printf("do_update: endpoint %d rts flags %x asyn tab %08x asyn endpoint %d grant tab %08x grant endpoint %d\n", src_rp->p_endpoint, src_rp->p_rts_flags, priv(src_rp)->s_asyntab, priv(src_rp)->s_asynendpoint, priv(src_rp)->s_grant_table, priv(src_rp)->s_grant_endpoint);
+  printf("do_update: endpoint %d rts flags %x asyn tab %08x asyn endpoint %d grant tab %08x grant endpoint %d\n", dst_rp->p_endpoint, dst_rp->p_rts_flags, priv(dst_rp)->s_asyntab, priv(dst_rp)->s_asynendpoint, priv(dst_rp)->s_grant_table, priv(dst_rp)->s_grant_endpoint);
 #endif
 
   /* Let destination inherit allowed IRQ, I/O ranges, and memory ranges. */
@@ -149,6 +151,8 @@ int do_update(struct proc * caller, message * m_ptr)
   proc_stacktrace(src_rp);
   proc_stacktrace(dst_rp);
   printf("do_update: curr ptproc %d\n", get_cpulocal_var(ptproc)->p_endpoint);
+  printf("do_update: endpoint %d rts flags %x asyn tab %08x asyn endpoint %d grant tab %08x grant endpoint %d\n", src_rp->p_endpoint, src_rp->p_rts_flags, priv(src_rp)->s_asyntab, priv(src_rp)->s_asynendpoint, priv(src_rp)->s_grant_table, priv(src_rp)->s_grant_endpoint);
+  printf("do_update: endpoint %d rts flags %x asyn tab %08x asyn endpoint %d grant tab %08x grant endpoint %d\n", dst_rp->p_endpoint, dst_rp->p_rts_flags, priv(dst_rp)->s_asyntab, priv(dst_rp)->s_asynendpoint, priv(dst_rp)->s_grant_table, priv(dst_rp)->s_grant_endpoint);
 #endif
 
 #ifdef CONFIG_SMP
