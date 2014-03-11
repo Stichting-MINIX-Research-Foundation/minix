@@ -426,6 +426,13 @@ void cstart()
   if(!value || system_hz < 2 || system_hz > 50000)	/* sanity check */
 	system_hz = DEFAULT_HZ;
 
+  /* Get memory parameters. */
+  value = env_get("ac_layout");
+  if(value && atoi(value)) {
+        kinfo.user_sp = (vir_bytes) USR_STACKTOP_COMPACT;
+        kinfo.user_end = (vir_bytes) USR_DATATOP_COMPACT;
+  }
+
   DEBUGEXTRA(("cstart\n"));
 
   /* Record miscellaneous information for user-space servers. */
