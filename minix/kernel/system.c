@@ -841,3 +841,86 @@ int allow_ipc_filtered_msg(struct proc *rp, endpoint_t src_e,
 	return allow;
 }
 
+/*===========================================================================*
+ *                             priv_add_irq                                  *
+ *===========================================================================*/
+int priv_add_irq(struct proc *rp, int irq)
+{
+        struct priv *priv = priv(rp);
+        int i;
+
+	priv->s_flags |= CHECK_IRQ;	/* Check IRQ */
+
+	/* When restarting a driver, check if it already has the permission */
+	for (i = 0; i < priv->s_nr_irq; i++) {
+		if (priv->s_irq_tab[i] == irq)
+			return OK;
+	}
+
+	i= priv->s_nr_irq;
+	if (i >= NR_IRQ) {
+		printf("do_privctl: %d already has %d irq's.\n",
+			rp->p_endpoint, i);
+		return ENOMEM;
+	}
+	priv->s_irq_tab[i]= irq;
+	priv->s_nr_irq++;
+	return OK;
+}
+
+/*===========================================================================*
+ *                             priv_add_io                                   *
+ *===========================================================================*/
+int priv_add_io(struct proc *rp, struct io_range *ior)
+{
+        struct priv *priv = priv(rp);
+        int i;
+
+	priv->s_flags |= CHECK_IO_PORT;	/* Check I/O accesses */
+
+	for (i = 0; i < priv->s_nr_io_range; i++) {
+		if (priv->s_io_tab[i].ior_base == ior->ior_base &&
+			priv->s_io_tab[i].ior_limit == ior->ior_limit)
+			return OK;
+	}
+
+	i= priv->s_nr_io_range;
+	if (i >= NR_IO_RANGE) {
+		printf("do_privctl: %d already has %d i/o ranges.\n",
+			rp->p_endpoint, i);
+		return ENOMEM;
+	}
+
+	priv->s_io_tab[i] = *ior;
+	priv->s_nr_io_range++;
+	return OK;
+}
+
+/*===========================================================================*
+ *                             priv_add_mem                                  *
+ *===========================================================================*/
+int priv_add_mem(struct proc *rp, struct minix_mem_range *memr)
+{
+        struct priv *priv = priv(rp);
+        int i;
+
+	priv->s_flags |= CHECK_MEM;	/* Check memory mappings */
+
+	/* When restarting a driver, check if it already has the permission */
+	for (i = 0; i < priv->s_nr_mem_range; i++) {
+		if (priv->s_mem_tab[i].mr_base == memr->mr_base &&
+			priv->s_mem_tab[i].mr_limit == memr->mr_limit)
+			return OK;
+	}
+
+	i= priv->s_nr_mem_range;
+	if (i >= NR_MEM_RANGE) {
+		printf("do_privctl: %d already has %d mem ranges.\n",
+			rp->p_endpoint, i);
+		return ENOMEM;
+	}
+	priv->s_mem_tab[i]= *memr;
+	priv->s_nr_mem_range++;
+	return OK;
+}
+
