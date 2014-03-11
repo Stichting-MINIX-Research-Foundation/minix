@@ -933,28 +933,30 @@ int map_proc_copy(struct vmproc *dst, struct vmproc *src)
 /* Copy all the memory regions from the src process to the dst process. */
 	region_init(&dst->vm_regions_avl);
 
-	return map_proc_copy_from(dst, src, NULL);
+	return map_proc_copy_range(dst, src, NULL, NULL);
 }
 
 /*========================================================================*
- *			     map_proc_copy_from			     	  *
+ *			     map_proc_copy_range			     	  *
  *========================================================================*/
-int map_proc_copy_from(struct vmproc *dst, struct vmproc *src,
-	struct vir_region *start_src_vr)
+int map_proc_copy_range(struct vmproc *dst, struct vmproc *src,
+	struct vir_region *start_src_vr, struct vir_region *end_src_vr)
 {
 	struct vir_region *vr;
 	region_iter v_iter;
 
 	if(!start_src_vr)
 		start_src_vr = region_search_least(&src->vm_regions_avl);
+	if(!end_src_vr)
+		end_src_vr = region_search_greatest(&src->vm_regions_avl);
 
-	assert(start_src_vr);
+	assert(start_src_vr && end_src_vr);
 	assert(start_src_vr->parent == src);
 	region_start_iter(&src->vm_regions_avl, &v_iter,
 		start_src_vr->vaddr, AVL_EQUAL);
 	assert(region_get_iter(&v_iter) == start_src_vr);
 
-	/* Copy source regions after the destination's last region (if any). */
+	/* Copy source regions into the destination. */
 
 	SANITYCHECK(SCL_FUNCTIONS);
 
@@ -982,6 +984,9 @@ int map_proc_copy_from(struct vmproc *dst, struct vmproc *src,
 		}
 	}
 #endif
+		if(vr == end_src_vr) {
+			break;
+		}
 		region_incr_iter(&v_iter);
 	}
 
@@ -1288,6 +1293,26 @@ int map_unmap_range(struct vmproc *vmp, vir_bytes unmap_start, vir_bytes length)
 
 	return OK;
 
+}
+
+/*========================================================================*
+ *			  map_region_lookup_type			  *
+ *========================================================================*/
+struct vir_region* map_region_lookup_type(struct vmproc *vmp, u32_t type)
+{
+	struct vir_region *vr;
+	struct phys_region *pr;
+	vir_bytes used = 0, weighted = 0;
+	region_iter v_iter;
+	region_start_iter_least(&vmp->vm_regions_avl, &v_iter);
+
+	while((vr = region_get_iter(&v_iter))) {
+		region_incr_iter(&v_iter);
+		if(vr->flags & type)
+			return vr;
+	}
+
+	return NULL;
 }
 
 /*========================================================================*

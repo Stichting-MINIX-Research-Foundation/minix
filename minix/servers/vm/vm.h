@@ -79,4 +79,10 @@
 #define VM_MMAPBASE	VM_PAGE_SIZE
 #endif
 
+extern char _end;
+#define VM_OWN_HEAPSTART ((vir_bytes) (&_end))
+#define VM_OWN_HEAPBASE   roundup(VM_OWN_HEAPSTART, VM_PAGE_SIZE)
+#define VM_OWN_MMAPBASE (VM_OWN_HEAPBASE+1024*1024*1024)
+#define VM_OWN_MMAPTOP   (VM_OWN_MMAPBASE+100 * 1024 * 1024)
+
 #endif

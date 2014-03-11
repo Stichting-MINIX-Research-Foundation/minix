@@ -515,6 +515,10 @@ void init_vm(void)
 
 	/* Initialize the structures for queryexit */
 	init_query_exit();
+
+	/* Mark VM instances. */
+	num_vm_instances = 1;
+	vmproc[VM_PROC_NR].vm_flags |= VMF_VM_INSTANCE;
 }
 
 /*===========================================================================*
