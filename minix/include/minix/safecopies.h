@@ -87,7 +87,8 @@ void cpf_reload(void);
 /* Set a process' grant table location and size (in-kernel only). */
 #define _K_SET_GRANT_TABLE(rp, ptr, entries)	\
 	priv(rp)->s_grant_table= (ptr);		\
-	priv(rp)->s_grant_entries= (entries);
+	priv(rp)->s_grant_entries= (entries);   \
+	priv(rp)->s_grant_endpoint= (rp)->p_endpoint;
 
 #endif	/* _MINIX_SAFECOPIES_H */
 

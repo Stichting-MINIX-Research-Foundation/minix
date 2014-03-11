@@ -30,7 +30,7 @@ int do_sdevio(struct proc * caller, message *m_ptr)
   vir_bytes count = m_ptr->m_lsys_krn_sys_sdevio.vec_size;
   long port = m_ptr->m_lsys_krn_sys_sdevio.port;
   phys_bytes vir_buf;
-  int i, req_type, req_dir, size, nr_io_range;
+  int i, r, req_type, req_dir, size, nr_io_range;
   struct priv *privp;
   struct io_range *iorp;
   struct proc *destproc;
@@ -67,11 +67,12 @@ int do_sdevio(struct proc * caller, message *m_ptr)
   /* Check for 'safe' variants. */
   if((m_ptr->m_lsys_krn_sys_sdevio.request & _DIO_SAFEMASK) == _DIO_SAFE) {
      /* Map grant address to physical address. */
-     if(verify_grant(proc_nr_e, caller->p_endpoint,
+     if((r=verify_grant(proc_nr_e, caller->p_endpoint,
 		m_ptr->m_lsys_krn_sys_sdevio.vec_addr, count,
 		req_dir == _DIO_INPUT ? CPF_WRITE : CPF_READ,
 		m_ptr->m_lsys_krn_sys_sdevio.offset, &newoffset, &newep,
-		NULL) != OK) {
+		NULL)) != OK) {
+	if(r == ENOTREADY) return r;
 	printf("do_sdevio: verify_grant failed\n");
 	return EPERM;
     }

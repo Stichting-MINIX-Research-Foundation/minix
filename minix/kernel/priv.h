@@ -60,6 +60,7 @@ struct priv {
   int s_irq_tab[NR_IRQ];
   vir_bytes s_grant_table;	/* grant table address of process, or 0 */
   int s_grant_entries;		/* no. of entries, or 0 */
+  endpoint_t s_grant_endpoint;  /* the endpoint the grant table belongs to */
   vir_bytes s_state_table;	/* state table address of process, or 0 */
   int s_state_entries;		/* no. of entries, or 0 */
 };

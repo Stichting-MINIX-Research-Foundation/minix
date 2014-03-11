@@ -156,6 +156,7 @@ int do_privctl(struct proc * caller, message * m_ptr)
 	priv(rp)->s_nr_irq= 0;
 	priv(rp)->s_grant_table= 0;
 	priv(rp)->s_grant_entries= 0;
+	priv(rp)->s_grant_endpoint = rp->p_endpoint;
 	priv(rp)->s_state_table= 0;
 	priv(rp)->s_state_entries= 0;
 	priv(rp)->s_ipcf= 0;
