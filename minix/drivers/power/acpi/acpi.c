@@ -100,7 +100,21 @@ void init_acpi(void)
 
 static int sef_cb_init_fresh(int type, sef_init_info_t *info)
 {
+	int r;
+
 	init_acpi();
+
+	/* Let SEF know about ACPI special cache word. */
+	r = sef_llvm_add_special_mem_region((void*)0xCACACACA, 1,
+	    "%MMAP_CACHE_WORD");
+	if(r < 0) {
+	    printf("acpi: sef_llvm_add_special_mem_region failed %d\n", r);
+	}
+
+	/* XXX To-do: acpi requires custom state transfer handlers for
+	 * unions acpi_operand_object and acpi_generic_state (and nested unions)
+	 * for generic state transfer to work correctly.
+	 */
 
 	return OK;
 }

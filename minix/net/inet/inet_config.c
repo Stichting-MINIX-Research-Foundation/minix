@@ -109,7 +109,7 @@ static void check_dev(int type, int ifno)
 		char	*defname;
 		mode_t	mode;
 		u8_t	minor_off;
-	} devlist[] = {
+	} devlist[5] = {
 		{	(char *) "/dev/eth",	0600,	ETH_DEV_OFF	},
 		{	(char *) "/dev/psip",	0600,	PSIP_DEV_OFF	},
 		{	(char *) "/dev/ip",	0600,	IP_DEV_OFF	},
@@ -423,7 +423,9 @@ void *alloc(size_t size)
 {
 	/* Allocate memory on the heap with sbrk(). */
 
-	return malloc(size);
+	void *addr = malloc(size);
+	memset(addr, 0, size);
+	return addr;
 }
 
 /*

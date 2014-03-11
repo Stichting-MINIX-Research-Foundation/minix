@@ -52,6 +52,7 @@ struct rupdate {
 };
 
 /* Definition of an entry of the system process table. */
+typedef struct priv ixfer_priv_s;
 struct rproc {
   struct rprocpub *r_pub;       /* pointer to the corresponding public entry */
   struct rproc *r_old_rp;       /* pointer to the slot with the old version */
@@ -83,7 +84,7 @@ struct rproc {
   char *r_exec;			/* Executable image */ 
   size_t r_exec_len;		/* Length of image */
 
-  struct priv r_priv;		/* Privilege structure to be passed to the
+  ixfer_priv_s r_priv;		/* Privilege structure to be passed to the
 				 * kernel.
 				 */
   uid_t r_uid;

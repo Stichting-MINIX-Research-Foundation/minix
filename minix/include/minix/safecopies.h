@@ -9,7 +9,7 @@
 
 typedef struct {
 	int cp_flags;	/* CPF_* below */
-	union {
+	union ixfer_cp_u{
 		struct {
 			/* CPF_DIRECT */
 			endpoint_t	cp_who_to;	/* grantee */

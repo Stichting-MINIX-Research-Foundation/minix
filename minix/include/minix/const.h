@@ -30,6 +30,12 @@
 #endif
 #endif
 
+#ifndef _MINIX_MAGIC
+#define __ALIGNED(X) __aligned(X)
+#else
+#define __ALIGNED(X)
+#endif
+
 #define EXTERN        extern	/* used in *.h files */
 
 #define TRUE               1	/* used for turning integers into Booleans */

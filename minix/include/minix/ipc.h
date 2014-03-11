@@ -2024,7 +2024,7 @@ typedef struct {
 } mess_vmmcp_reply;
 _ASSERT_MSG_SIZE(mess_vmmcp_reply);
 
-typedef struct {
+typedef struct noxfer_message {
 	endpoint_t m_source;		/* who sent the message */
 	int m_type;			/* what kind of message is it */
 	union {
@@ -2254,7 +2254,7 @@ typedef struct {
 
 		u8_t size[56];	/* message payload may have 56 bytes at most */
 	};
-} message __aligned(16);
+} message __ALIGNED(16);
 
 /* Ensure the complete union respects the IPC assumptions. */
 typedef int _ASSERT_message[/* CONSTCOND */sizeof(message) == 64 ? 1 : -1];

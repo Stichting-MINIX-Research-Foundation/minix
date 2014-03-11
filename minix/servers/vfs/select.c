@@ -32,12 +32,14 @@
 #define FROM_PROC 0
 #define TO_PROC   1
 
+typedef fd_set *ixfer_fd_set_ptr;
+
 static struct selectentry {
   struct fproc *requestor;	/* slot is free iff this is NULL */
   endpoint_t req_endpt;
   fd_set readfds, writefds, errorfds;
   fd_set ready_readfds, ready_writefds, ready_errorfds;
-  fd_set *vir_readfds, *vir_writefds, *vir_errorfds;
+  ixfer_fd_set_ptr vir_readfds, vir_writefds, vir_errorfds;
   struct filp *filps[OPEN_MAX];
   int type[OPEN_MAX];
   int nfds, nreadyfds;

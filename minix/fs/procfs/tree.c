@@ -2,9 +2,13 @@
 
 #include "inc.h"
 
-struct proc proc[NR_PROCS + NR_TASKS];
-struct mproc mproc[NR_PROCS];
-struct fproc fproc[NR_PROCS];
+typedef struct proc ixfer_proc_t;
+typedef struct fproc ixfer_fproc_t;
+typedef struct mproc ixfer_mproc_t;
+
+ixfer_proc_t proc[NR_PROCS + NR_TASKS];
+ixfer_mproc_t mproc[NR_PROCS];
+ixfer_fproc_t fproc[NR_PROCS];
 
 static int nr_pid_entries;
 

@@ -68,7 +68,7 @@ init_hook(void)
  */
 int main(void)
 {
-	struct inode_stat stat;
+	static struct inode_stat stat;
 	int r;
 
 	/*

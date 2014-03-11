@@ -23,7 +23,7 @@
 
 struct minix_timer;
 typedef void (*tmr_func_t)(struct minix_timer *tp);
-typedef union { int ta_int; long ta_long; void *ta_ptr; } tmr_arg_t;
+typedef union { int ta_int; long ta_long; void *ta_ptr; } ixfer_tmr_arg_t;
 
 /* A minix_timer_t variable must be declare for each distinct timer to be used.
  * The timers watchdog function and expiration time are automatically set
@@ -34,7 +34,7 @@ typedef struct minix_timer
   struct minix_timer	*tmr_next;	/* next in a timer chain */
   clock_t 	tmr_exp_time;	/* expiration time */
   tmr_func_t	tmr_func;	/* function to call when expired */
-  tmr_arg_t	tmr_arg;	/* random argument */
+  ixfer_tmr_arg_t tmr_arg;	/* random argument */
 } minix_timer_t;
 
 /* Used when the timer is not active. */

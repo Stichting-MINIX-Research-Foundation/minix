@@ -116,11 +116,13 @@ struct sdh {
 #define JUNK  0xdeadbeef
 #define NOJUNK 0xc0ffee
 
+struct slabdata {
+	u8_t 	data[DATABYTES];
+	struct	sdh sdh;
+};
+
 static struct slabheader {
-	struct slabdata {
-		u8_t 	data[DATABYTES];
-		struct	sdh sdh;
-	} *list_head;
+	struct slabdata *list_head;
 } slabs[SLABSIZES];
 
 static int objstats(void *, int, struct slabheader **, struct slabdata

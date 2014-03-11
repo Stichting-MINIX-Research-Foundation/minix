@@ -13,13 +13,12 @@ Copyright 1995 Philip Homburg
 
 struct event;
 
-typedef union ev_arg
+typedef struct ev_arg
 {
-	int ev_int;
 	void *ev_ptr;
 } ev_arg_t;
 
-typedef void (*ev_func_t) ARGS(( struct event *ev, union ev_arg eva ));
+typedef void (*ev_func_t) ARGS(( struct event *ev, ev_arg_t eva ));
 
 typedef struct event
 {

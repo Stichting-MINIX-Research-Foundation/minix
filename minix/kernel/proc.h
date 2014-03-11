@@ -96,7 +96,7 @@ struct proc {
 #define VMSTYPE_MAP		3
 
 	int		type;		/* suspended operation */
-	union {
+	union ixfer_saved{
 		/* VMSTYPE_SYS_MESSAGE */
 		message		reqmsg;	/* suspended request message */
 	} saved;
@@ -104,7 +104,7 @@ struct proc {
 	/* Parameters of request to VM */
 	int		req_type;
 	endpoint_t	target;
-	union {
+	union ixfer_params{
 		struct {
 			vir_bytes 	start, length;	/* memory range */
 			u8_t		writeflag;	/* nonzero for write access */

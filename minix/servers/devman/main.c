@@ -70,8 +70,8 @@ read_hook
 int main (int argc, char* argv[])
 {
 
-	struct fs_hooks hooks;
-	struct inode_stat root_stat;
+	static struct fs_hooks hooks;
+	static struct inode_stat root_stat;
 
 	/* fill in the hooks */
 	memset(&hooks, 0, sizeof(hooks));

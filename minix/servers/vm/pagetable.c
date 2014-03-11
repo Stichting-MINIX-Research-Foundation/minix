@@ -147,7 +147,7 @@ static u32_t findhole(int pages)
 /* Find a space in the virtual address space of VM. */
 	u32_t curv;
 	int pde = 0, try_restart;
-	static u32_t lastv = 0;
+	static void *lastv = 0;
 	pt_t *pt = &vmprocess->vm_pt;
 	vir_bytes vmin, vmax;
 	u32_t holev = NO_MEM;
@@ -163,7 +163,7 @@ static u32_t findhole(int pages)
 	assert((vmax % VM_PAGE_SIZE) == 0);
 	assert(pages > 0);
 
-	curv = lastv;
+	curv = (u32_t) lastv;
 	if(curv < vmin || curv >= vmax)
 		curv = vmin;
 
@@ -198,7 +198,7 @@ static u32_t findhole(int pages)
 
 			/* if it's big enough, return it */
 			if(holesize == pages) {
-				lastv = curv + VM_PAGE_SIZE;
+				lastv = (void*) (curv + VM_PAGE_SIZE);
 				return holev;
 			}
 		}
