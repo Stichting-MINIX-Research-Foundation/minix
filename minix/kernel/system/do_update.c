@@ -23,9 +23,11 @@
 static int inherit_priv_irq(struct proc *src_rp, struct proc *dst_rp);
 static int inherit_priv_io(struct proc *src_rp, struct proc *dst_rp);
 static int inherit_priv_mem(struct proc *src_rp, struct proc *dst_rp);
+static void abort_proc_ipc_send(struct proc *rp);
 static void adjust_proc_slot(struct proc *rp, struct proc *from_rp);
 static void adjust_priv_slot(struct priv *privp, struct priv
 	*from_privp);
+static void adjust_asyn_table(struct priv *src_privp, struct priv *dst_privp);
 static void swap_proc_slot_pointer(struct proc **rpp, struct proc
 	*src_rp, struct proc *dst_rp);
 
@@ -38,7 +40,7 @@ int do_update(struct proc * caller, message * m_ptr)
  * slots.
  */
   endpoint_t src_e, dst_e;
-  int src_p, dst_p;
+  int src_p, dst_p, flags;
   struct proc *src_rp, *dst_rp;
   struct priv *src_privp, *dst_privp;
   struct proc orig_src_proc;
@@ -48,6 +50,7 @@ int do_update(struct proc * caller, message * m_ptr)
   int i, r;
 
   /* Lookup slots for source and destination process. */
+  flags = m_ptr->SYS_UPD_FLAGS;
   src_e = m_ptr->SYS_UPD_SRC_ENDPT;
   if(!isokendpt(src_e, &src_p)) {
       return EINVAL;
@@ -111,6 +114,15 @@ int do_update(struct proc * caller, message * m_ptr)
   orig_src_priv = *(priv(src_rp));
   orig_dst_proc = *dst_rp;
   orig_dst_priv = *(priv(dst_rp));
+
+  /* Adjust asyn tables. */
+  adjust_asyn_table(priv(src_rp), priv(dst_rp));
+  adjust_asyn_table(priv(dst_rp), priv(src_rp));
+
+  /* Abort any pending send() on rollback. */
+  if(flags & SYS_UPD_ROLLBACK) {
+      abort_proc_ipc_send(src_rp);
+  }
 
   /* Swap slots. */
   *src_rp = orig_dst_proc;
@@ -196,6 +208,27 @@ int inherit_priv_mem(struct proc *src_rp, struct proc *dst_rp)
 }
 
 /*===========================================================================*
+ *			    abort_proc_ipc_send				     *
+ *===========================================================================*/
+void abort_proc_ipc_send(struct proc *rp)
+{
+  if(RTS_ISSET(rp, RTS_SENDING)) {
+      struct proc **xpp;
+      RTS_UNSET(rp, RTS_SENDING);
+      rp->p_misc_flags &= ~MF_SENDING_FROM_KERNEL;
+      xpp = &(proc_addr(_ENDPOINT_P(rp->p_sendto_e))->p_caller_q);
+      while (*xpp) {
+          if(*xpp == rp) {
+              *xpp = rp->p_q_link;
+              rp->p_q_link = NULL;
+              break;
+          }
+          xpp = &(*xpp)->p_q_link;
+      }
+  }
+}
+
+/*===========================================================================*
  *			     adjust_proc_slot				     *
  *===========================================================================*/
 static void adjust_proc_slot(struct proc *rp, struct proc *from_rp)
@@ -205,6 +238,7 @@ static void adjust_proc_slot(struct proc *rp, struct proc *from_rp)
   rp->p_nr = from_rp->p_nr;
   rp->p_priv = from_rp->p_priv;
   priv(rp)->s_proc_nr = from_rp->p_nr;
+
   rp->p_caller_q = from_rp->p_caller_q;
 
   /* preserve scheduling */
@@ -214,6 +248,27 @@ static void adjust_proc_slot(struct proc *rp, struct proc *from_rp)
   memcpy(rp->p_cpu_mask, from_rp->p_cpu_mask,
 		  sizeof(bitchunk_t) * BITMAP_CHUNKS(CONFIG_MAX_CPUS));
 #endif
+}
+
+/*===========================================================================*
+ *			     adjust_asyn_table				     *
+ *===========================================================================*/
+static void adjust_asyn_table(struct priv *src_privp, struct priv *dst_privp)
+{
+  /* Transfer the asyn table if source's table belongs to the destination. */
+  endpoint_t src_e = proc_addr(src_privp->s_proc_nr)->p_endpoint;
+  endpoint_t dst_e = proc_addr(dst_privp->s_proc_nr)->p_endpoint;
+
+  if(src_privp->s_asynsize > 0 && dst_privp->s_asynsize > 0 && src_privp->s_asynendpoint == dst_e) {
+      if(data_copy(src_e, src_privp->s_asyntab, dst_e, dst_privp->s_asyntab,
+	  src_privp->s_asynsize*sizeof(asynmsg_t)) != OK) {
+	  printf("Warning: unable to transfer asyn table from ep %d to ep %d\n",
+	      src_e, dst_e);
+      }
+      else {
+          dst_privp->s_asynsize = src_privp->s_asynsize;
+      }
+  }
 }
 
 /*===========================================================================*

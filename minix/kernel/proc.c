@@ -1153,6 +1153,7 @@ int try_deliver_senda(struct proc *caller_ptr,
   /* Clear table */
   privp->s_asyntab = -1;
   privp->s_asynsize = 0;
+  privp->s_asynendpoint = caller_ptr->p_endpoint;
 
   if (size == 0) return(OK);  /* Nothing to do, just return */
 
@@ -1346,6 +1347,7 @@ static int try_one(endpoint_t receive_e, struct proc *src_ptr,
   unset_sys_bit(priv(dst_ptr)->s_asyn_pending, privp->s_id);
 
   if (size == 0) return(EAGAIN);
+  if (privp->s_asynendpoint != src_ptr->p_endpoint) return EAGAIN;
   if (!may_asynsend_to(src_ptr, proc_nr(dst_ptr))) return (ECALLDENIED);
 
   caller_ptr = src_ptr;	/* Needed for A_ macros later on */
