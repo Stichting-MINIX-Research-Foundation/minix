@@ -140,6 +140,23 @@ struct rprocpub {
  */
 #define IS_RPUB_BOOT_USR(rpub) ((rpub)->endpoint == INIT_PROC_NR)
 
+/* Sys flag values. */
+#define SF_CORE_SRV     0x001    /* set for core system services */
+#define SF_SYNCH_BOOT   0X002    /* set when process needs synch boot init */
+#define SF_NEED_COPY    0x004    /* set when process needs copy to start */
+#define SF_USE_COPY     0x008    /* set when process has a copy in memory */
+#define SF_NEED_REPL    0x010    /* set when process needs replica to start */
+#define SF_USE_REPL     0x020    /* set when process has a replica */
+#define SF_VM_UPDATE    0x040    /* set when process needs vm update */
+#define SF_VM_ROLLBACK  0x080    /* set when vm update is a rollback */
+#define SF_VM_NOMMAP    0x100    /* set when vm update ignores mmapped regions */
+#define SF_USE_SCRIPT   0x200    /* set when process has restart script */
+#define SF_DET_RESTART  0x400    /* set when process detaches on restart */
+#define SF_NORESTART    0x800    /* set when process should not be restarted */
+
+#define IMM_SF          \
+    (SF_CORE_SRV | SF_SYNCH_BOOT | SF_NEED_COPY | SF_NEED_REPL) /* immutable */
+
 int minix_rs_lookup(const char *name, endpoint_t *value);
 
 #endif
