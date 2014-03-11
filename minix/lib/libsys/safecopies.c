@@ -44,7 +44,7 @@
 	}								      \
    }
 
-#define NR_STATIC_GRANTS 2
+#define NR_STATIC_GRANTS 3
 static cp_grant_t static_grants[NR_STATIC_GRANTS];
 static cp_grant_t *grants = NULL;
 static int ngrants = 0;
