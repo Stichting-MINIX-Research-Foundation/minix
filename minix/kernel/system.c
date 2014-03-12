@@ -37,6 +37,7 @@
 #include "kernel/vm.h"
 #include "kernel/clock.h"
 #include <stdlib.h>
+#include <stddef.h>
 #include <assert.h>
 #include <signal.h>
 #include <unistd.h>
@@ -672,5 +673,171 @@ int sched_proc(struct proc *p,
 	RTS_UNSET(p, RTS_NO_QUANTUM);
 
 	return OK;
+}
+
+/*===========================================================================*
+ *				add_ipc_filter				     *
+ *===========================================================================*/
+int add_ipc_filter(struct proc *rp, int type, vir_bytes address,
+	size_t length)
+{
+	int num_elements, r;
+	ipc_filter_t *ipcf, **ipcfp;
+
+	/* Validate arguments. */
+	if (type != IPCF_BLACKLIST && type != IPCF_WHITELIST)
+		return EINVAL;
+
+	if (length % sizeof(ipc_filter_el_t) != 0)
+		return EINVAL;
+
+	num_elements = length / sizeof(ipc_filter_el_t);
+	if (num_elements <= 0 || num_elements > IPCF_MAX_ELEMENTS)
+		return E2BIG;
+
+	/* Allocate a new IPC filter slot. */
+	IPCF_POOL_ALLOCATE_SLOT(type, &ipcf);
+	if (ipcf == NULL)
+		return ENOMEM;
+
+	/* Fill details. */
+	ipcf->num_elements = num_elements;
+	ipcf->next = NULL;
+	r = data_copy(rp->p_endpoint, address,
+		KERNEL, (vir_bytes)ipcf->elements, length);
+	if (r == OK)
+		r = check_ipc_filter(ipcf, TRUE /*fill_flags*/);
+	if (r != OK) {
+		IPCF_POOL_FREE_SLOT(ipcf);
+		return r;
+	}
+
+	/* Add the new filter at the end of the IPC filter chain. */
+	for (ipcfp = &priv(rp)->s_ipcf; *ipcfp != NULL;
+	    ipcfp = &(*ipcfp)->next)
+		;
+	*ipcfp = ipcf;
+
+	return OK;
+}
+
+/*===========================================================================*
+ *				clear_ipc_filters			     *
+ *===========================================================================*/
+void clear_ipc_filters(struct proc *rp)
+{
+	ipc_filter_t *curr_ipcf, *ipcf;
+
+	ipcf = priv(rp)->s_ipcf;
+	while (ipcf != NULL) {
+		curr_ipcf = ipcf;
+		ipcf = ipcf->next;
+		IPCF_POOL_FREE_SLOT(curr_ipcf);
+	}
+
+	priv(rp)->s_ipcf = NULL;
+}
+
+/*===========================================================================*
+ *				check_ipc_filter			     *
+ *===========================================================================*/
+int check_ipc_filter(ipc_filter_t *ipcf, int fill_flags)
+{
+	ipc_filter_el_t *ipcf_el;
+	int i, num_elements, flags;
+
+	if (ipcf == NULL)
+		return OK;
+
+	num_elements = ipcf->num_elements;
+	flags = 0;
+	for (i = 0; i < num_elements; i++) {
+		ipcf_el = &ipcf->elements[i];
+		if (!IPCF_EL_CHECK(ipcf_el))
+			return EINVAL;
+		flags |= ipcf_el->flags;
+	}
+
+	if (fill_flags)
+		ipcf->flags = flags;
+	else if (ipcf->flags != flags)
+		return EINVAL;
+	return OK;
+}
+
+/*===========================================================================*
+ *				allow_ipc_filtered_msg			     *
+ *===========================================================================*/
+int allow_ipc_filtered_msg(struct proc *rp, endpoint_t src_e,
+	vir_bytes m_src_v, message *m_src_p)
+{
+	int i, r, num_elements, get_mtype, allow;
+	ipc_filter_t *ipcf;
+	ipc_filter_el_t *ipcf_el;
+	message m_buff;
+
+	ipcf = priv(rp)->s_ipcf;
+	if (ipcf == NULL)
+		return TRUE; /* no IPC filters, always allow */
+
+	if (m_src_p == NULL) {
+		assert(m_src_v != 0);
+
+		/* Should we copy in the message type? */
+		get_mtype = FALSE;
+		do {
+#if DEBUG_DUMPIPCF
+			if (TRUE) {
+#else
+			if (ipcf->flags & IPCF_MATCH_M_TYPE) {
+#endif
+				get_mtype = TRUE;
+				break;
+			}
+			ipcf = ipcf->next;
+		} while (ipcf);
+		ipcf = priv(rp)->s_ipcf; /* reset to start */
+
+		/* If so, copy it in from the process. */
+		if (get_mtype) {
+			r = data_copy(src_e,
+			    m_src_v + offsetof(message, m_type), KERNEL,
+			    (vir_bytes)&m_buff.m_type, sizeof(m_buff.m_type));
+			if (r != OK) {
+				/* allow for now, this will fail later anyway */
+#if DEBUG_DUMPIPCF
+				printf("KERNEL: allow_ipc_filtered_msg: data "
+				    "copy error %d, allowing message...\n", r);
+#endif
+				return TRUE;
+			}
+		}
+		m_src_p = &m_buff;
+	}
+
+	m_src_p->m_source = src_e;
+
+	/* See if the message is allowed. */
+	allow = (ipcf->type == IPCF_BLACKLIST);
+	do {
+		if (allow != (ipcf->type == IPCF_WHITELIST)) {
+			num_elements = ipcf->num_elements;
+			for (i = 0; i < num_elements; i++) {
+				ipcf_el = &ipcf->elements[i];
+				if (IPCF_EL_MATCH(ipcf_el, m_src_p)) {
+					allow = (ipcf->type == IPCF_WHITELIST);
+					break;
+				}
+			}
+		}
+		ipcf = ipcf->next;
+	} while (ipcf);
+
+#if DEBUG_DUMPIPCF
+	printmsg(m_src_p, proc_addr(_ENDPOINT_P(src_e)), rp, allow ? '+' : '-',
+	    TRUE /*printparams*/);
+#endif
+
+	return allow;
 }
 

@@ -1414,6 +1414,7 @@
 ./usr/include/minix/ioctl.h		minix-sys
 ./usr/include/minix/ipcconst.h		minix-sys
 ./usr/include/minix/ipc.h		minix-sys
+./usr/include/minix/ipc_filter.h	minix-sys
 ./usr/include/minix/keymap.h		minix-sys
 ./usr/include/minix/libminixfs.h	minix-sys
 ./usr/include/minix/log.h		minix-sys

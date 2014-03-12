@@ -11,9 +11,15 @@
 #define NON_BLOCKING    0x0080  /* do not block if target not ready */
 #define FROM_KERNEL     0x0100  /* message from kernel on behalf of a process */
 
-#define WILLRECEIVE(target, source_ep) \
-  ((RTS_ISSET(target, RTS_RECEIVING) && !RTS_ISSET(target, RTS_SENDING)) &&	\
-    (target->p_getfrom_e == ANY || target->p_getfrom_e == source_ep))
+#define WILLRECEIVE(src_e,dst_ptr,m_src_v,m_src_p) \
+	((RTS_ISSET(dst_ptr, RTS_RECEIVING) && \
+	!RTS_ISSET(dst_ptr, RTS_SENDING)) && \
+	CANRECEIVE(dst_ptr->p_getfrom_e,src_e,dst_ptr,m_src_v,m_src_p))
+
+#define CANRECEIVE(receive_e,src_e,dst_ptr,m_src_v,m_src_p) \
+	(((receive_e) == ANY || (receive_e) == (src_e)) && \
+	(priv(dst_ptr)->s_ipcf == NULL || \
+	allow_ipc_filtered_msg(dst_ptr,src_e,m_src_v,m_src_p)))
 
 /* IPC status code macros. */
 #define IPC_STATUS_GET(p)	((p)->p_reg.IPC_STATUS_REG)

@@ -154,7 +154,12 @@ void kmain(kinfo_t *local_cbi)
  
    DEBUGEXTRA(("main()\n"));
 
-   proc_init();
+  /* Clear the process table. Anounce each slot as empty and set up mappings
+   * for proc_addr() and proc_nr() macros. Do the same for the table with
+   * privilege structures for the system processes and the ipc filter pool.
+   */
+  proc_init();
+  IPCF_POOL_INIT();
 
    if(NR_BOOT_MODULES != kinfo.mbi.mi_mods_count)
    	panic("expecting %d boot processes/modules, found %d",

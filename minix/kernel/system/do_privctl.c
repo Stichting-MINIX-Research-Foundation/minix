@@ -149,7 +149,7 @@ int do_privctl(struct proc * caller, message * m_ptr)
 	priv(rp)->s_bak_sig_mgr = NONE;
 
 	/* Set defaults for resources: no I/O resources, no memory resources,
-	 * no IRQs, no grant table
+	 * no IRQs, no grant table, no ipc filter
 	 */
 	priv(rp)->s_nr_io_range= 0;
 	priv(rp)->s_nr_mem_range= 0;
@@ -158,6 +158,7 @@ int do_privctl(struct proc * caller, message * m_ptr)
 	priv(rp)->s_grant_entries= 0;
 	priv(rp)->s_state_table= 0;
 	priv(rp)->s_state_entries= 0;
+	priv(rp)->s_ipcf= 0;
 
 	/* Override defaults if the caller has supplied a privilege structure. */
 	if (m_ptr->m_lsys_krn_sys_privctl.arg_ptr)
