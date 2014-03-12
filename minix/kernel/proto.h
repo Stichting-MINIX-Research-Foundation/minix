@@ -13,6 +13,7 @@
 
 /* Struct declarations. */
 struct proc;
+struct ipc_filter_s;
 
 /* clock.c */
 clock_t get_realtime(void);
@@ -100,6 +101,12 @@ void clear_endpoint(struct proc *rc);
 void clear_ipc_refs(struct proc *rc, int caller_ret);
 void kernel_call_resume(struct proc *p);
 int sched_proc(struct proc *rp, int priority, int quantum, int cpu);
+int add_ipc_filter(struct proc *rp, int type,
+    vir_bytes address, size_t length);
+void clear_ipc_filters(struct proc *rp);
+int check_ipc_filter(struct ipc_filter_s *ipcf, int fill_flags);
+int allow_ipc_filtered_msg(struct proc *rp, endpoint_t src_e,
+    vir_bytes m_src_v, message *m_src_p);
 
 /* system/do_vtimer.c */
 void vtimer_check(struct proc *rp);
@@ -128,6 +135,8 @@ char *schedulerstr(struct proc *scheduler);
 void print_proc(struct proc *pp);
 /* prints the given process and recursively all processes it depends on */
 void print_proc_recursive(struct proc *pp);
+void printmsg(message *msg, struct proc *src, struct proc *dst,
+    char operation, int printparams);
 #if DEBUG_IPC_HOOK
 void hook_ipc_msgrecv(message *msg, struct proc *src, struct proc *dst);
 void hook_ipc_msgsend(message *msg, struct proc *src, struct proc *dst);
