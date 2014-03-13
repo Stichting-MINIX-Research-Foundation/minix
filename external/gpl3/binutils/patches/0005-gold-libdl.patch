@@ -1,0 +1,112 @@
+commit 6632e8ccecd8fe5de18ad78ced1c14755a24b169
+Author: Cary Coutant <ccoutant@google.com>
+Date:   Fri Nov 22 15:46:51 2013 -0800
+
+    Add check for which library is needed for dlopen.
+    
+    gold/
+    	PR gold/16203
+    	* configure.ac: Add check for which library is needed for
+    	dlopen.
+    	* configure: Regenerate.
+
+diff --git a/gold/configure b/gold/configure
+index 83f5aa9..24140cf 100755
+--- a/gold/configure
++++ b/gold/configure
+@@ -7193,13 +7193,71 @@ if test "x$ac_cv_header_dlfcn_h" = x""yes; then :
+   cat >>confdefs.h <<_ACEOF
+ #define HAVE_DLFCN_H 1
+ _ACEOF
+- DLOPEN_LIBS="-ldl"
+-else
+-  DLOPEN_LIBS=""
++
+ fi
+ 
+ done
+ 
++{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing dlopen" >&5
++$as_echo_n "checking for library containing dlopen... " >&6; }
++if test "${ac_cv_search_dlopen+set}" = set; then :
++  $as_echo_n "(cached) " >&6
++else
++  ac_func_search_save_LIBS=$LIBS
++cat confdefs.h - <<_ACEOF >conftest.$ac_ext
++/* end confdefs.h.  */
++
++/* Override any GCC internal prototype to avoid an error.
++   Use char because int might match the return type of a GCC
++   builtin and then its argument prototype would still apply.  */
++#ifdef __cplusplus
++extern "C"
++#endif
++char dlopen ();
++int
++main ()
++{
++return dlopen ();
++  ;
++  return 0;
++}
++_ACEOF
++for ac_lib in '' dl dld; do
++  if test -z "$ac_lib"; then
++    ac_res="none required"
++  else
++    ac_res=-l$ac_lib
++    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
++  fi
++  if ac_fn_cxx_try_link "$LINENO"; then :
++  ac_cv_search_dlopen=$ac_res
++fi
++rm -f core conftest.err conftest.$ac_objext \
++    conftest$ac_exeext
++  if test "${ac_cv_search_dlopen+set}" = set; then :
++  break
++fi
++done
++if test "${ac_cv_search_dlopen+set}" = set; then :
++
++else
++  ac_cv_search_dlopen=no
++fi
++rm conftest.$ac_ext
++LIBS=$ac_func_search_save_LIBS
++fi
++{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_dlopen" >&5
++$as_echo "$ac_cv_search_dlopen" >&6; }
++ac_res=$ac_cv_search_dlopen
++if test "$ac_res" != no; then :
++  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
++
++fi
++
++case "$ac_cv_search_dlopen" in
++  no*) DLOPEN_LIBS="";;
++  *)   DLOPEN_LIBS="$ac_cv_search_dlopen";;
++esac
+ 
+ 
+ for ac_func in mallinfo posix_fallocate fallocate readv sysconf times
+diff --git a/gold/configure.ac b/gold/configure.ac
+index 82ad11e..9bc216b 100644
+--- a/gold/configure.ac
++++ b/gold/configure.ac
+@@ -528,9 +528,14 @@ AC_CHECK_HEADERS(ext/hash_map ext/hash_set)
+ AC_CHECK_HEADERS(byteswap.h)
+ 
+ dnl When plugins enabled dynamic loader interface is required. Check headers
+-dnl which may provide this interface. In case of dlfcn.h add libdl to link.
++dnl which may provide this interface. Add the necessary library to link.
+ AC_CHECK_HEADERS(windows.h)
+-AC_CHECK_HEADERS(dlfcn.h, [DLOPEN_LIBS="-ldl"], [DLOPEN_LIBS=""])
++AC_CHECK_HEADERS(dlfcn.h)
++AC_SEARCH_LIBS(dlopen, [dl dld])
++case "$ac_cv_search_dlopen" in
++  no*) DLOPEN_LIBS="";;
++  *)   DLOPEN_LIBS="$ac_cv_search_dlopen";;
++esac
+ AC_SUBST(DLOPEN_LIBS)
+ 
+ AC_CHECK_FUNCS(mallinfo posix_fallocate fallocate readv sysconf times)

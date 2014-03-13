@@ -1,0 +1,238 @@
+diff --git a/bfd/Makefile.am b/bfd/Makefile.am
+index 49f9662..2ac03e9 100644
+--- a/bfd/Makefile.am
++++ b/bfd/Makefile.am
+@@ -35,7 +35,7 @@ AM_CFLAGS = $(WARN_CFLAGS)
+ AM_CPPFLAGS = -DBINDIR='"$(bindir)"'
+ if PLUGINS
+ bfdinclude_HEADERS += $(INCDIR)/plugin-api.h
+-LIBDL = -ldl
++LIBDL = @lt_cv_dlopen_libs@
+ endif
+ 
+ # bfd.h goes here, for now
+diff --git a/bfd/Makefile.in b/bfd/Makefile.in
+index 5718fab..7b0f863 100644
+--- a/bfd/Makefile.in
++++ b/bfd/Makefile.in
+@@ -293,6 +293,7 @@ libdir = @libdir@
+ libexecdir = @libexecdir@
+ localedir = @localedir@
+ localstatedir = @localstatedir@
++lt_cv_dlopen_libs = @lt_cv_dlopen_libs@
+ mandir = @mandir@
+ mkdir_p = @mkdir_p@
+ oldincludedir = @oldincludedir@
+@@ -336,7 +337,7 @@ libbfd_la_LDFLAGS = $(am__append_1) -release `cat libtool-soversion` \
+ @INSTALL_LIBBFD_FALSE@noinst_LTLIBRARIES = libbfd.la
+ AM_CFLAGS = $(WARN_CFLAGS)
+ AM_CPPFLAGS = -DBINDIR='"$(bindir)"'
+-@PLUGINS_TRUE@LIBDL = -ldl
++@PLUGINS_TRUE@LIBDL = @lt_cv_dlopen_libs@
+ 
+ # bfd.h goes here, for now
+ BFD_H = bfd.h
+diff --git a/bfd/configure b/bfd/configure
+index d81719d..fdf5356 100755
+--- a/bfd/configure
++++ b/bfd/configure
+@@ -606,6 +606,7 @@ havevecs
+ tdefaults
+ bfd_ufile_ptr
+ bfd_file_ptr
++lt_cv_dlopen_libs
+ supports_plugins
+ bfd_default_target_size
+ bfd_machines
+diff --git a/bfd/configure.in b/bfd/configure.in
+index 612d032..530bbcb 100644
+--- a/bfd/configure.in
++++ b/bfd/configure.in
+@@ -1100,6 +1100,7 @@ else
+   supports_plugins=0
+ fi
+ AC_SUBST(supports_plugins)
++AC_SUBST(lt_cv_dlopen_libs)
+ 
+ # Determine the host dependant file_ptr a.k.a. off_t type.  In order
+ # prefer: off64_t - if ftello64 and fseeko64, off_t - if ftello and
+diff --git a/gold/Makefile.am b/gold/Makefile.am
+index df8dcb5..f6ced44 100644
+--- a/gold/Makefile.am
++++ b/gold/Makefile.am
+@@ -37,7 +38,7 @@ AM_CPPFLAGS = \
+ LIBIBERTY = ../libiberty/libiberty.a
+ 
+ if PLUGINS
+-LIBDL = -ldl
++LIBDL = @DLOPEN_LIBS@
+ endif
+ 
+ if THREADS
+diff --git a/gold/Makefile.in b/gold/Makefile.in
+index 216532a..f12832b 100644
+--- a/gold/Makefile.in
++++ b/gold/Makefile.in
+@@ -272,6 +273,7 @@ CYGPATH_W = @CYGPATH_W@
+ DATADIRNAME = @DATADIRNAME@
+ DEFS = @DEFS@
+ DEPDIR = @DEPDIR@
++DLOPEN_LIBS = @DLOPEN_LIBS@
+ ECHO_C = @ECHO_C@
+ ECHO_N = @ECHO_N@
+ ECHO_T = @ECHO_T@
+@@ -398,7 +400,7 @@ AM_CPPFLAGS = \
+ 	-DTOOLLIBDIR="\"$(tooldir)/lib\"" @INCINTL@
+ 
+ LIBIBERTY = ../libiberty/libiberty.a
+-@PLUGINS_TRUE@LIBDL = -ldl
++@PLUGINS_TRUE@LIBDL = @DLOPEN_LIBS@
+ @THREADS_TRUE@THREADSLIB = -lpthread
+ AM_YFLAGS = -d
+ 
+diff --git a/gold/config.in b/gold/config.in
+index 42252bf..d46fd75 100644
+--- a/gold/config.in
++++ b/gold/config.in
+@@ -73,6 +73,9 @@
+    don't. */
+ #undef HAVE_DECL_VSNPRINTF
+ 
++/* Define to 1 if you have the <dlfcn.h> header file. */
++#undef HAVE_DLFCN_H
++
+ /* Define to 1 if you have the <ext/hash_map> header file. */
+ #undef HAVE_EXT_HASH_MAP
+ 
+@@ -184,6 +187,9 @@
+ /* Define to 1 if you have the <unistd.h> header file. */
+ #undef HAVE_UNISTD_H
+ 
++/* Define to 1 if you have the <windows.h> header file. */
++#undef HAVE_WINDOWS_H
++
+ /* Define to 1 if you have the <zlib.h> header file. */
+ #undef HAVE_ZLIB_H
+ 
+diff --git a/gold/configure b/gold/configure
+index 9e1ee27..7e58cdf 100755
+--- a/gold/configure
++++ b/gold/configure
+@@ -596,6 +596,7 @@ MAINTAINER_MODE_FALSE
+ MAINTAINER_MODE_TRUE
+ HAVE_PUBNAMES_FALSE
+ HAVE_PUBNAMES_TRUE
++DLOPEN_LIBS
+ CXXCPP
+ HAVE_ZLIB_FALSE
+ HAVE_ZLIB_TRUE
+@@ -7139,6 +7140,35 @@ fi
+ 
+ done
+ 
++
++for ac_header in windows.h
++do :
++  ac_fn_cxx_check_header_mongrel "$LINENO" "windows.h" "ac_cv_header_windows_h" "$ac_includes_default"
++if test "x$ac_cv_header_windows_h" = x""yes; then :
++  cat >>confdefs.h <<_ACEOF
++#define HAVE_WINDOWS_H 1
++_ACEOF
++
++fi
++
++done
++
++for ac_header in dlfcn.h
++do :
++  ac_fn_cxx_check_header_mongrel "$LINENO" "dlfcn.h" "ac_cv_header_dlfcn_h" "$ac_includes_default"
++if test "x$ac_cv_header_dlfcn_h" = x""yes; then :
++  cat >>confdefs.h <<_ACEOF
++#define HAVE_DLFCN_H 1
++_ACEOF
++ DLOPEN_LIBS="-ldl"
++else
++  DLOPEN_LIBS=""
++fi
++
++done
++
++
++
+ for ac_func in mallinfo posix_fallocate fallocate readv sysconf times
+ do :
+   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
+diff --git a/gold/configure.ac b/gold/configure.ac
+index 804a474..b03c09d 100644
+--- a/gold/configure.ac
++++ b/gold/configure.ac
+@@ -505,6 +506,13 @@ AC_LANG_PUSH(C++)
+ AC_CHECK_HEADERS(tr1/unordered_set tr1/unordered_map)
+ AC_CHECK_HEADERS(ext/hash_map ext/hash_set)
+ AC_CHECK_HEADERS(byteswap.h)
++
++dnl When plugins enabled dynamic loader interface is required. Check headers
++dnl which may provide this interface. In case of dlfcn.h add libdl to link.
++AC_CHECK_HEADERS(windows.h)
++AC_CHECK_HEADERS(dlfcn.h, [DLOPEN_LIBS="-ldl"], [DLOPEN_LIBS=""])
++AC_SUBST(DLOPEN_LIBS)
++
+ AC_CHECK_FUNCS(mallinfo posix_fallocate fallocate readv sysconf times)
+ AC_CHECK_DECLS([basename, ffs, asprintf, vasprintf, snprintf, vsnprintf, strverscmp, strndup, memmem])
+ 
+diff --git a/gold/plugin.cc b/gold/plugin.cc
+index c39e11ec..9176e06 100644
+--- a/gold/plugin.cc
++++ b/gold/plugin.cc
+@@ -29,9 +29,39 @@
+ #include <vector>
+ 
+ #ifdef ENABLE_PLUGINS
++#ifdef HAVE_DLFCN_H
+ #include <dlfcn.h>
++#elif defined (HAVE_WINDOWS_H)
++#include <windows.h>
++#else
++#error Unknown how to handle dynamic-load-libraries.
+ #endif
+ 
++#if !defined (HAVE_DLFCN_H) && defined (HAVE_WINDOWS_H)
++
++#define RTLD_NOW 0      /* Dummy value.  */
++static void *
++dlopen(const char *file, int mode ATTRIBUTE_UNUSED)
++{
++  return LoadLibrary(file);
++}
++
++static void *
++dlsym(void *handle, const char *name)
++{
++  return reinterpret_cast<void *>(
++     GetProcAddress(static_cast<HMODULE>(handle),name));
++}
++
++static const char *
++dlerror(void)
++{
++  return "unable to load dll";
++}
++
++#endif /* !defined (HAVE_DLFCN_H) && defined (HAVE_WINDOWS_H)  */
++#endif /* ENABLE_PLUGINS */
++
+ #include "parameters.h"
+ #include "errors.h"
+ #include "fileread.h"
+diff --git a/gold/testsuite/Makefile.in b/gold/testsuite/Makefile.in
+index 6e22934..b2eb352 100644
+--- a/gold/testsuite/Makefile.in
++++ b/gold/testsuite/Makefile.in
+@@ -1878,6 +1878,7 @@ CYGPATH_W = @CYGPATH_W@
+ DATADIRNAME = @DATADIRNAME@
+ DEFS = @DEFS@
+ DEPDIR = @DEPDIR@
++DLOPEN_LIBS = @DLOPEN_LIBS@
+ ECHO_C = @ECHO_C@
+ ECHO_N = @ECHO_N@
+ ECHO_T = @ECHO_T@
