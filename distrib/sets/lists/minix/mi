@@ -289,7 +289,6 @@
 ./usr/bin/env				minix-sys
 ./usr/bin/ex				minix-sys
 ./usr/bin/expand			minix-sys
-./usr/bin/factor			minix-sys
 ./usr/bin/false				minix-sys
 ./usr/bin/fbdctl			minix-sys
 ./usr/bin/fdisk				minix-sys
@@ -558,6 +557,7 @@
 ./usr/etc/rc				minix-sys
 ./usr/games				minix-sys
 ./usr/games/adventure			minix-sys
+./usr/games/factor			minix-sys
 ./usr/games/hide			minix-sys
 ./usr/games/primes			minix-sys
 ./usr/include				minix-sys
@@ -2041,7 +2041,6 @@
 ./usr/man/man1/expand.1			minix-sys
 ./usr/man/man1/export.1			minix-sys
 ./usr/man/man1/expr.1			minix-sys
-./usr/man/man1/factor.1			minix-sys
 ./usr/man/man1/false.1			minix-sys
 ./usr/man/man1/fetch.1			minix-sys
 ./usr/man/man1/fgrep.1			minix-sys
@@ -4751,6 +4750,7 @@
 ./usr/man/man5/utmp.5				minix-sys
 ./usr/man/man6					minix-sys
 ./usr/man/man6/adventure.6			minix-sys
+./usr/man/man6/factor.6				minix-sys
 ./usr/man/man6/primes.6				minix-sys
 ./usr/man/man7					minix-sys
 ./usr/man/man7/ascii.7				minix-sys

@@ -8,7 +8,7 @@ SUBDIR=	add_route arp ash at backup btrace \
 	compress cp crc cron crontab \
 	dd decomp16 DESCRIBE devmand devsize dhcpd \
 	dhrystone diff diskctl \
-	eject factor fbdctl \
+	eject fbdctl \
 	find fix format fortune fsck.mfs \
 	gcov-pull grep host \
 	hostaddr ifconfig ifdef \

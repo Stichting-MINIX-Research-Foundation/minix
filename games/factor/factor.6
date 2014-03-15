@@ -1,0 +1,97 @@
+.\"	$NetBSD: factor.6,v 1.12 2010/05/15 21:22:39 joerg Exp $
+.\"
+.\" Copyright (c) 1989, 1993
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" This code is derived from software contributed to Berkeley by
+.\" Landon Curt Noll.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"	@(#)factor.6	8.1 (Berkeley) 5/31/93
+.\"
+.\"
+.\" By: Landon Curt Noll   chongo@toad.com,   ...!{sun,tolsoft}!hoptoad!chongo
+.\"
+.\"   chongo <for a good prime call: 391581 * 2^216193 - 1> /\oo/\
+.\"
+.Dd May 15, 2010
+.Dt FACTOR 6
+.Os
+.Sh NAME
+.Nm factor
+.Nd factor a number
+.Sh SYNOPSIS
+.Nm
+.Op Ar number ...
+.Sh DESCRIPTION
+The
+.Nm
+utility factors integers larger than 1.
+When a number is factored, it is printed, followed by a
+.Dq \&: ,
+and the list of
+.Pq prime
+factors on a single line.
+Factors are listed in ascending order, and are preceded by a space.
+If a factor divides a value more than once, it will be printed more than once.
+.Pp
+When
+.Nm
+is invoked with one or more arguments, each argument will be factored.
+.Pp
+When
+.Nm
+is invoked with no arguments,
+.Nm
+reads numbers, one per line, from standard input, until end of file or error.
+Leading white-space and empty lines are ignored.
+Numbers may be preceded by a single +.
+Integer less than 2 are rejected.
+Numbers are terminated by a non-digit character (such as a newline).
+After a number is read, it is factored.
+Input lines must not be longer than
+.Dv LINE_MAX \- 1
+(currently 2047) characters.
+.Pp
+By default,
+.Nm
+is compiled against the OpenSSL bignum implementation
+.Xr openssl_bn 3 ,
+which lets it handle arbitrarily large values.
+.Pq Note however that very large values can take a very long time to factor.
+If
+.Nm
+is compiled without OpenSSL it is limited to the maximum value of
+.Vt unsigned long .
+.Sh DIAGNOSTICS
+Out of range or invalid input results in
+an appropriate error message
+being written to standard error.
+.\".Sh BUGS
+.\".Nm
+.\"cannot handle the
+.\".Dq 10 most wanted
+.\"factor list.

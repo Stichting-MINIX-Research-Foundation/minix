@@ -10,7 +10,7 @@
 SUBDIR=	adventure \
 	\
 	\
-	\
+	factor \
 	\
 	primes
 
