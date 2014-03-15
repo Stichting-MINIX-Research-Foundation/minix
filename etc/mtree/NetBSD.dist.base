@@ -42,6 +42,8 @@
 ./usr/benchmarks/unixbench/tmp
 ./usr/benchmarks/unixbench/testdir
 ./usr/benchmarks/unixbench/results
+./usr/games
+./usr/games/hide	gname=games mode=0750
 ./usr/include
 ./usr/include/arpa
 ./usr/include/compat
@@ -111,6 +113,7 @@
 ./usr/share/doc/psd
 ./usr/share/doc/psd/19.curses
 ./usr/share/info
+./usr/share/games
 ./usr/share/misc
 ./usr/share/mk
 ./usr/share/nvi

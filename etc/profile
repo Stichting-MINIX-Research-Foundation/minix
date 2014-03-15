@@ -4,7 +4,7 @@
 set -o emacs
 
 # Set the default path
-PATH=/usr/local/bin:/usr/pkg/bin:/usr/bin:/bin
+PATH=/usr/local/bin:/usr/pkg/bin:/usr/bin:/bin:/usr/games
 
 # Add ~/bin, iff it is present
 if [ -e ${HOME}/bin ]; then
