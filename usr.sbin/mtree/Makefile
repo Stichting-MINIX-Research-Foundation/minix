@@ -10,9 +10,6 @@ MAN=	mtree.8
 SRCS=	compare.c crc.c create.c excludes.c misc.c mtree.c spec.c specspec.c \
 	verify.c getid.c pack_dev.c only.c
 .if (${HOSTPROG:U} == "")
-.if defined(__MINIX)
-CPPFLAGS+= -Dlchown=chown -Dlchmod=chmod 
-.endif
 DPADD+= ${LIBUTIL}
 LDADD+= -lutil
 .endif

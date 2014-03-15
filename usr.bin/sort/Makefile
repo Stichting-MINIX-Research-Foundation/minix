@@ -8,8 +8,4 @@ SRCS+=	radix_sort.c
 LDADD+=-lutil
 DPADD+=${LIBUTIL}
 
-.if defined(__MINIX)
-CPPFLAGS+= -Dlchown=chown -Dlchmod=chmod
-.endif # defined(__MINIX)
-
 .include <bsd.prog.mk>

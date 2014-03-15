@@ -22,7 +22,6 @@ LINTFLAGS+=-S -w
 SRCS+=		inode.c link.c misc.c mount.c open.c path.c path_puffs.c \
 		protect.c read.c stadir.c time.c utility.c table.c
 
-CPFFLAGS+=-Dlchown=chown -Dlchmod=chmod
 CPPFLAGS+= -D_MINIX_SYSTEM
 
 NOGCCERROR=yes

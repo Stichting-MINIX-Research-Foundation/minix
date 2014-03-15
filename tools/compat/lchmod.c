@@ -32,7 +32,9 @@
 /* Emulate lchmod(2), checking path with lstat(2) first to ensure that
  * it's not a symlink, and then call chmod(2) */
 
+#if !defined(__minix) && !defined(_LIBC)
 #include "nbtool_config.h"
+#endif /* !defined(__minix) && !defined(_LIBC) */
 
 #if !HAVE_LCHMOD
 #include <sys/stat.h>

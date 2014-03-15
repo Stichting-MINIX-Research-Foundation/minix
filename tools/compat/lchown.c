@@ -32,12 +32,18 @@
 /* Emulate lchown(2), checking path with lstat(2) first to ensure that
  * it's not a symlink, and then call chown(2) */
 
+#if !defined(__minix) && !defined(_LIBC)
 #include "nbtool_config.h"
+#endif /* !defined(__minix) && !defined(_LIBC) */
 
 #if !HAVE_LCHOWN
 #include <sys/stat.h>
 #include <errno.h>
 #include <unistd.h>
+
+#if defined(__minix) && defined(__weak_alias) && defined(_LIBC)
+__weak_alias(__posix_lchown, lchown)
+#endif /* defined(__minix) && defined(__weak_alias) && defined(_LIBC) */
 
 int
 lchown(const char *path, uid_t owner, gid_t group)

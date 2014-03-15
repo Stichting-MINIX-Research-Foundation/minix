@@ -259,12 +259,12 @@ __pure int
 	 getpagesize(void);		/* legacy */
 #if !defined(__minix)
 pid_t	 getpgid(pid_t);
+#endif /* !defined(__minix) */
 #if defined(_XOPEN_SOURCE)
 int	 lchown(const char *, uid_t, gid_t) __RENAME(__posix_lchown);
 #else
 int	 lchown(const char *, uid_t, gid_t);
 #endif
-#endif /* !defined(__minix) */
 int	 lockf(int, int, off_t);
 #if __SSP_FORTIFY_LEVEL == 0
 ssize_t	 readlink(const char * __restrict, char * __restrict, size_t);
