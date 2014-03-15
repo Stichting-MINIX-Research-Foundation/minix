@@ -1,5 +1,4 @@
-.\"	$OpenBSD: touch.1,v 1.14 2007/08/06 19:16:06 sobrado Exp $
-.\"	$NetBSD: touch.1,v 1.8 1995/08/31 22:10:05 jtc Exp $
+.\"	$NetBSD: touch.1,v 1.25 2012/10/24 02:46:25 pgoyette Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,27 +32,30 @@
 .\"
 .\"     @(#)touch.1	8.3 (Berkeley) 4/28/95
 .\"
-.Dd $Mdocdate: August 6 2007 $
+.Dd October 22, 2012
 .Dt TOUCH 1
 .Os
 .Sh NAME
 .Nm touch
 .Nd change file access and modification times
 .Sh SYNOPSIS
-.Nm touch
-.Op Fl acm
+.Nm
+.Op Fl acfhm
+.Op Fl d Ar human-datetime
+.Op Fl Fl date Ar human-datetime
 .Op Fl r Ar file
-.Op Fl t Ar [[CC]YY]MMDDhhmm[.SS]
-.Ar
+.Op Fl Fl reference Ar file
+.Op Fl t Ar datetime
+.Ar file ...
 .Sh DESCRIPTION
 The
 .Nm
-utility sets the modification and access times of files to the
+utility changes the access and modification times of files to the
 current time of day.
 If the file doesn't exist, it is created with default permissions.
 .Pp
-The options are as follows:
-.Bl -tag -width Ds
+The following options are available:
+.Bl -tag -width "-d human-datetime"
 .It Fl a
 Change the access time of the file.
 The modification time of the file is not changed unless the
@@ -65,17 +67,35 @@ The
 .Nm
 utility does not treat this as an error.
 No error messages are displayed and the exit value is not affected.
+.It Fl d Ar human-datetime
+.It Fl Fl date Ar human-datetime
+Parse
+.Ar human-datetime
+using the human datetime parser
+.Xr parsedate 3 .
+.It Fl f
+This flag has no effect; it is accepted for compatibility reasons.
+.It Fl h
+If
+.Ar file
+is a symbolic link, access and/or modification time of the link is changed.
+This option implies
+.Fl c .
 .It Fl m
 Change the modification time of the file.
 The access time of the file is not changed unless the
 .Fl a
 flag is also specified.
 .It Fl r Ar file
-Use the access and modification times from the specified file
+.It Fl Fl reference Ar file
+Use the access and modifications times from
+.Ar file
 instead of the current time of day.
-.It Fl t Ar [[CC]YY]MMDDhhmm[.SS]
+.It Fl t Ar datetime
 Change the access and modification times to the specified time.
-The argument should be in the form
+The argument
+.Ar datetime
+should be in the form
 .Dq [[CC]YY]MMDDhhmm[.SS]
 where each pair of letters represents the following:
 .Pp
@@ -120,22 +140,21 @@ letter pair is not specified, the value defaults to 0.
 .El
 .Pp
 The
-.Nm
-utility exits 0 on success or >0 if an error occurred.
-.Sh SEE ALSO
-.Xr utimes 2
-.Sh STANDARDS
-The
-.Nm
-utility is compliant with the
-.St -p1003.1-2004
-specification.
-.Pp
+.Fl d ,
+.Fl r ,
+and
+.Fl t
+options are mutually exclusive.
+If more than one of these options is present, the last one is used.
+.Sh EXIT STATUS
+.Ex -std
+.Sh COMPATIBILITY
 The obsolescent form of
-.Nm touch ,
+.Nm ,
 where a time format is specified as the first argument, is supported.
 When no
-.Fl r
+.Fl d ,
+.Fl r ,
 or
 .Fl t
 option is specified, there are at least two arguments, and the first
@@ -154,10 +173,20 @@ letter pairs are treated as their counterparts specified to the
 option.
 If the
 .Dq YY
-letter pair is in the range 69 to 99, the year is set from 1969 to 1999;
+letter pair is in the range 69 to 99, the year is set to 1969 to 1999,
 otherwise, the year is set in the 21st century.
+.Sh SEE ALSO
+.Xr utimes 2
+.Sh STANDARDS
+The
+.Nm
+utility is expected to be a superset of the
+.St -p1003.2
+specification.
 .Sh HISTORY
 A
 .Nm
 utility appeared in
 .At v7 .
+.Sh BUGS
+A symbolic link can't be a reference file of access and/or modification time.

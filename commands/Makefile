@@ -26,7 +26,7 @@ SUBDIR=	add_route arp ash at backup btrace \
 	slip spell sprofalyze sprofdiff srccrc \
 	svclog svrctl swifi synctree sysenv \
 	syslogd tail tcpd tcpdp tcpstat telnet \
-	telnetd term termcap tget time touch \
+	telnetd term termcap tget time \
 	truncate udpstat umount \
 	unstack update uud uue version vol \
 	whereis which writeisofs fetch \
