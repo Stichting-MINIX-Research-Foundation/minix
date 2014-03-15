@@ -559,6 +559,7 @@
 ./usr/games				minix-sys
 ./usr/games/adventure			minix-sys
 ./usr/games/hide			minix-sys
+./usr/games/primes			minix-sys
 ./usr/include				minix-sys
 ./usr/include/aio.h			minix-sys
 ./usr/include/a.out.h			minix-sys
@@ -4750,6 +4751,7 @@
 ./usr/man/man5/utmp.5				minix-sys
 ./usr/man/man6					minix-sys
 ./usr/man/man6/adventure.6			minix-sys
+./usr/man/man6/primes.6				minix-sys
 ./usr/man/man7					minix-sys
 ./usr/man/man7/ascii.7				minix-sys
 ./usr/man/man7/atf.7				minix-sys	atf

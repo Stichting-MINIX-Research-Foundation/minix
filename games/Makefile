@@ -7,7 +7,12 @@
 
 .include <bsd.own.mk>
 
-SUBDIR=	adventure
+SUBDIR=	adventure \
+	\
+	\
+	\
+	\
+	primes
 
 .if !defined(__MINIX)
 .if ${MKCXX} != "no"
