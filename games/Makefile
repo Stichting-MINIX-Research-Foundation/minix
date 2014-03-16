@@ -11,7 +11,7 @@ SUBDIR=	adventure \
 	\
 	\
 	factor fortune \
-	\
+	morse \
 	pig primes
 
 .if !defined(__MINIX)
