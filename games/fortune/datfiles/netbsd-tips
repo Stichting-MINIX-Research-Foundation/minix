@@ -1,0 +1,143 @@
+List 20 largest files (larger than 5 MB) sorted by megabytes:
+
+ find / -type f -size +10000 -print0 | xargs -0 du -m | sort -nr | head -20
+%
+You can keep specific rc.conf configurations in individual files
+under /etc/rc.conf.d/ where each file is named after the $name of
+the rc.d script. Some configurations may have different names than
+the script; see the $name variable to check.
+%
+You can see the total used buffers in megabytes with:
+
+ vmstat -s | awk '
+/ bytes per page$/ { bpp = $1 }
+/ cached file pages$/ { cfp = $1 }
+/ cached executable pages$/ { cep = $1 }
+END { print((cfp + cep) * bpp / 1024 / 1024); }'
+%
+You can view a value of a variable in pkgsrc by using the show-var
+target, for example:
+
+ make show-var VARNAME=MAINTAINER
+%
+You can view the basic order of your rc.d scripts with:
+
+ rcorder /etc/rc.d/*
+%
+You can ask questions about NetBSD at the netbsd-users@NetBSD.org
+mailing list. Be sure to clearly explain your problem, what you
+tried, what results you had, and what you expected.
+%
+You can view your non-default Postfix settings with:
+
+ postconf -n
+%
+To report about installed packages with known vulnerabilities,
+fetch the latest pkg-vulnerabilities file as the superuser with:
+
+ download-vulnerability-list
+
+And then run:
+
+ audit-packages
+%
+The following shows an example of temporarily adding 10MB more swap
+space for virtual memory:
+
+ dd if=/dev/zero of=/root/swapfile bs=1024 count=10240
+ chmod go= /root/swapfile
+ swapctl -a /root/swapfile
+%
+If your console ever gets broken, you can try resetting it to its
+initial state with:
+
+ printf "\033c
+%
+If you installed a package, but don't know what the software is
+called or what executables to run, use pkg_info with the -L switch
+to list the package's files and search for /bin:
+
+ pkg_info -L PACKAGE-NAME | grep /bin
+%
+A new user can be added by using the useradd tool with the -m switch
+to create the home directory. Then set the password. For example:
+
+ useradd -m susan
+ passwd susan
+%
+To modify user account information use the chpass or usermod tools.
+If you need to edit the user database directly, use the vipw command.
+%
+You can temporarily start the SSH server by running the following
+as root:
+
+ /etc/rc.d/sshd onestart
+%
+Several IP Filter and ipnat examples are available in the
+/usr/share/examples/ipf/ directory.
+%
+Want to dual boot using a bluetooth mouse or keyboard? Use btkey(1)
+to store the link key in the hardware.
+%
+If you are having trouble connecting to a remote bluetooth device,
+try the btconfig(8) inquiry command. The kernel will retain some
+clock offset information that may help.
+%
+You can download files via HTTP using the ftp(1) command; for example:
+
+ ftp http://www.NetBSD.org/images/NetBSD.png
+%
+The mtree(8) tool can be used to check permissions, ownerships,
+file changes, and more when compared against a specification. For
+example to check directory ownership and permissions for standard
+NetBSD directories, run:
+
+  /usr/sbin/mtree -e -p / -f /etc/mtree/NetBSD.dist
+%
+If you need reminders on your console to leave, use the leave(1)
+tool. For example to receive reminders to leave in one hour:
+
+  leave +0100
+%
+To stop non-superuser logins until next boot, as root:
+
+  touch /etc/nologin
+%
+When extracting distribution tar sets, be sure to use the pax -pe
+option or the tar -p switch to preserve the user and group and file
+modes (including setuid and setgid). This is needed, for example,
+so su(1) will work after extracting the base.tgz set.
+%
+Math can be done within the sh(1) and ksh(1) shells or with expr(1),
+dc(1), bc(1), or awk(1). Here are some simple examples:
+
+ echo $((431 * 79))
+ expr 60 \* 60 \* 24 \* 7
+%
+You can view network connections with the fstat, netstat -a, sockstat,
+and "systat netstat" commands.
+%
+Visit the NetBSD Security website to keep track of advisories:
+  http://www.NetBSD.org/support/security/
+Or join the security-announce mailing list for alerts:
+  http://www.netbsd.org/mailinglists/#security-announce
+%
+Here's an example of finding what package a file belongs to:
+
+	pkg_info -Fe /usr/pkg/bin/inw
+%
+Many log files are checked for rotation every hour by newsyslog(8).
+It is configured in /etc/newsyslog.conf.
+%
+NetBSD's default cron jobs are defined in the /var/cron/tabs/root
+file.  As the superuser, use "crontab -l" to view it. To edit it,
+use "crontab -e" (which defaults to using the vi(1) editor).
+%
+You can make sure that your system is stable and behaves correctly by
+running the tests in /usr/tests (which come from the tests.tgz set).
+To do so:
+
+  vi /etc/atf/NetBSD.conf
+  cd /usr/tests
+  atf-run | atf-report
+%

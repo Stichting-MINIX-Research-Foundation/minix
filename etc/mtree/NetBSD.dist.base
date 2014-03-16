@@ -114,6 +114,7 @@
 ./usr/share/doc/psd/19.curses
 ./usr/share/info
 ./usr/share/games
+./usr/share/games/fortune
 ./usr/share/misc
 ./usr/share/mk
 ./usr/share/nvi

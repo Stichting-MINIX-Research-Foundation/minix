@@ -122,7 +122,7 @@ SUBDIR += .WAIT texinfo \
 		.WAIT \
 		.WAIT \
 		.WAIT \
-		pwd_mkdb stat zic
+		pwd_mkdb stat strfile zic
 .endif
 .if defined(__MINIX)
 SUBDIR += \

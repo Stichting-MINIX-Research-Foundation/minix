@@ -302,7 +302,6 @@
 ./usr/bin/flex				minix-sys
 ./usr/bin/fold				minix-sys
 ./usr/bin/format			minix-sys
-./usr/bin/fortune			minix-sys
 ./usr/bin/fpr				minix-sys
 ./usr/bin/from				minix-sys
 ./usr/bin/fsplit			minix-sys
@@ -558,8 +557,11 @@
 ./usr/games				minix-sys
 ./usr/games/adventure			minix-sys
 ./usr/games/factor			minix-sys
+./usr/games/fortune			minix-sys
 ./usr/games/hide			minix-sys
 ./usr/games/primes			minix-sys
+./usr/games/strfile			minix-sys
+./usr/games/unstr			minix-sys
 ./usr/include				minix-sys
 ./usr/include/aio.h			minix-sys
 ./usr/include/a.out.h			minix-sys
@@ -1682,7 +1684,6 @@
 ./usr/lib/fonts/koi8-r.fnt		minix-sys
 ./usr/lib/fonts/koi8-u.fnt		minix-sys
 ./usr/lib/fonts/polish.fnt		minix-sys
-./usr/lib/fortune.dat			minix-sys
 ./usr/lib/gcrt0.o			minix-sys
 ./usr/lib/keymaps			minix-sys
 ./usr/lib/keymaps/abnt2.map		minix-sys
@@ -2052,7 +2053,6 @@
 ./usr/man/man1/fold.1			minix-sys
 ./usr/man/man1/for.1			minix-sys
 ./usr/man/man1/format.1			minix-sys
-./usr/man/man1/fortune.1		minix-sys
 ./usr/man/man1/fpr.1			minix-sys
 ./usr/man/man1/from.1			minix-sys
 ./usr/man/man1/fsck.mfs.1		minix-sys
@@ -4751,6 +4751,7 @@
 ./usr/man/man6					minix-sys
 ./usr/man/man6/adventure.6			minix-sys
 ./usr/man/man6/factor.6				minix-sys
+./usr/man/man6/fortune.6			minix-sys
 ./usr/man/man6/primes.6				minix-sys
 ./usr/man/man7					minix-sys
 ./usr/man/man7/ascii.7				minix-sys
@@ -4841,11 +4842,13 @@
 ./usr/man/man8/shutdown.8			minix-sys
 ./usr/man/man8/slip.8				minix-sys
 ./usr/man/man8/srccrc.8				minix-sys
+./usr/man/man8/strfile.8			minix-sys
 ./usr/man/man8/sync.8				minix-sys
 ./usr/man/man8/syslogd.8			minix-sys
 ./usr/man/man8/tcpd.8				minix-sys
 ./usr/man/man8/unix.8				minix-sys
 ./usr/man/man8/unlink.8				minix-sys
+./usr/man/man8/unstr.8				minix-sys
 ./usr/man/man8/update.8				minix-sys
 ./usr/man/man8/usage.8				minix-sys
 ./usr/man/man8/user.8				minix-sys
@@ -4997,6 +5000,33 @@
 ./usr/share/examples/lutok/interpreter.cpp	minix-sys	kyua
 ./usr/share/examples/lutok/raii.cpp	minix-sys	kyua
 ./usr/share/games			minix-sys
+./usr/share/games/fortune			minix-sys
+./usr/share/games/fortune/farber		minix-sys
+./usr/share/games/fortune/farber.dat		minix-sys
+./usr/share/games/fortune/fortunes		minix-sys
+./usr/share/games/fortune/fortunes-o		minix-sys
+./usr/share/games/fortune/fortunes-o.dat	minix-sys
+./usr/share/games/fortune/fortunes.dat		minix-sys
+./usr/share/games/fortune/fortunes2		minix-sys
+./usr/share/games/fortune/fortunes2-o		minix-sys
+./usr/share/games/fortune/fortunes2-o.dat	minix-sys
+./usr/share/games/fortune/fortunes2.dat		minix-sys
+./usr/share/games/fortune/limerick		minix-sys
+./usr/share/games/fortune/limerick-o		minix-sys
+./usr/share/games/fortune/limerick-o.dat	minix-sys
+./usr/share/games/fortune/limerick.dat		minix-sys
+./usr/share/games/fortune/netbsd		minix-sys
+./usr/share/games/fortune/netbsd-o		minix-sys
+./usr/share/games/fortune/netbsd-o.dat		minix-sys
+./usr/share/games/fortune/netbsd-tips		minix-sys
+./usr/share/games/fortune/netbsd-tips.dat	minix-sys
+./usr/share/games/fortune/netbsd.dat		minix-sys
+./usr/share/games/fortune/startrek		minix-sys
+./usr/share/games/fortune/startrek.dat		minix-sys
+./usr/share/games/fortune/unamerican-o		minix-sys
+./usr/share/games/fortune/unamerican-o.dat	minix-sys
+./usr/share/games/fortune/zippy			minix-sys
+./usr/share/games/fortune/zippy.dat		minix-sys
 ./usr/share/info			minix-sys
 ./usr/share/info/as.info		minix-sys	binutils
 ./usr/share/info/bfd.info		minix-sys	binutils
