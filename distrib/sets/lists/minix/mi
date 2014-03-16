@@ -561,6 +561,7 @@
 ./usr/games/hide			minix-sys
 ./usr/games/morse			minix-sys
 ./usr/games/pig				minix-sys
+./usr/games/ppt				minix-sys
 ./usr/games/primes			minix-sys
 ./usr/games/strfile			minix-sys
 ./usr/games/unstr			minix-sys

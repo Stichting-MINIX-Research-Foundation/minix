@@ -12,7 +12,7 @@ SUBDIR=	adventure \
 	\
 	factor fortune \
 	morse \
-	pig primes
+	pig ppt primes
 
 .if !defined(__MINIX)
 .if ${MKCXX} != "no"
