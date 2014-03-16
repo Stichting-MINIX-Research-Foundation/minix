@@ -11,7 +11,7 @@ SUBDIR=	adventure \
 	bcd \
 	\
 	factor fortune \
-	morse number \
+	monop morse number \
 	pig ppt primes
 
 .if !defined(__MINIX)
