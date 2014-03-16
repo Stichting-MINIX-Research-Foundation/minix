@@ -556,6 +556,7 @@
 ./usr/etc/rc				minix-sys
 ./usr/games				minix-sys
 ./usr/games/adventure			minix-sys
+./usr/games/bcd				minix-sys
 ./usr/games/factor			minix-sys
 ./usr/games/fortune			minix-sys
 ./usr/games/hide			minix-sys
@@ -4753,9 +4754,12 @@
 ./usr/man/man5/utmp.5				minix-sys
 ./usr/man/man6					minix-sys
 ./usr/man/man6/adventure.6			minix-sys
+./usr/man/man6/bcd.6				minix-sys
 ./usr/man/man6/factor.6				minix-sys
 ./usr/man/man6/fortune.6			minix-sys
+./usr/man/man6/morse.6				minix-sys
 ./usr/man/man6/pig.6				minix-sys
+./usr/man/man6/ppt.6				minix-sys
 ./usr/man/man6/primes.6				minix-sys
 ./usr/man/man7					minix-sys
 ./usr/man/man7/ascii.7				minix-sys

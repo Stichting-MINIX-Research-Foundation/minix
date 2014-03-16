@@ -8,7 +8,7 @@
 .include <bsd.own.mk>
 
 SUBDIR=	adventure \
-	\
+	bcd \
 	\
 	factor fortune \
 	morse \
