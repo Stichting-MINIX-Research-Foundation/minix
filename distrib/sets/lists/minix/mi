@@ -561,6 +561,7 @@
 ./usr/games/fortune			minix-sys
 ./usr/games/hide			minix-sys
 ./usr/games/morse			minix-sys
+./usr/games/number			minix-sys
 ./usr/games/pig				minix-sys
 ./usr/games/ppt				minix-sys
 ./usr/games/primes			minix-sys
@@ -4758,6 +4759,7 @@
 ./usr/man/man6/factor.6				minix-sys
 ./usr/man/man6/fortune.6			minix-sys
 ./usr/man/man6/morse.6				minix-sys
+./usr/man/man6/number.6				minix-sys
 ./usr/man/man6/pig.6				minix-sys
 ./usr/man/man6/ppt.6				minix-sys
 ./usr/man/man6/primes.6				minix-sys
