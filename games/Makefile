@@ -7,7 +7,7 @@
 
 .include <bsd.own.mk>
 
-SUBDIR=	adventure \
+SUBDIR=	adventure arithmetic \
 	bcd \
 	\
 	factor fortune \
