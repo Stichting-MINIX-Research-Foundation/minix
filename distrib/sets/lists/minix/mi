@@ -566,6 +566,7 @@
 ./usr/games/pig				minix-sys
 ./usr/games/ppt				minix-sys
 ./usr/games/primes			minix-sys
+./usr/games/random			minix-sys
 ./usr/games/strfile			minix-sys
 ./usr/games/unstr			minix-sys
 ./usr/games/wargames			minix-sys
@@ -4766,6 +4767,7 @@
 ./usr/man/man6/pig.6				minix-sys
 ./usr/man/man6/ppt.6				minix-sys
 ./usr/man/man6/primes.6				minix-sys
+./usr/man/man6/random.6				minix-sys
 ./usr/man/man6/wargames.6			minix-sys
 ./usr/man/man7					minix-sys
 ./usr/man/man7/ascii.7				minix-sys
