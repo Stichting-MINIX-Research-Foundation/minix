@@ -52,10 +52,6 @@ __RCSID("$NetBSD: map_object.c,v 1.52 2013/08/03 13:17:05 skrll Exp $");
 #if defined(__minix)
 #define MINIXVERBOSE 0
 
-#ifndef MAP_SHARED
-#define MAP_SHARED MAP_PRIVATE /* minix: MAP_SHARED should be MAP_PRIVATE */
-#endif
-
 #if MINIXVERBOSE
 #include <stdio.h>
 #endif

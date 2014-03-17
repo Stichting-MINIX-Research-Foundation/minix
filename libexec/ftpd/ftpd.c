@@ -2232,7 +2232,6 @@ send_data_with_mmap(int filefd, int netfd, const struct stat *st, int isdata)
 		(void)gettimeofday(&then, NULL);
 	} else
 		bufrem = winsize;
-#if !defined(__minix)
 	while (1) {
 		mapsize = MIN(filesize - off, winsize);
 		if (mapsize == 0)
@@ -2244,10 +2243,14 @@ send_data_with_mmap(int filefd, int netfd, const struct stat *st, int isdata)
 				goto try_read;
 			return (SS_FILE_ERROR);
 		}
+#ifndef __minix
 		(void) madvise(win, mapsize, MADV_SEQUENTIAL);
+#endif
 		error = write_data(netfd, win, mapsize, &bufrem, &then,
 		    isdata);
+#ifndef __minix
 		(void) madvise(win, mapsize, MADV_DONTNEED);
+#endif
 		munmap(win, mapsize);
 		if (urgflag && handleoobcmd())
 			return (SS_ABORTED);
@@ -2257,7 +2260,6 @@ send_data_with_mmap(int filefd, int netfd, const struct stat *st, int isdata)
 	}
 	return (SS_SUCCESS);
 
-#endif /* !defined(__minix) */
  try_read:
 	return (send_data_with_read(filefd, netfd, st, isdata));
 }

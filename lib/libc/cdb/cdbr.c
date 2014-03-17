@@ -57,10 +57,6 @@ __RCSID("$NetBSD: cdbr.c,v 1.4 2012/09/27 00:37:43 joerg Exp $");
 #include <string.h>
 #include <unistd.h>
 
-#if defined(__minix) && !defined(MAP_SHARED)
-#define MAP_SHARED MAP_PRIVATE /* LSC: We lose some memory, but it's OK as this is RO. */
-#endif /* defined(__minix) && !defined(MAP_SHARED) */
-
 #ifdef __weak_alias
 __weak_alias(cdbr_close,_cdbr_close)
 __weak_alias(cdbr_find,_cdbr_find)

@@ -61,15 +61,13 @@ __RCSID("$NetBSD: paths.c,v 1.41 2013/05/06 08:02:20 skrll Exp $");
 static Search_Path *_rtld_find_path(Search_Path *, const char *, size_t);
 static Search_Path **_rtld_append_path(Search_Path **, Search_Path **,
     const char *, const char *, const char *);
-#if !defined(__minix)
 static void _rtld_process_mapping(Library_Xform **, const char *,
     const char *);
-#endif /* !defined(__minix) */
 static char *exstrdup(const char *, const char *);
-#if !defined(__minix)
 static const char *getstr(const char **, const char *, const char *);
 static const char *getcstr(const char **, const char *, const char *);
 static const char *getword(const char **, const char *, const char *);
+#if !defined(__minix)
 static int matchstr(const char *, const char *, const char *);
 #endif /* !defined(__minix) */
 
@@ -90,7 +88,6 @@ exstrdup(const char *bp, const char *ep)
 	return (cp);
 }
 
-#if !defined(__minix)
 /*
  * Like strsep(), but takes end of string and doesn't put any NUL.  To
  * detect empty string, compare `*p' and return value.
@@ -149,6 +146,7 @@ getword(const char **p, const char *ep, const char *delim)
 	return (getstr(p, ep, delim));
 }
 
+#if !defined(__minix)
 /*
  * Match `bp' against NUL terminated string pointed by `p'.
  */
@@ -234,7 +232,6 @@ _rtld_add_paths(const char *execname, Search_Path **path_p, const char *pathstr)
 	}
 }
 
-#if !defined(__minix)
 /*
  * Process library mappings of the form:
  *	<library_name>	<machdep_variable> <value,...:library_name,...> ...
@@ -340,17 +337,11 @@ cleanup:
 		xfree(hwptr->name);
 	xfree(hwptr);
 }
-#endif /* !defined(__minix) */
 
 void
 _rtld_process_hints(const char *execname, Search_Path **path_p,
     Library_Xform **lib_p, const char *fname)
 {
-
-#if defined(__minix)
-	/* Minix doesn't support MAP_SHARED. */
-	return;
-#else
 	int fd;
 	char *buf, small[128];
 	const char *b, *ep, *ptr;
@@ -421,7 +412,6 @@ _rtld_process_hints(const char *execname, Search_Path **path_p,
 
 	if (buf != small)
 		(void)munmap(buf, sz);
-#endif /* defined(__minix) */
 }
 
 #if !defined(__minix)

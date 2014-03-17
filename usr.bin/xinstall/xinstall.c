@@ -819,9 +819,7 @@ copy(int from_fd, char *from_name, int to_fd, char *to_name, off_t size)
 {
 	ssize_t	nr, nw;
 	int	serrno;
-#if !defined(__minix)
 	u_char	*p;
-#endif /* !defined(__minix) */
 	u_char	buf[MAXBSIZE];
 	MD5_CTX		ctxMD5;
 	RMD160_CTX	ctxRMD160;
@@ -868,15 +866,12 @@ copy(int from_fd, char *from_name, int to_fd, char *to_name, off_t size)
 		 */
 
 		if (size <= 8 * 1048576) {
-#if defined(__minix)
-			goto mmap_failed;
-#else
 			if ((p = mmap(NULL, (size_t)size, PROT_READ,
 			    MAP_FILE|MAP_SHARED, from_fd, (off_t)0))
 			    == MAP_FAILED) {
 				goto mmap_failed;
 			}
-#if defined(MADV_SEQUENTIAL) && !defined(__APPLE__)
+#if defined(MADV_SEQUENTIAL) && !defined(__APPLE__) && !defined(__minix)
 			if (madvise(p, (size_t)size, MADV_SEQUENTIAL) == -1
 			    && errno != EOPNOTSUPP)
 				warnx("madvise: %s", strerror(errno));
@@ -911,7 +906,6 @@ copy(int from_fd, char *from_name, int to_fd, char *to_name, off_t size)
 				break;
 			}
 			(void)munmap(p, size);
-#endif /* defined(__minix) */
 		} else {
  mmap_failed:
 			while ((nr = read(from_fd, buf, sizeof(buf))) > 0) {

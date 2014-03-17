@@ -942,13 +942,9 @@ _prop_object_internalize_map_file(const char *fname)
 	if ((sb.st_size & pgmask) == 0)
 		need_guard = true;
 
-#ifndef __minix
 	mf->poimf_xml = mmap(NULL, need_guard ? mf->poimf_mapsize + pgsize
 			    		      : mf->poimf_mapsize,
 			    PROT_READ, MAP_FILE|MAP_SHARED, fd, (off_t)0);
-#else
-	mf->poimf_xml = MAP_FAILED;
-#endif
 	(void) close(fd);
 	if (mf->poimf_xml == MAP_FAILED) {
 		_PROP_FREE(mf, M_TEMP);

@@ -403,6 +403,16 @@ void basic_regression(void)
 	fd2 = open("../testsh2", O_RDONLY);
 	if(fd1 < 0 || fd2 < 0) { e(2); }
 
+	/* just check that we can't mmap() a file writable */
+	if(mmap(NULL, PAGE_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FILE, fd1, 0) != MAP_FAILED) {
+		e(1);
+	}
+
+	/* check that we can mmap() a file MAP_SHARED readonly */
+	if(mmap(NULL, PAGE_SIZE, PROT_READ, MAP_SHARED | MAP_FILE, fd1, 0) == MAP_FAILED) {
+		e(1);
+	}
+
 	/* clear cache of files before mmap so pages won't be present already */
 	if(fcntl(fd1, F_FLUSH_FS_CACHE) < 0) { e(1); }
 	if(fcntl(fd2, F_FLUSH_FS_CACHE) < 0) { e(1); }

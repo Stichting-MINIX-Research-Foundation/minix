@@ -256,9 +256,10 @@ int do_mmap(message *m)
 		/* File mapping might be disabled */
 		if(!enable_filemap) return ENXIO;
 
-		/* files get private copies of pages on writes. */
-		if(!(m->VMM_FLAGS & MAP_PRIVATE)) {
-			printf("VM: mmap file must MAP_PRIVATE\n");
+		/* For files, we only can't accept writable MAP_SHARED
+		 * mappings.
+		 */
+		if((m->VMM_FLAGS & MAP_SHARED) && (m->VMM_PROT & PROT_WRITE)) {
 			return ENXIO;
 		}
 

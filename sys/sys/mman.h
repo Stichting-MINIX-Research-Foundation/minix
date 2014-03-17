@@ -68,9 +68,7 @@ typedef	__off_t		off_t;		/* file offset */
  * Flags contain sharing type and options.
  * Sharing types; choose one.
  */
-#if !defined(__minix)
 #define	MAP_SHARED	0x0001	/* share changes */
-#endif /* !defined(__minix) */
 #define	MAP_PRIVATE	0x0002	/* changes are private */
 
 #ifdef _KERNEL

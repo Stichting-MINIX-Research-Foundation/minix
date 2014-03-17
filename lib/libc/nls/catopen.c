@@ -61,10 +61,6 @@ __RCSID("$NetBSD: catopen.c,v 1.32 2013/08/19 08:03:34 joerg Exp $");
 #define NLS_DEFAULT_PATH "/usr/share/nls/%L/%N.cat:/usr/share/nls/%N/%L"
 #define NLS_DEFAULT_LANG "C"
 
-#if defined(__minix) && !defined(MAP_SHARED)
-#define MAP_SHARED MAP_PRIVATE /* LSC: We lose some memory, but it's OK as this is RO. */
-#endif /* defined(__minix) && !defined(MAP_SHARED) */
-
 __weak_alias(catopen, _catopen)
 __weak_alias(catopen_l, _catopen_l)
 
