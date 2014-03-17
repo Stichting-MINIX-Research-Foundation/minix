@@ -47,7 +47,7 @@ char *argv[];
  
   found = find_mtab_entry(name);
 
-  if (umount(name, umount_flags) < 0) {
+  if (minix_umount(name, umount_flags) < 0) {
 	if (errno == EINVAL)
 		std_err("umount: Device not mounted\n");
 	else if (errno == ENOTBLK)

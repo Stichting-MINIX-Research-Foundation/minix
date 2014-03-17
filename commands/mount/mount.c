@@ -76,7 +76,7 @@ char *argv[];
 	}
   }
   
-  if (mount(device, argv[2], mountflags, srvflags, type, args) < 0) {
+  if (minix_mount(device, argv[2], mountflags, srvflags, type, args) < 0) {
 	err = strerror(errno);
 	fprintf(stderr, "mount: Can't mount %s on %s: %s\n",
 		argv[1], argv[2], err);
@@ -153,7 +153,7 @@ mount_all()
 		if (!strcmp(device, "none")) 
 			device = NULL;
 
-		if (mount(device, mountpoint, mountflags, 0, fs->fs_vfstype,
+		if (minix_mount(device, mountpoint, mountflags, 0, fs->fs_vfstype,
 		    fs->fs_mntops) != 0) {
 			err = strerror(errno);
 			fprintf(stderr, "mount: Can't mount %s on %s: %s\n",

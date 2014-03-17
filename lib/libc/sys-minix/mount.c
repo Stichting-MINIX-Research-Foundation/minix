@@ -28,7 +28,7 @@ static int rs_down(char *label)
 
 char *find_rslabel(char *args_line);
 
-int mount(char *special, char *name, int mountflags, int srvflags,
+int minix_mount(char *special, char *name, int mountflags, int srvflags,
 	  char *type, char *args)
 {
   int r;
@@ -165,7 +165,7 @@ int mount(char *special, char *name, int mountflags, int srvflags,
   return r;
 }
 
-int umount(const char *name, int srvflags)
+int minix_umount(const char *name, int srvflags)
 {
   char label[MNT_LABEL_LEN];
   message m;

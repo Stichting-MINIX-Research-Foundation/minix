@@ -6,8 +6,8 @@ mount, umount \- mount or umount a file system
 .nf
 #include <sys/mount.h>
 
-int mount(char *\fIspecial\fP, char *\fIname\fP, int \fImountflags\fP, int \fIsrvflags\fP, char *\fItype\fP, char *\fIargs\fP)
-int umount(char *\fIname\fP, int \fIsrvflags)
+int minix_mount(char *\fIspecial\fP, char *\fIname\fP, int \fImountflags\fP, int \fIsrvflags\fP, char *\fItype\fP, char *\fIargs\fP)
+int minix_umount(char *\fIname\fP, int \fIsrvflags)
 .fi
 .ft P
 .SH DESCRIPTION

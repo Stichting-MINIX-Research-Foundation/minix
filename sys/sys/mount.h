@@ -480,7 +480,7 @@ int	getfh(const char *, void *, size_t *)
 #if !defined(__minix)
 int	unmount(const char *, int);
 #else
-int	umount(const char *_name, int srvflags);
+int	minix_umount(const char *_name, int srvflags);
 #endif /* !defined(__minix) */
 
 #if defined(_NETBSD_SOURCE)
@@ -488,7 +488,7 @@ int	umount(const char *_name, int srvflags);
 #if !defined(__minix)
 int mount(const char *, const char *, int, void *, size_t) __RENAME(__mount50);
 #else
-int mount(char *_spec, char *_name, int _mountflags, int srvflags, char *type,
+int minix_mount(char *_spec, char *_name, int _mountflags, int srvflags, char *type,
 	char *args);
 #endif /* !defined(__minix) */
 int	fhopen(const void *, size_t, int) __RENAME(__fhopen40);
