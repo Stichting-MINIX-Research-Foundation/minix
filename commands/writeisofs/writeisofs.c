@@ -1,6 +1,10 @@
 
 /* writeisofs - simple ISO9660-format-image writing utility */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <errno.h>
 #include <stdio.h>
 #include <time.h>
