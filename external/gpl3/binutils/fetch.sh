@@ -28,6 +28,7 @@ then
 	cd dist && \
 	cat ../patches/* | patch -p1 && \
 	cp ../files/yyscript.h gold && \
-	cp ../files/yyscript.c gold
+	cp ../files/yyscript.c gold && \
+	rm -f ld/configdoc.texi
 fi
 

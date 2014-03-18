@@ -34,7 +34,7 @@ GNUHOSTDIST?=	${.CURDIR}/../../gnu/dist/${MODULE}
 # the corresponding ${.CURDIR}, which also conveniently hides from git.
 .if exists(${GNUHOSTDIST:H}/fetch.sh)
 ${GNUHOSTDIST:H}/.gitignore: ${GNUHOSTDIST:H}/fetch.sh
-	${HOST_SH} ${GNUHOSTDIST:H}/fetch.sh
+	SED=${TOOL_SED} ${HOST_SH} ${GNUHOSTDIST:H}/fetch.sh
 	@test -e ${GNUHOSTDIST}/configure
 	@echo "${MODULE:U${.CURDIR:T}:C,gcc[0-9]*,gcc,}-*.tar.*z*" >> $@
 	@echo ${GNUHOSTDIST:T} >> $@
