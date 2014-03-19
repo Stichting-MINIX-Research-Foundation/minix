@@ -56,7 +56,11 @@ AFLAGS.gpt.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 
 ${PROG}: ${OBJS}
 	${_MKTARGET_LINK}
+.if defined(__MINIX)
+	${CC} -o ${PROG}.tmp ${LDFLAGS} -Wl,--section-start=.text=${LOADADDR} ${OBJS}
+.else
 	${CC} -o ${PROG}.tmp ${LDFLAGS} -Wl,-Ttext,${LOADADDR} ${OBJS}
+.endif
 	@ set -- $$( ${NM} -t d ${PROG}.tmp | grep '\<mbr_space\>' \
 		    | ${TOOL_SED} 's/^0*//'  ); \
 		echo "#### There are $$1 free bytes in ${PROG}"

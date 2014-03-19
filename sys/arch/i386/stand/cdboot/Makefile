@@ -53,8 +53,13 @@ CLEANFILES+=	${PROG}.tmp
 
 ${PROG}: ${OBJS}
 	${_MKTARGET_LINK}
+.if defined(__MINIX)
+	${CC} -o ${PROG}.tmp ${LDFLAGS} -Wl,--section-start=.text=${PRIMARY_LOAD_ADDRESS} \
+	    ${OBJS}
+.else
 	${CC} -o ${PROG}.tmp ${LDFLAGS} -Wl,-Ttext,${PRIMARY_LOAD_ADDRESS} \
 	    ${OBJS}
+.endif
 	@ set -- $$( ${NM} -t d ${PROG}.tmp | grep '\<free_space\>' \
 		| ${TOOL_SED} 's/^0*//'  ); \
 		echo "#### There are $$1 free bytes in ${PROG}"

@@ -137,12 +137,18 @@ CLEANFILES+= ${PROG}.tmp ${PROG}.map ${PROG}.syms vers.c
 vers.c: ${VERSIONFILE} ${SOURCES} ${LIBLIST} ${.CURDIR}/../Makefile.boot
 	${HOST_SH} ${S}/conf/newvers_stand.sh ${VERSIONFILE} x86 ${NEWVERSWHAT}
 
+.if defined(__MINIX)
+# BJG
+# -Wl,-Ttext,0 changed to --section-start=.text=0 twice below of a gold problem.
+# did not leave both versions in because of the huge continued line.
+.endif
+
 # Anything that calls 'real_to_prot' must have a %pc < 0x10000.
 # We link the program, find the callers (all in libi386), then
 # explicitly pull in the required objects before any other library code.
 ${PROG}: ${OBJS} ${LIBLIST} ${.CURDIR}/../Makefile.boot
 	${_MKTARGET_LINK}
-	bb="$$( ${CC} -o ${PROG}.syms ${LDFLAGS} -Wl,-Ttext,0 -Wl,-cref \
+	bb="$$( ${CC} -o ${PROG}.syms ${LDFLAGS} -Wl,--section-start=.text=0 -Wl,-cref \
 	    ${OBJS} ${LIBLIST} | ( \
 		while read symbol file; do \
 			[ -z "$$file" ] && continue; \
@@ -158,7 +164,7 @@ ${PROG}: ${OBJS} ${LIBLIST} ${.CURDIR}/../Makefile.boot
 		do :; \
 		done; \
 	) )"; \
-	${CC} -o ${PROG}.syms ${LDFLAGS} -Wl,-Ttext,0 \
+	${CC} -o ${PROG}.syms ${LDFLAGS} -Wl,--section-start=.text=0 \
 		-Wl,-Map,${PROG}.map -Wl,-cref ${OBJS} $$bb ${LIBLIST}
 	${OBJCOPY} -O binary ${PROG}.syms ${PROG}
 
