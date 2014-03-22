@@ -350,6 +350,19 @@ install-etc-files-safe: .PHONY .MAKE check_DESTDIR MAKEDEV
 	${_MKMSG_INSTALL} ${DESTDIR}/dev/MAKEDEV
 	${ETC_INSTALL_OBJ_FILE} -o ${BINOWN} -g ${BINGRP} -m 555 \
 	    MAKEDEV ${DESTDIR}/dev
+.else
+.for owner group mode file in \
+		games games		664	/var/games/tetris.scores
+	${_MKMSG_INSTALL} ${DESTDIR}${file}
+	if [ ! -e ${DESTDIR}${file} -o -s ${DESTDIR}${file} ]; then \
+		${ETC_INSTALL_FILE} -o ${owner} -g ${group} -m ${mode} \
+    			/dev/null ${DESTDIR}${file}; \
+	else true; fi
+.endfor
+.endif # !defined(__MINIX)
+# TAC as software is imported, move the files from the .for block below
+# TAC to the .for block above.
+.if !defined(__MINIX)
 .for owner group mode file in \
 		${BINOWN} operator	664	/etc/dumpdates  \
 		${BINOWN} operator	600	/etc/skeykeys \
@@ -383,7 +396,6 @@ install-etc-files-safe: .PHONY .MAKE check_DESTDIR MAKEDEV
 		games games		664	/var/games/saillog \
 		games games		664	/var/games/snakerawscores \
 		games games		664	/var/games/snake.log \
-		games games		664	/var/games/tetris.scores
 	${_MKMSG_INSTALL} ${DESTDIR}${file}
 	if [ ! -e ${DESTDIR}${file} -o -s ${DESTDIR}${file} ]; then \
 		${ETC_INSTALL_FILE} -o ${owner} -g ${group} -m ${mode} \

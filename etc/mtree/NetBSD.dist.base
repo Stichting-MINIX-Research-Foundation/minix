@@ -157,6 +157,7 @@
 ./var
 ./var/db
 ./var/db/obsolete
+./var/games			uname=games gname=games mode=0775
 ./var/mail
 ./var/run
 
