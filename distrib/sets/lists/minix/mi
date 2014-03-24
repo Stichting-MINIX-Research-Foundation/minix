@@ -4904,6 +4904,7 @@
 ./usr/sbin/groupdel			minix-sys
 ./usr/sbin/groupinfo			minix-sys
 ./usr/sbin/groupmod			minix-sys
+./usr/sbin/hello			minix-sys
 ./usr/sbin/i2cscan			minix-sys
 ./usr/sbin/inet				minix-sys
 ./usr/sbin/installboot_nbsd		minix-sys

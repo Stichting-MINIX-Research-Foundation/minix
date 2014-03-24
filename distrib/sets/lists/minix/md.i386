@@ -175,7 +175,6 @@
 ./usr/sbin/fbd				minix-sys
 ./usr/sbin/filter			minix-sys
 ./usr/sbin/fxp				minix-sys
-./usr/sbin/hello			minix-sys
 ./usr/sbin/lance			minix-sys
 ./usr/sbin/orinoco			minix-sys
 ./usr/sbin/pci				minix-sys
