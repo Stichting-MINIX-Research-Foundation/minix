@@ -17,12 +17,14 @@ LDADD:= -nodefaultlibs ${LDADD}
 # 2. Compiler-specific libs
 .if !empty(CC:M*gcc)
 LDADD+= -lsys
+DPADD+= ${LIBSYS}
 .elif !empty(CC:M*clang)
 LDADD+= -L/usr/pkg/compiler-rt/lib -lCompilerRT-Generic -lsys -lCompilerRT-Generic
 .endif
 
 # 3. Minimal C library
 LDADD+= -lminc
+DPADD+= ${LIBMINC}
 
 .if ${MACHINE_ARCH} == "earm"
 LDADD+= -lc_vfp
