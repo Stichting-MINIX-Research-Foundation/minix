@@ -108,6 +108,7 @@ ENTRY(setcontext)
 	mov SI(%edx), %esi		/* Restore ESI */
 	mov BP(%edx), %ebp		/* Restore EBP */
 	mov SP(%edx), %esp		/* Restore stack pointer */
+	xor %eax, %eax			/* Return 0 */
 	jmp *PC(%edx)  			/* Return to RTA */
 
 /* void ctx_start((void *func)(int arg1, ..., argn), arg1, ..., argn,
