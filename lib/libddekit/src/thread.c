@@ -5,10 +5,13 @@
 #include <ddekit/panic.h>
 #include <ddekit/timer.h>
 
+
 #ifdef DDEBUG_LEVEL_THREAD
 #undef DDEBUG
 #define DDEBUG DDEBUG_LEVEL_THREAD
 #endif
+
+//#define DDEBUG DDEBUG_VERBOSE
 
 #include "debug.h"
 #include "util.h"
@@ -80,7 +83,7 @@ ddekit_thread_create(void (*fun)(void *), void *arg, const char *name)
 {
 	ddekit_thread_t *th  =  
 	  (ddekit_thread_t *) ddekit_simple_malloc(sizeof(ddekit_thread_t));
-
+	memset(th,0,sizeof(ddekit_thread_t));
 	strncpy(th->name, name, DDEKIT_THREAD_NAMELEN); 
 	th->name[DDEKIT_THREAD_NAMELEN-1] = 0;
 	
@@ -94,32 +97,14 @@ ddekit_thread_create(void (*fun)(void *), void *arg, const char *name)
 	th->next = NULL;
 	th->sleep_sem = ddekit_sem_init(0);
 
-	
-	/* setup stack */
-
-	void **ptr = (void **)(th->stack + DDEKIT_THREAD_STACKSIZE);
-	*(--ptr) = th;
-	--ptr;
-	--ptr;
-
-	/* TAKEN FROM P_THREAD (written by david?)*/
-#ifdef __ACK__
-    th->jb[0].__pc = _ddekit_thread_start;
-    th->jb[0].__sp = ptr;
-#else /* !__ACK__ */
-#include <sys/jmp_buf.h>
-#if defined(JB_PC) && defined(JB_SP)
-    /* um, yikes. */
-
-    *((void (**)(void))(&((char *)th->jb)[JB_PC])) =
-	    (void *)_ddekit_thread_start;
-
-    *((void **)(&((char *)th->jb)[JB_SP])) = ptr;
-#else
-#error "Unsupported Minix architecture"
-#endif
-#endif /* !__ACK__ */
-
+	/* Setup thread context */
+	th->ctx.uc_flags |= _UC_IGNSIGM | _UC_IGNFPU;
+	if (getcontext(&th->ctx) != 0) {
+		panic("ddekit thread create thread getcontext error");
+	}
+	th->ctx.uc_stack.ss_sp = th->stack;/* makecontext will determine sp */
+	th->ctx.uc_stack.ss_size = DDEKIT_THREAD_STACKSIZE;
+	makecontext(&th->ctx,_ddekit_thread_start,1 /* argc */,th /* pass thread as argument */);
 	DDEBUG_MSG_VERBOSE("created thread %s, stack at: %p\n", name,
 	    th->stack + DDEKIT_THREAD_STACKSIZE);
 	_ddekit_thread_enqueue(th);
@@ -159,7 +144,7 @@ ddekit_thread_t *ddekit_thread_myself(void)
 ddekit_thread_t *ddekit_thread_setup_myself(const char *name) {
 	ddekit_thread_t *th  =  
 	  (ddekit_thread_t *) ddekit_simple_malloc(sizeof(ddekit_thread_t));
-
+	memset(th,0,sizeof(ddekit_thread_t));
 	strncpy(th->name, name, DDEKIT_THREAD_NAMELEN); 
 	th->name[DDEKIT_THREAD_NAMELEN-1] = 0;
 	th->stack = NULL;
@@ -341,14 +326,30 @@ void _ddekit_thread_schedule()
 
 	/* get our tcb */
 	ddekit_thread_t * th = current;
+	volatile int is_callback;
 
 #if DDEBUG >= 4
 	_ddekit_print_backtrace(th);
 #endif
-
+	/* getcontext saves the current context in ctx. When setcontext is called
+	 * with that ctx it will return execution at getcontext here. To
+	 * discriminate between the initial call to getcontext that simply returns
+	 * and the situation where getcontext returns because of a setcontext call
+	 * we use the is_callback variable.
+	 *
+	 * When the program flow passes via the assignment bellow it will enter
+	 * the scheduling loop and set is_callback to 1. When the function returns
+	 * because of a setcontext call the program skip the scheduling and return
+	 * from this method to continue normal execution.
+	 */
+	is_callback =0;
 	/* save our context */
-	if (_setjmp(th->jb) == 0) {
-	
+	th->ctx.uc_flags |= _UC_IGNSIGM | _UC_IGNFPU;
+	if (getcontext(&th->ctx) != 0){
+		panic("ddekit thread schedule getcontext error");
+	}
+	if (is_callback == 0) {
+		is_callback = 1;
 		int i;
 
 		/* find a runnable thread */
@@ -365,7 +366,7 @@ void _ddekit_thread_schedule()
 		}
 
 		if (current == NULL) {
-			ddekit_panic("No runable threads?!");
+			ddekit_panic("No runnable threads?!");
 		}
 		
 		DDEBUG_MSG_VERBOSE("switching to id: %d name %s, prio: %d",
@@ -373,8 +374,14 @@ void _ddekit_thread_schedule()
 #if DDEBUG >= 4
 	_ddekit_print_backtrace(current);
 #endif
-		_longjmp(current->jb, 1);
+		//th->ctx.uc_flags |= _UC_IGNSIGM | _UC_IGNFPU;
+		if (setcontext(&current->ctx) == -1){
+			panic("ddekit threading setcontext error");
+		}
+		panic("unreachable code");
 	}
+	DDEBUG_MSG_VERBOSE("continuing thread execution  id: %d name %s, prio: %d",
+			current->id, current->name, current->prio);
 
 }
 
@@ -410,7 +417,7 @@ void _ddekit_thread_enqueue(ddekit_thread_t *th)
 void _ddekit_thread_set_myprio(int prio)
 {
 	DDEBUG_MSG_VERBOSE("changing thread prio, id: %d name %s, old prio: %d, "
-		"new prio: %d",	current->id, current->name, current->prio);
+		"new prio: %d",	current->id, current->name, current->prio, prio);
 
 	current->prio = prio;
 	ddekit_thread_schedule();
@@ -466,22 +473,12 @@ void _ddekit_thread_wakeup_sleeping()
  ****************************************************************************/
 void _ddekit_print_backtrace(ddekit_thread_t *th)
 {
+#if defined(__i386)
 	unsigned long bp, pc, hbp;				
 
 	ddekit_printf("%s: ", th->name);
 
-#ifdef __ACK__
-	bp =th->jb[0].__bp;
-#else /* !__ACK__ */
-#include <sys/jmp_buf.h>
-#if defined(JB_BP)
-	/* um, yikes. */
-	bp = (unsigned long) *((void **)(&((char *)th->jb)[JB_BP]));
-#else
-#error "Unsupported Minix architecture"
-#endif
-#endif /* !__ACK__ */
-
+	bp =	th->ctx.uc_mcontext.__gregs[_REG_EBP];
 	while (bp) {							
 		pc  = ((unsigned long *)bp)[1];				
 		hbp = ((unsigned long *)bp)[0];
@@ -494,6 +491,8 @@ void _ddekit_print_backtrace(ddekit_thread_t *th)
 			break;					
 		}						
 		bp= hbp;					
-	}							
+	}
+
 	ddekit_printf("\n");
+#endif
 }

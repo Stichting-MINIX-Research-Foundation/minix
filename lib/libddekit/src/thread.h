@@ -2,7 +2,7 @@
 #define DDEKIT_SRC_THREAD_H 1
 #include <ddekit/thread.h> 
 #include <ddekit/semaphore.h> 
-#include <setjmp.h>
+#include <ucontext.h>
 
 #define DDEKIT_THREAD_NAMELEN 32
 #define DDEKIT_THREAD_PRIOS 3
@@ -26,7 +26,7 @@ struct ddekit_thread {
 	void *data;
 	unsigned sleep_until;
 	char name[DDEKIT_THREAD_NAMELEN];
-	jmp_buf jb;
+	ucontext_t ctx;
 	ddekit_sem_t *sleep_sem;
 	struct ddekit_thread * next;
 };
