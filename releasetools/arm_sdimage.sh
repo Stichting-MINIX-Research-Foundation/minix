@@ -4,7 +4,7 @@ set -e
 #
 # Source settings if present
 #
-if [ -e .settings ]
+if [ -f .settings  ]
 then
 	echo "Sourcing settings from .settings"
 	# Display the content (so we can check in the build logs
