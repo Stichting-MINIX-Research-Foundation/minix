@@ -16,7 +16,8 @@ LDADD+=		-lm -lcompat_minix
 
 .include <bsd.own.mk>
 
-SUBDIR=		blocktest
+SUBDIR+=		blocktest
+SUBDIR+=		ddekit
 
 # Some have special flags compiling
 .if ${MACHINE_ARCH} == "i386"
