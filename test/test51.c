@@ -13,11 +13,7 @@
 #include <string.h>
 #include <ucontext.h>
 #include <math.h>
-#ifndef __arm__
 #include <fenv.h>
-#else
-#include <ieeefp.h>
-#endif
 
 #include <sys/signal.h>
 
@@ -200,6 +196,19 @@ void verify_main_reenter(void)
   if (reentered_main == 0) err(4, 1);
 }
 
+int set_context_test_value;
+void set_context_test_thread1(void){
+	set_context_test_value |= 0x1;
+	setcontext(&ctx[2]);
+	err(1, 24);
+
+}
+
+void set_context_test_thread2(void){
+	set_context_test_value |= 0x1 << 1;
+	setcontext(&ctx[0]);
+	err(1, 23);
+}
 
 int main(void)
 {
@@ -316,6 +325,42 @@ int main(void)
   makecontext(&ctx[1], (void (*) (void)) do_parent, 0);
   makecontext(&ctx[2], (void (*) (void)) do_child, 0);
   if (swapcontext(&ctx[0], &ctx[2]) == -1) err(1, 16);
+
+  /* test setcontext  first do some cleanup */
+
+  free(ctx[1].uc_stack.ss_sp);
+  free(ctx[2].uc_stack.ss_sp);
+
+  memset(&ctx[0],0,sizeof(ucontext_t));
+  memset(&ctx[1],0,sizeof(ucontext_t));
+  memset(&ctx[2],0,sizeof(ucontext_t));
+
+
+  /* create 3 new contexts */
+  volatile int cb =1;
+
+  /* control will be returned here */
+  set_context_test_value  = 0;
+  if (getcontext(&ctx[0]) != 0) err(1, 17);
+  if (set_context_test_value != 0x3) err(1, 20);
+  if (cb == 1) {
+    cb =0;
+    if (getcontext(&ctx[1]) != 0) err(1, 18);
+    if (getcontext(&ctx[2]) != 0) err(1, 19);
+
+    // allocate new stacks */
+    ctx[1].uc_stack.ss_sp = malloc(SSIZE);
+    ctx[1].uc_stack.ss_size = SSIZE;
+    ctx[2].uc_stack.ss_sp = malloc(SSIZE);
+    ctx[2].uc_stack.ss_size = SSIZE;
+
+    makecontext(&ctx[1],set_context_test_thread1,0);
+    makecontext(&ctx[2],set_context_test_thread2,0);
+    if( setcontext(&ctx[1]) != 0){
+      err(1, 21);
+    }
+    err(1, 22);
+  }
 
   quit();
   return(-1);
