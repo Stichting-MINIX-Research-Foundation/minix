@@ -7,7 +7,7 @@
 .include <bsd.own.mk>
 
 SUBDIR= \
-	\
+	chown \
 	fsck init \
 	mknod nologin \
 	reboot \

@@ -1,0 +1,175 @@
+.\" Copyright (c) 1990, 1991, 1993, 1994, 2003
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"     from: @(#)chown.8	8.3 (Berkeley) 3/31/94
+.\"	$NetBSD: chown.8,v 1.6 2012/10/23 17:30:59 wiz Exp $
+.\"
+.Dd October 22, 2012
+.Dt CHOWN 8
+.Os
+.Sh NAME
+.Nm chown
+.Nd change file owner and group
+.Sh SYNOPSIS
+.Nm
+.Oo
+.Fl R
+.Op Fl H | Fl L | Fl P
+.Oc
+.Op Fl fhv
+.Ar owner Ns Op Ar :group
+.Ar
+.Nm
+.Oo
+.Fl R
+.Op Fl H | Fl L | Fl P
+.Oc
+.Op Fl fhv
+.Ar :group
+.Ar
+.Nm
+.Oo
+.Fl R
+.Op Fl H | Fl L | Fl P
+.Oc
+.Op Fl fhv
+.Fl Fl reference=rfile
+.Ar
+.Sh DESCRIPTION
+.Nm
+sets the user ID and/or the group ID of the specified files.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl H
+If the
+.Fl R
+option is specified, symbolic links on the command line are followed.
+(Symbolic links encountered in the tree traversal are not followed.)
+.It Fl L
+If the
+.Fl R
+option is specified, all symbolic links are followed.
+.It Fl P
+If the
+.Fl R
+option is specified, no symbolic links are followed.
+.It Fl R
+Change the user ID and/or the group ID for the file hierarchies rooted
+in the files instead of just the files themselves.
+.It Fl f
+Don't report any failure to change file owner or group, nor modify
+the exit status to reflect such failures.
+.It Fl h
+If
+.Ar file
+is a symbolic link, the owner and/or group of the link is changed.
+.It Fl v
+Cause
+.Nm
+to be verbose, showing files as they are processed.
+.El
+.Pp
+The
+.Fl H ,
+.Fl L
+and
+.Fl P
+options are ignored unless the
+.Fl R
+option is specified.
+In addition, these options override each other and the
+command's actions are determined by the last one specified.
+.Pp
+The
+.Fl L
+option cannot be used together with the
+.Fl h
+option.
+.Pp
+The
+.Ar owner
+and
+.Ar group
+operands are both optional, however, one must be specified; alternatively,
+both the owner and group may be specified using a reference
+.Ar rfile
+specified using the
+.Fl Fl reference
+argument.
+If the
+.Ar group
+operand is specified, it must be preceded by a colon (``:'') character.
+.Pp
+The
+.Ar owner
+may be either a user name or a numeric user ID.
+The
+.Ar group
+may be either a group name or a numeric group ID.
+Since it is valid to have a user or group name that is numeric (and
+doesn't have the numeric ID that matches its name) the name lookup
+is always done first.
+Preceding an ID with a ``#'' character will force it to be taken
+as a number.
+.Pp
+The ownership of a file may only be altered by a super-user for
+obvious security reasons.
+.Pp
+Unless invoked by the super-user,
+.Nm
+clears the set-user-id and set-group-id bits on a file to prevent
+accidental or mischievous creation of set-user-id and set-group-id
+programs.
+.Pp
+The
+.Nm
+utility exits 0 on success, and \*[Gt]0 if an error occurs.
+.Sh COMPATIBILITY
+Previous versions of the
+.Nm
+utility used the dot (``.'') character to distinguish the group name.
+This has been changed to be a colon (``:'') character so that user and
+group names may contain the dot character.
+.Sh SEE ALSO
+.Xr chflags 1 ,
+.Xr chgrp 1 ,
+.Xr find 1 ,
+.Xr chown 2 ,
+.Xr lchown 2 ,
+.Xr fts 3 ,
+.Xr symlink 7
+.Sh STANDARDS
+The
+.Nm
+command is expected to be POSIX 1003.2 compliant.
+.Pp
+The
+.Fl v
+option and the use of ``#'' to force a numeric lookup
+are extensions to
+.St -p1003.2 .

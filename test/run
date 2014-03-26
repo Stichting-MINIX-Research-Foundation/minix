@@ -35,8 +35,8 @@ tests_no=`expr 0`
 # If root, make sure the setuid tests have the correct permissions
 # and make the dir bin-owned.
 if [ "$ROOT" ]
-then	chown bin .
-	chown root ${setuids}
+then	/usr/sbin/chown bin .
+	/usr/sbin/chown root ${setuids}
 	chmod 4755 ${setuids}
 fi
 
