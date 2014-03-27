@@ -5886,6 +5886,7 @@
 ./usr/tests/minix-posix/test9		minix-sys
 ./usr/tests/minix-posix/testinterp	minix-sys
 ./usr/tests/minix-posix/testisofs	minix-sys
+./usr/tests/minix-posix/testkyua	minix-sys
 ./usr/tests/minix-posix/testmfs		minix-sys
 ./usr/tests/minix-posix/testsh1		minix-sys
 ./usr/tests/minix-posix/testsh2		minix-sys

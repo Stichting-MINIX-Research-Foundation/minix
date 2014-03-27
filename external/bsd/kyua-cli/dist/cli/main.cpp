@@ -51,6 +51,7 @@ extern "C" {
 #include "cli/cmd_list.hpp"
 #include "cli/cmd_report.hpp"
 #include "cli/cmd_report_html.hpp"
+#include "cli/cmd_report_tap.hpp"
 #include "cli/cmd_test.hpp"
 #include "cli/common.ipp"
 #include "cli/config.hpp"
@@ -169,6 +170,7 @@ safe_main(cmdline::ui* ui, int argc, const char* const argv[],
 
     commands.insert(new cli::cmd_report(), "Reporting");
     commands.insert(new cli::cmd_report_html(), "Reporting");
+    commands.insert(new cli::cmd_report_tap(), "Reporting");
 
     if (mock_command.get() != NULL)
         commands.insert(mock_command);
