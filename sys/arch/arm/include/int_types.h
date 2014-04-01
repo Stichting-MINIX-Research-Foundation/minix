@@ -58,7 +58,9 @@ typedef	long long int		__int64_t;
 typedef	unsigned long long int __uint64_t;
 #endif
 
+#if !defined(__minix)
 #define	__BIT_TYPES_DEFINED__
+#endif /* !defined(__minix) */
 
 /* 7.18.1.4 Integer types capable of holding object pointers */
 
