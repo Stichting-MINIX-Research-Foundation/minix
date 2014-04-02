@@ -34,9 +34,11 @@ ENTRY(_getcontext)
 	cmp $[_UC_IGNFPU|_UC_IGNSIGM], %eax
 	jz 5f				/* Ignore both, skip getuctx */
 	PIC_PROLOGUE
-	push %edx		 
+	push %edx /* push a copy for us */
+	push %edx /* push a copy as function argument */
 	call PIC_PLT(_C_LABEL(getuctx))	/* getuctx(ucp) */
-	pop %edx			/* clean up stack and restore edx */
+	pop %edx	/* clean up stack */
+	pop %edx	/* clean up stack and  restore edx */
 	PIC_EPILOGUE
 
 5:
@@ -96,9 +98,11 @@ ENTRY(setcontext)
 				 * state and signal mask */
 
 	PIC_PROLOGUE
-	push %edx		 
+	push %edx /* push a copy for us */
+	push %edx /* push a copy as function argument */
 	call PIC_PLT(_C_LABEL(setuctx))	/* setuctx(ucp) */
-	pop %edx			/* Clean up stack and restore edx */
+	pop %edx	/* clean up stack */
+	pop %edx	/* clean up stack and  restore edx */
 	PIC_EPILOGUE
 
 5:	/* Restore the registers (except EAX and EDX) */
