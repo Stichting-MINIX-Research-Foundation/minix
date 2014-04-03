@@ -226,6 +226,7 @@ int notouch		/* check only */
 				r = SUSPEND;
 
 			/* If need be, activate sleeping writers. */
+			/* We ignore notouch voluntary here. */
 			if (susp_count > 0)
 				release(vp, VFS_WRITE, susp_count);
 		}
@@ -397,7 +398,7 @@ int count;			/* max number of processes to release */
 		 * select; a close() doesn't always warrant it.
 		 */
 		if(pipe_check(f, op == VFS_READ ? READING : WRITING,
-			f->filp_flags & ~O_NONBLOCK, 1, 1) == SUSPEND) {
+			f->filp_flags, 1, 1) != EAGAIN) {
 			continue;
 		}
 		select_callback(f, selop);
