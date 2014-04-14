@@ -2,7 +2,6 @@
 #include "namespace.h"
 
 #ifdef __weak_alias
-#define sprofile _sprofile
 __weak_alias(sprofile, _sprofile)
 #endif
 

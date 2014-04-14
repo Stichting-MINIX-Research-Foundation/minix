@@ -910,8 +910,12 @@
 #define __learn_tree		___learn_tree
 
 #if defined(__minix)
+#define cprofile _cprofile	/* LSC: Is this really needed? */
+#define sprofile _sprofile	/* LSC: Is this really needed? */
+
 /* Needed to allow RS and VM to provide their own implementations. */
 #define munmap			_munmap
+
 #endif /* defined(__minix) */
 #endif /* __weak_alias */
 #endif /* !__lint__ */

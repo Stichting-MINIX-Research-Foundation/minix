@@ -2,7 +2,6 @@
 #include "namespace.h"
 
 #ifdef __weak_alias
-#define cprofile _cprofile
 __weak_alias(cprofile, _cprofile)
 #endif
 
