@@ -28,14 +28,19 @@ static ssize_t r_write(devminor_t minor, u64_t position, endpoint_t endpt,
 static int r_open(devminor_t minor, int access, endpoint_t user_endpt);
 static void r_random(clock_t stamp);
 static void r_updatebin(int source, struct k_randomness_bin *rb);
+static int r_select(devminor_t, unsigned int, endpoint_t);
 
 /* Entry points to this driver. */
 static struct chardriver r_dtab = {
   .cdr_open	= r_open,	/* open device */
   .cdr_read	= r_read,	/* read from device */
   .cdr_write	= r_write,	/* write to device (seeding it) */
+  .cdr_select	= r_select,	/* select hook */
   .cdr_alarm	= r_random 	/* get randomness from kernel (alarm) */
 };
+
+/* select requestor */
+static endpoint_t random_select = NONE;
 
 /* Buffer for the /dev/random number generator. */
 #define RANDOM_BUF_SIZE 		1024
@@ -253,3 +258,16 @@ static void r_random(clock_t UNUSED(stamp))
   	printf("RANDOM: sys_setalarm failed: %d\n", s);
 }
 
+/*===========================================================================*
+ *				r_select				     *
+ *===========================================================================*/
+static int r_select(devminor_t minor, unsigned int ops, endpoint_t ep)
+{
+	/* random device is always writable; it's infinitely readable
+	 * once seeded, and doesn't block when it's not, so all operations
+	 * are instantly possible. we ignore CDEV_OP_ERR.
+	 */
+	int ready_ops = 0;
+	if (minor != RANDOM_DEV) return(EIO);
+	return ops & (CDEV_OP_RD | CDEV_OP_WR);
+}
