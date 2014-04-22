@@ -243,7 +243,6 @@
 ./usr/bin/checknr			minix-sys
 ./usr/bin/chfn				minix-sys
 ./usr/bin/chgrp				minix-sys
-./usr/bin/chmod				minix-sys
 ./usr/bin/chpass			minix-sys
 ./usr/bin/chsh				minix-sys
 ./usr/bin/ci				minix-sys
