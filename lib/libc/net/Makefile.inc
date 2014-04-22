@@ -4,6 +4,10 @@
 # net sources
 .if defined(__MINIX)
 .PATH: ${.CURDIR}/net/minix
+
+CPPFLAGS.getpeereid.c+= -D_MINIX_SYSTEM=1
+CPPFLAGS.getsockopt.c+= -D_MINIX_SYSTEM=1
+CPPFLAGS.setsockopt.c+= -D_MINIX_SYSTEM=1
 .endif
 .PATH: ${ARCHDIR}/net ${.CURDIR}/net
 

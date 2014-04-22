@@ -26,6 +26,8 @@ COPTS.test51.c=	-mhard-float
 COPTS.test52.c=	-mhard-float
 .endif
 
+CPPFLAGS.test56.c += -D_MINIX_SYSTEM=1
+
 WARNS=
 COPTS.test9.c=	-O0
 COPTS.test37.c=	-O0
