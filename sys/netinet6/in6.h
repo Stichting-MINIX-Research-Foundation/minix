@@ -143,9 +143,7 @@ struct in6_addr {
 #define SIN6_LEN
 #endif
 struct sockaddr_in6 {
-#if !defined(__minix)
 	uint8_t		sin6_len;	/* length of this struct(socklen_t)*/
-#endif /* !defined(__minix) */
 	sa_family_t	sin6_family;	/* AF_INET6 (sa_family_t) */
 	in_port_t	sin6_port;	/* Transport layer port */
 	uint32_t	sin6_flowinfo;	/* IP6 flow information */
@@ -153,7 +151,6 @@ struct sockaddr_in6 {
 	uint32_t	sin6_scope_id;	/* scope zone index */
 };
 
-#if !defined(__minix)
 /*
  * Local definition for masks
  */
@@ -203,7 +200,6 @@ extern const struct in6_addr in6mask128;
 #define IPV6_ADDR_INT16_MLL	0x02ff
 #endif
 #endif
-#endif /* !defined(__minix) */
 
 /*
  * Definition of some useful macros to handle IP6 addresses
