@@ -7,12 +7,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <minix/paths.h>
 
 #ifdef __weak_alias
 __weak_alias(gethostname, _gethostname)
 #endif
-
-#define HOSTNAME_FILE "/etc/hostname.file"
 
 int gethostname(char *buf, size_t len)
 {
@@ -20,7 +19,7 @@ int gethostname(char *buf, size_t len)
 	int r;
 	char *nl;
 
-	if ((fd= open(HOSTNAME_FILE, O_RDONLY)) < 0) return -1;
+	if ((fd= open(_PATH_HOSTNAME_FILE, O_RDONLY)) < 0) return -1;
 
 	r= read(fd, buf, len);
 	close(fd);

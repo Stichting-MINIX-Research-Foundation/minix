@@ -24,6 +24,7 @@
 ./bin/ed				minix-sys
 ./bin/expr				minix-sys
 ./bin/getopts				minix-sys
+./bin/hostname				minix-sys
 ./bin/intr				minix-sys
 ./bin/kill				minix-sys
 ./bin/ksh				minix-sys
@@ -2087,6 +2088,7 @@
 ./usr/man/man1/hexdump.1		minix-sys
 ./usr/man/man1/host.1			minix-sys
 ./usr/man/man1/hostaddr.1		minix-sys
+./usr/man/man1/hostname.1		minix-sys
 ./usr/man/man1/id.1			minix-sys
 ./usr/man/man1/if.1			minix-sys
 ./usr/man/man1/ifdef.1			minix-sys
