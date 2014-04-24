@@ -10,7 +10,7 @@
 .PATH: ${ARCHDIR}/compat-43 ${.CURDIR}/compat-43
 
 SRCS+=	creat.c getdtablesize.c \
-	killpg.c \
+	killpg.c setpgrp.c \
 
 .if !defined(AUDIT)
 SRCS+=	getwd.c

@@ -133,9 +133,7 @@ ssize_t	 read(int, void *, size_t);
 #endif
 int	 rmdir(const char *);
 int	 setgid(gid_t);
-#if !defined(__minix)
 int	 setpgid(pid_t, pid_t);
-#endif /* !defined(__minix) */
 pid_t	 setsid(void);
 int	 setuid(uid_t);
 unsigned int	 sleep(unsigned int);
@@ -270,9 +268,9 @@ int	 lockf(int, int, off_t);
 ssize_t	 readlink(const char * __restrict, char * __restrict, size_t);
 #endif
 void	*sbrk(intptr_t);
-#if !defined(__minix)
 /* XXX prototype wrong! */
 int	 setpgrp(pid_t, pid_t);			/* obsoleted by setpgid() */
+#if !defined(__minix)
 int	 setregid(gid_t, gid_t);
 int	 setreuid(uid_t, uid_t);
 #endif /* !defined(__minix) */
