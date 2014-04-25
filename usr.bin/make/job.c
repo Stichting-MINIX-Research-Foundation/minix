@@ -1380,7 +1380,7 @@ JobExec(Job *job, char **argv)
 	 * by killing its process family, but not commit suicide.
 	 */
 #if defined(MAKE_NATIVE) || defined(HAVE_SETPGID)
-#if defined(SYSV) || defined(__minix)
+#if defined(SYSV)
 	/* XXX: dsl - I'm sure this should be setpgrp()... */
 	(void)setsid();
 #else
@@ -2061,7 +2061,15 @@ Job_CatchOutput(void)
     if (nready > 0 && readyfd(&childExitJob)) {
 	char token = 0;
 	ssize_t count;
+#if defined(__minix)
+	/* Workaround: While the pipe is deemed ready to be read, it can still
+	 * return EAGAIN in the read below. */
+	do {
+#endif /* defined(__minix) */
 	count = read(childExitJob.inPipe, &token, 1);
+#if defined(__minix)
+	} while(-1 == count && EAGAIN == errno);
+#endif /* defined(__minix) */
 	switch (count) {
 	case 0:
 	    Punt("unexpected eof on token pipe");
