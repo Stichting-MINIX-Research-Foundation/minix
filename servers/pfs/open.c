@@ -11,16 +11,16 @@
 int fs_newnode(message *fs_m_in, message *fs_m_out)
 {
   register int r = OK;
-  pmode_t bits;
+  mode_t bits;
   struct inode *rip;
   uid_t uid;
   gid_t gid;
   dev_t dev;
 
-  uid = (uid_t) fs_m_in->REQ_UID;
-  gid = (gid_t) fs_m_in->REQ_GID;
-  bits = (pmode_t) fs_m_in->REQ_MODE;
-  dev = fs_m_in->REQ_DEV;
+  uid = fs_m_in->m_vfs_fs_newnode.uid;
+  gid = fs_m_in->m_vfs_fs_newnode.gid;
+  bits = fs_m_in->m_vfs_fs_newnode.mode;
+  dev = fs_m_in->m_vfs_fs_newnode.device;
 
   /* Try to allocate the inode */
   if( (rip = alloc_inode(dev, bits, uid, gid) ) == NULL) return(err_code);
@@ -42,12 +42,12 @@ int fs_newnode(message *fs_m_in, message *fs_m_out)
 	free_inode(rip);
   } else {
 	/* Fill in the fields of the response message */
-	fs_m_out->RES_INODE_NR = rip->i_num;
-	fs_m_out->RES_MODE = rip->i_mode;
-	fs_m_out->RES_FILE_SIZE = rip->i_size;
-	fs_m_out->RES_UID = rip->i_uid;
-	fs_m_out->RES_GID = rip->i_gid;
-	fs_m_out->RES_DEV = dev;
+	fs_m_out->m_fs_vfs_newnode.inode = rip->i_num;
+	fs_m_out->m_fs_vfs_newnode.mode = rip->i_mode;
+	fs_m_out->m_fs_vfs_newnode.file_size = rip->i_size;
+	fs_m_out->m_fs_vfs_newnode.uid = rip->i_uid;
+	fs_m_out->m_fs_vfs_newnode.gid = rip->i_gid;
+	fs_m_out->m_fs_vfs_newnode.device = dev;
   }
 
   return(r);

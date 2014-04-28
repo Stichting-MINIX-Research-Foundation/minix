@@ -634,21 +634,21 @@ int req_newnode(
 
   /* Fill in request message */
   m.m_type = REQ_NEWNODE;
-  m.REQ_MODE = (pmode_t) dmode;
-  m.REQ_DEV = dev;
-  m.REQ_UID = (puid_t) uid;
-  m.REQ_GID = (pgid_t) gid;
+  m.m_vfs_fs_newnode.mode = dmode;
+  m.m_vfs_fs_newnode.device = dev;
+  m.m_vfs_fs_newnode.uid = uid;
+  m.m_vfs_fs_newnode.gid = gid;
 
   /* Send/rec request */
   r = fs_sendrec(fs_e, &m);
 
   res->fs_e	= m.m_source;
-  res->inode_nr = (ino_t) m.RES_INODE_NR;
-  res->fmode	= (mode_t) m.RES_MODE;
-  res->fsize    = m.RES_FILE_SIZE;
-  res->dev	= m.RES_DEV;
-  res->uid	= (uid_t) m.RES_UID;
-  res->gid	= (gid_t) m.RES_GID;
+  res->inode_nr = m.m_fs_vfs_newnode.inode;
+  res->fmode	= m.m_fs_vfs_newnode.mode;
+  res->fsize    = m.m_fs_vfs_newnode.file_size;
+  res->dev	= m.m_fs_vfs_newnode.device;
+  res->uid	= m.m_fs_vfs_newnode.uid;
+  res->gid	= m.m_fs_vfs_newnode.gid;
 
   return(r);
 }

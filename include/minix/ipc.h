@@ -207,6 +207,30 @@ _ASSERT_MSG_SIZE(mess_fs_vfs_lookup);
 typedef struct {
 	dev_t device;
 
+	mode_t mode;
+	uid_t uid;
+	gid_t gid;
+
+	uint8_t data[36];
+} mess_vfs_fs_newnode;
+_ASSERT_MSG_SIZE(mess_vfs_fs_newnode);
+
+typedef struct {
+	off_t file_size;
+	dev_t device;
+	ino_t inode;
+
+	mode_t mode;
+	uid_t uid;
+	gid_t gid;
+
+	uint8_t data[20];
+} mess_fs_vfs_newnode;
+_ASSERT_MSG_SIZE(mess_fs_vfs_newnode);
+
+typedef struct {
+	dev_t device;
+
 	uint32_t flags;
 	size_t path_len;
 	cp_grant_id_t grant;
@@ -300,6 +324,8 @@ typedef struct {
 	mess_mmap m_mmap;
 	mess_notify m_notify;
 	mess_sigcalls m_sigcalls;
+	mess_vfs_fs_newnode m_vfs_fs_newnode;
+	mess_fs_vfs_newnode m_fs_vfs_newnode;
 	mess_vfs_fs_create m_vfs_fs_create;
 	mess_fs_vfs_create m_fs_vfs_create;
 	mess_vfs_fs_lookup m_vfs_fs_lookup;
