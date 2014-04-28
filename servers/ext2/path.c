@@ -44,12 +44,12 @@ int fs_lookup()
   pino_t dir_ino, root_ino;
   struct inode *rip;
 
-  grant		= (cp_grant_id_t) fs_m_in.REQ_GRANT;
-  path_size	= (size_t) fs_m_in.REQ_PATH_SIZE;	/* Size of the buffer */
-  len		= (int) fs_m_in.REQ_PATH_LEN;	/* including terminating nul */
-  dir_ino	= (pino_t) fs_m_in.REQ_DIR_INO;
-  root_ino	= (pino_t) fs_m_in.REQ_ROOT_INO;
-  flags		= (int) fs_m_in.REQ_FLAGS;
+  grant		= fs_m_in.m_vfs_fs_lookup.grant_path;
+  path_size	= fs_m_in.m_vfs_fs_lookup.path_size;	/* Size of the buffer */
+  len		= fs_m_in.m_vfs_fs_lookup.path_len;	/* including terminating nul */
+  dir_ino	= fs_m_in.m_vfs_fs_lookup.dir_ino;
+  root_ino	= fs_m_in.m_vfs_fs_lookup.root_ino;
+  flags		= fs_m_in.m_vfs_fs_lookup.flags;
 
   /* Check length. */
   if(len > sizeof(user_path)) return(E2BIG);	/* too big for buffer */
@@ -65,13 +65,12 @@ int fs_lookup()
 
   memset(&credentials, 0, sizeof(credentials));
   if(!(flags & PATH_GET_UCRED)) { /* Do we have to copy uid/gid credentials? */
-        caller_uid      = (uid_t) fs_m_in.REQ_UID;
-        caller_gid      = (gid_t) fs_m_in.REQ_GID;
+        caller_uid      = fs_m_in.m_vfs_fs_lookup.uid;
+        caller_gid      = fs_m_in.m_vfs_fs_lookup.gid;
    } else {
          if((r=fs_lookup_credentials(&credentials,
-               &caller_uid, &caller_gid,
-               (cp_grant_id_t) fs_m_in.REQ_GRANT2,
-               (size_t) fs_m_in.REQ_UCRED_SIZE)) != OK)
+               &caller_uid, &caller_gid, fs_m_in.m_vfs_fs_lookup.grant_ucred,
+               fs_m_in.m_vfs_fs_lookup.ucred_size)) != OK)
                return r;
   }
 
@@ -90,27 +89,27 @@ int fs_lookup()
 
   if(r == ELEAVEMOUNT || r == ESYMLINK) {
 	  /* Report offset and the error */
-	  fs_m_out.RES_OFFSET = offset;
-	  fs_m_out.RES_SYMLOOP = symlinks;
+	  fs_m_out.m_fs_vfs_lookup.offset = offset;
+	  fs_m_out.m_fs_vfs_lookup.symloop = symlinks;
 
 	  return(r);
   }
 
   if (r != OK && r != EENTERMOUNT) return(r);
 
-  fs_m_out.RES_INODE_NR		= rip->i_num;
-  fs_m_out.RES_MODE		= rip->i_mode;
-  fs_m_out.RES_FILE_SIZE	= rip->i_size;
-  fs_m_out.RES_SYMLOOP		= symlinks;
-  fs_m_out.RES_UID		= rip->i_uid;
-  fs_m_out.RES_GID		= rip->i_gid;
+  fs_m_out.m_fs_vfs_lookup.inode		= rip->i_num;
+  fs_m_out.m_fs_vfs_lookup.mode			= rip->i_mode;
+  fs_m_out.m_fs_vfs_lookup.file_size		= rip->i_size;
+  fs_m_out.m_fs_vfs_lookup.symloop		= symlinks;
+  fs_m_out.m_fs_vfs_lookup.uid			= rip->i_uid;
+  fs_m_out.m_fs_vfs_lookup.gid			= rip->i_gid;
 
   /* This is only valid for block and character specials. But it doesn't
-   * cause any harm to set RES_DEV always. */
-  fs_m_out.RES_DEV		= (dev_t) rip->i_block[0];
+   * cause any harm to always set the device field. */
+  fs_m_out.m_fs_vfs_lookup.device		= (dev_t) rip->i_block[0];
 
   if(r == EENTERMOUNT) {
-	  fs_m_out.RES_OFFSET	= offset;
+	  fs_m_out.m_fs_vfs_lookup.offset	= offset;
 	  put_inode(rip); /* Only return a reference to the final object */
   }
 

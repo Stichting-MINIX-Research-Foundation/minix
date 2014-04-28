@@ -149,7 +149,7 @@ int fs_lookup(void)
 {
 	/* Resolve a path string to an inode.
 	 */
-	pino_t dir_ino_nr, root_ino_nr;
+	ino_t dir_ino_nr, root_ino_nr;
 	struct inode *cur_ino, *next_ino, *root_ino;
 	char path[PATH_MAX], name[PNAME_MAX+1];
 	char *ptr, *last;
@@ -157,33 +157,35 @@ int fs_lookup(void)
 	size_t len;
 	int r, r2, symloop;
 
-	dir_ino_nr = fs_m_in.REQ_DIR_INO;
-	root_ino_nr = fs_m_in.REQ_ROOT_INO;
-	len = fs_m_in.REQ_PATH_LEN;
+	dir_ino_nr = fs_m_in.m_vfs_fs_lookup.dir_ino;
+	root_ino_nr = fs_m_in.m_vfs_fs_lookup.root_ino;
+	len = fs_m_in.m_vfs_fs_lookup.path_len;
 
 	/* Fetch the path name. */
 	if (len < 1 || len > PATH_MAX)
 		return EINVAL;
 
-	r = sys_safecopyfrom(fs_m_in.m_source, fs_m_in.REQ_GRANT, 0,
-		(vir_bytes) path, (phys_bytes) len);
+	r = sys_safecopyfrom(fs_m_in.m_source,
+		fs_m_in.m_vfs_fs_lookup.grant_path, 0, (vir_bytes) path,
+		(phys_bytes) len);
 	if (r != OK) return r;
 
 	if (path[len-1] != 0) return EINVAL;
 
 	/* Fetch the caller's credentials. */
-	if (fs_m_in.REQ_FLAGS & PATH_GET_UCRED) {
-		assert(fs_m_in.REQ_UCRED_SIZE == sizeof(ucred));
+	if (fs_m_in.m_vfs_fs_lookup.flags & PATH_GET_UCRED) {
+		assert(fs_m_in.m_vfs_fs_lookup.ucred_size == sizeof(ucred));
 
-		r = sys_safecopyfrom(fs_m_in.m_source, fs_m_in.REQ_GRANT2, 0,
-			(vir_bytes) &ucred, fs_m_in.REQ_UCRED_SIZE);
+		r = sys_safecopyfrom(fs_m_in.m_source,
+			fs_m_in.m_vfs_fs_lookup.grant_ucred, 0,
+			(vir_bytes) &ucred, fs_m_in.m_vfs_fs_lookup.ucred_size);
 
 		if (r != OK)
 			return r;
 	}
 	else {
-		ucred.vu_uid = fs_m_in.REQ_UID;
-		ucred.vu_gid = fs_m_in.REQ_GID;
+		ucred.vu_uid = fs_m_in.m_vfs_fs_lookup.uid;
+		ucred.vu_gid = fs_m_in.m_vfs_fs_lookup.gid;
 		ucred.vu_ngroups = 0;
 	}
 
@@ -228,7 +230,7 @@ int fs_lookup(void)
 			/* Perform symlink resolution if we have to. */
 			if (r == OK && S_ISLNK(next_ino->i_stat.mode) &&
 				(ptr[0] != '\0' ||
-				!(fs_m_in.REQ_FLAGS & PATH_RET_SYMLINK))) {
+				!(fs_m_in.m_vfs_fs_lookup.flags & PATH_RET_SYMLINK))) {
 
 				if (++symloop == _POSIX_SYMLOOP_MAX) {
 					put_inode(next_ino);
@@ -285,28 +287,28 @@ int fs_lookup(void)
 		/* Copy back the path if we resolved at least one symlink. */
 		if (symloop > 0 && (r == ELEAVEMOUNT || r == ESYMLINK)) {
 			r2 = sys_safecopyto(fs_m_in.m_source,
-				fs_m_in.REQ_GRANT, 0, (vir_bytes) path,
-				strlen(path) + 1);
+				fs_m_in.m_vfs_fs_lookup.grant_path, 0,
+				(vir_bytes) path, strlen(path) + 1);
 
 			if (r2 != OK)
 				r = r2;
 		}
 
 		if (r == ELEAVEMOUNT || r == ESYMLINK) {
-			fs_m_out.RES_OFFSET = (int) (last - path);
-			fs_m_out.RES_SYMLOOP = symloop;
+			fs_m_out.m_fs_vfs_lookup.offset = (int) (last - path);
+			fs_m_out.m_fs_vfs_lookup.symloop = symloop;
 		}
 
 		return r;
 	}
 
 	/* On success, leave the resulting file open and return its details. */
-	fs_m_out.RES_INODE_NR = get_inode_number(cur_ino);
-	fs_m_out.RES_MODE = cur_ino->i_stat.mode;
-	fs_m_out.RES_FILE_SIZE = cur_ino->i_stat.size;
-	fs_m_out.RES_UID = cur_ino->i_stat.uid;
-	fs_m_out.RES_GID = cur_ino->i_stat.gid;
-	fs_m_out.RES_DEV = cur_ino->i_stat.dev;
+	fs_m_out.m_fs_vfs_lookup.inode = get_inode_number(cur_ino);
+	fs_m_out.m_fs_vfs_lookup.mode = cur_ino->i_stat.mode;
+	fs_m_out.m_fs_vfs_lookup.file_size = cur_ino->i_stat.size;
+	fs_m_out.m_fs_vfs_lookup.uid = cur_ino->i_stat.uid;
+	fs_m_out.m_fs_vfs_lookup.gid = cur_ino->i_stat.gid;
+	fs_m_out.m_fs_vfs_lookup.device = cur_ino->i_stat.dev;
 
 	return OK;
 }

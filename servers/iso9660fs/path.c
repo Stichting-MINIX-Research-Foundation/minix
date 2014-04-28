@@ -17,16 +17,16 @@ int fs_lookup() {
   cp_grant_id_t grant;
   int r, len, flags;
   size_t offset;
-  pino_t dir_ino, root_ino;
+  ino_t dir_ino, root_ino;
   struct dir_record *dir;
 
-  grant		= fs_m_in.REQ_GRANT;
-  len		= fs_m_in.REQ_PATH_LEN;	/* including terminating nul */
-  dir_ino	= (pino_t) fs_m_in.REQ_DIR_INO;
-  root_ino	= (pino_t) fs_m_in.REQ_ROOT_INO;
-  flags		= fs_m_in.REQ_FLAGS;
-  caller_uid	= (uid_t) fs_m_in.REQ_UID;
-  caller_gid	= (gid_t) fs_m_in.REQ_GID;
+  grant		= fs_m_in.m_vfs_fs_lookup.grant_path;
+  len		= fs_m_in.m_vfs_fs_lookup.path_len;	/* including terminating nul */
+  dir_ino	= fs_m_in.m_vfs_fs_lookup.dir_ino;
+  root_ino	= fs_m_in.m_vfs_fs_lookup.root_ino;
+  flags		= fs_m_in.m_vfs_fs_lookup.flags;
+  caller_uid	= fs_m_in.m_vfs_fs_lookup.uid;
+  caller_gid	= fs_m_in.m_vfs_fs_lookup.gid;
 
   /* Check length. */
   if(len > sizeof(user_path)) return(E2BIG);	/* too big for buffer */
@@ -51,23 +51,22 @@ int fs_lookup() {
 
   if (r == ELEAVEMOUNT) {
 	/* Report offset and the error */
-	fs_m_out.RES_OFFSET = offset;
-	fs_m_out.RES_SYMLOOP = 0;
+	fs_m_out.m_fs_vfs_lookup.offset = offset;
+	fs_m_out.m_fs_vfs_lookup.symloop = 0;
 	return(r);
   }
 
   if (r != OK && r != EENTERMOUNT) return(r);
 
-  fs_m_out.RES_INODE_NR     = ID_DIR_RECORD(dir);
-  fs_m_out.RES_MODE         = dir->d_mode;
-  fs_m_out.RES_FILE_SIZE    = dir->d_file_size; 
-  fs_m_out.RES_SYMLOOP      = 0;
-  fs_m_out.RES_UID          = SYS_UID; 	/* root */
-  fs_m_out.RES_GID          = SYS_GID;		/* operator */
-
+  fs_m_out.m_fs_vfs_lookup.inode	= ID_DIR_RECORD(dir);
+  fs_m_out.m_fs_vfs_lookup.mode		= dir->d_mode;
+  fs_m_out.m_fs_vfs_lookup.file_size	= dir->d_file_size;
+  fs_m_out.m_fs_vfs_lookup.symloop	= 0;
+  fs_m_out.m_fs_vfs_lookup.uid		= SYS_UID;	/* root */
+  fs_m_out.m_fs_vfs_lookup.gid		= SYS_GID;	/* operator */
 
   if (r == EENTERMOUNT) { 
-  	fs_m_out.RES_OFFSET = offset;
+  	fs_m_out.m_fs_vfs_lookup.offset = offset;
 	release_dir_record(dir);
   }
 

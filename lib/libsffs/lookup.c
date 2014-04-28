@@ -203,7 +203,7 @@ int do_lookup(void)
 {
 /* Resolve a path string to an inode.
  */
-  pino_t dir_ino_nr, root_ino_nr;
+  ino_t dir_ino_nr, root_ino_nr;
   struct inode *cur_ino, *root_ino;
   struct inode *next_ino = NULL;
   struct sffs_attr attr;
@@ -211,19 +211,19 @@ int do_lookup(void)
   char name[NAME_MAX+1];
   char *ptr, *last;
   vfs_ucred_t ucred;
-  pmode_t mask;
+  mode_t mask;
   size_t len;
   int r;
 
-  dir_ino_nr = m_in.REQ_DIR_INO;
-  root_ino_nr = m_in.REQ_ROOT_INO;
-  len = m_in.REQ_PATH_LEN;
+  dir_ino_nr = m_in.m_vfs_fs_lookup.dir_ino;
+  root_ino_nr = m_in.m_vfs_fs_lookup.root_ino;
+  len = m_in.m_vfs_fs_lookup.path_len;
 
   /* Fetch the path name. */
   if (len < 1 || len > PATH_MAX)
 	return EINVAL;
 
-  r = sys_safecopyfrom(m_in.m_source, m_in.REQ_GRANT, 0,
+  r = sys_safecopyfrom(m_in.m_source, m_in.m_vfs_fs_lookup.grant_path, 0,
 	(vir_bytes) buf, len);
 
   if (r != OK)
@@ -238,22 +238,22 @@ int do_lookup(void)
   /* Fetch the credentials, and generate a search access mask to test against
    * directory modes.
    */
-  if (m_in.REQ_FLAGS & PATH_GET_UCRED) {
-	if (m_in.REQ_UCRED_SIZE != sizeof(ucred)) {
+  if (m_in.m_vfs_fs_lookup.flags & PATH_GET_UCRED) {
+	if (m_in.m_vfs_fs_lookup.ucred_size != sizeof(ucred)) {
 		printf("%s: bad credential structure size\n", sffs_name);
 
 		return EINVAL;
 	}
 
-	r = sys_safecopyfrom(m_in.m_source, m_in.REQ_GRANT2, 0,
-		(vir_bytes) &ucred, m_in.REQ_UCRED_SIZE);
+	r = sys_safecopyfrom(m_in.m_source, m_in.m_vfs_fs_lookup.grant_ucred, 0,
+		(vir_bytes) &ucred, m_in.m_vfs_fs_lookup.ucred_size);
 
 	if (r != OK)
 		return r;
   }
   else {
-	ucred.vu_uid = m_in.REQ_UID;
-	ucred.vu_gid = m_in.REQ_GID;
+	ucred.vu_uid = m_in.m_vfs_fs_lookup.uid;
+	ucred.vu_gid = m_in.m_vfs_fs_lookup.gid;
 	ucred.vu_ngroups = 0;
   }
 
@@ -322,19 +322,19 @@ int do_lookup(void)
 	assert(r != EENTERMOUNT && r != ESYMLINK);
 
 	if (r == ELEAVEMOUNT) {
-		m_out.RES_OFFSET = (int) (last - buf);
-		m_out.RES_SYMLOOP = 0;
+		m_out.m_fs_vfs_lookup.offset = (last - buf);
+		m_out.m_fs_vfs_lookup.symloop = 0;
 	}
 
 	return r;
   }
 
-  m_out.RES_INODE_NR = INODE_NR(cur_ino);
-  m_out.RES_MODE = get_mode(cur_ino, attr.a_mode);
-  m_out.RES_FILE_SIZE = attr.a_size;
-  m_out.RES_UID = sffs_params->p_uid;
-  m_out.RES_GID = sffs_params->p_gid;
-  m_out.RES_DEV = NO_DEV;
+  m_out.m_fs_vfs_lookup.inode = INODE_NR(cur_ino);
+  m_out.m_fs_vfs_lookup.mode = get_mode(cur_ino, attr.a_mode);
+  m_out.m_fs_vfs_lookup.file_size = attr.a_size;
+  m_out.m_fs_vfs_lookup.uid = sffs_params->p_uid;
+  m_out.m_fs_vfs_lookup.gid = sffs_params->p_gid;
+  m_out.m_fs_vfs_lookup.device = NO_DEV;
 
   return OK;
 }

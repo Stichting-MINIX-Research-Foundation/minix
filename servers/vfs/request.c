@@ -445,12 +445,12 @@ int req_lookup(
   flags = resolve->l_flags;
   len = strlen(resolve->l_path) + 1;
 
-  m.m_type		= REQ_LOOKUP;
-  m.REQ_GRANT		= grant_id;
-  m.REQ_PATH_LEN 	= len;
-  m.REQ_PATH_SIZE 	= PATH_MAX + 1;
-  m.REQ_DIR_INO 	= (pino_t) dir_ino;
-  m.REQ_ROOT_INO 	= (pino_t) root_ino;
+  m.m_type			= REQ_LOOKUP;
+  m.m_vfs_fs_lookup.grant_path	= grant_id;
+  m.m_vfs_fs_lookup.path_len 	= len;
+  m.m_vfs_fs_lookup.path_size 	= PATH_MAX + 1;
+  m.m_vfs_fs_lookup.dir_ino 	= dir_ino;
+  m.m_vfs_fs_lookup.root_ino 	= root_ino;
 
   if(rfp->fp_ngroups > 0) { /* Is the process member of multiple groups? */
 	/* In that case the FS has to copy the uid/gid credentials */
@@ -468,17 +468,17 @@ int req_lookup(
 	if(grant_id2 == -1)
 		panic("req_lookup: cpf_grant_direct failed");
 
-	m.REQ_GRANT2	= grant_id2;
-	m.REQ_UCRED_SIZE= sizeof(credentials);
+	m.m_vfs_fs_lookup.grant_ucred	= grant_id2;
+	m.m_vfs_fs_lookup.ucred_size	= sizeof(credentials);
 	flags		|= PATH_GET_UCRED;
   } else {
 	/* When there's only one gid, we can send it directly */
-	m.REQ_UID	= (pgid_t) uid;
-	m.REQ_GID	= (pgid_t) gid;
+	m.m_vfs_fs_lookup.uid = uid;
+	m.m_vfs_fs_lookup.gid = gid;
 	flags		&= ~PATH_GET_UCRED;
   }
 
-  m.REQ_FLAGS		= flags;
+  m.m_vfs_fs_lookup.flags = flags;
 
   /* Send/rec request */
   r = fs_sendrec(fs_e, &m);
@@ -490,25 +490,25 @@ int req_lookup(
 
   switch (r) {
   case OK:
-	res->inode_nr = (ino_t) m.RES_INODE_NR;
-	res->fmode = (mode_t) m.RES_MODE;
-	res->fsize = m.RES_FILE_SIZE;
-	res->dev = m.RES_DEV;
-	res->uid = (uid_t) m.RES_UID;
-	res->gid = (gid_t) m.RES_GID;
+	res->inode_nr = m.m_fs_vfs_lookup.inode;
+	res->fmode = m.m_fs_vfs_lookup.mode;
+	res->fsize = m.m_fs_vfs_lookup.file_size;
+	res->dev = m.m_fs_vfs_lookup.device;
+	res->uid = m.m_fs_vfs_lookup.uid;
+	res->gid = m.m_fs_vfs_lookup.gid;
 	break;
   case EENTERMOUNT:
-	res->inode_nr = (ino_t) m.RES_INODE_NR;
-	res->char_processed = m.RES_OFFSET;
-	res->symloop = m.RES_SYMLOOP;
+	res->inode_nr = m.m_fs_vfs_lookup.inode;
+	res->char_processed = m.m_fs_vfs_lookup.offset;
+	res->symloop = m.m_fs_vfs_lookup.symloop;
 	break;
   case ELEAVEMOUNT:
-	res->char_processed = m.RES_OFFSET;
-	res->symloop = m.RES_SYMLOOP;
+	res->char_processed = m.m_fs_vfs_lookup.offset;
+	res->symloop = m.m_fs_vfs_lookup.symloop;
 	break;
   case ESYMLINK:
-	res->char_processed = m.RES_OFFSET;
-	res->symloop = m.RES_SYMLOOP;
+	res->char_processed = m.m_fs_vfs_lookup.offset;
+	res->symloop = m.m_fs_vfs_lookup.symloop;
 	break;
   default:
 	break;
