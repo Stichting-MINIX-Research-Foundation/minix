@@ -845,13 +845,13 @@ static int req_readwrite_actual(endpoint_t fs_e, ino_t inode_nr, off_t pos,
 
   /* Fill in request message */
   m.m_type = rw_flag == READING ? REQ_READ : REQ_WRITE;
-  m.REQ_INODE_NR = (pino_t) inode_nr;
-  m.REQ_GRANT = grant_id;
-  m.REQ_SEEK_POS = pos;
+  m.m_vfs_fs_readwrite.inode = inode_nr;
+  m.m_vfs_fs_readwrite.grant = grant_id;
+  m.m_vfs_fs_readwrite.seek_pos = pos;
   if ((!(vmp->m_fs_flags & RES_64BIT)) && (pos > INT_MAX)) {
 	return EINVAL;
   }
-  m.REQ_NBYTES = num_of_bytes;
+  m.m_vfs_fs_readwrite.nbytes = num_of_bytes;
 
   /* Send/rec request */
   r = fs_sendrec(fs_e, &m);
@@ -859,8 +859,8 @@ static int req_readwrite_actual(endpoint_t fs_e, ino_t inode_nr, off_t pos,
 
   if (r == OK) {
 	/* Fill in response structure */
-	*new_posp = m.RES_SEEK_POS;
-	*cum_iop = m.RES_NBYTES;
+	*new_posp = m.m_fs_vfs_readwrite.seek_pos;
+	*cum_iop = m.m_fs_vfs_readwrite.nbytes;
   }
 
   return(r);
@@ -905,10 +905,10 @@ int req_peek(endpoint_t fs_e, ino_t inode_nr, off_t pos, unsigned int bytes)
 
   /* Fill in request message */
   m.m_type = REQ_PEEK;
-  m.REQ_INODE_NR = inode_nr;
-  m.REQ_GRANT = -1;
-  m.REQ_SEEK_POS = pos;
-  m.REQ_NBYTES = bytes;
+  m.m_vfs_fs_readwrite.inode = inode_nr;
+  m.m_vfs_fs_readwrite.grant = -1;
+  m.m_vfs_fs_readwrite.seek_pos = pos;
+  m.m_vfs_fs_readwrite.nbytes = bytes;
 
   /* Send/rec request */
   return fs_sendrec(fs_e, &m);

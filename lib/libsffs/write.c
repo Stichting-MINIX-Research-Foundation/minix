@@ -81,7 +81,7 @@ int do_write(void)
 /* Write data to a file.
  */
   struct inode *ino;
-  u64_t pos;
+  off_t pos;
   size_t count;
   cp_grant_id_t grant;
   int r;
@@ -89,22 +89,22 @@ int do_write(void)
   if (state.s_read_only)
 	return EROFS;
 
-  if ((ino = find_inode(m_in.REQ_INODE_NR)) == NULL)
+  if ((ino = find_inode(m_in.m_vfs_fs_readwrite.inode)) == NULL)
 	return EINVAL;
 
   if (IS_DIR(ino)) return EISDIR;
 
-  pos = m_in.REQ_SEEK_POS;
-  count = m_in.REQ_NBYTES;
-  grant = m_in.REQ_GRANT;
+  pos = m_in.m_vfs_fs_readwrite.seek_pos;
+  count = m_in.m_vfs_fs_readwrite.nbytes;
+  grant = m_in.m_vfs_fs_readwrite.grant;
 
   if (count == 0) return EINVAL;
 
   if ((r = write_file(ino, &pos, &count, &grant)) != OK)
 	return r;
 
-  m_out.RES_SEEK_POS = pos;
-  m_out.RES_NBYTES = count;
+  m_out.m_fs_vfs_readwrite.seek_pos = pos;
+  m_out.m_fs_vfs_readwrite.nbytes = count;
 
   return OK;
 }

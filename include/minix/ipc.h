@@ -432,6 +432,26 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_fs_vfs_readsuper);
 
 typedef struct {
+	ino_t inode;
+	off_t seek_pos;
+
+	cp_grant_id_t grant;
+	size_t nbytes;
+
+	uint8_t data[32];
+} mess_vfs_fs_readwrite;
+_ASSERT_MSG_SIZE(mess_vfs_fs_readwrite);
+
+typedef struct {
+	off_t seek_pos;
+
+	size_t nbytes;
+
+	uint8_t data[44];
+} mess_fs_vfs_readwrite;
+_ASSERT_MSG_SIZE(mess_fs_vfs_readwrite);
+
+typedef struct {
 	ino_t dir_old;
 	ino_t dir_new;
 
@@ -593,6 +613,8 @@ typedef struct {
 	mess_vfs_fs_readsuper m_vfs_fs_readsuper;
 	mess_fs_vfs_readsuper m_fs_vfs_readsuper;
 	mess_vfs_fs_rename m_vfs_fs_rename;
+	mess_vfs_fs_readwrite m_vfs_fs_readwrite;
+	mess_fs_vfs_readwrite m_fs_vfs_readwrite;
 	mess_vfs_fs_slink m_vfs_fs_slink;
 	mess_vfs_fs_stat m_vfs_fs_stat;
 	mess_vfs_fs_statvfs m_vfs_fs_statvfs;

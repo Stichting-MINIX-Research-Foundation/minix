@@ -14,7 +14,7 @@ static char getdents_buf[GETDENTS_BUFSIZ];
  *===========================================================================*/
 int fs_read(void) {
   int r, chunk, block_size;
-  int nrbytes;
+  size_t nrbytes;
   cp_grant_id_t gid;
   off_t position, f_size, bytes_left;
   unsigned int off, cum_io;
@@ -31,13 +31,13 @@ int fs_read(void) {
   r = OK;
   
   /* Try to get inode according to its index */
-  dir = get_dir_record(fs_m_in.REQ_INODE_NR);
+  dir = get_dir_record(fs_m_in.m_vfs_fs_readwrite.inode);
   if (dir == NULL) return(EINVAL); /* no inode found */
 
-  position = fs_m_in.REQ_SEEK_POS; 
-  nrbytes = (unsigned) fs_m_in.REQ_NBYTES; /* number of bytes to read */
+  position = fs_m_in.m_vfs_fs_readwrite.seek_pos;
+  nrbytes = fs_m_in.m_vfs_fs_readwrite.nbytes; /* number of bytes to read */
   block_size = v_pri.logical_block_size_l;
-  gid = fs_m_in.REQ_GRANT;
+  gid = fs_m_in.m_vfs_fs_readwrite.grant;
   f_size = dir->d_file_size;
 
   rdwt_err = OK;		/* set to EIO if disk error occurs */
@@ -45,18 +45,19 @@ int fs_read(void) {
   cum_io = 0;
   /* Split the transfer into chunks that don't span two blocks. */
   while (nrbytes != 0) {
-	off = (unsigned int) (position % block_size);
+	off = position % block_size;
           
 	chunk = MIN(nrbytes, block_size - off);
 	if (chunk < 0) chunk = block_size - off;
 
 	bytes_left = f_size - position;
 	if (position >= f_size) break;	/* we are beyond EOF */
-	if (chunk > bytes_left) chunk = (int) bytes_left;
+	if (chunk > bytes_left) chunk = (int32_t) bytes_left;
       
 	/* Read or write 'chunk' bytes. */
-	r = read_chunk(dir, ((u64_t)(position)), off, chunk, (unsigned) nrbytes, 
-		       gid, cum_io, block_size, &completed, rw);
+	r = read_chunk(dir, position, off, chunk,
+			(uint32_t) nrbytes, gid, cum_io, block_size,
+			&completed, rw);
 
 	if (r != OK) break;	/* EOF reached */
 	if (rdwt_err < 0) break;
@@ -67,12 +68,12 @@ int fs_read(void) {
 	position += chunk;	/* position within the file */
   }
 
-  fs_m_out.RES_SEEK_POS = position; 
+  fs_m_out.m_fs_vfs_readwrite.seek_pos = position;
   
   if (rdwt_err != OK) r = rdwt_err;	/* check for disk error */
   if (rdwt_err == END_OF_FILE) r = OK;
   
-  fs_m_out.RES_NBYTES = cum_io; /*dir->d_file_size;*/
+  fs_m_out.m_fs_vfs_readwrite.nbytes = cum_io; /*dir->d_file_size;*/
   release_dir_record(dir);
 
   return(r);

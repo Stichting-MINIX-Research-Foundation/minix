@@ -37,16 +37,16 @@ int fs_readwrite(void)
   struct vattr va;
   PUFFS_MAKECRED(pcr, &global_kcred);
 
-  if ((pn = puffs_pn_nodewalk(global_pu, 0, &fs_m_in.REQ_INODE_NR)) == NULL) {
+  if ((pn = puffs_pn_nodewalk(global_pu, 0, &fs_m_in.m_vfs_fs_readwrite.inode)) == NULL) {
   	lpuffs_debug("walk failed...\n");
         return(EINVAL);
   }
 
   /* Get the values from the request message */
   rw_flag = (fs_m_in.m_type == REQ_READ ? READING : WRITING);
-  gid = (cp_grant_id_t) fs_m_in.REQ_GRANT;
-  pos = (off_t) fs_m_in.REQ_SEEK_POS;
-  nrbytes = bytes_left = (size_t) fs_m_in.REQ_NBYTES;
+  gid = fs_m_in.m_vfs_fs_readwrite.grant;
+  pos = fs_m_in.m_vfs_fs_readwrite.seek_pos;
+  nrbytes = bytes_left = fs_m_in.m_vfs_fs_readwrite.nbytes;
 
   if (nrbytes > RW_BUFSIZ)
 	nrbytes = bytes_left = RW_BUFSIZ;
@@ -98,8 +98,8 @@ int fs_readwrite(void)
 
   if (r != OK) return(EINVAL);
 
-  fs_m_out.RES_SEEK_POS = pos + bytes_done;
-  fs_m_out.RES_NBYTES = bytes_done;
+  fs_m_out.m_fs_vfs_readwrite.seek_pos = pos + bytes_done;
+  fs_m_out.m_fs_vfs_readwrite.nbytes = bytes_done;
 
   return(r);
 }

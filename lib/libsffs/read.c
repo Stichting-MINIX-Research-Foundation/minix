@@ -22,13 +22,13 @@ int do_read(void)
 /* Read data from a file.
  */
   struct inode *ino;
-  u64_t pos;
+  off_t pos;
   size_t count, size;
   vir_bytes off;
   char *ptr;
   int r, chunk;
 
-  if ((ino = find_inode(m_in.REQ_INODE_NR)) == NULL)
+  if ((ino = find_inode(m_in.m_vfs_fs_readwrite.inode)) == NULL)
 	return EINVAL;
 
   if (IS_DIR(ino)) return EISDIR;
@@ -36,8 +36,8 @@ int do_read(void)
   if ((r = get_handle(ino)) != OK)
 	return r;
 
-  pos = m_in.REQ_SEEK_POS;
-  count = m_in.REQ_NBYTES;
+  pos = m_in.m_vfs_fs_readwrite.seek_pos;
+  count = m_in.m_vfs_fs_readwrite.nbytes;
 
   assert(count > 0);
 
@@ -53,7 +53,7 @@ int do_read(void)
 
 	chunk = r;
 
-	r = sys_safecopyto(m_in.m_source, m_in.REQ_GRANT, off,
+	r = sys_safecopyto(m_in.m_source, m_in.m_vfs_fs_readwrite.grant, off,
 		(vir_bytes) ptr, chunk);
 
 	if (r != OK)
@@ -67,8 +67,8 @@ int do_read(void)
   if (r < 0)
 	return r;
 
-  m_out.RES_SEEK_POS = pos;
-  m_out.RES_NBYTES = off;
+  m_out.m_fs_vfs_readwrite.seek_pos = pos;
+  m_out.m_fs_vfs_readwrite.nbytes = off;
 
   return OK;
 }

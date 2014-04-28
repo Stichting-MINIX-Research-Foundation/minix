@@ -22,7 +22,7 @@ int fs_read(void)
 	int r;
 
 	/* Try to get inode by to its inode number. */
-	if ((node = find_inode(fs_m_in.REQ_INODE_NR)) == NULL)
+	if ((node = find_inode(fs_m_in.m_vfs_fs_readwrite.inode)) == NULL)
 		return EINVAL;
 
 	/* Check whether the node is a regular file. */
@@ -30,12 +30,12 @@ int fs_read(void)
 		return EINVAL;
 
 	/* Get the values from the request message. */
-	gid = fs_m_in.REQ_GRANT;
-	pos = fs_m_in.REQ_SEEK_POS;
+	gid = fs_m_in.m_vfs_fs_readwrite.grant;
+	pos = fs_m_in.m_vfs_fs_readwrite.seek_pos;
 
 	/* Call the read hook, if any. */
 	if (!is_inode_deleted(node) && vtreefs_hooks->read_hook != NULL) {
-		len = fs_m_in.REQ_NBYTES;
+		len = fs_m_in.m_vfs_fs_readwrite.nbytes;
 
 		/* On success, the read hook provides us with a pointer to the
 		 * resulting data. This avoids copying overhead.
@@ -43,11 +43,11 @@ int fs_read(void)
 		r = vtreefs_hooks->read_hook(node, pos, &ptr, &len,
 			get_inode_cbdata(node));
 
-		assert(len <= fs_m_in.REQ_NBYTES);
+		assert(len <= fs_m_in.m_vfs_fs_readwrite.nbytes);
 
 		/* Copy the resulting data to user space. */
 		if (r == OK && len > 0) {
-			r = sys_safecopyto(fs_m_in.m_source, fs_m_in.REQ_GRANT,
+			r = sys_safecopyto(fs_m_in.m_source, fs_m_in.m_vfs_fs_readwrite.grant,
 				0, (vir_bytes) ptr, len);
 		}
 	} else {
@@ -57,8 +57,8 @@ int fs_read(void)
 	}
 
 	if (r == OK) {
-		fs_m_out.RES_SEEK_POS = pos + len;
-		fs_m_out.RES_NBYTES = len;
+		fs_m_out.m_fs_vfs_readwrite.seek_pos = pos + len;
+		fs_m_out.m_fs_vfs_readwrite.nbytes = len;
 	}
 
 	return r;

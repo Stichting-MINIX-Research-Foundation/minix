@@ -30,7 +30,7 @@ int fs_readwrite(void)
   cp_grant_id_t gid;
   off_t position, f_size, bytes_left;
   unsigned int off, cum_io, block_size, chunk;
-  pmode_t mode_word;
+  mode_t mode_word;
   int completed;
   struct inode *rip;
   size_t nrbytes;
@@ -38,7 +38,7 @@ int fs_readwrite(void)
   r = OK;
   
   /* Find the inode referred */
-  if ((rip = find_inode(fs_dev, (pino_t) fs_m_in.REQ_INODE_NR)) == NULL)
+  if ((rip = find_inode(fs_dev, (pino_t) fs_m_in.m_vfs_fs_readwrite.inode)) == NULL)
 	return(EINVAL);
 
   mode_word = rip->i_mode & I_TYPE;
@@ -61,9 +61,9 @@ int fs_readwrite(void)
   	case REQ_PEEK: rw_flag = PEEKING; break;
 	default: panic("odd request");
   }
-  gid = (cp_grant_id_t) fs_m_in.REQ_GRANT;
-  position = (off_t) fs_m_in.REQ_SEEK_POS;
-  nrbytes = (size_t) fs_m_in.REQ_NBYTES;
+  gid = fs_m_in.m_vfs_fs_readwrite.grant;
+  position = fs_m_in.m_vfs_fs_readwrite.seek_pos;
+  nrbytes = fs_m_in.m_vfs_fs_readwrite.nbytes;
 
   lmfs_reset_rdwt_err();
 
@@ -113,8 +113,9 @@ int fs_readwrite(void)
 	  position += (off_t) chunk;	/* position within the file */
   }
 
-  fs_m_out.RES_SEEK_POS = position; /* It might change later and the VFS
-					   has to know this value */
+  fs_m_out.m_fs_vfs_readwrite.seek_pos = position; /* It might change later and
+						    the VFS has to know this
+						    value */
   
   /* On write, update file size and access time. */
   if (rw_flag == WRITING) {
@@ -137,7 +138,7 @@ int fs_readwrite(void)
 	  IN_MARKDIRTY(rip);		/* inode is thus now dirty */
   }
   
-  fs_m_out.RES_NBYTES = cum_io;
+  fs_m_out.m_fs_vfs_readwrite.nbytes = cum_io;
   
   return(r);
 }
