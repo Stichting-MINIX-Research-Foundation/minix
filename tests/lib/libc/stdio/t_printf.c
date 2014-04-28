@@ -138,14 +138,12 @@ ATF_TC_BODY(snprintf_float, tc)
 	uint32_t ul, uh;
 	time_t now;
 	char buf[1000];
-#if !defined(__minix)
 	struct rlimit rl;
 
 	rl.rlim_cur = rl.rlim_max = 1 * 1024 * 1024;
 	ATF_CHECK(setrlimit(RLIMIT_AS, &rl) != -1);
 	rl.rlim_cur = rl.rlim_max = 1 * 1024 * 1024;
 	ATF_CHECK(setrlimit(RLIMIT_DATA, &rl) != -1);
-#endif /* !defined(__minix) */
 
 	time(&now);
 	srand(now);

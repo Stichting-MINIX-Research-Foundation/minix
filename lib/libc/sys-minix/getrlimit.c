@@ -20,12 +20,18 @@ int getrlimit(int resource, struct rlimit *rlp)
 	
 	switch (resource)
 	{
-		case RLIMIT_CORE:
 		case RLIMIT_CPU:
-		case RLIMIT_DATA:
 		case RLIMIT_FSIZE:
+		case RLIMIT_DATA:
 		case RLIMIT_STACK:
+		case RLIMIT_CORE:
+		case RLIMIT_RSS:
+		case RLIMIT_MEMLOCK:
+		case RLIMIT_NPROC:
+		case RLIMIT_SBSIZE:
 		case RLIMIT_AS:
+		/* case RLIMIT_VMEM: Same as RLIMIT_AS */
+		case RLIMIT_NTHR:
 			/* no limit enforced (however architectural limits 
 			 * may apply) 
 			 */	

@@ -219,10 +219,10 @@ main(int argc, char *argv[], char *envp[])
 	 */
 #if !defined(__minix)
 	(void)signal(SIGXCPU, timeoverrun);
+#endif /* !defined(__minix) */
 	limit.rlim_max = RLIM_INFINITY;
 	limit.rlim_cur = GETTY_TIMEOUT;
 	(void)setrlimit(RLIMIT_CPU, &limit);
-#endif /* !defined(__minix) */
 
 	/*
 	 * The following is a work around for vhangup interactions
@@ -432,9 +432,7 @@ main(int argc, char *argv[], char *envp[])
 
 			limit.rlim_max = RLIM_INFINITY;
 			limit.rlim_cur = RLIM_INFINITY;
-#if !defined(__minix)
 			(void)setrlimit(RLIMIT_CPU, &limit);
-#endif /* !defined(__minix) */
 			if (NN)
 				(void)execle(LO, "login", AL ? "-fp" : "-p",
 				    NULL, env);

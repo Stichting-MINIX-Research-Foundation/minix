@@ -207,7 +207,6 @@ pw_cont(int sig)
 void
 pw_init(void)
 {
-#if !defined(__minix)
 	struct rlimit rlim;
 
 	/* Unlimited resource limits. */
@@ -221,7 +220,6 @@ pw_init(void)
 	/* Don't drop core (not really necessary, but GP's). */
 	rlim.rlim_cur = rlim.rlim_max = 0;
 	(void)setrlimit(RLIMIT_CORE, &rlim);
-#endif /* !defined(__minix) */
 
 	/* Turn off signals. */
 	(void)signal(SIGALRM, SIG_IGN);
