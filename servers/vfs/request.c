@@ -797,12 +797,12 @@ int req_readsuper(
 
   /* Fill in request message */
   m.m_type = REQ_READSUPER;
-  m.REQ_FLAGS = 0;
-  if(readonly) m.REQ_FLAGS |= REQ_RDONLY;
-  if(isroot)   m.REQ_FLAGS |= REQ_ISROOT;
-  m.REQ_GRANT = grant_id;
-  m.REQ_DEV = dev;
-  m.REQ_PATH_LEN = len;
+  m.m_vfs_fs_readsuper.flags = 0;
+  if(readonly) m.m_vfs_fs_readsuper.flags |= REQ_RDONLY;
+  if(isroot)   m.m_vfs_fs_readsuper.flags |= REQ_ISROOT;
+  m.m_vfs_fs_readsuper.grant = grant_id;
+  m.m_vfs_fs_readsuper.device = dev;
+  m.m_vfs_fs_readsuper.path_len = len;
 
   /* Send/rec request */
   r = fs_sendrec(fs_e, &m);
@@ -811,12 +811,12 @@ int req_readsuper(
   if(r == OK) {
 	/* Fill in response structure */
 	res->fs_e = m.m_source;
-	res->inode_nr = (ino_t) m.RES_INODE_NR;
-	res->fmode = (mode_t) m.RES_MODE;
-	res->fsize = m.RES_FILE_SIZE;
-	res->uid = (uid_t) m.RES_UID;
-	res->gid = (gid_t) m.RES_GID;
-	*fs_flags = m.RES_FLAGS;
+	res->inode_nr = m.m_fs_vfs_readsuper.inode;
+	res->fmode = m.m_fs_vfs_readsuper.mode;
+	res->fsize = m.m_fs_vfs_readsuper.file_size;
+	res->uid = m.m_fs_vfs_readsuper.uid;
+	res->gid = m.m_fs_vfs_readsuper.gid;
+	*fs_flags = m.m_fs_vfs_readsuper.flags;
   }
 
   return(r);

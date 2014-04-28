@@ -14,9 +14,9 @@ int fs_readsuper() {
   size_t label_len;
   int r = OK;
 
-  fs_dev    = fs_m_in.REQ_DEV;
-  label_gid = fs_m_in.REQ_GRANT;
-  label_len = fs_m_in.REQ_PATH_LEN;
+  fs_dev    = fs_m_in.m_vfs_fs_readsuper.device;
+  label_gid = fs_m_in.m_vfs_fs_readsuper.grant;
+  label_len = fs_m_in.m_vfs_fs_readsuper.path_len;
 
   if (label_len > sizeof(fs_dev_label)) 
 	return(EINVAL);
@@ -46,12 +46,12 @@ int fs_readsuper() {
   lmfs_set_blocksize(v_pri.logical_block_size_l, major(fs_dev));
 
   /* Return some root inode properties */
-  fs_m_out.RES_INODE_NR = ID_DIR_RECORD(v_pri.dir_rec_root);
-  fs_m_out.RES_MODE = v_pri.dir_rec_root->d_mode;
-  fs_m_out.RES_FILE_SIZE = v_pri.dir_rec_root->d_file_size;
-  fs_m_out.RES_UID = SYS_UID; /* Always root */
-  fs_m_out.RES_GID = SYS_GID; /* operator */
-  fs_m_out.RES_FLAGS = RES_NOFLAGS;
+  fs_m_out.m_fs_vfs_readsuper.inode = ID_DIR_RECORD(v_pri.dir_rec_root);
+  fs_m_out.m_fs_vfs_readsuper.mode = v_pri.dir_rec_root->d_mode;
+  fs_m_out.m_fs_vfs_readsuper.file_size = v_pri.dir_rec_root->d_file_size;
+  fs_m_out.m_fs_vfs_readsuper.uid = SYS_UID; /* Always root */
+  fs_m_out.m_fs_vfs_readsuper.gid = SYS_GID; /* operator */
+  fs_m_out.m_fs_vfs_readsuper.flags = RES_NOFLAGS;
 
   return(r);
 }

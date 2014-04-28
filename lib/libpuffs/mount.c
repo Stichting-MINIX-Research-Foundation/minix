@@ -19,21 +19,21 @@ int fs_readsuper(void)
 {
   struct vattr *root_va;
 
-  fs_dev    = fs_m_in.REQ_DEV;
-  is_readonly_fs  = (fs_m_in.REQ_FLAGS & REQ_RDONLY) ? 1 : 0;
-  is_root_fs    = (fs_m_in.REQ_FLAGS & REQ_ISROOT) ? 1 : 0;
+  fs_dev    = fs_m_in.m_vfs_fs_readsuper.device;
+  is_readonly_fs  = (fs_m_in.m_vfs_fs_readsuper.flags & REQ_RDONLY) ? 1 : 0;
+  is_root_fs    = (fs_m_in.m_vfs_fs_readsuper.flags & REQ_ISROOT) ? 1 : 0;
 
   /* Open root pnode */
   global_pu->pu_pn_root->pn_count = 1;
 
   /* Root pnode properties */
   root_va = &global_pu->pu_pn_root->pn_va;
-  fs_m_out.RES_INODE_NR = root_va->va_fileid;
-  fs_m_out.RES_MODE = root_va->va_mode;
-  fs_m_out.RES_FILE_SIZE = root_va->va_size;
-  fs_m_out.RES_UID = root_va->va_uid;
-  fs_m_out.RES_GID = root_va->va_gid;
-  fs_m_out.RES_FLAGS = RES_NOFLAGS;
+  fs_m_out.m_fs_vfs_readsuper.inode = root_va->va_fileid;
+  fs_m_out.m_fs_vfs_readsuper.mode = root_va->va_mode;
+  fs_m_out.m_fs_vfs_readsuper.file_size = root_va->va_size;
+  fs_m_out.m_fs_vfs_readsuper.uid = root_va->va_uid;
+  fs_m_out.m_fs_vfs_readsuper.gid = root_va->va_gid;
+  fs_m_out.m_fs_vfs_readsuper.flags = RES_NOFLAGS;
 
   return(OK);
 }

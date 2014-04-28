@@ -33,11 +33,11 @@ int fs_readsuper()
   int readonly, isroot;
   u32_t mask;
 
-  fs_dev    = fs_m_in.REQ_DEV;
-  label_gid = fs_m_in.REQ_GRANT;
-  label_len = fs_m_in.REQ_PATH_LEN;
-  readonly  = (fs_m_in.REQ_FLAGS & REQ_RDONLY) ? 1 : 0;
-  isroot    = (fs_m_in.REQ_FLAGS & REQ_ISROOT) ? 1 : 0;
+  fs_dev    = fs_m_in.m_vfs_fs_readsuper.device;
+  label_gid = fs_m_in.m_vfs_fs_readsuper.grant;
+  label_len = fs_m_in.m_vfs_fs_readsuper.path_len;
+  readonly  = (fs_m_in.m_vfs_fs_readsuper.flags & REQ_RDONLY) ? 1 : 0;
+  isroot    = (fs_m_in.m_vfs_fs_readsuper.flags & REQ_ISROOT) ? 1 : 0;
 
   if (label_len > sizeof(fs_dev_label))
 	return(EINVAL);
@@ -153,12 +153,12 @@ int fs_readsuper()
   }
 
   /* Root inode properties */
-  fs_m_out.RES_INODE_NR = root_ip->i_num;
-  fs_m_out.RES_MODE = root_ip->i_mode;
-  fs_m_out.RES_FILE_SIZE = root_ip->i_size;
-  fs_m_out.RES_UID = root_ip->i_uid;
-  fs_m_out.RES_GID = root_ip->i_gid;
-  fs_m_out.RES_FLAGS = RES_HASPEEK;
+  fs_m_out.m_fs_vfs_readsuper.inode = root_ip->i_num;
+  fs_m_out.m_fs_vfs_readsuper.mode = root_ip->i_mode;
+  fs_m_out.m_fs_vfs_readsuper.file_size = root_ip->i_size;
+  fs_m_out.m_fs_vfs_readsuper.uid = root_ip->i_uid;
+  fs_m_out.m_fs_vfs_readsuper.gid = root_ip->i_gid;
+  fs_m_out.m_fs_vfs_readsuper.flags = RES_HASPEEK;
 
   return(r);
 }

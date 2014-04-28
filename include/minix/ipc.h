@@ -147,6 +147,33 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_sigcalls);
 
 typedef struct {
+	dev_t device;
+
+	uint32_t flags;
+	size_t path_len;
+	cp_grant_id_t grant;
+
+	uint8_t data[36];
+} mess_vfs_fs_readsuper;
+_ASSERT_MSG_SIZE(mess_vfs_fs_readsuper);
+
+typedef struct {
+	off_t file_size;
+	dev_t device;
+	ino_t inode;
+
+	uint32_t flags;
+	mode_t mode;
+	uid_t uid;
+	gid_t gid;
+
+	uint16_t con_reqs;
+
+	uint8_t data[14];
+} mess_fs_vfs_readsuper;
+_ASSERT_MSG_SIZE(mess_fs_vfs_readsuper);
+
+typedef struct {
 	time_t atime;
 	time_t mtime;
 	long ansec;
@@ -215,6 +242,8 @@ typedef struct {
 	mess_mmap m_mmap;
 	mess_notify m_notify;
 	mess_sigcalls m_sigcalls;
+	mess_vfs_fs_readsuper m_vfs_fs_readsuper;
+	mess_fs_vfs_readsuper m_fs_vfs_readsuper;
 	mess_vfs_utimens m_vfs_utimens;
 	mess_vm_vfs_mmap m_vm_vfs_mmap;
 	mess_vmmcp m_vmmcp;

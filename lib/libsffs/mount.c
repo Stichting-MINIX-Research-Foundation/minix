@@ -23,16 +23,16 @@ int do_readsuper(void)
   int r;
 
   dprintf(("%s: readsuper (dev %x, flags %x)\n",
-	sffs_name, m_in.REQ_DEV, m_in.REQ_FLAGS));
+	sffs_name, m_in.m_vfs_fs_readsuper.device, m_in.vfs_fs_readsuper.flags));
 
-  if (m_in.REQ_FLAGS & REQ_ISROOT) {
+  if (m_in.m_vfs_fs_readsuper.flags & REQ_ISROOT) {
 	printf("%s: attempt to mount as root device\n", sffs_name);
 
 	return EINVAL;
   }
 
-  state.s_read_only = !!(m_in.REQ_FLAGS & REQ_RDONLY);
-  state.s_dev = m_in.REQ_DEV;
+  state.s_read_only = !!(m_in.m_vfs_fs_readsuper.flags & REQ_RDONLY);
+  state.s_dev = m_in.m_vfs_fs_readsuper.device;
 
   init_dentry();
   ino = init_inode();
@@ -55,13 +55,13 @@ int do_readsuper(void)
 	return r;
   }
 
-  m_out.RES_INODE_NR = INODE_NR(ino);
-  m_out.RES_MODE = get_mode(ino, attr.a_mode);
-  m_out.RES_FILE_SIZE = attr.a_size;
-  m_out.RES_UID = sffs_params->p_uid;
-  m_out.RES_GID = sffs_params->p_gid;
-  m_out.RES_DEV = NO_DEV;
-  m_out.RES_FLAGS = RES_64BIT;
+  m_out.m_fs_vfs_readsuper.inode = INODE_NR(ino);
+  m_out.m_fs_vfs_readsuper.mode = get_mode(ino, attr.a_mode);
+  m_out.m_fs_vfs_readsuper.file_size = attr.a_size;
+  m_out.m_fs_vfs_readsuper.uid = sffs_params->p_uid;
+  m_out.m_fs_vfs_readsuper.gid = sffs_params->p_gid;
+  m_out.m_fs_vfs_readsuper.device = NO_DEV;
+  m_out.m_fs_vfs_readsuper.flags = RES_64BIT;
 
   state.s_mounted = TRUE;
 

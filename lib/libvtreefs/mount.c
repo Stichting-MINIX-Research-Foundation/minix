@@ -12,10 +12,10 @@ int fs_readsuper(void)
 	struct inode *root;
 
 	/* Get the device number, for stat requests. */
-	fs_dev = fs_m_in.REQ_DEV;
+	fs_dev = fs_m_in.m_vfs_fs_readsuper.device;
 
 	/* The VTreeFS must not be mounted as a root file system. */
-	if (fs_m_in.REQ_FLAGS & REQ_ISROOT)
+	if (fs_m_in.m_vfs_fs_readsuper.flags & REQ_ISROOT)
 		return EINVAL;
 
 	/* Get the root inode and increase its reference count. */
@@ -27,13 +27,13 @@ int fs_readsuper(void)
 		vtreefs_hooks->init_hook();
 
 	/* Return the root inode's properties. */
-	fs_m_out.RES_INODE_NR = get_inode_number(root);
-	fs_m_out.RES_MODE = root->i_stat.mode;
-	fs_m_out.RES_FILE_SIZE = root->i_stat.size;
-	fs_m_out.RES_UID = root->i_stat.uid;
-	fs_m_out.RES_GID = root->i_stat.gid;
-	fs_m_out.RES_DEV = NO_DEV;
-	fs_m_out.RES_FLAGS = RES_NOFLAGS;
+	fs_m_out.m_fs_vfs_readsuper.inode = get_inode_number(root);
+	fs_m_out.m_fs_vfs_readsuper.mode = root->i_stat.mode;
+	fs_m_out.m_fs_vfs_readsuper.file_size = root->i_stat.size;
+	fs_m_out.m_fs_vfs_readsuper.uid = root->i_stat.uid;
+	fs_m_out.m_fs_vfs_readsuper.gid = root->i_stat.gid;
+	fs_m_out.m_fs_vfs_readsuper.device = NO_DEV;
+	fs_m_out.m_fs_vfs_readsuper.flags = RES_NOFLAGS;
 
 	fs_mounted = TRUE;
 
