@@ -589,11 +589,11 @@ int fs_putnode(void)
 	struct inode *node;
 
 	/* Get the inode specified by its number. */
-	if ((node = find_inode(fs_m_in.REQ_INODE_NR)) == NULL)
+	if ((node = find_inode(fs_m_in.m_vfs_fs_putnode.inode)) == NULL)
 		return EINVAL;
 
 	/* Decrease the reference count. */
-	node->i_count -= fs_m_in.REQ_COUNT - 1;
+	node->i_count -= fs_m_in.m_vfs_fs_putnode.count - 1;
 
 	assert(node->i_count > 0);
 

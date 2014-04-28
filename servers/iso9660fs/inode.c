@@ -16,10 +16,10 @@ int fs_putnode()
   int count;
   struct dir_record *dir = NULL;
 
-  dir = get_dir_record(fs_m_in.REQ_INODE_NR);
+  dir = get_dir_record(fs_m_in.m_vfs_fs_putnode.inode);
   release_dir_record(dir);
   
-  count = fs_m_in.REQ_COUNT;
+  count = fs_m_in.m_vfs_fs_putnode.count;
 
   if (count <= 0) return(EINVAL);
   

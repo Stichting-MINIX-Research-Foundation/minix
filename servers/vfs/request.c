@@ -701,8 +701,8 @@ int count;
 
   /* Fill in request message */
   m.m_type = REQ_PUTNODE;
-  m.REQ_INODE_NR = (pino_t) inode_nr;
-  m.REQ_COUNT = count;
+  m.m_vfs_fs_putnode.inode = inode_nr;
+  m.m_vfs_fs_putnode.count = count;
 
   /* Send/rec request */
   return fs_sendrec(fs_e, &m);

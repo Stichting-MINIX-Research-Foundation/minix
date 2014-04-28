@@ -37,8 +37,8 @@ int fs_putnode(void)
  * Release unused pnode.
  */
   struct puffs_node *pn;
-  int count = fs_m_in.REQ_COUNT;
-  pino_t inum = fs_m_in.REQ_INODE_NR;
+  int count = fs_m_in.m_vfs_fs_putnode.count;
+  ino_t inum = fs_m_in.m_vfs_fs_putnode.inode;
 
   if ((pn = puffs_pn_nodewalk(global_pu, 0, &inum)) == NULL) {
 	/* XXX Probably removed from the list, see puffs_pn_remove() */

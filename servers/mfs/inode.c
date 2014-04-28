@@ -42,15 +42,15 @@ int fs_putnode(void)
   struct inode *rip;
   int count;
   
-  rip = find_inode(fs_dev, (pino_t) fs_m_in.REQ_INODE_NR);
+  rip = find_inode(fs_dev, fs_m_in.m_vfs_fs_putnode.inode);
 
   if(!rip) {
-	  printf("%s:%d put_inode: inode #%u dev: %llx not found\n", __FILE__,
-		 __LINE__, (pino_t) fs_m_in.REQ_INODE_NR, fs_dev);
+	  printf("%s:%d put_inode: inode #%llu dev: %llx not found\n", __FILE__,
+		 __LINE__, fs_m_in.m_vfs_fs_putnode.inode, fs_dev);
 	  panic("fs_putnode failed");
   }
 
-  count = fs_m_in.REQ_COUNT;
+  count = fs_m_in.m_vfs_fs_putnode.count;
   if (count <= 0) {
 	printf("%s:%d put_inode: bad value for count: %d\n", __FILE__,
 	       __LINE__, count);

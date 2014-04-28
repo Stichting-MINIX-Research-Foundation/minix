@@ -280,10 +280,10 @@ int do_putnode(void)
   struct inode *ino;
   int count;
 
-  if ((ino = find_inode(m_in.REQ_INODE_NR)) == NULL)
+  if ((ino = find_inode(m_in.m_vfs_fs_putnode.inode)) == NULL)
 	return EINVAL;
 
-  count = m_in.REQ_COUNT;
+  count = m_in.m_vfs_fs_putnode.count;
 
   if (count <= 0 || count > ino->i_ref) return EINVAL;
 
