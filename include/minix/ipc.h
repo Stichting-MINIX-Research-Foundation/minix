@@ -17,6 +17,26 @@
 #define M3_LONG_STRING    44	/* current m3_ca1 size (may be increased) */
 
 typedef struct {
+	uint8_t data[56];
+} mess_u8;
+_ASSERT_MSG_SIZE(mess_u8);
+
+typedef struct {
+	uint16_t data[28];
+} mess_u16;
+_ASSERT_MSG_SIZE(mess_u16);
+
+typedef struct {
+	uint32_t data[14];
+} mess_u32;
+_ASSERT_MSG_SIZE(mess_u32);
+
+typedef struct {
+	uint64_t data[7];
+} mess_u64;
+_ASSERT_MSG_SIZE(mess_u64);
+
+typedef struct {
 	uint64_t m1ull1;
 	int m1i1, m1i2, m1i3;
 	char *m1p1, *m1p2, *m1p3, *m1p4;
@@ -186,6 +206,11 @@ typedef struct {
   endpoint_t m_source;		/* who sent the message */
   int m_type;			/* what kind of message is it */
   union {
+	mess_u8 m_u8;
+	mess_u16 m_u16;
+	mess_u32 m_u32;
+	mess_u64 m_u64;
+
 	mess_1 m_m1;
 	mess_2 m_m2;
 	mess_3 m_m3;
