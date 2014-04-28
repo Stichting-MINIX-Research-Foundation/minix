@@ -19,25 +19,25 @@ int fs_create()
   int r;
   struct inode *ldirp;
   struct inode *rip;
-  pmode_t omode;
+  mode_t omode;
   char lastc[MFS_NAME_MAX];
   
   /* Read request message */
-  omode = (pmode_t) fs_m_in.REQ_MODE;
-  caller_uid = (uid_t) fs_m_in.REQ_UID;
-  caller_gid = (gid_t) fs_m_in.REQ_GID;
+  omode = fs_m_in.m_vfs_fs_create.mode;
+  caller_uid = fs_m_in.m_vfs_fs_create.uid;
+  caller_gid = fs_m_in.m_vfs_fs_create.gid;
   
   /* Try to make the file. */ 
 
   /* Copy the last component (i.e., file name) */
-  len = min( (unsigned) fs_m_in.REQ_PATH_LEN, sizeof(lastc));
-  err_code = sys_safecopyfrom(VFS_PROC_NR, (cp_grant_id_t) fs_m_in.REQ_GRANT,
+  len = min(fs_m_in.m_vfs_fs_create.path_len, sizeof(lastc));
+  err_code = sys_safecopyfrom(VFS_PROC_NR, fs_m_in.m_vfs_fs_create.grant,
 			      (vir_bytes) 0, (vir_bytes) lastc, len);
   if (err_code != OK) return err_code;
   NUL(lastc, len, sizeof(lastc));
 
   /* Get last directory inode (i.e., directory that will hold the new inode) */
-  if ((ldirp = get_inode(fs_dev, (pino_t) fs_m_in.REQ_INODE_NR)) == NULL)
+  if ((ldirp = get_inode(fs_dev, fs_m_in.m_vfs_fs_create.inode)) == NULL)
 	  return(ENOENT);
 
   /* Create a new inode by calling new_node(). */
@@ -52,13 +52,13 @@ int fs_create()
   }
   
   /* Reply message */
-  fs_m_out.RES_INODE_NR = rip->i_num;
-  fs_m_out.RES_MODE = rip->i_mode;
-  fs_m_out.RES_FILE_SIZE = rip->i_size;
+  fs_m_out.m_fs_vfs_create.inode = rip->i_num;
+  fs_m_out.m_fs_vfs_create.mode = rip->i_mode;
+  fs_m_out.m_fs_vfs_create.file_size = rip->i_size;
 
   /* These values are needed for the execution */
-  fs_m_out.RES_UID = rip->i_uid;
-  fs_m_out.RES_GID = rip->i_gid;
+  fs_m_out.m_fs_vfs_create.uid = rip->i_uid;
+  fs_m_out.m_fs_vfs_create.gid = rip->i_gid;
 
   /* Drop parent dir */
   put_inode(ldirp);

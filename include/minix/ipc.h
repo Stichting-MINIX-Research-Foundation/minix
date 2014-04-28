@@ -147,6 +147,31 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_sigcalls);
 
 typedef struct {
+	ino_t inode;
+
+	mode_t mode;
+	uid_t uid;
+	gid_t gid;
+	cp_grant_id_t grant;
+	size_t path_len;
+
+	uint8_t data[28];
+} mess_vfs_fs_create;
+_ASSERT_MSG_SIZE(mess_vfs_fs_create);
+
+typedef struct {
+	off_t file_size;
+	ino_t inode;
+
+	mode_t mode;
+	uid_t uid;
+	gid_t gid;
+
+	uint8_t data[28];
+} mess_fs_vfs_create;
+_ASSERT_MSG_SIZE(mess_fs_vfs_create);
+
+typedef struct {
 	ino_t dir_ino;
 	ino_t root_ino;
 
@@ -275,6 +300,8 @@ typedef struct {
 	mess_mmap m_mmap;
 	mess_notify m_notify;
 	mess_sigcalls m_sigcalls;
+	mess_vfs_fs_create m_vfs_fs_create;
+	mess_fs_vfs_create m_fs_vfs_create;
 	mess_vfs_fs_lookup m_vfs_fs_lookup;
 	mess_fs_vfs_lookup m_fs_vfs_lookup;
 	mess_vfs_fs_readsuper m_vfs_fs_readsuper;

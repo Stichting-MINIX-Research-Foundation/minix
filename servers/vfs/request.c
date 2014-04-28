@@ -186,12 +186,12 @@ int req_create(
 
   /* Fill in request message */
   m.m_type = REQ_CREATE;
-  m.REQ_INODE_NR = (pino_t) inode_nr;
-  m.REQ_MODE = (pmode_t) omode;
-  m.REQ_UID = (puid_t) uid;
-  m.REQ_GID = (pgid_t) gid;
-  m.REQ_GRANT = grant_id;
-  m.REQ_PATH_LEN = len;
+  m.m_vfs_fs_create.inode = inode_nr;
+  m.m_vfs_fs_create.mode = omode;
+  m.m_vfs_fs_create.uid = uid;
+  m.m_vfs_fs_create.gid = gid;
+  m.m_vfs_fs_create.grant = grant_id;
+  m.m_vfs_fs_create.path_len = len;
 
   /* Send/rec request */
   r = fs_sendrec(fs_e, &m);
@@ -200,11 +200,11 @@ int req_create(
 
   /* Fill in response structure */
   res->fs_e	= m.m_source;
-  res->inode_nr	= (ino_t) m.RES_INODE_NR;
-  res->fmode	= (mode_t) m.RES_MODE;
-  res->fsize    = m.RES_FILE_SIZE;
-  res->uid	= (uid_t) m.RES_UID;
-  res->gid	= (gid_t) m.RES_GID;
+  res->inode_nr	= m.m_fs_vfs_create.inode;
+  res->fmode	= m.m_fs_vfs_create.mode;
+  res->fsize    = m.m_fs_vfs_create.file_size;
+  res->uid	= m.m_fs_vfs_create.uid;
+  res->gid	= m.m_fs_vfs_create.gid;
   res->dev	= NO_DEV;
 
   return(OK);

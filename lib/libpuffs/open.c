@@ -21,7 +21,7 @@ int fs_create(void)
   int r;
   struct puffs_node *pn_dir;
   struct puffs_node *pn;
-  pmode_t omode;
+  mode_t omode;
   struct puffs_newinfo pni;
   struct puffs_kcn pkcnp;
   PUFFS_MAKECRED(pcr, &global_kcred);
@@ -36,24 +36,24 @@ int fs_create(void)
   }
 
   /* Read request message */
-  omode = (pmode_t) fs_m_in.REQ_MODE;
-  caller_uid = (uid_t) fs_m_in.REQ_UID;
-  caller_gid = (gid_t) fs_m_in.REQ_GID;
+  omode = fs_m_in.m_vfs_fs_create.mode;
+  caller_uid = fs_m_in.m_vfs_fs_create.uid;
+  caller_gid = fs_m_in.m_vfs_fs_create.gid;
 
   /* Copy the last component (i.e., file name) */
-  len = fs_m_in.REQ_PATH_LEN;
+  len = fs_m_in.m_vfs_fs_create.path_len;
   pcn.pcn_namelen = len - 1;
   if (pcn.pcn_namelen > NAME_MAX)
 	return(ENAMETOOLONG);
 
-  err_code = sys_safecopyfrom(VFS_PROC_NR, (cp_grant_id_t) fs_m_in.REQ_GRANT,
+  err_code = sys_safecopyfrom(VFS_PROC_NR, fs_m_in.m_vfs_fs_create.grant,
 			      (vir_bytes) 0, (vir_bytes) pcn.pcn_name,
 			      (size_t) len);
   if (err_code != OK) return(err_code);
   NUL(pcn.pcn_name, len, sizeof(pcn.pcn_name));
 
   /* Get last directory pnode (i.e., directory that will hold the new pnode) */
-  if ((pn_dir = puffs_pn_nodewalk(global_pu, 0, &fs_m_in.REQ_INODE_NR)) == NULL)
+  if ((pn_dir = puffs_pn_nodewalk(global_pu, 0, &fs_m_in.m_vfs_fs_create.inode)) == NULL)
 	return(ENOENT);
 
   memset(&pni, 0, sizeof(pni));
@@ -63,7 +63,7 @@ int fs_create(void)
   
   memset(&va, 0, sizeof(va));
   va.va_type = VREG;
-  va.va_mode = (mode_t) omode;
+  va.va_mode = omode;
   va.va_uid = caller_uid;
   va.va_gid = caller_gid;
   va.va_atime = va.va_mtime = va.va_ctime = cur_time;
@@ -99,13 +99,13 @@ int fs_create(void)
   update_timens(pn_dir, MTIME | CTIME, &cur_time);
 
   /* Reply message */
-  fs_m_out.RES_INODE_NR = pn->pn_va.va_fileid;
-  fs_m_out.RES_MODE = pn->pn_va.va_mode;
-  fs_m_out.RES_FILE_SIZE = pn->pn_va.va_size;
+  fs_m_out.m_fs_vfs_create.inode = pn->pn_va.va_fileid;
+  fs_m_out.m_fs_vfs_create.mode = pn->pn_va.va_mode;
+  fs_m_out.m_fs_vfs_create.file_size = pn->pn_va.va_size;
 
   /* This values are needed for the execution */
-  fs_m_out.RES_UID = pn->pn_va.va_uid;
-  fs_m_out.RES_GID = pn->pn_va.va_gid;
+  fs_m_out.m_fs_vfs_create.uid = pn->pn_va.va_uid;
+  fs_m_out.m_fs_vfs_create.gid = pn->pn_va.va_gid;
 
   return(OK);
 }

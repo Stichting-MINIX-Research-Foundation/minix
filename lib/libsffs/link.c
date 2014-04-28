@@ -35,12 +35,12 @@ int do_create(void)
 	return EROFS;
 
   /* Get path, name, parent inode and possibly inode for the given path. */
-  if ((r = get_name(m_in.REQ_GRANT, m_in.REQ_PATH_LEN, name)) != OK)
+  if ((r = get_name(m_in.m_vfs_fs_create.grant, m_in.m_vfs_fs_create.path_len, name)) != OK)
 	return r;
 
   if (!strcmp(name, ".") || !strcmp(name, "..")) return EEXIST;
 
-  if ((parent = find_inode(m_in.REQ_INODE_NR)) == NULL)
+  if ((parent = find_inode(m_in.m_vfs_fs_create.inode)) == NULL)
 	return EINVAL;
 
   if ((r = verify_dentry(parent, name, path, &ino)) != OK)
@@ -59,7 +59,7 @@ int do_create(void)
   }
 
   /* Perform the actual create call. */
-  r = sffs_table->t_open(path, O_CREAT | O_EXCL | O_RDWR, m_in.REQ_MODE,
+  r = sffs_table->t_open(path, O_CREAT | O_EXCL | O_RDWR, m_in.m_vfs_fs_create.mode,
 	&handle);
 
   if (r != OK) {
@@ -115,12 +115,11 @@ int do_create(void)
 
   add_dentry(parent, name, ino);
 
-  m_out.RES_INODE_NR = INODE_NR(ino);
-  m_out.RES_MODE = get_mode(ino, attr.a_mode);
-  m_out.RES_FILE_SIZE = attr.a_size;
-  m_out.RES_UID = sffs_params->p_uid;
-  m_out.RES_GID = sffs_params->p_gid;
-  m_out.RES_DEV = NO_DEV;
+  m_out.m_fs_vfs_create.inode = INODE_NR(ino);
+  m_out.m_fs_vfs_create.mode = get_mode(ino, attr.a_mode);
+  m_out.m_fs_vfs_create.file_size = attr.a_size;
+  m_out.m_fs_vfs_create.uid = sffs_params->p_uid;
+  m_out.m_fs_vfs_create.gid = sffs_params->p_gid;
 
   return OK;
 }
