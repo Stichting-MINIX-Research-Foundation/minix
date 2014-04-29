@@ -344,17 +344,17 @@ int do_rename(void)
   /* Get path strings, names, directory inodes and possibly preexisting inodes
    * for the old and new paths.
    */
-  if ((r = get_name(m_in.REQ_REN_GRANT_OLD, m_in.REQ_REN_LEN_OLD,
+  if ((r = get_name(m_in.m_vfs_fs_rename.grant_old, m_in.m_vfs_fs_rename.len_old,
 	old_name)) != OK) return r;
 
-  if ((r = get_name(m_in.REQ_REN_GRANT_NEW, m_in.REQ_REN_LEN_NEW,
+  if ((r = get_name(m_in.m_vfs_fs_rename.grant_new, m_in.m_vfs_fs_rename.len_new,
 	new_name)) != OK) return r;
 
   if (!strcmp(old_name, ".") || !strcmp(old_name, "..") ||
 	!strcmp(new_name, ".") || !strcmp(new_name, "..")) return EINVAL;
 
-  if ((old_parent = find_inode(m_in.REQ_REN_OLD_DIR)) == NULL ||
-	(new_parent = find_inode(m_in.REQ_REN_NEW_DIR)) == NULL)
+  if ((old_parent = find_inode(m_in.m_vfs_fs_rename.dir_old)) == NULL ||
+	(new_parent = find_inode(m_in.m_vfs_fs_rename.dir_new)) == NULL)
 	return EINVAL;
 
   if ((r = verify_dentry(old_parent, old_name, old_path, &old_ino)) != OK)

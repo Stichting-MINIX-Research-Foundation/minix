@@ -270,6 +270,19 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_fs_vfs_readsuper);
 
 typedef struct {
+	ino_t dir_old;
+	ino_t dir_new;
+
+	size_t len_old;
+	size_t len_new;
+	cp_grant_id_t grant_old;
+	cp_grant_id_t grant_new;
+
+	uint8_t data[24];
+} mess_vfs_fs_rename;
+_ASSERT_MSG_SIZE(mess_vfs_fs_rename);
+
+typedef struct {
 	time_t atime;
 	time_t mtime;
 	long ansec;
@@ -348,6 +361,7 @@ typedef struct {
 	mess_vfs_fs_mountpoint m_vfs_fs_mountpoint;
 	mess_vfs_fs_readsuper m_vfs_fs_readsuper;
 	mess_fs_vfs_readsuper m_fs_vfs_readsuper;
+	mess_vfs_fs_rename m_vfs_fs_rename;
 	mess_vfs_utimens m_vfs_utimens;
 	mess_vm_vfs_mmap m_vm_vfs_mmap;
 	mess_vmmcp m_vmmcp;

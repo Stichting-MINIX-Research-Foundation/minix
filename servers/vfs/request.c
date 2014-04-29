@@ -941,12 +941,13 @@ char *new_name;
 
   /* Fill in request message */
   m.m_type = REQ_RENAME;
-  m.REQ_REN_OLD_DIR = (pino_t) old_dir;
-  m.REQ_REN_NEW_DIR = (pino_t) new_dir;
-  m.REQ_REN_GRANT_OLD = gid_old;
-  m.REQ_REN_LEN_OLD = len_old;
-  m.REQ_REN_GRANT_NEW = gid_new;
-  m.REQ_REN_LEN_NEW = len_new;
+  m.m_vfs_fs_rename.dir_old = old_dir;
+  m.m_vfs_fs_rename.grant_old = gid_old;
+  m.m_vfs_fs_rename.len_old = len_old;
+
+  m.m_vfs_fs_rename.dir_new = new_dir;
+  m.m_vfs_fs_rename.grant_new = gid_new;
+  m.m_vfs_fs_rename.len_new = len_new;
 
   /* Send/rec request */
   r = fs_sendrec(fs_e, &m);

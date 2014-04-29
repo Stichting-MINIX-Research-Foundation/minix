@@ -214,29 +214,29 @@ int fs_rename(void)
 	return(EINVAL);
 
   /* Copy the last component of the old name */
-  len = fs_m_in.REQ_REN_LEN_OLD; /* including trailing '\0' */
+  len = fs_m_in.m_vfs_fs_rename.len_old; /* including trailing '\0' */
   if (len > NAME_MAX + 1)
         return(ENAMETOOLONG);
 
-  r = sys_safecopyfrom(VFS_PROC_NR, (cp_grant_id_t) fs_m_in.REQ_REN_GRANT_OLD,
+  r = sys_safecopyfrom(VFS_PROC_NR, fs_m_in.m_vfs_fs_rename.grant_old,
                 (vir_bytes) 0, (vir_bytes) pcn_src.pcn_name, (size_t) len);
   if (r != OK) return(r);
   NUL(pcn_src.pcn_name, len, sizeof(pcn_src.pcn_name));
   pcn_src.pcn_namelen = len - 1;
 
   /* Copy the last component of the new name */
-  len = fs_m_in.REQ_REN_LEN_NEW; /* including trailing '\0' */
+  len = fs_m_in.m_vfs_fs_rename.len_new; /* including trailing '\0' */
   if (len > NAME_MAX + 1)
         return(ENAMETOOLONG);
 
-  r = sys_safecopyfrom(VFS_PROC_NR, (cp_grant_id_t) fs_m_in.REQ_REN_GRANT_NEW,
+  r = sys_safecopyfrom(VFS_PROC_NR, fs_m_in.m_vfs_fs_rename.grant_new,
                 (vir_bytes) 0, (vir_bytes) pcn_targ.pcn_name, (size_t) len);
   if (r != OK) return(r);
   NUL(pcn_targ.pcn_name, len, sizeof(pcn_targ.pcn_name));
   pcn_targ.pcn_namelen = len - 1;
 
   /* Get old dir pnode */
-  if ((old_dirp = puffs_pn_nodewalk(global_pu, 0, &fs_m_in.REQ_REN_OLD_DIR))
+  if ((old_dirp = puffs_pn_nodewalk(global_pu, 0, &fs_m_in.m_vfs_fs_rename.dir_old))
 	  == NULL)
         return(ENOENT);
 
@@ -253,7 +253,7 @@ int fs_rename(void)
   }
 
   /* Get new dir pnode */
-  if ((new_dirp = puffs_pn_nodewalk(global_pu, 0, &fs_m_in.REQ_REN_NEW_DIR))
+  if ((new_dirp = puffs_pn_nodewalk(global_pu, 0, &fs_m_in.m_vfs_fs_rename.dir_new))
 	  == NULL) {
         r = ENOENT;
   } else {
