@@ -1202,12 +1202,11 @@ int req_utime(endpoint_t fs_e, ino_t inode_nr, struct timespec * actimespec,
 
   /* Fill in request message */
   m.m_type = REQ_UTIME;
-  m.REQ_INODE_NR = (pino_t) inode_nr;
-  m.REQ_INODE_NR = inode_nr;
-  m.REQ_ACTIME = actimespec->tv_sec;
-  m.REQ_MODTIME = modtimespec->tv_sec;
-  m.REQ_ACNSEC = actimespec->tv_nsec;
-  m.REQ_MODNSEC = modtimespec->tv_nsec;
+  m.m_vfs_fs_utime.inode = inode_nr;
+  m.m_vfs_fs_utime.actime = actimespec->tv_sec;
+  m.m_vfs_fs_utime.modtime = modtimespec->tv_sec;
+  m.m_vfs_fs_utime.acnsec = actimespec->tv_nsec;
+  m.m_vfs_fs_utime.modnsec = modtimespec->tv_nsec;
 
   /* Send/rec request */
   return fs_sendrec(fs_e, &m);

@@ -19,7 +19,7 @@ int fs_utime()
   register int r;
 
   /* Temporarily open the file. */
-  if( (rip = get_inode(fs_dev, (pino_t) fs_m_in.REQ_INODE_NR)) == NULL)
+  if( (rip = get_inode(fs_dev, fs_m_in.m_vfs_fs_utime.inode)) == NULL)
         return(EINVAL);
 
   /*
@@ -31,7 +31,7 @@ int fs_utime()
   if(read_only(rip) != OK) r = EROFS;	/* not even su can touch if R/O */
   if(r == OK) {
 	rip->i_update = CTIME;	/* discard any stale ATIME and MTIME flags */
-	switch(fs_m_in.REQ_ACNSEC) {
+	switch(fs_m_in.m_vfs_fs_utime.acnsec) {
 	case UTIME_NOW:
 		rip->i_update |= ATIME;
 		break;
@@ -39,18 +39,18 @@ int fs_utime()
 		break;
 	default:
 		/*
-		 * cases fs_m_in.REQ_ACNSEC < 0 || fs_m_in.REQ_ACNSEC >= 1E9
+		 * cases fs_m_in.m_vfs_fs_utime.acnsec < 0 || fs_m_in.m_vfs_fs_utime.acnsec >= 1E9
 		 * are caught by VFS to cooperate with old instances of EXT2
 		 */
-		rip->i_atime = fs_m_in.REQ_ACTIME;
+		rip->i_atime = fs_m_in.m_vfs_fs_utime.actime;
 		/*
 		 * Ext2FS does not support better than second resolution,
-		 * so we discard REQ_ACNSEC to round down
+		 * so we discard ACNSEC to round down
 		 */
 		break;
 	}
 
-	switch(fs_m_in.REQ_MODNSEC) {
+	switch(fs_m_in.m_vfs_fs_utime.modnsec) {
 	case UTIME_NOW:
 		rip->i_update |= MTIME;
 		break;
@@ -58,13 +58,13 @@ int fs_utime()
 		break;
 	default:
 		/*
-		 * cases fs_m_in.REQ_MODNSEC < 0 || fs_m_in.REQ_MODNSEC >= 1E9
+		 * cases fs_m_in.m_vfs_fs_utime.modnsec < 0 || fs_m_in.m_vfs_fs_utime.modnsec >= 1E9
 		 * are caught by VFS to cooperate with old instances of EXT2
 		 */
-		rip->i_mtime = fs_m_in.REQ_MODTIME;
+		rip->i_mtime = fs_m_in.m_vfs_fs_utime.modtime;
 		/*
 		 * Ext2FS does not support better than second resolution,
-		 * so we discard REQ_MODNSEC to round down
+		 * so we discard MODNSEC to round down
 		 */
 		break;
 	}

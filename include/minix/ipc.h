@@ -292,6 +292,18 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_vfs_fs_rename);
 
 typedef struct {
+	ino_t inode;
+	time_t actime;
+	time_t modtime;
+
+	uint32_t acnsec;
+	uint32_t modnsec;
+
+	uint8_t data[24];
+} mess_vfs_fs_utime;
+_ASSERT_MSG_SIZE(mess_vfs_fs_utime);
+
+typedef struct {
 	time_t atime;
 	time_t mtime;
 	long ansec;
@@ -372,6 +384,7 @@ typedef struct {
 	mess_vfs_fs_readsuper m_vfs_fs_readsuper;
 	mess_fs_vfs_readsuper m_fs_vfs_readsuper;
 	mess_vfs_fs_rename m_vfs_fs_rename;
+	mess_vfs_fs_utime m_vfs_fs_utime;
 	mess_vfs_utimens m_vfs_utimens;
 	mess_vm_vfs_mmap m_vm_vfs_mmap;
 	mess_vmmcp m_vmmcp;

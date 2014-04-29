@@ -147,7 +147,7 @@ int do_utime(void)
   if (state.s_read_only)
 	return EROFS;
 
-  if ((ino = find_inode(m_in.REQ_INODE_NR)) == NULL)
+  if ((ino = find_inode(m_in.m_vfs_fs_utime.inode)) == NULL)
 	return EINVAL;
 
   if ((r = verify_inode(ino, path, NULL)) != OK)
@@ -155,35 +155,35 @@ int do_utime(void)
 
   attr.a_mask = 0;
 
-  switch(m_in.REQ_ACNSEC) {
+  switch(m_in.m_vfs_fs_utime.acnsec) {
   case UTIME_OMIT: /* do not touch */
 	break;
   case UTIME_NOW:
 	/* XXX VFS should have time() into ACTIME, for compat; we trust it! */
-	m_in.REQ_ACNSEC = 0;
+	m_in.m_vfs_fs_utime.acnsec = 0;
 	/*FALLTHROUGH*/
   default:
-	/* cases m_in.REQ_ACNSEC < 0 || m_in.REQ_ACNSEC >= 1E9
+	/* cases m_in.m_vfs_fs_utime.acnsec < 0 || m_in.m_vfs_fs_utime.acnsec >= 1E9
 	 * are caught by VFS to cooperate with old instances of EXT2
 	 */
-	attr.a_atime.tv_sec = m_in.REQ_ACTIME;
-	attr.a_atime.tv_nsec = m_in.REQ_ACNSEC;
+	attr.a_atime.tv_sec = m_in.m_vfs_fs_utime.actime;
+	attr.a_atime.tv_nsec = m_in.m_vfs_fs_utime.acnsec;
 	attr.a_mask |= SFFS_ATTR_ATIME;
 	break;
   }
-  switch(m_in.REQ_MODNSEC) {
+  switch(m_in.m_vfs_fs_utime.modnsec) {
   case UTIME_OMIT: /* do not touch */
 	break;
   case UTIME_NOW:
 	/* XXX VFS should have time() into MODTIME, for compat; we trust it! */
-	m_in.REQ_MODNSEC = 0;
+	m_in.m_vfs_fs_utime.modnsec = 0;
 	/*FALLTHROUGH*/
   default:
-	/* cases m_in.REQ_MODNSEC < 0 || m_in.REQ_MODNSEC >= 1E9
+	/* cases m_in.m_vfs_fs_utime.modnsec < 0 || m_in.m_vfs_fs_utime.modnsec >= 1E9
 	 * are caught by VFS to cooperate with old instances
 	 */
-	attr.a_mtime.tv_sec = m_in.REQ_MODTIME;
-	attr.a_mtime.tv_nsec = m_in.REQ_MODNSEC;
+	attr.a_mtime.tv_sec = m_in.m_vfs_fs_utime.modtime;
+	attr.a_mtime.tv_nsec = m_in.m_vfs_fs_utime.modnsec;
 	attr.a_mask |= SFFS_ATTR_MTIME;
 	break;
   }
