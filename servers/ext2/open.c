@@ -195,21 +195,21 @@ int fs_slink()
   char* link_target_buf = NULL;       /* either sip->i_block or bp->b_data */
   struct buf *bp = NULL;    /* disk buffer for link */
 
-  caller_uid = (uid_t) fs_m_in.REQ_UID;
-  caller_gid = (gid_t) fs_m_in.REQ_GID;
+  caller_uid = fs_m_in.m_vfs_fs_slink.uid;
+  caller_gid = fs_m_in.m_vfs_fs_slink.gid;
 
   /* Copy the link name's last component */
-  len = fs_m_in.REQ_PATH_LEN;
+  len = fs_m_in.m_vfs_fs_slink.path_len;
   if (len > NAME_MAX || len > EXT2_NAME_MAX)
 	return(ENAMETOOLONG);
 
-  r = sys_safecopyfrom(VFS_PROC_NR, (cp_grant_id_t) fs_m_in.REQ_GRANT,
+  r = sys_safecopyfrom(VFS_PROC_NR, fs_m_in.m_vfs_fs_slink.grant_path,
 		       (vir_bytes) 0, (vir_bytes) string, (size_t) len);
   if (r != OK) return(r);
   NUL(string, len, sizeof(string));
 
   /* Temporarily open the dir. */
-  if( (ldirp = get_inode(fs_dev, (pino_t) fs_m_in.REQ_INODE_NR)) == NULL)
+  if( (ldirp = get_inode(fs_dev, fs_m_in.m_vfs_fs_slink.inode)) == NULL)
 	  return(EINVAL);
 
   /* Create the inode for the symlink. */
@@ -220,21 +220,21 @@ int fs_slink()
    * Otherwise allocate a disk block for the contents of the symlink and
    * copy contents of symlink (the name pointed to) into first disk block. */
   if( (r = err_code) == OK) {
-	if ( (fs_m_in.REQ_MEM_SIZE + 1) > sip->i_sp->s_block_size) {
+	if ( (fs_m_in.m_vfs_fs_slink.mem_size + 1) > sip->i_sp->s_block_size) {
 		r = ENAMETOOLONG;
-	} else if ((fs_m_in.REQ_MEM_SIZE + 1) <= MAX_FAST_SYMLINK_LENGTH) {
+	} else if ((fs_m_in.m_vfs_fs_slink.mem_size + 1) <= MAX_FAST_SYMLINK_LENGTH) {
 		r = sys_safecopyfrom(VFS_PROC_NR,
-				     (cp_grant_id_t) fs_m_in.REQ_GRANT3,
+				     fs_m_in.m_vfs_fs_slink.grant_target,
 				     (vir_bytes) 0, (vir_bytes) sip->i_block,
-                                     (vir_bytes) fs_m_in.REQ_MEM_SIZE);
+                                     (vir_bytes) fs_m_in.m_vfs_fs_slink.mem_size);
 		sip->i_dirt = IN_DIRTY;
 		link_target_buf = (char*) sip->i_block;
         } else {
 		if ((bp = new_block(sip, (off_t) 0)) != NULL) {
 			sys_safecopyfrom(VFS_PROC_NR,
-					 (cp_grant_id_t) fs_m_in.REQ_GRANT3,
+					 fs_m_in.m_vfs_fs_slink.grant_target,
 					 (vir_bytes) 0, (vir_bytes) b_data(bp),
-					 (vir_bytes) fs_m_in.REQ_MEM_SIZE);
+					 (vir_bytes) fs_m_in.m_vfs_fs_slink.mem_size);
 			lmfs_markdirty(bp);
 			link_target_buf = b_data(bp);
 		} else {
@@ -243,9 +243,9 @@ int fs_slink()
 	}
 	if (r == OK) {
 		assert(link_target_buf);
-		link_target_buf[fs_m_in.REQ_MEM_SIZE] = '\0';
+		link_target_buf[fs_m_in.m_vfs_fs_slink.mem_size] = '\0';
 		sip->i_size = (off_t) strlen(link_target_buf);
-		if (sip->i_size != fs_m_in.REQ_MEM_SIZE) {
+		if (sip->i_size != fs_m_in.m_vfs_fs_slink.mem_size) {
 			  /* This can happen if the user provides a buffer
 			   * with a \0 in it. This can cause a lot of trouble
 			   * when the symlink is used later. We could just use

@@ -1025,13 +1025,13 @@ static int req_slink_actual(
 
   /* Fill in request message */
   m.m_type = REQ_SLINK;
-  m.REQ_INODE_NR = (pino_t) inode_nr;
-  m.REQ_UID = (puid_t) uid;
-  m.REQ_GID = (pgid_t) gid;
-  m.REQ_GRANT = gid_name;
-  m.REQ_PATH_LEN = len;
-  m.REQ_GRANT3 = gid_buf;
-  m.REQ_MEM_SIZE = path_length;
+  m.m_vfs_fs_slink.inode = inode_nr;
+  m.m_vfs_fs_slink.uid = uid;
+  m.m_vfs_fs_slink.gid = gid;
+  m.m_vfs_fs_slink.grant_path = gid_name;
+  m.m_vfs_fs_slink.path_len = len;
+  m.m_vfs_fs_slink.grant_target = gid_buf;
+  m.m_vfs_fs_slink.mem_size = path_length;
 
   /* Send/rec request */
   r = fs_sendrec(fs_e, &m);

@@ -293,6 +293,20 @@ _ASSERT_MSG_SIZE(mess_vfs_fs_rename);
 
 typedef struct {
 	ino_t inode;
+
+	size_t path_len;
+	size_t mem_size;
+	cp_grant_id_t grant_path;
+	cp_grant_id_t grant_target;
+	uid_t uid;
+	gid_t gid;
+
+	uint8_t data[24];
+} mess_vfs_fs_slink;
+_ASSERT_MSG_SIZE(mess_vfs_fs_slink);
+
+typedef struct {
+	ino_t inode;
 	time_t actime;
 	time_t modtime;
 
@@ -384,6 +398,7 @@ typedef struct {
 	mess_vfs_fs_readsuper m_vfs_fs_readsuper;
 	mess_fs_vfs_readsuper m_fs_vfs_readsuper;
 	mess_vfs_fs_rename m_vfs_fs_rename;
+	mess_vfs_fs_slink m_vfs_fs_slink;
 	mess_vfs_fs_utime m_vfs_fs_utime;
 	mess_vfs_utimens m_vfs_utimens;
 	mess_vm_vfs_mmap m_vm_vfs_mmap;

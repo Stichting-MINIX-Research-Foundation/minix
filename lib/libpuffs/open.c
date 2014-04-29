@@ -293,32 +293,32 @@ int fs_slink(void)
   struct vattr va;
   int len;
 
-  caller_uid = (uid_t) fs_m_in.REQ_UID;
-  caller_gid = (gid_t) fs_m_in.REQ_GID;
+  caller_uid = fs_m_in.m_vfs_fs_slink.uid;
+  caller_gid = fs_m_in.m_vfs_fs_slink.gid;
 
   /* Copy the link name's last component */
-  len = fs_m_in.REQ_PATH_LEN;
+  len = fs_m_in.m_vfs_fs_slink.path_len;
   pcn.pcn_namelen = len - 1;
   if (pcn.pcn_namelen > NAME_MAX)
 	return(ENAMETOOLONG);
 
-  if (fs_m_in.REQ_MEM_SIZE >= PATH_MAX)
+  if (fs_m_in.m_vfs_fs_slink.mem_size >= PATH_MAX)
 	return(ENAMETOOLONG);
 
-  r = sys_safecopyfrom(VFS_PROC_NR, (cp_grant_id_t) fs_m_in.REQ_GRANT,
+  r = sys_safecopyfrom(VFS_PROC_NR, fs_m_in.m_vfs_fs_slink.grant_path,
 		       (vir_bytes) 0, (vir_bytes) pcn.pcn_name,
 		       (size_t) len);
   if (r != OK) return(r);
   NUL(pcn.pcn_name, len, sizeof(pcn.pcn_name));
 
   /* Copy the target path (note that it's not null terminated) */
-  r = sys_safecopyfrom(VFS_PROC_NR, (cp_grant_id_t) fs_m_in.REQ_GRANT3,
+  r = sys_safecopyfrom(VFS_PROC_NR, fs_m_in.m_vfs_fs_slink.grant_target,
 		       (vir_bytes) 0, (vir_bytes) target, 
-		       (size_t) fs_m_in.REQ_MEM_SIZE);
+		       fs_m_in.m_vfs_fs_slink.mem_size);
   if (r != OK) return(r);
-  target[fs_m_in.REQ_MEM_SIZE] = '\0';
+  target[fs_m_in.m_vfs_fs_slink.mem_size] = '\0';
 
-  if (strlen(target) != (size_t) fs_m_in.REQ_MEM_SIZE) {
+  if (strlen(target) != (size_t) fs_m_in.m_vfs_fs_slink.mem_size) {
 	/* This can happen if the user provides a buffer
 	 * with a \0 in it. This can cause a lot of trouble
 	 * when the symlink is used later. We could just use
@@ -330,7 +330,7 @@ int fs_slink(void)
 	return(ENAMETOOLONG);
   }
 
-  if ((pn_dir = puffs_pn_nodewalk(global_pu, 0, &fs_m_in.REQ_INODE_NR)) == NULL)
+  if ((pn_dir = puffs_pn_nodewalk(global_pu, 0, &fs_m_in.m_vfs_fs_slink.inode)) == NULL)
 	return(EINVAL);
 
   memset(&pni, 0, sizeof(pni));
@@ -338,7 +338,7 @@ int fs_slink(void)
 
   memset(&va, 0, sizeof(va));
   va.va_type = VLNK;
-  va.va_mode = (mode_t) (I_SYMBOLIC_LINK | RWX_MODES);
+  va.va_mode = (I_SYMBOLIC_LINK | RWX_MODES);
   va.va_uid = caller_uid;
   va.va_gid = caller_gid;
   va.va_atime = va.va_mtime = va.va_ctime = clock_timespec();

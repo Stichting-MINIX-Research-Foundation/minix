@@ -178,18 +178,18 @@ int fs_slink()
   char string[MFS_NAME_MAX];       /* last component of the new dir's path name */
   struct buf *bp;              /* disk buffer for link */
     
-  caller_uid = (uid_t) fs_m_in.REQ_UID;
-  caller_gid = (gid_t) fs_m_in.REQ_GID;
+  caller_uid = fs_m_in.m_vfs_fs_slink.uid;
+  caller_gid = fs_m_in.m_vfs_fs_slink.gid;
   
   /* Copy the link name's last component */
-  len = min( (unsigned) fs_m_in.REQ_PATH_LEN, sizeof(string));
-  r = sys_safecopyfrom(VFS_PROC_NR, (cp_grant_id_t) fs_m_in.REQ_GRANT,
+  len = min( (unsigned) fs_m_in.m_vfs_fs_slink.path_len, sizeof(string));
+  r = sys_safecopyfrom(VFS_PROC_NR, fs_m_in.m_vfs_fs_slink.grant_path,
   			(vir_bytes) 0, (vir_bytes) string, (size_t) len);
   if (r != OK) return(r);
   NUL(string, len, sizeof(string));
   
   /* Temporarily open the dir. */
-  if( (ldirp = get_inode(fs_dev, (pino_t) fs_m_in.REQ_INODE_NR)) == NULL)
+  if( (ldirp = get_inode(fs_dev, fs_m_in.m_vfs_fs_slink.inode)) == NULL)
 	  return(EINVAL);
 
   /* Create the inode for the symlink. */
@@ -199,7 +199,7 @@ int fs_slink()
   /* Allocate a disk block for the contents of the symlink.
    * Copy contents of symlink (the name pointed to) into first disk block. */
   if( (r = err_code) == OK) {
-	size_t namelen = (size_t) fs_m_in.REQ_MEM_SIZE;
+	size_t namelen = fs_m_in.m_vfs_fs_slink.mem_size;
   	bp = new_block(sip, (off_t) 0);
   	if (bp == NULL)
   		r = err_code;
@@ -208,7 +208,7 @@ int fs_slink()
 			r = ENAMETOOLONG;
 		} else {
 	  		r = sys_safecopyfrom(VFS_PROC_NR,
-  				     (cp_grant_id_t) fs_m_in.REQ_GRANT3,
+  				     fs_m_in.m_vfs_fs_slink.grant_target,
 				     (vir_bytes) 0, (vir_bytes) b_data(bp),
 				     namelen);
 			b_data(bp)[namelen] = '\0';
@@ -217,7 +217,7 @@ int fs_slink()
 
 	if(bp != NULL && r == OK) {
 		sip->i_size = (off_t) strlen(b_data(bp));
-		if(sip->i_size != fs_m_in.REQ_MEM_SIZE) {
+		if(sip->i_size != fs_m_in.m_vfs_fs_slink.mem_size) {
 			/* This can happen if the user provides a buffer
 			 * with a \0 in it. This can cause a lot of trouble
 			 * when the symlink is used later. We could just use
