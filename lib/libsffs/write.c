@@ -126,13 +126,13 @@ int do_ftrunc(void)
   if (state.s_read_only)
 	return EROFS;
 
-  if ((ino = find_inode(m_in.REQ_INODE_NR)) == NULL)
+  if ((ino = find_inode(m_in.m_vfs_fs_ftrunc.inode)) == NULL)
 	return EINVAL;
 
   if (IS_DIR(ino)) return EISDIR;
 
-  start = m_in.REQ_TRC_START;
-  end = m_in.REQ_TRC_END;
+  start = m_in.m_vfs_fs_ftrunc.trc_start;
+  end = m_in.m_vfs_fs_ftrunc.trc_end;
 
   if (end == 0) {
 	/* Truncate or expand the file. */

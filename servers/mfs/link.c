@@ -492,14 +492,14 @@ int fs_ftrunc(void)
   off_t start, end;
   int r;
   
-  if( (rip = find_inode(fs_dev, (pino_t) fs_m_in.REQ_INODE_NR)) == NULL)
+  if( (rip = find_inode(fs_dev, fs_m_in.m_vfs_fs_ftrunc.inode)) == NULL)
 	  return(EINVAL);
 
   if(rip->i_sp->s_rd_only) {
   	r = EROFS;
   } else {
-    start = fs_m_in.REQ_TRC_START;
-    end = fs_m_in.REQ_TRC_END;
+    start = fs_m_in.m_vfs_fs_ftrunc.trc_start;
+    end = fs_m_in.m_vfs_fs_ftrunc.trc_end;
 
     if (end == 0)
 	  r = truncate_inode(rip, start);

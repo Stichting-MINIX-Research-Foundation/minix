@@ -19,11 +19,11 @@ int fs_ftrunc(void)
   off_t start, end;
   PUFFS_MAKECRED(pcr, &global_kcred);
 
-  if ((pn = puffs_pn_nodewalk(global_pu, 0, &fs_m_in.REQ_INODE_NR)) == NULL)
+  if ((pn = puffs_pn_nodewalk(global_pu, 0, &fs_m_in.m_vfs_fs_ftrunc.inode)) == NULL)
           return(EINVAL);
 
-  start = fs_m_in.REQ_TRC_START;
-  end = fs_m_in.REQ_TRC_END;
+  start = fs_m_in.m_vfs_fs_ftrunc.trc_start;
+  end = fs_m_in.m_vfs_fs_ftrunc.trc_end;
 
   if (end == 0) {
 	struct vattr va;

@@ -10,13 +10,13 @@ int fs_ftrunc(message *fs_m_in, message *fs_m_out)
 {
   struct inode *rip;
   off_t start;
-  pino_t inumb;
+  ino_t inumb;
 
-  inumb = (pino_t) fs_m_in->REQ_INODE_NR;
+  inumb = fs_m_in->m_vfs_fs_ftrunc.inode;
 
   if( (rip = find_inode(inumb)) == NULL) return(EINVAL);
 
-  start = fs_m_in->REQ_TRC_START;
+  start = fs_m_in->m_vfs_fs_ftrunc.trc_start;
 
   return truncate_inode(rip, start);
 }
