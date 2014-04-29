@@ -220,7 +220,7 @@ int req_flush(endpoint_t fs_e, dev_t dev)
 
   /* Fill in request message */
   m.m_type = REQ_FLUSH;
-  m.REQ_DEV = dev;
+  m.m_vfs_fs_flush.device = dev;
 
   /* Send/rec request */
   return fs_sendrec(fs_e, &m);

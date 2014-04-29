@@ -172,6 +172,13 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_fs_vfs_create);
 
 typedef struct {
+	dev_t device;
+
+	uint8_t data[48];
+} mess_vfs_fs_flush;
+_ASSERT_MSG_SIZE(mess_vfs_fs_flush);
+
+typedef struct {
 	ino_t dir_ino;
 	ino_t root_ino;
 
@@ -335,6 +342,7 @@ typedef struct {
 	mess_fs_vfs_newnode m_fs_vfs_newnode;
 	mess_vfs_fs_create m_vfs_fs_create;
 	mess_fs_vfs_create m_fs_vfs_create;
+	mess_vfs_fs_flush m_vfs_fs_flush;
 	mess_vfs_fs_lookup m_vfs_fs_lookup;
 	mess_fs_vfs_lookup m_fs_vfs_lookup;
 	mess_vfs_fs_mountpoint m_vfs_fs_mountpoint;

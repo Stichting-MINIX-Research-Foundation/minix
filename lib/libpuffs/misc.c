@@ -41,7 +41,7 @@ int fs_flush(void)
  * to disk.
  */
 #if 0
-  dev_t dev = fs_m_in.REQ_DEV;
+  dev_t dev = fs_m_in.m_vfs_fs_flush.device;
 
   if(dev == fs_dev) return(EBUSY);
 

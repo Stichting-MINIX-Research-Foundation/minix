@@ -38,7 +38,7 @@ int fs_flush()
 /* Flush the blocks of a device from the cache after writing any dirty blocks
  * to disk.
  */
-  dev_t dev = fs_m_in.REQ_DEV;
+  dev_t dev = fs_m_in.m_vfs_fs_flush.device;
   if(dev == fs_dev && lmfs_bufs_in_use() > 0) return(EBUSY);
  
   lmfs_flushall();
