@@ -70,7 +70,7 @@ int fs_mountpoint()
   int r = OK;
   
   /* Temporarily open the file. */
-  if ((rip = get_dir_record(fs_m_in.REQ_INODE_NR)) == NULL)
+  if ((rip = get_dir_record(fs_m_in.m_vfs_fs_mountpoint.inode)) == NULL)
 	return(EINVAL);
 
   if (rip->d_mountpoint)

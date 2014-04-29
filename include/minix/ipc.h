@@ -205,6 +205,13 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_fs_vfs_lookup);
 
 typedef struct {
+	ino_t inode;
+
+	uint8_t data[48];
+} mess_vfs_fs_mountpoint;
+_ASSERT_MSG_SIZE(mess_vfs_fs_mountpoint);
+
+typedef struct {
 	dev_t device;
 
 	mode_t mode;
@@ -330,6 +337,7 @@ typedef struct {
 	mess_fs_vfs_create m_fs_vfs_create;
 	mess_vfs_fs_lookup m_vfs_fs_lookup;
 	mess_fs_vfs_lookup m_fs_vfs_lookup;
+	mess_vfs_fs_mountpoint m_vfs_fs_mountpoint;
 	mess_vfs_fs_readsuper m_vfs_fs_readsuper;
 	mess_fs_vfs_readsuper m_fs_vfs_readsuper;
 	mess_vfs_utimens m_vfs_utimens;

@@ -607,7 +607,7 @@ int req_mountpoint(endpoint_t fs_e, ino_t inode_nr)
 
   /* Fill in request message */
   m.m_type = REQ_MOUNTPOINT;
-  m.REQ_INODE_NR = (pino_t) inode_nr;
+  m.m_vfs_fs_mountpoint.inode = inode_nr;
 
   /* Send/rec request */
   return fs_sendrec(fs_e, &m);

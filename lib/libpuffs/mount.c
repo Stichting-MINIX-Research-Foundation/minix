@@ -49,13 +49,14 @@ int fs_mountpoint(void)
  */
   int r = OK;
   struct puffs_node *pn;
-  pmode_t bits;
+  mode_t bits;
 
   /*
    * XXX: we assume that lookup was done first, so pnode can be found with
    * puffs_pn_nodewalk.
    */
-  if ((pn = puffs_pn_nodewalk(global_pu, 0, &fs_m_in.REQ_INODE_NR)) == NULL)
+  if ((pn = puffs_pn_nodewalk(global_pu, 0, &fs_m_in.m_vfs_fs_mountpoint.inode))
+	  == NULL)
 	return(EINVAL);
 
 

@@ -174,10 +174,10 @@ int fs_mountpoint()
  */
   register struct inode *rip;
   int r = OK;
-  pmode_t bits;
+  mode_t bits;
 
   /* Temporarily open the file. */
-  if( (rip = get_inode(fs_dev, fs_m_in.REQ_INODE_NR)) == NULL)
+  if( (rip = get_inode(fs_dev, fs_m_in.m_vfs_fs_mountpoint.inode)) == NULL)
 	  return(EINVAL);
 
 
