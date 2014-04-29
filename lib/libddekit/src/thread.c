@@ -87,7 +87,7 @@ ddekit_thread_create(void (*fun)(void *), void *arg, const char *name)
 	strncpy(th->name, name, DDEKIT_THREAD_NAMELEN); 
 	th->name[DDEKIT_THREAD_NAMELEN-1] = 0;
 	
-	th->stack = ddekit_large_malloc(DDEKIT_THREAD_STACKSIZE);
+	th->stack = ddekit_simple_malloc(DDEKIT_THREAD_STACKSIZE);
 
 	th->arg = arg;
 	th->fun = fun;
