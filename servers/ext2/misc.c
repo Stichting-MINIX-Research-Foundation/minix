@@ -71,9 +71,9 @@ int fs_new_driver(void)
   char label[sizeof(fs_dev_label)];
   int r;
 
-  dev = fs_m_in.REQ_DEV;
-  label_gid = (cp_grant_id_t) fs_m_in.REQ_GRANT;
-  label_len = (size_t) fs_m_in.REQ_PATH_LEN;
+  dev = fs_m_in.m_vfs_fs_new_driver.device;
+  label_gid = fs_m_in.m_vfs_fs_new_driver.grant;
+  label_len = fs_m_in.m_vfs_fs_new_driver.path_len;
 
   if (label_len > sizeof(label))
 	return(EINVAL);

@@ -230,6 +230,16 @@ _ASSERT_MSG_SIZE(mess_vfs_fs_mountpoint);
 typedef struct {
 	dev_t device;
 
+	cp_grant_id_t grant;
+	size_t path_len;
+
+	uint8_t data[40];
+} mess_vfs_fs_new_driver;
+_ASSERT_MSG_SIZE(mess_vfs_fs_new_driver);
+
+typedef struct {
+	dev_t device;
+
 	mode_t mode;
 	uid_t uid;
 	gid_t gid;
@@ -395,6 +405,7 @@ typedef struct {
 	mess_vfs_fs_lookup m_vfs_fs_lookup;
 	mess_fs_vfs_lookup m_fs_vfs_lookup;
 	mess_vfs_fs_mountpoint m_vfs_fs_mountpoint;
+	mess_vfs_fs_new_driver m_vfs_fs_new_driver;
 	mess_vfs_fs_readsuper m_vfs_fs_readsuper;
 	mess_fs_vfs_readsuper m_fs_vfs_readsuper;
 	mess_vfs_fs_rename m_vfs_fs_rename;

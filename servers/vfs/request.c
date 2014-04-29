@@ -676,9 +676,9 @@ int req_newdriver(
 
   /* Fill in request message */
   m.m_type = REQ_NEW_DRIVER;
-  m.REQ_DEV = dev;
-  m.REQ_GRANT = grant_id;
-  m.REQ_PATH_LEN = len;
+  m.m_vfs_fs_new_driver.device = dev;
+  m.m_vfs_fs_new_driver.grant = grant_id;
+  m.m_vfs_fs_new_driver.path_len = len;
 
   /* Issue request */
   r = fs_sendrec(fs_e, &m);
