@@ -110,7 +110,7 @@ int do_chmod(void)
   if (state.s_read_only)
 	return EROFS;
 
-  if ((ino = find_inode(m_in.REQ_INODE_NR)) == NULL)
+  if ((ino = find_inode(m_in.m_vfs_fs_chmod.inode)) == NULL)
 	return EINVAL;
 
   if ((r = verify_inode(ino, path, NULL)) != OK)
@@ -118,7 +118,7 @@ int do_chmod(void)
 
   /* Set the new file mode. */
   attr.a_mask = SFFS_ATTR_MODE;
-  attr.a_mode = m_in.REQ_MODE; /* no need to convert in this direction */
+  attr.a_mode = m_in.m_vfs_fs_chmod.mode; /* no need to convert in this direction */
 
   if ((r = sffs_table->t_setattr(path, &attr)) != OK)
 	return r;
@@ -127,7 +127,7 @@ int do_chmod(void)
   if ((r = verify_path(path, ino, &attr, NULL)) != OK)
 	return r;
 
-  m_out.RES_MODE = get_mode(ino, attr.a_mode);
+  m_out.m_fs_vfs_chmod.mode = get_mode(ino, attr.a_mode);
 
   return OK;
 }

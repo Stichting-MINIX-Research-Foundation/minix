@@ -150,6 +150,22 @@ typedef struct {
 	ino_t inode;
 
 	mode_t mode;
+
+	uint8_t data[44];
+} mess_vfs_fs_chmod;
+_ASSERT_MSG_SIZE(mess_vfs_fs_chmod);
+
+typedef struct {
+	mode_t mode;
+
+	uint8_t data[52];
+} mess_fs_vfs_chmod;
+_ASSERT_MSG_SIZE(mess_fs_vfs_chmod);
+
+typedef struct {
+	ino_t inode;
+
+	mode_t mode;
 	uid_t uid;
 	gid_t gid;
 	cp_grant_id_t grant;
@@ -507,6 +523,8 @@ typedef struct {
 	mess_sigcalls m_sigcalls;
 	mess_vfs_fs_newnode m_vfs_fs_newnode;
 	mess_fs_vfs_newnode m_fs_vfs_newnode;
+	mess_vfs_fs_chmod m_vfs_fs_chmod;
+	mess_fs_vfs_chmod m_fs_vfs_chmod;
 	mess_vfs_fs_create m_vfs_fs_create;
 	mess_fs_vfs_create m_fs_vfs_create;
 	mess_vfs_fs_flush m_vfs_fs_flush;

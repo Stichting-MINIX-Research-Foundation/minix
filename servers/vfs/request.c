@@ -115,14 +115,14 @@ int req_chmod(
 
   /* Fill in request message */
   m.m_type = REQ_CHMOD;
-  m.REQ_INODE_NR = (pino_t) inode_nr;
-  m.REQ_MODE = (pmode_t) rmode;
+  m.m_vfs_fs_chmod.inode = inode_nr;
+  m.m_vfs_fs_chmod.mode = rmode;
 
   /* Send/rec request */
   r = fs_sendrec(fs_e, &m);
 
   /* Copy back actual mode. */
-  *new_modep = (mode_t) m.RES_MODE;
+  *new_modep = m.m_fs_vfs_chmod.mode;
 
   return(r);
 }

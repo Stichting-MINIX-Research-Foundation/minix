@@ -25,9 +25,9 @@ int fs_chmod(void)
   if (global_pu->pu_ops.puffs_node_setattr == NULL)
 	return(EINVAL);
 
-  mode = (mode_t) fs_m_in.REQ_MODE;
+  mode = fs_m_in.m_vfs_fs_chmod.mode;
 
-  if ((pn = puffs_pn_nodewalk(global_pu, 0, &fs_m_in.REQ_INODE_NR)) == NULL)
+  if ((pn = puffs_pn_nodewalk(global_pu, 0, &fs_m_in.m_vfs_fs_chmod.inode)) == NULL)
 	return(EINVAL);
    
   puffs_vattr_null(&va);
@@ -39,7 +39,7 @@ int fs_chmod(void)
 	return(EINVAL);
 
   /* Return full new mode to caller. */
-  fs_m_out.RES_MODE = pn->pn_va.va_mode;
+  fs_m_out.m_fs_vfs_chmod.mode = pn->pn_va.va_mode;
 
   return(OK);
 }

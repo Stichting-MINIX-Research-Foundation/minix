@@ -16,10 +16,10 @@ int fs_chmod()
   register struct inode *rip;
   pmode_t mode;
 
-  mode = (pmode_t) fs_m_in.REQ_MODE;
+  mode = fs_m_in.m_vfs_fs_chmod.mode;
   
   /* Temporarily open the file. */
-  if( (rip = get_inode(fs_dev, (pino_t) fs_m_in.REQ_INODE_NR)) == NULL)
+  if( (rip = get_inode(fs_dev, fs_m_in.m_vfs_fs_chmod.inode)) == NULL)
 	  return(EINVAL);
  
   if(rip->i_sp->s_rd_only) {
@@ -33,7 +33,7 @@ int fs_chmod()
   IN_MARKDIRTY(rip);
 
   /* Return full new mode to caller. */
-  fs_m_out.RES_MODE = rip->i_mode;
+  fs_m_out.m_fs_vfs_chmod.mode = rip->i_mode;
 
   put_inode(rip);
   return(OK);

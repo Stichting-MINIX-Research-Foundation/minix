@@ -18,9 +18,9 @@ int fs_sync(message *fs_m_in, message *fs_m_out)
 int fs_chmod(message *fs_m_in, message *fs_m_out)
 {
   struct inode *rip;  /* target inode */
-  mode_t mode = (mode_t) fs_m_in->REQ_MODE;
+  mode_t mode = fs_m_in->m_vfs_fs_chmod.mode;
 
-  if( (rip = find_inode(fs_m_in->REQ_INODE_NR)) == NULL) return(EINVAL);
+  if( (rip = find_inode(fs_m_in->m_vfs_fs_chmod.inode)) == NULL) return(EINVAL);
   get_inode(rip->i_dev, rip->i_num);	/* mark inode in use */
   rip->i_mode = (rip->i_mode & ~ALL_MODES) | (mode & ALL_MODES);
   put_inode(rip);			/* release the inode */
