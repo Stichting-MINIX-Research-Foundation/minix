@@ -42,17 +42,17 @@ int fs_link()
   phys_bytes len;
 
   /* Copy the link name's last component */
-  len = fs_m_in.REQ_PATH_LEN; /* including trailing '\0' */
+  len = fs_m_in.m_vfs_fs_link.path_len; /* including trailing '\0' */
   if (len > NAME_MAX + 1 || len > EXT2_NAME_MAX + 1)
 	return(ENAMETOOLONG);
 
-  r = sys_safecopyfrom(VFS_PROC_NR, (cp_grant_id_t) fs_m_in.REQ_GRANT, 0,
+  r = sys_safecopyfrom(VFS_PROC_NR, fs_m_in.m_vfs_fs_link.grant, 0,
 		       (vir_bytes) string, (size_t) len);
   if (r != OK) return r;
   NUL(string, len, sizeof(string));
 
   /* Temporarily open the file. */
-  if( (rip = get_inode(fs_dev, fs_m_in.REQ_INODE_NR)) == NULL)
+  if( (rip = get_inode(fs_dev, fs_m_in.m_vfs_fs_link.inode)) == NULL)
 	  return(EINVAL);
 
   /* Check to see if the file has maximum number of links already. */
@@ -74,7 +74,7 @@ int fs_link()
   }
 
   /* Temporarily open the last dir */
-  if( (ip = get_inode(fs_dev, fs_m_in.REQ_DIR_INO)) == NULL) {
+  if( (ip = get_inode(fs_dev, fs_m_in.m_vfs_fs_link.dir_ino)) == NULL) {
   	put_inode(rip);
 	return(EINVAL);
   }

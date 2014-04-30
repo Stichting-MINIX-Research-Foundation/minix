@@ -85,16 +85,16 @@ int fs_link(void)
   	return(OK);
 
   /* Copy the link name's last component */
-  len = fs_m_in.REQ_PATH_LEN;
+  len = fs_m_in.m_vfs_fs_link.path_len;
   if (len > NAME_MAX + 1)
         return(ENAMETOOLONG);
 
-  r = sys_safecopyfrom(VFS_PROC_NR, (cp_grant_id_t) fs_m_in.REQ_GRANT, 0,
+  r = sys_safecopyfrom(VFS_PROC_NR, fs_m_in.m_vfs_fs_link.grant, 0,
                        (vir_bytes) string, (size_t) len);
   if (r != OK) return(r);
   NUL(string, len, sizeof(string));
 
-  if ((pn = puffs_pn_nodewalk(global_pu, 0, &fs_m_in.REQ_INODE_NR)) == NULL)
+  if ((pn = puffs_pn_nodewalk(global_pu, 0, &fs_m_in.m_vfs_fs_link.inode)) == NULL)
 	return(EINVAL);
 
   /* Check to see if the file has maximum number of links already. */
@@ -105,7 +105,7 @@ int fs_link(void)
   if ((pn->pn_va.va_mode & I_TYPE) == I_DIRECTORY && caller_uid != SU_UID)
 	return(EPERM);
 
-  if ((pn_dir = puffs_pn_nodewalk(global_pu, 0, &fs_m_in.REQ_DIR_INO)) == NULL)
+  if ((pn_dir = puffs_pn_nodewalk(global_pu, 0, &fs_m_in.m_vfs_fs_link.dir_ino)) == NULL)
         return(EINVAL);
 
   if (pn_dir->pn_va.va_nlink == NO_LINK) {

@@ -401,10 +401,10 @@ int req_link(
 
   /* Fill in request message */
   m.m_type = REQ_LINK;
-  m.REQ_INODE_NR = (pino_t) linked_file;
-  m.REQ_DIR_INO = (pino_t) link_parent;
-  m.REQ_GRANT = grant_id;
-  m.REQ_PATH_LEN = len;
+  m.m_vfs_fs_link.inode = linked_file;
+  m.m_vfs_fs_link.dir_ino = link_parent;
+  m.m_vfs_fs_link.grant = grant_id;
+  m.m_vfs_fs_link.path_len = len;
 
   /* Send/rec request */
   r = fs_sendrec(fs_e, &m);

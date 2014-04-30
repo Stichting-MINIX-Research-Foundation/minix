@@ -39,15 +39,15 @@ int fs_link()
   struct inode *new_ip;
   phys_bytes len;
 
-  len = min( (unsigned) fs_m_in.REQ_PATH_LEN, sizeof(string));
+  len = min(fs_m_in.m_vfs_fs_link.path_len, sizeof(string));
   /* Copy the link name's last component */
-  r = sys_safecopyfrom(VFS_PROC_NR, (cp_grant_id_t) fs_m_in.REQ_GRANT,
+  r = sys_safecopyfrom(VFS_PROC_NR, fs_m_in.m_vfs_fs_link.grant,
   		       (vir_bytes) 0, (vir_bytes) string, (size_t) len);
   if (r != OK) return r;
   NUL(string, len, sizeof(string));
   
   /* Temporarily open the file. */
-  if( (rip = get_inode(fs_dev, (pino_t) fs_m_in.REQ_INODE_NR)) == NULL)
+  if( (rip = get_inode(fs_dev, fs_m_in.m_vfs_fs_link.inode)) == NULL)
 	  return(EINVAL);
   
   /* Check to see if the file has maximum number of links already. */
@@ -67,7 +67,7 @@ int fs_link()
   }
 
   /* Temporarily open the last dir */
-  if( (ip = get_inode(fs_dev, (pino_t) fs_m_in.REQ_DIR_INO)) == NULL) {
+  if( (ip = get_inode(fs_dev, fs_m_in.m_vfs_fs_link.dir_ino)) == NULL) {
 	put_inode(rip);
 	return(EINVAL);
   }
