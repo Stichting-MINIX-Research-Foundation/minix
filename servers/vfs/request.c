@@ -582,13 +582,13 @@ int req_mknod(
 
   /* Fill in request message */
   m.m_type = REQ_MKNOD;
-  m.REQ_INODE_NR = (pino_t) inode_nr;
-  m.REQ_MODE = (pmode_t) dmode;
-  m.REQ_DEV = dev;
-  m.REQ_UID = (puid_t) uid;
-  m.REQ_GID = (pgid_t) gid;
-  m.REQ_GRANT = grant_id;
-  m.REQ_PATH_LEN = len;
+  m.m_vfs_fs_mknod.inode = inode_nr;
+  m.m_vfs_fs_mknod.mode = dmode;
+  m.m_vfs_fs_mknod.device = dev;
+  m.m_vfs_fs_mknod.uid = uid;
+  m.m_vfs_fs_mknod.gid = gid;
+  m.m_vfs_fs_mknod.grant = grant_id;
+  m.m_vfs_fs_mknod.path_len = len;
 
   /* Send/rec request */
   r = fs_sendrec(fs_e, &m);

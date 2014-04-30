@@ -86,25 +86,25 @@ int fs_mknod()
   phys_bytes len;
 
   /* Copy the last component and set up caller's user and group id */
-  len = fs_m_in.REQ_PATH_LEN; /* including trailing '\0' */
+  len = fs_m_in.m_vfs_fs_mknod.path_len; /* including trailing '\0' */
   if (len > NAME_MAX + 1 || len > EXT2_NAME_MAX + 1)
 	return(ENAMETOOLONG);
 
-  err_code = sys_safecopyfrom(VFS_PROC_NR, (cp_grant_id_t) fs_m_in.REQ_GRANT,
+  err_code = sys_safecopyfrom(VFS_PROC_NR, fs_m_in.m_vfs_fs_mknod.grant,
                              (vir_bytes) 0, (vir_bytes) lastc, (size_t) len);
   if (err_code != OK) return err_code;
   NUL(lastc, len, sizeof(lastc));
 
-  caller_uid = (uid_t) fs_m_in.REQ_UID;
-  caller_gid = (gid_t) fs_m_in.REQ_GID;
+  caller_uid = fs_m_in.m_vfs_fs_mknod.uid;
+  caller_gid = fs_m_in.m_vfs_fs_mknod.gid;
 
   /* Get last directory inode */
-  if((ldirp = get_inode(fs_dev, (pino_t) fs_m_in.REQ_INODE_NR)) == NULL)
+  if((ldirp = get_inode(fs_dev, fs_m_in.m_vfs_fs_mknod.inode)) == NULL)
 	  return(ENOENT);
 
   /* Try to create the new node */
-  ip = new_node(ldirp, lastc, (pmode_t) fs_m_in.REQ_MODE,
-		(block_t) fs_m_in.REQ_DEV);
+  ip = new_node(ldirp, lastc, fs_m_in.m_vfs_fs_mknod.mode,
+		(block_t) fs_m_in.m_vfs_fs_mknod.device);
 
   put_inode(ip);
   put_inode(ldirp);
