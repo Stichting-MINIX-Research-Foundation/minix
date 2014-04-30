@@ -79,15 +79,15 @@ int fs_getdents(void)
 	int r, skip, get_next, indexed;
 	static char buf[GETDENTS_BUFSIZ];
 
-	if (fs_m_in.REQ_SEEK_POS >= ULONG_MAX)
+	if (fs_m_in.m_vfs_fs_getdents.seek_pos >= ULONG_MAX)
 		return EIO;
 
-	if ((node = find_inode(fs_m_in.REQ_INODE_NR)) == NULL)
+	if ((node = find_inode(fs_m_in.m_vfs_fs_getdents.inode)) == NULL)
 		return EINVAL;
 
 	off = 0;
 	user_off = 0;
-	user_left = fs_m_in.REQ_MEM_SIZE;
+	user_left = fs_m_in.m_vfs_fs_getdents.mem_size;
 	indexed = node->i_indexed;
 	get_next = FALSE;
 	child = NULL;
@@ -98,7 +98,7 @@ int fs_getdents(void)
 		if (r != OK) return r;
 	}
 
-	for (pos = fs_m_in.REQ_SEEK_POS; ; pos++) {
+	for (pos = fs_m_in.m_vfs_fs_getdents.seek_pos; ; pos++) {
 		/* Determine which inode and name to use for this entry. */
 		if (pos == 0) {
 			/* The "." entry. */
@@ -176,7 +176,7 @@ int fs_getdents(void)
 		 * first.
 		 */
 		if (off + len > sizeof(buf)) {
-			r = sys_safecopyto(fs_m_in.m_source, fs_m_in.REQ_GRANT,
+			r = sys_safecopyto(fs_m_in.m_source, fs_m_in.m_vfs_fs_getdents.grant,
 				user_off, (vir_bytes) buf, off);
 			if (r != OK) return r;
 
@@ -198,7 +198,7 @@ int fs_getdents(void)
 
 	/* If there is anything left in our own buffer, copy that out now. */
 	if (off > 0) {
-		r = sys_safecopyto(fs_m_in.m_source, fs_m_in.REQ_GRANT,
+		r = sys_safecopyto(fs_m_in.m_source, fs_m_in.m_vfs_fs_getdents.grant,
 			user_off, (vir_bytes) buf, off);
 		if (r != OK)
 			return r;
@@ -206,8 +206,8 @@ int fs_getdents(void)
 		user_off += off;
 	}
 
-	fs_m_out.RES_SEEK_POS = pos;
-	fs_m_out.RES_NBYTES = user_off;
+	fs_m_out.m_fs_vfs_getdents.seek_pos = pos;
+	fs_m_out.m_fs_vfs_getdents.nbytes = user_off;
 
 	return OK;
 }

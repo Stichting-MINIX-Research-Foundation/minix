@@ -620,7 +620,7 @@ int fs_getdents(void)
   struct inode *rip;
   int r, done;
   unsigned int block_size, len, reclen;
-  pino_t ino;
+  ino_t ino;
   cp_grant_id_t gid;
   size_t size, tmpbuf_off, userbuf_off;
   off_t pos, off, block_pos, new_pos, ent_pos;
@@ -628,10 +628,10 @@ int fs_getdents(void)
   struct ext2_disk_dir_desc *d_desc;
   struct dirent *dep;
 
-  ino = (pino_t) fs_m_in.REQ_INODE_NR;
-  gid = (cp_grant_id_t) fs_m_in.REQ_GRANT;
-  size = (size_t) fs_m_in.REQ_MEM_SIZE;
-  pos = (off_t) fs_m_in.REQ_SEEK_POS;
+  ino = fs_m_in.m_vfs_fs_getdents.inode;
+  gid = fs_m_in.m_vfs_fs_getdents.grant;
+  size = fs_m_in.m_vfs_fs_getdents.mem_size;
+  pos = fs_m_in.m_vfs_fs_getdents.seek_pos;
 
   /* Check whether the position is properly aligned */
   if ((unsigned int) pos % DIR_ENTRY_ALIGN)
@@ -759,8 +759,8 @@ int fs_getdents(void)
   if (done && userbuf_off == 0)
 	r = EINVAL;           /* The user's buffer is too small */
   else {
-	fs_m_out.RES_NBYTES = userbuf_off;
-	fs_m_out.RES_SEEK_POS = new_pos;
+	fs_m_out.m_fs_vfs_getdents.nbytes = userbuf_off;
+	fs_m_out.m_fs_vfs_getdents.seek_pos = new_pos;
 	rip->i_update |= ATIME;
 	rip->i_dirt = IN_DIRTY;
 	r = OK;

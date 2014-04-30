@@ -616,10 +616,10 @@ int fs_getdents(void)
   struct dirent *dep;
   char *cp;
 
-  ino = (pino_t) fs_m_in.REQ_INODE_NR;
-  gid = (cp_grant_id_t) fs_m_in.REQ_GRANT;
-  size = (size_t) fs_m_in.REQ_MEM_SIZE;
-  pos = (off_t) fs_m_in.REQ_SEEK_POS;
+  ino = fs_m_in.m_vfs_fs_getdents.inode;
+  gid = fs_m_in.m_vfs_fs_getdents.grant;
+  size = fs_m_in.m_vfs_fs_getdents.mem_size;
+  pos = fs_m_in.m_vfs_fs_getdents.seek_pos;
 
   /* Check whether the position is properly aligned */
   if( (unsigned int) pos % DIR_ENTRY_SIZE)
@@ -729,8 +729,8 @@ int fs_getdents(void)
   if (done && userbuf_off == 0)
 	  r = EINVAL;		/* The user's buffer is too small */
   else {
-	  fs_m_out.RES_NBYTES = userbuf_off;
-	  fs_m_out.RES_SEEK_POS = new_pos;
+	  fs_m_out.m_fs_vfs_getdents.nbytes = userbuf_off;
+	  fs_m_out.m_fs_vfs_getdents.seek_pos = new_pos;
 	  if(!rip->i_sp->s_rd_only) {
 		  rip->i_update |= ATIME;
 		  IN_MARKDIRTY(rip);

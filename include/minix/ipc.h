@@ -188,6 +188,26 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_vfs_fs_ftrunc);
 
 typedef struct {
+	ino_t inode;
+	off_t seek_pos;
+
+	cp_grant_id_t grant;
+	size_t mem_size;
+
+	uint8_t data[32];
+} mess_vfs_fs_getdents;
+_ASSERT_MSG_SIZE(mess_vfs_fs_getdents);
+
+typedef struct {
+	off_t seek_pos;
+
+	size_t nbytes;
+
+	uint8_t data[44];
+} mess_fs_vfs_getdents;
+_ASSERT_MSG_SIZE(mess_fs_vfs_getdents);
+
+typedef struct {
 	ino_t dir_ino;
 	ino_t root_ino;
 
@@ -402,6 +422,8 @@ typedef struct {
 	mess_fs_vfs_create m_fs_vfs_create;
 	mess_vfs_fs_flush m_vfs_fs_flush;
 	mess_vfs_fs_ftrunc m_vfs_fs_ftrunc;
+	mess_vfs_fs_getdents m_vfs_fs_getdents;
+	mess_fs_vfs_getdents m_fs_vfs_getdents;
 	mess_vfs_fs_lookup m_vfs_fs_lookup;
 	mess_fs_vfs_lookup m_fs_vfs_lookup;
 	mess_vfs_fs_mountpoint m_vfs_fs_mountpoint;

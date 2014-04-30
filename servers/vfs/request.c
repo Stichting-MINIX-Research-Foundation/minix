@@ -314,10 +314,10 @@ static int req_getdents_actual(
 								grant_id);
 
   m.m_type = REQ_GETDENTS;
-  m.REQ_INODE_NR = (pino_t) inode_nr;
-  m.REQ_GRANT = grant_id;
-  m.REQ_MEM_SIZE = size;
-  m.REQ_SEEK_POS = pos;
+  m.m_vfs_fs_getdents.inode = inode_nr;
+  m.m_vfs_fs_getdents.grant = grant_id;
+  m.m_vfs_fs_getdents.mem_size = size;
+  m.m_vfs_fs_getdents.seek_pos = pos;
   if (!(vmp->m_fs_flags & RES_64BIT) && (pos > INT_MAX)) {
 	/* FS does not support 64-bit off_t and 32 bits is not enough */
 	return EINVAL;
@@ -327,8 +327,8 @@ static int req_getdents_actual(
   cpf_revoke(grant_id);
 
   if (r == OK) {
-	*new_pos = m.RES_SEEK_POS;
-	r = m.RES_NBYTES;
+	*new_pos = m.m_fs_vfs_getdents.seek_pos;
+	r = m.m_fs_vfs_getdents.nbytes;
   }
 
   return(r);

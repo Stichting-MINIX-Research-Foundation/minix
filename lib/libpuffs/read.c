@@ -123,7 +123,7 @@ int fs_getdents(void)
 {
   int r;
   register struct puffs_node *pn;
-  pino_t ino;
+  ino_t ino;
   cp_grant_id_t gid;
   size_t size, buf_left;
   off_t pos;
@@ -132,10 +132,10 @@ int fs_getdents(void)
   size_t written;
   PUFFS_MAKECRED(pcr, &global_kcred);
 
-  ino = (pino_t) fs_m_in.REQ_INODE_NR;
-  gid = (cp_grant_id_t) fs_m_in.REQ_GRANT;
-  size = buf_left = (size_t) fs_m_in.REQ_MEM_SIZE;
-  pos = (off_t) fs_m_in.REQ_SEEK_POS;
+  ino = fs_m_in.m_vfs_fs_getdents.inode;
+  gid = fs_m_in.m_vfs_fs_getdents.grant;
+  size = buf_left = fs_m_in.m_vfs_fs_getdents.mem_size;
+  pos = fs_m_in.m_vfs_fs_getdents.seek_pos;
 
   if ((pn = puffs_pn_nodewalk(global_pu, 0, &ino)) == NULL) {
 	lpuffs_debug("walk failed...\n");
@@ -171,8 +171,8 @@ int fs_getdents(void)
 
   update_timens(pn, ATIME, NULL);
 
-  fs_m_out.RES_NBYTES = written;
-  fs_m_out.RES_SEEK_POS = pos;
+  fs_m_out.m_fs_vfs_getdents.nbytes = written;
+  fs_m_out.m_fs_vfs_getdents.seek_pos = pos;
 
   return(OK);
 }

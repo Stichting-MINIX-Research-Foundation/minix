@@ -92,10 +92,10 @@ int do_getdents(void)
 
   attr.a_mask = SFFS_ATTR_MODE;
 
-  if ((ino = find_inode(m_in.REQ_INODE_NR)) == NULL)
+  if ((ino = find_inode(m_in.m_vfs_fs_getdents.inode)) == NULL)
 	return EINVAL;
 
-  if(m_in.REQ_SEEK_POS >= ULONG_MAX) return EINVAL;
+  if(m_in.m_vfs_fs_getdents.seek_pos >= ULONG_MAX) return EINVAL;
 
   if (!IS_DIR(ino)) return ENOTDIR;
 
@@ -108,13 +108,13 @@ int do_getdents(void)
 
   off = 0;
   user_off = 0;
-  user_left = m_in.REQ_MEM_SIZE;
+  user_left = m_in.m_vfs_fs_getdents.mem_size;
 
   /* We use the seek position as file index number. The first position is for
    * the "." entry, the second position is for the ".." entry, and the next
    * position numbers each represent a file in the directory.
    */
-  for (pos = m_in.REQ_SEEK_POS; ; pos++) {
+  for (pos = m_in.m_vfs_fs_getdents.seek_pos; ; pos++) {
 	/* Determine which inode and name to use for this entry.
 	 * We have no idea whether the host will give us "." and/or "..",
 	 * so generate our own and skip those from the host.
@@ -190,7 +190,7 @@ int do_getdents(void)
 
 	/* If our own buffer cannot contain the new record, copy out first. */
 	if (off + len > sizeof(buf)) {
-		r = sys_safecopyto(m_in.m_source, m_in.REQ_GRANT,
+		r = sys_safecopyto(m_in.m_source, m_in.m_vfs_fs_getdents.grant,
 			user_off, (vir_bytes) buf, off);
 
 		if (r != OK) {
@@ -219,7 +219,7 @@ int do_getdents(void)
 
   /* If there is anything left in our own buffer, copy that out now. */
   if (off > 0) {
-	r = sys_safecopyto(m_in.m_source, m_in.REQ_GRANT, user_off,
+	r = sys_safecopyto(m_in.m_source, m_in.m_vfs_fs_getdents.grant, user_off,
 		(vir_bytes) buf, off);
 
 	if (r != OK)
@@ -228,8 +228,8 @@ int do_getdents(void)
 	user_off += off;
   }
 
-  m_out.RES_SEEK_POS = pos;
-  m_out.RES_NBYTES = user_off;
+  m_out.m_fs_vfs_getdents.seek_pos = pos;
+  m_out.m_fs_vfs_getdents.nbytes = user_off;
 
   return OK;
 }

@@ -159,9 +159,9 @@ int fs_getdents(void)
   memset(name_old,'\0',NAME_MAX);
 
   /* Get input parameters */
-  ino = fs_m_in.REQ_INODE_NR;
-  gid = fs_m_in.REQ_GRANT;
-  pos = fs_m_in.REQ_SEEK_POS;
+  ino = fs_m_in.m_vfs_fs_getdents.inode;
+  gid = fs_m_in.m_vfs_fs_getdents.grant;
+  pos = fs_m_in.m_vfs_fs_getdents.seek_pos;
 
   block_size = v_pri.logical_block_size_l;
   cur_pos = pos;		/* The current position */
@@ -277,8 +277,8 @@ int fs_getdents(void)
 	userbuf_off += tmpbuf_offset;
   }
   
-  fs_m_out.RES_NBYTES = userbuf_off;
-  fs_m_out.RES_SEEK_POS = cur_pos;
+  fs_m_out.m_fs_vfs_getdents.nbytes = userbuf_off;
+  fs_m_out.m_fs_vfs_getdents.seek_pos = cur_pos;
 
   release_dir_record(dir);		/* release the inode */
   return(OK);
