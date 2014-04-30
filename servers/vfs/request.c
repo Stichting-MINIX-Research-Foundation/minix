@@ -542,12 +542,12 @@ int req_mkdir(
 
   /* Fill in request message */
   m.m_type = REQ_MKDIR;
-  m.REQ_INODE_NR = (pino_t) inode_nr;
-  m.REQ_MODE = (pmode_t) dmode;
-  m.REQ_UID = (puid_t) uid;
-  m.REQ_GID = (pgid_t) gid;
-  m.REQ_GRANT = grant_id;
-  m.REQ_PATH_LEN = len;
+  m.m_vfs_fs_mkdir.inode = inode_nr;
+  m.m_vfs_fs_mkdir.mode = dmode;
+  m.m_vfs_fs_mkdir.uid = uid;
+  m.m_vfs_fs_mkdir.gid = gid;
+  m.m_vfs_fs_mkdir.grant = grant_id;
+  m.m_vfs_fs_mkdir.path_len = len;
 
   /* Send/rec request */
   r = fs_sendrec(fs_e, &m);

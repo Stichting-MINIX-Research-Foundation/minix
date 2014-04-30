@@ -124,24 +124,24 @@ int fs_mkdir()
   phys_bytes len;
 
   /* Copy the last component and set up caller's user and group id */
-  len = fs_m_in.REQ_PATH_LEN; /* including trailing '\0' */
+  len = fs_m_in.m_vfs_fs_mkdir.path_len; /* including trailing '\0' */
   if (len > NAME_MAX + 1 || len > EXT2_NAME_MAX + 1)
 	return(ENAMETOOLONG);
 
-  err_code = sys_safecopyfrom(VFS_PROC_NR, (cp_grant_id_t) fs_m_in.REQ_GRANT,
+  err_code = sys_safecopyfrom(VFS_PROC_NR, fs_m_in.m_vfs_fs_mkdir.grant,
 			      (vir_bytes) 0, (vir_bytes) lastc, (phys_bytes) len);
   if(err_code != OK) return(err_code);
   NUL(lastc, len, sizeof(lastc));
 
-  caller_uid = (uid_t) fs_m_in.REQ_UID;
-  caller_gid = (gid_t) fs_m_in.REQ_GID;
+  caller_uid = fs_m_in.m_vfs_fs_mkdir.uid;
+  caller_gid = fs_m_in.m_vfs_fs_mkdir.gid;
 
   /* Get last directory inode */
-  if((ldirp = get_inode(fs_dev, (pino_t) fs_m_in.REQ_INODE_NR)) == NULL)
+  if((ldirp = get_inode(fs_dev, fs_m_in.m_vfs_fs_mkdir.inode)) == NULL)
       return(ENOENT);
 
   /* Next make the inode. If that fails, return error code. */
-  rip = new_node(ldirp, lastc, (pino_t) fs_m_in.REQ_MODE, (block_t) 0);
+  rip = new_node(ldirp, lastc, fs_m_in.m_vfs_fs_mkdir.mode, (block_t) 0);
 
   if(rip == NULL || err_code == EEXIST) {
 	  put_inode(rip);		/* can't make dir: it already exists */
@@ -155,7 +155,7 @@ int fs_mkdir()
 
   /* Now make dir entries for . and .. unless the disk is completely full. */
   /* Use dot1 and dot2, so the mode of the directory isn't important. */
-  rip->i_mode = (pmode_t) fs_m_in.REQ_MODE;	/* set mode */
+  rip->i_mode = fs_m_in.m_vfs_fs_mkdir.mode;	/* set mode */
   /* enter . in the new dir*/
   r1 = search_dir(rip, dot1, &dot, ENTER, IGN_PERM, I_DIRECTORY);
   /* enter .. in the new dir */

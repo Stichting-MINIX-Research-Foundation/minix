@@ -140,19 +140,19 @@ int do_mkdir(void)
 	return EROFS;
 
   /* Get the path string and possibly an inode for the given path. */
-  if ((r = get_name(m_in.REQ_GRANT, m_in.REQ_PATH_LEN, name)) != OK)
+  if ((r = get_name(m_in.m_vfs_fs_mkdir.grant, m_in.m_vfs_fs_mkdir.path_len, name)) != OK)
 	return r;
 
   if (!strcmp(name, ".") || !strcmp(name, "..")) return EEXIST;
 
-  if ((parent = find_inode(m_in.REQ_INODE_NR)) == NULL)
+  if ((parent = find_inode(m_in.m_vfs_fs_mkdir.inode)) == NULL)
 	return EINVAL;
 
   if ((r = verify_dentry(parent, name, path, &ino)) != OK)
 	return r;
 
   /* Perform the actual mkdir call. */
-  r = sffs_table->t_mkdir(path, m_in.REQ_MODE);
+  r = sffs_table->t_mkdir(path, m_in.m_vfs_fs_mkdir.mode);
 
   if (r != OK) {
 	if (ino != NULL)

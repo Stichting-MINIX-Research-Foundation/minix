@@ -261,6 +261,19 @@ _ASSERT_MSG_SIZE(mess_fs_vfs_lookup);
 typedef struct {
 	ino_t inode;
 
+	mode_t mode;
+	uid_t uid;
+	gid_t gid;
+	cp_grant_id_t grant;
+	size_t path_len;
+
+	uint8_t data[28];
+} mess_vfs_fs_mkdir;
+_ASSERT_MSG_SIZE(mess_vfs_fs_mkdir);
+
+typedef struct {
+	ino_t inode;
+
 	uint8_t data[48];
 } mess_vfs_fs_mountpoint;
 _ASSERT_MSG_SIZE(mess_vfs_fs_mountpoint);
@@ -490,6 +503,7 @@ typedef struct {
 	mess_vfs_fs_link m_vfs_fs_link;
 	mess_vfs_fs_lookup m_vfs_fs_lookup;
 	mess_fs_vfs_lookup m_fs_vfs_lookup;
+	mess_vfs_fs_mkdir m_vfs_fs_mkdir;
 	mess_vfs_fs_mountpoint m_vfs_fs_mountpoint;
 	mess_vfs_fs_new_driver m_vfs_fs_new_driver;
 	mess_vfs_fs_putnode m_vfs_fs_putnode;

@@ -216,22 +216,22 @@ int fs_mkdir(void)
   }
 
   /* Copy the last component and set up caller's user and group id */
-  len = fs_m_in.REQ_PATH_LEN;
+  len = fs_m_in.m_vfs_fs_mkdir.path_len;
   pcn.pcn_namelen = len - 1;
   if (pcn.pcn_namelen > NAME_MAX)
 	return(ENAMETOOLONG);
 
-  err_code = sys_safecopyfrom(VFS_PROC_NR, (cp_grant_id_t) fs_m_in.REQ_GRANT,
+  err_code = sys_safecopyfrom(VFS_PROC_NR, fs_m_in.m_vfs_fs_mkdir.grant,
 			      (vir_bytes) 0, (vir_bytes) pcn.pcn_name,
 			      (phys_bytes) len);
   if (err_code != OK) return(err_code);
   NUL(pcn.pcn_name, len, sizeof(pcn.pcn_name));
 
-  caller_uid = (uid_t) fs_m_in.REQ_UID;
-  caller_gid = (gid_t) fs_m_in.REQ_GID;
+  caller_uid = fs_m_in.m_vfs_fs_mkdir.uid;
+  caller_gid = fs_m_in.m_vfs_fs_mkdir.gid;
 
   /* Get last directory pnode */
-  if ((pn_dir = puffs_pn_nodewalk(global_pu, 0, &fs_m_in.REQ_INODE_NR)) == NULL)
+  if ((pn_dir = puffs_pn_nodewalk(global_pu, 0, &fs_m_in.m_vfs_fs_mkdir.inode)) == NULL)
 	return(ENOENT);
   
   cur_time = clock_timespec();
@@ -241,7 +241,7 @@ int fs_mkdir(void)
 
   memset(&va, 0, sizeof(va));
   va.va_type = VDIR;
-  va.va_mode = (mode_t) fs_m_in.REQ_MODE;
+  va.va_mode = fs_m_in.m_vfs_fs_mkdir.mode;
   va.va_uid = caller_uid;
   va.va_gid = caller_gid;
   va.va_atime = va.va_mtime = va.va_ctime = cur_time;
