@@ -731,15 +731,15 @@ static int req_rdlink_actual(endpoint_t fs_e, ino_t inode_nr,
 
   /* Fill in request message */
   m.m_type = REQ_RDLINK;
-  m.REQ_INODE_NR = (pino_t) inode_nr;
-  m.REQ_GRANT = grant_id;
-  m.REQ_MEM_SIZE = len;
+  m.m_vfs_fs_rdlink.inode = inode_nr;
+  m.m_vfs_fs_rdlink.grant = grant_id;
+  m.m_vfs_fs_rdlink.mem_size = len;
 
   /* Send/rec request */
   r = fs_sendrec(fs_e, &m);
   cpf_revoke(grant_id);
 
-  if (r == OK) r = m.RES_NBYTES;
+  if (r == OK) r = m.m_fs_vfs_rdlink.nbytes;
 
   return(r);
 }

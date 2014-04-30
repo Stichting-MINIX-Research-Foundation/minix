@@ -282,6 +282,23 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_fs_vfs_newnode);
 
 typedef struct {
+	ino_t inode;
+
+	cp_grant_id_t grant;
+	size_t mem_size;
+
+	uint8_t data[40];
+} mess_vfs_fs_rdlink;
+_ASSERT_MSG_SIZE(mess_vfs_fs_rdlink);
+
+typedef struct {
+	size_t nbytes;
+
+	uint8_t data[52];
+} mess_fs_vfs_rdlink;
+_ASSERT_MSG_SIZE(mess_fs_vfs_rdlink);
+
+typedef struct {
 	dev_t device;
 
 	uint32_t flags;
@@ -428,6 +445,8 @@ typedef struct {
 	mess_fs_vfs_lookup m_fs_vfs_lookup;
 	mess_vfs_fs_mountpoint m_vfs_fs_mountpoint;
 	mess_vfs_fs_new_driver m_vfs_fs_new_driver;
+	mess_vfs_fs_rdlink m_vfs_fs_rdlink;
+	mess_fs_vfs_rdlink m_fs_vfs_rdlink;
 	mess_vfs_fs_readsuper m_vfs_fs_readsuper;
 	mess_fs_vfs_readsuper m_fs_vfs_readsuper;
 	mess_vfs_fs_rename m_vfs_fs_rename;

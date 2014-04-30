@@ -188,10 +188,10 @@ int fs_rdlink()
   register int r;              /* return value */
   size_t copylen;
 
-  copylen = min( (size_t) fs_m_in.REQ_MEM_SIZE, UMAX_FILE_POS);
+  copylen = min(fs_m_in.m_vfs_fs_rdlink.mem_size, UMAX_FILE_POS);
 
   /* Temporarily open the file. */
-  if( (rip = get_inode(fs_dev, (pino_t) fs_m_in.REQ_INODE_NR)) == NULL)
+  if( (rip = get_inode(fs_dev, fs_m_in.m_vfs_fs_rdlink.inode)) == NULL)
 	  return(EINVAL);
 
   if (rip->i_size >= MAX_FAST_SYMLINK_LENGTH) {
@@ -212,12 +212,12 @@ int fs_rdlink()
   /* We can safely cast to unsigned, because copylen is guaranteed to be
      below max file size */
 	copylen = min( copylen, (unsigned) rip->i_size);
-	r = sys_safecopyto(VFS_PROC_NR, (cp_grant_id_t) fs_m_in.REQ_GRANT,
+	r = sys_safecopyto(VFS_PROC_NR, fs_m_in.m_vfs_fs_rdlink.grant,
 	                   (vir_bytes) 0, (vir_bytes) link_text,
 			   (size_t) copylen);
 	put_block(bp, DIRECTORY_BLOCK);
 	if (r == OK)
-		fs_m_out.RES_NBYTES = copylen;
+		fs_m_out.m_fs_vfs_rdlink.nbytes = copylen;
   }
 
   put_inode(rip);
