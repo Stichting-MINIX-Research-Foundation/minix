@@ -328,7 +328,7 @@ int fs_inhibread()
 {
   struct inode *rip;
   
-  if((rip = find_inode(fs_dev, (pino_t) fs_m_in.REQ_INODE_NR)) == NULL)
+  if((rip = find_inode(fs_dev, fs_m_in.m_vfs_fs_inhibread.inode)) == NULL)
 	  return(EINVAL);
 
   /* inhibit read ahead */

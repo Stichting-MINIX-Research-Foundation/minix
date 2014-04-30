@@ -373,7 +373,7 @@ int req_inhibread(endpoint_t fs_e, ino_t inode_nr)
 
   /* Fill in request message */
   m.m_type = REQ_INHIBREAD;
-  m.REQ_INODE_NR = (pino_t) inode_nr;
+  m.m_vfs_fs_inhibread.inode = inode_nr;
 
   /* Send/rec request */
   return fs_sendrec(fs_e, &m);
