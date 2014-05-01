@@ -78,15 +78,6 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_5);
 
 typedef struct {
-	long m6l1, m6l2, m6l3;
-	short m6s1, m6s2, m6s3;
-	char m6c1, m6c2;
-        char *m6p1, *m6p2;
-	uint8_t padding[28];
-} mess_6;
-_ASSERT_MSG_SIZE(mess_6);
-
-typedef struct {
 	int m7i1, m7i2, m7i3, m7i4, m7i5;
 	char *m7p1, *m7p2;
 	uint8_t padding[28];
@@ -218,7 +209,6 @@ typedef struct {
 	mess_5 m_m5;
 	mess_7 m_m7;
 	mess_8 m_m8;
-	mess_6 m_m6;
 	mess_9 m_m9;
 	mess_10 m_m10;
 	mess_11 m_m11;
@@ -276,17 +266,6 @@ typedef int _ASSERT_message[/* CONSTCOND */sizeof(message) == 64 ? 1 : -1];
 #define m5_l1  m_m5.m5l1
 #define m5_l2  m_m5.m5l2
 #define m5_l3  m_m5.m5l3
-
-#define m6_l1  m_m6.m6l1
-#define m6_l2  m_m6.m6l2
-#define m6_l3  m_m6.m6l3
-#define m6_s1  m_m6.m6s1
-#define m6_s2  m_m6.m6s2
-#define m6_s3  m_m6.m6s3
-#define m6_c1  m_m6.m6c1
-#define m6_c2  m_m6.m6c2
-#define m6_p1  m_m6.m6p1
-#define m6_p2  m_m6.m6p2
 
 #define m7_i1  m_m7.m7i1
 #define m7_i2  m_m7.m7i2
