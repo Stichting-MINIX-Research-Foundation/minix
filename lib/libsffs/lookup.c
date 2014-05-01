@@ -57,7 +57,7 @@ static int access_as_dir(
 /* Check whether the given inode may be accessed as directory.
  * Return OK or an appropriate error code.
  */
-  pmode_t mode;
+  mode_t mode;
 
   assert(attr->a_mask & SFFS_ATTR_MODE);
 

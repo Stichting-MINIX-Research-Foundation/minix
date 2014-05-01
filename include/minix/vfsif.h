@@ -82,12 +82,6 @@ typedef struct {
 	gid_t vu_sgroups[NGROUPS_MAX];
 } vfs_ucred_t;
 
-/* Some system types are larger than what the protocol and FSes use */
-typedef u16_t	puid_t;		/* Protocol version of uid_t */
-typedef u16_t	pgid_t;		/* Protocol version of gid_t */
-typedef u16_t	pmode_t;	/* Protocol version of mode_t */
-typedef u32_t	pino_t;		/* Protocol version of ino_t */
-
 /* Request numbers */
 #define REQ_GETNODE	(FS_BASE + 1)	/* Should be removed */
 #define REQ_PUTNODE	(FS_BASE + 2)

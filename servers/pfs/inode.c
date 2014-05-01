@@ -38,7 +38,7 @@ int fs_putnode(message *fs_m_in, message *fs_m_out)
   rip = find_inode(fs_m_in->m_vfs_fs_putnode.inode);
 
   if(!rip) {
-	  printf("%s:%d put_inode: inode #%ld not found\n", __FILE__,
+	  printf("%s:%d put_inode: inode #%llu not found\n", __FILE__,
 		 __LINE__, fs_m_in->m_vfs_fs_putnode.inode);
 	  panic("fs_putnode failed");
   }
@@ -119,7 +119,7 @@ static void unhash_inode(struct inode * const node)
  *===========================================================================*/
 struct inode *get_inode(
   dev_t dev,		/* device on which inode resides */
-  pino_t numb		/* inode number */
+  ino_t numb		/* inode number */
 )
 {
 /* Find the inode in the hash table. If it is not there, get a free inode
@@ -173,7 +173,7 @@ struct inode *get_inode(
 /*===========================================================================*
  *				find_inode        			     *
  *===========================================================================*/
-struct inode *find_inode(pino_t numb	/* inode number */)
+struct inode *find_inode(ino_t numb	/* inode number */)
 {
 /* Find the inode specified by the inode and device number.
  */
@@ -237,13 +237,13 @@ struct inode *rip;	/* pointer to inode to be released */
 /*===========================================================================*
  *				alloc_inode				     *
  *===========================================================================*/
-struct inode *alloc_inode(dev_t dev, pmode_t bits, uid_t uid, gid_t gid)
+struct inode *alloc_inode(dev_t dev, mode_t bits, uid_t uid, gid_t gid)
 {
 /* Allocate a free inode on 'dev', and return a pointer to it. */
 
   register struct inode *rip;
   bit_t b;
-  pino_t i_num;
+  ino_t i_num;
   int print_oos_msg = 1;
 
   b = alloc_bit();
@@ -254,7 +254,7 @@ struct inode *alloc_inode(dev_t dev, pmode_t bits, uid_t uid, gid_t gid)
 	print_oos_msg = 0;	/* Don't repeat message */
 	return(NULL);
   }
-  i_num = (pino_t) b;
+  i_num = (ino_t) b;
   print_oos_msg = 1;
 
 
@@ -308,7 +308,7 @@ struct inode *rip;
 
   bit_t b;
 
-  if (rip->i_num <= (pino_t) 0 || rip->i_num >= (pino_t) PFS_NR_INODES) return;
+  if (rip->i_num <= 0 || rip->i_num >= PFS_NR_INODES) return;
   b = (bit_t) rip->i_num;
   free_bit(b);
 }

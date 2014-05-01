@@ -38,7 +38,7 @@ int fs_readwrite(void)
   r = OK;
   
   /* Find the inode referred */
-  if ((rip = find_inode(fs_dev, (pino_t) fs_m_in.m_vfs_fs_readwrite.inode)) == NULL)
+  if ((rip = find_inode(fs_dev, fs_m_in.m_vfs_fs_readwrite.inode)) == NULL)
 	return(EINVAL);
 
   mode_word = rip->i_mode & I_TYPE;
@@ -608,7 +608,7 @@ int fs_getdents(void)
   register struct inode *rip;
   int o, r, done;
   unsigned int block_size, len, reclen;
-  pino_t ino;
+  ino_t ino;
   cp_grant_id_t gid;
   size_t size, tmpbuf_off, userbuf_off;
   off_t pos, off, block_pos, new_pos, ent_pos;

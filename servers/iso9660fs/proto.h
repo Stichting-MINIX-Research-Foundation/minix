@@ -19,7 +19,7 @@ int create_dir_record(struct dir_record *dir, char *buffer, u32_t
 int create_ext_attr(struct ext_attr_rec *ext, char *buffer);
 int fs_getnode(void);
 int fs_putnode(void);
-struct dir_record *get_dir_record(pino_t id_dir);
+struct dir_record *get_dir_record(ino_t id_dir);
 struct dir_record *get_free_dir_record(void);
 struct ext_attr_rec *get_free_ext_attr(void);
 struct dir_record *load_dir_record_from_disk(u32_t address);
@@ -38,7 +38,7 @@ int fs_unmount(void);
 int fs_lookup(void);
 int advance(struct dir_record *dirp, char string[NAME_MAX], struct
 	dir_record **resp);
-int search_dir(struct dir_record *ldir_ptr,char string [NAME_MAX],pino_t *numb);
+int search_dir(struct dir_record *ldir_ptr, char string [NAME_MAX], ino_t *numb);
 
 /* read.c */
 int fs_read(void);

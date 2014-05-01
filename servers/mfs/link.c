@@ -252,7 +252,7 @@ char file_name[MFS_NAME_MAX];	/* name of file to be removed */
 {
 /* Unlink 'file_name'; rip must be the inode of 'file_name' or NULL. */
 
-  pino_t numb;			/* inode number */
+  ino_t numb;			/* inode number */
   int	r;
 
   /* If rip is not NULL, it is used to get faster access to the inode. */
@@ -291,7 +291,7 @@ int fs_rename()
   int odir, ndir;			/* TRUE iff {old|new} file is dir */
   int same_pdir;			/* TRUE iff parent dirs are the same */
   char old_name[MFS_NAME_MAX], new_name[MFS_NAME_MAX];
-  pino_t numb;
+  ino_t numb;
   phys_bytes len;
   
   /* Copy the last component of the old name */
@@ -328,7 +328,7 @@ int fs_rename()
   }
 
   /* Get new dir inode */ 
-  if ((new_dirp = get_inode(fs_dev, (pino_t) fs_m_in.m_vfs_fs_rename.dir_new)) == NULL){
+  if ((new_dirp = get_inode(fs_dev, fs_m_in.m_vfs_fs_rename.dir_new)) == NULL){
         put_inode(old_ip);
         put_inode(old_dirp);
         return(err_code);
@@ -527,7 +527,7 @@ off_t newsize;			/* inode must become this size */
  * writing is done.
  */
   int r;
-  pmode_t file_type;
+  mode_t file_type;
 
   file_type = rip->i_mode & I_TYPE;	/* check to see if file is special */
   if (file_type == I_CHAR_SPECIAL || file_type == I_BLOCK_SPECIAL)

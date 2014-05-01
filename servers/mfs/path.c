@@ -27,7 +27,7 @@ char dot2[3] = "..";	/* permissions for . and ..		    */
 
 static char *get_name(char *name, char string[MFS_NAME_MAX+1]);
 static int ltraverse(struct inode *rip, char *suffix);
-static int parse_path(pino_t dir_ino, pino_t root_ino, int flags, struct
+static int parse_path(ino_t dir_ino, ino_t root_ino, int flags, struct
 	inode **res_inop, size_t *offsetp, int *symlinkp);
 
 
@@ -121,8 +121,8 @@ int fs_lookup()
  *                             parse_path				     *
  *===========================================================================*/
 static int parse_path(
-pino_t dir_ino,
-pino_t root_ino,
+ino_t dir_ino,
+ino_t root_ino,
 int flags,
 struct inode **res_inop,
 size_t *offsetp,
@@ -355,7 +355,7 @@ int chk_perm;			/* check permissions when string is looked up*/
  * the directory, find the inode, open it, and return a pointer to its inode
  * slot.
  */
-  pino_t numb;
+  ino_t numb;
   struct inode *rip;
 
   /* If 'string' is empty, return an error. */
@@ -463,7 +463,7 @@ char string[MFS_NAME_MAX+1];	/* component extracted from 'old_name' */
 int search_dir(ldir_ptr, string, numb, flag, check_permissions)
 register struct inode *ldir_ptr; /* ptr to inode for dir to search */
 char string[MFS_NAME_MAX];		 /* component to search for */
-pino_t *numb;			 /* pointer to inode number */
+ino_t *numb;			 /* pointer to inode number */
 int flag;			 /* LOOK_UP, ENTER, DELETE or IS_EMPTY */
 int check_permissions;		 /* check permissions when flag is !IS_EMPTY */
 {
@@ -479,7 +479,7 @@ int check_permissions;		 /* check permissions when flag is !IS_EMPTY */
   register struct direct *dp = NULL;
   register struct buf *bp = NULL;
   int i, r, e_hit, t, match;
-  pmode_t bits;
+  mode_t bits;
   off_t pos;
   unsigned new_slots, old_slots;
   struct super_block *sp;
@@ -558,8 +558,8 @@ int check_permissions;		 /* check permissions when flag is !IS_EMPTY */
 			if (flag == IS_EMPTY) r = ENOTEMPTY;
 			else if (flag == DELETE) {
 				/* Save d_ino for recovery. */
-				t = MFS_NAME_MAX - sizeof(pino_t);
-				*((pino_t *) &dp->mfs_d_name[t]) = dp->mfs_d_ino;
+				t = MFS_NAME_MAX - sizeof(ino_t);
+				*((ino_t *) &dp->mfs_d_name[t]) = dp->mfs_d_ino;
 				dp->mfs_d_ino = NO_ENTRY;	/* erase entry */
 				MARKDIRTY(bp);
 				ldir_ptr->i_update |= CTIME | MTIME;
@@ -568,7 +568,7 @@ int check_permissions;		 /* check permissions when flag is !IS_EMPTY */
 					ldir_ptr->i_last_dpos = pos;
 			} else {
 				sp = ldir_ptr->i_sp;	/* 'flag' is LOOK_UP */
-				*numb = (pino_t) conv4(sp->s_native,
+				*numb = (ino_t) conv4(sp->s_native,
 						      (int) dp->mfs_d_ino);
 			}
 			assert(lmfs_dev(bp) != NO_DEV);

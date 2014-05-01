@@ -12,7 +12,7 @@
 #include "super.h"
 #include <minix/vfsif.h>
 
-static struct inode *new_node(struct inode *ldirp, char *string, pmode_t
+static struct inode *new_node(struct inode *ldirp, char *string, mode_t
 	bits, block_t z0);
 
 
@@ -118,7 +118,7 @@ int fs_mknod()
 int fs_mkdir()
 {
   int r1, r2;			/* status codes */
-  pino_t dot, dotdot;		/* inode numbers for . and .. */
+  ino_t dot, dotdot;		/* inode numbers for . and .. */
   struct inode *rip, *ldirp;
   char lastc[NAME_MAX + 1];         /* last component */
   phys_bytes len;
@@ -213,8 +213,7 @@ int fs_slink()
 	  return(EINVAL);
 
   /* Create the inode for the symlink. */
-  sip = new_node(ldirp, string, (pmode_t) (I_SYMBOLIC_LINK | RWX_MODES),
-		   (block_t) 0);
+  sip = new_node(ldirp, string, (I_SYMBOLIC_LINK | RWX_MODES), 0);
 
   /* If we can then create fast symlink (store it in inode),
    * Otherwise allocate a disk block for the contents of the symlink and
@@ -278,7 +277,7 @@ int fs_slink()
  *				new_node				     *
  *===========================================================================*/
 static struct inode *new_node(struct inode *ldirp,
-	char *string, pmode_t bits, block_t b0)
+	char *string, mode_t bits, block_t b0)
 {
 /* New_node() is called by fs_open(), fs_mknod(), and fs_mkdir().
  * In all cases it allocates a new inode, makes a directory entry for it in

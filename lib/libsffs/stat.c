@@ -15,7 +15,7 @@
 /*===========================================================================*
  *				get_mode				     *
  *===========================================================================*/
-pmode_t get_mode(struct inode *ino, int mode)
+mode_t get_mode(struct inode *ino, int mode)
 {
 /* Return the mode for an inode, given the inode and the retrieved mode.
  */
@@ -45,7 +45,7 @@ int do_stat(void)
   struct sffs_attr attr;
   struct stat stat;
   char path[PATH_MAX];
-  pino_t ino_nr;
+  ino_t ino_nr;
   int r;
 
   ino_nr = m_in.m_vfs_fs_stat.inode;

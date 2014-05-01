@@ -29,7 +29,7 @@ char dot2[3] = "..";	/* permissions for . and ..		    */
 
 static char *get_name(char *name, char string[NAME_MAX+1]);
 static int ltraverse(struct inode *rip, char *suffix);
-static int parse_path(pino_t dir_ino, pino_t root_ino, int flags, struct
+static int parse_path(ino_t dir_ino, ino_t root_ino, int flags, struct
 	inode **res_inop, size_t *offsetp, int *symlinkp);
 
 /*===========================================================================*
@@ -41,7 +41,7 @@ int fs_lookup()
   int r, r1, flags, symlinks;
   unsigned int len;
   size_t offset = 0, path_size;
-  pino_t dir_ino, root_ino;
+  ino_t dir_ino, root_ino;
   struct inode *rip;
 
   grant		= fs_m_in.m_vfs_fs_lookup.grant_path;
@@ -121,8 +121,8 @@ int fs_lookup()
  *                             parse_path				     *
  *===========================================================================*/
 static int parse_path(dir_ino, root_ino, flags, res_inop, offsetp, symlinkp)
-pino_t dir_ino;
-pino_t root_ino;
+ino_t dir_ino;
+ino_t root_ino;
 int flags;
 struct inode **res_inop;
 size_t *offsetp;
@@ -370,7 +370,7 @@ int chk_perm;			/* check permissions when string is looked up*/
  * the directory, find the inode, open it, and return a pointer to its inode
  * slot.
  */
-  pino_t numb;
+  ino_t numb;
   struct inode *rip;
 
   /* If 'string' is empty, return an error. */
@@ -483,7 +483,7 @@ char string[NAME_MAX+1];	/* component extracted from 'old_name' */
 int search_dir(ldir_ptr, string, numb, flag, check_permissions, ftype)
 register struct inode *ldir_ptr; /* ptr to inode for dir to search */
 const char string[NAME_MAX + 1];	 /* component to search for */
-pino_t *numb;			 /* pointer to inode number */
+ino_t *numb;			 /* pointer to inode number */
 int flag;			 /* LOOK_UP, ENTER, DELETE or IS_EMPTY */
 int check_permissions;		 /* check permissions when flag is !IS_EMPTY */
 int ftype;			 /* used when ENTER and
@@ -502,7 +502,7 @@ int ftype;			 /* used when ENTER and
   register struct ext2_disk_dir_desc  *prev_dp = NULL;
   register struct buf *bp = NULL;
   int i, r, e_hit, t, match;
-  pmode_t bits;
+  mode_t bits;
   off_t pos;
   unsigned new_slots;
   int extended = 0;
@@ -576,10 +576,10 @@ int ftype;			 /* used when ENTER and
 			r = OK;
 			if (flag == IS_EMPTY) r = ENOTEMPTY;
 			else if (flag == DELETE) {
-				if (dp->d_name_len >= sizeof(pino_t)) {
+				if (dp->d_name_len >= sizeof(ino_t)) {
 					/* Save d_ino for recovery. */
-					t = dp->d_name_len - sizeof(pino_t);
-					*((pino_t *) &dp->d_name[t])= dp->d_ino;
+					t = dp->d_name_len - sizeof(ino_t);
+					*((ino_t *) &dp->d_name[t])= dp->d_ino;
 				}
 				dp->d_ino = NO_ENTRY;	/* erase entry */
 				lmfs_markdirty(bp);
@@ -619,7 +619,7 @@ int ftype;			 /* used when ENTER and
 				}
 			} else {
 				/* 'flag' is LOOK_UP */
-				*numb = (pino_t) conv4(le_CPU, dp->d_ino);
+				*numb = (ino_t) conv4(le_CPU, dp->d_ino);
 			}
 			assert(lmfs_dev(bp) != NO_DEV);
 			put_block(bp, DIRECTORY_BLOCK);

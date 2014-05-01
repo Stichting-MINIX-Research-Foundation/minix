@@ -6,7 +6,7 @@
 #include "buf.h"
 
 static char *get_name(char *name, char string[NAME_MAX+1]);
-static int parse_path(pino_t dir_ino, pino_t root_ino, int flags, struct
+static int parse_path(ino_t dir_ino, ino_t root_ino, int flags, struct
 	dir_record **res_inop, size_t *offsetp);
 
 
@@ -82,7 +82,7 @@ int fs_lookup() {
 int search_dir(
 	register struct dir_record *ldir_ptr,	/* dir record parent */
 	char string[NAME_MAX],			/* component to search for */
-	pino_t *numb				/* pointer to new dir record */
+	ino_t *numb				/* pointer to new dir record */
 ) {
   struct dir_record *dir_tmp;
   register struct buf *bp;
@@ -182,8 +182,8 @@ int search_dir(
  *                             parse_path				     *
  *===========================================================================*/
 static int parse_path(
-pino_t dir_ino,
-pino_t root_ino,
+ino_t dir_ino,
+ino_t root_ino,
 int flags,
 struct dir_record **res_inop,
 size_t *offsetp
@@ -195,7 +195,7 @@ size_t *offsetp
 
   /* Find starting inode inode according to the request message */
   if ((start_dir = get_dir_record(dir_ino)) == NULL) {
-    printf("ISOFS: couldn't find starting inode %u\n", dir_ino);
+    printf("ISOFS: couldn't find starting inode %llu\n", dir_ino);
     return(ENOENT);
   }
   
@@ -292,7 +292,7 @@ struct dir_record **resp;		/* resulting inode */
 
   register struct dir_record *rip = NULL;
   int r;
-  pino_t numb;
+  ino_t numb;
 
   /* If 'string' is empty, yield same inode straight away. */
   if (string[0] == '\0') {

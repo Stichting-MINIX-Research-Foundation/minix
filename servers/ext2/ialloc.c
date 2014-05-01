@@ -29,7 +29,7 @@ static void wipe_inode(struct inode *rip);
 /*===========================================================================*
  *                alloc_inode                                                *
  *===========================================================================*/
-struct inode *alloc_inode(struct inode *parent, pmode_t bits)
+struct inode *alloc_inode(struct inode *parent, mode_t bits)
 {
 /* Allocate a free inode on parent's dev, and return a pointer to it. */
 
@@ -125,7 +125,7 @@ struct inode *parent;		/* parent of newly allocated inode */
 int is_dir;			/* inode will be a directory if it is TRUE */
 {
   int group;
-  pino_t inumber = NO_BIT;
+  ino_t inumber = NO_BIT;
   bit_t bit;
   struct buf *bp;
   struct group_desc *gd;

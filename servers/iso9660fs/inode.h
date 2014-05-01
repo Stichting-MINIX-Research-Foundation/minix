@@ -18,10 +18,10 @@ struct dir_record {
 
   /* Memory attrs */
   u8_t d_count;			/* Count if the dir_record is in use or not */
-  pmode_t d_mode;		/* file type, protection, etc. */
+  mode_t d_mode;			/* file type, protection, etc. */
 /*   struct hash_idi_entry *id; */	/* id associated */
   u32_t d_phy_addr;		/* physical address of this dir record */
-  pino_t d_ino_nr;		/* inode number (identical to the address) */
+  ino_t d_ino_nr;		/* inode number (identical to the address) */
   char d_mountpoint;		/* true if mounted on */
   struct dir_record *d_next;	/* In case the file consists in more file sections
 				   this points to the next one */

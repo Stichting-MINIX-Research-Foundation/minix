@@ -7,7 +7,7 @@
 #include "super.h"
 #include <minix/vfsif.h>
 
-static struct inode *new_node(struct inode *ldirp, char *string, pmode_t
+static struct inode *new_node(struct inode *ldirp, char *string, mode_t
 	bits, zone_t z0);
 
 /*===========================================================================*
@@ -106,7 +106,7 @@ int fs_mknod()
 int fs_mkdir()
 {
   int r1, r2;			/* status codes */
-  pino_t dot, dotdot;		/* inode numbers for . and .. */
+  ino_t dot, dotdot;		/* inode numbers for . and .. */
   struct inode *rip, *ldirp;
   char lastc[MFS_NAME_MAX];         /* last component */
   phys_bytes len;
@@ -155,7 +155,7 @@ int fs_mkdir()
 	  /* It was not possible to enter . or .. probably disk was full -
 	   * links counts haven't been touched. */
 	  if(search_dir(ldirp, lastc, NULL, DELETE, IGN_PERM) != OK)
-		  panic("Dir disappeared: %ul", rip->i_num);
+		  panic("Dir disappeared: %llu", rip->i_num);
 	  rip->i_nlinks--;	/* undo the increment done in new_node() */
   }
   IN_MARKDIRTY(rip);		/* either way, i_nlinks has changed */
@@ -193,8 +193,7 @@ int fs_slink()
 	  return(EINVAL);
 
   /* Create the inode for the symlink. */
-  sip = new_node(ldirp, string, (pmode_t) (I_SYMBOLIC_LINK | RWX_MODES),
-		   (zone_t) 0);
+  sip = new_node(ldirp, string, (I_SYMBOLIC_LINK | RWX_MODES), 0);
 
   /* Allocate a disk block for the contents of the symlink.
    * Copy contents of symlink (the name pointed to) into first disk block. */
@@ -250,7 +249,7 @@ int fs_slink()
  *				new_node				     *
  *===========================================================================*/
 static struct inode *new_node(struct inode *ldirp,
-	char *string, pmode_t bits, zone_t z0)
+	char *string, mode_t bits, zone_t z0)
 {
 /* New_node() is called by fs_open(), fs_mknod(), and fs_mkdir().  
  * In all cases it allocates a new inode, makes a directory entry for it in

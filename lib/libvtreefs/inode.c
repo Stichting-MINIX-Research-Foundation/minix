@@ -426,7 +426,7 @@ struct inode *get_inode_by_index(struct inode *parent, index_t index)
 /*===========================================================================*
  *				find_inode				     *
  *===========================================================================*/
-struct inode *find_inode(pino_t num)
+struct inode *find_inode(ino_t num)
 {
 	/* Retrieve an inode by inode number.
 	 */
@@ -442,7 +442,7 @@ struct inode *find_inode(pino_t num)
 /*===========================================================================*
  *				get_inode				     *
  *===========================================================================*/
-struct inode *get_inode(pino_t num)
+struct inode *get_inode(ino_t num)
 {
 	/* Retrieve an inode by inode number, and increase its reference count.
 	 */

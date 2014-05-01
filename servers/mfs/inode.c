@@ -25,7 +25,7 @@
 
 static void addhash_inode(struct inode *node);
 
-static void free_inode(dev_t dev, pino_t numb);
+static void free_inode(dev_t dev, ino_t numb);
 static void new_icopy(struct inode *rip, d2_inode *dip, int direction,
 	int norm);
 static void unhash_inode(struct inode *node);
@@ -123,7 +123,7 @@ static void unhash_inode(struct inode *node)
  *===========================================================================*/
 struct inode *get_inode(
   dev_t dev,			/* device on which inode resides */
-  pino_t numb			/* inode number */
+  ino_t numb			/* inode number */
 )
 {
 /* Find the inode in the hash table. If it is not there, get a free inode
@@ -185,7 +185,7 @@ struct inode *get_inode(
  *===========================================================================*/
 struct inode *find_inode(
   dev_t dev,			/* device on which inode resides */
-  pino_t numb			/* inode number */
+  ino_t numb			/* inode number */
 )
 {
 /* Find the inode specified by the inode and device number.
@@ -255,7 +255,7 @@ register struct inode *rip;	/* pointer to inode to be released */
 /*===========================================================================*
  *				alloc_inode				     *
  *===========================================================================*/
-struct inode *alloc_inode(dev_t dev, pmode_t bits)
+struct inode *alloc_inode(dev_t dev, mode_t bits)
 {
 /* Allocate a free inode on 'dev', and return a pointer to it. */
 
@@ -333,7 +333,7 @@ register struct inode *rip;	/* the inode to be erased */
  *===========================================================================*/
 static void free_inode(
   dev_t dev,			/* on which device is the inode? */
-  pino_t inumb			/* number of the inode to be freed */
+  ino_t inumb			/* number of the inode to be freed */
 )
 {
 /* Return an inode to the pool of unallocated inodes. */
@@ -428,7 +428,7 @@ int norm;			/* TRUE = do not swap bytes; FALSE = swap */
 
   if (direction == READING) {
 	/* Copy V2.x inode to the in-core table, swapping bytes if need be. */
-	rip->i_mode    = (pmode_t) conv2(norm,dip->d2_mode);
+	rip->i_mode    = (mode_t) conv2(norm,dip->d2_mode);
 	rip->i_uid     = (uid_t) conv2(norm,dip->d2_uid);
 	rip->i_nlinks  = (nlink_t) conv2(norm,dip->d2_nlinks);
 	rip->i_gid     = (gid_t) conv2(norm,dip->d2_gid);

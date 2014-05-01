@@ -60,7 +60,7 @@
 
 #define END_OF_FILE   (-104)	/* eof detected */
 
-#define ROOT_INODE   ((pino_t) 1)	/* inode number for root directory */
+#define ROOT_INODE   ((ino_t) 1)	/* inode number for root directory */
 #define BOOT_BLOCK  ((block_t) 0)	/* block number of boot block */
 #define SUPER_BLOCK_BYTES  (1024)	/* bytes offset */
 #define START_BLOCK ((block_t) 2)	/* first block of FS (not counting SB) */

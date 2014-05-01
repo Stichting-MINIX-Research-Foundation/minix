@@ -271,7 +271,7 @@ char file_name[NAME_MAX + 1]; /* name of file to be removed */
 {
 /* Unlink 'file_name'; rip must be the inode of 'file_name' or NULL. */
 
-  pino_t numb;			/* inode number */
+  ino_t numb;			/* inode number */
   int	r;
 
   /* If rip is not NULL, it is used to get faster access to the inode. */
@@ -310,7 +310,7 @@ int fs_rename()
   int odir, ndir;			/* TRUE iff {old|new} file is dir */
   int same_pdir = 0;			/* TRUE iff parent dirs are the same */
   char old_name[NAME_MAX + 1], new_name[NAME_MAX + 1];
-  pino_t numb;
+  ino_t numb;
   phys_bytes len;
 
   /* Copy the last component of the old name */
@@ -334,7 +334,7 @@ int fs_rename()
   NUL(new_name, len, sizeof(new_name));
 
   /* Get old dir inode */
-  if( (old_dirp = get_inode(fs_dev, (pino_t) fs_m_in.m_vfs_fs_rename.dir_old)) == NULL)
+  if( (old_dirp = get_inode(fs_dev, fs_m_in.m_vfs_fs_rename.dir_old)) == NULL)
 	return(err_code);
 
   old_ip = advance(old_dirp, old_name, IGN_PERM);
@@ -350,7 +350,7 @@ int fs_rename()
   }
 
   /* Get new dir inode */
-  if ((new_dirp = get_inode(fs_dev, (pino_t) fs_m_in.m_vfs_fs_rename.dir_new)) == NULL){
+  if ((new_dirp = get_inode(fs_dev, fs_m_in.m_vfs_fs_rename.dir_new)) == NULL){
 	put_inode(old_ip);
 	put_inode(old_dirp);
 	return(err_code);
@@ -483,7 +483,7 @@ int fs_rename()
 		r = search_dir(new_dirp, new_name, &numb, ENTER, IGN_PERM,
 					old_ip->i_mode & I_TYPE);
 		if(r == OK) {
-			(void) search_dir(old_dirp, old_name, (pino_t *) 0,
+			(void) search_dir(old_dirp, old_name, NULL,
 					  DELETE, IGN_PERM, 0);
 		}
 	}
@@ -551,7 +551,7 @@ off_t newsize;			/* inode must become this size */
  * writing is done.
  */
   int r;
-  pmode_t file_type;
+  mode_t file_type;
 
   discard_preallocated_blocks(rip);
 

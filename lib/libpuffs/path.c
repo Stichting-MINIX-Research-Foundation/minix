@@ -29,7 +29,7 @@ char dot2[3] = "..";	/* permissions for . and ..		    */
 
 static char *get_name(char *name, char string[NAME_MAX+1]);
 static int ltraverse(struct puffs_node *pn, char *suffix);
-static int parse_path(pino_t dir_ino, pino_t root_ino, int flags, struct
+static int parse_path(ino_t dir_ino, ino_t root_ino, int flags, struct
 	puffs_node **res_inop, size_t *offsetp, int *symlinkp);
 
 /*===========================================================================*
@@ -129,8 +129,8 @@ int fs_lookup(void)
  *                             parse_path				     *
  *===========================================================================*/
 static int parse_path(
-	pino_t dir_ino,
-	pino_t root_ino,
+	ino_t dir_ino,
+	ino_t root_ino,
 	int flags,
 	struct puffs_node **res_inop,
 	size_t *offsetp,

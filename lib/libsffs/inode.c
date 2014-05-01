@@ -65,7 +65,7 @@ struct inode *init_inode(void)
 /*===========================================================================*
  *				find_inode				     *
  *===========================================================================*/
-struct inode *find_inode(pino_t ino_nr)
+struct inode *find_inode(ino_t ino_nr)
 {
 /* Get an inode based on its inode number. Do not increase its reference count.
  */

@@ -18,7 +18,7 @@ int fs_chmod()
 /* Perform the chmod(name, mode) system call. */
 
   register struct inode *rip;
-  pmode_t mode;
+  mode_t mode;
 
   mode = fs_m_in.m_vfs_fs_chmod.mode;
 
@@ -72,7 +72,7 @@ int fs_chown()
 /*===========================================================================*
  *				forbidden				     *
  *===========================================================================*/
-int forbidden(register struct inode *rip, pmode_t access_desired)
+int forbidden(struct inode *rip, mode_t access_desired)
 {
 /* Given a pointer to an inode, 'rip', and the access desired, determine
  * if the access is allowed, and if not why not.  The routine looks up the
@@ -81,7 +81,7 @@ int forbidden(register struct inode *rip, pmode_t access_desired)
  */
 
   register struct inode *old_rip = rip;
-  register pmode_t bits, perm_bits;
+  mode_t bits, perm_bits;
   int r, shift;
 
   /* Isolate the relevant rwx bits from the mode. */

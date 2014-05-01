@@ -13,7 +13,7 @@ void put_handle(struct inode *ino);
 
 /* inode.c */
 struct inode *init_inode(void);
-struct inode *find_inode(pino_t ino_nr);
+struct inode *find_inode(ino_t ino_nr);
 void get_inode(struct inode *ino);
 void put_inode(struct inode *ino);
 void link_inode(struct inode *parent, struct inode *ino);
@@ -57,7 +57,7 @@ int do_read(void);
 int do_getdents(void);
 
 /* stat.c */
-pmode_t get_mode(struct inode *ino, int mode);
+mode_t get_mode(struct inode *ino, int mode);
 int do_stat(void);
 int do_chmod(void);
 int do_utime(void);

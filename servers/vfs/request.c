@@ -828,7 +828,7 @@ int req_readsuper(
  *===========================================================================*/
 static int req_readwrite_actual(endpoint_t fs_e, ino_t inode_nr, off_t pos,
 	int rw_flag, endpoint_t user_e, vir_bytes user_addr,
-	unsigned int num_of_bytes, off_t *new_posp, unsigned int *cum_iop,
+	unsigned int num_of_bytes, off_t *new_posp, size_t *cum_iop,
 	int cpflag)
 {
   struct vmnt *vmp;

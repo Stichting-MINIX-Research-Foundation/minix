@@ -8,20 +8,20 @@ struct buf;
 struct inode;
 
 /* buffer.c */
-struct buf *get_block(dev_t dev, pino_t inum);
-void put_block(dev_t dev, pino_t inum);
+struct buf *get_block(dev_t dev, ino_t inum);
+void put_block(dev_t dev, ino_t inum);
 
 /* cache.c */
 void buf_pool(void);
 
 /* inode.c */
-struct inode *alloc_inode(dev_t dev, pmode_t mode, uid_t uid, gid_t gid);
+struct inode *alloc_inode(dev_t dev, mode_t mode, uid_t uid, gid_t gid);
 void dup_inode(struct inode *ip);
-struct inode *find_inode(pino_t numb);
+struct inode *find_inode(ino_t numb);
 void free_inode(struct inode *rip);
 int fs_putnode(message *fs_m_in, message *fs_m_out);
 void init_inode_cache(void);
-struct inode *get_inode(dev_t dev, pino_t numb);
+struct inode *get_inode(dev_t dev, ino_t numb);
 void put_inode(struct inode *rip);
 void update_times(struct inode *rip);
 void wipe_inode(struct inode *rip);

@@ -23,7 +23,7 @@ static int stat_inode(
 /* Common code for stat and fstat system calls. */
 
   struct stat statbuf;
-  pmode_t mo;
+  mode_t mo;
   int r, s;
 
   /* Update the atime, ctime, and mtime fields in the inode, if need be. */

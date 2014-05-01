@@ -14,7 +14,7 @@ int fs_readwrite(message *fs_m_in, message *fs_m_out)
   struct buf *bp;
   cp_grant_id_t gid;
   off_t position, f_size;
-  unsigned int nrbytes, cum_io;
+  size_t nrbytes, cum_io;
   mode_t mode_word;
   struct inode *rip;
   ino_t inumb;
@@ -33,7 +33,7 @@ int fs_readwrite(message *fs_m_in, message *fs_m_out)
   /* Get the values from the request message */
   rw_flag = (fs_m_in->m_type == REQ_READ ? READING : WRITING);
   gid = fs_m_in->m_vfs_fs_readwrite.grant;
-  nrbytes = (unsigned) fs_m_in->m_vfs_fs_readwrite.nbytes;
+  nrbytes = fs_m_in->m_vfs_fs_readwrite.nbytes;
 
   /* We can't read beyond the max file position */
   if (nrbytes > PIPE_BUF) return(EFBIG);
@@ -87,7 +87,7 @@ int fs_readwrite(message *fs_m_in, message *fs_m_out)
 	if (rw_flag == WRITING) rip->i_update |= CTIME | MTIME;
   }
 
-  fs_m_out->m_fs_vfs_readwrite.nbytes = (size_t) cum_io;
+  fs_m_out->m_fs_vfs_readwrite.nbytes = cum_io;
   fs_m_out->m_fs_vfs_readwrite.seek_pos = rip->i_size;
 
   put_inode(rip);

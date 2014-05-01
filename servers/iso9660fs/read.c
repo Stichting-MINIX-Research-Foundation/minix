@@ -143,7 +143,7 @@ int fs_bread(void)
 int fs_getdents(void)
 {
   struct dir_record *dir;
-  pino_t ino;
+  ino_t ino;
   cp_grant_id_t gid;
   size_t block_size;
   off_t pos, block_pos, block, cur_pos, tmpbuf_offset, userbuf_off;
