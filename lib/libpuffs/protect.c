@@ -54,14 +54,14 @@ int fs_chown(void)
   struct vattr va;
   PUFFS_MAKECRED(pcr, &global_kcred);
 
-  if ((pn = puffs_pn_nodewalk(global_pu, 0, &fs_m_in.REQ_INODE_NR)) == NULL)
+  if ((pn = puffs_pn_nodewalk(global_pu, 0, &fs_m_in.m_vfs_fs_chown.inode)) == NULL)
 	return(EINVAL);
 
   /* Not permitted to change the owner of a file on a read-only file sys. */
   if (!is_readonly_fs) {
 	puffs_vattr_null(&va);
-	va.va_uid = fs_m_in.REQ_UID;
-	va.va_gid = fs_m_in.REQ_GID;
+	va.va_uid = fs_m_in.m_vfs_fs_chown.uid;
+	va.va_gid = fs_m_in.m_vfs_fs_chown.gid;
 	va.va_mode = pn->pn_va.va_mode & ~(I_SET_UID_BIT | I_SET_GID_BIT);
 	va.va_ctime = clock_timespec();
 
@@ -70,7 +70,7 @@ int fs_chown(void)
   }
 
   /* Update caller on current mode, as it may have changed. */
-  fs_m_out.RES_MODE = pn->pn_va.va_mode;
+  fs_m_out.m_fs_vfs_chown.mode = pn->pn_va.va_mode;
 
   return(OK);
 }

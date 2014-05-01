@@ -49,21 +49,21 @@ int fs_chown()
   register int r;
 
   /* Temporarily open the file. */
-  if( (rip = get_inode(fs_dev, (pino_t) fs_m_in.REQ_INODE_NR)) == NULL)
+  if( (rip = get_inode(fs_dev, fs_m_in.m_vfs_fs_chown.inode)) == NULL)
 	  return(EINVAL);
 
   /* Not permitted to change the owner of a file on a read-only file sys. */
   r = read_only(rip);
   if (r == OK) {
-	  rip->i_uid = (uid_t) fs_m_in.REQ_UID;
-	  rip->i_gid = (gid_t) fs_m_in.REQ_GID;
+	  rip->i_uid = fs_m_in.m_vfs_fs_chown.uid;
+	  rip->i_gid = fs_m_in.m_vfs_fs_chown.gid;
 	  rip->i_mode &= ~(I_SET_UID_BIT | I_SET_GID_BIT);
 	  rip->i_update |= CTIME;
           IN_MARKDIRTY(rip);
   }
 
   /* Update caller on current mode, as it may have changed. */
-  fs_m_out.RES_MODE = rip->i_mode;
+  fs_m_out.m_fs_vfs_chown.mode = rip->i_mode;
   put_inode(rip);
   
   return(r);

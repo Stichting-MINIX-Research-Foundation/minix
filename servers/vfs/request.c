@@ -144,15 +144,15 @@ int req_chown(
 
   /* Fill in request message */
   m.m_type = REQ_CHOWN;
-  m.REQ_INODE_NR = (pino_t) inode_nr;
-  m.REQ_UID = (puid_t) newuid;
-  m.REQ_GID = (pgid_t) newgid;
+  m.m_vfs_fs_chown.inode = inode_nr;
+  m.m_vfs_fs_chown.uid = newuid;
+  m.m_vfs_fs_chown.gid = newgid;
 
   /* Send/rec request */
   r = fs_sendrec(fs_e, &m);
 
   /* Return new mode to caller. */
-  *new_modep = (mode_t) m.RES_MODE;
+  *new_modep = m.m_fs_vfs_chown.mode;
 
   return(r);
 }
