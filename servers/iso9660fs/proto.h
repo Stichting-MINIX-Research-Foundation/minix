@@ -40,9 +40,6 @@ int advance(struct dir_record *dirp, char string[NAME_MAX], struct
 	dir_record **resp);
 int search_dir(struct dir_record *ldir_ptr,char string [NAME_MAX],pino_t *numb);
 
-/* protect.c */
-int fs_access(void);
-
 /* read.c */
 int fs_read(void);
 int fs_bread(void);
