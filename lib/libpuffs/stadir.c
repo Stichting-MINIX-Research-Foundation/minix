@@ -20,7 +20,7 @@ int fs_stat(void)
   register struct puffs_node *pn;  /* target pnode */
   struct vattr va;
   struct stat statbuf;
-  pmode_t mo;
+  mode_t mo;
   int s;
   PUFFS_MAKECRED(pcr, &global_kcred);
 
@@ -29,7 +29,7 @@ int fs_stat(void)
 	return(EINVAL);
   }
 
-  if ((pn = puffs_pn_nodewalk(global_pu, 0, &fs_m_in.REQ_INODE_NR)) == NULL) {
+  if ((pn = puffs_pn_nodewalk(global_pu, 0, &fs_m_in.m_vfs_fs_stat.inode)) == NULL) {
   	lpuffs_debug("walk failed...\n");
         return(EINVAL);
   }
@@ -67,7 +67,7 @@ int fs_stat(void)
   statbuf.st_gen = va.va_gen;
 
   /* Copy the struct to user space. */
-  r = sys_safecopyto(fs_m_in.m_source, (cp_grant_id_t) fs_m_in.REQ_GRANT,
+  r = sys_safecopyto(fs_m_in.m_source, fs_m_in.m_vfs_fs_stat.grant,
 		     (vir_bytes) 0, (vir_bytes) &statbuf,
 		     (size_t) sizeof(statbuf));
 

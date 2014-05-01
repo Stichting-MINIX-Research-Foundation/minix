@@ -67,10 +67,10 @@ int fs_stat()
   register int r;              /* return value */
   register struct inode *rip;  /* target inode */
 
-  if ((rip = get_inode(fs_dev, (pino_t) fs_m_in.REQ_INODE_NR)) == NULL)
+  if ((rip = get_inode(fs_dev, fs_m_in.m_vfs_fs_stat.inode)) == NULL)
 	return(EINVAL);
 
-  r = stat_inode(rip, fs_m_in.m_source, (cp_grant_id_t) fs_m_in.REQ_GRANT);
+  r = stat_inode(rip, fs_m_in.m_source, fs_m_in.m_vfs_fs_stat.grant);
   put_inode(rip);		/* release the inode */
   return(r);
 }

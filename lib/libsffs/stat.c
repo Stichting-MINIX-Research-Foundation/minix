@@ -48,7 +48,7 @@ int do_stat(void)
   pino_t ino_nr;
   int r;
 
-  ino_nr = m_in.REQ_INODE_NR;
+  ino_nr = m_in.m_vfs_fs_stat.inode;
 
   /* Don't increase the inode refcount: it's already open anyway */
   if ((ino = find_inode(ino_nr)) == NULL)
@@ -91,7 +91,7 @@ int do_stat(void)
 	if (HAS_CHILDREN(ino)) stat.st_nlink++;
   }
 
-  return sys_safecopyto(m_in.m_source, m_in.REQ_GRANT, 0,
+  return sys_safecopyto(m_in.m_source, m_in.m_vfs_fs_stat.grant, 0,
 	(vir_bytes) &stat, sizeof(stat));
 }
 

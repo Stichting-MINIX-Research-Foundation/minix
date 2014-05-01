@@ -19,7 +19,7 @@ int fs_stat(void)
 	struct inode *node;
 	int r;
 
-	if ((node = find_inode(fs_m_in.REQ_INODE_NR)) == NULL)
+	if ((node = find_inode(fs_m_in.m_vfs_fs_stat.inode)) == NULL)
 		return EINVAL;
 
 	memset(&statbuf, 0, sizeof(struct stat));
@@ -50,7 +50,7 @@ int fs_stat(void)
 	statbuf.st_ctime = cur_time;
 
 	/* Copy the struct to user space. */
-	return sys_safecopyto(fs_m_in.m_source, fs_m_in.REQ_GRANT, 0,
+	return sys_safecopyto(fs_m_in.m_source, fs_m_in.m_vfs_fs_stat.grant, 0,
 		(vir_bytes) &statbuf, (phys_bytes) sizeof(statbuf));
 }
 

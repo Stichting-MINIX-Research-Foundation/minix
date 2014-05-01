@@ -1092,8 +1092,8 @@ int req_stat_actual(endpoint_t fs_e, ino_t inode_nr, endpoint_t proc_e,
 
   /* Fill in request message */
   m.m_type = REQ_STAT;
-  m.REQ_INODE_NR = (pino_t) inode_nr;
-  m.REQ_GRANT = grant_id;
+  m.m_vfs_fs_stat.inode = inode_nr;
+  m.m_vfs_fs_stat.grant = grant_id;
 
   /* Send/rec request */
   r = fs_sendrec(fs_e, &m);

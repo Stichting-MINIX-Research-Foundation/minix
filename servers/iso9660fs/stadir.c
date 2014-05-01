@@ -83,8 +83,8 @@ int fs_stat()
   struct dir_record *dir;
   r = EINVAL;
 
-  if ((dir = get_dir_record(fs_m_in.REQ_INODE_NR)) != NULL) {
-	r = stat_dir_record(dir, 0, fs_m_in.m_source, fs_m_in.REQ_GRANT);
+  if ((dir = get_dir_record(fs_m_in.m_vfs_fs_stat.inode)) != NULL) {
+	r = stat_dir_record(dir, 0, fs_m_in.m_source, fs_m_in.m_vfs_fs_stat.grant);
 	release_dir_record(dir);
   } 
 
