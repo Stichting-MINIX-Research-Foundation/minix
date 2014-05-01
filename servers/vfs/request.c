@@ -243,7 +243,7 @@ int req_statvfs(endpoint_t fs_e, struct statvfs *buf)
 
   /* Fill in request message */
   m.m_type = REQ_STATVFS;
-  m.REQ_GRANT = grant_id;
+  m.m_vfs_fs_statvfs.grant = grant_id;
 
   /* Send/rec request */
   r = fs_sendrec(fs_e, &m);

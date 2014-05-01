@@ -52,6 +52,6 @@ int do_statvfs(void)
   statvfs.f_bavail = statvfs.f_bfree;
   statvfs.f_namemax = NAME_MAX;
 
-  return sys_safecopyto(m_in.m_source, m_in.REQ_GRANT, 0,
-	(vir_bytes) &statvfs, sizeof(statvfs));
+  return sys_safecopyto(m_in.m_source, m_in.m_vfs_fs_statvfs.grant, 0,
+			(vir_bytes) &statvfs, sizeof(statvfs));
 }

@@ -68,6 +68,6 @@ int fs_statvfs(void)
 	statvfs.f_flag = ST_NOTRUNC;
 	statvfs.f_namemax = PNAME_MAX;
 
-	return sys_safecopyto(fs_m_in.m_source, fs_m_in.REQ_GRANT, 0,
-		(vir_bytes) &statvfs, sizeof(statvfs));
+	return sys_safecopyto(fs_m_in.m_source, fs_m_in.m_vfs_fs_statvfs.grant,
+				0, (vir_bytes) &statvfs, sizeof(statvfs));
 }

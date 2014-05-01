@@ -431,6 +431,13 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_vfs_fs_stat);
 
 typedef struct {
+	cp_grant_id_t grant;
+
+	uint8_t data[52];
+} mess_vfs_fs_statvfs;
+_ASSERT_MSG_SIZE(mess_vfs_fs_statvfs);
+
+typedef struct {
 	ino_t inode;
 
 	cp_grant_id_t grant;
@@ -547,6 +554,7 @@ typedef struct {
 	mess_vfs_fs_rename m_vfs_fs_rename;
 	mess_vfs_fs_slink m_vfs_fs_slink;
 	mess_vfs_fs_stat m_vfs_fs_stat;
+	mess_vfs_fs_statvfs m_vfs_fs_statvfs;
 	mess_vfs_fs_unlink m_vfs_fs_unlink;
 	mess_vfs_fs_utime m_vfs_fs_utime;
 	mess_vfs_utimens m_vfs_utimens;

@@ -101,8 +101,8 @@ int fs_statvfs()
   st.f_namemax = NAME_MAX;
 
   /* Copy the struct to user space. */
-  r = sys_safecopyto(fs_m_in.m_source, fs_m_in.REQ_GRANT, 0, (vir_bytes) &st,
-                    (phys_bytes) sizeof(st));
+  r = sys_safecopyto(fs_m_in.m_source, fs_m_in.m_vfs_fs_statvfs.grant, 0,
+			(vir_bytes) &st, (phys_bytes) sizeof(st));
 
   return(r);
 }
