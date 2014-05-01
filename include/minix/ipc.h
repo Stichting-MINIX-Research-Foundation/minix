@@ -564,68 +564,72 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_vmmcp_reply);
 
 typedef struct {
-  endpoint_t m_source;		/* who sent the message */
-  int m_type;			/* what kind of message is it */
-  union {
-	mess_u8 m_u8;
-	mess_u16 m_u16;
-	mess_u32 m_u32;
-	mess_u64 m_u64;
+	endpoint_t m_source;		/* who sent the message */
+	int m_type;			/* what kind of message is it */
+	union {
+		mess_u8			m_u8;
+		mess_u16		m_u16;
+		mess_u32		m_u32;
+		mess_u64		m_u64;
 
-	mess_1 m_m1;
-	mess_2 m_m2;
-	mess_3 m_m3;
-	mess_4 m_m4;
-	mess_5 m_m5;
-	mess_7 m_m7;
-	mess_8 m_m8;
-	mess_9 m_m9;
-	mess_10 m_m10;
-	mess_11 m_m11;
-	mess_mmap m_mmap;
-	mess_notify m_notify;
-	mess_sigcalls m_sigcalls;
-	mess_vfs_fs_newnode m_vfs_fs_newnode;
-	mess_fs_vfs_newnode m_fs_vfs_newnode;
-	mess_vfs_fs_breadwrite m_vfs_fs_breadwrite;
-	mess_fs_vfs_breadwrite m_fs_vfs_breadwrite;
-	mess_vfs_fs_chmod m_vfs_fs_chmod;
-	mess_fs_vfs_chmod m_fs_vfs_chmod;
-	mess_vfs_fs_chown m_vfs_fs_chown;
-	mess_fs_vfs_chown m_fs_vfs_chown;
-	mess_vfs_fs_create m_vfs_fs_create;
-	mess_fs_vfs_create m_fs_vfs_create;
-	mess_vfs_fs_flush m_vfs_fs_flush;
-	mess_vfs_fs_ftrunc m_vfs_fs_ftrunc;
-	mess_vfs_fs_getdents m_vfs_fs_getdents;
-	mess_fs_vfs_getdents m_fs_vfs_getdents;
-	mess_vfs_fs_inhibread m_vfs_fs_inhibread;
-	mess_vfs_fs_link m_vfs_fs_link;
-	mess_vfs_fs_lookup m_vfs_fs_lookup;
-	mess_fs_vfs_lookup m_fs_vfs_lookup;
-	mess_vfs_fs_mkdir m_vfs_fs_mkdir;
-	mess_vfs_fs_mknod m_vfs_fs_mknod;
-	mess_vfs_fs_mountpoint m_vfs_fs_mountpoint;
-	mess_vfs_fs_new_driver m_vfs_fs_new_driver;
-	mess_vfs_fs_putnode m_vfs_fs_putnode;
-	mess_vfs_fs_rdlink m_vfs_fs_rdlink;
-	mess_fs_vfs_rdlink m_fs_vfs_rdlink;
-	mess_vfs_fs_readsuper m_vfs_fs_readsuper;
-	mess_fs_vfs_readsuper m_fs_vfs_readsuper;
-	mess_vfs_fs_rename m_vfs_fs_rename;
-	mess_vfs_fs_readwrite m_vfs_fs_readwrite;
-	mess_fs_vfs_readwrite m_fs_vfs_readwrite;
-	mess_vfs_fs_slink m_vfs_fs_slink;
-	mess_vfs_fs_stat m_vfs_fs_stat;
-	mess_vfs_fs_statvfs m_vfs_fs_statvfs;
-	mess_vfs_fs_unlink m_vfs_fs_unlink;
-	mess_vfs_fs_utime m_vfs_fs_utime;
-	mess_vfs_utimens m_vfs_utimens;
-	mess_vm_vfs_mmap m_vm_vfs_mmap;
-	mess_vmmcp m_vmmcp;
-	mess_vmmcp_reply m_vmmcp_reply;
-	u8_t size[56];		/* message payload may have 56 bytes at most */
-  };
+		mess_1			m_m1;
+		mess_2			m_m2;
+		mess_3			m_m3;
+		mess_4			m_m4;
+		mess_5			m_m5;
+		mess_7			m_m7;
+		mess_8			m_m8;
+		mess_9			m_m9;
+		mess_10			m_m10;
+		mess_11			m_m11;
+		mess_mmap		m_mmap;
+		mess_notify		m_notify;
+		mess_sigcalls		m_sigcalls;
+
+		mess_fs_vfs_breadwrite	m_fs_vfs_breadwrite;
+		mess_fs_vfs_chmod	m_fs_vfs_chmod;
+		mess_fs_vfs_chown	m_fs_vfs_chown;
+		mess_fs_vfs_create	m_fs_vfs_create;
+		mess_fs_vfs_getdents	m_fs_vfs_getdents;
+		mess_fs_vfs_lookup	m_fs_vfs_lookup;
+		mess_fs_vfs_newnode	m_fs_vfs_newnode;
+		mess_fs_vfs_rdlink	m_fs_vfs_rdlink;
+		mess_fs_vfs_readsuper	m_fs_vfs_readsuper;
+		mess_fs_vfs_readwrite	m_fs_vfs_readwrite;
+
+		mess_vfs_fs_breadwrite	m_vfs_fs_breadwrite;
+		mess_vfs_fs_chmod	m_vfs_fs_chmod;
+		mess_vfs_fs_chown	m_vfs_fs_chown;
+		mess_vfs_fs_create	m_vfs_fs_create;
+		mess_vfs_fs_flush	m_vfs_fs_flush;
+		mess_vfs_fs_ftrunc	m_vfs_fs_ftrunc;
+		mess_vfs_fs_getdents	m_vfs_fs_getdents;
+		mess_vfs_fs_inhibread	m_vfs_fs_inhibread;
+		mess_vfs_fs_link	m_vfs_fs_link;
+		mess_vfs_fs_lookup	m_vfs_fs_lookup;
+		mess_vfs_fs_mkdir	m_vfs_fs_mkdir;
+		mess_vfs_fs_mknod	m_vfs_fs_mknod;
+		mess_vfs_fs_mountpoint	m_vfs_fs_mountpoint;
+		mess_vfs_fs_newnode	m_vfs_fs_newnode;
+		mess_vfs_fs_new_driver	m_vfs_fs_new_driver;
+		mess_vfs_fs_putnode	m_vfs_fs_putnode;
+		mess_vfs_fs_rdlink	m_vfs_fs_rdlink;
+		mess_vfs_fs_readsuper	m_vfs_fs_readsuper;
+		mess_vfs_fs_rename	m_vfs_fs_rename;
+		mess_vfs_fs_readwrite	m_vfs_fs_readwrite;
+		mess_vfs_fs_slink	m_vfs_fs_slink;
+		mess_vfs_fs_stat	m_vfs_fs_stat;
+		mess_vfs_fs_statvfs	m_vfs_fs_statvfs;
+		mess_vfs_fs_unlink	m_vfs_fs_unlink;
+		mess_vfs_fs_utime	m_vfs_fs_utime;
+
+		mess_vfs_utimens	m_vfs_utimens;
+		mess_vm_vfs_mmap	m_vm_vfs_mmap;
+		mess_vmmcp		m_vmmcp;
+		mess_vmmcp_reply	m_vmmcp_reply;
+
+		u8_t size[56];	/* message payload may have 56 bytes at most */
+	};
 } message __aligned(16);
 
 /* Ensure the complete union respects the IPC assumptions. */

@@ -4,51 +4,6 @@
 #include <sys/types.h>
 #include <limits.h>
 
-/* VFS/FS request fields */
-#define REQ_ACTIME		m9_l2
-#define REQ_ACNSEC		m9_l4
-#define REQ_COUNT		m9_l2
-#define REQ_DEV			m9_ull1
-#define REQ_DIR_INO   		m9_l3
-#define REQ_FLAGS		m9_s3
-#define REQ_GID			m9_s1
-#define REQ_GRANT		m9_l2
-#define REQ_GRANT2		m9_l1 
-#define REQ_GRANT3		m9_l3
-#define REQ_INODE_NR		m9_l1
-#define REQ_MEM_SIZE		m9_l5
-#define REQ_MODE		m9_s3
-#define REQ_MODTIME		m9_l3
-#define REQ_MODNSEC		m9_l5
-#define REQ_NBYTES		m9_l5
-#define REQ_PATH_LEN		m9_s2
-#define REQ_PATH_SIZE		m9_l5
-#define REQ_REN_GRANT_NEW	m9_l1
-#define REQ_REN_GRANT_OLD	m9_l2
-#define REQ_REN_LEN_NEW		m9_s2
-#define REQ_REN_LEN_OLD		m9_s1
-#define REQ_REN_NEW_DIR		m9_l4
-#define REQ_REN_OLD_DIR		m9_l3
-#define REQ_ROOT_INO		m9_l4
-#define REQ_SEEK_POS		m9_ull2
-#define REQ_TRC_START		m9_ull1
-#define REQ_TRC_END		m9_ull2
-#define REQ_UCRED_SIZE		m9_s4 
-#define REQ_UID			m9_s4
-
-/* VFS/FS reply fields */
-#define RES_DEV			m9_ull1
-#define RES_GID			m9_s1
-#define RES_INODE_NR		m9_l1
-#define RES_FILE_SIZE		m9_ull2
-#define RES_MODE		m9_s2
-#define RES_NBYTES		m9_l5
-#define RES_OFFSET		m9_s2
-#define RES_SEEK_POS		m9_ull2
-#define RES_SYMLOOP		m9_s3
-#define RES_UID			m9_s4
-#define	RES_FLAGS		m9_s3
-
 /* VFS/FS flags */
 #define REQ_RDONLY		001	/* FS is mounted read-only */
 #define REQ_ISROOT		002	/* FS is root file system */

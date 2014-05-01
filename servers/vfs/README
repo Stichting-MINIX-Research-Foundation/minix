@@ -571,7 +571,7 @@ For File Servers that support concurrent requests, it's useful to know which
 locking guarantees VFS provides for vmnts and vnodes, so it can take that
 into account when protecting internal data structures. READ = TLL_READ,
 READSER = TLL_READSER, WRITE = TLL_WRITE. The vnode locks applies to the
-REQ_INODE_NR field in requests, unless the notes say otherwise.
+'''inode''' field in requests, unless the notes say otherwise.
 {{{
 ------------------------------------------------------------------------------
 | request      | vmnt    | vnode   | notes                                   |
@@ -602,8 +602,8 @@ REQ_INODE_NR field in requests, unless the notes say otherwise.
 +--------------+---------+---------+-----------------------------------------+
 | REQ_INHIBREAD|         | READ    |                                         |
 +--------------+---------+---------+-----------------------------------------+
-| REQ_LINK     | READSER | WRITE   | REQ_INODE_NR is locked READ             |
-|              |         |         | REQ_DIR_INO is locked WRITE             |
+| REQ_LINK     | READSER | WRITE   | vfs_fs_link.inode is locked READ        |
+|              |         |         | vfs_fs_link.dir_ino is locked WRITE     |
 +--------------+---------+---------+-----------------------------------------+
 | REQ_LOOKUP   | READSER |         |                                         |
 +--------------+---------+---------+-----------------------------------------+
