@@ -130,17 +130,17 @@ int fs_unlink()
   phys_bytes len;
 
   /* Copy the last component */
-  len = fs_m_in.REQ_PATH_LEN; /* including trailing '\0' */
+  len = fs_m_in.m_vfs_fs_unlink.path_len; /* including trailing '\0' */
   if (len > NAME_MAX + 1 || len > EXT2_NAME_MAX + 1)
 	return(ENAMETOOLONG);
 
-  r = sys_safecopyfrom(VFS_PROC_NR, (cp_grant_id_t) fs_m_in.REQ_GRANT,
+  r = sys_safecopyfrom(VFS_PROC_NR, fs_m_in.m_vfs_fs_unlink.grant,
                        (vir_bytes) 0, (vir_bytes) string, (size_t) len);
   if (r != OK) return r;
   NUL(string, len, sizeof(string));
 
   /* Temporarily open the dir. */
-  if( (rldirp = get_inode(fs_dev, (pino_t) fs_m_in.REQ_INODE_NR)) == NULL)
+  if((rldirp = get_inode(fs_dev, fs_m_in.m_vfs_fs_unlink.inode)) == NULL)
 	  return(EINVAL);
 
   /* The last directory exists.  Does the file also exist? */

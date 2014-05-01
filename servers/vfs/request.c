@@ -978,9 +978,9 @@ char *lastc;
 
   /* Fill in request message */
   m.m_type = REQ_RMDIR;
-  m.REQ_INODE_NR = (pino_t) inode_nr;
-  m.REQ_GRANT = grant_id;
-  m.REQ_PATH_LEN = len;
+  m.m_vfs_fs_unlink.inode = inode_nr;
+  m.m_vfs_fs_unlink.grant = grant_id;
+  m.m_vfs_fs_unlink.path_len = len;
 
   /* Send/rec request */
   r = fs_sendrec(fs_e, &m);
@@ -1161,9 +1161,9 @@ char *lastc;
 
   /* Fill in request message */
   m.m_type = REQ_UNLINK;
-  m.REQ_INODE_NR = (pino_t) inode_nr;
-  m.REQ_GRANT = grant_id;
-  m.REQ_PATH_LEN = len;
+  m.m_vfs_fs_unlink.inode = inode_nr;
+  m.m_vfs_fs_unlink.grant = grant_id;
+  m.m_vfs_fs_unlink.path_len = len;
 
   /* Send/rec request */
   r = fs_sendrec(fs_e, &m);

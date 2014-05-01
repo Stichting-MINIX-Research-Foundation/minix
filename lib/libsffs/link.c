@@ -245,12 +245,12 @@ int do_unlink(void)
 	return EROFS;
 
   /* Get the path string and possibly preexisting inode for the given path. */
-  if ((r = get_name(m_in.REQ_GRANT, m_in.REQ_PATH_LEN, name)) != OK)
+  if ((r = get_name(m_in.m_vfs_fs_unlink.grant, m_in.m_vfs_fs_unlink.path_len, name)) != OK)
 	return r;
 
   if (!strcmp(name, ".") || !strcmp(name, "..")) return EPERM;
 
-  if ((parent = find_inode(m_in.REQ_INODE_NR)) == NULL)
+  if ((parent = find_inode(m_in.m_vfs_fs_unlink.inode)) == NULL)
 	return EINVAL;
 
   if ((r = verify_dentry(parent, name, path, &ino)) != OK)
@@ -292,13 +292,13 @@ int do_rmdir(void)
 	return EROFS;
 
   /* Get the path string and possibly preexisting inode for the given path. */
-  if ((r = get_name(m_in.REQ_GRANT, m_in.REQ_PATH_LEN, name)) != OK)
+  if ((r = get_name(m_in.m_vfs_fs_unlink.grant, m_in.m_vfs_fs_unlink.path_len, name)) != OK)
 	return r;
 
   if (!strcmp(name, ".")) return EINVAL;
   if (!strcmp(name, "..")) return ENOTEMPTY;
 
-  if ((parent = find_inode(m_in.REQ_INODE_NR)) == NULL)
+  if ((parent = find_inode(m_in.m_vfs_fs_unlink.inode)) == NULL)
 	return EINVAL;
 
   if ((r = verify_dentry(parent, name, path, &ino)) != OK)

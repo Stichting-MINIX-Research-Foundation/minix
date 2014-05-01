@@ -408,18 +408,18 @@ int fs_unlink(void)
   int len;
 
   /* Copy the last component */
-  len = fs_m_in.REQ_PATH_LEN;
+  len = fs_m_in.m_vfs_fs_unlink.path_len;
   pcn.pcn_namelen = len - 1;
   if (pcn.pcn_namelen > NAME_MAX)
         return(ENAMETOOLONG);
 
-  r = sys_safecopyfrom(VFS_PROC_NR, (cp_grant_id_t) fs_m_in.REQ_GRANT,
+  r = sys_safecopyfrom(VFS_PROC_NR, fs_m_in.m_vfs_fs_unlink.grant,
 		       (vir_bytes) 0, (vir_bytes) pcn.pcn_name,
 		       (size_t) len);
   if (r != OK) return (r);
   NUL(pcn.pcn_name, len, sizeof(pcn.pcn_name));
 
-  if ((pn_dir = puffs_pn_nodewalk(global_pu, 0, &fs_m_in.REQ_INODE_NR)) == NULL)
+  if ((pn_dir = puffs_pn_nodewalk(global_pu, 0, &fs_m_in.m_vfs_fs_unlink.inode)) == NULL)
 	return(EINVAL);
 
   /* The last directory exists. Does the file also exist? */
