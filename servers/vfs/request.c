@@ -42,10 +42,10 @@ static int req_breadwrite_actual(endpoint_t fs_e, endpoint_t user_e, dev_t dev, 
 
   /* Fill in request message */
   m.m_type = rw_flag == READING ? REQ_BREAD : REQ_BWRITE;
-  m.REQ_DEV = dev;
-  m.REQ_GRANT = grant_id;
-  m.REQ_SEEK_POS = pos;
-  m.REQ_NBYTES = num_of_bytes;
+  m.m_vfs_fs_breadwrite.device = dev;
+  m.m_vfs_fs_breadwrite.grant = grant_id;
+  m.m_vfs_fs_breadwrite.seek_pos = pos;
+  m.m_vfs_fs_breadwrite.nbytes = num_of_bytes;
 
   /* Send/rec request */
   r = fs_sendrec(fs_e, &m);
@@ -53,8 +53,8 @@ static int req_breadwrite_actual(endpoint_t fs_e, endpoint_t user_e, dev_t dev, 
   if (r != OK) return(r);
 
   /* Fill in response structure */
-  *new_pos = m.RES_SEEK_POS;
-  *cum_iop = m.RES_NBYTES;
+  *new_pos = m.m_fs_vfs_breadwrite.seek_pos;
+  *cum_iop = m.m_fs_vfs_breadwrite.nbytes;
 
   return(OK);
 }
@@ -92,9 +92,9 @@ int req_bpeek(endpoint_t fs_e, dev_t dev, off_t pos, unsigned int num_of_bytes)
 
   /* Fill in request message */
   m.m_type = REQ_BPEEK;
-  m.REQ_DEV = dev;
-  m.REQ_SEEK_POS = pos;
-  m.REQ_NBYTES = num_of_bytes;
+  m.m_vfs_fs_breadwrite.device = dev;
+  m.m_vfs_fs_breadwrite.seek_pos = pos;
+  m.m_vfs_fs_breadwrite.nbytes = num_of_bytes;
 
   /* Send/rec request */
   return fs_sendrec(fs_e, &m);

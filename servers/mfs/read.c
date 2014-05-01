@@ -160,13 +160,13 @@ int fs_breadwrite(void)
   
   r = OK;
 
-  target_dev = fs_m_in.REQ_DEV;
+  target_dev = fs_m_in.m_vfs_fs_breadwrite.device;
   
   /* Get the values from the request message */ 
   rw_flag = (fs_m_in.m_type == REQ_BREAD ? READING : WRITING);
-  gid = (cp_grant_id_t) fs_m_in.REQ_GRANT;
-  position = fs_m_in.REQ_SEEK_POS;
-  nrbytes = (size_t) fs_m_in.REQ_NBYTES;
+  gid = fs_m_in.m_vfs_fs_breadwrite.grant;
+  position = fs_m_in.m_vfs_fs_breadwrite.seek_pos;
+  nrbytes = fs_m_in.m_vfs_fs_breadwrite.nbytes;
   
   block_size = get_block_size(target_dev);
 
@@ -199,12 +199,12 @@ int fs_breadwrite(void)
 	  position += chunk;	/* position within the file */
   }
   
-  fs_m_out.RES_SEEK_POS = position; 
+  fs_m_out.m_fs_vfs_breadwrite.seek_pos = position;
   
   if (lmfs_rdwt_err() != OK) r = lmfs_rdwt_err();	/* check for disk error */
   if (lmfs_rdwt_err() == END_OF_FILE) r = OK;
 
-  fs_m_out.RES_NBYTES = cum_io;
+  fs_m_out.m_fs_vfs_breadwrite.nbytes = cum_io;
   
   return(r);
 }

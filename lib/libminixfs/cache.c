@@ -936,9 +936,9 @@ int lmfs_rdwt_err(void)
 int lmfs_do_bpeek(message *m)
 {
 	block_t startblock, b, limitblock;
-	dev_t dev = m->REQ_DEV;
-	off_t extra, pos = m->REQ_SEEK_POS;
-	size_t len = m->REQ_NBYTES;
+	dev_t dev = m->m_vfs_fs_breadwrite.device;
+	off_t extra, pos = m->m_vfs_fs_breadwrite.seek_pos;
+	size_t len = m->m_vfs_fs_breadwrite.nbytes;
 	struct buf *bp;
 
 	assert(m->m_type == REQ_BPEEK);

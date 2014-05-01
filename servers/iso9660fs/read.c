@@ -95,9 +95,9 @@ int fs_bread(void)
   r = OK;
   
   rw_flag = (fs_m_in.m_type == REQ_BREAD ? READING : WRITING);
-  gid = fs_m_in.REQ_GRANT;
-  position = fs_m_in.REQ_SEEK_POS;
-  nrbytes = (unsigned) fs_m_in.REQ_NBYTES;
+  gid = fs_m_in.m_vfs_fs_breadwrite.grant;
+  position = fs_m_in.m_vfs_fs_breadwrite.seek_pos;
+  nrbytes = fs_m_in.m_vfs_fs_breadwrite.nbytes;
   block_size = v_pri.logical_block_size_l;
   dir = v_pri.dir_rec_root;
 
@@ -125,12 +125,12 @@ int fs_bread(void)
     position += chunk;	/* position within the file */
   }
   
-  fs_m_out.RES_SEEK_POS = position; 
+  fs_m_out.m_fs_vfs_breadwrite.seek_pos = position;
   
   if (rdwt_err != OK) r = rdwt_err;	/* check for disk error */
   if (rdwt_err == END_OF_FILE) r = OK;
 
-  fs_m_out.RES_NBYTES = cum_io;
+  fs_m_out.m_fs_vfs_breadwrite.nbytes = cum_io;
   
   return(r);
 }

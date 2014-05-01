@@ -147,6 +147,26 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_sigcalls);
 
 typedef struct {
+	dev_t device;
+	off_t seek_pos;
+
+	cp_grant_id_t grant;
+	size_t nbytes;
+
+	uint8_t data[32];
+} mess_vfs_fs_breadwrite;
+_ASSERT_MSG_SIZE(mess_vfs_fs_breadwrite);
+
+typedef struct {
+	off_t seek_pos;
+
+	size_t nbytes;
+
+	uint8_t data[44];
+} mess_fs_vfs_breadwrite;
+_ASSERT_MSG_SIZE(mess_fs_vfs_breadwrite);
+
+typedef struct {
 	ino_t inode;
 
 	mode_t mode;
@@ -547,6 +567,8 @@ typedef struct {
 	mess_sigcalls m_sigcalls;
 	mess_vfs_fs_newnode m_vfs_fs_newnode;
 	mess_fs_vfs_newnode m_fs_vfs_newnode;
+	mess_vfs_fs_breadwrite m_vfs_fs_breadwrite;
+	mess_fs_vfs_breadwrite m_fs_vfs_breadwrite;
 	mess_vfs_fs_chmod m_vfs_fs_chmod;
 	mess_fs_vfs_chmod m_fs_vfs_chmod;
 	mess_vfs_fs_chown m_vfs_fs_chown;
