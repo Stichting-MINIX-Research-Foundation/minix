@@ -1,0 +1,21 @@
+commit 31245c9b262fa983d9711f7795b35ad31c3a6618
+Author: Ben Gras <ben@minix3.org>
+Date:   Sat May 3 19:40:19 2014 +0200
+
+    plt
+
+diff --git a/gold/i386.cc b/gold/i386.cc
+index a2f7522..f06d60d 100644
+--- a/gold/i386.cc
++++ b/gold/i386.cc
+@@ -2543,6 +2543,10 @@ Target_i386::do_finalize_sections(
+   Symbol* sym = this->global_offset_table_;
+   if (sym != NULL)
+     {
++      // create a plt
++      if (this->plt_ == NULL)
++        this->make_plt_section(symtab, layout);
++
+       uint32_t data_size = this->got_plt_->current_data_size();
+       symtab->get_sized_symbol<32>(sym)->set_symsize(data_size);
+     }
