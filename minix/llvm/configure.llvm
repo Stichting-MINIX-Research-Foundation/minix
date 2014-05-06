@@ -1,0 +1,133 @@
+#!/bin/bash
+
+############################
+#
+# Author: Koustubha Bhat
+# Date  : 3-April-2014
+# VU University, Amsterdam.
+#
+############################
+
+##################
+# Initialization
+##################
+
+set -o errexit
+
+MYPWD="`pwd`"
+MINIX_ROOT=
+MINIX_LLVM_DIR=
+GOLD_DEST_DIR=
+DEFAULT_LLVM_ROOT=
+EXITCODE=0
+
+function check_current_dir()
+{
+   #Make sure we are running from the root dir of the Minix sources
+   if [ -d ./minix ] && [ -d ./drivers ] && [ -d ./servers ] ; then
+        MINIX_ROOT="${MYPWD}"
+   elif [ -d ../../minix ] && [ -d ../../drivers ] && [ -d ../../servers ]; then
+        MINIX_ROOT="${MYPWD}/../.."
+   else
+        echo "Please run the script from either of the following locations:"
+        echo "> Root of the Minix sources."
+        echo "          OR"
+        echo "> minix/llvm directory of the Minix sources."
+        exit 1
+   fi
+
+   MINIX_LLVM_DIR="${MINIX_ROOT}/minix/llvm"
+   GOLD_DEST_DIR="${MINIX_ROOT}/minix/llvm/bin"
+   DEFAULT_LLVM_ROOT="${MINIX_ROOT}/../../llvm-apps"
+}
+
+# Make sure we are running from the right directory
+check_current_dir
+
+# LLVM ROOT is the bridging connection from minix branch to the llvm-apps branch
+if [ "${ROOT}" == "" ]; then
+	
+	echo "\${ROOT} is not set."
+	echo "Please specify the path to the \"llvm-apps\" repository..."
+	echo "Default value: ${DEFAULT_LLVM_ROOT} . "
+	echo "If this is correct, press ENTER. Otherwise please enter the path."
+	read response
+
+	if [ "" == "${response}" ]; then
+		ROOT=${DEFAULT_LLVM_ROOT}
+	else
+		ROOT=${response}
+	fi
+fi	
+echo "LLVM root directory is set to :"
+echo "  ${ROOT}"
+
+# Persist the LLVM ROOT path information
+ROOT_1=`echo ${ROOT} | sed "s/\\\//\\\\\\\\\//g"`
+sed -i "s/ROOT=.*$/ROOT=\"${ROOT_1}\"/g" ${MINIX_LLVM_DIR}/minix.inc
+
+if [ ! -d ${ROOT}/.tmp ]; then
+	mkdir ${ROOT}/.tmp 2>/dev/null || true
+fi
+
+# Load useful functions and environment variables from llvm-apps repo.
+. ${ROOT}/apps/scripts/include/configure.llvm.inc
+
+# Set default values for essential variables
+: ${JOBS=1}
+: ${GEN_GOLD_PLUGIN="yes"}
+: ${REBUILD_MINIX="yes"}
+
+########################
+# Generate Gold Plugin
+########################
+
+if [ "${GEN_GOLD_PLUGIN}" == "yes" ] && [ -f "${MYPWD}/.gold_generated" ]; then
+	echo "It is found that Gold plugin has already been generated. Would you like to re-generate? [y | n]"
+	read response
+	if [ "y" == "$response" ] || [ "Y" == "$response" ]; then
+		echo "Gold shall be regenerated."
+	else
+		GEN_GOLD_PLUGIN="no"
+	fi
+fi
+
+if [ "${GEN_GOLD_PLUGIN}" == "yes" ]; then
+
+	echo LLVMPREFIX= ${LLVMPREFIX}
+        ${MINIX_LLVM_DIR}/generate_gold_plugin.sh 
+	if [ ! -f "${GOLD_DEST_DIR}/libLTO.so" ] || [ ! -f "${GOLD_DEST_DIR}/LLVMgold.so" ]; then 
+                echo "Failure: generate_gold_plugin.sh"
+		exit 1
+        fi
+
+       	echo "Finished generating gold plugin."
+        touch "${MYPWD}/.gold_generated"
+else
+	echo "Gold plugin generation: NO"
+fi
+
+########################
+# Build Minix
+########################
+if [ "${REBUILD_MINIX}" == "yes" ]; then
+
+	echo "Building Minix..."
+	echo "CC:$CC"
+	echo "CXX:$CXX"
+	echo "JOBS:$JOBS"
+	echo 
+	cd ${MINIX_ROOT}
+	BUILDVARS="-V MKBITCODE=yes -V SLOPPY_FLIST=yes" ./releasetools/x86_hdimage.sh
+	EXITCODE=$?
+	cd ${MYPWD}
+	if [ "$EXITCODE" != "0" ]; then
+        	echo "Error: Failed building Minix source code."
+	        exit $EXITCODE
+	else
+		echo "Completed building Minix source code."
+		exit $EXITCODE
+	fi
+else
+	echo "Building Minix: NO"
+fi

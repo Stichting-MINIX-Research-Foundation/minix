@@ -1,0 +1,156 @@
+#!/bin/bash
+
+############################
+#
+# Author: Koustubha Bhat
+# Date  : 3-April-2014
+# VU University, Amsterdam.
+#
+############################
+
+set -o errexit
+
+MYPWD=`pwd`
+MINIX_ROOT=
+MINIX_LLVM_DIR=
+TARGET_MODULES=
+MINIX_MODS=
+LIBNAMES=
+STATIC_LIBS=
+LDFLAGS_PLACEHOLDER=" "
+
+# Set default values to essential variables.
+: ${GENERATE_MAP="no"}
+: ${C="hello"}
+
+function usage()
+{
+   echo "C=<target Minix module> $0 [<static library name>]"
+   echo 
+   echo "Examples:"
+   echo "C=pm,vfs ./$0 dummy"
+   echo "C=drivers ./$0 dummy"
+   echo 
+}
+
+function check_current_dir()
+{
+   #Make sure we are running from the root dir of the Minix sources
+   if [ -d ./minix ] && [ -d ./drivers ] && [ -d ./servers ] ; then
+        MINIX_ROOT="${MYPWD}"
+   elif [ -d ../../minix ] && [ -d ../../drivers ] && [ -d ../../servers ]; then
+        MINIX_ROOT="${MYPWD}/../.."
+   else
+        echo "Please run the script from either of the following locations:"
+        echo "> Root of the Minix sources."
+        echo "          OR"
+        echo "> minix/llvm directory of the Minix sources."
+        exit 1
+   fi
+
+   MINIX_LLVM_DIR="${MINIX_ROOT}/minix/llvm"
+}
+
+function find_static_libs()
+{
+	local stat_libs_llvmapps=
+	local stat_libs_minix=
+	local install_dir_save=
+
+	stat_libs_llvmapps=`build_llvm_libs $*`
+	
+	install_dir_save=${INSTALL_DIR}
+
+	INSTALL_DIR=${MINIX_LLVM_BIN_DIR}
+	stat_libs_minix=`build_llvm_libs $*`
+
+	INSTALL_DIR=${install_dir_save}
+
+	echo "${stat_libs_llvmapps} ${stat_libs_minix}"
+}
+
+
+#Make sure we are running from the right directory
+check_current_dir
+
+# Arguments check
+if [ "$1" == "--help" ] || [ "$1" == "-h" ]; then
+	usage
+        exit 1
+fi
+
+# set up the bridge to llvm-apps repository and initialize
+. ${MINIX_LLVM_DIR}/minix.inc
+. ${ROOT}/apps/scripts/include/configure.llvm.inc
+
+echo "LLVM root directory is set to :"
+echo "	${ROOT}"
+echo ".so and .bcc binaries of LLVM passes set to be picked up from:"
+echo "	${INSTALL_DIR}"
+echo " 	     and"
+echo "  ${MINIX_LLVM_BIN_DIR}"
+echo 
+
+LIBNAMES="$*"
+
+EXIT_FLAG=no
+for l in ${LIBNAMES}; 
+do
+        if [ ! -f "${INSTALL_DIR}/$l.bcc" ] && [ ! -f "${MINIX_LLVM_BIN_DIR}/$l.bcc" ]; then
+                echo "ERROR: The LLVM pass file \"$l.bcc\" doesn't exit."
+		echo "Searched in: ${INSTALL_DIR} and ${MINIX_LLVM_BIN_DIR}."
+		EXIT_FLAG=yes
+        fi
+done
+
+if [ "${EXIT_FLAG}" == "yes" ]; then
+	exit 2
+fi
+
+# Picking up the selected modules
+
+if [ "${GENERATE_MAP}" != "" ] && [[ ${GENERATE_MAP} =~ [yY][eE][sS] ]]; then
+	generate_modules_map
+fi 
+
+STATIC_LIBS=`find_static_libs $*`
+
+TARGET_MODULES=`echo $C | sed -e "s/,/ /g"`
+
+for m in ${TARGET_MODULES}
+do
+	for p in `get_modules_path $m`
+	do 
+		MINIX_MODS="${MINIX_MODS} $p"
+	done 
+done
+
+# Show info
+echo "relink.llvm: Executing with following parameters..."
+echo "LIBRARIES                 :       $*"
+echo "Target Minix modules      :       ${MINIX_MODS}"
+echo
+
+cd ${MINIX_ROOT}	
+
+for m in ${MINIX_MODS}
+do 
+	echo "Relinking $m ..."
+	n=`get_module_name $m`
+	if [ "" == "$n" ]; then
+		echo "Error: Couldn't fetch the module name for $m"
+		continue
+	fi
+	clean_module $n $m "relink"
+	if [ "${STATIC_LIBS}"!="" ]; then
+		STATIC_LIBS=`echo ${STATIC_LIBS} | sed -e "s/\ /\\\ /g"`
+		LDFLAGS_PLACEHOLDER="BITCODE_LD_FLAGS.$n=\"${STATIC_LIBS}\""
+	fi
+
+	env "`echo ${LDFLAGS_PLACEHOLDER}`" MKBITCODE=yes  SLOPPY_FLIST=yes \
+	${TOOLDIR}/nbmake-${ARCH} -C $m
+	echo 
+done
+
+cd ${MYPWD}
+

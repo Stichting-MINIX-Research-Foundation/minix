@@ -579,6 +579,9 @@ ${OBJS.${_P}} ${LOBJS.${_P}}: ${DPSRCS}
 .if defined(__MINIX) && ${USE_BITCODE:Uno} == "yes"
 CLEANFILES+= ${_P}.opt.bcl ${_P}.bcl ${_P}.bcl.o
 
+OPTFLAGS.${_P}?= ${OPTFLAGS}
+BITCODE_LD_FLAGS.${_P}+= ${BITCODE_LD_FLAGS}
+
 ${_P}.bcl: .gdbinit ${LIBCRT0} ${LIBCRTI} ${OBJS.${_P}} ${LIBC} ${LIBCRTBEGIN} \
     ${LIBCRTEND} ${_DPADD.${_P}}
 	${_MKTARGET_LINK}
@@ -589,12 +592,12 @@ ${_P}.bcl: .gdbinit ${LIBCRT0} ${LIBCRTI} ${OBJS.${_P}} ${LIBC} ${LIBCRTBEGIN} \
 		${OBJS.${_P}} ${LLVM_LINK_ARGS} ${_LDADD.${_P}:N-shared} \
 		${_LDSTATIC.${_P}} ${_PROGLDOPTS} \
 		-Wl,-r \
-		${BITCODE_LD_FLAGS} \
+		${BITCODE_LD_FLAGS.${_P}} \
 		-Wl,-plugin-opt=emit-llvm
 
 ${_P}.opt.bcl: ${_P}.bcl ${LLVM_PASS}
 	${_MKTARGET_LINK}
-	${OPT} ${OPTFLAGS} -o ${.TARGET} ${_P}.bcl
+	${OPT} ${OPTFLAGS.${_P}} -o ${.TARGET} ${_P}.bcl
 
 ${_P}.bcl.o: ${_P}.opt.bcl
 	${_MKTARGET_LINK}
@@ -608,7 +611,7 @@ ${_P}: ${_P}.bcl.o
 		-L${DESTDIR}/usr/lib \
 		${_LDSTATIC.${_P}} -o ${.TARGET} \
 		${.TARGET}.bcl.o ${_PROGLDOPTS} ${_LDADD.${_P}} \
-		${BITCODE_LD_FLAGS} \
+		${BITCODE_LD_FLAGS.${_P}} \
 		-Wl,--allow-multiple-definition
 .endif	# !commands(${_P})
 

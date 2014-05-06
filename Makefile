@@ -137,7 +137,7 @@ _SRC_TOP_OBJ_=
 # _SUBDIR is used to set SUBDIR, after removing directories that have
 # BUILD_${dir}=no, or that have no ${dir}/Makefile.
 #
-_SUBDIR=	tools lib include gnu external crypto/external bin games
+_SUBDIR=	tools lib include gnu external crypto/external minix bin games
 .if defined(__MINIX)
 _SUBDIR+=	commands man benchmarks test
 _SUBDIR+=	kernel servers drivers

@@ -2,7 +2,7 @@
 
 cd $(dirname $0)
 
-: ${NETBSDSRCDIR=${PWD}/..}
+: ${NETBSDSRCDIR=${PWD}/../..}
 : ${LLVMSRCDIR=${NETBSDSRCDIR}/external/bsd/llvm/dist}
 : ${ARCH=i386}
 : ${JOBS=1}
@@ -44,15 +44,14 @@ ${LLVMSRCDIR}/llvm/configure \
     ac_cv_path_NEATO="echo neato" \
     ac_cv_path_TWOPI="echo twopi" \
     ac_cv_path_XDOT="echo xdot" \
-    --enable-optimized \
-    CC=cc
+    --enable-optimized 
 
 make -j ${JOBS}
 
 # Copy the gold plugin where the NetBSD build system expects it.
-mkdir -p ${NETBSDSRCDIR}/external/bsd/llvm/passes/lib/
-cp ${OBJ_LLVM}/./Release+Asserts/lib/libLTO.so   ${NETBSDSRCDIR}/external/bsd/llvm/passes/lib/
-cp ${OBJ_LLVM}/./Release+Asserts/lib/LLVMgold.so ${NETBSDSRCDIR}/external/bsd/llvm/passes/lib/
+mkdir -p ${NETBSDSRCDIR}/minix/llvm/bin/
+cp ${OBJ_LLVM}/./Release+Asserts/lib/libLTO.so   ${NETBSDSRCDIR}/minix/llvm/bin/
+cp ${OBJ_LLVM}/./Release+Asserts/lib/LLVMgold.so ${NETBSDSRCDIR}/minix/llvm/bin/
 
 # Copy useful LLVM tools
 mkdir -p ${CROSS_TOOLS}
@@ -61,6 +60,6 @@ cp ${OBJ_LLVM}/./Release+Asserts/bin/opt    ${CROSS_TOOLS}
 cp ${OBJ_LLVM}/./Release+Asserts/bin/llvm-* ${CROSS_TOOLS}
 
 # Generate and Install default MINIX passes
-cd ${NETBSDSRCDIR}/external/bsd/llvm/passes/WeakAliasModuleOverride
+cd ${NETBSDSRCDIR}/minix/llvm/passes/WeakAliasModuleOverride
 make LLVMPREFIX=${OBJ_LLVM}/./Release+Asserts/ install
 

@@ -2,7 +2,7 @@ QUIET=@
 ECHO=echo
 CP=cp
 
-PASSLIBNAME:= WeakAliasModuleOverride.so
+PASSLIBNAME:= weak-alias-module-override
 
 LLVM_VERSION = $($LLVMPREFIX/bin/llvm-config --version | sed "s/[^0-9]//g")
 CFLAGS  += -Wno-long-long -Wall -W -Wno-unused-parameter -Wwrite-strings -DHAVE_EXCEPTIONS=0
@@ -19,8 +19,8 @@ $(PASSLIBNAME): $(OBJS)
 	$(QUIET) $(CXX) $(CFLAGS) $(INCLUDES) -c -o $@ $<
 
 install: $(PASSLIBNAME)
-	$(QUIET) -mkdir -p ../lib
-	$(QUIET) $(CP)  $(PASSLIBNAME) ../lib/$(PASSLIBNAME)
+	$(QUIET) -mkdir -p ../../bin
+	$(QUIET) $(CP)  $(PASSLIBNAME) ../../bin/$(PASSLIBNAME)
 
 clean:
 	-rm -f *.o *.so

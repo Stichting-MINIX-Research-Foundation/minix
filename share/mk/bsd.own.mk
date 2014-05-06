@@ -61,8 +61,8 @@ MKRUMP:=	no
 MKSKEY:=	no
 MKYP:=		no
 
-WEAKALIASOVERRIDEPASS?=${NETBSDSRCDIR}/external/bsd/llvm/passes/lib/WeakAliasModuleOverride.so
-GOLD_PLUGIN?=${NETBSDSRCDIR}/external/bsd/llvm/passes/lib/LLVMgold.so
+WEAKALIASOVERRIDEPASS?=${NETBSDSRCDIR}/minix/llvm/bin/weak-alias-module-override
+GOLD_PLUGIN?=${NETBSDSRCDIR}/minix/llvm/bin/LLVMgold.so
 
 # By default when running LLVM passes:
 #  -  do not run optimization while running LLVM passes
