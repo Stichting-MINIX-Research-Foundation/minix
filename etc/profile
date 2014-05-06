@@ -5,7 +5,7 @@ set -o emacs
 set -o tabcomplete
 
 # Set the default path
-PATH=/usr/local/bin:/usr/pkg/bin:/usr/bin:/bin:/usr/games
+PATH=/usr/X11R7/bin:/usr/local/bin:/usr/pkg/bin:/usr/bin:/bin:/usr/games
 
 # Add ~/bin, iff it is present
 if [ -e ${HOME}/bin ]; then
@@ -14,7 +14,7 @@ fi
 
 # Add sbin for root
 if [ "x$(id -u)" = "x0" ]; then
-	PATH=/usr/local/sbin:/usr/pkg/sbin:/usr/sbin:/sbin:${PATH}
+	PATH=/usr/X11R7/sbin:/usr/local/sbin:/usr/pkg/sbin:/usr/sbin:/sbin:${PATH}
 
 	if [ -e ${HOME}/sbin ]; then
 		PATH=${HOME}/sbin:${PATH}
