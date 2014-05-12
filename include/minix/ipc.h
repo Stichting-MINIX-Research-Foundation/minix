@@ -146,6 +146,21 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_sigcalls);
 
 typedef struct {
+	pid_t pid;
+	int options;
+
+	uint8_t padding[48];
+} mess_lc_pm_waitpid;
+_ASSERT_MSG_SIZE(mess_lc_pm_waitpid);
+
+typedef struct {
+	int status;
+
+	uint8_t padding[52];
+} mess_pm_lc_waitpid;
+_ASSERT_MSG_SIZE(mess_pm_lc_waitpid);
+
+typedef struct {
 	vir_bytes name;
 	size_t len;
 	int fd;
@@ -887,6 +902,8 @@ typedef struct {
 		mess_fs_vfs_readsuper	m_fs_vfs_readsuper;
 		mess_fs_vfs_readwrite	m_fs_vfs_readwrite;
 
+		mess_lc_pm_waitpid	m_lc_pm_waitpid;
+
 		mess_lc_vfs_chown	m_lc_vfs_chown;
 		mess_lc_vfs_close	m_lc_vfs_close;
 		mess_lc_vfs_creat	m_lc_vfs_creat;
@@ -918,6 +935,8 @@ typedef struct {
 		mess_lsys_vfs_checkperms m_lsys_vfs_checkperms;
 		mess_lsys_vfs_copyfd	m_lsys_vfs_copyfd;
 		mess_lsys_vfs_mapdriver	m_lsys_vfs_mapdriver;
+
+		mess_pm_lc_waitpid	m_pm_lc_waitpid;
 
 		mess_pm_lsys_getepinfo	m_pm_lsys_getepinfo;
 		mess_pm_lsys_getprocnr	m_pm_lsys_getprocnr;

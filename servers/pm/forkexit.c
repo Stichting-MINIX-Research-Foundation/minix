@@ -463,8 +463,8 @@ int do_waitpid()
   int i, pidarg, options, children;
 
   /* Set internal variables. */
-  pidarg  = m_in.PM_WAITPID_PID;		/* 1st param */
-  options = m_in.PM_WAITPID_OPTIONS;		/* 3rd param */
+  pidarg  = m_in.m_lc_pm_waitpid.pid;		/* 1st param */
+  options = m_in.m_lc_pm_waitpid.options;	/* 3rd param */
   if (pidarg == 0) pidarg = -mp->mp_procgrp;	/* pidarg < 0 ==> proc grp */
 
   /* Is there a child waiting to be collected? At this point, pidarg != 0:
@@ -499,7 +499,7 @@ int do_waitpid()
 				if (sigismember(&rp->mp_sigtrace, i)) {
 					sigdelset(&rp->mp_sigtrace, i);
 
-					mp->mp_reply.PM_WAITPID_STATUS = W_STOPCODE(i);
+					mp->mp_reply.m_pm_lc_waitpid.status = W_STOPCODE(i);
 					return(rp->mp_pid);
 				}
 			}
@@ -647,7 +647,7 @@ register struct mproc *child;	/* tells which process is exiting */
   parent = &mproc[mp_parent];
 
   /* Wake up the parent by sending the reply message. */
-  parent->mp_reply.PM_WAITPID_STATUS =
+  parent->mp_reply.m_pm_lc_waitpid.status =
 	W_EXITCODE(child->mp_exitstatus, child->mp_sigstatus);
   reply(child->mp_parent, child->mp_pid);
   parent->mp_flags &= ~WAITING;		/* parent no longer waiting */
@@ -671,7 +671,7 @@ struct mproc *child;			/* tells which process is exiting */
   	panic("tell_tracer: child not a zombie");
   tracer = &mproc[mp_tracer];
 
-  tracer->mp_reply.PM_WAITPID_STATUS =
+  tracer->mp_reply.m_pm_lc_waitpid.status =
 	W_EXITCODE(child->mp_exitstatus, (child->mp_sigstatus & 0377));
   reply(child->mp_tracer, child->mp_pid);
   tracer->mp_flags &= ~WAITING;		/* tracer no longer waiting */
