@@ -14,10 +14,10 @@ ssize_t readlink(const char *name, char *buffer, size_t bufsiz)
   message m;
 
   memset(&m, 0, sizeof(m));
-  m.VFS_READLINK_NAMELEN = strlen(name) + 1;
-  m.VFS_READLINK_BUFSIZE = bufsiz;
-  m.VFS_READLINK_NAME = (char *) __UNCONST(name);
-  m.VFS_READLINK_BUF = (char *) buffer;
+  m.m_lc_vfs_readlink.namelen = strlen(name) + 1;
+  m.m_lc_vfs_readlink.bufsize = bufsiz;
+  m.m_lc_vfs_readlink.name = (vir_bytes)name;
+  m.m_lc_vfs_readlink.buf = (vir_bytes)buffer;
 
   return(_syscall(VFS_PROC_NR, VFS_READLINK, &m));
 }

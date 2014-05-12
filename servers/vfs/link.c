@@ -480,10 +480,10 @@ int do_rdlink(void)
   size_t vname_length, buf_size;
   vir_bytes buf;
 
-  vname = (vir_bytes) job_m_in.VFS_READLINK_NAME;
-  vname_length = job_m_in.VFS_READLINK_NAMELEN;
-  buf = (vir_bytes) job_m_in.VFS_READLINK_BUF;
-  buf_size = (size_t) job_m_in.VFS_READLINK_BUFSIZE;
+  vname = job_m_in.m_lc_vfs_readlink.name;
+  vname_length = job_m_in.m_lc_vfs_readlink.namelen;
+  buf = job_m_in.m_lc_vfs_readlink.buf;
+  buf_size = job_m_in.m_lc_vfs_readlink.bufsize;
   if (buf_size > SSIZE_MAX) return(EINVAL);
 
   lookup_init(&resolve, fullpath, PATH_RET_SYMLINK, &vmp, &vp);

@@ -232,12 +232,6 @@
 
 #define NR_VFS_CALLS		49	/* highest number from base plus one */
 
-/* Field names for the readlink(2) call. */
-#define VFS_READLINK_NAME	m1_p1	/* const char * */
-#define VFS_READLINK_NAMELEN	m1_i1	/* size_t */
-#define VFS_READLINK_BUF	m1_p2	/* char * */
-#define VFS_READLINK_BUFSIZE	m1_i2	/* size_t */
-
 /* Field names for the stat(2) and lstat(2) calls. */
 #define VFS_STAT_NAME		m1_p1	/* const char * */
 #define VFS_STAT_LEN		m1_i1	/* size_t */
