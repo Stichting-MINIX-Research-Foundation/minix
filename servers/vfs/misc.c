@@ -104,9 +104,7 @@ int do_fcntl(void)
   tll_access_t locktype;
 
   scratch(fp).file.fd_nr = job_m_in.m_lc_vfs_fcntl.fd;
-  /* LSC: io_buffer is used everywhere as a valid VFS memory space pointer.
-   * Seems downright scary to me. */
-  scratch(fp).io.io_buffer = (char *)job_m_in.m_lc_vfs_fcntl.arg_ptr;
+  scratch(fp).io.io_buffer = job_m_in.m_lc_vfs_fcntl.arg_ptr;
   scratch(fp).io.io_nbytes = job_m_in.m_lc_vfs_fcntl.cmd;
   fcntl_req = job_m_in.m_lc_vfs_fcntl.cmd;
   fcntl_argx = job_m_in.m_lc_vfs_fcntl.arg_int;
@@ -172,7 +170,7 @@ int do_fcntl(void)
 	else if (!(f->filp_mode & W_BIT)) r = EBADF;
 	else {
 		/* Copy flock data from userspace. */
-		r = sys_datacopy_wrapper(who_e, (vir_bytes)scratch(fp).io.io_buffer,
+		r = sys_datacopy_wrapper(who_e, scratch(fp).io.io_buffer,
 			SELF, (vir_bytes) &flock_arg, sizeof(flock_arg));
 	}
 
@@ -442,7 +440,7 @@ int do_vm_call(void)
 
 			if(result == OK) {
 				result = actual_read_write_peek(fp, PEEKING,
-					req_fd, NULL, length);
+					req_fd, /* vir_bytes */ 0, length);
 			}
 
 			break;

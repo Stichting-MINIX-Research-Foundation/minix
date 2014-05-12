@@ -327,7 +327,7 @@ void wait_for(endpoint_t who)
  *===========================================================================*/
 void pipe_suspend(filp, buf, size)
 struct filp *filp;
-char *buf;
+vir_bytes buf;
 size_t size;
 {
 /* Take measures to suspend the processing of the present system call.

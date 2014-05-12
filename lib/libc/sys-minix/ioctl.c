@@ -48,7 +48,7 @@ int     ioctl(int fd, unsigned long request, ...)
 {
   int r, request_save;
   message m;
-  void *addr;
+  vir_bytes addr;
   void *data;
   va_list ap;
 
@@ -66,12 +66,12 @@ int     ioctl(int fd, unsigned long request, ...)
   switch (request) {
 	case I2C_IOCTL_EXEC:
 		rewrite_i2c_netbsd_to_minix(&i2c, data);
-		addr = (void *) &i2c;
+		addr = (vir_bytes) &i2c;
 		request = MINIX_I2C_IOCTL_EXEC;
 		break;
 	default:
 		/* Keep original as-is */
-		addr = (void *) data;
+		addr = data;
 		break;
   }
 

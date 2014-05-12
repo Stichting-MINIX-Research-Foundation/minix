@@ -32,7 +32,7 @@ int vm_vfs_procctl_handlemem(endpoint_t ep, vir_bytes mem, vir_bytes len, int fl
 /* device.c */
 int cdev_open(dev_t dev, int flags);
 int cdev_close(dev_t dev);
-int cdev_io(int op, dev_t dev, endpoint_t proc_e, void *buf, off_t pos,
+int cdev_io(int op, dev_t dev, endpoint_t proc_e, vir_bytes buf, off_t pos,
 	unsigned long bytes, int flags);
 int cdev_select(dev_t dev, int ops);
 int cdev_cancel(dev_t dev);
@@ -168,7 +168,7 @@ int pipe_check(struct filp *filp, int rw_flag, int oflags, int bytes,
 void release(struct vnode *vp, int op, int count);
 void revive(endpoint_t proc_e, int returned);
 void suspend(int why);
-void pipe_suspend(struct filp *rfilp, char *buf, size_t size);
+void pipe_suspend(struct filp *rfilp, vir_bytes buf, size_t size);
 void unsuspend_by_endpt(endpoint_t proc_e);
 void wait_for(endpoint_t proc_e);
 
@@ -187,12 +187,12 @@ int do_getdents(void);
 void lock_bsf(void);
 void unlock_bsf(void);
 void check_bsf_lock(void);
-int do_read_write_peek(int rw_flag, int fd, char *buf, size_t bytes);
-int actual_read_write_peek(struct fproc *rfp, int rw_flag, int fd, char *buf,
+int do_read_write_peek(int rw_flag, int fd, vir_bytes buf, size_t bytes);
+int actual_read_write_peek(struct fproc *rfp, int rw_flag, int fd, vir_bytes buf,
 	size_t bytes);
-int read_write(struct fproc *rfp, int rw_flag, struct filp *f, char *buffer,
+int read_write(struct fproc *rfp, int rw_flag, struct filp *f, vir_bytes buffer,
 	size_t nbytes, endpoint_t for_e);
-int rw_pipe(int rw_flag, endpoint_t usr, struct filp *f, char *buf,
+int rw_pipe(int rw_flag, endpoint_t usr, struct filp *f, vir_bytes buf,
 	size_t req_size);
 
 /* request.c */
@@ -208,7 +208,7 @@ int req_create(endpoint_t fs_e, ino_t inode_nr, int omode, uid_t uid,
 int req_flush(endpoint_t fs_e, dev_t dev);
 int req_statvfs(endpoint_t fs_e, struct statvfs *buf);
 int req_ftrunc(endpoint_t fs_e, ino_t inode_nr, off_t start, off_t end);
-int req_getdents(endpoint_t fs_e, ino_t inode_nr, off_t pos, char *buf,
+int req_getdents(endpoint_t fs_e, ino_t inode_nr, off_t pos, vir_bytes buf,
 	size_t size, off_t *new_pos, int direct);
 int req_inhibread(endpoint_t fs_e, ino_t inode_nr);
 int req_link(endpoint_t fs_e, ino_t link_parent, char *lastc,

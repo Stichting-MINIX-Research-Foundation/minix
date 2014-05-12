@@ -30,8 +30,8 @@
  *===========================================================================*/
 int do_read(void)
 {
-  return(do_read_write_peek(READING, job_m_in.VFS_READWRITE_FD,
-          job_m_in.VFS_READWRITE_BUF, (size_t) job_m_in.VFS_READWRITE_LEN));
+  return(do_read_write_peek(READING, job_m_in.m_lc_vfs_readwrite.fd,
+          job_m_in.m_lc_vfs_readwrite.buf, job_m_in.m_lc_vfs_readwrite.len));
 }
 
 
@@ -82,7 +82,7 @@ void check_bsf_lock(void)
  *				actual_read_write_peek			     *
  *===========================================================================*/
 int actual_read_write_peek(struct fproc *rfp, int rw_flag, int io_fd,
-	char *io_buf, size_t io_nbytes)
+	vir_bytes io_buf, size_t io_nbytes)
 {
 /* Perform read(fd, buffer, nbytes) or write(fd, buffer, nbytes) call. */
   struct filp *f;
@@ -121,7 +121,7 @@ int actual_read_write_peek(struct fproc *rfp, int rw_flag, int io_fd,
 /*===========================================================================*
  *				do_read_write_peek			     *
  *===========================================================================*/
-int do_read_write_peek(int rw_flag, int io_fd, char *io_buf, size_t io_nbytes)
+int do_read_write_peek(int rw_flag, int io_fd, vir_bytes io_buf, size_t io_nbytes)
 {
 	return actual_read_write_peek(fp, rw_flag, io_fd, io_buf, io_nbytes);
 }
@@ -130,7 +130,7 @@ int do_read_write_peek(int rw_flag, int io_fd, char *io_buf, size_t io_nbytes)
  *				read_write				     *
  *===========================================================================*/
 int read_write(struct fproc *rfp, int rw_flag, struct filp *f,
-	char *buf, size_t size, endpoint_t for_e)
+	vir_bytes buf, size_t size, endpoint_t for_e)
 {
   register struct vnode *vp;
   off_t position, res_pos;
@@ -207,7 +207,7 @@ int read_write(struct fproc *rfp, int rw_flag, struct filp *f,
 		r = req_bpeek(vp->v_bfs_e, vp->v_sdev, position, size);
 	} else {
 		r = req_breadwrite(vp->v_bfs_e, for_e, vp->v_sdev, position,
-		       size, (vir_bytes) buf, rw_flag, &res_pos, &res_cum_io);
+		       size, buf, rw_flag, &res_pos, &res_cum_io);
 		if (r == OK) {
 			position = res_pos;
 			cum_io += res_cum_io;
@@ -227,7 +227,7 @@ int read_write(struct fproc *rfp, int rw_flag, struct filp *f,
 	} else {
 		off_t new_pos;
 		r = req_readwrite(vp->v_fs_e, vp->v_inode_nr, position,
-			rw_flag, for_e, (vir_bytes) buf, size, &new_pos,
+			rw_flag, for_e, buf, size, &new_pos,
 			&cum_io_incr);
 
 		if (r >= 0) {
@@ -273,9 +273,9 @@ int do_getdents(void)
   off_t new_pos;
   register struct filp *rfilp;
 
-  scratch(fp).file.fd_nr = job_m_in.VFS_READWRITE_FD;
-  scratch(fp).io.io_buffer = job_m_in.VFS_READWRITE_BUF;
-  scratch(fp).io.io_nbytes = (size_t) job_m_in.VFS_READWRITE_LEN;
+  scratch(fp).file.fd_nr = job_m_in.m_lc_vfs_readwrite.fd;
+  scratch(fp).io.io_buffer = job_m_in.m_lc_vfs_readwrite.buf;
+  scratch(fp).io.io_nbytes = job_m_in.m_lc_vfs_readwrite.len;
 
   /* Is the file descriptor valid? */
   if ( (rfilp = get_filp(scratch(fp).file.fd_nr, VNODE_READ)) == NULL)
@@ -306,7 +306,7 @@ int rw_pipe(rw_flag, usr_e, f, buf, req_size)
 int rw_flag;			/* READING or WRITING */
 endpoint_t usr_e;
 struct filp *f;
-char *buf;
+vir_bytes buf;
 size_t req_size;
 {
   int r, oflags, partial_pipe = 0;
@@ -345,7 +345,7 @@ size_t req_size;
 	panic("unmapped pipe");
 
   r = req_readwrite(vp->v_mapfs_e, vp->v_mapinode_nr, position, rw_flag, usr_e,
-		    (vir_bytes) buf, size, &new_pos, &cum_io_incr);
+		    buf, size, &new_pos, &cum_io_incr);
 
   if (r != OK) {
 	return(r);

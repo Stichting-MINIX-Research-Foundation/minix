@@ -621,8 +621,8 @@ char ename[NAME_MAX + 1];
   if (!S_ISDIR(dirp->v_mode)) return(EBADF);
 
   do {
-	r = req_getdents(dirp->v_fs_e, dirp->v_inode_nr, pos, buf, sizeof(buf),
-			 &new_pos, 1);
+	r = req_getdents(dirp->v_fs_e, dirp->v_inode_nr, pos, (vir_bytes)buf,
+		sizeof(buf), &new_pos, 1);
 
 	if (r == 0) {
 		return(ENOENT); /* end of entries -- matching inode !found */

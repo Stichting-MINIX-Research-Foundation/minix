@@ -225,7 +225,7 @@ _ASSERT_MSG_SIZE(mess_lc_vfs_getvfsstat);
 typedef struct {
 	int fd;
 	unsigned long req;
-	void *arg;
+	vir_bytes arg;
 
 	uint8_t padding[44];
 } mess_lc_vfs_ioctl;
@@ -311,6 +311,15 @@ typedef struct {
 	uint8_t padding[40];
 } mess_lc_vfs_readlink;
 _ASSERT_MSG_SIZE(mess_lc_vfs_readlink);
+
+typedef struct {
+	int fd;
+	vir_bytes buf;
+	size_t len;
+
+	uint8_t padding[44];
+} mess_lc_vfs_readwrite;
+_ASSERT_MSG_SIZE(mess_lc_vfs_readwrite);
 
 typedef struct {
 	uint32_t nfds;
@@ -866,6 +875,7 @@ typedef struct {
 		mess_lc_vfs_path	m_lc_vfs_path;
 		mess_lc_vfs_pipe2	m_lc_vfs_pipe2;
 		mess_lc_vfs_readlink	m_lc_vfs_readlink;
+		mess_lc_vfs_readwrite	m_lc_vfs_readwrite;
 		mess_lc_vfs_select	m_lc_vfs_select;
 		mess_lc_vfs_stat	m_lc_vfs_stat;
 		mess_lc_vfs_statvfs1	m_lc_vfs_statvfs1;

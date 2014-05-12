@@ -14,8 +14,8 @@ ssize_t read(int fd, void *buffer, size_t nbytes)
   message m;
 
   memset(&m, 0, sizeof(m));
-  m.VFS_READWRITE_FD = fd;
-  m.VFS_READWRITE_LEN = nbytes;
-  m.VFS_READWRITE_BUF = (char *) buffer;
+  m.m_lc_vfs_readwrite.fd = fd;
+  m.m_lc_vfs_readwrite.len = nbytes;
+  m.m_lc_vfs_readwrite.buf = (vir_bytes)buffer;
   return(_syscall(VFS_PROC_NR, VFS_READ, &m));
 }

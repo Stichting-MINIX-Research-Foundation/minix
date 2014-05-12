@@ -36,7 +36,7 @@
 static int cdev_opcl(int op, dev_t dev, int flags);
 static int block_io(endpoint_t driver_e, message *mess_ptr);
 static cp_grant_id_t make_grant(endpoint_t driver_e, endpoint_t user_e, int op,
-	void *buf, unsigned long size);
+	vir_bytes buf, unsigned long size);
 
 /*===========================================================================*
  *				bdev_open				     *
@@ -104,7 +104,7 @@ int bdev_close(dev_t dev)
  *				bdev_ioctl				     *
  *===========================================================================*/
 static int bdev_ioctl(dev_t dev, endpoint_t proc_e, unsigned long req,
-	void *buf)
+	vir_bytes buf)
 {
 /* Perform an I/O control operation on a block device. */
   struct dmap *dp;
@@ -155,7 +155,7 @@ static int bdev_ioctl(dev_t dev, endpoint_t proc_e, unsigned long req,
  *				make_grant				     *
  *===========================================================================*/
 static cp_grant_id_t make_grant(endpoint_t driver_e, endpoint_t user_e, int op,
-	void *buf, unsigned long bytes)
+	vir_bytes buf, unsigned long bytes)
 {
 /* Create a magic grant for the given operation and buffer. */
   cp_grant_id_t gid;
@@ -165,7 +165,7 @@ static cp_grant_id_t make_grant(endpoint_t driver_e, endpoint_t user_e, int op,
   switch (op) {
   case CDEV_READ:
   case CDEV_WRITE:
-	gid = cpf_grant_magic(driver_e, user_e, (vir_bytes) buf,
+	gid = cpf_grant_magic(driver_e, user_e, buf,
 		(size_t) bytes, op == CDEV_READ ? CPF_WRITE : CPF_READ);
 	break;
 
@@ -186,7 +186,7 @@ static cp_grant_id_t make_grant(endpoint_t driver_e, endpoint_t user_e, int op,
 	 * although now that we no longer identify responses based on grants,
 	 * this is not strictly necessary.
 	 */
-	gid = cpf_grant_magic(driver_e, user_e, (vir_bytes) buf, size, access);
+	gid = cpf_grant_magic(driver_e, user_e, buf, size, access);
 	break;
 
   default:
@@ -249,7 +249,7 @@ int cdev_io(
   int op,			/* CDEV_READ, CDEV_WRITE, or CDEV_IOCTL */
   dev_t dev,			/* major-minor device number */
   endpoint_t proc_e,		/* in whose address space is buf? */
-  void *buf,			/* virtual address of the buffer */
+  vir_bytes buf,		/* virtual address of the buffer */
   off_t pos,			/* byte position */
   unsigned long bytes,		/* how many bytes to transfer, or request */
   int flags			/* special flags, like O_NONBLOCK */
@@ -490,11 +490,11 @@ int do_ioctl(void)
   struct filp *f;
   register struct vnode *vp;
   dev_t dev;
-  void *argx;
+  vir_bytes argx;
 
   scratch(fp).file.fd_nr = job_m_in.m_lc_vfs_ioctl.fd;
   ioctlrequest = job_m_in.m_lc_vfs_ioctl.req;
-  argx = job_m_in.m_lc_vfs_ioctl.arg;
+  argx = (vir_bytes)job_m_in.m_lc_vfs_ioctl.arg;
 
   if ((f = get_filp(scratch(fp).file.fd_nr, VNODE_READ)) == NULL)
 	return(err_code);

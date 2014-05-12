@@ -10,7 +10,7 @@ EXTERN struct scratchpad {
 	struct filp *filp;
   } file;
   struct io_cmd {
-	char *io_buffer;
+	vir_bytes io_buffer;
 	size_t io_nbytes;
   } io;
 } scratchpad[NR_PROCS];

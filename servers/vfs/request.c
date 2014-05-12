@@ -287,7 +287,7 @@ static int req_getdents_actual(
   endpoint_t fs_e,
   ino_t inode_nr,
   off_t pos,
-  char *buf,
+  vir_bytes buf,
   size_t size,
   off_t *new_pos,
   int direct,
@@ -303,9 +303,9 @@ static int req_getdents_actual(
   assert(vmp != NULL);
 
   if (direct) {
-	grant_id = cpf_grant_direct(fs_e, (vir_bytes) buf, size, CPF_WRITE);
+	grant_id = cpf_grant_direct(fs_e, buf, size, CPF_WRITE);
   } else {
-	grant_id = cpf_grant_magic(fs_e, who_e, (vir_bytes) buf, size,
+	grant_id = cpf_grant_magic(fs_e, who_e, buf, size,
 				   CPF_WRITE | cpflag);
   }
 
@@ -341,7 +341,7 @@ int req_getdents(
   endpoint_t fs_e,
   ino_t inode_nr,
   off_t pos,
-  char *buf,
+  vir_bytes buf,
   size_t size,
   off_t *new_pos,
   int direct)
@@ -352,8 +352,7 @@ int req_getdents(
 		direct, CPF_TRY);
 
 	if(r == EFAULT && !direct) {
-		if((r=vm_vfs_procctl_handlemem(who_e, (vir_bytes) buf,
-			size, 1)) != OK) {
+		if((r=vm_vfs_procctl_handlemem(who_e, buf, size, 1)) != OK) {
 			return r;
 		}
 

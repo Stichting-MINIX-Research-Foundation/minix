@@ -175,7 +175,7 @@ static void adjust_offsets(Elf_Phdr phdrs[], int phnum)
  *===========================================================================*/
 static void write_buf(struct filp *f, char *buf, size_t size)
 {
-  read_write(fp, WRITING, f, buf, size, VFS_PROC_NR);
+  read_write(fp, WRITING, f, (vir_bytes)buf, size, VFS_PROC_NR);
 }
 
 /*===========================================================================*
