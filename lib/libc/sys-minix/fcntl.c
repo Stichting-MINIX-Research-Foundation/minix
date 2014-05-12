@@ -23,19 +23,19 @@ int fcntl(int fd, int cmd, ...)
      case F_DUPFD:
      case F_SETFD:
      case F_SETFL:
-	m.VFS_FCNTL_ARG_INT = va_arg(argp, int);
+	m.m_lc_vfs_fcntl.arg_int = va_arg(argp, int);
 	break;
      case F_GETLK:
      case F_SETLK:
      case F_SETLKW:
      case F_FREESP:
-	m.VFS_FCNTL_ARG_PTR = (char *) va_arg(argp, struct flock *);
+	m.m_lc_vfs_fcntl.arg_ptr = va_arg(argp, struct flock *);
 	break;
   }
 
   /* Clean up and make the system call. */
   va_end(argp);
-  m.VFS_FCNTL_FD = fd;
-  m.VFS_FCNTL_CMD = cmd;
+  m.m_lc_vfs_fcntl.fd = fd;
+  m.m_lc_vfs_fcntl.cmd = cmd;
   return(_syscall(VFS_PROC_NR, VFS_FCNTL, &m));
 }

@@ -828,10 +828,10 @@ struct fproc *rfp;
 	break;
   case VFS_FCNTL:
 	assert(blocked_on == FP_BLOCKED_ON_LOCK);
-	m_in.VFS_FCNTL_FD = scratch(rfp).file.fd_nr;
-	m_in.VFS_FCNTL_CMD = scratch(rfp).io.io_nbytes;
-	m_in.VFS_FCNTL_ARG_PTR = scratch(rfp).io.io_buffer;
-	assert(m_in.VFS_FCNTL_CMD == F_SETLKW);
+	m_in.m_lc_vfs_fcntl.fd = scratch(rfp).file.fd_nr;
+	m_in.m_lc_vfs_fcntl.cmd = scratch(rfp).io.io_nbytes;
+	m_in.m_lc_vfs_fcntl.arg_ptr = (vir_bytes)scratch(rfp).io.io_buffer;
+	assert(m_in.m_lc_vfs_fcntl.cmd == F_SETLKW);
 	break;
   default:
 	panic("unblocking call %d blocked on %d ??", m_in.m_type, blocked_on);

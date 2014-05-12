@@ -103,11 +103,13 @@ int do_fcntl(void)
   int new_fd, fl, r = OK, fcntl_req, fcntl_argx;
   tll_access_t locktype;
 
-  scratch(fp).file.fd_nr = job_m_in.VFS_FCNTL_FD;
-  scratch(fp).io.io_buffer = job_m_in.VFS_FCNTL_ARG_PTR;
-  scratch(fp).io.io_nbytes = job_m_in.VFS_FCNTL_CMD;
-  fcntl_req = job_m_in.VFS_FCNTL_CMD;
-  fcntl_argx = job_m_in.VFS_FCNTL_ARG_INT;
+  scratch(fp).file.fd_nr = job_m_in.m_lc_vfs_fcntl.fd;
+  /* LSC: io_buffer is used everywhere as a valid VFS memory space pointer.
+   * Seems downright scary to me. */
+  scratch(fp).io.io_buffer = (char *)job_m_in.m_lc_vfs_fcntl.arg_ptr;
+  scratch(fp).io.io_nbytes = job_m_in.m_lc_vfs_fcntl.cmd;
+  fcntl_req = job_m_in.m_lc_vfs_fcntl.cmd;
+  fcntl_argx = job_m_in.m_lc_vfs_fcntl.arg_int;
 
   /* Is the file descriptor valid? */
   locktype = (fcntl_req == F_FREESP) ? VNODE_WRITE : VNODE_READ;
@@ -170,7 +172,7 @@ int do_fcntl(void)
 	else if (!(f->filp_mode & W_BIT)) r = EBADF;
 	else {
 		/* Copy flock data from userspace. */
-		r = sys_datacopy_wrapper(who_e, (vir_bytes) scratch(fp).io.io_buffer,
+		r = sys_datacopy_wrapper(who_e, (vir_bytes)scratch(fp).io.io_buffer,
 			SELF, (vir_bytes) &flock_arg, sizeof(flock_arg));
 	}
 

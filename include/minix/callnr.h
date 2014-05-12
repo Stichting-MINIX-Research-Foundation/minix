@@ -232,12 +232,6 @@
 
 #define NR_VFS_CALLS		49	/* highest number from base plus one */
 
-/* Field names for the fcntl(2) call. */
-#define VFS_FCNTL_FD		m1_i1	/* int */
-#define VFS_FCNTL_CMD		m1_i2	/* int */
-#define VFS_FCNTL_ARG_INT	m1_i3	/* int */
-#define VFS_FCNTL_ARG_PTR	m1_p1	/* struct flock * */
-
 /* Field names for the mknod(2) call. */
 #define VFS_MKNOD_NAME		m1_p1	/* const char * */
 #define VFS_MKNOD_LEN		m1_i1	/* size_t */
