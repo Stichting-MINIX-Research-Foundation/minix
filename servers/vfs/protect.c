@@ -50,8 +50,8 @@ int do_chmod(void)
 		return(err_code);
 	if ((vp = eat_path(&resolve, fp)) == NULL) return(err_code);
   } else {	/* call_nr == VFS_FCHMOD */
-	rfd = job_m_in.VFS_FCHMOD_FD;
-	new_mode = (mode_t) job_m_in.VFS_FCHMOD_MODE;
+	rfd = job_m_in.m_lc_vfs_fchmod.fd;
+	new_mode = job_m_in.m_lc_vfs_fchmod.mode;
 	/* File is already opened; get a pointer to vnode from filp. */
 	if ((flp = get_filp(rfd, VNODE_WRITE)) == NULL) return(err_code);
 	vp = flp->filp_vno;

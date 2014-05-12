@@ -232,10 +232,6 @@
 
 #define NR_VFS_CALLS		49	/* highest number from base plus one */
 
-/* Field names for the fchmod(2) call. */
-#define VFS_FCHMOD_FD		m1_i1	/* int */
-#define VFS_FCHMOD_MODE		m1_i2	/* mode_t */
-
 /* Field names for the close(2) call. */
 #define VFS_CLOSE_FD		m1_i1	/* int */
 

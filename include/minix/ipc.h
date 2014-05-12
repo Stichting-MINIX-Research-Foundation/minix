@@ -175,6 +175,14 @@ _ASSERT_MSG_SIZE(mess_lc_vfs_fchdir);
 
 typedef struct {
 	int fd;
+	mode_t mode;
+
+	uint8_t padding[48];
+} mess_lc_vfs_fchmod;
+_ASSERT_MSG_SIZE(mess_lc_vfs_fchmod);
+
+typedef struct {
+	int fd;
 	int cmd;
 	int arg_int;
 	vir_bytes arg_ptr;	/* struct flock * */
@@ -837,6 +845,7 @@ typedef struct {
 		mess_lc_vfs_chown	m_lc_vfs_chown;
 		mess_lc_vfs_creat	m_lc_vfs_creat;
 		mess_lc_vfs_fchdir	m_lc_vfs_fchdir;
+		mess_lc_vfs_fchmod	m_lc_vfs_fchmod;
 		mess_lc_vfs_fcntl	m_lc_vfs_fcntl;
 		mess_lc_vfs_fstat	m_lc_vfs_fstat;
 		mess_lc_vfs_fsync	m_lc_vfs_fsync;

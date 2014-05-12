@@ -10,7 +10,7 @@ int fchmod(int fd, mode_t mode)
   message m;
 
   memset(&m, 0, sizeof(m));
-  m.VFS_FCHMOD_FD = fd;
-  m.VFS_FCHMOD_MODE = mode;
+  m.m_lc_vfs_fchmod.fd = fd;
+  m.m_lc_vfs_fchmod.mode = mode;
   return(_syscall(VFS_PROC_NR, VFS_FCHMOD, &m));
 }
