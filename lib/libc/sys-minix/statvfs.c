@@ -15,10 +15,10 @@ int statvfs1(const char *name, struct statvfs *buffer, int flags)
   message m;
 
   memset(&m, 0, sizeof(m));
-  m.VFS_STATVFS1_LEN = strlen(name) + 1;
-  m.VFS_STATVFS1_NAME = (char *) __UNCONST(name);
-  m.VFS_STATVFS1_BUF = (char *) buffer;
-  m.VFS_STATVFS1_FLAGS = flags;
+  m.m_lc_vfs_statvfs1.len = strlen(name) + 1;
+  m.m_lc_vfs_statvfs1.name =  (vir_bytes)name;
+  m.m_lc_vfs_statvfs1.buf = (vir_bytes)buffer;
+  m.m_lc_vfs_statvfs1.flags = flags;
   return(_syscall(VFS_PROC_NR, VFS_STATVFS1, &m));
 }
 

@@ -167,6 +167,17 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_lc_vfs_select);
 
 typedef struct {
+	int fd;
+	int flags;
+	size_t len;
+	vir_bytes name;
+	vir_bytes buf;
+
+	uint8_t padding[36];
+} mess_lc_vfs_statvfs1;
+_ASSERT_MSG_SIZE(mess_lc_vfs_statvfs1);
+
+typedef struct {
 	dev_t device;
 	off_t seek_pos;
 
@@ -619,6 +630,7 @@ typedef struct {
 
 		mess_lc_vfs_getvfsstat	m_lc_vfs_getvfsstat;
 		mess_lc_vfs_select	m_lc_vfs_select;
+		mess_lc_vfs_statvfs1	m_lc_vfs_statvfs1;
 
 		mess_vfs_fs_breadwrite	m_vfs_fs_breadwrite;
 		mess_vfs_fs_chmod	m_vfs_fs_chmod;

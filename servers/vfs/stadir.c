@@ -302,10 +302,10 @@ int do_statvfs(void)
   vir_bytes vname1, statbuf;
   size_t vname1_length;
 
-  vname1 = (vir_bytes) job_m_in.VFS_STATVFS1_NAME;
-  vname1_length = (size_t) job_m_in.VFS_STATVFS1_LEN;
-  statbuf = (vir_bytes) job_m_in.VFS_STATVFS1_BUF;
-  flags = job_m_in.VFS_STATVFS1_FLAGS;
+  vname1 = job_m_in.m_lc_vfs_statvfs1.name;
+  vname1_length = job_m_in.m_lc_vfs_statvfs1.len;
+  statbuf = job_m_in.m_lc_vfs_statvfs1.buf;
+  flags = job_m_in.m_lc_vfs_statvfs1.flags;
 
   lookup_init(&resolve, fullpath, PATH_NOFLAGS, &vmp, &vp);
   resolve.l_vmnt_lock = VMNT_READ;
@@ -332,9 +332,9 @@ int do_fstatvfs(void)
   int r, rfd, flags;
   vir_bytes statbuf;
 
-  rfd = job_m_in.VFS_STATVFS1_FD;
-  statbuf = (vir_bytes) job_m_in.VFS_STATVFS1_BUF;
-  flags = job_m_in.VFS_STATVFS1_FLAGS;
+  rfd = job_m_in.m_lc_vfs_statvfs1.fd;
+  statbuf = job_m_in.m_lc_vfs_statvfs1.buf;
+  flags = job_m_in.m_lc_vfs_statvfs1.flags;
 
   /* Is the file descriptor valid? */
   if ((rfilp = get_filp(rfd, VNODE_READ)) == NULL) return(err_code);
