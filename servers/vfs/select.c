@@ -97,8 +97,8 @@ int do_select(void)
   struct selectentry *se;
   vir_bytes vtimeout;
 
-  nfds = job_m_in.VFS_SELECT_NFDS;
-  vtimeout = (vir_bytes) job_m_in.VFS_SELECT_TIMEOUT;
+  nfds = job_m_in.m_lc_vfs_select.nfds;
+  vtimeout = job_m_in.m_lc_vfs_select.timeout;
 
   /* Sane amount of file descriptors? */
   if (nfds < 0 || nfds > OPEN_MAX) return(EINVAL);
@@ -113,9 +113,9 @@ int do_select(void)
   wipe_select(se);	/* Clear results of previous usage */
   se->requestor = fp;
   se->req_endpt = who_e;
-  se->vir_readfds = (fd_set *) job_m_in.VFS_SELECT_READFDS;
-  se->vir_writefds = (fd_set *) job_m_in.VFS_SELECT_WRITEFDS;
-  se->vir_errorfds = (fd_set *) job_m_in.VFS_SELECT_ERRORFDS;
+  se->vir_readfds = job_m_in.m_lc_vfs_select.readfds;
+  se->vir_writefds = job_m_in.m_lc_vfs_select.writefds;
+  se->vir_errorfds = job_m_in.m_lc_vfs_select.errorfds;
 
   /* Copy fdsets from the process */
   if ((r = copy_fdsets(se, nfds, FROM_PROC)) != OK) {
@@ -126,8 +126,8 @@ int do_select(void)
   /* Did the process set a timeout value? If so, retrieve it. */
   if (vtimeout != 0) {
 	do_timeout = 1;
-	r = sys_datacopy_wrapper(who_e, (vir_bytes) vtimeout, SELF, 
-			(vir_bytes) &timeout, sizeof(timeout));
+	r = sys_datacopy_wrapper(who_e, vtimeout, SELF, (vir_bytes) &timeout,
+		sizeof(timeout));
 	if (r != OK) {
 		se->requestor = NULL;
 		return(r);

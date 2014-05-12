@@ -13,11 +13,11 @@ int select(int nfds,
   message m;
 
   memset(&m, 0, sizeof(m));
-  m.VFS_SELECT_NFDS = nfds;
-  m.VFS_SELECT_READFDS = (char *) readfds;
-  m.VFS_SELECT_WRITEFDS = (char *) writefds;
-  m.VFS_SELECT_ERRORFDS = (char *) errorfds;
-  m.VFS_SELECT_TIMEOUT = (char *) timeout;
+  m.m_lc_vfs_select.nfds = nfds;
+  m.m_lc_vfs_select.readfds = readfds;
+  m.m_lc_vfs_select.writefds = writefds;
+  m.m_lc_vfs_select.errorfds = errorfds;
+  m.m_lc_vfs_select.timeout = (vir_bytes)timeout;
 
   return (_syscall(VFS_PROC_NR, VFS_SELECT, &m));
 }

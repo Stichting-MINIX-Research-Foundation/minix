@@ -147,6 +147,17 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_sigcalls);
 
 typedef struct {
+	uint32_t nfds;
+	fd_set *readfds;
+	fd_set *writefds;
+	fd_set *errorfds;
+	vir_bytes timeout;	/* user-provided 'struct timeval *' */
+
+	uint8_t padding[36];
+} mess_lc_vfs_select;
+_ASSERT_MSG_SIZE(mess_lc_vfs_select);
+
+typedef struct {
 	dev_t device;
 	off_t seek_pos;
 
@@ -596,6 +607,8 @@ typedef struct {
 		mess_fs_vfs_rdlink	m_fs_vfs_rdlink;
 		mess_fs_vfs_readsuper	m_fs_vfs_readsuper;
 		mess_fs_vfs_readwrite	m_fs_vfs_readwrite;
+
+		mess_lc_vfs_select	m_lc_vfs_select;
 
 		mess_vfs_fs_breadwrite	m_vfs_fs_breadwrite;
 		mess_vfs_fs_chmod	m_vfs_fs_chmod;

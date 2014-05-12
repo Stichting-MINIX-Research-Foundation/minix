@@ -232,13 +232,6 @@
 
 #define NR_VFS_CALLS		49	/* highest number from base plus one */
 
-/* Field names for the select(2) call. */
-#define VFS_SELECT_NFDS		m8_i1	/* int */
-#define VFS_SELECT_READFDS	m8_p1	/* fd_set * */
-#define VFS_SELECT_WRITEFDS	m8_p2	/* fd_set * */
-#define VFS_SELECT_ERRORFDS	m8_p3	/* fd_set * */
-#define VFS_SELECT_TIMEOUT	m8_p4	/* struct timeval * */
-
 /* Field names for the getvfsstat(2) call. */
 #define VFS_GETVFSSTAT_BUF	m1_p1	/* struct statvfs * */
 #define VFS_GETVFSSTAT_LEN	m1_i1	/* size_t */
