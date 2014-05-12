@@ -872,6 +872,7 @@ int do_checkperms(void)
   /* This should be replaced by an ACL check. */
   if (!super_user) return EPERM;
 
-  return check_perms(job_m_in.VFS_CHECKPERMS_ENDPT,
-	job_m_in.VFS_CHECKPERMS_GRANT, (size_t) job_m_in.VFS_CHECKPERMS_COUNT);
+  return check_perms(job_m_in.m_lsys_vfs_checkperms.endpt,
+	job_m_in.m_lsys_vfs_checkperms.grant,
+	job_m_in.m_lsys_vfs_checkperms.count);
 }

@@ -232,11 +232,6 @@
 
 #define NR_VFS_CALLS		49	/* highest number from base plus one */
 
-/* Field names for the checkperms(2) call. */
-#define VFS_CHECKPERMS_ENDPT	m2_i1	/* endpoint_t */
-#define VFS_CHECKPERMS_GRANT	m2_i2	/* cp_grant_id_t */
-#define VFS_CHECKPERMS_COUNT	m2_i3	/* size_t */
-
 /* Field names for the copyfd(2) call. */
 #define VFS_COPYFD_ENDPT	m1_i1	/* endpoint_t */
 #define VFS_COPYFD_FD		m1_i2	/* int */

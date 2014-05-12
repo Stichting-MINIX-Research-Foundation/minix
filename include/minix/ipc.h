@@ -212,6 +212,15 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_lc_vfs_umount);
 
 typedef struct {
+	endpoint_t endpt;
+	cp_grant_id_t grant;
+	size_t count;
+
+	uint8_t padding[44];
+} mess_lsys_vfs_checkperms;
+_ASSERT_MSG_SIZE(mess_lsys_vfs_checkperms);
+
+typedef struct {
 	dev_t device;
 	off_t seek_pos;
 
@@ -668,6 +677,8 @@ typedef struct {
 		mess_lc_vfs_select	m_lc_vfs_select;
 		mess_lc_vfs_statvfs1	m_lc_vfs_statvfs1;
 		mess_lc_vfs_umount	m_lc_vfs_umount;
+
+		mess_lsys_vfs_checkperms m_lsys_vfs_checkperms;
 
 		mess_vfs_fs_breadwrite	m_vfs_fs_breadwrite;
 		mess_vfs_fs_chmod	m_vfs_fs_chmod;

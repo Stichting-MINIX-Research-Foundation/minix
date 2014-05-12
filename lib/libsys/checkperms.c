@@ -16,9 +16,9 @@ checkperms(endpoint_t endpt, char *path, size_t size)
 		return ENOMEM;
 
 	memset(&m, 0, sizeof(m));
-	m.VFS_CHECKPERMS_ENDPT = endpt;
-	m.VFS_CHECKPERMS_GRANT = grant;
-	m.VFS_CHECKPERMS_COUNT = size;
+	m.m_lsys_vfs_checkperms.endpt = endpt;
+	m.m_lsys_vfs_checkperms.grant = grant;
+	m.m_lsys_vfs_checkperms.count = size;
 
 	r = _taskcall(VFS_PROC_NR, VFS_CHECKPERMS, &m);
 
