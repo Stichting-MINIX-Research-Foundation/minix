@@ -35,7 +35,7 @@ int do_fchdir(void)
   struct filp *rfilp;
   int r, rfd;
 
-  rfd = job_m_in.VFS_FCHDIR_FD;
+  rfd = job_m_in.m_lc_vfs_fchdir.fd;
 
   /* Is the file descriptor valid? */
   if ((rfilp = get_filp(rfd, VNODE_READ)) == NULL) return(err_code);
