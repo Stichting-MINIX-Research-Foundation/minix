@@ -232,12 +232,6 @@
 
 #define NR_VFS_CALLS		49	/* highest number from base plus one */
 
-/* Field names for the truncate(2) and ftruncate(2) calls. */
-#define VFS_TRUNCATE_FD		m2_i1	/* int */
-#define VFS_TRUNCATE_NAME	m2_p1	/* const char * */
-#define VFS_TRUNCATE_LEN	m2_i1	/* size_t */
-#define VFS_TRUNCATE_OFF	m2_ll1	/* off_t */
-
 /* Field names for the pipe2(2) call. */
 #define VFS_PIPE2_FD0		m1_i1	/* int */
 #define VFS_PIPE2_FD1		m1_i2	/* int */

@@ -15,8 +15,8 @@ int ftruncate(int _fd, off_t _length)
   message m;
 
   memset(&m, 0, sizeof(m));
-  m.VFS_TRUNCATE_OFF = _length;
-  m.VFS_TRUNCATE_FD = _fd;
+  m.m_lc_vfs_truncate.offset = _length;
+  m.m_lc_vfs_truncate.fd = _fd;
 
   return(_syscall(VFS_PROC_NR, VFS_FTRUNCATE, &m));
 }

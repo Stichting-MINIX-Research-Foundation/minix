@@ -290,14 +290,14 @@ int do_truncate(void)
   vir_bytes vname;
   size_t vname_length;
 
-  vname = (vir_bytes) job_m_in.VFS_TRUNCATE_NAME;
-  vname_length = job_m_in.VFS_TRUNCATE_LEN;
+  vname = job_m_in.m_lc_vfs_truncate.name;
+  vname_length = job_m_in.m_lc_vfs_truncate.len;
 
   lookup_init(&resolve, fullpath, PATH_NOFLAGS, &vmp, &vp);
   resolve.l_vmnt_lock = VMNT_READ;
   resolve.l_vnode_lock = VNODE_WRITE;
 
-  length = (off_t) job_m_in.VFS_TRUNCATE_OFF;
+  length = job_m_in.m_lc_vfs_truncate.offset;
   if (length < 0) return(EINVAL);
 
   /* Temporarily open file */
@@ -333,9 +333,9 @@ int do_ftruncate(void)
   int r;
   off_t length;
 
-  scratch(fp).file.fd_nr = job_m_in.VFS_TRUNCATE_FD;
+  scratch(fp).file.fd_nr = job_m_in.m_lc_vfs_truncate.fd;
 
-  length = (off_t) job_m_in.VFS_TRUNCATE_OFF;
+  length = job_m_in.m_lc_vfs_truncate.offset;
   if (length < 0) return(EINVAL);
 
   /* File is already opened; get a vnode pointer from filp */
