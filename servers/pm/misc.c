@@ -175,10 +175,10 @@ int do_getprocnr(void)
 	return EPERM;
   }
 
-  if ((rmp = find_proc(m_in.PM_GETPROCNR_PID)) == NULL)
+  if ((rmp = find_proc(m_in.m_lsys_pm_getprocnr.pid)) == NULL)
 	return(ESRCH);
 
-  mp->mp_reply.PM_GETPROCNR_ENDPT = rmp->mp_endpoint;
+  mp->mp_reply.m_pm_lsys_getprocnr.endpt = rmp->mp_endpoint;
   return(OK);
 }
 
