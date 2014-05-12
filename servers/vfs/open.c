@@ -64,10 +64,10 @@ int do_creat(void)
   vir_bytes vname;
   size_t vname_length;
 
-  vname = (vir_bytes) job_m_in.VFS_CREAT_NAME;
-  vname_length = (size_t) job_m_in.VFS_CREAT_LEN;
-  open_flags = job_m_in.VFS_CREAT_FLAGS;
-  create_mode = job_m_in.VFS_CREAT_MODE;
+  vname = job_m_in.m_lc_vfs_creat.name;
+  vname_length = job_m_in.m_lc_vfs_creat.len;
+  open_flags = job_m_in.m_lc_vfs_creat.flags;
+  create_mode = job_m_in.m_lc_vfs_creat.mode;
 
   if (!(open_flags & O_CREAT))
 	return(EINVAL);

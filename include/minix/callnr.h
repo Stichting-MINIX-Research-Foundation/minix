@@ -232,12 +232,6 @@
 
 #define NR_VFS_CALLS		49	/* highest number from base plus one */
 
-/* Field names for the creat(2) call. */
-#define VFS_CREAT_NAME		m1_p1	/* const char * */
-#define VFS_CREAT_LEN		m1_i1	/* size_t */
-#define VFS_CREAT_FLAGS		m1_i2	/* int */
-#define VFS_CREAT_MODE		m1_i3	/* mode_t */
-
 /* Field names for the chown(2) and fchown(2) calls. */
 #define VFS_CHOWN_NAME		m1_p1	/* const char * */
 #define VFS_CHOWN_LEN		m1_i1	/* size_t */

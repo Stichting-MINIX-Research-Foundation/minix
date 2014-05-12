@@ -18,10 +18,10 @@ int open(const char *name, int flags, ...)
    * and therefore a different call number as well.
    */
   if (flags & O_CREAT) {
-	m.VFS_CREAT_LEN = strlen(name) + 1;
-	m.VFS_CREAT_FLAGS = flags;
-	m.VFS_CREAT_MODE = va_arg(argp, int);
-	m.VFS_CREAT_NAME = (char *) __UNCONST(name);
+	m.m_lc_vfs_creat.len = strlen(name) + 1;
+	m.m_lc_vfs_creat.flags = flags;
+	m.m_lc_vfs_creat.mode = va_arg(argp, mode_t);
+	m.m_lc_vfs_creat.name = (vir_bytes)name;
 	call = VFS_CREAT;
   } else {
 	_loadname(name, &m);
