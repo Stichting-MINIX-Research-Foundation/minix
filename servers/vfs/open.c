@@ -646,13 +646,13 @@ int do_lseek(void)
   off_t newpos;
   int r;
 
-  if ((r = actual_lseek(fp, job_m_in.VFS_LSEEK_FD,
-		job_m_in.VFS_LSEEK_WHENCE, job_m_in.VFS_LSEEK_OFF,
+  if ((r = actual_lseek(fp, job_m_in.m_lc_vfs_lseek.fd,
+		job_m_in.m_lc_vfs_lseek.whence, job_m_in.m_lc_vfs_lseek.offset,
 		&newpos)) != OK)
 	return r;
 
   /* insert the new position into the output message */
-  job_m_out.VFS_LSEEK_OFF = newpos;
+  job_m_out.m_vfs_lc_lseek.offset = newpos;
   return OK;
 }
 

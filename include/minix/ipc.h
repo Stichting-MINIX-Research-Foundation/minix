@@ -172,6 +172,23 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_lc_vfs_ioctl);
 
 typedef struct {
+	off_t offset;
+
+	int fd;
+	int whence;
+
+	uint8_t padding[40];
+} mess_lc_vfs_lseek;
+_ASSERT_MSG_SIZE(mess_lc_vfs_lseek);
+
+typedef struct {
+	off_t offset;
+
+	uint8_t padding[48];
+} mess_vfs_lc_lseek;
+_ASSERT_MSG_SIZE(mess_vfs_lc_lseek);
+
+typedef struct {
 	int flags;
 	size_t devlen;
 	size_t pathlen;
@@ -699,6 +716,7 @@ typedef struct {
 		mess_lc_vfs_fsync	m_lc_vfs_fsync;
 		mess_lc_vfs_getvfsstat	m_lc_vfs_getvfsstat;
 		mess_lc_vfs_ioctl	m_lc_vfs_ioctl;
+		mess_lc_vfs_lseek	m_lc_vfs_lseek;
 		mess_lc_vfs_mount	m_lc_vfs_mount;
 		mess_lc_vfs_select	m_lc_vfs_select;
 		mess_lc_vfs_statvfs1	m_lc_vfs_statvfs1;
@@ -733,6 +751,8 @@ typedef struct {
 		mess_vfs_fs_statvfs	m_vfs_fs_statvfs;
 		mess_vfs_fs_unlink	m_vfs_fs_unlink;
 		mess_vfs_fs_utime	m_vfs_fs_utime;
+
+		mess_vfs_lc_lseek	m_vfs_lc_lseek;
 
 		mess_vfs_utimens	m_vfs_utimens;
 		mess_vm_vfs_mmap	m_vm_vfs_mmap;

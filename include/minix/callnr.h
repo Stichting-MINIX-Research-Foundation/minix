@@ -232,11 +232,6 @@
 
 #define NR_VFS_CALLS		49	/* highest number from base plus one */
 
-/* Field names for the lseek(2) call. */
-#define VFS_LSEEK_FD		m2_i1	/* int */
-#define VFS_LSEEK_OFF		m2_ll1	/* off_t */
-#define VFS_LSEEK_WHENCE	m2_i2	/* int */
-
 /* Field names for the truncate(2) and ftruncate(2) calls. */
 #define VFS_TRUNCATE_FD		m2_i1	/* int */
 #define VFS_TRUNCATE_NAME	m2_p1	/* const char * */
