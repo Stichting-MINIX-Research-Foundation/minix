@@ -428,9 +428,9 @@ int do_copyfd(void)
   /* This should be replaced with an ACL check. */
   if (!super_user) return(EPERM);
 
-  endpt = (endpoint_t) job_m_in.VFS_COPYFD_ENDPT;
-  fd = job_m_in.VFS_COPYFD_FD;
-  what = job_m_in.VFS_COPYFD_WHAT;
+  endpt = job_m_in.m_lsys_vfs_copyfd.endpt;
+  fd = job_m_in.m_lsys_vfs_copyfd.fd;
+  what = job_m_in.m_lsys_vfs_copyfd.what;
 
   if (isokendpt(endpt, &slot) != OK) return(EINVAL);
   rfp = &fproc[slot];

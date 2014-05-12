@@ -232,11 +232,6 @@
 
 #define NR_VFS_CALLS		49	/* highest number from base plus one */
 
-/* Field names for the copyfd(2) call. */
-#define VFS_COPYFD_ENDPT	m1_i1	/* endpoint_t */
-#define VFS_COPYFD_FD		m1_i2	/* int */
-#define VFS_COPYFD_WHAT		m1_i3	/* int */
-
 /* Field names for the mapdriver(2) call. */
 #define VFS_MAPDRIVER_MAJOR	m1_i1	/* devmajor_t */
 #define VFS_MAPDRIVER_LABELLEN	m1_i2	/* size_t */
