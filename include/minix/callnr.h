@@ -232,17 +232,6 @@
 
 #define NR_VFS_CALLS		49	/* highest number from base plus one */
 
-/* Field names for the mount(2) call. */
-#define VFS_MOUNT_FLAGS		m11_i1	/* int */
-#define VFS_MOUNT_DEVLEN	m11_s1	/* size_t */
-#define VFS_MOUNT_PATHLEN	m11_s2	/* size_t */
-#define VFS_MOUNT_TYPELEN	m11_s3	/* size_t */
-#define VFS_MOUNT_LABELLEN	m11_s4	/* size_t */
-#define VFS_MOUNT_DEV		m11_p1	/* char * */
-#define VFS_MOUNT_PATH		m11_p2	/* char * */
-#define VFS_MOUNT_TYPE		m11_p3	/* char * */
-#define VFS_MOUNT_LABEL		m11_p4	/* char * */
-
 /* Field names for the umount(2) call. */
 #define VFS_UMOUNT_NAME		m1_p1	/* char * */
 #define VFS_UMOUNT_NAMELEN	m1_i1	/* size_t */

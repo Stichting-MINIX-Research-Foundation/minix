@@ -144,15 +144,15 @@ int minix_mount(char *special, char *name, int mountflags, int srvflags,
   
   /* Now perform mount(). */
   memset(&m, 0, sizeof(m));
-  m.VFS_MOUNT_FLAGS = mountflags;
-  m.VFS_MOUNT_DEVLEN = special ? strlen(special) + 1 : 0;
-  m.VFS_MOUNT_PATHLEN = strlen(name) + 1;
-  m.VFS_MOUNT_TYPELEN = strlen(type) + 1;
-  m.VFS_MOUNT_LABELLEN = strlen(label) + 1;
-  m.VFS_MOUNT_DEV = special;
-  m.VFS_MOUNT_PATH = name;
-  m.VFS_MOUNT_TYPE = type;
-  m.VFS_MOUNT_LABEL = label;
+  m.m_lc_vfs_mount.flags = mountflags;
+  m.m_lc_vfs_mount.devlen = special ? strlen(special) + 1 : 0;
+  m.m_lc_vfs_mount.pathlen = strlen(name) + 1;
+  m.m_lc_vfs_mount.typelen = strlen(type) + 1;
+  m.m_lc_vfs_mount.labellen = strlen(label) + 1;
+  m.m_lc_vfs_mount.dev = (vir_bytes)special;
+  m.m_lc_vfs_mount.path = (vir_bytes)name;
+  m.m_lc_vfs_mount.type = (vir_bytes)type;
+  m.m_lc_vfs_mount.label = (vir_bytes)label;
   r = _syscall(VFS_PROC_NR, VFS_MOUNT, &m);
 
   if (r != OK && !use_existing) {

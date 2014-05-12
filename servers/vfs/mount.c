@@ -93,15 +93,15 @@ int do_mount(void)
   vir_bytes label, type, vname1, vname2;
   size_t vname1_length, vname2_length, label_len, type_len;
 
-  mflags = job_m_in.VFS_MOUNT_FLAGS;
-  label = (vir_bytes) job_m_in.VFS_MOUNT_LABEL;
-  label_len = (size_t) job_m_in.VFS_MOUNT_LABELLEN;
-  vname1 = (vir_bytes) job_m_in.VFS_MOUNT_DEV;
-  vname1_length = (size_t) job_m_in.VFS_MOUNT_DEVLEN;
-  vname2 = (vir_bytes) job_m_in.VFS_MOUNT_PATH;
-  vname2_length = (size_t) job_m_in.VFS_MOUNT_PATHLEN;
-  type = (vir_bytes) job_m_in.VFS_MOUNT_TYPE;
-  type_len = (size_t) job_m_in.VFS_MOUNT_TYPELEN;
+  mflags = job_m_in.m_lc_vfs_mount.flags;
+  label = job_m_in.m_lc_vfs_mount.label;
+  label_len = job_m_in.m_lc_vfs_mount.labellen;
+  vname1 = job_m_in.m_lc_vfs_mount.dev;
+  vname1_length = job_m_in.m_lc_vfs_mount.devlen;
+  vname2 = job_m_in.m_lc_vfs_mount.path;
+  vname2_length = job_m_in.m_lc_vfs_mount.pathlen;
+  type = job_m_in.m_lc_vfs_mount.type;
+  type_len = job_m_in.m_lc_vfs_mount.typelen;
 
   /* Only the super-user may do MOUNT. */
   if (!super_user) return(EPERM);

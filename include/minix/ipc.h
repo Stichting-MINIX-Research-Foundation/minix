@@ -156,6 +156,21 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_lc_vfs_getvfsstat);
 
 typedef struct {
+	int flags;
+	size_t devlen;
+	size_t pathlen;
+	size_t typelen;
+	size_t labellen;
+	vir_bytes dev;
+	vir_bytes path;
+	vir_bytes type;
+	vir_bytes label;
+
+	uint8_t padding[20];
+} mess_lc_vfs_mount;
+_ASSERT_MSG_SIZE(mess_lc_vfs_mount);
+
+typedef struct {
 	uint32_t nfds;
 	fd_set *readfds;
 	fd_set *writefds;
@@ -629,6 +644,7 @@ typedef struct {
 		mess_fs_vfs_readwrite	m_fs_vfs_readwrite;
 
 		mess_lc_vfs_getvfsstat	m_lc_vfs_getvfsstat;
+		mess_lc_vfs_mount	m_lc_vfs_mount;
 		mess_lc_vfs_select	m_lc_vfs_select;
 		mess_lc_vfs_statvfs1	m_lc_vfs_statvfs1;
 
