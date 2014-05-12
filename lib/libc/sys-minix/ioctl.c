@@ -76,9 +76,9 @@ int     ioctl(int fd, unsigned long request, ...)
   }
 
   memset(&m, 0, sizeof(m));
-  m.VFS_IOCTL_FD = fd;
-  m.VFS_IOCTL_REQ = request;
-  m.VFS_IOCTL_ARG = (char *) addr;
+  m.m_lc_vfs_ioctl.fd = fd;
+  m.m_lc_vfs_ioctl.req = request;
+  m.m_lc_vfs_ioctl.arg = addr;
 
   r = _syscall(VFS_PROC_NR, VFS_IOCTL, &m);
 

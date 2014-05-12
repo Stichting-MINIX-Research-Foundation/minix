@@ -492,9 +492,9 @@ int do_ioctl(void)
   dev_t dev;
   void *argx;
 
-  scratch(fp).file.fd_nr = job_m_in.VFS_IOCTL_FD;
-  ioctlrequest = job_m_in.VFS_IOCTL_REQ;
-  argx = job_m_in.VFS_IOCTL_ARG;
+  scratch(fp).file.fd_nr = job_m_in.m_lc_vfs_ioctl.fd;
+  ioctlrequest = job_m_in.m_lc_vfs_ioctl.req;
+  argx = job_m_in.m_lc_vfs_ioctl.arg;
 
   if ((f = get_filp(scratch(fp).file.fd_nr, VNODE_READ)) == NULL)
 	return(err_code);

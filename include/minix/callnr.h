@@ -232,11 +232,6 @@
 
 #define NR_VFS_CALLS		49	/* highest number from base plus one */
 
-/* Field names for the ioctl(2) call. */
-#define VFS_IOCTL_FD		m2_i1	/* int */
-#define VFS_IOCTL_REQ		m2_i3	/* unsigned long */
-#define VFS_IOCTL_ARG		m2_p1	/* void * */
-
 /* Field names for the checkperms(2) call. */
 #define VFS_CHECKPERMS_ENDPT	m2_i1	/* endpoint_t */
 #define VFS_CHECKPERMS_GRANT	m2_i2	/* cp_grant_id_t */
