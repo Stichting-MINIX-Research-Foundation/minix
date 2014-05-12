@@ -232,11 +232,6 @@
 
 #define NR_VFS_CALLS		49	/* highest number from base plus one */
 
-/* Field names for the mapdriver(2) call. */
-#define VFS_MAPDRIVER_MAJOR	m1_i1	/* devmajor_t */
-#define VFS_MAPDRIVER_LABELLEN	m1_i2	/* size_t */
-#define VFS_MAPDRIVER_LABEL	m1_p1	/* char * */
-
 /* Field names for the fsync(2) call. */
 #define VFS_FSYNC_FD		m1_i1	/* int */
 

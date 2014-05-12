@@ -230,6 +230,15 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_lsys_vfs_copyfd);
 
 typedef struct {
+	devmajor_t major;
+	size_t labellen;
+	vir_bytes label;
+
+	uint8_t padding[44];
+} mess_lsys_vfs_mapdriver;
+_ASSERT_MSG_SIZE(mess_lsys_vfs_mapdriver);
+
+typedef struct {
 	dev_t device;
 	off_t seek_pos;
 
@@ -689,6 +698,7 @@ typedef struct {
 
 		mess_lsys_vfs_checkperms m_lsys_vfs_checkperms;
 		mess_lsys_vfs_copyfd	m_lsys_vfs_copyfd;
+		mess_lsys_vfs_mapdriver	m_lsys_vfs_mapdriver;
 
 		mess_vfs_fs_breadwrite	m_vfs_fs_breadwrite;
 		mess_vfs_fs_chmod	m_vfs_fs_chmod;

@@ -9,9 +9,9 @@ mapdriver(char *label, devmajor_t major)
 	message m;
 
 	memset(&m, 0, sizeof(m));
-	m.VFS_MAPDRIVER_LABEL = label;
-	m.VFS_MAPDRIVER_LABELLEN = strlen(label) + 1;
-	m.VFS_MAPDRIVER_MAJOR = major;
+	m.m_lsys_vfs_mapdriver.label = (vir_bytes)label;
+	m.m_lsys_vfs_mapdriver.labellen = strlen(label) + 1;
+	m.m_lsys_vfs_mapdriver.major = major;
 
 	return _taskcall(VFS_PROC_NR, VFS_MAPDRIVER, &m);
 }

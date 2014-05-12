@@ -120,9 +120,9 @@ int do_mapdriver(void)
   /* Only RS can map drivers. */
   if (who_e != RS_PROC_NR) return(EPERM);
 
-  label_vir = (vir_bytes) job_m_in.VFS_MAPDRIVER_LABEL;
-  label_len = (size_t) job_m_in.VFS_MAPDRIVER_LABELLEN;
-  major = job_m_in.VFS_MAPDRIVER_MAJOR;
+  label_vir = job_m_in.m_lsys_vfs_mapdriver.label;
+  label_len = job_m_in.m_lsys_vfs_mapdriver.labellen;
+  major = job_m_in.m_lsys_vfs_mapdriver.major;
 
   /* Get the label */
   if (label_len > sizeof(label)) { /* Can we store this label? */
