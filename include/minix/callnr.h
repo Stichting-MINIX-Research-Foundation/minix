@@ -232,10 +232,6 @@
 
 #define NR_VFS_CALLS		49	/* highest number from base plus one */
 
-/* Field names for the fstat(2) call. */
-#define VFS_FSTAT_FD		m1_i1	/* int */
-#define VFS_FSTAT_BUF		m1_p1	/* struct stat * */
-
 /* Field names for the fcntl(2) call. */
 #define VFS_FCNTL_FD		m1_i1	/* int */
 #define VFS_FCNTL_CMD		m1_i2	/* int */

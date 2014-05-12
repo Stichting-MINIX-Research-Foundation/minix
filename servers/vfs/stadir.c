@@ -177,8 +177,8 @@ int do_fstat(void)
   int r, rfd;
   vir_bytes statbuf;
 
-  statbuf = (vir_bytes) job_m_in.VFS_FSTAT_BUF;
-  rfd = job_m_in.VFS_FSTAT_FD;
+  statbuf = job_m_in.m_lc_vfs_fstat.buf;
+  rfd = job_m_in.m_lc_vfs_fstat.fd;
 
   /* Is the file descriptor valid? */
   if ((rfilp = get_filp(rfd, VNODE_READ)) == NULL) return(err_code);

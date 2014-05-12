@@ -32,8 +32,8 @@ int fstat(int fd, struct stat *buffer)
   message m;
 
   memset(&m, 0, sizeof(m));
-  m.VFS_FSTAT_FD = fd;
-  m.VFS_FSTAT_BUF = (char *) buffer;
+  m.m_lc_vfs_fstat.fd = fd;
+  m.m_lc_vfs_fstat.buf = (vir_bytes)buffer;
 
   return _syscall(VFS_PROC_NR, VFS_FSTAT, &m);
 }
