@@ -662,7 +662,7 @@ int do_lseek(void)
 int do_close(void)
 {
 /* Perform the close(fd) system call. */
-  int thefd = job_m_in.VFS_CLOSE_FD;
+  int thefd = job_m_in.m_lc_vfs_close.fd;
   return close_fd(fp, thefd);
 }
 

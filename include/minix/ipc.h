@@ -157,6 +157,13 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_lc_vfs_chown);
 
 typedef struct {
+	int fd;
+
+	uint8_t padding[52];
+} mess_lc_vfs_close;
+_ASSERT_MSG_SIZE(mess_lc_vfs_close);
+
+typedef struct {
 	vir_bytes name;
 	size_t len;
 	int flags;
@@ -843,6 +850,7 @@ typedef struct {
 		mess_fs_vfs_readwrite	m_fs_vfs_readwrite;
 
 		mess_lc_vfs_chown	m_lc_vfs_chown;
+		mess_lc_vfs_close	m_lc_vfs_close;
 		mess_lc_vfs_creat	m_lc_vfs_creat;
 		mess_lc_vfs_fchdir	m_lc_vfs_fchdir;
 		mess_lc_vfs_fchmod	m_lc_vfs_fchmod;

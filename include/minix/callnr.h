@@ -232,9 +232,6 @@
 
 #define NR_VFS_CALLS		49	/* highest number from base plus one */
 
-/* Field names for the close(2) call. */
-#define VFS_CLOSE_FD		m1_i1	/* int */
-
 /* Field names for the read(2), write(2), and getdents(2) calls. */
 #define VFS_READWRITE_FD	m1_i1	/* int */
 #define VFS_READWRITE_BUF	m1_p1	/* char * */
