@@ -232,11 +232,6 @@
 
 #define NR_VFS_CALLS		49	/* highest number from base plus one */
 
-/* Field names for the getvfsstat(2) call. */
-#define VFS_GETVFSSTAT_BUF	m1_p1	/* struct statvfs * */
-#define VFS_GETVFSSTAT_LEN	m1_i1	/* size_t */
-#define VFS_GETVFSSTAT_FLAGS	m1_i2	/* int */
-
 /* Field names for the statvfs1(2) and fstatvfs1(2) calls. */
 #define VFS_STATVFS1_LEN	m1_i1	/* size_t */
 #define VFS_STATVFS1_NAME	m1_p1	/* const char * */

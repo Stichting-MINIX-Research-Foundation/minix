@@ -356,9 +356,9 @@ int do_getvfsstat(void)
   size_t bufsize;
   int r, flags, count, do_lock;
 
-  buf = (vir_bytes) job_m_in.VFS_GETVFSSTAT_BUF;
-  bufsize = job_m_in.VFS_GETVFSSTAT_LEN;
-  flags = job_m_in.VFS_GETVFSSTAT_FLAGS;
+  buf = job_m_in.m_lc_vfs_getvfsstat.buf;
+  bufsize = job_m_in.m_lc_vfs_getvfsstat.len;
+  flags = job_m_in.m_lc_vfs_getvfsstat.flags;
 
   count = 0;
 
