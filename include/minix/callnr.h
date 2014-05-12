@@ -64,14 +64,6 @@
 /* Field names for the exit(2) call. */
 #define PM_EXIT_STATUS		m1_i1	/* int */
 
-/* Field names for the gettimeofday(2), clock_*(2), adjtime(2), stime(2) calls.
- */
-#define PM_TIME_CLK_ID		m2_i1	/* clockid_t */
-#define PM_TIME_NOW		m2_i2	/* int */
-#define PM_TIME_SEC		m2_ll1	/* time_t */
-#define PM_TIME_USEC		m2_l2	/* long */
-#define PM_TIME_NSEC		m2_l2	/* long */
-
 /* Field names for the ptrace(2) call. */
 #define PM_PTRACE_PID		m2_i1	/* pid_t */
 #define PM_PTRACE_REQ		m2_i2	/* int */

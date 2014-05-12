@@ -15,10 +15,10 @@ int adjtime(const struct timeval *delta, struct timeval *olddelta)
   message m;
 
   memset(&m, 0, sizeof(m));
-  m.PM_TIME_CLK_ID = (clockid_t) CLOCK_REALTIME;
-  m.PM_TIME_NOW = 0; /* use adjtime() method to slowly adjust the clock. */
-  m.PM_TIME_SEC = delta->tv_sec;
-  m.PM_TIME_NSEC = delta->tv_usec * 1000; /* convert usec to nsec */
+  m.m_lc_pm_time.clk_id = CLOCK_REALTIME;
+  m.m_lc_pm_time.now = 0; /* use adjtime() method to slowly adjust the clock. */
+  m.m_lc_pm_time.sec = delta->tv_sec;
+  m.m_lc_pm_time.nsec = delta->tv_usec * 1000; /* convert usec to nsec */
 
   if (_syscall(PM_PROC_NR, PM_CLOCK_SETTIME, &m) < 0)
   	return -1;

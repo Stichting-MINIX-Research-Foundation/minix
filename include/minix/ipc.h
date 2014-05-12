@@ -146,6 +146,26 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_sigcalls);
 
 typedef struct {
+	time_t sec;
+
+	clockid_t clk_id;
+	int now;
+	long nsec;
+
+	uint8_t padding[36];
+} mess_lc_pm_time;
+_ASSERT_MSG_SIZE(mess_lc_pm_time);
+
+typedef struct {
+	time_t sec;
+
+	long nsec;
+
+	uint8_t padding[44];
+} mess_pm_lc_time;
+_ASSERT_MSG_SIZE(mess_pm_lc_time);
+
+typedef struct {
 	pid_t pid;
 	int options;
 
@@ -902,6 +922,7 @@ typedef struct {
 		mess_fs_vfs_readsuper	m_fs_vfs_readsuper;
 		mess_fs_vfs_readwrite	m_fs_vfs_readwrite;
 
+		mess_lc_pm_time		m_lc_pm_time;
 		mess_lc_pm_waitpid	m_lc_pm_waitpid;
 
 		mess_lc_vfs_chown	m_lc_vfs_chown;
@@ -936,6 +957,7 @@ typedef struct {
 		mess_lsys_vfs_copyfd	m_lsys_vfs_copyfd;
 		mess_lsys_vfs_mapdriver	m_lsys_vfs_mapdriver;
 
+		mess_pm_lc_time		m_pm_lc_time;
 		mess_pm_lc_waitpid	m_pm_lc_waitpid;
 
 		mess_pm_lsys_getepinfo	m_pm_lsys_getepinfo;

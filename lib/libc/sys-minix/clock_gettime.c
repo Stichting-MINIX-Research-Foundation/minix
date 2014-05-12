@@ -14,13 +14,13 @@ int clock_gettime(clockid_t clock_id, struct timespec *res)
   message m;
 
   memset(&m, 0, sizeof(m));
-  m.PM_TIME_CLK_ID = clock_id;
+  m.m_lc_pm_time.clk_id = clock_id;
 
   if (_syscall(PM_PROC_NR, PM_CLOCK_GETTIME, &m) < 0)
   	return -1;
 
-  res->tv_sec = m.PM_TIME_SEC;
-  res->tv_nsec = m.PM_TIME_NSEC;
+  res->tv_sec = m.m_pm_lc_time.sec;
+  res->tv_nsec = m.m_pm_lc_time.nsec;
 
   return 0;
 }

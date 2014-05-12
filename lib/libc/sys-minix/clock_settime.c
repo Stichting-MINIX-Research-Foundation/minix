@@ -14,10 +14,10 @@ int clock_settime(clockid_t clock_id, const struct timespec *ts)
   message m;
 
   memset(&m, 0, sizeof(m));
-  m.PM_TIME_CLK_ID = clock_id;
-  m.PM_TIME_NOW = 1; /* set time immediately. don't use adjtime() method. */
-  m.PM_TIME_SEC = ts->tv_sec;
-  m.PM_TIME_NSEC = ts->tv_nsec;
+  m.m_lc_pm_time.clk_id = clock_id;
+  m.m_lc_pm_time.now = 1; /* set time immediately. don't use adjtime() method. */
+  m.m_lc_pm_time.sec = ts->tv_sec;
+  m.m_lc_pm_time.nsec = ts->tv_nsec;
 
   if (_syscall(PM_PROC_NR, PM_CLOCK_SETTIME, &m) < 0)
   	return -1;

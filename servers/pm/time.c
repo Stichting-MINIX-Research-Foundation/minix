@@ -27,7 +27,7 @@ int do_gettime()
   if ( (s=getuptime(&ticks, &realtime, &boottime)) != OK)
   	panic("do_time couldn't get uptime: %d", s);
 
-  switch (m_in.PM_TIME_CLK_ID) {
+  switch (m_in.m_lc_pm_time.clk_id) {
 	case CLOCK_REALTIME:
 		clock = realtime;
 		break;
@@ -38,8 +38,8 @@ int do_gettime()
 		return EINVAL; /* invalid/unsupported clock_id */
   }
 
-  mp->mp_reply.PM_TIME_SEC = boottime + (clock / system_hz);
-  mp->mp_reply.PM_TIME_NSEC =
+  mp->mp_reply.m_pm_lc_time.sec = boottime + (clock / system_hz);
+  mp->mp_reply.m_pm_lc_time.nsec =
 	(uint32_t) ((clock % system_hz) * 1000000000ULL / system_hz);
 
   return(OK);
@@ -50,12 +50,12 @@ int do_gettime()
  *===========================================================================*/
 int do_getres()
 {
-  switch (m_in.PM_TIME_CLK_ID) {
+  switch (m_in.m_lc_pm_time.clk_id) {
 	case CLOCK_REALTIME:
 	case CLOCK_MONOTONIC:
 		/* tv_sec is always 0 since system_hz is an int */
-		mp->mp_reply.PM_TIME_SEC = 0;
-		mp->mp_reply.PM_TIME_NSEC = 1000000000 / system_hz;
+		mp->mp_reply.m_pm_lc_time.sec = 0;
+		mp->mp_reply.m_pm_lc_time.nsec = 1000000000 / system_hz;
 		return(OK);
 	default:
 		return EINVAL; /* invalid/unsupported clock_id */
@@ -73,10 +73,10 @@ int do_settime()
       return(EPERM);
   }
 
-  switch (m_in.PM_TIME_CLK_ID) {
+  switch (m_in.m_lc_pm_time.clk_id) {
 	case CLOCK_REALTIME:
-		s= sys_settime(m_in.PM_TIME_NOW, m_in.PM_TIME_CLK_ID,
-			m_in.PM_TIME_SEC, m_in.PM_TIME_NSEC);
+		s = sys_settime(m_in.m_lc_pm_time.now, m_in.m_lc_pm_time.clk_id,
+			m_in.m_lc_pm_time.sec, m_in.m_lc_pm_time.nsec);
 		return(s);
 	case CLOCK_MONOTONIC: /* monotonic cannot be changed */
 	default:
@@ -101,9 +101,9 @@ int do_time()
   if ( (s=getuptime(&ticks, &realtime, &boottime)) != OK)
   	panic("do_time couldn't get uptime: %d", s);
 
-  mp->mp_reply.PM_TIME_SEC = boottime + (realtime / system_hz);
-  mp->mp_reply.PM_TIME_USEC =
-	(uint32_t) ((realtime % system_hz) * 1000000ULL / system_hz);
+  mp->mp_reply.m_pm_lc_time.sec = boottime + (realtime / system_hz);
+  mp->mp_reply.m_pm_lc_time.nsec =
+	(uint32_t) ((realtime % system_hz) * 1000000000ULL / system_hz);
   return(OK);
 }
 
@@ -124,7 +124,7 @@ int do_stime()
   }
   if ( (s=getuptime(&uptime, &realtime, &boottime)) != OK) 
       panic("do_stime couldn't get uptime: %d", s);
-  boottime = m_in.PM_TIME_SEC - (realtime/system_hz);
+  boottime = m_in.m_lc_pm_time.sec - (realtime/system_hz);
 
   s= sys_stime(boottime);		/* Tell kernel about boottime */
   if (s != OK)
