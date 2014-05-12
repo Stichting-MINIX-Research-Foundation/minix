@@ -112,12 +112,12 @@ int do_chown(void)
   size_t vname1_length;
 
   flp = NULL;
-  uid = job_m_in.VFS_CHOWN_OWNER;
-  gid = job_m_in.VFS_CHOWN_GROUP;
+  uid = job_m_in.m_lc_vfs_chown.owner;
+  gid = job_m_in.m_lc_vfs_chown.group;
 
   if (job_call_nr == VFS_CHOWN) {
-	vname1 = (vir_bytes) job_m_in.VFS_CHOWN_NAME;
-	vname1_length = (size_t) job_m_in.VFS_CHOWN_LEN;
+	vname1 = job_m_in.m_lc_vfs_chown.name;
+	vname1_length = job_m_in.m_lc_vfs_chown.len;
 
 	lookup_init(&resolve, fullpath, PATH_NOFLAGS, &vmp, &vp);
 	resolve.l_vmnt_lock = VMNT_READ;
@@ -128,7 +128,7 @@ int do_chown(void)
 		return(err_code);
 	if ((vp = eat_path(&resolve, fp)) == NULL) return(err_code);
   } else {	/* call_nr == VFS_FCHOWN */
-	rfd = job_m_in.VFS_CHOWN_FD;
+	rfd = job_m_in.m_lc_vfs_chown.fd;
 
 	/* File is already opened; get a pointer to the vnode from filp. */
 	if ((flp = get_filp(rfd, VNODE_WRITE)) == NULL)

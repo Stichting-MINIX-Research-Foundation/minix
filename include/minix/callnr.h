@@ -232,13 +232,6 @@
 
 #define NR_VFS_CALLS		49	/* highest number from base plus one */
 
-/* Field names for the chown(2) and fchown(2) calls. */
-#define VFS_CHOWN_NAME		m1_p1	/* const char * */
-#define VFS_CHOWN_LEN		m1_i1	/* size_t */
-#define VFS_CHOWN_FD		m1_i1	/* int */
-#define VFS_CHOWN_OWNER		m1_i2	/* uid_t */
-#define VFS_CHOWN_GROUP		m1_i3	/* gid_t */
-
 /* Field names for the fchdir(2) call. */
 #define VFS_FCHDIR_FD		m1_i1	/* int */
 
