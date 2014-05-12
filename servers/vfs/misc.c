@@ -281,7 +281,7 @@ int do_fsync(void)
   dev_t dev;
   int r = OK;
 
-  scratch(fp).file.fd_nr = job_m_in.VFS_FSYNC_FD;
+  scratch(fp).file.fd_nr = job_m_in.m_lc_vfs_fsync.fd;
 
   if ((rfilp = get_filp(scratch(fp).file.fd_nr, VNODE_READ)) == NULL)
 	return(err_code);

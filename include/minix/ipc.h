@@ -147,6 +147,13 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_sigcalls);
 
 typedef struct {
+	int fd;
+
+	uint8_t padding[52];
+} mess_lc_vfs_fsync;
+_ASSERT_MSG_SIZE(mess_lc_vfs_fsync);
+
+typedef struct {
 	int32_t flags;
 	size_t len;
 	vir_bytes buf;		/* struct statvfs */
@@ -689,6 +696,7 @@ typedef struct {
 		mess_fs_vfs_readsuper	m_fs_vfs_readsuper;
 		mess_fs_vfs_readwrite	m_fs_vfs_readwrite;
 
+		mess_lc_vfs_fsync	m_lc_vfs_fsync;
 		mess_lc_vfs_getvfsstat	m_lc_vfs_getvfsstat;
 		mess_lc_vfs_ioctl	m_lc_vfs_ioctl;
 		mess_lc_vfs_mount	m_lc_vfs_mount;

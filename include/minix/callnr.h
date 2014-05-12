@@ -232,9 +232,6 @@
 
 #define NR_VFS_CALLS		49	/* highest number from base plus one */
 
-/* Field names for the fsync(2) call. */
-#define VFS_FSYNC_FD		m1_i1	/* int */
-
 /* Field names for the lseek(2) call. */
 #define VFS_LSEEK_FD		m2_i1	/* int */
 #define VFS_LSEEK_OFF		m2_ll1	/* off_t */
