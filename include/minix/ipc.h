@@ -381,6 +381,21 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_lc_vfs_umount);
 
 typedef struct {
+	endpoint_t endpt;
+
+	uint8_t padding[52];
+} mess_lsys_pm_getepinfo;
+_ASSERT_MSG_SIZE(mess_lsys_pm_getepinfo);
+
+typedef struct {
+	uid_t uid;
+	gid_t gid;
+
+	uint8_t padding[48];
+} mess_pm_lsys_getepinfo;
+_ASSERT_MSG_SIZE(mess_pm_lsys_getepinfo);
+
+typedef struct {
 	pid_t pid;
 
 	uint8_t padding[52];
@@ -897,12 +912,14 @@ typedef struct {
 		mess_lc_vfs_umask	m_lc_vfs_umask;
 		mess_lc_vfs_umount	m_lc_vfs_umount;
 
+		mess_lsys_pm_getepinfo	m_lsys_pm_getepinfo;
 		mess_lsys_pm_getprocnr	m_lsys_pm_getprocnr;
 
 		mess_lsys_vfs_checkperms m_lsys_vfs_checkperms;
 		mess_lsys_vfs_copyfd	m_lsys_vfs_copyfd;
 		mess_lsys_vfs_mapdriver	m_lsys_vfs_mapdriver;
 
+		mess_pm_lsys_getepinfo	m_pm_lsys_getepinfo;
 		mess_pm_lsys_getprocnr	m_pm_lsys_getprocnr;
 
 		mess_vfs_fs_breadwrite	m_vfs_fs_breadwrite;

@@ -11,15 +11,15 @@ getepinfo(endpoint_t proc_ep, uid_t *uid, gid_t *gid)
 	int r;
 
 	memset(&m, 0, sizeof(m));
-	m.PM_GETEPINFO_ENDPT = proc_ep;
+	m.m_lsys_pm_getepinfo.endpt = proc_ep;
 
 	if ((r = _taskcall(PM_PROC_NR, PM_GETEPINFO, &m)) < 0)
 		return r;
 
 	if (uid != NULL)
-		*uid = m.PM_GETEPINFO_UID;
+		*uid = m.m_pm_lsys_getepinfo.uid;
 	if (gid != NULL)
-		*gid = m.PM_GETEPINFO_GID;
+		*gid = m.m_pm_lsys_getepinfo.gid;
 	return (pid_t) r;
 }
 

@@ -191,13 +191,13 @@ int do_getepinfo(void)
   endpoint_t ep;
   int slot;
 
-  ep = m_in.PM_GETEPINFO_ENDPT;
+  ep = m_in.m_lsys_pm_getepinfo.endpt;
   if (pm_isokendpt(ep, &slot) != OK)
 	return(ESRCH);
 
   rmp = &mproc[slot];
-  mp->mp_reply.PM_GETEPINFO_UID = rmp->mp_effuid;
-  mp->mp_reply.PM_GETEPINFO_GID = rmp->mp_effgid;
+  mp->mp_reply.m_pm_lsys_getepinfo.uid = rmp->mp_effuid;
+  mp->mp_reply.m_pm_lsys_getepinfo.gid = rmp->mp_effgid;
   return(rmp->mp_pid);
 }
 

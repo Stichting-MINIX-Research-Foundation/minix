@@ -61,11 +61,6 @@
 
 #define NR_PM_CALLS		48	/* highest number from base plus one */
 
-/* Field names for the getepinfo(2) call. */
-#define PM_GETEPINFO_ENDPT	m1_i1	/* endpoint_t */
-#define PM_GETEPINFO_UID	m1_i1	/* uid_t */
-#define PM_GETEPINFO_GID	m1_i2	/* gid_t */
-
 /* Field names for the exit(2) call. */
 #define PM_EXIT_STATUS		m1_i1	/* int */
 
