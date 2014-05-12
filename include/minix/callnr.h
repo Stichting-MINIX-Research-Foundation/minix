@@ -232,11 +232,6 @@
 
 #define NR_VFS_CALLS		49	/* highest number from base plus one */
 
-/* Field names for the pipe2(2) call. */
-#define VFS_PIPE2_FD0		m1_i1	/* int */
-#define VFS_PIPE2_FD1		m1_i2	/* int */
-#define VFS_PIPE2_FLAGS		m1_i3	/* int */
-
 /* Field names for the umask(2) call. */
 #define VFS_UMASK_MASK		m1_i1	/* mode_t */
 

@@ -204,6 +204,15 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_lc_vfs_mount);
 
 typedef struct {
+	int fd0;
+	int fd1;
+	int flags;
+
+	uint8_t padding[44];
+} mess_lc_vfs_pipe2;
+_ASSERT_MSG_SIZE(mess_lc_vfs_pipe2);
+
+typedef struct {
 	uint32_t nfds;
 	fd_set *readfds;
 	fd_set *writefds;
@@ -729,6 +738,7 @@ typedef struct {
 		mess_lc_vfs_ioctl	m_lc_vfs_ioctl;
 		mess_lc_vfs_lseek	m_lc_vfs_lseek;
 		mess_lc_vfs_mount	m_lc_vfs_mount;
+		mess_lc_vfs_pipe2	m_lc_vfs_pipe2;
 		mess_lc_vfs_select	m_lc_vfs_select;
 		mess_lc_vfs_statvfs1	m_lc_vfs_statvfs1;
 		mess_lc_vfs_truncate	m_lc_vfs_truncate;

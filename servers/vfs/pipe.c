@@ -43,12 +43,12 @@ int do_pipe2(void)
   int r, flags;
   int fil_des[2];		/* reply goes here */
 
-  flags = job_m_in.VFS_PIPE2_FLAGS;
+  flags = job_m_in.m_lc_vfs_pipe2.flags;
 
   r = create_pipe(fil_des, flags);
   if (r == OK) {
-	job_m_out.VFS_PIPE2_FD0 = fil_des[0];
-	job_m_out.VFS_PIPE2_FD1 = fil_des[1];
+	job_m_out.m_lc_vfs_pipe2.fd0 = fil_des[0];
+	job_m_out.m_lc_vfs_pipe2.fd1 = fil_des[1];
   }
 
   return r;

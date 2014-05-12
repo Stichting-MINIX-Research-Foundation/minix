@@ -15,11 +15,11 @@ pipe2(int fild[2], int flags)
 	message m;
 
 	memset(&m, 0, sizeof(m));
-	m.VFS_PIPE2_FLAGS = flags;
+	m.m_lc_vfs_pipe2.flags = flags;
 
 	if (_syscall(VFS_PROC_NR, VFS_PIPE2, &m) < 0) return(-1);
-	fild[0] = m.VFS_PIPE2_FD0;
-	fild[1] = m.VFS_PIPE2_FD1;
+	fild[0] = m.m_lc_vfs_pipe2.fd0;
+	fild[1] = m.m_lc_vfs_pipe2.fd1;
 	return(0);
 }
 
