@@ -43,6 +43,7 @@ public:
     uint8_t personalityOffsetInCIE;
     bool isSignalFrame;
     bool fdesHaveAugmentationData;
+    uint8_t returnAddressRegister;
   };
 
   /// Information about an FDE (Frame Description Entry)
@@ -172,7 +173,7 @@ bool CFI_Parser<A, R>::decodeFDE(A &addressSpace, pint_t fdeStart,
   if (cieInfo->fdesHaveAugmentationData) {
     uintptr_t augLen = addressSpace.getULEB128(p, nextCFI);
     pint_t endOfAug = p + augLen;
-    if (cieInfo->lsdaEncoding != 0) {
+    if (cieInfo->lsdaEncoding != DW_EH_PE_omit) {
       // Peek at value (without indirection).  Zero means no LSDA.
       pint_t lsdaStart = p;
       if (addressSpace.getEncodedP(p, nextCFI, cieInfo->lsdaEncoding & 0x0F,
@@ -198,7 +199,7 @@ template <typename A, typename R>
 bool CFI_Parser<A, R>::parseCIE(A &addressSpace, pint_t cie,
                                 CIE_Info *cieInfo) {
   cieInfo->pointerEncoding = 0;
-  cieInfo->lsdaEncoding = 0;
+  cieInfo->lsdaEncoding = DW_EH_PE_omit;
   cieInfo->personalityEncoding = 0;
   cieInfo->personalityOffsetInCIE = 0;
   cieInfo->personality = 0;
@@ -238,7 +239,7 @@ bool CFI_Parser<A, R>::parseCIE(A &addressSpace, pint_t cie,
   // Parse data alignment factor
   cieInfo->dataAlignFactor = addressSpace.getSLEB128(p, cieContentEnd);
   // Parse return address register
-  addressSpace.getULEB128(p, cieContentEnd);
+  cieInfo->returnAddressRegister = (uint8_t)addressSpace.getULEB128(p, cieContentEnd);
   // Parse augmentation data based on augmentation string.
   if (addressSpace.get8(strStart) == 'z') {
     // parse augmentation data length
@@ -460,6 +461,8 @@ CFI_Parser<A, R>::parseInstructions(A &addressSpace, pint_t instructions,
       reg = R::dwarf2regno(addressSpace.getULEB128(p, instructionsEnd));
       offset =
           addressSpace.getULEB128(p, instructionsEnd) * cieInfo.dataAlignFactor;
+      if (reg > kMaxRegisterNumber)
+        return false;
       results->savedRegisters[reg].location = kRegisterOffsetFromCFA;
       results->savedRegisters[reg].value = offset;
       break;
@@ -481,6 +484,20 @@ CFI_Parser<A, R>::parseInstructions(A &addressSpace, pint_t instructions,
       length = addressSpace.getULEB128(p, instructionsEnd);
       p += length;
       break;
+    case DW_CFA_GNU_window_save:
+#if defined(__sparc__)
+      for (reg = 8; reg < 16; ++reg) {
+        results->savedRegisters[reg].location = kRegisterInRegister;
+        results->savedRegisters[reg].value = reg + 16;
+      }
+      for (reg = 16; reg < 32; ++reg) {
+        results->savedRegisters[reg].location = kRegisterInCFA;
+        results->savedRegisters[reg].value = (reg - 16) * sizeof(typename R::reg_t);
+      }
+      break;
+#else
+      return false;
+#endif
     case DW_CFA_GNU_args_size:
       offset = addressSpace.getULEB128(p, instructionsEnd);
       results->spExtraArgSize = offset;

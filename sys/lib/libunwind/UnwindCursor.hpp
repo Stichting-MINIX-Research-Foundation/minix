@@ -63,6 +63,9 @@ public:
       this->setInfoBasedOnIPRegister(true);
       if (fUnwindInfoMissing)
         return UNW_STEP_END;
+
+      if (fInfo.extra_args)
+        setSP(getSP() + fInfo.extra_args);
       return UNW_STEP_SUCCESS;
     }
     __builtin_unreachable();
@@ -134,7 +137,6 @@ void UnwindCursor<A, R>::setInfoBasedOnIPRegister(bool isReturnAddress) {
   fInfo.handler = cieInfo.personality;
   fInfo.extra_args = prolog.spExtraArgSize;
   fInfo.unwind_info = fdeInfo.fdeStart;
-  fInfo.unwind_info_size = fdeInfo.fdeLength;
 }
 
 }; // namespace _Unwind

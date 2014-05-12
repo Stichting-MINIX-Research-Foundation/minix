@@ -67,6 +67,7 @@ void _Unwind_DeleteException(struct _Unwind_Exception *);
 uintptr_t _Unwind_GetGR(struct _Unwind_Context *, int);
 void _Unwind_SetGR(struct _Unwind_Context *, int, uintptr_t);
 uintptr_t _Unwind_GetIP(struct _Unwind_Context *);
+uintptr_t _Unwind_GetIPInfo(struct _Unwind_Context *, int *);
 uintptr_t _Unwind_GetCFA(struct _Unwind_Context *);
 void _Unwind_SetIP(struct _Unwind_Context *, uintptr_t);
 uintptr_t _Unwind_GetRegionStart(struct _Unwind_Context *);

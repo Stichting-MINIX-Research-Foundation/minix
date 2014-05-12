@@ -39,12 +39,6 @@ public:
   static step_result stepWithDwarf(A &, pint_t, pint_t, R &, unw_proc_info_t *);
 
 private:
-  // Pseudo-register used for return addresses.
-  enum {
-    DW_X86_RET_ADDR = 8,
-    DW_X86_64_RET_ADDR = 16,
-  };
-
   static pint_t evaluateExpression(pint_t, A &, const R &, pint_t);
   static pint_t
   getSavedRegister(A &, const R &, pint_t,
@@ -54,9 +48,6 @@ private:
                           const typename CFI_Parser<A, R>::RegisterLocation &);
 
   static int lastRestoreReg(const R &) { return R::LAST_RESTORE_REG; }
-  static bool isReturnAddressRegister(int regno, const R &) {
-    return regno == R::IP_PSEUDO_REG;
-  }
 
   static pint_t getCFA(A &addressSpace,
                        const typename CFI_Parser<A, R>::PrologInfo &prolog,
@@ -145,7 +136,7 @@ step_result DwarfInstructions<A, R>::stepWithDwarf(A &addressSpace, pint_t pc,
   for (int i = 0; i <= lastRestoreReg(newRegisters); ++i) {
     if (prolog.savedRegisters[i].location == CFI_Parser<A, R>::kRegisterUnused)
       continue;
-    if (isReturnAddressRegister(i, registers))
+    if (i == (int)cieInfo.returnAddressRegister)
       returnAddress = getSavedRegister(addressSpace, registers, cfa,
                                        prolog.savedRegisters[i]);
     else if (registers.validRegister(i))
@@ -162,7 +153,7 @@ step_result DwarfInstructions<A, R>::stepWithDwarf(A &addressSpace, pint_t pc,
   // The CFA is defined as the stack pointer at the call site.
   // Therefore the SP is restored by setting it to the CFA.
   newRegisters.setSP(cfa);
-  newRegisters.setIP(returnAddress);
+  newRegisters.setIP(returnAddress + R::RETURN_OFFSET);
 
   // Now replace register set with the working copy.
   registers = newRegisters;

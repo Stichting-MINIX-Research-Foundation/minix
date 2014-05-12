@@ -48,7 +48,6 @@ struct unw_proc_info_t {
   uintptr_t lsda;            // Address of Language Specific Data Area
   uintptr_t handler;         // Personality routine
   uintptr_t extra_args;      // Extra stack space for frameless routines
-  uint32_t unwind_info_size; // Size of DWARF unwind info
   uintptr_t unwind_info;     // Address of DWARF unwind info
 };
 
@@ -76,13 +75,29 @@ public:
     pthread_rwlock_init(&fdeTreeLock, NULL);
   }
 
-  uint8_t get8(pint_t addr) { return *((uint8_t *)addr); }
+  uint8_t get8(pint_t addr) {
+    uint8_t val;
+    memcpy(&val, (void *)addr, sizeof(val));
+    return val;
+  }
 
-  uint16_t get16(pint_t addr) { return *((uint16_t *)addr); }
+  uint16_t get16(pint_t addr) {
+    uint16_t val;
+    memcpy(&val, (void *)addr, sizeof(val));
+    return val;
+  }
 
-  uint32_t get32(pint_t addr) { return *((uint32_t *)addr); }
+  uint32_t get32(pint_t addr) {
+    uint32_t val;
+    memcpy(&val, (void *)addr, sizeof(val));
+    return val;
+  }
 
-  uint64_t get64(pint_t addr) { return *((uint64_t *)addr); }
+  uint64_t get64(pint_t addr) {
+    uint64_t val;
+    memcpy(&val, (void *)addr, sizeof(val));
+    return val;
+  }
 
   uintptr_t getP(pint_t addr) {
     if (sizeof(uintptr_t) == sizeof(uint32_t))
@@ -249,6 +264,7 @@ public:
       return false;
     if (n->hdr_start == 0) {
       fdeStart = n->hdr_base;
+      data_base = n->data_base;
       return true;
     }
 
@@ -271,6 +287,7 @@ public:
         len = (len + 1) / 2;
     }
     fdeStart = base + (int32_t)get32(first + 4);
+    data_base = n->data_base;
     return true;
   }
 
@@ -336,9 +353,9 @@ public:
 private:
   findPCRange_t findPCRange;
   bool needsReload;
-#if !defined(__minix)
+#ifndef __minix
   pthread_rwlock_t fdeTreeLock;
-#endif /* !defined(__minix) */
+#endif
   rb_tree_t segmentTree;
   rb_tree_t dsoTree;
 
@@ -433,8 +450,8 @@ static int phdr_callback(struct dl_phdr_info *info, size_t size, void *data_) {
 }
 
 static int rangeCmp(void *context, const void *n1_, const void *n2_) {
-  LocalAddressSpace::Range *n1 = (LocalAddressSpace::Range *)n1_;
-  LocalAddressSpace::Range *n2 = (LocalAddressSpace::Range *)n2_;
+  const LocalAddressSpace::Range *n1 = (const LocalAddressSpace::Range *)n1_;
+  const LocalAddressSpace::Range *n2 = (const LocalAddressSpace::Range *)n2_;
 
   if (n1->first_pc < n2->first_pc)
     return -1;
@@ -445,8 +462,8 @@ static int rangeCmp(void *context, const void *n1_, const void *n2_) {
 }
 
 static int rangeCmpKey(void *context, const void *n_, const void *pc_) {
-  LocalAddressSpace::Range *n = (LocalAddressSpace::Range *)n_;
-  LocalAddressSpace::pint_t *pc = (LocalAddressSpace::pint_t *)pc_;
+  const LocalAddressSpace::Range *n = (const LocalAddressSpace::Range *)n_;
+  const LocalAddressSpace::pint_t *pc = (const LocalAddressSpace::pint_t *)pc_;
   if (n->last_pc < *pc)
     return -1;
   if (n->first_pc > *pc)
@@ -455,8 +472,8 @@ static int rangeCmpKey(void *context, const void *n_, const void *pc_) {
 }
 
 static int dsoTableCmp(void *context, const void *n1_, const void *n2_) {
-  LocalAddressSpace::Range *n1 = (LocalAddressSpace::Range *)n1_;
-  LocalAddressSpace::Range *n2 = (LocalAddressSpace::Range *)n2_;
+  const LocalAddressSpace::Range *n1 = (const LocalAddressSpace::Range *)n1_;
+  const LocalAddressSpace::Range *n2 = (const LocalAddressSpace::Range *)n2_;
 
   if (n1->ehframe_base < n2->ehframe_base)
     return -1;
@@ -466,8 +483,8 @@ static int dsoTableCmp(void *context, const void *n1_, const void *n2_) {
 }
 
 static int dsoTableCmpKey(void *context, const void *n_, const void *ptr_) {
-  LocalAddressSpace::Range *n = (LocalAddressSpace::Range *)n_;
-  LocalAddressSpace::pint_t *ptr = (LocalAddressSpace::pint_t *)ptr_;
+  const LocalAddressSpace::Range *n = (const LocalAddressSpace::Range *)n_;
+  const LocalAddressSpace::pint_t *ptr = (const LocalAddressSpace::pint_t *)ptr_;
   if (n->ehframe_base < *ptr)
     return -1;
   if (n->ehframe_base > *ptr)

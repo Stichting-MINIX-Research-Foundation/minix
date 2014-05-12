@@ -17,22 +17,12 @@
 
 using namespace _Unwind;
 
-#if __i386__
-typedef Registers_x86 ThisUnwindRegisters;
-#elif __x86_64__
-typedef Registers_x86_64 ThisUnwindRegisters;
-#elif __powerpc__
-typedef Registers_ppc32 ThisUnwindRegisters;
-#else
-#error Unsupported architecture
-#endif
-
-typedef CFI_Parser<LocalAddressSpace, ThisUnwindRegisters> MyCFIParser;
+typedef CFI_Parser<LocalAddressSpace, NativeUnwindRegisters> MyCFIParser;
 
 // Internal object representing the address space of this process.
 static LocalAddressSpace sThisAddressSpace(MyCFIParser::findPCRange);
 
-typedef UnwindCursor<LocalAddressSpace, ThisUnwindRegisters> ThisUnwindCursor;
+typedef UnwindCursor<LocalAddressSpace, NativeUnwindRegisters> ThisUnwindCursor;
 
 static _Unwind_Reason_Code unwind_phase1(ThisUnwindCursor &cursor,
                                          struct _Unwind_Exception *exc) {
@@ -197,7 +187,7 @@ static _Unwind_Reason_Code unwind_phase2_forced(ThisUnwindCursor &cursor,
 }
 
 _Unwind_Reason_Code _Unwind_RaiseException(struct _Unwind_Exception *exc) {
-  ThisUnwindRegisters registers;
+  NativeUnwindRegisters registers;
   ThisUnwindCursor cursor1(registers, sThisAddressSpace);
   ThisUnwindCursor cursor2(registers, sThisAddressSpace);
 
@@ -216,7 +206,7 @@ _Unwind_Reason_Code _Unwind_RaiseException(struct _Unwind_Exception *exc) {
 
 _Unwind_Reason_Code _Unwind_ForcedUnwind(struct _Unwind_Exception *exc,
                                          _Unwind_Stop_Fn stop, void *stop_arg) {
-  ThisUnwindRegisters registers;
+  NativeUnwindRegisters registers;
   ThisUnwindCursor cursor(registers, sThisAddressSpace);
 
   // Mark this as forced unwind for _Unwind_Resume().
@@ -227,7 +217,7 @@ _Unwind_Reason_Code _Unwind_ForcedUnwind(struct _Unwind_Exception *exc,
 }
 
 void _Unwind_Resume(struct _Unwind_Exception *exc) {
-  ThisUnwindRegisters registers;
+  NativeUnwindRegisters registers;
   ThisUnwindCursor cursor(registers, sThisAddressSpace);
 
   if (exc->private_1 != 0)
@@ -273,17 +263,18 @@ uintptr_t _Unwind_GetIP(struct _Unwind_Context *context) {
   return cursor->getIP();
 }
 
+uintptr_t _Unwind_GetIPInfo(struct _Unwind_Context *context, int *isSignalFrame) {
+  ThisUnwindCursor *cursor = (ThisUnwindCursor *)context;
+  *isSignalFrame = cursor->isSignalFrame() ? 1 : 0;
+  return cursor->getIP();
+}
+
 void _Unwind_SetIP(struct _Unwind_Context *context, uintptr_t new_value) {
   ThisUnwindCursor *cursor = (ThisUnwindCursor *)context;
   cursor->setIP(new_value);
   unw_proc_info_t info;
   cursor->getInfo(&info);
-  uint64_t orgArgSize = info.extra_args;
-  uint64_t orgFuncStart = info.start_ip;
   cursor->setInfoBasedOnIPRegister(false);
-  // Adjust REG_SP if there was a DW_CFA_GNU_args_size.
-  if (orgFuncStart == info.start_ip && orgArgSize != 0)
-    cursor->setSP(cursor->getSP() + orgArgSize);
 }
 
 uintptr_t _Unwind_GetRegionStart(struct _Unwind_Context *context) {
@@ -301,7 +292,7 @@ uintptr_t _Unwind_GetLanguageSpecificData(struct _Unwind_Context *context) {
 }
 
 _Unwind_Reason_Code _Unwind_Backtrace(_Unwind_Trace_Fn callback, void *ref) {
-  ThisUnwindRegisters registers;
+  NativeUnwindRegisters registers;
   ThisUnwindCursor cursor(registers, sThisAddressSpace);
   cursor.setInfoBasedOnIPRegister();
 
@@ -327,7 +318,7 @@ uintptr_t _Unwind_GetCFA(struct _Unwind_Context *context) {
 }
 
 void *_Unwind_FindEnclosingFunction(void *pc) {
-  ThisUnwindRegisters registers;
+  NativeUnwindRegisters registers;
   ThisUnwindCursor cursor(registers, sThisAddressSpace);
 
   unw_proc_info_t info;
