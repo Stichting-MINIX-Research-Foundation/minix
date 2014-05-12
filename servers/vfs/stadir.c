@@ -148,9 +148,9 @@ int do_stat(void)
   vir_bytes vname1, statbuf;
   size_t vname1_length;
 
-  vname1 = (vir_bytes) job_m_in.VFS_STAT_NAME;
-  vname1_length = (size_t) job_m_in.VFS_STAT_LEN;
-  statbuf = (vir_bytes) job_m_in.VFS_STAT_BUF;
+  vname1 = job_m_in.m_lc_vfs_stat.name;
+  vname1_length = job_m_in.m_lc_vfs_stat.len;
+  statbuf = job_m_in.m_lc_vfs_stat.buf;
 
   lookup_init(&resolve, fullpath, PATH_NOFLAGS, &vmp, &vp);
   resolve.l_vmnt_lock = VMNT_READ;
@@ -426,9 +426,9 @@ int do_lstat(void)
   vir_bytes vname1, statbuf;
   size_t vname1_length;
 
-  vname1 = (vir_bytes) job_m_in.VFS_STAT_NAME;
-  vname1_length = (size_t) job_m_in.VFS_STAT_LEN;
-  statbuf = (vir_bytes) job_m_in.VFS_STAT_BUF;
+  vname1 = job_m_in.m_lc_vfs_stat.name;
+  vname1_length = job_m_in.m_lc_vfs_stat.len;
+  statbuf = job_m_in.m_lc_vfs_stat.buf;
 
   lookup_init(&resolve, fullpath, PATH_RET_SYMLINK, &vmp, &vp);
   resolve.l_vmnt_lock = VMNT_READ;

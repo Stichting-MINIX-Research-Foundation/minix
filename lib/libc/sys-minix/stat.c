@@ -20,9 +20,9 @@ int stat(const char *name, struct stat *buffer)
   message m;
 
   memset(&m, 0, sizeof(m));
-  m.VFS_STAT_LEN = strlen(name) + 1;
-  m.VFS_STAT_NAME = (char *) __UNCONST(name);
-  m.VFS_STAT_BUF = (char *) buffer;
+  m.m_lc_vfs_stat.len = strlen(name) + 1;
+  m.m_lc_vfs_stat.name = (vir_bytes)name;
+  m.m_lc_vfs_stat.buf = (vir_bytes)buffer;
 
   return _syscall(VFS_PROC_NR, VFS_STAT, &m);
 }
@@ -43,9 +43,9 @@ int lstat(const char *name, struct stat *buffer)
   message m;
 
   memset(&m, 0, sizeof(m));
-  m.VFS_STAT_LEN = strlen(name) + 1;
-  m.VFS_STAT_NAME = (char *) __UNCONST(name);
-  m.VFS_STAT_BUF = (char *) buffer;
+  m.m_lc_vfs_stat.len = strlen(name) + 1;
+  m.m_lc_vfs_stat.name = (vir_bytes)name;
+  m.m_lc_vfs_stat.buf = (vir_bytes)buffer;
 
   return _syscall(VFS_PROC_NR, VFS_LSTAT, &m);
 }
