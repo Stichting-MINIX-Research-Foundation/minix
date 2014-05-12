@@ -232,12 +232,6 @@
 
 #define NR_VFS_CALLS		49	/* highest number from base plus one */
 
-/* Field names for the umount(2) call. */
-#define VFS_UMOUNT_NAME		m1_p1	/* char * */
-#define VFS_UMOUNT_NAMELEN	m1_i1	/* size_t */
-#define VFS_UMOUNT_LABEL	m1_p2	/* char * */
-#define VFS_UMOUNT_LABELLEN	m1_i2	/* size_t */
-
 /* Field names for the ioctl(2) call. */
 #define VFS_IOCTL_FD		m2_i1	/* int */
 #define VFS_IOCTL_REQ		m2_i3	/* unsigned long */

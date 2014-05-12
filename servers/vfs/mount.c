@@ -425,10 +425,10 @@ int do_umount(void)
   vir_bytes vname, label_addr;
   size_t vname_length, label_len;
 
-  vname = (vir_bytes) job_m_in.VFS_UMOUNT_NAME;
-  vname_length = (size_t) job_m_in.VFS_UMOUNT_NAMELEN;
-  label_addr = (vir_bytes) job_m_in.VFS_UMOUNT_LABEL;
-  label_len = (size_t) job_m_in.VFS_UMOUNT_LABELLEN;
+  vname = job_m_in.m_lc_vfs_umount.name;
+  vname_length = job_m_in.m_lc_vfs_umount.namelen;
+  label_addr = job_m_in.m_lc_vfs_umount.label;
+  label_len = job_m_in.m_lc_vfs_umount.labellen;
 
   /* Only the super-user may do umount. */
   if (!super_user) return(EPERM);

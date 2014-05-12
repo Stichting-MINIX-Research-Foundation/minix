@@ -172,10 +172,10 @@ int minix_umount(const char *name, int srvflags)
   int r;
 
   memset(&m, 0, sizeof(m));
-  m.VFS_UMOUNT_NAME = __UNCONST(name);
-  m.VFS_UMOUNT_NAMELEN = strlen(name) + 1;
-  m.VFS_UMOUNT_LABEL = label;
-  m.VFS_UMOUNT_LABELLEN = sizeof(label);
+  m.m_lc_vfs_umount.name = (vir_bytes)name;
+  m.m_lc_vfs_umount.namelen = strlen(name) + 1;
+  m.m_lc_vfs_umount.label = (vir_bytes)label;
+  m.m_lc_vfs_umount.labellen = sizeof(label);
   r = _syscall(VFS_PROC_NR, VFS_UMOUNT, &m);
 
   /* don't shut down the driver when exist flag is set */	
