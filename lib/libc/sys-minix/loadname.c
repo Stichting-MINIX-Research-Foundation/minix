@@ -13,7 +13,7 @@ void _loadname(const char *name, message *msgptr)
   register size_t k;
 
   k = strlen(name) + 1;
-  msgptr->VFS_PATH_LEN = k;
-  msgptr->VFS_PATH_NAME = (char *) __UNCONST(name);
-  if (k <= M3_STRING) strcpy(msgptr->VFS_PATH_BUF, name);
+  msgptr->m_lc_vfs_path.len = k;
+  msgptr->m_lc_vfs_path.name = (vir_bytes)name;
+  if (k <= M_PATH_STRING_MAX) strcpy(msgptr->m_lc_vfs_path.buf, name);
 }

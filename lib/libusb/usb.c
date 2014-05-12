@@ -132,7 +132,7 @@ int usb_init(char *name)
 
 	msg.m_type = USB_RQ_INIT;
 
-	strncpy(msg.USB_RB_INIT_NAME, name, M3_LONG_STRING);
+	strncpy(msg.USB_RB_INIT_NAME, name, M_PATH_STRING_MAX);
 	
 	res = ipc_sendrec(hcd_ep, &msg);
 

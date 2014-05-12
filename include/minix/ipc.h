@@ -13,8 +13,7 @@
 #define M1                 1
 #define M3                 3
 #define M4                 4
-#define M3_STRING         44	/* legacy m3_ca1 size (must not be changed) */
-#define M3_LONG_STRING    44	/* current m3_ca1 size (may be increased) */
+#define M_PATH_STRING_MAX  40
 
 typedef struct {
 	uint8_t data[56];
@@ -58,7 +57,7 @@ _ASSERT_MSG_SIZE(mess_2);
 typedef struct {
 	int m3i1, m3i2;
 	char *m3p1;
-	char m3ca1[M3_LONG_STRING];
+	char m3ca1[44];
 } mess_3;
 _ASSERT_MSG_SIZE(mess_3);
 
@@ -241,6 +240,15 @@ typedef struct {
 	uint8_t padding[20];
 } mess_lc_vfs_mount;
 _ASSERT_MSG_SIZE(mess_lc_vfs_mount);
+
+typedef struct {
+	vir_bytes name;
+	size_t len;
+	int flags;
+	mode_t mode;
+	char buf[M_PATH_STRING_MAX];
+} mess_lc_vfs_path;
+_ASSERT_MSG_SIZE(mess_lc_vfs_path);
 
 typedef struct {
 	int fd0;
@@ -807,6 +815,7 @@ typedef struct {
 		mess_lc_vfs_lseek	m_lc_vfs_lseek;
 		mess_lc_vfs_mknod	m_lc_vfs_mknod;
 		mess_lc_vfs_mount	m_lc_vfs_mount;
+		mess_lc_vfs_path	m_lc_vfs_path;
 		mess_lc_vfs_pipe2	m_lc_vfs_pipe2;
 		mess_lc_vfs_readlink	m_lc_vfs_readlink;
 		mess_lc_vfs_select	m_lc_vfs_select;

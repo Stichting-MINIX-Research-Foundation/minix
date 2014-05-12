@@ -25,7 +25,7 @@ int open(const char *name, int flags, ...)
 	call = VFS_CREAT;
   } else {
 	_loadname(name, &m);
-	m.VFS_PATH_FLAGS = flags;
+	m.m_lc_vfs_path.flags = flags;
 	call = VFS_OPEN;
   }
   va_end(argp);

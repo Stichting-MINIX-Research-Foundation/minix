@@ -42,7 +42,7 @@ int do_open(void)
   int open_flags;
   char fullpath[PATH_MAX];
 
-  open_flags = job_m_in.VFS_PATH_FLAGS;
+  open_flags = job_m_in.m_lc_vfs_path.flags;
 
   if (open_flags & O_CREAT)
 	return EINVAL;
@@ -562,7 +562,7 @@ int do_mkdir(void)
 
   if (copy_path(fullpath, sizeof(fullpath)) != OK)
 	return(err_code);
-  dirmode = (mode_t) job_m_in.VFS_PATH_MODE;
+  dirmode = job_m_in.m_lc_vfs_path.mode;
 
   lookup_init(&resolve, fullpath, PATH_NOFLAGS, &vmp, &vp);
   resolve.l_vmnt_lock = VMNT_WRITE;

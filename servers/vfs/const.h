@@ -32,7 +32,7 @@
 
 #define LABEL_MAX	16	/* maximum label size (including '\0'). Should
 				 * not be smaller than 16 or bigger than
-				 * M3_LONG_STRING.
+				 * M_PATH_STRING_MAX.
 				 */
 #define FSTYPE_MAX	VFS_NAMELEN	/* maximum file system type size */
 

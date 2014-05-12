@@ -32,8 +32,8 @@ int copy_path(char *dest, size_t size)
 
   assert(size >= PATH_MAX);
 
-  name = (vir_bytes) job_m_in.VFS_PATH_NAME;
-  len = job_m_in.VFS_PATH_LEN;
+  name = job_m_in.m_lc_vfs_path.name;
+  len = job_m_in.m_lc_vfs_path.len;
 
   if (len > size) {	/* 'len' includes terminating-nul */
 	err_code = ENAMETOOLONG;
@@ -41,11 +41,11 @@ int copy_path(char *dest, size_t size)
   }
 
   /* Is the string contained in the message? If not, perform a normal copy. */
-  if (len > M3_STRING)
+  if (len > M_PATH_STRING_MAX)
 	return fetch_name(name, len, dest);
 
   /* Just copy the path from the message */
-  strncpy(dest, job_m_in.VFS_PATH_BUF, len);
+  strncpy(dest, job_m_in.m_lc_vfs_path.buf, len);
 
   if (dest[len - 1] != '\0') {
 	err_code = ENAMETOOLONG;

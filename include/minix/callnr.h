@@ -232,15 +232,6 @@
 
 #define NR_VFS_CALLS		49	/* highest number from base plus one */
 
-/* Field names for the open(2), chdir(2), chmod(2), chroot(2), rmdir(2), and
- * unlink(2) calls.
- */
-#define VFS_PATH_NAME		m3_p1	/* const char * */
-#define VFS_PATH_LEN		m3_i1	/* size_t */
-#define VFS_PATH_FLAGS		m3_i2	/* int */
-#define VFS_PATH_MODE		m3_i2	/* mode_t */
-#define VFS_PATH_BUF		m3_ca1	/* char[M3_STRING] */
-
 /* Field names for the creat(2) call. */
 #define VFS_CREAT_NAME		m1_p1	/* const char * */
 #define VFS_CREAT_LEN		m1_i1	/* size_t */

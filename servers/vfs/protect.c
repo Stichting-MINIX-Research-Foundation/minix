@@ -44,7 +44,7 @@ int do_chmod(void)
   resolve.l_vnode_lock = VNODE_WRITE;
 
   if (job_call_nr == VFS_CHMOD) {
-	new_mode = job_m_in.VFS_PATH_MODE;
+	new_mode = job_m_in.m_lc_vfs_path.mode;
 	/* Temporarily open the file */
 	if (copy_path(fullpath, sizeof(fullpath)) != OK)
 		return(err_code);
@@ -207,7 +207,7 @@ int do_access(void)
   struct lookup resolve;
   mode_t access;
 
-  access = job_m_in.VFS_PATH_MODE;
+  access = job_m_in.m_lc_vfs_path.mode;
 
   lookup_init(&resolve, fullpath, PATH_NOFLAGS, &vmp, &vp);
   resolve.l_vmnt_lock = VMNT_READ;
