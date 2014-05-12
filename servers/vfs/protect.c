@@ -184,7 +184,7 @@ int do_umask(void)
 /* Perform the umask(2) system call. */
   mode_t complement, new_umask;
 
-  new_umask = job_m_in.VFS_UMASK_MASK;
+  new_umask = job_m_in.m_lc_vfs_umask.mask;
 
   complement = ~fp->fp_umask;	/* set 'r' to complement of old mask */
   fp->fp_umask = ~(new_umask & RWX_MODES);

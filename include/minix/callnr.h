@@ -232,9 +232,6 @@
 
 #define NR_VFS_CALLS		49	/* highest number from base plus one */
 
-/* Field names for the umask(2) call. */
-#define VFS_UMASK_MASK		m1_i1	/* mode_t */
-
 /* Field names for the link(2), symlink(2), and rename(2) call. */
 #define VFS_LINK_NAME1		m1_p1	/* const char * */
 #define VFS_LINK_LEN1		m1_i1	/* size_t */

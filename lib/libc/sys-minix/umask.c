@@ -10,6 +10,6 @@ mode_t umask(mode_t complmode)
   message m;
 
   memset(&m, 0, sizeof(m));
-  m.VFS_UMASK_MASK = complmode;
+  m.m_lc_vfs_umask.mask = complmode;
   return( (mode_t) _syscall(VFS_PROC_NR, VFS_UMASK, &m));
 }

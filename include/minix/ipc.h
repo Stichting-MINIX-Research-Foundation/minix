@@ -246,6 +246,13 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_lc_vfs_truncate);
 
 typedef struct {
+	mode_t mask;
+
+	uint8_t padding[52];
+} mess_lc_vfs_umask;
+_ASSERT_MSG_SIZE(mess_lc_vfs_umask);
+
+typedef struct {
 	vir_bytes name;
 	size_t namelen;
 	vir_bytes label;
@@ -742,6 +749,7 @@ typedef struct {
 		mess_lc_vfs_select	m_lc_vfs_select;
 		mess_lc_vfs_statvfs1	m_lc_vfs_statvfs1;
 		mess_lc_vfs_truncate	m_lc_vfs_truncate;
+		mess_lc_vfs_umask	m_lc_vfs_umask;
 		mess_lc_vfs_umount	m_lc_vfs_umount;
 
 		mess_lsys_vfs_checkperms m_lsys_vfs_checkperms;
