@@ -232,12 +232,6 @@
 
 #define NR_VFS_CALLS		49	/* highest number from base plus one */
 
-/* Field names for the mknod(2) call. */
-#define VFS_MKNOD_NAME		m1_p1	/* const char * */
-#define VFS_MKNOD_LEN		m1_i1	/* size_t */
-#define VFS_MKNOD_MODE		m1_i2	/* mode_t */
-#define VFS_MKNOD_DEV		m1_ull1	/* dev_t */
-
 /* Field names for the open(2), chdir(2), chmod(2), chroot(2), rmdir(2), and
  * unlink(2) calls.
  */

@@ -513,10 +513,10 @@ int do_mknod(void)
   size_t vname1_length;
   dev_t dev;
 
-  vname1 = (vir_bytes) job_m_in.VFS_MKNOD_NAME;
-  vname1_length = (size_t) job_m_in.VFS_MKNOD_LEN;
-  mode_bits = (mode_t) job_m_in.VFS_MKNOD_MODE;
-  dev = job_m_in.VFS_MKNOD_DEV;
+  vname1 = job_m_in.m_lc_vfs_mknod.name;
+  vname1_length = job_m_in.m_lc_vfs_mknod.len;
+  mode_bits = job_m_in.m_lc_vfs_mknod.mode;
+  dev = job_m_in.m_lc_vfs_mknod.device;
 
   lookup_init(&resolve, fullpath, PATH_NOFLAGS, &vmp, &vp);
   resolve.l_vmnt_lock = VMNT_WRITE;

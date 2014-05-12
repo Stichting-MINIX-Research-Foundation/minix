@@ -217,6 +217,17 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_vfs_lc_lseek);
 
 typedef struct {
+	dev_t device;
+
+	vir_bytes name;
+	size_t len;
+	mode_t mode;
+
+	uint8_t padding[36];
+} mess_lc_vfs_mknod;
+_ASSERT_MSG_SIZE(mess_lc_vfs_mknod);
+
+typedef struct {
 	int flags;
 	size_t devlen;
 	size_t pathlen;
@@ -794,6 +805,7 @@ typedef struct {
 		mess_lc_vfs_ioctl	m_lc_vfs_ioctl;
 		mess_lc_vfs_link	m_lc_vfs_link;
 		mess_lc_vfs_lseek	m_lc_vfs_lseek;
+		mess_lc_vfs_mknod	m_lc_vfs_mknod;
 		mess_lc_vfs_mount	m_lc_vfs_mount;
 		mess_lc_vfs_pipe2	m_lc_vfs_pipe2;
 		mess_lc_vfs_readlink	m_lc_vfs_readlink;
