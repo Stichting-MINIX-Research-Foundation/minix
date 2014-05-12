@@ -38,10 +38,10 @@ int do_link(void)
   vir_bytes vname1, vname2;
   size_t vname1_length, vname2_length;
 
-  vname1 = (vir_bytes) job_m_in.VFS_LINK_NAME1;
-  vname1_length = job_m_in.VFS_LINK_LEN1;
-  vname2 = (vir_bytes) job_m_in.VFS_LINK_NAME2;
-  vname2_length = job_m_in.VFS_LINK_LEN2;
+  vname1 = job_m_in.m_lc_vfs_link.name1;
+  vname1_length = job_m_in.m_lc_vfs_link.len1;
+  vname2 = job_m_in.m_lc_vfs_link.name2;
+  vname2_length = job_m_in.m_lc_vfs_link.len2;
 
   lookup_init(&resolve, fullpath, PATH_NOFLAGS, &vmp1, &vp);
   resolve.l_vmnt_lock = VMNT_WRITE;
@@ -179,10 +179,10 @@ int do_rename(void)
   vir_bytes vname1, vname2;
   size_t vname1_length, vname2_length;
 
-  vname1 = (vir_bytes) job_m_in.VFS_LINK_NAME1;
-  vname1_length = job_m_in.VFS_LINK_LEN1;
-  vname2 = (vir_bytes) job_m_in.VFS_LINK_NAME2;
-  vname2_length = job_m_in.VFS_LINK_LEN2;
+  vname1 = job_m_in.m_lc_vfs_link.name1;
+  vname1_length = job_m_in.m_lc_vfs_link.len1;
+  vname2 = job_m_in.m_lc_vfs_link.name2;
+  vname2_length = job_m_in.m_lc_vfs_link.len2;
 
   lookup_init(&resolve, fullpath, PATH_RET_SYMLINK, &oldvmp, &old_dirp);
   /* Do not yet request exclusive lock on vmnt to prevent deadlocks later on */
@@ -401,10 +401,10 @@ int do_slink(void)
   resolve.l_vmnt_lock = VMNT_WRITE;
   resolve.l_vnode_lock = VNODE_WRITE;
 
-  vname1 = (vir_bytes) job_m_in.VFS_LINK_NAME1;
-  vname1_length = job_m_in.VFS_LINK_LEN1;
-  vname2 = (vir_bytes) job_m_in.VFS_LINK_NAME2;
-  vname2_length = job_m_in.VFS_LINK_LEN2;
+  vname1 = job_m_in.m_lc_vfs_link.name1;
+  vname1_length = job_m_in.m_lc_vfs_link.len1;
+  vname2 = job_m_in.m_lc_vfs_link.name2;
+  vname2_length = job_m_in.m_lc_vfs_link.len2;
 
   if (vname1_length <= 1) return(ENOENT);
   if (vname1_length >= _POSIX_SYMLINK_MAX) return(ENAMETOOLONG);

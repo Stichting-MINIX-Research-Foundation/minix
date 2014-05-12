@@ -232,12 +232,6 @@
 
 #define NR_VFS_CALLS		49	/* highest number from base plus one */
 
-/* Field names for the link(2), symlink(2), and rename(2) call. */
-#define VFS_LINK_NAME1		m1_p1	/* const char * */
-#define VFS_LINK_LEN1		m1_i1	/* size_t */
-#define VFS_LINK_NAME2		m1_p2	/* const char * */
-#define VFS_LINK_LEN2		m1_i2	/* size_t */
-
 /* Field names for the readlink(2) call. */
 #define VFS_READLINK_NAME	m1_p1	/* const char * */
 #define VFS_READLINK_NAMELEN	m1_i1	/* size_t */

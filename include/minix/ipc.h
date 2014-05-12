@@ -172,6 +172,16 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_lc_vfs_ioctl);
 
 typedef struct {
+	vir_bytes name1;
+	vir_bytes name2;
+	size_t len1;
+	size_t len2;
+
+	uint8_t padding[40];
+} mess_lc_vfs_link;
+_ASSERT_MSG_SIZE(mess_lc_vfs_link);
+
+typedef struct {
 	off_t offset;
 
 	int fd;
@@ -743,6 +753,7 @@ typedef struct {
 		mess_lc_vfs_fsync	m_lc_vfs_fsync;
 		mess_lc_vfs_getvfsstat	m_lc_vfs_getvfsstat;
 		mess_lc_vfs_ioctl	m_lc_vfs_ioctl;
+		mess_lc_vfs_link	m_lc_vfs_link;
 		mess_lc_vfs_lseek	m_lc_vfs_lseek;
 		mess_lc_vfs_mount	m_lc_vfs_mount;
 		mess_lc_vfs_pipe2	m_lc_vfs_pipe2;
