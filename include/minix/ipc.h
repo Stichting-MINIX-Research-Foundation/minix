@@ -523,6 +523,16 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_lsys_vfs_mapdriver);
 
 typedef struct {
+	endpoint_t endpt;
+	int result;
+	vir_bytes pc;
+	vir_bytes ps_str;
+
+	uint8_t padding[40];
+} mess_rs_pm_exec_restart;
+_ASSERT_MSG_SIZE(mess_rs_pm_exec_restart);
+
+typedef struct {
 	dev_t device;
 	off_t seek_pos;
 
@@ -1021,6 +1031,8 @@ typedef struct {
 
 		mess_pm_lsys_getepinfo	m_pm_lsys_getepinfo;
 		mess_pm_lsys_getprocnr	m_pm_lsys_getprocnr;
+
+		mess_rs_pm_exec_restart	m_rs_pm_exec_restart;
 
 		mess_vfs_fs_breadwrite	m_vfs_fs_breadwrite;
 		mess_vfs_fs_chmod	m_vfs_fs_chmod;

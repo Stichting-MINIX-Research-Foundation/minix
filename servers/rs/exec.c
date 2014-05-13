@@ -129,10 +129,10 @@ static int exec_restart(int proc_e, int result, vir_bytes pc, vir_bytes ps_str)
 
 	memset(&m, 0, sizeof(m));
 	m.m_type = PM_EXEC_RESTART;
-	m.PM_EXEC_RESTART_ENDPT = proc_e;
-	m.PM_EXEC_RESTART_RESULT = result;
-	m.PM_EXEC_RESTART_PC = (void *)pc;
-	m.PM_EXEC_RESTART_PS_STR = (void *)ps_str;
+	m.m_rs_pm_exec_restart.endpt = proc_e;
+	m.m_rs_pm_exec_restart.result = result;
+	m.m_rs_pm_exec_restart.pc = pc;
+	m.m_rs_pm_exec_restart.ps_str = ps_str;
 
 	r = ipc_sendrec(PM_PROC_NR, &m);
 	if (r != OK)

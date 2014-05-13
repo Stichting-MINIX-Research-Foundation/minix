@@ -131,14 +131,14 @@ int do_execrestart(void)
 	if (who_e != RS_PROC_NR)
 		return EPERM;
 
-	proc_e = m_in.PM_EXEC_RESTART_ENDPT;
+	proc_e = m_in.m_rs_pm_exec_restart.endpt;
 	if (pm_isokendpt(proc_e, &proc_n) != OK) {
 		panic("do_execrestart: got bad endpoint: %d", proc_e);
 	}
 	rmp = &mproc[proc_n];
-	result = m_in.PM_EXEC_RESTART_RESULT;
-	pc = (vir_bytes)m_in.PM_EXEC_RESTART_PC;
-	ps_str = (vir_bytes)m_in.PM_EXEC_RESTART_PS_STR;
+	result = m_in.m_rs_pm_exec_restart.result;
+	pc = m_in.m_rs_pm_exec_restart.pc;
+	ps_str = m_in.m_rs_pm_exec_restart.ps_str;
 
 	exec_restart(rmp, result, pc, rmp->mp_frame_addr, ps_str);
 

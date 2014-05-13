@@ -122,12 +122,6 @@
 /* Field names for the reboot(2) call. */
 #define PM_REBOOT_HOW		m1_i1	/* int */
 
-/* Field names for the PM_EXEC_RESTART call. */
-#define PM_EXEC_RESTART_ENDPT	m1_i1	/* endpoint_t */
-#define PM_EXEC_RESTART_RESULT	m1_i2	/* int */
-#define PM_EXEC_RESTART_PC	m1_p1	/* vir_bytes */
-#define PM_EXEC_RESTART_PS_STR	m1_p2	/* vir_bytes */
-
 /*===========================================================================*
  *				Calls to VFS				     *
  *===========================================================================*/
