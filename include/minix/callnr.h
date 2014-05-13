@@ -68,13 +68,6 @@
 #define PM_SIG_OACT		m1_p2	/* struct sigaction * */
 #define PM_SIG_RET		m1_p3	/* int (*)(void) */
 
-/* Field names for the remaining sigpending(2), sigprocmask(2), sigreturn(2),
- * sigsuspend(2) calls.
- */
-#define PM_SIG_HOW		m2_i1	/* int */
-#define PM_SIG_SET		m2_sigset /* sigset_t */
-#define PM_SIG_CTX		m2_p1	/* struct sigcontext * */
-
 /*===========================================================================*
  *				Calls to VFS				     *
  *===========================================================================*/

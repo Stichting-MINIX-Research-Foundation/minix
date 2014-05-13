@@ -252,6 +252,22 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_lc_pm_sysuname);
 
 typedef struct {
+	int how;
+	vir_bytes ctx;
+	sigset_t set;
+
+	uint8_t padding[32];
+} mess_lc_pm_sigset;
+_ASSERT_MSG_SIZE(mess_lc_pm_sigset);
+
+typedef struct {
+	sigset_t set;
+
+	uint8_t padding[40];
+} mess_pm_lc_sigset;
+_ASSERT_MSG_SIZE(mess_pm_lc_sigset);
+
+typedef struct {
 	time_t sec;
 
 	clockid_t clk_id;
@@ -1093,6 +1109,7 @@ typedef struct {
 		mess_lc_pm_reboot	m_lc_pm_reboot;
 		mess_lc_pm_setgid	m_lc_pm_setgid;
 		mess_lc_pm_setuid	m_lc_pm_setuid;
+		mess_lc_pm_sigset	m_lc_pm_sigset;
 		mess_lc_pm_sysuname	m_lc_pm_sysuname;
 		mess_lc_pm_time		m_lc_pm_time;
 		mess_lc_pm_waitpid	m_lc_pm_waitpid;
@@ -1138,6 +1155,7 @@ typedef struct {
 		mess_pm_lc_getpid	m_pm_lc_getpid;
 		mess_pm_lc_getuid	m_pm_lc_getuid;
 		mess_pm_lc_ptrace	m_pm_lc_ptrace;
+		mess_pm_lc_sigset	m_pm_lc_sigset;
 		mess_pm_lc_time		m_pm_lc_time;
 		mess_pm_lc_waitpid	m_pm_lc_waitpid;
 

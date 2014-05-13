@@ -11,7 +11,7 @@ const sigset_t *set;
   message m;
 
   memset(&m, 0, sizeof(m));
-  m.PM_SIG_SET = *set;
+  m.m_lc_pm_sigset.set = *set;
   return(_syscall(PM_PROC_NR, PM_SIGSUSPEND, &m));
 }
 

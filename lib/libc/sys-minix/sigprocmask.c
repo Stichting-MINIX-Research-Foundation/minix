@@ -18,14 +18,14 @@ sigset_t *oset;
 
   memset(&m, 0, sizeof(m));
   if (set == (sigset_t *) NULL) {
-	m.PM_SIG_HOW = SIG_INQUIRE;
-	sigemptyset(&m.PM_SIG_SET);
+	m.m_lc_pm_sigset.how = SIG_INQUIRE;
+	sigemptyset(&m.m_lc_pm_sigset.set);
   } else {
-	m.PM_SIG_HOW = how;
-	m.PM_SIG_SET = *set;
+	m.m_lc_pm_sigset.how = how;
+	m.m_lc_pm_sigset.set = *set;
   }
   if (_syscall(PM_PROC_NR, PM_SIGPROCMASK, &m) < 0) return(-1);
-  if (oset != (sigset_t *) NULL) *oset = m.PM_SIG_SET;
+  if (oset != NULL) *oset = m.m_pm_lc_sigset.set;
 
   return(m.m_type);
 }

@@ -92,7 +92,7 @@ int do_sigpending(void)
 {
   assert(!(mp->mp_flags & (PROC_STOPPED | VFS_CALL | UNPAUSED)));
 
-  mp->mp_reply.PM_SIG_SET = mp->mp_sigpending;
+  mp->mp_reply.m_pm_lc_sigset.set = mp->mp_sigpending;
   return OK;
 }
 
@@ -116,10 +116,10 @@ int do_sigprocmask(void)
 
   assert(!(mp->mp_flags & (PROC_STOPPED | VFS_CALL | UNPAUSED)));
 
-  set = m_in.PM_SIG_SET;
-  mp->mp_reply.PM_SIG_SET = mp->mp_sigmask;
+  set = m_in.m_lc_pm_sigset.set;
+  mp->mp_reply.m_pm_lc_sigset.set = mp->mp_sigmask;
 
-  switch (m_in.PM_SIG_HOW) {
+  switch (m_in.m_lc_pm_sigset.how) {
       case SIG_BLOCK:
 	sigdelset(&set, SIGKILL);
 	sigdelset(&set, SIGSTOP);
@@ -162,7 +162,7 @@ int do_sigsuspend(void)
   assert(!(mp->mp_flags & (PROC_STOPPED | VFS_CALL | UNPAUSED)));
 
   mp->mp_sigmask2 = mp->mp_sigmask;	/* save the old mask */
-  mp->mp_sigmask = m_in.PM_SIG_SET;
+  mp->mp_sigmask = m_in.m_lc_pm_sigset.set;
   sigdelset(&mp->mp_sigmask, SIGKILL);
   sigdelset(&mp->mp_sigmask, SIGSTOP);
   mp->mp_flags |= SIGSUSPENDED;
@@ -182,11 +182,11 @@ int do_sigreturn(void)
 
   assert(!(mp->mp_flags & (PROC_STOPPED | VFS_CALL | UNPAUSED)));
 
-  mp->mp_sigmask = m_in.PM_SIG_SET;
+  mp->mp_sigmask = m_in.m_lc_pm_sigset.set;
   sigdelset(&mp->mp_sigmask, SIGKILL);
   sigdelset(&mp->mp_sigmask, SIGSTOP);
 
-  r = sys_sigreturn(who_e, (struct sigmsg *) m_in.PM_SIG_CTX);
+  r = sys_sigreturn(who_e, (struct sigmsg *)m_in.m_lc_pm_sigset.ctx);
   check_pending(mp);
   return(r);
 }

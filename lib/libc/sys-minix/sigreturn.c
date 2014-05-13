@@ -23,10 +23,10 @@ int sigreturn(struct sigcontext *scp)
 
   /* Protect against race conditions by blocking all interrupts. */
   sigfillset(&set);		/* splhi */
-  sigprocmask(SIG_SETMASK, &set, (sigset_t *) NULL);
+  sigprocmask(SIG_SETMASK, &set, NULL);
 
   memset(&m, 0, sizeof(m));
-  m.PM_SIG_SET = scp->sc_mask;
-  m.PM_SIG_CTX = (char *) scp;
+  m.m_lc_pm_sigset.set = scp->sc_mask;
+  m.m_lc_pm_sigset.ctx = (vir_bytes)scp;
   return(_syscall(PM_PROC_NR, PM_SIGRETURN, &m)); /* normally doesn't return */
 }

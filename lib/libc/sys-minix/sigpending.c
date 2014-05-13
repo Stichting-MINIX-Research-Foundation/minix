@@ -12,7 +12,7 @@ sigset_t *set;
 
   memset(&m, 0, sizeof(m));
   if (_syscall(PM_PROC_NR, PM_SIGPENDING, &m) < 0) return(-1);
-  *set = m.PM_SIG_SET;
+  *set = m.m_pm_lc_sigset.set;
   return(m.m_type);
 }
 
