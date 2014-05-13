@@ -42,11 +42,11 @@ int do_exec()
 	memset(&m, 0, sizeof(m));
 	m.m_type = VFS_PM_EXEC;
 	m.VFS_PM_ENDPT = mp->mp_endpoint;
-	m.VFS_PM_PATH = m_in.PM_EXEC_NAME;
-	m.VFS_PM_PATH_LEN = m_in.PM_EXEC_NAMELEN;
-	m.VFS_PM_FRAME = m_in.PM_EXEC_FRAME;
-	m.VFS_PM_FRAME_LEN = m_in.PM_EXEC_FRAMELEN;
-	m.VFS_PM_PS_STR = (vir_bytes) m_in.PM_EXEC_PS_STR;
+	m.VFS_PM_PATH = (void *)m_in.m_lc_pm_exec.name;
+	m.VFS_PM_PATH_LEN = m_in.m_lc_pm_exec.namelen;
+	m.VFS_PM_FRAME = (void *)m_in.m_lc_pm_exec.frame;
+	m.VFS_PM_FRAME_LEN = m_in.m_lc_pm_exec.framelen;
+	m.VFS_PM_PS_STR = m_in.m_lc_pm_exec.ps_str;
 
 	tell_vfs(mp, &m);
 

@@ -64,13 +64,6 @@
 /* Field names for the exit(2) call. */
 #define PM_EXIT_STATUS		m1_i1	/* int */
 
-/* Field names for the execve(2) call. */
-#define PM_EXEC_NAME		m1_p1	/* const char * */
-#define PM_EXEC_NAMELEN		m1_i1	/* size_t */
-#define PM_EXEC_FRAME		m1_p2	/* char * */
-#define PM_EXEC_FRAMELEN	m1_i2	/* size_t */
-#define PM_EXEC_PS_STR		m1_p3	/* char * */
-
 /* Field names for the kill(2), srv_kill(2), and sigaction(2) calls. */
 #define PM_SIG_PID		m1_i1	/* pid_t */
 #define PM_SIG_NR		m1_i2	/* int */

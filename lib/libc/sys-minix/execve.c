@@ -44,11 +44,11 @@ int execve(const char *path, char * const *argv, char * const *envp)
 	memset(&m, 0, sizeof(m));
 
 	/* We can finally make the system call. */
-	m.PM_EXEC_NAME = (char *) __UNCONST(path);
-	m.PM_EXEC_NAMELEN = strlen(path) + 1;
-	m.PM_EXEC_FRAME = frame;
-	m.PM_EXEC_FRAMELEN = frame_size;
-	m.PM_EXEC_PS_STR = (char *)(vsp + ((char *)psp - frame));
+	m.m_lc_pm_exec.name = (vir_bytes)path;
+	m.m_lc_pm_exec.namelen = strlen(path) + 1;
+	m.m_lc_pm_exec.frame = (vir_bytes)frame;
+	m.m_lc_pm_exec.framelen = frame_size;
+	m.m_lc_pm_exec.ps_str = (vir_bytes)(vsp + ((char *)psp - frame));
 
 	(void) _syscall(PM_PROC_NR, PM_EXEC, &m);
 
