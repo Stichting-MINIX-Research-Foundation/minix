@@ -69,7 +69,7 @@ int do_get()
 	case PM_GETSID:
 	{
 		struct mproc *target;
-		pid_t p = m_in.PM_GETSID_PID;
+		pid_t p = m_in.m_lc_pm_getsid.pid;
 		target = p ? find_proc(p) : &mproc[who_p];
 		r = ESRCH;
 		if(target)

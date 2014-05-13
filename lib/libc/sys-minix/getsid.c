@@ -10,6 +10,6 @@ pid_t getsid(pid_t p)
   message m;
 
   memset(&m, 0, sizeof(m));
-  m.PM_GETSID_PID = p;
+  m.m_lc_pm_getsid.pid = p;
   return(_syscall(PM_PROC_NR, PM_GETSID, &m));
 }
