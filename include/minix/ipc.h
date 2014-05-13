@@ -252,6 +252,17 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_lc_pm_sysuname);
 
 typedef struct {
+	pid_t pid;
+	int nr;
+	vir_bytes act;		/* const struct sigaction * */
+	vir_bytes oact;		/* struct sigaction * */
+	vir_bytes ret;		/* int (*)(void) */
+
+	uint8_t padding[36];
+} mess_lc_pm_sig;
+_ASSERT_MSG_SIZE(mess_lc_pm_sig);
+
+typedef struct {
 	int how;
 	vir_bytes ctx;
 	sigset_t set;
@@ -1117,6 +1128,7 @@ typedef struct {
 		mess_lc_pm_reboot	m_lc_pm_reboot;
 		mess_lc_pm_setgid	m_lc_pm_setgid;
 		mess_lc_pm_setuid	m_lc_pm_setuid;
+		mess_lc_pm_sig		m_lc_pm_sig;
 		mess_lc_pm_sigset	m_lc_pm_sigset;
 		mess_lc_pm_sysuname	m_lc_pm_sysuname;
 		mess_lc_pm_time		m_lc_pm_time;

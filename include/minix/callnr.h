@@ -61,13 +61,6 @@
 
 #define NR_PM_CALLS		48	/* highest number from base plus one */
 
-/* Field names for the kill(2), srv_kill(2), and sigaction(2) calls. */
-#define PM_SIG_PID		m1_i1	/* pid_t */
-#define PM_SIG_NR		m1_i2	/* int */
-#define PM_SIG_ACT		m1_p1	/* const struct sigaction * */
-#define PM_SIG_OACT		m1_p2	/* struct sigaction * */
-#define PM_SIG_RET		m1_p3	/* int (*)(void) */
-
 /*===========================================================================*
  *				Calls to VFS				     *
  *===========================================================================*/

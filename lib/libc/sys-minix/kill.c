@@ -16,7 +16,7 @@ int sig;			/* signal number */
   message m;
 
   memset(&m, 0, sizeof(m));
-  m.PM_SIG_PID = proc;
-  m.PM_SIG_NR = sig;
+  m.m_lc_pm_sig.pid = proc;
+  m.m_lc_pm_sig.nr = sig;
   return(_syscall(PM_PROC_NR, PM_KILL, &m));
 }

@@ -45,23 +45,23 @@ int do_sigaction(void)
 
   assert(!(mp->mp_flags & (PROC_STOPPED | VFS_CALL | UNPAUSED)));
 
-  sig_nr = m_in.PM_SIG_NR;
+  sig_nr = m_in.m_lc_pm_sig.nr;
   if (sig_nr == SIGKILL) return(OK);
   if (sig_nr < 1 || sig_nr >= _NSIG) return(EINVAL);
 
   svp = &mp->mp_sigact[sig_nr];
-  if ((struct sigaction *) m_in.PM_SIG_OACT != (struct sigaction *) NULL) {
+  if (m_in.m_lc_pm_sig.oact != 0) {
 	r = sys_datacopy(PM_PROC_NR,(vir_bytes) svp, who_e,
-		(vir_bytes) m_in.PM_SIG_OACT, (phys_bytes) sizeof(svec));
+		m_in.m_lc_pm_sig.oact, (phys_bytes) sizeof(svec));
 	if (r != OK) return(r);
   }
 
-  if ((struct sigaction *) m_in.PM_SIG_ACT == (struct sigaction *) NULL)
+  if (m_in.m_lc_pm_sig.act == 0)
   	return(OK);
 
   /* Read in the sigaction structure. */
-  r = sys_datacopy(who_e, (vir_bytes) m_in.PM_SIG_ACT,
-		PM_PROC_NR, (vir_bytes) &svec, (phys_bytes) sizeof(svec));
+  r = sys_datacopy(who_e, m_in.m_lc_pm_sig.act, PM_PROC_NR, (vir_bytes) &svec,
+	  (phys_bytes) sizeof(svec));
   if (r != OK) return(r);
 
   if (svec.sa_handler == SIG_IGN) {
@@ -81,7 +81,7 @@ int do_sigaction(void)
   sigdelset(&svec.sa_mask, SIGSTOP);
   mp->mp_sigact[sig_nr].sa_mask = svec.sa_mask;
   mp->mp_sigact[sig_nr].sa_flags = svec.sa_flags;
-  mp->mp_sigreturn = (vir_bytes) m_in.PM_SIG_RET;
+  mp->mp_sigreturn = m_in.m_lc_pm_sig.ret;
   return(OK);
 }
 
@@ -198,7 +198,7 @@ int do_kill(void)
 {
 /* Perform the kill(pid, signo) system call. */
 
-  return check_sig(m_in.PM_SIG_PID, m_in.PM_SIG_NR, FALSE /* ksig */);
+  return check_sig(m_in.m_lc_pm_sig.pid, m_in.m_lc_pm_sig.nr, FALSE /* ksig */);
 }
 
 /*===========================================================================*

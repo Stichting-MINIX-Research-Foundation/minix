@@ -12,10 +12,10 @@ int sigaction(int sig, const struct sigaction *act, struct sigaction *oact)
   message m;
 
   memset(&m, 0, sizeof(m));
-  m.PM_SIG_NR = sig;
-  m.PM_SIG_ACT = (char *) __UNCONST(act);
-  m.PM_SIG_OACT = (char *) oact;
-  m.PM_SIG_RET = (char *) __sigreturn;
+  m.m_lc_pm_sig.nr = sig;
+  m.m_lc_pm_sig.act = (vir_bytes)act;
+  m.m_lc_pm_sig.oact = (vir_bytes)oact;
+  m.m_lc_pm_sig.ret = (vir_bytes)__sigreturn;
 
   return(_syscall(PM_PROC_NR, PM_SIGACTION, &m));
 }
