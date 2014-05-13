@@ -16,7 +16,7 @@ int status;
   message m;
 
   memset(&m, 0, sizeof(m));
-  m.PM_EXIT_STATUS = status;
+  m.m_lc_pm_exit.status = status;
   _syscall(PM_PROC_NR, PM_EXIT, &m);
 
   /* If exiting nicely through PM fails for some reason, try to

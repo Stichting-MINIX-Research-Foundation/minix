@@ -241,7 +241,7 @@ int do_exit()
       sys_kill(mp->mp_endpoint, SIGKILL);
   }
   else {
-      exit_proc(mp, m_in.PM_EXIT_STATUS, FALSE /*dump_core*/);
+      exit_proc(mp, m_in.m_lc_pm_exit.status, FALSE /*dump_core*/);
   }
   return(SUSPEND);		/* can't communicate from beyond the grave */
 }

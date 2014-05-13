@@ -157,6 +157,13 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_lc_pm_exec);
 
 typedef struct {
+	int status;
+
+	uint8_t padding[52];
+} mess_lc_pm_exit;
+_ASSERT_MSG_SIZE(mess_lc_pm_exit);
+
+typedef struct {
 	pid_t pid;
 
 	uint8_t padding[52];
@@ -1076,6 +1083,7 @@ typedef struct {
 		mess_fs_vfs_readwrite	m_fs_vfs_readwrite;
 
 		mess_lc_pm_exec		m_lc_pm_exec;
+		mess_lc_pm_exit		m_lc_pm_exit;
 		mess_lc_pm_getsid	m_lc_pm_getsid;
 		mess_lc_pm_groups	m_lc_pm_groups;
 		mess_lc_pm_itimer	m_lc_pm_itimer;

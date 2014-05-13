@@ -61,9 +61,6 @@
 
 #define NR_PM_CALLS		48	/* highest number from base plus one */
 
-/* Field names for the exit(2) call. */
-#define PM_EXIT_STATUS		m1_i1	/* int */
-
 /* Field names for the kill(2), srv_kill(2), and sigaction(2) calls. */
 #define PM_SIG_PID		m1_i1	/* pid_t */
 #define PM_SIG_NR		m1_i2	/* int */
