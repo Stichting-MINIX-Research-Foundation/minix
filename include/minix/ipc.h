@@ -648,6 +648,14 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_rs_pm_exec_restart);
 
 typedef struct {
+	pid_t pid;
+	int nr;
+
+	uint8_t padding[48];
+} mess_rs_pm_srv_kill;
+_ASSERT_MSG_SIZE(mess_rs_pm_srv_kill);
+
+typedef struct {
 	dev_t device;
 	off_t seek_pos;
 
@@ -1163,6 +1171,7 @@ typedef struct {
 		mess_pm_lsys_getprocnr	m_pm_lsys_getprocnr;
 
 		mess_rs_pm_exec_restart	m_rs_pm_exec_restart;
+		mess_rs_pm_srv_kill	m_rs_pm_srv_kill;
 
 		mess_vfs_fs_breadwrite	m_vfs_fs_breadwrite;
 		mess_vfs_fs_chmod	m_vfs_fs_chmod;

@@ -216,7 +216,8 @@ int do_srv_kill(void)
    * to a system process. RS sends a SIGKILL when it wants to perform cleanup.
    * In that case, ksig == TRUE forces PM to exit the process immediately.
    */
-  return check_sig(m_in.PM_SIG_PID, m_in.PM_SIG_NR, TRUE /* ksig */);
+  return check_sig(m_in.m_rs_pm_srv_kill.pid, m_in.m_rs_pm_srv_kill.nr,
+	  TRUE /* ksig */);
 }
 
 /*===========================================================================*
