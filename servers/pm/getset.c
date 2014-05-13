@@ -49,7 +49,7 @@ int do_get()
 		break;
 	case PM_GETUID:
 		r = rmp->mp_realuid;
-		rmp->mp_reply.PM_GETUID_EUID = rmp->mp_effuid;
+		rmp->mp_reply.m_pm_lc_getuid.euid = rmp->mp_effuid;
 		break;
 
 	case PM_GETGID:

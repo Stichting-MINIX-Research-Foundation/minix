@@ -555,6 +555,13 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_lsys_vfs_mapdriver);
 
 typedef struct {
+	uid_t euid;
+
+	uint8_t padding[52];
+} mess_pm_lc_getuid;
+_ASSERT_MSG_SIZE(mess_pm_lc_getuid);
+
+typedef struct {
 	endpoint_t endpt;
 	int result;
 	vir_bytes pc;
@@ -1061,6 +1068,7 @@ typedef struct {
 
 		mess_pm_lexec_exec_new	m_pm_lexec_exec_new;
 
+		mess_pm_lc_getuid	m_pm_lc_getuid;
 		mess_pm_lc_ptrace	m_pm_lc_ptrace;
 		mess_pm_lc_time		m_pm_lc_time;
 		mess_pm_lc_waitpid	m_pm_lc_waitpid;

@@ -15,6 +15,6 @@ uid_t geteuid(void)
    * are not always successful and Minix returns the unreserved value
    * (uid_t) -1 when there is an error.
    */
-  if (_syscall(PM_PROC_NR, PM_GETUID, &m) < 0) return ( (uid_t) -1);
-  return( (uid_t) m.PM_GETUID_EUID);
+  if (_syscall(PM_PROC_NR, PM_GETUID, &m) < 0) return(-1);
+  return(m.m_pm_lc_getuid.euid);
 }
