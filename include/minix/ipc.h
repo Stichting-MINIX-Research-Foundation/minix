@@ -189,6 +189,13 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_pm_lc_ptrace);
 
 typedef struct {
+	int how;
+
+	uint8_t padding[52];
+} mess_lc_pm_reboot;
+_ASSERT_MSG_SIZE(mess_lc_pm_reboot);
+
+typedef struct {
 	int req;
 	int field;
 	size_t len;
@@ -1012,6 +1019,7 @@ typedef struct {
 		mess_lc_pm_itimer	m_lc_pm_itimer;
 		mess_lc_pm_priority	m_lc_pm_priority;
 		mess_lc_pm_ptrace	m_lc_pm_ptrace;
+		mess_lc_pm_reboot	m_lc_pm_reboot;
 		mess_lc_pm_sysuname	m_lc_pm_sysuname;
 		mess_lc_pm_time		m_lc_pm_time;
 		mess_lc_pm_waitpid	m_lc_pm_waitpid;

@@ -211,7 +211,7 @@ int do_reboot()
   if (mp->mp_effuid != SUPER_USER) return(EPERM);
 
   /* See how the system should be aborted. */
-  abort_flag = (unsigned) m_in.PM_REBOOT_HOW;
+  abort_flag = m_in.m_lc_pm_reboot.how;
 
   /* notify readclock (some arm systems power off via RTC alarms) */
   if (abort_flag & RB_POWERDOWN) {

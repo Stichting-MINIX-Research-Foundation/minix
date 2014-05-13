@@ -16,6 +16,6 @@ int reboot(int how, char *bootstr)
   message m;
 
   memset(&m, 0, sizeof(m));
-  m.PM_REBOOT_HOW = how;
+  m.m_lc_pm_reboot.how = how;
   return _syscall(PM_PROC_NR, PM_REBOOT, &m);
 }

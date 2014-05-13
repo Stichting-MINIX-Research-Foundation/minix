@@ -106,9 +106,6 @@
 /* Field names for the getmcontext(2)/setmcontext(2) calls. */
 #define PM_MCONTEXT_CTX		m1_p1	/* mcontext_t * */
 
-/* Field names for the reboot(2) call. */
-#define PM_REBOOT_HOW		m1_i1	/* int */
-
 /*===========================================================================*
  *				Calls to VFS				     *
  *===========================================================================*/
