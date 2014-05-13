@@ -54,7 +54,7 @@ int do_get()
 
 	case PM_GETGID:
 		r = rmp->mp_realgid;
-		rmp->mp_reply.PM_GETGID_EGID = rmp->mp_effgid;
+		rmp->mp_reply.m_pm_lc_getgid.egid = rmp->mp_effgid;
 		break;
 
 	case PM_GETPID:

@@ -15,6 +15,6 @@ gid_t getegid(void)
    * are not always successful and Minix returns the unreserved value
    * (gid_t) -1 when there is an error.
    */
-  if (_syscall(PM_PROC_NR, PM_GETGID, &m) < 0) return ( (gid_t) -1);
-  return( (gid_t) m.PM_GETGID_EGID);
+  if (_syscall(PM_PROC_NR, PM_GETGID, &m) < 0) return(-1);
+  return(m.m_pm_lc_getgid.egid);
 }
