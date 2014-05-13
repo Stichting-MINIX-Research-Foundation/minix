@@ -64,12 +64,6 @@
 /* Field names for the exit(2) call. */
 #define PM_EXIT_STATUS		m1_i1	/* int */
 
-/* Field names for the sysuname(2) call. */
-#define PM_SYSUNAME_REQ		m1_i1	/* int */
-#define PM_SYSUNAME_FIELD	m1_i2	/* int */
-#define PM_SYSUNAME_LEN		m1_i3	/* char * */
-#define PM_SYSUNAME_VALUE	m1_p1	/* size_t */
-
 /* Field names for the execve(2) call. */
 #define PM_EXEC_NAME		m1_p1	/* const char * */
 #define PM_EXEC_NAMELEN		m1_i1	/* size_t */

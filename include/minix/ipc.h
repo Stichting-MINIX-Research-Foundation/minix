@@ -172,6 +172,16 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_pm_lc_ptrace);
 
 typedef struct {
+	int req;
+	int field;
+	size_t len;
+	vir_bytes value;
+
+	uint8_t padding[40];
+} mess_lc_pm_sysuname;
+_ASSERT_MSG_SIZE(mess_lc_pm_sysuname);
+
+typedef struct {
 	time_t sec;
 
 	clockid_t clk_id;
@@ -950,6 +960,7 @@ typedef struct {
 
 		mess_lc_pm_itimer	m_lc_pm_itimer;
 		mess_lc_pm_ptrace	m_lc_pm_ptrace;
+		mess_lc_pm_sysuname	m_lc_pm_sysuname;
 		mess_lc_pm_time		m_lc_pm_time;
 		mess_lc_pm_waitpid	m_lc_pm_waitpid;
 

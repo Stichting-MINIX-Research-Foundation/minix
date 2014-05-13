@@ -81,32 +81,31 @@ int do_sysuname()
   };
 #endif
 
-  if ((unsigned) m_in.PM_SYSUNAME_FIELD >= _UTS_MAX) return(EINVAL);
+  if (m_in.m_lc_pm_sysuname.field >= _UTS_MAX) return(EINVAL);
 
-  string = uts_tbl[m_in.PM_SYSUNAME_FIELD];
+  string = uts_tbl[m_in.m_lc_pm_sysuname.field];
   if (string == NULL)
 	return EINVAL;	/* Unsupported field */
 
-  switch (m_in.PM_SYSUNAME_REQ) {
+  switch (m_in.m_lc_pm_sysuname.req) {
   case _UTS_GET:
 	/* Copy an uname string to the user. */
 	n = strlen(string) + 1;
-	if (n > m_in.PM_SYSUNAME_LEN) n = m_in.PM_SYSUNAME_LEN;
-	r = sys_datacopy(SELF, (phys_bytes) string, 
-		mp->mp_endpoint, (phys_bytes) m_in.PM_SYSUNAME_VALUE,
-		(phys_bytes) n);
+	if (n > m_in.m_lc_pm_sysuname.len) n = m_in.m_lc_pm_sysuname.len;
+	r = sys_datacopy(SELF, (vir_bytes)string, mp->mp_endpoint,
+		m_in.m_lc_pm_sysuname.value, (phys_bytes)n);
 	if (r < 0) return(r);
 	break;
 
 #if 0	/* no updates yet */
   case _UTS_SET:
 	/* Set an uname string, needs root power. */
-	len = sizes[m_in.PM_SYSUNAME_FIELD];
+	len = sizes[m_in.m_lc_pm_sysuname.field];
 	if (mp->mp_effuid != 0 || len == 0) return(EPERM);
-	n = len < m_in.PM_SYSUNAME_LEN ? len : m_in.PM_SYSUNAME_LEN;
+	n = len < m_in.m_lc_pm_sysuname.len ? len : m_in.m_lc_pm_sysuname.len;
 	if (n <= 0) return(EINVAL);
-	r = sys_datacopy(mp->mp_endpoint, (phys_bytes) m_in.PM_SYSUNAME_VALUE,
-		SELF, (phys_bytes) tmp, (phys_bytes) n);
+	r = sys_datacopy(mp->mp_endpoint, m_in.m_lc_pm_sysuname.value, SELF,
+		(phys_bytes)tmp, (phys_bytes)n);
 	if (r < 0) return(r);
 	tmp[n-1] = 0;
 	strcpy(string, tmp);

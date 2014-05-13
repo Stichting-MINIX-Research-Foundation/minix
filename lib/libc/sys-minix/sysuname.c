@@ -13,10 +13,10 @@ int sysuname(int req, int field, char *value, size_t len)
 	message m;
 
 	memset(&m, 0, sizeof(m));
-	m.PM_SYSUNAME_REQ = req;
-	m.PM_SYSUNAME_FIELD = field;
-	m.PM_SYSUNAME_LEN = len;
-	m.PM_SYSUNAME_VALUE = value;
+	m.m_lc_pm_sysuname.req = req;
+	m.m_lc_pm_sysuname.field = field;
+	m.m_lc_pm_sysuname.len = len;
+	m.m_lc_pm_sysuname.value = (vir_bytes)value;
 
 	return _syscall(PM_PROC_NR, PM_SYSUNAME, &m);
 }
