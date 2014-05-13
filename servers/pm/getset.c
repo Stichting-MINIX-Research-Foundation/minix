@@ -108,7 +108,7 @@ int do_set()
   switch(call_nr) {
 	case PM_SETUID:
 	case PM_SETEUID:
-		uid = (uid_t) m_in.PM_SETUID_UID;
+		uid = m_in.m_lc_pm_setuid.uid;
 		if (rmp->mp_realuid != uid && rmp->mp_effuid != SUPER_USER)
 			return(EPERM);
 		if(call_nr == PM_SETUID) rmp->mp_realuid = uid;

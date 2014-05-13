@@ -85,9 +85,6 @@
 #define PM_SIG_SET		m2_sigset /* sigset_t */
 #define PM_SIG_CTX		m2_p1	/* struct sigcontext * */
 
-/* Field names for the setuid(2)/seteuid(2) calls. */
-#define PM_SETUID_UID		m1_i1	/* uid_t */
-
 /* Field names for the setgid(2)/setegid(2) calls. */
 #define PM_SETGID_GID		m1_i1	/* gid_t */
 
