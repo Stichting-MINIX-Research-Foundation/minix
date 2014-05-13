@@ -437,7 +437,7 @@ int dump_core;			/* flag indicating whether to dump core */
   if (rmp->mp_flags & TRACE_EXIT)
   {
 	/* Wake up the tracer, completing the ptrace(T_EXIT) call */
-	mproc[rmp->mp_tracer].mp_reply.PM_PTRACE_DATA = 0;
+	mproc[rmp->mp_tracer].mp_reply.m_pm_lc_ptrace.data = 0;
 	reply(rmp->mp_tracer, OK);
   }
 

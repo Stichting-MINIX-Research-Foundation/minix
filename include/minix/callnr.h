@@ -64,12 +64,6 @@
 /* Field names for the exit(2) call. */
 #define PM_EXIT_STATUS		m1_i1	/* int */
 
-/* Field names for the ptrace(2) call. */
-#define PM_PTRACE_PID		m2_i1	/* pid_t */
-#define PM_PTRACE_REQ		m2_i2	/* int */
-#define PM_PTRACE_ADDR		m2_l1	/* long */
-#define PM_PTRACE_DATA		m2_l2	/* long */
-
 /* Field names for the sysuname(2) call. */
 #define PM_SYSUNAME_REQ		m1_i1	/* int */
 #define PM_SYSUNAME_FIELD	m1_i2	/* int */

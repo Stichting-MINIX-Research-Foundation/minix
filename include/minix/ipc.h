@@ -155,6 +155,23 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_lc_pm_itimer);
 
 typedef struct {
+	pid_t pid;
+	int req;
+	vir_bytes addr;
+	long data;
+
+	uint8_t padding[40];
+} mess_lc_pm_ptrace;
+_ASSERT_MSG_SIZE(mess_lc_pm_ptrace);
+
+typedef struct {
+	long data;
+
+	uint8_t padding[52];
+} mess_pm_lc_ptrace;
+_ASSERT_MSG_SIZE(mess_pm_lc_ptrace);
+
+typedef struct {
 	time_t sec;
 
 	clockid_t clk_id;
@@ -932,6 +949,7 @@ typedef struct {
 		mess_fs_vfs_readwrite	m_fs_vfs_readwrite;
 
 		mess_lc_pm_itimer	m_lc_pm_itimer;
+		mess_lc_pm_ptrace	m_lc_pm_ptrace;
 		mess_lc_pm_time		m_lc_pm_time;
 		mess_lc_pm_waitpid	m_lc_pm_waitpid;
 
@@ -967,6 +985,7 @@ typedef struct {
 		mess_lsys_vfs_copyfd	m_lsys_vfs_copyfd;
 		mess_lsys_vfs_mapdriver	m_lsys_vfs_mapdriver;
 
+		mess_pm_lc_ptrace	m_pm_lc_ptrace;
 		mess_pm_lc_time		m_pm_lc_time;
 		mess_pm_lc_waitpid	m_pm_lc_waitpid;
 
