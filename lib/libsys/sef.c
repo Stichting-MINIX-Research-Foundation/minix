@@ -230,35 +230,15 @@ void sef_exit(int status)
   /* Ask the kernel to exit. */
   sys_exit();
 
-  /* If sys_exit() fails, this is not a system service. Exit through PM. */
-  memset(&m, 0, sizeof(m));
-  m.PM_EXIT_STATUS = status;
-  _syscall(PM_PROC_NR, PM_EXIT, &m);
-
   /* If everything else fails, hang. */
   printf("Warning: system service %d couldn't exit\n", sef_self_endpoint);
   for(;;) { }
 }
 
-/*===========================================================================*
- *      	                     _exit                                   *
- *===========================================================================*/
-void _exit(int status)
-{
-/* Make exit() an alias for sef_exit() for system services. */
-  sef_exit(status);
-  panic("sef_exit failed");
-}
-
-/*===========================================================================*
- *      	                    __exit                                   *
- *===========================================================================*/
-void __exit(int status)
-{
-/* Make exit() an alias for sef_exit() for system services. */
-  sef_exit(status);
-  panic("sef_exit failed");
-}
+#ifdef __weak_alias
+__weak_alias(_exit, sef_exit);
+__weak_alias(__exit, sef_exit);
+#endif
 
 #if SEF_INIT_DEBUG || SEF_LU_DEBUG || SEF_PING_DEBUG || SEF_SIGNAL_DEBUG
 /*===========================================================================*
