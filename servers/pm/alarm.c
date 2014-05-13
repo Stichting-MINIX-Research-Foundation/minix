@@ -95,15 +95,15 @@ int do_itimer()
   int r, which;
 
   /* Make sure 'which' is one of the defined timers. */
-  which = m_in.PM_ITIMER_WHICH;
+  which = m_in.m_lc_pm_itimer.which;
   if (which < 0 || which >= NR_ITIMERS) return(EINVAL);
 
   /* Determine whether to set and/or return the given timer value, based on
    * which of the value and ovalue parameters are nonzero. At least one of
    * them must be nonzero.
    */
-  setval = (m_in.PM_ITIMER_VALUE != NULL);
-  getval = (m_in.PM_ITIMER_OVALUE != NULL);
+  setval = (m_in.m_lc_pm_itimer.value != 0);
+  getval = (m_in.m_lc_pm_itimer.ovalue != 0);
 
   if (!setval && !getval) return(EINVAL);
 
@@ -111,8 +111,8 @@ int do_itimer()
    * Also, make sure its fields have sane values.
    */
   if (setval) {
-	r = sys_datacopy(who_e, (vir_bytes) m_in.PM_ITIMER_VALUE,
-		PM_PROC_NR, (vir_bytes) &value, (phys_bytes) sizeof(value));
+	r = sys_datacopy(who_e, m_in.m_lc_pm_itimer.value,
+		PM_PROC_NR, (vir_bytes)&value, (phys_bytes)sizeof(value));
   	if (r != OK) return(r);
 
   	if (!is_sane_timeval(&value.it_value) ||
@@ -143,9 +143,9 @@ int do_itimer()
 
   /* If requested, copy the old interval timer to user space. */
   if (r == OK && getval) {
-	r = sys_datacopy(PM_PROC_NR, (vir_bytes) &ovalue,
-		who_e, (vir_bytes) m_in.PM_ITIMER_OVALUE,
-		(phys_bytes) sizeof(ovalue));
+	r = sys_datacopy(PM_PROC_NR, (vir_bytes)&ovalue,
+		who_e, m_in.m_lc_pm_itimer.ovalue,
+		(phys_bytes)sizeof(ovalue));
   }
 
   return(r);

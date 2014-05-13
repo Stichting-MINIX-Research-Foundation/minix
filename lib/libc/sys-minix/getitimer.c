@@ -14,9 +14,9 @@ int getitimer(int which, struct itimerval *value)
   message m;
 
   memset(&m, 0, sizeof(m));
-  m.PM_ITIMER_WHICH = which;
-  m.PM_ITIMER_VALUE = NULL;		/* only retrieve the timer */
-  m.PM_ITIMER_OVALUE = (char *) value;
+  m.m_lc_pm_itimer.which = which;
+  m.m_lc_pm_itimer.value = 0;		/* only retrieve the timer */
+  m.m_lc_pm_itimer.ovalue = (vir_bytes)value;
 
   return _syscall(PM_PROC_NR, PM_ITIMER, &m);
 }

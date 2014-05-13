@@ -146,6 +146,15 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_sigcalls);
 
 typedef struct {
+	int which;
+	vir_bytes value;	/* const struct itimerval * */
+	vir_bytes ovalue;	/* struct itimerval * */
+
+	uint8_t padding[44];
+} mess_lc_pm_itimer;
+_ASSERT_MSG_SIZE(mess_lc_pm_itimer);
+
+typedef struct {
 	time_t sec;
 
 	clockid_t clk_id;
@@ -922,6 +931,7 @@ typedef struct {
 		mess_fs_vfs_readsuper	m_fs_vfs_readsuper;
 		mess_fs_vfs_readwrite	m_fs_vfs_readwrite;
 
+		mess_lc_pm_itimer	m_lc_pm_itimer;
 		mess_lc_pm_time		m_lc_pm_time;
 		mess_lc_pm_waitpid	m_lc_pm_waitpid;
 

@@ -23,9 +23,9 @@ int setitimer(int which, const struct itimerval *__restrict value,
   }
 
   memset(&m, 0, sizeof(m));
-  m.PM_ITIMER_WHICH = which;
-  m.PM_ITIMER_VALUE = (char *) __UNCONST(value);
-  m.PM_ITIMER_OVALUE = (char *) ovalue;
+  m.m_lc_pm_itimer.which = which;
+  m.m_lc_pm_itimer.value = (vir_bytes)value;
+  m.m_lc_pm_itimer.ovalue = (vir_bytes)ovalue;
 
   return _syscall(PM_PROC_NR, PM_ITIMER, &m);
 }

@@ -76,11 +76,6 @@
 #define PM_SYSUNAME_LEN		m1_i3	/* char * */
 #define PM_SYSUNAME_VALUE	m1_p1	/* size_t */
 
-/* Field names for the getitimer(2)/setitimer(2) calls. */
-#define PM_ITIMER_WHICH		m1_i1	/* int */
-#define PM_ITIMER_VALUE		m1_p1	/* const struct itimerval * */
-#define PM_ITIMER_OVALUE	m1_p2	/* struct itimerval * */
-
 /* Field names for the execve(2) call. */
 #define PM_EXEC_NAME		m1_p1	/* const char * */
 #define PM_EXEC_NAMELEN		m1_i1	/* size_t */
