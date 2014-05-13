@@ -19,8 +19,8 @@ int getpriority(int which, id_t who)
 	message m;
 
 	memset(&m, 0, sizeof(m));
-	m.PM_PRIORITY_WHICH = which;
-	m.PM_PRIORITY_WHO = who;
+	m.m_lc_pm_priority.which = which;
+	m.m_lc_pm_priority.who = who;
 
 	/* GETPRIORITY returns negative for error.
 	 * Otherwise, it returns the priority plus the minimum
@@ -41,9 +41,9 @@ int setpriority(int which, id_t who, int prio)
 	message m;
 
 	memset(&m, 0, sizeof(m));
-	m.PM_PRIORITY_WHICH = which;
-	m.PM_PRIORITY_WHO = who;
-	m.PM_PRIORITY_PRIO = prio;
+	m.m_lc_pm_priority.which = which;
+	m.m_lc_pm_priority.who = who;
+	m.m_lc_pm_priority.prio = prio;
 
 	return _syscall(PM_PROC_NR, PM_SETPRIORITY, &m);
 }

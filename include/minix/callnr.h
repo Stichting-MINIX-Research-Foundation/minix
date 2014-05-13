@@ -107,11 +107,6 @@
 #define PM_GROUPS_NUM		m1_i1	/* int */
 #define PM_GROUPS_PTR		m1_p1	/* gid_t * */
 
-/* Field names for the getpriority(2)/setpriority(2) calls. */
-#define PM_PRIORITY_WHICH	m1_i1	/* int */
-#define PM_PRIORITY_WHO		m1_i2	/* int */
-#define PM_PRIORITY_PRIO	m1_i3	/* int */
-
 /* Field names for the getmcontext(2)/setmcontext(2) calls. */
 #define PM_MCONTEXT_CTX		m1_p1	/* mcontext_t * */
 

@@ -247,9 +247,9 @@ int do_getsetpriority()
 	int r, arg_which, arg_who, arg_pri;
 	struct mproc *rmp;
 
-	arg_which = m_in.PM_PRIORITY_WHICH;
-	arg_who = m_in.PM_PRIORITY_WHO;
-	arg_pri = m_in.PM_PRIORITY_PRIO;	/* for SETPRIORITY */
+	arg_which = m_in.m_lc_pm_priority.which;
+	arg_who = m_in.m_lc_pm_priority.who;
+	arg_pri = m_in.m_lc_pm_priority.prio;	/* for SETPRIORITY */
 
 	/* Code common to GETPRIORITY and SETPRIORITY. */
 

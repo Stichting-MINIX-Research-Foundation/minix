@@ -155,6 +155,15 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_lc_pm_itimer);
 
 typedef struct {
+	int which;
+	int who;
+	int prio;
+
+	uint8_t padding[44];
+} mess_lc_pm_priority;
+_ASSERT_MSG_SIZE(mess_lc_pm_priority);
+
+typedef struct {
 	pid_t pid;
 	int req;
 	vir_bytes addr;
@@ -992,6 +1001,7 @@ typedef struct {
 		mess_fs_vfs_readwrite	m_fs_vfs_readwrite;
 
 		mess_lc_pm_itimer	m_lc_pm_itimer;
+		mess_lc_pm_priority	m_lc_pm_priority;
 		mess_lc_pm_ptrace	m_lc_pm_ptrace;
 		mess_lc_pm_sysuname	m_lc_pm_sysuname;
 		mess_lc_pm_time		m_lc_pm_time;
