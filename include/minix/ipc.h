@@ -496,6 +496,14 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_pm_lsys_getprocnr);
 
 typedef struct {
+	uid_t uid;
+	gid_t gid;
+
+	uint8_t padding[48];
+} mess_lsys_pm_srv_fork;
+_ASSERT_MSG_SIZE(mess_lsys_pm_srv_fork);
+
+typedef struct {
 	endpoint_t endpt;
 	cp_grant_id_t grant;
 	size_t count;
@@ -1018,6 +1026,7 @@ typedef struct {
 
 		mess_lsys_pm_getepinfo	m_lsys_pm_getepinfo;
 		mess_lsys_pm_getprocnr	m_lsys_pm_getprocnr;
+		mess_lsys_pm_srv_fork	m_lsys_pm_srv_fork;
 
 		mess_lsys_vfs_checkperms m_lsys_vfs_checkperms;
 		mess_lsys_vfs_copyfd	m_lsys_vfs_copyfd;

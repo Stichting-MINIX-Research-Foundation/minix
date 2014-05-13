@@ -194,10 +194,10 @@ int do_srv_fork()
   rmc->mp_exitstatus = 0;
   rmc->mp_sigstatus = 0;
   rmc->mp_endpoint = child_ep;		/* passed back by VM */
-  rmc->mp_realuid = (uid_t) m_in.PM_SRV_FORK_UID;
-  rmc->mp_effuid = (uid_t) m_in.PM_SRV_FORK_UID;
-  rmc->mp_realgid = (uid_t) m_in.PM_SRV_FORK_GID;
-  rmc->mp_effgid = (uid_t) m_in.PM_SRV_FORK_GID;
+  rmc->mp_realuid = m_in.m_lsys_pm_srv_fork.uid;
+  rmc->mp_effuid = m_in.m_lsys_pm_srv_fork.uid;
+  rmc->mp_realgid = m_in.m_lsys_pm_srv_fork.gid;
+  rmc->mp_effgid = m_in.m_lsys_pm_srv_fork.gid;
   for (i = 0; i < NR_ITIMERS; i++)
 	rmc->mp_interval[i] = 0;	/* reset timer intervals */
 
@@ -210,8 +210,8 @@ int do_srv_fork()
   m.VFS_PM_ENDPT = rmc->mp_endpoint;
   m.VFS_PM_PENDPT = rmp->mp_endpoint;
   m.VFS_PM_CPID = rmc->mp_pid;
-  m.VFS_PM_REUID = m_in.PM_SRV_FORK_UID;
-  m.VFS_PM_REGID = m_in.PM_SRV_FORK_GID;
+  m.VFS_PM_REUID = m_in.m_lsys_pm_srv_fork.uid;
+  m.VFS_PM_REGID = m_in.m_lsys_pm_srv_fork.gid;
 
   tell_vfs(rmc, &m);
 

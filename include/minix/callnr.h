@@ -85,10 +85,6 @@
 #define PM_SIG_SET		m2_sigset /* sigset_t */
 #define PM_SIG_CTX		m2_p1	/* struct sigcontext * */
 
-/* Field names for the srv_fork(2) call. */
-#define PM_SRV_FORK_UID		m1_i1	/* uid_t */
-#define PM_SRV_FORK_GID		m1_i2	/* gid_t */
-
 /* Field names for the getuid(2) call. */
 #define PM_GETUID_EUID		m1_i1	/* uid_t */
 
