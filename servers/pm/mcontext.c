@@ -11,7 +11,7 @@
  *===========================================================================*/
 int do_setmcontext()
 {
-  return sys_setmcontext(who_e, (mcontext_t *) m_in.PM_MCONTEXT_CTX);
+  return sys_setmcontext(who_e, m_in.m_lc_pm_mcontext.ctx);
 }
 
 
@@ -20,6 +20,6 @@ int do_setmcontext()
  *===========================================================================*/
 int do_getmcontext()
 {
-  return sys_getmcontext(who_e, (mcontext_t *) m_in.PM_MCONTEXT_CTX);
+  return sys_getmcontext(who_e, m_in.m_lc_pm_mcontext.ctx);
 }
 

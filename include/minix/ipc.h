@@ -170,6 +170,13 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_lc_pm_itimer);
 
 typedef struct {
+	vir_bytes ctx;		/* mcontext_t * */
+
+	uint8_t padding[52];
+} mess_lc_pm_mcontext;
+_ASSERT_MSG_SIZE(mess_lc_pm_mcontext);
+
+typedef struct {
 	int which;
 	int who;
 	int prio;
@@ -1060,6 +1067,7 @@ typedef struct {
 		mess_lc_pm_getsid	m_lc_pm_getsid;
 		mess_lc_pm_groups	m_lc_pm_groups;
 		mess_lc_pm_itimer	m_lc_pm_itimer;
+		mess_lc_pm_mcontext	m_lc_pm_mcontext;
 		mess_lc_pm_priority	m_lc_pm_priority;
 		mess_lc_pm_ptrace	m_lc_pm_ptrace;
 		mess_lc_pm_reboot	m_lc_pm_reboot;

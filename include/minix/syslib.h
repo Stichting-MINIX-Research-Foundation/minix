@@ -255,8 +255,8 @@ int sys_cprof(int action, int size, endpoint_t endpt, void *ctl_ptr,
 int sys_profbuf(void *ctl_ptr, void *mem_ptr);
 
 /* machine context */
-int sys_getmcontext(endpoint_t proc, mcontext_t *mcp);
-int sys_setmcontext(endpoint_t proc, mcontext_t *mcp);
+int sys_getmcontext(endpoint_t proc, vir_bytes mcp);
+int sys_setmcontext(endpoint_t proc, vir_bytes mcp);
 
 /* input */
 int tty_input_inject(int type, int code, int val);
