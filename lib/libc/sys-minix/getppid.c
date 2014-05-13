@@ -15,6 +15,6 @@ pid_t getppid(void)
    * are not always successful and Minix returns the reserved value
    * (pid_t) -1 when there is an error.
    */
-  if (_syscall(PM_PROC_NR, PM_GETPID, &m) < 0) return ( (pid_t) -1);
-  return( (pid_t) m.PM_GETPID_PARENT);
+  if (_syscall(PM_PROC_NR, PM_GETPID, &m) < 0) return(-1);
+  return(m.m_pm_lc_getpid.parent_pid);
 }

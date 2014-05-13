@@ -85,9 +85,6 @@
 #define PM_SIG_SET		m2_sigset /* sigset_t */
 #define PM_SIG_CTX		m2_p1	/* struct sigcontext * */
 
-/* Field names for the getppid(2) call. */
-#define PM_GETPID_PARENT	m2_i1	/* pid_t */
-
 /* Field names for the setsid(2) call. */
 #define PM_GETSID_PID		m1_i1	/* pid_t */
 

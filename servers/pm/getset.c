@@ -59,7 +59,7 @@ int do_get()
 
 	case PM_GETPID:
 		r = mproc[who_p].mp_pid;
-		rmp->mp_reply.PM_GETPID_PARENT = mproc[rmp->mp_parent].mp_pid;
+		rmp->mp_reply.m_pm_lc_getpid.parent_pid = mproc[rmp->mp_parent].mp_pid;
 		break;
 
 	case PM_GETPGRP:
