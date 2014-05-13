@@ -196,6 +196,13 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_lc_pm_reboot);
 
 typedef struct {
+	gid_t gid;
+
+	uint8_t padding[52];
+} mess_lc_pm_setgid;
+_ASSERT_MSG_SIZE(mess_lc_pm_setgid);
+
+typedef struct {
 	uid_t uid;
 
 	uint8_t padding[52];
@@ -1041,6 +1048,7 @@ typedef struct {
 		mess_lc_pm_priority	m_lc_pm_priority;
 		mess_lc_pm_ptrace	m_lc_pm_ptrace;
 		mess_lc_pm_reboot	m_lc_pm_reboot;
+		mess_lc_pm_setgid	m_lc_pm_setgid;
 		mess_lc_pm_setuid	m_lc_pm_setuid;
 		mess_lc_pm_sysuname	m_lc_pm_sysuname;
 		mess_lc_pm_time		m_lc_pm_time;

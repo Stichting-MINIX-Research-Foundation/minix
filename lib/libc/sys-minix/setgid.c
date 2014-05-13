@@ -11,7 +11,7 @@ int setgid(gid_t grp)
   message m;
 
   memset(&m, 0, sizeof(m));
-  m.PM_SETGID_GID = (int) grp;
+  m.m_lc_pm_setgid.gid = grp;
   return(_syscall(PM_PROC_NR, PM_SETGID, &m));
 }
 
@@ -20,6 +20,6 @@ int setegid(gid_t grp)
   message m;
 
   memset(&m, 0, sizeof(m));
-  m.PM_SETGID_GID = (int) grp;
+  m.m_lc_pm_setgid.gid = grp;
   return(_syscall(PM_PROC_NR, PM_SETEGID, &m));
 }

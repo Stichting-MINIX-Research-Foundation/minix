@@ -123,7 +123,7 @@ int do_set()
 
 	case PM_SETGID:
 	case PM_SETEGID:
-		gid = (gid_t) m_in.PM_SETGID_GID;
+		gid = m_in.m_lc_pm_setgid.gid;
 		if (rmp->mp_realgid != gid && rmp->mp_effuid != SUPER_USER)
 			return(EPERM);
 		if(call_nr == PM_SETGID) rmp->mp_realgid = gid;
