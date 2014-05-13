@@ -82,11 +82,11 @@ int libexec_pm_newexec(endpoint_t proc_e, struct exec_info *e)
 
   memset(&m, 0, sizeof(m));
   m.m_type = PM_EXEC_NEW;
-  m.PM_EXEC_NEW_ENDPT = proc_e;
-  m.PM_EXEC_NEW_PTR = (char *)e;
+  m.m_lexec_pm_exec_new.endpt = proc_e;
+  m.m_lexec_pm_exec_new.ptr = (vir_bytes)e;
   if ((r = ipc_sendrec(PM_PROC_NR, &m)) != OK) return(r);
 
-  e->allow_setuid = !!m.PM_EXEC_NEW_SUID;
+  e->allow_setuid = !!m.m_pm_lexec_exec_new.suid;
 
   return(m.m_type);
 }

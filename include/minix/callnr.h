@@ -122,11 +122,6 @@
 /* Field names for the reboot(2) call. */
 #define PM_REBOOT_HOW		m1_i1	/* int */
 
-/* Field names for the PM_EXEC_NEW call. */
-#define PM_EXEC_NEW_ENDPT	m1_i1	/* endpoint_t */
-#define PM_EXEC_NEW_PTR		m1_p1	/* struct exec_info * */
-#define PM_EXEC_NEW_SUID	m1_i2	/* int */
-
 /* Field names for the PM_EXEC_RESTART call. */
 #define PM_EXEC_RESTART_ENDPT	m1_i1	/* endpoint_t */
 #define PM_EXEC_RESTART_RESULT	m1_i2	/* int */

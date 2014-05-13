@@ -453,6 +453,21 @@ _ASSERT_MSG_SIZE(mess_lc_vfs_umount);
 
 typedef struct {
 	endpoint_t endpt;
+	vir_bytes ptr;		/* struct exec_info * */
+
+	uint8_t padding[48];
+} mess_lexec_pm_exec_new;
+_ASSERT_MSG_SIZE(mess_lexec_pm_exec_new);
+
+typedef struct {
+	int suid;
+
+	uint8_t padding[52];
+} mess_pm_lexec_exec_new;
+_ASSERT_MSG_SIZE(mess_pm_lexec_exec_new);
+
+typedef struct {
+	endpoint_t endpt;
 
 	uint8_t padding[52];
 } mess_lsys_pm_getepinfo;
@@ -989,12 +1004,16 @@ typedef struct {
 		mess_lc_vfs_umask	m_lc_vfs_umask;
 		mess_lc_vfs_umount	m_lc_vfs_umount;
 
+		mess_lexec_pm_exec_new	m_lexec_pm_exec_new;
+
 		mess_lsys_pm_getepinfo	m_lsys_pm_getepinfo;
 		mess_lsys_pm_getprocnr	m_lsys_pm_getprocnr;
 
 		mess_lsys_vfs_checkperms m_lsys_vfs_checkperms;
 		mess_lsys_vfs_copyfd	m_lsys_vfs_copyfd;
 		mess_lsys_vfs_mapdriver	m_lsys_vfs_mapdriver;
+
+		mess_pm_lexec_exec_new	m_pm_lexec_exec_new;
 
 		mess_pm_lc_ptrace	m_pm_lc_ptrace;
 		mess_pm_lc_time		m_pm_lc_time;

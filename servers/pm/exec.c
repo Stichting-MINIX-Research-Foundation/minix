@@ -61,7 +61,7 @@ int do_exec()
 int do_newexec(void)
 {
 	int proc_e, proc_n, allow_setuid;
-	char *ptr;
+	vir_bytes ptr;
 	struct mproc *rmp;
 	struct exec_info args;
 	int r;
@@ -69,14 +69,13 @@ int do_newexec(void)
 	if (who_e != VFS_PROC_NR && who_e != RS_PROC_NR)
 		return EPERM;
 
-	proc_e= m_in.PM_EXEC_NEW_ENDPT;
+	proc_e= m_in.m_lexec_pm_exec_new.endpt;
 	if (pm_isokendpt(proc_e, &proc_n) != OK) {
 		panic("do_newexec: got bad endpoint: %d", proc_e);
 	}
 	rmp= &mproc[proc_n];
-	ptr= m_in.PM_EXEC_NEW_PTR;
-	r= sys_datacopy(who_e, (vir_bytes)ptr,
-		SELF, (vir_bytes)&args, sizeof(args));
+	ptr= m_in.m_lexec_pm_exec_new.ptr;
+	r= sys_datacopy(who_e, ptr, SELF, (vir_bytes)&args, sizeof(args));
 	if (r != OK)
 		panic("do_newexec: sys_datacopy failed: %d", r);
 
@@ -115,7 +114,7 @@ int do_newexec(void)
 	/* Kill process if something goes wrong after this point. */
 	rmp->mp_flags |= PARTIAL_EXEC;
 
-	mp->mp_reply.PM_EXEC_NEW_SUID = (allow_setuid && args.allow_setuid);
+	mp->mp_reply.m_pm_lexec_exec_new.suid = (allow_setuid && args.allow_setuid);
 
 	return r;
 }
