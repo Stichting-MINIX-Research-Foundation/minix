@@ -146,6 +146,14 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_sigcalls);
 
 typedef struct {
+	int num;
+	vir_bytes ptr;		/* gid_t * */
+
+	uint8_t padding[48];
+} mess_lc_pm_groups;
+_ASSERT_MSG_SIZE(mess_lc_pm_groups);
+
+typedef struct {
 	int which;
 	vir_bytes value;	/* const struct itimerval * */
 	vir_bytes ovalue;	/* struct itimerval * */
@@ -1000,6 +1008,7 @@ typedef struct {
 		mess_fs_vfs_readsuper	m_fs_vfs_readsuper;
 		mess_fs_vfs_readwrite	m_fs_vfs_readwrite;
 
+		mess_lc_pm_groups	m_lc_pm_groups;
 		mess_lc_pm_itimer	m_lc_pm_itimer;
 		mess_lc_pm_priority	m_lc_pm_priority;
 		mess_lc_pm_ptrace	m_lc_pm_ptrace;

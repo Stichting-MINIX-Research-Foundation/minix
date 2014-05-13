@@ -10,8 +10,8 @@ int setgroups(int ngroups, const gid_t *gidset)
   message m;
 
   memset(&m, 0, sizeof(m));
-  m.PM_GROUPS_PTR = (char *) __UNCONST(gidset);
-  m.PM_GROUPS_NUM = ngroups;
+  m.m_lc_pm_groups.ptr = (vir_bytes)gidset;
+  m.m_lc_pm_groups.num = ngroups;
 
   return(_syscall(PM_PROC_NR, PM_SETGROUPS, &m));
 }

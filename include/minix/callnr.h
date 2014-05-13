@@ -103,10 +103,6 @@
 /* Field names for the setsid(2) call. */
 #define PM_GETSID_PID		m1_i1	/* pid_t */
 
-/* Field names for the setgroups(2)/setgroups(2) calls. */
-#define PM_GROUPS_NUM		m1_i1	/* int */
-#define PM_GROUPS_PTR		m1_p1	/* gid_t * */
-
 /* Field names for the getmcontext(2)/setmcontext(2) calls. */
 #define PM_MCONTEXT_CTX		m1_p1	/* mcontext_t * */
 

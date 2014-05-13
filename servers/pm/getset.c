@@ -26,7 +26,7 @@ int do_get()
 
   switch(call_nr) {
 	case PM_GETGROUPS:
-		ngroups = m_in.PM_GROUPS_NUM;
+		ngroups = m_in.m_lc_pm_groups.num;
 		if (ngroups > NGROUPS_MAX || ngroups < 0)
 			return(EINVAL);
 
@@ -40,8 +40,7 @@ int do_get()
 			return(EINVAL);
 
 		r = sys_datacopy(SELF, (vir_bytes) rmp->mp_sgroups, who_e,
-			(vir_bytes) m_in.PM_GROUPS_PTR,
-			ngroups * sizeof(gid_t));
+			m_in.m_lc_pm_groups.ptr, ngroups * sizeof(gid_t));
 
 		if (r != OK)
 			return(r);
@@ -140,15 +139,15 @@ int do_set()
 		if (rmp->mp_effuid != SUPER_USER)
 			return(EPERM);
 
-		ngroups = m_in.PM_GROUPS_NUM;
+		ngroups = m_in.m_lc_pm_groups.num;
 
 		if (ngroups > NGROUPS_MAX || ngroups < 0) 
 			return(EINVAL);
 
-		if (ngroups > 0 && m_in.PM_GROUPS_PTR == NULL)
+		if (ngroups > 0 && m_in.m_lc_pm_groups.ptr == 0)
 			return(EFAULT);
 
-		r = sys_datacopy(who_e, (vir_bytes) m_in.PM_GROUPS_PTR, SELF,
+		r = sys_datacopy(who_e, m_in.m_lc_pm_groups.ptr, SELF,
 			     (vir_bytes) rmp->mp_sgroups,
 			     ngroups * sizeof(gid_t));
 		if (r != OK) 
