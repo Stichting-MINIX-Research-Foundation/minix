@@ -1002,22 +1002,10 @@
 #define SCHEDULING_NO_QUANTUM	(SCHEDULING_BASE+1)
 /* These are used for SYS_SCHEDULE, a reply to SCHEDULING_NO_QUANTUM */
 #	define SCHEDULING_ENDPOINT	m9_l1
-#	define SCHEDULING_QUANTUM	m9_l2
-
-/*
- * SCHEDULING_START uses _ENDPOINT, _PRIORITY and _QUANTUM from
- * SCHEDULING_NO_QUANTUM/SYS_SCHEDULE
- */
 #define SCHEDULING_START	(SCHEDULING_BASE+2)
-#	define SCHEDULING_SCHEDULER	m9_l1 /* Overrides _ENDPOINT on return*/
-#	define SCHEDULING_PARENT	m9_l3
 #	define SCHEDULING_MAXPRIO	m9_l4
-
 #define SCHEDULING_STOP		(SCHEDULING_BASE+3)
-
 #define SCHEDULING_SET_NICE	(SCHEDULING_BASE+4)
-
-/* SCHEDULING_INHERIT is like SCHEDULING_START, but without _QUANTUM field */
 #define SCHEDULING_INHERIT	(SCHEDULING_BASE+5)
 
 /*===========================================================================*

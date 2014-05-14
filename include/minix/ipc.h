@@ -636,6 +636,23 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_lsys_pm_srv_fork);
 
 typedef struct {
+	endpoint_t endpoint;
+	endpoint_t parent;
+	int maxprio;
+	int quantum;
+
+	uint8_t padding[40];
+} mess_lsys_sched_scheduling_start;
+_ASSERT_MSG_SIZE(mess_lsys_sched_scheduling_start);
+
+typedef struct {
+	endpoint_t scheduler;
+
+	uint8_t padding[52];
+} mess_sched_lsys_scheduling_start;
+_ASSERT_MSG_SIZE(mess_sched_lsys_scheduling_start);
+
+typedef struct {
 	endpoint_t endpt;
 	cp_grant_id_t grant;
 	size_t count;
@@ -1205,6 +1222,8 @@ typedef struct {
 		mess_lsys_pm_getprocnr	m_lsys_pm_getprocnr;
 		mess_lsys_pm_srv_fork	m_lsys_pm_srv_fork;
 
+		mess_lsys_sched_scheduling_start m_lsys_sched_scheduling_start;
+
 		mess_lsys_vfs_checkperms m_lsys_vfs_checkperms;
 		mess_lsys_vfs_copyfd	m_lsys_vfs_copyfd;
 		mess_lsys_vfs_mapdriver	m_lsys_vfs_mapdriver;
@@ -1224,6 +1243,8 @@ typedef struct {
 
 		mess_rs_pm_exec_restart	m_rs_pm_exec_restart;
 		mess_rs_pm_srv_kill	m_rs_pm_srv_kill;
+
+		mess_sched_lsys_scheduling_start m_sched_lsys_scheduling_start;
 
 		mess_vfs_fs_breadwrite	m_vfs_fs_breadwrite;
 		mess_vfs_fs_chmod	m_vfs_fs_chmod;

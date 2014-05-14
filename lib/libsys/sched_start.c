@@ -26,9 +26,9 @@ int sched_inherit(endpoint_t scheduler_e,
 	assert(newscheduler_e);
 
 	memset(&m, 0, sizeof(m));
-	m.SCHEDULING_ENDPOINT	= schedulee_e;
-	m.SCHEDULING_PARENT	= parent_e;
-	m.SCHEDULING_MAXPRIO	= (int) maxprio;
+	m.m_lsys_sched_scheduling_start.endpoint	= schedulee_e;
+	m.m_lsys_sched_scheduling_start.parent		= parent_e;
+	m.m_lsys_sched_scheduling_start.maxprio		= maxprio;
 
 	/* Send the request to the scheduler */
 	if ((rv = _taskcall(scheduler_e, SCHEDULING_INHERIT, &m))) {
@@ -40,7 +40,7 @@ int sched_inherit(endpoint_t scheduler_e,
 	 * might have forwarded the scheduling message on to another scheduler
 	 * before returning the message.
 	 */
-	*newscheduler_e = m.SCHEDULING_SCHEDULER;
+	*newscheduler_e = m.m_sched_lsys_scheduling_start.scheduler;
 	return (OK);
 }
 
@@ -82,10 +82,10 @@ int sched_start(endpoint_t scheduler_e,
 
 	/* A user-space scheduler must schedule this process. */
 	memset(&m, 0, sizeof(m));
-	m.SCHEDULING_ENDPOINT	= schedulee_e;
-	m.SCHEDULING_PARENT	= parent_e;
-	m.SCHEDULING_MAXPRIO	= (int) maxprio;
-	m.SCHEDULING_QUANTUM	= (int) quantum;
+	m.m_lsys_sched_scheduling_start.endpoint	= schedulee_e;
+	m.m_lsys_sched_scheduling_start.parent		= parent_e;
+	m.m_lsys_sched_scheduling_start.maxprio		= maxprio;
+	m.m_lsys_sched_scheduling_start.quantum		= quantum;
 
 	/* Send the request to the scheduler */
 	if ((rv = _taskcall(scheduler_e, SCHEDULING_START, &m))) {
@@ -97,6 +97,6 @@ int sched_start(endpoint_t scheduler_e,
 	 * might have forwarded the scheduling message on to another scheduler
 	 * before returning the message.
 	 */
-	*newscheduler_e = m.SCHEDULING_SCHEDULER;
+	*newscheduler_e = m.m_sched_lsys_scheduling_start.scheduler;
 	return (OK);
 }

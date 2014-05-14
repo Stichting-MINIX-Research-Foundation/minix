@@ -153,16 +153,16 @@ int do_start_scheduling(message *m_ptr)
 		return EPERM;
 
 	/* Resolve endpoint to proc slot. */
-	if ((rv = sched_isemtyendpt(m_ptr->SCHEDULING_ENDPOINT, &proc_nr_n))
-			!= OK) {
+	if ((rv = sched_isemtyendpt(m_ptr->m_lsys_sched_scheduling_start.endpoint,
+			&proc_nr_n)) != OK) {
 		return rv;
 	}
 	rmp = &schedproc[proc_nr_n];
 
 	/* Populate process slot */
-	rmp->endpoint     = m_ptr->SCHEDULING_ENDPOINT;
-	rmp->parent       = m_ptr->SCHEDULING_PARENT;
-	rmp->max_priority = (unsigned) m_ptr->SCHEDULING_MAXPRIO;
+	rmp->endpoint     = m_ptr->m_lsys_sched_scheduling_start.endpoint;
+	rmp->parent       = m_ptr->m_lsys_sched_scheduling_start.parent;
+	rmp->max_priority = m_ptr->m_lsys_sched_scheduling_start.maxprio;
 	if (rmp->max_priority >= NR_SCHED_QUEUES) {
 		return EINVAL;
 	}
@@ -195,14 +195,14 @@ int do_start_scheduling(message *m_ptr)
 		 * quanum and priority are set explicitly rather than inherited 
 		 * from the parent */
 		rmp->priority   = rmp->max_priority;
-		rmp->time_slice = (unsigned) m_ptr->SCHEDULING_QUANTUM;
+		rmp->time_slice = m_ptr->m_lsys_sched_scheduling_start.quantum;
 		break;
 		
 	case SCHEDULING_INHERIT:
 		/* Inherit current priority and time slice from parent. Since there
 		 * is currently only one scheduler scheduling the whole system, this
 		 * value is local and we assert that the parent endpoint is valid */
-		if ((rv = sched_isokendpt(m_ptr->SCHEDULING_PARENT,
+		if ((rv = sched_isokendpt(m_ptr->m_lsys_sched_scheduling_start.parent,
 				&parent_nr_n)) != OK)
 			return rv;
 
@@ -242,10 +242,10 @@ int do_start_scheduling(message *m_ptr)
 	 * By default, processes are scheduled by the parents scheduler. In case
 	 * this scheduler would want to delegate scheduling to another
 	 * scheduler, it could do so and then write the endpoint of that
-	 * scheduler into SCHEDULING_SCHEDULER
+	 * scheduler into the "scheduler" field.
 	 */
 
-	m_ptr->SCHEDULING_SCHEDULER = SCHED_PROC_NR;
+	m_ptr->m_sched_lsys_scheduling_start.scheduler = SCHED_PROC_NR;
 
 	return OK;
 }
