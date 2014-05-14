@@ -7,20 +7,20 @@
 int do_schedctl(struct proc * caller, message * m_ptr)
 {
 	struct proc *p;
-	unsigned flags;
+	uint32_t flags;
 	int priority, quantum, cpu;
 	int proc_nr;
 	int r;
 
 	/* check parameter validity */
-	flags = (unsigned) m_ptr->SCHEDCTL_FLAGS;
+	flags = m_ptr->m_lsys_krn_schedctl.flags;
 	if (flags & ~SCHEDCTL_FLAG_KERNEL) {
 		printf("do_schedctl: flags 0x%x invalid, caller=%d\n", 
 			flags, caller - proc);
 		return EINVAL;
 	}
 
-	if (!isokendpt(m_ptr->SCHEDCTL_ENDPOINT, &proc_nr))
+	if (!isokendpt(m_ptr->m_lsys_krn_schedctl.endpoint, &proc_nr))
 		return EINVAL;
 
 	p = proc_addr(proc_nr);
@@ -29,9 +29,9 @@ int do_schedctl(struct proc * caller, message * m_ptr)
 		/* the kernel becomes the scheduler and starts 
 		 * scheduling the process.
 		 */
-		priority = (int) m_ptr->SCHEDCTL_PRIORITY;
-		quantum = (int) m_ptr->SCHEDCTL_QUANTUM;
-		cpu = (int) m_ptr->SCHEDCTL_CPU;
+		priority = m_ptr->m_lsys_krn_schedctl.priority;
+		quantum = m_ptr->m_lsys_krn_schedctl.quantum;
+		cpu = m_ptr->m_lsys_krn_schedctl.cpu;
 
 		/* Try to schedule the process. */
 		if((r = sched_proc(p, priority, quantum, cpu) != OK))

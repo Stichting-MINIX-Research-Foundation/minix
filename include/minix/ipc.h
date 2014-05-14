@@ -564,6 +564,17 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_pm_lexec_exec_new);
 
 typedef struct {
+	uint32_t flags;
+	endpoint_t endpoint;
+	int priority;
+	int quantum;
+	int cpu;
+
+	uint8_t padding[36];
+} mess_lsys_krn_schedctl;
+_ASSERT_MSG_SIZE(mess_lsys_krn_schedctl);
+
+typedef struct {
 	endpoint_t endpt;
 
 	uint8_t padding[52];
@@ -1160,6 +1171,8 @@ typedef struct {
 		mess_lc_vfs_umount	m_lc_vfs_umount;
 
 		mess_lexec_pm_exec_new	m_lexec_pm_exec_new;
+
+		mess_lsys_krn_schedctl	m_lsys_krn_schedctl;
 
 		mess_lsys_pm_getepinfo	m_lsys_pm_getepinfo;
 		mess_lsys_pm_getprocnr	m_lsys_pm_getprocnr;
