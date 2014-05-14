@@ -121,9 +121,10 @@ int do_stop_scheduling(message *m_ptr)
 	if (!accept_message(m_ptr))
 		return EPERM;
 
-	if (sched_isokendpt(m_ptr->SCHEDULING_ENDPOINT, &proc_nr_n) != OK) {
+	if (sched_isokendpt(m_ptr->m_lsys_sched_scheduling_stop.endpoint,
+		    &proc_nr_n) != OK) {
 		printf("SCHED: WARNING: got an invalid endpoint in OOQ msg "
-		"%ld\n", m_ptr->SCHEDULING_ENDPOINT);
+		"%d\n", m_ptr->m_lsys_sched_scheduling_stop.endpoint);
 		return EBADEPT;
 	}
 

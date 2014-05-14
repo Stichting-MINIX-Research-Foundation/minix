@@ -20,7 +20,7 @@ int sched_stop(endpoint_t scheduler_e, endpoint_t schedulee_e)
 	assert(_ENDPOINT_P(schedulee_e) >= 0);
 
 	memset(&m, 0, sizeof(m));
-	m.SCHEDULING_ENDPOINT	= schedulee_e;
+	m.m_lsys_sched_scheduling_stop.endpoint	= schedulee_e;
 	if ((rv = _taskcall(scheduler_e, SCHEDULING_STOP, &m))) {
 		return rv;
 	}
