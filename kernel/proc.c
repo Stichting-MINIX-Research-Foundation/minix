@@ -1806,13 +1806,13 @@ static void notify_scheduler(struct proc *p)
 	 */
 	m_no_quantum.m_source = p->p_endpoint;
 	m_no_quantum.m_type   = SCHEDULING_NO_QUANTUM;
-	m_no_quantum.SCHEDULING_ACNT_QUEUE = cpu_time_2_ms(p->p_accounting.time_in_queue);
-	m_no_quantum.SCHEDULING_ACNT_DEQS      = p->p_accounting.dequeues;
-	m_no_quantum.SCHEDULING_ACNT_IPC_SYNC  = p->p_accounting.ipc_sync;
-	m_no_quantum.SCHEDULING_ACNT_IPC_ASYNC = p->p_accounting.ipc_async;
-	m_no_quantum.SCHEDULING_ACNT_PREEMPT   = p->p_accounting.preempted;
-	m_no_quantum.SCHEDULING_ACNT_CPU       = cpuid;
-	m_no_quantum.SCHEDULING_ACNT_CPU_LOAD  = cpu_load();
+	m_no_quantum.m_krn_lsys_schedule.acnt_queue = cpu_time_2_ms(p->p_accounting.time_in_queue);
+	m_no_quantum.m_krn_lsys_schedule.acnt_deqs      = p->p_accounting.dequeues;
+	m_no_quantum.m_krn_lsys_schedule.acnt_ipc_sync  = p->p_accounting.ipc_sync;
+	m_no_quantum.m_krn_lsys_schedule.acnt_ipc_async = p->p_accounting.ipc_async;
+	m_no_quantum.m_krn_lsys_schedule.acnt_preempt   = p->p_accounting.preempted;
+	m_no_quantum.m_krn_lsys_schedule.acnt_cpu       = cpuid;
+	m_no_quantum.m_krn_lsys_schedule.acnt_cpu_load  = cpu_load();
 
 	/* Reset accounting */
 	reset_proc_accounting(p);

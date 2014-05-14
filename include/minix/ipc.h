@@ -146,6 +146,30 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_sigcalls);
 
 typedef struct {
+	time_t acnt_queue;
+
+	unsigned long acnt_deqs;
+	unsigned long acnt_ipc_sync;
+	unsigned long acnt_ipc_async;
+	unsigned long acnt_preempt;
+	uint32_t acnt_cpu;
+	uint32_t acnt_cpu_load;
+
+	uint8_t padding[24];
+} mess_krn_lsys_schedule;
+_ASSERT_MSG_SIZE(mess_krn_lsys_schedule);
+
+typedef struct {
+	endpoint_t endpoint;
+	int quantum;
+	int priority;
+	int cpu;
+
+	uint8_t padding[40];
+} mess_lsys_krn_schedule;
+_ASSERT_MSG_SIZE(mess_lsys_krn_schedule);
+
+typedef struct {
 	vir_bytes name;
 	size_t namelen;
 	vir_bytes frame;
@@ -1117,6 +1141,8 @@ typedef struct {
 		mess_notify		m_notify;
 		mess_sigcalls		m_sigcalls;
 
+		mess_krn_lsys_schedule	m_krn_lsys_schedule;
+
 		mess_fs_vfs_breadwrite	m_fs_vfs_breadwrite;
 		mess_fs_vfs_chmod	m_fs_vfs_chmod;
 		mess_fs_vfs_chown	m_fs_vfs_chown;
@@ -1173,6 +1199,7 @@ typedef struct {
 		mess_lexec_pm_exec_new	m_lexec_pm_exec_new;
 
 		mess_lsys_krn_schedctl	m_lsys_krn_schedctl;
+		mess_lsys_krn_schedule	m_lsys_krn_schedule;
 
 		mess_lsys_pm_getepinfo	m_lsys_pm_getepinfo;
 		mess_lsys_pm_getprocnr	m_lsys_pm_getprocnr;

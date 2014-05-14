@@ -11,7 +11,7 @@ int do_schedule(struct proc * caller, message * m_ptr)
 	int proc_nr;
 	int priority, quantum, cpu;
 
-	if (!isokendpt(m_ptr->SCHEDULING_ENDPOINT, &proc_nr))
+	if (!isokendpt(m_ptr->m_lsys_krn_schedule.endpoint, &proc_nr))
 		return EINVAL;
 
 	p = proc_addr(proc_nr);
@@ -21,9 +21,9 @@ int do_schedule(struct proc * caller, message * m_ptr)
 		return(EPERM);
 
 	/* Try to schedule the process. */
-	priority = (int) m_ptr->SCHEDULING_PRIORITY;
-	quantum = (int) m_ptr->SCHEDULING_QUANTUM;
-	cpu = (int) m_ptr->SCHEDULING_CPU;
+	priority = m_ptr->m_lsys_krn_schedule.priority;
+	quantum = m_ptr->m_lsys_krn_schedule.quantum;
+	cpu = m_ptr->m_lsys_krn_schedule.cpu;
 
 	return sched_proc(p, priority, quantum, cpu);
 }
