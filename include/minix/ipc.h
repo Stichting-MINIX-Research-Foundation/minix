@@ -701,6 +701,14 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_pm_lc_getuid);
 
 typedef struct {
+	endpoint_t endpoint;
+	uint32_t maxprio;
+
+	uint8_t padding[48];
+} mess_pm_sched_scheduling_set_nice;
+_ASSERT_MSG_SIZE(mess_pm_sched_scheduling_set_nice);
+
+typedef struct {
 	endpoint_t endpt;
 	int result;
 	vir_bytes pc;
@@ -1240,6 +1248,8 @@ typedef struct {
 
 		mess_pm_lsys_getepinfo	m_pm_lsys_getepinfo;
 		mess_pm_lsys_getprocnr	m_pm_lsys_getprocnr;
+
+		mess_pm_sched_scheduling_set_nice m_pm_sched_scheduling_set_nice;
 
 		mess_rs_pm_exec_restart	m_rs_pm_exec_restart;
 		mess_rs_pm_srv_kill	m_rs_pm_srv_kill;
