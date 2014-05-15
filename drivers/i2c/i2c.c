@@ -323,7 +323,7 @@ i2c_other(message * m, int ipc_status)
 	switch (m->m_type) {
 	case BUSC_I2C_RESERVE:
 		/* reserve a device on the bus for exclusive access */
-		r = do_reserve(m->m_source, m->BUSC_I2C_ADDR);
+		r = do_reserve(m->m_source, m->m_li2cdriver_i2c_busc_i2c_reserve.addr);
 		break;
 	case BUSC_I2C_EXEC:
 		/* handle request from another driver */

@@ -159,7 +159,7 @@ i2cdriver_reserve_device(endpoint_t bus_endpoint, i2c_addr_t address)
 	message m;
 
 	m.m_type = BUSC_I2C_RESERVE;
-	m.BUSC_I2C_ADDR = address;
+	m.m_li2cdriver_i2c_busc_i2c_reserve.addr = address;
 
 	r = ipc_sendrec(bus_endpoint, &m);
 	if (r != OK) {
