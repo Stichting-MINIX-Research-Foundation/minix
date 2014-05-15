@@ -155,7 +155,6 @@
 
 #define BUSC_I2C_RESERVE	(BUSC_RQ_BASE + 64)	/* reserve i2c device */
 #define BUSC_I2C_EXEC		(BUSC_RQ_BASE + 65)	/* perform i2c action */
-#define   BUSC_I2C_GRANT	m2_i1			/* grant for request */
 
 /*===========================================================================*
  *                  	   Messages for networking layer		     *

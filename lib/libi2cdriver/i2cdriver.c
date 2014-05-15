@@ -182,7 +182,7 @@ i2cdriver_exec(endpoint_t bus_endpoint, minix_i2c_ioctl_exec_t * ioctl_exec)
 	memset(&m, '\0', sizeof(message));
 
 	m.m_type = BUSC_I2C_EXEC;
-	m.BUSC_I2C_GRANT = grant_nr;
+	m.m_li2cdriver_i2c_busc_i2c_exec.grant = grant_nr;
 
 	r = ipc_sendrec(bus_endpoint, &m);
 	cpf_revoke(grant_nr);

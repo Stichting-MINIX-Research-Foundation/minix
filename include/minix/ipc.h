@@ -588,6 +588,18 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_pm_lexec_exec_new);
 
 typedef struct {
+	cp_grant_id_t grant;
+
+	uint8_t padding[52];
+} mess_li2cdriver_i2c_busc_i2c_exec;
+_ASSERT_MSG_SIZE(mess_li2cdriver_i2c_busc_i2c_exec);
+
+typedef struct {
+	uint8_t padding[56];
+} mess_i2c_li2cdriver_busc_i2c_exec;
+_ASSERT_MSG_SIZE(mess_i2c_li2cdriver_busc_i2c_exec);
+
+typedef struct {
 	uint16_t addr; /* FIXME: strictly speaking this is an i2c_addr_t, but
 			  to get it I would need to include
 			  sys/dev/i2c/i2c_io.h, which I am not sure is a good
@@ -1218,6 +1230,7 @@ typedef struct {
 		mess_fs_vfs_readsuper	m_fs_vfs_readsuper;
 		mess_fs_vfs_readwrite	m_fs_vfs_readwrite;
 
+		mess_i2c_li2cdriver_busc_i2c_exec m_i2c_li2cdriver_busc_i2c_exec;
 		mess_i2c_li2cdriver_busc_i2c_reserve m_i2c_li2cdriver_busc_i2c_reserve;
 
 		mess_lc_pm_exec		m_lc_pm_exec;
@@ -1264,6 +1277,7 @@ typedef struct {
 
 		mess_lexec_pm_exec_new	m_lexec_pm_exec_new;
 
+		mess_li2cdriver_i2c_busc_i2c_exec m_li2cdriver_i2c_busc_i2c_exec;
 		mess_li2cdriver_i2c_busc_i2c_reserve m_li2cdriver_i2c_busc_i2c_reserve;
 
 		mess_lsys_krn_schedctl	m_lsys_krn_schedctl;

@@ -327,7 +327,7 @@ i2c_other(message * m, int ipc_status)
 		break;
 	case BUSC_I2C_EXEC:
 		/* handle request from another driver */
-		r = do_i2c_ioctl_exec(m->m_source, m->BUSC_I2C_GRANT);
+		r = do_i2c_ioctl_exec(m->m_source, m->m_li2cdriver_i2c_busc_i2c_exec.grant);
 		break;
 	default:
 		log_warn(&log, "Invalid message type (0x%x)\n", m->m_type);
