@@ -20,8 +20,8 @@ int *ioflag;
 	message m;
 
 	m.m_type= BUSC_PCI_GET_BAR;
-	m.BUSC_PGB_DEVIND= devind;
-	m.BUSC_PGB_PORT= port;
+	m.m_lsys_pci_busc_get_bar.devind = devind;
+	m.m_lsys_pci_busc_get_bar.port = port;
 
 	r= ipc_sendrec(pci_procnr, &m);
 	if (r != 0)
@@ -29,9 +29,9 @@ int *ioflag;
 
 	if (m.m_type == 0)
 	{
-		*base= m.BUSC_PGB_BASE;
-		*size= m.BUSC_PGB_SIZE;
-		*ioflag= m.BUSC_PGB_IOFLAG;
+		*base= m.m_pci_lsys_busc_get_bar.base;
+		*size= m.m_pci_lsys_busc_get_bar.size;
+		*ioflag= m.m_pci_lsys_busc_get_bar.flags;
 	}
 	return m.m_type;
 }

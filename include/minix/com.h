@@ -149,11 +149,6 @@
 #define BUSC_PCI_GET_BAR	(BUSC_RQ_BASE + 19)	/* Get Base Address
 							 * Register properties
 							 */
-#define   BUSC_PGB_DEVIND	m2_i1			/* device index */
-#define   BUSC_PGB_PORT		m2_i2			/* port (BAR offset) */
-#define   BUSC_PGB_BASE		m2_l1			/* BAR base address */
-#define   BUSC_PGB_SIZE		m2_l2			/* BAR size */
-#define   BUSC_PGB_IOFLAG	m2_i1			/* I/O space? */
 #define IOMMU_MAP		(BUSC_RQ_BASE + 32)	/* Ask IOMMU to map
 							 * a segment of memory
 							 */

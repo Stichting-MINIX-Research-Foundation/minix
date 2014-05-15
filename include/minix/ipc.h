@@ -599,6 +599,23 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_lsys_krn_schedctl);
 
 typedef struct {
+	int devind;
+	int port;
+
+	uint8_t padding[48];
+} mess_lsys_pci_busc_get_bar;
+_ASSERT_MSG_SIZE(mess_lsys_pci_busc_get_bar);
+
+typedef struct {
+	int base;
+	size_t size;
+	uint32_t flags;
+
+	uint8_t padding[44];
+} mess_pci_lsys_busc_get_bar;
+_ASSERT_MSG_SIZE(mess_pci_lsys_busc_get_bar);
+
+typedef struct {
 	endpoint_t endpt;
 
 	uint8_t padding[52];
@@ -1233,6 +1250,8 @@ typedef struct {
 		mess_lsys_krn_schedctl	m_lsys_krn_schedctl;
 		mess_lsys_krn_schedule	m_lsys_krn_schedule;
 
+		mess_lsys_pci_busc_get_bar m_lsys_pci_busc_get_bar;
+
 		mess_lsys_pm_getepinfo	m_lsys_pm_getepinfo;
 		mess_lsys_pm_getprocnr	m_lsys_pm_getprocnr;
 		mess_lsys_pm_srv_fork	m_lsys_pm_srv_fork;
@@ -1243,6 +1262,8 @@ typedef struct {
 		mess_lsys_vfs_checkperms m_lsys_vfs_checkperms;
 		mess_lsys_vfs_copyfd	m_lsys_vfs_copyfd;
 		mess_lsys_vfs_mapdriver	m_lsys_vfs_mapdriver;
+
+		mess_pci_lsys_busc_get_bar m_pci_lsys_busc_get_bar;
 
 		mess_pm_lexec_exec_new	m_pm_lexec_exec_new;
 

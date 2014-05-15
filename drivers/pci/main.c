@@ -534,16 +534,16 @@ message *mp;
 	int r, devind, port, ioflag;
 	u32_t base, size;
 
-	devind= mp->BUSC_PGB_DEVIND;
-	port= mp->BUSC_PGB_PORT;
+	devind= mp->m_lsys_pci_busc_get_bar.devind;
+	port= mp->m_lsys_pci_busc_get_bar.port;
 
 	mp->m_type= pci_get_bar_s(devind, port, &base, &size, &ioflag);
 
 	if (mp->m_type == OK)
 	{
-		mp->BUSC_PGB_BASE= base;
-		mp->BUSC_PGB_SIZE= size;
-		mp->BUSC_PGB_IOFLAG= ioflag;
+		mp->m_pci_lsys_busc_get_bar.base= base;
+		mp->m_pci_lsys_busc_get_bar.size= size;
+		mp->m_pci_lsys_busc_get_bar.flags= ioflag;
 	}
 
 	r= ipc_send(mp->m_source, mp);
