@@ -1780,8 +1780,8 @@ static void or_getstat_s (message * mp) {
 
 	stats = orp->or_stat;
 
-	r = sys_safecopyto(mp->m_source, mp->DL_GRANT, 0, 
-				(vir_bytes) &stats, sizeof(stats));
+	r = sys_safecopyto(mp->m_source, mp->m_net_netdrv_dl_getstat_s.grant,
+		0, (vir_bytes) &stats, sizeof(stats));
 	if(r != OK) {
 		panic("or_getstat_s: sys_safecopyto failed: %d", r);
 	}

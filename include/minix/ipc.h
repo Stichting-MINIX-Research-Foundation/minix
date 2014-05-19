@@ -829,6 +829,13 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_netdrv_net_dl_conf);
 
 typedef struct {
+	cp_grant_id_t grant;
+
+	uint8_t padding[52];
+} mess_net_netdrv_dl_getstat_s;
+_ASSERT_MSG_SIZE(mess_net_netdrv_dl_getstat_s);
+
+typedef struct {
 	uid_t egid;
 
 	uint8_t padding[52];
@@ -1409,6 +1416,7 @@ typedef struct {
 		mess_lsys_vfs_mapdriver	m_lsys_vfs_mapdriver;
 
 		mess_net_netdrv_dl_conf m_net_netdrv_dl_conf;
+		mess_net_netdrv_dl_getstat_s m_net_netdrv_dl_getstat_s;
 
 		mess_netdrv_net_dl_conf m_netdrv_net_dl_conf;
 

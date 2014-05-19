@@ -791,8 +791,8 @@ message *mp;
     stats.ets_CDheartbeat = 0;
     stats.ets_OWC = 0;
 
-    sys_safecopyto(mp->m_source, mp->DL_GRANT, 0, (vir_bytes)&stats,
-                   sizeof(stats));
+    sys_safecopyto(mp->m_source, mp->m_net_netdrv_dl_getstat_s.grant, 0,
+	    (vir_bytes)&stats, sizeof(stats));
     mp->m_type  = DL_STAT_REPLY;
     if((r=ipc_send(mp->m_source, mp)) != OK)
 	panic("e1000_getstat: ipc_send() failed: %d", r);

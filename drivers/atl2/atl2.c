@@ -1056,7 +1056,7 @@ static void atl2_getstat(message *m)
 	 */
 	int r;
 
-	sys_safecopyto(m->m_source, m->DL_GRANT, 0,
+	sys_safecopyto(m->m_source, m->m_net_netdrv_dl_getstat_s.grant, 0,
 		(vir_bytes) &state.stat, sizeof(state.stat));
 
 	m->m_type = DL_STAT_REPLY;

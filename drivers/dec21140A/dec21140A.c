@@ -176,9 +176,8 @@ static void do_get_stat_s(message * mp)
 
   dep = &de_state;
 
-  if ((rc = sys_safecopyto(mp->m_source, mp->DL_GRANT, 0UL,
-			(vir_bytes)&dep->de_stat,
-			sizeof(dep->de_stat))) != OK)
+  if ((rc = sys_safecopyto(mp->m_source, mp->m_net_netdrv_dl_getstat_s.grant,
+		  0, (vir_bytes)&dep->de_stat, sizeof(dep->de_stat))) != OK)
         panic("%s %d", str_CopyErrMsg, rc);
 
   mp->m_type = DL_STAT_REPLY;

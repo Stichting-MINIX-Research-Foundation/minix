@@ -552,7 +552,7 @@ virtio_net_getstat(message *m)
 	reply.DL_COUNT = 0;
 
 
-	r = sys_safecopyto(m->m_source, m->DL_GRANT, 0,
+	r = sys_safecopyto(m->m_source, m->m_net_netdrv_dl_getstat_s.grant, 0,
 			   (vir_bytes)&virtio_net_stats,
 			   sizeof(virtio_net_stats));
 

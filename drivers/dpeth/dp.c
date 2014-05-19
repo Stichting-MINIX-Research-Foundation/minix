@@ -434,9 +434,9 @@ static void do_getstat_s(const message * mp)
   dep = &de_state;
 
   if (dep->de_mode == DEM_ENABLED) (*dep->de_getstatsf) (dep);
-  if ((rc = sys_safecopyto(mp->m_source, mp->DL_GRANT, 0,
+  if ((rc = sys_safecopyto(mp->m_source, mp->m_net_netdrv_dl_getstat_s.grant, 0,
 			(vir_bytes)&dep->de_stat,
-			(vir_bytes) sizeof(dep->de_stat))) != OK)
+			(vir_bytes)sizeof(dep->de_stat))) != OK)
         panic(CopyErrMsg, rc);
 
   reply_mess.m_type = DL_STAT_REPLY;

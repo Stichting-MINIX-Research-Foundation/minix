@@ -1429,8 +1429,8 @@ static void fxp_getstat_s(message *mp)
 	stats.ets_CDheartbeat= 0;
 	stats.ets_OWC= fp->fxp_stat.sc_tx_latecol;
 
-	r= sys_safecopyto(mp->m_source, mp->DL_GRANT, 0, (vir_bytes)&stats,
-		sizeof(stats));
+	r= sys_safecopyto(mp->m_source, mp->m_net_netdrv_dl_getstat_s.grant, 0,
+		(vir_bytes)&stats, sizeof(stats));
 	if (r != OK)
 		panic("fxp_getstat_s: sys_safecopyto failed: %d", r);
 

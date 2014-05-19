@@ -582,7 +582,8 @@ message *mp;
 
 	if (dep->de_mode == DEM_SINK)
 	{
-		put_userdata_s(mp->m_source, (vir_bytes) mp->DL_GRANT,
+		put_userdata_s(mp->m_source,
+			mp->m_net_netdrv_dl_getstat_s.grant,
 			(vir_bytes) sizeof(dep->de_stat), &dep->de_stat);
 
 		mp->m_type= DL_STAT_REPLY;
@@ -598,7 +599,7 @@ message *mp;
 	dep->de_stat.ets_frameAll += inb_reg0(dep, DP_CNTR1);
 	dep->de_stat.ets_missedP += inb_reg0(dep, DP_CNTR2);
 
-	put_userdata_s(mp->m_source, mp->DL_GRANT,
+	put_userdata_s(mp->m_source, mp->m_net_netdrv_dl_getstat_s.grant,
 		sizeof(dep->de_stat), &dep->de_stat);
 
 	mp->m_type= DL_STAT_REPLY;

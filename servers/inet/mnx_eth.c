@@ -832,7 +832,7 @@ eth_port_t *eth_port;
 	message mess;
 
 	mess.m_type= DL_GETSTAT_S;
-	mess.DL_GRANT= eth_port->etp_osdep.etp_stat_gid;
+	mess.m_net_netdrv_dl_getstat_s.grant= eth_port->etp_osdep.etp_stat_gid;
 
 	assert(eth_port->etp_osdep.etp_state == OEPS_IDLE);
 
