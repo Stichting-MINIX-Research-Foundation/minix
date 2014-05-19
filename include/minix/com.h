@@ -1230,13 +1230,7 @@
 /* Message types for real time clock responses. */
 #define RTCDEV_REPLY	(RTCDEV_RS_BASE + 0)	/* general reply code */
 
-/* Field names for real time clock messages */
-#define RTCDEV_TM	m2_p1	/* pointer to struct tm */
-#define RTCDEV_FLAGS	m2_s1	/* clock flags flags */
-#define RTCDEV_STATUS	m2_i2	/* OK or error code */
-#define RTCDEV_GRANT	m2_i3	/* grant containing struct tm */
-
-/* Bits in 'RTCDEV_FLAGS' field of real time clock requests. */
+/* Bits in 'lc_readclock_rtcdev.flags' field of real time clock requests. */
 #define RTCDEV_NOFLAGS	0x00	/* no flags are set */
 #define RTCDEV_Y2KBUG	0x01	/* Interpret 1980 as 2000 for RTC w/Y2K bug */
 #define RTCDEV_CMOSREG	0x02	/* Also set the CMOS clock register bits. */

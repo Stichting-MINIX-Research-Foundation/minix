@@ -302,15 +302,14 @@ main(int argc, char *argv[])
 		switch (m.m_type) {
 		case RTCDEV_GET_TIME_G:
 			/* Any user can read the time */
-			reply_status = rtc_get_time(&t, m.RTCDEV_FLAGS);
+			reply_status = rtc_get_time(&t, m.m_lc_readclock_rtcdev.flags);
 			if (reply_status != OK) {
 				break;
 			}
 
 			/* write results back to calling process */
 			reply_status =
-			    store_t(caller, (cp_grant_id_t) m.RTCDEV_GRANT,
-			    &t);
+			    store_t(caller, m.m_lc_readclock_rtcdev.grant, &t);
 			break;
 
 		case RTCDEV_SET_TIME_G:
@@ -319,13 +318,14 @@ main(int argc, char *argv[])
 				/* read time from calling process */
 				reply_status =
 				    fetch_t(caller,
-				    (cp_grant_id_t) m.RTCDEV_GRANT, &t);
+					    m.m_lc_readclock_rtcdev.grant, &t);
 				if (reply_status != OK) {
 					break;
 				}
 
 				reply_status =
-				    rtc_set_time(&t, m.RTCDEV_FLAGS);
+				    rtc_set_time(&t,
+					    m.m_lc_readclock_rtcdev.flags);
 			} else {
 				reply_status = EPERM;
 			}
@@ -343,7 +343,7 @@ main(int argc, char *argv[])
 
 		/* Send Reply */
 		m.m_type = RTCDEV_REPLY;
-		m.RTCDEV_STATUS = reply_status;
+		m.m_readclock_lc_rtcdev.status = reply_status;
 
 		log_debug(&log, "Sending Reply");
 

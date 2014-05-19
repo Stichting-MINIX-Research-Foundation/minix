@@ -148,11 +148,11 @@ readclock(int type, struct tm *t, int flags)
 	}
 
 	memset(&m, 0, sizeof(m));
-	m.RTCDEV_TM = (char *) t;
-	m.RTCDEV_FLAGS = flags;
+	m.m_lc_readclock_rtcdev.tm = (vir_bytes)t;
+	m.m_lc_readclock_rtcdev.flags = flags;
 
 	r = _syscall(ep, type, &m);
-	if (r != RTCDEV_REPLY || m.RTCDEV_STATUS != 0) {
+	if (r != RTCDEV_REPLY || m.m_readclock_lc_rtcdev.status != 0) {
 		if (!quiet) errmsg("Call to readclock.drv failed\n");
 		exit(1);
 	}

@@ -82,12 +82,12 @@ fwd_msg(int type, struct tm *t, int t_access, int flags)
 		return -1;
 	}
 
-	m.RTCDEV_GRANT = gid;
-	m.RTCDEV_FLAGS = flags;
+	m.m_lc_readclock_rtcdev.grant = gid;
+	m.m_lc_readclock_rtcdev.flags = flags;
 
 	r = _syscall(ep, type, &m);
 	cpf_revoke(gid);
-	if (r != RTCDEV_REPLY || m.RTCDEV_STATUS != 0) {
+	if (r != RTCDEV_REPLY || m.m_readclock_lc_rtcdev.status != 0) {
 		log_warn(&log, "Call to '%s' failed.\n", target_label);
 		return -1;
 	}

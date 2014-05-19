@@ -314,6 +314,22 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_lc_pm_time);
 
 typedef struct {
+	cp_grant_id_t grant;
+	vir_bytes tm;			/* struct tm * */
+	int flags;
+
+	uint8_t padding[44];
+} mess_lc_readclock_rtcdev;
+_ASSERT_MSG_SIZE(mess_lc_readclock_rtcdev);
+
+typedef struct {
+	int status;
+
+	uint8_t padding[52];
+} mess_readclock_lc_rtcdev;
+_ASSERT_MSG_SIZE(mess_readclock_lc_rtcdev);
+
+typedef struct {
 	time_t sec;
 
 	long nsec;
@@ -1249,6 +1265,7 @@ typedef struct {
 		mess_lc_pm_sysuname	m_lc_pm_sysuname;
 		mess_lc_pm_time		m_lc_pm_time;
 		mess_lc_pm_waitpid	m_lc_pm_waitpid;
+		mess_lc_readclock_rtcdev m_lc_readclock_rtcdev;
 
 		mess_lc_vfs_chown	m_lc_vfs_chown;
 		mess_lc_vfs_close	m_lc_vfs_close;
@@ -1312,6 +1329,8 @@ typedef struct {
 		mess_pm_lsys_getprocnr	m_pm_lsys_getprocnr;
 
 		mess_pm_sched_scheduling_set_nice m_pm_sched_scheduling_set_nice;
+
+		mess_readclock_lc_rtcdev m_readclock_lc_rtcdev;
 
 		mess_rs_pm_exec_restart	m_rs_pm_exec_restart;
 		mess_rs_pm_srv_kill	m_rs_pm_srv_kill;
