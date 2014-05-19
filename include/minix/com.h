@@ -1084,9 +1084,7 @@
 #define INPUT_RS_BASE 0x1580	/* from input driver to input server */
 
 #define INPUT_CONF		(INPUT_RQ_BASE + 0)	/* configure driver */
-
 #define INPUT_SETLEDS		(INPUT_RQ_BASE + 1)	/* set keyboard LEDs */
-#  define INPUT_LED_MASK	m7_i1	/* status mask of LEDs */
 
 #define INPUT_EVENT		(INPUT_RS_BASE + 0)	/* send input event */
 

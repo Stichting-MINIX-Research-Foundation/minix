@@ -378,7 +378,7 @@ static void set_leds(void)
   memset(&m, 0, sizeof(m));
 
   m.m_type = INPUT_SETLEDS;
-  m.INPUT_LED_MASK = locks[ccurrent] & ~ALT_LOCK;
+  m.m_input_linputdriver_setleds.led_mask = locks[ccurrent] & ~ALT_LOCK;
 
   if ((r = asynsend3(input_endpt, &m, AMF_NOREPLY)) != OK)
 	printf("TTY: asynsend to INPUT %u failed (%d)\n", input_endpt, r);

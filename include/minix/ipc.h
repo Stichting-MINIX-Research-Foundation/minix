@@ -641,6 +641,13 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_input_linputdriver_input_conf);
 
 typedef struct {
+	uint32_t led_mask;
+
+	uint8_t padding[52];
+} mess_input_linputdriver_setleds;
+_ASSERT_MSG_SIZE(mess_input_linputdriver_setleds);
+
+typedef struct {
 	int id;
 	int page;
 	int code;
@@ -1271,6 +1278,7 @@ typedef struct {
 		mess_i2c_li2cdriver_busc_i2c_reserve m_i2c_li2cdriver_busc_i2c_reserve;
 
 		mess_input_linputdriver_input_conf m_input_linputdriver_input_conf;
+		mess_input_linputdriver_setleds m_input_linputdriver_setleds;
 
 		mess_lc_pm_exec		m_lc_pm_exec;
 		mess_lc_pm_exit		m_lc_pm_exit;

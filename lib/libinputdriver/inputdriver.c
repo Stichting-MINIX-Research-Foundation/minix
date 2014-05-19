@@ -128,7 +128,7 @@ do_setleds(struct inputdriver *idp, message *m_ptr)
 		return;
 	}
 
-	mask = m_ptr->INPUT_LED_MASK;
+	mask = m_ptr->m_input_linputdriver_setleds.led_mask;
 
 	if (idp->idr_leds)
 		idp->idr_leds(mask);

@@ -212,7 +212,7 @@ input_set_leds(devminor_t minor, unsigned int mask)
 	memset(&m, 0, sizeof(m));
 
 	m.m_type = INPUT_SETLEDS;
-	m.INPUT_LED_MASK = mask;
+	m.m_input_linputdriver_setleds.led_mask = mask;
 
 	/*
 	 * Send the request to all matching keyboard devices.  As side effect,
@@ -621,7 +621,7 @@ input_other(message *m, int ipc_status)
 
 	case INPUT_SETLEDS:
 		if (m->m_source == TTY_PROC_NR) {
-			input_set_leds(KBDMUX_MINOR, m->INPUT_LED_MASK);
+			input_set_leds(KBDMUX_MINOR, m->m_input_linputdriver_setleds.led_mask);
 
 			break;
 		}
