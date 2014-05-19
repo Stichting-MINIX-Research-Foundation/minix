@@ -1239,11 +1239,6 @@
 #define SVRCTL_REQ		m2_i1	/* int */
 #define SVRCTL_ARG		m2_p1	/* void * */
 
-/* Field names for the getrusage(2) call. */
-#define RU_ENDPT		m1_i1	/* endpoint_t */
-#define RU_WHO			m1_i1	/* int */
-#define RU_RUSAGE_ADDR		m1_p1	/* struct rusage * */
-
 /*===========================================================================*
  *		Internal codes used by several services			     *
  *===========================================================================*/

@@ -961,7 +961,7 @@ int do_getrusage(void)
 	int res;
 	struct rusage r_usage;
 
-	if ((res = sys_datacopy_wrapper(who_e, (vir_bytes) m_in.RU_RUSAGE_ADDR, SELF,
+	if ((res = sys_datacopy_wrapper(who_e, m_in.m_lc_vfs_rusage.addr, SELF,
 		(vir_bytes) &r_usage, (vir_bytes) sizeof(r_usage))) < 0)
 		return res;
 
@@ -972,5 +972,5 @@ int do_getrusage(void)
 	r_usage.ru_isrss = DEFAULT_STACK_LIMIT;
 
 	return sys_datacopy_wrapper(SELF, (vir_bytes) &r_usage, who_e,
-		(vir_bytes) m_in.RU_RUSAGE_ADDR, (phys_bytes) sizeof(r_usage));
+		m_in.m_lc_vfs_rusage.addr, (phys_bytes) sizeof(r_usage));
 }

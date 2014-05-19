@@ -344,7 +344,7 @@ int do_getrusage(message *m)
 
 	vmp = &vmproc[slot];
 
-	if ((res = sys_datacopy(m->m_source, (vir_bytes) m->RU_RUSAGE_ADDR,
+	if ((res = sys_datacopy(m->m_source, m->m_lc_vm_rusage.addr,
 		SELF, (vir_bytes) &r_usage, (vir_bytes) sizeof(r_usage))) < 0)
 		return res;
 
@@ -353,5 +353,5 @@ int do_getrusage(message *m)
 	r_usage.ru_majflt = vmp->vm_major_page_fault;
 
 	return sys_datacopy(SELF, (vir_bytes) &r_usage, m->m_source,
-		(vir_bytes) m->RU_RUSAGE_ADDR, (vir_bytes) sizeof(r_usage));
+		m->m_lc_vm_rusage.addr, (vir_bytes) sizeof(r_usage));
 }

@@ -252,6 +252,14 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_lc_pm_reboot);
 
 typedef struct {
+	endpoint_t who;
+	vir_bytes addr;
+
+	uint8_t padding[48];
+} mess_lc_pm_rusage;
+_ASSERT_MSG_SIZE(mess_lc_pm_rusage);
+
+typedef struct {
 	gid_t gid;
 
 	uint8_t padding[52];
@@ -530,6 +538,13 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_lc_vfs_readwrite);
 
 typedef struct {
+	vir_bytes addr;
+
+	uint8_t padding[52];
+} mess_lc_vfs_rusage;
+_ASSERT_MSG_SIZE(mess_lc_vfs_rusage);
+
+typedef struct {
 	uint32_t nfds;
 	fd_set *readfds;
 	fd_set *writefds;
@@ -587,6 +602,13 @@ typedef struct {
 	uint8_t padding[40];
 } mess_lc_vfs_umount;
 _ASSERT_MSG_SIZE(mess_lc_vfs_umount);
+
+typedef struct {
+	vir_bytes addr;
+
+	uint8_t padding[52];
+} mess_lc_vm_rusage;
+_ASSERT_MSG_SIZE(mess_lc_vm_rusage);
 
 typedef struct {
 	endpoint_t endpt;
@@ -1289,6 +1311,7 @@ typedef struct {
 		mess_lc_pm_priority	m_lc_pm_priority;
 		mess_lc_pm_ptrace	m_lc_pm_ptrace;
 		mess_lc_pm_reboot	m_lc_pm_reboot;
+		mess_lc_pm_rusage	m_lc_pm_rusage;
 		mess_lc_pm_setgid	m_lc_pm_setgid;
 		mess_lc_pm_setuid	m_lc_pm_setuid;
 		mess_lc_pm_sig		m_lc_pm_sig;
@@ -1316,12 +1339,15 @@ typedef struct {
 		mess_lc_vfs_pipe2	m_lc_vfs_pipe2;
 		mess_lc_vfs_readlink	m_lc_vfs_readlink;
 		mess_lc_vfs_readwrite	m_lc_vfs_readwrite;
+		mess_lc_vfs_rusage	m_lc_vfs_rusage;
 		mess_lc_vfs_select	m_lc_vfs_select;
 		mess_lc_vfs_stat	m_lc_vfs_stat;
 		mess_lc_vfs_statvfs1	m_lc_vfs_statvfs1;
 		mess_lc_vfs_truncate	m_lc_vfs_truncate;
 		mess_lc_vfs_umask	m_lc_vfs_umask;
 		mess_lc_vfs_umount	m_lc_vfs_umount;
+
+		mess_lc_vm_rusage	m_lc_vm_rusage;
 
 		mess_lexec_pm_exec_new	m_lexec_pm_exec_new;
 

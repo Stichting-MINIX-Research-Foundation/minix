@@ -407,12 +407,13 @@ int do_getrusage()
 	clock_t sys_time = 0;
 	struct rusage r_usage;
 	u64_t usec;
-	if (m_in.RU_WHO != RUSAGE_SELF && m_in.RU_WHO != RUSAGE_CHILDREN)
+	if (m_in.m_lc_pm_rusage.who != RUSAGE_SELF &&
+		m_in.m_lc_pm_rusage.who != RUSAGE_CHILDREN)
 		return EINVAL;
 	if ((res = sys_getrusage(&r_usage, who_e)) < 0)
 		return res;
 
-	if (m_in.RU_WHO == RUSAGE_CHILDREN) {
+	if (m_in.m_lc_pm_rusage.who == RUSAGE_CHILDREN) {
 		usec = mp->mp_child_utime * 1000000 / sys_hz();
 		r_usage.ru_utime.tv_sec = usec / 1000000;
 		r_usage.ru_utime.tv_usec = usec % 1000000;
@@ -421,6 +422,6 @@ int do_getrusage()
 		r_usage.ru_stime.tv_usec = usec % 1000000;
 	}
 
-	return sys_datacopy(SELF, (vir_bytes) &r_usage, who_e,
-		(vir_bytes) m_in.RU_RUSAGE_ADDR, (vir_bytes) sizeof(r_usage));
+	return sys_datacopy(SELF, (vir_bytes)&r_usage, who_e,
+		m_in.m_lc_pm_rusage.addr, (vir_bytes) sizeof(r_usage));
 }

@@ -12,8 +12,8 @@ int getrusage(int who, struct rusage *r_usage)
 	message m;
 
 	memset(&m, 0, sizeof(m));
-	m.RU_WHO = who;
-	m.RU_RUSAGE_ADDR = (char *) r_usage;
+	m.m_lc_pm_rusage.who = who;
+	m.m_lc_pm_rusage.addr = (vir_bytes)r_usage;
 
 	if (r_usage == NULL) {
 		errno = EFAULT;
@@ -29,11 +29,11 @@ int getrusage(int who, struct rusage *r_usage)
 		return rc;
 
 	memset(&m, 0, sizeof(m));
-	m.RU_RUSAGE_ADDR = (char *) r_usage;
+	m.m_lc_vfs_rusage.addr = (vir_bytes)r_usage;
 	if ((rc = _syscall(VFS_PROC_NR, VFS_GETRUSAGE, &m)) < 0)
 		return rc;
 
 	memset(&m, 0, sizeof(m));
-	m.RU_RUSAGE_ADDR = (char *) r_usage;
+	m.m_lc_vm_rusage.addr = (vir_bytes)r_usage;
 	return _syscall(VM_PROC_NR, VM_GETRUSAGE, &m);
 }
