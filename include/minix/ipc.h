@@ -1575,6 +1575,14 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_vfs_fs_utime);
 
 typedef struct {
+	int status;
+	uint32_t id;		/* should be cdev_id_t */
+
+	uint8_t padding[48];
+} mess_lchardriver_vfs_reply;
+_ASSERT_MSG_SIZE(mess_lchardriver_vfs_reply);
+
+typedef struct {
 	time_t atime;
 	time_t mtime;
 	long ansec;
@@ -1718,6 +1726,8 @@ typedef struct {
 		mess_lc_vfs_umount	m_lc_vfs_umount;
 
 		mess_lc_vm_rusage	m_lc_vm_rusage;
+
+		mess_lchardriver_vfs_reply m_lchardriver_vfs_reply;
 
 		mess_lexec_pm_exec_new	m_lexec_pm_exec_new;
 

@@ -138,8 +138,8 @@ void chardriver_reply_task(endpoint_t endpt, cdev_id_t id, int r)
   memset(&m_reply, 0, sizeof(m_reply));
 
   m_reply.m_type = CDEV_REPLY;
-  m_reply.CDEV_STATUS = r;
-  m_reply.CDEV_ID = id;
+  m_reply.m_lchardriver_vfs_reply.status = r;
+  m_reply.m_lchardriver_vfs_reply.id = id;
 
   if ((r = asynsend3(endpt, &m_reply, AMF_NOREPLY)) != OK)
 	printf("chardriver_reply_task: send to %d failed: %d\n", endpt, r);
@@ -240,8 +240,8 @@ static void chardriver_reply(message *mess, int ipc_status, int r)
   case CDEV_IOCTL:
   case CDEV_CANCEL: /* For cancel, this is a reply to the original request! */
 	reply_mess.m_type = CDEV_REPLY;
-	reply_mess.CDEV_STATUS = r;
-	reply_mess.CDEV_ID = mess->CDEV_ID;
+	reply_mess.m_lchardriver_vfs_reply.status = r;
+	reply_mess.m_lchardriver_vfs_reply.id = mess->CDEV_ID;
 	break;
 
   case CDEV_SELECT:

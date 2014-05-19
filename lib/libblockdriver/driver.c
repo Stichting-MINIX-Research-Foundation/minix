@@ -369,8 +369,8 @@ static void do_char_open(message *m_ptr, int ipc_status)
   memset(&m_reply, 0, sizeof(m_reply));
 
   m_reply.m_type = CDEV_REPLY;
-  m_reply.CDEV_STATUS = ENXIO;
-  m_reply.CDEV_ID = m_ptr->CDEV_ID;
+  m_reply.m_lchardriver_vfs_reply.status = ENXIO;
+  m_reply.m_lchardriver_vfs_reply.id = m_ptr->CDEV_ID;
 
   send_reply(m_ptr->m_source, &m_reply, ipc_status);
 }

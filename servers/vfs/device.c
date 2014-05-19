@@ -428,7 +428,7 @@ static int cdev_opcl(
   self->w_drv_sendrec = NULL;
 
   /* Process the reply. */
-  r = dev_mess.CDEV_STATUS;
+  r = dev_mess.m_lchardriver_vfs_reply.status;
 
   if (op == CDEV_OPEN && r >= 0) {
 	/* Some devices need special processing upon open. Such a device is
@@ -595,7 +595,7 @@ int cdev_cancel(dev_t dev)
 	fp->fp_grant = GRANT_INVALID;
   }
 
-  r = dev_mess.CDEV_STATUS;
+  r = dev_mess.m_lchardriver_vfs_reply.status;
   return (r == EAGAIN) ? EINTR : r;
 }
 
@@ -726,9 +726,9 @@ static void cdev_generic_reply(message *m_ptr)
   endpoint_t proc_e;
   int slot;
 
-  proc_e = m_ptr->CDEV_ID;
+  proc_e = m_ptr->m_lchardriver_vfs_reply.id;
 
-  if (m_ptr->CDEV_STATUS == SUSPEND) {
+  if (m_ptr->m_lchardriver_vfs_reply.status == SUSPEND) {
 	printf("VFS: got SUSPEND from %d, not reviving\n", m_ptr->m_source);
 	return;
   }
@@ -750,7 +750,7 @@ static void cdev_generic_reply(message *m_ptr)
 	 */
 	printf("VFS: proc %d not blocked on %d\n", proc_e, m_ptr->m_source);
   } else {
-	revive(proc_e, m_ptr->CDEV_STATUS);
+	revive(proc_e, m_ptr->m_lchardriver_vfs_reply.status);
   }
 }
 
