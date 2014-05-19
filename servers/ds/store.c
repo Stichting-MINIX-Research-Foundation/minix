@@ -634,7 +634,7 @@ int do_getsysinfo(const message *m_ptr)
   size_t length;
   int s;
 
-  switch(m_ptr->SI_WHAT) {
+  switch(m_ptr->m_lsys_getsysinfo.what) {
   case SI_DATA_STORE:
 	src_addr = (vir_bytes)ds_store;
 	length = sizeof(struct data_store) * NR_DS_KEYS;
@@ -643,11 +643,11 @@ int do_getsysinfo(const message *m_ptr)
   	return EINVAL;
   }
 
-  if (length != m_ptr->SI_SIZE)
+  if (length != m_ptr->m_lsys_getsysinfo.size)
 	return EINVAL;
 
   if (OK != (s=sys_datacopy(SELF, src_addr,
-		m_ptr->m_source, (vir_bytes)m_ptr->SI_WHERE, length))) {
+		m_ptr->m_source, m_ptr->m_lsys_getsysinfo.where, length))) {
 	printf("DS: copy failed: %d\n", s);
 	return s;
   }

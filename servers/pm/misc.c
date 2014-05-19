@@ -139,7 +139,7 @@ int do_getsysinfo()
 	return EPERM;
   }
 
-  switch(m_in.SI_WHAT) {
+  switch(m_in.m_lsys_getsysinfo.what) {
   case SI_PROC_TAB:			/* copy entire process table */
         src_addr = (vir_bytes) mproc;
         len = sizeof(struct mproc) * NR_PROCS;
@@ -154,10 +154,10 @@ int do_getsysinfo()
   	return(EINVAL);
   }
 
-  if (len != m_in.SI_SIZE)
+  if (len != m_in.m_lsys_getsysinfo.size)
 	return(EINVAL);
 
-  dst_addr = (vir_bytes) m_in.SI_WHERE;
+  dst_addr = m_in.m_lsys_getsysinfo.where;
   return sys_datacopy(SELF, src_addr, who_e, dst_addr, len);
 }
 

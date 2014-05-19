@@ -1227,15 +1227,6 @@
 #define RTCDEV_CMOSREG	0x02	/* Also set the CMOS clock register bits. */
 
 /*===========================================================================*
- *		Field names shared across several call codes		     *
- *===========================================================================*/
-
-/* Field names for the getsysinfo(2) call. */
-#define SI_WHAT			m1_i1	/* int */
-#define SI_WHERE		m1_p1	/* void */
-#define SI_SIZE			m1_i2	/* size_t */
-
-/*===========================================================================*
  *		Internal codes used by several services			     *
  *===========================================================================*/
 

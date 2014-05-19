@@ -56,9 +56,9 @@ int do_getsysinfo(void)
   size_t len, buf_size;
   int what;
 
-  what = job_m_in.SI_WHAT;
-  dst_addr = (vir_bytes) job_m_in.SI_WHERE;
-  buf_size = (size_t) job_m_in.SI_SIZE;
+  what = job_m_in.m_lsys_getsysinfo.what;
+  dst_addr = job_m_in.m_lsys_getsysinfo.where;
+  buf_size = job_m_in.m_lsys_getsysinfo.size;
 
   /* Only su may call do_getsysinfo. This call may leak information (and is not
    * stable enough to be part of the API/ABI). In the future, requests from

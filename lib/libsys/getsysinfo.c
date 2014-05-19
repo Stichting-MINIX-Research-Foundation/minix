@@ -25,8 +25,8 @@ int getsysinfo(
   }
 
   memset(&m, 0, sizeof(m));
-  m.SI_WHAT = what;
-  m.SI_WHERE = where;
-  m.SI_SIZE = size;
+  m.m_lsys_getsysinfo.what = what;
+  m.m_lsys_getsysinfo.where = where;
+  m.m_lsys_getsysinfo.size = size;
   return _taskcall(who, call_nr, &m);
 }
