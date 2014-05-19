@@ -162,8 +162,8 @@ void chardriver_reply_select(endpoint_t endpt, devminor_t minor, int r)
   memset(&m_reply, 0, sizeof(m_reply));
 
   m_reply.m_type = CDEV_SEL2_REPLY;
-  m_reply.CDEV_MINOR = minor;
-  m_reply.CDEV_STATUS = r;
+  m_reply.m_lchardriver_vfs_sel2.minor = minor;
+  m_reply.m_lchardriver_vfs_sel2.status = r;
 
   if ((r = asynsend3(endpt, &m_reply, AMF_NOREPLY)) != OK)
 	printf("chardriver_reply_select: send to %d failed: %d\n", endpt, r);
@@ -246,8 +246,8 @@ static void chardriver_reply(message *mess, int ipc_status, int r)
 
   case CDEV_SELECT:
 	reply_mess.m_type = CDEV_SEL1_REPLY;
-	reply_mess.CDEV_MINOR = mess->CDEV_MINOR;
-	reply_mess.CDEV_STATUS = r;
+	reply_mess.m_lchardriver_vfs_sel1.minor = mess->CDEV_MINOR;
+	reply_mess.m_lchardriver_vfs_sel1.status = r;
 	break;
 
   default:

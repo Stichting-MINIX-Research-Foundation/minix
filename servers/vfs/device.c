@@ -772,10 +772,12 @@ void cdev_reply(void)
 	cdev_generic_reply(&m_in);
 	break;
   case CDEV_SEL1_REPLY:
-	select_reply1(m_in.m_source, m_in.CDEV_MINOR, m_in.CDEV_STATUS);
+	select_reply1(m_in.m_source, m_in.m_lchardriver_vfs_sel1.minor,
+		m_in.m_lchardriver_vfs_sel1.status);
 	break;
   case CDEV_SEL2_REPLY:
-	select_reply2(m_in.m_source, m_in.CDEV_MINOR, m_in.CDEV_STATUS);
+	select_reply2(m_in.m_source, m_in.m_lchardriver_vfs_sel2.minor,
+		m_in.m_lchardriver_vfs_sel2.status);
 	break;
   default:
 	printf("VFS: char driver %u sent unknown reply %x\n", who_e, call_nr);

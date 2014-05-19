@@ -1583,6 +1583,22 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_lchardriver_vfs_reply);
 
 typedef struct {
+	int status;
+	int32_t minor;
+
+	uint8_t padding[48];
+} mess_lchardriver_vfs_sel1;
+_ASSERT_MSG_SIZE(mess_lchardriver_vfs_sel1);
+
+typedef struct {
+	int status;
+	int32_t minor;
+
+	uint8_t padding[48];
+} mess_lchardriver_vfs_sel2;
+_ASSERT_MSG_SIZE(mess_lchardriver_vfs_sel2);
+
+typedef struct {
 	time_t atime;
 	time_t mtime;
 	long ansec;
@@ -1728,6 +1744,8 @@ typedef struct {
 		mess_lc_vm_rusage	m_lc_vm_rusage;
 
 		mess_lchardriver_vfs_reply m_lchardriver_vfs_reply;
+		mess_lchardriver_vfs_sel1 m_lchardriver_vfs_sel1;
+		mess_lchardriver_vfs_sel2 m_lchardriver_vfs_sel2;
 
 		mess_lexec_pm_exec_new	m_lexec_pm_exec_new;
 
