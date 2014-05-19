@@ -246,14 +246,16 @@ message *m;
 	if (!(lan8710a_state.status & LAN8710A_ENABLED) &&
 						!(lan8710a_init_hw())) {
 		reply.m_type = DL_CONF_REPLY;
-		reply.DL_STAT = ENXIO;
+		reply.m_netdrv_net_dl_conf.stat = ENXIO;
 		mess_reply(m, &reply);
 		return;
 	}
 	/* Reply back to INET. */
 	reply.m_type = DL_CONF_REPLY;
-	reply.DL_STAT = OK;
-	*(ether_addr_t *) reply.DL_HWADDR = lan8710a_state.address;
+	reply.m_netdrv_net_dl_conf.stat = OK;
+	memcpy(reply.m_netdrv_net_dl_conf.hw_addr,
+		lan8710a_state.address,
+		sizeof(reply.m_netdrv_net_dl_conf.hw_addr));
 	mess_reply(m, &reply);
 }
 

@@ -434,7 +434,7 @@ static void or_init (message * mp) {
 		or_init_struct (orp);
 		if (orp->or_mode == OR_M_DISABLED) {
 			reply.m_type = DL_CONF_REPLY;
-			reply.DL_STAT = ENXIO;
+			reply.m_netdrv_net_dl_conf.stat = ENXIO;
 			mess_reply (mp, &reply);
 			return;
 		}
@@ -452,19 +452,20 @@ static void or_init (message * mp) {
 	 * multicasting, promiscuity, broadcasting, depending on the users 
          * needs */
 	orp->or_flags &= ~(OR_F_PROMISC | OR_F_MULTI | OR_F_BROAD);
-	if (mp->DL_MODE & DL_PROMISC_REQ)
+	if (mp->m_net_netdrv_dl_conf.mode & DL_PROMISC_REQ)
 		orp->or_flags |= OR_F_PROMISC;
-	if (mp->DL_MODE & DL_MULTI_REQ)
+	if (mp->m_net_netdrv_dl_conf.mode & DL_MULTI_REQ)
 		orp->or_flags |= OR_F_MULTI;
-	if (mp->DL_MODE & DL_BROAD_REQ)
+	if (mp->m_net_netdrv_dl_conf.mode & DL_BROAD_REQ)
 		orp->or_flags |= OR_F_BROAD;
 
 	or_rec_mode (orp);
 
 	/* reply the caller that the configuration succeeded */
 	reply.m_type = DL_CONF_REPLY;
-	reply.DL_STAT = OK;
-	*(ether_addr_t *) reply.DL_HWADDR = orp->or_address;
+	reply.m_netdrv_net_dl_conf.stat = OK;
+	memcpy(reply.m_netdrv_net_dl_conf.hw_addr, orp->or_address.ea_addr,
+		sizeof(reply.m_netdrv_net_dl_conf.hw_addr));
 	mess_reply (mp, &reply);
 }
 

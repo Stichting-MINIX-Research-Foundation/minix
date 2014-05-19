@@ -814,6 +814,21 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_lsys_vfs_mapdriver);
 
 typedef struct {
+	int mode;
+
+	uint8_t padding[52];
+} mess_net_netdrv_dl_conf;
+_ASSERT_MSG_SIZE(mess_net_netdrv_dl_conf);
+
+typedef struct {
+	int stat;
+	uint8_t hw_addr[6];
+
+	uint8_t padding[46];
+} mess_netdrv_net_dl_conf;
+_ASSERT_MSG_SIZE(mess_netdrv_net_dl_conf);
+
+typedef struct {
 	uid_t egid;
 
 	uint8_t padding[52];
@@ -1392,6 +1407,10 @@ typedef struct {
 		mess_lsys_vfs_checkperms m_lsys_vfs_checkperms;
 		mess_lsys_vfs_copyfd	m_lsys_vfs_copyfd;
 		mess_lsys_vfs_mapdriver	m_lsys_vfs_mapdriver;
+
+		mess_net_netdrv_dl_conf m_net_netdrv_dl_conf;
+
+		mess_netdrv_net_dl_conf m_netdrv_net_dl_conf;
 
 		mess_pci_lsys_busc_get_bar m_pci_lsys_busc_get_bar;
 

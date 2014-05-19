@@ -232,7 +232,9 @@ void eth_rec(message *m)
 		loc_port->etp_osdep.etp_state= OEPS_IDLE;
 		loc_port->etp_flags |= EPF_ENABLED;
 
-		loc_port->etp_ethaddr= *(ether_addr_t *)m->DL_HWADDR;
+		memcpy(loc_port->etp_ethaddr.ea_addr,
+			m->m_netdrv_net_dl_conf.hw_addr,
+			sizeof(loc_port->etp_ethaddr.ea_addr));
 		if (!(loc_port->etp_flags & EPF_GOT_ADDR))
 		{
 			loc_port->etp_flags |= EPF_GOT_ADDR;
@@ -475,7 +477,7 @@ u32_t flags;
 		dl_flags |= DL_PROMISC_REQ;
 
 	mess.m_type= DL_CONF;
-	mess.DL_MODE= dl_flags;
+	mess.m_net_netdrv_dl_conf.mode = dl_flags;
 
 	assert(eth_port->etp_osdep.etp_state == OEPS_IDLE);
 	r= asynsend(eth_port->etp_osdep.etp_task, &mess);
@@ -795,7 +797,7 @@ static void eth_restart(eth_port_t *eth_port, endpoint_t endpoint)
 	if (flags & NWEO_EN_PROMISC)
 		dl_flags |= DL_PROMISC_REQ;
 	mess.m_type= DL_CONF;
-	mess.DL_MODE= dl_flags;
+	mess.m_net_netdrv_dl_conf.mode= dl_flags;
 
 	compare(eth_port->etp_osdep.etp_state, ==, OEPS_IDLE);
 	r= asynsend(eth_port->etp_osdep.etp_task, &mess);

@@ -1026,7 +1026,7 @@ static void atl2_conf(message *m)
 	ether_addr_t addr;
 	int r;
 
-	state.mode = m->DL_MODE;
+	state.mode = m->m_net_netdrv_dl_conf.mode;
 
 	atl2_set_mode();
 
@@ -1037,10 +1037,11 @@ static void atl2_conf(message *m)
 	addr.ea_addr[4] = (state.hwaddr[0] >> 8) & 0xff;
 	addr.ea_addr[5] = state.hwaddr[0] & 0xff;
 
-	memcpy(m->DL_HWADDR, &addr, sizeof(addr));
+	memcpy(m->m_netdrv_net_dl_conf.hw_addr, &addr,
+		sizeof(m->m_netdrv_net_dl_conf.hw_addr));
 
 	m->m_type = DL_CONF_REPLY;
-	m->DL_STAT = OK;
+	m->m_netdrv_net_dl_conf.stat = OK;
 
 	if ((r = ipc_send(m->m_source, m)) != OK)
 		printf("ATL2: unable to send reply (%d)\n", r);

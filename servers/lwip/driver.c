@@ -156,7 +156,8 @@ static void driver_setup_read(struct nic * nic)
 
 static void nic_up(struct nic * nic, message * m)
 {
-	memcpy(nic->netif.hwaddr, m->DL_HWADDR, NETIF_MAX_HWADDR_LEN);
+	memcpy(nic->netif.hwaddr, m->m_netdrv_net_dl_conf.hw_addr,
+		sizeof(nic->netif.hwaddr));
 
 	debug_print("device %s is up MAC : %02x:%02x:%02x:%02x:%02x:%02x",
 			nic->name,

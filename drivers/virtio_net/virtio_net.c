@@ -531,12 +531,11 @@ virtio_net_conf(message *m)
 	}
 
 	/* Prepare reply */
-	for (i = 0; i < sizeof(virtio_net_mac); i++)
-		((u8_t*)reply.DL_HWADDR)[i] = virtio_net_mac[i];
+	memcpy(reply.m_netdrv_net_dl_conf.hw_addr, virtio_net_mac,
+		sizeof(reply.m_netdrv_net_dl_conf.hw_addr));
 
 	reply.m_type = DL_CONF_REPLY;
-	reply.DL_STAT = OK;
-	reply.DL_COUNT = 0;
+	reply.m_netdrv_net_dl_conf.stat = OK;
 
 	if ((r = ipc_send(m->m_source, &reply)) != OK)
 		panic("%s: ipc_send to %d failed (%d)", name, m->m_source, r);

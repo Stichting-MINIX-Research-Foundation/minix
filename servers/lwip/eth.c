@@ -103,13 +103,13 @@ static void low_level_init(struct netif *netif)
 	/* device capabilities */
 	netif->flags = NETIF_FLAG_ETHARP;
 
-        m.DL_MODE = DL_NOMODE;
+        m.m_net_netdrv_dl_conf.mode = DL_NOMODE;
         if (nic->flags & NWEO_EN_BROAD)
-                m.DL_MODE |= DL_BROAD_REQ;
+                m.m_net_netdrv_dl_conf.mode |= DL_BROAD_REQ;
         if (nic->flags & NWEO_EN_MULTI)
-                m.DL_MODE |= DL_MULTI_REQ;
+                m.m_net_netdrv_dl_conf.mode |= DL_MULTI_REQ;
         if (nic->flags & NWEO_EN_PROMISC)
-                m.DL_MODE |= DL_PROMISC_REQ;
+                m.m_net_netdrv_dl_conf.mode |= DL_PROMISC_REQ;
 
         m.m_type = DL_CONF;
 

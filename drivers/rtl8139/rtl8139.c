@@ -350,7 +350,7 @@ message *mp;
 		{
 			/* Probe failed, or the device is configured off. */
 			reply_mess.m_type= DL_CONF_REPLY;
-			reply_mess.DL_STAT= ENXIO;
+			reply_mess.m_netdrv_net_dl_conf.stat= ENXIO;
 			mess_reply(mp, &reply_mess);
 			return;
 		}
@@ -366,18 +366,20 @@ message *mp;
 
 	rep->re_flags &= ~(REF_PROMISC | REF_MULTI | REF_BROAD);
 
-	if (mp->DL_MODE & DL_PROMISC_REQ)
+	if (mp->m_net_netdrv_dl_conf.mode & DL_PROMISC_REQ)
 		rep->re_flags |= REF_PROMISC;
-	if (mp->DL_MODE & DL_MULTI_REQ)
+	if (mp->m_net_netdrv_dl_conf.mode & DL_MULTI_REQ)
 		rep->re_flags |= REF_MULTI;
-	if (mp->DL_MODE & DL_BROAD_REQ)
+	if (mp->m_net_netdrv_dl_conf.mode & DL_BROAD_REQ)
 		rep->re_flags |= REF_BROAD;
 
 	rl_rec_mode(rep);
 
 	reply_mess.m_type = DL_CONF_REPLY;
-	reply_mess.DL_STAT = OK;
-	*(ether_addr_t *) reply_mess.DL_HWADDR = rep->re_address;
+	reply_mess.m_netdrv_net_dl_conf.stat = OK;
+	memcpy(reply_mess.m_netdrv_net_dl_conf.hw_addr,
+		rep->re_address.ea_addr,
+		sizeof(reply_mess.m_netdrv_net_dl_conf.hw_addr));
 
 	mess_reply(mp, &reply_mess);
 }
