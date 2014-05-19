@@ -779,8 +779,8 @@ int do_svrctl(void)
   unsigned int svrctl;
   vir_bytes ptr;
 
-  svrctl = job_m_in.SVRCTL_REQ;
-  ptr = (vir_bytes) job_m_in.SVRCTL_ARG;
+  svrctl = job_m_in.m_lsys_svrctl.request;
+  ptr = job_m_in.m_lsys_svrctl.arg;
   if (((svrctl >> 8) & 0xFF) != 'M') return(EINVAL);
 
   switch (svrctl) {

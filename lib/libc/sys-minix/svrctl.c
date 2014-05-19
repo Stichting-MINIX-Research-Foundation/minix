@@ -11,8 +11,8 @@ int svrctl(int request, void *argp)
 	message m;
 
 	memset(&m, 0, sizeof(m));
-	m.SVRCTL_REQ = request;
-	m.SVRCTL_ARG = argp;
+	m.m_lsys_svrctl.request = request;
+	m.m_lsys_svrctl.arg = argp;
 
 	switch ((request >> 8) & 0xFF) {
 	case 'M':

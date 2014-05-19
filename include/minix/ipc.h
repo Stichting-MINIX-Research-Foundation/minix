@@ -770,6 +770,14 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_lsys_sched_scheduling_stop);
 
 typedef struct {
+	int request;
+	vir_bytes arg;
+
+	uint8_t padding[48];
+} mess_lsys_svrctl;
+_ASSERT_MSG_SIZE(mess_lsys_svrctl);
+
+typedef struct {
 	endpoint_t endpt;
 	cp_grant_id_t grant;
 	size_t count;
@@ -1367,6 +1375,8 @@ typedef struct {
 
 		mess_lsys_sched_scheduling_start m_lsys_sched_scheduling_start;
 		mess_lsys_sched_scheduling_stop m_lsys_sched_scheduling_stop;
+
+		mess_lsys_svrctl	m_lsys_svrctl;
 
 		mess_lsys_vfs_checkperms m_lsys_vfs_checkperms;
 		mess_lsys_vfs_copyfd	m_lsys_vfs_copyfd;

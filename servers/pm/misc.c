@@ -305,8 +305,8 @@ int do_svrctl()
   } local_param_overrides[MAX_LOCAL_PARAMS];
   static int local_params = 0;
 
-  req = m_in.SVRCTL_REQ;
-  ptr = (vir_bytes) m_in.SVRCTL_ARG;
+  req = m_in.m_lsys_svrctl.request;
+  ptr = m_in.m_lsys_svrctl.arg;
 
   /* Is the request indeed for the PM? */
   if (((req >> 8) & 0xFF) != 'M') return(EINVAL);

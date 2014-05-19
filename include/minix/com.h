@@ -1235,10 +1235,6 @@
 #define SI_WHERE		m1_p1	/* void */
 #define SI_SIZE			m1_i2	/* size_t */
 
-/* Field names for the svrctl(2) call. */
-#define SVRCTL_REQ		m2_i1	/* int */
-#define SVRCTL_ARG		m2_p1	/* void * */
-
 /*===========================================================================*
  *		Internal codes used by several services			     *
  *===========================================================================*/
