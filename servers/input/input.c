@@ -506,10 +506,10 @@ input_connect(endpoint_t owner, char *labelp, int typemask)
 	memset(&m, 0, sizeof(m));
 
 	m.m_type = INPUT_CONF;
-	m.INPUT_KBD_ID = kbd_id;
-	m.INPUT_MOUSE_ID = mouse_id;
-	m.INPUT_RSVD1_ID = INVALID_INPUT_ID;	/* reserved (joystick?) */
-	m.INPUT_RSVD2_ID = INVALID_INPUT_ID;	/* reserved for future use */
+	m.m_input_linputdriver_input_conf.kbd_id = kbd_id;
+	m.m_input_linputdriver_input_conf.mouse_id = mouse_id;
+	m.m_input_linputdriver_input_conf.rsvd1_id = INVALID_INPUT_ID;	/* reserved (joystick?) */
+	m.m_input_linputdriver_input_conf.rsvd2_id = INVALID_INPUT_ID;	/* reserved for future use */
 
 	if ((r = asynsend3(owner, &m, AMF_NOREPLY)) != OK)
 		printf("INPUT: asynsend to %u failed (%d)\n", owner, r);

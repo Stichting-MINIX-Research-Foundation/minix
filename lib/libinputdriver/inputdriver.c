@@ -102,8 +102,8 @@ do_conf(message *m_ptr)
 
 	/* Save the new state. */
 	input_endpt = m_ptr->m_source;
-	kbd_id = m_ptr->INPUT_KBD_ID;
-	mouse_id = m_ptr->INPUT_MOUSE_ID;
+	kbd_id = m_ptr->m_input_linputdriver_input_conf.kbd_id;
+	mouse_id = m_ptr->m_input_linputdriver_input_conf.mouse_id;
 
 	/* If the input server is "full" there's nothing for us to do. */
 	if (kbd_id == INVALID_INPUT_ID && mouse_id == INVALID_INPUT_ID)

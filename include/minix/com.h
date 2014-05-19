@@ -1082,10 +1082,6 @@
 #define INPUT_RS_BASE 0x1580	/* from input driver to input server */
 
 #define INPUT_CONF		(INPUT_RQ_BASE + 0)	/* configure driver */
-#  define INPUT_KBD_ID		m7_i1	/* keyboard device ID */
-#  define INPUT_MOUSE_ID	m7_i2	/* mouse device ID */
-#  define INPUT_RSVD1_ID	m7_i3	/* ID for as yet unallocated type */
-#  define INPUT_RSVD2_ID	m7_i4	/* ID for as yet unallocated type */
 
 #define INPUT_SETLEDS		(INPUT_RQ_BASE + 1)	/* set keyboard LEDs */
 #  define INPUT_LED_MASK	m7_i1	/* status mask of LEDs */
