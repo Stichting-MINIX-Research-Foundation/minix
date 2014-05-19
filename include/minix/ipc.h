@@ -641,6 +641,17 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_input_linputdriver_input_conf);
 
 typedef struct {
+	int id;
+	int page;
+	int code;
+	int value;
+	int flags;
+
+	uint8_t padding[36];
+} mess_linputdriver_input_event;
+_ASSERT_MSG_SIZE(mess_linputdriver_input_event);
+
+typedef struct {
 	uint32_t flags;
 	endpoint_t endpoint;
 	int priority;
@@ -1308,6 +1319,8 @@ typedef struct {
 
 		mess_li2cdriver_i2c_busc_i2c_exec m_li2cdriver_i2c_busc_i2c_exec;
 		mess_li2cdriver_i2c_busc_i2c_reserve m_li2cdriver_i2c_busc_i2c_reserve;
+
+		mess_linputdriver_input_event m_linputdriver_input_event;
 
 		mess_lsys_krn_schedctl	m_lsys_krn_schedctl;
 		mess_lsys_krn_schedule	m_lsys_krn_schedule;

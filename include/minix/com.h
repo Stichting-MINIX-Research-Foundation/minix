@@ -1071,7 +1071,9 @@
 /* This message uses no message fields. */
 
 #define TTY_INPUT_EVENT		(TTY_RQ_BASE + 3) /* relayed input event */
-/* This message shares its message fields with INPUT_EVENT. */
+#  define INPUT_PAGE		m7_i2	/* usage page */
+#  define INPUT_CODE		m7_i3	/* usage code */
+#  define INPUT_VALUE		m7_i4	/* event value */
 
 /*===========================================================================*
  *			Messages for input server and drivers		     *
@@ -1087,11 +1089,6 @@
 #  define INPUT_LED_MASK	m7_i1	/* status mask of LEDs */
 
 #define INPUT_EVENT		(INPUT_RS_BASE + 0)	/* send input event */
-#  define INPUT_ID		m7_i1	/* device ID */
-#  define INPUT_PAGE		m7_i2	/* usage page */
-#  define INPUT_CODE		m7_i3	/* usage code */
-#  define INPUT_VALUE		m7_i4	/* event value */
-#  define INPUT_FLAGS		m7_i5	/* flags associated with value */
 
 /*===========================================================================*
  *			VFS-FS TRANSACTION IDs				     *

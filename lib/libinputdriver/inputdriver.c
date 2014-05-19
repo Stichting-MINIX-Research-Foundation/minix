@@ -56,11 +56,11 @@ inputdriver_send_event(int mouse, unsigned short page, unsigned short code,
 	memset(&m, 0, sizeof(m));
 
 	m.m_type = INPUT_EVENT;
-	m.INPUT_ID = id;
-	m.INPUT_PAGE = page;
-	m.INPUT_CODE = code;
-	m.INPUT_VALUE = value;
-	m.INPUT_FLAGS = flags;
+	m.m_linputdriver_input_event.id = id;
+	m.m_linputdriver_input_event.page = page;
+	m.m_linputdriver_input_event.code = code;
+	m.m_linputdriver_input_event.value = value;
+	m.m_linputdriver_input_event.flags = flags;
 
 	/*
 	 * Use a blocking send call, for two reasons.  First, this avoids the

@@ -345,11 +345,11 @@ input_process(struct input_dev *input_dev, const message *m)
 #endif
 	}
 	next = (input_dev->tail + input_dev->count) % EVENTBUF_SIZE;
-	input_dev->eventbuf[next].page = m->INPUT_PAGE;
-	input_dev->eventbuf[next].code = m->INPUT_CODE;
-	input_dev->eventbuf[next].value = m->INPUT_VALUE;
-	input_dev->eventbuf[next].flags = m->INPUT_FLAGS;
-	input_dev->eventbuf[next].devid = m->INPUT_ID;
+	input_dev->eventbuf[next].page = m->m_linputdriver_input_event.page;
+	input_dev->eventbuf[next].code = m->m_linputdriver_input_event.code;
+	input_dev->eventbuf[next].value = m->m_linputdriver_input_event.value;
+	input_dev->eventbuf[next].flags = m->m_linputdriver_input_event.flags;
+	input_dev->eventbuf[next].devid = m->m_linputdriver_input_event.id;
 	input_dev->eventbuf[next].rsvd[0] = 0;
 	input_dev->eventbuf[next].rsvd[1] = 0;
 	input_dev->count++;
@@ -380,7 +380,7 @@ input_event(message *m)
 	int r, id;
 
 	/* Unlike minor numbers, device IDs are in fact array indices. */
-	id = m->INPUT_ID;
+	id = m->m_linputdriver_input_event.id;
 	if (id < 0 || id >= INPUT_DEV_MAX)
 		return;
 
