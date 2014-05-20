@@ -178,10 +178,6 @@
 #define DL_STAT_REPLY	(DL_RS_BASE + 1)
 #define DL_TASK_REPLY	(DL_RS_BASE + 2)
 
-/* Field names for data link layer messages. */
-#define DL_COUNT	m2_i3
-#define DL_GRANT	m2_l2
-
 /* Bits in 'flags' field of DL replies. */
 #  define DL_NOFLAGS		0x00
 #  define DL_PACK_SEND		0x01

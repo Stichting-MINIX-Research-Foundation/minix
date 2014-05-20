@@ -607,15 +607,16 @@ int from_int;
 	e->status |= E1000_WRITING;
 
 	/* Must be a sane vector count. */
-	assert(e->tx_message.DL_COUNT > 0);
-	assert(e->tx_message.DL_COUNT < E1000_IOVEC_NR);
+	assert(e->tx_message.m_net_netdrv_dl_writev_s.count > 0);
+	assert(e->tx_message.m_net_netdrv_dl_writev_s.count < E1000_IOVEC_NR);
 
 	/*
 	 * Copy the I/O vector table.
 	 */
 	if ((r = sys_safecopyfrom(e->tx_message.m_source,
-				  e->tx_message.DL_GRANT, 0,
-				  (vir_bytes) iovec, e->tx_message.DL_COUNT *
+				  e->tx_message.m_net_netdrv_dl_writev_s.grant, 0,
+				  (vir_bytes) iovec,
+				  e->tx_message.m_net_netdrv_dl_writev_s.count *
 				  sizeof(iovec_s_t))) != OK)
 	{
 	    panic("sys_safecopyfrom() failed: %d", r);
@@ -629,7 +630,7 @@ int from_int;
 	                 e->name, head, tail));
 
 	/* Loop vector elements. */
-	for (i = 0; i < e->tx_message.DL_COUNT; i++)
+	for (i = 0; i < e->tx_message.m_net_netdrv_dl_writev_s.count; i++)
 	{
 	    size = iovec[i].iov_size < (E1000_IOBUF_SIZE - bytes) ?
 		   iovec[i].iov_size : (E1000_IOBUF_SIZE - bytes);
@@ -651,7 +652,7 @@ int from_int;
 	    desc->length  = size;
 
 	    /* Marks End-of-Packet. */
-	    if (i == e->tx_message.DL_COUNT - 1)
+	    if (i == e->tx_message.m_net_netdrv_dl_writev_s.count - 1)
 	    {
 		desc->command = E1000_TX_CMD_EOP |
 			        E1000_TX_CMD_FCS |
@@ -696,8 +697,8 @@ int from_int;
 	e->status    |= E1000_READING;
 	e->rx_size    = 0;
 	
-	assert(e->rx_message.DL_COUNT > 0);
-	assert(e->rx_message.DL_COUNT < E1000_IOVEC_NR);
+	assert(e->rx_message.m_net_netdrv_dl_readv_s.count > 0);
+	assert(e->rx_message.m_net_netdrv_dl_readv_s.count < E1000_IOVEC_NR);
     }
     if (e->status & E1000_READING)
     {
@@ -705,8 +706,9 @@ int from_int;
 	 * Copy the I/O vector table first.
 	 */
 	if ((r = sys_safecopyfrom(e->rx_message.m_source,
-				  e->rx_message.DL_GRANT, 0,
-				  (vir_bytes) iovec, e->rx_message.DL_COUNT *
+				  e->rx_message.m_net_netdrv_dl_readv_s.grant, 0,
+				  (vir_bytes) iovec,
+				  e->rx_message.m_net_netdrv_dl_readv_s.count *
 				  sizeof(iovec_s_t))) != OK)
 	{
 	    panic("sys_safecopyfrom() failed: %d", r);
@@ -731,7 +733,8 @@ int from_int;
 	/*
 	 * Copy to vector elements.
 	 */    
-	for (i = 0; i < e->rx_message.DL_COUNT && bytes < desc->length; i++)
+	for (i = 0; i < e->rx_message.m_net_netdrv_dl_readv_s.count &&
+		bytes < desc->length; i++)
 	{
 	    size = iovec[i].iov_size < (desc->length - bytes) ?
 		   iovec[i].iov_size : (desc->length - bytes);

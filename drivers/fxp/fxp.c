@@ -938,7 +938,7 @@ static void fxp_writev_s(const message *mp, int from_int)
 
 	fp= fxp_state;
 
-	count = mp->DL_COUNT;
+	count = mp->m_net_netdrv_dl_writev_s.count;
 	fp->fxp_client= mp->m_source;
 
 	assert(fp->fxp_mode == FM_ENABLED);
@@ -982,7 +982,7 @@ static void fxp_writev_s(const message *mp, int from_int)
 	assert(!(fp->fxp_flags & FF_PACK_SENT));
 
 	iov_endpt= mp->m_source;
-	iov_grant= mp->DL_GRANT;
+	iov_grant= mp->m_net_netdrv_dl_writev_s.grant;
 
 	size= 0;
 	o= 0;
@@ -1081,7 +1081,7 @@ int from_int;
 
 	fp= fxp_state;
 
-	count = mp->DL_COUNT;
+	count = mp->m_net_netdrv_dl_readv_s.count;
 	fp->fxp_client= mp->m_source;
 
 	assert(fp->fxp_mode == FM_ENABLED);
@@ -1117,7 +1117,7 @@ int from_int;
 	packlen= rfd_res & RFDSZ_SIZE;
 
 	iov_endpt = mp->m_source;
-	iov_grant = mp->DL_GRANT;
+	iov_grant = mp->m_net_netdrv_dl_readv_s.grant;
 
 	size= 0;
 	o= 0;

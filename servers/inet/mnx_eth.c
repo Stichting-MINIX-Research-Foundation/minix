@@ -555,8 +555,8 @@ eth_port_t *eth_port;
 			errno));
 	}
 	m.m_type= DL_WRITEV_S;
-	m.DL_COUNT= i;
-	m.DL_GRANT= eth_port->etp_osdep.etp_wr_vec_grant;
+	m.m_net_netdrv_dl_writev_s.count= i;
+	m.m_net_netdrv_dl_writev_s.grant= eth_port->etp_osdep.etp_wr_vec_grant;
 
 	assert(eth_port->etp_osdep.etp_state == OEPS_IDLE);
 	r= asynsend(eth_port->etp_osdep.etp_task, &m);
@@ -721,8 +721,8 @@ eth_port_t *eth_port;
 	}
 
 	mess.m_type= DL_READV_S;
-	mess.DL_COUNT= i;
-	mess.DL_GRANT= eth_port->etp_osdep.etp_rd_vec_grant;
+	mess.m_net_netdrv_dl_readv_s.count= i;
+	mess.m_net_netdrv_dl_readv_s.grant= eth_port->etp_osdep.etp_rd_vec_grant;
 
 	assert(eth_port->etp_osdep.etp_state == OEPS_IDLE);
 

@@ -254,7 +254,7 @@ message *m;
 	reply.m_type = DL_CONF_REPLY;
 	reply.m_netdrv_net_dl_conf.stat = OK;
 	memcpy(reply.m_netdrv_net_dl_conf.hw_addr,
-		lan8710a_state.address,
+		lan8710a_state.address.ea_addr,
 		sizeof(reply.m_netdrv_net_dl_conf.hw_addr));
 	mess_reply(m, &reply);
 }
@@ -849,15 +849,17 @@ int from_int;
 		e->status |= LAN8710A_WRITING;
 
 		/* verify vector count */
-		assert(mp->DL_COUNT > 0);
-		assert(mp->DL_COUNT < LAN8710A_IOVEC_NR);
+		assert(mp->m_net_netdrv_dl_writev_s.count > 0);
+		assert(mp->m_net_netdrv_dl_writev_s.count < LAN8710A_IOVEC_NR);
 
 		/*
 		 * Copy the I/O vector table.
 		 */
-		if ((r = sys_safecopyfrom(mp->m_source, mp->DL_GRANT, 0,
+		if ((r = sys_safecopyfrom(mp->m_source,
+				mp->m_net_netdrv_dl_writev_s.grant, 0,
 				(vir_bytes) iovec,
-				mp->DL_COUNT * sizeof(iovec_s_t))) != OK) {
+				mp->m_net_netdrv_dl_writev_s.count *
+				sizeof(iovec_s_t))) != OK) {
 			panic("sys_safecopyfrom() failed: %d", r);
 		}
 		/* setup descriptors */
@@ -874,7 +876,7 @@ int from_int;
 		/* virtual address of buffer */
 		p_buf = e->p_tx_buf + e->tx_desc_idx * LAN8710A_IOBUF_SIZE;
 		buf_data_len = 0;
-		for (i = 0; i < mp->DL_COUNT; i++) {
+		for (i = 0; i < mp->m_net_netdrv_dl_writev_s.count; i++) {
 			if ((buf_data_len + iovec[i].iov_size)
 			     > LAN8710A_IOBUF_SIZE) {
 				panic("packet too long");
@@ -943,16 +945,17 @@ int from_int;
 		e->status |= LAN8710A_READING;
 		e->rx_size = 0;
 
-		assert(e->rx_message.DL_COUNT > 0);
-		assert(e->rx_message.DL_COUNT < LAN8710A_IOVEC_NR);
+		assert(e->rx_message.m_net_netdrv_dl_readv_s.count > 0);
+		assert(e->rx_message.m_net_netdrv_dl_readv_s.count < LAN8710A_IOVEC_NR);
 	}
 	if (e->status & LAN8710A_READING) {
 		/*
 		 * Copy the I/O vector table first.
 		 */
 		if ((r = sys_safecopyfrom(e->rx_message.m_source,
-				e->rx_message.DL_GRANT, 0, (vir_bytes) iovec,
-				e->rx_message.DL_COUNT *
+				e->rx_message.m_net_netdrv_dl_readv_s.grant, 0,
+				(vir_bytes) iovec,
+				e->rx_message.m_net_netdrv_dl_readv_s.count *
 				    sizeof(iovec_s_t))) != OK) {
 			panic("sys_safecopyfrom() failed: %d", r);
 		}
@@ -987,7 +990,7 @@ int from_int;
 		pkt_data_len = 0;
 		buf_bytes = 0;
 		p_buf = e->p_rx_buf + e->rx_desc_idx * LAN8710A_IOBUF_SIZE;
-		for (i = 0; i < e->rx_message.DL_COUNT; i++) {
+		for (i = 0; i < e->rx_message.m_net_netdrv_dl_readv_s.count; i++) {
 			buf_len = p_rx_desc->buffer_length_off & 0xFFFF;
 			if (buf_bytes == buf_len) {
 				/* Whole buffer move to the next descriptor */

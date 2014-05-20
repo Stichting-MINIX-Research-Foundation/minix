@@ -1006,9 +1006,9 @@ static void do_vread_s(const message *mp)
    ec= &ec_state;
 
    ec->client= mp->m_source;
-   count = mp->DL_COUNT;
+   count = mp->m_net_netdrv_dl_readv_s.count;
 
-   r = sys_safecopyfrom(mp->m_source, mp->DL_GRANT, 0,
+   r = sys_safecopyfrom(mp->m_source, mp->m_net_netdrv_dl_readv_s.grant, 0,
                         (vir_bytes)ec->read_iovec.iod_iovec,
                         (count > IOVEC_NR ? IOVEC_NR : count) *
                         sizeof(iovec_s_t));
@@ -1016,7 +1016,7 @@ static void do_vread_s(const message *mp)
 	panic("do_vread_s: sys_safecopyfrom failed: %d", r);
    ec->read_iovec.iod_iovec_s    = count;
    ec->read_iovec.iod_proc_nr    = mp->m_source;
-   ec->read_iovec.iod_grant = (cp_grant_id_t) mp->DL_GRANT;
+   ec->read_iovec.iod_grant = mp->m_net_netdrv_dl_readv_s.grant;
    ec->read_iovec.iod_iovec_offset = 0;
 
    ec->tmp_iovec = ec->read_iovec;
@@ -1114,7 +1114,7 @@ int from_int;
    ec = &ec_state;
 
    ec->client= mp->m_source;
-   count = mp->DL_COUNT;
+   count = mp->m_net_netdrv_dl_writev_s.count;
 
    if (isstored[tx_slot_nr]==1)
    {
@@ -1126,7 +1126,7 @@ int from_int;
    }
 
    /* convert the message to write_iovec */
-   r = sys_safecopyfrom(mp->m_source, mp->DL_GRANT, 0,
+   r = sys_safecopyfrom(mp->m_source, mp->m_net_netdrv_dl_writev_s.grant, 0,
                         (vir_bytes)ec->write_iovec.iod_iovec,
                         (count > IOVEC_NR ? IOVEC_NR : count) *
                         sizeof(iovec_s_t));
@@ -1134,7 +1134,7 @@ int from_int;
 	panic("do_vwrite_s: sys_safecopyfrom failed: %d", r);
    ec->write_iovec.iod_iovec_s    = count;
    ec->write_iovec.iod_proc_nr    = mp->m_source;
-   ec->write_iovec.iod_grant      = mp->DL_GRANT;
+   ec->write_iovec.iod_grant      = mp->m_net_netdrv_dl_writev_s.grant;
    ec->write_iovec.iod_iovec_offset = 0;
 
    ec->tmp_iovec = ec->write_iovec;

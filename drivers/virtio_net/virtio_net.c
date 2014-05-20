@@ -90,7 +90,8 @@ static void virtio_net_refill_rx_queue(void);
 static void virtio_net_check_queues(void);
 static void virtio_net_check_pending(void);
 
-static void virtio_net_fetch_iovec(iovec_s_t *iov, message *m);
+static void virtio_net_fetch_iovec(iovec_s_t *iov, message *m,
+	cp_grant_id_t grant, size_t count);
 static int virtio_net_cpy_to_user(message *m);
 static int virtio_net_cpy_from_user(message *m);
 
@@ -318,11 +319,11 @@ virtio_net_check_pending(void)
 }
 
 static void
-virtio_net_fetch_iovec(iovec_s_t *iov, message *m)
+virtio_net_fetch_iovec(iovec_s_t *iov, message *m, cp_grant_id_t grant, size_t count)
 {
 	int r;
-	r = sys_safecopyfrom(m->m_source, m->DL_GRANT, 0, (vir_bytes)iov,
-			     m->DL_COUNT * sizeof(iov[0]));
+	r = sys_safecopyfrom(m->m_source, grant, 0, (vir_bytes)iov,
+		count * sizeof(iov[0]));
 
 	if (r != OK)
 		panic("%s: iovec fail for %d (%d)", name, m->m_source, r);
@@ -344,9 +345,10 @@ virtio_net_cpy_to_user(message *m)
 	p = STAILQ_FIRST(&recv_list);
 	STAILQ_REMOVE_HEAD(&recv_list, next);
 
-	virtio_net_fetch_iovec(iovec, m);
+	virtio_net_fetch_iovec(iovec, m, m->m_net_netdrv_dl_readv_s.grant,
+		 m->m_net_netdrv_dl_readv_s.count);
 
-	for (i = 0; i < m->DL_COUNT && left > 0; i++) {
+	for (i = 0; i < m->m_net_netdrv_dl_readv_s.count && left > 0; i++) {
 		ivsz = iovec[i].iov_size;
 		size = left > ivsz ? ivsz : left;
 		r = sys_safecopyto(m->m_source, iovec[i].iov_grant, 0,
@@ -429,11 +431,12 @@ virtio_net_cpy_from_user(message *m)
 	p = STAILQ_FIRST(&free_list);
 	STAILQ_REMOVE_HEAD(&free_list, next);
 
-	virtio_net_fetch_iovec(iovec, m);
+	virtio_net_fetch_iovec(iovec, m, m->m_net_netdrv_dl_writev_s.grant,
+		 m->m_net_netdrv_dl_writev_s.count);
 
-	r = sys_easy_vsafecopy_from(m->m_source, iovec, m->DL_COUNT,
-				    (vir_bytes)p->vdata, MAX_PACK_SIZE,
-				    &bytes);
+	r = sys_easy_vsafecopy_from(m->m_source, iovec,
+		m->m_net_netdrv_dl_writev_s.count, (vir_bytes)p->vdata,
+		MAX_PACK_SIZE, &bytes);
 
 	if (r != OK)
 		panic("%s: copy from %d failed", name, m->m_source);

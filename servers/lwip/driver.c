@@ -147,8 +147,8 @@ static void driver_setup_read(struct nic * nic)
 	nic->rx_iovec[0].iov_size = nic->rx_pbuf->len;
 
 	m.m_type = DL_READV_S;
-	m.DL_COUNT = 1;
-	m.DL_GRANT = nic->rx_iogrant;
+	m.m_net_netdrv_dl_readv_s.count = 1;
+	m.m_net_netdrv_dl_readv_s.grant = nic->rx_iogrant;
 
 	if (asynsend(nic->drv_ep, &m) != OK)
 		panic("asynsend to the driver failed!");
@@ -209,8 +209,8 @@ int driver_tx(struct nic * nic)
 		panic("Failed to set grant");
 
 	m.m_type = DL_WRITEV_S;
-	m.DL_COUNT = 1;
-	m.DL_GRANT = nic->tx_iogrant;
+	m.m_net_netdrv_dl_writev_s.count = 1;
+	m.m_net_netdrv_dl_writev_s.grant = nic->tx_iogrant;
 
 	if (asynsend(nic->drv_ep, &m) != OK)
 		panic("asynsend to the driver failed!");

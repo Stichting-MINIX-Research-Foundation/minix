@@ -836,6 +836,22 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_net_netdrv_dl_getstat_s);
 
 typedef struct {
+	cp_grant_id_t grant;
+	int count;
+
+	uint8_t padding[48];
+} mess_net_netdrv_dl_readv_s;
+_ASSERT_MSG_SIZE(mess_net_netdrv_dl_readv_s);
+
+typedef struct {
+	cp_grant_id_t grant;
+	int count;
+
+	uint8_t padding[48];
+} mess_net_netdrv_dl_writev_s;
+_ASSERT_MSG_SIZE(mess_net_netdrv_dl_writev_s);
+
+typedef struct {
 	int count;
 	uint32_t flags;
 
@@ -1425,6 +1441,8 @@ typedef struct {
 
 		mess_net_netdrv_dl_conf m_net_netdrv_dl_conf;
 		mess_net_netdrv_dl_getstat_s m_net_netdrv_dl_getstat_s;
+		mess_net_netdrv_dl_readv_s m_net_netdrv_dl_readv_s;
+		mess_net_netdrv_dl_writev_s m_net_netdrv_dl_writev_s;
 
 		mess_netdrv_net_dl_conf m_netdrv_net_dl_conf;
 		mess_netdrv_net_dl_task m_netdrv_net_dl_task;

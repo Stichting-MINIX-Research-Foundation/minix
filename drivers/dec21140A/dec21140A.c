@@ -470,10 +470,11 @@ static void do_vread_s(const message * mp, int from_int)
        client layer
     */
     dep->de_read_iovec.iod_proc_nr = mp->m_source;
-    de_get_userdata_s(mp->m_source, (cp_grant_id_t) mp->DL_GRANT, 0,
-		      mp->DL_COUNT, dep->de_read_iovec.iod_iovec);
-    dep->de_read_iovec.iod_iovec_s = mp->DL_COUNT;
-    dep->de_read_iovec.iod_grant = (cp_grant_id_t) mp->DL_GRANT;
+    de_get_userdata_s(mp->m_source, mp->m_net_netdrv_dl_readv_s.grant, 0,
+		      mp->m_net_netdrv_dl_readv_s.count,
+		      dep->de_read_iovec.iod_iovec);
+    dep->de_read_iovec.iod_iovec_s = mp->m_net_netdrv_dl_readv_s.count;
+    dep->de_read_iovec.iod_grant = mp->m_net_netdrv_dl_readv_s.grant;
     dep->de_read_iovec.iod_iovec_offset = 0;
     size = de_calc_iov_size(&dep->de_read_iovec);
     if (size < ETH_MAX_PACK_SIZE) 
@@ -823,10 +824,10 @@ static void do_vwrite_s(const message * mp, int from_int){
     buffer = descr->buf1;
     iovp = &dep->de_write_iovec;
     iovp->iod_proc_nr = mp->m_source;
-    de_get_userdata_s(mp->m_source, mp->DL_GRANT, 0,
-		      mp->DL_COUNT, iovp->iod_iovec);
-    iovp->iod_iovec_s = mp->DL_COUNT;
-    iovp->iod_grant = (cp_grant_id_t) mp->DL_GRANT;
+    de_get_userdata_s(mp->m_source, mp->m_net_netdrv_dl_writev_s.grant, 0,
+		      mp->m_net_netdrv_dl_writev_s.count, iovp->iod_iovec);
+    iovp->iod_iovec_s = mp->m_net_netdrv_dl_writev_s.count;
+    iovp->iod_grant = mp->m_net_netdrv_dl_writev_s.grant;
     iovp->iod_iovec_offset = 0;
     totalsize = size = de_calc_iov_size(iovp);
     if (size < ETH_MIN_PACK_SIZE || size > ETH_MAX_PACK_SIZE)

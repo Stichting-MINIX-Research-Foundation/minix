@@ -363,10 +363,10 @@ static void do_vwrite_s(const message * mp)
 		panic("send already in progress ");
 
 	dep->de_write_iovec.iod_proc_nr = mp->m_source;
-	get_userdata_s(mp->m_source, mp->DL_GRANT, 0,
-	       mp->DL_COUNT, dep->de_write_iovec.iod_iovec);
-	dep->de_write_iovec.iod_iovec_s = mp->DL_COUNT;
-	dep->de_write_iovec.iod_grant = (cp_grant_id_t) mp->DL_GRANT;
+	get_userdata_s(mp->m_source, mp->m_net_netdrv_dl_writev_s.grant, 0,
+	       mp->m_net_netdrv_dl_writev_s.count, dep->de_write_iovec.iod_iovec);
+	dep->de_write_iovec.iod_iovec_s = mp->m_net_netdrv_dl_writev_s.count;
+	dep->de_write_iovec.iod_grant = mp->m_net_netdrv_dl_writev_s.grant;
 	dep->de_write_iovec.iod_iovec_offset = 0;
 	size = calc_iovec_size(&dep->de_write_iovec);
 	if (size < ETH_MIN_PACK_SIZE || size > ETH_MAX_PACK_SIZE)
@@ -401,10 +401,10 @@ static void do_vread_s(const message * mp)
 		panic("read already in progress");
 
 	dep->de_read_iovec.iod_proc_nr = mp->m_source;
-	get_userdata_s(mp->m_source, (cp_grant_id_t) mp->DL_GRANT, 0,
-		mp->DL_COUNT, dep->de_read_iovec.iod_iovec);
-	dep->de_read_iovec.iod_iovec_s = mp->DL_COUNT;
-	dep->de_read_iovec.iod_grant = (cp_grant_id_t) mp->DL_GRANT;
+	get_userdata_s(mp->m_source, mp->m_net_netdrv_dl_readv_s.grant, 0,
+		mp->m_net_netdrv_dl_readv_s.count, dep->de_read_iovec.iod_iovec);
+	dep->de_read_iovec.iod_iovec_s = mp->m_net_netdrv_dl_readv_s.count;
+	dep->de_read_iovec.iod_grant = mp->m_net_netdrv_dl_readv_s.grant;
 	dep->de_read_iovec.iod_iovec_offset = 0;
 	size = calc_iovec_size(&dep->de_read_iovec);
 	if (size < ETH_MAX_PACK_SIZE) panic(SizeErrMsg, size);

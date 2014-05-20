@@ -1165,7 +1165,7 @@ static void or_writev_s (message * mp, int from_int) {
 
 	orp = &or_state;
 
-	count = mp->DL_COUNT;
+	count = mp->m_net_netdrv_dl_writev_s.count;
 
 	orp->or_client = mp->m_source;
 	hw = &(orp->hw);
@@ -1210,7 +1210,8 @@ static void or_writev_s (message * mp, int from_int) {
 		if (i + n > count)
 			n = count - i;
 
-		cps = sys_safecopyfrom(mp->m_source, mp->DL_GRANT, iov_offset,
+		cps = sys_safecopyfrom(mp->m_source,
+			mp->m_net_netdrv_dl_writev_s.grant, iov_offset,
 			(vir_bytes) orp->or_iovec_s, 
 			n * sizeof(orp->or_iovec_s[0]));
 		if (cps != OK) 
@@ -1563,7 +1564,7 @@ static void or_readv_s (message * mp, int from_int)
 	orp = &or_state;
 
 	orp->or_client = mp->m_source;
-	count = mp->DL_COUNT;
+	count = mp->m_net_netdrv_dl_readv_s.count;
 
 	assert (orp->or_mode == OR_M_ENABLED);
 	assert (orp->or_flags & OR_F_ENABLED);
@@ -1601,7 +1602,8 @@ static void or_readv_s (message * mp, int from_int)
 		if (i + n > count)
 			n = count - i;
 
-		cps = sys_safecopyfrom(mp->m_source, mp->DL_GRANT, iov_offset, 
+		cps = sys_safecopyfrom(mp->m_source,
+				mp->m_net_netdrv_dl_readv_s.grant, iov_offset,
 				(vir_bytes)orp->or_iovec_s,
 				n * sizeof(orp->or_iovec_s[0]));
 		if (cps != OK) 

@@ -777,12 +777,13 @@ static void atl2_readv(const message *m, int from_int)
 	left = count;
 	pos = rxd->data;
 
-	for (i = 0; i < m->DL_COUNT && left > 0; i += batch) {
+	for (i = 0; i < m->m_net_netdrv_dl_readv_s.count && left > 0; i += batch) {
 		/* Copy in the next batch. */
-		batch = MIN(m->DL_COUNT - i, NR_IOREQS);
+		batch = MIN(m->m_net_netdrv_dl_readv_s.count - i, NR_IOREQS);
 
-		r = sys_safecopyfrom(m->m_source, m->DL_GRANT, off, 
-			(vir_bytes) iovec, batch * sizeof(iovec[0]));
+		r = sys_safecopyfrom(m->m_source,
+			m->m_net_netdrv_dl_readv_s.grant, off, (vir_bytes) iovec,
+			batch * sizeof(iovec[0]));
 		if (r != OK)
 			panic("vector copy failed: %d", r);
 
@@ -874,12 +875,13 @@ static void atl2_writev(const message *m, int from_int)
 	pos = (state.txd_tail + state.txd_num +
 		sizeof(u32_t)) % ATL2_TXD_BUFSIZE;
 
-	for (i = 0; i < m->DL_COUNT; i += batch) {
+	for (i = 0; i < m->m_net_netdrv_dl_writev_s.count; i += batch) {
 		/* Copy in the next batch. */
-		batch = MIN(m->DL_COUNT - i, NR_IOREQS);
+		batch = MIN(m->m_net_netdrv_dl_writev_s.count - i, NR_IOREQS);
 
-		r = sys_safecopyfrom(m->m_source, m->DL_GRANT, off, 
-			(vir_bytes) iovec, batch * sizeof(iovec[0]));
+		r = sys_safecopyfrom(m->m_source,
+			m->m_net_netdrv_dl_writev_s.grant, off, (vir_bytes) iovec,
+			batch * sizeof(iovec[0]));
 		if (r != OK)
 			panic("vector copy failed: %d", r);
 

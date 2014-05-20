@@ -364,7 +364,7 @@ int from_int;
 
 	dep= &de_state;
 
-	count = mp->DL_COUNT;
+	count = mp->m_net_netdrv_dl_writev_s.count;
 	dep->de_client= mp->m_source;
 
 	if (dep->de_mode == DEM_SINK)
@@ -391,13 +391,13 @@ int from_int;
 	}
 	assert(!(dep->de_flags & DEF_PACK_SEND));
 
-	get_userdata_s(mp->m_source, mp->DL_GRANT, 0,
+	get_userdata_s(mp->m_source, mp->m_net_netdrv_dl_writev_s.grant, 0,
 		(count > IOVEC_NR ? IOVEC_NR : count) *
 		sizeof(dep->de_write_iovec_s.iod_iovec[0]),
 		dep->de_write_iovec_s.iod_iovec);
 	dep->de_write_iovec_s.iod_iovec_s = count;
 	dep->de_write_iovec_s.iod_proc_nr = mp->m_source;
-	dep->de_write_iovec_s.iod_grant = mp->DL_GRANT;
+	dep->de_write_iovec_s.iod_grant = mp->m_net_netdrv_dl_writev_s.grant;
 	dep->de_write_iovec_s.iod_iovec_offset = 0;
 
 	dep->de_tmp_iovec_s = dep->de_write_iovec_s;
@@ -451,7 +451,7 @@ message *mp;
 
 	dep= &de_state;
 
-	count = mp->DL_COUNT;
+	count = mp->m_net_netdrv_dl_readv_s.count;
 	dep->de_client= mp->m_source;
 	if (dep->de_mode == DEM_SINK)
 	{
@@ -464,13 +464,13 @@ message *mp;
 	if(dep->de_flags & DEF_READING)
 		panic("dp8390: read already in progress");
 
-	get_userdata_s(mp->m_source, mp->DL_GRANT, 0,
+	get_userdata_s(mp->m_source, mp->m_net_netdrv_dl_readv_s.grant, 0,
 		(count > IOVEC_NR ? IOVEC_NR : count) *
 		sizeof(dep->de_read_iovec_s.iod_iovec[0]),
 		dep->de_read_iovec_s.iod_iovec);
 	dep->de_read_iovec_s.iod_iovec_s = count;
 	dep->de_read_iovec_s.iod_proc_nr = mp->m_source;
-	dep->de_read_iovec_s.iod_grant = mp->DL_GRANT;
+	dep->de_read_iovec_s.iod_grant = mp->m_net_netdrv_dl_readv_s.grant;
 	dep->de_read_iovec_s.iod_iovec_offset = 0;
 
 	dep->de_tmp_iovec_s = dep->de_read_iovec_s;

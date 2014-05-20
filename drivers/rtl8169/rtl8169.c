@@ -1168,7 +1168,7 @@ static void rl_readv_s(const message *mp, int from_int)
 	rep = &re_state;
 
 	rep->re_client = mp->m_source;
-	count = mp->DL_COUNT;
+	count = mp->m_net_netdrv_dl_readv_s.count;
 
 	assert(rep->re_mode == REM_ENABLED);
 	assert(rep->re_flags & REF_ENABLED);
@@ -1228,7 +1228,8 @@ readvs_loop:
 		n = IOVEC_NR;
 		if (i + n > count)
 			n = count-i;
-		cps = sys_safecopyfrom(mp->m_source, mp->DL_GRANT, iov_offset,
+		cps = sys_safecopyfrom(mp->m_source,
+			mp->m_net_netdrv_dl_readv_s.grant, iov_offset,
 			(vir_bytes) rep->re_iovec_s,
 			n * sizeof(rep->re_iovec_s[0]));
 		if (cps != OK) {
@@ -1307,7 +1308,7 @@ static void rl_writev_s(const message *mp, int from_int)
 	rep = &re_state;
 
 	rep->re_client = mp->m_source;
-	count = mp->DL_COUNT;
+	count = mp->m_net_netdrv_dl_writev_s.count;
 	assert(rep->setup);
 
 	assert(rep->re_mode == REM_ENABLED);
@@ -1364,7 +1365,8 @@ static void rl_writev_s(const message *mp, int from_int)
 		n = IOVEC_NR;
 		if (i + n > count)
 			n = count - i;
-		cps = sys_safecopyfrom(mp->m_source, mp->DL_GRANT, iov_offset,
+		cps = sys_safecopyfrom(mp->m_source,
+			mp->m_net_netdrv_dl_writev_s.grant, iov_offset,
 			(vir_bytes) rep->re_iovec_s,
 			n * sizeof(rep->re_iovec_s[0]));
 		if (cps != OK) {
