@@ -274,12 +274,6 @@
     SYS_TIMES, SYS_SETALARM, SYS_SETGRANT, \
     SYS_PROFBUF, SYS_DIAGCTL, SYS_STATECTL, SYS_SAFEMEMSET
 
-/* Field names for SYS_MEMSET. */
-#define MEM_PTR		m2_p1	/* base */
-#define MEM_COUNT	m2_l1	/* count */
-#define MEM_PATTERN	m2_l2   /* pattern to write */
-#define MEM_PROCESS	m2_i1	/* NONE (phys) or process id (vir) */
-
 /* Field names for SYS_DEVIO, SYS_VDEVIO, SYS_SDEVIO. */
 #define DIO_REQUEST	m2_i3	/* device in or output */
 #   define _DIO_INPUT		0x001

@@ -701,6 +701,16 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_lsys_krn_schedctl);
 
 typedef struct {
+	phys_bytes base;
+	phys_bytes count;
+	unsigned long pattern;
+	endpoint_t process;
+
+	uint8_t padding[40];
+} mess_lsys_krn_sys_memset;
+_ASSERT_MSG_SIZE(mess_lsys_krn_sys_memset);
+
+typedef struct {
 	int devind;
 	int port;
 
@@ -1423,6 +1433,7 @@ typedef struct {
 
 		mess_lsys_krn_schedctl	m_lsys_krn_schedctl;
 		mess_lsys_krn_schedule	m_lsys_krn_schedule;
+		mess_lsys_krn_sys_memset m_lsys_krn_sys_memset;
 
 		mess_lsys_pci_busc_get_bar m_lsys_pci_busc_get_bar;
 

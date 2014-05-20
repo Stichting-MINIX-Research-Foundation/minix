@@ -8,10 +8,10 @@ int sys_memset(endpoint_t who, unsigned long pattern,
 
   if (bytes == 0L) return(OK);
 
-  mess.MEM_PTR = (char *) base;
-  mess.MEM_COUNT   = bytes;
-  mess.MEM_PATTERN = pattern;
-  mess.MEM_PROCESS = who;
+  mess.m_lsys_krn_sys_memset.base = base;
+  mess.m_lsys_krn_sys_memset.count = bytes;
+  mess.m_lsys_krn_sys_memset.pattern = pattern;
+  mess.m_lsys_krn_sys_memset.process = who;
 
   return(_kernel_call(SYS_MEMSET, &mess));
 }

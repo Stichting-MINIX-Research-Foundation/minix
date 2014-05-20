@@ -2,9 +2,9 @@
  *   m_type:	SYS_MEMSET
  *
  * The parameters for this kernel call are:
- *    m2_p1:	MEM_PTR		(virtual address)	
- *    m2_l1:	MEM_COUNT	(returns physical address)	
- *    m2_l2:	MEM_PATTERN	(pattern byte to be written) 	
+ *    m_lsys_krn_sys_memset.base	(virtual address)
+ *    m_lsys_krn_sys_memset.count	(returns physical address)
+ *    m_lsys_krn_sys_memset.pattern	(pattern byte to be written)
  */
 
 #include "kernel/system.h"
@@ -17,8 +17,10 @@
 int do_memset(struct proc * caller, message * m_ptr)
 {
 /* Handle sys_memset(). This writes a pattern into the specified memory. */
-  vm_memset(caller, m_ptr->MEM_PROCESS, (phys_bytes) m_ptr->MEM_PTR,
-	m_ptr->MEM_PATTERN, (phys_bytes) m_ptr->MEM_COUNT);
+  vm_memset(caller, m_ptr->m_lsys_krn_sys_memset.process,
+	  m_ptr->m_lsys_krn_sys_memset.base,
+	  m_ptr->m_lsys_krn_sys_memset.pattern,
+	  m_ptr->m_lsys_krn_sys_memset.count);
   return(OK);
 }
 
