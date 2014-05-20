@@ -13,12 +13,12 @@ vir_bytes offset;			/* offset from grant */
 {
     message m_io;
 
-    m_io.DIO_REQUEST = req;
-    m_io.DIO_PORT = port;
-    m_io.DIO_VEC_ENDPT = proc_nr;
-    m_io.DIO_VEC_ADDR = buffer;
-    m_io.DIO_VEC_SIZE = count;
-    m_io.DIO_OFFSET = offset;
+    m_io.m_lsys_krn_sys_sdevio.request = req;
+    m_io.m_lsys_krn_sys_sdevio.port = port;
+    m_io.m_lsys_krn_sys_sdevio.vec_endpt = proc_nr;
+    m_io.m_lsys_krn_sys_sdevio.vec_addr = buffer;
+    m_io.m_lsys_krn_sys_sdevio.vec_size = count;
+    m_io.m_lsys_krn_sys_sdevio.offset = offset;
 
     return(_kernel_call(SYS_SDEVIO, &m_io));
 }

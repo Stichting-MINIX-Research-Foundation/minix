@@ -2,12 +2,12 @@
  *   m_type:	SYS_SDEVIO
  *
  * The parameters for this kernel call are:
- *    m2_i3:	DIO_REQUEST	(request input or output)
- *    m2_l1:	DIO_PORT	(port to read/ write)
- *    m2_p1:	DIO_VEC_ADDR	(virtual address of buffer, or grant ID)
- *    m2_l2:	DIO_VEC_SIZE	(number of elements)
- *    m2_i2:	DIO_VEC_PROC	(process where buffer is)
- *    m2_i1:	DIO_OFFSET	(offset into the grant)
+ *    m_lsys_krn_sys_sdevio.request	(request input or output)
+ *    m_lsys_krn_sys_sdevio.port	(port to read/ write)
+ *    m_lsys_krn_sys_sdevio.vec_addr	(virtual address of buffer, or grant ID)
+ *    m_lsys_krn_sys_sdevio.vec_size	(number of elements)
+ *    m_lsys_krn_sys_sdevio.vec_endpt	(process where buffer is)
+ *    m_lsys_krn_sys_sdevio.offset	(offset into the grant)
  */
 
 #include "kernel/system.h"
@@ -26,9 +26,9 @@ int do_sdevio(struct proc * caller, message *m_ptr)
   vir_bytes newoffset;
   endpoint_t newep;
   int proc_nr;
-  endpoint_t proc_nr_e = m_ptr->DIO_VEC_ENDPT;
-  vir_bytes count = m_ptr->DIO_VEC_SIZE;
-  long port = m_ptr->DIO_PORT;
+  endpoint_t proc_nr_e = m_ptr->m_lsys_krn_sys_sdevio.vec_endpt;
+  vir_bytes count = m_ptr->m_lsys_krn_sys_sdevio.vec_size;
+  long port = m_ptr->m_lsys_krn_sys_sdevio.port;
   phys_bytes vir_buf;
   int i, req_type, req_dir, size, nr_io_range;
   struct priv *privp;
@@ -37,7 +37,7 @@ int do_sdevio(struct proc * caller, message *m_ptr)
   int retval;
 
   /* Allow safe copies and accesses to SELF */
-  if ((m_ptr->DIO_REQUEST & _DIO_SAFEMASK) != _DIO_SAFE &&
+  if ((m_ptr->m_lsys_krn_sys_sdevio.request & _DIO_SAFEMASK) != _DIO_SAFE &&
 	proc_nr_e != SELF)
   {
 	static int first= 1;
@@ -45,7 +45,7 @@ int do_sdevio(struct proc * caller, message *m_ptr)
 	{
 		first= 0;
 		printf("do_sdevio: for %d, req %d\n",
-			m_ptr->m_source, m_ptr->DIO_REQUEST);
+			m_ptr->m_source, m_ptr->m_lsys_krn_sys_sdevio.request);
 	}
   }
 
@@ -61,18 +61,17 @@ int do_sdevio(struct proc * caller, message *m_ptr)
   if (iskerneln(proc_nr)) return(EPERM);
 
   /* Extract direction (in or out) and type (size). */
-  req_dir = m_ptr->DIO_REQUEST & _DIO_DIRMASK;
-  req_type = m_ptr->DIO_REQUEST & _DIO_TYPEMASK;
+  req_dir = m_ptr->m_lsys_krn_sys_sdevio.request & _DIO_DIRMASK;
+  req_type = m_ptr->m_lsys_krn_sys_sdevio.request & _DIO_TYPEMASK;
 
   /* Check for 'safe' variants. */
-  if((m_ptr->DIO_REQUEST & _DIO_SAFEMASK) == _DIO_SAFE) {
+  if((m_ptr->m_lsys_krn_sys_sdevio.request & _DIO_SAFEMASK) == _DIO_SAFE) {
      /* Map grant address to physical address. */
      if(verify_grant(proc_nr_e, caller->p_endpoint,
-	(cp_grant_id_t) m_ptr->DIO_VEC_ADDR,
-	count,
-	req_dir == _DIO_INPUT ? CPF_WRITE : CPF_READ,
-	(vir_bytes) m_ptr->DIO_OFFSET, 
-	&newoffset, &newep, NULL) != OK) {
+		m_ptr->m_lsys_krn_sys_sdevio.vec_addr, count,
+		req_dir == _DIO_INPUT ? CPF_WRITE : CPF_READ,
+		m_ptr->m_lsys_krn_sys_sdevio.offset, &newoffset, &newep,
+		NULL) != OK) {
 	printf("do_sdevio: verify_grant failed\n");
 	return EPERM;
     }
@@ -88,7 +87,7 @@ int do_sdevio(struct proc * caller, message *m_ptr)
 	return EPERM;
      }
      /* Get and check physical address. */
-     vir_buf = (phys_bytes) m_ptr->DIO_VEC_ADDR;
+     vir_buf = m_ptr->m_lsys_krn_sys_sdevio.vec_addr;
      destproc = proc_addr(proc_nr);
   }
      /* current process must be target for phys_* to be OK */
@@ -106,7 +105,7 @@ int do_sdevio(struct proc * caller, message *m_ptr)
   privp= priv(caller);
   if (privp && privp->s_flags & CHECK_IO_PORT)
   {
-	port= m_ptr->DIO_PORT;
+	port= m_ptr->m_lsys_krn_sys_sdevio.port;
 	nr_io_range= privp->s_nr_io_range;
 	for (i= 0, iorp= privp->s_io_tab; i<nr_io_range; i++, iorp++)
 	{

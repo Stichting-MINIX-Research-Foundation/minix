@@ -301,8 +301,6 @@
 #define DIO_VALUE	m2_l2	/* single I/O value */
 #define DIO_VEC_ADDR	m2_p1   /* address of buffer or (p,v)-pairs */
 #define DIO_VEC_SIZE	m2_l2   /* number of elements in vector */
-#define DIO_VEC_ENDPT	m2_i2   /* number of process where vector is */
-#define DIO_OFFSET	m2_i1	/* offset from grant */
 
 /* Field names for SYS_SETALARM. */
 #define ALRM_EXP_TIME   m2_l1	/* expire time for the alarm call */
