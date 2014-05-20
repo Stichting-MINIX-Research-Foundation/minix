@@ -676,8 +676,8 @@ ether_card_t *ec;
       flags |= DL_PACK_RECV;
 
    reply.m_type   = DL_TASK_REPLY;
-   reply.DL_FLAGS = flags;
-   reply.DL_COUNT = ec->read_s;
+   reply.m_netdrv_net_dl_task.flags = flags;
+   reply.m_netdrv_net_dl_task.count = ec->read_s;
 
    r = ipc_send(ec->client, &reply);
    if (r < 0)

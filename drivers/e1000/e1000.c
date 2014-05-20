@@ -1159,16 +1159,17 @@ e1000_t *e;
     }
     /* Construct reply message. */
     msg.m_type   = DL_TASK_REPLY;
-    msg.DL_FLAGS = DL_NOFLAGS;
-    msg.DL_COUNT = 0;
+    msg.m_netdrv_net_dl_task.flags = DL_NOFLAGS;
+    msg.m_netdrv_net_dl_task.count = 0;
 
     /* Did we successfully receive packet(s)? */
     if (e->status & E1000_READING &&
 	e->status & E1000_RECEIVED)
     {
-	msg.DL_FLAGS |= DL_PACK_RECV;
-	msg.DL_COUNT = e->rx_size >= ETH_MIN_PACK_SIZE ?
-		       e->rx_size  : ETH_MIN_PACK_SIZE;
+	msg.m_netdrv_net_dl_task.flags |= DL_PACK_RECV;
+	msg.m_netdrv_net_dl_task.count =
+		e->rx_size >= ETH_MIN_PACK_SIZE ?
+			e->rx_size  : ETH_MIN_PACK_SIZE;
 
         /* Clear flags. */
 	e->status &= ~(E1000_READING | E1000_RECEIVED);
@@ -1177,7 +1178,7 @@ e1000_t *e;
     if (e->status & E1000_TRANSMIT &&
         e->status & E1000_WRITING)
     {
-	msg.DL_FLAGS |= DL_PACK_SEND;
+	msg.m_netdrv_net_dl_task.flags |= DL_PACK_SEND;
 	
 	/* Clear flags. */
 	e->status &= ~(E1000_WRITING | E1000_TRANSMIT);

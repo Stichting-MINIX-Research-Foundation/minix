@@ -836,6 +836,14 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_net_netdrv_dl_getstat_s);
 
 typedef struct {
+	int count;
+	uint32_t flags;
+
+	uint8_t padding[48];
+} mess_netdrv_net_dl_task;
+_ASSERT_MSG_SIZE(mess_netdrv_net_dl_task);
+
+typedef struct {
 	uid_t egid;
 
 	uint8_t padding[52];
@@ -1419,6 +1427,7 @@ typedef struct {
 		mess_net_netdrv_dl_getstat_s m_net_netdrv_dl_getstat_s;
 
 		mess_netdrv_net_dl_conf m_netdrv_net_dl_conf;
+		mess_netdrv_net_dl_task m_netdrv_net_dl_task;
 
 		mess_pci_lsys_busc_get_bar m_pci_lsys_busc_get_bar;
 

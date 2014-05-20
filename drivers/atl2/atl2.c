@@ -729,11 +729,11 @@ static void atl2_reply(void)
 		flags |= DL_PACK_RECV;
 
 	m.m_type = DL_TASK_REPLY;
-	m.DL_FLAGS = flags;
-	m.DL_COUNT = state.recv_count;
+	m.m_netdrv_net_dl_task.flags = flags;
+	m.m_netdrv_net_dl_task.count = state.recv_count;
 
 	ATL2_DEBUG(("ATL2: sending reply, flags %x count %d\n", flags,
-		m.DL_COUNT));
+		m.m_netdrv_net_dl_task.count));
 
 	if ((r = ipc_send(state.task_endpt, &m)) != OK)
 		panic("unable to reply: %d", r);

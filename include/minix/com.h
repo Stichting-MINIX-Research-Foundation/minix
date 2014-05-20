@@ -180,11 +180,9 @@
 
 /* Field names for data link layer messages. */
 #define DL_COUNT	m2_i3
-#define DL_FLAGS	m2_l1
 #define DL_GRANT	m2_l2
-#define DL_STAT		m3_i1
 
-/* Bits in 'DL_FLAGS' field of DL replies. */
+/* Bits in 'flags' field of DL replies. */
 #  define DL_NOFLAGS		0x00
 #  define DL_PACK_SEND		0x01
 #  define DL_PACK_RECV		0x02

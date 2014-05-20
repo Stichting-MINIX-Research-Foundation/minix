@@ -366,20 +366,21 @@ void driver_request(message * m)
 
 	switch (m->m_type) {
 	case DL_CONF_REPLY:
-		if (m->DL_STAT == OK)
+		if (m->m_netdrv_net_dl_conf.stat == OK)
 			nic_up(nic, m);
 		break;
 	case DL_TASK_REPLY:
 		/*
-		if (!(m->DL_FLAGS & DL_PACK_SEND) && !(m->DL_FLAGS & DL_PACK_RECV)) {
+		if (!(m->m_netdrv_net_dl_task.flags & DL_PACK_SEND) &&
+			!(m->m_netdrv_net_dl_task.flags & DL_PACK_RECV)) {
 			printf("void reply from driver\n");
 			break;
 		}
 		*/
-		if (m->DL_FLAGS & DL_PACK_SEND)
+		if (m->m_netdrv_net_dl_task.flags & DL_PACK_SEND)
 			nic_pkt_sent(nic);
-		if (m->DL_FLAGS & DL_PACK_RECV)
-			nic_pkt_received(nic, m->DL_COUNT);
+		if (m->m_netdrv_net_dl_task.flags & DL_PACK_RECV)
+			nic_pkt_received(nic, m->m_netdrv_net_dl_task.count);
 		break;
 	case DL_STAT_REPLY:
 		break;

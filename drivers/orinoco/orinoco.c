@@ -1345,8 +1345,8 @@ static void reply (t_or * orp) {
 		flags |= DL_PACK_RECV;
 
 	reply.m_type = DL_TASK_REPLY;
-	reply.DL_FLAGS = flags;
-	reply.DL_COUNT = orp->or_read_s;
+	reply.m_netdrv_net_dl_task.flags = flags;
+	reply.m_netdrv_net_dl_task.count = orp->or_read_s;
 
 	r = ipc_send(orp->or_client, &reply);
 

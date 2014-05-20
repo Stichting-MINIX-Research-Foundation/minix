@@ -268,8 +268,8 @@ static void do_reply(dpeth_t * dep)
   if (dep->de_flags & DEF_ACK_RECV) flags |= DL_PACK_RECV;
 
   reply.m_type = DL_TASK_REPLY;
-  reply.DL_FLAGS = flags;
-  reply.DL_COUNT = dep->de_read_s;
+  reply.m_netdrv_net_dl_task.flags = flags;
+  reply.m_netdrv_net_dl_task.count = dep->de_read_s;
 
   r = ipc_send(dep->de_client, &reply);
 

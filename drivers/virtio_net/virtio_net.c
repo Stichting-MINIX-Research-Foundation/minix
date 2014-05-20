@@ -292,26 +292,27 @@ virtio_net_check_pending(void)
 
 	message reply;
 	reply.m_type = DL_TASK_REPLY;
-	reply.DL_FLAGS = DL_NOFLAGS;
-	reply.DL_COUNT = 0;
+	reply.m_netdrv_net_dl_task.flags = DL_NOFLAGS;
+	reply.m_netdrv_net_dl_task.count = 0;
 
 	/* Pending read and something in recv_list? */
 	if (!STAILQ_EMPTY(&recv_list) && rx_pending) {
 		dst = pending_rx_msg.m_source;
-		reply.DL_COUNT = virtio_net_cpy_to_user(&pending_rx_msg);
-		reply.DL_FLAGS |= DL_PACK_RECV;
+		reply.m_netdrv_net_dl_task.count =
+			virtio_net_cpy_to_user(&pending_rx_msg);
+		reply.m_netdrv_net_dl_task.flags |= DL_PACK_RECV;
 		rx_pending = 0;
 	}
 
 	if (!STAILQ_EMPTY(&free_list) && tx_pending) {
 		dst = pending_tx_msg.m_source;
 		virtio_net_cpy_from_user(&pending_tx_msg);
-		reply.DL_FLAGS |= DL_PACK_SEND;
+		reply.m_netdrv_net_dl_task.flags |= DL_PACK_SEND;
 		tx_pending = 0;
 	}
 
 	/* Only reply if a pending request was handled */
-	if (reply.DL_FLAGS != DL_NOFLAGS)
+	if (reply.m_netdrv_net_dl_task.flags != DL_NOFLAGS)
 		if ((r = ipc_send(dst, &reply)) != OK)
 			panic("%s: ipc_send to %d failed (%d)", name, dst, r);
 }
@@ -473,14 +474,14 @@ virtio_net_write(message *m)
 	message reply;
 
 	reply.m_type = DL_TASK_REPLY;
-	reply.DL_FLAGS = DL_NOFLAGS;
-	reply.DL_COUNT = 0;
+	reply.m_netdrv_net_dl_task.flags = DL_NOFLAGS;
+	reply.m_netdrv_net_dl_task.count = 0;
 
 
 	if (!STAILQ_EMPTY(&free_list)) {
 		/* free_list contains at least one  packet, use it */
-		reply.DL_COUNT = virtio_net_cpy_from_user(m);
-		reply.DL_FLAGS = DL_PACK_SEND;
+		reply.m_netdrv_net_dl_task.count = virtio_net_cpy_from_user(m);
+		reply.m_netdrv_net_dl_task.flags = DL_PACK_SEND;
 	} else {
 		pending_tx_msg = *m;
 		tx_pending = 1;
@@ -497,13 +498,13 @@ virtio_net_read(message *m)
 	message reply;
 
 	reply.m_type = DL_TASK_REPLY;
-	reply.DL_FLAGS = DL_NOFLAGS;
-	reply.DL_COUNT = 0;
+	reply.m_netdrv_net_dl_task.flags = DL_NOFLAGS;
+	reply.m_netdrv_net_dl_task.count = 0;
 
 	if (!STAILQ_EMPTY(&recv_list)) {
 		/* recv_list contains at least one  packet, copy it */
-		reply.DL_COUNT = virtio_net_cpy_to_user(m);
-		reply.DL_FLAGS = DL_PACK_RECV;
+		reply.m_netdrv_net_dl_task.count = virtio_net_cpy_to_user(m);
+		reply.m_netdrv_net_dl_task.flags = DL_PACK_RECV;
 	} else {
 		rx_pending = 1;
 		pending_rx_msg = *m;
@@ -548,9 +549,6 @@ virtio_net_getstat(message *m)
 	message reply;
 
 	reply.m_type = DL_STAT_REPLY;
-	reply.DL_STAT = OK;
-	reply.DL_COUNT = 0;
-
 
 	r = sys_safecopyto(m->m_source, m->m_net_netdrv_dl_getstat_s.grant, 0,
 			   (vir_bytes)&virtio_net_stats,

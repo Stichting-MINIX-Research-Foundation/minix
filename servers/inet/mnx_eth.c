@@ -201,12 +201,12 @@ void eth_rec(message *m)
 	{
 		if (m_type == DL_TASK_REPLY)
 		{
-			flags= m->DL_FLAGS;
+			flags= m->m_netdrv_net_dl_task.flags;
 
 			if (flags & DL_PACK_SEND)
 				write_int(loc_port);
 			if (flags & DL_PACK_RECV)
-				read_int(loc_port, m->DL_COUNT);
+				read_int(loc_port, m->m_netdrv_net_dl_task.count);
 			return;
 		}
 
@@ -218,7 +218,7 @@ void eth_rec(message *m)
 			return;
 		}
 
-		r= m->DL_STAT;
+		r= m->m_netdrv_net_dl_conf.stat;
 		if (r < 0)
 		{
 			ip_warning(("eth_rec: DL_CONF returned error %d\n",
@@ -281,12 +281,12 @@ void eth_rec(message *m)
 	{
 		if (m_type == DL_TASK_REPLY)
 		{
-			flags= m->DL_FLAGS;
+			flags= m->m_netdrv_net_dl_task.flags;
 
 			if (flags & DL_PACK_SEND)
 				write_int(loc_port);
 			if (flags & DL_PACK_RECV)
-				read_int(loc_port, m->DL_COUNT);
+				read_int(loc_port, m->m_netdrv_net_dl_task.count);
 			return;
 		}
 
@@ -341,12 +341,12 @@ void eth_rec(message *m)
 		(printf("etp_state = %d\n", loc_port->etp_osdep.etp_state), 0));
 	loc_port->etp_osdep.etp_state= OEPS_IDLE;
 
-	flags= m->DL_FLAGS;
+	flags= m->m_netdrv_net_dl_task.flags;
 
 	if (flags & DL_PACK_SEND)
 		write_int(loc_port);
 	if (flags & DL_PACK_RECV)
-		read_int(loc_port, m->DL_COUNT);
+		read_int(loc_port, m->m_netdrv_net_dl_task.count);
 
 	if (loc_port->etp_osdep.etp_state == OEPS_IDLE &&
 		loc_port->etp_osdep.etp_flags & OEPF_NEED_SEND)

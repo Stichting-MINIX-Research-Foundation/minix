@@ -1213,16 +1213,16 @@ lan8710a_t *e;
 	}
 	/* Construct reply message. */
 	msg.m_type   = DL_TASK_REPLY;
-	msg.DL_FLAGS = DL_NOFLAGS;
-	msg.DL_COUNT = 0;
+	msg.m_netdrv_net_dl_task.flags = DL_NOFLAGS;
+	msg.m_netdrv_net_dl_task.count = 0;
 
 	/* Did we successfully receive packet(s)? */
 	if (e->status & LAN8710A_READING &&
 	e->status & LAN8710A_RECEIVED) {
-		msg.DL_FLAGS |= DL_PACK_RECV;
-		msg.DL_COUNT = e->rx_size >= ETH_MIN_PACK_SIZE ?
-			       e->rx_size :
-			       ETH_MIN_PACK_SIZE;
+		msg.m_netdrv_net_dl_task.flags |= DL_PACK_RECV;
+		msg.m_netdrv_net_dl_task.count =
+			 e->rx_size >= ETH_MIN_PACK_SIZE ?
+				e->rx_size : ETH_MIN_PACK_SIZE;
 
 		/* Clear flags. */
 		e->status &= ~(LAN8710A_READING | LAN8710A_RECEIVED);
@@ -1230,7 +1230,7 @@ lan8710a_t *e;
 	/* Did we successfully transmit packet(s)? */
 	if (e->status & LAN8710A_TRANSMIT &&
 		e->status & LAN8710A_WRITING) {
-		msg.DL_FLAGS |= DL_PACK_SEND;
+		msg.m_netdrv_net_dl_task.flags |= DL_PACK_SEND;
 
 		/* Clear flags. */
 		e->status &= ~(LAN8710A_WRITING | LAN8710A_TRANSMIT);

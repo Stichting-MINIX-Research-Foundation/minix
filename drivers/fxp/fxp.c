@@ -1938,8 +1938,8 @@ fxp_t *fp;
 		flags |= DL_PACK_RECV;
 
 	reply.m_type = DL_TASK_REPLY;
-	reply.DL_FLAGS = flags;
-	reply.DL_COUNT = fp->fxp_read_s;
+	reply.m_netdrv_net_dl_task.flags = flags;
+	reply.m_netdrv_net_dl_task.count = fp->fxp_read_s;
 
 	r= ipc_send(fp->fxp_client, &reply);
 
