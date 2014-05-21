@@ -297,10 +297,10 @@ struct buf *lmfs_get_block_ino(dev_t dev, block_t block, int only_search,
   			bp->data = NULL;
   			break;
   		}
-  		ASSERT(bp->lmfs_needsetcache == 0);
   		/* Block needed has been found. */
   		if (bp->lmfs_count == 0) {
 			rm_lru(bp);
+			ASSERT(bp->lmfs_needsetcache == 0);
   			ASSERT(!(bp->lmfs_flags & VMMC_BLOCK_LOCKED));
 			bp->lmfs_flags |= VMMC_BLOCK_LOCKED;
 		}
