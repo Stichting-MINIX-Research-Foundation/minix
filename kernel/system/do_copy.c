@@ -2,11 +2,12 @@
  *   m_type:	SYS_VIRCOPY, SYS_PHYSCOPY
  *
  * The parameters for this kernel call are:
- *    m5_l1:	CP_SRC_ADDR		source offset within segment
- *    m5_i1:	CP_SRC_ENDPT		source process number
- *    m5_l2:	CP_DST_ADDR		destination offset within segment
- *    m5_i2:	CP_DST_ENDPT		destination process number
- *    m5_l3:	CP_NR_BYTES		number of bytes to copy
+ *   m_lsys_krn_sys_copy.src_addr		source offset within segment
+ *   m_lsys_krn_sys_copy.src_endpt		source process number
+ *   m_lsys_krn_sys_copy.dst_addr		destination offset within segment
+ *   m_lsys_krn_sys_copy.dst_endpt		destination process number
+ *   m_lsys_krn_sys_copy.nr_bytes		number of bytes to copy
+ *   m_lsys_krn_sys_copy.flags
  */
 
 #include "kernel/system.h"
@@ -41,19 +42,19 @@ int do_copy(struct proc * caller, message * m_ptr)
 		printf(
 "do_copy: got request from %d (source %d, destination %d)\n",
 			caller->p_endpoint,
-			m_ptr->CP_SRC_ENDPT,
-			m_ptr->CP_DST_ENDPT);
+			m_ptr->m_lsys_krn_sys_copy.src_endpt,
+			m_ptr->m_lsys_krn_sys_copy.dst_endpt);
 	}
   }
 #endif
 
   /* Dismember the command message. */
-  vir_addr[_SRC_].proc_nr_e = m_ptr->CP_SRC_ENDPT;
-  vir_addr[_DST_].proc_nr_e = m_ptr->CP_DST_ENDPT;
+  vir_addr[_SRC_].proc_nr_e = m_ptr->m_lsys_krn_sys_copy.src_endpt;
+  vir_addr[_DST_].proc_nr_e = m_ptr->m_lsys_krn_sys_copy.dst_endpt;
 
-  vir_addr[_SRC_].offset = (vir_bytes) m_ptr->CP_SRC_ADDR;
-  vir_addr[_DST_].offset = (vir_bytes) m_ptr->CP_DST_ADDR;
-  bytes = (phys_bytes) m_ptr->CP_NR_BYTES;
+  vir_addr[_SRC_].offset = m_ptr->m_lsys_krn_sys_copy.src_addr;
+  vir_addr[_DST_].offset = m_ptr->m_lsys_krn_sys_copy.dst_addr;
+  bytes = m_ptr->m_lsys_krn_sys_copy.nr_bytes;
 
   /* Now do some checks for both the source and destination virtual address.
    * This is done once for _SRC_, then once for _DST_. 
@@ -77,7 +78,7 @@ int do_copy(struct proc * caller, message * m_ptr)
   if (bytes != (phys_bytes) (vir_bytes) bytes) return(E2BIG);
 
   /* Now try to make the actual virtual copy. */
-  if(m_ptr->CP_FLAGS & CP_FLAG_TRY) {
+  if(m_ptr->m_lsys_krn_sys_copy.flags & CP_FLAG_TRY) {
 	int r;
 	assert(caller->p_endpoint == VFS_PROC_NR);
 	r = virtual_copy(&vir_addr[_SRC_], &vir_addr[_DST_], bytes);
@@ -89,4 +90,3 @@ int do_copy(struct proc * caller, message * m_ptr)
   }
 }
 #endif /* (USE_VIRCOPY || USE_PHYSCOPY) */
-

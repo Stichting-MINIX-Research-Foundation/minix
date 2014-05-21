@@ -17,12 +17,12 @@ int flags;			/* copy flags */
 
   if (bytes == 0L) return(OK);
   memset(&copy_mess, 0, sizeof(copy_mess));
-  copy_mess.CP_SRC_ENDPT = src_proc;
-  copy_mess.CP_SRC_ADDR = (long) src_vir;
-  copy_mess.CP_DST_ENDPT = dst_proc;
-  copy_mess.CP_DST_ADDR = (long) dst_vir;
-  copy_mess.CP_NR_BYTES = (long) bytes;
-  copy_mess.CP_FLAGS = flags;
+  copy_mess.m_lsys_krn_sys_copy.src_endpt = src_proc;
+  copy_mess.m_lsys_krn_sys_copy.src_addr = src_vir;
+  copy_mess.m_lsys_krn_sys_copy.dst_endpt = dst_proc;
+  copy_mess.m_lsys_krn_sys_copy.dst_addr = dst_vir;
+  copy_mess.m_lsys_krn_sys_copy.nr_bytes = bytes;
+  copy_mess.m_lsys_krn_sys_copy.flags = flags;
 
   return(_kernel_call(SYS_VIRCOPY, &copy_mess));
 }
