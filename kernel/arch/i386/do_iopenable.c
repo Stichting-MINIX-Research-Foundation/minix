@@ -2,7 +2,7 @@
  *   m_type:	SYS_IOPENABLE
  *
  * The parameters for this system call are:
- *    m2_i2:	IOP_ENDPT	(process to give I/O Protection Level bits)
+ *   m_lsys_krn_sys_iopenable.endpt	(process to give I/O Protection Level bits)
  *
  * Author:
  *    Jorrit N. Herder <jnherder@cs.vu.nl>
@@ -22,9 +22,9 @@ int do_iopenable(struct proc * caller, message * m_ptr)
   int proc_nr;
 
 #if 1 /* ENABLE_USERPRIV && ENABLE_USERIOPL */
-  if (m_ptr->IOP_ENDPT == SELF) {
+  if (m_ptr->m_lsys_krn_sys_iopenable.endpt == SELF) {
 	okendpt(caller->p_endpoint, &proc_nr);
-  } else if(!isokendpt(m_ptr->IOP_ENDPT, &proc_nr))
+  } else if(!isokendpt(m_ptr->m_lsys_krn_sys_iopenable.endpt, &proc_nr))
 	return(EINVAL);
   enable_iop(proc_addr(proc_nr));
   return(OK);

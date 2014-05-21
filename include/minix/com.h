@@ -310,9 +310,6 @@
 #  define IRQ_WORD      0x200	/* word values */
 #  define IRQ_LONG      0x400	/* long values */
 
-/* Field names for SYS_IOPENABLE. */
-#define IOP_ENDPT	m2_l1	/* target endpoint */
-
 /* Field names for _UMAP, _VIRCOPY, _PHYSCOPY. */
 #define CP_SRC_ENDPT	m5_i1	/* process to copy from */
 #define CP_SRC_ADDR	m5_l1	/* address where data come from */
