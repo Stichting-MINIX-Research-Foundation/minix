@@ -310,9 +310,6 @@
 #  define IRQ_WORD      0x200	/* word values */
 #  define IRQ_LONG      0x400	/* long values */
 
-/* Field names for SYS_ABORT. */
-#define ABRT_HOW	m1_i1	/* RBT_REBOOT, RBT_HALT, etc. */
-
 /* Field names for SYS_IOPENABLE. */
 #define IOP_ENDPT	m2_l1	/* target endpoint */
 

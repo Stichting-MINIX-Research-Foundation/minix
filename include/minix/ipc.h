@@ -701,6 +701,13 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_lsys_krn_schedctl);
 
 typedef struct {
+	int how;
+
+	uint8_t padding[52];
+} mess_lsys_krn_sys_abort;
+_ASSERT_MSG_SIZE(mess_lsys_krn_sys_abort);
+
+typedef struct {
 	int request;
 	int vector;
 	int policy;
@@ -1481,6 +1488,7 @@ typedef struct {
 
 		mess_lsys_krn_schedctl	m_lsys_krn_schedctl;
 		mess_lsys_krn_schedule	m_lsys_krn_schedule;
+		mess_lsys_krn_sys_abort m_lsys_krn_sys_abort;
 		mess_lsys_krn_sys_irqctl m_lsys_krn_sys_irqctl;
 		mess_lsys_krn_sys_memset m_lsys_krn_sys_memset;
 		mess_lsys_krn_sys_sdevio m_lsys_krn_sys_sdevio;

@@ -8,6 +8,6 @@ int sys_abort(int how)
 
   message m;
 
-  m.ABRT_HOW = how;
+  m.m_lsys_krn_sys_abort.how = how;
   return(_kernel_call(SYS_ABORT, &m));
 }
