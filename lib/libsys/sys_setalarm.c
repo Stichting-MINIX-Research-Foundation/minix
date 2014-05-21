@@ -11,8 +11,7 @@ int abs_time;		/* use absolute or relative expiration time */
  * number can be SELF if the caller doesn't know its process number.
  */
     message m;
-    m.ALRM_EXP_TIME = exp_time;		/* the expiration time */
-    m.ALRM_ABS_TIME = abs_time;		/* time is absolute? */
+    m.m_lsys_krn_sys_setalarm.exp_time = exp_time; /* the expiration time */
+    m.m_lsys_krn_sys_setalarm.abs_time = abs_time; /* time is absolute? */
     return _kernel_call(SYS_SETALARM, &m);
 }
-

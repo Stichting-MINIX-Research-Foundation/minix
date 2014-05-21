@@ -300,11 +300,6 @@
 #define DIO_PORT	m2_l1	/* single port address */
 #define DIO_VALUE	m2_l2	/* single I/O value */
 
-/* Field names for SYS_SETALARM. */
-#define ALRM_EXP_TIME   m2_l1	/* expire time for the alarm call */
-#define ALRM_ABS_TIME   m2_i2	/* set to 1 to use absolute alarm time */
-#define ALRM_TIME_LEFT  m2_l1	/* how many ticks were remaining */
-
 /* Field names for SYS_IRQCTL. */
 #define IRQ_REQUEST     m5_s1	/* what to do? */
 #  define IRQ_SETPOLICY     1	/* manage a slot of the IRQ table */
