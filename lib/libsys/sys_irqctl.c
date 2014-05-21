@@ -13,14 +13,12 @@ int *hook_id;				/* ID of IRQ hook at kernel */
     int s;
     
     m_irq.m_type = SYS_IRQCTL;
-    m_irq.IRQ_REQUEST = req;
-    m_irq.IRQ_VECTOR = irq_vec;
-    m_irq.IRQ_POLICY = policy;
-    m_irq.IRQ_HOOK_ID = *hook_id;
+    m_irq.m_lsys_krn_sys_irqctl.request = req;
+    m_irq.m_lsys_krn_sys_irqctl.vector = irq_vec;
+    m_irq.m_lsys_krn_sys_irqctl.policy = policy;
+    m_irq.m_lsys_krn_sys_irqctl.hook_id = *hook_id;
     
     s = _kernel_call(SYS_IRQCTL, &m_irq);
-    if (req == IRQ_SETPOLICY) *hook_id = m_irq.IRQ_HOOK_ID;
+    if (req == IRQ_SETPOLICY) *hook_id = m_irq.m_krn_lsys_sys_irqctl.hook_id;
     return(s);
 }
-
-

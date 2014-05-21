@@ -702,6 +702,23 @@ _ASSERT_MSG_SIZE(mess_lsys_krn_schedctl);
 
 typedef struct {
 	int request;
+	int vector;
+	int policy;
+	int hook_id;
+
+	uint8_t padding[40];
+} mess_lsys_krn_sys_irqctl;
+_ASSERT_MSG_SIZE(mess_lsys_krn_sys_irqctl);
+
+typedef struct {
+	int hook_id;
+
+	uint8_t padding[52];
+} mess_krn_lsys_sys_irqctl;
+_ASSERT_MSG_SIZE(mess_krn_lsys_sys_irqctl);
+
+typedef struct {
+	int request;
 	long int port;
 	endpoint_t vec_endpt;
 	phys_bytes vec_addr;
@@ -1387,6 +1404,7 @@ typedef struct {
 		mess_sigcalls		m_sigcalls;
 
 		mess_krn_lsys_schedule	m_krn_lsys_schedule;
+		mess_krn_lsys_sys_irqctl m_krn_lsys_sys_irqctl;
 
 		mess_fs_vfs_breadwrite	m_fs_vfs_breadwrite;
 		mess_fs_vfs_chmod	m_fs_vfs_chmod;
@@ -1463,6 +1481,7 @@ typedef struct {
 
 		mess_lsys_krn_schedctl	m_lsys_krn_schedctl;
 		mess_lsys_krn_schedule	m_lsys_krn_schedule;
+		mess_lsys_krn_sys_irqctl m_lsys_krn_sys_irqctl;
 		mess_lsys_krn_sys_memset m_lsys_krn_sys_memset;
 		mess_lsys_krn_sys_sdevio m_lsys_krn_sys_sdevio;
 		mess_lsys_krn_sys_setalarm m_lsys_krn_sys_setalarm;

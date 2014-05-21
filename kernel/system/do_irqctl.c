@@ -2,11 +2,11 @@
  *   m_type:	SYS_IRQCTL
  *
  * The parameters for this kernel call are:
- *    m5_s1:	IRQ_REQUEST	(control operation to perform)	
- *    m5_s2:	IRQ_VECTOR	(irq line that must be controlled)
- *    m5_i1:	IRQ_POLICY	(irq policy allows reenabling interrupts)
- *    m5_l3:	IRQ_HOOK_ID	(provides index to be returned on interrupt)
- *      ,,          ,,          (returns index of irq hook assigned at kernel)
+ *    m_lsys_krn_sys_irqctl.request	(control operation to perform)
+ *    m_lsys_krn_sys_irqctl.vector	(irq line that must be controlled)
+ *    m_lsys_krn_sys_irqctl.policy	(irq policy allows reenabling interrupts)
+ *    m_lsys_krn_sys_irqctl.hook_id	(provides index to be returned on interrupt)
+ *    m_krn_lsys_sys_irqctl.hook_id	(returns index of irq hook assigned at kernel)
  */
 
 #include "kernel/kernel.h"
@@ -33,11 +33,11 @@ int do_irqctl(struct proc * caller, message * m_ptr)
   struct priv *privp;
 
   /* Hook identifiers start at 1 and end at NR_IRQ_HOOKS. */
-  irq_hook_id = (unsigned) m_ptr->IRQ_HOOK_ID - 1;
-  irq_vec = (unsigned) m_ptr->IRQ_VECTOR; 
+  irq_hook_id = m_ptr->m_lsys_krn_sys_irqctl.hook_id - 1;
+  irq_vec = m_ptr->m_lsys_krn_sys_irqctl.vector;
 
   /* See what is requested and take needed actions. */
-  switch(m_ptr->IRQ_REQUEST) {
+  switch(m_ptr->m_lsys_krn_sys_irqctl.request) {
 
   /* Enable or disable IRQs. This is straightforward. */
   case IRQ_ENABLE:           
@@ -45,7 +45,7 @@ int do_irqctl(struct proc * caller, message * m_ptr)
       if (irq_hook_id >= NR_IRQ_HOOKS || irq_hook_id < 0 ||
           irq_hooks[irq_hook_id].proc_nr_e == NONE) return(EINVAL);
       if (irq_hooks[irq_hook_id].proc_nr_e != caller->p_endpoint) return(EPERM);
-      if (m_ptr->IRQ_REQUEST == IRQ_ENABLE) {
+      if (m_ptr->m_lsys_krn_sys_irqctl.request == IRQ_ENABLE) {
           enable_irq(&irq_hooks[irq_hook_id]);	
       }
       else 
@@ -85,7 +85,7 @@ int do_irqctl(struct proc * caller, message * m_ptr)
       /* When setting a policy, the caller must provide an identifier that
        * is returned on the notification message if a interrupt occurs.
        */
-      notify_id = (unsigned) m_ptr->IRQ_HOOK_ID;
+      notify_id = m_ptr->m_lsys_krn_sys_irqctl.hook_id;
       if (notify_id > CHAR_BIT * sizeof(irq_id_t) - 1) return(EINVAL);
 
       /* Try to find an existing mapping to override. */
@@ -111,13 +111,13 @@ int do_irqctl(struct proc * caller, message * m_ptr)
       /* Install the handler. */
       hook_ptr->proc_nr_e = caller->p_endpoint;	/* process to notify */
       hook_ptr->notify_id = notify_id;		/* identifier to pass */   	
-      hook_ptr->policy = m_ptr->IRQ_POLICY;	/* policy for interrupts */
+      hook_ptr->policy = m_ptr->m_lsys_krn_sys_irqctl.policy;	/* policy for interrupts */
       put_irq_handler(hook_ptr, irq_vec, generic_handler);
       DEBUGBASIC(("IRQ %d handler registered by %s / %d\n",
 			      irq_vec, caller->p_name, caller->p_endpoint));
 
       /* Return index of the IRQ hook in use. */
-      m_ptr->IRQ_HOOK_ID = irq_hook_id + 1;
+      m_ptr->m_krn_lsys_sys_irqctl.hook_id = irq_hook_id + 1;
       break;
 
   case IRQ_RMPOLICY:
@@ -133,7 +133,7 @@ int do_irqctl(struct proc * caller, message * m_ptr)
       break;
 
   default:
-      r = EINVAL;				/* invalid IRQ_REQUEST */
+      r = EINVAL;				/* invalid IRQ REQUEST */
   }
   return(r);
 }
@@ -174,4 +174,3 @@ irq_hook_t *hook;
 }
 
 #endif /* USE_IRQCTL */
-

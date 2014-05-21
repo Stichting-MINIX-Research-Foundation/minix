@@ -301,18 +301,14 @@
 #define DIO_VALUE	m2_l2	/* single I/O value */
 
 /* Field names for SYS_IRQCTL. */
-#define IRQ_REQUEST     m5_s1	/* what to do? */
 #  define IRQ_SETPOLICY     1	/* manage a slot of the IRQ table */
 #  define IRQ_RMPOLICY      2	/* remove a slot of the IRQ table */
 #  define IRQ_ENABLE        3	/* enable interrupts */
 #  define IRQ_DISABLE       4	/* disable interrupts */
-#define IRQ_VECTOR	m5_s2   /* irq vector */
-#define IRQ_POLICY	m5_i1   /* options for IRQCTL request */
 #  define IRQ_REENABLE  0x001	/* reenable IRQ line after interrupt */
 #  define IRQ_BYTE      0x100	/* byte values */      
 #  define IRQ_WORD      0x200	/* word values */
 #  define IRQ_LONG      0x400	/* long values */
-#define IRQ_HOOK_ID	m5_l3   /* id of irq hook at kernel */
 
 /* Field names for SYS_ABORT. */
 #define ABRT_HOW	m1_i1	/* RBT_REBOOT, RBT_HALT, etc. */
