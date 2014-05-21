@@ -2,9 +2,9 @@
  *   m_type:	SYS_VDEVIO
  *
  * The parameters for this kernel call are:
- *    m2_i3:	DIO_REQUEST	(request input or output)	
- *    m2_p1:	DIO_VEC_ADDR	(pointer to port/ value pairs)	
- *    m2_i2:	DIO_VEC_SIZE	(number of ports to read or write) 
+ *    m_lsys_krn_sys_vdevio.request	(request input or output)
+ *    m_lsys_krn_sys_vdevio.vec_addr	(pointer to port/ value pairs)
+ *    m_lsys_krn_sys_vdevio.vec_size	(number of ports to read or write)
  */
 
 #include "kernel/system.h"
@@ -42,12 +42,12 @@ int do_vdevio(struct proc * caller, message * m_ptr)
   int r;
     
   /* Get the request, size of the request vector, and check the values. */
-  io_dir = m_ptr->DIO_REQUEST & _DIO_DIRMASK;
-  io_type = m_ptr->DIO_REQUEST & _DIO_TYPEMASK;
+  io_dir = m_ptr->m_lsys_krn_sys_vdevio.request & _DIO_DIRMASK;
+  io_type = m_ptr->m_lsys_krn_sys_vdevio.request & _DIO_TYPEMASK;
   if (io_dir == _DIO_INPUT) io_in = TRUE;
   else if (io_dir == _DIO_OUTPUT) io_in = FALSE;
   else return(EINVAL);
-  if ((vec_size = m_ptr->DIO_VEC_SIZE) <= 0) return(EINVAL);
+  if ((vec_size = m_ptr->m_lsys_krn_sys_vdevio.vec_size) <= 0) return(EINVAL);
   switch (io_type) {
       case _DIO_BYTE:
 	bytes = vec_size * sizeof(pvb_pair_t);
@@ -66,7 +66,7 @@ int do_vdevio(struct proc * caller, message * m_ptr)
   if (bytes > sizeof(vdevio_buf))  return(E2BIG);
 
   /* Copy (port,value)-pairs from user. */
-  if((r=data_copy(caller->p_endpoint, (vir_bytes) m_ptr->DIO_VEC_ADDR,
+  if((r=data_copy(caller->p_endpoint, m_ptr->m_lsys_krn_sys_vdevio.vec_addr,
     KERNEL, (vir_bytes) vdevio_buf, bytes)) != OK)
 	return r;
 
@@ -152,7 +152,7 @@ int do_vdevio(struct proc * caller, message * m_ptr)
   /* Almost done, copy back results for input requests. */
   if (io_in) 
 	if((r=data_copy(KERNEL, (vir_bytes) vdevio_buf,
-	  caller->p_endpoint, (vir_bytes) m_ptr->DIO_VEC_ADDR,
+	  caller->p_endpoint, m_ptr->m_lsys_krn_sys_vdevio.vec_addr,
 	  (phys_bytes) bytes)) != OK)
 		return r;
   return(OK);

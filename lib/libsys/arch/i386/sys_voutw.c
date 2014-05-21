@@ -1,6 +1,5 @@
 #include "syslib.h"
 
-
 /*===========================================================================*
  *                                sys_voutw				     *
  *===========================================================================*/
@@ -10,9 +9,9 @@ int nr_ports;				/* nr of pairs to be processed */
 {
     message m_io;
 
-    m_io.DIO_REQUEST = _DIO_OUTPUT | _DIO_WORD;
-    m_io.DIO_VEC_ADDR = (char *) pvw_pairs;
-    m_io.DIO_VEC_SIZE = nr_ports;
+    m_io.m_lsys_krn_sys_vdevio.request = _DIO_OUTPUT | _DIO_WORD;
+    m_io.m_lsys_krn_sys_vdevio.vec_addr = (vir_bytes)pvw_pairs;
+    m_io.m_lsys_krn_sys_vdevio.vec_size = nr_ports;
     return _kernel_call(SYS_VDEVIO, &m_io);
 }
 

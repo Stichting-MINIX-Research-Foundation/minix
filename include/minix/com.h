@@ -299,8 +299,6 @@
 #   define DIO_SAFE_OUTPUT_LONG     (_DIO_OUTPUT|_DIO_LONG|_DIO_SAFE)
 #define DIO_PORT	m2_l1	/* single port address */
 #define DIO_VALUE	m2_l2	/* single I/O value */
-#define DIO_VEC_ADDR	m2_p1   /* address of buffer or (p,v)-pairs */
-#define DIO_VEC_SIZE	m2_l2   /* number of elements in vector */
 
 /* Field names for SYS_SETALARM. */
 #define ALRM_EXP_TIME   m2_l1	/* expire time for the alarm call */

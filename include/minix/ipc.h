@@ -713,6 +713,15 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_lsys_krn_sys_sdevio);
 
 typedef struct {
+	int request;
+	int vec_size;
+	vir_bytes vec_addr;		/* pv{b,w,l}_pair_t * */
+
+	uint8_t padding[44];
+} mess_lsys_krn_sys_vdevio;
+_ASSERT_MSG_SIZE(mess_lsys_krn_sys_vdevio);
+
+typedef struct {
 	phys_bytes base;
 	phys_bytes count;
 	unsigned long pattern;
@@ -1447,6 +1456,7 @@ typedef struct {
 		mess_lsys_krn_schedule	m_lsys_krn_schedule;
 		mess_lsys_krn_sys_memset m_lsys_krn_sys_memset;
 		mess_lsys_krn_sys_sdevio m_lsys_krn_sys_sdevio;
+		mess_lsys_krn_sys_vdevio m_lsys_krn_sys_vdevio;
 
 		mess_lsys_pci_busc_get_bar m_lsys_pci_busc_get_bar;
 
