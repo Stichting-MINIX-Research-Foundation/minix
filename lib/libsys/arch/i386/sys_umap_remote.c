@@ -22,14 +22,14 @@ phys_bytes *phys_addr;			/* placeholder for result */
      * - In all other cases, should be a valid endpoint (neither ANY nor NONE).
      */
 
-    m.CP_SRC_ENDPT = proc_ep;
-    m.CP_DST_ENDPT = grantee;
-    m.UMAP_SEG = seg;
-    m.CP_SRC_ADDR = vir_addr;
-    m.CP_NR_BYTES = bytes;
+    m.m_lsys_krn_sys_umap.src_endpt = proc_ep;
+    m.m_lsys_krn_sys_umap.dst_endpt = grantee;
+    m.m_lsys_krn_sys_umap.segment = seg;
+    m.m_lsys_krn_sys_umap.src_addr = vir_addr;
+    m.m_lsys_krn_sys_umap.nr_bytes = bytes;
 
     result = _kernel_call(SYS_UMAP_REMOTE, &m);
-    *phys_addr = m.CP_DST_ADDR;
+    *phys_addr = m.m_krn_lsys_sys_umap.dst_addr;
     return(result);
 }
 

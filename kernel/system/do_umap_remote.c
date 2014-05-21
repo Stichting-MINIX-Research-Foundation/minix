@@ -2,12 +2,12 @@
  *   m_type:	SYS_UMAP_REMOTE
  *
  * The parameters for this kernel call are:
- *    m5_i1:	CP_SRC_PROC_NR	(process number)
- *    m5_s1:	UMAP_SEG	(segment where address is: T, D, or S)
- *    m5_l1:	CP_SRC_ADDR	(virtual address)
- *    m5_i2:	CP_DST_ENDPT	(process number of grantee to check access for)
- *    m5_l2:	CP_DST_ADDR	(returns physical address)
- *    m5_l3:	CP_NR_BYTES	(size of datastructure)
+ *   m_lsys_krn_sys_umap.src_endpt	(process number)
+ *   m_lsys_krn_sys_umap.segment	(segment where address is: T, D, or S)
+ *   m_lsys_krn_sys_umap.src_addr	(virtual address)
+ *   m_lsys_krn_sys_umap.dst_endpt	(process number of grantee to check access for)
+ *   m_krn_lsys_sys_umap.dst_addr	(returns physical address)
+ *   m_lsys_krn_sys_umap.nr_bytes	(size of datastructure)
  */
 
 #include "kernel/system.h"
@@ -26,12 +26,12 @@
 int do_umap_remote(struct proc * caller, message * m_ptr)
 {
 /* Map virtual address to physical, for non-kernel processes. */
-  int seg_type = m_ptr->UMAP_SEG & SEGMENT_TYPE;
-  int seg_index = m_ptr->UMAP_SEG & SEGMENT_INDEX;
-  vir_bytes offset = m_ptr->CP_SRC_ADDR;
-  int count = m_ptr->CP_NR_BYTES;
-  int endpt = (int) m_ptr->CP_SRC_ENDPT;
-  endpoint_t grantee = (endpoint_t) m_ptr->CP_DST_ENDPT;
+  int seg_type = m_ptr->m_lsys_krn_sys_umap.segment & SEGMENT_TYPE;
+  int seg_index = m_ptr->m_lsys_krn_sys_umap.segment & SEGMENT_INDEX;
+  vir_bytes offset = m_ptr->m_lsys_krn_sys_umap.src_addr;
+  int count = m_ptr->m_lsys_krn_sys_umap.nr_bytes;
+  endpoint_t endpt = m_ptr->m_lsys_krn_sys_umap.src_endpt;
+  endpoint_t grantee = m_ptr->m_lsys_krn_sys_umap.dst_endpt;
   int proc_nr, proc_nr_grantee;
   phys_bytes phys_addr = 0, lin_addr = 0;
   struct proc *targetpr;
@@ -108,7 +108,7 @@ int do_umap_remote(struct proc * caller, message * m_ptr)
 	return EFAULT;
   }
 
-  m_ptr->CP_DST_ADDR = phys_addr;
+  m_ptr->m_krn_lsys_sys_umap.dst_addr = phys_addr;
   if(phys_addr == 0) {
 	  printf("kernel: umap 0x%x done by %d / %s, pc 0x%lx, 0x%lx -> 0x%lx\n",
 		seg_type, caller->p_endpoint, caller->p_name,

@@ -310,17 +310,7 @@
 #  define IRQ_WORD      0x200	/* word values */
 #  define IRQ_LONG      0x400	/* long values */
 
-/* Field names for _UMAP, _VIRCOPY, _PHYSCOPY. */
-#define CP_SRC_ENDPT	m5_i1	/* process to copy from */
-#define CP_SRC_ADDR	m5_l1	/* address where data come from */
-#define CP_DST_ENDPT	m5_i2	/* process to copy to */
-#define CP_DST_ADDR	m5_l2	/* address where data go to */
-#define CP_NR_BYTES	m5_l3	/* number of bytes to copy */
-#define CP_FLAGS	m5_s2	/* number of bytes to copy */
-
 #define CP_FLAG_TRY	0x01	/* do not transparently map */
-
-#define UMAP_SEG 	m5_s1
 
 /* Field names for SYS_VUMAP. */
 #define VUMAP_ENDPT	m10_i1	/* grant owner, or SELF for local addresses */
