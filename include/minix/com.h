@@ -338,13 +338,7 @@
 #   define GET_REGS	  24	/* get general process registers */
 #   define GET_RUSAGE	  25	/* get resource usage */
 
-/* Field names for SYS_TIMES. */
-#define T_ENDPT		m4_l1	/* process to request time info for */
-#define T_USER_TIME	m4_l1	/* user time consumed by process */
-#define T_SYSTEM_TIME	m4_l2	/* system time consumed by process */
 #define T_BOOTTIME	m4_ll1	/* Boottime in seconds (also for SYS_STIME) */
-#define T_REAL_TICKS	m4_l4	/* number of wall clock ticks since boottime */
-#define T_BOOT_TICKS	m4_l5	/* number of hard clock ticks since boottime */
 
 /* Field names for SYS_SETTIME. */
 #define T_SETTIME_NOW	m4_l2	/* non-zero for immediate, 0 for adjtime */

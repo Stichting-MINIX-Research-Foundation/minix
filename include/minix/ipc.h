@@ -785,6 +785,24 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_lsys_krn_sys_setalarm);
 
 typedef struct {
+	endpoint_t endpt;
+
+	uint8_t padding[52];
+} mess_lsys_krn_sys_times;
+_ASSERT_MSG_SIZE(mess_lsys_krn_sys_times);
+
+typedef struct {
+	clock_t real_ticks;
+	clock_t boot_ticks;
+	clock_t boot_time;
+	clock_t user_time;
+	clock_t system_time;
+
+	uint8_t padding[36];
+} mess_krn_lsys_sys_times;
+_ASSERT_MSG_SIZE(mess_krn_lsys_sys_times);
+
+typedef struct {
 	endpoint_t src_endpt;
 	int segment;
 	vir_bytes src_addr;
@@ -1490,6 +1508,7 @@ typedef struct {
 		mess_krn_lsys_schedule	m_krn_lsys_schedule;
 		mess_krn_lsys_sys_getwhoami m_krn_lsys_sys_getwhoami;
 		mess_krn_lsys_sys_irqctl m_krn_lsys_sys_irqctl;
+		mess_krn_lsys_sys_times	m_krn_lsys_sys_times;
 		mess_krn_lsys_sys_umap	m_krn_lsys_sys_umap;
 		mess_krn_lsys_sys_vumap	m_krn_lsys_sys_vumap;
 
@@ -1576,6 +1595,7 @@ typedef struct {
 		mess_lsys_krn_sys_memset m_lsys_krn_sys_memset;
 		mess_lsys_krn_sys_sdevio m_lsys_krn_sys_sdevio;
 		mess_lsys_krn_sys_setalarm m_lsys_krn_sys_setalarm;
+		mess_lsys_krn_sys_times	m_lsys_krn_sys_times;
 		mess_lsys_krn_sys_umap	m_lsys_krn_sys_umap;
 		mess_lsys_krn_sys_vdevio m_lsys_krn_sys_vdevio;
 		mess_lsys_krn_sys_vumap m_lsys_krn_sys_vumap;

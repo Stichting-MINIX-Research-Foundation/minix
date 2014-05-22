@@ -13,11 +13,11 @@ time_t *boottime;		/* boot time */
   message m;
   int r;
 
-  m.T_ENDPT = proc_ep;
+  m.m_lsys_krn_sys_times.endpt = proc_ep;
   r = _kernel_call(SYS_TIMES, &m);
-  if (user_time) *user_time = m.T_USER_TIME;
-  if (sys_time) *sys_time = m.T_SYSTEM_TIME;
-  if (uptime) *uptime = m.T_BOOT_TICKS;
-  if (boottime) *boottime = m.T_BOOTTIME;
+  if (user_time) *user_time = m.m_krn_lsys_sys_times.user_time;
+  if (sys_time) *sys_time = m.m_krn_lsys_sys_times.system_time;
+  if (uptime) *uptime = m.m_krn_lsys_sys_times.boot_ticks;
+  if (boottime) *boottime = m.m_krn_lsys_sys_times.boot_time;
   return(r);
 }
