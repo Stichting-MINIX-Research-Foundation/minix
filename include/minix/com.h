@@ -313,7 +313,6 @@
 #define CP_FLAG_TRY	0x01	/* do not transparently map */
 
 /* Field names for SYS_GETINFO. */
-#define I_REQUEST      m7_i3	/* what info to get */
 #   define GET_KINFO	   0	/* get kernel information structure */
 #   define GET_IMAGE	   1	/* get system image table */
 #   define GET_PROCTAB	   2	/* get kernel process table */
@@ -338,16 +337,6 @@
 #   define GET_CPUINFO    23    /* get information about cpus */
 #   define GET_REGS	  24	/* get general process registers */
 #   define GET_RUSAGE	  25	/* get resource usage */
-#define I_ENDPT        m7_i4	/* calling process (may only be SELF) */
-#define I_VAL_PTR      m7_p1	/* virtual address at caller */ 
-#define I_VAL_LEN      m7_i1	/* max length of value */
-#define I_VAL_PTR2     m7_p2	/* second virtual address */ 
-#define I_VAL_LEN2_E   m7_i2	/* second length, or proc nr */
-
-/* GET_WHOAMI fields. */
-#define GIWHO_EP	m3_i1
-#define GIWHO_NAME 	m3_ca1
-#define GIWHO_PRIVFLAGS	m3_i2
 
 /* Field names for SYS_TIMES. */
 #define T_ENDPT		m4_l1	/* process to request time info for */

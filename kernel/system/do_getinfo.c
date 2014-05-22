@@ -2,11 +2,17 @@
  *   m_type:	SYS_GETINFO
  *
  * The parameters for this kernel call are:
- *    m1_i3:	I_REQUEST	(what info to get)	
- *    m1_p1:	I_VAL_PTR 	(where to put it)	
- *    m1_i1:	I_VAL_LEN 	(maximum length expected, optional)	
- *    m1_p2:	I_VAL_PTR2	(second, optional pointer)	
- *    m1_i2:	I_VAL_LEN2_E	(second length or process nr)	
+ *   m_lsys_krn_sys_getinfo.request	(what info to get)
+ *   m_lsys_krn_sys_getinfo.val_ptr 	(where to put it)
+ *   m_lsys_krn_sys_getinfo.val_len 	(maximum length expected, optional)
+ *   m_lsys_krn_sys_getinfo.val_ptr2	(second, optional pointer)
+ *   m_lsys_krn_sys_getinfo.val_len2_e	(second length or process nr)
+ *
+ * Upon return of the GETWHOAMI request the following parameters are used:
+ *   m_krn_lsys_sys_getwhoami.endpt	(the caller endpoint)
+ *   m_krn_lsys_sys_getwhoami.privflags	(the caller priviledes)
+ *   m_krn_lsys_sys_getwhoami.name	(the caller process name)
+ *
  */
 
 #include <string.h>
@@ -50,7 +56,7 @@ int do_getinfo(struct proc * caller, message * m_ptr)
   struct rusage r_usage;
 
   /* Set source address and length based on request type. */
-  switch (m_ptr->I_REQUEST) {
+  switch (m_ptr->m_lsys_krn_sys_getinfo.request) {
     case GET_MACHINE: {
         length = sizeof(struct machine);
         src_vir = (vir_bytes) &machine;
@@ -98,24 +104,24 @@ int do_getinfo(struct proc * caller, message * m_ptr)
         break;
     }
     case GET_PROC: {
-        nr_e = (m_ptr->I_VAL_LEN2_E == SELF) ?
-		caller->p_endpoint : m_ptr->I_VAL_LEN2_E;
+        nr_e = (m_ptr->m_lsys_krn_sys_getinfo.val_len2_e == SELF) ?
+		caller->p_endpoint : m_ptr->m_lsys_krn_sys_getinfo.val_len2_e;
 	if(!isokendpt(nr_e, &nr)) return EINVAL; /* validate request */
         length = sizeof(struct proc);
         src_vir = (vir_bytes) proc_addr(nr);
         break;
     }
     case GET_PRIV: {
-        nr_e = (m_ptr->I_VAL_LEN2_E == SELF) ?
-            caller->p_endpoint : m_ptr->I_VAL_LEN2_E;
+        nr_e = (m_ptr->m_lsys_krn_sys_getinfo.val_len2_e == SELF) ?
+            caller->p_endpoint : m_ptr->m_lsys_krn_sys_getinfo.val_len2_e;
         if(!isokendpt(nr_e, &nr)) return EINVAL; /* validate request */
         length = sizeof(struct priv);
         src_vir = (vir_bytes) priv_addr(nr_to_id(nr));
         break;
     }
     case GET_REGS: {
-        nr_e = (m_ptr->I_VAL_LEN2_E == SELF) ?
-            caller->p_endpoint : m_ptr->I_VAL_LEN2_E;
+        nr_e = (m_ptr->m_lsys_krn_sys_getinfo.val_len2_e == SELF) ?
+            caller->p_endpoint : m_ptr->m_lsys_krn_sys_getinfo.val_len2_e;
         if(!isokendpt(nr_e, &nr)) return EINVAL; /* validate request */
         p = proc_addr(nr);
         length = sizeof(p->p_reg);
@@ -124,12 +130,12 @@ int do_getinfo(struct proc * caller, message * m_ptr)
     }
     case GET_WHOAMI: {
 	int len;
-	/* GET_WHOAMI uses m3 and only uses the message contents for info. */
-	m_ptr->GIWHO_EP = caller->p_endpoint;
-	len = MIN(sizeof(m_ptr->GIWHO_NAME), sizeof(caller->p_name))-1;
-	strncpy(m_ptr->GIWHO_NAME, caller->p_name, len);
-	m_ptr->GIWHO_NAME[len] = '\0';
-	m_ptr->GIWHO_PRIVFLAGS = priv(caller)->s_flags;
+	m_ptr->m_krn_lsys_sys_getwhoami.endpt = caller->p_endpoint;
+	len = MIN(sizeof(m_ptr->m_krn_lsys_sys_getwhoami.name),
+		sizeof(caller->p_name))-1;
+	strncpy(m_ptr->m_krn_lsys_sys_getwhoami.name, caller->p_name, len);
+	m_ptr->m_krn_lsys_sys_getwhoami.name[len] = '\0';
+	m_ptr->m_krn_lsys_sys_getwhoami.privflags = priv(caller)->s_flags;
 	return OK;
     }
     case GET_MONPARAMS: {
@@ -151,7 +157,7 @@ int do_getinfo(struct proc * caller, message * m_ptr)
     	break;
     }
     case GET_RANDOMNESS_BIN: {		
-	int bin = m_ptr->I_VAL_LEN2_E;
+	int bin = m_ptr->m_lsys_krn_sys_getinfo.val_len2_e;
 
 	if(bin < 0 || bin >= RANDOM_SOURCES) {
 		printf("SYSTEM: GET_RANDOMNESS_BIN: %d out of range\n", bin);
@@ -185,8 +191,8 @@ int do_getinfo(struct proc * caller, message * m_ptr)
 	struct proc *target = NULL;
 	int target_slot = 0;
 	u64_t usec;
-        nr_e = (m_ptr->I_VAL_LEN2_E == SELF) ?
-            caller->p_endpoint : m_ptr->I_VAL_LEN2_E;
+        nr_e = (m_ptr->m_lsys_krn_sys_getinfo.val_len2_e == SELF) ?
+            caller->p_endpoint : m_ptr->m_lsys_krn_sys_getinfo.val_len2_e;
 
 	if (!isokendpt(nr_e, &target_slot))
 		return EINVAL;
@@ -208,14 +214,18 @@ int do_getinfo(struct proc * caller, message * m_ptr)
 	break;
     }
     default:
-	printf("do_getinfo: invalid request %d\n", m_ptr->I_REQUEST);
+	printf("do_getinfo: invalid request %d\n",
+		m_ptr->m_lsys_krn_sys_getinfo.request);
         return(EINVAL);
   }
 
   /* Try to make the actual copy for the requested data. */
-  if (m_ptr->I_VAL_LEN > 0 && length > m_ptr->I_VAL_LEN) return (E2BIG);
+  if (m_ptr->m_lsys_krn_sys_getinfo.val_len > 0 &&
+	length > m_ptr->m_lsys_krn_sys_getinfo.val_len)
+	return (E2BIG);
+
   r = data_copy_vmcheck(caller, KERNEL, src_vir, caller->p_endpoint,
-	(vir_bytes) m_ptr->I_VAL_PTR, length);
+	m_ptr->m_lsys_krn_sys_getinfo.val_ptr, length);
 
   if(r != OK) return r;
 

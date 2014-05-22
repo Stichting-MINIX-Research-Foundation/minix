@@ -720,6 +720,26 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_lsys_krn_sys_copy);
 
 typedef struct {
+	int request;
+	endpoint_t endpt;
+	vir_bytes val_ptr;
+	int val_len;
+	vir_bytes val_ptr2;
+	int val_len2_e;
+
+	uint8_t padding[32];
+} mess_lsys_krn_sys_getinfo;
+_ASSERT_MSG_SIZE(mess_lsys_krn_sys_getinfo);
+
+typedef struct {
+	endpoint_t endpt;
+	int privflags;
+	char name[48];
+
+} mess_krn_lsys_sys_getwhoami;
+_ASSERT_MSG_SIZE(mess_krn_lsys_sys_getwhoami);
+
+typedef struct {
 	endpoint_t endpt;
 
 	uint8_t padding[52];
@@ -1468,6 +1488,7 @@ typedef struct {
 		mess_sigcalls		m_sigcalls;
 
 		mess_krn_lsys_schedule	m_krn_lsys_schedule;
+		mess_krn_lsys_sys_getwhoami m_krn_lsys_sys_getwhoami;
 		mess_krn_lsys_sys_irqctl m_krn_lsys_sys_irqctl;
 		mess_krn_lsys_sys_umap	m_krn_lsys_sys_umap;
 		mess_krn_lsys_sys_vumap	m_krn_lsys_sys_vumap;
@@ -1549,6 +1570,7 @@ typedef struct {
 		mess_lsys_krn_schedule	m_lsys_krn_schedule;
 		mess_lsys_krn_sys_abort m_lsys_krn_sys_abort;
 		mess_lsys_krn_sys_copy	m_lsys_krn_sys_copy;
+		mess_lsys_krn_sys_getinfo m_lsys_krn_sys_getinfo;
 		mess_lsys_krn_sys_iopenable m_lsys_krn_sys_iopenable;
 		mess_lsys_krn_sys_irqctl m_lsys_krn_sys_irqctl;
 		mess_lsys_krn_sys_memset m_lsys_krn_sys_memset;

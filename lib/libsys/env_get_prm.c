@@ -47,10 +47,10 @@ int env_get_param(const char *key, char *value, int max_len)
 
   /* Get copy of boot monitor parameters. */
   m.m_type = SYS_GETINFO;
-  m.I_REQUEST = GET_MONPARAMS;
-  m.I_ENDPT = SELF;
-  m.I_VAL_LEN = sizeof(mon_params);
-  m.I_VAL_PTR = mon_params;
+  m.m_lsys_krn_sys_getinfo.request = GET_MONPARAMS;
+  m.m_lsys_krn_sys_getinfo.endpt = SELF;
+  m.m_lsys_krn_sys_getinfo.val_len = sizeof(mon_params);
+  m.m_lsys_krn_sys_getinfo.val_ptr = mon_params;
   if ((s=_kernel_call(SYS_GETINFO, &m)) != OK) {
 	printf("SYS_GETINFO: %d (size %u)\n", s, sizeof(mon_params));
 	return(s);

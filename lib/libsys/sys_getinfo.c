@@ -15,12 +15,12 @@ int len2;				/* length or process nr */
 {
     message m;
 
-    m.I_REQUEST = request;
-    m.I_ENDPT = SELF;			/* always store values at caller */
-    m.I_VAL_PTR = ptr;
-    m.I_VAL_LEN = len;
-    m.I_VAL_PTR2 = ptr2;
-    m.I_VAL_LEN2_E = len2;
+    m.m_lsys_krn_sys_getinfo.request = request;
+    m.m_lsys_krn_sys_getinfo.endpt = SELF;	/* always store values at caller */
+    m.m_lsys_krn_sys_getinfo.val_ptr = ptr;
+    m.m_lsys_krn_sys_getinfo.val_len = len;
+    m.m_lsys_krn_sys_getinfo.val_ptr2 = ptr2;
+    m.m_lsys_krn_sys_getinfo.val_len2_e = len2;
 
     return(_kernel_call(SYS_GETINFO, &m));
 }
@@ -35,7 +35,7 @@ int sys_whoami(endpoint_t *who_ep, char *who_name, int len,
 	int r;
 	int lenmin;
 
-	m.I_REQUEST = GET_WHOAMI;
+	m.m_lsys_krn_sys_getinfo.request = GET_WHOAMI;
 
 	if(len < 2)
 		return EINVAL;
@@ -43,12 +43,12 @@ int sys_whoami(endpoint_t *who_ep, char *who_name, int len,
 	if((r = _kernel_call(SYS_GETINFO, &m)) != OK)
 		return r;
 
-	lenmin = MIN((size_t) len, sizeof(m.GIWHO_NAME)) - 1;
+	lenmin = MIN((size_t) len, sizeof(m.m_krn_lsys_sys_getwhoami.name)) - 1;
 
-	strncpy(who_name, m.GIWHO_NAME, lenmin);
+	strncpy(who_name, m.m_krn_lsys_sys_getwhoami.name, lenmin);
 	who_name[lenmin] = '\0';
-	*who_ep = m.GIWHO_EP;
-	*priv_flags = m.GIWHO_PRIVFLAGS;
+	*who_ep = m.m_krn_lsys_sys_getwhoami.endpt;
+	*priv_flags = m.m_krn_lsys_sys_getwhoami.privflags;
 
 	return OK;
 }
