@@ -338,8 +338,6 @@
 #   define GET_REGS	  24	/* get general process registers */
 #   define GET_RUSAGE	  25	/* get resource usage */
 
-#define T_BOOTTIME	m4_ll1	/* Boottime in seconds (also for SYS_STIME) */
-
 /* Field names for SYS_SETTIME. */
 #define T_SETTIME_NOW	m4_l2	/* non-zero for immediate, 0 for adjtime */
 #define T_CLOCK_ID	m4_l3	/* clock to adjust */

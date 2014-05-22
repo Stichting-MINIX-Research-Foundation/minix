@@ -2,7 +2,7 @@
  *   m_type:	SYS_STIME
  *
  * The parameters for this kernel call are:
- *    m4_ll1:	T_BOOTTIME
+ *   m_lsys_krn_sys_stime.boot_time
  */
 
 #include "kernel/system.h"
@@ -14,6 +14,6 @@
  *===========================================================================*/
 int do_stime(struct proc * caller, message * m_ptr)
 {
-  boottime= m_ptr->T_BOOTTIME;
+  boottime = m_ptr->m_lsys_krn_sys_stime.boot_time;
   return(OK);
 }
