@@ -338,12 +338,6 @@
 #   define GET_REGS	  24	/* get general process registers */
 #   define GET_RUSAGE	  25	/* get resource usage */
 
-/* Field names for SYS_SETTIME. */
-#define T_SETTIME_NOW	m4_l2	/* non-zero for immediate, 0 for adjtime */
-#define T_CLOCK_ID	m4_l3	/* clock to adjust */
-#define T_TIME_SEC	m4_ll1	/* time in seconds since 1970 */
-#define T_TIME_NSEC	m4_l5	/* number of nano seconds */
-
 /* Field names for SYS_TRACE, SYS_PRIVCTL, SYS_STATECTL. */
 #define CTL_ENDPT      m2_i1	/* process number of the caller */
 #define CTL_REQUEST    m2_i2	/* server control request */

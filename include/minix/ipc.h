@@ -792,6 +792,16 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_lsys_krn_sys_stime);
 
 typedef struct {
+	time_t sec;		/* time in seconds since 1970 */
+	long int nsec;
+	int now;		/* non-zero for immediate, 0 for adjtime */
+	clockid_t clock_id;
+
+	uint8_t padding[36];
+} mess_lsys_krn_sys_settime;
+_ASSERT_MSG_SIZE(mess_lsys_krn_sys_settime);
+
+typedef struct {
 	endpoint_t endpt;
 
 	uint8_t padding[52];
@@ -1603,6 +1613,7 @@ typedef struct {
 		mess_lsys_krn_sys_sdevio m_lsys_krn_sys_sdevio;
 		mess_lsys_krn_sys_setalarm m_lsys_krn_sys_setalarm;
 		mess_lsys_krn_sys_stime	m_lsys_krn_sys_stime;
+		mess_lsys_krn_sys_settime m_lsys_krn_sys_settime;
 		mess_lsys_krn_sys_times	m_lsys_krn_sys_times;
 		mess_lsys_krn_sys_umap	m_lsys_krn_sys_umap;
 		mess_lsys_krn_sys_vdevio m_lsys_krn_sys_vdevio;
