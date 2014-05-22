@@ -2,14 +2,14 @@
  *   m_type:	SYS_VUMAP
  *
  * The parameters for this kernel call are:
- *   m10_i1:	VUMAP_ENDPT	(grant owner, or SELF for local addresses)
- *   m10_l1:	VUMAP_VADDR	(address of virtual (input) vector)
- *   m10_i2:	VUMAP_VCOUNT	(number of elements in virtual vector)
- *   m10_l2:	VUMAP_OFFSET	(offset into first entry of input vector)
- *   m10_i3:	VUMAP_ACCESS	(safecopy access requested for input)
- *   m10_l3:	VUMAP_PADDR	(address of physical (output) vector)
- *   m10_i4:	VUMAP_PMAX	(maximum number of physical vector elements)
- *   m10_i1:	VUMAP_PCOUNT	(upon return: number of elements filled)
+ *   m_lsys_krn_sys_vumap.endpt		(grant owner, or SELF for local addresses)
+ *   m_lsys_krn_sys_vumap.vaddr		(address of virtual (input) vector)
+ *   m_lsys_krn_sys_vumap.vcount	(number of elements in virtual vector)
+ *   m_lsys_krn_sys_vumap.offset	(offset into first entry of input vector)
+ *   m_lsys_krn_sys_vumap.access	(safecopy access requested for input)
+ *   m_lsys_krn_sys_vumap.paddr		(address of physical (output) vector)
+ *   m_lsys_krn_sys_vumap.pmax		(maximum number of physical vector elements)
+ *   m_krn_lsys_sys_vumap.pcount	(upon return: number of elements filled)
  */
 
 #include "kernel/system.h"
@@ -37,13 +37,13 @@ int do_vumap(struct proc *caller, message *m_ptr)
   endpt = caller->p_endpoint;
 
   /* Retrieve and check input parameters. */
-  source = m_ptr->VUMAP_ENDPT;
-  vaddr = (vir_bytes) m_ptr->VUMAP_VADDR;
-  vcount = m_ptr->VUMAP_VCOUNT;
-  offset = m_ptr->VUMAP_OFFSET;
-  access = m_ptr->VUMAP_ACCESS;
-  paddr = (vir_bytes) m_ptr->VUMAP_PADDR;
-  pmax = m_ptr->VUMAP_PMAX;
+  source = m_ptr->m_lsys_krn_sys_vumap.endpt;
+  vaddr = m_ptr->m_lsys_krn_sys_vumap.vaddr;
+  vcount = m_ptr->m_lsys_krn_sys_vumap.vcount;
+  offset = m_ptr->m_lsys_krn_sys_vumap.offset;
+  access = m_ptr->m_lsys_krn_sys_vumap.access;
+  paddr = m_ptr->m_lsys_krn_sys_vumap.paddr;
+  pmax = m_ptr->m_lsys_krn_sys_vumap.pmax;
 
   if (vcount <= 0 || pmax <= 0)
 	return EINVAL;
@@ -125,7 +125,7 @@ int do_vumap(struct proc *caller, message *m_ptr)
   r = data_copy_vmcheck(caller, KERNEL, (vir_bytes) pvec, endpt, paddr, size);
 
   if (r == OK)
-	m_ptr->VUMAP_PCOUNT = pcount;
+	m_ptr->m_krn_lsys_sys_vumap.pcount = pcount;
 
   return r;
 }

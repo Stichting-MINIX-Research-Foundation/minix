@@ -312,16 +312,6 @@
 
 #define CP_FLAG_TRY	0x01	/* do not transparently map */
 
-/* Field names for SYS_VUMAP. */
-#define VUMAP_ENDPT	m10_i1	/* grant owner, or SELF for local addresses */
-#define VUMAP_VADDR	m10_l1	/* address of virtual (input) vector */
-#define VUMAP_VCOUNT	m10_i2	/* number of elements in virtual vector */
-#define VUMAP_OFFSET	m10_l2	/* offset into first entry of input vector */
-#define VUMAP_ACCESS	m10_i3	/* access requested for input (VUA_ flags) */
-#define VUMAP_PADDR	m10_l3	/* address of physical (output) vector */
-#define VUMAP_PMAX	m10_i4	/* max number of physical vector elements */
-#define VUMAP_PCOUNT	m10_i1	/* upon return: number of elements filled */
-
 /* Field names for SYS_GETINFO. */
 #define I_REQUEST      m7_i3	/* what info to get */
 #   define GET_KINFO	   0	/* get kernel information structure */

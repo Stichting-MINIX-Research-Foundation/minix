@@ -16,19 +16,19 @@ int sys_vumap(
   message m;
   int r;
 
-  m.VUMAP_ENDPT = endpt;
-  m.VUMAP_VADDR = (vir_bytes) vvec;
-  m.VUMAP_VCOUNT = vcount;
-  m.VUMAP_OFFSET = offset;
-  m.VUMAP_ACCESS = access;
-  m.VUMAP_PADDR = (vir_bytes) pvec;
-  m.VUMAP_PMAX = *pcount;
+  m.m_lsys_krn_sys_vumap.endpt = endpt;
+  m.m_lsys_krn_sys_vumap.vaddr = (vir_bytes) vvec;
+  m.m_lsys_krn_sys_vumap.vcount = vcount;
+  m.m_lsys_krn_sys_vumap.offset = offset;
+  m.m_lsys_krn_sys_vumap.access = access;
+  m.m_lsys_krn_sys_vumap.paddr = (vir_bytes) pvec;
+  m.m_lsys_krn_sys_vumap.pmax = *pcount;
 
   r = _kernel_call(SYS_VUMAP, &m);
 
   if (r != OK)
 	return r;
 
-  *pcount = m.VUMAP_PCOUNT;
+  *pcount = m.m_krn_lsys_sys_vumap.pcount;
   return OK;
 }
