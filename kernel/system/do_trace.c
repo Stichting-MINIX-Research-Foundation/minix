@@ -2,10 +2,11 @@
  *   m_type:	SYS_TRACE
  *
  * The parameters for this kernel call are:
- *    m2_i1:	CTL_ENDPT	process that is traced
- *    m2_i2:    CTL_REQUEST	trace request
- *    m2_l1:    CTL_ADDRESS     address at traced process' space
- *    m2_l2:    CTL_DATA        data to be written or returned here
+ *   m_lsys_krn_sys_trace.endpt		process that is traced
+ *   m_lsys_krn_sys_trace.request	trace request
+ *   m_lsys_krn_sys_trace.address	address at traced process' space
+ *   m_lsys_krn_sys_trace.data		data to be written
+ *   m_krn_lsys_sys_trace.data		data to be returned
  */
 
 #include "kernel/system.h"
@@ -44,10 +45,10 @@ int do_trace(struct proc * caller, message * m_ptr)
  */
 
   register struct proc *rp;
-  vir_bytes tr_addr = (vir_bytes) m_ptr->CTL_ADDRESS;
-  long tr_data = m_ptr->CTL_DATA;
-  int tr_request = m_ptr->CTL_REQUEST;
-  int tr_proc_nr_e = m_ptr->CTL_ENDPT, tr_proc_nr;
+  vir_bytes tr_addr = m_ptr->m_lsys_krn_sys_trace.address;
+  long tr_data = m_ptr->m_lsys_krn_sys_trace.data;
+  int tr_request = m_ptr->m_lsys_krn_sys_trace.request;
+  int tr_proc_nr_e = m_ptr->m_lsys_krn_sys_trace.endpt, tr_proc_nr;
   unsigned char ub;
   int i;
 
@@ -93,19 +94,19 @@ int do_trace(struct proc * caller, message * m_ptr)
 
   case T_GETINS:		/* return value from instruction space */
 	COPYFROMPROC(tr_addr, (vir_bytes) &tr_data, sizeof(long));
-	m_ptr->CTL_DATA = tr_data;
+	m_ptr->m_lsys_krn_sys_trace.data = tr_data;
 	break;
 
   case T_GETDATA:		/* return value from data space */
 	COPYFROMPROC(tr_addr, (vir_bytes) &tr_data, sizeof(long));
-	m_ptr->CTL_DATA= tr_data;
+	m_ptr->m_lsys_krn_sys_trace.data= tr_data;
 	break;
 
   case T_GETUSER:		/* return value from process table */
 	if ((tr_addr & (sizeof(long) - 1)) != 0) return(EFAULT);
 
 	if (tr_addr <= sizeof(struct proc) - sizeof(long)) {
-		m_ptr->CTL_DATA = *(long *) ((char *) rp + (int) tr_addr);
+		m_ptr->m_lsys_krn_sys_trace.data = *(long *) ((char *) rp + (int) tr_addr);
 		break;
 	}
 
@@ -117,17 +118,17 @@ int do_trace(struct proc * caller, message * m_ptr)
 
 	if (tr_addr > sizeof(struct priv) - sizeof(long)) return(EFAULT);
 
-	m_ptr->CTL_DATA = *(long *) ((char *) rp->p_priv + (int) tr_addr);
+	m_ptr->m_lsys_krn_sys_trace.data = *(long *) ((char *) rp->p_priv + (int) tr_addr);
 	break;
 
   case T_SETINS:		/* set value in instruction space */
 	COPYTOPROC(tr_addr, (vir_bytes) &tr_data, sizeof(long));
-	m_ptr->CTL_DATA = 0;
+	m_ptr->m_krn_lsys_sys_trace.data = 0;
 	break;
 
   case T_SETDATA:			/* set value in data space */
 	COPYTOPROC(tr_addr, (vir_bytes) &tr_data, sizeof(long));
-	m_ptr->CTL_DATA = 0;
+	m_ptr->m_krn_lsys_sys_trace.data = 0;
 	break;
 
   case T_SETUSER:			/* set value in process table */
@@ -147,14 +148,13 @@ int do_trace(struct proc * caller, message * m_ptr)
 	    i == (int) &((struct proc *) 0)->p_reg.fs ||
 	    i == (int) &((struct proc *) 0)->p_reg.ss)
 		return(EFAULT);
-#endif
-#if defined(__i386__)
+
 	if (i == (int) &((struct proc *) 0)->p_reg.psw)
 		/* only selected bits are changeable */
 		SETPSW(rp, tr_data);
 	else
 		*(reg_t *) ((char *) &rp->p_reg + i) = (reg_t) tr_data;
-#else 
+#elif defined(__arm__)
 	if (i == (int) &((struct proc *) 0)->p_reg.psr) {
 		/* only selected bits are changeable */
 		SET_USR_PSR(rp, tr_data);
@@ -162,7 +162,7 @@ int do_trace(struct proc * caller, message * m_ptr)
 		*(reg_t *) ((char *) &rp->p_reg + i) = (reg_t) tr_data;
 	}
 #endif
-	m_ptr->CTL_DATA = 0;
+	m_ptr->m_krn_lsys_sys_trace.data = 0;
 	break;
 
   case T_DETACH:		/* detach tracer */
@@ -171,30 +171,30 @@ int do_trace(struct proc * caller, message * m_ptr)
 	/* fall through */
   case T_RESUME:		/* resume execution */
 	RTS_UNSET(rp, RTS_P_STOP);
-	m_ptr->CTL_DATA = 0;
+	m_ptr->m_krn_lsys_sys_trace.data = 0;
 	break;
 
   case T_STEP:			/* set trace bit */
 	rp->p_misc_flags |= MF_STEP;
 	RTS_UNSET(rp, RTS_P_STOP);
-	m_ptr->CTL_DATA = 0;
+	m_ptr->m_krn_lsys_sys_trace.data = 0;
 	break;
 
   case T_SYSCALL:		/* trace system call */
 	rp->p_misc_flags |= MF_SC_TRACE;
 	RTS_UNSET(rp, RTS_P_STOP);
-	m_ptr->CTL_DATA = 0;
+	m_ptr->m_krn_lsys_sys_trace.data = 0;
 	break;
 
   case T_READB_INS:		/* get value from instruction space */
 	COPYFROMPROC(tr_addr, (vir_bytes) &ub, 1);
-	m_ptr->CTL_DATA = ub;
+	m_ptr->m_krn_lsys_sys_trace.data = ub;
 	break;
 
   case T_WRITEB_INS:		/* set value in instruction space */
 	ub = (unsigned char) (tr_data & 0xff);
 	COPYTOPROC(tr_addr, (vir_bytes) &ub, 1);
-	m_ptr->CTL_DATA = 0;
+	m_ptr->m_krn_lsys_sys_trace.data = 0;
 	break;
 
   default:

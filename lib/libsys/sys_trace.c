@@ -8,11 +8,11 @@ long addr, *data_p;
   message m;
   int r;
 
-  m.CTL_ENDPT = proc_ep;
-  m.CTL_REQUEST = req;
-  m.CTL_ADDRESS = addr;
-  if (data_p) m.CTL_DATA = *data_p;
+  m.m_lsys_krn_sys_trace.endpt = proc_ep;
+  m.m_lsys_krn_sys_trace.request = req;
+  m.m_lsys_krn_sys_trace.address = addr;
+  if (data_p) m.m_lsys_krn_sys_trace.data = *data_p;
   r = _kernel_call(SYS_TRACE, &m);
-  if (data_p) *data_p = m.CTL_DATA;
+  if (data_p) *data_p = m.m_krn_lsys_sys_trace.data;
   return(r);
 }

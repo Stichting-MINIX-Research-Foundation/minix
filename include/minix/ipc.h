@@ -820,6 +820,23 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_krn_lsys_sys_times);
 
 typedef struct {
+	int request;
+	endpoint_t endpt;
+	vir_bytes address;
+	long int data;
+
+	uint8_t padding[40];
+} mess_lsys_krn_sys_trace;
+_ASSERT_MSG_SIZE(mess_lsys_krn_sys_trace);
+
+typedef struct {
+	long int data;
+
+	uint8_t padding[52];
+} mess_krn_lsys_sys_trace;
+_ASSERT_MSG_SIZE(mess_krn_lsys_sys_trace);
+
+typedef struct {
 	endpoint_t src_endpt;
 	int segment;
 	vir_bytes src_addr;
@@ -1526,6 +1543,7 @@ typedef struct {
 		mess_krn_lsys_sys_getwhoami m_krn_lsys_sys_getwhoami;
 		mess_krn_lsys_sys_irqctl m_krn_lsys_sys_irqctl;
 		mess_krn_lsys_sys_times	m_krn_lsys_sys_times;
+		mess_krn_lsys_sys_trace	m_krn_lsys_sys_trace;
 		mess_krn_lsys_sys_umap	m_krn_lsys_sys_umap;
 		mess_krn_lsys_sys_vumap	m_krn_lsys_sys_vumap;
 
@@ -1615,6 +1633,7 @@ typedef struct {
 		mess_lsys_krn_sys_stime	m_lsys_krn_sys_stime;
 		mess_lsys_krn_sys_settime m_lsys_krn_sys_settime;
 		mess_lsys_krn_sys_times	m_lsys_krn_sys_times;
+		mess_lsys_krn_sys_trace	m_lsys_krn_sys_trace;
 		mess_lsys_krn_sys_umap	m_lsys_krn_sys_umap;
 		mess_lsys_krn_sys_vdevio m_lsys_krn_sys_vdevio;
 		mess_lsys_krn_sys_vumap m_lsys_krn_sys_vumap;
