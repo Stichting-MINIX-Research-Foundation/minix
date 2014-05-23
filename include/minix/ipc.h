@@ -785,6 +785,13 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_lsys_krn_sys_setalarm);
 
 typedef struct {
+	int request;
+
+	uint8_t padding[52];
+} mess_lsys_krn_sys_statectl;
+_ASSERT_MSG_SIZE(mess_lsys_krn_sys_statectl);
+
+typedef struct {
 	time_t boot_time;
 
 	uint8_t padding[48];
@@ -1630,6 +1637,7 @@ typedef struct {
 		mess_lsys_krn_sys_memset m_lsys_krn_sys_memset;
 		mess_lsys_krn_sys_sdevio m_lsys_krn_sys_sdevio;
 		mess_lsys_krn_sys_setalarm m_lsys_krn_sys_setalarm;
+		mess_lsys_krn_sys_statectl m_lsys_krn_sys_statectl;
 		mess_lsys_krn_sys_stime	m_lsys_krn_sys_stime;
 		mess_lsys_krn_sys_settime m_lsys_krn_sys_settime;
 		mess_lsys_krn_sys_times	m_lsys_krn_sys_times;
