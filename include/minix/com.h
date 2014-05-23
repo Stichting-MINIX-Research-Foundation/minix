@@ -351,10 +351,6 @@
 #define SYS_PRIV_UPDATE_SYS	9	/* Update a sys privilege structure. */
 #define SYS_PRIV_YIELD	       10	/* Allow process to run and suspend */
 
-/* Field names for SYS_SETGRANT */
-#define SG_ADDR		m2_p1	/* address */
-#define SG_SIZE		m2_i2	/* no. of entries */
-
 /* Field names for SYS_FORK, _EXEC, _EXIT, GETMCONTEXT, SETMCONTEXT.*/
 #define PR_ENDPT        m1_i1	/* indicates a process */
 #define PR_PRIORITY     m1_i2	/* process priority */

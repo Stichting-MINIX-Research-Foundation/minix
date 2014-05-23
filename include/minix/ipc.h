@@ -796,6 +796,14 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_lsys_krn_sys_setalarm);
 
 typedef struct {
+	vir_bytes addr;			/* cp_grant_t * */
+	int size;
+
+	uint8_t padding[48];
+} mess_lsys_krn_sys_setgrant;
+_ASSERT_MSG_SIZE(mess_lsys_krn_sys_setgrant);
+
+typedef struct {
 	int request;
 
 	uint8_t padding[52];
@@ -1649,6 +1657,7 @@ typedef struct {
 		mess_lsys_krn_sys_privctl m_lsys_krn_sys_privctl;
 		mess_lsys_krn_sys_sdevio m_lsys_krn_sys_sdevio;
 		mess_lsys_krn_sys_setalarm m_lsys_krn_sys_setalarm;
+		mess_lsys_krn_sys_setgrant m_lsys_krn_sys_setgrant;
 		mess_lsys_krn_sys_statectl m_lsys_krn_sys_statectl;
 		mess_lsys_krn_sys_stime	m_lsys_krn_sys_stime;
 		mess_lsys_krn_sys_settime m_lsys_krn_sys_settime;

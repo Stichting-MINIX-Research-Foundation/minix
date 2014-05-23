@@ -2,8 +2,8 @@
  *   m_type:	SYS_SETGRANT
  *
  * The parameters for this kernel call are:
- *      SG_ADDR	address of grant table in own address space
- *	SG_SIZE	number of entries
+ *   m_lsys_krn_sys_setgrant.addr    address of grant table in own address space
+ *   m_lsys_krn_sys_setgrant.size    number of entries
  */
 
 #include "kernel/system.h"
@@ -21,8 +21,8 @@ int do_setgrant(struct proc * caller, message * m_ptr)
 		r = EPERM;
 	} else {
 		_K_SET_GRANT_TABLE(caller,
-			(vir_bytes) m_ptr->SG_ADDR,
-			m_ptr->SG_SIZE);
+			m_ptr->m_lsys_krn_sys_setgrant.addr,
+			m_ptr->m_lsys_krn_sys_setgrant.size);
 		r = OK;
 	}
 
