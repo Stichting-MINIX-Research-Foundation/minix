@@ -2,9 +2,11 @@
  *   m_type:	SYS_PRIVCTL
  *
  * The parameters for this kernel call are:
- *    m2_i1:	CTL_ENDPT 	(process endpoint of target)
- *    m2_i2:	CTL_REQUEST	(privilege control request)
- *    m2_p1:	CTL_ARG_PTR	(pointer to request data)
+ *   m_lsys_krn_sys_privctl.endpt		(process endpoint of target)
+ *   m_lsys_krn_sys_privctl.request		(privilege control request)
+ *   m_lsys_krn_sys_privctl.arg_ptr		(pointer to request data)
+ *   m.m_lsys_krn_sys_privctl.phys_start
+ *   m.m_lsys_krn_sys_privctl.phys_len
  */
 
 #include "kernel/system.h"
@@ -44,11 +46,13 @@ int do_privctl(struct proc * caller, message * m_ptr)
    * forks. 
    */
   if (! (priv(caller)->s_flags & SYS_PROC)) return(EPERM);
-  if(m_ptr->CTL_ENDPT == SELF) okendpt(caller->p_endpoint, &proc_nr);
-  else if(!isokendpt(m_ptr->CTL_ENDPT, &proc_nr)) return(EINVAL);
+  if(m_ptr->m_lsys_krn_sys_privctl.endpt == SELF) okendpt(caller->p_endpoint,
+	&proc_nr);
+  else if(!isokendpt(m_ptr->m_lsys_krn_sys_privctl.endpt, &proc_nr))
+	return(EINVAL);
   rp = proc_addr(proc_nr);
 
-  switch(m_ptr->CTL_REQUEST)
+  switch(m_ptr->m_lsys_krn_sys_privctl.request)
   {
   case SYS_PRIV_ALLOW:
 	/* Allow process to run. Make sure its privilege structure has already
@@ -81,11 +85,12 @@ int do_privctl(struct proc * caller, message * m_ptr)
 
 	/* Check whether a static or dynamic privilege id must be allocated. */
 	priv_id = NULL_PRIV_ID;
-	if (m_ptr->CTL_ARG_PTR)
+	if (m_ptr->m_lsys_krn_sys_privctl.arg_ptr)
 	{
 		/* Copy privilege structure from caller */
-		if((r=data_copy(caller->p_endpoint, (vir_bytes) m_ptr->CTL_ARG_PTR,
-			KERNEL, (vir_bytes) &priv, sizeof(priv))) != OK)
+		if((r=data_copy(caller->p_endpoint,
+			m_ptr->m_lsys_krn_sys_privctl.arg_ptr, KERNEL,
+			(vir_bytes) &priv, sizeof(priv))) != OK)
 			return r;
 
 		/* See if the caller wants to assign a static privilege id. */
@@ -147,7 +152,7 @@ int do_privctl(struct proc * caller, message * m_ptr)
 	priv(rp)->s_grant_entries= 0;
 
 	/* Override defaults if the caller has supplied a privilege structure. */
-	if (m_ptr->CTL_ARG_PTR)
+	if (m_ptr->m_lsys_krn_sys_privctl.arg_ptr)
 	{
 		if((r = update_priv(rp, &priv)) != OK) {
 			return r;
@@ -185,7 +190,7 @@ int do_privctl(struct proc * caller, message * m_ptr)
 #endif
 
 	/* Get the I/O range */
-	data_copy(caller->p_endpoint, (vir_bytes) m_ptr->CTL_ARG_PTR,
+	data_copy(caller->p_endpoint, m_ptr->m_lsys_krn_sys_privctl.arg_ptr,
 		KERNEL, (vir_bytes) &io_range, sizeof(io_range));
 	priv(rp)->s_flags |= CHECK_IO_PORT;	/* Check I/O accesses */
 
@@ -217,8 +222,9 @@ int do_privctl(struct proc * caller, message * m_ptr)
 		return EPERM;
 
 	/* Get the memory range */
-	if((r=data_copy(caller->p_endpoint, (vir_bytes) m_ptr->CTL_ARG_PTR,
-		KERNEL, (vir_bytes) &mem_range, sizeof(mem_range))) != OK)
+	if((r=data_copy(caller->p_endpoint,
+		m_ptr->m_lsys_krn_sys_privctl.arg_ptr, KERNEL,
+		(vir_bytes) &mem_range, sizeof(mem_range))) != OK)
 		return r;
 	priv(rp)->s_flags |= CHECK_MEM;	/* Check memory mappings */
 
@@ -250,7 +256,7 @@ int do_privctl(struct proc * caller, message * m_ptr)
 	if (!(priv(rp)->s_flags & SYS_PROC))
 		return EPERM;
 
-	data_copy(caller->p_endpoint, (vir_bytes) m_ptr->CTL_ARG_PTR,
+	data_copy(caller->p_endpoint, m_ptr->m_lsys_krn_sys_privctl.arg_ptr,
 		KERNEL, (vir_bytes) &irq, sizeof(irq));
 	priv(rp)->s_flags |= CHECK_IRQ;	/* Check IRQs */
 
@@ -277,8 +283,8 @@ int do_privctl(struct proc * caller, message * m_ptr)
 	/* See if a certain process is allowed to map in certain physical
 	 * memory.
 	 */
-	addr = (phys_bytes) m_ptr->CTL_PHYSSTART;
-	limit = addr + (phys_bytes) m_ptr->CTL_PHYSLEN - 1;
+	addr = (phys_bytes) m_ptr->m_lsys_krn_sys_privctl.phys_start;
+	limit = addr + (phys_bytes) m_ptr->m_lsys_krn_sys_privctl.phys_len - 1;
 	if(limit < addr)
 		return EPERM;
 	if(!(sp = priv(rp)))
@@ -295,11 +301,12 @@ int do_privctl(struct proc * caller, message * m_ptr)
 
   case SYS_PRIV_UPDATE_SYS:
 	/* Update the privilege structure of a system process. */
-	if(!m_ptr->CTL_ARG_PTR) return EINVAL;
+	if(!m_ptr->m_lsys_krn_sys_privctl.arg_ptr) return EINVAL;
 
 	/* Copy privilege structure from caller */
-	if((r=data_copy(caller->p_endpoint, (vir_bytes) m_ptr->CTL_ARG_PTR,
-		KERNEL, (vir_bytes) &priv, sizeof(priv))) != OK)
+	if((r=data_copy(caller->p_endpoint,
+		m_ptr->m_lsys_krn_sys_privctl.arg_ptr, KERNEL,
+		(vir_bytes) &priv, sizeof(priv))) != OK)
 		return r;
 
 	/* Override settings in existing privilege structure. */
@@ -310,7 +317,8 @@ int do_privctl(struct proc * caller, message * m_ptr)
 	return(OK);
 
   default:
-	printf("do_privctl: bad request %d\n", m_ptr->CTL_REQUEST);
+	printf("do_privctl: bad request %d\n",
+		m_ptr->m_lsys_krn_sys_privctl.request);
 	return EINVAL;
   }
 }

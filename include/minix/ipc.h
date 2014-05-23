@@ -765,6 +765,17 @@ _ASSERT_MSG_SIZE(mess_krn_lsys_sys_irqctl);
 
 typedef struct {
 	int request;
+	endpoint_t endpt;
+	vir_bytes arg_ptr;
+	phys_bytes phys_start;
+	phys_bytes phys_len;
+
+	uint8_t padding[36];
+} mess_lsys_krn_sys_privctl;
+_ASSERT_MSG_SIZE(mess_lsys_krn_sys_privctl);
+
+typedef struct {
+	int request;
 	long int port;
 	endpoint_t vec_endpt;
 	phys_bytes vec_addr;
@@ -1635,6 +1646,7 @@ typedef struct {
 		mess_lsys_krn_sys_iopenable m_lsys_krn_sys_iopenable;
 		mess_lsys_krn_sys_irqctl m_lsys_krn_sys_irqctl;
 		mess_lsys_krn_sys_memset m_lsys_krn_sys_memset;
+		mess_lsys_krn_sys_privctl m_lsys_krn_sys_privctl;
 		mess_lsys_krn_sys_sdevio m_lsys_krn_sys_sdevio;
 		mess_lsys_krn_sys_setalarm m_lsys_krn_sys_setalarm;
 		mess_lsys_krn_sys_statectl m_lsys_krn_sys_statectl;

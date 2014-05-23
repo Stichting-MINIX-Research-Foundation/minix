@@ -338,17 +338,6 @@
 #   define GET_REGS	  24	/* get general process registers */
 #   define GET_RUSAGE	  25	/* get resource usage */
 
-/* Field names for SYS_TRACE, SYS_PRIVCTL, SYS_STATECTL. */
-#define CTL_ENDPT      m2_i1	/* process number of the caller */
-#define CTL_REQUEST    m2_i2	/* server control request */
-#define CTL_ARG_PTR    m2_p1	/* pointer to argument */
-#define CTL_ADDRESS    m2_l1	/* address at traced process' space */
-#define CTL_DATA       m2_l2	/* data field for tracing */
-
-/* SYS_PRIVCTL with CTL_REQUEST == SYS_PRIV_QUERY_MEM */
-#define CTL_PHYSSTART  m2_l1	/* physical memory start in bytes*/
-#define CTL_PHYSLEN    m2_l2	/* length in bytes */
-
 /* Subfunctions for SYS_PRIVCTL */
 #define SYS_PRIV_ALLOW		1	/* Allow process to run */
 #define SYS_PRIV_DISALLOW	2	/* Disallow process to run */
