@@ -112,6 +112,7 @@
 ./etc/system.conf			minix-sys
 ./etc/system.conf.d			minix-sys
 ./etc/system.conf.d/ipc			minix-sys
+./etc/system.conf.d/usb_storage		minix-sys
 ./etc/termcap				minix-sys
 ./etc/ttys				minix-sys
 ./etc/utmp				minix-sys
@@ -4935,6 +4936,7 @@
 ./usr/sbin/tty				minix-sys
 ./usr/sbin/uds				minix-sys
 ./usr/sbin/unlink			minix-sys
+./usr/sbin/usb_storage			minix-sys
 ./usr/sbin/user				minix-sys
 ./usr/sbin/useradd			minix-sys
 ./usr/sbin/userdel			minix-sys

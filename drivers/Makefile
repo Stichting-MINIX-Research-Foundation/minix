@@ -13,6 +13,7 @@ SUBDIR= hello \
 	random \
 	tty \
 	uds \
+	usb_storage \
 	vnd \
 	readclock
 
