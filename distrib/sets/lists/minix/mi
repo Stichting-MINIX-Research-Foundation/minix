@@ -1094,6 +1094,8 @@
 ./usr/include/libelf.h			minix-sys
 ./usr/include/libexec.h			minix-sys
 ./usr/include/libgen.h			minix-sys
+./usr/include/libdde			minix-sys
+./usr/include/libdde/usb_server.h	minix-sys
 ./usr/include/lib.h			minix-sys
 ./usr/include/libutil.h			minix-sys
 ./usr/include/limits.h			minix-sys

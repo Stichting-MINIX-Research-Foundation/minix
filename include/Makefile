@@ -59,6 +59,7 @@ SUBDIR+=	../common/include/prop
 SUBDIR+= 	arch sys minix
 SUBDIR+= 	net
 SUBDIR+= 	ddekit
+SUBDIR+= 	libdde
 .endif # defined(__MINIX)
 SUBDIR+=	../common/include/ppath
 
