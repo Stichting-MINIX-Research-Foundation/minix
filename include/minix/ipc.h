@@ -733,6 +733,14 @@ _ASSERT_MSG_SIZE(mess_lsys_krn_sys_getinfo);
 
 typedef struct {
 	endpoint_t endpt;
+	vir_bytes ctx_ptr;
+
+	uint8_t padding[48];
+} mess_lsys_krn_sys_getmcontext;
+_ASSERT_MSG_SIZE(mess_lsys_krn_sys_getmcontext);
+
+typedef struct {
+	endpoint_t endpt;
 	int privflags;
 	char name[48];
 
@@ -802,6 +810,14 @@ typedef struct {
 	uint8_t padding[48];
 } mess_lsys_krn_sys_setgrant;
 _ASSERT_MSG_SIZE(mess_lsys_krn_sys_setgrant);
+
+typedef struct {
+	endpoint_t endpt;
+	vir_bytes ctx_ptr;
+
+	uint8_t padding[48];
+} mess_lsys_krn_sys_setmcontext;
+_ASSERT_MSG_SIZE(mess_lsys_krn_sys_setmcontext);
 
 typedef struct {
 	int request;
@@ -1651,6 +1667,7 @@ typedef struct {
 		mess_lsys_krn_sys_abort m_lsys_krn_sys_abort;
 		mess_lsys_krn_sys_copy	m_lsys_krn_sys_copy;
 		mess_lsys_krn_sys_getinfo m_lsys_krn_sys_getinfo;
+		mess_lsys_krn_sys_getmcontext m_lsys_krn_sys_getmcontext;
 		mess_lsys_krn_sys_iopenable m_lsys_krn_sys_iopenable;
 		mess_lsys_krn_sys_irqctl m_lsys_krn_sys_irqctl;
 		mess_lsys_krn_sys_memset m_lsys_krn_sys_memset;
@@ -1658,6 +1675,7 @@ typedef struct {
 		mess_lsys_krn_sys_sdevio m_lsys_krn_sys_sdevio;
 		mess_lsys_krn_sys_setalarm m_lsys_krn_sys_setalarm;
 		mess_lsys_krn_sys_setgrant m_lsys_krn_sys_setgrant;
+		mess_lsys_krn_sys_setmcontext m_lsys_krn_sys_setmcontext;
 		mess_lsys_krn_sys_statectl m_lsys_krn_sys_statectl;
 		mess_lsys_krn_sys_stime	m_lsys_krn_sys_stime;
 		mess_lsys_krn_sys_settime m_lsys_krn_sys_settime;

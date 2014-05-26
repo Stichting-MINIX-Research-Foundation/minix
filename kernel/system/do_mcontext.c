@@ -2,10 +2,13 @@
  *   m_type:	SYS_SETMCONTEXT
  *   m_type:	SYS_GETMCONTEXT
  *
- * The parameters for these kernel calls are:
- *     m1_i1:	PR_ENDPT        # proc endpoint doing call
- *     m1_p1:	PR_MEM_PTR	# pointer to mcontext structure
+ * The parameters for SYS_SETMCONTEXT kernel call are:
+ *   m_lsys_krn_sys_setmcontext.endpt	# proc endpoint doing call
+ *   m_lsys_krn_sys_setmcontext.ctx_ptr	# pointer to mcontext structure
  *
+ * The parameters for SYS_GETMCONTEXT kernel call are:
+ *   m_lsys_krn_sys_getmcontext.endpt	# proc endpoint doing call
+ *   m_lsys_krn_sys_getmcontext.ctx_ptr	# pointer to mcontext structure
  */
 
 #include "kernel/system.h"
@@ -25,7 +28,8 @@ int do_getmcontext(struct proc * caller, message * m_ptr)
   int proc_nr, r;
   mcontext_t mc;
 
-  if (! isokendpt(m_ptr->PR_ENDPT, &proc_nr)) return(EINVAL);
+  if (!isokendpt(m_ptr->m_lsys_krn_sys_getmcontext.endpt, &proc_nr))
+	return(EINVAL);
   if (iskerneln(proc_nr)) return(EPERM);
   rp = proc_addr(proc_nr);
 
@@ -35,7 +39,8 @@ int do_getmcontext(struct proc * caller, message * m_ptr)
 #endif
 
   /* Get the mcontext structure into our address space.  */
-  if ((r = data_copy(m_ptr->PR_ENDPT, (vir_bytes) m_ptr->PR_CTX_PTR, KERNEL,
+  if ((r = data_copy(m_ptr->m_lsys_krn_sys_getmcontext.endpt,
+		m_ptr->m_lsys_krn_sys_getmcontext.ctx_ptr, KERNEL,
 		(vir_bytes) &mc, (phys_bytes) sizeof(mcontext_t))) != OK)
 	return(r);
 
@@ -53,8 +58,9 @@ int do_getmcontext(struct proc * caller, message * m_ptr)
 
 
   /* Copy the mcontext structure to the user's address space. */
-  if ((r = data_copy(KERNEL, (vir_bytes) &mc, m_ptr->PR_ENDPT, 
-	(vir_bytes) m_ptr->PR_CTX_PTR,
+  if ((r = data_copy(KERNEL, (vir_bytes) &mc,
+	m_ptr->m_lsys_krn_sys_getmcontext.endpt,
+	m_ptr->m_lsys_krn_sys_getmcontext.ctx_ptr,
 	(phys_bytes) sizeof(mcontext_t))) != OK)
 	return(r);
 
@@ -73,11 +79,12 @@ int do_setmcontext(struct proc * caller, message * m_ptr)
   int proc_nr, r;
   mcontext_t mc;
 
-  if (!isokendpt(m_ptr->PR_ENDPT, &proc_nr)) return(EINVAL);
+  if (!isokendpt(m_ptr->m_lsys_krn_sys_setmcontext.endpt, &proc_nr)) return(EINVAL);
   rp = proc_addr(proc_nr);
 
   /* Get the mcontext structure into our address space.  */
-  if ((r = data_copy(m_ptr->PR_ENDPT, (vir_bytes) m_ptr->PR_CTX_PTR, KERNEL,
+  if ((r = data_copy(m_ptr->m_lsys_krn_sys_setmcontext.endpt,
+		m_ptr->m_lsys_krn_sys_setmcontext.ctx_ptr, KERNEL,
 		(vir_bytes) &mc, (phys_bytes) sizeof(mcontext_t))) != OK)
 	return(r);
 

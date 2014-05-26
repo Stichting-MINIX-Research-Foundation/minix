@@ -361,7 +361,6 @@
 #define PR_PS_STR_PTR   m1_p4	/* pointer to ps_strings, expected by __start */
 #define PR_FORK_FLAGS	m1_i3	/* optional flags for fork operation */
 #define PR_FORK_MSGADDR m1_p1	/* reply message address of forked child */
-#define PR_CTX_PTR	m1_p1	/* pointer to mcontext_t structure */
 
 /* Constants for exec. FIXME: these do not belong here. */
 #define PMEF_AUXVECTORS	20

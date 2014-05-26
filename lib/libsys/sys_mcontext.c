@@ -9,8 +9,8 @@ vir_bytes mcp;			/* where to store context */
   message m;
   int r;
 
-  m.PR_ENDPT = proc;
-  m.PR_CTX_PTR = (char *) mcp;
+  m.m_lsys_krn_sys_getmcontext.endpt = proc;
+  m.m_lsys_krn_sys_getmcontext.ctx_ptr = mcp;
   r = _kernel_call(SYS_GETMCONTEXT, &m);
   return r;
 }
@@ -24,8 +24,8 @@ vir_bytes mcp;			/* where to get context from */
   message m;
   int r;
 
-  m.PR_ENDPT = proc;
-  m.PR_CTX_PTR = (char *) mcp;
+  m.m_lsys_krn_sys_setmcontext.endpt = proc;
+  m.m_lsys_krn_sys_setmcontext.ctx_ptr = mcp;
   r = _kernel_call(SYS_SETMCONTEXT, &m);
   return r;
 }
