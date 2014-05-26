@@ -79,12 +79,12 @@ echo "bootargs=console=$CONSOLE rootdevname=c0d0p1 verbose=$VERBOSE hz=$HZ"
 echo
 echo 'bootminix=setenv bootargs \$bootargs board_name=\$board_name ; echo \$bootargs; go  0x80200000 \\\"$bootargs\\\"'
 echo 
-echo "mmcbootcmd=echo starting from MMC ; mmc part 0; $(fill_cmd "fatload mmc 0:1" "") ; dcache off ; icache off ; run bootminix"
+echo "mmcbootcmd=echo starting from MMC ; mmc part 0; $(fill_cmd "fatload mmc 0:1" "") ; run bootminix"
 echo 
 echo "# Netbooting."
 echo "serverip=192.168.12.10"
 echo "ipaddr=192.168.12.62"
 echo "usbnet_devaddr=e8:03:9a:24:f9:10"
 echo "usbethaddr=e8:03:9a:24:f9:11"
-echo "netbootcmd=echo starting from TFTP;  $(fill_cmd "tftp" "$NETBOOT_PREFIX") ; dcache off ; icache off ; run bootminix"
+echo "netbootcmd=echo starting from TFTP;  $(fill_cmd "tftp" "$NETBOOT_PREFIX") ; run bootminix"
 exit 0
