@@ -173,37 +173,31 @@ autoboot|start)
 	cp /usr/lib/em* /usr/lib/cpp* /lib
     esac
 
-    if [ $ARCH = i386 ]
-    then
-	echo -n "Starting hotplugging infrastructure... "
-	rm -f /var/run/devmand.pid
-	devmand -d /etc/devmand -d /usr/pkg/etc/devmand &
-	echo "done."
-    fi
+    echo -n "Starting hotplugging infrastructure... "
+    rm -f /var/run/devmand.pid
+    devmand -d /etc/devmand -d /usr/pkg/etc/devmand &
+    echo "done."
 
     # Things should be alright now.
     ;;
 down|stop)
     sync
-    if [ $ARCH = i386 ]
+    if [ -f /var/run/devmand.pid ]
     then
-	if [ -f /var/run/devmand.pid ]
-	then
-	    	kill -INT `cat /var/run/devmand.pid`
-		# without this delay the following will 
-        	# be printed in the console
-        	# RS: devman not running?
-        	sleep 1
-    	fi
-	#
-	# usbd needs to be stopped exactly 
-	# at this stage(before stopping devman
-	# and after stopping the services
-	# stated by devmand)
-	if [ -x /usr/pkg/etc/rc.d/usbd ]
-	then 
-    		/usr/pkg/etc/rc.d/usbd stop
-	fi
+	kill -INT `cat /var/run/devmand.pid`
+	# without this delay the following will 
+	# be printed in the console
+	# RS: devman not running?
+	sleep 1
+    fi
+    #
+    # usbd needs to be stopped exactly 
+    # at this stage(before stopping devman
+    # and after stopping the services
+    # stated by devmand)
+    if [ -x /usr/pkg/etc/rc.d/usbd ]
+    then 
+	/usr/pkg/etc/rc.d/usbd stop
     fi
 
     # Tell RS server we're going down.
