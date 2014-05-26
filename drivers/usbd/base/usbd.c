@@ -5,6 +5,8 @@
 #include <ddekit/ddekit.h>		/* ddekit_init */
 #include <ddekit/thread.h>		/* DDEKit threading */
 
+#include <libdde/usb_server.h>		/* DDEKit USB server */
+
 #include <minix/devman.h>		/* Initializing 'devman' */
 #include <minix/sef.h>			/* SEF handling */
 
@@ -22,7 +24,6 @@ static void usbd_server_thread(void *);
 
 /* TODO: No headers for these... */
 extern void ddekit_minix_wait_exit(void); /* dde.c */
-extern void ddekit_usb_server_init(void); /* usb_server.c */
 
 
 /*===========================================================================*
@@ -34,6 +35,7 @@ main(int UNUSED(argc), char * UNUSED(argv[]))
 	int ret_val;
 
 	USB_MSG("Starting USBD");
+	USB_DBG("Built: %s %s", __DATE__, __TIME__);
 
 	/* Basic SEF,DDE,... initialization */
 	usbd_init();

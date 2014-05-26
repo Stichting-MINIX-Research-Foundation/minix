@@ -4,6 +4,7 @@
  */
 
 #include <string.h>			/* memset... */
+#include <time.h>			/* nanosleep */
 
 #include <sys/mman.h>			/* Physical to virtual memory mapping */
 
@@ -13,6 +14,7 @@
 #include <minix/syslib.h>		/* sys_privctl */
 
 #include <usb/hcd_common.h>
+#include <usb/hcd_interface.h>
 #include <usb/usb_common.h>
 
 
@@ -160,6 +162,31 @@ hcd_os_clkconf_release(void)
 
 
 /*===========================================================================*
+ *    hcd_os_nanosleep                                                       *
+ *===========================================================================*/
+void
+hcd_os_nanosleep(int nanosec)
+{
+	struct timespec nanotm;
+
+	DEBUG_DUMP;
+
+	if (nanosec >= HCD_NANO) {
+		nanotm.tv_sec = nanosec / HCD_NANO;
+		nanotm.tv_nsec = nanosec % HCD_NANO;
+	} else {
+		nanotm.tv_sec = 0;
+		nanotm.tv_nsec = nanosec;
+	}
+
+	/* TODO: since it is not likely to be ever interrupted, we do not try
+	 * to sleep for a remaining time in case of signal handling */
+	USB_ASSERT(EXIT_SUCCESS == nanosleep(&nanotm, NULL),
+		"Calling nanosleep() failed");
+}
+
+
+/*===========================================================================*
  *    hcd_init_device                                                        *
  *===========================================================================*/
 int
@@ -211,9 +238,18 @@ hcd_disconnect_device(hcd_device_state * this_device)
  *    hcd_device_wait                                                        *
  *===========================================================================*/
 void
-hcd_device_wait(hcd_device_state * this_device)
+hcd_device_wait(hcd_device_state * this_device, hcd_event event, int ep)
 {
+	hcd_driver_state * drv;
+
 	DEBUG_DUMP;
+
+	drv = (hcd_driver_state *)this_device->driver;
+
+	drv->expected_event = event;
+	drv->expected_endpoint = ep;
+
+	USB_DBG("Waiting for: ev=0x%X, ep=0x%X", (int)event, ep);
 
 	ddekit_sem_down(this_device->lock);
 }
@@ -225,7 +261,21 @@ hcd_device_wait(hcd_device_state * this_device)
 void
 hcd_device_continue(hcd_device_state * this_device)
 {
+	hcd_driver_state * drv;
+
 	DEBUG_DUMP;
+
+	drv = (hcd_driver_state *)this_device->driver;
+
+	/* We need to get what was expected... */
+	USB_ASSERT(drv->current_event == drv->expected_event,
+		"Unexpected event occurred");
+
+	/* ...including endpoint interrupts */
+	if (HCD_EVENT_ENDPOINT == drv->current_event) {
+		USB_ASSERT(drv->current_endpoint == drv->expected_endpoint,
+			"Unexpected endpoint interrupt");
+	}
 
 	ddekit_sem_up(this_device->lock);
 }
@@ -259,6 +309,11 @@ hcd_buffer_to_tree(hcd_reg1 * buf, int len, hcd_configuration * c)
 	while (len > (int)sizeof(*desc)) {
 		/* Check descriptor type */
 		desc = (hcd_descriptor *)buf;
+
+		if (0 == desc->bLength) {
+			USB_MSG("Zero length descriptor");
+			goto PARSE_ERROR;
+		}
 
 		if (UDESC_CONFIG == desc->bDescriptorType) {
 			if (EXIT_SUCCESS != hcd_fill_configuration(buf, len,
@@ -342,6 +397,36 @@ hcd_tree_cleanup(hcd_configuration * c)
 
 
 /*===========================================================================*
+ *    hcd_tree_find_ep                                                       *
+ *===========================================================================*/
+hcd_endpoint *
+hcd_tree_find_ep(hcd_configuration * c, int ep)
+{
+	hcd_interface * i;
+	hcd_endpoint * e;
+	int if_idx;
+	int ep_idx;
+
+	DEBUG_DUMP;
+
+	/* Free if anything was allocated */
+	USB_ASSERT(NULL != c->interface, "No interfaces available");
+	USB_ASSERT(c->num_interfaces > 0, "Interface number error");
+
+	for (if_idx = 0; if_idx < c->num_interfaces; if_idx++) {
+		i = &(c->interface[if_idx]);
+		for (ep_idx = 0; ep_idx < i->num_endpoints; ep_idx++) {
+			e = &(i->endpoint[ep_idx]);
+			if (UE_GET_ADDR(e->descriptor.bEndpointAddress) == ep)
+				return e;
+		}
+	}
+
+	return NULL;
+}
+
+
+/*===========================================================================*
  *    hcd_fill_configuration                                                 *
  *===========================================================================*/
 static int
@@ -385,8 +470,7 @@ hcd_fill_configuration(hcd_reg1 * buf, int len, hcd_configuration * c, int num)
 	USB_DBG("<<CONFIGURATION>>");
 	USB_DBG("bLength %02X",			desc->bLength);
 	USB_DBG("bDescriptorType %02X",		desc->bDescriptorType);
-	USB_DBG("wTotalLength %02X%02X",	desc->wTotalLength[1],
-						desc->wTotalLength[0]);
+	USB_DBG("wTotalLength %04X",		UGETW(desc->wTotalLength));
 	USB_DBG("bNumInterface %02X",		desc->bNumInterface);
 	USB_DBG("bConfigurationValue %02X",	desc->bConfigurationValue);
 	USB_DBG("iConfiguration %02X",		desc->iConfiguration);
@@ -482,8 +566,7 @@ hcd_fill_endpoint(hcd_reg1 * buf, int len, hcd_endpoint * e, int num)
 	USB_DBG("bDescriptorType %02X",		desc->bDescriptorType);
 	USB_DBG("bEndpointAddress %02X",	desc->bEndpointAddress);
 	USB_DBG("bmAttributes %02X",		desc->bmAttributes);
-	USB_DBG("wMaxPacketSize %02X%02X",	desc->wMaxPacketSize[1],
-						desc->wMaxPacketSize[0]);
+	USB_DBG("wMaxPacketSize %04X",		UGETW(desc->wMaxPacketSize));
 	USB_DBG("bInterval %02X",		desc->bInterval);
 
 	return EXIT_SUCCESS;

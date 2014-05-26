@@ -29,19 +29,20 @@ musb_core_config;
 /* Only to be used outside generic HCD code */
 void musb_core_start(void *);
 void musb_core_stop(void *);
-void musb_ep0_config(void *);
 
 
 /* For HCD interface */
 void musb_setup_device(void *, hcd_reg1, hcd_reg1);
-void musb_reset_device(void *);
+int musb_reset_device(void *, hcd_speed *);
 void musb_setup_stage(void *, hcd_ctrlrequest *);
+void musb_bulk_in_stage(void *, hcd_bulkrequest *);
+void musb_bulk_out_stage(void *, hcd_bulkrequest *);
 void musb_in_data_stage(void *);
 void musb_out_data_stage(void *);
 void musb_in_status_stage(void *);
 void musb_out_status_stage(void *);
 int musb_read_data(void *, hcd_reg1 *, int);
-int musb_check_error(void *);
+int musb_check_error(void *, hcd_transfer, hcd_direction);
 
 
 #endif /* !_MUSB_CORE_H_ */

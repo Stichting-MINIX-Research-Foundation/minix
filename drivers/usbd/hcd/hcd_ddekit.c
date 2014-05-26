@@ -7,6 +7,7 @@
 #include <ddekit/usb.h>
 
 #include <usb/hcd_ddekit.h>
+#include <usb/hcd_interface.h>
 #include <usb/usb_common.h>
 
 
@@ -40,7 +41,7 @@ _ddekit_usb_get_manufacturer(struct ddekit_usb_dev * ddev)
 {
 	static const char mfg[] = "UNKNOWN";
 	DEBUG_DUMP;
-	/* TODO: UNUSED won't work */
+	/* TODO: UNUSED for argument won't work */
 	((void)ddev);
 	return (char *)mfg;
 }
@@ -54,7 +55,7 @@ _ddekit_usb_get_product(struct ddekit_usb_dev * ddev)
 {
 	static const char prod[] = "UNKNOWN";
 	DEBUG_DUMP;
-	/* TODO: UNUSED won't work */
+	/* TODO: UNUSED for argument won't work */
 	((void)ddev);
 	return (char *)prod;
 }
@@ -68,7 +69,7 @@ _ddekit_usb_get_serial(struct ddekit_usb_dev * ddev)
 {
 	static const char serial[] = "UNKNOWN";
 	DEBUG_DUMP;
-	/* TODO: UNUSED won't work */
+	/* TODO: UNUSED for argument won't work */
 	((void)ddev);
 	return (char *)serial;
 }
@@ -156,7 +157,7 @@ ddekit_usb_get_device_id(struct ddekit_usb_dev * dev,
 			struct ddekit_usb_device_id * id)
 {
 	DEBUG_DUMP;
-	/* TODO: UNUSED won't work */
+	/* TODO: UNUSED for argument won't work */
 	((void)dev);
 	((void)id);
 	return;
@@ -172,17 +173,19 @@ ddekit_usb_submit_urb(struct ddekit_usb_urb * d_urb)
 {
 	hcd_urb * urb;
 	hcd_device_state * dev;
+	hcd_driver_state * drv;
 
 	DEBUG_DUMP;
 
 	urb = (hcd_urb *)d_urb;
 	dev = (hcd_device_state *)(urb->dev);
+	drv = (hcd_driver_state *)(dev->driver);
 
-	/* TODO: queue URB's */
-	/* Reassign and go to thread */
 	dev->urb = urb;
-	hcd_device_continue(dev);
-	dev->urb = NULL;
+	drv->current_event = HCD_EVENT_URB;
+
+	/* TODO: URB's must be queued somewhere */
+	hcd_handle_event(drv);
 
 	return EXIT_SUCCESS;
 }
@@ -195,7 +198,7 @@ int
 ddekit_usb_cancle_urb(struct ddekit_usb_urb * d_urb)
 {
 	DEBUG_DUMP;
-	/* TODO: UNUSED won't work */
+	/* TODO: UNUSED for argument won't work */
 	((void)d_urb);
 	return EXIT_SUCCESS;
 }

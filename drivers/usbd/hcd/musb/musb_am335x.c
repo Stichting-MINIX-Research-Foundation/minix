@@ -3,7 +3,6 @@
  */
 
 #include <string.h>					/* memset */
-#include <time.h>					/* nanosleep */
 
 #include <usb/hcd_common.h>
 #include <usb/hcd_platforms.h>
@@ -19,17 +18,19 @@
 /*===========================================================================*
  *    AM335x base register defines                                           *
  *===========================================================================*/
-/* Where MUSB core space starts */
-#define AM335X_MUSB_CORE0_BASE_ADDR		0x47401400u
-#define AM335X_MUSB_CORE1_BASE_ADDR		0x47401C00u
-#define AM335X_MUSB_CORE_BASE_LEN		0x400u
+/* Memory placement defines */
+#define AM335X_USBSS_BASE_ADDR			0x47400000u
+#define AM335X_USB0_BASE_OFFSET			0x1000u
+#define AM335X_MUSB_CORE0_BASE_OFFSET		0x1400u
+#define AM335X_USB1_BASE_OFFSET			0x1800u
+#define AM335X_MUSB_CORE1_BASE_OFFSET		0x1C00u
+#define AM335X_USBSS_TOTAL_REG_LEN		0x5000u
 
 
 /*===========================================================================*
  *    AM335x USB specific register defines                                   *
  *===========================================================================*/
 /* SS registers base address */
-#define AM335X_USBSS_BASE_ADDR			0x47400000u
 
 #define AM335X_REG_REVREG			0x000u
 #define AM335X_REG_SYSCONFIG			0x010u
@@ -73,13 +74,6 @@
 #define AM335X_REG_IRQFRAMETHOLDRX13		0x23Cu
 #define AM335X_REG_IRQFRAMEENABLE0		0x240u
 #define AM335X_REG_IRQFRAMEENABLE1		0x244u
-
-/* Length in bytes of SS registers */
-#define AM335X_USBSS_BASE_LEN			AM335X_REG_IRQFRAMEENABLE1 + 4u
-
-/* USBx registers base addresses */
-#define AM335X_USB0_BASE_ADDR			0x47401000u
-#define AM335X_USB1_BASE_ADDR			0x47401800u
 
 #define AM335X_REG_USBXREV			0x00u
 #define AM335X_REG_USBXCTRL			0x14u
@@ -167,6 +161,22 @@
 #define AM335X_VAL_USBXIRQENABLEXXX1_DRVVBUS		HCD_BIT(8)
 #define AM335X_VAL_USBXIRQENABLEXXX1_GENERIC		HCD_BIT(9)
 
+#define AM335X_VAL_USBXIRQENABLEXXX1_TX_FIFO_1		HCD_BIT(17)
+#define AM335X_VAL_USBXIRQENABLEXXX1_TX_FIFO_2		HCD_BIT(18)
+#define AM335X_VAL_USBXIRQENABLEXXX1_TX_FIFO_3		HCD_BIT(19)
+#define AM335X_VAL_USBXIRQENABLEXXX1_TX_FIFO_4		HCD_BIT(20)
+#define AM335X_VAL_USBXIRQENABLEXXX1_TX_FIFO_5		HCD_BIT(21)
+#define AM335X_VAL_USBXIRQENABLEXXX1_TX_FIFO_6		HCD_BIT(22)
+#define AM335X_VAL_USBXIRQENABLEXXX1_TX_FIFO_7		HCD_BIT(23)
+#define AM335X_VAL_USBXIRQENABLEXXX1_TX_FIFO_8		HCD_BIT(24)
+#define AM335X_VAL_USBXIRQENABLEXXX1_TX_FIFO_9		HCD_BIT(25)
+#define AM335X_VAL_USBXIRQENABLEXXX1_TX_FIFO_10		HCD_BIT(26)
+#define AM335X_VAL_USBXIRQENABLEXXX1_TX_FIFO_11		HCD_BIT(27)
+#define AM335X_VAL_USBXIRQENABLEXXX1_TX_FIFO_12		HCD_BIT(28)
+#define AM335X_VAL_USBXIRQENABLEXXX1_TX_FIFO_13		HCD_BIT(29)
+#define AM335X_VAL_USBXIRQENABLEXXX1_TX_FIFO_14		HCD_BIT(30)
+#define AM335X_VAL_USBXIRQENABLEXXX1_TX_FIFO_15		HCD_BIT(31)
+
 #define AM335X_VAL_USBXIRQSTAT1_SUSPEND		HCD_BIT(0)
 #define AM335X_VAL_USBXIRQSTAT1_RESUME		HCD_BIT(1)
 #define AM335X_VAL_USBXIRQSTAT1_RESET_BABBLE	HCD_BIT(2)
@@ -177,9 +187,6 @@
 #define AM335X_VAL_USBXIRQSTAT1_VBUS		HCD_BIT(7)
 #define AM335X_VAL_USBXIRQSTAT1_DRVVBUS		HCD_BIT(8)
 #define AM335X_VAL_USBXIRQSTAT1_GENERIC		HCD_BIT(9)
-
-/* Length in bytes of USBx registers */
-#define AM335X_USBX_BASE_LEN			AM335X_REG_USBXMODE + 4u
 
 /* Helpers for interrupt clearing */
 #define CLEAR_IRQ0(irq0_bit)	HCD_WR4(r, AM335X_REG_USBXIRQSTAT0, (irq0_bit))
@@ -263,6 +270,7 @@ static void musb_am335x_internal_deinit(void);
 static void musb_am335x_irq_init(void *); /* TODO: required by DDEKit */
 static void musb_am335x_usbss_isr(void *);
 static void musb_am335x_usbx_isr(void *);
+static int musb_am335x_irqstat0_to_ep(int);
 
 /* Configuration helpers */
 static void musb_am335x_usb_reset(int);
@@ -289,7 +297,7 @@ musb_am335x_init(void)
 
 	/* Map memory for USBSS */
 	am335x.ss.regs = hcd_os_regs_init(AM335X_USBSS_BASE_ADDR,
-					AM335X_USBSS_BASE_LEN);
+					AM335X_USBSS_TOTAL_REG_LEN);
 
 	if (NULL == am335x.ss.regs)
 		return EXIT_FAILURE;
@@ -312,18 +320,12 @@ musb_am335x_init(void)
 		ctrl->priv.usb_num = AM335X_USB0;
 
 		/* MUSB core addresses for later registering */
-		ctrl->core.regs = hcd_os_regs_init(AM335X_MUSB_CORE0_BASE_ADDR,
-						AM335X_MUSB_CORE_BASE_LEN);
-
-		if (NULL == ctrl->core.regs)
-			return EXIT_FAILURE;
+		ctrl->core.regs = (void*)((hcd_addr)am335x.ss.regs +
+					AM335X_MUSB_CORE0_BASE_OFFSET);
 
 		/* Map AM335X USB0 specific addresses */
-		ctrl->usb.regs = hcd_os_regs_init(AM335X_USB0_BASE_ADDR,
-						AM335X_USBX_BASE_LEN);
-
-		if (NULL == ctrl->usb.regs)
-			return EXIT_FAILURE;
+		ctrl->usb.regs = (void*)((hcd_addr)am335x.ss.regs +
+					AM335X_USB0_BASE_OFFSET);
 
 		/* Attach IRQ to number */
 		if (EXIT_SUCCESS != hcd_os_interrupt_attach(AM335X_USB0_IRQ,
@@ -337,6 +339,8 @@ musb_am335x_init(void)
 		ctrl->driver.setup_device = musb_setup_device;
 		ctrl->driver.reset_device = musb_reset_device;
 		ctrl->driver.setup_stage = musb_setup_stage;
+		ctrl->driver.bulk_in_stage = musb_bulk_in_stage;
+		ctrl->driver.bulk_out_stage = musb_bulk_out_stage;
 		ctrl->driver.in_data_stage = musb_in_data_stage;
 		ctrl->driver.out_data_stage = musb_out_data_stage;
 		ctrl->driver.in_status_stage = musb_in_status_stage;
@@ -356,18 +360,12 @@ musb_am335x_init(void)
 		ctrl->priv.usb_num = AM335X_USB1;
 
 		/* MUSB core addresses for later registering */
-		ctrl->core.regs = hcd_os_regs_init(AM335X_MUSB_CORE1_BASE_ADDR,
-						AM335X_MUSB_CORE_BASE_LEN);
+		ctrl->core.regs = (void*)((hcd_addr)am335x.ss.regs +
+					AM335X_MUSB_CORE1_BASE_OFFSET);
 
-		if (NULL == ctrl->core.regs)
-			return EXIT_FAILURE;
-
-		/* Map AM335X USB1 specific addresses */
-		ctrl->usb.regs = hcd_os_regs_init(AM335X_USB1_BASE_ADDR,
-						AM335X_USBX_BASE_LEN);
-
-		if (NULL == ctrl->usb.regs)
-			return EXIT_FAILURE;
+		/* Map AM335X USB0 specific addresses */
+		ctrl->usb.regs = (void*)((hcd_addr)am335x.ss.regs +
+					AM335X_USB1_BASE_OFFSET);
 
 		/* Attach IRQ to number */
 		if (EXIT_SUCCESS != hcd_os_interrupt_attach(AM335X_USB1_IRQ,
@@ -381,6 +379,8 @@ musb_am335x_init(void)
 		ctrl->driver.setup_device = musb_setup_device;
 		ctrl->driver.reset_device = musb_reset_device;
 		ctrl->driver.setup_stage = musb_setup_stage;
+		ctrl->driver.bulk_in_stage = musb_bulk_in_stage;
+		ctrl->driver.bulk_out_stage = musb_bulk_out_stage;
 		ctrl->driver.in_data_stage = musb_in_data_stage;
 		ctrl->driver.out_data_stage = musb_out_data_stage;
 		ctrl->driver.in_status_stage = musb_in_status_stage;
@@ -404,32 +404,9 @@ musb_am335x_deinit(void)
 	musb_am335x_internal_deinit();
 
 	/* Release maps if anything was assigned */
-#ifdef AM335X_USE_USB0
-	if (NULL != am335x.ctrl[AM335X_USB0].usb.regs)
-		if (EXIT_SUCCESS != hcd_os_regs_deinit(AM335X_USB0_BASE_ADDR,
-							AM335X_USBX_BASE_LEN))
-			USB_MSG("Failed to release USB0 OTG mapping");
-
-	if (NULL != am335x.ctrl[AM335X_USB0].core.regs)
-		if (EXIT_SUCCESS != hcd_os_regs_deinit(
-						AM335X_MUSB_CORE0_BASE_ADDR,
-						AM335X_MUSB_CORE_BASE_LEN))
-			USB_MSG("Failed to release USB0 core mapping");
-#endif
-	if (NULL != am335x.ctrl[AM335X_USB1].usb.regs)
-		if (EXIT_SUCCESS != hcd_os_regs_deinit(AM335X_USB1_BASE_ADDR,
-							AM335X_USBX_BASE_LEN))
-			USB_MSG("Failed to release USB1 OTG mapping");
-
-	if (NULL != am335x.ctrl[AM335X_USB1].core.regs)
-		if (EXIT_SUCCESS != hcd_os_regs_deinit(
-						AM335X_MUSB_CORE1_BASE_ADDR,
-						AM335X_MUSB_CORE_BASE_LEN))
-			USB_MSG("Failed to release USB1 core mapping");
-
 	if (NULL != am335x.ss.regs)
 		if (EXIT_SUCCESS != hcd_os_regs_deinit(AM335X_USBSS_BASE_ADDR,
-							AM335X_USBSS_BASE_LEN))
+						AM335X_USBSS_TOTAL_REG_LEN))
 			USB_MSG("Failed to release USBSS mapping");
 }
 
@@ -449,14 +426,11 @@ musb_am335x_internal_init(void)
 		return EXIT_FAILURE;
 
 	/* TODO: time to stabilize? */
-	{
-		/* Sleep 25ms */
-		struct timespec nanotm = {0, HCD_NANOSLEEP_MSEC(25)};
-		nanosleep(&nanotm, NULL);
-	}
+	/* Sleep 25msec */
+	hcd_os_nanosleep(HCD_NANOSLEEP_MSEC(25));
 
 	/* Read and dump revision register */
-	USB_MSG("Revision (REVREG): %08X",
+	USB_MSG("MUSB revision (REVREG): %08X",
 		(unsigned int)HCD_RD4(am335x.ss.regs, AM335X_REG_REVREG));
 
 	/* Allow OS to handle previously configured USBSS interrupts */
@@ -469,8 +443,6 @@ musb_am335x_internal_init(void)
 	hcd_os_interrupt_enable(AM335X_USB0_IRQ);
 	/* Enable whatever necessary for OTG part of controller */
 	musb_am335x_otg_enable(AM335X_USB0);
-	/* Configure control endpoint EP0 */
-	musb_ep0_config(&(am335x.ctrl[AM335X_USB0].core));
 	/* Start actual MUSB core */
 	musb_core_start(&(am335x.ctrl[AM335X_USB0].core));
 #endif
@@ -481,8 +453,6 @@ musb_am335x_internal_init(void)
 	hcd_os_interrupt_enable(AM335X_USB1_IRQ);
 	/* Enable whatever necessary for OTG part of controller */
 	musb_am335x_otg_enable(AM335X_USB1);
-	/* Configure control endpoint EP0 */
-	musb_ep0_config(&(am335x.ctrl[AM335X_USB1].core));
 	/* Start actual MUSB core */
 	musb_core_start(&(am335x.ctrl[AM335X_USB1].core));
 
@@ -581,8 +551,7 @@ musb_am335x_usbx_isr(void * data)
 	if (irqstat1 & AM335X_VAL_USBXIRQENABLEXXX1_CONNECTED) {
 		USB_DBG("Device connected");
 		CLEAR_IRQ1(AM335X_VAL_USBXIRQENABLEXXX1_CONNECTED);
-		driver->event = HCD_EVENT_CONNECTED;
-		driver->subevent = HCD_SUBEVENT_NONE;
+		driver->current_event = HCD_EVENT_CONNECTED;
 		hcd_handle_event(driver);
 		return;
 	}
@@ -590,17 +559,16 @@ musb_am335x_usbx_isr(void * data)
 	if (irqstat1 & AM335X_VAL_USBXIRQENABLEXXX1_DISCONNECTED) {
 		USB_DBG("Device disconnected");
 		CLEAR_IRQ1(AM335X_VAL_USBXIRQENABLEXXX1_DISCONNECTED);
-		driver->event = HCD_EVENT_DISCONNECTED;
-		driver->subevent = HCD_SUBEVENT_NONE;
+		driver->current_event = HCD_EVENT_DISCONNECTED;
 		hcd_handle_event(driver);
 		return;
 	}
 
-	if (irqstat0 & 0x01) {
-		USB_DBG("EP0 interrupt");
-		CLEAR_IRQ0(0x01);
-		driver->event = HCD_EVENT_ENDPOINT;
-		driver->subevent = HCD_SUBEVENT_EP0;
+	if (0 != irqstat0) {
+		USB_DBG("EP interrupt");
+		CLEAR_IRQ0(irqstat0);
+		driver->current_event = HCD_EVENT_ENDPOINT;
+		driver->current_endpoint = musb_am335x_irqstat0_to_ep(irqstat0);
 		hcd_handle_event(driver);
 		return;
 	}
@@ -651,6 +619,34 @@ musb_am335x_usbx_isr(void * data)
 	USB_MSG("Illegal value of IRQxSTAT: 0=%X 1=%X",
 		(unsigned int)irqstat0, (unsigned int)irqstat1);
 	USB_ASSERT(0, "IRQxSTAT error");
+}
+
+
+/*===========================================================================*
+ *    musb_am335x_irqstat0_to_ep                                             *
+ *===========================================================================*/
+static int
+musb_am335x_irqstat0_to_ep(int irqstat0)
+{
+	int ep;
+
+	DEBUG_DUMP;
+
+	ep = 0;
+
+	while (0 == (irqstat0 & 0x01)) {
+		irqstat0 >>= 1;
+		ep++;
+		USB_ASSERT(ep < 32, "Invalid IRQSTAT0 supplied (1)");
+	}
+
+	/* Convert RX interrupt to EP number */
+	if (ep >= 16) {
+		ep -= 16;
+		USB_ASSERT(ep != 0, "Invalid IRQSTAT0 supplied (2)");
+	}
+
+	return ep;
 }
 
 
@@ -711,8 +707,47 @@ musb_am335x_otg_enable(int usb_num)
 
 	HCD_WR4(r, AM335X_REG_USBXIRQENABLESET1, intreg);
 
-	/* Set endpoint 0 interrupt to be enabled */
+	/* Some MUSB implementations may not need this */
+#if 0
+	/* Set EP0 interrupt to be enabled */
 	intreg = HCD_RD4(r, AM335X_REG_USBXIRQENABLESET0);
 	HCD_SET(intreg, AM335X_VAL_USBXIRQENABLEXXX0_EP0);
 	HCD_WR4(r, AM335X_REG_USBXIRQENABLESET0, intreg);
+#else
+
+	/* Set all EP interrupts as enabled */
+	intreg = AM335X_VAL_USBXIRQENABLEXXX0_EP0	|
+		AM335X_VAL_USBXIRQENABLEXXX0_TX_EP1	|
+		AM335X_VAL_USBXIRQENABLEXXX0_TX_EP2	|
+		AM335X_VAL_USBXIRQENABLEXXX0_TX_EP3	|
+		AM335X_VAL_USBXIRQENABLEXXX0_TX_EP4	|
+		AM335X_VAL_USBXIRQENABLEXXX0_TX_EP5	|
+		AM335X_VAL_USBXIRQENABLEXXX0_TX_EP6	|
+		AM335X_VAL_USBXIRQENABLEXXX0_TX_EP7	|
+		AM335X_VAL_USBXIRQENABLEXXX0_TX_EP8	|
+		AM335X_VAL_USBXIRQENABLEXXX0_TX_EP9	|
+		AM335X_VAL_USBXIRQENABLEXXX0_TX_EP10	|
+		AM335X_VAL_USBXIRQENABLEXXX0_TX_EP11	|
+		AM335X_VAL_USBXIRQENABLEXXX0_TX_EP12	|
+		AM335X_VAL_USBXIRQENABLEXXX0_TX_EP13	|
+		AM335X_VAL_USBXIRQENABLEXXX0_TX_EP14	|
+		AM335X_VAL_USBXIRQENABLEXXX0_TX_EP15	|
+		AM335X_VAL_USBXIRQENABLEXXX0_RX_EP1	|
+		AM335X_VAL_USBXIRQENABLEXXX0_RX_EP2	|
+		AM335X_VAL_USBXIRQENABLEXXX0_RX_EP3	|
+		AM335X_VAL_USBXIRQENABLEXXX0_RX_EP4	|
+		AM335X_VAL_USBXIRQENABLEXXX0_RX_EP5	|
+		AM335X_VAL_USBXIRQENABLEXXX0_RX_EP6	|
+		AM335X_VAL_USBXIRQENABLEXXX0_RX_EP7	|
+		AM335X_VAL_USBXIRQENABLEXXX0_RX_EP8	|
+		AM335X_VAL_USBXIRQENABLEXXX0_RX_EP9	|
+		AM335X_VAL_USBXIRQENABLEXXX0_RX_EP10	|
+		AM335X_VAL_USBXIRQENABLEXXX0_RX_EP11	|
+		AM335X_VAL_USBXIRQENABLEXXX0_RX_EP12	|
+		AM335X_VAL_USBXIRQENABLEXXX0_RX_EP13	|
+		AM335X_VAL_USBXIRQENABLEXXX0_RX_EP14	|
+		AM335X_VAL_USBXIRQENABLEXXX0_RX_EP15	;
+
+	HCD_WR4(r, AM335X_REG_USBXIRQENABLESET0, intreg);
+#endif
 }
