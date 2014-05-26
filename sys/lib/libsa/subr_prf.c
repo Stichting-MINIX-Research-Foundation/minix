@@ -64,6 +64,11 @@ static void sputchar(int);
 static void kdoprnt(void (*)(int), const char *, va_list);
 
 static char *sbuf, *ebuf;
+#if defined(__minix)
+/* vsnprintf: add support for returning the amount of characters that would have been
+ * written if the buffer was large enough */
+static int  scount;
+#endif /* defined(__minix) */
 
 const char hexdigits[16] = "0123456789abcdef";
 
@@ -134,7 +139,10 @@ do {								\
 static void
 sputchar(int c)
 {
-
+#if defined(__minix)
+	scount++; /* increase scount regardless */
+	if (!sbuf) return; /* hanlde NULL sbuf  */
+#endif /* defined(__minix) */
 	if (sbuf < ebuf)
 		*sbuf++ = c;
 }
@@ -156,9 +164,21 @@ vsnprintf(char *buf, size_t size, const char *fmt, va_list ap)
 
 	sbuf = buf;
 	ebuf = buf + size - 1;
+#if defined(__minix)
+	scount = 0; /* use scount to keep track of written items */
+#endif /* defined(__minix) */
+
 	kdoprnt(sputchar, fmt, ap);
+
+#if defined(__minix)
+	if (sbuf){ /* handle case where sbuf == NULL */
+		*sbuf = '\0';
+	}
+	return scount;
+#else /* __minix is not defined */
 	*sbuf = '\0';
 	return sbuf - buf;
+#endif  /* defined(__minix) */
 }
 
 static void
