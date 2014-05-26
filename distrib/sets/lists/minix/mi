@@ -79,6 +79,7 @@
 ./etc/devmand/scripts			minix-sys
 ./etc/devmand/scripts/block		minix-sys
 ./etc/devmand/scripts/singlechar	minix-sys
+./etc/devmand/usb_storage.cfg		minix-sys
 ./etc/gettytab				minix-sys
 ./etc/group				minix-sys
 ./etc/hostname.file			minix-sys
