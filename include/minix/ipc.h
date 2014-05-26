@@ -708,6 +708,13 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_lsys_krn_sys_abort);
 
 typedef struct {
+	endpoint_t endpt;
+
+	uint8_t padding[52];
+} mess_lsys_krn_sys_clear;
+_ASSERT_MSG_SIZE(mess_lsys_krn_sys_clear);
+
+typedef struct {
 	endpoint_t src_endpt;
 	vir_bytes src_addr;
 	endpoint_t dst_endpt;
@@ -1694,6 +1701,7 @@ typedef struct {
 		mess_lsys_krn_schedctl	m_lsys_krn_schedctl;
 		mess_lsys_krn_schedule	m_lsys_krn_schedule;
 		mess_lsys_krn_sys_abort m_lsys_krn_sys_abort;
+		mess_lsys_krn_sys_clear m_lsys_krn_sys_clear;
 		mess_lsys_krn_sys_copy	m_lsys_krn_sys_copy;
 		mess_lsys_krn_sys_exec	m_lsys_krn_sys_exec;
 		mess_lsys_krn_sys_fork	m_lsys_krn_sys_fork;

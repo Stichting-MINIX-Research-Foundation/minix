@@ -351,9 +351,6 @@
 #define SYS_PRIV_UPDATE_SYS	9	/* Update a sys privilege structure. */
 #define SYS_PRIV_YIELD	       10	/* Allow process to run and suspend */
 
-/* Field names for SYS_FORK, _EXEC, _EXIT, GETMCONTEXT, SETMCONTEXT.*/
-#define PR_ENDPT        m1_i1	/* indicates a process */
-
 /* Constants for exec. FIXME: these do not belong here. */
 #define PMEF_AUXVECTORS	20
 #define PMEF_EXECNAMELEN1 PATH_MAX

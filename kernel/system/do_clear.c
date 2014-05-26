@@ -2,7 +2,7 @@
  *   m_type:	SYS_CLEAR
  *
  * The parameters for this kernel call are:
- *    m1_i1:	PR_ENDPT		(endpoint of process to clean up)
+ *   m_lsys_krn_sys_clear.endpt		(endpoint of process to clean up)
  */
 
 #include "kernel/system.h"
@@ -26,7 +26,8 @@ int do_clear(struct proc * caller, message * m_ptr)
   int exit_p;
   int i;
 
-  if(!isokendpt(m_ptr->PR_ENDPT, &exit_p)) { /* get exiting process */
+  if(!isokendpt(m_ptr->m_lsys_krn_sys_clear.endpt, &exit_p)) {
+      /* get exiting process */
       return EINVAL;
   }
   rc = proc_addr(exit_p);	/* clean up */
@@ -77,4 +78,3 @@ int do_clear(struct proc * caller, message * m_ptr)
 }
 
 #endif /* USE_CLEAR */
-
