@@ -4,13 +4,14 @@ set -e
 #
 # Source settings if present
 #
-if [ -f .settings  ]
+: ${SETTINGS_MINIX=.settings}
+if [ -f "${SETTINGS_MINIX}"  ]
 then
-	echo "Sourcing settings from .settings"
+	echo "Sourcing settings from ${SETTINGS_MINIX}"
 	# Display the content (so we can check in the build logs
 	# what the settings contain.
-	cat .settings | sed "s,^,CONTENT ,g"
- 	. .settings
+	cat ${SETTINGS_MINIX} | sed "s,^,CONTENT ,g"
+	. ${SETTINGS_MINIX}
 fi
 
 : ${ARCH=evbearm-el}
