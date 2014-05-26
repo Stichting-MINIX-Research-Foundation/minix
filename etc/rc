@@ -200,6 +200,11 @@ down|stop)
 	/usr/pkg/etc/rc.d/usbd stop
     fi
 
+    if [ -x /usr/sbin/usbd ]
+    then
+	service down usbd
+    fi
+
     # Tell RS server we're going down.
     service shutdown
     ;;

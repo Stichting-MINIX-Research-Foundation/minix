@@ -282,6 +282,11 @@ start|autoboot)
 				# fb hasn't been ported to AM335X yet.
 			fi
 
+			if [ -e /usr/sbin/usbd ]
+			then
+				echo "Starting USBD"
+				up usbd
+			fi
 			# Detect expansion boards and start drivers.
 			capemgr
 
@@ -310,6 +315,11 @@ start|autoboot)
 			#up fb -dev /dev/fb0 -args edid.0=tda19988.1.3470
 			# fb hasn't been ported to AM335X yet.
 
+			if [ -e /usr/sbin/usbd ]
+			then
+				echo "Starting USBD"
+				up usbd
+			fi
 			# Detect expansion boards and start drivers.
 			capemgr
 
