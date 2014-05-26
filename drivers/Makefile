@@ -55,7 +55,8 @@ SUBDIR+= bmp085 \
 	tda19988 \
 	tps65217 \
 	tps65950 \
-	tsl2550
+	tsl2550 \
+	usbd
 .endif
 
 .endif # ${MKIMAGEONLY} != "yes"

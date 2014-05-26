@@ -448,6 +448,7 @@ install-etc-files-safe: .PHONY .MAKE check_DESTDIR MAKEDEV
 	${_MKMSG_INSTALL} ${DESTDIR}/etc/rc.capes
 	${INSTALL_DIR} ${DESTDIR}/etc/rc.capes
 	${INSTALL_FILE} -m ${BINMODE} -o ${BINOWN} -g ${BINGRP} ${NETBSDSRCDIR}/etc/rc.capes/* ${DESTDIR}/etc/rc.capes
+	${INSTALL_FILE} -m ${BINMODE} -o ${BINOWN} -g ${BINGRP} ${NETBSDSRCDIR}/drivers/usbd/usbd.conf ${DESTDIR}/etc/system.conf.d/usbd
 .endif # Minix/earm specific
 .for subdir in . defaults mtree
 	${MAKEDIRTARGET} ${subdir} configinstall

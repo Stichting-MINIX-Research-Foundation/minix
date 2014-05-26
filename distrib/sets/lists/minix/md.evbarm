@@ -6,6 +6,7 @@
 ./etc/rc.capes				minix-sys
 ./etc/rc.capes/BB-BONE-WTHR-01		minix-sys
 ./etc/system.conf.d/lan8710a		minix-sys
+./etc/system.conf.d/usbd		minix-sys
 ./multiboot/mod07_tty			minix-sys
 ./multiboot/mod08_mfs			minix-sys
 ./multiboot/mod09_vm			minix-sys
@@ -115,6 +116,7 @@
 ./usr/sbin/tps65217			minix-sys
 ./usr/sbin/tps65950			minix-sys
 ./usr/sbin/tsl2550			minix-sys
+./usr/sbin/usbd				minix-sys
 ./usr/share/beaglebone			minix-sys
 ./usr/share/beaglebone/weather		minix-sys
 ./usr/share/beaglebone/weather/index.html		minix-sys
