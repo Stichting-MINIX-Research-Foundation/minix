@@ -12,11 +12,11 @@ vir_bytes *msgaddr;
   message m;
   int r;
 
-  m.PR_ENDPT = parent;
-  m.PR_SLOT = child;
-  m.PR_FORK_FLAGS = flags;
+  m.m_lsys_krn_sys_fork.endpt = parent;
+  m.m_lsys_krn_sys_fork.slot = child;
+  m.m_lsys_krn_sys_fork.flags = flags;
   r = _kernel_call(SYS_FORK, &m);
-  *child_endpoint = m.PR_ENDPT;
-  *msgaddr = (vir_bytes) m.PR_FORK_MSGADDR;
+  *child_endpoint = m.m_krn_lsys_sys_fork.endpt;
+  *msgaddr = m.m_krn_lsys_sys_fork.msgaddr;
   return r;
 }

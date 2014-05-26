@@ -2,10 +2,11 @@
  *   m_type:	SYS_FORK
  *
  * The parameters for this kernel call are:
- *    m1_i1:	PR_ENDPT	(parent, process that forked)
- *    m1_i2:	PR_SLOT		(child's process table slot)
- *    m1_p1:	PR_MEM_PTR	(new memory map for the child)
- *    m1_i3:	PR_FORK_FLAGS	(fork flags)
+ *   m_lsys_krn_sys_fork.endpt		(parent, process that forked)
+ *   m_lsys_krn_sys_fork.slot		(child's process table slot)
+ *   m_lsys_krn_sys_fork.flags		(fork flags)
+ *   m_krn_lsys_sys_fork.endpt		(endpoint of the child)
+ *   m_krn_lsys_sys_fork.msgaddr	(new memory map for the child)
  */
 
 #include "kernel/system.h"
@@ -24,7 +25,10 @@
  *===========================================================================*/
 int do_fork(struct proc * caller, message * m_ptr)
 {
-/* Handle sys_fork().  PR_ENDPT has forked.  The child is PR_SLOT. */
+/* Handle sys_fork().
+ * m_lsys_krn_sys_fork.endpt has forked.
+ * The child is m_lsys_krn_sys_fork.slot.
+ */
 #if defined(__i386__)
   char *old_fpu_save_area_p;
 #endif
@@ -34,11 +38,11 @@ int do_fork(struct proc * caller, message * m_ptr)
   int p_proc;
   int namelen;
 
-  if(!isokendpt(m_ptr->PR_ENDPT, &p_proc))
+  if(!isokendpt(m_ptr->m_lsys_krn_sys_fork.endpt, &p_proc))
 	return EINVAL;
 
   rpp = proc_addr(p_proc);
-  rpc = proc_addr(m_ptr->PR_SLOT);
+  rpc = proc_addr(m_ptr->m_lsys_krn_sys_fork.slot);
   if (isemptyp(rpp) || ! isemptyp(rpc)) return(EINVAL);
 
   assert(!(rpp->p_misc_flags & MF_DELIVERMSG));
@@ -64,7 +68,7 @@ int do_fork(struct proc * caller, message * m_ptr)
 #endif
   if(++gen >= _ENDPOINT_MAX_GENERATION)	/* increase generation */
 	gen = 1;			/* generation number wraparound */
-  rpc->p_nr = m_ptr->PR_SLOT;		/* this was obliterated by copy */
+  rpc->p_nr = m_ptr->m_lsys_krn_sys_fork.slot;	/* this was obliterated by copy */
   rpc->p_endpoint = _ENDPOINT(gen, rpc->p_nr);	/* new endpoint of slot */
 
   rpc->p_reg.retreg = 0;	/* child sees pid = 0 to know it is child */
@@ -102,11 +106,11 @@ int do_fork(struct proc * caller, message * m_ptr)
   }
 
   /* Calculate endpoint identifier, so caller knows what it is. */
-  m_ptr->PR_ENDPT = rpc->p_endpoint;
-  m_ptr->PR_FORK_MSGADDR = (char *) rpp->p_delivermsg_vir;
+  m_ptr->m_krn_lsys_sys_fork.endpt = rpc->p_endpoint;
+  m_ptr->m_krn_lsys_sys_fork.msgaddr = rpp->p_delivermsg_vir;
 
   /* Don't schedule process in VM mode until it has a new pagetable. */
-  if(m_ptr->PR_FORK_FLAGS & PFF_VMINHIBIT) {
+  if(m_ptr->m_lsys_krn_sys_fork.flags & PFF_VMINHIBIT) {
   	RTS_SET(rpc, RTS_VMINHIBIT);
   }
 
@@ -128,4 +132,3 @@ int do_fork(struct proc * caller, message * m_ptr)
 }
 
 #endif /* USE_FORK */
-

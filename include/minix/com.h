@@ -359,8 +359,6 @@
 #define PR_NAME_PTR     m1_p2	/* tells where program name is for dmp */
 #define PR_IP_PTR       m1_p3	/* initial value for ip after exec */
 #define PR_PS_STR_PTR   m1_p4	/* pointer to ps_strings, expected by __start */
-#define PR_FORK_FLAGS	m1_i3	/* optional flags for fork operation */
-#define PR_FORK_MSGADDR m1_p1	/* reply message address of forked child */
 
 /* Constants for exec. FIXME: these do not belong here. */
 #define PMEF_AUXVECTORS	20
