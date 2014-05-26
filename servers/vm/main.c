@@ -342,8 +342,9 @@ static void exec_bootproc(struct vmproc *vmp, struct boot_image *ip)
 		panic("vm: could not copy stack for boot process %s (ep=%d)\n",
 			execi->progname, vmp->vm_endpoint);
 
-	if(sys_exec(vmp->vm_endpoint, (char *)vsp, execi->progname, execi->pc,
-		vsp + ((int)psp - (int)frame)) != OK)
+	if(sys_exec(vmp->vm_endpoint, (vir_bytes)vsp,
+		   (vir_bytes)execi->progname, execi->pc,
+		   vsp + ((int)psp - (int)frame)) != OK)
 		panic("vm: boot process exec of process %s (ep=%d) failed\n",
 			execi->progname,vmp->vm_endpoint);
 

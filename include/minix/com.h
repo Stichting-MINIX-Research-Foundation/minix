@@ -353,12 +353,6 @@
 
 /* Field names for SYS_FORK, _EXEC, _EXIT, GETMCONTEXT, SETMCONTEXT.*/
 #define PR_ENDPT        m1_i1	/* indicates a process */
-#define PR_PRIORITY     m1_i2	/* process priority */
-#define PR_SLOT         m1_i2	/* indicates a process slot */
-#define PR_STACK_PTR    m1_p1	/* used for stack ptr in sys_exec, sys_getsp */
-#define PR_NAME_PTR     m1_p2	/* tells where program name is for dmp */
-#define PR_IP_PTR       m1_p3	/* initial value for ip after exec */
-#define PR_PS_STR_PTR   m1_p4	/* pointer to ps_strings, expected by __start */
 
 /* Constants for exec. FIXME: these do not belong here. */
 #define PMEF_AUXVECTORS	20

@@ -721,6 +721,17 @@ _ASSERT_MSG_SIZE(mess_lsys_krn_sys_copy);
 
 typedef struct {
 	endpoint_t endpt;
+	vir_bytes ip;
+	vir_bytes stack;
+	vir_bytes name;
+	vir_bytes ps_str;
+
+	uint8_t padding[36];
+} mess_lsys_krn_sys_exec;
+_ASSERT_MSG_SIZE(mess_lsys_krn_sys_exec);
+
+typedef struct {
+	endpoint_t endpt;
 	endpoint_t slot;
 	uint32_t flags;
 
@@ -1684,6 +1695,7 @@ typedef struct {
 		mess_lsys_krn_schedule	m_lsys_krn_schedule;
 		mess_lsys_krn_sys_abort m_lsys_krn_sys_abort;
 		mess_lsys_krn_sys_copy	m_lsys_krn_sys_copy;
+		mess_lsys_krn_sys_exec	m_lsys_krn_sys_exec;
 		mess_lsys_krn_sys_fork	m_lsys_krn_sys_fork;
 		mess_lsys_krn_sys_getinfo m_lsys_krn_sys_getinfo;
 		mess_lsys_krn_sys_getmcontext m_lsys_krn_sys_getmcontext;

@@ -189,7 +189,7 @@ void exec_restart(struct mproc *rmp, int result, vir_bytes pc, vir_bytes sp,
 	}
 
 	/* Call kernel to exec with SP and PC set by VFS. */
-	r = sys_exec(rmp->mp_endpoint, (char *) sp, rmp->mp_name, pc, ps_str);
+	r = sys_exec(rmp->mp_endpoint, sp, (vir_bytes)rmp->mp_name, pc, ps_str);
 	if (r != OK) panic("sys_exec failed: %d", r);
 }
 
