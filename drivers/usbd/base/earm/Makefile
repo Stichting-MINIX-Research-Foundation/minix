@@ -11,6 +11,7 @@ CPPFLAGS+=	-I${.CURDIR}/../../include
 
 DPADD+=		${LIBDDEKIT} ${LIBDDEKIT_USB_SERVER} ${LIBDEVMAN} ${LIBUSB} ${LIBMINC} ${LIBCLKCONF}
 LDADD+=		-lddekit -lddekit_usb_server -ldevman -lusb -lminc -lclkconf
+LDADD+=		-lsys -lminlib
 
 MAN=
 

@@ -263,15 +263,3 @@ void hcd_completion_cb(void * priv)
 
 	completion_cb(priv);
 }
-
-
-/* TODO: to be removed when this is linkable */
-/*===========================================================================*
- *    get_bp                                                                 *
- *===========================================================================*/
-unsigned int get_bp(void)
-{
-	DEBUG_DUMP;
-
-	return EXIT_SUCCESS;
-}
