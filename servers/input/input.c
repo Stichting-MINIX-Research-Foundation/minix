@@ -406,9 +406,17 @@ input_event(message *m)
 	else if (mux_dev->opened)
 		input_process(mux_dev, m);
 	else {
-		m->m_type = TTY_INPUT_EVENT;
+		message fwd;
+		mess_input_tty_event *tty_event = &(fwd.m_input_tty_event);
 
-		if ((r = ipc_send(TTY_PROC_NR, m)) != OK)
+		fwd.m_type = TTY_INPUT_EVENT;
+		tty_event->id = m->m_linputdriver_input_event.id;
+		tty_event->page = m->m_linputdriver_input_event.page;
+		tty_event->code = m->m_linputdriver_input_event.code;
+		tty_event->value = m->m_linputdriver_input_event.value;
+		tty_event->flags = m->m_linputdriver_input_event.flags;
+
+		if ((r = ipc_send(TTY_PROC_NR, &fwd)) != OK)
 			printf("INPUT: send to TTY failed (%d)\n", r);
 	}
 }

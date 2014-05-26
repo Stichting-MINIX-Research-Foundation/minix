@@ -146,6 +146,17 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_sigcalls);
 
 typedef struct {
+	int id;
+	int page;
+	int code;
+	int value;
+	int flags;
+
+	uint8_t padding[36];
+} mess_input_tty_event;
+_ASSERT_MSG_SIZE(mess_input_tty_event);
+
+typedef struct {
 	time_t acnt_queue;
 
 	unsigned long acnt_deqs;
@@ -1615,6 +1626,8 @@ typedef struct {
 		mess_mmap		m_mmap;
 		mess_notify		m_notify;
 		mess_sigcalls		m_sigcalls;
+
+		mess_input_tty_event	m_input_tty_event;
 
 		mess_krn_lsys_schedule	m_krn_lsys_schedule;
 		mess_krn_lsys_sys_fork m_krn_lsys_sys_fork;

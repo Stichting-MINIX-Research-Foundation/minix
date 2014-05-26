@@ -152,16 +152,16 @@ void do_input(message *msg)
 	}
 
 	/* Only handle keyboard keys. */
-	if (msg->INPUT_PAGE != INPUT_PAGE_KEY)
+	if (msg->m_input_tty_event.page != INPUT_PAGE_KEY)
 		return;
 
 	/* Only handle known USB HID keyboard codes (the 00h-E7h range). */
-	scode = msg->INPUT_CODE;
+	scode = msg->m_input_tty_event.code;
 	if (scode >= NR_SCAN_CODES)
 		return;
 
 	/* Is it a KEY RELEASE? */
-	if (msg->INPUT_VALUE == INPUT_RELEASE)
+	if (msg->m_input_tty_event.value == INPUT_RELEASE)
 		scode |= RELEASE_BIT;
 
 	if (incount < KB_IN_BYTES) {

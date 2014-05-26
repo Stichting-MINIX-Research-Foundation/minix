@@ -966,9 +966,6 @@
 /* This message uses no message fields. */
 
 #define TTY_INPUT_EVENT		(TTY_RQ_BASE + 3) /* relayed input event */
-#  define INPUT_PAGE		m7_i2	/* usage page */
-#  define INPUT_CODE		m7_i3	/* usage code */
-#  define INPUT_VALUE		m7_i4	/* event value */
 
 /*===========================================================================*
  *			Messages for input server and drivers		     *
