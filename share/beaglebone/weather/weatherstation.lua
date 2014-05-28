@@ -80,13 +80,14 @@ function read_file(filename)
 end
 
 -- Extract the value of the LABEL:VALUE pairs read from the device files.
-function extract_value(label, data, pat)
+function extract_value(data, pat)
 
-	local x, y, z = string.find(data, label .. "%s+: (" .. pat .. ")")
-	if x == nil or y == nil or z == nil then
+	local x = string.match(data, pat)
+
+	if x == nil then
 		return "0"
 	end
-	return z
+	return x
 end
 
 -- Read the sensor values and generate json output
@@ -97,20 +98,20 @@ function generate_json()
 	if tsl2550 == nil then
 		return nil
 	end
-	local illuminance = extract_value("ILLUMINANCE", tsl2550, "%d+")
+	local illuminance = extract_value(tsl2550, "ILLUMINANCE: (%d+)")
 
 	local sht21 = read_file("/dev/sht21b3s40")
 	if sht21 == nil then
 		return nil
 	end
-	local temperature = extract_value("TEMPERATURE", sht21, "%d+.%d+")
-	local humidity = extract_value("HUMIDITY", sht21, "%d+.%d+")
+	local temperature = extract_value(sht21, "TEMPERATURE: (%d+.%d+)")
+	local humidity = extract_value(sht21, "HUMIDITY: (%d+.%d+)")
 
 	local bmp085 = read_file("/dev/bmp085b3s77")
 	if bmp085 == nil then
 		return nil
 	end
-	local pressure = extract_value("PRESSURE", bmp085, "%d+")
+	local pressure = extract_value(bmp085, "PRESSURE: (%d+)")
 
 	json = json .. "{\n"
 	json = json .. "\"temperature\": " .. temperature .. ",\n"
