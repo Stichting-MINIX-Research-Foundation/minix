@@ -29,9 +29,9 @@ typedef unsigned short				hcd_reg2;
 typedef unsigned char				hcd_reg1;
 
 /* For register dereferencing */
-#define _HCD_REG4 				hcd_reg4 * volatile
-#define _HCD_REG2 				hcd_reg2 * volatile
-#define _HCD_REG1 				hcd_reg1 * volatile
+#define _HCD_REG4 				volatile hcd_reg4 *
+#define _HCD_REG2 				volatile hcd_reg2 *
+#define _HCD_REG1 				volatile hcd_reg1 *
 
 /* Scalar address to dereference */
 #define _HCD_ADDR(base, off)			(((hcd_addr)(base))+(off))
