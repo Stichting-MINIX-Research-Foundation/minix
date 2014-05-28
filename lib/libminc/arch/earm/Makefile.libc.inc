@@ -57,3 +57,43 @@ ${f}:	${LIBCARCHDIR}/gen/${f:C/\.o/.S/}
 OBJS+=	${f}
 CLEANFILES+= ${f}
 .endfor
+
+.for f in \
+	__aeabi_dcmpeq.o __aeabi_fcmpeq.o \
+	__aeabi_dcmpge.o __aeabi_fcmpge.o \
+	__aeabi_dcmpgt.o __aeabi_fcmpgt.o \
+	__aeabi_dcmple.o __aeabi_fcmple.o \
+	__aeabi_dcmplt.o __aeabi_fcmplt.o \
+	__aeabi_dcmpun.o __aeabi_fcmpun.o
+CPPFLAGS.${f:C/\.o/.c/}+= -I${LIBCARCHDIR}/softfloat -I${LIBCDIR}/softfloat
+CPPFLAGS.${f:C/\.o/.c/}+= -DSOFTFLOAT_FOR_GCC
+${f}:	${LIBCARCHDIR}/softfloat/${f:C/\.o/.c/}
+OBJS+=	${f}
+CLEANFILES+= ${f}
+.endfor
+
+.for f in \
+	fpgetround.o fpsetround.o fpgetmask.o fpsetmask.o \
+	fpgetsticky.o fpsetsticky.o
+CPPFLAGS.${f:C/\.o/.c/}+= -I${LIBCARCHDIR}/softfloat -I${LIBCDIR}/softfloat
+CPPFLAGS.${f:C/\.o/.c/}+= -DSOFTFLOAT_FOR_GCC
+${f}:	${LIBCDIR}/softfloat/${f:C/\.o/.c/}
+OBJS+=	${f}
+CLEANFILES+= ${f}
+.endfor
+
+SOFTFLOAT_BITS?=64
+.for f in \
+	softfloat.o
+CPPFLAGS.${f:C/\.o/.c/}+= -I${LIBCARCHDIR}/softfloat -I${LIBCDIR}/softfloat
+CPPFLAGS.${f:C/\.o/.c/}+= -DSOFTFLOAT_FOR_GCC
+${f}:	${LIBCDIR}/softfloat/bits${SOFTFLOAT_BITS}/${f:C/\.o/.c/}
+OBJS+=	${f}
+CLEANFILES+= ${f}
+.endfor
+
+.if defined(HAVE_GCC) && ${HAVE_GCC} >= 45
+.if (${MACHINE_CPU} == "arm")
+COPTS.softfloat.c+=	-Wno-enum-compare -fno-tree-vrp
+.endif
+.endif

@@ -27,7 +27,6 @@ LDADD+= -lminc
 DPADD+= ${LIBMINC}
 
 .if ${MACHINE_ARCH} == "earm"
-LDADD+= -lc_vfp
 
 # LSC: On ARM, when compiling statically, with gcc, lgcc_eh is required
 .if ${PROG:U} != "kernel" && !empty(CC:M*gcc)
