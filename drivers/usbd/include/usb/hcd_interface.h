@@ -26,8 +26,8 @@ struct hcd_driver_state {
 	void	(*setup_device)		(void *, hcd_reg1, hcd_reg1);
 	int	(*reset_device)		(void *, hcd_speed *);
 	void	(*setup_stage)		(void *, hcd_ctrlrequest *);
-	void	(*bulk_in_stage)	(void *, hcd_bulkrequest *);
-	void	(*bulk_out_stage)	(void *, hcd_bulkrequest *);
+	void	(*rx_stage)		(void *, hcd_datarequest *);
+	void	(*tx_stage)		(void *, hcd_datarequest *);
 	void	(*in_data_stage)	(void *);
 	void	(*out_data_stage)	(void *);
 	void	(*in_status_stage)	(void *);

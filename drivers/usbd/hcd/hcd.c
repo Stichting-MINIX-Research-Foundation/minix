@@ -30,11 +30,11 @@ static int hcd_get_descriptor_tree(hcd_device_state *);
 static int hcd_set_configuration(hcd_device_state *, int);
 static int hcd_handle_urb(hcd_device_state *);
 static int hcd_control_urb(hcd_device_state *);
-static int hcd_bulk_urb(hcd_device_state *);
+static int hcd_non_control_urb(hcd_device_state *, int);
 
 /* For internal use by more general methods */
 static int hcd_setup_packet(hcd_device_state *, hcd_ctrlrequest *);
-static int hcd_bulk_transfer(hcd_device_state *, hcd_bulkrequest *, int);
+static int hcd_data_transfer(hcd_device_state *, hcd_datarequest *);
 
 
 /*===========================================================================*
@@ -460,16 +460,13 @@ hcd_handle_urb(hcd_device_state * this_device)
 			break;
 
 		case USB_TRANSFER_BLK:
-			transfer_status = hcd_bulk_urb(this_device);
-			break;
-
 		case USB_TRANSFER_INT:
-			/* TODO: transfer */
-			USB_MSG("Interrupt transfer not supported");
+			transfer_status = hcd_non_control_urb(this_device,
+								urb->type);
 			break;
 
 		case USB_TRANSFER_ISO:
-			/* TODO: transfer */
+			/* TODO: ISO transfer */
 			USB_MSG("ISO transfer not supported");
 			break;
 
@@ -478,12 +475,15 @@ hcd_handle_urb(hcd_device_state * this_device)
 			break;
 	}
 
-#ifndef URB_TEST
-	/* Call completion */
-	hcd_completion_cb(urb->priv);
-#endif
+	if (EXIT_SUCCESS != transfer_status)
+		USB_MSG("USB transfer failed");
 
-	/* Only critical failures should ever yield EXIT_FAILURE */
+	/* Call completion regardless of status */
+	hcd_completion_cb(urb->priv);
+
+	/* TODO: Only critical failures should ever yield EXIT_FAILURE, so
+	 * return is not bound to transfer_status for now, to let device
+	 * driver act accordingly */
 	return EXIT_SUCCESS;
 }
 
@@ -538,13 +538,13 @@ hcd_control_urb(hcd_device_state * this_device)
 
 
 /*===========================================================================*
- *    hcd_bulk_urb                                                           *
+ *    hcd_non_control_urb                                                    *
  *===========================================================================*/
 static int
-hcd_bulk_urb(hcd_device_state * this_device)
+hcd_non_control_urb(hcd_device_state * this_device, int type)
 {
 	hcd_endpoint * e;
-	hcd_bulkrequest request;
+	hcd_datarequest request;
 	hcd_urb * urb;
 
 	DEBUG_DUMP;
@@ -555,7 +555,7 @@ hcd_bulk_urb(hcd_device_state * this_device)
 	urb->status = EINVAL;
 
 	if (NULL == urb->data) {
-		USB_MSG("No data packet in URB, for bulk transfer");
+		USB_MSG("No data packet in URB");
 		return EXIT_FAILURE;
 	}
 
@@ -571,12 +571,28 @@ hcd_bulk_urb(hcd_device_state * this_device)
 		return EXIT_FAILURE;
 	}
 
+	/* TODO: usb.h constants to type mapping */
+	switch (type) {
+		case USB_TRANSFER_BLK:
+			request.type = HCD_TRANSFER_BULK;
+			break;
+		case USB_TRANSFER_INT:
+			request.type = HCD_TRANSFER_INTERRUPT;
+			break;
+		default:
+			/* TODO: ISO transfer */
+			USB_MSG("Invalid transfer type");
+			return EXIT_FAILURE;
+	}
+
 	/* TODO: Any additional checks? (sane size?) */
 
-	/* Assign to bulk request structure */
+	/* Assign to data request structure */
 	request.endpoint = urb->endpoint;
+	request.direction = urb->direction;
 	request.size = (int)urb->size;
 	request.data = urb->data;
+	request.interval = urb->interval;
 
 	/* Check if EP number is valid */
 	e = hcd_tree_find_ep(&(this_device->config_tree), request.endpoint);
@@ -594,7 +610,7 @@ hcd_bulk_urb(hcd_device_state * this_device)
 	}
 
 	/* Check if remembered type matches */
-	if (e->descriptor.bmAttributes != UE_BULK) {
+	if (UE_GET_XFERTYPE(e->descriptor.bmAttributes) != (int)request.type) {
 		USB_MSG("EP type mismatch");
 		return EXIT_FAILURE;
 	}
@@ -605,14 +621,14 @@ hcd_bulk_urb(hcd_device_state * this_device)
 	/* Let know how to configure EP for speed */
 	request.speed = this_device->speed;
 
-	/* Send bulk data */
-	if (EXIT_SUCCESS != hcd_bulk_transfer(this_device, &request,
-						urb->direction)) {
-		USB_MSG("URB bulk transfer, failed");
+	/* Start sending data */
+	if (EXIT_SUCCESS != hcd_data_transfer(this_device, &request)) {
+		USB_MSG("URB non-control transfer, failed");
 		urb->status = EPIPE;
 		return EXIT_FAILURE;
 	}
 
+	/* Transfer successfully completed */
 	urb->status = EXIT_SUCCESS;
 	return EXIT_SUCCESS;
 }
@@ -743,14 +759,13 @@ hcd_setup_packet(hcd_device_state * this_device, hcd_ctrlrequest * setup)
 
 
 /*===========================================================================*
- *    hcd_bulk_transfer                                                      *
+ *    hcd_data_transfer                                                      *
  *===========================================================================*/
 static int
-hcd_bulk_transfer(hcd_device_state * this_device, hcd_bulkrequest * request,
-		int direction)
+hcd_data_transfer(hcd_device_state * this_device, hcd_datarequest * request)
 {
 	hcd_driver_state * d;
-	hcd_bulkrequest temp_req;
+	hcd_datarequest temp_req;
 	int transfer_len;
 
 	DEBUG_DUMP;
@@ -764,11 +779,11 @@ hcd_bulk_transfer(hcd_device_state * this_device, hcd_bulkrequest * request,
 			this_device->address);
 
 	/* TODO: broken USB_IN... constants */
-	if (1 == direction) {
+	if (1 == request->direction) {
 
 		do {
-			/* Start actual bulk transfer */
-			d->bulk_in_stage(d->private_data, request);
+			/* Start actual data transfer */
+			d->rx_stage(d->private_data, request);
 
 			/* Wait for response */
 			hcd_device_wait(this_device, HCD_EVENT_ENDPOINT,
@@ -776,7 +791,7 @@ hcd_bulk_transfer(hcd_device_state * this_device, hcd_bulkrequest * request,
 
 			/* Check response */
 			if (EXIT_SUCCESS != d->check_error(d->private_data,
-							HCD_TRANSFER_BULK,
+							request->type,
 							HCD_DIRECTION_IN))
 				return EXIT_FAILURE;
 
@@ -792,7 +807,8 @@ hcd_bulk_transfer(hcd_device_state * this_device, hcd_bulkrequest * request,
 			USB_ASSERT(request->size >= 0,
 				"Invalid amount of data received");
 
-			/* TODO: REMOVEME (dumping of bulk transfer) */
+#ifdef DEBUG
+			/* TODO: REMOVEME (dumping of data transfer) */
 			{
 				int i;
 				USB_MSG("RECEIVED: %d", transfer_len);
@@ -800,10 +816,11 @@ hcd_bulk_transfer(hcd_device_state * this_device, hcd_bulkrequest * request,
 					USB_MSG("%c",
 					(request->data-transfer_len)[i]);
 			}
+#endif
 
 		} while (0 != request->size);
 
-	} else if (0 == direction) {
+	} else if (0 == request->direction) {
 
 		do {
 			temp_req = *request;
@@ -820,8 +837,8 @@ hcd_bulk_transfer(hcd_device_state * this_device, hcd_bulkrequest * request,
 			USB_ASSERT(request->size >= 0,
 				"Invalid amount of data received");
 
-			/* Start actual bulk transfer */
-			d->bulk_out_stage(d->private_data, &temp_req);
+			/* Start actual data transfer */
+			d->tx_stage(d->private_data, &temp_req);
 
 			/* Wait for response */
 			hcd_device_wait(this_device, HCD_EVENT_ENDPOINT,
@@ -829,7 +846,7 @@ hcd_bulk_transfer(hcd_device_state * this_device, hcd_bulkrequest * request,
 
 			/* Check response */
 			if (EXIT_SUCCESS != d->check_error(d->private_data,
-							HCD_TRANSFER_BULK,
+							request->type,
 							HCD_DIRECTION_OUT))
 				return EXIT_FAILURE;
 

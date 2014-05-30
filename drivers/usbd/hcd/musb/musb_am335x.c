@@ -339,8 +339,8 @@ musb_am335x_init(void)
 		ctrl->driver.setup_device = musb_setup_device;
 		ctrl->driver.reset_device = musb_reset_device;
 		ctrl->driver.setup_stage = musb_setup_stage;
-		ctrl->driver.bulk_in_stage = musb_bulk_in_stage;
-		ctrl->driver.bulk_out_stage = musb_bulk_out_stage;
+		ctrl->driver.rx_stage = musb_rx_stage;
+		ctrl->driver.tx_stage = musb_tx_stage;
 		ctrl->driver.in_data_stage = musb_in_data_stage;
 		ctrl->driver.out_data_stage = musb_out_data_stage;
 		ctrl->driver.in_status_stage = musb_in_status_stage;
@@ -379,8 +379,8 @@ musb_am335x_init(void)
 		ctrl->driver.setup_device = musb_setup_device;
 		ctrl->driver.reset_device = musb_reset_device;
 		ctrl->driver.setup_stage = musb_setup_stage;
-		ctrl->driver.bulk_in_stage = musb_bulk_in_stage;
-		ctrl->driver.bulk_out_stage = musb_bulk_out_stage;
+		ctrl->driver.rx_stage = musb_rx_stage;
+		ctrl->driver.tx_stage = musb_tx_stage;
 		ctrl->driver.in_data_stage = musb_in_data_stage;
 		ctrl->driver.out_data_stage = musb_out_data_stage;
 		ctrl->driver.in_status_stage = musb_in_status_stage;

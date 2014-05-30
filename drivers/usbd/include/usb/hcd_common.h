@@ -151,22 +151,6 @@ hcd_device_state;
 
 
 /*===========================================================================*
- *    HCD transfer requests                                                  *
- *===========================================================================*/
-struct hcd_bulkrequest {
-
-	char * data;
-	int size;
-	int endpoint;
-	unsigned int max_packet_size;
-	hcd_speed speed;
-};
-
-typedef struct usb_ctrlrequest		hcd_ctrlrequest;
-typedef struct hcd_bulkrequest		hcd_bulkrequest;
-
-
-/*===========================================================================*
  *    HCD event handling                                                     *
  *===========================================================================*/
 /* Possible USB transfer types */
@@ -201,6 +185,25 @@ hcd_event;
 /* EP event constants */
 #define HCD_NO_ENDPOINT			-1
 #define HCD_ENDPOINT_0			0
+
+
+/*===========================================================================*
+ *    HCD transfer requests                                                  *
+ *===========================================================================*/
+struct hcd_datarequest {
+
+	char * data;
+	int size;
+	int endpoint;
+	int direction;
+	unsigned int max_packet_size;
+	unsigned int interval;
+	hcd_speed speed;
+	hcd_transfer type;
+};
+
+typedef struct usb_ctrlrequest		hcd_ctrlrequest;
+typedef struct hcd_datarequest		hcd_datarequest;
 
 
 /*===========================================================================*

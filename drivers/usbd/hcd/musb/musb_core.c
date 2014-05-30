@@ -454,10 +454,10 @@ musb_setup_stage(void * cfg, hcd_ctrlrequest * setup)
 
 
 /*===========================================================================*
- *    musb_bulk_in_stage                                                     *
+ *    musb_rx_stage                                                          *
  *===========================================================================*/
 void
-musb_bulk_in_stage(void * cfg, hcd_bulkrequest * request)
+musb_rx_stage(void * cfg, hcd_datarequest * request)
 {
 	musb_core_config * core;
 #if 0
@@ -472,15 +472,27 @@ musb_bulk_in_stage(void * cfg, hcd_bulkrequest * request)
 	core = (musb_core_config *)cfg;
 	r = core->regs;
 
-	USB_ASSERT(request->max_packet_size <= 1024, "Invalid wMaxPacketSize");
+	USB_ASSERT(request->max_packet_size <= 1024,
+			"Invalid wMaxPacketSize");
 	USB_ASSERT((core->ep <= 15) && (core->ep > 0),
-		"Invalid bulk EP supplied");
+			"Invalid bulk EP supplied");
 
 	/* Set EP and device address to be used in this command */
 	musb_set_state(core);
 
 	/* Evaluate RXTYPE */
-	host_rxtype = MUSB_VAL_HOST_XXTYPE_BULK | core->ep;
+	host_rxtype = core->ep;
+
+	switch (request->type) {
+		case HCD_TRANSFER_BULK:
+			host_rxtype |= MUSB_VAL_HOST_XXTYPE_BULK;
+			break;
+		case HCD_TRANSFER_INTERRUPT:
+			host_rxtype |= MUSB_VAL_HOST_XXTYPE_INTERRUPT;
+			break;
+		default:
+			USB_ASSERT(0, "Unsupported transfer type");
+	}
 
 	if (HCD_SPEED_HIGH == request->speed)
 		host_rxtype |= MUSB_VAL_HOST_XXTYPE_HIGH_SPEED;
@@ -493,8 +505,12 @@ musb_bulk_in_stage(void * cfg, hcd_bulkrequest * request)
 	/* Rewrite RXMAXP */
 	HCD_WR2(r, MUSB_REG_RXMAXP, request->max_packet_size);
 
-	/* Rewrite HOST_RXINTERVAL */
-	HCD_WR1(r, MUSB_REG_HOST_RXINTERVAL, MUSB_VAL_HOST_XXINTERVAL_DEFAULT);
+	/* Set HOST_RXINTERVAL based on transfer type */
+	if (HCD_TRANSFER_BULK == request->type)
+		HCD_WR1(r, MUSB_REG_HOST_RXINTERVAL,
+			MUSB_VAL_HOST_XXINTERVAL_DEFAULT);
+	else if (HCD_TRANSFER_INTERRUPT == request->type)
+		HCD_WR1(r, MUSB_REG_HOST_RXINTERVAL, request->interval);
 
 	/* Not required in some MUSB implementations */
 #if 0
@@ -536,10 +552,10 @@ musb_bulk_in_stage(void * cfg, hcd_bulkrequest * request)
 
 
 /*===========================================================================*
- *    musb_bulk_out_stage                                                    *
+ *    musb_tx_stage                                                          *
  *===========================================================================*/
 void
-musb_bulk_out_stage(void * cfg, hcd_bulkrequest * request)
+musb_tx_stage(void * cfg, hcd_datarequest * request)
 {
 	musb_core_config * core;
 #if 0
@@ -554,15 +570,27 @@ musb_bulk_out_stage(void * cfg, hcd_bulkrequest * request)
 	core = (musb_core_config *)cfg;
 	r = core->regs;
 
-	USB_ASSERT(request->max_packet_size <= 1024, "Invalid wMaxPacketSize");
+	USB_ASSERT(request->max_packet_size <= 1024,
+			"Invalid wMaxPacketSize");
 	USB_ASSERT((core->ep <= 15) && (core->ep > 0),
-		"Invalid bulk EP supplied");
+			"Invalid bulk EP supplied");
 
 	/* Set EP and device address to be used in this command */
 	musb_set_state(core);
 
 	/* Evaluate TXTYPE */
-	host_txtype = MUSB_VAL_HOST_XXTYPE_BULK | core->ep;
+	host_txtype = core->ep;
+
+	switch (request->type) {
+		case HCD_TRANSFER_BULK:
+			host_txtype |= MUSB_VAL_HOST_XXTYPE_BULK;
+			break;
+		case HCD_TRANSFER_INTERRUPT:
+			host_txtype |= MUSB_VAL_HOST_XXTYPE_INTERRUPT;
+			break;
+		default:
+			USB_ASSERT(0, "Unsupported transfer type");
+	}
 
 	if (HCD_SPEED_HIGH == request->speed)
 		host_txtype |= MUSB_VAL_HOST_XXTYPE_HIGH_SPEED;
@@ -575,8 +603,12 @@ musb_bulk_out_stage(void * cfg, hcd_bulkrequest * request)
 	/* Rewrite TXMAXP */
 	HCD_WR2(r, MUSB_REG_TXMAXP, request->max_packet_size);
 
-	/* Rewrite HOST_TXINTERVAL */
-	HCD_WR1(r, MUSB_REG_HOST_TXINTERVAL, MUSB_VAL_HOST_XXINTERVAL_DEFAULT);
+	/* Set HOST_TXINTERVAL based on transfer type */
+	if (HCD_TRANSFER_BULK == request->type)
+		HCD_WR1(r, MUSB_REG_HOST_TXINTERVAL,
+			MUSB_VAL_HOST_XXINTERVAL_DEFAULT);
+	else if (HCD_TRANSFER_INTERRUPT == request->type)
+		HCD_WR1(r, MUSB_REG_HOST_TXINTERVAL, request->interval);
 
 	/* Not required in some MUSB implementations */
 #if 0
