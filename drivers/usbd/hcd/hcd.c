@@ -804,8 +804,10 @@ hcd_data_transfer(hcd_device_state * this_device, hcd_datarequest * request)
 			request->data += transfer_len;
 
 			/* Total length shall not become negative */
-			USB_ASSERT(request->size >= 0,
-				"Invalid amount of data received");
+			if (request->size < 0) {
+				USB_MSG("Invalid amount of data received");
+				return EXIT_FAILURE;
+			}
 
 #ifdef DEBUG
 			/* TODO: REMOVEME (dumping of data transfer) */
@@ -813,7 +815,8 @@ hcd_data_transfer(hcd_device_state * this_device, hcd_datarequest * request)
 				int i;
 				USB_MSG("RECEIVED: %d", transfer_len);
 				for (i = 0; i < transfer_len; i++)
-					USB_MSG("%c",
+					USB_MSG("0x%02X: %c",
+					(request->data-transfer_len)[i],
 					(request->data-transfer_len)[i]);
 			}
 #endif
@@ -835,7 +838,7 @@ hcd_data_transfer(hcd_device_state * this_device, hcd_datarequest * request)
 
 			/* Total length shall not become negative */
 			USB_ASSERT(request->size >= 0,
-				"Invalid amount of data received");
+				"Invalid amount of transfer data calculated");
 
 			/* Start actual data transfer */
 			d->tx_stage(d->private_data, &temp_req);

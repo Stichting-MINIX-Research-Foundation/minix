@@ -3,7 +3,7 @@
 -------------------------------------------------------------------------------
 README file for "USBD" USB host controller driver.
 
-created march-may 2014, JPEmbedded (info@jpembedded.eu)
+created march-june 2014, JPEmbedded (info@jpembedded.eu)
 
 -------------------------------------------------------------------------------
 *                           KNOWN LIMITATIONS:                                *
@@ -14,3 +14,6 @@ created march-may 2014, JPEmbedded (info@jpembedded.eu)
   creation (see ddekit_thread_terminate, ddekit_thread_create) thus resources
   are spilled
 - Driver assumes that there is no preemption for DDEKit threading
+- URBs are enqueued in DDEKit but not in USBD itself
+- DDEKit way of handling interface numbers is not explicitly defined, bitmask
+  formatting for it, is therefore hardcoded into USBD

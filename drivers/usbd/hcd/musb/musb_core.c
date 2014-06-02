@@ -795,13 +795,17 @@ musb_check_error(void * cfg, hcd_transfer transfer, hcd_direction dir)
 
 	DEBUG_DUMP;
 
+	/* TODO: ISO transfer */
+	USB_ASSERT(HCD_TRANSFER_ISOCHRONOUS != transfer,
+		"ISO transfer not supported");
+
 	r = ((musb_core_config *)cfg)->regs;
 
 	/* Set EP and device address to be used in this command */
 	musb_set_state((musb_core_config *)cfg);
 
-	/* TODO: In MUSB only EP0 is allowed to handle control transfers
-	 * so there is no EP checking in this function */
+	/* TODO: More than one control EP? */
+	/* In MUSB EP0 has it's own registers for error handling */
 	if (HCD_TRANSFER_CONTROL == transfer) {
 		/* Get control status register */
 		host_csr = HCD_RD2(r, MUSB_REG_HOST_CSR0);
@@ -831,7 +835,9 @@ musb_check_error(void * cfg, hcd_transfer transfer, hcd_direction dir)
 		return EXIT_SUCCESS;
 	}
 
-	if ((HCD_TRANSFER_BULK == transfer) && (HCD_DIRECTION_OUT == dir)) {
+	/* Non-control transfer error check,
+	 * is based on transfer direction */
+	if (HCD_DIRECTION_OUT == dir) {
 		/* Get RX status register */
 		host_csr = HCD_RD2(r, MUSB_REG_HOST_TXCSR);
 
@@ -860,7 +866,7 @@ musb_check_error(void * cfg, hcd_transfer transfer, hcd_direction dir)
 		return EXIT_SUCCESS;
 	}
 
-	if ((HCD_TRANSFER_BULK == transfer) && (HCD_DIRECTION_IN == dir)) {
+	if (HCD_DIRECTION_IN == dir) {
 		/* Get RX status register */
 		host_csr = HCD_RD2(r, MUSB_REG_HOST_RXCSR);
 
