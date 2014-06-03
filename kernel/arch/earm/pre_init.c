@@ -37,8 +37,13 @@ static void setup_mbi(multiboot_info_t *mbi, char *bootargs);
 /* Kernel may use memory */
 int kernel_may_alloc = 1;
 
+/* kernel bss */
 extern u32_t _edata;
 extern u32_t _end;
+
+/* kernel unpaged bss */
+extern char _kern_unpaged_edata;
+extern char _kern_unpaged_end;
 
 /**
  *
@@ -374,6 +379,7 @@ kinfo_t *pre_init(int argc, char **argv)
 	   
 	/* Clear BSS */
 	memset(&_edata, 0, (u32_t)&_end - (u32_t)&_edata);
+        memset(&_kern_unpaged_edata, 0, (u32_t)&_kern_unpaged_end - (u32_t)&_kern_unpaged_edata);
 
 	/* we get called in a c like fashion where the first arg
          * is the program name (load address) and the rest are

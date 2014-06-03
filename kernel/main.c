@@ -123,6 +123,11 @@ void kmain(kinfo_t *local_cbi)
   struct boot_image *ip;	/* boot image pointer */
   register struct proc *rp;	/* process pointer */
   register int i, j;
+  static int bss_test;
+
+  /* bss sanity check */
+  assert(bss_test == 0);
+  bss_test = 1;
 
   /* save a global copy of the boot parameters */
   memcpy(&kinfo, local_cbi, sizeof(kinfo));
