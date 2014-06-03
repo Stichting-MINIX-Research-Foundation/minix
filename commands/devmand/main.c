@@ -8,6 +8,7 @@
 #include <dirent.h>
 #include <assert.h>
 #include <signal.h>
+#include <minix/dmap.h>
 #include "usb_driver.h"
 #include "proto.h"
 
@@ -63,7 +64,7 @@ static struct global_args args = {
 	.path = NULL,
 	.config_dirs = {NULL,NULL,NULL,NULL},
 	.config_dir_count = 0,
-	.major_offset = 25, 
+	.major_offset = USB_BASE_MAJOR,
 	.verbose = 0,
 	.check_config = 0};
 
