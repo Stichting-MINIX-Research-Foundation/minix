@@ -202,7 +202,8 @@ hcd_enumerate(hcd_device_state * this_device)
 		return EXIT_FAILURE;
 	}
 
-	/* TODO: dynamic device address when more devices are available */
+	/* TODO: Dynamic device addressing should be added here, when more
+	 * than one device can be handled at a time */
 
 	/* Set address */
 	if (EXIT_SUCCESS != hcd_set_address(this_device, HCD_ATTACHED_ADDR)) {
@@ -219,9 +220,12 @@ hcd_enumerate(hcd_device_state * this_device)
 		return EXIT_FAILURE;
 	}
 
-	/* TODO: always first configuration */
+	/* TODO: Always use first configuration, as there is no support for
+	 * multiple configurations in DDEKit/devman and devices rarely have
+	 * more than one anyway */
 	/* Set configuration */
-	if (EXIT_SUCCESS != hcd_set_configuration(this_device, 0x01)) {
+	if (EXIT_SUCCESS != hcd_set_configuration(this_device,
+				HCD_SET_CONFIG_NUM(HCD_DEFAULT_CONFIG))) {
 		USB_MSG("Failed to set configuration");
 		return EXIT_FAILURE;
 	}
@@ -346,12 +350,12 @@ hcd_get_descriptor_tree(hcd_device_state * this_device)
 	completed = 0;
 
 	do {
-		/* TODO: configuration 0 is hard-coded
+		/* TODO: Default configuration is hard-coded
 		 * but others are rarely used anyway */
 		/* TODO: magic numbers, no header for these */
 		setup.bRequestType	= 0x80;		/* IN */
 		setup.bRequest		= 0x06;		/* Get descriptor */
-		setup.wValue		= 0x0200;	/* Configuration 0 */
+		setup.wValue		= 0x0200 | HCD_DEFAULT_CONFIG;
 		setup.wIndex		= 0x0000;
 		setup.wLength		= buffer_length;
 
@@ -712,8 +716,9 @@ hcd_setup_packet(hcd_device_state * this_device, hcd_ctrlrequest * setup)
 			}
 
 		} else {
-			/* TODO: unimplemented */
-			USB_MSG("Illegal non-zero length OUT setup packet");
+			/* TODO: Unimplemented OUT DATA stage */
+			d->out_data_stage(d->private_data);
+
 			return EXIT_FAILURE;
 		}
 	}

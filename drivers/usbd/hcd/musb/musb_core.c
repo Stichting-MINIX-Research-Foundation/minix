@@ -325,7 +325,8 @@ musb_core_stop(void * cfg)
 
 	r = ((musb_core_config *)cfg)->regs;
 
-	/* TODO: add hardware interrupt disable */
+	/* Disable all interrupts */
+	HCD_WR1(r, MUSB_REG_INTRUSBE, MUSB_VAL_INTRUSBE_NONE);
 
 	/* Stop session */
 	devctl = HCD_RD1(r, MUSB_REG_DEVCTL);
@@ -695,8 +696,9 @@ musb_out_data_stage(void * cfg)
 	/* Set EP and device address to be used in this command */
 	musb_set_state((musb_core_config *)cfg);
 
-	/* TODO: not needed for enumeration but may be needed later */
-	USB_MSG("Setup packet's 'DATA OUT' stage not implemented");
+	/* TODO: Not needed for enumeration but may be needed later, if
+	 * additional control transfers are implemented */
+	USB_ASSERT(0, "Setup packet's 'DATA OUT' stage not implemented");
 }
 
 

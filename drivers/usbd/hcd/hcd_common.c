@@ -179,8 +179,9 @@ hcd_os_nanosleep(int nanosec)
 		nanotm.tv_nsec = nanosec;
 	}
 
-	/* TODO: since it is not likely to be ever interrupted, we do not try
+	/* TODO: Since it is not likely to be ever interrupted, we do not try
 	 * to sleep for a remaining time in case of signal handling */
+	/* Signal handling will most likely end up with termination anyway */
 	USB_ASSERT(EXIT_SUCCESS == nanosleep(&nanotm, NULL),
 		"Calling nanosleep() failed");
 }
@@ -225,7 +226,8 @@ hcd_disconnect_device(hcd_device_state * this_device)
 
 	hcd_tree_cleanup(&(this_device->config_tree));
 
-	/* TODO: spilled resources */
+	/* TODO: Spilled resources */
+	/* DDEKit does no resource deallocation, when terminating thread */
 	ddekit_thread_terminate(this_device->thread);
 	ddekit_sem_deinit(this_device->lock);
 

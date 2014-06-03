@@ -11,7 +11,9 @@
 
 #include "musb_core.h"
 
-/* TODO: BeagleBone white uses USB0 for PC connection as peripheral */
+/* TODO: BeagleBone white uses USB0 for PC connection as peripheral,
+ * so this is disabled by default */
+/* Should USB0 ever be used on BBB/BBW, one can change it to '#define': */
 #undef AM335X_USE_USB0
 
 
@@ -197,8 +199,7 @@
  *    AM335x clocking register defines                                       *
  *===========================================================================*/
 /* Clock module registers offsets */
-#define AM335X_CM_PER_BASE_OFFSET	0x00u
-#define AM335X_REG_CM_PER_USB0_CLKCTRL	(AM335X_CM_PER_BASE_OFFSET + 28u)
+#define AM335X_REG_CM_PER_USB0_CLKCTRL_OFFSET			0x1Cu
 
 /* Possible values to be set */
 #define AM335X_VAL_CM_PER_USB0_CLKCTRL_MODULEMODE_ENABLE	0x2u
@@ -267,7 +268,7 @@ static int musb_am335x_internal_init(void);
 static void musb_am335x_internal_deinit(void);
 
 /* Interrupt related */
-static void musb_am335x_irq_init(void *); /* TODO: required by DDEKit */
+static void musb_am335x_irq_init(void *);
 static void musb_am335x_usbss_isr(void *);
 static void musb_am335x_usbx_isr(void *);
 static int musb_am335x_irqstat0_to_ep(int);
@@ -420,14 +421,10 @@ musb_am335x_internal_init(void)
 	DEBUG_DUMP;
 
 	/* Configure clocking */
-	if (hcd_os_clkconf(AM335X_REG_CM_PER_USB0_CLKCTRL,
+	if (hcd_os_clkconf(AM335X_REG_CM_PER_USB0_CLKCTRL_OFFSET,
 			AM335X_VAL_CM_PER_USB0_CLKCTRL_MODULEMODE_ENABLE,
 			AM335X_CLKCONF_FULL_VAL))
 		return EXIT_FAILURE;
-
-	/* TODO: time to stabilize? */
-	/* Sleep 25msec */
-	hcd_os_nanosleep(HCD_NANOSLEEP_MSEC(25));
 
 	/* Read and dump revision register */
 	USB_MSG("MUSB revision (REVREG): %08X",
@@ -493,6 +490,11 @@ static void
 musb_am335x_irq_init(void * UNUSED(unused))
 {
 	DEBUG_DUMP;
+
+	/* TODO: This function does nothing and is not needed by MUSB but
+	 * is still required by DDEKit for initialization, as NULL pointer
+	 * cannot be passed to ddekit_interrupt_attach */
+	return;
 }
 
 
@@ -541,7 +543,8 @@ musb_am335x_usbx_isr(void * data)
 	irqstat0 = HCD_RD4(r, AM335X_REG_USBXIRQSTAT0);
 	irqstat1 = HCD_RD4(r, AM335X_REG_USBXIRQSTAT1);
 
-	/* TODO: priority of interrupts */
+	/* Interrupts, seem to appear one at a time
+	 * Check which bit is set to resolve event */
 	if (irqstat1 & AM335X_VAL_USBXIRQSTAT1_DRVVBUS) {
 		USB_DBG("DRVVBUS level changed");
 		CLEAR_IRQ1(AM335X_VAL_USBXIRQSTAT1_DRVVBUS);

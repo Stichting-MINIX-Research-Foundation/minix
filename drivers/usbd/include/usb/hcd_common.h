@@ -13,6 +13,8 @@
 #include <minix/usb.h>				/* for setup structures */
 #include <minix/usb_ch9.h>			/* for descriptor structures */
 
+#include <sys/cdefs.h>				/* for __aligned() */
+
 
 /*===========================================================================*
  *    USB register handling defines                                          *
@@ -143,9 +145,8 @@ typedef struct hcd_device_state {
 	/* Number of bytes received/transmitted in last transfer */
 	int data_len;
 
-	/* TODO: forcefully align buffer to make things clear? */
-	/* Buffer for each device to hold transfered data */
-	hcd_reg1 buffer[MAX_WTOTALLENGTH];
+	/* Word aligned buffer for each device to hold transfered data */
+	hcd_reg1 buffer[MAX_WTOTALLENGTH] __aligned(sizeof(hcd_reg4));
 }
 hcd_device_state;
 
@@ -219,9 +220,13 @@ typedef struct hcd_datarequest		hcd_datarequest;
 /* Default USB communication parameters */
 #define HCD_DEFAULT_EP		0x00
 #define HCD_DEFAULT_ADDR	0x00
+#define HCD_DEFAULT_CONFIG	0x00
 
-/* TODO: one device */
+/* TODO: One device only */
 #define HCD_ATTACHED_ADDR	0x01
+
+/* Translates configuration number for 'set configuration' */
+#define HCD_SET_CONFIG_NUM(num)	((num)+0x01u)
 
 
 /*===========================================================================*

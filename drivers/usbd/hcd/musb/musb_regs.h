@@ -101,6 +101,7 @@
 #define MUSB_VAL_INTRUSBE_DISCON		HCD_BIT(5)
 #define MUSB_VAL_INTRUSBE_SESSREQ		HCD_BIT(6)
 #define MUSB_VAL_INTRUSBE_VBUSERR		HCD_BIT(7)
+#define MUSB_VAL_INTRUSBE_NONE			0x00u
 
 /* HOST_TYPE0 */
 #define MUSB_VAL_HOST_TYPE0_MASK		(HCD_BIT(6) | HCD_BIT(7))
@@ -141,7 +142,9 @@
 						 HCD_BIT(3))
 
 /* HOST_RXINTERVAL/HOST_TXINTERVAL */
-/* TODO: Default NAK limit */
+/* Default NAK limit for non-control transfer
+ * When too big this may cause driver to wait for
+ * quite long in case of NAK error */
 #define MUSB_VAL_HOST_XXINTERVAL_DEFAULT	0x10u
 
 /* HOST_RXCSR */
