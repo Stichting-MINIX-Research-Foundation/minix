@@ -389,7 +389,8 @@ static void or_reset() {
 static void or_dump (message *m)
  {
 	t_or *orp;
-	
+	int sfkeys;
+
 	orp = &or_state;
 
 	if(orp->or_mode == OR_M_DISABLED) {
@@ -399,12 +400,11 @@ static void or_dump (message *m)
 	if(orp->or_mode != OR_M_ENABLED)
 		return;
 
-	m->m_type = TTY_FKEY_CONTROL;
-	m->FKEY_REQUEST = FKEY_EVENTS;
-	if(OK!=(ipc_sendrec(TTY_PROC_NR,m)) )
+	if(OK != fkey_events(NULL, &sfkeys)) {
 		printf("Contacting the TTY failed\n");
+	}
 		
-	if(bit_isset(m->FKEY_SFKEYS, 11)) {
+	if(bit_isset(sfkeys, 11)) {
 		print_linkstatus(orp, orp->last_linkstatus);
 	}
 }

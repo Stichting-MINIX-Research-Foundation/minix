@@ -501,6 +501,7 @@ message *m_ptr;			/* pointer to the request message */
       }
       break;
   case FKEY_EVENTS:
+      result = OK;			/* everything will be ok*/
       m_ptr->FKEY_FKEYS = m_ptr->FKEY_SFKEYS = 0;
       for (i=0; i < 12; i++) {		/* check (Shift+) F1-F12 keys */
           if (fkey_obs[i].proc_nr == m_ptr->m_source) {

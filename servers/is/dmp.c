@@ -67,25 +67,31 @@ int map;
 /*===========================================================================*
  *				handle_fkey				     *
  *===========================================================================*/
-#define pressed(k) ((F1<=(k)&&(k)<=F12 && bit_isset(m->FKEY_FKEYS,((k)-F1+1)))\
-  	|| (SF1<=(k) && (k)<=SF12 && bit_isset(m->FKEY_SFKEYS, ((k)-SF1+1)))) 
+#define pressed(start, end, bitfield, key) \
+	(((start) <= (key)) && ((end) >= (key)) && \
+	 bit_isset((bitfield), ((key) - (start) + 1)))
 int do_fkey_pressed(m)
 message *m;					/* notification message */
 {
   int s, h;
+  int fkeys, sfkeys;
 
   /* The notification message does not convey any information, other
    * than that some function keys have been pressed. Ask TTY for details.
    */
-  m->m_type = TTY_FKEY_CONTROL;
-  m->FKEY_REQUEST = FKEY_EVENTS;
-  if (OK != (s=ipc_sendrec(TTY_PROC_NR, m)))
-      printf("IS: warning, ipc_sendrec to TTY failed: %d\n", s);
+  s = fkey_events(&fkeys, &sfkeys);
+  if (s < 0) {
+      printf("IS: warning, fkey_events failed: %d\n", s);
+  }
 
   /* Now check which keys were pressed: F1-F12, SF1-SF12. */
-  for(h=0; h < NHOOKS; h++)
-      if(pressed(hooks[h].key))
-          hooks[h].function();
+  for(h=0; h < NHOOKS; h++) {
+	if (pressed(F1, F12, fkeys, hooks[h].key)) {
+		hooks[h].function();
+	} else if (pressed(SF1, SF12, sfkeys, hooks[h].key)) {
+		hooks[h].function();
+	}
+  }
 
   /* Don't send a reply message. */
   return(EDONTREPLY);
