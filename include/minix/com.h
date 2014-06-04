@@ -955,16 +955,11 @@
 #define TTY_RQ_BASE 0x1300
 
 #define TTY_FKEY_CONTROL	(TTY_RQ_BASE + 1) /* control an F-key at TTY */
-#  define FKEY_REQUEST	     m2_i1	/* request to perform at TTY */
 #  define    FKEY_MAP		10	/* observe function key */
 #  define    FKEY_UNMAP		11	/* stop observing function key */
 #  define    FKEY_EVENTS	12	/* request open key presses */
-#  define FKEY_FKEYS	      m2_l1	/* F1-F12 keys pressed */
-#  define FKEY_SFKEYS	      m2_l2	/* Shift-F1-F12 keys pressed */
 
 #define TTY_INPUT_UP		(TTY_RQ_BASE + 2) /* input server is up */
-/* This message uses no message fields. */
-
 #define TTY_INPUT_EVENT		(TTY_RQ_BASE + 3) /* relayed input event */
 
 /*===========================================================================*

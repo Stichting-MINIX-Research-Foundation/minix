@@ -17,12 +17,12 @@ int *sfkeys;				/* bit masks for Shift F1-F12 keys */
     message m;
     int s;
     memset(&m, 0, sizeof(m));
-    m.FKEY_REQUEST = request;
-    m.FKEY_FKEYS = (fkeys) ? *fkeys : 0;
-    m.FKEY_SFKEYS = (sfkeys) ? *sfkeys : 0;
+    m.m_lsys_tty_fkey_ctl.request = request;
+    m.m_lsys_tty_fkey_ctl.fkeys = (fkeys) ? *fkeys : 0;
+    m.m_lsys_tty_fkey_ctl.sfkeys = (sfkeys) ? *sfkeys : 0;
     s = _taskcall(TTY_PROC_NR, TTY_FKEY_CONTROL, &m);
-    if (fkeys) *fkeys = m.FKEY_FKEYS;
-    if (sfkeys) *sfkeys = m.FKEY_SFKEYS;
+    if (fkeys) *fkeys = m.m_tty_lsys_fkey_ctl.fkeys;
+    if (sfkeys) *sfkeys = m.m_tty_lsys_fkey_ctl.sfkeys;
     return(s);
 }
 

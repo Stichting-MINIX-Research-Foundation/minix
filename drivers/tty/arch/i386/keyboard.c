@@ -435,11 +435,11 @@ message *m_ptr;			/* pointer to the request message */
   int s, i;
   int result = EINVAL;
 
-  switch (m_ptr->FKEY_REQUEST) {	/* see what we must do */
+  switch (m_ptr->m_lsys_tty_fkey_ctl.request) {	/* see what we must do */
   case FKEY_MAP:			/* request for new mapping */
       result = OK;			/* assume everything will be ok*/
       for (i=0; i < 12; i++) {		/* check F1-F12 keys */
-          if (bit_isset(m_ptr->FKEY_FKEYS, i+1) ) {
+          if (bit_isset(m_ptr->m_lsys_tty_fkey_ctl.fkeys, i+1) ) {
 #if DEAD_CODE
 	/* Currently, we don't check if the slot is in use, so that IS
 	 * can recover after a crash by overtaking its existing mappings.
@@ -449,7 +449,7 @@ message *m_ptr;			/* pointer to the request message */
 #endif
     	          fkey_obs[i].proc_nr = m_ptr->m_source;
     	          fkey_obs[i].events = 0;
-    	          bit_unset(m_ptr->FKEY_FKEYS, i+1);
+    	          bit_unset(m_ptr->m_lsys_tty_fkey_ctl.fkeys, i+1);
 #if DEAD_CODE
     	      } else {
     	          printf("WARNING, fkey_map failed F%d\n", i+1);
@@ -459,13 +459,13 @@ message *m_ptr;			/* pointer to the request message */
     	  }
       }
       for (i=0; i < 12; i++) {		/* check Shift+F1-F12 keys */
-          if (bit_isset(m_ptr->FKEY_SFKEYS, i+1) ) {
+          if (bit_isset(m_ptr->m_lsys_tty_fkey_ctl.sfkeys, i+1) ) {
 #if DEAD_CODE
               if (sfkey_obs[i].proc_nr == NONE) { 
 #endif
     	          sfkey_obs[i].proc_nr = m_ptr->m_source;
     	          sfkey_obs[i].events = 0;
-    	          bit_unset(m_ptr->FKEY_SFKEYS, i+1);
+    	          bit_unset(m_ptr->m_lsys_tty_fkey_ctl.sfkeys, i+1);
 #if DEAD_CODE
     	      } else {
     	          printf("WARNING, fkey_map failed Shift F%d\n", i+1);
@@ -478,22 +478,22 @@ message *m_ptr;			/* pointer to the request message */
   case FKEY_UNMAP:
       result = OK;			/* assume everything will be ok*/
       for (i=0; i < 12; i++) {		/* check F1-F12 keys */
-          if (bit_isset(m_ptr->FKEY_FKEYS, i+1) ) {
+          if (bit_isset(m_ptr->m_lsys_tty_fkey_ctl.fkeys, i+1) ) {
               if (fkey_obs[i].proc_nr == m_ptr->m_source) { 
     	          fkey_obs[i].proc_nr = NONE;
     	          fkey_obs[i].events = 0;
-    	          bit_unset(m_ptr->FKEY_FKEYS, i+1);
+    	          bit_unset(m_ptr->m_lsys_tty_fkey_ctl.fkeys, i+1);
     	      } else {
     	          result = EPERM;	/* report failure, but try rest */
     	      }
     	  }
       }
       for (i=0; i < 12; i++) {		/* check Shift+F1-F12 keys */
-          if (bit_isset(m_ptr->FKEY_SFKEYS, i+1) ) {
+          if (bit_isset(m_ptr->m_lsys_tty_fkey_ctl.sfkeys, i+1) ) {
               if (sfkey_obs[i].proc_nr == m_ptr->m_source) { 
     	          sfkey_obs[i].proc_nr = NONE;
     	          sfkey_obs[i].events = 0;
-    	          bit_unset(m_ptr->FKEY_SFKEYS, i+1);
+    	          bit_unset(m_ptr->m_lsys_tty_fkey_ctl.sfkeys, i+1);
     	      } else {
     	          result = EPERM;	/* report failure, but try rest */
     	      }
@@ -502,17 +502,17 @@ message *m_ptr;			/* pointer to the request message */
       break;
   case FKEY_EVENTS:
       result = OK;			/* everything will be ok*/
-      m_ptr->FKEY_FKEYS = m_ptr->FKEY_SFKEYS = 0;
+      m_ptr->m_tty_lsys_fkey_ctl.fkeys = m_ptr->m_tty_lsys_fkey_ctl.sfkeys = 0;
       for (i=0; i < 12; i++) {		/* check (Shift+) F1-F12 keys */
           if (fkey_obs[i].proc_nr == m_ptr->m_source) {
               if (fkey_obs[i].events) { 
-                  bit_set(m_ptr->FKEY_FKEYS, i+1);
+                  bit_set(m_ptr->m_tty_lsys_fkey_ctl.fkeys, i+1);
                   fkey_obs[i].events = 0;
               }
           }
           if (sfkey_obs[i].proc_nr == m_ptr->m_source) {
               if (sfkey_obs[i].events) { 
-                  bit_set(m_ptr->FKEY_SFKEYS, i+1);
+                  bit_set(m_ptr->m_tty_lsys_fkey_ctl.sfkeys, i+1);
                   sfkey_obs[i].events = 0;
               }
           }

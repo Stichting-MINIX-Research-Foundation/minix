@@ -1068,6 +1068,23 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_lsys_svrctl);
 
 typedef struct {
+	int request;
+	int fkeys;
+	int sfkeys;
+
+	uint8_t padding[44];
+} mess_lsys_tty_fkey_ctl;
+_ASSERT_MSG_SIZE(mess_lsys_tty_fkey_ctl);
+
+typedef struct {
+	int fkeys;
+	int sfkeys;
+
+	uint8_t padding[48];
+} mess_tty_lsys_fkey_ctl;
+_ASSERT_MSG_SIZE(mess_tty_lsys_fkey_ctl);
+
+typedef struct {
 	endpoint_t endpt;
 	cp_grant_id_t grant;
 	size_t count;
@@ -1748,6 +1765,8 @@ typedef struct {
 
 		mess_lsys_svrctl	m_lsys_svrctl;
 
+		mess_lsys_tty_fkey_ctl	m_lsys_tty_fkey_ctl;
+
 		mess_lsys_vfs_checkperms m_lsys_vfs_checkperms;
 		mess_lsys_vfs_copyfd	m_lsys_vfs_copyfd;
 		mess_lsys_vfs_mapdriver	m_lsys_vfs_mapdriver;
@@ -1783,6 +1802,8 @@ typedef struct {
 		mess_rs_pm_srv_kill	m_rs_pm_srv_kill;
 
 		mess_sched_lsys_scheduling_start m_sched_lsys_scheduling_start;
+
+		mess_tty_lsys_fkey_ctl	m_tty_lsys_fkey_ctl;
 
 		mess_vfs_fs_breadwrite	m_vfs_fs_breadwrite;
 		mess_vfs_fs_chmod	m_vfs_fs_chmod;
