@@ -194,7 +194,7 @@ hcd_event;
 struct hcd_datarequest {
 
 	char * data;
-	int size;
+	int data_left;
 	int endpoint;
 	int direction;
 	unsigned int max_packet_size;
@@ -218,15 +218,22 @@ typedef struct hcd_datarequest		hcd_datarequest;
 #define HCD_NANOSLEEP_USEC(usec)	((usec) * HCD_MILI)
 
 /* Default USB communication parameters */
-#define HCD_DEFAULT_EP		0x00
-#define HCD_DEFAULT_ADDR	0x00
-#define HCD_DEFAULT_CONFIG	0x00
+#define HCD_DEFAULT_EP		0x00u
+#define HCD_DEFAULT_ADDR	0x00u
+#define HCD_DEFAULT_CONFIG	0x00u
+#define HCD_LAST_ADDR		0x7Fu
+#define HCD_LAST_EP		0x0Fu
+#define HCD_TOTAL_EP		0x10u
 
 /* TODO: One device only */
 #define HCD_ATTACHED_ADDR	0x01
 
 /* Translates configuration number for 'set configuration' */
 #define HCD_SET_CONFIG_NUM(num)	((num)+0x01u)
+
+/* Default MaxPacketSize for control transfer */
+#define HCD_LS_MAXPACKETSIZE	8u
+#define HCD_HS_MAXPACKETSIZE	64u
 
 
 /*===========================================================================*

@@ -631,7 +631,7 @@ musb_am335x_usbx_isr(void * data)
 static int
 musb_am335x_irqstat0_to_ep(int irqstat0)
 {
-	int ep;
+	hcd_reg1 ep;
 
 	DEBUG_DUMP;
 
@@ -640,16 +640,20 @@ musb_am335x_irqstat0_to_ep(int irqstat0)
 	while (0 == (irqstat0 & 0x01)) {
 		irqstat0 >>= 1;
 		ep++;
-		USB_ASSERT(ep < 32, "Invalid IRQSTAT0 supplied (1)");
+		/* Must be within two consecutive EP sets */
+		USB_ASSERT(ep < (2 * HCD_TOTAL_EP),
+			"Invalid IRQSTAT0 supplied (1)");
 	}
 
 	/* Convert RX interrupt to EP number */
-	if (ep >= 16) {
-		ep -= 16;
-		USB_ASSERT(ep != 0, "Invalid IRQSTAT0 supplied (2)");
+	if (ep >= HCD_TOTAL_EP) {
+		ep -= HCD_TOTAL_EP;
+		/* Must not be control EP */
+		USB_ASSERT(ep != HCD_DEFAULT_EP,
+			"Invalid IRQSTAT0 supplied (2)");
 	}
 
-	return ep;
+	return (int)ep;
 }
 
 

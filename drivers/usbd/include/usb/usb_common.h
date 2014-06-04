@@ -11,8 +11,8 @@
 /* Current printf implementation for dumping important messages */
 #include <stdio.h>
 
-#if 1
-/* TODO: should be elsewhere */
+/* In case of verbose debug output, enable this: */
+#if 0
 #define DEBUG
 #endif
 
@@ -45,8 +45,8 @@
 		} while(0)
 
 #else
-#define DEBUG_DUMP
-#define USB_DBG(fmt, ...)
+#define DEBUG_DUMP		((void)0)
+#define USB_DBG(fmt, ...)	((void)0)
 #endif
 
 
@@ -56,7 +56,8 @@
 #define USB_ASSERT(cond, otherwise)					\
 		do {							\
 			if(!(cond)) {					\
-				USB_MSG("ERROR - "otherwise);		\
+				USB_MSG("ASSERTION ERROR (%s:%d) - "	\
+					otherwise, __func__, __LINE__);	\
 				exit(EXIT_FAILURE);			\
 			}						\
 		} while(0)

@@ -16,13 +16,13 @@
  *    Local prototypes                                                       *
  *===========================================================================*/
 static void musb_set_state(musb_core_config *);
-static int musb_check_rxpktrdy(void *, int);
-static void musb_in_stage_cleanup(void *, int);
-static void musb_clear_rxpktrdy(void *, int);
+static int musb_check_rxpktrdy(void *, hcd_reg1);
+static void musb_in_stage_cleanup(void *, hcd_reg1);
+static void musb_clear_rxpktrdy(void *, hcd_reg1);
 static void musb_clear_statuspkt(void *);
 static int musb_get_count(void *);
-static void musb_read_fifo(void *, void *, int, int);
-static void musb_write_fifo(void *, void *, int, int);
+static void musb_read_fifo(void *, void *, int, hcd_reg1);
+static void musb_write_fifo(void *, void *, int, hcd_reg1);
 
 
 /*===========================================================================*
@@ -43,8 +43,8 @@ musb_set_state(musb_core_config * cfg)
 
 	r = cfg->regs;
 
-	USB_ASSERT(cfg->ep <= 15, "Invalid EP supplied");
-	USB_ASSERT(cfg->addr <= 127, "Invalid device address supplied");
+	USB_ASSERT(cfg->ep <= HCD_LAST_EP, "Invalid EP supplied");
+	USB_ASSERT(cfg->addr <= HCD_LAST_ADDR, "Invalid address supplied");
 
 	/* Set EP and address to be used in next MUSB command */
 
@@ -62,7 +62,7 @@ musb_set_state(musb_core_config * cfg)
  *    musb_check_rxpktrdy                                                    *
  *===========================================================================*/
 static int
-musb_check_rxpktrdy(void * cfg, int ep_num)
+musb_check_rxpktrdy(void * cfg, hcd_reg1 ep_num)
 {
 	void * r;
 
@@ -74,7 +74,7 @@ musb_check_rxpktrdy(void * cfg, int ep_num)
 	musb_set_state((musb_core_config *)cfg);
 
 	/* Check for RXPKTRDY */
-	if (0 == ep_num) {
+	if (HCD_DEFAULT_EP == ep_num) {
 		/* Get control status register for EP 0 */
 		if (HCD_RD2(r, MUSB_REG_HOST_CSR0) &
 			MUSB_VAL_HOST_CSR0_RXPKTRDY)
@@ -94,14 +94,14 @@ musb_check_rxpktrdy(void * cfg, int ep_num)
  *    musb_in_stage_cleanup                                                  *
  *===========================================================================*/
 static void
-musb_in_stage_cleanup(void * cfg, int ep_num)
+musb_in_stage_cleanup(void * cfg, hcd_reg1 ep_num)
 {
 	DEBUG_DUMP;
 
 	musb_clear_rxpktrdy(cfg, ep_num);
 
 	/* For control EP 0 also clear STATUSPKT */
-	if (0 == ep_num)
+	if (HCD_DEFAULT_EP == ep_num)
 		musb_clear_statuspkt(cfg);
 }
 
@@ -110,7 +110,7 @@ musb_in_stage_cleanup(void * cfg, int ep_num)
  *    musb_clear_rxpktrdy                                                    *
  *===========================================================================*/
 static void
-musb_clear_rxpktrdy(void * cfg, int ep_num)
+musb_clear_rxpktrdy(void * cfg, hcd_reg1 ep_num)
 {
 	void * r;
 	hcd_reg2 host_csr;
@@ -123,7 +123,7 @@ musb_clear_rxpktrdy(void * cfg, int ep_num)
 	musb_set_state((musb_core_config *)cfg);
 
 	/* Check for RXPKTRDY */
-	if (0 == ep_num) {
+	if (HCD_DEFAULT_EP == ep_num) {
 		/* Get control status register for EP 0 */
 		host_csr = HCD_RD2(r, MUSB_REG_HOST_CSR0);
 
@@ -191,7 +191,7 @@ musb_get_count(void * cfg)
  *    musb_read_fifo                                                         *
  *===========================================================================*/
 static void
-musb_read_fifo(void * cfg, void * output, int size, int fifo_num)
+musb_read_fifo(void * cfg, void * output, int size, hcd_reg1 fifo_num)
 {
 	void * r;
 
@@ -202,7 +202,7 @@ musb_read_fifo(void * cfg, void * output, int size, int fifo_num)
 
 	DEBUG_DUMP;
 
-	USB_ASSERT((fifo_num >= 0) && (fifo_num <= 15), "Wrong FIFO number");
+	USB_ASSERT(fifo_num <= HCD_LAST_EP, "Invalid FIFO number");
 
 	r = ((musb_core_config *)cfg)->regs;
 	fifo_addr = MUSB_REG_FIFO0 + (fifo_num * MUSB_REG_FIFO_LEN);
@@ -216,7 +216,7 @@ musb_read_fifo(void * cfg, void * output, int size, int fifo_num)
 	output_w = (hcd_reg4 *)output;
 
 	/* Try and copy aligned words */
-	if (0 == ((hcd_addr)output_w % 4)) {
+	if (0 == ((hcd_addr)output_w % sizeof(hcd_addr))) {
 
 		while (size > (int)(sizeof(*output_w) - 1)) {
 			*output_w++ = HCD_RD4(r, fifo_addr);
@@ -238,7 +238,7 @@ musb_read_fifo(void * cfg, void * output, int size, int fifo_num)
  *    musb_write_fifo                                                         *
  *===========================================================================*/
 static void
-musb_write_fifo(void * cfg, void * input, int size, int fifo_num)
+musb_write_fifo(void * cfg, void * input, int size, hcd_reg1 fifo_num)
 {
 	void * r;
 
@@ -249,7 +249,7 @@ musb_write_fifo(void * cfg, void * input, int size, int fifo_num)
 
 	DEBUG_DUMP;
 
-	USB_ASSERT((fifo_num >= 0) && (fifo_num <= 15), "Wrong FIFO number");
+	USB_ASSERT(fifo_num <= HCD_LAST_EP, "Invalid FIFO number");
 
 	r = ((musb_core_config *)cfg)->regs;
 	fifo_addr = MUSB_REG_FIFO0 + (fifo_num * MUSB_REG_FIFO_LEN);
@@ -263,7 +263,7 @@ musb_write_fifo(void * cfg, void * input, int size, int fifo_num)
 	input_w = (hcd_reg4 *)input;
 
 	/* Try and copy aligned words */
-	if (0 == ((hcd_addr)input_w % 4)) {
+	if (0 == ((hcd_addr)input_w % sizeof(hcd_addr))) {
 
 		while (size > (int)(sizeof(*input_w) - 1)) {
 			HCD_WR4(r, fifo_addr, *input_w++);
@@ -461,9 +461,6 @@ void
 musb_rx_stage(void * cfg, hcd_datarequest * request)
 {
 	musb_core_config * core;
-#if 0
-	hcd_reg2 intrrxe;
-#endif
 	hcd_reg2 host_rxcsr;
 	hcd_reg1 host_rxtype;
 	void * r;
@@ -475,7 +472,7 @@ musb_rx_stage(void * cfg, hcd_datarequest * request)
 
 	USB_ASSERT(request->max_packet_size <= 1024,
 			"Invalid wMaxPacketSize");
-	USB_ASSERT((core->ep <= 15) && (core->ep > 0),
+	USB_ASSERT((core->ep <= HCD_LAST_EP) && (core->ep > HCD_DEFAULT_EP),
 			"Invalid bulk EP supplied");
 
 	/* Set EP and device address to be used in this command */
@@ -513,12 +510,17 @@ musb_rx_stage(void * cfg, hcd_datarequest * request)
 	else if (HCD_TRANSFER_INTERRUPT == request->type)
 		HCD_WR1(r, MUSB_REG_HOST_RXINTERVAL, request->interval);
 
-	/* Not required in some MUSB implementations */
 #if 0
-	/* Enable this interrupt */
-	intrrxe = HCD_RD2(r, MUSB_REG_INTRRXE);
-	HCD_SET(intrrxe, HCD_BIT(core->ep));
-	HCD_WR2(r, MUSB_REG_INTRRXE, intrrxe);
+	{
+		/* Not required by all MUSB implementations, but
+		 * left here just in case */
+		hcd_reg2 intrrxe;
+
+		/* Enable this interrupt */
+		intrrxe = HCD_RD2(r, MUSB_REG_INTRRXE);
+		HCD_SET(intrrxe, HCD_BIT(core->ep));
+		HCD_WR2(r, MUSB_REG_INTRRXE, intrrxe);
+	}
 #endif
 
 	/* TODO: One reusable FIFO, no double buffering */
@@ -529,21 +531,15 @@ musb_rx_stage(void * cfg, hcd_datarequest * request)
 	HCD_WR2(r, MUSB_REG_RXFIFOADDR, MUSB_VAL_XXFIFOADDR_EP0_END);
 	HCD_WR1(r, MUSB_REG_RXFIFOSZ, MUSB_VAL_XXFIFOSZ_4096);
 
-	/* TODO: decide which is better (or working at all when we use more
-	 * than one transfer for bulk data in single device) */
-#if 0
 	/* Make controller reconfigure */
 	host_rxcsr = HCD_RD2(r, MUSB_REG_HOST_RXCSR);
-	HCD_SET(host_rxcsr, MUSB_VAL_HOST_RXCSR_CLRDATATOG);
+	if (MUSB_DATATOG_UNKNOWN == core->datatog_rx[core->ep]) {
+		/* Reset DATA toggle on first transfer */
+		HCD_SET(host_rxcsr, MUSB_VAL_HOST_RXCSR_CLRDATATOG);
+		core->datatog_rx[core->ep] = MUSB_DATATOG_INIT;
+	}
 	HCD_SET(host_rxcsr, MUSB_VAL_HOST_RXCSR_FLUSHFIFO);
 	HCD_WR2(r, MUSB_REG_HOST_RXCSR, host_rxcsr);
-#else
-	/* Reset and flush */
-	host_rxcsr = 0;
-	HCD_SET(host_rxcsr, MUSB_VAL_HOST_RXCSR_CLRDATATOG);
-	HCD_SET(host_rxcsr, MUSB_VAL_HOST_RXCSR_FLUSHFIFO);
-	HCD_WR2(r, MUSB_REG_HOST_RXCSR, host_rxcsr);
-#endif
 
 	/* Request packet */
 	host_rxcsr = HCD_RD2(r, MUSB_REG_HOST_RXCSR);
@@ -559,9 +555,6 @@ void
 musb_tx_stage(void * cfg, hcd_datarequest * request)
 {
 	musb_core_config * core;
-#if 0
-	hcd_reg2 intrtxe;
-#endif
 	hcd_reg2 host_txcsr;
 	hcd_reg1 host_txtype;
 	void * r;
@@ -573,7 +566,7 @@ musb_tx_stage(void * cfg, hcd_datarequest * request)
 
 	USB_ASSERT(request->max_packet_size <= 1024,
 			"Invalid wMaxPacketSize");
-	USB_ASSERT((core->ep <= 15) && (core->ep > 0),
+	USB_ASSERT((core->ep <= HCD_LAST_EP) && (core->ep > HCD_DEFAULT_EP),
 			"Invalid bulk EP supplied");
 
 	/* Set EP and device address to be used in this command */
@@ -611,12 +604,17 @@ musb_tx_stage(void * cfg, hcd_datarequest * request)
 	else if (HCD_TRANSFER_INTERRUPT == request->type)
 		HCD_WR1(r, MUSB_REG_HOST_TXINTERVAL, request->interval);
 
-	/* Not required in some MUSB implementations */
 #if 0
-	/* Enable this interrupt */
-	intrtxe = HCD_RD2(r, MUSB_REG_INTRTXE);
-	HCD_SET(intrtxe, HCD_BIT(core->ep));
-	HCD_WR2(r, MUSB_REG_INTRTXE, intrtxe);
+	{
+		/* Not required by all MUSB implementations, but
+		 * left here just in case */
+		hcd_reg2 intrtxe;
+
+		/* Enable this interrupt */
+		intrtxe = HCD_RD2(r, MUSB_REG_INTRTXE);
+		HCD_SET(intrtxe, HCD_BIT(core->ep));
+		HCD_WR2(r, MUSB_REG_INTRTXE, intrtxe);
+	}
 #endif
 
 	/* TODO: One reusable FIFO, no double buffering */
@@ -627,9 +625,6 @@ musb_tx_stage(void * cfg, hcd_datarequest * request)
 	HCD_WR2(r, MUSB_REG_TXFIFOADDR, MUSB_VAL_XXFIFOADDR_EP0_END);
 	HCD_WR1(r, MUSB_REG_TXFIFOSZ, MUSB_VAL_XXFIFOSZ_4096);
 
-	/* TODO: decide which is better (or working at all when we use more
-	 * than one transfer for bulk data in single device) */
-#if 0
 	/* Make controller reconfigure */
 	host_txcsr = HCD_RD2(r, MUSB_REG_HOST_TXCSR);
 	HCD_CLR(host_txcsr, MUSB_VAL_HOST_TXCSR_DMAMODE);
@@ -638,20 +633,16 @@ musb_tx_stage(void * cfg, hcd_datarequest * request)
 	HCD_SET(host_txcsr, MUSB_VAL_HOST_TXCSR_MODE);
 	HCD_CLR(host_txcsr, MUSB_VAL_HOST_TXCSR_ISO);
 	HCD_CLR(host_txcsr, MUSB_VAL_HOST_TXCSR_AUTOSET);
-	HCD_SET(host_txcsr, MUSB_VAL_HOST_TXCSR_CLRDATATOG);
+	if (MUSB_DATATOG_UNKNOWN == core->datatog_tx[core->ep]) {
+		/* Reset DATA toggle on first transfer */
+		HCD_SET(host_txcsr, MUSB_VAL_HOST_TXCSR_CLRDATATOG);
+		core->datatog_tx[core->ep] = MUSB_DATATOG_INIT;
+	}
 	HCD_SET(host_txcsr, MUSB_VAL_HOST_TXCSR_FLUSHFIFO);
 	HCD_WR2(r, MUSB_REG_HOST_TXCSR, host_txcsr);
-#else
-	/* Reset and flush */
-	host_txcsr = 0;
-	HCD_SET(host_txcsr, MUSB_VAL_HOST_TXCSR_MODE);
-	HCD_SET(host_txcsr, MUSB_VAL_HOST_TXCSR_CLRDATATOG);
-	HCD_SET(host_txcsr, MUSB_VAL_HOST_TXCSR_FLUSHFIFO);
-	HCD_WR2(r, MUSB_REG_HOST_TXCSR, host_txcsr);
-#endif
 
 	/* Put data in FIFO */
-	musb_write_fifo(cfg, request->data, request->size, core->ep);
+	musb_write_fifo(cfg, request->data, request->data_left, core->ep);
 
 	/* Request packet */
 	host_txcsr = HCD_RD2(r, MUSB_REG_HOST_TXCSR);
@@ -760,7 +751,7 @@ musb_out_status_stage(void * cfg)
  *    musb_read_data                                                         *
  *===========================================================================*/
 int
-musb_read_data(void * cfg, hcd_reg1 * buffer, int ep_num)
+musb_read_data(void * cfg, hcd_reg1 * buffer, hcd_reg1 ep_num)
 {
 	int count;
 

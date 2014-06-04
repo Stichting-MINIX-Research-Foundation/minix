@@ -23,7 +23,7 @@
  *===========================================================================*/
 static int hcd_fill_configuration(hcd_reg1 *, int, hcd_configuration *, int);
 static int hcd_fill_interface(hcd_reg1 *, int, hcd_interface *, int);
-static int hcd_fill_endpoint(hcd_reg1 *, int, hcd_endpoint *, int);
+static int hcd_fill_endpoint(hcd_reg1 *, int, hcd_endpoint *);
 
 
 /*===========================================================================*
@@ -343,10 +343,9 @@ hcd_buffer_to_tree(hcd_reg1 * buf, int len, hcd_configuration * c)
 			if (NULL == i)
 				goto PARSE_ERROR;
 
-			e = &(i->endpoint[ep_num]);
+			e = &(i->endpoint[ep_num++]);
 
-			if (EXIT_SUCCESS != hcd_fill_endpoint(buf, len,
-								e, ep_num++))
+			if (EXIT_SUCCESS != hcd_fill_endpoint(buf, len, e))
 				goto PARSE_ERROR;
 		} else
 			USB_DBG("Unhandled descriptor type 0x%02X",
@@ -507,6 +506,7 @@ hcd_fill_interface(hcd_reg1 * buf, int len, hcd_interface * i, int num)
 	if (sizeof(*desc) != desc->bLength)
 		return EXIT_FAILURE;
 
+	/* It is mandatory to supply interfaces in correct order */
 	if (desc->bInterfaceNumber != num)
 		return EXIT_FAILURE;
 
@@ -541,7 +541,7 @@ hcd_fill_interface(hcd_reg1 * buf, int len, hcd_interface * i, int num)
  *    hcd_fill_endpoint                                                      *
  *===========================================================================*/
 static int
-hcd_fill_endpoint(hcd_reg1 * buf, int len, hcd_endpoint * e, int num)
+hcd_fill_endpoint(hcd_reg1 * buf, int len, hcd_endpoint * e)
 {
 	hcd_endpoint_descriptor * desc;
 
@@ -549,7 +549,7 @@ hcd_fill_endpoint(hcd_reg1 * buf, int len, hcd_endpoint * e, int num)
 
 	desc = (hcd_endpoint_descriptor *)buf;
 
-	USB_DBG("Endpoint #%d", num);
+	USB_DBG("Endpoint #%d", UE_GET_ADDR(desc->bEndpointAddress));
 
 	if (UDESC_ENDPOINT != desc->bDescriptorType)
 		return EXIT_FAILURE;

@@ -27,7 +27,7 @@ static int hcd_enumerate(hcd_device_state *);
 static int hcd_get_device_descriptor(hcd_device_state *);
 static int hcd_set_address(hcd_device_state *, int);
 static int hcd_get_descriptor_tree(hcd_device_state *);
-static int hcd_set_configuration(hcd_device_state *, int);
+static int hcd_set_configuration(hcd_device_state *, hcd_reg1);
 static int hcd_handle_urb(hcd_device_state *);
 static int hcd_control_urb(hcd_device_state *);
 static int hcd_non_control_urb(hcd_device_state *, int);
@@ -195,6 +195,12 @@ hcd_enumerate(hcd_device_state * this_device)
 		USB_MSG("Failed to reset device");
 		return EXIT_FAILURE;
 	}
+
+	/* Default MaxPacketSize, based on speed */
+	if (HCD_SPEED_LOW == this_device->speed)
+		this_device->max_packet_size = HCD_LS_MAXPACKETSIZE;
+	else
+		this_device->max_packet_size = HCD_HS_MAXPACKETSIZE;
 
 	/* Get device descriptor */
 	if (EXIT_SUCCESS != hcd_get_device_descriptor(this_device)) {
@@ -415,7 +421,7 @@ hcd_get_descriptor_tree(hcd_device_state * this_device)
  *    hcd_set_configuration                                                  *
  *===========================================================================*/
 static int
-hcd_set_configuration(hcd_device_state * this_device, int configuration)
+hcd_set_configuration(hcd_device_state * this_device, hcd_reg1 configuration)
 {
 	hcd_ctrlrequest setup;
 
@@ -454,7 +460,7 @@ hcd_handle_urb(hcd_device_state * this_device)
 
 	USB_ASSERT(NULL != urb, "NULL URB given");
 	/* TODO: One device only */
-	USB_ASSERT((void *)this_device != (void *)urb->dev,
+	USB_ASSERT((void *)this_device == (void *)urb->dev,
 		"Unknown device for URB");
 
 	switch (urb->type) {
@@ -536,7 +542,12 @@ hcd_control_urb(hcd_device_state * this_device)
 		return EXIT_FAILURE;
 	}
 
+	/* TODO: Calling memcpy may be removed when writing directly to URB */
+	/* Put what was read back into URB */
+	memcpy(urb->data, this_device->buffer, this_device->data_len);
+	urb->actual_length = (unsigned int)this_device->data_len;
 	urb->status = EXIT_SUCCESS;
+
 	return EXIT_SUCCESS;
 }
 
@@ -563,8 +574,8 @@ hcd_non_control_urb(hcd_device_state * this_device, int type)
 		return EXIT_FAILURE;
 	}
 
-	if ((UE_GET_ADDR(urb->endpoint) >= 16) ||
-		(UE_GET_ADDR(urb->endpoint) <= 0)) {
+	if ((UE_GET_ADDR(urb->endpoint) >= HCD_TOTAL_EP) ||
+		(UE_GET_ADDR(urb->endpoint) <= HCD_DEFAULT_EP)) {
 		USB_MSG("Illegal EP number");
 		return EXIT_FAILURE;
 	}
@@ -594,7 +605,7 @@ hcd_non_control_urb(hcd_device_state * this_device, int type)
 	/* Assign to data request structure */
 	request.endpoint = urb->endpoint;
 	request.direction = urb->direction;
-	request.size = (int)urb->size;
+	request.data_left = (int)urb->size;
 	request.data = urb->data;
 	request.interval = urb->interval;
 
@@ -633,7 +644,9 @@ hcd_non_control_urb(hcd_device_state * this_device, int type)
 	}
 
 	/* Transfer successfully completed */
+	urb->actual_length = urb->size - request.data_left;
 	urb->status = EXIT_SUCCESS;
+
 	return EXIT_SUCCESS;
 }
 
@@ -646,15 +659,18 @@ hcd_setup_packet(hcd_device_state * this_device, hcd_ctrlrequest * setup)
 {
 	hcd_driver_state * d;
 	hcd_reg1 * current_byte;
-	int expected_len;
-	int received_len;
+	int rx_len;
 
 	DEBUG_DUMP;
 
+	/* Should have been set at enumeration or with default values */
+	USB_ASSERT(this_device->max_packet_size > 0,
+		"Illegal MaxPacketSize for EP0");
+
 	/* Initially... */
 	d = this_device->driver;
-	expected_len = (int)setup->wLength;
-	current_byte = this_device->buffer;
+	current_byte = this_device->buffer;	/* Start reading into this */
+	this_device->data_len = 0;		/* Nothing read yet */
 
 	/* Send setup packet */
 	d->setup_stage(d->private_data, setup);
@@ -669,16 +685,14 @@ hcd_setup_packet(hcd_device_state * this_device, hcd_ctrlrequest * setup)
 		return EXIT_FAILURE;
 
 	/* For data packets... */
-	if (expected_len > 0) {
+	if (setup->wLength > 0) {
 
 		/* TODO: magic number */
 		/* ...IN data packets */
 		if (setup->bRequestType & 0x80) {
 
-			/* What was received until now */
-			this_device->data_len = 0;
+			for(;;) {
 
-			do {
 				/* Try getting data */
 				d->in_data_stage(d->private_data);
 
@@ -695,24 +709,30 @@ hcd_setup_packet(hcd_device_state * this_device, hcd_ctrlrequest * setup)
 					return EXIT_FAILURE;
 
 				/* Read data received as response */
-				received_len = d->read_data(d->private_data,
-							current_byte, 0);
+				rx_len = d->read_data(d->private_data,
+						current_byte, HCD_DEFAULT_EP);
 
-				/* Data reading should always yield positive
-				 * results for proper setup packet */
-				if (received_len > 0) {
-					/* Try next packet */
-					this_device->data_len += received_len;
-					current_byte += received_len;
-				} else
-					return EXIT_FAILURE;
+				/* Increment */
+				current_byte += rx_len;
+				this_device->data_len += rx_len;
 
-			} while (expected_len > this_device->data_len);
+				/* If full max sized packet was read... */
+				if (rx_len == (int)this_device->max_packet_size)
+					/* ...try reading next packet even if
+					 * zero bytes may be received */
+					continue;
 
-			/* Should be exactly what we requested, no more */
-			if (this_device->data_len != expected_len) {
-				USB_MSG("Received more data than expected");
-				return EXIT_FAILURE;
+				/* If less than max data was read... */
+				if (rx_len < (int)this_device->max_packet_size)
+					/* ...it must have been
+					 * the last packet */
+					break;
+
+				/* Unreachable during normal operation */
+				USB_MSG("rx_len: %d; max_packet_size: %d",
+					rx_len, this_device->max_packet_size);
+				USB_ASSERT(0, "Illegal state of data "
+					"receive operation");
 			}
 
 		} else {
@@ -755,7 +775,7 @@ hcd_setup_packet(hcd_device_state * this_device, hcd_ctrlrequest * setup)
 			return EXIT_FAILURE;
 
 		/* Read zero data from response to clear registers */
-		if (0 != d->read_data(d->private_data, NULL, 0))
+		if (0 != d->read_data(d->private_data, NULL, HCD_DEFAULT_EP))
 			return EXIT_FAILURE;
 	}
 
@@ -775,13 +795,18 @@ hcd_data_transfer(hcd_device_state * this_device, hcd_datarequest * request)
 
 	DEBUG_DUMP;
 
+	USB_ASSERT((hcd_reg1)(UE_GET_ADDR(request->endpoint)) <= HCD_LAST_EP,
+		"Invalid EP number");
+	USB_ASSERT((hcd_reg1)(this_device->address) <= HCD_LAST_ADDR,
+		"Invalid device address");
+
 	/* Initially... */
 	d = this_device->driver;
 
 	/* Set parameters for further communication */
 	d->setup_device(d->private_data,
-			request->endpoint,
-			this_device->address);
+			(hcd_reg1)request->endpoint,
+			(hcd_reg1)this_device->address);
 
 	/* TODO: broken USB_IN... constants */
 	if (1 == request->direction) {
@@ -803,46 +828,34 @@ hcd_data_transfer(hcd_device_state * this_device, hcd_datarequest * request)
 			/* Read data received as response */
 			transfer_len = d->read_data(d->private_data,
 						(hcd_reg1 *)request->data,
-						request->endpoint);
+						(hcd_reg1)request->endpoint);
 
-			request->size -= transfer_len;
+			request->data_left -= transfer_len;
 			request->data += transfer_len;
 
 			/* Total length shall not become negative */
-			if (request->size < 0) {
+			if (request->data_left < 0) {
 				USB_MSG("Invalid amount of data received");
 				return EXIT_FAILURE;
 			}
 
-#ifdef DEBUG
-			/* TODO: REMOVEME (dumping of data transfer) */
-			{
-				int i;
-				USB_MSG("RECEIVED: %d", transfer_len);
-				for (i = 0; i < transfer_len; i++)
-					USB_MSG("0x%02X: %c",
-					(request->data-transfer_len)[i],
-					(request->data-transfer_len)[i]);
-			}
-#endif
-
-		} while (0 != request->size);
+		} while (0 != request->data_left);
 
 	} else if (0 == request->direction) {
 
 		do {
 			temp_req = *request;
 
-			/* Decide transfer size */
-			if (temp_req.size > (int)temp_req.max_packet_size) {
-				temp_req.size = temp_req.max_packet_size;
-			}
+			/* Decide temporary transfer size */
+			if (temp_req.data_left > (int)temp_req.max_packet_size)
+				temp_req.data_left = temp_req.max_packet_size;
 
-			request->data += temp_req.size;
-			request->size -= temp_req.size;
+			/* Alter actual transfer size */
+			request->data += temp_req.data_left;
+			request->data_left -= temp_req.data_left;
 
 			/* Total length shall not become negative */
-			USB_ASSERT(request->size >= 0,
+			USB_ASSERT(request->data_left >= 0,
 				"Invalid amount of transfer data calculated");
 
 			/* Start actual data transfer */
@@ -858,7 +871,7 @@ hcd_data_transfer(hcd_device_state * this_device, hcd_datarequest * request)
 							HCD_DIRECTION_OUT))
 				return EXIT_FAILURE;
 
-		} while (0 != request->size);
+		} while (0 != request->data_left);
 
 	} else
 		USB_ASSERT(0, "Invalid transfer direction");
