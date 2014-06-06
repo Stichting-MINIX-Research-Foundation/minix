@@ -246,10 +246,16 @@ static void chardriver_reply(message *mess, int ipc_status, int r)
   case CDEV_READ:
   case CDEV_WRITE:
   case CDEV_IOCTL:
-  case CDEV_CANCEL: /* For cancel, this is a reply to the original request! */
 	reply_mess.m_type = CDEV_REPLY;
 	reply_mess.m_lchardriver_vfs_reply.status = r;
 	reply_mess.m_lchardriver_vfs_reply.id = mess->CDEV_ID;
+	break;
+
+  case CDEV_CANCEL: /* For cancel, this is a reply to the original request! */
+	reply_mess.m_type = CDEV_REPLY;
+	reply_mess.m_lchardriver_vfs_reply.status = r;
+	reply_mess.m_lchardriver_vfs_reply.id =
+		mess->m_vfs_lchardriver_cancel.id;
 	break;
 
   case CDEV_SELECT:
@@ -394,9 +400,9 @@ static int do_cancel(struct chardriver *cdp, message *m_ptr)
 	return EDONTREPLY;
 
   /* Call the cancel hook. */
-  minor = m_ptr->CDEV_MINOR;
+  minor = m_ptr->m_vfs_lchardriver_cancel.minor;
   endpt = m_ptr->m_source;
-  id = m_ptr->CDEV_ID;
+  id = m_ptr->m_vfs_lchardriver_cancel.id;
 
   return cdp->cdr_cancel(minor, endpt, id);
 }
@@ -573,10 +579,12 @@ int chardriver_get_minor(message *m, devminor_t *minor)
 	case CDEV_CLOSE:
 	    *minor = m->m_vfs_lchardriver_openclose.minor;
 	    return OK;
+	case CDEV_CANCEL:
+	    *minor = m->m_vfs_lchardriver_cancel.minor;
+	    return OK;
 	case CDEV_READ:
 	case CDEV_WRITE:
 	case CDEV_IOCTL:
-	case CDEV_CANCEL:
 	case CDEV_SELECT:
 	    *minor = m->CDEV_MINOR;
 	    return OK;

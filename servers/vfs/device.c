@@ -575,8 +575,8 @@ int cdev_cancel(dev_t dev)
   memset(&dev_mess, 0, sizeof(dev_mess));
 
   dev_mess.m_type = CDEV_CANCEL;
-  dev_mess.CDEV_MINOR = minor_dev;
-  dev_mess.CDEV_ID = fp->fp_endpoint;
+  dev_mess.m_vfs_lchardriver_cancel.minor = minor_dev;
+  dev_mess.m_vfs_lchardriver_cancel.id = fp->fp_endpoint;
 
   /* Send the request to the driver. */
   if ((r = asynsend3(dp->dmap_driver, &dev_mess, AMF_NOREPLY)) != OK)

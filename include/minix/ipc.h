@@ -1576,6 +1576,14 @@ _ASSERT_MSG_SIZE(mess_vfs_fs_utime);
 
 typedef struct {
 	endpoint_t id;
+	devminor_t minor;
+
+	uint8_t padding[48];
+} mess_vfs_lchardriver_cancel;
+_ASSERT_MSG_SIZE(mess_vfs_lchardriver_cancel);
+
+typedef struct {
+	endpoint_t id;
 	endpoint_t user;
 	devminor_t minor;
 	int access;
@@ -1871,6 +1879,7 @@ typedef struct {
 
 		mess_vfs_lc_lseek	m_vfs_lc_lseek;
 
+		mess_vfs_lchardriver_cancel	m_vfs_lchardriver_cancel;
 		mess_vfs_lchardriver_openclose	m_vfs_lchardriver_openclose;
 
 		mess_vfs_utimens	m_vfs_utimens;
