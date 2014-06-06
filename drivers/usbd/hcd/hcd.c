@@ -33,7 +33,7 @@ static int hcd_control_urb(hcd_device_state *);
 static int hcd_non_control_urb(hcd_device_state *, int);
 
 /* For internal use by more general methods */
-static int hcd_setup_packet(hcd_device_state *, hcd_ctrlrequest *);
+static int hcd_setup_packet(hcd_device_state *, hcd_ctrlrequest *, hcd_reg1);
 static int hcd_data_transfer(hcd_device_state *, hcd_datarequest *);
 
 
@@ -90,6 +90,10 @@ hcd_handle_event(hcd_driver_state * driver)
 					hcd_disconnect_cb(this_device);
 				hcd_disconnect_device(this_device);
 				this_device->state = HCD_STATE_DISCONNECTED;
+
+				/* Finally, zero everything to allow
+				 * further connections with this object */
+				memset(this_device, 0x00, sizeof(*this_device));
 			} else
 				USB_MSG("Device is marked as 'disconnected' "
 					"for 'disconnection' event");
@@ -217,9 +221,6 @@ hcd_enumerate(hcd_device_state * this_device)
 		return EXIT_FAILURE;
 	}
 
-	/* Set parameters for further communication */
-	d->setup_device(d->private_data, HCD_DEFAULT_EP, this_device->address);
-
 	/* Get other descriptors */
 	if (EXIT_SUCCESS != hcd_get_descriptor_tree(this_device)) {
 		USB_MSG("Failed to get configuration descriptor tree");
@@ -262,7 +263,8 @@ hcd_get_device_descriptor(hcd_device_state * this_device)
 	setup.wLength		= sizeof(this_device->device_desc);
 
 	/* Handle formatted setup packet */
-	if (EXIT_SUCCESS != hcd_setup_packet(this_device, &setup)) {
+	if (EXIT_SUCCESS != hcd_setup_packet(this_device, &setup,
+						HCD_DEFAULT_EP)) {
 		USB_MSG("Handling setup packet failed");
 		return EXIT_FAILURE;
 	}
@@ -322,7 +324,8 @@ hcd_set_address(hcd_device_state * this_device, int address)
 	setup.wLength		= 0x0000;
 
 	/* Handle formatted setup packet */
-	if (EXIT_SUCCESS != hcd_setup_packet(this_device, &setup)) {
+	if (EXIT_SUCCESS != hcd_setup_packet(this_device, &setup,
+						HCD_DEFAULT_EP)) {
 		USB_MSG("Handling setup packet failed");
 		return EXIT_FAILURE;
 	}
@@ -366,7 +369,8 @@ hcd_get_descriptor_tree(hcd_device_state * this_device)
 		setup.wLength		= buffer_length;
 
 		/* Handle formatted setup packet */
-		if (EXIT_SUCCESS != hcd_setup_packet(this_device, &setup)) {
+		if (EXIT_SUCCESS != hcd_setup_packet(this_device, &setup,
+							HCD_DEFAULT_EP)) {
 			USB_MSG("Handling setup packet failed");
 			return EXIT_FAILURE;
 		}
@@ -435,7 +439,8 @@ hcd_set_configuration(hcd_device_state * this_device, hcd_reg1 configuration)
 	setup.wLength		= 0x0000;
 
 	/* Handle formatted setup packet */
-	if (EXIT_SUCCESS != hcd_setup_packet(this_device, &setup)) {
+	if (EXIT_SUCCESS != hcd_setup_packet(this_device, &setup,
+						HCD_DEFAULT_EP)) {
 		USB_MSG("Handling setup packet failed");
 		return EXIT_FAILURE;
 	}
@@ -536,7 +541,8 @@ hcd_control_urb(hcd_device_state * this_device)
 	}
 
 	/* Send setup packet */
-	if (EXIT_SUCCESS != hcd_setup_packet(this_device, &setup)) {
+	if (EXIT_SUCCESS != hcd_setup_packet(this_device, &setup,
+						(hcd_reg1)urb->endpoint)) {
 		USB_MSG("Sending URB setup packet, failed");
 		urb->status = EPIPE;
 		return EXIT_FAILURE;
@@ -655,7 +661,8 @@ hcd_non_control_urb(hcd_device_state * this_device, int type)
  *    hcd_setup_packet                                                       *
  *===========================================================================*/
 static int
-hcd_setup_packet(hcd_device_state * this_device, hcd_ctrlrequest * setup)
+hcd_setup_packet(hcd_device_state * this_device, hcd_ctrlrequest * setup,
+		hcd_reg1 ep)
 {
 	hcd_driver_state * d;
 	hcd_reg1 * current_byte;
@@ -666,11 +673,17 @@ hcd_setup_packet(hcd_device_state * this_device, hcd_ctrlrequest * setup)
 	/* Should have been set at enumeration or with default values */
 	USB_ASSERT(this_device->max_packet_size > 0,
 		"Illegal MaxPacketSize for EP0");
+	USB_ASSERT((ep <= HCD_LAST_EP), "Invalid EP number");
+	USB_ASSERT((hcd_reg1)(this_device->address) <= HCD_LAST_ADDR,
+		"Invalid device address");
 
 	/* Initially... */
 	d = this_device->driver;
 	current_byte = this_device->buffer;	/* Start reading into this */
 	this_device->data_len = 0;		/* Nothing read yet */
+
+	/* Set parameters for further communication */
+	d->setup_device(d->private_data, ep, (hcd_reg1)this_device->address);
 
 	/* Send setup packet */
 	d->setup_stage(d->private_data, setup);
