@@ -205,13 +205,13 @@ static void chardriver_reply(message *mess, int ipc_status, int r)
 	case CDEV_READ:
 	case CDEV_WRITE:
 	case CDEV_IOCTL:
-		/* FIXME: we should be able to check CDEV_FLAGS against
+		/* FIXME: we should be able to check FLAGS against
 		 * CDEV_NONBLOCK here, but in practice, several drivers do not
 		 * send a reply through this path (eg TTY) or simply do not
 		 * implement nonblocking calls properly (eg audio, LWIP).
 		 */
 #if 0
-		if (mess->CDEV_FLAGS & CDEV_NONBLOCK)
+		if (mess->m_vfs_lchardriver_readwrite.flags & CDEV_NONBLOCK)
 			panic("chardriver: cannot suspend nonblocking I/O");
 #endif
 		/*fall-through*/
@@ -248,7 +248,8 @@ static void chardriver_reply(message *mess, int ipc_status, int r)
   case CDEV_IOCTL:
 	reply_mess.m_type = CDEV_REPLY;
 	reply_mess.m_lchardriver_vfs_reply.status = r;
-	reply_mess.m_lchardriver_vfs_reply.id = mess->CDEV_ID;
+	reply_mess.m_lchardriver_vfs_reply.id =
+		mess->m_vfs_lchardriver_readwrite.id;
 	break;
 
   case CDEV_CANCEL: /* For cancel, this is a reply to the original request! */
@@ -328,7 +329,7 @@ static int do_transfer(struct chardriver *cdp, message *m_ptr, int do_write)
 {
 /* Carry out a read or write task request. */
   devminor_t minor;
-  u64_t position;
+  off_t position;
   endpoint_t endpt;
   cp_grant_id_t grant;
   size_t size;
@@ -336,13 +337,13 @@ static int do_transfer(struct chardriver *cdp, message *m_ptr, int do_write)
   cdev_id_t id;
   ssize_t r;
 
-  minor = m_ptr->CDEV_MINOR;
-  position = m_ptr->CDEV_POS;
+  minor = m_ptr->m_vfs_lchardriver_readwrite.minor;
+  position = m_ptr->m_vfs_lchardriver_readwrite.pos;
   endpt = m_ptr->m_source;
-  grant = (cp_grant_id_t) m_ptr->CDEV_GRANT;
-  size = m_ptr->CDEV_COUNT;
-  flags = m_ptr->CDEV_FLAGS;
-  id = m_ptr->CDEV_ID;
+  grant = m_ptr->m_vfs_lchardriver_readwrite.grant;
+  size = m_ptr->m_vfs_lchardriver_readwrite.count;
+  flags = m_ptr->m_vfs_lchardriver_readwrite.flags;
+  id = m_ptr->m_vfs_lchardriver_readwrite.id;
 
   /* Call the read/write hook, if the appropriate one is in place. */
   if (!do_write && cdp->cdr_read != NULL)
@@ -373,13 +374,13 @@ static int do_ioctl(struct chardriver *cdp, message *m_ptr)
 	return ENOTTY;
 
   /* Call the ioctl hook. */
-  minor = m_ptr->CDEV_MINOR;
-  request = m_ptr->CDEV_REQUEST;
+  minor = m_ptr->m_vfs_lchardriver_readwrite.minor;
+  request = m_ptr->m_vfs_lchardriver_readwrite.request;
   endpt = m_ptr->m_source;
-  grant = m_ptr->CDEV_GRANT;
-  flags = m_ptr->CDEV_FLAGS;
-  user_endpt = m_ptr->CDEV_USER;
-  id = m_ptr->CDEV_ID;
+  grant = m_ptr->m_vfs_lchardriver_readwrite.grant;
+  flags = m_ptr->m_vfs_lchardriver_readwrite.flags;
+  user_endpt = m_ptr->m_vfs_lchardriver_readwrite.user;
+  id = m_ptr->m_vfs_lchardriver_readwrite.id;
 
   return cdp->cdr_ioctl(minor, request, endpt, grant, flags, user_endpt, id);
 }
@@ -589,7 +590,7 @@ int chardriver_get_minor(message *m, devminor_t *minor)
 	case CDEV_READ:
 	case CDEV_WRITE:
 	case CDEV_IOCTL:
-	    *minor = m->CDEV_MINOR;
+	    *minor = m->m_vfs_lchardriver_readwrite.minor;
 	    return OK;
 	default:
 	    return EINVAL;

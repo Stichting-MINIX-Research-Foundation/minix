@@ -1009,16 +1009,6 @@
 #define CDEV_SEL1_REPLY	(CDEV_RS_BASE + 1)	/* immediate select reply */
 #define CDEV_SEL2_REPLY	(CDEV_RS_BASE + 2)	/* select notification reply */
 
-/* Field names for block device messages. */
-#define CDEV_MINOR	m10_i1	/* minor device number */
-#define CDEV_GRANT	m10_i2	/* grant ID of buffer */
-#define CDEV_COUNT	m10_i3	/* number of bytes to transfer */
-#define CDEV_USER	m10_i3	/* endpoint of user process */
-#define CDEV_FLAGS	m10_i4	/* transfer flags */
-#define CDEV_ID		m10_l1	/* opaque request ID */
-#define CDEV_REQUEST	m10_l2	/* I/O control request */
-#define CDEV_POS	m10_ull1 /* transfer position */
-
 /* Bits in 'CDEV_ACCESS' field of block device open requests. */
 #  define CDEV_R_BIT		0x01	/* open with read access */
 #  define CDEV_W_BIT		0x02	/* open with write access */

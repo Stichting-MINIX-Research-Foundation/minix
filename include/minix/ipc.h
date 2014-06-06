@@ -1593,6 +1593,20 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_vfs_lchardriver_openclose);
 
 typedef struct {
+	off_t pos;
+	cp_grant_id_t grant;
+	size_t count;
+	int request;
+	int flags;
+	endpoint_t id;
+	endpoint_t user;
+	devminor_t minor;
+
+	uint8_t padding[20];
+} mess_vfs_lchardriver_readwrite;
+_ASSERT_MSG_SIZE(mess_vfs_lchardriver_readwrite);
+
+typedef struct {
 	devminor_t minor;
 	int ops;
 
@@ -1889,6 +1903,7 @@ typedef struct {
 
 		mess_vfs_lchardriver_cancel	m_vfs_lchardriver_cancel;
 		mess_vfs_lchardriver_openclose	m_vfs_lchardriver_openclose;
+		mess_vfs_lchardriver_readwrite	m_vfs_lchardriver_readwrite;
 		mess_vfs_lchardriver_select	m_vfs_lchardriver_select;
 
 		mess_vfs_utimens	m_vfs_utimens;

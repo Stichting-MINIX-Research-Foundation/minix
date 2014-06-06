@@ -281,19 +281,19 @@ int cdev_io(
   /* Set up the rest of the message that will be sent to the driver. */
   memset(&dev_mess, 0, sizeof(dev_mess));
   dev_mess.m_type = op;
-  dev_mess.CDEV_MINOR = minor_dev;
+  dev_mess.m_vfs_lchardriver_readwrite.minor = minor_dev;
   if (op == CDEV_IOCTL) {
-	dev_mess.CDEV_REQUEST = bytes;
-	dev_mess.CDEV_USER = proc_e;
+	dev_mess.m_vfs_lchardriver_readwrite.request = bytes;
+	dev_mess.m_vfs_lchardriver_readwrite.user = proc_e;
   } else {
-	dev_mess.CDEV_POS = pos;
-	dev_mess.CDEV_COUNT = (size_t) bytes;
+	dev_mess.m_vfs_lchardriver_readwrite.pos = pos;
+	dev_mess.m_vfs_lchardriver_readwrite.count = bytes;
   }
-  dev_mess.CDEV_ID = proc_e;
-  dev_mess.CDEV_GRANT = gid;
-  dev_mess.CDEV_FLAGS = 0;
+  dev_mess.m_vfs_lchardriver_readwrite.id = proc_e;
+  dev_mess.m_vfs_lchardriver_readwrite.grant = gid;
+  dev_mess.m_vfs_lchardriver_readwrite.flags = 0;
   if (flags & O_NONBLOCK)
-	  dev_mess.CDEV_FLAGS |= CDEV_NONBLOCK;
+	  dev_mess.m_vfs_lchardriver_readwrite.flags |= CDEV_NONBLOCK;
 
   /* Send the request to the driver. */
   if ((r = asynsend3(dp->dmap_driver, &dev_mess, AMF_NOREPLY)) != OK)
