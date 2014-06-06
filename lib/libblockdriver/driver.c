@@ -370,7 +370,7 @@ static void do_char_open(message *m_ptr, int ipc_status)
 
   m_reply.m_type = CDEV_REPLY;
   m_reply.m_lchardriver_vfs_reply.status = ENXIO;
-  m_reply.m_lchardriver_vfs_reply.id = m_ptr->CDEV_ID;
+  m_reply.m_lchardriver_vfs_reply.id = m_ptr->m_vfs_lchardriver_openclose.id;
 
   send_reply(m_ptr->m_source, &m_reply, ipc_status);
 }

@@ -100,7 +100,7 @@ int main(void)
 
   message tty_mess;		/* buffer for all incoming messages */
   int ipc_status;
-  unsigned line;
+  int line;
   int r;
   register tty_t *tp;
 
@@ -140,7 +140,9 @@ int main(void)
 	/* Only device requests should get to this point.
 	 * All requests have a minor device number.
 	 */
-	line = tty_mess.CDEV_MINOR;
+	if (OK != chardriver_get_minor(&tty_mess, &line))
+		continue;
+
 	if (line - PTYPX_MINOR < NR_PTYS &&
 			tty_mess.m_type != CDEV_IOCTL) {
 		/* Terminals and pseudo terminals belong together. We can only

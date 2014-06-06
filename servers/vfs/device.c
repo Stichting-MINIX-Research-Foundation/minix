@@ -403,14 +403,17 @@ static int cdev_opcl(
   memset(&dev_mess, 0, sizeof(dev_mess));
 
   dev_mess.m_type = op;
-  dev_mess.CDEV_MINOR = minor_dev;
-  dev_mess.CDEV_ID = who_e;
+  dev_mess.m_vfs_lchardriver_openclose.minor = minor_dev;
+  dev_mess.m_vfs_lchardriver_openclose.id = who_e;
   if (op == CDEV_OPEN) {
-	dev_mess.CDEV_USER = who_e;
-	dev_mess.CDEV_ACCESS = 0;
-	if (flags & R_BIT)	dev_mess.CDEV_ACCESS |= CDEV_R_BIT;
-	if (flags & W_BIT)	dev_mess.CDEV_ACCESS |= CDEV_W_BIT;
-	if (flags & O_NOCTTY)	dev_mess.CDEV_ACCESS |= CDEV_NOCTTY;
+	dev_mess.m_vfs_lchardriver_openclose.user = who_e;
+	dev_mess.m_vfs_lchardriver_openclose.access = 0;
+	if (flags & R_BIT)
+		dev_mess.m_vfs_lchardriver_openclose.access |= CDEV_R_BIT;
+	if (flags & W_BIT)
+		dev_mess.m_vfs_lchardriver_openclose.access |= CDEV_W_BIT;
+	if (flags & O_NOCTTY)
+		dev_mess.m_vfs_lchardriver_openclose.access |= CDEV_NOCTTY;
   }
 
   /* Send the request to the driver. */

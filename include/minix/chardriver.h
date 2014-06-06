@@ -24,6 +24,7 @@ struct chardriver {
 
 /* Functions defined by libchardriver. */
 void chardriver_announce(void);
+int chardriver_get_minor(message *m, devminor_t *minor);
 void chardriver_process(struct chardriver *cdp, message *m_ptr,
 	int ipc_status);
 void chardriver_terminate(void);

@@ -43,6 +43,8 @@
  *   Apr 02, 1992   constructed from AT wini and floppy driver  (Kees J. Bot)
  */
 
+#include <assert.h>
+
 #include <minix/drivers.h>
 #include <minix/chardriver.h>
 #include <minix/ds.h>
@@ -235,6 +237,12 @@ static void chardriver_reply(message *mess, int ipc_status, int r)
   switch (mess->m_type) {
   case CDEV_OPEN:
   case CDEV_CLOSE:
+	reply_mess.m_type = CDEV_REPLY;
+	reply_mess.m_lchardriver_vfs_reply.status = r;
+	reply_mess.m_lchardriver_vfs_reply.id =
+		mess->m_vfs_lchardriver_openclose.id;
+	break;
+
   case CDEV_READ:
   case CDEV_WRITE:
   case CDEV_IOCTL:
@@ -272,9 +280,9 @@ static int do_open(struct chardriver *cdp, message *m_ptr)
 	return OK;
 
   /* Call the open hook. */
-  minor = m_ptr->CDEV_MINOR;
-  access = m_ptr->CDEV_ACCESS;
-  user_endpt = m_ptr->CDEV_USER;
+  minor = m_ptr->m_vfs_lchardriver_openclose.minor;
+  access = m_ptr->m_vfs_lchardriver_openclose.access;
+  user_endpt = m_ptr->m_vfs_lchardriver_openclose.user;
 
   r = cdp->cdr_open(minor, access, user_endpt);
 
@@ -301,7 +309,7 @@ static int do_close(struct chardriver *cdp, message *m_ptr)
 	return OK;
 
   /* Call the close hook. */
-  minor = m_ptr->CDEV_MINOR;
+  minor = m_ptr->m_vfs_lchardriver_openclose.minor;
 
   return cdp->cdr_close(minor);
 }
@@ -473,16 +481,26 @@ void chardriver_process(struct chardriver *cdp, message *m_ptr, int ipc_status)
 	return;
   }
 
-  /* We might get spurious requests if the driver has been restarted. Deny any
-   * requests on devices that have not previously been opened.
-   */
-  if (IS_CDEV_RQ(m_ptr->m_type) && !is_open_dev(m_ptr->CDEV_MINOR)) {
-	/* Ignore spurious requests for unopened devices. */
-	if (m_ptr->m_type != CDEV_OPEN)
-		return; /* do not send a reply */
+  if (IS_CDEV_RQ(m_ptr->m_type)) {
+	int minor;
 
-	/* Mark the device as opened otherwise. */
-	set_open_dev(m_ptr->CDEV_MINOR);
+	/* Try to retrieve minor device number */
+	r = chardriver_get_minor(m_ptr, &minor);
+
+	if (OK != r)
+		return;
+
+	/* We might get spurious requests if the driver has been restarted.
+	 * Deny any requests on devices that have not previously been opened.
+	 */
+	if (!is_open_dev(minor)) {
+		/* Ignore spurious requests for unopened devices. */
+		if (m_ptr->m_type != CDEV_OPEN)
+			return; /* do not send a reply */
+
+		/* Mark the device as opened otherwise. */
+		set_open_dev(minor);
+	}
   }
 
   /* Call the appropriate function(s) for this request. */
@@ -538,5 +556,31 @@ void chardriver_task(struct chardriver *cdp)
 	}
 
 	chardriver_process(cdp, &mess, ipc_status);
+  }
+}
+
+/*===========================================================================*
+ *				chardriver_get_minor			     *
+ *===========================================================================*/
+int chardriver_get_minor(message *m, devminor_t *minor)
+{
+  assert(NULL != m);
+  assert(NULL != minor);
+
+  switch(m->m_type)
+  {
+	case CDEV_OPEN:
+	case CDEV_CLOSE:
+	    *minor = m->m_vfs_lchardriver_openclose.minor;
+	    return OK;
+	case CDEV_READ:
+	case CDEV_WRITE:
+	case CDEV_IOCTL:
+	case CDEV_CANCEL:
+	case CDEV_SELECT:
+	    *minor = m->CDEV_MINOR;
+	    return OK;
+	default:
+	    return EINVAL;
   }
 }

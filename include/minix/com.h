@@ -1011,7 +1011,6 @@
 
 /* Field names for block device messages. */
 #define CDEV_MINOR	m10_i1	/* minor device number */
-#define CDEV_ACCESS	m10_i2	/* access bits for open requests */
 #define CDEV_GRANT	m10_i2	/* grant ID of buffer */
 #define CDEV_OPS	m10_i2	/* requested select operations */
 #define CDEV_COUNT	m10_i3	/* number of bytes to transfer */
