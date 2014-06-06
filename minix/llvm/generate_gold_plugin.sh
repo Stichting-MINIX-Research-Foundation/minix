@@ -63,3 +63,5 @@ cp ${OBJ_LLVM}/./Release+Asserts/bin/llvm-* ${CROSS_TOOLS}
 cd ${NETBSDSRCDIR}/minix/llvm/passes/WeakAliasModuleOverride
 make LLVMPREFIX=${OBJ_LLVM}/./Release+Asserts/ install
 
+cd ${NETBSDSRCDIR}/minix/llvm/passes/hello
+make LLVMPREFIX=${OBJ_LLVM}/./Release+Asserts/ install

@@ -2,13 +2,13 @@ QUIET=@
 ECHO=echo
 CP=cp
 
-PASSLIBNAME:= weak-alias-module-override.so
+PASSLIBNAME:= hello.so
 
-LLVM_VERSION = $($LLVMPREFIX/bin/llvm-config --version | sed "s/[^0-9]//g")
+LLVM_VERSION=$(shell ($(LLVMPREFIX)/bin/llvm-config --version | sed "s/[^0-9]//g"))
 CFLAGS  += -Wno-long-long -Wall -W -Wno-unused-parameter -Wwrite-strings -DHAVE_EXCEPTIONS=0
 CFLAGS  += $(shell $(LLVMPREFIX)/bin/llvm-config --cxxflags) -g -DLLVM_VERSION=$(LLVM_VERSION)
 LDFLAGS += $(shell $(LLVMPREFIX)/bin/llvm-config --ldflags)
-OBJS= WeakAliasModuleOverride.o
+OBJS= hello.o
 
 $(PASSLIBNAME): $(OBJS)
 	$(QUIET) $(ECHO) "  [LINK] $@"
@@ -16,7 +16,7 @@ $(PASSLIBNAME): $(OBJS)
 
 %.o: %.cpp $(HEADERS)
 	$(QUIET) $(ECHO)  "  [C++] $<"
-	$(QUIET) $(CXX) $(CFLAGS) $(INCLUDES) -c -o $@ $<
+	$(QUIET) $(CXX) $(CFLAGS) -c -o $@ $<
 
 install: $(PASSLIBNAME)
 	$(QUIET) -mkdir -p ../../bin

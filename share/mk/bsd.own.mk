@@ -61,7 +61,7 @@ MKRUMP:=	no
 MKSKEY:=	no
 MKYP:=		no
 
-WEAKALIASOVERRIDEPASS?=${NETBSDSRCDIR}/minix/llvm/bin/weak-alias-module-override
+WEAKALIASOVERRIDEPASS?=${NETBSDSRCDIR}/minix/llvm/bin/weak-alias-module-override.so
 GOLD_PLUGIN?=${NETBSDSRCDIR}/minix/llvm/bin/LLVMgold.so
 
 # By default when running LLVM passes:
@@ -69,6 +69,7 @@ GOLD_PLUGIN?=${NETBSDSRCDIR}/minix/llvm/bin/LLVMgold.so
 #  -  run the passe which allows assembly weak symbols to be
 #     overriden by bitcode functions
 OPTFLAGS?=	-disable-opt \
+		-disable-internalize -disable-inlining \
 		-load ${WEAKALIASOVERRIDEPASS} -weak-alias-module-override
 
 # Whitout -Wl,--no-ctors-in-init-array, golds moves the constructors out of
