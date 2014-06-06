@@ -1593,6 +1593,14 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_vfs_lchardriver_openclose);
 
 typedef struct {
+	devminor_t minor;
+	int ops;
+
+	uint8_t padding[48];
+} mess_vfs_lchardriver_select;
+_ASSERT_MSG_SIZE(mess_vfs_lchardriver_select);
+
+typedef struct {
 	int status;
 	uint32_t id;		/* should be cdev_id_t */
 
@@ -1881,6 +1889,7 @@ typedef struct {
 
 		mess_vfs_lchardriver_cancel	m_vfs_lchardriver_cancel;
 		mess_vfs_lchardriver_openclose	m_vfs_lchardriver_openclose;
+		mess_vfs_lchardriver_select	m_vfs_lchardriver_select;
 
 		mess_vfs_utimens	m_vfs_utimens;
 		mess_vm_vfs_mmap	m_vm_vfs_mmap;

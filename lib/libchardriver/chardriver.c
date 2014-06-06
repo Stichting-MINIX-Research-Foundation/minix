@@ -260,8 +260,9 @@ static void chardriver_reply(message *mess, int ipc_status, int r)
 
   case CDEV_SELECT:
 	reply_mess.m_type = CDEV_SEL1_REPLY;
-	reply_mess.m_lchardriver_vfs_sel1.minor = mess->CDEV_MINOR;
 	reply_mess.m_lchardriver_vfs_sel1.status = r;
+	reply_mess.m_lchardriver_vfs_sel1.minor =
+		mess->m_vfs_lchardriver_select.minor;
 	break;
 
   default:
@@ -422,8 +423,8 @@ static int do_select(struct chardriver *cdp, message *m_ptr)
 	return EBADF;
 
   /* Call the select hook. */
-  minor = m_ptr->CDEV_MINOR;
-  ops = m_ptr->CDEV_OPS;
+  minor = m_ptr->m_vfs_lchardriver_select.minor;
+  ops = m_ptr->m_vfs_lchardriver_select.ops;
   endpt = m_ptr->m_source;
 
   return cdp->cdr_select(minor, ops, endpt);
@@ -582,10 +583,12 @@ int chardriver_get_minor(message *m, devminor_t *minor)
 	case CDEV_CANCEL:
 	    *minor = m->m_vfs_lchardriver_cancel.minor;
 	    return OK;
+	case CDEV_SELECT:
+	    *minor = m->m_vfs_lchardriver_select.minor;
+	    return OK;
 	case CDEV_READ:
 	case CDEV_WRITE:
 	case CDEV_IOCTL:
-	case CDEV_SELECT:
 	    *minor = m->CDEV_MINOR;
 	    return OK;
 	default:
