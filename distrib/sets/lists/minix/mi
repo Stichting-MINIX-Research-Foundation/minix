@@ -561,6 +561,7 @@
 ./usr/games/adventure			minix-sys
 ./usr/games/arithmetic			minix-sys
 ./usr/games/bcd				minix-sys
+./usr/games/colorbars			minix-sys
 ./usr/games/factor			minix-sys
 ./usr/games/fortune			minix-sys
 ./usr/games/hide			minix-sys
@@ -4768,6 +4769,7 @@
 ./usr/man/man6/adventure.6			minix-sys
 ./usr/man/man6/arithmetic.6			minix-sys
 ./usr/man/man6/bcd.6				minix-sys
+./usr/man/man6/colorbars.6			minix-sys
 ./usr/man/man6/factor.6				minix-sys
 ./usr/man/man6/fortune.6			minix-sys
 ./usr/man/man6/monop.6				minix-sys

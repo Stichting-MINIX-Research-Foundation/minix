@@ -9,7 +9,7 @@
 
 SUBDIR=	adventure arithmetic \
 	bcd \
-	\
+	colorbars \
 	factor fortune \
 	monop morse number \
 	pig ppt primes \
