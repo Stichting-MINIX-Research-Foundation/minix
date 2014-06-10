@@ -10,6 +10,7 @@ set -e
 : ${FSTAB=${DESTDIR}/etc/fstab}
 : ${BUILDVARS=}
 : ${BUILDSH=build.sh}
+: ${CREATE_IMAGE_ONLY=0}
 
 # Where the kernel & boot modules will be
 MODDIR=${DESTDIR}/multiboot
@@ -41,21 +42,40 @@ done
 : ${IMG=minix_x86.img}
 
 #
+# Are we going to build the minix sources?
+#
+
+if [ ${CREATE_IMAGE_ONLY} -eq 1 ]
+then
+	if [ ! -d ${DESTDIR} ]
+	then
+		echo "Minix source code does'nt appear to have been built."
+		echo "Please try with \$CREATE_IMAGE_ONLY set to 0."
+		exit 1
+	fi
+fi
+
+#
 # Artifacts from this script are stored in the IMG_DIR
 #
 rm -rf ${IMG_DIR} ${IMG}
 mkdir -p ${IMG_DIR} ${CDFILES}
 
-#
-# Remove the generated files to allow us call build.sh without '-V SLOPPY_FLIST=yes'.
-#
-rm -f ${FSTAB}
+if [ ${CREATE_IMAGE_ONLY} -eq 0 ]
+then
+	echo "Going to build Minix source code..."
+	#
+	# Remove the generated files to allow us call build.sh without '-V SLOPPY_FLIST=yes'.
+	#
+	rm -f ${FSTAB}
 
-#
-# Now start the build.
-#
-export CPPFLAGS=${FLAG}
-sh ${BUILDSH} -j ${JOBS} -m ${ARCH} -O ${OBJ} -D ${DESTDIR} ${BUILDVARS} -U -u distribution
+	#
+	# Now start the build.
+	#
+	export CPPFLAGS=${FLAG}
+	sh ${BUILDSH} -j ${JOBS} -m ${ARCH} -O ${OBJ} -D ${DESTDIR} ${BUILDVARS} -U -u distribution
+
+fi
 
 if [ "x${ISOMODE}" = "x1" ]
 then
