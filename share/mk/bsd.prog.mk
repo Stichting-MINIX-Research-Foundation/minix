@@ -354,6 +354,11 @@ _CCLINKFLAGS=
 .if defined(PROG_CXX)
 PROG=		${PROG_CXX}
 _CCLINK=	${CXX} ${_CCLINKFLAGS}
+
+.if defined(__MINIX)
+# BJG - stack unwinding (for C++ exceptions) doesn't work on static executables when built with llvm.
+LDSTATIC=	-dynamic
+.endif # defined(__MINIX)
 .endif
 
 .if defined(RUMPPRG)
