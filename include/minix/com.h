@@ -646,6 +646,9 @@
 #	define GCOV_BUFF_P  m1_p1
 #	define GCOV_BUFF_SZ m1_i1
 
+/* Common fault injection ctl request to all processes. */
+#define COMMON_REQ_FI_CTL (COMMON_RQ_BASE+2)
+
 /*===========================================================================*
  *                Messages for VM server				     *
  *===========================================================================*/

@@ -692,6 +692,21 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_linputdriver_input_event);
 
 typedef struct {
+        cp_grant_id_t gid;
+	size_t size;
+
+        uint8_t padding[48];
+} mess_lsys_fi_ctl;
+_ASSERT_MSG_SIZE(mess_lsys_fi_ctl);
+
+typedef struct {
+        int status;
+
+        uint8_t padding[52];
+} mess_lsys_fi_reply;
+_ASSERT_MSG_SIZE(mess_lsys_fi_reply);
+
+typedef struct {
 	int what;
 	vir_bytes where;
 	size_t size;
@@ -1795,6 +1810,8 @@ typedef struct {
 		mess_linputdriver_input_event m_linputdriver_input_event;
 
 		mess_lsys_getsysinfo	m_lsys_getsysinfo;
+		mess_lsys_fi_ctl	m_lsys_fi_ctl;
+		mess_lsys_fi_reply	m_lsys_fi_reply;
 
 		mess_lsys_krn_schedctl	m_lsys_krn_schedctl;
 		mess_lsys_krn_schedule	m_lsys_krn_schedule;

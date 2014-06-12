@@ -233,6 +233,17 @@ void sef_cb_signal_handler_posix_default(int signo);
 #define sef_signal_debug_begin          sef_debug_begin
 #define sef_signal_debug_end            sef_debug_end
 
+/*===========================================================================*
+ *			     SEF Fault Injection			     *
+ *===========================================================================*/
+/* What to intercept. */
+#define INTERCEPT_SEF_FI_REQUESTS 1
+#define IS_SEF_FI_REQUEST(mp, status) \
+    (m_ptr->m_type == COMMON_REQ_FI_CTL)
+
+/* Fault injection tool support. */
+#define SEF_FI_ALLOW_EDFI               1
+
 #if !defined(USE_LIVEUPDATE)
 #undef INTERCEPT_SEF_LU_REQUESTS
 #undef SEF_LU_DEBUG

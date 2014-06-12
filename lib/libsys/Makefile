@@ -40,6 +40,7 @@ SRCS+=  \
 	sched_start.c \
 	sched_stop.c \
 	sef.c \
+	sef_fi.c \
 	sef_init.c \
 	sef_liveupdate.c \
 	sef_ping.c \

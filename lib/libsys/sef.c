@@ -27,9 +27,6 @@ char* sef_debug_header(void);
 #endif
 
 /* SEF Init prototypes. */
-#ifdef USE_COVERAGE
-EXTERN int do_sef_gcov_request(message *m_ptr);
-#endif
 EXTERN int do_sef_rs_init(endpoint_t old_endpoint);
 EXTERN int do_sef_init_request(message *m_ptr);
 
@@ -42,6 +39,14 @@ EXTERN int do_sef_lu_request(message *m_ptr);
 
 /* SEF Signal prototypes. */
 EXTERN int do_sef_signal_request(message *m_ptr);
+
+/* SEF GCOV prototypes. */
+#ifdef USE_COVERAGE
+EXTERN int do_sef_gcov_request(message *m_ptr);
+#endif
+
+/* SEF Fault Injection prototypes. */
+EXTERN int do_sef_fi_request(message *m_ptr);
 
 /*===========================================================================*
  *				sef_startup				     *
@@ -176,6 +181,15 @@ int sef_receive_status(endpoint_t src, message *m_ptr, int *status_ptr)
       if(m_ptr->m_type == COMMON_REQ_GCOV_DATA &&
 	 m_ptr->m_source == VFS_PROC_NR) {
           if(do_sef_gcov_request(m_ptr) == OK) {
+              continue;
+          }
+      }
+#endif
+
+#ifdef INTERCEPT_SEF_FI_REQUESTS
+      /* Intercept Fault injection requests. */
+      if(IS_SEF_FI_REQUEST(m_ptr, status)) {
+          if(do_sef_fi_request(m_ptr) == OK) {
               continue;
           }
       }
