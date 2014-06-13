@@ -93,4 +93,4 @@ TOOLDIR=${DESTDIR}/tooldir.`uname -s`-`uname -r`-`uname -m`/bin
 # repository
 # 
 ##############################################################################
-ROOT="/home/koustubha/systems_thesis.lnk/repositories/llvm-apps"
+ROOT="/nonexistent"

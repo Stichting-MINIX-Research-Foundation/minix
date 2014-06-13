@@ -63,6 +63,7 @@ echo "LLVM root directory is set to :"
 echo "  ${ROOT}"
 
 # Persist the LLVM ROOT path information
+[ -f ${MINIX_LLVM_DIR}/minix.inc ] || cp ${MINIX_LLVM_DIR}/minix.inc.default ${MINIX_LLVM_DIR}/minix.inc
 ROOT_1=`echo ${ROOT} | sed "s/\\\//\\\\\\\\\//g"`
 sed -i "s/ROOT=.*$/ROOT=\"${ROOT_1}\"/g" ${MINIX_LLVM_DIR}/minix.inc
 

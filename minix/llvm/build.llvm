@@ -99,6 +99,7 @@ function check_args()
 check_current_dir
 
 # set up the bridge to llvm-apps repository and initialize
+[ -f ${MINIX_LLVM_DIR}/minix.inc ] || cp ${MINIX_LLVM_DIR}/minix.inc.default ${MINIX_LLVM_DIR}/minix.inc
 . ${MINIX_LLVM_DIR}/minix.inc
 . ${ROOT}/apps/scripts/include/configure.llvm.inc
 

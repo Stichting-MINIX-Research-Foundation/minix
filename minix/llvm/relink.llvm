@@ -69,7 +69,6 @@ function find_static_libs()
 	echo "${stat_libs_llvmapps} ${stat_libs_minix}"
 }
 
-
 #Make sure we are running from the right directory
 check_current_dir
 
@@ -80,6 +79,7 @@ if [ "$1" == "--help" ] || [ "$1" == "-h" ]; then
 fi
 
 # set up the bridge to llvm-apps repository and initialize
+[ -f ${MINIX_LLVM_DIR}/minix.inc ] || cp ${MINIX_LLVM_DIR}/minix.inc.default ${MINIX_LLVM_DIR}/minix.inc
 . ${MINIX_LLVM_DIR}/minix.inc
 . ${ROOT}/apps/scripts/include/configure.llvm.inc
 
