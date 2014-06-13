@@ -10,6 +10,7 @@
 #include <ddekit/semaphore.h>
 #include <ddekit/usb.h>
 
+/* TODO: usb.h is for DDEKit's IPC and should not be used here */
 #include <minix/usb.h>				/* for setup structures */
 #include <minix/usb_ch9.h>			/* for descriptor structures */
 
@@ -99,60 +100,7 @@ hcd_configuration;
 
 
 /*===========================================================================*
- *    HCD device helper types                                                *
- *===========================================================================*/
-typedef					void (*hcd_thread_function)(void *);
-typedef ddekit_thread_t			hcd_thread;
-typedef ddekit_sem_t			hcd_lock;
-typedef struct hcd_driver_state		hcd_driver_state;
-typedef struct ddekit_usb_urb		hcd_urb;
-
-typedef enum {
-
-	HCD_STATE_DISCONNECTED = 0,		/* default for initialization */
-	HCD_STATE_CONNECTION_PENDING,
-	HCD_STATE_CONNECTED
-}
-hcd_state;
-
-typedef enum {
-
-	HCD_SPEED_LOW,
-	HCD_SPEED_FULL,
-	HCD_SPEED_HIGH,
-}
-hcd_speed;
-
-/* Largest value that can be transfered by this driver at a time
- * see MAXPAYLOAD in TXMAXP/RXMAXP */
-#define MAX_WTOTALLENGTH 1024
-
-typedef struct hcd_device_state {
-
-	hcd_driver_state * driver;	/* Specific HCD driver object */
-	hcd_thread * thread;
-	hcd_lock * lock;
-	hcd_urb * urb;
-	void * data;
-
-	hcd_device_descriptor device_desc;
-	hcd_configuration config_tree;
-	hcd_reg1 max_packet_size;
-	hcd_speed speed;
-	hcd_state state;
-	int address;
-
-	/* Number of bytes received/transmitted in last transfer */
-	int data_len;
-
-	/* Word aligned buffer for each device to hold transfered data */
-	hcd_reg1 buffer[MAX_WTOTALLENGTH] __aligned(sizeof(hcd_reg4));
-}
-hcd_device_state;
-
-
-/*===========================================================================*
- *    HCD event handling                                                     *
+ *    HCD enumerations                                                       *
  *===========================================================================*/
 /* Possible USB transfer types */
 typedef enum {
@@ -183,14 +131,44 @@ typedef enum {
 }
 hcd_event;
 
-/* EP event constants */
-#define HCD_NO_ENDPOINT			-1
-#define HCD_ENDPOINT_0			0
+/* Possible device states */
+typedef enum {
+
+	HCD_STATE_DISCONNECTED = 0,		/* default for initialization */
+	HCD_STATE_CONNECTION_PENDING,
+	HCD_STATE_CONNECTED
+}
+hcd_state;
+
+/* USB speeds */
+typedef enum {
+
+	HCD_SPEED_LOW,
+	HCD_SPEED_FULL,
+	HCD_SPEED_HIGH,
+}
+hcd_speed;
 
 
 /*===========================================================================*
- *    HCD transfer requests                                                  *
+ *    HCD threading/device/URB types                                         *
  *===========================================================================*/
+typedef					void (*hcd_thread_function)(void *);
+typedef ddekit_thread_t			hcd_thread;
+typedef ddekit_sem_t			hcd_lock;
+typedef struct hcd_driver_state		hcd_driver_state;
+typedef struct usb_ctrlrequest		hcd_ctrlrequest;
+
+/* Largest value that can be transfered by this driver at a time
+ * see MAXPAYLOAD in TXMAXP/RXMAXP */
+#define MAX_WTOTALLENGTH 		1024
+
+/* Forward declarations */
+typedef struct hcd_datarequest		hcd_datarequest;
+typedef struct hcd_urb			hcd_urb;
+typedef struct hcd_device_state		hcd_device_state;
+
+/* Non-control transfer request structure */
 struct hcd_datarequest {
 
 	char * data;
@@ -203,8 +181,49 @@ struct hcd_datarequest {
 	hcd_transfer type;
 };
 
-typedef struct usb_ctrlrequest		hcd_ctrlrequest;
-typedef struct hcd_datarequest		hcd_datarequest;
+/* HCD's URB structure */
+struct hcd_urb {
+
+	/* Basic */
+	void * original_urb;
+	hcd_device_state * target_device;
+
+	/* Transfer (in/out signifies what may be overwritten by HCD) */
+	hcd_ctrlrequest * in_setup;
+	void * inout_data;
+	hcd_reg4 in_size;
+	int out_size;
+	int inout_status;	/* URB submission/validity status */
+
+	/* Transfer control */
+	hcd_transfer type;
+	hcd_direction direction;
+	hcd_reg1 endpoint;
+	hcd_reg1 interval;
+};
+
+/* Current state of attached device */
+struct hcd_device_state {
+
+	hcd_driver_state * driver;	/* Specific HCD driver object */
+	hcd_thread * thread;
+	hcd_lock * lock;
+	void * data;
+
+	hcd_urb urb;
+	hcd_device_descriptor device_desc;
+	hcd_configuration config_tree;
+	hcd_reg1 max_packet_size;
+	hcd_speed speed;
+	hcd_state state;
+	hcd_reg1 address;
+
+	/* Number of bytes received/transmitted in last transfer */
+	int data_len;
+
+	/* Word aligned buffer for each device to hold transfered data */
+	hcd_reg1 buffer[MAX_WTOTALLENGTH] __aligned(sizeof(hcd_reg4));
+};
 
 
 /*===========================================================================*
@@ -218,22 +237,27 @@ typedef struct hcd_datarequest		hcd_datarequest;
 #define HCD_NANOSLEEP_USEC(usec)	((usec) * HCD_MILI)
 
 /* Default USB communication parameters */
-#define HCD_DEFAULT_EP		0x00u
-#define HCD_DEFAULT_ADDR	0x00u
-#define HCD_DEFAULT_CONFIG	0x00u
-#define HCD_LAST_ADDR		0x7Fu
-#define HCD_LAST_EP		0x0Fu
-#define HCD_TOTAL_EP		0x10u
+#define HCD_DEFAULT_EP			0x00u
+#define HCD_DEFAULT_ADDR		0x00u
+#define HCD_DEFAULT_CONFIG		0x00u
+#define HCD_LAST_ADDR			0x7Fu
+#define HCD_LAST_EP			0x0Fu
+#define HCD_TOTAL_EP			0x10u
+#define HCD_ANY_EP			0xFFu
+
+/* Legal interval values */
+#define HCD_LOWEST_INTERVAL		0x00u
+#define HCD_HIGHEST_INTERVAL		0xFFu
 
 /* TODO: One device only */
-#define HCD_ATTACHED_ADDR	0x01
+#define HCD_ATTACHED_ADDR		0x01u
 
 /* Translates configuration number for 'set configuration' */
-#define HCD_SET_CONFIG_NUM(num)	((num)+0x01u)
+#define HCD_SET_CONFIG_NUM(num)		((num)+0x01u)
 
 /* Default MaxPacketSize for control transfer */
-#define HCD_LS_MAXPACKETSIZE	8u
-#define HCD_HS_MAXPACKETSIZE	64u
+#define HCD_LS_MAXPACKETSIZE		8u
+#define HCD_HS_MAXPACKETSIZE		64u
 
 
 /*===========================================================================*
@@ -278,7 +302,7 @@ int hcd_connect_device(hcd_device_state *, hcd_thread_function);
 void hcd_disconnect_device(hcd_device_state *);
 
 /* Locks device thread until 'hcd_device_continue' */
-void hcd_device_wait(hcd_device_state *, hcd_event, int);
+void hcd_device_wait(hcd_device_state *, hcd_event, hcd_reg1);
 
 /* Unlocks device thread halted by 'hcd_device_wait' */
 void hcd_device_continue(hcd_device_state *);
@@ -294,7 +318,7 @@ int hcd_buffer_to_tree(hcd_reg1 *, int, hcd_configuration *);
 void hcd_tree_cleanup(hcd_configuration *);
 
 /* Find EP in a tree */
-hcd_endpoint * hcd_tree_find_ep(hcd_configuration *, int);
+hcd_endpoint * hcd_tree_find_ep(hcd_configuration *, hcd_reg1);
 
 
 #endif /* !_HCD_COMMON_H_ */

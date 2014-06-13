@@ -12,7 +12,7 @@
  *===========================================================================*/
 void hcd_connect_cb(hcd_device_state *);
 void hcd_disconnect_cb(hcd_device_state *);
-void hcd_completion_cb(void *);
+void hcd_completion_cb(hcd_urb *);
 
 
 #endif /* !_HCD_DDEKIT_H_ */

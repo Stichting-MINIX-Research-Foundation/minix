@@ -21,6 +21,11 @@ struct ddekit_usb_device_id;
 struct ddekit_usb_urb;
 struct ddekit_usb_dev;
 
+/* Translates DDEKit UBR to one used by HCD */
+static void hcd_decode_urb(hcd_urb *, struct ddekit_usb_urb *);
+static void hcd_encode_urb(hcd_urb *, struct ddekit_usb_urb *);
+
+
 /*===========================================================================*
  *    Global definitions                                                     *
  *===========================================================================*/
@@ -147,7 +152,7 @@ ddekit_usb_dev_get_data(struct ddekit_usb_dev * dev)
 }
 
 
-/* TODO: This was in header file but is not used anywhere */
+/* TODO: This was in 'ddekit/usb.h' header file, but is not used anywhere */
 #if 0
 /*===========================================================================*
  *    ddekit_usb_get_device_id                                               *
@@ -171,20 +176,25 @@ ddekit_usb_get_device_id(struct ddekit_usb_dev * dev,
 int
 ddekit_usb_submit_urb(struct ddekit_usb_urb * d_urb)
 {
-	hcd_urb * urb;
 	hcd_device_state * dev;
 	hcd_driver_state * drv;
 
 	DEBUG_DUMP;
 
-	urb = (hcd_urb *)d_urb;
-	dev = (hcd_device_state *)(urb->dev);
+	/* Retrieve info on device/driver state from DDEKit's USB */
+	dev = (hcd_device_state *)(d_urb->dev);
 	drv = (hcd_driver_state *)(dev->driver);
 
-	dev->urb = urb;
-	drv->current_event = HCD_EVENT_URB;
+	/* Remember original URB */
+	dev->urb.original_urb = (void *)d_urb;
 
-	/* TODO: URB's must be queued somewhere */
+	/* TODO: URB's should be queued somewhere if DDEKit is not changed */
+	/* Turn DDEKit URB format to one that is easier to handle by HCD, also
+	 * check if URB is valid */
+	hcd_decode_urb(&(dev->urb), d_urb);
+
+	/* Start handling URB event */
+	drv->current_event = HCD_EVENT_URB;
 	hcd_handle_event(drv);
 
 	return EXIT_SUCCESS;
@@ -228,13 +238,14 @@ ddekit_usb_init(struct ddekit_usb_driver * drv,
 /*===========================================================================*
  *    hcd_connect_cb                                                         *
  *===========================================================================*/
-void hcd_connect_cb(hcd_device_state * dev)
+void
+hcd_connect_cb(hcd_device_state * dev)
 {
 	unsigned int if_bitmask;
 
 	DEBUG_DUMP;
 
-	/* TODO: magic numbers like in ddekit/devman */
+	/* TODO: Magic numbers like in ddekit/devman */
 	/* Each bit starting from 0, represents valid interface */
 	if_bitmask = 0xFFFFFFFF >> (32 - dev->config_tree.num_interfaces);
 
@@ -249,7 +260,8 @@ void hcd_connect_cb(hcd_device_state * dev)
 /*===========================================================================*
  *    hcd_disconnect_cb                                                      *
  *===========================================================================*/
-void hcd_disconnect_cb(hcd_device_state * dev)
+void
+hcd_disconnect_cb(hcd_device_state * dev)
 {
 	DEBUG_DUMP;
 
@@ -260,9 +272,121 @@ void hcd_disconnect_cb(hcd_device_state * dev)
 /*===========================================================================*
  *    hcd_completion_cb                                                      *
  *===========================================================================*/
-void hcd_completion_cb(void * priv)
+void
+hcd_completion_cb(hcd_urb * urb)
+{
+	struct ddekit_usb_urb * d_urb;
+
+	DEBUG_DUMP;
+
+	/* Recollect original URB */
+	d_urb = (struct ddekit_usb_urb *)urb->original_urb;
+
+	/* Turn HCD URB format to one handled by DDEKit */
+	hcd_encode_urb(urb, d_urb);
+
+	completion_cb(d_urb->priv);
+}
+
+
+/*===========================================================================*
+ *    hcd_decode_urb                                                         *
+ *===========================================================================*/
+static void
+hcd_decode_urb(hcd_urb * urb, struct ddekit_usb_urb * dde_urb)
 {
 	DEBUG_DUMP;
 
-	completion_cb(priv);
+	/* No UBR error initially */
+	urb->inout_status = EXIT_SUCCESS;
+
+	/* Check transfer direction */
+	switch (dde_urb->direction) {
+		case DDEKIT_USB_IN:
+			urb->direction = HCD_DIRECTION_IN;
+			break;
+		case DDEKIT_USB_OUT:
+			urb->direction = HCD_DIRECTION_OUT;
+			break;
+		default:
+			USB_MSG("URB direction error");
+			goto URB_ERROR;
+	}
+
+	/* Check transfer type */
+	switch (dde_urb->type) {
+		case DDEKIT_USB_TRANSFER_ISO:
+			urb->type = HCD_TRANSFER_ISOCHRONOUS;
+			break;
+		case DDEKIT_USB_TRANSFER_INT:
+			urb->type = HCD_TRANSFER_INTERRUPT;
+			break;
+		case DDEKIT_USB_TRANSFER_CTL:
+			urb->type = HCD_TRANSFER_CONTROL;
+			break;
+		case DDEKIT_USB_TRANSFER_BLK:
+			urb->type = HCD_TRANSFER_BULK;
+			break;
+		default:
+			USB_MSG("URB type error");
+			goto URB_ERROR;
+	}
+
+	/* Check transfer endpoint validity */
+	if ((dde_urb->endpoint <= (int)HCD_LAST_EP) &&
+		(dde_urb->endpoint >= (int)HCD_DEFAULT_EP))
+		urb->endpoint = (hcd_reg1)dde_urb->endpoint;
+	else {
+		USB_MSG("URB endpoint error");
+		goto URB_ERROR;
+	}
+
+	/* Check transfer interval validity */
+	if ((dde_urb->interval <= (int)HCD_HIGHEST_INTERVAL) &&
+		(dde_urb->interval >= (int)HCD_LOWEST_INTERVAL))
+		urb->interval = (hcd_reg1)dde_urb->interval;
+	else {
+		USB_MSG("URB interval error");
+		goto URB_ERROR;
+	}
+
+	/* TODO: Alignment of setup packet. Can DDE client guarantee that? */
+	/* Transfer data assignment */
+	urb->inout_data = (void *)dde_urb->data;
+	urb->in_setup = (hcd_ctrlrequest *)dde_urb->setup_packet;
+
+	/* TODO: Sane size check? */
+	urb->in_size = (hcd_reg4)dde_urb->size;
+
+	/* Buffer validity check */
+	if ((NULL == urb->inout_data) && (NULL == urb->in_setup)) {
+		USB_MSG("URB buffer error");
+		goto URB_ERROR;
+	}
+
+	/* Remember device and check for NULL */
+	if (NULL == (urb->target_device = (hcd_device_state *)dde_urb->dev)) {
+		USB_MSG("URB device pointer error");
+		goto URB_ERROR;
+	}
+
+	/* Decoding completed */
+	return;
+
+	URB_ERROR:
+	urb->inout_status = EXIT_FAILURE;
+}
+
+
+/*===========================================================================*
+ *    hcd_encode_urb                                                         *
+ *===========================================================================*/
+static void
+hcd_encode_urb(hcd_urb * urb, struct ddekit_usb_urb * dde_urb)
+{
+	DEBUG_DUMP;
+
+	/* Rewrite output for DDEKit part */
+	dde_urb->actual_length = urb->out_size;
+	dde_urb->status = urb->inout_status;
 }

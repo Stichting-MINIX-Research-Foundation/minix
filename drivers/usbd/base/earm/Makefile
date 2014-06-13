@@ -9,9 +9,8 @@ SRCS=		usbd.c usbd_earm.c hcd.c hcd_common.c hcd_ddekit.c musb_am335x.c musb_cor
 
 CPPFLAGS+=	-I${.CURDIR}/../../include
 
-DPADD+=		${LIBDDEKIT} ${LIBDDEKIT_USB_SERVER} ${LIBDEVMAN} ${LIBUSB} ${LIBMINC} ${LIBCLKCONF}
-LDADD+=		-lddekit -lddekit_usb_server -ldevman -lusb -lminc -lclkconf
-LDADD+=		-lsys -lminlib
+DPADD+=		${LIBDDEKIT} ${LIBDDEKIT_USB_SERVER} ${LIBDEVMAN} ${LIBUSB} ${LIBMINC} ${LIBCLKCONF} ${LIBSYS} ${LIBMINLIB}
+LDADD+=		-lddekit -lddekit_usb_server -ldevman -lusb -lminc -lclkconf -lsys -lminlib
 
 MAN=
 

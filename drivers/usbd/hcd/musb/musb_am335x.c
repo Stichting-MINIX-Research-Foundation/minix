@@ -271,7 +271,7 @@ static void musb_am335x_internal_deinit(void);
 static void musb_am335x_irq_init(void *);
 static void musb_am335x_usbss_isr(void *);
 static void musb_am335x_usbx_isr(void *);
-static int musb_am335x_irqstat0_to_ep(int);
+static hcd_reg1 musb_am335x_irqstat0_to_ep(int);
 
 /* Configuration helpers */
 static void musb_am335x_usb_reset(int);
@@ -427,7 +427,7 @@ musb_am335x_internal_init(void)
 		return EXIT_FAILURE;
 
 	/* Read and dump revision register */
-	USB_MSG("MUSB revision (REVREG): %08X",
+	USB_MSG("MUSB revision (REVREG): 0x%08X",
 		(unsigned int)HCD_RD4(am335x.ss.regs, AM335X_REG_REVREG));
 
 	/* Allow OS to handle previously configured USBSS interrupts */
@@ -628,7 +628,7 @@ musb_am335x_usbx_isr(void * data)
 /*===========================================================================*
  *    musb_am335x_irqstat0_to_ep                                             *
  *===========================================================================*/
-static int
+static hcd_reg1
 musb_am335x_irqstat0_to_ep(int irqstat0)
 {
 	hcd_reg1 ep;
@@ -653,7 +653,7 @@ musb_am335x_irqstat0_to_ep(int irqstat0)
 			"Invalid IRQSTAT0 supplied (2)");
 	}
 
-	return (int)ep;
+	return ep;
 }
 
 
@@ -714,14 +714,6 @@ musb_am335x_otg_enable(int usb_num)
 
 	HCD_WR4(r, AM335X_REG_USBXIRQENABLESET1, intreg);
 
-	/* Some MUSB implementations may not need this */
-#if 0
-	/* Set EP0 interrupt to be enabled */
-	intreg = HCD_RD4(r, AM335X_REG_USBXIRQENABLESET0);
-	HCD_SET(intreg, AM335X_VAL_USBXIRQENABLEXXX0_EP0);
-	HCD_WR4(r, AM335X_REG_USBXIRQENABLESET0, intreg);
-#else
-
 	/* Set all EP interrupts as enabled */
 	intreg = AM335X_VAL_USBXIRQENABLEXXX0_EP0	|
 		AM335X_VAL_USBXIRQENABLEXXX0_TX_EP1	|
@@ -756,5 +748,4 @@ musb_am335x_otg_enable(int usb_num)
 		AM335X_VAL_USBXIRQENABLEXXX0_RX_EP15	;
 
 	HCD_WR4(r, AM335X_REG_USBXIRQENABLESET0, intreg);
-#endif
 }

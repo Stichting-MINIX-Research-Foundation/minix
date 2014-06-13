@@ -240,7 +240,7 @@ hcd_disconnect_device(hcd_device_state * this_device)
  *    hcd_device_wait                                                        *
  *===========================================================================*/
 void
-hcd_device_wait(hcd_device_state * this_device, hcd_event event, int ep)
+hcd_device_wait(hcd_device_state * this_device, hcd_event event, hcd_reg1 ep)
 {
 	hcd_driver_state * drv;
 
@@ -401,7 +401,7 @@ hcd_tree_cleanup(hcd_configuration * c)
  *    hcd_tree_find_ep                                                       *
  *===========================================================================*/
 hcd_endpoint *
-hcd_tree_find_ep(hcd_configuration * c, int ep)
+hcd_tree_find_ep(hcd_configuration * c, hcd_reg1 ep)
 {
 	hcd_interface * i;
 	hcd_endpoint * e;

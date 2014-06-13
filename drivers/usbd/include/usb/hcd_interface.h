@@ -40,9 +40,9 @@ struct hcd_driver_state {
 
 	/* Current state to be handled by driver */
 	hcd_event	current_event;
-	int		current_endpoint;
+	hcd_reg1	current_endpoint;
 	hcd_event	expected_event;
-	int		expected_endpoint;
+	hcd_reg1	expected_endpoint;
 };
 
 
