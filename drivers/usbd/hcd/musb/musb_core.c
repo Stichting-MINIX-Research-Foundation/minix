@@ -470,7 +470,7 @@ musb_rx_stage(void * cfg, hcd_datarequest * request)
 	core = (musb_core_config *)cfg;
 	r = core->regs;
 
-	USB_ASSERT(request->max_packet_size <= 1024,
+	USB_ASSERT(request->max_packet_size <= HCD_MAX_MAXPACKETSIZE,
 			"Invalid wMaxPacketSize");
 	USB_ASSERT((core->ep <= HCD_LAST_EP) && (core->ep > HCD_DEFAULT_EP),
 			"Invalid bulk EP supplied");
@@ -564,7 +564,7 @@ musb_tx_stage(void * cfg, hcd_datarequest * request)
 	core = (musb_core_config *)cfg;
 	r = core->regs;
 
-	USB_ASSERT(request->max_packet_size <= 1024,
+	USB_ASSERT(request->max_packet_size <= HCD_MAX_MAXPACKETSIZE,
 			"Invalid wMaxPacketSize");
 	USB_ASSERT((core->ep <= HCD_LAST_EP) && (core->ep > HCD_DEFAULT_EP),
 			"Invalid bulk EP supplied");

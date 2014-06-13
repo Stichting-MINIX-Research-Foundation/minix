@@ -352,7 +352,7 @@ hcd_decode_urb(hcd_urb * urb, struct ddekit_usb_urb * dde_urb)
 
 	/* TODO: Alignment of setup packet. Can DDE client guarantee that? */
 	/* Transfer data assignment */
-	urb->inout_data = (void *)dde_urb->data;
+	urb->inout_data = (hcd_reg1 *)dde_urb->data;
 	urb->in_setup = (hcd_ctrlrequest *)dde_urb->setup_packet;
 
 	/* TODO: Sane size check? */

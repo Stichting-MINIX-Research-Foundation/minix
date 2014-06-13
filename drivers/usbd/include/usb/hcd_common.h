@@ -171,14 +171,16 @@ typedef struct hcd_device_state		hcd_device_state;
 /* Non-control transfer request structure */
 struct hcd_datarequest {
 
-	char * data;
-	int data_left;
-	int endpoint;
-	int direction;
-	unsigned int max_packet_size;
-	unsigned int interval;
-	hcd_speed speed;
-	hcd_transfer type;
+	hcd_reg1 * data;		/* RX/TX buffer */
+	int data_left;			/* Amount of data to transfer (may
+					 * become negative in case of error
+					 * thus 'int') */
+	hcd_reg2 max_packet_size;	/* Read from EP descriptor */
+	hcd_reg1 endpoint;		/* EP number */
+	hcd_reg1 interval;		/* Should match one in EP descriptor */
+	hcd_direction direction;	/* Should match one in EP descriptor */
+	hcd_speed speed;		/* Decided during device reset */
+	hcd_transfer type;		/* Should match one in EP descriptor */
 };
 
 /* HCD's URB structure */
@@ -190,9 +192,9 @@ struct hcd_urb {
 
 	/* Transfer (in/out signifies what may be overwritten by HCD) */
 	hcd_ctrlrequest * in_setup;
-	void * inout_data;
+	hcd_reg1 * inout_data;
 	hcd_reg4 in_size;
-	int out_size;
+	hcd_reg4 out_size;
 	int inout_status;	/* URB submission/validity status */
 
 	/* Transfer control */
@@ -218,11 +220,16 @@ struct hcd_device_state {
 	hcd_state state;
 	hcd_reg1 address;
 
-	/* Number of bytes received/transmitted in last transfer */
-	int data_len;
+	/*
+	 * Control transfer's local data:
+	 */
+
+	/* Number of bytes received/transmitted in last control transfer (may
+	 * become negative in case of error thus 'int') */
+	int control_len;
 
 	/* Word aligned buffer for each device to hold transfered data */
-	hcd_reg1 buffer[MAX_WTOTALLENGTH] __aligned(sizeof(hcd_reg4));
+	hcd_reg1 control_data[MAX_WTOTALLENGTH] __aligned(sizeof(hcd_reg4));
 };
 
 
@@ -258,6 +265,7 @@ struct hcd_device_state {
 /* Default MaxPacketSize for control transfer */
 #define HCD_LS_MAXPACKETSIZE		8u
 #define HCD_HS_MAXPACKETSIZE		64u
+#define HCD_MAX_MAXPACKETSIZE		1024u
 
 
 /*===========================================================================*

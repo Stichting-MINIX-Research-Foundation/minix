@@ -33,6 +33,7 @@ static int hcd_non_control_urb(hcd_device_state *, hcd_urb *);
 
 /* For internal use by more general methods */
 static int hcd_setup_packet(hcd_device_state *, hcd_ctrlrequest *, hcd_reg1);
+static int hcd_finish_setup(hcd_device_state *, void *, hcd_reg4);
 static int hcd_data_transfer(hcd_device_state *, hcd_datarequest *);
 
 
@@ -44,6 +45,10 @@ static int hcd_data_transfer(hcd_device_state *, hcd_datarequest *);
  * HUB, means disconnecting every device attached to it, so data structure may
  * have to be altered to allow that */
 static hcd_device_state hcd_device[1];
+
+/* TODO: This was added for compatibility with DDELinux drivers that
+ * allow receiving less data than expected in URB, without error */
+#define HCD_ANY_LENGTH 0xFFFFFFFFu
 
 
 /*===========================================================================*
@@ -267,8 +272,10 @@ hcd_get_device_descriptor(hcd_device_state * this_device)
 	}
 
 	/* Put what was read in device descriptor */
-	memcpy(&(this_device->device_desc), this_device->buffer,
-		sizeof(this_device->device_desc));
+	if (EXIT_SUCCESS != hcd_finish_setup(this_device,
+					&(this_device->device_desc),
+					sizeof(this_device->device_desc)))
+		return EXIT_FAILURE;
 
 	/* Remember max packet size from device descriptor */
 	this_device->max_packet_size = this_device->device_desc.bMaxPacketSize;
@@ -378,9 +385,12 @@ hcd_get_descriptor_tree(hcd_device_state * this_device)
 		 * then ask again for other descriptors */
 		if (sizeof(config_descriptor) == buffer_length) {
 
-			/* Put what was read in configuration descriptor */
-			memcpy(&config_descriptor, this_device->buffer,
-				sizeof(config_descriptor));
+			/* Put what was already read in configuration
+			 * descriptor for analysis */
+			if (EXIT_SUCCESS != hcd_finish_setup(this_device,
+							&config_descriptor,
+							buffer_length))
+				return EXIT_FAILURE;
 
 			/* Continue only if there is more data */
 			total_length = UGETW(config_descriptor.wTotalLength);
@@ -404,9 +414,13 @@ hcd_get_descriptor_tree(hcd_device_state * this_device)
 	}
 	while (!completed);
 
-	/* Create tree based on received buffer */
-	if (EXIT_SUCCESS != hcd_buffer_to_tree(this_device->buffer,
-						this_device->data_len,
+	/* Validate... */
+	if (EXIT_SUCCESS != hcd_finish_setup(this_device, NULL, total_length))
+		return EXIT_FAILURE;
+
+	/* ... and create tree based on received buffer */
+	if (EXIT_SUCCESS != hcd_buffer_to_tree(this_device->control_data,
+						this_device->control_len,
 						&(this_device->config_tree))) {
 		/* This should never happen for a fine device */
 		USB_MSG("Illegal descriptor values");
@@ -532,10 +546,14 @@ hcd_control_urb(hcd_device_state * this_device, hcd_urb * urb)
 		return EXIT_FAILURE;
 	}
 
-	/* TODO: Calling memcpy may be removed when writing directly to URB */
 	/* Put what was read back into URB */
-	memcpy(urb->inout_data, this_device->buffer, this_device->data_len);
-	urb->out_size = this_device->data_len;
+	if (EXIT_SUCCESS != hcd_finish_setup(this_device,
+					urb->inout_data,
+					HCD_ANY_LENGTH))
+		return EXIT_FAILURE;
+
+	/* Write transfer output info to URB */
+	urb->out_size = (hcd_reg4)this_device->control_len;
 	urb->inout_status = EXIT_SUCCESS;
 
 	return EXIT_SUCCESS;
@@ -591,7 +609,7 @@ hcd_non_control_urb(hcd_device_state * this_device, hcd_urb * urb)
 	request.type = urb->type;
 	request.endpoint = urb->endpoint;
 	request.direction = urb->direction;
-	request.data_left = urb->in_size;
+	request.data_left = (int)urb->in_size;
 	request.data = urb->inout_data;
 	request.interval = urb->interval;
 
@@ -608,8 +626,10 @@ hcd_non_control_urb(hcd_device_state * this_device, hcd_urb * urb)
 		return EXIT_FAILURE;
 	}
 
-	/* Transfer successfully completed */
-	urb->out_size = urb->in_size - request.data_left;
+	/* Transfer successfully completed update URB */
+	USB_ASSERT(request.data_left >= 0,
+		"Negative amount of transfer data remains");
+	urb->out_size = urb->in_size - (hcd_reg4)request.data_left;
 	urb->inout_status = EXIT_SUCCESS;
 
 	return EXIT_SUCCESS;
@@ -638,8 +658,8 @@ hcd_setup_packet(hcd_device_state * this_device, hcd_ctrlrequest * setup,
 
 	/* Initially... */
 	d = this_device->driver;
-	current_byte = this_device->buffer;	/* Start reading into this */
-	this_device->data_len = 0;		/* Nothing read yet */
+	current_byte = this_device->control_data;/* Start reading into this */
+	this_device->control_len = 0;		/* Nothing read yet */
 
 	/* Set parameters for further communication */
 	d->setup_device(d->private_data, ep, this_device->address);
@@ -685,7 +705,7 @@ hcd_setup_packet(hcd_device_state * this_device, hcd_ctrlrequest * setup,
 
 				/* Increment */
 				current_byte += rx_len;
-				this_device->data_len += rx_len;
+				this_device->control_len += rx_len;
 
 				/* If full max sized packet was read... */
 				if (rx_len == (int)this_device->max_packet_size)
@@ -753,6 +773,45 @@ hcd_setup_packet(hcd_device_state * this_device, hcd_ctrlrequest * setup,
 
 
 /*===========================================================================*
+ *    hcd_finish_setup                                                       *
+ *===========================================================================*/
+static int
+hcd_finish_setup(hcd_device_state * this_device, void * output,
+		hcd_reg4 expected)
+{
+	DEBUG_DUMP;
+
+	/* Validate setup transfer output length */
+	if (this_device->control_len < 0) {
+		USB_MSG("Negative control transfer output length");
+		return EXIT_FAILURE;
+	}
+
+	/* In case it is required... */
+	if (HCD_ANY_LENGTH != expected) {
+		/* ...check for expected length */
+		if ((hcd_reg4)this_device->control_len != expected) {
+			USB_MSG("Control transfer output length mismatch");
+			return EXIT_FAILURE;
+		}
+
+		/* Valid but there is no need to copy anything */
+		if (0u == expected)
+			return EXIT_SUCCESS;
+	}
+
+	/* Length is valid but output not supplied */
+	if (NULL == output)
+		return EXIT_SUCCESS;
+
+	/* Finally, copy when needed */
+	memcpy(output, this_device->control_data, this_device->control_len);
+
+	return EXIT_SUCCESS;
+}
+
+
+/*===========================================================================*
  *    hcd_data_transfer                                                      *
  *===========================================================================*/
 static int
@@ -764,21 +823,22 @@ hcd_data_transfer(hcd_device_state * this_device, hcd_datarequest * request)
 
 	DEBUG_DUMP;
 
-	USB_ASSERT((hcd_reg1)(UE_GET_ADDR(request->endpoint)) <= HCD_LAST_EP,
+	USB_ASSERT((request->endpoint <= HCD_LAST_EP) &&
+		(request->endpoint > HCD_DEFAULT_EP),
 		"Invalid EP number");
-	USB_ASSERT(this_device->address <= HCD_LAST_ADDR,
+	USB_ASSERT((this_device->address <= HCD_LAST_ADDR) &&
+		(this_device->address > HCD_DEFAULT_ADDR),
 		"Invalid device address");
 
 	/* Initially... */
 	d = this_device->driver;
 
 	/* Set parameters for further communication */
-	d->setup_device(d->private_data,
-			(hcd_reg1)request->endpoint,
+	d->setup_device(d->private_data, request->endpoint,
 			this_device->address);
 
-	/* TODO: broken USB_IN... constants */
-	if (1 == request->direction) {
+	/* Check transfer direction first */
+	if (HCD_DIRECTION_IN == request->direction) {
 
 		do {
 			/* Start actual data transfer */
@@ -786,7 +846,7 @@ hcd_data_transfer(hcd_device_state * this_device, hcd_datarequest * request)
 
 			/* Wait for response */
 			hcd_device_wait(this_device, HCD_EVENT_ENDPOINT,
-					(hcd_reg1)request->endpoint);
+					request->endpoint);
 
 			/* Check response */
 			if (EXIT_SUCCESS != d->check_error(d->private_data,
@@ -796,8 +856,8 @@ hcd_data_transfer(hcd_device_state * this_device, hcd_datarequest * request)
 
 			/* Read data received as response */
 			transfer_len = d->read_data(d->private_data,
-						(hcd_reg1 *)request->data,
-						(hcd_reg1)request->endpoint);
+						request->data,
+						request->endpoint);
 
 			request->data_left -= transfer_len;
 			request->data += transfer_len;
@@ -810,14 +870,15 @@ hcd_data_transfer(hcd_device_state * this_device, hcd_datarequest * request)
 
 		} while (0 != request->data_left);
 
-	} else if (0 == request->direction) {
+	} else if (HCD_DIRECTION_OUT == request->direction) {
 
 		do {
 			temp_req = *request;
 
 			/* Decide temporary transfer size */
 			if (temp_req.data_left > (int)temp_req.max_packet_size)
-				temp_req.data_left = temp_req.max_packet_size;
+				temp_req.data_left =
+					(int)temp_req.max_packet_size;
 
 			/* Alter actual transfer size */
 			request->data += temp_req.data_left;
@@ -832,7 +893,7 @@ hcd_data_transfer(hcd_device_state * this_device, hcd_datarequest * request)
 
 			/* Wait for response */
 			hcd_device_wait(this_device, HCD_EVENT_ENDPOINT,
-					(hcd_reg1)request->endpoint);
+					request->endpoint);
 
 			/* Check response */
 			if (EXIT_SUCCESS != d->check_error(d->private_data,
