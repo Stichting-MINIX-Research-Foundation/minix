@@ -119,7 +119,7 @@ if [ "${REBUILD_MINIX}" == "yes" ]; then
 	echo "JOBS:$JOBS"
 	echo 
 	cd ${MINIX_ROOT}
-	BUILDVARS="-V MKBITCODE=yes -V SLOPPY_FLIST=yes" ./releasetools/x86_hdimage.sh
+	BUILDVARS="-V MKBITCODE=yes" ./releasetools/x86_hdimage.sh
 	EXITCODE=$?
 	cd ${MYPWD}
 	if [ "$EXITCODE" != "0" ]; then

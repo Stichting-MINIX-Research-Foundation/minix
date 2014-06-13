@@ -151,7 +151,7 @@ do
 	OPTFLAGS=`echo ${OPTFLAGS} | sed -e "s/\ /\\\ /g"`
 	OPTFLAGS_PLACEHOLDER="OPTFLAGS.$n=${OPTFLAGS}"
 	
-	(env "`echo ${OPTFLAGS_PLACEHOLDER}`" MKBITCODE=yes  SLOPPY_FLIST=yes \
+	(env "`echo ${OPTFLAGS_PLACEHOLDER}`" MKBITCODE=yes \
 	${TOOLDIR}/nbmake-${ARCH} -C $m all install && echo "INFO: $m successfully instrumented." ) || echo "ERROR: Failed instrumenting $m"
 	echo 
 done

@@ -147,7 +147,7 @@ do
 		LDFLAGS_PLACEHOLDER="BITCODE_LD_FLAGS.$n=\"${STATIC_LIBS}\""
 	fi
 
-	env "`echo ${LDFLAGS_PLACEHOLDER}`" MKBITCODE=yes  SLOPPY_FLIST=yes \
+	env "`echo ${LDFLAGS_PLACEHOLDER}`" MKBITCODE=yes \
 	${TOOLDIR}/nbmake-${ARCH} -C $m
 	echo 
 done
