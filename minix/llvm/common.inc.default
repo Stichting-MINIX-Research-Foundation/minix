@@ -1,0 +1,13 @@
+##############################################################################
+# COMMON MINIX SPECIFIC VARIABLES
+##############################################################################
+DESTDIR=${MINIX_ROOT}/../obj.${ARCH}
+TOOLDIR=${DESTDIR}/tooldir.`uname -s`-`uname -r`-`uname -m`/bin
+
+##############################################################################
+# configure.llvm would add an entry for ROOT which points to the llvm-apps
+# repository
+#
+##############################################################################
+ROOT="/nonexistent"
+

@@ -63,9 +63,13 @@ echo "LLVM root directory is set to :"
 echo "  ${ROOT}"
 
 # Persist the LLVM ROOT path information
-[ -f ${MINIX_LLVM_DIR}/minix.inc ] || cp ${MINIX_LLVM_DIR}/minix.inc.default ${MINIX_LLVM_DIR}/minix.inc
+. ${MINIX_LLVM_DIR}/minix.inc
 ROOT_1=`echo ${ROOT} | sed "s/\\\//\\\\\\\\\//g"`
-sed -i "s/ROOT=.*$/ROOT=\"${ROOT_1}\"/g" ${MINIX_LLVM_DIR}/minix.inc
+sed -i "s/ROOT=.*$/ROOT=\"${ROOT_1}\"/g" ${MINIX_LLVM_DIR}/common.inc
+
+# Configure llvm-apps
+cp ${ROOT}/conf/common.minix.overrides.inc ${ROOT}/common.minix.overrides.inc
+sed -i "s/MINIX_ROOT=.*$/MINIX_ROOT=\"${MINIX_ROOT}\"/g" ${ROOT}/common.minix.overrides.inc
 
 if [ ! -d ${ROOT}/.tmp ]; then
 	mkdir ${ROOT}/.tmp 2>/dev/null || true
@@ -132,3 +136,7 @@ if [ "${REBUILD_MINIX}" == "yes" ]; then
 else
 	echo "Building Minix: NO"
 fi
+
+# Reconfigure llvm-apps
+MINIX_TOOLS_DIR=$(readlink -f ${MINIX_ROOT}/obj.386/tooldir.*)
+sed -i "s/MINIX_TOOLS_DIR=.*$/MINIX_TOOLS_DIR=\"${MINIX_TOOLS_DIR}\"/g" ${ROOT}/common.minix.overrides.inc

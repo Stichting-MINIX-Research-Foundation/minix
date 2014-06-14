@@ -15,13 +15,12 @@ MINIX_ROOT=
 MINIX_LLVM_DIR=
 TARGET_MODULES=
 MINIX_MODS=
-LIBNAMES=
 STATIC_LIBS=
 LDFLAGS_PLACEHOLDER=" "
 
 # Set default values to essential variables.
 : ${GENERATE_MAP="no"}
-: ${C="hello"}
+: ${C="servers,drivers"}
 
 function usage()
 {
@@ -79,7 +78,6 @@ if [ "$1" == "--help" ] || [ "$1" == "-h" ]; then
 fi
 
 # set up the bridge to llvm-apps repository and initialize
-[ -f ${MINIX_LLVM_DIR}/minix.inc ] || cp ${MINIX_LLVM_DIR}/minix.inc.default ${MINIX_LLVM_DIR}/minix.inc
 . ${MINIX_LLVM_DIR}/minix.inc
 . ${ROOT}/apps/scripts/include/configure.llvm.inc
 
@@ -90,22 +88,6 @@ echo "	${INSTALL_DIR}"
 echo " 	     and"
 echo "  ${MINIX_LLVM_BIN_DIR}"
 echo 
-
-LIBNAMES="$*"
-
-EXIT_FLAG=no
-for l in ${LIBNAMES}; 
-do
-        if [ ! -f "${INSTALL_DIR}/$l.bcc" ] && [ ! -f "${MINIX_LLVM_BIN_DIR}/$l.bcc" ]; then
-                echo "ERROR: The LLVM pass file \"$l.bcc\" doesn't exit."
-		echo "Searched in: ${INSTALL_DIR} and ${MINIX_LLVM_BIN_DIR}."
-		EXIT_FLAG=yes
-        fi
-done
-
-if [ "${EXIT_FLAG}" == "yes" ]; then
-	exit 2
-fi
 
 # Picking up the selected modules
 
@@ -144,7 +126,7 @@ do
 	clean_module $n $m "relink"
 	if [ "${STATIC_LIBS}"!="" ]; then
 		STATIC_LIBS=`echo ${STATIC_LIBS} | sed -e "s/\ /\\\ /g"`
-		LDFLAGS_PLACEHOLDER="BITCODE_LD_FLAGS.$n=\"${STATIC_LIBS}\""
+		LDFLAGS_PLACEHOLDER="BITCODE_LD_FLAGS.$n=${STATIC_LIBS}"
 	fi
 
 	env "`echo ${LDFLAGS_PLACEHOLDER}`" MKBITCODE=yes \
