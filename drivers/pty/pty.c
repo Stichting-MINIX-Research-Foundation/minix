@@ -93,6 +93,8 @@ static int pty_master_open(devminor_t minor, int UNUSED(access),
   tty_t *tp;
   pty_t *pp;
 
+  assert(minor >= PTYPX_MINOR && minor < PTYPX_MINOR + NR_PTYS);
+
   if ((tp = line2tty(minor)) == NULL)
 	return ENXIO;
   pp = tp->tty_priv;
@@ -537,6 +539,8 @@ static int pty_slave_open(tty_t *tp, int UNUSED(try))
 {
 /* The tty side has been opened. */
   pty_t *pp = tp->tty_priv;
+
+  assert(tp->tty_minor >= TTYPX_MINOR && tp->tty_minor < TTYPX_MINOR + NR_PTYS);
 
   /* TTY_ACTIVE may already be set, which would indicate that the slave is
    * reopened after being fully closed while the master is still open. In that

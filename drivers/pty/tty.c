@@ -143,7 +143,7 @@ int main(void)
 	if (OK != chardriver_get_minor(&tty_mess, &line))
 		continue;
 
-	if (line - PTYPX_MINOR < NR_PTYS &&
+	if ((line >= PTYPX_MINOR) && (line < (PTYPX_MINOR + NR_PTYS)) &&
 			tty_mess.m_type != CDEV_IOCTL) {
 		/* Terminals and pseudo terminals belong together. We can only
 		 * make a distinction between the two based on position in the
