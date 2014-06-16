@@ -33,7 +33,8 @@ struct ddekit_thread {
 
 
 void _ddekit_thread_set_myprio(int prio);
-void _ddekit_thread_enqueue(ddekit_thread_t *th); 
+void _ddekit_thread_enqueue(ddekit_thread_t *th);
+void _ddekit_thread_dequeue(ddekit_thread_t *th);
 void _ddekit_thread_schedule();
 void _ddekit_thread_wakeup_sleeping();
 void _ddekit_print_backtrace(ddekit_thread_t *th);

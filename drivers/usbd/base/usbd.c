@@ -100,12 +100,21 @@ usbd_sef_handler(int type, sef_init_info_t * UNUSED(info))
 static int
 usbd_start(void)
 {
+	ddekit_thread_t * usbd_th;
+
 	DEBUG_DUMP;
 
 	/* Driver's "main loop" is within DDEKit server thread */
-	if (NULL != ddekit_thread_create(usbd_server_thread, NULL, "USBD")) {
-		/* This will lock current thread until DDEKit terminates */
+	usbd_th = ddekit_thread_create(usbd_server_thread, NULL, "USBD");
+
+	/* After spawning, allow server thread to work */
+	if (NULL != usbd_th) {
+		/* This will lock current thread until DDEKit exits */
 		ddekit_minix_wait_exit();
+
+		/* Cleanup */
+		ddekit_thread_terminate(usbd_th);
+
 		return EXIT_SUCCESS;
 	} else
 		return EXIT_FAILURE;

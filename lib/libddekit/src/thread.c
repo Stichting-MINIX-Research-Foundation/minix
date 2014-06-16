@@ -31,6 +31,7 @@ static ddekit_thread_t *current = NULL;
 
 static void _ddekit_thread_start(ddekit_thread_t *th);
 static void _ddekit_thread_sleep(unsigned long until);
+static void _ddekit_dump_queues(void);
 
 /*****************************************************************************
  *    _ddekit_thread_start                                                   *
@@ -52,6 +53,46 @@ static void _ddekit_thread_sleep(unsigned long until)
 	current->sleep_until = until;
 	_ddekit_thread_schedule();
 
+}
+
+/*****************************************************************************
+ *    _ddekit_dump_queues                                                    *
+ ****************************************************************************/
+static void
+_ddekit_dump_queues(void)
+{
+#if DDEBUG >= DDEBUG_VERBOSE
+	ddekit_thread_t * current_thread;
+	int i;
+
+	for (i = 0; i < DDEKIT_THREAD_PRIOS; i++) {
+		current_thread = ready_queue[i];
+
+		ddekit_printf("Ready queue #%d: ", i);
+
+		while (NULL != current_thread) {
+			ddekit_printf("0x%08X ", (int)current_thread);
+			current_thread = current_thread->next;
+		}
+
+		ddekit_printf("\n");
+	}
+
+	{
+		current_thread = sleep_queue;
+
+		ddekit_printf("Sleep queue: ");
+
+		while (NULL != current_thread) {
+			ddekit_printf("0x%08X ", (int)current_thread);
+			current_thread = current_thread->next;
+		}
+
+		ddekit_printf("\n");
+	}
+
+	ddekit_printf("Current thread: 0x%08X\n", (int)current);
+#endif
 }
 
 /*****************************************************************************
@@ -274,9 +315,23 @@ void  ddekit_thread_exit()
 /*****************************************************************************
  *    ddekit_thread_terminate                                                *
  ****************************************************************************/
-void  ddekit_thread_terminate(ddekit_thread_t *thread)
+void
+ddekit_thread_terminate(ddekit_thread_t * thread)
 {
-	/* todo */
+	if (thread == ddekit_thread_myself()) {
+		/* TODO: Whether or not this is an error, is to be decided.
+		 * Memory (especially stack) freeing should be somehow
+		 * postponed when such termination is legal. */
+		ddekit_panic("Thread attempted termination of itself!\n");
+	}
+
+	_ddekit_thread_dequeue(thread);
+
+	ddekit_sem_deinit(thread->sleep_sem);
+
+	ddekit_simple_free(thread->stack);
+
+	ddekit_simple_free(thread);
 }
 
 /*****************************************************************************
@@ -390,9 +445,8 @@ void _ddekit_thread_schedule()
  ****************************************************************************/
 void _ddekit_thread_enqueue(ddekit_thread_t *th) 
 {
-	
-	DDEBUG_MSG_VERBOSE("enqueueing thread: id: %d name %s, prio: %d",
-		th->id, th->name, th->prio);
+	DDEBUG_MSG_VERBOSE("Enqueuing thread 0x%08X: id %d, name %s, prio %d",
+			(int)th, th->id, th->name, th->prio);
 
 #if DDEBUG >= 4
 	_ddekit_print_backtrace(th);
@@ -409,6 +463,83 @@ void _ddekit_thread_enqueue(ddekit_thread_t *th)
 	} else {
 		ready_queue[th->prio] = th;
 	}
+}
+
+/*****************************************************************************
+ *    _ddekit_thread_dequeue                                                 *
+ ****************************************************************************/
+void
+_ddekit_thread_dequeue(ddekit_thread_t * th)
+{
+	ddekit_thread_t * current_thread;
+	ddekit_thread_t * previous_thread;
+
+	DDEBUG_MSG_VERBOSE("Dequeuing thread 0x%08X: id %d, name %s, prio %d",
+			(int)th, th->id, th->name, th->prio);
+
+	ddekit_assert((th->prio < DDEKIT_THREAD_PRIOS) && (th->prio >= 0));
+
+	/* Dump queues when debugging */
+	_ddekit_dump_queues();
+
+	/* Check ready queue (based on thread's priority) for thread */
+	current_thread = ready_queue[th->prio];
+	previous_thread = NULL;
+
+	while (NULL != current_thread) {
+
+		/* On match... */
+		if (th == current_thread) {
+
+			if (previous_thread) {
+				/* ...fix previous element to remove current */
+				previous_thread->next = current_thread->next;
+			} else {
+				/* ...alter queue start to reflect removal */
+				ready_queue[th->prio] = current_thread->next;
+			}
+
+			/* Thread found and dequeued */
+			DDEBUG_MSG_VERBOSE("Dequeued 'ready[%d]': 0x%08X",
+					th->prio, (int)th);
+			return;
+		}
+
+		/* Next thread */
+		previous_thread = current_thread;
+		current_thread = current_thread->next;
+	}
+
+	/* When previous loop fails, check if thread is sleeping */
+	current_thread = sleep_queue;
+	previous_thread = NULL;
+
+	while (NULL != current_thread) {
+
+		/* On match... */
+		if (th == current_thread) {
+
+			if (previous_thread) {
+				/* ...fix previous element to remove current */
+				previous_thread->next = current_thread->next;
+			} else {
+				/* ...alter queue start to reflect removal */
+				sleep_queue = current_thread->next;
+			}
+
+			/* Thread found and dequeued */
+			DDEBUG_MSG_VERBOSE("Dequeued 'sleep': 0x%08X", (int)th);
+			return;
+		}
+
+		/* Next thread */
+		previous_thread = current_thread;
+		current_thread = current_thread->next;
+	}
+
+	/* Thread may exist and not be enqueued at
+	 * all (is bound to semaphore for instance) */
+	DDEBUG_MSG_VERBOSE("Thread 0x%08X was not enqueued!", (int)th);
 }
 
 /*****************************************************************************

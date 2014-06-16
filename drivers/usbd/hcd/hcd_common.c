@@ -81,7 +81,7 @@ hcd_os_interrupt_disable(int irq)
  *    hcd_os_regs_init                                                       *
  *===========================================================================*/
 void *
-hcd_os_regs_init(unsigned long base_addr, unsigned long addr_len)
+hcd_os_regs_init(hcd_addr phys_addr, unsigned long addr_len)
 {
 	/* Memory range where we need privileged access */
 	struct minix_mem_range mr;
@@ -94,18 +94,18 @@ hcd_os_regs_init(unsigned long base_addr, unsigned long addr_len)
 	virt_reg_base = NULL;
 
 	/* Must have been set before */
-	USB_ASSERT(0 != base_addr, "Invalid base address!");
+	USB_ASSERT(0 != phys_addr, "Invalid base address!");
 	USB_ASSERT(0 != addr_len, "Invalid base length!");
 
 	/* Set memory range for peripheral */
-	mr.mr_base = base_addr;
-	mr.mr_limit = base_addr + addr_len;
+	mr.mr_base = phys_addr;
+	mr.mr_limit = phys_addr + addr_len;
 
 	/* Try getting access to memory range */
 	if (EXIT_SUCCESS == sys_privctl(SELF, SYS_PRIV_ADD_MEM, &mr)) {
 
 		/* And map it where we want it */
-		virt_reg_base = vm_map_phys(SELF, (void *)base_addr, addr_len);
+		virt_reg_base = vm_map_phys(SELF, (void *)phys_addr, addr_len);
 
 		/* Check for mapping errors to allow us returning NULL */
 		if (MAP_FAILED == virt_reg_base) {
@@ -124,12 +124,12 @@ hcd_os_regs_init(unsigned long base_addr, unsigned long addr_len)
  *    hcd_os_regs_deinit                                                     *
  *===========================================================================*/
 int
-hcd_os_regs_deinit(unsigned long base_addr, unsigned long addr_len)
+hcd_os_regs_deinit(hcd_addr virt_addr, unsigned long addr_len)
 {
 	DEBUG_DUMP;
 
 	/* To keep USBD return value convention */
-	return (0 == vm_unmap_phys(SELF, (void*)base_addr, addr_len)) ?
+	return (0 == vm_unmap_phys(SELF, (void*)virt_addr, addr_len)) ?
 		EXIT_SUCCESS : EXIT_FAILURE;
 }
 
@@ -226,8 +226,6 @@ hcd_disconnect_device(hcd_device_state * this_device)
 
 	hcd_tree_cleanup(&(this_device->config_tree));
 
-	/* TODO: Spilled resources */
-	/* DDEKit does no resource deallocation, when terminating thread */
 	ddekit_thread_terminate(this_device->thread);
 	ddekit_sem_deinit(this_device->lock);
 

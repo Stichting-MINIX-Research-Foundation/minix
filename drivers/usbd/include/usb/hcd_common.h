@@ -285,10 +285,10 @@ void hcd_os_interrupt_enable(int);
 void hcd_os_interrupt_disable(int);
 
 /* Returns pointer to memory mapped for given arguments */
-void * hcd_os_regs_init(unsigned long, unsigned long);
+void * hcd_os_regs_init(hcd_addr, unsigned long);
 
 /* Unregisters mapped memory */
-int hcd_os_regs_deinit(unsigned long, unsigned long);
+int hcd_os_regs_deinit(hcd_addr, unsigned long);
 
 /* Configure clocking */
 int hcd_os_clkconf(unsigned long, unsigned long, unsigned long);

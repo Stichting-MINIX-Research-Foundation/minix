@@ -404,9 +404,18 @@ musb_am335x_deinit(void)
 
 	musb_am335x_internal_deinit();
 
+	/* Release IRQ resources */
+	/* TODO: DDEKit has no checks on NULL IRQ and may crash on detach
+	 * if interrupts were not attached properly */
+	hcd_os_interrupt_detach(AM335X_USB1_IRQ);
+#ifdef AM335X_USE_USB0
+	hcd_os_interrupt_detach(AM335X_USB0_IRQ);
+#endif
+	hcd_os_interrupt_detach(AM335X_USBSS_IRQ);
+
 	/* Release maps if anything was assigned */
 	if (NULL != am335x.ss.regs)
-		if (EXIT_SUCCESS != hcd_os_regs_deinit(AM335X_USBSS_BASE_ADDR,
+		if (EXIT_SUCCESS != hcd_os_regs_deinit((hcd_addr)am335x.ss.regs,
 						AM335X_USBSS_TOTAL_REG_LEN))
 			USB_MSG("Failed to release USBSS mapping");
 }
