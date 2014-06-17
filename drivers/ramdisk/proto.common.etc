@@ -1,12 +1,12 @@
 	etc d--755 0 0
 		mtab    s--555 2 1      /proc/mounts
-		system.conf ---644 0 0 system.conf
-		passwd ---644 0 0 passwd
-		pwd.db ---644 0 0 pwd.db
-		spwd.db ---600 0 0 spwd.db
-		master.passwd ---600 0 0 master.passwd
+		system.conf ---644 0 0 etc/system.conf
+		passwd ---644 0 0 etc/passwd
+		pwd.db ---644 0 0 etc/pwd.db
+		spwd.db ---600 0 0 etc/spwd.db
+		master.passwd ---600 0 0 etc/master.passwd
 		rc ---755 0 0 rc
 #if defined(__i386__)
-		rs.single ---755 0 0 rs.single
+		rs.single ---755 0 0 etc/rs.single
 #endif
 	$

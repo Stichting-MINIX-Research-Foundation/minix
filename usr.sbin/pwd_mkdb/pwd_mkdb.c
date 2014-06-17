@@ -439,15 +439,9 @@ main(int argc, char *argv[])
 		 * Create original format password file entry.
 		 */
 		if (makeold) {
-#if defined(__minix)
-			(void)fprintf(oldfp, "%s:##%s:%d:%d:%s:%s:%s\n",
-			    pwd.pw_name, pwd.pw_name, pwd.pw_uid, pwd.pw_gid,
-			    pwd.pw_gecos, pwd.pw_dir, pwd.pw_shell);
-#else
 			(void)fprintf(oldfp, "%s:*:%d:%d:%s:%s:%s\n",
 			    pwd.pw_name, pwd.pw_uid, pwd.pw_gid, pwd.pw_gecos,
 			    pwd.pw_dir, pwd.pw_shell);
-#endif /* defined(__minix) */
 			if (ferror(oldfp))
 				wr_error(oldpwdfile);
 		}

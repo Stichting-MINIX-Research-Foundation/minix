@@ -27,7 +27,7 @@ RAMDISK_DEFINES= \
 PROTO=	proto
 
 # Common to all architectures
-ETC=		system.conf master.passwd group
+ETC=		system.conf group
 EXTRA=		rc
 PROTO_FILES=	proto.common.etc proto.common.dynamic
 PROG_DRIVERS=
@@ -97,7 +97,8 @@ PROGROOT:= ${.OBJDIR:S,/drivers/ramdisk,,}
 
 # Generate dependencies rules for config files
 .for etc in ${ETC}
-${etc}: ${NETBSDSRCDIR}/etc/${etc}
+etc/${etc}: ${NETBSDSRCDIR}/etc/${etc}
+	mkdir -p ${.OBJDIR}/etc
 	${INSTALL} $> $@
 .endfor
 
@@ -140,7 +141,7 @@ ${PROGROOT}/${srcdir}/${dir.${prog}:U${prog}}/${prog}:
 .endfor # prog
 .endfor # srcdir
 
-realall image:	proto.gen ${ETC} ${EXTRA} pwd.db spwd.db passwd group
+realall image:	proto.gen ${ETC:C/^/etc\//} ${EXTRA} etc/master.passwd etc/pwd.db etc/spwd.db etc/passwd etc/group
 	${_MKMSG_CREATE} "Generating ramdisk image"
 	${TOOL_MKFSMFS} image proto.gen || { rm -f image; false; }
 #	if fsck.mfs -s image | grep -q CLEAN;	\
@@ -150,16 +151,13 @@ realall image:	proto.gen ${ETC} ${EXTRA} pwd.db spwd.db passwd group
 #		rm -f image; false;             \
 #	fi
 
+etc/pwd.db etc/spwd.db etc/passwd: etc/master.passwd
+
 etc/master.passwd: ${NETBSDSRCDIR}/etc/master.passwd
 	rm -rf ${.OBJDIR}/etc/
 	mkdir -p ${.OBJDIR}/etc
 	${INSTALL} $> $@
 	${TOOL_PWD_MKDB} -V 0 -p -d . etc/master.passwd
-
-# LSC We use @F because some version of make still output a full path for @,
-#     even when the target is just a file name
-pwd.db spwd.db passwd: etc/master.passwd
-	${INSTALL} etc/${@F} ${@F}
 
 proto.dev.mtree:
 	@echo ". type=dir uname=root gname=operator mode=0755" \
@@ -172,8 +170,8 @@ proto.dev.mtree:
 # We have to remove the two first entries of the generated proto file, as
 # well as the two last ones (closing $).
 # Do not forget to double $ so that make doesn't try to expand it.
-proto.dev: proto.dev.mtree pwd.db spwd.db passwd group
-	${TOOL_MTREE} -f ${.TARGET}.mtree -N ${.OBJDIR} -C -K device | \
+proto.dev: proto.dev.mtree etc/pwd.db etc/spwd.db etc/passwd etc/group
+	${TOOL_MTREE} -f ${.TARGET}.mtree -N ${.OBJDIR}/etc -C -K device | \
 		${TOOL_TOPROTO} | ${TOOL_SED} -e '1,4d' | \
 		${TOOL_SED} -e '$$d' |${TOOL_SED} -e '$$d' > ${.TARGET}.tmp && \
 		mv ${.TARGET}.tmp ${.TARGET}
