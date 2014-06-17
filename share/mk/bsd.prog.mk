@@ -580,7 +580,8 @@ ${OBJS.${_P}} ${LOBJS.${_P}}: ${DPSRCS}
 CLEANFILES+= ${_P}.opt.bcl ${_P}.bcl ${_P}.bcl.o
 
 OPTFLAGS.${_P}?= ${OPTFLAGS}
-BITCODE_LD_FLAGS.${_P}+= ${BITCODE_LD_FLAGS}
+BITCODE_LD_FLAGS_1ST.${_P}+= ${BITCODE_LD_FLAGS_1ST}
+BITCODE_LD_FLAGS_2ND.${_P}+= ${BITCODE_LD_FLAGS_2ND}
 
 ${_P}.bcl: .gdbinit ${LIBCRT0} ${LIBCRTI} ${OBJS.${_P}} ${LIBC} ${LIBCRTBEGIN} \
     ${LIBCRTEND} ${_DPADD.${_P}}
@@ -592,7 +593,7 @@ ${_P}.bcl: .gdbinit ${LIBCRT0} ${LIBCRTI} ${OBJS.${_P}} ${LIBC} ${LIBCRTBEGIN} \
 		${OBJS.${_P}} ${LLVM_LINK_ARGS} ${_LDADD.${_P}:N-shared} \
 		${_LDSTATIC.${_P}} ${_PROGLDOPTS} \
 		-Wl,-r \
-		${BITCODE_LD_FLAGS.${_P}} \
+		${BITCODE_LD_FLAGS_1ST.${_P}} \
 		-Wl,-plugin-opt=emit-llvm
 
 ${_P}.opt.bcl: ${_P}.bcl ${LLVM_PASS}
@@ -611,7 +612,7 @@ ${_P}: ${_P}.bcl.o
 		-L${DESTDIR}/usr/lib \
 		${_LDSTATIC.${_P}} -o ${.TARGET} \
 		${.TARGET}.bcl.o ${_PROGLDOPTS} ${_LDADD.${_P}} \
-		${BITCODE_LD_FLAGS.${_P}} \
+		${BITCODE_LD_FLAGS_2ND.${_P}} \
 		-Wl,--allow-multiple-definition
 .endif	# !commands(${_P})
 

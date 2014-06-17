@@ -126,7 +126,7 @@ do
 	clean_module $n $m "relink"
 	if [ "${STATIC_LIBS}"!="" ]; then
 		STATIC_LIBS=`echo ${STATIC_LIBS} | sed -e "s/\ /\\\ /g"`
-		LDFLAGS_PLACEHOLDER="BITCODE_LD_FLAGS.$n=${STATIC_LIBS}"
+		LDFLAGS_PLACEHOLDER="BITCODE_LD_FLAGS_1ST.$n=${STATIC_LIBS}"
 	fi
 
 	env "`echo ${LDFLAGS_PLACEHOLDER}`" MKBITCODE=yes \

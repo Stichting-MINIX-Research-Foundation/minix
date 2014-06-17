@@ -74,11 +74,13 @@ OPTFLAGS?=	-disable-opt \
 
 # Whitout -Wl,--no-ctors-in-init-array, golds moves the constructors out of
 # .ctors into .init_array, which is bad on intel.
-BITCODE_LD_FLAGS?= \
+BITCODE_LD_FLAGS_1ST?= \
 		-Wl,--no-ctors-in-init-array \
 		-Wl,-plugin=${GOLD_PLUGIN} \
 		-Wl,-plugin-opt=-disable-opt \
-		-Wl,-plugin-opt=-disable-inlining \
+		-Wl,-plugin-opt=-disable-inlining
+
+BITCODE_LD_FLAGS_2ND?=${BITCODE_LD_FLAGS_1ST}
 
 .ifdef CONFIG_SMP
 SMP_FLAGS += -DCONFIG_SMP
