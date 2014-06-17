@@ -53,7 +53,7 @@ void musb_out_data_stage(void *);
 void musb_in_status_stage(void *);
 void musb_out_status_stage(void *);
 int musb_read_data(void *, hcd_reg1 *, hcd_reg1);
-int musb_check_error(void *, hcd_transfer, hcd_direction);
+int musb_check_error(void *, hcd_transfer, hcd_reg1, hcd_direction);
 
 
 #endif /* !_MUSB_CORE_H_ */

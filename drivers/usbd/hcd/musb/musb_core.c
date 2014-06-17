@@ -235,7 +235,7 @@ musb_read_fifo(void * cfg, void * output, int size, hcd_reg1 fifo_num)
 
 
 /*===========================================================================*
- *    musb_write_fifo                                                         *
+ *    musb_write_fifo                                                        *
  *===========================================================================*/
 static void
 musb_write_fifo(void * cfg, void * input, int size, hcd_reg1 fifo_num)
@@ -524,9 +524,9 @@ musb_rx_stage(void * cfg, hcd_datarequest * request)
 #endif
 
 	/* TODO: One reusable FIFO, no double buffering */
-	/* TODO: With this, only one device can work at a time but it
-	 * may be impossible to have MUSB work reasonably with multiple
-	 * EP interrupts anyway */
+	/* TODO: With this, only one device/EP can work at a time. Should this
+	 * be changed, hcd_device_wait/hcd_device_continue calls must be fixed
+	 * accordingly to allow handling multiple EP interrupts */
 	/* Assign FIFO */
 	HCD_WR2(r, MUSB_REG_RXFIFOADDR, MUSB_VAL_XXFIFOADDR_EP0_END);
 	HCD_WR1(r, MUSB_REG_RXFIFOSZ, MUSB_VAL_XXFIFOSZ_4096);
@@ -618,9 +618,9 @@ musb_tx_stage(void * cfg, hcd_datarequest * request)
 #endif
 
 	/* TODO: One reusable FIFO, no double buffering */
-	/* TODO: With this, only one device can work at a time but it
-	 * may be impossible to have MUSB work reasonably with multiple
-	 * EP interrupts anyway */
+	/* TODO: With this, only one device/EP can work at a time. Should this
+	 * be changed, hcd_device_wait/hcd_device_continue calls must be fixed
+	 * accordingly to allow handling multiple EP interrupts */
 	/* Assign FIFO */
 	HCD_WR2(r, MUSB_REG_TXFIFOADDR, MUSB_VAL_XXFIFOADDR_EP0_END);
 	HCD_WR1(r, MUSB_REG_TXFIFOSZ, MUSB_VAL_XXFIFOSZ_4096);
@@ -781,15 +781,26 @@ musb_read_data(void * cfg, hcd_reg1 * buffer, hcd_reg1 ep_num)
  *    musb_check_error                                                       *
  *===========================================================================*/
 int
-musb_check_error(void * cfg, hcd_transfer transfer, hcd_direction dir)
+musb_check_error(void * cfg, hcd_transfer xfer, hcd_reg1 ep, hcd_direction dir)
 {
+	/* Possible error handling schemes for MUSB */
+	typedef enum {
+
+		MUSB_INVALID_ERROR_CASE,
+		MUSB_EP0_ERROR_CASE,
+		MUSB_OUT_ERROR_CASE,
+		MUSB_IN_ERROR_CASE,
+	}
+	musb_error_case;
+
 	void * r;
 	hcd_reg2 host_csr;
+	musb_error_case error_case;
 
 	DEBUG_DUMP;
 
 	/* TODO: ISO transfer */
-	USB_ASSERT(HCD_TRANSFER_ISOCHRONOUS != transfer,
+	USB_ASSERT(HCD_TRANSFER_ISOCHRONOUS != xfer,
 		"ISO transfer not supported");
 
 	r = ((musb_core_config *)cfg)->regs;
@@ -797,9 +808,28 @@ musb_check_error(void * cfg, hcd_transfer transfer, hcd_direction dir)
 	/* Set EP and device address to be used in this command */
 	musb_set_state((musb_core_config *)cfg);
 
-	/* TODO: More than one control EP? */
-	/* In MUSB EP0 has it's own registers for error handling */
-	if (HCD_TRANSFER_CONTROL == transfer) {
+	/* Resolve which error needs to be checked
+	 * so we can use proper MUSB registers */
+	error_case = MUSB_INVALID_ERROR_CASE;
+
+	if (HCD_DEFAULT_EP == ep) {
+		if (HCD_TRANSFER_CONTROL == xfer)
+			/* EP0, control, any direction */
+			error_case = MUSB_EP0_ERROR_CASE;
+	} else {
+		if (HCD_TRANSFER_CONTROL != xfer) {
+			if (HCD_DIRECTION_OUT == dir)
+				/* EP>0, non-control, out */
+				error_case = MUSB_OUT_ERROR_CASE;
+			else if (HCD_DIRECTION_IN == dir)
+				/* EP>0, non-control, in */
+				error_case = MUSB_IN_ERROR_CASE;
+		}
+	}
+
+	/* In MUSB, EP0 has it's own registers for error handling and it also
+	 * seems to be the only way to handle errors for control transfers */
+	if (MUSB_EP0_ERROR_CASE == error_case) {
 		/* Get control status register */
 		host_csr = HCD_RD2(r, MUSB_REG_HOST_CSR0);
 
@@ -828,10 +858,8 @@ musb_check_error(void * cfg, hcd_transfer transfer, hcd_direction dir)
 		return EXIT_SUCCESS;
 	}
 
-	/* Non-control transfer error check,
-	 * is based on transfer direction */
-	if (HCD_DIRECTION_OUT == dir) {
-		/* Get RX status register */
+	if (MUSB_OUT_ERROR_CASE == error_case) {
+		/* Get TX status register */
 		host_csr = HCD_RD2(r, MUSB_REG_HOST_TXCSR);
 
 		/* Check for common errors */
@@ -859,7 +887,7 @@ musb_check_error(void * cfg, hcd_transfer transfer, hcd_direction dir)
 		return EXIT_SUCCESS;
 	}
 
-	if (HCD_DIRECTION_IN == dir) {
+	if (MUSB_IN_ERROR_CASE == error_case) {
 		/* Get RX status register */
 		host_csr = HCD_RD2(r, MUSB_REG_HOST_RXCSR);
 
@@ -888,6 +916,7 @@ musb_check_error(void * cfg, hcd_transfer transfer, hcd_direction dir)
 		return EXIT_SUCCESS;
 	}
 
-	USB_MSG("Invalid USB transfer 0x%X:0x%X", (int)transfer, (int)dir);
+	USB_MSG("Invalid USB transfer error check: 0x%X, 0x%X, 0x%X",
+		(int)xfer, (int)ep, (int)dir);
 	return EXIT_FAILURE;
 }

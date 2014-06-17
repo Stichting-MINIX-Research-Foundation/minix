@@ -673,6 +673,7 @@ hcd_setup_packet(hcd_device_state * this_device, hcd_ctrlrequest * setup,
 	/* Check response */
 	if (EXIT_SUCCESS != d->check_error(d->private_data,
 					HCD_TRANSFER_CONTROL,
+					ep,
 					HCD_DIRECTION_UNUSED))
 		return EXIT_FAILURE;
 
@@ -696,6 +697,7 @@ hcd_setup_packet(hcd_device_state * this_device, hcd_ctrlrequest * setup,
 				if (EXIT_SUCCESS != d->check_error(
 							d->private_data,
 							HCD_TRANSFER_CONTROL,
+							ep,
 							HCD_DIRECTION_UNUSED))
 					return EXIT_FAILURE;
 
@@ -746,6 +748,7 @@ hcd_setup_packet(hcd_device_state * this_device, hcd_ctrlrequest * setup,
 		/* Check response */
 		if (EXIT_SUCCESS != d->check_error(d->private_data,
 						HCD_TRANSFER_CONTROL,
+						ep,
 						HCD_DIRECTION_UNUSED))
 			return EXIT_FAILURE;
 
@@ -760,6 +763,7 @@ hcd_setup_packet(hcd_device_state * this_device, hcd_ctrlrequest * setup,
 		/* Check response */
 		if (EXIT_SUCCESS != d->check_error(d->private_data,
 						HCD_TRANSFER_CONTROL,
+						ep,
 						HCD_DIRECTION_UNUSED))
 			return EXIT_FAILURE;
 
@@ -851,6 +855,7 @@ hcd_data_transfer(hcd_device_state * this_device, hcd_datarequest * request)
 			/* Check response */
 			if (EXIT_SUCCESS != d->check_error(d->private_data,
 							request->type,
+							request->endpoint,
 							HCD_DIRECTION_IN))
 				return EXIT_FAILURE;
 
@@ -898,6 +903,7 @@ hcd_data_transfer(hcd_device_state * this_device, hcd_datarequest * request)
 			/* Check response */
 			if (EXIT_SUCCESS != d->check_error(d->private_data,
 							request->type,
+							request->endpoint,
 							HCD_DIRECTION_OUT))
 				return EXIT_FAILURE;
 

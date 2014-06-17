@@ -33,7 +33,8 @@ struct hcd_driver_state {
 	void	(*in_status_stage)	(void *);
 	void	(*out_status_stage)	(void *);
 	int	(*read_data)		(void *, hcd_reg1 *, hcd_reg1);
-	int	(*check_error)		(void *, hcd_transfer, hcd_direction);
+	int	(*check_error)		(void *, hcd_transfer, hcd_reg1,
+					hcd_direction);
 
 	/* Controller's private data (like mapped registers) */
 	void *		private_data;
