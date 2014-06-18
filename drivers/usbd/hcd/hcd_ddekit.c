@@ -185,19 +185,27 @@ ddekit_usb_submit_urb(struct ddekit_usb_urb * d_urb)
 	dev = (hcd_device_state *)(d_urb->dev);
 	drv = (hcd_driver_state *)(dev->driver);
 
-	/* Remember original URB */
-	dev->urb.original_urb = (void *)d_urb;
+	/* Check for latest URB completion */
+	if (NULL == dev->urb.original_urb) {
 
-	/* TODO: URB's should be queued somewhere if DDEKit is not changed */
-	/* Turn DDEKit URB format to one that is easier to handle by HCD, also
-	 * check if URB is valid */
-	hcd_decode_urb(&(dev->urb), d_urb);
+		/* Remember original URB */
+		dev->urb.original_urb = (void *)d_urb;
 
-	/* Start handling URB event */
-	drv->current_event = HCD_EVENT_URB;
-	hcd_handle_event(drv);
+		/* TODO: If multiple URB's have to be queued, this code
+		 * or DDEKit's must be altered accordingly */
+		/* Turn DDEKit URB format to one that is easier to
+		 * handle by HCD, also check if URB is valid */
+		hcd_decode_urb(&(dev->urb), d_urb);
 
-	return EXIT_SUCCESS;
+		/* Start handling URB event */
+		drv->current_event = HCD_EVENT_URB;
+		hcd_handle_event(drv);
+
+		return EXIT_SUCCESS;
+	}
+
+	/* Last URB must not have been completed */
+	return EXIT_FAILURE;
 }
 
 
@@ -286,6 +294,9 @@ hcd_completion_cb(hcd_urb * urb)
 	hcd_encode_urb(urb, d_urb);
 
 	completion_cb(d_urb->priv);
+
+	/* URB was handled, forget about it */
+	urb->original_urb = NULL;
 }
 
 
