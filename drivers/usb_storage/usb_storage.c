@@ -52,6 +52,9 @@ static int mass_storage_send_bulk_reset(void);
 static int mass_storage_sef_hdlr(int, sef_init_info_t *);
 static void mass_storage_signal_handler(int);
 
+/* DDEKit IPC related */
+static void ddekit_usb_task(void *);
+
 /* Mass storage related prototypes */
 static void mass_storage_task(void *);
 static int mass_storage_try_first_open(void);
@@ -122,7 +125,10 @@ static unsigned int last_cbw_tag = 0;		/* What was sent recently */
 static ddekit_sem_t * mass_storage_sem = NULL;
 
 /* Mass storage (using libblockdriver) thread */
-ddekit_thread_t * mass_storage_thread;
+ddekit_thread_t * mass_storage_thread = NULL;
+
+/* DDEKit USB message handling thread */
+ddekit_thread_t * ddekit_usb_thread = NULL;
 
 /* Static URB buffer size (must be multiple of SECTOR_SIZE) */
 #define BUFFER_SIZE (64*SECTOR_SIZE)
@@ -143,7 +149,7 @@ static unsigned char buffer[BUFFER_SIZE];
 int
 main(int argc, char * argv[])
 {
-	MASS_DEBUG_MSG(THIS_EXEC_NAME" starting...");
+	MASS_DEBUG_MSG("Starting...");
 
 	/* Store arguments for future parsing */
 	env_setargs(argc, argv);
@@ -163,26 +169,37 @@ main(int argc, char * argv[])
 
 	/* Semaphore initialization */
 	mass_storage_sem = ddekit_sem_init(0);
-	assert(NULL != mass_storage_sem);
+	if (NULL == mass_storage_sem)
+		panic("Initializing mass_storage_sem failed!");
 
 	/* Starting mass storage thread */
-	mass_storage_thread = ddekit_thread_create(mass_storage_task,
-						NULL, "mass_storage_task");
-	MASS_DEBUG_MSG("libblockdriver ready...");
+	mass_storage_thread = ddekit_thread_create(mass_storage_task, NULL,
+						"mass_storage_task");
+	if (NULL == mass_storage_thread)
+		panic("Initializing mass_storage_thread failed!");
 
-	/* Run USB client */
-	ddekit_usb_init(&mass_storage_driver, NULL, NULL);
+	MASS_DEBUG_MSG("Storage task (libblockdriver) ready...");
 
-	/* TODO: never reached */
+	/* Run USB IPC task to collect messages */
+	ddekit_usb_thread = ddekit_thread_create(ddekit_usb_task, NULL,
+						"ddekit_task" );
+	if (NULL == ddekit_usb_thread)
+		panic("Initializing ddekit_usb_thread failed!");
 
-	/* Block and wait */
+	MASS_DEBUG_MSG("USB IPC task ready...");
+
+	/* Block and wait until exit signal is received */
 	ddekit_minix_wait_exit();
-	MASS_DEBUG_MSG(THIS_EXEC_NAME" exiting...");
+	MASS_DEBUG_MSG("Exiting...");
 
-	/* Semaphore release */
+	/* Release objects that were explicitly allocated above */
+	ddekit_thread_terminate(ddekit_usb_thread);
+	ddekit_thread_terminate(mass_storage_thread);
 	ddekit_sem_deinit(mass_storage_sem);
 
 	/* TODO: no ddekit_deinit for proper cleanup? */
+
+	MASS_DEBUG_MSG("Cleanup completed...");
 
 	return EXIT_SUCCESS;
 }
@@ -368,7 +385,7 @@ mass_storage_sef_hdlr(int type, sef_init_info_t * UNUSED(info))
 
 	/* Get instance number */
 	if (EP_UNSET == env_res) {
-		MASS_MSG("Instance number was not supplied");
+		MASS_DEBUG_MSG("Instance number was not supplied");
 		driver_state.instance = 0;
 	} else {
 		/* Only SET and UNSET are allowed */
@@ -410,10 +427,25 @@ mass_storage_signal_handler(int this_signal)
 	MASS_MSG("Handling signal 0x%X", this_signal);
 #endif
 
+	/* Try graceful DDEKit exit */
 	ddekit_shutdown();
 
-	/* TODO: broken shutdown */
-	exit(0);
+	/* Unreachable, when ddekit_shutdown works correctly */
+	panic("Calling ddekit_shutdown failed!");
+}
+
+
+/*===========================================================================*
+ *    ddekit_usb_task                                                        *
+ *===========================================================================*/
+static void
+ddekit_usb_task(void * UNUSED(arg))
+{
+	MASS_DEBUG_DUMP;
+
+	/* TODO: This call was meant to return 'int' but loops forever instead,
+	 * so no return value is checked */
+	ddekit_usb_init(&mass_storage_driver, NULL, NULL);
 }
 
 
