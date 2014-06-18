@@ -18,12 +18,14 @@
  *    Local declarations                                                     *
  *===========================================================================*/
 static int usbd_sef_handler(int, sef_init_info_t *);
+static void usbd_signal_handler(int);
 static int usbd_start(void);
 static void usbd_init(void);
 static void usbd_server_thread(void *);
 
 /* TODO: No headers for these... */
-extern void ddekit_minix_wait_exit(void); /* dde.c */
+extern void ddekit_minix_wait_exit(void);	/* dde.c */
+extern void ddekit_shutdown(void);		/* dde.c */
 
 
 /*===========================================================================*
@@ -95,6 +97,24 @@ usbd_sef_handler(int type, sef_init_info_t * UNUSED(info))
 
 
 /*===========================================================================*
+ *    usbd_signal_handler                                                    *
+ *===========================================================================*/
+static void
+usbd_signal_handler(int UNUSED(signo))
+{
+	DEBUG_DUMP;
+
+	USB_MSG("Signal received, exiting USBD...");
+
+	/* Try graceful DDEKit exit */
+	ddekit_shutdown();
+
+	/* Unreachable, when ddekit_shutdown works correctly */
+	USB_ASSERT(0, "Calling ddekit_shutdown failed!");
+}
+
+
+/*===========================================================================*
  *    usbd_start                                                             *
  *===========================================================================*/
 static int
@@ -133,6 +153,7 @@ usbd_init(void)
 	sef_setcb_init_fresh(usbd_sef_handler);
 	sef_setcb_init_lu(usbd_sef_handler);
 	sef_setcb_init_restart(usbd_sef_handler);
+	sef_setcb_signal_handler(usbd_signal_handler);
 
 	/* Initialize DDEkit (involves sef_startup()) */
 	ddekit_init();
