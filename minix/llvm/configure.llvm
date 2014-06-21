@@ -51,7 +51,11 @@ if [ "${ROOT}" == "" ]; then
 	echo "Please specify the path to the \"llvm-apps\" repository..."
 	echo "Default value: ${DEFAULT_LLVM_ROOT} . "
 	echo "If this is correct, press ENTER. Otherwise please enter the path."
-	read response
+	if [ "$INTERACTIVE" = "no" ]; then
+		response=""
+	else
+		read response
+	fi
 
 	if [ "" == "${response}" ]; then
 		ROOT=${DEFAULT_LLVM_ROOT}
@@ -88,7 +92,11 @@ fi
 
 if [ "${GEN_GOLD_PLUGIN}" == "yes" ] && [ -f "${MYPWD}/.gold_generated" ]; then
 	echo "It is found that Gold plugin has already been generated. Would you like to re-generate? [y | n]"
-	read response
+	if [ "$INTERACTIVE" == "no" ]; then
+		response=n
+	else
+		read response
+	fi
 	if [ "y" == "$response" ] || [ "Y" == "$response" ]; then
 		echo "Gold shall be regenerated."
 	else
