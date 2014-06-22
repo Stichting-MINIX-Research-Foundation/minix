@@ -16,7 +16,6 @@ MINIX_LLVM_DIR=
 LLVMPASS=
 LLVMARGS=
 LLVMPASS_PATHS=
-OPTFLAGS="  "
 TARGET_MODULES=
 MINIX_MODS=
 
@@ -113,9 +112,11 @@ if [ "${GENERATE_MAP}" != "" ] && [[ ${GENERATE_MAP} =~ [yY][eE][sS] ]]; then
         generate_modules_map
 fi
 
+: ${OPTFLAGS="-disable-opt -disable-internalize -disable-inlining -load ${MINIX_LLVM_DIR}/bin/weak-alias-module-override.so -weak-alias-module-override"}
+
 # If we are really instrumenting with some pass...
 if [ "${LLVMPASS_PATHS}" != "" ]; then
-	OPTFLAGS=" -disable-opt ${LLVMPASS_PATHS} ${LLVMARGS}"
+	OPTFLAGS=" ${OPTFLAGS} ${LLVMPASS_PATHS} ${LLVMARGS}"
 fi
 
 TARGET_MODULES=`echo $C | sed -e "s/,/ /g"`
