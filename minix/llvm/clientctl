@@ -11,7 +11,12 @@ case "$mode" in
     (cd $ROOT && CREATE_IMAGE_ONLY=1 releasetools/x86_hdimage.sh)
     ;;
   'run')
-    (cd ../../../obj.i386/destdir.i386/multiboot && kvm -nographic -kernel kernel -append "console=tty00 rootdevname=c0d0p1" -initrd "mod01_ds,mod02_rs,mod03_pm,mod04_sched,mod05_vfs,mod06_memory,mod07_tty,mod08_mfs,mod09_vm,mod10_pfs,mod11_init" -hda $IMAGE)
+    if which kvm > /dev/null; then
+      hypervisor=kvm
+    else
+      hypervisor="qemu-system-i386 --enable-kvm"
+    fi
+    (cd ../../../obj.i386/destdir.i386/multiboot && $hypervisor -nographic -kernel kernel -append "console=tty00 rootdevname=c0d0p1" -initrd "mod01_ds,mod02_rs,mod03_pm,mod04_sched,mod05_vfs,mod06_memory,mod07_tty,mod08_mfs,mod09_vm,mod10_pfs,mod11_init" -hda $IMAGE)
     ;;
   *)
     echo "Invalid action: $mode"
