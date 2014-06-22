@@ -1,3 +1,5 @@
+include ../Makefile.inc
+
 QUIET=@
 ECHO=echo
 CP=cp

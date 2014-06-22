@@ -61,7 +61,7 @@ cp ${OBJ_LLVM}/./Release+Asserts/bin/llvm-* ${CROSS_TOOLS}
 
 # Generate and Install default MINIX passes
 cd ${NETBSDSRCDIR}/minix/llvm/passes/WeakAliasModuleOverride
-make LLVMPREFIX=${OBJ_LLVM}/./Release+Asserts/ install
+make install
 
 cd ${NETBSDSRCDIR}/minix/llvm/passes/hello
-make LLVMPREFIX=${OBJ_LLVM}/./Release+Asserts/ install
+make install
