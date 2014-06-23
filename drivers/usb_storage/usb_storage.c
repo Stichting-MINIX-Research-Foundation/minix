@@ -221,7 +221,7 @@ mass_storage_send_scsi_cbw_out(int scsi_cmd, scsi_transfer * info)
 
 	/* Reset URB and assign given values */
 	init_urb(&urb, driver_state.cur_periph->dev, DDEKIT_USB_TRANSFER_BLK,
-		driver_state.cur_periph->ep_out, DDEKIT_USB_OUT, 0);
+		driver_state.cur_periph->ep_out, DDEKIT_USB_OUT);
 
 	/* Reset CBW and assign default values */
 	init_cbw(&cbw, last_cbw_tag = current_cbw_tag++);
@@ -254,7 +254,7 @@ mass_storage_send_scsi_data_in(void * buf, unsigned int in_len)
 
 	/* Reset URB and assign given values */
 	init_urb(&urb, driver_state.cur_periph->dev, DDEKIT_USB_TRANSFER_BLK,
-		driver_state.cur_periph->ep_in, DDEKIT_USB_IN, 0);
+		driver_state.cur_periph->ep_in, DDEKIT_USB_IN);
 
 	/* Attach buffer to URB */
 	attach_urb_data(&urb, URB_BUF_TYPE_DATA, buf, in_len);
@@ -280,7 +280,7 @@ mass_storage_send_scsi_data_out(void * buf, unsigned int out_len)
 
 	/* Reset URB and assign given values */
 	init_urb(&urb, driver_state.cur_periph->dev, DDEKIT_USB_TRANSFER_BLK,
-		driver_state.cur_periph->ep_out, DDEKIT_USB_OUT, 0);
+		driver_state.cur_periph->ep_out, DDEKIT_USB_OUT);
 
 	/* Attach buffer to URB */
 	attach_urb_data(&urb, URB_BUF_TYPE_DATA, buf, out_len);
@@ -309,7 +309,7 @@ mass_storage_send_scsi_csw_in(void)
 
 	/* Reset URB and assign given values */
 	init_urb(&urb, driver_state.cur_periph->dev, DDEKIT_USB_TRANSFER_BLK,
-		driver_state.cur_periph->ep_in, DDEKIT_USB_IN, 0);
+		driver_state.cur_periph->ep_in, DDEKIT_USB_IN);
 
 	/* Clear CSW for receiving */
 	init_csw(&csw);
@@ -344,7 +344,7 @@ mass_storage_send_bulk_reset(void)
 
 	/* Reset URB and assign given values */
 	init_urb(&urb, driver_state.cur_periph->dev, DDEKIT_USB_TRANSFER_CTL, 0,
-		DDEKIT_USB_OUT, 0);
+		DDEKIT_USB_OUT);
 
 	/* Clear setup data */
 	memset(&bulk_setup, 0, sizeof(bulk_setup));
@@ -1325,7 +1325,7 @@ mass_storage_get_endpoints(int * ep_in, int * ep_out)
 
 	/* Reset URB and assign given values */
 	init_urb(&urb, driver_state.cur_periph->dev, DDEKIT_USB_TRANSFER_CTL, 0,
-		DDEKIT_USB_IN, 0);
+		DDEKIT_USB_IN);
 
 	/* Clear setup data */
 	memset(&setup_buf, 0, sizeof(setup_buf));

@@ -20,7 +20,7 @@
 void
 init_urb(struct ddekit_usb_urb * urb, struct ddekit_usb_dev * dev,
 	ddekit_int32_t urb_type, ddekit_int32_t urb_endpoint,
-	ddekit_int32_t urb_direction, ddekit_uint32_t urb_transfer_flags)
+	ddekit_int32_t urb_direction)
 {
 	MASS_DEBUG_DUMP;
 
@@ -43,7 +43,6 @@ init_urb(struct ddekit_usb_urb * urb, struct ddekit_usb_dev * dev,
 	urb->type = urb_type;
 	urb->endpoint = urb_endpoint;
 	urb->direction = urb_direction;
-	urb->transfer_flags = urb_transfer_flags;
 }
 
 

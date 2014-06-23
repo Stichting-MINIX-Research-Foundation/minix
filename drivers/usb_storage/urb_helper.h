@@ -23,7 +23,7 @@
  *    declared functions     *
  *---------------------------*/
 void init_urb(struct ddekit_usb_urb *, struct ddekit_usb_dev *, ddekit_int32_t,
-		ddekit_int32_t, ddekit_int32_t, ddekit_uint32_t);
+		ddekit_int32_t, ddekit_int32_t);
 void attach_urb_data(struct ddekit_usb_urb *, int, void *, ddekit_uint32_t);
 int blocking_urb_submit(struct ddekit_usb_urb *, ddekit_sem_t *, int);
 
