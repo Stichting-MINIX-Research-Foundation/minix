@@ -9,6 +9,8 @@
 #include <minix/type.h>			/* vir_bytes */
 /* TODO: no header for ddekit_usb_dev */
 
+#include "urb_helper.h"
+
 /* Number of handled peripherals (USB devices) */
 #define MAX_PERIPHS			(1)
 /* Number of handled disks per driver */
@@ -40,8 +42,8 @@ typedef struct mass_storage_periph {
 	mass_storage_drive drives[MAX_DRIVES];	/* Possible drive info */
 	struct ddekit_usb_dev * dev;		/* DDEKit device handler */
 	unsigned int interfaces;		/* Interfaces bitmap */
-	int ep_in;				/* Bulk IN endpoint*/
-	int ep_out;				/* Bulk OUT endpoint*/
+	urb_ep_config ep_in;			/* Bulk IN endpoint */
+	urb_ep_config ep_out;			/* Bulk OUT endpoint */
 }
 mass_storage_periph;
 

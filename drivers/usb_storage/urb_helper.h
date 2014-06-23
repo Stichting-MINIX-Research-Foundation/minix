@@ -19,11 +19,28 @@
 #define URB_SUBMIT_CHECK_LEN 0		/* return error on length mismatch */
 #define URB_SUBMIT_ALLOW_MISMATCH 1	/* ignore length check */
 
+/* Endpoint configuration related */
+#define URB_INVALID_EP (-1)		/* default for unset endpoint */
+
+/*---------------------------*
+ *    declared types         *
+ *---------------------------*
+/* URB's endpoint configuration */
+typedef struct urb_ep_config {
+
+	ddekit_int32_t ep_num;
+	ddekit_int32_t direction;
+	ddekit_int32_t type;
+	ddekit_int32_t max_packet_size;
+	ddekit_int32_t interval;
+}
+urb_ep_config;
+
 /*---------------------------*
  *    declared functions     *
  *---------------------------*/
-void init_urb(struct ddekit_usb_urb *, struct ddekit_usb_dev *, ddekit_int32_t,
-		ddekit_int32_t, ddekit_int32_t);
+void init_urb(struct ddekit_usb_urb *, struct ddekit_usb_dev *,
+		urb_ep_config *);
 void attach_urb_data(struct ddekit_usb_urb *, int, void *, ddekit_uint32_t);
 int blocking_urb_submit(struct ddekit_usb_urb *, ddekit_sem_t *, int);
 

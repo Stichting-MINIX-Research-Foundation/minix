@@ -81,9 +81,11 @@ static void usb_driver_connect(struct ddekit_usb_dev *, unsigned int);
 static void usb_driver_disconnect(struct ddekit_usb_dev *);
 
 /* Simplified enumeration method for endpoint resolution */
-static int mass_storage_get_endpoints(int *, int *);
-static int mass_storage_parse_endpoint(usb_descriptor_t *, int *, int *);
-static int mass_storage_parse_descriptors(char *, unsigned int, int *, int *);
+static int mass_storage_get_endpoints(urb_ep_config *, urb_ep_config *);
+static int mass_storage_parse_endpoint(usb_descriptor_t *, urb_ep_config *,
+					urb_ep_config *);
+static int mass_storage_parse_descriptors(char *, unsigned int, urb_ep_config *,
+					urb_ep_config *);
 
 
 /*---------------------------*
@@ -220,8 +222,8 @@ mass_storage_send_scsi_cbw_out(int scsi_cmd, scsi_transfer * info)
 	MASS_DEBUG_DUMP;
 
 	/* Reset URB and assign given values */
-	init_urb(&urb, driver_state.cur_periph->dev, DDEKIT_USB_TRANSFER_BLK,
-		driver_state.cur_periph->ep_out, DDEKIT_USB_OUT);
+	init_urb(&urb, driver_state.cur_periph->dev,
+		&(driver_state.cur_periph->ep_out));
 
 	/* Reset CBW and assign default values */
 	init_cbw(&cbw, last_cbw_tag = current_cbw_tag++);
@@ -253,8 +255,8 @@ mass_storage_send_scsi_data_in(void * buf, unsigned int in_len)
 	MASS_DEBUG_DUMP;
 
 	/* Reset URB and assign given values */
-	init_urb(&urb, driver_state.cur_periph->dev, DDEKIT_USB_TRANSFER_BLK,
-		driver_state.cur_periph->ep_in, DDEKIT_USB_IN);
+	init_urb(&urb, driver_state.cur_periph->dev,
+		&(driver_state.cur_periph->ep_in));
 
 	/* Attach buffer to URB */
 	attach_urb_data(&urb, URB_BUF_TYPE_DATA, buf, in_len);
@@ -279,8 +281,8 @@ mass_storage_send_scsi_data_out(void * buf, unsigned int out_len)
 	MASS_DEBUG_DUMP;
 
 	/* Reset URB and assign given values */
-	init_urb(&urb, driver_state.cur_periph->dev, DDEKIT_USB_TRANSFER_BLK,
-		driver_state.cur_periph->ep_out, DDEKIT_USB_OUT);
+	init_urb(&urb, driver_state.cur_periph->dev,
+		&(driver_state.cur_periph->ep_out));
 
 	/* Attach buffer to URB */
 	attach_urb_data(&urb, URB_BUF_TYPE_DATA, buf, out_len);
@@ -308,8 +310,8 @@ mass_storage_send_scsi_csw_in(void)
 	MASS_DEBUG_DUMP;
 
 	/* Reset URB and assign given values */
-	init_urb(&urb, driver_state.cur_periph->dev, DDEKIT_USB_TRANSFER_BLK,
-		driver_state.cur_periph->ep_in, DDEKIT_USB_IN);
+	init_urb(&urb, driver_state.cur_periph->dev,
+		&(driver_state.cur_periph->ep_in));
 
 	/* Clear CSW for receiving */
 	init_csw(&csw);
@@ -340,11 +342,18 @@ mass_storage_send_bulk_reset(void)
 	/* Setup buffer to be send */
 	struct usb_ctrlrequest bulk_setup;
 
+	/* Control EP configuration */
+	urb_ep_config ep_conf;
+
 	MASS_DEBUG_DUMP;
 
+	/* Initialize EP configuration */
+	ep_conf.ep_num = 0;
+	ep_conf.direction = DDEKIT_USB_OUT;
+	ep_conf.type = DDEKIT_USB_TRANSFER_CTL;
+
 	/* Reset URB and assign given values */
-	init_urb(&urb, driver_state.cur_periph->dev, DDEKIT_USB_TRANSFER_CTL, 0,
-		DDEKIT_USB_OUT);
+	init_urb(&urb, driver_state.cur_periph->dev, &ep_conf);
 
 	/* Clear setup data */
 	memset(&bulk_setup, 0, sizeof(bulk_setup));
@@ -908,8 +917,8 @@ mass_storage_open(devminor_t minor, int UNUSED(access))
 
 	/* In case of missing endpoint information, do simple
 	 * enumeration and hold it for future use */
-	if ((-1 == driver_state.cur_periph->ep_in) ||
-		(-1 == driver_state.cur_periph->ep_out)) {
+	if ((URB_INVALID_EP == driver_state.cur_periph->ep_in.ep_num) ||
+		(URB_INVALID_EP == driver_state.cur_periph->ep_out.ep_num)) {
 
 		if (mass_storage_get_endpoints(&driver_state.cur_periph->ep_in,
 					&driver_state.cur_periph->ep_out))
@@ -1279,8 +1288,8 @@ usb_driver_connect(struct ddekit_usb_dev * dev,
 	/* Hold host information for future use */
 	driver_state.cur_periph->dev = dev;
 	driver_state.cur_periph->interfaces = interfaces;
-	driver_state.cur_periph->ep_in = -1;
-	driver_state.cur_periph->ep_out = -1;
+	driver_state.cur_periph->ep_in.ep_num = URB_INVALID_EP;
+	driver_state.cur_periph->ep_out.ep_num = URB_INVALID_EP;
 }
 
 
@@ -1301,8 +1310,8 @@ usb_driver_disconnect(struct ddekit_usb_dev * UNUSED(dev))
 	/* Clear */
 	driver_state.cur_periph->dev = NULL;
 	driver_state.cur_periph->interfaces = 0;
-	driver_state.cur_periph->ep_in = -1;
-	driver_state.cur_periph->ep_out = -1;
+	driver_state.cur_periph->ep_in.ep_num = URB_INVALID_EP;
+	driver_state.cur_periph->ep_out.ep_num = URB_INVALID_EP;
 }
 
 
@@ -1310,7 +1319,7 @@ usb_driver_disconnect(struct ddekit_usb_dev * UNUSED(dev))
  *    mass_storage_get_endpoints                                             *
  *===========================================================================*/
 static int
-mass_storage_get_endpoints(int * ep_in, int * ep_out)
+mass_storage_get_endpoints(urb_ep_config * ep_in, urb_ep_config * ep_out)
 {
 	/* URB to be send */
 	struct ddekit_usb_urb urb;
@@ -1318,14 +1327,21 @@ mass_storage_get_endpoints(int * ep_in, int * ep_out)
 	/* Setup buffer to be attached */
 	struct usb_ctrlrequest setup_buf;
 
+	/* Control EP configuration */
+	urb_ep_config ep_conf;
+
 	/* Descriptors' buffer */
 	unsigned char descriptors[MAX_DESCRIPTORS_LEN];
 
 	MASS_DEBUG_DUMP;
 
+	/* Initialize EP configuration */
+	ep_conf.ep_num = 0;
+	ep_conf.direction = DDEKIT_USB_IN;
+	ep_conf.type = DDEKIT_USB_TRANSFER_CTL;
+
 	/* Reset URB and assign given values */
-	init_urb(&urb, driver_state.cur_periph->dev, DDEKIT_USB_TRANSFER_CTL, 0,
-		DDEKIT_USB_IN);
+	init_urb(&urb, driver_state.cur_periph->dev, &ep_conf);
 
 	/* Clear setup data */
 	memset(&setup_buf, 0, sizeof(setup_buf));
@@ -1364,9 +1380,11 @@ mass_storage_get_endpoints(int * ep_in, int * ep_out)
  *===========================================================================*/
 static int
 mass_storage_parse_endpoint(usb_descriptor_t * cur_desc,
-			int * ep_in, int * ep_out)
+			urb_ep_config * ep_in, urb_ep_config * ep_out)
 {
 	usb_endpoint_descriptor_t * ep_desc;
+
+	urb_ep_config * this_ep;
 
 	MASS_DEBUG_DUMP;
 
@@ -1378,24 +1396,30 @@ mass_storage_parse_endpoint(usb_descriptor_t * cur_desc,
 		/* Check for direction */
 		if (UE_DIR_IN == UE_GET_DIR(ep_desc->bEndpointAddress)) {
 
-			if (-1 != *ep_in) {
-				MASS_MSG("BULK IN already set");
-				return EXIT_FAILURE;
-			}
-
-			*ep_in = UE_GET_ADDR(ep_desc->bEndpointAddress);
+			this_ep = ep_in;
+			this_ep->direction = DDEKIT_USB_IN;
 
 		} else {
 
-			if (-1 != *ep_out) {
-				MASS_MSG("BULK OUT already set");
-				return EXIT_FAILURE;
-			}
-
-			*ep_out = UE_GET_ADDR(ep_desc->bEndpointAddress);
+			this_ep = ep_out;
+			this_ep->direction = DDEKIT_USB_OUT;
 		}
+
+		/* Check if it was set before */
+		if (URB_INVALID_EP != this_ep->ep_num) {
+			MASS_MSG("BULK EP already set");
+			return EXIT_FAILURE;
+		}
+
+		/* Assign rest */
+		this_ep->ep_num = UE_GET_ADDR(ep_desc->bEndpointAddress);
+		this_ep->type = DDEKIT_USB_TRANSFER_BLK;
+		this_ep->max_packet_size = UGETW(ep_desc->wMaxPacketSize);
+		this_ep->interval = ep_desc->bInterval;
 	}
 
+	/* EP type other than bulk, is also correct,
+	 * just no parsing is performed */
 	return EXIT_SUCCESS;
 }
 
@@ -1404,7 +1428,7 @@ mass_storage_parse_endpoint(usb_descriptor_t * cur_desc,
  *===========================================================================*/
 static int
 mass_storage_parse_descriptors(char * desc_buf, unsigned int buf_len,
-				int * ep_in, int * ep_out)
+				urb_ep_config * ep_in, urb_ep_config * ep_out)
 {
 	/* Currently parsed, descriptors */
 	usb_descriptor_t * cur_desc;
@@ -1419,8 +1443,8 @@ mass_storage_parse_descriptors(char * desc_buf, unsigned int buf_len,
 	MASS_DEBUG_DUMP;
 
 	/* Parse descriptors to get endpoints */
-	*ep_in = -1;
-	*ep_out = -1;
+	ep_in->ep_num = URB_INVALID_EP;
+	ep_out->ep_num = URB_INVALID_EP;
 	valid_interface = 0;
 	cur_byte = 0;
 
@@ -1514,7 +1538,8 @@ mass_storage_parse_descriptors(char * desc_buf, unsigned int buf_len,
 		return EXIT_FAILURE;
 
 	/* ...and descriptors should be valid */
-	if ((-1 == *ep_in) || (-1 == *ep_out)) {
+	if ((URB_INVALID_EP == ep_in->ep_num) ||
+		(URB_INVALID_EP == ep_out->ep_num)) {
 		MASS_MSG("Valid bulk endpoints not found");
 		return EXIT_FAILURE;
 	}
