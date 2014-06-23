@@ -141,12 +141,6 @@
 						 HCD_BIT(2) |		\
 						 HCD_BIT(3))
 
-/* HOST_RXINTERVAL/HOST_TXINTERVAL */
-/* Default NAK limit for non-control transfer
- * When too big this may cause driver to wait for
- * quite long in case of NAK error */
-#define MUSB_VAL_HOST_XXINTERVAL_DEFAULT	0x10u
-
 /* HOST_RXCSR */
 #define MUSB_VAL_HOST_RXCSR_RXPKTRDY		HCD_BIT(0)
 #define MUSB_VAL_HOST_RXCSR_FIFOFULL		HCD_BIT(1)

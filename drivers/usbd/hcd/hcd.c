@@ -605,6 +605,12 @@ hcd_non_control_urb(hcd_device_state * this_device, hcd_urb * urb)
 		return EXIT_FAILURE;
 	}
 
+	/* Check if remembered interval matches */
+	if ((hcd_reg1)e->descriptor.bInterval != urb->interval) {
+		USB_MSG("EP interval mismatch");
+		return EXIT_FAILURE;
+	}
+
 	/* Assign URB values to data request structure */
 	request.type = urb->type;
 	request.endpoint = urb->endpoint;

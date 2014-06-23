@@ -503,12 +503,8 @@ musb_rx_stage(void * cfg, hcd_datarequest * request)
 	/* Rewrite RXMAXP */
 	HCD_WR2(r, MUSB_REG_RXMAXP, request->max_packet_size);
 
-	/* Set HOST_RXINTERVAL based on transfer type */
-	if (HCD_TRANSFER_BULK == request->type)
-		HCD_WR1(r, MUSB_REG_HOST_RXINTERVAL,
-			MUSB_VAL_HOST_XXINTERVAL_DEFAULT);
-	else if (HCD_TRANSFER_INTERRUPT == request->type)
-		HCD_WR1(r, MUSB_REG_HOST_RXINTERVAL, request->interval);
+	/* Set HOST_RXINTERVAL (which means interval or NAK limit) */
+	HCD_WR1(r, MUSB_REG_HOST_RXINTERVAL, request->interval);
 
 #if 0
 	{
@@ -597,12 +593,8 @@ musb_tx_stage(void * cfg, hcd_datarequest * request)
 	/* Rewrite TXMAXP */
 	HCD_WR2(r, MUSB_REG_TXMAXP, request->max_packet_size);
 
-	/* Set HOST_TXINTERVAL based on transfer type */
-	if (HCD_TRANSFER_BULK == request->type)
-		HCD_WR1(r, MUSB_REG_HOST_TXINTERVAL,
-			MUSB_VAL_HOST_XXINTERVAL_DEFAULT);
-	else if (HCD_TRANSFER_INTERRUPT == request->type)
-		HCD_WR1(r, MUSB_REG_HOST_TXINTERVAL, request->interval);
+	/* Set HOST_TXINTERVAL (which means interval or NAK limit) */
+	HCD_WR1(r, MUSB_REG_HOST_TXINTERVAL, request->interval);
 
 #if 0
 	{
