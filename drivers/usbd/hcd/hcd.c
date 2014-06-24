@@ -469,35 +469,45 @@ hcd_handle_urb(hcd_device_state * this_device, hcd_urb * urb)
 
 	DEBUG_DUMP;
 
-	transfer_status = EXIT_FAILURE;
-
 	/* TODO: One device only */
 	USB_ASSERT(NULL != urb, "NULL URB given");
 	USB_ASSERT(this_device == urb->target_device, "Unknown device for URB");
 
-	switch (urb->type) {
-		case HCD_TRANSFER_CONTROL:
-			transfer_status = hcd_control_urb(this_device, urb);
-			break;
+	/* Only if URB parsing was completed... */
+	if (EXIT_SUCCESS == urb->inout_status) {
 
-		case HCD_TRANSFER_BULK:
-		case HCD_TRANSFER_INTERRUPT:
-			transfer_status = hcd_non_control_urb(this_device, urb);
-			break;
+		transfer_status = EXIT_FAILURE;
 
-		case HCD_TRANSFER_ISOCHRONOUS:
-			/* TODO: ISO transfer */
-			USB_MSG("ISO transfer not supported");
-			break;
+		/* ...check for URB to handle */
+		switch (urb->type) {
+			case HCD_TRANSFER_CONTROL:
+				transfer_status = hcd_control_urb(
+							this_device, urb);
+				break;
 
-		default:
-			USB_MSG("Invalid transfer type 0x%02X", (int)urb->type);
-			break;
-	}
+			case HCD_TRANSFER_BULK:
+			case HCD_TRANSFER_INTERRUPT:
+				transfer_status = hcd_non_control_urb(
+							this_device, urb);
+				break;
 
-	/* In case of error, only dump message */
-	if (EXIT_SUCCESS != transfer_status)
-		USB_MSG("USB transfer failed");
+			case HCD_TRANSFER_ISOCHRONOUS:
+				/* TODO: ISO transfer */
+				USB_MSG("ISO transfer not supported");
+				break;
+
+			default:
+				USB_MSG("Invalid transfer type 0x%02X",
+							(int)urb->type);
+				break;
+		}
+
+		/* In case of error, only dump message */
+		if (EXIT_SUCCESS != transfer_status)
+			USB_MSG("USB transfer failed");
+
+	} else
+		USB_MSG("Invalid URB supplied");
 
 	/* Call completion regardless of status */
 	hcd_completion_cb(urb);
