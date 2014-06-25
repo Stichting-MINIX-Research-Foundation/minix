@@ -46,7 +46,9 @@ static int mass_storage_send_scsi_data_out(void *, unsigned int);
 static int mass_storage_send_scsi_csw_in(void);
 
 /* Bulk only URB related prototypes */
+static int mass_storage_reset_recovery(void);
 static int mass_storage_send_bulk_reset(void);
+static int mass_storage_send_clear_feature(int, int);
 
 /* SEF related functions */
 static int mass_storage_sef_hdlr(int, sef_init_info_t *);
@@ -330,6 +332,43 @@ mass_storage_send_scsi_csw_in(void)
 	return EXIT_SUCCESS;
 }
 
+
+/*===========================================================================*
+ *    mass_storage_reset_recovery                                            *
+ *===========================================================================*/
+static int
+mass_storage_reset_recovery(void)
+{
+	MASS_DEBUG_DUMP;
+
+	/* Bulk-Only Mass Storage Reset */
+	if (mass_storage_send_bulk_reset()) {
+		MASS_MSG("Bulk-only mass storage reset failed");
+		return EIO;
+	}
+
+	/* Clear Feature HALT to the Bulk-In endpoint */
+	if (URB_INVALID_EP != driver_state.cur_periph->ep_in.ep_num)
+		if (mass_storage_send_clear_feature(
+					driver_state.cur_periph->ep_in.ep_num,
+					DDEKIT_USB_IN)) {
+			MASS_MSG("Resetting IN EP failed");
+			return EIO;
+		}
+
+	/* Clear Feature HALT to the Bulk-Out endpoint */
+	if (URB_INVALID_EP != driver_state.cur_periph->ep_out.ep_num)
+		if (mass_storage_send_clear_feature(
+					driver_state.cur_periph->ep_out.ep_num,
+					DDEKIT_USB_OUT)) {
+			MASS_MSG("Resetting OUT EP failed");
+			return EIO;
+		}
+
+	return EXIT_SUCCESS;
+}
+
+
 /*===========================================================================*
  *    mass_storage_send_bulk_reset                                           *
  *===========================================================================*/
@@ -351,6 +390,8 @@ mass_storage_send_bulk_reset(void)
 	ep_conf.ep_num = 0;
 	ep_conf.direction = DDEKIT_USB_OUT;
 	ep_conf.type = DDEKIT_USB_TRANSFER_CTL;
+	ep_conf.max_packet_size = 0;
+	ep_conf.interval = 0;
 
 	/* Reset URB and assign given values */
 	init_urb(&urb, driver_state.cur_periph->dev, &ep_conf);
@@ -364,6 +405,61 @@ mass_storage_send_bulk_reset(void)
 	bulk_setup.bRequest = 0xff;
 	bulk_setup.wValue = 0x00;
 	bulk_setup.wIndex = 0x00; /* TODO: hard-coded interface 0 */
+	bulk_setup.wLength = 0x00;
+
+	/* Attach request to URB */
+	attach_urb_data(&urb, URB_BUF_TYPE_SETUP,
+			&bulk_setup, sizeof(bulk_setup));
+
+	/* Send and wait for response */
+	if (blocking_urb_submit(&urb, mass_storage_sem, URB_SUBMIT_CHECK_LEN))
+		return EXIT_FAILURE;
+
+	return EXIT_SUCCESS;
+}
+
+
+/*===========================================================================*
+ *    mass_storage_send_clear_feature                                        *
+ *===========================================================================*/
+static int
+mass_storage_send_clear_feature(int ep_num, int direction)
+{
+	/* URB to be send */
+	struct ddekit_usb_urb urb;
+
+	/* Setup buffer to be send */
+	struct usb_ctrlrequest bulk_setup;
+
+	/* Control EP configuration */
+	urb_ep_config ep_conf;
+
+	MASS_DEBUG_DUMP;
+
+	assert((ep_num >= 0) && (ep_num < 16));
+	assert((DDEKIT_USB_OUT == direction) || (DDEKIT_USB_IN == direction));
+
+	/* Initialize EP configuration */
+	ep_conf.ep_num = 0;
+	ep_conf.direction = DDEKIT_USB_OUT;
+	ep_conf.type = DDEKIT_USB_TRANSFER_CTL;
+	ep_conf.max_packet_size = 0;
+	ep_conf.interval = 0;
+
+	/* Reset URB and assign given values */
+	init_urb(&urb, driver_state.cur_periph->dev, &ep_conf);
+
+	/* Clear setup data */
+	memset(&bulk_setup, 0, sizeof(bulk_setup));
+
+	/* For explanation of these values see usbmassbulk_10.pdf */
+	/* 3.1 Bulk-Only Mass Storage Reset */
+	bulk_setup.bRequestType = 0x02; /* Standard, Endpoint, host to device */
+	bulk_setup.bRequest = 0x01; /* CLEAR_FEATURE */
+	bulk_setup.wValue = 0x00; /* Endpoint */
+	bulk_setup.wIndex = ep_num; /* Endpoint number... */
+	if (DDEKIT_USB_IN == direction)
+		bulk_setup.wIndex |= UE_DIR_IN; /* ...and direction bit */
 	bulk_setup.wLength = 0x00;
 
 	/* Attach request to URB */
@@ -910,7 +1006,7 @@ mass_storage_open(devminor_t minor, int UNUSED(access))
 	d = driver_state.cur_drive;
 
 	/* In case of previous CBW mismatch */
-	if (mass_storage_send_bulk_reset()) {
+	if (mass_storage_reset_recovery()) {
 		MASS_MSG("Resetting mass storage device failed");
 		return EIO;
 	}
@@ -1339,6 +1435,8 @@ mass_storage_get_endpoints(urb_ep_config * ep_in, urb_ep_config * ep_out)
 	ep_conf.ep_num = 0;
 	ep_conf.direction = DDEKIT_USB_IN;
 	ep_conf.type = DDEKIT_USB_TRANSFER_CTL;
+	ep_conf.max_packet_size = 0;
+	ep_conf.interval = 0;
 
 	/* Reset URB and assign given values */
 	init_urb(&urb, driver_state.cur_periph->dev, &ep_conf);
