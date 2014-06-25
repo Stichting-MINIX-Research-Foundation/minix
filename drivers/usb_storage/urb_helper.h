@@ -24,7 +24,7 @@
 
 /*---------------------------*
  *    declared types         *
- *---------------------------*
+ *---------------------------*/
 /* URB's endpoint configuration */
 typedef struct urb_ep_config {
 

@@ -45,10 +45,12 @@ static int mass_storage_send_scsi_data_in(void *, unsigned int);
 static int mass_storage_send_scsi_data_out(void *, unsigned int);
 static int mass_storage_send_scsi_csw_in(void);
 
+#ifdef MASS_RESET_RECOVERY
 /* Bulk only URB related prototypes */
 static int mass_storage_reset_recovery(void);
 static int mass_storage_send_bulk_reset(void);
 static int mass_storage_send_clear_feature(int, int);
+#endif
 
 /* SEF related functions */
 static int mass_storage_sef_hdlr(int, sef_init_info_t *);
@@ -59,6 +61,7 @@ static void ddekit_usb_task(void *);
 
 /* Mass storage related prototypes */
 static void mass_storage_task(void *);
+static int mass_storage_test(void);
 static int mass_storage_try_first_open(void);
 static int mass_storage_transfer_restrictions(u64_t, unsigned long);
 static ssize_t mass_storage_write(unsigned long, endpoint_t, iovec_t *,
@@ -143,6 +146,8 @@ static unsigned char buffer[BUFFER_SIZE];
 /* Length of local buffer where descriptors are temporarily stored */
 #define MAX_DESCRIPTORS_LEN 128
 
+/* Maximum 'Test Unit Ready' command retries */
+#define MAX_TEST_RETRIES 3
 
 /*---------------------------*
  *    defined functions      *
@@ -333,6 +338,7 @@ mass_storage_send_scsi_csw_in(void)
 }
 
 
+#ifdef MASS_RESET_RECOVERY
 /*===========================================================================*
  *    mass_storage_reset_recovery                                            *
  *===========================================================================*/
@@ -472,6 +478,7 @@ mass_storage_send_clear_feature(int ep_num, int direction)
 
 	return EXIT_SUCCESS;
 }
+#endif
 
 
 /*===========================================================================*
@@ -576,6 +583,33 @@ mass_storage_task(void * UNUSED(unused))
 
 
 /*===========================================================================*
+ *    mass_storage_test                                                      *
+ *===========================================================================*/
+static int
+mass_storage_test(void)
+{
+	int repeat;
+
+	MASS_DEBUG_DUMP;
+
+	for (repeat = 0; repeat < MAX_TEST_RETRIES; repeat++) {
+
+		/* SCSI TEST UNIT READY OUT stage */
+		if (mass_storage_send_scsi_cbw_out(SCSI_TEST_UNIT_READY, NULL))
+			return EXIT_FAILURE;
+
+		/* TODO: Only CSW failure should normally contribute to retry */
+
+		/* SCSI TEST UNIT READY IN stage */
+		if (EXIT_SUCCESS == mass_storage_send_scsi_csw_in())
+			return EXIT_SUCCESS;
+	}
+
+	return EXIT_FAILURE;
+}
+
+
+/*===========================================================================*
  *    mass_storage_try_first_open                                            *
  *===========================================================================*/
 static int
@@ -593,6 +627,11 @@ mass_storage_try_first_open()
 	llba = 0; /* Last logical block address */
 	blen = 0; /* Block length (usually 512B) */
 
+	/* Run TEST UNIT READY before other SCSI command
+	 * Some devices refuse to work without this */
+	if (mass_storage_test())
+		return EIO;
+
 	/* SCSI INQUIRY OUT stage */
 	if (mass_storage_send_scsi_cbw_out(SCSI_INQUIRY, NULL))
 		return EIO;
@@ -607,6 +646,11 @@ mass_storage_try_first_open()
 
 	/* Check for proper reply */
 	if (check_inquiry_reply(inquiry))
+		return EIO;
+
+	/* Run TEST UNIT READY before other SCSI command
+	 * Some devices refuse to work without this */
+	if (mass_storage_test())
 		return EIO;
 
 	/* SCSI READ CAPACITY OUT stage */
@@ -1005,11 +1049,13 @@ mass_storage_open(devminor_t minor, int UNUSED(access))
 	/* Copy evaluated current drive for simplified dereference */
 	d = driver_state.cur_drive;
 
+#ifdef MASS_RESET_RECOVERY
 	/* In case of previous CBW mismatch */
 	if (mass_storage_reset_recovery()) {
 		MASS_MSG("Resetting mass storage device failed");
 		return EIO;
 	}
+#endif
 
 	/* In case of missing endpoint information, do simple
 	 * enumeration and hold it for future use */
@@ -1050,12 +1096,9 @@ mass_storage_open(devminor_t minor, int UNUSED(access))
 			return ENXIO;
 	}
 
-	/* SCSI TEST UNIT READY OUT stage */
-	if (mass_storage_send_scsi_cbw_out(SCSI_TEST_UNIT_READY, NULL))
-		return EIO;
-
-	/* SCSI TEST UNIT READY IN stage */
-	if (mass_storage_send_scsi_csw_in())
+	/* Run TEST UNIT READY before further commands
+	 * Some devices refuse to work without this */
+	if (mass_storage_test())
 		return EIO;
 
 	/* Opening completed */
@@ -1346,6 +1389,8 @@ mass_storage_geometry(devminor_t minor, struct part_geom * part)
 static void
 mass_storage_geometry(devminor_t UNUSED(minor), struct part_geom * part)
 {
+	MASS_DEBUG_DUMP;
+
 	part->cylinders = part->size / SECTOR_SIZE;
 	part->heads = 64;
 	part->sectors = 32;

@@ -258,7 +258,7 @@ check_csw(mass_storage_csw * csw, unsigned int tag)
 	}
 
 	if (CSW_STATUS_GOOD != csw->bCSWStatus) {
-		MASS_MSG("CSW status error!");
+		MASS_MSG("CSW status error (0x%02X)!", csw->bCSWStatus);
 		return EXIT_FAILURE;
 	}
 
