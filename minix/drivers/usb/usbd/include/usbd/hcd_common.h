@@ -124,10 +124,15 @@ hcd_direction;
 /* Possible asynchronous HCD events */
 typedef enum {
 
-	HCD_EVENT_CONNECTED,
-	HCD_EVENT_DISCONNECTED,
-	HCD_EVENT_ENDPOINT,
-	HCD_EVENT_URB
+	HCD_EVENT_CONNECTED = 0,	/* Device connected directly to root */
+	HCD_EVENT_DISCONNECTED,		/* Directly connected device removed */
+	HCD_EVENT_PORT_LS_CONNECTED,	/* Low speed device connected to hub */
+	HCD_EVENT_PORT_FS_CONNECTED,	/* Full speed device connected to hub */
+	HCD_EVENT_PORT_HS_CONNECTED,	/* High speed device connected to hub */
+	HCD_EVENT_PORT_DISCONNECTED,	/* Device disconnected from hub */
+	HCD_EVENT_ENDPOINT,		/* Something happened at endpoint */
+	HCD_EVENT_URB,			/* URB was submitted by device driver */
+	HCD_EVENT_INVALID = 0xFF
 }
 hcd_event;
 
@@ -149,6 +154,14 @@ typedef enum {
 }
 hcd_speed;
 
+/* Possible data toggle values (at least for bulk transfer) */
+typedef enum {
+
+	HCD_DATATOG_DATA0 = 0,
+	HCD_DATATOG_DATA1 = 1
+}
+hcd_datatog;
+
 
 /*===========================================================================*
  *    HCD threading/device/URB types                                         *
@@ -161,7 +174,14 @@ typedef struct usb_ctrlrequest		hcd_ctrlrequest;
 
 /* Largest value that can be transfered by this driver at a time
  * see MAXPAYLOAD in TXMAXP/RXMAXP */
-#define MAX_WTOTALLENGTH 		1024
+#define MAX_WTOTALLENGTH 		1024u
+
+/* TODO: This has corresponding redefinition in hub driver */
+/* Limit of child devices for each parent */
+#define HCD_CHILDREN			8u
+
+/* Total number of endpoints available in USB 2.0 */
+#define HCD_TOTAL_EP			16u
 
 /* Forward declarations */
 typedef struct hcd_datarequest		hcd_datarequest;
@@ -189,6 +209,7 @@ struct hcd_urb {
 	/* Basic */
 	void * original_urb;
 	hcd_device_state * target_device;
+	void (*handled)(hcd_urb *);	/* URB handled callback */
 
 	/* Transfer (in/out signifies what may be overwritten by HCD) */
 	hcd_ctrlrequest * in_setup;
@@ -207,18 +228,26 @@ struct hcd_urb {
 /* Current state of attached device */
 struct hcd_device_state {
 
-	hcd_driver_state * driver;	/* Specific HCD driver object */
+	hcd_device_state * parent;		/* In case of hub attachment */
+	hcd_device_state * child[HCD_CHILDREN];	/* In case of being hub */
+	hcd_device_state * _next;		/* To allow device lists */
+	hcd_driver_state * driver;		/* Specific HCD driver object */
 	hcd_thread * thread;
 	hcd_lock * lock;
 	void * data;
 
-	hcd_urb urb;
+	hcd_urb * urb;				/* URB to be used by device */
+	hcd_event wait_event;			/* Expected event */
+	hcd_reg1 wait_ep;			/* Expected event's endpoint */
 	hcd_device_descriptor device_desc;
 	hcd_configuration config_tree;
 	hcd_reg1 max_packet_size;
 	hcd_speed speed;
 	hcd_state state;
-	hcd_reg1 address;
+	hcd_reg1 reserved_address;
+	hcd_reg1 current_address;
+	hcd_datatog ep_tx_tog[HCD_TOTAL_EP];
+	hcd_datatog ep_rx_tog[HCD_TOTAL_EP];
 
 	/*
 	 * Control transfer's local data:
@@ -247,24 +276,24 @@ struct hcd_device_state {
 #define HCD_DEFAULT_EP			0x00u
 #define HCD_DEFAULT_ADDR		0x00u
 #define HCD_DEFAULT_CONFIG		0x00u
+#define HCD_FIRST_ADDR			0x01u
 #define HCD_LAST_ADDR			0x7Fu
+#define HCD_TOTAL_ADDR			0x80u
 #define HCD_LAST_EP			0x0Fu
-#define HCD_TOTAL_EP			0x10u
-#define HCD_ANY_EP			0xFFu
+#define HCD_UNUSED_VAL			0xFFu	/* When number not needed */
+#define HCD_DEFAULT_NAKLIMIT		0x10u
+
 
 /* Legal interval values */
 #define HCD_LOWEST_INTERVAL		0x00u
 #define HCD_HIGHEST_INTERVAL		0xFFu
 
-/* TODO: One device only */
-#define HCD_ATTACHED_ADDR		0x01u
-
 /* Translates configuration number for 'set configuration' */
 #define HCD_SET_CONFIG_NUM(num)		((num)+0x01u)
 
 /* Default MaxPacketSize for control transfer */
-#define HCD_LS_MAXPACKETSIZE		8u
-#define HCD_HS_MAXPACKETSIZE		64u
+#define HCD_LS_MAXPACKETSIZE		8u	/* Low-speed, Full-speed */
+#define HCD_HS_MAXPACKETSIZE		64u	/* High-speed */
 #define HCD_MAX_MAXPACKETSIZE		1024u
 
 
@@ -313,7 +342,13 @@ void hcd_disconnect_device(hcd_device_state *);
 void hcd_device_wait(hcd_device_state *, hcd_event, hcd_reg1);
 
 /* Unlocks device thread halted by 'hcd_device_wait' */
-void hcd_device_continue(hcd_device_state *);
+void hcd_device_continue(hcd_device_state *, hcd_event, hcd_reg1);
+
+/* Allocation/deallocation of device structures */
+hcd_device_state * hcd_new_device(void);
+void hcd_delete_device(hcd_device_state *);
+void hcd_dump_devices(void);
+int hcd_check_device(hcd_device_state *);
 
 
 /*===========================================================================*

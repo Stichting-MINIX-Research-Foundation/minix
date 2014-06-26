@@ -13,17 +13,29 @@
 #include <minix/clkconf.h>		/* clkconf_* */
 #include <minix/syslib.h>		/* sys_privctl */
 
-#include <usb/hcd_common.h>
-#include <usb/hcd_interface.h>
-#include <usb/usb_common.h>
+#include <usbd/hcd_common.h>
+#include <usbd/hcd_interface.h>
+#include <usbd/usbd_common.h>
 
 
 /*===========================================================================*
  *    Local prototypes                                                       *
  *===========================================================================*/
+/* Descriptor related operations */
 static int hcd_fill_configuration(hcd_reg1 *, int, hcd_configuration *, int);
 static int hcd_fill_interface(hcd_reg1 *, int, hcd_interface *, int);
 static int hcd_fill_endpoint(hcd_reg1 *, int, hcd_endpoint *);
+
+/* Handling free USB device addresses */
+static hcd_reg1 hcd_reserve_addr(hcd_driver_state *);
+static void hcd_release_addr(hcd_driver_state *, hcd_reg1);
+
+
+/*===========================================================================*
+ *    Local definitions                                                      *
+ *===========================================================================*/
+/* List of all allocated devices */
+static hcd_device_state * dev_list = NULL;
 
 
 /*===========================================================================*
@@ -188,49 +200,84 @@ hcd_os_nanosleep(int nanosec)
 
 
 /*===========================================================================*
- *    hcd_init_device                                                        *
+ *    hcd_connect_device                                                     *
  *===========================================================================*/
 int
 hcd_connect_device(hcd_device_state * this_device, hcd_thread_function funct)
 {
 	DEBUG_DUMP;
 
-	if ((NULL != this_device->lock) || (NULL != this_device->thread)) {
-		USB_MSG("Device data already allocated");
+	/* This is meant to allow thread name distinction
+	 * and should not be used for anything else */
+	static unsigned int devnum = 0;
+
+	/* Should be able to hold device prefix and some number */
+	char devname[] = "dev..........";
+
+	USB_ASSERT((NULL == this_device->lock) &&
+		(NULL == this_device->thread) &&
+		(HCD_DEFAULT_ADDR == this_device->reserved_address) &&
+		(HCD_STATE_DISCONNECTED == this_device->state),
+		"Device structure not clean");
+
+	/* Mark as 'plugged in' to avoid treating device
+	 * as 'disconnected' in case of errors below */
+	this_device->state = HCD_STATE_CONNECTION_PENDING;
+
+	/* Reserve device address for further use if available */
+	if (HCD_DEFAULT_ADDR == (this_device->reserved_address =
+				hcd_reserve_addr(this_device->driver))) {
+		USB_MSG("No free device addresses");
 		return EXIT_FAILURE;
 	}
 
-	if (NULL == (this_device->lock = ddekit_sem_init(0)))
+	/* Get 'lock' that makes device thread wait for events to occur */
+	if (NULL == (this_device->lock = ddekit_sem_init(0))) {
+		USB_MSG("Failed to initialize thread lock");
 		return EXIT_FAILURE;
+	}
 
+	/* Prepare name */
+	snprintf(devname, sizeof(devname), "dev%u", devnum++);
+
+	/* Get thread itself */
 	if (NULL == (this_device->thread = ddekit_thread_create(funct,
-								this_device,
-								"Device"))) {
-		ddekit_sem_deinit(this_device->lock);
+						this_device,
+						(const char *)devname))) {
+		USB_MSG("Failed to initialize USB device thread");
 		return EXIT_FAILURE;
 	}
-
-	/* Allow device thread to work */
-	ddekit_yield();
 
 	return EXIT_SUCCESS;
 }
 
+
 /*===========================================================================*
- *    hcd_deinit_device                                                      *
+ *    hcd_disconnect_device                                                  *
  *===========================================================================*/
 void
 hcd_disconnect_device(hcd_device_state * this_device)
 {
 	DEBUG_DUMP;
 
+	/* TODO: This should disconnect all the children if they exist */
+
+	/* Clean configuration tree in case it was acquired */
 	hcd_tree_cleanup(&(this_device->config_tree));
 
-	ddekit_thread_terminate(this_device->thread);
-	ddekit_sem_deinit(this_device->lock);
+	/* Release allocated resources */
+	if (NULL != this_device->thread)
+		ddekit_thread_terminate(this_device->thread);
+	if (NULL != this_device->lock)
+		ddekit_sem_deinit(this_device->lock);
 
-	this_device->thread = NULL;
-	this_device->lock = NULL;
+	/* Release reserved address */
+	if (HCD_DEFAULT_ADDR != this_device->reserved_address)
+		hcd_release_addr(this_device->driver,
+				this_device->reserved_address);
+
+	/* Mark as disconnected */
+	this_device->state = HCD_STATE_DISCONNECTED;
 }
 
 
@@ -238,20 +285,16 @@ hcd_disconnect_device(hcd_device_state * this_device)
  *    hcd_device_wait                                                        *
  *===========================================================================*/
 void
-hcd_device_wait(hcd_device_state * this_device, hcd_event event, hcd_reg1 ep)
+hcd_device_wait(hcd_device_state * device, hcd_event event, hcd_reg1 ep)
 {
-	hcd_driver_state * drv;
-
 	DEBUG_DUMP;
 
-	drv = (hcd_driver_state *)this_device->driver;
+	USB_DBG("0x%08X wait (0x%02X, 0x%02X)", device, event, ep);
 
-	drv->expected_event = event;
-	drv->expected_endpoint = ep;
+	device->wait_event = event;
+	device->wait_ep = ep;
 
-	USB_DBG("Waiting for: ev=0x%X, ep=0x%X", (int)event, ep);
-
-	ddekit_sem_down(this_device->lock);
+	ddekit_sem_down(device->lock);
 }
 
 
@@ -259,25 +302,128 @@ hcd_device_wait(hcd_device_state * this_device, hcd_event event, hcd_reg1 ep)
  *    hcd_device_continue                                                    *
  *===========================================================================*/
 void
-hcd_device_continue(hcd_device_state * this_device)
+hcd_device_continue(hcd_device_state * device, hcd_event event, hcd_reg1 ep)
 {
-	hcd_driver_state * drv;
+	DEBUG_DUMP;
+
+	USB_DBG("0x%08X continue (0x%02X, 0x%02X)", device, event, ep);
+
+	USB_ASSERT(device->wait_event == event, "Unexpected event");
+	USB_ASSERT(device->wait_ep == ep, "Unexpected endpoint");
+
+	ddekit_sem_up(device->lock);
+}
+
+
+/*===========================================================================*
+ *    hcd_new_device                                                         *
+ *===========================================================================*/
+hcd_device_state *
+hcd_new_device(void)
+{
+	hcd_device_state * d;
 
 	DEBUG_DUMP;
 
-	drv = (hcd_driver_state *)this_device->driver;
+	/* One new blank device */
+	d = calloc(1, sizeof(*d));
 
-	/* We need to get what was expected... */
-	USB_ASSERT(drv->current_event == drv->expected_event,
-		"Unexpected event occurred");
+	USB_ASSERT(NULL != d, "Failed to allocate device");
 
-	/* ...including endpoint interrupts */
-	if (HCD_EVENT_ENDPOINT == drv->current_event) {
-		USB_ASSERT(drv->current_endpoint == drv->expected_endpoint,
-			"Unexpected endpoint interrupt");
+	if (NULL == dev_list) {
+		dev_list = d;
+	} else {
+		d->_next = dev_list;
+		dev_list = d;
 	}
 
-	ddekit_sem_up(this_device->lock);
+#ifdef HCD_DUMP_DEVICE_LIST
+	/* Dump updated state of device list */
+	hcd_dump_devices();
+#endif
+
+	return d;
+}
+
+
+/*===========================================================================*
+ *    hcd_delete_device                                                      *
+ *===========================================================================*/
+void
+hcd_delete_device(hcd_device_state * d)
+{
+	hcd_device_state * temp;
+
+	DEBUG_DUMP;
+
+	if (d == dev_list) {
+		dev_list = dev_list->_next;
+	} else {
+		temp = dev_list;
+
+		/* Find the device and ... */
+		while (temp->_next != d) {
+			USB_ASSERT(NULL != temp->_next,
+				"Invalid state of device list");
+			temp = temp->_next;
+		}
+
+		/* ...make device list forget about it */
+		temp->_next = temp->_next->_next;
+	}
+
+	free(d);
+
+#ifdef HCD_DUMP_DEVICE_LIST
+	/* Dump updated state of device list */
+	hcd_dump_devices();
+#endif
+}
+
+
+/*===========================================================================*
+ *    hcd_dump_devices                                                       *
+ *===========================================================================*/
+void
+hcd_dump_devices(void)
+{
+	hcd_device_state * temp;
+
+	DEBUG_DUMP;
+
+	temp = dev_list;
+
+	USB_MSG("Allocated devices:");
+
+	while (NULL != temp) {
+		USB_MSG("0x%08X", (int)temp);
+		temp = temp->_next;
+	}
+}
+
+
+/*===========================================================================*
+ *    hcd_check_device                                                       *
+ *===========================================================================*/
+int
+hcd_check_device(hcd_device_state * d)
+{
+	hcd_device_state * temp;
+
+	DEBUG_DUMP;
+
+	temp = dev_list;
+
+	/* Traverse the list of allocated devices
+	 * to determine validity of this one */
+	while (NULL != temp) {
+		if (temp == d)
+			return EXIT_SUCCESS; /* Device found within the list */
+		temp = temp->_next;
+	}
+
+	/* Device was not found, may have been removed earlier */
+	return EXIT_FAILURE;
 }
 
 
@@ -570,4 +716,45 @@ hcd_fill_endpoint(hcd_reg1 * buf, int len, hcd_endpoint * e)
 	USB_DBG("bInterval %02X",		desc->bInterval);
 
 	return EXIT_SUCCESS;
+}
+
+
+/*===========================================================================*
+ *    hcd_reserve_addr                                                       *
+ *===========================================================================*/
+static hcd_reg1
+hcd_reserve_addr(hcd_driver_state * driver)
+{
+	hcd_reg1 addr;
+
+	DEBUG_DUMP;
+
+	for (addr = HCD_FIRST_ADDR; addr <= HCD_LAST_ADDR; addr++) {
+		if (HCD_ADDR_AVAILABLE == driver->dev_addr[addr]) {
+			USB_DBG("Reserved address: %u", addr);
+			driver->dev_addr[addr] = HCD_ADDR_USED;
+			return addr;
+		}
+	}
+
+	/* This means error */
+	return HCD_DEFAULT_ADDR;
+}
+
+
+/*===========================================================================*
+ *    hcd_release_addr                                                       *
+ *===========================================================================*/
+static void
+hcd_release_addr(hcd_driver_state * driver, hcd_reg1 addr)
+{
+	DEBUG_DUMP;
+
+	USB_ASSERT((addr > HCD_DEFAULT_ADDR) && (addr <= HCD_LAST_ADDR),
+		"Invalid device address to be released");
+	USB_ASSERT(HCD_ADDR_USED == driver->dev_addr[addr],
+		"Attempted to release unused address");
+
+	USB_DBG("Released address: %u", addr);
+	driver->dev_addr[addr] = HCD_ADDR_AVAILABLE;
 }

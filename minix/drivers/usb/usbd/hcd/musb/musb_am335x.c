@@ -4,10 +4,10 @@
 
 #include <string.h>					/* memset */
 
-#include <usb/hcd_common.h>
-#include <usb/hcd_platforms.h>
-#include <usb/hcd_interface.h>
-#include <usb/usb_common.h>
+#include <usbd/hcd_common.h>
+#include <usbd/hcd_platforms.h>
+#include <usbd/hcd_interface.h>
+#include <usbd/usbd_common.h>
 
 #include "musb_core.h"
 
@@ -348,6 +348,7 @@ musb_am335x_init(void)
 		ctrl->driver.out_status_stage = musb_out_status_stage;
 		ctrl->driver.read_data = musb_read_data;
 		ctrl->driver.check_error = musb_check_error;
+		ctrl->driver.port_device = NULL;
 	}
 #endif
 
@@ -388,6 +389,7 @@ musb_am335x_init(void)
 		ctrl->driver.out_status_stage = musb_out_status_stage;
 		ctrl->driver.read_data = musb_read_data;
 		ctrl->driver.check_error = musb_check_error;
+		ctrl->driver.port_device = NULL;
 	}
 
 	return musb_am335x_internal_init();
@@ -563,25 +565,26 @@ musb_am335x_usbx_isr(void * data)
 	if (irqstat1 & AM335X_VAL_USBXIRQENABLEXXX1_CONNECTED) {
 		USB_DBG("Device connected");
 		CLEAR_IRQ1(AM335X_VAL_USBXIRQENABLEXXX1_CONNECTED);
-		driver->current_event = HCD_EVENT_CONNECTED;
-		hcd_handle_event(driver);
+		hcd_update_port(driver, HCD_EVENT_CONNECTED);
+		hcd_handle_event(driver->port_device, HCD_EVENT_CONNECTED,
+				HCD_UNUSED_VAL);
 		return;
 	}
 
 	if (irqstat1 & AM335X_VAL_USBXIRQENABLEXXX1_DISCONNECTED) {
 		USB_DBG("Device disconnected");
 		CLEAR_IRQ1(AM335X_VAL_USBXIRQENABLEXXX1_DISCONNECTED);
-		driver->current_event = HCD_EVENT_DISCONNECTED;
-		hcd_handle_event(driver);
+		hcd_handle_event(driver->port_device, HCD_EVENT_DISCONNECTED,
+				HCD_UNUSED_VAL);
+		hcd_update_port(driver, HCD_EVENT_DISCONNECTED);
 		return;
 	}
 
 	if (0 != irqstat0) {
 		USB_DBG("EP interrupt");
 		CLEAR_IRQ0(irqstat0);
-		driver->current_event = HCD_EVENT_ENDPOINT;
-		driver->current_endpoint = musb_am335x_irqstat0_to_ep(irqstat0);
-		hcd_handle_event(driver);
+		hcd_handle_event(driver->port_device, HCD_EVENT_ENDPOINT,
+				musb_am335x_irqstat0_to_ep(irqstat0));
 		return;
 	}
 

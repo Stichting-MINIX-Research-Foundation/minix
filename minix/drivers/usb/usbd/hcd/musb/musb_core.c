@@ -4,9 +4,9 @@
 
 #include <string.h>				/* memcpy */
 
-#include <usb/hcd_common.h>
-#include <usb/hcd_interface.h>
-#include <usb/usb_common.h>
+#include <usbd/hcd_common.h>
+#include <usbd/hcd_interface.h>
+#include <usbd/usbd_common.h>
 
 #include "musb_core.h"
 #include "musb_regs.h"
@@ -345,13 +345,16 @@ musb_core_stop(void * cfg)
  *    musb_setup_device                                                      *
  *===========================================================================*/
 void
-musb_setup_device(void * cfg, hcd_reg1 ep, hcd_reg1 addr)
+musb_setup_device(void * cfg, hcd_reg1 ep, hcd_reg1 addr,
+		hcd_datatog * tx_tog, hcd_datatog * rx_tog)
 {
 	DEBUG_DUMP;
 
 	/* Assign  */
 	((musb_core_config *)cfg)->ep = ep;
 	((musb_core_config *)cfg)->addr = addr;
+	((musb_core_config *)cfg)->datatog_tx = tx_tog;
+	((musb_core_config *)cfg)->datatog_rx = rx_tog;
 }
 
 
@@ -372,7 +375,7 @@ musb_reset_device(void * cfg, hcd_speed * speed)
 	r = core->regs;
 
 	/* Set initial parameters */
-	musb_setup_device(core, HCD_DEFAULT_EP, HCD_DEFAULT_ADDR);
+	musb_setup_device(core, HCD_DEFAULT_EP, HCD_DEFAULT_ADDR, NULL, NULL);
 
 	/* Set EP and device address to be used in this command */
 	musb_set_state(core);
@@ -408,9 +411,14 @@ musb_reset_device(void * cfg, hcd_speed * speed)
 		USB_DBG("High speed USB enabled");
 	} else {
 		/* Only full-speed supported */
-		USB_DBG("High speed USB disabled");
+		host_type0 = HCD_RD1(r, MUSB_REG_HOST_TYPE0);
+		HCD_CLR(host_type0, MUSB_VAL_HOST_TYPE0_MASK);
+		HCD_SET(host_type0, MUSB_VAL_HOST_TYPE0_FULL_SPEED);
+		HCD_WR1(r, MUSB_REG_HOST_TYPE0, host_type0);
 
 		*speed = HCD_SPEED_FULL;
+
+		USB_DBG("High speed USB disabled");
 	}
 
 	return EXIT_SUCCESS;
@@ -529,16 +537,16 @@ musb_rx_stage(void * cfg, hcd_datarequest * request)
 
 	/* Make controller reconfigure */
 	host_rxcsr = HCD_RD2(r, MUSB_REG_HOST_RXCSR);
-	if (MUSB_DATATOG_UNKNOWN == core->datatog_rx[core->ep]) {
-		/* Reset DATA toggle on first transfer */
-		HCD_SET(host_rxcsr, MUSB_VAL_HOST_RXCSR_CLRDATATOG);
-		core->datatog_rx[core->ep] = MUSB_DATATOG_INIT;
-	}
+	HCD_SET(host_rxcsr, MUSB_VAL_HOST_RXCSR_DATATOGWREN); /* Enable first */
 	HCD_SET(host_rxcsr, MUSB_VAL_HOST_RXCSR_FLUSHFIFO);
 	HCD_WR2(r, MUSB_REG_HOST_RXCSR, host_rxcsr);
 
-	/* Request packet */
+	/* Set data toggle and start receiving */
 	host_rxcsr = HCD_RD2(r, MUSB_REG_HOST_RXCSR);
+	if (HCD_DATATOG_DATA0 == *(core->datatog_rx))
+		HCD_CLR(host_rxcsr, MUSB_VAL_HOST_RXCSR_DATATOG);
+	else
+		HCD_SET(host_rxcsr, MUSB_VAL_HOST_RXCSR_DATATOG);
 	HCD_SET(host_rxcsr, MUSB_VAL_HOST_RXCSR_REQPKT);
 	HCD_WR2(r, MUSB_REG_HOST_RXCSR, host_rxcsr);
 }
@@ -625,19 +633,20 @@ musb_tx_stage(void * cfg, hcd_datarequest * request)
 	HCD_SET(host_txcsr, MUSB_VAL_HOST_TXCSR_MODE);
 	HCD_CLR(host_txcsr, MUSB_VAL_HOST_TXCSR_ISO);
 	HCD_CLR(host_txcsr, MUSB_VAL_HOST_TXCSR_AUTOSET);
-	if (MUSB_DATATOG_UNKNOWN == core->datatog_tx[core->ep]) {
-		/* Reset DATA toggle on first transfer */
-		HCD_SET(host_txcsr, MUSB_VAL_HOST_TXCSR_CLRDATATOG);
-		core->datatog_tx[core->ep] = MUSB_DATATOG_INIT;
-	}
+	HCD_SET(host_txcsr, MUSB_VAL_HOST_TXCSR_DATATOGWREN); /* Enable first */
+	/* TODO: May have no effect */
 	HCD_SET(host_txcsr, MUSB_VAL_HOST_TXCSR_FLUSHFIFO);
 	HCD_WR2(r, MUSB_REG_HOST_TXCSR, host_txcsr);
 
 	/* Put data in FIFO */
 	musb_write_fifo(cfg, request->data, request->data_left, core->ep);
 
-	/* Request packet */
+	/* Set data toggle and start transmitting */
 	host_txcsr = HCD_RD2(r, MUSB_REG_HOST_TXCSR);
+	if (HCD_DATATOG_DATA0 == *(core->datatog_tx))
+		HCD_CLR(host_txcsr, MUSB_VAL_HOST_TXCSR_DATATOG);
+	else
+		HCD_SET(host_txcsr, MUSB_VAL_HOST_TXCSR_DATATOG);
 	HCD_SET(host_txcsr, MUSB_VAL_HOST_TXCSR_TXPKTRDY);
 	HCD_WR2(r, MUSB_REG_HOST_TXCSR, host_txcsr);
 }
@@ -785,6 +794,7 @@ musb_check_error(void * cfg, hcd_transfer xfer, hcd_reg1 ep, hcd_direction dir)
 	}
 	musb_error_case;
 
+	musb_core_config * core;
 	void * r;
 	hcd_reg2 host_csr;
 	musb_error_case error_case;
@@ -795,7 +805,8 @@ musb_check_error(void * cfg, hcd_transfer xfer, hcd_reg1 ep, hcd_direction dir)
 	USB_ASSERT(HCD_TRANSFER_ISOCHRONOUS != xfer,
 		"ISO transfer not supported");
 
-	r = ((musb_core_config *)cfg)->regs;
+	core = (musb_core_config *)cfg;
+	r = core->regs;
 
 	/* Set EP and device address to be used in this command */
 	musb_set_state((musb_core_config *)cfg);
@@ -854,6 +865,13 @@ musb_check_error(void * cfg, hcd_transfer xfer, hcd_reg1 ep, hcd_direction dir)
 		/* Get TX status register */
 		host_csr = HCD_RD2(r, MUSB_REG_HOST_TXCSR);
 
+		/* Check for completion */
+		if (!(host_csr & MUSB_VAL_HOST_TXCSR_TXPKTRDY)) {
+			/* ACK received update data toggle */
+			*(core->datatog_tx) ^= HCD_DATATOG_DATA1;
+			return EXIT_SUCCESS;
+		}
+
 		/* Check for common errors */
 		if (host_csr & MUSB_VAL_HOST_TXCSR_ERROR) {
 			USB_MSG("HOST_TXCSR ERROR: %04X", host_csr);
@@ -871,17 +889,29 @@ musb_check_error(void * cfg, hcd_transfer xfer, hcd_reg1 ep, hcd_direction dir)
 
 		if (host_csr & MUSB_VAL_HOST_TXCSR_NAK_TIMEOUT) {
 			USB_MSG("HOST_TXCSR NAK_TIMEOUT: %04X", host_csr);
+			/* Flush FIFO before clearing NAKTIMEOUT
+			 * to abort transfer */
+			HCD_SET(host_csr, MUSB_VAL_HOST_TXCSR_FLUSHFIFO);
+			HCD_WR2(r, MUSB_REG_HOST_TXCSR, host_csr);
+			host_csr = HCD_RD2(r, MUSB_REG_HOST_TXCSR);
 			HCD_CLR(host_csr, MUSB_VAL_HOST_TXCSR_NAK_TIMEOUT);
 			HCD_WR2(r, MUSB_REG_HOST_TXCSR, host_csr);
 			return EXIT_FAILURE;
 		}
 
-		return EXIT_SUCCESS;
+		USB_ASSERT(0, "Invalid state of HOST_TXCSR");
 	}
 
 	if (MUSB_IN_ERROR_CASE == error_case) {
 		/* Get RX status register */
 		host_csr = HCD_RD2(r, MUSB_REG_HOST_RXCSR);
+
+		/* Check for completion */
+		if (host_csr & MUSB_VAL_HOST_RXCSR_RXPKTRDY) {
+			/* ACK received update data toggle */
+			*(core->datatog_rx) ^= HCD_DATATOG_DATA1;
+			return EXIT_SUCCESS;
+		}
 
 		/* Check for common errors */
 		if (host_csr & MUSB_VAL_HOST_RXCSR_ERROR) {
@@ -900,12 +930,16 @@ musb_check_error(void * cfg, hcd_transfer xfer, hcd_reg1 ep, hcd_direction dir)
 
 		if (host_csr & MUSB_VAL_HOST_RXCSR_NAKTIMEOUT) {
 			USB_MSG("HOST_RXCSR NAK_TIMEOUT: %04X", host_csr);
+			/* Clear REQPKT before NAKTIMEOUT to abort transfer */
+			HCD_CLR(host_csr, MUSB_VAL_HOST_RXCSR_REQPKT);
+			HCD_WR2(r, MUSB_REG_HOST_RXCSR, host_csr);
+			host_csr = HCD_RD2(r, MUSB_REG_HOST_RXCSR);
 			HCD_CLR(host_csr, MUSB_VAL_HOST_RXCSR_NAKTIMEOUT);
 			HCD_WR2(r, MUSB_REG_HOST_RXCSR, host_csr);
 			return EXIT_FAILURE;
 		}
 
-		return EXIT_SUCCESS;
+		USB_ASSERT(0, "Invalid state of HOST_RXCSR");
 	}
 
 	USB_MSG("Invalid USB transfer error check: 0x%X, 0x%X, 0x%X",

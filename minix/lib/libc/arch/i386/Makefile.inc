@@ -1,8 +1,6 @@
 C_HERE=${NETBSDSRCDIR}/minix/lib/libc/arch/${ARCHSUBDIR}
 .PATH: ${C_HERE}
 
-.warning looking into ${C_HERE}
-
 SRCS+=	_cpuid.S	\
 	get_bp.S 	\
 	getprocessor.S	\

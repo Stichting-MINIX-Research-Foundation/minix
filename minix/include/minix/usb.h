@@ -152,4 +152,7 @@ int usb_init(char *name);
 /** This functions handles a message from the HCD */
 int usb_handle_msg(struct usb_driver *ubd, message *msg);
 
+/** Lets device driver send HCD various information */
+int usb_send_info(long, long);
+
 #endif /* _MINIX_USB_H */

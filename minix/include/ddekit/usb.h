@@ -78,12 +78,23 @@ struct ddekit_usb_urb {
 	void *ddekit_priv;
 };
 
+/* USB message types */
+typedef enum {
+
+	DDEKIT_HUB_PORT_LS_CONN,	/* Low speed device connected */
+	DDEKIT_HUB_PORT_FS_CONN,	/* Full speed device connected */
+	DDEKIT_HUB_PORT_HS_CONN,	/* High speed device connected */
+	DDEKIT_HUB_PORT_DISCONN		/* Device disconnected */
+}
+ddekit_msg_type_t;
+
 int ddekit_usb_dev_set_data(struct ddekit_usb_dev *dev, void *data);
 void *ddekit_usb_dev_get_data(struct ddekit_usb_dev *dev);
 void ddekit_usb_get_device_id(struct ddekit_usb_dev *dev, struct
 	ddekit_usb_device_id *id);
 int ddekit_usb_submit_urb(struct ddekit_usb_urb *d_urb);
 int ddekit_usb_cancle_urb(struct ddekit_usb_urb *d_urb);
+long ddekit_usb_info(struct ddekit_usb_dev *, long, long);
 
 /*
  * This one is only implemented for the client side. For the server side is
