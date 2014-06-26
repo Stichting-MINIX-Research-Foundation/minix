@@ -71,6 +71,7 @@ static struct ddekit_usb_urb *ddekit_usb_urb_from_mx_urb(struct usb_urb
 	*mx_urb);
 static void submit_urb(message *msg);
 static void cancle_urb(message *msg);
+static void get_info(message *msg);
 static void completion_callback(void *priv);
 
 static void prepare_devman_usbdev(struct ddekit_usb_dev * dev, int
@@ -442,6 +443,39 @@ static void cancle_urb(message *msg)
 
 
 /*****************************************************************************
+ *         get_info                                                          *
+ *****************************************************************************/
+static void
+get_info(message * msg)
+{
+	struct minix_usb_driver * drv;
+	endpoint_t ep;
+	long info_type;
+	long info_value;
+
+	/* Read */
+	ep		= msg->m_source;
+	info_type	= msg->USB_INFO_TYPE;
+	info_value	= msg->USB_INFO_VALUE;
+
+	/* Reuse as reply */
+	msg->m_type	= USB_REPLY;
+	msg->USB_RESULT	= -1;
+
+	/* Try and find driver first */
+	if (NULL == (drv = find_driver(ep)))
+		ddekit_printf("Non-registered driver tries to send info");
+	else
+		/* Route info to device */
+		msg->USB_RESULT = ddekit_usb_info(_devices[drv->dev].dev,
+						info_type, info_value);
+
+	/* Reply */
+	ipc_send(ep, msg);
+}
+
+
+/*****************************************************************************
  *         completion_callback                                               *
  ****************************************************************************/
 static void completion_callback(void *priv)
@@ -712,6 +746,9 @@ static int handle_msg(message *msg)
 			return 1;
 		case USB_RQ_CANCEL_URB:
 			cancle_urb(msg);
+			return 1;
+		case USB_RQ_SEND_INFO:
+			get_info(msg);
 			return 1;
 		default:
 			return 0;

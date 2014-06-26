@@ -5,9 +5,9 @@
 #include <minix/board.h>
 #include <minix/syslib.h>
 
-#include <usb/hcd_platforms.h>
-#include <usb/usb_common.h>
-#include <usb/usbd_interface.h>
+#include <usbd/hcd_platforms.h>
+#include <usbd/usbd_common.h>
+#include <usbd/usbd_interface.h>
 
 
 /*===========================================================================*

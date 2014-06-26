@@ -10,8 +10,9 @@
 #include <minix/devman.h>		/* Initializing 'devman' */
 #include <minix/sef.h>			/* SEF handling */
 
-#include <usb/usb_common.h>
-#include <usb/usbd_interface.h>
+#include <usbd/usbd_common.h>
+#include <usbd/usbd_interface.h>
+#include <usbd/usbd_schedule.h>
 
 
 /*===========================================================================*
@@ -37,7 +38,7 @@ main(int UNUSED(argc), char * UNUSED(argv[]))
 	int ret_val;
 
 	USB_MSG("Starting USBD");
-	USB_DBG("Built: %s %s", __DATE__, __TIME__);
+	USB_MSG("Built: %s %s", __DATE__, __TIME__);
 
 	/* Basic SEF,DDE,... initialization */
 	usbd_init();
@@ -74,7 +75,7 @@ main(int UNUSED(argc), char * UNUSED(argv[]))
 static int
 usbd_sef_handler(int type, sef_init_info_t * UNUSED(info))
 {
-	DEBUG_DUMP;
+	/* No DEBUG_DUMP, threading unavailable yet */
 
 	switch (type) {
 		case SEF_INIT_FRESH:
@@ -125,12 +126,21 @@ usbd_start(void)
 	DEBUG_DUMP;
 
 	/* Driver's "main loop" is within DDEKit server thread */
-	usbd_th = ddekit_thread_create(usbd_server_thread, NULL, "USBD");
+	usbd_th = ddekit_thread_create(usbd_server_thread, NULL, "ddekit_usb");
 
 	/* After spawning, allow server thread to work */
 	if (NULL != usbd_th) {
-		/* This will lock current thread until DDEKit exits */
-		ddekit_minix_wait_exit();
+
+		/* Allow URB scheduling */
+		if (usbd_init_scheduler()) {
+			USB_MSG("Failed to start URB scheduler");
+		} else {
+			/* This will lock current thread until DDEKit exits */
+			ddekit_minix_wait_exit();
+		}
+
+		/* Disallow URB scheduling */
+		usbd_deinit_scheduler();
 
 		/* Cleanup */
 		ddekit_thread_terminate(usbd_th);
@@ -147,16 +157,18 @@ usbd_start(void)
 static void
 usbd_init(void)
 {
-	DEBUG_DUMP;
+	/* No DEBUG_DUMP, threading unavailable yet */
 
 	/* Set one handler for all messages */
 	sef_setcb_init_fresh(usbd_sef_handler);
 	sef_setcb_init_lu(usbd_sef_handler);
 	sef_setcb_init_restart(usbd_sef_handler);
-	sef_setcb_signal_handler(usbd_signal_handler);
 
 	/* Initialize DDEkit (involves sef_startup()) */
 	ddekit_init();
+
+	/* After threading initialization, add signal handler */
+	sef_setcb_signal_handler(usbd_signal_handler);
 }
 
 

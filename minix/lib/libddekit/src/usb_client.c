@@ -186,6 +186,17 @@ int ddekit_usb_cancle_urb(struct ddekit_usb_urb *d_urb)
 	return res;
 }
 
+
+/*****************************************************************************
+ *         ddekit_usb_info                                                   *
+ *****************************************************************************/
+long
+ddekit_usb_info(struct ddekit_usb_dev * UNUSED(dev), long type, long value)
+{
+	return usb_send_info(type, value);
+}
+
+
 static void _ddekit_usb_thread()
 { 
 	struct ddekit_minix_msg_q *mq = ddekit_minix_create_msg_q(USB_BASE, 

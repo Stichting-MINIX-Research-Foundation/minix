@@ -82,6 +82,7 @@
 ./etc/devmand/scripts			minix-sys
 ./etc/devmand/scripts/block		minix-sys
 ./etc/devmand/scripts/singlechar	minix-sys
+./etc/devmand/usb_hub.cfg		minix-sys
 ./etc/devmand/usb_storage.cfg		minix-sys
 ./etc/gettytab				minix-sys
 ./etc/group				minix-sys
@@ -116,6 +117,7 @@
 ./etc/system.conf			minix-sys
 ./etc/system.conf.d			minix-sys
 ./etc/system.conf.d/ipc			minix-sys
+./etc/system.conf.d/usb_hub		minix-sys
 ./etc/system.conf.d/usb_storage		minix-sys
 ./etc/termcap				minix-sys
 ./etc/ttys				minix-sys
@@ -172,6 +174,7 @@
 ./service/sched				minix-sys
 ./service/tty				minix-sys
 ./service/uds				minix-sys
+./service/usb_hub			minix-sys
 ./service/usb_storage			minix-sys
 ./service/vfs				minix-sys
 ./service/vm				minix-sys
