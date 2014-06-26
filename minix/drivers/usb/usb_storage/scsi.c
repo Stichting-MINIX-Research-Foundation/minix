@@ -20,6 +20,7 @@ static int create_read_capacity_scsi_cmd(mass_storage_cbw *);
 static int create_write_scsi_cmd(mass_storage_cbw *, scsi_transfer *);
 static int create_read_scsi_cmd(mass_storage_cbw *, scsi_transfer *);
 static int create_mode_sense_scsi_cmd(mass_storage_cbw *);
+static int create_request_sense_scsi_cmd(mass_storage_cbw *);
 
 /*---------------------------*
  *    defined functions      *
@@ -47,6 +48,8 @@ create_scsi_cmd(mass_storage_cbw * cbw, int cmd, scsi_transfer * info)
 			return create_read_scsi_cmd(cbw, info);
 		case SCSI_MODE_SENSE:
 			return create_mode_sense_scsi_cmd(cbw);
+		case SCSI_REQUEST_SENSE:
+			return create_request_sense_scsi_cmd(cbw);
 		default:
 			MASS_MSG("Invalid SCSI command!");
 			return EXIT_FAILURE;
@@ -170,6 +173,25 @@ create_mode_sense_scsi_cmd(mass_storage_cbw * cbw)
 	SCSI_SET_MODE_SENSE_OP_CODE(cbw->CBWCB);
 	SCSI_SET_MODE_SENSE_PAGE_CODE(cbw->CBWCB,
 					SCSI_MODE_SENSE_FLEXIBLE_DISK_PAGE);
+
+	return EXIT_SUCCESS;
+}
+
+
+/*===========================================================================*
+ *    create_request_sense_scsi_cmd                                          *
+ *===========================================================================*/
+static int
+create_request_sense_scsi_cmd(mass_storage_cbw * cbw)
+{
+	MASS_DEBUG_DUMP;
+
+	cbw->dCBWDataTransferLength = SCSI_REQUEST_SENSE_DATA_LEN;
+	cbw->bCBWFlags = CBW_FLAGS_IN;
+	cbw->bCDBLength = SCSI_REQUEST_SENSE_CMD_LEN;
+
+	SCSI_SET_REQUEST_SENSE_OP_CODE(cbw->CBWCB);
+	SCSI_SET_REQUEST_SENSE_ALLOC(cbw->CBWCB, SCSI_REQUEST_SENSE_DATA_LEN);
 
 	return EXIT_SUCCESS;
 }

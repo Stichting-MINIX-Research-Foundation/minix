@@ -24,6 +24,7 @@
 
 #include <assert.h>
 #include <limits.h>			/* ULONG_MAX */
+#include <time.h>			/* nanosleep */
 
 #include "common.h"
 #include "bulk.h"
@@ -62,6 +63,7 @@ static void ddekit_usb_task(void *);
 /* Mass storage related prototypes */
 static void mass_storage_task(void *);
 static int mass_storage_test(void);
+static int mass_storage_check_error(void);
 static int mass_storage_try_first_open(void);
 static int mass_storage_transfer_restrictions(u64_t, unsigned long);
 static ssize_t mass_storage_write(unsigned long, endpoint_t, iovec_t *,
@@ -96,6 +98,8 @@ static int mass_storage_parse_descriptors(char *, unsigned int, urb_ep_config *,
 /*---------------------------*
  *    defined variables      *
  *---------------------------*/
+#define MASS_PACKED __attribute__((__packed__))
+
 /* Mass Storage callback structure */
 static struct blockdriver mass_storage = {
 	.bdr_type	= BLOCKDRIVER_TYPE_DISK,
@@ -147,7 +151,11 @@ static unsigned char buffer[BUFFER_SIZE];
 #define MAX_DESCRIPTORS_LEN 128
 
 /* Maximum 'Test Unit Ready' command retries */
-#define MAX_TEST_RETRIES 3
+#define MAX_TEST_RETRIES 20
+
+/* 'Test Unit Ready' failure delay time (in nanoseconds) */
+#define NEXT_TEST_DELAY 50000000 /* 50ms */
+
 
 /*---------------------------*
  *    defined functions      *
@@ -590,22 +598,113 @@ mass_storage_test(void)
 {
 	int repeat;
 
+	struct timespec test_wait;
+
 	MASS_DEBUG_DUMP;
+
+	/* Delay between consecutive test commands, in case of their failure */
+	test_wait.tv_nsec = NEXT_TEST_DELAY;
+	test_wait.tv_sec = 0;
 
 	for (repeat = 0; repeat < MAX_TEST_RETRIES; repeat++) {
 
 		/* SCSI TEST UNIT READY OUT stage */
 		if (mass_storage_send_scsi_cbw_out(SCSI_TEST_UNIT_READY, NULL))
-			return EXIT_FAILURE;
+			return EIO;
 
 		/* TODO: Only CSW failure should normally contribute to retry */
 
 		/* SCSI TEST UNIT READY IN stage */
 		if (EXIT_SUCCESS == mass_storage_send_scsi_csw_in())
 			return EXIT_SUCCESS;
+
+		/* Check for errors */
+		if (mass_storage_check_error())
+			return EIO;
+
+		/* Ignore potential signal interruption (no return value check),
+		 * since it causes driver termination anyway */
+		if (nanosleep(&test_wait, NULL))
+			MASS_MSG("Calling nanosleep() failed");
 	}
 
-	return EXIT_FAILURE;
+	MASS_MSG("Try, ignoring TEST UNIT READY errors");
+	return EXIT_SUCCESS;
+}
+
+
+/*===========================================================================*
+ *    mass_storage_check_error                                               *
+ *===========================================================================*/
+static int
+mass_storage_check_error(void)
+{
+	/* SCSI sense structure for local use */
+	typedef struct MASS_PACKED scsi_sense {
+
+		uint8_t code : 7;
+		uint8_t valid : 1;
+		uint8_t obsolete : 8;
+		uint8_t sense : 4;
+		uint8_t reserved : 1;
+		uint8_t ili : 1;
+		uint8_t eom : 1;
+		uint8_t filemark : 1;
+		uint32_t information : 32;
+		uint8_t additional_len : 8;
+		uint32_t command_specific : 32;
+		uint8_t additional_code : 8;
+		uint8_t additional_qual : 8;
+		uint8_t unit_code : 8;
+		uint8_t key_specific1 : 7;
+		uint8_t sksv : 1;
+		uint16_t key_specific2 : 16;
+	}
+	scsi_sense;
+
+	/* Sense variable to hold received data */
+	scsi_sense sense;
+
+	MASS_DEBUG_DUMP;
+
+	/* TODO: This should become compile-time assert */
+	assert(sizeof(sense) == SCSI_REQUEST_SENSE_DATA_LEN);
+
+	/* SCSI REQUEST SENSE OUT stage */
+	if (mass_storage_send_scsi_cbw_out(SCSI_REQUEST_SENSE, NULL))
+		return EIO;
+
+	/* SCSI REQUEST SENSE first IN stage */
+	if (mass_storage_send_scsi_data_in(&sense, sizeof(sense)))
+		return EIO;
+
+	/* SCSI REQUEST SENSE second IN stage */
+	if (mass_storage_send_scsi_csw_in())
+		return EIO;
+
+	/* When any sense code is present something may have failed */
+	if (sense.sense) {
+		MASS_MSG("SCSI sense:                ");
+		MASS_MSG("code             : %8X", sense.code            );
+		MASS_MSG("valid            : %8X", sense.valid           );
+		MASS_MSG("obsolete         : %8X", sense.obsolete        );
+		MASS_MSG("sense            : %8X", sense.sense           );
+		MASS_MSG("reserved         : %8X", sense.reserved        );
+		MASS_MSG("ili              : %8X", sense.ili             );
+		MASS_MSG("eom              : %8X", sense.eom             );
+		MASS_MSG("filemark         : %8X", sense.filemark        );
+		MASS_MSG("information      : %8X", sense.information     );
+		MASS_MSG("additional_len   : %8X", sense.additional_len  );
+		MASS_MSG("command_specific : %8X", sense.command_specific);
+		MASS_MSG("additional_code  : %8X", sense.additional_code );
+		MASS_MSG("additional_qual  : %8X", sense.additional_qual );
+		MASS_MSG("unit_code        : %8X", sense.unit_code       );
+		MASS_MSG("key_specific1    : %8X", sense.key_specific1   );
+		MASS_MSG("sksv             : %8X", sense.sksv            );
+		MASS_MSG("key_specific2    : %8X", sense.key_specific2   );
+	}
+
+	return EXIT_SUCCESS;
 }
 
 
@@ -1072,6 +1171,11 @@ mass_storage_open(devminor_t minor, int UNUSED(access))
 		if ((r = mass_storage_try_first_open())) {
 			MASS_MSG("Opening mass storage device"
 				" for the first time failed");
+
+			/* TODO: This could be used in other places too */
+			if (mass_storage_check_error())
+				MASS_MSG("SCSI error check failed");
+
 			return r;
 		}
 
@@ -1356,6 +1460,8 @@ mass_storage_part(devminor_t minor)
 /*===========================================================================*
  *    mass_storage_geometry                                                  *
  *===========================================================================*/
+/* This command is optional for most mass storage devices
+ * It should rather be used with USB floppy disk reader */
 #ifdef MASS_USE_GEOMETRY
 static void
 mass_storage_geometry(devminor_t minor, struct part_geom * part)

@@ -27,25 +27,13 @@
 
 #include "bulk.h"
 
-#define SCSI_FORMAT_UNIT			(0x04)
 #define SCSI_INQUIRY				(0x12)
-#define SCSI_START_STOP				(0x1B)
-#define SCSI_MODE_SELECT			(0x55)
 #define SCSI_MODE_SENSE				(0x5A)
-#define SCSI_PREVENT_ALLOW			(0x1E)
 #define SCSI_READ				(0x28)
-#define SCSI_READ_12				(0xA8)
 #define SCSI_READ_CAPACITY			(0x25)
-#define SCSI_READ_FORMAT_CAP			(0x23)
 #define SCSI_REQUEST_SENSE			(0x03)
-#define SCSI_REZERO_UNIT			(0x01)
-#define SCSI_SEEK				(0x2B)
-#define SCSI_SEND_DIAGNOSTIC			(0x1D)
 #define SCSI_TEST_UNIT_READY			(0x00)
-#define SCSI_VERIFY				(0x2F)
 #define SCSI_WRITE				(0x2A)
-#define SCSI_WRITE_12				(0xAA)
-#define SCSI_WRITE_VERIFY			(0x2E)
 
 #define SCSI_INQUIRY_DATA_LEN			(36)
 #define SCSI_INQUIRY_CMD_LEN			(6)
@@ -58,6 +46,9 @@
 
 #define SCSI_READ_CAPACITY_DATA_LEN		(8)
 #define SCSI_READ_CAPACITY_CMD_LEN		(10)
+
+#define SCSI_REQUEST_SENSE_DATA_LEN		(18)
+#define SCSI_REQUEST_SENSE_CMD_LEN		(6)
 
 #define SCSI_TEST_DATA_LEN			(0)
 #define SCSI_TEST_CMD_LEN			(6)
@@ -116,6 +107,10 @@
 #define SCSI_SET_READ_CAPACITY_PMI(x)		SCSI_SET1((x), 8, 0x01)
 #define SCSI_GET_READ_CAPACITY_LBA(x)		SCSI_RD4((x), 0)
 #define SCSI_GET_READ_CAPACITY_BLEN(x)		SCSI_RD4((x), 4)
+
+#define SCSI_SET_REQUEST_SENSE_OP_CODE(x)	SCSI_WR1((x), 0, \
+							SCSI_REQUEST_SENSE)
+#define SCSI_SET_REQUEST_SENSE_ALLOC(x, alloc)	SCSI_WR1((x), 4, (alloc))
 
 #define SCSI_SET_TEST_OP_CODE(x)		SCSI_WR1((x), 0, \
 							SCSI_TEST_UNIT_READY)
