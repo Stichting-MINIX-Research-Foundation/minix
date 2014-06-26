@@ -6,10 +6,11 @@
 
 #include <minix/drivers.h>			/* errno with sign */
 
-#include <usb/hcd_common.h>
-#include <usb/hcd_ddekit.h>
-#include <usb/hcd_interface.h>
-#include <usb/usb_common.h>
+#include <usbd/hcd_common.h>
+#include <usbd/hcd_ddekit.h>
+#include <usbd/hcd_interface.h>
+#include <usbd/hcd_schedule.h>
+#include <usbd/usbd_common.h>
 
 
 /*===========================================================================*
@@ -21,103 +22,223 @@ static void hcd_device_thread(void *);
 /* Procedure that locks device thread forever in case of error/completion */
 static void hcd_device_finish(hcd_device_state *, const char *);
 
+/* Procedure that finds device, waiting for given EP interrupt */
+static hcd_device_state * hcd_get_child_for_ep(hcd_device_state *, hcd_reg1);
+
+/* For HCD level, hub handling */
+static void hcd_add_child(hcd_device_state *, hcd_reg1, hcd_speed);
+static void hcd_delete_child(hcd_device_state *, hcd_reg1);
+static void hcd_disconnect_tree(hcd_device_state *);
+static void hcd_dump_tree(hcd_device_state *, hcd_reg1);
+
 /* Typical USD device communication procedures */
 static int hcd_enumerate(hcd_device_state *);
 static int hcd_get_device_descriptor(hcd_device_state *);
-static int hcd_set_address(hcd_device_state *, hcd_reg1);
+static int hcd_set_address(hcd_device_state *);
 static int hcd_get_descriptor_tree(hcd_device_state *);
 static int hcd_set_configuration(hcd_device_state *, hcd_reg1);
-static int hcd_handle_urb(hcd_device_state *, hcd_urb *);
+static void hcd_handle_urb(hcd_device_state *);
+static void hcd_complete_urb(hcd_device_state *);
 static int hcd_control_urb(hcd_device_state *, hcd_urb *);
 static int hcd_non_control_urb(hcd_device_state *, hcd_urb *);
 
 /* For internal use by more general methods */
 static int hcd_setup_packet(hcd_device_state *, hcd_ctrlrequest *, hcd_reg1);
-static int hcd_finish_setup(hcd_device_state *, void *, hcd_reg4);
+static int hcd_finish_setup(hcd_device_state *, void *);
 static int hcd_data_transfer(hcd_device_state *, hcd_datarequest *);
+
+/* TODO: This is not meant to be explicitly visible outside DDEKit library
+ * but there is no other way to set thread priority for now */
+extern void _ddekit_thread_set_myprio(int);
 
 
 /*===========================================================================*
  *    Local definitions                                                      *
  *===========================================================================*/
-/* TODO: Only one device at a time
- * If ever HUB functionality is added, one must remember that disconnecting
- * HUB, means disconnecting every device attached to it, so data structure may
- * have to be altered to allow that */
-static hcd_device_state hcd_device[1];
-
 /* TODO: This was added for compatibility with DDELinux drivers that
  * allow receiving less data than expected in URB, without error */
 #define HCD_ANY_LENGTH 0xFFFFFFFFu
+
+/* This doesn't seem to be specified in standard but abnormal values
+ * are unlikely so check for this was added below */
+#define HCD_SANE_DESCRIPTOR_LENGTH 2048
 
 
 /*===========================================================================*
  *    hcd_handle_event                                                       *
  *===========================================================================*/
 void
-hcd_handle_event(hcd_driver_state * driver)
+hcd_handle_event(hcd_device_state * device, hcd_event event, hcd_reg1 val)
 {
-	hcd_device_state * this_device;
-
 	DEBUG_DUMP;
 
-	/* TODO: Finding which hcd_device is in use should be performed here */
-	this_device = &(hcd_device[0]);
+	/* Invalid device may be supplied */
+	if (EXIT_SUCCESS != hcd_check_device(device)) {
+		USB_MSG("No device available for event: 0x%02X, value: 0x%02X",
+			event, val);
+		return;
+	}
 
-	/* Sometimes interrupts occur in a weird order (EP after disconnect)
-	 * This helps finding ordering errors in DEBUG */
-	USB_DBG("Event: 0x%02X, state: 0x%02X",
-		driver->current_event, this_device->state);
+#ifdef HCD_DUMP_DEVICE_TREE
+	/* This can be unlocked to dump current USB device tree on event */
+	{
+		/* Go to the base of USB device tree and
+		 * print the current state of it */
+		hcd_device_state * base;
 
-	/* Set what was received for device thread to use */
-	this_device->driver = driver;
+		base = device;
+
+		while (NULL != base->parent)
+			base = base->parent;
+
+		USB_MSG("Current state of USB device tree:");
+		hcd_dump_tree(base, 0);
+	}
+#endif
 
 	/* Handle event and forward control to device thread when required */
-	switch (driver->current_event) {
+	switch (event) {
 		case HCD_EVENT_CONNECTED:
-			if (HCD_STATE_DISCONNECTED == this_device->state) {
-				if (EXIT_SUCCESS != hcd_connect_device(
-							this_device,
-							hcd_device_thread))
-					USB_MSG("Device creation failed");
-			} else
-				USB_MSG("Device not marked as 'disconnected' "
-					"for 'connection' event");
+			USB_ASSERT((HCD_STATE_DISCONNECTED == device->state),
+				"Device not marked as 'disconnected' "
+				"for 'connection' event");
+
+			/* Try creating new thread for device */
+			if (hcd_connect_device(device, hcd_device_thread))
+				USB_MSG("Device creation failed, nothing more "
+					"will happen until disconnected");
 
 			break;
 
 		case HCD_EVENT_DISCONNECTED:
-			if (HCD_STATE_DISCONNECTED != this_device->state) {
-				/* If connect callback was used before, call
-				 * it's equivalent to signal disconnection */
-				if (HCD_STATE_CONNECTED == this_device->state)
-					hcd_disconnect_cb(this_device);
-				hcd_disconnect_device(this_device);
-				this_device->state = HCD_STATE_DISCONNECTED;
+			USB_ASSERT((HCD_STATE_DISCONNECTED != device->state),
+				"Device is marked as 'disconnected' "
+				"for 'disconnection' event");
 
-				/* Finally, zero everything to allow
-				 * further connections with this object */
-				memset(this_device, 0x00, sizeof(*this_device));
-			} else
-				USB_MSG("Device is marked as 'disconnected' "
-					"for 'disconnection' event");
+			/* Make this device and all attached children
+			 * disconnect recursively */
+			hcd_disconnect_tree(device);
+
+			break;
+
+		case HCD_EVENT_PORT_LS_CONNECTED:
+			USB_ASSERT((HCD_STATE_DISCONNECTED != device->state),
+				"Device is marked as 'disconnected' "
+				"for 'hub port LS attach' event");
+
+			USB_MSG("Low speed device connected at "
+				"hub 0x%08X, port %u", device, val);
+
+			hcd_add_child(device, val, HCD_SPEED_LOW);
+			break;
+
+		case HCD_EVENT_PORT_FS_CONNECTED:
+			USB_ASSERT((HCD_STATE_DISCONNECTED != device->state),
+				"Device is marked as 'disconnected' "
+				"for 'hub port FS attach' event");
+
+			USB_MSG("Full speed device connected at "
+				"hub 0x%08X, port %u", device, val);
+
+			hcd_add_child(device, val, HCD_SPEED_FULL);
+			break;
+
+		case HCD_EVENT_PORT_HS_CONNECTED:
+			USB_ASSERT((HCD_STATE_DISCONNECTED != device->state),
+				"Device is marked as 'disconnected' "
+				"for 'hub port HS attach' event");
+
+			USB_MSG("High speed device connected at "
+				"hub 0x%08X, port %u", device, val);
+
+			hcd_add_child(device, val, HCD_SPEED_HIGH);
+			break;
+
+		case HCD_EVENT_PORT_DISCONNECTED:
+			USB_ASSERT((HCD_STATE_DISCONNECTED != device->state),
+				"Device is marked as 'disconnected' "
+				"for 'hub port detach' event");
+
+			hcd_delete_child(device, val);
+
+			USB_MSG("Device disconnected from "
+				"hub 0x%08X, port %u", device, val);
 
 			break;
 
 		case HCD_EVENT_ENDPOINT:
-		case HCD_EVENT_URB:
-			/* Allow device thread to continue with it's logic */
-			if (HCD_STATE_DISCONNECTED != this_device->state)
-				hcd_device_continue(this_device);
+			USB_ASSERT((HCD_STATE_DISCONNECTED != device->state),
+				"Parent device is marked as 'disconnected' "
+				"for 'endpoint' event");
+
+			/* Alters 'device' when endpoint is allocated to
+			 * child rather than parent (hub), which allows
+			 * proper thread to continue */
+			device = hcd_get_child_for_ep(device, val);
+
+			/* Check if anything at all, waits for such endpoint */
+			if (device)
+				/* Allow device thread, waiting for endpoint
+				 * event, to continue with its logic */
+				hcd_device_continue(device, event, val);
 			else
-				USB_MSG("Device is marked as 'disconnected' "
-					"for 'EP' event");
+				USB_MSG("No device waits for endpoint %u", val);
+
+			break;
+
+		case HCD_EVENT_URB:
+			USB_ASSERT((HCD_STATE_DISCONNECTED != device->state),
+				"Device is marked as 'disconnected' "
+				"for 'URB' event");
+
+			/* Allow device thread to continue with it's logic */
+			hcd_device_continue(device, event, val);
 
 			break;
 
 		default:
 			USB_ASSERT(0, "Illegal HCD event");
+	}
+}
+
+
+/*===========================================================================*
+ *    hcd_update_port                                                        *
+ *===========================================================================*/
+void
+hcd_update_port(hcd_driver_state * driver, hcd_event event)
+{
+	DEBUG_DUMP;
+
+	switch (event) {
+		case HCD_EVENT_CONNECTED:
+			/* Check if already assigned */
+			USB_ASSERT(NULL == driver->port_device,
+				"Device was already connected before "
+				"receiving 'connection' event");
+
+			/* Assign new blank device */
+			driver->port_device = hcd_new_device();
+
+			/* Associate this device with driver */
+			driver->port_device->driver = driver;
 			break;
+
+		case HCD_EVENT_DISCONNECTED:
+			/* Check if already released */
+			USB_ASSERT(NULL != driver->port_device,
+				"Device was already disconnected before "
+				"receiving 'disconnection' event");
+
+			/* Release device */
+			hcd_delete_device(driver->port_device);
+
+			/* Clear port device pointer */
+			driver->port_device = NULL;
+			break;
+
+		default:
+			USB_ASSERT(0, "Illegal port update event");
 	}
 }
 
@@ -132,11 +253,12 @@ hcd_device_thread(void * thread_args)
 
 	DEBUG_DUMP;
 
+	/* Set device thread priority higher so it
+	 * won't change context unless explicitly locked */
+	_ddekit_thread_set_myprio(2);
+
 	/* Retrieve structures from generic data */
 	this_device = (hcd_device_state *)thread_args;
-
-	/* Plugged in */
-	this_device->state = HCD_STATE_CONNECTION_PENDING;
 
 	/* Enumeration sequence */
 	if (EXIT_SUCCESS != hcd_enumerate(this_device))
@@ -153,11 +275,8 @@ hcd_device_thread(void * thread_args)
 	/* Start handling URB's */
 	for(;;) {
 		/* Block and wait for something like 'submit URB' */
-		hcd_device_wait(this_device, HCD_EVENT_URB, HCD_ANY_EP);
-
-		if (EXIT_SUCCESS != hcd_handle_urb(this_device,
-						&(this_device->urb)))
-			hcd_device_finish(this_device, "URB handling failed");
+		hcd_device_wait(this_device, HCD_EVENT_URB, HCD_UNUSED_VAL);
+		hcd_handle_urb(this_device);
 	}
 
 	/* Finish device handling to avoid leaving thread */
@@ -177,8 +296,172 @@ hcd_device_finish(hcd_device_state * this_device, const char * finish_msg)
 
 	/* Lock forever */
 	for (;;) {
-		hcd_device_wait(this_device, HCD_EVENT_URB, HCD_ANY_EP);
+		hcd_device_wait(this_device, HCD_EVENT_URB, HCD_UNUSED_VAL);
 		USB_MSG("Failed attempt to continue finished thread");
+	}
+}
+
+
+/*===========================================================================*
+ *    hcd_get_child_for_ep                                                   *
+ *===========================================================================*/
+static hcd_device_state *
+hcd_get_child_for_ep(hcd_device_state * device, hcd_reg1 ep)
+{
+	hcd_device_state * child_found;
+	hcd_device_state * final_found;
+	hcd_device_state * child;
+	hcd_reg1 child_num;
+
+	DEBUG_DUMP;
+
+	/* Nothing yet */
+	final_found = NULL;
+
+	/* Check if any children (and their children) wait for EP event */
+	/* Every device in tree is checked every time so errors can be found */
+	for (child_num = 0; child_num < HCD_CHILDREN; child_num++) {
+		/* Device, to be checked for EP event recursively... */
+		child = device->child[child_num];
+
+		/* ...but only if attached */
+		if (NULL != child) {
+			/* Look deeper first */
+			child_found = hcd_get_child_for_ep(child, ep);
+
+			if (NULL != child_found) {
+				/* Only one device can wait for EP event */
+				USB_ASSERT((NULL == final_found),
+					"More than one device waits for EP");
+				/* Remember what was found */
+				final_found = child_found;
+			}
+		}
+	}
+
+	/* Check this device last */
+	if ((HCD_EVENT_ENDPOINT == device->wait_event) &&
+	    (ep == device->wait_ep)) {
+		/* Only one device can wait for EP event */
+		USB_ASSERT((NULL == final_found),
+			"More than one device waits for EP");
+		/* Remember what was found */
+		final_found = device;
+	}
+
+	return final_found;
+}
+
+
+/*===========================================================================*
+ *    hcd_add_child                                                          *
+ *===========================================================================*/
+static void
+hcd_add_child(hcd_device_state * parent, hcd_reg1 port, hcd_speed speed)
+{
+	DEBUG_DUMP;
+
+	USB_ASSERT(port < HCD_CHILDREN, "Port number too high");
+	USB_ASSERT(NULL == parent->child[port], "Child device already exists");
+
+	/* Basic addition */
+	parent->child[port] = hcd_new_device();
+	parent->child[port]->parent = parent;
+
+	/* Inherit parent's driver */
+	parent->child[port]->driver = parent->driver;
+
+	/* Remember speed, determined by hub driver */
+	parent->child[port]->speed = speed;
+
+	/* Try creating new thread for device */
+	if (hcd_connect_device(parent->child[port], hcd_device_thread))
+		USB_MSG("Device creation failed, nothing more "
+			"will happen until disconnected");
+}
+
+
+/*===========================================================================*
+ *    hcd_delete_child                                                       *
+ *===========================================================================*/
+static void
+hcd_delete_child(hcd_device_state * parent, hcd_reg1 port)
+{
+	hcd_device_state * child;
+
+	DEBUG_DUMP;
+
+	USB_ASSERT(port < HCD_CHILDREN, "Port number too high");
+
+	child = parent->child[port]; /* Child to be detached */
+
+	USB_ASSERT(NULL != child, "Child device does not exist");
+
+	/* Make this child device and all its attached children
+	 * disconnect recursively */
+	hcd_disconnect_tree(child);
+
+	/* Delete to release device itself */
+	hcd_delete_device(child);
+
+	/* Mark as released */
+	parent->child[port] = NULL;
+}
+
+
+/*===========================================================================*
+ *    hcd_disconnect_tree                                                    *
+ *===========================================================================*/
+static void
+hcd_disconnect_tree(hcd_device_state * device)
+{
+	hcd_reg1 child_num;
+
+	DEBUG_DUMP;
+
+	/* Generate disconnect event for all children */
+	for (child_num = 0; child_num < HCD_CHILDREN; child_num++) {
+		if (NULL != device->child[child_num])
+			hcd_handle_event(device, HCD_EVENT_PORT_DISCONNECTED,
+					child_num);
+	}
+
+	/* If this device was detached during URB handling, some steps must be
+	 * taken to ensure that no process/thread is waiting for completion */
+	if (NULL != device->urb) {
+		USB_MSG("Unplugged device had unhandled URB");
+		/* Tell device driver that device was detached */
+		/* TODO: ENODEV selected for that */
+		device->urb->inout_status = ENODEV;
+		hcd_complete_urb(device);
+	}
+
+	/* If connect callback was used before, call
+	 * it's equivalent to signal disconnection */
+	if (HCD_STATE_CONNECTED == device->state)
+		hcd_disconnect_cb(device);
+
+	/* Handle device disconnection (freeing memory etc.) */
+	hcd_disconnect_device(device);
+}
+
+
+/*===========================================================================*
+ *    hcd_dump_tree                                                          *
+ *===========================================================================*/
+static void
+hcd_dump_tree(hcd_device_state * device, hcd_reg1 level)
+{
+	hcd_reg1 child_num;
+
+	/* DEBUG_DUMP; */ /* Let's keep tree output cleaner */
+
+	USB_MSG("Device on level %03u: 0x%08X", level, device);
+
+	/* Traverse device tree recursively */
+	for (child_num = 0; child_num < HCD_CHILDREN; child_num++) {
+		if (NULL != device->child[child_num])
+			hcd_dump_tree(device->child[child_num], level + 1);
 	}
 }
 
@@ -195,18 +478,22 @@ hcd_enumerate(hcd_device_state * this_device)
 
 	d = this_device->driver;
 
-	/* First let driver reset device */
-	if (EXIT_SUCCESS != d->reset_device(d->private_data,
-					&(this_device->speed))) {
-		USB_MSG("Failed to reset device");
-		return EXIT_FAILURE;
+	/* Having a parent device also means being reseted by it
+	 * so only reset devices that have no parents */
+	if (NULL == this_device->parent) {
+		/* First let driver reset device */
+		if (EXIT_SUCCESS != d->reset_device(d->private_data,
+						&(this_device->speed))) {
+			USB_MSG("Failed to reset device");
+			return EXIT_FAILURE;
+		}
 	}
 
 	/* Default MaxPacketSize, based on speed */
-	if (HCD_SPEED_LOW == this_device->speed)
-		this_device->max_packet_size = HCD_LS_MAXPACKETSIZE;
-	else
+	if (HCD_SPEED_HIGH == this_device->speed)
 		this_device->max_packet_size = HCD_HS_MAXPACKETSIZE;
+	else
+		this_device->max_packet_size = HCD_LS_MAXPACKETSIZE;
 
 	/* Get device descriptor */
 	if (EXIT_SUCCESS != hcd_get_device_descriptor(this_device)) {
@@ -214,14 +501,44 @@ hcd_enumerate(hcd_device_state * this_device)
 		return EXIT_FAILURE;
 	}
 
-	/* TODO: Dynamic device addressing should be added here, when more
-	 * than one device can be handled at a time */
+	/* Remember max packet size from device descriptor */
+	this_device->max_packet_size = this_device->device_desc.bMaxPacketSize;
 
-	/* Set address */
-	if (EXIT_SUCCESS != hcd_set_address(this_device, HCD_ATTACHED_ADDR)) {
+	/* Dump device descriptor in debug mode */
+#ifdef DEBUG
+	{
+		hcd_device_descriptor * d;
+		d = &(this_device->device_desc);
+
+		USB_DBG("<<DEVICE>>");
+		USB_DBG("bLength %02X",			d->bLength);
+		USB_DBG("bDescriptorType %02X",		d->bDescriptorType);
+		USB_DBG("bcdUSB %04X",			UGETW(d->bcdUSB));
+		USB_DBG("bDeviceClass %02X",		d->bDeviceClass);
+		USB_DBG("bDeviceSubClass %02X",		d->bDeviceSubClass);
+		USB_DBG("bDeviceProtocol %02X",		d->bDeviceProtocol);
+		USB_DBG("bMaxPacketSize %02X",		d->bMaxPacketSize);
+		USB_DBG("idVendor %04X",		UGETW(d->idVendor));
+		USB_DBG("idProduct %04X",		UGETW(d->idProduct));
+		USB_DBG("bcdDevice %04X",		UGETW(d->bcdDevice));
+		USB_DBG("iManufacturer %02X",		d->iManufacturer);
+		USB_DBG("iProduct %02X",		d->iProduct);
+		USB_DBG("iSerialNumber %02X",		d->iSerialNumber);
+		USB_DBG("bNumConfigurations %02X",	d->bNumConfigurations);
+	}
+#endif
+
+	/* Set reserved address */
+	if (EXIT_SUCCESS != hcd_set_address(this_device)) {
 		USB_MSG("Failed to set device address");
 		return EXIT_FAILURE;
 	}
+
+	/* Sleep 5msec to allow addressing */
+	hcd_os_nanosleep(HCD_NANOSLEEP_MSEC(5));
+
+	/* Remember what was assigned in hardware */
+	this_device->current_address = this_device->reserved_address;
 
 	/* Get other descriptors */
 	if (EXIT_SUCCESS != hcd_get_descriptor_tree(this_device)) {
@@ -252,11 +569,11 @@ static int
 hcd_get_device_descriptor(hcd_device_state * this_device)
 {
 	hcd_ctrlrequest setup;
+	hcd_urb urb;
 
 	DEBUG_DUMP;
 
 	/* TODO: magic numbers, no header for these */
-
 	/* Format setup packet */
 	setup.bRequestType	= 0x80;			/* IN */
 	setup.bRequest		= 0x06;			/* Get descriptor */
@@ -264,45 +581,31 @@ hcd_get_device_descriptor(hcd_device_state * this_device)
 	setup.wIndex		= 0x0000;
 	setup.wLength		= sizeof(this_device->device_desc);
 
-	/* Handle formatted setup packet */
-	if (EXIT_SUCCESS != hcd_setup_packet(this_device, &setup,
-						HCD_DEFAULT_EP)) {
-		USB_MSG("Handling setup packet failed");
+	/* Prepare self-URB */
+	memset(&urb, 0, sizeof(urb));
+	urb.direction = HCD_DIRECTION_IN;
+	urb.endpoint = HCD_DEFAULT_EP;
+	urb.in_setup = &setup;
+	urb.inout_data = (hcd_reg1 *)(&(this_device->device_desc));
+	urb.target_device = this_device;
+	urb.type = HCD_TRANSFER_CONTROL;
+
+	/* Put it to be scheduled and wait for control to get back */
+	hcd_schedule_internal_urb(&urb);
+	hcd_device_wait(this_device, HCD_EVENT_URB, HCD_UNUSED_VAL);
+	hcd_handle_urb(this_device);
+
+	/* Check if URB submission completed successfully */
+	if (urb.inout_status) {
+		USB_MSG("URB submission failed");
 		return EXIT_FAILURE;
 	}
 
-	/* Put what was read in device descriptor */
-	if (EXIT_SUCCESS != hcd_finish_setup(this_device,
-					&(this_device->device_desc),
-					sizeof(this_device->device_desc)))
+	/* Check if expected size was received */
+	if (urb.out_size != setup.wLength) {
+		USB_MSG("URB submission returned invalid amount of data");
 		return EXIT_FAILURE;
-
-	/* Remember max packet size from device descriptor */
-	this_device->max_packet_size = this_device->device_desc.bMaxPacketSize;
-
-	/* Dump device descriptor in debug mode */
-#ifdef DEBUG
-	{
-		hcd_device_descriptor * d;
-		d = &(this_device->device_desc);
-
-		USB_DBG("<<DEVICE>>");
-		USB_DBG("bLength %02X",			d->bLength);
-		USB_DBG("bDescriptorType %02X",		d->bDescriptorType);
-		USB_DBG("bcdUSB %04X",			UGETW(d->bcdUSB));
-		USB_DBG("bDeviceClass %02X",		d->bDeviceClass);
-		USB_DBG("bDeviceSubClass %02X",		d->bDeviceSubClass);
-		USB_DBG("bDeviceProtocol %02X",		d->bDeviceProtocol);
-		USB_DBG("bMaxPacketSize %02X",		d->bMaxPacketSize);
-		USB_DBG("idVendor %04X",		UGETW(d->idVendor));
-		USB_DBG("idProduct %04X",		UGETW(d->idProduct));
-		USB_DBG("bcdDevice %04X",		UGETW(d->bcdDevice));
-		USB_DBG("iManufacturer %02X",		d->iManufacturer);
-		USB_DBG("iProduct %02X",		d->iProduct);
-		USB_DBG("iSerialNumber %02X",		d->iSerialNumber);
-		USB_DBG("bNumConfigurations %02X",	d->bNumConfigurations);
 	}
-#endif
 
 	return EXIT_SUCCESS;
 }
@@ -312,35 +615,50 @@ hcd_get_device_descriptor(hcd_device_state * this_device)
  *    hcd_set_address                                                        *
  *===========================================================================*/
 static int
-hcd_set_address(hcd_device_state * this_device, hcd_reg1 address)
+hcd_set_address(hcd_device_state * this_device)
 {
 	hcd_ctrlrequest setup;
+	hcd_urb urb;
 
 	DEBUG_DUMP;
 
 	/* Check for legal USB device address (must be non-zero as well) */
-	USB_ASSERT((address > HCD_DEFAULT_ADDR) && (address <= HCD_LAST_ADDR),
+	USB_ASSERT((this_device->reserved_address > HCD_DEFAULT_ADDR) &&
+		(this_device->reserved_address <= HCD_LAST_ADDR),
 		"Illegal device address supplied");
 
 	/* TODO: magic numbers, no header for these */
 	setup.bRequestType	= 0x00;			/* OUT */
 	setup.bRequest		= 0x05;			/* Set address */
-	setup.wValue		= address;
+	setup.wValue		= this_device->reserved_address;
 	setup.wIndex		= 0x0000;
 	setup.wLength		= 0x0000;
 
-	/* Handle formatted setup packet */
-	if (EXIT_SUCCESS != hcd_setup_packet(this_device, &setup,
-						HCD_DEFAULT_EP)) {
-		USB_MSG("Handling setup packet failed");
+	/* Prepare self-URB */
+	memset(&urb, 0, sizeof(urb));
+	urb.direction = HCD_DIRECTION_OUT;
+	urb.endpoint = HCD_DEFAULT_EP;
+	urb.in_setup = &setup;
+	urb.inout_data = NULL;
+	urb.target_device = this_device;
+	urb.type = HCD_TRANSFER_CONTROL;
+
+	/* Put it to be scheduled and wait for control to get back */
+	hcd_schedule_internal_urb(&urb);
+	hcd_device_wait(this_device, HCD_EVENT_URB, HCD_UNUSED_VAL);
+	hcd_handle_urb(this_device);
+
+	/* Check if URB submission completed successfully */
+	if (urb.inout_status) {
+		USB_MSG("URB submission failed");
 		return EXIT_FAILURE;
 	}
 
-	/* Sleep 5msec to allow addressing */
-	hcd_os_nanosleep(HCD_NANOSLEEP_MSEC(5));
-
-	/* Remember what was assigned in hardware */
-	this_device->address = address;
+	/* Check if expected size was received */
+	if (urb.out_size != setup.wLength) {
+		USB_MSG("URB submission returned invalid amount of data");
+		return EXIT_FAILURE;
+	}
 
 	return EXIT_SUCCESS;
 }
@@ -352,19 +670,24 @@ hcd_set_address(hcd_device_state * this_device, hcd_reg1 address)
 static int
 hcd_get_descriptor_tree(hcd_device_state * this_device)
 {
-	hcd_config_descriptor config_descriptor;
+	hcd_config_descriptor temp_config_descriptor;
 	hcd_ctrlrequest setup;
-	hcd_reg4 total_length;
-	hcd_reg4 buffer_length;
-	int completed;
+	hcd_urb urb;
+
+	/* To receive data */
+	hcd_reg4 expected_length;
+	hcd_reg1 * expected_buffer;
+
+	int retval;
 
 	DEBUG_DUMP;
 
-	/* First, ask only for configuration itself to get length info */
-	buffer_length = sizeof(config_descriptor);
-	completed = 0;
+	/* Initially */
+	retval = EXIT_FAILURE;
+	expected_buffer = NULL;
 
-	do {
+	/* First part gets only configuration to find out total length */
+	{
 		/* TODO: Default configuration is hard-coded
 		 * but others are rarely used anyway */
 		/* TODO: magic numbers, no header for these */
@@ -372,62 +695,107 @@ hcd_get_descriptor_tree(hcd_device_state * this_device)
 		setup.bRequest		= 0x06;		/* Get descriptor */
 		setup.wValue		= 0x0200 | HCD_DEFAULT_CONFIG;
 		setup.wIndex		= 0x0000;
-		setup.wLength		= buffer_length;
+		setup.wLength		= sizeof(temp_config_descriptor);
 
-		/* Handle formatted setup packet */
-		if (EXIT_SUCCESS != hcd_setup_packet(this_device, &setup,
-							HCD_DEFAULT_EP)) {
-			USB_MSG("Handling setup packet failed");
-			return EXIT_FAILURE;
+		/* Prepare self-URB */
+		memset(&urb, 0, sizeof(urb));
+		urb.direction = HCD_DIRECTION_IN;
+		urb.endpoint = HCD_DEFAULT_EP;
+		urb.in_setup = &setup;
+		urb.inout_data = (hcd_reg1 *)(&temp_config_descriptor);
+		urb.target_device = this_device;
+		urb.type = HCD_TRANSFER_CONTROL;
+
+		/* Put it to be scheduled and wait for control to get back */
+		hcd_schedule_internal_urb(&urb);
+		hcd_device_wait(this_device, HCD_EVENT_URB, HCD_UNUSED_VAL);
+		hcd_handle_urb(this_device);
+
+		/* Check if URB submission completed successfully */
+		if (urb.inout_status) {
+			USB_MSG("URB submission failed");
+			goto FINISH;
 		}
 
-		/* If we only asked for configuration itself
-		 * then ask again for other descriptors */
-		if (sizeof(config_descriptor) == buffer_length) {
-
-			/* Put what was already read in configuration
-			 * descriptor for analysis */
-			if (EXIT_SUCCESS != hcd_finish_setup(this_device,
-							&config_descriptor,
-							buffer_length))
-				return EXIT_FAILURE;
-
-			/* Continue only if there is more data */
-			total_length = UGETW(config_descriptor.wTotalLength);
-
-			if (total_length < sizeof(config_descriptor)) {
-				/* This should never happen for a fine device */
-				USB_MSG("Illegal wTotalLength value");
-				return EXIT_FAILURE;
-			} else if (sizeof(config_descriptor) == total_length) {
-				/* Nothing more was in descriptor anyway */
-				completed = 1;
-			} else {
-				/* Read whatever is needed */
-				buffer_length = total_length;
-			}
-
-		} else {
-			/* All data for given configuration was read */
-			completed = 1;
+		/* Check if expected size was received */
+		if (urb.out_size != setup.wLength) {
+			USB_MSG("URB submission returned "
+				"invalid amount of data");
+			goto FINISH;
 		}
 	}
-	while (!completed);
 
-	/* Validate... */
-	if (EXIT_SUCCESS != hcd_finish_setup(this_device, NULL, total_length))
-		return EXIT_FAILURE;
+	/* Get total expected length */
+	expected_length = UGETW(temp_config_descriptor.wTotalLength);
 
-	/* ... and create tree based on received buffer */
-	if (EXIT_SUCCESS != hcd_buffer_to_tree(this_device->control_data,
-						this_device->control_len,
+	/* Check for abnormal value */
+	if (expected_length > HCD_SANE_DESCRIPTOR_LENGTH) {
+		USB_MSG("Total descriptor length declared is too high");
+		goto FINISH;
+	}
+
+	/* Get descriptor buffer to hold everything expected */
+	if (NULL == (expected_buffer = malloc(expected_length))) {
+		USB_MSG("Descriptor allocation failed");
+		goto FINISH;
+	}
+
+	/* Second part gets all available descriptors */
+	{
+		/* TODO: Default configuration is hard-coded
+		 * but others are rarely used anyway */
+		/* TODO: magic numbers, no header for these */
+		setup.bRequestType	= 0x80;		/* IN */
+		setup.bRequest		= 0x06;		/* Get descriptor */
+		setup.wValue		= 0x0200 | HCD_DEFAULT_CONFIG;
+		setup.wIndex		= 0x0000;
+		setup.wLength		= expected_length;
+
+		/* Prepare self-URB */
+		memset(&urb, 0, sizeof(urb));
+		urb.direction = HCD_DIRECTION_IN;
+		urb.endpoint = HCD_DEFAULT_EP;
+		urb.in_setup = &setup;
+		urb.inout_data = expected_buffer;
+		urb.target_device = this_device;
+		urb.type = HCD_TRANSFER_CONTROL;
+
+		/* Put it to be scheduled and wait for control to get back */
+		hcd_schedule_internal_urb(&urb);
+		hcd_device_wait(this_device, HCD_EVENT_URB, HCD_UNUSED_VAL);
+		hcd_handle_urb(this_device);
+
+		/* Check if URB submission completed successfully */
+		if (urb.inout_status) {
+			USB_MSG("URB submission failed");
+			goto FINISH;
+		}
+
+		/* Check if expected size was received */
+		if (urb.out_size != setup.wLength) {
+			USB_MSG("URB submission returned "
+				"invalid amount of data");
+			goto FINISH;
+		}
+	}
+
+	if (EXIT_SUCCESS != hcd_buffer_to_tree(expected_buffer,
+						(int)expected_length,
 						&(this_device->config_tree))) {
-		/* This should never happen for a fine device */
-		USB_MSG("Illegal descriptor values");
-		return EXIT_FAILURE;
+		USB_MSG("Broken descriptor data");
+		goto FINISH;
 	}
 
-	return EXIT_SUCCESS;
+	/* No errors occurred */
+	retval = EXIT_SUCCESS;
+
+	FINISH:
+
+	/* Release allocated buffer */
+	if (expected_buffer)
+		free(expected_buffer);
+
+	return retval;
 }
 
 
@@ -438,6 +806,7 @@ static int
 hcd_set_configuration(hcd_device_state * this_device, hcd_reg1 configuration)
 {
 	hcd_ctrlrequest setup;
+	hcd_urb urb;
 
 	DEBUG_DUMP;
 
@@ -448,29 +817,39 @@ hcd_set_configuration(hcd_device_state * this_device, hcd_reg1 configuration)
 	setup.wIndex		= 0x0000;
 	setup.wLength		= 0x0000;
 
-	/* Handle formatted setup packet */
-	if (EXIT_SUCCESS != hcd_setup_packet(this_device, &setup,
-						HCD_DEFAULT_EP)) {
-		USB_MSG("Handling setup packet failed");
-		return EXIT_FAILURE;
-	}
+	/* Prepare self-URB */
+	memset(&urb, 0, sizeof(urb));
+	urb.direction = HCD_DIRECTION_OUT;
+	urb.endpoint = HCD_DEFAULT_EP;
+	urb.in_setup = &setup;
+	urb.inout_data = NULL;
+	urb.target_device = this_device;
+	urb.type = HCD_TRANSFER_CONTROL;
 
-	return EXIT_SUCCESS;
+	/* Put it to be scheduled and wait for control to get back */
+	hcd_schedule_internal_urb(&urb);
+	hcd_device_wait(this_device, HCD_EVENT_URB, HCD_UNUSED_VAL);
+	hcd_handle_urb(this_device);
+
+	return urb.inout_status;
 }
 
 
 /*===========================================================================*
  *    hcd_handle_urb                                                         *
  *===========================================================================*/
-static int
-hcd_handle_urb(hcd_device_state * this_device, hcd_urb * urb)
+static void
+hcd_handle_urb(hcd_device_state * this_device)
 {
+	hcd_urb * urb;
 	int transfer_status;
 
 	DEBUG_DUMP;
 
-	/* TODO: One device only */
-	USB_ASSERT(NULL != urb, "NULL URB given");
+	/* Retrieve URB */
+	urb = this_device->urb;
+
+	USB_ASSERT(NULL != urb, "No URB supplied");
 	USB_ASSERT(this_device == urb->target_device, "Unknown device for URB");
 
 	/* Only if URB parsing was completed... */
@@ -491,13 +870,8 @@ hcd_handle_urb(hcd_device_state * this_device, hcd_urb * urb)
 							this_device, urb);
 				break;
 
-			case HCD_TRANSFER_ISOCHRONOUS:
-				/* TODO: ISO transfer */
-				USB_MSG("ISO transfer not supported");
-				break;
-
 			default:
-				USB_MSG("Invalid transfer type 0x%02X",
+				USB_MSG("Unsupported transfer type 0x%02X",
 							(int)urb->type);
 				break;
 		}
@@ -509,13 +883,27 @@ hcd_handle_urb(hcd_device_state * this_device, hcd_urb * urb)
 	} else
 		USB_MSG("Invalid URB supplied");
 
-	/* Call completion regardless of status */
-	hcd_completion_cb(urb);
+	/* Perform completion routine */
+	hcd_complete_urb(this_device);
+}
 
-	/* TODO: Only critical failures should ever yield EXIT_FAILURE, so
-	 * return is not bound to transfer_status for now, to let device
-	 * driver act accordingly */
-	return EXIT_SUCCESS;
+
+/*===========================================================================*
+ *    hcd_complete_urb                                                       *
+ *===========================================================================*/
+static void
+hcd_complete_urb(hcd_device_state * this_device)
+{
+	DEBUG_DUMP;
+
+	/* Signal scheduler that URB was handled */
+	this_device->urb->handled(this_device->urb);
+
+	/* Use this callback in case it is an external URB */
+	hcd_completion_cb(this_device->urb);
+
+	/* Make device forget about this URB */
+	this_device->urb = NULL;
 }
 
 
@@ -557,9 +945,7 @@ hcd_control_urb(hcd_device_state * this_device, hcd_urb * urb)
 	}
 
 	/* Put what was read back into URB */
-	if (EXIT_SUCCESS != hcd_finish_setup(this_device,
-					urb->inout_data,
-					HCD_ANY_LENGTH))
+	if (EXIT_SUCCESS != hcd_finish_setup(this_device, urb->inout_data))
 		return EXIT_FAILURE;
 
 	/* Write transfer output info to URB */
@@ -627,7 +1013,14 @@ hcd_non_control_urb(hcd_device_state * this_device, hcd_urb * urb)
 	request.direction = urb->direction;
 	request.data_left = (int)urb->in_size;
 	request.data = urb->inout_data;
+	/* TODO: This was changed to allow software scheduler to work correctly
+	 * by switching URBs when they NAK, rather than waiting forever if URB
+	 * which requires such waiting, was issued */
+#if 0
 	request.interval = urb->interval;
+#else
+	request.interval = HCD_DEFAULT_NAKLIMIT;
+#endif
 
 	/* Assign to let know how much data can be transfered at a time */
 	request.max_packet_size = UGETW(e->descriptor.wMaxPacketSize);
@@ -669,7 +1062,7 @@ hcd_setup_packet(hcd_device_state * this_device, hcd_ctrlrequest * setup,
 	USB_ASSERT(this_device->max_packet_size >= HCD_LS_MAXPACKETSIZE,
 		"Illegal MaxPacketSize");
 	USB_ASSERT(ep <= HCD_LAST_EP, "Invalid EP number");
-	USB_ASSERT(this_device->address <= HCD_LAST_ADDR,
+	USB_ASSERT(this_device->current_address <= HCD_LAST_ADDR,
 		"Invalid device address");
 
 	/* Initially... */
@@ -678,7 +1071,8 @@ hcd_setup_packet(hcd_device_state * this_device, hcd_ctrlrequest * setup,
 	this_device->control_len = 0;		/* Nothing read yet */
 
 	/* Set parameters for further communication */
-	d->setup_device(d->private_data, ep, this_device->address);
+	d->setup_device(d->private_data, ep, this_device->current_address,
+			NULL, NULL);
 
 	/* Send setup packet */
 	d->setup_stage(d->private_data, setup);
@@ -725,8 +1119,8 @@ hcd_setup_packet(hcd_device_state * this_device, hcd_ctrlrequest * setup,
 				current_byte += rx_len;
 				this_device->control_len += rx_len;
 
-				/* If full max sized packet was read... */
-				if (rx_len == (int)this_device->max_packet_size)
+				/* If max sized packet was read (or more)... */
+				if (rx_len >= (int)this_device->max_packet_size)
 					/* ...try reading next packet even if
 					 * zero bytes may be received */
 					continue;
@@ -796,8 +1190,7 @@ hcd_setup_packet(hcd_device_state * this_device, hcd_ctrlrequest * setup,
  *    hcd_finish_setup                                                       *
  *===========================================================================*/
 static int
-hcd_finish_setup(hcd_device_state * this_device, void * output,
-		hcd_reg4 expected)
+hcd_finish_setup(hcd_device_state * this_device, void * output)
 {
 	DEBUG_DUMP;
 
@@ -805,19 +1198,6 @@ hcd_finish_setup(hcd_device_state * this_device, void * output,
 	if (this_device->control_len < 0) {
 		USB_MSG("Negative control transfer output length");
 		return EXIT_FAILURE;
-	}
-
-	/* In case it is required... */
-	if (HCD_ANY_LENGTH != expected) {
-		/* ...check for expected length */
-		if ((hcd_reg4)this_device->control_len != expected) {
-			USB_MSG("Control transfer output length mismatch");
-			return EXIT_FAILURE;
-		}
-
-		/* Valid but there is no need to copy anything */
-		if (0u == expected)
-			return EXIT_SUCCESS;
 	}
 
 	/* Length is valid but output not supplied */
@@ -846,8 +1226,8 @@ hcd_data_transfer(hcd_device_state * this_device, hcd_datarequest * request)
 	USB_ASSERT((request->endpoint <= HCD_LAST_EP) &&
 		(request->endpoint > HCD_DEFAULT_EP),
 		"Invalid EP number");
-	USB_ASSERT((this_device->address <= HCD_LAST_ADDR) &&
-		(this_device->address > HCD_DEFAULT_ADDR),
+	USB_ASSERT((this_device->current_address <= HCD_LAST_ADDR) &&
+		(this_device->current_address > HCD_DEFAULT_ADDR),
 		"Invalid device address");
 
 	/* Initially... */
@@ -855,7 +1235,9 @@ hcd_data_transfer(hcd_device_state * this_device, hcd_datarequest * request)
 
 	/* Set parameters for further communication */
 	d->setup_device(d->private_data, request->endpoint,
-			this_device->address);
+			this_device->current_address,
+			&(this_device->ep_tx_tog[request->endpoint]),
+			&(this_device->ep_rx_tog[request->endpoint]));
 
 	/* Check transfer direction first */
 	if (HCD_DIRECTION_IN == request->direction) {
