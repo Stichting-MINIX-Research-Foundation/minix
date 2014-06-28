@@ -40,6 +40,7 @@ do
 done
 
 : ${IMG=minix_x86.img}
+: ${RC=minix_x86.rc}
 
 #
 # Are we going to build the minix sources?
@@ -119,6 +120,12 @@ echo "creating the file systems"
 # FIX put "input somewhere clean"
 #
 cat ${DESTDIR}/METALOG.sanitised | ${CROSS_TOOLS}/nbmtree -N ${DESTDIR}/etc -C -K device > ${IMG_DIR}/input
+
+# add rc (if any)
+if [ -f ${RC} ]; then
+    cp ${RC} ${DESTDIR}/usr/etc/rc.local
+    echo "./usr/etc/rc.local type=file uid=0 gid=0 mode=0644" >> ${IMG_DIR}/input
+fi
 
 # add fstab
 echo "./etc/fstab type=file uid=0 gid=0 mode=0755 size=747 time=1365060731.000000000" >> ${IMG_DIR}/input
