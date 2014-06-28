@@ -20,7 +20,7 @@ function rc_create {
 
 set -o errexit
 
-mkdir /ext
+[ -d /ext ] || mkdir /ext
 mount -t ext2 /dev/c0d1 /ext
 
 if [ -f /ext/etc/rc ]; then
