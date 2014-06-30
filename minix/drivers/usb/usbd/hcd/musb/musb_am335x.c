@@ -4,10 +4,10 @@
 
 #include <string.h>					/* memset */
 
-#include <usb/hcd_common.h>
-#include <usb/hcd_platforms.h>
-#include <usb/hcd_interface.h>
-#include <usb/usb_common.h>
+#include <usbd/hcd_common.h>
+#include <usbd/hcd_platforms.h>
+#include <usbd/hcd_interface.h>
+#include <usbd/usbd_common.h>
 
 #include "musb_core.h"
 

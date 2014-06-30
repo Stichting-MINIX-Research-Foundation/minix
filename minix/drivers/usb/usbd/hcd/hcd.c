@@ -6,10 +6,10 @@
 
 #include <minix/drivers.h>			/* errno with sign */
 
-#include <usb/hcd_common.h>
-#include <usb/hcd_ddekit.h>
-#include <usb/hcd_interface.h>
-#include <usb/usb_common.h>
+#include <usbd/hcd_common.h>
+#include <usbd/hcd_ddekit.h>
+#include <usbd/hcd_interface.h>
+#include <usbd/usbd_common.h>
 
 
 /*===========================================================================*
@@ -203,10 +203,10 @@ hcd_enumerate(hcd_device_state * this_device)
 	}
 
 	/* Default MaxPacketSize, based on speed */
-	if (HCD_SPEED_LOW == this_device->speed)
-		this_device->max_packet_size = HCD_LS_MAXPACKETSIZE;
-	else
+	if (HCD_SPEED_HIGH == this_device->speed)
 		this_device->max_packet_size = HCD_HS_MAXPACKETSIZE;
+	else
+		this_device->max_packet_size = HCD_LS_MAXPACKETSIZE;
 
 	/* Get device descriptor */
 	if (EXIT_SUCCESS != hcd_get_device_descriptor(this_device)) {
@@ -725,8 +725,8 @@ hcd_setup_packet(hcd_device_state * this_device, hcd_ctrlrequest * setup,
 				current_byte += rx_len;
 				this_device->control_len += rx_len;
 
-				/* If full max sized packet was read... */
-				if (rx_len == (int)this_device->max_packet_size)
+				/* If max sized packet was read (or more)... */
+				if (rx_len >= (int)this_device->max_packet_size)
 					/* ...try reading next packet even if
 					 * zero bytes may be received */
 					continue;
@@ -811,7 +811,9 @@ hcd_finish_setup(hcd_device_state * this_device, void * output,
 	if (HCD_ANY_LENGTH != expected) {
 		/* ...check for expected length */
 		if ((hcd_reg4)this_device->control_len != expected) {
-			USB_MSG("Control transfer output length mismatch");
+			USB_MSG("Control transfer output length mismatch:"
+				"len %d, expected %u", this_device->control_len,
+				expected);
 			return EXIT_FAILURE;
 		}
 

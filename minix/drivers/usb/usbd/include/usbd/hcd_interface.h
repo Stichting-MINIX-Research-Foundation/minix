@@ -8,7 +8,7 @@
 #ifndef _HCD_INTERFACE_H_
 #define _HCD_INTERFACE_H_
 
-#include <usb/hcd_common.h>
+#include <usbd/hcd_common.h>
 
 
 /*===========================================================================*

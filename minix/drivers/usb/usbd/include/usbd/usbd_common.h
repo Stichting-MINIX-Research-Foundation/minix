@@ -1,9 +1,9 @@
 /*
- * Whatever is commonly used throughout USB code
+ * Whatever is commonly used throughout USBD code
  */
 
-#ifndef _USB_COMMON_H_
-#define _USB_COMMON_H_
+#ifndef _USBD_COMMON_H_
+#define _USBD_COMMON_H_
 
 /* For commonly used: NULL, EXIT_*, and stuff like that */
 #include <stdlib.h>
@@ -63,4 +63,4 @@
 		} while(0)
 
 
-#endif /* !_USB_COMMON_H_ */
+#endif /* !_USBD_COMMON_H_ */

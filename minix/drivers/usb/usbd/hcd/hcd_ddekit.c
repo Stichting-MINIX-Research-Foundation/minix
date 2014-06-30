@@ -6,9 +6,9 @@
 
 #include <ddekit/usb.h>
 
-#include <usb/hcd_ddekit.h>
-#include <usb/hcd_interface.h>
-#include <usb/usb_common.h>
+#include <usbd/hcd_ddekit.h>
+#include <usbd/hcd_interface.h>
+#include <usbd/usbd_common.h>
 
 
 /*===========================================================================*

@@ -4,9 +4,9 @@
 
 #include <string.h>				/* memcpy */
 
-#include <usb/hcd_common.h>
-#include <usb/hcd_interface.h>
-#include <usb/usb_common.h>
+#include <usbd/hcd_common.h>
+#include <usbd/hcd_interface.h>
+#include <usbd/usbd_common.h>
 
 #include "musb_core.h"
 #include "musb_regs.h"
@@ -408,9 +408,14 @@ musb_reset_device(void * cfg, hcd_speed * speed)
 		USB_DBG("High speed USB enabled");
 	} else {
 		/* Only full-speed supported */
-		USB_DBG("High speed USB disabled");
+		host_type0 = HCD_RD1(r, MUSB_REG_HOST_TYPE0);
+		HCD_CLR(host_type0, MUSB_VAL_HOST_TYPE0_MASK);
+		HCD_SET(host_type0, MUSB_VAL_HOST_TYPE0_FULL_SPEED);
+		HCD_WR1(r, MUSB_REG_HOST_TYPE0, host_type0);
 
 		*speed = HCD_SPEED_FULL;
+
+		USB_DBG("High speed USB disabled");
 	}
 
 	return EXIT_SUCCESS;

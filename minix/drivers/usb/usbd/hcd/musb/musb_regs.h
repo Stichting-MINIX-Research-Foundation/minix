@@ -5,7 +5,7 @@
 #ifndef _MUSB_REGS_H_
 #define _MUSB_REGS_H_
 
-#include <usb/hcd_common.h>
+#include <usbd/hcd_common.h>
 
 
 /*===========================================================================*

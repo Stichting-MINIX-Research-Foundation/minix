@@ -263,8 +263,8 @@ struct hcd_device_state {
 #define HCD_SET_CONFIG_NUM(num)		((num)+0x01u)
 
 /* Default MaxPacketSize for control transfer */
-#define HCD_LS_MAXPACKETSIZE		8u
-#define HCD_HS_MAXPACKETSIZE		64u
+#define HCD_LS_MAXPACKETSIZE		8u	/* Low-speed, Full-speed */
+#define HCD_HS_MAXPACKETSIZE		64u	/* High-speed */
 #define HCD_MAX_MAXPACKETSIZE		1024u
 
 

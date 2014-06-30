@@ -3,6 +3,7 @@
  * using DDEkit, and libblockdriver
  */
 
+#include <sys/cdefs.h>			/* __CTASSERT() */
 #include <sys/ioc_disk.h>		/* cases for mass_storage_ioctl */
 #ifdef USB_STORAGE_SIGNAL
 #include <sys/signal.h>			/* signal handling */
@@ -151,7 +152,7 @@ static unsigned char buffer[BUFFER_SIZE];
 #define MAX_DESCRIPTORS_LEN 128
 
 /* Maximum 'Test Unit Ready' command retries */
-#define MAX_TEST_RETRIES 20
+#define MAX_TEST_RETRIES 3
 
 /* 'Test Unit Ready' failure delay time (in nanoseconds) */
 #define NEXT_TEST_DELAY 50000000 /* 50ms */
@@ -597,6 +598,7 @@ static int
 mass_storage_test(void)
 {
 	int repeat;
+	int error;
 
 	struct timespec test_wait;
 
@@ -619,8 +621,10 @@ mass_storage_test(void)
 			return EXIT_SUCCESS;
 
 		/* Check for errors */
-		if (mass_storage_check_error())
-			return EIO;
+		if (EXIT_SUCCESS != (error = mass_storage_check_error())) {
+			MASS_MSG("SCSI sense error checking failed");
+			return error;
+		}
 
 		/* Ignore potential signal interruption (no return value check),
 		 * since it causes driver termination anyway */
@@ -628,8 +632,7 @@ mass_storage_test(void)
 			MASS_MSG("Calling nanosleep() failed");
 	}
 
-	MASS_MSG("Try, ignoring TEST UNIT READY errors");
-	return EXIT_SUCCESS;
+	return EIO;
 }
 
 
@@ -667,8 +670,8 @@ mass_storage_check_error(void)
 
 	MASS_DEBUG_DUMP;
 
-	/* TODO: This should become compile-time assert */
-	assert(sizeof(sense) == SCSI_REQUEST_SENSE_DATA_LEN);
+	/* Check if bit-fields are packed correctly */
+	__CTASSERT(sizeof(sense) == SCSI_REQUEST_SENSE_DATA_LEN);
 
 	/* SCSI REQUEST SENSE OUT stage */
 	if (mass_storage_send_scsi_cbw_out(SCSI_REQUEST_SENSE, NULL))
@@ -684,6 +687,7 @@ mass_storage_check_error(void)
 
 	/* When any sense code is present something may have failed */
 	if (sense.sense) {
+#ifdef MASS_DEBUG
 		MASS_MSG("SCSI sense:                ");
 		MASS_MSG("code             : %8X", sense.code            );
 		MASS_MSG("valid            : %8X", sense.valid           );
@@ -702,6 +706,10 @@ mass_storage_check_error(void)
 		MASS_MSG("key_specific1    : %8X", sense.key_specific1   );
 		MASS_MSG("sksv             : %8X", sense.sksv            );
 		MASS_MSG("key_specific2    : %8X", sense.key_specific2   );
+#else
+		MASS_MSG("SCSI sense: 0x%02X 0x%02X 0x%02X", sense.sense,
+			sense.additional_code, sense.additional_qual);
+#endif
 	}
 
 	return EXIT_SUCCESS;
@@ -1172,9 +1180,10 @@ mass_storage_open(devminor_t minor, int UNUSED(access))
 			MASS_MSG("Opening mass storage device"
 				" for the first time failed");
 
-			/* TODO: This could be used in other places too */
-			if (mass_storage_check_error())
-				MASS_MSG("SCSI error check failed");
+			/* Do one more test before failing, to output
+			 * sense errors in case they weren't dumped already */
+			if (mass_storage_test())
+				MASS_MSG("Final TEST UNIT READY failed");
 
 			return r;
 		}

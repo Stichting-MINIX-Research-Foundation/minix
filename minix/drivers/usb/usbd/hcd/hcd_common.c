@@ -13,9 +13,9 @@
 #include <minix/clkconf.h>		/* clkconf_* */
 #include <minix/syslib.h>		/* sys_privctl */
 
-#include <usb/hcd_common.h>
-#include <usb/hcd_interface.h>
-#include <usb/usb_common.h>
+#include <usbd/hcd_common.h>
+#include <usbd/hcd_interface.h>
+#include <usbd/usbd_common.h>
 
 
 /*===========================================================================*
@@ -209,9 +209,6 @@ hcd_connect_device(hcd_device_state * this_device, hcd_thread_function funct)
 		ddekit_sem_deinit(this_device->lock);
 		return EXIT_FAILURE;
 	}
-
-	/* Allow device thread to work */
-	ddekit_yield();
 
 	return EXIT_SUCCESS;
 }
