@@ -74,8 +74,8 @@ sed -i "s/ROOT=.*$/ROOT=\"${ROOT_1}\"/g" ${MINIX_LLVM_DIR}/common.inc
 
 # Configure llvm-apps
 cp ${ROOT}/conf/common.overrides.llvm-minix.inc ${ROOT}/common.overrides.llvm.inc
-MINIX_ROOT_1=`readlink -f ${MINIX_ROOT} | sed "s/\\\//\\\\\\\\\//g"`
-sed -i "s/_MINIX_ROOT=.*$/_MINIX_ROOT=\"${MINIX_ROOT_1}\"/g" ${ROOT}/common.overrides.llvm.inc
+MINIX_ROOT_1=`readlink -f ${MINIX_ROOT}`
+echo "_MINIX_ROOT=\"${MINIX_ROOT_1}\"" > ${ROOT}/common.overrides.minix.inc
 
 if [ ! -d ${ROOT}/.tmp ]; then
 	mkdir ${ROOT}/.tmp 2>/dev/null || true
@@ -144,5 +144,4 @@ fi
 
 # Reconfigure llvm-apps
 MINIX_TOOLS_DIR=$(readlink -f ${MINIX_ROOT}/../obj.i386/tooldir.*)
-MINIX_TOOLS_DIR_1=`echo ${MINIX_TOOLS_DIR} | sed "s/\\\//\\\\\\\\\//g"`
-sed -i "s/MINIX_TOOLS_DIR=.*$/MINIX_TOOLS_DIR=\"${MINIX_TOOLS_DIR_1}\"/g" ${ROOT}/common.overrides.llvm.inc
+echo "MINIX_TOOLS_DIR=\"${MINIX_TOOLS_DIR}\"" >> ${ROOT}/common.overrides.minix.inc
