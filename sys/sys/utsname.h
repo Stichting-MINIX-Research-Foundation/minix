@@ -61,6 +61,7 @@ struct utsname {
 __BEGIN_DECLS
 int	uname(struct utsname *);
 #if defined(__minix)
+#include <sys/types.h>
 int 	sysuname(int _req, int _field, char *_value, size_t _len);
 #endif /* defined(__minix) */
 __END_DECLS
