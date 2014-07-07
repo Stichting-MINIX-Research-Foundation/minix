@@ -1,0 +1,146 @@
+.\"	$NetBSD: mv.1,v 1.26 2012/03/22 07:58:17 wiz Exp $
+.\"
+.\" Copyright (c) 1989, 1990, 1993
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" This code is derived from software contributed to Berkeley by
+.\" the Institute of Electrical and Electronics Engineers, Inc.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"	@(#)mv.1	8.1 (Berkeley) 5/31/93
+.\"
+.Dd December 26, 2002
+.Dt MV 1
+.Os
+.Sh NAME
+.Nm mv
+.Nd move files
+.Sh SYNOPSIS
+.Nm
+.Op Fl fiv
+.Ar source target
+.Nm
+.Op Fl fiv
+.Ar source ... directory
+.Sh DESCRIPTION
+In its first form, the
+.Nm
+utility renames the file named by the
+.Ar source
+operand to the destination path named by the
+.Ar target
+operand.
+This form is assumed when the last operand does not name an already
+existing directory.
+.Pp
+In its second form,
+.Nm
+moves each file named by a
+.Ar source
+operand to a destination file in the existing directory named by the
+.Ar directory
+operand.
+The destination path for each operand is the pathname produced by the
+concatenation of the last operand, a slash, and the final pathname
+component of the named file.
+.Pp
+The following options are available:
+.Bl -tag -width flag
+.It Fl f
+Do not prompt for confirmation before overwriting the destination
+path.
+.It Fl i
+Causes
+.Nm
+to write a prompt to standard error before moving a file that would
+overwrite an existing file.
+If the response from the standard input begins with the character ``y'',
+the move is attempted.
+.It Fl v
+Cause
+.Nm
+to be verbose, showing files as they are processed.
+.El
+.Pp
+The last of any
+.Fl f
+or
+.Fl i
+options is the one which affects
+.Nm Ns 's
+behavior.
+.Pp
+It is an error for any of the
+.Ar source
+operands to specify a nonexistent file or directory.
+.Pp
+It is an error for the
+.Ar source
+operand to specify a directory if the
+.Ar target
+exists and is not a directory.
+.Pp
+If the destination path does not have a mode which permits writing,
+.Nm
+prompts the user for confirmation as specified for the
+.Fl i
+option.
+.Pp
+Should the
+.Xr rename 2
+call fail because
+.Ar source
+and
+.Ar target
+are on different file systems,
+.Nm
+will remove the destination file, copy the source file to the
+destination, and then remove the source.
+The effect is roughly equivalent to:
+.Bd -literal -offset indent
+rm -f destination_path \*[Am]\*[Am] \e
+cp -PRp source_file destination_path \*[Am]\*[Am] \e
+rm -rf source_file
+.Ed
+.Sh EXIT STATUS
+The
+.Nm
+utility exits 0 on success, and \*[Gt]0 if an error occurs.
+.Sh SEE ALSO
+.Xr cp 1 ,
+.Xr rename 2 ,
+.Xr symlink 7
+.Sh STANDARDS
+The
+.Nm
+utility is expected to be
+.St -p1003.2
+compatible.
+.Pp
+The
+.Fl v
+option is an extension to
+.St -p1003.2 .
