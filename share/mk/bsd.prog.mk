@@ -215,18 +215,32 @@ LIB${_lib:tu}=	${DESTDIR}/usr/lib/lib${_lib:S/xx/++/:S/atf_c/atf-c/}.a
 	bdev \
 	blockdriver \
 	chardriver \
+	clkconf \
+	compat_minix \
+	ddekit \
+	ddekit_usb_client \
+	ddekit_usb_server \
+	devman \
 	elf \
 	exec \
-	ddekit \
-	devman \
+	gpio \
+	hgfs \
+	i2cdriver \
+	inputdriver \
+	lwip \
 	minc \
+	minixfs \
 	minlib \
 	mthread \
 	netdriver \
+	netsock \
 	sffs \
 	sys \
 	timers \
-	usb
+	usb \
+	vboxfs \
+	virtio \
+	vtreefs
 .ifndef LIB${_lib:tu}
 LIB${_lib:tu}=	${DESTDIR}/usr/lib/lib${_lib:S/xx/++/:S/atf_c/atf-c/}.a
 .MADE:		${LIB${_lib:tu}}	# Note: ${DESTDIR} will be expanded

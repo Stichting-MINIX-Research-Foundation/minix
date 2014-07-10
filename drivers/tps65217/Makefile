@@ -2,7 +2,7 @@
 PROG=	tps65217
 SRCS=	tps65217.c
 
-DPADD+= ${LIBI2CDRIVER} ${CLKCONF} ${LIBSYS} ${LIBTIMERS}
+DPADD+= ${LIBI2CDRIVER} ${LIBCLKCONF} ${LIBSYS} ${LIBTIMERS}
 LDADD+= -li2cdriver -lclkconf -lsys -ltimers
 
 MAN=

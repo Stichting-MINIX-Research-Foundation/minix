@@ -6,5 +6,5 @@ HERE=${.CURDIR}/arch/${MACHINE_ARCH}
 
 SRCS += arch_readclock.c omap_rtc.c omap_rtc.h
 
-DPADD+= ${CLKCONF}
+DPADD+= ${LIBCLKCONF}
 LDADD+= -lclkconf 
