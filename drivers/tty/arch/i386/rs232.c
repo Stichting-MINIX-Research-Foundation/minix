@@ -820,7 +820,7 @@ static void out_int(register rs232_t *rs)
  * Notify TTY when the buffer goes empty.
  */
 
-  if (rs->ostate >= (ODEVREADY | OQUEUED | OSWREADY)) {
+  while (txready(rs) && rs->ostate >= (ODEVREADY | OQUEUED | OSWREADY)) {
 	/* Bit test allows ORAW and requires the others. */
 	sys_outb(rs->xmit_port, *rs->otail);
 	if (++rs->otail == bufend(rs->obuf)) rs->otail = rs->obuf;
