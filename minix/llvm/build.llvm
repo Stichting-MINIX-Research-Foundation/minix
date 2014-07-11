@@ -76,17 +76,17 @@ function check_args()
 		elif [ -f "${MINIX_LLVM_BIN_DIR}/${llvmpass}.so" ]; then
 			llvmpass_path="${MINIX_LLVM_BIN_DIR}/${llvmpass}.so"
 		else
-			echo "The LLVM pass file ${llvmpass}.so doesn't exit."
+			echo "The LLVM pass file ${llvmpass}.so doesn't exist."
 			exit_flag=1
 		fi
 		LLVMPASS_PATHS+=" -load=${llvmpass_path} -${llvmpass}"
+		LLVMPASS+=" ${llvmpass}"
 	done
 
 	if [ ${exit_flag} == 1 ]; then
-		echo "Searched in:"
+		echo "Searched in the following location(s):"
 		echo "  ${INSTALL_DIR}" 
-		echo "		and"
-		echo "  ${MINIX_LLVM_BIN_DIR}."
+		echo "  ${MINIX_LLVM_BIN_DIR}"
 		exit 1
 	fi
 
@@ -99,7 +99,7 @@ check_current_dir
 
 # set up the bridge to llvm-apps repository and initialize
 . ${MINIX_LLVM_DIR}/minix.inc
-. ${ROOT}/apps/scripts/include/configure.llvm.inc
+[ ! -f ${ROOT}/apps/scripts/include/configure.llvm.inc ] || . ${ROOT}/apps/scripts/include/configure.llvm.inc
 
 # Arguments check
 check_args "$@"
