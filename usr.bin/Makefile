@@ -30,7 +30,7 @@ SUBDIR= asa \
 	uniq units unvis unzip users \
 	uuidgen vis \
 	\
-	wall wc what who whois \
+	wall wc what whereis who whois \
 	write xargs xinstall xstr yes
 
 .if !defined(__MINIX)
