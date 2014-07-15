@@ -6,6 +6,7 @@ mode=$1
 shift || mode="no_action"
 
 ROOT=../..
+MYPWD=$( pwd )
 IMAGE=$( readlink -f $ROOT/minix_x86.img )
 DISK=$( readlink -f $ROOT/minix_x86.disk )
 RC=$( readlink -f $ROOT/minix_x86.rc )
@@ -13,6 +14,7 @@ RC=$( readlink -f $ROOT/minix_x86.rc )
 HYPER=${HYPER:-}
 DISK_SIZE=${DISK_SIZE:-1024}
 DISK_MNT=${DISK_MNT:-/media/minix-disk}
+SERIALOUT=${SERIALOUT:-0}
 
 function rc_create {
     cat <<EOF
@@ -92,8 +94,16 @@ case "$mode" in
         fi
     fi
     opts="-hda $IMAGE"
+    append="rootdevname=c0d0p1"
     [ ! -f $DISK ] || opts="$opts -hdb $DISK"
-    (cd ../../../obj.i386/destdir.i386/multiboot && $HYPER -nographic -kernel kernel -append "console=tty00 rootdevname=c0d0p1" -initrd "mod01_ds,mod02_rs,mod03_pm,mod04_sched,mod05_vfs,mod06_memory,mod07_tty,mod08_mfs,mod09_vm,mod10_pfs,mod11_init" $opts)
+    if [ $SERIALOUT -eq 1 ]; then
+        opts="$opts -curses -serial file:$MYPWD/serial.out"
+        append="$append cttyline=0"
+    else
+        opts="$opts -nographic"
+        append="$append console=tty00"
+    fi
+    (cd ../../../obj.i386/destdir.i386/multiboot && $HYPER -kernel kernel -append "$append" $opts -initrd "mod01_ds,mod02_rs,mod03_pm,mod04_sched,mod05_vfs,mod06_memory,mod07_tty,mod08_mfs,mod09_vm,mod10_pfs,mod11_init")
     ;;
   *)
     echo "Invalid action: $mode"
