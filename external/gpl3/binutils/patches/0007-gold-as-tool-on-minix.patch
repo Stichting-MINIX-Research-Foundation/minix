@@ -1,0 +1,147 @@
+diff -rNU3 dist/gold/configure dist.mxm/gold/configure
+--- dist/gold/configure	2014-07-14 18:21:16.292364610 +0200
++++ dist.mxm/gold/configure	2014-07-14 18:25:08.509642134 +0200
+@@ -7106,6 +7106,20 @@
+ ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
+ 
+ 
++for ac_header in unordered_set unordered_map
++do :
++  as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
++ac_fn_cxx_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
++eval as_val=\$$as_ac_Header
++   if test "x$as_val" = x""yes; then :
++  cat >>confdefs.h <<_ACEOF
++#define `$as_echo "HAVE_$ac_header" | $as_tr_cpp` 1
++_ACEOF
++
++fi
++
++done
++
+ for ac_header in tr1/unordered_set tr1/unordered_map
+ do :
+   as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
+diff -rNU3 dist/gold/configure.ac dist.mxm/gold/configure.ac
+--- dist/gold/configure.ac	2014-07-14 18:21:16.292364610 +0200
++++ dist.mxm/gold/configure.ac	2014-07-14 18:15:57.376945885 +0200
+@@ -496,6 +496,7 @@
+ 
+ AC_LANG_PUSH(C++)
+ 
++AC_CHECK_HEADERS(unordered_set unordered_map)
+ AC_CHECK_HEADERS(tr1/unordered_set tr1/unordered_map)
+ AC_CHECK_HEADERS(ext/hash_map ext/hash_set)
+ AC_CHECK_HEADERS(byteswap.h)
+diff -rNU3 dist/gold/gold.h dist.mxm/gold/gold.h
+--- dist/gold/gold.h	2012-11-09 09:21:28.000000000 +0100
++++ dist.mxm/gold/gold.h	2014-07-14 18:18:04.885779352 +0200
+@@ -66,7 +66,20 @@
+ 
+ // Figure out how to get a hash set and a hash map.
+ 
+-#if defined(HAVE_TR1_UNORDERED_SET) && defined(HAVE_TR1_UNORDERED_MAP) \
++#if defined(HAVE_UNORDERED_SET) && defined(HAVE_UNORDERED_MAP)
++
++#include <unordered_set>
++#include <unordered_map>
++
++// We need a template typedef here.
++
++#define Unordered_set std::unordered_set
++#define Unordered_map std::unordered_map
++#define Unordered_multimap std::unordered_multimap
++
++#define reserve_unordered_map(map, n) ((map)->rehash(n))
++
++#elif defined(HAVE_TR1_UNORDERED_SET) && defined(HAVE_TR1_UNORDERED_MAP) \
+     && defined(HAVE_TR1_UNORDERED_MAP_REHASH)
+ 
+ #include <tr1/unordered_set>
+diff -rNU3 dist/gold/stringpool.cc dist.mxm/gold/stringpool.cc
+--- dist/gold/stringpool.cc	2010-08-25 10:36:54.000000000 +0200
++++ dist.mxm/gold/stringpool.cc	2014-07-14 18:19:48.650875718 +0200
+@@ -72,7 +72,10 @@
+ {
+   this->key_to_offset_.reserve(n);
+ 
+-#if defined(HAVE_TR1_UNORDERED_MAP)
++#if defined(HAVE_UNORDERED_MAP)
++  this->string_set_.rehash(this->string_set_.size() + n);
++  return;
++#elif defined(HAVE_TR1_UNORDERED_MAP)
+   // rehash() implementation is broken in gcc 4.0.3's stl
+   //this->string_set_.rehash(this->string_set_.size() + n);
+   //return;
+@@ -499,7 +502,7 @@
+ void
+ Stringpool_template<Stringpool_char>::print_stats(const char* name) const
+ {
+-#if defined(HAVE_TR1_UNORDERED_MAP) || defined(HAVE_EXT_HASH_MAP)
++#if  defined(HAVE_UNORDERED_MAP) || defined(HAVE_TR1_UNORDERED_MAP) || defined(HAVE_EXT_HASH_MAP)
+   fprintf(stderr, _("%s: %s entries: %zu; buckets: %zu\n"),
+ 	  program_name, name, this->string_set_.size(),
+ 	  this->string_set_.bucket_count());
+diff -rNU3 dist/gold/config.in dist.mxm/gold/config.in
+--- dist/gold/config.in 2014-07-14 19:21:52.217425468 +0200
++++ dist.mxm/gold/config.in     2014-07-14 20:08:52.208824229 +0200
+@@ -175,6 +175,12 @@
+ /* Define to 1 if you have the <unistd.h> header file. */
+ #undef HAVE_UNISTD_H
+ 
++/* Define to 1 if you have the <unordered_map> header file. */
++#undef HAVE_UNORDERED_MAP
++
++/* Define to 1 if you have the <unordered_set> header file. */
++#undef HAVE_UNORDERED_SET
++
+ /* Define to 1 if you have the <windows.h> header file. */
+ #undef HAVE_WINDOWS_H
+ 
+diff -rNU3 dist/include/safe-ctype.h dist.mxm/include/safe-ctype.h
+--- dist/include/safe-ctype.h	2008-07-07 19:09:31.000000000 +0200
++++ dist.mxm/include/safe-ctype.h	2014-07-15 10:49:44.583026808 +0200
+@@ -119,6 +119,7 @@
+    including another system header (for instance gnulib's stdint.h).
+    So we include ctype.h here and then immediately redefine its macros.  */
+ 
++#if !defined(__minix) || !defined(__clang__)
+ #include <ctype.h>
+ #undef isalpha
+ #define isalpha(c) do_not_use_isalpha_with_safe_ctype
+@@ -145,6 +146,34 @@
+ #undef toupper
+ #define toupper(c) do_not_use_toupper_with_safe_ctype
+ #undef tolower
+-#define tolower(c) do_not_use_tolower_with_safe_ctype
++#else
++#include <ctype.h>
++#undef isalpha
++#define isalpha(c) ISALPHA(c)
++#undef isalnum
++#define isalnum(c) ISALNUM(c)
++#undef iscntrl
++#define iscntrl(c) ISCNTRL(c)
++#undef isdigit
++#define isdigit(c) ISDIGIT(c)
++#undef isgraph
++#define isgraph(c) ISGRAPH(c)
++#undef islower
++#define islower(c) ISLOWER(c)
++#undef isprint
++#define isprint(c) ISPRINT(c)
++#undef ispunct
++#define ispunct(c) ISPUNCT(c)
++#undef isspace
++#define isspace(c) ISSPACE(c)
++#undef isupper
++#define isupper(c) ISUPPER(c)
++#undef isxdigit
++#define isxdigit(c) ISXDIGIT(c)
++#undef toupper
++#define toupper(c) TOUPPER(c)
++#undef tolower
++#define tolower(c) TOLOWER(c)
++#endif /* !defined(__minix) || !defined(__clang__) */
+ 
+ #endif /* SAFE_CTYPE_H */
