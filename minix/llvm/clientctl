@@ -10,6 +10,7 @@ MYPWD=$( pwd )
 IMAGE=$( readlink -f $ROOT/minix_x86.img )
 DISK=$( readlink -f $ROOT/minix_x86.disk )
 RC=$( readlink -f $ROOT/minix_x86.rc )
+MKFS=$( readlink -f $ROOT/../obj.i386/tooldir*/bin/nbmkfs.mfs )
 
 HYPER=${HYPER:-}
 DISK_SIZE=${DISK_SIZE:-1024}
@@ -23,7 +24,7 @@ function rc_create {
 set -o errexit
 
 [ -d /ext ] || mkdir /ext
-mount -t ext2 /dev/c0d1 /ext
+mount /dev/c0d1 /ext
 
 if [ -f /ext/etc/rc ]; then
     sh /ext/etc/rc
@@ -59,7 +60,7 @@ function disk_build {
     local tmp_mnt=$( mktemp -d /tmp/clientctl-XXXXX )
     echo "* Building ${size} MB disk image..."
     dd if=/dev/zero of=$DISK bs=1M count=$size
-    mkfs -t ext2 -i 4096 -b 4096 -F $DISK
+    $MKFS $DISK
     echo "* Setting up /ext/etc/rc file executed at startup..."
     rc_create > $RC
     disk_mount $tmp_mnt
