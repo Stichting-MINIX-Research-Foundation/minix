@@ -4,7 +4,6 @@
 PROG=		kernel
 BINDIR=		/usr/sbin
 MAN=
-USE_BITCODE=	no
 
 .include "arch/${MACHINE_ARCH}/Makefile.inc"
 
@@ -76,5 +75,17 @@ extracted-mfield.h: extract-mfield.sh ../lib/libc/sys-minix/*.c ../lib/libsys/*.
 extracted-mtype.h: extract-mtype.sh ../include/minix/com.h
 	${_MKTARGET_CREATE}
 	cd ${.CURDIR} ; ${HOST_SH} extract-mtype.sh > ${.OBJDIR}/extracted-mtype.h
+
+.if ${USE_BITCODE:Uno} == "yes"
+kernel: kernel.bcl.o
+	${_MKTARGET_LINK}
+	${_CCLINK.kernel} \
+		${_LDFLAGS.kernel} \
+		-L${DESTDIR}/usr/lib \
+		${_LDSTATIC.kernel} -o ${.TARGET} \
+		${.TARGET}.bcl.o ${OBJS} ${_PROGLDOPTS} ${_LDADD.kernel} \
+		${BITCODE_LD_FLAGS_2ND.kernel} \
+		-Wl,--allow-multiple-definition
+.endif
 
 .include <minix.service.mk>

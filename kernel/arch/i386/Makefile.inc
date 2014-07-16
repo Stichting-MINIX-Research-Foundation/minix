@@ -52,8 +52,20 @@ CPPFLAGS.subr_prf.c+= -DLIBSA_PRINTF_LONGLONG_SUPPORT -DLIBSA_PRINTF_WIDTH_SUPPO
 	pg_utils.o klib.o utility.o arch_reset.o \
 	io_inb.o io_outb.o \
 	${MINLIB_OBJS_UNPAGED} ${MINC_OBJS_UNPAGED} ${SYS_OBJS_UNPAGED}
+
+CLEANFILES+=${unpaged_obj}.bin
+.if ${USE_BITCODE:Uno} == "yes"
+unpaged_${unpaged_obj}: ${unpaged_obj}
+	if file -b ${.OBJDIR}/${unpaged_obj} | grep -q '^LLVM'; then \
+		${LLC} -O1 -march=x86 -mcpu=i586 -filetype=obj -o ${.OBJDIR}/${unpaged_obj}.bin ${.OBJDIR}/${unpaged_obj}; \
+	else \
+		cp ${.OBJDIR}/${unpaged_obj} ${.OBJDIR}/${unpaged_obj}.bin; \
+	fi
+	${OBJCOPY} --prefix-symbols=__k_unpaged_ ${.OBJDIR}/${unpaged_obj}.bin $@
+.else
 unpaged_${unpaged_obj}: ${unpaged_obj}
 	${OBJCOPY} --prefix-symbols=__k_unpaged_ ${.OBJDIR}/${unpaged_obj} $@
+.endif
 UNPAGED_OBJS += unpaged_${unpaged_obj}
 ORIG_UNPAGED_OBJS += ${unpaged_obj}
 .endfor
@@ -104,7 +116,7 @@ PROCOFFSETSCF=procoffsets.cf
 procoffsets.h: ${PROCOFFSETSCF} kernel.h proc.h stackframe.h archtypes.h
 	${_MKTARGET_CREATE}
 	${TOOL_CAT} ${HERE}/${PROCOFFSETSCF} | \
-	  ${TOOL_GENASSYM} -- ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} >$@.tmp && \
+	  ${TOOL_GENASSYM} -- ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} ${${USE_BITCODE:Uno} == "yes":? -fno-lto:} >$@.tmp && \
 	  mv -f $@.tmp $@ 
 
 sconst.h: procoffsets.h
