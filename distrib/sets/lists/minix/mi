@@ -2024,10 +2024,11 @@
 ./usr/lib/libform.so.6			minix-sys
 ./usr/lib/libgcc.a			minix-sys	gcc=45
 ./usr/lib/libgcc_eh.a			minix-sys	gcccmds
-./usr/lib/libgcc_s.a			minix-sys	gcccmds
-./usr/lib/libgcc_s.so			minix-sys	gcccmds
-./usr/lib/libgcc_s.so.1.0		minix-sys	gcccmds
-./usr/lib/libgcc_s.so.1			minix-sys	gcccmds
+./usr/lib/libgcc_s_pic.a		minix-sys	!libgcc
+./usr/lib/libgcc_s.a			minix-sys
+./usr/lib/libgcc_s.so			minix-sys
+./usr/lib/libgcc_s.so.1.0		minix-sys
+./usr/lib/libgcc_s.so.1			minix-sys
 ./usr/lib/libinputdriver.a		minix-sys
 ./usr/lib/libinputdriver_pic.a		minix-sys
 ./usr/lib/libl.a			minix-sys

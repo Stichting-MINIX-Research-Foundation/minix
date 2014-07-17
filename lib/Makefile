@@ -52,6 +52,10 @@ SUBDIR+=	libasyn \
 		libusb \
 		libvtreefs
 
+.if (${HAVE_LIBGCC} == "no")
+SUBDIR+=	libgcc_s_empty
+.endif
+
 .if (${MKLWIP} == "yes")
 SUBDIR+=	liblwip \
 		libnetsock
