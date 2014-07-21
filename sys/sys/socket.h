@@ -497,7 +497,9 @@ struct msghdr {
 #define	MSG_DONTWAIT	0x0080		/* this message should be nonblocking */
 #define	MSG_BCAST	0x0100		/* this message was rcvd using link-level brdcst */
 #define	MSG_MCAST	0x0200		/* this message was rcvd using link-level mcast */
+#ifndef __minix
 #define	MSG_NOSIGNAL	0x0400		/* do not generate SIGPIPE on EOF */
+#endif
 #if defined(_NETBSD_SOURCE)
 #define	MSG_CMSG_CLOEXEC 0x0800		/* close on exec receiving fd */
 #define	MSG_NBIO	0x1000		/* use non-blocking I/O */
