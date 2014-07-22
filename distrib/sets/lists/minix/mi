@@ -13,7 +13,6 @@
 ./bin/cd				minix-sys
 ./bin/chgrp				minix-sys
 ./bin/chmod				minix-sys
-./bin/clone				minix-sys
 ./bin/command				minix-sys
 ./bin/cp				minix-sys
 ./bin/cpdir				minix-sys
