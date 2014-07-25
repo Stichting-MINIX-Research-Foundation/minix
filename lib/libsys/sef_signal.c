@@ -114,7 +114,7 @@ int do_sef_signal_request(message *m_ptr)
   }
   else {
       /* Handle system signals from a signal manager. */
-      signo = m_ptr->SIGS_SIG_NUM;
+      signo = m_ptr->m_pm_lsys_sigs_signal.num;
 
       /* Debug. */
 #if SEF_SIGNAL_DEBUG

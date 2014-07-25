@@ -464,7 +464,7 @@ int ksig;			/* non-zero means signal comes from kernel  */
 		/* Translate every non-termination sys signal into a message. */
 		message m;
 		m.m_type = SIGS_SIGNAL_RECEIVED;
-		m.SIGS_SIG_NUM = signo;
+		m.m_pm_lsys_sigs_signal.num = signo;
 		asynsend3(rmp->mp_endpoint, &m, AMF_NOREPLY);
 	}
 	else {

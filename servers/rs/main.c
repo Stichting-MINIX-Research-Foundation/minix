@@ -545,7 +545,7 @@ static int sef_cb_signal_manager(endpoint_t target, int signo)
 
   /* Translate every non-termination signal into a message. */
   m.m_type = SIGS_SIGNAL_RECEIVED;
-  m.SIGS_SIG_NUM = signo;
+  m.m_pm_lsys_sigs_signal.num = signo;
   asynsend3(rpub->endpoint, &m, AMF_NOREPLY);
 
   return OK; /* signal has been delivered */

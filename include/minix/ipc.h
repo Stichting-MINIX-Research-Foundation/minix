@@ -125,6 +125,13 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_lsys_krn_readbios);
 
 typedef struct {
+	int num;
+
+	uint8_t padding[52];
+} mess_pm_lsys_sigs_signal;
+_ASSERT_MSG_SIZE(mess_pm_lsys_sigs_signal);
+
+typedef struct {
 	off_t offset;
 	void *addr;
 	size_t len;
@@ -1962,6 +1969,7 @@ typedef struct {
 		mess_sigcalls		m_sigcalls;
 
 		mess_lsys_krn_readbios	m_lsys_krn_readbios;
+		mess_pm_lsys_sigs_signal m_pm_lsys_sigs_signal;
 		mess_input_tty_event	m_input_tty_event;
 
 		mess_krn_lsys_schedule	m_krn_lsys_schedule;

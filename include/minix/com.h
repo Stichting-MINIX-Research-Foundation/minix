@@ -586,7 +586,6 @@
 
 /* Field names for system signals (sent by a signal manager). */
 #define SIGS_SIGNAL_RECEIVED (COMMON_RQ_BASE+0)
-#	define SIGS_SIG_NUM      m2_i1
 
 /* Common request to all processes: gcov data. */
 #define COMMON_REQ_GCOV_DATA (COMMON_RQ_BASE+1)
