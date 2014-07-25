@@ -371,11 +371,6 @@
 #define PROF_CTL_PTR   m7_p1    /* location of info struct */
 #define PROF_MEM_PTR   m7_p2    /* location of profiling data */
 
-/* Field names for SYS_READBIOS. */
-#define RDB_SIZE	m2_i1
-#define RDB_ADDR	m2_l1
-#define RDB_BUF		m2_p1
-
 /* Field names for SYS_VMCTL. */
 #define SVMCTL_WHO	m1_i1
 #define SVMCTL_PARAM	m1_i2	/* All SYS_VMCTL requests. */
