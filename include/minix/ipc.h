@@ -125,6 +125,18 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_lsys_krn_readbios);
 
 typedef struct {
+	int action;
+	int freq;
+	int intr_type;
+	vir_bytes ctl_ptr;
+	vir_bytes mem_ptr;
+	size_t mem_size;
+
+	uint8_t padding[32];
+} mess_lc_pm_sprof;
+_ASSERT_MSG_SIZE(mess_lc_pm_sprof);
+
+typedef struct {
 	int num;
 
 	uint8_t padding[52];
@@ -140,6 +152,19 @@ typedef struct {
 	uint8_t padding[40];
 } mess_lsys_krn_sys_diagctl;
 _ASSERT_MSG_SIZE(mess_lsys_krn_sys_diagctl);
+
+typedef struct {
+	int action;
+	int freq;
+	int intr_type;
+	endpoint_t endpt;
+	vir_bytes ctl_ptr;
+	vir_bytes mem_ptr;
+	size_t mem_size;
+
+	uint8_t padding[28];
+} mess_lsys_krn_sys_sprof;
+_ASSERT_MSG_SIZE(mess_lsys_krn_sys_sprof);
 
 typedef struct {
 	off_t offset;
@@ -1978,7 +2003,9 @@ typedef struct {
 		mess_notify		m_notify;
 		mess_sigcalls		m_sigcalls;
 
+		mess_lc_pm_sprof	m_lc_pm_sprof;
 		mess_lsys_krn_sys_diagctl m_lsys_krn_sys_diagctl;
+		mess_lsys_krn_sys_sprof m_lsys_krn_sys_sprof;
 		mess_lsys_krn_readbios	m_lsys_krn_readbios;
 		mess_pm_lsys_sigs_signal m_pm_lsys_sigs_signal;
 		mess_input_tty_event	m_input_tty_event;

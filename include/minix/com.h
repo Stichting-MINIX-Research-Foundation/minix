@@ -365,9 +365,7 @@
 /* Field names for SYS_SPROF, _CPROF, _PROFBUF. */
 #define PROF_ACTION    m7_i1    /* start/stop/reset/get */
 #define PROF_MEM_SIZE  m7_i2    /* available memory for data */ 
-#define PROF_FREQ      m7_i3    /* sample frequency */
 #define PROF_ENDPT     m7_i4    /* endpoint of caller */
-#define PROF_INTR_TYPE m7_i5    /* interrupt type */
 #define PROF_CTL_PTR   m7_p1    /* location of info struct */
 #define PROF_MEM_PTR   m7_p2    /* location of profiling data */
 

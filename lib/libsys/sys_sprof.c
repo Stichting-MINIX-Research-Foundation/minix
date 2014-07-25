@@ -16,13 +16,13 @@ void *mem_ptr;				/* location of profiling memory */
 {
   message m;
 
-  m.PROF_ACTION         = action;
-  m.PROF_MEM_SIZE       = size;
-  m.PROF_FREQ           = freq;
-  m.PROF_INTR_TYPE      = type;
-  m.PROF_ENDPT		= endpt;
-  m.PROF_CTL_PTR        = ctl_ptr;
-  m.PROF_MEM_PTR        = mem_ptr;
+  m.m_lsys_krn_sys_sprof.action		= action;
+  m.m_lsys_krn_sys_sprof.mem_size	= size;
+  m.m_lsys_krn_sys_sprof.freq		= freq;
+  m.m_lsys_krn_sys_sprof.intr_type	= type;
+  m.m_lsys_krn_sys_sprof.endpt		= endpt;
+  m.m_lsys_krn_sys_sprof.ctl_ptr	= ctl_ptr;
+  m.m_lsys_krn_sys_sprof.mem_ptr	= mem_ptr;
 
   return(_kernel_call(SYS_SPROF, &m));
 }

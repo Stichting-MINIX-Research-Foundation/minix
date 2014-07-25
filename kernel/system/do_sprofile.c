@@ -1,13 +1,14 @@
 /* The kernel call that is implemented in this file:
- *   m_type:    SYS_SPROFILE
+ *   m_type:    SYS_SPROF
  *
  * The parameters for this kernel call are:
- *    m7_i1:    PROF_ACTION       (start/stop profiling)
- *    m7_i2:    PROF_MEM_SIZE     (available memory for data)
- *    m7_i3:    PROF_FREQ         (requested sample frequency)
- *    m7_i4:    PROF_ENDPT        (endpoint of caller)
- *    m7_p1:    PROF_CTL_PTR      (location of info struct)
- *    m7_p2:    PROF_MEM_PTR      (location of memory for data)
+ *	m_lsys_krn_sys_sprof.action	(start/stop profiling)
+ *	m_lsys_krn_sys_sprof.mem_size	(available memory for data)
+ *	m_lsys_krn_sys_sprof.freq	(requested sample frequency)
+ *	m_lsys_krn_sys_sprof.endpt	(endpoint of caller)
+ *	m_lsys_krn_sys_sprof.ctl_ptr	(location of info struct)
+ *	m_lsys_krn_sys_sprof.mem_ptr	(location of memory for data)
+ *	m_lsys_krn_sys_sprof.intr_type	(interrupt source: RTC/NMI)
  *
  * Changes:
  *   14 Aug, 2006   Created (Rogier Meurs)
@@ -37,7 +38,7 @@ int do_sprofile(struct proc * caller, message * m_ptr)
   int proc_nr;
   int err;
 
-  switch(m_ptr->PROF_ACTION) {
+  switch(m_ptr->m_lsys_krn_sys_sprof.action) {
 
   case PROF_START:
 	/* Starting profiling.
@@ -52,13 +53,13 @@ int do_sprofile(struct proc * caller, message * m_ptr)
 	}
 
 	/* Test endpoint number. */
-	if(!isokendpt(m_ptr->PROF_ENDPT, &proc_nr))
+	if(!isokendpt(m_ptr->m_lsys_krn_sys_sprof.endpt, &proc_nr))
 		return EINVAL;
 
 	/* Set parameters for statistical profiler. */
-	sprof_ep = m_ptr->PROF_ENDPT;
-	sprof_info_addr_vir = (vir_bytes) m_ptr->PROF_CTL_PTR;
-	sprof_data_addr_vir = (vir_bytes) m_ptr->PROF_MEM_PTR;
+	sprof_ep = m_ptr->m_lsys_krn_sys_sprof.endpt;
+	sprof_info_addr_vir = m_ptr->m_lsys_krn_sys_sprof.ctl_ptr;
+	sprof_data_addr_vir = m_ptr->m_lsys_krn_sys_sprof.mem_ptr;
 
 	sprof_info.mem_used = 0;
 	sprof_info.total_samples = 0;
@@ -66,15 +67,17 @@ int do_sprofile(struct proc * caller, message * m_ptr)
 	sprof_info.system_samples = 0;
 	sprof_info.user_samples = 0;
 
-	sprof_mem_size = m_ptr->PROF_MEM_SIZE < SAMPLE_BUFFER_SIZE ?
-				m_ptr->PROF_MEM_SIZE : SAMPLE_BUFFER_SIZE;
+	sprof_mem_size =
+		m_ptr->m_lsys_krn_sys_sprof.mem_size < SAMPLE_BUFFER_SIZE ?
+		m_ptr->m_lsys_krn_sys_sprof.mem_size : SAMPLE_BUFFER_SIZE;
 
-	switch (sprofiling_type = m_ptr->PROF_INTR_TYPE) {
+	switch (sprofiling_type = m_ptr->m_lsys_krn_sys_sprof.intr_type) {
 		case PROF_RTC:
-			init_profile_clock(m_ptr->PROF_FREQ);
+			init_profile_clock(m_ptr->m_lsys_krn_sys_sprof.freq);
 			break;
 		case PROF_NMI:
-			err = nmi_watchdog_start_profiling(m_ptr->PROF_FREQ);
+			err = nmi_watchdog_start_profiling(
+				_ptr->m_lsys_krn_sys_sprof.freq);
 			if (err)
 				return err;
 			break;

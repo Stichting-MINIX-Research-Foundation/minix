@@ -19,12 +19,12 @@ int sprofile(int action,
   message m;
 
   memset(&m, 0, sizeof(m));
-  m.PROF_ACTION         = action;
-  m.PROF_MEM_SIZE       = size;
-  m.PROF_FREQ           = freq;
-  m.PROF_INTR_TYPE      = type;
-  m.PROF_CTL_PTR        = (void *) ctl_ptr;
-  m.PROF_MEM_PTR        = (void *) mem_ptr;
+  m.m_lc_pm_sprof.action	= action;
+  m.m_lc_pm_sprof.mem_size	= size;
+  m.m_lc_pm_sprof.freq		= freq;
+  m.m_lc_pm_sprof.intr_type	= type;
+  m.m_lc_pm_sprof.ctl_ptr	= ctl_ptr;
+  m.m_lc_pm_sprof.mem_ptr	= mem_ptr;
 
   return _syscall(PM_PROC_NR, PM_SPROF, &m);
 }
