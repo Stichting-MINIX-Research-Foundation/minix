@@ -161,8 +161,8 @@ void blockdriver_reply(message *m_ptr, int ipc_status, int reply)
   memset(&m_reply, 0, sizeof(m_reply));
 
   m_reply.m_type = BDEV_REPLY;
-  m_reply.BDEV_STATUS = reply;
-  m_reply.BDEV_ID = m_ptr->BDEV_ID;
+  m_reply.m_lblockdriver_lbdev_reply.status = reply;
+  m_reply.m_lblockdriver_lbdev_reply.id = m_ptr->BDEV_ID;
 
   send_reply(m_ptr->m_source, &m_reply, ipc_status);
 }

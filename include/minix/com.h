@@ -928,7 +928,6 @@
 
 /* Field names for block device messages. */
 #define BDEV_MINOR	m10_i1	/* minor device number */
-#define BDEV_STATUS	m10_i1	/* OK or error code */
 #define BDEV_ACCESS	m10_i2	/* access bits for open requests */
 #define BDEV_COUNT	m10_i2	/* number of bytes or elements in transfer */
 #define BDEV_GRANT	m10_i3	/* grant ID of buffer or vector */

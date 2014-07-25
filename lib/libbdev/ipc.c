@@ -185,8 +185,9 @@ int bdev_sendrec(dev_t dev, const message *m_orig)
   /* The protocol contract states that no asynchronous reply can satisfy a
    * synchronous SENDREC call, so we can never get an asynchronous reply here.
    */
-  if (m.BDEV_ID != NO_ID) {
-	printf("bdev: driver (%d) sent invalid ID (%ld)\n", endpt, m.BDEV_ID);
+  if (m.m_lblockdriver_lbdev_reply.id != NO_ID) {
+	printf("bdev: driver (%d) sent invalid ID (%d)\n", endpt,
+		m.m_lblockdriver_lbdev_reply.id);
 	return EINVAL;
   }
 
@@ -198,7 +199,7 @@ int bdev_sendrec(dev_t dev, const message *m_orig)
    * device, and then resend the request. If the call keeps failing, the caller
    * will eventually give up.
    */
-  if (m.BDEV_STATUS == ERESTART) {
+  if (m.m_lblockdriver_lbdev_reply.status == ERESTART) {
 	printf("bdev: got ERESTART from driver (%d), sleeping for reopen\n",
 		endpt);
 
@@ -208,7 +209,7 @@ int bdev_sendrec(dev_t dev, const message *m_orig)
   }
 
   /* Return the result of our request. */
-  return m.BDEV_STATUS;
+  return m.m_lblockdriver_lbdev_reply.status;
 }
 
 static int bdev_receive(dev_t dev, message *m)
@@ -278,11 +279,11 @@ void bdev_reply_asyn(message *m)
   assert(m->m_type == BDEV_REPLY);
 
   /* Get the corresponding asynchronous call structure. */
-  id = m->BDEV_ID;
+  id = m->m_lblockdriver_lbdev_reply.id;
 
   if ((call = bdev_call_get(id)) == NULL) {
-	printf("bdev: driver (%d) replied to unknown request (%ld)\n",
-		m->m_source, m->BDEV_ID);
+	printf("bdev: driver (%d) replied to unknown request (%d)\n",
+		m->m_source, m->m_lblockdriver_lbdev_reply.id);
 	return;
   }
 
@@ -298,7 +299,7 @@ void bdev_reply_asyn(message *m)
   }
 
   /* See the ERESTART comment in bdev_sendrec(). */
-  if (m->BDEV_STATUS == ERESTART) {
+  if (m->m_lblockdriver_lbdev_reply.status == ERESTART) {
 	printf("bdev: got ERESTART from driver (%d), sleeping for reopen\n",
 		endpt);
 
@@ -310,7 +311,7 @@ void bdev_reply_asyn(message *m)
 	return;
   }
 
-  bdev_callback_asyn(call, m->BDEV_STATUS);
+  bdev_callback_asyn(call, m->m_lblockdriver_lbdev_reply.status);
 }
 
 int bdev_wait_asyn(bdev_id_t id)

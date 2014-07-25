@@ -67,7 +67,7 @@ int bdev_open(dev_t dev, int access)
   if (r != OK)
 	return r;
 
-  return dev_mess.BDEV_STATUS;
+  return dev_mess.m_lblockdriver_lbdev_reply.status;
 }
 
 
@@ -96,7 +96,7 @@ int bdev_close(dev_t dev)
   if (r != OK)
 	return r;
 
-  return dev_mess.BDEV_STATUS;
+  return dev_mess.m_lblockdriver_lbdev_reply.status;
 }
 
 
@@ -147,7 +147,7 @@ static int bdev_ioctl(dev_t dev, endpoint_t proc_e, unsigned long req,
   if (r != OK)
 	return(r);
 
-  return(dev_mess.BDEV_STATUS);
+  return(dev_mess.m_lblockdriver_lbdev_reply.status);
 }
 
 
@@ -623,7 +623,7 @@ static int block_io(endpoint_t driver_e, message *mess_ptr)
 	if (r != OK)
 		return r;
 
-	status = mess_ptr->BDEV_STATUS;
+	status = mess_ptr->m_lblockdriver_lbdev_reply.status;
 	if (status == ERESTART) {
 		r = EDEADEPT;
 		*mess_ptr = mess_retry;

@@ -42,9 +42,10 @@ static int driver_open(int which)
 		return RET_REDO;
 	}
 
-	if(msg.m_type != BDEV_REPLY || msg.BDEV_STATUS != OK) {
+	if(msg.m_type != BDEV_REPLY ||
+		msg.m_lblockdriver_lbdev_reply.status != OK) {
 		printf("Filter: driver_open: ipc_sendrec returned %d, %d\n",
-			msg.m_type, msg.BDEV_STATUS);
+			msg.m_type, msg.m_lblockdriver_lbdev_reply.status);
 
 		return RET_REDO;
 	}
@@ -67,7 +68,8 @@ static int driver_open(int which)
 
 	cpf_revoke(gid);
 
-	if (r != OK || msg.m_type != BDEV_REPLY || msg.BDEV_STATUS != OK) {
+	if (r != OK || msg.m_type != BDEV_REPLY ||
+		msg.m_lblockdriver_lbdev_reply.status != OK) {
 		/* Not sure what to do here, either. */
 		printf("Filter: ioctl(DIOCGETP) returned (%d, %d)\n", 
 			r, msg.m_type);
@@ -122,9 +124,10 @@ static int driver_close(int which)
 		return RET_REDO;
 	}
 
-	if(msg.m_type != BDEV_REPLY || msg.BDEV_STATUS != OK) {
+	if(msg.m_type != BDEV_REPLY ||
+		msg.m_lblockdriver_lbdev_reply.status != OK) {
 		printf("Filter: driver_close: ipc_sendrec returned %d, %d\n",
-			msg.m_type, msg.BDEV_STATUS);
+			msg.m_type, msg.m_lblockdriver_lbdev_reply.status);
 
 		return RET_REDO;
 	}
@@ -938,52 +941,60 @@ int read_write(u64_t pos, char *bufa, char *bufb, size_t *sizep, int request)
 		return r;
 	}
 
-	if (m1.m_type != BDEV_REPLY || m1.BDEV_STATUS < 0) {
+	if (m1.m_type != BDEV_REPLY ||
+		m1.m_lblockdriver_lbdev_reply.status < 0) {
 		printf("Filter: unexpected/invalid reply from main driver: "
-			"(%x, %d)\n", m1.m_type, m1.BDEV_STATUS);
+			"(%x, %d)\n", m1.m_type,
+			m1.m_lblockdriver_lbdev_reply.status);
 
 		return bad_driver(DRIVER_MAIN, BD_PROTO,
-			(m1.m_type == BDEV_REPLY) ? m1.BDEV_STATUS : EFAULT);
+			(m1.m_type == BDEV_REPLY) ?
+			m1.m_lblockdriver_lbdev_reply.status : EFAULT);
 	}
 
-	if (m1.BDEV_STATUS != (ssize_t) *sizep) {
+	if (m1.m_lblockdriver_lbdev_reply.status != (ssize_t) *sizep) {
 		printf("Filter: truncated reply from main driver\n");
 
 		/* If the driver returned a value *larger* than we requested,
 		 * OR if we did NOT exceed the disk size, then we should
 		 * report the driver for acting strangely!
 		 */
-		if (m1.BDEV_STATUS > (ssize_t) *sizep ||
-			(pos + (unsigned int) m1.BDEV_STATUS < disk_size))
+		if (m1.m_lblockdriver_lbdev_reply.status > (ssize_t) *sizep ||
+			(pos + (unsigned int)
+			    m1.m_lblockdriver_lbdev_reply.status < disk_size))
 			return bad_driver(DRIVER_MAIN, BD_PROTO, EFAULT);
 
 		/* Return the actual size. */
-		*sizep = m1.BDEV_STATUS;
+		*sizep = m1.m_lblockdriver_lbdev_reply.status;
 	}
 
 	if (both) {
-		if (m2.m_type != BDEV_REPLY || m2.BDEV_STATUS < 0) {
+		if (m2.m_type != BDEV_REPLY ||
+			m2.m_lblockdriver_lbdev_reply.status < 0) {
 			printf("Filter: unexpected/invalid reply from "
 				"backup driver (%x, %d)\n",
-				m2.m_type, m2.BDEV_STATUS);
+				m2.m_type,
+				m2.m_lblockdriver_lbdev_reply.status);
 
 			return bad_driver(DRIVER_BACKUP, BD_PROTO,
-				m2.m_type == BDEV_REPLY ? m2.BDEV_STATUS :
+				m2.m_type == BDEV_REPLY ?
+				m2.m_lblockdriver_lbdev_reply.status :
 				EFAULT);
 		}
-		if (m2.BDEV_STATUS != (ssize_t) *sizep) {
+		if (m2.m_lblockdriver_lbdev_reply.status != (ssize_t) *sizep) {
 			printf("Filter: truncated reply from backup driver\n");
 
 			/* As above */
-			if (m2.BDEV_STATUS > (ssize_t) *sizep ||
-					(pos + (unsigned int) m2.BDEV_STATUS <
-					disk_size))
+			if (m2.m_lblockdriver_lbdev_reply.status > (ssize_t) *sizep ||
+					(pos + (unsigned int)
+					 m2.m_lblockdriver_lbdev_reply.status
+						< disk_size))
 				return bad_driver(DRIVER_BACKUP, BD_PROTO,
 					EFAULT);
 
 			/* Return the actual size. */
-			if ((ssize_t) *sizep >= m2.BDEV_STATUS)
-				*sizep = m2.BDEV_STATUS;
+			if ((ssize_t)*sizep >= m2.m_lblockdriver_lbdev_reply.status)
+				*sizep = m2.m_lblockdriver_lbdev_reply.status;
 		}
 	}
 

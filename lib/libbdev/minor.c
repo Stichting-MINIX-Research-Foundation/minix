@@ -58,13 +58,13 @@ int bdev_minor_reopen(dev_t dev)
 			return EINVAL;
 		}
 
-		if (m.BDEV_ID != NO_ID) {
+		if (m.m_lblockdriver_lbdev_reply.id != NO_ID) {
 			printf("bdev: driver (%d) sent invalid ID (%ld)\n",
-				endpt, m.BDEV_ID);
+				endpt, m.m_lblockdriver_lbdev_reply.id);
 			return EINVAL;
 		}
 
-		if ((r = m.BDEV_STATUS) != OK) {
+		if ((r = m.m_lblockdriver_lbdev_reply.status) != OK) {
 			printf("bdev: driver (%d) failed device reopen (%d)\n",
 				endpt, r);
 			return r;

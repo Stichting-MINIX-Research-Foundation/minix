@@ -159,7 +159,7 @@ static int fbd_open(devminor_t UNUSED(minor), int access)
 	if (m.m_type != BDEV_REPLY)
 		panic("invalid reply from driver (%d)\n", m.m_type);
 
-	return m.BDEV_STATUS;
+	return m.m_lblockdriver_lbdev_reply.status;
 }
 
 /*===========================================================================*
@@ -183,7 +183,7 @@ static int fbd_close(devminor_t UNUSED(minor))
 	if (m.m_type != BDEV_REPLY)
 		panic("invalid reply from driver (%d)\n", m.m_type);
 
-	return m.BDEV_STATUS;
+	return m.m_lblockdriver_lbdev_reply.status;
 }
 
 /*===========================================================================*
@@ -226,7 +226,7 @@ static int fbd_ioctl(devminor_t UNUSED(minor), unsigned long request,
 
 	cpf_revoke(gid);
 
-	return m.BDEV_STATUS;
+	return m.m_lblockdriver_lbdev_reply.status;
 }
 
 /*===========================================================================*
@@ -271,7 +271,7 @@ static ssize_t fbd_transfer_direct(int do_write, u64_t position,
 	for (i = 0; i < count; i++)
 		cpf_revoke(iovec[i].iov_grant);
 
-	return m.BDEV_STATUS;
+	return m.m_lblockdriver_lbdev_reply.status;
 }
 
 /*===========================================================================*
@@ -369,7 +369,7 @@ static ssize_t fbd_transfer_copy(int do_write, u64_t position,
 		rule_io_hook(ptr, size, position, FBD_FLAG_READ);
 
 		/* Upon success, copy back whatever has been processed. */
-		rsize = m.BDEV_STATUS;
+		rsize = m.m_lblockdriver_lbdev_reply.status;
 		for (i = j = off = 0; rsize > 0 && i < count; i++) {
 			len = MIN(rsize, iov[i].iov_size);
 
@@ -392,7 +392,7 @@ static ssize_t fbd_transfer_copy(int do_write, u64_t position,
 	if (ptr != fbd_buf)
 		free_contig(ptr, size);
 
-	return m.BDEV_STATUS;
+	return m.m_lblockdriver_lbdev_reply.status;
 }
 
 /*===========================================================================*

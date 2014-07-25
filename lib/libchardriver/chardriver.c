@@ -442,8 +442,8 @@ static void do_block_open(message *m_ptr, int ipc_status)
   memset(&m_reply, 0, sizeof(m_reply));
 
   m_reply.m_type = BDEV_REPLY;
-  m_reply.BDEV_STATUS = ENXIO;
-  m_reply.BDEV_ID = m_ptr->BDEV_ID;
+  m_reply.m_lblockdriver_lbdev_reply.status = ENXIO;
+  m_reply.m_lblockdriver_lbdev_reply.id = m_ptr->BDEV_ID;
 
   send_reply(m_ptr->m_source, &m_reply, ipc_status);
 }

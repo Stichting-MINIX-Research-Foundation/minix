@@ -125,6 +125,14 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_lsys_krn_readbios);
 
 typedef struct {
+	int status;
+	int id;
+
+	uint8_t padding[48];
+} mess_lblockdriver_lbdev_reply;
+_ASSERT_MSG_SIZE(mess_lblockdriver_lbdev_reply);
+
+typedef struct {
 	int action;
 	int freq;
 	int intr_type;
@@ -2032,6 +2040,7 @@ typedef struct {
 		mess_notify		m_notify;
 		mess_sigcalls		m_sigcalls;
 
+		mess_lblockdriver_lbdev_reply m_lblockdriver_lbdev_reply;
 		mess_lc_pm_cprof	m_lc_pm_cprof;
 		mess_lc_pm_sprof	m_lc_pm_sprof;
 		mess_lsys_krn_sys_diagctl m_lsys_krn_sys_diagctl;

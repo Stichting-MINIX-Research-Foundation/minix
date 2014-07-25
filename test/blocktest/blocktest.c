@@ -279,12 +279,15 @@ static int sendrec_driver(message *m_ptr, ssize_t exp, result_t *res)
 	if (m_ptr->m_type != BDEV_REPLY)
 		return set_result(res, RESULT_BADTYPE, m_ptr->m_type);
 
-	if (m_ptr->BDEV_ID != m_orig.BDEV_ID)
-		return set_result(res, RESULT_BADID, m_ptr->BDEV_ID);
+	if (m_ptr->m_lblockdriver_lbdev_reply.id != m_orig.BDEV_ID)
+		return set_result(res, RESULT_BADID,
+				m_ptr->m_lblockdriver_lbdev_reply.id);
 
-	if ((exp < 0 && m_ptr->BDEV_STATUS >= 0) ||
-			(exp >= 0 && m_ptr->BDEV_STATUS < 0))
-		return set_result(res, RESULT_BADSTATUS, m_ptr->BDEV_STATUS);
+	if ((exp < 0 && m_ptr->m_lblockdriver_lbdev_reply.status >= 0) ||
+			(exp >= 0 &&
+			 m_ptr->m_lblockdriver_lbdev_reply.status < 0))
+		return set_result(res, RESULT_BADSTATUS,
+				m_ptr->m_lblockdriver_lbdev_reply.status);
 
 	return set_result(res, RESULT_OK, 0);
 }
@@ -321,13 +324,15 @@ static void raw_xfer(dev_t minor, u64_t pos, iovec_s_t *iovec, int nr_req,
 	if (r != RESULT_OK)
 		return;
 
-	if (m.BDEV_STATUS == exp)
+	if (m.m_lblockdriver_lbdev_reply.status == exp)
 		return;
 
 	if (exp < 0)
-		set_result(res, RESULT_BADSTATUS, m.BDEV_STATUS);
+		set_result(res, RESULT_BADSTATUS,
+			m.m_lblockdriver_lbdev_reply.status);
 	else
-		set_result(res, RESULT_TRUNC, exp - m.BDEV_STATUS);
+		set_result(res, RESULT_TRUNC,
+			exp - m.m_lblockdriver_lbdev_reply.status);
 }
 
 static void vir_xfer(dev_t minor, u64_t pos, iovec_t *iovec, int nr_req,
@@ -439,9 +444,10 @@ static void bad_read1(void)
 
 	sendrec_driver(&m, OK, &res);
 
-	if (res.type == RESULT_OK && m.BDEV_STATUS != (ssize_t) iov.iov_size) {
+	if (res.type == RESULT_OK &&
+		m.m_lblockdriver_lbdev_reply.status != (ssize_t) iov.iov_size) {
 		res.type = RESULT_TRUNC;
-		res.value = m.BDEV_STATUS;
+		res.value = m.m_lblockdriver_lbdev_reply.status;
 	}
 
 	got_result(&res, "normal request");
@@ -489,9 +495,10 @@ static void bad_read1(void)
 
 	sendrec_driver(&m, OK, &res);
 
-	if (res.type == RESULT_OK && m.BDEV_STATUS != (ssize_t) iov.iov_size) {
+	if (res.type == RESULT_OK &&
+		m.m_lblockdriver_lbdev_reply.status != (ssize_t) iov.iov_size) {
 		res.type = RESULT_TRUNC;
-		res.value = m.BDEV_STATUS;
+		res.value = m.m_lblockdriver_lbdev_reply.status;
 	}
 
 	got_result(&res, "normal request");
