@@ -355,9 +355,6 @@
 /* Flags for PR_FORK_FLAGS. */
 #define PFF_VMINHIBIT	0x01	/* Don't schedule until release by VM. */
 
-/* Field names for SYS_INT86 */
-#define INT86_REG86    m1_p1	/* pointer to registers */
-
 /* SYS_SAFEMEMSET */
 #define SMS_DST		m2_i1	/* dst endpoint */
 #define SMS_GID		m2_i3	/* grant id */
