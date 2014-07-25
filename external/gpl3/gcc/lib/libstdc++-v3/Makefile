@@ -24,7 +24,14 @@ CWARNFLAGS.clang+=	-Wno-logical-op-parentheses \
 .if exists(${.CURDIR}/arch/${GCC_MACHINE_ARCH}/defs.mk) && ${MKGCC} != "no"
 .include "${.CURDIR}/arch/${GCC_MACHINE_ARCH}/defs.mk"
 
+.if defined(__MINIX)
+# by itself, libstdc++ think it is version 6, so use the same number here
+# as this is the exact same code, and will allow us to provide this library
+# from the base system (here), or through the gcc45 package.
+SHLIB_MAJOR=	6
+.else
 SHLIB_MAJOR=	7
+.endif # defined(__MINIX)
 SHLIB_MINOR=	1
 
 SUBDIR=		include
