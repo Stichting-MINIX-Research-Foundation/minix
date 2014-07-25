@@ -55,11 +55,11 @@ int do_cprofile(void)
 
   int r;
 
-  switch(m_in.PROF_ACTION) {
+  switch(m_in.m_lc_pm_cprof.action) {
 
   case PROF_GET:
-	return sys_cprof(PROF_GET, m_in.PROF_MEM_SIZE, who_e,
-		m_in.PROF_CTL_PTR, m_in.PROF_MEM_PTR);
+	return sys_cprof(PROF_GET, m_in.m_lc_pm_cprof.mem_size, who_e,
+		m_in.m_lc_pm_cprof.ctl_ptr, m_in.m_lc_pm_cprof.mem_ptr);
 
   case PROF_RESET:
 	return sys_cprof(PROF_RESET,0,0,0,0);

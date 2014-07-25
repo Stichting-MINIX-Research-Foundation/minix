@@ -1,12 +1,12 @@
 /* The kernel call that is implemented in this file:
- *   m_type:    SYS_CPROFILE
+ *   m_type:    SYS_CPROF
  *
  * The parameters for this kernel call are:
- *    m7_i1:    PROF_ACTION       (get/reset profiling data)
- *    m7_i2:    PROF_MEM_SIZE     (available memory for data)
- *    m7_i4:    PROF_ENDPT        (endpoint of caller)
- *    m7_p1:    PROF_CTL_PTR      (location of info struct)
- *    m7_p2:    PROF_MEM_PTR      (location of memory for data)
+ *	m_lsys_krn_cprof.action		(get/reset profiling data)
+ *	m_lsys_krn_cprof.mem_size	(available memory for data)
+ *	m_lsys_krn_cprof.endpt		(endpoint of caller)
+ *	m_lsys_krn_cprof.ctl_ptr	(location of info struct)
+ *	m_lsys_krn_cprof.mem_ptr	(location of memory for data)
  *
  * Changes:
  *   14 Aug, 2006   Created (Rogier Meurs)
@@ -30,7 +30,7 @@ int do_cprofile(struct proc * caller, message * m_ptr)
   phys_bytes len;
   vir_bytes vir_dst;
 
-  switch (m_ptr->PROF_ACTION) {
+  switch (m_ptr->m_lsys_krn_cprof.action) {
 
   case PROF_RESET:
 
@@ -69,10 +69,10 @@ int do_cprofile(struct proc * caller, message * m_ptr)
 	 * tables of the profiled processes.
 	 */
 
-	if(!isokendpt(m_ptr->PROF_ENDPT, &proc_nr))
+	if(!isokendpt(m_ptr->m_lsys_krn_cprof.endpt, &proc_nr))
 		return EINVAL;
 
-	cprof_mem_size = m_ptr->PROF_MEM_SIZE;
+	cprof_mem_size = m_ptr->m_lsys_krn_cprof.mem_size;
 
 	printf("CPROFILE notice: getting tables:");
 
@@ -114,7 +114,7 @@ int do_cprofile(struct proc * caller, message * m_ptr)
 
 	/* Copy the info struct to the user process. */
 	data_copy(KERNEL, (vir_bytes) &cprof_info,
-		m_ptr->PROF_ENDPT, (vir_bytes) m_ptr->PROF_CTL_PTR,
+		m_ptr->m_lsys_krn_cprof.endpt, m_ptr->m_lsys_krn_cprof.ctl_ptr,
 		sizeof(cprof_info));
 
 	/* If there is no space or errors occurred, don't bother copying. */
@@ -122,23 +122,23 @@ int do_cprofile(struct proc * caller, message * m_ptr)
 
 	/* For each profiled process, copy its name, slots_used and profiling
 	 * table to the user process. */
-	vir_dst = (vir_bytes) m_ptr->PROF_MEM_PTR;
+	vir_dst = m_ptr->m_lsys_krn_cprof.mem_ptr;
 	for (i=0; i<cprof_procs_no; i++) {
 		len = (phys_bytes) strlen(cprof_proc_info[i].name);
 		data_copy(KERNEL, (vir_bytes) cprof_proc_info[i].name,
-			m_ptr->PROF_ENDPT, vir_dst, len);
+			m_ptr->m_lsys_krn_cprof.endpt, vir_dst, len);
 		vir_dst += CPROF_PROCNAME_LEN;
 
 		len = (phys_bytes) sizeof(cprof_ctl_inst.slots_used);
 		data_copy(cprof_proc_info[i].endpt,
 		  cprof_proc_info[i].ctl_v + sizeof(cprof_ctl_inst.reset),
-		  m_ptr->PROF_ENDPT, vir_dst, len);
+		  m_ptr->m_lsys_krn_cprof.endpt, vir_dst, len);
 		vir_dst += len;
 
 		len = (phys_bytes)
 		(sizeof(cprof_tbl_inst) * cprof_proc_info[i].slots_used);
 		data_copy(cprof_proc_info[i].endpt, cprof_proc_info[i].buf_v,
-		  m_ptr->PROF_ENDPT, vir_dst, len);
+		  m_ptr->m_lsys_krn_cprof.endpt, vir_dst, len);
 		vir_dst += len;
 	}
 
