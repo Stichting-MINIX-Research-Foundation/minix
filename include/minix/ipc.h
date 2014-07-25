@@ -147,6 +147,14 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_lc_pm_cprof);
 
 typedef struct {
+	vir_bytes ctl_ptr;
+	vir_bytes mem_ptr;
+
+	uint8_t padding[48];
+} mess_lsys_krn_sys_profbuf;
+_ASSERT_MSG_SIZE(mess_lsys_krn_sys_profbuf);
+
+typedef struct {
 	endpoint_t endpt;
 	int action;
 	vir_bytes ctl_ptr;
@@ -2028,6 +2036,7 @@ typedef struct {
 		mess_lc_pm_sprof	m_lc_pm_sprof;
 		mess_lsys_krn_sys_diagctl m_lsys_krn_sys_diagctl;
 		mess_lsys_krn_sys_cprof m_lsys_krn_sys_cprof;
+		mess_lsys_krn_sys_profbuf m_lsys_krn_sys_profbuf;
 		mess_lsys_krn_sys_sprof m_lsys_krn_sys_sprof;
 		mess_lsys_krn_readbios	m_lsys_krn_readbios;
 		mess_pm_lsys_sigs_signal m_pm_lsys_sigs_signal;

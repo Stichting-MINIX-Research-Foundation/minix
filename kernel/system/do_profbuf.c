@@ -2,8 +2,8 @@
  *   m_type:    SYS_PROFBUF
  *
  * The parameters for this kernel call are:
- *    m7_p1:    PROF_CTL_PTR      (location of control struct)
- *    m7_p2:    PROF_MEM_PTR      (location of profiling table)
+ *	m_lsys_krn_sys_profbuf.ctl_ptr	(location of control struct)
+ *	m_lsys_krn_sys_profbuf.mem_ptr	(location of profiling table)
  *
  * Changes:
  *   14 Aug, 2006   Created (Rogier Meurs)
@@ -39,8 +39,8 @@ int do_profbuf(struct proc * caller, message * m_ptr)
   cprof_proc_info[cprof_procs_no].endpt = caller->p_endpoint;
   cprof_proc_info[cprof_procs_no].name = rp->p_name;
 
-  cprof_proc_info[cprof_procs_no].ctl_v = (vir_bytes) m_ptr->PROF_CTL_PTR;
-  cprof_proc_info[cprof_procs_no].buf_v = (vir_bytes) m_ptr->PROF_MEM_PTR;
+  cprof_proc_info[cprof_procs_no].ctl_v = m_ptr->m_lsys_krn_sys_profbuf.ctl_ptr;
+  cprof_proc_info[cprof_procs_no].buf_v = m_ptr->m_lsys_krn_sys_profbuf.mem_ptr;
 
   cprof_procs_no++;
 
@@ -48,4 +48,3 @@ int do_profbuf(struct proc * caller, message * m_ptr)
 }
 
 #endif /* CPROFILE */
-
