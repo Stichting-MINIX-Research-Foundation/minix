@@ -414,9 +414,6 @@
 #define VMCTL_BOOTINHIBIT_CLEAR	33
 
 /* Codes and field names for SYS_DIAGCTL. */
-#define DIAGCTL_CODE		m1_i1	/* DIAGCTL_CODE_* below */
-#define DIAGCTL_ARG1		m1_p1
-#define DIAGCTL_ARG2		m1_i2
 #define DIAGCTL_CODE_DIAG	1	/* Print diagnostics. */
 #define DIAGCTL_CODE_STACKTRACE	2	/* Print process stack. */
 #define DIAGCTL_CODE_REGISTER	3	/* Register for diagnostic signals */

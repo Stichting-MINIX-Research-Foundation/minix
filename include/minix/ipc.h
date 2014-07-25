@@ -132,6 +132,16 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_pm_lsys_sigs_signal);
 
 typedef struct {
+	int code;
+	vir_bytes buf;
+	int len;
+	endpoint_t endpt;
+
+	uint8_t padding[40];
+} mess_lsys_krn_sys_diagctl;
+_ASSERT_MSG_SIZE(mess_lsys_krn_sys_diagctl);
+
+typedef struct {
 	off_t offset;
 	void *addr;
 	size_t len;
@@ -1968,6 +1978,7 @@ typedef struct {
 		mess_notify		m_notify;
 		mess_sigcalls		m_sigcalls;
 
+		mess_lsys_krn_sys_diagctl m_lsys_krn_sys_diagctl;
 		mess_lsys_krn_readbios	m_lsys_krn_readbios;
 		mess_pm_lsys_sigs_signal m_pm_lsys_sigs_signal;
 		mess_input_tty_event	m_input_tty_event;
