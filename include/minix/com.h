@@ -487,25 +487,6 @@
 #define RS_INIT 	(RS_RQ_BASE + 20)	/* service init message */
 #define RS_LU_PREPARE	(RS_RQ_BASE + 21)	/* prepare to update message */
 
-#  define RS_CMD_ADDR		m1_p1		/* command string */
-#  define RS_CMD_LEN		m1_i1		/* length of command */
-#  define RS_PERIOD 	        m1_i2		/* heartbeat period */
-#  define RS_DEV_MAJOR          m1_i3           /* major device number */
-
-#  define RS_ENDPOINT		m1_i1		/* endpoint number in reply */
-
-#  define RS_NAME		m1_p1		/* name */
-#  define RS_NAME_LEN		m1_i1		/* namelen */
-
-#  define RS_INIT_RESULT        m7_i1           /* init result */
-#  define RS_INIT_TYPE          m7_i2           /* init type */
-#  define RS_INIT_RPROCTAB_GID  m7_i3           /* init rproc table gid */
-#  define RS_INIT_OLD_ENDPOINT  m7_i4           /* init old endpoint */
-
-#  define RS_LU_RESULT          m1_i1           /* live update result */
-#  define RS_LU_STATE           m1_i2           /* state required to update */
-#  define RS_LU_PREPARE_MAXTIME m1_i3           /* the max time to prepare */
-
 /*===========================================================================*
  *                Messages for the Data Store Server			     *
  *===========================================================================*/

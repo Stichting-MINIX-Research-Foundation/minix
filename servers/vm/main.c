@@ -177,7 +177,7 @@ static int do_rs_init(message *m)
 	static struct rprocpub rprocpub[NR_BOOT_PROCS];
 
 	/* Map all the services in the boot image. */
-	if((s = sys_safecopyfrom(RS_PROC_NR, m->RS_INIT_RPROCTAB_GID, 0,
+	if((s = sys_safecopyfrom(RS_PROC_NR, m->m_rs_init.rproctab_gid, 0,
 		(vir_bytes) rprocpub, sizeof(rprocpub))) != OK) {
 		panic("vm: sys_safecopyfrom (rs) failed: %d", s);
 	}
@@ -191,7 +191,7 @@ static int do_rs_init(message *m)
 	}
 
 	/* RS expects this response that it then again wants to reply to: */
-	m->RS_INIT_RESULT = OK;
+	m->m_rs_init.result = OK;
 	ipc_sendrec(RS_PROC_NR, m);
 
 	return(SUSPEND);

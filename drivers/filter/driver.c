@@ -427,8 +427,8 @@ static void restart_driver(int which, int tell_rs)
 	if (tell_rs) {
 		/* Tell RS to refresh or restart the driver */
 		msg.m_type = RS_REFRESH;
-		msg.RS_CMD_ADDR = driver[which].label;
-		msg.RS_CMD_LEN = strlen(driver[which].label);
+		msg.m_rs_req.addr = driver[which].label;
+		msg.m_rs_req.len = strlen(driver[which].label);
 
 #if DEBUG
 		printf("Filter: asking RS to refresh %s..\n",

@@ -87,7 +87,7 @@ int do_sef_lu_request(message *m_ptr)
 
   sef_lu_debug_cycle = 0;
   old_state = sef_lu_state;
-  state = m_ptr->RS_LU_STATE;
+  state = m_ptr->m_rs_update.state;
 
   /* Deal with prepare cancel requests first. */
   is_valid_state = (state == SEF_LU_STATE_NULL);
@@ -151,8 +151,8 @@ static void sef_lu_ready(int result)
    */
   m.m_source = sef_self_endpoint;
   m.m_type = RS_LU_PREPARE;
-  m.RS_LU_STATE = sef_lu_state;
-  m.RS_LU_RESULT = result;
+  m.m_rs_update.state = sef_lu_state;
+  m.m_rs_update.result = result;
   r = sef_cbs.sef_cb_lu_response(&m);
 
 #if SEF_LU_DEBUG

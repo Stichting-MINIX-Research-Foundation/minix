@@ -28,11 +28,11 @@ int minix_rs_lookup(const char *name, endpoint_t *value)
 	len_key = strlen(name)+1;
 
 	memset(&m, 0, sizeof(m));
-	m.RS_NAME = (char *) __UNCONST(name);
-	m.RS_NAME_LEN = len_key;
+	m.m_rs_req.name = name;
+	m.m_rs_req.name_len = len_key;
 
 	if (_syscall(RS_PROC_NR, RS_LOOKUP, &m) != -1) {
-		*value = m.RS_ENDPOINT;
+		*value = m.m_rs_req.endpoint;
 		return OK;
 	}
 

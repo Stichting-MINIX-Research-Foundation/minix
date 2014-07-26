@@ -257,7 +257,7 @@ void update_period(message *m_ptr)
 
       /* Prepare cancel request. */
       m.m_type = RS_LU_PREPARE;
-      m.RS_LU_STATE = SEF_LU_STATE_NULL;
+      m.m_rs_update.state = SEF_LU_STATE_NULL;
       if(rpub->endpoint == RS_PROC_NR) {
           /* RS can process the request directly. */
           do_sef_lu_request(&m);

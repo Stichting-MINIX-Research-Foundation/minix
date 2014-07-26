@@ -35,7 +35,7 @@ message *m_ptr;					/* request message pointer */
   rpub = rp->r_pub;
 
   /* Copy the request structure. */
-  r = copy_rs_start(m_ptr->m_source, m_ptr->RS_CMD_ADDR, &rs_start);
+  r = copy_rs_start(m_ptr->m_source, m_ptr->m_rs_req.addr, &rs_start);
   if (r != OK) {
       return r;
   }
@@ -93,8 +93,8 @@ int do_down(message *m_ptr)
   char label[RS_MAX_LABEL_LEN];
 
   /* Copy label. */
-  s = copy_label(m_ptr->m_source, m_ptr->RS_CMD_ADDR,
-      m_ptr->RS_CMD_LEN, label, sizeof(label));
+  s = copy_label(m_ptr->m_source, m_ptr->m_rs_req.addr,
+      m_ptr->m_rs_req.len, label, sizeof(label));
   if(s != OK) {
       return s;
   }
@@ -143,8 +143,8 @@ int do_restart(message *m_ptr)
   char script[MAX_SCRIPT_LEN];
 
   /* Copy label. */
-  s = copy_label(m_ptr->m_source, m_ptr->RS_CMD_ADDR,
-      m_ptr->RS_CMD_LEN, label, sizeof(label));
+  s = copy_label(m_ptr->m_source, m_ptr->m_rs_req.addr,
+      m_ptr->m_rs_req.len, label, sizeof(label));
   if(s != OK) {
       return s;
   }
@@ -191,8 +191,8 @@ int do_clone(message *m_ptr)
   char label[RS_MAX_LABEL_LEN];
 
   /* Copy label. */
-  s = copy_label(m_ptr->m_source, m_ptr->RS_CMD_ADDR,
-      m_ptr->RS_CMD_LEN, label, sizeof(label));
+  s = copy_label(m_ptr->m_source, m_ptr->m_rs_req.addr,
+      m_ptr->m_rs_req.len, label, sizeof(label));
   if(s != OK) {
       return s;
   }
@@ -237,7 +237,7 @@ int do_edit(message *m_ptr)
   char label[RS_MAX_LABEL_LEN];
 
   /* Copy the request structure. */
-  r = copy_rs_start(m_ptr->m_source, m_ptr->RS_CMD_ADDR, &rs_start);
+  r = copy_rs_start(m_ptr->m_source, m_ptr->m_rs_req.addr, &rs_start);
   if (r != OK) {
       return r;
   }
@@ -327,8 +327,8 @@ int do_refresh(message *m_ptr)
   char label[RS_MAX_LABEL_LEN];
 
   /* Copy label. */
-  s = copy_label(m_ptr->m_source, m_ptr->RS_CMD_ADDR,
-      m_ptr->RS_CMD_LEN, label, sizeof(label));
+  s = copy_label(m_ptr->m_source, m_ptr->m_rs_req.addr,
+      m_ptr->m_rs_req.len, label, sizeof(label));
   if(s != OK) {
       return s;
   }
@@ -398,7 +398,7 @@ int do_init_ready(message *m_ptr)
 
   is_rs = (m_ptr->m_source == RS_PROC_NR);
   who_p = _ENDPOINT_P(m_ptr->m_source);
-  result = m_ptr->RS_INIT_RESULT;
+  result = m_ptr->m_rs_init.result;
 
   /* Check for RS failing initialization first. */
   if(is_rs && result != OK) {
@@ -490,7 +490,7 @@ int do_update(message *m_ptr)
   int prepare_maxtime;
 
   /* Copy the request structure. */
-  s = copy_rs_start(m_ptr->m_source, m_ptr->RS_CMD_ADDR, &rs_start);
+  s = copy_rs_start(m_ptr->m_source, m_ptr->m_rs_req.addr, &rs_start);
   if (s != OK) {
       return s;
   }
@@ -522,13 +522,13 @@ int do_update(message *m_ptr)
       return s;
 
   /* Retrieve live update state. */
-  lu_state = m_ptr->RS_LU_STATE;
+  lu_state = m_ptr->m_rs_update.state;
   if(lu_state == SEF_LU_STATE_NULL) {
       return(EINVAL);
   }
 
   /* Retrieve prepare max time. */
-  prepare_maxtime = m_ptr->RS_LU_PREPARE_MAXTIME;
+  prepare_maxtime = m_ptr->m_rs_update.prepare_maxtime;
   if(prepare_maxtime) {
       if(prepare_maxtime < 0 || prepare_maxtime > RS_MAX_PREPARE_MAXTIME) {
           return(EINVAL);
@@ -658,7 +658,7 @@ int do_upd_ready(message *m_ptr)
 
   who_p = _ENDPOINT_P(m_ptr->m_source);
   rp = rproc_ptr[who_p];
-  result = m_ptr->RS_LU_RESULT;
+  result = m_ptr->m_rs_update.result;
   is_rs = (m_ptr->m_source == RS_PROC_NR);
 
   /* Make sure the originating service was requested to prepare for update. */
@@ -906,14 +906,14 @@ message *m_ptr;
 	struct rproc *rrp;
 	struct rprocpub *rrpub;
 
-	len = m_ptr->RS_NAME_LEN;
+	len = m_ptr->m_rs_req.name_len;
 
 	if(len < 2 || len >= sizeof(namebuf)) {
 		printf("RS: len too weird (%d)\n", len);
 		return EINVAL;
 	}
 
-	if((r=sys_datacopy(m_ptr->m_source, (vir_bytes) m_ptr->RS_NAME,
+	if((r=sys_datacopy(m_ptr->m_source, (vir_bytes) m_ptr->m_rs_req.name,
 		SELF, (vir_bytes) namebuf, len)) != OK) {
 		printf("RS: name copy failed\n");
 		return r;
@@ -927,7 +927,7 @@ message *m_ptr;
 		return ESRCH;
 	}
 	rrpub = rrp->r_pub;
-	m_ptr->RS_ENDPOINT = rrpub->endpoint;
+	m_ptr->m_rs_req.endpoint = rrpub->endpoint;
 
 	return OK;
 }

@@ -419,8 +419,8 @@ int main(int argc, char **argv)
   memset(&m, 0, sizeof(m));
   switch(request) {
   case RS_UPDATE:
-      m.RS_LU_STATE = req_lu_state;
-      m.RS_LU_PREPARE_MAXTIME = req_lu_maxtime;
+      m.m_rs_update.state = req_lu_state;
+      m.m_rs_update.prepare_maxtime = req_lu_maxtime;
       /* fall through */
   case RS_UP:
   case RS_EDIT:
@@ -462,14 +462,14 @@ int main(int argc, char **argv)
       assert(config.rs_start.rss_priority < NR_SCHED_QUEUES);
       assert(config.rs_start.rss_quantum > 0);
 
-      m.RS_CMD_ADDR = (char *) &config.rs_start;
+      m.m_rs_req.addr = (char *) &config.rs_start;
       break;
   case RS_DOWN:
   case RS_REFRESH:
   case RS_RESTART:
   case RS_CLONE:
-      m.RS_CMD_ADDR = req_label;
-      m.RS_CMD_LEN = strlen(req_label);
+      m.m_rs_req.addr = req_label;
+      m.m_rs_req.len = strlen(req_label);
       break;
   case RS_SHUTDOWN:
       break;

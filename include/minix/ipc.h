@@ -1881,6 +1881,33 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_lsys_kern_vsafecopy);
 
 typedef struct {
+	int		result;
+	int		type;
+	cp_grant_id_t	rproctab_gid;
+	endpoint_t	old_endpoint;
+	uint8_t padding[40];
+} mess_rs_init;
+_ASSERT_MSG_SIZE(mess_rs_init);
+
+typedef struct {
+	int		result;
+	int		state;
+	int		prepare_maxtime;
+	uint8_t padding[44];
+} mess_rs_update;
+_ASSERT_MSG_SIZE(mess_rs_update);
+
+typedef struct {
+	int		len;
+	int		name_len;
+	endpoint_t	endpoint;
+	void		*addr;
+	const char	*name;
+	uint8_t padding[36];
+} mess_rs_req;
+_ASSERT_MSG_SIZE(mess_rs_req);
+
+typedef struct {
 	endpoint_t m_source;		/* who sent the message */
 	int m_type;			/* what kind of message is it */
 	union {
@@ -2120,6 +2147,9 @@ typedef struct {
 		mess_lsys_vm_unmap_phys	m_lsys_vm_unmap_phys;
 		mess_lsys_kern_safecopy	m_lsys_kern_safecopy;
 		mess_lsys_kern_vsafecopy m_lsys_kern_vsafecopy;
+		mess_rs_init		m_rs_init;
+		mess_rs_update		m_rs_update;
+		mess_rs_req		m_rs_req;
 
 		mess_vfs_lchardriver_cancel	m_vfs_lchardriver_cancel;
 		mess_vfs_lchardriver_openclose	m_vfs_lchardriver_openclose;

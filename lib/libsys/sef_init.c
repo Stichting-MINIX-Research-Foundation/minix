@@ -66,7 +66,7 @@ static int process_init(int type, sef_init_info_t *info)
   memset(&m, 0, sizeof(m));
   m.m_source = sef_self_endpoint;
   m.m_type = RS_INIT;
-  m.RS_INIT_RESULT = result;
+  m.m_rs_init.result = result;
   r = sef_cbs.sef_cb_init_response(&m);
 
   return r;
@@ -111,10 +111,10 @@ int do_sef_init_request(message *m_ptr)
   sef_init_info_t info;
 
   /* Get init parameters from message. */
-  type = m_ptr->RS_INIT_TYPE;
-  info.rproctab_gid = m_ptr->RS_INIT_RPROCTAB_GID;
+  type = m_ptr->m_rs_init.type;
+  info.rproctab_gid = m_ptr->m_rs_init.rproctab_gid;
   info.endpoint = sef_self_endpoint;
-  info.old_endpoint = m_ptr->RS_INIT_OLD_ENDPOINT;
+  info.old_endpoint = m_ptr->m_rs_init.old_endpoint;
 
   /* Peform initialization. */
   r = process_init(type, &info);

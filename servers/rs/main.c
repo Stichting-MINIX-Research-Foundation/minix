@@ -646,7 +646,7 @@ endpoint_t endpoint;
   if(m.m_type != RS_INIT) {
       panic("unexpected reply from service: %d", m.m_source);
   }
-  result = m.RS_INIT_RESULT;
+  result = m.m_rs_init.result;
   rp = rproc_ptr[_ENDPOINT_P(m.m_source)];
 
   /* Check result. */

@@ -43,9 +43,9 @@ int type;					/* type of initialization */
 
   /* Send initialization message. */
   m.m_type = RS_INIT;
-  m.RS_INIT_TYPE = type;
-  m.RS_INIT_RPROCTAB_GID = rinit.rproctab_gid;
-  m.RS_INIT_OLD_ENDPOINT = old_endpoint;
+  m.m_rs_init.type = type;
+  m.m_rs_init.rproctab_gid = rinit.rproctab_gid;
+  m.m_rs_init.old_endpoint = old_endpoint;
   r = asynsend(rpub->endpoint, &m);
 
   return r;
