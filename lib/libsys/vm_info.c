@@ -12,8 +12,8 @@ int vm_info_stats(struct vm_stats_info *vsi)
     message m;
 
     memset(&m, 0, sizeof(m));
-    m.VMI_WHAT = VMIW_STATS;
-    m.VMI_PTR = (void *) vsi;
+    m.m_lsys_vm_info.what = VMIW_STATS;
+    m.m_lsys_vm_info.ptr = vsi;
 
     return _taskcall(VM_PROC_NR, VM_INFO, &m);
 }
@@ -26,9 +26,9 @@ int vm_info_usage(endpoint_t who, struct vm_usage_info *vui)
     message m;
 
     memset(&m, 0, sizeof(m));
-    m.VMI_WHAT = VMIW_USAGE;
-    m.VMI_EP = who;
-    m.VMI_PTR = (void *) vui;
+    m.m_lsys_vm_info.what = VMIW_USAGE;
+    m.m_lsys_vm_info.ep = who;
+    m.m_lsys_vm_info.ptr = vui;
 
     return _taskcall(VM_PROC_NR, VM_INFO, &m);
 }
@@ -43,16 +43,16 @@ int vm_info_region(endpoint_t who, struct vm_region_info *vri,
     int result;
 
     memset(&m, 0, sizeof(m));
-    m.VMI_WHAT = VMIW_REGION;
-    m.VMI_EP = who;
-    m.VMI_COUNT = count;
-    m.VMI_PTR = (void *) vri;
-    m.VMI_NEXT = *next;
+    m.m_lsys_vm_info.what = VMIW_REGION;
+    m.m_lsys_vm_info.ep = who;
+    m.m_lsys_vm_info.count = count;
+    m.m_lsys_vm_info.ptr = vri;
+    m.m_lsys_vm_info.next = *next;
 
     if ((result = _taskcall(VM_PROC_NR, VM_INFO, &m)) != OK)
         return result;
 
-    *next = m.VMI_NEXT;
-    return m.VMI_COUNT;
+    *next = m.m_lsys_vm_info.next;
+    return m.m_lsys_vm_info.count;
 }
 

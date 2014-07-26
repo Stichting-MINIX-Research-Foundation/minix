@@ -773,13 +773,8 @@
 #	define VM_NOTIFY_SIG_IPC	m1_i2
 
 #define VM_INFO			(VM_RQ_BASE+40)
-#	define VMI_WHAT			m2_i1
-#	define VMI_EP			m2_i2
-#	define VMI_COUNT		m2_i3
-#	define VMI_PTR			m2_p1
-#	define VMI_NEXT			m2_l1
 
-/* VMI_WHAT values. */
+/* VM_INFO 'what' values. */
 #define VMIW_STATS			1
 #define VMIW_USAGE			2
 #define VMIW_REGION			3

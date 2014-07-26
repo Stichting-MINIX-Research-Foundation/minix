@@ -111,9 +111,9 @@ int do_info(message *m)
 		return EINVAL;
 	vmp = &vmproc[pr];
 
-	ptr = (vir_bytes) m->VMI_PTR;
+	ptr = (vir_bytes) m->m_lsys_vm_info.ptr;
 
-	switch(m->VMI_WHAT) {
+	switch(m->m_lsys_vm_info.what) {
 	case VMIW_STATS:
 		vsi.vsi_pagesize = VM_PAGE_SIZE;
 		vsi.vsi_total = total_pages;
@@ -129,9 +129,9 @@ int do_info(message *m)
 		break;
 
 	case VMIW_USAGE:
-		if(m->VMI_EP < 0)
+		if(m->m_lsys_vm_info.ep < 0)
 			get_usage_info_kernel(&vui);
-		else if (vm_isokendpt(m->VMI_EP, &pr) != OK)
+		else if (vm_isokendpt(m->m_lsys_vm_info.ep, &pr) != OK)
 			return EINVAL;
 		else get_usage_info(&vmproc[pr], &vui);
 
@@ -141,16 +141,16 @@ int do_info(message *m)
 		break;
 
 	case VMIW_REGION:
-		if (vm_isokendpt(m->VMI_EP, &pr) != OK)
+		if (vm_isokendpt(m->m_lsys_vm_info.ep, &pr) != OK)
 			return EINVAL;
 
-		count = MIN(m->VMI_COUNT, MAX_VRI_COUNT);
-		next = m->VMI_NEXT;
+		count = MIN(m->m_lsys_vm_info.count, MAX_VRI_COUNT);
+		next = m->m_lsys_vm_info.next;
 
 		count = get_region_info(&vmproc[pr], vri, count, &next);
 
-		m->VMI_COUNT = count;
-		m->VMI_NEXT = next;
+		m->m_lsys_vm_info.count = count;
+		m->m_lsys_vm_info.next = next;
 
 		addr = (vir_bytes) vri;
 		size = sizeof(vri[0]) * count;

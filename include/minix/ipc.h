@@ -1742,6 +1742,16 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_lsys_vm_query_exit);
 
 typedef struct {
+	int		what;
+	endpoint_t	ep;
+	int		count;
+	void		*ptr;
+	vir_bytes	next;
+	uint8_t		padding[36];
+} mess_lsys_vm_info;
+_ASSERT_MSG_SIZE(mess_lsys_vm_info);
+
+typedef struct {
 	endpoint_t m_source;		/* who sent the message */
 	int m_type;			/* what kind of message is it */
 	union {
@@ -1964,6 +1974,7 @@ typedef struct {
 		mess_lc_vm_getphys	m_lc_vm_getphys;
 		mess_lc_vm_shm_unmap	m_lc_vm_shm_unmap;
 		mess_lsys_vm_query_exit	m_lsys_vm_query_exit;
+		mess_lsys_vm_info	m_lsys_vm_info;
 
 		mess_vfs_lchardriver_cancel	m_vfs_lchardriver_cancel;
 		mess_vfs_lchardriver_openclose	m_vfs_lchardriver_openclose;
