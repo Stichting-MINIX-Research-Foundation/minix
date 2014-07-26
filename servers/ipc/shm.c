@@ -42,9 +42,9 @@ int do_shmget(message *m)
 	int flag;
 	int id;
 
-	key = m->SHMGET_KEY;
-	old_size = size = m->SHMGET_SIZE;
-	flag = m->SHMGET_FLAG;
+	key = m->m_lc_ipc_shmget.key;
+	old_size = size = m->m_lc_ipc_shmget.size;
+	flag = m->m_lc_ipc_shmget.flag;
 
 	if ((shm = shm_find_key(key))) {
 		if (!check_perm(&shm->shmid_ds.shm_perm, who_e, flag))
@@ -97,7 +97,7 @@ int do_shmget(message *m)
 		shm_list_nr++;
 	}
 
-	m->SHMGET_RETID = id;
+	m->m_lc_ipc_shmget.retid = id;
 	return OK;
 }
 

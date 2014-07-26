@@ -5,6 +5,7 @@
 #include <minix/type.h>
 #include <minix/const.h>
 #include <sys/signal.h>
+#include <sys/types.h>
 
 /*==========================================================================* 
  * Types relating to messages. 						    *
@@ -1765,6 +1766,15 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_lsys_vm_watch_exit);
 
 typedef struct {
+	key_t		key;
+	size_t		size;
+	int		flag;
+	int		retid;
+	uint8_t		padding[40];
+} mess_lc_ipc_shmget;
+_ASSERT_MSG_SIZE(mess_lc_ipc_shmget);
+
+typedef struct {
 	endpoint_t m_source;		/* who sent the message */
 	int m_type;			/* what kind of message is it */
 	union {
@@ -1990,6 +2000,7 @@ typedef struct {
 		mess_lsys_vm_info	m_lsys_vm_info;
 		mess_lsys_vm_update	m_lsys_vm_update;
 		mess_lsys_vm_watch_exit	m_lsys_vm_watch_exit;
+		mess_lc_ipc_shmget	m_lc_ipc_shmget;
 
 		mess_vfs_lchardriver_cancel	m_vfs_lchardriver_cancel;
 		mess_vfs_lchardriver_openclose	m_vfs_lchardriver_openclose;

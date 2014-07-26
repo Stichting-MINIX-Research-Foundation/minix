@@ -30,12 +30,12 @@ int shmget(key_t key, size_t size, int shmflg)
 	}
 
 	memset(&m, 0, sizeof(m));
-	m.SHMGET_KEY = key;
-	m.SHMGET_SIZE = size;
-	m.SHMGET_FLAG = shmflg;
+	m.m_lc_ipc_shmget.key = key;
+	m.m_lc_ipc_shmget.size = size;
+	m.m_lc_ipc_shmget.flag = shmflg;
 
 	r = _syscall(ipc_pt, IPC_SHMGET, &m);
 	if (r != OK)
 		return r;
-	return m.SHMGET_RETID;
+	return m.m_lc_ipc_shmget.retid;
 }

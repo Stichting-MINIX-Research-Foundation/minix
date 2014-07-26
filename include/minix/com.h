@@ -827,10 +827,6 @@
 
 /* Shared Memory */
 #define IPC_SHMGET	(IPC_BASE+1)
-#	define SHMGET_KEY	m2_l1
-#	define SHMGET_SIZE	m2_l2
-#	define SHMGET_FLAG	m2_i1
-#	define SHMGET_RETID	m2_i2
 #define IPC_SHMAT	(IPC_BASE+2)
 #	define SHMAT_ID		m2_i1
 #	define SHMAT_ADDR	m2_l1
