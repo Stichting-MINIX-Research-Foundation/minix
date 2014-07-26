@@ -311,7 +311,7 @@ Next make a file system for on-disk /usr and copy the floppy /usr on to it.
 .PP
 .XB "mkfs\0/dev/c0d0p1s2"
 .XB "mount\0/dev/c0d0p1s2\0/mnt"
-.XB "cpdir\0\-v\0/usr\0/mnt"
+.XB "cp -psmr\0\-v\0/usr\0/mnt"
 .PP
 This will create a file system on /dev/c0d0p1s2, mount it on /mnt, and copy the
 contents of the \s-2USR\s+2 floppy onto it.
@@ -330,7 +330,7 @@ fill it from the floppy:
 .XB "mkfs\0\-i\0512\0/dev/c0d0p1s0"
 .XB "mount\0/dev/fd0\0/fd0"
 .XB "mount\0/dev/c0d0p1s0\0/mnt"
-.XB "cpdir\0\-v\0/fd0\0/mnt"
+.XB "cp -psmr\0\-v\0/fd0\0/mnt"
 .XB "umount\0/dev/fd0"
 .PP
 Remove
@@ -646,7 +646,7 @@ This is slower then a RAM disk, but saves a lot of memory.
 The automatic installation script knows how to handle this new situation.
 If you install manually then you have to use
 .PP
-.XB "cpdir\0\-vx\0/\0/mnt"
+.XB "cp -psmr\0\-vx\0/\0/mnt"
 .PP
 to copy the root device to disk.  When it is time to fill /usr and you only
 have one floppy drive then hit DEL to get out of the installation script and

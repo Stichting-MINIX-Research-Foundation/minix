@@ -49,7 +49,6 @@ MLINKS += ash.1 umask.1
 MLINKS += ash.1 unset.1
 MLINKS += ash.1 wait.1
 MLINKS += compress.1 uncompress.1
-MLINKS += cp.1 cpdir.1
 MLINKS += svc.1 ci.1
 MLINKS += svc.1 co.1
 

@@ -15,7 +15,6 @@
 ./bin/chmod				minix-sys
 ./bin/command				minix-sys
 ./bin/cp				minix-sys
-./bin/cpdir				minix-sys
 ./bin/cpio				minix-sys
 ./bin/date				minix-sys
 ./bin/df				minix-sys
@@ -2243,7 +2242,6 @@
 ./usr/man/man1/compress.1		minix-sys
 ./usr/man/man1/continue.1		minix-sys
 ./usr/man/man1/cp.1			minix-sys
-./usr/man/man1/cpdir.1			minix-sys
 ./usr/man/man1/cpio.1			minix-sys
 ./usr/man/man1/cpp.1			minix-sys	gcccmds
 ./usr/man/man1/crc.1			minix-sys
