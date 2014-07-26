@@ -358,23 +358,12 @@
 /* Field names for SYS_INT86 */
 #define INT86_REG86    m1_p1	/* pointer to registers */
 
-/* Field names for SYS_SAFECOPY* */
-#define SCP_FROM_TO	m2_i1	/* from/to whom? */
-#define SCP_GID		m2_i3	/* grant id */
-#define SCP_OFFSET	m2_l1	/* offset within grant */
-#define SCP_ADDRESS	m2_p1	/* my own address */
-#define SCP_BYTES	m2_l2	/* bytes from offset */
-
 /* SYS_SAFEMEMSET */
 #define SMS_DST		m2_i1	/* dst endpoint */
 #define SMS_GID		m2_i3	/* grant id */
 #define SMS_OFFSET	m2_l1	/* offset within grant */
 #define SMS_BYTES	m2_l2	/* bytes from offset */
 #define SMS_PATTERN	m2_i2	/* memset() pattern */
-
-/* Field names for SYS_VSAFECOPY* */
-#define VSCP_VEC_ADDR	m2_p1	/* start of vector */
-#define VSCP_VEC_SIZE	m2_l2	/* elements in vector */
 
 /* Field names for SYS_SPROF, _CPROF, _PROFBUF. */
 #define PROF_ACTION    m7_i1    /* start/stop/reset/get */

@@ -1864,6 +1864,23 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_lsys_vm_unmap_phys);
 
 typedef struct {
+	endpoint_t	from_to;
+	cp_grant_id_t	gid;
+	size_t		offset;
+	void		*address;
+	size_t		bytes;
+	uint8_t padding[36];
+} mess_lsys_kern_safecopy;
+_ASSERT_MSG_SIZE(mess_lsys_kern_safecopy);
+
+typedef struct {
+	void		*vec_addr;
+	int		vec_size;
+	uint8_t padding[48];
+} mess_lsys_kern_vsafecopy;
+_ASSERT_MSG_SIZE(mess_lsys_kern_vsafecopy);
+
+typedef struct {
 	endpoint_t m_source;		/* who sent the message */
 	int m_type;			/* what kind of message is it */
 	union {
@@ -2101,6 +2118,8 @@ typedef struct {
 		mess_lc_vm_brk		m_lc_vm_brk;
 		mess_lsys_vm_map_phys	m_lsys_vm_map_phys;
 		mess_lsys_vm_unmap_phys	m_lsys_vm_unmap_phys;
+		mess_lsys_kern_safecopy	m_lsys_kern_safecopy;
+		mess_lsys_kern_vsafecopy m_lsys_kern_vsafecopy;
 
 		mess_vfs_lchardriver_cancel	m_vfs_lchardriver_cancel;
 		mess_vfs_lchardriver_openclose	m_vfs_lchardriver_openclose;

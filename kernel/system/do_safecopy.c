@@ -2,15 +2,15 @@
  *   m_type:	SYS_SAFECOPYFROM or SYS_SAFECOPYTO or SYS_VSAFECOPY
  *
  * The parameters for this kernel call are:
- *    	SCP_FROM_TO	other endpoint
- *    	SCP_GID		grant id
- *    	SCP_OFFSET	offset within granted space
- *	SCP_ADDRESS	address in own address space
- *    	SCP_BYTES	bytes to be copied
+ *    	m_lsys_kern_safecopy.from_to	other endpoint
+ *    	m_lsys_kern_safecopy.gid	grant id
+ *    	m_lsys_kern_safecopy.offset	offset within granted space
+ *	m_lsys_kern_safecopy.address	address in own address space
+ *    	m_lsys_kern_safecopy.bytes	bytes to be copied
  *
  * For the vectored variant (do_vsafecopy): 
- *      VSCP_VEC_ADDR   address of vector
- *      VSCP_VEC_SIZE   number of significant elements in vector
+ *      m_lsys_kern_vsafecopy.vec_addr   address of vector
+ *      m_lsys_kern_vsafecopy.vec_size   number of significant elements in vector
  */
 
 #include <assert.h>
@@ -318,10 +318,10 @@ int access;			/* CPF_READ for a copy from granter to grantee, CPF_WRITE
  *===========================================================================*/
 int do_safecopy_to(struct proc * caller, message * m_ptr)
 {
-	return safecopy(caller, m_ptr->SCP_FROM_TO, caller->p_endpoint,
-		(cp_grant_id_t) m_ptr->SCP_GID, 
-		m_ptr->SCP_BYTES, m_ptr->SCP_OFFSET,
-		(vir_bytes) m_ptr->SCP_ADDRESS, CPF_WRITE);
+	return safecopy(caller, m_ptr->m_lsys_kern_safecopy.from_to, caller->p_endpoint,
+		(cp_grant_id_t) m_ptr->m_lsys_kern_safecopy.gid,
+		m_ptr->m_lsys_kern_safecopy.bytes, m_ptr->m_lsys_kern_safecopy.offset,
+		(vir_bytes) m_ptr->m_lsys_kern_safecopy.address, CPF_WRITE);
 }
 
 /*===========================================================================*
@@ -329,10 +329,10 @@ int do_safecopy_to(struct proc * caller, message * m_ptr)
  *===========================================================================*/
 int do_safecopy_from(struct proc * caller, message * m_ptr)
 {
-	return safecopy(caller, m_ptr->SCP_FROM_TO, caller->p_endpoint,
-		(cp_grant_id_t) m_ptr->SCP_GID, 
-		m_ptr->SCP_BYTES, m_ptr->SCP_OFFSET,
-		(vir_bytes) m_ptr->SCP_ADDRESS, CPF_READ);
+	return safecopy(caller, m_ptr->m_lsys_kern_safecopy.from_to, caller->p_endpoint,
+		(cp_grant_id_t) m_ptr->m_lsys_kern_safecopy.gid, 
+		m_ptr->m_lsys_kern_safecopy.bytes, m_ptr->m_lsys_kern_safecopy.offset,
+		(vir_bytes) m_ptr->m_lsys_kern_safecopy.address, CPF_READ);
 }
 
 /*===========================================================================*
@@ -348,12 +348,12 @@ int do_vsafecopy(struct proc * caller, message * m_ptr)
 	/* Set vector copy parameters. */
 	src.proc_nr_e = caller->p_endpoint;
 	assert(src.proc_nr_e != NONE);
-	src.offset = (vir_bytes) m_ptr->VSCP_VEC_ADDR;
+	src.offset = (vir_bytes) m_ptr->m_lsys_kern_vsafecopy.vec_addr;
 	dst.proc_nr_e = KERNEL;
 	dst.offset = (vir_bytes) vec;
 
 	/* No. of vector elements. */
-	els = m_ptr->VSCP_VEC_SIZE;
+	els = m_ptr->m_lsys_kern_vsafecopy.vec_size;
 	bytes = els * sizeof(struct vscp_vec);
 
 	/* Obtain vector of copies. */
