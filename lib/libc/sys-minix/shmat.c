@@ -33,14 +33,14 @@ void *shmat(int shmid, const void *shmaddr, int shmflg)
 	}
 
 	memset(&m, 0, sizeof(m));
-	m.SHMAT_ID = shmid;
-	m.SHMAT_ADDR = (long) shmaddr;
-	m.SHMAT_FLAG = shmflg;
+	m.m_lc_ipc_shmat.id = shmid;
+	m.m_lc_ipc_shmat.addr = shmaddr;
+	m.m_lc_ipc_shmat.flag = shmflg;
 
 	r = _syscall(ipc_pt, IPC_SHMAT, &m);
 	if (r != OK)
 		return (void *) -1;
-	return (void *) m.SHMAT_RETADDR;
+	return m.m_lc_ipc_shmat.retaddr;
 }
 
 /* Deattach shared memory segment. */
@@ -55,7 +55,7 @@ int shmdt(const void *shmaddr)
 	}
 
 	memset(&m, 0, sizeof(m));
-	m.SHMDT_ADDR = (long) shmaddr;
+	m.m_lc_ipc_shmdt.addr = shmaddr;
 
 	return _syscall(ipc_pt, IPC_SHMDT, &m);
 }

@@ -828,12 +828,7 @@
 /* Shared Memory */
 #define IPC_SHMGET	(IPC_BASE+1)
 #define IPC_SHMAT	(IPC_BASE+2)
-#	define SHMAT_ID		m2_i1
-#	define SHMAT_ADDR	m2_l1
-#	define SHMAT_FLAG	m2_i2
-#	define SHMAT_RETADDR	m2_l2
 #define IPC_SHMDT	(IPC_BASE+3)
-#	define SHMDT_ADDR	m2_l1
 #define IPC_SHMCTL	(IPC_BASE+4)
 #	define SHMCTL_ID	m2_i1
 #	define SHMCTL_CMD	m2_i2

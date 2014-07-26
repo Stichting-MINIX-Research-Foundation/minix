@@ -111,9 +111,9 @@ int do_shmat(message *m)
 	void *ret;
 	struct shm_struct *shm;
 
-	id = m->SHMAT_ID;
-	addr = (vir_bytes) m->SHMAT_ADDR;
-	flag = m->SHMAT_FLAG;
+	id = m->m_lc_ipc_shmat.id;
+	addr = (vir_bytes) m->m_lc_ipc_shmat.addr;
+	flag = m->m_lc_ipc_shmat.flag;
 
 	if (addr && (addr % PAGE_SIZE)) {
 		if (flag & SHM_RND)
@@ -141,7 +141,7 @@ int do_shmat(message *m)
 	shm->shmid_ds.shm_lpid = getnpid(who_e);
 	/* nattach is updated lazily */
 
-	m->SHMAT_RETADDR = (long) ret;
+	m->m_lc_ipc_shmat.retaddr = ret;
 	return OK;
 }
 
@@ -186,7 +186,7 @@ int do_shmdt(message *m)
 	phys_bytes vm_id;
 	int i;
 
-	addr = m->SHMDT_ADDR;
+	addr = (vir_bytes) m->m_lc_ipc_shmdt.addr;
 
 	if ((vm_id = vm_getphys(who_e, (void *) addr)) == 0)
 		return EINVAL;
