@@ -471,8 +471,8 @@ int do_get_refcount(message *m)
 	u8_t cnt;
 	vir_bytes addr;
 
-	target = m->VMREFCNT_ENDPT;
-	addr = m->VMREFCNT_ADDR;
+	target = m->m_lsys_vm_getref.endpt;
+	addr = (vir_bytes) m->m_lsys_vm_getref.addr;
 
 	if ((r = vm_isokendpt(target, &n)) != OK)
 		return EINVAL;
@@ -481,7 +481,7 @@ int do_get_refcount(message *m)
 
 	r = map_get_ref(vmp, addr, &cnt);
 
-	m->VMREFCNT_RETC = cnt;
+	m->m_lsys_vm_getref.retc = cnt;
 	return r;
 }
 

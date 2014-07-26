@@ -161,12 +161,12 @@ u8_t vm_getrefcount(endpoint_t endpt, void *addr)
 	int r;
 
 	memset(&m, 0, sizeof(m));
-	m.VMREFCNT_ENDPT = endpt;
-	m.VMREFCNT_ADDR = (long) addr;
+	m.m_lsys_vm_getref.endpt = endpt;
+	m.m_lsys_vm_getref.addr  = addr;
 
 	r = _syscall(VM_PROC_NR, VM_GETREF, &m);
 	if (r != OK)
 		return (u8_t) -1;
-	return (u8_t) m.VMREFCNT_RETC;
+	return (u8_t) m.m_lsys_vm_getref.retc;
 }
 

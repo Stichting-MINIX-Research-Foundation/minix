@@ -760,9 +760,6 @@
 #define VM_GETPHYS		(VM_RQ_BASE+35)
 
 #define VM_GETREF		(VM_RQ_BASE+36)
-#	define VMREFCNT_ENDPT		m2_i1
-#	define VMREFCNT_ADDR		m2_l1
-#	define VMREFCNT_RETC		m2_i2
 
 #define VM_RS_SET_PRIV		(VM_RQ_BASE+37)
 #	define VM_RS_NR			m2_i1
