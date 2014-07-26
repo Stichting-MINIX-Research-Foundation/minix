@@ -26,7 +26,7 @@ void *addr;
 
   if (addr != _brksize) {
 	memset(&m, 0, sizeof(m));
-	m.VMB_ADDR = addr;
+	m.m_lc_vm_brk.addr = addr;
 	if (_syscall(VM_PROC_NR, VM_BRK, &m) < 0) return(-1);
 	_brksize = addr;
   }

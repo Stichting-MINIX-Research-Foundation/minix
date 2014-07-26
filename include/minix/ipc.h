@@ -1736,6 +1736,12 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_lc_vm_shm_unmap);
 
 typedef struct {
+	void		*addr;
+	uint8_t		padding[52];
+} mess_lc_vm_brk;
+_ASSERT_MSG_SIZE(mess_lc_vm_brk);
+
+typedef struct {
 	endpoint_t	endpt;
 	void		*addr;
 	void		*ret_addr;
@@ -2076,6 +2082,7 @@ typedef struct {
 		mess_lc_ipc_semget	m_lc_ipc_semget;
 		mess_lc_ipc_semctl	m_lc_ipc_semctl;
 		mess_lc_ipc_semop	m_lc_ipc_semop;
+		mess_lc_vm_brk		m_lc_vm_brk;
 
 		mess_vfs_lchardriver_cancel	m_vfs_lchardriver_cancel;
 		mess_vfs_lchardriver_openclose	m_vfs_lchardriver_openclose;

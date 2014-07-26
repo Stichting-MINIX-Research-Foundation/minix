@@ -659,7 +659,6 @@
 #	define VMF_SLOTNO		m1_i2
 #	define VMF_CHILD_ENDPOINT	m1_i3	/* result */
 #define VM_BRK			(VM_RQ_BASE+2)
-#	define VMB_ADDR			m1_p1
 #define VM_EXEC_NEWMEM		(VM_RQ_BASE+3)
 #	define VMEN_ENDPOINT		m1_i1
 #	define VMEN_ARGSPTR		m1_p1

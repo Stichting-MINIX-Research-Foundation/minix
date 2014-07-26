@@ -54,7 +54,7 @@ int do_brk(message *msg)
 		return EINVAL;
 	}
 
-	return real_brk(&vmproc[proc], (vir_bytes) msg->VMB_ADDR);
+	return real_brk(&vmproc[proc], (vir_bytes) msg->m_lc_vm_brk.addr);
 }
 
 /*===========================================================================*
