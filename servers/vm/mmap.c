@@ -167,7 +167,7 @@ static void mmap_file_cont(struct vmproc *vmp, message *replymsg, void *cbarg,
 	int writable = 0;
 	vir_bytes v = (vir_bytes) MAP_FAILED;
 
-	if(origmsg->VMM_PROT & PROT_WRITE)
+	if(origmsg->m_mmap.prot & PROT_WRITE)
 		writable = 1;
 
 	if(replymsg->VMV_RESULT != OK) {
@@ -178,18 +178,18 @@ static void mmap_file_cont(struct vmproc *vmp, message *replymsg, void *cbarg,
 		result = origmsg->VMV_RESULT;
 	} else {
 		/* Finish mmap */
-		result = mmap_file(vmp, replymsg->VMV_FD, origmsg->VMM_OFFSET,
-			origmsg->VMM_FLAGS, 
+		result = mmap_file(vmp, replymsg->VMV_FD, origmsg->m_mmap.offset,
+			origmsg->m_mmap.flags, 
 			replymsg->VMV_INO, replymsg->VMV_DEV,
 			(u64_t) replymsg->VMV_SIZE_PAGES*PAGE_SIZE,
-			(vir_bytes) origmsg->VMM_ADDR,
-			origmsg->VMM_LEN, &v, 0, writable, 1);
+			(vir_bytes) origmsg->m_mmap.addr,
+			origmsg->m_mmap.len, &v, 0, writable, 1);
 	}
 
 	/* Unblock requesting process. */
 	memset(&mmap_reply, 0, sizeof(mmap_reply));
 	mmap_reply.m_type = result;
-	mmap_reply.VMM_RETADDR = (void *) v;
+	mmap_reply.m_mmap.retaddr = (void *) v;
 
 	if(ipc_send(vmp->vm_endpoint, &mmap_reply) != OK)
 		panic("VM: mmap_file_cont: ipc_send() failed");
@@ -202,18 +202,18 @@ int do_mmap(message *m)
 {
 	int r, n;
 	struct vmproc *vmp;
-	vir_bytes addr = (vir_bytes) m->VMM_ADDR;
+	vir_bytes addr = (vir_bytes) m->m_mmap.addr;
 	struct vir_region *vr = NULL;
 	int execpriv = 0;
-	size_t len = (vir_bytes) m->VMM_LEN;
+	size_t len = (vir_bytes) m->m_mmap.len;
 
 	/* RS and VFS can do slightly more special mmap() things */
 	if(m->m_source == VFS_PROC_NR || m->m_source == RS_PROC_NR)
 		execpriv = 1;
 
-	if(m->VMM_FLAGS & MAP_THIRDPARTY) {
+	if(m->m_mmap.flags & MAP_THIRDPARTY) {
 		if(!execpriv) return EPERM;
-		if((r=vm_isokendpt(m->VMM_FORWHOM, &n)) != OK)
+		if((r=vm_isokendpt(m->m_mmap.forwhom, &n)) != OK)
 			return ESRCH;
 	} else {
 		/* regular mmap, i.e. for caller */
@@ -230,25 +230,25 @@ int do_mmap(message *m)
 		return EINVAL;
 	}
 
-	if(m->VMM_FD == -1 || (m->VMM_FLAGS & MAP_ANON)) {
+	if(m->m_mmap.fd == -1 || (m->m_mmap.flags & MAP_ANON)) {
 		/* actual memory in some form */
 		mem_type_t *mt = NULL;
 
-		if(m->VMM_FD != -1) {
-			printf("VM: mmap: fd %d, len 0x%x\n", m->VMM_FD, len);
+		if(m->m_mmap.fd != -1) {
+			printf("VM: mmap: fd %d, len 0x%x\n", m->m_mmap.fd, len);
 			return EINVAL;
 		}
 
 		/* Contiguous phys memory has to be preallocated. */
-		if((m->VMM_FLAGS & (MAP_CONTIG|MAP_PREALLOC)) == MAP_CONTIG) {
+		if((m->m_mmap.flags & (MAP_CONTIG|MAP_PREALLOC)) == MAP_CONTIG) {
 			return EINVAL;
 		}
 
-		if(m->VMM_FLAGS & MAP_CONTIG) {
+		if(m->m_mmap.flags & MAP_CONTIG) {
 			mt = &mem_type_anon_contig;
 		} else	mt = &mem_type_anon;
 
-		if(!(vr = mmap_region(vmp, addr, m->VMM_FLAGS, len,
+		if(!(vr = mmap_region(vmp, addr, m->m_mmap.flags, len,
 			VR_WRITABLE | VR_ANON, mt, execpriv))) {
 			return ENOMEM;
 		}
@@ -259,11 +259,11 @@ int do_mmap(message *m)
 		/* For files, we only can't accept writable MAP_SHARED
 		 * mappings.
 		 */
-		if((m->VMM_FLAGS & MAP_SHARED) && (m->VMM_PROT & PROT_WRITE)) {
+		if((m->m_mmap.flags & MAP_SHARED) && (m->m_mmap.prot & PROT_WRITE)) {
 			return ENXIO;
 		}
 
-		if(vfs_request(VMVFSREQ_FDLOOKUP, m->VMM_FD, vmp, 0, 0,
+		if(vfs_request(VMVFSREQ_FDLOOKUP, m->m_mmap.fd, vmp, 0, 0,
 			mmap_file_cont, NULL, m, sizeof(*m)) != OK) {
 			printf("VM: vfs_request for mmap failed\n");
 			return ENXIO;
@@ -274,7 +274,7 @@ int do_mmap(message *m)
 	}
 
 	/* Return mapping, as seen from process. */
-	m->VMM_RETADDR = (void *) vr->vaddr;
+	m->m_mmap.retaddr = (void *) vr->vaddr;
 
 	return OK;
 }

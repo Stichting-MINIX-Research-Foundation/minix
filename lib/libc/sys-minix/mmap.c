@@ -25,16 +25,16 @@ void *minix_mmap_for(endpoint_t forwhom,
 	int r;
 
 	memset(&m, 0, sizeof(m));
-	m.VMM_ADDR = addr;
-	m.VMM_LEN = len;
-	m.VMM_PROT = prot;
-	m.VMM_FLAGS = flags;
-	m.VMM_FD = fd;
-	m.VMM_OFFSET = offset;
-	m.VMM_FORWHOM = forwhom;
+	m.m_mmap.addr = addr;
+	m.m_mmap.len = len;
+	m.m_mmap.prot = prot;
+	m.m_mmap.flags = flags;
+	m.m_mmap.fd = fd;
+	m.m_mmap.offset = offset;
+	m.m_mmap.forwhom = forwhom;
 
 	if(forwhom != SELF) {
-		m.VMM_FLAGS |= MAP_THIRDPARTY;
+		m.m_mmap.flags |= MAP_THIRDPARTY;
 	}
 
 	r = _syscall(VM_PROC_NR, VM_MMAP, &m);
@@ -43,7 +43,7 @@ void *minix_mmap_for(endpoint_t forwhom,
 		return MAP_FAILED;
 	}
 
-	return m.VMM_RETADDR;
+	return m.m_mmap.retaddr;
 }
 
 int minix_vfs_mmap(endpoint_t who, off_t offset, size_t len,

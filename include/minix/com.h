@@ -671,14 +671,6 @@
 
 /* General calls. */
 #define VM_MMAP			(VM_RQ_BASE+10)
-#       define VMM_ADDR                 m_mmap.addr
-#       define VMM_LEN                  m_mmap.len
-#       define VMM_PROT                 m_mmap.prot
-#       define VMM_FLAGS                m_mmap.flags
-#       define VMM_FD                   m_mmap.fd
-#       define VMM_OFFSET               m_mmap.offset
-#       define VMM_FORWHOM              m_mmap.forwhom
-#       define VMM_RETADDR              m_mmap.retaddr
 
 #define VM_MUNMAP		(VM_RQ_BASE+17)
 #	define VMUM_ADDR		m_mmap.addr
