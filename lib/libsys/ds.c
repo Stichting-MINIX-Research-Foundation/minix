@@ -24,8 +24,8 @@ static int do_invoke_ds(message *m, int type, const char *ds_name)
 	if(!GRANT_VALID(g_key)) 
 		return ENOMEM;
 
-	m->DS_KEY_GRANT = g_key;
-	m->DS_KEY_LEN = len_key;
+	m->m_ds_req.key_grant = g_key;
+	m->m_ds_req.key_len = len_key;
 
 	r = _taskcall(DS_PROC_NR, type, m);
 
@@ -38,8 +38,8 @@ int ds_publish_label(const char *ds_name, endpoint_t endpoint, int flags)
 	message m;
 
 	memset(&m, 0, sizeof(m));
-	m.DS_VAL = (u32_t) endpoint;
-	m.DS_FLAGS = DSF_TYPE_LABEL | flags;
+	m.m_ds_req.val_in.ep = endpoint;
+	m.m_ds_req.flags = DSF_TYPE_LABEL | flags;
 	return do_invoke_ds(&m, DS_PUBLISH, ds_name);
 }
 
@@ -48,8 +48,8 @@ int ds_publish_u32(const char *ds_name, u32_t value, int flags)
 	message m;
 
 	memset(&m, 0, sizeof(m));
-	m.DS_VAL = value;
-	m.DS_FLAGS = DSF_TYPE_U32 | flags;
+	m.m_ds_req.val_in.u32 = value;
+	m.m_ds_req.flags = DSF_TYPE_U32 | flags;
 	return do_invoke_ds(&m, DS_PUBLISH, ds_name);
 }
 
@@ -66,9 +66,9 @@ static int ds_publish_raw(const char *ds_name, void *vaddr, size_t length,
 		return ENOMEM;
 
 	memset(&m, 0, sizeof(m));
-	m.DS_VAL = gid;
-	m.DS_VAL_LEN = length;
-	m.DS_FLAGS = flags;
+	m.m_ds_req.val_in.grant = gid;
+	m.m_ds_req.val_len = length;
+	m.m_ds_req.flags = flags;
 
 	r = do_invoke_ds(&m, DS_PUBLISH, ds_name);
 	cpf_revoke(gid);
@@ -95,7 +95,7 @@ int ds_retrieve_label_name(char *ds_name, endpoint_t endpoint)
 	int r;
 
 	memset(&m, 0, sizeof(m));
-	m.DS_VAL = (u32_t) endpoint;
+	m.m_ds_req.val_in.ep = endpoint;
 	r = do_invoke_ds(&m, DS_RETRIEVE_LABEL, ds_name);
 	return r;
 }
@@ -106,9 +106,9 @@ int ds_retrieve_label_endpt(const char *ds_name, endpoint_t *endpoint)
 	int r;
 
 	memset(&m, 0, sizeof(m));
-	m.DS_FLAGS = DSF_TYPE_LABEL;
+	m.m_ds_req.flags = DSF_TYPE_LABEL;
 	r = do_invoke_ds(&m, DS_RETRIEVE, ds_name);
-	*endpoint = (endpoint_t) m.DS_VAL;
+	*endpoint = m.m_ds_reply.val_out.ep;
 	return r;
 }
 
@@ -118,9 +118,9 @@ int ds_retrieve_u32(const char *ds_name, u32_t *value)
 	int r;
 
 	memset(&m, 0, sizeof(m));
-	m.DS_FLAGS = DSF_TYPE_U32;
+	m.m_ds_req.flags = DSF_TYPE_U32;
 	r = do_invoke_ds(&m, DS_RETRIEVE, ds_name);
-	*value = m.DS_VAL;
+	*value = m.m_ds_reply.val_out.u32;
 	return r;
 }
 
@@ -137,11 +137,11 @@ static int ds_retrieve_raw(const char *ds_name, char *vaddr, size_t *length,
 		return ENOMEM;
 
 	memset(&m, 0, sizeof(m));
-	m.DS_VAL = gid;
-	m.DS_VAL_LEN = *length;
-	m.DS_FLAGS = flags;
+	m.m_ds_req.val_in.grant = gid;
+	m.m_ds_req.val_len = *length;
+	m.m_ds_req.flags = flags;
 	r = do_invoke_ds(&m, DS_RETRIEVE, ds_name);
-	*length = m.DS_VAL_LEN;
+	*length = m.m_ds_reply.val_len;
 	cpf_revoke(gid);
 
 	return r;
@@ -166,7 +166,7 @@ int ds_delete_u32(const char *ds_name)
 	message m;
 
 	memset(&m, 0, sizeof(m));
-	m.DS_FLAGS = DSF_TYPE_U32;
+	m.m_ds_req.flags = DSF_TYPE_U32;
 	return do_invoke_ds(&m, DS_DELETE, ds_name);
 }
 
@@ -175,7 +175,7 @@ int ds_delete_str(const char *ds_name)
 	message m;
 
 	memset(&m, 0, sizeof(m));
-	m.DS_FLAGS = DSF_TYPE_STR;
+	m.m_ds_req.flags = DSF_TYPE_STR;
 	return do_invoke_ds(&m, DS_DELETE, ds_name);
 }
 
@@ -184,7 +184,7 @@ int ds_delete_mem(const char *ds_name)
 	message m;
 
 	memset(&m, 0, sizeof(m));
-	m.DS_FLAGS = DSF_TYPE_MEM;
+	m.m_ds_req.flags = DSF_TYPE_MEM;
 	return do_invoke_ds(&m, DS_DELETE, ds_name);
 }
 
@@ -193,7 +193,7 @@ int ds_delete_label(const char *ds_name)
 	message m;
 
 	memset(&m, 0, sizeof(m));
-	m.DS_FLAGS = DSF_TYPE_LABEL;
+	m.m_ds_req.flags = DSF_TYPE_LABEL;
 	return do_invoke_ds(&m, DS_DELETE, ds_name);
 }
 
@@ -202,7 +202,7 @@ int ds_subscribe(const char *regexp, int flags)
 	message m;
 
 	memset(&m, 0, sizeof(m));
-	m.DS_FLAGS = flags;
+	m.m_ds_req.flags = flags;
 	return do_invoke_ds(&m, DS_SUBSCRIBE, regexp);
 }
 
@@ -213,7 +213,7 @@ int ds_check(char *ds_key, int *type, endpoint_t *owner_e)
 
 	memset(&m, 0, sizeof(m));
 	r = do_invoke_ds(&m, DS_CHECK, ds_key);
-	if(type) *type = m.DS_FLAGS;
-	if(owner_e) *owner_e = m.DS_OWNER;
+	if(type) *type = m.m_ds_req.flags;
+	if(owner_e) *owner_e = m.m_ds_req.owner;
 	return r;
 }

@@ -1908,6 +1908,28 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_rs_req);
 
 typedef struct {
+	cp_grant_id_t	key_grant;
+	int		key_len;
+	int		flags;
+	union	ds_val {
+		cp_grant_id_t	grant;
+		u32_t		u32;
+		endpoint_t	ep;
+	}		val_in;
+	int		val_len;
+	endpoint_t	owner;
+	uint8_t padding[32];
+} mess_ds_req;
+_ASSERT_MSG_SIZE(mess_ds_req);
+
+typedef struct {
+	union	ds_val 	val_out;
+	int	val_len;
+	uint8_t padding[48];
+} mess_ds_reply;
+_ASSERT_MSG_SIZE(mess_ds_reply);
+
+typedef struct {
 	endpoint_t m_source;		/* who sent the message */
 	int m_type;			/* what kind of message is it */
 	union {
@@ -2150,6 +2172,8 @@ typedef struct {
 		mess_rs_init		m_rs_init;
 		mess_rs_update		m_rs_update;
 		mess_rs_req		m_rs_req;
+		mess_ds_req		m_ds_req;
+		mess_ds_reply		m_ds_reply;
 
 		mess_vfs_lchardriver_cancel	m_vfs_lchardriver_cancel;
 		mess_vfs_lchardriver_openclose	m_vfs_lchardriver_openclose;

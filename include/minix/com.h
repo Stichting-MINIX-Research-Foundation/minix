@@ -502,16 +502,6 @@
 #define DS_RETRIEVE_LABEL  (DS_RQ_BASE + 6)	/* retrieve label's name */
 #define DS_GETSYSINFO	(DS_RQ_BASE + 7)	/* get system information */
 
-/* DS field names */
-#  define DS_KEY_GRANT		m2_i1		/* key for the data */
-#  define DS_KEY_LEN		m2_s1		/* length of key incl. '\0' */
-#  define DS_FLAGS		m2_i2		/* flags provided by caller */
-
-#  define DS_VAL		m2_l1		/* data (u32, char *, etc.) */
-#  define DS_VAL_LEN		m2_l2		/* data length */
-#  define DS_NR_SNAPSHOT	m2_i3		/* number of snapshot */
-#  define DS_OWNER		m2_i3		/* owner */
-
 /*===========================================================================*
  *                Messages used between PM and VFS			     *
  *===========================================================================*/

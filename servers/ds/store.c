@@ -146,16 +146,16 @@ static int get_key_name(const message *m_ptr, char *key_name)
 /* Get key name given an input message. */
   int r;
 
-  if (m_ptr->DS_KEY_LEN > DS_MAX_KEYLEN || m_ptr->DS_KEY_LEN < 2) {
-	printf("DS: bogus key length (%d) from %d\n", m_ptr->DS_KEY_LEN,
+  if (m_ptr->m_ds_req.key_len > DS_MAX_KEYLEN || m_ptr->m_ds_req.key_len < 2) {
+	printf("DS: bogus key length (%d) from %d\n", m_ptr->m_ds_req.key_len,
 		m_ptr->m_source);
 	return EINVAL;
   }
 
   /* Copy name from caller. */
   r = sys_safecopyfrom(m_ptr->m_source,
-	(cp_grant_id_t) m_ptr->DS_KEY_GRANT, 0, 
-	(vir_bytes) key_name, m_ptr->DS_KEY_LEN);
+	(cp_grant_id_t) m_ptr->m_ds_req.key_grant, 0, 
+	(vir_bytes) key_name, m_ptr->m_ds_req.key_len);
   if(r != OK) {
 	printf("DS: publish: copy failed from %d: %d\n", m_ptr->m_source, r);
 	return r;
@@ -275,7 +275,7 @@ int do_publish(message *m_ptr)
   struct data_store *dsp;
   char key_name[DS_MAX_KEYLEN];
   char *source;
-  int flags = m_ptr->DS_FLAGS;
+  int flags = m_ptr->m_ds_req.flags;
   size_t length;
   int r;
 
@@ -296,7 +296,7 @@ int do_publish(message *m_ptr)
   dsp = lookup_entry(key_name, flags & DSF_MASK_TYPE);
   /* If type is LABEL, also try to lookup the entry by num. */
   if((flags & DSF_TYPE_LABEL) && (dsp == NULL))
-	dsp = lookup_label_entry(m_ptr->DS_VAL);
+	dsp = lookup_label_entry(m_ptr->m_ds_req.val_in.ep);
 
   if(dsp == NULL) {
 	/* The entry doesn't exist, allocate a new data slot. */
@@ -314,12 +314,14 @@ int do_publish(message *m_ptr)
   /* Store! */
   switch(flags & DSF_MASK_TYPE) {
   case DSF_TYPE_U32:
+	dsp->u.u32 = m_ptr->m_ds_req.val_in.u32;
+	break;
   case DSF_TYPE_LABEL:
-	dsp->u.u32 = m_ptr->DS_VAL;
+	dsp->u.u32 = m_ptr->m_ds_req.val_in.ep;
 	break;
   case DSF_TYPE_STR:
   case DSF_TYPE_MEM:
-	length = m_ptr->DS_VAL_LEN;
+	length = m_ptr->m_ds_req.val_len;
 	/* Allocate a new data buffer if necessary. */
 	if(!(dsp->flags & DSF_IN_USE)) {
 		if((dsp->u.mem.data = malloc(length)) == NULL)
@@ -333,7 +335,7 @@ int do_publish(message *m_ptr)
 	}
 
 	/* Copy the memory range. */
-	r = sys_safecopyfrom(m_ptr->m_source, (cp_grant_id_t) m_ptr->DS_VAL,
+	r = sys_safecopyfrom(m_ptr->m_source, m_ptr->m_ds_req.val_in.grant,
 	        0, (vir_bytes) dsp->u.mem.data, length);
 	if(r != OK) {
 		printf("DS: publish: memory map/copy failed from %d: %d\n",
@@ -368,7 +370,7 @@ int do_retrieve(message *m_ptr)
 {
   struct data_store *dsp;
   char key_name[DS_MAX_KEYLEN];
-  int flags = m_ptr->DS_FLAGS;
+  int flags = m_ptr->m_ds_req.flags;
   int type = flags & DSF_MASK_TYPE;
   size_t length;
   int r;
@@ -386,20 +388,22 @@ int do_retrieve(message *m_ptr)
   /* Copy the requested data. */
   switch(type) {
   case DSF_TYPE_U32:
+	m_ptr->m_ds_reply.val_out.u32 = dsp->u.u32;
+	break;
   case DSF_TYPE_LABEL:
-	m_ptr->DS_VAL = dsp->u.u32;
+	m_ptr->m_ds_reply.val_out.ep = dsp->u.u32;
 	break;
   case DSF_TYPE_STR:
   case DSF_TYPE_MEM:
-	length = MIN(m_ptr->DS_VAL_LEN, dsp->u.mem.length);
-	r = sys_safecopyto(m_ptr->m_source, (cp_grant_id_t) m_ptr->DS_VAL, 0,
+	length = MIN(m_ptr->m_ds_req.val_len, dsp->u.mem.length);
+	r = sys_safecopyto(m_ptr->m_source, m_ptr->m_ds_req.val_in.grant, 0,
 		(vir_bytes) dsp->u.mem.data, length);
 	if(r != OK) {
 		printf("DS: retrieve: copy failed to %d: %d\n",	
 			m_ptr->m_source, r);
 		return r;
 	}
-	m_ptr->DS_VAL_LEN = length;
+	m_ptr->m_ds_reply.val_len = length;
 	break;
   default:
 	return EINVAL;
@@ -417,12 +421,12 @@ int do_retrieve_label(const message *m_ptr)
   int r;
 
   /* Lookup the label entry. */
-  if((dsp = lookup_label_entry(m_ptr->DS_VAL)) == NULL)
+  if((dsp = lookup_label_entry(m_ptr->m_ds_req.val_in.ep)) == NULL)
 	return ESRCH;
 
   /* Copy the key name. */
   r = sys_safecopyto(m_ptr->m_source,
-	(cp_grant_id_t) m_ptr->DS_KEY_GRANT, (vir_bytes) 0,
+	(cp_grant_id_t) m_ptr->m_ds_req.key_grant, (vir_bytes) 0,
 	(vir_bytes) dsp->key, strlen(dsp->key) + 1);
   if(r != OK) {
 	printf("DS: copy failed from %d: %d\n", m_ptr->m_source, r);
@@ -454,7 +458,7 @@ int do_subscribe(message *m_ptr)
 	/* The subscription doesn't exist, allocate a new one. */
 	if((subp = alloc_sub_slot()) == NULL)
 		return EAGAIN;
-  } else if(!(m_ptr->DS_FLAGS & DSF_OVERWRITE)) {
+  } else if(!(m_ptr->m_ds_req.flags & DSF_OVERWRITE)) {
 	/* The subscription exists but we can't overwrite, return error. */
 	return EEXIST;
   }
@@ -476,7 +480,7 @@ int do_subscribe(message *m_ptr)
   }
 
   /* If type_set = 0, then subscribe all types. */
-  type_set = m_ptr->DS_FLAGS & DSF_MASK_TYPE;
+  type_set = m_ptr->m_ds_req.flags & DSF_MASK_TYPE;
   if(type_set == 0)
 	  type_set = DSF_MASK_TYPE;
 
@@ -486,7 +490,7 @@ int do_subscribe(message *m_ptr)
 	subp->old_subs[b] = 0;
 
   /* See if caller requested an instant initial list. */
-  if(m_ptr->DS_FLAGS & DSF_INITIAL) {
+  if(m_ptr->m_ds_req.flags & DSF_INITIAL) {
 	int i, match_found = FALSE;
 	for(i = 0; i < NR_DS_KEYS; i++) {
 		if(!(ds_store[i].flags & DSF_IN_USE))
@@ -537,7 +541,7 @@ int do_check(message *m_ptr)
 
   /* Copy the key name. */
   r = sys_safecopyto(m_ptr->m_source,
-	(cp_grant_id_t) m_ptr->DS_KEY_GRANT, (vir_bytes) 0, 
+	(cp_grant_id_t) m_ptr->m_ds_req.key_grant, (vir_bytes) 0, 
 	(vir_bytes) ds_store[i].key, strlen(ds_store[i].key) + 1);
   if(r != OK) {
 	printf("DS: check: copy failed from %d: %d\n", m_ptr->m_source, r);
@@ -546,8 +550,8 @@ int do_check(message *m_ptr)
 
   /* Copy the type and the owner of the original entry. */
   entry_owner_e = ds_getprocep(ds_store[i].owner);
-  m_ptr->DS_FLAGS = ds_store[i].flags & DSF_MASK_TYPE;
-  m_ptr->DS_OWNER = entry_owner_e;
+  m_ptr->m_ds_req.flags = ds_store[i].flags & DSF_MASK_TYPE;
+  m_ptr->m_ds_req.owner = entry_owner_e;
 
   /* Mark the entry as no longer updated for the subscriber. */
   UNSET_BIT(subp->old_subs, i);
@@ -564,7 +568,7 @@ int do_delete(message *m_ptr)
   char key_name[DS_MAX_KEYLEN];
   char *source;
   char *label;
-  int type = m_ptr->DS_FLAGS & DSF_MASK_TYPE;
+  int type = m_ptr->m_ds_req.flags & DSF_MASK_TYPE;
   int i, r;
 
   /* Lookup the source. */
