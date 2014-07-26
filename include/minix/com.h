@@ -700,10 +700,6 @@
 #	define VMGD_SIZEP		m2_l2
 
 #define VM_MAP_PHYS		(VM_RQ_BASE+15)
-#	define VMMP_EP			m1_i1
-#	define VMMP_PHADDR		m1_p2
-#	define VMMP_LEN			m1_i2
-#	define VMMP_VADDR_REPLY		m1_p3
 
 #define VM_UNMAP_PHYS		(VM_RQ_BASE+16)
 #	define VMUP_EP			m1_i1

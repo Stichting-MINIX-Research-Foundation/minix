@@ -12,15 +12,15 @@ vm_map_phys(endpoint_t who, void *phaddr, size_t len)
 	int r;
 
 	memset(&m, 0, sizeof(m));
-	m.VMMP_EP = who;
-	m.VMMP_PHADDR = phaddr;
-	m.VMMP_LEN = len;
+	m.m_lsys_vm_map_phys.ep = who;
+	m.m_lsys_vm_map_phys.phaddr = phaddr;
+	m.m_lsys_vm_map_phys.len = len;
 
 	r = _taskcall(VM_PROC_NR, VM_MAP_PHYS, &m);
 
 	if (r != OK) return MAP_FAILED;
 
-	return (void *) m.VMMP_VADDR_REPLY;
+	return m.m_lsys_vm_map_phys.reply;
 }
 
 int

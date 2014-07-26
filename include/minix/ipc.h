@@ -1848,6 +1848,15 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_lc_ipc_semop);
 
 typedef struct {
+	endpoint_t	ep;
+	phys_bytes	phaddr;
+	size_t		len;
+	void		*reply;
+	uint8_t		padding[40];
+} mess_lsys_vm_map_phys;
+_ASSERT_MSG_SIZE(mess_lsys_vm_map_phys);
+
+typedef struct {
 	endpoint_t m_source;		/* who sent the message */
 	int m_type;			/* what kind of message is it */
 	union {
@@ -2083,6 +2092,7 @@ typedef struct {
 		mess_lc_ipc_semctl	m_lc_ipc_semctl;
 		mess_lc_ipc_semop	m_lc_ipc_semop;
 		mess_lc_vm_brk		m_lc_vm_brk;
+		mess_lsys_vm_map_phys	m_lsys_vm_map_phys;
 
 		mess_vfs_lchardriver_cancel	m_vfs_lchardriver_cancel;
 		mess_vfs_lchardriver_openclose	m_vfs_lchardriver_openclose;

@@ -320,8 +320,8 @@ int do_map_phys(message *m)
 	phys_bytes startaddr;
 	size_t offset;
 
-	target = m->VMMP_EP;
-	len = m->VMMP_LEN;
+	target = m->m_lsys_vm_map_phys.ep;
+	len = m->m_lsys_vm_map_phys.len;
 
 	if (len <= 0) return EINVAL;
 
@@ -331,7 +331,7 @@ int do_map_phys(message *m)
 	if((r=vm_isokendpt(target, &n)) != OK)
 		return EINVAL;
 
-	startaddr = (vir_bytes)m->VMMP_PHADDR;
+	startaddr = (vir_bytes)m->m_lsys_vm_map_phys.phaddr;
 
 	/* First check permission, then round range down/up. Caller can't
 	 * help it if we can't map in lower than page granularity.
@@ -358,7 +358,7 @@ int do_map_phys(message *m)
 
 	phys_setphys(vr, startaddr);
 
-	m->VMMP_VADDR_REPLY = (void *) (vr->vaddr + offset);
+	m->m_lsys_vm_map_phys.reply = (void *) (vr->vaddr + offset);
 
 	return OK;
 }
