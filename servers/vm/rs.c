@@ -73,8 +73,8 @@ int do_rs_update(message *m_ptr)
 	struct vmproc *src_vmp, *dst_vmp;
 	int r;
 
-	src_e = m_ptr->VM_RS_SRC_ENDPT;
-	dst_e = m_ptr->VM_RS_DST_ENDPT;
+	src_e = m_ptr->m_lsys_vm_update.src;
+	dst_e = m_ptr->m_lsys_vm_update.dst;
 
 	/* Lookup slots for source and destination process. */
 	if(vm_isokendpt(src_e, &src_p) != OK) {

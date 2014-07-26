@@ -780,8 +780,6 @@
 #define VMIW_REGION			3
 
 #define VM_RS_UPDATE		(VM_RQ_BASE+41)
-#	define VM_RS_SRC_ENDPT		m1_i1
-#	define VM_RS_DST_ENDPT		m1_i2
 
 #define VM_RS_MEMCTL		(VM_RQ_BASE+42)
 #	define VM_RS_CTL_ENDPT		m1_i1
