@@ -846,6 +846,22 @@ _ASSERT_MSG_SIZE(mess_lsys_krn_sys_privctl);
 
 typedef struct {
 	int request;
+	int port;
+	uint32_t value;
+
+	uint8_t padding[44];
+} mess_lsys_krn_sys_devio;
+_ASSERT_MSG_SIZE(mess_lsys_krn_sys_devio);
+
+typedef struct {
+	uint32_t value;
+
+	uint8_t padding[52];
+} mess_krn_lsys_sys_devio;
+_ASSERT_MSG_SIZE(mess_krn_lsys_sys_devio);
+
+typedef struct {
+	int request;
 	long int port;
 	endpoint_t vec_endpt;
 	phys_bytes vec_addr;
@@ -1858,6 +1874,7 @@ typedef struct {
 		mess_krn_lsys_sys_trace	m_krn_lsys_sys_trace;
 		mess_krn_lsys_sys_umap	m_krn_lsys_sys_umap;
 		mess_krn_lsys_sys_vumap	m_krn_lsys_sys_vumap;
+		mess_krn_lsys_sys_devio m_krn_lsys_sys_devio;
 
 		mess_fs_vfs_breadwrite	m_fs_vfs_breadwrite;
 		mess_fs_vfs_chmod	m_fs_vfs_chmod;
@@ -1938,6 +1955,7 @@ typedef struct {
 		mess_lsys_fi_ctl	m_lsys_fi_ctl;
 		mess_lsys_fi_reply	m_lsys_fi_reply;
 
+		mess_lsys_krn_sys_devio m_lsys_krn_sys_devio;
 		mess_lsys_krn_schedctl	m_lsys_krn_schedctl;
 		mess_lsys_krn_schedule	m_lsys_krn_schedule;
 		mess_lsys_krn_sys_abort m_lsys_krn_sys_abort;

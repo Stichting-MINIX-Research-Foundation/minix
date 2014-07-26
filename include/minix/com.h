@@ -275,7 +275,6 @@
     SYS_PROFBUF, SYS_DIAGCTL, SYS_STATECTL, SYS_SAFEMEMSET
 
 /* Field names for SYS_DEVIO, SYS_VDEVIO, SYS_SDEVIO. */
-#define DIO_REQUEST	m2_i3	/* device in or output */
 #   define _DIO_INPUT		0x001
 #   define _DIO_OUTPUT		0x002
 #   define _DIO_DIRMASK		0x00f
@@ -297,8 +296,6 @@
 #   define DIO_SAFE_OUTPUT_BYTE     (_DIO_OUTPUT|_DIO_BYTE|_DIO_SAFE)
 #   define DIO_SAFE_OUTPUT_WORD     (_DIO_OUTPUT|_DIO_WORD|_DIO_SAFE)
 #   define DIO_SAFE_OUTPUT_LONG     (_DIO_OUTPUT|_DIO_LONG|_DIO_SAFE)
-#define DIO_PORT	m2_l1	/* single port address */
-#define DIO_VALUE	m2_l2	/* single I/O value */
 
 /* Field names for SYS_IRQCTL. */
 #  define IRQ_SETPOLICY     1	/* manage a slot of the IRQ table */

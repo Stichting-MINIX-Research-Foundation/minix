@@ -2,9 +2,9 @@
  *   m_type:	SYS_DEVIO
  *
  * The parameters for this kernel call are:
- *   m2_i3:	DIO_REQUEST	(request input or output)	
- *   m2_l1:	DIO_PORT	(port to read/ write)	
- *   m2_l2:	DIO_VALUE	(value to write/ return value read)	
+ *   m_lsys_krn_sys_devio.request	(request input or output)
+ *   m_lsys_krn_sys_devio.port		(port to read/ write)
+ *   m_lsys_krn_sys_devio.value		(value to write/ return value read)
  */
 
 #include "kernel/system.h"
@@ -25,8 +25,8 @@ int do_devio(struct proc * caller, message * m_ptr)
     int i, size, nr_io_range;
     int io_type, io_dir;
 
-    io_type = m_ptr->DIO_REQUEST & _DIO_TYPEMASK;
-    io_dir  = m_ptr->DIO_REQUEST & _DIO_DIRMASK;
+    io_type = m_ptr->m_lsys_krn_sys_devio.request & _DIO_TYPEMASK;
+    io_dir  = m_ptr->m_lsys_krn_sys_devio.request & _DIO_DIRMASK;
 
     switch (io_type)
     {
@@ -44,7 +44,7 @@ int do_devio(struct proc * caller, message * m_ptr)
     }
     if (privp->s_flags & CHECK_IO_PORT)
     {
-	port= m_ptr->DIO_PORT;
+	port= m_ptr->m_lsys_krn_sys_devio.port;
 	nr_io_range= privp->s_nr_io_range;
 	for (i= 0, iorp= privp->s_io_tab; i<nr_io_range; i++, iorp++)
 	{
@@ -54,16 +54,16 @@ int do_devio(struct proc * caller, message * m_ptr)
 	if (i >= nr_io_range)
 	{
 			printf("do_devio: port 0x%x (size %d) not allowed\n",
-				m_ptr->DIO_PORT, size);
+				m_ptr->m_lsys_krn_sys_devio.port, size);
 		return EPERM;
 	}
     }
 
 doit:
-    if (m_ptr->DIO_PORT & (size-1))
+    if (m_ptr->m_lsys_krn_sys_devio.port & (size-1))
     {
 		printf("do_devio: unaligned port 0x%x (size %d)\n",
-			m_ptr->DIO_PORT, size);
+			m_ptr->m_lsys_krn_sys_devio.port, size);
 	return EPERM;
     }
 
@@ -71,16 +71,34 @@ doit:
     if (io_dir == _DIO_INPUT) { 
       switch (io_type) {
 	/* maybe "it" should not be called ports */
-        case _DIO_BYTE: m_ptr->DIO_VALUE = inb(m_ptr->DIO_PORT); break; 
-        case _DIO_WORD: m_ptr->DIO_VALUE = inw(m_ptr->DIO_PORT); break; 
-        case _DIO_LONG: m_ptr->DIO_VALUE = inl(m_ptr->DIO_PORT); break;
+        case _DIO_BYTE:
+		m_ptr->m_krn_lsys_sys_devio.value =
+			inb(m_ptr->m_lsys_krn_sys_devio.port);
+		break;
+        case _DIO_WORD:
+		m_ptr->m_krn_lsys_sys_devio.value =
+			inw(m_ptr->m_lsys_krn_sys_devio.port);
+		break;
+        case _DIO_LONG:
+		m_ptr->m_krn_lsys_sys_devio.value =
+			inl(m_ptr->m_lsys_krn_sys_devio.port);
+		break;
     	default: return(EINVAL);
       } 
     } else { 
       switch (io_type) {
-	case _DIO_BYTE: outb(m_ptr->DIO_PORT, m_ptr->DIO_VALUE); break;
-	case _DIO_WORD: outw(m_ptr->DIO_PORT, m_ptr->DIO_VALUE); break;
-	case _DIO_LONG: outl(m_ptr->DIO_PORT, m_ptr->DIO_VALUE); break;
+	case _DIO_BYTE:
+		outb(m_ptr->m_lsys_krn_sys_devio.port,
+			m_ptr->m_lsys_krn_sys_devio.value);
+		break;
+	case _DIO_WORD:
+		outw(m_ptr->m_lsys_krn_sys_devio.port,
+			m_ptr->m_lsys_krn_sys_devio.value);
+		break;
+	case _DIO_LONG:
+		outl(m_ptr->m_lsys_krn_sys_devio.port,
+			m_ptr->m_lsys_krn_sys_devio.value);
+		break;
     	default: return(EINVAL);
       } 
     }
