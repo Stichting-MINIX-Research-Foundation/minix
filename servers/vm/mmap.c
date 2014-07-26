@@ -496,7 +496,7 @@ int do_munmap(message *m)
 	endpoint_t target = SELF;
 
 	if(m->m_type == VM_UNMAP_PHYS) {
-		target = m->VMUP_EP;
+		target = m->m_lsys_vm_unmap_phys.ep;
 	} else if(m->m_type == VM_SHM_UNMAP) {
 		target = m->m_lc_vm_shm_unmap.forwhom;
 	}
@@ -511,7 +511,7 @@ int do_munmap(message *m)
         vmp = &vmproc[n];
 
 	if(m->m_type == VM_UNMAP_PHYS) {
-		addr = (vir_bytes) m->VMUP_VADDR;
+		addr = (vir_bytes) m->m_lsys_vm_unmap_phys.vaddr;
 	} else if(m->m_type == VM_SHM_UNMAP) {
 		addr = (vir_bytes) m->m_lc_vm_shm_unmap.addr;
 	} else	addr = (vir_bytes) m->VMUM_ADDR;

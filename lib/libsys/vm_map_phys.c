@@ -29,8 +29,8 @@ vm_unmap_phys(endpoint_t who, void *vaddr, size_t len)
 	message m;
 
 	memset(&m, 0, sizeof(m));
-	m.VMUP_EP = who;
-	m.VMUP_VADDR = vaddr;
+	m.m_lsys_vm_unmap_phys.ep = who;
+	m.m_lsys_vm_unmap_phys.vaddr = vaddr;
 
 	return _taskcall(VM_PROC_NR, VM_UNMAP_PHYS, &m);
 }

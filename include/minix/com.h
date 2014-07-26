@@ -702,8 +702,6 @@
 #define VM_MAP_PHYS		(VM_RQ_BASE+15)
 
 #define VM_UNMAP_PHYS		(VM_RQ_BASE+16)
-#	define VMUP_EP			m1_i1
-#	define VMUP_VADDR		m1_p1
 
 /* To VM: map in cache block by FS */
 #define VM_MAPCACHEPAGE		(VM_RQ_BASE+26)
