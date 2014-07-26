@@ -146,13 +146,13 @@ unsigned long vm_getphys(endpoint_t endpt, void *addr)
 	int r;
 
 	memset(&m, 0, sizeof(m));
-	m.VMPHYS_ENDPT = endpt;
-	m.VMPHYS_ADDR = (long) addr;
+	m.m_lc_vm_getphys.endpt = endpt;
+	m.m_lc_vm_getphys.addr = addr;
 
 	r = _syscall(VM_PROC_NR, VM_GETPHYS, &m);
 	if (r != OK)
 		return 0;
-	return m.VMPHYS_RETA;
+	return (unsigned long) m.m_lc_vm_getphys.ret_addr;
 }
 
 u8_t vm_getrefcount(endpoint_t endpt, void *addr)

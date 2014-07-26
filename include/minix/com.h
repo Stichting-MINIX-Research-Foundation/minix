@@ -758,9 +758,6 @@
 #define VM_SHM_UNMAP		(VM_RQ_BASE+34)
 
 #define VM_GETPHYS		(VM_RQ_BASE+35)
-#	define VMPHYS_ENDPT		m2_i1
-#	define VMPHYS_ADDR		m2_l1
-#	define VMPHYS_RETA		m2_l2
 
 #define VM_GETREF		(VM_RQ_BASE+36)
 #	define VMREFCNT_ENDPT		m2_i1

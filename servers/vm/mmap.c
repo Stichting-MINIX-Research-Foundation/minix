@@ -446,8 +446,8 @@ int do_get_phys(message *m)
 	phys_bytes ret;
 	vir_bytes addr;
 
-	target = m->VMPHYS_ENDPT;
-	addr = m->VMPHYS_ADDR;
+	target = m->m_lc_vm_getphys.endpt;
+	addr = (vir_bytes) m->m_lc_vm_getphys.addr;
 
 	if ((r = vm_isokendpt(target, &n)) != OK)
 		return EINVAL;
@@ -456,7 +456,7 @@ int do_get_phys(message *m)
 
 	r = map_get_phys(vmp, addr, &ret);
 
-	m->VMPHYS_RETA = ret;
+	m->m_lc_vm_getphys.ret_addr = (void *) ret;
 	return r;
 }
 

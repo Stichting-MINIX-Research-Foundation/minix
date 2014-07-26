@@ -1719,6 +1719,14 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_lc_vm_shm_unmap);
 
 typedef struct {
+	endpoint_t	endpt;
+	void		*addr;
+	void		*ret_addr;
+	uint8_t		padding[44];
+} mess_lc_vm_getphys;
+_ASSERT_MSG_SIZE(mess_lc_vm_getphys);
+
+typedef struct {
 	endpoint_t m_source;		/* who sent the message */
 	int m_type;			/* what kind of message is it */
 	union {
@@ -1937,6 +1945,7 @@ typedef struct {
 		mess_vfs_lc_lseek	m_vfs_lc_lseek;
 
 		mess_lsys_vm_vmremap	m_lsys_vm_vmremap;
+		mess_lc_vm_getphys	m_lc_vm_getphys;
 		mess_lc_vm_shm_unmap	m_lc_vm_shm_unmap;
 
 		mess_vfs_lchardriver_cancel	m_vfs_lchardriver_cancel;
