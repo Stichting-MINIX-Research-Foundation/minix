@@ -498,7 +498,7 @@ int do_munmap(message *m)
 	if(m->m_type == VM_UNMAP_PHYS) {
 		target = m->VMUP_EP;
 	} else if(m->m_type == VM_SHM_UNMAP) {
-		target = m->VMUN_ENDPT;
+		target = m->m_lc_vm_shm_unmap.forwhom;
 	}
 
 	if(target == SELF)
@@ -513,7 +513,7 @@ int do_munmap(message *m)
 	if(m->m_type == VM_UNMAP_PHYS) {
 		addr = (vir_bytes) m->VMUP_VADDR;
 	} else if(m->m_type == VM_SHM_UNMAP) {
-		addr = (vir_bytes) m->VMUN_ADDR;
+		addr = (vir_bytes) m->m_lc_vm_shm_unmap.addr;
 	} else	addr = (vir_bytes) m->VMUM_ADDR;
 
 	if(addr % VM_PAGE_SIZE)

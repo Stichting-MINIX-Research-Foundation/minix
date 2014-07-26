@@ -134,8 +134,8 @@ int vm_unmap(endpoint_t endpt, void *addr)
 	message m;
 
 	memset(&m, 0, sizeof(m));
-	m.VMUN_ENDPT = endpt;
-	m.VMUN_ADDR = addr;
+	m.m_lc_vm_shm_unmap.forwhom = endpt;
+	m.m_lc_vm_shm_unmap.addr = addr;
 
 	return _syscall(VM_PROC_NR, VM_SHM_UNMAP, &m);
 }

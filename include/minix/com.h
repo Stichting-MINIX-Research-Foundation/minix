@@ -756,8 +756,6 @@
 #define VM_REMAP		(VM_RQ_BASE+33)
 
 #define VM_SHM_UNMAP		(VM_RQ_BASE+34)
-#	define VMUN_ENDPT		m_mmap.forwhom
-#	define VMUN_ADDR		m_mmap.addr
 
 #define VM_GETPHYS		(VM_RQ_BASE+35)
 #	define VMPHYS_ENDPT		m2_i1
