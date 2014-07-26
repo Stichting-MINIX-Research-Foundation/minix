@@ -32,6 +32,6 @@ vm_watch_exit(endpoint_t ep)
 	message m;
 
 	memset(&m, 0, sizeof(m));
-	m.VM_WE_EP = ep;
+	m.m_lsys_vm_watch_exit.ep = ep;
 	return _taskcall(VM_PROC_NR, VM_WATCH_EXIT, &m);
 }

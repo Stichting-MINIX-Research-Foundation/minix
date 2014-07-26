@@ -788,7 +788,6 @@
 #		define VM_RS_MEM_MAKE_VM    1	/* make VM instance */
 
 #define VM_WATCH_EXIT		(VM_RQ_BASE+43)
-#	define VM_WE_EP		m1_i1
 
 #define VM_REMAP_RO		(VM_RQ_BASE+44)
 /* same args as VM_REMAP */

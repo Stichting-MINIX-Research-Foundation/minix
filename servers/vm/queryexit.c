@@ -119,7 +119,7 @@ out:
  *===========================================================================*/
 int do_watch_exit(message *m)
 {
-	endpoint_t e = m->VM_WE_EP;
+	endpoint_t e = m->m_lsys_vm_watch_exit.ep;
 	struct vmproc *vmp;
 	int p;
 	if(vm_isokendpt(e, &p) != OK) return ESRCH;
