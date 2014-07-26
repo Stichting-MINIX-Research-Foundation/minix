@@ -217,9 +217,9 @@ int do_shmdt(message *m)
  *===========================================================================*/
 int do_shmctl(message *m)
 {
-	int id = m->SHMCTL_ID;
-	int cmd = m->SHMCTL_CMD;
-	struct shmid_ds *ds = (struct shmid_ds *)m->SHMCTL_BUF;
+	int id = m->m_lc_ipc_shmctl.id;
+	int cmd = m->m_lc_ipc_shmctl.cmd;
+	struct shmid_ds *ds = (struct shmid_ds *)m->m_lc_ipc_shmctl.buf;
 	struct shmid_ds tmp_ds;
 	struct shm_struct *shm = NULL;
 	struct shminfo sinfo;
@@ -286,9 +286,9 @@ int do_shmctl(message *m)
 			who_e, (vir_bytes)ds, sizeof(struct shminfo));
 		if (r != OK)
 			return EFAULT;
-		m->SHMCTL_RET = shm_list_nr - 1;
-		if (m->SHMCTL_RET < 0)
-			m->SHMCTL_RET = 0;
+		m->m_lc_ipc_shmctl.ret = (shm_list_nr - 1);
+		if (m->m_lc_ipc_shmctl.ret < 0)
+			m->m_lc_ipc_shmctl.ret = 0;
 		break;
 	case SHM_INFO:
 		if (!ds)
@@ -306,9 +306,9 @@ int do_shmctl(message *m)
 			who_e, (vir_bytes)ds, sizeof(struct shm_info));
 		if (r != OK)
 			return EFAULT;
-		m->SHMCTL_RET = shm_list_nr - 1;
-		if (m->SHMCTL_RET < 0)
-			m->SHMCTL_RET = 0;
+		m->m_lc_ipc_shmctl.ret = shm_list_nr - 1;
+		if (m->m_lc_ipc_shmctl.ret < 0)
+			m->m_lc_ipc_shmctl.ret = 0;
 		break;
 	case SHM_STAT:
 		if (id < 0 || id >= shm_list_nr)
@@ -318,7 +318,7 @@ int do_shmctl(message *m)
 			who_e, (vir_bytes)ds, sizeof(struct shmid_ds));
 		if (r != OK)
 			return EFAULT;
-		m->SHMCTL_RET = shm->id;
+		m->m_lc_ipc_shmctl.ret = shm->id;
 		break;
 	default:
 		return EINVAL;

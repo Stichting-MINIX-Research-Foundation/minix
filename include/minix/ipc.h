@@ -1790,6 +1790,34 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_lc_ipc_shmdt);
 
 typedef struct {
+	int		id;
+	int		cmd;
+	void		*buf;
+	int		ret;
+	uint8_t		padding[40];
+} mess_lc_ipc_shmctl;
+_ASSERT_MSG_SIZE(mess_lc_ipc_shmctl);
+
+typedef struct {
+	key_t		key;
+	int		nr;
+	int		flag;
+	int		retid;
+	uint8_t		padding[40];
+} mess_lc_ipc_semget;
+_ASSERT_MSG_SIZE(mess_lc_ipc_semget);
+
+typedef struct {
+	int		id;
+	int		num;
+	int		cmd;
+	int		opt;
+	int		ret;
+	uint8_t		padding[36];
+} mess_lc_ipc_semctl;
+_ASSERT_MSG_SIZE(mess_lc_ipc_semctl);
+
+typedef struct {
 	endpoint_t m_source;		/* who sent the message */
 	int m_type;			/* what kind of message is it */
 	union {
@@ -2018,6 +2046,9 @@ typedef struct {
 		mess_lc_ipc_shmget	m_lc_ipc_shmget;
 		mess_lc_ipc_shmat	m_lc_ipc_shmat;
 		mess_lc_ipc_shmdt	m_lc_ipc_shmdt;
+		mess_lc_ipc_shmctl	m_lc_ipc_shmctl;
+		mess_lc_ipc_semget	m_lc_ipc_semget;
+		mess_lc_ipc_semctl	m_lc_ipc_semctl;
 
 		mess_vfs_lchardriver_cancel	m_vfs_lchardriver_cancel;
 		mess_vfs_lchardriver_openclose	m_vfs_lchardriver_openclose;

@@ -32,14 +32,14 @@ int shmctl(int shmid, int cmd, struct shmid_ds *buf)
 	}
 
 	memset(&m, 0, sizeof(m));
-	m.SHMCTL_ID = shmid;
-	m.SHMCTL_CMD = cmd;
-	m.SHMCTL_BUF = (long) buf;
+	m.m_lc_ipc_shmctl.id = shmid;
+	m.m_lc_ipc_shmctl.cmd = cmd;
+	m.m_lc_ipc_shmctl.buf = buf;
 
 	r = _syscall(ipc_pt, IPC_SHMCTL, &m);
 	if ((cmd == IPC_INFO || cmd == SHM_INFO || cmd == SHM_STAT)
 		&& (r == OK))
-		return m.SHMCTL_RET;
+		return m.m_lc_ipc_shmctl.ret;
 	return r;
 }
 

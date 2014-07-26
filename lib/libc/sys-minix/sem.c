@@ -35,15 +35,15 @@ int semget(key_t key, int nsems, int semflag)
 	}
 
 	memset(&m, 0, sizeof(m));
-	m.SEMGET_KEY = key;
-	m.SEMGET_NR = nsems;
-	m.SEMGET_FLAG = semflag;
+	m.m_lc_ipc_semget.key = key;
+	m.m_lc_ipc_semget.nr = nsems;
+	m.m_lc_ipc_semget.flag = semflag;
 
 	r = _syscall(ipc_pt, IPC_SEMGET, &m);
 	if (r != OK)
 		return r;
 
-	return m.SEMGET_RETID;
+	return m.m_lc_ipc_semget.retid;
 }
  
 /* Semaphore control operation.  */
@@ -60,21 +60,21 @@ int semctl(int semid, int semnum, int cmd, ...)
 	}
 
 	memset(&m, 0, sizeof(m));
-	m.SEMCTL_ID = semid;
-	m.SEMCTL_NUM = semnum;
-	m.SEMCTL_CMD = cmd;
+	m.m_lc_ipc_semctl.id = semid;
+	m.m_lc_ipc_semctl.num = semnum;
+	m.m_lc_ipc_semctl.cmd = cmd;
 	va_start(ap, cmd);
 	if (cmd == IPC_STAT || cmd == IPC_SET || cmd == IPC_INFO ||
 		cmd == SEM_INFO || cmd == SEM_STAT || cmd == GETALL ||
 		cmd == SETALL || cmd == SETVAL)
-		m.SEMCTL_OPT = (long) va_arg(ap, long);
+		m.m_lc_ipc_semctl.opt = (long) va_arg(ap, long);
 	va_end(ap); 
 
 	r = _syscall(ipc_pt, IPC_SEMCTL, &m);
 	if ((r != -1) && (cmd == GETNCNT || cmd == GETZCNT || cmd == GETPID ||
 		cmd == GETVAL || cmd == IPC_INFO || cmd == SEM_INFO ||
 		cmd == SEM_STAT))
-		return m.SHMCTL_RET;
+		return m.m_lc_ipc_semctl.ret;
 	return r;
 }
 

@@ -57,9 +57,9 @@ int do_semget(message *m)
 	int nsems, flag, id;
 	struct sem_struct *sem;
 
-	key = m->SEMGET_KEY;
-	nsems = m->SEMGET_NR;
-	flag = m->SEMGET_FLAG;
+	key = m->m_lc_ipc_semget.key;
+	nsems = m->m_lc_ipc_semget.nr;
+	flag = m->m_lc_ipc_semget.flag;
 
 	if ((sem = sem_find_key(key))) {
 		if ((flag & IPC_CREAT) && (flag & IPC_EXCL))
@@ -94,7 +94,7 @@ int do_semget(message *m)
 		sem_list_nr++;
 	}
 
-	m->SEMGET_RETID = id;
+	m->m_lc_ipc_semget.retid = id;
 	return OK;
 }
 
@@ -287,14 +287,14 @@ int do_semctl(message *m)
 	struct semid_ds *ds, tmp_ds;
 	struct sem_struct *sem;
 
-	id = m->SEMCTL_ID;
-	num = m->SEMCTL_NUM;
-	cmd = m->SEMCTL_CMD;
+	id = m->m_lc_ipc_semctl.id;
+	num = m->m_lc_ipc_semctl.num;
+	cmd = m->m_lc_ipc_semctl.cmd;
 
 	if (cmd == IPC_STAT || cmd == IPC_SET || cmd == IPC_INFO ||
 		cmd == SEM_INFO || cmd == SEM_STAT || cmd == GETALL ||
 		cmd == SETALL || cmd == SETVAL)
-		opt = m->SEMCTL_OPT;
+		opt = m->m_lc_ipc_semctl.opt;
 
 	if (!(sem = sem_find_id(id))) {
 		return EINVAL;
@@ -367,22 +367,22 @@ int do_semctl(message *m)
 	case GETNCNT:
 		if (num < 0 || num >= sem->semid_ds.sem_nsems)
 			return EINVAL;
-		m->SHMCTL_RET = sem->sems[num].semncnt;
+		m->m_lc_ipc_semctl.ret = sem->sems[num].semncnt;
 		break;
 	case GETPID:
 		if (num < 0 || num >= sem->semid_ds.sem_nsems)
 			return EINVAL;
-		m->SHMCTL_RET = sem->sems[num].sempid;
+		m->m_lc_ipc_semctl.ret = sem->sems[num].sempid;
 		break;
 	case GETVAL:
 		if (num < 0 || num >= sem->semid_ds.sem_nsems)
 			return EINVAL;
-		m->SHMCTL_RET = sem->sems[num].semval;
+		m->m_lc_ipc_semctl.ret = sem->sems[num].semval;
 		break;
 	case GETZCNT:
 		if (num < 0 || num >= sem->semid_ds.sem_nsems)
 			return EINVAL;
-		m->SHMCTL_RET = sem->sems[num].semzcnt;
+		m->m_lc_ipc_semctl.ret = sem->sems[num].semzcnt;
 		break;
 	case SETALL:
 		buf = malloc(sizeof(unsigned short) * sem->semid_ds.sem_nsems);

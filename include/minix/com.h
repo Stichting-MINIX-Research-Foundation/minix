@@ -830,22 +830,10 @@
 #define IPC_SHMAT	(IPC_BASE+2)
 #define IPC_SHMDT	(IPC_BASE+3)
 #define IPC_SHMCTL	(IPC_BASE+4)
-#	define SHMCTL_ID	m2_i1
-#	define SHMCTL_CMD	m2_i2
-#	define SHMCTL_BUF	m2_l1
-#	define SHMCTL_RET	m2_i3
 
 /* Semaphore */
 #define IPC_SEMGET	(IPC_BASE+5)
-#	define SEMGET_KEY	m2_l1
-#	define SEMGET_NR	m2_i1
-#	define SEMGET_FLAG	m2_i2
-#	define SEMGET_RETID	m2_i3
 #define IPC_SEMCTL	(IPC_BASE+6)
-#	define SEMCTL_ID	m2_i1
-#	define SEMCTL_NUM	m2_i2
-#	define SEMCTL_CMD	m2_i3
-#	define SEMCTL_OPT	m2_l1
 #define IPC_SEMOP	(IPC_BASE+7)
 #	define SEMOP_ID		m2_i1
 #	define SEMOP_OPS	m2_l1
