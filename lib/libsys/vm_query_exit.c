@@ -22,8 +22,8 @@ vm_query_exit(int *endpt)
 	if (endpt == NULL)
 		return EFAULT;
 
-	*endpt = m.VM_QUERY_RET_PT;
-	return (m.VM_QUERY_IS_MORE ? 1 : 0);
+	*endpt = m.m_lsys_vm_query_exit.ret_pt;
+	return (m.m_lsys_vm_query_exit.is_more ? 1 : 0);
 }
 
 int

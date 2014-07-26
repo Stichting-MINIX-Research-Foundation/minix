@@ -767,8 +767,6 @@
 #	define VM_RS_SYS		m2_i2
 
 #define VM_QUERY_EXIT		(VM_RQ_BASE+38)
-#	define VM_QUERY_RET_PT	m2_i1
-#	define VM_QUERY_IS_MORE	m2_i2
 
 #define VM_NOTIFY_SIG		(VM_RQ_BASE+39)
 #	define VM_NOTIFY_SIG_ENDPOINT	m1_i1

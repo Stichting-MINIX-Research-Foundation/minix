@@ -55,8 +55,8 @@ int do_query_exit(message *m)
 		if (!array[i].avail)
 			nr++;
 	}
-	m->VM_QUERY_RET_PT = ep;
-	m->VM_QUERY_IS_MORE = (nr > 0);
+	m->m_lsys_vm_query_exit.ret_pt = ep;
+	m->m_lsys_vm_query_exit.is_more = (nr > 0);
 
 	return OK;
 }
