@@ -835,9 +835,6 @@
 #define IPC_SEMGET	(IPC_BASE+5)
 #define IPC_SEMCTL	(IPC_BASE+6)
 #define IPC_SEMOP	(IPC_BASE+7)
-#	define SEMOP_ID		m2_i1
-#	define SEMOP_OPS	m2_l1
-#	define SEMOP_SIZE	m2_i2
 
 /*===========================================================================*
  *                Messages for Scheduling				     *

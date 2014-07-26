@@ -90,9 +90,9 @@ int semop(int semid, struct sembuf *sops, size_t nsops)
 	}
 
 	memset(&m, 0, sizeof(m));
-	m.SEMOP_ID = semid;
-	m.SEMOP_OPS = (long) sops;
-	m.SEMOP_SIZE = nsops;
+	m.m_lc_ipc_semop.id = semid;
+	m.m_lc_ipc_semop.ops = sops;
+	m.m_lc_ipc_semop.size = nsops;
 
 	return _syscall(ipc_pt, IPC_SEMOP, &m);
 }

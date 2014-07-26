@@ -445,8 +445,8 @@ int do_semop(message *m)
 	struct sem_struct *sem;
 	int no_reply = 0;
 
-	id = m->SEMOP_ID;
-	nsops = (unsigned int) m->SEMOP_SIZE;
+	id = m->m_lc_ipc_semop.id;
+	nsops = m->m_lc_ipc_semop.size;
 
 	r = EINVAL;
 	if (!(sem = sem_find_id(id)))
@@ -469,7 +469,7 @@ int do_semop(message *m)
 	sops = malloc(sizeof(struct sembuf) * nsops);
 	if (!sops)
 		goto out_free;
-	r = sys_datacopy(who_e, (vir_bytes) m->SEMOP_OPS,
+	r = sys_datacopy(who_e, (vir_bytes) m->m_lc_ipc_semop.ops,
 			SELF, (vir_bytes) sops,
 			sizeof(struct sembuf) * nsops);
 	if (r != OK) {
