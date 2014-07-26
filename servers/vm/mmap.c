@@ -383,15 +383,15 @@ int do_remap(message *m)
 		readonly = 1;
 	else panic("do_remap: can't be");
 
-	da = (vir_bytes) m->VMRE_DA;
-	sa = (vir_bytes) m->VMRE_SA;
-	size = m->VMRE_SIZE;
+	da = (vir_bytes) m->m_lsys_vm_vmremap.dest_addr;
+	sa = (vir_bytes) m->m_lsys_vm_vmremap.src_addr;
+	size = m->m_lsys_vm_vmremap.size;
 
 	if (size <= 0) return EINVAL;
 
-	if ((r = vm_isokendpt((endpoint_t) m->VMRE_D, &dn)) != OK)
+	if ((r = vm_isokendpt((endpoint_t) m->m_lsys_vm_vmremap.destination, &dn)) != OK)
 		return EINVAL;
-	if ((r = vm_isokendpt((endpoint_t) m->VMRE_S, &sn)) != OK)
+	if ((r = vm_isokendpt((endpoint_t) m->m_lsys_vm_vmremap.source, &sn)) != OK)
 		return EINVAL;
 
 	dvmp = &vmproc[dn];
@@ -431,7 +431,7 @@ int do_remap(message *m)
 
 	shared_setsource(vr, svmp->vm_endpoint, src_region);
 
-	m->VMRE_RETA = (char *) vr->vaddr;
+	m->m_lsys_vm_vmremap.ret_addr = (void *) vr->vaddr;
 	return OK;
 }
 

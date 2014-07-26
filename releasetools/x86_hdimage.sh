@@ -191,5 +191,5 @@ then
 	echo "CD image at `pwd`/${IMG}"
 else
 	echo "To boot this image on kvm:"
-	echo "cd ${MODDIR} && kvm -serial stdio -kernel kernel -append \"console=tty00 rootdevname=c0d0p1\" -initrd \"${mods}\" -hda `pwd`/${IMG}"
+	echo "cd ${MODDIR} && kvm -display none -serial stdio -kernel kernel -append \"console=tty00 rootdevname=c0d0p1\" -initrd \"${mods}\" -hda `pwd`/${IMG}"
 fi

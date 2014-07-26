@@ -95,16 +95,16 @@ void *vm_remap(endpoint_t d,
 	int r;
 
 	memset(&m, 0, sizeof(m));
-	m.VMRE_D = d;
-	m.VMRE_S = s;
-	m.VMRE_DA = (char *) da;
-	m.VMRE_SA = (char *) sa;
-	m.VMRE_SIZE = size;
+	m.m_lsys_vm_vmremap.destination = d;
+	m.m_lsys_vm_vmremap.source = s;
+	m.m_lsys_vm_vmremap.dest_addr = da;
+	m.m_lsys_vm_vmremap.src_addr = sa;
+	m.m_lsys_vm_vmremap.size = size;
 
 	r = _syscall(VM_PROC_NR, VM_REMAP, &m);
 	if (r != OK)
 		return MAP_FAILED;
-	return (void *) m.VMRE_RETA;
+	return m.m_lsys_vm_vmremap.ret_addr;
 }
 
 void *vm_remap_ro(endpoint_t d,
@@ -117,16 +117,16 @@ void *vm_remap_ro(endpoint_t d,
 	int r;
 
 	memset(&m, 0, sizeof(m));
-	m.VMRE_D = d;
-	m.VMRE_S = s;
-	m.VMRE_DA = (char *) da;
-	m.VMRE_SA = (char *) sa;
-	m.VMRE_SIZE = size;
+	m.m_lsys_vm_vmremap.destination = d;
+	m.m_lsys_vm_vmremap.source = s;
+	m.m_lsys_vm_vmremap.dest_addr = da;
+	m.m_lsys_vm_vmremap.src_addr = sa;
+	m.m_lsys_vm_vmremap.size = size;
 
 	r = _syscall(VM_PROC_NR, VM_REMAP_RO, &m);
 	if (r != OK)
 		return MAP_FAILED;
-	return (void *) m.VMRE_RETA;
+	return m.m_lsys_vm_vmremap.ret_addr;
 }
 
 int vm_unmap(endpoint_t endpt, void *addr)

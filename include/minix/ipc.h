@@ -1701,6 +1701,17 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_vmmcp_reply);
 
 typedef struct {
+	endpoint_t	destination;
+	endpoint_t	source;
+	void		*dest_addr;
+	void		*src_addr;
+	size_t		size;
+	void		*ret_addr;
+	uint8_t		padding[32];
+} mess_lsys_vm_vmremap;
+_ASSERT_MSG_SIZE(mess_lsys_vm_vmremap);
+
+typedef struct {
 	endpoint_t m_source;		/* who sent the message */
 	int m_type;			/* what kind of message is it */
 	union {
@@ -1917,6 +1928,8 @@ typedef struct {
 		mess_vfs_fs_utime	m_vfs_fs_utime;
 
 		mess_vfs_lc_lseek	m_vfs_lc_lseek;
+
+		mess_lsys_vm_vmremap	m_lsys_vm_vmremap;
 
 		mess_vfs_lchardriver_cancel	m_vfs_lchardriver_cancel;
 		mess_vfs_lchardriver_openclose	m_vfs_lchardriver_openclose;

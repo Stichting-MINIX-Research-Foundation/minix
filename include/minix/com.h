@@ -754,13 +754,6 @@
 #	define VMV_SIZE_PAGES		m10_l3
 
 #define VM_REMAP		(VM_RQ_BASE+33)
-#	define VMRE_D			m1_i1
-#	define VMRE_S			m1_i2
-#	define VMRE_DA			m1_p1
-#	define VMRE_SA			m1_p2
-#	define VMRE_RETA		m1_p3
-#	define VMRE_SIZE		m1_i3
-#	define VMRE_FLAGS		m1_i3
 
 #define VM_SHM_UNMAP		(VM_RQ_BASE+34)
 #	define VMUN_ENDPT		m_mmap.forwhom
