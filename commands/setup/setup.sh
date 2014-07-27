@@ -695,17 +695,14 @@ mount /dev/$usr /mnt >/dev/null || exit		# Mount the intended /usr.
 
 (cd /usr || exit 1
  list="`ls | fgrep -v install`"
- for d in $list
- do	
-	cp -psmr -v $d /mnt/$d
- done
+	pax -rw -pe -v $list /mnt 2>&1
 ) | progressbar "$USRFILES" || exit	# Copy the usr floppy.
 
 umount /dev/$usr >/dev/null || exit		# Unmount the intended /usr.
 mount /dev/$root /mnt >/dev/null || exit
 
 # Running from the installation CD.
-cp -psmr -vx / /mnt | progressbar "$ROOTFILES" || exit
+pax -rw -pe -vX / /mnt 2>&1 | progressbar "$ROOTFILES" || exit
 chmod o-w /mnt/usr
 cp /mnt/etc/motd.install /mnt/etc/motd
 
@@ -753,7 +750,7 @@ then	if mount /dev/$home /home 2>/dev/null
 		do	h=`eval echo "~$u"`
 			if mkdir $h
 			then	echo " * Creating home directory for $u in $h"
-				cp -psmr /usr/ast $h
+				pax -rw -pe /usr/ast $h
 				chown -R $u:operator $h
 			else	echo " * Couldn't create $h"
 			fi
