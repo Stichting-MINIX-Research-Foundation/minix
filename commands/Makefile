@@ -22,7 +22,7 @@ SUBDIR=	add_route arp ash at backup btrace \
 	profile progressbar pr_routes ps pwdauth \
 	ramdisk rarpd rawspeed rcp readclock \
 	remsync rget rlogin \
-	rotate rsh rshd service setup shar \
+	rotate rsh rshd service setup \
 	slip spell sprofalyze sprofdiff srccrc \
 	svclog svrctl swifi synctree sysenv \
 	syslogd tcpd tcpdp tcpstat telnet \
