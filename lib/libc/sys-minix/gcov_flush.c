@@ -7,9 +7,9 @@ int gcov_flush_svr(char *buff, int buff_sz, int server_nr)
 	message m;
 
 	memset(&m, 0, sizeof(m));
-	m.GCOV_BUFF_P = buff;
-	m.GCOV_BUFF_SZ = buff_sz;
-	m.GCOV_PID = server_nr;
+	m.m_lc_vfs_gcov.buff_p = buff;
+	m.m_lc_vfs_gcov.buff_sz = buff_sz;
+	m.m_lc_vfs_gcov.pid = server_nr;
 
 	/* Make the call to server. It will call the gcov library,
 	 * buffer the stdio requests, and copy the buffer to this user

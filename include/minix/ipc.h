@@ -102,6 +102,16 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_lsys_krn_readbios);
 
 typedef struct {
+	cp_grant_id_t grant;
+	int pid;
+	vir_bytes buff_p;
+	size_t buff_sz;
+
+	uint8_t padding[40];
+} mess_lc_vfs_gcov;
+_ASSERT_MSG_SIZE(mess_lc_vfs_gcov);
+
+typedef struct {
 	off_t pos;
 
 	int minor;
@@ -2036,6 +2046,7 @@ typedef struct {
 		mess_lblockdriver_lbdev_reply m_lblockdriver_lbdev_reply;
 		mess_lc_pm_cprof	m_lc_pm_cprof;
 		mess_lc_pm_sprof	m_lc_pm_sprof;
+		mess_lc_vfs_gcov	m_lc_vfs_gcov;
 		mess_lsys_krn_sys_diagctl m_lsys_krn_sys_diagctl;
 		mess_lsys_krn_sys_cprof m_lsys_krn_sys_cprof;
 		mess_lsys_krn_sys_profbuf m_lsys_krn_sys_profbuf;

@@ -154,7 +154,8 @@ int do_gcov_flush_impl(message *msg)
 	assert(msg->m_type == COMMON_REQ_GCOV_DATA);
 	assert(msg->m_source == VFS_PROC_NR);
 
-	replymsg.m_type = gcov_flush(msg->GCOV_GRANT, msg->GCOV_BUFF_SZ);
+	replymsg.m_type = gcov_flush(msg->m_lc_vfs_gcov.grant,
+		msg->m_lc_vfs_gcov.buff_sz);
 	return ipc_send(msg->m_source, &replymsg);
 }
 

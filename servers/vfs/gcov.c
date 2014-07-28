@@ -23,9 +23,9 @@ int do_gcov_flush()
   message m;
   vir_bytes buf;
 
-  size = job_m_in.GCOV_BUFF_SZ;
-  target = job_m_in.GCOV_PID;
-  buf = (vir_bytes) job_m_in.GCOV_BUFF_P;
+  size = job_m_in.m_lc_vfs_gcov.buff_sz;
+  target = job_m_in.m_lc_vfs_gcov.pid;
+  buf = job_m_in.m_lc_vfs_gcov.buff_p;
 
   /* If the wrong process is sent to, the system hangs; so make this root-only.
    */
@@ -55,8 +55,8 @@ int do_gcov_flush()
 	r = gcov_flush(grantid, size);
   } else {
 	/* Perform generic GCOV request. */
-	m.GCOV_GRANT = grantid;
-	m.GCOV_BUFF_SZ = size;
+	m.m_lc_vfs_gcov.grant = grantid;
+	m.m_lc_vfs_gcov.buff_sz = size;
 	r = _taskcall(rfp->fp_endpoint, COMMON_REQ_GCOV_DATA, &m);
   }
 
