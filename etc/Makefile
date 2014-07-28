@@ -203,9 +203,9 @@ MAKEDEV: ${.CURDIR}/MAKEDEV.awk ${.CURDIR}/MAKEDEV.tmpl \
 .else
 MAKEDEV: .PHONY
 	if [ ${MKUNPRIVED} != "yes" ]; then \
-		cd ${DESTDIR}/dev && sh ${NETBSDSRCDIR}/commands/MAKEDEV/MAKEDEV.sh -s; \
+		cd ${DESTDIR}/dev && sh ${NETBSDSRCDIR}/minix/commands/MAKEDEV/MAKEDEV.sh -s; \
 	else \
-		sh ${NETBSDSRCDIR}/commands/MAKEDEV/MAKEDEV.sh -m -s >> ${DESTDIR}/METALOG; \
+		sh ${NETBSDSRCDIR}/minix/commands/MAKEDEV/MAKEDEV.sh -m -s >> ${DESTDIR}/METALOG; \
 	fi
 .endif # !defined(__MINIX)
 
@@ -448,7 +448,7 @@ install-etc-files-safe: .PHONY .MAKE check_DESTDIR MAKEDEV
 	${_MKMSG_INSTALL} ${DESTDIR}/etc/rc.capes
 	${INSTALL_DIR} ${DESTDIR}/etc/rc.capes
 	${INSTALL_FILE} -m ${BINMODE} -o ${BINOWN} -g ${BINGRP} ${NETBSDSRCDIR}/etc/rc.capes/* ${DESTDIR}/etc/rc.capes
-	${INSTALL_FILE} -m ${BINMODE} -o ${BINOWN} -g ${BINGRP} ${NETBSDSRCDIR}/drivers/usbd/usbd.conf ${DESTDIR}/etc/system.conf.d/usbd
+	${INSTALL_FILE} -m ${BINMODE} -o ${BINOWN} -g ${BINGRP} ${NETBSDSRCDIR}/minix/drivers/usb/usbd/usbd.conf ${DESTDIR}/etc/system.conf.d/usbd
 .endif # Minix/earm specific
 .for subdir in . defaults mtree
 	${MAKEDIRTARGET} ${subdir} configinstall

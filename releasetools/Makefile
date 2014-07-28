@@ -16,18 +16,18 @@ PROGROOT:= ${MAKEOBJDIR:S,releasetools,,}
 .endif
 
 # Specify the programs that are part of the system image.
-KERNEL= ${PROGROOT}/kernel/kernel
+KERNEL= ${PROGROOT}/minix/kernel/kernel
 # PROGRAMS are in the order they should be loaded by boot
-PROGRAMS+= ${PROGROOT}/servers/ds/ds
-PROGRAMS+= ${PROGROOT}/servers/rs/rs
-PROGRAMS+= ${PROGROOT}/servers/pm/pm
-PROGRAMS+= ${PROGROOT}/servers/sched/sched
-PROGRAMS+= ${PROGROOT}/servers/vfs/vfs
-PROGRAMS+= ${PROGROOT}/drivers/memory/memory
-PROGRAMS+= ${PROGROOT}/drivers/tty/tty
-PROGRAMS+= ${PROGROOT}/servers/mfs/mfs
-PROGRAMS+= ${PROGROOT}/servers/vm/vm
-PROGRAMS+= ${PROGROOT}/servers/pfs/pfs
+PROGRAMS+= ${PROGROOT}/minix/servers/ds/ds
+PROGRAMS+= ${PROGROOT}/minix/servers/rs/rs
+PROGRAMS+= ${PROGROOT}/minix/servers/pm/pm
+PROGRAMS+= ${PROGROOT}/minix/servers/sched/sched
+PROGRAMS+= ${PROGROOT}/minix/servers/vfs/vfs
+PROGRAMS+= ${PROGROOT}/minix/drivers/storage/memory/memory
+PROGRAMS+= ${PROGROOT}/minix/drivers/tty/tty/tty
+PROGRAMS+= ${PROGROOT}/minix/fs/mfs/mfs
+PROGRAMS+= ${PROGROOT}/minix/servers/vm/vm
+PROGRAMS+= ${PROGROOT}/minix/fs/pfs/pfs
 PROGRAMS+= ${PROGROOT}/sbin/init/init
 
 usage:	
@@ -98,12 +98,12 @@ do-hdboot:
 	${INSTALL_FILE} $$i $$newname;				\
 	echo ${INSTALL_FILE} $$i $$newname;			\
 	done
-	@cp ${PROGROOT}/kernel/kernel ${DESTDIR}/boot/minix/.temp/
+	@cp ${PROGROOT}/minix/kernel/kernel ${DESTDIR}/boot/minix/.temp/
 	@if [ "${MKINSTALLBOOT:Uno}" != "no" ] ; then		\
 	${STRIP} -s ${DESTDIR}/boot/minix/.temp/* ;		\
 	gzip ${DESTDIR}/boot/minix/.temp/mod* ;			\
 	${HOST_SH} mkboot hdboot ${DESTDIR};			\
-	${HOST_SH} ../commands/update_bootcfg/update_bootcfg.sh;\
+	${HOST_SH} ../minix/commands/update_bootcfg/update_bootcfg.sh;\
 	else							\
 	${INSTALL_DIR} ${DESTDIR}/multiboot;			\
 	${INSTALL_FILE} ${DESTDIR}/boot/minix/.temp/* ${DESTDIR}/multiboot; \
@@ -146,3 +146,6 @@ cleandir:
 	${MAKE} -C ../kernel $@
 	${MAKE} -C ../servers $@
 	${MAKE} -C ../drivers $@
+
+# LSC: For STRIP and HOST_SH
+.include <bsd.sys.mk>

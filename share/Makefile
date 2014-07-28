@@ -15,12 +15,6 @@ SUBDIR+=i18n locale nls
 .endif
 .endif
 
-.if defined(__MINIX)
-.if ${MACHINE_ARCH} == "earm"
-SUBDIR+= beaglebone
-.endif # ${MACHINE_ARCH} == "earm"
-.endif # defined(__MINIX)
-
 # Speedup stubs for some subtrees that don't need to run these rules
 includes-examples includes-man:
 	@true

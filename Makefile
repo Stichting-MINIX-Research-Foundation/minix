@@ -137,10 +137,9 @@ _SRC_TOP_OBJ_=
 # _SUBDIR is used to set SUBDIR, after removing directories that have
 # BUILD_${dir}=no, or that have no ${dir}/Makefile.
 #
-_SUBDIR=	tools lib include gnu external crypto/external minix bin games
+_SUBDIR=	tools lib include gnu external crypto/external bin games
 .if defined(__MINIX)
-_SUBDIR+=	commands man benchmarks test
-_SUBDIR+=	kernel servers drivers
+_SUBDIR+=	minix
 .endif # defined(__MINIX)
 _SUBDIR+=	libexec sbin usr.bin
 _SUBDIR+=	usr.sbin share sys etc tests compat
@@ -168,7 +167,7 @@ afterinstall: .PHONY .MAKE
 .if !defined(__MINIX)
 	${MAKEDIRTARGET} share/man makedb
 .else
-	${MAKEDIRTARGET} man makedb
+	${MAKEDIRTARGET} minix/man makedb
 .endif # !defined(__MINIX)
 .endif
 .if (${MKUNPRIVED} != "no" && ${MKINFO} != "no")

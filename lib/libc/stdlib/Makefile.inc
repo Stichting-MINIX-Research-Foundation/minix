@@ -28,7 +28,7 @@ SRCS+= erand48_ieee754.c
 .if (${USE_JEMALLOC} != "no")
 SRCS+=	jemalloc.c
 .elif (${USE_MINIXMALLOC:Uno} != "no")
-.include "../minix/Makefile.inc"
+.include "${NETBSDSRCDIR}/minix/lib/libc/Makefile.inc"
 .else
 SRCS+=	malloc.c
 .endif

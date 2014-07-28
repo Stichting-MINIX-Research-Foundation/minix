@@ -27,7 +27,7 @@ SRCS+=	_setjmp.S
 SRCS+=	sigsetjmp.S
 
 .if defined(__MINIX)
-# Already defined in sys-minix
+# Already defined in minix/lib/libc/arch/arm/sys
 .else
 SRCS+=	makecontext.c resumecontext.c swapcontext.S
 

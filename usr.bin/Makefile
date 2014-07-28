@@ -36,14 +36,6 @@ SUBDIR= asa \
 .if !defined(__MINIX)
 SUBDIR+= ../external/zlib/pigz/bin/pigz
 .else
-
-# Non-NetBSD imports
-SUBDIR+= ministat
-
-# Minix commands
-SUBDIR+= top 
-SUBDIR+= toproto
-
 # LSC FIXME For now we compile those unconditionnaly
 SUBDIR+= apropos whatis bdes soelim 
 .endif # defined(__MINIX)

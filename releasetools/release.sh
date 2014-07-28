@@ -157,7 +157,7 @@ mkdir -p $RELEASEPACKAGE
 ##########################################################################
 echo " * Bootstrapping filesystem in $RELEASEDIR"
 ##########################################################################
-CONFIGHEADER=$RELEASEDIR/usr/src/include/minix/sys_config.h
+CONFIGHEADER=$RELEASEDIR/usr/src/minix/include/minix/sys_config.h
 
 copy_local_packages
 
@@ -219,7 +219,7 @@ echo " * Build"
 ##########################################################################
 
 cd $RELEASEDIR/usr/src
-make build MKLIBCXX=yes DESTDIR=$RELEASEDIR SLOPPY_FLIST=yes $BUILDOPTIONS
+make distribution MKLIBCXX=yes DESTDIR=$RELEASEDIR SLOPPY_FLIST=yes $BUILDOPTIONS
 make -C releasetools do-hdboot DESTDIR=$RELEASEDIR MKINSTALLBOOT=yes
 cp $RELEASEDIR/usr/mdec/boot_monitor $RELEASEDIR
 cp $RELEASEDIR/boot/minix_latest/* $RELEASEDIR/boot/minix_default/

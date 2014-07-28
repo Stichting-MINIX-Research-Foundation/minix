@@ -37,11 +37,6 @@ INCS+=  ssp/ssp.h ssp/stdio.h ssp/string.h ssp/strings.h ssp/unistd.h
 INCS+=	ieeefp.h
 .endif
 
-.if defined(__MINIX)
-# MINIX Specific headers.
-INCS+=  env.h fetch.h lib.h libutil.h varargs.h
-.endif
-
 .include <bsd.own.mk>
 
 
@@ -50,17 +45,11 @@ INCSDIR=	/usr/include
 .if defined(__MINIX)
 # RPC is not compiled in the libc. This include also needs
 # rpcgen, which can be compiled if needed.
+SUBDIR+=	../minix/include
 .else
 SUBDIR=		rpc
 .endif # defined(__MINIX)
 SUBDIR+=	../common/include/prop
-
-.if defined(__MINIX)
-SUBDIR+= 	arch sys minix
-SUBDIR+= 	net
-SUBDIR+= 	ddekit
-SUBDIR+= 	libdde
-.endif # defined(__MINIX)
 SUBDIR+=	../common/include/ppath
 
 .include <bsd.prog.mk>

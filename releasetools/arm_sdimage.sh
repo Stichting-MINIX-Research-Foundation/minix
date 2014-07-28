@@ -181,25 +181,26 @@ cp ${IMG_DIR}/uEnv.txt ${OBJ}/
 # Do some last processing of the kernel and servers before also putting
 # them on the FAT
 #
-${CROSS_PREFIX}objcopy ${OBJ}/kernel/kernel -O binary ${OBJ}/kernel.bin
+${CROSS_PREFIX}objcopy ${OBJ}/minix/kernel/kernel -O binary ${OBJ}/kernel.bin
 
 mcopy -bsp -i ${IMG_DIR}/fat.img ${OBJ}/kernel.bin ::kernel.bin
 
 for f in servers/vm/vm servers/rs/rs servers/pm/pm servers/sched/sched \
-	servers/vfs/vfs servers/ds/ds servers/mfs/mfs servers/pfs/pfs \
-	sbin/init/init
+	servers/vfs/vfs servers/ds/ds fs/mfs/mfs fs/pfs/pfs \
+	../sbin/init/init
 do
     fn=`basename $f`.elf
-    cp ${OBJ}/${f} ${OBJ}/${fn}
+    cp ${OBJ}/minix/${f} ${OBJ}/${fn}
     ${CROSS_PREFIX}strip -s ${OBJ}/${fn}
     mcopy -bsp -i ${IMG_DIR}/fat.img  ${OBJ}/${fn} ::${fn}
 done
 
-for f in tty memory
+for f in tty/tty/tty storage/memory/memory
 do
-    cp ${OBJ}/drivers/${f}/${f} ${OBJ}/${f}.elf
-    ${CROSS_PREFIX}strip -s ${OBJ}/${f}.elf
-    mcopy -bsp -i ${IMG_DIR}/fat.img  ${OBJ}/${f}.elf ::${f}.elf
+    fn=`basename $f`.elf
+    cp ${OBJ}/minix/drivers/${f} ${OBJ}/${fn}
+    ${CROSS_PREFIX}strip -s ${OBJ}/${fn}
+    mcopy -bsp -i ${IMG_DIR}/fat.img  ${OBJ}/${fn} ::${fn}
 done
 
 #

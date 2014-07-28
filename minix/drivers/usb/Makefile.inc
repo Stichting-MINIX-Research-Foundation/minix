@@ -1,0 +1,3 @@
+MAN?=
+
+.include "../Makefile.inc"

@@ -19,59 +19,60 @@ SUBDIR+=	../external/gpl3/gcc/lib/libgcc .WAIT
 . endif
 .endif
 
+.if defined(__MINIX)
 #LSC MINIX libc depends on
-# - libminlib because of minix/malloc-debug.c
+# - libminlib because of minix/lib/libc/malloc-debug.c
 # - libmthread because of sys/lib/libunwind
-SUBDIR+=	libminlib
+SUBDIR+=	../minix/lib/libminlib
 SUBDIR+=	.WAIT
 
-SUBDIR+=	libsys
-SUBDIR+=	libmthread
+SUBDIR+=	../minix/lib/libsys
+SUBDIR+=	../minix/lib/libmthread
 SUBDIR+=	.WAIT
-
+.endif # defined(__MINIX)
 SUBDIR+=	libc
 SUBDIR+=	.WAIT
 
 .if defined(__MINIX)
-SUBDIR+=	libasyn \
-		libaudiodriver \
-		libbdev \
-		libblockdriver \
-		libchardriver \
-		libcompat_minix \
-		libddekit \
-		libdevman \
-		libexec \
-		libfetch \
-		libinputdriver \
-		libminc \
-		libminixfs \
-		libnetdriver \
-		libsffs \
-		libtimers \
-		libusb \
-		libvtreefs
+SUBDIR+=	../minix/lib/libasyn \
+		../minix/lib/libaudiodriver \
+		../minix/lib/libbdev \
+		../minix/lib/libblockdriver \
+		../minix/lib/libchardriver \
+		../minix/lib/libcompat_minix \
+		../minix/lib/libddekit \
+		../minix/lib/libdevman \
+		../minix/lib/libexec \
+		../minix/lib/libfetch \
+		../minix/lib/libinputdriver \
+		../minix/lib/libminc \
+		../minix/lib/libminixfs \
+		../minix/lib/libnetdriver \
+		../minix/lib/libsffs \
+		../minix/lib/libtimers \
+		../minix/lib/libusb \
+		../minix/lib/libvtreefs
 
 .if (${HAVE_LIBGCC} == "no")
-SUBDIR+=	libgcc_s_empty
+SUBDIR+=	../minix/lib/libgcc_s_empty
 .endif
 
 .if (${MKLWIP} == "yes")
-SUBDIR+=	liblwip \
-		libnetsock
+SUBDIR+=	../minix/lib/liblwip \
+		../minix/lib/libnetsock
 .endif
 
 .if (${MACHINE_ARCH} == "i386")
-SUBDIR+=	libhgfs \
-		libvassert \
-		libvboxfs \
-		libvirtio
+SUBDIR+=	../minix/lib/libhgfs \
+		../minix/lib/libvassert \
+		../minix/lib/libvboxfs \
+		../minix/lib/libvirtio
 .endif
 
 .if (${MACHINE_ARCH} == "earm")
-SUBDIR+=	libclkconf \
-		libgpio \
-		libi2cdriver
+SUBDIR+=	../minix/lib/libclkconf \
+		../minix/lib/libgpio \
+		../minix/lib/libi2cdriver
 .endif
 
 .endif # defined(__MINIX)

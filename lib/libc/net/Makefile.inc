@@ -3,7 +3,7 @@
 
 # net sources
 .if defined(__MINIX)
-.PATH: ${.CURDIR}/net/minix
+.PATH: ${NETBSDSRCDIR}/minix/lib/libc/net
 
 CPPFLAGS.getpeereid.c+= -D_MINIX_SYSTEM=1
 CPPFLAGS.getsockopt.c+= -D_MINIX_SYSTEM=1

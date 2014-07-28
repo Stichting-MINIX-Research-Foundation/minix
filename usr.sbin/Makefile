@@ -32,15 +32,11 @@ SUBDIR= \
 	\
 	zic
 
-.if defined(__MINIX)
-# LSC MINIX Specific
-SUBDIR+= mkfs.mfs \
-	mkproto
-.else
+.if !defined(__MINIX)
 .if ${MKMAKEMANDB} != "no"
 SUBDIR+= makemandb
 .endif
-.endif # defined(__MINIX)
+.endif # !defined(__MINIX)
 
 .if (${MKYP} != "no")
 SUBDIR+= rpc.yppasswdd ypbind yppoll ypserv ypset

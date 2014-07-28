@@ -1,0 +1,2 @@
+
+.include <bsd.subdir.mk>

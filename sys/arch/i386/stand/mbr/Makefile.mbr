@@ -49,8 +49,8 @@ CPPFLAGS+= -DLOADADDR=${LOADADDR}
 AFLAGS.mbr.S+=	-Wa,--divide
 
 BUILDSYMLINKS+= \
-	${NETBSDSRCDIR}/include/arch/i386/include/stackframe.h machine/stackframe.h \
-	${NETBSDSRCDIR}/include/arch/i386/include/fpu.h machine/fpu.h
+	${NETBSDSRCDIR}/minix/include/arch/i386/include/stackframe.h machine/stackframe.h \
+	${NETBSDSRCDIR}/minix/include/arch/i386/include/fpu.h machine/fpu.h
 
 DPSRCS+= machine/stackframe.h  machine/fpu.h
 .endif # defined(__MINIX)

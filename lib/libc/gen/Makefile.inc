@@ -3,7 +3,7 @@
 
 # gen sources
 .if defined(__MINIX)
-.PATH: ${.CURDIR}/gen/minix
+.PATH: ${NETBSDSRCDIR}/minix/lib/libc/gen
 .endif # defined(__MINIX)
 .PATH: ${ARCHDIR}/gen ${.CURDIR}/gen
 

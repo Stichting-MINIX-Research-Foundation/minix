@@ -1,5 +1,20 @@
-#	$NetBSD: Makefile,v 1.18 2012/06/14 04:14:36 riz Exp $
 
-SUBDIR+= llvm
+SUBDIR+=	include .WAIT
+SUBDIR+=	benchmarks
+SUBDIR+=	bin
+SUBDIR+=	commands
+SUBDIR+=	drivers
+SUBDIR+=	fs
+SUBDIR+=	kernel
+SUBDIR+=	lib
+SUBDIR+=	llvm
+SUBDIR+=	man
+SUBDIR+=	net
+SUBDIR+=	sbin
+SUBDIR+=	servers
+SUBDIR+=	share
+SUBDIR+=	tests
+SUBDIR+=	usr.bin
+SUBDIR+=	usr.sbin
 
 .include <bsd.subdir.mk>

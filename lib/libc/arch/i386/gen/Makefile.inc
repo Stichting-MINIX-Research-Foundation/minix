@@ -9,7 +9,7 @@ SRCS+=	alloca.S byte_swap_2.S byte_swap_4.S fabs.S \
 SRCS+=	setjmp.S _setjmp.S sigsetjmp.S
 
 .if defined(__MINIX)
-# Already defined in sys-minix
+# Already defined in minix/lib/libc/arch/i386/sys
 .else
 SRCS+=	resumecontext.S swapcontext.S
 .endif

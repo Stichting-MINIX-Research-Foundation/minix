@@ -111,7 +111,7 @@ SUBDIR+= pkgconfig
 .include "${.CURDIR}/thread-stub/Makefile.inc"
 .include "${.CURDIR}/time/Makefile.inc"
 .if defined(__MINIX)
-.include "${.CURDIR}/sys-minix/Makefile.inc"
+.include "${NETBSDSRCDIR}/minix/lib/libc/sys/Makefile.inc"
 .else
 .include "${.CURDIR}/tls/Makefile.inc"
 .endif

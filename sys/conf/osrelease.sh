@@ -35,9 +35,9 @@
 path="$0"
 [ "${path#/*}" = "$path" ] && path="./$path"
 
-release=`grep "define OS_RELEASE" ${path%/*}/../../include/minix/config.h | awk '{ print $3} ' | tr -d '"'  | awk -F. ' { print $1 }'`
-major=`grep "define OS_RELEASE" ${path%/*}/../../include/minix/config.h | awk '{ print $3 }' | tr -d '"'  | awk -F. ' { print $2 }'`
-minor=`grep "define OS_RELEASE" ${path%/*}/../../include/minix/config.h | awk '{ print $3 }' | tr -d '"'  | awk -F. ' { print $3 }'`
+release=`grep "define OS_RELEASE" ${path%/*}/../../minix/include/minix/config.h | awk '{ print $3} ' | tr -d '"'  | awk -F. ' { print $1 }'`
+major=`grep "define OS_RELEASE" ${path%/*}/../../minix/include/minix/config.h | awk '{ print $3 }' | tr -d '"'  | awk -F. ' { print $2 }'`
+minor=`grep "define OS_RELEASE" ${path%/*}/../../minix/include/minix/config.h | awk '{ print $3 }' | tr -d '"'  | awk -F. ' { print $3 }'`
 
 
 case "$option" in
