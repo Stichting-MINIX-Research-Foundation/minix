@@ -149,9 +149,9 @@ static int fbd_open(devminor_t UNUSED(minor), int access)
 	/* We simply forward this request to the real driver. */
 	memset(&m, 0, sizeof(m));
 	m.m_type = BDEV_OPEN;
-	m.BDEV_MINOR = driver_minor;
-	m.BDEV_ACCESS = access;
-	m.BDEV_ID = 0;
+	m.m_lbdev_lblockdriver_msg.minor = driver_minor;
+	m.m_lbdev_lblockdriver_msg.access = access;
+	m.m_lbdev_lblockdriver_msg.id = 0;
 
 	if ((r = ipc_sendrec(driver_endpt, &m)) != OK)
 		panic("ipc_sendrec to driver failed (%d)\n", r);
@@ -174,8 +174,8 @@ static int fbd_close(devminor_t UNUSED(minor))
 	/* We simply forward this request to the real driver. */
 	memset(&m, 0, sizeof(m));
 	m.m_type = BDEV_CLOSE;
-	m.BDEV_MINOR = driver_minor;
-	m.BDEV_ID = 0;
+	m.m_lbdev_lblockdriver_msg.minor = driver_minor;
+	m.m_lbdev_lblockdriver_msg.id = 0;
 
 	if ((r = ipc_sendrec(driver_endpt, &m)) != OK)
 		panic("ipc_sendrec to driver failed (%d)\n", r);
@@ -212,11 +212,11 @@ static int fbd_ioctl(devminor_t UNUSED(minor), unsigned long request,
 
 	memset(&m, 0, sizeof(m));
 	m.m_type = BDEV_IOCTL;
-	m.BDEV_MINOR = driver_minor;
-	m.BDEV_REQUEST = request;
-	m.BDEV_GRANT = gid;
-	m.BDEV_USER = NONE;
-	m.BDEV_ID = 0;
+	m.m_lbdev_lblockdriver_msg.minor = driver_minor;
+	m.m_lbdev_lblockdriver_msg.request = request;
+	m.m_lbdev_lblockdriver_msg.grant = gid;
+	m.m_lbdev_lblockdriver_msg.user = NONE;
+	m.m_lbdev_lblockdriver_msg.id = 0;
 
 	if ((r = ipc_sendrec(driver_endpt, &m)) != OK)
 		panic("ipc_sendrec to driver failed (%d)\n", r);
@@ -253,12 +253,12 @@ static ssize_t fbd_transfer_direct(int do_write, u64_t position,
 	assert(grant != GRANT_INVALID);
 
 	m.m_type = do_write ? BDEV_SCATTER : BDEV_GATHER;
-	m.BDEV_MINOR = driver_minor;
-	m.BDEV_COUNT = count;
-	m.BDEV_GRANT = grant;
-	m.BDEV_FLAGS = flags;
-	m.BDEV_ID = 0;
-	m.BDEV_POS = position;
+	m.m_lbdev_lblockdriver_msg.minor = driver_minor;
+	m.m_lbdev_lblockdriver_msg.count = count;
+	m.m_lbdev_lblockdriver_msg.grant = grant;
+	m.m_lbdev_lblockdriver_msg.flags = flags;
+	m.m_lbdev_lblockdriver_msg.id = 0;
+	m.m_lbdev_lblockdriver_msg.pos = position;
 
 	if ((r = ipc_sendrec(driver_endpt, &m)) != OK)
 		panic("ipc_sendrec to driver failed (%d)\n", r);
@@ -345,12 +345,12 @@ static ssize_t fbd_transfer_copy(int do_write, u64_t position,
 	assert(grant != GRANT_INVALID);
 
 	m.m_type = do_write ? BDEV_SCATTER : BDEV_GATHER;
-	m.BDEV_MINOR = driver_minor;
-	m.BDEV_COUNT = count;
-	m.BDEV_GRANT = grant;
-	m.BDEV_FLAGS = flags;
-	m.BDEV_ID = 0;
-	m.BDEV_POS = position;
+	m.m_lbdev_lblockdriver_msg.minor = driver_minor;
+	m.m_lbdev_lblockdriver_msg.count = count;
+	m.m_lbdev_lblockdriver_msg.grant = grant;
+	m.m_lbdev_lblockdriver_msg.flags = flags;
+	m.m_lbdev_lblockdriver_msg.id = 0;
+	m.m_lbdev_lblockdriver_msg.pos = position;
 
 	if ((r = ipc_sendrec(driver_endpt, &m)) != OK)
 		panic("ipc_sendrec to driver failed (%d)\n", r);

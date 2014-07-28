@@ -92,9 +92,9 @@ do_read(endpoint_t driver_endpt, uint8_t *buf, size_t bufsize)
 	/* Open Device - required for drivers using libblockdriver */
 	memset(&m, '\0', sizeof(message));
 	m.m_type = BDEV_OPEN;
-	m.BDEV_ACCESS = BDEV_R_BIT;
-	m.BDEV_ID = 0;
-	m.BDEV_MINOR = 0;
+	m.m_lbdev_lblockdriver_msg.access = BDEV_R_BIT;
+	m.m_lbdev_lblockdriver_msg.id = 0;
+	m.m_lbdev_lblockdriver_msg.minor = 0;
 
 	r = ipc_sendrec(driver_endpt, &m);
 	if (r != OK) {
@@ -108,12 +108,12 @@ do_read(endpoint_t driver_endpt, uint8_t *buf, size_t bufsize)
 	/* Perform the read */
 	memset(&m, '\0', sizeof(message));
 	m.m_type = BDEV_READ;
-	m.BDEV_MINOR = 0;
-	m.BDEV_COUNT = bufsize;
-	m.BDEV_GRANT = grant_nr;
-	m.BDEV_FLAGS = BDEV_NOPAGE; /* the EEPROMs used for EDID are pageless */
-	m.BDEV_ID = 0;
-	m.BDEV_POS = 0;
+	m.m_lbdev_lblockdriver_msg.minor = 0;
+	m.m_lbdev_lblockdriver_msg.count = bufsize;
+	m.m_lbdev_lblockdriver_msg.grant = grant_nr;
+	m.m_lbdev_lblockdriver_msg.flags = BDEV_NOPAGE; /* the EEPROMs used for EDID are pageless */
+	m.m_lbdev_lblockdriver_msg.id = 0;
+	m.m_lbdev_lblockdriver_msg.pos = 0;
 
 	r = ipc_sendrec(driver_endpt, &m);
 	cpf_revoke(grant_nr);
@@ -122,8 +122,8 @@ do_read(endpoint_t driver_endpt, uint8_t *buf, size_t bufsize)
 		/* Clean-up: try to close the device */
 		memset(&m, '\0', sizeof(message));
 		m.m_type = BDEV_CLOSE;
-		m.BDEV_MINOR = 0;
-		m.BDEV_ID = 0;
+		m.m_lbdev_lblockdriver_msg.minor = 0;
+		m.m_lbdev_lblockdriver_msg.id = 0;
 		ipc_sendrec(driver_endpt, &m);
 		return r;
 	}
@@ -131,8 +131,8 @@ do_read(endpoint_t driver_endpt, uint8_t *buf, size_t bufsize)
 	/* Close the device */
 	memset(&m, '\0', sizeof(message));
 	m.m_type = BDEV_CLOSE;
-	m.BDEV_MINOR = 0;
-	m.BDEV_ID = 0;
+	m.m_lbdev_lblockdriver_msg.minor = 0;
+	m.m_lbdev_lblockdriver_msg.id = 0;
 	r = ipc_sendrec(driver_endpt, &m);
 	if (r != OK) {
 		log_debug(&log, "ipc_sendrec(BDEV_CLOSE) failed (r=%d)\n", r);

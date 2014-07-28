@@ -56,11 +56,11 @@ int bdev_open(dev_t dev, int access)
 
   memset(&dev_mess, 0, sizeof(dev_mess));
   dev_mess.m_type = BDEV_OPEN;
-  dev_mess.BDEV_MINOR = minor_dev;
-  dev_mess.BDEV_ACCESS = 0;
-  if (access & R_BIT) dev_mess.BDEV_ACCESS |= BDEV_R_BIT;
-  if (access & W_BIT) dev_mess.BDEV_ACCESS |= BDEV_W_BIT;
-  dev_mess.BDEV_ID = 0;
+  dev_mess.m_lbdev_lblockdriver_msg.minor = minor_dev;
+  dev_mess.m_lbdev_lblockdriver_msg.access = 0;
+  if (access & R_BIT) dev_mess.m_lbdev_lblockdriver_msg.access |= BDEV_R_BIT;
+  if (access & W_BIT) dev_mess.m_lbdev_lblockdriver_msg.access |= BDEV_W_BIT;
+  dev_mess.m_lbdev_lblockdriver_msg.id = 0;
 
   /* Call the task. */
   r = block_io(dmap[major_dev].dmap_driver, &dev_mess);
@@ -89,8 +89,8 @@ int bdev_close(dev_t dev)
 
   memset(&dev_mess, 0, sizeof(dev_mess));
   dev_mess.m_type = BDEV_CLOSE;
-  dev_mess.BDEV_MINOR = minor_dev;
-  dev_mess.BDEV_ID = 0;
+  dev_mess.m_lbdev_lblockdriver_msg.minor = minor_dev;
+  dev_mess.m_lbdev_lblockdriver_msg.id = 0;
 
   r = block_io(dmap[major_dev].dmap_driver, &dev_mess);
   if (r != OK)
@@ -131,11 +131,11 @@ static int bdev_ioctl(dev_t dev, endpoint_t proc_e, unsigned long req,
   memset(&dev_mess, 0, sizeof(dev_mess));
 
   dev_mess.m_type = BDEV_IOCTL;
-  dev_mess.BDEV_MINOR = minor_dev;
-  dev_mess.BDEV_REQUEST = req;
-  dev_mess.BDEV_GRANT = gid;
-  dev_mess.BDEV_USER = proc_e;
-  dev_mess.BDEV_ID = 0;
+  dev_mess.m_lbdev_lblockdriver_msg.minor = minor_dev;
+  dev_mess.m_lbdev_lblockdriver_msg.request = req;
+  dev_mess.m_lbdev_lblockdriver_msg.grant = gid;
+  dev_mess.m_lbdev_lblockdriver_msg.user = proc_e;
+  dev_mess.m_lbdev_lblockdriver_msg.id = 0;
 
   /* Call the task. */
   r = block_io(dp->dmap_driver, &dev_mess);

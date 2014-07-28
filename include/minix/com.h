@@ -926,17 +926,6 @@
 /* Message types for block device responses. */
 #define BDEV_REPLY	(BDEV_RS_BASE + 0)	/* general reply code */
 
-/* Field names for block device messages. */
-#define BDEV_MINOR	m10_i1	/* minor device number */
-#define BDEV_ACCESS	m10_i2	/* access bits for open requests */
-#define BDEV_COUNT	m10_i2	/* number of bytes or elements in transfer */
-#define BDEV_GRANT	m10_i3	/* grant ID of buffer or vector */
-#define BDEV_FLAGS	m10_i4	/* transfer flags */
-#define BDEV_USER	m10_i4	/* user endpoint requesting I/O control */
-#define BDEV_ID		m10_l1	/* opaque request ID */
-#define BDEV_REQUEST	m10_l2	/* I/O control request */
-#define BDEV_POS	m10_ull1 /* transfer position */
-
 /* Bits in 'BDEV_ACCESS' field of block device open requests. */
 #  define BDEV_R_BIT		0x01	/* open with read access */
 #  define BDEV_W_BIT		0x02	/* open with write access */

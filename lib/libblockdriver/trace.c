@@ -174,7 +174,7 @@ void trace_start(thread_id_t id, message *m_ptr)
   size_t size;
   int flags;
 
-  if (!trace_enabled || trace_dev != m_ptr->BDEV_MINOR) return;
+  if (!trace_enabled || trace_dev != m_ptr->m_lbdev_lblockdriver_msg.minor) return;
 
   assert(id >= 0 && id < MAX_THREADS + 1);
 
@@ -196,7 +196,7 @@ void trace_start(thread_id_t id, message *m_ptr)
   case BDEV_OPEN:
   case BDEV_CLOSE:
 	pos = 0;
-	size = m_ptr->BDEV_ACCESS;
+	size = m_ptr->m_lbdev_lblockdriver_msg.access;
 	flags = 0;
 
 	break;
@@ -205,15 +205,15 @@ void trace_start(thread_id_t id, message *m_ptr)
   case BDEV_WRITE:
   case BDEV_GATHER:
   case BDEV_SCATTER:
-	pos = m_ptr->BDEV_POS;
-	size = m_ptr->BDEV_COUNT;
-	flags = m_ptr->BDEV_FLAGS;
+	pos = m_ptr->m_lbdev_lblockdriver_msg.pos;
+	size = m_ptr->m_lbdev_lblockdriver_msg.count;
+	flags = m_ptr->m_lbdev_lblockdriver_msg.flags;
 
 	break;
 
   case BDEV_IOCTL:
 	pos = 0;
-	size = m_ptr->BDEV_REQUEST;
+	size = m_ptr->m_lbdev_lblockdriver_msg.request;
 	flags = 0;
 
 	/* Do not log trace control requests. */

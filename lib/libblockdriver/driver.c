@@ -162,7 +162,7 @@ void blockdriver_reply(message *m_ptr, int ipc_status, int reply)
 
   m_reply.m_type = BDEV_REPLY;
   m_reply.m_lblockdriver_lbdev_reply.status = reply;
-  m_reply.m_lblockdriver_lbdev_reply.id = m_ptr->BDEV_ID;
+  m_reply.m_lblockdriver_lbdev_reply.id = m_ptr->m_lbdev_lblockdriver_msg.id;
 
   send_reply(m_ptr->m_source, &m_reply, ipc_status);
 }
@@ -174,7 +174,7 @@ static int do_open(struct blockdriver *bdp, message *mp)
 {
 /* Open a minor device. */
 
-  return (*bdp->bdr_open)(mp->BDEV_MINOR, mp->BDEV_ACCESS);
+  return (*bdp->bdr_open)(mp->m_lbdev_lblockdriver_msg.minor, mp->m_lbdev_lblockdriver_msg.access);
 }
 
 /*===========================================================================*
@@ -184,7 +184,7 @@ static int do_close(struct blockdriver *bdp, message *mp)
 {
 /* Close a minor device. */
 
-  return (*bdp->bdr_close)(mp->BDEV_MINOR);
+  return (*bdp->bdr_close)(mp->m_lbdev_lblockdriver_msg.minor);
 }
 
 /*===========================================================================*
@@ -199,18 +199,18 @@ static int do_rdwt(struct blockdriver *bdp, message *mp)
   ssize_t r;
 
   /* Disk address?  Address and length of the user buffer? */
-  if (mp->BDEV_COUNT < 0) return EINVAL;
+  if (mp->m_lbdev_lblockdriver_msg.count < 0) return EINVAL;
 
   /* Create a one element scatter/gather vector for the buffer. */
-  iovec1.iov_addr = mp->BDEV_GRANT;
-  iovec1.iov_size = mp->BDEV_COUNT;
+  iovec1.iov_addr = mp->m_lbdev_lblockdriver_msg.grant;
+  iovec1.iov_size = mp->m_lbdev_lblockdriver_msg.count;
 
   /* Transfer bytes from/to the device. */
   do_write = (mp->m_type == BDEV_WRITE);
-  position = mp->BDEV_POS;
+  position = mp->m_lbdev_lblockdriver_msg.pos;
 
-  r = (*bdp->bdr_transfer)(mp->BDEV_MINOR, do_write, position, mp->m_source,
-	&iovec1, 1, mp->BDEV_FLAGS);
+  r = (*bdp->bdr_transfer)(mp->m_lbdev_lblockdriver_msg.minor, do_write, position, mp->m_source,
+	&iovec1, 1, mp->m_lbdev_lblockdriver_msg.flags);
 
   /* Return the number of bytes transferred or an error code. */
   return r;
@@ -229,10 +229,10 @@ static int do_vrdwt(struct blockdriver *bdp, message *mp, thread_id_t id)
   ssize_t r, size;
 
   /* Copy the vector from the caller to kernel space. */
-  nr_req = mp->BDEV_COUNT;	/* Length of I/O vector */
+  nr_req = mp->m_lbdev_lblockdriver_msg.count;	/* Length of I/O vector */
   if (nr_req > NR_IOREQS) nr_req = NR_IOREQS;
 
-  if (OK != sys_safecopyfrom(mp->m_source, (vir_bytes) mp->BDEV_GRANT,
+  if (OK != sys_safecopyfrom(mp->m_source, (vir_bytes) mp->m_lbdev_lblockdriver_msg.grant,
 		0, (vir_bytes) iovec, nr_req * sizeof(iovec[0]))) {
 	printf("blockdriver: bad I/O vector by: %d\n", mp->m_source);
 	return EINVAL;
@@ -248,10 +248,10 @@ static int do_vrdwt(struct blockdriver *bdp, message *mp, thread_id_t id)
 
   /* Transfer bytes from/to the device. */
   do_write = (mp->m_type == BDEV_SCATTER);
-  position = mp->BDEV_POS;
+  position = mp->m_lbdev_lblockdriver_msg.pos;
 
-  r = (*bdp->bdr_transfer)(mp->BDEV_MINOR, do_write, position, mp->m_source,
-	iovec, nr_req, mp->BDEV_FLAGS);
+  r = (*bdp->bdr_transfer)(mp->m_lbdev_lblockdriver_msg.minor, do_write, position, mp->m_source,
+	iovec, nr_req, mp->m_lbdev_lblockdriver_msg.flags);
 
   /* Return the number of bytes transferred or an error code. */
   return r;
@@ -322,10 +322,10 @@ static int do_ioctl(struct blockdriver *bdp, message *mp)
   endpoint_t user_endpt;
   int r;
 
-  minor = mp->BDEV_MINOR;
-  request = mp->BDEV_REQUEST;
-  grant = mp->BDEV_GRANT;
-  user_endpt = mp->BDEV_USER;
+  minor = mp->m_lbdev_lblockdriver_msg.minor;
+  request = mp->m_lbdev_lblockdriver_msg.request;
+  grant = mp->m_lbdev_lblockdriver_msg.grant;
+  user_endpt = mp->m_lbdev_lblockdriver_msg.user;
 
   switch (request) {
   case BIOCTRACEBUF:
@@ -422,7 +422,7 @@ void blockdriver_process_on_thread(struct blockdriver *bdp, message *m_ptr,
    * requests on devices that have not previously been opened, signaling the
    * caller that something went wrong.
    */
-  if (IS_BDEV_RQ(m_ptr->m_type) && !is_open_dev(m_ptr->BDEV_MINOR)) {
+  if (IS_BDEV_RQ(m_ptr->m_type) && !is_open_dev(m_ptr->m_lbdev_lblockdriver_msg.minor)) {
 	/* Reply ERESTART to spurious requests for unopened devices. */
 	if (m_ptr->m_type != BDEV_OPEN) {
 		blockdriver_reply(m_ptr, ipc_status, ERESTART);
@@ -431,7 +431,7 @@ void blockdriver_process_on_thread(struct blockdriver *bdp, message *m_ptr,
 	}
 
 	/* Mark the device as opened otherwise. */
-	set_open_dev(m_ptr->BDEV_MINOR);
+	set_open_dev(m_ptr->m_lbdev_lblockdriver_msg.minor);
   }
 
   trace_start(id, m_ptr);

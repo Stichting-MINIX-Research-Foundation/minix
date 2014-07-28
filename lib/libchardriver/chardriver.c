@@ -443,7 +443,7 @@ static void do_block_open(message *m_ptr, int ipc_status)
 
   m_reply.m_type = BDEV_REPLY;
   m_reply.m_lblockdriver_lbdev_reply.status = ENXIO;
-  m_reply.m_lblockdriver_lbdev_reply.id = m_ptr->BDEV_ID;
+  m_reply.m_lblockdriver_lbdev_reply.id = m_ptr->m_lbdev_lblockdriver_msg.id;
 
   send_reply(m_ptr->m_source, &m_reply, ipc_status);
 }

@@ -131,7 +131,7 @@ int bdev_senda(dev_t dev, const message *m_orig, bdev_id_t id)
 	return EDEADSRCDST;
 
   m = *m_orig;
-  m.BDEV_ID = id;
+  m.m_lbdev_lblockdriver_msg.id = id;
 
   r = asynsend(endpt, &m);
 
@@ -156,7 +156,7 @@ int bdev_sendrec(dev_t dev, const message *m_orig)
 
   /* Send the request and block until we receive a reply. */
   m = *m_orig;
-  m.BDEV_ID = NO_ID;
+  m.m_lbdev_lblockdriver_msg.id = NO_ID;
 
   r = ipc_sendrec(endpt, &m);
 

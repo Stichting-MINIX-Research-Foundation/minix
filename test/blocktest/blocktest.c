@@ -225,9 +225,9 @@ static void reopen_device(dev_t minor)
 
 	memset(&m, 0, sizeof(m));
 	m.m_type = BDEV_OPEN;
-	m.BDEV_MINOR = minor;
-	m.BDEV_ACCESS = (may_write) ? (BDEV_R_BIT | BDEV_W_BIT) : BDEV_R_BIT;
-	m.BDEV_ID = 0;
+	m.m_lbdev_lblockdriver_msg.minor = minor;
+	m.m_lbdev_lblockdriver_msg.access = (may_write) ? (BDEV_R_BIT | BDEV_W_BIT) : BDEV_R_BIT;
+	m.m_lbdev_lblockdriver_msg.id = 0;
 
 	(void) ipc_sendrec(driver_endpt, &m);
 }
@@ -279,7 +279,7 @@ static int sendrec_driver(message *m_ptr, ssize_t exp, result_t *res)
 	if (m_ptr->m_type != BDEV_REPLY)
 		return set_result(res, RESULT_BADTYPE, m_ptr->m_type);
 
-	if (m_ptr->m_lblockdriver_lbdev_reply.id != m_orig.BDEV_ID)
+	if (m_ptr->m_lblockdriver_lbdev_reply.id != m_orig.m_lbdev_lblockdriver_msg.id)
 		return set_result(res, RESULT_BADID,
 				m_ptr->m_lblockdriver_lbdev_reply.id);
 
@@ -310,11 +310,11 @@ static void raw_xfer(dev_t minor, u64_t pos, iovec_s_t *iovec, int nr_req,
 
 	memset(&m, 0, sizeof(m));
 	m.m_type = write ? BDEV_SCATTER : BDEV_GATHER;
-	m.BDEV_MINOR = minor;
-	m.BDEV_POS = pos;
-	m.BDEV_COUNT = nr_req;
-	m.BDEV_GRANT = grant;
-	m.BDEV_ID = lrand48();
+	m.m_lbdev_lblockdriver_msg.minor = minor;
+	m.m_lbdev_lblockdriver_msg.pos = pos;
+	m.m_lbdev_lblockdriver_msg.count = nr_req;
+	m.m_lbdev_lblockdriver_msg.grant = grant;
+	m.m_lbdev_lblockdriver_msg.id = lrand48();
 
 	r = sendrec_driver(&m, exp, res);
 
@@ -428,11 +428,11 @@ static void bad_read1(void)
 	 */
 	memset(&mt, 0, sizeof(mt));
 	mt.m_type = BDEV_GATHER;
-	mt.BDEV_MINOR = driver_minor;
-	mt.BDEV_POS = 0LL;
-	mt.BDEV_COUNT = 1;
-	mt.BDEV_GRANT = grant;
-	mt.BDEV_ID = lrand48();
+	mt.m_lbdev_lblockdriver_msg.minor = driver_minor;
+	mt.m_lbdev_lblockdriver_msg.pos = 0LL;
+	mt.m_lbdev_lblockdriver_msg.count = 1;
+	mt.m_lbdev_lblockdriver_msg.grant = grant;
+	mt.m_lbdev_lblockdriver_msg.id = lrand48();
 
 	memset(&iovt, 0, sizeof(iovt));
 	iovt.iov_grant = grant2;
@@ -456,7 +456,7 @@ static void bad_read1(void)
 	m = mt;
 	iov = iovt;
 
-	m.BDEV_COUNT = 0;
+	m.m_lbdev_lblockdriver_msg.count = 0;
 
 	sendrec_driver(&m, EINVAL, &res);
 
@@ -465,7 +465,7 @@ static void bad_read1(void)
 	/* Test bad iovec grant. */
 	m = mt;
 
-	m.BDEV_GRANT = GRANT_INVALID;
+	m.m_lbdev_lblockdriver_msg.grant = GRANT_INVALID;
 
 	sendrec_driver(&m, EINVAL, &res);
 
@@ -481,7 +481,7 @@ static void bad_read1(void)
 
 	cpf_revoke(grant3);
 
-	m.BDEV_GRANT = grant3;
+	m.m_lbdev_lblockdriver_msg.grant = grant3;
 
 	sendrec_driver(&m, EINVAL, &res);
 
@@ -1108,9 +1108,9 @@ static void open_device(dev_t minor)
 
 	memset(&m, 0, sizeof(m));
 	m.m_type = BDEV_OPEN;
-	m.BDEV_MINOR = minor;
-	m.BDEV_ACCESS = may_write ? (BDEV_R_BIT | BDEV_W_BIT) : BDEV_R_BIT;
-	m.BDEV_ID = lrand48();
+	m.m_lbdev_lblockdriver_msg.minor = minor;
+	m.m_lbdev_lblockdriver_msg.access = may_write ? (BDEV_R_BIT | BDEV_W_BIT) : BDEV_R_BIT;
+	m.m_lbdev_lblockdriver_msg.id = lrand48();
 
 	sendrec_driver(&m, OK, &res);
 
@@ -1135,8 +1135,8 @@ static void close_device(dev_t minor)
 
 	memset(&m, 0, sizeof(m));
 	m.m_type = BDEV_CLOSE;
-	m.BDEV_MINOR = minor;
-	m.BDEV_ID = lrand48();
+	m.m_lbdev_lblockdriver_msg.minor = minor;
+	m.m_lbdev_lblockdriver_msg.id = lrand48();
 
 	sendrec_driver(&m, OK, &res);
 
@@ -1173,11 +1173,11 @@ static int vir_ioctl(dev_t minor, int req, void *ptr, ssize_t exp,
 
 	memset(&m, 0, sizeof(m));
 	m.m_type = BDEV_IOCTL;
-	m.BDEV_MINOR = minor;
-	m.BDEV_REQUEST = req;
-	m.BDEV_GRANT = grant;
-	m.BDEV_USER = NONE;
-	m.BDEV_ID = lrand48();
+	m.m_lbdev_lblockdriver_msg.minor = minor;
+	m.m_lbdev_lblockdriver_msg.request = req;
+	m.m_lbdev_lblockdriver_msg.grant = grant;
+	m.m_lbdev_lblockdriver_msg.user = NONE;
+	m.m_lbdev_lblockdriver_msg.id = lrand48();
 
 	r = sendrec_driver(&m, exp, res);
 

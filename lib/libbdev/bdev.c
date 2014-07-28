@@ -68,8 +68,8 @@ static int bdev_opcl(int req, dev_t dev, int access)
   do {
 	memset(&m, 0, sizeof(m));
 	m.m_type = req;
-	m.BDEV_MINOR = minor(dev);
-	m.BDEV_ACCESS = access;
+	m.m_lbdev_lblockdriver_msg.minor = minor(dev);
+	m.m_lbdev_lblockdriver_msg.access = access;
 
 	r = bdev_sendrec(dev, &m);
   } while (bdev_retry(&driver_tries, NULL, &r));
@@ -134,11 +134,11 @@ static int bdev_rdwt_setup(int req, dev_t dev, u64_t pos, char *buf,
 
   memset(m, 0, sizeof(*m));
   m->m_type = req;
-  m->BDEV_MINOR = minor(dev);
-  m->BDEV_POS = pos;
-  m->BDEV_COUNT = count;
-  m->BDEV_GRANT = grant;
-  m->BDEV_FLAGS = flags;
+  m->m_lbdev_lblockdriver_msg.minor = minor(dev);
+  m->m_lbdev_lblockdriver_msg.pos = pos;
+  m->m_lbdev_lblockdriver_msg.count = count;
+  m->m_lbdev_lblockdriver_msg.grant = grant;
+  m->m_lbdev_lblockdriver_msg.flags = flags;
 
   return OK;
 }
@@ -148,7 +148,7 @@ static void bdev_rdwt_cleanup(const message *m)
 /* Clean up a single-buffer read/write request.
  */
 
-  cpf_revoke(m->BDEV_GRANT);
+  cpf_revoke(m->m_lbdev_lblockdriver_msg.grant);
 }
 
 static ssize_t bdev_rdwt(int req, dev_t dev, u64_t pos, char *buf,
@@ -225,11 +225,11 @@ static int bdev_vrdwt_setup(int req, dev_t dev, u64_t pos, iovec_t *vec,
 
   memset(m, 0, sizeof(*m));
   m->m_type = req;
-  m->BDEV_MINOR = minor(dev);
-  m->BDEV_POS = pos;
-  m->BDEV_COUNT = count;
-  m->BDEV_GRANT = grant;
-  m->BDEV_FLAGS = flags;
+  m->m_lbdev_lblockdriver_msg.minor = minor(dev);
+  m->m_lbdev_lblockdriver_msg.pos = pos;
+  m->m_lbdev_lblockdriver_msg.count = count;
+  m->m_lbdev_lblockdriver_msg.grant = grant;
+  m->m_lbdev_lblockdriver_msg.flags = flags;
 
   return OK;
 }
@@ -241,11 +241,11 @@ static void bdev_vrdwt_cleanup(const message *m, iovec_s_t *gvec)
   cp_grant_id_t grant;
   int i;
 
-  grant = m->BDEV_GRANT;
+  grant = m->m_lbdev_lblockdriver_msg.grant;
 
   cpf_revoke(grant);
 
-  for (i = m->BDEV_COUNT - 1; i >= 0; i--)
+  for (i = m->m_lbdev_lblockdriver_msg.count - 1; i >= 0; i--)
 	cpf_revoke(gvec[i].iov_grant);
 }
 
@@ -335,10 +335,10 @@ static int bdev_ioctl_setup(dev_t dev, int request, void *buf,
 
   memset(m, 0, sizeof(*m));
   m->m_type = BDEV_IOCTL;
-  m->BDEV_MINOR = minor(dev);
-  m->BDEV_REQUEST = request;
-  m->BDEV_GRANT = grant;
-  m->BDEV_USER = user_endpt;
+  m->m_lbdev_lblockdriver_msg.minor = minor(dev);
+  m->m_lbdev_lblockdriver_msg.request = request;
+  m->m_lbdev_lblockdriver_msg.grant = grant;
+  m->m_lbdev_lblockdriver_msg.user = user_endpt;
 
   return OK;
 }
@@ -348,7 +348,7 @@ static void bdev_ioctl_cleanup(const message *m)
 /* Clean up an I/O control request.
  */
 
-  cpf_revoke(m->BDEV_GRANT);
+  cpf_revoke(m->m_lbdev_lblockdriver_msg.grant);
 }
 
 int bdev_ioctl(dev_t dev, int request, void *buf, endpoint_t user_endpt)
@@ -603,9 +603,9 @@ int bdev_restart_asyn(bdev_call_t *call)
 	bdev_rdwt_cleanup(&call->msg);
 
 	r = bdev_rdwt_setup(type, call->dev,
-		call->msg.BDEV_POS,
-		(char *) call->vec[0].iov_addr, call->msg.BDEV_COUNT,
-		call->msg.BDEV_FLAGS, &call->msg);
+		call->msg.m_lbdev_lblockdriver_msg.pos,
+		(char *) call->vec[0].iov_addr, call->msg.m_lbdev_lblockdriver_msg.count,
+		call->msg.m_lbdev_lblockdriver_msg.flags, &call->msg);
 
 	break;
 
@@ -614,8 +614,8 @@ int bdev_restart_asyn(bdev_call_t *call)
 	bdev_vrdwt_cleanup(&call->msg, call->gvec);
 
 	r = bdev_vrdwt_setup(type, call->dev,
-		call->msg.BDEV_POS,
-		call->vec, call->msg.BDEV_COUNT, call->msg.BDEV_FLAGS,
+		call->msg.m_lbdev_lblockdriver_msg.pos,
+		call->vec, call->msg.m_lbdev_lblockdriver_msg.count, call->msg.m_lbdev_lblockdriver_msg.flags,
 		&call->msg, call->gvec);
 
 	break;
@@ -623,8 +623,8 @@ int bdev_restart_asyn(bdev_call_t *call)
   case BDEV_IOCTL:
 	bdev_ioctl_cleanup(&call->msg);
 
-	r = bdev_ioctl_setup(call->dev, call->msg.BDEV_REQUEST,
-		(char *) call->vec[0].iov_addr, call->msg.BDEV_USER,
+	r = bdev_ioctl_setup(call->dev, call->msg.m_lbdev_lblockdriver_msg.request,
+		(char *) call->vec[0].iov_addr, call->msg.m_lbdev_lblockdriver_msg.user,
 		&call->msg);
 
 	break;

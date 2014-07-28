@@ -298,7 +298,7 @@ static void master_handle_message(message *m_ptr, int ipc_status)
   }
 
   /* Query the device ID. Upon failure, send the error code to the caller. */
-  r = (*bdtab->bdr_device)(m_ptr->BDEV_MINOR, &id);
+  r = (*bdtab->bdr_device)(m_ptr->m_lbdev_lblockdriver_msg.minor, &id);
   if (r != OK) {
 	blockdriver_reply(m_ptr, ipc_status, r);
 

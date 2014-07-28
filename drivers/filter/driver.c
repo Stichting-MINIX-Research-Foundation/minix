@@ -30,9 +30,9 @@ static int driver_open(int which)
 
 	memset(&msg, 0, sizeof(msg));
 	msg.m_type = BDEV_OPEN;
-	msg.BDEV_MINOR = driver[which].minor;
-	msg.BDEV_ACCESS = BDEV_R_BIT | BDEV_W_BIT;
-	msg.BDEV_ID = 0;
+	msg.m_lbdev_lblockdriver_msg.minor = driver[which].minor;
+	msg.m_lbdev_lblockdriver_msg.access = BDEV_R_BIT | BDEV_W_BIT;
+	msg.m_lbdev_lblockdriver_msg.id = 0;
 	r = ipc_sendrec(driver[which].endpt, &msg);
 
 	if (r != OK) {
@@ -58,11 +58,11 @@ static int driver_open(int which)
 
 	memset(&msg, 0, sizeof(msg));
 	msg.m_type = BDEV_IOCTL;
-	msg.BDEV_MINOR = driver[which].minor;
-	msg.BDEV_REQUEST = DIOCGETP;
-	msg.BDEV_GRANT = gid;
-	msg.BDEV_USER = NONE;
-	msg.BDEV_ID = 0;
+	msg.m_lbdev_lblockdriver_msg.minor = driver[which].minor;
+	msg.m_lbdev_lblockdriver_msg.request = DIOCGETP;
+	msg.m_lbdev_lblockdriver_msg.grant = gid;
+	msg.m_lbdev_lblockdriver_msg.user = NONE;
+	msg.m_lbdev_lblockdriver_msg.id = 0;
 
 	r = ipc_sendrec(driver[which].endpt, &msg);
 
@@ -113,8 +113,8 @@ static int driver_close(int which)
 
 	memset(&msg, 0, sizeof(msg));
 	msg.m_type = BDEV_CLOSE;
-	msg.BDEV_MINOR = driver[which].minor;
-	msg.BDEV_ID = 0;
+	msg.m_lbdev_lblockdriver_msg.minor = driver[which].minor;
+	msg.m_lbdev_lblockdriver_msg.id = 0;
 	r = ipc_sendrec(driver[which].endpt, &msg);
 
 	if (r != OK) {
@@ -526,8 +526,8 @@ static int flt_senda(message *mess, int which)
 	asynmsg_t *amp;
 
 	/* Fill in the last bits of the message. */
-	mess->BDEV_MINOR = driver[which].minor;
-	mess->BDEV_ID = 0;
+	mess->m_lbdev_lblockdriver_msg.minor = driver[which].minor;
+	mess->m_lbdev_lblockdriver_msg.id = 0;
 
 	/* Send the message asynchronously. */
 	amp = &amsgtable[which];
@@ -774,8 +774,8 @@ static int paired_sendrec(message *m1, message *m2, int both)
 
 #if DEBUG2
 	printf("paired_sendrec(%d) - <%d,%llx,%d> - %x,%x\n",
-		both, m1->m_type, m1->BDEV_POS,
-		m1->BDEV_COUNT, m1->BDEV_GRANT, m2->BDEV_GRANT);
+		both, m1->m_type, m1->m_lbdev_lblockdriver_msg.pos,
+		m1->m_lbdev_lblockdriver_msg.count, m1->m_lbdev_lblockdriver_msg.grant, m2->m_lbdev_lblockdriver_msg.grant);
 #endif
 
 	if (both)
@@ -921,13 +921,13 @@ int read_write(u64_t pos, char *bufa, char *bufb, size_t *sizep, int request)
 
 	memset(&m1, 0, sizeof(m1));
 	m1.m_type = (request == FLT_WRITE) ? BDEV_SCATTER : BDEV_GATHER;
-	m1.BDEV_COUNT = count;
-	m1.BDEV_POS = pos;
+	m1.m_lbdev_lblockdriver_msg.count = count;
+	m1.m_lbdev_lblockdriver_msg.pos = pos;
 
 	m2 = m1;
 
-	m1.BDEV_GRANT = gids[0];
-	m2.BDEV_GRANT = gids[1];
+	m1.m_lbdev_lblockdriver_msg.grant = gids[0];
+	m2.m_lbdev_lblockdriver_msg.grant = gids[1];
 
 	r = paired_sendrec(&m1, &m2, both);
 

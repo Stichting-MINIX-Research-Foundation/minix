@@ -42,9 +42,9 @@ int bdev_minor_reopen(dev_t dev)
 	for (j = 0; j < open_dev[i].count; j++) {
 		memset(&m, 0, sizeof(m));
 		m.m_type = BDEV_OPEN;
-		m.BDEV_MINOR = minor(open_dev[i].dev);
-		m.BDEV_ACCESS = open_dev[i].access;
-		m.BDEV_ID = NO_ID;
+		m.m_lbdev_lblockdriver_msg.minor = minor(open_dev[i].dev);
+		m.m_lbdev_lblockdriver_msg.access = open_dev[i].access;
+		m.m_lbdev_lblockdriver_msg.id = NO_ID;
 
 		if ((r = ipc_sendrec(endpt, &m)) != OK) {
 			printf("bdev: IPC to driver (%d) failed (%d)\n",
