@@ -70,26 +70,11 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_4);
 
 typedef struct {
-	short m5s1, m5s2;
-	int m5i1, m5i2;
-	long m5l1, m5l2, m5l3;
-	uint8_t padding[32];
-} mess_5;
-_ASSERT_MSG_SIZE(mess_5);
-
-typedef struct {
 	int m7i1, m7i2, m7i3, m7i4, m7i5;
 	char *m7p1, *m7p2;
 	uint8_t padding[28];
 } mess_7;
 _ASSERT_MSG_SIZE(mess_7);
-
-typedef struct {
-	int m8i1, m8i2;
-	char *m8p1, *m8p2, *m8p3, *m8p4;
-	uint8_t padding[32];
-} mess_8;
-_ASSERT_MSG_SIZE(mess_8);
 
 typedef struct {
 	uint64_t m9ull1, m9ull2;
@@ -106,14 +91,6 @@ typedef struct {
 	uint8_t padding[20];
 } mess_10;
 _ASSERT_MSG_SIZE(mess_10);
-
-typedef struct {
-	int m11i1;
-	short m11s1, m11s2, m11s3, m11s4;
-	char *m11p1, *m11p2, *m11p3, *m11p4;
-	uint8_t padding[28];
-} mess_11;
-_ASSERT_MSG_SIZE(mess_11);
 
 typedef struct {
 	size_t size;
@@ -2048,12 +2025,9 @@ typedef struct {
 		mess_2			m_m2;
 		mess_3			m_m3;
 		mess_4			m_m4;
-		mess_5			m_m5;
 		mess_7			m_m7;
-		mess_8			m_m8;
 		mess_9			m_m9;
 		mess_10			m_m10;
-		mess_11			m_m11;
 		mess_mmap		m_mmap;
 		mess_notify		m_notify;
 		mess_sigcalls		m_sigcalls;
@@ -2341,14 +2315,6 @@ typedef int _ASSERT_message[/* CONSTCOND */sizeof(message) == 64 ? 1 : -1];
 #define m4_l4  m_m4.m4l4
 #define m4_l5  m_m4.m4l5
 
-#define m5_s1  m_m5.m5s1
-#define m5_s2  m_m5.m5s2
-#define m5_i1  m_m5.m5i1
-#define m5_i2  m_m5.m5i2
-#define m5_l1  m_m5.m5l1
-#define m5_l2  m_m5.m5l2
-#define m5_l3  m_m5.m5l3
-
 #define m7_i1  m_m7.m7i1
 #define m7_i2  m_m7.m7i2
 #define m7_i3  m_m7.m7i3
@@ -2356,13 +2322,6 @@ typedef int _ASSERT_message[/* CONSTCOND */sizeof(message) == 64 ? 1 : -1];
 #define m7_i5  m_m7.m7i5
 #define m7_p1  m_m7.m7p1
 #define m7_p2  m_m7.m7p2
-
-#define m8_i1  m_m8.m8i1
-#define m8_i2  m_m8.m8i2
-#define m8_p1  m_m8.m8p1
-#define m8_p2  m_m8.m8p2
-#define m8_p3  m_m8.m8p3
-#define m8_p4  m_m8.m8p4
 
 #define m9_l1  m_m9.m9l1
 #define m9_l2  m_m9.m9l2
@@ -2385,15 +2344,6 @@ typedef int _ASSERT_message[/* CONSTCOND */sizeof(message) == 64 ? 1 : -1];
 #define m10_l3 m_m10.m10l3
 #define m10_ull1 m_m10.m10ull1
 
-#define m11_i1 m_m11.m11i1
-#define m11_s1 m_m11.m11s1
-#define m11_s2 m_m11.m11s2
-#define m11_s3 m_m11.m11s3
-#define m11_s4 m_m11.m11s4
-#define m11_p1 m_m11.m11p1
-#define m11_p2 m_m11.m11p2
-#define m11_p3 m_m11.m11p3
-#define m11_p4 m_m11.m11p4
 
 /*==========================================================================* 
  * Minix run-time system (IPC). 					    *
