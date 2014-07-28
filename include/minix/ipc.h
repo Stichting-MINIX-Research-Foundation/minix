@@ -11,9 +11,6 @@
  * Types relating to messages. 						    *
  *==========================================================================*/ 
 
-#define M1                 1
-#define M3                 3
-#define M4                 4
 #define M_PATH_STRING_MAX  40
 
 typedef struct {
@@ -92,24 +89,249 @@ typedef struct {
 } mess_10;
 _ASSERT_MSG_SIZE(mess_10);
 
-typedef struct {
-	size_t size;
-	phys_bytes addr;
-	vir_bytes buf;
-
-	uint8_t padding[44];
-} mess_lsys_krn_readbios;
-_ASSERT_MSG_SIZE(mess_lsys_krn_readbios);
+/* Helper union for DS messages */
+union	ds_val {
+	cp_grant_id_t	grant;
+	u32_t		u32;
+	endpoint_t	ep;
+};
 
 typedef struct {
-	cp_grant_id_t grant;
-	int pid;
-	vir_bytes buff_p;
-	size_t buff_sz;
+	union	ds_val 	val_out;
+	int	val_len;
+	uint8_t padding[48];
+} mess_ds_reply;
+_ASSERT_MSG_SIZE(mess_ds_reply);
+
+typedef struct {
+	cp_grant_id_t	key_grant;
+	int		key_len;
+	int		flags;
+	union ds_val 	val_in;
+	int		val_len;
+	endpoint_t	owner;
+	uint8_t padding[32];
+} mess_ds_req;
+_ASSERT_MSG_SIZE(mess_ds_req);
+
+typedef struct {
+	off_t seek_pos;
+
+	size_t nbytes;
+
+	uint8_t data[44];
+} mess_fs_vfs_breadwrite;
+_ASSERT_MSG_SIZE(mess_fs_vfs_breadwrite);
+
+typedef struct {
+	mode_t mode;
+
+	uint8_t data[52];
+} mess_fs_vfs_chmod;
+_ASSERT_MSG_SIZE(mess_fs_vfs_chmod);
+
+typedef struct {
+	mode_t mode;
+
+	uint8_t data[52];
+} mess_fs_vfs_chown;
+_ASSERT_MSG_SIZE(mess_fs_vfs_chown);
+
+typedef struct {
+	off_t file_size;
+	ino_t inode;
+
+	mode_t mode;
+	uid_t uid;
+	gid_t gid;
+
+	uint8_t data[28];
+} mess_fs_vfs_create;
+_ASSERT_MSG_SIZE(mess_fs_vfs_create);
+
+typedef struct {
+	off_t seek_pos;
+
+	size_t nbytes;
+
+	uint8_t data[44];
+} mess_fs_vfs_getdents;
+_ASSERT_MSG_SIZE(mess_fs_vfs_getdents);
+
+typedef struct {
+	off_t offset;
+	off_t file_size;
+	dev_t device;
+	ino_t inode;
+
+	mode_t mode;
+	uid_t uid;
+	gid_t gid;
+
+	uint16_t symloop;
+
+	uint8_t data[10];
+} mess_fs_vfs_lookup;
+_ASSERT_MSG_SIZE(mess_fs_vfs_lookup);
+
+typedef struct {
+	off_t file_size;
+	dev_t device;
+	ino_t inode;
+
+	mode_t mode;
+	uid_t uid;
+	gid_t gid;
+
+	uint8_t data[20];
+} mess_fs_vfs_newnode;
+_ASSERT_MSG_SIZE(mess_fs_vfs_newnode);
+
+typedef struct {
+	size_t nbytes;
+
+	uint8_t data[52];
+} mess_fs_vfs_rdlink;
+_ASSERT_MSG_SIZE(mess_fs_vfs_rdlink);
+
+typedef struct {
+	off_t file_size;
+	dev_t device;
+	ino_t inode;
+
+	uint32_t flags;
+	mode_t mode;
+	uid_t uid;
+	gid_t gid;
+
+	uint16_t con_reqs;
+
+	uint8_t data[14];
+} mess_fs_vfs_readsuper;
+_ASSERT_MSG_SIZE(mess_fs_vfs_readsuper);
+
+typedef struct {
+	off_t seek_pos;
+
+	size_t nbytes;
+
+	uint8_t data[44];
+} mess_fs_vfs_readwrite;
+_ASSERT_MSG_SIZE(mess_fs_vfs_readwrite);
+
+typedef struct {
+	uint8_t padding[56];
+} mess_i2c_li2cdriver_busc_i2c_exec;
+_ASSERT_MSG_SIZE(mess_i2c_li2cdriver_busc_i2c_exec);
+
+typedef struct {
+	uint8_t padding[56];
+} mess_i2c_li2cdriver_busc_i2c_reserve;
+_ASSERT_MSG_SIZE(mess_i2c_li2cdriver_busc_i2c_reserve);
+
+typedef struct {
+	int kbd_id;
+	int mouse_id;
+	int rsvd1_id;
+	int rsvd2_id;
 
 	uint8_t padding[40];
-} mess_lc_vfs_gcov;
-_ASSERT_MSG_SIZE(mess_lc_vfs_gcov);
+} mess_input_linputdriver_input_conf;
+_ASSERT_MSG_SIZE(mess_input_linputdriver_input_conf);
+
+typedef struct {
+	uint32_t led_mask;
+
+	uint8_t padding[52];
+} mess_input_linputdriver_setleds;
+_ASSERT_MSG_SIZE(mess_input_linputdriver_setleds);
+
+typedef struct {
+	int id;
+	int page;
+	int code;
+	int value;
+	int flags;
+
+	uint8_t padding[36];
+} mess_input_tty_event;
+_ASSERT_MSG_SIZE(mess_input_tty_event);
+
+typedef struct {
+	time_t acnt_queue;
+
+	unsigned long acnt_deqs;
+	unsigned long acnt_ipc_sync;
+	unsigned long acnt_ipc_async;
+	unsigned long acnt_preempt;
+	uint32_t acnt_cpu;
+	uint32_t acnt_cpu_load;
+
+	uint8_t padding[24];
+} mess_krn_lsys_schedule;
+_ASSERT_MSG_SIZE(mess_krn_lsys_schedule);
+
+typedef struct {
+	uint32_t value;
+
+	uint8_t padding[52];
+} mess_krn_lsys_sys_devio;
+_ASSERT_MSG_SIZE(mess_krn_lsys_sys_devio);
+
+typedef struct {
+	endpoint_t endpt;
+	vir_bytes msgaddr;
+
+	uint8_t padding[48];
+} mess_krn_lsys_sys_fork;
+_ASSERT_MSG_SIZE(mess_krn_lsys_sys_fork);
+
+typedef struct {
+	endpoint_t endpt;
+	int privflags;
+	char name[48];
+
+} mess_krn_lsys_sys_getwhoami;
+_ASSERT_MSG_SIZE(mess_krn_lsys_sys_getwhoami);
+
+typedef struct {
+	int hook_id;
+
+	uint8_t padding[52];
+} mess_krn_lsys_sys_irqctl;
+_ASSERT_MSG_SIZE(mess_krn_lsys_sys_irqctl);
+
+typedef struct {
+	clock_t real_ticks;
+	clock_t boot_ticks;
+	clock_t boot_time;
+	clock_t user_time;
+	clock_t system_time;
+
+	uint8_t padding[36];
+} mess_krn_lsys_sys_times;
+_ASSERT_MSG_SIZE(mess_krn_lsys_sys_times);
+
+typedef struct {
+	long int data;
+
+	uint8_t padding[52];
+} mess_krn_lsys_sys_trace;
+_ASSERT_MSG_SIZE(mess_krn_lsys_sys_trace);
+
+typedef struct {
+	phys_bytes dst_addr;
+
+	uint8_t padding[52];
+} mess_krn_lsys_sys_umap;
+_ASSERT_MSG_SIZE(mess_krn_lsys_sys_umap);
+
+typedef struct {
+	int pcount;
+
+	uint8_t padding[52];
+} mess_krn_lsys_sys_vumap;
+_ASSERT_MSG_SIZE(mess_krn_lsys_sys_vumap);
 
 typedef struct {
 	off_t pos;
@@ -138,16 +360,64 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_lblockdriver_lbdev_reply);
 
 typedef struct {
-	int action;
-	int freq;
-	int intr_type;
-	vir_bytes ctl_ptr;
-	vir_bytes mem_ptr;
-	size_t mem_size;
+	int		id;
+	int		num;
+	int		cmd;
+	int		opt;
+	int		ret;
+	uint8_t		padding[36];
+} mess_lc_ipc_semctl;
+_ASSERT_MSG_SIZE(mess_lc_ipc_semctl);
 
-	uint8_t padding[32];
-} mess_lc_pm_sprof;
-_ASSERT_MSG_SIZE(mess_lc_pm_sprof);
+typedef struct {
+	key_t		key;
+	int		nr;
+	int		flag;
+	int		retid;
+	uint8_t		padding[40];
+} mess_lc_ipc_semget;
+_ASSERT_MSG_SIZE(mess_lc_ipc_semget);
+
+typedef struct {
+	int		id;
+	void		*ops;
+	unsigned int	size;
+	uint8_t		padding[42];
+} mess_lc_ipc_semop;
+_ASSERT_MSG_SIZE(mess_lc_ipc_semop);
+
+typedef struct {
+	int		id;
+	const void	*addr;
+	int		flag;
+	void		*retaddr;
+	uint8_t		padding[40];
+} mess_lc_ipc_shmat;
+_ASSERT_MSG_SIZE(mess_lc_ipc_shmat);
+
+typedef struct {
+	int		id;
+	int		cmd;
+	void		*buf;
+	int		ret;
+	uint8_t		padding[40];
+} mess_lc_ipc_shmctl;
+_ASSERT_MSG_SIZE(mess_lc_ipc_shmctl);
+
+typedef struct {
+	const void	*addr;
+	uint8_t		padding[52];
+} mess_lc_ipc_shmdt;
+_ASSERT_MSG_SIZE(mess_lc_ipc_shmdt);
+
+typedef struct {
+	key_t		key;
+	size_t		size;
+	int		flag;
+	int		retid;
+	uint8_t		padding[40];
+} mess_lc_ipc_shmget;
+_ASSERT_MSG_SIZE(mess_lc_ipc_shmget);
 
 typedef struct {
 	int action;
@@ -158,121 +428,6 @@ typedef struct {
 	uint8_t padding[40];
 } mess_lc_pm_cprof;
 _ASSERT_MSG_SIZE(mess_lc_pm_cprof);
-
-typedef struct {
-	vir_bytes ctl_ptr;
-	vir_bytes mem_ptr;
-
-	uint8_t padding[48];
-} mess_lsys_krn_sys_profbuf;
-_ASSERT_MSG_SIZE(mess_lsys_krn_sys_profbuf);
-
-typedef struct {
-	endpoint_t endpt;
-	int action;
-	vir_bytes ctl_ptr;
-	vir_bytes mem_ptr;
-	size_t mem_size;
-
-	uint8_t padding[36];
-} mess_lsys_krn_sys_cprof;
-_ASSERT_MSG_SIZE(mess_lsys_krn_sys_cprof);
-
-typedef struct {
-	int num;
-
-	uint8_t padding[52];
-} mess_pm_lsys_sigs_signal;
-_ASSERT_MSG_SIZE(mess_pm_lsys_sigs_signal);
-
-typedef struct {
-	int code;
-	vir_bytes buf;
-	int len;
-	endpoint_t endpt;
-
-	uint8_t padding[40];
-} mess_lsys_krn_sys_diagctl;
-_ASSERT_MSG_SIZE(mess_lsys_krn_sys_diagctl);
-
-typedef struct {
-	int action;
-	int freq;
-	int intr_type;
-	endpoint_t endpt;
-	vir_bytes ctl_ptr;
-	vir_bytes mem_ptr;
-	size_t mem_size;
-
-	uint8_t padding[28];
-} mess_lsys_krn_sys_sprof;
-_ASSERT_MSG_SIZE(mess_lsys_krn_sys_sprof);
-
-typedef struct {
-	off_t offset;
-	void *addr;
-	size_t len;
-	int prot;
-	int flags;
-	int fd;
-	endpoint_t forwhom;
-	void *retaddr;
-	u32_t padding[5];
-} mess_mmap;
-_ASSERT_MSG_SIZE(mess_mmap);
-
-typedef struct {
-	u64_t timestamp;	/* valid for every notify msg */
-	u64_t interrupts;	/* raised interrupts; valid if from HARDWARE */
-	sigset_t sigset;	/* raised signals; valid if from SYSTEM */
-	uint8_t padding[24];
-} mess_notify;
-_ASSERT_MSG_SIZE(mess_notify);
-
-/* For SYS_GETKSIG, _ENDKSIG, _KILL, _SIGSEND, _SIGRETURN. */
-typedef struct {
-	sigset_t map;		/* used to pass signal bit map */
-	endpoint_t endpt;	/* process number for inform */
-	int sig;		/* signal number to send */
-	void *sigctx;		/* pointer to signal context */
-	uint8_t padding[28];
-} mess_sigcalls;
-_ASSERT_MSG_SIZE(mess_sigcalls);
-
-typedef struct {
-	int id;
-	int page;
-	int code;
-	int value;
-	int flags;
-
-	uint8_t padding[36];
-} mess_input_tty_event;
-_ASSERT_MSG_SIZE(mess_input_tty_event);
-
-typedef struct {
-	time_t acnt_queue;
-
-	unsigned long acnt_deqs;
-	unsigned long acnt_ipc_sync;
-	unsigned long acnt_ipc_async;
-	unsigned long acnt_preempt;
-	uint32_t acnt_cpu;
-	uint32_t acnt_cpu_load;
-
-	uint8_t padding[24];
-} mess_krn_lsys_schedule;
-_ASSERT_MSG_SIZE(mess_krn_lsys_schedule);
-
-typedef struct {
-	endpoint_t endpoint;
-	int quantum;
-	int priority;
-	int cpu;
-
-	uint8_t padding[40];
-} mess_lsys_krn_schedule;
-_ASSERT_MSG_SIZE(mess_lsys_krn_schedule);
 
 typedef struct {
 	vir_bytes name;
@@ -343,13 +498,6 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_lc_pm_ptrace);
 
 typedef struct {
-	long data;
-
-	uint8_t padding[52];
-} mess_pm_lc_ptrace;
-_ASSERT_MSG_SIZE(mess_pm_lc_ptrace);
-
-typedef struct {
 	int how;
 
 	uint8_t padding[52];
@@ -379,16 +527,6 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_lc_pm_setuid);
 
 typedef struct {
-	int req;
-	int field;
-	size_t len;
-	vir_bytes value;
-
-	uint8_t padding[40];
-} mess_lc_pm_sysuname;
-_ASSERT_MSG_SIZE(mess_lc_pm_sysuname);
-
-typedef struct {
 	pid_t pid;
 	int nr;
 	vir_bytes act;		/* const struct sigaction * */
@@ -409,11 +547,26 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_lc_pm_sigset);
 
 typedef struct {
-	sigset_t set;
+	int action;
+	int freq;
+	int intr_type;
+	vir_bytes ctl_ptr;
+	vir_bytes mem_ptr;
+	size_t mem_size;
+
+	uint8_t padding[32];
+} mess_lc_pm_sprof;
+_ASSERT_MSG_SIZE(mess_lc_pm_sprof);
+
+typedef struct {
+	int req;
+	int field;
+	size_t len;
+	vir_bytes value;
 
 	uint8_t padding[40];
-} mess_pm_lc_sigset;
-_ASSERT_MSG_SIZE(mess_pm_lc_sigset);
+} mess_lc_pm_sysuname;
+_ASSERT_MSG_SIZE(mess_lc_pm_sysuname);
 
 typedef struct {
 	time_t sec;
@@ -427,31 +580,6 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_lc_pm_time);
 
 typedef struct {
-	cp_grant_id_t grant;
-	vir_bytes tm;			/* struct tm * */
-	int flags;
-
-	uint8_t padding[44];
-} mess_lc_readclock_rtcdev;
-_ASSERT_MSG_SIZE(mess_lc_readclock_rtcdev);
-
-typedef struct {
-	int status;
-
-	uint8_t padding[52];
-} mess_readclock_lc_rtcdev;
-_ASSERT_MSG_SIZE(mess_readclock_lc_rtcdev);
-
-typedef struct {
-	time_t sec;
-
-	long nsec;
-
-	uint8_t padding[44];
-} mess_pm_lc_time;
-_ASSERT_MSG_SIZE(mess_pm_lc_time);
-
-typedef struct {
 	pid_t pid;
 	int options;
 
@@ -460,11 +588,13 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_lc_pm_waitpid);
 
 typedef struct {
-	int status;
+	cp_grant_id_t grant;
+	vir_bytes tm;			/* struct tm * */
+	int flags;
 
-	uint8_t padding[52];
-} mess_pm_lc_waitpid;
-_ASSERT_MSG_SIZE(mess_pm_lc_waitpid);
+	uint8_t padding[44];
+} mess_lc_readclock_rtcdev;
+_ASSERT_MSG_SIZE(mess_lc_readclock_rtcdev);
 
 typedef struct {
 	vir_bytes name;
@@ -535,6 +665,16 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_lc_vfs_fsync);
 
 typedef struct {
+	cp_grant_id_t grant;
+	int pid;
+	vir_bytes buff_p;
+	size_t buff_sz;
+
+	uint8_t padding[40];
+} mess_lc_vfs_gcov;
+_ASSERT_MSG_SIZE(mess_lc_vfs_gcov);
+
+typedef struct {
 	int32_t flags;
 	size_t len;
 	vir_bytes buf;		/* struct statvfs */
@@ -571,13 +711,6 @@ typedef struct {
 	uint8_t padding[40];
 } mess_lc_vfs_lseek;
 _ASSERT_MSG_SIZE(mess_lc_vfs_lseek);
-
-typedef struct {
-	off_t offset;
-
-	uint8_t padding[48];
-} mess_vfs_lc_lseek;
-_ASSERT_MSG_SIZE(mess_vfs_lc_lseek);
 
 typedef struct {
 	dev_t device;
@@ -709,11 +842,56 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_lc_vfs_umount);
 
 typedef struct {
+	void		*addr;
+	uint8_t		padding[52];
+} mess_lc_vm_brk;
+_ASSERT_MSG_SIZE(mess_lc_vm_brk);
+
+typedef struct {
+	endpoint_t	endpt;
+	void		*addr;
+	void		*ret_addr;
+	uint8_t		padding[44];
+} mess_lc_vm_getphys;
+_ASSERT_MSG_SIZE(mess_lc_vm_getphys);
+
+typedef struct {
 	vir_bytes addr;
 
 	uint8_t padding[52];
 } mess_lc_vm_rusage;
 _ASSERT_MSG_SIZE(mess_lc_vm_rusage);
+
+typedef struct {
+	endpoint_t	forwhom;
+	void		*addr;
+	uint8_t		padding[48];
+} mess_lc_vm_shm_unmap;
+_ASSERT_MSG_SIZE(mess_lc_vm_shm_unmap);
+
+typedef struct {
+	int status;
+	uint32_t id;		/* should be cdev_id_t */
+
+	uint8_t padding[48];
+} mess_lchardriver_vfs_reply;
+_ASSERT_MSG_SIZE(mess_lchardriver_vfs_reply);
+
+typedef struct {
+	int status;
+	int32_t minor;
+
+	uint8_t padding[48];
+} mess_lchardriver_vfs_sel1;
+_ASSERT_MSG_SIZE(mess_lchardriver_vfs_sel1);
+
+typedef struct {
+	int status;
+	int32_t minor;
+
+	uint8_t padding[48];
+} mess_lchardriver_vfs_sel2;
+_ASSERT_MSG_SIZE(mess_lchardriver_vfs_sel2);
 
 typedef struct {
 	endpoint_t endpt;
@@ -724,23 +902,11 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_lexec_pm_exec_new);
 
 typedef struct {
-	int suid;
-
-	uint8_t padding[52];
-} mess_pm_lexec_exec_new;
-_ASSERT_MSG_SIZE(mess_pm_lexec_exec_new);
-
-typedef struct {
 	cp_grant_id_t grant;
 
 	uint8_t padding[52];
 } mess_li2cdriver_i2c_busc_i2c_exec;
 _ASSERT_MSG_SIZE(mess_li2cdriver_i2c_busc_i2c_exec);
-
-typedef struct {
-	uint8_t padding[56];
-} mess_i2c_li2cdriver_busc_i2c_exec;
-_ASSERT_MSG_SIZE(mess_i2c_li2cdriver_busc_i2c_exec);
 
 typedef struct {
 	uint16_t addr; /* FIXME: strictly speaking this is an i2c_addr_t, but
@@ -751,28 +917,6 @@ typedef struct {
 	uint8_t padding[54];
 } mess_li2cdriver_i2c_busc_i2c_reserve;
 _ASSERT_MSG_SIZE(mess_li2cdriver_i2c_busc_i2c_reserve);
-
-typedef struct {
-	uint8_t padding[56];
-} mess_i2c_li2cdriver_busc_i2c_reserve;
-_ASSERT_MSG_SIZE(mess_i2c_li2cdriver_busc_i2c_reserve);
-
-typedef struct {
-	int kbd_id;
-	int mouse_id;
-	int rsvd1_id;
-	int rsvd2_id;
-
-	uint8_t padding[40];
-} mess_input_linputdriver_input_conf;
-_ASSERT_MSG_SIZE(mess_input_linputdriver_input_conf);
-
-typedef struct {
-	uint32_t led_mask;
-
-	uint8_t padding[52];
-} mess_input_linputdriver_setleds;
-_ASSERT_MSG_SIZE(mess_input_linputdriver_setleds);
 
 typedef struct {
 	int id;
@@ -810,6 +954,25 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_lsys_getsysinfo);
 
 typedef struct {
+	size_t size;
+	phys_bytes addr;
+	vir_bytes buf;
+
+	uint8_t padding[44];
+} mess_lsys_krn_readbios;
+_ASSERT_MSG_SIZE(mess_lsys_krn_readbios);
+
+typedef struct {
+	endpoint_t	from_to;
+	cp_grant_id_t	gid;
+	size_t		offset;
+	void		*address;
+	size_t		bytes;
+	uint8_t padding[36];
+} mess_lsys_kern_safecopy;
+_ASSERT_MSG_SIZE(mess_lsys_kern_safecopy);
+
+typedef struct {
 	uint32_t flags;
 	endpoint_t endpoint;
 	int priority;
@@ -819,6 +982,16 @@ typedef struct {
 	uint8_t padding[36];
 } mess_lsys_krn_schedctl;
 _ASSERT_MSG_SIZE(mess_lsys_krn_schedctl);
+
+typedef struct {
+	endpoint_t endpoint;
+	int quantum;
+	int priority;
+	int cpu;
+
+	uint8_t padding[40];
+} mess_lsys_krn_schedule;
+_ASSERT_MSG_SIZE(mess_lsys_krn_schedule);
 
 typedef struct {
 	int how;
@@ -848,6 +1021,36 @@ _ASSERT_MSG_SIZE(mess_lsys_krn_sys_copy);
 
 typedef struct {
 	endpoint_t endpt;
+	int action;
+	vir_bytes ctl_ptr;
+	vir_bytes mem_ptr;
+	size_t mem_size;
+
+	uint8_t padding[36];
+} mess_lsys_krn_sys_cprof;
+_ASSERT_MSG_SIZE(mess_lsys_krn_sys_cprof);
+
+typedef struct {
+	int request;
+	int port;
+	uint32_t value;
+
+	uint8_t padding[44];
+} mess_lsys_krn_sys_devio;
+_ASSERT_MSG_SIZE(mess_lsys_krn_sys_devio);
+
+typedef struct {
+	int code;
+	vir_bytes buf;
+	int len;
+	endpoint_t endpt;
+
+	uint8_t padding[40];
+} mess_lsys_krn_sys_diagctl;
+_ASSERT_MSG_SIZE(mess_lsys_krn_sys_diagctl);
+
+typedef struct {
+	endpoint_t endpt;
 	vir_bytes ip;
 	vir_bytes stack;
 	vir_bytes name;
@@ -865,14 +1068,6 @@ typedef struct {
 	uint8_t padding[44];
 } mess_lsys_krn_sys_fork;
 _ASSERT_MSG_SIZE(mess_lsys_krn_sys_fork);
-
-typedef struct {
-	endpoint_t endpt;
-	vir_bytes msgaddr;
-
-	uint8_t padding[48];
-} mess_krn_lsys_sys_fork;
-_ASSERT_MSG_SIZE(mess_krn_lsys_sys_fork);
 
 typedef struct {
 	int request;
@@ -896,14 +1091,6 @@ _ASSERT_MSG_SIZE(mess_lsys_krn_sys_getmcontext);
 
 typedef struct {
 	endpoint_t endpt;
-	int privflags;
-	char name[48];
-
-} mess_krn_lsys_sys_getwhoami;
-_ASSERT_MSG_SIZE(mess_krn_lsys_sys_getwhoami);
-
-typedef struct {
-	endpoint_t endpt;
 
 	uint8_t padding[52];
 } mess_lsys_krn_sys_iopenable;
@@ -920,11 +1107,14 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_lsys_krn_sys_irqctl);
 
 typedef struct {
-	int hook_id;
+	phys_bytes base;
+	phys_bytes count;
+	unsigned long pattern;
+	endpoint_t process;
 
-	uint8_t padding[52];
-} mess_krn_lsys_sys_irqctl;
-_ASSERT_MSG_SIZE(mess_krn_lsys_sys_irqctl);
+	uint8_t padding[40];
+} mess_lsys_krn_sys_memset;
+_ASSERT_MSG_SIZE(mess_lsys_krn_sys_memset);
 
 typedef struct {
 	int request;
@@ -938,20 +1128,12 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_lsys_krn_sys_privctl);
 
 typedef struct {
-	int request;
-	int port;
-	uint32_t value;
+	vir_bytes ctl_ptr;
+	vir_bytes mem_ptr;
 
-	uint8_t padding[44];
-} mess_lsys_krn_sys_devio;
-_ASSERT_MSG_SIZE(mess_lsys_krn_sys_devio);
-
-typedef struct {
-	uint32_t value;
-
-	uint8_t padding[52];
-} mess_krn_lsys_sys_devio;
-_ASSERT_MSG_SIZE(mess_krn_lsys_sys_devio);
+	uint8_t padding[48];
+} mess_lsys_krn_sys_profbuf;
+_ASSERT_MSG_SIZE(mess_lsys_krn_sys_profbuf);
 
 typedef struct {
 	int request;
@@ -991,6 +1173,29 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_lsys_krn_sys_setmcontext);
 
 typedef struct {
+	time_t sec;		/* time in seconds since 1970 */
+	long int nsec;
+	int now;		/* non-zero for immediate, 0 for adjtime */
+	clockid_t clock_id;
+
+	uint8_t padding[36];
+} mess_lsys_krn_sys_settime;
+_ASSERT_MSG_SIZE(mess_lsys_krn_sys_settime);
+
+typedef struct {
+	int action;
+	int freq;
+	int intr_type;
+	endpoint_t endpt;
+	vir_bytes ctl_ptr;
+	vir_bytes mem_ptr;
+	size_t mem_size;
+
+	uint8_t padding[28];
+} mess_lsys_krn_sys_sprof;
+_ASSERT_MSG_SIZE(mess_lsys_krn_sys_sprof);
+
+typedef struct {
 	int request;
 
 	uint8_t padding[52];
@@ -1005,32 +1210,11 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_lsys_krn_sys_stime);
 
 typedef struct {
-	time_t sec;		/* time in seconds since 1970 */
-	long int nsec;
-	int now;		/* non-zero for immediate, 0 for adjtime */
-	clockid_t clock_id;
-
-	uint8_t padding[36];
-} mess_lsys_krn_sys_settime;
-_ASSERT_MSG_SIZE(mess_lsys_krn_sys_settime);
-
-typedef struct {
 	endpoint_t endpt;
 
 	uint8_t padding[52];
 } mess_lsys_krn_sys_times;
 _ASSERT_MSG_SIZE(mess_lsys_krn_sys_times);
-
-typedef struct {
-	clock_t real_ticks;
-	clock_t boot_ticks;
-	clock_t boot_time;
-	clock_t user_time;
-	clock_t system_time;
-
-	uint8_t padding[36];
-} mess_krn_lsys_sys_times;
-_ASSERT_MSG_SIZE(mess_krn_lsys_sys_times);
 
 typedef struct {
 	int request;
@@ -1043,13 +1227,6 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_lsys_krn_sys_trace);
 
 typedef struct {
-	long int data;
-
-	uint8_t padding[52];
-} mess_krn_lsys_sys_trace;
-_ASSERT_MSG_SIZE(mess_krn_lsys_sys_trace);
-
-typedef struct {
 	endpoint_t src_endpt;
 	int segment;
 	vir_bytes src_addr;
@@ -1060,12 +1237,6 @@ typedef struct {
 } mess_lsys_krn_sys_umap;
 _ASSERT_MSG_SIZE(mess_lsys_krn_sys_umap);
 
-typedef struct {
-	phys_bytes dst_addr;
-
-	uint8_t padding[52];
-} mess_krn_lsys_sys_umap;
-_ASSERT_MSG_SIZE(mess_krn_lsys_sys_umap);
 
 typedef struct {
 	int request;
@@ -1090,21 +1261,11 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_lsys_krn_sys_vumap);
 
 typedef struct {
-	int pcount;
-
-	uint8_t padding[52];
-} mess_krn_lsys_sys_vumap;
-_ASSERT_MSG_SIZE(mess_krn_lsys_sys_vumap);
-
-typedef struct {
-	phys_bytes base;
-	phys_bytes count;
-	unsigned long pattern;
-	endpoint_t process;
-
-	uint8_t padding[40];
-} mess_lsys_krn_sys_memset;
-_ASSERT_MSG_SIZE(mess_lsys_krn_sys_memset);
+	void		*vec_addr;
+	int		vec_size;
+	uint8_t padding[48];
+} mess_lsys_kern_vsafecopy;
+_ASSERT_MSG_SIZE(mess_lsys_kern_vsafecopy);
 
 typedef struct {
 	int devind;
@@ -1115,15 +1276,6 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_lsys_pci_busc_get_bar);
 
 typedef struct {
-	int base;
-	size_t size;
-	uint32_t flags;
-
-	uint8_t padding[44];
-} mess_pci_lsys_busc_get_bar;
-_ASSERT_MSG_SIZE(mess_pci_lsys_busc_get_bar);
-
-typedef struct {
 	endpoint_t endpt;
 
 	uint8_t padding[52];
@@ -1131,26 +1283,11 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_lsys_pm_getepinfo);
 
 typedef struct {
-	uid_t uid;
-	gid_t gid;
-
-	uint8_t padding[48];
-} mess_pm_lsys_getepinfo;
-_ASSERT_MSG_SIZE(mess_pm_lsys_getepinfo);
-
-typedef struct {
 	pid_t pid;
 
 	uint8_t padding[52];
 } mess_lsys_pm_getprocnr;
 _ASSERT_MSG_SIZE(mess_lsys_pm_getprocnr);
-
-typedef struct {
-	endpoint_t endpt;
-
-	uint8_t padding[52];
-} mess_pm_lsys_getprocnr;
-_ASSERT_MSG_SIZE(mess_pm_lsys_getprocnr);
 
 typedef struct {
 	uid_t uid;
@@ -1169,13 +1306,6 @@ typedef struct {
 	uint8_t padding[40];
 } mess_lsys_sched_scheduling_start;
 _ASSERT_MSG_SIZE(mess_lsys_sched_scheduling_start);
-
-typedef struct {
-	endpoint_t scheduler;
-
-	uint8_t padding[52];
-} mess_sched_lsys_scheduling_start;
-_ASSERT_MSG_SIZE(mess_sched_lsys_scheduling_start);
 
 typedef struct {
 	endpoint_t endpoint;
@@ -1200,14 +1330,6 @@ typedef struct {
 	uint8_t padding[44];
 } mess_lsys_tty_fkey_ctl;
 _ASSERT_MSG_SIZE(mess_lsys_tty_fkey_ctl);
-
-typedef struct {
-	int fkeys;
-	int sfkeys;
-
-	uint8_t padding[48];
-} mess_tty_lsys_fkey_ctl;
-_ASSERT_MSG_SIZE(mess_tty_lsys_fkey_ctl);
 
 typedef struct {
 	endpoint_t endpt;
@@ -1237,19 +1359,89 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_lsys_vfs_mapdriver);
 
 typedef struct {
+	endpoint_t	endpt;
+	void		*addr;
+	int		retc;
+	uint8_t		padding[44];
+} mess_lsys_vm_getref;
+_ASSERT_MSG_SIZE(mess_lsys_vm_getref);
+
+typedef struct {
+	int		what;
+	endpoint_t	ep;
+	int		count;
+	void		*ptr;
+	vir_bytes	next;
+	uint8_t		padding[36];
+} mess_lsys_vm_info;
+_ASSERT_MSG_SIZE(mess_lsys_vm_info);
+
+typedef struct {
+	endpoint_t	ep;
+	phys_bytes	phaddr;
+	size_t		len;
+	void		*reply;
+	uint8_t		padding[40];
+} mess_lsys_vm_map_phys;
+_ASSERT_MSG_SIZE(mess_lsys_vm_map_phys);
+
+typedef struct {
+	endpoint_t	ret_pt;
+	int		is_more;
+	uint8_t		padding[48];
+} mess_lsys_vm_query_exit;
+_ASSERT_MSG_SIZE(mess_lsys_vm_query_exit);
+
+typedef struct {
+	endpoint_t	ep;
+	void		*vaddr;
+	uint8_t		padding[48];
+} mess_lsys_vm_unmap_phys;
+_ASSERT_MSG_SIZE(mess_lsys_vm_unmap_phys);
+
+typedef struct {
+	endpoint_t src;
+	endpoint_t dst;
+	uint8_t		padding[48];
+} mess_lsys_vm_update;
+_ASSERT_MSG_SIZE(mess_lsys_vm_update);
+
+typedef struct {
+	endpoint_t	destination;
+	endpoint_t	source;
+	void		*dest_addr;
+	void		*src_addr;
+	size_t		size;
+	void		*ret_addr;
+	uint8_t		padding[32];
+} mess_lsys_vm_vmremap;
+_ASSERT_MSG_SIZE(mess_lsys_vm_vmremap);
+
+typedef struct {
+	endpoint_t	ep;
+	uint8_t		padding[52];
+} mess_lsys_vm_watch_exit;
+_ASSERT_MSG_SIZE(mess_lsys_vm_watch_exit);
+
+typedef struct {
+	off_t offset;
+	void *addr;
+	size_t len;
+	int prot;
+	int flags;
+	int fd;
+	endpoint_t forwhom;
+	void *retaddr;
+	u32_t padding[5];
+} mess_mmap;
+_ASSERT_MSG_SIZE(mess_mmap);
+
+typedef struct {
 	int mode;
 
 	uint8_t padding[52];
 } mess_net_netdrv_dl_conf;
 _ASSERT_MSG_SIZE(mess_net_netdrv_dl_conf);
-
-typedef struct {
-	int stat;
-	uint8_t hw_addr[6];
-
-	uint8_t padding[46];
-} mess_netdrv_net_dl_conf;
-_ASSERT_MSG_SIZE(mess_netdrv_net_dl_conf);
 
 typedef struct {
 	cp_grant_id_t grant;
@@ -1275,12 +1467,37 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_net_netdrv_dl_writev_s);
 
 typedef struct {
+	int stat;
+	uint8_t hw_addr[6];
+
+	uint8_t padding[46];
+} mess_netdrv_net_dl_conf;
+_ASSERT_MSG_SIZE(mess_netdrv_net_dl_conf);
+
+typedef struct {
 	int count;
 	uint32_t flags;
 
 	uint8_t padding[48];
 } mess_netdrv_net_dl_task;
 _ASSERT_MSG_SIZE(mess_netdrv_net_dl_task);
+
+typedef struct {
+	u64_t timestamp;	/* valid for every notify msg */
+	u64_t interrupts;	/* raised interrupts; valid if from HARDWARE */
+	sigset_t sigset;	/* raised signals; valid if from SYSTEM */
+	uint8_t padding[24];
+} mess_notify;
+_ASSERT_MSG_SIZE(mess_notify);
+
+typedef struct {
+	int base;
+	size_t size;
+	uint32_t flags;
+
+	uint8_t padding[44];
+} mess_pci_lsys_busc_get_bar;
+_ASSERT_MSG_SIZE(mess_pci_lsys_busc_get_bar);
 
 typedef struct {
 	uid_t egid;
@@ -1304,12 +1521,87 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_pm_lc_getuid);
 
 typedef struct {
+	long data;
+
+	uint8_t padding[52];
+} mess_pm_lc_ptrace;
+_ASSERT_MSG_SIZE(mess_pm_lc_ptrace);
+
+typedef struct {
+	sigset_t set;
+
+	uint8_t padding[40];
+} mess_pm_lc_sigset;
+_ASSERT_MSG_SIZE(mess_pm_lc_sigset);
+
+typedef struct {
+	time_t sec;
+
+	long nsec;
+
+	uint8_t padding[44];
+} mess_pm_lc_time;
+_ASSERT_MSG_SIZE(mess_pm_lc_time);
+
+typedef struct {
+	int status;
+
+	uint8_t padding[52];
+} mess_pm_lc_waitpid;
+_ASSERT_MSG_SIZE(mess_pm_lc_waitpid);
+
+typedef struct {
+	int suid;
+
+	uint8_t padding[52];
+} mess_pm_lexec_exec_new;
+_ASSERT_MSG_SIZE(mess_pm_lexec_exec_new);
+
+typedef struct {
+	uid_t uid;
+	gid_t gid;
+
+	uint8_t padding[48];
+} mess_pm_lsys_getepinfo;
+_ASSERT_MSG_SIZE(mess_pm_lsys_getepinfo);
+
+typedef struct {
+	endpoint_t endpt;
+
+	uint8_t padding[52];
+} mess_pm_lsys_getprocnr;
+_ASSERT_MSG_SIZE(mess_pm_lsys_getprocnr);
+
+typedef struct {
+	int num;
+
+	uint8_t padding[52];
+} mess_pm_lsys_sigs_signal;
+_ASSERT_MSG_SIZE(mess_pm_lsys_sigs_signal);
+
+typedef struct {
 	endpoint_t endpoint;
 	uint32_t maxprio;
 
 	uint8_t padding[48];
 } mess_pm_sched_scheduling_set_nice;
 _ASSERT_MSG_SIZE(mess_pm_sched_scheduling_set_nice);
+
+typedef struct {
+	int status;
+
+	uint8_t padding[52];
+} mess_readclock_lc_rtcdev;
+_ASSERT_MSG_SIZE(mess_readclock_lc_rtcdev);
+
+typedef struct {
+	int		result;
+	int		type;
+	cp_grant_id_t	rproctab_gid;
+	endpoint_t	old_endpoint;
+	uint8_t padding[40];
+} mess_rs_init;
+_ASSERT_MSG_SIZE(mess_rs_init);
 
 typedef struct {
 	endpoint_t endpt;
@@ -1330,6 +1622,49 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_rs_pm_srv_kill);
 
 typedef struct {
+	int		len;
+	int		name_len;
+	endpoint_t	endpoint;
+	void		*addr;
+	const char	*name;
+	uint8_t padding[36];
+} mess_rs_req;
+_ASSERT_MSG_SIZE(mess_rs_req);
+
+typedef struct {
+	int		result;
+	int		state;
+	int		prepare_maxtime;
+	uint8_t padding[44];
+} mess_rs_update;
+_ASSERT_MSG_SIZE(mess_rs_update);
+
+typedef struct {
+	endpoint_t scheduler;
+
+	uint8_t padding[52];
+} mess_sched_lsys_scheduling_start;
+_ASSERT_MSG_SIZE(mess_sched_lsys_scheduling_start);
+
+/* For SYS_GETKSIG, _ENDKSIG, _KILL, _SIGSEND, _SIGRETURN. */
+typedef struct {
+	sigset_t map;		/* used to pass signal bit map */
+	endpoint_t endpt;	/* process number for inform */
+	int sig;		/* signal number to send */
+	void *sigctx;		/* pointer to signal context */
+	uint8_t padding[28];
+} mess_sigcalls;
+_ASSERT_MSG_SIZE(mess_sigcalls);
+
+typedef struct {
+	int fkeys;
+	int sfkeys;
+
+	uint8_t padding[48];
+} mess_tty_lsys_fkey_ctl;
+_ASSERT_MSG_SIZE(mess_tty_lsys_fkey_ctl);
+
+typedef struct {
 	dev_t device;
 	off_t seek_pos;
 
@@ -1341,15 +1676,6 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_vfs_fs_breadwrite);
 
 typedef struct {
-	off_t seek_pos;
-
-	size_t nbytes;
-
-	uint8_t data[44];
-} mess_fs_vfs_breadwrite;
-_ASSERT_MSG_SIZE(mess_fs_vfs_breadwrite);
-
-typedef struct {
 	ino_t inode;
 
 	mode_t mode;
@@ -1357,13 +1683,6 @@ typedef struct {
 	uint8_t data[44];
 } mess_vfs_fs_chmod;
 _ASSERT_MSG_SIZE(mess_vfs_fs_chmod);
-
-typedef struct {
-	mode_t mode;
-
-	uint8_t data[52];
-} mess_fs_vfs_chmod;
-_ASSERT_MSG_SIZE(mess_fs_vfs_chmod);
 
 typedef struct {
 	ino_t inode;
@@ -1374,13 +1693,6 @@ typedef struct {
 	uint8_t data[40];
 } mess_vfs_fs_chown;
 _ASSERT_MSG_SIZE(mess_vfs_fs_chown);
-
-typedef struct {
-	mode_t mode;
-
-	uint8_t data[52];
-} mess_fs_vfs_chown;
-_ASSERT_MSG_SIZE(mess_fs_vfs_chown);
 
 typedef struct {
 	ino_t inode;
@@ -1394,18 +1706,6 @@ typedef struct {
 	uint8_t data[28];
 } mess_vfs_fs_create;
 _ASSERT_MSG_SIZE(mess_vfs_fs_create);
-
-typedef struct {
-	off_t file_size;
-	ino_t inode;
-
-	mode_t mode;
-	uid_t uid;
-	gid_t gid;
-
-	uint8_t data[28];
-} mess_fs_vfs_create;
-_ASSERT_MSG_SIZE(mess_fs_vfs_create);
 
 typedef struct {
 	dev_t device;
@@ -1433,15 +1733,6 @@ typedef struct {
 	uint8_t data[32];
 } mess_vfs_fs_getdents;
 _ASSERT_MSG_SIZE(mess_vfs_fs_getdents);
-
-typedef struct {
-	off_t seek_pos;
-
-	size_t nbytes;
-
-	uint8_t data[44];
-} mess_fs_vfs_getdents;
-_ASSERT_MSG_SIZE(mess_fs_vfs_getdents);
 
 typedef struct {
 	ino_t inode;
@@ -1477,22 +1768,6 @@ typedef struct {
 	uint8_t data[8];
 } mess_vfs_fs_lookup;
 _ASSERT_MSG_SIZE(mess_vfs_fs_lookup);
-
-typedef struct {
-	off_t offset;
-	off_t file_size;
-	dev_t device;
-	ino_t inode;
-
-	mode_t mode;
-	uid_t uid;
-	gid_t gid;
-
-	uint16_t symloop;
-
-	uint8_t data[10];
-} mess_fs_vfs_lookup;
-_ASSERT_MSG_SIZE(mess_fs_vfs_lookup);
 
 typedef struct {
 	ino_t inode;
@@ -1550,19 +1825,6 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_vfs_fs_newnode);
 
 typedef struct {
-	off_t file_size;
-	dev_t device;
-	ino_t inode;
-
-	mode_t mode;
-	uid_t uid;
-	gid_t gid;
-
-	uint8_t data[20];
-} mess_fs_vfs_newnode;
-_ASSERT_MSG_SIZE(mess_fs_vfs_newnode);
-
-typedef struct {
 	uint64_t count;
 	ino_t inode;
 
@@ -1581,13 +1843,6 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_vfs_fs_rdlink);
 
 typedef struct {
-	size_t nbytes;
-
-	uint8_t data[52];
-} mess_fs_vfs_rdlink;
-_ASSERT_MSG_SIZE(mess_fs_vfs_rdlink);
-
-typedef struct {
 	dev_t device;
 
 	uint32_t flags;
@@ -1599,22 +1854,6 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_vfs_fs_readsuper);
 
 typedef struct {
-	off_t file_size;
-	dev_t device;
-	ino_t inode;
-
-	uint32_t flags;
-	mode_t mode;
-	uid_t uid;
-	gid_t gid;
-
-	uint16_t con_reqs;
-
-	uint8_t data[14];
-} mess_fs_vfs_readsuper;
-_ASSERT_MSG_SIZE(mess_fs_vfs_readsuper);
-
-typedef struct {
 	ino_t inode;
 	off_t seek_pos;
 
@@ -1624,15 +1863,6 @@ typedef struct {
 	uint8_t data[32];
 } mess_vfs_fs_readwrite;
 _ASSERT_MSG_SIZE(mess_vfs_fs_readwrite);
-
-typedef struct {
-	off_t seek_pos;
-
-	size_t nbytes;
-
-	uint8_t data[44];
-} mess_fs_vfs_readwrite;
-_ASSERT_MSG_SIZE(mess_fs_vfs_readwrite);
 
 typedef struct {
 	ino_t dir_old;
@@ -1700,6 +1930,13 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_vfs_fs_utime);
 
 typedef struct {
+	off_t offset;
+
+	uint8_t padding[48];
+} mess_vfs_lc_lseek;
+_ASSERT_MSG_SIZE(mess_vfs_lc_lseek);
+
+typedef struct {
 	endpoint_t id;
 	devminor_t minor;
 
@@ -1738,30 +1975,6 @@ typedef struct {
 	uint8_t padding[48];
 } mess_vfs_lchardriver_select;
 _ASSERT_MSG_SIZE(mess_vfs_lchardriver_select);
-
-typedef struct {
-	int status;
-	uint32_t id;		/* should be cdev_id_t */
-
-	uint8_t padding[48];
-} mess_lchardriver_vfs_reply;
-_ASSERT_MSG_SIZE(mess_lchardriver_vfs_reply);
-
-typedef struct {
-	int status;
-	int32_t minor;
-
-	uint8_t padding[48];
-} mess_lchardriver_vfs_sel1;
-_ASSERT_MSG_SIZE(mess_lchardriver_vfs_sel1);
-
-typedef struct {
-	int status;
-	int32_t minor;
-
-	uint8_t padding[48];
-} mess_lchardriver_vfs_sel2;
-_ASSERT_MSG_SIZE(mess_lchardriver_vfs_sel2);
 
 typedef struct {
 	time_t atime;
@@ -1811,218 +2024,6 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_vmmcp_reply);
 
 typedef struct {
-	endpoint_t	destination;
-	endpoint_t	source;
-	void		*dest_addr;
-	void		*src_addr;
-	size_t		size;
-	void		*ret_addr;
-	uint8_t		padding[32];
-} mess_lsys_vm_vmremap;
-_ASSERT_MSG_SIZE(mess_lsys_vm_vmremap);
-
-typedef struct {
-	endpoint_t	forwhom;
-	void		*addr;
-	uint8_t		padding[48];
-} mess_lc_vm_shm_unmap;
-_ASSERT_MSG_SIZE(mess_lc_vm_shm_unmap);
-
-typedef struct {
-	void		*addr;
-	uint8_t		padding[52];
-} mess_lc_vm_brk;
-_ASSERT_MSG_SIZE(mess_lc_vm_brk);
-
-typedef struct {
-	endpoint_t	endpt;
-	void		*addr;
-	void		*ret_addr;
-	uint8_t		padding[44];
-} mess_lc_vm_getphys;
-_ASSERT_MSG_SIZE(mess_lc_vm_getphys);
-
-typedef struct {
-	endpoint_t	endpt;
-	void		*addr;
-	int		retc;
-	uint8_t		padding[44];
-} mess_lsys_vm_getref;
-_ASSERT_MSG_SIZE(mess_lsys_vm_getref);
-
-typedef struct {
-	endpoint_t	ret_pt;
-	int		is_more;
-	uint8_t		padding[48];
-} mess_lsys_vm_query_exit;
-_ASSERT_MSG_SIZE(mess_lsys_vm_query_exit);
-
-typedef struct {
-	int		what;
-	endpoint_t	ep;
-	int		count;
-	void		*ptr;
-	vir_bytes	next;
-	uint8_t		padding[36];
-} mess_lsys_vm_info;
-_ASSERT_MSG_SIZE(mess_lsys_vm_info);
-
-typedef struct {
-	endpoint_t src;
-	endpoint_t dst;
-	uint8_t		padding[48];
-} mess_lsys_vm_update;
-_ASSERT_MSG_SIZE(mess_lsys_vm_update);
-
-typedef struct {
-	endpoint_t	ep;
-	uint8_t		padding[52];
-} mess_lsys_vm_watch_exit;
-_ASSERT_MSG_SIZE(mess_lsys_vm_watch_exit);
-
-typedef struct {
-	key_t		key;
-	size_t		size;
-	int		flag;
-	int		retid;
-	uint8_t		padding[40];
-} mess_lc_ipc_shmget;
-_ASSERT_MSG_SIZE(mess_lc_ipc_shmget);
-
-typedef struct {
-	int		id;
-	const void	*addr;
-	int		flag;
-	void		*retaddr;
-	uint8_t		padding[40];
-} mess_lc_ipc_shmat;
-_ASSERT_MSG_SIZE(mess_lc_ipc_shmat);
-
-typedef struct {
-	const void	*addr;
-	uint8_t		padding[52];
-} mess_lc_ipc_shmdt;
-_ASSERT_MSG_SIZE(mess_lc_ipc_shmdt);
-
-typedef struct {
-	int		id;
-	int		cmd;
-	void		*buf;
-	int		ret;
-	uint8_t		padding[40];
-} mess_lc_ipc_shmctl;
-_ASSERT_MSG_SIZE(mess_lc_ipc_shmctl);
-
-typedef struct {
-	key_t		key;
-	int		nr;
-	int		flag;
-	int		retid;
-	uint8_t		padding[40];
-} mess_lc_ipc_semget;
-_ASSERT_MSG_SIZE(mess_lc_ipc_semget);
-
-typedef struct {
-	int		id;
-	int		num;
-	int		cmd;
-	int		opt;
-	int		ret;
-	uint8_t		padding[36];
-} mess_lc_ipc_semctl;
-_ASSERT_MSG_SIZE(mess_lc_ipc_semctl);
-
-typedef struct {
-	int		id;
-	void		*ops;
-	unsigned int	size;
-	uint8_t		padding[42];
-} mess_lc_ipc_semop;
-_ASSERT_MSG_SIZE(mess_lc_ipc_semop);
-
-typedef struct {
-	endpoint_t	ep;
-	phys_bytes	phaddr;
-	size_t		len;
-	void		*reply;
-	uint8_t		padding[40];
-} mess_lsys_vm_map_phys;
-_ASSERT_MSG_SIZE(mess_lsys_vm_map_phys);
-
-typedef struct {
-	endpoint_t	ep;
-	void		*vaddr;
-	uint8_t		padding[48];
-} mess_lsys_vm_unmap_phys;
-_ASSERT_MSG_SIZE(mess_lsys_vm_unmap_phys);
-
-typedef struct {
-	endpoint_t	from_to;
-	cp_grant_id_t	gid;
-	size_t		offset;
-	void		*address;
-	size_t		bytes;
-	uint8_t padding[36];
-} mess_lsys_kern_safecopy;
-_ASSERT_MSG_SIZE(mess_lsys_kern_safecopy);
-
-typedef struct {
-	void		*vec_addr;
-	int		vec_size;
-	uint8_t padding[48];
-} mess_lsys_kern_vsafecopy;
-_ASSERT_MSG_SIZE(mess_lsys_kern_vsafecopy);
-
-typedef struct {
-	int		result;
-	int		type;
-	cp_grant_id_t	rproctab_gid;
-	endpoint_t	old_endpoint;
-	uint8_t padding[40];
-} mess_rs_init;
-_ASSERT_MSG_SIZE(mess_rs_init);
-
-typedef struct {
-	int		result;
-	int		state;
-	int		prepare_maxtime;
-	uint8_t padding[44];
-} mess_rs_update;
-_ASSERT_MSG_SIZE(mess_rs_update);
-
-typedef struct {
-	int		len;
-	int		name_len;
-	endpoint_t	endpoint;
-	void		*addr;
-	const char	*name;
-	uint8_t padding[36];
-} mess_rs_req;
-_ASSERT_MSG_SIZE(mess_rs_req);
-
-typedef struct {
-	cp_grant_id_t	key_grant;
-	int		key_len;
-	int		flags;
-	union	ds_val {
-		cp_grant_id_t	grant;
-		u32_t		u32;
-		endpoint_t	ep;
-	}		val_in;
-	int		val_len;
-	endpoint_t	owner;
-	uint8_t padding[32];
-} mess_ds_req;
-_ASSERT_MSG_SIZE(mess_ds_req);
-
-typedef struct {
-	union	ds_val 	val_out;
-	int	val_len;
-	uint8_t padding[48];
-} mess_ds_reply;
-_ASSERT_MSG_SIZE(mess_ds_reply);
-
-typedef struct {
 	endpoint_t m_source;		/* who sent the message */
 	int m_type;			/* what kind of message is it */
 	union {
@@ -2038,33 +2039,9 @@ typedef struct {
 		mess_7			m_m7;
 		mess_9			m_m9;
 		mess_10			m_m10;
-		mess_mmap		m_mmap;
-		mess_notify		m_notify;
-		mess_sigcalls		m_sigcalls;
 
-		mess_lbdev_lblockdriver_msg m_lbdev_lblockdriver_msg;
-		mess_lblockdriver_lbdev_reply m_lblockdriver_lbdev_reply;
-		mess_lc_pm_cprof	m_lc_pm_cprof;
-		mess_lc_pm_sprof	m_lc_pm_sprof;
-		mess_lc_vfs_gcov	m_lc_vfs_gcov;
-		mess_lsys_krn_sys_diagctl m_lsys_krn_sys_diagctl;
-		mess_lsys_krn_sys_cprof m_lsys_krn_sys_cprof;
-		mess_lsys_krn_sys_profbuf m_lsys_krn_sys_profbuf;
-		mess_lsys_krn_sys_sprof m_lsys_krn_sys_sprof;
-		mess_lsys_krn_readbios	m_lsys_krn_readbios;
-		mess_pm_lsys_sigs_signal m_pm_lsys_sigs_signal;
-		mess_input_tty_event	m_input_tty_event;
-
-		mess_krn_lsys_schedule	m_krn_lsys_schedule;
-		mess_krn_lsys_sys_fork m_krn_lsys_sys_fork;
-		mess_krn_lsys_sys_getwhoami m_krn_lsys_sys_getwhoami;
-		mess_krn_lsys_sys_irqctl m_krn_lsys_sys_irqctl;
-		mess_krn_lsys_sys_times	m_krn_lsys_sys_times;
-		mess_krn_lsys_sys_trace	m_krn_lsys_sys_trace;
-		mess_krn_lsys_sys_umap	m_krn_lsys_sys_umap;
-		mess_krn_lsys_sys_vumap	m_krn_lsys_sys_vumap;
-		mess_krn_lsys_sys_devio m_krn_lsys_sys_devio;
-
+		mess_ds_reply		m_ds_reply;
+		mess_ds_req		m_ds_req;
 		mess_fs_vfs_breadwrite	m_fs_vfs_breadwrite;
 		mess_fs_vfs_chmod	m_fs_vfs_chmod;
 		mess_fs_vfs_chown	m_fs_vfs_chown;
@@ -2075,13 +2052,30 @@ typedef struct {
 		mess_fs_vfs_rdlink	m_fs_vfs_rdlink;
 		mess_fs_vfs_readsuper	m_fs_vfs_readsuper;
 		mess_fs_vfs_readwrite	m_fs_vfs_readwrite;
-
 		mess_i2c_li2cdriver_busc_i2c_exec m_i2c_li2cdriver_busc_i2c_exec;
 		mess_i2c_li2cdriver_busc_i2c_reserve m_i2c_li2cdriver_busc_i2c_reserve;
-
 		mess_input_linputdriver_input_conf m_input_linputdriver_input_conf;
 		mess_input_linputdriver_setleds m_input_linputdriver_setleds;
-
+		mess_input_tty_event	m_input_tty_event;
+		mess_krn_lsys_schedule	m_krn_lsys_schedule;
+		mess_krn_lsys_sys_devio m_krn_lsys_sys_devio;
+		mess_krn_lsys_sys_fork m_krn_lsys_sys_fork;
+		mess_krn_lsys_sys_getwhoami m_krn_lsys_sys_getwhoami;
+		mess_krn_lsys_sys_irqctl m_krn_lsys_sys_irqctl;
+		mess_krn_lsys_sys_times	m_krn_lsys_sys_times;
+		mess_krn_lsys_sys_trace	m_krn_lsys_sys_trace;
+		mess_krn_lsys_sys_umap	m_krn_lsys_sys_umap;
+		mess_krn_lsys_sys_vumap	m_krn_lsys_sys_vumap;
+		mess_lbdev_lblockdriver_msg m_lbdev_lblockdriver_msg;
+		mess_lblockdriver_lbdev_reply m_lblockdriver_lbdev_reply;
+		mess_lc_ipc_semctl	m_lc_ipc_semctl;
+		mess_lc_ipc_semget	m_lc_ipc_semget;
+		mess_lc_ipc_semop	m_lc_ipc_semop;
+		mess_lc_ipc_shmat	m_lc_ipc_shmat;
+		mess_lc_ipc_shmctl	m_lc_ipc_shmctl;
+		mess_lc_ipc_shmdt	m_lc_ipc_shmdt;
+		mess_lc_ipc_shmget	m_lc_ipc_shmget;
+		mess_lc_pm_cprof	m_lc_pm_cprof;
 		mess_lc_pm_exec		m_lc_pm_exec;
 		mess_lc_pm_exit		m_lc_pm_exit;
 		mess_lc_pm_getsid	m_lc_pm_getsid;
@@ -2096,11 +2090,11 @@ typedef struct {
 		mess_lc_pm_setuid	m_lc_pm_setuid;
 		mess_lc_pm_sig		m_lc_pm_sig;
 		mess_lc_pm_sigset	m_lc_pm_sigset;
+		mess_lc_pm_sprof	m_lc_pm_sprof;
 		mess_lc_pm_sysuname	m_lc_pm_sysuname;
 		mess_lc_pm_time		m_lc_pm_time;
 		mess_lc_pm_waitpid	m_lc_pm_waitpid;
 		mess_lc_readclock_rtcdev m_lc_readclock_rtcdev;
-
 		mess_lc_vfs_chown	m_lc_vfs_chown;
 		mess_lc_vfs_close	m_lc_vfs_close;
 		mess_lc_vfs_creat	m_lc_vfs_creat;
@@ -2109,6 +2103,7 @@ typedef struct {
 		mess_lc_vfs_fcntl	m_lc_vfs_fcntl;
 		mess_lc_vfs_fstat	m_lc_vfs_fstat;
 		mess_lc_vfs_fsync	m_lc_vfs_fsync;
+		mess_lc_vfs_gcov	m_lc_vfs_gcov;
 		mess_lc_vfs_getvfsstat	m_lc_vfs_getvfsstat;
 		mess_lc_vfs_ioctl	m_lc_vfs_ioctl;
 		mess_lc_vfs_link	m_lc_vfs_link;
@@ -2126,30 +2121,30 @@ typedef struct {
 		mess_lc_vfs_truncate	m_lc_vfs_truncate;
 		mess_lc_vfs_umask	m_lc_vfs_umask;
 		mess_lc_vfs_umount	m_lc_vfs_umount;
-
+		mess_lc_vm_brk		m_lc_vm_brk;
+		mess_lc_vm_getphys	m_lc_vm_getphys;
 		mess_lc_vm_rusage	m_lc_vm_rusage;
-
+		mess_lc_vm_shm_unmap	m_lc_vm_shm_unmap;
 		mess_lchardriver_vfs_reply m_lchardriver_vfs_reply;
 		mess_lchardriver_vfs_sel1 m_lchardriver_vfs_sel1;
 		mess_lchardriver_vfs_sel2 m_lchardriver_vfs_sel2;
-
 		mess_lexec_pm_exec_new	m_lexec_pm_exec_new;
-
 		mess_li2cdriver_i2c_busc_i2c_exec m_li2cdriver_i2c_busc_i2c_exec;
 		mess_li2cdriver_i2c_busc_i2c_reserve m_li2cdriver_i2c_busc_i2c_reserve;
-
 		mess_linputdriver_input_event m_linputdriver_input_event;
-
-		mess_lsys_getsysinfo	m_lsys_getsysinfo;
 		mess_lsys_fi_ctl	m_lsys_fi_ctl;
 		mess_lsys_fi_reply	m_lsys_fi_reply;
-
-		mess_lsys_krn_sys_devio m_lsys_krn_sys_devio;
+		mess_lsys_getsysinfo	m_lsys_getsysinfo;
+		mess_lsys_krn_readbios	m_lsys_krn_readbios;
+		mess_lsys_kern_safecopy	m_lsys_kern_safecopy;
 		mess_lsys_krn_schedctl	m_lsys_krn_schedctl;
 		mess_lsys_krn_schedule	m_lsys_krn_schedule;
 		mess_lsys_krn_sys_abort m_lsys_krn_sys_abort;
 		mess_lsys_krn_sys_clear m_lsys_krn_sys_clear;
 		mess_lsys_krn_sys_copy	m_lsys_krn_sys_copy;
+		mess_lsys_krn_sys_cprof m_lsys_krn_sys_cprof;
+		mess_lsys_krn_sys_devio m_lsys_krn_sys_devio;
+		mess_lsys_krn_sys_diagctl m_lsys_krn_sys_diagctl;
 		mess_lsys_krn_sys_exec	m_lsys_krn_sys_exec;
 		mess_lsys_krn_sys_fork	m_lsys_krn_sys_fork;
 		mess_lsys_krn_sys_getinfo m_lsys_krn_sys_getinfo;
@@ -2158,48 +2153,49 @@ typedef struct {
 		mess_lsys_krn_sys_irqctl m_lsys_krn_sys_irqctl;
 		mess_lsys_krn_sys_memset m_lsys_krn_sys_memset;
 		mess_lsys_krn_sys_privctl m_lsys_krn_sys_privctl;
+		mess_lsys_krn_sys_profbuf m_lsys_krn_sys_profbuf;
 		mess_lsys_krn_sys_sdevio m_lsys_krn_sys_sdevio;
 		mess_lsys_krn_sys_setalarm m_lsys_krn_sys_setalarm;
 		mess_lsys_krn_sys_setgrant m_lsys_krn_sys_setgrant;
 		mess_lsys_krn_sys_setmcontext m_lsys_krn_sys_setmcontext;
+		mess_lsys_krn_sys_settime m_lsys_krn_sys_settime;
+		mess_lsys_krn_sys_sprof m_lsys_krn_sys_sprof;
 		mess_lsys_krn_sys_statectl m_lsys_krn_sys_statectl;
 		mess_lsys_krn_sys_stime	m_lsys_krn_sys_stime;
-		mess_lsys_krn_sys_settime m_lsys_krn_sys_settime;
 		mess_lsys_krn_sys_times	m_lsys_krn_sys_times;
 		mess_lsys_krn_sys_trace	m_lsys_krn_sys_trace;
 		mess_lsys_krn_sys_umap	m_lsys_krn_sys_umap;
 		mess_lsys_krn_sys_vdevio m_lsys_krn_sys_vdevio;
 		mess_lsys_krn_sys_vumap m_lsys_krn_sys_vumap;
-
+		mess_lsys_kern_vsafecopy m_lsys_kern_vsafecopy;
 		mess_lsys_pci_busc_get_bar m_lsys_pci_busc_get_bar;
-
 		mess_lsys_pm_getepinfo	m_lsys_pm_getepinfo;
 		mess_lsys_pm_getprocnr	m_lsys_pm_getprocnr;
 		mess_lsys_pm_srv_fork	m_lsys_pm_srv_fork;
-
 		mess_lsys_sched_scheduling_start m_lsys_sched_scheduling_start;
 		mess_lsys_sched_scheduling_stop m_lsys_sched_scheduling_stop;
-
 		mess_lsys_svrctl	m_lsys_svrctl;
-
 		mess_lsys_tty_fkey_ctl	m_lsys_tty_fkey_ctl;
-
 		mess_lsys_vfs_checkperms m_lsys_vfs_checkperms;
 		mess_lsys_vfs_copyfd	m_lsys_vfs_copyfd;
 		mess_lsys_vfs_mapdriver	m_lsys_vfs_mapdriver;
-
+		mess_lsys_vm_getref	m_lsys_vm_getref;
+		mess_lsys_vm_info	m_lsys_vm_info;
+		mess_lsys_vm_map_phys	m_lsys_vm_map_phys;
+		mess_lsys_vm_query_exit	m_lsys_vm_query_exit;
+		mess_lsys_vm_unmap_phys	m_lsys_vm_unmap_phys;
+		mess_lsys_vm_update	m_lsys_vm_update;
+		mess_lsys_vm_vmremap	m_lsys_vm_vmremap;
+		mess_lsys_vm_watch_exit	m_lsys_vm_watch_exit;
+		mess_mmap		m_mmap;
 		mess_net_netdrv_dl_conf m_net_netdrv_dl_conf;
 		mess_net_netdrv_dl_getstat_s m_net_netdrv_dl_getstat_s;
 		mess_net_netdrv_dl_readv_s m_net_netdrv_dl_readv_s;
 		mess_net_netdrv_dl_writev_s m_net_netdrv_dl_writev_s;
-
 		mess_netdrv_net_dl_conf m_netdrv_net_dl_conf;
 		mess_netdrv_net_dl_task m_netdrv_net_dl_task;
-
+		mess_notify		m_notify;
 		mess_pci_lsys_busc_get_bar m_pci_lsys_busc_get_bar;
-
-		mess_pm_lexec_exec_new	m_pm_lexec_exec_new;
-
 		mess_pm_lc_getgid	m_pm_lc_getgid;
 		mess_pm_lc_getpid	m_pm_lc_getpid;
 		mess_pm_lc_getuid	m_pm_lc_getuid;
@@ -2207,21 +2203,20 @@ typedef struct {
 		mess_pm_lc_sigset	m_pm_lc_sigset;
 		mess_pm_lc_time		m_pm_lc_time;
 		mess_pm_lc_waitpid	m_pm_lc_waitpid;
-
+		mess_pm_lexec_exec_new	m_pm_lexec_exec_new;
 		mess_pm_lsys_getepinfo	m_pm_lsys_getepinfo;
 		mess_pm_lsys_getprocnr	m_pm_lsys_getprocnr;
-
+		mess_pm_lsys_sigs_signal m_pm_lsys_sigs_signal;
 		mess_pm_sched_scheduling_set_nice m_pm_sched_scheduling_set_nice;
-
 		mess_readclock_lc_rtcdev m_readclock_lc_rtcdev;
-
+		mess_rs_init		m_rs_init;
 		mess_rs_pm_exec_restart	m_rs_pm_exec_restart;
 		mess_rs_pm_srv_kill	m_rs_pm_srv_kill;
-
+		mess_rs_req		m_rs_req;
+		mess_rs_update		m_rs_update;
 		mess_sched_lsys_scheduling_start m_sched_lsys_scheduling_start;
-
+		mess_sigcalls		m_sigcalls;
 		mess_tty_lsys_fkey_ctl	m_tty_lsys_fkey_ctl;
-
 		mess_vfs_fs_breadwrite	m_vfs_fs_breadwrite;
 		mess_vfs_fs_chmod	m_vfs_fs_chmod;
 		mess_vfs_fs_chown	m_vfs_fs_chown;
@@ -2235,52 +2230,23 @@ typedef struct {
 		mess_vfs_fs_mkdir	m_vfs_fs_mkdir;
 		mess_vfs_fs_mknod	m_vfs_fs_mknod;
 		mess_vfs_fs_mountpoint	m_vfs_fs_mountpoint;
-		mess_vfs_fs_newnode	m_vfs_fs_newnode;
 		mess_vfs_fs_new_driver	m_vfs_fs_new_driver;
+		mess_vfs_fs_newnode	m_vfs_fs_newnode;
 		mess_vfs_fs_putnode	m_vfs_fs_putnode;
 		mess_vfs_fs_rdlink	m_vfs_fs_rdlink;
 		mess_vfs_fs_readsuper	m_vfs_fs_readsuper;
-		mess_vfs_fs_rename	m_vfs_fs_rename;
 		mess_vfs_fs_readwrite	m_vfs_fs_readwrite;
+		mess_vfs_fs_rename	m_vfs_fs_rename;
 		mess_vfs_fs_slink	m_vfs_fs_slink;
 		mess_vfs_fs_stat	m_vfs_fs_stat;
 		mess_vfs_fs_statvfs	m_vfs_fs_statvfs;
 		mess_vfs_fs_unlink	m_vfs_fs_unlink;
 		mess_vfs_fs_utime	m_vfs_fs_utime;
-
 		mess_vfs_lc_lseek	m_vfs_lc_lseek;
-
-		mess_lsys_vm_vmremap	m_lsys_vm_vmremap;
-		mess_lsys_vm_getref	m_lsys_vm_getref;
-		mess_lc_vm_getphys	m_lc_vm_getphys;
-		mess_lc_vm_shm_unmap	m_lc_vm_shm_unmap;
-		mess_lsys_vm_query_exit	m_lsys_vm_query_exit;
-		mess_lsys_vm_info	m_lsys_vm_info;
-		mess_lsys_vm_update	m_lsys_vm_update;
-		mess_lsys_vm_watch_exit	m_lsys_vm_watch_exit;
-		mess_lc_ipc_shmget	m_lc_ipc_shmget;
-		mess_lc_ipc_shmat	m_lc_ipc_shmat;
-		mess_lc_ipc_shmdt	m_lc_ipc_shmdt;
-		mess_lc_ipc_shmctl	m_lc_ipc_shmctl;
-		mess_lc_ipc_semget	m_lc_ipc_semget;
-		mess_lc_ipc_semctl	m_lc_ipc_semctl;
-		mess_lc_ipc_semop	m_lc_ipc_semop;
-		mess_lc_vm_brk		m_lc_vm_brk;
-		mess_lsys_vm_map_phys	m_lsys_vm_map_phys;
-		mess_lsys_vm_unmap_phys	m_lsys_vm_unmap_phys;
-		mess_lsys_kern_safecopy	m_lsys_kern_safecopy;
-		mess_lsys_kern_vsafecopy m_lsys_kern_vsafecopy;
-		mess_rs_init		m_rs_init;
-		mess_rs_update		m_rs_update;
-		mess_rs_req		m_rs_req;
-		mess_ds_req		m_ds_req;
-		mess_ds_reply		m_ds_reply;
-
 		mess_vfs_lchardriver_cancel	m_vfs_lchardriver_cancel;
 		mess_vfs_lchardriver_openclose	m_vfs_lchardriver_openclose;
 		mess_vfs_lchardriver_readwrite	m_vfs_lchardriver_readwrite;
 		mess_vfs_lchardriver_select	m_vfs_lchardriver_select;
-
 		mess_vfs_utimens	m_vfs_utimens;
 		mess_vm_vfs_mmap	m_vm_vfs_mmap;
 		mess_vmmcp		m_vmmcp;
