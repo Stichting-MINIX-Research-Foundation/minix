@@ -31,11 +31,7 @@ PACKAGEURL=ftp://ftp.minix3.org/pub/minix/packages/$version_pretty/`uname -m`/Al
 PREINSTALLED_PACKAGES="
 	pkg_install
 	pkgin
-	bmake
-	binutils
-	clang
 	"
-#	pkg_tarup
 
 PKG_ADD_URL=$PACKAGEURL
 
@@ -170,6 +166,9 @@ then
 	echo "Retrieving latest minix repo from $REPO branch $GITBRANCH."
 	srcdir=$RELEASEDIR/usr/src
 	git clone -b $GITBRANCH $REPO $srcdir
+	echo "Triggering fetch scripts"
+	( cd $srcdir && sh ./gnu/dist/fetch.sh )
+	( cd $srcdir && sh ./external/gpl3/binutils/fetch.sh )
 	if [ "$REVTAG" ]
 	then	echo "Doing checkout of $REVTAG."
 		(cd $srcdir && git checkout $REVTAG )
@@ -220,7 +219,7 @@ echo " * Build"
 ##########################################################################
 
 cd $RELEASEDIR/usr/src
-make distribution DESTDIR=$RELEASEDIR SLOPPY_FLIST=yes $BUILDOPTIONS
+make build MKLIBCXX=yes DESTDIR=$RELEASEDIR SLOPPY_FLIST=yes $BUILDOPTIONS
 make -C releasetools do-hdboot DESTDIR=$RELEASEDIR MKINSTALLBOOT=yes
 cp $RELEASEDIR/usr/mdec/boot_monitor $RELEASEDIR
 cp $RELEASEDIR/boot/minix_latest/* $RELEASEDIR/boot/minix_default/
@@ -263,6 +262,10 @@ if [ $EXTRAS_INSTALL -ne 0 ] ; then
     echo " * Copying files from $EXTRAS_PATH"
     cp -Rv $EXTRAS_PATH/* $RELEASEDIR
 fi
+
+echo " * Removing sources"
+
+rm -rf $RELEASEDIR/usr/src # No space for /usr/src
 
 # If we are making a jail, all is done!
 if [ $JAILMODE = 1 ]
