@@ -347,12 +347,7 @@ copy(char *from, char *to)
 	int status;
 
 	if ((pid = vfork()) == 0) {
-#if defined(__minix)
-		/* LSC: This is required as long as we have not imported cp */
-		execl(_PATH_CP, "cp", vflg ?  "-Rpv" :  "-Rp", "--", from, to, NULL);
-#else
 		execl(_PATH_CP, "mv", vflg ? "-PRpv" : "-PRp", "--", from, to, NULL);
-#endif /* defined(__minix) */
 		warn("%s", _PATH_CP);
 		_exit(1);
 	}
