@@ -1,9 +1,5 @@
 # Makefile for the kernel image.
 .include <bsd.own.mk>
-.include "nbsd.config"
-
-.include <bsd.own.mk>
-.include <bsd.sys.mk>
 
 u=/usr
 MDEC=	/usr/mdec
@@ -42,8 +38,6 @@ usage:
 	@echo "	make install    # Make image, and install to hard disk" >&2
 	@echo "	make hdboot     # Make image, and install to hard disk" >&2
 	@echo "	make bootable   # Make hard disk bootable" >&2
-	@echo "	make nbsd_fetch	# Download current NetBSD reference sources" >&2
-	@echo "	make nbsd_diff	# Update minix-port.patch in NetBSD sources" >&2
 	@echo "	make clean      # Remove all compiler results, except libs" >&2
 	@echo " " >&2
 	@echo "To create a fresh MINIX configuration, try:" >&2
@@ -105,30 +99,6 @@ do-hdboot:
 	${HOST_SH} mkboot hdboot ${DESTDIR};			\
 	${HOST_SH} ../minix/commands/update_bootcfg/update_bootcfg.sh;\
 	fi
-
-# download and update NetBSD reference sources.
-nbsd_fetch:
-	export CVS_RSH=ssh; 							\
-	export OLDPWD=`pwd`;							\
-	echo "retrieving hierarchies from ${NBSD_CVSROOT}";			\
-	IFS=,;									\
-	cd ..;									\
-	cat releasetools/nbsd_ports | grep -v '^#' | while read port ;		\
-	do	set $$port;							\
-		date=$$1; minixpath=$$2; origpath=$$3;				\
-		if [ $$# -lt 3 ]; then origpath=$$2; fi;			\
-		echo "retrieving $$origpath ..";				\
-		cvs -q -d ${NBSD_CVSROOT} co -N -D "$$date UTC" -d nbsdsrc "src/$$origpath" ; \
-	done;									\
-	cd $${OLDPWD};
-
-nbsd_diff:
-	find .. -name minix-port.patch | xargs rm
-	cat nbsd_ports | grep -v '^#' | \
-	( cd .. && awk -F, '{ minixpath=$$2; origpath=$$3; if(NF < 3) { origpath=$$2; } system("sh releasetools/nbsd_diff.sh " \
-	   "nbsdsrc/src/"origpath" "minixpath" "minixpath"/minix-port.patch");}' )
-	find .. -name minix-port.patch | xargs wc -l | sort -n
-
 
 # clean up compile results
 clean:

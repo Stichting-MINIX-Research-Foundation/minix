@@ -1,7 +1,0 @@
-#!/bin/sh
-#
-#	tellconfig - Tell the value of a <minix/config.h> parameter
-#						Author: Kees J. Bot
-
-NETBSDSRCDIR=`dirname $0`/..
-exec sh $NETBSDSRCDIR/sys/conf/osrelease.sh
