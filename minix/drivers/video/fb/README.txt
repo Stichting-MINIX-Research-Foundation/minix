@@ -12,7 +12,7 @@ Testing the Code
 
 Starting up an instance:
 
-service up /usr/sbin/fb -dev /dev/fb0 -args edid.0=cat24c256.3.50
+service up /service/fb -dev /dev/fb0 -args edid.0=cat24c256.3.50
 
 The arguments take the following form:
 

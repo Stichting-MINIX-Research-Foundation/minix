@@ -8,8 +8,4 @@ LDADD+=	-lchardriver -lsys
 
 LDADD+= -lc
 
-MAN=
-
-BINDIR?= /usr/sbin
-
 .include <minix.service.mk>

@@ -1,16 +1,11 @@
 # Makefile for readclock 'driver'
 PROG=	readclock.drv
+SRCS+=	readclock.c forward.c forward.h
 
 .include "arch/${MACHINE_ARCH}/Makefile.inc"
 
-SRCS+=	readclock.c forward.c forward.h
-
 DPADD+= ${LIBSYS} ${LIBTIMERS}
 LDADD+= -lsys -ltimers
-
-MAN=
-
-BINDIR?= /sbin
 
 CPPFLAGS+= -D_SYSTEM=1 -I${.CURDIR}
 

@@ -1,7 +1,7 @@
 #!/bin/sh
 
 LABEL=dp8390
-EXEDIR=/usr/build/drivers/dp8390
+EXEDIR=/service/dp8390
 EXE=$EXEDIR/$LABEL
 DAYTIME_HOST=jetsam.cs.vu.nl
 FAULTS_PER_BLOCK=1
@@ -19,7 +19,7 @@ do_one()
 	while [ X"$pid" = X ]
 	do
 		pid=`ps ax | grep $LABEL | grep -v grep |
-			sed 's,^[ 	]*,,;s,[ 	].*,,`
+			sed 's,^[ 	]*,,;s,[ 	].*,,'`
 		if [ X"$pid" != X ]
 		then
 			break

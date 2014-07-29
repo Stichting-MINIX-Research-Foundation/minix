@@ -12,5 +12,5 @@ Testing the Code
 
 Starting up an instance:
 
-/bin/service up /usr/sbin/cat24c256 -dev /dev/eepromb1s50 -label cat24c256.1.50 -args 'bus=1 address=0x50'
+/bin/service up /service/cat24c256 -dev /dev/eepromb1s50 -label cat24c256.1.50 -args 'bus=1 address=0x50'
 

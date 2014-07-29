@@ -8,11 +8,6 @@ SRCS=	cache.c link.c \
 DPADD+=	${LIBMINIXFS} ${LIBBDEV} ${LIBSYS}
 LDADD+= -lminixfs -lbdev -lsys
 
-MAN=
-
-BINDIR?= /sbin
-
-DEFAULT_NR_BUFS= 1024
-CPPFLAGS+= -DDEFAULT_NR_BUFS=${DEFAULT_NR_BUFS}
+CPPFLAGS+= -DDEFAULT_NR_BUFS=1024
 
 .include <minix.service.mk>

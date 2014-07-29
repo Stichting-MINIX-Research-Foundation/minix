@@ -97,7 +97,7 @@ apply_env()
 	 * log_level=[0-4] (NONE,WARN,INFO,DEBUG,TRACE) instance=[0-3]
 	 * instance/bus number to use for this driver Passing these arguments
 	 * is done when starting the driver using the service command in the
-	 * following way service up /sbin/mmc -args "log_level=2 instance=1
+	 * following way service up /service/mmc -args "log_level=2 instance=1
 	 * driver=dummy" -dev /dev/c2d0 */
 	char driver[16];
 	memset(driver, '\0', 16);

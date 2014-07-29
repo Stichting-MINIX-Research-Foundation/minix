@@ -9,4 +9,4 @@ Needs updating:
 sb16/              SB16 ISA driver
 
 Running the drivers:
-* service up /usr/sbin/es137{0,1} -dev /dev/audio
+* service up /service/es137{0,1} -dev /dev/audio

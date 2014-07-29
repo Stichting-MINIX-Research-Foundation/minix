@@ -50,7 +50,7 @@ The driver should have been started by a script in /etc/rc.capes/ If not,
 this is how you start up an instance:
 
 cd /dev && MAKEDEV bmp085b3s77
-/bin/service up /usr/sbin/bmp085 -label bmp085.3.77 -dev /dev/bmp085b3s77 \
+/bin/service up /service/bmp085 -label bmp085.3.77 -dev /dev/bmp085b3s77 \
 	-args 'bus=3 address=0x77'
 
 Getting the sensor value:

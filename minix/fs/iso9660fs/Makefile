@@ -6,11 +6,6 @@ SRCS=	main.c table.c mount.c super.c inode.c \
 DPADD+=	${LIBBDEV} ${LIBSYS} ${LIBMINLIB}
 LDADD+=	-lbdev -lsys -lc -lminixfs -lminlib
 
-MAN=
-
-BINDIR?= /sbin
-
-NR_BUFS= 100
-CPPFLAGS+= -DNR_BUFS=${NR_BUFS}
+CPPFLAGS+= -DNR_BUFS=100
 
 .include <minix.service.mk>

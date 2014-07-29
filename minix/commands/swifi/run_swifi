@@ -2,7 +2,7 @@
 
 LABEL=e1000_0
 NAME=e1000
-EXEDIR=/usr/src/drivers/$NAME
+EXEDIR=/service
 EXE=$EXEDIR/$NAME
 
 :>log
@@ -19,7 +19,7 @@ do_one()
 	while [ X"$pid" = X ]
 	do
 		pid=`ps ax | grep $NAME | grep -v grep |
-			sed 's,^[ 	]*,,;s,[ 	].*,,`
+			sed 's,^[ 	]*,,;s,[ 	].*,,'`
 		if [ X"$pid" != X ]
 		then
 			break

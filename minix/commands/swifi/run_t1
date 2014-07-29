@@ -1,7 +1,7 @@
 #!/bin/sh
 
 LABEL=es1371
-EXEDIR=/usr/build/drivers/es1371
+EXEDIR=/service/es1371
 #LABEL=fxp
 #EXEDIR=/usr/build/drivers/fxp
 EXE=$EXEDIR/$LABEL
@@ -18,7 +18,7 @@ do_one()
 		ps ax | grep $LABEL | grep -v grep
 		pid=`ps ax | grep $LABEL | grep -v grep |
 			sort -n | tail -1 |
-			sed 's,^[ 	]*,,;s,[ 	].*,,`
+			sed 's,^[ 	]*,,;s,[ 	].*,,'`
 		if [ X"$pid" != X ]
 		then
 			break

@@ -5,8 +5,4 @@ SRCS=	main.c store.c
 DPADD+=	${LIBSYS}
 LDADD+=	-lsys
 
-MAN=
-
-BINDIR?= /usr/sbin
-
 .include <minix.service.mk>

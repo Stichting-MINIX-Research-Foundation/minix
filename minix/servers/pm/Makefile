@@ -9,10 +9,6 @@ SRCS=	main.c forkexit.c exec.c time.c alarm.c \
 DPADD+=	${LIBSYS} ${LIBTIMERS}
 LDADD+=	-lsys -ltimers
 
-MAN=
-
-BINDIR?= /usr/sbin
-
 CPPFLAGS.main.c+=	-I${NETBSDSRCDIR}/minix
 CPPFLAGS.misc.c+=	-I${NETBSDSRCDIR}/minix
 CPPFLAGS.schedule.c+=	-I${NETBSDSRCDIR}/minix

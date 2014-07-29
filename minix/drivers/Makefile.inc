@@ -1,4 +1,4 @@
-BINDIR?=/usr/sbin
+BINDIR?= /service
 MAN?=
 
 LDADD+= -lminlib -lcompat_minix

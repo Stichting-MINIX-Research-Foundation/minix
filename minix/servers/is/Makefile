@@ -1,6 +1,4 @@
 # Makefile for Information Server (IS)
-#
-
 .include <bsd.own.mk>
 
 PROG=	is
@@ -8,10 +6,6 @@ SRCS=	main.c dmp.c dmp_kernel.c dmp_pm.c dmp_fs.c dmp_rs.c dmp_ds.c dmp_vm.c
 
 DPADD+=	${LIBSYS}
 LDADD+=	-lsys
-
-MAN=
-
-BINDIR?= /sbin
 
 CPPFLAGS.dmp_fs.c+=	-I${NETBSDSRCDIR}/minix/servers \
    			-I${NETBSDSRCDIR}/minix/fs

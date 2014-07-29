@@ -33,9 +33,9 @@ cd /dev && MAKEDEV i2c-1 && MAKEDEV i2c-2 && MAKEDEV i2c-3
 
 Starting up the instances:
 
-/bin/service up /usr/sbin/i2c -dev /dev/i2c-1 -label i2c.1 -args instance=1
-/bin/service up /usr/sbin/i2c -dev /dev/i2c-2 -label i2c.2 -args instance=2
-/bin/service up /usr/sbin/i2c -dev /dev/i2c-3 -label i2c.3 -args instance=3
+/bin/service up /service/i2c -dev /dev/i2c-1 -label i2c.1 -args instance=1
+/bin/service up /service/i2c -dev /dev/i2c-2 -label i2c.2 -args instance=2
+/bin/service up /service/i2c -dev /dev/i2c-3 -label i2c.3 -args instance=3
 
 There is an i2cscan program from NetBSD which can detect devices on the bus:
 

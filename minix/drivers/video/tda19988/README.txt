@@ -52,7 +52,7 @@ Testing the Code
 
 Starting up an instance:
 
-/bin/service up /usr/sbin/tda19988 -label tda19988.1.3470 \
+/bin/service up /service/tda19988 -label tda19988.1.3470 \
 	-args 'cec_bus=1 cec_address=0x34 hdmi_bus=1 hdmi_address=0x70'
 
 Killing an instance:
@@ -67,7 +67,7 @@ device file to read the EDID like this:
 cd /dev
 mknod tda19988 b 32 0
 chmod 600 tda19988
-/bin/service up /usr/sbin/tda19988 -label tda19988.1.3470 \
+/bin/service up /service/tda19988 -label tda19988.1.3470 \
 	-dev /dev/tda19988 \
 	-args 'cec_bus=1 cec_address=0x34 hdmi_bus=1 hdmi_address=0x70'
 dd if=/dev/tda19988 of=/root/edid.dat count=1 bs=128

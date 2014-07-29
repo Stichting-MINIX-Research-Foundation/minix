@@ -18,8 +18,4 @@ CFLAGS+= -Wall -Wextra -Wno-sign-compare -Werror
 DPADD+=	${LIBSYS} ${LIBTIMERS} ${LIBEXEC}
 LDADD+=	-lsys -ltimers -lexec -lmthread
 
-MAN=
-
-BINDIR?= /usr/sbin
-
 .include <minix.service.mk>

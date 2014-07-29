@@ -38,7 +38,7 @@ up()
     service=$1
     shift
 
-    service $opt up /sbin/$service "$@"
+    service $opt up /service/$service "$@"
 }
 
 edit()
@@ -54,10 +54,10 @@ edit()
     service=$1
     shift
 
-    # Assume binaries are always in /sbin or /usr/sbin
-    binlocation=/usr/sbin/$service
+    # Assume binaries are always in /service or /usr/pkg/service
+    binlocation=/service/$service
     if [ ! -x $binlocation ]
-    then	binlocation=/sbin/$service
+    then	binlocation=/usr/pkg/service/$service
     fi
     service $opt edit $binlocation -label $service "$@" 
 }
@@ -200,7 +200,7 @@ down|stop)
 	/usr/pkg/etc/rc.d/usbd stop
     fi
 
-    if [ -x /usr/sbin/usbd ]
+    if [ -x /service/usbd ]
     then
 	service down usbd
     fi

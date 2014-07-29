@@ -5,8 +5,4 @@ SRCS=	pckbd.c table.c
 DPADD+=	${LIBINPUTDRIVER} ${LIBSYS} ${LIBTIMERS}
 LDADD+=	-linputdriver -lsys -ltimers
 
-MAN=
-
-BINDIR?= /sbin
-
 .include <minix.service.mk>

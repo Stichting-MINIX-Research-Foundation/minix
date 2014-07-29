@@ -15,7 +15,7 @@ d--755 0 0
 		sh ---755 0 0 sh
 		service ---755 0 0 service
 	$
-	sbin d--755 0 0
+	service d--755 0 0
 #ifdef __i386__
 		floppy ---755 0 0 floppy
 		ahci ---755 0 0 ahci
@@ -32,18 +32,16 @@ d--755 0 0
 		mfs ---755 0 0 mfs
 		procfs ---755 0 0 procfs
 		input ---755 0 0 input
+#ifdef __i386__
+#if RAMDISK_INC_ACPI == 1
+		acpi ---755 0 0 acpi
+#endif
+		pci ---755 0 0 pci
+#endif
 	$
 	usr d--755 0 0
 		bin d--755 0 0
 			loadramdisk ---755 0 0 loadramdisk
-		$
-		sbin d--755 0 0
-#ifdef __i386__
-#if RAMDISK_INC_ACPI == 1
-			acpi ---755 0 0 acpi
-#endif
-			pci ---755 0 0 pci
-#endif
 		$
 	$
 	proc d--755 0 0

@@ -3,7 +3,7 @@
 PROG=		usbd
 SRCS=		usbd.c usbd_earm.c hcd.c hcd_common.c hcd_ddekit.c musb_am335x.c musb_core.c
 MAN=
-BINDIR=		/usr/sbin
+BINDIR=		/service
 
 .PATH:		${.CURDIR}/../ ${.CURDIR}/../../hcd ${.CURDIR}/../../hcd/musb
 

@@ -6,8 +6,7 @@
 kill_by_name()
 {
 	label="$1"
-	pid=`ps ax | grep "$label" | grep -v grep |
-		sed 's,[ 	]*\([0-9]*\).*,\1,`
+	pid=`ps ax | grep "$label" | grep -v grep | sed 's,[ 	]*\([0-9]*\).*,\1,'`
 	if [ X"$pid" = X ]
 	then
 		return 1	# No such process
@@ -65,10 +64,10 @@ kill_by_name syslogd
 sleep 3
 if [ X`/bin/sysenv lwip` = Xyes ]
 then
-	service up /usr/sbin/lwip -script /etc/rs.inet -dev /dev/ip
+	service up /service/lwip -script /etc/rs.inet -dev /dev/ip
 	dhcpd --lwip &
 else
-	service up /usr/sbin/inet -script /etc/rs.inet -dev /dev/ip
+	service up /service/inet -script /etc/rs.inet -dev /dev/ip
 	daemonize dhcpd
 fi
 daemonize nonamed -L

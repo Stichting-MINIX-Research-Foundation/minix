@@ -5,8 +5,4 @@ SRCS=	vbfs.c
 DPADD+=	${LIBSFFS} ${LIBVBOXFS} ${LIBSYS}
 LDADD+=	-lsffs -lvboxfs -lsys
 
-MAN=
-
-BINDIR?= /sbin
-
 .include <minix.service.mk>

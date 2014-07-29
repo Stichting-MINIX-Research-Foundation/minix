@@ -82,7 +82,7 @@ read_test() {
   EXP=$2
   shift 2
   $RWBLOCKS $DEV $PAT
-  service up /usr/sbin/fbd -dev /dev/fbd -args "$PAIR" || exit 1
+  service up /service/fbd -dev /dev/fbd -args "$PAIR" || exit 1
   fbdctl add $@ >/dev/null
   #fbdctl list
   RES="`$RWBLOCKS /dev/fbd`"
@@ -115,7 +115,7 @@ write_test() {
   WS=$3
   shift 3
   $RWBLOCKS $DEV UUUUUUUUUUUUUUUU
-  service up /usr/sbin/fbd -dev /dev/fbd -args "$PAIR" || exit 1
+  service up /service/fbd -dev /dev/fbd -args "$PAIR" || exit 1
   fbdctl add $@ >/dev/null
   #fbdctl list
   $RWBLOCKS /dev/fbd $PAT $WS

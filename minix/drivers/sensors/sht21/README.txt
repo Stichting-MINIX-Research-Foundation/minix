@@ -54,7 +54,7 @@ The driver should have been started by a script in /etc/rc.capes/ If not,
 this is how you start up an instance:
 
 cd /dev && MAKEDEV sht21b3s40
-/bin/service up /usr/sbin/sht21 -label sht21.3.40 -dev /dev/sht21b3s40 \
+/bin/service up /service/sht21 -label sht21.3.40 -dev /dev/sht21b3s40 \
 	-args 'bus=3 address=0x40'
 
 Getting the sensor value:

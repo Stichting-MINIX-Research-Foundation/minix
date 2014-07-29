@@ -29,6 +29,7 @@
 ./proc
 ./root
 ./sbin
+./service
 ./sys
 ./usr
 ./usr/adm

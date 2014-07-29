@@ -5,8 +5,4 @@ SRCS=	hgfs.c
 DPADD+=	${LIBSFFS} ${LIBHGFS} ${LIBSYS}
 LDADD+=	-lsffs -lhgfs -lsys
 
-MAN=
-
-BINDIR?= /sbin
-
 .include <minix.service.mk>

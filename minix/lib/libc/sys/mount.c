@@ -15,7 +15,7 @@
 
 #define FSDEFAULT "mfs"
 
-static char fspath[] = "/sbin/:/usr/pkg/bin/"; /* Must include trailing '/' */
+static char fspath[] = "/service/:/usr/pkg/service/"; /* Must include trailing '/' */
 
 static int rs_down(char *label)
 {

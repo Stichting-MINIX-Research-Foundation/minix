@@ -11,10 +11,6 @@ CPPFLAGS+= -DUSE_PCI
 DPADD+=	${LIBSYS} ${LIBEXEC}
 LDADD+=	-lsys -lexec
 
-MAN=
-
-BINDIR?= /usr/sbin
-
 CPPFLAGS+=	-I${NETBSDSRCDIR}/minix
 
 .include <minix.service.mk>
