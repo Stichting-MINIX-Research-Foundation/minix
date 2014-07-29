@@ -124,14 +124,6 @@
 ./home/bin/.profile			minix-sys
 ./lib					minix-sys
 ./mnt					minix-sys
-./multiboot				minix-sys
-./multiboot/kernel			minix-sys
-./multiboot/mod01_ds			minix-sys
-./multiboot/mod02_rs			minix-sys
-./multiboot/mod03_pm			minix-sys
-./multiboot/mod04_sched			minix-sys
-./multiboot/mod05_vfs			minix-sys
-./multiboot/mod06_memory		minix-sys
 ./proc					minix-sys
 ./root					minix-sys
 ./root/.exrc				minix-sys

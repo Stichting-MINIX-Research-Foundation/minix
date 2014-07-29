@@ -98,15 +98,12 @@ do-hdboot:
 	${INSTALL_FILE} $$i $$newname;				\
 	echo ${INSTALL_FILE} $$i $$newname;			\
 	done
-	@cp ${PROGROOT}/minix/kernel/kernel ${DESTDIR}/boot/minix/.temp/
+	@${INSTALL_FILE} ${KERNEL} ${DESTDIR}/boot/minix/.temp/
 	@if [ "${MKINSTALLBOOT:Uno}" != "no" ] ; then		\
 	${STRIP} -s ${DESTDIR}/boot/minix/.temp/* ;		\
 	gzip ${DESTDIR}/boot/minix/.temp/mod* ;			\
 	${HOST_SH} mkboot hdboot ${DESTDIR};			\
 	${HOST_SH} ../minix/commands/update_bootcfg/update_bootcfg.sh;\
-	else							\
-	${INSTALL_DIR} ${DESTDIR}/multiboot;			\
-	${INSTALL_FILE} ${DESTDIR}/boot/minix/.temp/* ${DESTDIR}/multiboot; \
 	fi
 
 # download and update NetBSD reference sources.

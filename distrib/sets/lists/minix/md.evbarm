@@ -7,11 +7,6 @@
 ./etc/rc.capes/BB-BONE-WTHR-01		minix-sys
 ./etc/system.conf.d/lan8710a		minix-sys
 ./etc/system.conf.d/usbd		minix-sys
-./multiboot/mod07_tty			minix-sys
-./multiboot/mod08_mfs			minix-sys
-./multiboot/mod09_vm			minix-sys
-./multiboot/mod10_pfs			minix-sys
-./multiboot/mod11_init			minix-sys
 ./sbin/gpio				minix-sys
 ./usr/bin/eepromread			minix-sys
 ./usr/include/arm			minix-sys

@@ -13,7 +13,7 @@ set -e
 : ${CREATE_IMAGE_ONLY=0}
 
 # Where the kernel & boot modules will be
-MODDIR=${DESTDIR}/multiboot
+MODDIR=${DESTDIR}/boot/minix/.temp
 
 #
 # Directory where to store temporary file system images

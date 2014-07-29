@@ -731,7 +731,7 @@ cp /usr/mdec/boot_monitor /mnt/
 minixdir=/mnt/boot/minix_default
 if [ ! -f $minixdir/kernel ]
 then	rm -rf $minixdir
-	cp -r /mnt/multiboot $minixdir
+	cp -r /mnt/boot/minix/.temp $minixdir
 fi
 if [ ! -e /mnt/boot/minix_latest ]
 then	ln -sf minix_default /mnt/boot/minix_latest

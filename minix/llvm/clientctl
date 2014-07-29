@@ -104,7 +104,7 @@ case "$mode" in
         opts="$opts -nographic"
         append="$append console=tty00"
     fi
-    (cd ../../../obj.i386/destdir.i386/multiboot && $HYPER -kernel kernel -append "$append" $opts -initrd "mod01_ds,mod02_rs,mod03_pm,mod04_sched,mod05_vfs,mod06_memory,mod07_tty,mod08_mfs,mod09_vm,mod10_pfs,mod11_init")
+    (cd ../../../obj.i386/destdir.i386/boot/minix/.temp && $HYPER -kernel kernel -append "$append" $opts -initrd "mod01_ds,mod02_rs,mod03_pm,mod04_sched,mod05_vfs,mod06_memory,mod07_tty,mod08_mfs,mod09_vm,mod10_pfs,mod11_init")
     ;;
   *)
     echo "Invalid action: $mode"

@@ -11,11 +11,6 @@
 ./etc/system.conf.d/rtl8139		minix-sys
 ./etc/system.conf.d/rtl8169		minix-sys
 ./etc/system.conf.d/virtio_net		minix-sys
-./multiboot/mod07_tty			minix-sys
-./multiboot/mod08_mfs			minix-sys
-./multiboot/mod09_vm			minix-sys
-./multiboot/mod10_pfs			minix-sys
-./multiboot/mod11_init			minix-sys
 ./sbin/ahci				minix-sys
 ./sbin/at_wini				minix-sys
 ./sbin/floppy				minix-sys
