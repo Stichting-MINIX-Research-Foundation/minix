@@ -27,7 +27,7 @@ then	echo Please install pkg_install from pkgsrc.
 fi
 
 # Packages we have to pre-install, and url to use
-PACKAGEURL=ftp://ftp.minix3.org/pub/minix/packages/$version_pretty/`uname -m`/All/
+PACKAGEURL=http://www.minix3.org/pkgsrc/packages/$version_pretty/`uname -m`/All/
 PREINSTALLED_PACKAGES="
 	pkg_install
 	pkgin
