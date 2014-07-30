@@ -1,7 +1,7 @@
 # Makefile for the EARM USBD
 
 PROG=		usbd
-SRCS=		usbd.c usbd_earm.c hcd.c hcd_common.c hcd_ddekit.c musb_am335x.c musb_core.c
+SRCS=		usbd.c usbd_earm.c hcd.c hcd_common.c hcd_ddekit.c hcd_schedule.c musb_am335x.c musb_core.c
 MAN=
 BINDIR=		/service
 

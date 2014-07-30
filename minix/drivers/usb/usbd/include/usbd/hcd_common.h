@@ -124,10 +124,13 @@ hcd_direction;
 /* Possible asynchronous HCD events */
 typedef enum {
 
-	HCD_EVENT_CONNECTED,
+	HCD_EVENT_CONNECTED = 0,
 	HCD_EVENT_DISCONNECTED,
+	HCD_EVENT_PORT_CONNECTED,
+	HCD_EVENT_PORT_DISCONNECTED,
 	HCD_EVENT_ENDPOINT,
-	HCD_EVENT_URB
+	HCD_EVENT_URB,
+	HCD_EVENT_INVALID = 0xFF
 }
 hcd_event;
 
@@ -189,6 +192,7 @@ struct hcd_urb {
 	/* Basic */
 	void * original_urb;
 	hcd_device_state * target_device;
+	void (*handled)(void);	/* URB handled callback */
 
 	/* Transfer (in/out signifies what may be overwritten by HCD) */
 	hcd_ctrlrequest * in_setup;
@@ -207,12 +211,15 @@ struct hcd_urb {
 /* Current state of attached device */
 struct hcd_device_state {
 
-	hcd_driver_state * driver;	/* Specific HCD driver object */
+	hcd_device_state * parent;		/* In case of hub attachment */
+	hcd_driver_state * driver;		/* Specific HCD driver object */
 	hcd_thread * thread;
 	hcd_lock * lock;
 	void * data;
 
-	hcd_urb urb;
+	hcd_urb * urb;				/* URB to be used by device */
+	hcd_event wait_event;			/* Expected event */
+	hcd_reg1 wait_ep;			/* Expected event's endpoint */
 	hcd_device_descriptor device_desc;
 	hcd_configuration config_tree;
 	hcd_reg1 max_packet_size;
@@ -250,11 +257,14 @@ struct hcd_device_state {
 #define HCD_LAST_ADDR			0x7Fu
 #define HCD_LAST_EP			0x0Fu
 #define HCD_TOTAL_EP			0x10u
-#define HCD_ANY_EP			0xFFu
+#define HCD_UNUSED_VAL			0xFFu	/* When number not needed */
 
 /* Legal interval values */
 #define HCD_LOWEST_INTERVAL		0x00u
 #define HCD_HIGHEST_INTERVAL		0xFFu
+
+/* Max number of supported devices */
+#define HCD_NUM_MAX_DEVICES		0x08u
 
 /* TODO: One device only */
 #define HCD_ATTACHED_ADDR		0x01u
@@ -313,7 +323,7 @@ void hcd_disconnect_device(hcd_device_state *);
 void hcd_device_wait(hcd_device_state *, hcd_event, hcd_reg1);
 
 /* Unlocks device thread halted by 'hcd_device_wait' */
-void hcd_device_continue(hcd_device_state *);
+void hcd_device_continue(hcd_device_state *, hcd_event, hcd_reg1);
 
 
 /*===========================================================================*

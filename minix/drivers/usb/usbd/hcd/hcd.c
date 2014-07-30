@@ -21,13 +21,16 @@ static void hcd_device_thread(void *);
 /* Procedure that locks device thread forever in case of error/completion */
 static void hcd_device_finish(hcd_device_state *, const char *);
 
+/* Procedure that finds device, waiting for given EP interrupt */
+static hcd_device_state * hcd_get_child_for_ep(hcd_device_state *, hcd_reg1);
+
 /* Typical USD device communication procedures */
 static int hcd_enumerate(hcd_device_state *);
 static int hcd_get_device_descriptor(hcd_device_state *);
 static int hcd_set_address(hcd_device_state *, hcd_reg1);
 static int hcd_get_descriptor_tree(hcd_device_state *);
 static int hcd_set_configuration(hcd_device_state *, hcd_reg1);
-static int hcd_handle_urb(hcd_device_state *, hcd_urb *);
+static void hcd_handle_urb(hcd_device_state *, hcd_urb *);
 static int hcd_control_urb(hcd_device_state *, hcd_urb *);
 static int hcd_non_control_urb(hcd_device_state *, hcd_urb *);
 
@@ -40,11 +43,8 @@ static int hcd_data_transfer(hcd_device_state *, hcd_datarequest *);
 /*===========================================================================*
  *    Local definitions                                                      *
  *===========================================================================*/
-/* TODO: Only one device at a time
- * If ever HUB functionality is added, one must remember that disconnecting
- * HUB, means disconnecting every device attached to it, so data structure may
- * have to be altered to allow that */
-static hcd_device_state hcd_device[1];
+/* Array of available devices */
+static hcd_device_state hcd_device[HCD_NUM_MAX_DEVICES];
 
 /* TODO: This was added for compatibility with DDELinux drivers that
  * allow receiving less data than expected in URB, without error */
@@ -55,69 +55,152 @@ static hcd_device_state hcd_device[1];
  *    hcd_handle_event                                                       *
  *===========================================================================*/
 void
-hcd_handle_event(hcd_driver_state * driver)
+hcd_handle_event(hcd_device_state * device, hcd_event event, hcd_reg1 val)
 {
-	hcd_device_state * this_device;
-
 	DEBUG_DUMP;
 
-	/* TODO: Finding which hcd_device is in use should be performed here */
-	this_device = &(hcd_device[0]);
-
-	/* Sometimes interrupts occur in a weird order (EP after disconnect)
-	 * This helps finding ordering errors in DEBUG */
-	USB_DBG("Event: 0x%02X, state: 0x%02X",
-		driver->current_event, this_device->state);
-
-	/* Set what was received for device thread to use */
-	this_device->driver = driver;
+	/* No device may be supplied */
+	if (NULL == device) {
+		USB_MSG("No device available for event: 0x%02X, value: 0x%02X",
+			event, val);
+		return;
+	}
 
 	/* Handle event and forward control to device thread when required */
-	switch (driver->current_event) {
+	switch (event) {
 		case HCD_EVENT_CONNECTED:
-			if (HCD_STATE_DISCONNECTED == this_device->state) {
-				if (EXIT_SUCCESS != hcd_connect_device(
-							this_device,
-							hcd_device_thread))
-					USB_MSG("Device creation failed");
-			} else
-				USB_MSG("Device not marked as 'disconnected' "
-					"for 'connection' event");
+			USB_ASSERT((HCD_STATE_DISCONNECTED == device->state),
+				"Device not marked as 'disconnected' "
+				"for 'connection' event");
+
+			/* Mark as 'plugged in' first */
+			device->state = HCD_STATE_CONNECTION_PENDING;
+
+			/* Try creating new thread for device */
+			if (hcd_connect_device(device, hcd_device_thread))
+				USB_MSG("Device creation failed, nothing more "
+					"will happen until disconnected");
 
 			break;
 
 		case HCD_EVENT_DISCONNECTED:
-			if (HCD_STATE_DISCONNECTED != this_device->state) {
-				/* If connect callback was used before, call
-				 * it's equivalent to signal disconnection */
-				if (HCD_STATE_CONNECTED == this_device->state)
-					hcd_disconnect_cb(this_device);
-				hcd_disconnect_device(this_device);
-				this_device->state = HCD_STATE_DISCONNECTED;
+			USB_ASSERT((HCD_STATE_DISCONNECTED != device->state),
+				"Device is marked as 'disconnected' "
+				"for 'disconnection' event");
 
-				/* Finally, zero everything to allow
-				 * further connections with this object */
-				memset(this_device, 0x00, sizeof(*this_device));
-			} else
-				USB_MSG("Device is marked as 'disconnected' "
-					"for 'disconnection' event");
+			/* If connect callback was used before, call
+			 * it's equivalent to signal disconnection */
+			if (HCD_STATE_CONNECTED == device->state)
+				hcd_disconnect_cb(device);
+
+			hcd_disconnect_device(device);
+			device->state = HCD_STATE_DISCONNECTED;
+
+			/* Finally, zero everything to allow
+			 * further connections with this object */
+			memset(device, 0x00, sizeof(*device));
 
 			break;
 
+		case HCD_EVENT_PORT_CONNECTED:
+			/* TODO: Actual port handling */
+			USB_MSG("Device connected to hub's port");
+			break;
+
+		case HCD_EVENT_PORT_DISCONNECTED:
+			/* TODO: Actual port handling */
+			USB_MSG("Device disconnected from hub's port");
+			break;
+
 		case HCD_EVENT_ENDPOINT:
-		case HCD_EVENT_URB:
-			/* Allow device thread to continue with it's logic */
-			if (HCD_STATE_DISCONNECTED != this_device->state)
-				hcd_device_continue(this_device);
+			USB_ASSERT((HCD_STATE_DISCONNECTED != device->state),
+				"Parent device is marked as 'disconnected' "
+				"for 'endpoint' event");
+
+			/* Alters 'device' when endpoint is allocated to
+			 * child rather than parent (hub), which allows
+			 * proper thread to continue */
+			device = hcd_get_child_for_ep(device, val);
+
+			/* Check if anything at all, waits for such endpoint */
+			if (device)
+				/* Allow device thread, waiting for endpoint
+				 * event, to continue with its logic */
+				hcd_device_continue(device, event, val);
 			else
-				USB_MSG("Device is marked as 'disconnected' "
-					"for 'EP' event");
+				USB_MSG("No device waits for endpoint %u", val);
+
+			break;
+
+		case HCD_EVENT_URB:
+			USB_ASSERT((HCD_STATE_DISCONNECTED != device->state),
+				"Device is marked as 'disconnected' "
+				"for 'URB' event");
+
+			/* Allow device thread to continue with it's logic */
+			hcd_device_continue(device, event, val);
 
 			break;
 
 		default:
 			USB_ASSERT(0, "Illegal HCD event");
+	}
+}
+
+
+/*===========================================================================*
+ *    hcd_update_port                                                        *
+ *===========================================================================*/
+void
+hcd_update_port(hcd_driver_state * driver, hcd_event event)
+{
+	hcd_device_state * d;
+	int devnum;
+
+	const int maxdevs = (sizeof(hcd_device) / sizeof(hcd_device[0]));
+
+	DEBUG_DUMP;
+
+	switch (event) {
+		case HCD_EVENT_CONNECTED:
+			/* Check if already assigned */
+			USB_ASSERT(NULL == driver->port_device,
+				"Device was already connected before "
+				"receiving 'connection' event");
+
+			/* For short */
+			d = hcd_device;
+
+			/* Find first unused device */
+			for (devnum = 0; devnum < maxdevs; devnum++) {
+				if (HCD_STATE_DISCONNECTED == d[devnum].state) {
+					/* Assign free device */
+					driver->port_device = &(d[devnum]);
+					/* Associate this device with driver */
+					driver->port_device->driver = driver;
+					/* Device found, exit */
+					return;
+				}
+			}
+
+			/* Nothing found */
+			USB_MSG("Device limit reached, no more "
+				"free device structures to use");
+
 			break;
+
+		case HCD_EVENT_DISCONNECTED:
+			/* Check if already released */
+			USB_ASSERT(NULL != driver->port_device,
+				"Device was already disconnected before "
+				"receiving 'disconnection' event");
+
+			/* Clear port device */
+			driver->port_device = NULL;
+			break;
+
+		default:
+			USB_ASSERT(0, "Illegal port update event");
 	}
 }
 
@@ -135,9 +218,6 @@ hcd_device_thread(void * thread_args)
 	/* Retrieve structures from generic data */
 	this_device = (hcd_device_state *)thread_args;
 
-	/* Plugged in */
-	this_device->state = HCD_STATE_CONNECTION_PENDING;
-
 	/* Enumeration sequence */
 	if (EXIT_SUCCESS != hcd_enumerate(this_device))
 		hcd_device_finish(this_device, "USB device enumeration failed");
@@ -153,11 +233,8 @@ hcd_device_thread(void * thread_args)
 	/* Start handling URB's */
 	for(;;) {
 		/* Block and wait for something like 'submit URB' */
-		hcd_device_wait(this_device, HCD_EVENT_URB, HCD_ANY_EP);
-
-		if (EXIT_SUCCESS != hcd_handle_urb(this_device,
-						&(this_device->urb)))
-			hcd_device_finish(this_device, "URB handling failed");
+		hcd_device_wait(this_device, HCD_EVENT_URB, HCD_UNUSED_VAL);
+		hcd_handle_urb(this_device, this_device->urb);
 	}
 
 	/* Finish device handling to avoid leaving thread */
@@ -177,9 +254,25 @@ hcd_device_finish(hcd_device_state * this_device, const char * finish_msg)
 
 	/* Lock forever */
 	for (;;) {
-		hcd_device_wait(this_device, HCD_EVENT_URB, HCD_ANY_EP);
+		hcd_device_wait(this_device, HCD_EVENT_URB, HCD_UNUSED_VAL);
 		USB_MSG("Failed attempt to continue finished thread");
 	}
+}
+
+
+/*===========================================================================*
+ *    hcd_get_child_for_ep                                                   *
+ *===========================================================================*/
+static hcd_device_state *
+hcd_get_child_for_ep(hcd_device_state * device, hcd_reg1 ep)
+{
+	DEBUG_DUMP;
+
+	/* TODO: When device has multiple children (hub),
+	 * this will allow routing interrupt login downstream */
+	((void)ep);
+
+	return device;
 }
 
 
@@ -462,15 +555,13 @@ hcd_set_configuration(hcd_device_state * this_device, hcd_reg1 configuration)
 /*===========================================================================*
  *    hcd_handle_urb                                                         *
  *===========================================================================*/
-static int
+static void
 hcd_handle_urb(hcd_device_state * this_device, hcd_urb * urb)
 {
 	int transfer_status;
 
 	DEBUG_DUMP;
 
-	/* TODO: One device only */
-	USB_ASSERT(NULL != urb, "NULL URB given");
 	USB_ASSERT(this_device == urb->target_device, "Unknown device for URB");
 
 	/* Only if URB parsing was completed... */
@@ -491,13 +582,8 @@ hcd_handle_urb(hcd_device_state * this_device, hcd_urb * urb)
 							this_device, urb);
 				break;
 
-			case HCD_TRANSFER_ISOCHRONOUS:
-				/* TODO: ISO transfer */
-				USB_MSG("ISO transfer not supported");
-				break;
-
 			default:
-				USB_MSG("Invalid transfer type 0x%02X",
+				USB_MSG("Unsupported transfer type 0x%02X",
 							(int)urb->type);
 				break;
 		}
@@ -509,13 +595,8 @@ hcd_handle_urb(hcd_device_state * this_device, hcd_urb * urb)
 	} else
 		USB_MSG("Invalid URB supplied");
 
-	/* Call completion regardless of status */
-	hcd_completion_cb(urb);
-
-	/* TODO: Only critical failures should ever yield EXIT_FAILURE, so
-	 * return is not bound to transfer_status for now, to let device
-	 * driver act accordingly */
-	return EXIT_SUCCESS;
+	/* Signal scheduler that URB was handled */
+	urb->handled();
 }
 
 

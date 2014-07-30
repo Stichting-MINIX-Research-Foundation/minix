@@ -12,6 +12,7 @@
 
 #include <usbd/usbd_common.h>
 #include <usbd/usbd_interface.h>
+#include <usbd/usbd_schedule.h>
 
 
 /*===========================================================================*
@@ -129,8 +130,17 @@ usbd_start(void)
 
 	/* After spawning, allow server thread to work */
 	if (NULL != usbd_th) {
-		/* This will lock current thread until DDEKit exits */
-		ddekit_minix_wait_exit();
+
+		/* Allow URB scheduling */
+		if (usbd_init_scheduler()) {
+			USB_MSG("Failed to start URB scheduler");
+		} else {
+			/* This will lock current thread until DDEKit exits */
+			ddekit_minix_wait_exit();
+		}
+
+		/* Disallow URB scheduling */
+		usbd_deinit_scheduler();
 
 		/* Cleanup */
 		ddekit_thread_terminate(usbd_th);

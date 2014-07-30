@@ -223,3 +223,32 @@ int usb_handle_msg(struct usb_driver *ud, message *msg)
 	}
 }
 
+
+/*****************************************************************************
+ *         usb_send_info                                                     *
+ *****************************************************************************/
+int
+usb_send_info(long info_type, long info_value)
+{
+	int res;
+	message msg;
+
+	/* Prepare message */
+	msg.m_type		= USB_RQ_SEND_INFO;
+	msg.USB_INFO_TYPE	= info_type;
+	msg.USB_INFO_VALUE	= info_value;
+
+	/* Send/receive message */
+	res = ipc_sendrec(hcd_ep, &msg);
+
+	if (res != 0)
+		panic("usb_send_info: could not talk to HCD: %d", res);
+
+	if (msg.m_type != USB_REPLY)
+		panic("usb_send_info: got illegal response from HCD: %d", msg.m_type);
+
+	if (msg.USB_RESULT != 0)
+		panic("usb_send_info: got illegal response from HCD: %d", msg.m_type);
+
+	return msg.USB_RESULT;
+}

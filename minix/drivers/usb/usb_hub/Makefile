@@ -13,8 +13,4 @@ LDADD+=-lddekit_usb_client -lddekit -lusb -lsys -lminlib
 #LDADD+=-Wl,-Ttext=0x800000
 #CPPFLAGS+=-DHUB_DEBUG
 
-MAN=
-
-BINDIR?= /usr/sbin
-
 .include <minix.service.mk>

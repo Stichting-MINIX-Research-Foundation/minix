@@ -8,6 +8,7 @@
 
 #include <usbd/hcd_ddekit.h>
 #include <usbd/hcd_interface.h>
+#include <usbd/hcd_schedule.h>
 #include <usbd/usbd_common.h>
 
 
@@ -16,7 +17,7 @@
  *===========================================================================*/
 /*
  * In this file "struct ddekit_usb_dev" equals "hcd_device_state"
- * */
+ */
 struct ddekit_usb_device_id;
 struct ddekit_usb_urb;
 struct ddekit_usb_dev;
@@ -24,6 +25,13 @@ struct ddekit_usb_dev;
 /* Translates DDEKit UBR to one used by HCD */
 static void hcd_decode_urb(hcd_urb *, struct ddekit_usb_urb *);
 static void hcd_encode_urb(hcd_urb *, struct ddekit_usb_urb *);
+
+/* HCD's URB create/destroy */
+static hcd_urb * hcd_new_urb(void);
+static void hcd_free_urb(hcd_urb *);
+
+/* Decodes event from received info */
+static void hcd_decode_info(long, long, hcd_event *, hcd_reg1 *);
 
 
 /*===========================================================================*
@@ -177,35 +185,22 @@ int
 ddekit_usb_submit_urb(struct ddekit_usb_urb * d_urb)
 {
 	hcd_device_state * dev;
-	hcd_driver_state * drv;
+	hcd_urb * urb;
 
 	DEBUG_DUMP;
 
-	/* Retrieve info on device/driver state from DDEKit's USB */
+	/* Retrieve info on device state from DDEKit's URB */
 	dev = (hcd_device_state *)(d_urb->dev);
-	drv = (hcd_driver_state *)(dev->driver);
 
-	/* Check for latest URB completion */
-	if (NULL == dev->urb.original_urb) {
+	/* Get new URB */
+	urb = hcd_new_urb();
 
-		/* Remember original URB */
-		dev->urb.original_urb = (void *)d_urb;
+	/* Turn DDEKit URB format to one that is easier to
+	 * handle by HCD, also check if URB is valid */
+	hcd_decode_urb(urb, d_urb);
 
-		/* TODO: If multiple URB's have to be queued, this code
-		 * or DDEKit's must be altered accordingly */
-		/* Turn DDEKit URB format to one that is easier to
-		 * handle by HCD, also check if URB is valid */
-		hcd_decode_urb(&(dev->urb), d_urb);
-
-		/* Start handling URB event */
-		drv->current_event = HCD_EVENT_URB;
-		hcd_handle_event(drv);
-
-		return EXIT_SUCCESS;
-	}
-
-	/* Last URB must not have been completed */
-	return EXIT_FAILURE;
+	/* Add URB to scheduler */
+	return hcd_schedule_urb(urb);
 }
 
 
@@ -219,6 +214,31 @@ ddekit_usb_cancle_urb(struct ddekit_usb_urb * d_urb)
 	/* TODO: UNUSED for argument won't work */
 	((void)d_urb);
 	return EXIT_SUCCESS;
+}
+
+
+/*===========================================================================*
+ *    ddekit_usb_info                                                        *
+ *===========================================================================*/
+long
+ddekit_usb_info(struct ddekit_usb_dev * dev, long type, long value)
+{
+	hcd_event event;
+	hcd_reg1 val;
+
+	DEBUG_DUMP;
+
+	/* Decode event */
+	hcd_decode_info(type, value, &event, &val);
+
+	if (HCD_EVENT_INVALID == event) {
+		USB_MSG("Invalid info message received");
+		return EXIT_FAILURE;
+	} else {
+		/* Let HCD handle info message */
+		hcd_handle_event((hcd_device_state *)dev, event, val);
+		return EXIT_SUCCESS;
+	}
 }
 
 
@@ -290,13 +310,16 @@ hcd_completion_cb(hcd_urb * urb)
 	/* Recollect original URB */
 	d_urb = (struct ddekit_usb_urb *)urb->original_urb;
 
+	/* This URB will be scheduled no more */
+	hcd_unschedule_urb(urb);
+
 	/* Turn HCD URB format to one handled by DDEKit */
 	hcd_encode_urb(urb, d_urb);
 
-	completion_cb(d_urb->priv);
+	/* No need for this URB anymore */
+	hcd_free_urb(urb);
 
-	/* URB was handled, forget about it */
-	urb->original_urb = NULL;
+	completion_cb(d_urb->priv);
 }
 
 
@@ -307,6 +330,9 @@ static void
 hcd_decode_urb(hcd_urb * urb, struct ddekit_usb_urb * dde_urb)
 {
 	DEBUG_DUMP;
+
+	/* Remember original */
+	urb->original_urb = (void *)dde_urb;
 
 	/* No UBR error initially */
 	urb->inout_status = EXIT_SUCCESS;
@@ -397,7 +423,57 @@ hcd_encode_urb(hcd_urb * urb, struct ddekit_usb_urb * dde_urb)
 {
 	DEBUG_DUMP;
 
+	/* Data buffers are the same, no need to copy */
 	/* Rewrite output for DDEKit part */
 	dde_urb->actual_length = urb->out_size;
 	dde_urb->status = urb->inout_status;
+}
+
+
+/*===========================================================================*
+ *    hcd_new_urb                                                            *
+ *===========================================================================*/
+static hcd_urb *
+hcd_new_urb(void)
+{
+	DEBUG_DUMP;
+	return malloc(sizeof(hcd_urb));
+}
+
+
+/*===========================================================================*
+ *    hcd_free_urb                                                           *
+ *===========================================================================*/
+static void
+hcd_free_urb(hcd_urb * urb)
+{
+	DEBUG_DUMP;
+	free(urb);
+}
+
+
+/*===========================================================================*
+ *    hcd_decode_info                                                        *
+ *===========================================================================*/
+static void
+hcd_decode_info(long type, long invalue, hcd_event * event, hcd_reg1 * outvalue)
+{
+	DEBUG_DUMP;
+
+	USB_ASSERT((invalue >= 0) && (invalue <= 0xFF),
+		"Illegal USB info value received");
+
+	switch ((ddekit_msg_type_t)type) {
+		case DDEKIT_HUB_PORT_CONN:
+			*event = HCD_EVENT_PORT_CONNECTED;
+			break;
+		case DDEKIT_HUB_PORT_DISCONN:
+			*event = HCD_EVENT_PORT_DISCONNECTED;
+			break;
+		default:
+			*event = HCD_EVENT_INVALID;
+			break;
+	}
+
+	*outvalue = (hcd_reg1)invalue;
 }

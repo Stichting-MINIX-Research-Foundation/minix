@@ -479,6 +479,11 @@ hub_task(void * UNUSED(arg))
 					}
 					/* Block this port forever */
 					s->conn[port] = HUB_PORT_ERROR;
+
+					HUB_MSG("Port%d status ERROR", port);
+					HUB_MSG("Port%d will be blocked, until "
+						"hub is detached", port);
+
 					break;
 
 				case HUB_CHANGE_COM_ERR:
@@ -827,7 +832,8 @@ hub_handle_connection(int port_num)
 
 	HUB_MSG("Device connected to port %d", port_num);
 
-	return EXIT_SUCCESS;
+	return ddekit_usb_info(driver_state.dev, (long)DDEKIT_HUB_PORT_CONN,
+				(long)port_num);
 }
 
 
@@ -841,5 +847,6 @@ hub_handle_disconnection(int port_num)
 
 	HUB_MSG("Device disconnected from port %d", port_num);
 
-	return EXIT_SUCCESS;
+	return ddekit_usb_info(driver_state.dev, (long)DDEKIT_HUB_PORT_DISCONN,
+				(long)port_num);
 }

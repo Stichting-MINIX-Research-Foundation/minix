@@ -775,7 +775,8 @@
 #define USB_RQ_DEINIT        (USB_BASE +  1) /* Quit the session */
 #define USB_RQ_SEND_URB      (USB_BASE +  2) /* Send URB */
 #define USB_RQ_CANCEL_URB    (USB_BASE +  3) /* Cancel URB */
-#define USB_REPLY            (USB_BASE +  4) 
+#define USB_RQ_SEND_INFO     (USB_BASE +  4) /* Sends various information */
+#define USB_REPLY            (USB_BASE +  5)
 
 
 /* those are from USBD to driver */
@@ -792,6 +793,9 @@
 #   define USB_DRIVER_EP    m4_l2
 #   define USB_INTERFACES   m4_l3
 #   define USB_RB_INIT_NAME m3_ca1
+
+#   define USB_INFO_TYPE    m4_l1
+#   define USB_INFO_VALUE   m4_l2
 
 /*===========================================================================*
  *              Messages for DeviceManager (s/t like SysFS)                  *

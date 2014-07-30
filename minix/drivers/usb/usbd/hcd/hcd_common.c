@@ -235,20 +235,16 @@ hcd_disconnect_device(hcd_device_state * this_device)
  *    hcd_device_wait                                                        *
  *===========================================================================*/
 void
-hcd_device_wait(hcd_device_state * this_device, hcd_event event, hcd_reg1 ep)
+hcd_device_wait(hcd_device_state * device, hcd_event event, hcd_reg1 ep)
 {
-	hcd_driver_state * drv;
-
 	DEBUG_DUMP;
 
-	drv = (hcd_driver_state *)this_device->driver;
+	USB_DBG("Device 0x%08X wait (0x%02X, 0x%02X)", device, event, ep);
 
-	drv->expected_event = event;
-	drv->expected_endpoint = ep;
+	device->wait_event = event;
+	device->wait_ep = ep;
 
-	USB_DBG("Waiting for: ev=0x%X, ep=0x%X", (int)event, ep);
-
-	ddekit_sem_down(this_device->lock);
+	ddekit_sem_down(device->lock);
 }
 
 
@@ -256,25 +252,16 @@ hcd_device_wait(hcd_device_state * this_device, hcd_event event, hcd_reg1 ep)
  *    hcd_device_continue                                                    *
  *===========================================================================*/
 void
-hcd_device_continue(hcd_device_state * this_device)
+hcd_device_continue(hcd_device_state * device, hcd_event event, hcd_reg1 ep)
 {
-	hcd_driver_state * drv;
-
 	DEBUG_DUMP;
 
-	drv = (hcd_driver_state *)this_device->driver;
+	USB_DBG("Device 0x%08X continue (0x%02X, 0x%02X)", device, event, ep);
 
-	/* We need to get what was expected... */
-	USB_ASSERT(drv->current_event == drv->expected_event,
-		"Unexpected event occurred");
+	USB_ASSERT(device->wait_event == event, "Unexpected event");
+	USB_ASSERT(device->wait_ep == ep, "Unexpected endpoint");
 
-	/* ...including endpoint interrupts */
-	if (HCD_EVENT_ENDPOINT == drv->current_event) {
-		USB_ASSERT(drv->current_endpoint == drv->expected_endpoint,
-			"Unexpected endpoint interrupt");
-	}
-
-	ddekit_sem_up(this_device->lock);
+	ddekit_sem_up(device->lock);
 }
 
 
