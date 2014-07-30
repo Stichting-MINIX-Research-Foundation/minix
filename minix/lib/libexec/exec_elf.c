@@ -58,6 +58,8 @@ static int elf_ph_sane(Elf_Phdr *phdr)
 static int elf_unpack(char *exec_hdr,
 	int hdr_len, Elf_Ehdr **hdr, Elf_Phdr **phdr)
 {
+  assert(hdr_len >= sizeof(Elf_Ehdr));
+
   *hdr = (Elf_Ehdr *) exec_hdr;
   if(!elf_sane(*hdr)) {
   	return ENOEXEC;

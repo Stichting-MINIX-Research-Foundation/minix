@@ -7,6 +7,8 @@
 
 #include <paths.h>
 
+#include <sys/exec_elf.h>
+
 #include "inc.h"
 
 #include "kernel/proc.h"
@@ -1271,6 +1273,9 @@ struct rproc *rp;
   r= stat(e_name, &sb);
   if (r != 0) 
       return -errno;
+
+  if (sb.st_size < sizeof(Elf_Ehdr))
+      return ENOEXEC;
 
   fd= open(e_name, O_RDONLY);
   if (fd == -1)
