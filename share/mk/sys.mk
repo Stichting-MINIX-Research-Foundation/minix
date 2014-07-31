@@ -21,6 +21,15 @@ unix?=		We run MINIX.
 CPPFLAGS+= -DNDEBUG
 DBG=	-Os
 .endif
+
+#LSC: Be a bit smarter about the default compiler
+.if exists(/usr/pkg/bin/clang) || exists(/usr/bin/clang)
+CC?=	clang
+.endif
+
+.if exists(/usr/pkg/bin/gcc) || exists(/usr/bin/gcc)
+CC?=	gcc
+.endif
 .endif # defined(__MINIX)
 
 .LIBS:		.a

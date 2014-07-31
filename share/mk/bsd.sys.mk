@@ -7,7 +7,16 @@ _BSD_SYS_MK_=1
 
 .if ${HOST_OSTYPE:C/\-.*//:U} == "Minix"
 HOST_LDFLAGS?=	-static
+
+#LSC: Be a bit smarter about the default compiler
+.if exists(/usr/pkg/bin/clang) || exists(/usr/bin/clang)
+HOST_CC?=   clang
 .endif
+
+.if exists(/usr/pkg/bin/gcc) || exists(/usr/bin/gcc)
+HOST_CC?=   gcc
+.endif
+.endif # ${HOST_OSTYPE:C/\-.*//:U} == "Minix"
 
 .if ${MKREPRO:Uno} == "yes"
 CPPFLAGS+=	-Wp,-iremap,${NETBSDSRCDIR}:/usr/src
