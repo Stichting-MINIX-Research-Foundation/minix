@@ -185,8 +185,8 @@ HOST_LN?=	ln
 HOST_SH?=	/bin/sh
 
 ELF2ECOFF?=	elf2ecoff
-MKDEP?=		mkdep
-MKDEPCXX?=	mkdep
+MKDEP?=		CC=${CC:Q} mkdep
+MKDEPCXX?=	CC=${CXX:Q} mkdep
 OBJCOPY?=	objcopy
 OBJDUMP?=	objdump
 PAXCTL?=	paxctl

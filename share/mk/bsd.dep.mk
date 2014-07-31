@@ -7,8 +7,8 @@ realdepend:	beforedepend .depend afterdepend
 beforedepend .depend afterdepend: # ensure existence
 
 ##### Default values
-MKDEP?=			mkdep
-MKDEPCXX?=		mkdep
+MKDEP?=			CC=${CC:Q} mkdep
+MKDEPCXX?=		CC=${CXX:Q} mkdep
 MKDEP_SUFFIXES?=	.o
 
 ##### Build rules
