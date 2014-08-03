@@ -43,7 +43,6 @@ MLINKS += ash.1 set.1
 MLINKS += ash.1 setvar.1
 MLINKS += ash.1 shift.1
 MLINKS += ash.1 trap.1
-MLINKS += ash.1 umask.1
 MLINKS += ash.1 unset.1
 MLINKS += ash.1 wait.1
 MLINKS += compress.1 uncompress.1

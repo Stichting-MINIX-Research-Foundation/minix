@@ -36,6 +36,6 @@ SUBDIR=	add_route arp ash at backup btrace \
 	autopart part partition playwave  \
 	recwave repartition screendump \
 	command expr read test \
-       	umask wait
+       	wait
 
 .include <bsd.subdir.mk>

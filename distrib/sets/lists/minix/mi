@@ -50,7 +50,7 @@
 ./bin/sysenv				minix-sys
 ./bin/tar				minix-sys
 ./bin/test				minix-sys
-./bin/umask				minix-sys
+./bin/umask				minix-sys	obsolete
 ./bin/umount				minix-sys
 ./bin/updateboot			minix-sys
 ./bin/update_bootcfg			minix-sys
@@ -2515,7 +2515,7 @@
 ./usr/man/man1/tsort.1			minix-sys
 ./usr/man/man1/tty.1			minix-sys
 ./usr/man/man1/ul.1			minix-sys
-./usr/man/man1/umask.1			minix-sys
+./usr/man/man1/umask.1			minix-sys	obsolete
 ./usr/man/man1/umount.1			minix-sys
 ./usr/man/man1/uname.1			minix-sys
 ./usr/man/man1/uncompress.1		minix-sys

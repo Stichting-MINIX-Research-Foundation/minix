@@ -11,7 +11,6 @@ At this moment it is installed as the following commands:
 /bin/expr
 /bin/read
 /bin/test
-/bin/umask
 /bin/wait
 
 If one of the following is replaced by the NetBSD equivalent, please
