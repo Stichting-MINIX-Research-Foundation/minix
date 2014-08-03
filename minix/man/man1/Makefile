@@ -33,7 +33,6 @@ MLINKS += ash.1 exec.1
 MLINKS += ash.1 exit.1
 MLINKS += ash.1 export.1
 MLINKS += ash.1 for.1
-MLINKS += ash.1 getopts.1
 MLINKS += ash.1 hash.1
 MLINKS += ash.1 if.1
 MLINKS += ash.1 jobs.1

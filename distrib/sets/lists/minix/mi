@@ -21,7 +21,7 @@
 ./bin/echo				minix-sys
 ./bin/ed				minix-sys
 ./bin/expr				minix-sys
-./bin/getopts				minix-sys
+./bin/getopts				minix-sys	obsolete
 ./bin/hostname				minix-sys
 ./bin/intr				minix-sys
 ./bin/kill				minix-sys
@@ -2320,7 +2320,7 @@
 ./usr/man/man1/gcpp.1			minix-sys	gcccmds
 ./usr/man/man1/genassym.1		minix-sys
 ./usr/man/man1/getopt.1			minix-sys
-./usr/man/man1/getopts.1		minix-sys
+./usr/man/man1/getopts.1		minix-sys	obsolete
 ./usr/man/man1/gprof.1			minix-sys	binutils
 ./usr/man/man1/grep.1			minix-sys
 ./usr/man/man1/groups.1			minix-sys
