@@ -1,4 +1,4 @@
-MAN=	ash.1 at.1 \
+MAN=	at.1 \
 	bsfilt.1 cawf.1 chgrp.1 \
 	cmp.1 compress.1 \
 	crc.1 crontab.1 dd.1 \
@@ -21,33 +21,6 @@ MAN=	ash.1 at.1 \
 	uud.1 uue.1 vol.1 \
 	yap.1 linkfarm.1 pkg_view.1
 
-MLINKS += ash.1 sh.1
-MLINKS += ash.1 ..1
-MLINKS += ash.1 break.1
-MLINKS += ash.1 case.1
-MLINKS += ash.1 cd.1
-MLINKS += ash.1 command.1
-MLINKS += ash.1 continue.1
-MLINKS += ash.1 eval.1
-MLINKS += ash.1 exec.1
-MLINKS += ash.1 exit.1
-MLINKS += ash.1 export.1
-MLINKS += ash.1 for.1
-MLINKS += ash.1 getopts.1
-MLINKS += ash.1 hash.1
-MLINKS += ash.1 if.1
-MLINKS += ash.1 jobs.1
-MLINKS += ash.1 local.1
-MLINKS += ash.1 read.1
-MLINKS += ash.1 readonly.1
-MLINKS += ash.1 return.1
-MLINKS += ash.1 set.1
-MLINKS += ash.1 setvar.1
-MLINKS += ash.1 shift.1
-MLINKS += ash.1 trap.1
-MLINKS += ash.1 umask.1
-MLINKS += ash.1 unset.1
-MLINKS += ash.1 wait.1
 MLINKS += compress.1 uncompress.1
 MLINKS += svc.1 ci.1
 MLINKS += svc.1 co.1

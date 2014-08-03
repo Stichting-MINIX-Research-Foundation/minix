@@ -114,6 +114,8 @@
 ./usr/share/doc/html/bzip2
 ./usr/share/doc/psd
 ./usr/share/doc/psd/19.curses
+./usr/share/doc/usd
+./usr/share/doc/usd/03.shell
 ./usr/share/info
 ./usr/share/games
 ./usr/share/games/fortune

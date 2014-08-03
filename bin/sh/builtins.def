@@ -1,0 +1,93 @@
+#!/bin/sh -
+#	$NetBSD: builtins.def,v 1.22 2012/12/31 14:10:15 dsl Exp $
+#
+# Copyright (c) 1991, 1993
+#	The Regents of the University of California.  All rights reserved.
+#
+# This code is derived from software contributed to Berkeley by
+# Kenneth Almquist.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+# 3. Neither the name of the University nor the names of its contributors
+#    may be used to endorse or promote products derived from this software
+#    without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+# SUCH DAMAGE.
+#
+#	@(#)builtins.def	8.4 (Berkeley) 5/4/95
+
+#
+# This file lists all the builtin commands.  The first column is the name
+# of a C routine.
+# The -j flag specifies that this command is to be excluded from systems
+# without job control.
+# The -h flag specifies that this command is to be excluded from systems
+# based on the SMALL compile-time symbol.
+# The -s flag specifies that this is a posix 'special builtin' command.
+# The -u flag specifies that this is a posix 'standard utility'.
+# The rest of the line specifies the command name or names used to run
+# the command.
+
+bltincmd	-u command
+bgcmd -j	-u bg
+breakcmd	-s break -s continue
+cdcmd		-u cd chdir
+dotcmd		-s .
+echocmd		echo
+evalcmd		-s eval
+execcmd		-s exec
+exitcmd		-s exit
+expcmd		exp let
+exportcmd	-s export -s readonly
+falsecmd	-u false
+histcmd -h	-u fc
+inputrc		inputrc
+fgcmd -j	-u fg
+fgcmd_percent -j	-u %
+getoptscmd	-u getopts
+hashcmd		hash
+jobidcmd	jobid
+jobscmd		-u jobs
+localcmd	local
+#ifndef SMALL
+printfcmd	printf
+#endif
+pwdcmd		-u pwd
+readcmd		-u read
+returncmd	-s return
+setcmd		-s set
+setvarcmd	setvar
+shiftcmd	-s shift
+timescmd	-s times
+trapcmd		-s trap
+truecmd		-s : -u true
+typecmd		type
+umaskcmd	-u umask
+unaliascmd	-u unalias
+unsetcmd	-s unset
+waitcmd		-u wait
+aliascmd	-u alias
+ulimitcmd	ulimit
+testcmd		test [
+killcmd		-u kill		# mandated by posix for 'kill %job'
+wordexpcmd	wordexp
+#newgrp		-u newgrp	# optional command in posix
+
+#exprcmd	expr
