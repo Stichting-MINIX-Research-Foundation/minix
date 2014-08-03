@@ -1,296 +1,384 @@
 
-/* This file contains all the function that handle the dir records
- * (inodes) for the ISO9660 filesystem.*/
+/*
+ * This file contains all the function that handle the dir records
+ * (inodes) for the ISO9660 filesystem.
+ */
 
 #include "inc.h"
-#include "buf.h"
 #include <minix/vfsif.h>
+#include <sys/stat.h>
 
+static struct inode inodes[NR_INODE_RECORDS];
+static struct buf* fetch_inode(struct dir_extent *extent, size_t *offset);
 
-/*===========================================================================*
- *				fs_putnode				     *
- *===========================================================================*/
 int fs_putnode()
 {
-/* Find the inode specified by the request message and decrease its counter. */
-  int count;
-  struct dir_record *dir = NULL;
+	/*
+	 * Find the inode specified by the request message and decrease its
+	 * counter.
+	 */
+	int count = fs_m_in.m_vfs_fs_putnode.count;
+	struct inode *i_node = find_inode(fs_m_in.m_vfs_fs_putnode.inode);
 
-  dir = get_dir_record(fs_m_in.m_vfs_fs_putnode.inode);
-  release_dir_record(dir);
-  
-  count = fs_m_in.m_vfs_fs_putnode.count;
-
-  if (count <= 0) return(EINVAL);
-  
-  if (count > dir->d_count) {
-     printf("put_inode: count too high: %d > %d\n", count, dir->d_count);
-     return(EINVAL);
-  }
-
-  if (dir->d_count > 1)
-	dir->d_count = dir->d_count - count + 1;/*Keep at least one reference*/
-
-  release_dir_record(dir); /* Actual inode release, might be last reference */
-
-  return(OK);
-}
-
-
-/*===========================================================================*
- *				release_dir_record			     *
- *===========================================================================*/
-int release_dir_record(dir)
-struct dir_record *dir;
-{
-/* Release a dir record (decrement the counter) */
-  if (dir == NULL)
-	return(EINVAL);
-
-  if (--dir->d_count == 0) {    
-	if (dir->ext_attr != NULL)
-		dir->ext_attr->count = 0;
-	dir->ext_attr = NULL;
-	dir->d_mountpoint = FALSE;
-
-	dir->d_prior = NULL;
-	if (dir->d_next != NULL)
-		release_dir_record(dir);
-	dir->d_next = NULL;
-  }
-  return(OK);
-}
-
-
-/*===========================================================================*
- *				get_free_dir_record			     *
- *===========================================================================*/
-struct dir_record *get_free_dir_record(void)
-{
-/* Get a free dir record */
-  struct dir_record *dir;
-
-  for(dir = dir_records; dir < &dir_records[NR_ATTR_RECS]; dir++) {
-	if (dir->d_count == 0) {	/* The record is free */
-		dir->d_count = 1;		/* Set count to 1 */
-		dir->ext_attr = NULL;
-		return(dir);
+	if (i_node == NULL) {
+		printf("put_inode: trying to free unused inode\n");
+		panic("fs_putnode failed");
 	}
-  }
-
-  return(NULL);
-}
-
-
-/*===========================================================================*
- *				get_dir_record				     *
- *===========================================================================*/
-struct dir_record *get_dir_record(id_dir_record)
-ino_t id_dir_record;
-{
-  struct dir_record *dir = NULL;
-  u32_t address;
-  int i;
-
-  /* Search through the cache if the inode is still present */
-  for(i = 0; i < NR_DIR_RECORDS && dir == NULL; ++i) {
-	if (dir_records[i].d_ino_nr == id_dir_record
-					 && dir_records[i].d_count > 0) {
-		dir = dir_records + i;
-		dir->d_count++;
+	if (count <= 0) {
+		printf("put_inode: bad value for count: %d\n", count);
+		panic("fs_putnode failed");
 	}
-  }
-
-  if (dir == NULL) {
-	address = (u32_t)id_dir_record;
-	dir = load_dir_record_from_disk(address);
-  }
-
-  if (dir == NULL) return(NULL);
-  
-  return(dir);
-}
-
-
-/*===========================================================================*
- *				get_free_ext_attr				     *
- *===========================================================================*/
-struct ext_attr_rec *get_free_ext_attr(void) {
-/* Get a free extended attribute structure */
-  struct ext_attr_rec *dir;
-  for(dir = ext_attr_recs; dir < &ext_attr_recs[NR_ATTR_RECS]; dir++) {
-	if (dir->count == 0) {	/* The record is free */
-		dir->count = 1;
-		return(dir);
+	if (count > i_node->i_count) {
+		printf("put_inode: count too high: %d > %d\n", count, i_node->i_count);
+		panic("fs_putnode failed");
 	}
-  }
-  
-  return(NULL);
+
+	i_node->i_count -= count - 1;
+	put_inode(i_node);
+	return OK;
 }
 
-
-/*===========================================================================*
- *				create_ext_attr				     *
- *===========================================================================*/
-int create_ext_attr(struct ext_attr_rec *ext,char *buffer)
+struct inode* alloc_inode()
 {
-/* Fill an extent structure from the data read on the device */
-  if (ext == NULL) return(EINVAL);
+	/*
+	 * Return a free inode from the pool.
+	 */
+	static int i;
+	int end = i;
+	struct inode *i_node;
 
-  /* In input we have a stream of bytes that are physically read from the
-   * device. This stream of data is copied to the data structure. */
-  memcpy(&ext->own_id,buffer,sizeof(u32_t));
-  memcpy(&ext->group_id,buffer + 4,sizeof(u32_t));
-  memcpy(&ext->permissions,buffer + 8,sizeof(u16_t));
-  memcpy(&ext->file_cre_date,buffer + 10,ISO9660_SIZE_VOL_CRE_DATE);
-  memcpy(&ext->file_mod_date,buffer + 27,ISO9660_SIZE_VOL_MOD_DATE);
-  memcpy(&ext->file_exp_date,buffer + 44,ISO9660_SIZE_VOL_EXP_DATE);
-  memcpy(&ext->file_eff_date,buffer + 61,ISO9660_SIZE_VOL_EFF_DATE);
-  memcpy(&ext->rec_format,buffer + 78,sizeof(u8_t));
-  memcpy(&ext->rec_attrs,buffer + 79,sizeof(u8_t));
-  memcpy(&ext->rec_length,buffer + 80,sizeof(u32_t));
-  memcpy(&ext->system_id,buffer + 84,ISO9660_SIZE_SYS_ID);
-  memcpy(&ext->system_use,buffer + 116,ISO9660_SIZE_SYSTEM_USE);
-  memcpy(&ext->ext_attr_rec_ver,buffer + 180,sizeof(u8_t));
-  memcpy(&ext->len_esc_seq,buffer + 181,sizeof(u8_t));
+	i = (i + 1) % NR_INODE_RECORDS;
+	do {
+		i_node = &inodes[i];
 
-  return(OK);
-}
+		if (i_node->i_count == 0) {
+			free_extent(i_node->extent);
 
+			memset(i_node, 0, sizeof(*i_node));
+			i_node->i_count = 1;
 
-/*===========================================================================*
- *				create_ext_attr				     *
- *===========================================================================*/
-int create_dir_record(dir,buffer,address)
-struct dir_record *dir;
-char *buffer;
-u32_t address;
-{
-/* Fills a dir record structure from the data read on the device */
-/* If the flag assign id is active it will return the id associated;
- * otherwise it will return OK. */
-  short size;
+			return i_node;
+		}
 
-  size = buffer[0];
-  if (dir == NULL) return(EINVAL);
-  
-  /* The data structure dir record is filled with the stream of data
-   * that is read. */
-  dir->length = size;
-  dir->ext_attr_rec_length = *((u8_t*)buffer + 1);
-  memcpy(&dir->loc_extent_l,buffer + 2,sizeof(u32_t));
-  memcpy(&dir->loc_extent_m,buffer + 6,sizeof(u32_t));
-  memcpy(&dir->data_length_l,buffer + 10,sizeof(u32_t));
-  memcpy(&dir->data_length_m,buffer + 14,sizeof(u32_t));
-  memcpy(dir->rec_date,buffer + 18, sizeof(dir->rec_date));
-  dir->file_flags = *((u8_t*)buffer + 25);
-  dir->file_unit_size = *((u8_t*)buffer + 26);
-  dir->inter_gap_size = *((u8_t*)buffer + 27);
-  dir->vol_seq_number = *((u8_t*)buffer + 28);
-  dir->length_file_id = *((u8_t*)buffer + 32);
-  memcpy(dir->file_id,buffer + 33,dir->length_file_id);
-  dir->ext_attr = NULL;
-
-  /* set memory attrs */
-  if ((dir->file_flags & D_TYPE) == D_DIRECTORY)
-	dir->d_mode = I_DIRECTORY;
-  else
-	dir->d_mode = I_REGULAR;
-
-  /* Set permission to read only. Equal for all users. */
-  dir->d_mode |= R_BIT | X_BIT;
-  dir->d_mode |= R_BIT << 3 | X_BIT << 3;
-  dir->d_mode |= R_BIT << 6 | X_BIT << 6;
-
-  dir->d_mountpoint = FALSE;
-  dir->d_next = NULL;
-  dir->d_prior = NULL;
-  dir->d_file_size = dir->data_length_l;
-
-  /* Set physical address of the dir record */
-  dir->d_phy_addr = address;
-  dir->d_ino_nr = address;
-
-  return(OK);
-}
-
-
-/*===========================================================================*
- *			load_dir_record_from_disk			     *
- *===========================================================================*/
-struct dir_record *load_dir_record_from_disk(address)
-u32_t address;
-{
-/* This function load a particular dir record from a specific address
- * on the device */
- 
-  int block_nr, offset, block_size, new_pos;
-  struct buf *bp;
-  struct dir_record *dir, *dir_next, *dir_parent, *dir_tmp;
-  char name[NAME_MAX + 1];
-  char old_name[NAME_MAX + 1];
-  u32_t new_address, size;
-
-  block_size = v_pri.logical_block_size_l; /* Block size */
-  block_nr = address / block_size; /* Block number from the address */
-  offset = address % block_size; /* Offset starting from the block */
-
-  bp = get_block(block_nr);	/* Read the block from the device */
-  if (bp == NULL)
-	return(NULL);
-
-  dir = get_free_dir_record();	/* Get a free record */
-  if (dir == NULL)
-	return(NULL);
-
-  /* Fill the dir record with the data read from the device */
-  create_dir_record(dir,b_data(bp) + offset, address);
-
-  /* In case the file is composed of more file sections, load also the
-   * next section into the structure */
-  new_pos = offset + dir->length;
-  dir_parent = dir;
-  new_address = address + dir->length;
-  while (new_pos < block_size) {
-	dir_next = get_free_dir_record();
-	create_dir_record(dir_next, b_data(bp) + new_pos, new_address);
-
-	if (dir_next->length > 0) {
-		strncpy(name,dir_next->file_id,dir_next->length_file_id);
-		name[dir_next->length_file_id] = '\0';
-		strncpy(old_name, dir_parent->file_id,
-			dir_parent->length_file_id);
-		old_name[dir_parent->length_file_id] = '\0';
-      
-		if (strcmp(name, old_name) == 0) {
-			dir_parent->d_next = dir_next;
-			dir_next->d_prior = dir_parent;
-
-			/* Link the dir records */
-			dir_tmp = dir_next;
-			size = dir_tmp->data_length_l;
-
-			/* Update the file size */
-			while (dir_tmp->d_prior != NULL) {
-				dir_tmp = dir_tmp->d_prior;
-				size += dir_tmp->data_length_l;
-				dir_tmp->d_file_size = size;
-			}
-
-			new_pos += dir_parent->length;
-			new_address += dir_next->length;
-			dir_parent = dir_next;
-		} else {			/* This is another inode. */
-			release_dir_record(dir_next);
-			new_pos = block_size;
-		}      
-	} else {				/* record not valid */
-		release_dir_record(dir_next);
-		new_pos = block_size;		/* Exit from the while */
+		i = (i + 1) % NR_INODE_RECORDS;
 	}
-  }
+	while(i != end);
 
-  put_block(bp);		/* Release the block read. */
-  return(dir);
+	panic("No free inodes in cache");
+}
+
+struct inode* find_inode(ino_t i)
+{
+	/* Get inode from cache. */
+	int cpt;
+	struct inode *i_node;
+
+	if (i == 0)
+		return NULL;
+
+	for (cpt = 0; cpt < NR_INODE_RECORDS; cpt++) {
+		i_node = &inodes[cpt];
+
+		if ((i_node->i_stat.st_ino == i) && (i_node->i_count > 0))
+			return i_node;
+	}
+
+	return NULL;
+}
+
+struct inode* get_inode(ino_t i)
+{
+	struct inode *i_node;
+	struct dir_extent *extent;
+
+	if (i == 0)
+		return NULL;
+
+	/* Try to get inode from cache. */
+	i_node = find_inode(i);
+	if (i_node != NULL) {
+		dup_inode(i_node);
+		return i_node;
+	}
+
+	/*
+	 * Inode wasn't in cache, try to load it.
+	 * FIXME: a fake extent of one logical block is created for
+	 * read_inode(). Reading a inode this way could be problematic if
+	 * additional extents are stored behind the block boundary.
+	 */
+	i_node = alloc_inode();
+	extent = alloc_extent();
+	extent->location = i / v_pri.logical_block_size_l;
+	extent->length = 1;
+
+	if (read_inode(i_node, extent, i % v_pri.logical_block_size_l, NULL) != OK) {
+		free_extent(extent);
+		put_inode(i_node);
+		return NULL;
+	}
+
+	free_extent(extent);
+	return i_node;
+}
+
+void put_inode(struct inode *i_node)
+{
+	if (i_node == NULL)
+		return;
+
+	if (i_node->i_count <= 0)
+		panic("put_inode: i_count already below 1: %d", i_node->i_count);
+
+	i_node->i_count--;
+}
+
+void dup_inode(struct inode *i_node)
+{
+	if (i_node == NULL)
+		panic("dup_inode: trying to duplicate NULL inode");
+
+	i_node->i_count++;
+}
+
+static struct buf* fetch_inode(struct dir_extent *extent, size_t *offset)
+{
+	struct iso9660_dir_record *dir_rec;
+	struct buf *bp;
+
+	/*
+	 * Directory entries aren't allowed to cross a logical block boundary in
+	 * ISO 9660, so we keep searching until we find something or reach the
+	 * end of the extent.
+	 */
+	bp = read_extent_block(extent, *offset / v_pri.logical_block_size_l);
+	while (bp != NULL) {
+		dir_rec = (struct iso9660_dir_record*)(b_data(bp) + *offset % 
+		          v_pri.logical_block_size_l);
+		if (dir_rec->length == 0) {
+			*offset -= *offset % v_pri.logical_block_size_l;
+			*offset += v_pri.logical_block_size_l;
+		}
+		else {
+			break;
+		}
+
+		put_block(bp);
+		bp = read_extent_block(extent, *offset / v_pri.logical_block_size_l);
+	}
+
+	return bp;
+}
+
+int read_inode(struct inode *i_node, struct dir_extent *extent, size_t offset,
+	size_t *new_offset)
+{
+	struct iso9660_dir_record *dir_rec;
+	struct buf *bp;
+
+	/* Find inode. */
+	bp = fetch_inode(extent, &offset);
+	if (bp == NULL)
+		return EOF;
+
+	dir_rec = (struct iso9660_dir_record*)(b_data(bp) + offset % 
+	          v_pri.logical_block_size_l);
+
+	/* Parse basic ISO 9660 specs. */
+	if (check_dir_record(dir_rec, offset % v_pri.logical_block_size_l) != OK) {
+		put_block(bp);
+		return EINVAL;
+	}
+
+	memset(&i_node->i_stat, 0, sizeof(struct stat));
+
+	i_node->i_stat.st_ino = get_extent_absolute_block_id(extent,
+	    offset / v_pri.logical_block_size_l) * v_pri.logical_block_size_l +
+	    offset % v_pri.logical_block_size_l;
+
+	read_inode_iso9660(i_node, dir_rec);
+
+	/* Parse extensions. */
+	read_inode_susp(i_node, dir_rec, bp, offset % v_pri.logical_block_size_l);
+
+	offset += dir_rec->length;
+	read_inode_extents(i_node, dir_rec, extent, &offset);
+
+	put_block(bp);
+	if (new_offset != NULL)
+		*new_offset = offset;
+	return OK;
+}
+
+void read_inode_iso9660(struct inode *i, const struct iso9660_dir_record *dir_rec)
+{
+	char *cp;
+
+	/* Parse first extent. */
+	if (dir_rec->data_length_l > 0) {
+		i->extent = alloc_extent();
+		i->extent->location = dir_rec->loc_extent_l +
+		                      dir_rec->ext_attr_rec_length;
+		i->extent->length = dir_rec->data_length_l /
+		                    v_pri.logical_block_size_l;
+		if (dir_rec->data_length_l % v_pri.logical_block_size_l)
+			i->extent->length++;
+
+		i->i_stat.st_size = dir_rec->data_length_l;
+	}
+
+	/* Parse timestamps (record date). */
+	i->i_stat.st_atime = i->i_stat.st_mtime = i->i_stat.st_ctime =
+	    i->i_stat.st_birthtime = date7_to_time_t(dir_rec->rec_date);
+
+	if ((dir_rec->file_flags & D_TYPE) == D_DIRECTORY) {
+		i->i_stat.st_mode = S_IFDIR;
+		i->i_stat.st_ino = i->extent->location * v_pri.logical_block_size_l;
+	}
+	else
+		i->i_stat.st_mode = S_IFREG;
+	i->i_stat.st_mode |= 0555;
+
+	/* Parse file name. */
+	if (dir_rec->file_id[0] == 0)
+		strcpy(i->i_name, ".");
+	else if (dir_rec->file_id[0] == 1)
+		strcpy(i->i_name, "..");
+	else {
+		memcpy(i->i_name, dir_rec->file_id, dir_rec->length_file_id);
+
+		/* Truncate/ignore file version suffix. */
+		cp = strchr(i->i_name, ';');
+		if (cp != NULL)
+			*cp = '\0';
+		/* Truncate dot if file has no extension. */
+		if (strchr(i->i_name, '.') + 1 == cp)
+			*(cp-1) = '\0';
+	}
+
+	/* Initialize stat. */
+	i->i_stat.st_dev = fs_dev;
+	i->i_stat.st_blksize = v_pri.logical_block_size_l;
+	i->i_stat.st_blocks = dir_rec->data_length_l / v_pri.logical_block_size_l;
+	i->i_stat.st_nlink = 1;
+}
+
+void read_inode_extents(struct inode *i, const struct iso9660_dir_record *dir_rec,
+	struct dir_extent *extent, size_t *offset)
+{
+	struct buf *bp;
+	struct iso9660_dir_record *extent_rec;
+	struct dir_extent *cur_extent = i->extent;
+	int done = FALSE;
+
+	/*
+	 * No need to search extents if file is empty or has final directory
+	 * record flag set.
+	 */
+	if (cur_extent == NULL || ((dir_rec->file_flags & D_NOT_LAST_EXTENT) == 0))
+		return;
+
+	while (!done) {
+		bp = fetch_inode(extent, offset);
+		if (bp == NULL)
+			return;
+
+		bp = read_extent_block(extent, *offset / v_pri.logical_block_size_l);
+		extent_rec = (struct iso9660_dir_record*)(b_data(bp) + *offset % 
+		             v_pri.logical_block_size_l);
+
+		if (check_dir_record(dir_rec, *offset % v_pri.logical_block_size_l) != OK) {
+			put_block(bp);
+			return;
+		}
+
+		/* Extent entries should share the same name. */
+		if ((dir_rec->length_file_id == extent_rec->length_file_id) &&
+		    (memcmp(dir_rec->file_id, extent_rec->file_id, dir_rec->length_file_id) == 0)) {
+			/* Add the extent at the end of the linked list. */
+			cur_extent->next = alloc_extent();
+			cur_extent->next->location = dir_rec->loc_extent_l +
+			                             dir_rec->ext_attr_rec_length;
+			cur_extent->next->length = dir_rec->data_length_l /
+			                           v_pri.logical_block_size_l;
+			if (dir_rec->data_length_l % v_pri.logical_block_size_l)
+				cur_extent->next->length++;
+
+			i->i_stat.st_size += dir_rec->data_length_l;
+			i->i_stat.st_blocks += cur_extent->next->length;
+
+			cur_extent = cur_extent->next;
+			*offset += extent_rec->length;
+		}
+		else
+			done = TRUE;
+
+		/* Check if not last extent bit is not set. */
+		if ((dir_rec->file_flags & D_NOT_LAST_EXTENT) == 0)
+			done = TRUE;
+
+		put_block(bp);
+	}
+}
+
+void read_inode_susp(struct inode *i, const struct iso9660_dir_record *dir_rec,
+	struct buf *bp, size_t offset)
+{
+	int susp_offset, susp_size;
+	struct rrii_dir_record rrii_data;
+
+	susp_offset = 33 + dir_rec->length_file_id;
+	/* Get rid of padding byte. */
+	if(dir_rec->length_file_id % 2 == 0) {
+		susp_offset++;
+	}
+
+	if(dir_rec->length - susp_offset >= 4) {
+		susp_size = dir_rec->length - susp_offset;
+
+		/* Initialize rrii_dir_record structure with known, sane data. */
+		memcpy(rrii_data.mtime, dir_rec->rec_date, ISO9660_SIZE_DATE7);
+		memcpy(rrii_data.atime, dir_rec->rec_date, ISO9660_SIZE_DATE7);
+		memcpy(rrii_data.ctime, dir_rec->rec_date, ISO9660_SIZE_DATE7);
+		memcpy(rrii_data.birthtime, dir_rec->rec_date, ISO9660_SIZE_DATE7);
+
+		rrii_data.d_mode = i->i_stat.st_mode;
+		rrii_data.uid    = 0;
+		rrii_data.gid    = 0;
+		rrii_data.rdev   = NO_DEV;
+		rrii_data.file_id_rrip[0] = '\0';
+		rrii_data.slink_rrip[0]   = '\0';
+
+		parse_susp_buffer(&rrii_data, b_data(bp)+offset+susp_offset, susp_size);
+
+		/* Copy back data from rrii_dir_record structure. */
+		i->i_stat.st_atime = date7_to_time_t(rrii_data.atime);
+		i->i_stat.st_ctime = date7_to_time_t(rrii_data.ctime);
+		i->i_stat.st_mtime = date7_to_time_t(rrii_data.mtime);
+		i->i_stat.st_birthtime = date7_to_time_t(rrii_data.birthtime);
+
+		i->i_stat.st_mode = rrii_data.d_mode;
+		i->i_stat.st_uid  = rrii_data.uid;
+		i->i_stat.st_gid  = rrii_data.gid;
+		i->i_stat.st_rdev = rrii_data.rdev;
+
+		if (rrii_data.file_id_rrip[0] != '\0')
+			strlcpy(i->i_name, rrii_data.file_id_rrip, ISO9660_RRIP_MAX_FILE_ID_LEN);
+		if (rrii_data.slink_rrip[0] != '\0')
+			strlcpy(i->s_link, rrii_data.slink_rrip, ISO9660_RRIP_MAX_FILE_ID_LEN);
+	}
+}
+
+int check_dir_record(const struct iso9660_dir_record *d, size_t offset)
+{
+	/* Run some consistency check on a directory entry. */
+	if ((d->length < 33) || (d->length_file_id < 1))
+		return EINVAL;
+	if (d->length_file_id + 32 > d->length)
+		return EINVAL;
+	if (offset + d->length > v_pri.logical_block_size_l)
+		return EINVAL;
+
+	return OK;
 }
 
