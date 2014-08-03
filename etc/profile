@@ -2,6 +2,7 @@
 
 # Activate emacs keybindings and command line history support
 set -o emacs
+set -o tabcomplete
 
 # Set the default path
 PATH=/usr/local/bin:/usr/pkg/bin:/usr/bin:/bin:/usr/games

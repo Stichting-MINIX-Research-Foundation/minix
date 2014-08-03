@@ -142,7 +142,7 @@ vndconfig vnd0 image0 || bomb "unable to configure vnd0"
 # Invoke the blocktest test set to test various other aspects.
 vndconfig -S vnd0 image0 || bomb "unable to configure vnd0"
 cd ../blocktest
-. support.sh
+. ./support.sh
 block_test /dev/vnd0 \
   "rw,min_read=1,min_write=1,element=1,max=16777216,nocontig,silent" || \
   bomb "blocktest test set failed"

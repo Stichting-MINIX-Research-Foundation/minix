@@ -1,0 +1,180 @@
+.\"	$NetBSD: t4,v 1.3 2010/08/22 02:19:07 perry Exp $
+.\"
+.\" Copyright (C) Caldera International Inc. 2001-2002.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions are
+.\" met:
+.\"
+.\" Redistributions of source code and documentation must retain the above
+.\" copyright notice, this list of conditions and the following
+.\" disclaimer.
+.\"
+.\" Redistributions in binary form must reproduce the above copyright
+.\" notice, this list of conditions and the following disclaimer in the
+.\" documentation and/or other materials provided with the distribution.
+.\"
+.\" All advertising materials mentioning features or use of this software
+.\" must display the following acknowledgement:
+.\"
+.\" This product includes software developed or owned by Caldera
+.\" International, Inc.  Neither the name of Caldera International, Inc.
+.\" nor the names of other contributors may be used to endorse or promote
+.\" products derived from this software without specific prior written
+.\" permission.
+.\"
+.\" USE OF THE SOFTWARE PROVIDED FOR UNDER THIS LICENSE BY CALDERA
+.\" INTERNATIONAL, INC.  AND CONTRIBUTORS ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+.\" WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+.\" DISCLAIMED.  IN NO EVENT SHALL CALDERA INTERNATIONAL, INC. BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+.\" BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+.\" WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+.\" OR OTHERWISE) RISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+.\" IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\"	@(#)t4	8.1 (Berkeley) 8/14/93
+.\"
+.bp
+.SH
+Appendix\ A\ -\ Grammar
+.LP
+Note: This grammar needs updating, it is obsolete.
+.LP
+.LD
+\fIitem:		word
+		input-output
+		name = value
+.sp 0.7
+simple-command: item
+		simple-command item
+.sp 0.7
+command:	simple-command
+		\fB( \fIcommand-list \fB)
+		\fB{ \fIcommand-list \fB}
+		\fBfor \fIname \fBdo \fIcommand-list \fBdone
+		\fBfor \fIname \fBin \fIword \*(ZZ \fBdo \fIcommand-list \fBdone
+		\fBwhile \fIcommand-list \fBdo \fIcommand-list \fBdone
+		\fBuntil \fIcommand-list \fBdo \fIcommand-list \fBdone
+		\fBcase \fIword \fBin \fIcase-part \*(ZZ \fBesac
+		\fBif \fIcommand-list \fBthen \fIcommand-list \fIelse-part \fBfi
+.sp 0.7
+\fIpipeline:	command
+		pipeline \fB\*(VT\fI command
+.sp 0.7
+andor:	pipeline
+		andor \fB&&\fI pipeline
+		andor \fB\*(VT\*(VT\fI pipeline
+.sp 0.7
+command-list:	andor
+		command-list \fB;\fI
+		command-list \fB&\fI
+		command-list \fB;\fI andor
+		command-list \fB&\fI andor
+.sp 0.7
+input-output:	\fB> \fIfile
+		\fB< \fIfile
+		\fB\*(AP \fIword
+		\fB\*(HE \fIword
+.sp 0.7
+file:		word
+		\fB&\fI digit
+		\fB&\fI \(mi
+.sp 0.7
+case-part:	pattern\fB ) \fIcommand-list\fB ;;
+.sp 0.7
+\fIpattern:	word
+		pattern \fB\*(VT\fI word
+.sp 0.7
+\fIelse-part:	\fBelif \fIcommand-list\fB then\fI command-list else-part\fP
+		\fBelse \fIcommand-list\fI
+		empty
+.sp 0.7
+empty:
+.sp 0.7
+word:		\fRa sequence of non-blank characters\fI
+.sp 0.7
+name:		\fRa sequence of letters, digits or underscores starting with a letter\fI
+.sp 0.7
+digit:		\fB0 1 2 3 4 5 6 7 8 9\fP
+.DE
+.LP
+.bp
+.SH
+Appendix\ B\ -\ Meta-characters\ and\ Reserved\ Words
+.LP
+a) syntactic
+.RS
+.IP \fB\*(VT\fR 6
+pipe symbol
+.IP \fB&&\fR 6
+`andf' symbol
+.IP \fB\*(VT\*(VT\fR 6
+`orf' symbol
+.IP \fB;\fP 8
+command separator
+.IP \fB;;\fP 8
+case delimiter
+.IP \fB&\fP 8
+background commands
+.IP \fB(\ )\fP 8
+command grouping
+.IP \fB<\fP 8
+input redirection
+.IP \fB\*(HE\fP 8
+input from a here document
+.IP \fB>\fP 8
+output creation
+.IP \fB\*(AP\fP 8
+output append
+.sp 2
+.RE
+.LP
+b) patterns
+.RS
+.IP \fB\*(ST\fP 8
+match any character(s) including none
+.IP \fB?\fP 8
+match any single character
+.IP \fB[...]\fP 8
+match any of the enclosed characters
+.sp 2
+.RE
+.LP
+c) substitution
+.RS
+.IP \fB${...}\fP 8
+substitute shell variable
+.IP \fB$(...)\fP 8
+substitute command output
+.IP \fB\`...\`\fP 8
+substitute command output
+.IP \fB$((...))\fP 8
+substitute arithmetic expression
+.sp 2
+.RE
+.LP
+d) quoting
+.RS
+.IP \fB\e\fP 8
+quote the next character
+.IP \fB\'...\'\fP 8
+quote the enclosed characters except for \'
+.IP \fB"\&..."\fP 8
+quote the enclosed characters except
+for \fB$ \` \e "\fP
+.sp 2
+.RE
+.LP
+e) reserved words
+.DS
+.ft B
+if then else elif fi
+case in esac
+for while until do done
+! {  }
+.ft
+.DE
