@@ -23,64 +23,91 @@ RAMDISK_DEFINES= \
 	-DRAMDISK_DYNAMIC=${RAMDISK_DYNAMIC}
 
 # The name of the proto file to use
-PROTO=	proto
+PROTO=			proto
 
 # Common to all architectures
-ETC=		system.conf group
-EXTRA=		rc
-PROTO_FILES=	proto.common.etc proto.common.dynamic
-PROG_DRIVERS=
-PROG_COMMANDS=	mount umount grep fsck_mfs sh service loadramdisk sysenv
-PROG_SERVERS=	input mfs procfs
-PROG_BIN=
-PROG_SBIN=
-PROG_USR.BIN=
-PROG_USR.SBIN=
+ETC=			system.conf group
+EXTRA=			rc
+PROTO_FILES=		proto.common.etc
+PROTO_FILES+=		proto.common.dynamic
+PROGRAMS=		# defined
+PROGRAMS+=		fsck_mfs
+dir.fsck_mfs:=	minix/commands/fsck.mfs
+PROGRAMS+=		grep
+dir.grep:=	minix/commands/grep
+PROGRAMS+=		input
+dir.input:=	minix/servers/input
+PROGRAMS+=		loadramdisk
+dir.loadramdisk:=	minix/commands/loadramdisk
+PROGRAMS+=		mfs
+dir.mfs:=	minix/fs/mfs
+PROGRAMS+=		mount
+dir.mount:=	minix/commands/mount
+PROGRAMS+=		procfs
+dir.procfs:=	minix/fs/procfs
+PROGRAMS+=		service
+dir.service:=	minix/commands/service
+PROGRAMS+=		sh
+dir.sh:=	minix/commands/ash
+PROGRAMS+=		sysenv
+dir.sysenv:=	minix/commands/sysenv
+PROGRAMS+=		umount
+dir.umount:=	minix/commands/umount
 
 .if ${MKSMALL} != "yes"
-RAMDISK_SMALL=	1
+RAMDISK_SMALL=		1
 .endif
 
 .if ${MACHINE_ARCH} == "i386"
-ETC+=		rs.single
-EXTRA+=		
-PROG_DRIVERS+=	at_wini floppy pci pckbd
-PROG_COMMANDS+=	cdprobe 
-PROG_USR.SBIN+=	pwd_mkdb
+ETC+=			rs.single
+PROGRAMS+=		at_wini
+dir.at_wini:=	minix/drivers/storage/at_wini
+PROGRAMS+=		floppy
+dir.floppy:=	minix/drivers/storage/floppy
+PROGRAMS+=		pci
+dir.pci:=	minix/drivers/bus/pci
+PROGRAMS+=		pckbd
+dir.pckbd:=	minix/drivers/hid/pckbd
+PROGRAMS+=		cdprobe
+dir.cdprobe:=	minix/commands/cdprobe
+PROGRAMS+=		pwd_mkdb
+dir.pwd_mkdb:=	usr.sbin/pwd_mkdb
 
 .if ${MKSMALL} != "yes"
-PROG_DRIVERS+=	ahci
-PROG_DRIVERS+=	virtio_blk
-PROG_SERVERS+=	ext2
+PROGRAMS+=		ahci
+dir.ahci:=	minix/drivers/storage/ahci
+PROGRAMS+=		virtio_blk
+dir.virtio_blk:= minix/drivers/storage/virtio_blk
+PROGRAMS+=		ext2
+dir.ext2:=	minix/fs/ext2
 .endif
 
 .if ${MKACPI} != "no"
 RAMDISK_INC_ACPI= 1
-PROG_DRIVERS+=	acpi
+PROGRAMS+=		acpi
+dir.acpi:=	minix/drivers/power/acpi
 .endif
 .endif # ${MACHINE_ARCH} == "i386"
 
 .if ${MACHINE_ARCH} == "earm"
-PROG_DRIVERS+=	mmc
+PROGRAMS+=		mmc
+dir.mmc:=	minix/drivers/storage/mmc
 .endif # ${MACHINE_ARCH} == "earm"
 
 .if ${LDSTATIC} == "-dynamic"
-RAMDISK_DYNAMIC= 1
-PROG_LIBEXEC+=	ld.elf_so
-PROG_LIBS+=	libc
-PROG_MINIXLIBS+= libminlib libcompat_minix libterminfo
+RAMDISK_DYNAMIC=	 1
+PROGRAMS+=		ld.elf_so
+PROG_LIBS+=		libc
+PROG_MINIXLIBS+=	libminlib
+PROG_MINIXLIBS+=	libcompat_minix
+PROG_MINIXLIBS+=	libterminfo
 .endif
-
-PROGRAMS=${PROG_COMMANDS} \
-	 ${PROG_BIN} ${PROG_SBIN} ${PROG_USR.BIN} ${PROG_USR.SBIN} \
-	 ${PROG_DRIVERS} ${PROG_SERVERS} \
-	 ${PROG_LIBEXEC}
 
 CPPFLAGS+= -I${NETBSDSRCDIR}/servers
 
 # LSC We have to take care of not erasing the source file, so never add EXTRA
 # to CLEANFILES
-CLEANFILES += ${PROGRAMS} ${SCRIPTS} ${ETC} image image.c t
+CLEANFILES += ${PROGRAMS} ${SCRIPTS} ${ETC} image image.c
 CLEANFILES += proto.gen proto.dev proto.dev.mtree
 CLEANFILES += ${PROG_LIBEXEC}
 CLEANFILES += ${.OBJDIR}/etc/*
@@ -93,7 +120,7 @@ CLEANFILES += ${.OBJDIR}/etc/*
 TOOL_PWD_MKDB?= ${NETBSDSRCDIR}/usr.sbin/pwd_mkdb/pwd_mkdb
 
 # Remove "drivers/storage/ramdisk" component from path
-PROGROOT:= ${.OBJDIR:S,/drivers/storage/ramdisk,,}
+PROGROOT:= ${.OBJDIR:S,/minix/drivers/storage/ramdisk,,}
 
 # Generate dependencies rules for config files
 .for etc in ${ETC}
@@ -139,32 +166,16 @@ ${PROGROOT}/minix/lib/${lib}/${lib}.so.0:
 .endfor
 
 # Generate dependencies rules for binaries
-dir.acpi:=	power/acpi
-dir.ahci:=	storage/ahci
-dir.at_wini:=	storage/at_wini
-dir.ext2:=	../fs/ext2
-dir.floppy:=	storage/floppy
-dir.fsck_mfs:=	fsck.mfs
-dir.mfs:=	../fs/mfs
-dir.mmc:=	storage/mmc
-dir.pci:=	bus/pci
-dir.pckbd:=	hid/pckbd
-dir.procfs:=	../fs/procfs
-dir.pwd_mkdb:=	../../usr.sbin/pwd_mkdb
-dir.sh:=	ash
-dir.virtio_blk:= storage/virtio_blk
-
-.for srcdir in bin sbin commands drivers libexec servers usr.bin usr.sbin
-.for prog in ${PROG_${srcdir:tu}}
-${prog}: ${PROGROOT}/${srcdir}/${dir.${prog}:U${prog}}/${prog}
+.for prog in ${PROGRAMS}
+${prog}: ${PROGROOT}/${dir.${prog}}/${prog}
 	${INSTALL} $> $@
 
-${PROGROOT}/${srcdir}/${dir.${prog}:U${prog}}/${prog}:
-	${MAKE} -C ${NETBSDSRCDIR}/minix/${srcdir}/${dir.${prog}:U${prog}} all
+${PROGROOT}/${dir.${prog}}/${prog}:
+	${MAKE} -C ${NETBSDSRCDIR}/${dir.${prog}} all
 .endfor # prog
-.endfor # srcdir
 
-realall image:	proto.gen ${ETC:C/^/etc\//} ${EXTRA} etc/master.passwd etc/pwd.db etc/spwd.db etc/passwd etc/group
+realall image:	proto.gen ${ETC:C/^/etc\//} ${EXTRA} \
+		etc/master.passwd etc/pwd.db etc/spwd.db etc/passwd etc/group
 	${_MKMSG_CREATE} "Generating ramdisk image"
 	${TOOL_MKFSMFS} image proto.gen || { rm -f image; false; }
 
