@@ -34,7 +34,6 @@ SUBDIR=	add_route arp ash at backup btrace \
 	worldstone updateboot update_bootcfg \
 	atnormalize dosread fdisk loadfont \
 	autopart part partition playwave  \
-	recwave repartition screendump \
-	test
+	recwave repartition screendump
 
 .include <bsd.subdir.mk>
