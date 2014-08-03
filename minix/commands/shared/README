@@ -10,7 +10,6 @@ At this moment it is installed as the following commands:
 /bin/echo
 /bin/expr
 /bin/test
-/bin/wait
 
 If one of the following is replaced by the NetBSD equivalent, please
 update the list, and remove this completly when it is not anymore
