@@ -36,7 +36,6 @@ MLINKS += ash.1 hash.1
 MLINKS += ash.1 if.1
 MLINKS += ash.1 jobs.1
 MLINKS += ash.1 local.1
-MLINKS += ash.1 read.1
 MLINKS += ash.1 readonly.1
 MLINKS += ash.1 return.1
 MLINKS += ash.1 set.1

@@ -9,7 +9,6 @@ At this moment it is installed as the following commands:
 /bin/command
 /bin/echo
 /bin/expr
-/bin/read
 /bin/test
 /bin/wait
 
