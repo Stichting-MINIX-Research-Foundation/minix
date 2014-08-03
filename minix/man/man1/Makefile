@@ -25,7 +25,6 @@ MLINKS += ash.1 sh.1
 MLINKS += ash.1 ..1
 MLINKS += ash.1 break.1
 MLINKS += ash.1 case.1
-MLINKS += ash.1 command.1
 MLINKS += ash.1 continue.1
 MLINKS += ash.1 eval.1
 MLINKS += ash.1 exec.1

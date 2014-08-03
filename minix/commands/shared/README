@@ -6,7 +6,6 @@ and simply call the builtin function of the same name.
 
 At this moment it is installed as the following commands:
 /bin/[
-/bin/command
 /bin/echo
 /bin/expr
 /bin/test

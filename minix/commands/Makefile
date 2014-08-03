@@ -35,6 +35,6 @@ SUBDIR=	add_route arp ash at backup btrace \
 	atnormalize dosread fdisk loadfont \
 	autopart part partition playwave  \
 	recwave repartition screendump \
-	command expr test
+	expr test
 
 .include <bsd.subdir.mk>

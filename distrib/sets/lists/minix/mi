@@ -13,7 +13,7 @@
 ./bin/cd				minix-sys	obsolete
 ./bin/chgrp				minix-sys
 ./bin/chmod				minix-sys
-./bin/command				minix-sys
+./bin/command				minix-sys	obsolete
 ./bin/cp				minix-sys
 ./bin/cpio				minix-sys
 ./bin/date				minix-sys
@@ -2263,7 +2263,7 @@
 ./usr/man/man1/colrm.1			minix-sys
 ./usr/man/man1/column.1			minix-sys
 ./usr/man/man1/comm.1			minix-sys
-./usr/man/man1/command.1		minix-sys
+./usr/man/man1/command.1		minix-sys	obsolete
 ./usr/man/man1/compress.1		minix-sys
 ./usr/man/man1/continue.1		minix-sys
 ./usr/man/man1/cp.1			minix-sys
