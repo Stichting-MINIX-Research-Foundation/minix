@@ -10,7 +10,7 @@
 ./bin					minix-sys
 ./bin/[					minix-sys
 ./bin/cat				minix-sys
-./bin/cd				minix-sys
+./bin/cd				minix-sys	obsolete
 ./bin/chgrp				minix-sys
 ./bin/chmod				minix-sys
 ./bin/command				minix-sys
@@ -2245,7 +2245,7 @@
 ./usr/man/man1/cawf.1			minix-sys
 ./usr/man/man1/cc.1			minix-sys	gcccmds
 ./usr/man/man1/cccp.1			minix-sys	gcccmds
-./usr/man/man1/cd.1			minix-sys
+./usr/man/man1/cd.1			minix-sys	obsolete
 ./usr/man/man1/c++filt.1		minix-sys	binutils
 ./usr/man/man1/checknr.1		minix-sys
 ./usr/man/man1/chfn.1			minix-sys

@@ -3,7 +3,7 @@
 .include <bsd.own.mk>
 
 SUBDIR=	add_route arp ash at backup btrace \
-	cawf cd cdprobe \
+	cawf cdprobe \
 	ci cleantmp cmp co \
 	compress crc cron crontab \
 	dd decomp16 DESCRIBE devmand devsize dhcpd \
