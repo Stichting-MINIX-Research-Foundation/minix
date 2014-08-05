@@ -81,8 +81,10 @@ struct ddekit_usb_urb {
 /* USB message types */
 typedef enum {
 
-	DDEKIT_HUB_PORT_CONN,
-	DDEKIT_HUB_PORT_DISCONN
+	DDEKIT_HUB_PORT_LS_CONN,	/* Low speed device connected */
+	DDEKIT_HUB_PORT_FS_CONN,	/* Full speed device connected */
+	DDEKIT_HUB_PORT_HS_CONN,	/* High speed device connected */
+	DDEKIT_HUB_PORT_DISCONN		/* Device disconnected */
 }
 ddekit_msg_type_t;
 

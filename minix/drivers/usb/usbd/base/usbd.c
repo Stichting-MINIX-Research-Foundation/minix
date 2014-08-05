@@ -126,7 +126,7 @@ usbd_start(void)
 	DEBUG_DUMP;
 
 	/* Driver's "main loop" is within DDEKit server thread */
-	usbd_th = ddekit_thread_create(usbd_server_thread, NULL, "USBD");
+	usbd_th = ddekit_thread_create(usbd_server_thread, NULL, "usbd");
 
 	/* After spawning, allow server thread to work */
 	if (NULL != usbd_th) {

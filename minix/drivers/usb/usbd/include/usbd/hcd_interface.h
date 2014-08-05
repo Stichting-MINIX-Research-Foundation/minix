@@ -18,9 +18,17 @@
 /* Can be returned by 'read_data' to indicate error */
 #define HCD_READ_ERR -1
 
+/* Possible states of USB device address */
+typedef enum {
+
+	HCD_ADDR_AVAILABLE = 0,		/* Default for reset */
+	HCD_ADDR_USED
+}
+hcd_addr_state;
+
 
 /*===========================================================================*
- *    HCD driver structure to be filled
+ *    HCD driver structure to be filled                                      *
  *===========================================================================*/
 struct hcd_driver_state {
 	/* Standard USB controller procedures */
@@ -43,6 +51,9 @@ struct hcd_driver_state {
 	/* TODO: Only one port for each driver */
 	/* Represents device attached to USB port handled by this driver */
 	hcd_device_state * port_device;
+
+	/* Array to hold information of unused device addresses */
+	hcd_addr_state dev_addr[HCD_TOTAL_ADDR];
 };
 
 

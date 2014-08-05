@@ -2,7 +2,6 @@
  * Minix3 USB hub driver implementation
  */
 
-#include <assert.h>			/* assert */
 #include <string.h>			/* memset */
 #include <stdint.h>
 
@@ -48,6 +47,9 @@ static void hub_task(void *);
 
 /* Max number of hub ports */
 #define USB_HUB_PORT_LIMIT 8
+
+/* Limits number of communication retries (when needed) */
+#define USB_HUB_MAX_TRIES 3
 
 /* Hub descriptor type */
 #define USB_HUB_DESCRIPTOR_TYPE 0x29
@@ -164,7 +166,7 @@ static int hub_get_port_status(int, hub_port_status *);
 static port_change hub_handle_change(int, hub_port_status *);
 
 /* Handle port connection */
-static int hub_handle_connection(int);
+static int hub_handle_connection(int, hub_port_status *);
 
 /* Handle port disconnection */
 static int hub_handle_disconnection(int);
@@ -281,10 +283,10 @@ hub_sef_hdlr(int type, sef_init_info_t * UNUSED(info))
 			return EXIT_SUCCESS;
 		case SEF_INIT_LU:
 		case SEF_INIT_RESTART:
-			HUB_MSG("Only 'fresh' SEF initialization supported\n");
+			HUB_MSG("Only 'fresh' SEF initialization supported");
 			break;
 		default:
-			HUB_MSG("illegal SEF type\n");
+			HUB_MSG("Illegal SEF type");
 			break;
 	}
 
@@ -423,17 +425,9 @@ hub_task(void * UNUSED(arg))
 	 * from 1, as defined by USB 2.0 document */
 	for (port = 1; port <= s->num_ports; port++) {
 		if (hub_port_feature(port, SET_FEATURE, PORT_POWER)) {
-			HUB_MSG("Powering port %d failed", port);
+			HUB_MSG("Powering port%d failed", port);
 			goto HUB_ERROR;
 		}
-
-		/* TODO: Will be needed later with HUB IPC */
-#if 0
-		if (hub_port_feature(port, SET_FEATURE, PORT_RESET)) {
-			HUB_MSG("Resetting port %d failed", port);
-			goto HUB_ERROR;
-		}
-#endif
 	}
 
 	/*
@@ -450,7 +444,7 @@ hub_task(void * UNUSED(arg))
 
 			/* Get port status */
 			if (hub_get_port_status(port, &port_status)) {
-				HUB_MSG("Reading port %d status failed", port);
+				HUB_MSG("Reading port%d status failed", port);
 				goto HUB_ERROR;
 			}
 
@@ -473,7 +467,7 @@ hub_task(void * UNUSED(arg))
 					if (hub_port_feature(port,
 							CLEAR_FEATURE,
 							PORT_POWER)) {
-						HUB_MSG("Halting port %d "
+						HUB_MSG("Halting port%d "
 							"failed", port);
 						goto HUB_ERROR;
 					}
@@ -488,7 +482,7 @@ hub_task(void * UNUSED(arg))
 
 				case HUB_CHANGE_COM_ERR:
 					/* Serious error, hang */
-					HUB_MSG("Handling port %d "
+					HUB_MSG("Handling port%d "
 						"change failed", port);
 					goto HUB_ERROR;
 			}
@@ -588,7 +582,7 @@ hub_port_feature(int port_num, class_code code, class_feature feature)
 		return EXIT_FAILURE;
 
 	if (!((feature == PORT_RESET) || (feature == PORT_POWER) ||
-		(feature == C_PORT_CONNECTION)))
+		(feature == C_PORT_CONNECTION) || (feature == C_PORT_RESET)))
 		return EXIT_FAILURE;
 
 	/* Initialize EP configuration */
@@ -724,7 +718,7 @@ hub_handle_change(int port_num, hub_port_status * status)
 		 * to allow further polling */
 		if (hub_port_feature(port_num, CLEAR_FEATURE,
 					C_PORT_CONNECTION)) {
-			HUB_MSG("Clearing port %d change bit failed", port_num);
+			HUB_MSG("Clearing port%d change bit failed", port_num);
 			return HUB_CHANGE_COM_ERR;
 		}
 
@@ -736,7 +730,7 @@ hub_handle_change(int port_num, hub_port_status * status)
 				 */
 				/* Make hub disconnect and connect again */
 				if (hub_handle_disconnection(port_num) ||
-					hub_handle_connection(port_num))
+					hub_handle_connection(port_num, status))
 					return HUB_CHANGE_STATUS_ERR;
 				else
 					return HUB_CHANGE_CONN;
@@ -760,7 +754,7 @@ hub_handle_change(int port_num, hub_port_status * status)
 				 * 3
 				 */
 				/* Handle connection */
-				if (hub_handle_connection(port_num))
+				if (hub_handle_connection(port_num, status))
 					return HUB_CHANGE_STATUS_ERR;
 				else
 					return HUB_CHANGE_CONN;
@@ -821,19 +815,98 @@ hub_handle_change(int port_num, hub_port_status * status)
 }
 
 
-/* TODO: Add real connection/disconnection HCD IPC below */
 /*===========================================================================*
  *    hub_handle_connection                                                  *
  *===========================================================================*/
 static int
-hub_handle_connection(int port_num)
+hub_handle_connection(int port_num, hub_port_status * status)
 {
+	int reset_tries;
+	long port_speed;
+
 	HUB_DEBUG_DUMP;
 
-	HUB_MSG("Device connected to port %d", port_num);
+	HUB_MSG("Device connected to port%d", port_num);
 
-	return ddekit_usb_info(driver_state.dev, (long)DDEKIT_HUB_PORT_CONN,
-				(long)port_num);
+	/* This should never happen if power-off works as intended */
+	if (status->C_PORT_RESET) {
+		HUB_MSG("Unexpected reset state for port%d", port_num);
+		return EXIT_FAILURE;
+	}
+
+	/* Start reset signaling for this port */
+	if (hub_port_feature(port_num, SET_FEATURE, PORT_RESET)) {
+		HUB_MSG("Resetting port%d failed", port_num);
+		return EXIT_FAILURE;
+	}
+
+	reset_tries = 0;
+
+	/* Wait for reset completion */
+	while (!status->C_PORT_RESET) {
+		/* To avoid endless loop */
+		if (reset_tries >= USB_HUB_MAX_TRIES) {
+			HUB_MSG("Port%d reset took too long", port_num);
+			return EXIT_FAILURE;
+		}
+
+		/* Get port status again */
+		if (hub_get_port_status(port_num, status)) {
+			HUB_MSG("Reading port%d status failed", port_num);
+			return EXIT_FAILURE;
+		}
+
+		reset_tries++;
+	}
+
+	/* Reset completed */
+	HUB_DEBUG_MSG("Port%d reset complete", port_num);
+
+	/* Dump full status for analysis (high-speed, ...) */
+	HUB_DEBUG_MSG("C_PORT_CONNECTION   %1X", status->C_PORT_CONNECTION  );
+	HUB_DEBUG_MSG("C_PORT_ENABLE       %1X", status->C_PORT_ENABLE      );
+	HUB_DEBUG_MSG("C_PORT_OVER_CURRENT %1X", status->C_PORT_OVER_CURRENT);
+	HUB_DEBUG_MSG("C_PORT_RESET        %1X", status->C_PORT_RESET       );
+	HUB_DEBUG_MSG("C_PORT_SUSPEND      %1X", status->C_PORT_SUSPEND     );
+	HUB_DEBUG_MSG("PORT_CONNECTION     %1X", status->PORT_CONNECTION    );
+	HUB_DEBUG_MSG("PORT_ENABLE         %1X", status->PORT_ENABLE        );
+	HUB_DEBUG_MSG("PORT_HIGH_SPEED     %1X", status->PORT_HIGH_SPEED    );
+	HUB_DEBUG_MSG("PORT_INDICATOR      %1X", status->PORT_INDICATOR     );
+	HUB_DEBUG_MSG("PORT_LOW_SPEED      %1X", status->PORT_LOW_SPEED     );
+	HUB_DEBUG_MSG("PORT_OVER_CURRENT   %1X", status->PORT_OVER_CURRENT  );
+	HUB_DEBUG_MSG("PORT_POWER          %1X", status->PORT_POWER         );
+	HUB_DEBUG_MSG("PORT_RESET          %1X", status->PORT_RESET         );
+	HUB_DEBUG_MSG("PORT_SUSPEND        %1X", status->PORT_SUSPEND       );
+	HUB_DEBUG_MSG("PORT_TEST           %1X", status->PORT_TEST          );
+
+	/* Clear reset change bit for further devices */
+	if (hub_port_feature(port_num, CLEAR_FEATURE, C_PORT_RESET)) {
+		HUB_MSG("Clearing port%d reset bit failed", port_num);
+		return EXIT_FAILURE;
+	}
+
+	/* Should never happen */
+	if (!status->PORT_CONNECTION || !status->PORT_ENABLE) {
+		HUB_MSG("Port%d unexpectedly unavailable", port_num);
+		return EXIT_FAILURE;
+	}
+
+	/* Determine port speed from status bits */
+	if (status->PORT_LOW_SPEED) {
+		if (status->PORT_HIGH_SPEED) {
+			HUB_MSG("Port%d has invalid speed flags", port_num);
+			return EXIT_FAILURE;
+		} else
+			port_speed = (long)DDEKIT_HUB_PORT_LS_CONN;
+	} else {
+		if (status->PORT_HIGH_SPEED)
+			port_speed = (long)DDEKIT_HUB_PORT_HS_CONN;
+		else
+			port_speed = (long)DDEKIT_HUB_PORT_FS_CONN;
+	}
+
+	/* Signal to HCD that port has device connected at given speed */
+	return ddekit_usb_info(driver_state.dev, port_speed, (long)port_num);
 }
 
 
@@ -845,7 +918,7 @@ hub_handle_disconnection(int port_num)
 {
 	HUB_DEBUG_DUMP;
 
-	HUB_MSG("Device disconnected from port %d", port_num);
+	HUB_MSG("Device disconnected from port%d", port_num);
 
 	return ddekit_usb_info(driver_state.dev, (long)DDEKIT_HUB_PORT_DISCONN,
 				(long)port_num);

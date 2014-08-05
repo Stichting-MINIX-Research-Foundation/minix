@@ -124,12 +124,14 @@ hcd_direction;
 /* Possible asynchronous HCD events */
 typedef enum {
 
-	HCD_EVENT_CONNECTED = 0,
-	HCD_EVENT_DISCONNECTED,
-	HCD_EVENT_PORT_CONNECTED,
-	HCD_EVENT_PORT_DISCONNECTED,
-	HCD_EVENT_ENDPOINT,
-	HCD_EVENT_URB,
+	HCD_EVENT_CONNECTED = 0,	/* Device connected directly to root */
+	HCD_EVENT_DISCONNECTED,		/* Directly connected device removed */
+	HCD_EVENT_PORT_LS_CONNECTED,	/* Low speed device connected to hub */
+	HCD_EVENT_PORT_FS_CONNECTED,	/* Full speed device connected to hub */
+	HCD_EVENT_PORT_HS_CONNECTED,	/* High speed device connected to hub */
+	HCD_EVENT_PORT_DISCONNECTED,	/* Device disconnected from hub */
+	HCD_EVENT_ENDPOINT,		/* Something happened at endpoint */
+	HCD_EVENT_URB,			/* URB was submitted by device driver */
 	HCD_EVENT_INVALID = 0xFF
 }
 hcd_event;
@@ -166,6 +168,10 @@ typedef struct usb_ctrlrequest		hcd_ctrlrequest;
  * see MAXPAYLOAD in TXMAXP/RXMAXP */
 #define MAX_WTOTALLENGTH 		1024
 
+/* TODO: This has corresponding redefinition in hub driver */
+/* Limit of child devices for each parent */
+#define HCD_CHILDREN			8u
+
 /* Forward declarations */
 typedef struct hcd_datarequest		hcd_datarequest;
 typedef struct hcd_urb			hcd_urb;
@@ -192,7 +198,7 @@ struct hcd_urb {
 	/* Basic */
 	void * original_urb;
 	hcd_device_state * target_device;
-	void (*handled)(void);	/* URB handled callback */
+	void (*handled)(hcd_urb *);	/* URB handled callback */
 
 	/* Transfer (in/out signifies what may be overwritten by HCD) */
 	hcd_ctrlrequest * in_setup;
@@ -212,6 +218,7 @@ struct hcd_urb {
 struct hcd_device_state {
 
 	hcd_device_state * parent;		/* In case of hub attachment */
+	hcd_device_state * child[HCD_CHILDREN];	/* In case of being hub */
 	hcd_driver_state * driver;		/* Specific HCD driver object */
 	hcd_thread * thread;
 	hcd_lock * lock;
@@ -225,7 +232,8 @@ struct hcd_device_state {
 	hcd_reg1 max_packet_size;
 	hcd_speed speed;
 	hcd_state state;
-	hcd_reg1 address;
+	hcd_reg1 reserved_address;
+	hcd_reg1 current_address;
 
 	/*
 	 * Control transfer's local data:
@@ -254,7 +262,9 @@ struct hcd_device_state {
 #define HCD_DEFAULT_EP			0x00u
 #define HCD_DEFAULT_ADDR		0x00u
 #define HCD_DEFAULT_CONFIG		0x00u
+#define HCD_FIRST_ADDR			0x01u
 #define HCD_LAST_ADDR			0x7Fu
+#define HCD_TOTAL_ADDR			0x80u
 #define HCD_LAST_EP			0x0Fu
 #define HCD_TOTAL_EP			0x10u
 #define HCD_UNUSED_VAL			0xFFu	/* When number not needed */
@@ -262,12 +272,6 @@ struct hcd_device_state {
 /* Legal interval values */
 #define HCD_LOWEST_INTERVAL		0x00u
 #define HCD_HIGHEST_INTERVAL		0xFFu
-
-/* Max number of supported devices */
-#define HCD_NUM_MAX_DEVICES		0x08u
-
-/* TODO: One device only */
-#define HCD_ATTACHED_ADDR		0x01u
 
 /* Translates configuration number for 'set configuration' */
 #define HCD_SET_CONFIG_NUM(num)		((num)+0x01u)
@@ -324,6 +328,10 @@ void hcd_device_wait(hcd_device_state *, hcd_event, hcd_reg1);
 
 /* Unlocks device thread halted by 'hcd_device_wait' */
 void hcd_device_continue(hcd_device_state *, hcd_event, hcd_reg1);
+
+/* Allocation/deallocation of device structures */
+hcd_device_state * hcd_new_device(void);
+void hcd_delete_device(hcd_device_state *);
 
 
 /*===========================================================================*

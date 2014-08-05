@@ -184,13 +184,9 @@ ddekit_usb_get_device_id(struct ddekit_usb_dev * dev,
 int
 ddekit_usb_submit_urb(struct ddekit_usb_urb * d_urb)
 {
-	hcd_device_state * dev;
 	hcd_urb * urb;
 
 	DEBUG_DUMP;
-
-	/* Retrieve info on device state from DDEKit's URB */
-	dev = (hcd_device_state *)(d_urb->dev);
 
 	/* Get new URB */
 	urb = hcd_new_urb();
@@ -213,6 +209,8 @@ ddekit_usb_cancle_urb(struct ddekit_usb_urb * d_urb)
 	DEBUG_DUMP;
 	/* TODO: UNUSED for argument won't work */
 	((void)d_urb);
+	/* TODO: No driver will require this any time soon */
+	USB_ASSERT(0, "URB cancellation not supported");
 	return EXIT_SUCCESS;
 }
 
@@ -464,8 +462,14 @@ hcd_decode_info(long type, long invalue, hcd_event * event, hcd_reg1 * outvalue)
 		"Illegal USB info value received");
 
 	switch ((ddekit_msg_type_t)type) {
-		case DDEKIT_HUB_PORT_CONN:
-			*event = HCD_EVENT_PORT_CONNECTED;
+		case DDEKIT_HUB_PORT_LS_CONN:
+			*event = HCD_EVENT_PORT_LS_CONNECTED;
+			break;
+		case DDEKIT_HUB_PORT_FS_CONN:
+			*event = HCD_EVENT_PORT_FS_CONNECTED;
+			break;
+		case DDEKIT_HUB_PORT_HS_CONN:
+			*event = HCD_EVENT_PORT_HS_CONNECTED;
 			break;
 		case DDEKIT_HUB_PORT_DISCONN:
 			*event = HCD_EVENT_PORT_DISCONNECTED;
