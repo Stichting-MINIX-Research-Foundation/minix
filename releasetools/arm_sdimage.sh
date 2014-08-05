@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -e
 
 #
@@ -48,6 +48,24 @@ fi
 # We host u-boot binaries.
 U_BOOT_GIT_VERSION=cb5178f12787c690cb1c888d88733137e5a47b15
 
+# Set the vfat mkfs command. We need to re-evaluate MKFS_VFAT_OPTS after
+# FAT_SIZE is set :-(
+case $(uname -s) in
+Darwin)
+	MKFS_VFAT_CMD=newfs_msdos
+	MKFS_VFAT_OPTS='-h 64 -u 32 -S 512 -s ${FAT_SIZE} -o 0'
+;;
+FreeBSD)
+	MKFS_VFAT_CMD=newfs_msdos
+	MKFS_VFAT_OPTS=
+;;
+*)
+	MKFS_VFAT_CMD=mkfs.vfat
+	MKFS_VFAT_OPTS=
+;;
+esac
+
+
 if [ -n "$BASE_URL" ]
 then
 	#we no longer download u-boot but do a checkout
@@ -66,7 +84,7 @@ fi
 
 export PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:$PATH
 
-for needed in mcopy dd mkfs.vfat git
+for needed in mcopy dd ${MKFS_VFAT_CMD} git
 do
 	if ! which $needed 2>&1 > /dev/null
 	then
@@ -110,6 +128,8 @@ sh ${BUILDSH} -j ${JOBS} -m ${ARCH} -O ${OBJ} -D ${DESTDIR} ${BUILDVARS} -U -u d
 : ${ROOT_SIZE=$((   64*(2**20) / 512))}
 : ${HOME_SIZE=$((  128*(2**20) / 512))}
 : ${USR_SIZE=$((  1536*(2**20) / 512))}
+
+eval MKFS_VFAT_OPTS="\"$MKFS_VFAT_OPTS\""
 
 #
 # create a fstab entry in /etc this is normally done during the
@@ -156,7 +176,7 @@ ${CROSS_TOOLS}/nbpartition -m ${IMG} ${FAT_START} "c:${FAT_SIZE}*" 81:${ROOT_SIZ
 # Format the fat partition and put the bootloaders
 # uEnv and the kernel command line in the FAT partition
 #
-mkfs.vfat ${IMG_DIR}/fat.img
+${MKFS_VFAT_CMD} ${MKFS_VFAT_OPTS} ${IMG_DIR}/fat.img
 
 #
 # Create a uEnv.txt file
