@@ -9,7 +9,8 @@ package, and 'pkgin available' will list all available packages.
 
 To install packages from the installation CD: same, but use pkgin_cd.
 To switch to the online repository, do 'pkgin update' again. To install
-all packages, do pkgin_all.
+all packages, do pkgin_all, or do pkgin_sets to install one or more
+predefined sets.
 
 MINIX 3 supports multiple virtual terminals. Just use ALT+F1, F2, F3
 and F4 to navigate among them.
