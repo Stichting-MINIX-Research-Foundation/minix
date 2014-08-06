@@ -30,7 +30,7 @@ SUBDIR=	add_route arp ash at backup btrace \
 	truncate udpstat umount \
 	unstack update uud uue version vol \
 	writeisofs fetch \
-	zdump zmodem pkgin_cd pkgin_all \
+	zdump zmodem pkgin_cd pkgin_all pkgin_sets \
 	worldstone updateboot update_bootcfg \
 	atnormalize dosread fdisk loadfont \
 	autopart part partition playwave  \
