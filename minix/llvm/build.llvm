@@ -76,11 +76,12 @@ function check_args()
 		elif [ -f "${MINIX_LLVM_BIN_DIR}/${llvmpass}.so" ]; then
 			llvmpass_path="${MINIX_LLVM_BIN_DIR}/${llvmpass}.so"
 		else
-			echo "The LLVM pass file ${llvmpass}.so doesn't exist."
-			exit_flag=1
+			llvmpass_path=""
 		fi
-		LLVMPASS_PATHS+=" -load=${llvmpass_path} -${llvmpass}"
-		LLVMPASS+=" ${llvmpass}"
+		if [ "$llvmpass_path" != "" ]; then
+			LLVMPASS_PATHS+=" -load=${llvmpass_path}"
+		fi
+		LLVMPASS_PATHS+=" -${llvmpass}"
 	done
 
 	if [ ${exit_flag} == 1 ]; then
