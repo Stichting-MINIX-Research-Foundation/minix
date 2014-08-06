@@ -5,6 +5,10 @@ set -e
 # This script creates a bootable image and should at some point in the future
 # be replaced by makefs.
 #
+# Supported command line switches:
+#   -i   build iso image instead of qemu imaeg
+#   -b   bitcode build, increase partition sizes as necessary
+#
 
 : ${ARCH=i386}
 : ${OBJ=../obj.${ARCH}}
@@ -30,6 +34,9 @@ set -e
 # we create a disk image of about 2 gig's
 # for alignment reasons, prefer sizes which are multiples of 4096 bytes
 #
+# these sizes are insufficient for bitcode builds!
+# invoke this script with the -b flag to increase sizes accordingly
+#
 : ${ROOT_SIZE=$((   64*(2**20) / 512))}
 : ${HOME_SIZE=$((  128*(2**20) / 512))}
 : ${USR_SIZE=$((  1792*(2**20) / 512))}
@@ -43,11 +50,15 @@ set -e
 # Where the kernel & boot modules will be
 MODDIR=${DESTDIR}/boot/minix/.temp
 
-while getopts "i" c
+while getopts "ib" c
 do
 	case "$c" in
 		i)	: ${IMG=minix_x86.iso}
 			ISOMODE=1
+			;;
+		b)	# bitcode build: increase partition sizes
+			ROOT_SIZE="$((${ROOT_SIZE} + 192*(2**20) / 512))"
+			USR_SIZE="$((${USR_SIZE} + 256*(2**20) / 512))"
 			;;
 	esac
 done

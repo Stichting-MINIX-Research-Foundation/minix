@@ -347,7 +347,7 @@ function minix_test {
     LOG=$(pwd)/test.log
     if [ "$C" == "full" ]; then
         cd $ROOT
-        JOBS=$JOBS BUILDVARS="-V MKBITCODE=yes" ./releasetools/x86_hdimage.sh 2>&1 | tee $LOG; test ${PIPESTATUS[0]} -eq 0 || exit 125
+        JOBS=$JOBS BUILDVARS="-V MKBITCODE=yes" ./releasetools/x86_hdimage.sh -b 2>&1 | tee $LOG; test ${PIPESTATUS[0]} -eq 0 || exit 125
         cd -
     else
         C=$C ./relink.llvm 2>&1 | tee $LOG; test ${PIPESTATUS[0]} -eq 0 || exit 125
@@ -373,7 +373,7 @@ function minix_bisect {
 
 case "$mode" in
   'buildimage')
-    (cd $ROOT && CREATE_IMAGE_ONLY=1 releasetools/x86_hdimage.sh)
+    (cd $ROOT && CREATE_IMAGE_ONLY=1 releasetools/x86_hdimage.sh -b)
     ;;
   'buildboot')
     (cd $ROOT && $MAKE -C releasetools do-hdboot)

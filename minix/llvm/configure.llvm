@@ -116,7 +116,7 @@ if [ "${REBUILD_MINIX}" == "yes" ]; then
 	echo "BUILDVARS:$BUILDVARS"
 	echo 
 	cd ${MINIX_ROOT}
-	./releasetools/x86_hdimage.sh || EXITCODE=1
+	./releasetools/x86_hdimage.sh -b || EXITCODE=1
 	cd ${MYPWD}
 	if [ "$EXITCODE" != "0" ]; then
         	echo "Error: Failed building Minix source code."
