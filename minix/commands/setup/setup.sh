@@ -773,13 +773,13 @@ umount /dev/$usr && echo Unmounted $usr
 umount /dev/$root && echo Unmounted $root
 
 echo "
-Please type 'shutdown' to exit MINIX 3 and reboot. To boot into your new
+Please type 'reboot' to exit MINIX 3 and reboot. To boot into your new
 system, you might have to remove installation media.
 
-This ends the MINIX 3 setup script.  After booting your newly set up system,
-you can run the test suites as indicated in the setup manual.  You also 
-may want to take care of local configuration, such as securing your system
-with a password.  Please consult the usage manual for more information. 
+This ends the MINIX 3 setup script.  You may want to take care of post
+installation steps, such as local testing and configuration.
+
+Please consult the user manual for more information.
 
 "
 
