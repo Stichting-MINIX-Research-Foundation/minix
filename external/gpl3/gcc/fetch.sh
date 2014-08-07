@@ -11,7 +11,7 @@ cd `dirname $0`
 : ${SED=sed}
 
 # Configure fetch method
-URL="http://www.minix3.org/distfiles-minix/gcc-4.5.3.tar.bz2"
+URL="http://www.minix3.org/pkgsrc/distfiles/minix/3.3.0/gcc-4.5.3.tar.bz2"
 BACKUP_URL="ftp://ftp.gwdg.de/pub/misc/gcc/releases/gcc-4.5.3/gcc-4.5.3.tar.bz2"
 FETCH=ftp
 if which curl >/dev/null

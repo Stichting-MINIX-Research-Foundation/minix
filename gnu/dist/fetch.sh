@@ -11,7 +11,7 @@ if [ $? -eq 0 ]; then
 fi
 
 # Configure fetch method - GMAKE
-URL="http://www.minix3.org/distfiles-minix/make-3.80.tar.bz2"
+URL="http://www.minix3.org/pkgsrc/distfiles/minix/3.3.0/make-3.80.tar.bz2"
 BACKUP_URL="ftp://ftp.gnu.org/gnu/make/make-3.80.tar.bz2"
 
 # Fetch sources if not available
@@ -31,7 +31,7 @@ then
 fi
 
 # Configure fetch method - TEXINFO
-URL="http://www.minix3.org/distfiles-minix/texinfo-4.8.tar.bz2"
+URL="http://www.minix3.org/pkgsrc/distfiles/minix/3.3.0/texinfo-4.8.tar.bz2"
 BACKUP_URL="ftp://ftp.gnu.org/gnu/texinfo/texinfo-4.8.tar.bz2"
 
 # Fetch sources if not available

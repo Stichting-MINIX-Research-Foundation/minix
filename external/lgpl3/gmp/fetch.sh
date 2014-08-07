@@ -5,7 +5,7 @@ echo $0
 cd `dirname $0`
 
 # Configure fetch method
-URL="http://www.minix3.org/distfiles-minix/gmp-5.1.2.tar.bz2"
+URL="http://www.minix3.org/pkgsrc/distfiles/minix/3.3.0/gmp-5.1.2.tar.bz2"
 BACKUP_URL="ftp://ftp.gmplib.org/pub/gmp-5.1.2/gmp-5.1.2.tar.bz2"
 FETCH=ftp
 which curl >/dev/null
