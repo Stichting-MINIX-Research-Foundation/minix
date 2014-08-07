@@ -744,21 +744,6 @@ echo "cddrive=$cddrive" >>/mnt/usr/etc/rc.package
 
 bios="`echo $primary | sed -e 's/d./dX/g' -e 's/c.//g'`"
 
-if [ ! "$auto" = "r" ]
-then	if mount /dev/$home /home 2>/dev/null
-	then	for u in bin
-		do	h=`eval echo "~$u"`
-			if mkdir $h
-			then	echo " * Creating home directory for $u in $h"
-				pax -rw -pe /usr/ast $h
-				chown -R $u:operator $h
-			else	echo " * Couldn't create $h"
-			fi
-		done
-		umount /dev/$home
-	fi
-fi
-
 echo "Saving random data.."
 dd if=/dev/random of=/mnt/usr/adm/random.dat bs=1024 count=1
 

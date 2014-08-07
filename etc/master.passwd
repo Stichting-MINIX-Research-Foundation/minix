@@ -1,6 +1,6 @@
 root::0:0::0:0:Big Brother:/root:/bin/sh
 daemon:*:1:1::0:0:The Deuce:/etc:/bin/sh
-bin:*:2:0::0:0:Binaries:/home/bin:/bin/sh
+bin:*:2:0::0:0:Binaries Commands and Source:/nonexistent:/bin/sh
 uucp:*:5:5::0:0:UNIX to UNIX copy:/usr/spool/uucp:/usr/bin/uucico
 news:*:6:6::0:0:Usenet news:/usr/spool/news:/bin/sh
 ftp:*:7:7::0:0:Anonymous FTP:/usr/ftp:/bin/sh

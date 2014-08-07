@@ -111,7 +111,7 @@ runtest() {
 	then
 		if [ $needroot -eq 1 ]
 		then $NAME $ARG || return 1
-		else su - bin -c "cd `pwd`; $NAME $ARG" || return 1
+		else su bin -c "$NAME $ARG" || return 1
 		fi
 	else
 		if [ $needroot -eq 1 ]

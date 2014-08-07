@@ -169,9 +169,6 @@
 ./usr/tmp
 
 /set type=dir uid=2 gid=0 mode=755
-./home/bin
-
-/set type=dir uid=2 gid=0 mode=755
 ./usr/tests/minix-posix
 ./usr/tests/minix-posix/blocktest
 ./usr/tests/minix-posix/ddekit

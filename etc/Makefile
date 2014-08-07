@@ -435,7 +435,6 @@ install-etc-files-safe: .PHONY .MAKE check_DESTDIR MAKEDEV
 		${BINOWN} ${BINGRP}	${BINMODE}	${NETBSDSRCDIR}/etc/devmand/scripts/ ${DESTDIR}/etc/devmand/scripts/ singlechar \
 		${BINOWN} ${BINGRP}	${NONBINMODE}	${NETBSDSRCDIR}/etc/ast/ ${DESTDIR}/usr/ast/ .[aepv]* \
 		${BINOWN} ${BINGRP}	${NONBINMODE}	${NETBSDSRCDIR}/etc/ast/ ${DESTDIR}/root/ .[aepv]* \
-		bin	  ${BINGRP}	${NONBINMODE}	${NETBSDSRCDIR}/etc/ast/ ${DESTDIR}/home/bin/ .[aepv]* \
 
 	${_MKMSG_INSTALL} ${DESTDIR}${tdir}${files:T}
 	if [ ! -e ${tdir} ]; then \

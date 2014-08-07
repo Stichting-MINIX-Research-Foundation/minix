@@ -124,9 +124,9 @@
 ./home/ast				minix-sys	obsolete
 ./home/ast/.exrc			minix-sys	obsolete
 ./home/ast/.profile			minix-sys	obsolete
-./home/bin				minix-sys
-./home/bin/.exrc			minix-sys
-./home/bin/.profile			minix-sys
+./home/bin				minix-sys	obsolete
+./home/bin/.exrc			minix-sys	obsolete
+./home/bin/.profile			minix-sys	obsolete
 ./lib					minix-sys
 ./mnt					minix-sys
 ./proc					minix-sys
