@@ -746,7 +746,7 @@ bios="`echo $primary | sed -e 's/d./dX/g' -e 's/c.//g'`"
 
 if [ ! "$auto" = "r" ]
 then	if mount /dev/$home /home 2>/dev/null
-	then	for u in bin ast
+	then	for u in bin
 		do	h=`eval echo "~$u"`
 			if mkdir $h
 			then	echo " * Creating home directory for $u in $h"

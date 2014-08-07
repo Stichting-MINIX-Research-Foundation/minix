@@ -4,7 +4,6 @@ bin:*:2:0::0:0:Binaries:/home/bin:/bin/sh
 uucp:*:5:5::0:0:UNIX to UNIX copy:/usr/spool/uucp:/usr/bin/uucico
 news:*:6:6::0:0:Usenet news:/usr/spool/news:/bin/sh
 ftp:*:7:7::0:0:Anonymous FTP:/usr/ftp:/bin/sh
-ast:*:8:100::0:0:Andrew S. Tanenbaum:/home/ast:/bin/sh
 www:*:9:9::0:0:World Wide Web:/usr/www:/bin/sh
 driver:*:10:10::0:0:Device Drivers:/:/bin/sh
 server:*:11:11::0:0:OS Servers:/:/bin/sh

@@ -121,9 +121,9 @@
 ./etc/ttys				minix-sys
 ./etc/utmp				minix-sys
 ./home					minix-sys
-./home/ast				minix-sys
-./home/ast/.exrc			minix-sys
-./home/ast/.profile			minix-sys
+./home/ast				minix-sys	obsolete
+./home/ast/.exrc			minix-sys	obsolete
+./home/ast/.profile			minix-sys	obsolete
 ./home/bin				minix-sys
 ./home/bin/.exrc			minix-sys
 ./home/bin/.profile			minix-sys

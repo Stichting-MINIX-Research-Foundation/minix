@@ -168,9 +168,6 @@
 ./tmp
 ./usr/tmp
 
-/set type=dir uid=8 gid=0 mode=755
-./home/ast
-
 /set type=dir uid=2 gid=0 mode=755
 ./home/bin
 
