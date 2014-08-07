@@ -4,6 +4,7 @@
 
 #include <string.h>			/* memset */
 #include <stdint.h>
+#include <time.h>			/* nanosleep */
 
 #include <ddekit/thread.h>
 #include <minix/sef.h>
@@ -50,6 +51,9 @@ static void hub_task(void *);
 
 /* Limits number of communication retries (when needed) */
 #define USB_HUB_MAX_TRIES 3
+
+/* How long to wait between retries, in case of reset error (in nanoseconds) */
+#define USB_HUB_RESET_DELAY 200000000 /* 200ms */
 
 /* Hub descriptor type */
 #define USB_HUB_DESCRIPTOR_TYPE 0x29
@@ -821,6 +825,7 @@ hub_handle_change(int port_num, hub_port_status * status)
 static int
 hub_handle_connection(int port_num, hub_port_status * status)
 {
+	struct timespec wait_time;
 	int reset_tries;
 	long port_speed;
 
@@ -841,6 +846,8 @@ hub_handle_connection(int port_num, hub_port_status * status)
 	}
 
 	reset_tries = 0;
+	wait_time.tv_sec = 0;
+	wait_time.tv_nsec = USB_HUB_RESET_DELAY;
 
 	/* Wait for reset completion */
 	while (!status->C_PORT_RESET) {
@@ -857,6 +864,11 @@ hub_handle_connection(int port_num, hub_port_status * status)
 		}
 
 		reset_tries++;
+
+		/* Ignore potential signal interruption (no return value check),
+		 * since it causes driver termination anyway */
+		if (nanosleep(&wait_time, NULL))
+			HUB_MSG("Calling nanosleep() failed");
 	}
 
 	/* Reset completed */

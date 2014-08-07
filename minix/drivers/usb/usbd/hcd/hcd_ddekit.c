@@ -196,7 +196,7 @@ ddekit_usb_submit_urb(struct ddekit_usb_urb * d_urb)
 	hcd_decode_urb(urb, d_urb);
 
 	/* Add URB to scheduler */
-	return hcd_schedule_urb(urb);
+	return hcd_schedule_external_urb(urb);
 }
 
 
@@ -308,8 +308,7 @@ hcd_completion_cb(hcd_urb * urb)
 	/* Recollect original URB */
 	d_urb = (struct ddekit_usb_urb *)urb->original_urb;
 
-	/* This URB will be scheduled no more */
-	hcd_unschedule_urb(urb);
+	USB_ASSERT(NULL != d_urb, "Original DDEKit URB missing");
 
 	/* Turn HCD URB format to one handled by DDEKit */
 	hcd_encode_urb(urb, d_urb);

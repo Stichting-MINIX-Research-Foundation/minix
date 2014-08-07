@@ -9,6 +9,7 @@
 #include <usbd/hcd_common.h>
 #include <usbd/hcd_ddekit.h>
 #include <usbd/hcd_interface.h>
+#include <usbd/hcd_schedule.h>
 #include <usbd/usbd_common.h>
 
 
@@ -40,7 +41,7 @@ static int hcd_non_control_urb(hcd_device_state *, hcd_urb *);
 
 /* For internal use by more general methods */
 static int hcd_setup_packet(hcd_device_state *, hcd_ctrlrequest *, hcd_reg1);
-static int hcd_finish_setup(hcd_device_state *, void *, hcd_reg4);
+static int hcd_finish_setup(hcd_device_state *, void *);
 static int hcd_data_transfer(hcd_device_state *, hcd_datarequest *);
 
 /* TODO: This is not meant to be explicitly visible outside DDEKit library
@@ -54,6 +55,10 @@ extern void _ddekit_thread_set_myprio(int);
 /* TODO: This was added for compatibility with DDELinux drivers that
  * allow receiving less data than expected in URB, without error */
 #define HCD_ANY_LENGTH 0xFFFFFFFFu
+
+/* This doesn't seem to be specified in standard but abnormal values
+ * are unlikely so check for this was added below */
+#define HCD_SANE_DESCRIPTOR_LENGTH 2048
 
 
 /*===========================================================================*
@@ -255,6 +260,9 @@ hcd_device_thread(void * thread_args)
 		/* Block and wait for something like 'submit URB' */
 		hcd_device_wait(this_device, HCD_EVENT_URB, HCD_UNUSED_VAL);
 		hcd_handle_urb(this_device);
+
+		/* Only external URBs should be submitted here */
+		hcd_completion_cb(this_device->urb);
 	}
 
 	/* Finish device handling to avoid leaving thread */
@@ -413,11 +421,44 @@ hcd_enumerate(hcd_device_state * this_device)
 		return EXIT_FAILURE;
 	}
 
+	/* Remember max packet size from device descriptor */
+	this_device->max_packet_size = this_device->device_desc.bMaxPacketSize;
+
+	/* Dump device descriptor in debug mode */
+#ifdef DEBUG
+	{
+		hcd_device_descriptor * d;
+		d = &(this_device->device_desc);
+
+		USB_DBG("<<DEVICE>>");
+		USB_DBG("bLength %02X",			d->bLength);
+		USB_DBG("bDescriptorType %02X",		d->bDescriptorType);
+		USB_DBG("bcdUSB %04X",			UGETW(d->bcdUSB));
+		USB_DBG("bDeviceClass %02X",		d->bDeviceClass);
+		USB_DBG("bDeviceSubClass %02X",		d->bDeviceSubClass);
+		USB_DBG("bDeviceProtocol %02X",		d->bDeviceProtocol);
+		USB_DBG("bMaxPacketSize %02X",		d->bMaxPacketSize);
+		USB_DBG("idVendor %04X",		UGETW(d->idVendor));
+		USB_DBG("idProduct %04X",		UGETW(d->idProduct));
+		USB_DBG("bcdDevice %04X",		UGETW(d->bcdDevice));
+		USB_DBG("iManufacturer %02X",		d->iManufacturer);
+		USB_DBG("iProduct %02X",		d->iProduct);
+		USB_DBG("iSerialNumber %02X",		d->iSerialNumber);
+		USB_DBG("bNumConfigurations %02X",	d->bNumConfigurations);
+	}
+#endif
+
 	/* Set reserved address */
 	if (EXIT_SUCCESS != hcd_set_address(this_device)) {
 		USB_MSG("Failed to set device address");
 		return EXIT_FAILURE;
 	}
+
+	/* Sleep 5msec to allow addressing */
+	hcd_os_nanosleep(HCD_NANOSLEEP_MSEC(5));
+
+	/* Remember what was assigned in hardware */
+	this_device->current_address = this_device->reserved_address;
 
 	/* Get other descriptors */
 	if (EXIT_SUCCESS != hcd_get_descriptor_tree(this_device)) {
@@ -448,11 +489,11 @@ static int
 hcd_get_device_descriptor(hcd_device_state * this_device)
 {
 	hcd_ctrlrequest setup;
+	hcd_urb urb;
 
 	DEBUG_DUMP;
 
 	/* TODO: magic numbers, no header for these */
-
 	/* Format setup packet */
 	setup.bRequestType	= 0x80;			/* IN */
 	setup.bRequest		= 0x06;			/* Get descriptor */
@@ -460,45 +501,31 @@ hcd_get_device_descriptor(hcd_device_state * this_device)
 	setup.wIndex		= 0x0000;
 	setup.wLength		= sizeof(this_device->device_desc);
 
-	/* Handle formatted setup packet */
-	if (EXIT_SUCCESS != hcd_setup_packet(this_device, &setup,
-						HCD_DEFAULT_EP)) {
-		USB_MSG("Handling setup packet failed");
+	/* Prepare self-URB */
+	memset(&urb, 0, sizeof(urb));
+	urb.direction = HCD_DIRECTION_IN;
+	urb.endpoint = HCD_DEFAULT_EP;
+	urb.in_setup = &setup;
+	urb.inout_data = (hcd_reg1 *)(&(this_device->device_desc));
+	urb.target_device = this_device;
+	urb.type = HCD_TRANSFER_CONTROL;
+
+	/* Put it to be scheduled and wait for control to get back */
+	hcd_schedule_internal_urb(&urb);
+	hcd_device_wait(this_device, HCD_EVENT_URB, HCD_UNUSED_VAL);
+	hcd_handle_urb(this_device);
+
+	/* Check if URB submission completed successfully */
+	if (urb.inout_status) {
+		USB_MSG("URB submission failed");
 		return EXIT_FAILURE;
 	}
 
-	/* Put what was read in device descriptor */
-	if (EXIT_SUCCESS != hcd_finish_setup(this_device,
-					&(this_device->device_desc),
-					sizeof(this_device->device_desc)))
+	/* Check if expected size was received */
+	if (urb.out_size != setup.wLength) {
+		USB_MSG("URB submission returned invalid amount of data");
 		return EXIT_FAILURE;
-
-	/* Remember max packet size from device descriptor */
-	this_device->max_packet_size = this_device->device_desc.bMaxPacketSize;
-
-	/* Dump device descriptor in debug mode */
-#ifdef DEBUG
-	{
-		hcd_device_descriptor * d;
-		d = &(this_device->device_desc);
-
-		USB_DBG("<<DEVICE>>");
-		USB_DBG("bLength %02X",			d->bLength);
-		USB_DBG("bDescriptorType %02X",		d->bDescriptorType);
-		USB_DBG("bcdUSB %04X",			UGETW(d->bcdUSB));
-		USB_DBG("bDeviceClass %02X",		d->bDeviceClass);
-		USB_DBG("bDeviceSubClass %02X",		d->bDeviceSubClass);
-		USB_DBG("bDeviceProtocol %02X",		d->bDeviceProtocol);
-		USB_DBG("bMaxPacketSize %02X",		d->bMaxPacketSize);
-		USB_DBG("idVendor %04X",		UGETW(d->idVendor));
-		USB_DBG("idProduct %04X",		UGETW(d->idProduct));
-		USB_DBG("bcdDevice %04X",		UGETW(d->bcdDevice));
-		USB_DBG("iManufacturer %02X",		d->iManufacturer);
-		USB_DBG("iProduct %02X",		d->iProduct);
-		USB_DBG("iSerialNumber %02X",		d->iSerialNumber);
-		USB_DBG("bNumConfigurations %02X",	d->bNumConfigurations);
 	}
-#endif
 
 	return EXIT_SUCCESS;
 }
@@ -511,6 +538,7 @@ static int
 hcd_set_address(hcd_device_state * this_device)
 {
 	hcd_ctrlrequest setup;
+	hcd_urb urb;
 
 	DEBUG_DUMP;
 
@@ -526,18 +554,31 @@ hcd_set_address(hcd_device_state * this_device)
 	setup.wIndex		= 0x0000;
 	setup.wLength		= 0x0000;
 
-	/* Handle formatted setup packet */
-	if (EXIT_SUCCESS != hcd_setup_packet(this_device, &setup,
-						HCD_DEFAULT_EP)) {
-		USB_MSG("Handling setup packet failed");
+	/* Prepare self-URB */
+	memset(&urb, 0, sizeof(urb));
+	urb.direction = HCD_DIRECTION_OUT;
+	urb.endpoint = HCD_DEFAULT_EP;
+	urb.in_setup = &setup;
+	urb.inout_data = NULL;
+	urb.target_device = this_device;
+	urb.type = HCD_TRANSFER_CONTROL;
+
+	/* Put it to be scheduled and wait for control to get back */
+	hcd_schedule_internal_urb(&urb);
+	hcd_device_wait(this_device, HCD_EVENT_URB, HCD_UNUSED_VAL);
+	hcd_handle_urb(this_device);
+
+	/* Check if URB submission completed successfully */
+	if (urb.inout_status) {
+		USB_MSG("URB submission failed");
 		return EXIT_FAILURE;
 	}
 
-	/* Sleep 5msec to allow addressing */
-	hcd_os_nanosleep(HCD_NANOSLEEP_MSEC(5));
-
-	/* Remember what was assigned in hardware */
-	this_device->current_address = this_device->reserved_address;
+	/* Check if expected size was received */
+	if (urb.out_size != setup.wLength) {
+		USB_MSG("URB submission returned invalid amount of data");
+		return EXIT_FAILURE;
+	}
 
 	return EXIT_SUCCESS;
 }
@@ -549,19 +590,24 @@ hcd_set_address(hcd_device_state * this_device)
 static int
 hcd_get_descriptor_tree(hcd_device_state * this_device)
 {
-	hcd_config_descriptor config_descriptor;
+	hcd_config_descriptor temp_config_descriptor;
 	hcd_ctrlrequest setup;
-	hcd_reg4 total_length;
-	hcd_reg4 buffer_length;
-	int completed;
+	hcd_urb urb;
+
+	/* To receive data */
+	hcd_reg4 expected_length;
+	hcd_reg1 * expected_buffer;
+
+	int retval;
 
 	DEBUG_DUMP;
 
-	/* First, ask only for configuration itself to get length info */
-	buffer_length = sizeof(config_descriptor);
-	completed = 0;
+	/* Initially */
+	retval = EXIT_FAILURE;
+	expected_buffer = NULL;
 
-	do {
+	/* First part gets only configuration to find out total length */
+	{
 		/* TODO: Default configuration is hard-coded
 		 * but others are rarely used anyway */
 		/* TODO: magic numbers, no header for these */
@@ -569,62 +615,107 @@ hcd_get_descriptor_tree(hcd_device_state * this_device)
 		setup.bRequest		= 0x06;		/* Get descriptor */
 		setup.wValue		= 0x0200 | HCD_DEFAULT_CONFIG;
 		setup.wIndex		= 0x0000;
-		setup.wLength		= buffer_length;
+		setup.wLength		= sizeof(temp_config_descriptor);
 
-		/* Handle formatted setup packet */
-		if (EXIT_SUCCESS != hcd_setup_packet(this_device, &setup,
-							HCD_DEFAULT_EP)) {
-			USB_MSG("Handling setup packet failed");
-			return EXIT_FAILURE;
+		/* Prepare self-URB */
+		memset(&urb, 0, sizeof(urb));
+		urb.direction = HCD_DIRECTION_IN;
+		urb.endpoint = HCD_DEFAULT_EP;
+		urb.in_setup = &setup;
+		urb.inout_data = (hcd_reg1 *)(&temp_config_descriptor);
+		urb.target_device = this_device;
+		urb.type = HCD_TRANSFER_CONTROL;
+
+		/* Put it to be scheduled and wait for control to get back */
+		hcd_schedule_internal_urb(&urb);
+		hcd_device_wait(this_device, HCD_EVENT_URB, HCD_UNUSED_VAL);
+		hcd_handle_urb(this_device);
+
+		/* Check if URB submission completed successfully */
+		if (urb.inout_status) {
+			USB_MSG("URB submission failed");
+			goto FINISH;
 		}
 
-		/* If we only asked for configuration itself
-		 * then ask again for other descriptors */
-		if (sizeof(config_descriptor) == buffer_length) {
-
-			/* Put what was already read in configuration
-			 * descriptor for analysis */
-			if (EXIT_SUCCESS != hcd_finish_setup(this_device,
-							&config_descriptor,
-							buffer_length))
-				return EXIT_FAILURE;
-
-			/* Continue only if there is more data */
-			total_length = UGETW(config_descriptor.wTotalLength);
-
-			if (total_length < sizeof(config_descriptor)) {
-				/* This should never happen for a fine device */
-				USB_MSG("Illegal wTotalLength value");
-				return EXIT_FAILURE;
-			} else if (sizeof(config_descriptor) == total_length) {
-				/* Nothing more was in descriptor anyway */
-				completed = 1;
-			} else {
-				/* Read whatever is needed */
-				buffer_length = total_length;
-			}
-
-		} else {
-			/* All data for given configuration was read */
-			completed = 1;
+		/* Check if expected size was received */
+		if (urb.out_size != setup.wLength) {
+			USB_MSG("URB submission returned "
+				"invalid amount of data");
+			goto FINISH;
 		}
 	}
-	while (!completed);
 
-	/* Validate... */
-	if (EXIT_SUCCESS != hcd_finish_setup(this_device, NULL, total_length))
-		return EXIT_FAILURE;
+	/* Get total expected length */
+	expected_length = UGETW(temp_config_descriptor.wTotalLength);
 
-	/* ... and create tree based on received buffer */
-	if (EXIT_SUCCESS != hcd_buffer_to_tree(this_device->control_data,
-						this_device->control_len,
+	/* Check for abnormal value */
+	if (expected_length > HCD_SANE_DESCRIPTOR_LENGTH) {
+		USB_MSG("Total descriptor length declared is too high");
+		goto FINISH;
+	}
+
+	/* Get descriptor buffer to hold everything expected */
+	if (NULL == (expected_buffer = malloc(expected_length))) {
+		USB_MSG("Descriptor allocation failed");
+		goto FINISH;
+	}
+
+	/* Second part gets all available descriptors */
+	{
+		/* TODO: Default configuration is hard-coded
+		 * but others are rarely used anyway */
+		/* TODO: magic numbers, no header for these */
+		setup.bRequestType	= 0x80;		/* IN */
+		setup.bRequest		= 0x06;		/* Get descriptor */
+		setup.wValue		= 0x0200 | HCD_DEFAULT_CONFIG;
+		setup.wIndex		= 0x0000;
+		setup.wLength		= expected_length;
+
+		/* Prepare self-URB */
+		memset(&urb, 0, sizeof(urb));
+		urb.direction = HCD_DIRECTION_IN;
+		urb.endpoint = HCD_DEFAULT_EP;
+		urb.in_setup = &setup;
+		urb.inout_data = expected_buffer;
+		urb.target_device = this_device;
+		urb.type = HCD_TRANSFER_CONTROL;
+
+		/* Put it to be scheduled and wait for control to get back */
+		hcd_schedule_internal_urb(&urb);
+		hcd_device_wait(this_device, HCD_EVENT_URB, HCD_UNUSED_VAL);
+		hcd_handle_urb(this_device);
+
+		/* Check if URB submission completed successfully */
+		if (urb.inout_status) {
+			USB_MSG("URB submission failed");
+			goto FINISH;
+		}
+
+		/* Check if expected size was received */
+		if (urb.out_size != setup.wLength) {
+			USB_MSG("URB submission returned "
+				"invalid amount of data");
+			goto FINISH;
+		}
+	}
+
+	if (EXIT_SUCCESS != hcd_buffer_to_tree(expected_buffer,
+						(int)expected_length,
 						&(this_device->config_tree))) {
-		/* This should never happen for a fine device */
-		USB_MSG("Illegal descriptor values");
-		return EXIT_FAILURE;
+		USB_MSG("Broken descriptor data");
+		goto FINISH;
 	}
 
-	return EXIT_SUCCESS;
+	/* No errors occurred */
+	retval = EXIT_SUCCESS;
+
+	FINISH:
+
+	/* Release allocated buffer */
+	if (expected_buffer)
+		free(expected_buffer);
+
+	return retval;
 }
 
 
@@ -635,6 +726,7 @@ static int
 hcd_set_configuration(hcd_device_state * this_device, hcd_reg1 configuration)
 {
 	hcd_ctrlrequest setup;
+	hcd_urb urb;
 
 	DEBUG_DUMP;
 
@@ -645,14 +737,21 @@ hcd_set_configuration(hcd_device_state * this_device, hcd_reg1 configuration)
 	setup.wIndex		= 0x0000;
 	setup.wLength		= 0x0000;
 
-	/* Handle formatted setup packet */
-	if (EXIT_SUCCESS != hcd_setup_packet(this_device, &setup,
-						HCD_DEFAULT_EP)) {
-		USB_MSG("Handling setup packet failed");
-		return EXIT_FAILURE;
-	}
+	/* Prepare self-URB */
+	memset(&urb, 0, sizeof(urb));
+	urb.direction = HCD_DIRECTION_OUT;
+	urb.endpoint = HCD_DEFAULT_EP;
+	urb.in_setup = &setup;
+	urb.inout_data = NULL;
+	urb.target_device = this_device;
+	urb.type = HCD_TRANSFER_CONTROL;
 
-	return EXIT_SUCCESS;
+	/* Put it to be scheduled and wait for control to get back */
+	hcd_schedule_internal_urb(&urb);
+	hcd_device_wait(this_device, HCD_EVENT_URB, HCD_UNUSED_VAL);
+	hcd_handle_urb(this_device);
+
+	return urb.inout_status;
 }
 
 
@@ -705,6 +804,8 @@ hcd_handle_urb(hcd_device_state * this_device)
 		USB_MSG("Invalid URB supplied");
 
 	/* Signal scheduler that URB was handled */
+	/* TODO: This works based on the fact that device thread has higher
+	 * priority than scheduler and won't change context within this call */
 	urb->handled(urb);
 }
 
@@ -747,9 +848,7 @@ hcd_control_urb(hcd_device_state * this_device, hcd_urb * urb)
 	}
 
 	/* Put what was read back into URB */
-	if (EXIT_SUCCESS != hcd_finish_setup(this_device,
-					urb->inout_data,
-					HCD_ANY_LENGTH))
+	if (EXIT_SUCCESS != hcd_finish_setup(this_device, urb->inout_data))
 		return EXIT_FAILURE;
 
 	/* Write transfer output info to URB */
@@ -986,8 +1085,7 @@ hcd_setup_packet(hcd_device_state * this_device, hcd_ctrlrequest * setup,
  *    hcd_finish_setup                                                       *
  *===========================================================================*/
 static int
-hcd_finish_setup(hcd_device_state * this_device, void * output,
-		hcd_reg4 expected)
+hcd_finish_setup(hcd_device_state * this_device, void * output)
 {
 	DEBUG_DUMP;
 
@@ -995,21 +1093,6 @@ hcd_finish_setup(hcd_device_state * this_device, void * output,
 	if (this_device->control_len < 0) {
 		USB_MSG("Negative control transfer output length");
 		return EXIT_FAILURE;
-	}
-
-	/* In case it is required... */
-	if (HCD_ANY_LENGTH != expected) {
-		/* ...check for expected length */
-		if ((hcd_reg4)this_device->control_len != expected) {
-			USB_MSG("Control transfer output length mismatch:"
-				"len %d, expected %u", this_device->control_len,
-				expected);
-			return EXIT_FAILURE;
-		}
-
-		/* Valid but there is no need to copy anything */
-		if (0u == expected)
-			return EXIT_SUCCESS;
 	}
 
 	/* Length is valid but output not supplied */

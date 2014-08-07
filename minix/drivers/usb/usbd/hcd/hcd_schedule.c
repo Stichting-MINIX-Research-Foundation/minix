@@ -34,6 +34,12 @@ static hcd_lock * urb_lock;
 /* This allows waiting for completion */
 static hcd_lock * handled_lock;
 
+/* Makes URB schedule enabled */
+static int hcd_schedule_urb(hcd_urb *);
+
+/* Makes URB schedule disabled */
+static void hcd_unschedule_urb(hcd_urb *);
+
 /* Scheduler task */
 static void hcd_urb_scheduler_task(void *);
 
@@ -102,9 +108,33 @@ usbd_deinit_scheduler(void)
 
 
 /*===========================================================================*
- *    hcd_schedule_urb                                                       *
+ *    hcd_schedule_external_urb                                              *
  *===========================================================================*/
 int
+hcd_schedule_external_urb(hcd_urb * urb)
+{
+	DEBUG_DUMP;
+
+	return hcd_schedule_urb(urb);
+}
+
+
+/*===========================================================================*
+ *    hcd_schedule_internal_urb                                              *
+ *===========================================================================*/
+int
+hcd_schedule_internal_urb(hcd_urb * urb)
+{
+	DEBUG_DUMP;
+
+	return hcd_schedule_urb(urb);
+}
+
+
+/*===========================================================================*
+ *    hcd_schedule_urb                                                       *
+ *===========================================================================*/
+static int
 hcd_schedule_urb(hcd_urb * urb)
 {
 	DEBUG_DUMP;
@@ -114,12 +144,7 @@ hcd_schedule_urb(hcd_urb * urb)
 
 	/* Store and check if scheduler should be unlocked */
 	if (EXIT_SUCCESS == hcd_store_urb(urb)) {
-
-		/* This is the first stored URB (possibly in a row)
-		 * so unlock scheduler */
-		if (1 == num_stored_urbs)
-			ddekit_sem_up(urb_lock);
-
+		ddekit_sem_up(urb_lock);
 		return EXIT_SUCCESS;
 	}
 
@@ -130,7 +155,7 @@ hcd_schedule_urb(hcd_urb * urb)
 /*===========================================================================*
  *    hcd_unschedule_urb                                                     *
  *===========================================================================*/
-void
+static void
 hcd_unschedule_urb(hcd_urb * urb)
 {
 	DEBUG_DUMP;
@@ -150,9 +175,8 @@ hcd_urb_scheduler_task(void * UNUSED(arg))
 	DEBUG_DUMP;
 
 	for (;;) {
-		/* Wait for scheduler to unlock on first URB submit */
-		if (0 == num_stored_urbs)
-			ddekit_sem_down(urb_lock);
+		/* Wait for scheduler to unlock on any URB submit */
+		ddekit_sem_down(urb_lock);
 
 		/* Get URB */
 		current_urb = hcd_get_urb();
@@ -169,9 +193,6 @@ hcd_urb_scheduler_task(void * UNUSED(arg))
 
 		/* Wait for completion */
 		ddekit_sem_down(handled_lock);
-
-		/* Handled, forget about it */
-		current_urb->target_device->urb = NULL;
 	}
 }
 
@@ -184,8 +205,10 @@ hcd_urb_handled(hcd_urb * urb)
 {
 	DEBUG_DUMP;
 
-	/* Call completion regardless of status */
-	hcd_completion_cb(urb);
+	/* This URB will be scheduled no more */
+	/* TODO: It would be better if this was connected
+	 * to setting urb_lock down */
+	hcd_unschedule_urb(urb);
 
 	/* Handling completed */
 	ddekit_sem_up(handled_lock);
