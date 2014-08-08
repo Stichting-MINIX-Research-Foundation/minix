@@ -1,5 +1,10 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -e
+
+#
+# This script creates a bootable image and should at some point in the future
+# be replaced by makefs.
+#
 
 : ${ARCH=i386}
 : ${OBJ=../obj.${ARCH}}
@@ -7,28 +12,36 @@ set -e
 : ${CROSS_PREFIX=${CROSS_TOOLS}/i586-elf32-minix-}
 : ${JOBS=1}
 : ${DESTDIR=${OBJ}/destdir.$ARCH}
+: ${RELEASETOOLSDIR=./releasetools/}
 : ${FSTAB=${DESTDIR}/etc/fstab}
 : ${BUILDVARS=}
 : ${BUILDSH=build.sh}
 : ${CREATE_IMAGE_ONLY=0}
-
-# Where the kernel & boot modules will be
-MODDIR=${DESTDIR}/boot/minix/.temp
+: ${RC=minix_x86.rc}
 
 #
 # Directory where to store temporary file system images
 #
 : ${IMG_DIR=${OBJ}/img}
+: ${CDFILES=${IMG_DIR}/cd}
 
-CDFILES=${IMG_DIR}/cd
+# All sized are written in 512 byte blocks
+#
+# we create a disk image of about 2 gig's
+# for alignment reasons, prefer sizes which are multiples of 4096 bytes
+#
+: ${ROOT_SIZE=$((   64*(2**20) / 512))}
+: ${HOME_SIZE=$((  128*(2**20) / 512))}
+: ${USR_SIZE=$((  1792*(2**20) / 512))}
 
-if [ ! -f ${BUILDSH} ]
-then
-	echo "Please invoke me from the root source dir, where ${BUILDSH} is."
-	exit 1
-fi
+#
+# Do some math to determine the start addresses of the partitions.
+# Don't leave holes so the 'partition' invocation later is easy.
+#
 
-export PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:${PATH}
+
+# Where the kernel & boot modules will be
+MODDIR=${DESTDIR}/boot/minix/.temp
 
 while getopts "i" c
 do
@@ -40,7 +53,26 @@ do
 done
 
 : ${IMG=minix_x86.img}
-: ${RC=minix_x86.rc}
+
+if [ "x${ISOMODE}" = "x1" ]
+then	
+	# In iso mode, make all FSes fit (i.e. as small as possible), but
+	# leave some space on /
+	ROOTSIZEARG="-x 5"
+else	
+	# In hd image mode, FSes have fixed sizes
+	ROOTSIZEARG="-b $((${ROOT_SIZE} / 8))"
+	USRSIZEARG="-b $((${USR_SIZE} / 8))"
+	HOMESIZEARG="-b $((${HOME_SIZE} / 8))"
+fi
+
+if [ ! -f ${BUILDSH} ]
+then
+	echo "Please invoke me from the root source dir, where ${BUILDSH} is."
+	exit 1
+fi
+
+export PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:${PATH}
 
 #
 # Are we going to build the minix sources?
@@ -73,23 +105,8 @@ then
 	#
 	# Now start the build.
 	#
-	export CPPFLAGS=${FLAG}
 	sh ${BUILDSH} -j ${JOBS} -m ${ARCH} -O ${OBJ} -D ${DESTDIR} ${BUILDVARS} -U -u distribution
 
-fi
-
-if [ "x${ISOMODE}" = "x1" ]
-then
-	cp ${DESTDIR}/usr/mdec/boot_monitor ${CDFILES}/boot
-	cp ${MODDIR}/* ${CDFILES}/
-	. ./releasetools/release.functions
-	cd_root_changes	# uses $CDFILES and writes $CDFILES/boot.cfg
-	# start the image off with the iso image; reduce root size to reserve
-	${CROSS_TOOLS}/nbwriteisofs -s0x0 -l MINIX -B ${DESTDIR}/usr/mdec/bootxx_cd9660 -n ${CDFILES} ${IMG}
-	ISO_SIZE=$((`${CROSS_TOOLS}/nbstat -f %z ${IMG}` / 512))
-else
-	# just make an empty iso partition
-	ISO_SIZE=8
 fi
 
 #
@@ -97,9 +114,9 @@ fi
 # setup phase on x86
 #
 cat >${FSTAB} <<END_FSTAB
-/dev/c0d0p2   /usr    mfs     rw                      0       2
-/dev/c0d0p3   /home   mfs     rw                      0       2
-none          /sys    devman  rw,rslabel=devman       0       0
+/dev/c0d0p2	/usr	mfs	rw			0	2
+/dev/c0d0p3	/home	mfs	rw			0	2
+none		/sys	devman	rw,rslabel=devman	0	0
 END_FSTAB
 
 rm -f ${DESTDIR}/SETS.*
@@ -113,7 +130,7 @@ ${CROSS_TOOLS}/nbpwd_mkdb -V 0 -p -d ${DESTDIR} ${DESTDIR}/etc/master.passwd
 # After that we do some magic processing to add device nodes (also missing from METALOG)
 # and convert the METALOG into a proto file that can be used by mkfs.mfs
 #
-echo "creating the file systems"
+echo "Creating the file systems"
 
 #
 # read METALOG and use mtree to convert the user and group names into uid and gids
@@ -139,51 +156,40 @@ cat ${IMG_DIR}/input  | grep -v "^./usr/" | ${CROSS_TOOLS}/nbtoproto -b ${DESTDI
 cat ${IMG_DIR}/input  | grep  "^\./usr/\|^. "  | sed "s,\./usr,\.,g" | ${CROSS_TOOLS}/nbtoproto -b ${DESTDIR}/usr -o ${IMG_DIR}/usr.proto
 cat ${IMG_DIR}/input  | grep  "^\./home/\|^. "  | sed "s,\./home,\.,g" | ${CROSS_TOOLS}/nbtoproto -b ${DESTDIR}/home -o ${IMG_DIR}/home.proto
 
-#
-# This script creates a bootable image and should at some point in the future
-# be replaced by makefs.
-#
-# All sized are written in 512 byte blocks
-#
-# we create a disk image of about 2 gig's
-# for alignment reasons, prefer sizes which are multiples of 4096 bytes
-#
-: ${ROOT_SIZE=$((  64*(2**20) / 512))}
-: ${HOME_SIZE=$(( 128*(2**20) / 512))}
-: ${USR_SIZE=$(( 1536*(2**20) / 512))}
-
 if [ "x${ISOMODE}" = "x1" ]
-then	
-	# In iso mode, make all FSes fit (i.e. as small as possible), but
-	# leave some space on /
-	ROOTSIZEARG="-x 5"
-else	
-	# In hd image mode, FSes have fixed sizes
-	ROOTSIZEARG="-b $((${ROOT_SIZE} / 8))"
-	USRSIZEARG="-b $((${USR_SIZE} / 8))"
-	HOMESIZEARG="-b $((${HOME_SIZE} / 8))"
+then
+	cp ${DESTDIR}/usr/mdec/boot_monitor ${CDFILES}/boot
+	cp ${MODDIR}/* ${CDFILES}/
+	. ${RELEASETOOLSDIR}/release.functions
+	cd_root_changes	# uses $CDFILES and writes $CDFILES/boot.cfg
+	# start the image off with the iso image; reduce root size to reserve
+	${CROSS_TOOLS}/nbwriteisofs -s0x0 -l MINIX -B ${DESTDIR}/usr/mdec/bootxx_cd9660 -n ${CDFILES} ${IMG}
+	ISO_SIZE=$((`${CROSS_TOOLS}/nbstat -f %z ${IMG}` / 512))
+else
+	# just make an empty iso partition
+	ISO_SIZE=8
 fi
 
+#
+# Generate /root, /usr and /home partition images.
+#
 echo "Writing Minix filesystem images"
-
-#
-# Do some math to determine the start addresses of the partitions.
-# Ensure the start of the partitions are always aligned, the end will 
-# always be as we assume the sizes are multiples of 4096 bytes, which
-# is always true as soon as you have an integer multiple of 1MB.
-#
 ROOT_START=${ISO_SIZE}
-
 echo " - ROOT"
-ROOT_SIZE=$((`${CROSS_TOOLS}/nbmkfs.mfs -d $ROOTSIZEARG -I $(($ROOT_START*512)) ${IMG} ${IMG_DIR}/root.proto`/512))
-USR_START=$((${ROOT_START} + ${ROOT_SIZE}))
+_ROOT_SIZE=$((`${CROSS_TOOLS}/nbmkfs.mfs -d ${ROOTSIZEARG} -I $((${ROOT_START}*512)) ${IMG} ${IMG_DIR}/root.proto`/512))
+USR_START=$((${ROOT_START} + ${_ROOT_SIZE}))
 echo " - USR"
-USR_SIZE=$((`${CROSS_TOOLS}/nbmkfs.mfs -d $USRSIZEARG  -I $(($USR_START*512))  ${IMG} ${IMG_DIR}/usr.proto`/512))
-HOME_START=$((${USR_START} + $USR_SIZE))
+_USR_SIZE=$((`${CROSS_TOOLS}/nbmkfs.mfs  -d ${USRSIZEARG}  -I $((${USR_START}*512))  ${IMG}  ${IMG_DIR}/usr.proto`/512))
+HOME_START=$((${USR_START} + ${_USR_SIZE}))
 echo " - HOME"
-HOME_SIZE=$((`${CROSS_TOOLS}/nbmkfs.mfs -d $HOMESIZEARG -I $(($HOME_START*512)) ${IMG} ${IMG_DIR}/home.proto`/512))
+_HOME_SIZE=$((`${CROSS_TOOLS}/nbmkfs.mfs -d ${HOMESIZEARG} -I $((${HOME_START}*512)) ${IMG} ${IMG_DIR}/home.proto`/512))
 
-${CROSS_TOOLS}/nbpartition -m ${IMG} 0 81:${ISO_SIZE} 81:${ROOT_SIZE} 81:${USR_SIZE} 81:${HOME_SIZE} 
+#
+# Write the partition table using the natively compiled
+# minix partition utility
+#
+${CROSS_TOOLS}/nbpartition -m ${IMG} 0 81:${ISO_SIZE} \
+	81:${_ROOT_SIZE} 81:${_USR_SIZE} 81:${_HOME_SIZE}
 
 mods="`( cd ${MODDIR}; echo mod* | tr ' ' ',' )`"
 if [ "x${ISOMODE}" = "x1" ]
@@ -191,5 +197,5 @@ then
 	echo "CD image at `pwd`/${IMG}"
 else
 	echo "To boot this image on kvm:"
-	echo "cd ${MODDIR} && kvm -display none -serial stdio -kernel kernel -append \"console=tty00 rootdevname=c0d0p1\" -initrd \"${mods}\" -hda `pwd`/${IMG}"
+	echo "cd ${MODDIR} && qemu-system-i386 -display none -serial stdio -kernel kernel -append \"console=tty00 rootdevname=c0d0p1\" -initrd \"${mods}\" -hda `pwd`/${IMG} --enable-kvm"
 fi
