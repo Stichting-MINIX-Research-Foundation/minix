@@ -68,7 +68,8 @@ usbd_init_scheduler(void)
 	num_stored_urbs = 0;
 	memset(stored_urb, 0, sizeof(stored_urb));
 
-	urb_thread = ddekit_thread_create(hcd_urb_scheduler_task, NULL, "urb");
+	urb_thread = ddekit_thread_create(hcd_urb_scheduler_task, NULL,
+					"scheduler");
 	if (NULL == urb_thread)
 		goto ERR1;
 
@@ -170,6 +171,7 @@ hcd_unschedule_urb(hcd_urb * urb)
 static void
 hcd_urb_scheduler_task(void * UNUSED(arg))
 {
+	hcd_device_state * current_device;
 	hcd_urb * current_urb;
 
 	DEBUG_DUMP;
@@ -181,18 +183,37 @@ hcd_urb_scheduler_task(void * UNUSED(arg))
 		/* Get URB */
 		current_urb = hcd_get_urb();
 
+		/* Get URB's target device */
+		current_device = current_urb->target_device;
+
 		/* Check for mismatch */
 		USB_ASSERT(NULL != current_urb, "URB missing after URB unlock");
 
-		/* Tell device that this is its URB */
-		current_urb->target_device->urb = current_urb;
+		/* Check if URB's device is still allocated */
+		if (EXIT_SUCCESS == hcd_check_device(current_device)) {
+			/* Tell device that this is its URB */
+			current_device->urb = current_urb;
 
-		/* Start handling URB event */
-		hcd_handle_event(current_urb->target_device,
-				HCD_EVENT_URB, HCD_UNUSED_VAL);
+			/* Start handling URB event */
+			hcd_handle_event(current_device, HCD_EVENT_URB,
+					HCD_UNUSED_VAL);
 
-		/* Wait for completion */
-		ddekit_sem_down(handled_lock);
+			/* Wait for completion */
+			ddekit_sem_down(handled_lock);
+
+			/* TODO: Not enough DDEKit thread priorities
+			 * for a better solution */
+			/* Yield, to allow unlocking thread, to continue
+			 * before next URB is used */
+			ddekit_yield();
+
+			/* Makes thread debugging easier */
+			USB_DBG("URB handled, scheduler unlocked");
+		} else {
+			USB_MSG("Device 0x%08X for URB 0x%08X, is unavailable",
+				(int)current_device,
+				(int)current_urb);
+		}
 	}
 }
 
@@ -206,8 +227,6 @@ hcd_urb_handled(hcd_urb * urb)
 	DEBUG_DUMP;
 
 	/* This URB will be scheduled no more */
-	/* TODO: It would be better if this was connected
-	 * to setting urb_lock down */
 	hcd_unschedule_urb(urb);
 
 	/* Handling completed */

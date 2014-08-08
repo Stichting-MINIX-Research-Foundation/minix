@@ -28,6 +28,8 @@ static hcd_device_state * hcd_get_child_for_ep(hcd_device_state *, hcd_reg1);
 /* For HCD level, hub handling */
 static void hcd_add_child(hcd_device_state *, hcd_reg1, hcd_speed);
 static void hcd_delete_child(hcd_device_state *, hcd_reg1);
+static void hcd_disconnect_tree(hcd_device_state *);
+static void hcd_dump_tree(hcd_device_state *, hcd_reg1);
 
 /* Typical USD device communication procedures */
 static int hcd_enumerate(hcd_device_state *);
@@ -36,6 +38,7 @@ static int hcd_set_address(hcd_device_state *);
 static int hcd_get_descriptor_tree(hcd_device_state *);
 static int hcd_set_configuration(hcd_device_state *, hcd_reg1);
 static void hcd_handle_urb(hcd_device_state *);
+static void hcd_complete_urb(hcd_device_state *);
 static int hcd_control_urb(hcd_device_state *, hcd_urb *);
 static int hcd_non_control_urb(hcd_device_state *, hcd_urb *);
 
@@ -69,12 +72,29 @@ hcd_handle_event(hcd_device_state * device, hcd_event event, hcd_reg1 val)
 {
 	DEBUG_DUMP;
 
-	/* No device may be supplied */
-	if (NULL == device) {
+	/* Invalid device may be supplied */
+	if (EXIT_SUCCESS != hcd_check_device(device)) {
 		USB_MSG("No device available for event: 0x%02X, value: 0x%02X",
 			event, val);
 		return;
 	}
+
+#ifdef HCD_DUMP_DEVICE_TREE
+	/* This can be unlocked to dump current USB device tree on event */
+	{
+		/* Go to the base of USB device tree and
+		 * print the current state of it */
+		hcd_device_state * base;
+
+		base = device;
+
+		while (NULL != base->parent)
+			base = base->parent;
+
+		USB_MSG("Current state of USB device tree:");
+		hcd_dump_tree(base, 0);
+	}
+#endif
 
 	/* Handle event and forward control to device thread when required */
 	switch (event) {
@@ -95,13 +115,9 @@ hcd_handle_event(hcd_device_state * device, hcd_event event, hcd_reg1 val)
 				"Device is marked as 'disconnected' "
 				"for 'disconnection' event");
 
-			/* If connect callback was used before, call
-			 * it's equivalent to signal disconnection */
-			if (HCD_STATE_CONNECTED == device->state)
-				hcd_disconnect_cb(device);
-
-			/* Handle device disconnection (freeing memory etc.) */
-			hcd_disconnect_device(device);
+			/* Make this device and all attached children
+			 * disconnect recursively */
+			hcd_disconnect_tree(device);
 
 			break;
 
@@ -143,10 +159,11 @@ hcd_handle_event(hcd_device_state * device, hcd_event event, hcd_reg1 val)
 				"Device is marked as 'disconnected' "
 				"for 'hub port detach' event");
 
+			hcd_delete_child(device, val);
+
 			USB_MSG("Device disconnected from "
 				"hub 0x%08X, port %u", device, val);
 
-			hcd_delete_child(device, val);
 			break;
 
 		case HCD_EVENT_ENDPOINT:
@@ -260,9 +277,6 @@ hcd_device_thread(void * thread_args)
 		/* Block and wait for something like 'submit URB' */
 		hcd_device_wait(this_device, HCD_EVENT_URB, HCD_UNUSED_VAL);
 		hcd_handle_urb(this_device);
-
-		/* Only external URBs should be submitted here */
-		hcd_completion_cb(this_device->urb);
 	}
 
 	/* Finish device handling to avoid leaving thread */
@@ -294,40 +308,48 @@ hcd_device_finish(hcd_device_state * this_device, const char * finish_msg)
 static hcd_device_state *
 hcd_get_child_for_ep(hcd_device_state * device, hcd_reg1 ep)
 {
-	hcd_device_state * d;
-	hcd_device_state * found;
-	int child_num;
+	hcd_device_state * child_found;
+	hcd_device_state * final_found;
+	hcd_device_state * child;
+	hcd_reg1 child_num;
 
 	DEBUG_DUMP;
 
-	/* Start with parent */
-	d = device;
-	child_num = 0;
+	/* Nothing yet */
+	final_found = NULL;
 
-	/* Nothing found yet */
-	found = NULL;
+	/* Check if any children (and their children) wait for EP event */
+	/* Every device in tree is checked every time so errors can be found */
+	for (child_num = 0; child_num < HCD_CHILDREN; child_num++) {
+		/* Device, to be checked for EP event recursively... */
+		child = device->child[child_num];
 
-	/* When device has multiple children (hub), this allows
-	 * routing interrupt login downstream */
-	do {
-		/* Must exist and match requirements */
-		if ((NULL != d) &&
-		    (HCD_EVENT_ENDPOINT == d->wait_event) &&
-		    (ep == d->wait_ep)) {
+		/* ...but only if attached */
+		if (NULL != child) {
+			/* Look deeper first */
+			child_found = hcd_get_child_for_ep(child, ep);
 
-			/* Waiting for EP by multiple devices is mutually
-			 * exclusive, as long as scheduler works correctly */
-			USB_ASSERT(NULL == found, "More than one device waits "
-						"for given endpoint interrupt");
-			found = d;
+			if (NULL != child_found) {
+				/* Only one device can wait for EP event */
+				USB_ASSERT((NULL == final_found),
+					"More than one device waits for EP");
+				/* Remember what was found */
+				final_found = child_found;
+			}
 		}
+	}
 
-		/* Check next child */
-		d = device->child[child_num++];
+	/* Check this device last */
+	if ((HCD_EVENT_ENDPOINT == device->wait_event) &&
+	    (ep == device->wait_ep)) {
+		/* Only one device can wait for EP event */
+		USB_ASSERT((NULL == final_found),
+			"More than one device waits for EP");
+		/* Remember what was found */
+		final_found = device;
+	}
 
-	} while(child_num <= HCD_CHILDREN);
-
-	return found;
+	return final_found;
 }
 
 
@@ -365,24 +387,82 @@ hcd_add_child(hcd_device_state * parent, hcd_reg1 port, hcd_speed speed)
 static void
 hcd_delete_child(hcd_device_state * parent, hcd_reg1 port)
 {
+	hcd_device_state * child;
+
 	DEBUG_DUMP;
 
 	USB_ASSERT(port < HCD_CHILDREN, "Port number too high");
-	USB_ASSERT(NULL != parent->child[port], "Child device does not exist");
 
-	/* If connect callback was used before, call
-	 * it's equivalent to signal disconnection */
-	if (HCD_STATE_CONNECTED == parent->child[port]->state)
-		hcd_disconnect_cb(parent->child[port]);
+	child = parent->child[port]; /* Child to be detached */
 
-	/* Disconnect to release fields */
-	hcd_disconnect_device(parent->child[port]);
+	USB_ASSERT(NULL != child, "Child device does not exist");
+
+	/* Make this child device and all its attached children
+	 * disconnect recursively */
+	hcd_disconnect_tree(child);
 
 	/* Delete to release device itself */
-	hcd_delete_device(parent->child[port]);
+	hcd_delete_device(child);
 
 	/* Mark as released */
 	parent->child[port] = NULL;
+}
+
+
+/*===========================================================================*
+ *    hcd_disconnect_tree                                                    *
+ *===========================================================================*/
+static void
+hcd_disconnect_tree(hcd_device_state * device)
+{
+	hcd_reg1 child_num;
+
+	DEBUG_DUMP;
+
+	/* Generate disconnect event for all children */
+	for (child_num = 0; child_num < HCD_CHILDREN; child_num++) {
+		if (NULL != device->child[child_num])
+			hcd_handle_event(device, HCD_EVENT_PORT_DISCONNECTED,
+					child_num);
+	}
+
+	/* If this device was detached during URB handling, some steps must be
+	 * taken to ensure that no process/thread is waiting for completion */
+	if (NULL != device->urb) {
+		USB_MSG("Unplugged device had unhandled URB");
+		/* Tell device driver that device was detached */
+		/* TODO: ENODEV selected for that */
+		device->urb->inout_status = ENODEV;
+		hcd_complete_urb(device);
+	}
+
+	/* If connect callback was used before, call
+	 * it's equivalent to signal disconnection */
+	if (HCD_STATE_CONNECTED == device->state)
+		hcd_disconnect_cb(device);
+
+	/* Handle device disconnection (freeing memory etc.) */
+	hcd_disconnect_device(device);
+}
+
+
+/*===========================================================================*
+ *    hcd_dump_tree                                                          *
+ *===========================================================================*/
+static void
+hcd_dump_tree(hcd_device_state * device, hcd_reg1 level)
+{
+	hcd_reg1 child_num;
+
+	/* DEBUG_DUMP; */ /* Let's keep tree output cleaner */
+
+	USB_MSG("Device on level %03u: 0x%08X", level, device);
+
+	/* Traverse device tree recursively */
+	for (child_num = 0; child_num < HCD_CHILDREN; child_num++) {
+		if (NULL != device->child[child_num])
+			hcd_dump_tree(device->child[child_num], level + 1);
+	}
 }
 
 
@@ -803,10 +883,27 @@ hcd_handle_urb(hcd_device_state * this_device)
 	} else
 		USB_MSG("Invalid URB supplied");
 
+	/* Perform completion routine */
+	hcd_complete_urb(this_device);
+}
+
+
+/*===========================================================================*
+ *    hcd_complete_urb                                                       *
+ *===========================================================================*/
+static void
+hcd_complete_urb(hcd_device_state * this_device)
+{
+	DEBUG_DUMP;
+
 	/* Signal scheduler that URB was handled */
-	/* TODO: This works based on the fact that device thread has higher
-	 * priority than scheduler and won't change context within this call */
-	urb->handled(urb);
+	this_device->urb->handled(this_device->urb);
+
+	/* Use this callback in case it is an external URB */
+	hcd_completion_cb(this_device->urb);
+
+	/* Make device forget about this URB */
+	this_device->urb = NULL;
 }
 
 
@@ -916,7 +1013,14 @@ hcd_non_control_urb(hcd_device_state * this_device, hcd_urb * urb)
 	request.direction = urb->direction;
 	request.data_left = (int)urb->in_size;
 	request.data = urb->inout_data;
+	/* TODO: This was changed to allow software scheduler to work correctly
+	 * by switching URBs when they NAK, rather than waiting forever if URB
+	 * which requires such waiting, was issued */
+#if 0
 	request.interval = urb->interval;
+#else
+	request.interval = HCD_DEFAULT_NAKLIMIT;
+#endif
 
 	/* Assign to let know how much data can be transfered at a time */
 	request.max_packet_size = UGETW(e->descriptor.wMaxPacketSize);
@@ -967,7 +1071,8 @@ hcd_setup_packet(hcd_device_state * this_device, hcd_ctrlrequest * setup,
 	this_device->control_len = 0;		/* Nothing read yet */
 
 	/* Set parameters for further communication */
-	d->setup_device(d->private_data, ep, this_device->current_address);
+	d->setup_device(d->private_data, ep, this_device->current_address,
+			NULL, NULL);
 
 	/* Send setup packet */
 	d->setup_stage(d->private_data, setup);
@@ -1130,7 +1235,9 @@ hcd_data_transfer(hcd_device_state * this_device, hcd_datarequest * request)
 
 	/* Set parameters for further communication */
 	d->setup_device(d->private_data, request->endpoint,
-			this_device->current_address);
+			this_device->current_address,
+			&(this_device->ep_tx_tog[request->endpoint]),
+			&(this_device->ep_rx_tog[request->endpoint]));
 
 	/* Check transfer direction first */
 	if (HCD_DIRECTION_IN == request->direction) {

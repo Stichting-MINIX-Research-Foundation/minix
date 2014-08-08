@@ -288,13 +288,13 @@ void _ddekit_interrupt_trigger(int irq_id)
 	irq_s = find_by_irq_id(irq_id);
 
 	if (irq_s)	{
-		DDEBUG_MSG_VERBOSE("Triggering IRQ %d", irq);
+		DDEBUG_MSG_VERBOSE("Triggering IRQ %d", irq_s->irq);
 		ddekit_sem_up(irq_s->sem);
 		if (0 != (err_code = sys_irqenable(&irq_s->irq_hook)))
 			ddekit_panic("Failed to enable interrupt "
 					"(ERROR %d)", err_code);
 	} else {
-		DDEBUG_MSG_WARN("no handler for IRQ %d", irq);
+		DDEBUG_MSG_WARN("no handler for IRQ %d", irq_s->irq);
 	}
 }
 

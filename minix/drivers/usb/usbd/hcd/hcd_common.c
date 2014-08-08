@@ -32,6 +32,13 @@ static void hcd_release_addr(hcd_driver_state *, hcd_reg1);
 
 
 /*===========================================================================*
+ *    Local definitions                                                      *
+ *===========================================================================*/
+/* List of all allocated devices */
+static hcd_device_state * dev_list = NULL;
+
+
+/*===========================================================================*
  *    hcd_os_interrupt_attach                                                *
  *===========================================================================*/
 int
@@ -282,7 +289,7 @@ hcd_device_wait(hcd_device_state * device, hcd_event event, hcd_reg1 ep)
 {
 	DEBUG_DUMP;
 
-	USB_DBG("Device 0x%08X wait (0x%02X, 0x%02X)", device, event, ep);
+	USB_DBG("0x%08X wait (0x%02X, 0x%02X)", device, event, ep);
 
 	device->wait_event = event;
 	device->wait_ep = ep;
@@ -299,7 +306,7 @@ hcd_device_continue(hcd_device_state * device, hcd_event event, hcd_reg1 ep)
 {
 	DEBUG_DUMP;
 
-	USB_DBG("Device 0x%08X continue (0x%02X, 0x%02X)", device, event, ep);
+	USB_DBG("0x%08X continue (0x%02X, 0x%02X)", device, event, ep);
 
 	USB_ASSERT(device->wait_event == event, "Unexpected event");
 	USB_ASSERT(device->wait_ep == ep, "Unexpected endpoint");
@@ -323,6 +330,18 @@ hcd_new_device(void)
 
 	USB_ASSERT(NULL != d, "Failed to allocate device");
 
+	if (NULL == dev_list) {
+		dev_list = d;
+	} else {
+		d->_next = dev_list;
+		dev_list = d;
+	}
+
+#ifdef HCD_DUMP_DEVICE_LIST
+	/* Dump updated state of device list */
+	hcd_dump_devices();
+#endif
+
 	return d;
 }
 
@@ -333,9 +352,78 @@ hcd_new_device(void)
 void
 hcd_delete_device(hcd_device_state * d)
 {
+	hcd_device_state * temp;
+
 	DEBUG_DUMP;
 
+	if (d == dev_list) {
+		dev_list = dev_list->_next;
+	} else {
+		temp = dev_list;
+
+		/* Find the device and ... */
+		while (temp->_next != d) {
+			USB_ASSERT(NULL != temp->_next,
+				"Invalid state of device list");
+			temp = temp->_next;
+		}
+
+		/* ...make device list forget about it */
+		temp->_next = temp->_next->_next;
+	}
+
 	free(d);
+
+#ifdef HCD_DUMP_DEVICE_LIST
+	/* Dump updated state of device list */
+	hcd_dump_devices();
+#endif
+}
+
+
+/*===========================================================================*
+ *    hcd_dump_devices                                                       *
+ *===========================================================================*/
+void
+hcd_dump_devices(void)
+{
+	hcd_device_state * temp;
+
+	DEBUG_DUMP;
+
+	temp = dev_list;
+
+	USB_MSG("Allocated devices:");
+
+	while (NULL != temp) {
+		USB_MSG("0x%08X", (int)temp);
+		temp = temp->_next;
+	}
+}
+
+
+/*===========================================================================*
+ *    hcd_check_device                                                       *
+ *===========================================================================*/
+int
+hcd_check_device(hcd_device_state * d)
+{
+	hcd_device_state * temp;
+
+	DEBUG_DUMP;
+
+	temp = dev_list;
+
+	/* Traverse the list of allocated devices
+	 * to determine validity of this one */
+	while (NULL != temp) {
+		if (temp == d)
+			return EXIT_SUCCESS; /* Device found within the list */
+		temp = temp->_next;
+	}
+
+	/* Device was not found, may have been removed earlier */
+	return EXIT_FAILURE;
 }
 
 

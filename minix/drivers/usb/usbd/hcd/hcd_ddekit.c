@@ -308,15 +308,17 @@ hcd_completion_cb(hcd_urb * urb)
 	/* Recollect original URB */
 	d_urb = (struct ddekit_usb_urb *)urb->original_urb;
 
-	USB_ASSERT(NULL != d_urb, "Original DDEKit URB missing");
+	/* Original URB will not be NULL if URB
+	 * was external (from device driver) */
+	if (NULL != d_urb) {
+		/* Turn HCD URB format to one handled by DDEKit */
+		hcd_encode_urb(urb, d_urb);
 
-	/* Turn HCD URB format to one handled by DDEKit */
-	hcd_encode_urb(urb, d_urb);
+		/* No need for this URB anymore */
+		hcd_free_urb(urb);
 
-	/* No need for this URB anymore */
-	hcd_free_urb(urb);
-
-	completion_cb(d_urb->priv);
+		completion_cb(d_urb->priv);
+	}
 }
 
 

@@ -32,7 +32,8 @@ hcd_addr_state;
  *===========================================================================*/
 struct hcd_driver_state {
 	/* Standard USB controller procedures */
-	void	(*setup_device)		(void *, hcd_reg1, hcd_reg1);
+	void	(*setup_device)		(void *, hcd_reg1, hcd_reg1,
+					hcd_datatog *, hcd_datatog *);
 	int	(*reset_device)		(void *, hcd_speed *);
 	void	(*setup_stage)		(void *, hcd_ctrlrequest *);
 	void	(*rx_stage)		(void *, hcd_datarequest *);

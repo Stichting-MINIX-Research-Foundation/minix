@@ -154,6 +154,14 @@ typedef enum {
 }
 hcd_speed;
 
+/* Possible data toggle values (at least for bulk transfer) */
+typedef enum {
+
+	HCD_DATATOG_DATA0 = 0,
+	HCD_DATATOG_DATA1 = 1
+}
+hcd_datatog;
+
 
 /*===========================================================================*
  *    HCD threading/device/URB types                                         *
@@ -166,11 +174,14 @@ typedef struct usb_ctrlrequest		hcd_ctrlrequest;
 
 /* Largest value that can be transfered by this driver at a time
  * see MAXPAYLOAD in TXMAXP/RXMAXP */
-#define MAX_WTOTALLENGTH 		1024
+#define MAX_WTOTALLENGTH 		1024u
 
 /* TODO: This has corresponding redefinition in hub driver */
 /* Limit of child devices for each parent */
 #define HCD_CHILDREN			8u
+
+/* Total number of endpoints available in USB 2.0 */
+#define HCD_TOTAL_EP			16u
 
 /* Forward declarations */
 typedef struct hcd_datarequest		hcd_datarequest;
@@ -219,6 +230,7 @@ struct hcd_device_state {
 
 	hcd_device_state * parent;		/* In case of hub attachment */
 	hcd_device_state * child[HCD_CHILDREN];	/* In case of being hub */
+	hcd_device_state * _next;		/* To allow device lists */
 	hcd_driver_state * driver;		/* Specific HCD driver object */
 	hcd_thread * thread;
 	hcd_lock * lock;
@@ -234,6 +246,8 @@ struct hcd_device_state {
 	hcd_state state;
 	hcd_reg1 reserved_address;
 	hcd_reg1 current_address;
+	hcd_datatog ep_tx_tog[HCD_TOTAL_EP];
+	hcd_datatog ep_rx_tog[HCD_TOTAL_EP];
 
 	/*
 	 * Control transfer's local data:
@@ -266,8 +280,9 @@ struct hcd_device_state {
 #define HCD_LAST_ADDR			0x7Fu
 #define HCD_TOTAL_ADDR			0x80u
 #define HCD_LAST_EP			0x0Fu
-#define HCD_TOTAL_EP			0x10u
 #define HCD_UNUSED_VAL			0xFFu	/* When number not needed */
+#define HCD_DEFAULT_NAKLIMIT		0x10u
+
 
 /* Legal interval values */
 #define HCD_LOWEST_INTERVAL		0x00u
@@ -332,6 +347,8 @@ void hcd_device_continue(hcd_device_state *, hcd_event, hcd_reg1);
 /* Allocation/deallocation of device structures */
 hcd_device_state * hcd_new_device(void);
 void hcd_delete_device(hcd_device_state *);
+void hcd_dump_devices(void);
+int hcd_check_device(hcd_device_state *);
 
 
 /*===========================================================================*
