@@ -38,9 +38,9 @@ function usage()
 function check_current_dir()
 {
    #Make sure we are running from the root dir of the Minix sources
-   if [ -d ./minix ] && [ -d ./drivers ] && [ -d ./servers ] ; then
+   if [ -d ./minix/drivers ] && [ -d ./minix/servers ] ; then
         MINIX_ROOT="${MYPWD}"
-   elif [ -d ../../minix ] && [ -d ../../drivers ] && [ -d ../../servers ]; then
+   elif [ -d ../../minix/drivers ] && [ -d ../../minix/servers ]; then
         MINIX_ROOT="${MYPWD}/../.."
    else
         echo "Please run the script from either of the following locations:"
