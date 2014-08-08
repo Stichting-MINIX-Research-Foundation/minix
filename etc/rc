@@ -59,6 +59,11 @@ edit()
     if [ ! -x $binlocation ]
     then	binlocation=/usr/pkg/service/$service
     fi
+
+    # Mostly to find init...
+    if [ ! -x $binlocation ]
+    then	binlocation=/sbin/$service
+    fi
     service $opt edit $binlocation -label $service "$@" 
 }
 
