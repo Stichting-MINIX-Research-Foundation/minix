@@ -24,9 +24,9 @@ function generate_modules_map()
 	cat ${TMPFILE} | sed -e "s/\.\///g" > ${TMPFILE}.1
 
 	for l in `cat ${TMPFILE}.1`; do echo "`echo $l | cut -d: -f2`=`echo $l | cut -d: -f1`" | sed -e "s/\/Makefile//g"; done > ${TMPFILE}.2
-	GREP_FILTER=$( cat drivers/Makefile | awk "\$1 ~ /endif/ {N=0}; N==1 {print}; \$4 ~ /earm/ {N=1}" | sed "s/^\t//g" | sed "s/SUBDIR[^ ]* *//g" | sed "s/ \\\//g" | xargs | sed "s/ /= -e ^/g")
+	GREP_FILTER=$( cat minix/drivers/Makefile | awk "\$1 ~ /endif/ {N=0}; N==1 {print}; \$4 ~ /earm/ {N=1}" | sed "s/^\t//g" | sed "s/SUBDIR[^ ]* *//g" | sed "s/ \\\//g" | xargs | sed "s/ /= -e ^/g")
         grep -v -e ^${GREP_FILTER}= -e ^memory= ${TMPFILE}.2 > ${OUTFILE}
-	echo memory=drivers/memory >> ${OUTFILE} # memory always last
+	echo memory=minix/drivers/storage/memory >> ${OUTFILE} # memory always last
 
 	rm -rf ${TMPFILE} ${TMPFILE}.1 ${TMPFILE}.2
 
@@ -45,7 +45,7 @@ function get_modules_path()
 		generate_modules_map
 	fi
 	if [ $MODULE_NAME == "servers" ] || [ $MODULE_NAME == "drivers" ]; then
-		MODULE_NAME="=${MODULE_NAME}/"
+		MODULE_NAME="=minix/${MODULE_NAME}/"
 	else
 		MODULE_NAME="^${MODULE_NAME}="
 	fi
