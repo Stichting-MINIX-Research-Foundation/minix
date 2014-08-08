@@ -652,7 +652,13 @@ TOOL_STAT=		stat
 TOOL_STRFILE=		strfile
 TOOL_SUNLABEL=		sunlabel
 TOOL_TBL=		tbl
+.if defined(__MINIX)
+# LSC: There is a tic packaged, which has a completly different set of
+#      options, so make sure to use the base system one, always.
+TOOL_TIC=		/usr/bin/tic
+.else
 TOOL_TIC=		tic
+.endif # defined(__MINIX)
 TOOL_TOPROTO=		toproto
 TOOL_UUDECODE=		uudecode
 TOOL_VGRIND=		vgrind -f
