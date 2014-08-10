@@ -25,7 +25,21 @@ function generate_modules_map()
 
 	for l in `cat ${TMPFILE}.1`; do echo "`echo $l | cut -d: -f2`=`echo $l | cut -d: -f1`" | sed -e "s/\/Makefile//g"; done > ${TMPFILE}.2
 	GREP_FILTER=$( cat minix/drivers/Makefile | awk "\$1 ~ /endif/ {N=0}; N==1 {print}; \$4 ~ /earm/ {N=1}" | sed "s/^\t//g" | sed "s/SUBDIR[^ ]* *//g" | sed "s/ \\\//g" | xargs | sed "s/ /= -e ^/g")
-        grep -v -e ^${GREP_FILTER}= -e ^memory= ${TMPFILE}.2 > ${OUTFILE}
+	# The blacklist has drivers not available on x86; ideally this would be extracted from the Makefiles
+	blacklist=""
+	blacklist="$blacklist -e ^bmp085="
+	blacklist="$blacklist -e ^cat24c256="
+	blacklist="$blacklist -e ^fb="
+	blacklist="$blacklist -e ^gpio="
+	blacklist="$blacklist -e ^i2c="
+	blacklist="$blacklist -e ^lan8710a="
+	blacklist="$blacklist -e ^sht21="
+	blacklist="$blacklist -e ^tda19988="
+	blacklist="$blacklist -e ^tps65217="
+	blacklist="$blacklist -e ^tps65950="
+	blacklist="$blacklist -e ^tsl2550="
+	blacklist="$blacklist -e ^usbd="
+        grep -v -e ^${GREP_FILTER}= -e ^memory= $blacklist ${TMPFILE}.2 > ${OUTFILE}
 	echo memory=minix/drivers/storage/memory >> ${OUTFILE} # memory always last
 
 	rm -rf ${TMPFILE} ${TMPFILE}.1 ${TMPFILE}.2
