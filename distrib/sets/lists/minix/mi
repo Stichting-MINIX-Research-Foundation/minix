@@ -1874,6 +1874,7 @@
 ./usr/lib/bc/libexecinfo.a		minix-sys	bitcode
 ./usr/lib/bc/libfetch.a			minix-sys	bitcode
 ./usr/lib/bc/libform.a			minix-sys	bitcode
+./usr/lib/bc/libgcc_s.a			minix-sys	bitcode
 ./usr/lib/bc/libhgfs.a			minix-sys	bitcode
 ./usr/lib/bc/libiberty.a		minix-sys	bitcode,binutils
 ./usr/lib/bc/libinputdriver.a		minix-sys	bitcode
