@@ -17900,7 +17900,7 @@ osexec|Osborne executive,
 # Added lf0@, lf1@, lf2@, lf3@, lf4@, lf5@, , not sure what it does... to check!
 minix|minix console (v3),
 	acsc=+\020\,\021-\030.^Y0\333`\004a\261f\370g\361h\260j\331k\277l\332m\300n\305o~p\304q\304r\304s_t\303u\264v\301w\302x\263y\363z\362{\343|\330}\234~\376,
-	kdch1=\177, kend=\E[Y, kf0=\E[21~, kf1=\E[11~, kf10=\E[21~,
+	kdch1=\E[3~, kbs=\177, kend=\E[Y, kf0=\E[21~, kf1=\E[11~, kf10=\E[21~,
 	kf11=\E[11;2~, kf12=\E[12;2~, kf13=\E[13;2~,
 	kf14=\E[14;2~, kf15=\E[15;2~, kf16=\E[17;2~,
 	kf17=\E[18;2~, kf18=\E[19;2~, kf19=\E[20;2~, kf2=\E[12~,
