@@ -6023,6 +6023,7 @@
 ./usr/tests/minix-posix/blocktest/support.sh	minix-sys
 ./usr/tests/minix-posix/blocktest/system.conf	minix-sys
 ./usr/tests/minix-posix/blocktest/test.sh	minix-sys
+./usr/tests/minix-posix/check-install	minix-sys
 ./usr/tests/minix-posix/ddekit		minix-sys
 ./usr/tests/minix-posix/ddekit/ddekittest		minix-sys
 ./usr/tests/minix-posix/ddekit/ddekittest_driver	minix-sys
