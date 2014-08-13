@@ -1,0 +1,42 @@
+#!/bin/sh
+
+# Run a partial test suite for a quick check of most of the system
+# functionnality.
+
+RUN="/usr/tests/minix-posix/run"
+
+# Tests to run:
+TESTS="  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 \
+	21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 \
+	41 42 43 44 45 46 47    49 50 51 52 53 54 55 56 57 58 59    \
+	61 62 63 64    66 67 68 69 70 71 72 73 74 75 76 77 78 79 \
+	sh1     interp mfs isofs    "
+
+if [ ! -f ${RUN} ]
+then
+	echo "Test runner script not found: ${RUN}\n"
+	exit 1;
+fi
+
+cat <<EOT
+This tool will run the most common tests. This will skip some very lengthy
+ones, as well as some which are expected to generate some warnings.
+
+To run the full test suite, you can execute the following:
+
+# ./run
+
+Be advised that the full test suite might take up to several hours to complete
+depending on your hardware.
+
+The following tests will be run:
+${TESTS}
+
+EOT
+
+echo -n "Do you want to start [Y/n]? "
+read ok
+
+if [ "${ok}" = "" -o "${ok}" = "y" -o "${ok}" = "Y" ]; then
+	sh ${RUN} -t "${TESTS}"
+fi
