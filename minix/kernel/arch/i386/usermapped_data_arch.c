@@ -1,7 +1,7 @@
 #include "kernel/kernel.h"
 #include "arch_proto.h"
 
-struct minix_ipcvecs minix_ipcvecs_softint = {
+struct minix_ipcvecs minix_ipcvecs_softint __section(".usermapped") = {
 	.send		= usermapped_send_softint,
 	.receive	= usermapped_receive_softint,
 	.sendrec	= usermapped_sendrec_softint,
@@ -11,7 +11,7 @@ struct minix_ipcvecs minix_ipcvecs_softint = {
 	.senda		= usermapped_senda_softint
 };
 
-struct minix_ipcvecs minix_ipcvecs_sysenter = {
+struct minix_ipcvecs minix_ipcvecs_sysenter __section(".usermapped") = {
 	.send		= usermapped_send_sysenter,
 	.receive	= usermapped_receive_sysenter,
 	.sendrec	= usermapped_sendrec_sysenter,
@@ -21,7 +21,7 @@ struct minix_ipcvecs minix_ipcvecs_sysenter = {
 	.senda		= usermapped_senda_sysenter
 };
 
-struct minix_ipcvecs minix_ipcvecs_syscall = {
+struct minix_ipcvecs minix_ipcvecs_syscall __section(".usermapped") = {
 	.send		= usermapped_send_syscall,
 	.receive	= usermapped_receive_syscall,
 	.sendrec	= usermapped_sendrec_syscall,

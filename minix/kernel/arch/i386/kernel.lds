@@ -16,15 +16,15 @@ SECTIONS
 
 	.unpaged_text : { unpaged_*.o(.text) }
 	.unpaged_data ALIGN(4096) : { unpaged_*.o(.data .rodata*) }
-	.unpaged_bss  ALIGN(4096) : { unpaged_*.o(.bss COMMON) } 
+	.unpaged_bss  ALIGN(4096) : { unpaged_*.o(.bss COMMON) }
 	__k_unpaged__kern_unpaged_end = .;
 
 	. += _kern_offset;
 
 	. = ALIGN(4096); usermapped_start = .;
-	.usermapped_glo : AT(ADDR(.usermapped_glo) - _kern_offset) { usermapped_glo*.o(*) }
+	.usermapped_glo : AT(ADDR(.usermapped_glo) - _kern_offset) { *(.usermapped_glo) }
 	. = ALIGN(4096); usermapped_nonglo_start = .;
-	.usermapped : AT(ADDR(.usermapped) - _kern_offset) { usermapped_*.o(*) }
+	.usermapped : AT(ADDR(.usermapped) - _kern_offset) { *(.usermapped) }
 	. = ALIGN(4096); usermapped_end = .;
 	.text             : AT(ADDR(.text) - _kern_offset) { *(.text*) }
 	.data ALIGN(4096) : AT(ADDR(.data) - _kern_offset) { *(.data .rodata* ) }

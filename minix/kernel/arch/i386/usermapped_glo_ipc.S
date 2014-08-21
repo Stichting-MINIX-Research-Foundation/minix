@@ -1,6 +1,14 @@
 #include <minix/ipcconst.h>
 #include <machine/asm.h>
 
+/* Redefine _ENTRY to put the following function in the section
+ * ".usermapped_glo". */
+#undef _ENTRY
+#define _ENTRY(x) \
+	_ALIGN_TEXT; .globl x; .type x,@function; x:
+
+.section .usermapped_glo, "wax", @progbits
+
 /**========================================================================* */
 /*                           IPC assembly routines			  * */
 /**========================================================================* */
