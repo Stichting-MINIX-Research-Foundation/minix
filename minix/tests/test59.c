@@ -599,9 +599,9 @@ static void test_attributes(void)
 {
   attr_t tattr;
   thread_t tid;
-  int detachstate = -1, status = 0;
+  int detachstate = -1;
   unsigned int i, no_ints, stack_untouched = 1;
-  void *stackaddr, *newstackaddr;
+  void *status, *stackaddr, *newstackaddr;
   int *stackp;
   size_t stacksize, newstacksize;
 
@@ -750,7 +750,7 @@ static void test_attributes(void)
 #error "Unsupported chip for this test"
 #endif
 
-  if (mthread_join(tid, (void *) &status) != 0) err(11, 69);
+  if (mthread_join(tid, &status) != 0) err(11, 69);
   if ((size_t) status != stacksize) err(11, 70);
   if (mthread_attr_destroy(&tattr) != 0) err(11, 71); 
   if (mthread_mutex_destroy(condition_mutex) != 0) err(11, 72);
