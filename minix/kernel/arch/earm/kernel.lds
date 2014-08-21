@@ -24,9 +24,9 @@ SECTIONS
 	. += _kern_offset;
 
 	. = ALIGN(4096); usermapped_start = .;
-	.usermapped_glo : AT(ADDR(.usermapped_glo) - _kern_offset) { usermapped_glo*.o(*) }
+	.usermapped_glo : AT(ADDR(.usermapped_glo) - _kern_offset) { *(.usermapped_glo) }
 	. = ALIGN(4096); usermapped_nonglo_start = .;
-	.usermapped : AT(ADDR(.usermapped) - _kern_offset) { usermapped_*.o(*) }
+	.usermapped : AT(ADDR(.usermapped) - _kern_offset) { *(.usermapped) }
 	. = ALIGN(4096); usermapped_end = .;
 	.text             : AT(ADDR(.text) - _kern_offset) { *(.text*) }
 	_etext = .;
@@ -47,5 +47,4 @@ SECTIONS
        {
                *(.ARM.exidx*)
        }
-
 }
