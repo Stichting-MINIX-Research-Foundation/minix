@@ -987,7 +987,7 @@ _prop_object_internalize_unmap_file(
 	(void) munmap(mf->poimf_xml, mf->poimf_mapsize);
 	_PROP_FREE(mf, M_TEMP);
 #else
-	assert(0);
+	abort();
 #endif
 }
 #endif /* !_KERNEL && !_STANDALONE */

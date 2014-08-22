@@ -522,8 +522,10 @@ kyua_error_t
 kyua_oom_error_new(void)
 {
     // This is idempotent; no need to ensure that we call it only once.
-    const bool ok = error_init(&oom_error, kyua_oom_error_type, NULL, 0,
-                               oom_format);
+#if defined(__minix) && !defined(NDEBUG)
+    const bool ok =
+#endif /* defined(__minix) && !defined(NDEBUG) */
+    error_init(&oom_error, kyua_oom_error_type, NULL, 0, oom_format);
     assert(ok);
 
     return &oom_error;

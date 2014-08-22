@@ -143,7 +143,10 @@ get_file(sqlite::database& db, const int64_t file_id)
         const std::string contents(
             static_cast< const char *>(raw_contents.memory), raw_contents.size);
 
-        const bool more = stmt.step();
+#if defined(__minix) && !defined(NDEBUG)
+        const bool more =
+#endif /* defined(__minix) && !defined(NDEBUG) */
+        stmt.step();
         INV(!more);
 
         return contents;
@@ -384,7 +387,10 @@ store::detail::get_test_program(backend& backend_, const int64_t id)
         fs::path(stmt.safe_column_text("root")),
         stmt.safe_column_text("test_suite_name"),
         get_metadata(db, stmt.safe_column_int64("metadata_id"))));
-    const bool more = stmt.step();
+#if defined(__minix) && !defined(NDEBUG)
+    const bool more =
+#endif /* defined(__minix) && !defined(NDEBUG) */
+    stmt.step();
     INV(!more);
 
     LD(F("Loaded test program '%s'; getting test cases") %

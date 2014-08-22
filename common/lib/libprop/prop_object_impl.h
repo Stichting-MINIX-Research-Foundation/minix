@@ -480,7 +480,7 @@ do {									\
 /*
  * Language features.
  */
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) || defined(__minix)
 #include <sys/cdefs.h>
 #define	_PROP_ARG_UNUSED		__unused
 #else

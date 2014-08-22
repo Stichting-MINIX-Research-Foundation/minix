@@ -296,7 +296,10 @@ impl::child::~child(void)
         ::kill(atf_process_child_pid(&m_child), SIGTERM);
 
         atf_process_status_t s;
-        atf_error_t err = atf_process_child_wait(&m_child, &s);
+#if defined(__minix) && !defined(NDEBUG)
+        atf_error_t err =
+#endif /* defined(__minix) && !defined(NDEBUG) */
+        atf_process_child_wait(&m_child, &s);
         INV(!atf_is_error(err));
         atf_process_status_fini(&s);
     }

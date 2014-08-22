@@ -679,6 +679,9 @@ convert_result(const enum atf_status status, const int status_arg,
     }
 
     assert(false);
+#if defined(__minix) && defined(NDEBUG)
+    abort();
+#endif /* defined(__minix) && !defined(NDEBUG) */
 }
 
 

@@ -997,7 +997,9 @@ static int tcp_get_opt(struct socket * sock, endpoint_t endpt,
 	cp_grant_id_t grant)
 {
 	nwio_tcpopt_t tcpopt;
+#if !defined(NDEBUG)
 	struct tcp_pcb * pcb = (struct tcp_pcb *) sock->pcb;
+#endif /* !defined(NDEBUG) */
 
 	debug_tcp_print("socket num %ld", get_sock_num(sock));
 
@@ -1013,7 +1015,9 @@ static int tcp_set_opt(struct socket * sock, endpoint_t endpt,
 	cp_grant_id_t grant)
 {
 	nwio_tcpopt_t tcpopt;
+#if !defined(NDEBUG)
 	struct tcp_pcb * pcb = (struct tcp_pcb *) sock->pcb;
+#endif /* !defined(NDEBUG) */
 
 	debug_tcp_print("socket num %ld", get_sock_num(sock));
 

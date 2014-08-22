@@ -384,7 +384,10 @@ unmount_with_umount8(const char* mount_point)
     if (pid == -1) {
         return kyua_libc_error_new(errno, "fork() failed");
     } else if (pid == 0) {
-        const int ret = execlp(UMOUNT, "umount", mount_point, NULL);
+#if defined(__minix) && !defined(NDEBUG)
+        const int ret =
+#endif /* defined(__minix) && !defined(NDEBUG) */
+        execlp(UMOUNT, "umount", mount_point, NULL);
         assert(ret == -1);
         err(EXIT_FAILURE, "Failed to execute " UMOUNT);
     }

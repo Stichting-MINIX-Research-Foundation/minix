@@ -164,7 +164,10 @@ mask_signals(void)
     sigaddset(&mask, SIGHUP);
     sigaddset(&mask, SIGINT);
     sigaddset(&mask, SIGTERM);
-    const int ret = ::sigprocmask(SIG_BLOCK, &mask, &old_sigmask);
+#if defined(__minix) && !defined(NDEBUG)
+    const int ret =
+#endif /* defined(__minix) && !defined(NDEBUG) */
+    ::sigprocmask(SIG_BLOCK, &mask, &old_sigmask);
     INV(ret != -1);
 }
 
@@ -173,7 +176,10 @@ mask_signals(void)
 static void
 unmask_signals(void)
 {
-    const int ret = ::sigprocmask(SIG_SETMASK, &old_sigmask, NULL);
+#if defined(__minix) && !defined(NDEBUG)
+    const int ret =
+#endif /* defined(__minix) && !defined(NDEBUG) */
+    ::sigprocmask(SIG_SETMASK, &old_sigmask, NULL);
     INV(ret != -1);
 }
 

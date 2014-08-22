@@ -203,7 +203,10 @@ cxx_exec(const fs::path& program, const process::args_vector& args) throw()
             argv[1 + i] = args[i].c_str();
         argv[1 + args.size()] = NULL;
 
-        const int ret = ::execv(program.c_str(),
+#if defined(__minix) && !defined(NDEBUG)
+        const int ret =
+#endif /* defined(__minix) && !defined(NDEBUG) */
+        ::execv(program.c_str(),
                                 (char* const*)(unsigned long)(const void*)argv);
         const int original_errno = errno;
         assert(ret == -1);

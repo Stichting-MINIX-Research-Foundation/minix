@@ -126,7 +126,10 @@ run_gdb(const char* program, const char* core_name, FILE* output)
     }
 
     (void)close(STDIN_FILENO);
-    const int input_fd = open("/dev/null", O_RDONLY);
+#if defined(__minix) && !defined(NDEBUG)
+    const int input_fd =
+#endif /* defined(__minix) && !defined(NDEBUG) */
+    open("/dev/null", O_RDONLY);
     assert(input_fd == STDIN_FILENO);
 
     const int output_fd = fileno(output);

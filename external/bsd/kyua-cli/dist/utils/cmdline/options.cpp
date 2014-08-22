@@ -41,6 +41,14 @@
 namespace cmdline = utils::cmdline;
 namespace text = utils::text;
 
+#if defined(__minix) && defined(NDEBUG)
+#undef PRE_MSG
+#define PRE_MSG(expr, msg) \
+    do { \
+        if (!(expr)) \
+            utils::sanity_failure(utils::precondition, __FILE__, __LINE__, msg); \
+    } while (0)
+#endif /* defined(__minix) && defined(NDEBUG) */
 
 /// Constructs a generic option with both a short and a long name.
 ///

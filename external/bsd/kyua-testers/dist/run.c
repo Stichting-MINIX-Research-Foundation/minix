@@ -112,7 +112,10 @@ mask_handlers(const int operation)
     sigaddset(&mask, SIGINT);
     sigaddset(&mask, SIGHUP);
     sigaddset(&mask, SIGTERM);
-    const int ret = sigprocmask(operation, &mask, NULL);
+#if defined(__minix) && !defined(NDEBUG)
+    const int ret =
+#endif /* defined(__minix) && !defined(NDEBUG) */
+    sigprocmask(operation, &mask, NULL);
     assert(ret != -1);
 }
 
@@ -209,7 +212,10 @@ setup_signal(const int signo, void (*handler)(const int),
     sigemptyset(&sa.sa_mask);
     sa.sa_flags = SA_RESTART;
 
-    const int ret = sigaction(signo, &sa, old_sa);
+#if defined(__minix) && !defined(NDEBUG)
+    const int ret =
+#endif /* defined(__minix) && !defined(NDEBUG) */
+    sigaction(signo, &sa, old_sa);
     assert(ret != -1);
 }
 
@@ -227,7 +233,10 @@ setup_timer(const int seconds, struct itimerval* old_itimerval)
     new_timer.it_interval.tv_usec = 0;
     new_timer.it_value.tv_sec = seconds;
     new_timer.it_value.tv_usec = 0;
-    const int ret = setitimer(ITIMER_REAL, &new_timer, old_itimerval);
+#if defined(__minix) && !defined(NDEBUG)
+    const int ret =
+#endif /* defined(__minix) && !defined(NDEBUG) */
+    setitimer(ITIMER_REAL, &new_timer, old_itimerval);
     assert(ret != -1);
 }
 
@@ -471,7 +480,10 @@ kyua_error_t
 kyua_run_wait(const pid_t pid, int* status, bool* timed_out)
 {
     int tmp_status;
-    const pid_t waited_pid = waitpid(pid, &tmp_status, 0);
+#if defined(__minix) && !defined(NDEBUG)
+    const pid_t waited_pid =
+#endif /* defined(__minix) && !defined(NDEBUG) */
+    waitpid(pid, &tmp_status, 0);
     assert(pid == waited_pid);
 
     protect();

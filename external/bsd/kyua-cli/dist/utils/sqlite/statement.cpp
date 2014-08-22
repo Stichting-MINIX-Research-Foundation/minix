@@ -171,7 +171,10 @@ sqlite::statement::~statement(void)
 void
 sqlite::statement::step_without_results(void)
 {
-    const bool data = step();
+#if defined(__minix) && !defined(NDEBUG)
+    const bool data =
+#endif /* defined(__minix) && !defined(NDEBUG) */
+    step();
     INV_MSG(!data, "The statement should not have produced any rows, but it "
             "did");
 }
@@ -610,6 +613,14 @@ void
 sqlite::statement::clear_bindings(void)
 {
     const int error = ::sqlite3_clear_bindings(_pimpl->stmt);
+#if defined(__minix) && defined(NDEBUG)
+#undef PRE_MSG
+#define PRE_MSG(expr, msg) \
+    do { \
+        if (!(expr)) \
+            utils::sanity_failure(utils::precondition, __FILE__, __LINE__, msg); \
+    } while (0)
+#endif /* defined(__minix) && defined(NDEBUG) */
     PRE_MSG(error == SQLITE_OK, "SQLite3 contract has changed; it should "
             "only return SQLITE_OK");
 }

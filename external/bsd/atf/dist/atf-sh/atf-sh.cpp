@@ -142,7 +142,10 @@ atf_sh::main(void)
     // Don't bother keeping track of the memory allocated by construct_argv:
     // we are going to exec or die immediately.
 
-    const int ret = execv(shell.c_str(), const_cast< char** >(argv));
+#if defined(__minix) && !defined(NDEBUG)
+    const int ret =
+#endif /* defined(__minix) && !defined(NDEBUG) */
+    execv(shell.c_str(), const_cast< char** >(argv));
     INV(ret == -1);
     std::cerr << "Failed to execute " << shell << ": " << std::strerror(errno)
               << "\n";

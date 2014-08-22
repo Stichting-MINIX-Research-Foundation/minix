@@ -345,9 +345,15 @@ ssize_t
 cdf_read_sector(const cdf_info_t *info, void *buf, size_t offs, size_t len,
     const cdf_header_t *h, cdf_secid_t id)
 {
+#if defined(__minix) && !defined(NDEBUG)
 	size_t ss = CDF_SEC_SIZE(h);
+#endif /* defined(__minix) && !defined(NDEBUG) */
 	size_t pos = CDF_SEC_POS(h, id);
+#if defined(__minix) && !defined(NDEBUG)
+	/* MINIX: It seems even with NDEBUG, when built as a tool assert is
+	 *        still defined on linux. */
 	assert(ss == len);
+#endif /* defined(__minix) && !defined(NDEBUG) */
 	return cdf_read(info, (off_t)pos, ((char *)buf) + offs, len);
 }
 
@@ -355,9 +361,13 @@ ssize_t
 cdf_read_short_sector(const cdf_stream_t *sst, void *buf, size_t offs,
     size_t len, const cdf_header_t *h, cdf_secid_t id)
 {
+#if defined(__minix) && !defined(NDEBUG)
 	size_t ss = CDF_SHORT_SEC_SIZE(h);
+#endif /* defined(__minix) && !defined(NDEBUG) */
 	size_t pos = CDF_SHORT_SEC_POS(h, id);
+#if defined(__minix) && !defined(NDEBUG)
 	assert(ss == len);
+#endif /* defined(__minix) && !defined(NDEBUG) */
 	if (pos > CDF_SEC_SIZE(h) * sst->sst_len) {
 		DPRINTF(("Out of bounds read %" SIZE_T_FORMAT "u > %"
 		    SIZE_T_FORMAT "u\n",
