@@ -12,6 +12,7 @@
 #include "arch_proto.h"
 #include "bsp_reset.h"
 
+#include "omap_timer_registers.h"
 #include "omap_rtc.h"
 
 #define AM335X_CM_BASE 0x44E00000
@@ -86,3 +87,14 @@ bsp_poweroff(void)
 		while (1);
 	}
 }
+
+void bsp_disable_watchdog(void)
+{
+        if(BOARD_IS_BB(machine.board_id)) {
+		mmio_write(AM335X_WDT_BASE+AM335X_WDT_WSPR, 0xAAAA);
+		while(mmio_read(AM335X_WDT_BASE+AM335X_WDT_WWPS) != 0) ;
+		mmio_write(AM335X_WDT_BASE+AM335X_WDT_WSPR, 0x5555);
+		while(mmio_read(AM335X_WDT_BASE+AM335X_WDT_WWPS) != 0) ;
+	}
+}
+
