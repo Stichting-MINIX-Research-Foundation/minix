@@ -65,7 +65,9 @@
 #define AM335X_TIMER_TSICR     0x054 /* Control posted mode and functional SW reset */
 #define AM335X_TIMER_TCAR2     0x058 /* Second captured value of counter register */
 
-
+#define AM335X_WDT_BASE		0x44E35000	/* watchdog timer */
+#define AM335X_WDT_WWPS		0x34		/* command posted status */
+#define AM335X_WDT_WSPR		0x48		/* activate/deactivate sequence */
 
 /* Interrupt status register fields */
 #define OMAP3_TISR_MAT_IT_FLAG  (1 << 0) /* Pending match interrupt status */
