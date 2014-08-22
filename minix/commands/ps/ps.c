@@ -116,8 +116,8 @@ struct pstat {			/* structure filled by pstat() */
   int ps_ftask;			/* VFS suspend task (endpoint) */
   vir_bytes ps_memory;		/* memory usage */
   int ps_recv;			/* process number to receive from (endpoint) */
-  time_t ps_utime;		/* accumulated user time */
-  time_t ps_stime;		/* accumulated system time */
+  unsigned int ps_utime;	/* accumulated user time */
+  unsigned int ps_stime;	/* accumulated system time */
   char ps_name[PROC_NAME_LEN+1];/* process name */
   char *ps_args;		/* concatenated argument string */
 };
