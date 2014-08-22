@@ -2245,7 +2245,7 @@
 ./usr/man/man1/cawf.1			minix-sys
 ./usr/man/man1/cc.1			minix-sys	gcccmds
 ./usr/man/man1/cccp.1			minix-sys	gcccmds
-./usr/man/man1/cd.1			minix-sys	obsolete
+./usr/man/man1/cd.1			minix-sys
 ./usr/man/man1/c++filt.1		minix-sys	binutils
 ./usr/man/man1/checknr.1		minix-sys
 ./usr/man/man1/chfn.1			minix-sys
@@ -2263,7 +2263,7 @@
 ./usr/man/man1/colrm.1			minix-sys
 ./usr/man/man1/column.1			minix-sys
 ./usr/man/man1/comm.1			minix-sys
-./usr/man/man1/command.1		minix-sys	obsolete
+./usr/man/man1/command.1		minix-sys
 ./usr/man/man1/compress.1		minix-sys
 ./usr/man/man1/continue.1		minix-sys
 ./usr/man/man1/cp.1			minix-sys
@@ -2320,7 +2320,7 @@
 ./usr/man/man1/gcpp.1			minix-sys	gcccmds
 ./usr/man/man1/genassym.1		minix-sys
 ./usr/man/man1/getopt.1			minix-sys
-./usr/man/man1/getopts.1		minix-sys	obsolete
+./usr/man/man1/getopts.1		minix-sys
 ./usr/man/man1/gprof.1			minix-sys	binutils
 ./usr/man/man1/grep.1			minix-sys
 ./usr/man/man1/groups.1			minix-sys
@@ -2449,7 +2449,7 @@
 ./usr/man/man1/pwhash.1			minix-sys
 ./usr/man/man1/ranlib.1			minix-sys	binutils
 ./usr/man/man1/rcp.1			minix-sys
-./usr/man/man1/read.1			minix-sys	obsolete
+./usr/man/man1/read.1			minix-sys
 ./usr/man/man1/readelf.1		minix-sys	binutils
 ./usr/man/man1/readlink.1		minix-sys
 ./usr/man/man1/readonly.1		minix-sys
@@ -2515,7 +2515,7 @@
 ./usr/man/man1/tsort.1			minix-sys
 ./usr/man/man1/tty.1			minix-sys
 ./usr/man/man1/ul.1			minix-sys
-./usr/man/man1/umask.1			minix-sys	obsolete
+./usr/man/man1/umask.1			minix-sys
 ./usr/man/man1/umount.1			minix-sys
 ./usr/man/man1/uname.1			minix-sys
 ./usr/man/man1/uncompress.1		minix-sys
@@ -2537,7 +2537,7 @@
 ./usr/man/man1/view.1			minix-sys
 ./usr/man/man1/vis.1			minix-sys
 ./usr/man/man1/vol.1			minix-sys
-./usr/man/man1/wait.1			minix-sys	obsolete
+./usr/man/man1/wait.1			minix-sys
 ./usr/man/man1/wall.1			minix-sys
 ./usr/man/man1/wc.1			minix-sys
 ./usr/man/man1/what.1			minix-sys
