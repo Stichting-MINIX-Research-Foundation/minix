@@ -15,4 +15,7 @@ bsp_init()
 
 	/* map memory for reset control */
 	bsp_reset_init();
+
+	/* disable watchdog */
+	bsp_disable_watchdog();
 }
