@@ -58,6 +58,10 @@ ex_read(SCR *sp, EXCMD *cmdp)
 	int argc, rval;
 	char *p;
 
+#if defined(__minix)
+	/* Prevent complains from GCC at -O3 optimisation level. */
+	nlines = 0;
+#endif /* defined(__minix) */
 	gp = sp->gp;
 
 	/*
