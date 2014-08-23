@@ -21,7 +21,7 @@ static char iobuf[VBOXFS_MAX_FILEIO];
  * Open a file.
  */
 int
-vboxfs_open(char *path, int flags, int mode, sffs_file_t *handle)
+vboxfs_open(const char *path, int flags, int mode, sffs_file_t *handle)
 {
 	vboxfs_handle_t *handlep;
 	int r;

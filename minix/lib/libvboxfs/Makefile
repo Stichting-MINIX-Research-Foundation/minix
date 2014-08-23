@@ -1,6 +1,3 @@
-NOGCCERROR=yes
-NOCLANGERROR=yes
-
 # Makefile for libvboxfs
 .include <bsd.own.mk>
 

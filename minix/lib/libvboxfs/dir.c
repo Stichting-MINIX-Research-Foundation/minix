@@ -143,7 +143,7 @@ read_dir(vboxfs_handle_t handle, sffs_dir_t *dirp)
  * Open a directory.
  */
 int
-vboxfs_opendir(char *path, sffs_dir_t *handle)
+vboxfs_opendir(const char *path, sffs_dir_t *handle)
 {
 	vboxfs_handle_t h;
 	int r;

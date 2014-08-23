@@ -5,7 +5,7 @@
 /*===========================================================================*
  *				hgfs_opendir				     *
  *===========================================================================*/
-int hgfs_opendir(char *path, sffs_dir_t *handle)
+int hgfs_opendir(const char *path, sffs_dir_t *handle)
 {
 /* Open a directory. Store a directory handle upon success.
  */

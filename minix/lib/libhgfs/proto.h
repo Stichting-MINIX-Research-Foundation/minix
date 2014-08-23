@@ -3,8 +3,8 @@
 /* attr.c */
 #define attr_get PREFIX(attr_get)
 void attr_get(struct sffs_attr *attr);
-int hgfs_getattr(char *path, struct sffs_attr *attr);
-int hgfs_setattr(char *path, struct sffs_attr *attr);
+int hgfs_getattr(const char *path, struct sffs_attr *attr);
+int hgfs_setattr(const char *path, struct sffs_attr *attr);
 
 /* backdoor.s */
 #define backdoor PREFIX(backdoor)
@@ -25,7 +25,7 @@ int channel_send(struct channel *ch, char *buf, int len);
 int channel_recv(struct channel *ch, char *buf, int max);
 
 /* dir.c */
-int hgfs_opendir(char *path, sffs_dir_t *handle);
+int hgfs_opendir(const char *path, sffs_dir_t *handle);
 int hgfs_readdir(sffs_dir_t handle, unsigned int index, char *buf, size_t size,
   struct sffs_attr *attr);
 int hgfs_closedir(sffs_dir_t handle);
@@ -35,7 +35,7 @@ int hgfs_closedir(sffs_dir_t handle);
 int error_convert(int err);
 
 /* file.c */
-int hgfs_open(char *path, int flags, int mode, sffs_file_t *handle);
+int hgfs_open(const char *path, int flags, int mode, sffs_file_t *handle);
 ssize_t hgfs_read(sffs_file_t handle, char *buf, size_t size, u64_t offset);
 ssize_t hgfs_write(sffs_file_t handle, char *buf, size_t len, u64_t offset);
 int hgfs_close(sffs_file_t handle);
@@ -43,18 +43,18 @@ size_t hgfs_readbuf(char **ptr);
 size_t hgfs_writebuf(char **ptr);
 
 /* info.c */
-int hgfs_queryvol(char *path, u64_t *free, u64_t *total);
+int hgfs_queryvol(const char *path, u64_t *free, u64_t *total);
 
 /* link.c */
-int hgfs_mkdir(char *path, int mode);
-int hgfs_unlink(char *path);
-int hgfs_rmdir(char *path);
-int hgfs_rename(char *opath, char *npath);
+int hgfs_mkdir(const char *path, int mode);
+int hgfs_unlink(const char *path);
+int hgfs_rmdir(const char *path);
+int hgfs_rename(const char *opath, const char *npath);
 
 /* path.c */
 #define path_put PREFIX(path_put)
 #define path_get PREFIX(path_get)
-void path_put(char *path);
+void path_put(const char *path);
 int path_get(char *path, int max);
 
 /* rpc.c */

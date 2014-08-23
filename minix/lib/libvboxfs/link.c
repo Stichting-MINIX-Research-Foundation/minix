@@ -6,7 +6,7 @@
  * Create a directory.
  */
 int
-vboxfs_mkdir(char *path, int mode)
+vboxfs_mkdir(const char *path, int mode)
 {
 	vboxfs_handle_t h;
 	int r;
@@ -26,7 +26,7 @@ vboxfs_mkdir(char *path, int mode)
  * Remove a file or directory.
  */
 static int
-remove_file(char *path, int dir)
+remove_file(const char *path, int dir)
 {
 	vbox_param_t param[3];
 	vboxfs_path_t pathbuf;
@@ -48,7 +48,7 @@ remove_file(char *path, int dir)
  * Unlink a file.
  */
 int
-vboxfs_unlink(char *path)
+vboxfs_unlink(const char *path)
 {
 
 	return remove_file(path, FALSE /*dir*/);
@@ -58,7 +58,7 @@ vboxfs_unlink(char *path)
  * Remove a directory.
  */
 int
-vboxfs_rmdir(char *path)
+vboxfs_rmdir(const char *path)
 {
 
 	return remove_file(path, TRUE /*dir*/);
@@ -68,7 +68,7 @@ vboxfs_rmdir(char *path)
  * Rename a file or directory.
  */
 static int
-rename_file(char *opath, char *npath, int dir)
+rename_file(const char *opath, const char *npath, int dir)
 {
 	vbox_param_t param[4];
 	vboxfs_path_t opathbuf, npathbuf;
@@ -98,7 +98,7 @@ rename_file(char *opath, char *npath, int dir)
  * Rename a file or directory.
  */
 int
-vboxfs_rename(char *opath, char *npath)
+vboxfs_rename(const char *opath, const char *npath)
 {
 	int r;
 

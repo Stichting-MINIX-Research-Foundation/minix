@@ -6,8 +6,8 @@
  * Create or open a file or directory.
  */
 int
-vboxfs_open_file(char *path, int flags, int mode, vboxfs_handle_t *handlep,
-	vboxfs_objinfo_t *infop)
+vboxfs_open_file(const char *path, int flags, int mode,
+	vboxfs_handle_t *handlep, vboxfs_objinfo_t *infop)
 {
 	vbox_param_t param[3];
 	vboxfs_path_t pathbuf;

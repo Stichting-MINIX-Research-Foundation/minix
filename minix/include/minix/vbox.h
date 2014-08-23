@@ -7,7 +7,7 @@ typedef int vbox_conn_t;
 
 extern int vbox_init(void);
 
-extern vbox_conn_t vbox_open(char *name);
+extern vbox_conn_t vbox_open(const char *name);
 extern int vbox_close(vbox_conn_t conn);
 extern int vbox_call(vbox_conn_t conn, u32_t function, vbox_param_t *param,
 	int count, int *code);

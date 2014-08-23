@@ -9,7 +9,7 @@
  * will be initialized to the empty string.
  */
 int
-vboxfs_set_path(vboxfs_path_t *path, char *name)
+vboxfs_set_path(vboxfs_path_t *path, const char *name)
 {
 	size_t len;
 

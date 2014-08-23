@@ -49,7 +49,7 @@ vboxfs_get_attr(struct sffs_attr *attr, vboxfs_objinfo_t *info)
  * Get file attributes.
  */
 int
-vboxfs_getattr(char *path, struct sffs_attr *attr)
+vboxfs_getattr(const char *path, struct sffs_attr *attr)
 {
 	vbox_param_t param[3];
 	vboxfs_path_t pathbuf;
@@ -92,7 +92,7 @@ vboxfs_getattr(char *path, struct sffs_attr *attr)
  * Set file size.
  */
 static int
-set_size(char *path, u64_t size)
+set_size(const char *path, u64_t size)
 {
 	vboxfs_objinfo_t info;
 	vboxfs_handle_t h;
@@ -116,7 +116,7 @@ set_size(char *path, u64_t size)
  * Set file attributes.
  */
 int
-vboxfs_setattr(char *path, struct sffs_attr *attr)
+vboxfs_setattr(const char *path, struct sffs_attr *attr)
 {
 	vboxfs_objinfo_t info;
 	vboxfs_handle_t h;

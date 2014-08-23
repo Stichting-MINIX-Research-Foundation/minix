@@ -28,7 +28,7 @@ struct sffs_attr {
 #define SFFS_ATTR_MODE		0x20	/* get/set file mode */
 
 struct sffs_table {
-  int (*t_open)(char *path, int flags, int mode, sffs_file_t *handle);
+  int (*t_open)(const char *path, int flags, int mode, sffs_file_t *handle);
   ssize_t (*t_read)(sffs_file_t handle, char *buf, size_t size, u64_t pos);
   ssize_t (*t_write)(sffs_file_t handle, char *buf, size_t size, u64_t pos);
   int (*t_close)(sffs_file_t handle);
@@ -36,20 +36,20 @@ struct sffs_table {
   size_t (*t_readbuf)(char **ptr);
   size_t (*t_writebuf)(char **ptr);
 
-  int (*t_opendir)(char *path, sffs_dir_t *handle);
+  int (*t_opendir)(const char *path, sffs_dir_t *handle);
   int (*t_readdir)(sffs_dir_t handle, unsigned int index, char *buf,
 	size_t size, struct sffs_attr *attr);
   int (*t_closedir)(sffs_dir_t handle);
 
-  int (*t_getattr)(char *path, struct sffs_attr *attr);
-  int (*t_setattr)(char *path, struct sffs_attr *attr);
+  int (*t_getattr)(const char *path, struct sffs_attr *attr);
+  int (*t_setattr)(const char *path, struct sffs_attr *attr);
 
-  int (*t_mkdir)(char *path, int mode);
-  int (*t_unlink)(char *path);
-  int (*t_rmdir)(char *path);
-  int (*t_rename)(char *opath, char *npath);
+  int (*t_mkdir)(const char *path, int mode);
+  int (*t_unlink)(const char *path);
+  int (*t_rmdir)(const char *path);
+  int (*t_rename)(const char *opath, const char *npath);
 
-  int (*t_queryvol)(char *path, u64_t *free, u64_t *total);
+  int (*t_queryvol)(const char *path, u64_t *free, u64_t *total);
 };
 
 struct sffs_params {

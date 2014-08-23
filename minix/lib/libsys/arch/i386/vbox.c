@@ -24,7 +24,7 @@ int vbox_init(void)
   return OK;
 }
 
-vbox_conn_t vbox_open(char *name)
+vbox_conn_t vbox_open(const char *name)
 {
 /* Open a VirtualBox HGCM connection.
  */

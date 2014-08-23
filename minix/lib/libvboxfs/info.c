@@ -24,7 +24,7 @@ vboxfs_getset_info(vboxfs_handle_t handle, u32_t flags, void *data,
  * Query volume information.
  */
 int
-vboxfs_query_vol(char *path, vboxfs_volinfo_t *volinfo)
+vboxfs_query_vol(const char *path, vboxfs_volinfo_t *volinfo)
 {
 	vboxfs_handle_t h;
 	int r;
@@ -44,7 +44,7 @@ vboxfs_query_vol(char *path, vboxfs_volinfo_t *volinfo)
  * Query volume information.
  */
 int
-vboxfs_queryvol(char *path, u64_t *free, u64_t *total)
+vboxfs_queryvol(const char *path, u64_t *free, u64_t *total)
 {
 	vboxfs_volinfo_t volinfo;
 	int r;

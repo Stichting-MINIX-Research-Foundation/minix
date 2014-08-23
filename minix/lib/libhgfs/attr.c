@@ -34,7 +34,7 @@ void attr_get(struct sffs_attr *attr)
 /*===========================================================================*
  *				hgfs_getattr				     *
  *===========================================================================*/
-int hgfs_getattr(char *path, struct sffs_attr *attr)
+int hgfs_getattr(const char *path, struct sffs_attr *attr)
 {
 /* Get selected attributes of a file by path name.
  */
@@ -55,7 +55,7 @@ int hgfs_getattr(char *path, struct sffs_attr *attr)
 /*===========================================================================*
  *				hgfs_setattr				     *
  *===========================================================================*/
-int hgfs_setattr(char *path, struct sffs_attr *attr)
+int hgfs_setattr(const char *path, struct sffs_attr *attr)
 {
 /* Set selected attributes of a file by path name.
  */
