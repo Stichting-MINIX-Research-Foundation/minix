@@ -688,6 +688,12 @@ Suff_AddTransform(char *line)
                   *t;		/* target suffix */
     LstNode 	  ln;	    	/* Node for existing transformation */
 
+#if defined(__minix)
+    /* Prevent complains from GCC at -O3 optimisation level. */
+    s = NULL;
+    t = NULL;
+#endif /* defined(__minix) */
+
     ln = Lst_Find(transforms, line, SuffGNHasNameP);
     if (ln == NULL) {
 	/*
