@@ -833,7 +833,7 @@ writebootimage(char *bootimage, int bootfd, int fd, int *currentsector,
 			exit(1);
 		}
 
-		fprintf(stderr, " * appended sector info: 0x%x len 0x%x\n",
+		fprintf(stderr, " * appended sector info: 0x%llx len 0x%x\n",
 			bap[0].sector, bap[0].length);
 
 		addr = buf;
@@ -1063,6 +1063,7 @@ main(int argc, char *argv[])
 	memcpy(pvd.modified, timestr, strlen(timestr));
 	memcpy(pvd.effective, timestr, strlen(timestr));
 	strcpy(pvd.expiry, "0000000000000000");	/* not specified */
+	pvd.one2 = 1;
 	pvdsector = currentsector;
 
 	writesector(fd, (char *) &pvd, &currentsector);
