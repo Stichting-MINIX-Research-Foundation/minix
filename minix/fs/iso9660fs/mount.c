@@ -60,4 +60,7 @@ void fs_unmount(void)
 	release_vol_pri_desc(&v_pri);	/* Release the super block */
 
 	bdev_close(fs_dev);
+
+	if (check_inodes() == FALSE)
+		printf("ISOFS: unmounting with in-use inodes!\n");
 }

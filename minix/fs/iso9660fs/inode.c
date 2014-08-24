@@ -212,6 +212,7 @@ void read_inode_iso9660(struct inode *i,
 
 	/* Parse first extent. */
 	if (dir_rec->data_length_l > 0) {
+		assert(i->extent == NULL);
 		i->extent = alloc_extent();
 		i->extent->location = dir_rec->loc_extent_l +
 		                      dir_rec->ext_attr_rec_length;
@@ -299,6 +300,7 @@ void read_inode_extents(struct inode *i,
 		    (memcmp(dir_rec->file_id, extent_rec->file_id,
 		    dir_rec->length_file_id) == 0)) {
 			/* Add the extent at the end of the linked list. */
+			assert(cur_extent->next == NULL);
 			cur_extent->next = alloc_extent();
 			cur_extent->next->location = dir_rec->loc_extent_l +
 			    dir_rec->ext_attr_rec_length;
@@ -387,4 +389,16 @@ int check_dir_record(const struct iso9660_dir_record *d, size_t offset)
 		return EINVAL;
 
 	return OK;
+}
+
+int check_inodes(void)
+{
+	/* Check whether there are no more inodes in use. Called on unmount. */
+	int i;
+
+	for (i = 0; i < NR_INODE_RECORDS; i++)
+		if (inodes[i].i_count > 0)
+			return FALSE;
+
+	return TRUE;
 }
