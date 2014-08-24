@@ -37,7 +37,7 @@ int fs_stat(ino_t ino_nr, struct stat *buf)
 	}
 
 	/* Take the current time as file time for all files. */
-	cur_time = time(NULL);
+	cur_time = clock_time(NULL);
 	buf->st_atime = cur_time;
 	buf->st_mtime = cur_time;
 	buf->st_ctime = cur_time;

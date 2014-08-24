@@ -89,21 +89,13 @@ int do_settime()
  *===========================================================================*/
 int do_time()
 {
-/* Perform the time(tp) system call. This returns the time in seconds since 
- * 1.1.1970.  MINIX is an astrophysically naive system that assumes the earth 
- * rotates at a constant rate and that such things as leap seconds do not 
- * exist.
- */
-  clock_t ticks, realtime;
-  time_t boottime;
-  int s;
+/* Perform the time(tp) system call. */
+  struct timespec tv;
 
-  if ( (s=getuptime(&ticks, &realtime, &boottime)) != OK)
-  	panic("do_time couldn't get uptime: %d", s);
+  (void)clock_time(&tv);
 
-  mp->mp_reply.m_pm_lc_time.sec = boottime + (realtime / system_hz);
-  mp->mp_reply.m_pm_lc_time.nsec =
-	(uint32_t) ((realtime % system_hz) * 1000000000ULL / system_hz);
+  mp->mp_reply.m_pm_lc_time.sec = tv.tv_sec;
+  mp->mp_reply.m_pm_lc_time.nsec = tv.tv_nsec;
   return(OK);
 }
 

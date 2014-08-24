@@ -12,35 +12,6 @@
 
 
 /*===========================================================================*
- *				clock_timespec				     *
- *===========================================================================*/
-struct timespec clock_timespec(void)
-{
-/* This routine returns the time in seconds since 1.1.1970.  MINIX is an
- * astrophysically naive system that assumes the earth rotates at a constant
- * rate and that such things as leap seconds do not exist.
- */
-  static long system_hz = 0;
-
-  register int k;
-  struct timespec tv;
-  clock_t uptime;
-  clock_t realtime;
-  time_t boottime;
-
-  if (system_hz == 0) system_hz = sys_hz();
-  if ((k=getuptime(&uptime, &realtime, &boottime)) != OK)
-	panic("clock_timespec: getuptime failed: %d", k);
-
-  tv.tv_sec = (time_t) (boottime + (realtime/system_hz));
-  /* We do not want to overflow, and system_hz can be as high as 50kHz */
-  assert(system_hz < LONG_MAX/40000);
-  tv.tv_nsec = (realtime%system_hz) * 40000 / system_hz * 25000;
-  return tv;
-}
-
-
-/*===========================================================================*
  *				update_timens				     *
  *===========================================================================*/
 int update_timens(struct puffs_node *pn, int flags, struct timespec *t)
@@ -56,7 +27,10 @@ int update_timens(struct puffs_node *pn, int flags, struct timespec *t)
   if (global_pu->pu_ops.puffs_node_setattr == NULL)
 	return EINVAL;
 
-  new_time = t != NULL ? *t : clock_timespec();
+  if (t != NULL)
+	new_time = *t;
+  else
+	(void)clock_time(&new_time);
   
   puffs_vattr_null(&va);
   /* librefuse modifies atime and mtime together,

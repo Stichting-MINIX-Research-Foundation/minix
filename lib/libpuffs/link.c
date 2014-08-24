@@ -123,7 +123,7 @@ int fs_link(ino_t dir_nr, char *name, ino_t ino_nr)
   
   if (r != OK) return(EINVAL);
 
-  cur_time = clock_timespec();
+  (void)clock_time(&cur_time);
   update_timens(pn, CTIME, &cur_time);
   update_timens(pn_dir, MTIME | CTIME, &cur_time);
 
@@ -308,7 +308,7 @@ int fs_rename(ino_t old_dir_nr, char *old_name, ino_t new_dir_nr,
 	}
   }
 
-  cur_time = clock_timespec();
+  (void)clock_time(&cur_time);
   update_timens(old_dirp, MTIME | CTIME, &cur_time);
   update_timens(new_dirp, MTIME | CTIME, &cur_time);
 
@@ -366,7 +366,7 @@ int fs_unlink(ino_t dir_nr, char *name, int call)
   }
 
   if (pn->pn_va.va_nlink != 0) {
-	cur_time = clock_timespec();
+	(void)clock_time(&cur_time);
 	update_timens(pn, CTIME, &cur_time);
 	update_timens(pn_dir, MTIME | CTIME, &cur_time);
   }

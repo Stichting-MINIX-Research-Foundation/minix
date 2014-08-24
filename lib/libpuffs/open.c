@@ -43,7 +43,7 @@ int fs_create(ino_t dir_nr, char *name, mode_t mode, uid_t uid, gid_t gid,
   memset(&pni, 0, sizeof(pni));
   pni.pni_cookie = (void** )&pn;
 
-  cur_time = clock_timespec();
+  (void)clock_time(&cur_time);
   
   memset(&va, 0, sizeof(va));
   va.va_type = VREG;
@@ -127,7 +127,7 @@ int fs_mknod(ino_t dir_nr, char *name, mode_t mode, uid_t uid, gid_t gid,
   memset(&pni, 0, sizeof(pni));
   pni.pni_cookie = (void** )&pn;
 
-  cur_time = clock_timespec();
+  (void)clock_time(&cur_time);
 
   memset(&va, 0, sizeof(va));
   va.va_type = VDIR;
@@ -196,7 +196,7 @@ int fs_mkdir(ino_t dir_nr, char *name, mode_t mode, uid_t uid, gid_t gid)
   if ((pn_dir = puffs_pn_nodewalk(global_pu, 0, &dir_nr)) == NULL)
 	return(ENOENT);
   
-  cur_time = clock_timespec();
+  (void)clock_time(&cur_time);
 
   memset(&pni, 0, sizeof(pni));
   pni.pni_cookie = (void** )&pn;
@@ -254,6 +254,7 @@ int fs_slink(ino_t dir_nr, char *name, uid_t uid, gid_t gid,
   PUFFS_MAKECRED(pcr, &global_kcred);
   struct puffs_cn pcn = {&pkcnp, (struct puffs_cred *) __UNCONST(pcr), {0,0,0}};
   struct vattr va;
+  struct timespec cur_time;
 
   /* Copy the link name's last component */
   pcn.pcn_namelen = strlen(name);
@@ -287,12 +288,14 @@ int fs_slink(ino_t dir_nr, char *name, uid_t uid, gid_t gid,
   memset(&pni, 0, sizeof(pni));
   pni.pni_cookie = (void** )&pn;
 
+  (void)clock_time(&cur_time);
+
   memset(&va, 0, sizeof(va));
   va.va_type = VLNK;
   va.va_mode = (I_SYMBOLIC_LINK | RWX_MODES);
   va.va_uid = uid;
   va.va_gid = gid;
-  va.va_atime = va.va_mtime = va.va_ctime = clock_timespec();
+  va.va_atime = va.va_mtime = va.va_ctime = cur_time;
 
   if (buildpath) {
 	r = puffs_path_pcnbuild(global_pu, &pcn, pn_dir);

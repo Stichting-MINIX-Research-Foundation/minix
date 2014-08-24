@@ -95,7 +95,6 @@ struct group_desc* get_group_desc(unsigned int bnum);
 int fs_utime(void);
 
 /* utility.c */
-time_t clock_time(void);
 unsigned conv2(int norm, int w);
 long conv4(int norm, long x);
 void mfs_nul_f(const char *file, int line, const char *str, unsigned int len,

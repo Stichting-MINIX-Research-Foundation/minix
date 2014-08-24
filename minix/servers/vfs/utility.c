@@ -1,7 +1,6 @@
 /* This file contains a few general purpose utility routines.
  *
  * The entry points into this file are
- *   clock_timespec: ask the clock task for the real time
  *   copy_path:	  copy a path name from a path request from userland
  *   fetch_name:  go get a path name from user space
  *   panic:       something awful has occurred;  MINIX cannot continue
@@ -121,34 +120,6 @@ int isokendpt_f(const char *file, int line, endpoint_t endpoint, int *proc,
 	panic("isokendpt_f failed");
 
   return(failed ? EDEADEPT : OK);
-}
-
-
-/*===========================================================================*
- *				clock_timespec				     *
- *===========================================================================*/
-struct timespec clock_timespec(void)
-{
-/* This routine returns the time in seconds since 1.1.1970.  MINIX is an
- * astrophysically naive system that assumes the earth rotates at a constant
- * rate and that such things as leap seconds do not exist.
- */
-
-  register int r;
-  struct timespec tv;
-  clock_t uptime;
-  clock_t realtime;
-  time_t boottime;
-
-  r = getuptime(&uptime, &realtime, &boottime);
-  if (r != OK)
-	panic("clock_timespec err: %d", r);
-
-  tv.tv_sec = boottime + (realtime/system_hz);
-  /* We do not want to overflow, and system_hz can be as high as 50kHz */
-  assert(system_hz < LONG_MAX/40000);
-  tv.tv_nsec = (realtime%system_hz) * 40000 / system_hz * 25000;
-  return tv;
 }
 
 /*===========================================================================*

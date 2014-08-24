@@ -369,7 +369,7 @@ register struct inode *rip;	/* pointer to inode to be read/written */
   sp = rip->i_sp;		/* get pointer to super block. */
   if (sp->s_rd_only) return;	/* no updates for read-only file systems */
 
-  cur_time = clock_time();
+  cur_time = clock_time(NULL);
   if (rip->i_update & ATIME) rip->i_atime = cur_time;
   if (rip->i_update & CTIME) rip->i_ctime = cur_time;
   if (rip->i_update & MTIME) rip->i_mtime = cur_time;

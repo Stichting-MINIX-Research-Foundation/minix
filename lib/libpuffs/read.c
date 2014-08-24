@@ -73,6 +73,7 @@ ssize_t fs_write(ino_t ino_nr, struct fsdriver_data *data, size_t bytes,
   size_t bytes_left;
   struct puffs_node *pn;
   struct vattr va;
+  struct timespec cur_time;
   PUFFS_MAKECRED(pcr, &global_kcred);
 
   if ((pn = puffs_pn_nodewalk(global_pu, 0, &ino_nr)) == NULL) {
@@ -88,10 +89,12 @@ ssize_t fs_write(ino_t ino_nr, struct fsdriver_data *data, size_t bytes,
   if (global_pu->pu_ops.puffs_node_setattr == NULL)
 	return(EINVAL);
 
+  (void)clock_time(&cur_time);
+
   puffs_vattr_null(&va);
   if ((u_quad_t)(pos + bytes_left) > pn->pn_va.va_size)
 	va.va_size = bytes_left + pos;
-  va.va_ctime = va.va_mtime = clock_timespec();
+  va.va_ctime = va.va_mtime = cur_time;
   va.va_atime = pn->pn_va.va_atime;
 
   r = global_pu->pu_ops.puffs_node_setattr(global_pu, pn, &va, pcr);
