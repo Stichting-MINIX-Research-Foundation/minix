@@ -116,35 +116,27 @@ static void allocate(int b)
 ssize_t
 bdev_gather(dev_t dev, u64_t pos, iovec_t *vec, int count, int flags)
 {
-	int i;
+	int i, block;
+	size_t size, block_off;
 	ssize_t tot = 0;
 	assert(dev == MYDEV);
 	assert(curblocksize > 0);
 	assert(!(pos % curblocksize));
 	for(i = 0; i < count; i++) {
-		int subpages, block, block_off;
 		char *data = (char *) vec[i].iov_addr;
-		assert(!(pos % curblocksize));
 		block = pos / curblocksize;
-		block_off = pos % curblocksize;
-		assert(!(vec[i].iov_size % PAGE_SIZE));
-		subpages = vec[i].iov_size / PAGE_SIZE;
-		while(subpages > 0) {
-			assert(block >= 0);
-			assert(block < MAXBLOCKS);
-			assert(block_off >= 0);
-			assert(block_off < curblocksize);
-			if(!writtenblocks[block]) {
-				allocate(block);
-			}
-			memcpy(data, writtenblocks[block] + block_off,
-				PAGE_SIZE);
-			block++;
-			subpages--;
-			data += PAGE_SIZE;
-			tot += PAGE_SIZE;
-			block_off += PAGE_SIZE;
+		block_off = (size_t)(pos % curblocksize);
+		size = vec[i].iov_size;
+		assert(size == PAGE_SIZE);
+		assert(block >= 0);
+		assert(block < MAXBLOCKS);
+		assert(block_off + size <= curblocksize);
+		if(!writtenblocks[block]) {
+			allocate(block);
 		}
+		memcpy(data, writtenblocks[block] + block_off, size);
+		pos += size;
+		tot += size;
 	}
 
 	return tot;
@@ -154,29 +146,26 @@ ssize_t
 bdev_scatter(dev_t dev, u64_t pos, iovec_t *vec, int count, int flags)
 {
 	int i, block;
+	size_t size, block_off;
 	ssize_t tot = 0;
 	assert(dev == MYDEV);
 	assert(curblocksize > 0);
 	assert(!(pos % curblocksize));
-	block = pos / curblocksize;
 	for(i = 0; i < count; i++) {
-		int subblocks;
 		char *data = (char *) vec[i].iov_addr;
-		assert(vec[i].iov_size > 0);
-		assert(!(vec[i].iov_size % PAGE_SIZE));
-		subblocks = vec[i].iov_size / curblocksize;
-		while(subblocks > 0) {
-			assert(block >= 0);
-			assert(block < MAXBLOCKS);
-			if(!writtenblocks[block]) {
-				allocate(block);
-			}
-			memcpy(writtenblocks[block], data, curblocksize);
-			block++;
-			subblocks--;
-			data += curblocksize;
-			tot += curblocksize;
+		block = pos / curblocksize;
+		block_off = (size_t)(pos % curblocksize);
+		size = vec[i].iov_size;
+		assert(size == PAGE_SIZE);
+		assert(block >= 0);
+		assert(block < MAXBLOCKS);
+		assert(block_off + size <= curblocksize);
+		if(!writtenblocks[block]) {
+			allocate(block);
 		}
+		memcpy(writtenblocks[block] + block_off, data, size);
+		pos += size;
+		tot += size;
 	}
 
 	return tot;
@@ -186,31 +175,23 @@ ssize_t
 bdev_read(dev_t dev, u64_t pos, char *data, size_t count, int flags)
 {
 	int block;
-	ssize_t tot = 0;
-	int subblocks;
 
 	assert(dev == MYDEV);
 	assert(curblocksize > 0);
 	assert(!(pos % curblocksize));
 	assert(count > 0);
 	assert(!(count % curblocksize));
+	assert(count == PAGE_SIZE);
+	assert(curblocksize == PAGE_SIZE);
 
 	block = pos / curblocksize;
-	subblocks = count / curblocksize;
-	while(subblocks > 0) {
-		assert(block >= 0);
-		assert(block < MAXBLOCKS);
-		if(!writtenblocks[block]) {
-			allocate(block);
-		}
-		memcpy(data, writtenblocks[block], curblocksize);
-		block++;
-		subblocks--;
-		data += curblocksize;
-		tot += curblocksize;
+	assert(block >= 0);
+	assert(block < MAXBLOCKS);
+	if(!writtenblocks[block]) {
+		allocate(block);
 	}
-
-	return tot;
+	memcpy(data, writtenblocks[block], curblocksize);
+	return count;
 }
 
 /* Fake some libsys functions */
