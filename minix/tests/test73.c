@@ -6,7 +6,6 @@
 
 #define _MINIX_SYSTEM 1
 
-#include <minix/libminixfs.h>
 #include <minix/sysutil.h>
 #include <minix/syslib.h>
 #include <minix/vm.h>
@@ -23,6 +22,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <math.h>
+#include <minix/libminixfs.h>
 
 #include "testvm.h"
 

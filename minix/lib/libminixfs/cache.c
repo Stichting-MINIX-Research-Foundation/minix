@@ -29,7 +29,6 @@ static unsigned int bufs_in_use;/* # bufs currently in use (not on free list)*/
 
 static void rm_lru(struct buf *bp);
 static void read_block(struct buf *);
-static void flushall(dev_t dev);
 static void freeblock(struct buf *bp);
 static void cache_heuristic_check(int major);
 
@@ -226,7 +225,7 @@ static void freeblock(struct buf *bp)
    * Avoid hysteresis by flushing all other dirty blocks for the same device.
    */
   if (bp->lmfs_dev != NO_DEV) {
-	if (!lmfs_isclean(bp)) flushall(bp->lmfs_dev);
+	if (!lmfs_isclean(bp)) lmfs_flushdev(bp->lmfs_dev);
 	assert(bp->lmfs_bytes == fs_block_size);
 	bp->lmfs_dev = NO_DEV;
   }
@@ -579,9 +578,9 @@ void lmfs_invalidate(
 }
 
 /*===========================================================================*
- *				flushall				     *
+ *				lmfs_flushdev				     *
  *===========================================================================*/
-static void flushall(dev_t dev)
+void lmfs_flushdev(dev_t dev)
 {
 /* Flush all dirty blocks for one device. */
 
@@ -910,7 +909,7 @@ void lmfs_flushall(void)
 	struct buf *bp;
 	for(bp = &buf[0]; bp < &buf[nr_bufs]; bp++)
 		if(bp->lmfs_dev != NO_DEV && !lmfs_isclean(bp)) 
-			flushall(bp->lmfs_dev);
+			lmfs_flushdev(bp->lmfs_dev);
 }
 
 int lmfs_fs_block_size(void)
