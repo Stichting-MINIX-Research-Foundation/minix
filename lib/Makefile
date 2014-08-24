@@ -41,6 +41,7 @@ SUBDIR+=	../minix/lib/libasyn \
 		../minix/lib/libdevman \
 		../minix/lib/libexec \
 		../minix/lib/libfetch \
+		../minix/lib/libfsdriver \
 		../minix/lib/libinputdriver \
 		../minix/lib/libminc \
 		../minix/lib/libminixfs \

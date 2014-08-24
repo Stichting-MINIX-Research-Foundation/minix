@@ -10,7 +10,7 @@ INCS+=	acpi.h audio_fw.h bitmap.h \
 	config.h const.h cpufeature.h \
 	debug.h devio.h devman.h dmap.h \
 	driver.h drivers.h drvlib.h ds.h \
-	endpoint.h fb.h fslib.h gpio.h gcov.h hash.h \
+	endpoint.h fb.h fsdriver.h fslib.h gpio.h gcov.h hash.h \
 	hgfs.h i2c.h i2cdriver.h ioctl.h input.h \
 	inputdriver.h ipc.h ipcconst.h \
 	keymap.h log.h mmio.h mthread.h minlib.h \

@@ -1345,6 +1345,7 @@
 ./usr/include/minix/ds.h		minix-sys
 ./usr/include/minix/endpoint.h		minix-sys
 ./usr/include/minix/fb.h		minix-sys
+./usr/include/minix/fsdriver.h		minix-sys
 ./usr/include/minix/fslib.h		minix-sys
 ./usr/include/minix/gcov.h		minix-sys
 ./usr/include/minix/gpio.h		minix-sys
@@ -2051,6 +2052,8 @@
 ./usr/lib/libform.so			minix-sys
 ./usr/lib/libform.so.6.0		minix-sys
 ./usr/lib/libform.so.6			minix-sys
+./usr/lib/libfsdriver.a			minix-sys
+./usr/lib/libfsdriver_pic.a		minix-sys
 ./usr/lib/libgcc.a			minix-sys	gcc=45
 ./usr/lib/libgcc_eh.a			minix-sys	gcc=45
 ./usr/lib/libgcc_s.a			minix-sys
