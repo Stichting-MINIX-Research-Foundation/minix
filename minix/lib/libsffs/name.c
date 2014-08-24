@@ -28,7 +28,7 @@ void normalize_name(char dst[NAME_MAX+1], char *src)
 
   if (sffs_params->p_case_insens) {
 	for (i = 0; i < size; i++)
-		*dst++ = tolower(*src++);
+		*dst++ = tolower((int)*src++);
   }
   else memcpy(dst, src, size);
 }

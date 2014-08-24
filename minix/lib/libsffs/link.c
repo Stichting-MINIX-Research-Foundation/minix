@@ -15,16 +15,15 @@
 
 #include <fcntl.h>
 
-static int force_remove(char *path, int dir);
-
 /*===========================================================================*
  *				do_create				     *
  *===========================================================================*/
-int do_create(void)
+int do_create(ino_t dir_nr, char *name, mode_t mode, uid_t uid, gid_t gid,
+	struct fsdriver_node *node)
 {
 /* Create a new file.
  */
-  char path[PATH_MAX], name[NAME_MAX+1];
+  char path[PATH_MAX];
   struct inode *parent, *ino;
   struct sffs_attr attr;
   sffs_file_t handle;
@@ -34,13 +33,7 @@ int do_create(void)
   if (state.s_read_only)
 	return EROFS;
 
-  /* Get path, name, parent inode and possibly inode for the given path. */
-  if ((r = get_name(m_in.m_vfs_fs_create.grant, m_in.m_vfs_fs_create.path_len, name)) != OK)
-	return r;
-
-  if (!strcmp(name, ".") || !strcmp(name, "..")) return EEXIST;
-
-  if ((parent = find_inode(m_in.m_vfs_fs_create.inode)) == NULL)
+  if ((parent = find_inode(dir_nr)) == NULL)
 	return EINVAL;
 
   if ((r = verify_dentry(parent, name, path, &ino)) != OK)
@@ -59,8 +52,7 @@ int do_create(void)
   }
 
   /* Perform the actual create call. */
-  r = sffs_table->t_open(path, O_CREAT | O_EXCL | O_RDWR, m_in.m_vfs_fs_create.mode,
-	&handle);
+  r = sffs_table->t_open(path, O_CREAT | O_EXCL | O_RDWR, mode, &handle);
 
   if (r != OK) {
 	/* Let's not try to be too clever with error codes here. If something
@@ -115,11 +107,12 @@ int do_create(void)
 
   add_dentry(parent, name, ino);
 
-  m_out.m_fs_vfs_create.inode = INODE_NR(ino);
-  m_out.m_fs_vfs_create.mode = get_mode(ino, attr.a_mode);
-  m_out.m_fs_vfs_create.file_size = attr.a_size;
-  m_out.m_fs_vfs_create.uid = sffs_params->p_uid;
-  m_out.m_fs_vfs_create.gid = sffs_params->p_gid;
+  node->fn_ino_nr = INODE_NR(ino);
+  node->fn_mode = get_mode(ino, attr.a_mode);
+  node->fn_size = attr.a_size;
+  node->fn_uid = sffs_params->p_uid;
+  node->fn_gid = sffs_params->p_gid;
+  node->fn_dev = NO_DEV;
 
   return OK;
 }
@@ -127,11 +120,11 @@ int do_create(void)
 /*===========================================================================*
  *				do_mkdir				     *
  *===========================================================================*/
-int do_mkdir(void)
+int do_mkdir(ino_t dir_nr, char *name, mode_t mode, uid_t uid, gid_t gid)
 {
 /* Make a new directory.
  */
-  char path[PATH_MAX], name[NAME_MAX+1];
+  char path[PATH_MAX];
   struct inode *parent, *ino;
   int r;
 
@@ -139,20 +132,14 @@ int do_mkdir(void)
   if (state.s_read_only)
 	return EROFS;
 
-  /* Get the path string and possibly an inode for the given path. */
-  if ((r = get_name(m_in.m_vfs_fs_mkdir.grant, m_in.m_vfs_fs_mkdir.path_len, name)) != OK)
-	return r;
-
-  if (!strcmp(name, ".") || !strcmp(name, "..")) return EEXIST;
-
-  if ((parent = find_inode(m_in.m_vfs_fs_mkdir.inode)) == NULL)
+  if ((parent = find_inode(dir_nr)) == NULL)
 	return EINVAL;
 
   if ((r = verify_dentry(parent, name, path, &ino)) != OK)
 	return r;
 
   /* Perform the actual mkdir call. */
-  r = sffs_table->t_mkdir(path, m_in.m_vfs_fs_mkdir.mode);
+  r = sffs_table->t_mkdir(path, mode);
 
   if (r != OK) {
 	if (ino != NULL)
@@ -232,11 +219,11 @@ static int force_remove(
 /*===========================================================================*
  *				do_unlink				     *
  *===========================================================================*/
-int do_unlink(void)
+int do_unlink(ino_t dir_nr, char *name, int call)
 {
 /* Delete a file.
  */
-  char path[PATH_MAX], name[NAME_MAX+1];
+  char path[PATH_MAX];
   struct inode *parent, *ino;
   int r;
 
@@ -244,13 +231,7 @@ int do_unlink(void)
   if (state.s_read_only)
 	return EROFS;
 
-  /* Get the path string and possibly preexisting inode for the given path. */
-  if ((r = get_name(m_in.m_vfs_fs_unlink.grant, m_in.m_vfs_fs_unlink.path_len, name)) != OK)
-	return r;
-
-  if (!strcmp(name, ".") || !strcmp(name, "..")) return EPERM;
-
-  if ((parent = find_inode(m_in.m_vfs_fs_unlink.inode)) == NULL)
+  if ((parent = find_inode(dir_nr)) == NULL)
 	return EINVAL;
 
   if ((r = verify_dentry(parent, name, path, &ino)) != OK)
@@ -279,11 +260,11 @@ int do_unlink(void)
 /*===========================================================================*
  *				do_rmdir				     *
  *===========================================================================*/
-int do_rmdir(void)
+int do_rmdir(ino_t dir_nr, char *name, int call)
 {
 /* Remove an empty directory.
  */
-  char path[PATH_MAX], name[NAME_MAX+1];
+  char path[PATH_MAX];
   struct inode *parent, *ino;
   int r;
 
@@ -291,14 +272,7 @@ int do_rmdir(void)
   if (state.s_read_only)
 	return EROFS;
 
-  /* Get the path string and possibly preexisting inode for the given path. */
-  if ((r = get_name(m_in.m_vfs_fs_unlink.grant, m_in.m_vfs_fs_unlink.path_len, name)) != OK)
-	return r;
-
-  if (!strcmp(name, ".")) return EINVAL;
-  if (!strcmp(name, "..")) return ENOTEMPTY;
-
-  if ((parent = find_inode(m_in.m_vfs_fs_unlink.inode)) == NULL)
+  if ((parent = find_inode(dir_nr)) == NULL)
 	return EINVAL;
 
   if ((r = verify_dentry(parent, name, path, &ino)) != OK)
@@ -327,12 +301,12 @@ int do_rmdir(void)
 /*===========================================================================*
  *				do_rename				     *
  *===========================================================================*/
-int do_rename(void)
+int do_rename(ino_t old_dir_nr, char *old_name, ino_t new_dir_nr,
+	char *new_name)
 {
 /* Rename a file or directory.
  */
   char old_path[PATH_MAX], new_path[PATH_MAX];
-  char old_name[NAME_MAX+1], new_name[NAME_MAX+1];
   struct inode *old_parent, *new_parent;
   struct inode *old_ino, *new_ino;
   int r;
@@ -341,20 +315,9 @@ int do_rename(void)
   if (state.s_read_only)
 	return EROFS;
 
-  /* Get path strings, names, directory inodes and possibly preexisting inodes
-   * for the old and new paths.
-   */
-  if ((r = get_name(m_in.m_vfs_fs_rename.grant_old, m_in.m_vfs_fs_rename.len_old,
-	old_name)) != OK) return r;
-
-  if ((r = get_name(m_in.m_vfs_fs_rename.grant_new, m_in.m_vfs_fs_rename.len_new,
-	new_name)) != OK) return r;
-
-  if (!strcmp(old_name, ".") || !strcmp(old_name, "..") ||
-	!strcmp(new_name, ".") || !strcmp(new_name, "..")) return EINVAL;
-
-  if ((old_parent = find_inode(m_in.m_vfs_fs_rename.dir_old)) == NULL ||
-	(new_parent = find_inode(m_in.m_vfs_fs_rename.dir_new)) == NULL)
+  /* Get possibly preexisting inodes for the old and new paths. */
+  if ((old_parent = find_inode(old_dir_nr)) == NULL ||
+	(new_parent = find_inode(new_dir_nr)) == NULL)
 	return EINVAL;
 
   if ((r = verify_dentry(old_parent, old_name, old_path, &old_ino)) != OK)

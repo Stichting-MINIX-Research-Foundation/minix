@@ -273,19 +273,16 @@ int have_used_inode(void)
 /*===========================================================================*
  *				do_putnode				     *
  *===========================================================================*/
-int do_putnode(void)
+int do_putnode(ino_t ino_nr, unsigned int count)
 {
 /* Decrease an inode's reference count.
  */
   struct inode *ino;
-  int count;
 
-  if ((ino = find_inode(m_in.m_vfs_fs_putnode.inode)) == NULL)
+  if ((ino = find_inode(ino_nr)) == NULL)
 	return EINVAL;
 
-  count = m_in.m_vfs_fs_putnode.count;
-
-  if (count <= 0 || count > ino->i_ref) return EINVAL;
+  if (count > ino->i_ref) return EINVAL;
 
   ino->i_ref -= count - 1;
 
