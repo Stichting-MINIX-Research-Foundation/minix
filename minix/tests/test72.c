@@ -90,12 +90,6 @@ void testend(void)
 
 /* Fake some libminixfs client functions */
 
-int
-fs_sync(void)
-{
-	return 0;
-}
-
 void
 fs_blockstats(u64_t *total, u64_t *free, u64_t *used)
 {

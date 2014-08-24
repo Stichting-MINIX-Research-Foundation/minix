@@ -854,7 +854,7 @@ void lmfs_buf_pool(int new_nr_bufs)
 
   if(nr_bufs > 0) {
 	assert(buf);
-	(void) fs_sync();
+	lmfs_flushall();
   	for (bp = &buf[0]; bp < &buf[nr_bufs]; bp++) {
 		if(bp->data) {
 			assert(bp->lmfs_bytes > 0);
