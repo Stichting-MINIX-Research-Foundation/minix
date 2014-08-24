@@ -12,20 +12,20 @@ struct filp;
 struct inode;
 struct super_block;
 
-
 /* balloc.c */
 void discard_preallocated_blocks(struct inode *rip);
 block_t alloc_block(struct inode *rip, block_t goal);
 void free_block(struct super_block *sp, bit_t bit);
 
 /* ialloc.c */
-struct inode *alloc_inode(struct inode *parent, mode_t bits);
+struct inode *alloc_inode(struct inode *parent, mode_t bits, uid_t uid,
+	gid_t gid);
 void free_inode(struct inode *rip);
 
 /* inode.c */
 void dup_inode(struct inode *ip);
 struct inode *find_inode(dev_t dev, ino_t numb);
-int fs_putnode(void);
+int fs_putnode(ino_t ino_nr, unsigned int count);
 void init_inode_cache(void);
 struct inode *get_inode(dev_t dev, ino_t numb);
 void put_inode(struct inode *rip);
@@ -33,56 +33,56 @@ void update_times(struct inode *rip);
 void rw_inode(struct inode *rip, int rw_flag);
 
 /* link.c */
-int fs_ftrunc(void);
-int fs_link(void);
-int fs_rdlink(void);
-int fs_rename(void);
-int fs_unlink(void);
+int fs_trunc(ino_t ino_nr, off_t start, off_t end);
+int fs_link(ino_t dir_nr, char *name, ino_t ino_nr);
+int fs_rdlink(ino_t ino_nr, struct fsdriver_data *data, size_t bytes);
+int fs_rename(ino_t old_dir_nr, char *old_name, ino_t new_dir_nr,
+	char *new_name);
+int fs_unlink(ino_t dir_nr, char *name, int call);
 int truncate_inode(struct inode *rip, off_t len);
 
 /* misc.c */
-int fs_flush(void);
-int fs_sync(void);
-int fs_new_driver(void);
-int fs_bpeek(void);
+void fs_sync(void);
 
 /* mount.c */
-int fs_mountpoint(void);
-int fs_readsuper(void);
-int fs_unmount(void);
+int fs_mount(dev_t dev, unsigned int flags, struct fsdriver_node *root_node,
+	unsigned int *res_flags);
+void fs_unmount(void);
+int fs_mountpt(ino_t ino_nr);
 
 /* open.c */
-int fs_create(void);
-int fs_inhibread(void);
-int fs_mkdir(void);
-int fs_mknod(void);
-int fs_slink(void);
+int fs_create(ino_t dir_nr, char *name, mode_t mode, uid_t uid, gid_t gid,
+	struct fsdriver_node *node);
+int fs_mkdir(ino_t dir_nr, char *name, mode_t mode, uid_t uid, gid_t gid);
+int fs_mknod(ino_t dir_nr, char *name, mode_t mode, uid_t uid, gid_t gid,
+	dev_t dev);
+int fs_slink(ino_t dir_nr, char *name, uid_t uid, gid_t gid,
+	struct fsdriver_data *data, size_t bytes);
+void fs_seek(ino_t ino_nr);
 
 /* path.c */
-int fs_lookup(void);
-struct inode *advance(struct inode *dirp, char string[NAME_MAX + 1], int
-	chk_perm);
-int search_dir(struct inode *ldir_ptr, const char string [NAME_MAX + 1], ino_t
-	*numb, int flag, int check_permissions, int ftype);
+int fs_lookup(ino_t dir_nr, char *name, struct fsdriver_node *node,
+	int *is_mountpt);
+struct inode *advance(struct inode *dirp, const char *string);
+int search_dir(struct inode *ldir_ptr, const char *string, ino_t *numb,
+	int flag, int ftype);
 
 /* protect.c */
-int fs_chmod(void);
-int fs_chown(void);
-int fs_getdents(void);
-int forbidden(struct inode *rip, mode_t access_desired);
-int read_only(struct inode *ip);
+int fs_chmod(ino_t ino_nr, mode_t *mode);
+int fs_chown(ino_t ino_nr, uid_t uid, gid_t gid, mode_t *mode);
 
 /* read.c */
-int fs_breadwrite(void);
-int fs_readwrite(void);
-void read_ahead(void);
+ssize_t fs_readwrite(ino_t ino_nr, struct fsdriver_data *data, size_t bytes,
+	off_t pos, int call);
 block_t rd_indir(struct buf *bp, int index);
 block_t read_map(struct inode *rip, off_t pos, int opportunistic);
 struct buf *get_block_map(register struct inode *rip, u64_t position);
+ssize_t fs_getdents(ino_t ino_nr, struct fsdriver_data *data, size_t bytes,
+	off_t *posp);
 
 /* stadir.c */
-int fs_stat(void);
-int fs_statvfs(void);
+int fs_stat(ino_t ino_nr, struct stat *statbuf);
+int fs_statvfs(struct statvfs *st);
 
 /* super.c */
 unsigned int get_block_size(dev_t dev);
@@ -92,17 +92,11 @@ void write_super(struct super_block *sp);
 struct group_desc* get_group_desc(unsigned int bnum);
 
 /* time.c */
-int fs_utime(void);
+int fs_utime(ino_t ino, struct timespec *atime, struct timespec *mtime);
 
 /* utility.c */
 unsigned conv2(int norm, int w);
 long conv4(int norm, long x);
-void mfs_nul_f(const char *file, int line, const char *str, unsigned int len,
-	unsigned int maxlen);
-int min(unsigned int l, unsigned int r);
-int no_sys(void);
-void sanitycheck(char *file, int line);
-#define SANITYCHECK sanitycheck(__FILE__, __LINE__)
 int ansi_strcmp(register const char* ansi_s, register const char *s2,
 	register size_t ansi_s_length);
 bit_t setbit(bitchunk_t *bitmap, bit_t max_bits, unsigned int word);

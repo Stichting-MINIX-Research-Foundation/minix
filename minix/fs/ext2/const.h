@@ -13,13 +13,6 @@
 #define INODE_HASH_SIZE   ((unsigned long)1<<INODE_HASH_LOG2)
 #define INODE_HASH_MASK   (((unsigned long)1<<INODE_HASH_LOG2)-1)
 
-
-/* The type of sizeof may be (unsigned) long.  Use the following macro for
- * taking the sizes of small objects so that there are no surprises like
- * (small) long constants being passed to routines expecting an int.
- */
-#define usizeof(t) ((unsigned) sizeof(t))
-
 #define SUPER_MAGIC   0xEF53  /* magic number contained in super-block */
 
 #define EXT2_NAME_MAX	255
@@ -40,18 +33,11 @@
 /* write_map() args */
 #define WMAP_FREE           (1 << 0)
 
-#define IGN_PERM            0
-#define CHK_PERM            1
-
 #define IN_CLEAN              0    /* inode disk and memory copies identical */
 #define IN_DIRTY              1    /* inode disk and memory copies differ */
 #define ATIME            002    /* set if atime field needs updating */
 #define CTIME            004    /* set if ctime field needs updating */
 #define MTIME            010    /* set if mtime field needs updating */
-
-#define BYTE_SWAP          0    /* tells conv2/conv4 to swap bytes */
-
-#define END_OF_FILE   (-104)    /* eof detected */
 
 #define SUPER_BLOCK_BYTES       (1024)         /* bytes offset */
 
@@ -60,7 +46,7 @@
 #define START_BLOCK     ((block_t) 2) /* first block of FS (not counting SB) */
 #define BLOCK_ADDRESS_BYTES	4     /* bytes per address */
 
-#define SUPER_SIZE      usizeof (struct super_block) /* sb size in RAM */
+#define SUPER_SIZE      sizeof (struct super_block) /* sb size in RAM */
 #define SUPER_SIZE_D    (1024)  /* max size of superblock stored on disk */
 
 /* Directories related macroses */
@@ -93,8 +79,8 @@
 #define EXT2_TIND_BLOCK         (EXT2_DIND_BLOCK + 1)
 #define EXT2_N_BLOCKS           (EXT2_TIND_BLOCK + 1)
 
-#define FS_BITMAP_CHUNKS(b) ((b)/usizeof (bitchunk_t))/* # map chunks/blk   */
-#define FS_BITCHUNK_BITS        (usizeof(bitchunk_t) * CHAR_BIT)
+#define FS_BITMAP_CHUNKS(b) ((b)/sizeof (bitchunk_t))/* # map chunks/blk   */
+#define FS_BITCHUNK_BITS        (sizeof(bitchunk_t) * CHAR_BIT)
 #define FS_BITS_PER_BLOCK(b)    (FS_BITMAP_CHUNKS(b) * FS_BITCHUNK_BITS)
 
 /* Inodes */
@@ -113,8 +99,6 @@
 /* Maximum size of a fast symlink including trailing '\0' */
 #define MAX_FAST_SYMLINK_LENGTH \
 	( sizeof(((d_inode *)0)->i_block[0]) * EXT2_N_BLOCKS )
-
-#define NUL(str,l,m) mfs_nul_f(__FILE__,__LINE__,(str), (l), (m))
 
 /* FS states */
 #define EXT2_VALID_FS                   0x0001  /* Cleanly unmounted */

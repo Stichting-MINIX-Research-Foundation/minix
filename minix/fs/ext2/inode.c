@@ -31,27 +31,21 @@ static void unhash_inode(struct inode *node);
 /*===========================================================================*
  *                fs_putnode                                                 *
  *===========================================================================*/
-int fs_putnode(void)
+int fs_putnode(ino_t ino_nr, unsigned int count)
 {
 /* Find the inode specified by the request message and decrease its counter.*/
 
   struct inode *rip;
-  int count;
 
-  rip = find_inode(fs_dev, fs_m_in.m_vfs_fs_putnode.inode);
+  rip = find_inode(fs_dev, ino_nr);
 
   if (!rip) {
 	printf("%s:%d put_inode: inode #%llu dev: %llx not found\n", __FILE__,
-		__LINE__, fs_m_in.m_vfs_fs_putnode.inode, fs_dev);
+		__LINE__, ino_nr, fs_dev);
 	panic("fs_putnode failed");
   }
 
-  count = fs_m_in.m_vfs_fs_putnode.count;
-  if (count <= 0) {
-	printf("%s:%d put_inode: bad value for count: %d\n", __FILE__,
-		__LINE__, count);
-	panic("fs_putnode failed");
-  } else if (count > rip->i_count) {
+  if (count > rip->i_count) {
 	printf("%s:%d put_inode: count too high: %d > %d\n", __FILE__,
 		__LINE__, count, rip->i_count);
 	panic("fs_putnode failed");
