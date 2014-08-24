@@ -2,7 +2,7 @@
 PROG=	hgfs
 SRCS=	hgfs.c
 
-DPADD+=	${LIBSFFS} ${LIBHGFS} ${LIBSYS}
-LDADD+=	-lsffs -lhgfs -lsys
+DPADD+=	${LIBSFFS} ${LIBHGFS} ${LIBFSDRIVER} ${LIBSYS}
+LDADD+=	-lsffs -lhgfs -lfsdriver -lsys
 
 .include <minix.service.mk>

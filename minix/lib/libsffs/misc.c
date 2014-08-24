@@ -14,11 +14,10 @@
 /*===========================================================================*
  *				do_statvfs				     *
  *===========================================================================*/
-int do_statvfs(void)
+int do_statvfs(struct statvfs *statvfs)
 {
 /* Retrieve file system statistics.
  */
-  struct statvfs statvfs;
   struct inode *ino;
   char path[PATH_MAX];
   u64_t free, total;
@@ -38,20 +37,17 @@ int do_statvfs(void)
   if ((r = sffs_table->t_queryvol(path, &free, &total)) != OK)
 	return r;
 
-  memset(&statvfs, 0, sizeof(statvfs));
-
   /* Returning zero for unknown values seems to be the convention. However, we
    * do have to use a nonzero block size, even though it is entirely arbitrary.
    */
-  statvfs.f_flag = ST_NOTRUNC;
-  statvfs.f_bsize = BLOCK_SIZE;
-  statvfs.f_frsize = BLOCK_SIZE;
-  statvfs.f_iosize = BLOCK_SIZE;
-  statvfs.f_blocks = (unsigned long)(total / BLOCK_SIZE);
-  statvfs.f_bfree = (unsigned long)(free / BLOCK_SIZE);
-  statvfs.f_bavail = statvfs.f_bfree;
-  statvfs.f_namemax = NAME_MAX;
+  statvfs->f_flag = ST_NOTRUNC;
+  statvfs->f_bsize = BLOCK_SIZE;
+  statvfs->f_frsize = BLOCK_SIZE;
+  statvfs->f_iosize = BLOCK_SIZE;
+  statvfs->f_blocks = (fsblkcnt_t)(total / BLOCK_SIZE);
+  statvfs->f_bfree = (fsblkcnt_t)(free / BLOCK_SIZE);
+  statvfs->f_bavail = statvfs->f_bfree;
+  statvfs->f_namemax = NAME_MAX;
 
-  return sys_safecopyto(m_in.m_source, m_in.m_vfs_fs_statvfs.grant, 0,
-			(vir_bytes) &statvfs, sizeof(statvfs));
+  return OK;
 }

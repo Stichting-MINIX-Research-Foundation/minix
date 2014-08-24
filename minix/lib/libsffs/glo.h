@@ -10,10 +10,8 @@ EXTERN char *sffs_name;				/* file server name */
 EXTERN const struct sffs_table *sffs_table;	/* call table */
 EXTERN struct sffs_params *sffs_params;		/* parameters */
 
-EXTERN message m_in;				/* request message */
-EXTERN message m_out;				/* reply message */
 EXTERN struct state state;			/* global state */
 
-extern int(*call_vec[]) (void);
+extern struct fsdriver sffs_dtable;		/* driver table */
 
 #endif /* _SFFS_GLO_H */
