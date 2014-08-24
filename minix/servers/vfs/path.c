@@ -430,7 +430,7 @@ struct fproc *rfp;
 
   /* Is the process' root directory on the same partition?,
    * if so, set the chroot directory too. */
-  if (rfp->fp_rd->v_dev == rfp->fp_wd->v_dev)
+  if (rfp->fp_rd->v_dev == start_node->v_dev)
 	root_ino = rfp->fp_rd->v_inode_nr;
   else
 	root_ino = 0;
