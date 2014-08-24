@@ -21,6 +21,10 @@
 #include <minix/sysutil.h>
 #include <minix/bitmap.h>
 
+#include <minix/fsdriver.h>
+#include <minix/libminixfs.h>
+#include <minix/bdev.h>
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -32,8 +36,11 @@
 #include <sys/types.h>
 #include <sys/dirent.h>
 
+#include <assert.h>
+
 #define b_data(bp) ((char *) (bp->data))
 
+#include "const.h"
 #include "proto.h"
 #include "super.h"
 #include "glo.h"

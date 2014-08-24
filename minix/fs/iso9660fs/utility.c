@@ -1,13 +1,8 @@
 #include "inc.h"
-#include <sys/stat.h>
-#include <string.h>
-#include <minix/com.h>
-#include <minix/callnr.h>
-#include <minix/vfsif.h>
 
 static struct dir_extent dir_extents[NR_DIR_EXTENT_RECORDS];
 
-struct dir_extent* alloc_extent()
+struct dir_extent* alloc_extent(void)
 {
 	/* Return a free extent from the pool. */
 	int i;
@@ -46,7 +41,7 @@ struct buf* read_extent_block(struct dir_extent *e, size_t block)
 	if (block_id == 0 || block_id >= v_pri.volume_space_size_l)
 		return NULL;
 
-	return get_block(block_id);
+	return lmfs_get_block(fs_dev, block_id, NORMAL);
 }
 
 size_t get_extent_absolute_block_id(struct dir_extent *e, size_t block)
@@ -70,7 +65,9 @@ size_t get_extent_absolute_block_id(struct dir_extent *e, size_t block)
 
 time_t date7_to_time_t(const u8_t *date)
 {
-	/* This function converts from the ISO 9660 7-byte time format to a time_t. */
+	/* This function converts from the ISO 9660 7-byte time format to a
+	 * time_t.
+	 */
 	struct tm ltime;
 	signed char time_zone = (signed char)date[6];
 
@@ -88,16 +85,3 @@ time_t date7_to_time_t(const u8_t *date)
 
 	return mktime(&ltime);
 }
-
-int do_noop(void)
-{
-	/* Do not do anything. */
-	return OK;
-}
-
-int no_sys(void)
-{
-	/* Somebody has used an illegal system call number */
-	return EINVAL;
-}
-

@@ -1,7 +1,7 @@
 
 #define GETDENTS_BUFSIZ         1024
 
-#define ISO9660_STANDARD_ID     "CD001" /* Standard code for ISO9660 file systems */
+#define ISO9660_STANDARD_ID     "CD001" /* Standard code for ISO9660 FS */
 
 #define NR_INODE_RECORDS        64
 #define NR_DIR_EXTENT_RECORDS   NR_INODE_RECORDS * 16
@@ -43,9 +43,6 @@
 #define ISO9660_MAX_FILE_ID_LEN         32
 #define ISO9660_RRIP_MAX_FILE_ID_LEN    256
 
-#define END_OF_FILE                     (-104)  /* eof detected */
-
 /* Miscellaneous constants */
 #define SYS_UID  ((uid_t) 0)            /* uid_t for processes PM and INIT */
 #define SYS_GID  ((gid_t) 0)            /* gid_t for processes PM and INIT */
-
