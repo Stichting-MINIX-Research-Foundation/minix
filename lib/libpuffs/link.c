@@ -6,24 +6,18 @@
 #include "puffs.h"
 #include "puffs_priv.h"
 
-#define SAME 1000
-
 
 /*===========================================================================*
- *                              fs_ftrunc                                    *
+ *				fs_trunc				     *
  *===========================================================================*/
-int fs_ftrunc(void)
+int fs_trunc(ino_t ino_nr, off_t start, off_t end)
 {
   int r;
   struct puffs_node *pn;
-  off_t start, end;
   PUFFS_MAKECRED(pcr, &global_kcred);
 
-  if ((pn = puffs_pn_nodewalk(global_pu, 0, &fs_m_in.m_vfs_fs_ftrunc.inode)) == NULL)
+  if ((pn = puffs_pn_nodewalk(global_pu, 0, &ino_nr)) == NULL)
           return(EINVAL);
-
-  start = fs_m_in.m_vfs_fs_ftrunc.trc_start;
-  end = fs_m_in.m_vfs_fs_ftrunc.trc_end;
 
   if (end == 0) {
 	struct vattr va;
@@ -68,13 +62,11 @@ int fs_ftrunc(void)
 /*===========================================================================*
  *                              fs_link                                      *
  *===========================================================================*/
-int fs_link(void)
+int fs_link(ino_t dir_nr, char *name, ino_t ino_nr)
 {
 /* Perform the link(name1, name2) system call. */
 
   register int r;
-  char string[NAME_MAX + 1];
-  phys_bytes len;
   struct puffs_node *pn, *pn_dir, *new_pn;
   struct timespec cur_time;
   struct puffs_kcn pkcnp;
@@ -84,28 +76,18 @@ int fs_link(void)
   if (global_pu->pu_ops.puffs_node_link == NULL)
   	return(OK);
 
-  /* Copy the link name's last component */
-  len = fs_m_in.m_vfs_fs_link.path_len;
-  if (len > NAME_MAX + 1)
-        return(ENAMETOOLONG);
-
-  r = sys_safecopyfrom(VFS_PROC_NR, fs_m_in.m_vfs_fs_link.grant, 0,
-                       (vir_bytes) string, (size_t) len);
-  if (r != OK) return(r);
-  NUL(string, len, sizeof(string));
-
-  if ((pn = puffs_pn_nodewalk(global_pu, 0, &fs_m_in.m_vfs_fs_link.inode)) == NULL)
+  if ((pn = puffs_pn_nodewalk(global_pu, 0, &ino_nr)) == NULL)
 	return(EINVAL);
 
   /* Check to see if the file has maximum number of links already. */
   if (pn->pn_va.va_nlink >= LINK_MAX)
 	return(EMLINK);
 
-  /* Only super_user may link to directories. */
-  if ((pn->pn_va.va_mode & I_TYPE) == I_DIRECTORY && caller_uid != SU_UID)
+  /* Linking directories is too dangerous to allow. */
+  if (S_ISDIR(pn->pn_va.va_mode))
 	return(EPERM);
 
-  if ((pn_dir = puffs_pn_nodewalk(global_pu, 0, &fs_m_in.m_vfs_fs_link.dir_ino)) == NULL)
+  if ((pn_dir = puffs_pn_nodewalk(global_pu, 0, &dir_nr)) == NULL)
         return(EINVAL);
 
   if (pn_dir->pn_va.va_nlink == NO_LINK) {
@@ -114,7 +96,7 @@ int fs_link(void)
   }
 
   /* If 'name2' exists in full (even if no space) set 'r' to error. */
-  if ((new_pn = advance(pn_dir, string, IGN_PERM)) == NULL) {
+  if ((new_pn = advance(pn_dir, name)) == NULL) {
         r = err_code;
         if (r == ENOENT) r = OK;
   } else {
@@ -124,9 +106,9 @@ int fs_link(void)
   if (r != OK) return(r);
 
   /* Try to link. */
-  pcn.pcn_namelen = strlen(string);
-  assert(pcn.pcn_namelen <= MAXPATHLEN);
-  strcpy(pcn.pcn_name, string);
+  pcn.pcn_namelen = strlen(name);
+  assert(pcn.pcn_namelen <= NAME_MAX);
+  strcpy(pcn.pcn_name, name);
 
   if (buildpath) {
 	if (puffs_path_pcnbuild(global_pu, &pcn, pn_dir) != 0)
@@ -152,20 +134,17 @@ int fs_link(void)
 /*===========================================================================*
  *                             fs_rdlink                                     *
  *===========================================================================*/
-int fs_rdlink(void)
+ssize_t fs_rdlink(ino_t ino_nr, struct fsdriver_data *data, size_t bytes)
 {
   register int r;              /* return value */
-  size_t copylen;
   struct puffs_node *pn;
   char path[PATH_MAX];
   PUFFS_MAKECRED(pcr, &global_kcred);
 
-  copylen = fs_m_in.m_vfs_fs_rdlink.mem_size < UMAX_FILE_POS ?
-	fs_m_in.m_vfs_fs_rdlink.mem_size : UMAX_FILE_POS;
+  if (bytes > sizeof(path))
+	bytes = sizeof(path);
   
-  assert(copylen <= PATH_MAX);
-
-  if ((pn = puffs_pn_nodewalk(global_pu, 0, &fs_m_in.m_vfs_fs_rdlink.inode)) == NULL)
+  if ((pn = puffs_pn_nodewalk(global_pu, 0, &ino_nr)) == NULL)
 	return(EINVAL);
 
   if (!S_ISLNK(pn->pn_va.va_mode))
@@ -174,26 +153,23 @@ int fs_rdlink(void)
   if (global_pu->pu_ops.puffs_node_readlink == NULL)
 	return(EINVAL);
 
-  r = global_pu->pu_ops.puffs_node_readlink(global_pu, pn, pcr, path,
-						&copylen);
+  r = global_pu->pu_ops.puffs_node_readlink(global_pu, pn, pcr, path, &bytes);
   if (r != OK) {
 	if (r > 0) r = -r;
 	return(r);
   }
 
-  r = sys_safecopyto(VFS_PROC_NR, fs_m_in.m_vfs_fs_rdlink.grant,
-		  (vir_bytes) 0, (vir_bytes) path, (size_t) copylen);
-  if (r == OK)
-	  fs_m_out.m_fs_vfs_rdlink.nbytes = copylen;
+  r = fsdriver_copyout(data, 0, path, bytes);
 
-  return(r);
+  return (r == OK) ? bytes : r;
 }
 
 
 /*===========================================================================*
  *                              fs_rename                                    *
  *===========================================================================*/
-int fs_rename(void)
+int fs_rename(ino_t old_dir_nr, char *old_name, ino_t new_dir_nr,
+	char *new_name)
 {
 /* Perform the rename(name1, name2) system call. */
   struct puffs_node *old_dirp, *old_ip;      /* ptrs to old dir, file pnodes */
@@ -207,55 +183,35 @@ int fs_rename(void)
   int r = OK;                           /* error flag; initially no error */
   int odir, ndir;                       /* TRUE iff {old|new} file is dir */
   int same_pdir;                        /* TRUE iff parent dirs are the same */
-  phys_bytes len;
   struct timespec cur_time;
 
   if (global_pu->pu_ops.puffs_node_rename == NULL)
 	return(EINVAL);
 
   /* Copy the last component of the old name */
-  len = fs_m_in.m_vfs_fs_rename.len_old; /* including trailing '\0' */
-  if (len > NAME_MAX + 1)
-        return(ENAMETOOLONG);
-
-  r = sys_safecopyfrom(VFS_PROC_NR, fs_m_in.m_vfs_fs_rename.grant_old,
-                (vir_bytes) 0, (vir_bytes) pcn_src.pcn_name, (size_t) len);
-  if (r != OK) return(r);
-  NUL(pcn_src.pcn_name, len, sizeof(pcn_src.pcn_name));
-  pcn_src.pcn_namelen = len - 1;
+  pcn_src.pcn_namelen = strlen(old_name);
+  assert(pcn_src.pcn_namelen <= NAME_MAX);
+  strcpy(pcn_src.pcn_name, old_name);
 
   /* Copy the last component of the new name */
-  len = fs_m_in.m_vfs_fs_rename.len_new; /* including trailing '\0' */
-  if (len > NAME_MAX + 1)
-        return(ENAMETOOLONG);
-
-  r = sys_safecopyfrom(VFS_PROC_NR, fs_m_in.m_vfs_fs_rename.grant_new,
-                (vir_bytes) 0, (vir_bytes) pcn_targ.pcn_name, (size_t) len);
-  if (r != OK) return(r);
-  NUL(pcn_targ.pcn_name, len, sizeof(pcn_targ.pcn_name));
-  pcn_targ.pcn_namelen = len - 1;
+  pcn_targ.pcn_namelen = strlen(new_name);
+  assert(pcn_targ.pcn_namelen <= NAME_MAX);
+  strcpy(pcn_targ.pcn_name, new_name);
 
   /* Get old dir pnode */
-  if ((old_dirp = puffs_pn_nodewalk(global_pu, 0, &fs_m_in.m_vfs_fs_rename.dir_old))
-	  == NULL)
+  if ((old_dirp = puffs_pn_nodewalk(global_pu, 0, &old_dir_nr)) == NULL)
         return(ENOENT);
 
-  old_ip = advance(old_dirp, pcn_src.pcn_name, IGN_PERM);
-  if (!old_ip) {
-	return(ENOENT);
-  }
-  r = err_code;
+  old_ip = advance(old_dirp, pcn_src.pcn_name);
+  if (!old_ip)
+	return(err_code);
 
-  if (r == EENTERMOUNT || r == ELEAVEMOUNT) {
-        old_ip = NULL;
-        if (r == EENTERMOUNT) r = EXDEV;        /* should this fail at all? */
-        else if (r == ELEAVEMOUNT) r = EINVAL;  /* rename on dot-dot */
-  }
+  if (old_ip->pn_mountpoint)
+	return(EBUSY);
 
   /* Get new dir pnode */
-  if ((new_dirp = puffs_pn_nodewalk(global_pu, 0, &fs_m_in.m_vfs_fs_rename.dir_new))
-	  == NULL) {
-        r = ENOENT;
+  if ((new_dirp = puffs_pn_nodewalk(global_pu, 0, &new_dir_nr)) == NULL) {
+        return(ENOENT);
   } else {
         if (new_dirp->pn_va.va_nlink == NO_LINK) {
 		/* Dir does not actually exist */
@@ -264,14 +220,11 @@ int fs_rename(void)
   }
 
   /* not required to exist */
-  new_ip = advance(new_dirp, pcn_targ.pcn_name, IGN_PERM);
+  new_ip = advance(new_dirp, pcn_targ.pcn_name);
 
-  /* However, if the check failed because the file does exist, don't continue.
-   * Note that ELEAVEMOUNT is covered by the dot-dot check later. */
-  if (err_code == EENTERMOUNT) {
-        new_ip = NULL;
-        r = EBUSY;
-  }
+  /* If the node does exist, make sure it's not a mountpoint. */
+  if (new_ip != NULL && new_ip->pn_mountpoint)
+	return(EBUSY);
 
   if (old_ip != NULL) {
 	/* TRUE iff dir */
@@ -280,41 +233,24 @@ int fs_rename(void)
 	odir = FALSE;
   }
 
-  if (r != OK) return(r);
-
   /* Check for a variety of possible errors. */
   same_pdir = (old_dirp == new_dirp);
-
-  /* The old or new name must not be . or .. */
-  if (strcmp(pcn_src.pcn_name, ".") == 0 ||
-      strcmp(pcn_src.pcn_name, "..") == 0 ||
-      strcmp(pcn_targ.pcn_name, ".") == 0 ||
-      strcmp(pcn_targ.pcn_name, "..") == 0) {
-	r = EINVAL;
-  }
 
   /* Some tests apply only if the new path exists. */
   if (new_ip == NULL) {
 	if (odir && (new_dirp->pn_va.va_nlink >= SHRT_MAX ||
-		     new_dirp->pn_va.va_nlink >= LINK_MAX) &&
-	    !same_pdir && r == OK) {
-		r = EMLINK;
+		     new_dirp->pn_va.va_nlink >= LINK_MAX) && !same_pdir) {
+		return(EMLINK);
 	}
   } else {
-	if (old_ip == new_ip) r = SAME; /* old=new */
+	if (old_ip == new_ip) /* old=new */
+		return(OK); /* do NOT update directory times in this case */
 
 	/* dir ? */
 	ndir = ((new_ip->pn_va.va_mode & I_TYPE) == I_DIRECTORY);
-	if (odir == TRUE && ndir == FALSE) r = ENOTDIR;
-	if (odir == FALSE && ndir == TRUE) r = EISDIR;
+	if (odir == TRUE && ndir == FALSE) return(ENOTDIR);
+	if (odir == FALSE && ndir == TRUE) return(EISDIR);
   }
-
-  if (r == SAME) {
-	r = OK;
-	goto rename_out;
-  }
-
-  if (r != OK) return(r);
 
   /* If a process has another root directory than the system root, we might
    * "accidently" be moving it's working directory to a place where it's
@@ -372,7 +308,6 @@ int fs_rename(void)
 	}
   }
 
-rename_out: 
   cur_time = clock_timespec();
   update_timens(old_dirp, MTIME | CTIME, &cur_time);
   update_timens(new_dirp, MTIME | CTIME, &cur_time);
@@ -391,13 +326,12 @@ static int unlink_file(struct puffs_node *dirp, struct puffs_node *pn,
 	struct puffs_cn *pcn);
 
 /*===========================================================================*
- *                              fs_unlink                                    *
+ *				fs_unlink				     *
  *===========================================================================*/
-int fs_unlink(void)
+int fs_unlink(ino_t dir_nr, char *name, int call)
 {
 /* Perform the unlink(name) or rmdir(name) system call. The code for these two
- * is almost the same.  They differ only in some condition testing.  Unlink()
- * may be used by the superuser to do dangerous things; rmdir() may not.
+ * is almost the same.  They differ only in some condition testing.
  */
   int r;
   struct puffs_node *pn, *pn_dir;
@@ -405,43 +339,28 @@ int fs_unlink(void)
   struct puffs_kcn pkcnp;
   struct puffs_cn pcn = {&pkcnp, 0, {0,0,0}};
   PUFFS_KCREDTOCRED(pcn.pcn_cred, &global_kcred);
-  int len;
 
   /* Copy the last component */
-  len = fs_m_in.m_vfs_fs_unlink.path_len;
-  pcn.pcn_namelen = len - 1;
-  if (pcn.pcn_namelen > NAME_MAX)
-        return(ENAMETOOLONG);
+  pcn.pcn_namelen = strlen(name);
+  assert(pcn.pcn_namelen <= NAME_MAX);
+  strcpy(pcn.pcn_name, name);
 
-  r = sys_safecopyfrom(VFS_PROC_NR, fs_m_in.m_vfs_fs_unlink.grant,
-		       (vir_bytes) 0, (vir_bytes) pcn.pcn_name,
-		       (size_t) len);
-  if (r != OK) return (r);
-  NUL(pcn.pcn_name, len, sizeof(pcn.pcn_name));
-
-  if ((pn_dir = puffs_pn_nodewalk(global_pu, 0, &fs_m_in.m_vfs_fs_unlink.inode)) == NULL)
+  if ((pn_dir = puffs_pn_nodewalk(global_pu, 0, &dir_nr)) == NULL)
 	return(EINVAL);
 
   /* The last directory exists. Does the file also exist? */
-  pn = advance(pn_dir, pcn.pcn_name, IGN_PERM);
+  pn = advance(pn_dir, pcn.pcn_name);
   r = err_code;
 
   /* If error, return pnode. */
-  if (r != OK) {
-        /* Mount point? */
-        if (r == EENTERMOUNT || r == ELEAVEMOUNT) {
-                r = EBUSY;
-        }
+  if (r != OK)
         return(r);
-  }
+  if (pn->pn_mountpoint)
+	return EBUSY;
 
   /* Now test if the call is allowed, separately for unlink() and rmdir(). */
-  if (fs_m_in.m_type == REQ_UNLINK) {
-	/* Only the su may unlink directories, but the su can unlink any dir */
-	if ((pn->pn_va.va_mode & I_TYPE) == I_DIRECTORY)
-		r = EPERM;
-	if (r == OK)
-		r = unlink_file(pn_dir, pn, &pcn);
+  if (call == FSC_UNLINK) {
+	r = unlink_file(pn_dir, pn, &pcn);
   } else {
 	r = remove_dir(pn_dir, pn, &pcn); /* call is RMDIR */
   }
@@ -502,9 +421,6 @@ static int remove_dir(
   if (r) return(EINVAL);
   if (!eofflag) return(ENOTEMPTY);
 
-  if (strcmp(pcn->pcn_name, ".") == 0 || strcmp(pcn->pcn_name, "..") == 0)
-	return(EINVAL);
-
   if (pn->pn_va.va_fileid == global_pu->pu_pn_root->pn_va.va_fileid)
 	return(EBUSY); /* can't remove 'root' */
   
@@ -541,7 +457,7 @@ static int unlink_file(
   	return(EINVAL);
 
   if (S_ISDIR(pn->pn_va.va_mode))
-	return(EINVAL);
+	return(EPERM);
 
   if (buildpath) {
 	r = puffs_path_pcnbuild(global_pu, pcn, dirp);

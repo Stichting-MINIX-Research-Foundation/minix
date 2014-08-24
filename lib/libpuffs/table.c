@@ -9,39 +9,29 @@
 
 #include "fs.h"
 
-int (*fs_call_vec[])(void) = {
-    no_sys,             /* 0   not used */
-    no_sys,             /* 1   */       /* Was: fs_getnode */
-    fs_putnode,         /* 2   */
-    fs_slink,           /* 3   */
-    fs_ftrunc,          /* 4   */
-    fs_chown,           /* 5   */
-    fs_chmod,           /* 6   */
-    fs_inhibread,       /* 7   */
-    fs_stat,            /* 8   */
-    fs_utime,           /* 9   */
-    fs_statvfs,		/* 10  */
-    fs_breadwrite,      /* 11  */
-    fs_breadwrite,      /* 12  */
-    fs_unlink,          /* 13  */
-    fs_unlink,          /* 14  */
-    fs_unmount,         /* 15  */
-    fs_sync,            /* 16  */
-    fs_new_driver,      /* 17  */
-    fs_flush,           /* 18  */
-    fs_readwrite,       /* 19  */
-    fs_readwrite,       /* 20  */
-    fs_mknod,           /* 21  */
-    fs_mkdir,           /* 22  */
-    fs_create,          /* 23  */
-    fs_link,            /* 24  */
-    fs_rename,          /* 25  */
-    fs_lookup,          /* 26  */
-    fs_mountpoint,      /* 27  */
-    fs_readsuper,       /* 28  */
-    no_sys,		/* 29  */	/* Was: fs_newnode */
-    fs_rdlink,          /* 30  */
-    fs_getdents,        /* 31  */
-    no_sys,		/* 32 peek */
-    no_sys,		/* 33 bpeek */
+struct fsdriver puffs_table = {
+	.fdr_mount	= fs_mount,
+	.fdr_unmount	= fs_unmount,
+	.fdr_lookup	= fs_lookup,
+	.fdr_putnode	= fs_putnode,
+	.fdr_read	= fs_read,
+	.fdr_write	= fs_write,
+	.fdr_getdents	= fs_getdents,
+	.fdr_trunc	= fs_trunc,
+	.fdr_create	= fs_create,
+	.fdr_mkdir	= fs_mkdir,
+	.fdr_mknod	= fs_mknod,
+	.fdr_link	= fs_link,
+	.fdr_unlink	= fs_unlink,
+	.fdr_rmdir	= fs_unlink,
+	.fdr_rename	= fs_rename,
+	.fdr_slink	= fs_slink,
+	.fdr_rdlink	= fs_rdlink,
+	.fdr_stat	= fs_stat,
+	.fdr_chown	= fs_chown,
+	.fdr_chmod	= fs_chmod,
+	.fdr_utime	= fs_utime,
+	.fdr_mountpt	= fs_mountpt,
+	.fdr_statvfs	= fs_statvfs,
+	.fdr_sync	= fs_sync
 };

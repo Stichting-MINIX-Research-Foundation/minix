@@ -12,30 +12,6 @@
 
 
 /*===========================================================================*
- *				no_sys					     *
- *===========================================================================*/
-int no_sys(void)
-{
-/* Somebody has used an illegal system call number */
-  lpuffs_debug("no_sys: invalid call %d\n", req_nr);
-  return(EINVAL);
-}
-
-
-/*===========================================================================*
- *                              mfs_nul                                      *
- *===========================================================================*/
-void mfs_nul_f(const char *file, int line, char *str, unsigned int len,
-                      unsigned int maxlen)
-{
-  if (len < maxlen && str[len-1] != '\0') {
-	lpuffs_debug("%s:%d string (length %d,maxlen %d) not null-terminated\n",
-                file, line, len, maxlen);
-  }
-}
-
-
-/*===========================================================================*
  *				clock_timespec				     *
  *===========================================================================*/
 struct timespec clock_timespec(void)

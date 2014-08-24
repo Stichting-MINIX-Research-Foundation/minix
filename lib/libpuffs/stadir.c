@@ -5,7 +5,6 @@
 #include "fs.h"
 #include <sys/stat.h>
 #include <sys/statvfs.h>
-#include <minix/vfsif.h>
 
 #include "puffs.h"
 #include "puffs_priv.h"
@@ -14,12 +13,10 @@
 /*===========================================================================*
  *                             fs_stat					     *
  *===========================================================================*/
-int fs_stat(void)
+int fs_stat(ino_t ino_nr, struct stat *statbuf)
 {
-  register int r;              /* return value */
   register struct puffs_node *pn;  /* target pnode */
   struct vattr va;
-  struct stat statbuf;
   mode_t mo;
   int s;
   PUFFS_MAKECRED(pcr, &global_kcred);
@@ -29,7 +26,7 @@ int fs_stat(void)
 	return(EINVAL);
   }
 
-  if ((pn = puffs_pn_nodewalk(global_pu, 0, &fs_m_in.m_vfs_fs_stat.inode)) == NULL) {
+  if ((pn = puffs_pn_nodewalk(global_pu, 0, &ino_nr)) == NULL) {
   	lpuffs_debug("walk failed...\n");
         return(EINVAL);
   }
@@ -48,57 +45,41 @@ int fs_stat(void)
   /* true iff special */
   s = (mo == I_CHAR_SPECIAL || mo == I_BLOCK_SPECIAL);
 
-  statbuf.st_dev = fs_dev;
-  statbuf.st_ino = va.va_fileid;
-  statbuf.st_mode = va.va_mode;
-  statbuf.st_nlink = va.va_nlink;
-  statbuf.st_uid = va.va_uid;
-  statbuf.st_gid = va.va_gid;
-  statbuf.st_rdev = (s ? va.va_rdev : NO_DEV);
-  statbuf.st_size = va.va_size;
-  statbuf.st_atimespec = va.va_atime;
-  statbuf.st_mtimespec = va.va_mtime;
-  statbuf.st_ctimespec = va.va_ctime;
+  statbuf->st_dev = fs_dev;
+  statbuf->st_ino = va.va_fileid;
+  statbuf->st_mode = va.va_mode;
+  statbuf->st_nlink = va.va_nlink;
+  statbuf->st_uid = va.va_uid;
+  statbuf->st_gid = va.va_gid;
+  statbuf->st_rdev = (s ? va.va_rdev : NO_DEV);
+  statbuf->st_size = va.va_size;
+  statbuf->st_atimespec = va.va_atime;
+  statbuf->st_mtimespec = va.va_mtime;
+  statbuf->st_ctimespec = va.va_ctime;
 
-  statbuf.st_birthtimespec = va.va_birthtime;
-  statbuf.st_blksize = va.va_blocksize;
-  statbuf.st_blocks = va.va_bytes / va.va_blocksize;
-  statbuf.st_flags = va.va_flags;
-  statbuf.st_gen = va.va_gen;
+  statbuf->st_birthtimespec = va.va_birthtime;
+  statbuf->st_blksize = va.va_blocksize;
+  statbuf->st_blocks = va.va_bytes / va.va_blocksize;
+  statbuf->st_flags = va.va_flags;
+  statbuf->st_gen = va.va_gen;
 
-  /* Copy the struct to user space. */
-  r = sys_safecopyto(fs_m_in.m_source, fs_m_in.m_vfs_fs_stat.grant,
-		     (vir_bytes) 0, (vir_bytes) &statbuf,
-		     (size_t) sizeof(statbuf));
-
-  return(r);
+  return(OK);
 }
 
 
 /*===========================================================================*
  *                             fs_statvfs                                    *
  *===========================================================================*/
-int fs_statvfs(void)
+int fs_statvfs(struct statvfs *st)
 {
-  int r;
-  struct statvfs st;
 
-  memset(&st, 0, sizeof(st));
-
-  if (global_pu->pu_ops.puffs_fs_statvfs(global_pu, &st) != 0) {
+  if (global_pu->pu_ops.puffs_fs_statvfs(global_pu, st) != 0) {
 	lpuffs_debug("statvfs failed\n");
 	return(EINVAL);
   }
 
-  /* XXX libpuffs doesn't truncate filenames and returns ENAMETOOLONG,
-   * though some servers would like to behave differently.
-   * See subtest 2.18-19 of test23 and test/common.c:does_fs_truncate().
-   */
-  st.f_flag |= ST_NOTRUNC;
+  /* libpuffs doesn't truncate filenames */
+  st->f_flag |= ST_NOTRUNC;
 
-  /* Copy the struct to user space. */
-  r = sys_safecopyto(fs_m_in.m_source, fs_m_in.m_vfs_fs_statvfs.grant, 0,
-			(vir_bytes) &st, (phys_bytes) sizeof(st));
-
-  return(r);
+  return(OK);
 }

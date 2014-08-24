@@ -93,7 +93,7 @@ struct puffs_node {
 #if defined(__minix)
 	/* MINIX fields */
 	char			pn_mountpoint; /* true if mounted on */
-	int 			pn_count;          /* # times inode used */
+	unsigned int		pn_count;          /* # times inode used */
 #endif /* defined(__minix) */
 };
 #define PUFFS_NODE_REMOVED	0x01		/* not on entry list	*/
