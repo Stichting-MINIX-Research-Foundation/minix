@@ -28,6 +28,8 @@ void read_inode_susp(struct inode *i, const struct iso9660_dir_record *dir_rec,
 
 int check_dir_record(const struct iso9660_dir_record *d, size_t offset);
 
+int check_inodes(void);
+
 /* link.c */
 ssize_t fs_rdlink(ino_t ino_nr, struct fsdriver_data *data, size_t bytes);
 
