@@ -1,46 +1,29 @@
 #include "inc.h"
-#include <assert.h>
 #include <sys/stat.h>
 #include <sys/statvfs.h>
-#include <minix/com.h>
-#include <string.h>
-#include <time.h>
 
-#include <minix/vfsif.h>
-
-int fs_stat()
+int fs_stat(ino_t ino_nr, struct stat *statbuf)
 {
-	int r = EINVAL; /* return value */
-	struct inode *dir;
+	struct inode *rip;
 
-	if ((dir = get_inode(fs_m_in.m_vfs_fs_stat.inode)) != NULL) {
-		r = sys_safecopyto(fs_m_in.m_source, fs_m_in.m_vfs_fs_stat.grant,
-		                   0, (vir_bytes) &dir->i_stat,
-		                   (phys_bytes) sizeof(dir->i_stat));
-		put_inode(dir);
-	}
+	if ((rip = find_inode(ino_nr)) == NULL)
+		return EINVAL;
 
-	return r;
+	*statbuf = rip->i_stat;
+
+	return OK;
 }
 
-int fs_statvfs()
+int fs_statvfs(struct statvfs *st)
 {
-	int r;
-	struct statvfs st;
+	st->f_flag = ST_NOTRUNC;
+	st->f_bsize =  v_pri.logical_block_size_l;
+	st->f_frsize = st->f_bsize;
+	st->f_iosize = st->f_bsize;
+	st->f_blocks = v_pri.volume_space_size_l;
+	st->f_namemax = NAME_MAX;
 
-	memset(&st, 0, sizeof(st));
-
-	st.f_bsize =  v_pri.logical_block_size_l;
-	st.f_frsize = st.f_bsize;
-	st.f_iosize = st.f_bsize;
-	st.f_blocks = v_pri.volume_space_size_l;
-	st.f_namemax = NAME_MAX;
-
-	/* Copy the struct to user space. */
-	r = sys_safecopyto(fs_m_in.m_source, fs_m_in.m_vfs_fs_statvfs.grant, 0,
-	                   (vir_bytes) &st, (phys_bytes) sizeof(st));
-
-	return r;
+	return OK;
 }
 
 void fs_blockstats(u64_t *blocks, u64_t *free, u64_t *used)
@@ -48,4 +31,3 @@ void fs_blockstats(u64_t *blocks, u64_t *free, u64_t *used)
 	*used = *blocks = v_pri.volume_space_size_l;
 	*free = 0;
 }
-

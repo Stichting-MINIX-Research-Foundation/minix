@@ -4,88 +4,17 @@
  */
 
 #include "inc.h"
-#include <minix/vfsif.h>
-#include <assert.h>
-#include "const.h"
-#include "glo.h"
-
-/* Declare some local functions. */
-static void get_work(message *m_in);
-
-/* SEF functions and variables. */
-static void sef_local_startup(void);
-static int sef_cb_init_fresh(int type, sef_init_info_t *info);
-static void sef_cb_signal_handler(int signo);
+#include <minix/optset.h>
 
 static struct optset optset_table[] = {
-	{ "norock",		OPT_BOOL,   &opt.norock,	TRUE	},
-	{ NULL,		0,	    NULL,			0	}
+	{ "norock",	OPT_BOOL,   &opt.norock,	TRUE	},
+	{ NULL,		0,	    NULL,		0	}
 };
 
-int main(int argc, char *argv[]) {
-	endpoint_t who_e;
-	int ind, error, transid;
-
-	/* SEF local startup. */
-	env_setargs(argc, argv);
-	sef_local_startup();
-
-	while (TRUE) {
-		/* Wait for request message. */
-		get_work(&fs_m_in);
-
-		transid = TRNS_GET_ID(fs_m_in.m_type);
-		fs_m_in.m_type = TRNS_DEL_ID(fs_m_in.m_type);
-		if (fs_m_in.m_type == 0) {
-			assert(!IS_VFS_FS_TRANSID(transid));
-			fs_m_in.m_type = transid;	/* Backwards compat. */
-			transid = 0;
-		}
-		else
-			assert(IS_VFS_FS_TRANSID(transid));
-
-		error = OK;
-
-		caller_uid = -1;	/* To trap errors */
-		caller_gid = -1;
-
-		who_e = fs_m_in.m_source;	/* source of the request */
-
-		if (who_e != VFS_PROC_NR) { /* If the message is not for us just 
-					    * continue */
-			continue;
-		}
-
-		req_nr = fs_m_in.m_type;
-
-		if (req_nr < FS_BASE) {
-			fs_m_in.m_type += FS_BASE;
-			req_nr = fs_m_in.m_type;
-		}
-
-		ind = req_nr - FS_BASE;
-
-		if (ind < 0 || ind >= NREQS)
-			error = EINVAL; 
-		else
-			error = (*fs_call_vec[ind])(); /* Process the request calling
-							* the appropriate function. */
-
-		fs_m_out.m_type = error; 
-		if (IS_VFS_FS_TRANSID(transid)) {
-			/* If a transaction ID was set, reset it */
-			fs_m_out.m_type = TRNS_ADD_ID(fs_m_out.m_type, transid);
-		}
-		reply(who_e, &fs_m_out); 	/* returns the response to VFS */
-	}
-}
-
-/*===========================================================================*
- *			       sef_local_startup			     *
- *===========================================================================*/
-static void sef_local_startup()
+static int sef_cb_init_fresh(int __unused type,
+	sef_init_info_t * __unused info)
 {
-	/* Initialize the Minix file server. */
+	/* Initialize the iso9660fs server. */
 	int i;
 
 	/* Defaults */
@@ -96,6 +25,23 @@ static void sef_local_startup()
 		if (!strcmp(env_argv[i], "-o"))
 			optset_parse(optset_table, env_argv[++i]);
 
+	setenv("TZ","",1);              /* Used to calculate the time */
+
+	lmfs_buf_pool(NR_BUFS);
+
+	return OK;
+}
+
+static void sef_cb_signal_handler(int signo)
+{
+	/* Only check for termination signal, ignore anything else. */
+	if (signo != SIGTERM) return;
+
+	fsdriver_terminate();
+}
+
+static void sef_local_startup(void)
+{
 	/* Register init callbacks. */
 	sef_setcb_init_fresh(sef_cb_init_fresh);
 	sef_setcb_init_restart(sef_cb_init_fail);
@@ -107,42 +53,15 @@ static void sef_local_startup()
 
 	/* Let SEF perform startup. */
 	sef_startup();
-
-	lmfs_buf_pool(10);
 }
 
-static int sef_cb_init_fresh(int type, sef_init_info_t *info)
+int main(int argc, char *argv[])
 {
-	/* Initialize the iso9660fs server. */
-	setenv("TZ","",1);              /* Used to calculate the time */
+	/* SEF local startup. */
+	env_setargs(argc, argv);
+	sef_local_startup();
 
-	return OK;
+	fsdriver_task(&isofs_table);
+
+	return 0;
 }
-
-static void sef_cb_signal_handler(int signo)
-{
-	/* Only check for termination signal, ignore anything else. */
-	if (signo != SIGTERM) return;
-
-	/* No need to do a sync, as this is a read-only file system. */
-
-	/*
-	 * If the file system has already been unmounted, exit immediately.
-	 * We might not get another message.
-	 */
-	if (unmountdone) exit(0);
-}
-
-static void get_work(message *m_in)
-{
-	int s;                                          /* receive status */
-	if (OK != (s = sef_receive(ANY, m_in)))         /* wait for message */
-		panic("sef_receive failed: %d", s);
-}
-
-void reply(int who, message *m_out)
-{
-	if (OK != ipc_send(who, m_out))                 /* send the message */
-		printf("ISOFS(%d) was unable to send reply\n", sef_self());
-}
-
