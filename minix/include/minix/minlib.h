@@ -13,7 +13,6 @@ int fsversion(char *_dev, char *_prog);
 int getprocessor(void);
 void _cpuid(u32_t *eax, u32_t *ebx, u32_t *ecx, u32_t *edx);
 int load_mtab(char *_prog_name);
-uint8_t fs_mode_to_type(mode_t mode);
 int get_mtab_entry(char dev[PATH_MAX], char mount_point[PATH_MAX],
 			char type[MNTNAMELEN], char flags[MNTFLAGLEN]);
 
