@@ -116,7 +116,7 @@ static int _uds_socketpair(int type, int protocol, int sv[2])
 		return -1;
 	}
 
-	dev = sbuf.st_dev;
+	dev = sbuf.st_rdev;
 
 	/* connect the sockets sv[0] and sv[1] */
 	r= ioctl(sv[0], NWIOSUDSPAIR, &dev);
