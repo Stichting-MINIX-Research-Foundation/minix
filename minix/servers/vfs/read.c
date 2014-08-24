@@ -355,7 +355,10 @@ size_t req_size;
   buf += cum_io_incr;
   req_size -= cum_io_incr;
 
-  vp->v_size = new_pos;
+  if (rw_flag == READING)
+	vp->v_size -= cum_io_incr;
+  else
+	vp->v_size += cum_io_incr;
 
   if (partial_pipe) {
 	/* partial write on pipe with */

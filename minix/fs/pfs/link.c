@@ -1,22 +1,15 @@
 #include "fs.h"
-#include "buf.h"
-#include "inode.h"
-#include <minix/vfsif.h>
 
 /*===========================================================================*
- *				fs_ftrunc				     *
+ *				fs_trunc				     *
  *===========================================================================*/
-int fs_ftrunc(message *fs_m_in, message *fs_m_out)
+int fs_trunc(ino_t ino_nr, off_t start, off_t end)
 {
   struct inode *rip;
-  off_t start;
-  ino_t inumb;
 
-  inumb = fs_m_in->m_vfs_fs_ftrunc.inode;
+  if( (rip = find_inode(ino_nr)) == NULL) return(EINVAL);
 
-  if( (rip = find_inode(inumb)) == NULL) return(EINVAL);
-
-  start = fs_m_in->m_vfs_fs_ftrunc.trc_start;
+  if (end != 0) return(EINVAL); /* creating holes is not supported */
 
   return truncate_inode(rip, start);
 }

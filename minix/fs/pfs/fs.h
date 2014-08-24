@@ -11,20 +11,23 @@
 #include <sys/types.h>
 #include <minix/const.h>
 #include <minix/type.h>
-#include <minix/dmap.h>
 
-#include <minix/vfsif.h>
 #include <lib.h>
-#include <limits.h>
-#include <errno.h>
 #include <minix/syslib.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <stdio.h>
 #include <minix/sysutil.h>
+
+#include <minix/fsdriver.h>
+
+#include <stdlib.h>
+#include <string.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <assert.h>
 
 #include "const.h"
 #include "proto.h"
 #include "glo.h"
+#include "buf.h"
+#include "inode.h"
 
 #endif
