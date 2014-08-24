@@ -5,7 +5,7 @@ SUBDIR+=	pfs
 
 .if ${MKIMAGEONLY} == "no"
 SUBDIR+=	ext2
-SUBDIR+=	iso9660fs
+SUBDIR+=	isofs
 SUBDIR+=	procfs
 
 .  if ${MACHINE_ARCH} == "i386"
