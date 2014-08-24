@@ -7,7 +7,7 @@ then	ROOT=yes
 fi
 
 # Initialization
-PATH=:/bin:/usr/bin
+PATH=:/bin:/usr/bin:/sbin
 export PATH
 
 rm -rf DIR*			# remove any old junk lying around
