@@ -289,7 +289,7 @@ void update_times(
   if (sp->s_rd_only)
 	return;             /* no updates for read-only file systems */
 
-  cur_time = clock_time();
+  cur_time = clock_time(NULL);
   if (rip->i_update & ATIME)
 	rip->i_atime = cur_time;
   if (rip->i_update & CTIME)

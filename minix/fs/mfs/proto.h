@@ -98,7 +98,6 @@ bit_t count_free_bits(struct super_block *sp, int map);
 int fs_utime(void);
 
 /* utility.c */
-time_t clock_time(void);
 unsigned conv2(int norm, int w);
 long conv4(int norm, long x);
 void mfs_nul_f(char *file, int line, char *str, unsigned int len,

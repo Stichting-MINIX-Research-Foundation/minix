@@ -33,7 +33,7 @@ int fs_sync()
   lmfs_flushall();
 
   if (superblock->s_dev != NO_DEV) {
-	superblock->s_wtime = clock_time();
+	superblock->s_wtime = clock_time(NULL);
 	write_super(superblock);
   }
 

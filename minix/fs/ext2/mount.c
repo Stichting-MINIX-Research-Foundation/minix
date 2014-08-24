@@ -149,7 +149,7 @@ int fs_readsuper()
   if (!readonly) {
 	superblock->s_state = EXT2_ERROR_FS;
 	superblock->s_mnt_count++;
-	superblock->s_mtime = clock_time();
+	superblock->s_mtime = clock_time(NULL);
 	write_super(superblock); /* Commit info, we just set above */
   }
 
@@ -234,7 +234,7 @@ int fs_unmount()
   put_inode(root_ip);
 
   if (!superblock->s_rd_only) {
-	superblock->s_wtime = clock_time();
+	superblock->s_wtime = clock_time(NULL);
 	superblock->s_state = EXT2_VALID_FS;
 	write_super(superblock); /* Commit info, we just set above */
   }

@@ -275,7 +275,6 @@ int tll_unlock(tll_t *tllp);
 void tll_upgrade(tll_t *tllp);
 
 /* utility.c */
-struct timespec clock_timespec(void);
 int copy_path(char *dest, size_t size);
 int fetch_name(vir_bytes path, size_t len, char *dest);
 int isokendpt_f(const char *f, int l, endpoint_t e, int *p, int ft);
