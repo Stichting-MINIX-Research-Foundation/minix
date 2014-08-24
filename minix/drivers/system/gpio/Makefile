@@ -2,8 +2,8 @@
 PROG=	gpio
 SRCS=	gpio.c
 
-DPADD+=	${LIBBLOCKDRIVER} ${LIBSYS} ${LIBGPIO} ${LIBCLKCONF}
-LDADD+=	-lvtreefs -lsys -lgpio -lclkconf
+DPADD+=	${LIBVTREEFS} ${LIBFSDRIVER} ${LIBSYS} ${LIBGPIO} ${LIBCLKCONF}
+LDADD+=	-lvtreefs -lfsdriver -lsys -lgpio -lclkconf
 
 # This is a system driver.
 CPPFLAGS+= -D_SYSTEM=1

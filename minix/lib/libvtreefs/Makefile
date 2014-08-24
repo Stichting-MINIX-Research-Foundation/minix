@@ -1,8 +1,8 @@
-NOGCCERROR=yes
-NOCLANGERROR=yes
-CPPFLAGS+= -D_MINIX_SYSTEM
-
 # Makefile for libvtreefs
+
+NOGCCERROR=yes
+
+CPPFLAGS+= -D_MINIX_SYSTEM
 
 LIB=	vtreefs
 
@@ -17,7 +17,6 @@ SRCS=	\
 	sdbm.c \
 	stadir.c \
 	table.c \
-	utility.c \
 	vtreefs.c
 
 .include <bsd.lib.mk>

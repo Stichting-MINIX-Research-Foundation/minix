@@ -11,31 +11,34 @@ void put_inode(struct inode *node);
 void ref_inode(struct inode *node);
 int get_inode_number(struct inode *node);
 int is_inode_deleted(struct inode *node);
-int fs_putnode(void);
+int fs_putnode(ino_t ino_nr, unsigned int count);
 
 /* link.c */
-int fs_rdlink(void);
+ssize_t fs_rdlink(ino_t ino_nr, struct fsdriver_data *data, size_t bytes);
 
 /* mount.c */
-int fs_readsuper(void);
-int fs_unmount(void);
+int fs_mount(dev_t dev, unsigned int flags, struct fsdriver_node *root_node,
+	unsigned int *res_flags);
+void fs_unmount(void);
+
+/* main.c */
+void fs_other(const message *m_ptr, int ipc_status);
 
 /* path.c */
-int fs_lookup(void);
+int fs_lookup(ino_t dir_nr, char *name, struct fsdriver_node *node,
+	int *is_mountpt);
 
 /* read.c */
-int fs_read(void);
-int fs_getdents(void);
+ssize_t fs_read(ino_t ino_nr, struct fsdriver_data *data, size_t bytes,
+	off_t pos, int call);
+ssize_t fs_getdents(ino_t ino_nr, struct fsdriver_data *data, size_t bytes,
+	off_t *pos);
 
 /* sdbm.c */
 long sdbm_hash(char *str, int len);
 
 /* stadir.c */
-int fs_stat(void);
-int fs_statvfs(void);
-
-/* utility.c */
-int no_sys(void);
-int do_noop(void);
+int fs_stat(ino_t ino_nr, struct stat *buf);
+int fs_statvfs(struct statvfs *buf);
 
 #endif /* _VTREEFS_PROTO_H */
