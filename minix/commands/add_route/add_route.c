@@ -15,7 +15,7 @@ Created August 7, 1991 by Philip Homburg
 
 #include <net/hton.h>
 #include <net/netlib.h>
-#include <net/gen/netdb.h>
+#include <netdb.h>
 #include <net/gen/in.h>
 #include <net/gen/inet.h>
 #include <net/gen/route.h>

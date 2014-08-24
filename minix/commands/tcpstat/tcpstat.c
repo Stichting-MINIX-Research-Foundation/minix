@@ -21,7 +21,7 @@ Created:	June 1995 by Philip Homburg <philip@f-mnx.phicoh.com>
 #endif
 #include <net/netlib.h>
 #include <net/gen/inet.h>
-#include <net/gen/netdb.h>
+#include <netdb.h>
 #include <net/gen/socket.h>
 #include <minix/queryparam.h>
 #include <minix/com.h>

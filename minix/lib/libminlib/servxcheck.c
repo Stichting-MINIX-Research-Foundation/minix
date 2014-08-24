@@ -23,7 +23,7 @@
 #include <net/gen/tcp_io.h>
 #include <net/gen/inet.h>
 #include <net/gen/socket.h>
-#include <net/gen/netdb.h>
+#include <netdb.h>
 
 /* Default service access file. */
 static const char *path_servacces = _PATH_SERVACCES;

@@ -1421,12 +1421,12 @@
 ./usr/include/net/gen/in.h		minix-sys
 ./usr/include/net/gen/ip_hdr.h		minix-sys
 ./usr/include/net/gen/ip_io.h		minix-sys
-./usr/include/net/gen/nameser.h		minix-sys
-./usr/include/net/gen/netdb.h		minix-sys
+./usr/include/net/gen/nameser.h		minix-sys	obsolete
+./usr/include/net/gen/netdb.h		minix-sys	obsolete
 ./usr/include/net/gen/oneCsum.h		minix-sys
 ./usr/include/net/gen/psip_hdr.h	minix-sys
 ./usr/include/net/gen/psip_io.h		minix-sys
-./usr/include/net/gen/resolv.h		minix-sys
+./usr/include/net/gen/resolv.h		minix-sys	obsolete
 ./usr/include/net/gen/rip.h		minix-sys
 ./usr/include/net/gen/route.h		minix-sys
 ./usr/include/net/gen/socket.h		minix-sys
@@ -1633,7 +1633,7 @@
 ./usr/include/sys/ioctl.h		minix-sys
 ./usr/include/sys/iostat.h		minix-sys
 ./usr/include/sys/ipc.h			minix-sys
-./usr/include/sys/jmp_buf.h		minix-sys
+./usr/include/sys/jmp_buf.h		minix-sys	obsolete
 ./usr/include/sys/joystick.h		minix-sys
 ./usr/include/sys/kbdio.h		minix-sys
 ./usr/include/sys/kcore.h		minix-sys

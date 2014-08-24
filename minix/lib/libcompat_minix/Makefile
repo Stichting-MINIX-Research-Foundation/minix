@@ -20,7 +20,7 @@ SRCS+= configfile.c
 # NetBSD's 'mtab' format.
 SRCS+= mtab.c
 
-SUBDIR+= pkgconfig include
+SUBDIR+= pkgconfig 
 
 .include <bsd.lib.mk>
 .include <bsd.subdir.mk>

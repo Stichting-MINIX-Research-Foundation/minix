@@ -32,9 +32,9 @@ static const char version[] = "2.7";
 #include <net/netlib.h>
 #include <net/gen/in.h>
 #include <net/gen/inet.h>
-#include <net/gen/nameser.h>
-#include <net/gen/resolv.h>
-#include <net/gen/netdb.h>
+#include <arpa/nameser.h>
+#include <resolv.h>
+#include <netdb.h>
 #include <net/gen/socket.h>
 #include <net/gen/tcp.h>
 #include <net/gen/tcp_io.h>

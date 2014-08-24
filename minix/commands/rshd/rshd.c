@@ -30,7 +30,7 @@ in.rshd.c
 #include <sys/ioctl.h>
 #include <net/gen/in.h>
 #include <net/gen/inet.h>
-#include <net/gen/netdb.h>
+#include <netdb.h>
 #include <net/gen/socket.h>
 #include <net/gen/tcp.h>
 #include <net/gen/tcp_io.h>

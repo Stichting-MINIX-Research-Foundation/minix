@@ -60,7 +60,7 @@ static char sccsid[] = "@(#)rsh.c	5.24 (Berkeley) 7/1/91";
 #include <unistd.h>
 
 #include <net/netlib.h>
-#include <net/gen/netdb.h>
+#include <netdb.h>
 int main( int argc, char *argv[] );
 void usage( void );
 char *copyargs( char **argv );

@@ -69,7 +69,7 @@
 ./usr/include/i386/byte_swap.h		minix-sys
 ./usr/include/i386/cdefs.h		minix-sys
 ./usr/include/i386/cmos.h		minix-sys
-./usr/include/i386/compat_jmp_buf.h	minix-sys
+./usr/include/i386/compat_jmp_buf.h	minix-sys	obsolete
 ./usr/include/i386/cpu.h		minix-sys
 ./usr/include/i386/disklabel.h		minix-sys
 ./usr/include/i386/diskparm.h		minix-sys
