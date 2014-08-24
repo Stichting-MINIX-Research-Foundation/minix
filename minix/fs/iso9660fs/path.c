@@ -41,12 +41,16 @@ static int search_dir(
 			r = read_inode(dir_tmp, ldir_ptr->extent, pos, &pos);
 			if ((r != OK) || (pos >= ldir_ptr->i_stat.st_size)) {
 				put_inode(dir_tmp);
-				return EINVAL;
+				return ENOENT;
 			}
+			/* Temporary fix for extent spilling */
+			put_inode(dir_tmp);
+			dir_tmp = alloc_inode();
+			/* End of fix */
 			r = read_inode(dir_tmp, ldir_ptr->extent, pos, &pos);
 			if ((r != OK) || (pos >= ldir_ptr->i_stat.st_size)) {
 				put_inode(dir_tmp);
-				return EINVAL;
+				return ENOENT;
 			}
 			*numb = dir_tmp->i_stat.st_ino;
 			put_inode(dir_tmp);
@@ -60,7 +64,7 @@ static int search_dir(
 		r = read_inode(dir_tmp, ldir_ptr->extent, pos, &pos);
 		if ((r != OK) || (pos >= ldir_ptr->i_stat.st_size)) {
 			put_inode(dir_tmp);
-			return EINVAL;
+			return ENOENT;
 		}
 
 		if ((strcmp(dir_tmp->i_name, string) == 0) ||
