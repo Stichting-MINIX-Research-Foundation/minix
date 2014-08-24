@@ -25,7 +25,7 @@ Manipulate ARP table
 #include <net/gen/in.h>
 #include <net/gen/inet.h>
 #include <net/gen/ip_io.h>
-#include <net/gen/netdb.h>
+#include <netdb.h>
 #include <net/gen/socket.h>
 
 #include <net/gen/arp_io.h>

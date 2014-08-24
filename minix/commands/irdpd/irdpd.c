@@ -27,7 +27,7 @@
 #include <net/gen/icmp_hdr.h>
 #include <net/gen/ip_io.h>
 #include <net/gen/inet.h>
-#include <net/gen/netdb.h>
+#include <netdb.h>
 #include <net/gen/oneCsum.h>
 #include <net/gen/socket.h>
 #include <net/gen/udp.h>

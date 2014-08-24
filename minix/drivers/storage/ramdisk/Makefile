@@ -99,7 +99,6 @@ RAMDISK_DYNAMIC=	 1
 PROGRAMS+=		ld.elf_so
 PROG_LIBS+=		libc
 PROG_MINIXLIBS+=	libminlib
-PROG_MINIXLIBS+=	libcompat_minix
 PROG_MINIXLIBS+=	libterminfo
 .endif
 

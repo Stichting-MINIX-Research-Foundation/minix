@@ -102,7 +102,7 @@
 #include <net/gen/in.h>
 #include <net/gen/udp.h>
 #include <net/gen/udp_io.h>
-#include <net/gen/netdb.h>
+#include <netdb.h>
 
 #define SYSLOG_NAMES
 #include <syslog.h>

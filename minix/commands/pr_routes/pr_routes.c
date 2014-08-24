@@ -19,7 +19,7 @@ vmd/cmd/simple/pr_routes.c
 #include <net/gen/in.h>
 #include <net/gen/ip_io.h>
 #include <net/gen/route.h>
-#include <net/gen/netdb.h>
+#include <netdb.h>
 #include <net/gen/inet.h>
 
 #define N_IF	64	/* More than enough? */

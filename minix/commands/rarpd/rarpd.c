@@ -28,14 +28,14 @@ Changed:	Dec 11, 2000 by Kees J. Bot
 #include <sys/asynchio.h>
 #include <net/hton.h>
 #include <net/gen/socket.h>
-#include <net/gen/netdb.h>
+#include <netdb.h>
 #include <net/gen/in.h>
 #include <net/gen/inet.h>
 #include <net/gen/ether.h>
 #include <net/gen/eth_io.h>
 #include <net/gen/if_ether.h>
 #include <net/gen/ip_io.h>
-#include <net/gen/nameser.h>
+#include <arpa/nameser.h>
 
 #define MAX_RARP_RETRIES	5
 #define RARP_TIMEOUT		5

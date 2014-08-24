@@ -39,7 +39,6 @@ SUBDIR+=	../minix/lib/libasyn \
 		../minix/lib/libbdev \
 		../minix/lib/libblockdriver \
 		../minix/lib/libchardriver \
-		../minix/lib/libcompat_minix \
 		../minix/lib/libddekit \
 		../minix/lib/libdevman \
 		../minix/lib/libexec \

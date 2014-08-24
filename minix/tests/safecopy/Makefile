@@ -2,10 +2,10 @@ all: requestor grantor 1fifo 2fifo
 	chmod +x down run
 
 requestor: requestor.c inc.h
-	cc -static -o $@ $< -lsys -lminlib -lcompat_minix
+	cc -static -o $@ $< -lsys -lminlib 
 
 grantor: grantor.c inc.h
-	cc -static -o $@ $< -lsys -lminlib -lcompat_minix
+	cc -static -o $@ $< -lsys -lminlib 
 
 1fifo 2fifo:
 	mkfifo $@

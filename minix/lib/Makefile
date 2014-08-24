@@ -12,7 +12,6 @@ SUBDIR+=	libaudiodriver
 SUBDIR+=	libbdev
 SUBDIR+=	libblockdriver
 SUBDIR+=	libchardriver
-SUBDIR+=	libcompat_minix
 SUBDIR+=	libddekit
 SUBDIR+=	libdevman
 SUBDIR+=	libexec

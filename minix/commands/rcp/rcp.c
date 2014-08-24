@@ -41,7 +41,7 @@ static char sccsid[] = "@(#)rcp.c 1.1 87/12/21 SMI"; /* from UCB 5.3 6/8/85"*/
 #include <signal.h>
 #include <unistd.h>
 
-#include <net/gen/netdb.h>
+#include <netdb.h>
 #include <net/netlib.h>
 
 #if __STDC__

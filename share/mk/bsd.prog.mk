@@ -216,7 +216,6 @@ LIB${_lib:tu}=	${DESTDIR}/usr/lib/lib${_lib:S/xx/++/:S/atf_c/atf-c/}.a
 	blockdriver \
 	chardriver \
 	clkconf \
-	compat_minix \
 	ddekit \
 	ddekit_usb_client \
 	ddekit_usb_server \

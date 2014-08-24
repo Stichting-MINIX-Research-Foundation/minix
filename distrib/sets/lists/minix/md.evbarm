@@ -40,7 +40,7 @@
 ./usr/include/arm/bswap.h		minix-sys
 ./usr/include/arm/byte_swap.h		minix-sys
 ./usr/include/arm/cdefs.h		minix-sys
-./usr/include/arm/compat_jmp_buf.h	minix-sys
+./usr/include/arm/compat_jmp_buf.h	minix-sys	obsolete
 ./usr/include/arm/cpuconf.h		minix-sys
 ./usr/include/arm/cpu.h			minix-sys
 ./usr/include/arm/disklabel.h		minix-sys

@@ -26,10 +26,11 @@ Created:	Jan 27, 1992 by Philip Homburg
 #include <net/gen/in.h>
 #include <net/gen/inet.h>
 #include <net/gen/ip_io.h>
-#include <net/gen/netdb.h>
+#include <netdb.h>
 #include <net/gen/socket.h>
-#include <net/gen/nameser.h>
-#include <net/gen/resolv.h>
+
+#include <arpa/nameser.h>
+#include <resolv.h>
 #include <net/gen/dhcp.h>
 
 #include <minix/paths.h>

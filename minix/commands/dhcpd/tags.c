@@ -18,7 +18,7 @@
 #include <sys/asynchio.h>
 #include <net/hton.h>
 #include <net/gen/socket.h>
-#include <net/gen/netdb.h>
+#include <netdb.h>
 #include <net/gen/in.h>
 #include <net/gen/inet.h>
 #include <net/gen/ether.h>

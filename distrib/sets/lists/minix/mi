@@ -1423,12 +1423,12 @@
 ./usr/include/net/gen/in.h		minix-sys
 ./usr/include/net/gen/ip_hdr.h		minix-sys
 ./usr/include/net/gen/ip_io.h		minix-sys
-./usr/include/net/gen/nameser.h		minix-sys
-./usr/include/net/gen/netdb.h		minix-sys
+./usr/include/net/gen/nameser.h		minix-sys	obsolete
+./usr/include/net/gen/netdb.h		minix-sys	obsolete
 ./usr/include/net/gen/oneCsum.h		minix-sys
 ./usr/include/net/gen/psip_hdr.h	minix-sys
 ./usr/include/net/gen/psip_io.h		minix-sys
-./usr/include/net/gen/resolv.h		minix-sys
+./usr/include/net/gen/resolv.h		minix-sys	obsolete
 ./usr/include/net/gen/rip.h		minix-sys
 ./usr/include/net/gen/route.h		minix-sys
 ./usr/include/net/gen/socket.h		minix-sys
@@ -1635,7 +1635,7 @@
 ./usr/include/sys/ioctl.h		minix-sys
 ./usr/include/sys/iostat.h		minix-sys
 ./usr/include/sys/ipc.h			minix-sys
-./usr/include/sys/jmp_buf.h		minix-sys
+./usr/include/sys/jmp_buf.h		minix-sys	obsolete
 ./usr/include/sys/joystick.h		minix-sys
 ./usr/include/sys/kbdio.h		minix-sys
 ./usr/include/sys/kcore.h		minix-sys
@@ -1858,7 +1858,7 @@
 ./usr/lib/bc/libc.a			minix-sys	bitcode
 ./usr/lib/bc/libc++.a			minix-sys	bitcode
 ./usr/lib/bc/libchardriver.a		minix-sys	bitcode
-./usr/lib/bc/libcompat_minix.a		minix-sys	bitcode
+./usr/lib/bc/libcompat_minix.a		minix-sys	bitcode	obsolete
 ./usr/lib/bc/libcrypt.a			minix-sys	bitcode
 ./usr/lib/bc/libcurses.a		minix-sys	bitcode
 ./usr/lib/bc/libddekit.a		minix-sys	bitcode
@@ -1914,7 +1914,7 @@
 ./usr/lib/cawf/me.mac			minix-sys
 ./usr/lib/cawf/mnx.mac			minix-sys
 ./usr/lib/cawf/ms.mac			minix-sys
-./usr/lib/compat_minix.pc		minix-sys
+./usr/lib/compat_minix.pc		minix-sys	obsolete
 ./usr/lib/crontab			minix-sys
 ./usr/lib/crt0.o			minix-sys
 ./usr/lib/crtbegin.o			minix-sys
@@ -1991,11 +1991,11 @@
 ./usr/lib/libc++.a			minix-sys	libcxx
 ./usr/lib/libchardriver.a		minix-sys
 ./usr/lib/libchardriver_pic.a		minix-sys
-./usr/lib/libcompat_minix.a		minix-sys
-./usr/lib/libcompat_minix_pic.a		minix-sys
-./usr/lib/libcompat_minix.so.0.0	minix-sys
-./usr/lib/libcompat_minix.so.0		minix-sys
-./usr/lib/libcompat_minix.so		minix-sys
+./usr/lib/libcompat_minix.a		minix-sys	obsolete
+./usr/lib/libcompat_minix_pic.a		minix-sys	obsolete
+./usr/lib/libcompat_minix.so.0.0	minix-sys	obsolete
+./usr/lib/libcompat_minix.so.0		minix-sys	obsolete
+./usr/lib/libcompat_minix.so		minix-sys	obsolete
 ./usr/lib/libc.pc			minix-sys
 ./usr/lib/libc_pic.a			minix-sys
 ./usr/lib/libc++_pic.a			minix-sys	libcxx
