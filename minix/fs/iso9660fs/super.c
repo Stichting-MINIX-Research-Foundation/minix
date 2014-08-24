@@ -21,8 +21,8 @@ int release_vol_pri_desc(struct iso9660_vol_pri_desc *vol_pri)
 	return OK;
 }
 
-int create_vol_pri_desc(struct iso9660_vol_pri_desc *vol_pri, char *buf,
-	size_t address)
+static int create_vol_pri_desc(struct iso9660_vol_pri_desc *vol_pri, char *buf,
+	size_t __unused address)
 {
 	/*
 	 * This function fullfill the super block data structure using the
@@ -38,7 +38,8 @@ int create_vol_pri_desc(struct iso9660_vol_pri_desc *vol_pri, char *buf,
 	memcpy(vol_pri, buf, 2048);
 
 	/* Check various fields for consistency. */
-	if ((memcmp(vol_pri->standard_id, "CD001", ISO9660_SIZE_STANDARD_ID) != 0) ||
+	if ((memcmp(vol_pri->standard_id, "CD001",
+	    ISO9660_SIZE_STANDARD_ID) != 0) ||
 	    (vol_pri->vd_version != 1) ||
 	    (vol_pri->logical_block_size_l < 2048) ||
 	    (vol_pri->file_struct_ver != 1))
@@ -51,8 +52,10 @@ int create_vol_pri_desc(struct iso9660_vol_pri_desc *vol_pri, char *buf,
 	root = alloc_inode();
 	extent = alloc_extent();
 
-	extent->location = root_record->loc_extent_l + root_record->ext_attr_rec_length;
-	extent->length = root_record->data_length_l / vol_pri->logical_block_size_l;
+	extent->location =
+	    root_record->loc_extent_l + root_record->ext_attr_rec_length;
+	extent->length =
+	    root_record->data_length_l / vol_pri->logical_block_size_l;
 	if (root_record->data_length_l % vol_pri->logical_block_size_l)
 		extent->length++;
 
@@ -72,8 +75,8 @@ int create_vol_pri_desc(struct iso9660_vol_pri_desc *vol_pri, char *buf,
 int read_vds(struct iso9660_vol_pri_desc *vol_pri, dev_t dev)
 {
 	/*
-	 * This function reads from a ISO9660 filesystem (in the device dev) the
-	 * super block and saves it in vol_pri.
+	 * This function reads from a ISO9660 filesystem (in the device dev)
+	 * the super block and saves it in vol_pri.
 	 */
 	size_t offset;
 	int vol_ok = FALSE, vol_pri_flag = FALSE;
@@ -81,10 +84,12 @@ int read_vds(struct iso9660_vol_pri_desc *vol_pri, dev_t dev)
 	static char sbbuf[ISO9660_MIN_BLOCK_SIZE];
 	int i = 0;
 
-	for(offset = ISO9660_SUPER_BLOCK_POSITION; !vol_ok && i++ < MAX_ATTEMPTS;
+	for(offset = ISO9660_SUPER_BLOCK_POSITION;
+	    !vol_ok && i++ < MAX_ATTEMPTS;
 	    offset += ISO9660_MIN_BLOCK_SIZE) {
 		/* Read the sector of the super block. */
-		r = bdev_read(dev, offset, sbbuf, ISO9660_MIN_BLOCK_SIZE, BDEV_NOFLAGS);
+		r = bdev_read(dev, offset, sbbuf, ISO9660_MIN_BLOCK_SIZE,
+		    BDEV_NOFLAGS);
 
 		if (r != ISO9660_MIN_BLOCK_SIZE) {
 			/* Damaged sector or what? */
@@ -109,4 +114,3 @@ int read_vds(struct iso9660_vol_pri_desc *vol_pri, dev_t dev)
 	else
 		return OK;		/* otherwise. */
 }
-
