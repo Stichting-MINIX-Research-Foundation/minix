@@ -274,6 +274,7 @@ int vm_clear_cache(dev_t dev)
 int
 main(int argc, char *argv[])
 {
+	size_t newblocksize;
 	int wss, cs, n = 0, p;
 
 #define ITER 3
@@ -286,8 +287,10 @@ main(int argc, char *argv[])
 	/* Can the cache handle differently sized blocks? */
 
 	for(p = 1; p <= 3; p++) {
-		curblocksize = PAGE_SIZE*p;
-		lmfs_set_blocksize(curblocksize, MYMAJOR);
+		/* Do not update curblocksize until the cache is flushed. */
+		newblocksize = PAGE_SIZE*p;
+		lmfs_set_blocksize(newblocksize, MYMAJOR);
+		curblocksize = newblocksize;	/* now it's safe to update */
 		lmfs_buf_pool(BLOCKS);
 		if(dotest(curblocksize, BLOCKS, ITER)) e(n);
 		n++;
@@ -299,8 +302,8 @@ main(int argc, char *argv[])
 	for(wss = 2; wss <= 3; wss++) {
 		int wsblocks = 10*wss*wss*wss*wss*wss;
 		for(cs = wsblocks/4; cs <= wsblocks*3; cs *= 1.5) {
-			curblocksize = PAGE_SIZE;
-			lmfs_set_blocksize(curblocksize, MYMAJOR);
+			lmfs_set_blocksize(PAGE_SIZE, MYMAJOR);
+			curblocksize = PAGE_SIZE;	/* same as above */
 			lmfs_buf_pool(cs);
 		        if(dotest(curblocksize, wsblocks, ITER)) e(n);
 			n++;
