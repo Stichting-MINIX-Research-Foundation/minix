@@ -39,10 +39,6 @@ __RCSID("$NetBSD: pnode.c,v 1.13 2012/08/16 09:25:43 manu Exp $");
 #include <string.h>
 
 #include "puffs_priv.h"
-#if defined(__minix)
-#include <minix/type.h>
-#include "proto.h"
-#endif /* defined(__minix) */
 
 /*
  * Well, you're probably wondering why this isn't optimized.

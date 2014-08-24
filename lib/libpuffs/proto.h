@@ -7,68 +7,64 @@ struct timespec;
 
 /* Function prototypes. */
 
-int fs_new_driver(void);
-
 /* inode.c */
-int fs_putnode(void);
+int fs_putnode(ino_t ino_nr, unsigned int count);
 void release_node(struct puffs_usermount *pu, struct puffs_node *pn );
 
-/* device.c */
-int dev_open(endpoint_t driver_e, dev_t dev, endpoint_t proc_e, int
-	flags);
-void dev_close(endpoint_t driver_e, dev_t dev);
-
 /* link.c */
-int fs_ftrunc(void);
-int fs_link(void);
-int fs_rdlink(void);
-int fs_rename(void);
-int fs_unlink(void);
+int fs_trunc(ino_t ino_nr, off_t start, off_t end);
+int fs_link(ino_t dir_nr, char *name, ino_t ino_nr);
+ssize_t fs_rdlink(ino_t ino_nr, struct fsdriver_data *data, size_t bytes);
+int fs_rename(ino_t old_dir_nr, char *old_name, ino_t new_dir_nr,
+	char *new_name);
+int fs_unlink(ino_t dir_nr, char *name, int call);
 
 /* misc.c */
-int fs_flush(void);
-int fs_sync(void);
+void fs_sync(void);
 
 /* mount.c */
-int fs_mountpoint(void);
-int fs_readsuper(void);
-int fs_unmount(void);
+int fs_mount(dev_t dev, unsigned int flags, struct fsdriver_node *root_node,
+	unsigned int *res_flags);
+void fs_unmount(void);
+int fs_mountpt(ino_t ino_nr);
 
 /* open.c */
-int fs_create(void);
-int fs_inhibread(void);
-int fs_mkdir(void);
-int fs_mknod(void);
-int fs_slink(void);
+int fs_create(ino_t dir_nr, char *name, mode_t mode, uid_t uid, gid_t gid,
+	struct fsdriver_node *node);
+int fs_mkdir(ino_t dir_nr, char *name, mode_t mode, uid_t uid, gid_t gid);
+int fs_mknod(ino_t dir_nr, char *name, mode_t mode, uid_t uid, gid_t gid,
+	dev_t dev);
+int fs_slink(ino_t dir_nr, char *name, uid_t uid, gid_t gid,
+	struct fsdriver_data *data, size_t bytes);
 
 /* path.c */
-int fs_lookup(void);
-struct puffs_node *advance(struct puffs_node *dirp, char string[NAME_MAX
-	+ 1], int chk_perm);
+int fs_lookup(ino_t dir_nr, char *name, struct fsdriver_node *node,
+	int *is_mountpt);
+struct puffs_node *advance(struct puffs_node *dirp, char string[NAME_MAX + 1]);
 
 /* protect.c */
-int fs_chmod(void);
-int fs_chown(void);
-int fs_getdents(void);
-int forbidden(struct puffs_node *rip, mode_t access_desired);
+int fs_chmod(ino_t ino_nr, mode_t *mode);
+int fs_chown(ino_t ino_nr, uid_t uid, gid_t gid, mode_t *mode);
 
 /* read.c */
-int fs_breadwrite(void);
-int fs_readwrite(void);
+ssize_t fs_read(ino_t ino_nr, struct fsdriver_data *data, size_t bytes,
+	off_t pos, int call);
+ssize_t fs_write(ino_t ino_nr, struct fsdriver_data *data, size_t bytes,
+	off_t pos, int call);
+ssize_t fs_getdents(ino_t ino_nr, struct fsdriver_data *data, size_t bytes,
+	off_t *pos);
 
 /* stadir.c */
-int fs_stat(void);
-int fs_statvfs(void);
+int fs_stat(ino_t ino, struct stat *statbuf);
+int fs_statvfs(struct statvfs *st);
 
 /* time.c */
-int fs_utime(void);
+int fs_utime(ino_t ino_nr, struct timespec *atime, struct timespec *mtime);
 
 /* utility.c */
-int no_sys(void);
-void mfs_nul_f(const char *file, int line, char *str, unsigned int len,
-	unsigned int maxlen);
 struct timespec clock_timespec(void);
 int update_timens(struct puffs_node *pn, int fl, struct timespec *);
-void lpuffs_debug(const char *format, ...);
+void lpuffs_debug(const char *format, ...)
+	__attribute__((__format__(__printf__, 1, 2)));
 
 #endif /* PUFFS_PROTO_H */

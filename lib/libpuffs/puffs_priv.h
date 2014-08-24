@@ -40,18 +40,9 @@
 #if defined(__minix)
 
 /* XXX: MINIX */
-#define IGN_PERM            0
-#define CHK_PERM            1
-#define SU_UID          ((uid_t) 0)     /* super_user's uid_t */
-
-/* XXX: MINIX */
 #define ATIME            002    /* set if atime field needs updating */
 #define CTIME            004    /* set if ctime field needs updating */
 #define MTIME            010    /* set if mtime field needs updating */
-
-#define REQ_READ_SUPER   28
-
-#define NUL(str,l,m) mfs_nul_f(__FILE__,__LINE__,(str), (l), (m))
 
 #else
 extern pthread_mutex_t pu_lock;
