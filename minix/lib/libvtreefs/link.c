@@ -5,7 +5,7 @@
 /*===========================================================================*
  *				fs_rdlink				     *
  *===========================================================================*/
-int fs_rdlink(void)
+ssize_t fs_rdlink(ino_t ino_nr, struct fsdriver_data *data, size_t bytes)
 {
 	/* Retrieve symbolic link target.
 	 */
@@ -14,7 +14,7 @@ int fs_rdlink(void)
 	size_t len;
 	int r;
 
-	if ((node = find_inode(fs_m_in.m_vfs_fs_rdlink.inode)) == NULL)
+	if ((node = find_inode(ino_nr)) == NULL)
 		return EINVAL;
 
 	/* Call the rdlink hook. */
@@ -28,14 +28,12 @@ int fs_rdlink(void)
 	len = strlen(path);
 	assert(len > 0 && len < sizeof(path));
 
-	if (len > fs_m_in.m_vfs_fs_rdlink.mem_size)
-		len = fs_m_in.m_vfs_fs_rdlink.mem_size;
+	if (len > bytes)
+		len = bytes;
 
 	/* Copy out the result. */
-	r = sys_safecopyto(fs_m_in.m_source, fs_m_in.m_vfs_fs_rdlink.grant, 0,
-		(vir_bytes) path, len);
-	if (r != OK) return r;
+	if ((r = fsdriver_copyout(data, 0, path, len)) != OK)
+		return r;
 
-	fs_m_out.m_fs_vfs_rdlink.nbytes = len;
-	return OK;
+	return len;
 }

@@ -89,7 +89,7 @@ int main(void)
 	stat.size 	= 0;
 	stat.dev 	= NO_DEV;
 
-	/* Start VTreeFS. This call does not return. */
+	/* Start VTreeFS. */
 	start_vtreefs(&hooks, NR_INODES, &stat, NR_PROCS + NR_TASKS);
 
 	return 0;

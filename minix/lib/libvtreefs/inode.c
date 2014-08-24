@@ -33,7 +33,7 @@ void init_inodes(unsigned int inodes, struct inode_stat *stat,
 	/* Initialize the inode-related state.
 	 */
 	struct inode *node;
-	int i;
+	unsigned int i;
 
 	assert(inodes > 0);
 	assert(nr_indexed_entries >= 0);
@@ -134,7 +134,7 @@ static int parent_index_hash(struct inode *parent, index_t index)
 /*===========================================================================*
  *				purge_inode				     *
  *===========================================================================*/
-void purge_inode(struct inode *parent)
+static void purge_inode(struct inode *parent)
 {
 	/* Delete a deletable inode to make room for a new inode.
 	 */
@@ -149,7 +149,7 @@ void purge_inode(struct inode *parent)
 	 */
 	static int last_checked = 0;
 	struct inode *node;
-	int count;
+	unsigned int count;
 
 	assert(TAILQ_EMPTY(&unused_inodes));
 
@@ -484,7 +484,6 @@ void ref_inode(struct inode *node)
 	 */
 
 	CHECK_INODE(node);
-	assert(node->i_count >= 0);
 
 	node->i_count++;
 }
@@ -581,7 +580,7 @@ int is_inode_deleted(struct inode *node)
 /*===========================================================================*
  *				fs_putnode				     *
  *===========================================================================*/
-int fs_putnode(void)
+int fs_putnode(ino_t ino_nr, unsigned int count)
 {
 	/* Find the inode specified by the request message, and decrease its
 	 * reference count.
@@ -589,14 +588,13 @@ int fs_putnode(void)
 	struct inode *node;
 
 	/* Get the inode specified by its number. */
-	if ((node = find_inode(fs_m_in.m_vfs_fs_putnode.inode)) == NULL)
+	if ((node = find_inode(ino_nr)) == NULL)
 		return EINVAL;
 
 	/* Decrease the reference count. */
-	node->i_count -= fs_m_in.m_vfs_fs_putnode.count - 1;
+	assert(node->i_count >= count);
 
-	assert(node->i_count > 0);
-
+	node->i_count -= count - 1;
 	put_inode(node);
 
 	return OK;
