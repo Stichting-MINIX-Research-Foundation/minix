@@ -365,12 +365,12 @@ struct filp *f;
 		dev = vp->v_sdev;
 		if (S_ISBLK(vp->v_mode))  {
 			lock_bsf();
-			if (vp->v_bfs_e == ROOT_FS_E) {
+			if (vp->v_bfs_e == ROOT_FS_E && dev != ROOT_DEV) {
 				/* Invalidate the cache unless the special is
-				 * mounted. Assume that the root filesystem's
-				 * is open only for fsck.
+				 * mounted. Be careful not to flush the root
+				 * file system either.
 				 */
-				req_flush(vp->v_bfs_e, dev);
+				(void) req_flush(vp->v_bfs_e, dev);
 			}
 			unlock_bsf();
 
