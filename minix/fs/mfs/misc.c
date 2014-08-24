@@ -1,14 +1,12 @@
 #include "fs.h"
-#include <assert.h>
-#include <minix/vfsif.h>
-#include <minix/bdev.h>
 #include "inode.h"
 #include "clean.h"
+#include <assert.h>
 
 /*===========================================================================*
  *				fs_sync					     *
  *===========================================================================*/
-int fs_sync()
+void fs_sync(void)
 {
 /* Perform the sync() system call.  Flush all the tables. 
  * The order in which the various tables are flushed is critical.  The
@@ -25,62 +23,4 @@ int fs_sync()
 
   /* Write all the dirty blocks to the disk. */
   lmfs_flushall();
-
-  return(OK);		/* sync() can't fail */
-}
-
-
-/*===========================================================================*
- *				fs_flush				     *
- *===========================================================================*/
-int fs_flush()
-{
-/* Flush the blocks of a device from the cache after writing any dirty blocks
- * to disk.
- */
-  dev_t dev = fs_m_in.m_vfs_fs_flush.device;
-  if(dev == fs_dev && lmfs_bufs_in_use() > 0) return(EBUSY);
- 
-  lmfs_flushall();
-  lmfs_invalidate(dev);
-
-  return(OK);
-}
-
-
-/*===========================================================================*
- *				fs_new_driver				     *
- *===========================================================================*/
-int fs_new_driver(void)
-{
-/* Set a new driver endpoint for this device. */
-  dev_t dev;
-  cp_grant_id_t label_gid;
-  size_t label_len;
-  char label[sizeof(fs_dev_label)];
-  int r;
-
-  dev = fs_m_in.m_vfs_fs_new_driver.device;
-  label_gid = fs_m_in.m_vfs_fs_new_driver.grant;
-  label_len = fs_m_in.m_vfs_fs_new_driver.path_len;
-
-  if (label_len > sizeof(label))
-	return(EINVAL);
-
-  r = sys_safecopyfrom(fs_m_in.m_source, label_gid, (vir_bytes) 0,
-	(vir_bytes) label, label_len);
-
-  if (r != OK) {
-	printf("MFS: fs_new_driver safecopyfrom failed (%d)\n", r);
-	return(EINVAL);
-  }
-
-  bdev_driver(dev, label);
-
-  return(OK);
-}
-
-int fs_bpeek(void)
-{
-	return lmfs_do_bpeek(&fs_m_in);
 }

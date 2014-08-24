@@ -193,7 +193,6 @@ unsigned int get_block_size(dev_t dev)
 static int rw_super(struct super_block *sp, int writing)
 {
 /* Read/write a superblock. */
-  int r;
   dev_t save_dev = sp->s_dev;
   struct buf *bp;
   char *sbbuf;

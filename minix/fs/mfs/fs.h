@@ -13,15 +13,15 @@
 #include <sys/types.h>
 #include <minix/const.h>
 #include <minix/type.h>
-#include <minix/dmap.h>
 
 #include <lib.h>
 #include <limits.h>
 #include <errno.h>
 
-#include <minix/vfsif.h>
 #include <minix/syslib.h>
 #include <minix/sysutil.h>
+
+#include <minix/fsdriver.h>
 
 #include "mfsdir.h"
 #include "const.h"
