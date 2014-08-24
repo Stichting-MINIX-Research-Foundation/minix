@@ -5,8 +5,8 @@ SRCS=	balloc.c link.c \
 	stadir.c table.c time.c utility.c \
 	write.c ialloc.c inode.c main.c path.c \
 	super.c
-DPADD+=	${LIBMINIXFS} ${LIBBDEV} ${LIBSYS} 
-LDADD+= -lminixfs -lbdev -lsys 
+DPADD+=	${LIBMINIXFS} ${LIBFSDRIVER} ${LIBBDEV} ${LIBSYS}
+LDADD+= -lminixfs -lfsdriver -lbdev -lsys
 
 WARNS=3
 
