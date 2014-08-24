@@ -29,7 +29,8 @@ static void wipe_inode(struct inode *rip);
 /*===========================================================================*
  *                alloc_inode                                                *
  *===========================================================================*/
-struct inode *alloc_inode(struct inode *parent, mode_t bits)
+struct inode *alloc_inode(struct inode *parent, mode_t bits, uid_t uid,
+	gid_t gid)
 {
 /* Allocate a free inode on parent's dev, and return a pointer to it. */
 
@@ -67,8 +68,8 @@ struct inode *alloc_inode(struct inode *parent, mode_t bits)
 	/* An inode slot is available. Put the inode just allocated into it. */
 	rip->i_mode = bits;         /* set up RWX bits */
 	rip->i_links_count = NO_LINK; /* initial no links */
-	rip->i_uid = caller_uid;    /* file's uid is owner's */
-	rip->i_gid = caller_gid;    /* ditto group id */
+	rip->i_uid = uid;           /* file's uid is owner's */
+	rip->i_gid = gid;           /* ditto group id */
 	rip->i_dev = parent->i_dev; /* mark which device it is on */
 	rip->i_sp = sp;             /* pointer to super block */
 

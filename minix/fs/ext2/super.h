@@ -100,7 +100,6 @@ EXTERN struct super_block {
     int     s_rd_only;          /* set to 1 if file sys mounted read only */
     block_t s_bsearch;	/* all data blocks  below this block are in use*/
     int     s_igsearch; /* all groups below this one have no free inodes */
-    char    s_is_root;
     u32_t   s_dirs_counter;
 
 } *superblock, *ondisk_superblock;
