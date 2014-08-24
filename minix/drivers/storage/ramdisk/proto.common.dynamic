@@ -5,7 +5,6 @@
 		lib d--755 0 0
 			libc.so.0 ---755 0 0 libc.so.0
 			libminlib.so.0 ---755 0 0 libminlib.so.0
-			libcompat_minix.so.0 ---755 0 0 libcompat_minix.so.0
 			libterminfo.so.0 ---755 0 0 libterminfo.so.0
 		$
 	$

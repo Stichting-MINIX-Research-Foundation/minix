@@ -15,7 +15,7 @@ BINOWN=		bin
 FILES=		test1.c
 
 CFLAGS+=	-fno-builtin
-LDADD+=		-lm -lcompat_minix
+LDADD+=		-lm 
 
 .include <bsd.own.mk>
 

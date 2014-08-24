@@ -1,4 +1,4 @@
 # Copied from drivers/Makefile.inc
-LDADD+= -lminlib -lcompat_minix
-DPADD+= ${LIBMINLIB} ${LIBCOMPAT_MINIX}
+LDADD+= -lminlib 
+DPADD+= ${LIBMINLIB} 
 BINDIR?=/usr/sbin

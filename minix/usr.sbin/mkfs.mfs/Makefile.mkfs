@@ -11,7 +11,7 @@ CPPFLAGS+=	-I${.CURDIR}
 
 .if ${HOST_OSTYPE:C/\-.*//:U} == "Minix" || !defined(HOSTPROGNAME)
 #LSC: FIXME This should not be required, more so only on Minix...
-LDADD+= -lminlib -lcompat_minix
+LDADD+= -lminlib 
 DPADD+= ${MINLIB} ${COMPAT_MINIX}
 .endif
 

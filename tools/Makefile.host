@@ -13,10 +13,6 @@ NOMAN=		# defined
 HOSTEXEEXT=.exe
 .endif
 
-.if ${HOST_OSTYPE:C/\-.*//} == "Minix"
-LDADD+= -lcompat_minix
-.endif # ${HOST_OSTYPE:C/\-.*//} == "Minix"
-
 # Resolve pathnames in variables.
 _RESOLVE_VARS=	CFLAGS CPPFLAGS DPADD HOST_CPPFLAGS LDADD
 .for var in ${_RESOLVE_VARS}
