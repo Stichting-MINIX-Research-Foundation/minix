@@ -18,7 +18,7 @@ struct inode {
 	/* Inode metadata */
 	struct inode_stat i_stat;	/* POSIX attributes */
 	char i_name[PNAME_MAX + 1];	/* name of the inode in the parent */
-	int i_count;			/* reference count */
+	unsigned int i_count;		/* reference count */
 	index_t i_index;		/* index number in parent / NO_INDEX */
 	int i_indexed;			/* number of indexed entries */
 	cbdata_t i_cbdata;		/* callback data */
