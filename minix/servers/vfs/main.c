@@ -289,7 +289,7 @@ static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *info)
   message mess;
   struct rprocpub rprocpub[NR_BOOT_PROCS];
 
-  receive_from = ANY;
+  receive_from = NONE;
   self = NULL;
   verbose = 0;
 
@@ -379,10 +379,8 @@ static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *info)
   init_vmnts();			/* init vmnt structures */
   init_select();		/* init select() structures */
   init_filps();			/* Init filp structures */
-  mount_pfs();			/* mount Pipe File Server */
 
-  /* Mount initial ramdisk as file system root. */
-  receive_from = MFS_PROC_NR;
+  /* Mount PFS and initial file system root. */
   worker_start(fproc_addr(VFS_PROC_NR), do_init_root, &mess /*unused*/,
 	FALSE /*use_spare*/);
 
@@ -394,9 +392,19 @@ static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *info)
  *===========================================================================*/
 static void do_init_root(void)
 {
+  char *mount_type, *mount_label;
   int r;
-  char *mount_type = "mfs"; /* FIXME: use boot image process name instead */
-  char *mount_label = "fs_imgrd"; /* FIXME: obtain this from RS */
+
+  /* Mount the pipe file server. */
+  receive_from = PFS_PROC_NR;
+
+  mount_pfs();
+
+  /* Mount the root file system. */
+  receive_from = MFS_PROC_NR;
+
+  mount_type = "mfs";       /* FIXME: use boot image process name instead */
+  mount_label = "fs_imgrd"; /* FIXME: obtain this from RS */
 
   r = mount_fs(DEV_IMGRD, "bootramdisk", "/", MFS_PROC_NR, 0, mount_type,
 	mount_label);
@@ -485,6 +493,8 @@ static void get_work()
   }
 
   for(;;) {
+	assert(receive_from != NONE);
+
 	/* Normal case.  No one to revive. Get a useful request. */
 	if ((r = sef_receive(receive_from, &m_in)) != OK) {
 		panic("VFS: sef_receive error: %d", r);
