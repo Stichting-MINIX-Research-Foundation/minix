@@ -8,7 +8,6 @@
 #include <sys/types.h>
 #include <minix/const.h>
 #include <minix/type.h>		/* for unshort :-( */
-#include <minix/sysutil.h>
 #include <minix/minlib.h>
 #include <minix/ipc.h>
 #include "mfs/const.h"		/* depends of -I flag in Makefile */
@@ -16,7 +15,6 @@
 #include "mfs/inode.h"		/* ditto */
 #include "mfs/super.h"
 #include <minix/fslib.h>
-#include <sys/stat.h>
 
 /* The next routine is copied from fsck.c and mkfs.c...  (Re)define some
  * things for consistency.  Some things should be done better.
@@ -46,20 +44,3 @@ int block_size;
   if (((bit_t) nr_blocks * FS_BITS_PER_BLOCK(block_size)) < nr_bits) ++nr_blocks;
   return(nr_blocks);
 }
-
-uint8_t fs_mode_to_type(mode_t mode)
-{
-	if(S_ISREG(mode)) return DT_REG;
-	else if(S_ISDIR(mode)) return DT_DIR;
-	else if(S_ISLNK(mode)) return DT_LNK;
-	else if(S_ISCHR(mode)) return DT_CHR;
-	else if(S_ISBLK(mode)) return DT_BLK;
-	else if(S_ISFIFO(mode)) return DT_FIFO;
-	else if(S_ISSOCK(mode)) return DT_SOCK;
-
-	assert(0 && "unknown type");
-
-	/* assert()s are removed on NDEBUG builds. */
-	abort();
-}
-

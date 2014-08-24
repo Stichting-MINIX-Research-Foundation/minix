@@ -3,9 +3,6 @@
 #ifndef _MINIX_FSLIB_H
 #define _MINIX_FSLIB_H
 
-#include <minix/safecopies.h>
-#include <minix/sef.h>
-#include <minix/vfsif.h>
 #include <minix/fsdriver.h>
 
 struct buf {
@@ -30,9 +27,6 @@ struct buf {
   u64_t lmfs_inode_offset;
 };
 
-int fs_lookup_credentials(vfs_ucred_t *credentials,
-        uid_t *caller_uid, gid_t *caller_gid, cp_grant_id_t grant2, size_t cred_size);
-
 void lmfs_markdirty(struct buf *bp);
 void lmfs_markclean(struct buf *bp);
 int lmfs_isclean(struct buf *bp);
@@ -55,7 +49,6 @@ void lmfs_invalidate(dev_t device);
 void lmfs_put_block(struct buf *bp, int block_type);
 void lmfs_rw_scattered(dev_t, struct buf **, int, int);
 void lmfs_setquiet(int q);
-int lmfs_do_bpeek(message *);
 void lmfs_cache_reevaluate(dev_t dev);
 void lmfs_blockschange(dev_t dev, int delta);
 
@@ -86,4 +79,3 @@ ssize_t lmfs_bio(dev_t dev, struct fsdriver_data *data, size_t bytes,
 void lmfs_bflush(dev_t dev);
 
 #endif /* _MINIX_FSLIB_H */
-
