@@ -17,6 +17,7 @@ SRCS+=  \
 	assert.c \
 	asynsend.c \
 	checkperms.c \
+	clock_time.c \
 	copyfd.c \
 	ds.c	\
 	env_get_prm.c \

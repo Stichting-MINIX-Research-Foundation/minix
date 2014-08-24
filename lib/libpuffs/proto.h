@@ -3,7 +3,6 @@
 
 struct puffs_usermount;
 struct puffs_node;
-struct timespec;
 
 /* Function prototypes. */
 
@@ -62,7 +61,6 @@ int fs_statvfs(struct statvfs *st);
 int fs_utime(ino_t ino_nr, struct timespec *atime, struct timespec *mtime);
 
 /* utility.c */
-struct timespec clock_timespec(void);
 int update_timens(struct puffs_node *pn, int fl, struct timespec *);
 void lpuffs_debug(const char *format, ...)
 	__attribute__((__format__(__printf__, 1, 2)));

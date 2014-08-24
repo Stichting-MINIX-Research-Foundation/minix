@@ -47,7 +47,6 @@ int fs_newnode(message *fs_m_in, message *fs_m_out);
 int fs_readwrite(message *fs_m_in, message *fs_m_out);
 
 /* utility.c */
-time_t clock_time(void);
 int no_sys(message *pfs_m_in, message *pfs_m_out);
 
 /* stadir.c */

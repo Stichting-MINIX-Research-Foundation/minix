@@ -329,7 +329,7 @@ struct inode *rip;	/* pointer to inode to be read/written */
 
   time_t cur_time;
 
-  cur_time = clock_time();
+  cur_time = clock_time(NULL);
   if (rip->i_update & ATIME) rip->i_atime = cur_time;
   if (rip->i_update & CTIME) rip->i_ctime = cur_time;
   if (rip->i_update & MTIME) rip->i_mtime = cur_time;

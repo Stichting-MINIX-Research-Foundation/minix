@@ -46,6 +46,8 @@ int env_parse(const char *env, const char *fmt, int field,
 #define fkey_events(fkeys, sfkeys) fkey_ctl(FKEY_EVENTS, (fkeys), (sfkeys))
 int fkey_ctl(int req, int *fkeys, int *sfkeys);
 
+struct timespec;
+
 int printf(const char *fmt, ...);
 void kputc(int c);
 __dead void panic(const char *fmt, ...)
@@ -64,6 +66,7 @@ u32_t tsc_64_to_micros(u64_t tsc);
 u32_t tsc_to_micros(u32_t low, u32_t high);
 u32_t tsc_get_khz(void);
 u32_t micros_to_ticks(u32_t micros);
+time_t clock_time(struct timespec *tv);
 #if defined(__arm__)
 void read_frclock(u32_t *frclk);
 u32_t delta_frclock(u32_t base, u32_t cur);
