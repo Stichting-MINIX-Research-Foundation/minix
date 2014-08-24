@@ -35,27 +35,21 @@ static void wipe_inode(struct inode *rip);
 /*===========================================================================*
  *				fs_putnode				     *
  *===========================================================================*/
-int fs_putnode(void)
+int fs_putnode(ino_t ino_nr, unsigned int count)
 {
 /* Find the inode specified by the request message and decrease its counter.*/
 
   struct inode *rip;
-  int count;
   
-  rip = find_inode(fs_dev, fs_m_in.m_vfs_fs_putnode.inode);
+  rip = find_inode(fs_dev, ino_nr);
 
   if(!rip) {
 	  printf("%s:%d put_inode: inode #%llu dev: %llx not found\n", __FILE__,
-		 __LINE__, fs_m_in.m_vfs_fs_putnode.inode, fs_dev);
+		 __LINE__, ino_nr, fs_dev);
 	  panic("fs_putnode failed");
   }
 
-  count = fs_m_in.m_vfs_fs_putnode.count;
-  if (count <= 0) {
-	printf("%s:%d put_inode: bad value for count: %d\n", __FILE__,
-	       __LINE__, count);
-	panic("fs_putnode failed");
-  } else if(count > rip->i_count) {
+  if (count > rip->i_count) {
 	printf("%s:%d put_inode: count too high: %d > %d\n", __FILE__,
 	       __LINE__, count, rip->i_count);
 	panic("fs_putnode failed");
@@ -255,7 +249,7 @@ register struct inode *rip;	/* pointer to inode to be released */
 /*===========================================================================*
  *				alloc_inode				     *
  *===========================================================================*/
-struct inode *alloc_inode(dev_t dev, mode_t bits)
+struct inode *alloc_inode(dev_t dev, mode_t bits, uid_t uid, gid_t gid)
 {
 /* Allocate a free inode on 'dev', and return a pointer to it. */
 
@@ -290,8 +284,8 @@ struct inode *alloc_inode(dev_t dev, mode_t bits)
 	/* An inode slot is available. Put the inode just allocated into it. */
 	rip->i_mode = bits;		/* set up RWX bits */
 	rip->i_nlinks = NO_LINK;	/* initial no links */
-	rip->i_uid = caller_uid;	/* file's uid is owner's */
-	rip->i_gid = caller_gid;	/* ditto group id */
+	rip->i_uid = uid;		/* file's uid is owner's */
+	rip->i_gid = gid;		/* ditto group id */
 	rip->i_dev = dev;		/* mark which device it is on */
 	rip->i_ndzones = sp->s_ndzones;	/* number of direct zones */
 	rip->i_nindirs = sp->s_nindirs;	/* number of indirect zones per blk*/

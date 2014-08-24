@@ -18,12 +18,6 @@
 #define MFS_NAME_MAX	 MFS_DIRSIZ
 
 
-/* The type of sizeof may be (unsigned) long.  Use the following macro for
- * taking the sizes of small objects so that there are no surprises like
- * (small) long constants being passed to routines expecting an int.
- */
-#define usizeof(t) ((unsigned) sizeof(t))
-
 /* File system types. */
 #define SUPER_MAGIC   0x137F	/* magic number contained in super-block */
 #define SUPER_REV     0x7F13	/* magic # when 68000 disk read on PC or vv */
@@ -35,8 +29,6 @@
 #define V3		   3	/* version number of V3 file systems */ 
 
 /* Miscellaneous constants */
-#define SU_UID 	 ((uid_t) 0)	/* super_user's uid_t */
-
 #define NO_BIT   ((bit_t) 0)	/* returned by alloc_bit() to signal failure */
 
 #define LOOK_UP            0 /* tells search_dir to lookup string */
@@ -47,39 +39,30 @@
 /* write_map() args */
 #define WMAP_FREE	(1 << 0)
 
-#define IGN_PERM	0
-#define CHK_PERM	1
-
 #define IN_CLEAN        0	/* in-block inode and memory copies identical */
 #define IN_DIRTY        1	/* in-block inode and memory copies differ */
 #define ATIME            002	/* set if atime field needs updating */
 #define CTIME            004	/* set if ctime field needs updating */
 #define MTIME            010	/* set if mtime field needs updating */
 
-#define BYTE_SWAP          0	/* tells conv2/conv4 to swap bytes */
-
-#define END_OF_FILE   (-104)	/* eof detected */
-
 #define ROOT_INODE   ((ino_t) 1)	/* inode number for root directory */
 #define BOOT_BLOCK  ((block_t) 0)	/* block number of boot block */
 #define SUPER_BLOCK_BYTES  (1024)	/* bytes offset */
 #define START_BLOCK ((block_t) 2)	/* first block of FS (not counting SB) */
 
-#define DIR_ENTRY_SIZE       usizeof (struct direct)  /* # bytes/dir entry   */
+#define DIR_ENTRY_SIZE       sizeof (struct direct)  /* # bytes/dir entry   */
 #define NR_DIR_ENTRIES(b)   ((b)/DIR_ENTRY_SIZE)  /* # dir entries/blk   */
-#define SUPER_SIZE      usizeof (struct super_block)  /* super_block size    */
+#define SUPER_SIZE      sizeof (struct super_block)  /* super_block size    */
 
-#define FS_BITMAP_CHUNKS(b) ((b)/usizeof (bitchunk_t))/* # map chunks/blk   */
-#define FS_BITCHUNK_BITS		(usizeof(bitchunk_t) * CHAR_BIT)
+#define FS_BITMAP_CHUNKS(b) ((b)/sizeof (bitchunk_t))/* # map chunks/blk   */
+#define FS_BITCHUNK_BITS		(sizeof(bitchunk_t) * CHAR_BIT)
 #define FS_BITS_PER_BLOCK(b)	(FS_BITMAP_CHUNKS(b) * FS_BITCHUNK_BITS)
 
 /* Derived sizes pertaining to the V2 file system. */
-#define V2_ZONE_NUM_SIZE            usizeof (zone_t)  /* # bytes in V2 zone  */
-#define V2_INODE_SIZE             usizeof (d2_inode)  /* bytes in V2 dsk ino */
+#define V2_ZONE_NUM_SIZE            sizeof (zone_t)  /* # bytes in V2 zone  */
+#define V2_INODE_SIZE             sizeof (d2_inode)  /* bytes in V2 dsk ino */
 #define V2_INDIRECTS(b)   ((b)/V2_ZONE_NUM_SIZE)  /* # zones/indir block */
 #define V2_INODES_PER_BLOCK(b) ((b)/V2_INODE_SIZE)/* # V2 dsk inodes/blk */
-
-#define NUL(str,l,m) mfs_nul_f(__FILE__,__LINE__,(str), (l), (m))
 
 #endif
 

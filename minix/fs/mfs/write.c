@@ -233,8 +233,8 @@ struct super_block *sb;		/* superblock of device block resides on */
  *===========================================================================*/
 void clear_zone(rip, pos, flag)
 register struct inode *rip;	/* inode to clear */
-off_t pos;			/* points to block to clear */
-int flag;			/* 1 if called by new_block, 0 otherwise */
+off_t __unused pos;		/* points to block to clear */
+int __unused flag;		/* 1 if called by new_block, 0 otherwise */
 {
 /* Zero a zone, possibly starting in the middle.  The parameter 'pos' gives
  * a byte in the first block to be zeroed.  Clearzone() is called from 
