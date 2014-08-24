@@ -1,9 +1,4 @@
 #include "fs.h"
-#include "buf.h"
-#include "inode.h"
-#include <sys/types.h>
-#include <stdlib.h>
-#include <string.h>
 
 static struct buf *new_block(dev_t dev, ino_t inum);
 

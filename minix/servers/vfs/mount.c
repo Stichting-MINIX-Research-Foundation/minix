@@ -390,11 +390,16 @@ char mount_label[LABEL_MAX] )
  *===========================================================================*/
 void mount_pfs(void)
 {
-/* Mount the Pipe File Server. It's not really mounted onto the file system,
-   but it's necessary it has a vmnt entry to make locking easier */
-
+/* Mount the Pipe File Server.  We treat it as a regular file system to a
+ * certain extent, to prevent creating too many exceptions all over the place.
+ * For example, it has a vmnt entry to make locking easier, and it gets sent
+ * a mount request to keep the fsdriver library happy.
+ */
   dev_t dev;
   struct vmnt *vmp;
+  struct node_details res;
+  unsigned int fs_flags;
+  int r;
 
   if ((dev = find_free_nonedev()) == NO_DEV)
 	panic("VFS: no nonedev to initialize PFS");
@@ -410,6 +415,13 @@ void mount_pfs(void)
   strlcpy(vmp->m_label, "pfs", LABEL_MAX);
   strlcpy(vmp->m_mount_path, "pipe", PATH_MAX);
   strlcpy(vmp->m_mount_dev, "none", PATH_MAX);
+
+  /* Ask PFS to acknowledge being mounted. Ignore the returned node details. */
+  r = req_readsuper(vmp, "", dev, FALSE, FALSE, &res, &fs_flags);
+  if (r != OK)
+	printf("VFS: unable to mount PFS (%d)\n", r);
+  else
+	vmp->m_fs_flags = fs_flags;
 }
 
 /*===========================================================================*

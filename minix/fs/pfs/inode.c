@@ -15,9 +15,6 @@
  */
 
 #include "fs.h"
-#include "buf.h"
-#include "inode.h"
-#include <minix/vfsif.h>
 
 static void addhash_inode(struct inode * const node);
 static void unhash_inode(struct inode * const node);
@@ -26,29 +23,21 @@ static void unhash_inode(struct inode * const node);
 /*===========================================================================*
  *				fs_putnode				     *
  *===========================================================================*/
-int fs_putnode(message *fs_m_in, message *fs_m_out)
+int fs_putnode(ino_t ino_nr, unsigned int count)
 {
 /* Find the inode specified by the request message and decrease its counter.*/
-
   struct inode *rip;
-  int count;
   dev_t dev;
-  ino_t inum;
 
-  rip = find_inode(fs_m_in->m_vfs_fs_putnode.inode);
+  rip = find_inode(ino_nr);
 
   if(!rip) {
-	  printf("%s:%d put_inode: inode #%llu not found\n", __FILE__,
-		 __LINE__, fs_m_in->m_vfs_fs_putnode.inode);
-	  panic("fs_putnode failed");
+	printf("%s:%d put_inode: inode #%llu not found\n", __FILE__,
+		__LINE__, ino_nr);
+	panic("fs_putnode failed");
   }
 
-  count = fs_m_in->m_vfs_fs_putnode.count;
-  if (count <= 0) {
-	printf("%s:%d put_inode: bad value for count: %d\n", __FILE__,
-	       __LINE__, count);
-	panic("fs_putnode failed");
-  } else if(count > rip->i_count) {
+  if (count > rip->i_count) {
 	printf("%s:%d put_inode: count too high: %d > %d\n", __FILE__,
 	       __LINE__, count, rip->i_count);
 	panic("fs_putnode failed");
@@ -58,9 +47,8 @@ int fs_putnode(message *fs_m_in, message *fs_m_out)
    * put_inode(). */
   rip->i_count -= count - 1;
   dev = rip->i_dev;
-  inum = rip->i_num;
   put_inode(rip);
-  if (rip->i_count == 0) put_block(dev, inum);
+  if (rip->i_count == 0) put_block(dev, ino_nr);
   return(OK);
 }
 
