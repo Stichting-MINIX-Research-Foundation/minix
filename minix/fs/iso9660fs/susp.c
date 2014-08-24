@@ -44,13 +44,13 @@ int parse_susp(struct rrii_dir_record *dir, char *buffer)
 			ca_length = v_pri.logical_block_size_l - ca_offset;
 		}
 
-		ca_bp = get_block(ca_block_nr);
+		ca_bp = lmfs_get_block(fs_dev, ca_block_nr, NORMAL);
 		if (ca_bp == NULL) {
 			return EINVAL;
 		}
 
 		parse_susp_buffer(dir, b_data(ca_bp) + ca_offset, ca_length);
-		put_block(ca_bp);
+		lmfs_put_block(ca_bp, FULL_DATA_BLOCK);
 
 		return OK;
 	}
