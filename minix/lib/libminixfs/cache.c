@@ -931,38 +931,3 @@ int lmfs_rdwt_err(void)
 {
 	return rdwt_err;
 }
-
-int lmfs_do_bpeek(message *m)
-{
-	block_t startblock, b, limitblock;
-	dev_t dev = m->m_vfs_fs_breadwrite.device;
-	off_t extra, pos = m->m_vfs_fs_breadwrite.seek_pos;
-	size_t len = m->m_vfs_fs_breadwrite.nbytes;
-	struct buf *bp;
-
-	assert(m->m_type == REQ_BPEEK);
-	assert(fs_block_size > 0);
-	assert(dev != NO_DEV);
-
-	if(!vmcache) { return ENXIO; }
-
-	assert(!(fs_block_size % PAGE_SIZE));
-
-	if((extra=(pos % fs_block_size))) {
-		pos -= extra;
-		len += extra;
-	}
-
-	len = roundup(len, fs_block_size);
-
-	startblock = pos/fs_block_size;
-	limitblock = startblock + len/fs_block_size;
-
-	for(b = startblock; b < limitblock; b++) {
-		bp = lmfs_get_block(dev, b, NORMAL);
-		assert(bp);
-		lmfs_put_block(bp, FULL_DATA_BLOCK);
-	}
-
-	return OK;
-}
