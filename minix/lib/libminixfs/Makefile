@@ -6,6 +6,6 @@ CPPFLAGS+= -D_MINIX_SYSTEM
 .include <bsd.own.mk>
 LIB=		minixfs
 
-SRCS=  	fetch_credentials.c cache.c 
+SRCS=  	fetch_credentials.c cache.c bio.c
 
 .include <bsd.lib.mk>

@@ -6,6 +6,7 @@
 #include <minix/safecopies.h>
 #include <minix/sef.h>
 #include <minix/vfsif.h>
+#include <minix/fsdriver.h>
 
 struct buf {
   /* Data portion of the buffer. */
@@ -40,6 +41,7 @@ int lmfs_bytes(struct buf *bp);
 int lmfs_bufs_in_use(void);
 int lmfs_nr_bufs(void);
 void lmfs_flushall(void);
+void lmfs_flushdev(dev_t dev);
 int lmfs_fs_block_size(void);
 void lmfs_may_use_vmcache(int); 
 void lmfs_set_blocksize(int blocksize, int major); 
@@ -76,6 +78,12 @@ void fs_blockstats(u64_t *blocks, u64_t *free, u64_t *used);
 #define PARTIAL_DATA_BLOCK 6                             /* data, partly used*/
 
 #define END_OF_FILE   (-104)        /* eof detected */
+
+/* Block I/O helper functions. */
+void lmfs_driver(dev_t dev, char *label);
+ssize_t lmfs_bio(dev_t dev, struct fsdriver_data *data, size_t bytes,
+	off_t pos, int call);
+void lmfs_bflush(dev_t dev);
 
 #endif /* _MINIX_FSLIB_H */
 
