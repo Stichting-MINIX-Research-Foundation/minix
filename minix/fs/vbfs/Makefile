@@ -2,7 +2,7 @@
 PROG=	vbfs
 SRCS=	vbfs.c
 
-DPADD+=	${LIBSFFS} ${LIBVBOXFS} ${LIBSYS}
-LDADD+=	-lsffs -lvboxfs -lsys
+DPADD+=	${LIBSFFS} ${LIBVBOXFS} ${LIBFSDRIVER} ${LIBSYS}
+LDADD+=	-lsffs -lvboxfs -lfsdriver -lsys
 
 .include <minix.service.mk>

@@ -14,7 +14,6 @@
 
 static LIST_HEAD(hash_head, inode) hash_table[NUM_HASH_SLOTS];
 
-static void del_one_dentry(struct inode *ino);
 static unsigned int hash_dentry(struct inode *parent, char *name);
 
 /*===========================================================================*

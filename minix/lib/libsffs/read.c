@@ -12,32 +12,26 @@
 
 #include <dirent.h>
 
-#define DWORD_ALIGN(len) (((len) + sizeof(long) - 1) & ~(sizeof(long) - 1))
-
 /*===========================================================================*
  *				do_read					     *
  *===========================================================================*/
-int do_read(void)
+ssize_t do_read(ino_t ino_nr, struct fsdriver_data *data, size_t count,
+	off_t pos, int call)
 {
 /* Read data from a file.
  */
   struct inode *ino;
-  off_t pos;
-  size_t count, size;
-  vir_bytes off;
+  size_t size, off;
   char *ptr;
   int r, chunk;
 
-  if ((ino = find_inode(m_in.m_vfs_fs_readwrite.inode)) == NULL)
+  if ((ino = find_inode(ino_nr)) == NULL)
 	return EINVAL;
 
   if (IS_DIR(ino)) return EISDIR;
 
   if ((r = get_handle(ino)) != OK)
 	return r;
-
-  pos = m_in.m_vfs_fs_readwrite.seek_pos;
-  count = m_in.m_vfs_fs_readwrite.nbytes;
 
   assert(count > 0);
 
@@ -53,10 +47,7 @@ int do_read(void)
 
 	chunk = r;
 
-	r = sys_safecopyto(m_in.m_source, m_in.m_vfs_fs_readwrite.grant, off,
-		(vir_bytes) ptr, chunk);
-
-	if (r != OK)
+	if ((r = fsdriver_copyout(data, off, ptr, chunk)) != OK)
 		break;
 
 	count -= chunk;
@@ -67,37 +58,32 @@ int do_read(void)
   if (r < 0)
 	return r;
 
-  m_out.m_fs_vfs_readwrite.seek_pos = pos;
-  m_out.m_fs_vfs_readwrite.nbytes = off;
-
-  return OK;
+  return off;
 }
 
 /*===========================================================================*
  *				do_getdents				     *
  *===========================================================================*/
-int do_getdents(void)
+ssize_t do_getdents(ino_t ino_nr, struct fsdriver_data *data, size_t bytes,
+	off_t *posp)
 {
 /* Retrieve directory entries.
  */
+  struct fsdriver_dentry fsdentry;
   char name[NAME_MAX+1];
   struct inode *ino, *child;
-  struct dirent *dent;
   struct sffs_attr attr;
-  size_t len, off, user_off, user_left;
   off_t pos;
-  int r, namelen;
+  int r;
   /* must be at least sizeof(struct dirent) + NAME_MAX */
   static char buf[BLOCK_SIZE];
 
-  attr.a_mask = SFFS_ATTR_MODE;
-
-  if ((ino = find_inode(m_in.m_vfs_fs_getdents.inode)) == NULL)
+  if ((ino = find_inode(ino_nr)) == NULL)
 	return EINVAL;
 
-  if(m_in.m_vfs_fs_getdents.seek_pos >= ULONG_MAX) return EINVAL;
-
   if (!IS_DIR(ino)) return ENOTDIR;
+
+  if (*posp < 0 || *posp >= ULONG_MAX) return EINVAL;
 
   /* We are going to need at least one free inode to store children in. */
   if (!have_free_inode()) return ENFILE;
@@ -106,19 +92,19 @@ int do_getdents(void)
   if ((r = get_handle(ino)) != OK)
 	return r;
 
-  off = 0;
-  user_off = 0;
-  user_left = m_in.m_vfs_fs_getdents.mem_size;
+  fsdriver_dentry_init(&fsdentry, data, bytes, buf, sizeof(buf));
 
   /* We use the seek position as file index number. The first position is for
    * the "." entry, the second position is for the ".." entry, and the next
    * position numbers each represent a file in the directory.
    */
-  for (pos = m_in.m_vfs_fs_getdents.seek_pos; ; pos++) {
+  do {
 	/* Determine which inode and name to use for this entry.
 	 * We have no idea whether the host will give us "." and/or "..",
 	 * so generate our own and skip those from the host.
 	 */
+	pos = (*posp)++;
+
 	if (pos == 0) {
 		/* Entry for ".". */
 		child = ino;
@@ -140,6 +126,8 @@ int do_getdents(void)
 	}
 	else {
 		/* Any other entry, not being "." or "..". */
+		attr.a_mask = SFFS_ATTR_MODE;
+
 		r = sffs_table->t_readdir(ino->i_dir, pos - 2, name,
 			sizeof(name), &attr);
 
@@ -170,66 +158,14 @@ int do_getdents(void)
 		}
 	}
 
-	/* record length incl. alignment. */
-	namelen = strlen(name);
-	len = _DIRENT_RECLEN(dent, namelen);
-
-	/* Is the user buffer too small to store another record?
-	 * Note that we will be rerequesting the same dentry upon a subsequent
-	 * getdents call this way, but we really need the name length for this.
-	 */
-	if (user_off + off + len > user_left) {
-		put_inode(child);
-
-		/* Is the user buffer too small for even a single record? */
-		if (user_off == 0 && off == 0)
-			return EINVAL;
-
-		break;
-	}
-
-	/* If our own buffer cannot contain the new record, copy out first. */
-	if (off + len > sizeof(buf)) {
-		r = sys_safecopyto(m_in.m_source, m_in.m_vfs_fs_getdents.grant,
-			user_off, (vir_bytes) buf, off);
-
-		if (r != OK) {
-			put_inode(child);
-
-			return r;
-		}
-
-		user_off += off;
-		user_left -= off;
-		off = 0;
-	}
-
-	/* Fill in the actual directory entry. */
-	dent = (struct dirent *) &buf[off];
-	dent->d_ino = INODE_NR(child);
-	dent->d_reclen = len;
-	dent->d_namlen = namelen;
-	dent->d_type = IS_DIR(child) ? DT_DIR : DT_REG;
-	strcpy(dent->d_name, name);
-
-	off += len;
+	r = fsdriver_dentry_add(&fsdentry, INODE_NR(child), name, strlen(name),
+		IS_DIR(child) ? DT_DIR : DT_REG);
 
 	put_inode(child);
-  }
 
-  /* If there is anything left in our own buffer, copy that out now. */
-  if (off > 0) {
-	r = sys_safecopyto(m_in.m_source, m_in.m_vfs_fs_getdents.grant, user_off,
-		(vir_bytes) buf, off);
-
-	if (r != OK)
+	if (r < 0)
 		return r;
+  } while (r > 0);
 
-	user_off += off;
-  }
-
-  m_out.m_fs_vfs_getdents.seek_pos = pos;
-  m_out.m_fs_vfs_getdents.nbytes = user_off;
-
-  return OK;
+  return fsdriver_dentry_finish(&fsdentry);
 }
