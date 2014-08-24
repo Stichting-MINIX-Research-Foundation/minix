@@ -6,7 +6,6 @@
 #include "fs.h"
 #include <string.h>
 #include <assert.h>
-#include <minix/vfsif.h>
 
 #include "puffs.h"
 #include "puffs_priv.h"
@@ -31,22 +30,20 @@ void release_node(struct puffs_usermount *pu, struct puffs_node *pn)
 /*===========================================================================*
  *                fs_putnode                                                 *
  *===========================================================================*/
-int fs_putnode(void)
+int fs_putnode(ino_t ino_nr, unsigned int count)
 {
 /* Find the pnode specified by the request message and decrease its counter.
  * Release unused pnode.
  */
   struct puffs_node *pn;
-  int count = fs_m_in.m_vfs_fs_putnode.count;
-  ino_t inum = fs_m_in.m_vfs_fs_putnode.inode;
 
-  if ((pn = puffs_pn_nodewalk(global_pu, 0, &inum)) == NULL) {
+  if ((pn = puffs_pn_nodewalk(global_pu, 0, &ino_nr)) == NULL) {
 	/* XXX Probably removed from the list, see puffs_pn_remove() */
 	struct puffs_node *pn_cur, *pn_next;
 	pn_cur = LIST_FIRST(&global_pu->pu_pnode_removed_lst);
 	while (pn_cur) {
 		pn_next = LIST_NEXT(pn_cur, pn_entries);
-		if (pn_cur->pn_va.va_fileid == inum) {
+		if (pn_cur->pn_va.va_fileid == ino_nr) {
 			pn = pn_cur;
 			break;
 		}
@@ -55,8 +52,8 @@ int fs_putnode(void)
   }
 
   if (pn == NULL) {
-	lpuffs_debug("%s:%d putnode: pnode #%ld dev: %d not found\n", __FILE__,
-		__LINE__, inum, fs_dev);
+	lpuffs_debug("%s:%d putnode: pnode #%"PRIu64" dev: %"PRIu64
+		" not found\n", __FILE__, __LINE__, ino_nr, fs_dev);
 	panic("fs_putnode failed");
   }
 
@@ -82,7 +79,9 @@ int fs_putnode(void)
 	while (pn_cur) {
 		pn_next = LIST_NEXT(pn_cur, pn_entries);
 		if (pn_cur->pn_va.va_fileid == ino) {
-			lpuffs_debug("%ld: %d %s %u %u\n", ino, pn_cur->pn_count,
+			lpuffs_debug("%"PRIu64": %d %s %u %u\n",
+				ino,
+				pn_cur->pn_count,
 				pn_cur->pn_po.po_path,
 				pn_cur->pn_po.po_len,
 				pn_cur->pn_po.po_hash);

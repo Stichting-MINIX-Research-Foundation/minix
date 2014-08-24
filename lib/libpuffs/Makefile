@@ -25,7 +25,6 @@ SRCS+=		inode.c link.c misc.c mount.c open.c path.c path_puffs.c \
 CPPFLAGS+= -D_MINIX_SYSTEM
 
 NOGCCERROR=yes
-NOCLANGERROR=yes
 .endif # defined(__MINIX)
 
 .include <bsd.lib.mk>
