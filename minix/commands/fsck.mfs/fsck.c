@@ -46,6 +46,7 @@
 #include <minix/config.h>
 #include <minix/const.h>
 #include <minix/type.h>
+#include <minix/ipc.h>
 #include "mfs/const.h"
 #include "mfs/inode.h"
 #include "mfs/type.h"

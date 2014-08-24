@@ -57,7 +57,6 @@ EXTERN struct super_block {
   int s_nindirs;		/* # indirect zones per indirect block */
   bit_t s_isearch;		/* inodes below this bit number are in use */
   bit_t s_zsearch;		/* all zones below this bit number are in use*/
-  char s_is_root;
 } superblock;
 
 #define IMAP		0	/* operating on the inode bit map */
