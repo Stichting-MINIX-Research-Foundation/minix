@@ -59,7 +59,6 @@ void lmfs_blockschange(dev_t dev, int delta);
 
 /* calls that libminixfs does into fs */
 void fs_blockstats(u64_t *blocks, u64_t *free, u64_t *used);
-int fs_sync(void);
 
 /* get_block arguments */
 #define NORMAL             0    /* forces get_block to do disk read */
