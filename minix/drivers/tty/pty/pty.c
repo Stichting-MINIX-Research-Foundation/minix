@@ -45,7 +45,8 @@ typedef struct pty {
   /* Output buffer. */
   int		ocount;		/* # characters in the buffer */
   char		*ohead, *otail;	/* head and tail of the circular buffer */
-  char		obuf[2048];	/* buffer for bytes going to the pty reader */
+  char		obuf[TTY_OUT_BYTES];
+				/* buffer for bytes going to the pty reader */
 
   /* select() data. */
   unsigned int	select_ops;	/* Which operations do we want to know about? */

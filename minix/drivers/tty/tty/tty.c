@@ -133,6 +133,8 @@ u32_t system_hz;
 u32_t consoleline = CONS_MINOR;
 u32_t kernel_msg_color = 0;
 
+static const char lined[TTLINEDNAMELEN] = "termios";	/* line discipline */
+
 /* SEF functions and variables. */
 static void sef_local_startup(void);
 static int sef_cb_init_fresh(int type, sef_init_info_t *info);
@@ -677,15 +679,19 @@ static int do_ioctl(devminor_t minor, unsigned long request, endpoint_t endpt,
 	beep_x(bell.kb_pitch, ticks);
 	break;
     case TIOCGETD:	/* get line discipline */
-    {
-	int disc = TTYDISC;
-	r = sys_safecopyto(endpt, grant, 0,
-		(vir_bytes) &disc, (vir_bytes) sizeof(disc));
+	i = TTYDISC;
+	r = sys_safecopyto(endpt, grant, 0, (vir_bytes) &i, sizeof(i));
 	break;
-    }
     case TIOCSETD:	/* set line discipline */
 	printf("TTY: TIOCSETD: can't set any other line discipline.\n");
 	r = ENOTTY;
+	break;
+    case TIOCGLINED:	/* get line discipline as string */
+	r = sys_safecopyto(endpt, grant, 0, (vir_bytes) lined, sizeof(lined));
+	break;
+    case TIOCGQSIZE:	/* get input/output queue sizes */
+	i = TTY_IN_BYTES;	/* best we can do.. */
+	r = sys_safecopyto(endpt, grant, 0, (vir_bytes) &i, sizeof(i));
 	break;
     case KIOCSMAP:
 	/* Load a new keymap (only /dev/console). */
