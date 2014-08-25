@@ -308,7 +308,7 @@ main(int argc, char *argv[])
 	} else {
 		if(bblocks < strtol(token[0], (char **) NULL, 10)) {
  			errx(1, "%s: number of blocks given as parameter(%d)"
-				" is too small for given proto file(%d).", 
+				" is too small for given proto file(%ld).", 
 				argv[optind], bblocks, 
 				strtol(token[0], (char **) NULL, 10));
 		};
@@ -432,7 +432,7 @@ main(int argc, char *argv[])
 		    (int)next_inode-1, next_zone);
   }
 
-  if(insertmode) printf("%ld\n", written_fs_size);
+  if(insertmode) printf("%llu\n", written_fs_size);
 
   return(0);
 
@@ -502,7 +502,15 @@ sizeup_dir(struct fs_size * fssize)
 		fssize->zonecount++; /* Symlink contents is always stored a block */
 	} else {
 		if ((f = fopen(token[4], "rb")) == NULL) {
-			warn("dynamic sizing: can't open %s", token[4]);
+/* on minix natively, allow EACCES and skip the entry.
+ * while crossbuilding, always fail on error.
+ */
+#ifdef __minix
+			if(errno == EACCES)
+				warn("dynamic sizing: can't open %s", token[4]);
+			else
+#endif
+				err(1, "dynamic sizing: can't open %s", token[4]);
 		} else if (fseek(f, 0, SEEK_END) < 0) {
 			pexit("dynamic size detection failed: seek to end of %s",
 			    token[4]);
@@ -805,8 +813,15 @@ eat_dir(ino_t parent)
 	} else {
 		/* Regular file. Go read it. */
 		if ((f = open(token[4], O_RDONLY)) < 0) {
-			fprintf(stderr, "%s: Can't open %s: %s\n",
-				progname, token[4], strerror(errno));
+/* on minix natively, allow EACCES and skip the entry.
+ * while crossbuilding, always fail on error.
+ */
+#ifdef __minix
+			if(errno == EACCES)
+				warn("Can't open %s", token[4]);
+			else
+#endif
+				err(1, "Can't open %s", token[4]);
 		} else {
 			eat_file(n, f);
 		}
@@ -1103,7 +1118,7 @@ alloc_inode(int mode, int usrid, int grpid)
 
   num = next_inode++;
   if (num > nrinodes) {
-  	pexit("File system does not have enough inodes (only %d)", nrinodes);
+  	pexit("File system does not have enough inodes (only %llu)", nrinodes);
   }
   b = ((num - 1) / inodes_per_block) + inode_offset;
   off = (num - 1) % inodes_per_block;
@@ -1114,7 +1129,7 @@ alloc_inode(int mode, int usrid, int grpid)
 
   get_block(b, inodes);
   if (inodes[off].i_mode) {
-	pexit("allocation new inode %d with non-zero mode - this cannot happen",
+	pexit("allocation new inode %llu with non-zero mode - this cannot happen",
 		num);
   }
   inodes[off].i_mode = mode;
@@ -1614,7 +1629,7 @@ mkfs_write(void * buf, size_t count)
 	if(w < 0)
 		err(1, "mkfs_write: write failed");
 	if(w != count)
-		errx(1, "mkfs_write: short write: %ld != %ld", w, count);
+		errx(1, "mkfs_write: short write: %zd != %zu", w, count);
 
 	/* Check if this has made the FS any bigger; count bytes after offset */
 	fssize = mkfs_seek(0, SEEK_CUR);

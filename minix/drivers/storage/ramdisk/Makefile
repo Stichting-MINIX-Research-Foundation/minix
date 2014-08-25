@@ -151,8 +151,9 @@ CLEANFILES += ${lib}.so.0
 ${lib}.so.0:${PROGROOT}/lib/${lib}/${lib}.so.0
 	${INSTALL} $> $@
 
-${PROGROOT}/lib/${lib}/${lib}.so.0:
-	${MAKE} -C ${NETBSDSRCDIR}/lib/${lib} all
+# BJG - Don't invoke parallel Makes
+#${PROGROOT}/lib/${lib}/${lib}.so.0:
+#	${MAKE} -C ${NETBSDSRCDIR}/lib/${lib} all
 .endfor
 
 .for lib in ${PROG_MINIXLIBS}
@@ -161,8 +162,9 @@ CLEANFILES += ${lib}.so.0
 ${lib}.so.0:${PROGROOT}/minix/lib/${lib}/${lib}.so.0
 	${INSTALL} $> $@
 
-${PROGROOT}/minix/lib/${lib}/${lib}.so.0:
-	${MAKE} -C ${NETBSDSRCDIR}/minix/lib/${lib} all
+# BJG - Don't invoke parallel Makes
+#${PROGROOT}/minix/lib/${lib}/${lib}.so.0:
+#	${MAKE} -C ${NETBSDSRCDIR}/minix/lib/${lib} all
 .endfor
 
 # Generate dependencies rules for binaries
@@ -170,8 +172,9 @@ ${PROGROOT}/minix/lib/${lib}/${lib}.so.0:
 ${prog}: ${PROGROOT}/${dir.${prog}}/${prog}
 	${INSTALL} $> $@
 
-${PROGROOT}/${dir.${prog}}/${prog}:
-	${MAKE} -C ${NETBSDSRCDIR}/${dir.${prog}} all
+# BJG - don't invoke parallel Makes
+#${PROGROOT}/${dir.${prog}}/${prog}:
+#	${MAKE} -C ${NETBSDSRCDIR}/${dir.${prog}} all
 .endfor # prog
 
 realall image:	proto.gen ${ETC:C/^/etc\//} ${EXTRA} \
@@ -182,7 +185,6 @@ realall image:	proto.gen ${ETC:C/^/etc\//} ${EXTRA} \
 etc/pwd.db etc/spwd.db etc/passwd: etc/master.passwd
 
 etc/master.passwd: ${NETBSDSRCDIR}/etc/master.passwd
-	rm -rf ${.OBJDIR}/etc/
 	mkdir -p ${.OBJDIR}/etc
 	${INSTALL} $> $@
 	${TOOL_PWD_MKDB} -V 0 -p -d . etc/master.passwd
@@ -201,8 +203,9 @@ proto.dev.mtree:
 proto.dev: proto.dev.mtree etc/pwd.db etc/spwd.db etc/passwd etc/group
 	${TOOL_MTREE} -f ${.TARGET}.mtree -N ${.OBJDIR}/etc -C -K device | \
 		${TOOL_TOPROTO} | ${TOOL_SED} -e '1,4d' | \
-		${TOOL_SED} -e '$$d' |${TOOL_SED} -e '$$d' > ${.TARGET}.tmp && \
-		mv ${.TARGET}.tmp ${.TARGET}
+		${TOOL_SED} -e '$$d' |${TOOL_SED} -e '$$d' > ${.TARGET}.tmp
+	grep console ${.TARGET}.tmp	# sanity check; is there a console entry?
+	mv ${.TARGET}.tmp ${.TARGET}
 
 proto.gen: ${PROTO} ${PROTO_FILES} proto.dev ${PROGRAMS}
 	${STRIP} ${PROGRAMS}

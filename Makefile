@@ -138,12 +138,13 @@ _SRC_TOP_OBJ_=
 # BUILD_${dir}=no, or that have no ${dir}/Makefile.
 #
 _SUBDIR=	tools lib include gnu external crypto/external bin games
-.if defined(__MINIX)
-_SUBDIR+=	minix
-.endif # defined(__MINIX)
 _SUBDIR+=	libexec sbin usr.bin
 _SUBDIR+=	usr.sbin share sys etc tests compat
 _SUBDIR+=	.WAIT rescue .WAIT distrib regress
+.if defined(__MINIX)
+# the minix subdir depends on some other things (e.g. lib/) 
+_SUBDIR+=	.WAIT minix
+.endif # defined(__MINIX)
 
 .for dir in ${_SUBDIR}
 .if "${dir}" == ".WAIT" \

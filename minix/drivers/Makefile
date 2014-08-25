@@ -20,6 +20,8 @@ SUBDIR+=	vmm_guest
 SUBDIR+=	bus
 SUBDIR+=	tty
 SUBDIR+=	hid
-SUBDIR+=	storage
+
+# BJG - build storage last as the ramdisk depends on some other things
+SUBDIR+=	.WAIT storage
 
 .include <bsd.subdir.mk>
