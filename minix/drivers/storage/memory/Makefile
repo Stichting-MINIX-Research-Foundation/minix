@@ -26,8 +26,9 @@ touch-genfiles:
 	${OBJCOPY} -Ibinary -B${MACHINE_CPU} -O${MACHINE_GNU_PLATFORM} $< $@
 
 CLEANFILES+=	../ramdisk/image
-../ramdisk/image: .PHONY
-	${MAKE} -C ${RAMDISK_PATH} image
+# BJG - don't invoke parallel Makes
+#../ramdisk/image: .PHONY
+#	${MAKE} -C ${RAMDISK_PATH} image
 
 CLEANFILES+=	imgrd.mfs
 imgrd.mfs: ../ramdisk/image

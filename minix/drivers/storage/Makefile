@@ -17,7 +17,9 @@ SUBDIR+=	at_wini
 SUBDIR+=	floppy
 .endif # ${MACHINE_ARCH} == "i386"
 
-# memory driver must be last for ramdisk image
-SUBDIR+=	ramdisk .WAIT memory
+# memory driver must be last for ramdisk image.
+# Everything else must be done before ramdisk as it needs
+# executables from other targets.
+SUBDIR+=	.WAIT ramdisk .WAIT memory
 
 .include <bsd.subdir.mk>

@@ -7,6 +7,12 @@ DPADD=	${LIBUTIL}
 LDADD=	-lutil
 CPPFLAGS+=	-DMFS_DEV_IF_NO_CONSOLE -DSUPPORT_UTMP -DSUPPORT_UTMPX
 
+#.if defined(__MINIX)
+# BJG - by default produce line numbers in case init exits without producing
+# output
+DBG=-g
+#.endif
+
 .ifdef	 INIT_CHROOT
 CPPFLAGS+=	-DCHROOT
 .elifdef SMALLPROG

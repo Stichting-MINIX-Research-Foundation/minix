@@ -502,7 +502,7 @@ sizeup_dir(struct fs_size * fssize)
 		fssize->zonecount++; /* Symlink contents is always stored a block */
 	} else {
 		if ((f = fopen(token[4], "rb")) == NULL) {
-			warn("dynamic sizing: can't open %s", token[4]);
+			errx(1, "dynamic sizing: can't open %s", token[4]);
 		} else if (fseek(f, 0, SEEK_END) < 0) {
 			pexit("dynamic size detection failed: seek to end of %s",
 			    token[4]);
@@ -805,8 +805,7 @@ eat_dir(ino_t parent)
 	} else {
 		/* Regular file. Go read it. */
 		if ((f = open(token[4], O_RDONLY)) < 0) {
-			fprintf(stderr, "%s: Can't open %s: %s\n",
-				progname, token[4], strerror(errno));
+			err(1, "Can't open %s", token[4]);
 		} else {
 			eat_file(n, f);
 		}
