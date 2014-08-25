@@ -314,7 +314,8 @@ int dump_core;			/* flag indicating whether to dump core */
   vm_notify_sig_wrapper(rmp->mp_endpoint);
   if (proc_nr_e == INIT_PROC_NR)
   {
-	printf("PM: INIT died\n");
+	printf("PM: INIT died with exit status %d; showing stacktrace\n", exit_status);
+	sys_diagctl_stacktrace(proc_nr_e);
 	return;
   }
   if (proc_nr_e == VFS_PROC_NR)

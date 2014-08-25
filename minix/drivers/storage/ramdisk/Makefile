@@ -201,8 +201,9 @@ proto.dev.mtree:
 proto.dev: proto.dev.mtree etc/pwd.db etc/spwd.db etc/passwd etc/group
 	${TOOL_MTREE} -f ${.TARGET}.mtree -N ${.OBJDIR}/etc -C -K device | \
 		${TOOL_TOPROTO} | ${TOOL_SED} -e '1,4d' | \
-		${TOOL_SED} -e '$$d' |${TOOL_SED} -e '$$d' > ${.TARGET}.tmp && \
-		mv ${.TARGET}.tmp ${.TARGET}
+		${TOOL_SED} -e '$$d' |${TOOL_SED} -e '$$d' > ${.TARGET}.tmp
+	grep console ${.TARGET}.tmp	# sanity check; is there a console entry?
+	mv ${.TARGET}.tmp ${.TARGET}
 
 proto.gen: ${PROTO} ${PROTO_FILES} proto.dev ${PROGRAMS}
 	${STRIP} ${PROGRAMS}
