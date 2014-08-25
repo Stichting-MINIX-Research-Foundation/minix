@@ -61,7 +61,11 @@
 #define CTRL(x)	(x&037)
 #define	CEOF		CTRL('d')
 #define	CEOL		((unsigned char)'\377')	/* XXX avoid _POSIX_VDISABLE */
+#if defined(__minix)
+#define	CERASE		CTRL('h')
+#else
 #define	CERASE		0177
+#endif /* defined(__minix) */
 #define	CINTR		CTRL('c')
 #define	CSTATUS		CTRL('t')
 #define	CKILL		CTRL('u')
