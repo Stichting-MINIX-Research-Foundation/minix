@@ -8,6 +8,7 @@
 #define PTYPX_MINOR	 192
 
 #define TTY_IN_BYTES     256	/* tty input queue size */
+#define TTY_OUT_BYTES   2048	/* tty output queue size */
 #define TAB_SIZE           8	/* distance between tab stops */
 #define TAB_MASK           7	/* mask to compute a tab stop position */
 
