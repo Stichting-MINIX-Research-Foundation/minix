@@ -73,7 +73,6 @@ register struct super_block *sp; /* pointer to a superblock */
   int r;
   /* group descriptors, sp->s_group_desc points to this. */
   static struct group_desc *group_descs;
-  char *buf;
   block_t gd_size; /* group descriptors table size in blocks */
   int gdt_position;
   static char superblock_buf[1024];
@@ -149,16 +148,10 @@ register struct super_block *sp; /* pointer to a superblock */
 
   gd_size = sp->s_gdb_count * sp->s_block_size;
 
-  buf = 0;
-  STATICINIT(buf, gd_size);
-  group_descs = (struct group_desc *) buf;
-
-  buf = 0;
-  STATICINIT(buf, gd_size);
-  ondisk_group_descs = (struct group_desc *) buf;
-
-  if (!group_descs || !ondisk_group_descs)
-	panic("can't allocate memory for gdt buffer");
+  if(!(group_descs = malloc(gd_size * sizeof(struct group_desc))))
+	panic("can't allocate group desc array");
+  if(!(ondisk_group_descs = malloc(gd_size * sizeof(struct group_desc))))
+	panic("can't allocate group desc array");
 
   /* s_first_data_block (block number, where superblock is stored)
    * is 1 for 1Kb blocks and 0 for larger blocks.
