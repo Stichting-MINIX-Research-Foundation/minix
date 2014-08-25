@@ -84,6 +84,8 @@ static struct termios termios_defaults = {
 };
 static struct winsize winsize_defaults;	/* = all zeroes */
 
+static const char lined[TTLINEDNAMELEN] = "termios";	/* line discipline */
+
 /* Global variables for the TTY task (declared extern in tty.h). */
 tty_t tty_table[NR_PTYS];
 u32_t system_hz;
@@ -391,17 +393,25 @@ static int do_ioctl(devminor_t minor, unsigned long request, endpoint_t endpt,
 	sigchar(tp, SIGWINCH, 0);
 	break;
     case TIOCGETD:	/* get line discipline */
-    {
-	int disc = TTYDISC;
-	r = sys_safecopyto(endpt, grant, 0,
-		(vir_bytes) &disc, (vir_bytes) sizeof(disc));
+	i = TTYDISC;
+	r = sys_safecopyto(endpt, grant, 0, (vir_bytes) &i, sizeof(i));
 	break;
-    }
     case TIOCSETD:	/* set line discipline */
 	printf("TTY: TIOCSETD: can't set any other line discipline.\n");
 	r = ENOTTY;
 	break;
-
+    case TIOCGLINED:	/* get line discipline as string */
+	r = sys_safecopyto(endpt, grant, 0, (vir_bytes) lined, sizeof(lined));
+	break;
+    case TIOCGQSIZE:	/* get input/output queue sizes */
+	/* Not sure what to report here. We are using input and output queues
+	 * of different sizes, and the IOCTL allows for one single value for
+	 * both. So far this seems to be just for stty(1) so let's just report
+	 * the larger of the two. TODO: revisit queue sizes altogether.
+	 */
+	i = MAX(TTY_IN_BYTES, TTY_OUT_BYTES);
+	r = sys_safecopyto(endpt, grant, 0, (vir_bytes) &i, sizeof(i));
+	break;
     case TIOCSCTTY:
 	/* Process sets this tty as its controlling tty */
 	tp->tty_pgrp = user_endpt;
