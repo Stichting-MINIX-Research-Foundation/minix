@@ -5,6 +5,7 @@
 #include "fs.h"
 #include <fcntl.h>
 #include <string.h>
+#include <stdlib.h>
 #include <minix/com.h>
 #include <sys/stat.h>
 #include "buf.h"
@@ -60,9 +61,9 @@ int fs_readsuper()
   }
 
   /* Fill in the super block. */
-  STATICINIT(superblock, 1);
-  if (!superblock)
+  if(!(superblock = malloc(sizeof(*superblock))))
 	panic("Can't allocate memory for superblock.");
+
   superblock->s_dev = fs_dev;	/* read_super() needs to know which dev */
   r = read_super(superblock);
 
