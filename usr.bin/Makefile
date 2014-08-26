@@ -29,7 +29,7 @@ SUBDIR= asa \
 	tr true tsort tty ul uname unexpand unifdef \
 	uniq units unvis unzip users \
 	uuidgen vis \
-	\
+	w \
 	wall wc what whereis who whois \
 	write xargs xinstall xstr yes
 

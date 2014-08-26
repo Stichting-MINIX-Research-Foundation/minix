@@ -538,6 +538,7 @@
 ./usr/bin/unxz				minix-sys
 ./usr/bin/unzip				minix-sys
 ./usr/bin/update			minix-sys
+./usr/bin/uptime			minix-sys
 ./usr/bin/users				minix-sys
 ./usr/bin/uud				minix-sys
 ./usr/bin/uudecode			minix-sys
@@ -549,6 +550,7 @@
 ./usr/bin/view				minix-sys
 ./usr/bin/vis				minix-sys
 ./usr/bin/vol				minix-sys
+./usr/bin/w				minix-sys
 ./usr/bin/wall				minix-sys
 ./usr/bin/wc				minix-sys
 ./usr/bin/what				minix-sys
@@ -2529,6 +2531,7 @@
 ./usr/man/man1/unvis.1			minix-sys
 ./usr/man/man1/unxz.1			minix-sys
 ./usr/man/man1/unzip.1			minix-sys
+./usr/man/man1/uptime.1			minix-sys
 ./usr/man/man1/users.1			minix-sys
 ./usr/man/man1/uud.1			minix-sys
 ./usr/man/man1/uue.1			minix-sys
@@ -2537,6 +2540,7 @@
 ./usr/man/man1/view.1			minix-sys
 ./usr/man/man1/vis.1			minix-sys
 ./usr/man/man1/vol.1			minix-sys
+./usr/man/man1/w.1			minix-sys
 ./usr/man/man1/wait.1			minix-sys
 ./usr/man/man1/wall.1			minix-sys
 ./usr/man/man1/wc.1			minix-sys
