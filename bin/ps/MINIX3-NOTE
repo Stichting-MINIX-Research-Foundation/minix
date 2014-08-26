@@ -1,0 +1,3 @@
+These files are here because they are used from usr.bin/w/Makefile.
+We have our own, completely independent implementation of ps(1).
+Thus, please do NOT include this directory in the parent Makefile.
