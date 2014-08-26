@@ -50,7 +50,8 @@ static void update_bspec(dev_t dev, endpoint_t fs_e, int send_drv_e)
  */
   struct vnode *vp;
   struct dmap *dp;
-  int r, major;
+  devmajor_t major;
+  int r;
 
   for (vp = &vnode[0]; vp < &vnode[NR_VNODES]; ++vp)
 	if (vp->v_ref_count > 0 && S_ISBLK(vp->v_mode) && vp->v_sdev == dev) {

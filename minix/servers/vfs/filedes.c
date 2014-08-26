@@ -209,7 +209,7 @@ void invalidate_filp(struct filp *rfilp)
 /*===========================================================================*
  *			invalidate_filp_by_char_major			     *
  *===========================================================================*/
-void invalidate_filp_by_char_major(int major)
+void invalidate_filp_by_char_major(devmajor_t major)
 {
   struct filp *f;
 
