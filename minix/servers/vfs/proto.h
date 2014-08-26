@@ -40,7 +40,7 @@ void cdev_reply(void);
 int bdev_open(dev_t dev, int access);
 int bdev_close(dev_t dev);
 void bdev_reply(void);
-void bdev_up(int major);
+void bdev_up(devmajor_t major);
 int do_ioctl(void);
 
 /* dmap.c */
@@ -48,10 +48,10 @@ void lock_dmap(struct dmap *dp);
 void unlock_dmap(struct dmap *dp);
 int do_mapdriver(void);
 void init_dmap(void);
-int dmap_driver_match(endpoint_t proc, int major);
+int dmap_driver_match(endpoint_t proc, devmajor_t major);
 void dmap_endpt_up(endpoint_t proc_nr, int is_blk);
 struct dmap *get_dmap(endpoint_t proc_e);
-struct dmap *get_dmap_by_major(int major);
+struct dmap *get_dmap_by_major(devmajor_t major);
 void dmap_unmap_by_endpt(endpoint_t proc_nr);
 int map_service(struct rprocpub *rpub);
 
@@ -76,7 +76,7 @@ void unlock_filp(struct filp *filp);
 void unlock_filps(struct filp *filp1, struct filp *filp2);
 void invalidate_filp(struct filp *);
 void invalidate_filp_by_endpt(endpoint_t proc_e);
-void invalidate_filp_by_char_major(int major);
+void invalidate_filp_by_char_major(devmajor_t major);
 void close_filp(struct filp *fp);
 int do_copyfd(void);
 
@@ -328,8 +328,8 @@ int do_select(void);
 void init_select(void);
 void select_callback(struct filp *, int ops);
 void select_forget(void);
-void select_reply1(endpoint_t driver_e, int minor, int status);
-void select_reply2(endpoint_t driver_e, int minor, int status);
+void select_reply1(endpoint_t driver_e, devminor_t minor, int status);
+void select_reply2(endpoint_t driver_e, devminor_t minor, int status);
 void select_timeout_check(minix_timer_t *);
 void select_unsuspend_by_endpt(endpoint_t proc);
 

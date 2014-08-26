@@ -84,7 +84,8 @@ int do_creat(void)
 int common_open(char path[PATH_MAX], int oflags, mode_t omode)
 {
 /* Common code from do_creat and do_open. */
-  int b, r, exist = TRUE, major_dev;
+  int b, r, exist = TRUE;
+  devmajor_t major_dev;
   dev_t dev;
   mode_t bits;
   struct filp *filp, *filp2;

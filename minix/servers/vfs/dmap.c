@@ -110,7 +110,8 @@ int do_mapdriver(void)
  * etc), and its label. This label is registered with DS, and allows us to
  * retrieve the driver's endpoint.
  */
-  int r, major, slot;
+  int r, slot;
+  devmajor_t major;
   endpoint_t endpoint;
   vir_bytes label_vir;
   size_t label_len;
@@ -165,7 +166,8 @@ int do_mapdriver(void)
 void dmap_unmap_by_endpt(endpoint_t proc_e)
 {
 /* Lookup driver in dmap table by endpoint and unmap it */
-  int major, r;
+  devmajor_t major;
+  int r;
 
   for (major = 0; major < NR_DEVICES; major++) {
 	if (dmap_driver_match(proc_e, major)) {
@@ -233,7 +235,7 @@ void init_dmap(void)
 /*===========================================================================*
  *				dmap_driver_match	 		     *
  *===========================================================================*/
-int dmap_driver_match(endpoint_t proc, int major)
+int dmap_driver_match(endpoint_t proc, devmajor_t major)
 {
   if (major < 0 || major >= NR_DEVICES) return(0);
   if (dmap[major].dmap_driver != NONE && dmap[major].dmap_driver == proc)
@@ -246,7 +248,7 @@ int dmap_driver_match(endpoint_t proc, int major)
  *				dmap_by_major		 		     *
  *===========================================================================*/
 struct dmap *
-get_dmap_by_major(int major)
+get_dmap_by_major(devmajor_t major)
 {
 	if (major < 0 || major >= NR_DEVICES) return(NULL);
 	if (dmap[major].dmap_driver == NONE) return(NULL);
@@ -261,8 +263,7 @@ void dmap_endpt_up(endpoint_t proc_e, int is_blk)
 /* A device driver with endpoint proc_e has been restarted. Go tell everyone
  * that might be blocking on it that this device is 'up'.
  */
-
-  int major;
+  devmajor_t major;
   struct dmap *dp;
   struct worker_thread *worker;
 
@@ -303,8 +304,8 @@ struct dmap *get_dmap(endpoint_t proc_e)
 {
 /* See if 'proc_e' endpoint belongs to a valid dmap entry. If so, return a
  * pointer */
+  devmajor_t major;
 
-  int major;
   for (major = 0; major < NR_DEVICES; major++)
 	if (dmap_driver_match(proc_e, major))
 		return(&dmap[major]);

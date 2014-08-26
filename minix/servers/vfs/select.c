@@ -362,7 +362,8 @@ static int select_request_char(struct filp *f, int *ops, int block)
  * result processing to be deferred. This function MUST NOT block its calling
  * thread. The given filp may or may not be locked.
  */
-  int r, rops, major;
+  devmajor_t major;
+  int r, rops;
   struct dmap *dp;
 
   major = major(f->filp_vno->v_sdev);
@@ -596,7 +597,7 @@ static void select_cancel_filp(struct filp *f)
 /* Reduce the number of select users of this filp. This function MUST NOT block
  * its calling thread.
  */
-  dev_t major;
+  devmajor_t major;
 
   assert(f);
   assert(f->filp_selectors > 0);
@@ -729,8 +730,8 @@ void select_timeout_check(minix_timer_t *timer)
 void select_unsuspend_by_endpt(endpoint_t proc_e)
 {
 /* Revive blocked processes when a driver has disappeared */
-
-  int fd, s, major;
+  devmajor_t major;
+  int fd, s;
   struct selectentry *se;
   struct filp *f;
 
@@ -765,15 +766,12 @@ void select_unsuspend_by_endpt(endpoint_t proc_e)
 /*===========================================================================*
  *				select_reply1				     *
  *===========================================================================*/
-void select_reply1(driver_e, minor, status)
-endpoint_t driver_e;
-int minor;
-int status;
+void select_reply1(endpoint_t driver_e, devminor_t minor, int status)
 {
 /* Handle the initial reply to CDEV_SELECT request. This function MUST NOT
  * block its calling thread.
  */
-  int major;
+  devmajor_t major;
   dev_t dev;
   struct filp *f;
   struct dmap *dp;
@@ -863,16 +861,14 @@ int status;
 /*===========================================================================*
  *				select_reply2				     *
  *===========================================================================*/
-void select_reply2(driver_e, minor, status)
-endpoint_t driver_e;
-int minor;
-int status;
+void select_reply2(endpoint_t driver_e, devminor_t minor, int status)
 {
 /* Handle secondary reply to DEV_SELECT request. A secondary reply occurs when
  * the select request is 'blocking' until an operation becomes ready. This
  * function MUST NOT block its calling thread.
  */
-  int major, slot, found, fd;
+  int slot, found, fd;
+  devmajor_t major;
   dev_t dev;
   struct filp *f;
   struct dmap *dp;
