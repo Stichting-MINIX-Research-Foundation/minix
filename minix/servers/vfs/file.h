@@ -29,6 +29,7 @@ EXTERN struct filp {
 
   /* following are for fd-type-specific select() */
   int filp_pipe_select_ops;
+  dev_t filp_char_select_dev;
 } filp[NR_FILPS];
 
 #define FILP_CLOSED	0	/* filp_mode: associated device closed/gone */

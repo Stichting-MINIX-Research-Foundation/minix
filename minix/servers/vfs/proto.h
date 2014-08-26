@@ -34,6 +34,7 @@ int cdev_open(dev_t dev, int flags);
 int cdev_close(dev_t dev);
 int cdev_io(int op, dev_t dev, endpoint_t proc_e, vir_bytes buf, off_t pos,
 	unsigned long bytes, int flags);
+dev_t cdev_map(dev_t dev, struct fproc *rfp);
 int cdev_select(dev_t dev, int ops);
 int cdev_cancel(dev_t dev);
 void cdev_reply(void);

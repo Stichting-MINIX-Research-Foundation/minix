@@ -200,6 +200,35 @@ static cp_grant_id_t make_grant(endpoint_t driver_e, endpoint_t user_e, int op,
 }
 
 /*===========================================================================*
+ *				cdev_map				     *
+ *===========================================================================*/
+dev_t cdev_map(dev_t dev, struct fproc *rfp)
+{
+/* Map the given device number to a real device number, remapping /dev/tty to
+ * the given process's controlling terminal if it has one. Perform a bounds
+ * check on the resulting device's major number, and return NO_DEV on failure.
+ * This function is idempotent but not used that way.
+ */
+  devmajor_t major;
+
+  /* First cover one special case: /dev/tty, the magic device that translates
+   * to the controlling tty.
+   */
+  if ((major = major(dev)) == CTTY_MAJOR) {
+	/* No controlling terminal? Fail the request. */
+	if (rfp->fp_tty == NO_DEV) return NO_DEV;
+
+	/* Substitute the controlling terminal device. */
+	dev = rfp->fp_tty;
+	major = major(dev);
+  }
+
+  if (major < 0 || major >= NR_DEVICES) return NO_DEV;
+
+  return dev;
+}
+
+/*===========================================================================*
  *				cdev_get				     *
  *===========================================================================*/
 static struct dmap *cdev_get(dev_t dev, devminor_t *minor_dev)
@@ -207,32 +236,21 @@ static struct dmap *cdev_get(dev_t dev, devminor_t *minor_dev)
 /* Obtain the dmap structure for the given device, if a valid driver exists for
  * the major device. Perform redirection for CTTY_MAJOR.
  */
-  devmajor_t major_dev;
   struct dmap *dp;
   int slot;
 
-  /* First cover one special case: /dev/tty, the magic device that translates
-   * to the controlling tty.
-   */
-  if (major(dev) == CTTY_MAJOR) {
-	/* No controlling terminal? Fail the request. */
-	if (fp->fp_tty == 0) return(NULL);
-
-	/* Substitute the controlling terminal device. */
-	dev = fp->fp_tty;
-  }
+  /* Remap /dev/tty as needed. Perform a bounds check on the major number. */
+  if ((dev = cdev_map(dev, fp)) == NO_DEV)
+	return(NULL);
 
   /* Determine task dmap. */
-  major_dev = major(dev);
-  if (major_dev < 0 || major_dev >= NR_DEVICES) return(NULL);
-
-  dp = &dmap[major_dev];
+  dp = &dmap[major(dev)];
 
   /* See if driver is roughly valid. */
   if (dp->dmap_driver == NONE) return(NULL);
 
   if (isokendpt(dp->dmap_driver, &slot) != OK) {
-	printf("VFS: cdev_get: old driver for major %x (%d)\n", major_dev,
+	printf("VFS: cdev_get: old driver for major %x (%d)\n", major(dev),
 		dp->dmap_driver);
 	return(NULL);
   }
@@ -531,21 +549,27 @@ int do_ioctl(void)
  *===========================================================================*/
 int cdev_select(dev_t dev, int ops)
 {
-/* Initiate a select call on a device. Return OK iff the request was sent. */
-  devminor_t minor_dev;
+/* Initiate a select call on a device. Return OK iff the request was sent.
+ * This function explicitly bypasses cdev_get() since it must not do CTTY
+ * mapping, because a) the caller already has done that, b) "fp" may be wrong.
+ */
+  devmajor_t major;
   message dev_mess;
   struct dmap *dp;
   int r;
 
-  /* Determine task dmap. */
-  if ((dp = cdev_get(dev, &minor_dev)) == NULL)
-	return(EIO);
+  /* Determine task dmap, without CTTY mapping. */
+  assert(dev != NO_DEV);
+  major = major(dev);
+  assert(major >= 0 && major < NR_DEVICES);
+  assert(major != CTTY_MAJOR);
+  dp = &dmap[major];
 
   /* Prepare the request message. */
   memset(&dev_mess, 0, sizeof(dev_mess));
 
   dev_mess.m_type = CDEV_SELECT;
-  dev_mess.m_vfs_lchardriver_select.minor = minor_dev;
+  dev_mess.m_vfs_lchardriver_select.minor = minor(dev);
   dev_mess.m_vfs_lchardriver_select.ops = ops;
 
   /* Send the request to the driver. */
