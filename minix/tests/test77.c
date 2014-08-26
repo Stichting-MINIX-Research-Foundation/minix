@@ -482,6 +482,157 @@ test77e(void)
 	if (sigaction(SIGUSR1, &usr_oact, NULL) < 0) e(16);
 }
 
+/*
+ * Test basic select functionality on /dev/tty.  While this test should not be
+ * part of this test set, we already have all the infrastructure we need here.
+ */
+static void
+test77f(void)
+{
+	struct sigaction act, oact;
+	char c, pname[PATH_MAX], tname[PATH_MAX];
+	struct timeval tv;
+	fd_set fd_set;
+	int fd, maxfd, masterfd, slavefd;
+
+	subtest = 6;
+
+	/* We do not want to get SIGHUP signals in this test. */
+	memset(&act, 0, sizeof(act));
+	act.sa_handler = SIG_IGN;
+	if (sigaction(SIGHUP, &act, &oact) < 0) e(1);
+
+	/* Get master and slave device names for a free pseudo terminal. */
+	get_names(pname, tname);
+
+	if ((masterfd = open(pname, O_RDWR | O_NOCTTY)) < 0) e(2);
+
+	switch (fork()) {
+	case 0:
+		if (setsid() < 0) e(3);
+
+		close(masterfd);
+
+		if ((slavefd = open(tname, O_RDWR)) < 0) e(4);
+
+		if ((fd = open("/dev/tty", O_RDWR)) < 0) e(5);
+
+		make_raw(fd);
+
+		/* Without slave input, /dev/tty is not ready for reading. */
+		FD_ZERO(&fd_set);
+		FD_SET(fd, &fd_set);
+		tv.tv_sec = 0;
+		tv.tv_usec = 0;
+
+		if (select(fd + 1, &fd_set, NULL, NULL, &tv) != 0) e(6);
+		if (FD_ISSET(fd, &fd_set)) e(7);
+
+		FD_SET(fd, &fd_set);
+		tv.tv_sec = 0;
+		tv.tv_usec = 10000;
+
+		if (select(fd + 1, &fd_set, NULL, NULL, &tv) != 0) e(8);
+		if (FD_ISSET(fd, &fd_set)) e(9);
+
+		/* It will be ready for writing, though. */
+		FD_SET(fd, &fd_set);
+
+		if (select(fd + 1, NULL, &fd_set, NULL, NULL) != 1) e(10);
+		if (!FD_ISSET(fd, &fd_set)) e(11);
+
+		/* Test mixing file descriptors to the same terminal. */
+		FD_ZERO(&fd_set);
+		FD_SET(fd, &fd_set);
+		FD_SET(slavefd, &fd_set);
+		tv.tv_sec = 0;
+		tv.tv_usec = 10000;
+
+		maxfd = fd > slavefd ? fd : slavefd;
+		if (select(maxfd + 1, &fd_set, NULL, NULL, &tv) != 0) e(12);
+		if (FD_ISSET(fd, &fd_set)) e(13);
+		if (FD_ISSET(slavefd, &fd_set)) e(14);
+
+		/* The delayed echo on the master must wake up our select. */
+		c = 'A';
+		if (write(slavefd, &c, sizeof(c)) != sizeof(c)) e(15);
+
+		FD_ZERO(&fd_set);
+		FD_SET(fd, &fd_set);
+
+		if (select(fd + 1, &fd_set, NULL, NULL, NULL) != 1) e(16);
+		if (!FD_ISSET(fd, &fd_set)) e(17);
+
+		/* Select must now still flag readiness for reading. */
+		tv.tv_sec = 0;
+		tv.tv_usec = 0;
+
+		if (select(fd + 1, &fd_set, NULL, NULL, &tv) != 1) e(18);
+		if (!FD_ISSET(fd, &fd_set)) e(19);
+
+		/* That is, until we read the byte. */
+		if (read(slavefd, &c, sizeof(c)) != sizeof(c)) e(20);
+		if (c != 'B') e(21);
+
+		if (select(fd + 1, &fd_set, NULL, NULL, &tv) != 0) e(22);
+		if (FD_ISSET(fd, &fd_set)) e(23);
+
+		/* Ask the parent to close the master. */
+		c = 'C';
+		if (write(slavefd, &c, sizeof(c)) != sizeof(c)) e(24);
+
+		FD_SET(fd, &fd_set);
+
+		/* The closure must cause an EOF condition on the slave. */
+		if (select(fd + 1, &fd_set, NULL, NULL, NULL) != 1) e(25);
+		if (!FD_ISSET(fd, &fd_set)) e(26);
+
+		if (select(fd + 1, &fd_set, NULL, NULL, NULL) != 1) e(27);
+		if (!FD_ISSET(fd, &fd_set)) e(28);
+
+		if (read(slavefd, &c, sizeof(c)) != 0) e(29);
+
+		exit(errct);
+	case -1:
+		e(30);
+	default:
+		/* Wait for the child to write something to the slave. */
+		FD_ZERO(&fd_set);
+		FD_SET(masterfd, &fd_set);
+
+		if (select(masterfd + 1, &fd_set, NULL, NULL, NULL) != 1)
+			e(31);
+		if (!FD_ISSET(masterfd, &fd_set)) e(32);
+
+		if (read(masterfd, &c, sizeof(c)) != sizeof(c)) e(33);
+		if (c != 'A') e(34);
+
+		/* Write a reply once the child is blocked in its select. */
+		tv.tv_sec = 1;
+		tv.tv_usec = 0;
+		if (select(masterfd + 1, &fd_set, NULL, NULL, &tv) != 0)
+			e(35);
+
+		c = 'B';
+		if (write(masterfd, &c, sizeof(c)) != sizeof(c)) e(36);
+
+		/* Wait for the child to request closing the master. */
+		if (read(masterfd, &c, sizeof(c)) != sizeof(c)) e(37);
+		if (c != 'C') e(38);
+
+		/* Close the master once the child is blocked in its select. */
+		sleep(1);
+
+		close(masterfd);
+
+		break;
+	}
+
+	if (waitchild() < 0) e(39);
+
+	if (sigaction(SIGHUP, &oact, NULL) < 0) e(28);
+}
+
 int
 main(int argc, char **argv)
 {
@@ -500,6 +651,7 @@ main(int argc, char **argv)
 		if (m & 0x04) test77c();
 		if (m & 0x08) test77d();
 		if (m & 0x10) test77e();
+		if (m & 0x20) test77f();
 	}
 
 	quit();

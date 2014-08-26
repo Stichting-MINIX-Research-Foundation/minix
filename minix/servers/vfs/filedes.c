@@ -119,6 +119,7 @@ int get_fd(struct fproc *rfp, int start, mode_t bits, int *k, struct filp **fpt)
 		f->filp_selectors = 0;
 		f->filp_select_ops = 0;
 		f->filp_pipe_select_ops = 0;
+		f->filp_char_select_dev = NO_DEV;
 		f->filp_flags = 0;
 		f->filp_select_flags = 0;
 		f->filp_softlock = NULL;
