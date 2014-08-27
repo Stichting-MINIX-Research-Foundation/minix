@@ -126,6 +126,7 @@ static int pty_master_close(devminor_t minor)
 	pp->state = 0;
   } else {
 	pp->state |= PTY_CLOSED;
+	tp->tty_termios.c_ospeed = B0; /* cause EOF on slave side */
 	sigchar(tp, SIGHUP, 1);
   }
 

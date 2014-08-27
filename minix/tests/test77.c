@@ -20,7 +20,7 @@ static int sighups;		/* number of SIGHUP signals received */
 /*
  * Signal handler for SIGHUP and SIGUSR1.
  */
-void
+static void
 signal_handler(int sig)
 {
 	if (sig == SIGHUP)
@@ -311,9 +311,28 @@ test77c(void)
 	if (write(slavefd, &c, sizeof(c)) >= 0) e(18);
 	if (errno != EIO) e(19);
 
-	if (close(slavefd) < 0) e(20);
+	/* Reads from the slave should return EOF if the master is gone. */
+	if (read(slavefd, &c, sizeof(c)) != 0) e(20);
 
-	if (sigaction(SIGHUP, &oact, NULL) < 0) e(21);
+	if (close(slavefd) < 0) e(21);
+
+	if (sigaction(SIGHUP, &oact, NULL) < 0) e(22);
+}
+
+/*
+ * Wait for a child process to terminate.  Return 0 if the child exited without
+ * errors, -1 otherwise.
+ */
+static int
+waitchild(void)
+{
+	int status;
+
+	if (wait(&status) <= 0) return -1;
+	if (!WIFEXITED(status)) return -1;
+	if (WEXITSTATUS(status) != 0) return -1;
+
+	return 0;
 }
 
 /*
@@ -348,14 +367,14 @@ test77d(void)
 		if (open("/dev/tty", O_RDWR) >= 0) e(4);
 		if (errno != ENXIO) e(5);
 
-		exit(0);
+		exit(errct);
 	case -1:
 		e(6);
 	default:
 		break;
 	}
 
-	if (wait(NULL) <= 0) e(7);
+	if (waitchild() < 0) e(7);
 
 	if (close(masterfd) < 0) e(8);
 
@@ -373,14 +392,14 @@ test77d(void)
 
 		if (open("/dev/tty", O_RDWR) < 0) e(12);
 
-		exit(0);
+		exit(errct);
 	case -1:
 		e(13);
 	default:
 		break;
 	}
 
-	if (wait(NULL) <= 0) e(14);
+	if (waitchild() < 0) e(14);
 
 	if (close(masterfd) < 0) e(15);
 }
@@ -441,7 +460,7 @@ test77e(void)
 
 		if (sighups != 1) e(9);
 
-		exit(0);
+		exit(errct);
 	case -1:
 		e(10);
 	default:
@@ -455,7 +474,7 @@ test77e(void)
 	/* Closing the master should now raise a SIGHUP signal in the child. */
 	if (close(masterfd) < 0) e(12);
 
-	if (wait(NULL) <= 0) e(13);
+	if (waitchild() < 0) e(13);
 
 	if (sigprocmask(SIG_SETMASK, &oset, NULL) < 0) e(14);
 
