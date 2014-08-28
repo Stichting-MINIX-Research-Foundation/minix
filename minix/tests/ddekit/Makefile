@@ -6,8 +6,8 @@ SCRIPTS= ddekittest.sh
 #uncomment the following for proper debugging
 #CFLAGS+=-g
 #LDFLAGS+= -Ttext=0x4000000
-LDADD+=	 -lsys -lddekit -lminlib
-DPADD+=	 ${LIBSYS} ${LIBDDEKIT} ${LIBMINLIB}
+LDADD+=	 -lsys -lddekit 
+DPADD+=	 ${LIBSYS} ${LIBDDEKIT} 
 
 MAN=
 

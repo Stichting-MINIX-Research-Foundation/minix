@@ -21,9 +21,7 @@ SUBDIR+=	../external/gpl3/gcc/lib/libgcc .WAIT
 
 .if defined(__MINIX)
 #LSC MINIX libc depends on
-# - libminlib because of minix/lib/libc/malloc-debug.c
 # - libmthread because of sys/lib/libunwind
-SUBDIR+=	../minix/lib/libminlib
 SUBDIR+=	.WAIT
 
 SUBDIR+=	../minix/lib/libsys

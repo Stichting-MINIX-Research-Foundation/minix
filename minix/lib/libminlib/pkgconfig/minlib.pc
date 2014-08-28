@@ -1,6 +1,0 @@
-Name: minlib
-Description: Minix Compatibility Library
-Version: 1.0
-Libs: -lminlib
-Cflags:
-

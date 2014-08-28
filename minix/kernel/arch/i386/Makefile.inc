@@ -4,11 +4,11 @@
 HERE=${.CURDIR}/arch/${MACHINE_ARCH}
 .PATH:	${HERE}
 
-# objects we want unpaged from -lminlib
+# objects we want unpaged from -lc
 MINLIB_OBJS_UNPAGED= _cpufeature.o _cpuid.o get_bp.o
-_cpufeature.o:	${NETBSDSRCDIR}/minix/lib/libminlib/${MACHINE_ARCH}/_cpufeature.c
-_cpuid.o:	${NETBSDSRCDIR}/minix/lib/libminlib/${MACHINE_ARCH}/_cpuid.S
-get_bp.o:	${NETBSDSRCDIR}/minix/lib/libminlib/${MACHINE_ARCH}/get_bp.S
+_cpufeature.o:	${NETBSDSRCDIR}/minix/lib/libc/arch/${MACHINE_ARCH}/_cpufeature.c
+_cpuid.o:	${NETBSDSRCDIR}/minix/lib/libc/arch/${MACHINE_ARCH}/_cpuid.S
+get_bp.o:	${NETBSDSRCDIR}/minix/lib/libc/arch/${MACHINE_ARCH}/get_bp.S
 
 # objects we want unpaged from -lsys
 SYS_OBJS_UNPAGED=assert.o stacktrace.o

@@ -6,8 +6,8 @@ FILES= $(PROG).conf
 FILESNAME= $(PROG)
 FILESDIR= /etc/system.conf.d
 
-DPADD+= ${LIBBLOCKDRIVER} ${LIBDDEKIT_USB_CLIENT} ${LIBSYS} ${LIBMINLIB} ${LIBDDEKIT} ${LIBUSB}
-LDADD+= -lblockdriver -lddekit_usb_client -lsys -lminlib -lddekit -lusb
+DPADD+= ${LIBBLOCKDRIVER} ${LIBDDEKIT_USB_CLIENT} ${LIBSYS} ${LIBDDEKIT} ${LIBUSB}
+LDADD+= -lblockdriver -lddekit_usb_client -lsys -lddekit -lusb
 
 #For easier debugging, uncomment:
 #LDADD+= -Wl,-Ttext=0x800000

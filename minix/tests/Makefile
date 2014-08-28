@@ -53,7 +53,7 @@ LDADD.test72+=	-lminixfs
 PROGS += testvm
 OBJS.testvm+=	testcache.o
 LDSTATIC.testvm= -static
-LDADD.testvm+=	-lsys -ltimers -lminlib
+LDADD.testvm+=	-lsys -ltimers 
 
 FILES += testvm.conf
 

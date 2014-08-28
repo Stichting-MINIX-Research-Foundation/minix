@@ -1,9 +1,6 @@
 PROG=	mkproto
 MAN=
 
-LDADD+= -lminlib
-DPADD+= ${LIBMINLIB}
-
 NOGCCERROR?=    yes
 NOCLANGERROR?=  yes
 

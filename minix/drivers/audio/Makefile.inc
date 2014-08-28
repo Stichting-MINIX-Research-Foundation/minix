@@ -1,7 +1,7 @@
 BINDIR?= /service
 MAN?=
 
-DPADD+= ${LIBAUDIODRIVER} ${LIBCHARDRIVER} ${LIBSYS} ${LIBMINLIB}
-LDADD+= -laudiodriver -lchardriver -lsys -lminlib
+DPADD+= ${LIBAUDIODRIVER} ${LIBCHARDRIVER} ${LIBSYS} 
+LDADD+= -laudiodriver -lchardriver -lsys 
 
 .include "../Makefile.inc"

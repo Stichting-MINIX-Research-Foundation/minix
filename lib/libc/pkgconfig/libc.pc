@@ -1,4 +1,4 @@
 Name: c
 Description: NetBSD C Library
 Version: 1.0
-Libs: -lc -lminlib 
+Libs: -lc 

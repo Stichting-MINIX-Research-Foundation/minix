@@ -3,6 +3,7 @@
 #include <minix/config.h>	/* for unused stuff in <minix/type.h> :-( */
 #include <limits.h>
 #include <dirent.h>
+#include <assert.h>
 #include <sys/types.h>
 #include <minix/const.h>
 #include <minix/type.h>		/* for unshort :-( */
@@ -54,6 +55,6 @@ uint8_t fs_mode_to_type(mode_t mode)
 	else if(S_ISFIFO(mode)) return DT_FIFO;
 	else if(S_ISSOCK(mode)) return DT_SOCK;
 
-	panic("unknown type, mode 0x%x", mode);
+	assert(0 && "unknown type");
 }
 

@@ -10,7 +10,7 @@ MAN=
 SRCS+=	clock.c cpulocals.c interrupt.c main.c proc.c system.c \
 	table.c utility.c usermapped_data.c
 
-LDADD+=	-ltimers -lsys -lexec -lminlib
+LDADD+=	-ltimers -lsys -lexec 
 
 LINKERSCRIPT= ${.CURDIR}/arch/${MACHINE_ARCH}/kernel.lds
 

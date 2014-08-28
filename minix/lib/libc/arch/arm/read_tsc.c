@@ -1,4 +1,5 @@
 #include <sys/types.h>
+#include <minix/minlib.h>
 
 void
 read_tsc(u32_t *hi, u32_t *lo)

@@ -9,7 +9,7 @@ BINDIR=		/service
 
 CPPFLAGS+=	-I${.CURDIR}/../../include
 
-DPADD+=		${LIBDDEKIT} ${LIBDDEKIT_USB_SERVER} ${LIBDEVMAN} ${LIBUSB} ${LIBMINC} ${LIBCLKCONF} ${LIBSYS} ${LIBMINLIB}
-LDADD+=		-lddekit -lddekit_usb_server -ldevman -lusb -lminc -lclkconf -lsys -lminlib
+DPADD+=		${LIBDDEKIT} ${LIBDDEKIT_USB_SERVER} ${LIBDEVMAN} ${LIBUSB} ${LIBMINC} ${LIBCLKCONF} ${LIBSYS} 
+LDADD+=		-lddekit -lddekit_usb_server -ldevman -lusb -lminc -lclkconf -lsys 
 
 .include <minix.service.mk>

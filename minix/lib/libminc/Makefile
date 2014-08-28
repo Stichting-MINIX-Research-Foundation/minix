@@ -61,6 +61,8 @@ CLEANFILES+= ${f:C/\.o/.bc/}
 .endif # ${USE_BITCODE:Uno} == "yes"
 .endfor
 
+CPPFLAGS.fslib.c+= -I${NETBSDSRCDIR}/minix/fs
+
 # LSC: I would like not to have to copy te file, but I can't
 #      have libsa appear first in the .PATH, for a lot of files
 #      would be taken from there, which is not the intention ATM.
@@ -181,7 +183,7 @@ CLEANFILES+=	errlist.c
 .for f in \
 	_errno.o \
 	getprogname.o setprogname.o execle.o sleep.o time.o \
-	ctype_.o tolower_.o toupper_.o usleep.o sigsetops.o
+	ctype_.o tolower_.o toupper_.o usleep.o sigsetops.o 
 ${f} ${f:C/\.o/.bc/}:	${LIBCDIR}/gen/${f:C/\.o/.c/}
 OBJS+=	${f}
 CLEANFILES+= ${f}
@@ -198,7 +200,7 @@ CPPFLAGS.tolower_.c+= -I${LIBCDIR}/locale
 CPPFLAGS.toupper_.c+= -I${LIBCDIR}/locale
 
 .for f in \
-	waitpid.o
+	waitpid.o read_tsc_64.o fslib.o itoa.o
 ${f} ${f:C/\.o/.bc/}:	${LIBMINIXCDIR}/gen/${f:C/\.o/.c/}
 OBJS+=	${f}
 CLEANFILES+= ${f}
@@ -296,5 +298,8 @@ OBJS+=	${f:C/\.o/.bc/}
 CLEANFILES+= ${f:C/\.o/.bc/}
 .endif # ${USE_BITCODE:Uno} == "yes"
 .endfor
+
+ARCHSUBDIR=${MACHINE_CPU}
+.include "${NETBSDSRCDIR}/minix/lib/libc/arch/${MACHINE_CPU}/Makefile.inc"
 
 .include <bsd.lib.mk>

@@ -229,7 +229,6 @@ LIB${_lib:tu}=	${DESTDIR}/usr/lib/lib${_lib:S/xx/++/:S/atf_c/atf-c/}.a
 	lwip \
 	minc \
 	minixfs \
-	minlib \
 	mthread \
 	netdriver \
 	netsock \

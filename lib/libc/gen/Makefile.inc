@@ -4,6 +4,13 @@
 # gen sources
 .if defined(__MINIX)
 .PATH: ${NETBSDSRCDIR}/minix/lib/libc/gen
+
+CPPFLAGS.fslib.c+= -I${NETBSDSRCDIR}/minix/fs
+CPPFLAGS.fsversion.c+= -I${NETBSDSRCDIR}/minix/fs
+
+SRCS+= dhcp_gettag.c dhcp_settag.c fsversion.c gcov.c gcov_flush.c itoa.c \
+	oneC_sum.c paramvalue.c read_tsc_64.c servxcheck.c fslib.c
+
 .endif # defined(__MINIX)
 .PATH: ${ARCHDIR}/gen ${.CURDIR}/gen
 

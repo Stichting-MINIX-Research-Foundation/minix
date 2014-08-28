@@ -1885,8 +1885,8 @@
 ./usr/lib/bc/libmenu.a			minix-sys	bitcode
 ./usr/lib/bc/libminc.a			minix-sys	bitcode
 ./usr/lib/bc/libminixfs.a		minix-sys	bitcode
-./usr/lib/bc/libminlib.a		minix-sys	bitcode
-./usr/lib/bc/libmthread.a		minix-sys	bitcode
+./usr/lib/bc/libminlib.a		minix-sys	bitcode	obsolete
+./usr/lib/bc/libmthread.a		minix-sys	bitcode	
 ./usr/lib/bc/libnetdriver.a		minix-sys	bitcode
 ./usr/lib/bc/libnetsock.a		minix-sys	bitcode
 ./usr/lib/bc/libopcodes.a		minix-sys	bitcode,binutils
@@ -2089,11 +2089,11 @@
 ./usr/lib/libminc.a			minix-sys
 ./usr/lib/libminixfs.a			minix-sys
 ./usr/lib/libminixfs_pic.a		minix-sys
-./usr/lib/libminlib.a			minix-sys
-./usr/lib/libminlib_pic.a		minix-sys
-./usr/lib/libminlib.so.0.0		minix-sys
-./usr/lib/libminlib.so.0		minix-sys
-./usr/lib/libminlib.so			minix-sys
+./usr/lib/libminlib.a			minix-sys	obsolete
+./usr/lib/libminlib_pic.a		minix-sys	obsolete
+./usr/lib/libminlib.so.0.0		minix-sys	obsolete
+./usr/lib/libminlib.so.0		minix-sys	obsolete
+./usr/lib/libminlib.so			minix-sys	obsolete
 ./usr/lib/libm_pic.a			minix-sys
 ./usr/lib/libm.so.0			minix-sys
 ./usr/lib/libm.so.0.10			minix-sys
@@ -2184,7 +2184,7 @@
 ./usr/lib/lua/5.1/gpio.so		minix-sys
 ./usr/lib/lua/5.1/sqlite.so		minix-sys
 ./usr/lib/lua/5.1/syslog.so		minix-sys
-./usr/lib/minlib.pc			minix-sys
+./usr/lib/minlib.pc			minix-sys	obsolete
 ./usr/lib/pkgconfig			minix-sys
 ./usr/lib/pkgconfig/atf-c.pc		minix-sys	atf
 ./usr/lib/pkgconfig/atf-c++.pc		minix-sys	atf

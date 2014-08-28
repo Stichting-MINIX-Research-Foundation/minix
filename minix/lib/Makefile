@@ -1,8 +1,5 @@
 .include <bsd.own.mk>
 
-SUBDIR+=	libminlib
-SUBDIR+=	.WAIT
-
 SUBDIR+=	libsys
 SUBDIR+=	libmthread
 SUBDIR+=	.WAIT
