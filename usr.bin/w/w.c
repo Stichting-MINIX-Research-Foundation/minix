@@ -475,8 +475,12 @@ pr_header(time_t *nowp, int nusers)
 	double avenrun[3];
 	time_t uptime;
 	int days, hrs, mins;
+#ifndef __minix
 	int mib[2];
 	size_t size, i;
+#else
+	size_t i;
+#endif /* __minix */
 	char buf[256];
 
 	/*
@@ -493,12 +497,16 @@ pr_header(time_t *nowp, int nusers)
 	 * Print how long system has been up.
 	 * (Found by looking getting "boottime" from the kernel)
 	 */
+#ifndef __minix
 	mib[0] = CTL_KERN;
 	mib[1] = KERN_BOOTTIME;
 	size = sizeof(boottime);
 	if (sysctl(mib, 2, &boottime, &size, NULL, 0) != -1 &&
 	    boottime.tv_sec != 0) {
 		uptime = now - boottime.tv_sec;
+#else
+	if (minix_getuptime(&uptime) != -1) {
+#endif /* __minix */
 		uptime += 30;
 		if (uptime > SECSPERMIN) {
 			days = uptime / SECSPERDAY;

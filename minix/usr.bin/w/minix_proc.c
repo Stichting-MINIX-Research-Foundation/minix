@@ -129,7 +129,7 @@ minix_getproc(void * __unused dummy, int op, int arg, int elemsize, int *cnt)
 	for (i = 0; i < npids; i++) {
 		pid = pids[i];
 
-		snprintf(path, sizeof(path), _PATH_PROC "/%u/psinfo", pid);
+		snprintf(path, sizeof(path), _PATH_PROC "%u/psinfo", pid);
 
 		/* Processes may legitimately disappear between calls. */
 		if ((fp = fopen(path, "r")) == NULL)
@@ -165,7 +165,7 @@ minix_getargv(void * __unused dummy, const struct minix_proc * p, int nchr)
 	int fd, argc;
 
 	/* Get the command line of the process from procfs. */
-	snprintf(path, sizeof(path), _PATH_PROC "/%u/cmdline", p->p_pid);
+	snprintf(path, sizeof(path), _PATH_PROC "%u/cmdline", p->p_pid);
 
 	if ((fd = open(path, O_RDONLY)) < 0)
 		return NULL;
@@ -250,4 +250,24 @@ minix_proc_compare(const struct minix_proc * p1, const struct minix_proc * p2)
 	 * process, which makes it the most interesting process as well.
 	 */
 	return p1->p_pid < p2->p_pid;
+}
+
+/*
+ * Obtain the system uptime in seconds.  Return 0 on success, with the uptime
+ * stored in the given time_t field.  Return -1 on failure.
+ */
+int
+minix_getuptime(time_t *timep)
+{
+	FILE *fp;
+	int r;
+
+	if ((fp = fopen(_PATH_PROC "uptime", "r")) == NULL)
+		return -1;
+
+	r = fscanf(fp, "%llu", timep);
+
+	fclose(fp);
+
+	return (r == 1) ? 0 : -1;
 }

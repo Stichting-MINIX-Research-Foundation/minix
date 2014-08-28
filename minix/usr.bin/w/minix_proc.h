@@ -44,4 +44,6 @@ int minix_proc_compare(const struct minix_proc *p1,
 #undef proc_compare_wrapper
 #define proc_compare_wrapper minix_proc_compare
 
+int minix_getuptime(time_t *timep);
+
 #endif /* !_W_MINIX_PROC_H */
