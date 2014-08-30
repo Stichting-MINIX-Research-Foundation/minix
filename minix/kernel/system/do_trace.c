@@ -94,19 +94,20 @@ int do_trace(struct proc * caller, message * m_ptr)
 
   case T_GETINS:		/* return value from instruction space */
 	COPYFROMPROC(tr_addr, (vir_bytes) &tr_data, sizeof(long));
-	m_ptr->m_lsys_krn_sys_trace.data = tr_data;
+	m_ptr->m_krn_lsys_sys_trace.data = tr_data;
 	break;
 
   case T_GETDATA:		/* return value from data space */
 	COPYFROMPROC(tr_addr, (vir_bytes) &tr_data, sizeof(long));
-	m_ptr->m_lsys_krn_sys_trace.data= tr_data;
+	m_ptr->m_krn_lsys_sys_trace.data= tr_data;
 	break;
 
   case T_GETUSER:		/* return value from process table */
 	if ((tr_addr & (sizeof(long) - 1)) != 0) return(EFAULT);
 
 	if (tr_addr <= sizeof(struct proc) - sizeof(long)) {
-		m_ptr->m_lsys_krn_sys_trace.data = *(long *) ((char *) rp + (int) tr_addr);
+		m_ptr->m_krn_lsys_sys_trace.data =
+		    *(long *) ((char *) rp + (int) tr_addr);
 		break;
 	}
 
@@ -118,7 +119,8 @@ int do_trace(struct proc * caller, message * m_ptr)
 
 	if (tr_addr > sizeof(struct priv) - sizeof(long)) return(EFAULT);
 
-	m_ptr->m_lsys_krn_sys_trace.data = *(long *) ((char *) rp->p_priv + (int) tr_addr);
+	m_ptr->m_krn_lsys_sys_trace.data =
+	    *(long *) ((char *) rp->p_priv + (int) tr_addr);
 	break;
 
   case T_SETINS:		/* set value in instruction space */
