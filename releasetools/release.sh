@@ -2,7 +2,7 @@
 
 set -e
 
-. release.functions
+. ./release.functions
 
 version_pretty="`sh ../sys/conf/osrelease.sh`"
 version="`echo $version_pretty | tr . _`"
@@ -212,7 +212,7 @@ then	echo $PKG_ADD_URL >$RELEASEDIR/usr/pkg/etc/pkgin/repositories.conf
 fi
 
 echo " * Resetting timestamps"
-find $RELEASEDIR | xargs touch
+find $RELEASEDIR -print0 | xargs -n1000 -0 touch 
 
 ##########################################################################
 echo " * Build"
