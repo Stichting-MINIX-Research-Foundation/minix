@@ -751,7 +751,7 @@ static void cdev_generic_reply(message *m_ptr)
   struct fproc *rfp;
   struct worker_thread *wp;
   endpoint_t proc_e;
-  int slot;
+  int r, slot;
 
   proc_e = m_ptr->m_lchardriver_vfs_reply.id;
 
@@ -777,7 +777,13 @@ static void cdev_generic_reply(message *m_ptr)
 	 */
 	printf("VFS: proc %d not blocked on %d\n", proc_e, m_ptr->m_source);
   } else {
-	revive(proc_e, m_ptr->m_lchardriver_vfs_reply.status);
+	/* Some services (inet) use the same infrastructure for nonblocking
+	 * and cancelled requests, resulting in one of EINTR or EAGAIN when the
+	 * other is really the appropriate code.  Thus, cdev_cancel converts
+	 * EAGAIN into EINTR, and we convert EINTR into EAGAIN here.
+	 */
+	r = m_ptr->m_lchardriver_vfs_reply.status;
+	revive(proc_e, (r == EINTR) ? EAGAIN : r);
   }
 }
 
