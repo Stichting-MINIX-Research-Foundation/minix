@@ -271,10 +271,10 @@ void arch_init(void)
 
 #if defined(USE_APIC) && !defined(CONFIG_SMP)
 	if (config_no_apic) {
-		BOOT_VERBOSE(printf("APIC disabled, using legacy PIC\n"));
+		DEBUGBASIC(("APIC disabled, using legacy PIC\n"));
 	}
 	else if (!apic_single_cpu_init()) {
-		BOOT_VERBOSE(printf("APIC not present, using legacy PIC\n"));
+		DEBUGBASIC(("APIC not present, using legacy PIC\n"));
 	}
 #endif
 

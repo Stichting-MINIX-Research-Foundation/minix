@@ -939,13 +939,13 @@ int arch_phys_map_reply(const int index, const vir_bytes addr)
 
 		/* select the right set of IPC routines to map into processes */
 		if(minix_feature_flags & MKF_I386_INTEL_SYSENTER) {
-			printf("kernel: selecting intel sysenter ipc style\n");
+			DEBUGBASIC(("kernel: selecting intel sysenter ipc style\n"));
 			minix_kerninfo.minix_ipcvecs = &minix_ipcvecs_sysenter;
 		} else  if(minix_feature_flags & MKF_I386_AMD_SYSCALL) {
-			printf("kernel: selecting amd syscall ipc style\n");
+			DEBUGBASIC(("kernel: selecting amd syscall ipc style\n"));
 			minix_kerninfo.minix_ipcvecs = &minix_ipcvecs_syscall;
 		} else	{
-			printf("kernel: selecting fallback (int) ipc style\n");
+			DEBUGBASIC(("kernel: selecting fallback (int) ipc style\n"));
 			minix_kerninfo.minix_ipcvecs = &minix_ipcvecs_softint;
 		}
 

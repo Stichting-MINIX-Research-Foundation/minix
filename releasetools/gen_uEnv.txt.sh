@@ -24,7 +24,7 @@ BOOT="mmcbootcmd"
 #default for the beagleboard-xM
 CONSOLE=tty02 
 #verbosity
-VERBOSE=3 
+VERBOSE=0
 HZ=1000
 
 while getopts "c:v:h:p:n?" c

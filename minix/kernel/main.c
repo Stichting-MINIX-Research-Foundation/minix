@@ -141,7 +141,7 @@ void kmain(kinfo_t *local_cbi)
   arch_ser_init();
 #endif
   /* We can talk now */
-  printf("MINIX booting\n");
+  DEBUGBASIC(("MINIX booting\n"));
 
   /* Kernel may use bits of main memory before VM is started */
   kernel_may_alloc = 1;
@@ -299,10 +299,10 @@ void kmain(kinfo_t *local_cbi)
 
 #ifdef CONFIG_SMP
   if (config_no_apic) {
-	  BOOT_VERBOSE(printf("APIC disabled, disables SMP, using legacy PIC\n"));
+	  DEBUGBASIC(("APIC disabled, disables SMP, using legacy PIC\n"));
 	  smp_single_cpu_fallback();
   } else if (config_no_smp) {
-	  BOOT_VERBOSE(printf("SMP disabled, using legacy PIC\n"));
+	  DEBUGBASIC(("SMP disabled, using legacy PIC\n"));
 	  smp_single_cpu_fallback();
   } else {
 	  smp_init();
@@ -505,7 +505,7 @@ void cpu_print_freq(unsigned cpu)
         u64_t freq;
 
         freq = cpu_get_freq(cpu);
-        printf("CPU %d freq %lu MHz\n", cpu, (unsigned long)(freq / 1000000));
+        DEBUGBASIC(("CPU %d freq %lu MHz\n", cpu, (unsigned long)(freq / 1000000)));
 }
 
 int is_fpu(void)

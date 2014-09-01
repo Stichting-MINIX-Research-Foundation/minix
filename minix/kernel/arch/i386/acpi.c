@@ -60,7 +60,7 @@ static int acpi_check_signature(const char * orig, const char * match)
 static u32_t acpi_phys2vir(u32_t p)
 {
 	if(!vm_running) {
-		printf("acpi: returning 0x%lx as vir addr\n", p);
+		DEBUGEXTRA(("acpi: returning 0x%lx as vir addr\n", p));
 		return p;
 	}
 	panic("acpi: can't get virtual address of arbitrary physical address");
@@ -304,7 +304,7 @@ static void acpi_init_poweroff(void)
 
 exit:
 	if (msg) {
-		printf("acpi: %s\n", msg);
+		DEBUGBASIC(("acpi: %s\n", msg));
 	}
 }
 
