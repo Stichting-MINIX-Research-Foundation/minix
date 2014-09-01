@@ -1160,6 +1160,7 @@ static int split_region(struct vmproc *vmp, struct vir_region *vr,
 	if(!vr->def_memtype->ev_split) {
 		printf("VM: split region not implemented for %s\n",
 			vr->def_memtype->name);
+		sys_diagctl_stacktrace(vmp->vm_endpoint);
 		return EINVAL;
 	}
 
