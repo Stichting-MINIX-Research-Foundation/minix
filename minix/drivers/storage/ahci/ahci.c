@@ -1950,7 +1950,6 @@ static void port_free(struct port_state *ps)
 	 * allocated memory.
 	 */
 	u32_t cmd;
-	int i;
 
 	/* Disable FIS receive. */
 	cmd = port_read(ps, AHCI_PORT_CMD);
@@ -1964,11 +1963,6 @@ static void port_free(struct port_state *ps)
 
 	if (ps->pad_base != NULL)
 		free_contig(ps->pad_base, ps->pad_size);
-
-	/* The first command table is part of the primary memory page. */
-	for (i = 1; i < hba_state.nr_cmds; i++)
-		if (ps->ct_base[i] != NULL)
-			free_contig(ps->ct_base[i], AHCI_CT_SIZE);
 
 	free_contig(ps->mem_base, ps->mem_size);
 }
