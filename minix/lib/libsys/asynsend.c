@@ -19,6 +19,8 @@ static asynmsg_t msgtable[ASYN_NR];
 static int first_slot = 0, next_slot = 0;
 static int initialized = 0;
 
+#define DEBUG 0
+
 /*===========================================================================*
  *				asynsend3				     *
  *===========================================================================*/
@@ -54,7 +56,7 @@ int fl;
 	if ((flags & (AMF_VALID|AMF_DONE)) == (AMF_VALID|AMF_DONE)) {
 		/* Marked in use by us (VALID) and processed by the kernel */
 		if (msgtable[first_slot].result != OK) {
-#if NDEBUG
+#if DEBUG
 			printf("asynsend: found entry %d with error %d\n",
 				first_slot, msgtable[first_slot].result);
 #endif
@@ -92,7 +94,7 @@ int fl;
 			if (msgtable[src_ind].result == OK)
 				continue;
 			else {
-#if NDEBUG
+#if DEBUG
 				printf(
 				 "asynsend: found entry %d with error %d\n",
 					src_ind, msgtable[src_ind].result);
@@ -105,7 +107,7 @@ int fl;
 
 
 		/* Copy/move in use entry */
-#if NDEBUG
+#if DEBUG
 		printf("asynsend: copying entry %d to %d\n", src_ind, dst_ind);
 #endif
 		if (src_ind != dst_ind) msgtable[dst_ind] = msgtable[src_ind];

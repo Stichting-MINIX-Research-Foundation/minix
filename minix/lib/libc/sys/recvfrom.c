@@ -1,8 +1,6 @@
 #include <sys/cdefs.h>
 #include "namespace.h"
 
-#undef NDEBUG
-
 #include <assert.h>
 #include <errno.h>
 #include <stdlib.h>
@@ -122,9 +120,7 @@ ssize_t recvfrom(int sock, void *__restrict buffer, size_t length,
 #if DEBUG
 	fprintf(stderr, "recvfrom: not implemented for fd %d\n", sock);
 #endif
-	errno= ENOSYS;
-	assert(0);
-	return -1;
+	abort();
 }
 
 static ssize_t _tcp_recvfrom(int sock, void *__restrict buffer, size_t length,

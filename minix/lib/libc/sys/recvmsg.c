@@ -1,8 +1,6 @@
 #include <sys/cdefs.h>
 #include "namespace.h"
 
-#undef NDEBUG
-
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
