@@ -127,7 +127,8 @@ CPPFLAGS.sha2.c+=	-D_STANDALONE
 CPPFLAGS.sha2.c+=	-I${NETBSDSRCDIR}/sys
 
 .for f in \
-	divdi3.o moddi3.o udivdi3.o umoddi3.o qdivrem.o
+	ashrdi3.o divdi3.o lshldi3.o lshrdi3.o moddi3.o \
+	udivdi3.o umoddi3.o qdivrem.o
 ${f} ${f:C/\.o/.bc/}:	${LIBCOMMONCDIR}/quad/${f:C/\.o/.c/}
 OBJS+=	${f}
 CLEANFILES+= ${f}

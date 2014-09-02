@@ -166,6 +166,11 @@ process(FILE *fp)
 	char buff[4 * MB_LEN_MAX + 1]; /* max encoding length for one char */
 	int mbilen, cerr = 0, raerr = 0;
 	
+#if defined(__minix)
+	/* triggers a 'may be used uninitialized', when compiled with gcc,
+	 * asserts off, and -Os. */
+	rachar = 0;
+#endif /* defined(__minix) */
         /*
          * The input stream is considered to be multibyte characters.
          * The input loop will read this data inputing one character,

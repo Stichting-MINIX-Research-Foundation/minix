@@ -338,6 +338,11 @@ Targ_FindNode(const char *name, int flags)
     Boolean	  isNew;      /* Set TRUE if Hash_CreateEntry had to create */
 			      /* an entry for the node */
 
+#if defined(__minix)
+    /* triggers a 'may be used uninitialized', when compiled with gcc,
+     * asserts off, and -Os. */
+    he = NULL;
+#endif /* defined(__minix) */
     if (!(flags & (TARG_CREATE | TARG_NOHASH))) {
 	he = Hash_FindEntry(&targets, name);
 	if (he == NULL)

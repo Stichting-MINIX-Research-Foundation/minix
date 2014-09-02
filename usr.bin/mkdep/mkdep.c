@@ -230,9 +230,13 @@ main(int argc, char **argv)
 	const char *prefix = NULL;
 	const char *suffixes = NULL, *s;
 	suff_list_t *suff_list = NULL, *sl;
-#ifdef __minix
+#if defined(__minix)
 	size_t nr;
-#endif
+
+	/* triggers a 'may be used uninitialized', when compiled with gcc,
+	 * asserts off, and -Os. */
+	slen = 0;
+#endif /* defined(__minix) */
 
 	suf = NULL;		/* XXXGCC -Wuninitialized [sun2] */
 	sl = NULL;		/* XXXGCC -Wuninitialized [sun2] */

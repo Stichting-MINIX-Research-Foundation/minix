@@ -715,6 +715,11 @@ int     scanopt (svoid, arg, optindex)
 	struct _aux *auxp;
 	int     is_short;
 	int     opt_offset = -1;
+#if defined(__minix)
+	/* triggers a 'may be used uninitialized', when compiled with gcc,
+	 * asserts off, and -Os. */
+	is_short = 0;
+#endif /* defined(__minix) */
 
 	s = (struct _scanopt_t *) svoid;
 
