@@ -10,7 +10,7 @@
 
 LOCALRC=/usr/etc/rc.local
 MYLOCALRC=/mnt/etc/rc.local
-ROOTMB=64
+ROOTMB=128
 ROOTSECTS="`expr $ROOTMB '*' 1024 '*' 2`"
 BOOTXXSECTS=32
 USRKB="`du -sxk /usr | awk '{ print $1 }'`"
