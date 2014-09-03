@@ -131,7 +131,11 @@ static int shared_pagefault(struct vmproc *vmp, struct vir_region *region,
 		return EINVAL;
 	}
 
-	assert(ph->ph->phys == MAP_NONE);
+	if(ph->ph->phys != MAP_NONE) {
+		/* memory is there - pagefault does not need handling */
+		return OK;
+	}
+
 	pb_free(ph->ph);
 
 	if(!(pr = physblock_get(src_region, ph->offset))) {
