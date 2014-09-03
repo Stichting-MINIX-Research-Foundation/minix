@@ -295,7 +295,7 @@
 ./usr/bin/csplit			minix-sys
 ./usr/bin/ctags				minix-sys
 ./usr/bin/cut				minix-sys
-./usr/bin/datasizes			minix-sys
+./usr/bin/datasizes			minix-sys	obsolete
 ./usr/bin/dd				minix-sys
 ./usr/bin/decomp16			minix-sys
 ./usr/bin/del_route			minix-sys
@@ -536,7 +536,7 @@
 ./usr/bin/uniq				minix-sys
 ./usr/bin/units				minix-sys
 ./usr/bin/unlzma			minix-sys
-./usr/bin/unstack			minix-sys
+./usr/bin/unstack			minix-sys	obsolete
 ./usr/bin/unvis				minix-sys
 ./usr/bin/unxz				minix-sys
 ./usr/bin/unzip				minix-sys

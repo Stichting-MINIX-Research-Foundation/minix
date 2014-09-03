@@ -28,7 +28,7 @@ SUBDIR=	add_route arp at backup btrace \
 	syslogd tcpd tcpdp tcpstat telnet \
 	telnetd term termcap tget time \
 	truncate udpstat umount \
-	unstack update uud uue version vol \
+	update uud uue version vol \
 	writeisofs fetch \
 	zdump zmodem pkgin_cd pkgin_all pkgin_sets \
 	worldstone updateboot update_bootcfg \
