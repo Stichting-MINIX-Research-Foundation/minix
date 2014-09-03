@@ -27,11 +27,13 @@ SRCS+= erand48_ieee754.c
 
 .if (${USE_JEMALLOC} != "no")
 SRCS+=	jemalloc.c
-.elif (${USE_MINIXMALLOC:Uno} != "no")
-.include "${NETBSDSRCDIR}/minix/lib/libc/Makefile.inc"
 .else
 SRCS+=	malloc.c
 .endif
+
+.if defined(__MINIX)
+.include "${NETBSDSRCDIR}/minix/lib/libc/Makefile.inc"
+.endif # defined(__MINIX)
 
 CPPFLAGS.strtoimax.c+=	-I${LIBCDIR}/../../common/lib/libc/stdlib
 CPPFLAGS.strtol.c+=	-I${LIBCDIR}/../../common/lib/libc/stdlib

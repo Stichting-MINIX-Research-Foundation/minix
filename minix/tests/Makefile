@@ -78,7 +78,10 @@ PROGS+=	t10a t11a t11b t40a t40b t40c t40d t40e t40f t40g t60a t60b \
 	t67a t67b t68a t68b tvnd
 
 SCRIPTS+= run check-install testinterp.sh testsh1.sh testsh2.sh testmfs.sh \
-	  testisofs.sh testvnd.sh testkyua.sh
+	  testvnd.sh testkyua.sh
+# This test is currently commented out, as iso9660fs requires a serious cleanup
+# anyway, which is available as a soon to be merged patch set.
+#SCRIPTS+= testisofs.sh
 
 # test57loop.S is not linked into the .bcl file.
 # This way, we can link it in when linking the final binary
