@@ -89,6 +89,9 @@ int run_upscript(struct devmand_driver_instance *inst)
 	cmdl[0] = 0;
 	int ret;
 
+	assert(inst->drv->upscript);
+	assert(inst->label);
+
 	snprintf(cmdl, 1024, "%s up %s %d %d",
 	    inst->drv->upscript, inst->label, inst->major, inst->dev_id);
 	dbg("Running Upscript:  \"%s\"", cmdl);
@@ -107,6 +110,9 @@ int run_cleanscript(struct devmand_usb_driver *drv)
 	char cmdl[1024];
 	cmdl[0] = 0;
 	int ret;
+
+	assert(drv->upscript);
+	assert(drv->devprefix);
 
 	snprintf(cmdl, 1024, "%s clean %s ",
 		drv->upscript, drv->devprefix);
@@ -129,6 +135,9 @@ int run_downscript(struct devmand_driver_instance *inst)
 	char cmdl[1024];
 	cmdl[0] = 0;
 	int ret;
+
+	assert(inst->drv->downscript);
+	assert(inst->label);
 
 	snprintf(cmdl, 1024, "%s down %s %d",
 	    inst->drv->downscript, inst->label, inst->major);
@@ -153,6 +162,8 @@ int stop_driver(struct devmand_driver_instance *inst)
 	char cmdl[1024];
 	cmdl[0] = 0;
 	int ret;
+
+	assert(inst->label);
 
 	snprintf(cmdl, 1024, "%s down %s %d",
 	    SERVICE_BINARY, inst->label, inst->dev_id);
@@ -185,6 +196,9 @@ int start_driver(struct devmand_driver_instance *inst)
 		dbg("label too long");
 		return ENOMEM;
 	}
+
+	assert(inst->drv->binary);
+	assert(inst->label);
 
 	snprintf(cmdl, 1024, "%s up %s  -major %d -devid %d -label %s",
 	    SERVICE_BINARY, inst->drv->binary, inst->major, inst->dev_id,
@@ -389,7 +403,9 @@ static void cleanup() {
 	/* quit all running drivers */
 	LIST_FOREACH(inst, &instances, list) {
 		dbg("stopping driver %s", inst->label);
-		run_downscript (inst);
+		if(inst->drv->downscript) {
+			run_downscript (inst);
+		}
 		stop_driver(inst);
 	}
 	unlink("/var/run/devmand.pid");
@@ -485,7 +501,9 @@ int main(int argc, char *argv[])
 
 	parse_config();
 	LIST_FOREACH(driver, &drivers, list) {
-		run_cleanscript(driver);
+		if (driver->upscript) {
+			run_cleanscript(driver);
+		}
 	}
 
 	signal(SIGINT, sig_int);
