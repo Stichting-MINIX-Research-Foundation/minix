@@ -21,6 +21,9 @@ if [ "x$(id -u)" = "x0" ]; then
 	fi
 fi
 
+# Set library path
+export LD_LIBRARY_PATH="/usr/local/lib:/usr/pkg/lib:/usr/lib:/lib"
+
 # Set the timezone
 export TZ=GMT0
 RC_TZ=/etc/rc.timezone
