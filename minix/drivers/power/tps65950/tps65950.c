@@ -136,6 +136,9 @@ check_revision(void)
 	case IDCODE_REV_1_2:
 		log_debug(&log, "TPS65950 rev 1.2\n");
 		break;
+	case 0:
+		log_debug(&log, "TPS65950 missing in qemu\n");
+		break;
 	default:
 		log_warn(&log, "Unexpected IDCODE: 0x%x\n", idcode);
 		return -1;
