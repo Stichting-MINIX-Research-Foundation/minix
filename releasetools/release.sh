@@ -266,6 +266,7 @@ fi
 echo " * Removing sources"
 
 rm -rf $RELEASEDIR/usr/src # No space for /usr/src
+rm -f $RELEASEDIR/SETS.* # No need for those.
 
 # If we are making a jail, all is done!
 if [ $JAILMODE = 1 ]
