@@ -365,8 +365,8 @@ then
 	read ok
 	if [ "$ok" = "y" -o "$ok" = "Y" -o "$ok" = "" ]
 	then
-		fsck.mfs -a "/dev/$root" >/dev/null
-		fsck.mfs -a "/dev/$usr" >/dev/null
+		fsck -t mfs -T mfs:-a "/dev/$root" >/dev/null
+		fsck -t mfs -T mfs:-a "/dev/$usr" >/dev/null
 	fi
 
 	# If there is no ELF stuff and not enough space after repartitioning,
@@ -378,7 +378,7 @@ then
 
 	cp -pf /bin/update_bootcfg /mnt/bin/ && \
 		cp -pf /etc/boot.cfg.default /mnt/etc/ && \
-		cp -pf /boot_monitor /mnt/ || exit
+		cp -pf /usr/mdec/boot_monitor /mnt/ || exit
 
 	if [ ! -d /mnt/boot/minix_default -o ! -r /mnt/boot/minix_default/kernel ]
 	then
@@ -419,7 +419,7 @@ then
 	umount /mnt/usr && umount /mnt || exit
 
 	# Check if enough space for new boot
-	let bootspace=`devsize /dev/$primary`-`devsize /dev/$root`-`devsize /dev/$home`-`devsize /dev/$usr` >/dev/null
+	bootspace=$((`devsize /dev/$primary`-`devsize /dev/$root`-`devsize /dev/$home`-`devsize /dev/$usr`)) >/dev/null
 	if [ $bootspace -lt $BOOTXXSECTS ]
 	then
 		echo ""
@@ -591,7 +591,7 @@ else
 	fi
 
 	# Check if enough space for new boot (even if old used)
-	let bootspace=`devsize /dev/$primary`-`devsize /dev/$root`-`devsize /dev/$home`-`devsize /dev/$usr` >/dev/null
+	bootspace=$((`devsize /dev/$primary`-`devsize /dev/$root`-`devsize /dev/$home`-`devsize /dev/$usr`)) >/dev/null
 	if [ $bootspace -lt $BOOTXXSECTS ]
 	then
 		echo "Root partition size will be reduced by up to 16Kb to fit new bootloader."
