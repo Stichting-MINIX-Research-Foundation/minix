@@ -233,13 +233,6 @@ static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
   if (ipc_sendrec(VFS_PROC_NR, &mess) != OK || mess.m_type != OK)
 	panic("can't sync up with VFS");
 
-#if defined(__i386__)
-        uts_val.machine[0] = 'i';
-        strcpy(uts_val.machine + 1, itoa(getprocessor()));
-#elif defined(__arm__)
-        strcpy(uts_val.machine, "arm");
-#endif  
-
  system_hz = sys_hz();
 
   /* Initialize user-space scheduling. */

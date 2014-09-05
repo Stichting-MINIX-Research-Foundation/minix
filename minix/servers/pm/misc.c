@@ -32,10 +32,11 @@ struct utsname uts_val = {
   "noname",		/* node/network name */
   OS_RELEASE,		/* O.S. release (e.g. 3.3.0) */
   OS_VERSION,		/* O.S. version (e.g. Minix 3.3.0 (GENERIC)) */
-  "xyzzy",		/* machine (cpu) type (filled in later) */
 #if defined(__i386__)
+  "i386",		/* machine (cpu) type */
   "i386",		/* architecture */
 #elif defined(__arm__)
+  "arm",		/* machine (cpu) type */
   "arm",		/* architecture */
 #else
 #error			/* oops, no 'uname -mk' */
