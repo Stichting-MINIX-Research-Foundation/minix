@@ -1,0 +1,175 @@
+.\"	$NetBSD: uuencode.1,v 1.26 2014/09/06 21:21:36 wiz Exp $
+.\"
+.\" Copyright (c) 1980, 1990, 1993
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"     @(#)uuencode.1	8.1 (Berkeley) 6/6/93
+.\"
+.Dd September 6, 2014
+.Dt UUENCODE 1
+.Os
+.Sh NAME
+.Nm uuencode ,
+.Nm uudecode
+.Nd encode/decode a binary file
+.Sh SYNOPSIS
+.Nm
+.Op Fl m
+.Op Ar inputfile
+.Ar headername
+.Nm uudecode
+.Op Fl m
+.Op Fl p | Fl o Ar outputfile
+.Op Ar encoded-file ...
+.Sh DESCRIPTION
+.Nm
+and
+.Nm uudecode
+are used to transmit binary files over transmission mediums
+that do not support other than simple
+.Tn ASCII
+data.
+.Pp
+The following options are available:
+.Bl -tag -width ".Fl m"
+.It Fl m
+Use base64 encoding.
+For
+.Nm ,
+the historical uuencode algorithm is the default.
+For
+.Nm uudecode ,
+by default the encoding is automatically detected.
+.It Fl o Ar outputfile
+.Po Nm uudecode No only . Pc
+Send the decoded output data to
+.Ar outputfile .
+By default,
+.Nm uudecode
+uses the
+.Ar headername
+recorded in the header of the encoded data stream.
+.It Fl p
+.Po Nm uudecode No only . Pc
+Write the decoded file to standard output instead of to a file.
+.El
+.Pp
+.Nm
+reads
+.Ar inputfile
+(or by default the standard input) and writes an encoded version
+to (always) the standard output.
+The encoding uses only printing
+.Tn ASCII
+characters suitable for text-only transport media.
+The string
+.Ar headername
+is inserted into the output header as the
+.Ar outputfile
+to use at
+.Nm uudecode
+time.
+The header also includes the mode (permissions) of the file.
+.Pp
+.Nm uudecode
+transforms
+.Em uuencoded
+files (or by default, the standard input) into the original form.
+The resulting file is named
+.Ar headername
+as recorded in the encoded file,
+or as specified by the
+.Fl o
+option,
+and will have the mode of the original file except that setuid
+and execute bits are not retained.
+If the
+.Fl p
+option is specified, or if the output file name is given as
+.Pa /dev/stdout ,
+then the data will be written to the standard output
+instead of to a named file.
+.Nm uudecode
+ignores any leading and trailing lines.
+.Pp
+The encoded form of the file is expanded by 35%.
+Every 3 bytes become 4 plus control information.
+.Sh EXIT STATUS
+The
+.Nm uudecode
+and
+.Nm
+utilities exits 0 on success, and \*[Gt]0 if an error occurs.
+.Sh EXAMPLES
+The following example packages up a source tree, compresses it,
+uuencodes it and mails it to a user on another system.
+.Pp
+.Bd -literal -offset indent -compact
+tar czf \- src_tree \&| uuencode src_tree.tgz \&| mail user@example.com
+.Ed
+.Pp
+On the other system, if the user saves the mail to the file
+.Pa temp ,
+the following example creates the file
+.Pa src_tree.tgz
+and extracts it to make a copy of the original tree.
+.Pp
+.Bd -literal -offset indent -compact
+uudecode temp
+tar xzf src_tree.tgz
+.Ed
+.Sh SEE ALSO
+.Xr gzip 1 ,
+.Xr mail 1 ,
+.Xr tar 1 ,
+.\".Xr uucp 1 ,
+.Xr uuencode 5
+.Sh STANDARDS
+The
+.Nm uudecode
+and
+.Nm
+utilities conform to
+.St -p1003.1-2008 .
+.Sh HISTORY
+The
+.Nm uudecode
+and
+.Nm
+utilities appeared in
+.Bx 4.0 .
+.Sh SECURITY CONSIDERATIONS
+When using
+.Nm uudecode
+with files coming from dubious sources,
+always either explicitly pass the
+.Fl o
+option or check the header (the first line) of the encoded file for
+safety.
+Blindly using a
+.Ar headername
+from a hostile source can overwrite important files.

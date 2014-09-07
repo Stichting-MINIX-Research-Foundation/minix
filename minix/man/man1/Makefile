@@ -18,7 +18,7 @@ MAN=	at.1 \
 	synctree.1 sysenv.1 sz.1 telnet.1 template.1 \
 	term.1 termcap.1 tget.1 time.1 \
 	truncate.1 umount.1 \
-	uud.1 uue.1 vol.1 \
+	vol.1 \
 	yap.1 linkfarm.1 pkg_view.1
 
 MLINKS += compress.1 uncompress.1

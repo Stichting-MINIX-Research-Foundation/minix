@@ -543,9 +543,9 @@
 ./usr/bin/update			minix-sys
 ./usr/bin/uptime			minix-sys
 ./usr/bin/users				minix-sys
-./usr/bin/uud				minix-sys
+./usr/bin/uud				minix-sys	obsolete
 ./usr/bin/uudecode			minix-sys
-./usr/bin/uue				minix-sys
+./usr/bin/uue				minix-sys	obsolete
 ./usr/bin/uuencode			minix-sys
 ./usr/bin/uuidgen			minix-sys
 ./usr/bin/version			minix-sys
@@ -1890,7 +1890,7 @@
 ./usr/lib/bc/libminc.a			minix-sys	bitcode
 ./usr/lib/bc/libminixfs.a		minix-sys	bitcode
 ./usr/lib/bc/libminlib.a		minix-sys	bitcode	obsolete
-./usr/lib/bc/libmthread.a		minix-sys	bitcode	
+./usr/lib/bc/libmthread.a		minix-sys	bitcode
 ./usr/lib/bc/libnetdriver.a		minix-sys	bitcode
 ./usr/lib/bc/libnetsock.a		minix-sys	bitcode
 ./usr/lib/bc/libopcodes.a		minix-sys	bitcode,binutils
@@ -2215,8 +2215,8 @@
 ./usr/Makefile				minix-sys
 ./usr/man				minix-sys
 ./usr/man/man1				minix-sys
-./usr/man/man1/..1			minix-sys	obsolete
 ./usr/man/man1/[.1			minix-sys
+./usr/man/man1/..1			minix-sys	obsolete
 ./usr/man/man1/addr2line.1		minix-sys	binutils
 ./usr/man/man1/apropos.1		minix-sys
 ./usr/man/man1/ar.1			minix-sys	binutils
@@ -2537,8 +2537,10 @@
 ./usr/man/man1/unzip.1			minix-sys
 ./usr/man/man1/uptime.1			minix-sys
 ./usr/man/man1/users.1			minix-sys
-./usr/man/man1/uud.1			minix-sys
-./usr/man/man1/uue.1			minix-sys
+./usr/man/man1/uud.1			minix-sys	obsolete
+./usr/man/man1/uudecode.1		minix-sys
+./usr/man/man1/uue.1			minix-sys	obsolete
+./usr/man/man1/uuencode.1		minix-sys
 ./usr/man/man1/uuidgen.1		minix-sys
 ./usr/man/man1/vi.1			minix-sys
 ./usr/man/man1/view.1			minix-sys
@@ -5013,6 +5015,7 @@
 ./usr/man/man5/tzfile.5				minix-sys
 ./usr/man/man5/usermgmt.conf.5			minix-sys
 ./usr/man/man5/utmp.5				minix-sys
+./usr/man/man5/uuencode.5			minix-sys
 ./usr/man/man6					minix-sys
 ./usr/man/man6/adventure.6			minix-sys
 ./usr/man/man6/arithmetic.6			minix-sys
@@ -5027,7 +5030,7 @@
 ./usr/man/man6/ppt.6				minix-sys
 ./usr/man/man6/primes.6				minix-sys
 ./usr/man/man6/random.6				minix-sys
-./usr/man/man6/tetris.6
+./usr/man/man6/tetris.6				minix-sys
 ./usr/man/man6/wargames.6			minix-sys
 ./usr/man/man7					minix-sys
 ./usr/man/man7/ascii.7				minix-sys
@@ -5098,7 +5101,7 @@
 ./usr/man/man8/ossdevlinks.8			minix-sys
 ./usr/man/man8/part.8				minix-sys
 ./usr/man/man8/partition.8			minix-sys
-./usr/man/man8/ping.8			minix-sys
+./usr/man/man8/ping.8				minix-sys
 ./usr/man/man8/postinstall.8			minix-sys
 ./usr/man/man8/poweroff.8			minix-sys
 ./usr/man/man8/printroot.8			minix-sys

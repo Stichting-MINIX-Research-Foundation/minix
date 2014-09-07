@@ -1,0 +1,146 @@
+.\"	$NetBSD: uuencode.5,v 1.11 2008/08/25 09:36:24 wiz Exp $
+.\"
+.\" Copyright (c) 1989, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"	@(#)uuencode.format.5	8.2 (Berkeley) 1/12/94
+.\"
+.Dd April 9, 1997
+.Dt UUENCODE 5
+.Os
+.Sh NAME
+.Nm uuencode
+.Nd format of an encoded uuencode file
+.Sh DESCRIPTION
+Files output by
+.Xr uuencode 1
+consist of a header line,
+followed by a number of body lines,
+and a trailer line.
+The
+.Xr uudecode 1
+command
+will ignore any lines preceding the header or
+following the trailer.
+Lines preceding a header must not, of course,
+look like a header.
+.Pp
+The header line starts with the word
+.Dq begin ,
+a space,
+a file mode (in octal),
+a space,
+and finally a string which names the file being encoded.
+.Pp
+The central engine of
+.Xr uuencode 1
+is a six-bit encoding function which outputs an
+.Tn ASCII
+character.
+The six bits to be encoded are treated as a small integer and added
+with the
+.Tn ASCII
+value for the space character (octal 40).
+The result is a printable
+.Tn ASCII
+character.
+In the case where all six bits to be encoded are zero,
+the
+.Tn ASCII
+backquote character \` (octal 140) is emitted instead of what
+would normally be a space.
+.Pp
+The body of an encoded file consists of one or more lines,
+each of which may be a maximum of 86 characters long (including the trailing
+newline).
+Each line represents an encoded chunk of data from the input file and begins
+with a byte count,
+followed by encoded bytes,
+followed by a newline.
+.Pp
+The byte count is a six-bit integer encoded with the above function,
+representing the number of bytes encoded in the rest of the line.
+The method used to encode the data expands its size by
+133% (described below).
+Therefore it is important to note that the byte count describes the size of
+the chunk of data before it is encoded, not afterwards.
+The six bit size of this number effectively limits the number of bytes
+that can be encoded in each line to a maximum of 63.
+While
+.Xr uuencode 1
+will not encode more than 45 bytes per line,
+.Xr uudecode 1
+will tolerate the maximum line size.
+.Pp
+The remaining characters in the line represent the data of the input
+file encoded as follows.
+Input data are broken into groups of three eight-bit bytes,
+which are then interpreted together as a 24-bit block.
+The first bit of the block is the highest order bit of the first character,
+and the last is the lowest order bit of the third character.
+This block is then broken into four six-bit integers which are encoded one by
+one starting from the first bit of the block.
+The result is a four character
+.Tn ASCII
+string for every three bytes of input data.
+.Pp
+Encoded lines of data continue in this manner until the input file is
+exhausted.
+The end of the body is signaled by an encoded line with a byte count
+of zero (the
+.Tn ASCII
+backquote character \`).
+.Pp
+Obviously, not every input file will be a multiple of three bytes in size.
+In these cases,
+.Xr uuencode 1
+will pad the remaining one or two bytes of data with garbage bytes until
+a three byte group is created.
+The byte count in a line containing
+garbage padding will reflect the actual number of bytes encoded, making
+it possible to convey how many bytes are garbage.
+.Pp
+The trailer line consists of
+.Dq end
+on a line by itself.
+.Sh SEE ALSO
+.Xr mail 1 ,
+.Xr uucp 1 ,
+.Xr uudecode 1 ,
+.Xr uuencode 1 ,
+.Xr ascii 7
+.Sh HISTORY
+The
+.Nm
+file format appeared in
+.Bx 4.0 .
+.Sh BUGS
+The interpretation of the
+.Nm
+format relies on properties of the
+.Tn ASCII
+character set and may not work correctly on non-ASCII systems.
