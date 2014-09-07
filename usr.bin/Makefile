@@ -28,7 +28,7 @@ SUBDIR= asa \
 	tail tee tic touch tput \
 	tr true tsort tty ul uname unexpand unifdef \
 	uniq units unvis unzip users \
-	uuidgen vis \
+	uudecode uuencode uuidgen vis \
 	w \
 	wall wc what whereis who whois \
 	write xargs xinstall xstr yes

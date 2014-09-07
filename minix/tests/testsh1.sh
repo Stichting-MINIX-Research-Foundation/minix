@@ -282,20 +282,20 @@ END
 tsort <x >y
 if cmp -s y answer; then : ; else bomb "Error on tsort test 1"; fi
 
-#Test uue/uud
+#Test uuencode/uudecode
 cp $f x
-uue x
-if test -s x.uue; then : ; else bomb "Error on uue/uud test 1"; fi
+uuencode x x > x.uue
+if test -s x.uue; then : ; else bomb "Error on uuencode/uudecode test 1"; fi
 rm x
-uud x.uue
-if cmp -s x $f; then : ; else bomb "Error on uue/uud test 2"; fi
+uudecode x.uue
+if cmp -s x $f; then : ; else bomb "Error on uuencode/uudecode test 2"; fi
 
 compress -fc x >x.Z 2>/dev/null
-uue x.Z
+uuencode x.Z x.Z > x.Z.uue
 rm x x.Z
-uud x.uue
+uudecode x.Z.uue
 compress -cd x.Z >x
-if cmp -s x $f; then : ; else bomb "Error on uue/uud test 3"; fi
+if cmp -s x $f; then : ; else bomb "Error on uuencode/uudecode test 3"; fi
 
 cd ..
 rm -rf $TESTDIR
