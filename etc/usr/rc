@@ -18,7 +18,7 @@ fi
 
 # Directories to find services in
 if [ ! "$SERVICES_DIRS" ]
-then	SERVICES_DIRS=/usr/sbin
+then	SERVICES_DIRS=/service
 fi
 
 # Booting from cd?
