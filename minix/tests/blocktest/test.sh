@@ -1,6 +1,6 @@
 #!/bin/sh
 
-. support.sh
+. ./support.sh
 
 # The following commented-out examples of how to run blocktest for certain
 # driver and device pairs. The syntax of the calls is:
