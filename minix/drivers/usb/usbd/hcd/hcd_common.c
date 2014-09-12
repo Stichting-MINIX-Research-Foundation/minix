@@ -180,6 +180,7 @@ void
 hcd_os_nanosleep(int nanosec)
 {
 	struct timespec nanotm;
+	int r;
 
 	DEBUG_DUMP;
 
@@ -194,8 +195,8 @@ hcd_os_nanosleep(int nanosec)
 	/* TODO: Since it is not likely to be ever interrupted, we do not try
 	 * to sleep for a remaining time in case of signal handling */
 	/* Signal handling will most likely end up with termination anyway */
-	USB_ASSERT(EXIT_SUCCESS == nanosleep(&nanotm, NULL),
-		"Calling nanosleep() failed");
+	r = nanosleep(&nanotm, NULL);
+	USB_ASSERT(EXIT_SUCCESS == r, "Calling nanosleep() failed");
 }
 
 
