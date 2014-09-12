@@ -2,7 +2,7 @@
 
 CORE_TOOLS="openssh vim curl"
 DEV_TOOLS="git-base bmake gmake binutils clang"
-EXTRA_TOOLS="bison groff perl python"
+EXTRA_TOOLS="bison groff perl python27"
 
 cat <<START_EOT
 This script contains 3 sets of packages, you can install any of those
