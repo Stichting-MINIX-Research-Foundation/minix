@@ -137,7 +137,12 @@ fi
 #
 # Artifacts from this script are stored in the IMG_DIR
 #
-rm -rf ${IMG_DIR} ${IMG}
+rm -rf ${IMG_DIR}
+
+if [ -f ${IMG} ]	# IMG might be a block device
+then	rm -f ${IMG}
+fi
+
 mkdir -p ${IMG_DIR}
 
 #
@@ -288,7 +293,7 @@ _HOME_SIZE=$((`${CROSS_TOOLS}/nbmkfs.mfs -I $((${HOME_START} * 512)) -b $((${HOM
 # Write the partition table using the natively compiled
 # minix partition utility
 #
-${CROSS_TOOLS}/nbpartition -m ${IMG} ${FAT_START} "c:${FAT_SIZE}*" \
+${CROSS_TOOLS}/nbpartition -f -m ${IMG} ${FAT_START} "c:${FAT_SIZE}*" \
 	81:${_ROOT_SIZE} 81:${_USR_SIZE} 81:${_HOME_SIZE}
 
 #
