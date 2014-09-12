@@ -109,8 +109,8 @@ src: git
 # Support rules
 ########################################################################
 git:
-	@pkgin update 2>&1 > /dev/null
-	@pkgin install git-base 2>&1 > /dev/null
+	@pkgin -y update 2>&1 > /dev/null
+	@pkgin -y install git-base 2>&1 > /dev/null
 
 usage:
 	@echo "Usage: make [target]"
