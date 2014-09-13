@@ -1,20 +1,9 @@
-
-To install additional packages, run 'pkgin'.
-
-To install packages from the online package repository, if you have a
-working network connection from MINIX: first do a 'pkgin update' to
-update the list of available packages, and then do a 'pkgin' to get a
-list of commands.  For example, 'pkgin install vim' installs the 'vim'
-package, and 'pkgin available' will list all available packages.
-
-To install packages from the installation CD: same, but use pkgin_cd.
-To switch to the online repository, do 'pkgin update' again. To install
-all packages, do pkgin_all, or do pkgin_sets to install one or more
-predefined sets.
-
-MINIX 3 supports multiple virtual terminals. Just use ALT+F1, F2, F3
-and F4 to navigate among them.
+For post-installation usage tips such as installing binary
+packages, please see:
+http://wiki.minix3.org/UsersGuide/PostInstallation
 
 For more information on how to use MINIX 3, see the wiki:
-http://wiki.minix3.org. We'd like your feedback: http://minix3.org/community/
+http://wiki.minix3.org
+
+We'd like your feedback: http://minix3.org/community/
 
