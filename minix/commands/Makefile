@@ -10,7 +10,7 @@ SUBDIR=	add_route arp at backup btrace \
 	dhrystone diff diskctl \
 	eject fbdctl \
 	find fix format fsck.mfs \
-	gcov-pull grep host \
+	gcov-pull host \
 	hostaddr ifconfig ifdef \
 	intr ipcrm ipcs irdpd isoread \
 	loadkeys loadramdisk logger look lp \
