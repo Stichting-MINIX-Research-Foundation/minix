@@ -349,9 +349,6 @@ partition -m $IMG 0 81:$isosects 81:$ROOTSECTS 81:$USRSECTS
 # Clean up: RELEASEDIR no longer needed
 rm -r $RELEASEDIR
 
-echo "${ZIP}ping $IMG"
-$ZIP -f $IMG
-
 if [ "$FILENAMEOUT" ]
 then	echo "$IMG" >$FILENAMEOUT
 fi

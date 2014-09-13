@@ -45,6 +45,9 @@ retrieve()
 	do	pkgname="`fgrep PKGNAME=${name} $SUMMARY | sed 's/PKGNAME=//g'`"
 		if [ `echo $pkgname | wc -w` -ne 1 ]
 		then	echo " *** Could not resolve $name (not found or too many matches: $pkgname) ***"
+			echo Matches:
+			echo $pkgname
+			exit 1
 		else	echo Getting $pkgname
 			fetch -r ${PACKAGEURL}/${pkgname}.tgz
 		fi
