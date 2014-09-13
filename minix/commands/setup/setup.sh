@@ -739,7 +739,7 @@ fi
 chroot /mnt update_bootcfg
 
 # Save name of CD drive
-cddrive="`mount | grep /usr | awk '{ print $1 }' | sed 's/p.*//'`"
+cddrive="`mount | fgrep ' /usr ' | awk '{ print $1 }' | sed 's/p.*//'`"
 echo "cddrive=$cddrive" >>/mnt/usr/etc/rc.package
 
 bios="`echo $primary | sed -e 's/d./dX/g' -e 's/c.//g'`"

@@ -135,7 +135,7 @@ copy_local_packages()
 				  exit 1
 			      fi
 	
-			      if [ "`wc -l $indexname`" -lt 3 ]
+			      if [ "`wc -l <$indexname`" -lt 3 ]
 			      then	$indexname is too short.
 				  rm $indexname
 				  exit 1
