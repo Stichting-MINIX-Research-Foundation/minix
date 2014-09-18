@@ -159,7 +159,7 @@
 ./service/input				minix-sys
 ./service/ipc				minix-sys
 ./service/is				minix-sys
-./service/isofs				minix-sys	oboslete
+./service/isofs				minix-sys
 ./service/log				minix-sys
 ./service/lwip				minix-sys
 ./service/memory			minix-sys
