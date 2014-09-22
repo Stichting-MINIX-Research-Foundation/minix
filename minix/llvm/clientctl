@@ -2,6 +2,9 @@
 
 set -o errexit
 
+cd $(dirname $0)
+
+CMD=$(pwd)/$(basename $0)
 mode=$1
 shift || mode="no_action"
 
@@ -10,12 +13,20 @@ MYPWD=$( pwd )
 IMAGE=$( readlink -f $ROOT/minix_x86.img )
 DISK=$( readlink -f $ROOT/minix_x86.disk )
 RC=$( readlink -f $ROOT/minix_x86.rc )
+CONF=$( readlink -f $ROOT/minix_x86.conf )
 MKFS=$( readlink -f $ROOT/../obj.i386/tooldir*/bin/nbmkfs.mfs )
+MAKE=$( readlink -f $ROOT/../obj.i386/tooldir*/bin/nbmake-i386 )
+ADDR2LINE=$( readlink -f $ROOT/../obj.i386/tooldir*/bin/i586-elf32-minix-addr2line )
 
+BATCH=${BATCH:-0}
 HYPER=${HYPER:-}
 DISK_SIZE=${DISK_SIZE:-1024}
 DISK_MNT=${DISK_MNT:-/media/minix-disk}
-SERIALOUT=${SERIALOUT:-0}
+OUT=${OUT:-S} # S=STDOUT, F=FILE, C=CONSOLE, P=PTY
+APPEND=${APPEND:-}
+
+TIMEOUT=${TIMEOUT:-60}
+BOOT_TIMEOUT=${BOOT_TIMEOUT:-45}
 
 function rc_create {
     cat <<EOF
@@ -42,12 +53,149 @@ echo "/ext/etc/rc: /ext mounted correctly."
 EOF
 }
 
+function rc_ext_runcmd_create {
+    cat <<EOF
+#!/bin/sh
+
+echo "____runcmd_start"
+$*
+RET=\$?
+echo "____runcmd_end \$RET status"
+
+EOF
+}
+
+function minix_conf_create {
+    cat <<EOF
+#!/bin/sh
+
+GUEST_NIC=$guest_nic
+HOST_FTP_USER=$host_ftp_user
+HOST_FTP_PASS=$host_ftp_pass
+HOST_FTP_PORT=$host_ftp_port
+HOST_FTP_DIR=$host_ftp_dir
+HOST_IP_ADDR=$host_ip_addr
+
+EOF
+}
+
+#
+# Configuration variables
+#
+CONF_VARS="guest_nic host_ftp_user host_ftp_pass host_ftp_port host_ftp_dir host_ip_addr"
+
+function conf_init
+{
+    for v in $CONF_VARS
+    do
+        if [ -z ${!v} ]; then
+            eval ${v}="NULL"
+        fi
+    done
+}
+
+function get_conf_value
+{
+    local conf_var=$1
+    local msg="$2"
+    local default=$3
+    local values=""
+    [ ! -z $VALUES ] && values="$VALUES, "
+    line="$msg [${values}Default=$default]: "
+    (
+        echo -n "$line"
+    ) 2>&1
+    if [ "${!conf_var}" == "NULL" ]; then
+        if [ $BATCH -eq 0 ]; then
+            read -r $conf_var
+            echo -en "\e[1A"
+        else
+            eval $conf_var=""
+        fi
+    fi
+    if [ "${!conf_var}" == "" ]; then
+        eval $conf_var=$default
+    fi
+    (
+        echo -en "\e[0K\r"
+        echo -n "$line"
+        echo ${!conf_var}
+    ) 2>&1
+    RET=${!conf_var}
+}
+
+function get_conf_value_repeat
+{
+    local check=$1
+    shift
+    local conf_var=$1
+    while true
+    do
+        get_conf_value "$@"
+        eval $check $RET || break
+        eval $conf_var="NULL"
+    done
+}
+
+function __get_conf_value_check_list
+{
+    for v in $( echo $VALUES | sed "s/|/ /g" )
+    do
+        [ "$1" == "$v" ] && return 1
+    done
+    return 0
+}
+
+function get_conf_value_list
+{
+    get_conf_value_repeat __get_conf_value_check_list "$@"
+}
+
+function get_conf_value_yn
+{
+    VALUES="y|n" get_conf_value_list "$@"
+}
+
+function __get_conf_value_check_int_range
+{
+    min=$( echo $VALUES | sed "s/|/ /g" | cut -d' ' -f 1 )
+    max=$( echo $VALUES | sed "s/|/ /g" | cut -d' ' -f 2 )
+    case $min in
+        ''|*[!0-9]*) return 0 ;;
+    esac
+    case $max in
+        ''|*[!0-9]*) return 0 ;;
+    esac
+    [ $1 -ge $min ] && [ $1 -le $max ] && return 1
+    return 0
+}
+
+function get_conf_value_int_range
+{
+    get_conf_value_repeat __get_conf_value_check_int_range "$@"
+}
+
+function get_conf_value_nic
+{
+    VALUES="0|13" get_conf_value_int_range "$@"
+}
+
+function __get_conf_value_check_string
+{
+    return 1
+}
+
+function get_conf_value_string
+{
+    get_conf_value_repeat __get_conf_value_check_string "$@"
+}
+
 function disk_mount {
     local mnt=$1
     echo "* Mounting ${DISK} to $mnt..."
     [ -d $mnt ] || sudo mkdir -p $mnt
-    umountdisk &> /dev/null || true
-    sudo mount -o loop $DISK $mnt
+    disk_umount &> /dev/null || true
+    sudo mount -o loop $DISK $mnt || true
 }
 
 function disk_umount {
@@ -70,9 +218,170 @@ function disk_build {
     rm -rf $tmp_mnt
 }
 
+function minix_conf {
+    conf_init
+    nics="virbr0 virbr1 eth0 eth1 wlan0 wlan1"
+    for n in $nics
+    do
+        host_ip_addr_default=$( ifconfig $n 2> /dev/null | perl -nle'/dr:(\S+)/ && print $1' )
+        [ -z "$host_ip_addr_default" ] || break
+    done
+    get_conf_value_nic guest_nic "[NIC] Which nic do you want to use on MINIX (see MINIX' \`netconf -c\`)?" 7
+    get_conf_value_string host_ftp_user "[FTP] Username for FTP server running on the host?" ftptest
+    get_conf_value_string host_ftp_pass "[FTP] Password for FTP server running on the host?" ftptest
+    get_conf_value_string host_ftp_port "[FTP] Port for FTP server running on the host?" 21
+    get_conf_value_string host_ftp_dir  "[FTP] Base directory for FTP server running on the host?" /home/$host_ftp_user
+    get_conf_value_string host_ip_addr "[HOSTS] Host ip address?" $host_ip_addr_default
+
+    echo ""
+    echo "* Setting up configuration settings in $CONF..."
+    minix_conf_create > $CONF
+}
+
+function wait_output {
+    RET=0
+    date
+    timeout $1 watch -n 1 -e \! grep -q "$2" $3 &> /dev/null  < /dev/null || RET=$?
+    if [ $RET -eq 124 ]; then
+        echo "* Timed out after $1 seconds!" 1>&2
+        return 1
+    fi
+    echo "* Done." 1>&2
+    date
+    return 0
+}
+
+function run_cmd_exec {
+    echo "* Waiting for MINIX to boot..." 1>&2
+    wait_output $BOOT_TIMEOUT "__runcmd_start" runcmd.log || return 33
+    echo "* Waiting for command \"$*\"..." 1>&2
+    wait_output $TIMEOUT "__runcmd_end" runcmd.log || return 66
+    RET=$( grep __runcmd_end runcmd.log | cut -d' ' -f 2 )
+    return $RET
+}
+
+function run_cmd {
+    echo "* Setting up configuration..." 1>&2
+    [ -f $DISK ] || $CMD builddisk
+    [ -f $IMAGE ] || $CMD buildimage
+
+    $CMD mountdisk
+    [ ! -f $DISK_MNT/etc/rc ] || mv $DISK_MNT/etc/rc $DISK_MNT/etc/rc.bak
+    rc_ext_runcmd_create $*  > $DISK_MNT/etc/rc
+    $CMD umountdisk
+    echo "* Starting up..." 1>&2
+    rm -f runcmd.*
+    OUT=S $CMD run &> runcmd.log &
+    PID=$!
+    RUNCMD_RET=0
+    run_cmd_exec $* || RUNCMD_RET=$?
+    cat runcmd.log | awk '/__runcmd_end/ {N=0;} { if (N==1) print; } /__runcmd_start/ {N=1;}' > runcmd.out
+    echo "* Shutting down..." 1>&2
+    for pid in $(ps ax -o pid,args --sort start_time | grep -e "$CMD run[^a-zA-Z]" -e qemu -e kvm | grep -v grep | cut -d' ' -f 1 | head -3 )
+    do
+        kill $pid &> /dev/null || true
+    done
+    $CMD mountdisk
+    [ ! -f $DISK_MNT/etc/rc.bak ] || mv $DISK_MNT/etc/rc.bak $DISK_MNT/etc/rc
+    echo "* COMMAND: \"$*\", RET: $RUNCMD_RET, OUTPUT:"
+    cat runcmd.out
+    return $RUNCMD_RET
+}
+
+function run {
+    if [ "$HYPER" == "" ]; then
+        if which kvm2 > /dev/null; then
+            HYPER=kvm
+        elif [ -e /dev/kvm ]; then
+            HYPER="qemu-system-i386 --enable-kvm"
+        else
+            HYPER=qemu-system-i386
+        fi
+    fi
+    opts="-hda $IMAGE"
+    append="$APPEND rootdevname=c0d0p1"
+    [ ! -f $DISK ] || opts="$opts -hdb $DISK"
+    if [ "$OUT" == "F" ]; then
+        opts="$opts -curses -serial file:$MYPWD/serial.out"
+        append="$append cttyline=0"
+        echo "tail -f $MYPWD/serial.out" > $MYPWD/connect.cmd
+    elif [ "$OUT" == "C" ]; then
+	opts="$opts -curses -chardev socket,id=serial0,path=$MYPWD/serial.sock,server,nowait -serial chardev:serial0"
+	append="$append cttyline=0"
+	echo "(cd $MYPWD && minicom -D unix\#serial.sock)" > $MYPWD/connect.cmd
+    else
+        opts="$opts -nographic"
+        append="$append console=tty00"
+        if [ "$OUT" == "P" ]; then
+            opts="$opts -serial pty"
+            [ -z $PTS ] && PTS=$( $HYPER -serial pty 2>&1 | grep pts | sed "s/.* \([^ ]*pts[^ ]*\) .*/\1/g" )
+            echo "minicom -D $PTS" > $MYPWD/connect.cmd
+        else
+            echo "echo Cannot connect with OUT=S option." > $MYPWD/connect.cmd
+        fi
+    fi
+    (cd ../../../obj.i386/destdir.i386/boot/minix/.temp && $HYPER -kernel kernel -append "$append" $opts -initrd "mod01_ds,mod02_rs,mod03_pm,mod04_sched,mod05_vfs,mod06_memory,mod07_tty,mod08_mfs,mod09_vm,mod10_pfs,mod11_init")
+}
+
+function minix_connect {
+    echo "*****"
+    echo "***** Running: $( cat $MYPWD/connect.cmd )"
+    echo "*****"
+    eval $MYPWD/connect.cmd
+}
+
+function minix_unstack {
+    local service=$1
+    shift
+    if [ ! -f $ROOT/minix.mods.map ]; then
+        echo "$ROOT/minix.mods.map does not exist, run relink.llvm first!"
+        return 1
+    fi
+    path=$(grep "^$service=" $ROOT/minix.mods.map | cut -d= -f 2)
+    path=$ROOT/../obj.i386/$path/$service
+    $ADDR2LINE -p -f -e $path $*
+}
+
+function minix_test {
+    JOBS=${JOBS:-8}
+    RUNCMD=${RUNCMD:-ls}
+    C=${C:-full}
+    LOG=$(pwd)/test.log
+    if [ "$C" == "full" ]; then
+        cd $ROOT
+        JOBS=$JOBS BUILDVARS="-V MKBITCODE=yes" ./releasetools/x86_hdimage.sh 2>&1 | tee $LOG; test ${PIPESTATUS[0]} -eq 0 || exit 125
+        cd -
+    else
+        C=$C ./relink.llvm 2>&1 | tee $LOG; test ${PIPESTATUS[0]} -eq 0 || exit 125
+        ./clientctl buildimage 2>&1 | tee -a $LOG; test ${PIPESTATUS[0]} -eq 0 || exit 125
+    fi
+    if [ "$RUNCMD" != "" ]; then
+        ./clientctl runcmd $RUNCMD 2>&1 | tee -a $LOG; test ${PIPESTATUS[0]} -eq 0 || exit 2
+    fi
+    exit 0
+}
+
+function minix_bisect {
+    cd $ROOT
+    git bisect reset
+    echo " * Enter bad commit: "
+    read bad
+    echo " * Enter good commit: "
+    read good
+    git bisect start $bad $good
+    git bisect run minix/llvm/clientctl test
+    cd -
+}
+
 case "$mode" in
   'buildimage')
     (cd $ROOT && CREATE_IMAGE_ONLY=1 releasetools/x86_hdimage.sh)
+    ;;
+  'buildboot')
+    (cd $ROOT && $MAKE -C releasetools do-hdboot)
+    ;;
+  'conf')
+    minix_conf
     ;;
   'builddisk')
     rm -f $DISK
@@ -84,27 +393,23 @@ case "$mode" in
   'umountdisk')
     disk_umount
     ;;
+  'runcmd')
+    run_cmd $*
+    ;;
   'run')
-    if [ "$HYPER" == "" ]; then
-        if which kvm2 > /dev/null; then
-            HYPER=kvm
-        elif [ -e /dev/kvm ]; then
-            HYPER="qemu-system-i386 --enable-kvm"
-        else
-            HYPER=qemu-system-i386
-        fi
-    fi
-    opts="-hda $IMAGE"
-    append="rootdevname=c0d0p1"
-    [ ! -f $DISK ] || opts="$opts -hdb $DISK"
-    if [ $SERIALOUT -eq 1 ]; then
-        opts="$opts -curses -serial file:$MYPWD/serial.out"
-        append="$append cttyline=0"
-    else
-        opts="$opts -nographic"
-        append="$append console=tty00"
-    fi
-    (cd ../../../obj.i386/destdir.i386/boot/minix/.temp && $HYPER -kernel kernel -append "$append" $opts -initrd "mod01_ds,mod02_rs,mod03_pm,mod04_sched,mod05_vfs,mod06_memory,mod07_tty,mod08_mfs,mod09_vm,mod10_pfs,mod11_init")
+    run
+    ;;
+  'connect')
+    minix_connect
+    ;;
+  'unstack')
+    minix_unstack $*
+    ;;
+  'test')
+    minix_test
+    ;;
+  'bisect')
+    minix_bisect
     ;;
   *)
     echo "Invalid action: $mode"
