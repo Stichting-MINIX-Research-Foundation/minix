@@ -602,6 +602,8 @@
 ./usr/games/ppt				minix-sys
 ./usr/games/primes			minix-sys
 ./usr/games/random			minix-sys
+./usr/games/snake			minix-sys
+./usr/games/snscore			minix-sys
 ./usr/games/strfile			minix-sys
 ./usr/games/tetris			minix-sys
 ./usr/games/unstr			minix-sys
@@ -5033,6 +5035,7 @@
 ./usr/man/man6/ppt.6				minix-sys
 ./usr/man/man6/primes.6				minix-sys
 ./usr/man/man6/random.6				minix-sys
+./usr/man/man6/snake.6				minix-sys
 ./usr/man/man6/tetris.6				minix-sys
 ./usr/man/man6/wargames.6			minix-sys
 ./usr/man/man7					minix-sys
