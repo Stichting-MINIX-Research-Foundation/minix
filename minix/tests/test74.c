@@ -139,7 +139,6 @@ static void do_write(void *buf, int fd, int writable)
 static void do_stat(void *buf, int fd, int writable)
 {
 	int r;
-	struct stat sb;
 	r = fstat(fd, (struct stat *) buf);
 
 	/* should succeed if buf is writable */
@@ -325,7 +324,7 @@ struct {
 	{ do_select3 },
 };
 
-void test_memory_types_vs_operations(void)
+static void test_memory_types_vs_operations(void)
 {
 #define NFDS 4
 #define BUFSIZE (10 * PAGE_SIZE)
@@ -368,7 +367,7 @@ void test_memory_types_vs_operations(void)
 	}
 }
 
-void basic_regression(void)
+static void basic_regression(void)
 {
 	int fd, fd1, fd2;
 	ssize_t rb, wr;
@@ -418,7 +417,7 @@ void basic_regression(void)
 	if(fcntl(fd2, F_FLUSH_FS_CACHE) < 0) { e(1); }
 
 #define LOCATION1 (void *) 0x90000000
-#define LOCATION2 (LOCATION1 + PAGE_SIZE)
+#define LOCATION2 ((void *)((char *)LOCATION1 + PAGE_SIZE))
 	block1 = mmap(LOCATION1, PAGE_SIZE, PROT_READ, MAP_PRIVATE | MAP_FILE, fd1, 0);
 	if(block1 == MAP_FAILED) { e(4); }
 	if(block1 != LOCATION1) { e(5); }

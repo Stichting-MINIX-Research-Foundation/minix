@@ -1,5 +1,4 @@
 NOGCCERROR:=	yes
-NOCLANGERROR:=	yes
 
 BINDIR?=	/usr/tests/minix-posix
 FILESDIR?=	/usr/tests/minix-posix
@@ -23,12 +22,6 @@ SUBDIR+=		blocktest
 SUBDIR+=		ddekit
 
 # Some have special flags compiling
-.if ${MACHINE_ARCH} == "i386"
-# LSC FIXME: Compilation error for now on ARM with that!
-COPTS.test51.c=	-mhard-float
-COPTS.test52.c=	-mhard-float
-.endif
-
 CPPFLAGS.test56.c += -D_MINIX_SYSTEM=1
 
 COPTS.test9.c=	-O0

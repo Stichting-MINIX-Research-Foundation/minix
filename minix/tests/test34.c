@@ -577,7 +577,7 @@ uid_t * r_uid;
 gid_t * r_gid;
 {
   char line[N];
-  char *p;
+  unsigned char *p;
   uid_t uid;
   gid_t gid;
   FILE *fp;

@@ -222,7 +222,7 @@ int sig;
 }
 
 
-int sigmemcmp(sigset_t *s1, sigset_t *s2, int size)
+static int sigmemcmp(sigset_t *s1, sigset_t *s2, int size)
 {
 	int i;
 	int mismatch = 0;
@@ -536,7 +536,6 @@ int signo;
 {
   sigset_t oset;
   sigset_t set;
-  int i;
 
   if (sigemptyset(&set) == -1) e(5001);
   if (sigaddset(&set, SIGTERM) == -1) e(5002);

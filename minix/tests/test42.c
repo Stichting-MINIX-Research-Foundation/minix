@@ -461,7 +461,7 @@ int sig;
   case SIGUSR1: bit = 1; break;
   case SIGUSR2: bit = 2; break;
   case SIGTERM: bit = 4; break;
-  default: my_e(100);
+  default: bit = 0; my_e(100);
   }
 
   sigfillset(&set);

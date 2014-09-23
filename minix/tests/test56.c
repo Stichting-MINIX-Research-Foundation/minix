@@ -82,15 +82,15 @@ int max_error = 4;
 #define ISO8601_FORMAT "%Y-%m-%dT%H:%M:%S"
 
 /* socket types supported */
-int types[3] = {SOCK_STREAM, SOCK_SEQPACKET, SOCK_DGRAM};
-char sock_fullpath[PATH_MAX + 1];
+static int types[3] = {SOCK_STREAM, SOCK_SEQPACKET, SOCK_DGRAM};
+static char sock_fullpath[PATH_MAX + 1];
 
-void test_abort_client_server(int abort_type);
-void test_abort_client(int abort_type);
-void test_abort_server(pid_t pid, int abort_type);
+static void test_abort_client_server(int abort_type);
+static void test_abort_client(int abort_type);
+static void test_abort_server(pid_t pid, int abort_type);
 
 /* timestamps for debug and error logs */
-char *get_timestamp(void)
+static char *get_timestamp(void)
 {
 	struct tm *tm;
 	time_t t;
@@ -120,7 +120,7 @@ char *get_timestamp(void)
 }
 
 /* macro to display information about a failed test and increment the errct */
-void test_fail_fl(char *msg, char *file, int line)
+static void test_fail_fl(char *msg, char *file, int line)
 {
 	char *timestamp;
 	timestamp = get_timestamp();
@@ -138,7 +138,7 @@ void test_fail_fl(char *msg, char *file, int line)
 #define test_fail(msg)	test_fail_fl(msg, __FILE__, __LINE__)
 
 /* Convert name to the full path of the socket. Assumes name is in cwd. */
-char *fullpath(char *name)
+static char *fullpath(char *name)
 {
 	char cwd[PATH_MAX + 1];
 
@@ -152,7 +152,7 @@ char *fullpath(char *name)
 
 #if DEBUG == 1
 /* macros to display debugging information */
-void debug_fl(char *msg, char *file, int line)
+static void debug_fl(char *msg, char *file, int line)
 {
 	char *timestamp;
 	timestamp = get_timestamp();
@@ -208,7 +208,7 @@ void debug_fl(char *msg, char *file, int line)
 		}					\
 	} while (0)
 
-void test_socket(void)
+static void test_socket(void)
 {
 	struct stat statbuf, statbuf2;
 	int sd, sd2;
@@ -292,7 +292,7 @@ void test_socket(void)
 	debug("leaving test_socket()");
 }
 
-void test_header(void)
+static void test_header(void)
 {
 	struct sockaddr_un sun;
 	debug("entering test_header()");
@@ -312,7 +312,7 @@ void test_header(void)
 	}
 }
 
-void test_socketpair(void)
+static void test_socketpair(void)
 {
 	char buf[128];
 	struct sockaddr_un addr;
@@ -384,7 +384,7 @@ void test_socketpair(void)
 	debug("leaving test_socketpair()");
 }
 
-void test_ucred(void)
+static void test_ucred(void)
 {
 	struct uucred credentials;
 	socklen_t ucred_length;
@@ -426,7 +426,7 @@ void test_ucred(void)
 	CLOSE(sv[1]);
 }
 
-void test_getsockname(void)
+static void test_getsockname(void)
 {
 	int sd;
 	int rc;
@@ -464,7 +464,7 @@ void test_getsockname(void)
 	CLOSE(sd);
 }
 
-void test_bind(void)
+static void test_bind(void)
 {
 	struct sockaddr_un addr;
 	struct sockaddr_un sock_addr;
@@ -582,7 +582,7 @@ void test_bind(void)
 	debug("leaving test_bind()");
 }
 
-void test_listen(void)
+static void test_listen(void)
 {
 	int rc;
 
@@ -611,7 +611,7 @@ void test_listen(void)
 	debug("leaving test_listen()");
 }
 
-void test_shutdown(void)
+static void test_shutdown(void)
 {
 	int how[3] = { SHUT_RD, SHUT_WR, SHUT_RDWR };
 	int sd;
@@ -661,7 +661,7 @@ void test_shutdown(void)
 	debug("leaving test_shutdown()");
 }
 
-void test_close(void)
+static void test_close(void)
 {
 	struct sockaddr_un addr;
 	int sd, sd2;
@@ -727,7 +727,7 @@ void test_close(void)
 	debug("leaving test_close()");
 }
 
-void test_sockopts(void)
+static void test_sockopts(void)
 {
 	int i;
 	int rc;
@@ -802,7 +802,7 @@ void test_sockopts(void)
 	debug("leaving test_sockopts()");
 }
 
-void test_read(void)
+static void test_read(void)
 {
 	int rc;
 	int fd;
@@ -826,7 +826,7 @@ void test_read(void)
 	debug("leaving test_read()");
 }
 
-void test_write(void)
+static void test_write(void)
 {
 	int rc;
 	char buf[BUFSIZE];
@@ -842,7 +842,7 @@ void test_write(void)
 	debug("leaving test_write()");
 }
 
-void test_dup(void)
+static void test_dup(void)
 {
 	struct stat info1;
 	struct stat info2;
@@ -932,7 +932,7 @@ void test_dup(void)
 	debug("leaving test_dup()");
 }
 
-void test_dup2(void)
+static void test_dup2(void)
 {
 	struct stat info1;
 	struct stat info2;
@@ -996,7 +996,7 @@ void test_dup2(void)
 /*
  * A toupper() server. This toy server converts a string to upper case.
  */
-void test_xfer_server(pid_t pid)
+static void test_xfer_server(pid_t pid)
 {
 	int i;
 	struct timeval tv;
@@ -1004,7 +1004,7 @@ void test_xfer_server(pid_t pid)
 	int status;
 	int rc;
 	int sd;
-	char buf[BUFSIZE];
+	unsigned char buf[BUFSIZE];
 	socklen_t client_addr_size;
 	int client_sd;
 	struct sockaddr_un addr;
@@ -1175,10 +1175,10 @@ void test_xfer_server(pid_t pid)
 	errct += WEXITSTATUS(status);
 }
 
-int server_ready = 0;
+static int server_ready = 0;
 
 /* signal handler for the client */
-void test_xfer_sighdlr(int sig)
+static void test_xfer_sighdlr(int sig)
 {
 	debug("entering signal handler");
 	switch (sig) {
@@ -1198,7 +1198,7 @@ void test_xfer_sighdlr(int sig)
 /*
  * A toupper() client.
  */
-void test_xfer_client(void)
+static void test_xfer_client(void)
 {
 	struct uucred credentials;
 	socklen_t ucred_length;
@@ -1394,7 +1394,7 @@ void test_xfer_client(void)
 	exit(errct);
 }
 
-void test_xfer(void)
+static void test_xfer(void)
 {
 	pid_t pid;
 
@@ -1433,7 +1433,7 @@ void test_xfer(void)
 	UNLINK(TEST_SUN_PATH);
 }
 
-void test_simple_client(int type)
+static void test_simple_client(int type)
 {
 	char buf[BUFSIZE];
 	int sd, rc;
@@ -1499,7 +1499,7 @@ void test_simple_client(int type)
 	exit(errct);
 }
 
-void test_simple_server(int type, pid_t pid)
+static void test_simple_server(int type, pid_t pid)
 {
 	char buf[BUFSIZE];
 	int sd, rc, client_sd, status;
@@ -1590,7 +1590,7 @@ void test_simple_server(int type, pid_t pid)
 	errct += WEXITSTATUS(status);
 }
 
-void test_abort_client_server(int abort_type)
+static void test_abort_client_server(int abort_type)
 {
 	pid_t pid;
 	debug("test_simple_client_server()");
@@ -1628,7 +1628,7 @@ void test_abort_client_server(int abort_type)
 	UNLINK(TEST_SUN_PATH);
 }
 
-void test_abort_client(int abort_type)
+static void test_abort_client(int abort_type)
 {
 	char buf[BUFSIZE];
 	int sd, rc;
@@ -1677,7 +1677,7 @@ void test_abort_client(int abort_type)
 	exit(errct);
 }
 
-void test_abort_server(pid_t pid, int abort_type)
+static void test_abort_server(pid_t pid, int abort_type)
 {
 	char buf[BUFSIZE];
 	int sd, rc, client_sd, status;
@@ -1745,7 +1745,7 @@ void test_abort_server(pid_t pid, int abort_type)
 	errct += WEXITSTATUS(status);
 }
 
-void test_simple_client_server(int type)
+static void test_simple_client_server(int type)
 {
 	pid_t pid;
 	debug("test_simple_client_server()");
@@ -1783,7 +1783,7 @@ void test_simple_client_server(int type)
 	UNLINK(TEST_SUN_PATH);
 }
 
-void test_vectorio(int type)
+static void test_vectorio(int type)
 {
 	int sv[2];
 	int rc;
@@ -1874,7 +1874,7 @@ void test_vectorio(int type)
 	debug("done vector io tests");
 }
 
-void test_msg(int type)
+static void test_msg(int type)
 {
 	int sv[2];
 	int rc;
@@ -1982,7 +1982,7 @@ void test_msg(int type)
 	}
 }
 
-void test_msg_dgram(void)
+static void test_msg_dgram(void)
 {
 	int rc;
 	int src;
@@ -2106,7 +2106,7 @@ void test_msg_dgram(void)
 	UNLINK(TEST_SUN_PATHB);
 }
 
-void test_scm_credentials(void)
+static void test_scm_credentials(void)
 {
 	int rc;
 	int src;
@@ -2270,7 +2270,7 @@ void test_scm_credentials(void)
 	UNLINK(TEST_SUN_PATHB);
 }
 
-void test_connect(void)
+static void test_connect(void)
 {
 	int i, sd, sds[2], rc;
 
@@ -2315,7 +2315,7 @@ void test_connect(void)
 	debug("exiting test_connect()");
 }
 
-int test_multiproc_read(void)
+static int test_multiproc_read(void)
 {
 /* test that when we fork() a process with an open socket descriptor, 
  * the descriptor in each process points to the same thing.
@@ -2407,7 +2407,7 @@ int test_multiproc_read(void)
 	return 0;
 }
 
-int test_multiproc_write(void)
+static int test_multiproc_write(void)
 {
 /* test that when we fork() a process with an open socket descriptor, 
  * the descriptor in each process points to the same thing.
@@ -2496,7 +2496,7 @@ int test_multiproc_write(void)
 	return 0;
 }
 
-void test_fd_passing_child(int sd)
+static void test_fd_passing_child(int sd)
 {
 	int fd, rc;
 	char x = 'x';
@@ -2580,7 +2580,7 @@ void test_fd_passing_child(int sd)
 	exit(errct);
 }
 
-void test_fd_passing_parent(int sd)
+static void test_fd_passing_parent(int sd)
 {
 	int rc, fd;
 	char x;
@@ -2638,7 +2638,7 @@ void test_fd_passing_parent(int sd)
 	}
 }
 
-void test_permissions(void) {
+static void test_permissions(void) {
 	/* Test bind and connect for permission verification
 	 *
 	 * After creating a UDS socket we change user credentials. At that
@@ -2721,7 +2721,7 @@ void test_permissions(void) {
 	UNLINK(TEST_SUN_PATH);
 }
 
-void test_fd_passing(void) {
+static void test_fd_passing(void) {
 	int status;
 	int sv[2];
 	pid_t pid;
@@ -2775,9 +2775,9 @@ void test_fd_passing(void) {
 	}
 }
 
-void test_select()
+static void test_select()
 {
-	int i, nfds = -1;
+	int nfds = -1;
 	int socks[2];
 	fd_set readfds, writefds;
 	struct timeval tv;
@@ -2854,7 +2854,7 @@ void test_select()
 	close(socks[1]);
 }
 
-void test_select_close(void)
+static void test_select_close(void)
 {
 	int res, socks[2];
 	fd_set readfds;
@@ -2895,7 +2895,7 @@ void test_select_close(void)
 	close(socks[0]);
 }
 
-void test_fchmod()
+static void test_fchmod()
 {
 	int socks[2];
 	struct stat st1, st2;
@@ -3341,9 +3341,8 @@ test_connect_close(void)
 static void
 test_listen_close(void)
 {
-	socklen_t len;
 	int server_sd, client_sd;
-	struct sockaddr_un server_addr, client_addr, addr;
+	struct sockaddr_un server_addr, client_addr;
 	int status;
 	char byte;
 
@@ -3415,9 +3414,8 @@ test_listen_close(void)
 static void
 test_listen_close_nb(void)
 {
-	socklen_t len;
 	int server_sd, client_sd;
-	struct sockaddr_un server_addr, client_addr, addr;
+	struct sockaddr_un server_addr, client_addr;
 	int status;
 	char byte;
 

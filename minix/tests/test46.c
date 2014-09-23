@@ -283,7 +283,10 @@ void group_test() {
 int dotest( void (*func)(void) ) {
   int test_result;
 
-  if(fork() == 0) (*func)();
+  if(fork() == 0) {
+	(*func)();
+	exit(1); /* not supposed to be reached */
+  }
   else wait(&test_result);
 
   return(test_result);
