@@ -3236,6 +3236,8 @@ test_intr(void)
 		/* No partial transfers should be happening. */
 		check_select(client_sd, 0 /*read*/, 1 /*write*/, 0 /*block*/);
 
+		sleep(1);
+
 		fcntl(client_sd, F_SETFL, fcntl(client_sd, F_GETFL) |
 		    O_NONBLOCK);
 
