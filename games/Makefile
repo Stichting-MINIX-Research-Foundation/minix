@@ -10,7 +10,7 @@
 SUBDIR=	adventure arithmetic \
 	bcd \
 	colorbars \
-	factor fortune \
+	factor fish fortune \
 	monop morse number \
 	pig ppt primes \
 	random snake tetris \
