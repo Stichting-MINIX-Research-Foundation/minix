@@ -178,10 +178,9 @@ int sef_receive_status(endpoint_t src, message *m_ptr, int *status_ptr)
       }
 #endif
 
-#ifdef USE_COVERAGE
+#if INTERCEPT_SEF_GCOV_REQUESTS && USE_COVERAGE
       /* Intercept GCOV data requests (sent by VFS in vfs/gcov.c). */
-      if(m_ptr->m_type == COMMON_REQ_GCOV_DATA &&
-	 m_ptr->m_source == VFS_PROC_NR) {
+      if(IS_SEF_GCOV_REQUEST(m_ptr, status)) {
           if(do_sef_gcov_request(m_ptr) == OK) {
               continue;
           }

@@ -4,7 +4,7 @@
 #include <minix/sysutil.h>
 #include <minix/gcov.h>
 
-static sef_cb_gcov_t sef_cb_gcov = do_gcov_flush_impl;
+static sef_cb_gcov_t sef_cb_gcov = SEF_CB_GCOV_FLUSH_DEFAULT;
 
 /*===========================================================================*
  *                            do_sef_gcov_request             		     *

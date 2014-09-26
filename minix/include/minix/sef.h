@@ -230,12 +230,10 @@ int sef_cb_lu_response_rs_reply(message *m_ptr);
 /* Callback type definitions. */
 typedef void(*sef_cb_signal_handler_t)(int signo);
 typedef  int(*sef_cb_signal_manager_t)(endpoint_t target, int signo);
-typedef  int(*sef_cb_gcov_t)(message *msg);
 
 /* Callback registration helpers. */
 void sef_setcb_signal_handler(sef_cb_signal_handler_t cb);
 void sef_setcb_signal_manager(sef_cb_signal_manager_t cb);
-void sef_setcb_gcov(sef_cb_gcov_t cb);
 
 /* Predefined callback implementations. */
 void sef_cb_signal_handler_null(int signo);
@@ -261,6 +259,24 @@ void sef_cb_signal_handler_posix_default(int signo);
 #define sef_signal_dprint               sef_dprint
 #define sef_signal_debug_begin          sef_debug_begin
 #define sef_signal_debug_end            sef_debug_end
+
+/*===========================================================================*
+ *				  SEF GCOV				     *
+ *===========================================================================*/
+/* What to intercept. */
+#define INTERCEPT_SEF_GCOV_REQUESTS 1
+#define SEF_GCOV_REQUEST_TYPE COMMON_REQ_GCOV_DATA
+#define IS_SEF_GCOV_REQUEST(mp, status) \
+    ((mp)->m_type == COMMON_REQ_GCOV_DATA && (mp)->m_source == VFS_PROC_NR)
+
+/* Callback type definitions. */
+typedef  int(*sef_cb_gcov_t)(message *msg);
+
+/* Callback registration helpers. */
+void sef_setcb_gcov(sef_cb_gcov_t cb);
+
+/* Macros for predefined callback implementations. */
+#define SEF_CB_GCOV_FLUSH_DEFAULT        do_gcov_flush_impl
 
 /*===========================================================================*
  *			     SEF Fault Injection			     *
