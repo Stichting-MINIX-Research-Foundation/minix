@@ -7,7 +7,7 @@
 
 .if ${MKSHARE} != "no" || \
 	make(clean) || make(cleandir) || make(distclean) || make(obj)
-SUBDIR= misc mk \
+SUBDIR= legal misc mk \
 	terminfo zoneinfo
 
 .if ${MKNLS} != "no"

@@ -5336,6 +5336,8 @@
 ./usr/share/kyua-cli/store		minix-sys	atf
 ./usr/share/kyua-cli/store/migrate_v1_v2.sql	minix-sys	kyua
 ./usr/share/kyua-cli/store/schema_v2.sql	minix-sys	kyua
+./usr/share/legal				minix-sys
+./usr/share/legal/COPYRIGHT                    minix-sys
 ./usr/share/misc			minix-sys
 ./usr/share/misc/acronyms		minix-sys
 ./usr/share/misc/acronyms.comp		minix-sys
