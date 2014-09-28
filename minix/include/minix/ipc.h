@@ -1593,7 +1593,11 @@ typedef struct {
 	int		type;
 	cp_grant_id_t	rproctab_gid;
 	endpoint_t	old_endpoint;
-	uint8_t padding[40];
+	int		restarts;
+	int		flags;
+	vir_bytes	buff_addr;
+	size_t		buff_len;
+	uint8_t padding[24];
 } mess_rs_init;
 _ASSERT_MSG_SIZE(mess_rs_init);
 
@@ -1621,7 +1625,8 @@ typedef struct {
 	endpoint_t	endpoint;
 	void		*addr;
 	const char	*name;
-	uint8_t padding[36];
+	int		subtype;
+	uint8_t padding[32];
 } mess_rs_req;
 _ASSERT_MSG_SIZE(mess_rs_req);
 
@@ -1630,7 +1635,8 @@ typedef struct {
 	int		state;
 	int		prepare_maxtime;
 	int		flags;
-	uint8_t padding[40];
+	gid_t		state_data_gid;
+	uint8_t padding[36];
 } mess_rs_update;
 _ASSERT_MSG_SIZE(mess_rs_update);
 

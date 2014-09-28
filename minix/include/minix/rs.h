@@ -9,6 +9,7 @@ Interface to the reincarnation server
 
 #include <minix/bitmap.h>
 #include <minix/com.h>
+#include <minix/ipc_filter.h>
 
 #define SERVICE_LOGIN	"service"	/* passwd file entry for services */
 
@@ -31,16 +32,31 @@ Interface to the reincarnation server
 #define RSS_REUSE	0x04	/* Try to reuse previously copied binary */
 #define RSS_NOBLOCK	0x08	/* unblock caller immediately */
 #define RSS_REPLICA	0x10	/* keep a replica of the service */
-#define RSS_SELF_LU	0x20	/* perform self update */
-#define RSS_SYS_BASIC_CALLS	0x40	/* include basic kernel calls */
-#define RSS_VM_BASIC_CALLS	0x80	/* include basic vm calls */
-#define RSS_NO_BIN_EXP	0x100	/* suppress binary exponential offset */
+#define RSS_BATCH	0x20	/* batch mode */
+#define RSS_SELF_LU	0x40	/* perform self update */
+#define RSS_ASR_LU	0x80	/* perform ASR update */
+#define RSS_FORCE_SELF_LU	0x0100	/* force self update */
+#define RSS_PREPARE_ONLY_LU	0x0200	/* request prepare-only update */
+#define RSS_FORCE_INIT_CRASH    0x0400  /* force crash at initialization time (for debugging) */
+#define RSS_FORCE_INIT_FAIL     0x0800  /* force failure at initialization time (for debugging) */
+#define RSS_FORCE_INIT_TIMEOUT  0x1000  /* force timeout at initialization time (for debugging) */
+#define RSS_FORCE_INIT_DEFCB    0x2000  /* force default cb at initialization time (for debugging) */
+#define RSS_SYS_BASIC_CALLS	0x4000	/* include basic kernel calls */
+#define RSS_VM_BASIC_CALLS	0x8000	/* include basic vm calls */
+#define RSS_UNSAFE_LU          0x10000  /* allow unsafe update */
+#define RSS_NOMMAP_LU          0x20000  /* don't inherit mmapped regions */
+#define RSS_DETACH             0x40000  /* detach on update/restart */
+#define RSS_NORESTART          0x80000  /* don't restart */
+#define RSS_FORCE_INIT_ST     0x100000  /* force state transfer at initialization time */
+#define RSS_NO_BIN_EXP        0x200000  /* suppress binary exponential offset */
 
 /* Common definitions. */
 #define RS_NR_CONTROL		 8
 #define RS_NR_PCI_DEVICE	32
 #define RS_NR_PCI_CLASS		 4
 #define RS_MAX_LABEL_LEN	16
+#define RS_MAX_IPCF_STR_LEN	 (RS_MAX_LABEL_LEN+12)
+#define RS_MAX_IPC_FILTERS	 4
 
 /* CPU special values */
 #define RS_CPU_DEFAULT		-1 /* use the default cpu or do not change the current one */
@@ -67,6 +83,22 @@ struct rs_pci_class {
 	u32_t mask;
 };
 
+/* State-related data. */
+struct rs_ipc_filter_el {
+	int flags;
+	char m_label[RS_MAX_LABEL_LEN];
+	int m_type;
+};
+struct rs_state_data {
+	size_t size;
+	void *ipcf_els;
+	size_t ipcf_els_size;
+	int ipcf_els_gid;
+	void *eval_addr;
+	size_t eval_len;
+	int eval_gid;
+};
+
 /* Arguments needed to start a new driver or server */
 struct rs_start
 {
@@ -82,6 +114,8 @@ struct rs_start
 	long rss_period;
 	char *rss_script;
 	size_t rss_scriptlen;
+	long rss_heap_prealloc_bytes;
+	long rss_map_prealloc_bytes;
 	int rss_nr_irq;
 	int rss_irq[RSS_NR_IRQ];
 	int rss_nr_io;
@@ -92,11 +126,13 @@ struct rs_start
 	struct rs_pci_class rss_pci_class[RS_NR_PCI_CLASS];
 	bitchunk_t rss_system[SYS_CALL_MASK_SIZE];
 	struct rss_label rss_label;
+	struct rss_label rss_trg_label;
 	char *rss_ipc;
 	size_t rss_ipclen;
 	bitchunk_t rss_vm[VM_CALL_MASK_SIZE];
 	int rss_nr_control;
 	struct rss_label rss_control[RS_NR_CONTROL];
+	struct rs_state_data rss_state_data;
 	int devman_id;
 	/*
 	 * SMP specific data
@@ -123,6 +159,8 @@ struct rprocpub {
   short in_use; 		  /* set when the entry is in use */
   unsigned sys_flags; 		  /* sys flags */
   endpoint_t endpoint;		  /* process endpoint number */
+  endpoint_t old_endpoint;	  /* old instance endpoint number (for VM, when updating) */
+  endpoint_t new_endpoint;	  /* new instance endpoint number (for VM, when updating) */
 
   devmajor_t dev_nr;		  /* major device number or NO_DEV */
 
