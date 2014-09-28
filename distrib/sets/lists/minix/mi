@@ -1947,6 +1947,7 @@
 ./usr/lib/gcrt0.o			minix-sys
 ./usr/lib/keymaps			minix-sys
 ./usr/lib/keymaps/abnt2.map		minix-sys
+./usr/lib/keymaps/colemak.map		minix-sys
 ./usr/lib/keymaps/dvorak.map		minix-sys
 ./usr/lib/keymaps/french.map		minix-sys
 ./usr/lib/keymaps/german.map		minix-sys
