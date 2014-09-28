@@ -5,12 +5,12 @@
 #include <string.h>
 
 /* SEF Init callbacks. */
-static struct sef_cbs {
+static struct sef_init_cbs {
     sef_cb_init_t                       sef_cb_init_fresh;
     sef_cb_init_t                       sef_cb_init_lu;
     sef_cb_init_t                       sef_cb_init_restart;
     sef_cb_init_response_t              sef_cb_init_response;
-} sef_cbs = {
+} sef_init_cbs = {
     SEF_CB_INIT_FRESH_DEFAULT,
     SEF_CB_INIT_LU_DEFAULT,
     SEF_CB_INIT_RESTART_DEFAULT,
@@ -48,13 +48,13 @@ static int process_init(int type, sef_init_info_t *info)
   /* Let the callback code handle the specific initialization type. */
   switch(type) {
       case SEF_INIT_FRESH:
-          result = sef_cbs.sef_cb_init_fresh(type, info);
+          result = sef_init_cbs.sef_cb_init_fresh(type, info);
       break;
       case SEF_INIT_LU:
-          result = sef_cbs.sef_cb_init_lu(type, info);
+          result = sef_init_cbs.sef_cb_init_lu(type, info);
       break;
       case SEF_INIT_RESTART:
-          result = sef_cbs.sef_cb_init_restart(type, info);
+          result = sef_init_cbs.sef_cb_init_restart(type, info);
       break;
 
       default:
@@ -67,7 +67,7 @@ static int process_init(int type, sef_init_info_t *info)
   m.m_source = sef_self_endpoint;
   m.m_type = RS_INIT;
   m.m_rs_init.result = result;
-  r = sef_cbs.sef_cb_init_response(&m);
+  r = sef_init_cbs.sef_cb_init_response(&m);
 
   return r;
 }
@@ -128,7 +128,7 @@ int do_sef_init_request(message *m_ptr)
 void sef_setcb_init_fresh(sef_cb_init_t cb)
 {
   assert(cb != NULL);
-  sef_cbs.sef_cb_init_fresh = cb;
+  sef_init_cbs.sef_cb_init_fresh = cb;
 }
 
 /*===========================================================================*
@@ -137,7 +137,7 @@ void sef_setcb_init_fresh(sef_cb_init_t cb)
 void sef_setcb_init_lu(sef_cb_init_t cb)
 {
   assert(cb != NULL);
-  sef_cbs.sef_cb_init_lu = cb;
+  sef_init_cbs.sef_cb_init_lu = cb;
 }
 
 /*===========================================================================*
@@ -146,7 +146,7 @@ void sef_setcb_init_lu(sef_cb_init_t cb)
 void sef_setcb_init_restart(sef_cb_init_t cb)
 {
   assert(cb != NULL);
-  sef_cbs.sef_cb_init_restart = cb;
+  sef_init_cbs.sef_cb_init_restart = cb;
 }
 
 /*===========================================================================*
@@ -155,7 +155,7 @@ void sef_setcb_init_restart(sef_cb_init_t cb)
 void sef_setcb_init_response(sef_cb_init_response_t cb)
 {
   assert(cb != NULL);
-  sef_cbs.sef_cb_init_response = cb;
+  sef_init_cbs.sef_cb_init_response = cb;
 }
 
 /*===========================================================================*
@@ -197,7 +197,7 @@ int sef_cb_init_reset(int UNUSED(type), sef_init_info_t *UNUSED(info))
  *===========================================================================*/
 int sef_cb_init_crash(int UNUSED(type), sef_init_info_t *UNUSED(info))
 {
-  panic("Simulating a crash at initialization time...");
+  panic("Simulating a crash at initialization time...\n");
 
   return OK;
 }

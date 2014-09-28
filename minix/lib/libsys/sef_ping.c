@@ -3,9 +3,9 @@
 #include <minix/sysutil.h>
 
 /* SEF Ping callbacks. */
-static struct sef_cbs {
+static struct sef_ping_cbs {
     sef_cb_ping_reply_t                 sef_cb_ping_reply;
-} sef_cbs = {
+} sef_ping_cbs = {
     SEF_CB_PING_REPLY_DEFAULT
 };
 
@@ -31,7 +31,7 @@ int do_sef_ping_request(message *m_ptr)
 #endif
 
   /* Let the callback code handle the request. */
-  sef_cbs.sef_cb_ping_reply(m_ptr->m_source);
+  sef_ping_cbs.sef_cb_ping_reply(m_ptr->m_source);
 
   /* Return OK not to let anybody else intercept the request. */
   return(OK);
@@ -43,7 +43,7 @@ int do_sef_ping_request(message *m_ptr)
 void sef_setcb_ping_reply(sef_cb_ping_reply_t cb)
 {
   assert(cb != NULL);
-  sef_cbs.sef_cb_ping_reply = cb;
+  sef_ping_cbs.sef_cb_ping_reply = cb;
 }
 
 /*===========================================================================*
