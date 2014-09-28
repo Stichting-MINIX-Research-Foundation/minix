@@ -465,7 +465,7 @@
 #define RS_SHUTDOWN	(RS_RQ_BASE + 4)	/* alert about shutdown */
 #define RS_UPDATE	(RS_RQ_BASE + 5)	/* update system service */
 #define RS_CLONE	(RS_RQ_BASE + 6)	/* clone system service */
-#define RS_EDIT		(RS_RQ_BASE + 7)	/* edit system service */
+#define RS_UNCLONE	(RS_RQ_BASE + 22)	/* unclone system service */
 
 #define RS_LOOKUP	(RS_RQ_BASE + 8)	/* lookup server name */
 
@@ -473,6 +473,15 @@
 
 #define RS_INIT 	(RS_RQ_BASE + 20)	/* service init message */
 #define RS_LU_PREPARE	(RS_RQ_BASE + 21)	/* prepare to update message */
+#define RS_EDIT		(RS_RQ_BASE + 7)	/* edit system service */
+#define RS_SYSCTL	(RS_RQ_BASE + 23)	/* perform system ctl action */
+
+/* Subfunctions for RS_SYSCTL. */
+#define RS_SYSCTL_SRV_STATUS    1
+#define RS_SYSCTL_UPD_START     2
+#define RS_SYSCTL_UPD_RUN       3
+#define RS_SYSCTL_UPD_STOP      4
+#define RS_SYSCTL_UPD_STATUS    5
 
 /*===========================================================================*
  *                Messages for the Data Store Server			     *
