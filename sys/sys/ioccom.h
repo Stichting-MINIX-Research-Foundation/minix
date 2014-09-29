@@ -99,7 +99,6 @@
 /* Decode an ioctl call. */
 #define _MINIX_IOCTL_SIZE(i)            (((i) >> IOCPARM_SHIFT) & IOCPARM_MASK)
 #define _MINIX_IOCTL_IOR(i)             ((i) & IOC_OUT)
-#define _MINIX_IOCTL_IORW(i)            ((i) & IOC_INOUT)
 #define _MINIX_IOCTL_IOW(i)             ((i) & IOC_IN)
 
 /* Recognize and decode size of a 'big' ioctl call. */
