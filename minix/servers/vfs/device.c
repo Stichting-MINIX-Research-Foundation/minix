@@ -343,7 +343,7 @@ static int cdev_clone(dev_t dev, devminor_t new_minor)
 
   /* Issue request */
   r = req_newnode(PFS_PROC_NR, fp->fp_effuid, fp->fp_effgid,
-      ALL_MODES | I_CHAR_SPECIAL, dev, &res);
+      RWX_MODES | I_CHAR_SPECIAL, dev, &res);
   if (r != OK) {
 	(void) cdev_opcl(CDEV_CLOSE, dev, 0);
 	return r;
