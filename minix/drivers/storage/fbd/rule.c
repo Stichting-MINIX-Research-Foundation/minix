@@ -12,7 +12,7 @@ static int nr_matches;
 /*===========================================================================*
  *				rule_ctl				     *
  *===========================================================================*/
-int rule_ctl(int request, endpoint_t endpt, cp_grant_id_t grant)
+int rule_ctl(unsigned long request, endpoint_t endpt, cp_grant_id_t grant)
 {
 	/* Handle an I/O control request regarding rules. */
 	fbd_rulenum_t i;

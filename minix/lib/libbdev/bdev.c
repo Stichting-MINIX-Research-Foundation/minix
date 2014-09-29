@@ -303,7 +303,7 @@ ssize_t bdev_scatter(dev_t dev, u64_t pos, iovec_t *vec, int count, int flags)
   return bdev_vrdwt(BDEV_SCATTER, dev, pos, vec, count, flags);
 }
 
-static int bdev_ioctl_setup(dev_t dev, int request, void *buf,
+static int bdev_ioctl_setup(dev_t dev, unsigned long request, void *buf,
   endpoint_t user_endpt, message *m)
 {
 /* Set up an I/O control request.
@@ -351,7 +351,8 @@ static void bdev_ioctl_cleanup(const message *m)
   cpf_revoke(m->m_lbdev_lblockdriver_msg.grant);
 }
 
-int bdev_ioctl(dev_t dev, int request, void *buf, endpoint_t user_endpt)
+int bdev_ioctl(dev_t dev, unsigned long request, void *buf,
+  endpoint_t user_endpt)
 {
 /* Perform a synchronous I/O control request.
  */
@@ -495,7 +496,7 @@ bdev_id_t bdev_scatter_asyn(dev_t dev, u64_t pos, iovec_t *vec, int count,
 	param);
 }
 
-bdev_id_t bdev_ioctl_asyn(dev_t dev, int request, void *buf,
+bdev_id_t bdev_ioctl_asyn(dev_t dev, unsigned long request, void *buf,
 	endpoint_t user_endpt, bdev_callback_t callback, bdev_param_t param)
 {
 /* Perform an asynchronous I/O control request.

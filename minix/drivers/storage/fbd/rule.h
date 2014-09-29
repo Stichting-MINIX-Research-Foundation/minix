@@ -3,7 +3,8 @@
 
 #define MAX_RULES	16
 
-extern int rule_ctl(int request, endpoint_t endpt, cp_grant_id_t grant);
+extern int rule_ctl(unsigned long request, endpoint_t endpt,
+	cp_grant_id_t grant);
 
 extern int rule_find(u64_t pos, size_t size, int flag);
 

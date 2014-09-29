@@ -345,7 +345,7 @@ typedef struct {
 	int flags;
 
 	endpoint_t user;
-	int request;
+	unsigned long request;
 
 	uint8_t padding[16];
 } mess_lbdev_lblockdriver_msg;
@@ -1958,7 +1958,7 @@ typedef struct {
 	off_t pos;
 	cp_grant_id_t grant;
 	size_t count;
-	int request;
+	unsigned long request;
 	int flags;
 	endpoint_t id;
 	endpoint_t user;

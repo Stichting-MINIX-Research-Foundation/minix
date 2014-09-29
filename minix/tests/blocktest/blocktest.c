@@ -1152,7 +1152,7 @@ static void close_device(dev_t minor)
 		"closing a subpartition");
 }
 
-static int vir_ioctl(dev_t minor, int req, void *ptr, ssize_t exp,
+static int vir_ioctl(dev_t minor, unsigned long req, void *ptr, ssize_t exp,
 	result_t *res)
 {
 	/* Perform an I/O control request, using a local buffer.
