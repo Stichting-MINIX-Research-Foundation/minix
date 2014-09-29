@@ -13,6 +13,9 @@ void sef_cancel(void);
 void __dead sef_exit(int status);
 #define sef_receive(src, m_ptr) sef_receive_status(src, m_ptr, NULL)
 
+/* SEF global definitions. */
+#define SEF_STATE_TRANSFER_GID          0
+
 /* SEF Debug. */
 #include <stdio.h>
 #define sef_dprint                      printf
@@ -24,14 +27,25 @@ void __dead sef_exit(int status);
  *===========================================================================*/
 /* What to intercept. */
 #define INTERCEPT_SEF_INIT_REQUESTS 1
-#define IS_SEF_INIT_REQUEST(mp) ((mp)->m_type == RS_INIT \
-    && (mp)->m_source == RS_PROC_NR)
+#define SEF_INIT_REQUEST_TYPE RS_INIT
+#define IS_SEF_INIT_REQUEST(mp, status) ((mp)->m_type == RS_INIT \
+     && (mp)->m_source == RS_PROC_NR)
+
+#define SEF_COPY_OLD_TO_NEW     0x001
+#define SEF_COPY_NEW_TO_NEW     0x002
+#define SEF_COPY_DEST_OFFSET    0x004
+#define SEF_COPY_SRC_OFFSET     0X008
 
 /* Type definitions. */
 typedef struct {
+    int flags;
     cp_grant_id_t rproctab_gid;
     endpoint_t endpoint;
     endpoint_t old_endpoint;
+    int restarts;
+    void* init_buff_start;
+    void* init_buff_cleanup_start;
+    size_t init_buff_len;
 } sef_init_info_t;
 
 /* Callback type definitions. */
@@ -69,8 +83,17 @@ int sef_cb_init_response_rs_reply(message *m_ptr);
 #define SEF_INIT_LU                     1    /* init after live update */
 #define SEF_INIT_RESTART                2    /* init after restart */
 
+/* Init flags (live update flags can be used as init flags as well). */
+#define SEF_INIT_CRASH	 	      0x1
+#define SEF_INIT_FAIL		      0x2
+#define SEF_INIT_TIMEOUT	      0x4
+#define SEF_INIT_DEFCB  	      0x8
+#define SEF_INIT_SCRIPT_RESTART	     0x10
+#define SEF_INIT_ST                  0x20    /* force state transfer init */
+
 /* Debug. */
-#define SEF_INIT_DEBUG_DEFAULT 0
+#define SEF_INIT_DEBUG_DEFAULT 		0
+#define SEF_INIT_ALLOW_DEBUG_INIT_FLAGS 1
 
 #ifndef SEF_INIT_DEBUG
 #define SEF_INIT_DEBUG                  SEF_INIT_DEBUG_DEFAULT
@@ -85,6 +108,7 @@ int sef_cb_init_response_rs_reply(message *m_ptr);
  *===========================================================================*/
 /* What to intercept. */
 #define INTERCEPT_SEF_PING_REQUESTS 1
+#define SEF_PING_REQUEST_TYPE NOTIFY_MESSAGE
 #define IS_SEF_PING_REQUEST(mp, status) (is_ipc_notify(status) \
     && (mp)->m_source == RS_PROC_NR)
 
@@ -120,6 +144,7 @@ void sef_cb_ping_reply_pong(endpoint_t source);
  *===========================================================================*/
 /* What to intercept. */
 #define INTERCEPT_SEF_LU_REQUESTS 1
+#define SEF_LU_REQUEST_TYPE RS_LU_PREPARE
 #define IS_SEF_LU_REQUEST(mp, status) ((mp)->m_type == RS_LU_PREPARE \
     && (mp)->m_source == RS_PROC_NR)
 
@@ -207,7 +232,7 @@ int sef_cb_lu_response_rs_reply(message *m_ptr);
 #define SEF_LU_IS_IDENTITY_UPDATE(F) (((F) & (SEF_LU_SELF|SEF_LU_NOMMAP|SEF_LU_ASR|SEF_INIT_ST)) == SEF_LU_SELF)
 
 /* Debug. */
-#define SEF_LU_DEBUG_DEFAULT 1
+#define SEF_LU_DEBUG_DEFAULT             0
 #define SEF_LU_ALWAYS_ALLOW_DEBUG_STATES 1
 
 #ifndef SEF_LU_DEBUG
@@ -223,6 +248,7 @@ int sef_cb_lu_response_rs_reply(message *m_ptr);
  *===========================================================================*/
 /* What to intercept. */
 #define INTERCEPT_SEF_SIGNAL_REQUESTS 1
+#define SEF_SIGNAL_REQUEST_TYPE SIGS_SIGNAL_RECEIVED
 #define IS_SEF_SIGNAL_REQUEST(mp, status) \
     (((mp)->m_type == SIGS_SIGNAL_RECEIVED && (mp)->m_source < INIT_PROC_NR) \
     || (is_ipc_notify(status) && (mp)->m_source == SYSTEM))
@@ -283,6 +309,7 @@ void sef_setcb_gcov(sef_cb_gcov_t cb);
  *===========================================================================*/
 /* What to intercept. */
 #define INTERCEPT_SEF_FI_REQUESTS 1
+#define SEF_FI_REQUEST_TYPE COMMON_REQ_FI_CTL
 #define IS_SEF_FI_REQUEST(mp, status) \
     (m_ptr->m_type == COMMON_REQ_FI_CTL)
 
