@@ -1825,10 +1825,10 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_vfs_fs_newnode);
 
 typedef struct {
-	uint64_t count;
 	ino_t inode;
+	unsigned int count;
 
-	uint8_t data[40];
+	uint8_t data[44];
 } mess_vfs_fs_putnode;
 _ASSERT_MSG_SIZE(mess_vfs_fs_putnode);
 
