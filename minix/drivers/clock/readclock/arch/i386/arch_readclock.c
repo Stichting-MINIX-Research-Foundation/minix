@@ -51,7 +51,6 @@
 #include <minix/com.h>
 #include <minix/log.h>
 #include <machine/cmos.h>
-#include <sys/svrctl.h>
 
 #include "readclock.h"
 

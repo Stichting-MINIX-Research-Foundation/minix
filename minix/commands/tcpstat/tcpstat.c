@@ -15,7 +15,6 @@ Created:	June 1995 by Philip Homburg <philip@f-mnx.phicoh.com>
 #include <stdio.h>
 #include <time.h>
 #include <unistd.h>
-#include <sys/svrctl.h>
 #ifndef __minix_vmd
 #include <sys/times.h>
 #endif

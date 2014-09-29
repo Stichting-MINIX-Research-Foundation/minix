@@ -776,12 +776,13 @@ void pm_setsid(endpoint_t proc_e)
  *===========================================================================*/
 int do_svrctl(void)
 {
-  unsigned int svrctl;
+  unsigned long svrctl;
   vir_bytes ptr;
 
-  svrctl = job_m_in.m_lsys_svrctl.request;
-  ptr = job_m_in.m_lsys_svrctl.arg;
-  if (((svrctl >> 8) & 0xFF) != 'M') return(EINVAL);
+  svrctl = job_m_in.m_lc_svrctl.request;
+  ptr = job_m_in.m_lc_svrctl.arg;
+
+  if (IOCGROUP(svrctl) != 'F') return(EINVAL);
 
   switch (svrctl) {
     case VFSSETPARAM:

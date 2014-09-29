@@ -597,6 +597,14 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_lc_readclock_rtcdev);
 
 typedef struct {
+	unsigned long request;
+	vir_bytes arg;
+
+	uint8_t padding[48];
+} mess_lc_svrctl;
+_ASSERT_MSG_SIZE(mess_lc_svrctl);
+
+typedef struct {
 	vir_bytes name;
 	size_t len;
 	int fd;
@@ -1313,14 +1321,6 @@ typedef struct {
 	uint8_t padding[52];
 } mess_lsys_sched_scheduling_stop;
 _ASSERT_MSG_SIZE(mess_lsys_sched_scheduling_stop);
-
-typedef struct {
-	int request;
-	vir_bytes arg;
-
-	uint8_t padding[48];
-} mess_lsys_svrctl;
-_ASSERT_MSG_SIZE(mess_lsys_svrctl);
 
 typedef struct {
 	int request;
@@ -2095,6 +2095,7 @@ typedef struct {
 		mess_lc_pm_time		m_lc_pm_time;
 		mess_lc_pm_waitpid	m_lc_pm_waitpid;
 		mess_lc_readclock_rtcdev m_lc_readclock_rtcdev;
+		mess_lc_svrctl		m_lc_svrctl;
 		mess_lc_vfs_chown	m_lc_vfs_chown;
 		mess_lc_vfs_close	m_lc_vfs_close;
 		mess_lc_vfs_creat	m_lc_vfs_creat;
@@ -2174,7 +2175,6 @@ typedef struct {
 		mess_lsys_pm_srv_fork	m_lsys_pm_srv_fork;
 		mess_lsys_sched_scheduling_start m_lsys_sched_scheduling_start;
 		mess_lsys_sched_scheduling_stop m_lsys_sched_scheduling_stop;
-		mess_lsys_svrctl	m_lsys_svrctl;
 		mess_lsys_tty_fkey_ctl	m_lsys_tty_fkey_ctl;
 		mess_lsys_vfs_checkperms m_lsys_vfs_checkperms;
 		mess_lsys_vfs_copyfd	m_lsys_vfs_copyfd;

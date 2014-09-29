@@ -20,7 +20,7 @@ static char *bin_name;
 
 int main (int argc, char *argv[])
 {
-  int param;
+  unsigned long param;
   endpoint_t proc_e = NONE;
   struct sysgetenv sysgetenv;
   char *to_whom, *operation, *what, *value;

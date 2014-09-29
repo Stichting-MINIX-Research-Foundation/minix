@@ -16,7 +16,6 @@
 #include <minix/com.h>
 #include <minix/type.h>
 #include <minix/safecopies.h>
-#include <sys/svrctl.h>
 
 #include "readclock.h"
 

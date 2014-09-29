@@ -295,9 +295,10 @@ int do_getsetpriority()
 /*===========================================================================*
  *				do_svrctl				     *
  *===========================================================================*/
-int do_svrctl()
+int do_svrctl(void)
 {
-  int s, req;
+  unsigned long req;
+  int s;
   vir_bytes ptr;
 #define MAX_LOCAL_PARAMS 2
   static struct {
@@ -306,14 +307,16 @@ int do_svrctl()
   } local_param_overrides[MAX_LOCAL_PARAMS];
   static int local_params = 0;
 
-  req = m_in.m_lsys_svrctl.request;
-  ptr = m_in.m_lsys_svrctl.arg;
+  req = m_in.m_lc_svrctl.request;
+  ptr = m_in.m_lc_svrctl.arg;
 
-  /* Is the request indeed for the PM? */
-  if (((req >> 8) & 0xFF) != 'M') return(EINVAL);
+  /* Is the request indeed for the PM? ('M' is old and being phased out) */
+  if (IOCGROUP(req) != 'P' && IOCGROUP(req) != 'M') return(EINVAL);
 
   /* Control operations local to the PM. */
   switch(req) {
+  case OPMSETPARAM:
+  case OPMGETPARAM:
   case PMSETPARAM:
   case PMGETPARAM: {
       struct sysgetenv sysgetenv;
@@ -327,7 +330,7 @@ int do_svrctl()
               sizeof(sysgetenv)) != OK) return(EFAULT);  
 
       /* Set a param override? */
-      if (req == PMSETPARAM) {
+      if (req == PMSETPARAM || req == OPMSETPARAM) {
   	if (local_params >= MAX_LOCAL_PARAMS) return ENOSPC;
   	if (sysgetenv.keylen <= 0
   	 || sysgetenv.keylen >=

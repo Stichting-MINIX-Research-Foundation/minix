@@ -19,7 +19,6 @@
 #include <sys/ioc_disk.h>
 #include <machine/pci.h>
 #include <sys/mman.h>
-#include <sys/svrctl.h>
 
 /* Variables. */
 
