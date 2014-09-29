@@ -20,6 +20,16 @@ function generate_modules_map()
 	echo "Generating Minix modules map..." 1>&2
 	cd ${MINIX_ROOT}
 	grep -r "^PROG=" . --include=Makefile | sed -e "s/\s*//g" | sed -e "s/PROG=//g" > ${TMPFILE}
+	grep -r "^PROGS=" . --include=Makefile | sed -e "s/\s\s*/ /g" | sed -e "s/PROGS=//g" | sed -e "s/\.\///g" | (
+		while read line; do
+			path=$(echo $line | cut -d' ' -f 1)
+			progs=$(echo $line | cut -d' ' -f 2-)
+			for p in $progs
+			do
+				echo $path$p
+			done
+		done
+	) >> ${TMPFILE}
 
 	cat ${TMPFILE} | sed -e "s/\.\///g" > ${TMPFILE}.1
 
