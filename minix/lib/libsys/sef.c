@@ -107,7 +107,7 @@ void sef_startup()
           if(r != OK) {
               panic("unable to ipc_receive from RS: %d", r);
           }
-      } while(!IS_SEF_INIT_REQUEST(&m));
+      } while(!IS_SEF_INIT_REQUEST(&m, status));
 
       /* Process initialization request for this system service. */
       if((r = do_sef_init_request(&m)) != OK) {
@@ -127,7 +127,7 @@ void sef_startup()
 int sef_receive_status(endpoint_t src, message *m_ptr, int *status_ptr)
 {
 /* SEF receive() interface for system services. */
-  int r, status;
+  int r, status, m_type;
 
   sef_self_receiving = TRUE;
 
@@ -151,50 +151,89 @@ int sef_receive_status(endpoint_t src, message *m_ptr, int *status_ptr)
           return r;
       }
 
-#if INTERCEPT_SEF_PING_REQUESTS
-      /* Intercept SEF Ping requests. */
-      if(IS_SEF_PING_REQUEST(m_ptr, status)) {
-          if(do_sef_ping_request(m_ptr) == OK) {
-              continue;
+      m_type = m_ptr->m_type;
+      if (is_ipc_notify(status)) {
+          switch (m_ptr->m_source) {
+              case SYSTEM:
+                  m_type = SEF_SIGNAL_REQUEST_TYPE;
+              break;
+              case RS_PROC_NR:
+                  m_type = SEF_PING_REQUEST_TYPE;
+              break;
           }
       }
+      switch(m_type) {
+
+#if INTERCEPT_SEF_INIT_REQUESTS
+      case SEF_INIT_REQUEST_TYPE:
+          /* Intercept SEF Init requests. */
+          if(IS_SEF_INIT_REQUEST(m_ptr, status)) {
+              /* Ignore spurious init requests. */
+              if (m_ptr->m_rs_init.type != SEF_INIT_FRESH
+                  || sef_self_endpoint != VM_PROC_NR)
+              continue;
+          }
+      break;
+#endif
+
+#if INTERCEPT_SEF_PING_REQUESTS
+      case SEF_PING_REQUEST_TYPE:
+          /* Intercept SEF Ping requests. */
+          if(IS_SEF_PING_REQUEST(m_ptr, status)) {
+              if(do_sef_ping_request(m_ptr) == OK) {
+                  continue;
+              }
+          }
+      break;
 #endif
 
 #if INTERCEPT_SEF_LU_REQUESTS
-      /* Intercept SEF Live update requests. */
-      if(IS_SEF_LU_REQUEST(m_ptr, status)) {
-          if(do_sef_lu_request(m_ptr) == OK) {
-              continue;
+      case SEF_LU_REQUEST_TYPE:
+          /* Intercept SEF Live update requests. */
+          if(IS_SEF_LU_REQUEST(m_ptr, status)) {
+              if(do_sef_lu_request(m_ptr) == OK) {
+                  continue;
+              }
           }
-      }
+      break;
 #endif
 
 #if INTERCEPT_SEF_SIGNAL_REQUESTS
-      /* Intercept SEF Signal requests. */
-      if(IS_SEF_SIGNAL_REQUEST(m_ptr, status)) {
-          if(do_sef_signal_request(m_ptr) == OK) {
-              continue;
+      case SEF_SIGNAL_REQUEST_TYPE:
+          /* Intercept SEF Signal requests. */
+          if(IS_SEF_SIGNAL_REQUEST(m_ptr, status)) {
+              if(do_sef_signal_request(m_ptr) == OK) {
+                  continue;
+              }
           }
-      }
+      break;
 #endif
 
 #if INTERCEPT_SEF_GCOV_REQUESTS && USE_COVERAGE
-      /* Intercept GCOV data requests (sent by VFS in vfs/gcov.c). */
-      if(IS_SEF_GCOV_REQUEST(m_ptr, status)) {
-          if(do_sef_gcov_request(m_ptr) == OK) {
-              continue;
+      case SEF_GCOV_REQUEST_TYPE:
+          /* Intercept GCOV data requests (sent by VFS in vfs/gcov.c). */
+          if(IS_SEF_GCOV_REQUEST(m_ptr, status)) {
+              if(do_sef_gcov_request(m_ptr) == OK) {
+                  continue;
+              }
           }
-      }
+      break;
 #endif
 
-#ifdef INTERCEPT_SEF_FI_REQUESTS
-      /* Intercept Fault injection requests. */
-      if(IS_SEF_FI_REQUEST(m_ptr, status)) {
-          if(do_sef_fi_request(m_ptr) == OK) {
-              continue;
+#if INTERCEPT_SEF_FI_REQUESTS
+      case SEF_FI_REQUEST_TYPE:
+          /* Intercept SEF Fault Injection requests. */
+          if(IS_SEF_FI_REQUEST(m_ptr, status)) {
+              if(do_sef_fi_request(m_ptr) == OK) {
+                  continue;
+              }
           }
-      }
+      break;
 #endif
+
+      default:
+      break;
+      }
 
       /* If we get this far, this is not a valid SEF request, return and
        * let the caller deal with that.
