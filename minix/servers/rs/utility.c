@@ -42,6 +42,7 @@ int type;					/* type of initialization */
   }
 
   /* Send initialization message. */
+  memset(&m, 0, sizeof(message));
   m.m_type = RS_INIT;
   m.m_rs_init.type = type;
   m.m_rs_init.rproctab_gid = rinit.rproctab_gid;

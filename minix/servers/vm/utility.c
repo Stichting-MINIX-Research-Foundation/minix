@@ -3,8 +3,6 @@
 
 #define _SYSTEM		1
 
-#define brk _brk	/* get rid of no previous prototype warning */
-
 #include <minix/callnr.h>
 #include <minix/com.h>
 #include <minix/config.h>
@@ -24,6 +22,7 @@
 #include <env.h>
 #include <unistd.h>
 #include <assert.h>
+#include <sys/cdefs.h>
 #include <sys/param.h>
 #include <sys/mman.h>
 #include <sys/resource.h>
@@ -305,7 +304,10 @@ int munmap(void * addr, size_t len)
 	return 0;
 }
 
-int brk(void *addr)
+#ifdef __weak_alias
+__weak_alias(brk, _brk)
+#endif
+int _brk(void *addr)
 {
 	/* brk is a special case function to allow vm itself to
 	   allocate memory in it's own (cacheable) HEAP */

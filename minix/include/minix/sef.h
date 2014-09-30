@@ -11,6 +11,8 @@ int sef_receive_status(endpoint_t src, message *m_ptr, int *status_ptr);
 endpoint_t sef_self(void);
 void sef_cancel(void);
 void __dead sef_exit(int status);
+int sef_getrndseed (void);
+int sef_munmap(void *addrstart, vir_bytes len, int type);
 #define sef_receive(src, m_ptr) sef_receive_status(src, m_ptr, NULL)
 
 /* SEF global definitions. */
@@ -46,6 +48,7 @@ typedef struct {
     void* init_buff_start;
     void* init_buff_cleanup_start;
     size_t init_buff_len;
+    int copy_flags;
 } sef_init_info_t;
 
 /* Callback type definitions. */
@@ -65,6 +68,10 @@ int sef_cb_init_response_null(message *m_ptr);
 int sef_cb_init_fail(int type, sef_init_info_t *info);
 int sef_cb_init_reset(int type, sef_init_info_t *info);
 int sef_cb_init_crash(int type, sef_init_info_t *info);
+int sef_cb_init_timeout(int type, sef_init_info_t *info);
+int sef_cb_init_identity_state_transfer(int type, sef_init_info_t *info);
+int sef_cb_init_lu_identity_as_restart(int type, sef_init_info_t *info);
+int sef_cb_init_lu_generic(int type, sef_init_info_t *info);
 int sef_cb_init_response_rs_reply(message *m_ptr);
 
 /* Macros for predefined callback implementations. */
@@ -175,10 +182,12 @@ int sef_cb_lu_response_null(message *m_ptr);
 int sef_cb_lu_prepare_always_ready(int state);
 int sef_cb_lu_prepare_never_ready(int state);
 int sef_cb_lu_prepare_crash(int state);
+int sef_cb_lu_prepare_eval(int state);
 int sef_cb_lu_state_isvalid_standard(int state, int flags);
 int sef_cb_lu_state_isvalid_workfree(int state, int flags);
 int sef_cb_lu_state_isvalid_workfree_self(int state, int flags);
 int sef_cb_lu_state_isvalid_generic(int state, int flags);
+void sef_cb_lu_state_dump_eval(int state);
 int sef_cb_lu_response_rs_reply(message *m_ptr);
 
 /* Macros for predefined callback implementations. */
@@ -315,6 +324,49 @@ void sef_setcb_gcov(sef_cb_gcov_t cb);
 
 /* Fault injection tool support. */
 #define SEF_FI_ALLOW_EDFI               1
+
+/*===========================================================================*
+ *                          SEF State Transfer                               *
+ *===========================================================================*/
+#define SEF_LU_STATE_EVAL_MAX_LEN          512
+
+/* State transfer helpers. */
+int sef_copy_state_region_ctl(sef_init_info_t *info,
+    vir_bytes *src_address, vir_bytes *dst_address);
+int sef_copy_state_region(sef_init_info_t *info,
+    vir_bytes address, size_t size, vir_bytes dst_address);
+int sef_st_state_transfer(sef_init_info_t *info);
+
+/* Callback prototypes to be passed to the State Transfer framwork. */
+int sef_old_state_table_lookup(sef_init_info_t *info, void *addr);
+int sef_old_state_table_lookup_opaque(void *info_opaque, void *addr);
+int sef_copy_state_region_opaque(void *info_opaque, uint32_t address,
+    size_t size, uint32_t dst_address);
+
+/* Debug. */
+#define SEF_ST_DEBUG_DEFAULT 		0
+
+#ifndef SEF_ST_DEBUG
+#define SEF_ST_DEBUG                    SEF_ST_DEBUG_DEFAULT
+#endif
+
+/*===========================================================================*
+ *                               SEF LLVM                                    *
+ *===========================================================================*/
+/* LLVM helpers. */
+int sef_llvm_magic_enabled(void);
+int sef_llvm_real_brk(char *newbrk);
+int sef_llvm_state_cleanup(void);
+void sef_llvm_dump_eval(char *expr);
+int sef_llvm_eval_bool(char *expr, char *result);
+void *sef_llvm_state_table_addr(void);
+size_t sef_llvm_state_table_size(void);
+void sef_llvm_stack_refs_save(char *stack_buff);
+void sef_llvm_stack_refs_restore(char *stack_buff);
+int sef_llvm_state_transfer(sef_init_info_t *info);
+
+int sef_llvm_ltckpt_enabled(void);
+int sef_llvm_get_ltckpt_offset(void);
 
 #if !defined(USE_LIVEUPDATE)
 #undef INTERCEPT_SEF_LU_REQUESTS

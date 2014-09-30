@@ -1,6 +1,9 @@
 #include "syslib.h"
 #include <assert.h>
 #include <minix/sysutil.h>
+#include <minix/rs.h>
+#include <minix/timers.h>
+#include <minix/endpoint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -10,13 +13,18 @@
 #define SEF_SELF_NAME_MAXLEN 20
 char sef_self_name[SEF_SELF_NAME_MAXLEN];
 endpoint_t sef_self_endpoint = NONE;
+endpoint_t sef_self_proc_nr;
 int sef_self_priv_flags;
-int sef_self_first_receive_done;
+int sef_self_init_flags;
 int sef_self_receiving;
+
+/* Extern variables. */
+EXTERN int sef_lu_state;
+EXTERN int __sef_st_before_receive_enabled;
 
 /* Debug. */
 #if SEF_INIT_DEBUG || SEF_LU_DEBUG || SEF_PING_DEBUG || SEF_SIGNAL_DEBUG
-#define SEF_DEBUG_HEADER_MAXLEN 32
+#define SEF_DEBUG_HEADER_MAXLEN 50
 static int sef_debug_init = 0;
 static time_t sef_debug_boottime = 0;
 static u32_t sef_debug_system_hz = 0;
@@ -40,6 +48,9 @@ EXTERN int do_sef_lu_request(message *m_ptr);
 
 /* SEF Signal prototypes. */
 EXTERN int do_sef_signal_request(message *m_ptr);
+
+/* State transfer prototypes. */
+EXTERN void do_sef_st_before_receive(void);
 
 /* SEF GCOV prototypes. */
 #ifdef USE_COVERAGE
@@ -67,8 +78,15 @@ void sef_startup()
   if ( r != OK) {
       panic("sef_startup: sys_whoami failed: %d\n", r);
   }
+
+  sef_self_proc_nr = _ENDPOINT_P(sef_self_endpoint);
   sef_self_priv_flags = priv_flags;
+  sef_self_init_flags = init_flags;
+  sef_lu_state = SEF_LU_STATE_NULL;
   old_endpoint = NONE;
+  if(init_flags & SEF_LU_NOMMAP) {
+      sys_upd_flags |= SF_VM_NOMMAP;
+  }
 
 #if USE_LIVEUPDATE
   /* RS may wake up with the wrong endpoint, perfom the update in that case. */
@@ -117,8 +135,9 @@ void sef_startup()
 #endif
 
   /* (Re)initialize SEF variables. */
-  sef_self_first_receive_done = FALSE;
   sef_self_priv_flags = priv_flags;
+  sef_self_init_flags = init_flags;
+  sef_lu_state = SEF_LU_STATE_NULL;
 }
 
 /*===========================================================================*
@@ -140,13 +159,19 @@ int sef_receive_status(endpoint_t src, message *m_ptr, int *status_ptr)
 
 #if INTERCEPT_SEF_LU_REQUESTS
       /* Handle SEF Live update before receive events. */
-      do_sef_lu_before_receive();
+      if(sef_lu_state != SEF_LU_STATE_NULL) {
+          do_sef_lu_before_receive();
+      }
+
+      /* Handle State transfer before receive events. */
+      if(__sef_st_before_receive_enabled) {
+          do_sef_st_before_receive();
+      }
 #endif
 
       /* Receive and return in case of error. */
       r = ipc_receive(src, m_ptr, &status);
       if(status_ptr) *status_ptr = status;
-      if(!sef_self_first_receive_done) sef_self_first_receive_done = TRUE;
       if(r != OK) {
           return r;
       }
@@ -272,6 +297,16 @@ void sef_cancel(void)
 }
 
 /*===========================================================================*
+ *                              sef_getrndseed              		     *
+ *===========================================================================*/
+int sef_getrndseed(void)
+{
+    clock_t uptime;
+    sys_times(SELF, NULL, NULL, &uptime, NULL);
+    return (int) uptime;
+}
+
+/*===========================================================================*
  *      	                  sef_exit                                   *
  *===========================================================================*/
 void sef_exit(int status)
@@ -292,6 +327,24 @@ void sef_exit(int status)
 __weak_alias(_exit, sef_exit);
 __weak_alias(__exit, sef_exit);
 #endif
+
+/*===========================================================================*
+ *                                sef_munmap                                 *
+ *===========================================================================*/
+int sef_munmap(void *addrstart, vir_bytes len, int type)
+{
+/* System services use a special version of munmap() to control implicit
+ * munmaps as startup and allow for asynchronous mnmap for VM.
+ */
+  message m;
+  m.m_type = type;
+  m.VMUM_ADDR = addrstart;
+  m.VMUM_LEN = len;
+  if(sef_self_endpoint == VM_PROC_NR) {
+      return asynsend3(SELF, &m, AMF_NOREPLY);
+  }
+  return _syscall(VM_PROC_NR, type, &m);
+}
 
 #if SEF_INIT_DEBUG || SEF_LU_DEBUG || SEF_PING_DEBUG || SEF_SIGNAL_DEBUG
 /*===========================================================================*
