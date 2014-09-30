@@ -16,7 +16,7 @@ vir_bytes offset;			/* offset from grant */
     m_io.m_lsys_krn_sys_sdevio.request = req;
     m_io.m_lsys_krn_sys_sdevio.port = port;
     m_io.m_lsys_krn_sys_sdevio.vec_endpt = proc_nr;
-    m_io.m_lsys_krn_sys_sdevio.vec_addr = buffer;
+    m_io.m_lsys_krn_sys_sdevio.vec_addr = (vir_bytes)buffer;
     m_io.m_lsys_krn_sys_sdevio.vec_size = count;
     m_io.m_lsys_krn_sys_sdevio.offset = offset;
 

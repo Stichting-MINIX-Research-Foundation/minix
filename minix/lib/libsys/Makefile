@@ -1,8 +1,7 @@
-NOGCCERROR=yes
-NOCLANGERROR=yes
-
 # Makefile for libsys
 .include <bsd.own.mk>
+
+NOGCCERROR=yes
 
 CPPFLAGS+= -D_MINIX_SYSTEM -D_SYSTEM
 

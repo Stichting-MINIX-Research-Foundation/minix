@@ -1,4 +1,5 @@
 #include "syslib.h"
+#include <string.h>
 
 int sys_vircopy(src_proc, src_vir, 
 	dst_proc, dst_vir, bytes, flags)

@@ -10,6 +10,6 @@ size_t size;			/* Amount of data to read */
 
   m.m_lsys_krn_readbios.size = size;
   m.m_lsys_krn_readbios.addr = address;
-  m.m_lsys_krn_readbios.buf = buf;
+  m.m_lsys_krn_readbios.buf = (vir_bytes)buf;
   return(_kernel_call(SYS_READBIOS, &m));
 }

@@ -50,7 +50,7 @@ int env_get_param(const char *key, char *value, int max_len)
   m.m_lsys_krn_sys_getinfo.request = GET_MONPARAMS;
   m.m_lsys_krn_sys_getinfo.endpt = SELF;
   m.m_lsys_krn_sys_getinfo.val_len = sizeof(mon_params);
-  m.m_lsys_krn_sys_getinfo.val_ptr = mon_params;
+  m.m_lsys_krn_sys_getinfo.val_ptr = (vir_bytes)mon_params;
   if ((s=_kernel_call(SYS_GETINFO, &m)) != OK) {
 	printf("SYS_GETINFO: %d (size %u)\n", s, sizeof(mon_params));
 	return(s);

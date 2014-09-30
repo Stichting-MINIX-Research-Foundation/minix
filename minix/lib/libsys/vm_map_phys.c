@@ -13,7 +13,7 @@ vm_map_phys(endpoint_t who, void *phaddr, size_t len)
 
 	memset(&m, 0, sizeof(m));
 	m.m_lsys_vm_map_phys.ep = who;
-	m.m_lsys_vm_map_phys.phaddr = phaddr;
+	m.m_lsys_vm_map_phys.phaddr = (phys_bytes)phaddr;
 	m.m_lsys_vm_map_phys.len = len;
 
 	r = _taskcall(VM_PROC_NR, VM_MAP_PHYS, &m);

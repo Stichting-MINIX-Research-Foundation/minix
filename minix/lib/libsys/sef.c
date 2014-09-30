@@ -17,6 +17,7 @@ int sef_self_receiving;
 /* Debug. */
 #if SEF_INIT_DEBUG || SEF_LU_DEBUG || SEF_PING_DEBUG || SEF_SIGNAL_DEBUG
 #define SEF_DEBUG_HEADER_MAXLEN 32
+static int sef_debug_init = 0;
 static time_t sef_debug_boottime = 0;
 static u32_t sef_debug_system_hz = 0;
 static time_t sef_debug_time_sec = 0;
@@ -239,7 +240,6 @@ void sef_exit(int status)
 /* System services use a special version of exit() that generates a
  * self-termination signal.
  */
-  message m;
 
   /* Ask the kernel to exit. */
   sys_exit();
@@ -262,40 +262,26 @@ static void sef_debug_refresh_params(void)
 {
 /* Refresh SEF debug params. */
   clock_t uptime;
-  int r;
 
-  /* Get boottime the first time. */
-  if(!sef_debug_boottime) {
-      r = sys_times(NONE, NULL, NULL, NULL, &sef_debug_boottime);
-      if ( r != OK) {
-          sef_debug_boottime = -1;
-      }
-  }
-
-  /* Get system hz the first time. */
-  if(!sef_debug_system_hz) {
-      r = sys_getinfo(GET_HZ, &sef_debug_system_hz,
-          sizeof(sef_debug_system_hz), 0, 0);
-      if ( r != OK) {
-          sef_debug_system_hz = -1;
-      }
+  /* Get boottime and system hz the first time. */
+  if(!sef_debug_init) {
+      if (sys_times(NONE, NULL, NULL, NULL, &sef_debug_boottime) != OK)
+	  sef_debug_init = -1;
+      else if (sys_getinfo(GET_HZ, &sef_debug_system_hz,
+        sizeof(sef_debug_system_hz), 0, 0) != OK)
+	  sef_debug_init = -1;
+      else
+	  sef_debug_init = 1;
   }
 
   /* Get uptime. */
   uptime = -1;
-  if(sef_debug_boottime!=-1 && sef_debug_system_hz!=-1) {
-      r = sys_times(NONE, NULL, NULL, &uptime, NULL);
-      if ( r != OK) {
-            uptime = -1;
-      }
-  }
-
-  /* Compute current time. */
-  if(sef_debug_boottime==-1 || sef_debug_system_hz==-1 || uptime==-1) {
+  if (sef_debug_init < 1 || sys_times(NONE, NULL, NULL, &uptime, NULL) != OK) {
       sef_debug_time_sec = 0;
       sef_debug_time_us = 0;
   }
   else {
+      /* Compute current time. */
       sef_debug_time_sec = (time_t) (sef_debug_boottime
           + (uptime/sef_debug_system_hz));
       sef_debug_time_us = (uptime%sef_debug_system_hz)

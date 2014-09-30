@@ -12,8 +12,9 @@
 #include <machine/param.h>
 #include <machine/vmparam.h>
 
-int vm_cachecall(message *m, int call, void *addr, dev_t dev, off_t dev_offset,
-	ino_t ino, off_t ino_offset, u32_t *flags, int blocksize)
+static int vm_cachecall(message *m, int call, void *addr, dev_t dev,
+	off_t dev_offset, ino_t ino, off_t ino_offset, u32_t *flags,
+	int blocksize)
 {
     if(blocksize % PAGE_SIZE)
     	panic("blocksize %d should be a multiple of pagesize %d\n",

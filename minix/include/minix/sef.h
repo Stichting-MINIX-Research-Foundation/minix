@@ -10,7 +10,7 @@ void sef_startup(void);
 int sef_receive_status(endpoint_t src, message *m_ptr, int *status_ptr);
 endpoint_t sef_self(void);
 void sef_cancel(void);
-void sef_exit(int status);
+void __dead sef_exit(int status);
 #define sef_receive(src, m_ptr) sef_receive_status(src, m_ptr, NULL)
 
 /* SEF Debug. */

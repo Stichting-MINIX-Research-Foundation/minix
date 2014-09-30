@@ -5,6 +5,8 @@
 
 EXTERN __attribute__((weak)) int edfi_ctl_process_request(void *ctl_request);
 
+EXTERN int do_sef_fi_request(message *m_ptr);
+
 /*===========================================================================*
  *                            do_sef_fi_request             		     *
  *===========================================================================*/

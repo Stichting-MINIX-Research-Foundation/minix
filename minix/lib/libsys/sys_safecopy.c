@@ -16,7 +16,7 @@ int sys_safecopyfrom(endpoint_t src_e,
   copy_mess.m_lsys_kern_safecopy.from_to = src_e;
   copy_mess.m_lsys_kern_safecopy.gid = gr_id;
   copy_mess.m_lsys_kern_safecopy.offset = offset;
-  copy_mess.m_lsys_kern_safecopy.address = address;
+  copy_mess.m_lsys_kern_safecopy.address = (void *)address;
   copy_mess.m_lsys_kern_safecopy.bytes = bytes;
 
   return(_kernel_call(SYS_SAFECOPYFROM, &copy_mess));
@@ -36,7 +36,7 @@ int sys_safecopyto(endpoint_t dst_e,
   copy_mess.m_lsys_kern_safecopy.from_to = dst_e;
   copy_mess.m_lsys_kern_safecopy.gid = gr_id;
   copy_mess.m_lsys_kern_safecopy.offset = offset;
-  copy_mess.m_lsys_kern_safecopy.address = address;
+  copy_mess.m_lsys_kern_safecopy.address = (void *)address;
   copy_mess.m_lsys_kern_safecopy.bytes = bytes;
 
   return(_kernel_call(SYS_SAFECOPYTO, &copy_mess));

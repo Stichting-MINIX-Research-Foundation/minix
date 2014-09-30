@@ -8,6 +8,7 @@ Copyright 1995 Philip Homburg
 
 #include <stdio.h>
 #include <string.h>
+#include <minix/sysutil.h>
 
 typedef unsigned int reg_t;
 

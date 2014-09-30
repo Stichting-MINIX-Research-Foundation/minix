@@ -1,6 +1,7 @@
 #include "syslib.h"
 #include <assert.h>
 #include <string.h>
+#include <minix/sched.h>
 
 /*===========================================================================*
  *				sched_stop				     *

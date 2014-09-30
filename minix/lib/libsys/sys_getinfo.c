@@ -17,9 +17,9 @@ int len2;				/* length or process nr */
 
     m.m_lsys_krn_sys_getinfo.request = request;
     m.m_lsys_krn_sys_getinfo.endpt = SELF;	/* always store values at caller */
-    m.m_lsys_krn_sys_getinfo.val_ptr = ptr;
+    m.m_lsys_krn_sys_getinfo.val_ptr = (vir_bytes)ptr;
     m.m_lsys_krn_sys_getinfo.val_len = len;
-    m.m_lsys_krn_sys_getinfo.val_ptr2 = ptr2;
+    m.m_lsys_krn_sys_getinfo.val_ptr2 = (vir_bytes)ptr2;
     m.m_lsys_krn_sys_getinfo.val_len2_e = len2;
 
     return(_kernel_call(SYS_GETINFO, &m));

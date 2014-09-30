@@ -22,7 +22,6 @@ SRCS+=  \
         sys_voutb.c \
         sys_voutl.c \
         sys_voutw.c \
-        timing.c \
         tsc_util.c \
         vbox.c
 
