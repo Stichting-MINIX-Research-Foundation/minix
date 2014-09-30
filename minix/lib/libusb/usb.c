@@ -12,7 +12,7 @@
 static struct usb_urb * pending_urbs = NULL;
 static endpoint_t hcd_ep;
 
-static void _usb_urb_complete(struct usb_driver *ud, long urb_id);
+static void _usb_urb_complete(struct usb_driver *ud, unsigned int urb_id);
 
 /*****************************************************************************
  *         usb_send_urb                                                      *
@@ -154,7 +154,7 @@ int usb_init(char *name)
 /*****************************************************************************
  *      _usb_urb_complete                                                    *
  ****************************************************************************/
-static void _usb_urb_complete(struct usb_driver *ud, long urb_id)
+static void _usb_urb_complete(struct usb_driver *ud, unsigned int urb_id)
 {
 	/* find the corresponding URB in the urb_pending list. */
 	struct usb_urb * urb = NULL;
@@ -186,7 +186,8 @@ static void _usb_urb_complete(struct usb_driver *ud, long urb_id)
 #endif
 		ud->urb_completion(urb);
 	} else {
-		printf("WARN: _usb_urb_complete: did not find URB with ID %ld", urb_id);
+		printf("WARN: _usb_urb_complete: did not find URB with ID %u",
+		    urb_id);
 	}
 }
 
@@ -210,7 +211,7 @@ int usb_handle_msg(struct usb_driver *ud, message *msg)
 
 	switch(msg->m_type) {
 		case USB_COMPLETE_URB:
-			_usb_urb_complete(ud, msg->USB_URB_ID);
+			_usb_urb_complete(ud, (unsigned int)msg->USB_URB_ID);
 			return 0;
 		case USB_ANNOUCE_DEV:
 			ud->connect_device(msg->USB_DEV_ID, msg->USB_INTERFACES);

@@ -23,7 +23,7 @@ static int (*unbind_cb) (struct devman_usb_bind_cb_data *data, endpoint_t ep);
  ***************************************************************************/
 static void 
 devman_usb_add_attr
-(struct devman_dev *dev, char *name, char *data)
+(struct devman_dev *dev, const char *name, const char *data)
 {
 	struct devman_static_attribute *attr = (struct devman_static_attribute *)
 	    malloc(sizeof(struct devman_static_attribute));

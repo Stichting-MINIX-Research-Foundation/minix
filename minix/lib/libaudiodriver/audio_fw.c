@@ -58,9 +58,6 @@ static int irq_hook_set = FALSE;
 static void sef_local_startup(void);
 static int sef_cb_init_fresh(int type, sef_init_info_t *info);
 static void sef_cb_signal_handler(int signo);
-EXTERN int sef_cb_lu_prepare(int state);
-EXTERN int sef_cb_lu_state_isvalid(int state);
-EXTERN void sef_cb_lu_state_dump(int state);
 
 static struct chardriver audio_tab = {
 	.cdr_open	= msg_open,	/* open the special file */
@@ -73,9 +70,6 @@ static struct chardriver audio_tab = {
 
 int main(void)
 {
-	int r, caller;
-	message mess, repl_mess;
-	int ipc_status;
 
 	/* SEF local startup. */
 	sef_local_startup();
@@ -115,7 +109,7 @@ static void sef_local_startup(void)
 static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 {
 /* Initialize the audio driver framework. */
-	u32_t i; char irq;
+	int i; char irq;
 	static int executed = 0;
 	sub_dev_t* sub_dev_ptr;
 
@@ -499,7 +493,7 @@ static ssize_t msg_read(devminor_t minor, u64_t UNUSED(position),
 
 static void msg_hardware(unsigned int UNUSED(mask))
 {
-	u32_t     i;
+	int i;
 
 	/* loop over all sub devices */
 	for ( i = 0; i < drv.NrOfSubDevices; i++) {
@@ -579,7 +573,6 @@ static void handle_int_write(int sub_dev_nr)
 static void handle_int_read(int sub_dev_nr) 
 {
 	sub_dev_t *sub_dev_ptr;
-	message m;
 
 	sub_dev_ptr = &sub_dev[sub_dev_nr];
 
@@ -651,7 +644,6 @@ static int get_started(sub_dev_t *sub_dev_ptr) {
 static void data_from_user(sub_dev_t *subdev)
 {
 	int r;
-	message m;
 
 	if (subdev->DmaLength == subdev->NrOfDmaFragments &&
 			subdev->BufLength == subdev->NrOfExtraBuffers) return;/* no space */
@@ -710,7 +702,6 @@ static void data_from_user(sub_dev_t *subdev)
 static void data_to_user(sub_dev_t *sub_dev_ptr)
 {
 	int r;
-	message m;
 
 	if (!sub_dev_ptr->RevivePending) return; /* nobody is wating for data */
 	if (sub_dev_ptr->BufLength == 0 && sub_dev_ptr->DmaLength == 0) return; 
@@ -793,7 +784,7 @@ static int init_buffers(sub_dev_t *sub_dev_ptr)
 	}
 
 	if ((left = dma_bytes_left(sub_dev_ptr->DmaPhys)) < 
-			sub_dev_ptr->DmaSize) {
+			(unsigned int)sub_dev_ptr->DmaSize) {
 		/* First half of buffer crosses a 64K boundary,
 		 * can't DMA into that */
 		sub_dev_ptr->DmaPtr += left;

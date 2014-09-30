@@ -1,5 +1,6 @@
 NOGCCERROR=yes
-NOCLANGERROR=yes
+
+CPPFLAGS+= -D_MINIX_SYSTEM
 
 LIB = devman
 

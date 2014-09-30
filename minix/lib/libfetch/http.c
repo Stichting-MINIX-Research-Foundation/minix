@@ -406,6 +406,9 @@ static struct {
 /*
  * Send a formatted line; optionally echo to terminal
  */
+static int http_cmd(conn_t *conn, const char *fmt, ...)
+	__attribute__((__format__(__printf__, 2, 3)));
+
 #ifndef __minix
 static int
 http_cmd(conn_t *conn, const char *fmt, ...)

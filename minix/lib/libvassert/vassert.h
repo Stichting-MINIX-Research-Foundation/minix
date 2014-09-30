@@ -72,7 +72,8 @@ extern char VAssert_Uninit(void);
 /*
  * These functions should not be called directly; they need to be wrapped.
  */
-extern void VAssert_LogMain(const char *format, ...);
+extern void VAssert_LogMain(const char *format, ...)
+	__attribute__((__format__(__printf__, 1, 2)));
 extern void VAssert_GoLiveMain(void);
 extern void VAssert_ReturnToReplayMain(void);
 extern char VAssert_Trace(size_t max_size);

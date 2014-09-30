@@ -26,7 +26,7 @@
 #define TID_DEVICE(tid)		((tid) / MAX_WORKERS)
 #define TID_WORKER(tid)		((tid) % MAX_WORKERS)
 
-typedef int worker_id_t;
+typedef unsigned int worker_id_t;
 
 typedef enum {
   STATE_DEAD,
@@ -150,7 +150,7 @@ static void *worker_thread(void *param)
   device_t *dp;
   thread_id_t tid;
   message m;
-  int ipc_status, r;
+  int ipc_status;
 
   wp = (worker_t *) param;
   assert(wp != NULL);
@@ -284,7 +284,8 @@ static void master_handle_message(message *m_ptr, int ipc_status)
   device_id_t id;
   worker_t *wp;
   device_t *dp;
-  int r, wid;
+  unsigned int wid;
+  int r;
 
   /* If this is not a block driver request, we cannot get the minor device
    * associated with it, and thus we can not tell which thread should process
@@ -488,7 +489,7 @@ void blockdriver_mt_wakeup(thread_id_t id)
 /*===========================================================================*
  *				blockdriver_mt_set_workers		     *
  *===========================================================================*/
-void blockdriver_mt_set_workers(device_id_t id, int workers)
+void blockdriver_mt_set_workers(device_id_t id, unsigned int workers)
 {
 /* Set the number of worker threads for the given device.
  */

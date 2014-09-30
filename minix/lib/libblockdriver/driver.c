@@ -98,7 +98,7 @@ void blockdriver_announce(int type)
   int r;
   char key[DS_MAX_KEYLEN];
   char label[DS_MAX_KEYLEN];
-  char *driver_prefix = "drv.blk.";
+  const char *driver_prefix = "drv.blk.";
 
   /* Callers are allowed to use ipc_sendrec to communicate with drivers.
    * For this reason, there may blocked callers when a driver restarts.
@@ -223,9 +223,9 @@ static int do_vrdwt(struct blockdriver *bdp, message *mp, thread_id_t id)
 {
 /* Carry out an device read or write to/from a vector of buffers. */
   iovec_t iovec[NR_IOREQS];
-  unsigned int nr_req;
+  unsigned int i, nr_req;
   u64_t position;
-  int i, do_write;
+  int do_write;
   ssize_t r, size;
 
   /* Copy the vector from the caller to kernel space. */
@@ -260,7 +260,7 @@ static int do_vrdwt(struct blockdriver *bdp, message *mp, thread_id_t id)
 /*===========================================================================*
  *				do_dioctl				     *
  *===========================================================================*/
-static int do_dioctl(struct blockdriver *bdp, dev_t minor,
+static int do_dioctl(struct blockdriver *bdp, devminor_t minor,
   unsigned long request, endpoint_t endpt, cp_grant_id_t grant)
 {
 /* Carry out a disk-specific I/O control request. */
@@ -316,7 +316,7 @@ static int do_ioctl(struct blockdriver *bdp, message *mp)
  * to the tracing module, and handle setting/getting partitions when the driver
  * has specified that it is a disk driver.
  */
-  dev_t minor;
+  devminor_t minor;
   unsigned long request;
   cp_grant_id_t grant;
   endpoint_t user_endpt;

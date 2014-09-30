@@ -33,7 +33,7 @@ static int save_string(char *buffer, char *src, size_t *offset)
 /****************************************************************************
  *     serialize_dev                                                        *
  ***************************************************************************/
-void *serialize_dev(struct devman_dev *dev, size_t *overall_size)
+static void *serialize_dev(struct devman_dev *dev, size_t *overall_size)
 {
 	/* determine size of serialized version of dev */
 	char *buffer;
@@ -177,14 +177,6 @@ int devman_del_device(struct devman_dev *dev)
 
 	return 0;
 
-}
-
-/****************************************************************************
- *     devman_get_ep                                                        *
- ***************************************************************************/
-endpoint_t devman_get_ep(void)
-{
-	return devman_ep;
 }
 
 /****************************************************************************

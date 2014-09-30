@@ -39,7 +39,7 @@ static struct buf **buf_hash;   /* the buffer hash table */
 static unsigned int nr_bufs;
 static int may_use_vmcache;
 
-static int fs_block_size = PAGE_SIZE;	/* raw i/o block size */
+static size_t fs_block_size = PAGE_SIZE;	/* raw i/o block size */
 
 static int rdwt_err;
 
@@ -106,8 +106,8 @@ void lmfs_blockschange(dev_t dev, int delta)
         static int bitdelta = 0;
         bitdelta += delta;
 #define BANDKB (10*1024)	/* recheck cache every 10MB change */
-        if(bitdelta*fs_block_size/1024 > BANDKB ||
-	   bitdelta*fs_block_size/1024 < -BANDKB) {
+        if(bitdelta*(int)fs_block_size/1024 > BANDKB ||
+	   bitdelta*(int)fs_block_size/1024 < -BANDKB) {
                 lmfs_cache_reevaluate(dev);
                 bitdelta = 0;
         }
@@ -184,7 +184,7 @@ struct buf *lmfs_get_block(register dev_t dev, register block_t block,
 	return lmfs_get_block_ino(dev, block, only_search, VMC_NO_INODE, 0);
 }
 
-void munmap_t(void *a, int len)
+static void munmap_t(void *a, int len)
 {
 	vir_bytes av = (vir_bytes) a;
 	assert(a);
@@ -627,7 +627,7 @@ void lmfs_rw_scattered(
   static iovec_t iovec[NR_IOREQS];
   off_t pos;
   int iov_per_block;
-  int start_in_use = bufs_in_use, start_bufqsize = bufqsize;
+  unsigned int start_in_use = bufs_in_use, start_bufqsize = bufqsize;
 
   assert(bufqsize >= 0);
   if(bufqsize == 0) return;

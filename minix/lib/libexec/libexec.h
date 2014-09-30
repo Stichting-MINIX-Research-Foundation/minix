@@ -52,8 +52,9 @@ struct exec_info {
     vir_bytes stack_high;		/* High stack addr */
 };
 
-int elf_has_interpreter(char *exec_hdr, int hdr_len, char *interp, int maxsz);
-int elf_phdr(char *exec_hdr, int hdr_len, vir_bytes *phdr);
+int elf_has_interpreter(char *exec_hdr, size_t hdr_len, char *interp,
+	size_t maxsz);
+int elf_phdr(char *exec_hdr, size_t hdr_len, vir_bytes *phdr);
 
 int libexec_pm_newexec(endpoint_t proc_e, struct exec_info *execi);
 

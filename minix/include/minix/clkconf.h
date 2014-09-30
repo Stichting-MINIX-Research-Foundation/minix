@@ -11,8 +11,8 @@
 #define CM_PER_I2C1_CLKCTRL 0x048
 #define CM_WKUP_I2C0_CLKCTRL 0x4B8
 
-int clkconf_init();
+int clkconf_init(void);
 int clkconf_set(u32_t clk, u32_t mask, u32_t value);
-int clkconf_release();
+int clkconf_release(void);
 
 #endif

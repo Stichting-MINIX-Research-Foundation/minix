@@ -10,11 +10,11 @@
 #include "const.h"
 #include "trace.h"
 
-#define NO_TRACEDEV		((dev_t) -1)
+#define NO_TRACEDEV		((devminor_t) -1)
 #define NO_TIME			((u32_t) -1)
 
 static int trace_enabled	= FALSE;
-static dev_t trace_dev		= NO_TRACEDEV;
+static devminor_t trace_dev	= NO_TRACEDEV;
 static btrace_entry *trace_buf	= NULL;
 static size_t trace_size	= 0;
 static size_t trace_pos;
@@ -48,7 +48,7 @@ static u32_t trace_gettime(void)
 /*===========================================================================*
  *				trace_ctl				     *
  *===========================================================================*/
-int trace_ctl(dev_t minor, unsigned long request, endpoint_t endpt,
+int trace_ctl(devminor_t minor, unsigned long request, endpoint_t endpt,
 	cp_grant_id_t grant)
 {
 /* Process a block trace control request.

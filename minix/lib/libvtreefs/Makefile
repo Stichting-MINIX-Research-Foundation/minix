@@ -6,8 +6,6 @@ CPPFLAGS+= -D_MINIX_SYSTEM
 
 LIB=	vtreefs
 
-CPPFLAGS+= -I${NETBSDSRCDIR}/include
-
 SRCS=	\
 	inode.c \
 	link.c \

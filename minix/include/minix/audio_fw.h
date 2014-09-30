@@ -84,4 +84,8 @@ EXTERN special_file_t special_file[];
 #define READ_DMA 1
 #define WRITE_DMA 2
 
+EXTERN int sef_cb_lu_prepare(int state);
+EXTERN int sef_cb_lu_state_isvalid(int state);
+EXTERN void sef_cb_lu_state_dump(int state);
+
 #endif /* AUDIO_FW_H */

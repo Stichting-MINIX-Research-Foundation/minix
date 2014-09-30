@@ -716,7 +716,8 @@ netif_loop_output(struct netif *netif, struct pbuf *p,
      netif_poll(). */
 
   /* let last point to the last pbuf in chain r */
-  for (last = r; last->next != NULL; last = last->next);
+  for (last = r; last->next != NULL; last = last->next)
+	;
 
   SYS_ARCH_PROTECT(lev);
   if(netif->loop_first != NULL) {

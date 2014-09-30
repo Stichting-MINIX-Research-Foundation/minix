@@ -56,7 +56,7 @@ static int elf_ph_sane(Elf_Phdr *phdr)
 }
 
 static int elf_unpack(char *exec_hdr,
-	int hdr_len, Elf_Ehdr **hdr, Elf_Phdr **phdr)
+	size_t hdr_len, Elf_Ehdr **hdr, Elf_Phdr **phdr)
 {
   if(hdr_len < sizeof(Elf_Ehdr))
 	return ENOEXEC;
@@ -98,7 +98,7 @@ static int check_header(Elf_Ehdr *hdr)
  * Return <0 on error.
  */
 int elf_has_interpreter(char *exec_hdr,		/* executable header */
-		int hdr_len, char *interp, int maxsz)
+		size_t hdr_len, char *interp, size_t maxsz)
 {
   Elf_Ehdr *hdr = NULL;
   Elf_Phdr *phdr = NULL;

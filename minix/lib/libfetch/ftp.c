@@ -199,6 +199,9 @@ ftp_chkerr(conn_t *conn)
 /*
  * Send a command and check reply
  */
+static int ftp_cmd(conn_t *conn, const char *fmt, ...)
+	__attribute__((__format__(__printf__, 2, 3)));
+
 #ifndef __minix
 static int
 ftp_cmd(conn_t *conn, const char *fmt, ...)

@@ -1,9 +1,9 @@
-NOGCCERROR=yes
-NOCLANGERROR=yes
-CPPFLAGS+= -D_MINIX_SYSTEM
-
 # Makefile for libbdev
 .include <bsd.own.mk>
+
+NOGCCERROR=yes
+
+CPPFLAGS+= -D_MINIX_SYSTEM
 
 LIB=	bdev
 

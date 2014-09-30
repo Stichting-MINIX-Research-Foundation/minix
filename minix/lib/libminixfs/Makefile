@@ -1,9 +1,10 @@
-NOGCCERROR=yes
-NOCLANGERROR=yes
-CPPFLAGS+= -D_MINIX_SYSTEM
-
 # Makefile for libminixfs
 .include <bsd.own.mk>
+
+NOGCCERROR=yes
+
+CPPFLAGS+= -D_MINIX_SYSTEM
+
 LIB=		minixfs
 
 SRCS=  	cache.c bio.c

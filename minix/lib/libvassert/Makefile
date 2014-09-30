@@ -1,7 +1,6 @@
-NOGCCERROR=yes
-NOCLANGERROR=yes
-
 # Makefile for libvassert library
+
+NOGCCERROR=yes
 
 MKPIC?=	no
 LIB=    vassert

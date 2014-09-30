@@ -1,7 +1,7 @@
-NOGCCERROR=yes
-NOCLANGERROR=yes
 #
 # Makefile for libclkconf
+
+NOGCCERROR=yes
 
 CPPFLAGS+= -D_SYSTEM -D_MINIX_SYSTEM
 

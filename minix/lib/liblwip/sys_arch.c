@@ -2,6 +2,8 @@
 #include <minix/sysutil.h>
 #include <errno.h>
 
+#include "lwip/sys.h"
+
 u32_t sys_jiffies(void)
 {
 	clock_t ticks;

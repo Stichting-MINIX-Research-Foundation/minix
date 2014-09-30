@@ -549,7 +549,7 @@ set_indirect_descriptors(struct virtio_device *dev, struct virtio_queue *q,
 	vd->len = num * sizeof(desc->descs[0]);
 
 	/* Initialize the descriptors in the indirect descriptor table */
-	for (i = 0; i < num; i++) {
+	for (i = 0; i < (int)num; i++) {
 		ivd = &desc->descs[i];
 
 		use_vring_desc(ivd, &bufs[i]);

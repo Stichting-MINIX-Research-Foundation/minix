@@ -10,7 +10,7 @@ void blockdriver_mt_task(struct blockdriver *driver_tab);
 void blockdriver_mt_sleep(void);
 void blockdriver_mt_wakeup(thread_id_t id);
 void blockdriver_mt_terminate(void);
-void blockdriver_mt_set_workers(device_id_t id, int workers);
+void blockdriver_mt_set_workers(device_id_t id, unsigned int workers);
 thread_id_t blockdriver_mt_get_tid(void);
 
 #endif /* _MINIX_BLOCKDRIVER_MT_H */

@@ -61,7 +61,7 @@ void libvassert_process_backdoor(uint32, uint32, uint32, reg_t *, reg_t *,
  *---------------------------------------------------------------------
  */
 
-static void sig_segv(int sig_no)
+static void __dead sig_segv(int sig_no)
 {
    /* jumping to error handling in VAssert_IsInVM. */
    siglongjmp(segv_jmp, 1);
@@ -144,7 +144,7 @@ char VAssert_Init(void)
    libvassert_process_backdoor(CMD_SET_ADDRESS, page_address,
    	MAGIC_PORT|(1<<16), &eax, &ebx, &ecx, &edx);
 
-   return (eax != -1) ? 0 : -1;
+   return (eax != (uint32)-1) ? 0 : -1;
 }
 
 
@@ -172,7 +172,7 @@ char VAssert_Uninit(void)
       return -1;
    }
    libvassert_process_backdoor(CMD_SET_ADDRESS, 0, MAGIC_PORT|(0<<16), &eax, &ebx, &ecx, &edx);
-   return (eax != -1) ? 0 : 1;
+   return (eax != (unsigned int)-1) ? 0 : 1;
 }
 
 

@@ -59,7 +59,7 @@ int bdev_minor_reopen(dev_t dev)
 		}
 
 		if (m.m_lblockdriver_lbdev_reply.id != NO_ID) {
-			printf("bdev: driver (%d) sent invalid ID (%ld)\n",
+			printf("bdev: driver (%d) sent invalid ID (%d)\n",
 				endpt, m.m_lblockdriver_lbdev_reply.id);
 			return EINVAL;
 		}

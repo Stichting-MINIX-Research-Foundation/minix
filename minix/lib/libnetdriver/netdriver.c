@@ -25,7 +25,7 @@ void netdriver_announce()
   int r;
   char key[DS_MAX_KEYLEN];
   char label[DS_MAX_KEYLEN];
-  char *driver_prefix = "drv.net.";
+  const char *driver_prefix = "drv.net.";
 
   /* Publish a driver up event. */
   r = ds_retrieve_label_name(label, sef_self());

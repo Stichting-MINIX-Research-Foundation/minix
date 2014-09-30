@@ -80,7 +80,7 @@ struct mq {
 
 static struct mq * mq_head, *mq_tail;
 
-int mq_enqueue(struct sock_req * req)
+static int mq_enqueue(struct sock_req * req)
 {
 	struct mq * mq;
 
@@ -317,7 +317,7 @@ static int netsock_close(devminor_t minor)
 
 static int netsock_request(struct socket *sock, struct sock_req *req)
 {
-	char *o;
+	const char *o;
 
 	/*
 	 * If an operation is pending (blocking operation) or writing is

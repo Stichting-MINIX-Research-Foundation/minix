@@ -102,7 +102,7 @@ void chardriver_announce(void)
   int r;
   char key[DS_MAX_KEYLEN];
   char label[DS_MAX_KEYLEN];
-  char *driver_prefix = "drv.chr.";
+  const char *driver_prefix = "drv.chr.";
 
   /* Callers are allowed to use ipc_sendrec to communicate with drivers.
    * For this reason, there may blocked callers when a driver restarts.
@@ -456,7 +456,7 @@ void chardriver_process(struct chardriver *cdp, message *m_ptr, int ipc_status)
 /* Call the appropiate driver function, based on the type of request. Send a
  * reply to the caller if necessary.
  */
-  int r, reply;
+  int r;
 
   /* Check for notifications first. We never reply to notifications. */
   if (is_ipc_notify(ipc_status)) {

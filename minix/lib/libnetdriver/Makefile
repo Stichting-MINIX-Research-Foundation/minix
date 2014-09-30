@@ -1,8 +1,8 @@
-NOGCCERROR=yes
-NOCLANGERROR=yes
-CPPFLAGS+= -D_MINIX_SYSTEM
-
 # Makefile for libnetdriver
+
+NOGCCERROR=yes
+
+CPPFLAGS+= -D_MINIX_SYSTEM
 
 LIB=	netdriver
 
