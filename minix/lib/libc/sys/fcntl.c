@@ -29,7 +29,7 @@ int fcntl(int fd, int cmd, ...)
      case F_SETLK:
      case F_SETLKW:
      case F_FREESP:
-	m.m_lc_vfs_fcntl.arg_ptr = va_arg(argp, struct flock *);
+	m.m_lc_vfs_fcntl.arg_ptr = (vir_bytes)va_arg(argp, struct flock *);
 	break;
   }
 

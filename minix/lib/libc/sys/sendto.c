@@ -13,7 +13,6 @@
 
 #include <net/gen/in.h>
 #include <net/gen/ip_hdr.h>
-#include <net/gen/icmp_hdr.h>
 #include <net/gen/tcp.h>
 #include <net/gen/tcp_io.h>
 #include <net/gen/udp.h>
@@ -78,8 +77,6 @@ ssize_t sendto(int sock, const void *message, size_t length, int flags,
 
 	{
 		ip_hdr_t *ip_hdr;
-		int ihl;
-		icmp_hdr_t *icmp_hdr;
 		struct sockaddr_in *sinp;
 
 		sinp = (struct sockaddr_in *) __UNCONST(dest_addr);
@@ -199,7 +196,7 @@ static ssize_t _udp_sendto(int sock, const void *message, size_t length,
 		errno= t_errno;
 		return -1;
 	}
-	assert(r == buflen);
+	assert((size_t)r == buflen);
 	free(buf);
 	return length;
 }

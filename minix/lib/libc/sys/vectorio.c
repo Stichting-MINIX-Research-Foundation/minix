@@ -39,7 +39,9 @@ static ssize_t vectorio_buffer(int fildes, const struct iovec *iov,
 			while (copied < r)
 			{
 				assert(iovidx < iovcnt);
-				len = MIN(r - copied, iov[iovidx].iov_len);
+				len = iov[iovidx].iov_len;
+				if (len > r - copied)
+					len = r - copied;
 				memcpy(iov[iovidx++].iov_base, buffer + copied, len);
 				copied += len;
 			}

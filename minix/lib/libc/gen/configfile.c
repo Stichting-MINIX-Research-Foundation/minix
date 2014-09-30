@@ -149,7 +149,7 @@ static void skipwhite(void)
     }
 }
 
-static void parse_err(void)
+static void __dead parse_err(void)
 /* Tell user that you can't parse past the current character. */
 {
     char sc[2];

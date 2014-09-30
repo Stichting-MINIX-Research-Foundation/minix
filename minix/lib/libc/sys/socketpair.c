@@ -6,6 +6,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <net/netlib.h>
+#include <sys/ioctl.h>
 #include <sys/ioc_net.h>
 #include <sys/socket.h>
 #include <sys/stat.h>

@@ -42,7 +42,7 @@
 
 #define BUF_SIZE   512		  /* size of the /etc/mtab buffer */
 
-char *etc_mtab = "/etc/mtab";	  /* name of the /etc/mtab file */
+const char *etc_mtab = "/etc/mtab";	  /* name of the /etc/mtab file */
 static char mtab_in[BUF_SIZE+1];  /* holds /etc/mtab when it is read in */
 static char *iptr = mtab_in;	  /* pointer to next line to feed out. */
 

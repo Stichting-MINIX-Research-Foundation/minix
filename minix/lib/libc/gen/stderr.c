@@ -1,6 +1,7 @@
 #include <lib.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <minix/minlib.h>
 
 void std_err(const char *s)
 {

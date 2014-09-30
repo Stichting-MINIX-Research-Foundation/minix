@@ -71,7 +71,7 @@ int     ioctl(int fd, unsigned long request, ...)
 		break;
 	default:
 		/* Keep original as-is */
-		addr = data;
+		addr = (vir_bytes)data;
 		break;
   }
 

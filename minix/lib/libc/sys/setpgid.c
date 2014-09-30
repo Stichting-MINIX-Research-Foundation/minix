@@ -11,7 +11,7 @@
  */
 int setpgid(pid_t pid, pid_t pgid)
 {
-	pid_t _pid, _pgid, sid, cpid;
+	pid_t _pid, _pgid, cpid;
 
 	_pid = pid;
 	_pgid = pgid;

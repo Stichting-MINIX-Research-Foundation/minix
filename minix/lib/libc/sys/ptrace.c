@@ -12,7 +12,7 @@ int ptrace(int req, pid_t pid, void *addr, int data)
   memset(&m, 0, sizeof(m));
   m.m_lc_pm_ptrace.pid = pid;
   m.m_lc_pm_ptrace.req = req;
-  m.m_lc_pm_ptrace.addr = addr;
+  m.m_lc_pm_ptrace.addr = (vir_bytes)addr;
   m.m_lc_pm_ptrace.data = data;
   if (_syscall(PM_PROC_NR, PM_PTRACE, &m) < 0) return(-1);
 

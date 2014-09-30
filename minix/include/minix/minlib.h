@@ -15,6 +15,9 @@ void _cpuid(u32_t *eax, u32_t *ebx, u32_t *ecx, u32_t *edx);
 int load_mtab(char *_prog_name);
 int get_mtab_entry(char dev[PATH_MAX], char mount_point[PATH_MAX],
 			char type[MNTNAMELEN], char flags[MNTFLAGLEN]);
+int servxcheck(unsigned long peer, const char *service,
+	void (*logf)(int pass, const char *name));
+char *servxfile(const char *file);
 
 /* read_tsc() and friends */
 void read_tsc(u32_t *hi, u32_t *lo);

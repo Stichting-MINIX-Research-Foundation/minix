@@ -19,7 +19,6 @@
 #include <net/gen/udp_io.h>
 
 #include <net/gen/ip_hdr.h>
-#include <net/gen/icmp_hdr.h>
 
 #define DEBUG 0
 
@@ -88,15 +87,14 @@ ssize_t recvfrom(int sock, void *__restrict buffer, size_t length,
 
 	{
 		ip_hdr_t *ip_hdr;
-       		int ihl, rd;
-		icmp_hdr_t *icmp_hdr;
+		int rd;
 		struct sockaddr_in sin;
 
 		rd = read(sock, buffer, length);
 
 		if(rd < 0) return rd;
 
-		assert(rd >= sizeof(*ip_hdr));
+		assert((size_t)rd >= sizeof(*ip_hdr));
 
 		ip_hdr= buffer;
 
@@ -108,8 +106,8 @@ ssize_t recvfrom(int sock, void *__restrict buffer, size_t length,
 			sin.sin_addr.s_addr= ip_hdr->ih_src;
 			sin.sin_len= sizeof(sin);
 			len= *address_len;
-			if (len > sizeof(sin))
-				len= sizeof(sin);
+			if ((size_t)len > sizeof(sin))
+				len= (int)sizeof(sin);
 			memcpy(address, &sin, len);
 			*address_len= sizeof(sin);
 		}
@@ -237,7 +235,7 @@ static ssize_t _udp_recvfrom(int sock, void *__restrict buffer, size_t length,
 		return -1;
 	}
 
-	assert(r >= sizeof(*io_hdrp));
+	assert((size_t)r >= sizeof(*io_hdrp));
 	length= r-sizeof(*io_hdrp);
 
 	io_hdrp= buf;

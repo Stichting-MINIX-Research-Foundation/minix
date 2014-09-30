@@ -23,8 +23,8 @@ int sprofile(int action,
   m.m_lc_pm_sprof.mem_size	= size;
   m.m_lc_pm_sprof.freq		= freq;
   m.m_lc_pm_sprof.intr_type	= type;
-  m.m_lc_pm_sprof.ctl_ptr	= ctl_ptr;
-  m.m_lc_pm_sprof.mem_ptr	= mem_ptr;
+  m.m_lc_pm_sprof.ctl_ptr	= (vir_bytes)ctl_ptr;
+  m.m_lc_pm_sprof.mem_ptr	= (vir_bytes)mem_ptr;
 
   return _syscall(PM_PROC_NR, PM_SPROF, &m);
 }

@@ -17,6 +17,7 @@
 #include <minix/type.h>
 #include <minix/minlib.h>
 #include <minix/partition.h>
+#include <sys/ioctl.h>
 #include <sys/ioc_disk.h>
 
 #include <unistd.h>

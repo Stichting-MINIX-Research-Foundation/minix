@@ -5,6 +5,7 @@
 #include <sys/types.h>
 #include <fcntl.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
@@ -38,6 +39,7 @@ int sethostname(const char *buf, size_t len)
 
 	r = write(fd, buf, len);
 	tmperr = errno;
+	fsync(fd);
 	close(fd);
 
 	if (r == -1) {
@@ -46,7 +48,7 @@ int sethostname(const char *buf, size_t len)
 		return -1;
 	}
 
-	if (r < len) {
+	if ((size_t)r < len) {
 		unlink(name);
 		errno = ENOSPC;
 		return -1;

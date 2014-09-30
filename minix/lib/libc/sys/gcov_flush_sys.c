@@ -7,7 +7,7 @@ int gcov_flush_svr(char *buff, int buff_sz, int server_nr)
 	message m;
 
 	memset(&m, 0, sizeof(m));
-	m.m_lc_vfs_gcov.buff_p = buff;
+	m.m_lc_vfs_gcov.buff_p = (vir_bytes)buff;
 	m.m_lc_vfs_gcov.buff_sz = buff_sz;
 	m.m_lc_vfs_gcov.pid = server_nr;
 

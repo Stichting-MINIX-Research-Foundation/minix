@@ -9,9 +9,11 @@ __weak_alias(socket, __socket30)
 #include <fcntl.h>
 #include <signal.h>
 #include <stdio.h>
+#include <string.h>
 #include <unistd.h>
 #include <sys/socket.h>
 
+#include <sys/ioctl.h>
 #include <sys/ioc_net.h>
 #include <net/hton.h>
 #include <net/gen/in.h>
@@ -148,8 +150,7 @@ static int _udp_socket(int type, int protocol)
 
 static int _raw_socket(int type, int protocol)
 {
-	int r, fd, t_errno, flags = O_RDWR;
-	struct sockaddr_in sin;
+	int fd, flags = O_RDWR;
 	nwio_ipopt_t ipopt;
 	int result;
 
