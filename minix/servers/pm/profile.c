@@ -2,7 +2,6 @@
  *
  * The entry points in this file are:
  *   do_sprofile:   start/stop statistical profiling
- *   do_cprofile:   get/reset call profiling tables
  *
  * Changes:
  *   14 Aug, 2006  Created (Rogier Meurs)
@@ -44,32 +43,3 @@ int do_sprofile(void)
 	return ENOSYS;
 #endif
 }
-
-
-/*===========================================================================*
- *				do_cprofile				     *
- *===========================================================================*/
-int do_cprofile(void)
-{
-#if CPROFILE
-
-  int r;
-
-  switch(m_in.m_lc_pm_cprof.action) {
-
-  case PROF_GET:
-	return sys_cprof(PROF_GET, m_in.m_lc_pm_cprof.mem_size, who_e,
-		m_in.m_lc_pm_cprof.ctl_ptr, m_in.m_lc_pm_cprof.mem_ptr);
-
-  case PROF_RESET:
-	return sys_cprof(PROF_RESET,0,0,0,0);
-
-  default:
-	return EINVAL;
-  }
-
-#else
-	return ENOSYS;
-#endif
-}
-

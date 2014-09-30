@@ -89,7 +89,6 @@
 
 /* Enable or disable system profiling. */
 #define SPROFILE          0    /* statistical profiling */
-#define CPROFILE          0    /* call profiling */
 
 /* PCI configuration parameters */
 #define NR_PCIBUS 40

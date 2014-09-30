@@ -250,9 +250,6 @@ int pci_get_bar(int devind, int port, u32_t *base, u32_t *size, int
 /* Profiling. */
 int sys_sprof(int action, int size, int freq, int type, endpoint_t
 	endpt, void *ctl_ptr, void *mem_ptr);
-int sys_cprof(int action, int size, endpoint_t endpt, void *ctl_ptr,
-	void *mem_ptr);
-int sys_profbuf(void *ctl_ptr, void *mem_ptr);
 
 /* machine context */
 int sys_getmcontext(endpoint_t proc, vir_bytes mcp);

@@ -54,7 +54,6 @@ int sched_nice(struct mproc *rmp, int nice);
 
 /* profile.c */
 int do_sprofile(void);
-int do_cprofile(void);
 
 /* signal.c */
 int do_kill(void);

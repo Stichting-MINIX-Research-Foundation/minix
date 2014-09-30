@@ -420,16 +420,6 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_lc_ipc_shmget);
 
 typedef struct {
-	int action;
-	vir_bytes ctl_ptr;
-	vir_bytes mem_ptr;
-	size_t mem_size;
-
-	uint8_t padding[40];
-} mess_lc_pm_cprof;
-_ASSERT_MSG_SIZE(mess_lc_pm_cprof);
-
-typedef struct {
 	vir_bytes name;
 	size_t namelen;
 	vir_bytes frame;
@@ -1028,17 +1018,6 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_lsys_krn_sys_copy);
 
 typedef struct {
-	endpoint_t endpt;
-	int action;
-	vir_bytes ctl_ptr;
-	vir_bytes mem_ptr;
-	size_t mem_size;
-
-	uint8_t padding[36];
-} mess_lsys_krn_sys_cprof;
-_ASSERT_MSG_SIZE(mess_lsys_krn_sys_cprof);
-
-typedef struct {
 	int request;
 	int port;
 	uint32_t value;
@@ -1134,14 +1113,6 @@ typedef struct {
 	uint8_t padding[36];
 } mess_lsys_krn_sys_privctl;
 _ASSERT_MSG_SIZE(mess_lsys_krn_sys_privctl);
-
-typedef struct {
-	vir_bytes ctl_ptr;
-	vir_bytes mem_ptr;
-
-	uint8_t padding[48];
-} mess_lsys_krn_sys_profbuf;
-_ASSERT_MSG_SIZE(mess_lsys_krn_sys_profbuf);
 
 typedef struct {
 	int request;
@@ -2075,7 +2046,6 @@ typedef struct {
 		mess_lc_ipc_shmctl	m_lc_ipc_shmctl;
 		mess_lc_ipc_shmdt	m_lc_ipc_shmdt;
 		mess_lc_ipc_shmget	m_lc_ipc_shmget;
-		mess_lc_pm_cprof	m_lc_pm_cprof;
 		mess_lc_pm_exec		m_lc_pm_exec;
 		mess_lc_pm_exit		m_lc_pm_exit;
 		mess_lc_pm_getsid	m_lc_pm_getsid;
@@ -2143,7 +2113,6 @@ typedef struct {
 		mess_lsys_krn_sys_abort m_lsys_krn_sys_abort;
 		mess_lsys_krn_sys_clear m_lsys_krn_sys_clear;
 		mess_lsys_krn_sys_copy	m_lsys_krn_sys_copy;
-		mess_lsys_krn_sys_cprof m_lsys_krn_sys_cprof;
 		mess_lsys_krn_sys_devio m_lsys_krn_sys_devio;
 		mess_lsys_krn_sys_diagctl m_lsys_krn_sys_diagctl;
 		mess_lsys_krn_sys_exec	m_lsys_krn_sys_exec;
@@ -2154,7 +2123,6 @@ typedef struct {
 		mess_lsys_krn_sys_irqctl m_lsys_krn_sys_irqctl;
 		mess_lsys_krn_sys_memset m_lsys_krn_sys_memset;
 		mess_lsys_krn_sys_privctl m_lsys_krn_sys_privctl;
-		mess_lsys_krn_sys_profbuf m_lsys_krn_sys_profbuf;
 		mess_lsys_krn_sys_sdevio m_lsys_krn_sys_sdevio;
 		mess_lsys_krn_sys_setalarm m_lsys_krn_sys_setalarm;
 		mess_lsys_krn_sys_setgrant m_lsys_krn_sys_setgrant;

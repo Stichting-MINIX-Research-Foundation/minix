@@ -1,6 +1,6 @@
 /* profile - profile operating system
  *
- * The profile command is used to control Statistical and Call Profiling.
+ * The profile command is used to control statistical profiling.
  * It writes the profiling data collected by the kernel to a file.
  *
  * Changes:
@@ -27,14 +27,8 @@
 
 #define START			1
 #define STOP			2
-#define GET			3
-#define RESET			4
 
-#define SPROF			(action==START||action==STOP)
-#define CPROF			(!SPROF)
-#define DEF_OUTFILE_S		"profile.stat.out"
-#define DEF_OUTFILE_C		"profile.call.out"
-#define DEF_OUTFILE		(SPROF?DEF_OUTFILE_S:DEF_OUTFILE_C)
+#define DEF_OUTFILE		"profile.stat.out"
 #define NPIPE			"/tmp/profile.npipe"
 #define MIN_MEMSIZE		1
 #define DEF_MEMSIZE		64
@@ -55,7 +49,6 @@ char *outfile = "";
 char *mem_ptr;
 int outfile_fd, npipe_fd;
 struct sprof_info_s sprof_info;
-struct cprof_info_s cprof_info;
 
 #define HASH_MOD	128
 struct sproc {
@@ -69,13 +62,10 @@ static struct sproc * proc_hash[HASH_MOD];
 int handle_args(int argc, char *argv[]);
 int start(void);
 int stop(void);
-int get(void);
-int reset(void);
 int create_named_pipe(void);
 int alloc_mem(void);
 int init_outfile(void);
 int write_outfile(void);
-int write_outfile_cprof(void);
 int write_outfile_sprof(void);
 void detach(void);
 
@@ -119,17 +109,14 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-        printf("Statistical Profiling:\n");
+        printf("Usage:\n");
 	printf("  profile start [--rtc | --nmi] "
 			"[-m memsize] [-o outfile] [-f frequency]\n");
         printf("  profile stop\n\n");
-	printf("   --rtc is default, --nmi allows kernel profiling\n");
-        printf("Call Profiling:\n");
-	printf("  profile get   [-m memsize] [-o outfile]\n");
-        printf("  profile reset\n\n");
+	printf("   - --rtc is default, --nmi allows kernel profiling\n");
 	printf("   - memsize in MB, default: %u\n", DEF_MEMSIZE);
-	printf("   - default output file: profile.{stat|call}.out\n");
-	printf( "   - sample frequencies for --rtc (default: %u):\n", DEF_FREQ);
+	printf("   - default output file: profile.stat.out\n");
+	printf("   - sample frequencies for --rtc (default: %u):\n", DEF_FREQ);
 	printf("      3    8192 Hz          10     64 Hz\n");
 	printf("      4    4096 Hz          11     32 Hz\n");
 	printf("      5    2048 Hz          12     16 Hz\n");
@@ -137,7 +124,7 @@ int main(int argc, char *argv[])
 	printf("      7     512 Hz          14      4 Hz\n");
 	printf("      8     256 Hz          15      2 Hz\n");
 	printf("      9     128 Hz\n\n");
-	printf("Use [sc]profalyze.pl to analyze output file.\n");
+	printf("Use sprofalyze to analyze output file.\n");
 	return 1;
   }
 
@@ -147,12 +134,6 @@ int main(int argc, char *argv[])
 		break;
 	  case STOP:
 	  	if (stop()) return 1;
-		break;
-	  case GET:
-	  	if (get()) return 1;
-		break;
-	  case RESET:
-	  	if (reset()) return 1;
 		break;
 	  default:
 		break;
@@ -197,14 +178,6 @@ int handle_args(int argc, char *argv[])
 	if (strcmp(*argv, "stop") == 0) {
 		if (action) return EACTION;
 	       	action = STOP;
-	} else
-	if (strcmp(*argv, "get") == 0) {
-		if (action) return EACTION;
-	       	action = GET;
-	} else
-	if (strcmp(*argv, "reset") == 0) {
-		if (action) return EACTION;
-	       	action = RESET;
 	}
   }
 
@@ -212,12 +185,10 @@ int handle_args(int argc, char *argv[])
   if (!action) return EHELP;
 
   /* Init unspecified parameters. */
-  if (action == START || action == GET) {
+  if (action == START) {
 	if (strcmp(outfile, "") == 0) outfile = DEF_OUTFILE;
 	if (mem_size == 0) mem_size = DEF_MEMSIZE;
 	mem_size *= MB;				   /* mem_size in bytes */
-  }
-  if (action == START) {
 	mem_size -= mem_size % sizeof(struct sprof_sample); /* align to sample size */
 	if (freq == 0) freq = DEF_FREQ;		   /* default frequency */
   }
@@ -325,69 +296,6 @@ int stop()
 }
 
 
-int get()
-{
- /* Get function for call profiling.
-  *
-  * Create output file.  Allocate memory.  Perform system call to get
-  * profiling table and write it to file.  Clean up.
-  */
-  if (init_outfile()) return 1;
-
-  printf("Getting call profiling data.\n");
-
-  if (alloc_mem()) return 1;
-
-  if (cprofile(PROF_GET, mem_size, &cprof_info, mem_ptr)) {
-	perror("cprofile");
-	fprintf(stderr, "Error getting data.\n");
-	return 1;
-  }
-
-  mem_used = cprof_info.mem_used;
-
-  if (mem_used == -1) {
-	fprintf(stderr, "ERROR: unable to get data due to insufficient memory.\n");
-	fprintf(stderr, "Try increasing available memory using the -m switch.\n");
-  } else
-  if (cprof_info.err) {
-	fprintf(stderr, "ERROR: the following error(s) happened during profiling:\n");
-	if (cprof_info.err & CPROF_CPATH_OVERRUN)
-		fprintf(stderr, " call path overrun\n");
-	if (cprof_info.err & CPROF_STACK_OVERRUN)
-		fprintf(stderr, " call stack overrun\n");
-	if (cprof_info.err & CPROF_TABLE_OVERRUN)
-		fprintf(stderr, " hash table overrun\n");
-	fprintf(stderr, "Try changing values in /usr/src/include/minix/profile.h ");
-	fprintf(stderr, "and then rebuild the system.\n");
-  } else
-  if (write_outfile()) return 1;
-
-  close(outfile_fd);
-  free(mem_ptr);
-
-  return 0;
-}
-
-
-int reset()
-{
- /* Reset function for call profiling.
-  *
-  * Perform system call to reset profiling table.
-  */
-  printf("Resetting call profiling data.\n");
-
-  if (cprofile(PROF_RESET, 0, 0, 0)) {
-	perror("cprofile");
-	fprintf(stderr, "Error resetting data.\n");
-	return 1;
-  }
-
-  return 0;
-}
-
-
 int alloc_mem()
 {
   if ((mem_ptr = malloc(mem_size)) == 0) {
@@ -465,13 +373,9 @@ int write_outfile()
   printf("Writing to %s ...", outfile);
 
   /* Write header. */
-  if (SPROF)
-	sprintf(header, "stat\n%u %u %u\n",	sizeof(struct sprof_info_s),
-						sizeof(struct sprof_sample),
-					  	sizeof(struct sprof_proc));
-  else
-	sprintf(header, "call\n%u %u\n",
-				CPROF_CPATH_MAX_LEN, CPROF_PROCNAME_LEN);
+  sprintf(header, "stat\n%u %u %u\n",	sizeof(struct sprof_info_s),
+					sizeof(struct sprof_sample),
+					sizeof(struct sprof_proc));
 
   n = write(outfile_fd, header, strlen(header));
 
@@ -480,58 +384,11 @@ int write_outfile()
 	return 1;
   }
 
-  /* for sprofile, raw data will do; cprofile is handled by a script that needs
-   * some preprocessing to be done by us
-   */
-  if (SPROF) {
-	written = write_outfile_sprof();
-  } else {
-	written = write_outfile_cprof();
-  }
+  written = write_outfile_sprof();
   if (written < 0) return -1;
 
   printf(" header %d bytes, data %d bytes.\n", strlen(header), written);
   return 0;
-}
-
-int write_outfile_cprof()
-{
-  int towrite, written = 0;
-  struct sprof_sample *sample;
-
-  /* Write data. */
-  towrite = mem_used == -1 ? mem_size : mem_used;
-
-  sample = (struct sprof_sample *) mem_ptr;
-  while (towrite > 0) {
-	  unsigned bytes;
-	  char	entry[12];
-	  char * name;
-
-	  name = get_proc_name(sample->proc);
-	  if (!name) {
-		  add_proc((struct sprof_proc *)sample);
-		  bytes = sizeof(struct sprof_proc);
-		  towrite -= bytes;
-		  sample = (struct sprof_sample *)(((char *) sample) + bytes);
-		  continue;
-	  }
-
-	  memset(entry, 0, 12);
-	  memcpy(entry, name, strlen(name));
-	  memcpy(entry + 8, &sample->pc, 4);
-
-	  if (write(outfile_fd, entry, 12) != 12) {
-		  fprintf(stderr, "Error writing to outfile %s.\n", outfile);
-		  return -1;
-	  }
-	  towrite -= sizeof(struct sprof_sample);
-	  sample++;
-
-	  written += 12;
-  }
-
-  return written;
 }
 
 int write_outfile_sprof()

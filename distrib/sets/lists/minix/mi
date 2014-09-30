@@ -288,7 +288,7 @@
 ./usr/bin/cpio				minix-sys
 ./usr/bin/cpp				minix-sys	gcccmds
 ./usr/bin/cpp				minix-sys	llvm
-./usr/bin/cprofalyze			minix-sys
+./usr/bin/cprofalyze			minix-sys	obsolete
 ./usr/bin/crc				minix-sys
 ./usr/bin/cron				minix-sys
 ./usr/bin/crontab			minix-sys

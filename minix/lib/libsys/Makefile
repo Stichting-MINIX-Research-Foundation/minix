@@ -52,7 +52,6 @@ SRCS+=  \
 	stacktrace.c \
 	sys_abort.c \
 	sys_clear.c \
-	sys_cprof.c \
 	sys_diagctl.c \
 	sys_endsig.c \
 	sys_exec.c \
@@ -68,7 +67,6 @@ SRCS+=  \
 	sys_padconf.c \
 	sys_physcopy.c \
 	sys_privctl.c \
-	sys_profbuf.c \
 	sys_runctl.c \
 	sys_safecopy.c \
 	sys_safememset.c \

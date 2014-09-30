@@ -7,8 +7,6 @@ HERE=${.CURDIR}/arch/${MACHINE_ARCH}
 SRCS+=  \
         get_randomness.c \
         getidle.c \
-        profile.c \
-        profile_extern.c \
         ser_putc.c \
         spin.c \
         sys_eniop.c \

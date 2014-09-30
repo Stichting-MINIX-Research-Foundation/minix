@@ -186,13 +186,6 @@ int do_sprofile(struct proc * caller, message *m_ptr);
 #define do_sprofile NULL
 #endif
 
-int do_cprofile(struct proc * caller, message *m_ptr);
-int do_profbuf(struct proc * caller, message *m_ptr);
-#if ! CPROFILE
-#define do_cprofile NULL
-#define do_profbuf NULL
-#endif
-
 int do_getmcontext(struct proc * caller, message *m_ptr);
 int do_setmcontext(struct proc * caller, message *m_ptr);
 #if ! USE_MCONTEXT

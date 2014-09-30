@@ -246,8 +246,6 @@ void system_init(void)
 
   /* Profiling. */
   map(SYS_SPROF, do_sprofile);         /* start/stop statistical profiling */
-  map(SYS_CPROF, do_cprofile);         /* get/reset call profiling data */
-  map(SYS_PROFBUF, do_profbuf);        /* announce locations to kernel */
 
   /* arm-specific. */
 #if defined(__arm__)

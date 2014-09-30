@@ -238,8 +238,6 @@
 #  define SYS_READBIOS   (KERNEL_CALL + 35)	/* sys_readbios() */
 
 #  define SYS_SPROF      (KERNEL_CALL + 36)     /* sys_sprof() */ 
-#  define SYS_CPROF      (KERNEL_CALL + 37)     /* sys_cprof() */
-#  define SYS_PROFBUF    (KERNEL_CALL + 38)     /* sys_profbuf() */
 
 #  define SYS_STIME      (KERNEL_CALL + 39)	/* sys_stime() */
 #  define SYS_SETTIME    (KERNEL_CALL + 40)	/* sys_settime() */
@@ -272,7 +270,7 @@
 #define SYS_BASIC_CALLS \
     SYS_EXIT, SYS_SAFECOPYFROM, SYS_SAFECOPYTO, SYS_VSAFECOPY, SYS_GETINFO, \
     SYS_TIMES, SYS_SETALARM, SYS_SETGRANT, \
-    SYS_PROFBUF, SYS_DIAGCTL, SYS_STATECTL, SYS_SAFEMEMSET
+    SYS_DIAGCTL, SYS_STATECTL, SYS_SAFEMEMSET
 
 /* Field names for SYS_DEVIO, SYS_VDEVIO, SYS_SDEVIO. */
 #   define _DIO_INPUT		0x001

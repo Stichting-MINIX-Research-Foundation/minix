@@ -51,7 +51,6 @@ int (* const call_vec[NR_PM_CALLS])(void) = {
 	CALL(PM_REBOOT)		= do_reboot,		/* reboot(2) */
 	CALL(PM_SVRCTL)		= do_svrctl,		/* svrctl(2) */
 	CALL(PM_SPROF)		= do_sprofile,		/* sprofile(2) */
-	CALL(PM_CPROF)		= do_cprofile,		/* cprofile(2) */
 	CALL(PM_SRV_FORK)	= do_srv_fork,		/* srv_fork(2) */
 	CALL(PM_SRV_KILL)	= do_srv_kill,		/* srv_kill(2) */
 	CALL(PM_EXEC_NEW)	= do_newexec,

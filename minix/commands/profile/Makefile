@@ -1,7 +1,6 @@
-# Makefile for profile and cprofalyze.pl
+# Makefile for profile
 
 PROG=		profile
-SCRIPTS=	cprofalyze.pl
 MAN=
 
 .include <bsd.prog.mk>
