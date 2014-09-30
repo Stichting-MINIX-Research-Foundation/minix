@@ -1,7 +1,7 @@
-/*	$NetBSD: queue.c,v 1.5 2011/08/31 16:24:57 plunky Exp $	*/
-/*	$FreeBSD: head/usr.bin/grep/queue.c 211496 2010-08-19 09:28:59Z des $	*/
+/*	$OpenBSD: queue.c,v 1.6 2011/07/08 01:20:24 tedu Exp $	*/
+
 /*-
- * Copyright (c) 1999 James Howard and Dag-Erling CoÃ¯dan SmÃ¸rgrav
+ * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,89 +28,95 @@
 
 /*
  * A really poor man's queue.  It does only what it has to and gets out of
- * Dodge.  It is used in place of <sys/queue.h> to get a better performance.
+ * Dodge.
  */
 
-#if HAVE_NBTOOL_CONFIG_H
-#include "nbtool_config.h"
-#endif
-
-#include <sys/cdefs.h>
-__RCSID("$NetBSD: queue.c,v 1.5 2011/08/31 16:24:57 plunky Exp $");
-
 #include <sys/param.h>
-#include <sys/queue.h>
 
 #include <stdlib.h>
 #include <string.h>
 
 #include "grep.h"
 
-struct qentry {
-	STAILQ_ENTRY(qentry)	list;
-	struct str	 	data;
-};
+typedef struct queue {
+	struct queue   *next;
+	str_t		data;
+} queue_t;
 
-static STAILQ_HEAD(, qentry)	queue = STAILQ_HEAD_INITIALIZER(queue);
-static unsigned long long	count;
+static queue_t	*q_head, *q_tail;
+static int	 count;
 
-static struct qentry	*dequeue(void);
+static queue_t	*dequeue(void);
 
 void
-enqueue(struct str *x)
+initqueue(void)
 {
-	struct qentry *item;
+	q_head = q_tail = NULL;
+}
 
-	item = grep_malloc(sizeof(struct qentry));
-	item->data.dat = grep_malloc(sizeof(char) * x->len);
+static void
+free_item(queue_t *item)
+{
+	free(item);
+}
+
+void
+enqueue(str_t *x)
+{
+	queue_t	*item;
+
+	item = grep_malloc(sizeof *item + x->len);
 	item->data.len = x->len;
 	item->data.line_no = x->line_no;
 	item->data.off = x->off;
+	item->data.dat = (char *)item + sizeof *item;
 	memcpy(item->data.dat, x->dat, x->len);
 	item->data.file = x->file;
+	item->next = NULL;
 
-	STAILQ_INSERT_TAIL(&queue, item, list);
-
-	if (++count > Bflag) {
-		item = dequeue();
-		free(item->data.dat);
-		free(item);
+	if (!q_head) {
+		q_head = q_tail = item;
+	} else {
+		q_tail->next = item;
+		q_tail = item;
 	}
+
+	if (++count > Bflag)
+		free_item(dequeue());
 }
 
-static struct qentry *
+static queue_t *
 dequeue(void)
 {
-	struct qentry *item;
+	queue_t	*item;
 
-	item = STAILQ_FIRST(&queue);
-	if (item == NULL)
-		return (NULL);
+	if (q_head == NULL)
+		return NULL;
 
-	STAILQ_REMOVE_HEAD(&queue, list);
 	--count;
-	return (item);
+	item = q_head;
+	q_head = item->next;
+	if (q_head == NULL)
+		q_tail = NULL;
+	return item;
 }
 
 void
 printqueue(void)
 {
-	struct qentry *item;
+	queue_t *item;
 
 	while ((item = dequeue()) != NULL) {
-		printline(&item->data, '-', NULL, 0);
-		free(item->data.dat);
-		free(item);
+		printline(&item->data, '-', NULL);
+		free_item(item);
 	}
 }
 
 void
 clearqueue(void)
 {
-	struct qentry *item;
+	queue_t	*item;
 
-	while ((item = dequeue()) != NULL) {
-		free(item->data.dat);
-		free(item);
-	}
+	while ((item = dequeue()) != NULL)
+		free_item(item);
 }

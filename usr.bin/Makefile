@@ -11,7 +11,7 @@ SUBDIR= asa \
 	deroff dirname du \
 	env expand \
 	false finger fold fpr from \
-	fsplit ftp genassym getopt grep \
+	fsplit ftp genassym getopt \
 	head hexdump id indent infocmp join jot \
 	lam last ldd leave \
 	lock login logname lorder m4 \
