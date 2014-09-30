@@ -43,8 +43,10 @@ SRCS+=  \
 	sef_fi.c \
 	sef_init.c \
 	sef_liveupdate.c \
+	sef_llvm.c \
 	sef_ping.c \
 	sef_signal.c \
+	sef_st.c \
 	sqrt_approx.c \
 	srv_fork.c \
 	srv_kill.c \
@@ -139,5 +141,6 @@ CPPFLAGS+= -DUSE_SYSDEBUG
 .endif
 
 CPPFLAGS.sched_start.c+=	-I${NETBSDSRCDIR}/minix
+CPPFLAGS.sef_st.c+=		-I${NETBSDSRCDIR}/minix
 
 .include <bsd.lib.mk>
