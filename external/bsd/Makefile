@@ -4,7 +4,7 @@
 
 SUBDIR= byacc file flex less \
 	libarchive libevent mdocml \
-	
+	tmux
 
 .if (${MKATF} != "no")
 SUBDIR+= atf
