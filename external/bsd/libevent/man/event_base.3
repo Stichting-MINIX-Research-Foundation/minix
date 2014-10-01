@@ -1,0 +1,31 @@
+.TH "event_base" 3 "Wed Apr 10 2013" "libevent" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+event_base \- 
+.PP
+Structure to hold information and state for a Libevent dispatch loop\&.  
+
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fC#include <event\&.h>\fP
+.SH "Detailed Description"
+.PP 
+Structure to hold information and state for a Libevent dispatch loop\&. 
+
+The \fBevent_base\fP lies at the center of Libevent; every application will have one\&. It keeps track of all pending and active events, and notifies your application of the active ones\&.
+.PP
+This is an opaque structure; you can allocate one using \fBevent_base_new()\fP or \fBevent_base_new_with_config()\fP\&.
+.PP
+\fBSee Also:\fP
+.RS 4
+\fBevent_base_new()\fP, \fBevent_base_free()\fP, \fBevent_base_loop()\fP, \fBevent_base_new_with_config()\fP 
+.RE
+.PP
+
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for libevent from the source code\&.

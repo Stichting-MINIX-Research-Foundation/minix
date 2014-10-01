@@ -1,0 +1,139 @@
+.TH "event2/buffer_compat.h" 3 "Wed Apr 10 2013" "libevent" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+event2/buffer_compat.h \- 
+.PP
+Obsolete and deprecated versions of the functions in \fBbuffer\&.h\fP: provided only for backward compatibility\&.  
+
+.SH SYNOPSIS
+.br
+.PP
+.SS "Macros"
+
+.in +1c
+.ti -1c
+.RI "#define \fBEVBUFFER_DATA\fP(x)   \fBevbuffer_pullup\fP((x), -1)"
+.br
+.RI "\fIdeprecated in favor of calling the functions directly \fP"
+.ti -1c
+.RI "#define \fBEVBUFFER_LENGTH\fP(x)   \fBevbuffer_get_length\fP(x)"
+.br
+.RI "\fIdeprecated in favor of calling the functions directly \fP"
+.in -1c
+.SS "Typedefs"
+
+.in +1c
+.ti -1c
+.RI "typedef void(* \fBevbuffer_cb\fP )(struct \fBevbuffer\fP *buffer, size_t old_len, size_t new_len, void *arg)"
+.br
+.RI "\fIType definition for a callback that is invoked whenever data is added or removed from an evbuffer\&. \fP"
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "unsigned char * \fBevbuffer_find\fP (struct \fBevbuffer\fP *buffer, const unsigned char *what, size_t len)"
+.br
+.RI "\fIFind a string within an evbuffer\&. \fP"
+.ti -1c
+.RI "char * \fBevbuffer_readline\fP (struct \fBevbuffer\fP *buffer)"
+.br
+.RI "\fIObsolete alias for evbuffer_readln(buffer, NULL, EOL_STYLE_ANY)\&. \fP"
+.ti -1c
+.RI "void \fBevbuffer_setcb\fP (struct \fBevbuffer\fP *buffer, \fBevbuffer_cb\fP cb, void *cbarg)"
+.br
+.RI "\fIReplace all callbacks on an evbuffer with a single new callback, or remove them\&. \fP"
+.in -1c
+.SH "Detailed Description"
+.PP 
+Obsolete and deprecated versions of the functions in \fBbuffer\&.h\fP: provided only for backward compatibility\&. 
+
+
+.SH "Typedef Documentation"
+.PP 
+.SS "typedef void(* evbuffer_cb)(struct \fBevbuffer\fP *buffer, size_t old_len, size_t new_len, void *arg)"
+
+.PP
+Type definition for a callback that is invoked whenever data is added or removed from an evbuffer\&. An evbuffer may have one or more callbacks set at a time\&. The order in which they are executed is undefined\&.
+.PP
+A callback function may add more callbacks, or remove itself from the list of callbacks, or add or remove data from the buffer\&. It may not remove another callback from the list\&.
+.PP
+If a callback adds or removes data from the buffer or from another buffer, this can cause a recursive invocation of your callback or other callbacks\&. If you ask for an infinite loop, you might just get one: watch out!
+.PP
+\fBParameters:\fP
+.RS 4
+\fIbuffer\fP the buffer whose size has changed 
+.br
+\fIold_len\fP the previous length of the buffer 
+.br
+\fInew_len\fP the current length of the buffer 
+.br
+\fIarg\fP a pointer to user data 
+.RE
+.PP
+
+.SH "Function Documentation"
+.PP 
+.SS "unsigned char* evbuffer_find (struct \fBevbuffer\fP *buffer, const unsigned char *what, size_tlen)"
+
+.PP
+Find a string within an evbuffer\&. \fBParameters:\fP
+.RS 4
+\fIbuffer\fP the evbuffer to be searched 
+.br
+\fIwhat\fP the string to be searched for 
+.br
+\fIlen\fP the length of the search string 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+a pointer to the beginning of the search string, or NULL if the search failed\&. 
+.RE
+.PP
+
+.SS "char* evbuffer_readline (struct \fBevbuffer\fP *buffer)"
+
+.PP
+Obsolete alias for evbuffer_readln(buffer, NULL, EOL_STYLE_ANY)\&. \fBDeprecated\fP
+.RS 4
+This function is deprecated because its behavior is not correct for almost any protocol, and also because it's wholly subsumed by \fBevbuffer_readln()\fP\&.
+.RE
+.PP
+.PP
+\fBParameters:\fP
+.RS 4
+\fIbuffer\fP the evbuffer to read from 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+pointer to a single line, or NULL if an error occurred 
+.RE
+.PP
+
+.SS "void evbuffer_setcb (struct \fBevbuffer\fP *buffer, \fBevbuffer_cb\fPcb, void *cbarg)"
+
+.PP
+Replace all callbacks on an evbuffer with a single new callback, or remove them\&. Subsequent calls to \fBevbuffer_setcb()\fP replace callbacks set by previous calls\&. Setting the callback to NULL removes any previously set callback\&.
+.PP
+\fBDeprecated\fP
+.RS 4
+This function is deprecated because it clears all previous callbacks set on the evbuffer, which can cause confusing behavior if multiple parts of the code all want to add their own callbacks on a buffer\&. Instead, use \fBevbuffer_add()\fP, evbuffer_del(), and evbuffer_setflags() to manage your own evbuffer callbacks without interfering with callbacks set by others\&.
+.RE
+.PP
+.PP
+\fBParameters:\fP
+.RS 4
+\fIbuffer\fP the evbuffer to be monitored 
+.br
+\fIcb\fP the callback function to invoke when the evbuffer is modified, or NULL to remove all callbacks\&. 
+.br
+\fIcbarg\fP an argument to be provided to the callback function 
+.RE
+.PP
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for libevent from the source code\&.

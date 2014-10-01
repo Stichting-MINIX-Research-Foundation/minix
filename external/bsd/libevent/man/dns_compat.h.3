@@ -1,0 +1,499 @@
+.TH "event2/dns_compat.h" 3 "Wed Apr 10 2013" "libevent" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+event2/dns_compat.h \- 
+.PP
+Potentially non-threadsafe versions of the functions in \fBdns\&.h\fP: provided only for backwards compatibility\&.  
+
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <event2/event-config\&.h>\fP
+.br
+\fC#include <event2/util\&.h>\fP
+.br
+
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "struct evdns_server_port * \fBevdns_add_server_port\fP (\fBevutil_socket_t\fP socket, int flags, \fBevdns_request_callback_fn_type\fP callback, void *user_data)"
+.br
+.RI "\fIAs evdns_server_new_with_base\&. \fP"
+.ti -1c
+.RI "int \fBevdns_clear_nameservers_and_suspend\fP (void)"
+.br
+.RI "\fIRemove all configured nameservers, and suspend all pending resolves\&. \fP"
+.ti -1c
+.RI "int \fBevdns_count_nameservers\fP (void)"
+.br
+.RI "\fIGet the number of configured nameservers\&. \fP"
+.ti -1c
+.RI "struct evdns_base * \fBevdns_get_global_base\fP (void)"
+.br
+.RI "\fIReturn the global evdns_base created by \fBevent_init()\fP and used by the other deprecated functions\&. \fP"
+.ti -1c
+.RI "int \fBevdns_init\fP (void)"
+.br
+.RI "\fIInitialize the asynchronous DNS library\&. \fP"
+.ti -1c
+.RI "int \fBevdns_nameserver_add\fP (unsigned long int address)"
+.br
+.RI "\fIAdd a nameserver\&. \fP"
+.ti -1c
+.RI "int \fBevdns_nameserver_ip_add\fP (const char *ip_as_string)"
+.br
+.RI "\fIAdd a nameserver\&. \fP"
+.ti -1c
+.RI "int \fBevdns_resolv_conf_parse\fP (int flags, const char *const filename)"
+.br
+.RI "\fIParse a resolv\&.conf file\&. \fP"
+.ti -1c
+.RI "int \fBevdns_resolve_ipv4\fP (const char *name, int flags, \fBevdns_callback_type\fP callback, void *ptr)"
+.br
+.RI "\fILookup an A record for a given name\&. \fP"
+.ti -1c
+.RI "int \fBevdns_resolve_ipv6\fP (const char *name, int flags, \fBevdns_callback_type\fP callback, void *ptr)"
+.br
+.RI "\fILookup an AAAA record for a given name\&. \fP"
+.ti -1c
+.RI "int \fBevdns_resolve_reverse\fP (const struct in_addr *in, int flags, \fBevdns_callback_type\fP callback, void *ptr)"
+.br
+.RI "\fILookup a PTR record for a given IP address\&. \fP"
+.ti -1c
+.RI "int \fBevdns_resolve_reverse_ipv6\fP (const struct in6_addr *in, int flags, \fBevdns_callback_type\fP callback, void *ptr)"
+.br
+.RI "\fILookup a PTR record for a given IPv6 address\&. \fP"
+.ti -1c
+.RI "int \fBevdns_resume\fP (void)"
+.br
+.RI "\fIResume normal operation and continue any suspended resolve requests\&. \fP"
+.ti -1c
+.RI "void \fBevdns_search_add\fP (const char *domain)"
+.br
+.RI "\fIAdd a domain to the list of search domains\&. \fP"
+.ti -1c
+.RI "void \fBevdns_search_clear\fP (void)"
+.br
+.RI "\fIClear the list of search domains\&. \fP"
+.ti -1c
+.RI "void \fBevdns_search_ndots_set\fP (const int ndots)"
+.br
+.RI "\fISet the 'ndots' parameter for searches\&. \fP"
+.ti -1c
+.RI "int \fBevdns_set_option\fP (const char *option, const char *val, int flags)"
+.br
+.RI "\fISet the value of a configuration option\&. \fP"
+.ti -1c
+.RI "void \fBevdns_shutdown\fP (int fail_requests)"
+.br
+.RI "\fIShut down the asynchronous DNS resolver and terminate all active requests\&. \fP"
+.in -1c
+.SH "Detailed Description"
+.PP 
+Potentially non-threadsafe versions of the functions in \fBdns\&.h\fP: provided only for backwards compatibility\&. 
+
+
+.SH "Function Documentation"
+.PP 
+.SS "struct evdns_server_port* evdns_add_server_port (\fBevutil_socket_t\fPsocket, intflags, \fBevdns_request_callback_fn_type\fPcallback, void *user_data)\fC [read]\fP"
+
+.PP
+As evdns_server_new_with_base\&. \fBDeprecated\fP
+.RS 4
+This function is deprecated because it does not allow the caller to specify which even_base it uses\&. The recommended function is \fBevdns_add_server_port_with_base()\fP\&.
+.RE
+.PP
+
+.SS "int evdns_clear_nameservers_and_suspend (void)"
+
+.PP
+Remove all configured nameservers, and suspend all pending resolves\&. Resolves will not necessarily be re-attempted until \fBevdns_resume()\fP is called\&.
+.PP
+\fBDeprecated\fP
+.RS 4
+This function is deprecated because it does not allow the caller to specify which evdns_base it applies to\&. The recommended function is \fBevdns_base_clear_nameservers_and_suspend()\fP\&.
+.RE
+.PP
+.PP
+\fBReturns:\fP
+.RS 4
+0 if successful, or -1 if an error occurred 
+.RE
+.PP
+\fBSee Also:\fP
+.RS 4
+\fBevdns_resume()\fP 
+.RE
+.PP
+
+.SS "int evdns_count_nameservers (void)"
+
+.PP
+Get the number of configured nameservers\&. This returns the number of configured nameservers (not necessarily the number of running nameservers)\&. This is useful for double-checking whether our calls to the various nameserver configuration functions have been successful\&.
+.PP
+\fBDeprecated\fP
+.RS 4
+This function is deprecated because it does not allow the caller to specify which evdns_base it applies to\&. The recommended function is \fBevdns_base_count_nameservers()\fP\&.
+.RE
+.PP
+.PP
+\fBReturns:\fP
+.RS 4
+the number of configured nameservers 
+.RE
+.PP
+\fBSee Also:\fP
+.RS 4
+\fBevdns_nameserver_add()\fP 
+.RE
+.PP
+
+.SS "struct evdns_base* evdns_get_global_base (void)\fC [read]\fP"
+
+.PP
+Return the global evdns_base created by \fBevent_init()\fP and used by the other deprecated functions\&. \fBDeprecated\fP
+.RS 4
+This function is deprecated because use of the global evdns_base is error-prone\&. 
+.RE
+.PP
+
+.SS "int evdns_init (void)"
+
+.PP
+Initialize the asynchronous DNS library\&. This function initializes support for non-blocking name resolution by calling \fBevdns_resolv_conf_parse()\fP on UNIX and evdns_config_windows_nameservers() on Windows\&.
+.PP
+\fBDeprecated\fP
+.RS 4
+This function is deprecated because it always uses the current event base, and is easily confused by multiple calls to \fBevent_init()\fP, and so is not safe for multithreaded use\&. Additionally, it allocates a global structure that only one thread can use\&. The replacement is \fBevdns_base_new()\fP\&.
+.RE
+.PP
+.PP
+\fBReturns:\fP
+.RS 4
+0 if successful, or -1 if an error occurred 
+.RE
+.PP
+\fBSee Also:\fP
+.RS 4
+\fBevdns_shutdown()\fP 
+.RE
+.PP
+
+.SS "int evdns_nameserver_add (unsigned long intaddress)"
+
+.PP
+Add a nameserver\&. The address should be an IPv4 address in network byte order\&. The type of address is chosen so that it matches in_addr\&.s_addr\&.
+.PP
+\fBDeprecated\fP
+.RS 4
+This function is deprecated because it does not allow the caller to specify which evdns_base it applies to\&. The recommended function is \fBevdns_base_nameserver_add()\fP\&.
+.RE
+.PP
+.PP
+\fBParameters:\fP
+.RS 4
+\fIaddress\fP an IP address in network byte order 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+0 if successful, or -1 if an error occurred 
+.RE
+.PP
+\fBSee Also:\fP
+.RS 4
+\fBevdns_nameserver_ip_add()\fP 
+.RE
+.PP
+
+.SS "int evdns_nameserver_ip_add (const char *ip_as_string)"
+
+.PP
+Add a nameserver\&. This wraps the \fBevdns_nameserver_add()\fP function by parsing a string as an IP address and adds it as a nameserver\&.
+.PP
+\fBDeprecated\fP
+.RS 4
+This function is deprecated because it does not allow the caller to specify which evdns_base it applies to\&. The recommended function is \fBevdns_base_nameserver_ip_add()\fP\&.
+.RE
+.PP
+.PP
+\fBReturns:\fP
+.RS 4
+0 if successful, or -1 if an error occurred 
+.RE
+.PP
+\fBSee Also:\fP
+.RS 4
+\fBevdns_nameserver_add()\fP 
+.RE
+.PP
+
+.SS "int evdns_resolv_conf_parse (intflags, const char *constfilename)"
+
+.PP
+Parse a resolv\&.conf file\&. The 'flags' parameter determines what information is parsed from the resolv\&.conf file\&. See the man page for resolv\&.conf for the format of this file\&.
+.PP
+The following directives are not parsed from the file: sortlist, rotate, no-check-names, inet6, debug\&.
+.PP
+If this function encounters an error, the possible return values are: 1 = failed to open file, 2 = failed to stat file, 3 = file too large, 4 = out of memory, 5 = short read from file, 6 = no nameservers listed in the file
+.PP
+\fBDeprecated\fP
+.RS 4
+This function is deprecated because it does not allow the caller to specify which evdns_base it applies to\&. The recommended function is \fBevdns_base_resolv_conf_parse()\fP\&.
+.RE
+.PP
+.PP
+\fBParameters:\fP
+.RS 4
+\fIflags\fP any of DNS_OPTION_NAMESERVERS|DNS_OPTION_SEARCH|DNS_OPTION_MISC| DNS_OPTIONS_ALL 
+.br
+\fIfilename\fP the path to the resolv\&.conf file 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+0 if successful, or various positive error codes if an error occurred (see above) 
+.RE
+.PP
+\fBSee Also:\fP
+.RS 4
+resolv\&.conf(3), evdns_config_windows_nameservers() 
+.RE
+.PP
+
+.SS "int evdns_resolve_ipv4 (const char *name, intflags, \fBevdns_callback_type\fPcallback, void *ptr)"
+
+.PP
+Lookup an A record for a given name\&. \fBDeprecated\fP
+.RS 4
+This function is deprecated because it does not allow the caller to specify which evdns_base it applies to\&. The recommended function is \fBevdns_base_resolve_ipv4()\fP\&.
+.RE
+.PP
+.PP
+\fBParameters:\fP
+.RS 4
+\fIname\fP a DNS hostname 
+.br
+\fIflags\fP either 0, or DNS_QUERY_NO_SEARCH to disable searching for this query\&. 
+.br
+\fIcallback\fP a callback function to invoke when the request is completed 
+.br
+\fIptr\fP an argument to pass to the callback function 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+0 if successful, or -1 if an error occurred 
+.RE
+.PP
+\fBSee Also:\fP
+.RS 4
+\fBevdns_resolve_ipv6()\fP, \fBevdns_resolve_reverse()\fP, \fBevdns_resolve_reverse_ipv6()\fP 
+.RE
+.PP
+
+.SS "int evdns_resolve_ipv6 (const char *name, intflags, \fBevdns_callback_type\fPcallback, void *ptr)"
+
+.PP
+Lookup an AAAA record for a given name\&. \fBParameters:\fP
+.RS 4
+\fIname\fP a DNS hostname 
+.br
+\fIflags\fP either 0, or DNS_QUERY_NO_SEARCH to disable searching for this query\&. 
+.br
+\fIcallback\fP a callback function to invoke when the request is completed 
+.br
+\fIptr\fP an argument to pass to the callback function 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+0 if successful, or -1 if an error occurred 
+.RE
+.PP
+\fBSee Also:\fP
+.RS 4
+\fBevdns_resolve_ipv4()\fP, \fBevdns_resolve_reverse()\fP, \fBevdns_resolve_reverse_ipv6()\fP 
+.RE
+.PP
+
+.SS "int evdns_resolve_reverse (const struct in_addr *in, intflags, \fBevdns_callback_type\fPcallback, void *ptr)"
+
+.PP
+Lookup a PTR record for a given IP address\&. \fBDeprecated\fP
+.RS 4
+This function is deprecated because it does not allow the caller to specify which evdns_base it applies to\&. The recommended function is \fBevdns_base_resolve_reverse()\fP\&.
+.RE
+.PP
+.PP
+\fBParameters:\fP
+.RS 4
+\fIin\fP an IPv4 address 
+.br
+\fIflags\fP either 0, or DNS_QUERY_NO_SEARCH to disable searching for this query\&. 
+.br
+\fIcallback\fP a callback function to invoke when the request is completed 
+.br
+\fIptr\fP an argument to pass to the callback function 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+0 if successful, or -1 if an error occurred 
+.RE
+.PP
+\fBSee Also:\fP
+.RS 4
+\fBevdns_resolve_reverse_ipv6()\fP 
+.RE
+.PP
+
+.SS "int evdns_resolve_reverse_ipv6 (const struct in6_addr *in, intflags, \fBevdns_callback_type\fPcallback, void *ptr)"
+
+.PP
+Lookup a PTR record for a given IPv6 address\&. \fBDeprecated\fP
+.RS 4
+This function is deprecated because it does not allow the caller to specify which evdns_base it applies to\&. The recommended function is \fBevdns_base_resolve_reverse_ipv6()\fP\&.
+.RE
+.PP
+.PP
+\fBParameters:\fP
+.RS 4
+\fIin\fP an IPv6 address 
+.br
+\fIflags\fP either 0, or DNS_QUERY_NO_SEARCH to disable searching for this query\&. 
+.br
+\fIcallback\fP a callback function to invoke when the request is completed 
+.br
+\fIptr\fP an argument to pass to the callback function 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+0 if successful, or -1 if an error occurred 
+.RE
+.PP
+\fBSee Also:\fP
+.RS 4
+\fBevdns_resolve_reverse_ipv6()\fP 
+.RE
+.PP
+
+.SS "int evdns_resume (void)"
+
+.PP
+Resume normal operation and continue any suspended resolve requests\&. Re-attempt resolves left in limbo after an earlier call to \fBevdns_clear_nameservers_and_suspend()\fP\&.
+.PP
+\fBDeprecated\fP
+.RS 4
+This function is deprecated because it does not allow the caller to specify which evdns_base it applies to\&. The recommended function is \fBevdns_base_resume()\fP\&.
+.RE
+.PP
+.PP
+\fBReturns:\fP
+.RS 4
+0 if successful, or -1 if an error occurred 
+.RE
+.PP
+\fBSee Also:\fP
+.RS 4
+\fBevdns_clear_nameservers_and_suspend()\fP 
+.RE
+.PP
+
+.SS "void evdns_search_add (const char *domain)"
+
+.PP
+Add a domain to the list of search domains\&. \fBDeprecated\fP
+.RS 4
+This function is deprecated because it does not allow the caller to specify which evdns_base it applies to\&. The recommended function is \fBevdns_base_search_add()\fP\&.
+.RE
+.PP
+.PP
+\fBParameters:\fP
+.RS 4
+\fIdomain\fP the domain to be added to the search list 
+.RE
+.PP
+
+.SS "void evdns_search_clear (void)"
+
+.PP
+Clear the list of search domains\&. \fBDeprecated\fP
+.RS 4
+This function is deprecated because it does not allow the caller to specify which evdns_base it applies to\&. The recommended function is \fBevdns_base_search_clear()\fP\&. 
+.RE
+.PP
+
+.SS "void evdns_search_ndots_set (const intndots)"
+
+.PP
+Set the 'ndots' parameter for searches\&. Sets the number of dots which, when found in a name, causes the first query to be without any search domain\&.
+.PP
+\fBDeprecated\fP
+.RS 4
+This function is deprecated because it does not allow the caller to specify which evdns_base it applies to\&. The recommended function is \fBevdns_base_search_ndots_set()\fP\&.
+.RE
+.PP
+.PP
+\fBParameters:\fP
+.RS 4
+\fIndots\fP the new ndots parameter 
+.RE
+.PP
+
+.SS "int evdns_set_option (const char *option, const char *val, intflags)"
+
+.PP
+Set the value of a configuration option\&. The currently available configuration options are:
+.PP
+ndots, timeout, max-timeouts, max-inflight, and attempts
+.PP
+\fBDeprecated\fP
+.RS 4
+This function is deprecated because it does not allow the caller to specify which evdns_base it applies to\&. The recommended function is \fBevdns_base_set_option()\fP\&.
+.RE
+.PP
+.PP
+\fBParameters:\fP
+.RS 4
+\fIoption\fP the name of the configuration option to be modified 
+.br
+\fIval\fP the value to be set 
+.br
+\fIflags\fP Ignored\&. 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+0 if successful, or -1 if an error occurred 
+.RE
+.PP
+
+.SS "void evdns_shutdown (intfail_requests)"
+
+.PP
+Shut down the asynchronous DNS resolver and terminate all active requests\&. If the 'fail_requests' option is enabled, all active requests will return an empty result with the error flag set to DNS_ERR_SHUTDOWN\&. Otherwise, the requests will be silently discarded\&.
+.PP
+\fBDeprecated\fP
+.RS 4
+This function is deprecated because it does not allow the caller to specify which evdns_base it applies to\&. The recommended function is evdns_base_shutdown()\&.
+.RE
+.PP
+.PP
+\fBParameters:\fP
+.RS 4
+\fIfail_requests\fP if zero, active requests will be aborted; if non-zero, active requests will return DNS_ERR_SHUTDOWN\&. 
+.RE
+.PP
+\fBSee Also:\fP
+.RS 4
+\fBevdns_init()\fP 
+.RE
+.PP
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for libevent from the source code\&.

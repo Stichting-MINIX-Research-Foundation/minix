@@ -52,6 +52,7 @@
 ./usr/include/compat/machine
 ./usr/include/ddekit
 ./usr/include/ddekit/minix
+./usr/include/event2
 ./usr/include/fs
 ./usr/include/g++
 ./usr/include/i386

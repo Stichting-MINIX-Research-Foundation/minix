@@ -1,0 +1,29 @@
+.TH "event_config" 3 "Wed Apr 10 2013" "libevent" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+event_config \- 
+.PP
+Configuration for an \fBevent_base\fP\&.  
+
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fC#include <event\&.h>\fP
+.SH "Detailed Description"
+.PP 
+Configuration for an \fBevent_base\fP\&. 
+
+There are many options that can be used to alter the behavior and implementation of an \fBevent_base\fP\&. To avoid having to pass them all in a complex many-argument constructor, we provide an abstract data type wrhere you set up configation information before passing it to \fBevent_base_new_with_config()\fP\&.
+.PP
+\fBSee Also:\fP
+.RS 4
+\fBevent_config_new()\fP, \fBevent_config_free()\fP, \fBevent_base_new_with_config()\fP, \fBevent_config_avoid_method()\fP, \fBevent_config_require_features()\fP, \fBevent_config_set_flag()\fP, \fBevent_config_set_num_cpus_hint()\fP 
+.RE
+.PP
+
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for libevent from the source code\&.

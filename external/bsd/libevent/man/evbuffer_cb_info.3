@@ -1,0 +1,57 @@
+.TH "evbuffer_cb_info" 3 "Wed Apr 10 2013" "libevent" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+evbuffer_cb_info \- 
+.PP
+Structure passed to an evbuffer_cb_func evbuffer callback\&.  
+
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fC#include <buffer\&.h>\fP
+.SS "Data Fields"
+
+.in +1c
+.ti -1c
+.RI "size_t \fBn_added\fP"
+.br
+.RI "\fIThe number of bytes added since callbacks were last invoked\&. \fP"
+.ti -1c
+.RI "size_t \fBn_deleted\fP"
+.br
+.RI "\fIThe number of bytes removed since callbacks were last invoked\&. \fP"
+.ti -1c
+.RI "size_t \fBorig_size\fP"
+.br
+.RI "\fIThe number of bytes in this evbuffer when callbacks were last invoked\&. \fP"
+.in -1c
+.SH "Detailed Description"
+.PP 
+Structure passed to an evbuffer_cb_func evbuffer callback\&. 
+
+\fBSee Also:\fP
+.RS 4
+\fBevbuffer_cb_func\fP, \fBevbuffer_add_cb()\fP 
+.RE
+.PP
+
+.SH "Field Documentation"
+.PP 
+.SS "size_t evbuffer_cb_info::n_added"
+
+.PP
+The number of bytes added since callbacks were last invoked\&. 
+.SS "size_t evbuffer_cb_info::n_deleted"
+
+.PP
+The number of bytes removed since callbacks were last invoked\&. 
+.SS "size_t evbuffer_cb_info::orig_size"
+
+.PP
+The number of bytes in this evbuffer when callbacks were last invoked\&. 
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for libevent from the source code\&.

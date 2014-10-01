@@ -1,0 +1,51 @@
+.TH "evbuffer_iovec" 3 "Wed Apr 10 2013" "libevent" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+evbuffer_iovec \- 
+.PP
+Describes a single extent of memory inside an evbuffer\&.  
+
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fC#include <buffer\&.h>\fP
+.SS "Data Fields"
+
+.in +1c
+.ti -1c
+.RI "void * \fBiov_base\fP"
+.br
+.RI "\fIThe start of the extent of memory\&. \fP"
+.ti -1c
+.RI "size_t \fBiov_len\fP"
+.br
+.RI "\fIThe length of the extent of memory\&. \fP"
+.in -1c
+.SH "Detailed Description"
+.PP 
+Describes a single extent of memory inside an evbuffer\&. 
+
+Used for direct-access functions\&.
+.PP
+\fBSee Also:\fP
+.RS 4
+\fBevbuffer_reserve_space\fP, \fBevbuffer_commit_space\fP, \fBevbuffer_peek\fP 
+.RE
+.PP
+
+.SH "Field Documentation"
+.PP 
+.SS "void* evbuffer_iovec::iov_base"
+
+.PP
+The start of the extent of memory\&. 
+.SS "size_t evbuffer_iovec::iov_len"
+
+.PP
+The length of the extent of memory\&. 
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for libevent from the source code\&.

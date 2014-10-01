@@ -1,0 +1,50 @@
+.TH "evutil_addrinfo" 3 "Wed Apr 10 2013" "libevent" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+evutil_addrinfo \- 
+.PP
+A definition of struct addrinfo for systems that lack it\&.  
+
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fC#include <util\&.h>\fP
+.SS "Data Fields"
+
+.in +1c
+.ti -1c
+.RI "struct sockaddr * \fBai_addr\fP"
+.br
+.ti -1c
+.RI "size_t \fBai_addrlen\fP"
+.br
+.ti -1c
+.RI "char * \fBai_canonname\fP"
+.br
+.ti -1c
+.RI "int \fBai_family\fP"
+.br
+.ti -1c
+.RI "int \fBai_flags\fP"
+.br
+.ti -1c
+.RI "struct \fBevutil_addrinfo\fP * \fBai_next\fP"
+.br
+.ti -1c
+.RI "int \fBai_protocol\fP"
+.br
+.ti -1c
+.RI "int \fBai_socktype\fP"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+A definition of struct addrinfo for systems that lack it\&. 
+
+(This is just an alias for struct addrinfo if the system defines struct addrinfo\&.) 
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for libevent from the source code\&.

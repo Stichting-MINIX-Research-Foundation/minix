@@ -1,0 +1,871 @@
+.TH "event2/rpc.h" 3 "Wed Apr 10 2013" "libevent" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+event2/rpc.h \- 
+.PP
+This header files provides basic support for an RPC server and client\&.  
+
+.SH SYNOPSIS
+.br
+.PP
+.SS "Macros"
+
+.in +1c
+.ti -1c
+.RI "#define \fBEVRPC_GENERATE\fP(rpcname, reqstruct, rplystruct)"
+.br
+.RI "\fIGenerates the code for receiving and sending an RPC message\&. \fP"
+.ti -1c
+.RI "#define \fBEVRPC_HEADER\fP(rpcname, reqstruct, rplystruct)"
+.br
+.RI "\fICreates the definitions and prototypes for an RPC\&. \fP"
+.ti -1c
+.RI "#define \fBEVRPC_MAKE_CTX\fP(rpcname, reqstruct, rplystruct, pool, request, reply, cb, cbarg)"
+.br
+.RI "\fICreates a context structure that contains rpc specific information\&. \fP"
+.ti -1c
+.RI "#define \fBEVRPC_MAKE_REQUEST\fP(name, pool, request, reply, cb, cbarg)   evrpc_send_request_##name((pool), (request), (reply), (cb), (cbarg))"
+.br
+.RI "\fIlaunches an RPC and sends it to the server \fP"
+.ti -1c
+.RI "#define \fBEVRPC_REGISTER\fP(base, name, request, reply, callback, cbarg)"
+.br
+.RI "\fIregister RPCs with the HTTP Server \fP"
+.ti -1c
+.RI "#define \fBEVRPC_REQUEST_DONE\fP(rpc_req)"
+.br
+.RI "\fICreates the reply to an RPC request\&. \fP"
+.ti -1c
+.RI "#define \fBEVRPC_REQUEST_HTTP\fP(rpc_req)   (rpc_req)->http_req"
+.br
+.RI "\fIProvides access to the HTTP request object underlying an RPC\&. \fP"
+.ti -1c
+.RI "#define \fBEVRPC_STRUCT\fP(rpcname)   struct evrpc_req__##rpcname"
+.br
+.RI "\fIThe type of a specific RPC Message\&. \fP"
+.ti -1c
+.RI "#define \fBEVRPC_UNREGISTER\fP(base, name)   evrpc_unregister_rpc((base), #name)"
+.br
+.RI "\fIUnregisters an already registered RPC\&. \fP"
+.ti -1c
+.RI "#define \fBEVTAG_ARRAY_ADD\fP(msg, member)   (*(msg)->base->member##_add)(msg)"
+.br
+.RI "\fIAllocates a new entry in the array and returns it\&. \fP"
+.ti -1c
+.RI "#define \fBEVTAG_ARRAY_ADD_VALUE\fP(msg, member, value)   (*(msg)->base->member##_add)((msg), (value))"
+.br
+.RI "\fIAdds a value to an array\&. \fP"
+.ti -1c
+.RI "#define \fBEVTAG_ARRAY_GET\fP(msg, member, offset, pvalue)   (*(msg)->base->member##_get)((msg), (offset), (pvalue))"
+.br
+.RI "\fIGets a variable at the specified offset from the array\&. \fP"
+.ti -1c
+.RI "#define \fBEVTAG_ARRAY_LEN\fP(msg, member)   ((msg)->member##_length)"
+.br
+.RI "\fIReturns the number of entries in the array\&. \fP"
+.ti -1c
+.RI "#define \fBEVTAG_ASSIGN\fP(msg, member, value)   (*(msg)->base->member##_assign)((msg), (value))"
+.br
+.RI "\fIAssigns a value to the member in the message\&. \fP"
+.ti -1c
+.RI "#define \fBEVTAG_ASSIGN_WITH_LEN\fP(msg, member, value, len)   (*(msg)->base->member##_assign)((msg), (value), (len))"
+.br
+.RI "\fIAssigns a value to the member in the message\&. \fP"
+.ti -1c
+.RI "#define \fBEVTAG_GET\fP(msg, member, pvalue)   (*(msg)->base->member##_get)((msg), (pvalue))"
+.br
+.RI "\fIReturns the value for a member\&. \fP"
+.ti -1c
+.RI "#define \fBEVTAG_GET_WITH_LEN\fP(msg, member, pvalue, plen)   (*(msg)->base->member##_get)((msg), (pvalue), (plen))"
+.br
+.RI "\fIReturns the value for a member\&. \fP"
+.ti -1c
+.RI "#define \fBEVTAG_HAS\fP(msg, member)   ((msg)->member##_set == 1)"
+.br
+.RI "\fIDetermines if the member has been set in the message\&. \fP"
+.ti -1c
+.RI "#define \fBINPUT\fP   \fBEVRPC_INPUT\fP"
+.br
+.RI "\fIDeprecated alias for EVRPC_INPUT\&. \fP"
+.ti -1c
+.RI "#define \fBOUTPUT\fP   \fBEVRPC_OUTPUT\fP"
+.br
+.RI "\fIDeprecated alias for EVRPC_OUTPUT\&. \fP"
+.in -1c
+.SS "Enumerations"
+
+.in +1c
+.ti -1c
+.RI "enum \fBEVRPC_HOOK_RESULT\fP { \fBEVRPC_TERMINATE\fP = -1, \fBEVRPC_CONTINUE\fP = 0, \fBEVRPC_PAUSE\fP = 1 }"
+.br
+.RI "\fIReturn value from hook processing functions\&. \fP"
+.ti -1c
+.RI "enum \fBEVRPC_HOOK_TYPE\fP { \fBEVRPC_INPUT\fP, \fBEVRPC_OUTPUT\fP }"
+.br
+.RI "\fIHooks for changing the input and output of RPCs; this can be used to implement compression, authentication, encryption, \&.\&.\&. \fP"
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "void * \fBevrpc_add_hook\fP (void *vbase, enum \fBEVRPC_HOOK_TYPE\fP hook_type, int(*cb)(void *, struct evhttp_request *, struct \fBevbuffer\fP *, void *), void *cb_arg)"
+.br
+.RI "\fIadds a processing hook to either an rpc base or rpc pool \fP"
+.ti -1c
+.RI "void \fBevrpc_free\fP (struct evrpc_base *base)"
+.br
+.RI "\fIFrees the evrpc base\&. \fP"
+.ti -1c
+.RI "void * \fBevrpc_get_reply\fP (struct evrpc_req_generic *req)"
+.br
+.ti -1c
+.RI "void * \fBevrpc_get_request\fP (struct evrpc_req_generic *req)"
+.br
+.RI "\fIaccessors for request and reply \fP"
+.ti -1c
+.RI "void \fBevrpc_hook_add_meta\fP (void *ctx, const char *key, const void *data, size_t data_size)"
+.br
+.RI "\fIadds meta data to request \fP"
+.ti -1c
+.RI "int \fBevrpc_hook_find_meta\fP (void *ctx, const char *key, void **data, size_t *data_size)"
+.br
+.RI "\fIretrieves meta data previously associated \fP"
+.ti -1c
+.RI "struct evhttp_connection * \fBevrpc_hook_get_connection\fP (void *ctx)"
+.br
+.RI "\fIreturns the connection object associated with the request \fP"
+.ti -1c
+.RI "struct evrpc_base * \fBevrpc_init\fP (struct evhttp *server)"
+.br
+.RI "\fICreates a new rpc base from which RPC requests can be received\&. \fP"
+.ti -1c
+.RI "int \fBevrpc_make_request\fP (struct evrpc_request_wrapper *ctx)"
+.br
+.RI "\fIMakes an RPC request based on the provided context\&. \fP"
+.ti -1c
+.RI "struct evrpc_request_wrapper * \fBevrpc_make_request_ctx\fP (struct evrpc_pool *pool, void *request, void *reply, const char *rpcname, void(*req_marshal)(struct \fBevbuffer\fP *, void *), void(*rpl_clear)(void *), int(*rpl_unmarshal)(void *, struct \fBevbuffer\fP *), void(*cb)(struct evrpc_status *, void *, void *, void *), void *cbarg)"
+.br
+.RI "\fIuse EVRPC_GENERATE instead \fP"
+.ti -1c
+.RI "void \fBevrpc_pool_add_connection\fP (struct evrpc_pool *pool, struct evhttp_connection *evcon)"
+.br
+.RI "\fIAdds a connection over which rpc can be dispatched to the pool\&. \fP"
+.ti -1c
+.RI "void \fBevrpc_pool_free\fP (struct evrpc_pool *pool)"
+.br
+.RI "\fIfrees an rpc connection pool \fP"
+.ti -1c
+.RI "struct evrpc_pool * \fBevrpc_pool_new\fP (struct \fBevent_base\fP *base)"
+.br
+.RI "\fIcreates an rpc connection pool \fP"
+.ti -1c
+.RI "void \fBevrpc_pool_remove_connection\fP (struct evrpc_pool *pool, struct evhttp_connection *evcon)"
+.br
+.RI "\fIRemoves a connection from the pool\&. \fP"
+.ti -1c
+.RI "void \fBevrpc_pool_set_timeout\fP (struct evrpc_pool *pool, int timeout_in_secs)"
+.br
+.RI "\fISets the timeout in secs after which a request has to complete\&. \fP"
+.ti -1c
+.RI "int \fBevrpc_register_generic\fP (struct evrpc_base *base, const char *name, void(*callback)(struct evrpc_req_generic *, void *), void *cbarg, void *(*req_new)(void *), void *req_new_arg, void(*req_free)(void *), int(*req_unmarshal)(void *, struct \fBevbuffer\fP *), void *(*rpl_new)(void *), void *rpl_new_arg, void(*rpl_free)(void *), int(*rpl_complete)(void *), void(*rpl_marshal)(struct \fBevbuffer\fP *, void *))"
+.br
+.RI "\fIFunction for registering a generic RPC with the RPC base\&. \fP"
+.ti -1c
+.RI "int \fBevrpc_register_rpc\fP (struct evrpc_base *, struct evrpc *, void(*)(struct evrpc_req_generic *, void *), void *)"
+.br
+.RI "\fILow level function for registering an RPC with a server\&. \fP"
+.ti -1c
+.RI "int \fBevrpc_remove_hook\fP (void *vbase, enum \fBEVRPC_HOOK_TYPE\fP hook_type, void *handle)"
+.br
+.RI "\fIremoves a previously added hook \fP"
+.ti -1c
+.RI "void \fBevrpc_request_done\fP (struct evrpc_req_generic *req)"
+.br
+.RI "\fIcompletes the server response to an rpc request \fP"
+.ti -1c
+.RI "struct evrpc_pool * \fBevrpc_request_get_pool\fP (struct evrpc_request_wrapper *ctx)"
+.br
+.RI "\fIaccessors for obscure and undocumented functionality \fP"
+.ti -1c
+.RI "void \fBevrpc_request_set_cb\fP (struct evrpc_request_wrapper *ctx, void(*cb)(struct evrpc_status *, void *request, void *reply, void *arg), void *cb_arg)"
+.br
+.ti -1c
+.RI "void \fBevrpc_request_set_pool\fP (struct evrpc_request_wrapper *ctx, struct evrpc_pool *pool)"
+.br
+.ti -1c
+.RI "int \fBevrpc_resume_request\fP (void *vbase, void *ctx, enum \fBEVRPC_HOOK_RESULT\fP res)"
+.br
+.RI "\fIresume a paused request \fP"
+.ti -1c
+.RI "int \fBevrpc_send_request_generic\fP (struct evrpc_pool *pool, void *request, void *reply, void(*cb)(struct evrpc_status *, void *, void *, void *), void *cb_arg, const char *rpcname, void(*req_marshal)(struct \fBevbuffer\fP *, void *), void(*rpl_clear)(void *), int(*rpl_unmarshal)(void *, struct \fBevbuffer\fP *))"
+.br
+.RI "\fIFunction for sending a generic RPC request\&. \fP"
+.ti -1c
+.RI "int \fBevrpc_unregister_rpc\fP (struct evrpc_base *base, const char *name)"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+This header files provides basic support for an RPC server and client\&. 
+
+To support RPCs in a server, every supported RPC command needs to be defined and registered\&.
+.PP
+\fBEVRPC_HEADER(SendCommand, Request, Reply)\fP;
+.PP
+SendCommand is the name of the RPC command\&. Request is the name of a structure generated by event_rpcgen\&.py\&. It contains all parameters relating to the SendCommand RPC\&. The server needs to fill in the Reply structure\&. Reply is the name of a structure generated by event_rpcgen\&.py\&. It contains the answer to the RPC\&.
+.PP
+To register an RPC with an HTTP server, you need to first create an RPC base with:
+.PP
+struct evrpc_base *base = evrpc_init(http);
+.PP
+A specific RPC can then be registered with
+.PP
+\fBEVRPC_REGISTER(base, SendCommand, Request, Reply,  FunctionCB, arg)\fP;
+.PP
+when the server receives an appropriately formatted RPC, the user callback is invoked\&. The callback needs to fill in the reply structure\&.
+.PP
+void FunctionCB(\fBEVRPC_STRUCT(SendCommand)\fP* rpc, void *arg);
+.PP
+To send the reply, call \fBEVRPC_REQUEST_DONE(rpc)\fP;
+.PP
+See the regression test for an example\&. 
+.SH "Macro Definition Documentation"
+.PP 
+.SS "#define EVRPC_GENERATE(rpcname, reqstruct, rplystruct)"
+\fBValue:\fP
+.PP
+.nf
+int evrpc_send_request_##rpcname(struct evrpc_pool *pool, \
+        struct reqstruct *request, struct rplystruct *reply,    \
+        void (*cb)(struct evrpc_status *,               \
+        struct reqstruct *, struct rplystruct *, void *cbarg),  \
+        void *cbarg) {                      \
+    return evrpc_send_request_generic(pool, request, reply, \
+        (void (*)(struct evrpc_status *, void *, void *, void *))cb, \
+        cbarg,                          \
+        #rpcname,                           \
+        (void (*)(struct evbuffer *, void *))reqstruct##_marshal,   \
+        (void (*)(void *))rplystruct##_clear,           \
+        (int (*)(void *, struct evbuffer *))rplystruct##_unmarshal); \
+}
+.fi
+.PP
+Generates the code for receiving and sending an RPC message\&. EVRPC_GENERATE is used to create the code corresponding to sending and receiving a particular RPC message
+.PP
+\fBParameters:\fP
+.RS 4
+\fIrpcname\fP the name of the RPC 
+.br
+\fIreqstruct\fP the name of the RPC request structure 
+.br
+\fIreplystruct\fP the name of the RPC reply structure 
+.RE
+.PP
+\fBSee Also:\fP
+.RS 4
+\fBEVRPC_HEADER()\fP 
+.RE
+.PP
+
+.SS "#define EVRPC_HEADER(rpcname, reqstruct, rplystruct)"
+\fBValue:\fP
+.PP
+.nf
+EVRPC_STRUCT(rpcname) { \
+    struct evrpc_hook_meta *hook_meta; \
+    struct reqstruct* request; \
+    struct rplystruct* reply; \
+    struct evrpc* rpc; \
+    struct evhttp_request* http_req; \
+    struct evbuffer* rpc_data; \
+};                                   \
+int evrpc_send_request_##rpcname(struct evrpc_pool *, \
+    struct reqstruct *, struct rplystruct *, \
+    void (*)(struct evrpc_status *, \
+    struct reqstruct *, struct rplystruct *, void *cbarg),  \
+    void *);
+.fi
+.PP
+Creates the definitions and prototypes for an RPC\&. You need to use EVRPC_HEADER to create structures and function prototypes needed by the server and client implementation\&. The structures have to be defined in an \&.rpc file and converted to source code via event_rpcgen\&.py
+.PP
+\fBParameters:\fP
+.RS 4
+\fIrpcname\fP the name of the RPC 
+.br
+\fIreqstruct\fP the name of the RPC request structure 
+.br
+\fIreplystruct\fP the name of the RPC reply structure 
+.RE
+.PP
+\fBSee Also:\fP
+.RS 4
+\fBEVRPC_GENERATE()\fP 
+.RE
+.PP
+
+.SS "#define EVRPC_MAKE_CTX(rpcname, reqstruct, rplystruct, pool, request, reply, cb, cbarg)"
+\fBValue:\fP
+.PP
+.nf
+evrpc_make_request_ctx(pool, request, reply,         \
+        #rpcname,                           \
+        (void (*)(struct evbuffer *, void *))reqstruct##_marshal,   \
+        (void (*)(void *))rplystruct##_clear,           \
+        (int (*)(void *, struct evbuffer *))rplystruct##_unmarshal, \
+        (void (*)(struct evrpc_status *, void *, void *, void *))cb, \
+        cbarg)
+.fi
+.PP
+Creates a context structure that contains rpc specific information\&. EVRPC_MAKE_CTX is used to populate a RPC specific context that contains information about marshaling the RPC data types\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIrpcname\fP the name of the RPC 
+.br
+\fIreqstruct\fP the name of the RPC request structure 
+.br
+\fIreplystruct\fP the name of the RPC reply structure 
+.br
+\fIpool\fP the evrpc_pool over which to make the request 
+.br
+\fIrequest\fP a pointer to the RPC request structure object 
+.br
+\fIreply\fP a pointer to the RPC reply structure object 
+.br
+\fIcb\fP the callback function to call when the RPC has completed 
+.br
+\fIcbarg\fP the argument to supply to the callback 
+.RE
+.PP
+
+.SS "#define EVRPC_MAKE_REQUEST(name, pool, request, reply, cb, cbarg)   evrpc_send_request_##name((pool), (request), (reply), (cb), (cbarg))"
+
+.PP
+launches an RPC and sends it to the server \fBEVRPC_MAKE_REQUEST()\fP is used by the client to send an RPC to the server\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIname\fP the name of the RPC 
+.br
+\fIpool\fP the evrpc_pool that contains the connection objects over which the request should be sent\&. 
+.br
+\fIrequest\fP a pointer to the RPC request structure - it contains the data to be sent to the server\&. 
+.br
+\fIreply\fP a pointer to the RPC reply structure\&. It is going to be filled if the request was answered successfully 
+.br
+\fIcb\fP the callback to invoke when the RPC request has been answered 
+.br
+\fIcbarg\fP an additional argument to be passed to the client 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+0 on success, -1 on failure 
+.RE
+.PP
+
+.SS "#define EVRPC_REGISTER(base, name, request, reply, callback, cbarg)"
+\fBValue:\fP
+.PP
+.nf
+evrpc_register_generic(base, #name,             \
+        (void (*)(struct evrpc_req_generic *, void *))callback, cbarg, \
+        (void *(*)(void *))request##_new, NULL,         \
+        (void (*)(void *))request##_free,               \
+        (int (*)(void *, struct evbuffer *))request##_unmarshal,    \
+        (void *(*)(void *))reply##_new, NULL,           \
+        (void (*)(void *))reply##_free, \
+        (int (*)(void *))reply##_complete, \
+        (void (*)(struct evbuffer *, void *))reply##_marshal)
+.fi
+.PP
+register RPCs with the HTTP Server registers a new RPC with the HTTP server, each RPC needs to have a unique name under which it can be identified\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIbase\fP the evrpc_base structure in which the RPC should be registered\&. 
+.br
+\fIname\fP the name of the RPC 
+.br
+\fIrequest\fP the name of the RPC request structure 
+.br
+\fIreply\fP the name of the RPC reply structure 
+.br
+\fIcallback\fP the callback that should be invoked when the RPC is received\&. The callback has the following prototype void (\fIcallback)(\fBEVRPC_STRUCT(Message)\fP\fP rpc, void *arg) 
+.br
+\fIcbarg\fP an additional parameter that can be passed to the callback\&. The parameter can be used to carry around state\&. 
+.RE
+.PP
+
+.SS "#define EVRPC_REQUEST_DONE(rpc_req)"
+\fBValue:\fP
+.PP
+.nf
+do { \
+  struct evrpc_req_generic *_req = (struct evrpc_req_generic *)(rpc_req); \
+  evrpc_request_done(_req);                 \
+} while (/*CONSTCOND*/0)
+.fi
+.PP
+Creates the reply to an RPC request\&. EVRPC_REQUEST_DONE is used to answer a request; the reply is expected to have been filled in\&. The request and reply pointers become invalid after this call has finished\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIrpc_req\fP the rpc request structure provided to the server callback 
+.RE
+.PP
+
+.SS "#define EVRPC_REQUEST_HTTP(rpc_req)   (rpc_req)->http_req"
+
+.PP
+Provides access to the HTTP request object underlying an RPC\&. Access to the underlying http object; can be used to look at headers or for getting the remote ip address
+.PP
+\fBParameters:\fP
+.RS 4
+\fIrpc_req\fP the rpc request structure provided to the server callback 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+an struct evhttp_request object that can be inspected for HTTP headers or sender information\&. 
+.RE
+.PP
+
+.SS "#define EVRPC_STRUCT(rpcname)   struct evrpc_req__##rpcname"
+
+.PP
+The type of a specific RPC Message\&. \fBParameters:\fP
+.RS 4
+\fIrpcname\fP the name of the RPC message 
+.RE
+.PP
+
+.SS "#define EVRPC_UNREGISTER(base, name)   evrpc_unregister_rpc((base), #name)"
+
+.PP
+Unregisters an already registered RPC\&. \fBParameters:\fP
+.RS 4
+\fIbase\fP the evrpc_base object from which to unregister an RPC 
+.br
+\fIname\fP the name of the rpc to unregister 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+-1 on error or 0 when successful\&. 
+.RE
+.PP
+\fBSee Also:\fP
+.RS 4
+\fBEVRPC_REGISTER()\fP 
+.RE
+.PP
+
+.SS "#define EVTAG_ASSIGN(msg, member, value)   (*(msg)->base->member##_assign)((msg), (value))"
+
+.PP
+Assigns a value to the member in the message\&. \fBParameters:\fP
+.RS 4
+\fImsg\fP the message to which to assign a value 
+.br
+\fImember\fP the name of the member variable 
+.br
+\fIvalue\fP the value to assign 
+.RE
+.PP
+
+.SS "#define EVTAG_ASSIGN_WITH_LEN(msg, member, value, len)   (*(msg)->base->member##_assign)((msg), (value), (len))"
+
+.PP
+Assigns a value to the member in the message\&. \fBParameters:\fP
+.RS 4
+\fImsg\fP the message to which to assign a value 
+.br
+\fImember\fP the name of the member variable 
+.br
+\fIvalue\fP the value to assign 
+.br
+\fIlen\fP the length of the value 
+.RE
+.PP
+
+.SS "#define EVTAG_GET(msg, member, pvalue)   (*(msg)->base->member##_get)((msg), (pvalue))"
+
+.PP
+Returns the value for a member\&. \fBParameters:\fP
+.RS 4
+\fImsg\fP the message from which to get the value 
+.br
+\fImember\fP the name of the member variable 
+.br
+\fIpvalue\fP a pointer to the variable to hold the value 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+0 on success, -1 otherwise\&. 
+.RE
+.PP
+
+.SS "#define EVTAG_GET_WITH_LEN(msg, member, pvalue, plen)   (*(msg)->base->member##_get)((msg), (pvalue), (plen))"
+
+.PP
+Returns the value for a member\&. \fBParameters:\fP
+.RS 4
+\fImsg\fP the message from which to get the value 
+.br
+\fImember\fP the name of the member variable 
+.br
+\fIpvalue\fP a pointer to the variable to hold the value 
+.br
+\fIplen\fP a pointer to the length of the value 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+0 on success, -1 otherwise\&. 
+.RE
+.PP
+
+.SS "#define EVTAG_HAS(msg, member)   ((msg)->member##_set == 1)"
+
+.PP
+Determines if the member has been set in the message\&. \fBParameters:\fP
+.RS 4
+\fImsg\fP the message to inspect 
+.br
+\fImember\fP the member variable to test for presences 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+1 if it's present or 0 otherwise\&. 
+.RE
+.PP
+
+.SS "#define INPUT   \fBEVRPC_INPUT\fP"
+
+.PP
+Deprecated alias for EVRPC_INPUT\&. Not available on windows, where it conflicts with platform headers\&. 
+.SS "#define OUTPUT   \fBEVRPC_OUTPUT\fP"
+
+.PP
+Deprecated alias for EVRPC_OUTPUT\&. Not available on windows, where it conflicts with platform headers\&. 
+.SH "Enumeration Type Documentation"
+.PP 
+.SS "enum \fBEVRPC_HOOK_RESULT\fP"
+
+.PP
+Return value from hook processing functions\&. 
+.PP
+\fBEnumerator\fP
+.in +1c
+.TP
+\fB\fIEVRPC_TERMINATE \fP\fP
+indicates the rpc should be terminated 
+.TP
+\fB\fIEVRPC_CONTINUE \fP\fP
+continue processing the rpc 
+.TP
+\fB\fIEVRPC_PAUSE \fP\fP
+pause processing request until resumed 
+.SS "enum \fBEVRPC_HOOK_TYPE\fP"
+
+.PP
+Hooks for changing the input and output of RPCs; this can be used to implement compression, authentication, encryption, \&.\&.\&. 
+.PP
+\fBEnumerator\fP
+.in +1c
+.TP
+\fB\fIEVRPC_INPUT \fP\fP
+apply the function to an input hook 
+.TP
+\fB\fIEVRPC_OUTPUT \fP\fP
+apply the function to an output hook 
+.SH "Function Documentation"
+.PP 
+.SS "void* evrpc_add_hook (void *vbase, enum \fBEVRPC_HOOK_TYPE\fPhook_type, int(*)(void *, struct evhttp_request *, struct \fBevbuffer\fP *, void *)cb, void *cb_arg)"
+
+.PP
+adds a processing hook to either an rpc base or rpc pool If a hook returns TERMINATE, the processing is aborted\&. On CONTINUE, the request is immediately processed after the hook returns\&. If the hook returns PAUSE, request processing stops until \fBevrpc_resume_request()\fP has been called\&.
+.PP
+The add functions return handles that can be used for removing hooks\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIvbase\fP a pointer to either struct evrpc_base or struct evrpc_pool 
+.br
+\fIhook_type\fP either INPUT or OUTPUT 
+.br
+\fIcb\fP the callback to call when the hook is activated 
+.br
+\fIcb_arg\fP an additional argument for the callback 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+a handle to the hook so it can be removed later 
+.RE
+.PP
+\fBSee Also:\fP
+.RS 4
+\fBevrpc_remove_hook()\fP 
+.RE
+.PP
+
+.SS "void evrpc_free (struct evrpc_base *base)"
+
+.PP
+Frees the evrpc base\&. For now, you are responsible for making sure that no rpcs are ongoing\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIbase\fP the evrpc_base object to be freed 
+.RE
+.PP
+\fBSee Also:\fP
+.RS 4
+\fBevrpc_init\fP 
+.RE
+.PP
+
+.SS "void evrpc_hook_add_meta (void *ctx, const char *key, const void *data, size_tdata_size)"
+
+.PP
+adds meta data to request \fBevrpc_hook_add_meta()\fP allows hooks to add meta data to a request\&. for a client request, the meta data can be inserted by an outgoing request hook and retrieved by the incoming request hook\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIctx\fP the context provided to the hook call 
+.br
+\fIkey\fP a NUL-terminated c-string 
+.br
+\fIdata\fP the data to be associated with the key 
+.br
+\fIdata_size\fP the size of the data 
+.RE
+.PP
+
+.SS "int evrpc_hook_find_meta (void *ctx, const char *key, void **data, size_t *data_size)"
+
+.PP
+retrieves meta data previously associated \fBevrpc_hook_find_meta()\fP can be used to retrieve meta data associated to a request by a previous hook\&. 
+.PP
+\fBParameters:\fP
+.RS 4
+\fIctx\fP the context provided to the hook call 
+.br
+\fIkey\fP a NUL-terminated c-string 
+.br
+\fIdata\fP pointer to a data pointer that will contain the retrieved data 
+.br
+\fIdata_size\fP pointer to the size of the data 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+0 on success or -1 on failure 
+.RE
+.PP
+
+.SS "struct evhttp_connection* evrpc_hook_get_connection (void *ctx)\fC [read]\fP"
+
+.PP
+returns the connection object associated with the request \fBParameters:\fP
+.RS 4
+\fIctx\fP the context provided to the hook call 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+a pointer to the evhttp_connection object 
+.RE
+.PP
+
+.SS "struct evrpc_base* evrpc_init (struct evhttp *server)\fC [read]\fP"
+
+.PP
+Creates a new rpc base from which RPC requests can be received\&. \fBParameters:\fP
+.RS 4
+\fIserver\fP a pointer to an existing HTTP server 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+a newly allocated evrpc_base struct 
+.RE
+.PP
+\fBSee Also:\fP
+.RS 4
+\fBevrpc_free()\fP 
+.RE
+.PP
+
+.SS "int evrpc_make_request (struct evrpc_request_wrapper *ctx)"
+
+.PP
+Makes an RPC request based on the provided context\&. This is a low-level function and should not be used directly unless a custom context object is provided\&. Use \fBEVRPC_MAKE_REQUEST()\fP instead\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIctx\fP a context from \fBEVRPC_MAKE_CTX()\fP 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+0 on success, -1 otherwise\&. 
+.RE
+.PP
+\fBSee Also:\fP
+.RS 4
+\fBEVRPC_MAKE_REQUEST()\fP, \fBEVRPC_MAKE_CTX()\fP 
+.RE
+.PP
+
+.SS "void evrpc_pool_add_connection (struct evrpc_pool *pool, struct evhttp_connection *evcon)"
+
+.PP
+Adds a connection over which rpc can be dispatched to the pool\&. The connection object must have been newly created\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIpool\fP the pool to which to add the connection 
+.br
+\fIevcon\fP the connection to add to the pool\&. 
+.RE
+.PP
+
+.SS "void evrpc_pool_free (struct evrpc_pool *pool)"
+
+.PP
+frees an rpc connection pool \fBParameters:\fP
+.RS 4
+\fIpool\fP a pointer to an evrpc_pool allocated via \fBevrpc_pool_new()\fP 
+.RE
+.PP
+\fBSee Also:\fP
+.RS 4
+\fBevrpc_pool_new()\fP 
+.RE
+.PP
+
+.SS "struct evrpc_pool* evrpc_pool_new (struct \fBevent_base\fP *base)\fC [read]\fP"
+
+.PP
+creates an rpc connection pool a pool has a number of connections associated with it\&. rpc requests are always made via a pool\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIbase\fP a pointer to an struct event_based object; can be left NULL in singled-threaded applications 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+a newly allocated struct evrpc_pool object 
+.RE
+.PP
+\fBSee Also:\fP
+.RS 4
+\fBevrpc_pool_free()\fP 
+.RE
+.PP
+
+.SS "void evrpc_pool_remove_connection (struct evrpc_pool *pool, struct evhttp_connection *evcon)"
+
+.PP
+Removes a connection from the pool\&. The connection object must have been newly created\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIpool\fP the pool from which to remove the connection 
+.br
+\fIevcon\fP the connection to remove from the pool\&. 
+.RE
+.PP
+
+.SS "void evrpc_pool_set_timeout (struct evrpc_pool *pool, inttimeout_in_secs)"
+
+.PP
+Sets the timeout in secs after which a request has to complete\&. The RPC is completely aborted if it does not complete by then\&. Setting the timeout to 0 means that it never timeouts and can be used to implement callback type RPCs\&.
+.PP
+Any connection already in the pool will be updated with the new timeout\&. Connections added to the pool after set_timeout has be called receive the pool timeout only if no timeout has been set for the connection itself\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIpool\fP a pointer to a struct evrpc_pool object 
+.br
+\fItimeout_in_secs\fP the number of seconds after which a request should timeout and a failure be returned to the callback\&. 
+.RE
+.PP
+
+.SS "int evrpc_register_generic (struct evrpc_base *base, const char *name, void(*)(struct evrpc_req_generic *, void *)callback, void *cbarg, void *(*)(void *)req_new, void *req_new_arg, void(*)(void *)req_free, int(*)(void *, struct \fBevbuffer\fP *)req_unmarshal, void *(*)(void *)rpl_new, void *rpl_new_arg, void(*)(void *)rpl_free, int(*)(void *)rpl_complete, void(*)(struct \fBevbuffer\fP *, void *)rpl_marshal)"
+
+.PP
+Function for registering a generic RPC with the RPC base\&. Do not call this function directly, use \fBEVRPC_REGISTER()\fP instead\&.
+.PP
+\fBSee Also:\fP
+.RS 4
+\fBEVRPC_REGISTER()\fP 
+.RE
+.PP
+
+.SS "int evrpc_register_rpc (struct evrpc_base *, struct evrpc *, void(*)(struct evrpc_req_generic *, void *), void *)"
+
+.PP
+Low level function for registering an RPC with a server\&. Use \fBEVRPC_REGISTER()\fP instead\&.
+.PP
+\fBSee Also:\fP
+.RS 4
+\fBEVRPC_REGISTER()\fP 
+.RE
+.PP
+
+.SS "int evrpc_remove_hook (void *vbase, enum \fBEVRPC_HOOK_TYPE\fPhook_type, void *handle)"
+
+.PP
+removes a previously added hook \fBParameters:\fP
+.RS 4
+\fIvbase\fP a pointer to either struct evrpc_base or struct evrpc_pool 
+.br
+\fIhook_type\fP either INPUT or OUTPUT 
+.br
+\fIhandle\fP a handle returned by \fBevrpc_add_hook()\fP 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+1 on success or 0 on failure 
+.RE
+.PP
+\fBSee Also:\fP
+.RS 4
+\fBevrpc_add_hook()\fP 
+.RE
+.PP
+
+.SS "int evrpc_resume_request (void *vbase, void *ctx, enum \fBEVRPC_HOOK_RESULT\fPres)"
+
+.PP
+resume a paused request \fBParameters:\fP
+.RS 4
+\fIvbase\fP a pointer to either struct evrpc_base or struct evrpc_pool 
+.br
+\fIctx\fP the context pointer provided to the original hook call 
+.RE
+.PP
+
+.SS "int evrpc_send_request_generic (struct evrpc_pool *pool, void *request, void *reply, void(*)(struct evrpc_status *, void *, void *, void *)cb, void *cb_arg, const char *rpcname, void(*)(struct \fBevbuffer\fP *, void *)req_marshal, void(*)(void *)rpl_clear, int(*)(void *, struct \fBevbuffer\fP *)rpl_unmarshal)"
+
+.PP
+Function for sending a generic RPC request\&. Do not call this function directly, use \fBEVRPC_MAKE_REQUEST()\fP instead\&.
+.PP
+\fBSee Also:\fP
+.RS 4
+\fBEVRPC_MAKE_REQUEST()\fP 
+.RE
+.PP
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for libevent from the source code\&.

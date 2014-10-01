@@ -1,0 +1,109 @@
+#!/bin/sh
+# $NetBSD: libevent2netbsd,v 1.1 2013/04/11 16:56:11 christos Exp $
+
+# Extract the new tarball and rename the libevent-X.Y.Z directory
+# to dist.  Run this script and check for additional files and
+# directories to prune, only relevant content is included.
+#
+# lib/ is built as SUBDIR from lib/Makefile, and
+# the regression tests are used from tests/lib/libevent
+#
+# Use the following template to import
+#  cvs import src/external/bsd/libevent/dist LIBEVENT libevent-X-Y-Z-stable
+#
+# don't forget to bump the shlib version in Makefile.inc and
+# commit the include/ files
+# XXX: Automate the man page generation
+
+if [ -z "$1" ]
+then
+    echo "Usage $0 <dir>" 1>&2
+    exit 1
+fi
+
+case $1 in
+/*)
+	d=$1;;
+*)
+	d=$(pwd)/$1;;
+esac
+
+if [ -f $d/configure ]; then
+	mkdir -p tmp
+	cd tmp
+	$d/configure
+	make include/event2/event-config.h
+	sed -e '
+/_EVENT_SIZEOF_SIZE_T/ {
+	a\
+#ifdef _LP64\
+#define _EVENT_SIZEOF_SIZE_T 8\
+#else\
+#define _EVENT_SIZEOF_SIZE_T 4\
+#endif
+	d
+}
+/_EVENT_SIZEOF_LONG/ {
+	a\
+#ifdef _LP64\
+#define _EVENT_SIZEOF_LONG 8\
+#else\
+#define _EVENT_SIZEOF_LONG 4\
+#endif
+	d
+}
+/_EVENT_SIZEOF_PTHREAD_T/ {
+	a\
+#ifdef _LP64\
+#define _EVENT_SIZEOF_PTHREAD_T 8\
+#else\
+#define _EVENT_SIZEOF_PTHREAD_T 4\
+#endif
+	d
+}
+/_EVENT_SIZEOF_VOID_P/ {
+	a\
+#ifdef _LP64\
+#define _EVENT_SIZEOF_VOID_P 8\
+#else\
+#define _EVENT_SIZEOF_VOID_P 4\
+#endif
+	d
+}' < include/event2/event-config.h > ../include/event2/event-config.h
+	cd ..
+	rm -Rf tmp
+fi
+
+echo "Removing RCS tags..."
+cleantags $d
+
+echo "Adding RCS tags .."
+for f in $(grep -RL '\$NetBSD.*\$' $d include | grep -v CVS); do
+	case $f in
+	*.c)
+		sed -e '1i\
+/*	\$NetBSD\$	*/
+' -e '/#include "event2\/event-config.h"/ {
+    a\
+#include <sys/cdefs.h>\
+__RCSID("\$NetBSD\$");
+}' < "$f" > tmp$$ && mv tmp$$ "$f"
+		;;
+	*.h)
+		cat - ${f} > ${f}_tmp <<- EOF
+			/*	\$NetBSD\$	*/
+		EOF
+		mv ${f}_tmp ${f}
+		;;
+	*.[0-9])
+		cat - ${f} > ${f}_tmp <<- EOF
+			.\"	\$NetBSD\$
+			.\"
+		EOF
+		mv ${f}_tmp ${f}
+		;;
+	*)
+		echo "No RCS tag added to ${f}"
+		;;
+	esac
+done
