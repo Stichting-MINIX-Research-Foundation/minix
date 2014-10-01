@@ -1,0 +1,607 @@
+.TH "event2/util.h" 3 "Wed Apr 10 2013" "libevent" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+event2/util.h \- 
+.PP
+Common convenience functions for cross-platform portability and related socket manipulations\&.  
+
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <event2/event-config\&.h>\fP
+.br
+\fC#include <stdarg\&.h>\fP
+.br
+\fC#include <sys/socket\&.h>\fP
+.br
+
+.SS "Data Structures"
+
+.in +1c
+.ti -1c
+.RI "struct \fBevutil_addrinfo\fP"
+.br
+.RI "\fIA definition of struct addrinfo for systems that lack it\&. \fP"
+.in -1c
+.SS "Macros"
+
+.in +1c
+.ti -1c
+.RI "#define \fBev_socklen_t\fP   socklen_t"
+.br
+.ti -1c
+.RI "#define \fBEVUTIL_CLOSESOCKET\fP(s)   \fBevutil_closesocket\fP(s)"
+.br
+.ti -1c
+.RI "#define \fBevutil_offsetof\fP(type, field)   ((off_t)(&((type *)0)->field))"
+.br
+.RI "\fIReplacement for offsetof on platforms that don't define it\&. \fP"
+.ti -1c
+.RI "#define \fBevutil_socket_t\fP   int"
+.br
+.RI "\fIA type wide enough to hold the output of 'socket()' or 'accept()'\&. \fP"
+.ti -1c
+.RI "#define \fBevutil_timercmp\fP(tvp, uvp, cmp)"
+.br
+.RI "\fIReturn true iff the tvp is related to uvp according to the relational operator cmp\&. \fP"
+.ti -1c
+.RI "#define \fBevutil_timerisset\fP(tvp)   ((tvp)->tv_sec || (tvp)->tv_usec)"
+.br
+.in -1c
+.PP
+.RI "\fBStandard integer types\&.\fP"
+.br
+Integer type definitions for types that are supposed to be defined in the C99-specified stdint\&.h\&.
+.PP
+Shamefully, some platforms do not include stdint\&.h, so we need to replace it\&. (If you are on a platform like this, your C headers are now over 10 years out of date\&. You should bug them to do something about this\&.)
+.PP
+We define:
+.PP
+.IP "\fBev_uint64_t, ev_uint32_t, ev_uint16_t, ev_uint8_t \fP" 1c
+unsigned integer types of exactly 64, 32, 16, and 8 bits respectively\&. 
+.IP "\fBev_int64_t, ev_int32_t, ev_int16_t, ev_int8_t \fP" 1c
+signed integer types of exactly 64, 32, 16, and 8 bits respectively\&. 
+.IP "\fBev_uintptr_t, ev_intptr_t \fP" 1c
+unsigned/signed integers large enough to hold a pointer without loss of bits\&. 
+.IP "\fBev_ssize_t \fP" 1c
+A signed type of the same size as size_t 
+.IP "\fBev_off_t \fP" 1c
+A signed type typically used to represent offsets within a (potentially large) file 
+.PP
+
+.PP
+.in +1c
+.in +1c
+.ti -1c
+.RI "#define \fBev_uint64_t\fP   \&.\&.\&."
+.br
+.ti -1c
+.RI "#define \fBev_int64_t\fP   \&.\&.\&."
+.br
+.ti -1c
+.RI "#define \fBev_uint32_t\fP   \&.\&.\&."
+.br
+.ti -1c
+.RI "#define \fBev_int32_t\fP   \&.\&.\&."
+.br
+.ti -1c
+.RI "#define \fBev_uint16_t\fP   \&.\&.\&."
+.br
+.ti -1c
+.RI "#define \fBev_int16_t\fP   \&.\&.\&."
+.br
+.ti -1c
+.RI "#define \fBev_uint8_t\fP   \&.\&.\&."
+.br
+.ti -1c
+.RI "#define \fBev_int8_t\fP   \&.\&.\&."
+.br
+.ti -1c
+.RI "#define \fBev_uintptr_t\fP   ev_uint32_t"
+.br
+.ti -1c
+.RI "#define \fBev_intptr_t\fP   ev_int32_t"
+.br
+.ti -1c
+.RI "#define \fBev_ssize_t\fP   ssize_t"
+.br
+.ti -1c
+.RI "#define \fBev_off_t\fP   off_t"
+.br
+.in -1c
+.in -1c
+.PP
+.RI "\fBLimits for integer types\fP"
+.br
+These macros hold the largest or smallest values possible for the ev_[u]int*_t types\&. 
+.PP
+.in +1c
+.in +1c
+.ti -1c
+.RI "#define \fBEV_UINT64_MAX\fP   ((((ev_uint64_t)0xffffffffUL) << 32) | 0xffffffffUL)"
+.br
+.ti -1c
+.RI "#define \fBEV_INT64_MAX\fP   ((((ev_int64_t) 0x7fffffffL) << 32) | 0xffffffffL)"
+.br
+.ti -1c
+.RI "#define \fBEV_INT64_MIN\fP   ((-EV_INT64_MAX) - 1)"
+.br
+.ti -1c
+.RI "#define \fBEV_UINT32_MAX\fP   ((ev_uint32_t)0xffffffffUL)"
+.br
+.ti -1c
+.RI "#define \fBEV_INT32_MAX\fP   ((ev_int32_t) 0x7fffffffL)"
+.br
+.ti -1c
+.RI "#define \fBEV_INT32_MIN\fP   ((-EV_INT32_MAX) - 1)"
+.br
+.ti -1c
+.RI "#define \fBEV_UINT16_MAX\fP   ((ev_uint16_t)0xffffUL)"
+.br
+.ti -1c
+.RI "#define \fBEV_INT16_MAX\fP   ((ev_int16_t) 0x7fffL)"
+.br
+.ti -1c
+.RI "#define \fBEV_INT16_MIN\fP   ((-EV_INT16_MAX) - 1)"
+.br
+.ti -1c
+.RI "#define \fBEV_UINT8_MAX\fP   255"
+.br
+.ti -1c
+.RI "#define \fBEV_INT8_MAX\fP   127"
+.br
+.ti -1c
+.RI "#define \fBEV_INT8_MIN\fP   ((-EV_INT8_MAX) - 1)"
+.br
+.in -1c
+.in -1c
+.PP
+.RI "\fBLimits for SIZE_T and SSIZE_T\fP"
+.br
+
+.in +1c
+.in +1c
+.ti -1c
+.RI "#define \fBEV_SIZE_MAX\fP   \&.\&.\&."
+.br
+.ti -1c
+.RI "#define \fBEV_SSIZE_MAX\fP   \&.\&.\&."
+.br
+.ti -1c
+.RI "#define \fBEV_SSIZE_MIN\fP   ((-EV_SSIZE_MAX) - 1)"
+.br
+.in -1c
+.in -1c
+.PP
+.RI "\fBSocket error functions\fP"
+.br
+These functions are needed for making programs compatible between Windows and Unix-like platforms\&.
+.PP
+You see, Winsock handles socket errors differently from the rest of the world\&. Elsewhere, a socket error is like any other error and is stored in errno\&. But winsock functions require you to retrieve the error with a special function, and don't let you use strerror for the error codes\&. And handling EWOULDBLOCK is \&.\&.\&. different\&. 
+.PP
+.in +1c
+.in +1c
+.ti -1c
+.RI "#define \fBEVUTIL_SOCKET_ERROR\fP()   \&.\&.\&."
+.br
+.RI "\fIReturn the most recent socket error\&. \fP"
+.ti -1c
+.RI "#define \fBEVUTIL_SET_SOCKET_ERROR\fP(errcode)   \&.\&.\&."
+.br
+.RI "\fIReplace the most recent socket error with errcode\&. \fP"
+.ti -1c
+.RI "#define \fBevutil_socket_geterror\fP(sock)   \&.\&.\&."
+.br
+.RI "\fIReturn the most recent socket error to occur on sock\&. \fP"
+.ti -1c
+.RI "#define \fBevutil_socket_error_to_string\fP(errcode)   \&.\&.\&."
+.br
+.RI "\fIConvert a socket error to a string\&. \fP"
+.in -1c
+.in -1c
+.PP
+.RI "\fBManipulation macros for struct timeval\&.\fP"
+.br
+We define replacements for timeradd, timersub, timerclear, timercmp, and timerisset\&. 
+.PP
+.in +1c
+.in +1c
+.ti -1c
+.RI "#define \fBevutil_timeradd\fP(tvp, uvp, vvp)"
+.br
+.ti -1c
+.RI "#define \fBevutil_timersub\fP(tvp, uvp, vvp)"
+.br
+.ti -1c
+.RI "#define \fBevutil_timerclear\fP(tvp)   (tvp)->tv_sec = (tvp)->tv_usec = 0"
+.br
+.in -1c
+.in -1c
+.PP
+.RI "\fBevutil_getaddrinfo() error codes\fP"
+.br
+These values are possible error codes for \fBevutil_getaddrinfo()\fP and related functions\&. 
+.PP
+.in +1c
+.in +1c
+.ti -1c
+.RI "#define \fBEVUTIL_EAI_ADDRFAMILY\fP   -901"
+.br
+.ti -1c
+.RI "#define \fBEVUTIL_EAI_AGAIN\fP   -902"
+.br
+.ti -1c
+.RI "#define \fBEVUTIL_EAI_BADFLAGS\fP   -903"
+.br
+.ti -1c
+.RI "#define \fBEVUTIL_EAI_FAIL\fP   -904"
+.br
+.ti -1c
+.RI "#define \fBEVUTIL_EAI_FAMILY\fP   -905"
+.br
+.ti -1c
+.RI "#define \fBEVUTIL_EAI_MEMORY\fP   -906"
+.br
+.ti -1c
+.RI "#define \fBEVUTIL_EAI_NODATA\fP   -907"
+.br
+.ti -1c
+.RI "#define \fBEVUTIL_EAI_NONAME\fP   -908"
+.br
+.ti -1c
+.RI "#define \fBEVUTIL_EAI_SERVICE\fP   -909"
+.br
+.ti -1c
+.RI "#define \fBEVUTIL_EAI_SOCKTYPE\fP   -910"
+.br
+.ti -1c
+.RI "#define \fBEVUTIL_EAI_SYSTEM\fP   -911"
+.br
+.ti -1c
+.RI "#define \fBEVUTIL_EAI_CANCEL\fP   -90001"
+.br
+.ti -1c
+.RI "#define \fBEVUTIL_AI_PASSIVE\fP   0x1000"
+.br
+.ti -1c
+.RI "#define \fBEVUTIL_AI_CANONNAME\fP   0x2000"
+.br
+.ti -1c
+.RI "#define \fBEVUTIL_AI_NUMERICHOST\fP   0x4000"
+.br
+.ti -1c
+.RI "#define \fBEVUTIL_AI_NUMERICSERV\fP   0x8000"
+.br
+.ti -1c
+.RI "#define \fBEVUTIL_AI_V4MAPPED\fP   0x10000"
+.br
+.ti -1c
+.RI "#define \fBEVUTIL_AI_ALL\fP   0x20000"
+.br
+.ti -1c
+.RI "#define \fBEVUTIL_AI_ADDRCONFIG\fP   0x40000"
+.br
+.in -1c
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "int \fBevutil_ascii_strcasecmp\fP (const char *str1, const char *str2)"
+.br
+.RI "\fIAs strcasecmp, but always compares the characters in locale-independent ASCII\&. \fP"
+.ti -1c
+.RI "int \fBevutil_ascii_strncasecmp\fP (const char *str1, const char *str2, size_t n)"
+.br
+.RI "\fIAs strncasecmp, but always compares the characters in locale-independent ASCII\&. \fP"
+.ti -1c
+.RI "int \fBevutil_closesocket\fP (\fBevutil_socket_t\fP sock)"
+.br
+.RI "\fIDo the platform-specific call needed to close a socket returned from socket() or accept()\&. \fP"
+.ti -1c
+.RI "void \fBevutil_freeaddrinfo\fP (struct \fBevutil_addrinfo\fP *ai)"
+.br
+.RI "\fIRelease storage allocated by evutil_getaddrinfo or evdns_getaddrinfo\&. \fP"
+.ti -1c
+.RI "const char * \fBevutil_gai_strerror\fP (int err)"
+.br
+.ti -1c
+.RI "int \fBevutil_getaddrinfo\fP (const char *nodename, const char *servname, const struct \fBevutil_addrinfo\fP *hints_in, struct \fBevutil_addrinfo\fP **res)"
+.br
+.RI "\fIThis function clones getaddrinfo for systems that don't have it\&. \fP"
+.ti -1c
+.RI "int \fBevutil_gettimeofday\fP (struct timeval *tv, struct timezone *tz)"
+.br
+.ti -1c
+.RI "const char * \fBevutil_inet_ntop\fP (int af, const void *src, char *dst, size_t len)"
+.br
+.RI "\fIReplacement for inet_ntop for platforms which lack it\&. \fP"
+.ti -1c
+.RI "int \fBevutil_inet_pton\fP (int af, const char *src, void *dst)"
+.br
+.RI "\fIReplacement for inet_pton for platforms which lack it\&. \fP"
+.ti -1c
+.RI "int \fBevutil_make_listen_socket_reuseable\fP (\fBevutil_socket_t\fP sock)"
+.br
+.RI "\fIDo platform-specific operations to make a listener socket reusable\&. \fP"
+.ti -1c
+.RI "int \fBevutil_make_socket_closeonexec\fP (\fBevutil_socket_t\fP sock)"
+.br
+.RI "\fIDo platform-specific operations as needed to close a socket upon a successful execution of one of the exec*() functions\&. \fP"
+.ti -1c
+.RI "int \fBevutil_make_socket_nonblocking\fP (\fBevutil_socket_t\fP sock)"
+.br
+.RI "\fIDo platform-specific operations as needed to make a socket nonblocking\&. \fP"
+.ti -1c
+.RI "int \fBevutil_parse_sockaddr_port\fP (const char *str, struct sockaddr *out, int *outlen)"
+.br
+.RI "\fIParse an IPv4 or IPv6 address, with optional port, from a string\&. \fP"
+.ti -1c
+.RI "void \fBevutil_secure_rng_add_bytes\fP (const char *dat, size_t datlen)"
+.br
+.RI "\fISeed the random number generator with extra random bytes\&. \fP"
+.ti -1c
+.RI "void \fBevutil_secure_rng_get_bytes\fP (void *buf, size_t n)"
+.br
+.RI "\fIGenerate n bytes of secure pseudorandom data, and store them in buf\&. \fP"
+.ti -1c
+.RI "int \fBevutil_secure_rng_init\fP (void)"
+.br
+.RI "\fISeed the secure random number generator if needed, and return 0 on success or -1 on failure\&. \fP"
+.ti -1c
+.RI "int \fBevutil_snprintf\fP (char *buf, size_t buflen, const char *format,\&.\&.\&.)"
+.br
+.RI "\fIReplacement for snprintf to get consistent behavior on platforms for which the return value of snprintf does not conform to C99\&. \fP"
+.ti -1c
+.RI "int \fBevutil_sockaddr_cmp\fP (const struct sockaddr *sa1, const struct sockaddr *sa2, int include_port)"
+.br
+.RI "\fICompare two sockaddrs; return 0 if they are equal, or less than 0 if sa1 preceeds sa2, or greater than 0 if sa1 follows sa2\&. \fP"
+.ti -1c
+.RI "int \fBevutil_socketpair\fP (int d, int type, int protocol, \fBevutil_socket_t\fP sv[2])"
+.br
+.RI "\fICreate two new sockets that are connected to each other\&. \fP"
+.ti -1c
+.RI "ev_int64_t \fBevutil_strtoll\fP (const char *s, char **endptr, int base)"
+.br
+.RI "\fIParse a 64-bit value from a string\&. \fP"
+.ti -1c
+.RI "int \fBevutil_vsnprintf\fP (char *buf, size_t buflen, const char *format, va_list ap)"
+.br
+.RI "\fIReplacement for vsnprintf to get consistent behavior on platforms for which the return value of snprintf does not conform to C99\&. \fP"
+.in -1c
+.SH "Detailed Description"
+.PP 
+Common convenience functions for cross-platform portability and related socket manipulations\&. 
+
+
+.SH "Macro Definition Documentation"
+.PP 
+.SS "#define evutil_offsetof(type, field)   ((off_t)(&((type *)0)->field))"
+
+.PP
+Replacement for offsetof on platforms that don't define it\&. 
+.SS "#define EVUTIL_SOCKET_ERROR()   \&.\&.\&."
+
+.PP
+Return the most recent socket error\&. Not idempotent on all platforms\&. 
+.SS "#define evutil_socket_error_to_string(errcode)   \&.\&.\&."
+
+.PP
+Convert a socket error to a string\&. 
+.SS "#define evutil_socket_geterror(sock)   \&.\&.\&."
+
+.PP
+Return the most recent socket error to occur on sock\&. 
+.SS "#define evutil_socket_t   int"
+
+.PP
+A type wide enough to hold the output of 'socket()' or 'accept()'\&. On Windows, this is an intptr_t; elsewhere, it is an int\&. 
+.SS "#define evutil_timeradd(tvp, uvp, vvp)"
+\fBValue:\fP
+.PP
+.nf
+do {                               \
+        (vvp)->tv_sec = (tvp)->tv_sec + (uvp)->tv_sec;      \
+        (vvp)->tv_usec = (tvp)->tv_usec + (uvp)->tv_usec;       \
+        if ((vvp)->tv_usec >= 1000000) {            \
+            (vvp)->tv_sec++;                \
+            (vvp)->tv_usec -= 1000000;          \
+        }                           \
+    } while (/*CONSTCOND*/0)
+.fi
+.SS "#define evutil_timercmp(tvp, uvp, cmp)"
+\fBValue:\fP
+.PP
+.nf
+(((tvp)->tv_sec == (uvp)->tv_sec) ?               \
+     ((tvp)->tv_usec cmp (uvp)->tv_usec) :              \
+     ((tvp)->tv_sec cmp (uvp)->tv_sec))
+.fi
+.PP
+Return true iff the tvp is related to uvp according to the relational operator cmp\&. Recognized values for cmp are ==, <=, <, >=, and >\&. 
+.SS "#define evutil_timersub(tvp, uvp, vvp)"
+\fBValue:\fP
+.PP
+.nf
+do {                              \
+        (vvp)->tv_sec = (tvp)->tv_sec - (uvp)->tv_sec;      \
+        (vvp)->tv_usec = (tvp)->tv_usec - (uvp)->tv_usec;   \
+        if ((vvp)->tv_usec < 0) {               \
+            (vvp)->tv_sec--;                \
+            (vvp)->tv_usec += 1000000;          \
+        }                           \
+    } while (/*CONSTCOND*/0)
+.fi
+.SH "Function Documentation"
+.PP 
+.SS "int evutil_ascii_strcasecmp (const char *str1, const char *str2)"
+
+.PP
+As strcasecmp, but always compares the characters in locale-independent ASCII\&. That's useful if you're handling data in ASCII-based protocols\&. 
+.SS "int evutil_ascii_strncasecmp (const char *str1, const char *str2, size_tn)"
+
+.PP
+As strncasecmp, but always compares the characters in locale-independent ASCII\&. That's useful if you're handling data in ASCII-based protocols\&. 
+.SS "int evutil_closesocket (\fBevutil_socket_t\fPsock)"
+
+.PP
+Do the platform-specific call needed to close a socket returned from socket() or accept()\&. \fBParameters:\fP
+.RS 4
+\fIsock\fP The socket to be closed 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+0 on success, -1 on failure 
+.RE
+.PP
+
+.SS "void evutil_freeaddrinfo (struct \fBevutil_addrinfo\fP *ai)"
+
+.PP
+Release storage allocated by evutil_getaddrinfo or evdns_getaddrinfo\&. 
+.SS "int evutil_getaddrinfo (const char *nodename, const char *servname, const struct \fBevutil_addrinfo\fP *hints_in, struct \fBevutil_addrinfo\fP **res)"
+
+.PP
+This function clones getaddrinfo for systems that don't have it\&. For full details, see RFC 3493, section 6\&.1\&.
+.PP
+Limitations:
+.IP "\(bu" 2
+When the system has no getaddrinfo, we fall back to gethostbyname_r or gethostbyname, with their attendant issues\&.
+.IP "\(bu" 2
+The AI_V4MAPPED and AI_ALL flags are not currently implemented\&.
+.PP
+.PP
+For a nonblocking variant, see evdns_getaddrinfo\&. 
+.SS "const char* evutil_inet_ntop (intaf, const void *src, char *dst, size_tlen)"
+
+.PP
+Replacement for inet_ntop for platforms which lack it\&. 
+.SS "int evutil_inet_pton (intaf, const char *src, void *dst)"
+
+.PP
+Replacement for inet_pton for platforms which lack it\&. 
+.SS "int evutil_make_listen_socket_reuseable (\fBevutil_socket_t\fPsock)"
+
+.PP
+Do platform-specific operations to make a listener socket reusable\&. Specifically, we want to make sure that another program will be able to bind this address right after we've closed the listener\&.
+.PP
+This differs from Windows's interpretation of 'reusable', which allows multiple listeners to bind the same address at the same time\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIsock\fP The socket to make reusable 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+0 on success, -1 on failure 
+.RE
+.PP
+
+.SS "int evutil_make_socket_closeonexec (\fBevutil_socket_t\fPsock)"
+
+.PP
+Do platform-specific operations as needed to close a socket upon a successful execution of one of the exec*() functions\&. \fBParameters:\fP
+.RS 4
+\fIsock\fP The socket to be closed 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+0 on success, -1 on failure 
+.RE
+.PP
+
+.SS "int evutil_make_socket_nonblocking (\fBevutil_socket_t\fPsock)"
+
+.PP
+Do platform-specific operations as needed to make a socket nonblocking\&. \fBParameters:\fP
+.RS 4
+\fIsock\fP The socket to make nonblocking 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+0 on success, -1 on failure 
+.RE
+.PP
+
+.SS "int evutil_parse_sockaddr_port (const char *str, struct sockaddr *out, int *outlen)"
+
+.PP
+Parse an IPv4 or IPv6 address, with optional port, from a string\&. Recognized formats are:
+.IP "\(bu" 2
+[IPv6Address]:port
+.IP "\(bu" 2
+[IPv6Address]
+.IP "\(bu" 2
+IPv6Address
+.IP "\(bu" 2
+IPv4Address:port
+.IP "\(bu" 2
+IPv4Address
+.PP
+.PP
+If no port is specified, the port in the output is set to 0\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIstr\fP The string to parse\&. 
+.br
+\fIout\fP A struct sockaddr to hold the result\&. This should probably be a struct sockaddr_storage\&. 
+.br
+\fIoutlen\fP A pointer to the number of bytes that that 'out' can safely hold\&. Set to the number of bytes used in 'out' on success\&. 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+-1 if the address is not well-formed, if the port is out of range, or if out is not large enough to hold the result\&. Otherwise returns 0 on success\&. 
+.RE
+.PP
+
+.SS "void evutil_secure_rng_add_bytes (const char *dat, size_tdatlen)"
+
+.PP
+Seed the random number generator with extra random bytes\&. You should almost never need to call this function; it should be sufficient to invoke \fBevutil_secure_rng_init()\fP, or let Libevent take care of calling \fBevutil_secure_rng_init()\fP on its own\&.
+.PP
+If you call this function as a \fIreplacement\fP for the regular entropy sources, then you need to be sure that your input contains a fairly large amount of strong entropy\&. Doing so is notoriously hard: most people who try get it wrong\&. Watch out!
+.PP
+\fBParameters:\fP
+.RS 4
+\fIdat\fP a buffer full of a strong source of random numbers 
+.br
+\fIdatlen\fP the number of bytes to read from datlen 
+.RE
+.PP
+
+.SS "void evutil_secure_rng_get_bytes (void *buf, size_tn)"
+
+.PP
+Generate n bytes of secure pseudorandom data, and store them in buf\&. By default, Libevent uses an ARC4-based random number generator, seeded using the platform's entropy source (/dev/urandom on Unix-like systems; CryptGenRandom on Windows)\&. 
+.SS "int evutil_secure_rng_init (void)"
+
+.PP
+Seed the secure random number generator if needed, and return 0 on success or -1 on failure\&. It is okay to call this function more than once; it will still return 0 if the RNG has been successfully seeded and -1 if it can't be seeded\&.
+.PP
+Ordinarily you don't need to call this function from your own code; Libevent will seed the RNG itself the first time it needs good random numbers\&. You only need to call it if (a) you want to double-check that one of the seeding methods did succeed, or (b) you plan to drop the capability to seed (by chrooting, or dropping capabilities, or whatever), and you want to make sure that seeding happens before your program loses the ability to do it\&. 
+.SS "int evutil_sockaddr_cmp (const struct sockaddr *sa1, const struct sockaddr *sa2, intinclude_port)"
+
+.PP
+Compare two sockaddrs; return 0 if they are equal, or less than 0 if sa1 preceeds sa2, or greater than 0 if sa1 follows sa2\&. If include_port is true, consider the port as well as the address\&. Only implemented for AF_INET and AF_INET6 addresses\&. The ordering is not guaranteed to remain the same between Libevent versions\&. 
+.SS "int evutil_socketpair (intd, inttype, intprotocol, \fBevutil_socket_t\fPsv[2])"
+
+.PP
+Create two new sockets that are connected to each other\&. On Unix, this simply calls socketpair()\&. On Windows, it uses the loopback network interface on 127\&.0\&.0\&.1, and only AF_INET,SOCK_STREAM are supported\&.
+.PP
+(This may fail on some Windows hosts where firewall software has cleverly decided to keep 127\&.0\&.0\&.1 from talking to itself\&.)
+.PP
+Parameters and return values are as for socketpair() 
+.SS "ev_int64_t evutil_strtoll (const char *s, char **endptr, intbase)"
+
+.PP
+Parse a 64-bit value from a string\&. Arguments are as for strtol\&. 
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for libevent from the source code\&.

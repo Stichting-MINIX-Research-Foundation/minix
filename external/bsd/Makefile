@@ -3,7 +3,7 @@
 .include <bsd.own.mk>
 
 SUBDIR= byacc file flex less \
-	libarchive mdocml \
+	libarchive libevent mdocml \
 	
 
 .if (${MKATF} != "no")

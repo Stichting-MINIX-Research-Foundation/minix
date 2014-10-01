@@ -1,0 +1,18 @@
+#!/bin/sh
+SED="$1"
+in="$2"
+out="$3"
+name="${in##*/}"
+
+case "${name}" in
+ev*|bufferev*)	ev=;;
+*)		ev=ev;;
+esac
+
+${SED} \
+	-e "s@event2/${name%.3}@${ev}${name%.h.3}@g" \
+	-e '/^\.SH SYNOPSIS/,/^\.PP/ {
+	/^.PP/a\
+\\fC#include <event2/'${name%.h.3}'\\\&.h>\\fP\
+.br
+}' < "${in}" > "${out}"

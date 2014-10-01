@@ -1,0 +1,1283 @@
+.TH "event2/event.h" 3 "Wed Apr 10 2013" "libevent" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+event2/event.h \- 
+.PP
+Core functions for waiting for and receiving events, and using event bases\&.  
+
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <event2/event-config\&.h>\fP
+.br
+\fC#include <stdio\&.h>\fP
+.br
+\fC#include <event2/util\&.h>\fP
+.br
+
+.SS "Data Structures"
+
+.in +1c
+.ti -1c
+.RI "struct \fBevent\fP"
+.br
+.RI "\fIStructure to represent a single event\&. \fP"
+.ti -1c
+.RI "struct \fBevent_base\fP"
+.br
+.RI "\fIStructure to hold information and state for a Libevent dispatch loop\&. \fP"
+.ti -1c
+.RI "struct \fBevent_config\fP"
+.br
+.RI "\fIConfiguration for an \fBevent_base\fP\&. \fP"
+.in -1c
+.SS "Macros"
+
+.in +1c
+.ti -1c
+.RI "#define \fB_EVENT_LOG_DEBUG\fP   EVENT_LOG_DEBUG"
+.br
+.ti -1c
+.RI "#define \fB_EVENT_LOG_ERR\fP   EVENT_LOG_ERR"
+.br
+.ti -1c
+.RI "#define \fB_EVENT_LOG_MSG\fP   EVENT_LOG_MSG"
+.br
+.ti -1c
+.RI "#define \fB_EVENT_LOG_WARN\fP   EVENT_LOG_WARN"
+.br
+.ti -1c
+.RI "#define \fBevent_get_signal\fP(ev)   ((int)\fBevent_get_fd\fP(ev))"
+.br
+.RI "\fIGet the signal number assigned to a signal event\&. \fP"
+.ti -1c
+.RI "#define \fBEVENT_MAX_PRIORITIES\fP   256"
+.br
+.RI "\fILargest number of priorities that Libevent can support\&. \fP"
+.ti -1c
+.RI "#define \fBEVENT_SET_MEM_FUNCTIONS_IMPLEMENTED\fP"
+.br
+.RI "\fIThis definition is present if Libevent was built with support for \fBevent_set_mem_functions()\fP \fP"
+.ti -1c
+.RI "#define \fBLIBEVENT_VERSION\fP   _EVENT_VERSION"
+.br
+.RI "\fIAs event_get_version, but gives the version of Libevent's headers\&. \fP"
+.ti -1c
+.RI "#define \fBLIBEVENT_VERSION_NUMBER\fP   _EVENT_NUMERIC_VERSION"
+.br
+.RI "\fIAs event_get_version_number, but gives the version number of Libevent's headers\&. \fP"
+.in -1c
+.PP
+.RI "\fBLog severities\fP"
+.br
+
+.in +1c
+.in +1c
+.ti -1c
+.RI "#define \fBEVENT_LOG_DEBUG\fP   0"
+.br
+.ti -1c
+.RI "#define \fBEVENT_LOG_MSG\fP   1"
+.br
+.ti -1c
+.RI "#define \fBEVENT_LOG_WARN\fP   2"
+.br
+.ti -1c
+.RI "#define \fBEVENT_LOG_ERR\fP   3"
+.br
+.in -1c
+.in -1c
+.PP
+.RI "\fBLoop flags\fP"
+.br
+These flags control the behavior of \fBevent_base_loop()\fP\&. 
+.PP
+.in +1c
+.in +1c
+.ti -1c
+.RI "#define \fBEVLOOP_ONCE\fP   0x01"
+.br
+.RI "\fIBlock until we have an active event, then exit once all active events have had their callbacks run\&. \fP"
+.ti -1c
+.RI "#define \fBEVLOOP_NONBLOCK\fP   0x02"
+.br
+.RI "\fIDo not block: see which events are ready now, run the callbacks of the highest-priority ones, then exit\&. \fP"
+.in -1c
+.in -1c
+.PP
+.RI "\fBevent flags\fP"
+.br
+Flags to pass to \fBevent_new()\fP, \fBevent_assign()\fP, \fBevent_pending()\fP, and anything else with an argument of the form 'short events' 
+.PP
+.in +1c
+.in +1c
+.ti -1c
+.RI "#define \fBEV_TIMEOUT\fP   0x01"
+.br
+.RI "\fIIndicates that a timeout has occurred\&. \fP"
+.ti -1c
+.RI "#define \fBEV_READ\fP   0x02"
+.br
+.RI "\fIWait for a socket or FD to become readable\&. \fP"
+.ti -1c
+.RI "#define \fBEV_WRITE\fP   0x04"
+.br
+.RI "\fIWait for a socket or FD to become writeable\&. \fP"
+.ti -1c
+.RI "#define \fBEV_SIGNAL\fP   0x08"
+.br
+.RI "\fIWait for a POSIX signal to be raised\&. \fP"
+.ti -1c
+.RI "#define \fBEV_PERSIST\fP   0x10"
+.br
+.RI "\fIPersistent event: won't get removed automatically when activated\&. \fP"
+.ti -1c
+.RI "#define \fBEV_ET\fP   0x20"
+.br
+.RI "\fISelect edge-triggered behavior, if supported by the backend\&. \fP"
+.in -1c
+.in -1c
+.PP
+.RI "\fBevtimer_* macros\fP"
+.br
+Aliases for working with one-shot timer events 
+.PP
+.in +1c
+.in +1c
+.ti -1c
+.RI "#define \fBevtimer_assign\fP(ev, b, cb, arg)   \fBevent_assign\fP((ev), (b), -1, 0, (cb), (arg))"
+.br
+.ti -1c
+.RI "#define \fBevtimer_new\fP(b, cb, arg)   \fBevent_new\fP((b), -1, 0, (cb), (arg))"
+.br
+.ti -1c
+.RI "#define \fBevtimer_add\fP(ev, tv)   \fBevent_add\fP((ev), (tv))"
+.br
+.ti -1c
+.RI "#define \fBevtimer_del\fP(ev)   \fBevent_del\fP(ev)"
+.br
+.ti -1c
+.RI "#define \fBevtimer_pending\fP(ev, tv)   \fBevent_pending\fP((ev), \fBEV_TIMEOUT\fP, (tv))"
+.br
+.ti -1c
+.RI "#define \fBevtimer_initialized\fP(ev)   \fBevent_initialized\fP(ev)"
+.br
+.in -1c
+.in -1c
+.PP
+.RI "\fBevsignal_* macros\fP"
+.br
+Aliases for working with signal events 
+.PP
+.in +1c
+.in +1c
+.ti -1c
+.RI "#define \fBevsignal_add\fP(ev, tv)   \fBevent_add\fP((ev), (tv))"
+.br
+.ti -1c
+.RI "#define \fBevsignal_assign\fP(ev, b, x, cb, arg)   \fBevent_assign\fP((ev), (b), (x), \fBEV_SIGNAL\fP|\fBEV_PERSIST\fP, cb, (arg))"
+.br
+.ti -1c
+.RI "#define \fBevsignal_new\fP(b, x, cb, arg)   \fBevent_new\fP((b), (x), \fBEV_SIGNAL\fP|\fBEV_PERSIST\fP, (cb), (arg))"
+.br
+.ti -1c
+.RI "#define \fBevsignal_del\fP(ev)   \fBevent_del\fP(ev)"
+.br
+.ti -1c
+.RI "#define \fBevsignal_pending\fP(ev, tv)   \fBevent_pending\fP((ev), \fBEV_SIGNAL\fP, (tv))"
+.br
+.ti -1c
+.RI "#define \fBevsignal_initialized\fP(ev)   \fBevent_initialized\fP(ev)"
+.br
+.in -1c
+.in -1c
+.SS "Typedefs"
+
+.in +1c
+.ti -1c
+.RI "typedef void(* \fBevent_callback_fn\fP )(\fBevutil_socket_t\fP, short, void *)"
+.br
+.RI "\fIA callback function for an event\&. \fP"
+.ti -1c
+.RI "typedef void(* \fBevent_fatal_cb\fP )(int err)"
+.br
+.RI "\fIA function to be called if Libevent encounters a fatal internal error\&. \fP"
+.ti -1c
+.RI "typedef void(* \fBevent_log_cb\fP )(int severity, const char *msg)"
+.br
+.RI "\fIA callback function used to intercept Libevent's log messages\&. \fP"
+.in -1c
+.SS "Enumerations"
+
+.in +1c
+.ti -1c
+.RI "enum \fBevent_base_config_flag\fP { \fBEVENT_BASE_FLAG_NOLOCK\fP = 0x01, \fBEVENT_BASE_FLAG_IGNORE_ENV\fP = 0x02, \fBEVENT_BASE_FLAG_STARTUP_IOCP\fP = 0x04, \fBEVENT_BASE_FLAG_NO_CACHE_TIME\fP = 0x08, \fBEVENT_BASE_FLAG_EPOLL_USE_CHANGELIST\fP = 0x10 }"
+.br
+.RI "\fIA flag passed to \fBevent_config_set_flag()\fP\&. \fP"
+.ti -1c
+.RI "enum \fBevent_method_feature\fP { \fBEV_FEATURE_ET\fP = 0x01, \fBEV_FEATURE_O1\fP = 0x02, \fBEV_FEATURE_FDS\fP = 0x04 }"
+.br
+.RI "\fIA flag used to describe which features an \fBevent_base\fP (must) provide\&. \fP"
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "void \fBevent_active\fP (struct \fBevent\fP *ev, int res, short ncalls)"
+.br
+.RI "\fIMake an event active\&. \fP"
+.ti -1c
+.RI "int \fBevent_add\fP (struct \fBevent\fP *ev, const struct timeval *timeout)"
+.br
+.RI "\fIAdd an event to the set of pending events\&. \fP"
+.ti -1c
+.RI "int \fBevent_assign\fP (struct \fBevent\fP *, struct \fBevent_base\fP *, \fBevutil_socket_t\fP, short, \fBevent_callback_fn\fP, void *)"
+.br
+.RI "\fIPrepare a new, already-allocated event structure to be added\&. \fP"
+.ti -1c
+.RI "int \fBevent_base_dispatch\fP (struct \fBevent_base\fP *)"
+.br
+.RI "\fIEvent dispatching loop\&. \fP"
+.ti -1c
+.RI "void \fBevent_base_dump_events\fP (struct \fBevent_base\fP *, FILE *)"
+.br
+.ti -1c
+.RI "void \fBevent_base_free\fP (struct \fBevent_base\fP *)"
+.br
+.RI "\fIDeallocate all memory associated with an \fBevent_base\fP, and free the base\&. \fP"
+.ti -1c
+.RI "int \fBevent_base_get_features\fP (const struct \fBevent_base\fP *base)"
+.br
+.RI "\fIReturn a bitmask of the features implemented by an event base\&. \fP"
+.ti -1c
+.RI "const char * \fBevent_base_get_method\fP (const struct \fBevent_base\fP *)"
+.br
+.RI "\fIGet the kernel event notification mechanism used by Libevent\&. \fP"
+.ti -1c
+.RI "int \fBevent_base_gettimeofday_cached\fP (struct \fBevent_base\fP *base, struct timeval *tv)"
+.br
+.RI "\fISets 'tv' to the current time (as returned by gettimeofday()), looking at the cached value in 'base' if possible, and calling gettimeofday() or clock_gettime() as appropriate if there is no cached time\&. \fP"
+.ti -1c
+.RI "int \fBevent_base_got_break\fP (struct \fBevent_base\fP *)"
+.br
+.RI "\fIChecks if the event loop was told to abort immediately by \fBevent_loopbreak()\fP\&. \fP"
+.ti -1c
+.RI "int \fBevent_base_got_exit\fP (struct \fBevent_base\fP *)"
+.br
+.RI "\fIChecks if the event loop was told to exit by \fBevent_loopexit()\fP\&. \fP"
+.ti -1c
+.RI "struct timeval * \fBevent_base_init_common_timeout\fP (struct \fBevent_base\fP *base, const struct timeval *duration)"
+.br
+.RI "\fIPrepare an \fBevent_base\fP to use a large number of timeouts with the same duration\&. \fP"
+.ti -1c
+.RI "int \fBevent_base_loop\fP (struct \fBevent_base\fP *, int)"
+.br
+.RI "\fIWait for events to become active, and run their callbacks\&. \fP"
+.ti -1c
+.RI "int \fBevent_base_loopbreak\fP (struct \fBevent_base\fP *)"
+.br
+.RI "\fIAbort the active \fBevent_base_loop()\fP immediately\&. \fP"
+.ti -1c
+.RI "int \fBevent_base_loopexit\fP (struct \fBevent_base\fP *, const struct timeval *)"
+.br
+.RI "\fIExit the event loop after the specified time\&. \fP"
+.ti -1c
+.RI "struct \fBevent_base\fP * \fBevent_base_new\fP (void)"
+.br
+.RI "\fICreate and return a new \fBevent_base\fP to use with the rest of Libevent\&. \fP"
+.ti -1c
+.RI "struct \fBevent_base\fP * \fBevent_base_new_with_config\fP (const struct \fBevent_config\fP *)"
+.br
+.RI "\fIInitialize the event API\&. \fP"
+.ti -1c
+.RI "int \fBevent_base_once\fP (struct \fBevent_base\fP *, \fBevutil_socket_t\fP, short, \fBevent_callback_fn\fP, void *, const struct timeval *)"
+.br
+.RI "\fISchedule a one-time event\&. \fP"
+.ti -1c
+.RI "int \fBevent_base_priority_init\fP (struct \fBevent_base\fP *, int)"
+.br
+.RI "\fISet the number of different event priorities\&. \fP"
+.ti -1c
+.RI "int \fBevent_base_set\fP (struct \fBevent_base\fP *, struct \fBevent\fP *)"
+.br
+.RI "\fIAssociate a different event base with an event\&. \fP"
+.ti -1c
+.RI "int \fBevent_config_avoid_method\fP (struct \fBevent_config\fP *cfg, const char *method)"
+.br
+.RI "\fIEnters an event method that should be avoided into the configuration\&. \fP"
+.ti -1c
+.RI "void \fBevent_config_free\fP (struct \fBevent_config\fP *cfg)"
+.br
+.RI "\fIDeallocates all memory associated with an event configuration object\&. \fP"
+.ti -1c
+.RI "struct \fBevent_config\fP * \fBevent_config_new\fP (void)"
+.br
+.RI "\fIAllocates a new event configuration object\&. \fP"
+.ti -1c
+.RI "int \fBevent_config_require_features\fP (struct \fBevent_config\fP *cfg, int feature)"
+.br
+.RI "\fIEnters a required event method feature that the application demands\&. \fP"
+.ti -1c
+.RI "int \fBevent_config_set_flag\fP (struct \fBevent_config\fP *cfg, int flag)"
+.br
+.RI "\fISets one or more flags to configure what parts of the eventual \fBevent_base\fP will be initialized, and how they'll work\&. \fP"
+.ti -1c
+.RI "int \fBevent_config_set_num_cpus_hint\fP (struct \fBevent_config\fP *cfg, int cpus)"
+.br
+.RI "\fIRecords a hint for the number of CPUs in the system\&. \fP"
+.ti -1c
+.RI "void \fBevent_debug_unassign\fP (struct \fBevent\fP *)"
+.br
+.RI "\fIWhen debugging mode is enabled, informs Libevent that an event should no longer be considered as assigned\&. \fP"
+.ti -1c
+.RI "int \fBevent_del\fP (struct \fBevent\fP *)"
+.br
+.RI "\fIRemove an event from the set of monitored events\&. \fP"
+.ti -1c
+.RI "void \fBevent_enable_debug_mode\fP (void)"
+.br
+.RI "\fIEnable some relatively expensive debugging checks in Libevent that would normally be turned off\&. \fP"
+.ti -1c
+.RI "void \fBevent_free\fP (struct \fBevent\fP *)"
+.br
+.RI "\fIDeallocate a struct event * returned by \fBevent_new()\fP\&. \fP"
+.ti -1c
+.RI "void \fBevent_get_assignment\fP (const struct \fBevent\fP *\fBevent\fP, struct \fBevent_base\fP **base_out, \fBevutil_socket_t\fP *fd_out, short *events_out, \fBevent_callback_fn\fP *callback_out, void **arg_out)"
+.br
+.RI "\fIExtract \fIall\fP of arguments given to construct a given event\&. \fP"
+.ti -1c
+.RI "struct \fBevent_base\fP * \fBevent_get_base\fP (const struct \fBevent\fP *ev)"
+.br
+.RI "\fIGet the \fBevent_base\fP associated with an event\&. \fP"
+.ti -1c
+.RI "\fBevent_callback_fn\fP \fBevent_get_callback\fP (const struct \fBevent\fP *ev)"
+.br
+.RI "\fIReturn the callback assigned to an event\&. \fP"
+.ti -1c
+.RI "void * \fBevent_get_callback_arg\fP (const struct \fBevent\fP *ev)"
+.br
+.RI "\fIReturn the callback argument assigned to an event\&. \fP"
+.ti -1c
+.RI "short \fBevent_get_events\fP (const struct \fBevent\fP *ev)"
+.br
+.RI "\fIReturn the events (EV_READ, EV_WRITE, etc) assigned to an event\&. \fP"
+.ti -1c
+.RI "\fBevutil_socket_t\fP \fBevent_get_fd\fP (const struct \fBevent\fP *ev)"
+.br
+.RI "\fIGet the socket or signal assigned to an event, or -1 if the event has no socket\&. \fP"
+.ti -1c
+.RI "size_t \fBevent_get_struct_event_size\fP (void)"
+.br
+.RI "\fIReturn the size of struct event that the Libevent library was compiled with\&. \fP"
+.ti -1c
+.RI "const char ** \fBevent_get_supported_methods\fP (void)"
+.br
+.RI "\fIGets all event notification mechanisms supported by Libevent\&. \fP"
+.ti -1c
+.RI "const char * \fBevent_get_version\fP (void)"
+.br
+.RI "\fIGet the Libevent version\&. \fP"
+.ti -1c
+.RI "ev_uint32_t \fBevent_get_version_number\fP (void)"
+.br
+.RI "\fIReturn a numeric representation of Libevent's version\&. \fP"
+.ti -1c
+.RI "int \fBevent_initialized\fP (const struct \fBevent\fP *ev)"
+.br
+.RI "\fITest if an event structure might be initialized\&. \fP"
+.ti -1c
+.RI "struct \fBevent\fP * \fBevent_new\fP (struct \fBevent_base\fP *, \fBevutil_socket_t\fP, short, \fBevent_callback_fn\fP, void *)"
+.br
+.RI "\fIAllocate and asssign a new event structure, ready to be added\&. \fP"
+.ti -1c
+.RI "int \fBevent_pending\fP (const struct \fBevent\fP *ev, short events, struct timeval *tv)"
+.br
+.RI "\fIChecks if a specific event is pending or scheduled\&. \fP"
+.ti -1c
+.RI "int \fBevent_priority_set\fP (struct \fBevent\fP *, int)"
+.br
+.RI "\fIAssign a priority to an event\&. \fP"
+.ti -1c
+.RI "int \fBevent_reinit\fP (struct \fBevent_base\fP *base)"
+.br
+.RI "\fIReinitialize the event base after a fork\&. \fP"
+.ti -1c
+.RI "void \fBevent_set_fatal_callback\fP (\fBevent_fatal_cb\fP cb)"
+.br
+.RI "\fIOverride Libevent's behavior in the event of a fatal internal error\&. \fP"
+.ti -1c
+.RI "void \fBevent_set_log_callback\fP (\fBevent_log_cb\fP cb)"
+.br
+.RI "\fIRedirect Libevent's log messages\&. \fP"
+.ti -1c
+.RI "void \fBevent_set_mem_functions\fP (void *(*malloc_fn)(size_t sz), void *(*realloc_fn)(void *ptr, size_t sz), void(*free_fn)(void *ptr))"
+.br
+.RI "\fIOverride the functions that Libevent uses for memory management\&. \fP"
+.in -1c
+.SH "Detailed Description"
+.PP 
+Core functions for waiting for and receiving events, and using event bases\&. 
+
+
+.SH "Macro Definition Documentation"
+.PP 
+.SS "#define EV_ET   0x20"
+
+.PP
+Select edge-triggered behavior, if supported by the backend\&. 
+.SS "#define EV_PERSIST   0x10"
+
+.PP
+Persistent event: won't get removed automatically when activated\&. When a persistent event with a timeout becomes activated, its timeout is reset to 0\&. 
+.SS "#define EV_TIMEOUT   0x01"
+
+.PP
+Indicates that a timeout has occurred\&. It's not necessary to pass this flag to event_for new()/event_assign() to get a timeout\&. 
+.SS "#define EVENT_MAX_PRIORITIES   256"
+
+.PP
+Largest number of priorities that Libevent can support\&. 
+.SS "#define EVLOOP_NONBLOCK   0x02"
+
+.PP
+Do not block: see which events are ready now, run the callbacks of the highest-priority ones, then exit\&. 
+.SS "#define EVLOOP_ONCE   0x01"
+
+.PP
+Block until we have an active event, then exit once all active events have had their callbacks run\&. 
+.SS "#define LIBEVENT_VERSION   _EVENT_VERSION"
+
+.PP
+As event_get_version, but gives the version of Libevent's headers\&. 
+.SS "#define LIBEVENT_VERSION_NUMBER   _EVENT_NUMERIC_VERSION"
+
+.PP
+As event_get_version_number, but gives the version number of Libevent's headers\&. 
+.SH "Typedef Documentation"
+.PP 
+.SS "typedef void(* event_callback_fn)(\fBevutil_socket_t\fP, short, void *)"
+
+.PP
+A callback function for an event\&. It receives three arguments:
+.PP
+\fBParameters:\fP
+.RS 4
+\fIfd\fP An fd or signal 
+.br
+\fIevents\fP One or more EV_* flags 
+.br
+\fIarg\fP A user-supplied argument\&.
+.RE
+.PP
+\fBSee Also:\fP
+.RS 4
+\fBevent_new()\fP 
+.RE
+.PP
+
+.SS "typedef void(* event_fatal_cb)(int err)"
+
+.PP
+A function to be called if Libevent encounters a fatal internal error\&. \fBSee Also:\fP
+.RS 4
+\fBevent_set_fatal_callback\fP 
+.RE
+.PP
+
+.SS "typedef void(* event_log_cb)(int severity, const char *msg)"
+
+.PP
+A callback function used to intercept Libevent's log messages\&. \fBSee Also:\fP
+.RS 4
+\fBevent_set_log_callback\fP 
+.RE
+.PP
+
+.SH "Enumeration Type Documentation"
+.PP 
+.SS "enum \fBevent_base_config_flag\fP"
+
+.PP
+A flag passed to \fBevent_config_set_flag()\fP\&. These flags change the behavior of an allocated \fBevent_base\fP\&.
+.PP
+\fBSee Also:\fP
+.RS 4
+\fBevent_config_set_flag()\fP, \fBevent_base_new_with_config()\fP, \fBevent_method_feature\fP 
+.RE
+.PP
+
+.PP
+\fBEnumerator\fP
+.in +1c
+.TP
+\fB\fIEVENT_BASE_FLAG_NOLOCK \fP\fP
+Do not allocate a lock for the event base, even if we have locking set up\&. 
+.TP
+\fB\fIEVENT_BASE_FLAG_IGNORE_ENV \fP\fP
+Do not check the EVENT_* environment variables when configuring an \fBevent_base\fP\&. 
+.TP
+\fB\fIEVENT_BASE_FLAG_STARTUP_IOCP \fP\fP
+Windows only: enable the IOCP dispatcher at startup\&. If this flag is set then \fBbufferevent_socket_new()\fP and evconn_listener_new() will use IOCP-backed implementations instead of the usual select-based one on Windows\&. 
+.TP
+\fB\fIEVENT_BASE_FLAG_NO_CACHE_TIME \fP\fP
+Instead of checking the current time every time the event loop is ready to run timeout callbacks, check after each timeout callback\&. 
+.TP
+\fB\fIEVENT_BASE_FLAG_EPOLL_USE_CHANGELIST \fP\fP
+If we are using the epoll backend, this flag says that it is safe to use Libevent's internal change-list code to batch up adds and deletes in order to try to do as few syscalls as possible\&. Setting this flag can make your code run faster, but it may trigger a Linux bug: it is not safe to use this flag if you have any fds cloned by dup() or its variants\&. Doing so will produce strange and hard-to-diagnose bugs\&.
+.PP
+This flag can also be activated by settnig the EVENT_EPOLL_USE_CHANGELIST environment variable\&.
+.PP
+This flag has no effect if you wind up using a backend other than epoll\&. 
+.SS "enum \fBevent_method_feature\fP"
+
+.PP
+A flag used to describe which features an \fBevent_base\fP (must) provide\&. Because of OS limitations, not every Libevent backend supports every possible feature\&. You can use this type with \fBevent_config_require_features()\fP to tell Libevent to only proceed if your \fBevent_base\fP implements a given feature, and you can receive this type from \fBevent_base_get_features()\fP to see which features are available\&. 
+.PP
+\fBEnumerator\fP
+.in +1c
+.TP
+\fB\fIEV_FEATURE_ET \fP\fP
+Require an event method that allows edge-triggered events with EV_ET\&. 
+.TP
+\fB\fIEV_FEATURE_O1 \fP\fP
+Require an event method where having one event triggered among many is [approximately] an O(1) operation\&. This excludes (for example) select and poll, which are approximately O(N) for N equal to the total number of possible events\&. 
+.TP
+\fB\fIEV_FEATURE_FDS \fP\fP
+Require an event method that allows file descriptors as well as sockets\&. 
+.SH "Function Documentation"
+.PP 
+.SS "void event_active (struct \fBevent\fP *ev, intres, shortncalls)"
+
+.PP
+Make an event active\&. You can use this function on a pending or a non-pending event to make it active, so that its callback will be run by \fBevent_base_dispatch()\fP or \fBevent_base_loop()\fP\&.
+.PP
+One common use in multithreaded programs is to wake the thread running \fBevent_base_loop()\fP from another thread\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIev\fP an event to make active\&. 
+.br
+\fIres\fP a set of flags to pass to the event's callback\&. 
+.br
+\fIncalls\fP an obsolete argument: this is ignored\&. 
+.RE
+.PP
+
+.SS "int event_add (struct \fBevent\fP *ev, const struct timeval *timeout)"
+
+.PP
+Add an event to the set of pending events\&. The function \fBevent_add()\fP schedules the execution of the ev event when the event specified in \fBevent_assign()\fP/event_new() occurs, or when the time specified in timeout has elapesed\&. If atimeout is NULL, no timeout occurs and the function will only be called if a matching event occurs\&. The event in the ev argument must be already initialized by \fBevent_assign()\fP or \fBevent_new()\fP and may not be used in calls to \fBevent_assign()\fP until it is no longer pending\&.
+.PP
+If the event in the ev argument already has a scheduled timeout, calling \fBevent_add()\fP replaces the old timeout with the new one, or clears the old timeout if the timeout argument is NULL\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIev\fP an event struct initialized via \fBevent_set()\fP 
+.br
+\fItimeout\fP the maximum amount of time to wait for the event, or NULL to wait forever 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+0 if successful, or -1 if an error occurred 
+.RE
+.PP
+\fBSee Also:\fP
+.RS 4
+\fBevent_del()\fP, \fBevent_assign()\fP, \fBevent_new()\fP 
+.RE
+.PP
+
+.SS "int event_assign (struct \fBevent\fP *, struct \fBevent_base\fP *, \fBevutil_socket_t\fP, short, \fBevent_callback_fn\fP, void *)"
+
+.PP
+Prepare a new, already-allocated event structure to be added\&. The function \fBevent_assign()\fP prepares the event structure ev to be used in future calls to \fBevent_add()\fP and \fBevent_del()\fP\&. Unlike \fBevent_new()\fP, it doesn't allocate memory itself: it requires that you have already allocated a struct event, probably on the heap\&. Doing this will typically make your code depend on the size of the event structure, and thereby create incompatibility with future versions of Libevent\&.
+.PP
+The easiest way to avoid this problem is just to use \fBevent_new()\fP and \fBevent_free()\fP instead\&.
+.PP
+A slightly harder way to future-proof your code is to use \fBevent_get_struct_event_size()\fP to determine the required size of an event at runtime\&.
+.PP
+Note that it is NOT safe to call this function on an event that is active or pending\&. Doing so WILL corrupt internal data structures in Libevent, and lead to strange, hard-to-diagnose bugs\&. You \fIcan\fP use event_assign to change an existing event, but only if it is not active or pending!
+.PP
+The arguments for this function, and the behavior of the events that it makes, are as for \fBevent_new()\fP\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIev\fP an event struct to be modified 
+.br
+\fIbase\fP the event base to which ev should be attached\&. 
+.br
+\fIfd\fP the file descriptor to be monitored 
+.br
+\fIevents\fP desired events to monitor; can be EV_READ and/or EV_WRITE 
+.br
+\fIcallback\fP callback function to be invoked when the event occurs 
+.br
+\fIcallback_arg\fP an argument to be passed to the callback function
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+0 if success, or -1 on invalid arguments\&.
+.RE
+.PP
+\fBSee Also:\fP
+.RS 4
+\fBevent_new()\fP, \fBevent_add()\fP, \fBevent_del()\fP, \fBevent_base_once()\fP, \fBevent_get_struct_event_size()\fP 
+.RE
+.PP
+
+.SS "int event_base_dispatch (struct \fBevent_base\fP *)"
+
+.PP
+Event dispatching loop\&. This loop will run the event base until either there are no more added events, or until something calls \fBevent_base_loopbreak()\fP or \fBevent_base_loopexit()\fP\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIbase\fP the \fBevent_base\fP structure returned by \fBevent_base_new()\fP or \fBevent_base_new_with_config()\fP 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+0 if successful, -1 if an error occurred, or 1 if no events were registered\&. 
+.RE
+.PP
+\fBSee Also:\fP
+.RS 4
+\fBevent_base_loop()\fP 
+.RE
+.PP
+
+.SS "void event_base_free (struct \fBevent_base\fP *)"
+
+.PP
+Deallocate all memory associated with an \fBevent_base\fP, and free the base\&. Note that this function will not close any fds or free any memory passed to event_new as the argument to callback\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIeb\fP an \fBevent_base\fP to be freed 
+.RE
+.PP
+
+.SS "int event_base_get_features (const struct \fBevent_base\fP *base)"
+
+.PP
+Return a bitmask of the features implemented by an event base\&. This will be a bitwise OR of one or more of the values of event_method_feature
+.PP
+\fBSee Also:\fP
+.RS 4
+\fBevent_method_feature\fP 
+.RE
+.PP
+
+.SS "const char* event_base_get_method (const struct \fBevent_base\fP *)"
+
+.PP
+Get the kernel event notification mechanism used by Libevent\&. \fBParameters:\fP
+.RS 4
+\fIeb\fP the \fBevent_base\fP structure returned by \fBevent_base_new()\fP 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+a string identifying the kernel event mechanism (kqueue, epoll, etc\&.) 
+.RE
+.PP
+
+.SS "int event_base_gettimeofday_cached (struct \fBevent_base\fP *base, struct timeval *tv)"
+
+.PP
+Sets 'tv' to the current time (as returned by gettimeofday()), looking at the cached value in 'base' if possible, and calling gettimeofday() or clock_gettime() as appropriate if there is no cached time\&. Generally, this value will only be cached while actually processing event callbacks, and may be very inaccuate if your callbacks take a long time to execute\&.
+.PP
+Returns 0 on success, negative on failure\&. 
+.SS "int event_base_got_break (struct \fBevent_base\fP *)"
+
+.PP
+Checks if the event loop was told to abort immediately by \fBevent_loopbreak()\fP\&. This function will return true for an \fBevent_base\fP at every point after \fBevent_loopbreak()\fP is called, until the event loop is next entered\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIeb\fP the \fBevent_base\fP structure returned by \fBevent_init()\fP 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+true if \fBevent_base_loopbreak()\fP was called on this event base, or 0 otherwise 
+.RE
+.PP
+\fBSee Also:\fP
+.RS 4
+\fBevent_base_loopbreak()\fP 
+.PP
+\fBevent_base_got_exit()\fP 
+.RE
+.PP
+
+.SS "int event_base_got_exit (struct \fBevent_base\fP *)"
+
+.PP
+Checks if the event loop was told to exit by \fBevent_loopexit()\fP\&. This function will return true for an \fBevent_base\fP at every point after \fBevent_loopexit()\fP is called, until the event loop is next entered\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIeb\fP the \fBevent_base\fP structure returned by \fBevent_init()\fP 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+true if \fBevent_base_loopexit()\fP was called on this event base, or 0 otherwise 
+.RE
+.PP
+\fBSee Also:\fP
+.RS 4
+\fBevent_base_loopexit()\fP 
+.PP
+\fBevent_base_got_break()\fP 
+.RE
+.PP
+
+.SS "struct timeval* event_base_init_common_timeout (struct \fBevent_base\fP *base, const struct timeval *duration)\fC [read]\fP"
+
+.PP
+Prepare an \fBevent_base\fP to use a large number of timeouts with the same duration\&. Libevent's default scheduling algorithm is optimized for having a large number of timeouts with their durations more or less randomly distributed\&. But if you have a large number of timeouts that all have the same duration (for example, if you have a large number of connections that all have a 10-second timeout), then you can improve Libevent's performance by telling Libevent about it\&.
+.PP
+To do this, call this function with the common duration\&. It will return a pointer to a different, opaque timeout value\&. (Don't depend on its actual contents!) When you use this timeout value in \fBevent_add()\fP, Libevent will schedule the event more efficiently\&.
+.PP
+(This optimization probably will not be worthwhile until you have thousands or tens of thousands of events with the same timeout\&.) 
+.SS "int event_base_loop (struct \fBevent_base\fP *, int)"
+
+.PP
+Wait for events to become active, and run their callbacks\&. This is a more flexible version of \fBevent_base_dispatch()\fP\&.
+.PP
+By default, this loop will run the event base until either there are no more added events, or until something calls \fBevent_base_loopbreak()\fP or evenet_base_loopexit()\&. You can override this behavior with the 'flags' argument\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIeb\fP the \fBevent_base\fP structure returned by \fBevent_base_new()\fP or \fBevent_base_new_with_config()\fP 
+.br
+\fIflags\fP any combination of EVLOOP_ONCE | EVLOOP_NONBLOCK 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+0 if successful, -1 if an error occurred, or 1 if no events were registered\&. 
+.RE
+.PP
+\fBSee Also:\fP
+.RS 4
+\fBevent_base_loopexit()\fP, \fBevent_base_dispatch()\fP, \fBEVLOOP_ONCE\fP, \fBEVLOOP_NONBLOCK\fP 
+.RE
+.PP
+
+.SS "int event_base_loopbreak (struct \fBevent_base\fP *)"
+
+.PP
+Abort the active \fBevent_base_loop()\fP immediately\&. \fBevent_base_loop()\fP will abort the loop after the next event is completed; \fBevent_base_loopbreak()\fP is typically invoked from this event's callback\&. This behavior is analogous to the 'break;' statement\&.
+.PP
+Subsequent invocations of \fBevent_loop()\fP will proceed normally\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIeb\fP the \fBevent_base\fP structure returned by \fBevent_init()\fP 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+0 if successful, or -1 if an error occurred 
+.RE
+.PP
+\fBSee Also:\fP
+.RS 4
+\fBevent_base_loopexit()\fP 
+.RE
+.PP
+
+.SS "int event_base_loopexit (struct \fBevent_base\fP *, const struct timeval *)"
+
+.PP
+Exit the event loop after the specified time\&. The next \fBevent_base_loop()\fP iteration after the given timer expires will complete normally (handling all queued events) then exit without blocking for events again\&.
+.PP
+Subsequent invocations of \fBevent_base_loop()\fP will proceed normally\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIeb\fP the \fBevent_base\fP structure returned by \fBevent_init()\fP 
+.br
+\fItv\fP the amount of time after which the loop should terminate, or NULL to exit after running all currently active events\&. 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+0 if successful, or -1 if an error occurred 
+.RE
+.PP
+\fBSee Also:\fP
+.RS 4
+\fBevent_base_loopbreak()\fP 
+.RE
+.PP
+
+.SS "struct \fBevent_base\fP* event_base_new (void)\fC [read]\fP"
+
+.PP
+Create and return a new \fBevent_base\fP to use with the rest of Libevent\&. \fBReturns:\fP
+.RS 4
+a new \fBevent_base\fP on success, or NULL on failure\&.
+.RE
+.PP
+\fBSee Also:\fP
+.RS 4
+\fBevent_base_free()\fP, \fBevent_base_new_with_config()\fP 
+.RE
+.PP
+
+.SS "struct \fBevent_base\fP* event_base_new_with_config (const struct \fBevent_config\fP *)\fC [read]\fP"
+
+.PP
+Initialize the event API\&. Use \fBevent_base_new_with_config()\fP to initialize a new event base, taking the specified configuration under consideration\&. The configuration object can currently be used to avoid certain event notification mechanisms\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIcfg\fP the event configuration object 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+an initialized \fBevent_base\fP that can be used to registering events, or NULL if no event base can be created with the requested \fBevent_config\fP\&. 
+.RE
+.PP
+\fBSee Also:\fP
+.RS 4
+\fBevent_base_new()\fP, \fBevent_base_free()\fP, \fBevent_init()\fP, \fBevent_assign()\fP 
+.RE
+.PP
+
+.SS "int event_base_once (struct \fBevent_base\fP *, \fBevutil_socket_t\fP, short, \fBevent_callback_fn\fP, void *, const struct timeval *)"
+
+.PP
+Schedule a one-time event\&. The function \fBevent_base_once()\fP is similar to \fBevent_set()\fP\&. However, it schedules a callback to be called exactly once, and does not require the caller to prepare an event structure\&.
+.PP
+Note that in Libevent 2\&.0 and earlier, if the event is never triggered, the internal memory used to hold it will never be freed\&. This may be fixed in a later version of Libevent\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIbase\fP an \fBevent_base\fP 
+.br
+\fIfd\fP a file descriptor to monitor, or -1 for no fd\&. 
+.br
+\fIevents\fP event(s) to monitor; can be any of EV_READ | EV_WRITE, or EV_TIMEOUT 
+.br
+\fIcallback\fP callback function to be invoked when the event occurs 
+.br
+\fIarg\fP an argument to be passed to the callback function 
+.br
+\fItimeout\fP the maximum amount of time to wait for the event\&. NULL makes an EV_READ/EV_WRITE event make forever; NULL makes an EV_TIMEOUT event succees immediately\&. 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+0 if successful, or -1 if an error occurred 
+.RE
+.PP
+
+.SS "int event_base_priority_init (struct \fBevent_base\fP *, int)"
+
+.PP
+Set the number of different event priorities\&. By default Libevent schedules all active events with the same priority\&. However, some time it is desirable to process some events with a higher priority than others\&. For that reason, Libevent supports strict priority queues\&. Active events with a lower priority are always processed before events with a higher priority\&.
+.PP
+The number of different priorities can be set initially with the \fBevent_base_priority_init()\fP function\&. This function should be called before the first call to \fBevent_base_dispatch()\fP\&. The \fBevent_priority_set()\fP function can be used to assign a priority to an event\&. By default, Libevent assigns the middle priority to all events unless their priority is explicitly set\&.
+.PP
+Note that urgent-priority events can starve less-urgent events: after running all urgent-priority callbacks, Libevent checks for more urgent events again, before running less-urgent events\&. Less-urgent events will not have their callbacks run until there are no events more urgent than them that want to be active\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIeb\fP the \fBevent_base\fP structure returned by \fBevent_base_new()\fP 
+.br
+\fInpriorities\fP the maximum number of priorities 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+0 if successful, or -1 if an error occurred 
+.RE
+.PP
+\fBSee Also:\fP
+.RS 4
+\fBevent_priority_set()\fP 
+.RE
+.PP
+
+.SS "int event_base_set (struct \fBevent_base\fP *, struct \fBevent\fP *)"
+
+.PP
+Associate a different event base with an event\&. The event to be associated must not be currently active or pending\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIeb\fP the event base 
+.br
+\fIev\fP the event 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+0 on success, -1 on failure\&. 
+.RE
+.PP
+
+.SS "int event_config_avoid_method (struct \fBevent_config\fP *cfg, const char *method)"
+
+.PP
+Enters an event method that should be avoided into the configuration\&. This can be used to avoid event mechanisms that do not support certain file descriptor types, or for debugging to avoid certain event mechanisms\&. An application can make use of multiple event bases to accommodate incompatible file descriptor types\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIcfg\fP the event configuration object 
+.br
+\fImethod\fP the name of the event method to avoid 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+0 on success, -1 on failure\&. 
+.RE
+.PP
+
+.SS "void event_config_free (struct \fBevent_config\fP *cfg)"
+
+.PP
+Deallocates all memory associated with an event configuration object\&. \fBParameters:\fP
+.RS 4
+\fIcfg\fP the event configuration object to be freed\&. 
+.RE
+.PP
+
+.SS "struct \fBevent_config\fP* event_config_new (void)\fC [read]\fP"
+
+.PP
+Allocates a new event configuration object\&. The event configuration object can be used to change the behavior of an event base\&.
+.PP
+\fBReturns:\fP
+.RS 4
+an \fBevent_config\fP object that can be used to store configuration, or NULL if an error is encountered\&. 
+.RE
+.PP
+\fBSee Also:\fP
+.RS 4
+\fBevent_base_new_with_config()\fP, \fBevent_config_free()\fP, \fBevent_config\fP 
+.RE
+.PP
+
+.SS "int event_config_require_features (struct \fBevent_config\fP *cfg, intfeature)"
+
+.PP
+Enters a required event method feature that the application demands\&. Note that not every feature or combination of features is supported on every platform\&. Code that requests features should be prepared to handle the case where \fBevent_base_new_with_config()\fP returns NULL, as in: 
+.PP
+.nf
+
+     event_config_require_features(cfg, EV_FEATURE_ET);
+     base = event_base_new_with_config(cfg);
+     if (base == NULL) {
+We can't get edge-triggered behavior here\&.
+       event_config_require_features(cfg, 0);
+       base = event_base_new_with_config(cfg);
+     }
+   
+.fi
+.PP
+.PP
+\fBParameters:\fP
+.RS 4
+\fIcfg\fP the event configuration object 
+.br
+\fIfeature\fP a bitfield of one or more event_method_feature values\&. Replaces values from previous calls to this function\&. 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+0 on success, -1 on failure\&. 
+.RE
+.PP
+\fBSee Also:\fP
+.RS 4
+\fBevent_method_feature\fP, \fBevent_base_new_with_config()\fP 
+.RE
+.PP
+
+.SS "int event_config_set_flag (struct \fBevent_config\fP *cfg, intflag)"
+
+.PP
+Sets one or more flags to configure what parts of the eventual \fBevent_base\fP will be initialized, and how they'll work\&. \fBSee Also:\fP
+.RS 4
+event_base_config_flags, \fBevent_base_new_with_config()\fP 
+.RE
+.PP
+
+.SS "int event_config_set_num_cpus_hint (struct \fBevent_config\fP *cfg, intcpus)"
+
+.PP
+Records a hint for the number of CPUs in the system\&. This is used for tuning thread pools, etc, for optimal performance\&. In Libevent 2\&.0, it is only on Windows, and only when IOCP is in use\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIcfg\fP the event configuration object 
+.br
+\fIcpus\fP the number of cpus 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+0 on success, -1 on failure\&. 
+.RE
+.PP
+
+.SS "void event_debug_unassign (struct \fBevent\fP *)"
+
+.PP
+When debugging mode is enabled, informs Libevent that an event should no longer be considered as assigned\&. When debugging mode is not enabled, does nothing\&.
+.PP
+This function must only be called on a non-added event\&.
+.PP
+\fBSee Also:\fP
+.RS 4
+\fBevent_enable_debug_mode()\fP 
+.RE
+.PP
+
+.SS "int event_del (struct \fBevent\fP *)"
+
+.PP
+Remove an event from the set of monitored events\&. The function \fBevent_del()\fP will cancel the event in the argument ev\&. If the event has already executed or has never been added the call will have no effect\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIev\fP an event struct to be removed from the working set 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+0 if successful, or -1 if an error occurred 
+.RE
+.PP
+\fBSee Also:\fP
+.RS 4
+\fBevent_add()\fP 
+.RE
+.PP
+
+.SS "void event_enable_debug_mode (void)"
+
+.PP
+Enable some relatively expensive debugging checks in Libevent that would normally be turned off\&. Generally, these checks cause code that would otherwise crash mysteriously to fail earlier with an assertion failure\&. Note that this method MUST be called before any events or event_bases have been created\&.
+.PP
+Debug mode can currently catch the following errors: An event is re-assigned while it is added Any function is called on a non-assigned event
+.PP
+Note that debugging mode uses memory to track every event that has been initialized (via event_assign, event_set, or event_new) but not yet released (via event_free or event_debug_unassign)\&. If you want to use debug mode, and you find yourself running out of memory, you will need to use event_debug_unassign to explicitly stop tracking events that are no longer considered set-up\&.
+.PP
+\fBSee Also:\fP
+.RS 4
+\fBevent_debug_unassign()\fP 
+.RE
+.PP
+
+.SS "void event_free (struct \fBevent\fP *)"
+
+.PP
+Deallocate a struct event * returned by \fBevent_new()\fP\&. If the event is pending or active, first make it non-pending and non-active\&. 
+.SS "void event_get_assignment (const struct \fBevent\fP *event, struct \fBevent_base\fP **base_out, \fBevutil_socket_t\fP *fd_out, short *events_out, \fBevent_callback_fn\fP *callback_out, void **arg_out)"
+
+.PP
+Extract \fIall\fP of arguments given to construct a given event\&. The \fBevent_base\fP is copied into *base_out, the fd is copied into *fd_out, and so on\&.
+.PP
+If any of the '_out' arguments is NULL, it will be ignored\&. 
+.SS "size_t event_get_struct_event_size (void)"
+
+.PP
+Return the size of struct event that the Libevent library was compiled with\&. This will be NO GREATER than sizeof(struct event) if you're running with the same version of Libevent that your application was built with, but otherwise might not\&.
+.PP
+Note that it might be SMALLER than sizeof(struct event) if some future version of Libevent adds extra padding to the end of struct event\&. We might do this to help ensure ABI-compatibility between different versions of Libevent\&. 
+.SS "const char** event_get_supported_methods (void)"
+
+.PP
+Gets all event notification mechanisms supported by Libevent\&. This functions returns the event mechanism in order preferred by Libevent\&. Note that this list will include all backends that Libevent has compiled-in support for, and will not necessarily check your OS to see whether it has the required resources\&.
+.PP
+\fBReturns:\fP
+.RS 4
+an array with pointers to the names of support methods\&. The end of the array is indicated by a NULL pointer\&. If an error is encountered NULL is returned\&. 
+.RE
+.PP
+
+.SS "const char* event_get_version (void)"
+
+.PP
+Get the Libevent version\&. Note that this will give you the version of the library that you're currently linked against, not the version of the headers that you've compiled against\&.
+.PP
+\fBReturns:\fP
+.RS 4
+a string containing the version number of Libevent 
+.RE
+.PP
+
+.SS "ev_uint32_t event_get_version_number (void)"
+
+.PP
+Return a numeric representation of Libevent's version\&. Note that this will give you the version of the library that you're currently linked against, not the version of the headers you've used to compile\&.
+.PP
+The format uses one byte each for the major, minor, and patchlevel parts of the version number\&. The low-order byte is unused\&. For example, version 2\&.0\&.1-alpha has a numeric representation of 0x02000100 
+.SS "int event_initialized (const struct \fBevent\fP *ev)"
+
+.PP
+Test if an event structure might be initialized\&. The \fBevent_initialized()\fP function can be used to check if an event has been initialized\&.
+.PP
+Warning: This function is only useful for distinguishing a a zeroed-out piece of memory from an initialized event, it can easily be confused by uninitialized memory\&. Thus, it should ONLY be used to distinguish an initialized event from zero\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIev\fP an event structure to be tested 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+1 if the structure might be initialized, or 0 if it has not been initialized 
+.RE
+.PP
+
+.SS "struct \fBevent\fP* event_new (struct \fBevent_base\fP *, \fBevutil_socket_t\fP, short, \fBevent_callback_fn\fP, void *)\fC [read]\fP"
+
+.PP
+Allocate and asssign a new event structure, ready to be added\&. The function \fBevent_new()\fP returns a new event that can be used in future calls to \fBevent_add()\fP and \fBevent_del()\fP\&. The fd and events arguments determine which conditions will trigger the event; the callback and callback_arg arguments tell Libevent what to do when the event becomes active\&.
+.PP
+If events contains one of EV_READ, EV_WRITE, or EV_READ|EV_WRITE, then fd is a file descriptor or socket that should get monitored for readiness to read, readiness to write, or readiness for either operation (respectively)\&. If events contains EV_SIGNAL, then fd is a signal number to wait for\&. If events contains none of those flags, then the event can be triggered only by a timeout or by manual activation with \fBevent_active()\fP: In this case, fd must be -1\&.
+.PP
+The EV_PERSIST flag can also be passed in the events argument: it makes \fBevent_add()\fP persistent until \fBevent_del()\fP is called\&.
+.PP
+The EV_ET flag is compatible with EV_READ and EV_WRITE, and supported only by certain backends\&. It tells Libevent to use edge-triggered events\&.
+.PP
+The EV_TIMEOUT flag has no effect here\&.
+.PP
+It is okay to have multiple events all listening on the same fds; but they must either all be edge-triggered, or all not be edge triggerd\&.
+.PP
+When the event becomes active, the event loop will run the provided callbuck function, with three arguments\&. The first will be the provided fd value\&. The second will be a bitfield of the events that triggered: EV_READ, EV_WRITE, or EV_SIGNAL\&. Here the EV_TIMEOUT flag indicates that a timeout occurred, and EV_ET indicates that an edge-triggered event occurred\&. The third event will be the callback_arg pointer that you provide\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIbase\fP the event base to which the event should be attached\&. 
+.br
+\fIfd\fP the file descriptor or signal to be monitored, or -1\&. 
+.br
+\fIevents\fP desired events to monitor: bitfield of EV_READ, EV_WRITE, EV_SIGNAL, EV_PERSIST, EV_ET\&. 
+.br
+\fIcallback\fP callback function to be invoked when the event occurs 
+.br
+\fIcallback_arg\fP an argument to be passed to the callback function
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+a newly allocated struct event that must later be freed with \fBevent_free()\fP\&. 
+.RE
+.PP
+\fBSee Also:\fP
+.RS 4
+\fBevent_free()\fP, \fBevent_add()\fP, \fBevent_del()\fP, \fBevent_assign()\fP 
+.RE
+.PP
+
+.SS "int event_pending (const struct \fBevent\fP *ev, shortevents, struct timeval *tv)"
+
+.PP
+Checks if a specific event is pending or scheduled\&. \fBParameters:\fP
+.RS 4
+\fIev\fP an event struct previously passed to \fBevent_add()\fP 
+.br
+\fIevents\fP the requested event type; any of EV_TIMEOUT|EV_READ| EV_WRITE|EV_SIGNAL 
+.br
+\fItv\fP if this field is not NULL, and the event has a timeout, this field is set to hold the time at which the timeout will expire\&.
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+true if the event is pending on any of the events in 'what', (that is to say, it has been added), or 0 if the event is not added\&. 
+.RE
+.PP
+
+.SS "int event_priority_set (struct \fBevent\fP *, int)"
+
+.PP
+Assign a priority to an event\&. \fBParameters:\fP
+.RS 4
+\fIev\fP an event struct 
+.br
+\fIpriority\fP the new priority to be assigned 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+0 if successful, or -1 if an error occurred 
+.RE
+.PP
+\fBSee Also:\fP
+.RS 4
+\fBevent_priority_init()\fP 
+.RE
+.PP
+
+.SS "int event_reinit (struct \fBevent_base\fP *base)"
+
+.PP
+Reinitialize the event base after a fork\&. Some event mechanisms do not survive across fork\&. The event base needs to be reinitialized with the \fBevent_reinit()\fP function\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIbase\fP the event base that needs to be re-initialized 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+0 if successful, or -1 if some events could not be re-added\&. 
+.RE
+.PP
+\fBSee Also:\fP
+.RS 4
+\fBevent_base_new()\fP 
+.RE
+.PP
+
+.SS "void event_set_fatal_callback (\fBevent_fatal_cb\fPcb)"
+
+.PP
+Override Libevent's behavior in the event of a fatal internal error\&. By default, Libevent will call exit(1) if a programming error makes it impossible to continue correct operation\&. This function allows you to supply another callback instead\&. Note that if the function is ever invoked, something is wrong with your program, or with Libevent: any subsequent calls to Libevent may result in undefined behavior\&.
+.PP
+Libevent will (almost) always log an _EVENT_LOG_ERR message before calling this function; look at the last log message to see why Libevent has died\&. 
+.SS "void event_set_log_callback (\fBevent_log_cb\fPcb)"
+
+.PP
+Redirect Libevent's log messages\&. \fBParameters:\fP
+.RS 4
+\fIcb\fP a function taking two arguments: an integer severity between _EVENT_LOG_DEBUG and _EVENT_LOG_ERR, and a string\&. If cb is NULL, then the default log is used\&.
+.RE
+.PP
+NOTE: The function you provide \fImust not\fP call any other libevent functionality\&. Doing so can produce undefined behavior\&. 
+.SS "void event_set_mem_functions (void *(*)(size_t sz)malloc_fn, void *(*)(void *ptr, size_t sz)realloc_fn, void(*)(void *ptr)free_fn)"
+
+.PP
+Override the functions that Libevent uses for memory management\&. Usually, Libevent uses the standard libc functions malloc, realloc, and free to allocate memory\&. Passing replacements for those functions to \fBevent_set_mem_functions()\fP overrides this behavior\&.
+.PP
+Note that all memory returned from Libevent will be allocated by the replacement functions rather than by malloc() and realloc()\&. Thus, if you have replaced those functions, it will not be appropriate to free() memory that you get from Libevent\&. Instead, you must use the free_fn replacement that you provided\&.
+.PP
+Note also that if you are going to call this function, you should do so before any call to any Libevent function that does allocation\&. Otherwise, those funtions will allocate their memory using malloc(), but then later free it using your provided free_fn\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fImalloc_fn\fP A replacement for malloc\&. 
+.br
+\fIrealloc_fn\fP A replacement for realloc 
+.br
+\fIfree_fn\fP A replacement for free\&. 
+.RE
+.PP
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for libevent from the source code\&.

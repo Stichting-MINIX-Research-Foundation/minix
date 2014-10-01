@@ -1,0 +1,203 @@
+.TH "event2/thread.h" 3 "Wed Apr 10 2013" "libevent" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+event2/thread.h \- 
+.PP
+Functions for multi-threaded applications using Libevent\&.  
+
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <event2/event-config\&.h>\fP
+.br
+
+.SS "Data Structures"
+
+.in +1c
+.ti -1c
+.RI "struct \fBevthread_condition_callbacks\fP"
+.br
+.RI "\fIThis structure describes the interface a threading library uses for condition variables\&. \fP"
+.ti -1c
+.RI "struct \fBevthread_lock_callbacks\fP"
+.br
+.RI "\fIThis structure describes the interface a threading library uses for locking\&. \fP"
+.in -1c
+.SS "Macros"
+
+.in +1c
+.ti -1c
+.RI "#define \fBEVTHREAD_CONDITION_API_VERSION\fP   1"
+.br
+.ti -1c
+.RI "#define \fBEVTHREAD_LOCK_API_VERSION\fP   1"
+.br
+.ti -1c
+.RI "#define \fBEVTHREAD_USE_PTHREADS_IMPLEMENTED\fP   1"
+.br
+.RI "\fIDefined if Libevent was built with support for \fBevthread_use_pthreads()\fP \fP"
+.ti -1c
+.RI "#define \fBEVTHREAD_USE_WINDOWS_THREADS_IMPLEMENTED\fP   1"
+.br
+.RI "\fIDefined if Libevent was built with support for \fBevthread_use_windows_threads()\fP \fP"
+.in -1c
+.PP
+.RI "\fBFlags passed to lock functions\fP"
+.br
+
+.in +1c
+.in +1c
+.ti -1c
+.RI "#define \fBEVTHREAD_WRITE\fP   0x04"
+.br
+.RI "\fIA flag passed to a locking callback when the lock was allocated as a read-write lock, and we want to acquire or release the lock for writing\&. \fP"
+.ti -1c
+.RI "#define \fBEVTHREAD_READ\fP   0x08"
+.br
+.RI "\fIA flag passed to a locking callback when the lock was allocated as a read-write lock, and we want to acquire or release the lock for reading\&. \fP"
+.ti -1c
+.RI "#define \fBEVTHREAD_TRY\fP   0x10"
+.br
+.RI "\fIA flag passed to a locking callback when we don't want to block waiting for the lock; if we can't get the lock immediately, we will instead return nonzero from the locking callback\&. \fP"
+.in -1c
+.in -1c
+.PP
+.RI "\fBTypes of locks\fP"
+.br
+
+.in +1c
+.in +1c
+.ti -1c
+.RI "#define \fBEVTHREAD_LOCKTYPE_RECURSIVE\fP   1"
+.br
+.RI "\fIA recursive lock is one that can be acquired multiple times at once by the same thread\&. \fP"
+.ti -1c
+.RI "#define \fBEVTHREAD_LOCKTYPE_READWRITE\fP   2"
+.br
+.in -1c
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "void \fBevthread_enable_lock_debuging\fP (void)"
+.br
+.RI "\fIEnable debugging wrappers around the current lock callbacks\&. \fP"
+.ti -1c
+.RI "int \fBevthread_make_base_notifiable\fP (struct \fBevent_base\fP *base)"
+.br
+.RI "\fIMake sure it's safe to tell an event base to wake up from another thread or a signal handler\&. \fP"
+.ti -1c
+.RI "int \fBevthread_set_condition_callbacks\fP (const struct \fBevthread_condition_callbacks\fP *)"
+.br
+.RI "\fISets a group of functions that Libevent should use for condition variables\&. \fP"
+.ti -1c
+.RI "void \fBevthread_set_id_callback\fP (unsigned long(*id_fn)(void))"
+.br
+.RI "\fISets the function for determining the thread id\&. \fP"
+.ti -1c
+.RI "int \fBevthread_set_lock_callbacks\fP (const struct \fBevthread_lock_callbacks\fP *)"
+.br
+.RI "\fISets a group of functions that Libevent should use for locking\&. \fP"
+.ti -1c
+.RI "int \fBevthread_use_pthreads\fP (void)"
+.br
+.RI "\fISets up Libevent for use with Pthreads locking and thread ID functions\&. \fP"
+.ti -1c
+.RI "int \fBevthread_use_windows_threads\fP (void)"
+.br
+.RI "\fISets up Libevent for use with Windows builtin locking and thread ID functions\&. \fP"
+.in -1c
+.SH "Detailed Description"
+.PP 
+Functions for multi-threaded applications using Libevent\&. 
+
+When using a multi-threaded application in which multiple threads add and delete events from a single event base, Libevent needs to lock its data structures\&.
+.PP
+Like the memory-management function hooks, all of the threading functions \fImust\fP be set up before an \fBevent_base\fP is created if you want the base to use them\&.
+.PP
+Most programs will either be using Windows threads or Posix threads\&. You can configure Libevent to use one of these event_use_windows_threads() or event_use_pthreads() respectively\&. If you're using another threading library, you'll need to configure threading functions manually using \fBevthread_set_lock_callbacks()\fP and \fBevthread_set_condition_callbacks()\fP\&. 
+.SH "Macro Definition Documentation"
+.PP 
+.SS "#define EVTHREAD_LOCKTYPE_RECURSIVE   1"
+
+.PP
+A recursive lock is one that can be acquired multiple times at once by the same thread\&. No other process can allocate the lock until the thread that has been holding it has unlocked it as many times as it locked it\&. 
+.SS "#define EVTHREAD_READ   0x08"
+
+.PP
+A flag passed to a locking callback when the lock was allocated as a read-write lock, and we want to acquire or release the lock for reading\&. 
+.SS "#define EVTHREAD_TRY   0x10"
+
+.PP
+A flag passed to a locking callback when we don't want to block waiting for the lock; if we can't get the lock immediately, we will instead return nonzero from the locking callback\&. 
+.SS "#define EVTHREAD_WRITE   0x04"
+
+.PP
+A flag passed to a locking callback when the lock was allocated as a read-write lock, and we want to acquire or release the lock for writing\&. 
+.SH "Function Documentation"
+.PP 
+.SS "void evthread_enable_lock_debuging (void)"
+
+.PP
+Enable debugging wrappers around the current lock callbacks\&. If Libevent makes one of several common locking errors, exit with an assertion failure\&.
+.PP
+If you're going to call this function, you must do so before any locks are allocated\&. 
+.SS "int evthread_make_base_notifiable (struct \fBevent_base\fP *base)"
+
+.PP
+Make sure it's safe to tell an event base to wake up from another thread or a signal handler\&. \fBReturns:\fP
+.RS 4
+0 on success, -1 on failure\&. 
+.RE
+.PP
+
+.SS "int evthread_set_condition_callbacks (const struct \fBevthread_condition_callbacks\fP *)"
+
+.PP
+Sets a group of functions that Libevent should use for condition variables\&. For full information on the required callback API, see the documentation for the individual members of \fBevthread_condition_callbacks\fP\&.
+.PP
+Note that if you're using Windows or the Pthreads threading library, you probably shouldn't call this function; instead, use \fBevthread_use_windows_threads()\fP or \fBevthread_use_pthreads()\fP if you can\&. 
+.SS "void evthread_set_id_callback (unsigned long(*)(void)id_fn)"
+
+.PP
+Sets the function for determining the thread id\&. \fBParameters:\fP
+.RS 4
+\fIbase\fP the event base for which to set the id function 
+.br
+\fIid_fn\fP the identify function Libevent should invoke to determine the identity of a thread\&. 
+.RE
+.PP
+
+.SS "int evthread_set_lock_callbacks (const struct \fBevthread_lock_callbacks\fP *)"
+
+.PP
+Sets a group of functions that Libevent should use for locking\&. For full information on the required callback API, see the documentation for the individual members of \fBevthread_lock_callbacks\fP\&.
+.PP
+Note that if you're using Windows or the Pthreads threading library, you probably shouldn't call this function; instead, use \fBevthread_use_windows_threads()\fP or evthread_use_posix_threads() if you can\&. 
+.SS "int evthread_use_pthreads (void)"
+
+.PP
+Sets up Libevent for use with Pthreads locking and thread ID functions\&. Unavailable if Libevent is not build for use with pthreads\&. Requires libraries to link against Libevent_pthreads as well as Libevent\&.
+.PP
+\fBReturns:\fP
+.RS 4
+0 on success, -1 on failure\&. 
+.RE
+.PP
+
+.SS "int evthread_use_windows_threads (void)"
+
+.PP
+Sets up Libevent for use with Windows builtin locking and thread ID functions\&. Unavailable if Libevent is not built for Windows\&.
+.PP
+\fBReturns:\fP
+.RS 4
+0 on success, -1 on failure\&. 
+.RE
+.PP
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for libevent from the source code\&.

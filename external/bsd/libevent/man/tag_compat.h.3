@@ -1,0 +1,41 @@
+.TH "event2/tag_compat.h" 3 "Wed Apr 10 2013" "libevent" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+event2/tag_compat.h \- 
+.PP
+Obsolete/deprecated functions from \fBtag\&.h\fP; provided only for backwards compatibility\&.  
+
+.SH SYNOPSIS
+.br
+.PP
+.SS "Macros"
+
+.PP
+.RI "\fBMisnamed functions\fP"
+.br
+\fBDeprecated\fP
+.RS 4
+These macros are deprecated because their names don't follow Libevent's naming conventions\&. Use evtag_encode_int and evtag_encode_int64 instead\&.
+.RE
+.PP
+
+.PP
+.in +1c
+.in +1c
+.ti -1c
+.RI "#define \fBencode_int\fP(evbuf, number)   \fBevtag_encode_int\fP((evbuf), (number))"
+.br
+.ti -1c
+.RI "#define \fBencode_int64\fP(evbuf, number)   evtag_encode_int64((evbuf), (number))"
+.br
+.in -1c
+.in -1c
+.SH "Detailed Description"
+.PP 
+Obsolete/deprecated functions from \fBtag\&.h\fP; provided only for backwards compatibility\&. 
+
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for libevent from the source code\&.

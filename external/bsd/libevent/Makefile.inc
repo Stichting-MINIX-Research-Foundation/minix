@@ -1,0 +1,17 @@
+# $NetBSD: Makefile.inc,v 1.2 2013/04/11 16:59:16 christos Exp $
+
+.include <bsd.own.mk>
+
+LIBEVENT_DIR=	${NETBSDSRCDIR}/external/bsd/libevent
+LIBEVENT_DIST=	${LIBEVENT_DIR}/dist
+
+CPPFLAGS+=	-DHAVE_CONFIG_H
+CPPFLAGS+=	-I${LIBEVENT_DIST} -I${LIBEVENT_DIR}/include
+CPPFLAGS+=	-I${LIBEVENT_DIST}/include
+
+SHLIB_MAJOR=	4
+SHLIB_MINOR=	0
+
+WARNS?=		4
+
+.PATH:		${LIBEVENT_DIST} ${LIBEVENT_DIST}/include

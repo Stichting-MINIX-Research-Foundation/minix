@@ -1,0 +1,121 @@
+.TH "event2/tag.h" 3 "Wed Apr 10 2013" "libevent" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+event2/tag.h \- 
+.PP
+Helper functions for reading and writing tagged data onto buffers\&.  
+
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <event2/event-config\&.h>\fP
+.br
+\fC#include <event2/util\&.h>\fP
+.br
+
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "int \fBevtag_consume\fP (struct \fBevbuffer\fP *evbuf)"
+.br
+.ti -1c
+.RI "void \fBevtag_encode_int\fP (struct \fBevbuffer\fP *evbuf, ev_uint32_t number)"
+.br
+.RI "\fIEncode an integer and store it in an evbuffer\&. \fP"
+.ti -1c
+.RI "void \fBevtag_encode_int64\fP (struct \fBevbuffer\fP *evbuf, ev_uint64_t number)"
+.br
+.ti -1c
+.RI "void \fBevtag_init\fP (void)"
+.br
+.ti -1c
+.RI "void \fBevtag_marshal\fP (struct \fBevbuffer\fP *evbuf, ev_uint32_t tag, const void *data, ev_uint32_t len)"
+.br
+.ti -1c
+.RI "void \fBevtag_marshal_buffer\fP (struct \fBevbuffer\fP *evbuf, ev_uint32_t tag, struct \fBevbuffer\fP *data)"
+.br
+.ti -1c
+.RI "void \fBevtag_marshal_int\fP (struct \fBevbuffer\fP *evbuf, ev_uint32_t tag, ev_uint32_t integer)"
+.br
+.ti -1c
+.RI "void \fBevtag_marshal_int64\fP (struct \fBevbuffer\fP *evbuf, ev_uint32_t tag, ev_uint64_t integer)"
+.br
+.ti -1c
+.RI "void \fBevtag_marshal_string\fP (struct \fBevbuffer\fP *buf, ev_uint32_t tag, const char *string)"
+.br
+.ti -1c
+.RI "void \fBevtag_marshal_timeval\fP (struct \fBevbuffer\fP *evbuf, ev_uint32_t tag, struct timeval *tv)"
+.br
+.ti -1c
+.RI "int \fBevtag_payload_length\fP (struct \fBevbuffer\fP *evbuf, ev_uint32_t *plength)"
+.br
+.ti -1c
+.RI "int \fBevtag_peek\fP (struct \fBevbuffer\fP *evbuf, ev_uint32_t *ptag)"
+.br
+.ti -1c
+.RI "int \fBevtag_peek_length\fP (struct \fBevbuffer\fP *evbuf, ev_uint32_t *plength)"
+.br
+.ti -1c
+.RI "int \fBevtag_unmarshal\fP (struct \fBevbuffer\fP *src, ev_uint32_t *ptag, struct \fBevbuffer\fP *dst)"
+.br
+.ti -1c
+.RI "int \fBevtag_unmarshal_fixed\fP (struct \fBevbuffer\fP *src, ev_uint32_t need_tag, void *data, size_t len)"
+.br
+.ti -1c
+.RI "int \fBevtag_unmarshal_header\fP (struct \fBevbuffer\fP *evbuf, ev_uint32_t *ptag)"
+.br
+.RI "\fIUnmarshals the header and returns the length of the payload\&. \fP"
+.ti -1c
+.RI "int \fBevtag_unmarshal_int\fP (struct \fBevbuffer\fP *evbuf, ev_uint32_t need_tag, ev_uint32_t *pinteger)"
+.br
+.ti -1c
+.RI "int \fBevtag_unmarshal_int64\fP (struct \fBevbuffer\fP *evbuf, ev_uint32_t need_tag, ev_uint64_t *pinteger)"
+.br
+.ti -1c
+.RI "int \fBevtag_unmarshal_string\fP (struct \fBevbuffer\fP *evbuf, ev_uint32_t need_tag, char **pstring)"
+.br
+.ti -1c
+.RI "int \fBevtag_unmarshal_timeval\fP (struct \fBevbuffer\fP *evbuf, ev_uint32_t need_tag, struct timeval *ptv)"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+Helper functions for reading and writing tagged data onto buffers\&. 
+
+
+.SH "Function Documentation"
+.PP 
+.SS "void evtag_encode_int (struct \fBevbuffer\fP *evbuf, ev_uint32_tnumber)"
+
+.PP
+Encode an integer and store it in an evbuffer\&. We encode integers by nybbles; the first nibble contains the number of significant nibbles - 1; this allows us to encode up to 64-bit integers\&. This function is byte-order independent\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIevbuf\fP evbuffer to store the encoded number 
+.br
+\fInumber\fP a 32-bit integer 
+.RE
+.PP
+
+.SS "int evtag_unmarshal_header (struct \fBevbuffer\fP *evbuf, ev_uint32_t *ptag)"
+
+.PP
+Unmarshals the header and returns the length of the payload\&. \fBParameters:\fP
+.RS 4
+\fIevbuf\fP the buffer from which to unmarshal data 
+.br
+\fIptag\fP a pointer in which the tag id is being stored 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+-1 on failure or the number of bytes in the remaining payload\&. 
+.RE
+.PP
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for libevent from the source code\&.

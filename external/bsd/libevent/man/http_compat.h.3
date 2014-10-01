@@ -1,0 +1,92 @@
+.TH "event2/http_compat.h" 3 "Wed Apr 10 2013" "libevent" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+event2/http_compat.h \- 
+.PP
+Potentially non-threadsafe versions of the functions in \fBhttp\&.h\fP: provided only for backwards compatibility\&.  
+
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <event2/event-config\&.h>\fP
+.br
+\fC#include <event2/util\&.h>\fP
+.br
+
+.SS "Macros"
+
+.in +1c
+.ti -1c
+.RI "#define \fBevhttp_request_uri\fP   \fBevhttp_request_get_uri\fP"
+.br
+.RI "\fIReturns the request URI\&. \fP"
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "struct evhttp_connection * \fBevhttp_connection_new\fP (const char *address, unsigned short port)"
+.br
+.RI "\fIA connection object that can be used to for making HTTP requests\&. \fP"
+.ti -1c
+.RI "void \fBevhttp_connection_set_base\fP (struct evhttp_connection *evcon, struct \fBevent_base\fP *base)"
+.br
+.RI "\fIAssociates an event base with the connection - can only be called on a freshly created connection object that has not been used yet\&. \fP"
+.ti -1c
+.RI "struct evhttp * \fBevhttp_start\fP (const char *address, unsigned short port)"
+.br
+.RI "\fIStart an HTTP server on the specified address and port\&. \fP"
+.in -1c
+.SH "Detailed Description"
+.PP 
+Potentially non-threadsafe versions of the functions in \fBhttp\&.h\fP: provided only for backwards compatibility\&. 
+
+
+.SH "Function Documentation"
+.PP 
+.SS "struct evhttp_connection* evhttp_connection_new (const char *address, unsigned shortport)\fC [read]\fP"
+
+.PP
+A connection object that can be used to for making HTTP requests\&. The connection object tries to establish the connection when it is given an http request object\&.
+.PP
+\fBDeprecated\fP
+.RS 4
+It does not allow an event base to be specified 
+.RE
+.PP
+
+.SS "void evhttp_connection_set_base (struct evhttp_connection *evcon, struct \fBevent_base\fP *base)"
+
+.PP
+Associates an event base with the connection - can only be called on a freshly created connection object that has not been used yet\&. \fBDeprecated\fP
+.RS 4
+XXXX Why? 
+.RE
+.PP
+
+.SS "struct evhttp* evhttp_start (const char *address, unsigned shortport)\fC [read]\fP"
+
+.PP
+Start an HTTP server on the specified address and port\&. \fBDeprecated\fP
+.RS 4
+It does not allow an event base to be specified
+.RE
+.PP
+.PP
+\fBParameters:\fP
+.RS 4
+\fIaddress\fP the address to which the HTTP server should be bound 
+.br
+\fIport\fP the port number on which the HTTP server should listen 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+an struct evhttp object 
+.RE
+.PP
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for libevent from the source code\&.

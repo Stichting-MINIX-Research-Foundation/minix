@@ -1,0 +1,83 @@
+.TH "deprecated" 3 "Wed Apr 10 2013" "libevent" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+deprecated \- Deprecated List 
+.IP "\fBGlobal \fBevbuffer_readline\fP (struct evbuffer *buffer)\fP" 1c
+This function is deprecated because its behavior is not correct for almost any protocol, and also because it's wholly subsumed by \fBevbuffer_readln()\fP\&. 
+.IP "\fBGlobal \fBevbuffer_setcb\fP (struct evbuffer *buffer, evbuffer_cb cb, void *cbarg)\fP" 1c
+This function is deprecated because it clears all previous callbacks set on the evbuffer, which can cause confusing behavior if multiple parts of the code all want to add their own callbacks on a buffer\&. Instead, use \fBevbuffer_add()\fP, evbuffer_del(), and evbuffer_setflags() to manage your own evbuffer callbacks without interfering with callbacks set by others\&. 
+.IP "\fBGlobal \fBevdns_add_server_port\fP (evutil_socket_t socket, int flags, evdns_request_callback_fn_type callback, void *user_data)\fP" 1c
+This function is deprecated because it does not allow the caller to specify which even_base it uses\&. The recommended function is \fBevdns_add_server_port_with_base()\fP\&. 
+.IP "\fBGlobal \fBevdns_clear_nameservers_and_suspend\fP (void)\fP" 1c
+This function is deprecated because it does not allow the caller to specify which evdns_base it applies to\&. The recommended function is \fBevdns_base_clear_nameservers_and_suspend()\fP\&. 
+.IP "\fBGlobal \fBevdns_count_nameservers\fP (void)\fP" 1c
+This function is deprecated because it does not allow the caller to specify which evdns_base it applies to\&. The recommended function is \fBevdns_base_count_nameservers()\fP\&. 
+.IP "\fBGlobal \fBevdns_get_global_base\fP (void)\fP" 1c
+This function is deprecated because use of the global evdns_base is error-prone\&.  
+.IP "\fBGlobal \fBevdns_init\fP (void)\fP" 1c
+This function is deprecated because it always uses the current event base, and is easily confused by multiple calls to \fBevent_init()\fP, and so is not safe for multithreaded use\&. Additionally, it allocates a global structure that only one thread can use\&. The replacement is \fBevdns_base_new()\fP\&. 
+.IP "\fBGlobal \fBevdns_nameserver_add\fP (unsigned long int address)\fP" 1c
+This function is deprecated because it does not allow the caller to specify which evdns_base it applies to\&. The recommended function is \fBevdns_base_nameserver_add()\fP\&. 
+.IP "\fBGlobal \fBevdns_nameserver_ip_add\fP (const char *ip_as_string)\fP" 1c
+This function is deprecated because it does not allow the caller to specify which evdns_base it applies to\&. The recommended function is \fBevdns_base_nameserver_ip_add()\fP\&. 
+.IP "\fBGlobal \fBevdns_resolv_conf_parse\fP (int flags, const char *const filename)\fP" 1c
+This function is deprecated because it does not allow the caller to specify which evdns_base it applies to\&. The recommended function is \fBevdns_base_resolv_conf_parse()\fP\&. 
+.IP "\fBGlobal \fBevdns_resolve_ipv4\fP (const char *name, int flags, evdns_callback_type callback, void *ptr)\fP" 1c
+This function is deprecated because it does not allow the caller to specify which evdns_base it applies to\&. The recommended function is \fBevdns_base_resolve_ipv4()\fP\&. 
+.IP "\fBGlobal \fBevdns_resolve_reverse\fP (const struct in_addr *in, int flags, evdns_callback_type callback, void *ptr)\fP" 1c
+This function is deprecated because it does not allow the caller to specify which evdns_base it applies to\&. The recommended function is \fBevdns_base_resolve_reverse()\fP\&. 
+.IP "\fBGlobal \fBevdns_resolve_reverse_ipv6\fP (const struct in6_addr *in, int flags, evdns_callback_type callback, void *ptr)\fP" 1c
+This function is deprecated because it does not allow the caller to specify which evdns_base it applies to\&. The recommended function is \fBevdns_base_resolve_reverse_ipv6()\fP\&. 
+.IP "\fBGlobal \fBevdns_resume\fP (void)\fP" 1c
+This function is deprecated because it does not allow the caller to specify which evdns_base it applies to\&. The recommended function is \fBevdns_base_resume()\fP\&. 
+.IP "\fBGlobal \fBevdns_search_add\fP (const char *domain)\fP" 1c
+This function is deprecated because it does not allow the caller to specify which evdns_base it applies to\&. The recommended function is \fBevdns_base_search_add()\fP\&. 
+.IP "\fBGlobal \fBevdns_search_clear\fP (void)\fP" 1c
+This function is deprecated because it does not allow the caller to specify which evdns_base it applies to\&. The recommended function is \fBevdns_base_search_clear()\fP\&.  
+.IP "\fBGlobal \fBevdns_search_ndots_set\fP (const int ndots)\fP" 1c
+This function is deprecated because it does not allow the caller to specify which evdns_base it applies to\&. The recommended function is \fBevdns_base_search_ndots_set()\fP\&. 
+.IP "\fBGlobal \fBevdns_set_option\fP (const char *option, const char *val, int flags)\fP" 1c
+This function is deprecated because it does not allow the caller to specify which evdns_base it applies to\&. The recommended function is \fBevdns_base_set_option()\fP\&. 
+.IP "\fBGlobal \fBevdns_shutdown\fP (int fail_requests)\fP" 1c
+This function is deprecated because it does not allow the caller to specify which evdns_base it applies to\&. The recommended function is evdns_base_shutdown()\&. 
+.IP "\fBFile \fBevent_compat\&.h\fP \fP" 1c
+All functions in this file are by definition deprecated\&.  
+.IP "\fBGlobal \fBevent_dispatch\fP (void)\fP" 1c
+This function is deprecated because it is easily confused by multiple calls to \fBevent_init()\fP, and because it is not safe for multithreaded use\&. The replacement is \fBevent_base_dispatch()\fP\&. 
+.IP "\fBGlobal \fBevent_get_method\fP (void)\fP" 1c
+This function is obsolete, and has been replaced by \fBevent_base_get_method()\fP\&. Its use is deprecated because it relies on the 'current' base configured by \fBevent_init()\fP\&. 
+.IP "\fBGlobal \fBevent_init\fP (void)\fP" 1c
+This function is deprecated because it replaces the 'current' \fBevent_base\fP, and is totally unsafe for multithreaded use\&. The replacement is \fBevent_base_new()\fP\&. 
+.IP "\fBGlobal \fBevent_loop\fP (int)\fP" 1c
+This function is deprecated because it uses the event base from the last call to event_init, and is therefore not safe for multithreaded use\&. The replacement is \fBevent_base_loop()\fP\&. 
+.IP "\fBGlobal \fBevent_loopbreak\fP (void)\fP" 1c
+This function is deprecated because it uses the event base from the last call to event_init, and is therefore not safe for multithreaded use\&. The replacement is \fBevent_base_loopbreak()\fP\&. 
+.IP "\fBGlobal \fBevent_loopexit\fP (const struct timeval *)\fP" 1c
+This function is deprecated because it uses the event base from the last call to event_init, and is therefore not safe for multithreaded use\&. The replacement is \fBevent_base_loopexit()\fP\&. 
+.IP "\fBGlobal \fBevent_once\fP (evutil_socket_t, short, void(*)(evutil_socket_t, short, void *), void *, const struct timeval *)\fP" 1c
+This function is obsolete, and has been replaced by \fBevent_base_once()\fP\&. Its use is deprecated because it relies on the 'current' base configured by \fBevent_init()\fP\&. 
+.IP "\fBGlobal \fBevent_priority_init\fP (int)\fP" 1c
+This function is deprecated because it is easily confused by multiple calls to \fBevent_init()\fP, and because it is not safe for multithreaded use\&. The replacement is \fBevent_base_priority_init()\fP\&. 
+.IP "\fBGlobal \fBevent_set\fP (struct event *, evutil_socket_t, short, void(*)(evutil_socket_t, short, void *), void *)\fP" 1c
+\fBevent_set()\fP is not recommended for new code, because it requires a subsequent call to \fBevent_base_set()\fP to be safe under most circumstances\&. Use \fBevent_assign()\fP or \fBevent_new()\fP instead\&.  
+.IP "\fBGlobal \fBevhttp_connection_new\fP (const char *address, unsigned short port)\fP" 1c
+It does not allow an event base to be specified  
+.IP "\fBGlobal \fBevhttp_connection_set_base\fP (struct evhttp_connection *evcon, struct \fBevent_base\fP *base)\fP" 1c
+XXXX Why?  
+.IP "\fBGlobal \fBevhttp_decode_uri\fP (const char *uri)\fP" 1c
+This function is deprecated; you probably want to use evhttp_get_decoded_uri instead\&. 
+.IP "\fBGlobal \fBevhttp_parse_query\fP (const char *uri, struct evkeyvalq *headers)\fP" 1c
+This function is deprecated as of Libevent 2\&.0\&.9\&. Use evhttp_uri_parse and evhttp_parse_query_str instead\&. 
+.IP "\fBGlobal \fBevhttp_start\fP (const char *address, unsigned short port)\fP" 1c
+It does not allow an event base to be specified 
+.IP "\fBGroup \fBMisnamed functions\fP \fP" 1c
+These macros are deprecated because their names don't follow Libevent's naming conventions\&. Use evtag_encode_int and evtag_encode_int64 instead\&. 
+.IP "\fBGroup \fBsignal_* macros\fP \fP" 1c
+These macros are deprecated because their naming is inconsistent with the rest of Libevent\&. Use the evsignal_* macros instead\&.
+.PP
+.IP "\fBGroup \fBtimeout_* macros\fP \fP" 1c
+These macros are deprecated because their naming is inconsistent with the rest of Libevent\&. Use the evtimer_* macros instead\&.
+.PP
+.PP
+

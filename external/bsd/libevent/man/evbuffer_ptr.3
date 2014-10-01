@@ -1,0 +1,41 @@
+.TH "evbuffer_ptr" 3 "Wed Apr 10 2013" "libevent" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+evbuffer_ptr \- 
+.PP
+Pointer to a position within an evbuffer\&.  
+
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fC#include <buffer\&.h>\fP
+.SS "Data Fields"
+
+.in +1c
+.ti -1c
+.RI "struct {"
+.br
+.ti -1c
+.RI "   void * \fBchain\fP"
+.br
+.ti -1c
+.RI "   size_t \fBpos_in_chain\fP"
+.br
+.ti -1c
+.RI "} \fB_internal\fP"
+.br
+.ti -1c
+.RI "ev_ssize_t \fBpos\fP"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+Pointer to a position within an evbuffer\&. 
+
+Used when repeatedly searching through a buffer\&. Calling any function that modifies or re-packs the buffer contents may invalidate all evbuffer_ptrs for that buffer\&. Do not modify these values except with evbuffer_ptr_set\&. 
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for libevent from the source code\&.

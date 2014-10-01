@@ -1,0 +1,116 @@
+.TH "event2/bufferevent_ssl.h" 3 "Wed Apr 10 2013" "libevent" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+event2/bufferevent_ssl.h \- 
+.PP
+OpenSSL support for bufferevents\&.  
+
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <event2/event-config\&.h>\fP
+.br
+\fC#include <event2/bufferevent\&.h>\fP
+.br
+\fC#include <event2/util\&.h>\fP
+.br
+
+.SS "Enumerations"
+
+.in +1c
+.ti -1c
+.RI "enum \fBbufferevent_ssl_state\fP { \fBBUFFEREVENT_SSL_OPEN\fP = 0, \fBBUFFEREVENT_SSL_CONNECTING\fP = 1, \fBBUFFEREVENT_SSL_ACCEPTING\fP = 2 }"
+.br
+.RI "\fIThe state of an SSL object to be used when creating a new SSL bufferevent\&. \fP"
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "unsigned long \fBbufferevent_get_openssl_error\fP (struct \fBbufferevent\fP *bev)"
+.br
+.RI "\fIReturn the most recent OpenSSL error reported on an SSL bufferevent\&. \fP"
+.ti -1c
+.RI "struct \fBbufferevent\fP * \fBbufferevent_openssl_filter_new\fP (struct \fBevent_base\fP *base, struct \fBbufferevent\fP *underlying, struct ssl_st *ssl, enum \fBbufferevent_ssl_state\fP state, int options)"
+.br
+.RI "\fICreate a new SSL bufferevent to send its data over another bufferevent\&. \fP"
+.ti -1c
+.RI "struct ssl_st * \fBbufferevent_openssl_get_ssl\fP (struct \fBbufferevent\fP *bufev)"
+.br
+.RI "\fIReturn the underlying openssl SSL * object for an SSL bufferevent\&. \fP"
+.ti -1c
+.RI "struct \fBbufferevent\fP * \fBbufferevent_openssl_socket_new\fP (struct \fBevent_base\fP *base, \fBevutil_socket_t\fP fd, struct ssl_st *ssl, enum \fBbufferevent_ssl_state\fP state, int options)"
+.br
+.RI "\fICreate a new SSL bufferevent to send its data over an SSL * on a socket\&. \fP"
+.ti -1c
+.RI "int \fBbufferevent_ssl_renegotiate\fP (struct \fBbufferevent\fP *bev)"
+.br
+.RI "\fITells a bufferevent to begin SSL renegotiation\&. \fP"
+.in -1c
+.SH "Detailed Description"
+.PP 
+OpenSSL support for bufferevents\&. 
+
+
+.SH "Function Documentation"
+.PP 
+.SS "unsigned long bufferevent_get_openssl_error (struct \fBbufferevent\fP *bev)"
+
+.PP
+Return the most recent OpenSSL error reported on an SSL bufferevent\&. 
+.SS "struct \fBbufferevent\fP* bufferevent_openssl_filter_new (struct \fBevent_base\fP *base, struct \fBbufferevent\fP *underlying, struct ssl_st *ssl, enum \fBbufferevent_ssl_state\fPstate, intoptions)\fC [read]\fP"
+
+.PP
+Create a new SSL bufferevent to send its data over another bufferevent\&. \fBParameters:\fP
+.RS 4
+\fIbase\fP An \fBevent_base\fP to use to detect reading and writing\&. It must also be the base for the underlying bufferevent\&. 
+.br
+\fIunderlying\fP A socket to use for this SSL 
+.br
+\fIssl\fP A SSL* object from openssl\&. 
+.br
+\fIstate\fP The current state of the SSL connection 
+.br
+\fIoptions\fP One or more bufferevent_options 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+A new bufferevent on success, or NULL on failure 
+.RE
+.PP
+
+.SS "struct ssl_st* bufferevent_openssl_get_ssl (struct \fBbufferevent\fP *bufev)\fC [read]\fP"
+
+.PP
+Return the underlying openssl SSL * object for an SSL bufferevent\&. 
+.SS "struct \fBbufferevent\fP* bufferevent_openssl_socket_new (struct \fBevent_base\fP *base, \fBevutil_socket_t\fPfd, struct ssl_st *ssl, enum \fBbufferevent_ssl_state\fPstate, intoptions)\fC [read]\fP"
+
+.PP
+Create a new SSL bufferevent to send its data over an SSL * on a socket\&. \fBParameters:\fP
+.RS 4
+\fIbase\fP An \fBevent_base\fP to use to detect reading and writing 
+.br
+\fIfd\fP A socket to use for this SSL 
+.br
+\fIssl\fP A SSL* object from openssl\&. 
+.br
+\fIstate\fP The current state of the SSL connection 
+.br
+\fIoptions\fP One or more bufferevent_options 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+A new bufferevent on success, or NULL on failure\&. 
+.RE
+.PP
+
+.SS "int bufferevent_ssl_renegotiate (struct \fBbufferevent\fP *bev)"
+
+.PP
+Tells a bufferevent to begin SSL renegotiation\&. 
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for libevent from the source code\&.
