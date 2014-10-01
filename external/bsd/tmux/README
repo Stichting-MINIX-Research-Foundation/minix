@@ -1,0 +1,15 @@
+To update tmux to a new version:
+
+- Build the package from pkgsrc and write down all -D flags passed to the
+  compiler.  Autoconf is not generating a config.h file, so this is the
+  best we can do to get the build-time settings in place.
+- Use prepare-import.sh to regenerate the dist directory.
+- Update usr.bin/tmux/Makefile to sync the CPPFLAGS to the list of -D flags
+  gathered earlier on.
+- Update the list of source files in usr.bin/tmux/Makefile with the new
+  dist/*.c listing.
+- cvs import the contents of the new dist directory.
+- Fix merge conflicts, if any.
+- Commit the changes to the reachover Makefiles.
+- Update doc/3RDPARTY with the new tmux version.
+- Add a note to doc/CHANGES about the new version.

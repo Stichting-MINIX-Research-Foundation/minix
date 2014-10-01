@@ -162,7 +162,6 @@
 ./usr/share/doc/kyua-atf-compat
 ./usr/share/doc/kyua-cli
 ./usr/share/doc/kyua-testers
-./usr/share/examples
 ./usr/share/examples/atf
 ./usr/share/examples/kyua-cli
 ./usr/share/examples/lutok
