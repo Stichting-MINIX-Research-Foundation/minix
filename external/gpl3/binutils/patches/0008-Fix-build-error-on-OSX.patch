@@ -1,0 +1,40 @@
+From aff3cc514eff051c4c4a838d6c927c816733b01a Mon Sep 17 00:00:00 2001
+From: Thomas Veerman <tveerman@gmail.com>
+Date: Fri, 10 Oct 2014 12:17:39 +0200
+Subject: [PATCH] Fix build error on OSX
+
+When building Gold on OSX 10.9 and Clang 6.0, the build process fails
+with the error:
+
+    In file included from /Users/thomas/minix/tools/binutils/../../external/gpl3/binutils/dist/gold/binary.cc:31:
+    In file included from /Users/thomas/minix/tools/binutils/../../external/gpl3/binutils/dist/gold/stringpool.h:23:
+    In file included from /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/../include/c++/v1/string:438:
+    In file included from /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/../include/c++/v1/cwchar:107:
+    In file included from /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/../include/c++/v1/cwctype:54:
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/../include/c++/v1/cctype:51:72: error: use of undeclared identifier 'do_not_use_isalnum_with_safe_ctype'
+    inline _LIBCPP_INLINE_VISIBILITY int __libcpp_isalnum(int __c) {return isalnum(__c);}
+
+Signed-off-by: Thomas Veerman <tveerman@gmail.com>
+---
+ gold/binary.cc | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/gold/binary.cc b/gold/binary.cc
+index 4dab52c..77a78f0 100644
+--- a/gold/binary.cc
++++ b/gold/binary.cc
+@@ -24,10 +24,10 @@
+ 
+ #include <cerrno>
+ #include <cstring>
++#include "stringpool.h"
+ #include "safe-ctype.h"
+ 
+ #include "elfcpp.h"
+-#include "stringpool.h"
+ #include "fileread.h"
+ #include "output.h"
+ #include "binary.h"
+-- 
+1.7.12.4 (Apple Git-37)
+
