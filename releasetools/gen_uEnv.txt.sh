@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 #generate a u-boot u-env.
 list="0x80200000 kernel.bin
@@ -22,34 +22,34 @@ NETBOOT="no"
 BOOT="mmcbootcmd"
 
 #default for the beagleboard-xM
-CONSOLE=tty02 
+CONSOLE=tty02
 #verbosity
 VERBOSE=0
 HZ=1000
 
 while getopts "c:v:h:p:n?" c
 do
-        case "$c" in
-        \?)
-                echo "Usage: $0 [-p netboot_prefix] -n [-c consoletty] [-v level] " >&2
-                exit 1
-        	;;
-        n)
+	case "$c" in
+	\?)
+		echo "Usage: $0 [-p netboot_prefix] -n [-c consoletty] [-v level] " >&2
+		exit 1
+		;;
+	n)
 		# genrate netbooting uEnv.txt
-                BOOT="netbootcmd"
-                NETBOOT="yes"
+		BOOT="netbootcmd"
+		NETBOOT="yes"
 		;;
-        p)
-                NETBOOT_PREFIX=$OPTARG
+	p)
+		NETBOOT_PREFIX=$OPTARG
 		;;
-        c)
-                CONSOLE=$OPTARG
+	c)
+		CONSOLE=$OPTARG
 		;;
-        v)
-                VERBOSE=$OPTARG
+	v)
+		VERBOSE=$OPTARG
 		;;
-        h)
-                # system hz
+	h)
+		# system hz
 		HZ=$OPTARG
 		;;
 	esac
@@ -60,7 +60,7 @@ fill_cmd() {
 	#prefix is an optional directory containing the ending /
 	load=$1
 	prefix=$2
-	export IFS=" " 
+	export IFS=" "
 	echo $list | while true
 	do
 		if ! read -r mem addr
@@ -78,9 +78,9 @@ echo "uenvcmd=run $BOOT"
 echo "bootargs=console=$CONSOLE rootdevname=c0d0p1 verbose=$VERBOSE hz=$HZ"
 echo
 echo 'bootminix=setenv bootargs \$bootargs board_name=\$board_name ; echo \$bootargs; go  0x80200000 \\\"$bootargs\\\"'
-echo 
+echo
 echo "mmcbootcmd=echo starting from MMC ; mmc part 0; $(fill_cmd "fatload mmc 0:1" "") ; run bootminix"
-echo 
+echo
 echo "# Netbooting."
 echo "serverip=192.168.12.10"
 echo "ipaddr=192.168.12.62"
