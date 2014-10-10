@@ -79,7 +79,7 @@ HOME_START=$(($USR_START + $USR_SIZE))
 case $(uname -s) in
 Darwin)
 	MKFS_VFAT_CMD=newfs_msdos
-	MKFS_VFAT_OPTS='-h 64 -u 32 -S 512 -s ${FAT_SIZE} -o 0'
+	MKFS_VFAT_OPTS="-h 64 -u 32 -S 512 -s ${FAT_SIZE} -o 0"
 ;;
 FreeBSD)
 	MKFS_VFAT_CMD=newfs_msdos
