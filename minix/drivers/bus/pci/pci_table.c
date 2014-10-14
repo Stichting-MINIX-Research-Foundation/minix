@@ -14,10 +14,9 @@ See the Linux PCI ID Repository <http://pciids.sourceforge.net/>.
  */
 
 #include <minix/drivers.h>
+#include <minix/rs.h>
+
 #include "pci.h"
-#if __minix_vmd
-#include "config.h"
-#endif
 
 struct pci_vendor pci_vendor_table[]=
 {

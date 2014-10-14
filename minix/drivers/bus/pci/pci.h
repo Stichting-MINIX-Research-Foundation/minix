@@ -4,36 +4,23 @@ pci.h
 Created:	Jan 2000 by Philip Homburg <philip@cs.vu.nl>
 */
 
-#include <minix/drivers.h>
-#include <minix/driver.h>
-#include <minix/rs.h>
-
-/* tempory functions: to be replaced later (see pci_intel.h) */
-unsigned pci_inb(u16_t port);
-unsigned pci_inw(u16_t port);
-unsigned pci_inl(u16_t port);
-
-void pci_outb(u16_t port, u8_t value);
-void pci_outw(u16_t port, u16_t value);
-void pci_outl(u16_t port, u32_t value);
-
 struct pci_vendor
 {
 	u16_t vid;
-	char *name;
+	const char *name;
 };
 
 struct pci_device
 {
 	u16_t vid;
 	u16_t did;
-	char *name;
+	const char *name;
 };
 
 struct pci_baseclass
 {
 	u8_t baseclass;
-	char *name;
+	const char *name;
 };
 
 struct pci_subclass
@@ -41,7 +28,7 @@ struct pci_subclass
 	u8_t baseclass;
 	u8_t subclass;
 	u16_t infclass;
-	char *name;
+	const char *name;
 };
 
 struct pci_intel_ctrl
@@ -83,6 +70,8 @@ struct pci_acl
 /* Still needed? */
 #define PCI_AGPB_VIA	3	/* VIA compatible AGP bridge */
 
+extern int debug;
+
 extern struct pci_vendor pci_vendor_table[];
 extern struct pci_device pci_device_table[];
 extern struct pci_baseclass pci_baseclass_table[];
@@ -92,24 +81,36 @@ extern struct pci_intel_ctrl pci_intel_ctrl[];
 #endif
 extern struct pci_isabridge pci_isabridge[];
 extern struct pci_pcibridge pci_pcibridge[];
+extern struct pci_acl pci_acl[NR_DRIVERS];
 
 /* Function prototypes. */
 int sef_cb_init_fresh(int type, sef_init_info_t *info);
 int map_service(struct rprocpub *rpub);
-int pci_reserve_a(int devind, endpoint_t proc, struct rs_pci *aclp);
-void pci_release(endpoint_t proc);
-int pci_first_dev_a(struct rs_pci *aclp, int *devindp, u16_t *vidp,
+
+int _pci_reserve(int devind, endpoint_t proc, struct rs_pci *aclp);
+void _pci_release(endpoint_t proc);
+
+int _pci_first_dev(struct rs_pci *aclp, int *devindp, u16_t *vidp,
 	u16_t *didp);
-int pci_next_dev_a(struct rs_pci *aclp, int *devindp, u16_t *vidp, u16_t
+int _pci_next_dev(struct rs_pci *aclp, int *devindp, u16_t *vidp, u16_t
 	*didp);
+int _pci_find_dev(u8_t bus, u8_t dev, u8_t func, int *devindp);
 
-int pci_attr_r8_s(int devind, int port, u8_t *vp);
-int pci_attr_r32_s(int devind, int port, u32_t *vp);
-int pci_get_bar_s(int devind, int port, u32_t *base, u32_t *size, int
+void _pci_rescan_bus(u8_t busnr);
+const char *_pci_dev_name(u16_t vid, u16_t did);
+
+
+int _pci_get_bar(int devind, int port, u32_t *base, u32_t *size, int
 	*ioflag);
-int pci_slot_name_s(int devind, char **cpp);
-int pci_ids_s(int devind, u16_t *vidp, u16_t *didp);
+int _pci_slot_name(int devind, char **cpp);
+int _pci_ids(int devind, u16_t *vidp, u16_t *didp);
 
-/*
- * $PchId: pci.h,v 1.4 2001/12/06 20:21:22 philip Exp $
- */
+/* PCI Config Read functions */
+int _pci_attr_r8(int devind, int port, u8_t *vp);
+int _pci_attr_r16(int devind, int port, u16_t *vp);
+int _pci_attr_r32(int devind, int port, u32_t *vp);
+
+/* PCI Config Write functions */
+int _pci_attr_w8(int devind, int port, u8_t value);
+int _pci_attr_w16(int devind, int port, u16_t value);
+int _pci_attr_w32(int devind, int port, u32_t value);
