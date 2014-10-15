@@ -830,6 +830,19 @@
 ./usr/include/dev			minix-sys
 ./usr/include/dev/i2c			minix-sys
 ./usr/include/dev/i2c/i2c_io.h		minix-sys
+./usr/include/dev/pci			minix-sys
+./usr/include/dev/pci/amrio.h		minix-sys
+./usr/include/dev/pci/amrreg.h		minix-sys
+./usr/include/dev/pci/if_lmc.h		minix-sys
+./usr/include/dev/pci/mlyio.h		minix-sys
+./usr/include/dev/pci/mlyreg.h		minix-sys
+./usr/include/dev/pci/pcidevs_data.h	minix-sys
+./usr/include/dev/pci/pcidevs.h		minix-sys
+./usr/include/dev/pci/pciio.h		minix-sys
+./usr/include/dev/pci/pcireg.h		minix-sys
+./usr/include/dev/pci/tgareg.h		minix-sys
+./usr/include/dev/pci/tweio.h		minix-sys
+./usr/include/dev/pci/twereg.h		minix-sys
 ./usr/include/dev/vndvar.h		minix-sys
 ./usr/include/dirent.h			minix-sys
 ./usr/include/disktab.h			minix-sys
@@ -840,33 +853,33 @@
 ./usr/include/errno.h			minix-sys
 ./usr/include/eti.h			minix-sys
 ./usr/include/evdns.h			minix-sys
-./usr/include/event.h			minix-sys
 ./usr/include/event2			minix-sys
-./usr/include/event2/buffer.h		minix-sys
 ./usr/include/event2/buffer_compat.h	minix-sys
-./usr/include/event2/bufferevent.h	minix-sys
 ./usr/include/event2/bufferevent_compat.h	minix-sys
+./usr/include/event2/bufferevent.h	minix-sys
 ./usr/include/event2/bufferevent_ssl.h	minix-sys
 ./usr/include/event2/bufferevent_struct.h	minix-sys
-./usr/include/event2/dns.h		minix-sys
+./usr/include/event2/buffer.h		minix-sys
 ./usr/include/event2/dns_compat.h	minix-sys
+./usr/include/event2/dns.h		minix-sys
 ./usr/include/event2/dns_struct.h	minix-sys
+./usr/include/event2/event_compat.h	minix-sys
 ./usr/include/event2/event-config.h	minix-sys
 ./usr/include/event2/event.h		minix-sys
-./usr/include/event2/event_compat.h	minix-sys
 ./usr/include/event2/event_struct.h	minix-sys
-./usr/include/event2/http.h		minix-sys
 ./usr/include/event2/http_compat.h	minix-sys
+./usr/include/event2/http.h		minix-sys
 ./usr/include/event2/http_struct.h	minix-sys
 ./usr/include/event2/keyvalq_struct.h	minix-sys
 ./usr/include/event2/listener.h		minix-sys
-./usr/include/event2/rpc.h		minix-sys
 ./usr/include/event2/rpc_compat.h	minix-sys
+./usr/include/event2/rpc.h		minix-sys
 ./usr/include/event2/rpc_struct.h	minix-sys
-./usr/include/event2/tag.h		minix-sys
 ./usr/include/event2/tag_compat.h	minix-sys
+./usr/include/event2/tag.h		minix-sys
 ./usr/include/event2/thread.h		minix-sys
 ./usr/include/event2/util.h		minix-sys
+./usr/include/event.h			minix-sys
 ./usr/include/evhttp.h			minix-sys
 ./usr/include/evrpc.h			minix-sys
 ./usr/include/evutil.h			minix-sys
@@ -1517,6 +1530,7 @@
 ./usr/include/objc/thr.h		minix-sys	gcc=45
 ./usr/include/objc/typedstream.h	minix-sys	gcc=45
 ./usr/include/paths.h			minix-sys
+./usr/include/pci.h			minix-sys
 ./usr/include/poll.h			minix-sys
 ./usr/include/ppath			minix-sys
 ./usr/include/ppath/ppath.h		minix-sys
@@ -2077,9 +2091,9 @@
 ./usr/lib/libelf.so			minix-sys
 ./usr/lib/libevent.a			minix-sys
 ./usr/lib/libevent_pic.a		minix-sys
+./usr/lib/libevent.so			minix-sys
 ./usr/lib/libevent.so.4.0		minix-sys
 ./usr/lib/libevent.so.4			minix-sys
-./usr/lib/libevent.so			minix-sys
 ./usr/lib/libexec.a			minix-sys
 ./usr/lib/libexecinfo.a			minix-sys
 ./usr/lib/libexecinfo_pic.a		minix-sys
@@ -2163,6 +2177,11 @@
 ./usr/lib/libobjc.so.3			minix-sys	gcc=45
 ./usr/lib/libopcodes.so.6.0		minix-sys	binutils
 ./usr/lib/libopcodes.so.6		minix-sys	binutils
+./usr/lib/libpci.a			minix-sys
+./usr/lib/libpci_pic.a			minix-sys
+./usr/lib/libpci.so			minix-sys
+./usr/lib/libpci.so.2.0			minix-sys
+./usr/lib/libpci.so.2			minix-sys
 ./usr/lib/libprop.a			minix-sys
 ./usr/lib/libprop_pic.a			minix-sys
 ./usr/lib/libprop.so			minix-sys
@@ -4134,6 +4153,14 @@
 ./usr/man/man3/pair_content.3				minix-sys
 ./usr/man/man3/parsedate.3				minix-sys
 ./usr/man/man3/pause.3					minix-sys
+./usr/man/man3/pci.3			minix-sys
+./usr/man/man3/pcibus_conf_read.3	minix-sys
+./usr/man/man3/pcibus_conf_write.3	minix-sys
+./usr/man/man3/pci_conf_print.3		minix-sys
+./usr/man/man3/pcidev_conf_read.3	minix-sys
+./usr/man/man3/pcidev_conf_write.3	minix-sys
+./usr/man/man3/pci_devinfo.3		minix-sys
+./usr/man/man3/pci_findvendor.3		minix-sys
 ./usr/man/man3/pclose.3					minix-sys
 ./usr/man/man3/pechochar.3				minix-sys
 ./usr/man/man3/perror.3					minix-sys

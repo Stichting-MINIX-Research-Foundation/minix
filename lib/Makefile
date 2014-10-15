@@ -86,7 +86,7 @@ SUBDIR+=	\
 		libbz2 \
 		libcrypt \
 		libm \
-		libprop \
+		libpci libprop \
 		libpuffs librmt \
 		libterminfo \
 		libutil libz

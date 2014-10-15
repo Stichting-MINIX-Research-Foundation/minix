@@ -1,0 +1,164 @@
+.\"	$NetBSD: pci.3,v 1.7 2009/10/23 15:41:58 cegger Exp $
+.\"
+.\" Copyright 2001 Wasabi Systems, Inc.
+.\" All rights reserved.
+.\"
+.\" Written by Jason R. Thorpe for Wasabi Systems, Inc.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"	This product includes software developed for the NetBSD Project by
+.\"	Wasabi Systems, Inc.
+.\" 4. The name of Wasabi Systems, Inc. may not be used to endorse
+.\"    or promote products derived from this software without specific prior
+.\"    written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY WASABI SYSTEMS, INC. ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL WASABI SYSTEMS, INC
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd April 24, 2004
+.Dt PCI 3
+.Os
+.Sh NAME
+.Nm pci
+.Nd library interface for PCI bus access
+.Sh LIBRARY
+.Lb libpci
+.Sh SYNOPSIS
+.In pci.h
+.Ft int
+.Fn pcibus_conf_read "int pcifd" "u_int bus" "u_int dev" "u_int func" \
+"u_int reg" "pcireg_t *valp"
+.Ft int
+.Fn pcibus_conf_write "int pcifd" "u_int bus" "u_int dev" "u_int func" \
+"u_int reg" "pcireg_t val"
+.Ft int
+.Fn pcidev_conf_read "int devfd" "u_int reg" "pcireg_t *valp"
+.Ft int
+.Fn pcidev_conf_write "int devfd" "u_int reg" "pcireg_t val"
+.Ft char *
+.Fn pci_findvendor "pcireg_t id_reg"
+.Ft void
+.Fn pci_devinfo "pcireg_t id_reg" "pcireg_t class_reg" "char *devinfo" "size_t len"
+.Ft void
+.Fn pci_conf_print "int pcifd" "u_int bus" "u_int dev" "u_int func"
+.Sh DESCRIPTION
+The
+.Nm
+library provides support for accessing the PCI bus by user programs.
+.Pp
+These functions are available in the
+.Nm libpci
+library.
+Programs should be linked with
+.Fl lpci .
+.Sh CONFIGURATION SPACE FUNCTIONS
+The following functions are used to access PCI configuration space:
+.Bl -tag -width 4n
+.It Fn pcibus_conf_read
+Access the PCI configuration register
+.Fa reg
+on the device located at
+.Fa bus ,
+.Fa dev ,
+.Fa func ,
+and place the result in
+.Fa *valp .
+.Fa pcifd
+must be an open file descriptor to a PCI bus within the target PCI domain.
+.It Fn pcibus_conf_write
+Write the value specified by
+.Fa val
+into the PCI configuration register
+.Fa reg
+on the device located at
+.Fa bus ,
+.Fa dev ,
+.Fa func .
+.Fa pcifd
+must be an open file descriptor to a PCI bus within the target PCI domain.
+.It Fn pcidev_conf_read
+Access the PCI configuration register
+.Fa reg
+on the device associated with the open file descriptor
+.Fa devfd
+and place the result in
+.Fa *valp .
+.It Fn pcidev_conf_write
+Write the value specified by
+.Fa val
+into the PCI configuration register
+.Fa reg
+on the device associated with the open file descriptor
+.Fa devfd .
+.El
+.Sh MISCELLANEOUS FUNCTIONS
+The following miscellaneous functions are available:
+.Bl -tag -width 4n
+.It Fn pci_findvendor
+Return an ASCII description of the PCI vendor in the
+PCI ID register
+.Fa id_reg .
+.It Fn pci_devinfo
+Return an ASCII description of the PCI vendor, PCI product,
+and PCI class specified by the PCI ID register
+.Fa id_reg
+and PCI class ID register
+.Fa class_reg .
+The description is placed into the buffer pointed to by
+.Fa devinfo ;
+the size of that buffer is specified in
+.Fa len .
+.It Fn pci_conf_print
+Print the PCI configuration information for the device located
+at
+.Fa bus ,
+.Fa dev ,
+.Fa func .
+.Fa pcifd
+must be an open file descriptor to a PCI bus within the target PCI domain.
+.El
+.Sh RETURN VALUES
+The
+.Fn pcibus_conf_read ,
+.Fn pcibus_conf_write ,
+.Fn pcidev_conf_read ,
+and
+.Fn pcidev_conf_write
+functions return 0 on success and -1 on failure.
+.Pp
+The
+.Fn pci_findvendor
+function returns NULL if the PCI vendor description cannot be
+found.
+.Sh SEE ALSO
+.Xr pci 4
+.Sh HISTORY
+The
+.Fn pcibus_conf_read ,
+.Fn pcibus_conf_write ,
+.Fn pcidev_conf_read ,
+.Fn pcidev_conf_write ,
+.Fn pci_findvendor ,
+.Fn pci_devinfo ,
+and
+.Fn pci_conf_print
+functions first appeared in
+.Nx 1.6 .
