@@ -20,6 +20,7 @@ Created:	Jan 2000 by Philip Homburg <philip@cs.vu.nl>
 #include <machine/pci_via.h>
 #include <machine/vmparam.h>
 
+#include <pci.h>
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -452,50 +453,13 @@ get_freebus(void)
 static const char *
 pci_vid_name(u16_t vid)
 {
-	int i;
-
-	for (i= 0; pci_vendor_table[i].name; i++)
-	{
-		if (pci_vendor_table[i].vid == vid)
-			return pci_vendor_table[i].name;
-	}
-	return "unknown";
+	const char *name = pci_findvendor_real(vid);
+	if (NULL == name)
+		return "unknown";
+	else
+		return name;
 }
 
-
-static const char *
-pci_baseclass_name(u8_t baseclass)
-{
-	int i;
-
-	for (i= 0; pci_baseclass_table[i].name; i++)
-	{
-		if (pci_baseclass_table[i].baseclass == baseclass)
-			return pci_baseclass_table[i].name;
-	}
-	return NULL;
-}
-
-static const char *
-pci_subclass_name(u8_t baseclass, u8_t subclass, u8_t infclass)
-{
-	int i;
-
-	for (i= 0; pci_subclass_table[i].name; i++)
-	{
-		if (pci_subclass_table[i].baseclass != baseclass)
-			continue;
-		if (pci_subclass_table[i].subclass != subclass)
-			continue;
-		if (pci_subclass_table[i].infclass != infclass &&
-			pci_subclass_table[i].infclass != (u16_t)-1)
-		{
-			continue;
-		}
-		return pci_subclass_table[i].name;
-	}
-	return NULL;
-}
 
 static void
 print_hyper_cap(int devind, u8_t capptr)
@@ -1660,9 +1624,9 @@ probe_bus(int busind)
 			baseclass= __pci_attr_r8(devind, PCI_BCR);
 			subclass= __pci_attr_r8(devind, PCI_SCR);
 			infclass= __pci_attr_r8(devind, PCI_PIFR);
-			s= pci_subclass_name(baseclass, subclass, infclass);
+			s=  pci_subclass_name(baseclass << 24 | subclass << 16);
 			if (!s)
-				s= pci_baseclass_name(baseclass);
+				s= pci_baseclass_name(baseclass << 24);
 			{
 				if (!s)
 					s= "(unknown class)";
@@ -1858,7 +1822,7 @@ acpi_map_bridge(unsigned int pbnr, unsigned int dev, unsigned int sbnr)
 static void
 do_pcibridge(int busind)
 {
-	int i, devind, busnr;
+	int devind, busnr;
 	int ind, type;
 	u16_t vid, did;
 	u8_t sbusn, baseclass, subclass, infclass, headt;
@@ -1868,12 +1832,6 @@ do_pcibridge(int busind)
 	busnr= pcibus[busind].pb_busnr;
 	for (devind= 0; devind< nr_pcidev; devind++)
 	{
-#if 0
-		printf("do_pcibridge: trying %u.%u.%u\n",
-			pcidev[devind].pd_busnr, pcidev[devind].pd_dev,
-			pcidev[devind].pd_func);
-#endif
-
 		if (pcidev[devind].pd_busnr != busnr)
 		{
 #if 0
@@ -1884,16 +1842,8 @@ do_pcibridge(int busind)
 
 		vid= pcidev[devind].pd_vid;
 		did= pcidev[devind].pd_did;
-		for (i= 0; pci_pcibridge[i].vid != 0; i++)
-		{
-			if (pci_pcibridge[i].vid != vid)
-				continue;
-			if (pci_pcibridge[i].did != did)
-				continue;
-			break;
-		}
-		type= pci_pcibridge[i].type;
-		if (pci_pcibridge[i].vid == 0)
+		/* LSC: The table is empty, so always true...
+		if (pci_pcibridge[i].vid == 0) */
 		{
 			headt= __pci_attr_r8(devind, PCI_HEADT);
 			type= 0;
@@ -2031,26 +1981,8 @@ pci_intel_init()
 	if (OK != (s=sys_outl(PCII_CONFADD, PCII_UNSEL)))
 		printf("PCI: warning, sys_outl failed: %d\n", s);
 
-#if 0
 	if (vid == 0xffff && did == 0xffff)
-		return;	/* Nothing here */
-
-	for (i= 0; pci_intel_ctrl[i].vid; i++)
-	{
-		if (pci_intel_ctrl[i].vid == vid &&
-			pci_intel_ctrl[i].did == did)
-		{
-			break;
-		}
-	}
-
-	if (!pci_intel_ctrl[i].vid)
-	{
-		printf("pci_intel_init (warning): unknown PCI-controller:\n"
-			"\tvendor %04X (%s), device %04X\n",
-			vid, pci_vid_name(vid), did);
-	}
-#endif
+		return; /* Nothing here */
 
 	if (nr_pcibus >= NR_PCIBUS)
 		panic("too many PCI busses: %d", nr_pcibus);
@@ -2521,17 +2453,8 @@ _pci_slot_name(int devind, char **cpp)
 const char *
 _pci_dev_name(u16_t vid, u16_t did)
 {
-	int i;
 
-	for (i= 0; pci_device_table[i].name; i++)
-	{
-		if (pci_device_table[i].vid == vid &&
-			pci_device_table[i].did == did)
-		{
-			return pci_device_table[i].name;
-		}
-	}
-	return NULL;
+	return pci_findproduct_real(did << 16 | vid);
 }
 
 /*===========================================================================*

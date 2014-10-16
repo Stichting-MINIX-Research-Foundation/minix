@@ -32,6 +32,20 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if defined(__minix) && defined(_PCI_SERVER)
+/* This is a quick hack, simple copy of the file, until we can use it as is. */
+#include <sys/types.h>
+
+#include <stdint.h>
+#include <stdbool.h>
+#include <stdio.h>
+
+#include <pci.h>
+#include <dev/pci/pcireg.h>
+
+const char *pci_baseclass_name(pcireg_t reg);
+const char *pci_subclass_name(pcireg_t reg);
+#else
 /*
  * PCI autoconfiguration support functions.
  *
@@ -62,6 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.106 2013/08/05 07:53:31 msaitoh Exp $
 #ifdef _KERNEL
 #include <dev/pci/pcivar.h>
 #endif
+#endif /* defined(__minix) && defined(_PCI_SERVER) */
 
 /*
  * Descriptions of known PCI classes and subclasses.
@@ -295,6 +310,44 @@ static const struct pci_class pci_class[] = {
 	    NULL,						},
 };
 
+#if defined(__minix) && defined(_PCI_SERVER)
+const char *
+pci_baseclass_name(pcireg_t reg)
+{
+	const struct pci_class *classp = pci_class;
+
+	while (classp->name != NULL) {
+		if (PCI_CLASS(reg) == classp->val)
+			break;
+		classp++;
+	}
+
+	return classp->name;
+}
+
+const char *
+pci_subclass_name(pcireg_t reg)
+{
+	const struct pci_class *classp = pci_class;
+	const struct pci_class *subclassp;
+
+	while (classp->name != NULL) {
+		if (PCI_CLASS(reg) == classp->val)
+			break;
+		classp++;
+	}
+
+	subclassp = (classp->name != NULL) ? classp->subclasses : NULL;
+	while (subclassp && subclassp->name != NULL) {
+		if (PCI_SUBCLASS(reg) == subclassp->val)
+			break;
+		subclassp++;
+	}
+
+	return subclassp->name;
+}
+
+#else
 void pci_load_verbose(void);
 
 #if defined(_KERNEL)
@@ -1980,3 +2033,4 @@ pci_conf_print(
 	printf("\n");
 #endif /* _KERNEL */
 }
+#endif /* defined(__minix) && defined(_PCI_SERVER) */
