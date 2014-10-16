@@ -18,7 +18,6 @@
 #include <machine/param.h>
 #include <machine/vm.h>
 #include <machine/vmparam.h>
-#include <sys/vm.h>
 
 #include <lib.h>
 #include <time.h>

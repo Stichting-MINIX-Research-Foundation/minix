@@ -1,3 +1,8 @@
+#include <sys/types.h>
+
+#include <dev/pci/pciio.h>
+
+#include <minix/chardriver.h>
 #include <minix/driver.h>
 #include <minix/rs.h>
 
@@ -6,22 +11,9 @@
 int debug = 0;
 struct pci_acl pci_acl[NR_DRIVERS];
 
-static void
-sef_local_startup()
-{
-  /* Register init callbacks. */
-  sef_setcb_init_fresh(sef_cb_init_fresh);
-  sef_setcb_init_lu(sef_cb_init_fresh);
-  sef_setcb_init_restart(sef_cb_init_fresh);
-
-  /* Register live update callbacks. */
-  sef_setcb_lu_prepare(sef_cb_lu_prepare_always_ready);
-  sef_setcb_lu_state_isvalid(sef_cb_lu_state_isvalid_standard);
-
-  /* Let SEF perform startup. */
-  sef_startup();
-}
-
+/*======================================================================*
+ *				Helpers					*
+ *======================================================================*/
 static struct rs_pci *
 find_acl(int endpoint)
 {
@@ -49,7 +41,6 @@ reply(message *mp, int result)
 	if (r != 0)
 		printf("reply: unable to send to %d: %d\n", mp->m_source, r);
 }
-
 
 static void
 do_init(message *mp)
@@ -527,58 +518,239 @@ do_rescan_bus(message *mp)
 	}
 }
 
+/*======================================================================*
+ *			CharDriver Callbacks				*
+ *======================================================================*/
+static int
+pci_open(devminor_t UNUSED(minor), int UNUSED(access),
+	endpoint_t UNUSED(user_endpt))
+{
+	return OK;
+}
+
+static int
+pci_close(devminor_t UNUSED(minor))
+{
+	return OK;
+}
+
+static int
+pci_ioctl(devminor_t minor, unsigned long request, endpoint_t endpt,
+	cp_grant_id_t grant, int flags, endpoint_t user_endpt, cdev_id_t id)
+{
+	int devind;
+	int r = ENOTTY;
+
+	switch(request)
+	{
+	case PCI_IOC_BDF_CFGREAD:
+	{
+		struct pciio_bdf_cfgreg bdf;
+
+		if ((r = sys_safecopyfrom(endpt, grant, 0, (vir_bytes)&bdf,
+				sizeof(bdf))) != OK)
+			break;
+
+		r = _pci_find_dev(bdf.bus, bdf.device, bdf.function, &devind);
+		if (r != 1) {
+			r = EINVAL;
+			break;
+		}
+
+		if ((r = _pci_attr_r32(devind, bdf.cfgreg.reg,
+					&bdf.cfgreg.val)) != OK)
+			break;
+
+		r = sys_safecopyto(endpt, grant, 0, (vir_bytes)&bdf,
+			sizeof(bdf));
+		break;
+	}
+	case PCI_IOC_BDF_CFGWRITE:
+	{
+		struct pciio_bdf_cfgreg bdf;
+
+		if ((r = sys_safecopyfrom(endpt, grant, 0, (vir_bytes)&bdf,
+				sizeof(bdf))) != OK)
+			break;
+
+		r = _pci_find_dev(bdf.bus, bdf.device, bdf.function, &devind);
+		if (r != 1) {
+			r = EINVAL;
+			break;
+		}
+
+		_pci_attr_w32(devind, bdf.cfgreg.reg, bdf.cfgreg.val);
+		r = OK;
+		break;
+	}
+	case PCI_IOC_BUSINFO:
+		break;
+	case PCI_IOC_MAP:
+	{
+		struct pciio_map map;
+		struct minix_mem_range mr;
+
+		if ((r = sys_safecopyfrom(endpt, grant, 0,
+				(vir_bytes)&map, sizeof(map))) != OK)
+			break;
+
+#if 1
+		mr.mr_base = map.phys_offset;
+		mr.mr_limit = map.phys_offset + map.size - 1;
+
+		r = sys_privctl(user_endpt, SYS_PRIV_ADD_MEM, &mr);
+		if (r != OK)
+		{
+			break;
+		}
+#endif
+
+		map.vaddr_ret = vm_map_phys(user_endpt,
+			(void *)map.phys_offset, map.size);
+		r = sys_safecopyto(endpt, grant, 0, (vir_bytes)&map,
+			sizeof(map));
+		break;
+	}
+	case PCI_IOC_UNMAP:
+	{
+		struct pciio_map map;
+
+		if ((r = sys_safecopyfrom(endpt, grant, 0,
+				(vir_bytes)&map, sizeof(map))) != OK)
+			break;
+
+		r = vm_unmap_phys(user_endpt, map.vaddr, map.size);
+		break;
+	}
+	case PCI_IOC_RESERVE:
+	{
+		struct pciio_acl acl;
+
+		if ((r = sys_safecopyfrom(endpt, grant, 0,
+				(vir_bytes)&acl, sizeof(acl))) != OK)
+			break;
+
+		r = _pci_find_dev(acl.bus, acl.device, acl.function, &devind);
+		if (r != 1) {
+			r = EINVAL;
+			break;
+		}
+
+		r = _pci_grant_access(devind, user_endpt);
+		break;
+	}
+	case PCI_IOC_RELEASE:
+	{
+		struct pciio_acl acl;
+
+		if ((r = sys_safecopyfrom(endpt, grant, 0,
+				(vir_bytes)&acl, sizeof(acl))) != OK)
+			break;
+
+		r = _pci_find_dev(acl.bus, acl.device, acl.function, &devind);
+		if (r != 1) {
+			r = EINVAL;
+			break;
+		}
+
+		_pci_release(endpt);
+		r = OK;
+
+		break;
+	}
+	case PCI_IOC_CFGREAD:
+	case PCI_IOC_CFGWRITE:
+	default:
+		r = ENOTTY;
+	}
+	return r;
+}
+
+static void
+pci_other(message *m, int ipc_status)
+{
+	switch(m->m_type)
+	{
+	case BUSC_PCI_INIT: do_init(m); break;
+	case BUSC_PCI_FIRST_DEV: do_first_dev(m); break;
+	case BUSC_PCI_NEXT_DEV: do_next_dev(m); break;
+	case BUSC_PCI_FIND_DEV: do_find_dev(m); break;
+	case BUSC_PCI_IDS: do_ids(m); break;
+	case BUSC_PCI_RESERVE: do_reserve(m); break;
+	case BUSC_PCI_ATTR_R8: do_attr_r8(m); break;
+	case BUSC_PCI_ATTR_R16: do_attr_r16(m); break;
+	case BUSC_PCI_ATTR_R32: do_attr_r32(m); break;
+	case BUSC_PCI_ATTR_W8: do_attr_w8(m); break;
+	case BUSC_PCI_ATTR_W16: do_attr_w16(m); break;
+	case BUSC_PCI_ATTR_W32: do_attr_w32(m); break;
+	case BUSC_PCI_RESCAN: do_rescan_bus(m); break;
+	case BUSC_PCI_DEV_NAME_S: do_dev_name(m); break;
+	case BUSC_PCI_SLOT_NAME_S: do_slot_name(m); break;
+	case BUSC_PCI_SET_ACL: do_set_acl(m); break;
+	case BUSC_PCI_DEL_ACL: do_del_acl(m); break;
+	case BUSC_PCI_GET_BAR: do_get_bar(m); break;
+	default:
+		printf("PCI: unhandled message from %d, type %d\n",
+			m->m_source, m->m_type);
+		break;
+	}
+}
+
+static struct chardriver driver =
+{
+	.cdr_open	= pci_open,
+	.cdr_close	= pci_close,
+	.cdr_ioctl	= pci_ioctl,
+	.cdr_other	= pci_other,
+};
+
+/*======================================================================*
+ *			SEF Callbacks					*
+ *======================================================================*/
+/* NOTE: sef_cb_init is in pci.c. */
+static void
+sef_local_startup(void)
+{
+	/*
+	 * Register init callbacks. Use the same function for all event types
+	 */
+	sef_setcb_init_fresh(sef_cb_init);
+	sef_setcb_init_lu(sef_cb_init);
+	sef_setcb_init_restart(sef_cb_init);
+
+	/*
+	 * Register live update callbacks.
+	 */
+
+	/* - Agree to update immediately when LU is requested in a valid
+	 * state. */
+	sef_setcb_lu_prepare(sef_cb_lu_prepare_always_ready);
+	/* - Support live update starting from any standard state. */
+	sef_setcb_lu_state_isvalid(sef_cb_lu_state_isvalid_standard);
+
+#if 0
+	/* - Register a custom routine to save the state. */
+	sef_setcb_lu_state_save(sef_cb_lu_state_save);
+#endif
+
+	/* Let SEF perform startup. */
+	sef_startup();
+}
+
+/*======================================================================*
+ *				main					*
+ *======================================================================*/
 int
 main(void)
 {
-	int r;
-	message m;
-	int ipc_status;
-
-	/* SEF local startup. */
+	/*
+	 * Perform initialization.
+	 */
 	sef_local_startup();
 
-	for(;;)
-	{
-		r= driver_receive(ANY, &m, &ipc_status);
-		if (r < 0)
-		{
-			printf("PCI: driver_receive failed: %d\n", r);
-			break;
-		}
-
-		if (is_ipc_notify(ipc_status)) {
-			printf("PCI: got notify from %d\n", m.m_source);
-
-			/* done, get a new message */
-			continue;
-		}
-
-		switch(m.m_type)
-		{
-		case BUSC_PCI_INIT: do_init(&m); break;
-		case BUSC_PCI_FIRST_DEV: do_first_dev(&m); break;
-		case BUSC_PCI_NEXT_DEV: do_next_dev(&m); break;
-		case BUSC_PCI_FIND_DEV: do_find_dev(&m); break;
-		case BUSC_PCI_IDS: do_ids(&m); break;
-		case BUSC_PCI_RESERVE: do_reserve(&m); break;
-		case BUSC_PCI_ATTR_R8: do_attr_r8(&m); break;
-		case BUSC_PCI_ATTR_R16: do_attr_r16(&m); break;
-		case BUSC_PCI_ATTR_R32: do_attr_r32(&m); break;
-		case BUSC_PCI_ATTR_W8: do_attr_w8(&m); break;
-		case BUSC_PCI_ATTR_W16: do_attr_w16(&m); break;
-		case BUSC_PCI_ATTR_W32: do_attr_w32(&m); break;
-		case BUSC_PCI_RESCAN: do_rescan_bus(&m); break;
-		case BUSC_PCI_DEV_NAME_S: do_dev_name(&m); break;
-		case BUSC_PCI_SLOT_NAME_S: do_slot_name(&m); break;
-		case BUSC_PCI_SET_ACL: do_set_acl(&m); break;
-		case BUSC_PCI_DEL_ACL: do_del_acl(&m); break;
-		case BUSC_PCI_GET_BAR: do_get_bar(&m); break;
-		default:
-			printf("PCI: got message from %d, type %d\n",
-				m.m_source, m.m_type);
-			break;
-		}
-	}
-
-	return 0;
+	/*
+	 * Run the main loop.
+	 */
+	chardriver_task(&driver);
+	return OK;
 }

@@ -93,4 +93,28 @@ struct pciio_businfo {
 
 #define	PCI_IOC_BUSINFO		 _IOR('P', 4, struct pciio_businfo)
 
+#if defined(__minix)
+struct pciio_map {
+	int	flags;		/* reserved, must be 0 */
+	u_int	phys_offset;
+	size_t	size;
+	int	readonly;
+	char	reserved[36];	/* reserved, must be 0 */
+	void	*vaddr;
+	void	*vaddr_ret;
+};
+
+#define	PCI_IOC_MAP		_IOWR('P', 100, struct pciio_map)
+#define	PCI_IOC_UNMAP		 _IOW('P', 101, struct pciio_map)
+
+struct pciio_acl {
+	u_int	domain;
+	u_int	bus;
+	u_int	device;
+	u_int	function;
+};
+
+#define	PCI_IOC_RESERVE		 _IOW('P', 102, struct pciio_acl)
+#define	PCI_IOC_RELEASE		 _IOW('P', 103, struct pciio_acl)
+#endif /* defined(__minix) */
 #endif /* _DEV_PCI_PCIIO_H_ */

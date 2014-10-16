@@ -13,7 +13,7 @@ then	if [ -e $ACPI -a -n "`sysenv acpi`" ]
 	then
 		/bin/service -c up $ACPI
 	fi
-	/bin/service -c up /service/pci
+	/bin/service -c up /service/pci -dev /dev/pci
 
 	/bin/service -c up /service/input -dev /dev/kbdmux
 	/bin/service -c up /service/pckbd

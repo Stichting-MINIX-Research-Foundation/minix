@@ -4,24 +4,11 @@ pci.h
 Created:	Jan 2000 by Philip Homburg <philip@cs.vu.nl>
 */
 
-struct pci_intel_ctrl
-{
-	u16_t vid;
-	u16_t did;
-};
-
 struct pci_isabridge
 {
 	u16_t vid;
 	u16_t did;
 	int checkclass;
-	int type;
-};
-
-struct pci_pcibridge
-{
-	u16_t vid;
-	u16_t did;
 	int type;
 };
 
@@ -49,9 +36,10 @@ extern struct pci_isabridge pci_isabridge[];
 extern struct pci_acl pci_acl[NR_DRIVERS];
 
 /* Function prototypes. */
-int sef_cb_init_fresh(int type, sef_init_info_t *info);
+int sef_cb_init(int type, sef_init_info_t *info);
 int map_service(struct rprocpub *rpub);
 
+int _pci_grant_access(int devind, endpoint_t proc);
 int _pci_reserve(int devind, endpoint_t proc, struct rs_pci *aclp);
 void _pci_release(endpoint_t proc);
 

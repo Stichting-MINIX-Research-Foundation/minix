@@ -294,15 +294,13 @@ static int map_perm_check(endpoint_t caller, endpoint_t target,
 	 */
 	if(caller == TTY_PROC_NR)
 		return OK;
-	if(caller != target)
-		return EPERM;
 	if(caller == MEM_PROC_NR)
 		return OK;
 
 	/* Anyone else needs explicit permission from the kernel (ultimately
 	 * set by PCI).
 	 */
-	r = sys_privquery_mem(caller, physaddr, len);
+	r = sys_privquery_mem(target, physaddr, len);
 
 	return r;
 }
@@ -337,8 +335,8 @@ int do_map_phys(message *m)
 	 * help it if we can't map in lower than page granularity.
 	 */
 	if(map_perm_check(m->m_source, target, startaddr, len) != OK) {
-		printf("VM: unauthorized mapping of 0x%lx by %d\n",
-			startaddr, m->m_source);
+		printf("VM: unauthorized mapping of 0x%lx by %d for %d\n",
+			startaddr, m->m_source, target);
 		return EPERM;
 	}
 

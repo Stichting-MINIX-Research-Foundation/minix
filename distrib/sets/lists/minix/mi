@@ -1810,7 +1810,7 @@
 ./usr/include/sys/verified_exec.h	minix-sys
 ./usr/include/sys/video.h		minix-sys
 ./usr/include/sys/videoio.h		minix-sys
-./usr/include/sys/vm.h			minix-sys
+./usr/include/sys/vm.h			minix-sys	obsolete
 ./usr/include/sys/vmmeter.h		minix-sys
 ./usr/include/sys/vnode.h		minix-sys
 ./usr/include/sys/vnode_if.h		minix-sys
