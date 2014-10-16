@@ -1,16 +1,18 @@
 
 #include "inc.h"
 
-#include <sys/ioctl.h>
-#include <minix/i2c.h>
+#include <dev/pci/pciio.h>
+
 #include <minix/fb.h>
+#include <minix/i2c.h>
+#include <minix/keymap.h>
 #include <minix/sound.h>
+
+#include <sys/fcntl.h>
+#include <sys/ioctl.h>
+#include <sys/kbdio.h>
 #include <sys/termios.h>
 #include <sys/time.h>
-#include <sys/kbdio.h>
-#include <minix/keymap.h>
-#include <sys/vm.h>
-#include <sys/fcntl.h>
 
 const char *
 char_ioctl_name(unsigned long req)
@@ -93,8 +95,15 @@ char_ioctl_name(unsigned long req)
 	NAME(KIOCBELL);
 	NAME(KIOCSLEDS);
 	NAME(KIOCSMAP);			/* not worth interpreting */
-	NAME(TIOCMAPMEM);
-	NAME(TIOCUNMAPMEM);
+	NAME(PCI_IOC_CFGREAD);
+	NAME(PCI_IOC_CFGWRITE);
+	NAME(PCI_IOC_BDF_CFGREAD);
+	NAME(PCI_IOC_BDF_CFGWRITE);
+	NAME(PCI_IOC_BUSINFO);
+	NAME(PCI_IOC_MAP);
+	NAME(PCI_IOC_UNMAP);
+	NAME(PCI_IOC_RESERVE);
+	NAME(PCI_IOC_RELEASE);
 	}
 
 	return NULL;
@@ -267,7 +276,12 @@ char_ioctl_arg(struct trace_proc * proc, unsigned long req, void * ptr,
 	struct winsize *ws;
 	struct kio_bell *bell;
 	struct kio_leds *leds;
-	struct mapreqvm *mapreq;
+	struct pciio_cfgreg *pci_cfgreg;
+	struct pciio_bdf_cfgreg *pci_bdf_cfgreg;
+	struct pciio_businfo *pci_businfo;
+	struct pciio_map *pci_iomap;
+	struct pciio_acl *pci_acl;
+
 
 	switch (req) {
 	case MINIX_I2C_IOCTL_EXEC:
@@ -482,25 +496,93 @@ char_ioctl_arg(struct trace_proc * proc, unsigned long req, void * ptr,
 		    leds->kl_bits);
 		return IF_ALL;
 
-	case TIOCMAPMEM:
-		if ((mapreq = (struct mapreqvm *)ptr) == NULL)
-			return dir;
+	case PCI_IOC_CFGREAD:
+		if ((pci_cfgreg = (struct pciio_cfgreg *)ptr) == NULL)
+			return IF_IN;
 
-		/* This structure has more fields, but they're all unused.. */
-		if (dir == IF_OUT) {
-			put_value(proc, "phys_offset", "%"PRIu64,
-			    (uint64_t)mapreq->phys_offset); /* future compat */
-			put_value(proc, "size", "%zu", mapreq->size);
-		} else
-			put_ptr(proc, "vaddr_ret", (vir_bytes)mapreq->vaddr);
+		put_ptr(proc, "reg", (vir_bytes)pci_cfgreg->reg);
+		put_value(proc, "val", "%08x", pci_cfgreg->val);
 		return IF_ALL;
 
-	case TIOCUNMAPMEM:
-		if ((mapreq = (struct mapreqvm *)ptr) == NULL)
+	case PCI_IOC_CFGWRITE:
+		if ((pci_cfgreg = (struct pciio_cfgreg *)ptr) == NULL)
 			return IF_OUT;
 
-		put_ptr(proc, "vaddr", (vir_bytes)mapreq->vaddr);
-		put_value(proc, "size", "%zu", mapreq->size);
+		put_ptr(proc, "reg", (vir_bytes)pci_cfgreg->reg);
+		put_value(proc, "val", "%08x", pci_cfgreg->val);
+		return IF_ALL;
+
+	case PCI_IOC_BDF_CFGREAD:
+		if ((pci_bdf_cfgreg = (struct pciio_bdf_cfgreg *)ptr) == NULL)
+			return IF_IN;
+
+		put_value(proc, "bus", "%u", pci_bdf_cfgreg->bus);
+		put_value(proc, "device", "%u", pci_bdf_cfgreg->device);
+		put_value(proc, "function", "%u", pci_bdf_cfgreg->function);
+		put_ptr(proc, "cfgreg.reg", (vir_bytes)pci_bdf_cfgreg->cfgreg.reg);
+		put_value(proc, "cfgreg.val", "%08x", pci_bdf_cfgreg->cfgreg.val);
+		return IF_ALL;
+
+	case PCI_IOC_BDF_CFGWRITE:
+		if ((pci_bdf_cfgreg = (struct pciio_bdf_cfgreg *)ptr) == NULL)
+			return IF_OUT;
+
+		put_value(proc, "bus", "%u", pci_bdf_cfgreg->bus);
+		put_value(proc, "device", "%u", pci_bdf_cfgreg->device);
+		put_value(proc, "function", "%u", pci_bdf_cfgreg->function);
+		put_ptr(proc, "cfgreg.reg", (vir_bytes)pci_bdf_cfgreg->cfgreg.reg);
+		put_value(proc, "cfgreg.val", "%08x", pci_bdf_cfgreg->cfgreg.val);
+		return IF_ALL;
+
+	case PCI_IOC_BUSINFO:
+		if ((pci_businfo = (struct pciio_businfo *)ptr) == NULL)
+			return IF_IN;
+
+		put_value(proc, "busno", "%u", pci_businfo->busno);
+		put_value(proc, "maxdevs", "%u", pci_businfo->maxdevs);
+		return IF_ALL;
+
+	case PCI_IOC_MAP:
+		if ((pci_iomap = (struct pciio_map *)ptr) == NULL)
+			return IF_OUT|IF_IN;
+
+		put_value(proc, "flags", "%x", pci_iomap->flags);
+		put_value(proc, "phys_offset", "%08x", pci_iomap->phys_offset);
+		put_value(proc, "size", "%zu", pci_iomap->size);
+		put_value(proc, "readonly", "%x", pci_iomap->readonly);
+
+		if (IF_IN == dir)
+			put_ptr(proc, "vaddr_ret", (vir_bytes)pci_iomap->vaddr_ret);
+
+		return IF_ALL;
+
+	case PCI_IOC_UNMAP:
+		if ((pci_iomap = (struct pciio_map *)ptr) == NULL)
+			return IF_OUT;
+
+		put_ptr(proc, "vaddr", (vir_bytes)pci_iomap->vaddr);
+
+		return IF_ALL;
+
+	case PCI_IOC_RESERVE:
+		if ((pci_acl = (struct pciio_acl *)ptr) == NULL)
+			return IF_OUT;
+
+		put_value(proc, "domain", "%u", pci_acl->domain);
+		put_value(proc, "bus", "%u", pci_acl->bus);
+		put_value(proc, "device", "%u", pci_acl->device);
+		put_value(proc, "function", "%u", pci_acl->function);
+
+		return IF_ALL;
+	case PCI_IOC_RELEASE:
+		if ((pci_acl = (struct pciio_acl *)ptr) == NULL)
+			return IF_OUT;
+
+		put_value(proc, "domain", "%u", pci_acl->domain);
+		put_value(proc, "bus", "%u", pci_acl->bus);
+		put_value(proc, "device", "%u", pci_acl->device);
+		put_value(proc, "function", "%u", pci_acl->function);
+
 		return IF_ALL;
 
 	default:

@@ -68,8 +68,9 @@
 					/* 56-63 = /dev/vnd[0-7] (vnd)	      */
 #define INPUT_MAJOR		  64	/* 64 = /dev/input (input)            */
 #define USB_BASE_MAJOR		  65	/* 65-133 = USB major range	      */
+#define PCI_MAJOR		 134	/* 134 = /dev/pci (pci)            */
 
-#define NR_DEVICES   		 134	/* number of (major) devices */
+#define NR_DEVICES   		 135	/* number of (major) devices */
 
 /* Minor device numbers for memory driver. */
 #  define RAM_DEV_OLD  		   0	/* minor device for /dev/ram */

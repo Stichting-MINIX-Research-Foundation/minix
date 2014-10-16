@@ -176,10 +176,6 @@ int do_privctl(struct proc * caller, message * m_ptr)
 	if (RTS_ISSET(rp, RTS_NO_PRIV))
 		return(EPERM);
 
-	/* Only system processes get I/O resources? */
-	if (!(priv(rp)->s_flags & SYS_PROC))
-		return EPERM;
-
 #if 0 /* XXX -- do we need a call for this? */
 	if (strcmp(rp->p_name, "fxp") == 0 ||
 		strcmp(rp->p_name, "rtl8139") == 0)
@@ -217,10 +213,6 @@ int do_privctl(struct proc * caller, message * m_ptr)
 	if (RTS_ISSET(rp, RTS_NO_PRIV))
 		return(EPERM);
 
-	/* Only system processes get memory resources? */
-	if (!(priv(rp)->s_flags & SYS_PROC))
-		return EPERM;
-
 	/* Get the memory range */
 	if((r=data_copy(caller->p_endpoint,
 		m_ptr->m_lsys_krn_sys_privctl.arg_ptr, KERNEL,
@@ -252,10 +244,11 @@ int do_privctl(struct proc * caller, message * m_ptr)
 	if (RTS_ISSET(rp, RTS_NO_PRIV))
 		return(EPERM);
 
+#if 0
 	/* Only system processes get IRQs? */
 	if (!(priv(rp)->s_flags & SYS_PROC))
 		return EPERM;
-
+#endif
 	data_copy(caller->p_endpoint, m_ptr->m_lsys_krn_sys_privctl.arg_ptr,
 		KERNEL, (vir_bytes) &irq, sizeof(irq));
 	priv(rp)->s_flags |= CHECK_IRQ;	/* Check IRQs */
@@ -288,8 +281,6 @@ int do_privctl(struct proc * caller, message * m_ptr)
 	if(limit < addr)
 		return EPERM;
 	if(!(sp = priv(rp)))
-		return EPERM;
-	if (!(sp->s_flags & SYS_PROC))
 		return EPERM;
 	for(i = 0; i < sp->s_nr_mem_range; i++) {
 		if(addr >= sp->s_mem_tab[i].mr_base &&

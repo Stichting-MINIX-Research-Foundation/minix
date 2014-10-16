@@ -3,7 +3,6 @@
 
 #include <sys/ioctl.h>
 #include <minix/partition.h>
-#include <sys/vm.h>
 #include <sys/mtio.h>
 
 const char *

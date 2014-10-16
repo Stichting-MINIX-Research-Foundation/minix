@@ -174,9 +174,6 @@ typedef char linedn_t[TTLINEDNAMELEN];
 #define KIOCSLEDS       _IOW('k', 2, struct kio_leds)
 #define KIOCSMAP        _IOW('k', 3, keymap_t)
 
-/* /dev/video ioctls. */
-#define TIOCMAPMEM      _IOWR('v', 1, struct mapreqvm)
-#define TIOCUNMAPMEM    _IOWR('v', 2, struct mapreqvm)
 #endif /* defined(__minix) */
 
 #endif /* !_SYS_TTYCOM_H_ */

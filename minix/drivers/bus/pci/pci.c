@@ -5,12 +5,11 @@ Configure devices on the PCI bus
 
 Created:	Jan 2000 by Philip Homburg <philip@cs.vu.nl>
 */
-
-#include <minix/driver.h>
-
 #include <minix/acpi.h>
-#include <minix/param.h>
+#include <minix/chardriver.h>
+#include <minix/driver.h>
 #include <minix/ds.h>
+#include <minix/param.h>
 #include <minix/rs.h>
 
 #include <machine/pci.h>
@@ -2127,9 +2126,11 @@ visible(struct rs_pci *aclp, int devind)
  *				sef_cb_init_fresh			     *
  *===========================================================================*/
 int
-sef_cb_init_fresh(int type, sef_init_info_t *info)
+sef_cb_init(int type, sef_init_info_t *info)
 {
-/* Initialize the pci driver. */
+	/* Initialize the driver. */
+	int do_announce_driver = -1;
+
 	long v;
 	int i, r;
 	struct rprocpub rprocpub[NR_BOOT_PROCS];
@@ -2153,19 +2154,38 @@ sef_cb_init_fresh(int type, sef_init_info_t *info)
 	pci_intel_init();
 
 	/* Map all the services in the boot image. */
-	if((r = sys_safecopyfrom(RS_PROC_NR, info->rproctab_gid, 0,
+	if ((r = sys_safecopyfrom(RS_PROC_NR, info->rproctab_gid, 0,
 		(vir_bytes) rprocpub, sizeof(rprocpub))) != OK) {
 		panic("sys_safecopyfrom failed: %d", r);
 	}
 	for(i=0;i < NR_BOOT_PROCS;i++) {
-		if(rprocpub[i].in_use) {
-			if((r = map_service(&rprocpub[i])) != OK) {
+		if (rprocpub[i].in_use) {
+			if ((r = map_service(&rprocpub[i])) != OK) {
 				panic("unable to map service: %d", r);
 			}
 		}
 	}
 
-	return(OK);
+	switch(type) {
+	case SEF_INIT_FRESH:
+	case SEF_INIT_RESTART:
+		do_announce_driver = TRUE;
+		break;
+	case SEF_INIT_LU:
+		do_announce_driver = FALSE;
+		break;
+	default:
+		panic("Unknown type of restart");
+		break;
+	}
+
+	/* Announce we are up when necessary. */
+	if (TRUE == do_announce_driver) {
+		chardriver_announce();
+	}
+
+	/* Initialization completed successfully. */
+	return OK;
 }
 
 /*===========================================================================*
@@ -2199,7 +2219,7 @@ map_service(struct rprocpub *rpub)
 	pci_acl[i].inuse = 1;
 	pci_acl[i].acl = rpub->pci_acl;
 
-	return(OK);
+	return OK;
 }
 
 /*===========================================================================*
@@ -2219,13 +2239,12 @@ _pci_find_dev(u8_t bus, u8_t dev, u8_t func, int *devindp)
 			break;
 		}
 	}
+
 	if (devind >= nr_pcidev)
 		return 0;
-#if 0
-	if (pcidev[devind].pd_inuse)
-		return 0;
-#endif
+
 	*devindp= devind;
+
 	return 1;
 }
 
@@ -2240,10 +2259,6 @@ _pci_first_dev(struct rs_pci *aclp, int *devindp, u16_t *vidp,
 
 	for (devind= 0; devind < nr_pcidev; devind++)
 	{
-#if 0
-		if (pcidev[devind].pd_inuse)
-			continue;
-#endif
 		if (!visible(aclp, devind))
 			continue;
 		break;
@@ -2266,10 +2281,6 @@ _pci_next_dev(struct rs_pci *aclp, int *devindp, u16_t *vidp, u16_t *didp)
 
 	for (devind= *devindp+1; devind < nr_pcidev; devind++)
 	{
-#if 0
-		if (pcidev[devind].pd_inuse)
-			continue;
-#endif
 		if (!visible(aclp, devind))
 			continue;
 		break;
@@ -2283,32 +2294,15 @@ _pci_next_dev(struct rs_pci *aclp, int *devindp, u16_t *vidp, u16_t *didp)
 }
 
 /*===========================================================================*
- *				_pci_reserve				     *
+ *				_pci_grant_access			     *
  *===========================================================================*/
 int
-_pci_reserve(int devind, endpoint_t proc, struct rs_pci *aclp)
+_pci_grant_access(int devind, endpoint_t proc)
 {
-	int i, r;
-	int ilr;
+	int i, ilr;
+	int r = OK;
 	struct io_range ior;
 	struct minix_mem_range mr;
-
-	if (devind < 0 || devind >= nr_pcidev)
-	{
-		printf("pci_reserve_a: bad devind: %d\n", devind);
-		return EINVAL;
-	}
-	if (!visible(aclp, devind))
-	{
-		printf("pci_reserve_a: %u is not allowed to reserve %d\n",
-			proc, devind);
-		return EPERM;
-	}
-
-	if(pcidev[devind].pd_inuse && pcidev[devind].pd_proc != proc)
-		return EBUSY;
-	pcidev[devind].pd_inuse= 1;
-	pcidev[devind].pd_proc= proc;
 
 	for (i= 0; i<pcidev[devind].pd_bar_nr; i++)
 	{
@@ -2361,7 +2355,34 @@ _pci_reserve(int devind, endpoint_t proc, struct rs_pci *aclp)
 		}
 	}
 
-	return OK;
+	return r;
+}
+
+/*===========================================================================*
+ *				_pci_reserve				     *
+ *===========================================================================*/
+int
+_pci_reserve(int devind, endpoint_t proc, struct rs_pci *aclp)
+{
+	if (devind < 0 || devind >= nr_pcidev)
+	{
+		printf("pci_reserve_a: bad devind: %d\n", devind);
+		return EINVAL;
+	}
+	if (!visible(aclp, devind))
+	{
+		printf("pci_reserve_a: %u is not allowed to reserve %d\n",
+			proc, devind);
+		return EPERM;
+	}
+
+	if(pcidev[devind].pd_inuse && pcidev[devind].pd_proc != proc)
+		return EBUSY;
+
+	pcidev[devind].pd_inuse= 1;
+	pcidev[devind].pd_proc= proc;
+
+	return  _pci_grant_access(devind, proc);
 }
 
 /*===========================================================================*

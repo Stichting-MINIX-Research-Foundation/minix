@@ -20,7 +20,6 @@
 #include <termios.h>
 #include <assert.h>
 #include <sys/ioctl.h>
-#include <sys/vm.h>
 #include <sys/video.h>
 #include <sys/mman.h>
 #include <sys/termios.h>
@@ -845,32 +844,7 @@ static int video_ioctl(devminor_t minor, unsigned long request,
 	endpoint_t endpt, cp_grant_id_t grant, int flags,
 	endpoint_t user_endpt, cdev_id_t id)
 {
-  struct mapreqvm mapreqvm;
-  int r, do_map;
-
-  switch (request) {
-  case TIOCMAPMEM:
-  case TIOCUNMAPMEM:
-	do_map = (request == TIOCMAPMEM);	/* else unmap */
-
-	if ((r = sys_safecopyfrom(endpt, grant, 0, (vir_bytes) &mapreqvm,
-		sizeof(mapreqvm))) != OK)
-		return r;
-
-	if (do_map) {
-		mapreqvm.vaddr_ret = vm_map_phys(user_endpt,
-			(void *) mapreqvm.phys_offset, mapreqvm.size);
-		r = sys_safecopyto(endpt, grant, 0, (vir_bytes) &mapreqvm,
-			sizeof(mapreqvm));
-	} else {
-		r = vm_unmap_phys(user_endpt, mapreqvm.vaddr, mapreqvm.size);
-	}
-
-	return r;
-
-  default:
-	return ENOTTY;
-  }
+  return ENOTTY;
 }
 
 /*===========================================================================*

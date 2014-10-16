@@ -26,6 +26,7 @@ RAMDISK_DEVICES="
 	c1d4 c1d4p0 c1d4p0s0 c1d5 c1d5p0 c1d5p0s0
 	c1d6 c1d6p0 c1d6p0s0 c1d7 c1d7p0 c1d7p0s0
 	fd0 fd1 fd0p0 fd1p0
+	pci
 	ttyc1 ttyc2 ttyc3 tty00 tty01 tty02 tty03
 	ttyp0 ttyp1 ttyp2 ttyp3 ttyp4 ttyp5 ttyp6 ttyp7 ttyp8 ttyp9
 	ttypa ttypb ttypc ttypd ttype ttypf
@@ -137,6 +138,7 @@ Where key is one of the following:
   fbd                     # Make /dev/fbd
   hello                   # Make /dev/hello
   video                   # Make /dev/video
+  pci                     # Make /dev/pci
   vnd0 vnd0p0 vnd0p0s0 .. # Make vnode disks /dev/vnd[0-7] and (sub)partitions
   input                   # Make /dev/kbdmux, /dev/kbd[0-3], idem /dev/mouse~
 EOF
@@ -362,6 +364,10 @@ do
 				${uname} ${gname} 666
 			minor=`expr ${minor} + 4`
 		done
+		;;
+	pci)
+		# PCI server, manages PCI buses
+		makedev pci c 134 0 ${uname} ${gname} ${permissions}
 		;;
 	ram|mem|kmem|null|boot|zero|imgrd)
 		# Memory devices.
