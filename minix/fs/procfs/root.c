@@ -127,8 +127,8 @@ static void root_pci(void)
 {
 	/* Print information about PCI devices present in the system.
 	 */
-	u16_t vid, did;
-	u8_t bcr, scr, pifr;
+	u16_t vid, did, subvid, subdid;
+	u8_t bcr, scr, pifr, rev;
 	char *slot_name, *dev_name;
 	int r, devind;
 	static int first = TRUE;
@@ -148,10 +148,14 @@ static void root_pci(void)
 		bcr = pci_attr_r8(devind, PCI_BCR);
 		scr = pci_attr_r8(devind, PCI_SCR);
 		pifr = pci_attr_r8(devind, PCI_PIFR);
+		rev = pci_attr_r8(devind, PCI_REV);
+		subvid = pci_attr_r16(devind, PCI_SUBVID);
+		subdid = pci_attr_r16(devind, PCI_SUBDID);
 
-		buf_printf("%s %x/%x/%x %04X:%04X %s\n",
-			slot_name ? slot_name : "-",
-			bcr, scr, pifr, vid, did,
+		buf_printf("%s %x/%x/%x/%x %04X:%04X:%04X:%04X %s\n",
+			slot_name ? slot_name : "-1.-1.-1.-1",
+			bcr, scr, pifr, rev,
+			vid, did, subvid, subdid,
 			dev_name ? dev_name : "");
 
 		r = pci_next_dev(&devind, &vid, &did);

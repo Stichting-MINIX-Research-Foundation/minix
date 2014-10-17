@@ -208,7 +208,7 @@ start|autoboot)
     then
 	up -n printer -dev /dev/lp -period 10HZ
 	# start VirtualBox time sync driver if the device is there
-	if grep '^[^ ]* [^ ]* 80EE:CAFE ' /proc/pci >/dev/null; then
+	if grep '^[^ ]* [^ ]* 80EE:CAFE[^ ]* ' /proc/pci >/dev/null; then
 		up -n vbox -period 10HZ
 	fi
     fi

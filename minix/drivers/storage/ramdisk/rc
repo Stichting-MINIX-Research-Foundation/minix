@@ -25,7 +25,7 @@ then	if [ -e $ACPI -a -n "`sysenv acpi`" ]
 	# If not specified, default to yes if the device is found.
 	if /bin/sysenv virtio_blk >/dev/null
 	then	virtio_blk="`/bin/sysenv virtio_blk`"
-        elif	grep '^[^ ]* [^ ]* 1AF4:1001 ' /proc/pci >/dev/null
+        elif	grep '^[^ ]* [^ ]* 1AF4:1001[^ ]* ' /proc/pci >/dev/null
 	then	echo "virtio_blk not set, defaulting to using found virtio device."
 		virtio_blk=yes
         fi
