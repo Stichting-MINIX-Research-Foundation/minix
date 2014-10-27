@@ -13,6 +13,8 @@
 
 #include "kernel/proc.h"
 
+static int run_script(struct rproc *rp);
+
 /*===========================================================================*
  *				caller_is_root				     *
  *===========================================================================*/
@@ -102,9 +104,14 @@ struct rproc *rp;
           if(call != RS_EDIT) return EPERM;
       }
 
+      /* Disallow the call if an update is in progress. */
+      if(RUPDATE_IS_UPDATING()) {
+      	  return EBUSY;
+      }
+
       /* Disallow the call if another call is in progress for the service. */
       if((rp->r_flags & RS_LATEREPLY)
-          || (rp->r_flags & RS_INITIALIZING) || (rp->r_flags & RS_UPDATING)) {
+          || (rp->r_flags & RS_INITIALIZING)) {
           return EBUSY;
       }
 
@@ -162,6 +169,121 @@ size_t dst_len;
 }
 
 /*===========================================================================*
+ *			      init_state_data				     *
+ *===========================================================================*/
+int init_state_data(endpoint_t src_e, int prepare_state,
+    struct rs_state_data *src_rs_state_data,
+    struct rs_state_data *dst_rs_state_data)
+{
+  int s, i, j, num_ipc_filters = 0;
+  struct rs_ipc_filter_el (*rs_ipc_filter_els)[IPCF_MAX_ELEMENTS];
+  struct rs_ipc_filter_el rs_ipc_filter[IPCF_MAX_ELEMENTS];
+  size_t rs_ipc_filter_size = sizeof(rs_ipc_filter);
+  ipc_filter_el_t (*ipcf_els_buff)[IPCF_MAX_ELEMENTS];
+  size_t ipcf_els_buff_size;
+
+  dst_rs_state_data->size = 0;
+  dst_rs_state_data->eval_addr = NULL;
+  dst_rs_state_data->eval_len = 0;
+  dst_rs_state_data->ipcf_els = NULL;
+  dst_rs_state_data->ipcf_els_size  = 0;
+  if(src_rs_state_data->size != sizeof(struct rs_state_data)) {
+      return E2BIG;
+  }
+
+  /* Initialize eval expression. */
+  if(prepare_state == SEF_LU_STATE_EVAL) {
+      if(src_rs_state_data->eval_len == 0 || !src_rs_state_data->eval_addr) {
+          return EINVAL;
+      }
+      dst_rs_state_data->eval_addr = malloc(src_rs_state_data->eval_len+1);
+      dst_rs_state_data->eval_len = src_rs_state_data->eval_len;
+      if(!dst_rs_state_data->eval_addr) {
+          return ENOMEM;
+      }
+      s = sys_datacopy(src_e, (vir_bytes) src_rs_state_data->eval_addr,
+          SELF, (vir_bytes) dst_rs_state_data->eval_addr,
+          dst_rs_state_data->eval_len);
+      if(s != OK) {
+          return s;
+      }
+      *((char*)dst_rs_state_data->eval_addr + dst_rs_state_data->eval_len) = '\0';
+      dst_rs_state_data->size = src_rs_state_data->size;
+  }
+
+  /* Initialize ipc filters. */
+  if(src_rs_state_data->ipcf_els_size % rs_ipc_filter_size) {
+      return E2BIG;
+  }
+  rs_ipc_filter_els = src_rs_state_data->ipcf_els;
+  num_ipc_filters = src_rs_state_data->ipcf_els_size / rs_ipc_filter_size;
+  if(!rs_ipc_filter_els) {
+      return OK;
+  }
+
+  ipcf_els_buff_size = sizeof(ipc_filter_el_t)*IPCF_MAX_ELEMENTS*num_ipc_filters;
+  if(src_e == VM_PROC_NR) {
+      ipcf_els_buff_size += sizeof(ipc_filter_el_t)*IPCF_MAX_ELEMENTS;
+  }
+  ipcf_els_buff = malloc(ipcf_els_buff_size);
+  if(!ipcf_els_buff) {
+      return ENOMEM;
+  }
+  memset(ipcf_els_buff, 0, ipcf_els_buff_size);
+  for(i=0;i<num_ipc_filters;i++) {
+      s = sys_datacopy(src_e, (vir_bytes) rs_ipc_filter_els[i],
+          SELF, (vir_bytes) rs_ipc_filter, rs_ipc_filter_size);
+      if(s != OK) {
+          return s;
+      }
+      for(j=0;j<IPCF_MAX_ELEMENTS && rs_ipc_filter[j].flags;j++) {
+          endpoint_t m_source = 0;
+          int m_type = 0;
+          int flags = rs_ipc_filter[j].flags;
+          if(flags & IPCF_MATCH_M_TYPE) {
+              m_type = rs_ipc_filter[j].m_type;
+          }
+          if(flags & IPCF_MATCH_M_SOURCE) {
+              if(ds_retrieve_label_endpt(rs_ipc_filter[j].m_label,&m_source) != OK) {
+                  /* try to see if an endpoint was provided as label */
+                  char *buff;
+                  if(!strcmp("ANY_USR", rs_ipc_filter[j].m_label)) {
+                      m_source = ANY_USR;
+                  }
+                  else if(!strcmp("ANY_SYS", rs_ipc_filter[j].m_label)) {
+                      m_source = ANY_SYS;
+                  }
+                  else if(!strcmp("ANY_TSK", rs_ipc_filter[j].m_label)) {
+                      m_source = ANY_TSK;
+                  }
+                  else {
+                      errno=0;
+                      m_source = strtol(rs_ipc_filter[j].m_label, &buff, 10);
+                      if(errno || strcmp(buff, "")) {
+                            return ESRCH;
+                      }
+                  }
+              }
+          }
+          ipcf_els_buff[i][j].flags = flags;
+          ipcf_els_buff[i][j].m_source = m_source;
+          ipcf_els_buff[i][j].m_type = m_type;
+      }
+  }
+  if(src_e == VM_PROC_NR) {
+      /* Make sure VM can still talk to us at update time. */
+      ipcf_els_buff[i][0].flags = (IPCF_EL_WHITELIST|IPCF_MATCH_M_SOURCE|IPCF_MATCH_M_TYPE);
+      ipcf_els_buff[i][0].m_source = RS_PROC_NR;
+      ipcf_els_buff[i][0].m_type = VM_RS_UPDATE;
+  }
+  dst_rs_state_data->size = src_rs_state_data->size;
+  dst_rs_state_data->ipcf_els = ipcf_els_buff;
+  dst_rs_state_data->ipcf_els_size = ipcf_els_buff_size;
+
+  return OK;
+}
+
+/*===========================================================================*
  *			        build_cmd_dep				     *
  *===========================================================================*/
 void build_cmd_dep(struct rproc *rp)
@@ -213,122 +335,35 @@ void build_cmd_dep(struct rproc *rp)
 }
 
 /*===========================================================================*
- *				 srv_update				     *
+ *				end_srv_init				     *
  *===========================================================================*/
-int srv_update(endpoint_t src_e, endpoint_t dst_e)
+void end_srv_init(struct rproc *rp)
 {
-  int r;
-  int sys_upd_flags = 0;
-
-  /* Ask VM to swap the slots of the two processes and tell the kernel to
-   * do the same. If VM is the service being updated, only perform the kernel
-   * part of the call. The new instance of VM will do the rest at
-   * initialization time.
-   */
-  if(src_e != VM_PROC_NR) {
-      r = vm_update(src_e, dst_e, sys_upd_flags);
-  }
-  else {
-      r = sys_update(src_e, dst_e, sys_upd_flags);
-  }
-
-  return r;
-}
-
-/*===========================================================================*
- *				update_period				     *
- *===========================================================================*/
-void update_period(message *m_ptr)
-{
-  clock_t now = m_ptr->m_notify.timestamp;
-  short has_update_timed_out;
-  message m;
   struct rprocpub *rpub;
+  int r;
 
-  rpub = rupdate.rp->r_pub;
+  rpub = rp->r_pub;
 
-  /* See if a timeout has occurred. */
-  has_update_timed_out = (now - rupdate.prepare_tm > rupdate.prepare_maxtime);
+  /* See if a late reply has to be sent. */
+  late_reply(rp, OK);
 
-  /* If an update timed out, end the update process and notify
-   * the old version that the update has been canceled. From now on, the old
-   * version will continue executing.
+  /* If the service has completed initialization after a crash
+   * make the new instance active and cleanup the old replica.
+   * If the service was part of a scheduled update, schedule the new
+   * replica for the same update.
    */
-  if(has_update_timed_out) {
-      printf("RS: update failed: maximum prepare time reached\n");
-      end_update(EINTR, RS_DONTREPLY);
-
-      /* Prepare cancel request. */
-      m.m_type = RS_LU_PREPARE;
-      m.m_rs_update.state = SEF_LU_STATE_NULL;
-      if(rpub->endpoint == RS_PROC_NR) {
-          /* RS can process the request directly. */
-          do_sef_lu_request(&m);
+  if(rp->r_prev_rp) {
+      if(SRV_IS_UPD_SCHEDULED(rp->r_prev_rp)) {
+          rupdate_upd_move(rp->r_prev_rp, rp);
       }
-      else {
-          /* Send request message to the system service. */
-          asynsend(rpub->endpoint, &m);
-      }
+      cleanup_service(rp->r_prev_rp);
+      rp->r_prev_rp = NULL;
+      rp->r_restarts += 1;
+
+      if(rs_verbose)
+          printf("RS: %s completed restart\n", srv_to_string(rp));
   }
-}
-
-/*===========================================================================*
- *				end_update				     *
- *===========================================================================*/
-void end_update(int result, int reply_flag)
-{
-/* End the update process. There are two possibilities:
- * 1) the update succeeded. In that case, cleanup the old version and mark the
- *    new version as no longer under update.
- * 2) the update failed. In that case, cleanup the new version and mark the old
- *    version as no longer under update. Eventual late ready to update
- *    messages (if any) will simply be ignored and the service can
- *    continue executing. In addition, reset the check timestamp, so that if the
- *    service has a period, a status request will be forced in the next period.
- */
-  struct rproc *old_rp, *new_rp, *exiting_rp, *surviving_rp;
-  struct rproc **rps;
-  int nr_rps, i;
-
-  old_rp = rupdate.rp;
-  new_rp = old_rp->r_new_rp;
-
-  if(rs_verbose)
-      printf("RS: ending update from %s to %s with result: %d\n",
-          srv_to_string(old_rp), srv_to_string(new_rp), result);
-
-  /* Decide which version has to die out and which version has to survive. */
-  surviving_rp = (result == OK ? new_rp : old_rp);
-  exiting_rp =   (result == OK ? old_rp : new_rp);
-
-  /* End update. */
-  rupdate.flags &= ~RS_UPDATING;
-  rupdate.rp = NULL;
-  old_rp->r_new_rp = NULL;
-  new_rp->r_old_rp = NULL;
-  old_rp->r_check_tm = 0;
-
-  /* Send a late reply if necessary. */
-  late_reply(old_rp, result);
-
-  /* Mark the version that has to survive as no longer updating and
-   * reply when asked to.
-   */
-  surviving_rp->r_flags &= ~RS_UPDATING;
-  if(reply_flag == RS_REPLY) {
-      message m;
-      m.m_type = result;
-      reply(surviving_rp->r_pub->endpoint, surviving_rp, &m);
-  }
-
-  /* Cleanup the version that has to die out. */
-  get_service_instances(exiting_rp, &rps, &nr_rps);
-  for(i=0;i<nr_rps;i++) {
-      cleanup_service(rps[i]);
-  }
-
-  if(rs_verbose)
-      printf("RS: %s ended the update\n", srv_to_string(surviving_rp));
+  rp->r_next_rp = NULL;
 }
 
 /*===========================================================================*
@@ -385,30 +420,120 @@ int line;
 struct rproc *rp;
 {
   struct rprocpub *rpub;
+  int detach, cleanup_script;
   int s;
 
   rpub = rp->r_pub;
 
-  if(rs_verbose)
-      printf("RS: %s cleaned up at %s:%d\n", srv_to_string(rp),
-          file, line);
+  if(!(rp->r_flags & RS_DEAD)) {
+      if(rs_verbose)
+          printf("RS: %s marked for cleanup at %s:%d\n", srv_to_string(rp),
+              file, line);
 
-  /* Tell scheduler this process is finished */
-  if ((s = sched_stop(rp->r_scheduler, rpub->endpoint)) != OK) {
-	printf("RS: warning: scheduler won't give up process: %d\n", s);
+      /* Unlink service the first time. */
+      if(rp->r_next_rp) {
+          rp->r_next_rp->r_prev_rp = NULL;
+          rp->r_next_rp = NULL;
+      }
+      if(rp->r_prev_rp) {
+          rp->r_prev_rp->r_next_rp = NULL;
+          rp->r_prev_rp = NULL;
+      }
+      if(rp->r_new_rp) {
+          rp->r_new_rp->r_old_rp = NULL;
+          rp->r_new_rp = NULL;
+      }
+      if(rp->r_old_rp) {
+          rp->r_old_rp->r_new_rp = NULL;
+          rp->r_old_rp = NULL;
+      }
+      rp->r_flags |= RS_DEAD;
+
+      /* Make sure the service can no longer run and unblock IPC callers. */
+      sys_privctl(rpub->endpoint, SYS_PRIV_DISALLOW, NULL);
+      sys_privctl(rpub->endpoint, SYS_PRIV_CLEAR_IPC_REFS, NULL);
+      rp->r_flags &= ~RS_ACTIVE;
+
+      /* Send a late reply if there is any pending. */
+      late_reply(rp, OK);
+
+      return;
   }
 
-  /* Ask PM to exit the service */
-  if(rp->r_pid == -1) {
-      printf("RS: warning: attempt to kill pid -1!\n");
+  cleanup_script = rp->r_flags & RS_CLEANUP_SCRIPT;
+  detach = rp->r_flags & RS_CLEANUP_DETACH;
+
+  /* Cleanup the service when not detaching. */
+  if(!detach) {
+      if(rs_verbose)
+          printf("RS: %s cleaned up at %s:%d\n", srv_to_string(rp),
+              file, line);
+
+      /* Tell scheduler this process is finished */
+      if ((s = sched_stop(rp->r_scheduler, rpub->endpoint)) != OK) {
+            printf("RS: warning: scheduler won't give up process: %d\n", s);
+      }
+
+      /* Ask PM to exit the service */
+      if(rp->r_pid == -1) {
+          printf("RS: warning: attempt to kill pid -1!\n");
+      }
+      else {
+          srv_kill(rp->r_pid, SIGKILL);
+      }
+  }
+
+  /* See if we need to run a script now. */
+  if(cleanup_script) {
+      rp->r_flags &= ~RS_CLEANUP_SCRIPT;
+      s = run_script(rp);
+      if(s != OK) {
+          printf("RS: warning: cannot run cleanup script: %d\n", s);
+      }
+  }
+
+  if(detach) {
+      /* Detach service when asked to. */
+      detach_service(rp);
   }
   else {
-      srv_kill(rp->r_pid, SIGKILL);
+      /* Free slot otherwise, unless we're about to reuse it */
+      if (!(rp->r_flags & RS_REINCARNATE))
+          free_slot(rp);
   }
+}
 
-  /* Free slot, unless we're about to reuse it */
-  if (!(rp->r_flags & RS_REINCARNATE))
-      free_slot(rp);
+/*===========================================================================*
+ *			     detach_service_debug			     *
+ *===========================================================================*/
+void detach_service_debug(file, line, rp)
+char *file;
+int line;
+struct rproc *rp;
+{
+/* Detach the given system service. */
+  static unsigned long detach_counter = 0;
+  char label[RS_MAX_LABEL_LEN];
+  struct rprocpub *rpub;
+
+  rpub = rp->r_pub;
+
+  /* Publish a new unique label for the system service. */
+  rpub->label[RS_MAX_LABEL_LEN-1] = '\0';
+  strcpy(label, rpub->label);
+  snprintf(rpub->label, RS_MAX_LABEL_LEN, "%lu.%s", ++detach_counter, label);
+  ds_publish_label(rpub->label, rpub->endpoint, DSF_OVERWRITE);
+
+  if(rs_verbose)
+      printf("RS: %s detached at %s:%d\n", srv_to_string(rp),
+          file, line);
+
+  /* Allow the service to run. */
+  rp->r_flags = RS_IN_USE | RS_ACTIVE;
+  rpub->sys_flags &= ~(SF_CORE_SRV|SF_DET_RESTART);
+  rp->r_period = 0;
+  rpub->dev_nr = 0;
+  sys_privctl(rpub->endpoint, SYS_PRIV_ALLOW, NULL);
 }
 
 /*===========================================================================*
@@ -495,7 +620,7 @@ struct rproc *rp;
   if ((s = sched_init_proc(rp)) != OK) {
 	printf("RS: unable to start scheduling: %d\n", s);
 	cleanup_service(rp);
-	vm_memctl(RS_PROC_NR, VM_RS_MEM_PIN,0,0);
+	vm_memctl(RS_PROC_NR, VM_RS_MEM_PIN, 0, 0);
 	return s;
   }
 
@@ -529,8 +654,37 @@ struct rproc *rp;
         free_exec(rp);
   }
 
+  /* The purpose of non-blocking forks is to avoid involving VFS in the forking
+   * process, because VFS may be blocked on a sendrec() to a MFS that is
+   * waiting for a endpoint update for a dead driver. We have just published
+   * that update, but VFS may still be blocked. As a result, VFS may not yet
+   * have received PM's fork message. Hence, if we call mapdriver()
+   * immediately, VFS may not know about the process and thus refuse to add the
+   * driver entry. The following temporary hack works around this by forcing
+   * blocking communication from PM to VFS. Once VFS has been made non-blocking
+   * towards MFS instances, this hack and the big part of srv_fork() can go.
+   */
+  setuid(0);
+
+  /* If this is a RS instance, pin memory. */
+  if(rp->r_priv.s_flags & ROOT_SYS_PROC) {
+      if(rs_verbose)
+          printf("RS: pinning memory of RS instance %s\n", srv_to_string(rp));
+
+      s = vm_memctl(rpub->endpoint, VM_RS_MEM_PIN, 0, 0);
+      if(s != OK) {
+          printf("vm_memctl failed: %d\n", s);
+          cleanup_service(rp);
+          return s;
+      }
+  }
+
   /* If this is a VM instance, let VM know now. */
   if(rp->r_priv.s_flags & VM_SYS_PROC) {
+      struct rproc *rs_rp;
+      struct rproc **rs_rps;
+      int i, nr_rs_rps;
+
       if(rs_verbose)
           printf("RS: informing VM of instance %s\n", srv_to_string(rp));
 
@@ -539,6 +693,15 @@ struct rproc *rp;
           printf("vm_memctl failed: %d\n", s);
           cleanup_service(rp);
           return s;
+      }
+
+      /* VM may start actually pinning memory for us only now.
+       * Ask again for all our instances.
+       */
+      rs_rp = rproc_ptr[_ENDPOINT_P(RS_PROC_NR)];
+      get_service_instances(rs_rp, &rs_rps, &nr_rs_rps);
+      for(i=0;i<nr_rs_rps;i++) {
+          vm_memctl(rs_rps[i]->r_pub->endpoint, VM_RS_MEM_PIN, 0, 0);
       }
   }
 
@@ -558,9 +721,7 @@ struct rproc *rp;
 /*===========================================================================*
  *				clone_service				     *
  *===========================================================================*/
-int clone_service(rp, instance_flag)
-struct rproc *rp;
-int instance_flag;
+int clone_service(struct rproc *rp, int instance_flag, int init_flags)
 {
 /* Clone the given system service instance. */
   struct rproc *replica_rp;
@@ -572,7 +733,16 @@ int instance_flag;
   int r;
 
   if(rs_verbose)
-      printf("RS: creating a replica for %s\n", srv_to_string(rp));
+      printf("RS: %s creating a replica\n", srv_to_string(rp));
+
+  /* VM can only reliably support one replica at the time for now.
+   * XXX TO-DO: Fix VM's rs_memctl_make_vm_instance to allow multiple replicas.
+   */
+  if(rp->r_pub->endpoint == VM_PROC_NR && instance_flag == LU_SYS_PROC
+      && rp->r_next_rp) {
+      cleanup_service_now(rp->r_next_rp);
+      rp->r_next_rp = NULL;
+  }
 
   /* Clone slot. */
   if((r = clone_slot(rp, &replica_rp)) != OK) {
@@ -590,6 +760,7 @@ int instance_flag;
       replica_link = &replica_rp->r_prev_rp;
   }
   replica_rp->r_priv.s_flags |= instance_flag;
+  replica_rp->r_priv.s_init_flags |= init_flags;
 
   /* Link the two slots. */
   *rp_link = replica_rp;
@@ -737,7 +908,7 @@ struct rproc *rp;				/* pointer to service slot */
 	  r = ds_retrieve_label_endpt("devman",&ep);
   
 	  if (r != OK) {
-		printf("RS: devman not running?");
+		   printf("RS: devman not running?");
 	  } else {
 		m.m_type = DEVMAN_UNBIND;
 		m.DEVMAN_ENDPOINT  = rpub->endpoint;
@@ -759,9 +930,7 @@ struct rproc *rp;				/* pointer to service slot */
 /*===========================================================================*
  *				run_service				     *
  *===========================================================================*/
-int run_service(rp, init_type)
-struct rproc *rp;
-int init_type;
+int run_service(struct rproc *rp, int init_type, int init_flags)
 {
 /* Let a newly created service run. */
   struct rprocpub *rpub;
@@ -775,7 +944,7 @@ int init_type;
   }
 
   /* Initialize service. */
-  if((s = init_service(rp, init_type)) != OK) {
+  if((s = init_service(rp, init_type, init_flags)) != OK) {
       return kill_service(rp, "unable to initialize service", s);
   }
 
@@ -788,16 +957,16 @@ int init_type;
 /*===========================================================================*
  *				start_service				     *
  *===========================================================================*/
-int start_service(rp)
-struct rproc *rp;
+int start_service(struct rproc *rp, int init_flags)
 {
 /* Start a system service. */
-  int r, init_type;
+  int r;
   struct rprocpub *rpub;
 
   rpub = rp->r_pub;
 
   /* Create and make active. */
+  rp->r_priv.s_init_flags |= init_flags;
   r = create_service(rp);
   if(r != OK) {
       return r;
@@ -811,8 +980,7 @@ struct rproc *rp;
   }
 
   /* Run. */
-  init_type = SEF_INIT_FRESH;
-  r = run_service(rp, init_type);
+  r = run_service(rp, SEF_INIT_FRESH, init_flags);
   if(r != OK) {
       return r;
   }
@@ -850,66 +1018,6 @@ void stop_service(struct rproc *rp,int how)
 }
 
 /*===========================================================================*
- *				update_service				     *
- *===========================================================================*/
-int update_service(src_rpp, dst_rpp, swap_flag)
-struct rproc **src_rpp;
-struct rproc **dst_rpp;
-int swap_flag;
-{
-/* Update an existing service. */
-  int r;
-  struct rproc *src_rp;
-  struct rproc *dst_rp;
-  struct rprocpub *src_rpub;
-  struct rprocpub *dst_rpub;
-  int pid;
-  endpoint_t endpoint;
-
-  src_rp = *src_rpp;
-  dst_rp = *dst_rpp;
-  src_rpub = src_rp->r_pub;
-  dst_rpub = dst_rp->r_pub;
-
-  if(rs_verbose)
-      printf("RS: %s updating into %s\n",
-          srv_to_string(src_rp), srv_to_string(dst_rp));
-
-  /* Swap the slots of the two processes when asked to. */
-  if(swap_flag == RS_SWAP) {
-      if((r = srv_update(src_rpub->endpoint, dst_rpub->endpoint)) != OK) {
-          return r;
-      }
-  }
-
-  /* Swap slots here as well. */
-  pid = src_rp->r_pid;
-  endpoint = src_rpub->endpoint;
-  swap_slot(&src_rp, &dst_rp);
-
-  /* Reassign pids and endpoints. */
-  src_rp->r_pid = dst_rp->r_pid;
-  src_rp->r_pub->endpoint = dst_rp->r_pub->endpoint;
-  rproc_ptr[_ENDPOINT_P(src_rp->r_pub->endpoint)] = src_rp;
-  dst_rp->r_pid = pid;
-  dst_rp->r_pub->endpoint = endpoint;
-  rproc_ptr[_ENDPOINT_P(dst_rp->r_pub->endpoint)] = dst_rp;
-
-  /* Adjust input pointers. */
-  *src_rpp = src_rp;
-  *dst_rpp = dst_rp;
-
-  /* Make the new version active. */
-  activate_service(dst_rp, src_rp);
-
-  if(rs_verbose)
-      printf("RS: %s updated into %s\n",
-          srv_to_string(src_rp), srv_to_string(dst_rp));
-
-  return OK;
-}
-
-/*===========================================================================*
  *			      activate_service				     *
  *===========================================================================*/
 void activate_service(struct rproc *rp, struct rproc *ex_rp)
@@ -932,35 +1040,23 @@ void activate_service(struct rproc *rp, struct rproc *ex_rp)
 /*===========================================================================*
  *			      reincarnate_service			     *
  *===========================================================================*/
-void reincarnate_service(struct rproc *rp)
+void reincarnate_service(struct rproc *old_rp)
 {
 /* Restart a service as if it were never started before. */
-  struct rprocpub *rpub;
-  int i;
+  struct rproc *rp;
+  int r, restarts;
 
-  rpub = rp->r_pub;
+  if ((r = clone_slot(old_rp, &rp)) != OK) {
+      printf("RS: Failed to clone the slot: %d\n", r);
+      return;
+  }
 
-  rp->r_flags &= RS_IN_USE;
-  rp->r_pid = -1;
-  rproc_ptr[_ENDPOINT_P(rpub->endpoint)] = NULL;
+  rp->r_flags = RS_IN_USE;
+  rproc_ptr[_ENDPOINT_P(rp->r_pub->endpoint)] = NULL;
 
-  /* Restore original IRQ and I/O range tables in the priv struct. This is the
-   * only part of the privilege structure that can be modified by processes
-   * other than RS itself.
-   */
-  rp->r_priv.s_nr_irq = rp->r_nr_irq;
-  for (i = 0; i < rp->r_nr_irq; i++)
-      rp->r_priv.s_irq_tab[i] = rp->r_irq_tab[i];
-  rp->r_priv.s_nr_io_range = rp->r_nr_io_range;
-  for (i = 0; i < rp->r_nr_io_range; i++)
-      rp->r_priv.s_io_tab[i] = rp->r_io_tab[i];
-
-  rp->r_old_rp = NULL;
-  rp->r_new_rp = NULL;
-  rp->r_prev_rp = NULL;
-  rp->r_next_rp = NULL;
-
-  start_service(rp);
+  restarts = rp->r_restarts;
+  start_service(rp, SEF_INIT_FRESH);
+  rp->r_restarts = restarts + 1;
 }
 
 /*===========================================================================*
@@ -971,7 +1067,7 @@ void terminate_service(struct rproc *rp)
 /* Handle a termination event for a system service. */
   struct rproc **rps;
   struct rprocpub *rpub;
-  int nr_rps;
+  int nr_rps, norestart;
   int i, r;
 
   rpub = rp->r_pub;
@@ -981,6 +1077,14 @@ void terminate_service(struct rproc *rp)
 
   /* Deal with failures during initialization. */
   if(rp->r_flags & RS_INITIALIZING) {
+      /* If updating, rollback. */
+      if(SRV_IS_UPDATING(rp)) {
+          printf("RS: update failed: state transfer failed. Rolling back...\n");
+          end_update(rp->r_init_err, RS_REPLY);
+          rp->r_init_err = ERESTART;
+          return;
+      }
+
       if (rpub->sys_flags & SF_NO_BIN_EXP) {
           /* If service was deliberately started with binary exponential offset
 	   * disabled, we're going to assume we want to refresh a service upon
@@ -993,33 +1097,51 @@ void terminate_service(struct rproc *rp)
       } else {
           if(rs_verbose)
               printf("RS: service '%s' exited during initialization; "
-                     "not restarting\n", rpub->label);
+                     "exiting\n", rpub->label);
           rp->r_flags |= RS_EXITING; /* don't restart. */
       }
+  }
 
-      /* If updating, rollback. */
-      if(rp->r_flags & RS_UPDATING) {
-          struct rproc *old_rp, *new_rp;
-          printf("RS: update failed: state transfer failed. Rolling back...\n");
-          new_rp = rp;
-          old_rp = new_rp->r_old_rp;
-          new_rp->r_flags &= ~RS_INITIALIZING;
-          r = update_service(&new_rp, &old_rp, RS_SWAP);
-          assert(r == OK); /* can't fail */
-          end_update(ERESTART, RS_REPLY);
-          return;
+  /* If an update process is in progress, end it before doing anything else.
+   * This is to be on the safe side, since there may be some weird dependencies
+   * with services under update, while we perform recovery actions.
+   */
+  if(RUPDATE_IS_UPDATING()) {
+      printf("RS: aborting the update after a crash...\n");
+      abort_update_proc(ERESTART);
+  }
+
+  /* Force exit when no restart is requested. */
+  norestart = !(rp->r_flags & RS_EXITING) && (rp->r_pub->sys_flags & SF_NORESTART);
+  if(norestart) {
+      rp->r_flags |= RS_EXITING;
+      if((rp->r_pub->sys_flags & SF_DET_RESTART)
+          && (rp->r_restarts < MAX_DET_RESTART)) {
+          /* Detach at cleanup time. */
+          rp->r_flags |= RS_CLEANUP_DETACH;
+      }
+      if(rp->r_script[0] != '\0') {
+          /* Run script at cleanup time. */
+          rp->r_flags |= RS_CLEANUP_SCRIPT;
       }
   }
 
   if (rp->r_flags & RS_EXITING) {
       /* If a core system service is exiting, we are in trouble. */
-      if (rp->r_pub->sys_flags & SF_CORE_SRV && !shutting_down) {
+      if ((rp->r_pub->sys_flags & SF_CORE_SRV) && !shutting_down) {
           printf("core system service died: %s\n", srv_to_string(rp));
 	  _exit(1);
       }
 
+      /* If this service was scheduled for the update, abort the update now. */
+      if(SRV_IS_UPD_SCHEDULED(rp)) {
+          printf("RS: aborting the scheduled update, one of the services part of it is exiting...\n");
+          abort_update_proc(EDEADSRCDST);
+      }
+
       /* See if a late reply has to be sent. */
-      r = (rp->r_caller_request == RS_DOWN ? OK : EDEADEPT);
+      r = (rp->r_caller_request == RS_DOWN
+          || (rp->r_caller_request == RS_REFRESH && norestart) ? OK : EDEADEPT);
       late_reply(rp, r);
 
       /* Unpublish the service. */
@@ -1036,6 +1158,7 @@ void terminate_service(struct rproc *rp)
        * If this fails, start_service() itself will perform cleanup.
        */
       if (rp->r_flags & RS_REINCARNATE) {
+          rp->r_flags &= ~RS_REINCARNATE;
           reincarnate_service(rp);
       }
   }
@@ -1044,13 +1167,6 @@ void terminate_service(struct rproc *rp)
       restart_service(rp);
   }
   else {
-      /* If an update is in progress, end it. The old version
-       * that just exited will continue executing.
-       */
-      if(rp->r_flags & RS_UPDATING) {
-          end_update(ERESTART, RS_DONTREPLY);
-      }
-
       /* Determine what to do. If this is the first unexpected 
        * exit, immediately restart this service. Otherwise use
        * a binary exponential backoff.
@@ -1104,7 +1220,7 @@ static int run_script(struct rproc *rp)
 	switch(pid)
 	{
 	case -1:
-		return kill_service(rp, "unable to fork script", errno);
+		return errno;
 	case 0:
 		execle(_PATH_BSHELL, "sh", rp->r_script, rpub->label, reason,
 			incarnation_str, (char*) NULL, envp);
@@ -1146,25 +1262,19 @@ void restart_service(struct rproc *rp)
   /* See if a late reply has to be sent. */
   late_reply(rp, OK);
 
-  /* This hack disables restarting of file servers, which at the moment always
-   * cause VFS to hang indefinitely. As soon as VFS no longer blocks on calls
-   * to file servers, this exception can be removed again.
-   */
-  if (!strncmp(rp->r_pub->label, "fs_", 3)) {
-      kill_service(rp, "file servers cannot be restarted yet", ENOSYS);
-      return;
-  }
-
   /* Run a recovery script if available. */
   if (rp->r_script[0] != '\0') {
-      run_script(rp);
+      r = run_script(rp);
+      if(r != OK) {
+          kill_service(rp, "unable to run script", errno);
+      }
       return;
   }
 
   /* Restart directly. We need a replica if not already available. */
   if(rp->r_next_rp == NULL) {
       /* Create the replica. */
-      r = clone_service(rp, RST_SYS_PROC);
+      r = clone_service(rp, RST_SYS_PROC, 0);
       if(r != OK) {
           kill_service(rp, "unable to clone service", r);
           return;
@@ -1173,17 +1283,23 @@ void restart_service(struct rproc *rp)
   replica_rp = rp->r_next_rp;
 
   /* Update the service into the replica. */
-  r = update_service(&rp, &replica_rp, RS_SWAP);
+  r = update_service(&rp, &replica_rp, RS_SWAP, 0);
   if(r != OK) {
       kill_service(rp, "unable to update into new replica", r);
       return;
   }
 
   /* Let the new replica run. */
-  r = run_service(replica_rp, SEF_INIT_RESTART);
+  r = run_service(replica_rp, SEF_INIT_RESTART, 0);
   if(r != OK) {
       kill_service(rp, "unable to let the replica run", r);
       return;
+  }
+
+  /* See if the old version needs to be detached. */
+  if((rp->r_pub->sys_flags & SF_DET_RESTART)
+      && (rp->r_restarts < MAX_DET_RESTART)) {
+      rp->r_flags |= RS_CLEANUP_DETACH;
   }
 
   if(rs_verbose)
@@ -1499,11 +1615,13 @@ endpoint_t source;
 
   /* Update recovery script. */
   if (rs_start->rss_scriptlen > MAX_SCRIPT_LEN-1) return(E2BIG);
-  if (rs_start->rss_script != NULL && !(rpub->sys_flags & SF_CORE_SRV)) {
+  if (rs_start->rss_script != NULL && rs_start->rss_scriptlen > 0
+      && !(rpub->sys_flags & SF_CORE_SRV)) {
       s=sys_datacopy(source, (vir_bytes) rs_start->rss_script, 
           SELF, (vir_bytes) rp->r_script, rs_start->rss_scriptlen);
       if (s != OK) return(s);
       rp->r_script[rs_start->rss_scriptlen] = '\0';
+      rpub->sys_flags |= SF_USE_SCRIPT;
   }
 
   /* Update system flags and in-memory copy. */
@@ -1518,9 +1636,6 @@ endpoint_t source;
 
           for(i = 0; i < NR_SYS_PROCS; i++) {
               rp2 = &rproc[i];
-              if (!(rp2->r_flags & RS_IN_USE)) {
-              	  continue;
-              }
               rpub2 = rproc[i].r_pub;
               if(strcmp(rpub->proc_name, rpub2->proc_name) == 0 &&
                   (rpub2->sys_flags & SF_USE_COPY)) {
@@ -1549,10 +1664,30 @@ endpoint_t source;
   if (rs_start->rss_flags & RSS_NO_BIN_EXP) {
       rpub->sys_flags |= SF_NO_BIN_EXP;
   }
+  if (rs_start->rss_flags & RSS_DETACH) {
+      rpub->sys_flags |= SF_DET_RESTART;
+  }
+  else {
+      rpub->sys_flags &= ~SF_DET_RESTART;
+  }
+  if (rs_start->rss_flags & RSS_NORESTART) {
+      if(rpub->sys_flags & SF_CORE_SRV) {
+          return EPERM;
+      }
+      rpub->sys_flags |= SF_NORESTART;
+  }
+  else {
+      rpub->sys_flags &= ~SF_NORESTART;
+  }
 
   /* Update period. */
   if(rpub->endpoint != RS_PROC_NR) {
       rp->r_period = rs_start->rss_period;
+  }
+
+  /* Update restarts. */
+  if(rs_start->rss_restarts) {
+      rp->r_restarts = rs_start->rss_restarts;
   }
 
   /* (Re)initialize privilege settings. */
@@ -1581,6 +1716,7 @@ endpoint_t source;
    */
   rpub->sys_flags = DSRV_SF;             /* system flags */
   rp->r_priv.s_flags = DSRV_F;           /* privilege flags */
+  rp->r_priv.s_init_flags = DSRV_I;      /* init flags */
   rp->r_priv.s_trap_mask = DSRV_T;       /* allowed traps */
   rp->r_priv.s_bak_sig_mgr = NONE;       /* backup signal manager */
 
@@ -1622,7 +1758,7 @@ endpoint_t source;
               (unsigned int) rpub->pci_acl.rsp_class[i].pciclass,
               (unsigned int) rpub->pci_acl.rsp_class[i].mask);
   }
-
+  
   /* Initialize some fields. */
   rp->r_restarts = 0; 				/* no restarts yet */
   rp->r_old_rp = NULL;			        /* no old version yet */
@@ -1635,6 +1771,9 @@ endpoint_t source;
   rpub->label[0]= '\0';                         /* no label yet */
   rp->r_scheduler = -1;                         /* no scheduler yet */
   rp->r_priv.s_sig_mgr = -1;                    /* no signal manager yet */
+  rp->r_map_prealloc_addr = 0;                  /* no preallocated memory */
+  rp->r_map_prealloc_len = 0;
+  rp->r_init_err = ERESTART;                    /* default init error `*/
 
   /* Initialize editable slot settings. */
   return edit_slot(rp, rs_start, source);
@@ -1671,6 +1810,7 @@ struct rproc **clone_rpp;
   *clone_rpub = *rpub;
 
   /* Deep copy. */
+  clone_rp->r_init_err = ERESTART; /* default init error */
   clone_rp->r_flags &= ~RS_ACTIVE; /* the clone is not active yet */
   clone_rp->r_pid = -1;            /* no pid yet */
   clone_rpub->endpoint = -1;       /* no endpoint yet */
@@ -1689,6 +1829,7 @@ struct rproc **clone_rpp;
 
   /* Clear instance flags. */
   clone_rp->r_priv.s_flags &= ~(LU_SYS_PROC | RST_SYS_PROC);
+  clone_rp->r_priv.s_init_flags = 0;
 
   *clone_rpp = clone_rp;
   return OK;
@@ -1716,12 +1857,11 @@ struct rproc **src_rpp;
 struct rproc **dst_rpp;
 {
 /* Swap two service slots. */
-  struct rproc *src_rp;
-  struct rproc *dst_rp;
-  struct rprocpub *src_rpub;
-  struct rprocpub *dst_rpub;
+  struct rproc *src_rp, *dst_rp;
+  struct rprocpub *src_rpub, *dst_rpub;
   struct rproc orig_src_rproc, orig_dst_rproc;
   struct rprocpub orig_src_rprocpub, orig_dst_rprocpub;
+  struct rprocupd *prev_rpupd, *rpupd;
 
   src_rp = *src_rpp;
   dst_rp = *dst_rpp;
@@ -1740,9 +1880,11 @@ struct rproc **dst_rpp;
   *dst_rp = orig_src_rproc;
   *dst_rpub = orig_src_rprocpub;
 
-  /* Restore public entries. */
+  /* Restore public entries and update descriptors. */
   src_rp->r_pub = orig_src_rproc.r_pub;
   dst_rp->r_pub = orig_dst_rproc.r_pub;
+  src_rp->r_upd = orig_src_rproc.r_upd;
+  dst_rp->r_upd = orig_dst_rproc.r_upd;
 
   /* Rebuild command dependencies. */
   build_cmd_dep(src_rp);
@@ -1759,7 +1901,9 @@ struct rproc **dst_rpp;
   swap_slot_pointer(&dst_rp->r_new_rp, src_rp, dst_rp);
 
   /* Swap global slot pointers. */
-  swap_slot_pointer(&rupdate.rp, src_rp, dst_rp);
+  RUPDATE_ITER(rupdate.first_rpupd, prev_rpupd, rpupd,
+      swap_slot_pointer(&rpupd->rp, src_rp, dst_rp);
+  );
   swap_slot_pointer(&rproc_ptr[_ENDPOINT_P(src_rp->r_pub->endpoint)],
       src_rp, dst_rp);
   swap_slot_pointer(&rproc_ptr[_ENDPOINT_P(dst_rp->r_pub->endpoint)],

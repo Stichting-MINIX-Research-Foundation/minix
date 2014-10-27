@@ -114,6 +114,7 @@ struct rs_start
 	long rss_period;
 	char *rss_script;
 	size_t rss_scriptlen;
+	long rss_restarts;
 	long rss_heap_prealloc_bytes;
 	long rss_map_prealloc_bytes;
 	int rss_nr_irq;
@@ -191,9 +192,10 @@ struct rprocpub {
 #define SF_USE_SCRIPT   0x200    /* set when process has restart script */
 #define SF_DET_RESTART  0x400    /* set when process detaches on restart */
 #define SF_NORESTART    0x800    /* set when process should not be restarted */
+#define SF_NO_BIN_EXP  0x1000    /* set when we should ignore binary exp. offset */
 
 #define IMM_SF          \
-    (SF_CORE_SRV | SF_SYNCH_BOOT | SF_NEED_COPY | SF_NEED_REPL) /* immutable */
+    (SF_NO_BIN_EXP | SF_CORE_SRV | SF_SYNCH_BOOT | SF_NEED_COPY | SF_NEED_REPL) /* immutable */
 
 int minix_rs_lookup(const char *name, endpoint_t *value);
 

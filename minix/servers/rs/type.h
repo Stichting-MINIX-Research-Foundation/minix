@@ -25,6 +25,32 @@ struct boot_image_dev {
   dev_t dev_nr;                /* major device number */
 };
 
+/* Definition of the update descriptors. */
+struct rproc;
+struct rprocupd {
+  int lu_flags;		   /* user-specified live update flags */
+  int init_flags;		   /* user-specified init flags */
+  int prepare_state;       /* the state the process has to prepare for the update */
+  endpoint_t state_endpoint; /* the custom process to transfer the state from (if any). */
+  clock_t prepare_tm;      /* timestamp of when the update was scheduled */
+  clock_t prepare_maxtime; /* max time to wait for the process to be ready */
+  struct rproc *rp;        /* the process under update */
+  struct rs_state_data prepare_state_data; /* state data for the update */
+  cp_grant_id_t prepare_state_data_gid; /* state data gid */
+  struct rprocupd *prev_rpupd;   /* the previous process under update */
+  struct rprocupd *next_rpupd;   /* the next process under update */
+};
+struct rupdate {
+  int flags;               /* flags to keep track of the status of the update */
+  int num_rpupds;          /* number of descriptors scheduled for the update */
+  int num_init_ready_pending;   /* number of pending init ready messages */
+  struct rprocupd *curr_rpupd;  /* the current descriptor under update */
+  struct rprocupd *first_rpupd; /* first descriptor scheduled for the update */
+  struct rprocupd *last_rpupd;  /* last descriptor scheduled for the update */
+  struct rprocupd *vm_rpupd;    /* VM descriptor scheduled for the update */
+  struct rprocupd *rs_rpupd;    /* RS descriptor scheduled for the update */
+};
+
 /* Definition of an entry of the system process table. */
 struct rproc {
   struct rprocpub *r_pub;       /* pointer to the corresponding public entry */
@@ -32,11 +58,13 @@ struct rproc {
   struct rproc *r_new_rp;       /* pointer to the slot with the new version */
   struct rproc *r_prev_rp;      /* pointer to the slot with the prev replica */
   struct rproc *r_next_rp;      /* pointer to the slot with the next replica */
+  struct rprocupd r_upd;        /* update descriptor */
   pid_t r_pid;			/* process id, -1 if the process is not there */
 
   int r_restarts;		/* number of restarts (initially zero) */
   long r_backoff;		/* number of periods to wait before revive */
   unsigned r_flags; 		/* status and policy flags */
+  int r_init_err;               /* error code at initialization time */
 
   long r_period;		/* heartbeat period (or zero) */
   clock_t r_check_tm;		/* timestamp of last check */
@@ -63,6 +91,8 @@ struct rproc {
   int r_priority;		/* negative values are reserved for special meanings */
   int r_quantum;
   int r_cpu;
+  vir_bytes r_map_prealloc_addr; /* preallocated mmap address */
+  size_t r_map_prealloc_len;     /* preallocated mmap len */
 
   /* Backup values from the privilege structure. */
   struct io_range r_io_tab[NR_IO_RANGE];
@@ -75,12 +105,6 @@ struct rproc {
   char r_control[RS_NR_CONTROL][RS_MAX_LABEL_LEN];
 };
 
-/* Definition of the global update descriptor. */
-struct rupdate {
-  int flags;               /* flags to keep track of the status of the update */
-  clock_t prepare_tm;      /* timestamp of when the update was scheduled */
-  clock_t prepare_maxtime; /* max time to wait for the process to be ready */
-  struct rproc *rp;        /* the process under update */
-};
-
 #endif /* RS_TYPE_H */
+
+

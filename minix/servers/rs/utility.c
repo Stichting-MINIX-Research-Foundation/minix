@@ -10,21 +10,19 @@
 #include <minix/sched.h>
 #include "kernel/proc.h"
 
+#define PRINT_SEP() printf("---------------------------------------------------------------------------------\n")
+
 /*===========================================================================*
  *				 init_service				     *
  *===========================================================================*/
-int init_service(rp, type)
-struct rproc *rp;				/* pointer to process slot */
-int type;					/* type of initialization */
+int init_service(struct rproc *rp, int type, int flags)
 {
   int r;
   message m;
-  struct rprocpub *rpub;
   endpoint_t old_endpoint;
 
-  rpub = rp->r_pub;
-
   rp->r_flags |= RS_INITIALIZING;              /* now initializing */
+  getticks(&rp->r_alive_tm);
   rp->r_check_tm = rp->r_alive_tm + 1;         /* expect reply within period */
 
   /* In case of RS initialization, we are done. */
@@ -35,19 +33,29 @@ int type;					/* type of initialization */
   /* Determine the old endpoint if this is a new instance. */
   old_endpoint = NONE;
   if(rp->r_old_rp) {
-      old_endpoint = rp->r_old_rp->r_pub->endpoint;
+      old_endpoint = rp->r_upd.state_endpoint;
   }
   else if(rp->r_prev_rp) {
       old_endpoint = rp->r_prev_rp->r_pub->endpoint;
   }
 
+  /* Check flags. */
+  if(rp->r_pub->sys_flags & SF_USE_SCRIPT) {
+      flags |= SEF_INIT_SCRIPT_RESTART;
+  }
+
   /* Send initialization message. */
-  memset(&m, 0, sizeof(message));
   m.m_type = RS_INIT;
-  m.m_rs_init.type = type;
+  m.m_rs_init.type = (short) type;
+  m.m_rs_init.flags = flags;
   m.m_rs_init.rproctab_gid = rinit.rproctab_gid;
   m.m_rs_init.old_endpoint = old_endpoint;
-  r = asynsend(rpub->endpoint, &m);
+  m.m_rs_init.restarts = (short) rp->r_restarts+1;
+  m.m_rs_init.buff_addr = rp->r_map_prealloc_addr;
+  m.m_rs_init.buff_len  = rp->r_map_prealloc_len;
+  rp->r_map_prealloc_addr = 0;
+  rp->r_map_prealloc_len = 0;
+  r = rs_asynsend(rp, &m, 0);
 
   return r;
 }
@@ -113,15 +121,14 @@ int is_init;                    /* set when initializing a call mask */
 }
 
 /*===========================================================================*
- *			     srv_to_string				     *
+ *			     srv_to_string_gen				     *
  *===========================================================================*/
-char* srv_to_string(rp)
-struct rproc *rp;			/* pointer to process slot */
+char* srv_to_string_gen(struct rproc *rp, int is_verbose)
 {
   struct rprocpub *rpub;
   int slot_nr;
   char *srv_string;
-  static char srv_string_pool[3][RS_MAX_LABEL_LEN + (DEBUG ? 256 : 64)];
+  static char srv_string_pool[3][RS_MAX_LABEL_LEN + 256];
   static int srv_string_pool_index = 0;
 
   rpub = rp->r_pub;
@@ -130,24 +137,92 @@ struct rproc *rp;			/* pointer to process slot */
   srv_string_pool_index = (srv_string_pool_index + 1) % 3;
 
 #define srv_str(cmd) ((cmd) == NULL || (cmd)[0] == '\0' ? "_" : (cmd))
-#define srv_ep_str(rp) (itoa((rp)->r_pub->endpoint))
 #define srv_active_str(rp) ((rp)->r_flags & RS_ACTIVE ? "*" : " ")
 #define srv_version_str(rp) ((rp)->r_new_rp || (rp)->r_next_rp ? "-" : \
     ((rp)->r_old_rp || (rp)->r_prev_rp ? "+" : " "))
 
-#if DEBUG
-  sprintf(srv_string, "service '%s'%s%s(slot %d, ep %d, pid %d, cmd %s, script %s, proc %s, major %d, flags 0x%03x, sys_flags 0x%02x)",
-      rpub->label, srv_active_str(rp), srv_version_str(rp),
-      slot_nr, rpub->endpoint, rp->r_pid, srv_str(rp->r_cmd),
-      srv_str(rp->r_script), srv_str(rpub->proc_name), rpub->dev_nr,
-      rp->r_flags, rpub->sys_flags);
-#else
-  sprintf(srv_string, "service '%s'%s%s(slot %d, ep %d, pid %d)",
-      rpub->label, srv_active_str(rp), srv_version_str(rp),
-      slot_nr, rpub->endpoint, rp->r_pid);
-#endif
+  if(is_verbose) {
+      sprintf(srv_string, "service '%s'%s%s(slot %d, ep %d, pid %d, cmd %s, script %s, proc %s, major %d, flags 0x%03x, sys_flags 0x%02x)",
+          rpub->label, srv_active_str(rp), srv_version_str(rp),
+          slot_nr, rpub->endpoint, rp->r_pid, srv_str(rp->r_cmd),
+          srv_str(rp->r_script), srv_str(rpub->proc_name), rpub->dev_nr,
+          rp->r_flags, rpub->sys_flags);
+  }
+  else {
+      sprintf(srv_string, "service '%s'%s%s(slot %d, ep %d, pid %d)",
+          rpub->label, srv_active_str(rp), srv_version_str(rp),
+          slot_nr, rpub->endpoint, rp->r_pid);
+  }
+
+#undef srv_str
+#undef srv_active_str
+#undef srv_version_str
 
   return srv_string;
+}
+
+/*===========================================================================*
+ *			     srv_upd_to_string				     *
+ *===========================================================================*/
+char* srv_upd_to_string(struct rprocupd *rpupd)
+{
+   static char srv_upd_string[256];
+   struct rprocpub *rpub, *next_rpub, *prev_rpub;
+   rpub = rpupd->rp ? rpupd->rp->r_pub : NULL;
+   next_rpub = rpupd->next_rpupd && rpupd->next_rpupd->rp ? rpupd->next_rpupd->rp->r_pub : NULL;
+   prev_rpub = rpupd->prev_rpupd && rpupd->prev_rpupd->rp ? rpupd->prev_rpupd->rp->r_pub : NULL;
+
+#define srv_ep(RPUB) (RPUB ? (RPUB)->endpoint : -1)
+#define srv_upd_luflag_c(F) (rpupd->lu_flags & F ? '1' : '0')
+#define srv_upd_iflag_c(F) (rpupd->init_flags & F ? '1' : '0')
+
+   sprintf(srv_upd_string, "update (lu_flags(SAMPUNDRV)=%c%c%c%c%c%c%c%c%c, init_flags=(FCTD)=%c%c%c%c, state %d (%s), tm %lu, maxtime %lu, endpoint %d, state_data_gid %d, prev_ep %d, next_ep %d)",
+       srv_upd_luflag_c(SEF_LU_SELF), srv_upd_luflag_c(SEF_LU_ASR),
+       srv_upd_luflag_c(SEF_LU_MULTI), srv_upd_luflag_c(SEF_LU_PREPARE_ONLY),
+       srv_upd_luflag_c(SEF_LU_UNSAFE), srv_upd_luflag_c(SEF_LU_NOMMAP),
+       srv_upd_luflag_c(SEF_LU_DETACHED), srv_upd_luflag_c(SEF_LU_INCLUDES_RS),
+       srv_upd_luflag_c(SEF_LU_INCLUDES_VM), srv_upd_iflag_c(SEF_INIT_FAIL),
+       srv_upd_iflag_c(SEF_INIT_CRASH), srv_upd_iflag_c(SEF_INIT_TIMEOUT),
+       srv_upd_iflag_c(SEF_INIT_DEFCB), rpupd->prepare_state, 
+       rpupd->prepare_state_data.eval_addr ? rpupd->prepare_state_data.eval_addr : "", rpupd->prepare_tm,
+       rpupd->prepare_maxtime, srv_ep(rpub), rpupd->prepare_state_data_gid,
+       srv_ep(prev_rpub), srv_ep(next_rpub));
+
+   return srv_upd_string;
+}
+
+/*===========================================================================*
+ *			     rs_asynsend				     *
+ *===========================================================================*/
+int rs_asynsend(struct rproc *rp, message *m_ptr, int no_reply)
+{
+  struct rprocpub *rpub;
+  int r;
+
+  rpub = rp->r_pub;
+
+  if(no_reply) {
+      r = asynsend3(rpub->endpoint, m_ptr, AMF_NOREPLY);
+  }
+  else {
+      r = asynsend(rpub->endpoint, m_ptr);
+  }
+
+  if(rs_verbose)
+      printf("RS: %s being asynsent to with message type %d, noreply=%d, result=%d\n",
+          srv_to_string(rp), m_ptr->m_type, no_reply, r);
+
+  return r;
+}
+
+/*===========================================================================*
+ *			     rs_receive_ticks				     *
+ *===========================================================================*/
+int rs_receive_ticks(endpoint_t src, message *m_ptr,
+    int *status_ptr, int ticks)
+{
+  printf("RS: rs_receive_ticks not implemented\n");
+  return ENOSYS;
 }
 
 /*===========================================================================*
@@ -166,7 +241,7 @@ message *m_ptr;                         /* reply message */
   }
 
   if(rs_verbose && rp)
-      printf("RS: %s being replied to\n", srv_to_string(rp));
+      printf("RS: %s being replied to with message type %d\n", srv_to_string(rp), m_ptr->m_type);
 
   r = ipc_sendnb(who, m_ptr);		/* send the message */
   if (r != OK)
@@ -263,5 +338,127 @@ int update_sig_mgrs(struct rproc *rp, endpoint_t sig_mgr,
   }
 
   return OK;
+}
+
+/*===========================================================================*
+ *				rs_is_idle			 	     *
+ *===========================================================================*/
+int rs_is_idle()
+{
+  int slot_nr;
+  struct rproc *rp;
+  for (slot_nr = 0; slot_nr < NR_SYS_PROCS; slot_nr++) {
+      rp = &rproc[slot_nr];
+      if (!(rp->r_flags & RS_IN_USE)) {
+          continue;
+      }
+      if(!RS_SRV_IS_IDLE(rp)) {
+          return 0;
+      }
+  }
+  return 1;
+}
+
+/*===========================================================================*
+ *				rs_idle_period				     *
+ *===========================================================================*/
+void rs_idle_period()
+{
+  struct rproc *rp;
+  struct rprocpub *rpub;
+  int r;
+
+  /* Not much to do when RS is not idle. */
+  if(!rs_is_idle()) {
+      return;
+  }
+
+  /* Cleanup dead services. */
+  for (rp=BEG_RPROC_ADDR; rp<END_RPROC_ADDR; rp++) {
+      if((rp->r_flags & (RS_IN_USE|RS_DEAD)) == (RS_IN_USE|RS_DEAD)) {
+          cleanup_service(rp);
+      }
+  }
+
+  /* Create missing replicas when necessary. */
+  for (rp=BEG_RPROC_ADDR; rp<END_RPROC_ADDR; rp++) {
+      rpub = rp->r_pub;
+      if((rp->r_flags & RS_ACTIVE) && (rpub->sys_flags & SF_USE_REPL) && rp->r_next_rp == NULL) {
+          if(rpub->endpoint == VM_PROC_NR && (rp->r_old_rp || rp->r_new_rp)) {
+              /* Only one replica at the time for VM. */
+              continue;
+          }
+          if ((r = clone_service(rp, RST_SYS_PROC, 0)) != OK) {
+              printf("RS: warning: unable to clone %s (error %d)\n",
+                  srv_to_string(rp), r);
+          }
+      }
+  }
+}
+
+/*===========================================================================*
+ *			   print_services_status		 	     *
+ *===========================================================================*/
+void print_services_status()
+{
+  int slot_nr;
+  struct rproc *rp;
+  int num_services = 0;
+  int num_service_instances = 0;
+  int is_verbose = 1;
+
+  PRINT_SEP();
+  printf("Printing information about all the system service instances:\n");
+  PRINT_SEP();
+  for (slot_nr = 0; slot_nr < NR_SYS_PROCS; slot_nr++) {
+      rp = &rproc[slot_nr];
+      if (!(rp->r_flags & RS_IN_USE)) {
+          continue;
+      }
+      if (rp->r_flags & RS_ACTIVE) {
+          num_services++;
+      }
+      num_service_instances++;
+      printf("%s\n", srv_to_string_gen(rp, is_verbose));
+  }
+  PRINT_SEP();
+  printf("Found %d service instances, of which %d are active services\n",
+  	  num_service_instances, num_services);
+  PRINT_SEP();
+}
+
+/*===========================================================================*
+ *			    print_update_status 		 	     *
+ *===========================================================================*/
+void print_update_status()
+{
+  struct rprocupd *prev_rpupd, *rpupd;
+  int is_updating = RUPDATE_IS_UPDATING();
+  int i;
+
+#define rupdate_flag_c(F) (rupdate.flags & F ? '1' : '0')
+
+  if(!is_updating && !RUPDATE_IS_UPD_SCHEDULED()) {
+      PRINT_SEP();
+      printf("No update is in progress or scheduled\n");
+      PRINT_SEP();
+      return;
+  }
+
+  PRINT_SEP();
+  i = 1;
+  printf("A %s-component update is %s, flags(UIRV)=%c%c%c%c:\n", RUPDATE_IS_UPD_MULTI() ? "multi" : "single",
+      is_updating ? "in progress" : "scheduled",
+      rupdate_flag_c(RS_UPDATING), rupdate_flag_c(RS_INITIALIZING),
+      rupdate.rs_rpupd ? '1' : '0', rupdate.vm_rpupd ? '1' : '0');
+  PRINT_SEP();
+  RUPDATE_ITER(rupdate.first_rpupd, prev_rpupd, rpupd,
+      printf("%d. %s %s %s\n", i++, srv_to_string(rpupd->rp),
+          is_updating ? "updating with" : "scheduled for",
+          srv_upd_to_string(rpupd));
+  );
+  PRINT_SEP();
+
+#undef rupdate_flag_c
 }
 

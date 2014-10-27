@@ -276,20 +276,11 @@ int do_rs_memctl(message *m_ptr)
 	switch(req)
 	{
 	case VM_RS_MEM_PIN:
-
-		/* Do not perform VM_RS_MEM_PIN yet - it costs the full
-		 * size of the RS stack (64MB by default) in memory,
-		 * and it's needed for functionality that isn't complete /
-		 * merged in current Minix (surviving VM crashes).
-		 */
-
-#if 0
+		/* Only actually pin RS memory if VM can recover from crashes (saves memory). */
+		if (num_vm_instances <= 1)
+			return OK;
 		r = map_pin_memory(vmp);
 		return r;
-#else
-		return OK;
-#endif
-
 	case VM_RS_MEM_MAKE_VM:
 		r = rs_memctl_make_vm_instance(vmp);
 		return r;
