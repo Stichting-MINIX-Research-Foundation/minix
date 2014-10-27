@@ -13,7 +13,8 @@ struct errentry {
 
 /* Initialization errors. */
 static struct errentry init_errlist[] = {
-  { ENOSYS,     "service does not support the requested initialization type"  }
+  { ENOSYS,     "service does not support the requested initialization type"  },
+  { ERESTART,     "service requested an initialization reset"  }
 };
 static const int init_nerr = sizeof(init_errlist) / sizeof(init_errlist[0]);
 

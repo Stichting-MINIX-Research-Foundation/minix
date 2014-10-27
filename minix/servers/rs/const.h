@@ -22,6 +22,7 @@
 #define MAX_IPC_LIST        256         /* Max size of list for IPC target
                                          * process names
                                          */
+#define MAX_DET_RESTART      10         /* maximum number of detached restarts. */
 
 /* Flag values. */
 #define RS_IN_USE       0x001    /* set when process slot is in use */
@@ -32,17 +33,16 @@
 #define RS_LATEREPLY    0x020    /* no reply sent to RS_DOWN caller yet */
 #define RS_INITIALIZING 0x040    /* set when init is in progress */
 #define RS_UPDATING     0x080    /* set when update is in progress */
-#define RS_ACTIVE       0x100    /* set for the active instance of a service */
-#define RS_REINCARNATE  0x200    /* after exit, restart with a new endpoint */
+#define RS_PREPARE_DONE 0x100    /* set when updating and preparation is done */
+#define RS_INIT_DONE    0x200    /* set when updating and init is done */
+#define RS_INIT_PENDING 0x400    /* set when updating and init is pending */
+#define RS_ACTIVE       0x800    /* set for the active instance of a service */
+#define RS_DEAD         0x1000   /* set for an instance ready to be cleaned up */
+#define RS_CLEANUP_DETACH 0x2000   /* detach at cleanup time */
+#define RS_CLEANUP_SCRIPT 0x4000   /* run script at cleanup time */
+#define RS_REINCARNATE    0x8000   /* after exit, restart with a new endpoint */
 
-/* Sys flag values. */
-#define SF_CORE_SRV     0x001    /* set for core system services */
-#define SF_SYNCH_BOOT   0X002    /* set when process needs synch boot init */
-#define SF_NEED_COPY    0x004    /* set when process needs copy to start */
-#define SF_USE_COPY     0x008    /* set when process has a copy in memory */
-#define SF_NEED_REPL    0x010    /* set when process needs replica to start */
-#define SF_USE_REPL     0x020    /* set when process has a replica */
-#define SF_NO_BIN_EXP	0x040    /* set when we should ignore binary exp. offset */
+#define RS_SRV_IS_IDLE(S) (((S)->r_flags & RS_DEAD) || ((S)->r_flags & ~(RS_IN_USE|RS_ACTIVE|RS_CLEANUP_DETACH|RS_CLEANUP_SCRIPT)) == 0)
 
 /* Constants determining RS period and binary exponential backoff. */
 #define RS_INIT_T	(system_hz * 10)	/* allow T ticks for init */
@@ -56,8 +56,6 @@
 
 /* Constants for live update. */
 #define RS_DEFAULT_PREPARE_MAXTIME 2*RS_DELTA_T   /* default prepare max time */
-#define RS_MAX_PREPARE_MAXTIME     20*RS_DELTA_T  /* max prepare max time */
-
 
 /* Definitions for boot info tables. */
 #define NULL_BOOT_NR    NR_BOOT_PROCS        /* marks a null boot entry */
@@ -75,10 +73,54 @@
 /* Reply flags. */
 #define RS_DONTREPLY    0
 #define RS_REPLY        1
+#define RS_CANCEL       2
 
 /* Swap flags. */
 #define RS_DONTSWAP     0
 #define RS_SWAP         1
+
+/* Configuration constants */
+#define RS_VM_DEFAULT_MAP_PREALLOC_LEN  (1024*1024*8)
+#define RS_USE_PAGING                   0
+
+/* Update macros. */
+#define RUPDATE_INIT() memset(&rupdate, 0, sizeof(rupdate))
+#define RUPDATE_CLEAR() RUPDATE_INIT()
+
+#define RUPDATE_ITER(HEAD, RPUPD_PREV, RPUPD, B) do { \
+        RPUPD = HEAD; \
+        RPUPD_PREV = NULL; \
+        while(RPUPD) { \
+            B \
+            RPUPD_PREV = RPUPD; \
+            RPUPD = RPUPD->next_rpupd; \
+        } \
+     } while(0)
+#define RUPDATE_REV_ITER(TAIL, RPUPD_PREV, RPUPD, B) do { \
+        RPUPD = TAIL; \
+        while(RPUPD) { \
+            RPUPD_PREV = RPUPD->prev_rpupd; \
+            B \
+            RPUPD = RPUPD->prev_rpupd; \
+        } \
+     } while(0)
+
+#define RUPDATE_IS_UPDATING() (rupdate.flags & RS_UPDATING)
+#define RUPDATE_IS_VM_UPDATING() ((rupdate.flags & RS_UPDATING) && rupdate.vm_rpupd)
+#define RUPDATE_IS_VM_INIT_DONE() (rproc_ptr[_ENDPOINT_P(VM_PROC_NR)]->r_flags & RS_INIT_DONE)
+#define RUPDATE_IS_RS_UPDATING() ((rupdate.flags & RS_UPDATING) && rupdate.rs_rpupd)
+#define RUPDATE_IS_RS_INIT_DONE() (rproc_ptr[_ENDPOINT_P(RS_PROC_NR)]->r_flags & RS_INIT_DONE)
+#define RUPDATE_IS_INITIALIZING() (rupdate.flags & RS_INITIALIZING)
+#define RUPDATE_IS_UPD_SCHEDULED() (rupdate.num_rpupds > 0 && !RUPDATE_IS_UPDATING())
+#define RUPDATE_IS_UPD_MULTI() (rupdate.num_rpupds > 1)
+#define RUPDATE_IS_UPD_VM_MULTI() (rupdate.vm_rpupd && RUPDATE_IS_UPD_MULTI())
+#define SRV_IS_UPDATING(RP) ((RP)->r_flags & RS_UPDATING)
+#define SRV_IS_UPDATING_AND_INITIALIZING(RP) (((RP)->r_flags & (RS_UPDATING|RS_INITIALIZING)) == (RS_UPDATING|RS_INITIALIZING))
+#define UPD_INIT_MAXTIME(RPUPD) ((RPUPD)->prepare_maxtime != RS_DEFAULT_PREPARE_MAXTIME ? (RPUPD)->prepare_maxtime : RS_INIT_T)
+#define UPD_IS_PREPARING_ONLY(RPUPD) ((RPUPD)->lu_flags & SEF_LU_PREPARE_ONLY)
+#define SRV_IS_PREPARING_ONLY(RP) ((RP)->r_upd.rp && UPD_IS_PREPARING_ONLY(&(RP)->r_upd))
+#define UPD_IS_UPD_SCHEDULED(RPUPD) (RUPDATE_IS_UPD_SCHEDULED() && (RPUPD)->rp)
+#define SRV_IS_UPD_SCHEDULED(RP) UPD_IS_UPD_SCHEDULED(&(RP)->r_upd)
 
 #endif /* RS_CONST_H */
 

@@ -84,7 +84,8 @@ static int known_request_types[] = {
 #define OPT_REUSE	"-r"		/* reuse executable image */
 #define OPT_NOBLOCK	"-n"		/* unblock caller immediately */
 #define OPT_REPLICA	"-p"		/* create replica for the service */
-#define OPT_BATCH	"-b"		/* batch mode */
+#define OPT_NO_BIN_EXP	"-b"		/* no binary exponential backoff */
+#define OPT_BATCH	"-q"		/* batch mode */
 #define OPT_ASR_LU	"-a"		/* asr update */
 #define OPT_PREPARE_ONLY_LU    "-o"	/* prepare-only update */
 #define OPT_FORCE_SELF_LU      "-s"	/* force self update */
@@ -134,6 +135,7 @@ static int known_request_types[] = {
 #define ARG_TRG_LABELNAME "-trg-label"	/* target label name */
 #define ARG_LU_IPC_BL	"-ipc_bl"       /* IPC blacklist filter */
 #define ARG_LU_IPC_WL	"-ipc_wl"       /* IPC whitelist filter */
+#define ARG_RESTARTS	"-restarts"    /* number of restarts */
 
 /* The function parse_arguments() verifies and parses the command line 
  * parameters passed to this utility. Request parameters that are needed
@@ -154,6 +156,7 @@ static char *req_config = PATH_CONFIG;
 static int custom_config_file = 0;
 static int req_lu_state = DEFAULT_LU_STATE;
 static int req_lu_maxtime = DEFAULT_LU_MAXTIME;
+static int req_restarts = 0;
 static long req_heap_prealloc = 0;
 static long req_map_prealloc = 0;
 static int req_sysctl_type = 0;
@@ -171,15 +174,16 @@ static void print_usage(char *app_name, char *problem)
   fprintf(stderr, "Warning, %s\n", problem);
   fprintf(stderr, "Usage:\n");
   fprintf(stderr,
-      "    %s [%s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s] (up|run|edit|update) <binary|%s> [%s <args>] [%s <special>] [%s <major_nr>] [%s <dev_id>] [%s <ticks>] [%s <path>] [%s <name>] [%s <path>] [%s <state value|eval_expression>] [%s <time>] [%s <bytes>] [%s <bytes>] [%s <name>] [(%s|%s <src_label1,src_type1:src_label2,:,src_type3:...>)*]\n", 
-	app_name, OPT_COPY, OPT_REUSE, OPT_NOBLOCK, OPT_REPLICA, 
+      "    %s [%s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s] (up|run|edit|update) <binary|%s> [%s <args>] [%s <special>] [%s <major_nr>] [%s <dev_id>] [%s <ticks>] [%s <path>] [%s <name>] [%s <path>] [%s <state value|eval_expression>] [%s <time>] [%s <bytes>] [%s <bytes>] [%s <name>] [(%s|%s <src_label1,src_type1:src_label2,:,src_type3:...>)*] [%s <restarts>]\n",
+	app_name, OPT_COPY, OPT_REUSE, OPT_NOBLOCK, OPT_REPLICA, OPT_NO_BIN_EXP,
 	OPT_BATCH, OPT_ASR_LU, OPT_PREPARE_ONLY_LU, OPT_FORCE_SELF_LU,
 	OPT_FORCE_INIT_CRASH, OPT_FORCE_INIT_FAIL, OPT_FORCE_INIT_TIMEOUT,
 	OPT_FORCE_INIT_DEFCB, OPT_UNSAFE_LU, OPT_NOMMAP_LU, OPT_DETACH,
 	OPT_NORESTART, OPT_FORCE_INIT_ST, SELF_BINARY,
 	ARG_ARGS, ARG_DEV, ARG_MAJOR, ARG_DEVMANID, ARG_PERIOD,
 	ARG_SCRIPT, ARG_LABELNAME, ARG_CONFIG, ARG_LU_STATE, ARG_LU_MAXTIME,
-	ARG_HEAP_PREALLOC, ARG_MAP_PREALLOC, ARG_TRG_LABELNAME, ARG_LU_IPC_BL, ARG_LU_IPC_WL);
+	ARG_HEAP_PREALLOC, ARG_MAP_PREALLOC, ARG_TRG_LABELNAME, ARG_LU_IPC_BL, ARG_LU_IPC_WL,
+	ARG_RESTARTS);
   fprintf(stderr, "    %s down <label>\n", app_name);
   fprintf(stderr, "    %s refresh <label>\n", app_name);
   fprintf(stderr, "    %s restart <label>\n", app_name);
@@ -627,6 +631,14 @@ static int parse_arguments(int argc, char **argv, u32_t *rss_flags)
                   exit(r);
               }
           }
+          else if (strcmp(argv[i], ARG_RESTARTS)==0) {
+              errno=0;
+              req_restarts = strtol(argv[i+1], &buff, 10);
+              if(errno || strcmp(buff, "") || req_restarts<0) {
+                  print_usage(argv[ARG_NAME], "bad number of restarts");
+                  exit(EINVAL);
+              }
+          }
           else {
               print_usage(argv[ARG_NAME], "unknown optional argument given");
               exit(EINVAL);
@@ -726,6 +738,8 @@ int main(int argc, char **argv)
 	memset(&config, 0, sizeof(config));
       	if(!parse_config(progname, custom_config_file, req_config, &config))
 		errx(1, "couldn't parse config");
+	assert(config.rs_start.rss_priority < NR_SCHED_QUEUES);
+	assert(config.rs_start.rss_quantum > 0);
       }
 
       /* Set specifics */
@@ -734,6 +748,7 @@ int main(int argc, char **argv)
       config.rs_start.rss_major= req_major;
       config.rs_start.rss_period= req_period;
       config.rs_start.rss_script= req_script;
+      config.rs_start.rss_restarts= req_restarts;
       config.rs_start.devman_id= devman_id;
       config.rs_start.rss_heap_prealloc_bytes= req_heap_prealloc;
       config.rs_start.rss_map_prealloc_bytes= req_map_prealloc;
@@ -756,9 +771,6 @@ int main(int argc, char **argv)
 	      config.rs_start.rss_scriptlen= strlen(req_script);
       else
 	      config.rs_start.rss_scriptlen= 0;
-
-      assert(config.rs_start.rss_priority < NR_SCHED_QUEUES);
-      assert(config.rs_start.rss_quantum > 0);
 
       /* State-related data. */
       config.rs_start.rss_state_data.size =
