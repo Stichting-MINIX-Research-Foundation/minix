@@ -143,13 +143,7 @@ devman_event_read(char **ptr, size_t *len,off_t offset, void *data)
 {
 	struct devman_event *ev = NULL;
 	struct devman_event_inode *n;
-	static int eof = 0;	
 	
-	if (eof) {
-		*len=0;
-		eof = 0;
-		return 0;
-	}
 	n = (struct devman_event_inode *) data;
 	
 	if (!TAILQ_EMPTY(&n->event_queue)) {
@@ -157,18 +151,17 @@ devman_event_read(char **ptr, size_t *len,off_t offset, void *data)
 	}
 
 	buf_init(offset, *len);
-	if (ev != NULL) {
+	if (ev != NULL)
 		buf_printf("%s", ev->data);
-		/* read all? */
-		if (*len + offset >= strlen(ev->data)) {
-			TAILQ_REMOVE(&n->event_queue, ev, events);
-			free(ev);
-			eof = 1;
-		}
-	}
 
 	*len = buf_get(ptr);
-	
+
+	/* read all (EOF)? */
+	if (ev != NULL && *len == 0) {
+		TAILQ_REMOVE(&n->event_queue, ev, events);
+		free(ev);
+	}
+
 	return 0;
 }
 
