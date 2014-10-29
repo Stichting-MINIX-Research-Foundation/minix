@@ -519,6 +519,13 @@ void init_vm(void)
 	/* Mark VM instances. */
 	num_vm_instances = 1;
 	vmproc[VM_PROC_NR].vm_flags |= VMF_VM_INSTANCE;
+
+	/* Let SEF know about VM mmapped regions. */
+	s = sef_llvm_add_special_mem_region((void*)VM_OWN_HEAPBASE,
+	    VM_OWN_MMAPTOP-VM_OWN_HEAPBASE, "%MMAP_ALL");
+	if(s < 0) {
+	    printf("VM: st_add_special_mmapped_region failed %d\n", s);
+	}
 }
 
 /*===========================================================================*

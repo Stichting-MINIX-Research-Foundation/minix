@@ -1,6 +1,7 @@
 #include "syslib.h"
 #include <assert.h>
 #include <unistd.h>
+#include <sys/mman.h>
 #include <minix/sysutil.h>
 
 /* Stack refs definitions. */
@@ -126,6 +127,30 @@ int sef_llvm_state_transfer(sef_init_info_t *info)
     if (!_magic_state_transfer)
         return ENOSYS;
     return _magic_state_transfer(info);
+}
+
+/*===========================================================================*
+ *      	        sef_llvm_add_special_mem_region                      *
+ *===========================================================================*/
+int sef_llvm_add_special_mem_region(void *addr, size_t len, const char* name)
+{
+    extern int __attribute__((weak)) st_add_special_mmapped_region(void *addr,
+        size_t len, char* name);
+    if (!st_add_special_mmapped_region)
+        return 0;
+    return st_add_special_mmapped_region(addr, len, (char*) name);
+}
+
+/*===========================================================================*
+ *      	    sef_llvm_del_special_mem_region_by_addr                  *
+ *===========================================================================*/
+int sef_llvm_del_special_mem_region_by_addr(void *addr)
+{
+    extern int __attribute__((weak)) st_del_special_mmapped_region_by_addr(
+        void *addr);
+    if (!st_del_special_mmapped_region_by_addr)
+        return 0;
+    return st_del_special_mmapped_region_by_addr(addr);
 }
 
 /*===========================================================================*
