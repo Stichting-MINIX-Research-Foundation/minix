@@ -307,6 +307,25 @@ int sef_cb_init_timeout(int UNUSED(type), sef_init_info_t *UNUSED(info))
 }
 
 /*===========================================================================*
+ *      	           sef_cb_init_restart_generic                       *
+ *===========================================================================*/
+int sef_cb_init_restart_generic(int type, sef_init_info_t *info)
+{
+  /* Always resort to simple identity transfer for self updates. */
+  if (type == SEF_INIT_LU && (info->flags & SEF_LU_SELF))
+      return sef_cb_init_identity_state_transfer(type, info);
+
+  /* Can only handle restart otherwise. */
+  if(type != SEF_INIT_RESTART) {
+      printf("sef_cb_init_restart_generic: init failed\n");
+      return ENOSYS;
+  }
+
+  /* Perform instrumentation-supported checkpoint-restart. */
+  return sef_llvm_ltckpt_restart(type, info);
+}
+
+/*===========================================================================*
  *      	       sef_cb_init_identity_state_transfer                   *
  *===========================================================================*/
 int sef_cb_init_identity_state_transfer(int type, sef_init_info_t *info)

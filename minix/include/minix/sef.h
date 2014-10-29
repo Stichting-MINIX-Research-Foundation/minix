@@ -69,6 +69,7 @@ int sef_cb_init_fail(int type, sef_init_info_t *info);
 int sef_cb_init_reset(int type, sef_init_info_t *info);
 int sef_cb_init_crash(int type, sef_init_info_t *info);
 int sef_cb_init_timeout(int type, sef_init_info_t *info);
+int sef_cb_init_restart_generic(int type, sef_init_info_t *info);
 int sef_cb_init_identity_state_transfer(int type, sef_init_info_t *info);
 int sef_cb_init_lu_identity_as_restart(int type, sef_init_info_t *info);
 int sef_cb_init_lu_generic(int type, sef_init_info_t *info);
@@ -80,7 +81,7 @@ int sef_cb_init_response_rs_asyn_once(message *m_ptr);
 #define SEF_CB_INIT_LU_NULL             sef_cb_init_null
 #define SEF_CB_INIT_RESTART_NULL        sef_cb_init_null
 #define SEF_CB_INIT_RESPONSE_NULL       sef_cb_init_response_null
-#define SEF_CB_INIT_RESTART_STATEFUL    sef_cb_init_identity_state_transfer
+#define SEF_CB_INIT_RESTART_STATEFUL    sef_cb_init_restart_generic
 
 #define SEF_CB_INIT_FRESH_DEFAULT       sef_cb_init_null
 #define SEF_CB_INIT_LU_DEFAULT          sef_cb_init_lu_generic
@@ -375,6 +376,7 @@ int sef_llvm_ac_munmap(void *buf, size_t len);
 
 int sef_llvm_ltckpt_enabled(void);
 int sef_llvm_get_ltckpt_offset(void);
+int sef_llvm_ltckpt_restart(int type, sef_init_info_t *info);
 
 #if !defined(USE_LIVEUPDATE)
 #undef INTERCEPT_SEF_LU_REQUESTS

@@ -209,8 +209,8 @@ int sef_llvm_ac_munmap(void *buf, size_t len)
  *===========================================================================*/
 int sef_llvm_ltckpt_enabled()
 {
-    extern int __attribute__((weak)) ltckpt_get_offset();
-    if (!ltckpt_get_offset)
+    extern int __attribute__((weak)) ltckpt_mechanism_enabled(void);
+    if (!sef_llvm_get_ltckpt_offset() || !ltckpt_mechanism_enabled())
         return 0;
     return 1;
 }
@@ -224,5 +224,19 @@ int sef_llvm_get_ltckpt_offset()
     if (!ltckpt_get_offset)
         return 0;
     return ltckpt_get_offset();
+}
+
+/*===========================================================================*
+ *      	             sef_llvm_ltckpt_restart                         *
+ *===========================================================================*/
+int sef_llvm_ltckpt_restart(int type, sef_init_info_t *info)
+{
+    extern int __attribute__((weak)) ltckpt_restart(void *);
+
+    if(!sef_llvm_ltckpt_enabled())
+        return sef_cb_init_identity_state_transfer(type, info);
+
+    assert(ltckpt_restart);
+    return ltckpt_restart(info);
 }
 
