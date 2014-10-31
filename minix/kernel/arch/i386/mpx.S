@@ -402,7 +402,12 @@ ENTRY(restore_user_context_sysenter)
 	mov	SPREG(%ebp), %ecx	/* sysexit restores ESP using ECX */
 	mov	AXREG(%ebp), %eax	/* trap return value */
 	mov	BXREG(%ebp), %ebx	/* secondary return value */
-	movl	PSWREG(%ebp), %edi	/* load desired PSW to EDI */
+
+        /* restore PSW */
+        movl    PSWREG(%ebp), %edi      /* load desired PSW to EDI */
+        push    %edi
+        popf
+
 	sti				/* enable interrupts */
 	sysexit				/* jump to EIP in user */
 
