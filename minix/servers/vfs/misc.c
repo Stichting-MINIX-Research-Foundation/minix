@@ -214,14 +214,13 @@ int do_fcntl(void)
 	break;
      }
     case F_GETNOSIGPIPE:
-	/* POSIX: return value other than -1 is flag is set, else -1 */
-	r = -1;
-	if (f->filp_flags & O_NOSIGPIPE)
-		r = 0;
+	r = !!(f->filp_flags & O_NOSIGPIPE);
 	break;
     case F_SETNOSIGPIPE:
-	fl = (O_NOSIGPIPE);
-	f->filp_flags = (f->filp_flags & ~fl) | (fcntl_argx & fl);
+	if (fcntl_argx)
+		f->filp_flags |= O_NOSIGPIPE;
+	else
+		f->filp_flags &= ~O_NOSIGPIPE;
 	break;
     case F_FLUSH_FS_CACHE:
     {

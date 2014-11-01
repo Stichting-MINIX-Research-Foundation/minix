@@ -267,8 +267,8 @@ test_pipe_flag_setting()
 	if (fcntl(pipes[1], F_GETFD) != 0) e(3);
 	if (fcntl(pipes[0], F_GETFL) & O_NONBLOCK) e(4);
 	if (fcntl(pipes[1], F_GETFL) & O_NONBLOCK) e(5);
-	if (fcntl(pipes[0], F_GETNOSIGPIPE) != -1) e(6);
-	if (fcntl(pipes[1], F_GETNOSIGPIPE) != -1) e(7);
+	if (fcntl(pipes[0], F_GETNOSIGPIPE) != 0) e(6);
+	if (fcntl(pipes[1], F_GETNOSIGPIPE) != 0) e(7);
 	if (close(pipes[0]) != 0) e(8);
 	if (close(pipes[1]) != 0) e(9);
 
@@ -278,10 +278,14 @@ test_pipe_flag_setting()
 	if (fcntl(pipes[1], F_GETFD) != FD_CLOEXEC) e(12);
 	if (!(fcntl(pipes[0], F_GETFL) & O_NONBLOCK)) e(13);
 	if (!(fcntl(pipes[1], F_GETFL) & O_NONBLOCK)) e(14);
-	if (fcntl(pipes[0], F_GETNOSIGPIPE) == -1) e(15);
-	if (fcntl(pipes[1], F_GETNOSIGPIPE) == -1) e(16);
-	if (close(pipes[0]) != 0) e(17);
-	if (close(pipes[1]) != 0) e(18);
+	if (fcntl(pipes[0], F_GETNOSIGPIPE) == 0) e(15);
+	if (fcntl(pipes[1], F_GETNOSIGPIPE) == 0) e(16);
+	if (fcntl(pipes[0], F_SETNOSIGPIPE, 0) != 0) e(17);
+	if (fcntl(pipes[0], F_GETNOSIGPIPE) != 0) e(18);
+	if (fcntl(pipes[0], F_SETNOSIGPIPE, 1) != 0) e(19);
+	if (fcntl(pipes[0], F_GETNOSIGPIPE) == 0) e(20);
+	if (close(pipes[0]) != 0) e(21);
+	if (close(pipes[1]) != 0) e(22);
 }
 
 int
