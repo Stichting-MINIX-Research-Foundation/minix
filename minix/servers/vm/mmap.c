@@ -175,7 +175,7 @@ static void mmap_file_cont(struct vmproc *vmp, message *replymsg, void *cbarg,
 		printf("VM: VFS reply failed (%d)\n", replymsg->VMV_RESULT);
 		sys_diagctl_stacktrace(vmp->vm_endpoint);
 #endif
-		result = origmsg->VMV_RESULT;
+		result = replymsg->VMV_RESULT;
 	} else {
 		/* Finish mmap */
 		result = mmap_file(vmp, replymsg->VMV_FD, origmsg->m_mmap.offset,
