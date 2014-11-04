@@ -1,0 +1,255 @@
+Developer notes regarding trace(1), by David van Moolenbroek.
+
+
+OVERALL CODE STRUCTURE
+
+The general tracing engine is in trace.c.  It passes IPC-level system call
+enter and leave events off to call.c, which handles IPC-level system call
+printing and passes off system calls to be interpreted by a service-specific
+system call handler whenever possible.  All the service-specific code is in the
+service/ subdirectory, grouped by destination service.  IOCTLs are a special
+case, which are handled in ioctl.c and passed on to driver-type-grouped IOCTL
+handlers in the ioctl/ subdirectory (this grouping is not strict).  Some of the
+generated output goes through the formatting code in format.c, and all of it
+ends up in output.c.  The remaining source files contain support code.
+
+
+ADDING A SYSTEM CALL HANDLER
+
+In principle, every system call stops the traced process twice: once when the
+system call is started (the call-enter event) and once when the system call
+returns (the call-leave event).  The tracer uses the call-enter event to print
+the request being made, and the call-leave event to print the result of the
+call.  The output format is supposed to mimic largely what the system call
+looks like from a C program, although with additional information where that
+makes sense.  The general output format for system calls is:
+
+  name(parameters) = result
+
+..where "name" is the name of the system call, "parameters" is a list of system
+call parameters, and "result" is the result of the system call.  If possible,
+the part up to and including the equals sign is printed from the call-enter
+event, and the result is printed from the call-leave event.  However, many
+system calls actually pass a pointer to a block of memory that is filled with
+meaningful content as part of the system call.  For that reason, it is also
+possible that the call-enter event stops printing somewhere inside the
+parameters block, and the call-leave event prints the rest of the parameters,
+as well as the equals sign and the result after it.  The place in the printed
+system call where the call-enter printer stops and the call-leave printer is
+supposed to pick up again, is referred to as the "call split".
+
+The tracer has to a handler structure for every system call that can be made by
+a user program to any of the the MINIX3 services.  This handler structure
+provides three elements: the name of the system call, an "out" function that
+handles printing of the call-enter part of the system call, and an "in"
+function that handles printing of the call-leave part of the system call.  The
+"out" function is expected to print zero or more call parameters, and then
+return a call type, which indicates whether all parameters have been printed
+yet, or not.  In fact, there are three call types, shown here with an example
+which has a "|" pipe symbol added to indicate the call split:
+
+  CT_DONE:       write(5, "foo", 3) = |3
+  CT_NOTDONE:    read(5, |"foo", 1024) = 3
+  CT_NORETURN:   execve("foo", ["foo"], []")| = -1 [ENOENT]
+
+The CT_DONE call type indicates that the handler is done printing all the
+parameters during the call-enter event, and the call split will be after the
+equals sign.  The CT_NOTDONE call type indicates that the handler is not done
+printing all parameters yet, thus yielding a call split in the middle of the
+parameters block (or even right after the opening parenthesis).  The no-return
+(CT_NORETURN) call type is used for a small number of functions that do not
+return on success.  Currently, these are the exit(), execve(), and sigreturn()
+system calls.  For these calls, no result will be printed at all, unless such
+a call fails, in which case a failure result is printed after all.  The call
+split is such that the entire parameters block is printed upon entering the
+call, but the equals sign and result are printed only if the call does return.
+
+Now more about the handler structure for the system call.  First of all, each
+system call has a name, which must be a static string.  It may be supplied
+either as a string, or as a function that returns a name string.  The latter is
+for cases where one message-level system call is used to implement multiple
+C-level system calls (such as setitimer() and getitimer() both going through
+PM_ITIMER).  The name function has the following prototype:
+
+  const char *svc_syscall_name(const message *m_out);
+
+..where "m_out" is a local copy of the request message, which the name function
+can use to decide what string to return for the system call.  As a sidenote,
+in the future, the system call name will be used to implement call filtering.
+
+An "out" printer function has the following prototype:
+
+  int svc_syscall_out(struct trace_proc *proc, const message *m_out);
+
+Here, "proc" is a pointer to the process structure containing information about
+the process making the system call; proc->pid returns the process PID, but the
+function should not access any other fields of this structure directly.
+Instead, many of the output primitive and helper functions (which are all
+prefixed with "put_") take this pointer as part of the call.  "m_out" is a
+local copy of the request message, and the printer may access its fields as it
+sees fit.
+
+The printer function should simply print parameters.  The call name and the
+opening parenthesis are printed by the main output routine.
+
+All simple call parameters should be printed using the put_field() and
+put_value() functions.  The former prints a parameter or field name as flat
+text; the latter is a printf-like interface to the former.  By default, call
+paramaters are simply printed as "value", but if printing all names is enabled,
+call parameters are printed as "name=value".  Thus, all parameters should be
+given a name, even if this name does not show up by default.  Either way, these
+two functions take care of deciding whether to print the name, as well as of
+printing separators between the parameters.  More about printing more complex
+parameters (such as structures) in a bit.
+
+The out printer function must return one of the three CT_ call type values.  If
+it returns CT_DONE, the main output routine will immediately print the closing
+parenthesis and equals sign.  If it returns CF_NORETURN, a closing parenthesis
+will be printed.  If it return CF_NOTDONE, only a parameter field separator
+(that is, a comma and a space) will be printed--after all, it can be assumed
+that more parameters will be printed later.
+
+An "in" printer function has the following prototype:
+
+  void svc_syscall_in(struct trace_proc *proc, const message *m_out,
+          const message *m_in, int failed);
+
+Again, "proc" is the traced process of which its current system call has now
+returned.  "m_out" is again the request message, guaranteed to be unchanged
+since the "out" call.  "m_in" is the reply message from the service.  "failed"
+is either 0 to indicate that the call appears to have succeeded, or PF_FAILED
+to indicate that the call definitely failed.  If PF_FAILED is set, the call
+has failed either at the IPC level or at the system call level (or for another,
+less common reason).  In that case, the contents of "m_in" may be garbage and
+"m_in" must not be used at all.
+
+For CF_NOTDONE type calls, the in printer function should first print the
+remaining parameters.  Here especially, it is important to consider that the
+entire call may fail.  In that case, the parameters of which the contents were
+still going to be printed may also contain garbage, since they were never
+filled.  The expected behavior is to print such parameters as pointer or "&.."
+or something else to indicate that their actual contents are not valid.
+
+Either way, once a CF_NOTDONE type call function is done printing the remaining
+parameters, it must call put_equals(proc) to print the closing parenthesis of
+the call and the equals sign.  CF_NORETURN calls must also use put_equals(proc)
+to print the equals sign.
+
+Then comes the result part.  If the call failed, the in printer function *must*
+use put_result(proc) to print the failure result.  This call not only takes
+care of converting negative error codes from m_in->m_type into "-1 [ECODE]" but
+also prints appropriate failure codes for IPC-level and other exceptional
+failures.  Only if the system call did not fail, may the in printer function
+choose to not call put_result(proc), which on success simply prints
+m_in->m_type as an integer.  Similarly, if the system call succeeded, the in
+printer function may print extended results after the primary result, generally
+in parentheses.  For example, getpid() and getppid() share the same system call
+and thus the tracer prints both return values, one as the primary result of the
+actual call and one in parentheses with a clarifying name as extended result:
+
+  getpid() = 3 (ppid=1)
+
+It should now be clear that printing extended results makes no sense if the
+system call failed.
+
+Besidse put_equals and put_result, the following more or less generic support
+functions are available to print the various parts of the requests and replies.
+
+  put_field - output a parameter, structure field, and so on; this function
+              should be used for just about every actual value
+  put_value - printf-like version of put_field
+  put_text  - output plain text; for call handlers, this should be used only to
+              to add things right after a put_field call, never on its own
+  put_fmt   - printf-like version of put_text, should generally not be used
+              from call handlers at all
+  put_open  - open a nested block of fields, surrounded by parentheses,
+              brackets, or something like that; this is used for structures,
+              arrays, and any other similar nontrivial case of nesting
+  put_close - close a previously opened block of fields; the nesting depth is
+              actually tracked (to keep per-level separators etc), so each
+              put_open call must have a corresponding put_close call
+  put_open_struct  - perform several tasks necessary to start printing the
+                     fields of a structure; note that this function may fail!
+  put_close_struct - end successful printing of a structure
+  put_ptr   - print a pointer in the traced process
+  put_buf   - print a buffer or string
+  put_flags - print a bitwise flags field
+  put_tail  - helper function for printing the continuation part of an array
+
+Many of these support functions take a flags field which takes PF_-prefixed
+flags to modify the output they generate.  The value of 'failed' in the in
+printer function may actually be passed (bitwise-OR'ed in) as the PF_FAILED
+flag to these support functions, and they will do the right thing.  For
+example, a call to put_open_struct with the PF_FAILED flag will end up simply
+printing the pointer to the structure, and not allow printing of the contents
+of the structure.
+
+The above support functions are documented (at a basic level) within the code,
+but in many cases, it may be useful to look up how they are used in practice by
+the existing handlers.  The same goes for various less clear cases; while there
+is basic support for printing structures, support for printing arrays must be
+coded fully by hand, as has been done for many places.  A serious attempt has
+been made to make the output consistent across the board (mainly thanks to the
+output format of strace, on which the output of this tracer has been based,
+sometimes very strictly and sometimes more loosely, but that aside) so it is
+always advisable to follow the ways of the existing handlers.  Also keep in
+mind that there are already printer functions for several generic structures,
+and these should be used whenever possible (e.g., see the put_fd() comment).
+
+Finally, the default_out and default_in functions may be used as printer
+functions for call with no parameters, and for functions which need no more
+than put_result() to print their system call result, respectively.
+
+
+INTERNALS: MULTIPROCESS OUTPUT AND PREEMPTION
+
+Things get interesting when multiple processes are traced at once.  Due to the
+nature of process scheduling, system calls may end up being preempted between
+the call-enter and call-leave phases.  This means that the output of a system
+call has to be suspended to give way to an event from another traced process.
+Such preemption may occur with literally all calls; not just "blocking" calls.
+
+The tracer goes through some lengths to aid the user in following the output in
+the light of preemtion.  The most important aspect is that the output of the
+call-enter phase is recorded, so that in the case of preemption, the call-leave
+phase can start by replaying the record.  As a result, the user gets to see the
+whole system call on a single line, instead of just the second half.  Such
+system call resumptions are marked with a "*" in their prefix, to show that
+the call was not just entered.  The output therefore looks like this:
+
+      2| syscall() = <..>
+      3| othercall() = 0
+      2|*syscall() = 0
+
+Signals that arrive during a call will cause a resumption of the call as well.
+As a result, a call may be resumed multiple times:
+
+      2| syscall() = <..>
+      3| othercall() = 0
+      2|*syscall() = ** SIGUSR1 ** ** SIGUSR2 ** <..>
+      3| othercall() = -1 [EBUSY]
+      2|*syscall() = ** SIGHUP ** <..>
+      3| othercall() = 0
+      2|*syscall() = 0
+
+This entire scenario shows one single system call from process 2.
+
+In the current implementation, the output that should be recorded and/or cause
+the "<..>" preemption marker, as well as the cases where the recorded text must
+be replayed, are marked by the code explicitly.  Replay takes place in three
+cases: upon the call-leave event (obviously), upon receiving a signal (as shown
+above), and when it is required that a suspended no-return call is shown as
+completed before continuing with other output.  The last case applies to exit()
+and execve(), and both are documented in the code quite extensively.  Generally
+speaking, in all output lines where no recording or replay actions are
+performed, the recording will not be replayed but also not removed.  This
+allows for intermediate lines for that process in the output.  Practically
+speaking, future support for job control could even print when a process get
+stopped and continued, for that process, while preempting the output for the
+ongoing system call for that same process.
+
+It is possible that the output of the call-enter phase exhausts the recording
+buffer for its process.  In this case, a new, shorter text is generated upon
+process resumption.  There are many other aspects to proper output formatting
+in the light of preemption, but most of them should be documented as part of
+the code reasonably well.

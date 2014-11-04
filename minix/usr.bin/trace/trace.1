@@ -1,0 +1,334 @@
+.Dd November 2, 2014
+.Dt TRACE 1
+.Os
+.Sh NAME
+.Nm trace
+.Nd print process system calls and signals
+.Sh SYNOPSIS
+.Nm
+.Op Fl fgNsVv
+.Op Fl o Ar file
+.Op Fl p Ar pid
+.Op Ar command
+.Sh DESCRIPTION
+The
+.Nm
+utility shows one or more processes to be traced.
+For each traced process,
+.Nm
+prints the system calls the process makes and the signals
+it receives.
+The user can let
+.Nm
+start a
+.Ar command
+to be traced, and/or attach to one or more existing processes.
+.Pp
+The utility will run until no processes are left to trace, or until the user
+presses the interrupt key (typically Ctrl-C).
+Pressing this key once will cause all attached processes to be detached, with
+the hope that the command that was started will also terminate cleanly from the
+interruption.
+Pressing the interrupt key once more kills the command that was started.
+.Pp
+The following options are available:
+.Bl -tag -width XoXfileXX
+.It Fl f
+Follow forks.
+Attach automatically to forked child processes.
+Child processes of the started command will be treated as attached processes,
+in that upon Ctrl-C presses they will be detached rather than killed.
+.It Fl g
+Enable call grouping.
+With this option, the tracing engine tries to reduce noise from call preemption
+by first polling the process that was active last.
+This should reduce in cleaner output, but may also cause a single process to be
+scheduled repeatedly and thus cause starvation.
+.It Fl N
+Print all names.
+By default, the most structure fields are printed with their name.
+This option enables printing of all available names, which also includes
+system call parameter names.
+This flag may be useful to figure out the meaning of a parameter, and for
+automatic processing of the output.
+.It Fl s
+Print stack traces.
+Each system call, and each signal arriving outside a system call, will be
+preceded by a line showing the process's current stack trace.
+For signals blocked by the target process, the stack trace may not be
+meaningful.
+Stack traces may not be supported on all platforms.
+.It Fl V
+Print values only.
+If this flag is given once, numerical values will be printed instead of
+string constants.
+In addition, if it is given twice, the addresses of structures will be printed
+instead of their contents.
+.It Fl v
+Increase verbosity.
+By default, the output will be terse, in that not all structure fields are
+shown, and strings and arrays are not always printed in full.
+If this flag is provided once, more and longer output will be printed.
+If it is provided twice, the tracer will print as much as possible.
+.It Fl o Ar file
+Redirect output.
+By default, the output is sent to standard error.
+With this option, the output is written to the given
+.Ar file
+instead.
+.It Fl p Ar pid
+Attach to a process.
+This option makes
+.Nm
+attach to an existing process with process ID
+.Ar pid .
+This option may be used multiple times.
+When attaching to one or more processes this way, starting a command becomes
+optional.
+.El
+.Pp
+If the user presses the information key (typically Ctrl-T), the list of traced
+process along with their current status will be printed.
+.Sh OUTPUT FORMAT
+System calls are printed with the following general output format:
+.Bd -literal -offset indent
+.Sy name Ns ( Ns Sy parameters Ns ) = Sy result
+.Ed
+.Pp
+Other informational lines may be printed about the status of the process.
+These lines typically start with an uppercase letter, while system calls
+always start with a lowercase letter or an underscore.
+The following example shows the tracer output for a program that prints its
+own user ID:
+.Bd -literal -offset indent
+Tracing printuid (pid 12685)
+minix_getinfo() = 0
+getuid() = 0 (euid=1)
+write(1, "My uid: 0\en", 10) = 10
+exit(0)
+Process exited normally with code 0
+.Ed
+.Pp
+The first and last lines of the output provide status information about the
+traced process.
+Some calls return multiple results; extended results are printed in parentheses
+after the primary call result, typically in
+.Va name Ns = Ns Va value
+format for clarity.
+System calls that do not return on success, such as
+.Fn exit ,
+are printed without the equals sign and result, unless they fail.
+System call failure is printed according to POSIX conventions; that is, the
+call is assumed to return -1 with the value of
+.Va errno
+printed in square brackets after it:
+.Bd -literal -offset indent
+setuid(0) = -1 [EPERM]
+.Ed
+.Pp
+If a system call ends up in an IPC-level failure, the -1 value will be preceded
+by an
+.Dq Li <ipc>
+string.
+However, this string will be omitted if the system call itself is printed at
+the IPC level (that is, as an
+.Fn ipc_sendrec
+call), generally because
+.Nm
+has no handler to print the actual system call.
+.Pp
+Signals are printed as they arrive at the traced process, using two asterisks
+on both side of the signal name.
+Signals may arrive both during and outside the execution of a system call:
+.Bd -literal -offset indent
+read(3, ** SIGUSR1 ** &0xeffff867, 4096) = -1 [EINTR]
+** SIGUSR2 **
+getpid() = 5278 (ppid=5277)
+kill(5278, SIGTERM) = ** SIGTERM ** <..>
+Process terminated from signal SIGTERM
+.Ed
+.Pp
+Multiple signals may be printed consecutively.
+The above example illustrates a few other important aspects of output
+formatting.
+Some call parameters may be printed only after the system call returns, in
+order to show their actual value.
+For the
+.Fn read
+call, this would be the bytes that were read.
+Upon failure, no bytes were read, so the buffer pointer is printed instead.
+Finally, if a call that is expected to return (here,
+.Fn kill )
+does not return before the process terminates, the line ends with a
+.Dq Li <..>
+marker.
+This is an instance of call preemption; more about that later.
+.Pp
+Pointers are printed with a
+.Sq Li &
+prefix, except for NULL, which is printed using its own name.
+In general, named constants are used instead of numerical constants wherever
+that makes sense.
+For pointers of which the address is not available, typically because its
+contents are passed by value,
+.Dq Li &..
+is shown instead.
+.Pp
+Data buffers are printed as double-quoted strings, using C-style character
+escaping for nontextual bytes.
+If either the verbosity level or a copy error prevents the whole data buffer
+from being printed, two dots will be printed after the closing quote.
+The same is done when printing a string buffer which does not have a null
+termination byte within its range.
+Path names are shown in full regardless of the verbosity level.
+.Pp
+Structures are printed as a set of structure fields enclosed in curly brackets.
+The
+.Va name Ns = Ns Va value
+format is used, unless printing names for that structure type would introduce
+too much noise and the
+.Dq print all names
+option is not given.
+For many structures, by default only a subset of their fields are printed.
+In this case, a
+.Dq Li ..
+entry is added at the end.
+In some cases, an attempt is made to print only the most useful fields:
+.Bd -literal -offset indent
+stat("/etc/motd", {st_mode=S_IFREG|0755, st_size=747, ..}) = 0
+stat("/dev/tty", {st_mode=S_IFCHR|0666, st_rdev=<5,0>, ..}) = 0
+.Ed
+.Pp
+As shown in the above example, flag fields are printed as a combination of
+named constants, separated by a
+.Sq Li |
+pipe symbol.
+Any leftover numerical bits are printed at the end.
+The example also shows the format in which major/minor pairs are printed for
+device numbers.
+This is a custom format; there are a few other custom formats throughout the
+.Nm
+output which are supposed to be sufficiently self-explanatory (and rare).
+.Pp
+Arrays are printed using square brackets.
+.Bd -literal -offset indent
+pipe2([3, 4], 0) = 0
+getdents(3, [..(45)], 4096) = 1824
+getdents(3, [{d_name="."}, ..(+44)], 4096) = 1824
+getdents(3, [], 4096) = 0
+.Ed
+.Pp
+If the array contents are not printed as per the settings for the verbosity
+level, a single pseudo-element shows how many actual elements were in the array
+(the second line in the example).
+If the number of printed elements is limited, a final pseudo-element shows how
+many additional elements were not printed (the third line in the example).
+If a copy error occurs while part of the array has been printed already, a
+last
+.Dq Li ..(?)
+pseudo-element is printed; for immediate failure, the array's pointer is shown.
+Empty arrays will be printed as
+.Dq Li [] .
+.Pp
+Bit sets are printed as arrays except with just a space and no comma as
+bit separator, closely following the output format of
+.Nm Ns 's
+original inspiration
+.Sy strace .
+For signal sets in particular, an inverted bit set may be shown, thus printing
+only the bits which are not set; such sets are prefixed with a
+.Sq Li ~
+to the opening bracket:
+.Bd -literal -offset indent
+sigprocmask(SIG_SETMASK, ~[USR1 USR2], []) = 0
+.Ed
+.Pp
+Note how the
+.Dq Li SIG
+prefixes are omitted for brevity in this case.
+.Pp
+When multiple processes are traced at once, each line will have a prefix that
+shows the PID of the corresponding process.
+When the number of processes drops to one again, one more line is prefixed with
+the PID of the remaining process, but using a
+.Sq Li '
+instead of a
+.Sq Li |
+symbol:
+.Bd -literal -offset indent
+fork() = 25813
+25813| Tracing test*F (pid 25813)
+25813| fork() = 0
+25812| waitpid(-1, &.., WNOHANG) = 0
+25813| exit(1)
+25813| Process exited normally with code 1
+25812' waitpid(-1, W_EXITED(1), WNOHANG) = 25813
+exit(0)
+Process exited normally with code 0
+.Ed
+.Pp
+If a process is preempted while making a system call, the system call will
+be shown as suspended with the
+.Dq Li <..>
+suffix.
+Later, when the system call is resumed, the output so far will be repeated,
+either in full or (due to memory limitations) with
+.Dq Li <..>
+in its body, before the remaining part of the system call is printed.
+This time, the line will have a
+.Sq Li *
+asterisk in its prefix, to indicate that this is not a new system call:
+.Bd -literal -offset indent
+25812| write(1, "test\en", 5) = <..>
+25813| setuid(0) = 0
+25812|*write(1, "test\en", 5) = 5
+.Ed
+.Pp
+Finally,
+.Nm
+prints three dashes on their own line whenever the process context (program
+counter and/or stack pointer) is changed during a system call.
+This feature intends to help identify blocks of code run from signal handlers.
+The following example shows a SIGALRM signal handler being invoked.
+.Bd -literal -offset indent
+sigsuspend([]) = ** SIGALRM ** -1 [EINTR]
+---
+sigprocmask(SIG_SETMASK, ~[], [ALRM]) = 0
+sigreturn({sc_mask=[], ..})
+---
+exit(0)
+.Ed
+.Pp
+However, the three dashes are not printed when a signal handler is invoked
+while the program is not in a system call, because the tracer does not see such
+invocations.
+It is however also printed for successful
+.Fn execve
+calls.
+.Sh DIAGNOSTICS
+.Ex
+.Sh SEE ALSO
+.Xr ptrace 2
+.Sh AUTHORS
+The
+.Nm
+utility was written by
+.An David van Moolenbroek
+.Aq david@minix3.org .
+.Sh BUGS
+While the utility aims to provide output for all system calls that can possibly
+be made by user programs, output printers for a small number of rarely-used
+structures and IOCTLs are still missing.  In such cases, plain pointers will be
+printed instead of actual contents.
+.Pp
+A signal arrives at the tracing process when sent to the target process, even
+when the target process is blocking the signal and will thus receive it later.
+This is a limitation of the ptrace infrastructure, although it does ensure that
+a target process is not able to block signals generated for tracing purposes.
+The result is that signals are not always shown at the time that they are
+taken in by the target process, and that stack traces for signals may be off.
+.Pp
+Attaching to system services is currently not supported, due to limitations of
+the ptrace infrastructure.  The
+.Nm
+utility will detect and safely detach from system services, though.

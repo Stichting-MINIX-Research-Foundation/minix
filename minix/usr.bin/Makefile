@@ -8,5 +8,6 @@ SUBDIR+=	grep
 SUBDIR+=	ministat
 SUBDIR+=	top
 SUBDIR+=	toproto
+SUBDIR+=	trace
 
 .include <bsd.subdir.mk>
