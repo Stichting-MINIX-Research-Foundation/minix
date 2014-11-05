@@ -1,10 +1,13 @@
 #include "inc.h"
+#if defined(__i386__)
 #include "../../kernel/arch/i386/include/archconst.h"
+#endif
 
 #ifndef CONFIG_MAX_CPUS
 #define CONFIG_MAX_CPUS	1
 #endif
 
+#if defined(__i386__)
 static const char * x86_flag[] = {
 	"fpu",
 	"vme",
@@ -72,7 +75,7 @@ static const char * x86_flag[] = {
 	"",
 };
 
-static void print_cpu_flags(u32_t * flags)
+static void print_x86_cpu_flags(u32_t * flags)
 {
 	int i, j;
 
@@ -85,6 +88,7 @@ static void print_cpu_flags(u32_t * flags)
 	}
 	buf_printf("\n");
 }
+#endif
 
 static void print_cpu(struct cpu_info * cpu_info, unsigned id)
 {
@@ -109,7 +113,7 @@ static void print_cpu(struct cpu_info * cpu_info, unsigned id)
 	buf_printf("%-16s: %d\n", "stepping", cpu_info->stepping);
 	buf_printf("%-16s: %d\n", "cpu MHz", cpu_info->freq);
 	buf_printf("%-16s: ", "flags");
-	print_cpu_flags(cpu_info->flags);
+	print_x86_cpu_flags(cpu_info->flags);
 	buf_printf("\n");
 #endif
 }
