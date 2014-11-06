@@ -71,6 +71,9 @@ static struct inode_stat default_file_stat = {
 	.dev = NO_DEV,
 };
 
+/* Buffer size for read requests */
+#define DATA_SIZE	26
+
 int
 add_gpio_inode(char *name, int nr, int mode)
 {
@@ -206,14 +209,12 @@ init_hook(void)
 	}
 }
 
-static int
+static ssize_t
     read_hook
-    (struct inode *inode, off_t offset, char **ptr, size_t * len,
-    cbdata_t cbdata)
+    (struct inode *inode, char *ptr, size_t len, off_t offset, cbdata_t cbdata)
 {
 	/* This hook will be called every time a regular file is read. We use
 	 * it to dyanmically generate the contents of our file. */
-	static char data[26];
 	int value;
 	struct gpio_cbdata *gpio_cbdata = (struct gpio_cbdata *) cbdata;
 	assert(gpio_cbdata->gpio != NULL);
@@ -222,53 +223,42 @@ static int
 	    || gpio_cbdata->type == GPIO_CB_OFF) {
 		/* turn on or off */
 		if (gpio_set(gpio_cbdata->gpio,
-			(gpio_cbdata->type == GPIO_CB_ON) ? 1 : 0)) {
-			*len = 0;
+			(gpio_cbdata->type == GPIO_CB_ON) ? 1 : 0))
 			return EIO;
-		}
-		*len = 0;
-		return OK;
+		return 0;
 	}
 
 	if (gpio_cbdata->type == GPIO_CB_INTR_READ) {
 		/* reading interrupt */
-		if (gpio_intr_read(gpio_cbdata->gpio, &value)) {
-			*len = 0;
+		if (gpio_intr_read(gpio_cbdata->gpio, &value))
 			return EIO;
-		}
 	} else {
 		/* reading */
-		if (gpio_read(gpio_cbdata->gpio, &value)) {
-			*len = 0;
+		if (gpio_read(gpio_cbdata->gpio, &value))
 			return EIO;
-		}
 	}
-	snprintf(data, 26, "%d\n", value);
+	snprintf(ptr, DATA_SIZE, "%d\n", value);
+	len = strlen(ptr);
 
-	/* If the offset is beyond the end of the string, return EOF. */
-	if (offset > strlen(data)) {
-		*len = 0;
+	/* If the offset is at or beyond the end of the string, return EOF. */
+	if (offset >= len)
+		return 0;
 
-		return OK;
+	/* Otherwise, we may have to move the data to the start of ptr. */
+	if (offset > 0) {
+		len -= offset;
+
+		memmove(ptr, &ptr[offset], len);
 	}
 
-	/* Otherwise, return a pointer into 'data'. If necessary, bound the
-	 * returned length to the length of the rest of the string. Note that
-	 * 'data' has to be static, because it will be used after this
-	 * function returns. */
-	*ptr = data + offset;
-
-	if (*len > strlen(data) - offset)
-		*len = strlen(data) - offset;
-
-	return OK;
+	/* Return the resulting length. */
+	return len;
 }
 
-static int
-message_hook(message * m)
+static void
+message_hook(message * m, int __unused ipc_status)
 {
 	gpio_intr_message(m);
-	return OK;
 }
 
 int
@@ -294,7 +284,7 @@ main(int argc, char **argv)
 	root_stat.dev = NO_DEV;
 
 	/* limit the number of indexed entries */
-	start_vtreefs(&hooks, 30, &root_stat, 0);
+	start_vtreefs(&hooks, 30, &root_stat, 0, DATA_SIZE);
 
 	return EXIT_SUCCESS;
 }

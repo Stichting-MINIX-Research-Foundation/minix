@@ -2,10 +2,10 @@
 #define _DEVMAN_PROTO_H
 
 /* buf.c */
-void buf_init(off_t start, size_t len);
+void buf_init(char *ptr, size_t len, off_t off);
 void buf_printf(char *fmt, ...);
 void buf_append(char *data, size_t len);
-size_t buf_get(char **ptr);
+ssize_t buf_result(void);
 
 /* message handlers */
 int do_add_device(message *m);

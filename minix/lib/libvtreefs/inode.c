@@ -26,7 +26,7 @@ static LIST_HEAD(index_head, inode) *parent_index_head;
 /*
  * Initialize the inode-related state.
  */
-void
+int
 init_inodes(unsigned int inodes, struct inode_stat * stat,
 	index_t nr_indexed_entries)
 {
@@ -39,13 +39,21 @@ init_inodes(unsigned int inodes, struct inode_stat * stat,
 	nr_inodes = inodes;
 
 	/* Allocate the inode and hash tables. */
-	inode = malloc(nr_inodes * sizeof(inode[0]));
-	parent_name_head = malloc(nr_inodes * sizeof(parent_name_head[0]));
-	parent_index_head = malloc(nr_inodes * sizeof(parent_index_head[0]));
+	if ((inode = malloc(nr_inodes * sizeof(inode[0]))) == NULL)
+		return ENOMEM;
 
-	assert(inode != NULL);
-	assert(parent_name_head != NULL);
-	assert(parent_index_head != NULL);
+	parent_name_head = malloc(nr_inodes * sizeof(parent_name_head[0]));
+	if (parent_name_head == NULL) {
+		free(inode);
+		return ENOMEM;
+	}
+
+	parent_index_head = malloc(nr_inodes * sizeof(parent_index_head[0]));
+	if (parent_index_head == NULL) {
+		free(parent_name_head);
+		free(inode);
+		return ENOMEM;
+	}
 
 #if DEBUG
 	printf("VTREEFS: allocated %d+%d+%d bytes\n",
@@ -83,6 +91,8 @@ init_inodes(unsigned int inodes, struct inode_stat * stat,
 	set_inode_stat(node, stat);
 	node->i_indexed = nr_indexed_entries;
 	node->i_cbdata = NULL;
+
+	return OK;
 }
 
 /*

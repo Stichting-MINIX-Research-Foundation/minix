@@ -1,4 +1,4 @@
-/* VTreeFS - stadir.c - file and file system status retrieval */
+/* VTreeFS - stadir.c - file and file system status management */
 
 #include "inc.h"
 
@@ -40,6 +40,72 @@ fs_stat(ino_t ino_nr, struct stat * buf)
 	buf->st_atime = cur_time;
 	buf->st_mtime = cur_time;
 	buf->st_ctime = cur_time;
+
+	return OK;
+}
+
+/*
+ * Change file mode.
+ */
+int
+fs_chmod(ino_t ino_nr, mode_t * mode)
+{
+	struct inode *node;
+	struct inode_stat stat;
+	int r;
+
+	if ((node = find_inode(ino_nr)) == NULL)
+		return EINVAL;
+
+	if (vtreefs_hooks->chstat_hook == NULL)
+		return ENOSYS;
+
+	get_inode_stat(node, &stat);
+
+	stat.mode = (stat.mode & ~ALL_MODES) | (*mode & ALL_MODES);
+
+	r = vtreefs_hooks->chstat_hook(node, &stat, get_inode_cbdata(node));
+
+	if (r != OK)
+		return r;
+
+	get_inode_stat(node, &stat);
+
+	*mode = stat.mode;
+
+	return OK;
+}
+
+/*
+ * Change file ownership.
+ */
+int
+fs_chown(ino_t ino_nr, uid_t uid, gid_t gid, mode_t * mode)
+{
+	struct inode *node;
+	struct inode_stat stat;
+	int r;
+
+	if ((node = find_inode(ino_nr)) == NULL)
+		return EINVAL;
+
+	if (vtreefs_hooks->chstat_hook == NULL)
+		return ENOSYS;
+
+	get_inode_stat(node, &stat);
+
+	stat.uid = uid;
+	stat.gid = gid;
+	stat.mode &= ~(S_ISUID | S_ISGID);
+
+	r = vtreefs_hooks->chstat_hook(node, &stat, get_inode_cbdata(node));
+
+	if (r != OK)
+		return r;
+
+	get_inode_stat(node, &stat);
+
+	*mode = stat.mode;
 
 	return OK;
 }

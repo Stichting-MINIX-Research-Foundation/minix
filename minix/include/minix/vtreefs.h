@@ -25,11 +25,21 @@ struct fs_hooks {
 	void (*cleanup_hook)(void);
 	int (*lookup_hook)(struct inode *inode, char *name, cbdata_t cbdata);
 	int (*getdents_hook)(struct inode *inode, cbdata_t cbdata);
-	int (*read_hook)(struct inode *inode, off_t offset, char **ptr,
-		size_t *len, cbdata_t cbdata);
+	ssize_t (*read_hook)(struct inode *inode, char *ptr, size_t len,
+	    off_t off, cbdata_t cbdata);
+	ssize_t (*write_hook)(struct inode *inode, char *ptr, size_t max,
+	    off_t off, cbdata_t cbdata);
+	int (*trunc_hook)(struct inode *inode, off_t offset, cbdata_t cbdata);
+	int (*mknod_hook)(struct inode *inode, char *name,
+	    struct inode_stat *stat, cbdata_t cbdata);
+	int (*unlink_hook)(struct inode *inode, cbdata_t cbdata);
+	int (*slink_hook)(struct inode *inode, char *name,
+	    struct inode_stat *stat, char *path, cbdata_t cbdata);
 	int (*rdlink_hook)(struct inode *inode, char *ptr, size_t max,
-		cbdata_t cbdata);
-	int (*message_hook)(message *m);
+	    cbdata_t cbdata);
+	int (*chstat_hook)(struct inode *inode, struct inode_stat *stat,
+	    cbdata_t cbdata);
+	void (*message_hook)(message *m, int ipc_status);
 };
 
 extern struct inode *add_inode(struct inode *parent, const char *name,
@@ -55,6 +65,6 @@ extern void get_inode_stat(const struct inode *inode, struct inode_stat *stat);
 extern void set_inode_stat(struct inode *inode, struct inode_stat *stat);
 
 extern void start_vtreefs(struct fs_hooks *hooks, unsigned int nr_inodes,
-	struct inode_stat *stat, index_t nr_indexed_entries);
+	struct inode_stat *stat, index_t nr_indexed_entries, size_t buf_size);
 
 #endif /* _MINIX_VTREEFS_H */

@@ -7,13 +7,11 @@ static void init_hook(void);
 
 /* The hook functions that will be called by VTreeFS. */
 static struct fs_hooks hooks = {
-	init_hook,
-	NULL,		/* cleanup_hook */
-	lookup_hook,
-	getdents_hook,
-	read_hook,
-	rdlink_hook,
-	NULL		/* message_hook */
+	.init_hook	= init_hook,
+	.lookup_hook	= lookup_hook,
+	.getdents_hook	= getdents_hook,
+	.read_hook	= read_hook,
+	.rdlink_hook	= rdlink_hook,
 };
 
 /*===========================================================================*
@@ -90,7 +88,7 @@ int main(void)
 	stat.dev 	= NO_DEV;
 
 	/* Start VTreeFS. */
-	start_vtreefs(&hooks, NR_INODES, &stat, NR_PROCS + NR_TASKS);
+	start_vtreefs(&hooks, NR_INODES, &stat, NR_PROCS + NR_TASKS, BUF_SIZE);
 
 	return 0;
 }
