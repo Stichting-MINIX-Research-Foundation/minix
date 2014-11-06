@@ -494,14 +494,14 @@ int getdents_hook(struct inode *node, cbdata_t UNUSED(cbdata))
 /*===========================================================================*
  *				read_hook				     *
  *===========================================================================*/
-int read_hook(struct inode *node, off_t off, char **ptr,
-	size_t *len, cbdata_t cbdata)
+ssize_t read_hook(struct inode *node, char *ptr, size_t len, off_t off,
+	cbdata_t cbdata)
 {
 	/* Regular file read hook. Call the appropriate callback function to
 	 * generate and return the data.
 	 */
 
-	buf_init(off, *len);
+	buf_init(ptr, len, off);
 
 	/* Populate the buffer with the proper content. */
 	if (get_inode_index(node) != NO_INDEX) {
@@ -510,9 +510,7 @@ int read_hook(struct inode *node, off_t off, char **ptr,
 		((void (*) (void)) cbdata)();
 	}
 
-	*len = buf_get(ptr);
-
-	return OK;
+	return buf_result();
 }
 
 /*===========================================================================*

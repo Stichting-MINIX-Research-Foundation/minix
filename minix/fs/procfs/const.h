@@ -30,4 +30,7 @@
 #define DIR_ALL_MODE	(S_IFDIR | 0555)	/* world-accessible directory */
 #define LNK_ALL_MODE	(S_IFLNK | 0777)	/* symbolic link */
 
+/* Size of the I/O buffer. */
+#define BUF_SIZE	4097			/* 4KB+1 (see buf.c) */
+
 #endif /* _PROCFS_CONST_H */

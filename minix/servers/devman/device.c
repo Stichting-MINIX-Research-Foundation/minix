@@ -8,7 +8,7 @@ static struct devman_device *_find_dev(struct devman_device *dev, int
 	dev_id);
 static int devman_dev_add_info(struct devman_device *dev, struct
 	devman_device_info_entry *entry, char *buf);
-static int devman_event_read(char **ptr, size_t *len,off_t offset, void
+static ssize_t devman_event_read(char *ptr, size_t len, off_t offset, void
 	*data);
 
 static int devman_del_device(struct devman_device *dev);
@@ -138,11 +138,12 @@ devman_device_remove_event(struct devman_device* dev)
 /*===========================================================================*
  *          devman_event_read                                                *
  *===========================================================================*/
-static int
-devman_event_read(char **ptr, size_t *len,off_t offset, void *data)
+static ssize_t
+devman_event_read(char *ptr, size_t len, off_t offset, void *data)
 {
 	struct devman_event *ev = NULL;
 	struct devman_event_inode *n;
+	ssize_t r;
 	
 	n = (struct devman_event_inode *) data;
 	
@@ -150,35 +151,34 @@ devman_event_read(char **ptr, size_t *len,off_t offset, void *data)
 		ev = TAILQ_LAST(&n->event_queue, event_head);
 	}
 
-	buf_init(offset, *len);
+	buf_init(ptr, len, offset);
 	if (ev != NULL)
 		buf_printf("%s", ev->data);
 
-	*len = buf_get(ptr);
+	r = buf_result();
 
 	/* read all (EOF)? */
-	if (ev != NULL && *len == 0) {
+	if (ev != NULL && r == 0) {
 		TAILQ_REMOVE(&n->event_queue, ev, events);
 		free(ev);
 	}
 
-	return 0;
+	return r;
 }
 
 /*===========================================================================*
  *          devman_static_info_read                                          *
  *===========================================================================*/
-static int
-devman_static_info_read(char **ptr, size_t *len, off_t offset, void *data)
+static ssize_t
+devman_static_info_read(char *ptr, size_t len, off_t offset, void *data)
 {
 	struct devman_static_info_inode *n;
 
 	n = (struct devman_static_info_inode *) data;
 
-	buf_init(offset, *len);
+	buf_init(ptr, len, offset);
 	buf_printf("%s\n", n->data);
-	*len = buf_get(ptr);
-	return 0;
+	return buf_result();
 }
 
 /*===========================================================================*

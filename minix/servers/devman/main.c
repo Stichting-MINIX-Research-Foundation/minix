@@ -43,24 +43,23 @@ static void init_hook(void) {
 }
 
 
-static int message_hook (message *m)
+static void message_hook(message *m, int __unused ipc_status)
 {
 	switch (m->m_type) {
 		case DEVMAN_ADD_DEV:
-			return do_add_device(m);
+			do_add_device(m);
 		case DEVMAN_DEL_DEV:
-			return do_del_device(m);
+			do_del_device(m);
 		case DEVMAN_BIND:
-			return do_bind_device(m);
+			do_bind_device(m);
 		case DEVMAN_UNBIND:
-			return do_unbind_device(m);
-		default: return -1;
+			do_unbind_device(m);
 	}
 }
 
-static int 
+static ssize_t
 read_hook
-(struct inode *inode, off_t offset, char **ptr, size_t *len, cbdata_t cbdata)
+(struct inode *inode, char *ptr, size_t len, off_t offset, cbdata_t cbdata)
 {
 	struct devman_inode *d_inode = (struct devman_inode *) cbdata;
 
@@ -77,7 +76,7 @@ int main (int argc, char* argv[])
 	/* fill in the hooks */
 	memset(&hooks, 0, sizeof(hooks));
 	hooks.init_hook 	= init_hook;
-	hooks.read_hook 	= read_hook; /* read will never be called */
+	hooks.read_hook 	= read_hook;
 	hooks.message_hook 	= message_hook;	/* handle the ds_update call */
 
 	root_stat.mode 	= S_IFDIR | S_IRUSR | S_IRGRP | S_IROTH;
@@ -87,7 +86,7 @@ int main (int argc, char* argv[])
 	root_stat.dev 	= NO_DEV;
 
 	/* limit the number of indexed entries */
-	start_vtreefs(&hooks, 1024 , &root_stat, 0);
+	start_vtreefs(&hooks, 1024, &root_stat, 0, BUF_SIZE);
 	return 0;
 }
 

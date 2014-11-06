@@ -5,16 +5,24 @@
 static unsigned int inodes;
 static struct inode_stat *root_stat;
 static index_t root_entries;
+static size_t buf_size;
 
 /*
- * Initialize internal state, and register with VFS.
+ * Initialize internal state.  This is the only place where dynamic memory
+ * allocation takes place.
  */
 static int
 init_server(int __unused type, sef_init_info_t * __unused info)
 {
+	int r;
 
 	/* Initialize the virtual tree. */
-	init_inodes(inodes, root_stat, root_entries);
+	if ((r = init_inodes(inodes, root_stat, root_entries)) != OK)
+		panic("init_inodes failed: %d", r);
+
+	/* Initialize the I/O buffer. */
+	if ((r = init_buf(buf_size)) != OK)
+		panic("init_buf failed: %d", r);
 
 	return OK;
 }
@@ -54,7 +62,7 @@ sef_local_startup(void)
  * Call the message hook, if there is one.
  */
 void
-fs_other(const message * m_ptr, int __unused ipc_status)
+fs_other(const message * m_ptr, int ipc_status)
 {
 	message msg;
 
@@ -65,7 +73,7 @@ fs_other(const message * m_ptr, int __unused ipc_status)
 		 */
 		msg = *m_ptr;
 
-		vtreefs_hooks->message_hook(&msg);
+		vtreefs_hooks->message_hook(&msg, ipc_status);
 	}
 }
 
@@ -76,7 +84,7 @@ fs_other(const message * m_ptr, int __unused ipc_status)
  */
 void
 start_vtreefs(struct fs_hooks * hooks, unsigned int nr_inodes,
-	struct inode_stat * stat, index_t nr_indexed_entries)
+	struct inode_stat * stat, index_t nr_indexed_entries, size_t bufsize)
 {
 
 	/*
@@ -87,10 +95,12 @@ start_vtreefs(struct fs_hooks * hooks, unsigned int nr_inodes,
 	inodes = nr_inodes;
 	root_stat = stat;
 	root_entries = nr_indexed_entries;
+	buf_size = bufsize;
 
 	sef_local_startup();
 
 	fsdriver_task(&vtreefs_table);
 
+	cleanup_buf();
 	cleanup_inodes();
 }
