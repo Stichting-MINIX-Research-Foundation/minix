@@ -1,7 +1,8 @@
 #ifndef _VTREEFS_INODE_H
 #define _VTREEFS_INODE_H
 
-/* The inodes that are active, form a fully connected tree. Each node except
+/*
+ * The inodes that are active, form a fully connected tree.  Each node except
  * the root node has a parent and a tail queue of children, where each child
  * inode points to the "next" and "previous" inode with a common parent.
  *
@@ -9,9 +10,9 @@
  * <parent,name> -> inode hashtable, and if it has an index into the parent,
  * is part of a <parent,index> -> inode hashtable.
  *
- * Inodes that are not active, are either deleted or free. A deleted inode is
+ * Inodes that are not active, are either deleted or free.  A deleted inode is
  * in use as long as it still has a nonzero reference count, even though it is
- * no longer part of the tree. Inodes that are free, are part of the list of
+ * no longer part of the tree.  Inodes that are free, are part of the list of
  * unused inodes.
  */
 struct inode {

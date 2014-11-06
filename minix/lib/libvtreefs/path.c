@@ -1,15 +1,14 @@
-/* VTreeFS - path.c - by Alen Stojanov and David van Moolenbroek */
+/* VTreeFS - path.c - name resolution */
 
 #include "inc.h"
 
-/*===========================================================================*
- *				fs_lookup				     *
- *===========================================================================*/
-int fs_lookup(ino_t dir_nr, char *name, struct fsdriver_node *node_details,
-	int *is_mountpt)
+/*
+ * Resolve a path string to an inode.
+ */
+int
+fs_lookup(ino_t dir_nr, char * name, struct fsdriver_node * node_details,
+	int * is_mountpt)
 {
-	/* Resolve a path string to an inode.
-	 */
 	struct inode *node, *child;
 	int r;
 
@@ -30,13 +29,13 @@ int fs_lookup(ino_t dir_nr, char *name, struct fsdriver_node *node_details,
 		if ((child = get_parent_inode(node)) == NULL)
 			return ENOENT;	/* deleted? should not be possible */
 	} else {
-		/* Progress into a directory entry. Call the lookup hook, if
+		/* Progress into a directory entry.  Call the lookup hook, if
 		 * present, before doing the actual lookup.
 		 */
 		if (!is_inode_deleted(node) &&
 		    vtreefs_hooks->lookup_hook != NULL) {
 			r = vtreefs_hooks->lookup_hook(node, name,
-				get_inode_cbdata(node));
+			    get_inode_cbdata(node));
 			if (r != OK) return r;
 		}
 

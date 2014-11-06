@@ -1,14 +1,13 @@
-/* VTreeFS - stadir.c - by Alen Stojanov and David van Moolenbroek */
+/* VTreeFS - stadir.c - file and file system status retrieval */
 
 #include "inc.h"
 
-/*===========================================================================*
- *				fs_stat					     *
- *===========================================================================*/
-int fs_stat(ino_t ino_nr, struct stat *buf)
+/*
+ * Retrieve file status.
+ */
+int
+fs_stat(ino_t ino_nr, struct stat * buf)
 {
-	/* Retrieve file status.
-	 */
 	char path[PATH_MAX];
 	time_t cur_time;
 	struct inode *node;
@@ -30,7 +29,7 @@ int fs_stat(ino_t ino_nr, struct stat *buf)
 	/* If it is a symbolic link, return the size of the link target. */
 	if (S_ISLNK(node->i_stat.mode) && vtreefs_hooks->rdlink_hook != NULL) {
 		r = vtreefs_hooks->rdlink_hook(node, path, sizeof(path),
-			get_inode_cbdata(node));
+		    get_inode_cbdata(node));
 
 		if (r == OK)
 			buf->st_size = strlen(path);
@@ -45,13 +44,12 @@ int fs_stat(ino_t ino_nr, struct stat *buf)
 	return OK;
 }
 
-/*===========================================================================*
- *				fs_statvfs				     *
- *===========================================================================*/
-int fs_statvfs(struct statvfs *buf)
+/*
+ * Retrieve file system statistics.
+ */
+int
+fs_statvfs(struct statvfs * buf)
 {
-	/* Retrieve file system statistics.
-	 */
 
 	buf->f_flag = ST_NOTRUNC;
 	buf->f_namemax = PNAME_MAX;

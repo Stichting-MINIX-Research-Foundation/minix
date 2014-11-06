@@ -9,8 +9,8 @@ struct inode *find_inode(ino_t num);
 struct inode *get_inode(ino_t num);
 void put_inode(struct inode *node);
 void ref_inode(struct inode *node);
-int get_inode_number(struct inode *node);
-int is_inode_deleted(struct inode *node);
+int get_inode_number(const struct inode *node);
+int is_inode_deleted(const struct inode *node);
 int fs_putnode(ino_t ino_nr, unsigned int count);
 
 /* link.c */
@@ -35,7 +35,7 @@ ssize_t fs_getdents(ino_t ino_nr, struct fsdriver_data *data, size_t bytes,
 	off_t *pos);
 
 /* sdbm.c */
-long sdbm_hash(char *str, int len);
+long sdbm_hash(const char *str, int len);
 
 /* stadir.c */
 int fs_stat(ino_t ino_nr, struct stat *buf);
