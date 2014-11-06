@@ -28,6 +28,7 @@ static int kbd_state = 0;
 static unsigned char aux_bytes[3];
 static unsigned char aux_state = 0;
 static int aux_counter = 0;
+static int aux_available = 0;
 
 static void pckbd_leds(unsigned int);
 static void pckbd_intr(unsigned int);
@@ -125,7 +126,7 @@ scan_keyboard(unsigned char *bp, int *isauxp)
 		printf("PCKBD: scan sys_inb() failed (2): %d\n", r);
 		return FALSE;
 	}
-	if (!(sb & KB_AUX_BYTE) && b == KB_ACK && kbdout.expect_ack) {
+	if (!(sb & 0x40) && b == KB_ACK && kbdout.expect_ack) {
 		kbdout.expect_ack = 0;
 		micro_delay(KBC_IN_DELAY);
 		kbd_send();
@@ -254,8 +255,25 @@ kb_init(void)
 {
 	int r, ccb;
 
+	/* Disable the keyboard and AUX. */
+	kbc_cmd0(KBC_DI_KBD);
+	kbc_cmd0(KBC_DI_AUX);
+
 	/* Discard leftover keystroke. */
 	scan_keyboard(NULL, NULL);
+
+	/* Get the current configuration byte. */
+	kbc_cmd0(KBC_RD_RAM_CCB);
+	ccb = kbc_read();
+
+	/* If bit 5 is clear, it is a single channel controler for sure.. */
+	aux_available = (ccb & 0x10);
+
+	/* Execute Controller Self Test. */
+	kbc_cmd0(0xAA);
+	r = kbc_read();
+	if (r != 0x55)
+		panic("PCKBD: Controller self-test failed.\n");
 
 	/* Set interrupt handler and enable keyboard IRQ. */
 	irq_hook_id = KEYBOARD_IRQ;	/* id to be returned on interrupt */
@@ -265,30 +283,34 @@ kb_init(void)
 	if ((r = sys_irqenable(&irq_hook_id)) != OK)
 		panic("Couldn't enable keyboard IRQs: %d", r);
 
-	/* Set AUX interrupt handler and enable AUX IRQ. */
-	aux_irq_hook_id = KBD_AUX_IRQ;	/* id to be returned on interrupt */
-	r = sys_irqsetpolicy(KBD_AUX_IRQ, IRQ_REENABLE, &aux_irq_hook_id);
-	if (r != OK)
-		panic("Couldn't set AUX IRQ policy: %d", r);
-	if ((r = sys_irqenable(&aux_irq_hook_id)) != OK)
-		panic("Couldn't enable AUX IRQs: %d", r);
+	/* Activate IRQ bit for the keyboard. */
+	ccb |= 0x1;
 
-	/* Disable the keyboard and AUX. */
-	kbc_cmd0(KBC_DI_KBD);
-	kbc_cmd0(KBC_DI_AUX);
+	if (aux_available != 0) {
+		/* Set AUX interrupt handler and enable AUX IRQ. */
+		aux_irq_hook_id = KBD_AUX_IRQ;	/* id to be returned on interrupt */
+		r = sys_irqsetpolicy(KBD_AUX_IRQ, IRQ_REENABLE, &aux_irq_hook_id);
+		if (r != OK)
+			panic("Couldn't set AUX IRQ policy: %d", r);
+		if ((r = sys_irqenable(&aux_irq_hook_id)) != OK)
+			panic("Couldn't enable AUX IRQs: %d", r);
 
-	/* Get the current configuration byte. */
-	kbc_cmd0(KBC_RD_RAM_CCB);
-	ccb = kbc_read();
+		/* Activate IRQ for AUX. */
+		ccb |= 0x2;
+	}
 
-	/* Enable both interrupts. */
-	kbc_cmd1(KBC_WR_RAM_CCB, ccb | 3);
+	/* Enable interrupt(s). */
+	kbc_cmd1(KBC_WR_RAM_CCB, ccb);
 
 	/* Re-enable the keyboard device. */
 	kbc_cmd0(KBC_EN_KBD);
 
-	/* Enable the AUX device. */
-	kbc_cmd0(KBC_EN_AUX);
+	if (aux_available != 0) {
+		/* Enable the AUX device. */
+		kbc_cmd0(KBC_EN_AUX);
+		kbc_cmd1(0xD4, 0xF6);
+		kbc_cmd1(0xD4, 0xF4);
+	}
 
 	/* Set the initial LED state. */
 	kb_wait();
@@ -368,7 +390,7 @@ kbdaux_process(unsigned char scode)
 
 			inputdriver_send_event(TRUE /*mouse*/,
 			    INPUT_PAGE_BUTTON, INPUT_BUTTON_1 + i,
-			    aux_state & (1 << i), 0);
+			    !!(aux_state & (1 << i)), 0);
 		}
 	}
 
@@ -439,6 +461,7 @@ pckbd_alarm(clock_t stamp)
 static int
 pckbd_init(int UNUSED(type), sef_init_info_t *UNUSED(info))
 {
+	int flags = INPUT_DEV_KBD;
 	/* Initialize the watchdog timer. */
 	init_timer(&tmr_kbd_wd);
 
@@ -446,7 +469,9 @@ pckbd_init(int UNUSED(type), sef_init_info_t *UNUSED(info))
 	kb_init();
 
 	/* Announce the driver's presence. */
-	inputdriver_announce(INPUT_DEV_KBD | INPUT_DEV_MOUSE);
+	if (aux_available != 0)
+		flags |= INPUT_DEV_MOUSE;
+	inputdriver_announce(flags);
 
 	return OK;
 }
