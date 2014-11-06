@@ -32,23 +32,26 @@ struct fs_hooks {
 	int (*message_hook)(message *m);
 };
 
-extern struct inode *add_inode(struct inode *parent, char *name, index_t index,
-	struct inode_stat *stat, index_t nr_indexed_entries, cbdata_t cbdata);
+extern struct inode *add_inode(struct inode *parent, const char *name,
+	index_t index, const struct inode_stat *stat,
+	index_t nr_indexed_entries, cbdata_t cbdata);
 extern void delete_inode(struct inode *inode);
 
-extern struct inode *get_inode_by_name(struct inode *parent, char *name);
-extern struct inode *get_inode_by_index(struct inode *parent, index_t index);
+extern struct inode *get_inode_by_name(const struct inode *parent,
+	const char *name);
+extern struct inode *get_inode_by_index(const struct inode *parent,
+	index_t index);
 
-extern char const *get_inode_name(struct inode *inode);
-extern index_t get_inode_index(struct inode *inode);
-extern cbdata_t get_inode_cbdata(struct inode *inode);
+extern const char *get_inode_name(const struct inode *inode);
+extern index_t get_inode_index(const struct inode *inode);
+extern cbdata_t get_inode_cbdata(const struct inode *inode);
 
 extern struct inode *get_root_inode(void);
-extern struct inode *get_parent_inode(struct inode *inode);
-extern struct inode *get_first_inode(struct inode *parent);
-extern struct inode *get_next_inode(struct inode *previous);
+extern struct inode *get_parent_inode(const struct inode *inode);
+extern struct inode *get_first_inode(const struct inode *parent);
+extern struct inode *get_next_inode(const struct inode *previous);
 
-extern void get_inode_stat(struct inode *inode, struct inode_stat *stat);
+extern void get_inode_stat(const struct inode *inode, struct inode_stat *stat);
 extern void set_inode_stat(struct inode *inode, struct inode_stat *stat);
 
 extern void start_vtreefs(struct fs_hooks *hooks, unsigned int nr_inodes,

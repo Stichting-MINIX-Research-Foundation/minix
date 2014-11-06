@@ -1,4 +1,4 @@
-/* VTreeFS - table.c - by Alen Stojanov and David van Moolenbroek */
+/* VTreeFS - table.c - file system driver callback table */
 
 #define _TABLE
 #include "inc.h"

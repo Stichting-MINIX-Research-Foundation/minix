@@ -1,22 +1,21 @@
-/* VTreeFS - mount.c - by Alen Stojanov and David van Moolenbroek */
+/* VTreeFS - mount.c - mounting and unmounting */
 
 #include "inc.h"
 #include <minix/vfsif.h>
 
-/*===========================================================================*
- *				fs_mount				     *
- *===========================================================================*/
-int fs_mount(dev_t dev, unsigned int flags, struct fsdriver_node *root_node,
-	unsigned int *res_flags)
+/*
+ * Mount the file system.  Obtain the root inode and send back its details.
+ */
+int
+fs_mount(dev_t dev, unsigned int flags, struct fsdriver_node * root_node,
+	unsigned int * res_flags)
 {
-	/* This function gets the root inode and sends back its details.
-	 */
 	struct inode *root;
 
 	/* Get the device number, for stat requests. */
 	fs_dev = dev;
 
-	/* The VTreeFS must not be mounted as a root file system. */
+	/* VTreeFS must not be mounted as a root file system. */
 	if (flags & REQ_ISROOT)
 		return EINVAL;
 
@@ -24,7 +23,7 @@ int fs_mount(dev_t dev, unsigned int flags, struct fsdriver_node *root_node,
 	root = get_root_inode();
 	ref_inode(root);
 
-	/* The system is now mounted. Call the initialization hook. */
+	/* The system is now mounted.  Call the initialization hook. */
 	if (vtreefs_hooks->init_hook != NULL)
 		vtreefs_hooks->init_hook();
 
@@ -41,13 +40,12 @@ int fs_mount(dev_t dev, unsigned int flags, struct fsdriver_node *root_node,
 	return OK;
 }
 
-/*===========================================================================*
- *				fs_unmount				     *
- *===========================================================================*/
-void fs_unmount(void)
+/*
+ * Unmount the file system.
+ */
+void
+fs_unmount(void)
 {
-	/* Unmount the file system.
-	 */
 	struct inode *root;
 
 	/* Decrease the count of the root inode. */
@@ -55,7 +53,7 @@ void fs_unmount(void)
 
 	put_inode(root);
 
-	/* The system is unmounted. Call the cleanup hook. */
+	/* The system is unmounted.  Call the cleanup hook. */
 	if (vtreefs_hooks->cleanup_hook != NULL)
 		vtreefs_hooks->cleanup_hook();
 }
