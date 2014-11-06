@@ -493,10 +493,7 @@ struct vir_region *map_page_region(struct vmproc *vmp, vir_bytes minv,
 		if(map_handle_memory(vmp, newregion, 0, length, 1,
 			NULL, 0, 0) != OK) {
 			printf("VM: map_page_region: prealloc failed\n");
-			free(newregion->physblocks);
-			USE(newregion,
-				newregion->physblocks = NULL;);
-			SLABFREE(newregion);
+			map_free(newregion);
 			return NULL;
 		}
 	}
@@ -1283,8 +1280,10 @@ int map_unmap_range(struct vmproc *vmp, vir_bytes unmap_start, vir_bytes length)
 			return r;
 		}
 
-		region_start_iter(&vmp->vm_regions_avl, &v_iter, nextvr->vaddr, AVL_EQUAL);
-		assert(region_get_iter(&v_iter) == nextvr);
+		if(nextvr) {
+			region_start_iter(&vmp->vm_regions_avl, &v_iter, nextvr->vaddr, AVL_EQUAL);
+			assert(region_get_iter(&v_iter) == nextvr);
+		}
 	}
 
 	return OK;

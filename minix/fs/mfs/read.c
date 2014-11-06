@@ -69,7 +69,7 @@ ssize_t fs_readwrite(ino_t ino_nr, struct fsdriver_data *data, size_t nrbytes,
 	  if (chunk > nrbytes)
 		chunk = nrbytes;
 
-	  if (call == FSC_READ) {
+	  if (call != FSC_WRITE) {
 		  bytes_left = f_size - position;
 		  if (position >= f_size) break;	/* we are beyond EOF */
 		  if (chunk > (unsigned int) bytes_left) chunk = bytes_left;
