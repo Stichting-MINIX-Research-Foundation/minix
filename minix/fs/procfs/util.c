@@ -50,7 +50,7 @@ int procfs_getloadavg(struct load *loadavg, int nelem)
 			slot = (latest - h + _LOAD_HISTORY) % _LOAD_HISTORY;
 			loadavg[p].proc_load +=
 				 loadinfo.proc_load_history[slot];
-			l += (double) loadinfo.proc_load_history[slot];
+			l += (ssize_t) loadinfo.proc_load_history[slot];
 		}
 
 		/* The load average over this number of minutes is the number
