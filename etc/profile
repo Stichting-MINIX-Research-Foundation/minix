@@ -34,3 +34,5 @@ fi
 
 export PATH TZ
 
+# Make sure this gets sourced on every subshells
+export ENV="/etc/profile"
