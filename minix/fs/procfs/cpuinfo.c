@@ -1,4 +1,7 @@
+/* ProcFS - cpuinfo.c - generator for the cpuinfo file */
+
 #include "inc.h"
+
 #if defined(__i386__)
 #include "../../kernel/arch/i386/include/archconst.h"
 #endif
@@ -75,14 +78,17 @@ static const char * x86_flag[] = {
 	"",
 };
 
-static void print_x86_cpu_flags(u32_t * flags)
+/*
+ * Output a space-separated list of supported CPU flags.  x86 only.
+ */
+static void
+print_x86_cpu_flags(u32_t * flags)
 {
 	int i, j;
 
 	for (i = 0; i < 2; i++) {
 		for (j = 0; j < 32; j++) {
-			if (flags[i] & (1 << j) &&
-					x86_flag[i * 32 + j][0])
+			if (flags[i] & (1 << j) && x86_flag[i * 32 + j][0])
 				buf_printf("%s ", x86_flag[i * 32 + j]);
 		}
 	}
@@ -90,22 +96,27 @@ static void print_x86_cpu_flags(u32_t * flags)
 }
 #endif
 
-static void print_cpu(struct cpu_info * cpu_info, unsigned id)
+/*
+ * Print information for a single CPU.
+ */
+static void
+print_cpu(struct cpu_info * cpu_info, unsigned id)
 {
+
 	buf_printf("%-16s: %d\n", "processor", id);
 
 #if defined(__i386__)
 	switch (cpu_info->vendor) {
-		case CPU_VENDOR_INTEL:
-			buf_printf("%-16s: %s\n", "vendor_id", "GenuineIntel");
-			buf_printf("%-16s: %s\n", "model name", "Intel");
-			break;
-		case CPU_VENDOR_AMD:
-			buf_printf("%-16s: %s\n", "vendor_id", "AuthenticAMD");
-			buf_printf("%-16s: %s\n", "model name", "AMD");
-			break;
-		default:
-			buf_printf("%-16: %s\n", "vendor_id", "unknown");
+	case CPU_VENDOR_INTEL:
+		buf_printf("%-16s: %s\n", "vendor_id", "GenuineIntel");
+		buf_printf("%-16s: %s\n", "model name", "Intel");
+		break;
+	case CPU_VENDOR_AMD:
+		buf_printf("%-16s: %s\n", "vendor_id", "AuthenticAMD");
+		buf_printf("%-16s: %s\n", "model name", "AMD");
+		break;
+	default:
+		buf_printf("%-16s: %s\n", "vendor_id", "unknown");
 	}
 
 	buf_printf("%-16s: %d\n", "cpu family", cpu_info->family);
@@ -118,18 +129,22 @@ static void print_cpu(struct cpu_info * cpu_info, unsigned id)
 #endif
 }
 
-void root_cpuinfo(void)
+/*
+ * Generate the contents of /proc/cpuinfo.
+ */
+void
+root_cpuinfo(void)
 {
 	struct cpu_info cpu_info[CONFIG_MAX_CPUS];
 	struct machine machine;
-	unsigned c;
+	unsigned int c;
 
 	if (sys_getmachine(&machine)) {
 		printf("PROCFS: cannot get machine\n");
 		return;
 	}
 	if (sys_getcpuinfo(&cpu_info)) {
-		printf("PROCFS: cannot get cpu info\n");
+		printf("PROCFS: cannot get CPU info\n");
 		return;
 	}
 
