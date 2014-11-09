@@ -16,6 +16,10 @@
  * unused inodes.
  */
 struct inode {
+	/* Inode identity */
+	unsigned int i_num;		/* index number into the inode array */
+	/* Note that the actual inode number (of type ino_t) is (i_num + 1). */
+
 	/* Inode metadata */
 	struct inode_stat i_stat;	/* POSIX attributes */
 	char i_name[PNAME_MAX + 1];	/* name of the inode in the parent */

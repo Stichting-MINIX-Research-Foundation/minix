@@ -87,8 +87,9 @@ int main(void)
 	stat.size 	= 0;
 	stat.dev 	= NO_DEV;
 
-	/* Start VTreeFS. */
-	start_vtreefs(&hooks, NR_INODES, &stat, NR_PROCS + NR_TASKS, BUF_SIZE);
+	/* Run VTreeFS. */
+	run_vtreefs(&hooks, NR_INODES, 0, &stat, NR_PROCS + NR_TASKS,
+	    BUF_SIZE);
 
 	return 0;
 }

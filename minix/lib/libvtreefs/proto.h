@@ -1,6 +1,10 @@
 #ifndef _VTREEFS_PROTO_H
 #define _VTREEFS_PROTO_H
 
+/* extra.c */
+int init_extra(unsigned int inodes, size_t inode_extra);
+void clear_inode_extra(struct inode *node);
+
 /* file.c */
 int init_buf(size_t size);
 void cleanup_buf(void);

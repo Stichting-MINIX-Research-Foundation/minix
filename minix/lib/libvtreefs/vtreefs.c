@@ -6,6 +6,7 @@ static unsigned int inodes;
 static struct inode_stat *root_stat;
 static index_t root_entries;
 static size_t buf_size;
+static size_t extra_size;
 
 /*
  * Initialize internal state.  This is the only place where dynamic memory
@@ -19,6 +20,10 @@ init_server(int __unused type, sef_init_info_t * __unused info)
 	/* Initialize the virtual tree. */
 	if ((r = init_inodes(inodes, root_stat, root_entries)) != OK)
 		panic("init_inodes failed: %d", r);
+
+	/* Initialize extra data. */
+	if ((r = init_extra(inodes, extra_size)) != OK)
+		panic("init_extra failed: %d", r);
 
 	/* Initialize the I/O buffer. */
 	if ((r = init_buf(buf_size)) != OK)
@@ -83,8 +88,9 @@ fs_other(const message * m_ptr, int ipc_status)
  * unmounted and the process is signaled to exit.
  */
 void
-start_vtreefs(struct fs_hooks * hooks, unsigned int nr_inodes,
-	struct inode_stat * stat, index_t nr_indexed_entries, size_t bufsize)
+run_vtreefs(struct fs_hooks * hooks, unsigned int nr_inodes,
+	size_t inode_extra, struct inode_stat * stat,
+	index_t nr_indexed_entries, size_t bufsize)
 {
 
 	/*
@@ -93,6 +99,7 @@ start_vtreefs(struct fs_hooks * hooks, unsigned int nr_inodes,
 	 */
 	vtreefs_hooks = hooks;
 	inodes = nr_inodes;
+	extra_size = inode_extra;
 	root_stat = stat;
 	root_entries = nr_indexed_entries;
 	buf_size = bufsize;

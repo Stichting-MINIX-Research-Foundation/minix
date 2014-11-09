@@ -44,7 +44,7 @@ struct fs_hooks {
 
 extern struct inode *add_inode(struct inode *parent, const char *name,
 	index_t index, const struct inode_stat *stat,
-	index_t nr_indexed_entries, cbdata_t cbdata);
+	index_t nr_indexed_slots, cbdata_t cbdata);
 extern void delete_inode(struct inode *inode);
 
 extern struct inode *get_inode_by_name(const struct inode *parent,
@@ -54,7 +54,9 @@ extern struct inode *get_inode_by_index(const struct inode *parent,
 
 extern const char *get_inode_name(const struct inode *inode);
 extern index_t get_inode_index(const struct inode *inode);
+extern index_t get_inode_slots(const struct inode *inode);
 extern cbdata_t get_inode_cbdata(const struct inode *inode);
+extern void *get_inode_extra(const struct inode *inode);
 
 extern struct inode *get_root_inode(void);
 extern struct inode *get_parent_inode(const struct inode *inode);
@@ -64,7 +66,8 @@ extern struct inode *get_next_inode(const struct inode *previous);
 extern void get_inode_stat(const struct inode *inode, struct inode_stat *stat);
 extern void set_inode_stat(struct inode *inode, struct inode_stat *stat);
 
-extern void start_vtreefs(struct fs_hooks *hooks, unsigned int nr_inodes,
-	struct inode_stat *stat, index_t nr_indexed_entries, size_t buf_size);
+extern void run_vtreefs(struct fs_hooks *hooks, unsigned int nr_inodes,
+	size_t inode_extra, struct inode_stat *stat, index_t nr_indexed_slots,
+	size_t buf_size);
 
 #endif /* _MINIX_VTREEFS_H */

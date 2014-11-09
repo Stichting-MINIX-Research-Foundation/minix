@@ -19,6 +19,7 @@ static LIST_HEAD(index_head, inode) *parent_index_head;
 #define CHECK_INODE(node)						\
 	do {								\
 		assert(node >= &inode[0] && node < &inode[nr_inodes]);	\
+		assert((unsigned int)(node - &inode[0]) == node->i_num);\
 		assert(node == &inode[0] || node->i_parent != NULL ||	\
 		    (node->i_flags & I_DELETED));			\
 	} while (0);
@@ -68,7 +69,7 @@ init_inodes(unsigned int inodes, struct inode_stat * stat,
 	/* Add free inodes to the unused/free list.  Skip the root inode. */
 	for (i = 1; i < nr_inodes; i++) {
 		node = &inode[i];
-
+		node->i_num = i;
 		node->i_parent = NULL;
 		node->i_count = 0;
 		TAILQ_INIT(&node->i_children);
@@ -83,6 +84,7 @@ init_inodes(unsigned int inodes, struct inode_stat * stat,
 
 	/* Initialize the root inode. */
 	node = &inode[0];
+	node->i_num = 0;
 	node->i_parent = NULL;
 	node->i_count = 0;
 	TAILQ_INIT(&node->i_children);
@@ -114,15 +116,13 @@ cleanup_inodes(void)
 static int
 parent_name_hash(const struct inode * parent, const char *name)
 {
-	unsigned int name_hash, parent_hash;
-
-	/* The parent hash is a simple array entry; find its index. */
-	parent_hash = (unsigned int)(parent - &inode[0]);
+	unsigned int name_hash;
 
 	/* Use the sdbm algorithm to hash the name. */
 	name_hash = sdbm_hash(name, strlen(name));
 
-	return (parent_hash ^ name_hash) % nr_inodes;
+	/* The parent hash is a simple array entry. */
+	return (parent->i_num ^ name_hash) % nr_inodes;
 }
 
 /*
@@ -132,7 +132,7 @@ static int
 parent_index_hash(const struct inode * parent, index_t index)
 {
 
-	return ((int)(parent - &inode[0]) ^ index) % nr_inodes;
+	return (parent->i_num ^ index) % nr_inodes;
 }
 
 /*
@@ -217,6 +217,9 @@ add_inode(struct inode * parent, const char * name, index_t index,
 	newnode->i_cbdata = cbdata;
 	strlcpy(newnode->i_name, name, sizeof(newnode->i_name));
 
+	/* Clear the extra data for this inode, if present. */
+	clear_inode_extra(newnode);
+
 	/* Add the inode to the list of children inodes of the parent. */
 	TAILQ_INSERT_HEAD(&parent->i_children, newnode, i_siblings);
 
@@ -266,6 +269,18 @@ get_inode_index(const struct inode * node)
 	CHECK_INODE(node);
 
 	return node->i_index;
+}
+
+/*
+ * Return the number of indexed slots for the given (directory) inode.
+ */
+index_t
+get_inode_slots(const struct inode * node)
+{
+
+	CHECK_INODE(node);
+
+	return node->i_indexed;
 }
 
 /*
@@ -342,7 +357,7 @@ get_inode_number(const struct inode * node)
 
 	CHECK_INODE(node);
 
-	return (int)(node - &inode[0]) + 1;
+	return node->i_num + 1;
 }
 
 /*
