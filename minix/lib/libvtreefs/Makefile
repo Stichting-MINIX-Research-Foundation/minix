@@ -7,6 +7,7 @@ CPPFLAGS+= -D_MINIX_SYSTEM
 LIB=	vtreefs
 
 SRCS=	\
+	extra.c \
 	file.c \
 	inode.c \
 	link.c \

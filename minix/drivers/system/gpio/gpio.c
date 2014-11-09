@@ -283,8 +283,8 @@ main(int argc, char **argv)
 	root_stat.size = 0;
 	root_stat.dev = NO_DEV;
 
-	/* limit the number of indexed entries */
-	start_vtreefs(&hooks, 30, &root_stat, 0, DATA_SIZE);
+	/* run VTreeFS */
+	run_vtreefs(&hooks, 30, 0, &root_stat, 0, DATA_SIZE);
 
 	return EXIT_SUCCESS;
 }
