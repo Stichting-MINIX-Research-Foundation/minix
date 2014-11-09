@@ -1,4 +1,4 @@
-/* ProcFS - root.c - by Alen Stojanov and David van Moolenbroek */
+/* ProcFS - root.c - generators for static files in the root directory */
 
 #include "inc.h"
 
@@ -6,7 +6,6 @@
 #include <machine/pci.h>
 #endif
 #include <minix/dmap.h>
-#include "cpuinfo.h"
 
 static void root_hz(void);
 static void root_uptime(void);
@@ -38,24 +37,22 @@ struct file root_files[] = {
 	{ NULL,		0,		NULL			}
 };
 
-/*===========================================================================*
- *				root_hz					     *
- *===========================================================================*/
-static void root_hz(void)
+/*
+ * Print the system clock frequency.
+ */
+static void
+root_hz(void)
 {
-	/* Print the system clock frequency.
-	 */
 
-	buf_printf("%lu\n", (long) sys_hz());
+	buf_printf("%lu\n", (unsigned long)sys_hz());
 }
 
-/*===========================================================================*
- *				root_loadavg				     *
- *===========================================================================*/
-static void root_loadavg(void)
+/*
+ * Print load averages.
+ */
+static void
+root_loadavg(void)
 {
-	/* Print load averages.
-	 */
 	struct load loads[3];
 	ldiv_t avg[3];
 
@@ -67,17 +64,16 @@ static void root_loadavg(void)
 	avg[2] = ldiv(100L * loads[2].proc_load / loads[2].ticks, 100);
 
 	buf_printf("%ld.%02ld %ld.%02ld %ld.%02ld\n",
-		avg[0].quot, avg[0].rem, avg[1].quot, avg[1].rem,
-		avg[2].quot, avg[2].rem);
+	    avg[0].quot, avg[0].rem, avg[1].quot, avg[1].rem,
+	    avg[2].quot, avg[2].rem);
 }
 
-/*===========================================================================*
- *				root_uptime				     *
- *===========================================================================*/
-static void root_uptime(void)
+/*
+ * Print the current uptime.
+ */
+static void
+root_uptime(void)
 {
-	/* Print the current uptime.
-	 */
 	clock_t ticks;
 	ldiv_t division;
 
@@ -88,13 +84,12 @@ static void root_uptime(void)
 	buf_printf("%ld.%0.2ld\n", division.quot, division.rem);
 }
 
-/*===========================================================================*
- *				root_kinfo				     *
- *===========================================================================*/
-static void root_kinfo(void)
+/*
+ * Print general kernel information.
+ */
+static void
+root_kinfo(void)
 {
-	/* Print general kernel information.
-	 */
 	struct kinfo kinfo;
 
 	if (sys_getkinfo(&kinfo) != OK)
@@ -103,30 +98,28 @@ static void root_kinfo(void)
 	buf_printf("%u %u\n", kinfo.nr_procs, kinfo.nr_tasks);
 }
 
-/*===========================================================================*
- *				root_meminfo				     *
- *===========================================================================*/
-static void root_meminfo(void)
+/*
+ * Print general memory information.
+ */
+static void
+root_meminfo(void)
 {
-	/* Print general memory information.
-	 */
 	struct vm_stats_info vsi;
 
 	if (vm_info_stats(&vsi) != OK)
 		return;
 
-	buf_printf("%u %lu %lu %lu %lu\n", vsi.vsi_pagesize,
-		vsi.vsi_total, vsi.vsi_free, vsi.vsi_largest, vsi.vsi_cached);
+	buf_printf("%u %lu %lu %lu %lu\n", vsi.vsi_pagesize, vsi.vsi_total,
+	    vsi.vsi_free, vsi.vsi_largest, vsi.vsi_cached);
 }
 
-/*===========================================================================*
- *				root_pci				     *
- *===========================================================================*/
 #if defined(__i386__)
-static void root_pci(void)
+/*
+ * Print information about PCI devices present in the system.
+ */
+static void
+root_pci(void)
 {
-	/* Print information about PCI devices present in the system.
-	 */
 	u16_t vid, did, subvid, subdid;
 	u8_t bcr, scr, pifr, rev;
 	char *slot_name, *dev_name;
@@ -153,20 +146,21 @@ static void root_pci(void)
 		subdid = pci_attr_r16(devind, PCI_SUBDID);
 
 		buf_printf("%s %x/%x/%x/%x %04X:%04X:%04X:%04X %s\n",
-			slot_name ? slot_name : "-1.-1.-1.-1",
-			bcr, scr, pifr, rev,
-			vid, did, subvid, subdid,
-			dev_name ? dev_name : "");
+		    slot_name ? slot_name : "-1.-1.-1.-1",
+		    bcr, scr, pifr, rev,
+		    vid, did, subvid, subdid,
+		    dev_name ? dev_name : "");
 
 		r = pci_next_dev(&devind, &vid, &did);
 	}
 }
 #endif /* defined(__i386__) */
 
-/*===========================================================================*
- *				root_dmap				     *
- *===========================================================================*/
-static void root_dmap(void)
+/*
+ * Print a list of drivers that have been assigned major device numbers.
+ */
+static void
+root_dmap(void)
 {
 	struct dmap dmap[NR_DEVICES];
 	int i;
@@ -179,30 +173,35 @@ static void root_dmap(void)
 			continue;
 
 		buf_printf("%u %s %u\n", i, dmap[i].dmap_label,
-			dmap[i].dmap_driver);
+		    dmap[i].dmap_driver);
 	}
 }
 
-/*===========================================================================*
- *				root_ipcvecs				     *
- *===========================================================================*/
-static void root_ipcvecs(void)
+/*
+ * Print a list of IPC vectors with their addresses.
+ */
+static void
+root_ipcvecs(void)
 {
 	extern struct minix_kerninfo *_minix_kerninfo;
 	extern struct minix_ipcvecs _minix_ipcvecs;
 
-	/* only print this if the kernel provides the info; otherwise binaries
-	 * will be using their own in-libc vectors that are normal symbols in the
-	 * binary.
+	/*
+	 * Only print this if the kernel provides the info; otherwise binaries
+	 * will be using their own in-libc vectors that are normal symbols in
+	 * the binary.
 	 */
-	if(!_minix_kerninfo || !(_minix_kerninfo->ki_flags & MINIX_KIF_IPCVECS))
+	if (!_minix_kerninfo ||
+	    !(_minix_kerninfo->ki_flags & MINIX_KIF_IPCVECS))
 		return;
 
-	/* print the vectors with an descriptive name and the additional (k)
+	/*
+	 * Print the vectors with an descriptive name and the additional (k)
 	 * to distinguish them from regular symbols.
 	 */
 #define PRINT_ENTRYPOINT(name) \
-	buf_printf("%08lx T %s(k)\n", _minix_ipcvecs.name, #name)
+	buf_printf("%08lx T %s(k)\n", \
+	    (unsigned long)_minix_ipcvecs.name, #name)
 
 	PRINT_ENTRYPOINT(sendrec);
 	PRINT_ENTRYPOINT(send);
@@ -213,9 +212,9 @@ static void root_ipcvecs(void)
 	PRINT_ENTRYPOINT(do_kernel_call);
 }
 
-/*===========================================================================*
- *				root_mounts				     *
- *===========================================================================*/
+/*
+ * Print the list of mounted file systems.
+ */
 static void
 root_mounts(void)
 {
@@ -227,7 +226,7 @@ root_mounts(void)
 
 	for (i = 0; i < count; i++) {
 		buf_printf("%s on %s type %s (%s)\n", buf[i].f_mntfromname,
-			buf[i].f_mntonname, buf[i].f_fstypename,
-			(buf[i].f_flag & ST_RDONLY) ? "ro" : "rw");
-        }
+		    buf[i].f_mntonname, buf[i].f_fstypename,
+		    (buf[i].f_flag & ST_RDONLY) ? "ro" : "rw");
+	}
 }

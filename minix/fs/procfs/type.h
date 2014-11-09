@@ -8,8 +8,9 @@ struct load {
 	long proc_load;		/* .. the CPU had this load */
 };
 
-/* ProcFS supports two groups of files: dynamic files, which are created within
- * process-specific (PID) directories, and static files, which are global. For
+/*
+ * ProcFS supports two groups of files: dynamic files, which are created within
+ * process-specific (PID) directories, and static files, which are global.  For
  * both, the following structure is used to construct the files.
  *
  * For dynamic files, the rules are simple: only regular files are supported
@@ -21,48 +22,49 @@ struct load {
  * The function will be called whenever a read request for the file is made;
  * 'slot' contains the kernel slot number of the process being queried (so for
  * the PM and VFS process tables, NR_TASKS has to be subtracted from the slot
- * number to find the right slot). The function is expected to produce
+ * number to find the right slot).  The function is expected to produce
  * appropriate output using the buf_printf() function.
  *
- * For static files, regular files and directories are supported. For
+ * For static files, regular files and directories are supported.  For
  * directories, the 'data' field must be a pointer to another 'struct file'
  * array that specifies the contents of the directory - this directory will
- * the be created recursively. For regular files, the 'data' field must point
+ * the be created recursively.  For regular files, the 'data' field must point
  * to a function of the type:
  *
  *   void (*)(void)
  *
  * Here too, the function will be called upon a read request, and it is
- * supposed to "fill" the file using buf_printf(). Obviously, for static files,
- * there is no slot number.
+ * supposed to "fill" the file using buf_printf().  Obviously, for static
+ * files, there is no slot number.
  *
  * For both static and dynamic files, 'mode' must specify the file type as well
  * as the access mode, and in both cases, each array is terminated with an
  * entry that has its name set to NULL.
  */
-/* The internal link between static/dynamic files/directories and VTreeFS'
+/*
+ * The internal link between static/dynamic files/directories and VTreeFS'
  * indexes and cbdata values is as follows:
  * - Dynamic directories are always PID directories in the root directory.
  *   They are generated automatically, and are not specified using a "struct
- *   file" structure. Their index is their slot number, so that getdents()
- *   calls always return any PID at most once. Their cbdata value is the PID of
- *   the process associated with that dynamic directory, for the purpose of
+ *   file" structure.  Their index is their slot number, so that getdents()
+ *   calls always return any PID at most once.  Their cbdata value is the PID
+ *   of the process associated with that dynamic directory, for the purpose of
  *   comparing old and new PIDs after updating process tables (without having
  *   to atoi() the directory's name).
- * - Dynamic files are always in such a dynamic directory. Their index is the
- *   array index into the "struct file" array of pid files (pid_files[]). They
- *   are indexed at all, because they may be deleted at any time due to inode
- *   shortages, independently of other dynamic files in the same directory, and
- *   recreating them without index would again risk possibly inconsistent
+ * - Dynamic files are always in such a dynamic directory.  Their index is the
+ *   array index into the "struct file" array of pid files (pid_files[]).  They
+ *   are indexed at all because they may be deleted at any time due to inode
+ *   shortages, independently of other dynamic files in the same directory.
+ *   Recreating them without index would again risk possibly inconsistent
  *   getdents() results, where for example the same file shows up twice.
- *   VTreeFS currently does not distinguish between indexed and delatable files
+ *   VTreeFS currently does not distinguish between indexed and deletable files
  *   and hence, all dynamic files must be indexed so as to be deletable anyway.
  * - Static directories have no index (they are not and must not be deletable),
  *   and although their cbdata is their associated 'data' field from their
  *   "struct file" entries, their cbdata value is currently not relied on
- *   anywhere. Then again, as of writing, there are no static directories at
+ *   anywhere.  Then again, as of writing, there are no static directories at
  *   all.
- * - Static files have no index either (for the same reason). Their cbdata is
+ * - Static files have no index either (for the same reason).  Their cbdata is
  *   also their 'data' field from the "struct file" entry creating the file,
  *   and this is used to actually call the callback function directly.
  */

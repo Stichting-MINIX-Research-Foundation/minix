@@ -3,9 +3,12 @@
 
 /* buf.c */
 void buf_init(char *ptr, size_t len, off_t start);
-void buf_printf(char *fmt, ...);
+void buf_printf(char *fmt, ...) __attribute__((__format__(__printf__, 1, 2)));
 void buf_append(char *data, size_t len);
 ssize_t buf_result(void);
+
+/* cpuinfo.c */
+void root_cpuinfo(void);
 
 /* tree.c */
 int init_tree(void);
