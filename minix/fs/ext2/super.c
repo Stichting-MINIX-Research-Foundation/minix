@@ -17,6 +17,7 @@
 #include <minix/bdev.h>
 #include <machine/param.h>
 #include <machine/vmparam.h>
+#include <sys/mman.h>
 #include "buf.h"
 #include "inode.h"
 #include "super.h"
@@ -74,10 +75,13 @@ register struct super_block *sp; /* pointer to a superblock */
   /* group descriptors, sp->s_group_desc points to this. */
   static struct group_desc *group_descs;
   block_t gd_size; /* group descriptors table size in blocks */
-  int gdt_position;
-  static char superblock_buf[1024];
+  u64_t gdt_position;
+  size_t off, chunk;
 
-  ondisk_superblock = (struct super_block *) superblock_buf;
+  ondisk_superblock = (struct super_block *)mmap(NULL, SUPER_SIZE_D,
+	PROT_READ|PROT_WRITE, MAP_ANON|MAP_PRIVATE, -1, 0);
+  if (ondisk_superblock == MAP_FAILED)
+	panic("can't allocate buffer for super block");
 
   dev = sp->s_dev;              /* save device (will be overwritten by copy) */
   if (dev == NO_DEV)
@@ -90,10 +94,10 @@ register struct super_block *sp; /* pointer to a superblock */
 	super_block_offset = opt.block_with_super * 1024;
   }
 
-  r = bdev_read(dev, ((u64_t)(super_block_offset)), (char*) ondisk_superblock,
-	sizeof(superblock_buf), BDEV_NOFLAGS);
+  r = bdev_read(dev, super_block_offset, (char*) ondisk_superblock,
+	SUPER_SIZE_D, BDEV_NOFLAGS);
 
-  if (r != sizeof(superblock_buf))
+  if (r != SUPER_SIZE_D)
 	return(EINVAL);
 
   super_copy(sp, ondisk_superblock);
@@ -150,7 +154,9 @@ register struct super_block *sp; /* pointer to a superblock */
 
   if(!(group_descs = malloc(gd_size * sizeof(struct group_desc))))
 	panic("can't allocate group desc array");
-  if(!(ondisk_group_descs = malloc(gd_size * sizeof(struct group_desc))))
+  ondisk_group_descs = mmap(NULL, gd_size * sizeof(struct group_desc),
+	PROT_READ|PROT_WRITE, MAP_ANON|MAP_PRIVATE, -1, 0);
+  if (ondisk_group_descs == MAP_FAILED)
 	panic("can't allocate group desc array");
 
   /* s_first_data_block (block number, where superblock is stored)
@@ -168,11 +174,18 @@ register struct super_block *sp; /* pointer to a superblock */
 	gdt_position = (opt.block_with_super + 1) * 1024;
   }
 
-  r = bdev_read(dev, ((u64_t)(gdt_position)), (char*) ondisk_group_descs,
-	gd_size, BDEV_NOFLAGS);
-  if (r != (ssize_t) gd_size) {
-	printf("Can not read group descriptors\n");
-	return(EINVAL);
+  /* The driver requires contiguous memory chunks, so use page granularity. */
+  for (off = 0; off < gd_size; off += chunk) {
+	chunk = gd_size - off;
+	if (chunk > PAGE_SIZE)
+		chunk = PAGE_SIZE;
+
+	r = bdev_read(dev, gdt_position + off,
+	    (char *)ondisk_group_descs + off, chunk, BDEV_NOFLAGS);
+	if (r != (ssize_t)chunk) {
+		printf("Can not read group descriptors\n");
+		return(EINVAL);
+	}
   }
 
   /* TODO: check descriptors we just read */
@@ -211,7 +224,8 @@ struct super_block *sp; /* pointer to a superblock */
 /* Write a superblock and gdt. */
   int r;
   block_t gd_size; /* group descriptors table size in blocks */
-  int gdt_position;
+  u64_t gdt_position;
+  size_t off, chunk;
 
   if (sp->s_rd_only)
 	panic("can't write superblock on read-only filesys.");
@@ -221,8 +235,8 @@ struct super_block *sp; /* pointer to a superblock */
 
   super_copy(ondisk_superblock, sp);
 
-  r = bdev_write(sp->s_dev, ((u64_t)(super_block_offset)), (char *) sp,
-	SUPER_SIZE_D, BDEV_NOFLAGS);
+  r = bdev_write(sp->s_dev, super_block_offset, (char *) sp, SUPER_SIZE_D,
+	BDEV_NOFLAGS);
   if (r != SUPER_SIZE_D)
 	printf("ext2: Warning, failed to write superblock to the disk!\n");
 
@@ -239,11 +253,19 @@ struct super_block *sp; /* pointer to a superblock */
         copy_group_descriptors(ondisk_group_descs, sp->s_group_desc,
 			       sp->s_groups_count);
 
-	r = bdev_write(sp->s_dev, ((u64_t)(gdt_position)),
-		(char*) ondisk_group_descs, gd_size, BDEV_NOFLAGS);
-	if (r != (ssize_t) gd_size) {
-		printf("Can not write group descriptors\n");
+	/* As above. Yes, lame. */
+	for (off = 0; off < gd_size; off += chunk) {
+		chunk = gd_size - off;
+		if (chunk > PAGE_SIZE)
+			chunk = PAGE_SIZE;
+
+		r = bdev_write(sp->s_dev, gdt_position + off,
+		    (char *)ondisk_group_descs + off, chunk, BDEV_NOFLAGS);
+		if (r != (ssize_t)chunk) {
+			printf("Can not write group descriptors\n");
+		}
 	}
+
 	group_descriptors_dirty = 0;
   }
 }
