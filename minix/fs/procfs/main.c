@@ -49,7 +49,7 @@ construct_tree(struct inode * dir, struct file * files)
 static void
 init_hook(void)
 {
-	static int first_time = 1;
+	static int first_time = TRUE;
 	struct inode *root;
 
 	if (first_time) {
@@ -57,7 +57,9 @@ init_hook(void)
 
 		construct_tree(root, root_files);
 
-		first_time = 0;
+		service_init();
+
+		first_time = FALSE;
 	}
 }
 

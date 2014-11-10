@@ -10,6 +10,12 @@ ssize_t buf_result(void);
 /* cpuinfo.c */
 void root_cpuinfo(void);
 
+/* service.c */
+void service_init(void);
+void service_lookup(struct inode *parent, clock_t now);
+void service_getdents(struct inode *node);
+void service_read(struct inode *node);
+
 /* tree.c */
 int init_tree(void);
 int lookup_hook(struct inode *parent, char *name, cbdata_t cbdata);
@@ -17,6 +23,7 @@ int getdents_hook(struct inode *inode, cbdata_t cbdata);
 ssize_t read_hook(struct inode *inode, char *ptr, size_t len, off_t off,
 	cbdata_t cbdata);
 int rdlink_hook(struct inode *inode, char *ptr, size_t max, cbdata_t cbdata);
+void out_of_inodes(void);
 
 /* util.c */
 int procfs_getloadavg(struct load *loadavg, int nelem);
