@@ -10,12 +10,18 @@ struct load {
 
 /*
  * ProcFS supports two groups of files: dynamic files, which are created within
- * process-specific (PID) directories, and static files, which are global.  For
- * both, the following structure is used to construct the files.
+ * process-specific (PID) directories and the service directory, and static
+ * files, which are global.  For both, the following structure is used to
+ * construct the files.
  *
- * For dynamic files, the rules are simple: only regular files are supported
- * (although partial support for symbolic links is already present), and the
- * 'data' field must be filled with a pointer to a function of the type:
+ * For dynamic service files, no indirection infrastructure is present.  Each
+ * service gets one flat file, named after its label, and generating the
+ * contents of this flat file is all handled within the service module.  They
+ * are not relevant to the rest of this comment.
+ *
+ * For dynamic PID files, the rules are simple: only regular files are
+ * supported (although partial support for symbolic links is already present),
+ * and the 'data' field must be filled with a pointer to a function of type:
  *
  *   void (*)(int slot)
  *
@@ -51,7 +57,7 @@ struct load {
  *   of the process associated with that dynamic directory, for the purpose of
  *   comparing old and new PIDs after updating process tables (without having
  *   to atoi() the directory's name).
- * - Dynamic files are always in such a dynamic directory.  Their index is the
+ * - Dynamic files in a dynamic directory are PID files.  Their index is the
  *   array index into the "struct file" array of pid files (pid_files[]).  They
  *   are indexed at all because they may be deleted at any time due to inode
  *   shortages, independently of other dynamic files in the same directory.
@@ -59,11 +65,14 @@ struct load {
  *   getdents() results, where for example the same file shows up twice.
  *   VTreeFS currently does not distinguish between indexed and deletable files
  *   and hence, all dynamic files must be indexed so as to be deletable anyway.
+ * - Dynamic files in a static directory are currently always service files.
+ *   Their index is the slot number in process tables, for the same reasons as
+ *   above.  They have no meaningful cbdata value.
  * - Static directories have no index (they are not and must not be deletable),
  *   and although their cbdata is their associated 'data' field from their
  *   "struct file" entries, their cbdata value is currently not relied on
  *   anywhere.  Then again, as of writing, there are no static directories at
- *   all.
+ *   all, except the service directory, which is an exception case.
  * - Static files have no index either (for the same reason).  Their cbdata is
  *   also their 'data' field from the "struct file" entry creating the file,
  *   and this is used to actually call the callback function directly.

@@ -185,7 +185,7 @@ init_tree(void)
  * If the NR_INODES value is not below the *crucial* minimum, the symptom of
  * this case will be an incomplete listing of the main proc directory.
  */
-static void
+void
 out_of_inodes(void)
 {
 	static int warned = FALSE;
@@ -454,6 +454,9 @@ lookup_hook(struct inode * parent, char * name, cbdata_t __unused cbdata)
 		 * construct_pid_entries() will take care of this case.
 		 */
 		construct_pid_entries(parent, name);
+	else
+		/* TODO: skip updating the main tables in this case. */
+		service_lookup(parent, now);
 
 	return OK;
 }
@@ -473,6 +476,8 @@ getdents_hook(struct inode * node, cbdata_t __unused cbdata)
 		construct_pid_dirs();
 	} else if (dir_is_pid(node))
 		construct_pid_entries(node, NULL /*name*/);
+	else
+		service_getdents(node);
 
 	return OK;
 }
@@ -485,13 +490,20 @@ ssize_t
 read_hook(struct inode * node, char * ptr, size_t len, off_t off,
 	cbdata_t cbdata)
 {
+	struct inode *parent;
 
 	buf_init(ptr, len, off);
 
 	/* Populate the buffer with the proper content. */
-	if (get_inode_index(node) != NO_INDEX)
-		pid_read(node);
-	else
+	if (get_inode_index(node) != NO_INDEX) {
+		parent = get_parent_inode(node);
+
+		/* The PID directories are indexed; service/ is not. */
+		if (get_inode_index(parent) != NO_INDEX)
+			pid_read(node);
+		else
+			service_read(node);
+	} else
 		((void (*)(void))cbdata)();
 
 	return buf_result();
