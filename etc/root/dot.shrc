@@ -1,0 +1,12 @@
+#	$NetBSD: dot.shrc,v 1.8 2007/11/24 11:14:41 pavel Exp $
+
+if [ -f /etc/shrc ]; then
+	. /etc/shrc
+fi
+
+hup(){ (read pid; kill -HUP $pid) </var/run/$1.pid; }
+
+case "$-" in *i*)
+	# interactive mode settings go here
+	;;
+esac

@@ -1,0 +1,10 @@
+#	$NetBSD: dot.logout,v 1.1 2003/04/24 01:01:39 perry Exp $
+#
+# This is the default .logout file.
+# Users are expected to edit it to meet their own needs.
+#
+# The commands in this file are executed when a csh login shell
+# terminates.
+#
+# See csh(1) for details.
+#

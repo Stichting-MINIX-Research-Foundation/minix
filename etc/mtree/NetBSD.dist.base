@@ -38,6 +38,7 @@
 ./etc/fonts/conf.avail
 ./etc/fonts/conf.d
 ./etc/mtree
+./etc/skel
 ./etc/system.conf.d
 ./home
 ./lib
@@ -50,7 +51,6 @@
 ./usr
 ./usr/adm
 ./usr/adm/old
-./usr/ast
 ./usr/bin
 ./usr/etc
 ./usr/benchmarks

@@ -151,12 +151,8 @@ enum {
 #endif
 
 #ifndef DEF_SKELDIR
-#if defined(__minix)
-#define DEF_SKELDIR	"/usr/ast"
-#else
 #define DEF_SKELDIR	"/etc/skel"
 #endif
-#endif /* defined(__minix) */
 
 #ifndef DEF_SHELL
 #define DEF_SHELL	_PATH_BSHELL

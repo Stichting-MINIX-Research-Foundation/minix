@@ -75,6 +75,9 @@
 ./etc					minix-sys
 ./etc/atf				minix-sys	atf
 ./etc/boot.cfg.default			minix-sys
+./etc/csh.cshrc				minix-sys
+./etc/csh.login				minix-sys
+./etc/csh.logout			minix-sys
 ./etc/defaults				minix-sys
 ./etc/defaults/minix.rc.conf		minix-sys
 ./etc/defaults/rc.conf			minix-sys
@@ -115,6 +118,13 @@
 ./etc/rs.single				minix-sys
 ./etc/services				minix-sys
 ./etc/shells				minix-sys
+./etc/shrc				minix-sys
+./etc/skel				minix-sys
+./etc/skel/.cshrc			minix-sys
+./etc/skel/.login			minix-sys
+./etc/skel/.logout			minix-sys
+./etc/skel/.profile			minix-sys
+./etc/skel/.shrc			minix-sys
 ./etc/spwd.db				minix-sys
 ./etc/syslog.conf			minix-sys
 ./etc/system.conf			minix-sys
@@ -149,8 +159,12 @@
 ./mnt					minix-sys
 ./proc					minix-sys
 ./root					minix-sys
-./root/.exrc				minix-sys
+./root/.cshrc				minix-sys
+./root/.exrc				minix-sys	obsolete
+./root/.klogin				minix-sys
+./root/.login				minix-sys
 ./root/.profile				minix-sys
+./root/.shrc				minix-sys
 ./sbin					minix-sys
 ./sbin/chown				minix-sys
 ./sbin/fsck				minix-sys
@@ -200,9 +214,9 @@
 ./usr					minix-sys
 ./usr/adm				minix-sys
 ./usr/adm/old				minix-sys
-./usr/ast				minix-sys
-./usr/ast/.exrc				minix-sys
-./usr/ast/.profile			minix-sys
+./usr/ast				minix-sys	obsolete
+./usr/ast/.exrc				minix-sys	obsolete
+./usr/ast/.profile			minix-sys	obsolete
 ./usr/benchmarks					minix-sys
 ./usr/benchmarks/unixbench				minix-sys
 ./usr/benchmarks/unixbench/pgms				minix-sys
