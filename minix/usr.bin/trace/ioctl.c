@@ -44,15 +44,18 @@ put_ioctl_req(struct trace_proc * proc, const char * name, unsigned long req,
 	 * smart about looking up particular codes in each switch statement,
 	 * although in the worst case, it's a full O(n) lookup.
 	 */
-	for (i = 0; !valuesonly && i < COUNT(ioctl_table); i++) {
+	for (i = 0; i < COUNT(ioctl_table); i++) {
 		/* IOCTLs and SVRCTLs are considered different name spaces. */
 		if (ioctl_table[i].is_svrctl != is_svrctl)
 			continue;
 
 		if ((text = ioctl_table[i].name(req)) != NULL) {
-			put_field(proc, name, text);
-
 			proc->ioctl_index = i;
+
+			if (valuesonly)
+				break;
+
+			put_field(proc, name, text);
 
 			return;
 		}
