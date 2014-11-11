@@ -201,6 +201,112 @@ functions for call with no parameters, and for functions which need no more
 than put_result() to print their system call result, respectively.
 
 
+ADDING AN IOCTL HANDLER
+
+There are many IOCTL requests, and many have their own associated data types.
+Like with system calls, the idea is to provide an actual implementation for any
+IOCTLs that can actually occur in the wild.  This consists of printing the full
+IOCTL name, as well as its argument.  First something about how handling IOCTLs
+is grouped into files in the ioctl subdirectory, then about the actual
+procedure the IOCTLs are handled.
+
+Grouping of IOCTL handling in the ioctl subdirectory is currently based on the
+IOCTLs' associated device type.  This is not a performance optimization: for
+any given IOCTL, there is no way for the main IOCTL code (in ioctl.c) to know
+which group, if any, contains a handler for the IOCTL, so it simply queries all
+groups.  The grouping is there only to keep down the size of individual source
+files, and as such not even strict: for example, networking IOCTLs are
+technically a subset of character IOCTLs, and kept separate only because there
+are so many of them.  The point here is mainly that the separation is not at
+all set in stone.  However, the svrctl group is an exception: svrctl(2)
+requests are very much like IOCTLs, and thus also treated as such, but they are
+in a different namespace.  Thus, their handlers are in a separate file.
+
+As per the ioctl_table structure, each group has a function to return the name
+of an IOCTL it knows (typically <group>_ioctl_name), and a function to handle
+IOCTL arguments (typically <group>_ioctl_arg).  Whenever an IOCTL system call
+is made, each group's name function is queried.  This function has the
+following prototype:
+
+  const char *group_ioctl_name(unsigned long req);
+
+The "req" parameter contains the IOCTL request code.  The function is to return
+a static non-NULL string if it knows the name for the request code, or NULL
+otherwise.  If the function returns a non-NULL string, that name will be used
+for the IOCTL.  In addition, if the IOCTL has an argument at all, i.e. it is
+not of the basic _IO() type, that group (and only that group!) will be queried
+about the IOCTL argument, by calling the group's IOCTL argument function.  The
+IOCTL argument function has the following prototype:
+
+  int group_ioctl_arg(struct trace_proc *proc, unsigned long req, void *ptr,
+          int dir);
+
+For a single IOCTL, this function may be called up to three times.  The first
+time, "ptr" will be NULL, and based on the same IOCTL request code "req", the
+function must return any bitwise combination of two flags: IF_OUT and IF_IN.
+
+The returned flags determine whether and how the IOCTL's argument will be
+printed: before and/or after performing the IOCTL system call.  These two flags
+effectively correspond to the "write" and "read" argument directions of IOCTLs:
+IF_OUT indicates that the argument should be printed before the IOCTL request,
+and this is to be used only for IOCTLs of type _IOW() and _IOWR().  IF_IN
+indicates that the argument should be printed after the IOCTL request (but if
+it was successful only), and is to be used only for IOCTLs of type _IOR() and
+_IOWR().
+
+The returned flag combination determines how the IOCTL is formatted.  The
+following possible return values result in the following output formats, again
+with the "|" indicating the call split, "out" being the IOCTL argument contents
+printed before the IOCTL call, and "in" being the IOCTL argument printed after
+the IOCTL call:
+
+  0:             ioctl(3, IOCFOO, &0xaddress) = |0
+  IF_OUT:        ioctl(3, IOCFOO, {out}) = |0
+  IF_OUT|IF_IN:  ioctl(3, IOCFOO, {out}) = |0 {in}
+  IF_IN:         ioctl(3, IOCFOO, |{in}) = 0
+
+Both IF_ flags are optional, mainly because it is not always needed to print
+both sides for an _IOWR() request.  However, using the wrong flag (e.g., IF_OUT
+for an _IOR() request, which simply makes no sense) will trigger an assert.
+Also, the function should basically never return 0 for an IOCTL it recognizes.
+Again, for IOCTLs of type _IO(), which have no argument, the argument function
+is not called at all.
+
+Now the important part.  For each flag that is returned on the initial call to
+the argument function, the argument function will be called again, this time to
+perform actual printing of the argument.  For these subsequent calls, "ptr"
+will point to the argument data which has been copied to the local address
+space, and "dir" will contain one of the returned flags (that is, either IF_OUT
+or IF_IN) to indicate whether the function is called before or after the IOCTL
+call.  As should now be obvious, if the first call returned IF_OUT | IF_IN, the
+function will be called again with "dir" set to IF_OUT, and if the IOCTL call
+did not fail, once more (for the third time), now with "dir" set to IF_IN.
+
+For these calls with an actual "ptr" value and a direction, the function should
+indeed print the argument as appropriate, using "proc" as process pointer for
+use in calls to the printing functions.  The general approach is to print non-
+structure arguments as single values with no field name, and structure
+arguments by printing its fields with their field names.  The main code (in
+ioctl.c) ensures that the output is enclosed in curly brackets, thus making the
+output look like a structure anyway.
+
+For these subsequent calls, the argument function's return value should be
+IF_ALL if all parts of the IOCTL argument have been printed, or 0 otherwise.
+In the latter case, the main code will add a final ".." field to indicate to
+the user that not all parts of the argument have been printed, very much like
+the "all" parameter of put_close_struct.
+
+If no name can be found for the IOCTL request code, the argument will simply be
+printed as a pointer.  The same happens in error cases, for example if copying
+in the IOCTL data resulted in an error.
+
+There is no support for dealing with multiple IOCTLs with the exact same
+request code--something that should not, but sadly does, occur in practice.
+For now, the preferred approach would be to implement only support for the
+IOCTL that is most likely to be found in practice, and possibly to put a horse
+head in the bed of whoever introduced the duplicate request code.
+
+
 INTERNALS: MULTIPROCESS OUTPUT AND PREEMPTION
 
 Things get interesting when multiple processes are traced at once.  Due to the
