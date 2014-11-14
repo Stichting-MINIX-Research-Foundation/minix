@@ -7,13 +7,10 @@
  * Mount the file system.  Obtain the root inode and send back its details.
  */
 int
-fs_mount(dev_t dev, unsigned int flags, struct fsdriver_node * root_node,
-	unsigned int * res_flags)
+fs_mount(dev_t __unused dev, unsigned int flags,
+	struct fsdriver_node * root_node, unsigned int * res_flags)
 {
 	struct inode *root;
-
-	/* Get the device number, for stat requests. */
-	fs_dev = dev;
 
 	/* VTreeFS must not be mounted as a root file system. */
 	if (flags & REQ_ISROOT)

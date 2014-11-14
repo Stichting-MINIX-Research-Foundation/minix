@@ -72,7 +72,7 @@ ssize_t do_write(ino_t ino_nr, struct fsdriver_data *data, size_t count,
  */
   struct inode *ino;
 
-  if (state.s_read_only)
+  if (read_only)
 	return EROFS;
 
   if ((ino = find_inode(ino_nr)) == NULL)
@@ -98,7 +98,7 @@ int do_trunc(ino_t ino_nr, off_t start, off_t end)
   uint64_t delta;
   ssize_t r;
 
-  if (state.s_read_only)
+  if (read_only)
 	return EROFS;
 
   if ((ino = find_inode(ino_nr)) == NULL)

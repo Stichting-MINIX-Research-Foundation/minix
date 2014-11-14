@@ -16,7 +16,6 @@
 #define dprintf(x)
 #endif
 
-#include "type.h"
 #include "const.h"
 #include "proto.h"
 #include "glo.h"

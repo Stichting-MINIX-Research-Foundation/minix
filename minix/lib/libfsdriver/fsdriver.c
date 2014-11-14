@@ -2,6 +2,7 @@
 #include "fsdriver.h"
 
 /* Library-local variables. */
+dev_t fsdriver_device;
 ino_t fsdriver_root;
 int fsdriver_mounted = FALSE;
 

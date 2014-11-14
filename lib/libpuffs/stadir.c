@@ -45,7 +45,6 @@ int fs_stat(ino_t ino_nr, struct stat *statbuf)
   /* true iff special */
   s = (mo == I_CHAR_SPECIAL || mo == I_BLOCK_SPECIAL);
 
-  statbuf->st_dev = fs_dev;
   statbuf->st_ino = va.va_fileid;
   statbuf->st_mode = va.va_mode;
   statbuf->st_nlink = va.va_nlink;

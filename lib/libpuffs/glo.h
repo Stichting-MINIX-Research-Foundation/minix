@@ -25,8 +25,6 @@ EXTERN int err_code;        /* temporary storage for error number */
 
 EXTERN struct puffs_kcred global_kcred;
 
-EXTERN dev_t fs_dev;              /* The device that is handled by this FS proc
-                                   */
 EXTERN char fs_name[PATH_MAX+1];
 
 EXTERN int mounted;

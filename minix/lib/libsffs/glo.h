@@ -10,7 +10,7 @@ EXTERN char *sffs_name;				/* file server name */
 EXTERN const struct sffs_table *sffs_table;	/* call table */
 EXTERN struct sffs_params *sffs_params;		/* parameters */
 
-EXTERN struct state state;			/* global state */
+EXTERN int read_only;				/* mounted read-only? */
 
 extern struct fsdriver sffs_dtable;		/* driver table */
 

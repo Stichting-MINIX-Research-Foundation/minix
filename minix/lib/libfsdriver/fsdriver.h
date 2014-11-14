@@ -75,6 +75,7 @@ extern int fsdriver_bpeek(const struct fsdriver * __restrict,
 extern int fsdriver_getname(endpoint_t endpt, cp_grant_id_t grant, size_t len,
 	char *name, size_t size, int not_empty);
 
+extern dev_t fsdriver_device;
 extern ino_t fsdriver_root;
 extern int fsdriver_mounted;
 extern int (*fsdriver_callvec[])(const struct fsdriver * __restrict,

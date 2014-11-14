@@ -55,6 +55,7 @@ fsdriver_readsuper(const struct fsdriver * __restrict fdp,
 
 		/* Update library-local state. */
 		fsdriver_mounted = TRUE;
+		fsdriver_device = dev;
 		fsdriver_root = root_node.fn_ino_nr;
 	}
 
@@ -654,6 +655,7 @@ fsdriver_stat(const struct fsdriver * __restrict fdp,
 		return ENOSYS;
 
 	memset(&buf, 0, sizeof(buf));
+	buf.st_dev = fsdriver_device;
 
 	if ((r = fdp->fdr_stat(ino_nr, &buf)) == OK)
 		r = sys_safecopyto(m_in->m_source, grant, 0, (vir_bytes)&buf,

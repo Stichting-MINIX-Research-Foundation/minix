@@ -28,7 +28,7 @@ mode_t get_mode(struct inode *ino, int mode)
   else
 	mode = S_IFREG | (mode & sffs_params->p_file_mask);
 
-  if (state.s_read_only)
+  if (read_only)
 	mode &= ~(S_IWUSR | S_IWGRP | S_IWOTH);
 
   return mode;
@@ -56,7 +56,6 @@ int do_stat(ino_t ino_nr, struct stat *stat)
   if ((r = verify_inode(ino, path, &attr)) != OK)
 	return r;
 
-  stat->st_dev = state.s_dev;
   stat->st_ino = ino_nr;
   stat->st_mode = get_mode(ino, attr.a_mode);
   stat->st_uid = sffs_params->p_uid;
@@ -100,7 +99,7 @@ int do_chmod(ino_t ino_nr, mode_t *mode)
   struct sffs_attr attr;
   int r;
 
-  if (state.s_read_only)
+  if (read_only)
 	return EROFS;
 
   if ((ino = find_inode(ino_nr)) == NULL)
@@ -137,7 +136,7 @@ int do_utime(ino_t ino_nr, struct timespec *atime, struct timespec *mtime)
   struct sffs_attr attr;
   int r;
 
-  if (state.s_read_only)
+  if (read_only)
 	return EROFS;
 
   if ((ino = find_inode(ino_nr)) == NULL)

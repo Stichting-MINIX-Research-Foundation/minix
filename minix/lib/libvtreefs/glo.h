@@ -8,8 +8,6 @@
 
 EXTERN struct fs_hooks *vtreefs_hooks;
 
-EXTERN dev_t fs_dev;
-
 extern struct fsdriver vtreefs_table;
 
 #endif /* _VTREEFS_GLO_H */

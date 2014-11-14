@@ -13,8 +13,8 @@
 /*===========================================================================*
  *				do_mount				     *
  *===========================================================================*/
-int do_mount(dev_t dev, unsigned int flags, struct fsdriver_node *root_node,
-	unsigned int *res_flags)
+int do_mount(dev_t __unused dev, unsigned int flags,
+	struct fsdriver_node *root_node, unsigned int *res_flags)
 {
 /* Mount the file system.
  */
@@ -31,8 +31,7 @@ int do_mount(dev_t dev, unsigned int flags, struct fsdriver_node *root_node,
 	return EINVAL;
   }
 
-  state.s_read_only = !!(flags & REQ_RDONLY);
-  state.s_dev = dev;
+  read_only = !!(flags & REQ_RDONLY);
 
   init_dentry();
   ino = init_inode();

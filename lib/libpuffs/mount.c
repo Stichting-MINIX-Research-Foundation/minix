@@ -12,12 +12,11 @@
 /*===========================================================================*
  *				fs_mount				     *
  *===========================================================================*/
-int fs_mount(dev_t dev, unsigned int flags, struct fsdriver_node *root_node,
-	unsigned int *res_flags)
+int fs_mount(dev_t __unused dev, unsigned int flags,
+	struct fsdriver_node *root_node, unsigned int *res_flags)
 {
   struct vattr *root_va;
 
-  fs_dev = dev;
   is_readonly_fs = !!(flags & REQ_RDONLY);
 
   /* Open root pnode */

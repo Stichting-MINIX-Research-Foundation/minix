@@ -33,13 +33,13 @@ int get_handle(struct inode *ino)
 	r = sffs_table->t_opendir(path, &ino->i_dir);
   }
   else {
-	if (!state.s_read_only)
+	if (!read_only)
 		r = sffs_table->t_open(path, O_RDWR, 0, &ino->i_file);
 
 	/* Protection or mount status might prevent us from writing. With the
 	 * information that we have available, this is the best we can do..
 	 */
-	if (state.s_read_only || r != OK)
+	if (read_only || r != OK)
 		r = sffs_table->t_open(path, O_RDONLY, 0, &ino->i_file);
   }
 

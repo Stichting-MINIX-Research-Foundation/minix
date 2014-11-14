@@ -30,7 +30,7 @@ int do_create(ino_t dir_nr, char *name, mode_t mode, uid_t uid, gid_t gid,
   int r;
 
   /* We cannot create files on a read-only file system. */
-  if (state.s_read_only)
+  if (read_only)
 	return EROFS;
 
   if ((parent = find_inode(dir_nr)) == NULL)
@@ -129,7 +129,7 @@ int do_mkdir(ino_t dir_nr, char *name, mode_t mode, uid_t uid, gid_t gid)
   int r;
 
   /* We cannot create directories on a read-only file system. */
-  if (state.s_read_only)
+  if (read_only)
 	return EROFS;
 
   if ((parent = find_inode(dir_nr)) == NULL)
@@ -228,7 +228,7 @@ int do_unlink(ino_t dir_nr, char *name, int call)
   int r;
 
   /* We cannot delete files on a read-only file system. */
-  if (state.s_read_only)
+  if (read_only)
 	return EROFS;
 
   if ((parent = find_inode(dir_nr)) == NULL)
@@ -269,7 +269,7 @@ int do_rmdir(ino_t dir_nr, char *name, int call)
   int r;
 
   /* We cannot remove directories on a read-only file system. */
-  if (state.s_read_only)
+  if (read_only)
 	return EROFS;
 
   if ((parent = find_inode(dir_nr)) == NULL)
@@ -312,7 +312,7 @@ int do_rename(ino_t old_dir_nr, char *old_name, ino_t new_dir_nr,
   int r;
 
   /* We cannot do rename on a read-only file system. */
-  if (state.s_read_only)
+  if (read_only)
 	return EROFS;
 
   /* Get possibly preexisting inodes for the old and new paths. */

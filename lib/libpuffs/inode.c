@@ -52,8 +52,8 @@ int fs_putnode(ino_t ino_nr, unsigned int count)
   }
 
   if (pn == NULL) {
-	lpuffs_debug("%s:%d putnode: pnode #%"PRIu64" dev: %"PRIu64
-		" not found\n", __FILE__, __LINE__, ino_nr, fs_dev);
+	lpuffs_debug("%s:%d putnode: pnode #%"PRIu64" not found\n",
+	    __FILE__, __LINE__, ino_nr);
 	panic("fs_putnode failed");
   }
 
