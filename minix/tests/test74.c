@@ -36,6 +36,7 @@
 #include <sys/ioctl.h>
 #include <sys/ioc_memory.h>
 #include <sys/param.h>
+#include <minix/paths.h>
 #include <stdio.h>
 #include <assert.h>
 #include <string.h>
@@ -461,6 +462,63 @@ static void basic_regression(void)
 
 }
 
+/*
+ * Test mmap on none-dev file systems - file systems that do not have a buffer
+ * cache and therefore have to fake mmap support.  We use procfs as target.
+ * The idea is that while we succeed in mapping in /proc/uptime, we also get
+ * a new uptime value every time we map in the page -- VM must not cache it.
+ */
+static void
+nonedev_regression(void)
+{
+	int fd;
+	char *buf;
+	unsigned long uptime1, uptime2, uptime3;
+
+	subtest++;
+
+	if ((fd = open(_PATH_PROC "uptime", O_RDONLY)) < 0) e(1);
+
+	buf = mmap(NULL, 4096, PROT_READ, MAP_PRIVATE | MAP_FILE, fd, 0);
+	if (buf == MAP_FAILED) e(2);
+
+	if (buf[4095] != 0) e(3);
+
+	if ((uptime1 = atoi(buf)) == 0) e(4);
+
+	if (munmap(buf, 4096) != 0) e(5);
+
+	sleep(2);
+
+	buf = mmap(NULL, 4096, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_FILE,
+	    fd, 0);
+	if (buf == MAP_FAILED) e(6);
+
+	if (buf[4095] != 0) e(7);
+
+	if ((uptime2 = atoi(buf)) == 0) e(8);
+
+	if (uptime1 == uptime2) e(9);
+
+	if (munmap(buf, 4096) != 0) e(10);
+
+	sleep(2);
+
+	buf = mmap(NULL, 4096, PROT_READ, MAP_SHARED | MAP_FILE, fd, 0);
+	if (buf == MAP_FAILED) e(11);
+
+	if (buf[4095] != 0) e(12);
+
+	if ((uptime3 = atoi(buf)) == 0) e(13);
+
+	if (uptime1 == uptime3) e(14);
+	if (uptime2 == uptime3) e(15);
+
+	if (munmap(buf, 4096) != 0) e(16);
+
+	close(fd);
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -469,6 +527,8 @@ main(int argc, char *argv[])
 	start(74);
 
 	basic_regression();
+
+	nonedev_regression();
 
 	test_memory_types_vs_operations();
 

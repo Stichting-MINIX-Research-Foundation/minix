@@ -12,6 +12,7 @@ struct cached_page {
 
 	ino_t ino;			/* which ino is it about */
 	u64_t ino_offset;		/* offset within ino */
+	int flags;			/* currently only VMSF_ONCE or 0 */
 	struct phys_block *page;	/* page ptr */
 	struct cached_page *older;	/* older in lru chain */
 	struct cached_page *newer;	/* newer in lru chain */

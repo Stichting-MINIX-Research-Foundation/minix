@@ -1,6 +1,7 @@
 
 #include "fsdriver.h"
 #include <minix/ds.h>
+#include <sys/mman.h>
 
 /*
  * Process a READSUPER request from VFS.
@@ -43,7 +44,8 @@ fsdriver_readsuper(const struct fsdriver * __restrict fdp,
 
 	if (r == OK) {
 		/* This one we can set on the file system's behalf. */
-		if (fdp->fdr_peek != NULL && fdp->fdr_bpeek != NULL)
+		if ((fdp->fdr_peek != NULL && fdp->fdr_bpeek != NULL) ||
+		    major(dev) == NONE_MAJOR)
 			res_flags |= RES_HASPEEK;
 
 		m_out->m_fs_vfs_readsuper.inode = root_node.fn_ino_nr;
@@ -73,6 +75,10 @@ fsdriver_unmount(const struct fsdriver * __restrict fdp,
 
 	if (fdp->fdr_unmount != NULL)
 		fdp->fdr_unmount();
+
+	/* If we used mmap emulation, clear any cached blocks from VM. */
+	if (fdp->fdr_peek == NULL && major(fsdriver_device) == NONE_MAJOR)
+		vm_clear_cache(fsdriver_device);
 
 	/* Update library-local state. */
 	fsdriver_mounted = FALSE;
@@ -207,6 +213,61 @@ fsdriver_write(const struct fsdriver * __restrict fdp,
 }
 
 /*
+ * A read-based peek implementation.  This allows file systems that do not have
+ * a buffer cache and do not implement peek, to support a limited form of mmap.
+ * We map in a block, fill it by calling the file system's read function, tell
+ * VM about the page, and then unmap the block again.  We tell VM not to cache
+ * the block beyond its immediate use for the mmap request, so as to prevent
+ * potentially stale data from being cached--at the cost of performance.
+ */
+static ssize_t
+builtin_peek(const struct fsdriver * __restrict fdp, ino_t ino_nr,
+	size_t nbytes, off_t pos)
+{
+	static u32_t flags = 0;	/* storage for the VMMC_ flags of all blocks */
+	static off_t dev_off = 0; /* fake device offset, see below */
+	struct fsdriver_data data;
+	char *buf;
+	ssize_t r;
+
+	if ((buf = mmap(NULL, nbytes, PROT_READ | PROT_WRITE,
+	    MAP_ANON | MAP_PRIVATE, -1, 0)) == MAP_FAILED)
+		return ENOMEM;
+
+	data.endpt = SELF;
+	data.grant = (cp_grant_id_t)buf;
+	data.size = nbytes;
+
+	r = fdp->fdr_read(ino_nr, &data, nbytes, pos, FSC_READ);
+
+	if (r >= 0) {
+		if ((size_t)r < nbytes)
+			memset(&buf[r], 0, nbytes - r);
+
+		/*
+		 * VM uses serialized communication to VFS.  Since the page is
+		 * to be used only once, VM will use and then discard it before
+		 * sending a new peek request.  Thus, it should be safe to
+		 * reuse the same device offset all the time.  However, relying
+		 * on assumptions in protocols elsewhere a bit dangerous, so we
+		 * use an ever-increasing device offset just to be safe.
+		 */
+		r = vm_set_cacheblock(buf, fsdriver_device, dev_off, ino_nr,
+		    pos, &flags, nbytes, VMSF_ONCE);
+
+		if (r == OK) {
+			dev_off += nbytes;
+
+			r = nbytes;
+		}
+	}
+
+	munmap(buf, nbytes);
+
+	return r;
+}
+
+/*
  * Process a PEEK request from VFS.
  */
 int
@@ -222,13 +283,22 @@ fsdriver_peek(const struct fsdriver * __restrict fdp,
 	pos = m_in->m_vfs_fs_readwrite.seek_pos;
 	nbytes = m_in->m_vfs_fs_readwrite.nbytes;
 
-	if (fdp->fdr_peek == NULL)
-		return ENOSYS;
-
 	if (pos < 0 || nbytes > SSIZE_MAX)
 		return EINVAL;
 
-	r = fdp->fdr_peek(ino_nr, NULL /*data*/, nbytes, pos, FSC_PEEK);
+	if (fdp->fdr_peek == NULL) {
+		if (major(fsdriver_device) != NONE_MAJOR)
+			return ENOSYS;
+
+		/*
+		 * For file systems that have no backing device, emulate peek
+		 * support by reading into temporary buffers and passing these
+		 * to VM.
+		 */
+		r = builtin_peek(fdp, ino_nr, nbytes, pos);
+	} else
+		r = fdp->fdr_peek(ino_nr, NULL /*data*/, nbytes, pos,
+		    FSC_PEEK);
 
 	/* Do not return a new position. */
 	if (r >= 0) {

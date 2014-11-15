@@ -227,7 +227,8 @@ int do_clearcache(message *m);
 struct cached_page *find_cached_page_bydev(dev_t dev, u64_t dev_off,
 	ino_t ino, u64_t ino_off, int touchlru);
 struct cached_page *find_cached_page_byino(dev_t dev, ino_t ino, u64_t ino_off, int touchlru);
-int addcache(dev_t dev, u64_t def_off, ino_t ino, u64_t ino_off, struct phys_block *pb);
+int addcache(dev_t dev, u64_t def_off, ino_t ino, u64_t ino_off, int flags,
+	struct phys_block *pb);
 void cache_sanitycheck_internal(void);
 int cache_freepages(int pages);
 void get_stats_info(struct vm_stats_info *vsi);

@@ -44,7 +44,7 @@ int dowriteblock(int b, int blocksize, u32_t seed, char *block)
 	memcpy(bdata, block, blocksize);
 
 	if(mustset && (r=vm_set_cacheblock(bdata, MYDEV, dev_off,
-		VMC_NO_INODE, 0, NULL, blocksize)) != OK) {
+		VMC_NO_INODE, 0, NULL, blocksize, 0)) != OK) {
 		printf("dowriteblock: vm_set_cacheblock failed %d\n", r);
 		exit(1);
 	}

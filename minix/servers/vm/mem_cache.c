@@ -175,6 +175,7 @@ do_setcache(message *msg)
 	dev_t dev = msg->m_vmmcp.dev;
 	off_t dev_off = msg->m_vmmcp.dev_offset;
 	off_t ino_off = msg->m_vmmcp.ino_offset;
+	int flags = msg->m_vmmcp.flags;
 	int n;
 	struct vmproc *caller;
 	phys_bytes offset;
@@ -209,7 +210,8 @@ do_setcache(message *msg)
 		if((hb=find_cached_page_bydev(dev, dev_off + offset,
 			msg->m_vmmcp.ino, ino_off + offset, 1))) {
 			/* block inode info updated */
-			if(hb->page != phys_region->ph) {
+			if(hb->page != phys_region->ph ||
+			    (hb->flags & VMSF_ONCE)) {
 				/* previous cache entry has become
 				 * obsolete; make a new one. rmcache
 				 * removes it from the cache and frees
@@ -236,8 +238,8 @@ do_setcache(message *msg)
 
 		phys_region->memtype = &mem_type_cache;
 
-		if((r=addcache(dev, dev_off + offset,
-			msg->m_vmmcp.ino, ino_off + offset, phys_region->ph)) != OK) {
+		if((r=addcache(dev, dev_off + offset, msg->m_vmmcp.ino,
+		    ino_off + offset, flags, phys_region->ph)) != OK) {
 			printf("VM: addcache failed\n");
 			return r;
 		}

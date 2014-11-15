@@ -230,7 +230,7 @@ u32_t sqrt_approx(u32_t v)
 }
 
 int vm_set_cacheblock(void *block, dev_t dev, off_t dev_offset,
-        ino_t ino, off_t ino_offset, u32_t *flags, int blocksize)
+        ino_t ino, off_t ino_offset, u32_t *flags, int blocksize, int setflags)
 {
 	return ENOSYS;
 }

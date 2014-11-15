@@ -469,7 +469,7 @@ void lmfs_put_block(
   if(vmcache && bp->lmfs_needsetcache && dev != NO_DEV) {
   	if((r=vm_set_cacheblock(bp->data, dev, dev_off,
 	bp->lmfs_inode, bp->lmfs_inode_offset,
-	&bp->lmfs_flags, fs_block_size)) != OK) {
+	&bp->lmfs_flags, fs_block_size, 0)) != OK) {
 		if(r == ENOSYS) {
 			printf("libminixfs: ENOSYS, disabling VM calls\n");
 			vmcache = 0;

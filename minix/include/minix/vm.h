@@ -71,7 +71,8 @@ int vm_procctl_clear(endpoint_t ep);
 int vm_procctl_handlemem(endpoint_t ep, vir_bytes m1, vir_bytes m2, int wr);
 
 int vm_set_cacheblock(void *block, dev_t dev, off_t dev_offset,
-        ino_t ino, off_t ino_offset, u32_t *flags, int blocksize);
+        ino_t ino, off_t ino_offset, u32_t *flags, int blocksize,
+        int setflags);
 
 void *vm_map_cacheblock(dev_t dev, off_t dev_offset,
         ino_t ino, off_t ino_offset, u32_t *flags, int blocksize);
@@ -86,6 +87,9 @@ int vm_clear_cache(dev_t dev);
 
 /* special inode number for vm cache functions */
 #define VMC_NO_INODE		0	/* to reference a disk block, no associated file */
+
+/* setflags for vm_set_cacheblock, also used internally in VM */
+#define VMSF_ONCE		0x01	/* discard block after one-time use */
 
 #endif /* _MINIX_VM_H */
 

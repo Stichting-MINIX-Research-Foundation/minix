@@ -107,7 +107,17 @@ static int mappedfile_pagefault(struct vmproc *vmp, struct vir_region *region,
 			cp = find_cached_page_byino(region->param.file.fdref->dev,
 				region->param.file.fdref->ino, referenced_offset, 1);
 		}
-		if(cp) {
+		/*
+		 * Normally, a cache hit saves a round-trip to the file system
+		 * to load the page.  However, if the page in the VM cache is
+		 * marked for one-time use, then force a round-trip through the
+		 * file system anyway, so that the FS can update the page by
+		 * by readding it to the cache.  Thus, for one-time use pages,
+		 * no caching is performed.  This approach is correct even in
+		 * the light of concurrent requests and disappearing processes
+		 * but relies on VM requests to VFS being fully serialized.
+		 */
+		if(cp && (!cb || !(cp->flags & VMSF_ONCE))) {
 			int result = OK;
 			pb_unreferenced(region, ph, 0);
 			pb_link(ph, cp->page, ph->offset, region);
@@ -119,6 +129,10 @@ static int mappedfile_pagefault(struct vmproc *vmp, struct vir_region *region,
 			} else if(result == OK && write) {
 				result = cow_block(vmp, region, ph, 0);
 			}
+
+			/* Discard one-use pages after mapping them in. */
+			if (result == OK && (cp->flags & VMSF_ONCE))
+				rmcache(cp);
 
 			return result;
 		}
@@ -210,7 +224,14 @@ int mappedfile_setfile(struct vmproc *owner,
 			cp = find_cached_page_byino(dev, ino,
 				referenced_offset, 1);
 		}
-		if(!cp) continue;
+		/*
+		 * If we get a hit for a page that is to be used only once,
+		 * then either we found a stale page (due to a process dying
+		 * before a requested once-page could be mapped in) or this is
+		 * a rare case of concurrent requests for the same page.  In
+		 * both cases, force the page to be obtained from its FS later.
+		 */
+		if(!cp || (cp->flags & VMSF_ONCE)) continue;
 		if(!(pr = pb_reference(cp->page, vaddr, region,
 			&mem_type_mappedfile))) {
 			printf("mappedfile_setfile: pb_reference failed\n");

@@ -14,7 +14,7 @@
 
 static int vm_cachecall(message *m, int call, void *addr, dev_t dev,
 	off_t dev_offset, ino_t ino, off_t ino_offset, u32_t *flags,
-	int blocksize)
+	int blocksize, int setflags)
 {
     if(blocksize % PAGE_SIZE)
     	panic("blocksize %d should be a multiple of pagesize %d\n",
@@ -39,7 +39,7 @@ static int vm_cachecall(message *m, int call, void *addr, dev_t dev,
     m->m_vmmcp.flags_ptr = flags;
     m->m_vmmcp.dev = dev;
     m->m_vmmcp.pages = blocksize / PAGE_SIZE;
-    m->m_vmmcp.flags = 0;
+    m->m_vmmcp.flags = setflags;
 
     return _taskcall(VM_PROC_NR, call, m);
 }
@@ -50,19 +50,19 @@ void *vm_map_cacheblock(dev_t dev, off_t dev_offset,
 	message m;
 
 	if(vm_cachecall(&m, VM_MAPCACHEPAGE, NULL, dev, dev_offset,
-		ino, ino_offset, flags, blocksize) != OK)
+		ino, ino_offset, flags, blocksize, 0) != OK)
 		return MAP_FAILED;
 
 	return m.m_vmmcp_reply.addr;
 }
 
 int vm_set_cacheblock(void *block, dev_t dev, off_t dev_offset,
-	ino_t ino, off_t ino_offset, u32_t *flags, int blocksize)
+	ino_t ino, off_t ino_offset, u32_t *flags, int blocksize, int setflags)
 {
 	message m;
 
 	return vm_cachecall(&m, VM_SETCACHEPAGE, block, dev, dev_offset,
-		ino, ino_offset, flags, blocksize);
+		ino, ino_offset, flags, blocksize, setflags);
 }
 
 int
