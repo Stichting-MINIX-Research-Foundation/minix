@@ -676,6 +676,7 @@ int main(int argc, char **argv)
     static struct timeval eventtv;
 
 main:
+    n_nets = 0;
     r = -1;
     bp = nil;
     program= argv[0];
