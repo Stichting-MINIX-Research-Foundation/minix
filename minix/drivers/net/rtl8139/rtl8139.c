@@ -411,7 +411,7 @@ re_t *rep;
 int skip;
 {
 	int r, devind;
-	u16_t vid, did;
+	u16_t cr, vid, did;
 	u32_t bar;
 	u8_t ilr;
 #if VERBOSE
@@ -437,7 +437,13 @@ int skip;
 	printf("%s (%x/%x) at %s\n", dname, vid, did, pci_slot_name(devind));
 #endif
 	pci_reserve(devind);
-	/* printf("cr = 0x%x\n", pci_attr_r16(devind, PCI_CR)); */
+
+	/* Enable bus mastering if necessary. */
+	cr = pci_attr_r16(devind, PCI_CR);
+	/* printf("cr = 0x%x\n", cr); */
+	if (!(cr & PCI_CR_MAST_EN))
+		pci_attr_w16(devind, PCI_CR, cr | PCI_CR_MAST_EN);
+
 	bar= pci_attr_r32(devind, PCI_BAR) & 0xffffffe0;
 	if (bar < 0x400) {
 		panic("base address is not properly configured");
