@@ -649,7 +649,11 @@ TOOL_SED=		sed
 TOOL_SOELIM=		soelim
 TOOL_SPARKCRC=		sparkcrc
 TOOL_STAT=		stat
+.if defined(__MINIX)
+TOOL_STRFILE=		/usr/games/strfile
+.else
 TOOL_STRFILE=		strfile
+.endif # defined(__MINIX)
 TOOL_SUNLABEL=		sunlabel
 TOOL_TBL=		tbl
 .if defined(__MINIX)
