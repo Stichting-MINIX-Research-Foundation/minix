@@ -90,6 +90,8 @@ size_t *mssp;
 		if (i+2 > tcp_hdr_len)
 			break;	/* No length field */
 		len= cp[1];
+		if (len < 2)
+			break;	/* Length too short */
 		if (i+len > tcp_hdr_len)
 			break;	/* Truncated option */
 		i += len;
