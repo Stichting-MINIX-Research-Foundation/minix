@@ -1,0 +1,30 @@
+.TH man 8 "14 November 2014" "1.0" "rawspeed man page"
+.SH NAME
+rawspeed \- Measure speed of a device
+
+.SH SYNOPSIS
+rawspeed [-u unit] [-m max] [-t seconds] [-c] [-r limit] device
+.SH OPTIONS
+.IP -u
+best sector multiple (default 2) 
+
+.IP -m 
+read multiples of unit upto 'max'
+
+.IP -t
+time to run test (default 10)
+
+.IP -c
+cache test: rewind after each read or write of max size
+
+.IP -r
+random seeks upto sector 'limit' before reading or writing
+
+.SH DESCRIPTION
+Measures the speed of a given device.
+
+.SH EXAMPLES
+rawspeed /dev/c0d1
+
+.SH AUTHOR
+Manpage written by Jacob Adams <tookmund@gmail.com>

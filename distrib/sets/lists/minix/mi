@@ -2384,6 +2384,7 @@
 ./usr/man/man1/cut.1			minix-sys
 ./usr/man/man1/date.1			minix-sys
 ./usr/man/man1/dd.1			minix-sys
+./usr/man/man1/decomp16.1		minix-sys
 ./usr/man/man1/deroff.1			minix-sys
 ./usr/man/man1/df.1			minix-sys
 ./usr/man/man1/dhrystone.1		minix-sys
@@ -5193,6 +5194,8 @@
 ./usr/man/man8					minix-sys
 ./usr/man/man8/add_route.8			minix-sys
 ./usr/man/man8/adduser.8			minix-sys
+./usr/man/man8/atnormalize.8		minix-sys
+./usr/man/man8/autopart.8		minix-sys
 ./usr/man/man8/backup.8				minix-sys
 ./usr/man/man8/boot.8				minix-sys
 ./usr/man/man8/btrace.8				minix-sys
@@ -5202,6 +5205,7 @@
 ./usr/man/man8/cleantmp.8			minix-sys
 ./usr/man/man8/config.8				minix-sys
 ./usr/man/man8/cron.8				minix-sys
+./usr/man/man8/devsize.8		minix-sys
 ./usr/man/man8/dhcpd.8				minix-sys
 ./usr/man/man8/diskctl.8			minix-sys
 ./usr/man/man8/fbdctl.8				minix-sys
@@ -5249,11 +5253,13 @@
 ./usr/man/man8/pwdauth.8			minix-sys
 ./usr/man/man8/pwd_mkdb.8			minix-sys
 ./usr/man/man8/rarpd.8				minix-sys
+./usr/man/man8/rawspeed.8		minix-sys
 ./usr/man/man8/rdate.8				minix-sys
 ./usr/man/man8/readclock.8			minix-sys
 ./usr/man/man8/reboot.8				minix-sys
 ./usr/man/man8/renice.8				minix-sys
 ./usr/man/man8/repartition.8			minix-sys
+./usr/man/man8/rotate.8			minix-sys
 ./usr/man/man8/rshd.8				minix-sys
 ./usr/man/man8/screendump.8			minix-sys
 ./usr/man/man8/serial-ip.8			minix-sys
@@ -5271,6 +5277,8 @@
 ./usr/man/man8/unlink.8				minix-sys
 ./usr/man/man8/unstr.8				minix-sys
 ./usr/man/man8/update.8				minix-sys
+./usr/man/man8/updateboot.8		minix-sys
+./usr/man/man8/update_bootcfg.8		minix-sys
 ./usr/man/man8/usage.8				minix-sys
 ./usr/man/man8/user.8				minix-sys
 ./usr/man/man8/useradd.8			minix-sys

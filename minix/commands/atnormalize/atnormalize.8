@@ -1,0 +1,20 @@
+.\" Based on http://osdir.com/ml/minix3/2010-01/msg00133.html
+.TH man 8 "13 November 2014" "1.0" "atnormalize man page"
+.SH NAME
+atnormalize \- Reset disk drivers to normal settings
+
+.SH SYNOPSIS
+atnormalize
+
+.SH DESCRIPTION
+Resets the disk drivers to their normal settings in case a partitioning tool changes them.
+Loops over all the disk devices and sends each a DIOCTIMEOUT with an argp of 0
+
+.SH EXAMPLES
+atnormalize 
+
+.SH SEE ALSO
+autopart(8),ioctl(2)
+
+.SH AUTHOR
+Manpage written by Jacob Adams <tookmund@gmail.com>

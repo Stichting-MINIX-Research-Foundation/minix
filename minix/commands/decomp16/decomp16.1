@@ -1,0 +1,55 @@
+.TH man 1 "14 November 2014" "1.0" "decomp16 man page"
+.PD 0
+.SH NAME
+decomp16 \- decompress 16bit compressed files on a 16bit Intel processor
+
+.SH SYNOPSIS
+decomp16 [-#] [in] [out]
+
+.SH OPTIONS
+.IP -#
+If given a switch -#, where # is a digit from 0 to 4 (example: -2), the
+program will run as that copy, reading from stdin and writing to stdout.
+This allows decompressing with very limited RAM because only one of the
+five passes is in memory at a time.
+
+.IP in
+File to decompress
+
+.IP out
+File to output decompressed data to
+
+.SH DESCRIPTION
+decompresses files compressed with compress(1)
+This program works by forking four more copies of itself. The five
+programs form a pipeline. Copy 0 writes to stdout, and forks copy 1
+to supply its input, which in turn forks and reads from copy 2, etc.
+The arguments -0 to -4 run only the corresponding pass.
+.P
+Thus:
+.P 
+decomp16 -4 < compressed_file > 3; 
+.P 
+decomp16 -3 < 3 > 2;
+.P 
+decomp16 -2 < 2 > 1;
+.P 
+decomp16 -1 < 1 > 0;
+.P 
+decomp16 -0 < 0 > decompressed_file
+.P
+will also work, as will connecting the passes by explicit pipes if
+there is enough memory to do so.
+
+.SH EXAMPLES
+.P 
+decomp16 comp_file decomp_file     # Decompresses comp_file to decomp_file.
+.P 
+decomp16 < comp_file > decomp_file # Same as above but with output redirects.
+
+
+.SH SEE ALSO
+compress(1)
+
+.SH AUTHOR
+Manpage written by Jacob Adams <tookmund@gmail.com>
