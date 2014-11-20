@@ -418,11 +418,17 @@ ENTRY(restore_user_context_syscall)
 	 * enabling interrupts, and of course sysret instead of sysexit.
 	 */
 	mov	4(%esp), %ebp		/* retrieve proc ptr arg */
+
+        /* restore PSW (before we switch to user stack!) */
+        movl    PSWREG(%ebp), %edi      /* load desired PSW to EDI */
+        push    %edi
+        popf
+
 	mov	PCREG(%ebp), %ecx	/* sysret restores EIP using ECX */
 	mov	SPREG(%ebp), %esp	/* restore ESP directly */
 	mov	AXREG(%ebp), %eax	/* trap return value */
 	mov	BXREG(%ebp), %ebx	/* secondary return value */
-	movl	PSWREG(%ebp), %edi	/* load desired PSW to EDI */
+
 	sysret				/* jump to EIP in user */
 
 ENTRY(restore_user_context_int)
