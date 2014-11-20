@@ -422,7 +422,12 @@ ENTRY(restore_user_context_syscall)
 	mov	SPREG(%ebp), %esp	/* restore ESP directly */
 	mov	AXREG(%ebp), %eax	/* trap return value */
 	mov	BXREG(%ebp), %ebx	/* secondary return value */
-	movl	PSWREG(%ebp), %edi	/* load desired PSW to EDI */
+
+        /* restore PSW */
+        movl    PSWREG(%ebp), %edi      /* load desired PSW to EDI */
+        push    %edi
+        popf
+
 	sysret				/* jump to EIP in user */
 
 ENTRY(restore_user_context_int)
