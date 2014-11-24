@@ -574,7 +574,11 @@ TOOL_CKSUM=		cksum
 .if defined(__MINIX)
 # LSC: A full path has to be provided, as this is also, used as a make
 #      target.
+.if  exists(/usr/pkg/bin/clang-tblgen)
+TOOL_CLANG_TBLGEN=	/usr/pkg/bin/clang-tblgen
+.else
 TOOL_CLANG_TBLGEN=	/usr/bin/clang-tblgen
+.endif # exists(/usr/pkg/bin/clang-tblgen)
 .else
 TOOL_CLANG_TBLGEN=	clang-tblgen
 .endif # defined(__MINIX)
@@ -604,7 +608,11 @@ TOOL_JOIN=		join
 .if defined(__MINIX)
 # LSC: A full path has to be provided, as this is also, used as a make
 #      target.
+.if  exists(/usr/pkg/bin/llvm-tblgen)
+TOOL_LLVM_TBLGEN=	/usr/pkg/bin/llvm-tblgen
+.else
 TOOL_LLVM_TBLGEN=	/usr/bin/llvm-tblgen
+.endif # exists(/usr/pkg/bin/llvm-tblgen)
 .else
 TOOL_LLVM_TBLGEN=	llvm-tblgen
 .endif # defined(__MINIX)
