@@ -546,7 +546,11 @@ TOOL_ZIC=		${TOOLDIR}/bin/${_TOOL_PREFIX}zic
 
 # Clang supports C, C++ and Objective C
 TOOL_CC.clang=		clang
+.if defined(__MINIX)
+TOOL_CPP.clang=		clang -E
+.else
 TOOL_CPP.clang=		clang-cpp
+.endif # defined(__MINIX)
 TOOL_CXX.clang=		clang++
 TOOL_OBJC.clang=	clang
 TOOL_OPT.clang=		opt
