@@ -1,6 +1,6 @@
 /* Attansic/Atheros L2 FastEthernet driver, by D.C. van Moolenbroek */
-
-/* No documentation is available for this card. The FreeBSD driver is based
+/*
+ * No documentation is available for this card.  The FreeBSD driver is based
  * heavily on the official Linux driver; this driver is based heavily on both.
  */
 
@@ -27,9 +27,9 @@
 #endif
 
 typedef struct {
-	u32_t hdr;
-	u32_t vtag;
-	u8_t data[ATL2_RXD_SIZE - sizeof(u32_t) * 2];
+	uint32_t hdr;
+	uint32_t vtag;
+	uint8_t data[ATL2_RXD_SIZE - sizeof(uint32_t) * 2];
 } rxd_t;
 
 static struct {
@@ -37,13 +37,13 @@ static struct {
 	int irq;		/* IRQ number */
 	int hook_id;		/* IRQ hook ID */
 	int mode;		/* datalink mode */
-	volatile u8_t *base;	/* base address of memory-mapped registers */
-	u32_t size;		/* size of memory-mapped area */
-	u32_t hwaddr[2];	/* MAC address, in register representation */
+	volatile uint8_t *base;	/* base address of memory-mapped registers */
+	uint32_t size;		/* size of memory-mapped area */
+	uint32_t hwaddr[2];	/* MAC address, in register representation */
 
-	u8_t *txd_base;		/* local address of TxD ring buffer base */
-	u32_t *txs_base;	/* local address of TxS ring buffer base */
-	u8_t *rxd_base_u;	/* unaligned base address of RxD ring buffer */
+	uint8_t *txd_base;	/* local address of TxD ring buffer base */
+	uint32_t *txs_base;	/* local address of TxS ring buffer base */
+	uint8_t *rxd_base_u;	/* unaligned base address of RxD ring buffer */
 	rxd_t *rxd_base;	/* local address of RxD ring buffer base */
 
 	int rxd_align;		/* alignment offset of RxD ring buffer */
@@ -73,35 +73,35 @@ static struct {
 #define ATL2_FLAG_PACK_RCVD	0x08	/* packet received */
 #define ATL2_FLAG_PACK_SENT	0x10	/* packet transmitted */
 
-#define ATL2_READ_U8(off) (* (u8_t *) (state.base + (off)))
-#define ATL2_READ_U16(off) (* (u16_t *) (state.base + (off)))
-#define ATL2_READ_U32(off) (* (u32_t *) (state.base + (off)))
-#define ATL2_WRITE_U8(off, val) * (u8_t *) (state.base + (off)) = (val);
-#define ATL2_WRITE_U16(off, val) * (u16_t *) (state.base + (off)) = (val);
-#define ATL2_WRITE_U32(off, val) * (u32_t *) (state.base + (off)) = (val);
+#define ATL2_READ_U8(off) (*(volatile uint8_t *)(state.base + (off)))
+#define ATL2_READ_U16(off) (*(volatile uint16_t *)(state.base + (off)))
+#define ATL2_READ_U32(off) (*(volatile uint32_t *)(state.base + (off)))
+#define ATL2_WRITE_U8(off, val) \
+	*(volatile uint8_t *)(state.base + (off)) = (val)
+#define ATL2_WRITE_U16(off, val) \
+	*(volatile uint16_t *)(state.base + (off)) = (val)
+#define ATL2_WRITE_U32(off, val) \
+	*(volatile uint32_t *)(state.base + (off)) = (val)
 
 #define ATL2_ALIGN_32(n) (((n) + 3) & ~3)
 
 static iovec_s_t iovec[NR_IOREQS];
 
-static int instance;
-
-/*===========================================================================*
- *				atl2_read_vpd				     *
- *===========================================================================*/
-static int atl2_read_vpd(int index, u32_t *res)
+/*
+ * Read a value from the VPD register area.
+ */
+static int
+atl2_read_vpd(int index, uint32_t * res)
 {
-	/* Read a value from the VPD register area.
-	 */
-	u32_t off, val;
+	uint32_t off, val;
 	int i;
 
 	ATL2_WRITE_U32(ATL2_VPD_DATA_REG, 0);
 
-	off = ATL2_VPD_REGBASE + index * sizeof(u32_t);
+	off = ATL2_VPD_REGBASE + index * sizeof(uint32_t);
 
 	ATL2_WRITE_U32(ATL2_VPD_CAP_REG,
-		(off << ATL2_VPD_CAP_ADDR_SHIFT) & ATL2_VPD_CAP_ADDR_MASK);
+	    (off << ATL2_VPD_CAP_ADDR_SHIFT) & ATL2_VPD_CAP_ADDR_MASK);
 
 	for (i = 0; i < ATL2_VPD_NTRIES; i++) {
 		micro_delay(ATL2_VPD_DELAY);
@@ -120,15 +120,14 @@ static int atl2_read_vpd(int index, u32_t *res)
 	return TRUE;
 }
 
-/*===========================================================================*
- *				atl2_get_vpd_hwaddr			     *
- *===========================================================================*/
-static int atl2_get_vpd_hwaddr(void)
+/*
+ * Read the MAC address from the EEPROM, using the Vital Product Data register
+ * interface.
+ */
+static int
+atl2_get_vpd_hwaddr(void)
 {
-	/* Read the MAC address from the EEPROM, using the Vital Product Data
-	 * register interface.
-	 */
-	u32_t key, val;
+	uint32_t key, val;
 	int i, n, found[2];
 
 	/* No idea, copied from FreeBSD which copied it from Linux. */
@@ -144,7 +143,8 @@ static int atl2_get_vpd_hwaddr(void)
 		return FALSE;
 #endif
 
-	/* Read out the set of key/value pairs. Look for the two parts that
+	/*
+	 * Read out the set of key/value pairs.  Look for the two parts that
 	 * make up the MAC address.
 	 */
 	found[0] = found[1] = FALSE;
@@ -173,14 +173,13 @@ static int atl2_get_vpd_hwaddr(void)
 	return found[0] && found[1];
 }
 
-/*===========================================================================*
- *				atl2_get_hwaddr				     *
- *===========================================================================*/
-static void atl2_get_hwaddr(void)
+/*
+ * Get the MAC address of the card.  First try the EEPROM; if that fails, just
+ * use whatever the card was already set to.
+ */
+static void
+atl2_get_hwaddr(void)
 {
-	/* Get the MAC address of the card. First try the EEPROM; if that
-	 * fails, just use whatever the card was already set to.
-	 */
 
 	if (!atl2_get_vpd_hwaddr()) {
 		printf("ATL2: unable to read from VPD\n");
@@ -190,22 +189,21 @@ static void atl2_get_hwaddr(void)
 	}
 
 	ATL2_DEBUG(("ATL2: MAC address %04lx%08lx\n",
-		state.hwaddr[1], state.hwaddr[0]));
+	    state.hwaddr[1], state.hwaddr[0]));
 }
 
-/*===========================================================================*
- *				atl2_read_mdio				     *
- *===========================================================================*/
-static int atl2_read_mdio(int addr, u16_t *res)
+/*
+ * Read a MII PHY register using MDIO.
+ */
+static int
+atl2_read_mdio(int addr, uint16_t * res)
 {
-	/* Read a MII PHY register using MDIO.
-	 */
-	u32_t rval;
+	uint32_t rval;
 	int i;
 
 	rval = ((addr << ATL2_MDIO_ADDR_SHIFT) & ATL2_MDIO_ADDR_MASK) |
-		ATL2_MDIO_START | ATL2_MDIO_READ | ATL2_MDIO_SUP_PREAMBLE |
-		ATL2_MDIO_CLK_25_4;
+	    ATL2_MDIO_START | ATL2_MDIO_READ | ATL2_MDIO_SUP_PREAMBLE |
+	    ATL2_MDIO_CLK_25_4;
 
 	ATL2_WRITE_U32(ATL2_MDIO_REG, rval);
 
@@ -220,54 +218,52 @@ static int atl2_read_mdio(int addr, u16_t *res)
 
 	if (i == ATL2_MDIO_NTRIES) return FALSE;
 
-	*res = (u16_t) (rval & ATL2_MDIO_DATA_MASK);
+	*res = (uint16_t)(rval & ATL2_MDIO_DATA_MASK);
 	return TRUE;
 }
 
-/*===========================================================================*
- *				atl2_alloc_dma				     *
- *===========================================================================*/
-static int atl2_alloc_dma(void)
+/*
+ * Allocate DMA ring buffers.
+ */
+static int
+atl2_alloc_dma(void)
 {
-	/* Allocate DMA ring buffers.
-	 */
 
-	state.txd_base = alloc_contig(ATL2_TXD_BUFSIZE,
-		AC_ALIGN4K, &state.txd_phys);
-	state.txs_base = alloc_contig(ATL2_TXS_COUNT * sizeof(u32_t),
-		AC_ALIGN4K, &state.txs_phys);
+	state.txd_base = alloc_contig(ATL2_TXD_BUFSIZE, AC_ALIGN4K,
+	    &state.txd_phys);
+	state.txs_base = alloc_contig(ATL2_TXS_COUNT * sizeof(uint32_t),
+	    AC_ALIGN4K, &state.txs_phys);
 
-	/* The data buffer in each RxD descriptor must be 128-byte aligned.
+	/*
+	 * The data buffer in each RxD descriptor must be 128-byte aligned.
 	 * The two Tx buffers merely require a 4-byte start alignment.
 	 */
 	state.rxd_align = 128 - offsetof(rxd_t, data);
-	state.rxd_base_u =
-		alloc_contig(state.rxd_align + ATL2_RXD_COUNT * ATL2_RXD_SIZE,
-		AC_ALIGN4K, &state.rxd_phys);
+	state.rxd_base_u = alloc_contig(state.rxd_align +
+	    ATL2_RXD_COUNT * ATL2_RXD_SIZE, AC_ALIGN4K, &state.rxd_phys);
 
 	/* Unlike mmap, alloc_contig returns NULL on failure. */
 	if (!state.txd_base || !state.txs_base || !state.rxd_base_u)
 		return ENOMEM;
 
-	state.rxd_base = (rxd_t *) (state.rxd_base_u + state.rxd_align);
+	state.rxd_base = (rxd_t *)(state.rxd_base_u + state.rxd_align);
 	state.rxd_phys += state.rxd_align;
 
 	/* Zero out just in case. */
 	memset(state.txd_base, 0, ATL2_TXD_BUFSIZE);
-	memset(state.txs_base, 0, ATL2_TXS_COUNT * sizeof(u32_t));
+	memset(state.txs_base, 0, ATL2_TXS_COUNT * sizeof(uint32_t));
 	memset(state.rxd_base, 0, ATL2_RXD_COUNT * ATL2_RXD_SIZE);
 
 	return OK;
 }
 
-/*===========================================================================*
- *				atl2_stop				     *
- *===========================================================================*/
-static int atl2_stop(void)
+/*
+ * Stop the device.
+ */
+static int
+atl2_stop(void)
 {
-	/* Stop the device.
-	 */
-	u32_t val;
+	uint32_t val;
 	int i;
 
 	/* Clear and disable interrupts. */
@@ -296,14 +292,13 @@ static int atl2_stop(void)
 	return (i < ATL2_IDLE_NTRIES);
 }
 
-/*===========================================================================*
- *				atl2_reset				     *
- *===========================================================================*/
-static int atl2_reset(void)
+/*
+ * Reset the device to a known good state.
+ */
+static int
+atl2_reset(void)
 {
-	/* Reset the device to a known good state.
-	 */
-	u32_t val;
+	uint32_t val;
 	int i;
 
 	/* Issue a soft reset, and wait for the device to respond. */
@@ -331,15 +326,14 @@ static int atl2_reset(void)
 	return (i < ATL2_IDLE_NTRIES);
 }
 
-/*===========================================================================*
- *				atl2_set_mode				     *
- *===========================================================================*/
-static void atl2_set_mode(void)
+/*
+ * Reconfigure the device's promiscuity, multicast, and broadcast mode
+ * settings.
+ */
+static void
+atl2_set_mode(void)
 {
-	/* Reconfigure the device's promiscuity, multicast, and broadcast mode
-	 * settings.
-	 */
-	u32_t val;
+	uint32_t val;
 
 	val = ATL2_READ_U32(ATL2_MAC_REG);
 	val &= ~(ATL2_MAC_PROMISC_EN | ATL2_MAC_MCAST_EN | ATL2_MAC_BCAST_EN);
@@ -354,21 +348,20 @@ static void atl2_set_mode(void)
 	ATL2_WRITE_U32(ATL2_MAC_REG, val);
 }
 
-/*===========================================================================*
- *				atl2_setup				     *
- *===========================================================================*/
-static int atl2_setup(void)
+/*
+ * Set up the device for normal operation.
+ */
+static int
+atl2_setup(void)
 {
-	/* Set up the device for normal operation.
-	 */
-	u32_t val;
+	uint32_t val;
 
 	atl2_stop();
 
 	if (!atl2_reset())
 		return FALSE;
 
-	/* Initialize PCIE module. Magic. */
+	/* Initialize PCIe module.  Magic. */
 	ATL2_WRITE_U32(ATL2_LTSSM_TESTMODE_REG, ATL2_LTSSM_TESTMODE_DEFAULT);
 	ATL2_WRITE_U32(ATL2_DLL_TX_CTRL_REG, ATL2_DLL_TX_CTRL_DEFAULT);
 
@@ -390,7 +383,8 @@ static int atl2_setup(void)
 	ATL2_WRITE_U32(ATL2_RXD_ADDR_LO_REG, state.rxd_phys);
 
 	ATL2_WRITE_U16(ATL2_RXD_COUNT_REG, ATL2_RXD_COUNT);
-	ATL2_WRITE_U16(ATL2_TXD_BUFSIZE_REG, ATL2_TXD_BUFSIZE / sizeof(u32_t));
+	ATL2_WRITE_U16(ATL2_TXD_BUFSIZE_REG,
+	    ATL2_TXD_BUFSIZE / sizeof(uint32_t));
 	ATL2_WRITE_U16(ATL2_TXS_COUNT_REG, ATL2_TXS_COUNT);
 
 	/* A whole lot of other initialization copied from Linux/FreeBSD. */
@@ -439,7 +433,8 @@ static int atl2_setup(void)
 	/* Configure MAC. */
 	ATL2_WRITE_U32(ATL2_MAC_REG, ATL2_MAC_DEFAULT);
 
-	/* Inet does not tell us about the multicast addresses that it is
+	/*
+	 * Inet does not tell us about the multicast addresses that it is
 	 * interested in, so we have to simply accept all multicast packets.
 	 */
 	ATL2_WRITE_U32(ATL2_MHT0_REG, 0xffffffff);
@@ -454,14 +449,13 @@ static int atl2_setup(void)
 	return TRUE;
 }
 
-/*===========================================================================*
- *				atl2_probe				     *
- *===========================================================================*/
-static int atl2_probe(int skip)
+/*
+ * Find a matching PCI device.
+ */
+static int
+atl2_probe(int skip)
 {
-	/* Find a matching PCI device.
-	 */
-	u16_t vid, did;
+	uint16_t vid, did;
 #if VERBOSE
 	char *dname;
 #endif
@@ -482,8 +476,7 @@ static int atl2_probe(int skip)
 #if VERBOSE
 	dname = pci_dev_name(vid, did);
 	ATL2_DEBUG(("ATL2: found %s (%x/%x) at %s\n",
-		dname ? dname : "<unknown>", vid, did,
-		pci_slot_name(devind)));
+	    dname ? dname : "<unknown>", vid, did, pci_slot_name(devind)));
 #endif
 
 	pci_reserve(devind);
@@ -491,14 +484,13 @@ static int atl2_probe(int skip)
 	return devind;
 }
 
-/*===========================================================================*
- *				atl2_init				     *
- *===========================================================================*/
-static void atl2_init(int devind)
+/*
+ * Initialize the device.
+ */
+static void
+atl2_init(int devind)
 {
-	/* Initialize the device.
-	 */
-	u32_t bar;
+	uint32_t bar;
 	int r, flag;
 
 	/* Initialize global state. */
@@ -515,7 +507,7 @@ static void atl2_init(int devind)
 	if (state.size < ATL2_MIN_MMAP_SIZE || flag)
 		panic("invalid register bar");
 
-	state.base = vm_map_phys(SELF, (void *) bar, state.size);
+	state.base = vm_map_phys(SELF, (void *)bar, state.size);
 	if (state.base == MAP_FAILED)
 		panic("unable to map in registers");
 
@@ -539,13 +531,12 @@ static void atl2_init(int devind)
 	atl2_setup();
 }
 
-/*===========================================================================*
- *				atl2_tx_stat				     *
- *===========================================================================*/
-static void atl2_tx_stat(u32_t stat)
+/*
+ * Update statistics for packet transmission.
+ */
+static void
+atl2_tx_stat(uint32_t stat)
 {
-	/* Update statistics for packet transmission.
-	 */
 
 	if (stat & ATL2_TXS_SUCCESS)
 		state.stat.ets_packetT++;
@@ -566,13 +557,12 @@ static void atl2_tx_stat(u32_t stat)
 		state.stat.ets_fifoUnder++;
 }
 
-/*===========================================================================*
- *				atl2_rx_stat				     *
- *===========================================================================*/
-static void atl2_rx_stat(u32_t stat)
+/*
+ * Update statistics for packet receipt.
+ */
+static void
+atl2_rx_stat(uint32_t stat)
 {
-	/* Update statistics for packet receipt.
-	 */
 
 	if (stat & ATL2_RXD_SUCCESS)
 		state.stat.ets_packetR++;
@@ -589,14 +579,13 @@ static void atl2_rx_stat(u32_t stat)
 		state.stat.ets_frameAll++;
 }
 
-/*===========================================================================*
- *				atl2_tx_advance				     *
- *===========================================================================*/
-static int atl2_tx_advance(void)
+/*
+ * Advance the TxD/TxS tails by as many sent packets as found.
+ */
+static int
+atl2_tx_advance(void)
 {
-	/* Advance the TxD/TxS tails by as many sent packets as found.
-	 */
-	u32_t stat, size, dsize;
+	uint32_t stat, size, dsize;
 	int advanced;
 
 	advanced = FALSE;
@@ -608,32 +597,32 @@ static int atl2_tx_advance(void)
 		if (!(stat & ATL2_TXS_UPDATE))
 			break;
 
-		/* The packet size from the status must match the packet size
-		 * we put in. If they don't, there's not much we can do..
+		/*
+		 * The packet size from the status must match the packet size
+		 * we put in.  If they don't, there's not much we can do..
 		 */
 		size = stat & ATL2_TXS_SIZE_MASK;
 
-		assert((u32_t) state.txd_tail <=
-			ATL2_TXD_BUFSIZE - sizeof(u32_t));
-		dsize = * (u32_t *) (state.txd_base + state.txd_tail);
+		assert((uint32_t)state.txd_tail <=
+		    ATL2_TXD_BUFSIZE - sizeof(uint32_t));
+		dsize = *(uint32_t *)(state.txd_base + state.txd_tail);
 		if (size != dsize)
 			printf("ATL2: TxD/TxS size mismatch (%x vs %x)\n",
-				size, dsize);
+			    size, dsize);
 
 		/* Advance tails accordingly. */
-		size = sizeof(u32_t) + ATL2_ALIGN_32(dsize);
-		assert((u32_t) state.txd_num >= size);
+		size = sizeof(uint32_t) + ATL2_ALIGN_32(dsize);
+		assert((uint32_t)state.txd_num >= size);
 		state.txd_tail = (state.txd_tail + size) % ATL2_TXD_BUFSIZE;
 		state.txd_num -= size;
 
 		state.txs_tail = (state.txs_tail + 1) % ATL2_TXS_COUNT;
 		state.txs_num--;
 
-		if (stat & ATL2_TXS_SUCCESS) {
+		if (stat & ATL2_TXS_SUCCESS)
 			ATL2_DEBUG(("ATL2: successfully sent packet\n"));
-		} else {
+		else
 			ATL2_DEBUG(("ATL2: failed to send packet\n"));
-		}
 
 		/* Update statistics. */
 		atl2_tx_stat(stat);
@@ -644,18 +633,17 @@ static int atl2_tx_advance(void)
 	return advanced;
 }
 
-/*===========================================================================*
- *				atl2_rx_advance				     *
- *===========================================================================*/
-static void atl2_rx_advance(int next)
+/*
+ * Advance the RxD tail by as many failed receipts as possible, and see if
+ * there is an actual packet left to receive.  If 'next' is set, the packet at
+ * the current tail has been processed.
+ */
+static void
+atl2_rx_advance(int next)
 {
-	/* Advance the RxD tail by as many failed receipts as possible, and
-	 * see if there is an actual packet left to receive. If 'next' is set,
-	 * the packet at the current tail has been processed.
-	 */
 	int update_tail;
 	rxd_t *rxd;
-	u32_t hdr, size;
+	uint32_t hdr, size;
 
 	update_tail = FALSE;
 
@@ -679,19 +667,20 @@ static void atl2_rx_advance(int next)
 		if (!(hdr & ATL2_RXD_UPDATE))
 			break;
 
-		rxd->hdr = hdr & ~(ATL2_RXD_UPDATE);
+		rxd->hdr = hdr & ~ATL2_RXD_UPDATE;
 
 		/* Update statistics. */
 		atl2_rx_stat(hdr);
 
-		/* Stop at the first successful receipt. The packet will be
+		/*
+		 * Stop at the first successful receipt.  The packet will be
 		 * picked up by Inet later.
 		 */
 		size = hdr & ATL2_RXD_SIZE_MASK;
 
 		if ((hdr & ATL2_RXD_SUCCESS) && size >= ETH_MIN_PACK_SIZE) {
 			ATL2_DEBUG(("ATL2: packet available, size %ld\n",
-				size));
+			    size));
 
 			state.flags |= ATL2_FLAG_RX_AVAIL;
 			break;
@@ -712,13 +701,12 @@ static void atl2_rx_advance(int next)
 	}
 }
 
-/*===========================================================================*
- *				atl2_reply				     *
- *===========================================================================*/
-static void atl2_reply(void)
+/*
+ * Send a task reply to Inet.
+ */
+static void
+atl2_reply(void)
 {
-	/* Send a task reply to Inet.
-	 */
 	message m;
 	int r, flags;
 
@@ -742,17 +730,16 @@ static void atl2_reply(void)
 	state.recv_count = 0;
 }
 
-/*===========================================================================*
- *				atl2_readv				     *
- *===========================================================================*/
-static void atl2_readv(const message *m, int from_int)
+/*
+ * Read packet data.
+ */
+static void
+atl2_readv(const message * m, int from_int)
 {
-	/* Read packet data.
-	 */
 	rxd_t *rxd;
 	iovec_s_t *iovp;
 	size_t count, off, left, size;
-	u8_t *pos;
+	uint8_t *pos;
 	int i, j, r, batch;
 
 	/* We can deal with only one read request from Inet at a time. */
@@ -764,7 +751,7 @@ static void atl2_readv(const message *m, int from_int)
 	if (!(state.flags & ATL2_FLAG_RX_AVAIL))
 		goto suspend;
 
-	/* Get the first available packet's size. Cut off the CRC. */
+	/* Get the first available packet's size.  Cut off the CRC. */
 	rxd = &state.rxd_base[state.rxd_tail];
 
 	count = rxd->hdr & ATL2_RXD_SIZE_MASK;
@@ -777,13 +764,14 @@ static void atl2_readv(const message *m, int from_int)
 	left = count;
 	pos = rxd->data;
 
-	for (i = 0; i < m->m_net_netdrv_dl_readv_s.count && left > 0; i += batch) {
+	for (i = 0; i < m->m_net_netdrv_dl_readv_s.count && left > 0;
+	    i += batch) {
 		/* Copy in the next batch. */
 		batch = MIN(m->m_net_netdrv_dl_readv_s.count - i, NR_IOREQS);
 
 		r = sys_safecopyfrom(m->m_source,
-			m->m_net_netdrv_dl_readv_s.grant, off, (vir_bytes) iovec,
-			batch * sizeof(iovec[0]));
+		    m->m_net_netdrv_dl_readv_s.grant, off, (vir_bytes)iovec,
+		    batch * sizeof(iovec[0]));
 		if (r != OK)
 			panic("vector copy failed: %d", r);
 
@@ -792,7 +780,7 @@ static void atl2_readv(const message *m, int from_int)
 			size = MIN(iovp->iov_size, left);
 
 			r = sys_safecopyto(m->m_source, iovp->iov_grant, 0,
-				(vir_bytes) pos, size);
+			    (vir_bytes)pos, size);
 			if (r != OK)
 				panic("safe copy failed: %d", r);
 
@@ -803,14 +791,14 @@ static void atl2_readv(const message *m, int from_int)
 		off += batch * sizeof(iovec[0]);
 	}
 
-	/* Not sure what to do here. Inet shouldn't mess this up anyway. */
+	/* Not sure what to do here.  Inet shouldn't mess this up anyway. */
 	if (left > 0) {
 		printf("ATL2: truncated packet of %d bytes by %d bytes\n",
-			count, left);
+		    count, left);
 		count -= left;
 	}
 
-	/* We are done with this packet. Move on to the next. */
+	/* We are done with this packet.  Move on to the next. */
 	atl2_rx_advance(TRUE /*next*/);
 
 	/* We have now successfully received a packet. */
@@ -825,7 +813,8 @@ static void atl2_readv(const message *m, int from_int)
 	return;
 
 suspend:
-	/* No packets are available at this time. If we were not already
+	/*
+	 * No packets are available at this time.  If we were not already
 	 * trying to resume receipt, save the read request for later, and tell
 	 * Inet that the request has been suspended.
 	 */
@@ -838,17 +827,16 @@ suspend:
 	atl2_reply();
 }
 
-/*===========================================================================*
- *				atl2_writev				     *
- *===========================================================================*/
-static void atl2_writev(const message *m, int from_int)
+/*
+ * Write packet data.
+ */
+static void
+atl2_writev(const message * m, int from_int)
 {
-	/* Write packet data.
-	 */
 	iovec_s_t *iovp;
 	size_t off, count, left, pos, skip;
 	vir_bytes size;
-	u8_t *sizep;
+	uint8_t *sizep;
 	int i, j, r, batch, maxnum;
 
 	/* We can deal with only one write request from Inet at a time. */
@@ -856,32 +844,34 @@ static void atl2_writev(const message *m, int from_int)
 
 	state.task_endpt = m->m_source;
 
-	/* If we are already certain that the packet won't fit, bail out.
+	/*
+	 * If we are already certain that the packet won't fit, bail out.
 	 * Keep at least some space between TxD head and tail, as it is not
 	 * clear whether the device deals well with the case that they collide.
 	 */
 	if (state.txs_num >= ATL2_TXS_COUNT)
 		goto suspend;
-	maxnum = ATL2_TXD_BUFSIZE - ETH_MIN_PACK_SIZE - sizeof(u32_t);
+	maxnum = ATL2_TXD_BUFSIZE - ETH_MIN_PACK_SIZE - sizeof(uint32_t);
 	if (state.txd_num >= maxnum)
 		goto suspend;
 
-	/* Optimistically try to copy in the data; suspend if it turns out
+	/*
+	 * Optimistically try to copy in the data; suspend if it turns out
 	 * that it does not fit.
 	 */
 	off = 0;
 	count = 0;
-	left = state.txd_num - sizeof(u32_t);
+	left = state.txd_num - sizeof(uint32_t);
 	pos = (state.txd_tail + state.txd_num +
-		sizeof(u32_t)) % ATL2_TXD_BUFSIZE;
+	    sizeof(uint32_t)) % ATL2_TXD_BUFSIZE;
 
 	for (i = 0; i < m->m_net_netdrv_dl_writev_s.count; i += batch) {
 		/* Copy in the next batch. */
 		batch = MIN(m->m_net_netdrv_dl_writev_s.count - i, NR_IOREQS);
 
 		r = sys_safecopyfrom(m->m_source,
-			m->m_net_netdrv_dl_writev_s.grant, off, (vir_bytes) iovec,
-			batch * sizeof(iovec[0]));
+		    m->m_net_netdrv_dl_writev_s.grant, off, (vir_bytes)iovec,
+		    batch * sizeof(iovec[0]));
 		if (r != OK)
 			panic("vector copy failed: %d", r);
 
@@ -895,17 +885,16 @@ static void atl2_writev(const message *m, int from_int)
 			if (size > ATL2_TXD_BUFSIZE - pos) {
 				skip = ATL2_TXD_BUFSIZE - pos;
 				r = sys_safecopyfrom(m->m_source,
-					iovp->iov_grant, 0,
-					(vir_bytes) (state.txd_base + pos),
-					skip);
+				    iovp->iov_grant, 0,
+				    (vir_bytes)(state.txd_base + pos), skip);
 				if (r != OK)
 					panic("safe copy failed: %d", r);
 				pos = 0;
 			}
 
 			r = sys_safecopyfrom(m->m_source, iovp->iov_grant,
-				skip, (vir_bytes) (state.txd_base + pos),
-				size - skip);
+			    skip, (vir_bytes)(state.txd_base + pos),
+			    size - skip);
 			if (r != OK)
 				panic("safe copy failed: %d", r);
 
@@ -921,14 +910,14 @@ static void atl2_writev(const message *m, int from_int)
 
 	/* Write the length to the DWORD right before the packet. */
 	sizep = state.txd_base +
-		(state.txd_tail + state.txd_num) % ATL2_TXD_BUFSIZE;
-	* (u32_t *) sizep = count;
+	    (state.txd_tail + state.txd_num) % ATL2_TXD_BUFSIZE;
+	*(uint32_t *)sizep = count;
 
 	/* Update the TxD head. */
-	state.txd_num += sizeof(u32_t) + ATL2_ALIGN_32(count);
+	state.txd_num += sizeof(uint32_t) + ATL2_ALIGN_32(count);
 	pos = ATL2_ALIGN_32(pos) % ATL2_TXD_BUFSIZE;
-	assert((int) pos ==
-		(state.txd_tail + state.txd_num) % ATL2_TXD_BUFSIZE);
+	assert((int)pos ==
+	    (state.txd_tail + state.txd_num) % ATL2_TXD_BUFSIZE);
 
 	/* Initialize and update the TxS head. */
 	state.txs_base[(state.txs_tail + state.txs_num) % ATL2_TXS_COUNT] = 0;
@@ -937,7 +926,7 @@ static void atl2_writev(const message *m, int from_int)
 	/* Tell the device about our new position. */
 	__insn_barrier();
 
-	ATL2_WRITE_U32(ATL2_TXD_IDX_REG, pos / sizeof(u32_t));
+	ATL2_WRITE_U32(ATL2_TXD_IDX_REG, pos / sizeof(uint32_t));
 
 	/* We have now successfully set up the transmission of a packet. */
 	state.flags &= ~ATL2_FLAG_WRITE_PEND;
@@ -950,7 +939,8 @@ static void atl2_writev(const message *m, int from_int)
 	return;
 
 suspend:
-	/* We cannot transmit the packet at this time. If we were not already
+	/*
+	 * We cannot transmit the packet at this time.  If we were not already
 	 * trying to resume transmission, save the write request for later,
 	 * and tell Inet that the request has been suspended.
 	 */
@@ -963,14 +953,13 @@ suspend:
 	atl2_reply();
 }
 
-/*===========================================================================*
- *				atl2_intr				     *
- *===========================================================================*/
-static void atl2_intr(const message *UNUSED(m))
+/*
+ * Process an interrupt.
+ */
+static void
+atl2_intr(const message * __unused m)
 {
-	/* Interrupt received.
-	 */
-	u32_t val;
+	uint32_t val;
 	int r, try_write, try_read;
 
 	/* Clear and disable interrupts. */
@@ -982,9 +971,8 @@ static void atl2_intr(const message *UNUSED(m))
 
 	/* If an error occurred, reset the card. */
 	if (val & (ATL2_ISR_DMAR_TIMEOUT | ATL2_ISR_DMAW_TIMEOUT |
-			ATL2_ISR_PHY_LINKDOWN)) {
+	    ATL2_ISR_PHY_LINKDOWN))
 		atl2_setup();
-	}
 
 	try_write = try_read = FALSE;
 
@@ -1018,13 +1006,12 @@ static void atl2_intr(const message *UNUSED(m))
 		atl2_reply();
 }
 
-/*===========================================================================*
- *				atl2_conf				     *
- *===========================================================================*/
-static void atl2_conf(message *m)
+/*
+ * Configure the mode of the card.
+ */
+static void
+atl2_conf(message * m)
 {
-	/* Configure the mode of the card.
-	 */
 	ether_addr_t addr;
 	int r;
 
@@ -1040,7 +1027,7 @@ static void atl2_conf(message *m)
 	addr.ea_addr[5] = state.hwaddr[0] & 0xff;
 
 	memcpy(m->m_netdrv_net_dl_conf.hw_addr, &addr,
-		sizeof(m->m_netdrv_net_dl_conf.hw_addr));
+	    sizeof(m->m_netdrv_net_dl_conf.hw_addr));
 
 	m->m_type = DL_CONF_REPLY;
 	m->m_netdrv_net_dl_conf.stat = OK;
@@ -1049,17 +1036,16 @@ static void atl2_conf(message *m)
 		printf("ATL2: unable to send reply (%d)\n", r);
 }
 
-/*===========================================================================*
- *				atl2_getstat				     *
- *===========================================================================*/
-static void atl2_getstat(message *m)
+/*
+ * Copy out statistics.
+ */
+static void
+atl2_getstat(message * m)
 {
-	/* Copy out statistics.
-	 */
 	int r;
 
 	sys_safecopyto(m->m_source, m->m_net_netdrv_dl_getstat_s.grant, 0,
-		(vir_bytes) &state.stat, sizeof(state.stat));
+	    (vir_bytes) &state.stat, sizeof(state.stat));
 
 	m->m_type = DL_STAT_REPLY;
 
@@ -1067,17 +1053,16 @@ static void atl2_getstat(message *m)
 		printf("ATL2: unable to send reply (%d)\n", r);
 }
 
-/*===========================================================================*
- *				atl2_dump_link				     *
- *===========================================================================*/
-static void atl2_dump_link(void)
+/*
+ * Dump link status.
+ */
+static void
+atl2_dump_link(void)
 {
-	/* Dump link status.
-	 */
-	u16_t val;
+	uint16_t val;
 	int link_up;
 
-	/* The link status bit is latched. Read the status register twice. */
+	/* The link status bit is latched.  Read the status register twice. */
 	atl2_read_mdio(ATL2_MII_BMSR, &val);
 	if (!atl2_read_mdio(ATL2_MII_BMSR, &val)) return;
 
@@ -1104,13 +1089,12 @@ static void atl2_dump_link(void)
 	printf("%s duplex)", (val & ATL2_MII_PSSR_DUPLEX) ? "full" : "half");
 }
 
-/*===========================================================================*
- *				atl2_dump				     *
- *===========================================================================*/
-static void atl2_dump(void)
+/*
+ * Dump statistics.
+ */
+static void
+atl2_dump(void)
 {
-	/* Dump statistics.
-	 */
 
 	printf("\n");
 	printf("Attansic L2 statistics:\n");
@@ -1148,14 +1132,13 @@ static void atl2_dump(void)
 	printf("\n");
 }
 
-/*===========================================================================*
- *		            sef_cb_init_fresh                                *
- *===========================================================================*/
-static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
+/*
+ * Initialize the atl2 driver.
+ */
+static int
+sef_cb_init_fresh(int __unused type, sef_init_info_t * __unused info)
 {
-	/* Initialize the atl2 driver.
-	 */
-	int r, devind;
+	int r, devind, instance;
 	long v;
 #if ATL2_FKEY
 	int fkeys, sfkeys;
@@ -1163,8 +1146,8 @@ static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 
 	/* How many matching devices should we skip? */
 	v = 0;
-	(void) env_parse("instance", "d", 0, &v, 0, 255);
-	instance = (int) v;
+	(void)env_parse("instance", "d", 0, &v, 0, 255);
+	instance = (int)v;
 
 	/* Try to find a recognized device. */
 	devind = atl2_probe(instance);
@@ -1186,17 +1169,16 @@ static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 		printf("ATL2: warning, could not map Shift+F11 key (%d)\n", r);
 #endif
 
-	return(OK);
+	return OK;
 }
 
-/*===========================================================================*
- *			    sef_cb_signal_handler			     *
- *===========================================================================*/
-static void sef_cb_signal_handler(int signo)
+/*
+ * In case of a termination signal, shut down this driver.  Stop the device,
+ * and deallocate resources as proof of concept.
+ */
+static void
+sef_cb_signal_handler(int signo)
 {
-	/* In case of a termination signal, shut down this driver.
-	 * Stop the device, and deallocate resources as proof of concept.
-	 */
 	int r;
 
 	/* Only check for termination signal, ignore anything else. */
@@ -1208,22 +1190,24 @@ static void sef_cb_signal_handler(int signo)
 		panic("unable to deregister IRQ: %d", r);
 
 	free_contig(state.txd_base, ATL2_TXD_BUFSIZE);
-	free_contig(state.txs_base, ATL2_TXS_COUNT * sizeof(u32_t));
+	free_contig(state.txs_base, ATL2_TXS_COUNT * sizeof(uint32_t));
 	free_contig(state.rxd_base_u,
-		state.rxd_align + ATL2_RXD_COUNT * ATL2_RXD_SIZE);
+	    state.rxd_align + ATL2_RXD_COUNT * ATL2_RXD_SIZE);
 
-	vm_unmap_phys(SELF, (void *) state.base, state.size);
+	vm_unmap_phys(SELF, (void *)state.base, state.size);
 
 	/* We cannot free the PCI device at this time. */
 
 	exit(0);
 }
 
-/*===========================================================================*
- *				sef_local_startup			     *
- *===========================================================================*/
-static void sef_local_startup(void)
+/*
+ * Perform SEF initialization.
+ */
+static void
+sef_local_startup(void)
 {
+
 	/* Register init callbacks. */
 	sef_setcb_init_fresh(sef_cb_init_fresh);
 	sef_setcb_init_lu(sef_cb_init_fresh);
@@ -1240,13 +1224,12 @@ static void sef_local_startup(void)
 	sef_startup();
 }
 
-/*===========================================================================*
- *				main					     *
- *===========================================================================*/
-int main(int argc, char **argv)
+/*
+ * The ATL2 ethernet driver.
+ */
+int
+main(int argc, char ** argv)
 {
-	/* Driver task.
-	 */
 	message m;
 	int ipc_status;
 	int r;
@@ -1255,7 +1238,7 @@ int main(int argc, char **argv)
 	env_setargs(argc, argv);
 	sef_local_startup();
 
-	while (TRUE) {
+	for (;;) {
 		if ((r = netdriver_receive(ANY, &m, &ipc_status)) != OK)
 			panic("netdriver_receive failed: %d", r);
 
@@ -1273,7 +1256,7 @@ int main(int argc, char **argv)
 
 			default:
 				printf("ATL2: illegal notify from %d\n",
-					m.m_source);
+				    m.m_source);
 			}
 
 			continue;
@@ -1287,7 +1270,7 @@ int main(int argc, char **argv)
 		case DL_READV_S:	atl2_readv(&m, FALSE);		break;
 		default:
 			printf("ATL2: illegal message %d from %d\n",
-				m.m_type, m.m_source);
+			    m.m_type, m.m_source);
 		}
 	}
 }
