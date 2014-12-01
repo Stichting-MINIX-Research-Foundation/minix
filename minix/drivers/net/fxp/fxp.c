@@ -424,7 +424,7 @@ static void fxp_pci_conf()
 static int fxp_probe(fxp_t *fp, int skip)
 {
 	int r, devind;
-	u16_t vid, did;
+	u16_t vid, did, cr;
 	u32_t bar;
 	u8_t ilr, rev;
 	char *str;
@@ -451,6 +451,11 @@ static int fxp_probe(fxp_t *fp, int skip)
 		fp->fxp_name, dname, vid, did, pci_slot_name(devind));
 #endif
 	pci_reserve(devind);
+
+	/* Enable bus mastering if necessary. */
+	cr = pci_attr_r16(devind, PCI_CR);
+	if (!(cr & PCI_CR_MAST_EN))
+		pci_attr_w16(devind, PCI_CR, cr | PCI_CR_MAST_EN);
 
 	bar= pci_attr_r32(devind, PCI_BAR_2) & 0xffffffe0;
 	if (bar < 0x400) {
