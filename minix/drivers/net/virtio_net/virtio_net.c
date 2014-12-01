@@ -268,7 +268,7 @@ virtio_net_check_queues(void)
 	struct packet *p;
 
 	/* Put the received packets into the recv list */
-	while (virtio_from_queue(net_dev, RX_Q, (void **)&p) == 0) {
+	while (virtio_from_queue(net_dev, RX_Q, (void **)&p, NULL) == 0) {
 		STAILQ_INSERT_TAIL(&recv_list, p, next);
 		in_rx--;
 		virtio_net_stats.ets_packetR++;
@@ -277,7 +277,7 @@ virtio_net_check_queues(void)
 	/* Packets from the TX queue just indicated they are free to
 	 * be reused now. inet already knows about them as being sent.
 	 */
-	while (virtio_from_queue(net_dev, TX_Q, (void **)&p) == 0) {
+	while (virtio_from_queue(net_dev, TX_Q, (void **)&p, NULL) == 0) {
 		memset(p->vhdr, 0, sizeof(*p->vhdr));
 		memset(p->vdata, 0, MAX_PACK_SIZE);
 		STAILQ_INSERT_HEAD(&free_list, p, next);
