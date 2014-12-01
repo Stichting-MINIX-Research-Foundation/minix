@@ -18,6 +18,7 @@
 #include	<minix/timers.h>
 #include	<machine/pci.h>
 #include	<machine/vmparam.h>
+#include	<sys/mman.h>
 #include 	<minix/ds.h>
 #include	<minix/endpoint.h>
 #include	"kernel/const.h"
@@ -138,7 +139,6 @@ static void or_ev_info(t_or *);
 static void or_init(message *);
 static void or_pci_conf(void);
 static void or_init_struct(t_or *);
-static void map_hw_buffer(t_or *);
 static void or_init_hw(t_or *);
 static void or_check_ints(t_or *);
 static void or_writerids(hermes_t *, t_or *);
@@ -536,52 +536,15 @@ static int or_probe (t_or * orp, int skip)
 	ilr = pci_attr_r8 (devind, PCI_ILR);
 	orp->or_irq = ilr;
 
-	/* Get the base address */
-	bar = or_get_bar (devind, orp);
-	orp->or_base_port = bar;
+	/* Map registers into memory */
+	bar = or_get_bar(devind, orp);
 
-	map_hw_buffer(orp);
+	orp->hw.locmem = vm_map_phys(SELF, (void *)bar, PAGE_SIZE);
+	if (orp->hw.locmem == MAP_FAILED)
+		panic("or_probe: vm_map_phys failed");
+
 	return TRUE;
 }
-
-/*****************************************************************************
- *                map_hw_buffer                                              *
- *                                                                           *
- * Map the memory mapped registers into user space memory                    *
- *****************************************************************************/
-static void map_hw_buffer(t_or *orp)
-{
-	int r;
-	size_t o, size;
-	char *buf, *abuf;	
-	hermes_t *hw = &(orp->hw);	
-
-	/* This way, the buffer will be at least PAGE_SIZE big: see
-	 * calculation with the offset */
-	size = 2 * PAGE_SIZE;
-
-	buf = (char *)malloc(size);
-	if(buf == NULL) 
-		panic("map_hw_buffer: cannot malloc size: %d", size);
-
-	/* Let the mapped memory by PAGE_SIZE aligned */
-	o = PAGE_SIZE - ((vir_bytes)buf % PAGE_SIZE);
-	abuf = buf + o;
-
-#if 0
-	r = sys_vm_map(SELF, 1, (vir_bytes)abuf, 
-			1 * PAGE_SIZE, (phys_bytes)orp->or_base_port);
-#else
-	r = ENOSYS;
-#endif
-
-	if(r!=OK) 
-		panic("map_hw_buffer: sys_vm_map failed: %d", r);
-
-
-	hw->locmem = abuf;
-}
-
 
 
 /*****************************************************************************

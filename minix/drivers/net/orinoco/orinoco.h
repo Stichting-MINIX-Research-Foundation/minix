@@ -35,7 +35,6 @@ typedef struct s_or
 	int or_tx_alive;
 	int or_send_int;
 	int or_clear_rx;
-	u32_t or_base_port;
 	int or_need_reset;
 	int or_report_link;
 
