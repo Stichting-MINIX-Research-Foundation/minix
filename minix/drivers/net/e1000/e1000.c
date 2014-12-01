@@ -400,7 +400,7 @@ e1000_t *e;
     /* Clear Multicast Table Array (MTA). */
     for (i = 0; i < 128; i++)
     {
-	e1000_reg_write(e, E1000_REG_MTA + i, 0);
+	e1000_reg_write(e, E1000_REG_MTA + i * 4, 0);
     }
     /* Initialize statistics registers. */
     for (i = 0; i < 64; i++)
