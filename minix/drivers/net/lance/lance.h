@@ -1,39 +1,8 @@
 
-/* macros for 'mode' */
-#define EC_DISABLED    0x0
-#define EC_SINK        0x1
-#define EC_ENABLED     0x2
-
 /* macros for 'flags' */
-#define ECF_EMPTY       0x000
-#define ECF_PACK_SEND   0x001
-#define ECF_PACK_RECV   0x002
-#define ECF_SEND_AVAIL  0x004
-#define ECF_READING     0x010
-#define ECF_PROMISC     0x040
-#define ECF_MULTI       0x080
-#define ECF_BROAD       0x100
-#define ECF_ENABLED     0x200
-#define ECF_STOPPED     0x400
-
-/* === macros for ether cards (our generalized version) === */
-#define EC_ISR_RINT     0x0001
-#define EC_ISR_WINT     0x0002
-#define EC_ISR_RERR     0x0010
-#define EC_ISR_WERR     0x0020
-#define EC_ISR_ERR      0x0040
-#define EC_ISR_RST      0x0100
-
-/* IOVEC */
-#define IOVEC_NR        16
-typedef struct iovec_dat
-{
-  iovec_s_t iod_iovec[IOVEC_NR];
-  int iod_iovec_s;
-  endpoint_t iod_proc_nr;
-  cp_grant_id_t iod_grant;
-  vir_bytes iod_iovec_offset;
-} iovec_dat_t;
+#define ECF_PROMISC     0x01
+#define ECF_MULTI       0x02
+#define ECF_BROAD       0x04
 
 /* ====== ethernet card info. ====== */
 typedef struct ether_card
@@ -41,34 +10,13 @@ typedef struct ether_card
   /* ####### MINIX style ####### */
   char port_name[sizeof("lance#n")];
   int flags;
-  int mode;
-  int transfer_mode;
   eth_stat_t eth_stat;
-  iovec_dat_t read_iovec;
-  iovec_dat_t write_iovec;
-  iovec_dat_t tmp_iovec;
-  vir_bytes write_s;
-  vir_bytes read_s;
-  int client;
-  message sendmsg;
 
   /* ######## device info. ####### */
   port_t ec_port;
-  phys_bytes ec_linmem;
   int ec_irq;
-  int ec_int_pending;
   int ec_hook;
-
-  int ec_ramsize;
- 
-  /* Addrassing */
-  u16_t ec_memseg;
-  vir_bytes ec_memoff;
-  
-  ether_addr_t mac_address;
 } ether_card_t;
-
-#define DEI_DEFAULT    0x8000
 
 /*
  * NOTE: Not all the CSRs are defined. Just the ones that were deemed

@@ -4,38 +4,6 @@
  * This file contains a ethernet device driver for AMD LANCE based ethernet
  * cards.
  *
- * The valid messages and their parameters are:
- *
- *   m_type        DL_COUNT   DL_MODE   DL_GRANT
- * |--------------+----------+---------+---------|
- * | DL_WRITEV_S  | count    |         | grant   |
- * |--------------|----------|---------|---------|
- * | DL_READV_S   | count    |         | grant   |
- * |--------------|----------|---------|---------|
- * | DL_CONF      |          | mode    |         |
- * |--------------|----------|---------|---------|
- * | DL_GETSTAT_S |          |         | grant   |
- * |--------------|----------|---------|---------|
- * | hardware int |          |         |         |
- * |--------------|----------|---------|---------|
- *
- * The messages sent are:
- *
- *   m_type         DL_COUNT   DL_FLAGS
- * |---------------+----------+---------|
- * | DL_TASK_REPLY | rd-count | flags   |
- * |---------------|----------|---------|
- *
- *   m_type
- * |---------------|
- * | DL_STAT_REPLY |
- * |---------------|
- *
- *   m_type         DL_STAT   DL_ADDR
- * |---------------+---------+---------------|
- * | DL_CONF_REPLY | code    | ethernet addr |
- * |---------------|---------|---------------|
- *
  * Created: Jul 27, 2002 by Kazuya Kodama <kazuya@nii.ac.jp>
  * Adapted for Minix 3: Sep 05, 2005 by Joren l'Ami <jwlami@cs.vu.nl>
  */
@@ -58,58 +26,21 @@
 
 #include "lance.h"
 
-static ether_card_t ec_state;
-static int ec_instance;
-
-/* Configuration */
-typedef struct ec_conf
-{
-   port_t ec_port;
-   int ec_irq;
-   phys_bytes ec_mem;
-} ec_conf_t;
-
-/* We hardly use these. Just "LANCE0=on/off" "LANCE1=on/off" mean. */
-#define EC_CONF_NR 3
-ec_conf_t ec_conf[EC_CONF_NR]=    /* Card addresses */
-{
-   /* I/O port, IRQ,  Buffer address. */
-   {  0x1000,     9,    0x00000,     },
-   {  0xD000,    15,    0x00000,     },
-   {  0x0000,     0,    0x00000,     },
-};
-
-/* General */
-static void do_init(message *mp);
-static void ec_init(ether_card_t *ec);
-static void ec_confaddr(ether_card_t *ec);
+static int do_init(unsigned int instance, ether_addr_t *addr);
+static void ec_confaddr(ether_addr_t *addr);
 static void ec_reinit(ether_card_t *ec);
-static void ec_check_ints(ether_card_t *ec);
-static void conf_hw(ether_card_t *ec);
-static void update_conf(ether_card_t *ec, ec_conf_t *ecp);
-static void mess_reply(message *req, message *reply);
-static void do_int(ether_card_t *ec);
-static void reply(ether_card_t *ec);
 static void ec_reset(ether_card_t *ec);
-static void ec_send(ether_card_t *ec);
-static void ec_recv(ether_card_t *ec);
-static void do_vwrite_s(message *mp, int from_int);
-static void do_vread_s(const message *mp);
-static void ec_user2nic(ether_card_t *dep, iovec_dat_t *iovp, vir_bytes
-	offset, int nic_addr, vir_bytes count);
-static void ec_nic2user(ether_card_t *ec, int nic_addr, iovec_dat_t
-	*iovp, vir_bytes offset, vir_bytes count);
-static int calc_iovec_size(iovec_dat_t *iovp);
-static void ec_next_iovec(iovec_dat_t *iovp);
-static void do_getstat_s(message *mp);
-static void lance_stop(ether_card_t *ec);
-
+static void do_intr(unsigned int mask);
+static void do_mode(unsigned int mode);
+static int do_send(struct netdriver_data *data, size_t size);
+static ssize_t do_recv(struct netdriver_data *data, size_t max);
+static void do_stat(eth_stat_t *stat);
+static void do_stop(void);
 static void lance_dump(void);
-static void getAddressing(int devind, ether_card_t *ec);
-
-/* probe+init LANCE cards */
-static int lance_probe(ether_card_t *ec, int skip);
-static void lance_init_card(ether_card_t *ec);
+static void do_other(const message *m_ptr, int ipc_status);
+static void get_addressing(int devind, ether_card_t *ec);
+static int lance_probe(ether_card_t *ec, unsigned int skip);
+static void lance_init_hw(ether_card_t *ec, ether_addr_t *addr);
 
 /* Accesses Lance Control and Status Registers */
 static u8_t in_byte(port_t port);
@@ -118,28 +49,12 @@ static void out_word(port_t port, u16_t value);
 static u16_t read_csr(port_t ioaddr, u16_t csrno);
 static void write_csr(port_t ioaddr, u16_t csrno, u16_t value);
 
+static ether_card_t ec_state;
+static int ec_instance;
+
 /* --- LANCE --- */
 /* General */
-typedef unsigned long Address;
-
-#define virt_to_bus(x)          (vir2phys((unsigned long)x))
-unsigned long vir2phys( unsigned long x )
-{
-   int r;
-   unsigned long value;
-
-   if ( (r=sys_umap( SELF, VM_D, x, 4, &value )) != OK ) {
-      printf("lance: umap of 0x%lx failed\n",x );
-      panic("sys_umap failed: %d", r);
-   }
-
-   return value;
-}
-
-/* DMA limitations */
-#define DMA_ADDR_MASK  0xFFFFFF  /* mask to verify DMA address is 24-bit */
-
-#define CORRECT_DMA_MEM() ( (virt_to_bus(lance_buf + sizeof(struct lance_interface)) & ~DMA_ADDR_MASK) == 0 )
+typedef uint32_t Address;
 
 #define ETH_FRAME_LEN           1518
 
@@ -240,151 +155,31 @@ static char *lance_buf = NULL;
 static int rx_slot_nr = 0;          /* Rx-slot number */
 static int tx_slot_nr = 0;          /* Tx-slot number */
 static int cur_tx_slot_nr = 0;      /* Tx-slot number */
+static phys_bytes tx_ring_base[TX_RING_SIZE]; /* Tx-slot physical address */
 static char isstored[TX_RING_SIZE]; /* Tx-slot in-use */
 
-phys_bytes lance_buf_phys;
-
-/* SEF functions and variables. */
-static void sef_local_startup(void);
-static int sef_cb_init_fresh(int type, sef_init_info_t *info);
-static void sef_cb_signal_handler(int signo);
+static const struct netdriver lance_table = {
+   .ndr_init = do_init,
+   .ndr_stop = do_stop,
+   .ndr_mode = do_mode,
+   .ndr_recv = do_recv,
+   .ndr_send = do_send,
+   .ndr_stat = do_stat,
+   .ndr_intr = do_intr,
+   .ndr_other = do_other,
+};
 
 /*===========================================================================*
  *                              main                                         *
  *===========================================================================*/
-int main( int argc, char **argv )
+int main(int argc, char **argv)
 {
-   message m;
-   int ipc_status;
-   int r;
-   ether_card_t *ec;
 
-   /* SEF local startup. */
    env_setargs(argc, argv);
-   sef_local_startup();
 
-   ec= &ec_state;
-
-   while (TRUE)
-   {
-      if (ec->ec_irq != 0)
-         sys_irqenable(&ec->ec_hook);
-
-      if ((r= netdriver_receive(ANY, &m, &ipc_status)) != OK)
-        panic("netdriver_receive failed: %d", r);
-        
-      if (ec->ec_irq != 0)
-         sys_irqdisable(&ec->ec_hook);
-
-      if (is_ipc_notify(ipc_status)) {
-	      switch(_ENDPOINT_P(m.m_source)) {
-		      case TTY_PROC_NR:
-			      lance_dump();
-			      break;
-		      case HARDWARE:
-			      if (ec->mode == EC_ENABLED)
-			      {
-				 ec->ec_int_pending = 0;
-				 ec_check_ints(ec);
-				 do_int(ec);
-			      }
-			      break;
-		      default:
-			      panic("illegal notify source: %d", m.m_source);
-	      }
-
-	      /* get next message */
-	      continue;
-      }
-  
-      switch (m.m_type)
-      {
-      case DL_WRITEV_S:
-         do_vwrite_s(&m, FALSE);
-         break;
-      case DL_READV_S:
-         do_vread_s(&m);
-         break;
-      case DL_CONF:
-         do_init(&m);
-         break;
-      case DL_GETSTAT_S:
-         do_getstat_s(&m);
-         break;
-      default:
-         panic("illegal message: %d", m.m_type);
-      }
-   }
+   netdriver_task(&lance_table);
 
    return 0;
-}
-
-/*===========================================================================*
- *			       sef_local_startup			     *
- *===========================================================================*/
-static void sef_local_startup()
-{
-  /* Register init callbacks. */
-  sef_setcb_init_fresh(sef_cb_init_fresh);
-  sef_setcb_init_lu(sef_cb_init_fresh);
-  sef_setcb_init_restart(sef_cb_init_fresh);
-
-  /* Register live update callbacks. */
-  sef_setcb_lu_prepare(sef_cb_lu_prepare_always_ready);
-  sef_setcb_lu_state_isvalid(sef_cb_lu_state_isvalid_workfree);
-
-  /* Register signal callbacks. */
-  sef_setcb_signal_handler(sef_cb_signal_handler);
-
-  /* Let SEF perform startup. */
-  sef_startup();
-}
-
-/*===========================================================================*
- *		            sef_cb_init_fresh                                *
- *===========================================================================*/
-static int sef_cb_init_fresh(int type, sef_init_info_t *UNUSED(info))
-{
-/* Initialize the lance driver. */
-   long v;
-#if LANCE_FKEY
-   int r, fkeys, sfkeys;
-#endif
-
-#if LANCE_FKEY
-   fkeys = sfkeys = 0;
-   bit_set( sfkeys, 7 );
-   if ( (r = fkey_map(&fkeys, &sfkeys)) != OK )
-      printf("Warning: lance couldn't observe Shift+F7 key: %d\n",r);
-#endif
-
-   v = 0;
-   (void) env_parse("instance", "d", 0, &v, 0, 255);
-   ec_instance = (int) v;
-
-   /* Announce we are up! */
-   netdriver_announce();
-
-   return OK;
-}
-
-/*===========================================================================*
- *		           sef_cb_signal_handler                             *
- *===========================================================================*/
-static void sef_cb_signal_handler(int signo)
-{
-
-   /* Only check for termination signal, ignore anything else. */
-   if (signo != SIGTERM) return;
-
-   if (ec_state.mode == EC_ENABLED)
-      lance_stop(&ec_state);
-
-#if VERBOSE
-   printf("LANCE driver stopped.\n");
-#endif
-
-   exit(0);
 }
 
 /*===========================================================================*
@@ -395,41 +190,34 @@ static void lance_dump()
    ether_card_t *ec;
    int isr, csr;
    unsigned short ioaddr;
-  
+
    printf("\n");
    ec = &ec_state;
-   if (ec->mode == EC_DISABLED)
-      printf("lance instance %d is disabled\n", ec_instance);
-   else if (ec->mode == EC_SINK)
-      printf("lance instance %d is in sink mode\n", ec_instance);
 
-   if (ec->mode != EC_ENABLED)
-      return;
-      
    printf("lance statistics of instance %d:\n", ec_instance);
-      
+
    printf("recvErr    :%8ld\t", ec->eth_stat.ets_recvErr);
    printf("sendErr    :%8ld\t", ec->eth_stat.ets_sendErr);
    printf("OVW        :%8ld\n", ec->eth_stat.ets_OVW);
-      
+
    printf("CRCerr     :%8ld\t", ec->eth_stat.ets_CRCerr);
    printf("frameAll   :%8ld\t", ec->eth_stat.ets_frameAll);
    printf("missedP    :%8ld\n", ec->eth_stat.ets_missedP);
-      
+
    printf("packetR    :%8ld\t", ec->eth_stat.ets_packetR);
    printf("packetT    :%8ld\t", ec->eth_stat.ets_packetT);
    printf("transDef   :%8ld\n", ec->eth_stat.ets_transDef);
-      
+
    printf("collision  :%8ld\t", ec->eth_stat.ets_collision);
    printf("transAb    :%8ld\t", ec->eth_stat.ets_transAb);
    printf("carrSense  :%8ld\n", ec->eth_stat.ets_carrSense);
-      
+
    printf("fifoUnder  :%8ld\t", ec->eth_stat.ets_fifoUnder);
    printf("fifoOver   :%8ld\t", ec->eth_stat.ets_fifoOver);
    printf("CDheartbeat:%8ld\n", ec->eth_stat.ets_CDheartbeat);
-      
+
    printf("OWC        :%8ld\t", ec->eth_stat.ets_OWC);
-      
+
    ioaddr = ec->ec_port;
    isr = read_csr(ioaddr, LANCE_CSR0);
    printf("isr = 0x%x, flags = 0x%x\n", isr,
@@ -450,261 +238,19 @@ static void lance_dump()
 }
 
 /*===========================================================================*
- *                              do_init                                      *
+ *                              do_other                                     *
  *===========================================================================*/
-static void do_init(mp)
-message *mp;
+static void do_other(const message *m_ptr, int ipc_status)
 {
-   ether_card_t *ec;
-   message reply_mess;
 
-   pci_init();
-
-   if(!lance_buf && !(lance_buf = alloc_contig(LANCE_BUF_SIZE, AC_ALIGN4K|AC_LOWER16M, &lance_buf_phys))) {
-      panic("alloc_contig failed: %d", LANCE_BUF_SIZE);
-   }
-
-   ec= &ec_state;
-   strlcpy(ec->port_name, "lance#0", sizeof(ec->port_name));
-   ec->port_name[6] += ec_instance;
-
-   if (ec->mode == EC_DISABLED)
-   {
-      /* This is the default, try to (re)locate the device. */
-      /* only try to enable if memory is correct for DMA */
-      if ( CORRECT_DMA_MEM() )
-      {
-         conf_hw(ec);
-      }
-      else
-      {
-         printf("LANCE: DMA denied because address out of range\n" );
-      }
-
-      if (ec->mode == EC_DISABLED)
-      {
-         /* Probe failed, or the device is configured off. */
-         reply_mess.m_type= DL_CONF_REPLY;
-         reply_mess.m_netdrv_net_dl_conf.stat = ENXIO;
-         mess_reply(mp, &reply_mess);
-         return;
-      }
-      if (ec->mode == EC_ENABLED)
-         ec_init(ec);
-   }
-
-   if (ec->mode == EC_SINK)
-   {
-      ec->mac_address.ea_addr[0] = 
-         ec->mac_address.ea_addr[1] =
-         ec->mac_address.ea_addr[2] =
-         ec->mac_address.ea_addr[3] =
-         ec->mac_address.ea_addr[4] =
-         ec->mac_address.ea_addr[5] = 0;
-      ec_confaddr(ec);
-      reply_mess.m_type = DL_CONF_REPLY;
-      reply_mess.m_netdrv_net_dl_conf.stat = OK;
-      memcpy(reply_mess.m_netdrv_net_dl_conf.hw_addr, ec->mac_address.ea_addr,
-	      sizeof(reply_mess.m_netdrv_net_dl_conf.hw_addr));
-      mess_reply(mp, &reply_mess);
-      return;
-   }
-   assert(ec->mode == EC_ENABLED);
-   assert(ec->flags & ECF_ENABLED);
-
-   ec->flags &= ~(ECF_PROMISC | ECF_MULTI | ECF_BROAD);
-
-   if (mp->m_net_netdrv_dl_conf.mode & DL_PROMISC_REQ)
-      ec->flags |= ECF_PROMISC | ECF_MULTI | ECF_BROAD;
-   if (mp->m_net_netdrv_dl_conf.mode & DL_MULTI_REQ)
-      ec->flags |= ECF_MULTI;
-   if (mp->m_net_netdrv_dl_conf.mode & DL_BROAD_REQ)
-      ec->flags |= ECF_BROAD;
-
-   ec_reinit(ec);
-
-   reply_mess.m_type = DL_CONF_REPLY;
-   reply_mess.m_netdrv_net_dl_conf.stat = OK;
-   memcpy(reply_mess.m_netdrv_net_dl_conf.hw_addr, ec->mac_address.ea_addr,
-      sizeof(reply_mess.m_netdrv_net_dl_conf.hw_addr));
-
-   mess_reply(mp, &reply_mess);
+   if (is_ipc_notify(ipc_status) && m_ptr->m_source == TTY_PROC_NR)
+      lance_dump();
 }
-
-
-/*===========================================================================*
- *                              do_int                                       *
- *===========================================================================*/
-static void do_int(ec)
-ether_card_t *ec;
-{
-   if (ec->flags & (ECF_PACK_SEND | ECF_PACK_RECV))
-      reply(ec);
-}
-
-
-/*===========================================================================*
- *                              conf_hw                                      *
- *===========================================================================*/
-static void conf_hw(ec)
-ether_card_t *ec;
-{
-   static eth_stat_t empty_stat = {0, 0, 0, 0, 0, 0        /* ,... */ };
-
-   int confnr;
-   ec_conf_t *ecp;
-
-   ec->mode= EC_DISABLED;     /* Superfluous */
-
-   /* Pick a default configuration. This hardly matters anymore. */
-   confnr= MIN(ec_instance, EC_CONF_NR-1);
-
-   ecp= &ec_conf[confnr];
-   update_conf(ec, ecp);
-   if (ec->mode != EC_ENABLED)
-      return;
-
-   if (!lance_probe(ec, ec_instance))
-   {
-      printf("%s: No ethernet card found on PCI-BIOS info.\n", 
-             ec->port_name);
-      ec->mode= EC_DISABLED;
-      return;
-   }
-
-   /* XXX */ if (ec->ec_linmem == 0) ec->ec_linmem= 0xFFFF0000;
-
-   ec->flags = ECF_EMPTY;
-   ec->eth_stat = empty_stat;
-}
-
-
-/*===========================================================================*
- *                              update_conf                                  *
- *===========================================================================*/
-static void update_conf(ec, ecp)
-ether_card_t *ec;
-ec_conf_t *ecp;
-{
-   long v;
-   char eckey[16];
-   static char ec_fmt[] = "x:d:x:x";
-
-   /* Get the default settings and modify them from the environment. */
-   strlcpy(eckey, "LANCE0", sizeof(eckey));
-   eckey[5] += ec_instance;
-   ec->mode= EC_SINK;
-   v= ecp->ec_port;
-   switch (env_parse(eckey, ec_fmt, 0, &v, 0x0000L, 0xFFFFL))
-   {
-   case EP_OFF:
-      ec->mode= EC_DISABLED;
-      break;
-   case EP_ON:
-   case EP_SET:
-   default:
-      ec->mode= EC_ENABLED;      /* Might become disabled if
-                                  * all probes fail */
-      break;
-   }
-  
-   ec->ec_port= v;
-
-   v= ecp->ec_irq | DEI_DEFAULT;
-   (void) env_parse(eckey, ec_fmt, 1, &v, 0L, (long) NR_IRQ_VECTORS - 1);
-   ec->ec_irq= v;
-  
-   v= ecp->ec_mem;
-   (void) env_parse(eckey, ec_fmt, 2, &v, 0L, 0xFFFFFL);
-   ec->ec_linmem= v;
-  
-   v= 0;
-   (void) env_parse(eckey, ec_fmt, 3, &v, 0x2000L, 0x8000L);
-   ec->ec_ramsize= v;
-}
-
-
-/*===========================================================================*
- *                              ec_init                                      *
- *===========================================================================*/
-static void ec_init(ec)
-ether_card_t *ec;
-{
-   int r;
-#if VERBOSE
-   int i;
-#endif
-
-   /* General initialization */
-   ec->flags = ECF_EMPTY;
-   lance_init_card(ec); /* Get mac_address, etc ...*/
-
-   ec_confaddr(ec);
-
-#if VERBOSE
-   printf("%s: Ethernet address ", ec->port_name);
-   for (i= 0; i < 6; i++)
-      printf("%x%c", ec->mac_address.ea_addr[i],
-             i < 5 ? ':' : '\n');
-#endif
-
-   /* Finish the initialization */
-   ec->flags |= ECF_ENABLED;
-
-   /* Set the interrupt handler */
-   ec->ec_hook = ec->ec_irq;
-   if ((r=sys_irqsetpolicy(ec->ec_irq, 0, &ec->ec_hook)) != OK)
-      printf("lance: error, couldn't set IRQ policy: %d\n", r);
-
-   return;
-}
-
-
-/*===========================================================================*
- *                              reply                                        *
- *===========================================================================*/
-static void reply(ec)
-ether_card_t *ec;
-{
-   message reply;
-   int flags,r;
-
-   flags = DL_NOFLAGS;
-   if (ec->flags & ECF_PACK_SEND)
-      flags |= DL_PACK_SEND;
-   if (ec->flags & ECF_PACK_RECV)
-      flags |= DL_PACK_RECV;
-
-   reply.m_type   = DL_TASK_REPLY;
-   reply.m_netdrv_net_dl_task.flags = flags;
-   reply.m_netdrv_net_dl_task.count = ec->read_s;
-
-   r = ipc_send(ec->client, &reply);
-   if (r < 0)
-      panic("ipc_send failed: %d", r);
-
-   ec->read_s = 0;
-   ec->flags &= ~(ECF_PACK_SEND | ECF_PACK_RECV);
-}
-
-
-/*===========================================================================*
- *                              mess_reply                                   *
- *===========================================================================*/
-static void mess_reply(req, reply_mess)
-message *req;
-message *reply_mess;
-{
-   if (ipc_send(req->m_source, reply_mess) != OK)
-      panic("unable to mess_reply");
-}
-
 
 /*===========================================================================*
  *                              ec_confaddr                                  *
  *===========================================================================*/
-static void ec_confaddr(ec)
-ether_card_t *ec;
+static void ec_confaddr(ether_addr_t *addr)
 {
    int i;
    char eakey[16];
@@ -717,25 +263,68 @@ ether_card_t *ec;
 
    for (i = 0; i < 6; i++)
    {
-      v= ec->mac_address.ea_addr[i];
+      v= addr->ea_addr[i];
       if (env_parse(eakey, eafmt, i, &v, 0x00L, 0xFFL) != EP_SET)
          break;
-      ec->mac_address.ea_addr[i]= v;
+      addr->ea_addr[i]= v;
    }
-  
+
    if (i != 0 && i != 6)
    {
       /* It's all or nothing; force a panic. */
-      (void) env_parse(eakey, "?", 0, &v, 0L, 0L);
+      panic("invalid ethernet address supplied");
    }
 }
 
+/*===========================================================================*
+ *		                do_init                                      *
+ *===========================================================================*/
+static int do_init(unsigned int instance, ether_addr_t *addr)
+{
+/* Initialize the lance driver. */
+   ether_card_t *ec;
+#if VERBOSE
+   int i, r;
+#endif
+#if LANCE_FKEY
+   int fkeys, sfkeys;
+#endif
+
+#if LANCE_FKEY
+   fkeys = sfkeys = 0;
+   bit_set( sfkeys, 7 );
+   if ( (r = fkey_map(&fkeys, &sfkeys)) != OK )
+      printf("Warning: lance couldn't observe Shift+F7 key: %d\n",r);
+#endif
+
+   ec_instance = instance;
+
+   /* Initialize the driver state. */
+   ec= &ec_state;
+   memset(ec, 0, sizeof(*ec));
+   strlcpy(ec->port_name, "lance#0", sizeof(ec->port_name));
+   ec->port_name[6] += instance;
+
+   /* See if there is a matching card. */
+   if (!lance_probe(ec, instance))
+      return ENXIO;
+
+   /* Initialize the hardware. */
+   lance_init_hw(ec, addr);
+
+#if VERBOSE
+   printf("%s: Ethernet address ", ec->port_name);
+   for (i= 0; i < 6; i++)
+      printf("%x%c", addr->ea_addr[i], i < 5 ? ':' : '\n');
+#endif
+
+   return OK;
+}
 
 /*===========================================================================*
  *                              ec_reinit                                    *
  *===========================================================================*/
-static void ec_reinit(ec)
-ether_card_t *ec;
+static void ec_reinit(ether_card_t *ec)
 {
    int i;
    unsigned short ioaddr = ec->ec_port;
@@ -784,18 +373,39 @@ ether_card_t *ec;
 }
 
 /*===========================================================================*
- *                              ec_check_ints                                *
+ *                              do_mode                                      *
  *===========================================================================*/
-static void ec_check_ints(ec)
-ether_card_t *ec;
+static void do_mode(unsigned int mode)
 {
-   int must_restart = 0;
-   int check,status;
-   int isr = 0x0000;
-   unsigned short ioaddr = ec->ec_port;
+   ether_card_t *ec;
 
-   if (!(ec->flags & ECF_ENABLED))
-      panic("got premature interrupt");
+   ec = &ec_state;
+
+   ec->flags &= ~(ECF_PROMISC | ECF_MULTI | ECF_BROAD);
+
+   if (mode & NDEV_PROMISC)
+      ec->flags |= ECF_PROMISC | ECF_MULTI | ECF_BROAD;
+   if (mode & NDEV_MULTI)
+      ec->flags |= ECF_MULTI;
+   if (mode & NDEV_BROAD)
+      ec->flags |= ECF_BROAD;
+
+   ec_reinit(ec);
+}
+
+/*===========================================================================*
+ *                              do_intr                                      *
+ *===========================================================================*/
+static void do_intr(unsigned int __unused mask)
+{
+   ether_card_t *ec;
+   int must_restart = 0;
+   int r, check, status;
+   int isr = 0x0000;
+   unsigned short ioaddr;
+
+   ec = &ec_state;
+   ioaddr = ec->ec_port;
 
    for (;;)
    {
@@ -811,8 +421,6 @@ ether_card_t *ec;
       write_csr(ioaddr, LANCE_CSR0,
                 LANCE_CSR0_BABL|LANCE_CSR0_CERR|LANCE_CSR0_MISS|LANCE_CSR0_MERR
                 |LANCE_CSR0_IDON|LANCE_CSR0_IENA);
-
-#define ISR_RST  0x0000
 
       if ((isr & (LANCE_CSR0_TINT|LANCE_CSR0_RINT|LANCE_CSR0_MISS
                   |LANCE_CSR0_BABL|LANCE_CSR0_ERR)) == 0x0000)
@@ -847,18 +455,18 @@ ether_card_t *ec;
             /* status check: restart if needed. */
             status = lp->tx_ring[cur_tx_slot_nr].u.base;
 
-            /* ??? */
+            /* did an error (UFLO, LCOL, LCAR, RTRY) occur? */
             if (status & 0x40000000)
             {
                status = lp->tx_ring[cur_tx_slot_nr].misc;
                ec->eth_stat.ets_sendErr++;
-               if (status & 0x0400)
+               if (status & 0x0400) /* RTRY */
                   ec->eth_stat.ets_transAb++;
-               if (status & 0x0800)
+               if (status & 0x0800) /* LCAR */
                   ec->eth_stat.ets_carrSense++;
-               if (status & 0x1000)
+               if (status & 0x1000) /* LCOL */
                   ec->eth_stat.ets_OWC++;
-               if (status & 0x4000)
+               if (status & 0x4000) /* UFLO */
                {
                   ec->eth_stat.ets_fifoUnder++;
                   must_restart=1;
@@ -896,55 +504,43 @@ ether_card_t *ec;
          }
          /* we set a buffered message in the slot if it exists. */
          /* and transmit it, if needed. */
-         if (ec->flags & ECF_SEND_AVAIL)
-            ec_send(ec);
+         if (!must_restart)
+            netdriver_send();
       }
       if (isr & LANCE_CSR0_RINT)
       {
 #if VERBOSE
          printf("RX INT\n");
 #endif
-         ec_recv(ec);
+         netdriver_recv();
       }
 
-      if (isr & ISR_RST)
-      {
-         ec->flags = ECF_STOPPED;
-#if VERBOSE
-         printf("ISR_RST\n");
-#endif
-         break;
-      }
-
-      /* ??? cf. lance driver on linux */
       if (must_restart == 1)
       {
 #if VERBOSE
          printf("ETH: restarting...\n");
 #endif
-         /* stop */
-         write_csr(ioaddr, LANCE_CSR0, LANCE_CSR0_STOP);
-         /* start */
-         write_csr(ioaddr, LANCE_CSR0, LANCE_CSR0_STRT);
+
+         ec_reset(ec);
       }
    }
 
-   if ((ec->flags & (ECF_READING|ECF_STOPPED)) == (ECF_READING|ECF_STOPPED))
-   {
-#if VERBOSE
-      printf("ETH: resetting...\n");
-#endif
-      ec_reset(ec);
-   }
+   /* reenable interrupts */
+   if ((r = sys_irqenable(&ec->ec_hook)) != OK)
+      panic("couldn't enable interrupt: %d", r);
 }
 
 /*===========================================================================*
  *                              ec_reset                                     *
  *===========================================================================*/
-static void ec_reset(ec)
-ether_card_t *ec;
+static void ec_reset(ether_card_t *ec)
 {
-   /* Stop/start the chip, and clear all RX,TX-slots */
+   /* Stop/start the chip, and clear all RX,TX-slots.  The spec says this type
+    * of reset should be done on MERR, UFLO, and TX BUFF errors.  For now it is
+    * called only for UFLO and TX BUFF (which causes UFLO).  MERR is not (yet?)
+    * handled.  Also note that the PCnet spec says that the LANCE chip does not
+    * require resetting Rx/Tx, but PCnet does.  We intend to support both here.
+    */
    unsigned short ioaddr = ec->ec_port;
    int i;
 
@@ -969,185 +565,101 @@ ether_card_t *ec;
       lp->rx_ring[i].u.addr[3] |= 0x80;
    }
 
-   /* store a buffered message on the slot if exists */
-   ec_send(ec);
-   ec->flags &= ~ECF_STOPPED;
+   /* store a buffered message on the slot if it exists */
+   netdriver_send();
 }
 
 /*===========================================================================*
- *                              ec_send                                      *
+ *                              do_recv                                      *
  *===========================================================================*/
-static void ec_send(ec)
-ether_card_t *ec;
+static ssize_t do_recv(struct netdriver_data *data, size_t max)
 {
-   /* from ec_check_ints() or ec_reset(). */
-   /* this function proccesses the buffered message. (slot/transmit) */
-   if (!(ec->flags & ECF_SEND_AVAIL))
-      return;
-  
-   ec->flags &= ~ECF_SEND_AVAIL;
-   switch(ec->sendmsg.m_type)
-   {
-   case DL_WRITEV_S: do_vwrite_s(&ec->sendmsg, TRUE);        break;
-   default:
-      panic("wrong type: %d", ec->sendmsg.m_type);
-      break;
-   }
-}
-
-/*===========================================================================*
- *                              do_vread_s                                   *
- *===========================================================================*/
-static void do_vread_s(const message *mp)
-{
-   int count, r;
    ether_card_t *ec;
-
-   ec= &ec_state;
-
-   ec->client= mp->m_source;
-   count = mp->m_net_netdrv_dl_readv_s.count;
-
-   r = sys_safecopyfrom(mp->m_source, mp->m_net_netdrv_dl_readv_s.grant, 0,
-                        (vir_bytes)ec->read_iovec.iod_iovec,
-                        (count > IOVEC_NR ? IOVEC_NR : count) *
-                        sizeof(iovec_s_t));
-   if (r != OK)
-	panic("do_vread_s: sys_safecopyfrom failed: %d", r);
-   ec->read_iovec.iod_iovec_s    = count;
-   ec->read_iovec.iod_proc_nr    = mp->m_source;
-   ec->read_iovec.iod_grant = mp->m_net_netdrv_dl_readv_s.grant;
-   ec->read_iovec.iod_iovec_offset = 0;
-
-   ec->tmp_iovec = ec->read_iovec;
-
-   ec->flags |= ECF_READING;
-
-   ec_recv(ec);
-
-   if ((ec->flags & (ECF_READING|ECF_STOPPED)) == (ECF_READING|ECF_STOPPED))
-      ec_reset(ec);
-   reply(ec);
-}
-
-/*===========================================================================*
- *                              ec_recv                                      *
- *===========================================================================*/
-static void ec_recv(ec)
-ether_card_t *ec;
-{
    vir_bytes length;
    int packet_processed;
    int status;
-   unsigned short ioaddr = ec->ec_port;
+   unsigned short ioaddr;
 
-   if ((ec->flags & ECF_READING)==0)
-      return;
-   if (!(ec->flags & ECF_ENABLED))
-      return;
+   ec = &ec_state;
+   ioaddr = ec->ec_port;
 
    /* we check all the received slots until find a properly received packet */
    packet_processed = FALSE;
    while (!packet_processed)
    {
       status = lp->rx_ring[rx_slot_nr].u.base >> 24;
-      if ( (status & 0x80) == 0x00 )
+
+      /* is the slot marked as ready? */
+      if ( (status & 0x80) != 0x00 )
+         return SUSPEND; /* no */
+
+      /* did an error occur? */
+      if (status != 0x03)
       {
-         status = lp->rx_ring[rx_slot_nr].u.base >> 24;
-
-         /* ??? */
-         if (status != 0x03)
-         {
-            if (status & 0x01)
-               ec->eth_stat.ets_recvErr++;
-            if (status & 0x04)
-               ec->eth_stat.ets_fifoOver++;
-            if (status & 0x08)
-               ec->eth_stat.ets_CRCerr++;
-            if (status & 0x10)
-               ec->eth_stat.ets_OVW++;
-            if (status & 0x20)
-               ec->eth_stat.ets_frameAll++;
-            length = 0;
-         }
-         else
-         {
-            ec->eth_stat.ets_packetR++;
-            length = lp->rx_ring[rx_slot_nr].msg_length;
-         }
-         if (length > 0)
-         {
-            ec_nic2user(ec, (int)(lp->rbuf[rx_slot_nr]),
-                        &ec->read_iovec, 0, length);
-              
-            ec->read_s = length;
-            ec->flags |= ECF_PACK_RECV;
-            ec->flags &= ~ECF_READING;
-            packet_processed = TRUE;
-         }
-         /* set up this slot again, and we move to the next slot */
-         lp->rx_ring[rx_slot_nr].buf_length = -ETH_FRAME_LEN;
-         lp->rx_ring[rx_slot_nr].u.addr[3] |= 0x80;
-
-         write_csr(ioaddr, LANCE_CSR0,
-                   LANCE_CSR0_BABL|LANCE_CSR0_CERR|LANCE_CSR0_MISS
-                   |LANCE_CSR0_MERR|LANCE_CSR0_IDON|LANCE_CSR0_IENA);
-
-         rx_slot_nr = (rx_slot_nr + 1) & RX_RING_MOD_MASK;
+         if (status & 0x01)
+            ec->eth_stat.ets_recvErr++;
+         if (status & 0x04)
+            ec->eth_stat.ets_fifoOver++;
+         if (status & 0x08)
+            ec->eth_stat.ets_CRCerr++;
+         if (status & 0x10)
+             ec->eth_stat.ets_OVW++;
+         if (status & 0x20)
+             ec->eth_stat.ets_frameAll++;
+         length = 0;
       }
       else
-         break;
+      {
+         ec->eth_stat.ets_packetR++;
+         length = lp->rx_ring[rx_slot_nr].msg_length;
+      }
+
+      /* do we now have a valid packet? */
+      if (length > 0)
+      {
+	 if (length > max)
+	    length = max;
+         netdriver_copyout(data, 0, lp->rbuf[rx_slot_nr], length);
+         packet_processed = TRUE;
+      }
+
+      /* set up this slot again, and we move to the next slot */
+      lp->rx_ring[rx_slot_nr].buf_length = -ETH_FRAME_LEN;
+      lp->rx_ring[rx_slot_nr].u.addr[3] |= 0x80;
+
+      write_csr(ioaddr, LANCE_CSR0,
+                LANCE_CSR0_BABL|LANCE_CSR0_CERR|LANCE_CSR0_MISS
+                |LANCE_CSR0_MERR|LANCE_CSR0_IDON|LANCE_CSR0_IENA);
+
+      rx_slot_nr = (rx_slot_nr + 1) & RX_RING_MOD_MASK;
    }
+
+   /* return the length of the packet we have received */
+   return length;
 }
 
 /*===========================================================================*
- *                              do_vwrite_s                                  *
+ *                              do_send                                      *
  *===========================================================================*/
-static void do_vwrite_s(mp, from_int)
-message *mp;
-int from_int;
+static int do_send(struct netdriver_data *data, size_t size)
 {
-   int count, check, r;
+   int check;
    ether_card_t *ec;
    unsigned short ioaddr;
 
    ec = &ec_state;
 
-   ec->client= mp->m_source;
-   count = mp->m_net_netdrv_dl_writev_s.count;
-
+   /* if all slots are used, this request must be deferred */
    if (isstored[tx_slot_nr]==1)
-   {
-      /* all slots are used, so this message is buffered */
-      ec->sendmsg= *mp;
-      ec->flags |= ECF_SEND_AVAIL;
-      reply(ec);
-      return;
-   }
+      return SUSPEND;
 
-   /* convert the message to write_iovec */
-   r = sys_safecopyfrom(mp->m_source, mp->m_net_netdrv_dl_writev_s.grant, 0,
-                        (vir_bytes)ec->write_iovec.iod_iovec,
-                        (count > IOVEC_NR ? IOVEC_NR : count) *
-                        sizeof(iovec_s_t));
-   if (r != OK)
-	panic("do_vwrite_s: sys_safecopyfrom failed: %d", r);
-   ec->write_iovec.iod_iovec_s    = count;
-   ec->write_iovec.iod_proc_nr    = mp->m_source;
-   ec->write_iovec.iod_grant      = mp->m_net_netdrv_dl_writev_s.grant;
-   ec->write_iovec.iod_iovec_offset = 0;
+   /* copy the packet to the slot on DMA address */
+   netdriver_copyin(data, 0, lp->tbuf[tx_slot_nr], size);
 
-   ec->tmp_iovec = ec->write_iovec;
-   ec->write_s = calc_iovec_size(&ec->tmp_iovec);
-
-   /* copy write_iovec to the slot on DMA address */
-   ec_user2nic(ec, &ec->write_iovec, 0,
-               (int)(lp->tbuf[tx_slot_nr]), ec->write_s);
    /* set-up for transmitting, and transmit it if needed. */
-   lp->tx_ring[tx_slot_nr].buf_length = -ec->write_s;
+   lp->tx_ring[tx_slot_nr].buf_length = -size;
    lp->tx_ring[tx_slot_nr].misc = 0x0;
-   lp->tx_ring[tx_slot_nr].u.base
-      = virt_to_bus(lp->tbuf[tx_slot_nr]) & 0xffffff;
+   lp->tx_ring[tx_slot_nr].u.base = tx_ring_base[tx_slot_nr];
    isstored[tx_slot_nr]=1;
    if (cur_tx_slot_nr == tx_slot_nr)
       check=1;
@@ -1161,198 +673,44 @@ int from_int;
       lp->tx_ring[cur_tx_slot_nr].u.addr[3] = 0x83;
       write_csr(ioaddr, LANCE_CSR0, LANCE_CSR0_IENA|LANCE_CSR0_TDMD);
    }
-        
-   ec->flags |= ECF_PACK_SEND;
 
-   /* reply by calling do_int() if this function is called from interrupt. */
-   if (from_int)
-      return;
-   reply(ec);
-}
-
-
-/*===========================================================================*
- *                              ec_user2nic                                  *
- *===========================================================================*/
-static void ec_user2nic(ec, iovp, offset, nic_addr, count)
-ether_card_t *ec;
-iovec_dat_t *iovp;
-vir_bytes offset;
-int nic_addr;
-vir_bytes count;
-{
-   int bytes, i, r;
-
-   i= 0;
-   while (count > 0)
-   {
-      if (i >= IOVEC_NR)
-      {
-         ec_next_iovec(iovp);
-         i= 0;
-         continue;
-      }
-      if (offset >= iovp->iod_iovec[i].iov_size)
-      {
-         offset -= iovp->iod_iovec[i].iov_size;
-         i++;
-         continue;
-      }
-      bytes = iovp->iod_iovec[i].iov_size - offset;
-      if (bytes > count)
-         bytes = count;
-      
-      if ( (r=sys_safecopyfrom(iovp->iod_proc_nr,
-                               iovp->iod_iovec[i].iov_grant, offset,
-                               nic_addr, bytes )) != OK )
-         panic("ec_user2nic: sys_safecopyfrom failed: %d", r);
-
-      count -= bytes;
-      nic_addr += bytes;
-      offset += bytes;
-   }
+   return OK;
 }
 
 /*===========================================================================*
- *                              ec_nic2user                                  *
+ *                              do_stat                                      *
  *===========================================================================*/
-static void ec_nic2user(ec, nic_addr, iovp, offset, count)
-ether_card_t *ec;
-int nic_addr;
-iovec_dat_t *iovp;
-vir_bytes offset;
-vir_bytes count;
+static void do_stat(eth_stat_t *stat)
 {
-   int bytes, i, r;
 
-   i= 0;
-   while (count > 0)
-   {
-      if (i >= IOVEC_NR)
-      {
-         ec_next_iovec(iovp);
-         i= 0;
-         continue;
-      }
-      if (offset >= iovp->iod_iovec[i].iov_size)
-      {
-         offset -= iovp->iod_iovec[i].iov_size;
-         i++;
-         continue;
-      }
-      bytes = iovp->iod_iovec[i].iov_size - offset;
-      if (bytes > count)
-         bytes = count;
-      if ( (r=sys_safecopyto( iovp->iod_proc_nr, iovp->iod_iovec[i].iov_grant,
-                              offset, nic_addr, bytes )) != OK )
-         panic("ec_nic2user: sys_safecopyto failed: %d", r);
-      
-      count -= bytes;
-      nic_addr += bytes;
-      offset += bytes;
-   }
-}
-
-
-/*===========================================================================*
- *                              calc_iovec_size                              *
- *===========================================================================*/
-static int calc_iovec_size(iovec_dat_t *iovp)
-{
-   int size,i;
-
-   size = i = 0;
-        
-   while (i < iovp->iod_iovec_s)
-   {
-      if (i >= IOVEC_NR)
-      {
-         ec_next_iovec(iovp);
-         i= 0;
-         continue;
-      }
-      size += iovp->iod_iovec[i].iov_size;
-      i++;
-   }
-
-   return size;
+   memcpy(stat, &ec_state.eth_stat, sizeof(*stat));
 }
 
 /*===========================================================================*
- *                              ec_next_iovec                                *
+ *                              do_stop                                      *
  *===========================================================================*/
-static void ec_next_iovec(iovp)
-iovec_dat_t *iovp;
+static void do_stop(void)
 {
-   int r;
-
-   iovp->iod_iovec_s -= IOVEC_NR;
-   iovp->iod_iovec_offset += IOVEC_NR * sizeof(iovec_s_t);
-
-   r = sys_safecopyfrom(iovp->iod_proc_nr, iovp->iod_grant,
-                        iovp->iod_iovec_offset,
-                        (vir_bytes)iovp->iod_iovec,
-                        (iovp->iod_iovec_s > IOVEC_NR ?
-                         IOVEC_NR : iovp->iod_iovec_s) *
-                        sizeof(iovec_s_t));
-   if (r != OK)
-	panic("ec_next_iovec: sys_safecopyfrom failed: %d", r);
-}
-
-
-/*===========================================================================*
- *                              do_getstat_s                                 *
- *===========================================================================*/
-static void do_getstat_s(mp)
-message *mp;
-{
-   int r;
    ether_card_t *ec;
-
-   ec= &ec_state;
-
-   r = sys_safecopyto(mp->m_source, mp->m_net_netdrv_dl_getstat_s.grant, 0,
-                      (vir_bytes)&ec->eth_stat, sizeof(ec->eth_stat));
-
-   if (r != OK)
-	panic("do_getstat_s: sys_safecopyto failed: %d", r);
-
-   mp->m_type= DL_STAT_REPLY;
-   r= ipc_send(mp->m_source, mp);
-   if (r != OK)
-      panic("do_getstat_s: send failed: %d", r);
-}
-
-/*===========================================================================*
- *                              lance_stop                                   *
- *===========================================================================*/
-static void lance_stop(ec)
-ether_card_t *ec;
-{
    unsigned short ioaddr;
 
-   if (!(ec->flags & ECF_ENABLED))
-      return;
+   ec = &ec_state;
 
    ioaddr = ec->ec_port;
-  
+
    /* stop */
    write_csr(ioaddr, LANCE_CSR0, LANCE_CSR0_STOP);
 
    /* Reset */
    in_word(ioaddr+LANCE_RESET);
-
-   ec->flags = ECF_EMPTY;
 }
 
 /*===========================================================================*
- *                              getAddressing                                *
+ *                              get_addressing                               *
  *===========================================================================*/
-static void getAddressing(devind, ec)
-int devind;
-ether_card_t *ec;
+static void get_addressing(int devind, ether_card_t *ec)
 {
-   unsigned int      membase, ioaddr;
+   unsigned int ioaddr;
    int reg, irq;
 
    for (reg = PCI_BAR; reg <= PCI_BAR_6; reg += 4)
@@ -1363,31 +721,28 @@ ether_card_t *ec;
          continue;
       /* Strip the I/O address out of the returned value */
       ioaddr &= PCI_BAR_IO_MASK;
-      /* Get the memory base address */
-      membase = pci_attr_r32(devind, PCI_BAR_2);
-      /* KK: Get the IRQ number */
-      irq = pci_attr_r8(devind, PCI_IPR);
-      if (irq)
-         irq = pci_attr_r8(devind, PCI_ILR);
-
-      ec->ec_linmem = membase;
       ec->ec_port = ioaddr;
-      ec->ec_irq = irq;
    }
+
+   /* KK: Get the IRQ number */
+   irq = pci_attr_r8(devind, PCI_IPR);
+   if (irq)
+      irq = pci_attr_r8(devind, PCI_ILR);
+   ec->ec_irq = irq;
 }
 
 /*===========================================================================*
  *                              lance_probe                                  *
  *===========================================================================*/
-static int lance_probe(ec, skip)
-ether_card_t *ec;
-int skip;
+static int lance_probe(ether_card_t *ec, unsigned int skip)
 {
    unsigned short    pci_cmd;
    unsigned short    ioaddr;
    int               lance_version, chip_version;
    int devind, r;
    u16_t vid, did;
+
+   pci_init();
 
    r= pci_first_dev(&devind, &vid, &did);
    if (r == 0)
@@ -1402,8 +757,7 @@ int skip;
 
    pci_reserve(devind);
 
-   getAddressing(devind, ec);
-
+   get_addressing(devind, ec);
 
    /* ===== Bus Master ? ===== */
    pci_cmd = pci_attr_r32(devind, PCI_CR);
@@ -1420,7 +774,7 @@ int skip;
 
    if (read_csr(ioaddr, LANCE_CSR0) != LANCE_CSR0_STOP)
    {
-      ec->mode=EC_DISABLED;
+      return 0;
    }
 
    /* Probe Chip Version */
@@ -1434,7 +788,7 @@ int skip;
 
       if ((chip_version & 0xfff) != 0x3)
       {
-         ec->mode=EC_DISABLED;
+	 return 0;
       }
       chip_version = (chip_version >> 12) & 0xffff;
       for (lance_version = 1; chip_table[lance_version].id_number != 0;
@@ -1453,18 +807,38 @@ int skip;
 }
 
 /*===========================================================================*
- *                              lance_init_card                              *
+ *                              virt_to_bus                                  *
  *===========================================================================*/
-static void lance_init_card(ec)
-ether_card_t *ec;
+static phys_bytes virt_to_bus(void *ptr)
 {
-   int i;
-   Address l = (vir_bytes)lance_buf;
+   phys_bytes value;
+   int r;
+
+   if ((r = sys_umap(SELF, VM_D, (vir_bytes)ptr, 4, &value)) != OK)
+      panic("sys_umap failed: %d", r);
+
+   return value;
+}
+
+/*===========================================================================*
+ *                              lance_init_hw                                *
+ *===========================================================================*/
+static void lance_init_hw(ether_card_t *ec, ether_addr_t *addr)
+{
+   phys_bytes lance_buf_phys;
+   int i, r;
+   Address l;
    unsigned short ioaddr = ec->ec_port;
 
    /* ============= setup init_block(cf. lance_probe1) ================ */
    /* make sure data structure is 8-byte aligned and below 16MB (for DMA) */
 
+   /* Allocate memory */
+   if ((lance_buf = alloc_contig(LANCE_BUF_SIZE, AC_ALIGN4K|AC_LOWER16M,
+     &lance_buf_phys)) == NULL)
+      panic("alloc_contig failed: %d", LANCE_BUF_SIZE);
+
+   l = (vir_bytes)lance_buf;
    lp = (struct lance_interface *)l;
 
    /* disable Tx and Rx */
@@ -1485,7 +859,10 @@ ether_card_t *ec;
 
    /* ============= Get MAC address (cf. lance_probe1) ================ */
    for (i = 0; i < 6; ++i)
-      ec->mac_address.ea_addr[i]=in_byte(ioaddr+LANCE_ETH_ADDR+i);
+      addr->ea_addr[i]=in_byte(ioaddr+LANCE_ETH_ADDR+i);
+
+   /* Allow the user to override the hardware address. */
+   ec_confaddr(addr);
 
    /* ============ (re)start init_block(cf. lance_reset) =============== */
    /* Reset the LANCE */
@@ -1494,7 +871,7 @@ ether_card_t *ec;
    /* ----- Re-initialize the LANCE ----- */
    /* Set station address */
    for (i = 0; i < 6; ++i)
-      lp->init_block.phys_addr[i] = ec->mac_address.ea_addr[i];
+      lp->init_block.phys_addr[i] = addr->ea_addr[i];
    /* Preset the receive ring headers */
    for (i=0; i<RX_RING_SIZE; i++)
    {
@@ -1508,6 +885,7 @@ ether_card_t *ec;
    for (i=0; i<TX_RING_SIZE; i++)
    {
       lp->tx_ring[i].u.base = 0;
+      tx_ring_base[i] = virt_to_bus(lp->tbuf[i]) & 0xffffff;
       isstored[i] = 0;
    }
    /* enable Rx and Tx */
@@ -1553,11 +931,16 @@ ether_card_t *ec;
       }
    }
 
+   /* Set the interrupt handler */
+   ec->ec_hook = ec->ec_irq;
+   if ((r=sys_irqsetpolicy(ec->ec_irq, 0, &ec->ec_hook)) != OK)
+      panic("couldn't set IRQ policy: %d", r);
+   if ((r = sys_irqenable(&ec->ec_hook)) != OK)
+      panic("couldn't enable interrupt: %d", r);
+
    /* start && enable interrupt */
    write_csr(ioaddr, LANCE_CSR0,
              LANCE_CSR0_IDON|LANCE_CSR0_IENA|LANCE_CSR0_STRT);
-
-   return;
 }
 
 /*===========================================================================*
