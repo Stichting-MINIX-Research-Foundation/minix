@@ -1,3 +1,5 @@
+/* Code left here for historical purposes only. TODO: move into libnetdriver */
+
 #include "rtl8139.h"
 
 /* State management variables. */
