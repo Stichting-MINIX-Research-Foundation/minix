@@ -420,7 +420,7 @@ ipc_semop_out(struct trace_proc * proc, const message * m_out)
 	put_value(proc, "semid", "%d", m_out->m_lc_ipc_semop.id);
 	put_sembuf_array(proc, "sops", (vir_bytes)m_out->m_lc_ipc_semop.ops,
 	    m_out->m_lc_ipc_semop.size);
-	put_value(proc, "nsops", "%zu", m_out->m_lc_ipc_semop.size);
+	put_value(proc, "nsops", "%u", m_out->m_lc_ipc_semop.size);
 
 	return CT_DONE;
 }

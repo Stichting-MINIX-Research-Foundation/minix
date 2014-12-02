@@ -19,7 +19,7 @@ MINC_OBJS_UNPAGED= atoi.o \
 	strcmp.o strcpy.o strlen.o strncmp.o \
 	memcpy.o memmove.o memset.o \
 	udivdi3.o umoddi3.o qdivrem.o
-MINC_OBJS_UNPAGED+= __aeabi_ldiv0.o __aeabi_idiv0.o __aeabi_uldivmod.o divide.o divsi3.o udivsi3.o
+MINC_OBJS_UNPAGED+= __aeabi_ldiv0.o __aeabi_idiv0.o __aeabi_uldivmod.o divide.o divsi3.o udivsi3.o umodsi3.o
 atoi.o:		${NETBSDSRCDIR}/minix/lib/libminc/atoi.c
 printf.o:	${NETBSDSRCDIR}/sys/lib/libsa/printf.c
 subr_prf.o:	${NETBSDSRCDIR}/sys/lib/libsa/subr_prf.c
@@ -37,6 +37,7 @@ __aeabi_uldivmod.o:	${NETBSDSRCDIR}/common/lib/libc/arch/arm/quad/__aeabi_uldivm
 divide.o:	${NETBSDSRCDIR}/common/lib/libc/arch/arm/gen/divide.S
 divsi3.o:	${NETBSDSRCDIR}/common/lib/libc/arch/arm/gen/divsi3.S
 udivsi3.o:	${NETBSDSRCDIR}/common/lib/libc/arch/arm/gen/udivsi3.S
+umodsi3.o:	${NETBSDSRCDIR}/common/lib/libc/arch/arm/gen/umodsi3.S
 
 # the following is required by pre_init.c
 strncmp.o:	${NETBSDSRCDIR}/common/lib/libc/string/strncmp.c

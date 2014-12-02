@@ -303,4 +303,9 @@ CLEANFILES+= ${f:C/\.o/.bc/}
 ARCHSUBDIR=${MACHINE_CPU}
 .include "${NETBSDSRCDIR}/minix/lib/libc/arch/${MACHINE_CPU}/Makefile.inc"
 
+.if ${HAVE_LIBGCC} == "no"
+.include "${NETBSDSRCDIR}/lib/libc/compiler_rt/Makefile.inc"
+.include "${NETBSDSRCDIR}/sys/lib/libunwind/Makefile.inc"
+.endif
+
 .include <bsd.lib.mk>

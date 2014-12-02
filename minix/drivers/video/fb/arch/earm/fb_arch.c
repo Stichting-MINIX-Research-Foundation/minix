@@ -283,7 +283,7 @@ arch_put_varscreeninfo(int minor, struct fb_var_screeninfo *fbvsp)
 
 	/* For now we only allow to play with the yoffset setting */
 	if (fbvsp->yoffset != omap_fbvs[minor].yoffset) {
-		if (fbvsp->yoffset < 0 || fbvsp->yoffset > omap_fbvs[minor].yres) {
+		if (/* fbvsp->yoffset < 0 || */ fbvsp->yoffset > omap_fbvs[minor].yres) {
 			return EINVAL;
 		}
 

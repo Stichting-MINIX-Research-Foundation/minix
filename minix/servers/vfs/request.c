@@ -29,7 +29,7 @@
  *===========================================================================*/
 static int req_breadwrite_actual(endpoint_t fs_e, endpoint_t user_e, dev_t dev, off_t pos,
         unsigned int num_of_bytes, vir_bytes user_addr, int rw_flag,
-        off_t *new_pos, unsigned int *cum_iop, int cpflag)
+        off_t *new_pos, size_t *cum_iop, int cpflag)
 {
   int r;
   cp_grant_id_t grant_id;
@@ -61,7 +61,7 @@ static int req_breadwrite_actual(endpoint_t fs_e, endpoint_t user_e, dev_t dev, 
 
 int req_breadwrite(endpoint_t fs_e, endpoint_t user_e, dev_t dev, off_t pos,
         unsigned int num_of_bytes, vir_bytes user_addr, int rw_flag,
-        off_t *new_pos, unsigned int *cum_iop)
+        off_t *new_pos, size_t *cum_iop)
 {
 	int r;
 
@@ -870,7 +870,7 @@ static int req_readwrite_actual(endpoint_t fs_e, ino_t inode_nr, off_t pos,
  *===========================================================================*/
 int req_readwrite(endpoint_t fs_e, ino_t inode_nr, off_t pos,
 	int rw_flag, endpoint_t user_e, vir_bytes user_addr,
-	unsigned int num_of_bytes, off_t *new_posp, unsigned int *cum_iop)
+	unsigned int num_of_bytes, off_t *new_posp, size_t *cum_iop)
 {
 	int r;
 
