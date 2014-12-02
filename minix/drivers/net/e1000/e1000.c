@@ -2,13 +2,7 @@
 
 #include <minix/drivers.h>
 #include <minix/netdriver.h>
-#include <stdlib.h>
-#include <net/gen/ether.h>
-#include <net/gen/eth_io.h>
 #include <machine/pci.h>
-#include <minix/ds.h>
-#include <minix/vm.h>
-#include <minix/timers.h>
 #include <sys/mman.h>
 #include "assert.h"
 #include "e1000.h"
@@ -16,37 +10,34 @@
 #include "e1000_reg.h"
 #include "e1000_pci.h"
 
-static int e1000_instance;
-static e1000_t e1000_state;
-
-static void e1000_init(message *mp);
-static void e1000_init_pci(void);
+static int e1000_init(unsigned int instance, ether_addr_t *addr);
+static void e1000_stop(void);
+static int e1000_send(struct netdriver_data *data, size_t size);
+static ssize_t e1000_recv(struct netdriver_data *data, size_t max);
+static void e1000_stat(eth_stat_t *stat);
+static void e1000_intr(unsigned int mask);
 static int e1000_probe(e1000_t *e, int skip);
-static int e1000_init_hw(e1000_t *e);
-static void e1000_init_addr(e1000_t *e);
-static void e1000_init_buf(e1000_t *e);
-static void e1000_reset_hw(e1000_t *e);
-static void e1000_writev_s(message *mp, int from_int);
-static void e1000_readv_s(message *mp, int from_int);
-static void e1000_getstat_s(message *mp);
-static void e1000_interrupt(message *mp);
-static int e1000_link_changed(e1000_t *e);
-static void e1000_stop(e1000_t *e);
+static void e1000_init_hw(e1000_t *e, ether_addr_t *addr);
 static uint32_t e1000_reg_read(e1000_t *e, uint32_t reg);
 static void e1000_reg_write(e1000_t *e, uint32_t reg, uint32_t value);
 static void e1000_reg_set(e1000_t *e, uint32_t reg, uint32_t value);
 static void e1000_reg_unset(e1000_t *e, uint32_t reg, uint32_t value);
-static u16_t eeprom_eerd(void *e, int reg);
-static u16_t eeprom_ich(void *e, int reg);
+static u16_t eeprom_eerd(e1000_t *e, int reg);
+static u16_t eeprom_ich(e1000_t *e, int reg);
 static int eeprom_ich_init(e1000_t *e);
 static int eeprom_ich_cycle(e1000_t *e, u32_t timeout);
-static void reply(e1000_t *e);
-static void mess_reply(message *req, message *reply);
 
-/* SEF functions and variables. */
-static void sef_local_startup(void);
-static int sef_cb_init_fresh(int type, sef_init_info_t *info);
-static void sef_cb_signal_handler(int signo);
+static int e1000_instance;
+static e1000_t e1000_state;
+
+static const struct netdriver e1000_table = {
+	.ndr_init = e1000_init,
+	.ndr_stop = e1000_stop,
+	.ndr_recv = e1000_recv,
+	.ndr_send = e1000_send,
+	.ndr_stat = e1000_stat,
+	.ndr_intr = e1000_intr,
+};
 
 /*
  * The e1000 driver.
@@ -54,161 +45,86 @@ static void sef_cb_signal_handler(int signo);
 int
 main(int argc, char * argv[])
 {
-	message m;
-	int ipc_status;
-	int r;
 
-	/* SEF local startup. */
 	env_setargs(argc, argv);
-	sef_local_startup();
 
-	/*
-	 * Enter the main driver loop.
-	 */
-	while (TRUE) {
-		if ((r = netdriver_receive(ANY, &m, &ipc_status)) != OK)
-			panic("netdriver_receive failed: %d", r);
+	/* Let the netdriver library take control. */
+	netdriver_task(&e1000_table);
 
-		if (is_ipc_notify(ipc_status)) {
-			switch (_ENDPOINT_P(m.m_source)) {
-			case HARDWARE:
-				e1000_interrupt(&m);
-				break;
-			}
-
-			continue;
-		}
-
-		switch (m.m_type) {
-		case DL_WRITEV_S:	e1000_writev_s(&m, FALSE);	break;
-		case DL_READV_S:	e1000_readv_s(&m, FALSE);	break;
-		case DL_CONF:		e1000_init(&m);			break;
-		case DL_GETSTAT_S:	e1000_getstat_s(&m);		break;
-		default:		panic("illegal message: %d", m.m_type);
-		}
-	}
+	return 0;
 }
 
 /*
- * Perform SEF initialization.
- */
-static void
-sef_local_startup(void)
-{
-
-	/* Register init callbacks. */
-	sef_setcb_init_fresh(sef_cb_init_fresh);
-	sef_setcb_init_lu(sef_cb_init_fresh);
-	sef_setcb_init_restart(sef_cb_init_fresh);
-
-	/* Register live update callbacks. */
-	sef_setcb_lu_prepare(sef_cb_lu_prepare_always_ready);
-	sef_setcb_lu_state_isvalid(sef_cb_lu_state_isvalid_workfree);
-
-	/* Register signal callbacks. */
-	sef_setcb_signal_handler(sef_cb_signal_handler);
-
-	/* Let SEF perform startup. */
-	sef_startup();
-}
-
-/*
- * Initialize the e1000 driver.
+ * Initialize the e1000 driver and device.
  */
 static int
-sef_cb_init_fresh(int __unused type, sef_init_info_t * __unused info)
+e1000_init(unsigned int instance, ether_addr_t * addr)
 {
-	long v;
+	e1000_t *e;
 	int r;
 
-	v = 0;
-	(void)env_parse("instance", "d", 0, &v, 0, 255);
-	e1000_instance = (int) v;
+	e1000_instance = instance;
 
 	/* Clear state. */
 	memset(&e1000_state, 0, sizeof(e1000_state));
+
+	e = &e1000_state;
+	strlcpy(e->name, "e1000#0", sizeof(e->name));
+	e->name[6] += instance;
 
 	/* Perform calibration. */
 	if ((r = tsc_calibrate()) != OK)
 		panic("tsc_calibrate failed: %d", r);
 
-	/* Announce we are up! */
-	netdriver_announce();
+	/* See if we can find a matching device. */
+	if (!e1000_probe(e, instance))
+		return ENXIO;
+
+	/* Initialize the hardware, and return its ethernet address. */
+	e1000_init_hw(e, addr);
 
 	return OK;
 }
 
 /*
- * Process a signal.
+ * Map flash memory.  This step is optional.
  */
 static void
-sef_cb_signal_handler(int signo)
+e1000_map_flash(e1000_t * e, int devind, int did)
 {
-	e1000_t *e;
+	u32_t flash_addr, gfpreg, sector_base_addr;
+	size_t flash_size;
 
-	e = &e1000_state;
-
-	E1000_DEBUG(3, ("%s: got signal\n", e->name));
-
-	/* Only check for termination signal, ignore anything else. */
-	if (signo != SIGTERM) return;
-
-	e1000_stop(e);
-}
-
-/*
- * Process a configuration message from Inet.
- */
-static void
-e1000_init(message * mp)
-{
-	static int first_time = 1;
-	message reply_mess;
-	e1000_t *e;
-
-	E1000_DEBUG(3, ("e1000: init()\n"));
-
-	/* Configure PCI devices, if needed. */
-	if (first_time) {
-		first_time = 0;
-		e1000_init_pci();
-	}
-
-	e = &e1000_state;
-
-	/* Initialize hardware, if needed. */
-	if (!(e->status & E1000_ENABLED) && !(e1000_init_hw(e))) {
-		reply_mess.m_type = DL_CONF_REPLY;
-		reply_mess.m_netdrv_net_dl_conf.stat = ENXIO;
-		mess_reply(mp, &reply_mess);
+	/* The flash memory is pointed to by BAR2.  It may not be present. */
+	if ((flash_addr = pci_attr_r32(devind, PCI_BAR_2)) == 0)
 		return;
+
+	/* The default flash size. */
+	flash_size = 0x10000;
+
+	switch (did) {
+	case E1000_DEV_ID_82540EM:
+	case E1000_DEV_ID_82545EM:
+	case E1000_DEV_ID_82540EP:
+		return; /* don't even try */
+
+	/* 82566/82567/82562V series support mapping 4kB of flash memory. */
+	case E1000_DEV_ID_ICH10_D_BM_LM:
+	case E1000_DEV_ID_ICH10_R_BM_LF:
+		flash_size = 0x1000;
+		break;
 	}
 
-	/* Reply back to INET. */
-	reply_mess.m_type = DL_CONF_REPLY;
-	reply_mess.m_netdrv_net_dl_conf.stat = OK;
-	memcpy(reply_mess.m_netdrv_net_dl_conf.hw_addr, e->address.ea_addr,
-	    sizeof(reply_mess.m_netdrv_net_dl_conf.hw_addr));
-	mess_reply(mp, &reply_mess);
-}
+	e->flash = vm_map_phys(SELF, (void *)flash_addr, flash_size);
+	if (e->flash == MAP_FAILED)
+		panic("e1000: couldn't map in flash");
 
-/*
- * Find a matching PCI device.
- */
-static void
-e1000_init_pci(void)
-{
-	e1000_t *e;
+	/* sector_base_addr is a "sector"-aligned address (4096 bytes). */
+	gfpreg = E1000_READ_FLASH_REG(e, ICH_FLASH_GFPREG);
+	sector_base_addr = gfpreg & FLASH_GFPREG_BASE_MASK;
 
-	/* Initialize the PCI bus. */
-	pci_init();
-
-	/* Try to detect e1000 cards. */
-	e = &e1000_state;
-	strlcpy(e->name, "e1000#0", sizeof(e->name));
-	e->name[6] += e1000_instance;
-
-	e1000_probe(e, e1000_instance);
+	/* flash_base_addr is byte-aligned. */
+	e->flash_base_addr = sector_base_addr << FLASH_SECTOR_ADDR_SHIFT;
 }
 
 /*
@@ -219,13 +135,14 @@ e1000_probe(e1000_t * e, int skip)
 {
 	int r, devind, ioflag;
 	u16_t vid, did, cr;
-	u32_t status[2];
+	u32_t status;
 	u32_t base, size;
-	size_t flash_size;
-	u32_t gfpreg, sector_base_addr;
 	char *dname;
 
 	E1000_DEBUG(3, ("%s: probe()\n", e->name));
+
+	/* Initialize communication to the PCI driver. */
+	pci_init();
 
 	/* Attempt to iterate the PCI bus. Start at the beginning. */
 	if ((r = pci_first_dev(&devind, &vid, &did)) == 0)
@@ -241,7 +158,6 @@ e1000_probe(e1000_t * e, int skip)
 	}
 
 	/* We found a matching card.  Set card-specific properties. */
-	e->status |= E1000_DETECTED;
 	e->eeprom_read = eeprom_eerd;
 
 	switch (did) {
@@ -265,12 +181,11 @@ e1000_probe(e1000_t * e, int skip)
 	/* Inform the user about the new card. */
 	if (!(dname = pci_dev_name(vid, did)))
 		dname = "Intel Pro/1000 Gigabit Ethernet Card";
-	E1000_DEBUG(1, ("%s: %s (%04x/%04x/%02x) at %s\n",
-	    e->name, dname, vid, did, e->revision, pci_slot_name(devind)));
+	E1000_DEBUG(1, ("%s: %s (%04x/%04x) at %s\n",
+	    e->name, dname, vid, did, pci_slot_name(devind)));
 
 	/* Reserve PCI resources found. */
-	if ((r = pci_reserve_ok(devind)) != OK)
-		panic("failed to reserve PCI device: %d", r);
+	pci_reserve(devind);
 
 	/* Read PCI configuration. */
 	e->irq = pci_attr_r8(devind, PCI_ILR);
@@ -289,55 +204,152 @@ e1000_probe(e1000_t * e, int skip)
 		pci_attr_w16(devind, PCI_CR, cr | PCI_CR_MAST_EN);
 
 	/* Optionally map flash memory. */
-	if (did != E1000_DEV_ID_82540EM && did != E1000_DEV_ID_82545EM &&
-	    did != E1000_DEV_ID_82540EP && pci_attr_r32(devind, PCI_BAR_2)) {
-		/*
-		 * 82566/82567/82562V series support mapping 4kB of flash
-		 * memory.
-		 */
-		switch (did) {
-		case E1000_DEV_ID_ICH10_D_BM_LM:
-		case E1000_DEV_ID_ICH10_R_BM_LF:
-			flash_size = 0x1000;
-			break;
-		default:
-			flash_size = 0x10000;
-		}
-
-		if ((e->flash = vm_map_phys(SELF,
-		    (void *)pci_attr_r32(devind, PCI_BAR_2),
-		    flash_size)) == MAP_FAILED)
-			panic("e1000: couldn't map in flash");
-
-		/*
-		 * sector_base_addr is a "sector"-aligned address (4096 bytes)
-		 */
-		gfpreg = E1000_READ_FLASH_REG(e, ICH_FLASH_GFPREG);
-		sector_base_addr = gfpreg & FLASH_GFPREG_BASE_MASK;
-
-		/* flash_base_addr is byte-aligned */
-		e->flash_base_addr =
-		    sector_base_addr << FLASH_SECTOR_ADDR_SHIFT;
-	}
+	e1000_map_flash(e, devind, did);
 
 	/* Output debug information. */
-	status[0] = e1000_reg_read(e, E1000_REG_STATUS);
+	status = e1000_reg_read(e, E1000_REG_STATUS);
 	E1000_DEBUG(3, ("%s: MEM at %p, IRQ %d\n", e->name, e->regs, e->irq));
 	E1000_DEBUG(3, ("%s: link %s, %s duplex\n", e->name,
-	    status[0] & 3 ? "up"   : "down", status[0] & 1 ? "full" : "half"));
+	    status & 3 ? "up"   : "down", status & 1 ? "full" : "half"));
 
 	return TRUE;
 }
 
 /*
- * Initialize the hardware.
+ * Reset the card.
  */
-static int
-e1000_init_hw(e1000_t * e)
+static void
+e1000_reset_hw(e1000_t * e)
+{
+
+	/* Assert a Device Reset signal. */
+	e1000_reg_set(e, E1000_REG_CTRL, E1000_REG_CTRL_RST);
+
+	/* Wait one microsecond. */
+	tickdelay(1);
+}
+
+/*
+ * Initialize and return the card's ethernet address.
+ */
+static void
+e1000_init_addr(e1000_t * e, ether_addr_t * addr)
+{
+	static char eakey[] = E1000_ENVVAR "#_EA";
+	static char eafmt[] = "x:x:x:x:x:x";
+	u16_t word;
+	int i;
+	long v;
+
+	/* Do we have a user defined ethernet address? */
+	eakey[sizeof(E1000_ENVVAR)-1] = '0' + e1000_instance;
+
+	for (i = 0; i < 6; i++) {
+		if (env_parse(eakey, eafmt, i, &v, 0x00L, 0xFFL) != EP_SET)
+			break;
+		else
+			addr->ea_addr[i] = v;
+	}
+
+	/* If that fails, read Ethernet Address from EEPROM. */
+	if (i != 6) {
+		for (i = 0; i < 3; i++) {
+			word = e->eeprom_read(e, i);
+			addr->ea_addr[i * 2]     = (word & 0x00ff);
+			addr->ea_addr[i * 2 + 1] = (word & 0xff00) >> 8;
+		}
+	}
+
+	/* Set Receive Address. */
+	e1000_reg_write(e, E1000_REG_RAL, *(u32_t *)(&addr->ea_addr[0]));
+	e1000_reg_write(e, E1000_REG_RAH, *(u16_t *)(&addr->ea_addr[4]));
+	e1000_reg_set(e, E1000_REG_RAH, E1000_REG_RAH_AV);
+	e1000_reg_set(e, E1000_REG_RCTL, E1000_REG_RCTL_MPE);
+
+	E1000_DEBUG(3, ("%s: Ethernet Address %x:%x:%x:%x:%x:%x\n", e->name,
+	    addr->ea_addr[0], addr->ea_addr[1], addr->ea_addr[2],
+	    addr->ea_addr[3], addr->ea_addr[4], addr->ea_addr[5]));
+}
+
+/*
+ * Initialize receive and transmit buffers.
+ */
+static void
+e1000_init_buf(e1000_t * e)
+{
+	phys_bytes rx_desc_p, rx_buff_p;
+	phys_bytes tx_desc_p, tx_buff_p;
+	int i;
+
+	/* Number of descriptors. */
+	e->rx_desc_count = E1000_RXDESC_NR;
+	e->tx_desc_count = E1000_TXDESC_NR;
+
+	/* Allocate receive descriptors. */
+	if ((e->rx_desc = alloc_contig(sizeof(e1000_rx_desc_t) *
+	    e->rx_desc_count, AC_ALIGN4K, &rx_desc_p)) == NULL)
+		panic("failed to allocate RX descriptors");
+
+	memset(e->rx_desc, 0, sizeof(e1000_rx_desc_t) * e->rx_desc_count);
+
+	/* Allocate receive buffers. */
+	e->rx_buffer_size = E1000_RXDESC_NR * E1000_IOBUF_SIZE;
+
+	if ((e->rx_buffer = alloc_contig(e->rx_buffer_size, AC_ALIGN4K,
+	    &rx_buff_p)) == NULL)
+		panic("failed to allocate RX buffers");
+
+	/* Set up receive descriptors. */
+	for (i = 0; i < E1000_RXDESC_NR; i++)
+		e->rx_desc[i].buffer = rx_buff_p + i * E1000_IOBUF_SIZE;
+
+	/* Allocate transmit descriptors. */
+	if ((e->tx_desc = alloc_contig(sizeof(e1000_tx_desc_t) *
+	    e->tx_desc_count, AC_ALIGN4K, &tx_desc_p)) == NULL)
+		panic("failed to allocate TX descriptors");
+
+	memset(e->tx_desc, 0, sizeof(e1000_tx_desc_t) * e->tx_desc_count);
+
+	/* Allocate transmit buffers. */
+	e->tx_buffer_size = E1000_TXDESC_NR * E1000_IOBUF_SIZE;
+
+	if ((e->tx_buffer = alloc_contig(e->tx_buffer_size, AC_ALIGN4K,
+	    &tx_buff_p)) == NULL)
+		panic("failed to allocate TX buffers");
+
+	/* Set up transmit descriptors. */
+	for (i = 0; i < E1000_TXDESC_NR; i++)
+		e->tx_desc[i].buffer = tx_buff_p + i * E1000_IOBUF_SIZE;
+
+	/* Set up the receive ring registers. */
+	e1000_reg_write(e, E1000_REG_RDBAL, rx_desc_p);
+	e1000_reg_write(e, E1000_REG_RDBAH, 0);
+	e1000_reg_write(e, E1000_REG_RDLEN,
+	    e->rx_desc_count * sizeof(e1000_rx_desc_t));
+	e1000_reg_write(e, E1000_REG_RDH, 0);
+	e1000_reg_write(e, E1000_REG_RDT, e->rx_desc_count - 1);
+	e1000_reg_unset(e, E1000_REG_RCTL, E1000_REG_RCTL_BSIZE);
+	e1000_reg_set(e, E1000_REG_RCTL, E1000_REG_RCTL_EN);
+
+	/* Set up the transmit ring registers. */
+	e1000_reg_write(e, E1000_REG_TDBAL, tx_desc_p);
+	e1000_reg_write(e, E1000_REG_TDBAH, 0);
+	e1000_reg_write(e, E1000_REG_TDLEN,
+	    e->tx_desc_count * sizeof(e1000_tx_desc_t));
+	e1000_reg_write(e, E1000_REG_TDH, 0);
+	e1000_reg_write(e, E1000_REG_TDT, 0);
+	e1000_reg_set(e, E1000_REG_TCTL,
+	    E1000_REG_TCTL_EN | E1000_REG_TCTL_PSP);
+}
+
+/*
+ * Initialize the hardware.  Return the ethernet address.
+ */
+static void
+e1000_init_hw(e1000_t * e, ether_addr_t * addr)
 {
 	int r, i;
 
-	e->status |= E1000_ENABLED;
 	e->irq_hook = e->irq;
 
 	/*
@@ -370,371 +382,169 @@ e1000_init_hw(e1000_t * e)
 
 	/* Clear Multicast Table Array (MTA). */
 	for (i = 0; i < 128; i++)
-		e1000_reg_write(e, E1000_REG_MTA + i, 0);
+		e1000_reg_write(e, E1000_REG_MTA + i * 4, 0);
 
 	/* Initialize statistics registers. */
 	for (i = 0; i < 64; i++)
-		e1000_reg_write(e, E1000_REG_CRCERRS + (i * 4), 0);
+		e1000_reg_write(e, E1000_REG_CRCERRS + i * 4, 0);
 
 	/* Acquire MAC address and set up RX/TX buffers. */
-	e1000_init_addr(e);
+	e1000_init_addr(e, addr);
 	e1000_init_buf(e);
 
 	/* Enable interrupts. */
 	e1000_reg_set(e, E1000_REG_IMS, E1000_REG_IMS_LSC | E1000_REG_IMS_RXO |
 	    E1000_REG_IMS_RXT | E1000_REG_IMS_TXQE | E1000_REG_IMS_TXDW);
-	return TRUE;
-}
-
-/*
- * Initialize the card's ethernet address.
- */
-static void
-e1000_init_addr(e1000_t * e)
-{
-	static char eakey[] = E1000_ENVVAR "#_EA";
-	static char eafmt[] = "x:x:x:x:x:x";
-	u16_t word;
-	int i;
-	long v;
-
-	/* Do we have a user defined ethernet address? */
-	eakey[sizeof(E1000_ENVVAR)-1] = '0' + e1000_instance;
-
-	for (i = 0; i < 6; i++) {
-		if (env_parse(eakey, eafmt, i, &v, 0x00L, 0xFFL) != EP_SET)
-			break;
-		else
-			e->address.ea_addr[i] = v;
-	}
-
-	/* If that fails, read Ethernet Address from EEPROM. */
-	if (i != 6) {
-		for (i = 0; i < 3; i++) {
-			word = e->eeprom_read(e, i);
-			e->address.ea_addr[(i * 2)]     = (word & 0x00ff);
-			e->address.ea_addr[(i * 2) + 1] = (word & 0xff00) >> 8;
-		}
-	}
-
-	/* Set Receive Address. */
-	e1000_reg_write(e, E1000_REG_RAL, *(u32_t *)(&e->address.ea_addr[0]));
-	e1000_reg_write(e, E1000_REG_RAH, *(u16_t *)(&e->address.ea_addr[4]));
-	e1000_reg_set(e, E1000_REG_RAH, E1000_REG_RAH_AV);
-	e1000_reg_set(e, E1000_REG_RCTL, E1000_REG_RCTL_MPE);
-
-	E1000_DEBUG(3, ("%s: Ethernet Address %x:%x:%x:%x:%x:%x\n", e->name,
-	    e->address.ea_addr[0], e->address.ea_addr[1],
-	    e->address.ea_addr[2], e->address.ea_addr[3],
-	    e->address.ea_addr[4], e->address.ea_addr[5]));
-}
-
-/*
- * Initialize receive and transmit buffers.
- */
-static void
-e1000_init_buf(e1000_t * e)
-{
-	phys_bytes rx_buff_p;
-	phys_bytes tx_buff_p;
-	int i;
-
-	/* Number of descriptors. */
-	e->rx_desc_count = E1000_RXDESC_NR;
-	e->tx_desc_count = E1000_TXDESC_NR;
-
-	/* Allocate the receive descriptors. */
-	if (!e->rx_desc) {
-		if ((e->rx_desc = alloc_contig(sizeof(e1000_rx_desc_t) *
-		    e->rx_desc_count, AC_ALIGN4K, &e->rx_desc_p)) == NULL)
-			panic("failed to allocate RX descriptors");
-
-		memset(e->rx_desc, 0,
-		    sizeof(e1000_rx_desc_t) * e->rx_desc_count);
-
-		e->rx_buffer_size = E1000_RXDESC_NR * E1000_IOBUF_SIZE;
-
-		/* Allocate receive buffers. */
-		if ((e->rx_buffer = alloc_contig(e->rx_buffer_size, AC_ALIGN4K,
-		    &rx_buff_p)) == NULL)
-			panic("failed to allocate RX buffers");
-
-		/* Set up receive descriptors. */
-		for (i = 0; i < E1000_RXDESC_NR; i++)
-			e->rx_desc[i].buffer = rx_buff_p +
-			    (i * E1000_IOBUF_SIZE);
-	}
-
-	/* Allocate transmit descriptors. */
-	if (!e->tx_desc) {
-		if ((e->tx_desc = alloc_contig(sizeof(e1000_tx_desc_t) *
-		    e->tx_desc_count, AC_ALIGN4K, &e->tx_desc_p)) == NULL)
-				panic("failed to allocate TX descriptors");
-
-		memset(e->tx_desc, 0,
-		    sizeof(e1000_tx_desc_t) * e->tx_desc_count);
-
-		/* Allocate transmit buffers. */
-		e->tx_buffer_size = E1000_TXDESC_NR * E1000_IOBUF_SIZE;
-
-		/* Attempt to allocate. */
-		if ((e->tx_buffer = alloc_contig(e->tx_buffer_size, AC_ALIGN4K,
-		    &tx_buff_p)) == NULL)
-			panic("failed to allocate TX buffers");
-
-		/* Set up transmit descriptors. */
-		for (i = 0; i < E1000_TXDESC_NR; i++)
-			e->tx_desc[i].buffer = tx_buff_p +
-			    (i * E1000_IOBUF_SIZE);
-	}
-
-	/* Set up the receive ring registers. */
-	e1000_reg_write(e, E1000_REG_RDBAL, e->rx_desc_p);
-	e1000_reg_write(e, E1000_REG_RDBAH, 0);
-	e1000_reg_write(e, E1000_REG_RDLEN,
-	    e->rx_desc_count * sizeof(e1000_rx_desc_t));
-	e1000_reg_write(e, E1000_REG_RDH, 0);
-	e1000_reg_write(e, E1000_REG_RDT, e->rx_desc_count - 1);
-	e1000_reg_unset(e, E1000_REG_RCTL, E1000_REG_RCTL_BSIZE);
-	e1000_reg_set(e, E1000_REG_RCTL, E1000_REG_RCTL_EN);
-
-	/* Set up the transmit ring registers. */
-	e1000_reg_write(e, E1000_REG_TDBAL, e->tx_desc_p);
-	e1000_reg_write(e, E1000_REG_TDBAH, 0);
-	e1000_reg_write(e, E1000_REG_TDLEN,
-	    e->tx_desc_count * sizeof(e1000_tx_desc_t));
-	e1000_reg_write(e, E1000_REG_TDH, 0);
-	e1000_reg_write(e, E1000_REG_TDT, 0);
-	e1000_reg_set(e, E1000_REG_TCTL,
-	    E1000_REG_TCTL_EN | E1000_REG_TCTL_PSP);
-}
-
-/*
- * Reset the card.
- */
-static void
-e1000_reset_hw(e1000_t * e)
-{
-
-	/* Assert a Device Reset signal. */
-	e1000_reg_set(e, E1000_REG_CTRL, E1000_REG_CTRL_RST);
-
-	/* Wait one microsecond. */
-	tickdelay(1);
 }
 
 /*
  * Try to send a packet.
  */
-static void
-e1000_writev_s(message * mp, int from_int)
+static int
+e1000_send(struct netdriver_data * data, size_t size)
 {
-	e1000_t *e = &e1000_state;
+	e1000_t *e;
 	e1000_tx_desc_t *desc;
-	iovec_s_t iovec[E1000_IOVEC_NR];
-	int r, head, tail, i, bytes = 0, size;
+	unsigned int head, tail, next;
+	char *ptr;
 
-	E1000_DEBUG(3, ("e1000: writev_s(%p,%d)\n", mp, from_int));
+	e = &e1000_state;
 
-	/* Are we called from the interrupt handler? */
-	if (!from_int) {
-		/* We cannot write twice simultaneously.
-		assert(!(e->status & E1000_WRITING)); */
+	if (size > E1000_IOBUF_SIZE)
+		panic("packet too large to send");
 
-		/* Copy write message. */
-		e->tx_message = *mp;
-		e->client = mp->m_source;
-		e->status |= E1000_WRITING;
+	/*
+	 * The queue tail must not advance to the point that it is equal to the
+	 * queue head, since this condition indicates that the queue is empty.
+	 */
+	head = e1000_reg_read(e, E1000_REG_TDH);
+	tail = e1000_reg_read(e, E1000_REG_TDT);
+	next = (tail + 1) % e->tx_desc_count;
 
-		/* Must be a sane vector count. */
-		assert(e->tx_message.m_net_netdrv_dl_writev_s.count > 0);
-		assert(e->tx_message.m_net_netdrv_dl_writev_s.count <
-		    E1000_IOVEC_NR);
+	if (next == head)
+		return SUSPEND;
 
-		/*
-		 * Copy the I/O vector table.
-		 */
-		if ((r = sys_safecopyfrom(e->tx_message.m_source,
-		    e->tx_message.m_net_netdrv_dl_writev_s.grant, 0,
-		    (vir_bytes)iovec,
-		    e->tx_message.m_net_netdrv_dl_writev_s.count *
-		    sizeof(iovec_s_t))) != OK)
-			panic("sys_safecopyfrom() failed: %d", r);
+	/* The descriptor to use is the one pointed to by the current tail. */
+	desc = &e->tx_desc[tail];
 
-		/* Find the head, tail and current descriptors. */
-		head =  e1000_reg_read(e, E1000_REG_TDH);
-		tail =  e1000_reg_read(e, E1000_REG_TDT);
-		desc = &e->tx_desc[tail];
+	/* Copy the packet from the caller. */
+	ptr = e->tx_buffer + tail * E1000_IOBUF_SIZE;
 
-		E1000_DEBUG(4, ("%s: head=%d, tail=%d\n",
-		    e->name, head, tail));
+	netdriver_copyin(data, 0, ptr, size);
 
-		/* Loop vector elements. */
-		for (i = 0; i < e->tx_message.m_net_netdrv_dl_writev_s.count;
-		    i++)
-		{
-			size = iovec[i].iov_size < (E1000_IOBUF_SIZE - bytes) ?
-			    iovec[i].iov_size : (E1000_IOBUF_SIZE - bytes);
+	/* Mark this descriptor ready. */
+	desc->status = 0;
+	desc->length = size;
+	desc->command = E1000_TX_CMD_EOP | E1000_TX_CMD_FCS | E1000_TX_CMD_RS;
 
-			E1000_DEBUG(4, ("iovec[%d] = %d\n", i, size));
+	/* Increment tail.  Start transmission. */
+	e1000_reg_write(e, E1000_REG_TDT, next);
 
-			/* Copy bytes to TX queue buffers. */
-			if ((r = sys_safecopyfrom(e->tx_message.m_source,
-			    iovec[i].iov_grant, 0, (vir_bytes) e->tx_buffer +
-			    (tail * E1000_IOBUF_SIZE), size)) != OK)
-				panic("sys_safecopyfrom() failed: %d", r);
-
-			/* Mark this descriptor ready. */
-			desc->status  = 0;
-			desc->command = 0;
-			desc->length  = size;
-
-			/* Marks End-of-Packet. */
-			if (i ==
-			    e->tx_message.m_net_netdrv_dl_writev_s.count - 1) {
-				desc->command = E1000_TX_CMD_EOP |
-				    E1000_TX_CMD_FCS | E1000_TX_CMD_RS;
-			}
-			/* Move to next descriptor. */
-			tail = (tail + 1) % e->tx_desc_count;
-			bytes +=  size;
-			desc = &e->tx_desc[tail];
-		}
-
-		/* Increment tail.  Start transmission. */
-		e1000_reg_write(e, E1000_REG_TDT,  tail);
-
-		E1000_DEBUG(2, ("e1000: wrote %d byte packet\n", bytes));
-	} else
-		e->status |= E1000_TRANSMIT;
-	reply(e);
+	return OK;
 }
 
 /*
  * Try to receive a packet.
  */
-static void
-e1000_readv_s(message * mp, int from_int)
+static ssize_t
+e1000_recv(struct netdriver_data * data, size_t max)
 {
-	e1000_t *e = &e1000_state;
+	e1000_t *e;
 	e1000_rx_desc_t *desc;
-	iovec_s_t iovec[E1000_IOVEC_NR];
-	int i, r, head, tail, cur, bytes = 0, size;
+	unsigned int head, tail, cur;
+	char *ptr;
+	size_t size;
 
-	E1000_DEBUG(3, ("e1000: readv_s(%p,%d)\n", mp, from_int));
+	e = &e1000_state;
 
-	/* Are we called from the interrupt handler? */
-	if (!from_int) {
-		e->rx_message = *mp;
-		e->client = mp->m_source;
-		e->status |= E1000_READING;
-		e->rx_size = 0;
+	/* If the queue head and tail are equal, the queue is empty. */
+	head = e1000_reg_read(e, E1000_REG_RDH);
+	tail = e1000_reg_read(e, E1000_REG_RDT);
 
-		assert(e->rx_message.m_net_netdrv_dl_readv_s.count > 0);
-		assert(e->rx_message.m_net_netdrv_dl_readv_s.count <
-		    E1000_IOVEC_NR);
-	}
+	E1000_DEBUG(4, ("%s: head=%u, tail=%u\n", e->name, head, tail));
 
-	if (e->status & E1000_READING) {
-		/*
-		 * Copy the I/O vector table first.
-		 */
-		if ((r = sys_safecopyfrom(e->rx_message.m_source,
-		    e->rx_message.m_net_netdrv_dl_readv_s.grant, 0,
-		    (vir_bytes)iovec,
-		    e->rx_message.m_net_netdrv_dl_readv_s.count *
-		    sizeof(iovec_s_t))) != OK)
-			panic("sys_safecopyfrom() failed: %d", r);
+	if (head == tail)
+		return SUSPEND;
 
-		/* Find the head, tail and current descriptors. */
-		head = e1000_reg_read(e, E1000_REG_RDH);
-		tail = e1000_reg_read(e, E1000_REG_RDT);
-		cur  = (tail + 1) % e->rx_desc_count;
-		desc = &e->rx_desc[cur];
+	/* Has a packet been received? */
+	cur = (tail + 1) % e->rx_desc_count;
+	desc = &e->rx_desc[cur];
 
-		/*
-		 * Only handle one packet at a time.
-		 */
-		if (!(desc->status & E1000_RX_STATUS_EOP)) {
-			reply(e);
-			return;
-		}
-		E1000_DEBUG(4, ("%s: head=%x, tail=%d\n",
-		    e->name, head, tail));
+	if (!(desc->status & E1000_RX_STATUS_DONE))
+		return SUSPEND;
 
-		/*
-		 * Copy to vector elements.
-		 */
-		for (i = 0; i < e->rx_message.m_net_netdrv_dl_readv_s.count &&
-		    bytes < desc->length; i++) {
-			size = iovec[i].iov_size < (desc->length - bytes) ?
-			    iovec[i].iov_size : (desc->length - bytes);
+	/*
+	 * HACK: we expect all packets to fit in a single receive buffer.
+	 * Eventually, some sort of support to deal with packets spanning
+	 * multiple receive descriptors should be added.  For now, we panic,
+	 * so that we can continue after the restart; this is already an
+	 * improvement over freezing (the old behavior of this driver).
+	 */
+	size = desc->length;
 
-			E1000_DEBUG(4, ("iovec[%d] = %lu[%d]\n",
-			    i, iovec[i].iov_size, size));
+	if (!(desc->status & E1000_RX_STATUS_EOP))
+		panic("received packet too large");
 
-			if ((r = sys_safecopyto(e->rx_message.m_source,
-			    iovec[i].iov_grant, 0, (vir_bytes)e->rx_buffer +
-			    bytes + (cur * E1000_IOBUF_SIZE), size)) != OK)
-				panic("sys_safecopyto() failed: %d", r);
-			bytes += size;
-		}
-		desc->status = 0;
+	/* Copy the packet to the caller. */
+	ptr = e->rx_buffer + cur * E1000_IOBUF_SIZE;
 
-		/*
-		 * Update state.
-		 */
-		e->rx_size = bytes;
-		e->status |= E1000_RECEIVED;
-		E1000_DEBUG(2, ("e1000: got %d byte packet\n", e->rx_size));
+	if (size > max)
+		size = max;
 
-		/* Increment tail. */
-		e1000_reg_write(e, E1000_REG_RDT,
-		    (tail + 1) % e->rx_desc_count);
-	}
-	reply(e);
+	netdriver_copyout(data, 0, ptr, size);
+
+	/* Reset the descriptor. */
+	desc->status = 0;
+
+	/* Increment tail. */
+	e1000_reg_write(e, E1000_REG_RDT, cur);
+
+	/* Return the size of the received packet. */
+	return size;
 }
 
 /*
  * Return statistics.
  */
 static void
-e1000_getstat_s(message * mp)
+e1000_stat(eth_stat_t * stat)
 {
-	int r;
-	eth_stat_t stats;
 	e1000_t *e = &e1000_state;
 
-	E1000_DEBUG(3, ("e1000: getstat_s()\n"));
+	E1000_DEBUG(3, ("e1000: stat()\n"));
 
-	stats.ets_recvErr	= e1000_reg_read(e, E1000_REG_RXERRC);
-	stats.ets_sendErr	= 0;
-	stats.ets_OVW		= 0;
-	stats.ets_CRCerr	= e1000_reg_read(e, E1000_REG_CRCERRS);
-	stats.ets_frameAll	= 0;
-	stats.ets_missedP	= e1000_reg_read(e, E1000_REG_MPC);
-	stats.ets_packetR	= e1000_reg_read(e, E1000_REG_TPR);
-	stats.ets_packetT	= e1000_reg_read(e, E1000_REG_TPT);
-	stats.ets_collision	= e1000_reg_read(e, E1000_REG_COLC);
-	stats.ets_transAb	= 0;
-	stats.ets_carrSense	= 0;
-	stats.ets_fifoUnder	= 0;
-	stats.ets_fifoOver	= 0;
-	stats.ets_CDheartbeat	= 0;
-	stats.ets_OWC		= 0;
+	stat->ets_recvErr	= e1000_reg_read(e, E1000_REG_RXERRC);
+	stat->ets_sendErr	= 0;
+	stat->ets_OVW		= 0;
+	stat->ets_CRCerr	= e1000_reg_read(e, E1000_REG_CRCERRS);
+	stat->ets_frameAll	= 0;
+	stat->ets_missedP	= e1000_reg_read(e, E1000_REG_MPC);
+	stat->ets_packetR	= e1000_reg_read(e, E1000_REG_TPR);
+	stat->ets_packetT	= e1000_reg_read(e, E1000_REG_TPT);
+	stat->ets_collision	= e1000_reg_read(e, E1000_REG_COLC);
+	stat->ets_transAb	= 0;
+	stat->ets_carrSense	= 0;
+	stat->ets_fifoUnder	= 0;
+	stat->ets_fifoOver	= 0;
+	stat->ets_CDheartbeat	= 0;
+	stat->ets_OWC		= 0;
+}
 
-	sys_safecopyto(mp->m_source, mp->m_net_netdrv_dl_getstat_s.grant, 0,
-	    (vir_bytes)&stats, sizeof(stats));
-	mp->m_type = DL_STAT_REPLY;
-	if ((r = ipc_send(mp->m_source, mp)) != OK)
-		panic("e1000_getstat: ipc_send() failed: %d", r);
+/*
+ * Link status has changed.  Nothing to do for now.
+ */
+static void
+e1000_link_changed(e1000_t * e)
+{
+
+	E1000_DEBUG(4, ("%s: link_changed()\n", e->name));
 }
 
 /*
  * Handle an interrupt.
  */
 static void
-e1000_interrupt(message * mp)
+e1000_intr(unsigned int __unused mask)
 {
 	e1000_t *e;
 	u32_t cause;
@@ -753,36 +563,26 @@ e1000_interrupt(message * mp)
 			e1000_link_changed(e);
 
 		if (cause & (E1000_REG_ICR_RXO | E1000_REG_ICR_RXT))
-			e1000_readv_s(&e->rx_message, TRUE);
+			netdriver_recv();
 
 		if (cause & (E1000_REG_ICR_TXQE | E1000_REG_ICR_TXDW))
-			e1000_writev_s(&e->tx_message, TRUE);
+			netdriver_send();
 	}
-}
-
-/*
- * Link status has changed.  Nothing to do for now.
- */
-static int
-e1000_link_changed(e1000_t * e)
-{
-
-	E1000_DEBUG(4, ("%s: link_changed()\n", e->name));
-	return FALSE;
 }
 
 /*
  * Stop the card.
  */
 static void
-e1000_stop(e1000_t *e)
+e1000_stop(void)
 {
+	e1000_t *e;
+
+	e = &e1000_state;
 
 	E1000_DEBUG(3, ("%s: stop()\n", e->name));
 
 	e1000_reset_hw(e);
-
-	exit(EXIT_SUCCESS);
 }
 
 /*
@@ -851,9 +651,8 @@ e1000_reg_unset(e1000_t * e, uint32_t reg, uint32_t value)
  * Read from EEPROM.
  */
 static u16_t
-eeprom_eerd(void * v, int reg)
+eeprom_eerd(e1000_t * e, int reg)
 {
-	e1000_t *e = (e1000_t *)v;
 	u32_t data;
 
 	/* Request EEPROM read. */
@@ -883,7 +682,7 @@ eeprom_ich_init(e1000_t * e)
 	if (hsfsts.hsf_status.fldesvalid == 0) {
 		E1000_DEBUG(3, ("Flash descriptor invalid. "
 		    "SW Sequencing must be used."));
-		goto out;
+		return ret_val;
 	}
 
 	/* Clear FCERR and DAEL in hw status by writing 1 */
@@ -935,7 +734,7 @@ eeprom_ich_init(e1000_t * e)
 			    ("Flash controller busy, cannot get access"));
 		}
 	}
-out:
+
 	return ret_val;
 }
 
@@ -975,7 +774,7 @@ eeprom_ich_cycle(e1000_t * e, u32_t timeout)
  * Read from ICH8 flash.
  */
 static u16_t
-eeprom_ich(void * v, int reg)
+eeprom_ich(e1000_t * e, int reg)
 {
 	union ich8_hws_flash_status hsfsts;
 	union ich8_hws_flash_ctrl hsflctl;
@@ -983,13 +782,12 @@ eeprom_ich(void * v, int reg)
 	u32_t flash_data = 0;
 	int ret_val = -1;
 	u8_t count = 0;
-	e1000_t *e = (e1000_t *)v;
 	u16_t data = 0;
 
 	E1000_DEBUG(3, ("e1000_read_flash_data_ich8lan"));
 
 	if (reg > ICH_FLASH_LINEAR_ADDR_MASK)
-		goto out;
+		return data;
 
 	reg *= sizeof(u16_t);
 	flash_linear_addr = (ICH_FLASH_LINEAR_ADDR_MASK & reg) +
@@ -1010,7 +808,7 @@ eeprom_ich(void * v, int reg)
 		E1000_WRITE_FLASH_REG16(e, ICH_FLASH_HSFCTL, hsflctl.regval);
 		E1000_WRITE_FLASH_REG(e, ICH_FLASH_FADDR, flash_linear_addr);
 
-		ret_val = eeprom_ich_cycle(v, ICH_FLASH_READ_COMMAND_TIMEOUT);
+		ret_val = eeprom_ich_cycle(e, ICH_FLASH_READ_COMMAND_TIMEOUT);
 
 		/*
 		 * Check if FCERR is set to 1, if set to 1, clear it and try
@@ -1043,59 +841,5 @@ eeprom_ich(void * v, int reg)
 		}
 	} while (count++ < ICH_FLASH_CYCLE_REPEAT_COUNT);
 
-out:
 	return data;
-}
-
-/*
- * Reply to a task request from Inet.
- */
-static void
-reply(e1000_t *e)
-{
-	message msg;
-	int r;
-
-	/* Only reply to client for read/write request. */
-	if (!(e->status & E1000_READING || e->status & E1000_WRITING))
-		return;
-
-	/* Construct reply message. */
-	msg.m_type = DL_TASK_REPLY;
-	msg.m_netdrv_net_dl_task.flags = DL_NOFLAGS;
-	msg.m_netdrv_net_dl_task.count = 0;
-
-	/* Did we successfully receive packet(s)? */
-	if (e->status & E1000_READING && e->status & E1000_RECEIVED) {
-		msg.m_netdrv_net_dl_task.flags |= DL_PACK_RECV;
-		msg.m_netdrv_net_dl_task.count =
-		    e->rx_size >= ETH_MIN_PACK_SIZE ?
-		    e->rx_size : ETH_MIN_PACK_SIZE;
-
-		/* Clear flags. */
-		e->status &= ~(E1000_READING | E1000_RECEIVED);
-	}
-
-	/* Did we successfully transmit packet(s)? */
-	if (e->status & E1000_TRANSMIT && e->status & E1000_WRITING) {
-		msg.m_netdrv_net_dl_task.flags |= DL_PACK_SEND;
-
-		/* Clear flags. */
-		e->status &= ~(E1000_WRITING | E1000_TRANSMIT);
-	}
-
-	/* Acknowledge to INET. */
-	if ((r = ipc_send(e->client, &msg)) != OK)
-		panic("ipc_send() failed: %d", r);
-}
-
-/*
- * Send a reply to Inet.
- */
-static void
-mess_reply(message *req, message *reply_mess)
-{
-
-	if (ipc_send(req->m_source, reply_mess) != OK)
-		panic("unable to send reply message");
 }
