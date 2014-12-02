@@ -545,7 +545,7 @@ vir_bytes *vsp;
   int n, r;
   off_t pos, new_pos;
   char *sp, *interp = NULL;
-  unsigned int cum_io;
+  size_t cum_io;
   char buf[PAGE_SIZE];
 
   /* Make 'path' the new argv[0]. */
@@ -645,7 +645,7 @@ static int insert_arg(char stack[ARG_MAX], size_t *stk_bytes, char *arg,
 
 	/* The stack will grow (or shrink) by offset bytes. */
 	if ((*stk_bytes += offset) > ARG_MAX) {
-		printf("vfs:: offset too big!! %d (max %d)\n", *stk_bytes,
+		printf("vfs:: offset too big!! %zu (max %d)\n", *stk_bytes,
 			ARG_MAX);
 		return FALSE;
 	}
@@ -693,7 +693,7 @@ static int read_seg(struct exec_info *execi, off_t off, vir_bytes seg_addr, size
  */
   int r;
   off_t new_pos;
-  unsigned int cum_io;
+  size_t cum_io;
   struct vnode *vp = ((struct vfs_exec_info *) execi->opaque)->vp;
 
   /* Make sure that the file is big enough */
@@ -735,7 +735,7 @@ static void clo_exec(struct fproc *rfp)
 static int map_header(struct vfs_exec_info *execi)
 {
   int r;
-  unsigned int cum_io;
+  size_t cum_io;
   off_t pos, new_pos;
   static char hdr[PAGE_SIZE]; /* Assume that header is not larger than a page */
 

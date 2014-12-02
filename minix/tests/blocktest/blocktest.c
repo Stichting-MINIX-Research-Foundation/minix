@@ -107,7 +107,7 @@ static void *alloc_dma_memory(size_t size)
 			MAP_PREALLOC | MAP_ANON, -1, 0);
 
 	if (ptr == MAP_FAILED)
-		panic("unable to allocate %d bytes of memory", size);
+		panic("unable to allocate %zu bytes of memory", size);
 
 	return ptr;
 }

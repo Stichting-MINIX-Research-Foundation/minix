@@ -99,7 +99,7 @@ mmc_write32(vir_bytes reg, u32_t value)
 	write32(mmchs->io_base + reg, value);
 }
 
-int
+void
 mmchs_set_bus_freq(u32_t freq)
 {
 	u32_t freq_in = HSMMCSD_0_IN_FREQ;
@@ -971,7 +971,7 @@ dump(uint8_t * data, int len)
 	}
 }
 
-int
+void
 mmc_switch(int function, int value, uint8_t * data)
 {
 	struct mmc_command command;
@@ -990,7 +990,7 @@ mmc_switch(int function, int value, uint8_t * data)
 	command.args |= (value << fshift);
 	if (mmc_send_cmd(&command)) {
 		log_warn(&log, "Failed to set device in high speed mode\n");
-		return 1;
+		return;
 	}
 	// dump(data,64);
 }
