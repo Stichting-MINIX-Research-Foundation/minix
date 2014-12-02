@@ -972,7 +972,7 @@ pm_sysuname_out(struct trace_proc * proc, const message * m_out)
 
 	put_buf(proc, "value", PF_STRING, m_out->m_lc_pm_sysuname.value,
 	    m_out->m_lc_pm_sysuname.len);
-	put_value(proc, "len", "%d", m_out->m_lc_pm_sysuname.len);
+	put_value(proc, "len", "%zu", m_out->m_lc_pm_sysuname.len);
 	return CT_DONE;
 }
 
@@ -984,7 +984,7 @@ pm_sysuname_in(struct trace_proc * proc, const message * m_out,
 	if (m_out->m_lc_pm_sysuname.req == _UTS_GET) {
 		put_buf(proc, "value", failed | PF_STRING,
 		    m_out->m_lc_pm_sysuname.value, m_in->m_type);
-		put_value(proc, "len", "%d", m_out->m_lc_pm_sysuname.len);
+		put_value(proc, "len", "%zu", m_out->m_lc_pm_sysuname.len);
 		put_equals(proc);
 	}
 	put_result(proc);

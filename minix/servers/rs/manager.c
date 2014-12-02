@@ -1285,7 +1285,7 @@ struct rproc *rp;
   rp->r_exec= malloc(rp->r_exec_len);
   if (rp->r_exec == NULL)
   {
-      printf("RS: read_exec: unable to allocate %d bytes\n",
+      printf("RS: read_exec: unable to allocate %zu bytes\n",
           rp->r_exec_len);
       close(fd);
       return ENOMEM;
@@ -1951,7 +1951,7 @@ char *caller_label;
 		{
 			printf(
 	"rs:get_next_name: bad ipc list entry '%.*s' for %s: too long\n",
-				len, p, caller_label);
+				(int) len, p, caller_label);
 			continue;
 		}
 		memcpy(name, p, len);

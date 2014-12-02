@@ -134,10 +134,10 @@ void bf_logon ARGS(( bf_freereq_t func, bf_checkreq_t checkfunc ));
 #endif
 
 #ifndef BUF_TRACK_ALLOC_FREE
-acc_t *bf_memreq ARGS(( unsigned size));
+acc_t *bf_memreq ARGS(( size_t size));
 #else
 acc_t *_bf_memreq ARGS(( char *clnt_file, int clnt_line,
-			unsigned size));
+			size_t size));
 #endif
 /* the result is an acc with linkC == 1 */
 

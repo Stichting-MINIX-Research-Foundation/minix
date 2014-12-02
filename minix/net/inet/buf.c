@@ -1149,7 +1149,7 @@ acc_t *acc;
 		}
 		if (acc->acc_offset + acc->acc_length > buffer->buf_size)
 		{
-			printf("%d + %d > %d for buffer %p, and acc %p\n",
+			printf("%d + %d > %zu for buffer %p, and acc %p\n",
 				acc->acc_offset, acc->acc_length, 
 				buffer->buf_size, buffer, acc);
 			return 0;

@@ -235,7 +235,7 @@ int do_mmap(message *m)
 		mem_type_t *mt = NULL;
 
 		if(m->m_mmap.fd != -1) {
-			printf("VM: mmap: fd %d, len 0x%x\n", m->m_mmap.fd, len);
+			printf("VM: mmap: fd %d, len 0x%zx\n", m->m_mmap.fd, len);
 			return EINVAL;
 		}
 

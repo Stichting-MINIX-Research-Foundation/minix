@@ -464,8 +464,7 @@ lan8710a_stop(void)
  *				lan8710a_dma_config_tx			      *
  *============================================================================*/
 static void
-lan8710a_dma_config_tx(desc_idx)
-u8_t desc_idx;
+lan8710a_dma_config_tx(u8_t desc_idx)
 {
 	phys_bytes phys_addr;
 	int i;
