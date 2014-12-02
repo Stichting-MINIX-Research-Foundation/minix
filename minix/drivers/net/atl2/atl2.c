@@ -7,18 +7,14 @@
 #include <minix/drivers.h>
 #include <minix/netdriver.h>
 
-#include <sys/mman.h>
-#include <minix/ds.h>
-#include <minix/vm.h>
 #include <machine/pci.h>
-#include <net/gen/ether.h>
-#include <net/gen/eth_io.h>
+#include <sys/mman.h>
 #include <assert.h>
 
 #include "atl2.h"
 
 #define VERBOSE		0	/* Verbose debugging output */
-#define ATL2_FKEY	1	/* Register Shift+F11 for dumping statistics */
+#define ATL2_FKEY	11	/* Use Shift+Fn to dump statistics (0=off) */
 
 #if VERBOSE
 #define ATL2_DEBUG(x) printf x
@@ -36,15 +32,14 @@ static struct {
 	int devind;		/* PCI device index */
 	int irq;		/* IRQ number */
 	int hook_id;		/* IRQ hook ID */
-	int mode;		/* datalink mode */
-	volatile uint8_t *base;	/* base address of memory-mapped registers */
+	uint8_t *base;		/* base address of memory-mapped registers */
 	uint32_t size;		/* size of memory-mapped area */
 	uint32_t hwaddr[2];	/* MAC address, in register representation */
 
 	uint8_t *txd_base;	/* local address of TxD ring buffer base */
 	uint32_t *txs_base;	/* local address of TxS ring buffer base */
 	uint8_t *rxd_base_u;	/* unaligned base address of RxD ring buffer */
-	rxd_t *rxd_base;	/* local address of RxD ring buffer base */
+	rxd_t *rxd_base; 	/* local address of RxD ring buffer base */
 
 	int rxd_align;		/* alignment offset of RxD ring buffer */
 
@@ -58,20 +53,10 @@ static struct {
 	int txs_num;		/* head-tail offset into TxS, in elements */
 	int rxd_tail;		/* tail index into RxD, in elements */
 
-	int flags;		/* state flags (ATL2_FLAG_) */
-	message read_msg;	/* suspended read request (READ_PEND) */
-	message write_msg;	/* suspended write request (WRITE_PEND) */
-	endpoint_t task_endpt;	/* requester endpoint (PACK_RCVD|PACK_SENT) */
-	size_t recv_count;	/* packet size (PACK_RCVD) */
+	int rx_avail;		/* is there a packet available for receipt? */
 
 	eth_stat_t stat;	/* statistics */
 } state;
-
-#define ATL2_FLAG_RX_AVAIL	0x01	/* packet available for receipt */
-#define ATL2_FLAG_READ_PEND	0x02	/* read request pending */
-#define ATL2_FLAG_WRITE_PEND	0x04	/* write request pending */
-#define ATL2_FLAG_PACK_RCVD	0x08	/* packet received */
-#define ATL2_FLAG_PACK_SENT	0x10	/* packet transmitted */
 
 #define ATL2_READ_U8(off) (*(volatile uint8_t *)(state.base + (off)))
 #define ATL2_READ_U16(off) (*(volatile uint16_t *)(state.base + (off)))
@@ -85,7 +70,25 @@ static struct {
 
 #define ATL2_ALIGN_32(n) (((n) + 3) & ~3)
 
-static iovec_s_t iovec[NR_IOREQS];
+static int atl2_init(unsigned int instance, ether_addr_t *addr);
+static void atl2_stop(void);
+static void atl2_mode(unsigned int mode);
+static int atl2_send(struct netdriver_data *data, size_t size);
+static ssize_t atl2_recv(struct netdriver_data *data, size_t max);
+static void atl2_stat(eth_stat_t *stat);
+static void atl2_intr(unsigned int mask);
+static void atl2_other(const message *m_ptr, int ipc_status);
+
+static const struct netdriver atl2_table = {
+	.ndr_init	= atl2_init,
+	.ndr_stop	= atl2_stop,
+	.ndr_mode	= atl2_mode,
+	.ndr_recv	= atl2_recv,
+	.ndr_send	= atl2_send,
+	.ndr_stat	= atl2_stat,
+	.ndr_intr	= atl2_intr,
+	.ndr_other	= atl2_other
+};
 
 /*
  * Read a value from the VPD register area.
@@ -178,7 +181,7 @@ atl2_get_vpd_hwaddr(void)
  * use whatever the card was already set to.
  */
 static void
-atl2_get_hwaddr(void)
+atl2_get_hwaddr(ether_addr_t * addr)
 {
 
 	if (!atl2_get_vpd_hwaddr()) {
@@ -188,8 +191,15 @@ atl2_get_hwaddr(void)
 		state.hwaddr[1] = ATL2_READ_U32(ATL2_HWADDR1_REG) & 0xffff;
 	}
 
-	ATL2_DEBUG(("ATL2: MAC address %04lx%08lx\n",
+	ATL2_DEBUG(("ATL2: MAC address %04x%08x\n",
 	    state.hwaddr[1], state.hwaddr[0]));
+
+	addr->ea_addr[0] = state.hwaddr[1] >> 8;
+	addr->ea_addr[1] = state.hwaddr[1] & 0xff;
+	addr->ea_addr[2] = state.hwaddr[0] >> 24;
+	addr->ea_addr[3] = (state.hwaddr[0] >> 16) & 0xff;
+	addr->ea_addr[4] = (state.hwaddr[0] >> 8) & 0xff;
+	addr->ea_addr[5] = state.hwaddr[0] & 0xff;
 }
 
 /*
@@ -260,7 +270,7 @@ atl2_alloc_dma(void)
 /*
  * Stop the device.
  */
-static int
+static void
 atl2_stop(void)
 {
 	uint32_t val;
@@ -288,8 +298,7 @@ atl2_stop(void)
 		micro_delay(ATL2_IDLE_DELAY);
 	}
 
-	/* The caller will generally ignore this return value. */
-	return (i < ATL2_IDLE_NTRIES);
+	assert(i < ATL2_IDLE_NTRIES);
 }
 
 /*
@@ -331,18 +340,18 @@ atl2_reset(void)
  * settings.
  */
 static void
-atl2_set_mode(void)
+atl2_mode(unsigned int mode)
 {
 	uint32_t val;
 
 	val = ATL2_READ_U32(ATL2_MAC_REG);
 	val &= ~(ATL2_MAC_PROMISC_EN | ATL2_MAC_MCAST_EN | ATL2_MAC_BCAST_EN);
 
-	if (state.mode & DL_PROMISC_REQ)
+	if (mode & NDEV_PROMISC)
 		val |= ATL2_MAC_PROMISC_EN;
-	if (state.mode & DL_MULTI_REQ)
+	if (mode & NDEV_MULTI)
 		val |= ATL2_MAC_MCAST_EN;
-	if (state.mode & DL_BROAD_REQ)
+	if (mode & NDEV_BROAD)
 		val |= ATL2_MAC_BCAST_EN;
 
 	ATL2_WRITE_U32(ATL2_MAC_REG, val);
@@ -409,7 +418,7 @@ atl2_setup(void)
 	/* Reset descriptors, and enable DMA. */
 	state.txd_tail = state.txs_tail = state.rxd_tail = 0;
 	state.txd_num = state.txs_num = 0;
-	state.flags &= ~ATL2_FLAG_RX_AVAIL;
+	state.rx_avail = FALSE;
 	ATL2_WRITE_U16(ATL2_TXD_IDX_REG, 0);
 	ATL2_WRITE_U16(ATL2_RXD_IDX_REG, 0);
 
@@ -440,7 +449,7 @@ atl2_setup(void)
 	ATL2_WRITE_U32(ATL2_MHT0_REG, 0xffffffff);
 	ATL2_WRITE_U32(ATL2_MHT1_REG, 0xffffffff);
 
-	atl2_set_mode();
+	atl2_mode(NDEV_NOMODE);
 
 	/* Enable Tx/Rx. */
 	val = ATL2_READ_U32(ATL2_MAC_REG);
@@ -488,18 +497,13 @@ atl2_probe(int skip)
  * Initialize the device.
  */
 static void
-atl2_init(int devind)
+atl2_init_hw(int devind, ether_addr_t * addr)
 {
 	uint32_t bar;
 	int r, flag;
 
 	/* Initialize global state. */
 	state.devind = devind;
-	state.mode = DL_NOMODE;
-	state.flags = 0;
-	state.recv_count = 0;
-
-	memset(&state.stat, 0, sizeof(state.stat));
 
 	if ((r = pci_get_bar(devind, PCI_BAR, &bar, &state.size, &flag)) != OK)
 		panic("unable to retrieve bar: %d", r);
@@ -526,7 +530,7 @@ atl2_init(int devind)
 	if ((r = sys_irqenable(&state.hook_id)) != OK)
 		panic("unable to enable IRQ: %d", r);
 
-	atl2_get_hwaddr();
+	atl2_get_hwaddr(addr);
 
 	atl2_setup();
 }
@@ -605,7 +609,8 @@ atl2_tx_advance(void)
 
 		assert((uint32_t)state.txd_tail <=
 		    ATL2_TXD_BUFSIZE - sizeof(uint32_t));
-		dsize = *(uint32_t *)(state.txd_base + state.txd_tail);
+		dsize =
+		    *(volatile uint32_t *)(state.txd_base + state.txd_tail);
 		if (size != dsize)
 			printf("ATL2: TxD/TxS size mismatch (%x vs %x)\n",
 			    size, dsize);
@@ -643,7 +648,8 @@ atl2_rx_advance(int next)
 {
 	int update_tail;
 	rxd_t *rxd;
-	uint32_t hdr, size;
+	uint32_t hdr;
+	size_t size;
 
 	update_tail = FALSE;
 
@@ -653,10 +659,10 @@ atl2_rx_advance(int next)
 
 		ATL2_DEBUG(("ATL2: successfully received packet\n"));
 
-		state.flags &= ~ATL2_FLAG_RX_AVAIL;
+		state.rx_avail = FALSE;
 	}
 
-	assert(!(state.flags & ATL2_FLAG_RX_AVAIL));
+	assert(!state.rx_avail);
 
 	for (;;) {
 		/* Check the RxD tail for updates. */
@@ -678,11 +684,12 @@ atl2_rx_advance(int next)
 		 */
 		size = hdr & ATL2_RXD_SIZE_MASK;
 
-		if ((hdr & ATL2_RXD_SUCCESS) && size >= ETH_MIN_PACK_SIZE) {
-			ATL2_DEBUG(("ATL2: packet available, size %ld\n",
+		if ((hdr & ATL2_RXD_SUCCESS) &&
+		    size >= ETH_MIN_PACK_SIZE + ETH_CRC_SIZE) {
+			ATL2_DEBUG(("ATL2: packet available, size %zu\n",
 			    size));
 
-			state.flags |= ATL2_FLAG_RX_AVAIL;
+			state.rx_avail = TRUE;
 			break;
 		}
 
@@ -702,220 +709,78 @@ atl2_rx_advance(int next)
 }
 
 /*
- * Send a task reply to Inet.
+ * Receive a packet.
  */
-static void
-atl2_reply(void)
-{
-	message m;
-	int r, flags;
-
-	flags = DL_NOFLAGS;
-	if (state.flags & ATL2_FLAG_PACK_SENT)
-		flags |= DL_PACK_SEND;
-	if (state.flags & ATL2_FLAG_PACK_RCVD)
-		flags |= DL_PACK_RECV;
-
-	m.m_type = DL_TASK_REPLY;
-	m.m_netdrv_net_dl_task.flags = flags;
-	m.m_netdrv_net_dl_task.count = state.recv_count;
-
-	ATL2_DEBUG(("ATL2: sending reply, flags %x count %d\n", flags,
-		m.m_netdrv_net_dl_task.count));
-
-	if ((r = ipc_send(state.task_endpt, &m)) != OK)
-		panic("unable to reply: %d", r);
-
-	state.flags &= ~(ATL2_FLAG_PACK_SENT | ATL2_FLAG_PACK_RCVD);
-	state.recv_count = 0;
-}
-
-/*
- * Read packet data.
- */
-static void
-atl2_readv(const message * m, int from_int)
+static ssize_t
+atl2_recv(struct netdriver_data * data, size_t max)
 {
 	rxd_t *rxd;
-	iovec_s_t *iovp;
-	size_t count, off, left, size;
-	uint8_t *pos;
-	int i, j, r, batch;
-
-	/* We can deal with only one read request from Inet at a time. */
-	assert(from_int || !(state.flags & ATL2_FLAG_READ_PEND));
-
-	state.task_endpt = m->m_source;
+	size_t size;
 
 	/* Are there any packets available at all? */
-	if (!(state.flags & ATL2_FLAG_RX_AVAIL))
-		goto suspend;
+	if (!state.rx_avail)
+		return SUSPEND;
 
 	/* Get the first available packet's size.  Cut off the CRC. */
 	rxd = &state.rxd_base[state.rxd_tail];
 
-	count = rxd->hdr & ATL2_RXD_SIZE_MASK;
-	count -= ETH_CRC_SIZE;
+	size = rxd->hdr & ATL2_RXD_SIZE_MASK;
+	size -= ETH_CRC_SIZE;
 
-	ATL2_DEBUG(("ATL2: readv: found packet with length %d\n", count));
+	ATL2_DEBUG(("ATL2: receiving packet with length %zu\n", size));
+
+	/* Truncate large packets. */
+	if (size > max)
+		size = max;
 
 	/* Copy out the packet. */
-	off = 0;
-	left = count;
-	pos = rxd->data;
-
-	for (i = 0; i < m->m_net_netdrv_dl_readv_s.count && left > 0;
-	    i += batch) {
-		/* Copy in the next batch. */
-		batch = MIN(m->m_net_netdrv_dl_readv_s.count - i, NR_IOREQS);
-
-		r = sys_safecopyfrom(m->m_source,
-		    m->m_net_netdrv_dl_readv_s.grant, off, (vir_bytes)iovec,
-		    batch * sizeof(iovec[0]));
-		if (r != OK)
-			panic("vector copy failed: %d", r);
-
-		/* Copy out each element in the batch, until we run out. */
-		for (j = 0, iovp = iovec; j < batch && left > 0; j++, iovp++) {
-			size = MIN(iovp->iov_size, left);
-
-			r = sys_safecopyto(m->m_source, iovp->iov_grant, 0,
-			    (vir_bytes)pos, size);
-			if (r != OK)
-				panic("safe copy failed: %d", r);
-
-			pos += size;
-			left -= size;
-		}
-
-		off += batch * sizeof(iovec[0]);
-	}
-
-	/* Not sure what to do here.  Inet shouldn't mess this up anyway. */
-	if (left > 0) {
-		printf("ATL2: truncated packet of %d bytes by %d bytes\n",
-		    count, left);
-		count -= left;
-	}
+		netdriver_copyout(data, 0, rxd->data, size);
 
 	/* We are done with this packet.  Move on to the next. */
 	atl2_rx_advance(TRUE /*next*/);
 
-	/* We have now successfully received a packet. */
-	state.flags &= ~ATL2_FLAG_READ_PEND;
-	state.flags |= ATL2_FLAG_PACK_RCVD;
-	state.recv_count = count;
-
-	/* If called from the interrupt handler, the caller will reply. */
-	if (!from_int)
-		atl2_reply();
-
-	return;
-
-suspend:
-	/*
-	 * No packets are available at this time.  If we were not already
-	 * trying to resume receipt, save the read request for later, and tell
-	 * Inet that the request has been suspended.
-	 */
-	if (from_int)
-		return;
-
-	state.flags |= ATL2_FLAG_READ_PEND;
-	state.read_msg = *m;
-
-	atl2_reply();
+	return size;
 }
 
 /*
- * Write packet data.
+ * Send a packet.
  */
-static void
-atl2_writev(const message * m, int from_int)
+static int
+atl2_send(struct netdriver_data * data, size_t size)
 {
-	iovec_s_t *iovp;
-	size_t off, count, left, pos, skip;
-	vir_bytes size;
+	size_t pos, chunk;
 	uint8_t *sizep;
-	int i, j, r, batch, maxnum;
-
-	/* We can deal with only one write request from Inet at a time. */
-	assert(from_int || !(state.flags & ATL2_FLAG_WRITE_PEND));
-
-	state.task_endpt = m->m_source;
 
 	/*
-	 * If we are already certain that the packet won't fit, bail out.
-	 * Keep at least some space between TxD head and tail, as it is not
-	 * clear whether the device deals well with the case that they collide.
+	 * If the packet won't fit, bail out.  Keep at least some space between
+	 * TxD head and tail, as it is not clear whether the device deals well
+	 * with the case that they collide.
 	 */
 	if (state.txs_num >= ATL2_TXS_COUNT)
-		goto suspend;
-	maxnum = ATL2_TXD_BUFSIZE - ETH_MIN_PACK_SIZE - sizeof(uint32_t);
-	if (state.txd_num >= maxnum)
-		goto suspend;
+		return SUSPEND;
 
-	/*
-	 * Optimistically try to copy in the data; suspend if it turns out
-	 * that it does not fit.
-	 */
-	off = 0;
-	count = 0;
-	left = state.txd_num - sizeof(uint32_t);
+	if (state.txd_num + sizeof(uint32_t) + ATL2_ALIGN_32(size) >=
+	    ATL2_TXD_BUFSIZE)
+		return SUSPEND;
+
+	/* Copy in the packet. */
 	pos = (state.txd_tail + state.txd_num +
 	    sizeof(uint32_t)) % ATL2_TXD_BUFSIZE;
-
-	for (i = 0; i < m->m_net_netdrv_dl_writev_s.count; i += batch) {
-		/* Copy in the next batch. */
-		batch = MIN(m->m_net_netdrv_dl_writev_s.count - i, NR_IOREQS);
-
-		r = sys_safecopyfrom(m->m_source,
-		    m->m_net_netdrv_dl_writev_s.grant, off, (vir_bytes)iovec,
-		    batch * sizeof(iovec[0]));
-		if (r != OK)
-			panic("vector copy failed: %d", r);
-
-		/* Copy in each element in the batch. */
-		for (j = 0, iovp = iovec; j < batch; j++, iovp++) {
-			size = iovp->iov_size;
-			if (size > left)
-				goto suspend;
-
-			skip = 0;
-			if (size > ATL2_TXD_BUFSIZE - pos) {
-				skip = ATL2_TXD_BUFSIZE - pos;
-				r = sys_safecopyfrom(m->m_source,
-				    iovp->iov_grant, 0,
-				    (vir_bytes)(state.txd_base + pos), skip);
-				if (r != OK)
-					panic("safe copy failed: %d", r);
-				pos = 0;
-			}
-
-			r = sys_safecopyfrom(m->m_source, iovp->iov_grant,
-			    skip, (vir_bytes)(state.txd_base + pos),
-			    size - skip);
-			if (r != OK)
-				panic("safe copy failed: %d", r);
-
-			pos = (pos + size - skip) % ATL2_TXD_BUFSIZE;
-			left -= size;
-			count += size;
-		}
-
-		off += batch * sizeof(iovec[0]);
-	}
-
-	assert(count <= ETH_MAX_PACK_SIZE_TAGGED);
+	chunk = ATL2_TXD_BUFSIZE - pos;
+	if (size > chunk) {
+		netdriver_copyin(data, 0, state.txd_base + pos, chunk);
+		netdriver_copyin(data, chunk, state.txd_base, size - chunk);
+	} else
+		netdriver_copyin(data, 0, state.txd_base + pos, size);
 
 	/* Write the length to the DWORD right before the packet. */
 	sizep = state.txd_base +
 	    (state.txd_tail + state.txd_num) % ATL2_TXD_BUFSIZE;
-	*(uint32_t *)sizep = count;
+	*(volatile uint32_t *)sizep = size;
 
 	/* Update the TxD head. */
-	state.txd_num += sizeof(uint32_t) + ATL2_ALIGN_32(count);
-	pos = ATL2_ALIGN_32(pos) % ATL2_TXD_BUFSIZE;
+	state.txd_num += sizeof(uint32_t) + ATL2_ALIGN_32(size);
+	pos = ATL2_ALIGN_32(pos + size) % ATL2_TXD_BUFSIZE;
 	assert((int)pos ==
 	    (state.txd_tail + state.txd_num) % ATL2_TXD_BUFSIZE);
 
@@ -928,66 +793,44 @@ atl2_writev(const message * m, int from_int)
 
 	ATL2_WRITE_U32(ATL2_TXD_IDX_REG, pos / sizeof(uint32_t));
 
-	/* We have now successfully set up the transmission of a packet. */
-	state.flags &= ~ATL2_FLAG_WRITE_PEND;
-	state.flags |= ATL2_FLAG_PACK_SENT;
-
-	/* If called from the interrupt handler, the caller will reply. */
-	if (!from_int)
-		atl2_reply();
-
-	return;
-
-suspend:
-	/*
-	 * We cannot transmit the packet at this time.  If we were not already
-	 * trying to resume transmission, save the write request for later,
-	 * and tell Inet that the request has been suspended.
-	 */
-	if (from_int)
-		return;
-
-	state.flags |= ATL2_FLAG_WRITE_PEND;
-	state.write_msg = *m;
-
-	atl2_reply();
+	return OK;
 }
 
 /*
  * Process an interrupt.
  */
 static void
-atl2_intr(const message * __unused m)
+atl2_intr(unsigned int __unused mask)
 {
 	uint32_t val;
-	int r, try_write, try_read;
+	int r, try_send, try_recv;
 
 	/* Clear and disable interrupts. */
 	val = ATL2_READ_U32(ATL2_ISR_REG);
 
 	ATL2_WRITE_U32(ATL2_ISR_REG, val | ATL2_ISR_DISABLE);
 
-	ATL2_DEBUG(("ATL2: interrupt (0x%08lx)\n", val));
+	ATL2_DEBUG(("ATL2: interrupt (0x%08x)\n", val));
 
 	/* If an error occurred, reset the card. */
 	if (val & (ATL2_ISR_DMAR_TIMEOUT | ATL2_ISR_DMAW_TIMEOUT |
 	    ATL2_ISR_PHY_LINKDOWN))
 		atl2_setup();
 
-	try_write = try_read = FALSE;
+	try_send = try_recv = FALSE;
 
 	/* Process sent data, and possibly send pending data. */
 	if (val & ATL2_ISR_TX_EVENT) {
 		if (atl2_tx_advance())
-			try_write = (state.flags & ATL2_FLAG_WRITE_PEND);
+			try_send = TRUE;
 	}
 
 	/* Receive new data, and possible satisfy a pending receive request. */
 	if (val & ATL2_ISR_RX_EVENT) {
-		if (!(state.flags & ATL2_FLAG_RX_AVAIL)) {
+		if (!state.rx_avail) {
 			atl2_rx_advance(FALSE /*next*/);
 
-			try_read = (state.flags & ATL2_FLAG_READ_PEND);
+			try_recv = TRUE;
 		}
 	}
 
@@ -997,60 +840,21 @@ atl2_intr(const message * __unused m)
 	if ((r = sys_irqenable(&state.hook_id)) != OK)
 		panic("unable to enable IRQ: %d", r);
 
-	/* Attempt to satisfy pending write and read requests. */
-	if (try_write)
-		atl2_writev(&state.write_msg, TRUE /*from_int*/);
-	if (try_read)
-		atl2_readv(&state.read_msg, TRUE /*from_int*/);
-	if (state.flags & (ATL2_FLAG_PACK_SENT | ATL2_FLAG_PACK_RCVD))
-		atl2_reply();
-}
-
-/*
- * Configure the mode of the card.
- */
-static void
-atl2_conf(message * m)
-{
-	ether_addr_t addr;
-	int r;
-
-	state.mode = m->m_net_netdrv_dl_conf.mode;
-
-	atl2_set_mode();
-
-	addr.ea_addr[0] = state.hwaddr[1] >> 8;
-	addr.ea_addr[1] = state.hwaddr[1] & 0xff;
-	addr.ea_addr[2] = state.hwaddr[0] >> 24;
-	addr.ea_addr[3] = (state.hwaddr[0] >> 16) & 0xff;
-	addr.ea_addr[4] = (state.hwaddr[0] >> 8) & 0xff;
-	addr.ea_addr[5] = state.hwaddr[0] & 0xff;
-
-	memcpy(m->m_netdrv_net_dl_conf.hw_addr, &addr,
-	    sizeof(m->m_netdrv_net_dl_conf.hw_addr));
-
-	m->m_type = DL_CONF_REPLY;
-	m->m_netdrv_net_dl_conf.stat = OK;
-
-	if ((r = ipc_send(m->m_source, m)) != OK)
-		printf("ATL2: unable to send reply (%d)\n", r);
+	/* Attempt to satisfy pending send and receive requests. */
+	if (try_send)
+		netdriver_send();
+	if (try_recv)
+		netdriver_recv();
 }
 
 /*
  * Copy out statistics.
  */
 static void
-atl2_getstat(message * m)
+atl2_stat(eth_stat_t * stat)
 {
-	int r;
 
-	sys_safecopyto(m->m_source, m->m_net_netdrv_dl_getstat_s.grant, 0,
-	    (vir_bytes) &state.stat, sizeof(state.stat));
-
-	m->m_type = DL_STAT_REPLY;
-
-	if ((r = ipc_send(m->m_source, m)) != OK)
-		printf("ATL2: unable to send reply (%d)\n", r);
+	memcpy(stat, &state.stat, sizeof(*stat));
 }
 
 /*
@@ -1127,64 +931,69 @@ atl2_dump(void)
 	printf("TxS tail:    %8d\t", state.txs_tail);
 	printf("TxS count:   %8d\n", state.txs_num);
 
-	printf("flags:         0x%04x\t", state.flags);
 	atl2_dump_link();
 	printf("\n");
+}
+
+/*
+ * Process miscellaneous messages.
+ */
+static void
+atl2_other(const message * m_ptr, int ipc_status)
+{
+#if ATL2_FKEY
+	int sfkeys;
+
+	if (!is_ipc_notify(ipc_status) || m_ptr->m_source != TTY_PROC_NR)
+		return;
+
+	if (fkey_events(NULL, &sfkeys) == OK && bit_isset(sfkeys, ATL2_FKEY))
+		atl2_dump();
+#endif
 }
 
 /*
  * Initialize the atl2 driver.
  */
 static int
-sef_cb_init_fresh(int __unused type, sef_init_info_t * __unused info)
+atl2_init(unsigned int instance, ether_addr_t * addr)
 {
-	int r, devind, instance;
-	long v;
+	int devind;
 #if ATL2_FKEY
-	int fkeys, sfkeys;
+	int r, fkeys, sfkeys;
 #endif
 
-	/* How many matching devices should we skip? */
-	v = 0;
-	(void)env_parse("instance", "d", 0, &v, 0, 255);
-	instance = (int)v;
+	memset(&state, 0, sizeof(state));
 
 	/* Try to find a recognized device. */
 	devind = atl2_probe(instance);
 
 	if (devind < 0)
-		panic("no matching device found");
+		return ENXIO;
 
 	/* Initialize the device. */
-	atl2_init(devind);
-
-	/* Announce we are up! */
-	netdriver_announce();
+	atl2_init_hw(devind, addr);
 
 #if ATL2_FKEY
 	/* Register debug dump function key. */
 	fkeys = sfkeys = 0;
-	bit_set(sfkeys, 11);
+	bit_set(sfkeys, ATL2_FKEY);
 	if ((r = fkey_map(&fkeys, &sfkeys)) != OK)
-		printf("ATL2: warning, could not map Shift+F11 key (%d)\n", r);
+		printf("ATL2: warning, could not map Shift+F%u key (%d)\n",
+		    r, ATL2_FKEY);
 #endif
 
 	return OK;
 }
 
+#if 0
 /*
- * In case of a termination signal, shut down this driver.  Stop the device,
- * and deallocate resources as proof of concept.
+ * Deallocate resources as proof of concept.  Currently unused.
  */
 static void
-sef_cb_signal_handler(int signo)
+atl2_cleanup(void)
 {
 	int r;
-
-	/* Only check for termination signal, ignore anything else. */
-	if (signo != SIGTERM) return;
-
-	atl2_stop();
 
 	if ((r = sys_irqrmpolicy(&state.hook_id)) != OK)
 		panic("unable to deregister IRQ: %d", r);
@@ -1197,32 +1006,8 @@ sef_cb_signal_handler(int signo)
 	vm_unmap_phys(SELF, (void *)state.base, state.size);
 
 	/* We cannot free the PCI device at this time. */
-
-	exit(0);
 }
-
-/*
- * Perform SEF initialization.
- */
-static void
-sef_local_startup(void)
-{
-
-	/* Register init callbacks. */
-	sef_setcb_init_fresh(sef_cb_init_fresh);
-	sef_setcb_init_lu(sef_cb_init_fresh);
-	sef_setcb_init_restart(sef_cb_init_fresh);
-
-	/* Register live update callbacks. */
-	sef_setcb_lu_prepare(sef_cb_lu_prepare_always_ready);
-	sef_setcb_lu_state_isvalid(sef_cb_lu_state_isvalid_workfree);
-
-	/* Register signal callbacks. */
-	sef_setcb_signal_handler(sef_cb_signal_handler);
-
-	/* Let SEF perform startup. */
-	sef_startup();
-}
+#endif
 
 /*
  * The ATL2 ethernet driver.
@@ -1230,47 +1015,10 @@ sef_local_startup(void)
 int
 main(int argc, char ** argv)
 {
-	message m;
-	int ipc_status;
-	int r;
 
-	/* Initialize SEF. */
 	env_setargs(argc, argv);
-	sef_local_startup();
 
-	for (;;) {
-		if ((r = netdriver_receive(ANY, &m, &ipc_status)) != OK)
-			panic("netdriver_receive failed: %d", r);
+	netdriver_task(&atl2_table);
 
-		if (is_ipc_notify(ipc_status)) {
-			switch (m.m_source) {
-			case HARDWARE:		/* interrupt */
-				atl2_intr(&m);
-
-				break;
-
-			case TTY_PROC_NR:	/* function key */
-				atl2_dump();
-
-				break;
-
-			default:
-				printf("ATL2: illegal notify from %d\n",
-				    m.m_source);
-			}
-
-			continue;
-		}
-
-		/* Process requests from Inet. */
-		switch (m.m_type) {
-		case DL_CONF:		atl2_conf(&m);			break;
-		case DL_GETSTAT_S:	atl2_getstat(&m);		break;
-		case DL_WRITEV_S:	atl2_writev(&m, FALSE);		break;
-		case DL_READV_S:	atl2_readv(&m, FALSE);		break;
-		default:
-			printf("ATL2: illegal message %d from %d\n",
-			    m.m_type, m.m_source);
-		}
-	}
+	return EXIT_SUCCESS;
 }
