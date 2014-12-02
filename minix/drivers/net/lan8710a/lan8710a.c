@@ -1,31 +1,28 @@
 #include <minix/drivers.h>
 #include <minix/netdriver.h>
-#include <net/gen/ether.h>
-#include <net/gen/eth_io.h>
-#include <minix/sysutil.h>
 #include <minix/board.h>
+#include <sys/mman.h>
 #include "assert.h"
 #include "lan8710a.h"
 #include "lan8710a_reg.h"
 
 /* Local functions */
-static void lan8710a_readv_s(message *m, int from_int);
-static void lan8710a_writev_s(message *m, int from_int);
-static void lan8710a_conf(message *m);
-static void lan8710a_getstat(message *m);
-
-static void lan8710a_init(void);
-static void lan8710a_enable_interrupt(int interrupt);
-static void lan8710a_interrupt(message *m);
-static void lan8710a_map_regs(void);
+static int lan8710a_init(unsigned int instance, ether_addr_t *addr);
 static void lan8710a_stop(void);
+static ssize_t lan8710a_recv(struct netdriver_data *data, size_t max);
+static int lan8710a_send(struct netdriver_data *data, size_t size);
+static void lan8710a_stat(eth_stat_t *stat);
+static void lan8710a_intr(unsigned int mask);
+
+static void lan8710a_enable_interrupt(int interrupt);
+static void lan8710a_map_regs(void);
 static void lan8710a_dma_config_tx(u8_t desc_idx);
 static void lan8710a_dma_reset_init(void);
-static void lan8710a_init_addr(void);
+static void lan8710a_init_addr(ether_addr_t *addr);
 static void lan8710a_init_desc(void);
 static void lan8710a_init_mdio(void);
-static int lan8710a_init_hw(void);
-static void lan8710a_reset_hw();
+static int lan8710a_init_hw(ether_addr_t *addr);
+static void lan8710a_reset_hw(void);
 
 static void lan8710a_phy_write(u32_t reg, u32_t value);
 static u32_t lan8710a_phy_read(u32_t reg);
@@ -35,16 +32,17 @@ static void lan8710a_reg_write(volatile u32_t *reg, u32_t value);
 static void lan8710a_reg_set(volatile u32_t *reg, u32_t value);
 static void lan8710a_reg_unset(volatile u32_t *reg, u32_t value);
 
-static void mess_reply(message *req, message *reply);
-static void reply(lan8710a_t *e);
-
 /* Local variables */
 static lan8710a_t lan8710a_state;
 
-/* SEF functions and variables. */
-static void sef_local_startup(void);
-static int sef_cb_init_fresh(int type, sef_init_info_t *info);
-static void sef_cb_signal_handler(int signal);
+static const struct netdriver lan8710a_table = {
+	.ndr_init	= lan8710a_init,
+	.ndr_stop	= lan8710a_stop,
+	.ndr_recv	= lan8710a_recv,
+	.ndr_send	= lan8710a_send,
+	.ndr_stat	= lan8710a_stat,
+	.ndr_intr	= lan8710a_intr
+};
 
 /*============================================================================*
  *				main					      *
@@ -52,122 +50,45 @@ static void sef_cb_signal_handler(int signal);
 int
 main(int argc, char *argv[])
 {
-	
-	/* Local variables */
-	message m;
-	int r;
-	int ipc_status;
-	struct machine  machine ;
+	struct machine machine;
+
+	env_setargs(argc, argv);
 
 	sys_getmachine(&machine);
-	if ( BOARD_IS_BB(machine.board_id)) {
+	if (BOARD_IS_BB(machine.board_id))
+		netdriver_task(&lan8710a_table);
 
-		/* SEF local startup */
-		env_setargs(argc, argv);
-		sef_local_startup();
-
-		/* Main driver loop */
-		for (;;) {
-			r = netdriver_receive(ANY, &m, &ipc_status);
-			if (r != OK) {
-				panic("netdriver_receive failed: %d", r);
-			}
-
-			if (is_ipc_notify(ipc_status)) {
-				switch (_ENDPOINT_P(m.m_source)) {
-				case HARDWARE:
-					lan8710a_interrupt(&m);
-					break;
-				}
-			} else {
-				switch (m.m_type) {
-				case DL_WRITEV_S:
-					lan8710a_writev_s(&m, FALSE);
-					break;
-				case DL_READV_S:
-					lan8710a_readv_s(&m, FALSE);
-					break;
-				case DL_CONF:
-					lan8710a_conf(&m);
-					break;
-				case DL_GETSTAT_S:
-					lan8710a_getstat(&m);
-					break;
-				default:
-					panic("Illegal message: %d", m.m_type);
-				}
-			}
-		}
-	}
 	return EXIT_SUCCESS;
 }
 
 /*============================================================================*
- *				sef_local_startup			      *
- *============================================================================*/
-static void
-sef_local_startup()
-{
-	/* Register init callbacks. */
-	sef_setcb_init_fresh(sef_cb_init_fresh);
-	sef_setcb_init_lu(sef_cb_init_fresh);
-	sef_setcb_init_restart(sef_cb_init_fresh);
-
-	/* Register live update callbacks. */
-	sef_setcb_lu_prepare(sef_cb_lu_prepare_always_ready);
-	sef_setcb_lu_state_isvalid(sef_cb_lu_state_isvalid_workfree);
-
-	/* Register signal callbacks. */
-	sef_setcb_signal_handler(sef_cb_signal_handler);
-
-	/* Let SEF perform startup. */
-	sef_startup();
-}
-
-/*============================================================================*
- *				sef_cb_init_fresh			      *
+ *				lan8710a_init				      *
  *============================================================================*/
 static int
-sef_cb_init_fresh(int UNUSED( type), sef_init_info_t *UNUSED( info))
+lan8710a_init(unsigned int instance, ether_addr_t * addr)
 {
 	/* Initialize the ethernet driver. */
-	long v = 0;
 
 	/* Clear state. */
 	memset(&lan8710a_state, 0, sizeof(lan8710a_state));
 
+	strlcpy(lan8710a_state.name, "lan8710a#0", LAN8710A_NAME_LEN);
+	lan8710a_state.name[9] += instance;
+	lan8710a_state.instance = instance;
+
 	/* Initialize driver. */
-	lan8710a_init();
+	lan8710a_map_regs();
 
-	/* Get instance of ethernet device */
-	env_parse("instance", "d", 0, &v, 0, 255);
-	lan8710a_state.instance = (int) v;
-
-	/* Announce we are up! */
-	netdriver_announce();
+	lan8710a_init_hw(addr);
 
 	return OK;
-}
-
-/*============================================================================*
- *				sef_cb_signal_handler			      *
- *============================================================================*/
-static void
-sef_cb_signal_handler(int signal)
-{
-	/* Only check for termination signal, ignore anything else. */
-	if (signal != SIGTERM)
-		return;
-
-	lan8710a_stop();
 }
 
 /*============================================================================*
  *				lan8710a_enable_interrupt		      *
  *============================================================================*/
 static void
-lan8710a_enable_interrupt(interrupt)
-u8_t interrupt;
+lan8710a_enable_interrupt(int interrupt)
 {
 	int r;
 
@@ -182,14 +103,13 @@ u8_t interrupt;
 		}
 	}
 }
+
 /*============================================================================*
- *				lan8710a_interrupt			      *
+ *				lan8710a_intr				      *
  *============================================================================*/
 static void
-lan8710a_interrupt(m)
-message *m;
+lan8710a_intr(unsigned int mask)
 {
-	lan8710a_t *e = &lan8710a_state;
 	u32_t dma_status;
 
 	/* Check the card for interrupt reason(s). */
@@ -201,7 +121,7 @@ message *m;
 	if (rx_stat) {
 		cp = lan8710a_reg_read(CPDMA_STRAM_RX_CP(0));
 
-		lan8710a_readv_s(&(e->rx_message), TRUE);
+		netdriver_recv();
 
 		lan8710a_reg_write(CPDMA_STRAM_RX_CP(0), cp);
 		lan8710a_reg_write(CPDMA_EOI_VECTOR, RX_INT);
@@ -212,7 +132,7 @@ message *m;
 		/* Disabling channels, where Tx interrupt occurred */
 		lan8710a_reg_set(CPDMA_TX_INTMASK_CLEAR, tx_stat);
 
-		lan8710a_writev_s(&(e->tx_message), TRUE);
+		netdriver_send();
 
 		lan8710a_reg_write(CPDMA_STRAM_TX_CP(0), cp);
 		lan8710a_reg_write(CPDMA_EOI_VECTOR, TX_INT);
@@ -226,61 +146,19 @@ message *m;
 	}
 
 	/* Re-enable Rx interrupt. */
-	if(m->m_notify.interrupts & (1 << RX_INT))
+	if (mask & (1 << RX_INT))
 		lan8710a_enable_interrupt(RX_INT);
 
 	/* Re-enable Tx interrupt. */
-	if(m->m_notify.interrupts & (1 << TX_INT))
+	if (mask & (1 << TX_INT))
 		lan8710a_enable_interrupt(TX_INT);
-}
-
-/*============================================================================*
- *				lan8710a_conf				      *
- *============================================================================*/
-static void
-lan8710a_conf(m)
-message *m;
-{
-	message reply;
-
-	if (!(lan8710a_state.status & LAN8710A_ENABLED) &&
-						!(lan8710a_init_hw())) {
-		reply.m_type = DL_CONF_REPLY;
-		reply.m_netdrv_net_dl_conf.stat = ENXIO;
-		mess_reply(m, &reply);
-		return;
-	}
-	/* Reply back to INET. */
-	reply.m_type = DL_CONF_REPLY;
-	reply.m_netdrv_net_dl_conf.stat = OK;
-	memcpy(reply.m_netdrv_net_dl_conf.hw_addr,
-		lan8710a_state.address.ea_addr,
-		sizeof(reply.m_netdrv_net_dl_conf.hw_addr));
-	mess_reply(m, &reply);
-}
-
-/*============================================================================*
- *				lan8710a_init				      *
- *============================================================================*/
-static void
-lan8710a_init(void)
-{
-	lan8710a_map_regs();
-	strlcpy(lan8710a_state.name, "lan8710a#0", LAN8710A_NAME_LEN);
-	lan8710a_state.name[9] += lan8710a_state.instance;
-	lan8710a_state.status |= LAN8710A_DETECTED;
-
-	if (!(lan8710a_state.status & LAN8710A_ENABLED) &&
-						!(lan8710a_init_hw())) {
-		return;
-	}
 }
 
 /*============================================================================*
  *				lan8710a_init_addr			      *
  *============================================================================*/
 static void
-lan8710a_init_addr(void)
+lan8710a_init_addr(ether_addr_t * addr)
 {
 	static char eakey[]= LAN8710A_ENVVAR "#_EA";
 	static char eafmt[]= "x:x:x:x:x:x";
@@ -296,22 +174,20 @@ lan8710a_init_addr(void)
 		if (env_parse(eakey, eafmt, i, &v, 0x00L, 0xFFL) != EP_SET)
 			break;
 		else
-			lan8710a_state.address.ea_addr[i] = v;
+			addr->ea_addr[i] = v;
 	}
-	if (i != 6) {
-		lan8710a_state.address.ea_addr[0] =
-			(lan8710a_reg_read(CTRL_MAC_ID0_HI) & 0xFF);
-		lan8710a_state.address.ea_addr[1] =
-			((lan8710a_reg_read(CTRL_MAC_ID0_HI) & 0xFF00) >> 8);
-		lan8710a_state.address.ea_addr[2] =
-			((lan8710a_reg_read(CTRL_MAC_ID0_HI) & 0xFF0000) >> 16);
-		lan8710a_state.address.ea_addr[3] =
-			((lan8710a_reg_read(CTRL_MAC_ID0_HI) & 0xFF000000) >> 24);
-		lan8710a_state.address.ea_addr[4] =
-			(lan8710a_reg_read(CTRL_MAC_ID0_LO) & 0xFF);
-		lan8710a_state.address.ea_addr[5] =
-			((lan8710a_reg_read(CTRL_MAC_ID0_LO) & 0xFF00) >> 8);
-	}
+	if (i == 6)
+		return;
+
+	/*
+	 * No; get the address from the chip itself.
+	 */
+	addr->ea_addr[0] = lan8710a_reg_read(CTRL_MAC_ID0_HI) & 0xFF;
+	addr->ea_addr[1] = (lan8710a_reg_read(CTRL_MAC_ID0_HI) >> 8) & 0xFF;
+	addr->ea_addr[2] = (lan8710a_reg_read(CTRL_MAC_ID0_HI) >> 16) & 0xFF;
+	addr->ea_addr[3] = (lan8710a_reg_read(CTRL_MAC_ID0_HI) >> 24) & 0xFF;
+	addr->ea_addr[4] = lan8710a_reg_read(CTRL_MAC_ID0_LO) & 0xFF;
+	addr->ea_addr[5] = (lan8710a_reg_read(CTRL_MAC_ID0_LO) >> 8) & 0xFF;
 }
 
 /*============================================================================*
@@ -411,40 +287,28 @@ lan8710a_map_regs(void)
 }
 
 /*============================================================================*
- *				lan8710a_getstat			      *
+ *				lan8710a_stat				      *
  *============================================================================*/
 static void
-lan8710a_getstat(mp)
-message *mp;
+lan8710a_stat(eth_stat_t * stat)
 {
-	int r;
-	eth_stat_t stats;
-
-	stats.ets_recvErr   = lan8710a_reg_read(CPSW_STAT_RX_CRC_ERR)
+	stat->ets_recvErr   = lan8710a_reg_read(CPSW_STAT_RX_CRC_ERR)
 				+ lan8710a_reg_read(CPSW_STAT_RX_AGNCD_ERR)
 				+ lan8710a_reg_read(CPSW_STAT_RX_OVERSIZE);
-	stats.ets_sendErr   = 0;
-	stats.ets_OVW       = 0;
-	stats.ets_CRCerr    = lan8710a_reg_read(CPSW_STAT_RX_CRC_ERR);
-	stats.ets_frameAll  = lan8710a_reg_read(CPSW_STAT_RX_AGNCD_ERR);
-	stats.ets_missedP   = 0;
-	stats.ets_packetR   = lan8710a_reg_read(CPSW_STAT_RX_GOOD);
-	stats.ets_packetT   = lan8710a_reg_read(CPSW_STAT_TX_GOOD);
-	stats.ets_collision = lan8710a_reg_read(CPSW_STAT_COLLISIONS);
-	stats.ets_transAb   = 0;
-	stats.ets_carrSense = lan8710a_reg_read(CPSW_STAT_CARR_SENS_ERR);
-	stats.ets_fifoUnder = lan8710a_reg_read(CPSW_STAT_TX_UNDERRUN);
-	stats.ets_fifoOver  = lan8710a_reg_read(CPSW_STAT_RX_OVERRUN);
-	stats.ets_CDheartbeat = 0;
-	stats.ets_OWC = 0;
-
-	sys_safecopyto(mp->m_source, mp->m_net_netdrv_dl_getstat_s.grant, 0,
-		(vir_bytes)&stats, sizeof(stats));
-	mp->m_type  = DL_STAT_REPLY;
-
-	if ((r=ipc_send(mp->m_source, mp)) != OK) {
-		panic("lan8710a_getstat: ipc_send() failed: %d", r);
-	}
+	stat->ets_sendErr   = 0;
+	stat->ets_OVW       = 0;
+	stat->ets_CRCerr    = lan8710a_reg_read(CPSW_STAT_RX_CRC_ERR);
+	stat->ets_frameAll  = lan8710a_reg_read(CPSW_STAT_RX_AGNCD_ERR);
+	stat->ets_missedP   = 0;
+	stat->ets_packetR   = lan8710a_reg_read(CPSW_STAT_RX_GOOD);
+	stat->ets_packetT   = lan8710a_reg_read(CPSW_STAT_TX_GOOD);
+	stat->ets_collision = lan8710a_reg_read(CPSW_STAT_COLLISIONS);
+	stat->ets_transAb   = 0;
+	stat->ets_carrSense = lan8710a_reg_read(CPSW_STAT_CARR_SENS_ERR);
+	stat->ets_fifoUnder = lan8710a_reg_read(CPSW_STAT_TX_UNDERRUN);
+	stat->ets_fifoOver  = lan8710a_reg_read(CPSW_STAT_RX_OVERRUN);
+	stat->ets_CDheartbeat = 0;
+	stat->ets_OWC = 0;
 }
 
 /*============================================================================*
@@ -455,9 +319,6 @@ lan8710a_stop(void)
 {
 	/* Reset hardware. */
 	lan8710a_reset_hw();
-
-	/* Exit driver. */
-	exit(EXIT_SUCCESS);
 }
 
 /*============================================================================*
@@ -584,11 +445,9 @@ lan8710a_init_desc(void)
  *				lan8710a_init_hw			      *
  *============================================================================*/
 static int
-lan8710a_init_hw(void)
+lan8710a_init_hw(ether_addr_t * addr)
 {
 	int r, i;
-
-	lan8710a_state.status |= LAN8710A_ENABLED;
 
 	/*
 	 * Set the interrupt handler and policy. Do not automatically
@@ -756,7 +615,7 @@ lan8710a_init_hw(void)
 	lan8710a_init_mdio();
 
 	/* Getting MAC Address */
-	lan8710a_init_addr();
+	lan8710a_init_addr(addr);
 
 	/* Initialize descriptors */
 	lan8710a_init_desc();
@@ -824,244 +683,145 @@ lan8710a_init_mdio(void)
 }
 
 /*============================================================================*
- *				lan8710a_writev_s			      *
+ *				lan8710a_send				      *
  *============================================================================*/
-static void
-lan8710a_writev_s(mp, from_int)
-message *mp;
-int from_int;
+static int
+lan8710a_send(struct netdriver_data * data, size_t size)
 {
-	iovec_s_t iovec[LAN8710A_IOVEC_NR];
 	lan8710a_t *e = &lan8710a_state;
 	lan8710a_desc_t *p_tx_desc;
-	u8_t *p_buf;
-	int r, size, buf_data_len, i;
+	u8_t *buf;
 
-	/* Are we called from the interrupt handler? */
-	if (!from_int) {
-		/* We cannot write twice simultaneously. */
-		assert(!(e->status & LAN8710A_WRITING));
+	/* setup descriptors */
+	p_tx_desc = &(e->tx_desc[e->tx_desc_idx]);
 
-		/* Copy write message. */
-		e->tx_message = *mp;
-		e->client = mp->m_source;
-		e->status |= LAN8710A_WRITING;
+	/*
+	 * Check if descriptor is available for host and suspend if not.
+	 */
+	if (LAN8710A_DESC_FLAG_OWN & p_tx_desc->pkt_len_flags)
+		return SUSPEND;
 
-		/* verify vector count */
-		assert(mp->m_net_netdrv_dl_writev_s.count > 0);
-		assert(mp->m_net_netdrv_dl_writev_s.count < LAN8710A_IOVEC_NR);
+	/* Drop packets that exceed the size of our transmission buffer. */
+	if (size > LAN8710A_IOBUF_SIZE) {
+		printf("%s: dropping large packet (%zu)\n", e->name, size);
 
-		/*
-		 * Copy the I/O vector table.
-		 */
-		if ((r = sys_safecopyfrom(mp->m_source,
-				mp->m_net_netdrv_dl_writev_s.grant, 0,
-				(vir_bytes) iovec,
-				mp->m_net_netdrv_dl_writev_s.count *
-				sizeof(iovec_s_t))) != OK) {
-			panic("sys_safecopyfrom() failed: %d", r);
-		}
-		/* setup descriptors */
-		p_tx_desc = &(e->tx_desc[e->tx_desc_idx]);
-
-		/*
-		 * Check if descriptor is available for host
-		 * and drop the packet if not.
-		 */
-		if (LAN8710A_DESC_FLAG_OWN & p_tx_desc->pkt_len_flags) {
-			panic("No available transmit descriptor.");
-		}
-
-		/* virtual address of buffer */
-		p_buf = e->p_tx_buf + e->tx_desc_idx * LAN8710A_IOBUF_SIZE;
-		buf_data_len = 0;
-		for (i = 0; i < mp->m_net_netdrv_dl_writev_s.count; i++) {
-			if ((buf_data_len + iovec[i].iov_size)
-			     > LAN8710A_IOBUF_SIZE) {
-				panic("packet too long");
-			}
-
-			/* copy data to buffer */
-			size = iovec[i].iov_size
-				< (LAN8710A_IOBUF_SIZE - buf_data_len) ?
-				    iovec[i].iov_size
-				    : (LAN8710A_IOBUF_SIZE - buf_data_len);
-
-			/* Copy bytes to TX queue buffers. */
-			if ((r = sys_safecopyfrom(mp->m_source,
-					iovec[i].iov_grant, 0,
-					(vir_bytes) p_buf, size)) != OK) {
-				panic("sys_safecopyfrom() failed: %d", r);
-			}
-			p_buf += size;
-			buf_data_len += size;
-		}
-
-		/* set descriptor length */
-		p_tx_desc->buffer_length_off = buf_data_len;
-		/* set flags */
-		p_tx_desc->pkt_len_flags = (LAN8710A_DESC_FLAG_OWN |
-						LAN8710A_DESC_FLAG_SOP |
-						LAN8710A_DESC_FLAG_EOP |
-						TX_DESC_TO_PORT1 |
-						TX_DESC_TO_PORT_EN);
-		p_tx_desc->pkt_len_flags |= buf_data_len;
-
-		/* setup DMA transfer */
-		lan8710a_dma_config_tx(e->tx_desc_idx);
-
-		e->tx_desc_idx++;
-		if (LAN8710A_NUM_TX_DESC == e->tx_desc_idx) {
-			e->tx_desc_idx = 0;
-		}
-	} else {
-		e->status |= LAN8710A_TRANSMIT;
+		return OK;
 	}
-	reply(e);
+
+	/* virtual address of buffer */
+	buf = e->p_tx_buf + e->tx_desc_idx * LAN8710A_IOBUF_SIZE;
+
+	netdriver_copyin(data, 0, buf, size);
+
+	/* set descriptor length */
+	p_tx_desc->buffer_length_off = size;
+	/* set flags */
+	p_tx_desc->pkt_len_flags = (LAN8710A_DESC_FLAG_OWN |
+					LAN8710A_DESC_FLAG_SOP |
+					LAN8710A_DESC_FLAG_EOP |
+					TX_DESC_TO_PORT1 |
+					TX_DESC_TO_PORT_EN);
+	p_tx_desc->pkt_len_flags |= size;
+
+	/* setup DMA transfer */
+	lan8710a_dma_config_tx(e->tx_desc_idx);
+
+	e->tx_desc_idx++;
+	if (LAN8710A_NUM_TX_DESC == e->tx_desc_idx)
+		e->tx_desc_idx = 0;
+
+	return OK;
 }
 
 /*============================================================================*
- *				lan8710a_readv_s			      *
+ *				lan8710a_recv				      *
  *============================================================================*/
-static void
-lan8710a_readv_s(mp, from_int)
-message *mp;
-int from_int;
+static ssize_t
+lan8710a_recv(struct netdriver_data * data, size_t max)
 {
-	iovec_s_t iovec[LAN8710A_IOVEC_NR];
 	lan8710a_t *e = &lan8710a_state;
 	lan8710a_desc_t *p_rx_desc;
-	u32_t  flags;
-	u8_t *p_buf;
-	u16_t pkt_data_len;
-	u16_t buf_bytes, buf_len;
-	int i, r, size;
+	u32_t flags;
+	u8_t *buf;
+	size_t off, size, chunk;
 
-	/* Are we called from the interrupt handler? */
-	if (!from_int) {
-		e->rx_message = *mp;
-		e->client = mp->m_source;
-		e->status |= LAN8710A_READING;
-		e->rx_size = 0;
+	/*
+	 * Only handle one packet at a time.
+	 */
+	p_rx_desc = &(e->rx_desc[e->rx_desc_idx]);
+	/* find next OWN descriptor with SOP flag */
+	while ((0 == (LAN8710A_DESC_FLAG_SOP & p_rx_desc->pkt_len_flags)) &&
+	    (0 == (LAN8710A_DESC_FLAG_OWN & p_rx_desc->pkt_len_flags))) {
+		p_rx_desc->buffer_length_off = LAN8710A_IOBUF_SIZE;
+		/* set ownership of current descriptor to EMAC */
+		p_rx_desc->pkt_len_flags = LAN8710A_DESC_FLAG_OWN;
 
-		assert(e->rx_message.m_net_netdrv_dl_readv_s.count > 0);
-		assert(e->rx_message.m_net_netdrv_dl_readv_s.count < LAN8710A_IOVEC_NR);
-	}
-	if (e->status & LAN8710A_READING) {
-		/*
-		 * Copy the I/O vector table first.
-		 */
-		if ((r = sys_safecopyfrom(e->rx_message.m_source,
-				e->rx_message.m_net_netdrv_dl_readv_s.grant, 0,
-				(vir_bytes) iovec,
-				e->rx_message.m_net_netdrv_dl_readv_s.count *
-				    sizeof(iovec_s_t))) != OK) {
-			panic("sys_safecopyfrom() failed: %d", r);
-		}
-
-		/*
-		 * Only handle one packet at a time.
-		 */
+		e->rx_desc_idx++;
+		if (LAN8710A_NUM_RX_DESC == e->rx_desc_idx)
+			e->rx_desc_idx = 0;
 		p_rx_desc = &(e->rx_desc[e->rx_desc_idx]);
-		/* find next OWN descriptor with SOP flag */
-		while ((0 == (LAN8710A_DESC_FLAG_SOP &
-					p_rx_desc->pkt_len_flags)) &&
-				(0 == (LAN8710A_DESC_FLAG_OWN &
-					p_rx_desc->pkt_len_flags))) {
-			p_rx_desc->buffer_length_off = LAN8710A_IOBUF_SIZE;
-			/* set ownership of current descriptor to EMAC */
-			p_rx_desc->pkt_len_flags = LAN8710A_DESC_FLAG_OWN;
-
-			e->rx_desc_idx++;
-			if (LAN8710A_NUM_RX_DESC == e->rx_desc_idx)
-				e->rx_desc_idx = 0;
-			p_rx_desc = &(e->rx_desc[e->rx_desc_idx]);
-		}
-		if (0 == (LAN8710A_DESC_FLAG_SOP & p_rx_desc->pkt_len_flags)) {
-			/* SOP was not found */
-			reply(e);
-			return;
-		}
-
-		/*
-		 * Copy to vector elements.
-		 */
-		pkt_data_len = 0;
-		buf_bytes = 0;
-		p_buf = e->p_rx_buf + e->rx_desc_idx * LAN8710A_IOBUF_SIZE;
-		for (i = 0; i < e->rx_message.m_net_netdrv_dl_readv_s.count; i++) {
-			buf_len = p_rx_desc->buffer_length_off & 0xFFFF;
-			if (buf_bytes == buf_len) {
-				/* Whole buffer move to the next descriptor */
-				p_rx_desc->buffer_length_off =
-							LAN8710A_IOBUF_SIZE;
-				/* set ownership of current desc to EMAC */
-				p_rx_desc->pkt_len_flags =
-							LAN8710A_DESC_FLAG_OWN;
-				buf_bytes = 0;
-
-				e->rx_desc_idx++;
-				if (LAN8710A_NUM_RX_DESC == e->rx_desc_idx)
-					e->rx_desc_idx = 0;
-				p_rx_desc = &(e->rx_desc[e->rx_desc_idx]);
-				p_buf = e->p_rx_buf + (e->rx_desc_idx *
-					    LAN8710A_IOBUF_SIZE) +
-					    (p_rx_desc->buffer_length_off >> 16);
-				buf_len = p_rx_desc->buffer_length_off & 0xFFFF;
-			}
-			size = iovec[i].iov_size < (buf_len - buf_bytes) ?
-				   iovec[i].iov_size :
-				   (buf_len - buf_bytes);
-
-			if ((r = sys_safecopyto(e->rx_message.m_source,
-						iovec[i].iov_grant, 0,
-						(vir_bytes) p_buf,
-						size)) != OK) {
-				panic("sys_safecopyto() failed: %d", r);
-			}
-			p_buf += size;
-			buf_bytes += size;
-			pkt_data_len += size;
-
-			/* if EOP flag is set -> stop processing */
-			if ((LAN8710A_DESC_FLAG_EOP & p_rx_desc->pkt_len_flags) &&
-							(buf_bytes == buf_len)) {
-				/* end of packet */
-				break;
-			}
-		}
-		do {
-			/* reset owned descriptors up to EOP flag */
-			flags = p_rx_desc->pkt_len_flags;
-			p_rx_desc->buffer_length_off = LAN8710A_IOBUF_SIZE;
-			/* set ownership of current descriptor to EMAC */
-			p_rx_desc->pkt_len_flags = LAN8710A_DESC_FLAG_OWN;
-
-			e->rx_desc_idx++;
-			if (LAN8710A_NUM_RX_DESC == e->rx_desc_idx)
-				e->rx_desc_idx = 0;
-
-			p_rx_desc = &(e->rx_desc[e->rx_desc_idx]);
-		}
-		while (0 == (flags & LAN8710A_DESC_FLAG_EOP));
-
-		/*
-		 * Update state.
-		 */
-		e->status |= LAN8710A_RECEIVED;
-		e->rx_size = pkt_data_len;
-
 	}
-	reply(e);
+
+	if (0 == (LAN8710A_DESC_FLAG_SOP & p_rx_desc->pkt_len_flags)) {
+		/* SOP was not found */
+		return SUSPEND;
+	}
+
+	/*
+	 * Copy data from descriptors, from SOP to EOP inclusive.
+	 * TODO: make sure that the presence of a SOP slot implies the presence
+	 * of an EOP slot, because we are not checking for ownership below..
+	 */
+	size = 0;
+	off = 0;
+
+	for (;;) {
+		buf = e->p_rx_buf + e->rx_desc_idx * LAN8710A_IOBUF_SIZE + off;
+		chunk = p_rx_desc->buffer_length_off & 0xFFFF;
+
+		/* Truncate packets that are too large. */
+		if (chunk > max - size)
+			chunk = max - size;
+
+		if (chunk > 0) {
+			netdriver_copyout(data, size, buf, chunk);
+
+			size += chunk;
+		}
+
+		flags = p_rx_desc->pkt_len_flags;
+
+		/* Whole buffer move to the next descriptor */
+		p_rx_desc->buffer_length_off = LAN8710A_IOBUF_SIZE;
+		/* set ownership of current desc to EMAC */
+		p_rx_desc->pkt_len_flags = LAN8710A_DESC_FLAG_OWN;
+
+		e->rx_desc_idx++;
+		if (LAN8710A_NUM_RX_DESC == e->rx_desc_idx)
+			e->rx_desc_idx = 0;
+		p_rx_desc = &(e->rx_desc[e->rx_desc_idx]);
+
+		/* if EOP flag is set -> stop processing */
+		if (flags & LAN8710A_DESC_FLAG_EOP)
+			break;
+
+		/*
+		 * TODO: the upper 16 bits of buffer_length_off are used *only*
+		 * for descriptors *after* the first one; I'm retaining this
+		 * behavior because I don't have the chip's spec, but it may be
+		 * better to simplify/correct this behavior. --David
+		 */
+		off = p_rx_desc->buffer_length_off >> 16;
+	}
+
+	return size;
 }
 
 /*============================================================================*
  *				lan8710a_phy_write			      *
  *============================================================================*/
 static void
-lan8710a_phy_write(reg, value)
-u32_t reg;
-u32_t value;
+lan8710a_phy_write(u32_t reg, u32_t value)
 {
 	if (!(lan8710a_reg_read(MDIOUSERACCESS0) & MDIO_GO)) {
 		/* Clearing MDIOUSERACCESS0 register */
@@ -1072,7 +832,8 @@ u32_t value;
 		lan8710a_reg_set(MDIOUSERACCESS0,
 				lan8710a_state.phy_address << MDIO_PHYADR);
 		/* Data written only 16 bits. */
-		lan8710a_reg_set(MDIOUSERACCESS0, (value & 0xFFFF) << MDIO_DATA);
+		lan8710a_reg_set(MDIOUSERACCESS0,
+		    (value & 0xFFFF) << MDIO_DATA);
 		lan8710a_reg_set(MDIOUSERACCESS0, MDIO_GO);
 
 		/* Waiting for writing completion */
@@ -1084,8 +845,7 @@ u32_t value;
  *				lan8710a_phy_read			      *
  *============================================================================*/
 static u32_t
-lan8710a_phy_read(reg)
-u32_t reg;
+lan8710a_phy_read(u32_t reg)
 {
 	u32_t value = 0xFFFFFFFF;
 
@@ -1115,7 +875,7 @@ u32_t reg;
  *				lan8710a_reset_hw			      *
  *============================================================================*/
 static void
-lan8710a_reset_hw()
+lan8710a_reset_hw(void)
 {
 	/* Assert a Device Reset signal. */
 	lan8710a_phy_write(LAN8710A_CTRL_REG, LAN8710A_SOFT_RESET);
@@ -1128,8 +888,7 @@ lan8710a_reset_hw()
  *				lan8710a_reg_read			      *
  *============================================================================*/
 static u32_t
-lan8710a_reg_read(reg)
-volatile u32_t *reg;
+lan8710a_reg_read(volatile u32_t *reg)
 {
 	u32_t value;
 
@@ -1144,9 +903,7 @@ volatile u32_t *reg;
  *				lan8710a_reg_write			      *
  *============================================================================*/
 static void
-lan8710a_reg_write(reg, value)
-volatile u32_t *reg;
-u32_t value;
+lan8710a_reg_write(volatile u32_t *reg, u32_t value)
 {
 	/* Write to memory mapped register. */
 	*reg = value;
@@ -1156,9 +913,7 @@ u32_t value;
  *				lan8710a_reg_set			      *
  *============================================================================*/
 static void
-lan8710a_reg_set(reg, value)
-volatile u32_t *reg;
-u32_t value;
+lan8710a_reg_set(volatile u32_t *reg, u32_t value)
 {
 	u32_t data;
 
@@ -1173,9 +928,7 @@ u32_t value;
  *				lan8710a_reg_unset			      *
  *============================================================================*/
 static void
-lan8710a_reg_unset(reg, value)
-volatile u32_t *reg;
-u32_t value;
+lan8710a_reg_unset(volatile u32_t *reg, u32_t value)
 {
 	u32_t data;
 
@@ -1184,62 +937,4 @@ u32_t value;
 
 	/* Unset value, and write back. */
 	lan8710a_reg_write(reg, data & ~value);
-}
-
-/*============================================================================*
- *				mess_reply				      *
- *============================================================================*/
-static void
-mess_reply(req, reply)
-message *req;message *reply;
-{
-	if (ipc_send(req->m_source, reply) != OK) {
-		panic("unable to send reply message");
-	}
-}
-
-/*============================================================================*
- *				reply					      *
- *============================================================================*/
-static void
-reply(e)
-lan8710a_t *e;
-{
-	message msg;
-	int r;
-
-	/* Only reply to client for read/write request. */
-	if (!(e->status & LAN8710A_READING ||
-			e->status & LAN8710A_WRITING)) {
-		return;
-	}
-	/* Construct reply message. */
-	msg.m_type   = DL_TASK_REPLY;
-	msg.m_netdrv_net_dl_task.flags = DL_NOFLAGS;
-	msg.m_netdrv_net_dl_task.count = 0;
-
-	/* Did we successfully receive packet(s)? */
-	if (e->status & LAN8710A_READING &&
-	e->status & LAN8710A_RECEIVED) {
-		msg.m_netdrv_net_dl_task.flags |= DL_PACK_RECV;
-		msg.m_netdrv_net_dl_task.count =
-			 e->rx_size >= ETH_MIN_PACK_SIZE ?
-				e->rx_size : ETH_MIN_PACK_SIZE;
-
-		/* Clear flags. */
-		e->status &= ~(LAN8710A_READING | LAN8710A_RECEIVED);
-	}
-	/* Did we successfully transmit packet(s)? */
-	if (e->status & LAN8710A_TRANSMIT &&
-		e->status & LAN8710A_WRITING) {
-		msg.m_netdrv_net_dl_task.flags |= DL_PACK_SEND;
-
-		/* Clear flags. */
-		e->status &= ~(LAN8710A_WRITING | LAN8710A_TRANSMIT);
-	}
-
-	/* Acknowledge to INET. */
-	if ((r = ipc_send(e->client, &msg) != OK)) {
-		panic("ipc_send() failed: %d", r);
-	}
 }
