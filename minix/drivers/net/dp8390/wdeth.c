@@ -5,6 +5,7 @@ Created:	March 14, 1994 by Philip Homburg
 */
 
 #include <minix/drivers.h>
+#include <minix/netdriver.h>
 
 #include <net/gen/ether.h>
 #include <net/gen/eth_io.h>
@@ -69,9 +70,6 @@ dpeth_t *dep;
 	int icr, irr, hwr, b, gcr;
 	int we_type;
 	int sendq_nr;
-
-	assert(dep->de_mode == DEM_ENABLED);
-	assert(!(dep->de_flags & DEF_ENABLED));
 
 	dep->de_address.ea_addr[0] = inb_we(dep, EPL_EA0);
 	dep->de_address.ea_addr[1] = inb_we(dep, EPL_EA1);
