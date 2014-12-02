@@ -22,11 +22,18 @@
 
 #include "virtio_net.h"
 
+#define VERBOSE 0
+
+#if VERBOSE
 #define dput(s)		do { dprintf(s); printf("\n"); } while (0)
 #define dprintf(s) do {						\
 	printf("%s: ", name);					\
 	printf s;						\
 } while (0)
+#else
+#define dput(s)
+#define dprintf(s)
+#endif
 
 static struct virtio_device *net_dev;
 
@@ -50,6 +57,7 @@ struct packet {
 	phys_bytes phdr;
 	char *vdata;
 	phys_bytes pdata;
+	size_t len;
 	STAILQ_ENTRY(packet) next;
 };
 
@@ -60,7 +68,6 @@ static struct virtio_net_hdr *hdrs_vir;
 static phys_bytes hdrs_phys;
 static struct packet *packets;
 static int in_rx;
-static int started;
 
 /* Packets on this list can be given to the host */
 static STAILQ_HEAD(free_list, packet) free_list;
@@ -68,21 +75,13 @@ static STAILQ_HEAD(free_list, packet) free_list;
 /* Packets on this list are to be given to inet */
 static STAILQ_HEAD(recv_list, packet) recv_list;
 
-/* State about pending inet messages */
-static int rx_pending;
-static message pending_rx_msg;
-static int tx_pending;
-static message pending_tx_msg;
-
 /* Various state data */
-static u8_t virtio_net_mac[6];
 static eth_stat_t virtio_net_stats;
 static int spurious_interrupt;
 
-
 /* Prototypes */
-static int virtio_net_probe(int skip);
-static int virtio_net_config(void);
+static int virtio_net_probe(unsigned int skip);
+static void virtio_net_config(ether_addr_t *addr);
 static int virtio_net_alloc_bufs(void);
 static void virtio_net_init_queues(void);
 
@@ -90,28 +89,24 @@ static void virtio_net_refill_rx_queue(void);
 static void virtio_net_check_queues(void);
 static void virtio_net_check_pending(void);
 
-static void virtio_net_fetch_iovec(iovec_s_t *iov, message *m,
-	cp_grant_id_t grant, size_t count);
-static int virtio_net_cpy_to_user(message *m);
-static int virtio_net_cpy_from_user(message *m);
+static int virtio_net_init(unsigned int instance, ether_addr_t *addr);
+static void virtio_net_stop(void);
+static int virtio_net_send(struct netdriver_data *data, size_t len);
+static ssize_t virtio_net_recv(struct netdriver_data *data, size_t max);
+static void virtio_net_stat(eth_stat_t *stat);
+static void virtio_net_intr(unsigned int mask);
 
-static void virtio_net_intr(message *m);
-static void virtio_net_write(message *m);
-static void virtio_net_read(message *m);
-static void virtio_net_conf(message *m);
-static void virtio_net_getstat(message *m);
-
-static void virtio_net_notify(message *m);
-static void virtio_net_msg(message *m);
-static void virtio_net_main_loop(void);
-
-static void sef_local_startup(void);
-static int sef_cb_init_fresh(int type, sef_init_info_t *info);
-static void sef_cb_signal_handler(int signo);
-
+static const struct netdriver virtio_net_table = {
+	.ndr_init	= virtio_net_init,
+	.ndr_stop	= virtio_net_stop,
+	.ndr_recv	= virtio_net_recv,
+	.ndr_send	= virtio_net_send,
+	.ndr_stat	= virtio_net_stat,
+	.ndr_intr	= virtio_net_intr,
+};
 
 /* TODO: Features are pretty much ignored */
-struct virtio_feature netf[] = {
+static struct virtio_feature netf[] = {
 	{ "partial csum",	VIRTIO_NET_F_CSUM,	0,	0	},
 	{ "given mac",		VIRTIO_NET_F_MAC,	0,	1	},
 	{ "status ",		VIRTIO_NET_F_STATUS,	0,	0	},
@@ -120,7 +115,7 @@ struct virtio_feature netf[] = {
 };
 
 static int
-virtio_net_probe(int skip)
+virtio_net_probe(unsigned int skip)
 {
 	/* virtio-net has at least 2 queues */
 	int queues = 2;
@@ -142,8 +137,8 @@ virtio_net_probe(int skip)
 	return OK;
 }
 
-static int
-virtio_net_config(void)
+static void
+virtio_net_config(ether_addr_t * addr)
 {
 	u32_t mac14;
 	u32_t mac56;
@@ -153,12 +148,12 @@ virtio_net_config(void)
 		dprintf(("Mac set by host: "));
 		mac14 = virtio_sread32(net_dev, 0);
 		mac56 = virtio_sread32(net_dev, 4);
-		*(u32_t*)virtio_net_mac = mac14;
-		*(u16_t*)(virtio_net_mac + 4) = mac56;
+		memcpy(&addr->ea_addr[0], &mac14, 4);
+		memcpy(&addr->ea_addr[4], &mac56, 2);
 
 		for (i = 0; i < 6; i++)
-			printf("%02x%s", virtio_net_mac[i],
-					 i == 5 ? "\n" : ":");
+			dprintf(("%02x%s", addr->ea_addr[i],
+					 i == 5 ? "\n" : ":"));
 	} else {
 		dput(("No mac"));
 	}
@@ -174,8 +169,6 @@ virtio_net_config(void)
 
 	if (virtio_host_supports(net_dev, VIRTIO_NET_F_CTRL_RX))
 		dput(("Host supports control channel for RX"));
-
-	return OK;
 }
 
 static int
@@ -233,7 +226,6 @@ virtio_net_refill_rx_queue(void)
 	struct packet *p;
 
 	while ((in_rx < BUF_PACKETS / 2) && !STAILQ_EMPTY(&free_list)) {
-
 		/* peek */
 		p = STAILQ_FIRST(&free_list);
 		/* remove */
@@ -253,7 +245,6 @@ virtio_net_refill_rx_queue(void)
 
 		virtio_to_queue(net_dev, RX_Q, phys, 2, p);
 		in_rx++;
-
 	}
 
 	if (in_rx == 0 && STAILQ_EMPTY(&free_list)) {
@@ -266,15 +257,18 @@ static void
 virtio_net_check_queues(void)
 {
 	struct packet *p;
+	size_t len;
 
 	/* Put the received packets into the recv list */
-	while (virtio_from_queue(net_dev, RX_Q, (void **)&p, NULL) == 0) {
+	while (virtio_from_queue(net_dev, RX_Q, (void **)&p, &len) == 0) {
+		p->len = len;
 		STAILQ_INSERT_TAIL(&recv_list, p, next);
 		in_rx--;
 		virtio_net_stats.ets_packetR++;
 	}
 
-	/* Packets from the TX queue just indicated they are free to
+	/*
+	 * Packets from the TX queue just indicated they are free to
 	 * be reused now. inet already knows about them as being sent.
 	 */
 	while (virtio_from_queue(net_dev, TX_Q, (void **)&p, NULL) == 0) {
@@ -288,173 +282,19 @@ virtio_net_check_queues(void)
 static void
 virtio_net_check_pending(void)
 {
-	int dst = 0xDEAD;
-	int r;
-
-	message reply;
-	reply.m_type = DL_TASK_REPLY;
-	reply.m_netdrv_net_dl_task.flags = DL_NOFLAGS;
-	reply.m_netdrv_net_dl_task.count = 0;
 
 	/* Pending read and something in recv_list? */
-	if (!STAILQ_EMPTY(&recv_list) && rx_pending) {
-		dst = pending_rx_msg.m_source;
-		reply.m_netdrv_net_dl_task.count =
-			virtio_net_cpy_to_user(&pending_rx_msg);
-		reply.m_netdrv_net_dl_task.flags |= DL_PACK_RECV;
-		rx_pending = 0;
-	}
+	if (!STAILQ_EMPTY(&recv_list))
+		netdriver_recv();
 
-	if (!STAILQ_EMPTY(&free_list) && tx_pending) {
-		dst = pending_tx_msg.m_source;
-		virtio_net_cpy_from_user(&pending_tx_msg);
-		reply.m_netdrv_net_dl_task.flags |= DL_PACK_SEND;
-		tx_pending = 0;
-	}
-
-	/* Only reply if a pending request was handled */
-	if (reply.m_netdrv_net_dl_task.flags != DL_NOFLAGS)
-		if ((r = ipc_send(dst, &reply)) != OK)
-			panic("%s: ipc_send to %d failed (%d)", name, dst, r);
+	if (!STAILQ_EMPTY(&free_list))
+		netdriver_send();
 }
 
 static void
-virtio_net_fetch_iovec(iovec_s_t *iov, message *m, cp_grant_id_t grant, size_t count)
+virtio_net_intr(unsigned int __unused mask)
 {
-	int r;
-	r = sys_safecopyfrom(m->m_source, grant, 0, (vir_bytes)iov,
-		count * sizeof(iov[0]));
 
-	if (r != OK)
-		panic("%s: iovec fail for %d (%d)", name, m->m_source, r);
-}
-
-static int
-virtio_net_cpy_to_user(message *m)
-{
-	/* Hmm, this looks so similar to cpy_from_user... TODO */
-	int i, r, size, ivsz;
-	int left = MAX_PACK_SIZE;	/* Try copying the whole packet */
-	int bytes = 0;
-	iovec_s_t iovec[NR_IOREQS];
-	struct packet *p;
-
-	/* This should only be called if recv_list has some entries */
-	assert(!STAILQ_EMPTY(&recv_list));
-
-	p = STAILQ_FIRST(&recv_list);
-	STAILQ_REMOVE_HEAD(&recv_list, next);
-
-	virtio_net_fetch_iovec(iovec, m, m->m_net_netdrv_dl_readv_s.grant,
-		 m->m_net_netdrv_dl_readv_s.count);
-
-	for (i = 0; i < m->m_net_netdrv_dl_readv_s.count && left > 0; i++) {
-		ivsz = iovec[i].iov_size;
-		size = left > ivsz ? ivsz : left;
-		r = sys_safecopyto(m->m_source, iovec[i].iov_grant, 0,
-				   (vir_bytes) p->vdata + bytes, size);
-
-		if (r != OK)
-			panic("%s: copy to %d failed (%d)", name,
-							    m->m_source,
-							    r);
-
-		left -= size;
-		bytes += size;
-	}
-
-	if (left != 0)
-		dput(("Uhm... left=%d", left));
-
-	/* Clean the packet */
-	memset(p->vhdr, 0, sizeof(*p->vhdr));
-	memset(p->vdata, 0, MAX_PACK_SIZE);
-	STAILQ_INSERT_HEAD(&free_list, p, next);
-
-	return bytes;
-}
-
-static int
-sys_easy_vsafecopy_from(endpoint_t src_proc, iovec_s_t *iov, int count,
-			vir_bytes dst, size_t max, size_t *copied)
-{
-	int i, r;
-	size_t left = max;
-	vir_bytes cur_off = 0;
-	struct vscp_vec vv[NR_IOREQS];
-
-	for (i = 0; i < count && left > 0; i++) {
-		vv[i].v_from = src_proc;
-		vv[i].v_to = SELF;
-		vv[i].v_gid = iov[i].iov_grant;
-		vv[i].v_offset = 0;
-		vv[i].v_addr = dst + cur_off;
-		vv[i].v_bytes = iov[i].iov_size;
-
-		/* More data in iov than the buffer can hold, this should be
-		 * manageable by the caller.
-		 */
-		if (left - vv[i].v_bytes > left) {
-			printf("sys_easy_vsafecopy_from: buf too small!\n");
-			return ENOMEM;
-		}
-
-		left -= iov[i].iov_size;
-		cur_off += iov[i].iov_size;
-	}
-
-	/* Now that we prepared the vscp_vec, we can call vsafecopy() */
-	if ((r = sys_vsafecopy(vv, count)) != OK)
-		printf("sys_vsafecopy: failed: (%d)\n", r);
-
-	if (copied)
-		*copied = cur_off;
-
-	return OK;
-}
-
-static int
-virtio_net_cpy_from_user(message *m)
-{
-	/* Put user bytes into a a free packet buffer and
-	 * then forward this packet to the TX queue.
-	 */
-	int r;
-	iovec_s_t iovec[NR_IOREQS];
-	struct vumap_phys phys[2];
-	struct packet *p;
-	size_t bytes;
-
-	/* This should only be called if free_list has some entries */
-	assert(!STAILQ_EMPTY(&free_list));
-
-	p = STAILQ_FIRST(&free_list);
-	STAILQ_REMOVE_HEAD(&free_list, next);
-
-	virtio_net_fetch_iovec(iovec, m, m->m_net_netdrv_dl_writev_s.grant,
-		 m->m_net_netdrv_dl_writev_s.count);
-
-	r = sys_easy_vsafecopy_from(m->m_source, iovec,
-		m->m_net_netdrv_dl_writev_s.count, (vir_bytes)p->vdata,
-		MAX_PACK_SIZE, &bytes);
-
-	if (r != OK)
-		panic("%s: copy from %d failed", name, m->m_source);
-
-
-	phys[0].vp_addr = p->phdr;
-	assert(!(phys[0].vp_addr & 1));
-	phys[0].vp_size = sizeof(struct virtio_net_hdr);
-	phys[1].vp_addr = p->pdata;
-	assert(!(phys[1].vp_addr & 1));
-	phys[1].vp_size = bytes;
-	virtio_to_queue(net_dev, TX_Q, phys, 2, p);
-	return bytes;
-}
-
-static void
-virtio_net_intr(message *m)
-{
 	/* Check and clear interrupt flag */
 	if (virtio_had_irq(net_dev)) {
 		virtio_net_check_queues();
@@ -468,202 +308,131 @@ virtio_net_intr(message *m)
 	virtio_net_check_pending();
 
 	virtio_irq_enable(net_dev);
+
+	/* Readd packets to the receive queue as necessary. */
+	virtio_net_refill_rx_queue();
 }
 
-static void
-virtio_net_write(message *m)
-{
-	int r;
-	message reply;
-
-	reply.m_type = DL_TASK_REPLY;
-	reply.m_netdrv_net_dl_task.flags = DL_NOFLAGS;
-	reply.m_netdrv_net_dl_task.count = 0;
-
-
-	if (!STAILQ_EMPTY(&free_list)) {
-		/* free_list contains at least one  packet, use it */
-		reply.m_netdrv_net_dl_task.count = virtio_net_cpy_from_user(m);
-		reply.m_netdrv_net_dl_task.flags = DL_PACK_SEND;
-	} else {
-		pending_tx_msg = *m;
-		tx_pending = 1;
-	}
-
-	if ((r = ipc_send(m->m_source, &reply)) != OK)
-		panic("%s: ipc_send to %d failed (%d)", name, m->m_source, r);
-}
-
-static void
-virtio_net_read(message *m)
-{
-	int r;
-	message reply;
-
-	reply.m_type = DL_TASK_REPLY;
-	reply.m_netdrv_net_dl_task.flags = DL_NOFLAGS;
-	reply.m_netdrv_net_dl_task.count = 0;
-
-	if (!STAILQ_EMPTY(&recv_list)) {
-		/* recv_list contains at least one  packet, copy it */
-		reply.m_netdrv_net_dl_task.count = virtio_net_cpy_to_user(m);
-		reply.m_netdrv_net_dl_task.flags = DL_PACK_RECV;
-	} else {
-		rx_pending = 1;
-		pending_rx_msg = *m;
-	}
-
-	if ((r = ipc_send(m->m_source, &reply)) != OK)
-		panic("%s: ipc_send to %d failed (%d)", name, m->m_source, r);
-}
-
-static void
-virtio_net_conf(message *m)
-{
-	/* TODO: Add the multicast, broadcast filtering etc. */
-	int i, r;
-
-	message reply;
-
-	/* If this is the first CONF message we see, fully initialize
-	 * the device now.
-	 */
-	if (!started) {
-		started = 1;
-		virtio_device_ready(net_dev);
-		virtio_irq_enable(net_dev);
-	}
-
-	/* Prepare reply */
-	memcpy(reply.m_netdrv_net_dl_conf.hw_addr, virtio_net_mac,
-		sizeof(reply.m_netdrv_net_dl_conf.hw_addr));
-
-	reply.m_type = DL_CONF_REPLY;
-	reply.m_netdrv_net_dl_conf.stat = OK;
-
-	if ((r = ipc_send(m->m_source, &reply)) != OK)
-		panic("%s: ipc_send to %d failed (%d)", name, m->m_source, r);
-}
-
-static void
-virtio_net_getstat(message *m)
-{
-	int r;
-	message reply;
-
-	reply.m_type = DL_STAT_REPLY;
-
-	r = sys_safecopyto(m->m_source, m->m_net_netdrv_dl_getstat_s.grant, 0,
-			   (vir_bytes)&virtio_net_stats,
-			   sizeof(virtio_net_stats));
-
-	if (r != OK)
-		panic("%s: copy to %d failed (%d)", name, m->m_source, r);
-
-	if ((r = ipc_send(m->m_source, &reply)) != OK)
-		panic("%s: ipc_send to %d failed (%d)", name, m->m_source, r);
-}
-
-static void
-virtio_net_notify(message *m)
-{
-	if (_ENDPOINT_P(m->m_source) == HARDWARE)
-		virtio_net_intr(m);
-}
-
-static void
-virtio_net_msg(message *m)
-{
-	switch (m->m_type) {
-	case DL_WRITEV_S:
-		virtio_net_write(m);
-		break;
-	case DL_READV_S:
-		virtio_net_read(m);
-		break;
-	case DL_CONF:
-		virtio_net_conf(m);
-		break;
-	case DL_GETSTAT_S:
-		virtio_net_getstat(m);
-		break;
-	default:
-		panic("%s: illegal message: %d", name, m->m_type);
-	}
-}
-
-static void
-virtio_net_main_loop(void)
-{
-	message m;
-	int ipc_status;
-	int r;
-
-	while (TRUE) {
-
-		virtio_net_refill_rx_queue();
-
-		if ((r = netdriver_receive(ANY, &m, &ipc_status)) != OK)
-			panic("%s: netdriver_receive failed: %d", name, r);
-
-		if (is_ipc_notify(ipc_status))
-			virtio_net_notify(&m);
-		else
-			virtio_net_msg(&m);
-	}
-}
-
-int
-main(int argc, char *argv[])
-{
-	env_setargs(argc, argv);
-	sef_local_startup();
-
-	virtio_net_main_loop();
-}
-
-static void
-sef_local_startup()
-{
-	sef_setcb_init_fresh(sef_cb_init_fresh);
-	sef_setcb_init_lu(sef_cb_init_fresh);
-	sef_setcb_init_restart(sef_cb_init_fresh);
-
-	sef_setcb_lu_prepare(sef_cb_lu_prepare_always_ready);
-	sef_setcb_lu_state_isvalid(sef_cb_lu_state_isvalid_workfree);
-
-	sef_setcb_signal_handler(sef_cb_signal_handler);
-
-	sef_startup();
-}
-
+/*
+ * Put user bytes into a free packet buffer, forward this packet to the TX
+ * queue, and return OK.  If there are no free packet buffers, return SUSPEND.
+ */
 static int
-sef_cb_init_fresh(int type, sef_init_info_t *info)
+virtio_net_send(struct netdriver_data * data, size_t len)
 {
-	long instance = 0;
-	env_parse("instance", "d", 0, &instance, 0, 255);
+	struct vumap_phys phys[2];
+	struct packet *p;
 
-	if (virtio_net_probe((int)instance) != OK)
-		panic("%s: No device found", name);
+	if (STAILQ_EMPTY(&free_list))
+		return SUSPEND;
 
-	if (virtio_net_config() != OK)
-		panic("%s: No device found", name);
+	p = STAILQ_FIRST(&free_list);
+	STAILQ_REMOVE_HEAD(&free_list, next);
+
+	if (len > MAX_PACK_SIZE)
+		panic("%s: packet too large to send: %zu", name, len);
+
+	netdriver_copyin(data, 0, p->vdata, len);
+
+	phys[0].vp_addr = p->phdr;
+	assert(!(phys[0].vp_addr & 1));
+	phys[0].vp_size = sizeof(struct virtio_net_hdr);
+	phys[1].vp_addr = p->pdata;
+	assert(!(phys[1].vp_addr & 1));
+	phys[1].vp_size = len;
+	virtio_to_queue(net_dev, TX_Q, phys, 2, p);
+
+	return OK;
+}
+
+/*
+ * Put a packet receive from the RX queue into a user buffer, and return the
+ * packet length.  If there are no received packets, return SUSPEND.
+ */
+static ssize_t
+virtio_net_recv(struct netdriver_data * data, size_t max)
+{
+	struct packet *p;
+	ssize_t len;
+
+	/* Get the first received packet, if any. */
+	if (STAILQ_EMPTY(&recv_list))
+		return SUSPEND;
+
+	p = STAILQ_FIRST(&recv_list);
+	STAILQ_REMOVE_HEAD(&recv_list, next);
+
+	/* Copy out the packet contents. */
+	len = p->len - sizeof(struct virtio_net_hdr);
+	if (len > max)
+		len = max;
+
+	/*
+	 * HACK: due to lack of padding, received packets may in fact be
+	 * smaller than the minimum ethernet packet size.  Inet will accept the
+	 * packets just fine if we increase the length to its minimum.  We
+	 * already zeroed out the rest of the packet data, so this is safe.
+	 */
+	if (len < ETH_MIN_PACK_SIZE)
+		len = ETH_MIN_PACK_SIZE;
+
+	netdriver_copyout(data, 0, p->vdata, len);
+
+	/* Clean the packet. */
+	memset(p->vhdr, 0, sizeof(*p->vhdr));
+	memset(p->vdata, 0, MAX_PACK_SIZE);
+	STAILQ_INSERT_HEAD(&free_list, p, next);
+
+	/* Readd packets to the receive queue as necessary. */
+	virtio_net_refill_rx_queue();
+
+	return len;
+}
+
+/*
+ * Return statistics.
+ */
+static void
+virtio_net_stat(eth_stat_t *stat)
+{
+
+	memcpy(stat, &virtio_net_stats, sizeof(*stat));
+}
+
+/*
+ * Initialize the driver and the virtual hardware.
+ */
+static int
+virtio_net_init(unsigned int instance, ether_addr_t *addr)
+{
+	int r;
+
+	if ((r = virtio_net_probe(instance)) != OK)
+		return r;
+
+	virtio_net_config(addr);
 
 	if (virtio_net_alloc_bufs() != OK)
 		panic("%s: Buffer allocation failed", name);
 
 	virtio_net_init_queues();
 
-	netdriver_announce();
+	/* Add packets to the receive queue. */
+	virtio_net_refill_rx_queue();
+
+	virtio_device_ready(net_dev);
+
+	virtio_irq_enable(net_dev);
 
 	return(OK);
 }
 
+/*
+ * The driver is terminating.  Clean up.
+ */
 static void
-sef_cb_signal_handler(int signo)
+virtio_net_stop(void)
 {
-	if (signo != SIGTERM)
-		return;
 
 	dput(("Terminating"));
 
@@ -675,6 +444,18 @@ sef_cb_signal_handler(int signo)
 	virtio_free_queues(net_dev);
 	virtio_free_device(net_dev);
 	net_dev = NULL;
+}
 
-	exit(1);
+/*
+ * The virtio-net device driver.
+ */
+int
+main(int argc, char *argv[])
+{
+
+	env_setargs(argc, argv);
+
+	netdriver_task(&virtio_net_table);
+
+	return 0;
 }
