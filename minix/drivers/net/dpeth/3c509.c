@@ -10,7 +10,7 @@
 */
 
 #include <minix/drivers.h>
-#include <minix/com.h>
+#include <minix/netdriver.h>
 #include <net/gen/ether.h>
 #include <net/gen/eth_io.h>
 
@@ -25,7 +25,7 @@ static const char *const IfNamesMsg[] = {
 };
 
 /*
-**  Name:	void el3_update_stats(dpeth_t *dep)
+**  Name:	el3_update_stats
 **  Function:	Reads statistic counters from board
 **  		and updates local counters.
 */
@@ -52,36 +52,30 @@ static void el3_update_stats(dpeth_t * dep)
   /* Goes back to operating window and enables statistics */
   SetWindow(WNO_Operating);
   outw_el3(dep, REG_CmdStatus, CMD_StatsEnable);
-
-  return;
 }
 
 /*
-**  Name:	void el3_getstats(dpeth_t *dep)
+**  Name:	el3_getstats
 **  Function:	Reads statistics counters from board.
 */
 static void el3_getstats(dpeth_t * dep)
 {
 
-  lock();
   el3_update_stats(dep);
-  unlock();
-  return;
 }
 
 /*
-**  Name:	void el3_dodump(dpeth_t *dep)
+**  Name:	el3_dodump
 **  Function:	Dumps counter on screen (support for console display).
 */
 static void el3_dodump(dpeth_t * dep)
 {
 
   el3_getstats(dep);
-  return;
 }
 
 /*
-**  Name:	void el3_rx_mode(dpeth_t *dep)
+**  Name:	el3_rx_mode
 **  Function:	Initializes receiver mode
 */
 static void el3_rx_mode(dpeth_t * dep)
@@ -95,85 +89,49 @@ static void el3_rx_mode(dpeth_t * dep)
   outw_el3(dep, REG_CmdStatus, CMD_RxReset);
   outw_el3(dep, REG_CmdStatus, CMD_SetRxFilter | dep->de_recv_mode);
   outw_el3(dep, REG_CmdStatus, CMD_RxEnable);
-
-  return;
 }
 
 /*
-**  Name:	void el3_reset(dpeth_t *dep)
+**  Name:	el3_reset
 **  Function:	Reset function specific for Etherlink hardware.
 */
 static void el3_reset(dpeth_t * UNUSED(dep))
 {
 
-  return;			/* Done */
 }
 
 /*
-**  Name:	void el3_write_fifo(dpeth_t * dep, int pktsize);
-**  Function:	Writes a packet from user area to board.
-**  Remark:	Writing a word/dword at a time may result faster
-**  		but is a lot more complicated. Let's go simpler way.
-*/
-static void el3_write_fifo(dpeth_t * dep, int pktsize)
-{
-  int bytes, ix = 0;
-  iovec_dat_s_t *iovp = &dep->de_write_iovec;
-  int r, padding = pktsize;
-
-  do {				/* Writes chuncks of packet from user buffers */
-
-	bytes = iovp->iod_iovec[ix].iov_size;	/* Size of buffer */
-	if (bytes > pktsize) bytes = pktsize;
-	/* Writes from user buffer to Tx FIFO */
-	r= sys_safe_outsb(dep->de_data_port, iovp->iod_proc_nr,
-		iovp->iod_iovec[ix].iov_grant, 0, bytes);
-	if (r != OK)
-		panic("el3_write_fifo: sys_safe_outsb failed: %d", r);
-		
-	if (++ix >= IOVEC_NR) {	/* Next buffer of IO vector */
-		dp_next_iovec(iovp);
-		ix = 0;
-	}
-	/* Till packet done */
-  } while ((pktsize -= bytes) > 0);
-  while ((padding++ % sizeof(long)) != 0) outb(dep->de_data_port, 0x00);
-  return;
-}
-
-/*
-**  Name:	void el3_recv(dpeth_t *dep, int fromint, int size)
+**  Name:	el3_recv
 **  Function:	Receive function.  Called from interrupt handler or
 **  		from main to unload recv. buffer (packet to client)
 */
-static void el3_recv(dpeth_t *dep, int fromint, int size)
+static ssize_t el3_recv(dpeth_t *dep, struct netdriver_data *data, size_t max)
 {
   buff_t *rxptr;
+  size_t size;
 
-  while ((dep->de_flags & DEF_READING) && (rxptr = dep->de_recvq_head)) {
+  if ((rxptr = dep->de_recvq_head) == NULL)
+	return SUSPEND;
 
-	lock();			/* Remove buffer from queue */
-	if (dep->de_recvq_tail == dep->de_recvq_head)
-		dep->de_recvq_head = dep->de_recvq_tail = NULL;
-	else
-		dep->de_recvq_head = rxptr->next;
-	unlock();
+  /* Remove buffer from queue */
+  if (dep->de_recvq_tail == dep->de_recvq_head)
+	dep->de_recvq_head = dep->de_recvq_tail = NULL;
+  else
+	dep->de_recvq_head = rxptr->next;
 
-	/* Copy buffer to user area and free it */
-	mem2user(dep, rxptr);
+  /* Copy buffer to user area and free it */
+  size = MIN(rxptr->size, max);
 
-	dep->de_read_s = rxptr->size;
-	dep->de_flags |= DEF_ACK_RECV;
-	dep->de_flags &= NOT(DEF_READING);
+  netdriver_copyout(data, 0, rxptr->buffer, size);
 
-	/* Return buffer to the idle pool */
-	free_buff(dep, rxptr);
-  }
-  return;
+  /* Return buffer to the idle pool */
+  free_buff(dep, rxptr);
+
+  return size;
 }
 
 /*
-**  Name:	void el3_rx_complete(dpeth_t * dep);
+**  Name:	el3_rx_complete
 **  Function:	Upon receiving a packet, provides status checks
 **  		and if packet is OK copies it to local buffer.
 */
@@ -205,38 +163,36 @@ static void el3_rx_complete(dpeth_t * dep)
 
   } else {
 	/* Good packet.  Read it from FIFO */
-	insb(dep->de_data_port, SELF, rxptr->buffer, pktsize);
+	insb(dep->de_data_port, rxptr->buffer, pktsize);
 	rxptr->next = NULL;
 	rxptr->size = pktsize;
 
-	lock();			/* Queue packet to receive queue */
+	/* Queue packet to receive queue */
 	if (dep->de_recvq_head == NULL)
 		dep->de_recvq_head = rxptr;
 	else
 		dep->de_recvq_tail->next = rxptr;
 	dep->de_recvq_tail = rxptr;
-	unlock();
 
 	/* Reply to pending Receive requests, if any */
-	el3_recv(dep, TRUE, pktsize);
+	netdriver_recv();
   }
 
   /* Discard top packet from queue */
   outw_el3(dep, REG_CmdStatus, CMD_RxDiscard);
-
-  return;
 }
 
 /*
-**  Name:	void el3_send(dpeth_t *dep, int count)
+**  Name:	el3_send
 **  Function:	Send function.  Called from main to transit a packet or
 **  		from interrupt handler when Tx FIFO gets available.
 */
-static void el3_send(dpeth_t * dep, int from_int, int count)
+static int el3_send(dpeth_t *dep, struct netdriver_data *data, size_t size)
 {
   clock_t now;
   int ix;
   short int TxStatus;
+  size_t padding;
 
   getticks(&now);
   if ((dep->de_flags & DEF_XMIT_BUSY) &&
@@ -249,41 +205,43 @@ static void el3_send(dpeth_t * dep, int from_int, int count)
 	outw_el3(dep, REG_CmdStatus, CMD_TxEnable);
 	dep->de_flags &= NOT(DEF_XMIT_BUSY);
   }
-  if (!(dep->de_flags & DEF_XMIT_BUSY)) {
+  if (dep->de_flags & DEF_XMIT_BUSY)
+	return SUSPEND;
 
-	/* Writes Transmitter preamble 1st Word (packet len, no ints) */
-	outw_el3(dep, REG_TxFIFO, count);
-	/* Writes Transmitter preamble 2nd Word (all zero) */
-	outw_el3(dep, REG_TxFIFO, 0);
-	/* Writes packet */
-	el3_write_fifo(dep, count);
+  /* Writes Transmitter preamble 1st Word (packet len, no ints) */
+  outw_el3(dep, REG_TxFIFO, size);
+  /* Writes Transmitter preamble 2nd Word (all zero) */
+  outw_el3(dep, REG_TxFIFO, 0);
+  /* Writes packet */
+  netdriver_portoutb(data, 0, dep->de_data_port, size);
+  padding = size;
+  while ((padding++ % sizeof(long)) != 0) outb(dep->de_data_port, 0x00);
 
-	getticks(&dep->de_xmit_start);
-	dep->de_flags |= (DEF_XMIT_BUSY | DEF_ACK_SEND);
-	if (inw_el3(dep, REG_TxFree) > ETH_MAX_PACK_SIZE) {
-		/* Tx has enough room for a packet of maximum size */
-		dep->de_flags &= NOT(DEF_XMIT_BUSY | DEF_SENDING);
-	} else {
-		/* Interrupt driver when enough room is available */
-		outw_el3(dep, REG_CmdStatus, CMD_SetTxAvailable | ETH_MAX_PACK_SIZE);
-		dep->de_flags &= NOT(DEF_SENDING);
-	}
-
-	/* Pops Tx status stack */
-	for (ix = 4; --ix && (TxStatus = inb_el3(dep, REG_TxStatus)) > 0;) {
-		if (TxStatus & 0x38) dep->de_stat.ets_sendErr += 1;
-		if (TxStatus & 0x30)
-			outw_el3(dep, REG_CmdStatus, CMD_TxReset);
-		if (TxStatus & 0x3C)
-			outw_el3(dep, REG_CmdStatus, CMD_TxEnable);
-		outb_el3(dep, REG_TxStatus, 0);
-	}
+  getticks(&dep->de_xmit_start);
+  dep->de_flags |= DEF_XMIT_BUSY;
+  if (inw_el3(dep, REG_TxFree) > ETH_MAX_PACK_SIZE) {
+	/* Tx has enough room for a packet of maximum size */
+	dep->de_flags &= NOT(DEF_XMIT_BUSY);
+  } else {
+	/* Interrupt driver when enough room is available */
+	outw_el3(dep, REG_CmdStatus, CMD_SetTxAvailable | ETH_MAX_PACK_SIZE);
   }
-  return;
+
+  /* Pops Tx status stack */
+  for (ix = 4; --ix && (TxStatus = inb_el3(dep, REG_TxStatus)) > 0;) {
+	if (TxStatus & 0x38) dep->de_stat.ets_sendErr += 1;
+	if (TxStatus & 0x30)
+		outw_el3(dep, REG_CmdStatus, CMD_TxReset);
+	if (TxStatus & 0x3C)
+		outw_el3(dep, REG_CmdStatus, CMD_TxEnable);
+	outb_el3(dep, REG_TxStatus, 0);
+  }
+
+  return OK;
 }
 
 /*
-**  Name:	void el3_close(dpeth_t *dep)
+**  Name:	el3_close
 **  Function:	Stops board and makes it ready to shut down.
 */
 static void el3_close(dpeth_t * dep)
@@ -296,24 +254,22 @@ static void el3_close(dpeth_t * dep)
 
   if (dep->de_if_port == BNC_XCVR) {
 	outw_el3(dep, REG_CmdStatus, CMD_StopIntXcvr);
-	/* milli_delay(5); */
+	/* micro_delay(5000); */
 
   } else if (dep->de_if_port == TP_XCVR) {
 	SetWindow(WNO_Diagnostics);
 	outw_el3(dep, REG_MediaStatus, inw_el3(dep, REG_MediaStatus) &
 		 NOT((MediaLBeatEnable | MediaJabberEnable)));
-	/* milli_delay(5); */
+	/* micro_delay(5000); */
   }
   DEBUG(printf("%s: stopping Etherlink ... \n", dep->de_name));
   /* Issues a global reset
   outw_el3(dep, REG_CmdStatus, CMD_GlobalReset); */
   sys_irqdisable(&dep->de_hook);	/* Disable interrupt */
- 
-  return;
 }
 
 /*
-**  Name:	void el3_interrupt(dpeth_t *dep)
+**  Name:	el3_interrupt
 **  Function:	Interrupt handler.  Acknwledges transmit interrupts
 **  		or unloads receive buffer to memory queue.
 */
@@ -332,8 +288,7 @@ static void el3_interrupt(dpeth_t * dep)
 		DEBUG(printf("3c509: got Tx interrupt, Status=0x%04x\n", isr);)
 		dep->de_flags &= NOT(DEF_XMIT_BUSY);
 		outw_el3(dep, REG_CmdStatus, CMD_Acknowledge | INT_TxAvailable);
-		if (dep->de_flags & DEF_SENDING)	/* Send pending */
-			el3_send(dep, TRUE, dep->de_send_s);
+		netdriver_send();
 	}
 	if (isr & (INT_AdapterFail | INT_RxEarly | INT_UpdateStats)) {
 
@@ -354,11 +309,10 @@ static void el3_interrupt(dpeth_t * dep)
 	/* Acknowledge interrupt */
 	outw_el3(dep, REG_CmdStatus, CMD_Acknowledge | (INT_Latch | INT_Requested));
   }
-  return;
 }
 
 /*
-**  Name:	unsigned el3_read_eeprom(port_t port, unsigned address);
+**  Name:	el3_read_eeprom
 **  Function:	Reads the EEPROM at specified address
 */
 static unsigned el3_read_eeprom(port_t port, unsigned address)
@@ -368,7 +322,7 @@ static unsigned el3_read_eeprom(port_t port, unsigned address)
 
   address |= EL3_READ_EEPROM;
   outb(port, address);
-  milli_delay(5);		/* Allows EEPROM reads */
+  micro_delay(5000);		/* Allows EEPROM reads */
   for (result = 0, bit = 16; bit > 0; bit -= 1) {
 	result = (result << 1) | (inb(port) & 0x0001);
   }
@@ -376,7 +330,7 @@ static unsigned el3_read_eeprom(port_t port, unsigned address)
 }
 
 /*
-**  Name:	void el3_read_StationAddress(dpeth_t *dep)
+**  Name:	el3_read_StationAddress
 **  Function:	Reads station address from board
 */
 static void el3_read_StationAddress(dpeth_t * dep)
@@ -390,11 +344,10 @@ static void el3_read_StationAddress(dpeth_t * dep)
 	dep->de_address.ea_addr[ix++] = (rc >> 8) & 0xFF;
 	dep->de_address.ea_addr[ix++] = rc & 0xFF;
   }
-  return;
 }
 
 /*
-**  Name:	void el3_open(dpeth_t *dep)
+**  Name:	el3_open
 **  Function:	Initalizes board hardware and driver data structures.
 */
 static void el3_open(dpeth_t * dep)
@@ -440,7 +393,7 @@ static void el3_open(dpeth_t * dep)
   if (dep->de_if_port == BNC_XCVR) {
 	/* Start internal transceiver for Coaxial cable */
 	outw_el3(dep, REG_CmdStatus, CMD_StartIntXcvr);
-	milli_delay(5);
+	micro_delay(5000);
 
   } else if (dep->de_if_port == TP_XCVR) {
 	/* Start internal transceiver for Twisted pair cable */
@@ -497,12 +450,10 @@ static void el3_open(dpeth_t * dep)
   for (ix = 0; ix < SA_ADDR_LEN; ix += 1)
 	printf("%02X%c", dep->de_address.ea_addr[ix],
 	       ix < SA_ADDR_LEN - 1 ? ':' : '\n');
-
-  return;			/* Done */
 }
 
 /*
-**  Name:	unsigned int el3_checksum(port_t port);
+**  Name:	int el3_checksum
 **  Function:	Reads EEPROM and computes checksum.
 */
 static unsigned short el3_checksum(port_t port)
@@ -534,7 +485,7 @@ static unsigned short el3_checksum(port_t port)
 }
 
 /*
-**  Name:	void el3_write_id(port_t port);
+**  Name:	el3_write_id
 **  Function:	Writes the ID sequence to the board.
 */
 static void el3_write_id(port_t port)
@@ -548,11 +499,10 @@ static void el3_write_id(port_t port)
 	pattern <<= 1;
 	pattern = (pattern & 0x0100) ? pattern ^ 0xCF : pattern;
   }
-  return;
 }
 
 /*
-**  Name:	int el3_probe(dpeth_t *dep)
+**  Name:	el3_probe
 **  Function:	Checks for presence of the board.
 */
 int el3_probe(dpeth_t * dep)
@@ -572,10 +522,10 @@ int el3_probe(dpeth_t * dep)
 
   el3_write_id(id_port);
   outb(id_port, EL3_ID_GLOBAL_RESET);	/* Reset the board */
-  milli_delay(5);		/* Technical reference says 162 micro sec. */
+  micro_delay(5000);		/* Technical reference says 162 micro sec. */
   el3_write_id(id_port);
   outb(id_port, EL3_SET_TAG_REGISTER);
-  milli_delay(5);
+  micro_delay(5000);
 
   dep->de_id_port = id_port;	/* Stores ID port No. */
   dep->de_ramsize =		/* RAM size is meaningless */
