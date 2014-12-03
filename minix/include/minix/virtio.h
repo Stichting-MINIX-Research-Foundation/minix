@@ -98,11 +98,12 @@ int virtio_to_queue(struct virtio_device *dev, int qidx,
 			struct vumap_phys *bufs, size_t num, void *data);
 
 /*
- * If the host used a chain of descriptors, return 0 and set data
- * as was given to virtio_to_queue(). If the host has not processed
- * any element returns -1.
+ * If the host used a chain of descriptors, return 0, set data as was given to
+ * virtio_to_queue(), and if len is not NULL, set it to the resulting length.
+ * If the host has not processed any element, return -1.
  */
-int virtio_from_queue(struct virtio_device *dev, int qidx, void **data);
+int virtio_from_queue(struct virtio_device *dev, int qidx, void **data,
+	size_t *len);
 
 /* IRQ related functions */
 void virtio_irq_enable(struct virtio_device *dev);

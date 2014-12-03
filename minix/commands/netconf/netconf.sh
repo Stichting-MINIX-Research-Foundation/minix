@@ -109,7 +109,7 @@ cards()
     card 0 "No Ethernet card (no networking)"
     card 1 "3Com 501 or 3Com 509 based card"
     card 2 "Realtek 8029 based card (also emulated by Qemu)" "10EC:8029"
-    card 3 "NE2000, 3com 503 or WD based card (also emulated by Bochs)"
+    card 3 "NE2000, 3com 503 or WD based card (also emulated by Qemu, Bochs)"
     card 4 "lan8710a (on BeagleBone, BeagleBone Black)"
     n=$first_pcicard
     for pcicard in $pci_list
@@ -197,10 +197,11 @@ drv_params()
            test "$v" = 1 && echo "Note: After installing, edit $LOCALRC to the right configuration."
 		;;
 	2) driver=dp8390;   driverargs="dp8390_arg='DPETH0=pci'";	;;
-	3) driver=dp8390;   driverargs="dp8390_arg='DPETH0=240:9'"; 
+	3) driver=dp8390;   driverargs="dp8390_arg='DPETH0=300:9'";
 	   test "$v" = 1 && echo ""
            test "$v" = 1 && echo "Note: After installing, edit $LOCALRC to the right configuration."
-           test "$v" = 1 && echo " chose option 4, the defaults for emulation by Bochs have been set."
+           test "$v" = 1 && echo "You may then also have to edit /etc/system.conf ."
+           test "$v" = 1 && echo "For now, the defaults for emulation by Bochs/Qemu have been set."
 		;;
 	4) driver=lan8710a;	;;
         $first_after_pci) driver="psip0"; ;;    

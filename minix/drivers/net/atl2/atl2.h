@@ -179,5 +179,3 @@
 #define ATL2_TXS_ABORTCOL		0x04000000	/* collision abort */
 #define ATL2_TXS_UNDERRUN		0x08000000	/* buffer underrun */
 #define ATL2_TXS_UPDATE			0x80000000	/* updated by device */
-
-

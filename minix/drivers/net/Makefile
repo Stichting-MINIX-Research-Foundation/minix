@@ -18,6 +18,4 @@ SUBDIR+=	virtio_net
 SUBDIR+=	lan8710a
 .endif # ${MACHINE_ARCH} == "earm"
 
-SUBDIR+=	uds
-
 .include <bsd.subdir.mk>

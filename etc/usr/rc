@@ -184,7 +184,7 @@ start|autoboot)
     for label in $(get_eth_labels); do
         driver=$(echo $label | sed 's/\(.*\)_.*/\1/')
         instance=$(echo $label | sed 's/.*_//')
-        eval arg=\$${label}_arg
+        eval arg=\$${driver}_arg
         if [ ! -z "$arg" ]; then arg=" $arg"; fi
         arg="-args \"instance=$instance$arg\""
         eval up $driver -label $label $arg -period 5HZ

@@ -639,7 +639,8 @@ virtio_to_queue(struct virtio_device *dev, int qidx, struct vumap_phys *bufs,
 }
 
 int
-virtio_from_queue(struct virtio_device *dev, int qidx, void **data)
+virtio_from_queue(struct virtio_device *dev, int qidx, void **data,
+	size_t *len)
 {
 	struct virtio_queue *q;
 	struct vring *vring;
@@ -717,6 +718,9 @@ virtio_from_queue(struct virtio_device *dev, int qidx, void **data)
 
 	*data = q->data[uel->id];
 	q->data[uel->id] = NULL;
+
+	if (len != NULL)
+		*len = uel->len;
 
 	return 0;
 }

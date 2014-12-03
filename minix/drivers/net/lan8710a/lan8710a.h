@@ -16,25 +16,8 @@
 	#define LAN8710A_DEBUG_PRINT(args)
 #endif
 
-#ifndef ERR
-	#define ERR (-1)	/* general error flag */
-#endif
-#ifndef OK
-	#define OK 0		/* general OK flag */
-#endif
-
-#define MAP_FAILED 		((void *) -1)	/* mmap() failed */
-
 /* Ethernet driver defines */
 #define LAN8710A_NAME_LEN	(11)
-
-/* Ethernet driver states */
-#define LAN8710A_DETECTED	(1 << 0)
-#define LAN8710A_ENABLED	(1 << 1)
-#define LAN8710A_READING	(1 << 2)
-#define LAN8710A_WRITING	(1 << 3)
-#define LAN8710A_RECEIVED	(1 << 4)
-#define LAN8710A_TRANSMIT	(1 << 5)
 
 /* Descriptors flags */
 #define LAN8710A_DESC_FLAG_OWN		(1 << 29) /* ownership flag */
@@ -57,9 +40,6 @@
 
 /** Number of receive descriptors */
 #define LAN8710A_NUM_RX_DESC		(255)
-
-/** Number of I/O vectors to use. */
-#define LAN8710A_IOVEC_NR		(16)
 
 /** Size of each I/O buffer per descriptor. */
 #define LAN8710A_IOBUF_SIZE		(1520)
@@ -89,11 +69,9 @@ typedef struct lan8710a_t
 	phys_bytes  rx_desc_phy;
 	phys_bytes  tx_desc_phy;
 	char  name[LAN8710A_NAME_LEN];
-	int  status;
 	int  irq_rx_hook;	/* Rx interrupt Request Vector Hook. */
 	int  irq_tx_hook;	/* Tx interrupt Request Vector Hook. */
 	int  instance;
-	ether_addr_t  address;	/* Ethernet MAC address. */
 	u8_t  *regs;
 	u32_t  phy_address;
 	u8_t  *p_rx_buf;	/* pointer to the buffer with receive frames */
@@ -101,10 +79,6 @@ typedef struct lan8710a_t
 
 	u16_t  tx_desc_idx;	/* index of the next transmit desciptor */
 	u16_t  rx_desc_idx;	/* index of the next receive desciptor */
-	int  client;
-	message  tx_message;
-	message  rx_message;
-	unsigned int  rx_size;
 
 	/* register mapping */
 	vir_bytes  regs_cp_per;

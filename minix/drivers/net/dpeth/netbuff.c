@@ -8,6 +8,7 @@
 */
 
 #include <minix/drivers.h>
+#include <minix/netdriver.h>
 #include <net/gen/ether.h>
 #include <net/gen/eth_io.h>
 #include "dp.h"
@@ -18,7 +19,7 @@ static m_hdr_t *allocptr = NULL;
 static char tx_rx_buff[8192];
 
 /*
-**  Name:	void *alloc_buff(dpeth_t *dep, int size)
+**  Name:	alloc_buff
 **  Function:	Allocates a buffer from the common pool.
 */
 void *alloc_buff(dpeth_t *dep, int size)
@@ -26,7 +27,6 @@ void *alloc_buff(dpeth_t *dep, int size)
   m_hdr_t *ptr, *wrk = allocptr;
   int units = ((size + sizeof(m_hdr_t) - 1) / sizeof(m_hdr_t)) + 1;
 
-  lock();
   for (ptr = wrk->next;; wrk = ptr, ptr = ptr->next) {
 	if (ptr->size >= units) {
 		/* Memory is available, carve requested size from pool */
@@ -39,24 +39,22 @@ void *alloc_buff(dpeth_t *dep, int size)
 			ptr->size = units;
 		}
 		allocptr = wrk;
-		unlock();
 		return ptr + 1;
 	}
 	if (ptr == allocptr) break;
   }
-  unlock();
   return NULL;			/* No memory available */
 }
 
 /*
-**  Name:	void free_buff(dpeth_t *dep, void *blk)
+**  Name:	free_buff
 **  Function:	Returns a buffer to the common pool.
 */
 void free_buff(dpeth_t *dep, void *blk)
 {
   m_hdr_t *wrk, *ptr = (m_hdr_t *) blk - 1;
 
-  lock();			/* Scan linked list for the correct place */
+  /* Scan linked list for the correct place */
   for (wrk = allocptr; !(ptr > wrk && ptr < wrk->next); wrk = wrk->next)
 	if (wrk >= wrk->next && (ptr > wrk || ptr < wrk->next)) break;
   
@@ -72,12 +70,10 @@ void free_buff(dpeth_t *dep, void *blk)
   } else
 	wrk->next = ptr;
   allocptr = wrk;		/* Point allocptr to block just released */
-  unlock();
-  return;
 }
 
 /*
-**  Name:	void init_buff(dpeth_t *dep, buff_t **tx_buff)
+**  Name:	init_buff
 **  Function:	Initalizes driver data structures.
 */
 void init_buff(dpeth_t *dep, buff_t **tx_buff)
@@ -98,69 +94,6 @@ void init_buff(dpeth_t *dep, buff_t **tx_buff)
 		(*tx_buff)->size = 0;
 	}
   }
-  return;			/* Done */
-}
-
-/*
-**  Name:	void mem2user(dpeth_t *dep, buff_t *rxbuff);
-**  Function:	Copies a packet from local buffer to user area.
-*/
-void mem2user(dpeth_t *dep, buff_t *rxbuff)
-{
-  int bytes, ix = 0;
-  iovec_dat_s_t *iovp = &dep->de_read_iovec;
-  int r, pktsize = rxbuff->size;
-  char *buffer = rxbuff->buffer;
-
-  do {				/* Reads chuncks of packet into user buffers */
-
-	bytes = iovp->iod_iovec[ix].iov_size;	/* Size of buffer */
-	if (bytes > pktsize) bytes = pktsize;
-
-	/* Reads from Rx buffer to user area */
-	r= sys_safecopyto(iovp->iod_proc_nr, iovp->iod_iovec[ix].iov_grant, 0,
-		(vir_bytes)buffer, bytes);
-	if (r != OK)
-		panic("mem2user: sys_safecopyto failed: %d", r);
-	buffer += bytes;
-
-	if (++ix >= IOVEC_NR) {	/* Next buffer of IO vector */
-		dp_next_iovec(iovp);
-		ix = 0;
-	}
-	/* Till packet done */
-  } while ((pktsize -= bytes) > 0);
-  return;
-}
-
-/*
-**  Name:	void user2mem(dpeth_t *dep, buff_t *txbuff)
-**  Function:	Copies a packet from user area to local buffer.
-*/
-void user2mem(dpeth_t *dep, buff_t *txbuff)
-{
-  int bytes, ix = 0;
-  iovec_dat_s_t *iovp = &dep->de_write_iovec;
-  int r, pktsize = txbuff->size;
-  char *buffer = txbuff->buffer;
-
-  do {				/* Reads chuncks of packet from user buffers */
-
-	bytes = iovp->iod_iovec[ix].iov_size;	/* Size of buffer */
-	if (bytes > pktsize) bytes = pktsize;
-	r= sys_safecopyfrom(iovp->iod_proc_nr, iovp->iod_iovec[ix].iov_grant,
-		0, (vir_bytes)buffer, bytes);
-	if (r != OK)
-		panic("user2mem: sys_safecopyfrom failed: %d", r);
-	buffer += bytes;
-
-	if (++ix >= IOVEC_NR) {	/* Next buffer of IO vector */
-		dp_next_iovec(iovp);
-		ix = 0;
-	}
-	/* Till packet done */
-  } while ((pktsize -= bytes) > 0);
-  return;
 }
 
 #endif				/* HAVE_BUFFERS */

@@ -7,6 +7,7 @@ Created:	April 2000 by Philip Homburg <philip@f-mnx.phicoh.com>
 */
 
 #include <minix/drivers.h>
+#include <minix/netdriver.h>
 
 #include <stdlib.h>
 #include <sys/types.h>
@@ -19,8 +20,6 @@ Created:	April 2000 by Philip Homburg <philip@f-mnx.phicoh.com>
 #include "local.h"
 #include "dp8390.h"
 #include "rtl8029.h"
-
-#if ENABLE_PCI
 
 static void rtl_init(struct dpeth *dep);
 #if 0
@@ -311,8 +310,6 @@ dpeth_t *dep;
 	outb_reg0(dep, DP_CR, CR_PS_P0);	/* back to bank 0 */
 }
 #endif
-
-#endif /* ENABLE_PCI */
 
 /*
  * $PchId: rtl8029.c,v 1.7 2004/08/03 12:16:58 philip Exp $
