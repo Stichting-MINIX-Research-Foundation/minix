@@ -6,39 +6,154 @@
 #include "rs/const.h"
 #include "rs/type.h"
 
+enum policy {
+	POL_NONE	= 0x00,	/*     user	| endpoint	*/
+	POL_RESET	= 0x01,	/* visible	|  change	*/
+	POL_RESTART	= 0x02,	/* transparent	| preserved	*/
+	POL_LIVE_UPDATE	= 0x04	/* transparent	| preserved	*/
+};
+
+struct policies {
+	#define MAX_POL_FORMAT_SZ 20
+	char formatted[MAX_POL_FORMAT_SZ];
+	enum policy supported;
+};
+
 static struct rprocpub rprocpub[NR_SYS_PROCS];
 static struct rproc rproc[NR_SYS_PROCS];
+static struct policies policies[NR_SYS_PROCS];
 
 static struct inode *service_node;
 
-/*
- * Initialize the service directory.
- */
-void
-service_init(void)
+/* Updates the policies state from RS. Always returns an ASCIIZ string.  */
+static const char *
+service_get_policies(struct policies * pol, index_t slot)
 {
-	struct inode *root, *node;
-	struct inode_stat stat;
+#if 1 /* The following should be retrieved from RS and formated instead. */
+	int pos;
+	char *ref_label;
+	static const struct {
+		const char *label;
+		const char *policy_str;
+	} def_pol[] = {
+		/* audio */
+                { .label = "es1370", .policy_str = "reset" },
+                { .label = "es1371", .policy_str = "reset" },
+                { .label = "sb16", .policy_str = "reset" },
+		/* bus */
+                { .label = "i2c", .policy_str = "restart" },
+                { .label = "pci", .policy_str = "restart" },
+                { .label = "ti1225", .policy_str = "restart" },
+		/* clock */
+                { .label = "readclock.drv", .policy_str = "restart" },
+		/* eeprom */
+                { .label = "cat24c256", .policy_str = "restart" },
+		/* examples */
+                { .label = "hello", .policy_str = "restart" },
+		/* hid */
+                { .label = "pckbd", .policy_str = "reset" },
+		/* iommu */
+                { .label = "amddev", .policy_str = "" },
+		/* net */
+                { .label = "atl2", .policy_str = "restart" },
+                { .label = "dec21140A", .policy_str = "restart" },
+                { .label = "dp8390", .policy_str = "restart" },
+                { .label = "dpeth", .policy_str = "restart" },
+                { .label = "e1000", .policy_str = "restart" },
+                { .label = "fxp", .policy_str = "restart" },
+                { .label = "lance", .policy_str = "restart" },
+                { .label = "lan8710a", .policy_str = "restart" },
+                { .label = "orinoco", .policy_str = "restart" },
+                { .label = "rtl8139", .policy_str = "restart" },
+                { .label = "rtl8169", .policy_str = "restart" },
+                { .label = "uds", .policy_str = "reset" },
+                { .label = "virtio_net", .policy_str = "restart" },
+		/* power */
+                { .label = "acpi", .policy_str = "" },
+                { .label = "tps65217", .policy_str = "" },
+                { .label = "tps65590", .policy_str = "" },
+		/* printer */
+                { .label = "printer", .policy_str = "restart" },
+		/* sensors */
+                { .label = "bmp085", .policy_str = "" },
+                { .label = "sht21", .policy_str = "restart" },
+                { .label = "tsl2550", .policy_str = "restart" },
+		/* storage */
+                { .label = "ahci", .policy_str = "reset" },
+                { .label = "at_wini", .policy_str = "reset" },
+                { .label = "fbd", .policy_str = "reset" },
+                { .label = "filter", .policy_str = "reset" },
+                { .label = "floppy", .policy_str = "reset" },
+                { .label = "memory", .policy_str = "restart" },
+                { .label = "mmc", .policy_str = "reset" },
+                { .label = "virtio_blk", .policy_str = "reset" },
+                { .label = "vnd", .policy_str = "reset" },
+		/* system */
+                { .label = "gpio", .policy_str = "restart" },
+                { .label = "log", .policy_str = "restart" },
+                { .label = "random", .policy_str = "restart" },
+		/* tty */
+                { .label = "pty", .policy_str = "restart" },
+                { .label = "tty", .policy_str = "" },
+		/* usb */
+                { .label = "usbd", .policy_str = "" },
+                { .label = "usb_hub", .policy_str = "" },
+                { .label = "usb_storage", .policy_str = "" },
+		/* video */
+                { .label = "fb", .policy_str = "" },
+                { .label = "tda19988", .policy_str = "" },
+		/* vmm_guest */
+                { .label = "vbox", .policy_str = "" },
+		/* fs */
+                { .label = "ext2", .policy_str = "" },
+                { .label = "hgfs", .policy_str = "" },
+                { .label = "isofs", .policy_str = "" },
+                { .label = "mfs", .policy_str = "" },
+                { .label = "pfs", .policy_str = "" },
+                { .label = "procfs", .policy_str = "" },
+                { .label = "vbfs", .policy_str = "" },
+		/* net */
+                { .label = "inet", .policy_str = "reset" },
+                { .label = "lwip", .policy_str = "" },
+		/* servers */
+                { .label = "devman", .policy_str = "" },
+                { .label = "ds", .policy_str = "" },
+                { .label = "input", .policy_str = "reset" },
+                { .label = "ipc", .policy_str = "restart" },
+                { .label = "is", .policy_str = "restart" },
+                { .label = "pm", .policy_str = "" },
+                { .label = "rs", .policy_str = "" },
+                { .label = "sched", .policy_str = "" },
+                { .label = "vfs", .policy_str = "" },
+                { .label = "vm", .policy_str = "" },
+		//{ .label = "", .policy_str = "" },
+	};
 
-	root = get_root_inode();
+	/* Find the related policy, based on the file name of the service. */
+	ref_label = strrchr(rprocpub[slot].proc_name, '/');
+	if (NULL == ref_label)
+		ref_label = rprocpub[slot].proc_name;
 
-	memset(&stat, 0, sizeof(stat));
-	stat.mode = DIR_ALL_MODE;
-	stat.uid = SUPER_USER;
-	stat.gid = SUPER_USER;
+	memset(pol[slot].formatted, 0, MAX_POL_FORMAT_SZ);
+	for(pos = 0; pos < (sizeof(def_pol) / sizeof(def_pol[0])); pos++) {
+		if (0 == strcmp(ref_label, def_pol[pos].label)) {
+			(void)strncpy(pol[slot].formatted, def_pol[pos].policy_str, MAX_POL_FORMAT_SZ);
+			pol[slot].formatted[MAX_POL_FORMAT_SZ-1] = '\0';
+			break;
+		}
+	}
+#else
+	/* Should do something sensible, based on flags from RS/SEF. */
+#endif
 
-	service_node = add_inode(root, "service", NO_INDEX, &stat,
-	    NR_SYS_PROCS, NULL);
-
-	if (service_node == NULL)
-		panic("unable to create service node");
+	return pol[slot].formatted;
 }
 
 /*
  * Update the contents of the service directory, by first updating the RS
  * tables and then updating the directory contents.
  */
-void
+static void
 service_update(void)
 {
 	struct inode *node;
@@ -84,6 +199,29 @@ service_update(void)
 		if (node == NULL)
 			out_of_inodes();
 	}
+}
+
+/*
+ * Initialize the service directory.
+ */
+void
+service_init(void)
+{
+	struct inode *root, *node;
+	struct inode_stat stat;
+
+	root = get_root_inode();
+
+	memset(&stat, 0, sizeof(stat));
+	stat.mode = DIR_ALL_MODE;
+	stat.uid = SUPER_USER;
+	stat.gid = SUPER_USER;
+
+	service_node = add_inode(root, "service", NO_INDEX, &stat,
+	    NR_SYS_PROCS, NULL);
+
+	if (service_node == NULL)
+		panic("unable to create service node");
 }
 
 /*
@@ -141,5 +279,8 @@ service_read(struct inode * node)
 	rp = &rproc[slot];
 
 	/* TODO: add a large number of other fields! */
-	buf_printf("%d %d\n", rpub->endpoint, rp->r_restarts);
+	buf_printf("filename: %s\n", rpub->proc_name);
+	buf_printf("endpoint: %d\n", rpub->endpoint);
+	buf_printf("restarts: %d\n", rp->r_restarts);
+	buf_printf("policies: %s\n", service_get_policies(policies, slot));
 }
