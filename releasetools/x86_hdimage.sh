@@ -7,7 +7,7 @@ set -e
 #
 
 : ${ARCH=i386}
-: ${OBJ=../obj.${ARCH}}
+: ${OBJ=../obj-native.${ARCH}}
 : ${CROSS_TOOLS=${OBJ}/"tooldir.`uname -s`-`uname -r`-`uname -m`"/bin}
 : ${CROSS_PREFIX=${CROSS_TOOLS}/i586-elf32-minix-}
 : ${JOBS=1}

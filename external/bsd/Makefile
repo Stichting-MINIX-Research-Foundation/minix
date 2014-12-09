@@ -33,6 +33,7 @@ SUBDIR+= libc++
 SUBDIR+= llvm
 .endif # (${MKLLVMCMDS} != "no")
 .endif
+.endif
 .if (${MKPCC} != "no")
 SUBDIR+= pcc
 .endif

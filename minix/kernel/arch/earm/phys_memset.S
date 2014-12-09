@@ -1,4 +1,4 @@
-/*	$NetBSD: memset.S,v 1.1 2005/12/20 19:28:49 christos Exp $	*/
+/*	$NetBSD: memset.S,v 1.7 2013/12/02 21:21:33 joerg Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -68,6 +68,27 @@
 
 #include <machine/asm.h>
 
+#if 0  && defined(__minix)
+#if defined(__ARM_EABI__) && !defined(_BZERO)
+ENTRY(__aeabi_memset)
+	mov	r3, r1
+	mov	r1, r2
+	mov	r2, r3
+	b	memset
+END(__aeabi_memset)
+STRONG_ALIAS(__aeabi_memset4, __aeabi_memset)
+STRONG_ALIAS(__aeabi_memset8, __aeabi_memset)
+
+ENTRY(__aeabi_memclr)
+	mov	r2, r1
+	mov	r1, #0
+	b	memset
+END(__aeabi_memclr)
+STRONG_ALIAS(__aeabi_memclr4, __aeabi_memclr)
+STRONG_ALIAS(__aeabi_memclr8, __aeabi_memclr)
+#endif
+#endif /* #if 0  && defined(__minix) */
+
 /*
  * memset: Sets a block of memory to the specified value
  *
@@ -107,7 +128,7 @@ ENTRY(memset)
 #ifndef _BZERO
 	orr	r3, r3, r3, lsl #8	/* Extend value to 16-bits */
 #endif
-#ifdef __XSCALE__
+#ifdef _ARM_ARCH_DWORD_OK
 	tst	ip, #0x04		/* Quad-align for Xscale */
 #else
 	cmp	r1, #0x10
@@ -115,7 +136,7 @@ ENTRY(memset)
 #ifndef _BZERO
 	orr	r3, r3, r3, lsl #16	/* Extend value to 32-bits */
 #endif
-#ifdef __XSCALE__
+#ifdef _ARM_ARCH_DWORD_OK
 	subne	r1, r1, #0x04		/* Quad-align if necessary */
 	strne	r3, [ip], #0x04
 	cmp	r1, #0x10
@@ -128,40 +149,40 @@ ENTRY(memset)
 	/* Do 128 bytes at a time */
 .Lmemset_loop128:
 	subs	r1, r1, #0x80
-#ifdef __XSCALE__
-	strged	r2, [ip], #0x08
-	strged	r2, [ip], #0x08
-	strged	r2, [ip], #0x08
-	strged	r2, [ip], #0x08
-	strged	r2, [ip], #0x08
-	strged	r2, [ip], #0x08
-	strged	r2, [ip], #0x08
-	strged	r2, [ip], #0x08
-	strged	r2, [ip], #0x08
-	strged	r2, [ip], #0x08
-	strged	r2, [ip], #0x08
-	strged	r2, [ip], #0x08
-	strged	r2, [ip], #0x08
-	strged	r2, [ip], #0x08
-	strged	r2, [ip], #0x08
-	strged	r2, [ip], #0x08
+#ifdef _ARM_ARCH_DWORD_OK
+	strdge	r2, r3, [ip], #0x08
+	strdge	r2, r3, [ip], #0x08
+	strdge	r2, r3, [ip], #0x08
+	strdge	r2, r3, [ip], #0x08
+	strdge	r2, r3, [ip], #0x08
+	strdge	r2, r3, [ip], #0x08
+	strdge	r2, r3, [ip], #0x08
+	strdge	r2, r3, [ip], #0x08
+	strdge	r2, r3, [ip], #0x08
+	strdge	r2, r3, [ip], #0x08
+	strdge	r2, r3, [ip], #0x08
+	strdge	r2, r3, [ip], #0x08
+	strdge	r2, r3, [ip], #0x08
+	strdge	r2, r3, [ip], #0x08
+	strdge	r2, r3, [ip], #0x08
+	strdge	r2, r3, [ip], #0x08
 #else
-	stmgeia	ip!, {r2-r3}
-	stmgeia	ip!, {r2-r3}
-	stmgeia	ip!, {r2-r3}
-	stmgeia	ip!, {r2-r3}
-	stmgeia	ip!, {r2-r3}
-	stmgeia	ip!, {r2-r3}
-	stmgeia	ip!, {r2-r3}
-	stmgeia	ip!, {r2-r3}
-	stmgeia	ip!, {r2-r3}
-	stmgeia	ip!, {r2-r3}
-	stmgeia	ip!, {r2-r3}
-	stmgeia	ip!, {r2-r3}
-	stmgeia	ip!, {r2-r3}
-	stmgeia	ip!, {r2-r3}
-	stmgeia	ip!, {r2-r3}
-	stmgeia	ip!, {r2-r3}
+	stmiage	ip!, {r2-r3}
+	stmiage	ip!, {r2-r3}
+	stmiage	ip!, {r2-r3}
+	stmiage	ip!, {r2-r3}
+	stmiage	ip!, {r2-r3}
+	stmiage	ip!, {r2-r3}
+	stmiage	ip!, {r2-r3}
+	stmiage	ip!, {r2-r3}
+	stmiage	ip!, {r2-r3}
+	stmiage	ip!, {r2-r3}
+	stmiage	ip!, {r2-r3}
+	stmiage	ip!, {r2-r3}
+	stmiage	ip!, {r2-r3}
+	stmiage	ip!, {r2-r3}
+	stmiage	ip!, {r2-r3}
+	stmiage	ip!, {r2-r3}
 #endif
 	bgt	.Lmemset_loop128
 #if defined(__minix)
@@ -174,16 +195,16 @@ ENTRY(memset)
 	/* Do 32 bytes at a time */
 .Lmemset_loop32:
 	subs	r1, r1, #0x20
-#ifdef __XSCALE__
-	strged	r2, [ip], #0x08
-	strged	r2, [ip], #0x08
-	strged	r2, [ip], #0x08
-	strged	r2, [ip], #0x08
+#ifdef _ARM_ARCH_DWORD_OK
+	strdge	r2, r3, [ip], #0x08
+	strdge	r2, r3, [ip], #0x08
+	strdge	r2, r3, [ip], #0x08
+	strdge	r2, r3, [ip], #0x08
 #else
-	stmgeia	ip!, {r2-r3}
-	stmgeia	ip!, {r2-r3}
-	stmgeia	ip!, {r2-r3}
-	stmgeia	ip!, {r2-r3}
+	stmiage	ip!, {r2-r3}
+	stmiage	ip!, {r2-r3}
+	stmiage	ip!, {r2-r3}
+	stmiage	ip!, {r2-r3}
 #endif
 	bgt	.Lmemset_loop32
 #if defined(__minix)
@@ -194,15 +215,15 @@ ENTRY(memset)
 	adds	r1, r1, #0x10		/* Partially adjust for extra sub */
 
 	/* Deal with 16 bytes or more */
-#ifdef __XSCALE__
-	strged	r2, [ip], #0x08
-	strged	r2, [ip], #0x08
+#ifdef _ARM_ARCH_DWORD_OK
+	strdge	r2, r3, [ip], #0x08
+	strdge	r2, r3, [ip], #0x08
 #else
-	stmgeia	ip!, {r2-r3}
-	stmgeia	ip!, {r2-r3}
+	stmiage	ip!, {r2-r3}
+	stmiage	ip!, {r2-r3}
 #endif
 #if defined(__minix)
-	moveq	r0, #0
+	moveq   r0, #0
 #endif
 	RETc(eq)			/* Zero length so just exit */
 
@@ -218,7 +239,7 @@ ENTRY(memset)
 #endif
 	RETc(eq)			/* Zero length so just exit */
 
-#ifdef __XSCALE__
+#ifdef _ARM_ARCH_DWORD_OK
 	/* Compensate for 64-bit alignment check */
 	adds	r1, r1, #0x04
 #if defined(__minix)
@@ -231,8 +252,8 @@ ENTRY(memset)
 #endif
 
 	strb	r3, [ip], #0x01		/* Set 1 byte */
-	strgeb	r3, [ip], #0x01		/* Set another byte */
-	strgtb	r3, [ip]		/* and a third */
+	strbge	r3, [ip], #0x01		/* Set another byte */
+	strbgt	r3, [ip]		/* and a third */
 #if defined(__minix)
 	mov	r0, #0
 #endif
@@ -242,9 +263,9 @@ ENTRY(memset)
 	rsb	r2, r2, #0x004
 	strb	r3, [ip], #0x01		/* Set 1 byte */
 	cmp	r2, #0x02
-	strgeb	r3, [ip], #0x01		/* Set another byte */
+	strbge	r3, [ip], #0x01		/* Set another byte */
 	sub	r1, r1, r2
-	strgtb	r3, [ip], #0x01		/* and a third */
+	strbgt	r3, [ip], #0x01		/* and a third */
 	cmp	r1, #0x04		/* More than 4 bytes left? */
 	bge	.Lmemset_wordaligned	/* Yup */
 
@@ -256,12 +277,21 @@ ENTRY(memset)
 	RETc(eq)				/* Zero length so exit */
 	strb	r3, [ip], #0x01		/* Set 1 byte */
 	cmp	r1, #0x02
-	strgeb	r3, [ip], #0x01		/* Set another byte */
-	strgtb	r3, [ip]		/* and a third */
+	strbge	r3, [ip], #0x01		/* Set another byte */
+	strbgt	r3, [ip]		/* and a third */
 #if defined(__minix)
-	mov	r0, #0
+	mov     r0, #0
 #endif
 	RET				/* Exit */
+#ifdef _BZERO
+END(bzero)
+#else
+#if !defined(__minix)
+END(memset)
+#else
+END(phys_memset)
+#endif
+#endif
 
 #if defined(__minix)
 LABEL(memset_fault)		/* kernel can send us here */

@@ -30,7 +30,7 @@ static const char sccsid[] = "Id: put.c,v 10.18 2001/06/25 15:19:11 skimo Exp  (
  * put --
  *	Put text buffer contents into the file.
  *
- * PUBLIC: int put __P((SCR *, CB *, CHAR_T *, MARK *, MARK *, int));
+ * PUBLIC: int put __P((SCR *, CB *, ARG_CHAR_T *, MARK *, MARK *, int));
  */
 int
 put(SCR *sp, CB *cbp, ARG_CHAR_T *namep, MARK *cp, MARK *rp, int append)
