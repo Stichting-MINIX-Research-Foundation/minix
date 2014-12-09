@@ -10,6 +10,9 @@ _BSD_OWN_MK_=1
 
 .if defined(__MINIX)
 
+#CPPFLAGS += -D__ARM_EABI__
+#CFLAGS += -mfloat-abi=soft 
+
 # Some Minix deviations from NetBSD
 LDSTATIC?=	-static
 MKDYNAMICROOT?=	no

@@ -24,6 +24,9 @@
 #include "hw_intr.h"
 #include "arch_proto.h"
 
+#include "arch/earm/include/io.h"
+#include "arch/earm/bsp/ti/omap_serial.h"
+
 #ifdef CONFIG_SMP
 #include "smp.h"
 #endif
@@ -54,11 +57,14 @@ void bsp_finish_booting(void)
   /* MINIX is now ready. All boot image processes are on the ready queue.
    * Return to the assembly code to start running the current process. 
    */
+
+        mmio_write(OMAP3_DM37XX_DEBUG_UART_BASE + OMAP3_THR, '1');
   
   /* it should point somewhere */
   get_cpulocal_var(bill_ptr) = get_cpulocal_var_ptr(idle_proc);
   get_cpulocal_var(proc_ptr) = get_cpulocal_var_ptr(idle_proc);
   announce();				/* print MINIX startup banner */
+        mmio_write(OMAP3_DM37XX_DEBUG_UART_BASE + OMAP3_THR, '2');
 
   /*
    * we have access to the cpu local run queue, only now schedule the processes.

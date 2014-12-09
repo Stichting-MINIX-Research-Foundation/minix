@@ -43,4 +43,22 @@
 /* Include internal utility function declarations. */
 #include "int_util.h"
 
+#ifdef __minix
+/* missing prototypes causing build problems */
+COMPILER_RT_ABI di_int __ashrdi3(di_int a, si_int b);
+COMPILER_RT_ABI di_int __divdi3(di_int a, di_int b);
+COMPILER_RT_ABI di_int __divmoddi4(di_int a, di_int b, di_int* rem);
+COMPILER_RT_ABI si_int __divmodsi4(si_int a, si_int b, si_int* rem);
+COMPILER_RT_ABI si_int __divsi3(si_int a, si_int b);
+COMPILER_RT_ABI si_int __modsi3(si_int a, si_int b);
+COMPILER_RT_ABI di_int __lshrdi3(di_int a, si_int b);
+COMPILER_RT_ABI di_int __moddi3(di_int a, di_int b);
+COMPILER_RT_ABI du_int __udivdi3(du_int a, du_int b);
+COMPILER_RT_ABI du_int __udivmoddi4(du_int a, du_int b, du_int* rem);
+COMPILER_RT_ABI su_int __udivmodsi4(su_int a, su_int b, su_int* rem);
+COMPILER_RT_ABI su_int __udivsi3(su_int n, su_int d);
+COMPILER_RT_ABI du_int __umoddi3(du_int a, du_int b);
+COMPILER_RT_ABI su_int __umodsi3(su_int a, su_int b);
+#endif
+
 #endif /* INT_LIB_H */
