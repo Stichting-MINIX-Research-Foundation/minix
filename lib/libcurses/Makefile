@@ -5,7 +5,7 @@
 
 .if defined(__MINIX)
 # /usr/minix/src-clang/lib/libcurses/get_wch.c:646:15: error: comparison of unsigned expression < 0 is always false [-Werror,-Wtautological-compare]
-NOCLANGERROR=yes
+WARNS=0
 .else
 WARNS=	2
 .endif

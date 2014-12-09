@@ -14,7 +14,11 @@
 
 #include "int_lib.h"
 
+#ifdef __minix
+si_int COMPILER_RT_ABI __divsi3(si_int a, si_int b);
+#else
 su_int COMPILER_RT_ABI __divsi3(si_int a, si_int b);
+#endif
 
 /* Returns: a % b */
 
