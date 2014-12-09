@@ -5,6 +5,11 @@ PROG=		kernel
 BINDIR=		/usr/sbin
 MAN=
 
+.if ${MACHINE_ARCH} == "earm" && ${MKLLVM:Uno} == "yes"
+# BJG - problems with optimisation of the kernel by llvm 
+DBG=-O0
+.endif
+
 .include "arch/${MACHINE_ARCH}/Makefile.inc"
 
 SRCS+=	clock.c cpulocals.c interrupt.c main.c proc.c system.c \

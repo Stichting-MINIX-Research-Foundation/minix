@@ -17,7 +17,14 @@
 #include "int_lib.h"
 #include "int_math.h"
 
+#ifdef __minix
+#include <math.h>
+#include <machine/ieee.h>
+#endif
+
 /* Returns: the product of a + ib and c + id */
+
+#if defined(__HAVE_LONG_DOUBLE) && defined(__minix)	/* for fabsl() */
 
 long double _Complex
 __mulxc3(long double __a, long double __b, long double __c, long double __d)
@@ -73,5 +80,6 @@ __mulxc3(long double __a, long double __b, long double __c, long double __d)
     }
     return z;
 }
+#endif /* defined(__HAVE_LONG_DOUBLE) && defined(__minix) */
 
 #endif

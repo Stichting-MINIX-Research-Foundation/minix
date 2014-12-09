@@ -453,7 +453,7 @@ _rmt_write(int fildes, const void *buf, size_t nbyte)
 		return -1;
 
 	pstat = signal(SIGPIPE, SIG_IGN);
-	if ((size_t)write(WRITE(fildes), buf, nbyte) == nbyte) {
+	if ((size_t)write(WRITE(fildes), buf, nbyte) == (size_t) nbyte) {
 		signal(SIGPIPE, pstat);
 		return status(fildes);
 	}
