@@ -127,11 +127,21 @@ CPPFLAGS.sha2.c+=	-D_STANDALONE
 CPPFLAGS.sha2.c+=	-I${NETBSDSRCDIR}/sys
 
 .for f in \
-	ashrdi3.o divdi3.o lshldi3.o lshrdi3.o moddi3.o \
-	udivdi3.o umoddi3.o qdivrem.o
-${f} ${f:C/\.o/.bc/}:	${LIBCOMMONCDIR}/quad/${f:C/\.o/.c/}
+	ashrdi3.o divdi3.o lshrdi3.o moddi3.o \
+	udivdi3.o umoddi3.o umodsi3.o udivsi3.o \
+	udivmoddi4.o divsi3.o modsi3.o divmoddi4.o \
+	divmodsi4.o udivmodsi4.o #qdivrem.o lshldi3.o 
+${f} ${f:C/\.o/.bc/}:	${NETBSDSRCDIR}/sys/external/bsd/compiler_rt/dist/lib/${f:C/\.o/.c/}
 OBJS+=	${f}
 CLEANFILES+= ${f}
+
+COPTS+=  -Wno-missing-prototypes \
+                -Wno-old-style-definition \
+                -Wno-strict-prototypes \
+                -Wno-uninitialized \
+                -Wno-cast-qual
+
+
 
 .if ${USE_BITCODE:Uno} == "yes"
 OBJS+=	${f:C/\.o/.bc/}

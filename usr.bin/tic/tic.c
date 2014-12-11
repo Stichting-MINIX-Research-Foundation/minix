@@ -429,7 +429,11 @@ print_dump(int argc, char **argv)
 		}
 		if (col != 0)
 			printf("\",\n");
+#ifdef __minix
+		printf("\t\t%zu\n", (size_t) len);
+#else
 		printf("\t\t%zu\n", len);
+#endif
 		printf("\t}");
 		if (i + 1 < argc)
 			printf(",");
