@@ -95,12 +95,12 @@
 ./usr/include/i386			minix-sys
 ./usr/lib/libclkconf.a			minix-sys
 ./usr/lib/libclkconf_pic.a		minix-sys
-./usr/lib/libc_vfp.a			minix-sys
-./usr/lib/libc_vfp_pic.a		minix-sys
-./usr/lib/libc_vfp.so.0.0		minix-sys
-./usr/lib/libc_vfp.so.0			minix-sys
-./usr/lib/libc_vfp.so			minix-sys
-./usr/lib/libgcc_eh.a			minix-sys
+./usr/lib/libc_vfp.a			minix-sys       obsolete
+./usr/lib/libc_vfp_pic.a		minix-sys       obsolete
+./usr/lib/libc_vfp.so.0.0		minix-sys       obsolete
+./usr/lib/libc_vfp.so.0			minix-sys       obsolete
+./usr/lib/libc_vfp.so			minix-sys       obsolete
+./usr/lib/libgcc_eh.a			minix-sys	gcccmds
 ./usr/lib/libgpio.a			minix-sys
 ./usr/lib/libgpio_pic.a			minix-sys
 ./usr/lib/libi2cdriver.a		minix-sys
