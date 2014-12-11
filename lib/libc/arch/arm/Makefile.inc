@@ -13,10 +13,6 @@ AFLAGS+= -marm
 CPPFLAGS += -I.
 
 .if !empty(LIBC_MACHINE_ARCH:Mearm*)
-SRCS+=	__aeabi_ldivmod.S __aeabi_uldivmod.S
-SRCS+=	__aeabi_lcmp.c __aeabi_ulcmp.c
-SRCS+=	fixunsgen_ieee754.c fixunssfsi_ieee754.c
-SRCS+=	fixunsgen64_ieee754.c fixunsdfsi_ieee754.c
 SRCS+=	arm_initfini.c
 .endif
 
@@ -26,7 +22,7 @@ CPPFLAGS += -DSOFTFLOAT
 # for earm, use the 64-bit softfloat
 .if ${LIBC_MACHINE_ARCH} == "arm" || ${LIBC_MACHINE_ARCH} == "armeb"
 SOFTFLOAT_BITS=32
-#SRCS+=	floatunsidf_ieee754.c floatunsisf_ieee754.c
+SRCS+=	floatunsidf_ieee754.c floatunsisf_ieee754.c
 .endif
 
 .include <softfloat/Makefile.inc>

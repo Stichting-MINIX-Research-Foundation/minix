@@ -2,6 +2,11 @@
 
 .include <bsd.own.mk>
 
+.if defined(__MINIX)
+#/usr/minix/src-clang/external/bsd/nvi/dist/ex/ex.c:533:18: error: comparison of integers of different signs: 'CHAR_T' (aka 'unsigned int') and 'ARG_CHAR_T' (aka 'int') [-Werror,-Wsign-compare]
+NOCLANGERROR=yes
+.endif
+
 USE_WIDECHAR?=yes
 
 CWARNFLAGS.clang+=	-Wno-uninitialized -Wno-format-security

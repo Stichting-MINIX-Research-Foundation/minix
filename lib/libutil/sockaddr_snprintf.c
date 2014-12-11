@@ -226,7 +226,7 @@ sockaddr_snprintf(char * const sbuf, const size_t len, const char * const fmt,
 #if !defined(__minix)
 			(void)snprintf(nbuf, sizeof(nbuf), "%d", sa->sa_len);
 #else
-			(void)snprintf(nbuf, sizeof(nbuf), "%d", len);
+			(void)snprintf(nbuf, sizeof(nbuf), "%zu", len);
 #endif /* !defined(__minix) */
 			ADDS(nbuf);
 			break;
