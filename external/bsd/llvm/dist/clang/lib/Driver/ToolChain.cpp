@@ -280,8 +280,14 @@ std::string ToolChain::ComputeLLVMTriple(const ArgList &Args,
     // Thumb2 is the default for V7 on Darwin.
     //
     // FIXME: Thumb should just be another -target-feaure, not in the triple.
+#if 1
+    // Minix/ARM-specific force to ARMv7 and EABI.
+    StringRef Suffix = "v7";
+    Triple.setEnvironment(llvm::Triple::EABI);
+#else
     StringRef Suffix =
       getLLVMArchSuffixForARM(getARMTargetCPU(Args, Triple));
+#endif
     bool ThumbDefault = Suffix.startswith("v6m") ||
       (Suffix.startswith("v7") && getTriple().isOSDarwin());
     std::string ArchName = "arm";

@@ -9,6 +9,13 @@ LIB=		rmt
 SRCS=		rmtlib.c
 MAN=		rmtops.3
 
+.if defined(__MINIX)
+# rmtlib.c:451:50: error: format specifies type 'size_t' (aka 'unsigned long') \
+# but the argument has type 'size_t' (aka 'unsigned int') [-Werror,-Wformat]
+WARNS=0
+CFLAGS+=-Wno-format
+.endif
+
 .if !defined(__MINIX)
 CPPFLAGS+=	-D_REENTRANT
 .endif # !defined(__MINIX)

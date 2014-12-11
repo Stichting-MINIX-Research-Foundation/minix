@@ -283,12 +283,12 @@
 ./usr/bin/bzip2				minix-sys
 ./usr/bin/bzip2recover			minix-sys
 ./usr/bin/c++				minix-sys	gcccmds
-./usr/bin/c++				minix-sys	llvm
+./usr/bin/c++				minix-sys	llvm,llvmcmds
 ./usr/bin/cal				minix-sys
 ./usr/bin/calendar			minix-sys
 ./usr/bin/cawf				minix-sys
 ./usr/bin/cc				minix-sys	gcccmds
-./usr/bin/cc				minix-sys	llvm
+./usr/bin/cc				minix-sys	llvm,llvmcmds
 ./usr/bin/cc1				minix-sys	gcccmds
 ./usr/bin/cc1obj			minix-sys	gcccmds
 ./usr/bin/cc1plus			minix-sys	gcccmds
@@ -301,10 +301,10 @@
 ./usr/bin/chsh				minix-sys
 ./usr/bin/ci				minix-sys
 ./usr/bin/cksum				minix-sys
-./usr/bin/clang++			minix-sys	llvm
-./usr/bin/clang				minix-sys	llvm
-./usr/bin/clang-cpp			minix-sys	llvm
-./usr/bin/clang-tblgen			minix-sys	llvm
+./usr/bin/clang++			minix-sys	llvm,llvmcmds
+./usr/bin/clang				minix-sys	llvm,llvmcmds
+./usr/bin/clang-cpp			minix-sys	llvm,llvmcmds
+./usr/bin/clang-tblgen			minix-sys	llvm,llvmcmds
 ./usr/bin/cleantmp			minix-sys
 ./usr/bin/clear				minix-sys
 ./usr/bin/cmp				minix-sys
@@ -317,7 +317,7 @@
 ./usr/bin/compress			minix-sys
 ./usr/bin/cpio				minix-sys
 ./usr/bin/cpp				minix-sys	gcccmds
-./usr/bin/cpp				minix-sys	llvm
+./usr/bin/cpp				minix-sys	llvm,llvmcmds
 ./usr/bin/cprofalyze			minix-sys	obsolete
 ./usr/bin/crc				minix-sys
 ./usr/bin/cron				minix-sys
@@ -412,7 +412,7 @@
 ./usr/bin/lessecho			minix-sys
 ./usr/bin/lesskey			minix-sys
 ./usr/bin/lex				minix-sys
-./usr/bin/llvm-tblgen			minix-sys	llvm
+./usr/bin/llvm-tblgen			minix-sys	llvm,llvmcmds
 ./usr/bin/loadfont			minix-sys
 ./usr/bin/loadramdisk			minix-sys
 ./usr/bin/lock				minix-sys
@@ -796,36 +796,36 @@
 ./usr/include/cdbr.h			minix-sys
 ./usr/include/cdbw.h			minix-sys
 ./usr/include/clang-3.4			minix-sys
-./usr/include/clang-3.4/ammintrin.h	minix-sys	llvm
-./usr/include/clang-3.4/avx2intrin.h	minix-sys	llvm
-./usr/include/clang-3.4/avxintrin.h	minix-sys	llvm
-./usr/include/clang-3.4/bmi2intrin.h	minix-sys	llvm
-./usr/include/clang-3.4/bmiintrin.h	minix-sys	llvm
-./usr/include/clang-3.4/emmintrin.h	minix-sys	llvm
-./usr/include/clang-3.4/f16cintrin.h	minix-sys	llvm
-./usr/include/clang-3.4/fma4intrin.h	minix-sys	llvm
-./usr/include/clang-3.4/fmaintrin.h	minix-sys	llvm
-./usr/include/clang-3.4/immintrin.h	minix-sys	llvm
-./usr/include/clang-3.4/lzcntintrin.h	minix-sys	llvm
-./usr/include/clang-3.4/mm3dnow.h	minix-sys	llvm
-./usr/include/clang-3.4/mmintrin.h	minix-sys	llvm
-./usr/include/clang-3.4/mm_malloc.h	minix-sys	llvm
-./usr/include/clang-3.4/nmmintrin.h	minix-sys	llvm
-./usr/include/clang-3.4/pmmintrin.h	minix-sys	llvm
-./usr/include/clang-3.4/popcntintrin.h	minix-sys	llvm
-./usr/include/clang-3.4/prfchwintrin.h	minix-sys	llvm
-./usr/include/clang-3.4/rdseedintrin.h	minix-sys	llvm
-./usr/include/clang-3.4/rtmintrin.h	minix-sys	llvm
-./usr/include/clang-3.4/shaintrin.h	minix-sys	llvm
-./usr/include/clang-3.4/smmintrin.h	minix-sys	llvm
-./usr/include/clang-3.4/tbmintrin.h	minix-sys	llvm
-./usr/include/clang-3.4/tmmintrin.h	minix-sys	llvm
-./usr/include/clang-3.4/__wmmintrin_aes.h	minix-sys	llvm
-./usr/include/clang-3.4/wmmintrin.h	minix-sys	llvm
-./usr/include/clang-3.4/__wmmintrin_pclmul.h	minix-sys	llvm
-./usr/include/clang-3.4/x86intrin.h	minix-sys	llvm
-./usr/include/clang-3.4/xmmintrin.h	minix-sys	llvm
-./usr/include/clang-3.4/xopintrin.h	minix-sys	llvm
+./usr/include/clang-3.4/ammintrin.h	minix-sys	llvm,llvmcmds
+./usr/include/clang-3.4/avx2intrin.h	minix-sys	llvm,llvmcmds
+./usr/include/clang-3.4/avxintrin.h	minix-sys	llvm,llvmcmds
+./usr/include/clang-3.4/bmi2intrin.h	minix-sys	llvm,llvmcmds
+./usr/include/clang-3.4/bmiintrin.h	minix-sys	llvm,llvmcmds
+./usr/include/clang-3.4/emmintrin.h	minix-sys	llvm,llvmcmds
+./usr/include/clang-3.4/f16cintrin.h	minix-sys	llvm,llvmcmds
+./usr/include/clang-3.4/fma4intrin.h	minix-sys	llvm,llvmcmds
+./usr/include/clang-3.4/fmaintrin.h	minix-sys	llvm,llvmcmds
+./usr/include/clang-3.4/immintrin.h	minix-sys	llvm,llvmcmds
+./usr/include/clang-3.4/lzcntintrin.h	minix-sys	llvm,llvmcmds
+./usr/include/clang-3.4/mm3dnow.h	minix-sys	llvm,llvmcmds
+./usr/include/clang-3.4/mmintrin.h	minix-sys	llvm,llvmcmds
+./usr/include/clang-3.4/mm_malloc.h	minix-sys	llvm,llvmcmds
+./usr/include/clang-3.4/nmmintrin.h	minix-sys	llvm,llvmcmds
+./usr/include/clang-3.4/pmmintrin.h	minix-sys	llvm,llvmcmds
+./usr/include/clang-3.4/popcntintrin.h	minix-sys	llvm,llvmcmds
+./usr/include/clang-3.4/prfchwintrin.h	minix-sys	llvm,llvmcmds
+./usr/include/clang-3.4/rdseedintrin.h	minix-sys	llvm,llvmcmds
+./usr/include/clang-3.4/rtmintrin.h	minix-sys	llvm,llvmcmds
+./usr/include/clang-3.4/shaintrin.h	minix-sys	llvm,llvmcmds
+./usr/include/clang-3.4/smmintrin.h	minix-sys	llvm,llvmcmds
+./usr/include/clang-3.4/tbmintrin.h	minix-sys	llvm,llvmcmds
+./usr/include/clang-3.4/tmmintrin.h	minix-sys	llvm,llvmcmds
+./usr/include/clang-3.4/__wmmintrin_aes.h	minix-sys	llvm,llvmcmds
+./usr/include/clang-3.4/wmmintrin.h	minix-sys	llvm,llvmcmds
+./usr/include/clang-3.4/__wmmintrin_pclmul.h	minix-sys	llvm,llvmcmds
+./usr/include/clang-3.4/x86intrin.h	minix-sys	llvm,llvmcmds
+./usr/include/clang-3.4/xmmintrin.h	minix-sys	llvm,llvmcmds
+./usr/include/clang-3.4/xopintrin.h	minix-sys	llvm,llvmcmds
 ./usr/include/compat			minix-sys
 ./usr/include/compat/machine		minix-sys
 ./usr/include/complex.h			minix-sys
@@ -1895,7 +1895,7 @@
 ./usr/include/ulimit.h			minix-sys
 ./usr/include/unctrl.h			minix-sys
 ./usr/include/unistd.h			minix-sys
-./usr/include/unwind.h			minix-sys	llvm
+./usr/include/unwind.h			minix-sys	llvm,llvmcmds
 ./usr/include/util.h			minix-sys
 ./usr/include/utime.h			minix-sys
 ./usr/include/utmp.h			minix-sys
@@ -1945,7 +1945,7 @@
 ./usr/lib/bc/libc.a			minix-sys	bitcode
 ./usr/lib/bc/libc++.a			minix-sys	bitcode
 ./usr/lib/bc/libchardriver.a		minix-sys	bitcode
-./usr/lib/bc/libcompat_minix.a		minix-sys	bitcode	obsolete
+./usr/lib/bc/libcompat_minix.a		minix-sys	bitcode,obsolete
 ./usr/lib/bc/libcrypt.a			minix-sys	bitcode
 ./usr/lib/bc/libcurses.a		minix-sys	bitcode
 ./usr/lib/bc/libddekit.a		minix-sys	bitcode
@@ -1953,6 +1953,10 @@
 ./usr/lib/bc/libddekit_usb_server.a	minix-sys	bitcode
 ./usr/lib/bc/libdevman.a		minix-sys	bitcode
 ./usr/lib/bc/libedit.a			minix-sys	bitcode
+./usr/lib/bc/libevent.a			minix-sys	bitcode
+./usr/lib/bc/libexpat.a			minix-sys	bitcode
+./usr/lib/bc/libfsdriver.a		minix-sys	bitcode
+./usr/lib/bc/libpci.a			minix-sys	bitcode
 ./usr/lib/bc/libelf.a			minix-sys	bitcode
 ./usr/lib/bc/libexec.a			minix-sys	bitcode
 ./usr/lib/bc/libexecinfo.a		minix-sys	bitcode
@@ -1973,7 +1977,7 @@
 ./usr/lib/bc/libmenu.a			minix-sys	bitcode
 ./usr/lib/bc/libminc.a			minix-sys	bitcode
 ./usr/lib/bc/libminixfs.a		minix-sys	bitcode
-./usr/lib/bc/libminlib.a		minix-sys	bitcode	obsolete
+./usr/lib/bc/libminlib.a		minix-sys	bitcode,obsolete
 ./usr/lib/bc/libmthread.a		minix-sys	bitcode
 ./usr/lib/bc/libnetdriver.a		minix-sys	bitcode
 ./usr/lib/bc/libnetsock.a		minix-sys	bitcode
@@ -5410,7 +5414,7 @@
 ./usr/share/doc/usd/03.shell/t3		minix-sys
 ./usr/share/doc/usd/03.shell/t4		minix-sys
 ./usr/share/doc/usd/03.shell/t.mac	minix-sys
-./usr/share/examples			minix-sys	atf
+./usr/share/examples			minix-sys
 ./usr/share/examples/atf		minix-sys	atf
 ./usr/share/examples/atf/atf-run.hooks	minix-sys	atf,!kyua
 ./usr/share/examples/atf/tests-results.css	minix-sys	atf,!kyua

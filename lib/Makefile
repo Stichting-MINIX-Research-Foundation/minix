@@ -98,7 +98,9 @@ SUBDIR+=	\
 .if (${MACHINE_CPU} == "arm")
 LIBC_MACHINE_ARCH?=${MACHINE_ARCH}
 .if empty(LIBC_MACHINE_ARCH:M*hf*)
+.if !defined(__MINIX)
 SUBDIR+=	libc_vfp
+.endif
 .endif
 .endif
 .if (${MKRUMP} != "no")

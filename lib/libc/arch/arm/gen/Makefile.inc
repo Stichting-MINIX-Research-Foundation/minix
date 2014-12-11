@@ -1,7 +1,7 @@
 # $NetBSD: Makefile.inc,v 1.25 2013/08/21 03:09:39 matt Exp $
 
-SRCS+=	alloca.S byte_swap_2.S byte_swap_4.S bswap64.c divide.S divsi3.S \
-	fabs.c flt_rounds.c udivsi3.S
+SRCS+=	alloca.S byte_swap_2.S byte_swap_4.S bswap64.c \
+	fabs.c flt_rounds.c 
 
 CPUFLAGS.divide.S+=		-marm
 
@@ -16,8 +16,6 @@ SRCS+=	signbitf_ieee754.c signbitd_ieee754.c
 .if !empty(LIBC_MACHINE_ARCH:Mearm*)
 SRCS+=	__aeabi_fcmpun.c __aeabi_dcmpun.c
 SRCS+=	__aeabi_idiv0.c __aeabi_ldiv0.c
-.else
-SRCS+=	modsi3.S umodsi3.S
 .endif
 
 SRCS+=	nanf.c

@@ -7,4 +7,6 @@ LDADD+=	-li2cdriver -lchardriver -lsys -ltimers
 
 CPPFLAGS+=	-I${NETBSDSRCDIR}
 
+NOCLANGERROR=yes
+
 .include <minix.service.mk>
