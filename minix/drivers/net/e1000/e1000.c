@@ -106,6 +106,7 @@ e1000_map_flash(e1000_t * e, int devind, int did)
 	case E1000_DEV_ID_82540EM:
 	case E1000_DEV_ID_82545EM:
 	case E1000_DEV_ID_82540EP:
+	case E1000_DEV_ID_82540EP_LP:
 		return; /* don't even try */
 
 	/* 82566/82567/82562V series support mapping 4kB of flash memory. */
@@ -168,6 +169,7 @@ e1000_probe(e1000_t * e, int skip)
 
 	case E1000_DEV_ID_82540EM:
 	case E1000_DEV_ID_82545EM:
+	case E1000_DEV_ID_82540EP_LP:
 		e->eeprom_done_bit = (1 << 4);
 		e->eeprom_addr_off = 8;
 		break;
