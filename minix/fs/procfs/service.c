@@ -142,7 +142,8 @@ service_get_policies(struct policies * pol, index_t slot)
 	memset(pol[slot].formatted, 0, MAX_POL_FORMAT_SZ);
 	for(pos = 0; pos < (sizeof(def_pol) / sizeof(def_pol[0])); pos++) {
 		if (0 == strcmp(ref_label, def_pol[pos].label)) {
-			(void)strncpy(pol[slot].formatted, def_pol[pos].policy_str, MAX_POL_FORMAT_SZ);
+			(void)strncpy(pol[slot].formatted,
+			    def_pol[pos].policy_str, MAX_POL_FORMAT_SZ);
 			pol[slot].formatted[MAX_POL_FORMAT_SZ-1] = '\0';
 			break;
 		}
@@ -152,6 +153,19 @@ service_get_policies(struct policies * pol, index_t slot)
 #endif
 
 	return pol[slot].formatted;
+}
+
+/*
+ * Return whether a slot is in use and active.  The purpose of this check is
+ * to ensure that after eliminating all slots that do not pass this check, we
+ * are left with a set of live services each with a unique label.
+ */
+static int
+service_active(index_t slot)
+{
+
+	return ((rproc.proc[slot].r_flags & (RS_IN_USE | RS_ACTIVE)) ==
+	    (RS_IN_USE | RS_ACTIVE));
 }
 
 /*
@@ -187,7 +201,7 @@ service_update(void)
 		 * If the slot is no longer in use, or the label name does not
 		 * match, the node must be deleted.
 		 */
-		if (!(rproc.proc[slot].r_flags & RS_IN_USE) ||
+		if (!service_active(slot) ||
 		    strcmp(get_inode_name(node), rproc.pub[slot].label))
 			delete_inode(node);
 	}
@@ -198,7 +212,7 @@ service_update(void)
 	stat.gid = SUPER_USER;
 
 	for (slot = 0; slot < NR_SYS_PROCS; slot++) {
-		if (!(rproc.proc[slot].r_flags & RS_IN_USE) ||
+		if (!service_active(slot) ||
 		    get_inode_by_index(service_node, slot) != NULL)
 			continue;
 
