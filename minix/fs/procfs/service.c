@@ -19,8 +19,11 @@ struct policies {
 	enum policy supported;
 };
 
-static struct rprocpub rprocpub[NR_SYS_PROCS];
-static struct rproc rproc[NR_SYS_PROCS];
+static struct {
+	struct rproc proc[NR_SYS_PROCS];
+	struct rprocpub pub[NR_SYS_PROCS];
+} rproc;
+
 static struct policies policies[NR_SYS_PROCS];
 
 static struct inode *service_node;
@@ -132,9 +135,9 @@ service_get_policies(struct policies * pol, index_t slot)
 	};
 
 	/* Find the related policy, based on the file name of the service. */
-	ref_label = strrchr(rprocpub[slot].proc_name, '/');
+	ref_label = strrchr(rproc.pub[slot].proc_name, '/');
 	if (NULL == ref_label)
-		ref_label = rprocpub[slot].proc_name;
+		ref_label = rproc.pub[slot].proc_name;
 
 	memset(pol[slot].formatted, 0, MAX_POL_FORMAT_SZ);
 	for(pos = 0; pos < (sizeof(def_pol) / sizeof(def_pol[0])); pos++) {
@@ -161,11 +164,15 @@ service_update(void)
 	struct inode *node;
 	struct inode_stat stat;
 	index_t slot;
+	static int warned = FALSE;
+	int r;
 
-	/* There is not much we can do if either of these calls fails. */
-	(void)getsysinfo(RS_PROC_NR, SI_PROCPUB_TAB, rprocpub,
-	    sizeof(rprocpub));
-	(void)getsysinfo(RS_PROC_NR, SI_PROC_TAB, rproc, sizeof(rproc));
+	/* There is not much we can do if this call fails. */
+	r = getsysinfo(RS_PROC_NR, SI_PROCALL_TAB, &rproc, sizeof(rproc));
+	if (r != OK && !warned) {
+		printf("PROCFS: unable to obtain RS tables (%d)\n", r);
+		warned = TRUE;
+	}
 
 	/*
 	 * As with PIDs, we make two passes.  Delete first, then add.  This
@@ -180,8 +187,8 @@ service_update(void)
 		 * If the slot is no longer in use, or the label name does not
 		 * match, the node must be deleted.
 		 */
-		if (!(rproc[slot].r_flags & RS_IN_USE) ||
-		    strcmp(get_inode_name(node), rprocpub[slot].label))
+		if (!(rproc.proc[slot].r_flags & RS_IN_USE) ||
+		    strcmp(get_inode_name(node), rproc.pub[slot].label))
 			delete_inode(node);
 	}
 
@@ -191,11 +198,11 @@ service_update(void)
 	stat.gid = SUPER_USER;
 
 	for (slot = 0; slot < NR_SYS_PROCS; slot++) {
-		if (!(rproc[slot].r_flags & RS_IN_USE) ||
+		if (!(rproc.proc[slot].r_flags & RS_IN_USE) ||
 		    get_inode_by_index(service_node, slot) != NULL)
 			continue;
 
-		node = add_inode(service_node, rprocpub[slot].label, slot,
+		node = add_inode(service_node, rproc.pub[slot].label, slot,
 		    &stat, (index_t)0, (cbdata_t)slot);
 
 		if (node == NULL)
@@ -277,8 +284,8 @@ service_read(struct inode * node)
 		return;
 
 	slot = get_inode_index(node);
-	rpub = &rprocpub[slot];
-	rp = &rproc[slot];
+	rpub = &rproc.pub[slot];
+	rp = &rproc.proc[slot];
 
 	/* TODO: add a large number of other fields! */
 	buf_printf("filename: %s\n", rpub->proc_name);

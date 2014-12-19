@@ -867,18 +867,33 @@ message *m_ptr;
 {
   vir_bytes src_addr, dst_addr;
   int dst_proc;
-  size_t len;
+  size_t size, len;
   int s;
 
   /* Check if the call can be allowed. */
   if((s = check_call_permission(m_ptr->m_source, 0, NULL)) != OK)
       return s;
 
+  dst_proc = m_ptr->m_source;
+  dst_addr = m_ptr->m_lsys_getsysinfo.where;
+  size = m_ptr->m_lsys_getsysinfo.size;
+
   switch(m_ptr->m_lsys_getsysinfo.what) {
   case SI_PROC_TAB:
   	src_addr = (vir_bytes) rproc;
   	len = sizeof(struct rproc) * NR_SYS_PROCS;
   	break; 
+  case SI_PROCALL_TAB:
+	/* Copy out both tables, one after the other. */
+	src_addr = (vir_bytes) rproc;
+	len = sizeof(struct rproc) * NR_SYS_PROCS;
+	if (len > size)
+		return EINVAL;
+	if ((s = sys_datacopy(SELF, src_addr, dst_proc, dst_addr, len)) != OK)
+		return s;
+	dst_addr += len;
+	size -= len;
+	/* FALLTHROUGH */
   case SI_PROCPUB_TAB:
   	src_addr = (vir_bytes) rprocpub;
   	len = sizeof(struct rprocpub) * NR_SYS_PROCS;
@@ -887,11 +902,9 @@ message *m_ptr;
   	return(EINVAL);
   }
 
-  if (len != m_ptr->m_lsys_getsysinfo.size)
+  if (len != size)
 	return(EINVAL);
 
-  dst_proc = m_ptr->m_source;
-  dst_addr = m_ptr->m_lsys_getsysinfo.where;
   return sys_datacopy(SELF, src_addr, dst_proc, dst_addr, len);
 }
 
