@@ -198,12 +198,17 @@ static int rs_memctl_make_vm_instance(struct vmproc *new_vm_vmp)
 static int rs_memctl_heap_prealloc(struct vmproc *vmp,
 	vir_bytes *addr, size_t *len)
 {
+	struct vir_region *data_vr;
+	vir_bytes bytes;
 
-	/*
-	 * XXX: Is this still needed?
-	 */
+	if(*len <= 0) {
+		return EINVAL;
+	}
+	data_vr = region_search(&vmp->vm_regions_avl, VM_MMAPBASE, AVL_LESS);
+	*addr = data_vr->vaddr + data_vr->length;
+	bytes = *addr + *len;
 
-	return OK;
+	return real_brk(vmp, bytes);
 }
 
 /*===========================================================================*
