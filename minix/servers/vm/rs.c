@@ -168,11 +168,13 @@ static int rs_memctl_make_vm_instance(struct vmproc *new_vm_vmp)
 	 */
 	flags = 0;
 	verify = FALSE;
-	r = pt_ptalloc_in_range(&this_vm_vmp->vm_pt, 0, 0, flags, verify);
+	r = pt_ptalloc_in_range(&this_vm_vmp->vm_pt,
+		kernel_boot_info.freepde_start, ARCH_VM_DIR_ENTRIES, flags, verify);
 	if(r != OK) {
 		return r;
 	}
-	r = pt_ptalloc_in_range(&new_vm_vmp->vm_pt, 0, 0, flags, verify);
+	r = pt_ptalloc_in_range(&new_vm_vmp->vm_pt,
+		kernel_boot_info.freepde_start, ARCH_VM_DIR_ENTRIES, flags, verify);
 	if(r != OK) {
 		return r;
 	}
