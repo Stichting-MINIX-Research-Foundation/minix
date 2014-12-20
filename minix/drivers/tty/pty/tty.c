@@ -214,8 +214,6 @@ static void tty_startup(void)
   sef_setcb_init_fresh(tty_init);
   sef_setcb_init_restart(tty_init);
 
-  /* No live update support for now. */
-
   /* No signal support for now. */
 
   /* Let SEF perform startup. */

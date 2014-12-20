@@ -408,8 +408,7 @@ pfs_startup(void)
 
 	/* Register initialization callbacks. */
 	sef_setcb_init_fresh(pfs_init);
-
-	/* No live update support for now. */
+	sef_setcb_init_restart(SEF_CB_INIT_RESTART_STATEFUL);
 
 	/* Register signal callbacks. */
 	sef_setcb_signal_handler(pfs_signal);

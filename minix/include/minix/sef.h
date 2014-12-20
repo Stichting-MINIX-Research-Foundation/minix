@@ -80,9 +80,10 @@ int sef_cb_init_response_rs_asyn_once(message *m_ptr);
 #define SEF_CB_INIT_LU_NULL             sef_cb_init_null
 #define SEF_CB_INIT_RESTART_NULL        sef_cb_init_null
 #define SEF_CB_INIT_RESPONSE_NULL       sef_cb_init_response_null
+#define SEF_CB_INIT_RESTART_STATEFUL    sef_cb_init_identity_state_transfer
 
 #define SEF_CB_INIT_FRESH_DEFAULT       sef_cb_init_null
-#define SEF_CB_INIT_LU_DEFAULT          sef_cb_init_null
+#define SEF_CB_INIT_LU_DEFAULT          sef_cb_init_lu_generic
 #define SEF_CB_INIT_RESTART_DEFAULT     sef_cb_init_reset
 #define SEF_CB_INIT_RESPONSE_DEFAULT    sef_cb_init_response_rs_reply
 
@@ -200,9 +201,9 @@ int sef_cb_lu_response_rs_reply(message *m_ptr);
 #define SEF_CB_LU_RESPONSE_NULL         sef_cb_lu_response_null
 
 #define SEF_CB_LU_PREPARE_DEFAULT       sef_cb_lu_prepare_null
-#define SEF_CB_LU_STATE_ISVALID_DEFAULT sef_cb_lu_state_isvalid_null
+#define SEF_CB_LU_STATE_ISVALID_DEFAULT sef_cb_lu_state_isvalid_generic
 #define SEF_CB_LU_STATE_CHANGED_DEFAULT sef_cb_lu_state_changed_null
-#define SEF_CB_LU_STATE_DUMP_DEFAULT    sef_cb_lu_state_dump_null
+#define SEF_CB_LU_STATE_DUMP_DEFAULT    sef_cb_lu_state_dump_eval
 #define SEF_CB_LU_STATE_SAVE_DEFAULT    sef_cb_lu_state_save_null
 #define SEF_CB_LU_RESPONSE_DEFAULT      sef_cb_lu_response_rs_reply
 

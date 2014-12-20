@@ -147,8 +147,6 @@ static void sef_local_startup()
   sef_setcb_init_response(sef_cb_init_response);
   sef_setcb_lu_response(sef_cb_lu_response);
 
-  /* No live update support for now. */
-
   /* Register signal callbacks. */
   sef_setcb_signal_handler(sef_cb_signal_handler);
   sef_setcb_signal_manager(sef_cb_signal_manager);
@@ -507,9 +505,9 @@ static int sef_cb_init_restart(int type, sef_init_info_t *info)
   assert(info->endpoint == RS_PROC_NR);
 
   /* Perform default state transfer first. */
-  r = SEF_CB_INIT_RESTART_DEFAULT(type, info);
+  r = SEF_CB_INIT_RESTART_STATEFUL(type, info);
   if(r != OK) {
-      printf("SEF_CB_INIT_RESTART_DEFAULT failed: %d\n", r);
+      printf("SEF_CB_INIT_RESTART_STATEFUL failed: %d\n", r);
       return r;
   }
 
@@ -557,7 +555,7 @@ static int sef_cb_init_lu(int type, sef_init_info_t *info)
   assert(info->endpoint == RS_PROC_NR);
 
   /* Perform default state transfer first. */
-  sef_setcb_init_restart(SEF_CB_INIT_RESTART_DEFAULT);
+  sef_setcb_init_restart(SEF_CB_INIT_RESTART_STATEFUL);
   r = SEF_CB_INIT_LU_DEFAULT(type, info);
   if(r != OK) {
       printf("SEF_CB_INIT_LU_DEFAULT failed: %d\n", r);

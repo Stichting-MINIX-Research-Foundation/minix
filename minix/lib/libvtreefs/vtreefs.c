@@ -51,12 +51,10 @@ got_signal(int signal)
 static void
 sef_local_startup(void)
 {
-
 	sef_setcb_init_fresh(init_server);
+	sef_setcb_init_restart(SEF_CB_INIT_RESTART_STATEFUL);
 
 	sef_setcb_signal_handler(got_signal);
-
-	/* No support for live update yet. */
 
 	sef_startup();
 }

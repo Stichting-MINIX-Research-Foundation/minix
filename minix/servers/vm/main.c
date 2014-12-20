@@ -661,13 +661,13 @@ static int sef_cb_init_lu_restart(int type, sef_init_info_t *info)
         int old_p;
         struct vmproc *old_vmp, *new_vmp;
 
-        /* Perform default state transfer first. Assume VM doesn't brk(). */
+        /* Perform default state transfer first. */
         if(type == SEF_INIT_LU) {
-		sef_setcb_init_restart(SEF_CB_INIT_RESTART_DEFAULT);
+		sef_setcb_init_restart(SEF_CB_INIT_RESTART_STATEFUL);
 		r = SEF_CB_INIT_LU_DEFAULT(type, info);
         }
         else {
-		r = SEF_CB_INIT_RESTART_DEFAULT(type, info);
+		r = SEF_CB_INIT_RESTART_STATEFUL(type, info);
         }
         if(r != OK) {
 		return r;

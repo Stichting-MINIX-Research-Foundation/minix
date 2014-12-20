@@ -732,8 +732,6 @@ uds_startup(void)
 	/* Register init callbacks. */
 	sef_setcb_init_fresh(uds_init);
 
-	/* No live update support for now. */
-
 	/* Register signal callbacks. */
 	sef_setcb_signal_handler(uds_signal);
 

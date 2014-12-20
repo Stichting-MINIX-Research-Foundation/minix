@@ -346,7 +346,7 @@ int sef_cb_init_identity_state_transfer(int type, sef_init_info_t *info)
   new_brksize = _brksize;
 
   /* Transfer heap if necessary. */
-  if(old_brksize != new_brksize) {
+  if(sef_self_endpoint != VM_PROC_NR && old_brksize != new_brksize) {
 
 #if SEF_ST_DEBUG
       printf("sef_cb_init_identity_state_transfer: brk() for new_brksize = 0x%08x\n",
@@ -391,9 +391,10 @@ int sef_cb_init_lu_identity_as_restart(int type, sef_init_info_t *info)
 
   /* Resort to restart callback only for identity updates, ignore other cases. */
   if(SEF_LU_IS_IDENTITY_UPDATE(info->flags)) {
-      if(info->flags & (SEF_INIT_DEFCB|SEF_INIT_SCRIPT_RESTART)) {
-          /* Use default callback when requested or when using a script.*/
-          return SEF_CB_INIT_RESTART_DEFAULT(type, info);
+      if((info->flags & (SEF_INIT_DEFCB|SEF_INIT_SCRIPT_RESTART))
+          || sef_init_cbs.sef_cb_init_restart == sef_cb_init_reset) {
+          /* Use stateful restart callback when necessary. */
+          return SEF_CB_INIT_RESTART_STATEFUL(type, info);
       }
       return sef_init_cbs.sef_cb_init_restart(type, info);
   }

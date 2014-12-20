@@ -94,11 +94,10 @@ static void sef_local_startup()
 {
   /* Register init callbacks. */
   sef_setcb_init_fresh(sef_cb_init_fresh);
+  sef_setcb_init_restart(SEF_CB_INIT_RESTART_STATEFUL);
 
   /* Register state transfer callbacks. */
   sef_llvm_ds_st_init();
-
-  /* No live update support for now. */
 
   /* Let SEF perform startup. */
   sef_startup();

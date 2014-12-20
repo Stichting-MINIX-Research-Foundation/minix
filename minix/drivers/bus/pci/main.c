@@ -718,21 +718,6 @@ sef_local_startup(void)
 	sef_setcb_init_lu(sef_cb_init);
 	sef_setcb_init_restart(sef_cb_init);
 
-	/*
-	 * Register live update callbacks.
-	 */
-
-	/* - Agree to update immediately when LU is requested in a valid
-	 * state. */
-	sef_setcb_lu_prepare(sef_cb_lu_prepare_always_ready);
-	/* - Support live update starting from any standard state. */
-	sef_setcb_lu_state_isvalid(sef_cb_lu_state_isvalid_standard);
-
-#if 0
-	/* - Register a custom routine to save the state. */
-	sef_setcb_lu_state_save(sef_cb_lu_state_save);
-#endif
-
 	/* Let SEF perform startup. */
 	sef_startup();
 }
