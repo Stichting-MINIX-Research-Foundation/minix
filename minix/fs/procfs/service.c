@@ -304,6 +304,7 @@ service_read(struct inode * node)
 	/* TODO: add a large number of other fields! */
 	buf_printf("filename: %s\n", rpub->proc_name);
 	buf_printf("endpoint: %d\n", rpub->endpoint);
+	buf_printf("pid:      %d\n", rp->r_pid);
 	buf_printf("restarts: %d\n", rp->r_restarts);
 	buf_printf("policies: %s\n", service_get_policies(policies, slot));
 }
