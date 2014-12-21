@@ -931,8 +931,9 @@ _ASSERT_MSG_SIZE(mess_linputdriver_input_event);
 typedef struct {
         cp_grant_id_t gid;
 	size_t size;
+	int subtype;
 
-        uint8_t padding[48];
+        uint8_t padding[44];
 } mess_lsys_fi_ctl;
 _ASSERT_MSG_SIZE(mess_lsys_fi_ctl);
 

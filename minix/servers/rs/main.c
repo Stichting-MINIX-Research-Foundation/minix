@@ -112,6 +112,7 @@ int main(void)
 	  case RS_UNCLONE: 	result = do_unclone(&m);	break;
           case RS_EDIT: 	result = do_edit(&m); 		break;
 	  case RS_SYSCTL:	result = do_sysctl(&m);		break;
+	  case RS_FI:	result = do_fi(&m);		break;
           case RS_GETSYSINFO:  result = do_getsysinfo(&m);     break;
 	  case RS_LOOKUP:	result = do_lookup(&m);		break;
 	  /* Ready messages. */

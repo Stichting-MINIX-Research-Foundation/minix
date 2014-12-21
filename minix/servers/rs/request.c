@@ -1224,6 +1224,42 @@ int do_sysctl(message *m_ptr)
 }
 
 /*===========================================================================*
+ *				do_fi				     *
+ *===========================================================================*/
+int do_fi(message *m_ptr)
+{
+  struct rproc *rp;
+  struct rprocpub *rpub;
+  int s, r;
+  char label[RS_MAX_LABEL_LEN];
+
+  /* Copy label. */
+  s = copy_label(m_ptr->m_source, m_ptr->m_rs_req.addr,
+      m_ptr->m_rs_req.len, label, sizeof(label));
+  if(s != OK) {
+      return s;
+  }
+
+  /* Lookup slot by label. */
+  rp = lookup_slot_by_label(label);
+  if(!rp) {
+      if(rs_verbose)
+          printf("RS: do_fi: service '%s' not found\n", label);
+      return(ESRCH);
+  }
+  rpub = rp->r_pub;
+
+  /* Check if the call can be allowed. */
+  if((r = check_call_permission(m_ptr->m_source, RS_FI, rp)) != OK)
+      return r;
+
+  /* Inject fault into the service as requested. */
+  s = fi_service(rp);
+
+  return s;
+}
+
+/*===========================================================================*
  *				   check_request			     *
  *===========================================================================*/
 static int check_request(struct rs_start *rs_start)

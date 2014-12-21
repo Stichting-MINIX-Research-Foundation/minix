@@ -28,6 +28,7 @@ void do_sigchld(void);
 int do_getsysinfo(message *m);
 int do_lookup(message *m);
 int do_sysctl(message *m);
+int do_fi(message *m);
 
 /* manager.c */
 int check_call_permission(endpoint_t caller, int call, struct rproc
@@ -123,6 +124,7 @@ void end_update_debug(char *file, int line,
 
 /* utility.c */
 int init_service(struct rproc *rp, int type, int flags);
+int fi_service(struct rproc *rp);
 void fill_send_mask(sys_map_t *send_mask, int set_bits);
 void fill_call_mask( int *calls, int tot_nr_calls,
 	bitchunk_t *call_mask, int call_base, int is_init);

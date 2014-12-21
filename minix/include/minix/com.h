@@ -475,6 +475,7 @@
 #define RS_LU_PREPARE	(RS_RQ_BASE + 21)	/* prepare to update message */
 #define RS_EDIT		(RS_RQ_BASE + 22)	/* edit system service */
 #define RS_SYSCTL	(RS_RQ_BASE + 23)	/* perform system ctl action */
+#define RS_FI		(RS_RQ_BASE + 24)	/* inject fault into service */
 
 /* Subfunctions for RS_SYSCTL. */
 #define RS_SYSCTL_SRV_STATUS    1
@@ -482,6 +483,9 @@
 #define RS_SYSCTL_UPD_RUN       3
 #define RS_SYSCTL_UPD_STOP      4
 #define RS_SYSCTL_UPD_STATUS    5
+
+/* Subfunctions for RS_FI. */
+#define RS_FI_CRASH             1
 
 /*===========================================================================*
  *                Messages for the Data Store Server			     *

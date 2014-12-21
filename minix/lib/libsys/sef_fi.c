@@ -12,6 +12,10 @@ EXTERN int do_sef_fi_request(message *m_ptr);
  *===========================================================================*/
 int do_sef_fi_request(message *m_ptr)
 {
+    /* See if we are simply asked to crash. */
+    if (m_ptr->m_lsys_fi_ctl.subtype == RS_FI_CRASH)
+        panic("Crash!");
+
 #if SEF_FI_ALLOW_EDFI
     /* Forward the request to the EDFI fault injector, if linked in. */
     if(edfi_ctl_process_request)

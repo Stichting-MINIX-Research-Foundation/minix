@@ -61,6 +61,19 @@ int init_service(struct rproc *rp, int type, int flags)
 }
 
 /*===========================================================================*
+ *				 fi_service				     *
+ *===========================================================================*/
+int fi_service(struct rproc *rp)
+{
+  message m;
+
+  /* Send fault injection message. */
+  m.m_type = COMMON_REQ_FI_CTL;
+  m.m_lsys_fi_ctl.subtype = RS_FI_CRASH;
+  return rs_asynsend(rp, &m, 0);
+}
+
+/*===========================================================================*
  *			      fill_send_mask                                 *
  *===========================================================================*/
 void fill_send_mask(send_mask, set_bits)

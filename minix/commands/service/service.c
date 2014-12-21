@@ -51,6 +51,7 @@ static char *known_requests[] = {
   "unclone",
   "edit",
   "sysctl",
+  "fi",
   "catch for illegal requests"
 };
 static int known_request_types[] = {
@@ -64,6 +65,7 @@ static int known_request_types[] = {
   RS_UNCLONE,
   RS_EDIT,
   RS_SYSCTL,
+  RS_FI,
   0
 };
 #define ILLEGAL_REQUEST  sizeof(known_requests)/sizeof(char *)
@@ -189,6 +191,7 @@ static void print_usage(char *app_name, char *problem)
   fprintf(stderr, "    %s restart <label>\n", app_name);
   fprintf(stderr, "    %s clone <label>\n", app_name);
   fprintf(stderr, "    %s unclone <label>\n", app_name);
+  fprintf(stderr, "    %s fi <label>\n", app_name);
   fprintf(stderr, "    %s sysctl <srv_status|upd_start|upd_run|upd_stop|upd_status>\n", app_name);
   fprintf(stderr, "    %s shutdown\n", app_name);
   fprintf(stderr, "    Options:\n");
@@ -646,7 +649,7 @@ static int parse_arguments(int argc, char **argv, u32_t *rss_flags)
       }
   }
   else if (req_nr == RS_DOWN || req_nr == RS_REFRESH || req_nr == RS_RESTART
-      || req_nr == RS_CLONE || req_nr == RS_UNCLONE) {
+      || req_nr == RS_CLONE || req_nr == RS_UNCLONE || req_nr == RS_FI) {
 
       /* Verify argument count. */ 
       if (argc - 1 < optind+ARG_LABEL) {
@@ -800,6 +803,7 @@ int main(int argc, char **argv)
   case RS_RESTART:
   case RS_CLONE:
   case RS_UNCLONE:
+  case RS_FI:
       m.m_rs_req.addr = req_label;
       m.m_rs_req.len = strlen(req_label);
       break;
