@@ -158,6 +158,13 @@ autoboot|start)
 	edit memory
 	edit pfs
 	edit init
+	#
+	# Keep a copy around to recover the root FS from crashes
+	#
+	rootline=`cat /etc/mtab | grep "on / "`
+	rootfs=fs_`echo "$rootline" | cut -d' ' -f1 | cut -d'/' -f3`
+	roottype=`echo "$rootline" | cut -d' ' -f5`
+	service -c edit /service/$roottype -label $rootfs
     fi
 
     if [ "$sflag" ]

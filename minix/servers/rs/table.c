@@ -34,6 +34,7 @@ struct boot_image_sys boot_image_sys_table[] = {
   { RS_PROC_NR,       SRVR_SF                           },
   { VM_PROC_NR,       VM_SF                             },
   { PM_PROC_NR,       SRVR_SF                           },
+  { SCHED_PROC_NR,    SRVR_SF                           },
   { VFS_PROC_NR,      SRVR_SF                           },
   { MFS_PROC_NR,      0                                 },
   { PFS_PROC_NR,      SRV_SF                            },
