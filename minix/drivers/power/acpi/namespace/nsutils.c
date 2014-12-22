@@ -5,116 +5,42 @@
  *
  *****************************************************************************/
 
-/******************************************************************************
- *
- * 1. Copyright Notice
- *
- * Some or all of this work - Copyright (c) 1999 - 2010, Intel Corp.
+/*
+ * Copyright (C) 2000 - 2014, Intel Corp.
  * All rights reserved.
  *
- * 2. License
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions, and the following disclaimer,
+ *    without modification.
+ * 2. Redistributions in binary form must reproduce at minimum a disclaimer
+ *    substantially similar to the "NO WARRANTY" disclaimer below
+ *    ("Disclaimer") and any redistribution must be conditioned upon
+ *    including a substantially similar Disclaimer requirement for further
+ *    binary redistribution.
+ * 3. Neither the names of the above-listed copyright holders nor the names
+ *    of any contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
- * 2.1. This is your license from Intel Corp. under its intellectual property
- * rights.  You may have additional license terms from the party that provided
- * you this software, covering your right to use that party's intellectual
- * property rights.
+ * Alternatively, this software may be distributed under the terms of the
+ * GNU General Public License ("GPL") version 2 as published by the Free
+ * Software Foundation.
  *
- * 2.2. Intel grants, free of charge, to any person ("Licensee") obtaining a
- * copy of the source code appearing in this file ("Covered Code") an
- * irrevocable, perpetual, worldwide license under Intel's copyrights in the
- * base code distributed originally by Intel ("Original Intel Code") to copy,
- * make derivatives, distribute, use and display any portion of the Covered
- * Code in any form, with the right to sublicense such rights; and
- *
- * 2.3. Intel grants Licensee a non-exclusive and non-transferable patent
- * license (with the right to sublicense), under only those claims of Intel
- * patents that are infringed by the Original Intel Code, to make, use, sell,
- * offer to sell, and import the Covered Code and derivative works thereof
- * solely to the minimum extent necessary to exercise the above copyright
- * license, and in no event shall the patent license extend to any additions
- * to or modifications of the Original Intel Code.  No other license or right
- * is granted directly or by implication, estoppel or otherwise;
- *
- * The above copyright and patent license is granted only if the following
- * conditions are met:
- *
- * 3. Conditions
- *
- * 3.1. Redistribution of Source with Rights to Further Distribute Source.
- * Redistribution of source code of any substantial portion of the Covered
- * Code or modification with rights to further distribute source must include
- * the above Copyright Notice, the above License, this list of Conditions,
- * and the following Disclaimer and Export Compliance provision.  In addition,
- * Licensee must cause all Covered Code to which Licensee contributes to
- * contain a file documenting the changes Licensee made to create that Covered
- * Code and the date of any change.  Licensee must include in that file the
- * documentation of any changes made by any predecessor Licensee.  Licensee
- * must include a prominent statement that the modification is derived,
- * directly or indirectly, from Original Intel Code.
- *
- * 3.2. Redistribution of Source with no Rights to Further Distribute Source.
- * Redistribution of source code of any substantial portion of the Covered
- * Code or modification without rights to further distribute source must
- * include the following Disclaimer and Export Compliance provision in the
- * documentation and/or other materials provided with distribution.  In
- * addition, Licensee may not authorize further sublicense of source of any
- * portion of the Covered Code, and must include terms to the effect that the
- * license from Licensee to its licensee is limited to the intellectual
- * property embodied in the software Licensee provides to its licensee, and
- * not to intellectual property embodied in modifications its licensee may
- * make.
- *
- * 3.3. Redistribution of Executable. Redistribution in executable form of any
- * substantial portion of the Covered Code or modification must reproduce the
- * above Copyright Notice, and the following Disclaimer and Export Compliance
- * provision in the documentation and/or other materials provided with the
- * distribution.
- *
- * 3.4. Intel retains all right, title, and interest in and to the Original
- * Intel Code.
- *
- * 3.5. Neither the name Intel nor any other trademark owned or controlled by
- * Intel shall be used in advertising or otherwise to promote the sale, use or
- * other dealings in products derived from or relating to the Covered Code
- * without prior written authorization from Intel.
- *
- * 4. Disclaimer and Export Compliance
- *
- * 4.1. INTEL MAKES NO WARRANTY OF ANY KIND REGARDING ANY SOFTWARE PROVIDED
- * HERE.  ANY SOFTWARE ORIGINATING FROM INTEL OR DERIVED FROM INTEL SOFTWARE
- * IS PROVIDED "AS IS," AND INTEL WILL NOT PROVIDE ANY SUPPORT,  ASSISTANCE,
- * INSTALLATION, TRAINING OR OTHER SERVICES.  INTEL WILL NOT PROVIDE ANY
- * UPDATES, ENHANCEMENTS OR EXTENSIONS.  INTEL SPECIFICALLY DISCLAIMS ANY
- * IMPLIED WARRANTIES OF MERCHANTABILITY, NONINFRINGEMENT AND FITNESS FOR A
- * PARTICULAR PURPOSE.
- *
- * 4.2. IN NO EVENT SHALL INTEL HAVE ANY LIABILITY TO LICENSEE, ITS LICENSEES
- * OR ANY OTHER THIRD PARTY, FOR ANY LOST PROFITS, LOST DATA, LOSS OF USE OR
- * COSTS OF PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES, OR FOR ANY INDIRECT,
- * SPECIAL OR CONSEQUENTIAL DAMAGES ARISING OUT OF THIS AGREEMENT, UNDER ANY
- * CAUSE OF ACTION OR THEORY OF LIABILITY, AND IRRESPECTIVE OF WHETHER INTEL
- * HAS ADVANCE NOTICE OF THE POSSIBILITY OF SUCH DAMAGES.  THESE LIMITATIONS
- * SHALL APPLY NOTWITHSTANDING THE FAILURE OF THE ESSENTIAL PURPOSE OF ANY
- * LIMITED REMEDY.
- *
- * 4.3. Licensee shall not export, either directly or indirectly, any of this
- * software or system incorporating such software without first obtaining any
- * required license or other approval from the U. S. Department of Commerce or
- * any other agency or department of the United States Government.  In the
- * event Licensee exports any such software from the United States or
- * re-exports any such software from a foreign destination, Licensee shall
- * ensure that the distribution and export/re-export of the software is in
- * compliance with all laws, regulations, orders, or other restrictions of the
- * U.S. Export Administration Regulations. Licensee agrees that neither it nor
- * any of its subsidiaries will export/re-export any technical data, process,
- * software, or service, directly or indirectly, to any country for which the
- * United States government or any agency thereof requires an export license,
- * other governmental approval, or letter of assurance, without first obtaining
- * such license, approval or letter.
- *
- *****************************************************************************/
-
-#define __NSUTILS_C__
+ * NO WARRANTY
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * HOLDERS OR CONTRIBUTORS BE LIABLE FOR SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+ * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGES.
+ */
 
 #include "acpi.h"
 #include "accommon.h"
@@ -126,127 +52,11 @@
 
 /* Local prototypes */
 
-static BOOLEAN
-AcpiNsValidPathSeparator (
-    char                    Sep);
-
 #ifdef ACPI_OBSOLETE_FUNCTIONS
 ACPI_NAME
 AcpiNsFindParentName (
     ACPI_NAMESPACE_NODE     *NodeToSearch);
 #endif
-
-
-/*******************************************************************************
- *
- * FUNCTION:    AcpiNsReportError
- *
- * PARAMETERS:  ModuleName          - Caller's module name (for error output)
- *              LineNumber          - Caller's line number (for error output)
- *              InternalName        - Name or path of the namespace node
- *              LookupStatus        - Exception code from NS lookup
- *
- * RETURN:      None
- *
- * DESCRIPTION: Print warning message with full pathname
- *
- ******************************************************************************/
-
-void
-AcpiNsReportError (
-    const char              *ModuleName,
-    UINT32                  LineNumber,
-    const char              *InternalName,
-    ACPI_STATUS             LookupStatus)
-{
-    ACPI_STATUS             Status;
-    UINT32                  BadName;
-    char                    *Name = NULL;
-
-
-    AcpiOsPrintf ("ACPI Error (%s-%04d): ", ModuleName, LineNumber);
-
-    if (LookupStatus == AE_BAD_CHARACTER)
-    {
-        /* There is a non-ascii character in the name */
-
-        ACPI_MOVE_32_TO_32 (&BadName, ACPI_CAST_PTR (UINT32, InternalName));
-        AcpiOsPrintf ("[0x%4.4X] (NON-ASCII)", BadName);
-    }
-    else
-    {
-        /* Convert path to external format */
-
-        Status = AcpiNsExternalizeName (ACPI_UINT32_MAX,
-                    InternalName, NULL, &Name);
-
-        /* Print target name */
-
-        if (ACPI_SUCCESS (Status))
-        {
-            AcpiOsPrintf ("[%s]", Name);
-        }
-        else
-        {
-            AcpiOsPrintf ("[COULD NOT EXTERNALIZE NAME]");
-        }
-
-        if (Name)
-        {
-            ACPI_FREE (Name);
-        }
-    }
-
-    AcpiOsPrintf (" Namespace lookup failure, %s\n",
-        AcpiFormatException (LookupStatus));
-}
-
-
-/*******************************************************************************
- *
- * FUNCTION:    AcpiNsReportMethodError
- *
- * PARAMETERS:  ModuleName          - Caller's module name (for error output)
- *              LineNumber          - Caller's line number (for error output)
- *              Message             - Error message to use on failure
- *              PrefixNode          - Prefix relative to the path
- *              Path                - Path to the node (optional)
- *              MethodStatus        - Execution status
- *
- * RETURN:      None
- *
- * DESCRIPTION: Print warning message with full pathname
- *
- ******************************************************************************/
-
-void
-AcpiNsReportMethodError (
-    const char              *ModuleName,
-    UINT32                  LineNumber,
-    const char              *Message,
-    ACPI_NAMESPACE_NODE     *PrefixNode,
-    const char              *Path,
-    ACPI_STATUS             MethodStatus)
-{
-    ACPI_STATUS             Status;
-    ACPI_NAMESPACE_NODE     *Node = PrefixNode;
-
-
-    AcpiOsPrintf ("ACPI Error (%s-%04d): ", ModuleName, LineNumber);
-
-    if (Path)
-    {
-        Status = AcpiNsGetNode (PrefixNode, Path, ACPI_NS_NO_UPSEARCH,
-                    &Node);
-        if (ACPI_FAILURE (Status))
-        {
-            AcpiOsPrintf ("[Could not get node by pathname]");
-        }
-    }
-
-    AcpiNsPrintNodePathname (Node, Message);
-    AcpiOsPrintf (", %s\n", AcpiFormatException (MethodStatus));
-}
 
 
 /*******************************************************************************
@@ -296,48 +106,6 @@ AcpiNsPrintNodePathname (
 
 /*******************************************************************************
  *
- * FUNCTION:    AcpiNsValidRootPrefix
- *
- * PARAMETERS:  Prefix          - Character to be checked
- *
- * RETURN:      TRUE if a valid prefix
- *
- * DESCRIPTION: Check if a character is a valid ACPI Root prefix
- *
- ******************************************************************************/
-
-BOOLEAN
-AcpiNsValidRootPrefix (
-    char                    Prefix)
-{
-
-    return ((BOOLEAN) (Prefix == '\\'));
-}
-
-
-/*******************************************************************************
- *
- * FUNCTION:    AcpiNsValidPathSeparator
- *
- * PARAMETERS:  Sep         - Character to be checked
- *
- * RETURN:      TRUE if a valid path separator
- *
- * DESCRIPTION: Check if a character is a valid ACPI path separator
- *
- ******************************************************************************/
-
-static BOOLEAN
-AcpiNsValidPathSeparator (
-    char                    Sep)
-{
-
-    return ((BOOLEAN) (Sep == '.'));
-}
-
-
-/*******************************************************************************
- *
  * FUNCTION:    AcpiNsGetType
  *
  * PARAMETERS:  Node        - Parent Node to be examined
@@ -358,10 +126,10 @@ AcpiNsGetType (
     if (!Node)
     {
         ACPI_WARNING ((AE_INFO, "Null Node parameter"));
-        return_UINT32 (ACPI_TYPE_ANY);
+        return_UINT8 (ACPI_TYPE_ANY);
     }
 
-    return_UINT32 ((ACPI_OBJECT_TYPE) Node->Type);
+    return_UINT8 (Node->Type);
 }
 
 
@@ -393,7 +161,7 @@ AcpiNsLocal (
         return_UINT32 (ACPI_NS_NORMAL);
     }
 
-    return_UINT32 ((UINT32) AcpiGbl_NsProperties[Type] & ACPI_NS_LOCAL);
+    return_UINT32 (AcpiGbl_NsProperties[Type] & ACPI_NS_LOCAL);
 }
 
 
@@ -434,14 +202,14 @@ AcpiNsGetInternalNameLength (
      *
      * strlen() + 1 covers the first NameSeg, which has no path separator
      */
-    if (AcpiNsValidRootPrefix (*NextExternalChar))
+    if (ACPI_IS_ROOT_PREFIX (*NextExternalChar))
     {
         Info->FullyQualified = TRUE;
         NextExternalChar++;
 
         /* Skip redundant RootPrefix, like \\_SB.PCI0.SBRG.EC0 */
 
-        while (AcpiNsValidRootPrefix (*NextExternalChar))
+        while (ACPI_IS_ROOT_PREFIX (*NextExternalChar))
         {
             NextExternalChar++;
         }
@@ -450,7 +218,7 @@ AcpiNsGetInternalNameLength (
     {
         /* Handle Carat prefixes */
 
-        while (*NextExternalChar == '^')
+        while (ACPI_IS_PARENT_PREFIX (*NextExternalChar))
         {
             Info->NumCarats++;
             NextExternalChar++;
@@ -467,7 +235,7 @@ AcpiNsGetInternalNameLength (
         Info->NumSegments = 1;
         for (i = 0; NextExternalChar[i]; i++)
         {
-            if (AcpiNsValidPathSeparator (NextExternalChar[i]))
+            if (ACPI_IS_PATH_SEPARATOR (NextExternalChar[i]))
             {
                 Info->NumSegments++;
             }
@@ -512,7 +280,7 @@ AcpiNsBuildInternalName (
 
     if (Info->FullyQualified)
     {
-        InternalName[0] = '\\';
+        InternalName[0] = AML_ROOT_PREFIX;
 
         if (NumSegments <= 1)
         {
@@ -541,7 +309,7 @@ AcpiNsBuildInternalName (
         {
             for (i = 0; i < Info->NumCarats; i++)
             {
-                InternalName[i] = '^';
+                InternalName[i] = AML_PARENT_PREFIX;
             }
         }
 
@@ -568,7 +336,7 @@ AcpiNsBuildInternalName (
     {
         for (i = 0; i < ACPI_NAME_SIZE; i++)
         {
-            if (AcpiNsValidPathSeparator (*ExternalName) ||
+            if (ACPI_IS_PATH_SEPARATOR (*ExternalName) ||
                (*ExternalName == 0))
             {
                 /* Pad the segment with underscore(s) if segment is short */
@@ -586,10 +354,10 @@ AcpiNsBuildInternalName (
 
         /* Now we must have a path separator, or the pathname is bad */
 
-        if (!AcpiNsValidPathSeparator (*ExternalName) &&
+        if (!ACPI_IS_PATH_SEPARATOR (*ExternalName) &&
             (*ExternalName != 0))
         {
-            return_ACPI_STATUS (AE_BAD_PARAMETER);
+            return_ACPI_STATUS (AE_BAD_PATHNAME);
         }
 
         /* Move on the next segment */
@@ -726,14 +494,16 @@ AcpiNsExternalizeName (
 
     switch (InternalName[0])
     {
-    case '\\':
+    case AML_ROOT_PREFIX:
+
         PrefixLength = 1;
         break;
 
-    case '^':
+    case AML_PARENT_PREFIX:
+
         for (i = 0; i < InternalNameLength; i++)
         {
-            if (InternalName[i] == '^')
+            if (ACPI_IS_PARENT_PREFIX (InternalName[i]))
             {
                 PrefixLength = i + 1;
             }
@@ -751,6 +521,7 @@ AcpiNsExternalizeName (
         break;
 
     default:
+
         break;
     }
 
@@ -806,7 +577,7 @@ AcpiNsExternalizeName (
                         ((NumSegments > 0) ? (NumSegments - 1) : 0) + 1;
 
     /*
-     * Check to see if we're still in bounds.  If not, there's a problem
+     * Check to see if we're still in bounds. If not, there's a problem
      * with InternalName (invalid format).
      */
     if (RequiredLength > InternalNameLength)
@@ -839,10 +610,13 @@ AcpiNsExternalizeName (
                 (*ConvertedName)[j++] = '.';
             }
 
-            (*ConvertedName)[j++] = InternalName[NamesIndex++];
-            (*ConvertedName)[j++] = InternalName[NamesIndex++];
-            (*ConvertedName)[j++] = InternalName[NamesIndex++];
-            (*ConvertedName)[j++] = InternalName[NamesIndex++];
+            /* Copy and validate the 4-char name segment */
+
+            ACPI_MOVE_NAME (&(*ConvertedName)[j], &InternalName[NamesIndex]);
+            AcpiUtRepairName (&(*ConvertedName)[j]);
+
+            j += ACPI_NAME_SIZE;
+            NamesIndex += ACPI_NAME_SIZE;
         }
     }
 
@@ -917,26 +691,28 @@ void
 AcpiNsTerminate (
     void)
 {
-    ACPI_OPERAND_OBJECT     *ObjDesc;
+    ACPI_STATUS             Status;
 
 
     ACPI_FUNCTION_TRACE (NsTerminate);
 
 
     /*
-     * 1) Free the entire namespace -- all nodes and objects
-     *
-     * Delete all object descriptors attached to namepsace nodes
+     * Free the entire namespace -- all nodes and all objects
+     * attached to the nodes
      */
     AcpiNsDeleteNamespaceSubtree (AcpiGbl_RootNode);
 
-    /* Detach any objects attached to the root */
+    /* Delete any objects attached to the root node */
 
-    ObjDesc = AcpiNsGetAttachedObject (AcpiGbl_RootNode);
-    if (ObjDesc)
+    Status = AcpiUtAcquireMutex (ACPI_MTX_NAMESPACE);
+    if (ACPI_FAILURE (Status))
     {
-        AcpiNsDetachObject (AcpiGbl_RootNode);
+        return_VOID;
     }
+
+    AcpiNsDeleteNode (AcpiGbl_RootNode);
+    (void) AcpiUtReleaseMutex (ACPI_MTX_NAMESPACE);
 
     ACPI_DEBUG_PRINT ((ACPI_DB_INFO, "Namespace freed\n"));
     return_VOID;
@@ -958,18 +734,18 @@ UINT32
 AcpiNsOpensScope (
     ACPI_OBJECT_TYPE        Type)
 {
-    ACPI_FUNCTION_TRACE_STR (NsOpensScope, AcpiUtGetTypeName (Type));
+    ACPI_FUNCTION_ENTRY ();
 
 
-    if (!AcpiUtValidObjectType (Type))
+    if (Type > ACPI_TYPE_LOCAL_MAX)
     {
         /* type code out of range  */
 
         ACPI_WARNING ((AE_INFO, "Invalid Object Type 0x%X", Type));
-        return_UINT32 (ACPI_NS_NORMAL);
+        return (ACPI_NS_NORMAL);
     }
 
-    return_UINT32 (((UINT32) AcpiGbl_NsProperties[Type]) & ACPI_NS_NEWSCOPE);
+    return (((UINT32) AcpiGbl_NsProperties[Type]) & ACPI_NS_NEWSCOPE);
 }
 
 
@@ -981,7 +757,7 @@ AcpiNsOpensScope (
  *                            \ (backslash) and ^ (carat) prefixes, and the
  *                            . (period) to separate segments are supported.
  *              PrefixNode   - Root of subtree to be searched, or NS_ALL for the
- *                            root of the name space.  If Name is fully
+ *                            root of the name space. If Name is fully
  *                            qualified (first INT8 is '\'), the passed value
  *                            of Scope will not be accessed.
  *              Flags       - Used to indicate whether to perform upsearch or
@@ -989,7 +765,7 @@ AcpiNsOpensScope (
  *              ReturnNode  - Where the Node is returned
  *
  * DESCRIPTION: Look up a name relative to a given scope and return the
- *              corresponding Node.  NOTE: Scope can be null.
+ *              corresponding Node. NOTE: Scope can be null.
  *
  * MUTEX:       Locks namespace
  *
@@ -1010,6 +786,8 @@ AcpiNsGetNode (
     ACPI_FUNCTION_TRACE_PTR (NsGetNode, ACPI_CAST_PTR (char, Pathname));
 
 
+    /* Simplest case is a null pathname */
+
     if (!Pathname)
     {
         *ReturnNode = PrefixNode;
@@ -1017,6 +795,14 @@ AcpiNsGetNode (
         {
             *ReturnNode = AcpiGbl_RootNode;
         }
+        return_ACPI_STATUS (AE_OK);
+    }
+
+    /* Quick check for a reference to the root */
+
+    if (ACPI_IS_ROOT_PREFIX (Pathname[0]) && (!Pathname[1]))
+    {
+        *ReturnNode = AcpiGbl_RootNode;
         return_ACPI_STATUS (AE_OK);
     }
 

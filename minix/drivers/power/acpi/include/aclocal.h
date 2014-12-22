@@ -4,114 +4,42 @@
  *
  *****************************************************************************/
 
-/******************************************************************************
- *
- * 1. Copyright Notice
- *
- * Some or all of this work - Copyright (c) 1999 - 2010, Intel Corp.
+/*
+ * Copyright (C) 2000 - 2014, Intel Corp.
  * All rights reserved.
  *
- * 2. License
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions, and the following disclaimer,
+ *    without modification.
+ * 2. Redistributions in binary form must reproduce at minimum a disclaimer
+ *    substantially similar to the "NO WARRANTY" disclaimer below
+ *    ("Disclaimer") and any redistribution must be conditioned upon
+ *    including a substantially similar Disclaimer requirement for further
+ *    binary redistribution.
+ * 3. Neither the names of the above-listed copyright holders nor the names
+ *    of any contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
- * 2.1. This is your license from Intel Corp. under its intellectual property
- * rights.  You may have additional license terms from the party that provided
- * you this software, covering your right to use that party's intellectual
- * property rights.
+ * Alternatively, this software may be distributed under the terms of the
+ * GNU General Public License ("GPL") version 2 as published by the Free
+ * Software Foundation.
  *
- * 2.2. Intel grants, free of charge, to any person ("Licensee") obtaining a
- * copy of the source code appearing in this file ("Covered Code") an
- * irrevocable, perpetual, worldwide license under Intel's copyrights in the
- * base code distributed originally by Intel ("Original Intel Code") to copy,
- * make derivatives, distribute, use and display any portion of the Covered
- * Code in any form, with the right to sublicense such rights; and
- *
- * 2.3. Intel grants Licensee a non-exclusive and non-transferable patent
- * license (with the right to sublicense), under only those claims of Intel
- * patents that are infringed by the Original Intel Code, to make, use, sell,
- * offer to sell, and import the Covered Code and derivative works thereof
- * solely to the minimum extent necessary to exercise the above copyright
- * license, and in no event shall the patent license extend to any additions
- * to or modifications of the Original Intel Code.  No other license or right
- * is granted directly or by implication, estoppel or otherwise;
- *
- * The above copyright and patent license is granted only if the following
- * conditions are met:
- *
- * 3. Conditions
- *
- * 3.1. Redistribution of Source with Rights to Further Distribute Source.
- * Redistribution of source code of any substantial portion of the Covered
- * Code or modification with rights to further distribute source must include
- * the above Copyright Notice, the above License, this list of Conditions,
- * and the following Disclaimer and Export Compliance provision.  In addition,
- * Licensee must cause all Covered Code to which Licensee contributes to
- * contain a file documenting the changes Licensee made to create that Covered
- * Code and the date of any change.  Licensee must include in that file the
- * documentation of any changes made by any predecessor Licensee.  Licensee
- * must include a prominent statement that the modification is derived,
- * directly or indirectly, from Original Intel Code.
- *
- * 3.2. Redistribution of Source with no Rights to Further Distribute Source.
- * Redistribution of source code of any substantial portion of the Covered
- * Code or modification without rights to further distribute source must
- * include the following Disclaimer and Export Compliance provision in the
- * documentation and/or other materials provided with distribution.  In
- * addition, Licensee may not authorize further sublicense of source of any
- * portion of the Covered Code, and must include terms to the effect that the
- * license from Licensee to its licensee is limited to the intellectual
- * property embodied in the software Licensee provides to its licensee, and
- * not to intellectual property embodied in modifications its licensee may
- * make.
- *
- * 3.3. Redistribution of Executable. Redistribution in executable form of any
- * substantial portion of the Covered Code or modification must reproduce the
- * above Copyright Notice, and the following Disclaimer and Export Compliance
- * provision in the documentation and/or other materials provided with the
- * distribution.
- *
- * 3.4. Intel retains all right, title, and interest in and to the Original
- * Intel Code.
- *
- * 3.5. Neither the name Intel nor any other trademark owned or controlled by
- * Intel shall be used in advertising or otherwise to promote the sale, use or
- * other dealings in products derived from or relating to the Covered Code
- * without prior written authorization from Intel.
- *
- * 4. Disclaimer and Export Compliance
- *
- * 4.1. INTEL MAKES NO WARRANTY OF ANY KIND REGARDING ANY SOFTWARE PROVIDED
- * HERE.  ANY SOFTWARE ORIGINATING FROM INTEL OR DERIVED FROM INTEL SOFTWARE
- * IS PROVIDED "AS IS," AND INTEL WILL NOT PROVIDE ANY SUPPORT,  ASSISTANCE,
- * INSTALLATION, TRAINING OR OTHER SERVICES.  INTEL WILL NOT PROVIDE ANY
- * UPDATES, ENHANCEMENTS OR EXTENSIONS.  INTEL SPECIFICALLY DISCLAIMS ANY
- * IMPLIED WARRANTIES OF MERCHANTABILITY, NONINFRINGEMENT AND FITNESS FOR A
- * PARTICULAR PURPOSE.
- *
- * 4.2. IN NO EVENT SHALL INTEL HAVE ANY LIABILITY TO LICENSEE, ITS LICENSEES
- * OR ANY OTHER THIRD PARTY, FOR ANY LOST PROFITS, LOST DATA, LOSS OF USE OR
- * COSTS OF PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES, OR FOR ANY INDIRECT,
- * SPECIAL OR CONSEQUENTIAL DAMAGES ARISING OUT OF THIS AGREEMENT, UNDER ANY
- * CAUSE OF ACTION OR THEORY OF LIABILITY, AND IRRESPECTIVE OF WHETHER INTEL
- * HAS ADVANCE NOTICE OF THE POSSIBILITY OF SUCH DAMAGES.  THESE LIMITATIONS
- * SHALL APPLY NOTWITHSTANDING THE FAILURE OF THE ESSENTIAL PURPOSE OF ANY
- * LIMITED REMEDY.
- *
- * 4.3. Licensee shall not export, either directly or indirectly, any of this
- * software or system incorporating such software without first obtaining any
- * required license or other approval from the U. S. Department of Commerce or
- * any other agency or department of the United States Government.  In the
- * event Licensee exports any such software from the United States or
- * re-exports any such software from a foreign destination, Licensee shall
- * ensure that the distribution and export/re-export of the software is in
- * compliance with all laws, regulations, orders, or other restrictions of the
- * U.S. Export Administration Regulations. Licensee agrees that neither it nor
- * any of its subsidiaries will export/re-export any technical data, process,
- * software, or service, directly or indirectly, to any country for which the
- * United States government or any agency thereof requires an export license,
- * other governmental approval, or letter of assurance, without first obtaining
- * such license, approval or letter.
- *
- *****************************************************************************/
+ * NO WARRANTY
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * HOLDERS OR CONTRIBUTORS BE LIABLE FOR SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+ * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGES.
+ */
 
 #ifndef __ACLOCAL_H__
 #define __ACLOCAL_H__
@@ -126,7 +54,7 @@ typedef UINT32                          ACPI_MUTEX_HANDLE;
 
 /* Total number of aml opcodes defined */
 
-#define AML_NUM_OPCODES                 0x7F
+#define AML_NUM_OPCODES                 0x81
 
 
 /* Forward declarations */
@@ -165,25 +93,6 @@ union acpi_parse_object;
 #define ACPI_MAX_MUTEX                  7
 #define ACPI_NUM_MUTEX                  ACPI_MAX_MUTEX+1
 
-#if defined(ACPI_DEBUG_OUTPUT) || defined(ACPI_DEBUGGER)
-#ifdef DEFINE_ACPI_GLOBALS
-
-/* Debug names for the mutexes above */
-
-static char                 *AcpiGbl_MutexNames[ACPI_NUM_MUTEX] =
-{
-    "ACPI_MTX_Interpreter",
-    "ACPI_MTX_Namespace",
-    "ACPI_MTX_Tables",
-    "ACPI_MTX_Events",
-    "ACPI_MTX_Caches",
-    "ACPI_MTX_Memory",
-    "ACPI_MTX_CommandComplete",
-    "ACPI_MTX_CommandReady"
-};
-
-#endif
-#endif
 
 /* Lock structure for reader/writer interfaces */
 
@@ -304,7 +213,6 @@ typedef struct acpi_namespace_node
 #define ANOBJ_IS_EXTERNAL               0x08    /* iASL only: This object created via External() */
 #define ANOBJ_METHOD_NO_RETVAL          0x10    /* iASL only: Method has no return value */
 #define ANOBJ_METHOD_SOME_NO_RETVAL     0x20    /* iASL only: Method has at least one return value */
-#define ANOBJ_IS_BIT_OFFSET             0x40    /* iASL only: Reference is a bit offset */
 #define ANOBJ_IS_REFERENCED             0x80    /* iASL only: Object was referenced */
 
 
@@ -377,12 +285,17 @@ typedef struct acpi_create_field_info
     ACPI_NAMESPACE_NODE             *FieldNode;
     ACPI_NAMESPACE_NODE             *RegisterNode;
     ACPI_NAMESPACE_NODE             *DataRegisterNode;
+    ACPI_NAMESPACE_NODE             *ConnectionNode;
+    UINT8                           *ResourceBuffer;
     UINT32                          BankValue;
     UINT32                          FieldBitPosition;
     UINT32                          FieldBitLength;
+    UINT16                          ResourceLength;
+    UINT16                          PinNumberIndex;
     UINT8                           FieldFlags;
     UINT8                           Attribute;
     UINT8                           FieldType;
+    UINT8                           AccessLength;
 
 } ACPI_CREATE_FIELD_INFO;
 
@@ -393,7 +306,7 @@ ACPI_STATUS (*ACPI_INTERNAL_METHOD) (
 
 
 /*
- * Bitmapped ACPI types.  Used internally only
+ * Bitmapped ACPI types. Used internally only
  */
 #define ACPI_BTYPE_ANY                  0x00000000
 #define ACPI_BTYPE_INTEGER              0x00000001
@@ -423,6 +336,7 @@ ACPI_STATUS (*ACPI_INTERNAL_METHOD) (
 #define ACPI_BTYPE_OBJECTS_AND_REFS     0x0001FFFF  /* ARG or LOCAL */
 #define ACPI_BTYPE_ALL_OBJECTS          0x0000FFFF
 
+#pragma pack(1)
 
 /*
  * Information structure for ACPI predefined names.
@@ -435,7 +349,7 @@ ACPI_STATUS (*ACPI_INTERNAL_METHOD) (
 typedef struct acpi_name_info
 {
     char                        Name[ACPI_NAME_SIZE];
-    UINT8                       ParamCount;
+    UINT16                      ArgumentList;
     UINT8                       ExpectedBtypes;
 
 } ACPI_NAME_INFO;
@@ -450,7 +364,8 @@ typedef struct acpi_name_info
 
 /*
  * Used for ACPI_PTYPE1_FIXED, ACPI_PTYPE1_VAR, ACPI_PTYPE2,
- * ACPI_PTYPE2_MIN, ACPI_PTYPE2_PKG_COUNT, ACPI_PTYPE2_COUNT
+ * ACPI_PTYPE2_MIN, ACPI_PTYPE2_PKG_COUNT, ACPI_PTYPE2_COUNT,
+ * ACPI_PTYPE2_FIX_VAR
  */
 typedef struct acpi_package_info
 {
@@ -459,7 +374,7 @@ typedef struct acpi_package_info
     UINT8                       Count1;
     UINT8                       ObjectType2;
     UINT8                       Count2;
-    UINT8                       Reserved;
+    UINT16                      Reserved;
 
 } ACPI_PACKAGE_INFO;
 
@@ -470,6 +385,7 @@ typedef struct acpi_package_info2
     UINT8                       Type;
     UINT8                       Count;
     UINT8                       ObjectType[4];
+    UINT8                       Reserved;
 
 } ACPI_PACKAGE_INFO2;
 
@@ -481,7 +397,7 @@ typedef struct acpi_package_info3
     UINT8                       Count;
     UINT8                       ObjectType[2];
     UINT8                       TailObjectType;
-    UINT8                       Reserved;
+    UINT16                      Reserved;
 
 } ACPI_PACKAGE_INFO3;
 
@@ -494,22 +410,25 @@ typedef union acpi_predefined_info
 
 } ACPI_PREDEFINED_INFO;
 
+/* Reset to default packing */
 
-/* Data block used during object validation */
+#pragma pack()
 
-typedef struct acpi_predefined_data
+
+/* Return object auto-repair info */
+
+typedef ACPI_STATUS (*ACPI_OBJECT_CONVERTER) (
+    union acpi_operand_object   *OriginalObject,
+    union acpi_operand_object   **ConvertedObject);
+
+typedef struct acpi_simple_repair_info
 {
-    char                        *Pathname;
-    const ACPI_PREDEFINED_INFO  *Predefined;
-    union acpi_operand_object   *ParentPackage;
-    UINT32                      Flags;
-    UINT8                       NodeFlags;
+    char                        Name[ACPI_NAME_SIZE];
+    UINT32                      UnexpectedBtypes;
+    UINT32                      PackageIndex;
+    ACPI_OBJECT_CONVERTER       ObjectConverter;
 
-} ACPI_PREDEFINED_DATA;
-
-/* Defines for Flags field above */
-
-#define ACPI_OBJECT_REPAIRED    1
+} ACPI_SIMPLE_REPAIR_INFO;
 
 
 /*
@@ -535,20 +454,46 @@ typedef struct acpi_predefined_data
  *
  ****************************************************************************/
 
+/* Dispatch info for each host-installed SCI handler */
+
+typedef struct acpi_sci_handler_info
+{
+    struct acpi_sci_handler_info    *Next;
+    ACPI_SCI_HANDLER                Address;        /* Address of handler */
+    void                            *Context;       /* Context to be passed to handler */
+
+} ACPI_SCI_HANDLER_INFO;
+
 /* Dispatch info for each GPE -- either a method or handler, cannot be both */
 
-typedef struct acpi_handler_info
+typedef struct acpi_gpe_handler_info
 {
-    ACPI_EVENT_HANDLER              Address;        /* Address of handler, if any */
+    ACPI_GPE_HANDLER                Address;        /* Address of handler, if any */
     void                            *Context;       /* Context to be passed to handler */
     ACPI_NAMESPACE_NODE             *MethodNode;    /* Method node for this GPE level (saved) */
+    UINT8                           OriginalFlags;  /* Original (pre-handler) GPE info */
+    BOOLEAN                         OriginallyEnabled; /* True if GPE was originally enabled */
 
-} ACPI_HANDLER_INFO;
+} ACPI_GPE_HANDLER_INFO;
 
+/* Notify info for implicit notify, multiple device objects */
+
+typedef struct acpi_gpe_notify_info
+{
+    ACPI_NAMESPACE_NODE             *DeviceNode;    /* Device to be notified */
+    struct acpi_gpe_notify_info     *Next;
+
+} ACPI_GPE_NOTIFY_INFO;
+
+/*
+ * GPE dispatch info. At any time, the GPE can have at most one type
+ * of dispatch - Method, Handler, or Implicit Notify.
+ */
 typedef union acpi_gpe_dispatch_info
 {
     ACPI_NAMESPACE_NODE             *MethodNode;    /* Method node for this GPE level */
-    struct acpi_handler_info        *Handler;
+    ACPI_GPE_HANDLER_INFO           *Handler;       /* Installed GPE handler */
+    ACPI_GPE_NOTIFY_INFO            *NotifyList;    /* List of _PRW devices for implicit notifies */
 
 } ACPI_GPE_DISPATCH_INFO;
 
@@ -558,7 +503,7 @@ typedef union acpi_gpe_dispatch_info
  */
 typedef struct acpi_gpe_event_info
 {
-    union acpi_gpe_dispatch_info    Dispatch;       /* Either Method or Handler */
+    union acpi_gpe_dispatch_info    Dispatch;       /* Either Method, Handler, or NotifyList */
     struct acpi_gpe_register_info   *RegisterInfo;  /* Backpointer to register info */
     UINT8                           Flags;          /* Misc info about this GPE */
     UINT8                           GpeNumber;      /* This GPE */
@@ -572,9 +517,9 @@ typedef struct acpi_gpe_register_info
 {
     ACPI_GENERIC_ADDRESS            StatusAddress;  /* Address of status reg */
     ACPI_GENERIC_ADDRESS            EnableAddress;  /* Address of enable reg */
+    UINT16                          BaseGpeNumber;  /* Base GPE number for this register */
     UINT8                           EnableForWake;  /* GPEs to keep enabled when sleeping */
     UINT8                           EnableForRun;   /* GPEs to keep enabled when running */
-    UINT8                           BaseGpeNumber;  /* Base GPE number for this register */
 
 } ACPI_GPE_REGISTER_INFO;
 
@@ -590,10 +535,12 @@ typedef struct acpi_gpe_block_info
     struct acpi_gpe_xrupt_info      *XruptBlock;    /* Backpointer to interrupt block */
     ACPI_GPE_REGISTER_INFO          *RegisterInfo;  /* One per GPE register pair */
     ACPI_GPE_EVENT_INFO             *EventInfo;     /* One for each GPE */
-    ACPI_GENERIC_ADDRESS            BlockAddress;   /* Base address of the block */
+    UINT64                          Address;        /* Base address of the block */
     UINT32                          RegisterCount;  /* Number of register pairs in block */
     UINT16                          GpeCount;       /* Number of individual GPEs in block */
-    UINT8                           BlockBaseNumber;/* Base GPE number for this block */
+    UINT16                          BlockBaseNumber;/* Base GPE number for this block */
+    UINT8                           SpaceId;
+    BOOLEAN                         Initialized;    /* TRUE if this block is initialized */
 
 } ACPI_GPE_BLOCK_INFO;
 
@@ -614,7 +561,6 @@ typedef struct acpi_gpe_walk_info
     ACPI_GPE_BLOCK_INFO             *GpeBlock;
     UINT16                          Count;
     ACPI_OWNER_ID                   OwnerId;
-    BOOLEAN                         EnableThisGpe;
     BOOLEAN                         ExecuteByOwnerId;
 
 } ACPI_GPE_WALK_INFO;
@@ -758,7 +704,7 @@ typedef struct acpi_pscope_state
 
 
 /*
- * Thread state - one per thread across multiple walk states.  Multiple walk
+ * Thread state - one per thread across multiple walk states. Multiple walk
  * states are created when there are nested control methods executing.
  */
 typedef struct acpi_thread_state
@@ -794,6 +740,15 @@ ACPI_STATUS (*ACPI_PARSE_UPWARDS) (
     struct acpi_walk_state          *WalkState);
 
 
+/* Global handlers for AML Notifies */
+
+typedef struct acpi_global_notify_handler
+{
+    ACPI_NOTIFY_HANDLER             Handler;
+    void                            *Context;
+
+} ACPI_GLOBAL_NOTIFY_HANDLER;
+
 /*
  * Notify info - used to pass info to the deferred notify
  * handler/dispatcher.
@@ -801,8 +756,10 @@ ACPI_STATUS (*ACPI_PARSE_UPWARDS) (
 typedef struct acpi_notify_info
 {
     ACPI_STATE_COMMON
+    UINT8                           HandlerListId;
     ACPI_NAMESPACE_NODE             *Node;
-    union acpi_operand_object       *HandlerObj;
+    union acpi_operand_object       *HandlerListHead;
+    ACPI_GLOBAL_NOTIFY_HANDLER      *Global;
 
 } ACPI_NOTIFY_INFO;
 
@@ -834,6 +791,17 @@ typedef
 ACPI_STATUS (*ACPI_EXECUTE_OP) (
     struct acpi_walk_state          *WalkState);
 
+/* Address Range info block */
+
+typedef struct acpi_address_range
+{
+    struct acpi_address_range   *Next;
+    ACPI_NAMESPACE_NODE         *RegionNode;
+    ACPI_PHYSICAL_ADDRESS       StartAddress;
+    ACPI_PHYSICAL_ADDRESS       EndAddress;
+
+} ACPI_ADDRESS_RANGE;
+
 
 /*****************************************************************************
  *
@@ -858,6 +826,17 @@ typedef struct acpi_opcode_info
 
 } ACPI_OPCODE_INFO;
 
+/* Structure for Resource Tag information */
+
+typedef struct acpi_tag_info
+{
+    UINT32                          BitOffset;
+    UINT32                          BitLength;
+
+} ACPI_TAG_INFO;
+
+/* Value associated with the parse object */
+
 typedef union acpi_parse_value
 {
     UINT64                          Integer;        /* Integer constant (Up to 64 bits) */
@@ -866,6 +845,7 @@ typedef union acpi_parse_value
     UINT8                           *Buffer;        /* buffer or string */
     char                            *Name;          /* NULL terminated string */
     union acpi_parse_object         *Arg;           /* arguments and contained ops */
+    ACPI_TAG_INFO                   Tag;            /* Resource descriptor tag info  */
 
 } ACPI_PARSE_VALUE;
 
@@ -889,18 +869,24 @@ typedef union acpi_parse_value
     ACPI_DISASM_ONLY_MEMBERS (\
     UINT8                           DisasmFlags;    /* Used during AML disassembly */\
     UINT8                           DisasmOpcode;   /* Subtype used for disassembly */\
+    char                            *OperatorSymbol;/* Used for C-style operator name strings */\
     char                            AmlOpName[16])  /* Op name (debug only) */
 
 
-#define ACPI_DASM_BUFFER                0x00
-#define ACPI_DASM_RESOURCE              0x01
-#define ACPI_DASM_STRING                0x02
-#define ACPI_DASM_UNICODE               0x03
-#define ACPI_DASM_EISAID                0x04
-#define ACPI_DASM_MATCHOP               0x05
-#define ACPI_DASM_LNOT_PREFIX           0x06
-#define ACPI_DASM_LNOT_SUFFIX           0x07
-#define ACPI_DASM_IGNORE                0x08
+/* Flags for DisasmFlags field  above */
+
+#define ACPI_DASM_BUFFER                0x00        /* Buffer is a simple data buffer */
+#define ACPI_DASM_RESOURCE              0x01        /* Buffer is a Resource Descriptor */
+#define ACPI_DASM_STRING                0x02        /* Buffer is a ASCII string */
+#define ACPI_DASM_UNICODE               0x03        /* Buffer is a Unicode string */
+#define ACPI_DASM_PLD_METHOD            0x04        /* Buffer is a _PLD method bit-packed buffer */
+#define ACPI_DASM_UUID                  0x05        /* Buffer is a UUID/GUID */
+#define ACPI_DASM_EISAID                0x06        /* Integer is an EISAID */
+#define ACPI_DASM_MATCHOP               0x07        /* Parent opcode is a Match() operator */
+#define ACPI_DASM_LNOT_PREFIX           0x08        /* Start of a LNotEqual (etc.) pair of opcodes */
+#define ACPI_DASM_LNOT_SUFFIX           0x09        /* End  of a LNotEqual (etc.) pair of opcodes */
+#define ACPI_DASM_HID_STRING            0x0A        /* String is a _HID or _CID */
+#define ACPI_DASM_IGNORE                0x0B        /* Not used at this time */
 
 /*
  * Generic operation (for example:  If, While, Store)
@@ -1004,7 +990,10 @@ typedef struct acpi_parse_state
 #define ACPI_PARSEOP_IGNORE             0x01
 #define ACPI_PARSEOP_PARAMLIST          0x02
 #define ACPI_PARSEOP_EMPTY_TERMLIST     0x04
+#define ACPI_PARSEOP_PREDEF_CHECKED     0x08
 #define ACPI_PARSEOP_SPECIAL            0x10
+#define ACPI_PARSEOP_COMPOUND           0x20
+#define ACPI_PARSEOP_ASSIGNMENT         0x40
 
 
 /*****************************************************************************
@@ -1080,6 +1069,7 @@ typedef struct acpi_bit_register_info
     ACPI_BITMASK_POWER_BUTTON_STATUS   | \
     ACPI_BITMASK_SLEEP_BUTTON_STATUS   | \
     ACPI_BITMASK_RT_CLOCK_STATUS       | \
+    ACPI_BITMASK_PCIEXP_WAKE_STATUS    | \
     ACPI_BITMASK_WAKE_STATUS)
 
 #define ACPI_BITMASK_TIMER_ENABLE               0x0001
@@ -1127,25 +1117,22 @@ typedef struct acpi_bit_register_info
 
 /* Structs and definitions for _OSI support and I/O port validation */
 
-#define ACPI_OSI_WIN_2000               0x01
-#define ACPI_OSI_WIN_XP                 0x02
-#define ACPI_OSI_WIN_XP_SP1             0x03
-#define ACPI_OSI_WINSRV_2003            0x04
-#define ACPI_OSI_WIN_XP_SP2             0x05
-#define ACPI_OSI_WINSRV_2003_SP1        0x06
-#define ACPI_OSI_WIN_VISTA              0x07
-#define ACPI_OSI_WINSRV_2008            0x08
-#define ACPI_OSI_WIN_VISTA_SP1          0x09
-#define ACPI_OSI_WIN_7                  0x0A
-
 #define ACPI_ALWAYS_ILLEGAL             0x00
 
 typedef struct acpi_interface_info
 {
-    char                    *Name;
-    UINT8                   Value;
+    char                        *Name;
+    struct acpi_interface_info  *Next;
+    UINT8                       Flags;
+    UINT8                       Value;
 
 } ACPI_INTERFACE_INFO;
+
+#define ACPI_OSI_INVALID                0x01
+#define ACPI_OSI_DYNAMIC                0x02
+#define ACPI_OSI_FEATURE                0x04
+#define ACPI_OSI_DEFAULT_INVALID        0x08
+#define ACPI_OSI_OPTIONAL_FEATURE       (ACPI_OSI_FEATURE | ACPI_OSI_DEFAULT_INVALID | ACPI_OSI_INVALID)
 
 typedef struct acpi_port_info
 {
@@ -1189,7 +1176,7 @@ typedef struct acpi_port_info
 #define ACPI_RESOURCE_NAME_END_DEPENDENT        0x38
 #define ACPI_RESOURCE_NAME_IO                   0x40
 #define ACPI_RESOURCE_NAME_FIXED_IO             0x48
-#define ACPI_RESOURCE_NAME_RESERVED_S1          0x50
+#define ACPI_RESOURCE_NAME_FIXED_DMA            0x50
 #define ACPI_RESOURCE_NAME_RESERVED_S2          0x58
 #define ACPI_RESOURCE_NAME_RESERVED_S3          0x60
 #define ACPI_RESOURCE_NAME_RESERVED_S4          0x68
@@ -1211,7 +1198,9 @@ typedef struct acpi_port_info
 #define ACPI_RESOURCE_NAME_EXTENDED_IRQ         0x89
 #define ACPI_RESOURCE_NAME_ADDRESS64            0x8A
 #define ACPI_RESOURCE_NAME_EXTENDED_ADDRESS64   0x8B
-#define ACPI_RESOURCE_NAME_LARGE_MAX            0x8B
+#define ACPI_RESOURCE_NAME_GPIO                 0x8C
+#define ACPI_RESOURCE_NAME_SERIAL_BUS           0x8E
+#define ACPI_RESOURCE_NAME_LARGE_MAX            0x8E
 
 
 /*****************************************************************************
@@ -1236,14 +1225,25 @@ typedef struct acpi_external_list
     struct acpi_external_list   *Next;
     UINT32                      Value;
     UINT16                      Length;
+    UINT16                      Flags;
     UINT8                       Type;
-    UINT8                       Flags;
 
 } ACPI_EXTERNAL_LIST;
 
 /* Values for Flags field above */
 
-#define ACPI_IPATH_ALLOCATED    0x01
+#define ACPI_EXT_RESOLVED_REFERENCE         0x01    /* Object was resolved during cross ref */
+#define ACPI_EXT_ORIGIN_FROM_FILE           0x02    /* External came from a file */
+#define ACPI_EXT_INTERNAL_PATH_ALLOCATED    0x04    /* Deallocate internal path on completion */
+#define ACPI_EXT_EXTERNAL_EMITTED           0x08    /* External() statement has been emitted */
+
+
+typedef struct acpi_external_file
+{
+    char                        *Path;
+    struct acpi_external_file   *Next;
+
+} ACPI_EXTERNAL_FILE;
 
 
 /*****************************************************************************
@@ -1254,10 +1254,11 @@ typedef struct acpi_external_list
 
 typedef struct acpi_db_method_info
 {
+    ACPI_HANDLE                     Method;
     ACPI_HANDLE                     MainThreadGate;
     ACPI_HANDLE                     ThreadCompleteGate;
     ACPI_HANDLE                     InfoGate;
-    UINT32                          *Threads;
+    ACPI_THREAD_ID                  *Threads;
     UINT32                          NumThreads;
     UINT32                          NumCreated;
     UINT32                          NumCompleted;
@@ -1265,8 +1266,9 @@ typedef struct acpi_db_method_info
     char                            *Name;
     UINT32                          Flags;
     UINT32                          NumLoops;
-    char                            Pathname[128];
+    char                            Pathname[ACPI_DB_LINE_BUFFER_SIZE];
     char                            **Args;
+    ACPI_OBJECT_TYPE                *Types;
 
     /*
      * Arguments to be passed to method for the command
@@ -1275,6 +1277,7 @@ typedef struct acpi_db_method_info
      *   Index of current thread inside all them created.
      */
     char                            InitArgs;
+    ACPI_OBJECT_TYPE                ArgTypes[4];
     char                            *Arguments[4];
     char                            NumThreadsStr[11];
     char                            IdOfThreadStr[11];
@@ -1290,6 +1293,7 @@ typedef struct acpi_integrity_info
 } ACPI_INTEGRITY_INFO;
 
 
+#define ACPI_DB_DISABLE_OUTPUT          0x00
 #define ACPI_DB_REDIRECTABLE_OUTPUT     0x01
 #define ACPI_DB_CONSOLE_OUTPUT          0x02
 #define ACPI_DB_DUPLICATE_OUTPUT        0x03
@@ -1335,5 +1339,35 @@ typedef struct acpi_debug_mem_block
 #define ACPI_MEM_LIST_MAX               1
 #define ACPI_NUM_MEM_LISTS              2
 
+
+/*****************************************************************************
+ *
+ * Info/help support
+ *
+ ****************************************************************************/
+
+typedef struct ah_predefined_name
+{
+    char            *Name;
+    char            *Description;
+#ifndef ACPI_ASL_COMPILER
+    char            *Action;
+#endif
+
+} AH_PREDEFINED_NAME;
+
+typedef struct ah_device_id
+{
+    char            *Name;
+    char            *Description;
+
+} AH_DEVICE_ID;
+
+typedef struct ah_uuid
+{
+    char            *Description;
+    char            *String;
+
+} AH_UUID;
 
 #endif /* __ACLOCAL_H__ */

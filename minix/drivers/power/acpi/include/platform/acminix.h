@@ -132,7 +132,6 @@
 /* Host-dependent types and defines for user-space ACPICA */
 
 #define ACPI_FLUSH_CPU_CACHE()
-#define ACPI_THREAD_ID              int
 
 #define ACPI_MACHINE_WIDTH          32
 #define COMPILER_DEPENDENT_INT64    long long

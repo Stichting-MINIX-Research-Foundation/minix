@@ -4,124 +4,53 @@
  *
  *****************************************************************************/
 
-/******************************************************************************
- *
- * 1. Copyright Notice
- *
- * Some or all of this work - Copyright (c) 1999 - 2010, Intel Corp.
+/*
+ * Copyright (C) 2000 - 2014, Intel Corp.
  * All rights reserved.
  *
- * 2. License
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions, and the following disclaimer,
+ *    without modification.
+ * 2. Redistributions in binary form must reproduce at minimum a disclaimer
+ *    substantially similar to the "NO WARRANTY" disclaimer below
+ *    ("Disclaimer") and any redistribution must be conditioned upon
+ *    including a substantially similar Disclaimer requirement for further
+ *    binary redistribution.
+ * 3. Neither the names of the above-listed copyright holders nor the names
+ *    of any contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
- * 2.1. This is your license from Intel Corp. under its intellectual property
- * rights.  You may have additional license terms from the party that provided
- * you this software, covering your right to use that party's intellectual
- * property rights.
+ * Alternatively, this software may be distributed under the terms of the
+ * GNU General Public License ("GPL") version 2 as published by the Free
+ * Software Foundation.
  *
- * 2.2. Intel grants, free of charge, to any person ("Licensee") obtaining a
- * copy of the source code appearing in this file ("Covered Code") an
- * irrevocable, perpetual, worldwide license under Intel's copyrights in the
- * base code distributed originally by Intel ("Original Intel Code") to copy,
- * make derivatives, distribute, use and display any portion of the Covered
- * Code in any form, with the right to sublicense such rights; and
- *
- * 2.3. Intel grants Licensee a non-exclusive and non-transferable patent
- * license (with the right to sublicense), under only those claims of Intel
- * patents that are infringed by the Original Intel Code, to make, use, sell,
- * offer to sell, and import the Covered Code and derivative works thereof
- * solely to the minimum extent necessary to exercise the above copyright
- * license, and in no event shall the patent license extend to any additions
- * to or modifications of the Original Intel Code.  No other license or right
- * is granted directly or by implication, estoppel or otherwise;
- *
- * The above copyright and patent license is granted only if the following
- * conditions are met:
- *
- * 3. Conditions
- *
- * 3.1. Redistribution of Source with Rights to Further Distribute Source.
- * Redistribution of source code of any substantial portion of the Covered
- * Code or modification with rights to further distribute source must include
- * the above Copyright Notice, the above License, this list of Conditions,
- * and the following Disclaimer and Export Compliance provision.  In addition,
- * Licensee must cause all Covered Code to which Licensee contributes to
- * contain a file documenting the changes Licensee made to create that Covered
- * Code and the date of any change.  Licensee must include in that file the
- * documentation of any changes made by any predecessor Licensee.  Licensee
- * must include a prominent statement that the modification is derived,
- * directly or indirectly, from Original Intel Code.
- *
- * 3.2. Redistribution of Source with no Rights to Further Distribute Source.
- * Redistribution of source code of any substantial portion of the Covered
- * Code or modification without rights to further distribute source must
- * include the following Disclaimer and Export Compliance provision in the
- * documentation and/or other materials provided with distribution.  In
- * addition, Licensee may not authorize further sublicense of source of any
- * portion of the Covered Code, and must include terms to the effect that the
- * license from Licensee to its licensee is limited to the intellectual
- * property embodied in the software Licensee provides to its licensee, and
- * not to intellectual property embodied in modifications its licensee may
- * make.
- *
- * 3.3. Redistribution of Executable. Redistribution in executable form of any
- * substantial portion of the Covered Code or modification must reproduce the
- * above Copyright Notice, and the following Disclaimer and Export Compliance
- * provision in the documentation and/or other materials provided with the
- * distribution.
- *
- * 3.4. Intel retains all right, title, and interest in and to the Original
- * Intel Code.
- *
- * 3.5. Neither the name Intel nor any other trademark owned or controlled by
- * Intel shall be used in advertising or otherwise to promote the sale, use or
- * other dealings in products derived from or relating to the Covered Code
- * without prior written authorization from Intel.
- *
- * 4. Disclaimer and Export Compliance
- *
- * 4.1. INTEL MAKES NO WARRANTY OF ANY KIND REGARDING ANY SOFTWARE PROVIDED
- * HERE.  ANY SOFTWARE ORIGINATING FROM INTEL OR DERIVED FROM INTEL SOFTWARE
- * IS PROVIDED "AS IS," AND INTEL WILL NOT PROVIDE ANY SUPPORT,  ASSISTANCE,
- * INSTALLATION, TRAINING OR OTHER SERVICES.  INTEL WILL NOT PROVIDE ANY
- * UPDATES, ENHANCEMENTS OR EXTENSIONS.  INTEL SPECIFICALLY DISCLAIMS ANY
- * IMPLIED WARRANTIES OF MERCHANTABILITY, NONINFRINGEMENT AND FITNESS FOR A
- * PARTICULAR PURPOSE.
- *
- * 4.2. IN NO EVENT SHALL INTEL HAVE ANY LIABILITY TO LICENSEE, ITS LICENSEES
- * OR ANY OTHER THIRD PARTY, FOR ANY LOST PROFITS, LOST DATA, LOSS OF USE OR
- * COSTS OF PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES, OR FOR ANY INDIRECT,
- * SPECIAL OR CONSEQUENTIAL DAMAGES ARISING OUT OF THIS AGREEMENT, UNDER ANY
- * CAUSE OF ACTION OR THEORY OF LIABILITY, AND IRRESPECTIVE OF WHETHER INTEL
- * HAS ADVANCE NOTICE OF THE POSSIBILITY OF SUCH DAMAGES.  THESE LIMITATIONS
- * SHALL APPLY NOTWITHSTANDING THE FAILURE OF THE ESSENTIAL PURPOSE OF ANY
- * LIMITED REMEDY.
- *
- * 4.3. Licensee shall not export, either directly or indirectly, any of this
- * software or system incorporating such software without first obtaining any
- * required license or other approval from the U. S. Department of Commerce or
- * any other agency or department of the United States Government.  In the
- * event Licensee exports any such software from the United States or
- * re-exports any such software from a foreign destination, Licensee shall
- * ensure that the distribution and export/re-export of the software is in
- * compliance with all laws, regulations, orders, or other restrictions of the
- * U.S. Export Administration Regulations. Licensee agrees that neither it nor
- * any of its subsidiaries will export/re-export any technical data, process,
- * software, or service, directly or indirectly, to any country for which the
- * United States government or any agency thereof requires an export license,
- * other governmental approval, or letter of assurance, without first obtaining
- * such license, approval or letter.
- *
- *****************************************************************************/
+ * NO WARRANTY
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * HOLDERS OR CONTRIBUTORS BE LIABLE FOR SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+ * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGES.
+ */
 
 #ifndef _ACUTILS_H
 #define _ACUTILS_H
 
 
 extern const UINT8                      AcpiGbl_ResourceAmlSizes[];
+extern const UINT8                      AcpiGbl_ResourceAmlSerialBusSizes[];
 
 /* Strings used by the disassembler and debugger resource dump routines */
 
-#if defined(ACPI_DISASSEMBLER) || defined (ACPI_DEBUGGER)
+#if defined(ACPI_DEBUG_OUTPUT) || defined (ACPI_DISASSEMBLER) || defined (ACPI_DEBUGGER)
 
 extern const char                       *AcpiGbl_BmDecode[];
 extern const char                       *AcpiGbl_ConfigDecode[];
@@ -141,7 +70,65 @@ extern const char                       *AcpiGbl_SizDecode[];
 extern const char                       *AcpiGbl_TrsDecode[];
 extern const char                       *AcpiGbl_TtpDecode[];
 extern const char                       *AcpiGbl_TypDecode[];
+extern const char                       *AcpiGbl_PpcDecode[];
+extern const char                       *AcpiGbl_IorDecode[];
+extern const char                       *AcpiGbl_DtsDecode[];
+extern const char                       *AcpiGbl_CtDecode[];
+extern const char                       *AcpiGbl_SbtDecode[];
+extern const char                       *AcpiGbl_AmDecode[];
+extern const char                       *AcpiGbl_SmDecode[];
+extern const char                       *AcpiGbl_WmDecode[];
+extern const char                       *AcpiGbl_CphDecode[];
+extern const char                       *AcpiGbl_CpoDecode[];
+extern const char                       *AcpiGbl_DpDecode[];
+extern const char                       *AcpiGbl_EdDecode[];
+extern const char                       *AcpiGbl_BpbDecode[];
+extern const char                       *AcpiGbl_SbDecode[];
+extern const char                       *AcpiGbl_FcDecode[];
+extern const char                       *AcpiGbl_PtDecode[];
 #endif
+
+/*
+ * For the iASL compiler case, the output is redirected to stderr so that
+ * any of the various ACPI errors and warnings do not appear in the output
+ * files, for either the compiler or disassembler portions of the tool.
+ */
+#ifdef ACPI_ASL_COMPILER
+
+#include <stdio.h>
+
+#define ACPI_MSG_REDIRECT_BEGIN \
+    FILE                    *OutputFile = AcpiGbl_OutputFile; \
+    AcpiOsRedirectOutput (stderr);
+
+#define ACPI_MSG_REDIRECT_END \
+    AcpiOsRedirectOutput (OutputFile);
+
+#else
+/*
+ * non-iASL case - no redirection, nothing to do
+ */
+#define ACPI_MSG_REDIRECT_BEGIN
+#define ACPI_MSG_REDIRECT_END
+#endif
+
+/*
+ * Common error message prefixes
+ */
+#define ACPI_MSG_ERROR          "ACPI Error: "
+#define ACPI_MSG_EXCEPTION      "ACPI Exception: "
+#define ACPI_MSG_WARNING        "ACPI Warning: "
+#define ACPI_MSG_INFO           "ACPI: "
+
+#define ACPI_MSG_BIOS_ERROR     "ACPI BIOS Error (bug): "
+#define ACPI_MSG_BIOS_WARNING   "ACPI BIOS Warning (bug): "
+
+/*
+ * Common message suffix
+ */
+#define ACPI_MSG_SUFFIX \
+    AcpiOsPrintf (" (%8.8X/%s-%u)\n", ACPI_CA_VERSION, ModuleName, LineNumber)
+
 
 /* Types for Resource descriptor entries */
 
@@ -156,7 +143,7 @@ ACPI_STATUS (*ACPI_WALK_AML_CALLBACK) (
     UINT32                  Length,
     UINT32                  Offset,
     UINT8                   ResourceIndex,
-    void                    *Context);
+    void                    **Context);
 
 typedef
 ACPI_STATUS (*ACPI_PKG_CALLBACK) (
@@ -174,9 +161,10 @@ typedef struct acpi_pkg_info
 
 } ACPI_PKG_INFO;
 
+/* Object reference counts */
+
 #define REF_INCREMENT       (UINT16) 0
 #define REF_DECREMENT       (UINT16) 1
-#define REF_FORCE_DELETE    (UINT16) 2
 
 /* AcpiUtDumpBuffer */
 
@@ -184,7 +172,6 @@ typedef struct acpi_pkg_info
 #define DB_WORD_DISPLAY     2
 #define DB_DWORD_DISPLAY    4
 #define DB_QWORD_DISPLAY    8
-
 
 /*
  * utglobal - Global data structures and procedures
@@ -201,8 +188,8 @@ AcpiUtGetMutexName (
 
 const char *
 AcpiUtGetNotifyName (
-    UINT32                  NotifyValue);
-
+    UINT32                  NotifyValue,
+    ACPI_OBJECT_TYPE        Type);
 #endif
 
 char *
@@ -238,6 +225,10 @@ AcpiUtHexToAsciiChar (
     UINT64                  Integer,
     UINT32                  Position);
 
+UINT8
+AcpiUtAsciiCharToHex (
+    int                     HexChar);
+
 BOOLEAN
 AcpiUtValidObjectType (
     ACPI_OBJECT_TYPE        Type);
@@ -263,6 +254,11 @@ AcpiUtSubsystemShutdown (
 ACPI_SIZE
 AcpiUtStrlen (
     const char              *String);
+
+char *
+AcpiUtStrchr (
+    const char              *String,
+    int                     ch);
 
 char *
 AcpiUtStrcpy (
@@ -352,7 +348,7 @@ extern const UINT8 _acpi_ctype[];
 #define ACPI_IS_XDIGIT(c) (_acpi_ctype[(unsigned char)(c)] & (_ACPI_XD))
 #define ACPI_IS_UPPER(c)  (_acpi_ctype[(unsigned char)(c)] & (_ACPI_UP))
 #define ACPI_IS_LOWER(c)  (_acpi_ctype[(unsigned char)(c)] & (_ACPI_LO))
-#define ACPI_IS_PRINT(c)  (_acpi_ctype[(unsigned char)(c)] & (_ACPI_LO | _ACPI_UP | _ACPI_DI | _ACPI_SP | _ACPI_PU))
+#define ACPI_IS_PRINT(c)  (_acpi_ctype[(unsigned char)(c)] & (_ACPI_LO | _ACPI_UP | _ACPI_DI | _ACPI_XS | _ACPI_PU))
 #define ACPI_IS_ALPHA(c)  (_acpi_ctype[(unsigned char)(c)] & (_ACPI_LO | _ACPI_UP))
 
 #endif /* !ACPI_USE_SYSTEM_CLIBRARY */
@@ -481,17 +477,28 @@ AcpiUtPtrExit (
     UINT8                   *Ptr);
 
 void
+AcpiUtDebugDumpBuffer (
+    UINT8                   *Buffer,
+    UINT32                  Count,
+    UINT32                  Display,
+    UINT32                  ComponentId);
+
+void
 AcpiUtDumpBuffer (
     UINT8                   *Buffer,
     UINT32                  Count,
     UINT32                  Display,
-    UINT32                  componentId);
+    UINT32                  Offset);
 
+#ifdef ACPI_APPLICATION
 void
-AcpiUtDumpBuffer2 (
+AcpiUtDumpBufferToFile (
+    ACPI_FILE               File,
     UINT8                   *Buffer,
     UINT32                  Count,
-    UINT32                  Display);
+    UINT32                  Display,
+    UINT32                  BaseOffset);
+#endif
 
 void
 AcpiUtReportError (
@@ -536,10 +543,6 @@ AcpiUtDeleteInternalObjectList (
  * uteval - object evaluation
  */
 ACPI_STATUS
-AcpiUtOsiImplementation (
-    ACPI_WALK_STATE         *WalkState);
-
-ACPI_STATUS
 AcpiUtEvaluateObject (
     ACPI_NAMESPACE_NODE     *PrefixNode,
     char                    *Path,
@@ -566,22 +569,38 @@ AcpiUtExecutePowerMethods (
 
 
 /*
+ * utfileio - file operations
+ */
+#ifdef ACPI_APPLICATION
+ACPI_STATUS
+AcpiUtReadTableFromFile (
+    char                    *Filename,
+    ACPI_TABLE_HEADER       **Table);
+#endif
+
+
+/*
  * utids - device ID support
  */
 ACPI_STATUS
 AcpiUtExecute_HID (
     ACPI_NAMESPACE_NODE     *DeviceNode,
-    ACPI_DEVICE_ID          **ReturnId);
+    ACPI_PNP_DEVICE_ID      **ReturnId);
 
 ACPI_STATUS
 AcpiUtExecute_UID (
     ACPI_NAMESPACE_NODE     *DeviceNode,
-    ACPI_DEVICE_ID          **ReturnId);
+    ACPI_PNP_DEVICE_ID      **ReturnId);
+
+ACPI_STATUS
+AcpiUtExecute_SUB (
+    ACPI_NAMESPACE_NODE     *DeviceNode,
+    ACPI_PNP_DEVICE_ID      **ReturnId);
 
 ACPI_STATUS
 AcpiUtExecute_CID (
     ACPI_NAMESPACE_NODE     *DeviceNode,
-    ACPI_DEVICE_ID_LIST     **ReturnCidList);
+    ACPI_PNP_DEVICE_ID_LIST **ReturnCidList);
 
 
 /*
@@ -662,6 +681,70 @@ AcpiUtGetObjectSize(
 
 
 /*
+ * utosi - Support for the _OSI predefined control method
+ */
+ACPI_STATUS
+AcpiUtInitializeInterfaces (
+    void);
+
+ACPI_STATUS
+AcpiUtInterfaceTerminate (
+    void);
+
+ACPI_STATUS
+AcpiUtInstallInterface (
+    ACPI_STRING             InterfaceName);
+
+ACPI_STATUS
+AcpiUtRemoveInterface (
+    ACPI_STRING             InterfaceName);
+
+ACPI_STATUS
+AcpiUtUpdateInterfaces (
+    UINT8                   Action);
+
+ACPI_INTERFACE_INFO *
+AcpiUtGetInterface (
+    ACPI_STRING             InterfaceName);
+
+ACPI_STATUS
+AcpiUtOsiImplementation (
+    ACPI_WALK_STATE         *WalkState);
+
+
+/*
+ * utpredef - support for predefined names
+ */
+const ACPI_PREDEFINED_INFO *
+AcpiUtGetNextPredefinedMethod (
+    const ACPI_PREDEFINED_INFO  *ThisName);
+
+const ACPI_PREDEFINED_INFO *
+AcpiUtMatchPredefinedMethod (
+    char                        *Name);
+
+const ACPI_PREDEFINED_INFO *
+AcpiUtMatchResourceName (
+    char                        *Name);
+
+void
+AcpiUtDisplayPredefinedMethod (
+    char                        *Buffer,
+    const ACPI_PREDEFINED_INFO  *ThisName,
+    BOOLEAN                     MultiLine);
+
+void
+AcpiUtGetExpectedReturnTypes (
+    char                    *Buffer,
+    UINT32                  ExpectedBtypes);
+
+UINT32
+AcpiUtGetResourceBitWidth (
+    char                    *Buffer,
+    UINT16                  Types);
+
+
+/*
  * utstate - Generic state creation/cache routines
  */
 void
@@ -732,10 +815,11 @@ AcpiUtShortDivide (
     UINT64                  *OutQuotient,
     UINT32                  *OutRemainder);
 
+
 /*
  * utmisc
  */
-const char *
+const ACPI_EXCEPTION_INFO *
 AcpiUtValidateException (
     ACPI_STATUS             Status);
 
@@ -748,69 +832,12 @@ AcpiUtIsAmlTable (
     ACPI_TABLE_HEADER       *Table);
 
 ACPI_STATUS
-AcpiUtAllocateOwnerId (
-    ACPI_OWNER_ID           *OwnerId);
-
-void
-AcpiUtReleaseOwnerId (
-    ACPI_OWNER_ID           *OwnerId);
-
-ACPI_STATUS
 AcpiUtWalkPackageTree (
     ACPI_OPERAND_OBJECT     *SourceObject,
     void                    *TargetObject,
     ACPI_PKG_CALLBACK       WalkCallback,
     void                    *Context);
 
-void
-AcpiUtStrupr (
-    char                    *SrcString);
-
-void
-AcpiUtStrlwr (
-    char                    *SrcString);
-
-void
-AcpiUtPrintString (
-    char                    *String,
-    UINT8                   MaxLength);
-
-BOOLEAN
-AcpiUtValidAcpiName (
-    UINT32                  Name);
-
-void
-AcpiUtRepairName (
-    char                    *Name);
-
-BOOLEAN
-AcpiUtValidAcpiChar (
-    char                    Character,
-    UINT32                  Position);
-
-ACPI_STATUS
-AcpiUtStrtoul64 (
-    char                    *String,
-    UINT32                  Base,
-    UINT64                  *RetInteger);
-
-void ACPI_INTERNAL_VAR_XFACE
-AcpiUtPredefinedWarning (
-    const char              *ModuleName,
-    UINT32                  LineNumber,
-    char                    *Pathname,
-    UINT8                   NodeFlags,
-    const char              *Format,
-    ...);
-
-void ACPI_INTERNAL_VAR_XFACE
-AcpiUtPredefinedInfo (
-    const char              *ModuleName,
-    UINT32                  LineNumber,
-    char                    *Pathname,
-    UINT8                   NodeFlags,
-    const char              *Format,
-    ...);
 
 /* Values for Base above (16=Hex, 10=Decimal) */
 
@@ -834,17 +861,31 @@ AcpiUtDisplayInitPathname (
 
 
 /*
+ * utownerid - Support for Table/Method Owner IDs
+ */
+ACPI_STATUS
+AcpiUtAllocateOwnerId (
+    ACPI_OWNER_ID           *OwnerId);
+
+void
+AcpiUtReleaseOwnerId (
+    ACPI_OWNER_ID           *OwnerId);
+
+
+/*
  * utresrc
  */
 ACPI_STATUS
 AcpiUtWalkAmlResources (
+    ACPI_WALK_STATE         *WalkState,
     UINT8                   *Aml,
     ACPI_SIZE               AmlLength,
     ACPI_WALK_AML_CALLBACK  UserFunction,
-    void                    *Context);
+    void                    **Context);
 
 ACPI_STATUS
 AcpiUtValidateResource (
+    ACPI_WALK_STATE         *WalkState,
     void                    *Aml,
     UINT8                   *ReturnIndex);
 
@@ -868,6 +909,72 @@ ACPI_STATUS
 AcpiUtGetResourceEndTag (
     ACPI_OPERAND_OBJECT     *ObjDesc,
     UINT8                   **EndTag);
+
+
+/*
+ * utstring - String and character utilities
+ */
+void
+AcpiUtStrupr (
+    char                    *SrcString);
+
+void
+AcpiUtStrlwr (
+    char                    *SrcString);
+
+int
+AcpiUtStricmp (
+    char                    *String1,
+    char                    *String2);
+
+ACPI_STATUS
+AcpiUtStrtoul64 (
+    char                    *String,
+    UINT32                  Base,
+    UINT64                  *RetInteger);
+
+void
+AcpiUtPrintString (
+    char                    *String,
+    UINT16                  MaxLength);
+
+void
+UtConvertBackslashes (
+    char                    *Pathname);
+
+BOOLEAN
+AcpiUtValidAcpiName (
+    char                    *Name);
+
+BOOLEAN
+AcpiUtValidAcpiChar (
+    char                    Character,
+    UINT32                  Position);
+
+void
+AcpiUtRepairName (
+    char                    *Name);
+
+#if defined (ACPI_DEBUGGER) || defined (ACPI_APPLICATION)
+BOOLEAN
+AcpiUtSafeStrcpy (
+    char                    *Dest,
+    ACPI_SIZE               DestSize,
+    char                    *Source);
+
+BOOLEAN
+AcpiUtSafeStrcat (
+    char                    *Dest,
+    ACPI_SIZE               DestSize,
+    char                    *Source);
+
+BOOLEAN
+AcpiUtSafeStrncat (
+    char                    *Dest,
+    ACPI_SIZE               DestSize,
+    char                    *Source,
+    ACPI_SIZE               MaxTransferLength);
+#endif
 
 
 /*
@@ -910,20 +1017,6 @@ AcpiUtInitializeBuffer (
     ACPI_BUFFER             *Buffer,
     ACPI_SIZE               RequiredLength);
 
-void *
-AcpiUtAllocate (
-    ACPI_SIZE               Size,
-    UINT32                  Component,
-    const char              *Module,
-    UINT32                  Line);
-
-void *
-AcpiUtAllocateZeroed (
-    ACPI_SIZE               Size,
-    UINT32                  Component,
-    const char              *Module,
-    UINT32                  Line);
-
 #ifdef ACPI_DBG_TRACK_ALLOCATIONS
 void *
 AcpiUtAllocateAndTrack (
@@ -961,7 +1054,142 @@ AcpiUtCreateList (
     UINT16                  ObjectSize,
     ACPI_MEMORY_LIST        **ReturnCache);
 
+#endif /* ACPI_DBG_TRACK_ALLOCATIONS */
 
+/*
+ * utaddress - address range check
+ */
+ACPI_STATUS
+AcpiUtAddAddressRange (
+    ACPI_ADR_SPACE_TYPE     SpaceId,
+    ACPI_PHYSICAL_ADDRESS   Address,
+    UINT32                  Length,
+    ACPI_NAMESPACE_NODE     *RegionNode);
+
+void
+AcpiUtRemoveAddressRange (
+    ACPI_ADR_SPACE_TYPE     SpaceId,
+    ACPI_NAMESPACE_NODE     *RegionNode);
+
+UINT32
+AcpiUtCheckAddressRange (
+    ACPI_ADR_SPACE_TYPE     SpaceId,
+    ACPI_PHYSICAL_ADDRESS   Address,
+    UINT32                  Length,
+    BOOLEAN                 Warn);
+
+void
+AcpiUtDeleteAddressLists (
+    void);
+
+/*
+ * utxferror - various error/warning output functions
+ */
+void ACPI_INTERNAL_VAR_XFACE
+AcpiUtPredefinedWarning (
+    const char              *ModuleName,
+    UINT32                  LineNumber,
+    char                    *Pathname,
+    UINT8                   NodeFlags,
+    const char              *Format,
+    ...);
+
+void ACPI_INTERNAL_VAR_XFACE
+AcpiUtPredefinedInfo (
+    const char              *ModuleName,
+    UINT32                  LineNumber,
+    char                    *Pathname,
+    UINT8                   NodeFlags,
+    const char              *Format,
+    ...);
+
+void ACPI_INTERNAL_VAR_XFACE
+AcpiUtPredefinedBiosError (
+    const char              *ModuleName,
+    UINT32                  LineNumber,
+    char                    *Pathname,
+    UINT8                   NodeFlags,
+    const char              *Format,
+    ...);
+
+void
+AcpiUtNamespaceError (
+    const char              *ModuleName,
+    UINT32                  LineNumber,
+    const char              *InternalName,
+    ACPI_STATUS             LookupStatus);
+
+void
+AcpiUtMethodError (
+    const char              *ModuleName,
+    UINT32                  LineNumber,
+    const char              *Message,
+    ACPI_NAMESPACE_NODE     *Node,
+    const char              *Path,
+    ACPI_STATUS             LookupStatus);
+
+/*
+ * Utility functions for ACPI names and IDs
+ */
+const AH_PREDEFINED_NAME *
+AcpiAhMatchPredefinedName (
+    char                    *Nameseg);
+
+const AH_DEVICE_ID *
+AcpiAhMatchHardwareId (
+    char                    *Hid);
+
+const char *
+AcpiAhMatchUuid (
+    UINT8                   *Data);
+
+/*
+ * utprint - printf/vprintf output functions
+ */
+const char *
+AcpiUtScanNumber (
+    const char              *String,
+    UINT64                  *NumberPtr);
+
+const char *
+AcpiUtPrintNumber (
+    char                    *String,
+    UINT64                  Number);
+
+int
+AcpiUtVsnprintf (
+    char                    *String,
+    ACPI_SIZE               Size,
+    const char              *Format,
+    va_list                 Args);
+
+int
+AcpiUtSnprintf (
+    char                    *String,
+    ACPI_SIZE               Size,
+    const char              *Format,
+    ...);
+
+#ifdef ACPI_APPLICATION
+int
+AcpiUtFileVprintf (
+    ACPI_FILE               File,
+    const char              *Format,
+    va_list                 Args);
+
+int
+AcpiUtFilePrintf (
+    ACPI_FILE               File,
+    const char              *Format,
+    ...);
 #endif
+
+/*
+ * utuuid -- UUID support functions
+ */
+void
+AcpiUtConvertStringToUuid (
+    char                    *InString,
+    UINT8                   *UuidBuffer);
 
 #endif /* _ACUTILS_H */
