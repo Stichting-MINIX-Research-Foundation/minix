@@ -471,7 +471,7 @@ static void basic_regression(void)
 static void
 nonedev_regression(void)
 {
-	int fd;
+	int fd, fd2;
 	char *buf;
 	unsigned long uptime1, uptime2, uptime3;
 
@@ -516,6 +516,19 @@ nonedev_regression(void)
 
 	if (munmap(buf, 4096) != 0) e(16);
 
+	/* Also test page faults not incurred by the process itself. */
+	if ((fd2 = open("testfile", O_CREAT | O_TRUNC | O_WRONLY)) < 0) e(17);
+
+	if (unlink("testfile") != 0) e(18);
+
+	buf = mmap(NULL, 4096, PROT_READ, MAP_SHARED | MAP_FILE, fd, 0);
+	if (buf == MAP_FAILED) e(19);
+
+	if (write(fd2, buf, 10) != 10) e(20);
+
+	if (munmap(buf, 4096) != 0) e(21);
+
+	close(fd2);
 	close(fd);
 }
 
