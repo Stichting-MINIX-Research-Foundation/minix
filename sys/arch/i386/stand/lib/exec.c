@@ -666,6 +666,49 @@ userconf_init(void)
 	}
 }
 
+#if defined(PASS_MEMMAP) && defined(__minix)
+/*
+ * Construct a memory map for the multiboot info structure, with memory ranges
+ * as reported by the BIOS.  If successful, set the HAS_MMAP flag.  Code copied
+ * largely from bootinfo_memmap.c.
+ */
+static void
+memmap_init(struct multiboot_info * mbi)
+{
+	multiboot_memory_map_t *mmap;
+	int buf[5], i, nranges;
+
+	nranges = 0;
+	i = 0;
+	do {
+		if (getmementry(&i, buf))
+			break;
+		nranges++;
+	} while (i);
+
+	if (nranges == 0)
+		return;
+
+	mbi->mmap_length = sizeof(multiboot_memory_map_t) * nranges;
+
+	mmap = alloc(mbi->mmap_length);
+
+	mbi->mmap_addr = vtophys(mmap);
+
+	i = 0;
+	while (nranges-- > 0) {
+		getmementry(&i, buf);
+
+		/* Stupid tricks to deal with alignment issues. */
+		memcpy(&mmap->mm_base_addr, buf, sizeof(buf));
+		mmap->mm_size = sizeof(*mmap) - sizeof(mmap->mm_size);
+		mmap++;
+	}
+
+	mbi->mi_flags |= MULTIBOOT_INFO_HAS_MMAP;
+}
+#endif /* PASS_MEMMAP && __minix */
+
 int
 exec_multiboot(const char *file, char *args)
 {
@@ -717,6 +760,14 @@ exec_multiboot(const char *file, char *args)
 			mbi->mi_mods_addr = vtophys(mbm);
 		}
 	}
+
+#if defined(PASS_MEMMAP) && defined(__minix)
+	/*
+	 * The MINIX3 kernel needs a full memory map.  Without it, it will do
+	 * silly things such as overwriting the ACPI tables.
+	 */
+	memmap_init(mbi);
+#endif /* PASS_MEMMAP && __minix */
 
 #ifdef DEBUG
 	printf("Start @ 0x%lx [%ld=0x%lx-0x%lx]...\n", marks[MARK_ENTRY],
