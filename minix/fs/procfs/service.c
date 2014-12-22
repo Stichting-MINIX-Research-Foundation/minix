@@ -40,96 +40,97 @@ service_get_policies(struct policies * pol, index_t slot)
 		const char *policy_str;
 	} def_pol[] = {
 		/* audio */
-                { .label = "es1370", .policy_str = "reset" },
-                { .label = "es1371", .policy_str = "reset" },
-                { .label = "sb16", .policy_str = "reset" },
+		{ .label = "es1370", .policy_str = "reset" },
+		{ .label = "es1371", .policy_str = "reset" },
+		{ .label = "sb16", .policy_str = "reset" },
 		/* bus */
-                { .label = "i2c", .policy_str = "restart" },
-                { .label = "pci", .policy_str = "restart" },
-                { .label = "ti1225", .policy_str = "restart" },
+		{ .label = "i2c", .policy_str = "restart" },
+		{ .label = "pci", .policy_str = "restart" },
+		{ .label = "ti1225", .policy_str = "restart" },
 		/* clock */
-                { .label = "readclock.drv", .policy_str = "restart" },
+		{ .label = "readclock.drv", .policy_str = "restart" },
 		/* eeprom */
-                { .label = "cat24c256", .policy_str = "restart" },
+		{ .label = "cat24c256", .policy_str = "restart" },
 		/* examples */
-                { .label = "hello", .policy_str = "restart" },
+		{ .label = "hello", .policy_str = "restart" },
 		/* hid */
-                { .label = "pckbd", .policy_str = "reset" },
+		{ .label = "pckbd", .policy_str = "reset" },
 		/* iommu */
-                { .label = "amddev", .policy_str = "" },
+		{ .label = "amddev", .policy_str = "" },
 		/* net */
-		{ .label = "3c90x", .policy_str = "restart" },
-                { .label = "atl2", .policy_str = "restart" },
-                { .label = "dec21140A", .policy_str = "restart" },
-                { .label = "dp8390", .policy_str = "restart" },
-                { .label = "dpeth", .policy_str = "restart" },
-                { .label = "e1000", .policy_str = "restart" },
-                { .label = "fxp", .policy_str = "restart" },
-                { .label = "lance", .policy_str = "restart" },
-                { .label = "lan8710a", .policy_str = "restart" },
-                { .label = "rtl8139", .policy_str = "restart" },
-                { .label = "rtl8169", .policy_str = "restart" },
-                { .label = "uds", .policy_str = "reset" },
-                { .label = "virtio_net", .policy_str = "restart" },
+		{ .label = "3c90x", .policy_str = "reset" },
+		{ .label = "atl2", .policy_str = "reset" },
+		{ .label = "dec21140A", .policy_str = "reset" },
+		{ .label = "dp8390", .policy_str = "reset" },
+		{ .label = "dpeth", .policy_str = "reset" },
+		{ .label = "e1000", .policy_str = "reset" },
+		{ .label = "fxp", .policy_str = "reset" },
+		{ .label = "lance", .policy_str = "reset" },
+		{ .label = "lan8710a", .policy_str = "reset" },
+		{ .label = "orinoco", .policy_str = "reset" },
+		{ .label = "rtl8139", .policy_str = "reset" },
+		{ .label = "rtl8169", .policy_str = "reset" },
+		{ .label = "uds", .policy_str = "reset" },
+		{ .label = "virtio_net", .policy_str = "reset" },
 		/* power */
-                { .label = "acpi", .policy_str = "" },
-                { .label = "tps65217", .policy_str = "" },
-                { .label = "tps65590", .policy_str = "" },
+		{ .label = "acpi", .policy_str = "" },
+		{ .label = "tps65217", .policy_str = "" },
+		{ .label = "tps65590", .policy_str = "" },
 		/* printer */
-                { .label = "printer", .policy_str = "restart" },
+		{ .label = "printer", .policy_str = "restart" },
 		/* sensors */
-                { .label = "bmp085", .policy_str = "" },
-                { .label = "sht21", .policy_str = "restart" },
-                { .label = "tsl2550", .policy_str = "restart" },
+		{ .label = "bmp085", .policy_str = "" },
+		{ .label = "sht21", .policy_str = "restart" },
+		{ .label = "tsl2550", .policy_str = "restart" },
 		/* storage */
-                { .label = "ahci", .policy_str = "reset" },
-                { .label = "at_wini", .policy_str = "reset" },
-                { .label = "fbd", .policy_str = "reset" },
-                { .label = "filter", .policy_str = "reset" },
-                { .label = "floppy", .policy_str = "reset" },
-                { .label = "memory", .policy_str = "restart" },
-                { .label = "mmc", .policy_str = "reset" },
-                { .label = "virtio_blk", .policy_str = "reset" },
-                { .label = "vnd", .policy_str = "reset" },
+		{ .label = "ahci", .policy_str = "reset" },
+		{ .label = "at_wini", .policy_str = "reset" },
+		{ .label = "fbd", .policy_str = "reset" },
+		{ .label = "filter", .policy_str = "reset" },
+		{ .label = "floppy", .policy_str = "reset" },
+		{ .label = "memory", .policy_str = "restart" },
+		{ .label = "mmc", .policy_str = "reset" },
+		{ .label = "virtio_blk", .policy_str = "reset" },
+		{ .label = "vnd", .policy_str = "reset" },
 		/* system */
-                { .label = "gpio", .policy_str = "restart" },
-                { .label = "log", .policy_str = "reset" },
-                { .label = "random", .policy_str = "restart" },
+		{ .label = "gpio", .policy_str = "restart" },
+		{ .label = "log", .policy_str = "reset" },
+		{ .label = "random", .policy_str = "restart" },
 		/* tty */
-                { .label = "pty", .policy_str = "restart" },
-                { .label = "tty", .policy_str = "" },
+		{ .label = "pty", .policy_str = "restart" },
+		{ .label = "tty", .policy_str = "restart" },
 		/* usb */
-                { .label = "usbd", .policy_str = "" },
-                { .label = "usb_hub", .policy_str = "" },
-                { .label = "usb_storage", .policy_str = "" },
+		{ .label = "usbd", .policy_str = "" },
+		{ .label = "usb_hub", .policy_str = "" },
+		{ .label = "usb_storage", .policy_str = "" },
 		/* video */
-                { .label = "fb", .policy_str = "" },
-                { .label = "tda19988", .policy_str = "" },
+		{ .label = "fb", .policy_str = "" },
+		{ .label = "tda19988", .policy_str = "" },
 		/* vmm_guest */
-                { .label = "vbox", .policy_str = "" },
+		{ .label = "vbox", .policy_str = "" },
 		/* fs */
-                { .label = "ext2", .policy_str = "" },
-                { .label = "hgfs", .policy_str = "" },
-                { .label = "isofs", .policy_str = "" },
-                { .label = "mfs", .policy_str = "" },
-                { .label = "pfs", .policy_str = "" },
-                { .label = "procfs", .policy_str = "" },
+		{ .label = "ext2", .policy_str = "" },
+		{ .label = "hgfs", .policy_str = "" },
+		{ .label = "isofs", .policy_str = "" },
+		{ .label = "mfs", .policy_str = "restart" },
+		{ .label = "pfs", .policy_str = "restart" },
+		{ .label = "procfs", .policy_str = "restart" },
 		{ .label = "ptyfs", .policy_str = "" },
-                { .label = "vbfs", .policy_str = "" },
+		{ .label = "vbfs", .policy_str = "" },
 		/* net */
-                { .label = "inet", .policy_str = "reset" },
-                { .label = "lwip", .policy_str = "" },
+		{ .label = "inet", .policy_str = "reset" },
+		{ .label = "lwip", .policy_str = "" },
 		/* servers */
-                { .label = "devman", .policy_str = "" },
-                { .label = "ds", .policy_str = "" },
-                { .label = "input", .policy_str = "reset" },
-                { .label = "ipc", .policy_str = "restart" },
-                { .label = "is", .policy_str = "restart" },
-                { .label = "pm", .policy_str = "" },
-                { .label = "rs", .policy_str = "" },
-                { .label = "sched", .policy_str = "" },
-                { .label = "vfs", .policy_str = "" },
-                { .label = "vm", .policy_str = "" },
+		{ .label = "devman", .policy_str = "restart" },
+		{ .label = "ds", .policy_str = "restart" },
+		{ .label = "input", .policy_str = "reset" },
+		{ .label = "ipc", .policy_str = "restart" },
+		{ .label = "is", .policy_str = "restart" },
+		{ .label = "pm", .policy_str = "restart" },
+		{ .label = "rs", .policy_str = "restart" },
+		{ .label = "sched", .policy_str = "restart" },
+		{ .label = "vfs", .policy_str = "restart" },
+		{ .label = "vm", .policy_str = "" },
 		//{ .label = "", .policy_str = "" },
 	};
 
@@ -152,6 +153,30 @@ service_get_policies(struct policies * pol, index_t slot)
 #endif
 
 	return pol[slot].formatted;
+}
+
+/* Returns a ASCIIZ string encoding RS flags.  */
+static const char *
+service_get_flags(index_t slot)
+{
+	static char str[10];
+	int flags, sys_flags;
+
+	flags = rproc.proc[slot].r_flags;
+	sys_flags = rproc.pub[slot].sys_flags;
+
+	str[0] = (flags & RS_ACTIVE)        ? 'A' : '-';
+	str[1] = (flags & RS_UPDATING)      ? 'U' : '-';
+	str[2] = (flags & RS_EXITING)       ? 'E' : '-';
+	str[3] = (flags & RS_NOPINGREPLY)   ? 'N' : '-';
+	str[4] = (sys_flags & SF_USE_COPY)  ? 'C' : '-';
+	str[5] = (sys_flags & SF_USE_REPL)  ? 'R' : '-';
+	str[6] = (sys_flags & SF_NEED_COPY) ? 'c' : '-';
+	str[7] = (sys_flags & SF_NEED_REPL) ? 'r' : '-';
+	str[8] = (sys_flags & SF_CORE_SRV)  ? 's' : '-';
+	str[9] = '\0';
+
+	return str;
 }
 
 /*
@@ -310,5 +335,6 @@ service_read(struct inode * node)
 	buf_printf("endpoint: %d\n", rpub->endpoint);
 	buf_printf("pid:      %d\n", rp->r_pid);
 	buf_printf("restarts: %d\n", rp->r_restarts);
+	buf_printf("flags:    %s\n", service_get_flags(slot));
 	buf_printf("policies: %s\n", service_get_policies(policies, slot));
 }
