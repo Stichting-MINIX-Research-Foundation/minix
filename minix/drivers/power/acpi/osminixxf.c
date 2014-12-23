@@ -317,6 +317,7 @@ AcpiOsVprintf (
     va_list                 Args)
 {
 
+	printf("ACPI: ");
 	vprintf (Fmt, Args);
 	printf("\n");
 }
@@ -366,15 +367,7 @@ AcpiOsMapMemory (
     ACPI_PHYSICAL_ADDRESS   where,  /* not page aligned */
     ACPI_SIZE               length) /* in bytes, not page-aligned */
 {
-	ACPI_PHYSICAL_ADDRESS addr;
-	void * vir;
-	unsigned sdiff;
-
-	addr = where & ~0xfff; /* align to 4k */
-	sdiff = where - addr;
-	vir = vm_map_phys(SELF, (void *) addr, length + sdiff);
-
-	return (void *) ((char *)vir + sdiff);
+	return vm_map_phys(SELF, (void *) where, length);
 }
 
 
@@ -397,6 +390,7 @@ AcpiOsUnmapMemory (
     void                    *where,
     ACPI_SIZE               length)
 {
+	vm_unmap_phys(SELF, where, length);
 }
 
 
@@ -588,7 +582,7 @@ AcpiOsInstallInterruptHandler (
     ACPI_OSD_HANDLER        ServiceRoutine,
     void                    *Context)
 {
-	printf("AcpiOsInstallInterruptHandler NOT SUPPORTED\n");
+	printf("ACPI: no support for power interrupt yet\n");
 	return AE_OK;
 }
 
@@ -610,7 +604,7 @@ AcpiOsRemoveInterruptHandler (
     UINT32                  InterruptNumber,
     ACPI_OSD_HANDLER        ServiceRoutine)
 {
-	printf("AcpiOsRemoveInterruptHandler NOT SUPPORTED\n");
+	printf("ACPI: no support for power interrupt yet\n");
 	return AE_OK;
 }
 
@@ -795,6 +789,8 @@ AcpiOsReadPort (
 		case 32:
 			sys_inl(Address, Value);
 			break;
+		default:
+			panic("unsupported width: %d", Width);
 	}
 	return AE_OK;
 }
@@ -830,8 +826,9 @@ AcpiOsWritePort (
 		case 32:
 			sys_outl(Address, Value);
 			break;
+		default:
+			panic("unsupported width: %d", Width);
 	}
-	return AE_OK;
 	return AE_OK;
 }
 
