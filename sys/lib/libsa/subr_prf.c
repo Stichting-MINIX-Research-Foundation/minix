@@ -191,6 +191,9 @@ kdoprnt(void (*put)(int), const char *fmt, va_list ap)
 #ifdef LIBSA_PRINTF_WIDTH_SUPPORT
 	int width;
 	char *q;
+#if defined(__minix)
+	int max;
+#endif /* defined(__minix) */
 #endif
 
 	for (;;) {
@@ -202,18 +205,20 @@ kdoprnt(void (*put)(int), const char *fmt, va_list ap)
 		lflag = 0;
 #ifdef LIBSA_PRINTF_WIDTH_SUPPORT
 		width = 0;
+#if defined(__minix)
+		max = -1;
+#endif /* defined(__minix) */
 #endif
 reswitch:
 		switch (ch = *fmt++) {
 #ifdef LIBSA_PRINTF_WIDTH_SUPPORT
 #if defined(__minix)
-		/* LSC: FIXME: this is a simple hack which ignores the thing for now. */
 		case '.':
-			/* eat up digits */
-			while( ((('1' >= *fmt) && ( *fmt <= '9'))
-				 || (*fmt == '*')) )
-				 fmt++;
-			fmt++;
+			if (*fmt == '*') {
+				max = va_arg(ap, int);
+				fmt++;
+			} else for (max = 0; *fmt >= '0' && *fmt <= '9'; fmt++)
+				max = max * 10 + *fmt - '0';
 			goto reswitch;
 #endif /* defined(__minix) */
 		case '#':
@@ -274,10 +279,19 @@ reswitch:
 #ifdef LIBSA_PRINTF_WIDTH_SUPPORT
 			for (q = p; *q != '\0'; ++q)
 				continue;
+#if defined(__minix)
+			if (max >= 0 && q - p > max)
+				q = &p[max];
+#endif /* defined(__minix) */
 			width -= q - p;
 #endif
 			RPAD();
+#if defined(LIBSA_PRINTF_WIDTH_SUPPORT) && defined(__minix)
+			while ((max < 0 || max-- > 0) &&
+			    (ch = (unsigned char)*p++))
+#else /* !defined(LIBSA_PRINTF_WIDTH_SUPPORT) || !defined(__minix) */
 			while ((ch = (unsigned char)*p++))
+#endif /* !defined(LIBSA_PRINTF_WIDTH_SUPPORT) || !defined(__minix) */
 				put(ch);
 			LPAD();
 			break;
