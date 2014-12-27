@@ -18,10 +18,10 @@ int
 init_extra(unsigned int nr_inodes, size_t inode_extra)
 {
 
-	if (extra_size == 0)
+	if (inode_extra == 0)
 		return OK;
 
-	if ((extra_ptr = malloc(nr_inodes * inode_extra)) == NULL)
+	if ((extra_ptr = calloc(nr_inodes, inode_extra)) == NULL)
 		return ENOMEM;
 
 	extra_size = inode_extra;
