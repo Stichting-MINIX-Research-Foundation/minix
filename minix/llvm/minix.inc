@@ -19,8 +19,8 @@ function generate_modules_map()
 
 	echo "Generating Minix modules map..." 1>&2
 	cd ${MINIX_ROOT}
-	grep -r "^PROG=" . --include=Makefile | sed -e "s/\s*//g" | sed -e "s/PROG=//g" > ${TMPFILE}
-	grep -r "^PROGS=" . --include=Makefile | sed -e "s/\s\s*/ /g" | sed -e "s/PROGS=//g" | sed -e "s/\.\///g" | (
+	grep -r "^PROG *=" . --include=Makefile | sed -e "s/\s*//g" | sed -e "s/PROG *=//g" > ${TMPFILE}
+	grep -r "^PROGS *=" . --include=Makefile | sed -e "s/\s\s*/ /g" | sed -e "s/PROGS *=//g" | sed -e "s/\.\///g" | (
 		while read line; do
 			path=$(echo $line | cut -d' ' -f 1)
 			progs=$(echo $line | cut -d' ' -f 2-)
@@ -49,7 +49,8 @@ function generate_modules_map()
 	blacklist="$blacklist -e ^tps65950="
 	blacklist="$blacklist -e ^tsl2550="
 	blacklist="$blacklist -e ^usbd="
-        grep -v -e ^${GREP_FILTER}= -e ^memory= $blacklist ${TMPFILE}.2 > ${OUTFILE}
+	grep -v -e ^${GREP_FILTER}= -e ^ramdisk -e ^memory= $blacklist ${TMPFILE}.2 > ${OUTFILE}
+        echo ramdisk=minix/drivers/storage/ramdisk >> ${OUTFILE} # ramdisk always second last
 	echo memory=minix/drivers/storage/memory >> ${OUTFILE} # memory always last
 
 	rm -rf ${TMPFILE} ${TMPFILE}.1 ${TMPFILE}.2
@@ -68,7 +69,7 @@ function get_modules_path()
 	if [ ! -f "${MINIX_MODULES_MAPFILE}" ]; then
 		generate_modules_map
 	fi
-	if [ $MODULE_NAME == "servers" ] || [ $MODULE_NAME == "drivers" ]; then
+	if [ $MODULE_NAME == "servers" ] || [ $MODULE_NAME == "drivers" ] || [ $MODULE_NAME == "fs" ] || [ $MODULE_NAME == "net" ] || [ $MODULE_NAME == "commands" ]; then
 		MODULE_NAME="=minix/${MODULE_NAME}/"
 	else
 		MODULE_NAME="^${MODULE_NAME}="

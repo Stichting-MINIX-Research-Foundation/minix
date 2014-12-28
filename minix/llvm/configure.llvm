@@ -72,11 +72,6 @@ ROOT_1=`echo ${ROOT} | sed "s/\\\//\\\\\\\\\//g"`
 sed -i "s/ROOT=.*$/ROOT=\"${ROOT_1}\"/g" ${MINIX_LLVM_DIR}/common.inc
 . ${MINIX_LLVM_DIR}/minix.inc
 
-# Configure llvm-apps
-cp ${ROOT}/conf/common.overrides.llvm-minix.inc ${ROOT}/common.overrides.llvm.inc
-MINIX_ROOT_1=`readlink -f ${MINIX_ROOT}`
-echo "_MINIX_ROOT=\"${MINIX_ROOT_1}\"" > ${ROOT}/common.overrides.minix.inc
-
 if [ ! -d ${ROOT}/.tmp ]; then
 	mkdir ${ROOT}/.tmp 2>/dev/null || true
 fi
@@ -132,15 +127,17 @@ if [ "${REBUILD_MINIX}" == "yes" ]; then
 	cd ${MYPWD}
 	if [ "$EXITCODE" != "0" ]; then
         	echo "Error: Failed building Minix source code."
-	        exit $EXITCODE
 	else
 		echo "Completed building Minix source code."
-		exit $EXITCODE
 	fi
 else
 	echo "Building Minix: NO"
 fi
 
-# Reconfigure llvm-apps
+# Configure llvm-apps
+cp ${ROOT}/conf/common.overrides.llvm-minix.inc ${ROOT}/common.overrides.llvm.inc
+MINIX_ROOT_1=`readlink -f ${MINIX_ROOT}`
 MINIX_TOOLS_DIR=$(readlink -f ${MINIX_ROOT}/../obj.i386/tooldir.*)
-echo "MINIX_TOOLS_DIR=\"${MINIX_TOOLS_DIR}\"" >> ${ROOT}/common.overrides.minix.inc
+echo "_MINIX_ROOT=\"${MINIX_ROOT_1}\"" > ${ROOT}/common.overrides.minix.inc
+echo "_MINIX_TOOLS_DIR=\"${MINIX_TOOLS_DIR}\"" >> ${ROOT}/common.overrides.minix.inc
+exit $EXITCODE

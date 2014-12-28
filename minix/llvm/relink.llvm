@@ -20,7 +20,7 @@ LDFLAGS_PLACEHOLDER=" "
 
 # Set default values to essential variables.
 : ${GENERATE_MAP="no"}
-: ${C="servers,drivers"}
+: ${C="servers,fs,net,drivers"}
 
 function usage()
 {
@@ -97,7 +97,7 @@ fi
 
 STATIC_LIBS=`find_static_libs $*`
 
-TARGET_MODULES=`echo $C | sed -e "s/,/ /g"`
+TARGET_MODULES=`echo " $C " | sed -e "s/,/ /g" -e "s/ rd / ramdisk memory /g"`
 
 for m in ${TARGET_MODULES}
 do
@@ -130,7 +130,7 @@ do
 	fi
 
 	env "`echo ${LDFLAGS_PLACEHOLDER}`" MKBITCODE=yes \
-	${TOOLDIR}/nbmake-${ARCH} -C $m
+	${TOOLDIR}/nbmake-${ARCH} -C $m all install
 	echo 
 done
 

@@ -21,7 +21,7 @@ MINIX_MODS=
 
 # Set default values for essential variables
 : ${GENERATE_MAP="no"}
-: ${C="servers,drivers"}
+: ${C="servers,fs,net,drivers"}
 
 function usage()
 {
@@ -120,7 +120,7 @@ if [ "${LLVMPASS_PATHS}" != "" ]; then
 	OPTFLAGS=" ${OPTFLAGS} ${LLVMPASS_PATHS} ${LLVMARGS}"
 fi
 
-TARGET_MODULES=`echo $C | sed -e "s/,/ /g"`
+TARGET_MODULES=`echo " $C " | sed -e "s/,/ /g" -e "s/ rd / ramdisk memory /g"`
 
 for m in ${TARGET_MODULES}
 do
@@ -148,6 +148,10 @@ do
                 echo "Error: Couldn't fetch the module name for $m"
                 continue
         fi
+	if [ "$n" == "ramdisk" ] || [ "$n" == "memory" ]; then
+		(cd minix/llvm && C=$n ./relink.llvm)
+		continue
+	fi
 	clean_module $n $m
 	OPTFLAGS=`echo ${OPTFLAGS} | sed -e "s/\ /\\\ /g"`
 	OPTFLAGS_PLACEHOLDER="OPTFLAGS.$n=${OPTFLAGS}"
