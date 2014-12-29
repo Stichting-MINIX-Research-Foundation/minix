@@ -55,6 +55,7 @@ service_get_policies(struct policies * pol, index_t slot)
 		/* iommu */
                 { .label = "amddev", .policy_str = "" },
 		/* net */
+		{ .label = "3c90x", .policy_str = "restart" },
                 { .label = "atl2", .policy_str = "restart" },
                 { .label = "dec21140A", .policy_str = "restart" },
                 { .label = "dp8390", .policy_str = "restart" },

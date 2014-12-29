@@ -1,3 +1,4 @@
+./etc/system.conf.d/3c90x		minix-sys
 ./etc/system.conf.d/atl2		minix-sys
 ./etc/system.conf.d/dec21140A		minix-sys
 ./etc/system.conf.d/e1000		minix-sys
@@ -6,6 +7,7 @@
 ./etc/system.conf.d/rtl8139		minix-sys
 ./etc/system.conf.d/rtl8169		minix-sys
 ./etc/system.conf.d/virtio_net		minix-sys
+./service/3c90x				minix-sys
 ./service/acpi				minix-sys
 ./service/ahci				minix-sys
 ./service/amddev			minix-sys
