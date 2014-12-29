@@ -106,7 +106,8 @@ then
 	# Now start the build.
 	#
 	sh ${BUILDSH} -j ${JOBS} -m ${ARCH} -O ${OBJ} -D ${DESTDIR} ${BUILDVARS} -U -u distribution
-
+else
+	${CROSS_TOOLS}/nbmake-i386 -C releasetools do-hdboot
 fi
 
 #
