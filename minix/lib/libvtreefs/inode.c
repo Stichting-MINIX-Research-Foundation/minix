@@ -70,6 +70,7 @@ init_inodes(unsigned int inodes, struct inode_stat * stat,
 	for (i = 1; i < nr_inodes; i++) {
 		node = &inode[i];
 		node->i_num = i;
+		node->i_name = NULL;
 		node->i_parent = NULL;
 		node->i_count = 0;
 		TAILQ_INIT(&node->i_children);
@@ -186,12 +187,13 @@ add_inode(struct inode * parent, const char * name, index_t index,
 	cbdata_t cbdata)
 {
 	struct inode *newnode;
+	char *newname;
 	int slot;
 
 	CHECK_INODE(parent);
 	assert(S_ISDIR(parent->i_stat.mode));
 	assert(!(parent->i_flags & I_DELETED));
-	assert(strlen(name) <= PNAME_MAX);
+	assert(strlen(name) <= NAME_MAX);
 	assert(index >= 0 || index == NO_INDEX);
 	assert(stat != NULL);
 	assert(nr_indexed_entries >= 0);
@@ -204,18 +206,28 @@ add_inode(struct inode * parent, const char * name, index_t index,
 	assert(!TAILQ_EMPTY(&unused_inodes));
 
 	newnode = TAILQ_FIRST(&unused_inodes);
+
+	/* Use the static name buffer if the name is short enough. Otherwise,
+	 * allocate heap memory for the name.
+	 */
+	newname = newnode->i_namebuf;
+	if (strlen(name) > PNAME_MAX &&
+	    (newname = malloc(strlen(name) + 1)) == NULL)
+		return NULL;
+
 	TAILQ_REMOVE(&unused_inodes, newnode, i_unused);
 
 	assert(newnode->i_count == 0);
 
 	/* Copy the relevant data to the inode. */
 	newnode->i_parent = parent;
+	newnode->i_name = newname;
 	newnode->i_flags = 0;
 	newnode->i_index = index;
 	newnode->i_stat = *stat;
 	newnode->i_indexed = nr_indexed_entries;
 	newnode->i_cbdata = cbdata;
-	strlcpy(newnode->i_name, name, sizeof(newnode->i_name));
+	strcpy(newnode->i_name, name);
 
 	/* Clear the extra data for this inode, if present. */
 	clear_inode_extra(newnode);
@@ -255,6 +267,8 @@ get_inode_name(const struct inode * node)
 {
 
 	CHECK_INODE(node);
+	assert(!(node->i_flags & I_DELETED));
+	assert(node->i_name != NULL);
 
 	return node->i_name;
 }
@@ -394,7 +408,7 @@ get_inode_by_name(const struct inode * parent, const char * name)
 	int slot;
 
 	CHECK_INODE(parent);
-	assert(strlen(name) <= PNAME_MAX);
+	assert(strlen(name) <= NAME_MAX);
 	assert(S_ISDIR(parent->i_stat.mode));
 
 	/* Get the hash value, and search for the inode. */
@@ -546,6 +560,12 @@ delete_inode(struct inode * node)
 		/* Unhash the inode from the <parent,index> table if needed. */
 		if (node->i_index != NO_INDEX)
 			LIST_REMOVE(node, i_hindex);
+
+		/* Free the name if allocated dynamically. */
+		assert(node->i_name != NULL);
+		if (node->i_name != node->i_namebuf)
+			free(node->i_name);
+		node->i_name = NULL;
 
 		node->i_flags |= I_DELETED;
 

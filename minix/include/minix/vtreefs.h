@@ -7,8 +7,9 @@ typedef void *cbdata_t;
 
 #define NO_INDEX	((index_t) -1)
 
-/* Maximum file name length, excluding terminating null character. It is set
- * to a low value to limit memory usage, but can be changed to any value.
+/* Maximum file name length, excluding terminating null character, for which
+ * the name will be allocated statically. Longer names will be allocated
+ * dynamically, and should not be used for system-critical file systems.
  */
 #define PNAME_MAX	24
 

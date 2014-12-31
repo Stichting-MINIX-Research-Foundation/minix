@@ -18,7 +18,7 @@ fs_lookup(ino_t dir_nr, char * name, struct fsdriver_node * node_details,
 	if (!S_ISDIR(node->i_stat.mode))
 		return ENOTDIR;
 
-	if (strlen(name) > PNAME_MAX)
+	if (strlen(name) > NAME_MAX)
 		return ENAMETOOLONG;
 
 	if (!strcmp(name, ".")) {

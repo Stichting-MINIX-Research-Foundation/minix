@@ -116,7 +116,7 @@ fs_statvfs(struct statvfs * buf)
 {
 
 	buf->f_flag = ST_NOTRUNC;
-	buf->f_namemax = PNAME_MAX;
+	buf->f_namemax = NAME_MAX;
 
 	return OK;
 }
