@@ -432,7 +432,10 @@ get_inode_by_index(const struct inode * parent, index_t index)
 
 	CHECK_INODE(parent);
 	assert(S_ISDIR(parent->i_stat.mode));
-	assert(index >= 0 && index < parent->i_indexed);
+	assert(index >= 0);
+
+	if (index >= parent->i_indexed)
+		return NULL;
 
 	/* Get the hash value, and search for the inode. */
 	slot = parent_index_hash(parent, index);
