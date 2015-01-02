@@ -422,8 +422,10 @@ void *arg;
 # error "Unsupported platform"
 #endif
 	stacksize = guarded_stacksize;
-	if (munmap(guard_start, MTHREAD_GUARDSIZE) != 0)
-		mthread_panic("unable to unmap stack space for guard");
+	/* Mere unmapping could allow a later allocation to fill the gap. */
+        if (mmap(guard_start, MTHREAD_GUARDSIZE, PROT_NONE,
+		MAP_ANON|MAP_PRIVATE|MAP_FIXED, -1, 0) != guard_start)
+		mthread_panic("unable to overmap stack space for guard");
 	tcb->m_context.uc_stack.ss_sp = guard_end;
   } else
   	tcb->m_context.uc_stack.ss_sp = stackaddr;
@@ -444,6 +446,9 @@ mthread_thread_t thread;
 /* Reset the thread to its default values. Free the allocated stack space. */
 
   mthread_tcb_t *rt;
+  size_t stacksize;
+  char *stackaddr;
+
   if (!isokthreadid(thread)) mthread_panic("Invalid thread id"); 
 
   rt = mthread_find_tcb(thread);
@@ -456,8 +461,15 @@ mthread_thread_t thread;
   rt->m_cond = NULL;
   if (rt->m_attr.ma_stackaddr == NULL) { /* We allocated stack space */
 	if (rt->m_context.uc_stack.ss_sp) {
-		if (munmap(rt->m_context.uc_stack.ss_sp,
-				 rt->m_context.uc_stack.ss_size) != 0) {
+		stacksize = rt->m_context.uc_stack.ss_size;
+		stackaddr = rt->m_context.uc_stack.ss_sp;
+#if defined(__i386__) || defined(__arm__)
+		stacksize += MTHREAD_GUARDSIZE;
+		stackaddr -= MTHREAD_GUARDSIZE;
+#else
+# error "Unsupported platform"
+#endif
+		if (munmap(stackaddr, stacksize) != 0) {
 			mthread_panic("unable to unmap memory");
 		}
 	}
