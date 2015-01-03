@@ -30,6 +30,7 @@ static int cache_unreference(struct phys_region *pr);
 static int cache_sanitycheck(struct phys_region *pr, const char *file, int line);
 static int cache_writable(struct phys_region *pr);
 static int cache_resize(struct vmproc *vmp, struct vir_region *vr, vir_bytes l);
+static int cache_lowshrink(struct vir_region *vr, vir_bytes len);
 static int cache_pagefault(struct vmproc *vmp, struct vir_region *region, 
         struct phys_region *ph, int write, vfs_callback_t cb, void *state,
 	int len, int *io);
@@ -40,6 +41,7 @@ struct mem_type mem_type_cache = {
 	.ev_reference = cache_reference,
 	.ev_unreference = cache_unreference,
 	.ev_resize = cache_resize,
+	.ev_lowshrink = cache_lowshrink,
 	.ev_sanitycheck = cache_sanitycheck,
 	.ev_pagefault = cache_pagefault,
 	.writable = cache_writable,
@@ -84,6 +86,11 @@ static int cache_resize(struct vmproc *vmp, struct vir_region *vr, vir_bytes l)
 	return ENOMEM;
 }
 
+static int cache_lowshrink(struct vir_region *vr, vir_bytes len)
+{
+        return OK;
+}
+
 int
 do_mapcache(message *msg)
 {
@@ -92,6 +99,7 @@ do_mapcache(message *msg)
 	off_t ino_off = msg->m_vmmcp.ino_offset;
 	int n;
 	phys_bytes bytes = msg->m_vmmcp.pages * VM_PAGE_SIZE;
+	phys_bytes alloc_bytes;
 	struct vir_region *vr;
 	struct vmproc *caller;
 	vir_bytes offset;
@@ -107,11 +115,23 @@ do_mapcache(message *msg)
 
 	if(bytes < VM_PAGE_SIZE) return EINVAL;
 
-	if(!(vr = map_page_region(caller, VM_PAGE_SIZE, VM_DATATOP, bytes,
-		VR_ANON | VR_WRITABLE, 0, &mem_type_cache))) {
+	alloc_bytes = bytes;
+#ifdef _MINIX_MAGIC
+	/* Make sure there is a 1-page hole available before the region,
+	 * in case instrumentation needs to allocate in-band metadata later.
+	 * This does effectively halve the usable part of the caller's address
+	 * space, though, so only do this if we are instrumenting at all.
+	 */
+	alloc_bytes += VM_PAGE_SIZE;
+#endif
+	if (!(vr = map_page_region(caller, VM_PAGE_SIZE, VM_DATATOP,
+	    alloc_bytes, VR_ANON | VR_WRITABLE, 0, &mem_type_cache))) {
 		printf("VM: map_page_region failed\n");
 		return ENOMEM;
 	}
+#ifdef _MINIX_MAGIC
+	map_unmap_region(caller, vr, 0, VM_PAGE_SIZE);
+#endif
 
 	assert(vr->length == bytes);
 
