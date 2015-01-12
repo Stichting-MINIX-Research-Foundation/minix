@@ -5,8 +5,13 @@
 #	for each restatability policy call the policy test function if it is
 #	supported. No accounting of failed / successful test is done, as a
 #	failed test can currently provoque cascading effects, so instead we
-#	fail the test as a whole on the first failure is found. Live update tests
+#	fail the test as a whole on the first failure found. Live update tests
 #	are currently policy-agnostic.
+#
+# If arguments are given, use this instead of all entries found in
+# /proc/service. Full path have to be provided on the command line, like
+#   /usr/tests/minix/testrelpol /proc/service/vfs
+# to test vfs recovery only.
 #
 # Supported policies have to be in the POLICIES variable, and define a test
 # function.
@@ -268,12 +273,18 @@ main() {
 	# If there is a running X server, skip the input driver
 	if ps -ef | grep -v grep | grep -q /usr/X11R7/bin/X
 	then
-		echo "This test can't be run while a Xserver is running"
+		echo "# This test can't be run while a Xserver is running"
 		echo "not ok # A Xserver is running"
 		exit 1
 	fi
 
-	services=$(echo /proc/service/*)
+	if [ $# -eq 0 ]
+	then
+		services=$(echo /proc/service/*)
+	else
+		services="$@"
+	fi
+
 	for service in ${services}
 	do
 		label=$(basename ${service})
@@ -299,6 +310,12 @@ main() {
 			fi
 		done
 	done
+	if [ $# -gt 0 ]
+	then
+		echo "ok # partial test for $@ successful"
+		exit 0
+	fi
+
 	multi_lu_labels=""
 	for service in ${services}
 	do
@@ -337,4 +354,4 @@ main() {
 	exit 0
 }
 
-main
+main "$@"
