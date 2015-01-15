@@ -702,6 +702,9 @@ uds_init(int UNUSED(type), sef_init_info_t *UNUSED(info))
 
 	uds_exit_left = 0;
 
+	/* Announce we are up! */
+	chardriver_announce();
+
 	return(OK);
 }
 
