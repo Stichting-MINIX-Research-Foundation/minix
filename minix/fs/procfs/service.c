@@ -94,7 +94,7 @@ service_get_policies(struct policies * pol, index_t slot)
                 { .label = "vnd", .policy_str = "reset" },
 		/* system */
                 { .label = "gpio", .policy_str = "restart" },
-                { .label = "log", .policy_str = "restart" },
+                { .label = "log", .policy_str = "reset" },
                 { .label = "random", .policy_str = "restart" },
 		/* tty */
                 { .label = "pty", .policy_str = "restart" },
