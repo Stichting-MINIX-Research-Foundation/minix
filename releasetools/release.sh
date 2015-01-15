@@ -219,7 +219,7 @@ echo " * Build"
 ##########################################################################
 
 cd $RELEASEDIR/usr/src
-make distribution MKLIBCXX=yes DESTDIR=$RELEASEDIR SLOPPY_FLIST=yes $BUILDOPTIONS
+make build MKLIBCXX=yes DESTDIR=$RELEASEDIR $BUILDOPTIONS
 make -C releasetools do-hdboot DESTDIR=$RELEASEDIR MKINSTALLBOOT=yes
 cp $RELEASEDIR/usr/mdec/boot_monitor $RELEASEDIR
 cp $RELEASEDIR/boot/minix_latest/* $RELEASEDIR/boot/minix_default/
