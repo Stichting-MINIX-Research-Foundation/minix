@@ -118,6 +118,7 @@ void vm_pagelock(void *vir, int lockflag);
 int vm_addrok(void *vir, int write);
 int get_vm_self_pages(void);
 int pt_writable(struct vmproc *vmp, vir_bytes v);
+void pt_assert(pt_t *pt);
 
 #if SANITYCHECKS
 void pt_sanitycheck(pt_t *pt, const char *file, int line);

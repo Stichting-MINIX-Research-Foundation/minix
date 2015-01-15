@@ -146,6 +146,8 @@ static int rs_memctl_make_vm_instance(struct vmproc *new_vm_vmp)
 
 	this_vm_vmp = &vmproc[VM_PROC_NR];
 
+	pt_assert(&this_vm_vmp->vm_pt);
+
 	/* Check if the operation is allowed. */
 	assert(num_vm_instances == 1 || num_vm_instances == 2);
 	if(num_vm_instances == 2) {
@@ -169,12 +171,12 @@ static int rs_memctl_make_vm_instance(struct vmproc *new_vm_vmp)
 	flags = 0;
 	verify = FALSE;
 	r = pt_ptalloc_in_range(&this_vm_vmp->vm_pt,
-		kernel_boot_info.freepde_start, ARCH_VM_DIR_ENTRIES, flags, verify);
+		VM_OWN_HEAPBASE, VM_DATATOP, flags, verify);
 	if(r != OK) {
 		return r;
 	}
 	r = pt_ptalloc_in_range(&new_vm_vmp->vm_pt,
-		kernel_boot_info.freepde_start, ARCH_VM_DIR_ENTRIES, flags, verify);
+		VM_OWN_HEAPBASE, VM_DATATOP, flags, verify);
 	if(r != OK) {
 		return r;
 	}
@@ -188,6 +190,9 @@ static int rs_memctl_make_vm_instance(struct vmproc *new_vm_vmp)
 	if(r != OK) {
 		return r;
 	}
+
+	pt_assert(&this_vm_vmp->vm_pt);
+	pt_assert(&new_vm_vmp->vm_pt);
 
 	return OK;
 }

@@ -783,6 +783,7 @@ int map_pin_memory(struct vmproc *vmp)
 	region_iter iter;
 	region_start_iter_least(&vmp->vm_regions_avl, &iter);
 	/* Scan all memory regions. */
+	pt_assert(&vmp->vm_pt);
 	while((vr = region_get_iter(&iter))) {
 		/* Make sure region is mapped to physical memory and writable.*/
 		r = map_handle_memory(vmp, vr, 0, vr->length, 1, NULL, 0, 0);
@@ -791,6 +792,7 @@ int map_pin_memory(struct vmproc *vmp)
 		}
 		region_incr_iter(&iter);
 	}
+	pt_assert(&vmp->vm_pt);
 	return OK;
 }
 
