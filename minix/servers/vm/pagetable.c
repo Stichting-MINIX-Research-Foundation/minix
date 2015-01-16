@@ -856,11 +856,6 @@ int pt_writemap(struct vmproc * vmp,
 		 */
 		assert(pt->pt_pt[pde]);
 
-#if SANITYCHECKS
-		/* We don't expect to overwrite a page. */
-		if(!(writemapflags & (WMF_OVERWRITE|WMF_VERIFY)))
-			assert(!(pt->pt_pt[pde][pte] & ARCH_VM_PTE_PRESENT));
-#endif
 		if(writemapflags & (WMF_WRITEFLAGSONLY|WMF_FREE)) {
 #if defined(__i386__)
 			physaddr = pt->pt_pt[pde][pte] & ARCH_VM_ADDR_MASK;
@@ -1072,12 +1067,28 @@ void pt_allocate_kernel_mapped_pagetables(void)
 	}
 }
 
+static void pt_copy(pt_t *dst, pt_t *src)
+{
+	int pde;
+	for(pde=0; pde < kern_start_pde; pde++) {
+		if(!(src->pt_dir[pde] & ARCH_VM_PDE_PRESENT)) {
+			continue;
+		}
+		assert(!(src->pt_dir[pde] & ARCH_VM_BIGPAGE));
+		if(!src->pt_pt[pde]) { panic("pde %d empty\n", pde); }
+		if(pt_ptalloc(dst, pde, 0) != OK)
+			panic("pt_ptalloc failed");
+		memcpy(dst->pt_pt[pde], src->pt_pt[pde],
+			ARCH_VM_PT_ENTRIES * sizeof(*dst->pt_pt[pde]));
+	}
+}
+
 /*===========================================================================*
  *                              pt_init                                      *
  *===========================================================================*/
 void pt_init(void)
 {
-        pt_t *newpt;
+        pt_t *newpt, newpt_dyn;
         int s, r, p;
 	phys_bytes phys;
 	vir_bytes sparepages_mem;
@@ -1307,12 +1318,29 @@ void pt_init(void)
 	 * pages though, as the physical addresses will change on liveupdate. So we
 	 * re-do part of the initialization now with purely dynamically allocated
 	 * memory. First throw out the static pool.
+	 *
+	 * Then allocate the kernel-shared-pagetables and VM pagetables with dynamic
+	 * memory.
 	 */
 
 	alloc_cycle();                          /* Make sure allocating works */
 	while(vm_getsparepage(&phys)) ;		/* Use up all static pages */
 	alloc_cycle();                          /* Refill spares with dynamic */
 	pt_allocate_kernel_mapped_pagetables(); /* Reallocate in-kernel pages */
+	pt_bind(newpt, &vmproc[VM_PROC_NR]);    /* Recalculate */
+	pt_mapkernel(newpt);                    /* Rewrite pagetable info */
+
+	/* Flush TLB just in case any of those mappings have been touched */
+	if((sys_vmctl(SELF, VMCTL_FLUSHTLB, 0)) != OK) {
+		panic("VMCTL_FLUSHTLB failed");
+	}
+
+	/* Recreate VM page table with dynamic-only allocations */
+	memset(&newpt_dyn, 0, sizeof(newpt_dyn));
+	pt_new(&newpt_dyn);
+	pt_copy(&newpt_dyn, newpt);
+	memcpy(newpt, &newpt_dyn, sizeof(*newpt));
+
 	pt_bind(newpt, &vmproc[VM_PROC_NR]);    /* Recalculate */
 	pt_mapkernel(newpt);                    /* Rewrite pagetable info */
 
