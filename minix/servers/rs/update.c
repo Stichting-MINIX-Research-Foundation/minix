@@ -266,6 +266,7 @@ int sys_upd_flags;
   /* Swap slots here as well. */
   pid = src_rp->r_pid;
   endpoint = src_rpub->endpoint;
+
   swap_slot(&src_rp, &dst_rp);
 
   /* Reassign pids and endpoints. */
@@ -275,6 +276,12 @@ int sys_upd_flags;
   dst_rp->r_pid = pid;
   dst_rp->r_pub->endpoint = endpoint;
   rproc_ptr[_ENDPOINT_P(dst_rp->r_pub->endpoint)] = dst_rp;
+
+  /* Update in-RS priv structs */
+  if ((r = sys_getpriv(&src_rp->r_priv, src_rp->r_pub->endpoint)) != OK)
+    panic("RS: update: could not update RS copies of priv of src: %d\n", r);
+  if ((r = sys_getpriv(&dst_rp->r_priv, dst_rp->r_pub->endpoint)) != OK)
+    panic("RS: update: could not update RS copies of priv of dst: %d\n", r);
 
   /* Adjust input pointers. */
   *src_rpp = src_rp;
