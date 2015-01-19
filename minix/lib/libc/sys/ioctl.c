@@ -39,7 +39,7 @@ static void rewrite_i2c_minix_to_netbsd(i2c_ioctl_exec_t *out,
 	minix_i2c_ioctl_exec_t *in)
 {
   /* the only field that changes is iie_buf, everything else is the same */
-  if (in->iie_buflen > 0 && in->iie_buf != NULL) {
+  if (in->iie_buflen > 0 ) {
 	memcpy(out->iie_buf, in->iie_buf, in->iie_buflen);
   }
 }
