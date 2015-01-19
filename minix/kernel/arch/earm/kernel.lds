@@ -14,7 +14,7 @@ SECTIONS
 	. = _kern_phys_base;
 	__k_unpaged__kern_unpaged_start = .;
 
-	.unpaged_text ALIGN(4096) : { unpaged_*.o(.text) }
+	.unpaged_text ALIGN(4096) : { unpaged_*.o(.startup); unpaged_*.o(.text) }
 	.unpaged_data ALIGN(4096) : { unpaged_*.o(.data .rodata*) }
 	__k_unpaged__kern_unpaged_edata = .;
 

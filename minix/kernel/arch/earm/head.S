@@ -18,7 +18,7 @@
 
 #include "arch_proto.h" /* K_STACK_SIZE */
 
-.text
+.section .startup
 /*===========================================================================*/
 /*					MINIX				     */
 /*===========================================================================*/
@@ -27,6 +27,7 @@ MINIX:
 /* this is the entry point for the MINIX kernel */
 	b multiboot_init
 
+.text
 multiboot_init:
 	ldr	sp, =load_stack_start	/* make usable stack */
 	mov	fp, #0
