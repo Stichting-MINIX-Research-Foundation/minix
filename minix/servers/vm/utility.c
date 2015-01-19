@@ -242,6 +242,12 @@ int swap_proc_dyn_data(struct vmproc *src_vmp, struct vmproc *dst_vmp,
 			printf("swap_proc_dyn_data: pt_map_in_range failed\n");
 			return r;
 		}
+		r = pt_map_in_range(src_vmp, dst_vmp, VM_STACKTOP, VM_DATATOP);
+		if(r != OK) {
+			printf("swap_proc_dyn_data: pt_map_in_range failed\n");
+			return r;
+		}
+
         }
 
 #if LU_DEBUG
@@ -268,6 +274,28 @@ int swap_proc_dyn_data(struct vmproc *src_vmp, struct vmproc *dst_vmp,
 	 */
 	start_vr = region_search(&dst_vmp->vm_regions_avl, VM_MMAPBASE, AVL_GREATER_EQUAL);
 	end_vr = region_search(&dst_vmp->vm_regions_avl, VM_MMAPTOP, AVL_LESS);
+	if(start_vr) {
+#if LU_DEBUG
+		printf("VM: swap_proc_dyn_data: tranferring memory mapped regions from %d to %d\n",
+			dst_vmp->vm_endpoint, src_vmp->vm_endpoint);
+#endif
+		assert(end_vr);
+		r = map_proc_copy_range(src_vmp, dst_vmp, start_vr, end_vr);
+		if(r != OK) {
+			return r;
+		}
+	}
+
+	/* If the stack is not mapped at the VM_DATATOP, there might be some
+	 * more regions hiding above the stack.  We also have to transfer
+	 * those.
+	 */
+	if (VM_STACKTOP == VM_DATATOP)
+		return OK;
+
+	start_vr = region_search(&dst_vmp->vm_regions_avl, VM_STACKTOP, AVL_GREATER_EQUAL);
+	end_vr = region_search(&dst_vmp->vm_regions_avl, VM_DATATOP, AVL_LESS);
+
 	if(start_vr) {
 #if LU_DEBUG
 		printf("VM: swap_proc_dyn_data: tranferring memory mapped regions from %d to %d\n",
