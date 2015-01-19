@@ -162,7 +162,9 @@ static uint32_t net_mask(struct in_addr);
 #endif
 
 static struct timespec __res_conf_time;
+#if !defined(__minix)
 static const struct timespec ts = { 0, 0 };
+#endif
 
 /*
  * Resolver state default settings.

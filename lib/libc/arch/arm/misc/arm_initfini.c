@@ -58,7 +58,9 @@ void __section(".text.startup")
 _libc_aapcs_init(void)
 {
 	if (!_libc_aapcs_initialized) {
+#if !defined(__minix)
 		size_t len = sizeof(_libc_arm_fpu_present);
+#endif
 		_libc_aapcs_initialized = true;
 #if !defined(__minix)
 		(void)sysctlbyname("machdep.fpu_present",
