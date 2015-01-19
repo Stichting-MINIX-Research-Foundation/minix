@@ -57,7 +57,7 @@ init_inodes(unsigned int inodes, struct inode_stat * stat,
 	}
 
 #if DEBUG
-	printf("VTREEFS: allocated %d+%d+%d bytes\n",
+	printf("VTREEFS: allocated %zu+%zu+%zu bytes\n",
 	    nr_inodes * sizeof(inode[0]),
 	    nr_inodes * sizeof(parent_name_head[0]),
 	    nr_inodes * sizeof(parent_index_head[0]));
