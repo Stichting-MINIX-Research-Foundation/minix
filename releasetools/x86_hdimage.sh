@@ -199,5 +199,5 @@ then
 	echo "CD image at `pwd`/${IMG}"
 else
 	echo "To boot this image on kvm:"
-	echo "cd ${MODDIR} && qemu-system-i386 -display none -serial stdio -kernel kernel -append \"console=tty00 rootdevname=c0d0p1\" -initrd \"${mods}\" -hda `pwd`/${IMG} --enable-kvm"
+	echo "cd ${MODDIR} && qemu-system-i386 --enable-kvm -m 256 -kernel kernel -append \"rootdevname=c0d0p1\" -initrd \"${mods}\" -hda `pwd`/${IMG}"
 fi

@@ -290,15 +290,13 @@ function run_cmd {
 
 function run {
     if [ "$HYPER" == "" ]; then
-        if which kvm2 > /dev/null; then
-            HYPER=kvm
-        elif [ -e /dev/kvm ]; then
+        if [ -e /dev/kvm ]; then
             HYPER="qemu-system-i386 --enable-kvm"
         else
             HYPER=qemu-system-i386
         fi
     fi
-    opts="-hda $IMAGE"
+    opts="-m 256 -hda $IMAGE"
     append="$APPEND rootdevname=c0d0p1"
     [ ! -f $DISK ] || opts="$opts -hdb $DISK"
     if [ "$OUT" == "F" ]; then
