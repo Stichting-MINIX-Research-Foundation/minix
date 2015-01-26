@@ -130,7 +130,7 @@ service_get_policies(struct policies * pol, index_t slot)
 		{ .label = "rs", .policy_str = "restart" },
 		{ .label = "sched", .policy_str = "restart" },
 		{ .label = "vfs", .policy_str = "restart" },
-		{ .label = "vm", .policy_str = "" },
+		{ .label = "vm", .policy_str = "restart" },
 		//{ .label = "", .policy_str = "" },
 	};
 

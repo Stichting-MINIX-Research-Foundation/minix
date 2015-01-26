@@ -70,6 +70,31 @@ wait_for_service() {
 }
 
 #######################################################################
+# Service management routines
+#######################################################################
+prepare_service() {
+	local label service
+
+	service=$1
+	label=$2
+
+	flags=$(get_value flags ${service})
+	echo $flags | grep -q 'r' || return 0
+	echo $flags | grep -q 'R' && return 0
+
+	service clone $label
+	return 1
+}
+
+cleanup_service() {
+	local label
+
+	label=$1
+
+	service unclone $label
+}
+
+#######################################################################
 # POLICY: restart
 #######################################################################
 POLICIES="${POLICIES} restart"
@@ -91,7 +116,7 @@ pol_restart() {
 	endpoint_post=$(get_value endpoint ${service})
 
 	if [ ${restarts_post} -gt ${restarts_pre} \
-	    -a ${endpoint_post} -eq ${endpoint_pre} ]
+		-a ${endpoint_post} -eq ${endpoint_pre} ]
 	then
 		echo ok
 	else
@@ -124,7 +149,7 @@ pol_reset() {
 	# is a slight chance that it will actualy stay the same, and fail
 	# the test.
 	if [ ${restarts_post} -gt ${restarts_pre} \
-	    -a ${endpoint_post} -ne ${endpoint_pre} ]
+		-a ${endpoint_post} -ne ${endpoint_pre} ]
 	then
 		echo ok
 	else
@@ -133,7 +158,7 @@ pol_reset() {
 }
 
 #######################################################################
-# Live update test
+# Live update tests
 #######################################################################
 lu_test_one() {
 	local label=$1
@@ -146,7 +171,6 @@ lu_test_one() {
 	service ${lu_opts} update ${prog} -label ${label} -maxtime ${lu_maxtime} -state ${lu_state}
 	if [ $? -ne $result ]
 	then
-		echo not ok
 		return 1
 	else
 		return 0
@@ -165,16 +189,32 @@ lu_test() {
 	endpoint_pre=$(get_value endpoint ${service})
 
 	lu_test_one ${label} self 0 || return
-	if ! echo "vm pm vfs rs" | grep -q ${label}
+
+	# Test live update "prepare only"
+	if ! echo "pm rs vfs vm" | grep -q ${label}
 	then
 		lu_opts="-o" lu_test_one ${label} self 0 || return
 	fi
-	lu_opts="-x" lu_test_one ${label} self 200 || return
-	if ! echo "rs" | grep -q ${label}
+
+	# Test live update initialization crash
+	if ! echo "vm" | grep -q ${label}
+	then
+		lu_opts="-x" lu_test_one ${label} self 200 || return
+	fi
+
+	# Test live update initialization failure
+	if ! echo "rs vm" | grep -q ${label}
 	then
 		lu_opts="-y" lu_test_one ${label} self 78 || return
+	fi
+
+	# Test live update initialization timeout
+	if ! echo "rs vm" | grep -q ${label}
+	then
 		lu_maxtime="1HZ" lu_opts="-z" lu_test_one ${label} self 4 || return
 	fi
+
+	# Test live update from SEF_LU_STATE_EVAL state
 	lu_maxtime="1HZ" lu_state="5" lu_test_one ${label} self 4 || return
 
 	restarts_post=$(get_value restarts ${service})
@@ -182,7 +222,7 @@ lu_test() {
 
 	# Make sure endpoint and restarts are preserved
 	if [ ${restarts_post} -eq ${restarts_pre} \
-	    -a ${endpoint_post} -eq ${endpoint_pre} ]
+		-a ${endpoint_post} -eq ${endpoint_pre} ]
 	then
 		echo ok
 	else
@@ -196,7 +236,8 @@ multi_lu_test_one() {
 	local labels="$*"
 	local ret=0
 	local index=0
-	local once_index=1
+	local once_index=2
+	local force_unsafe=""
 
 	lu_opts=${lu_opts:-}
 	lu_maxtime=${lu_maxtime:-3HZ}
@@ -207,13 +248,26 @@ multi_lu_test_one() {
 
 	for label in ${labels}
 	do
+		index=`expr $index + 1`
+		force_unsafe=""
+
+		if [ "x$label" = "xvm" ]
+		then
+			# VM doesn't support safe LU, nor rollbacks for now
+			force_unsafe="-u"
+
+			if echo "${lu_opts_once}" | grep -q -E -- '-(x|y|z)'
+			then
+				continue
+			fi
+		fi
+
 		if [ $index -eq $once_index ]
 		then
-			service ${lu_opts_once} -q update self -label ${label} -maxtime ${lu_maxtime_once} -state ${lu_state_once} || ret=1
+			service ${lu_opts_once} ${force_unsafe} -q update self -label ${label} -maxtime ${lu_maxtime_once} -state ${lu_state_once} || ret=1
 		else
-			service ${lu_opts} -q update self -label ${label} -maxtime ${lu_maxtime} -state ${lu_state} || ret=1
+			service ${lu_opts} ${force_unsafe} -q update self -label ${label} -maxtime ${lu_maxtime} -state ${lu_state} || ret=1
 		fi
-		index=`expr $index + 1`
 	done
 	service sysctl upd_run
 	if [ $? -ne $result ]
@@ -237,31 +291,6 @@ multi_lu_test() {
 	lu_maxtime_once="1HZ" lu_state_once="5" multi_lu_test_one 4 ${labels} || return
 
 	echo ok
-}
-
-#######################################################################
-# Service management routines
-#######################################################################
-prepare_service() {
-	local label service
-
-	service=$1
-	label=$2
-
-	flags=$(get_value flags ${service})
-	echo $flags | grep -q 'r' || return 0
-	echo $flags | grep -q 'R' && return 0
-
-	service clone $label
-	return 1
-}
-
-cleanup_service() {
-	local label
-
-	label=$1
-
-	service unclone $label
 }
 
 #######################################################################
