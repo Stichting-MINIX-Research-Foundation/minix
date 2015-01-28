@@ -105,15 +105,18 @@ fi
 ########################
 # Build Minix
 ########################
+export BUILDVARS=$(echo "${BUILDVARS} -V MKBITCODE=yes"| sed -e 's,-V MKMAGIC=yes,-V DBG=-g -V STRIPFLAG=-s -V CPPFLAGS=-D_MINIX_MAGIC=1,')
+
 if [ "${REBUILD_MINIX}" == "yes" ]; then
 
 	echo "Building Minix..."
 	echo "CC:$CC"
 	echo "CXX:$CXX"
 	echo "JOBS:$JOBS"
+	echo "BUILDVARS:$BUILDVARS"
 	echo 
 	cd ${MINIX_ROOT}
-	BUILDVARS="-V MKBITCODE=yes" ./releasetools/x86_hdimage.sh || EXITCODE=1
+	./releasetools/x86_hdimage.sh || EXITCODE=1
 	cd ${MYPWD}
 	if [ "$EXITCODE" != "0" ]; then
         	echo "Error: Failed building Minix source code."

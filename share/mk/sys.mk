@@ -61,7 +61,11 @@ DBG?=	-O1 -fgcse -fstrength-reduce -fgcse-after-reload
 .else
 DBG?=	-O2
 .endif
+.if !defined(__MINIX)
 CFLAGS?=	${DBG}
+.else
+CFLAGS+=	${DBG}
+.endif # !defined(__MINIX)
 LDFLAGS?=
 COMPILE.c?=	${CC} ${CFLAGS} ${CPPFLAGS} -c
 LINK.c?=	${CC} ${CFLAGS} ${CPPFLAGS} ${LDFLAGS}
