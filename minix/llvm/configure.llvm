@@ -86,17 +86,7 @@ fi
 ########################
 
 if [ "${GEN_GOLD_PLUGIN}" == "yes" ] && [ -f "${MYPWD}/.gold_generated" ]; then
-	echo "It is found that Gold plugin has already been generated. Would you like to re-generate? [y | n]"
-	if [ "$INTERACTIVE" == "no" ]; then
-		response=n
-	else
-		read response
-	fi
-	if [ "y" == "$response" ] || [ "Y" == "$response" ]; then
-		echo "Gold shall be regenerated."
-	else
-		GEN_GOLD_PLUGIN="no"
-	fi
+	GEN_GOLD_PLUGIN="no"
 fi
 
 if [ "${GEN_GOLD_PLUGIN}" == "yes" ]; then
