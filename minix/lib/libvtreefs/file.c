@@ -223,7 +223,7 @@ fs_getdents(ino_t ino_nr, struct fsdriver_data * data, size_t bytes,
 
 	fsdriver_dentry_init(&fsdentry, data, bytes, buf, bufsize);
 
-	do {
+	for (;;) {
 		/* Determine which inode and name to use for this entry. */
 		pos = (*posp)++;
 
@@ -287,7 +287,9 @@ fs_getdents(ino_t ino_nr, struct fsdriver_data * data, size_t bytes,
 		    IFTODT(child->i_stat.mode));
 		if (r < 0)
 			return r;
-	} while (r > 0);
+		if (r == 0)
+			break;
+	}
 
 	return fsdriver_dentry_finish(&fsdentry);
 }

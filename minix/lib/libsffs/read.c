@@ -98,7 +98,7 @@ ssize_t do_getdents(ino_t ino_nr, struct fsdriver_data *data, size_t bytes,
    * the "." entry, the second position is for the ".." entry, and the next
    * position numbers each represent a file in the directory.
    */
-  do {
+  for (;;) {
 	/* Determine which inode and name to use for this entry.
 	 * We have no idea whether the host will give us "." and/or "..",
 	 * so generate our own and skip those from the host.
@@ -165,7 +165,9 @@ ssize_t do_getdents(ino_t ino_nr, struct fsdriver_data *data, size_t bytes,
 
 	if (r < 0)
 		return r;
-  } while (r > 0);
+	if (r == 0)
+		break;
+  }
 
   return fsdriver_dentry_finish(&fsdentry);
 }
