@@ -68,7 +68,7 @@ SUBDIR+= pkgconfig
 .include "${.CURDIR}/db/Makefile.inc"
 .include "${.CURDIR}/citrus/Makefile.inc"
 .include "${.CURDIR}/compat-43/Makefile.inc"
-.if ${HAVE_LIBGCC} == "no"
+.if ${HAVE_LIBGCC} == "no" || defined(__MINIX)
 .include "${.CURDIR}/compiler_rt/Makefile.inc"
 .endif
 .include "${.CURDIR}/dlfcn/Makefile.inc"
@@ -89,7 +89,7 @@ SUBDIR+= pkgconfig
 .include "${.CURDIR}/net/Makefile.inc"
 .include "${.CURDIR}/nameser/Makefile.inc"
 .include "${.CURDIR}/nls/Makefile.inc"
-.if (${MACHINE_ARCH} != "alpha") && (${ARCHSUBDIR} != "sparc64")
+.if (${MACHINE_ARCH} != "alpha") && (${ARCHSUBDIR} != "sparc64") && !defined(__MINIX)
 .include "${.CURDIR}/quad/Makefile.inc"
 .endif
 .if (${USE_LIBTRE} == "yes")
@@ -116,9 +116,10 @@ SUBDIR+= pkgconfig
 .include "${.CURDIR}/tls/Makefile.inc"
 .endif
 .include "${.CURDIR}/sys/Makefile.inc"
-.if ${HAVE_LIBGCC} == "no"
+.if ${HAVE_LIBGCC} == "no" && ${MACHINE_ARCH} != "earm" && defined(__MINIX)
+# Currently unavailable on minix/arm - BJG
 .include "${NETBSDSRCDIR}/sys/lib/libunwind/Makefile.inc"
-.endif
+.endif # ${HAVE_LIBGCC} == "no" && ${MACHINE_ARCH} != "earm" && defined(__MINIX)
 .include "${.CURDIR}/uuid/Makefile.inc"
 .if (${MKYP} != "no")
 .include "${.CURDIR}/yp/Makefile.inc"

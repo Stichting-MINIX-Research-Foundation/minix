@@ -14,6 +14,8 @@ SRCS=	buf.c clock.c inet.c inet_config.c \
 
 WARNS=
 
+NOCLANGERROR=yes
+
 DPADD+=	${LIBCHARDRIVER} ${LIBSYS}
 LDADD+=	-lchardriver -lsys
 

@@ -42,10 +42,11 @@ void rproc_dmp()
   	rpub = &rprocpub[i];
   	if (! (rp->r_flags & RS_IN_USE)) continue;
   	if (++n > 22) break;
-	printf("%13s %9d %5d %6s %4d %4ld %8lu %5dx %s",
+	printf("%13s %9d %5d %6s %4d %4lu %8u %5dx %s",
   		rpub->label, rpub->endpoint, rp->r_pid,
 		s_flags_str(rp->r_flags, rpub->sys_flags), rpub->dev_nr,
-		rp->r_period, rp->r_alive_tm, rp->r_restarts,
+		(unsigned long) rp->r_period,
+		(unsigned int) rp->r_alive_tm, rp->r_restarts,
 		rp->r_args
   	);
 	printf("\n");

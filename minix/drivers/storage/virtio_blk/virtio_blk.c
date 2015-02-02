@@ -439,7 +439,7 @@ virtio_blk_device_intr(void)
 	thread_id_t *tid;
 
 	/* Multiple requests might have finished */
-	while (!virtio_from_queue(blk_dev, 0, (void**)&tid))
+	while (!virtio_from_queue(blk_dev, 0, (void**)&tid, NULL))
 		blockdriver_mt_wakeup(*tid);
 }
 

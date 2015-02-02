@@ -163,7 +163,7 @@ size_t seg_bytes           /* how much is to be transferred? */
   if((r= sys_datacopy(SELF, ((vir_bytes)execi->hdr)+off,
   	execi->proc_e, seg_addr, seg_bytes)) != OK) {
 	printf("RS: exec read_seg: copy 0x%x bytes into %i at 0x%08lx failed: %i\n",
-		seg_bytes, execi->proc_e, seg_addr, r);
+		(int) seg_bytes, execi->proc_e, seg_addr, r);
   }
   return r;
 }

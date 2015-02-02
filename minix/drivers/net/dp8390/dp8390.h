@@ -173,44 +173,18 @@ typedef struct dp_rcvhdr
 struct dpeth;
 struct iovec_dat;
 struct iovec_dat_s;
-typedef void(*dp_initf_t) (struct dpeth *dep);
-typedef void(*dp_stopf_t) (struct dpeth *dep);
-typedef void(*dp_user2nicf_t) (struct dpeth *dep, struct iovec_dat
-	*iovp, vir_bytes offset, int nic_addr, vir_bytes count);
-typedef void(*dp_user2nicf_s_t) (struct dpeth *dep, struct iovec_dat_s
-	*iovp, vir_bytes offset, int nic_addr, vir_bytes count);
-typedef void(*dp_nic2userf_t) (struct dpeth *dep, int nic_addr, struct
-	iovec_dat *iovp, vir_bytes offset, vir_bytes count);
-typedef void(*dp_nic2userf_s_t) (struct dpeth *dep, int nic_addr, struct
-	iovec_dat_s *iovp, vir_bytes offset, vir_bytes count);
-#if 0
-typedef void(*dp_getheaderf_t) (struct dpeth *dep, int page, struct
-	dp_rcvhdr *h, u16_t *eth_type);
-#endif
-typedef void(*dp_getblock_t) (struct dpeth *dep, int page, size_t
+typedef void (*dp_initf_t)(struct dpeth *dep);
+typedef void (*dp_stopf_t)(struct dpeth *dep);
+typedef void (*dp_user2nicf_s_t)(struct dpeth *dep,
+	struct netdriver_data *data, int nic_addr, size_t offset,
+	size_t count);
+typedef void (*dp_nic2userf_s_t)(struct dpeth *dep,
+	struct netdriver_data *data, int nic_addr, size_t offset,
+	size_t count);
+typedef void (*dp_getblock_t)(struct dpeth *dep, int page, size_t
 	offset, size_t size, void *dst);
 
-/* iovectors are handled IOVEC_NR entries at a time. */
-#define IOVEC_NR	16
-
 typedef int irq_hook_t;
-
-typedef struct iovec_dat
-{
-  iovec_t iod_iovec[IOVEC_NR];
-  int iod_iovec_s;
-  endpoint_t iod_proc_nr;
-  vir_bytes iod_iovec_addr;
-} iovec_dat_t;
-
-typedef struct iovec_dat_s
-{
-  iovec_s_t iod_iovec[IOVEC_NR];
-  int iod_iovec_s;
-  int iod_proc_nr;
-  cp_grant_id_t iod_grant;
-  vir_bytes iod_iovec_offset;
-} iovec_dat_s_t;
 
 #define SENDQ_NR	2	/* Maximum size of the send queue */
 #define SENDQ_PAGES	6	/* 6 * DP_PAGESIZE >= 1514 bytes */
@@ -250,10 +224,8 @@ typedef struct dpeth
 	int de_startpage;
 	int de_stoppage;
 
-#if ENABLE_PCI
 	/* PCI config */
 	char de_pci;			/* TRUE iff PCI device */
-#endif
 
 	/* Do it yourself send queue */
 	struct sendq
@@ -268,14 +240,7 @@ typedef struct dpeth
 
 	/* Fields for internal use by the dp8390 driver. */
 	int de_flags;
-	int de_mode;
 	eth_stat_t de_stat;
-	iovec_dat_s_t de_read_iovec_s;
-	iovec_dat_s_t de_write_iovec_s;
-	iovec_dat_s_t de_tmp_iovec_s;
-	vir_bytes de_read_s;
-	endpoint_t de_client;
-	message de_sendmsg;
 	dp_user2nicf_s_t de_user2nicf_s; 
 	dp_nic2userf_s_t de_nic2userf_s; 
 	dp_getblock_t de_getblockf; 
@@ -283,24 +248,10 @@ typedef struct dpeth
 
 #define DEI_DEFAULT	0x8000
 
-#define DEF_EMPTY	0x000
-#define DEF_PACK_SEND	0x001
-#define DEF_PACK_RECV	0x002
-#define DEF_SEND_AVAIL	0x004
-#define DEF_READING	0x010
-#define DEF_PROMISC	0x040
-#define DEF_MULTI	0x080
-#define DEF_BROAD	0x100
-#define DEF_ENABLED	0x200
-#define DEF_STOPPED	0x400
+#define DEF_EMPTY	0x00
+#define DEF_STOPPED	0x01
 
-#define DEM_DISABLED	0x0
-#define DEM_SINK	0x1
-#define DEM_ENABLED	0x2
-
-#if !__minix_vmd
-#define debug		0	/* Standard Minix lacks debug variable */
-#endif
+#define debug		0
 
 /*
  * $PchId: dp8390.h,v 1.10 2005/02/10 17:26:06 philip Exp $

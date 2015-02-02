@@ -2,8 +2,8 @@
 PROG=	orinoco
 SRCS=	orinoco.c hermes.c
 
-DPADD+=	${LIBNETDRIVER} ${LIBSYS} ${LIBTIMERS}
-LDADD+=	-lnetdriver -lsys -ltimers
+DPADD+=	${LIBNETDRIVER} ${LIBSYS}
+LDADD+=	-lnetdriver -lsys
 
 CPPFLAGS.orinoco.c+=	-I${NETBSDSRCDIR}/minix
 

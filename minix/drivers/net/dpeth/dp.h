@@ -51,7 +51,7 @@
 
 #define NOT(x) (~(x))
 
-#if debug == 1
+#if VERBOSE == 1
 #	define DEBUG(statm) statm
 #else
 #	define DEBUG(statm)
@@ -70,26 +70,19 @@ typedef struct _buff_t {	/* Receive/Transmit buffer header */
 } buff_t;
 
 struct dpeth;
-struct iovec_dat;
-typedef void (*dp_eth_t) (struct dpeth *);
-typedef void (*dp_send_recv_t) (struct dpeth *, int, int);
+typedef void (*dp_eth_t)(struct dpeth *);
+typedef int (*dp_send_t)(struct dpeth *, struct netdriver_data *, size_t);
+typedef ssize_t (*dp_recv_t)(struct dpeth *, struct netdriver_data *, size_t);
 
 #if ENABLE_DP8390 == 1
-typedef void (*dp_user2nicf_t) (struct dpeth *, int, int);
-typedef void (*dp_nic2userf_t) (struct dpeth *, int, int);
-typedef void (*dp_getblock_t) (struct dpeth *, u16_t, int, void *);
+typedef void (*dp_user2nicf_t)(struct dpeth *, int, struct netdriver_data *,
+	size_t);
+typedef void (*dp_nic2userf_t)(struct dpeth *, int, struct netdriver_data *,
+	size_t);
+typedef void (*dp_getblock_t)(struct dpeth *, u16_t, int, void *);
 #endif
 
 #define SENDQ_NR	2	/* Size of the send queue	 */
-#define IOVEC_NR	16	/* Number of IOVEC entries at a time */
-
-typedef struct iovec_dat_s {
-  iovec_s_t iod_iovec[IOVEC_NR];
-  int iod_iovec_s;
-  endpoint_t iod_proc_nr;
-  cp_grant_id_t iod_grant;
-  vir_bytes iod_iovec_offset;
-} iovec_dat_s_t;
 
 typedef struct dpeth {
   /* The de_base_port field is the starting point of the probe. The
@@ -109,7 +102,6 @@ typedef struct dpeth {
   port_t de_data_port;		/* For boards using Prog. I/O for xmit/recv */
 
   int de_irq;
-  int de_int_pending;
   int de_hook;			/* interrupt hook at kernel */
 
   char de_name[8];
@@ -117,7 +109,7 @@ typedef struct dpeth {
 #define DEI_DEFAULT	0x8000
 
   phys_bytes de_linmem;		/* For boards using shared memory */
-  vir_bytes de_memoffs;
+  char *de_locmem;		/* Locally mapped (virtual) address */
   int de_ramsize;		/* Size of on board memory	 */
   int de_offset_page;		/* Offset of shared memory page	 */
 
@@ -129,8 +121,8 @@ typedef struct dpeth {
   dp_eth_t de_getstatsf;
   dp_eth_t de_dumpstatsf;
   dp_eth_t de_interruptf;
-  dp_send_recv_t de_recvf;
-  dp_send_recv_t de_sendf;
+  dp_recv_t de_recvf;
+  dp_send_t de_sendf;
 
   ether_addr_t de_address;	/* Ethernet Address */
   eth_stat_t de_stat;		/* Ethernet Statistics */
@@ -141,35 +133,12 @@ typedef struct dpeth {
 
   int de_flags;			/* Send/Receive mode (Configuration) */
 
-#define DEF_EMPTY	0x0000
-#define DEF_READING	0x0001
-#define DEF_RECV_BUSY	0x0002
-#define DEF_ACK_RECV	0x0004
-#define DEF_SENDING	0x0010
-#define DEF_XMIT_BUSY	0x0020
-#define DEF_ACK_SEND	0x0040
-#define DEF_PROMISC	0x0100
-#define DEF_MULTI	0x0200
-#define DEF_BROAD	0x0400
-#define DEF_ENABLED	0x2000
-#define DEF_STOPPED	0x4000
+#define DEF_EMPTY	0x00
+#define DEF_XMIT_BUSY	0x01
+#define DEF_PROMISC	0x02
+#define DEF_MULTI	0x04
+#define DEF_BROAD	0x08
 
-  int de_mode;			/* Status of the Interface */
-
-#define DEM_DISABLED	0x0000
-#define DEM_SINK	0x0001
-#define DEM_ENABLED	0x0002
-
-  /* Temporary storage for RECV/SEND requests */
-  iovec_dat_s_t de_read_iovec;
-  iovec_dat_s_t de_write_iovec;
-  vir_bytes de_read_s;
-  vir_bytes de_send_s;
-  int de_client;
-/*
-  message de_sendmsg;
-  iovec_dat_t de_tmp_iovec;
-*/
 #if ENABLE_DP8390 == 1
   /* For use by NS DP8390 driver */
   port_t de_dp8390_port;
@@ -203,8 +172,6 @@ typedef struct dpeth {
   /* For use by 3Com Etherlink (3c501 and 3c509) driver */
   buff_t *de_recvq_head;
   buff_t *de_recvq_tail;
-  buff_t *de_xmitq_head;
-  buff_t *de_xmitq_tail;
   u16_t de_recv_mode;
   clock_t de_xmit_start;
 #endif
@@ -215,29 +182,23 @@ typedef struct dpeth {
  *	Function definitions
  */
 
-/* dp.c */
-void dp_next_iovec(iovec_dat_s_t * iovp);
-
 /* devio.c */
 #if defined USE_IOPL
 #include <machine/portio.h>
 #else
 unsigned int inb(unsigned short int);
 unsigned int inw(unsigned short int);
-void insb(unsigned short int, endpoint_t, void *, int);
-void insw(unsigned short int, int, void *, int);
+void insb(unsigned short int, void *, int);
+void insw(unsigned short int, void *, int);
 void outb(unsigned short int, unsigned long);
 void outw(unsigned short int, unsigned long);
-void outsb(unsigned short int, endpoint_t, void *, int);
-void outsw(unsigned short int, int, void *, int);
+void outsb(unsigned short int, void *, int);
 #endif
 
 /* netbuff.c */
 void *alloc_buff(dpeth_t *, int);
 void free_buff(dpeth_t *, void *);
 void init_buff(dpeth_t *, buff_t **);
-void mem2user(dpeth_t *, buff_t *);
-void user2mem(dpeth_t *, buff_t *);
 
 /* 3c501.c */
 #if ENABLE_3C501 == 1
@@ -273,9 +234,5 @@ int wdeth_probe(dpeth_t * dep);
 #else
 #define wdeth_probe(x) (0)
 #endif
-
-#define lock()	 (++dep->de_int_pending,sys_irqdisable(&dep->de_hook))
-#define unlock() do{int i=(--dep->de_int_pending)?0:sys_irqenable(&dep->de_hook);(void) i;}while(0)
-#define milli_delay(t) tickdelay(1)
 
 /** dp.h **/

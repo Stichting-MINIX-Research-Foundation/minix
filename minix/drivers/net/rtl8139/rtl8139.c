@@ -16,7 +16,7 @@
 
 #include "rtl8139.h"
 
-re_t re_state;
+static re_t re_state;
 
 static int re_instance;
 
@@ -64,225 +64,114 @@ static void my_outl(u16_t port, u32_t value) {
 #define rl_outw(port, offset, value)	(my_outw((port) + (offset), (value)))
 #define rl_outl(port, offset, value)	(my_outl((port) + (offset), (value)))
 
-static void rl_init(message *mp);
-static void rl_pci_conf(void);
-static int rl_probe(re_t *rep, int skip);
-static void rl_conf_hw(re_t *rep);
+static int rl_init(unsigned int instance, ether_addr_t *addr);
+static int rl_probe(re_t *rep, unsigned int skip);
 static void rl_init_buf(re_t *rep);
-static void rl_init_hw(re_t *rep);
+static void rl_init_hw(re_t *rep, ether_addr_t *addr);
 static void rl_reset_hw(re_t *rep);
-static void rl_confaddr(re_t *rep);
+static void rl_confaddr(re_t *rep, ether_addr_t *addr);
+static void rl_stop(void);
 static void rl_rec_mode(re_t *rep);
-static void rl_readv_s(const message *mp, int from_int);
-static void rl_writev_s(const message *mp, int from_int);
+static void rl_mode(unsigned int mode);
+static ssize_t rl_recv(struct netdriver_data *data, size_t max);
+static int rl_send(struct netdriver_data *data, size_t size);
+static void rl_intr(unsigned int mask);
 static void rl_check_ints(re_t *rep);
 static void rl_report_link(re_t *rep);
+#if VERBOSE
 static void mii_print_techab(u16_t techab);
 static void mii_print_stat_speed(u16_t stat, u16_t extstat);
+#endif
 static void rl_clear_rx(re_t *rep);
 static void rl_do_reset(re_t *rep);
-static void rl_getstat_s(message *mp);
-static void reply(re_t *rep);
-static void mess_reply(message *req, message *reply);
-static void check_int_events(void);
-static void do_hard_int(void);
-static void rtl8139_dump(message *m);
+static void rl_stat(eth_stat_t *stat);
+static void rl_other(const message *m_ptr, int ipc_status);
+static void rl_dump(void);
 #if 0
 static void dump_phy(re_t *rep);
 #endif
 static int rl_handler(re_t *rep);
-static void rl_watchdog_f(minix_timer_t *tp);
-static void tell_dev(vir_bytes start, size_t size, int pci_bus, int
+static void rl_alarm(clock_t stamp);
+static void tell_iommu(vir_bytes start, size_t size, int pci_bus, int
 	pci_dev, int pci_func);
 
-/* The message used in the main loop is made global, so that rl_watchdog_f()
- * can change its message type to fake an interrupt message.
- */
-static message m;
-static int int_event_check;		/* set to TRUE if events arrived */
-
-static u32_t system_hz;
-
-/* SEF functions and variables. */
-static void sef_local_startup(void);
-static int sef_cb_init_fresh(int type, sef_init_info_t *info);
-static void sef_cb_signal_handler(int signo);
-EXTERN int sef_cb_lu_prepare(int state);
-EXTERN int sef_cb_lu_state_isvalid(int state);
-EXTERN void sef_cb_lu_state_dump(int state);
+static const struct netdriver rl_table = {
+	.ndr_init	= rl_init,
+	.ndr_stop	= rl_stop,
+	.ndr_mode	= rl_mode,
+	.ndr_recv	= rl_recv,
+	.ndr_send	= rl_send,
+	.ndr_stat	= rl_stat,
+	.ndr_intr	= rl_intr,
+	.ndr_alarm	= rl_alarm,
+	.ndr_other	= rl_other,
+};
 
 /*===========================================================================*
  *				main					     *
  *===========================================================================*/
 int main(int argc, char *argv[])
 {
-	int r;
-	int ipc_status;
 
-	/* SEF local startup. */
 	env_setargs(argc, argv);
-	sef_local_startup();
 
-	while (TRUE)
-	{
-		if ((r= netdriver_receive(ANY, &m, &ipc_status)) != OK)
-			panic("netdriver_receive failed: %d", r);
+	netdriver_task(&rl_table);
 
-		if (is_ipc_notify(ipc_status)) {
-			switch (_ENDPOINT_P(m.m_source)) {
-				case CLOCK:
-					/* 
-					 * Under MINIX, synchronous alarms are
-					 * used instead of watchdog functions.
-					 * The approach is very different: MINIX
-					 * VMD timeouts are handled within the
-					 * kernel (the watchdog is executed by
-					 * CLOCK), and notify() the driver in
-					 * some cases.  MINIX timeouts result in
-					 * a SYN_ALARM message to the driver and
-					 * thus are handled where they should be
-					 * handled. Locally, watchdog functions
-					 * are used again. 
-					 */
-					rl_watchdog_f(NULL);     
-					break;		 
-				case HARDWARE:
-					do_hard_int();
-					if (int_event_check)
-						check_int_events();
-					break ;
-				case TTY_PROC_NR:
-					rtl8139_dump(&m);
-					break;
-				default:
-					panic("illegal notify from: %d",
-					m.m_source);
-			}
-
-			/* done, get nwe message */
-			continue;
-		}
-
-		switch (m.m_type)
-		{
-		case DL_WRITEV_S: rl_writev_s(&m, FALSE);	break;
-		case DL_READV_S: rl_readv_s(&m, FALSE);		break;
-		case DL_CONF:	rl_init(&m);			break;
-		case DL_GETSTAT_S: rl_getstat_s(&m);		break;
-		default:
-			panic("illegal message: %d", m.m_type);
-		}
-	}
+	return 0;
 }
 
 /*===========================================================================*
- *			       sef_local_startup			     *
+ *				rl_intr					     *
  *===========================================================================*/
-static void sef_local_startup()
-{
-  /* Register init callbacks. */
-  sef_setcb_init_fresh(sef_cb_init_fresh);
-  sef_setcb_init_lu(sef_cb_init_fresh);
-  sef_setcb_init_restart(sef_cb_init_fresh);
-
-  /* Register live update callbacks. */
-  sef_setcb_lu_prepare(sef_cb_lu_prepare);
-  sef_setcb_lu_state_isvalid(sef_cb_lu_state_isvalid);
-  sef_setcb_lu_state_dump(sef_cb_lu_state_dump);
-
-  /* Register signal callbacks. */
-  sef_setcb_signal_handler(sef_cb_signal_handler);
-
-  /* Let SEF perform startup. */
-  sef_startup();
-}
-
-/*===========================================================================*
- *		            sef_cb_init_fresh                                *
- *===========================================================================*/
-static int sef_cb_init_fresh(int type, sef_init_info_t *UNUSED(info))
-{
-/* Initialize the rtl8139 driver. */
-	long v;
-#if RTL8139_FKEY
-	int r, fkeys, sfkeys;
-#endif
-
-	system_hz = sys_hz();
-
-	v = 0;
-	(void) env_parse("instance", "d", 0, &v, 0, 255);
-	re_instance = (int) v;
-
-#if RTL8139_FKEY
-	/* Observe some function key for debug dumps. */
-	fkeys = sfkeys = 0; bit_set(sfkeys, 9);
-	if ((r=fkey_map(&fkeys, &sfkeys)) != OK) 
-	    printf("Warning: RTL8139 couldn't observe Shift+F9 key: %d\n",r);
-#endif
-
-	/* Claim buffer memory now. */
-	rl_init_buf(&re_state);
-
-	/* Announce we are up! */
-	netdriver_announce();
-
-	return(OK);
-}
-
-/*===========================================================================*
- *		           sef_cb_signal_handler                             *
- *===========================================================================*/
-static void sef_cb_signal_handler(int signo)
+static void rl_intr(unsigned int __unused mask)
 {
 	re_t *rep;
-
-	/* Only check for termination signal, ignore anything else. */
-	if (signo != SIGTERM) return;
+	int s;
 
 	rep = &re_state;
-	if (rep->re_mode == REM_ENABLED)
-		rl_outb(rep->re_base_port, RL_CR, 0);
 
-	exit(0);
-}
+	/* Run interrupt handler at driver level. */
+	rl_handler(rep);
 
-/*===========================================================================*
- *				check_int_events			     *
- *===========================================================================*/
-static void check_int_events(void) 
-{
-	re_t *rep;
+	/* Reenable interrupts for this hook. */
+	if ((s = sys_irqenable(&rep->re_hook_id)) != OK)
+		printf("RTL8139: error, couldn't enable interrupts: %d\n", s);
 
-	rep= &re_state;
-
-	if (rep->re_mode != REM_ENABLED)
-		return;
-	if (!rep->re_got_int)
-		return;
-	rep->re_got_int= 0;
-	assert(rep->re_flags & REF_ENABLED);
+	/* Perform tasks based on the flagged conditions. */
 	rl_check_ints(rep);
 }
 
 /*===========================================================================*
- *				rtl8139_dump				     *
+ *				rl_other				     *
  *===========================================================================*/
-static void rtl8139_dump(m)
-message *m;			/* pointer to request message */
+static void rl_other(const message *m_ptr, int ipc_status)
+{
+	if (is_ipc_notify(ipc_status) && m_ptr->m_source == TTY_PROC_NR)
+		rl_dump();
+}
+
+/*===========================================================================*
+ *				rl_stop					     *
+ *===========================================================================*/
+static void rl_stop(void)
+{
+	re_t *rep;
+
+	rep = &re_state;
+
+	rl_outb(rep->re_base_port, RL_CR, 0);
+}
+
+/*===========================================================================*
+ *				rl_dump					     *
+ *===========================================================================*/
+static void rl_dump(void)
 {
 	re_t *rep;
 
 	rep= &re_state;
 
 	printf("\n");
-	if (rep->re_mode == REM_DISABLED)
-		printf("Realtek RTL 8139 instance %d is disabled\n",
-			re_instance);
-
-	if (rep->re_mode != REM_ENABLED)
-		return;
-
 	printf("Realtek RTL 8139 statistics of instance %d:\n", re_instance);
 
 	printf("recvErr    :%8ld\t", rep->re_stat.ets_recvErr);
@@ -307,8 +196,6 @@ message *m;			/* pointer to request message */
 
 	printf("OWC        :%8ld\t", rep->re_stat.ets_OWC);
 
-	printf("re_flags = 0x%x\n", rep->re_flags);
-
 	printf("TSAD: 0x%04x, TSD: 0x%08x, 0x%08x, 0x%08x, 0x%08x\n",
 		rl_inw(rep->re_base_port, RL_TSAD),
 		rl_inl(rep->re_base_port, RL_TSD0+0*4),
@@ -322,93 +209,73 @@ message *m;			/* pointer to request message */
 }
 
 /*===========================================================================*
- *				rl_init					     *
+ *				rl_mode					     *
  *===========================================================================*/
-static void rl_init(mp)
-message *mp;
+static void rl_mode(unsigned int mode)
 {
-	static int first_time= 1;
-
 	re_t *rep;
-	message reply_mess;
-
-	if (first_time)
-	{
-		first_time= 0;
-		rl_pci_conf(); /* Configure PCI devices. */
-
-		/* Use a synchronous alarm instead of a watchdog timer. */
-		sys_setalarm(system_hz, 0);
-	}
 
 	rep= &re_state;
-	if (rep->re_mode == REM_DISABLED)
-	{
-		/* This is the default, try to (re)locate the device. */
-		rl_conf_hw(rep);
-		if (rep->re_mode == REM_DISABLED)
-		{
-			/* Probe failed, or the device is configured off. */
-			reply_mess.m_type= DL_CONF_REPLY;
-			reply_mess.m_netdrv_net_dl_conf.stat= ENXIO;
-			mess_reply(mp, &reply_mess);
-			return;
-		}
-		if (rep->re_mode == REM_ENABLED)
-			rl_init_hw(rep);
-#if VERBOSE	/* load silently ... can always check status later */
-		rl_report_link(rep);
-#endif
-	}
 
-	assert(rep->re_mode == REM_ENABLED);
-	assert(rep->re_flags & REF_ENABLED);
-
-	rep->re_flags &= ~(REF_PROMISC | REF_MULTI | REF_BROAD);
-
-	if (mp->m_net_netdrv_dl_conf.mode & DL_PROMISC_REQ)
-		rep->re_flags |= REF_PROMISC;
-	if (mp->m_net_netdrv_dl_conf.mode & DL_MULTI_REQ)
-		rep->re_flags |= REF_MULTI;
-	if (mp->m_net_netdrv_dl_conf.mode & DL_BROAD_REQ)
-		rep->re_flags |= REF_BROAD;
+	rep->re_mode = mode;
 
 	rl_rec_mode(rep);
-
-	reply_mess.m_type = DL_CONF_REPLY;
-	reply_mess.m_netdrv_net_dl_conf.stat = OK;
-	memcpy(reply_mess.m_netdrv_net_dl_conf.hw_addr,
-		rep->re_address.ea_addr,
-		sizeof(reply_mess.m_netdrv_net_dl_conf.hw_addr));
-
-	mess_reply(mp, &reply_mess);
 }
 
 /*===========================================================================*
- *				rl_pci_conf				     *
+ *				rl_init					     *
  *===========================================================================*/
-static void rl_pci_conf()
+static int rl_init(unsigned int instance, ether_addr_t *addr)
 {
+/* Initialize the rtl8139 driver. */
 	re_t *rep;
+#if RTL8139_FKEY
+	int r, fkeys, sfkeys;
+#endif
 
+	/* Initialize driver state. */
 	rep= &re_state;
+	memset(rep, 0, sizeof(*rep));
 
+	rep->re_link_up= -1;	/* Unknown */
+	rep->re_ertxth= RL_TSD_ERTXTH_8;
 	strlcpy(rep->re_name, "rtl8139#0", sizeof(rep->re_name));
-	rep->re_name[8] += re_instance;
-	rep->re_seen= FALSE;
+	rep->re_name[8] += instance;
 
-	pci_init();
+	re_instance = instance;
 
-	if (rl_probe(rep, re_instance))
-		rep->re_seen= TRUE;
+	/* Try to find a matching device. */
+	if (!rl_probe(rep, instance))
+		return ENXIO;
+
+	/* Claim buffer memory. */
+	rl_init_buf(rep);
+
+	/* Initialize the device we found. */
+	rl_init_hw(rep, addr);
+
+#if VERBOSE
+	/* Report initial link status. */
+	rl_report_link(rep);
+#endif
+
+	/* Use a synchronous alarm instead of a watchdog timer. */
+	sys_setalarm(sys_hz(), 0);
+
+#if RTL8139_FKEY
+	/* Observe some function key for debug dumps. */
+	fkeys = sfkeys = 0; bit_set(sfkeys, 9);
+	if ((r = fkey_map(&fkeys, &sfkeys)) != OK)
+	    printf("Warning: RTL8139 couldn't observe Shift+F9 key: %d\n",r);
+#endif
+
+	return OK;
 }
 
 /*===========================================================================*
  *				rl_probe				     *
  *===========================================================================*/
-static int rl_probe(rep, skip)
-re_t *rep;
-int skip;
+static int rl_probe(re_t *rep, unsigned int skip)
 {
 	int r, devind;
 	u16_t cr, vid, did;
@@ -417,6 +284,8 @@ int skip;
 #if VERBOSE
 	char *dname;
 #endif
+
+	pci_init();
 
 	r= pci_first_dev(&devind, &vid, &did);
 	if (r == 0)
@@ -452,53 +321,18 @@ int skip;
 
 	ilr= pci_attr_r8(devind, PCI_ILR);
 	rep->re_irq= ilr;
-	if (debug)
-	{
-		printf("%s: using I/O address 0x%lx, IRQ %d\n",
-			rep->re_name, (unsigned long)bar, ilr);
-	}
+#if VERBOSE
+	printf("%s: using I/O address 0x%lx, IRQ %d\n",
+		rep->re_name, (unsigned long)bar, ilr);
+#endif
 
 	return TRUE;
 }
 
 /*===========================================================================*
- *				rl_conf_hw				     *
- *===========================================================================*/
-static void rl_conf_hw(rep)
-re_t *rep;
-{
-	static eth_stat_t empty_stat = {0, 0, 0, 0, 0, 0 	/* ,... */ };
-
-	rep->re_mode= REM_DISABLED;	/* Superfluous */
-
-	if (rep->re_seen)
-	{
-		/* PCI device is present */
-		rep->re_mode= REM_ENABLED;
-	}
-	if (rep->re_mode != REM_ENABLED)
-		return;
-
-	rep->re_flags= REF_EMPTY;
-	rep->re_link_up= -1;	/* Unknown */
-	rep->re_got_int= 0;
-	rep->re_send_int= 0;
-	rep->re_report_link= 0;
-	rep->re_clear_rx= 0;
-	rep->re_need_reset= 0;
-	rep->re_tx_alive= 0;
-	rep->re_read_s= 0;
-	rep->re_tx_head= 0;
-	rep->re_tx_tail= 0;
-	rep->re_ertxth= RL_TSD_ERTXTH_8;
-	rep->re_stat= empty_stat;
-}
-
-/*===========================================================================*
  *				rl_init_buf				     *
  *===========================================================================*/
-static void rl_init_buf(rep)
-re_t *rep;
+static void rl_init_buf(re_t *rep)
 {
 	size_t rx_bufsize, tx_bufsize, tot_bufsize;
 	phys_bytes buf;
@@ -517,9 +351,8 @@ re_t *rep;
 
 #define BUF_ALIGNMENT (64*1024)
 
-	if(!(mallocbuf = alloc_contig(BUF_ALIGNMENT + tot_bufsize, 0, &buf))) {
-	    panic("Couldn't allocate kernel buffer");
-	}
+	if (!(mallocbuf = alloc_contig(BUF_ALIGNMENT + tot_bufsize, 0, &buf)))
+		panic("Couldn't allocate kernel buffer");
 
 	/* click-align mallocced buffer. this is what we used to get
 	 * from kmalloc() too.
@@ -529,7 +362,7 @@ re_t *rep;
 		buf += BUF_ALIGNMENT - off;
 	}
 
-	tell_dev((vir_bytes)mallocbuf, tot_bufsize, 0, 0, 0);
+	tell_iommu((vir_bytes)mallocbuf, tot_bufsize, 0, 0, 0);
 
 	for (i= 0; i<N_TX_BUF; i++)
 	{
@@ -545,19 +378,18 @@ re_t *rep;
 /*===========================================================================*
  *				rl_init_hw				     *
  *===========================================================================*/
-static void rl_init_hw(rep)
-re_t *rep;
+static void rl_init_hw(re_t *rep, ether_addr_t *addr)
 {
-	int s, i;
+#if VERBOSE
+	int i;
+#endif
+	int s;
 
-	rep->re_flags = REF_EMPTY;
-	rep->re_flags |= REF_ENABLED;
-
-	/* Set the interrupt handler. The policy is to only send HARD_INT 
+	/* Set the interrupt handler. The policy is to only send HARD_INT
 	 * notifications. Don't reenable interrupts automatically. The id
 	 * that is passed back is the interrupt line number.
 	 */
-	rep->re_hook_id = rep->re_irq;	
+	rep->re_hook_id = rep->re_irq;
 	if ((s=sys_irqsetpolicy(rep->re_irq, 0, &rep->re_hook_id)) != OK)
 		printf("RTL8139: error, couldn't set IRQ policy: %d\n", s);
 
@@ -578,23 +410,19 @@ re_t *rep;
 	}
 #endif
 
-	rl_confaddr(rep);
-	if (debug)
-	{
-		printf("%s: Ethernet address ", rep->re_name);
-		for (i= 0; i < 6; i++)
-		{
-			printf("%x%c", rep->re_address.ea_addr[i],
-				i < 5 ? ':' : '\n');
-		}
-	}
+	rl_confaddr(rep, addr);
+
+#if VERBOSE
+	printf("%s: Ethernet address ", rep->re_name);
+	for (i= 0; i < 6; i++)
+		printf("%x%c", addr->ea_addr[i], i < 5 ? ':' : '\n');
+#endif
 }
 
 /*===========================================================================*
  *				rl_reset_hw				     *
  *===========================================================================*/
-static void rl_reset_hw(rep)
-re_t *rep;
+static void rl_reset_hw(re_t *rep)
 {
 	port_t port;
 	u32_t t;
@@ -660,7 +488,7 @@ re_t *rep;
 	bus_buf= vm_1phys2bus(rep->re_rx_buf);
 	rl_outl(port, RL_RBSTART, bus_buf);
 
-	/* Initialize Tx */ 
+	/* Initialize Tx */
 	for (i= 0; i<N_TX_BUF; i++)
 	{
 		rep->re_tx[i].ret_busy= FALSE;
@@ -669,6 +497,8 @@ re_t *rep;
 		t= rl_inl(port, RL_TSD0+i*4);
 		assert(t & RL_TSD_OWN);
 	}
+
+	rep->re_tx_busy = 0;
 
 #if 0
 	dump_phy(rep);
@@ -700,8 +530,7 @@ re_t *rep;
 /*===========================================================================*
  *				rl_confaddr				     *
  *===========================================================================*/
-static void rl_confaddr(rep)
-re_t *rep;
+static void rl_confaddr(re_t *rep, ether_addr_t *addr)
 {
 	static char eakey[]= RL_ENVVAR "#_EA";
 	static char eafmt[]= "x:x:x:x:x:x";
@@ -720,7 +549,7 @@ re_t *rep;
 	{
 		if (env_parse(eakey, eafmt, i, &v, 0x00L, 0xFFL) != EP_SET)
 			break;
-		rep->re_address.ea_addr[i]= v;
+		addr->ea_addr[i]= v;
 	}
 
 	if (i != 0 && i != 6) env_panic(eakey);	/* It's all or nothing */
@@ -732,25 +561,24 @@ re_t *rep;
 		rl_outb(port, RL_9346CR, RL_9346CR_EEM_CONFIG);
 		w= 0;
 		for (i= 0; i<4; i++)
-			w |= (rep->re_address.ea_addr[i] << (i*8));
+			w |= (addr->ea_addr[i] << (i*8));
 		rl_outl(port, RL_IDR, w);
 		w= 0;
 		for (i= 4; i<6; i++)
-			w |= (rep->re_address.ea_addr[i] << ((i-4)*8));
+			w |= (addr->ea_addr[i] << ((i-4)*8));
 		rl_outl(port, RL_IDR+4, w);
 		rl_outb(port, RL_9346CR, RL_9346CR_EEM_NORMAL);
 	}
 
 	/* Get ethernet address */
 	for (i= 0; i<6; i++)
-		rep->re_address.ea_addr[i]= rl_inb(port, RL_IDR+i);
+		addr->ea_addr[i]= rl_inb(port, RL_IDR+i);
 }
 
 /*===========================================================================*
  *				rl_rec_mode				     *
  *===========================================================================*/
-static void rl_rec_mode(rep)
-re_t *rep;
+static void rl_rec_mode(re_t *rep)
 {
 	port_t port;
 	u32_t rcr;
@@ -758,11 +586,11 @@ re_t *rep;
 	port= rep->re_base_port;
 	rcr= rl_inl(port, RL_RCR);
 	rcr &= ~(RL_RCR_AB|RL_RCR_AM|RL_RCR_APM|RL_RCR_AAP);
-	if (rep->re_flags & REF_PROMISC)
+	if (rep->re_mode & NDEV_PROMISC)
 		rcr |= RL_RCR_AB | RL_RCR_AM | RL_RCR_AAP;
-	if (rep->re_flags & REF_BROAD)
+	if (rep->re_mode & NDEV_BROAD)
 		rcr |= RL_RCR_AB;
-	if (rep->re_flags & REF_MULTI)
+	if (rep->re_mode & NDEV_MULTI)
 		rcr |= RL_RCR_AM;
 	rcr |= RL_RCR_APM;
 
@@ -770,39 +598,28 @@ re_t *rep;
 }
 
 /*===========================================================================*
- *				rl_readv_s				     *
+ *				rl_recv					     *
  *===========================================================================*/
-static void rl_readv_s(const message *mp, int from_int)
+static ssize_t rl_recv(struct netdriver_data *data, size_t max)
 {
-	int i, j, n, o, s, s1, count, size;
+	int o, s;
 	port_t port;
 	unsigned amount, totlen, packlen;
 	u16_t d_start, d_end;
-	u32_t l, rxstat = 0x12345678;
+	u32_t l, rxstat;
 	re_t *rep;
-	iovec_s_t *iovp;
-	int cps;
-	int iov_offset = 0;
 
 	rep= &re_state;
 
-	rep->re_client= mp->m_source;
-	count = mp->m_net_netdrv_dl_readv_s.count;
-
 	if (rep->re_clear_rx)
-		goto suspend;	/* Buffer overflow */
-
-	assert(rep->re_mode == REM_ENABLED);
-	assert(rep->re_flags & REF_ENABLED);
+		return SUSPEND;	/* Buffer overflow */
 
 	port= rep->re_base_port;
 
-	/* Assume that the RL_CR_BUFE check was been done by rl_checks_ints
-	 */
-	if (!from_int && (rl_inb(port, RL_CR) & RL_CR_BUFE))
+	if (rl_inb(port, RL_CR) & RL_CR_BUFE)
 	{
 		/* Receive buffer is empty, suspend */
-		goto suspend;
+		return SUSPEND;
 	}
 
 	d_start= rl_inw(port, RL_CAPR) + RL_CAPR_DATA_OFF;
@@ -811,7 +628,7 @@ static void rl_readv_s(const message *mp, int from_int)
 #if RX_BUFSIZE <= USHRT_MAX
 	if (d_start >= RX_BUFSIZE)
 	{
-		printf("rl_readv: strange value in RL_CAPR: 0x%x\n",
+		printf("rl_recv: strange value in RL_CAPR: 0x%x\n",
 			rl_inw(port, RL_CAPR));
 		d_start %= RX_BUFSIZE;
 	}
@@ -823,14 +640,6 @@ static void rl_readv_s(const message *mp, int from_int)
 		amount= d_end+RX_BUFSIZE - d_start;
 
 	rxstat = *(u32_t *) (rep->v_re_rx_buf + d_start);
-
-	if (rep->re_clear_rx)
-	{
-#if 0
-		printf("rl_readv: late buffer overflow\n");
-#endif
-		goto suspend;	/* Buffer overflow */
-	}
 
 	/* Should convert from little endian to host byte order */
 
@@ -846,7 +655,7 @@ static void rl_readv_s(const message *mp, int from_int)
 	{
 		/* Someting went wrong */
 		printf(
-		"rl_readv: bad length (%u) in status 0x%08x at offset 0x%x\n",
+		"rl_recv: bad length (%u) in status 0x%08x at offset 0x%x\n",
 			totlen, rxstat, d_start);
 		printf(
 		"d_start: 0x%x, d_end: 0x%x, totlen: %d, rxstat: 0x%x\n",
@@ -861,106 +670,22 @@ static void rl_readv_s(const message *mp, int from_int)
 
 	if (totlen+4 > amount)
 	{
-		printf("rl_readv: packet not yet ready\n");
-		goto suspend;
+		printf("rl_recv: packet not yet ready\n");
+		return SUSPEND;
 	}
 
 	/* Should subtract the CRC */
-	packlen= totlen - ETH_CRC_SIZE;
+	packlen = MIN(totlen - ETH_CRC_SIZE, max);
 
-	size= 0;
-	o= d_start+4;
-	for (i= 0; i<count; i += IOVEC_NR,
-		iov_offset += IOVEC_NR * sizeof(rep->re_iovec_s[0]))
-	{
-		n= IOVEC_NR;
-		if (i+n > count)
-			n= count-i;
+	/* Copy out the data.  The packet may wrap in the receive buffer. */
+	o = (d_start+4) % RX_BUFSIZE;
+	s = MIN(RX_BUFSIZE - o, packlen);
 
-		cps = sys_safecopyfrom(mp->m_source,
-			mp->m_net_netdrv_dl_readv_s.grant, iov_offset,
-			(vir_bytes) rep->re_iovec_s,
-			n * sizeof(rep->re_iovec_s[0]));
-		if (cps != OK) {
-			panic("rl_readv_s: sys_safecopyfrom failed: %d",
-				cps);
-		}
-
-		for (j= 0, iovp= rep->re_iovec_s; j<n; j++, iovp++)
-		{
-			s= iovp->iov_size;
-			if (size + s > packlen)
-			{
-				assert(packlen > size);
-				s= packlen-size;
-			}
-
-#if 0
-			if (sys_umap(mp->m_source, D, iovp->iov_addr, s, &dst_phys) != OK)
-			  panic("umap_local failed");
-#endif
-
-			if (o >= RX_BUFSIZE)
-			{
-				o -= RX_BUFSIZE;
-				assert(o < RX_BUFSIZE);
-			}
-
-			if (o+s > RX_BUFSIZE)
-			{
-				assert(o<RX_BUFSIZE);
-				s1= RX_BUFSIZE-o;
-
-				cps = sys_safecopyto(mp->m_source,
-					iovp->iov_grant, 0, 
-					(vir_bytes) rep->v_re_rx_buf+o, s1);
-				if (cps != OK) { 
-					panic("rl_readv_s: sys_safecopyto failed: %d",
-					cps);
-				}
-				cps = sys_safecopyto(mp->m_source,
-					iovp->iov_grant, s1, 
-					(vir_bytes) rep->v_re_rx_buf, s-s1);
-				if (cps != OK) {
-					panic("rl_readv_s: sys_safecopyto failed: %d", cps);
-				}
-			}
-			else
-			{
-				cps = sys_safecopyto(mp->m_source,
-					iovp->iov_grant, 0,
-					(vir_bytes) rep->v_re_rx_buf+o, s);
-				if (cps != OK)
-					panic("rl_readv_s: sys_safecopyto failed: %d", cps);
-			}
-
-			size += s;
-			if (size == packlen)
-				break;
-			o += s;
-		}
-		if (size == packlen)
-			break;
-	}
-	if (size < packlen)
-	{
-		assert(0);
-	}
-
-	if (rep->re_clear_rx)
-	{
-		/* For some reason the receiver FIFO is not stopped when
-		 * the buffer is full.
-		 */
-#if 0
-		printf("rl_readv: later buffer overflow\n");
-#endif
-		goto suspend;	/* Buffer overflow */
-	}
+	netdriver_copyout(data, 0, rep->v_re_rx_buf + o, s);
+	if (s < packlen)
+		netdriver_copyout(data, s, rep->v_re_rx_buf, packlen - s);
 
 	rep->re_stat.ets_packetR++;
-	rep->re_read_s= packlen;
-	rep->re_flags= (rep->re_flags & ~REF_READING) | REF_PACK_RECV;
 
 	/* Avoid overflow in 16-bit computations */
 	l= d_start;
@@ -973,145 +698,41 @@ static void rl_readv_s(const message *mp, int from_int)
 	}
 	rl_outw(port, RL_CAPR, l-RL_CAPR_DATA_OFF);
 
-	if (!from_int)
-		reply(rep);
-
-	return;
-
-suspend:
-	if (from_int)
-	{
-		assert(rep->re_flags & REF_READING);
-
-		/* No need to store any state */
-		return;
-	}
-
-	rep->re_rx_mess= *mp;
-	assert(!(rep->re_flags & REF_READING));
-	rep->re_flags |= REF_READING;
-
-	reply(rep);
+	return packlen;
 }
 
 /*===========================================================================*
- *				rl_writev_s				     *
+ *				rl_send					     *
  *===========================================================================*/
-static void rl_writev_s(const message *mp, int from_int)
+static int rl_send(struct netdriver_data *data, size_t size)
 {
-	int i, j, n, s, count, size;
 	int tx_head;
 	re_t *rep;
-	iovec_s_t *iovp;
-	char *ret;
-	int cps;
-	int iov_offset = 0;
 
 	rep= &re_state;
 
-	rep->re_client= mp->m_source;
-	count = mp->m_net_netdrv_dl_writev_s.count;
-
-	assert(rep->re_mode == REM_ENABLED);
-	assert(rep->re_flags & REF_ENABLED);
-
-	if (from_int)
-	{
-		assert(rep->re_flags & REF_SEND_AVAIL);
-		rep->re_flags &= ~REF_SEND_AVAIL;
-		rep->re_send_int= FALSE;
-		rep->re_tx_alive= TRUE;
-	}
-
 	tx_head= rep->re_tx_head;
 	if (rep->re_tx[tx_head].ret_busy)
-	{
-		assert(!(rep->re_flags & REF_SEND_AVAIL));
-		rep->re_flags |= REF_SEND_AVAIL;
-		goto suspend;
-	}
+		return SUSPEND;
 
-	assert(!(rep->re_flags & REF_SEND_AVAIL));
-	assert(!(rep->re_flags & REF_PACK_SENT));
+	netdriver_copyin(data, 0, rep->re_tx[tx_head].v_ret_buf, size);
 
-	size= 0;
-	ret = rep->re_tx[tx_head].v_ret_buf;
-	for (i= 0; i<count; i += IOVEC_NR,
-		iov_offset += IOVEC_NR * sizeof(rep->re_iovec_s[0]))
-	{
-		n= IOVEC_NR;
-		if (i+n > count)
-			n= count-i;
-		cps = sys_safecopyfrom(mp->m_source,
-			mp->m_net_netdrv_dl_writev_s.grant, iov_offset,
-			(vir_bytes) rep->re_iovec_s,
-			n * sizeof(rep->re_iovec_s[0]));
-		if (cps != OK) {
-			panic("rl_writev_s: sys_safecopyfrom failed: %d", cps);
-		}
-
-		for (j= 0, iovp= rep->re_iovec_s; j<n; j++, iovp++)
-		{
-			s= iovp->iov_size;
-			if (size + s > ETH_MAX_PACK_SIZE_TAGGED) {
-				panic("invalid packet size");
-			}
-			cps = sys_safecopyfrom(mp->m_source, iovp->iov_grant,
-				0, (vir_bytes) ret, s);
-			if (cps != OK) { 
-				panic("rl_writev_s: sys_safecopyfrom failed: %d",	cps);
-			}
-			size += s;
-			ret += s;
-		}
-	}
-	if (size < ETH_MIN_PACK_SIZE)
-		panic("invalid packet size: %d", size);
-
-	rl_outl(rep->re_base_port, RL_TSD0+tx_head*4, 
-		rep->re_ertxth | size);
+	rl_outl(rep->re_base_port, RL_TSD0+tx_head*4, rep->re_ertxth | size);
 	rep->re_tx[tx_head].ret_busy= TRUE;
+	rep->re_tx_busy++;
 
 	if (++tx_head == N_TX_BUF)
 		tx_head= 0;
 	assert(tx_head < RL_N_TX);
 	rep->re_tx_head= tx_head;
 
-	rep->re_flags |= REF_PACK_SENT;
-
-	/* If the interrupt handler called, don't send a reply. The reply
-	 * will be sent after all interrupts are handled. 
-	 */
-	if (from_int)
-		return;
-	reply(rep);
-	return;
-
-suspend:
-#if 0
-		printf("rl_writev: head %d, tail %d, busy: %d %d %d %d\n",
-			tx_head, rep->re_tx_tail,
-			rep->re_tx[0].ret_busy, rep->re_tx[1].ret_busy,
-			rep->re_tx[2].ret_busy, rep->re_tx[3].ret_busy);
-		printf("rl_writev: TSD: 0x%x, 0x%x, 0x%x, 0x%x\n",
-			rl_inl(rep->re_base_port, RL_TSD0+0*4),
-			rl_inl(rep->re_base_port, RL_TSD0+1*4),
-			rl_inl(rep->re_base_port, RL_TSD0+2*4),
-			rl_inl(rep->re_base_port, RL_TSD0+3*4));
-#endif
-
-	if (from_int)
-		panic("should not be sending");
-
-	rep->re_tx_mess= *mp;
-	reply(rep);
+	return OK;
 }
 
 /*===========================================================================*
  *				rl_check_ints				     *
  *===========================================================================*/
-static void rl_check_ints(rep)
-re_t *rep;
+static void rl_check_ints(re_t *rep)
 {
 #if 0
 10-1f	R/W	TSD[0-3]	Transmit Status of Descriptor [0-3]
@@ -1152,45 +773,41 @@ re_t *rep;
 	15-0	R	RXERCNT	Received packet counter
 #endif
 
-	int re_flags;
+	if (!rep->re_got_int)
+		return;
+	rep->re_got_int = FALSE;
 
-	re_flags= rep->re_flags;
+	netdriver_recv();
 
-	if ((re_flags & REF_READING) &&
-		!(rl_inb(rep->re_base_port, RL_CR) & RL_CR_BUFE))
-	{
-		rl_readv_s(&rep->re_rx_mess, TRUE /* from int */);
-	}
 	if (rep->re_clear_rx)
 		rl_clear_rx(rep);
 
 	if (rep->re_need_reset)
 		rl_do_reset(rep);
 
-	if (rep->re_send_int)
-	{
-		rl_writev_s(&rep->re_tx_mess, TRUE /* from int */);
+	if (rep->re_send_int) {
+		rep->re_send_int = FALSE;
+
+		netdriver_send();
 	}
 
-	if (rep->re_report_link)
-		rl_report_link(rep);
+	if (rep->re_report_link) {
+		rep->re_report_link = FALSE;
 
-	if (rep->re_flags & (REF_PACK_SENT | REF_PACK_RECV))
-		reply(rep);
+		rl_report_link(rep);
+	}
 }
 
 /*===========================================================================*
  *				rl_report_link				     *
  *===========================================================================*/
-static void rl_report_link(rep)
-re_t *rep;
+static void rl_report_link(re_t *rep)
 {
 	port_t port;
 	u16_t mii_ctrl, mii_status, mii_ana, mii_anlpa, mii_ane, mii_extstat;
 	u8_t msr;
 	int f, link_up;
 
-	rep->re_report_link= FALSE;
 	port= rep->re_base_port;
 	msr= rl_inb(port, RL_MSR);
 	link_up= !(msr & RL_MSR_LINKB);
@@ -1250,8 +867,7 @@ re_t *rep;
 		return;
 	}
 
-	if (!debug) goto resspeed;
-
+#if VERBOSE
 	printf("%s: ", rep->re_name);
 	mii_print_stat_speed(mii_status, mii_extstat);
 	printf("\n");
@@ -1293,14 +909,16 @@ re_t *rep;
 	printf("%s: remote cap.: ", rep->re_name);
 	mii_print_techab(mii_anlpa);
 	printf("\n");
-
 resspeed:
+#endif
+
 	printf("%s: ", rep->re_name);
 	printf("link up at %d Mbps, ", (msr & RL_MSR_SPEED_10) ? 10 : 100);
 	printf("%s duplex\n", ((mii_ctrl & MII_CTRL_DM) ? "full" : "half"));
 
 }
 
+#if VERBOSE
 static void mii_print_techab(u16_t techab)
 {
 	int fs, ft;
@@ -1469,6 +1087,7 @@ static void mii_print_stat_speed(u16_t stat, u16_t extstat)
 		}
 	}
 }
+#endif /* VERBOSE */
 
 /*===========================================================================*
  *				rl_clear_rx				     *
@@ -1508,98 +1127,32 @@ static void rl_clear_rx(re_t *rep)
 /*===========================================================================*
  *				rl_do_reset				     *
  *===========================================================================*/
-static void rl_do_reset(rep)
-re_t *rep;
+static void rl_do_reset(re_t *rep)
 {
 	rep->re_need_reset= FALSE;
 	rl_reset_hw(rep);
 	rl_rec_mode(rep);
 
 	rep->re_tx_head= 0;
-	if (rep->re_flags & REF_SEND_AVAIL)
-	{
-		rep->re_tx[rep->re_tx_head].ret_busy= FALSE;
-		rep->re_send_int= TRUE;
-	}
+	if (rep->re_tx[rep->re_tx_head].ret_busy)
+		rep->re_tx_busy--;
+	rep->re_tx[rep->re_tx_head].ret_busy= FALSE;
+	rep->re_send_int= TRUE;
 }
 
 /*===========================================================================*
- *				rl_getstat_s				     *
+ *				rl_stat					     *
  *===========================================================================*/
-static void rl_getstat_s(mp)
-message *mp;
+static void rl_stat(eth_stat_t *stat)
 {
-	int r;
-	eth_stat_t stats;
-	re_t *rep;
-
-	rep= &re_state;
-
-	assert(rep->re_mode == REM_ENABLED);
-	assert(rep->re_flags & REF_ENABLED);
-
-	stats= rep->re_stat;
-
-	r = sys_safecopyto(mp->m_source, mp->m_net_netdrv_dl_getstat_s.grant,
-		0, (vir_bytes) &stats, sizeof(stats));
-	if (r != OK)
-		panic("rl_getstat_s: sys_safecopyto failed: %d", r);
-
-	mp->m_type= DL_STAT_REPLY;
-	r= ipc_send(mp->m_source, mp);
-	if (r != OK)
-		panic("rl_getstat_s: ipc_send failed: %d", r);
-}
-
-/*===========================================================================*
- *				reply					     *
- *===========================================================================*/
-static void reply(rep)
-re_t *rep;
-{
-	message reply;
-	int flags;
-	int r;
-
-	flags = DL_NOFLAGS;
-	if (rep->re_flags & REF_PACK_SENT)
-		flags |= DL_PACK_SEND;
-	if (rep->re_flags & REF_PACK_RECV)
-		flags |= DL_PACK_RECV;
-
-	reply.m_type = DL_TASK_REPLY;
-	reply.m_netdrv_net_dl_task.flags = flags;
-	reply.m_netdrv_net_dl_task.count = rep->re_read_s;
-
-	r= ipc_send(rep->re_client, &reply);
-
-	if (r < 0) {
-		printf("RTL8139 tried sending to %d, type %d\n",
-			rep->re_client, reply.m_type);
-		panic("ipc_send failed: %d", r);
-	}
-	
-	rep->re_read_s = 0;
-	rep->re_flags &= ~(REF_PACK_SENT | REF_PACK_RECV);
-}
-
-/*===========================================================================*
- *				mess_reply				     *
- *===========================================================================*/
-static void mess_reply(req, reply_mess)
-message *req;
-message *reply_mess;
-{
-	if (ipc_send(req->m_source, reply_mess) != OK)
-		panic("unable to mess_reply");
+	memcpy(stat, &re_state.re_stat, sizeof(*stat));
 }
 
 #if 0
 /*===========================================================================*
  *				dump_phy				     *
  *===========================================================================*/
-static void dump_phy(rep)
-re_t *rep;
+static void dump_phy(re_t *rep)
 {
 	port_t port;
 	u32_t t;
@@ -1694,21 +1247,6 @@ re_t *rep;
 #endif
 
 /*===========================================================================*
- *				do_hard_int				     *
- *===========================================================================*/
-static void do_hard_int(void)
-{
-	int s;
-
-	/* Run interrupt handler at driver level. */
-	rl_handler(&re_state);
-
-	/* Reenable interrupts for this hook. */
-	if ((s=sys_irqenable(&re_state.re_hook_id)) != OK)
-		printf("RTL8139: error, couldn't enable interrupts: %d\n", s);
-}
-
-/*===========================================================================*
  *				rl_handler				     *
  *===========================================================================*/
 static int rl_handler(re_t *rep)
@@ -1716,10 +1254,6 @@ static int rl_handler(re_t *rep)
 	int i, port, tx_head, tx_tail, link_up;
 	u16_t isr, tsad;
 	u32_t tsd, tcr, ertxth;
-#if 0
-	u8_t cr;
-#endif
-	int_event_check = FALSE;	/* disable check by default */
 
 	port= rep->re_base_port;
 
@@ -1746,7 +1280,6 @@ static int rl_handler(re_t *rep)
 		{
 			rep->re_report_link= TRUE;
 			rep->re_got_int= TRUE;
-			int_event_check = TRUE;
 		}
 	}
 	if (isr & RL_IMR_RXOVW)
@@ -1756,40 +1289,14 @@ static int rl_handler(re_t *rep)
 		/* Clear the receive buffer */
 		rep->re_clear_rx= TRUE;
 		rep->re_got_int= TRUE;
-		int_event_check = TRUE;
 	}
 
 	if (isr & (RL_ISR_RER | RL_ISR_ROK))
 	{
 		isr &= ~(RL_ISR_RER | RL_ISR_ROK);
 
-		if (!rep->re_got_int && (rep->re_flags & REF_READING))
-		{
-			rep->re_got_int= TRUE;
-			int_event_check = TRUE;
-		}
+		rep->re_got_int= TRUE;
 	}
-#if 0
-	if ((isr & (RL_ISR_TER | RL_ISR_TOK)) &&
-		(rep->re_flags & REF_SEND_AVAIL) &&
-		(rep->re_tx[0].ret_busy || rep->re_tx[1].ret_busy ||
-		rep->re_tx[2].ret_busy || rep->re_tx[3].ret_busy))
-		
-	{
-		printf(
-	"rl_handler, SEND_AVAIL: tx_head %d, tx_tail %d, busy: %d %d %d %d\n",
-			rep->re_tx_head, rep->re_tx_tail,
-			rep->re_tx[0].ret_busy, rep->re_tx[1].ret_busy,
-			rep->re_tx[2].ret_busy, rep->re_tx[3].ret_busy);
-		printf(
-	"rl_handler: TSAD: 0x%04x, TSD: 0x%08x, 0x%08x, 0x%08x, 0x%08x\n",
-			rl_inw(port, RL_TSAD),
-			rl_inl(port, RL_TSD0+0*4),
-			rl_inl(port, RL_TSD0+1*4),
-			rl_inl(port, RL_TSD0+2*4),
-			rl_inl(port, RL_TSD0+3*4));
-	}
-#endif
 	if ((isr & (RL_ISR_TER | RL_ISR_TOK)) || 1)
 	{
 		isr &= ~(RL_ISR_TER | RL_ISR_TOK);
@@ -1798,41 +1305,6 @@ static int rl_handler(re_t *rep)
 		if (tsad & (RL_TSAD_TABT0|RL_TSAD_TABT1|
 			RL_TSAD_TABT2|RL_TSAD_TABT3))
 		{
-#if 0
-			/* Do we need a watch dog? */
-			/* Just reset the whole chip */
-			rep->re_need_reset= TRUE;
-			rep->re_got_int= TRUE;
-			int_event_check = TRUE;
-#elif 0
-			/* Reset transmitter */
-			rep->re_stat.ets_transAb++;
-
-			cr= rl_inb(port, RL_CR);
-			cr &= ~RL_CR_TE;
-			rl_outb(port, RL_CR, cr);
-			SPIN_UNTIL(!(rl_inb(port, RL_CR) & RL_CR_TE), 1000000);
-			if (rl_inb(port, RL_CR) & RL_CR_TE) {
-				panic("cannot disable transmitter");
-			}
-			rl_outb(port, RL_CR, cr | RL_CR_TE);
-
-			tcr= rl_inl(port, RL_TCR);
-			rl_outl(port, RL_TCR, tcr | RL_TCR_IFG_STD);
-
-			printf("rl_handler: reset after abort\n");
-
-			if (rep->re_flags & REF_SEND_AVAIL)
-			{
-				printf("rl_handler: REF_SEND_AVAIL\n");
-				rep->re_send_int= TRUE;
-				rep->re_got_int= TRUE;
-				int_event_check = TRUE;
-			}
-			for (i= 0; i< N_TX_BUF; i++)
-				rep->re_tx[i].ret_busy= FALSE;
-			rep->re_tx_head= 0;
-#else
 			printf("rl_handler, TABT, tasd = 0x%04x\n",
 				tsad);
 
@@ -1862,7 +1334,6 @@ static int rl_handler(re_t *rep)
 			rep->re_stat.ets_transAb++;
 			tcr= rl_inl(port, RL_TCR);
 			rl_outl(port, RL_TCR, tcr | RL_TCR_CLRABT);
-#endif
 		}
 
 		/* Transmit completed */
@@ -1923,7 +1394,8 @@ static int rl_handler(re_t *rep)
 				/* Increase ERTXTH */
 				ertxth= tsd + (1 << RL_TSD_ERTXTH_S);
 				ertxth &= RL_TSD_ERTXTH_M;
-				if (debug && ertxth > rep->re_ertxth)
+#if VERBOSE
+				if (ertxth > rep->re_ertxth)
 				{
 					printf("%s: new ertxth: %d bytes\n",
 						rep->re_name,
@@ -1931,19 +1403,18 @@ static int rl_handler(re_t *rep)
 						32);
 					rep->re_ertxth= ertxth;
 				}
+#endif
 			}
 			rep->re_tx[tx_tail].ret_busy= FALSE;
+			rep->re_tx_busy--;
 
 #if 0
-			if (rep->re_flags & REF_SEND_AVAIL)
-			{
 			printf("TSD%d: %08lx\n", tx_tail, tsd);
 			printf(
-			"rl_handler: head %d, tail %d, busy: %d %d %d %d\n", 
+			"rl_handler: head %d, tail %d, busy: %d %d %d %d\n",
 				tx_head, tx_tail,
-				rep->re_tx[0].ret_busy, rep->re_tx[1].ret_busy, 
+				rep->re_tx[0].ret_busy, rep->re_tx[1].ret_busy,
 				rep->re_tx[2].ret_busy, rep->re_tx[3].ret_busy);
-			}
 #endif
 
 			if (++tx_tail >= N_TX_BUF)
@@ -1951,18 +1422,9 @@ static int rl_handler(re_t *rep)
 			assert(tx_tail < RL_N_TX);
 			rep->re_tx_tail= tx_tail;
 
-			if (rep->re_flags & REF_SEND_AVAIL)
-			{
-#if 0
-				printf("rl_handler: REF_SEND_AVAIL\n");
-#endif
-				rep->re_send_int= TRUE;
-				if (!rep->re_got_int)
-				{
-					rep->re_got_int= TRUE;
-					int_event_check = TRUE;
-				}
-			}
+			rep->re_send_int= TRUE;
+			rep->re_got_int= TRUE;
+			rep->re_tx_alive= TRUE;
 		}
 		assert(i < 2*N_TX_BUF);
 	}
@@ -1976,20 +1438,19 @@ static int rl_handler(re_t *rep)
 }
 
 /*===========================================================================*
- *				rl_watchdog_f				     *
+ *				rl_alarm				     *
  *===========================================================================*/
-static void rl_watchdog_f(tp)
-minix_timer_t *tp;
+static void rl_alarm(clock_t __unused stamp)
 {
 	re_t *rep;
+
 	/* Use a synchronous alarm instead of a watchdog timer. */
-	sys_setalarm(system_hz, 0);
+	sys_setalarm(sys_hz(), 0);
 
 	rep= &re_state;
 
-	if (rep->re_mode != REM_ENABLED)
-		return;
-	if (!(rep->re_flags & REF_SEND_AVAIL))
+	assert(rep->re_tx_busy >= 0 && rep->re_tx_busy <= N_TX_BUF);
+	if (rep->re_tx_busy == 0)
 	{
 		/* Assume that an idle system is alive */
 		rep->re_tx_alive= TRUE;
@@ -2000,7 +1461,7 @@ minix_timer_t *tp;
 		rep->re_tx_alive= FALSE;
 		return;
 	}
-	printf("rl_watchdog_f: resetting instance %d\n", re_instance);
+	printf("rl_alarm: resetting instance %d\n", re_instance);
 	printf("TSAD: 0x%04x, TSD: 0x%08x, 0x%08x, 0x%08x, 0x%08x\n",
 		rl_inw(rep->re_base_port, RL_TSAD),
 		rl_inl(rep->re_base_port, RL_TSD0+0*4),
@@ -2013,242 +1474,13 @@ minix_timer_t *tp;
 		rep->re_tx[2].ret_busy, rep->re_tx[3].ret_busy);
 	rep->re_need_reset= TRUE;
 	rep->re_got_int= TRUE;
-			
-	check_int_events();
+
+	rl_check_ints(rep);
 }
 
-#if 0
-
-static void rtl_init(struct dpeth *dep);
-static u16_t get_ee_word(dpeth_t *dep, int a);
-static void ee_wen(dpeth_t *dep);
-static void set_ee_word(dpeth_t *dep, int a, u16_t w);
-static void ee_wds(dpeth_t *dep);
-
-static void rtl_init(dep)
-dpeth_t *dep;
-{
-	u8_t reg_a, reg_b, cr, config0, config2, config3;
-	int i;
-	char val[128];
-
-	printf("rtl_init called\n");
-	ne_init(dep);
-
-	/* ID */
-	outb_reg0(dep, DP_CR, CR_PS_P0);
-	reg_a = inb_reg0(dep, DP_DUM1);
-	reg_b = inb_reg0(dep, DP_DUM2);
-
-	printf("rtl_init: '%c', '%c'\n", reg_a, reg_b);
-
-	outb_reg0(dep, DP_CR, CR_PS_P3);
-	config0 = inb_reg3(dep, 3);
-	config2 = inb_reg3(dep, 5);
-	config3 = inb_reg3(dep, 6);
-	outb_reg0(dep, DP_CR, CR_PS_P0);
-
-	printf("rtl_init: config 0/2/3 = %x/%x/%x\n",
-		config0, config2, config3);
-
-	if (0 == sys_getkenv("RTL8029FD",9+1, val, sizeof(val)))
-	{
-		printf("rtl_init: setting full-duplex mode\n");
-		outb_reg0(dep, DP_CR, CR_PS_P3);
-
-		cr= inb_reg3(dep, 1);
-		outb_reg3(dep, 1, cr | 0xc0);
-
-		outb_reg3(dep, 6, config3 | 0x40);
-		config3 = inb_reg3(dep, 6);
-
-		config2= inb_reg3(dep, 5);
-		outb_reg3(dep, 5, config2 | 0x20);
-		config2= inb_reg3(dep, 5);
-
-		outb_reg3(dep, 1, cr);
-
-		outb_reg0(dep, DP_CR, CR_PS_P0);
-
-		printf("rtl_init: config 2 = %x\n", config2);
-		printf("rtl_init: config 3 = %x\n", config3);
-	}
-
-	for (i= 0; i<64; i++)
-		printf("%x ", get_ee_word(dep, i));
-	printf("\n");
-
-	if (0 == sys_getkenv("RTL8029MN",9+1, val, sizeof(val)))
-	{
-		ee_wen(dep);
-
-		set_ee_word(dep, 0x78/2, 0x10ec);
-		set_ee_word(dep, 0x7A/2, 0x8029);
-		set_ee_word(dep, 0x7C/2, 0x10ec);
-		set_ee_word(dep, 0x7E/2, 0x8029);
-
-		ee_wds(dep);
-
-		assert(get_ee_word(dep, 0x78/2) == 0x10ec);
-		assert(get_ee_word(dep, 0x7A/2) == 0x8029);
-		assert(get_ee_word(dep, 0x7C/2) == 0x10ec);
-		assert(get_ee_word(dep, 0x7E/2) == 0x8029);
-	}
-
-	if (0 == sys_getkenv("RTL8029XXX",10+1, val, sizeof(val)))
-	{
-		ee_wen(dep);
-
-		set_ee_word(dep, 0x76/2, 0x8029);
-
-		ee_wds(dep);
-
-		assert(get_ee_word(dep, 0x76/2) == 0x8029);
-	}
-}
-
-static u16_t get_ee_word(dep, a)
-dpeth_t *dep;
-int a;
-{
-	int b, i, cmd;
-	u16_t w;
-
-	outb_reg0(dep, DP_CR, CR_PS_P3);	/* Bank 3 */
-
-	/* Switch to 9346 mode and enable CS */
-	outb_reg3(dep, 1, 0x80 | 0x8);
-
-	cmd= 0x180 | (a & 0x3f);	/* 1 1 0 a5 a4 a3 a2 a1 a0 */
-	for (i= 8; i >= 0; i--)
-	{
-		b= (cmd & (1 << i));
-		b= (b ? 2 : 0);
-
-		/* Cmd goes out on the rising edge of the clock */
-		outb_reg3(dep, 1, 0x80 | 0x8 | b);
-		outb_reg3(dep, 1, 0x80 | 0x8 | 0x4 | b);
-	}
-	outb_reg3(dep, 1, 0x80 | 0x8);	/* End of cmd */
-
-	w= 0;
-	for (i= 0; i<16; i++)
-	{
-		w <<= 1;
-
-		/* Data is shifted out on the rising edge. Read at the
-		 * falling edge.
-		 */
-		outb_reg3(dep, 1, 0x80 | 0x8 | 0x4);
-		outb_reg3(dep, 1, 0x80 | 0x8 | b);
-		b= inb_reg3(dep, 1);
-		w |= (b & 1);
-	}
-
-	outb_reg3(dep, 1, 0x80);		/* drop CS */
-	outb_reg3(dep, 1, 0x00);		/* back to normal */
-	outb_reg0(dep, DP_CR, CR_PS_P0);	/* back to bank 0 */
-
-	return w;
-}
-
-static void ee_wen(dep)
-dpeth_t *dep;
-{
-	int b, i, cmd;
-	u16_t w;
-
-	outb_reg0(dep, DP_CR, CR_PS_P3);	/* Bank 3 */
-
-	/* Switch to 9346 mode and enable CS */
-	outb_reg3(dep, 1, 0x80 | 0x8);
-
-	cmd= 0x130;		/* 1 0 0 1 1 x x x x */
-	for (i= 8; i >= 0; i--)
-	{
-		b= (cmd & (1 << i));
-		b= (b ? 2 : 0);
-
-		/* Cmd goes out on the rising edge of the clock */
-		outb_reg3(dep, 1, 0x80 | 0x8 | b);
-		outb_reg3(dep, 1, 0x80 | 0x8 | 0x4 | b);
-	}
-	outb_reg3(dep, 1, 0x80 | 0x8);	/* End of cmd */
-	outb_reg3(dep, 1, 0x80);	/* Drop CS */
-	/* micro_delay(1); */			/* Is this required? */
-}
-
-static void set_ee_word(dpeth_t *dep, int a, u16_t w)
-dpeth_t *dep;
-int a;
-u16_t w;
-{
-	int b, i, cmd;
-
-	outb_reg3(dep, 1, 0x80 | 0x8);		/* Set CS */
-
-	cmd= 0x140 | (a & 0x3f);		/* 1 0 1 a5 a4 a3 a2 a1 a0 */
-	for (i= 8; i >= 0; i--)
-	{
-		b= (cmd & (1 << i));
-		b= (b ? 2 : 0);
-
-		/* Cmd goes out on the rising edge of the clock */
-		outb_reg3(dep, 1, 0x80 | 0x8 | b);
-		outb_reg3(dep, 1, 0x80 | 0x8 | 0x4 | b);
-	}
-	for (i= 15; i >= 0; i--)
-	{
-		b= (w & (1 << i));
-		b= (b ? 2 : 0);
-
-		/* Cmd goes out on the rising edge of the clock */
-		outb_reg3(dep, 1, 0x80 | 0x8 | b);
-		outb_reg3(dep, 1, 0x80 | 0x8 | 0x4 | b);
-	}
-	outb_reg3(dep, 1, 0x80 | 0x8);	/* End of data */
-	outb_reg3(dep, 1, 0x80);	/* Drop CS */
-	/* micro_delay(1); */			/* Is this required? */
-	outb_reg3(dep, 1, 0x80 | 0x8);		/* Set CS */
-	SPIN_UNTIL(inb_reg3(dep, 1) & 1, 10000);
-	if (!(inb_reg3(dep, 1) & 1))
-		panic("device remains busy");
-}
-
-static void ee_wds(dep)
-dpeth_t *dep;
-{
-	int b, i, cmd;
-	u16_t w;
-
-	outb_reg0(dep, DP_CR, CR_PS_P3);	/* Bank 3 */
-
-	/* Switch to 9346 mode and enable CS */
-	outb_reg3(dep, 1, 0x80 | 0x8);
-
-	cmd= 0x100;		/* 1 0 0 0 0 x x x x */
-	for (i= 8; i >= 0; i--)
-	{
-		b= (cmd & (1 << i));
-		b= (b ? 2 : 0);
-
-		/* Cmd goes out on the rising edge of the clock */
-		outb_reg3(dep, 1, 0x80 | 0x8 | b);
-		outb_reg3(dep, 1, 0x80 | 0x8 | 0x4 | b);
-	}
-	outb_reg3(dep, 1, 0x80 | 0x8);	/* End of cmd */
-	outb_reg3(dep, 1, 0x80);	/* Drop CS */
-	outb_reg3(dep, 1, 0x00);		/* back to normal */
-	outb_reg0(dep, DP_CR, CR_PS_P0);	/* back to bank 0 */
-}
-#endif
-
-static void tell_dev(buf, size, pci_bus, pci_dev, pci_func)
-vir_bytes buf;
-size_t size;
-int pci_bus;
-int pci_dev;
-int pci_func;
+/* TODO: obviously this needs a lot of work. */
+static void tell_iommu(vir_bytes buf, size_t size, int pci_bus, int pci_dev,
+	int pci_func)
 {
 	int r;
 	endpoint_t dev_e;
@@ -2258,9 +1490,8 @@ int pci_func;
 	if (r != OK)
 	{
 #if 0
-		printf(
-		"rtl8139`tell_dev: ds_retrieve_label_endpt failed for 'amddev': %d\n",
-			r);
+		printf("rtl8139`tell_dev: ds_retrieve_label_endpt failed "
+		    "for 'amddev': %d\n", r);
 #endif
 		return;
 	}

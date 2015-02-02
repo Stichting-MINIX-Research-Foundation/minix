@@ -48,13 +48,6 @@
  *	#endif
  */
 #define	_BSD_CLOCK_T_		unsigned int	/* clock() */
-#if defined(__minix)
-/* To change this, this require also changing the defintion of size_t in GCC,
- * and to adapt the following headers: int_fmt.h, int_types.h */
-#define _BSD_PTRDIFF_T_		int             /* ptr1 - ptr2 */
-#define _BSD_SIZE_T_		unsigned int    /* sizeof() */
-#define _BSD_SSIZE_T_		int             /* byte count or error */
-#else
 #ifdef __PTRDIFF_TYPE__
 #define	_BSD_PTRDIFF_T_		__PTRDIFF_TYPE__ /* ptr1 - ptr2 */
 #define	_BSD_SSIZE_T_		__PTRDIFF_TYPE__ /* byte count or error */
@@ -67,7 +60,6 @@
 #else
 #define	_BSD_SIZE_T_		unsigned long int /* sizeof() */
 #endif
-#endif /* defined(__minix) */
 #define	_BSD_TIME_T_		__int64_t	/* time() */
 #define	_BSD_CLOCKID_T_		int		/* clockid_t */
 #define	_BSD_TIMER_T_		int		/* timer_t */

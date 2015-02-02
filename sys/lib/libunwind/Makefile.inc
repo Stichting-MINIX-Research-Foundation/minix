@@ -5,6 +5,10 @@
 SRCS+=	libunwind.cxx \
 	unwind_registers.S
 
+.if defined(__MINIX) && (${MACHINE_ARCH} == "earm")
+SRCS+=	aeabi_unwind.c
+.endif
+
 INCS+=	unwind.h
 
 .if ${HAVE_GCC:U48} == "4"

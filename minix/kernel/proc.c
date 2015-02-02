@@ -1095,7 +1095,7 @@ int mini_notify(
 
 #define ASCOMPLAIN(caller, entry, field)	\
 	printf("kernel:%s:%d: asyn failed for %s in %s "	\
-	"(%d/%d, tab 0x%lx)\n",__FILE__,__LINE__,	\
+	"(%d/%zu, tab 0x%lx)\n",__FILE__,__LINE__,	\
 field, caller->p_name, entry, priv(caller)->s_asynsize, priv(caller)->s_asyntab)
 
 #define A_RETR_FLD(entry, field)	\

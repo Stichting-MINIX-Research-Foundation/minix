@@ -127,7 +127,7 @@ hcd_handle_event(hcd_device_state * device, hcd_event event, hcd_reg1 val)
 				"for 'hub port LS attach' event");
 
 			USB_MSG("Low speed device connected at "
-				"hub 0x%08X, port %u", device, val);
+				"hub 0x%p, port %u", device, val);
 
 			hcd_add_child(device, val, HCD_SPEED_LOW);
 			break;
@@ -138,7 +138,7 @@ hcd_handle_event(hcd_device_state * device, hcd_event event, hcd_reg1 val)
 				"for 'hub port FS attach' event");
 
 			USB_MSG("Full speed device connected at "
-				"hub 0x%08X, port %u", device, val);
+				"hub 0x%p, port %u", device, val);
 
 			hcd_add_child(device, val, HCD_SPEED_FULL);
 			break;
@@ -149,7 +149,7 @@ hcd_handle_event(hcd_device_state * device, hcd_event event, hcd_reg1 val)
 				"for 'hub port HS attach' event");
 
 			USB_MSG("High speed device connected at "
-				"hub 0x%08X, port %u", device, val);
+				"hub 0x%p, port %u", device, val);
 
 			hcd_add_child(device, val, HCD_SPEED_HIGH);
 			break;
@@ -162,7 +162,7 @@ hcd_handle_event(hcd_device_state * device, hcd_event event, hcd_reg1 val)
 			hcd_delete_child(device, val);
 
 			USB_MSG("Device disconnected from "
-				"hub 0x%08X, port %u", device, val);
+				"hub 0x%p, port %u", device, val);
 
 			break;
 
@@ -456,7 +456,7 @@ hcd_dump_tree(hcd_device_state * device, hcd_reg1 level)
 
 	/* DEBUG_DUMP; */ /* Let's keep tree output cleaner */
 
-	USB_MSG("Device on level %03u: 0x%08X", level, device);
+	USB_MSG("Device on level %03u: 0x%p", level, device);
 
 	/* Traverse device tree recursively */
 	for (child_num = 0; child_num < HCD_CHILDREN; child_num++) {

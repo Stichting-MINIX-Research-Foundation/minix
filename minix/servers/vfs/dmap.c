@@ -88,7 +88,7 @@ static int map_driver(const char label[LABEL_MAX], devmajor_t major,
   if (label != NULL) {
 	len = strlen(label);
 	if (len+1 > sizeof(dp->dmap_label)) {
-		printf("VFS: map_driver: label too long: %d\n", len);
+		printf("VFS: map_driver: label too long: %zu\n", len);
 		return(EINVAL);
 	}
 	strlcpy(dp->dmap_label, label, sizeof(dp->dmap_label));

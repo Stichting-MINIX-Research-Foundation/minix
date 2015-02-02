@@ -2,7 +2,7 @@
 
 COMMON_DIR:=${.PARSEDIR}
 .if defined(__MINIX)
-COMMON_CODEDIRS=atomic gen inet md net quad stdlib string 
+COMMON_CODEDIRS=atomic gen inet md net stdlib string
 .else
 COMMON_CODEDIRS=atomic gen gmon inet md net quad stdlib string sys
 .endif

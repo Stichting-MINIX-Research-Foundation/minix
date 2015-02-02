@@ -134,7 +134,8 @@ int read_write(struct fproc *rfp, int rw_flag, struct filp *f,
 {
   register struct vnode *vp;
   off_t position, res_pos;
-  unsigned int cum_io, cum_io_incr, res_cum_io;
+  size_t cum_io, res_cum_io;
+  size_t cum_io_incr;
   int op, r;
   dev_t dev;
 
@@ -310,7 +311,8 @@ vir_bytes buf;
 size_t req_size;
 {
   int r, oflags, partial_pipe = 0;
-  size_t size, cum_io, cum_io_incr;
+  size_t size, cum_io;
+  size_t cum_io_incr;
   struct vnode *vp;
   off_t  position, new_pos;
 

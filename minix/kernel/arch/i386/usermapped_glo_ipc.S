@@ -43,8 +43,6 @@ ENTRY(usermapped_ ## name ## _sysenter)					;\
 	SETARGS			/* call-specific register setup */	;\
 	sysenter		/* disappear into kernel */		;\
 0:									;\
-	push	%edi		/* kernel has desired PSW in %edi */	;\
-	popf			/* set PSW kernel wants us to have */	;\
 	mov	%ebx, %ecx	/* return w. state mangled; save %ebx */;\
 	pop	%edi							;\
 	pop	%esi							;\
@@ -69,8 +67,6 @@ ENTRY(usermapped_ ## name ## _syscall)					;\
 	SETARGS			/* call-specific register setup */	;\
 	movl	%ecx, %edx	/* %ecx is clobbered by SYSCALL */	;\
 	syscall			/* disappear into kernel */		;\
-	push	%edi		/* kernel has desired PSW in %edi */	;\
-	popf			/* set PSW kernel wants us to have */	;\
 	mov	%ebx, %ecx	/* return w. state mangled; save %ebx */;\
 	pop	%edi							;\
 	pop	%esi							;\

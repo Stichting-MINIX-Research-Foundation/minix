@@ -546,7 +546,11 @@ TOOL_ZIC=		${TOOLDIR}/bin/${_TOOL_PREFIX}zic
 
 # Clang supports C, C++ and Objective C
 TOOL_CC.clang=		clang
+.if defined(__MINIX)
+TOOL_CPP.clang=		clang -E
+.else
 TOOL_CPP.clang=		clang-cpp
+.endif # defined(__MINIX)
 TOOL_CXX.clang=		clang++
 TOOL_OBJC.clang=	clang
 TOOL_OPT.clang=		opt
@@ -574,7 +578,11 @@ TOOL_CKSUM=		cksum
 .if defined(__MINIX)
 # LSC: A full path has to be provided, as this is also, used as a make
 #      target.
+.if  exists(/usr/pkg/bin/clang-tblgen)
+TOOL_CLANG_TBLGEN=	/usr/pkg/bin/clang-tblgen
+.else
 TOOL_CLANG_TBLGEN=	/usr/bin/clang-tblgen
+.endif # exists(/usr/pkg/bin/clang-tblgen)
 .else
 TOOL_CLANG_TBLGEN=	clang-tblgen
 .endif # defined(__MINIX)
@@ -604,7 +612,11 @@ TOOL_JOIN=		join
 .if defined(__MINIX)
 # LSC: A full path has to be provided, as this is also, used as a make
 #      target.
+.if  exists(/usr/pkg/bin/llvm-tblgen)
+TOOL_LLVM_TBLGEN=	/usr/pkg/bin/llvm-tblgen
+.else
 TOOL_LLVM_TBLGEN=	/usr/bin/llvm-tblgen
+.endif # exists(/usr/pkg/bin/llvm-tblgen)
 .else
 TOOL_LLVM_TBLGEN=	llvm-tblgen
 .endif # defined(__MINIX)
@@ -1139,7 +1151,7 @@ _MKVARS.yes= \
 
 #MINIX-specific vars
 _MKVARS.yes+= \
-	MKSYSDEBUG MKLIVEUPDATE MKLWIP
+	MKSYSDEBUG MKLIVEUPDATE MKLWIP MKLLVMCMDS
 .if (${MACHINE_ARCH} == "i386")
 _MKVARS.yes+= \
 	MKWATCHDOG MKACPI MKAPIC MKDEBUGREG MKINSTALLBOOT MKPCI

@@ -29,7 +29,9 @@ SUBDIR+= openldap
 SUBDIR+= libc++
 .endif
 .if (${MKLLVM} != "no")
+.if (${MKLLVMCMDS} != "no")
 SUBDIR+= llvm
+.endif # (${MKLLVMCMDS} != "no")
 .endif
 .if (${MKPCC} != "no")
 SUBDIR+= pcc

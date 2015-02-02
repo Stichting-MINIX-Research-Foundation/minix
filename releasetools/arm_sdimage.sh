@@ -28,6 +28,8 @@ fi
 : ${RELEASETOOLSDIR=./releasetools/}
 : ${FSTAB=${DESTDIR}/etc/fstab}
 : ${BUILDVARS=-V MKGCCCMDS=yes -V MKLLVM=no}
+# These BUILDVARS are for building with LLVM:
+#: ${BUILDVARS=-V MKLIBCXX=no -V MKKYUA=no -V MKATF=no -V MKLLVMCMDS=no}
 : ${BUILDSH=build.sh}
 : ${CREATE_IMAGE_ONLY=0}
 : ${RC=minix_x86.rc}

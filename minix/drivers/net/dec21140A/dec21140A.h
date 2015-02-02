@@ -11,36 +11,20 @@ Created: 09/01/2009   Nicolas Tittley (first.last @ gmail DOT com)
 
 #include <sys/null.h>
 
-#define DE_FKEY 7  /* Shift+ this value will dump info on console */
-
-#define NOT(x) (~(x))
-
 #if debug == 1
 #	define DEBUG(statm) statm
 #else
 #	define DEBUG(statm)
 #endif
 
-
-#define	SA_ADDR_LEN	sizeof(ether_addr_t)
-
 #define DE_NB_SEND_DESCR    32
 #define DE_SEND_BUF_SIZE    (ETH_MAX_PACK_SIZE+2)
 #define DE_NB_RECV_DESCR    32
 #define DE_RECV_BUF_SIZE    (ETH_MAX_PACK_SIZE+2)
-#define IOVEC_NR	    16
+
 #define DE_MIN_BASE_ADDR    0x0400
 #define DE_SROM_EA_OFFSET   20
 #define DE_SETUP_FRAME_SIZE 192
-
-
-typedef struct iovec_dat_s {
-  iovec_s_t iod_iovec[IOVEC_NR];
-  int iod_iovec_s;
-  endpoint_t iod_proc_nr;
-  cp_grant_id_t iod_grant;
-  vir_bytes iod_iovec_offset;
-} iovec_dat_s_t;
 
 typedef struct de_descr {
   u32_t des[4];
@@ -53,9 +37,6 @@ typedef struct de_local_descr {
 } de_loc_descr_t;
 
 typedef struct dpeth {
-
-  message rx_return_msg;        /* Holds VREAD message until int */   
-  message tx_return_msg;        /* Holds VWRITE message until int */   
   char de_name[32];              /* Name of this interface */
   port_t de_base_port;          /* Base port, for multiple card instance */
   int de_irq;                   /* IRQ line number */
@@ -63,10 +44,7 @@ typedef struct dpeth {
 
   int de_type;			/* What kind of hardware */
 
-  ether_addr_t de_address;	/* Ethernet Address */
   eth_stat_t de_stat;           /* Stats */
-  unsigned long bytes_tx;       /* Number of bytes sent */
-  unsigned long bytes_rx;       /* Number of bytes recv */
 
   /* Space reservation. We will allocate all structures later in the code.
      here we just make sure we have the space we need at compile time */
@@ -81,42 +59,11 @@ typedef struct dpeth {
 #define DESCR_RECV 0
 #define DESCR_TRAN 1
   
-  int de_flags;			/* Send/Receive mode (Configuration) */
-
-#define DEF_EMPTY	0x0000
-#define DEF_READING	0x0001
-#define DEF_RECV_BUSY	0x0002
-#define DEF_ACK_RECV	0x0004
-#define DEF_SENDING	0x0010
-#define DEF_XMIT_BUSY	0x0020
-#define DEF_ACK_SEND	0x0040
-#define DEF_PROMISC	0x0100
-#define DEF_MULTI	0x0200
-#define DEF_BROAD	0x0400
-#define DEF_ENABLED	0x2000
-#define DEF_STOPPED	0x4000
-
-  int de_mode;			/* Status of the Interface */
-
-#define DEM_DISABLED	0x0000
-#define DEM_SINK	0x0001
-#define DEM_ENABLED	0x0002
-
-
   /* Serial ROM */
 #define SROM_BITWIDTH 6
 
   u8_t srom[((1<<SROM_BITWIDTH)-1)*2];    /* Space to read in 
 					     all the configuration ROM */
-
-
-  /* Temporary storage for RECV/SEND requests */
-  iovec_dat_s_t de_read_iovec;
-  iovec_dat_s_t de_write_iovec;
-  vir_bytes de_read_s;
-  vir_bytes de_send_s;
-  endpoint_t de_client;
-
 } dpeth_t;
 
 
