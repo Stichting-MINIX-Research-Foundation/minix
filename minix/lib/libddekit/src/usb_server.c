@@ -329,7 +329,7 @@ static void submit_urb(message *msg)
 		
 		DEBUG_MSG("URB type: %d", mx_urb->type);
 		/* check if urb is valid */
-		if (mx_urb->dev_id >= MAX_DEVS && mx_urb->dev_id < 0) {
+		if (mx_urb->dev_id >= MAX_DEVS || mx_urb->dev_id < 0) {
 			DEBUG_MSG("Bogus device ID.");
 			res = EINVAL;
 			goto out;
