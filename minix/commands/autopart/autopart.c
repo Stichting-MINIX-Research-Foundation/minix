@@ -1521,7 +1521,7 @@ void regionize(void)
 void m_read(int ev, int *biosdrive)
 /* Read the partition table from the current device. */
 {
-	int i, mode, n, v;
+	int i, n, v;
 	struct part_entry *pe;
 	u32_t system_hz;
 
@@ -1531,8 +1531,8 @@ void m_read(int ev, int *biosdrive)
 	stat_start(0);
 	fflush(stdout);
 
-	if ((device= open(curdev->name, mode= O_RDWR, 0666)) < 0) {
-		if (device >= 0) { close(device); device= -1; }
+	device = open(curdev->name, O_RDWR, 0666);
+	if (device < 0) {
 		return;
 	}
 
