@@ -2,6 +2,8 @@
 #
 # Perform a checkout / update the MINIX u-boot git repo if needed
 # 
+: ${UBOOT_REPO_URL=git://git.minix3.org/u-boot}
+
 # -o output dir
 OUTPUT_DIR=""
 GIT_VERSION=""
@@ -38,7 +40,7 @@ fi
 #
 if  [ ! -e "$OUTPUT_DIR" ]
 then
-	git clone git://git.minix3.org/u-boot -b minix $OUTPUT_DIR
+	git clone ${UBOOT_REPO_URL} -b minix $OUTPUT_DIR
 fi
 
 (
