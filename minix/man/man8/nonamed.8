@@ -9,7 +9,7 @@
 nonamed \- not a name daemon, but acts like one
 .SH SYNOPSIS
 .B nonamed
-.RB [ \-qs ]
+.RB [ \-Lqs ]
 .RB [ \-d [\fIlevel\fP]]
 .RB [ \-p
 .IR port ]
@@ -235,6 +235,9 @@ signal
 .B SIGUSR1
 or turned off (set to 0) with
 .BR SIGUSR2 .
+.TP
+.RB [ \-L ]
+Only accept queries coming from the local host.
 .TP
 .RB [ \-p " \fIport\fP]
 Port to listen on instead of the normal
