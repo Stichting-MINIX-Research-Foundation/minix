@@ -1980,9 +1980,6 @@ pci_intel_init()
 	if (OK != (s=sys_outl(PCII_CONFADD, PCII_UNSEL)))
 		printf("PCI: warning, sys_outl failed: %d\n", s);
 
-	if (vid == 0xffff && did == 0xffff)
-		return; /* Nothing here */
-
 	if (nr_pcibus >= NR_PCIBUS)
 		panic("too many PCI busses: %d", nr_pcibus);
 	busind= nr_pcibus;
