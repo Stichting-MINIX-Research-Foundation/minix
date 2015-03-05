@@ -11,6 +11,13 @@ CLEANFILES+= ${f}
 .endfor
 
 .for f in \
+	lshldi3.o
+${f}:	${LIBCOMMONCDIR}/quad/${f:C/\.o/.c/}
+OBJS+=	${f}
+CLEANFILES+= ${f}
+.endfor
+
+.for f in \
 	byte_swap_2.o byte_swap_4.o 
 ${f}:	${LIBCOMMONCARCHDIR}/gen/${f:C/\.o/.S/}
 OBJS+=	${f}
