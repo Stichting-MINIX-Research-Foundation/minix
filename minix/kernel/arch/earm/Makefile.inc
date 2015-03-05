@@ -18,8 +18,8 @@ MINC_OBJS_UNPAGED= atoi.o \
 	printf.o subr_prf.o \
 	strcmp.o strcpy.o strlen.o strncmp.o \
 	memcpy.o memmove.o memset.o 
-MINC_OBJS_UNPAGED+= divsi3.o udivsi3.o umodsi3.o \
-	umoddi3.o udivmoddi4.o aeabi_uidivmod.o \
+MINC_OBJS_UNPAGED+= divmodsi4.o divsi3.o udivsi3.o umodsi3.o \
+	umoddi3.o udivmoddi4.o aeabi_idivmod.o aeabi_uidivmod.o \
 	udivmodsi4.o aeabi_uldivmod.o
 atoi.o:		${NETBSDSRCDIR}/minix/lib/libminc/atoi.c
 printf.o:	${NETBSDSRCDIR}/sys/lib/libsa/printf.c
@@ -36,7 +36,9 @@ udivsi3.o:	${NETBSDSRCDIR}/sys/external/bsd/compiler_rt/dist/lib/udivsi3.c
 umodsi3.o:	${NETBSDSRCDIR}/sys/external/bsd/compiler_rt/dist/lib/umodsi3.c
 umoddi3.o:	${NETBSDSRCDIR}/sys/external/bsd/compiler_rt/dist/lib/umoddi3.c
 udivmoddi4.o:	${NETBSDSRCDIR}/sys/external/bsd/compiler_rt/dist/lib/udivmoddi4.c
+divmodsi4.o:		${NETBSDSRCDIR}/sys/external/bsd/compiler_rt/dist/lib/arm/divmodsi4.S
 udivmodsi4.o:		${NETBSDSRCDIR}/sys/external/bsd/compiler_rt/dist/lib/arm/udivmodsi4.S
+aeabi_idivmod.o:	${NETBSDSRCDIR}/sys/external/bsd/compiler_rt/dist/lib/arm/aeabi_idivmod.S
 aeabi_uidivmod.o:	${NETBSDSRCDIR}/sys/external/bsd/compiler_rt/dist/lib/arm/aeabi_uidivmod.S
 aeabi_uldivmod.o:	${NETBSDSRCDIR}/sys/external/bsd/compiler_rt/dist/lib/arm/aeabi_uldivmod.S
 
