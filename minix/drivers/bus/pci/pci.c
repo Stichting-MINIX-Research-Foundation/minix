@@ -1492,7 +1492,7 @@ complete_bars(void)
 			base &= 0xfcff;
 
 			if (base < iogap_low)
-				panic("I/O base too low: %d", base);
+				printf("I/O base too low: %d", base);
 
 			iogap_high= base;
 			bar_nr= pcidev[i].pd_bar[j].pb_nr;
