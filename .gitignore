@@ -41,3 +41,8 @@ releasetools/revision
 share/zoneinfo/builddir
 lib/libc/compat__*
 .gdbinit
+minix_x86.img
+obj.i386/*
+sys/arch/*/include/fpu.h
+sys/arch/*/include/stackframe.h
+			
