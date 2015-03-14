@@ -135,6 +135,7 @@
 ./usr/share/doc/psd/19.curses
 ./usr/share/doc/usd
 ./usr/share/doc/usd/03.shell
+./usr/share/doc/usd/30.rogue
 ./usr/share/examples
 ./usr/share/examples/tmux
 ./usr/share/info
