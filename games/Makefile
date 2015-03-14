@@ -13,7 +13,7 @@ SUBDIR=	adventure arithmetic \
 	factor fish fortune \
 	monop morse number \
 	pig ppt primes \
-	random snake tetris \
+	random rogue snake tetris \
 	wargames
 
 .if !defined(__MINIX)
