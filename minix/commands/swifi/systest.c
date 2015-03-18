@@ -66,14 +66,14 @@ main(int argc, char * argv[])
       goto Usage;
     }
   }
-
-  res = malloc(arg * sizeof(swifi_result_t));
+  size_t ressize = arg * sizeof(swifi_result_t);
+  res = malloc(ressize);
   if (res == NULL) {
     printf("Out of memory\n");
     goto Cleanup;
   }
 
-  memset(res, 0, sizeof(res));
+  memset(res, 0, ressize);
 
   /*
   // Find out where the faults will be injected
