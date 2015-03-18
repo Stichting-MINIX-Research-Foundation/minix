@@ -136,7 +136,7 @@ char **argv;
   if (argc < 2) usage();
 
   i = 1;
-  while (argv[i][0] == '-' && i < argc)
+  while ((i < argc) && (argv[i][0] == '-'))
   {
     if (strncmp(argv[i], "-b", 2) == 0)
       bits = atoi(argv[i] + 2);
