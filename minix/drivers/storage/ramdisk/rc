@@ -16,7 +16,7 @@ then	if [ -e $ACPI -a -n "`sysenv acpi`" ]
 	/bin/service -c up /service/pci -dev /dev/pci
 
 	/bin/service -c up /service/input -dev /dev/kbdmux
-	/bin/service -c up /service/pckbd
+	/bin/service -c up /service/pckbd || :
 
 	# Start procfs so we can access /proc/pci
 	mount -t procfs none /proc >/dev/null
