@@ -73,7 +73,7 @@ main(int argc, char * argv[])
     goto Cleanup;
   }
 
-  memset(res, 0, sizeof(res));
+  memset(res, 0, sizeof(*res));
 
   /*
   // Find out where the faults will be injected
