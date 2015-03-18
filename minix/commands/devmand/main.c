@@ -379,7 +379,7 @@ static void parse_config()
 				dbg("Parsing file %s",config_file);
 				yyin = fopen(config_file, "r");
 
-				if (yyin < 0) {
+				if (yyin == NULL) {
 					dbg("Can not open config file:" 
 				 	       " %d.\n", errno);
 				}
@@ -544,7 +544,7 @@ static enum dev_type determine_type (char *path)
 		return DEV_TYPE_UNKOWN;
 	}
 
-	res = fscanf(fd , "%s\n", buf);
+	res = fscanf(fd , "%256s\n", buf);
 	fclose(fd);
 
 	if (res != 1) {
