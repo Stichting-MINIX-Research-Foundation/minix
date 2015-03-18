@@ -80,8 +80,7 @@ void usage()
   exit(-1);
 }
 
-void terminate(s)
-int s;
+void terminate(int s)
 {
   /* Restore terminal parameters */
   tcsetattr(0, TCSANOW, &old_tty);
@@ -123,9 +122,7 @@ void write_wave_header()
 }
 
 
-int main(argc, argv)
-int argc;
-char **argv;
+int main(int argc, char* argv[])
 {
   unsigned int fragment_size;
   char *buffer, *file_name;
