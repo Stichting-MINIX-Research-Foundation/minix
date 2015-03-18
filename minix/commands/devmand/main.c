@@ -379,7 +379,7 @@ static void parse_config()
 				dbg("Parsing file %s",config_file);
 				yyin = fopen(config_file, "r");
 
-				if (yyin < 0) {
+				if (yyin == NULL) {
 					dbg("Can not open config file:" 
 				 	       " %d.\n", errno);
 				}
