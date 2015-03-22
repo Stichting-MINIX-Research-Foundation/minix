@@ -1502,7 +1502,6 @@ void (*escfunc(int c))(void)
 	case 'B': return(DN);
 	case 'C': return(RT);
 	case 'D': return(LF);
-#if defined(__i386__)
 	case '@': return(MA);
 	case 'G': return(FS);
 	case 'S': return(SR);
@@ -1510,7 +1509,6 @@ void (*escfunc(int c))(void)
 	case 'U': return(PD);
 	case 'V': return(PU);
 	case 'Y': return(EF);
-#endif
 	}
 	return(I);
   }
