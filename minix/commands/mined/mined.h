@@ -2,7 +2,6 @@
  *				Mined.h					  *
  *========================================================================*/
 
-#include <minix/config.h>
 #include <sys/types.h>
 #include <fcntl.h>
 #include <stdlib.h>
@@ -53,10 +52,6 @@ extern char *pos_string;	/* Absolute cursor positioning */
 #define NO_INPUT	(ERRORS + 2)
 
 #define STD_OUT	 	1		/* File descriptor for terminal */
-
-#if defined(__i386__)
-#define MEMORY_SIZE	(50 * 1024)	/* Size of data space to malloc */
-#endif
 
 #define REPORT	2			/* Report change of lines on # lines */
 
@@ -126,8 +121,6 @@ struct regex {
 };
 
 typedef struct regex REGEX;
-
-/* NULL definitions */
 
 /*
  * Forward declarations
