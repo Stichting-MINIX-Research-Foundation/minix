@@ -1,0 +1,15 @@
+.TH man 8 "21 March 2015" "1.0" "fix man page"
+.SH NAME
+fix \- Update file from difflist
+.SH SYNOPSIS
+fix <original-file> <diff-list-file> 
+.SH DESCRIPTION
+Works on diffs like patch does but outputs to STDOUT instead of overwriting the file
+.SH EXAMPLES
+diff test.old test.new > test.patch
+
+fix test.old test.patch > test.new.2
+.SH SEE ALSO
+patch(1), diff(1)
+.SH AUTHOR
+Manpage written by Jacob Adams <tookmund@gmail.com>
