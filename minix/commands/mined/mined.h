@@ -2,7 +2,7 @@
  *				Mined.h					  *
  *========================================================================*/
 
-#include <minix/config.h>
+
 #include <sys/types.h>
 #include <fcntl.h>
 #include <stdlib.h>
