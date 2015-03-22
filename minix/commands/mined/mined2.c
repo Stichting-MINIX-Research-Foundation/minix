@@ -3,7 +3,7 @@
  */
 
 /*  ========================================================================  *
- *				Move Commands				      *	
+ *				Move Commands				      *
  *  ========================================================================  */
 
 #include "mined.h"
@@ -122,7 +122,7 @@ void GOTO(void)
 }
 
 /*
- * Scroll forward one page or to eof, whatever comes first. (Bot_line becomes 
+ * Scroll forward one page or to eof, whatever comes first. (Bot_line becomes
  * top_line of display.) Try to leave the cursor on the same line. If this is
  * not possible, leave cursor on the line halfway the page.
  */
@@ -218,7 +218,7 @@ void SU(void)
  */
 void SD(void)
 {
-  if (forward_scroll() != ERRORS) 
+  if (forward_scroll() != ERRORS)
   	move_to(x, (y == 0) ? 0 : y - 1);
   else
   	set_cursor(x, y);
@@ -382,13 +382,13 @@ void DCC(void)
 /*
  * DPC deletes the character on the left side of the cursor.  If the cursor is
  * at the beginning of the line, the last character if the previous line is
- * deleted. 
+ * deleted.
  */
 void DPC(void)
 {
   if (x == 0 && cur_line->prev == header)
   	return;			/* Top of file */
-  
+
   LF();				/* Move one left */
   DCC();				/* Delete character under cursor */
 }
@@ -529,12 +529,12 @@ int insert(register LINE *line, char *location, char *string)
 /* Copy part of line until `location' has been reached */
   while (textp != location)
   	*bufp++ = *textp++;
-  
+
 /* Insert string at this location */
   while (*string != '\0')
   	*bufp++ = *string++;
   *bufp = '\0';
-  
+
   if (*(string - 1) == '\n')		/* Insert a new line */
   	(void) line_insert(line, location, length_of(location));
   else					/* Append last part of line */
@@ -655,7 +655,7 @@ void delete(register LINE *start_line, char *start_textp, LINE *end_line,
 }
 
 /*  ========================================================================  *
- *				Yank Commands				      *	
+ *				Yank Commands				      *
  *  ========================================================================  */
 
 LINE *mark_line;			/* For marking position. */
@@ -678,7 +678,7 @@ void PT(void)
 }
 
 /*
- * IF() prompt for a filename and inserts the file at the current location 
+ * IF() prompt for a filename and inserts the file at the current location
  * in the file.
  */
 void IF(void)
@@ -689,7 +689,7 @@ void IF(void)
 /* Get the file name */
   if (get_file("Get and insert file:", name) != FINE)
   	return;
-  
+
   if ((fd = open(name, 0)) < 0)
   	error("Cannot open ", name);
   else {
@@ -709,7 +709,7 @@ void file_insert(int fd, FLAG old_pos)
   register int line_count = nlines;	/* Nr of lines inserted */
   LINE *page = cur_line;
   int ret = ERRORS;
-  
+
 /* Get the first piece of text (might be ended with a '\n') from fd */
   if (get_line(fd, line_buffer) == ERRORS)
   	return;				/* Empty file */
@@ -721,7 +721,7 @@ void file_insert(int fd, FLAG old_pos)
 /* Repeat getting lines (and inserting lines) until EOF is reached */
   while ((ret = get_line(fd, line_buffer)) != ERRORS && ret != NO_LINE)
   	line = line_insert(line, line_buffer, ret);
-  
+
   if (ret == NO_LINE) {		/* Last line read not ended by a '\n' */
   	line = line->next;
   	(void) insert(line, line->text, line_buffer);
@@ -766,7 +766,7 @@ void WB(void)
   register int cnt;		/* Count check for read/write */
   int ret = 0;			/* Error check for write */
   char file[LINE_LEN];		/* Output file */
-  
+
 /* Checkout the buffer */
   if ((yank_fd = scratch_file(READ)) == ERRORS) {
   	error("Buffer is empty.", NULL);
@@ -776,7 +776,7 @@ void WB(void)
 /* Get file name */
   if (get_file("Write buffer to file:", file) != FINE)
   	return;
-  
+
 /* Creat the new file */
   if ((new_fd = creat(file, 0644)) < 0) {
   	error("Cannot create ", file);
@@ -784,7 +784,7 @@ void WB(void)
   }
 
   status_line("Writing ", file);
-  
+
 /* Copy buffer into file */
   while ((cnt = read(yank_fd, text_buffer, sizeof(text_buffer))) > 0)
   	if (write(new_fd, text_buffer, cnt) != cnt) {
@@ -802,7 +802,7 @@ void WB(void)
 }
 
 /*
- * MA sets mark_line (mark_text) to the current line (text pointer). 
+ * MA sets mark_line (mark_text) to the current line (text pointer).
  */
 void MA(void)
 {
@@ -919,7 +919,7 @@ void yank(LINE *start_line, char *start_textp, LINE *end_line, char *end_textp,
 /* Creat file to hold buffer */
   if ((fd = scratch_file(WRITE)) == ERRORS)
   	return;
-  
+
   chars_saved = 0L;
   lines_saved = 0;
   status_line("Saving text.", NULL);
@@ -1006,7 +1006,7 @@ int scratch_file(FLAG mode)
 }
 
 /*  ========================================================================  *
- *				Search Routines				      *	
+ *				Search Routines				      *
  *  ========================================================================  */
 
 /*
@@ -1020,7 +1020,7 @@ int scratch_file(FLAG mode)
  * 	   characters. A list of characters can be indicated by a '-'. So
  * 	   [a-z] matches any letter of the alphabet. If the first character
  * 	   after the '[' is a '^' then the set is negated (matching none of
- * 	   the characters). 
+ * 	   the characters).
  * 	   A ']', '^' or '-' can be escaped by putting a '\' in front of it.
  * 	7. If one of the expressions as described in 1-6 is followed by a
  * 	   '*' than that expressions matches a sequence of 0 or more of
@@ -1059,7 +1059,7 @@ REGEX *get_expression(char *message)
 
   if (get_string(message, exp_buf, FALSE) == ERRORS)
   	return NULL;
-  
+
   if (exp_buf[0] == '\0' && typed_expression[0] == '\0') {
   	error("No previous expression.", NULL);
   	return NULL;
@@ -1115,12 +1115,12 @@ void change(char *message, FLAG file)
   copy_string(mess_buf, message);
   if ((program = get_expression(mess_buf)) == NULL)
   	return;
-  
+
 /* Get substitution pattern */
   build_string(mess_buf, "%s %s by:", mess_buf, typed_expression);
   if (get_string(mess_buf, replacement, FALSE) == ERRORS)
   	return;
-  
+
   set_cursor(0, ymax);
   flush();
 /* Substitute until end of file */
@@ -1165,7 +1165,7 @@ void change(char *message, FLAG file)
 
 /*
  * Substitute() replaces the match on this line by the substitute pattern
- * as indicated by the program. Every '&' in the replacement is replaced by 
+ * as indicated by the program. Every '&' in the replacement is replaced by
  * the original match. A \ in the replacement escapes the next character.
  */
 char *substitute(LINE *line, REGEX *program, char *replacement)
@@ -1180,7 +1180,7 @@ char *substitute(LINE *line, REGEX *program, char *replacement)
 /* Copy part of line until the beginning of the match */
   while (linep != program->start_ptr)
   	*textp++ = *linep++;
-  
+
 /*
  * Replace the match by the substitution pattern. Each occurrence of '&' is
  * replaced by the original match. A \ escapes the next character.
@@ -1326,7 +1326,7 @@ void finished(register REGEX *program, int *last_exp)
 }
 
 /*
- * Compile compiles the pattern into a more comprehensible form and returns a 
+ * Compile compiles the pattern into a more comprehensible form and returns a
  * REGEX structure. If something went wrong, the status field of the structure
  * is set to REG_ERROR and an error message is set into the err_mess field of
  * the union. If all went well the expression is saved and the expression
@@ -1401,7 +1401,7 @@ void compile(register char *pattern, REGEX *program)
   		 * the list.
   		 * The opcode consists of BRACKET and if necessary
   		 * NEGATE to indicate that the list should be negated
-  		 * and/or STAR to indicate a number of sequence of this 
+  		 * and/or STAR to indicate a number of sequence of this
   		 * list.
   		 * The lower byte contains the length of the list.
   		 */
@@ -1466,7 +1466,7 @@ void compile(register char *pattern, REGEX *program)
 }
 
 /*
- * Match gets as argument the program, pointer to place in current line to 
+ * Match gets as argument the program, pointer to place in current line to
  * start from and the method to search for (either FORWARD or REVERSE).
  * Match() will look through the whole file until a match is found.
  * NULL is returned if no match could be found.
@@ -1557,7 +1557,7 @@ int line_check(register REGEX *program, char *string, FLAG method)
  * is found during matching, then the begin position of the string is marked
  * and the maximum number of matches is performed. Then the function star()
  * is called which starts to finish the match from this position of the string
- * (and expression). Check() return MATCH for a match, NO_MATCH is the string 
+ * (and expression). Check() return MATCH for a match, NO_MATCH is the string
  * couldn't be matched or REG_ERROR for an illegal opcode in expression.
  */
 int check_string(REGEX *program, register char *string, int *expression)
@@ -1607,7 +1607,7 @@ int check_string(REGEX *program, register char *string, int *expression)
   	default :
   		panic("Corrupted program in check_string()");
   	}
-  	if (star_fl) 
+  	if (star_fl)
   		return star(program, mark, string, expression);
   }
   if (*expression & DONE) {
