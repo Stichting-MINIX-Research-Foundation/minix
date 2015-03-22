@@ -1954,15 +1954,14 @@
 ./usr/lib/bc/libddekit_usb_server.a	minix-sys	bitcode
 ./usr/lib/bc/libdevman.a		minix-sys	bitcode
 ./usr/lib/bc/libedit.a			minix-sys	bitcode
-./usr/lib/bc/libevent.a			minix-sys	bitcode
-./usr/lib/bc/libexpat.a			minix-sys	bitcode
-./usr/lib/bc/libfsdriver.a		minix-sys	bitcode
-./usr/lib/bc/libpci.a			minix-sys	bitcode
 ./usr/lib/bc/libelf.a			minix-sys	bitcode
+./usr/lib/bc/libevent.a			minix-sys	bitcode
 ./usr/lib/bc/libexec.a			minix-sys	bitcode
 ./usr/lib/bc/libexecinfo.a		minix-sys	bitcode
+./usr/lib/bc/libexpat.a			minix-sys	bitcode
 ./usr/lib/bc/libfetch.a			minix-sys	bitcode
 ./usr/lib/bc/libform.a			minix-sys	bitcode
+./usr/lib/bc/libfsdriver.a		minix-sys	bitcode
 ./usr/lib/bc/libgcc_s.a			minix-sys	bitcode
 ./usr/lib/bc/libhgfs.a			minix-sys	bitcode
 ./usr/lib/bc/libiberty.a		minix-sys	bitcode,binutils
@@ -1983,6 +1982,7 @@
 ./usr/lib/bc/libnetdriver.a		minix-sys	bitcode
 ./usr/lib/bc/libnetsock.a		minix-sys	bitcode
 ./usr/lib/bc/libopcodes.a		minix-sys	bitcode,binutils
+./usr/lib/bc/libpci.a			minix-sys	bitcode
 ./usr/lib/bc/libprop.a			minix-sys	bitcode
 ./usr/lib/bc/libpuffs.a			minix-sys	bitcode
 ./usr/lib/bc/librefuse.a		minix-sys	bitcode
@@ -5217,6 +5217,7 @@
 ./usr/man/man8/fbdctl.8				minix-sys
 ./usr/man/man8/fdisk.8				minix-sys
 ./usr/man/man8/fingerd.8			minix-sys
+./usr/man/man8/fix.8			minix-sys
 ./usr/man/man8/fsck.8				minix-sys
 ./usr/man/man8/fsck_ext2fs.8			minix-sys
 ./usr/man/man8/ftpd.8				minix-sys

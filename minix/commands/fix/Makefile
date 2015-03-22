@@ -1,4 +1,4 @@
 PROG=	fix
-MAN=
+MAN=    fix.8
 
 .include <bsd.prog.mk>
