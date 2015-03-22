@@ -4,15 +4,15 @@
 
 /*
  * Author: Michiel Huisjes.
- * 
+ *
  * 1. General remarks.
- * 
+ *
  *   Mined is a screen editor designed for the MINIX operating system.
  *   It is meant to be used on files not larger than 50K and to be fast.
  *   When mined starts up, it reads the file into its memory to minimize
  *   disk access. The only time that disk access is needed is when certain
  *   save, write or copy commands are given.
- * 
+ *
  *   Mined has the style of Emacs or Jove, that means that there are no modes.
  *   Each character has its own entry in an 256 pointer to function array,
  *   which is called when that character is typed. Only ASCII characters are
@@ -21,7 +21,7 @@
  *   inserted as well. Note that the mapping between commands and functions
  *   called is implicit in the table. Changing the mapping just implies
  *   changing the pointers in this table.
- * 
+ *
  *   The display consists of SCREENMAX + 1 lines and XMAX + 1 characters. When
  *   a line is larger (or gets larger during editing) than XBREAK characters,
  *   the line is either shifted SHIFT_SIZE characters to the left (which means
@@ -40,7 +40,7 @@
  *   editing. This line is usually blank or contains information mined needs
  *   during editing. This information (or rather questions) is displayed in
  *   reverse video.
- * 
+ *
  *   The terminal modes are changed completely. All signals like start/stop,
  *   interrupt etc. are unset. The only signal that remains is the quit signal.
  *   The quit signal (^\) is the general abort signal for mined. Typing a ^\
@@ -51,19 +51,19 @@
  *   The session will also be aborted when an unrecoverable error occurs. E.g
  *   when there is no more memory available. If the file has been modified,
  *   mined will ask if the file has to be saved or not.
- *   If there is no more space left on the disk, mined will just give an error 
+ *   If there is no more space left on the disk, mined will just give an error
  *   message and continue.
- * 
+ *
  *   The number of system calls are minized. This is done to keep the editor
  *   as fast as possible. I/O is done in SCREEN_SIZE reads/writes. Accumulated
  *   output is also flushed at the end of each character typed.
- * 
+ *
  * 2. Regular expressions
- *   
+ *
  *   Mined has a build in regular expression matcher, which is used for
  *   searching and replace routines. A regular expression consists of a
  *   sequence of:
- * 
+ *
  *      1. A normal character matching that character.
  *      2. A . matching any character.
  *      3. A ^ matching the begin of a line.
@@ -73,32 +73,32 @@
  *        characters. A list of characters can be indicated by a '-'. So
  *        [a-z] matches any letter of the alphabet. If the first character
  *        after the '[' is a '^' then the set is negated (matching none of
- *        the characters). 
+ *        the characters).
  *        A ']', '^' or '-' can be escaped by putting a '\' in front of it.
  *        Of course this means that a \ must be represented by \\.
  *      7. If one of the expressions as described in 1-6 is followed by a
  *        '*' than that expressions matches a sequence of 0 or more of
  *        that expression.
- * 
+ *
  *   Parsing of regular expression is done in two phases. In the first phase
  *   the expression is compiled into a more comprehensible form. In the second
  *   phase the actual matching is done. For more details see 3.6.
- * 
- * 
+ *
+ *
  * 3. Implementation of mined.
- * 
+ *
  *   3.1 Data structures.
- * 
+ *
  *      The main data structures are as follows. The whole file is kept in a
  *      double linked list of lines. The LINE structure looks like this:
- * 
+ *
  *         typedef struct Line {
  *              struct Line *next;
  *              struct Line *prev;
  *              char *text;
  *              unsigned char shift_count;
  *         } LINE;
- * 
+ *
  *      Each line entry contains a pointer to the next line, a pointer to the
  *      previous line and a pointer to the text of that line. A special field
  *      shift_count contains the number of shifts (in units of SHIFT_SIZE)
@@ -108,7 +108,7 @@
  *      that the number of characters of the line is counted and sufficient
  *      space is allocated to store them (including a linefeed and a '\0').
  *      The resulting address is assigned to the text field in the structure.
- * 
+ *
  *      A special structure is allocated and its address is assigned to the
  *      variable header as well as the variable tail. The text field of this
  *      structure is set to NULL. The tail->prev of this structure points
@@ -122,12 +122,12 @@
  *      character inserted. Then the old data space (pointed to by
  *      cur_line->text) is freed, data space for the new line is allocated and
  *      assigned to cur_line->text.
- * 
+ *
  *      Two global variables called x and y represent the x and y coordinates
  *      from the cursor. The global variable nlines contains the number of
  *      lines in the file. Last_y indicates the maximum y coordinate of the
  *      screen (which is usually SCREENMAX).
- * 
+ *
  *      A few strings must be initialized by hand before compiling mined.
  *      These string are enter_string, which is printed upon entering mined,
  *      rev_video (turn on reverse video), normal_video, rev_scroll (perform a
@@ -135,13 +135,13 @@
  *      absolute position string to be printed for cursor motion. The #define
  *      X_PLUS and Y_PLUS should contain the characters to be added to the
  *      coordinates x and y (both starting at 0) to finish cursor positioning.
- * 
+ *
  *   3.2 Starting up.
- *      
+ *
  *      Mined can be called with or without argument and the function
  *      load_file () is called with these arguments. load_file () checks
  *      if the file exists if it can be read and if it is writable and
- *      sets the writable flag accordingly. If the file can be read, 
+ *      sets the writable flag accordingly. If the file can be read,
  *      load_file () reads a line from the file and stores this line into
  *      a structure by calling install_line () and line_insert () which
  *      installs the line into the double linked list, until the end of the
@@ -149,9 +149,9 @@
  *      Lines are read by the function get_line (), which buffers the
  *      reading in blocks of SCREEN_SIZE. Load_file () also initializes the
  *      LINE *variables described above.
- * 
+ *
  *   3.3 Moving around.
- * 
+ *
  *      Several commands are implemented for moving through the file.
  *      Moving up (UP), down (DN) left (LF) and right (RT) are done by the
  *      arrow keys. Moving one line below the screen scrolls the screen one
@@ -163,12 +163,12 @@
  *      (HO), end of file (EF), scroll one page down (PD), scroll one page up
  *      (PU), scroll one line down (SD), scroll one line up (SU) and move to a
  *      certain line number (GOTO).
- *      Two functions called MN () and MP () each move one word further or 
+ *      Two functions called MN () and MP () each move one word further or
  *      backwards. A word is a number of non-blanks seperated by a space, a
  *      tab or a linefeed.
- * 
+ *
  *   3.4 Modifying text.
- * 
+ *
  *      The modifying commands can be separated into two modes. The first
  *      being inserting text, and the other deleting text. Two functions are
  *      created for these purposes: insert () and delete (). Both are capable
@@ -186,11 +186,11 @@
  *      before cursor (even linefeed) (DPC), delete next word (DNW), delete
  *      previous word (DPC) and delete to end of line (if the cursor is at
  *      a linefeed delete line) (DLN).
- * 
+ *
  *   3.5 Yanking.
- * 
+ *
  *      A few utilities are provided for yanking pieces of text. The function
- *      MA () marks the current position in the file. This is done by setting 
+ *      MA () marks the current position in the file. This is done by setting
  *      LINE *mark_line and char *mark_text to the current position. Yanking
  *      of text can be done in two modes. The first mode just copies the text
  *      from the mark to the current position (or visa versa) into a buffer
@@ -207,14 +207,14 @@
  *      yank ()). Several things can be done with the buffer. It can be
  *      inserted somewhere else in the file (PT) or it can be copied into
  *      another file (WB), which will be prompted for.
- * 
+ *
  *   3.6 Search and replace routines.
- * 
+ *
  *      Searching for strings and replacing strings are done by regular
  *      expressions. For any expression the function compile () is called
  *      with as argument the expression to compile. Compile () returns a
  *      pointer to a structure which looks like this:
- * 
+ *
  *         typedef struct regex {
  *              union {
  *                    char *err_mess;
@@ -224,7 +224,7 @@
  *              char *start_ptr;
  *              char *end_ptr;
  *         } REGEX;
- *      
+ *
  *    If something went wrong during compiling (e.g. an illegal expression
  *    was given), the function reg_error () is called, which sets the status
  *    field to REG_ERROR and the err_mess field to the error message. If the
@@ -241,7 +241,7 @@
  *    match was found else it returns a NULL. Line_check () takes the
  *    same arguments, but return either MATCH or NO_MATCH.
  *    During checking, the start_ptr and end_ptr fields of the REGEX
- *    structure are assigned to the start and end of the match. 
+ *    structure are assigned to the start and end of the match.
  *    Both functions try to find a match by walking through the line
  *    character by character. For each possibility, the function
  *    check_string () is called with as arguments the REGEX *program and the
@@ -271,9 +271,9 @@
  *    means substitute the match instead. An & can be escaped by a \. When
  *    a match is found, the function substitute () will perform the
  *    substitution.
- * 
+ *
  *  3.6 Miscellaneous commands.
- * 
+ *
  *    A few commands haven't be discussed yet. These are redraw the screen
  *    (RD) fork a shell (SH), print file status (FS), write file to disc
  *    (WT), insert a file at current position (IF), leave editor (XT) and
@@ -282,16 +282,16 @@
  *    file by calling ask_save ().
  *    The function ESC () will repeat a command n times. It will prompt for
  *    the number. Aborting the loop can be done by sending the ^\ signal.
- * 
+ *
  *  3.7 Utility functions.
- * 
+ *
  *    Several functions exists for internal use. First allocation routines:
  *    alloc (bytes) and newline () will return a pointer to free data space
  *    if the given size. If there is no more memory available, the function
  *    panic () is called.
- *    Signal handling: The only signal that can be send to mined is the 
+ *    Signal handling: The only signal that can be send to mined is the
  *    SIGQUIT signal. This signal, functions as a general abort command.
- *    Mined will abort if the signal is given during the main loop. The 
+ *    Mined will abort if the signal is given during the main loop. The
  *    function abort_mined () takes care of that.
  *    Panic () is a function with as argument a error message. It will print
  *    the message and the error number set by the kernel (errno) and will
@@ -345,9 +345,9 @@
  *    of cur_line to an apropiate number according to new_x. The only thing
  *    left to do now is to assign the new values to cur_line, cur_text, x
  *    and y.
- * 
+ *
  * 4. Summary of commands.
- *  
+ *
  *  CURSOR MOTION
  *    up-arrow  Move cursor 1 line up.  At top of screen, reverse scroll
  *    down-arrow  Move cursor 1 line down.  At bottom, scroll forward.
@@ -359,7 +359,7 @@
  *    CTRL-_   Move cursor to bottom of screen
  *    CTRL-F   Forward to start of next word (even to next line)
  *    CTRL-B   Backward to first character of previous word
- *   
+ *
  *  SCREEN MOTION
  *    Home key  Move cursor to first character of file
  *    End key   Move cursor to last character of file
@@ -367,7 +367,7 @@
  *    PgD    Scroll backward 1 page. Top line becomes bottom line
  *    CTRL-D   Scroll screen down one line (reverse scroll)
  *    CTRL-U   Scroll screen up one line (forward scroll)
- *   
+ *
  *  MODIFYING TEXT
  *    ASCII char  Self insert character at cursor
  *    tab    Insert tab at cursor
@@ -383,7 +383,7 @@
  *    CTRL-Y   Insert the contents of the save file at current position
  *    CTRL-Q   Insert the contents of the save file into a new file
  *    CTRL-G   Insert a file at the current position
- *   
+ *
  *  MISCELLANEOUS
  *    CTRL-E   Erase and redraw the screen
  *    CTRL-V   Visit file (read a new file); complain if old one changed
@@ -401,7 +401,7 @@
  */
 
 /*  ========================================================================  *
- *				Utilities				      *	
+ *				Utilities				      *
  *  ========================================================================  */
 
 #include "mined.h"
@@ -440,7 +440,7 @@ void VI(void)
 
   if (modified == TRUE && ask_save() == ERRORS)
   	return;
-  
+
 /* Get new file name */
   if (get_file("Visit file:", new_file) == ERRORS)
   	return;
@@ -619,7 +619,7 @@ int bottom_line(FLAG revfl, char *s1, char *s2, char *inbuf, FLAG statfl)
   	stat_visible = FALSE;
 
   string_print(buf);
-  
+
   if (inbuf != NULL)
   	ret = input(inbuf, statfl);
 
@@ -776,7 +776,7 @@ char *find_address(LINE *line, int x_coord, int *old_x)
   		tx++;
   	textp++;
   }
-  
+
   *old_x = tx;
   return textp;
 }
@@ -909,7 +909,7 @@ void display(int x_coord, int y_coord, register LINE *line, register int count)
 }
 
 /*
- * Write_char does a buffered output. 
+ * Write_char does a buffered output.
  */
 int write_char(int fd, int c)
 {
@@ -1023,7 +1023,7 @@ void bad_write(int fd)
 {
   if (fd == STD_OUT)		/* Cannot write to terminal? */
   	exit(1);
-  
+
   clear_buffer();
   build_string(text_buffer, "Command aborted: %s (File incomplete)",
   		            (errno == ENOSPC || errno == -ENOSPC) ?
@@ -1208,7 +1208,7 @@ char   *normal_video = "\033[m";	/* String for leaving reverse video */
 char   *blank_line = "\033[K";		/* Clear line to end */
 #endif /* UNIX */
 
-/* 
+/*
  * Yank variables.
  */
 FLAG yank_status = NOT_VALID;		/* Status of yank_file */
@@ -1516,7 +1516,7 @@ void (*escfunc(int c))(void)
 }
 
 /*
- * ESC() wants a count and a command after that. It repeats the 
+ * ESC() wants a count and a command after that. It repeats the
  * command count times. If a ^\ is given during repeating, stop looping and
  * return to main loop.
  */
@@ -1596,10 +1596,10 @@ int line_number(void)
   	count++;
   	line = line->next;
   }
-  
+
   return count;
 }
-  
+
 /*
  * Display a line telling how many chars and lines the file contains. Also tell
  * whether the file is readonly and/or modified.
