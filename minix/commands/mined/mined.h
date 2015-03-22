@@ -123,8 +123,6 @@ struct regex {
 
 typedef struct regex REGEX;
 
-/* NULL definitions */
-
 /*
  * Forward declarations
  */
