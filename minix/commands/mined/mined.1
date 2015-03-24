@@ -1,0 +1,229 @@
+.Dd March 25, 2015
+.Dt MINED 1
+.Os
+.Sh NAME
+.Nm mined
+.Nd text editor
+.Sh SYNOPSIS
+.Nm
+.Op file
+.Sh DESCRIPTION
+.Nm
+is a simple screen editor.
+At any instant, a window of 24 lines is visible on the screen.
+The current position in the file is shown by the cursor.
+Ordinary characters typed in are inserted at the cursor.
+Control characters and keys on the numeric keypad (at the right-hand side
+of the keyboard) are used to move the cursor and perform other functions.
+.Pp
+Commands exist to move forward and backward a word, and delete words
+either in front of the cursor or behind it.
+A word in this context is a sequence of characters delimited on both ends by
+white space (space, tab, line feed, start of file, or end of file).
+The commands for deleting characters and words also work on line feeds, making
+it possible to join two consecutive lines by deleting the line feed between them.
+.Pp
+The editor maintains one save buffer (not displayed).
+Commands are present to move text from the file to the buffer, from the buffer
+to the file, and to write the buffer onto a new file.
+If the edited text cannot be written out due to a full disk, it may still
+be possible to copy the whole text to the save buffer and then write it to a
+different file on a different disk with CTRL-Q.
+It may also be possible to escape from the editor with CTRL-S and remove
+some files.
+.Pp
+Some of the commands prompt for arguments (file names, search patterns, etc.).
+All commands that might result in loss of the file being edited prompt to ask
+for confirmation.
+.Pp
+A key (command or ordinary character) can be repeated
+.Em n
+times by typing
+.Em "ESC n key"
+where
+.Em ESC
+is the
+.Em escape
+key.
+.Pp
+Forward and backward searching requires a regular expression as the search
+pattern.
+Regular expressions follow the same rules as in the
+.Ux
+editor,
+.Xr ed 1 .
+These rules can be stated as:
+.Bl -tag -compact -offset indent -width "012345679"
+.It Em c
+Any displayable character matches itself
+.It Em \&.
+(period) matches any character except line feed
+.It Em \&^
+(circumflex) matches the start of the line
+.It Em \&$
+(dollar sign) matches the end of the line
+.It Em \ec
+matches the character \fIc\fR (including period, circumflex, etc)
+.It Em [string]
+matches any of the characters in the string
+.It Em [^string]
+matches any of the characters except those in the string
+.It Em [x-y]
+matches any characters between
+.Em x
+and
+.Em y
+(e.g., 
+.Em [a-z]
+).
+.It Pattern*
+matches any number of occurrences of
+.Em pattern
+.El
+.Pp
+Some examples of regular expressions are:
+.Bl -tag -compact -offset indent -width "012345679"
+.It Em The boy
+matches the string
+.Em The boy
+.It Em ^$
+matches any empty line.
+.It Em ^.$
+matches any line containing exactly 1 character
+.It ^A.*\e.$
+matches any line starting with an
+.Em A
+, ending with a period.
+.It ^[A\(enZ]*$
+matches any line containing only capital letters (or empty).
+.It [A-Z0-9]
+matches any line containing either a capital letter or a digit.
+.It \&.*X$
+matches any line ending in
+.Em X.
+.It A.*B
+matches any line containing an
+.Em A
+and then a
+.Em B
+.El
+.Pp
+Control characters cannot be entered into a file simply by typing them because
+all of them are editor commands.
+To enter a control character, depress the ALT key, and then while holding it
+down, hit the ESC key.
+Release both ALT and ESC and type the control character.
+Control characters are displayed in reverse video.
+.Pp
+The
+.Nm
+commands are as follows.
+.Ss CURSOR MOTION
+.Bl -tag -width "0123456789" -compact
+.It Em arrows
+Move the cursor in the indicated direction
+.It Em CTRL-A
+Move cursor to start of current line
+.It Em CTRL-Z
+Move cursor to end of current line
+.It Em CTRL-^
+Move cursor to top of screen
+.It Em CTRL-_
+Move cursor to end of screen
+.It Em CTRL-F
+Move cursor forward to start of next word
+.It Em CTRL-B
+Move cursor backward to start of previous word
+.El
+.Ss SCREEN MOTION
+.Bl -tag -width "0123456789" -compact
+.It Em Home key
+Move to first character of the file
+.It Em End key
+Move to last character of the file
+.It Em PgUp key
+Scroll window up 23 lines (closer to start of the file)
+.It Em PgDn Key
+Scroll window down 23 lines (closer to end of the file)
+.It Em CTRL-U
+Scroll window up 1 line
+.It Em CTRL-D
+Scroll window down 1 line
+.El
+.Ss MODIFYING TEXT
+.Bl -tag -width "0123456789" -compact
+.It Em Del key
+Delete the character under the cursor
+.It Em Backspace
+Delete the character to left of the cursor
+.It Em CTRL-N
+Delete the next word
+.It Em CTRL-P
+Delete the previous word
+.It Em CTRL-T
+Delete tail of line (all characters from cursor to end of line)
+.It Em CTRL-O
+Open up the line (insert line feed and back up)
+.It Em CTRL-G
+Get and insert a file at the cursor position
+.El
+.Ss BUFFER OPERATIONS
+.Bl -tag -width "0123456789" -compact
+.It Em CTRL-@
+Set mark at current position for use with CTRL-C and CTRL-K
+.It Em CTRL-C
+Copy the text between the mark and the cursor into the buffer
+.It Em CTRL-K
+Delete text between mark and cursor; also copy it to the buffer
+.It Em CTRL-Y
+Yank contents of the buffer out and insert it at the cursor
+.It Em CTRL-Q
+Write the contents of the buffer onto a file
+.El
+.Ss MISCELLANEOUS
+.Bl -tag -width "0123456789" -compact
+.It Em numeric +
+Search forward (prompts for regular expression)
+.It Em numeric -
+Search backward (prompts for regular expression)
+.It Em numeric 5
+Display the file status
+.It Em CTRL-]
+Go to specific line
+.It Em CTRL-R
+Global replace
+.Em pattern
+with
+.Em string
+(from cursor to end)
+.It Em CTRL-L
+Line replace
+.Em pattern
+with
+.Em string
+.It Em CTRL-W
+Write the edited file back to the disk
+.It Em CTRL-X
+Exit the editor
+.It Em CTRL-S
+Fork off a shell (use CTRL-D to get back to the editor)
+.It Em CTRL-\e
+Abort whatever the editor was doing and wait for command
+.It Em CTRL-E
+Erase screen and redraw it
+.It Em CTRL-V
+Visit (edit) a new file
+.El
+.Sh SEE ALSO
+.Xr vi 1 ,
+.Xr ed 1
+.Sh HISTORY
+.Nm
+first appeared in Minix 1.1.
+.Sh AUTHORS
+.Nm
+was designed by
+.An "Andy Tanenbaum"
+and written by
+.An "Michiel Huisjes".
+.\" .Sh BUGS

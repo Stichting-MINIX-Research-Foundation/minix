@@ -1,6 +1,6 @@
 .include <bsd.own.mk>
 
-SUBDIR=	man1 man1x man2 man4 man5 man7 man8 man9
+SUBDIR=	man1 man2 man4 man5 man7 man8 man9
 
 WHATISDBDIR?=	/usr/man
 
