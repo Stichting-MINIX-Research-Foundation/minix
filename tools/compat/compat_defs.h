@@ -475,7 +475,7 @@ void strmode(mode_t, char *);
 char *strndup(const char *, size_t);
 #endif
 
-#if !HAVE_STRSEP || defined(__NetBSD__) || defined(__minix)
+#if !HAVE_STRSEP || defined(__NetBSD__)
 char *strsep(char **, const char *);
 #endif
 
@@ -1214,7 +1214,7 @@ __GEN_ENDIAN_DEC(64, le)
 #endif
 
 /* Has quad_t but these prototypes don't get pulled into scope. w/o we lose */
-#if defined(__NetBSD__) || defined(__minix)
+#if defined(__NetBSD__)
 quad_t   strtoq(const char *, char **, int);
 u_quad_t strtouq(const char *, char **, int);
 #endif
