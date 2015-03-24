@@ -2520,6 +2520,7 @@
 ./usr/man/man1/md5.1			minix-sys
 ./usr/man/man1/menuc.1			minix-sys
 ./usr/man/man1/mesg.1			minix-sys
+./usr/man/man1/mined.1			minix-sys
 ./usr/man/man1/ministat.1		minix-sys
 ./usr/man/man1/mixer.1			minix-sys
 ./usr/man/man1/mkdep.1			minix-sys
@@ -2687,11 +2688,11 @@
 ./usr/man/man1/zless.1			minix-sys
 ./usr/man/man1/zmore.1			minix-sys
 ./usr/man/man1/znew.1			minix-sys
-./usr/man/man1x				minix-sys
-./usr/man/man1x/awk.1x			minix-sys
-./usr/man/man1x/kermit.1x		minix-sys
-./usr/man/man1x/macros.1x		minix-sys
-./usr/man/man1x/mined.1x		minix-sys
+./usr/man/man1x				minix-sys	obsolete
+./usr/man/man1x/awk.1x			minix-sys	obsolete
+./usr/man/man1x/kermit.1x		minix-sys	obsolete
+./usr/man/man1x/macros.1x		minix-sys	obsolete
+./usr/man/man1x/mined.1x		minix-sys	obsolete
 ./usr/man/man2				minix-sys
 ./usr/man/man2/accept.2			minix-sys
 ./usr/man/man2/access.2			minix-sys
