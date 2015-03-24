@@ -1,0 +1,41 @@
+$NetBSD: TODO,v 1.7 2007/12/10 23:54:35 dyoung Exp $
+
+todo
+----
+
+- read files from multiple directories with or without root
+  specification, e.g., makefs -t cd9660 output.iso dir1 root2=dir2
+  dir3 root4=dir4
+
+- display block numbers for a given file (e.g, /boot)
+
+- finish makefs.8
+
+- testing
+
+- even more testing
+
+- add support for converting a tar file (instead of a directory tree);
+  suggested by kpneal@pobox.com
+
+
+outstanding bugs
+----------------
+
+- size estimation is still out (need to take into account indirect blocks!)
+
+- parameter checking when density is rather high or low.
+
+- filling up a file system (running out of inodes or whatever)
+  doesn't do the right thing.
+
+
+discuss
+-------
+
+- consider replacing ffs_balloc() et al with own code that doesn't
+  need hacked-up buf.c code
+
+- whacking on newfs/mkfs.c to allow .PATH-ing directly into makefs(8).
+  this would involve passing all of mkfs()'s parameters in a single
+  struct rather than a lot of global vars, etc.

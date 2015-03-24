@@ -1,0 +1,130 @@
+.\"	$NetBSD: newfs_v7fs.8,v 1.3 2011/08/10 11:31:49 uch Exp $
+.\"
+.\" Copyright (c) 2011 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by UCHIYAMA Yasushi.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\" Copyright (c) 1993
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"     @(#)newlfs.8	8.1 (Berkeley) 6/19/93
+.\"
+.Dd April 29, 2011
+.Dt NEWFS_V7FS 8
+.Os
+.Sh NAME
+.Nm newfs_v7fs
+.Nd construct a new 7th Edition(V7) File System
+.Sh SYNOPSIS
+.Nm
+.Op Fl FZ
+.Op Fl B Ar byte-order
+.Op Fl n Ar inodes
+.Op Fl s Ar sectors
+.Op Fl V Ar verbose
+.Ar special
+.Sh DESCRIPTION
+.Nm
+builds a 7th Edition(V7) file system on the specified
+.Ar special .
+If it is a device, the size information will be taken from the disk label and
+before running
+.Nm
+the disk must be labeled using
+.Xr disklabel 8 ;
+the proper fstype is
+.Dq Version 7 .
+Otherwise, the size must be specified on the command line.
+V7 filesystem's block size and sector size are 512 byte.
+Disk address limits are 24 bit.
+.Pp
+The following arguments are supported:
+.Bl -tag -width XBXbyteXorderXX
+.It Fl B Ar byte-order
+Specify the metadata byte order of the file system to be created.
+Valid byte orders are
+.Sq be ,
+.Sq le ,
+and
+.Sq pdp .
+If no byte order is specified, the file system is created in host
+byte order.
+.It Fl F
+Create file system to a regular file (needs the
+.Fl s
+option).
+.It Fl n Ar inodes
+This specifies the number of inodes for the filesystem.
+If the number of inodes exceeds 65536, it is reduced to 65536.
+.It Fl s Ar sectors
+Create file system with specified number of disk sectors.
+.It Fl V Ar verbose
+This controls the amount of information written to stdout:
+.Bl -tag -width 3n -offset indent -compact
+.It 0
+No output.
+.It 1
+Overall size, ilist size, endian and filename length.
+.It 2
+A progress bar.
+.It 3
+.It 4
+More verbose message.
+.El
+The default is 3.
+.It Fl Z
+Fill file with zeroes instead of creating a sparse file.
+.El
+.Sh SEE ALSO
+.Xr disklabel 5 ,
+.Xr disktab 5 ,
+.\" .Xr fs 5 ,
+.Xr disklabel 8 ,
+.Xr diskpart 8

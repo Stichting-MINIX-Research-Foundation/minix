@@ -117,7 +117,7 @@ SUBDIR += .WAIT texinfo \
 	${DTRACE_BITS} \
 		 cat cksum \
 		file \
-		.WAIT \
+		makefs .WAIT \
 		.WAIT \
 		.WAIT \
 		.WAIT \

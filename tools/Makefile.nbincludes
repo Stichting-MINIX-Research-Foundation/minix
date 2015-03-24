@@ -24,7 +24,9 @@ _UFS_INCS!=	cd ${_UFSDIR} && find ffs ufs -name '*.h'
 _ARCH_INCS!=	${TOOL_SED} -e 's/^\#.*//' ${.CURDIR}/../headerlist
 .endif
 
+.if !defined(__MINIX)
 _ARCH_INCS+=	ews4800mips/include/pdinfo.h ews4800mips/include/vtoc.h
+.endif # !defined(__MINIX)
 
 _INCS=		disktab.h
 _SYSINCS=	bootblock.h \
