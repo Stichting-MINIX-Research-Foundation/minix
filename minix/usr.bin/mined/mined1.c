@@ -1747,7 +1747,7 @@ void get_term(void)
   static char termbuf[50];
   extern char *tgetstr(), *getenv();
   char *loc = termbuf;
-  char entry[1024];
+  char entry[2048];
 
   if (tgetent(entry, getenv("TERM")) <= 0) {
   	printf("Unknown terminal.\n");
