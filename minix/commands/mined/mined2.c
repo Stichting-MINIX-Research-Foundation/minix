@@ -12,7 +12,7 @@
 /*
  * Move one line up.
  */
-void UP(void)
+void UP1(void)
 {
   if (y == 0) {		/* Top line of screen. Scroll one line */
   	(void) reverse_scroll();
@@ -25,12 +25,12 @@ void UP(void)
 /*
  * Move one line down.
  */
-void DN(void)
+void DN1(void)
 {
   if (y == last_y) {	/* Last line of screen. Scroll one line */
 	if (bot_line->next == tail && bot_line->text[0] != '\n') {
 		dummy_line();		/* Create new empty line */
-		DN();
+		DN1();
 		return;
 	}
 	else {
@@ -45,11 +45,11 @@ void DN(void)
 /*
  * Move left one position.
  */
-void LF(void)
+void LF1(void)
 {
   if (x == 0 && get_shift(cur_line->shift_count) == 0) {/* Begin of line */
 	if (cur_line->prev != header) {
-		UP();					/* Move one line up */
+		UP1();					/* Move one line up */
 		move_to(LINE_END, y);
 	}
   }
@@ -60,11 +60,11 @@ void LF(void)
 /*
  * Move right one position.
  */
-void RT(void)
+void RT1(void)
 {
   if (*cur_text == '\n') {
   	if (cur_line->next != tail) {		/* Last char of file */
-		DN();				/* Move one line down */
+		DN1();				/* Move one line down */
 		move_to(LINE_START, y);
 	}
   }
@@ -154,11 +154,7 @@ void PU(void)
   	if (reverse_scroll() == ERRORS)
   		break;			/* Top of file reached */
   set_cursor(0, ymax);			/* Erase very bottom line */
-#ifdef UNIX
-  tputs(CE, 0, _putchar);
-#else
-  string_print(blank_line);
-#endif /* UNIX */
+  tputs(CE, 0, _putch);
   if (y + i > screenmax)			/* line no longer on screen */
   	move_to(0, screenmax >> 1);
   else
@@ -205,11 +201,7 @@ void SU(void)
 
   (void) reverse_scroll();
   set_cursor(0, ymax);		/* Erase very bottom line */
-#ifdef UNIX
-  tputs(CE, 0, _putchar);
-#else
-  string_print(blank_line);
-#endif /* UNIX */
+  tputs(CE, 0, _putch);
   move_to(x, (y == screenmax) ? screenmax : y + 1);
 }
 
@@ -259,11 +251,7 @@ int reverse_scroll(void)
 
 /* Perform the scroll */
   set_cursor(0, 0);
-#ifdef UNIX
-  tputs(AL, 0, _putchar);
-#else
-  string_print(rev_scroll);
-#endif /* UNIX */
+  tputs(AL, 0, _putch);
   set_cursor(0, 0);
   line_print(top_line);
 
@@ -298,7 +286,7 @@ void move_previous_word(FLAG remove)
   	start_char = '\0';
   }
 
-  LF();
+  LF1();
 
   begin_line = cur_line->text;
   textp = cur_text;
@@ -352,7 +340,7 @@ void move_next_word(FLAG remove)
 
 /* If we're at end of line. move to the first word on the next line. */
   if (*textp == '\n' && cur_line->next != tail) {
-  	DN();
+  	DN1();
   	move_to(LINE_START, y);
   	textp = cur_text;
   	while (*textp != '\n' && white_space(*textp))
@@ -389,7 +377,7 @@ void DPC(void)
   if (x == 0 && cur_line->prev == header)
   	return;			/* Top of file */
 
-  LF();				/* Move one left */
+  LF1();				/* Move one left */
   DCC();				/* Delete character under cursor */
 }
 
@@ -469,7 +457,7 @@ void CTL(void)
   register char ctrl;
 
   status_line("Enter control character.", NULL);
-  if ((ctrl = getchar()) >= '\01' && ctrl <= '\037') {
+  if ((ctrl = getch()) >= '\01' && ctrl <= '\037') {
   	S(ctrl);		/* Insert the char */
 	clear_status();
   }
@@ -484,7 +472,7 @@ void CTL(void)
 void LIB(void)
 {
   S('\n');	  		/* Insert the line */
-  UP();				/* Move one line up */
+  UP1();			/* Move one line up */
   move_to(LINE_END, y);		/* Move to end of this line */
 }
 
