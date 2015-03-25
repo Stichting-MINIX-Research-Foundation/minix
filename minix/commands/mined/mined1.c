@@ -153,7 +153,7 @@
  *   3.3 Moving around.
  *
  *      Several commands are implemented for moving through the file.
- *      Moving up (UP), down (DN) left (LF) and right (RT) are done by the
+ *      Moving up (UP1), down (DN1) left (LF1) and right (RT1) are done by the
  *      arrow keys. Moving one line below the screen scrolls the screen one
  *      line up. Moving one line above the screen scrolls the screen one line
  *      down. The functions forward_scroll () and reverse_scroll () take care
@@ -304,7 +304,7 @@
  *    string). The functions status_line (string1, string2), error (string1,
  *    string2), clear_status () and bottom_line () all print information on
  *    the status line.
- *    Get_string (message, buffer) reads a string and getchar () reads one
+ *    Get_string (message, buffer) reads a string and getch () reads one
  *    character from the terminal.
  *    Num_out ((long) number) prints the number into a 11 digit field
  *    without leading zero's. It returns a pointer to the resulting string.
@@ -314,7 +314,7 @@
  *    Output is done by four functions: writeline(fd,string), clear_buffer()
  *    write_char (fd, c) and flush_buffer (fd). Three defines are provided
  *    to write on filedescriptor STD_OUT (terminal) which is used normally:
- *    string_print (string), putchar (c) and flush (). All these functions
+ *    string_print (string), putch (c) and flush (). All these functions
  *    use the global I/O buffer screen and the global index for this array
  *    called out_count. In this way I/O can be buffered, so that reads or
  *    writes can be done in blocks of SCREEN_SIZE size.
@@ -447,11 +447,7 @@ void VI(void)
 
 /* Free old linked list, initialize global variables and load new file */
   initialize();
-#ifdef UNIX
-  tputs(CL, 0, _putchar);
-#else
-  string_print (enter_string);
-#endif /* UNIX */
+  tputs(CL, 0, _putch);
   load_file(new_file[0] == '\0' ? NULL : new_file);
 }
 
@@ -540,7 +536,7 @@ void SH(void)
   		return;
   	case 0:				/* This is the child */
   		set_cursor(0, ymax);
-  		putchar('\n');
+  		putch('\n');
   		flush();
   		raw_mode(OFF);
 		if (rpipe) {			/* Fix stdin */
@@ -608,11 +604,7 @@ int bottom_line(FLAG revfl, char *s1, char *s2, char *inbuf, FLAG statfl)
 	clear_status ();
   set_cursor(0, ymax);
   if (revfl == ON) {		/* Print rev. start sequence */
-#ifdef UNIX
-  	tputs(SO, 0, _putchar);
-#else
-  	string_print(rev_video);
-#endif /* UNIX */
+  	tputs(SO, 0, _putch);
   	stat_visible = TRUE;
   }
   else				/* Used as clear_status() */
@@ -624,13 +616,8 @@ int bottom_line(FLAG revfl, char *s1, char *s2, char *inbuf, FLAG statfl)
   	ret = input(inbuf, statfl);
 
   /* Print normal video */
-#ifdef UNIX
-  tputs(SE, 0, _putchar);
-  tputs(CE, 0, _putchar);
-#else
-  string_print(normal_video);
-  string_print(blank_line);	/* Clear the rest of the line */
-#endif /* UNIX */
+  tputs(SE, 0, _putch);
+  tputs(CE, 0, _putch);		/* Clear the rest of the line */
   if (inbuf != NULL)
   	set_cursor(0, ymax);
   else
@@ -834,16 +821,7 @@ void reset(LINE *head_line, int screen_y)
  */
 void set_cursor(int nx, int ny)
 {
-#ifdef UNIX
-  extern char *tgoto();
-
-  tputs(tgoto(CM, nx, ny), 0, _putchar);
-#else
-  char text_buffer[10];
-
-  build_string(text_buffer, pos_string, ny+1, nx+1);
-  string_print(text_buffer);
-#endif /* UNIX */
+  tputs(tgoto(CM, nx, ny), 0, _putch);
 }
 
 /*
@@ -859,18 +837,9 @@ void open_device(void)
  * Getchar() reads one character from the terminal. The character must be
  * masked with 0377 to avoid sign extension.
  */
-int getchar(void)
+int getch(void)
 {
-#ifdef UNIX
-  return (_getchar() & 0377);
-#else
-  char c;
-
-  if (read(input_fd, &c, 1) != 1 && quit == FALSE)
-  	panic("Can't read one char from fd #0");
-
-  return c & 0377;
-#endif /* UNIX */
+  return (_getch() & 0377);
 }
 
 /*
@@ -898,12 +867,8 @@ void display(int x_coord, int y_coord, register LINE *line, register int count)
 /* Print the blank lines (if any) */
   if (loading == FALSE) {
 	while (count-- >= 0) {
-#ifdef UNIX
-		tputs(CE, 0, _putchar);
-#else
-		string_print(blank_line);
-#endif /* UNIX */
-		putchar('\n');
+		tputs(CE, 0, _putch);
+		putch('\n');
 	}
   }
 }
@@ -955,42 +920,30 @@ void put_line(LINE *line, int offset, FLAG clear_line)
   		tab_count = tab(count);
   		while (count < XBREAK && count < tab_count) {
   			count++;
-  			putchar(' ');
+  			putch(' ');
   		}
   		textp++;
   	}
   	else {
 		if (*textp >= '\01' && *textp <= '\037') {
-#ifdef UNIX
-			tputs(SO, 0, _putchar);
-#else
-			string_print (rev_video);
-#endif /* UNIX */
-  			putchar(*textp++ + '\100');
-#ifdef UNIX
-			tputs(SE, 0, _putchar);
-#else
-			string_print (normal_video);
-#endif /* UNIX */
+			tputs(SO, 0, _putch);
+  			putch(*textp++ + '\100');
+			tputs(SE, 0, _putch);
 		}
 		else
-  			putchar(*textp++);
+  			putch(*textp++);
   		count++;
   	}
   }
 
 /* If line is longer than XBREAK chars, print the shift_mark */
   if (count == XBREAK && *textp != '\n')
-  	putchar(textp[1]=='\n' ? *textp : SHIFT_MARK);
+  	putch(textp[1]=='\n' ? *textp : SHIFT_MARK);
 
 /* Clear the rest of the line is clear_line is TRUE */
   if (clear_line == TRUE) {
-#ifdef	UNIX
-  	tputs(CE, 0, _putchar);
-#else
-	string_print(blank_line);
-#endif /* UNIX */
-  	putchar('\n');
+  	tputs(CE, 0, _putch);
+  	putch('\n');
   }
 }
 
@@ -1001,14 +954,11 @@ int flush_buffer(int fd)
 {
   if (out_count <= 0)		/* There is nothing to flush */
   	return FINE;
-#ifdef UNIX
   if (fd == STD_OUT) {
   	printf("%.*s", out_count, screen);
   	_flush();
   }
-  else
-#endif /* UNIX */
-  if (write(fd, screen, out_count) != out_count) {
+  else if (write(fd, screen, out_count) != out_count) {
   	bad_write(fd);
   	return ERRORS;
   }
@@ -1050,7 +1000,7 @@ void abort_mined(void)
 
 /* Ask for confirmation */
   status_line("Really abort? ", NULL);
-  if (getchar() != 'y') {
+  if (getch() != 'y') {
   	clear_status();
   	return;
   }
@@ -1058,13 +1008,9 @@ void abort_mined(void)
 /* Reset terminal */
   raw_mode(OFF);
   set_cursor(0, ymax);
-  putchar('\n');
+  putch('\n');
   flush();
-#ifdef UNIX
   abort();
-#else
-  exit(1);
-#endif /* UNIX */
 }
 
 #define UNDEF	_POSIX_VDISABLE
@@ -1109,12 +1055,8 @@ void panic(register char *message)
 {
   extern char yank_file[];
 
-#ifdef UNIX
-  tputs(CL, 0, _putchar);
+  tputs(CL, 0, _putch);
   build_string(text_buffer, "%s\nError code %d\n", message, errno);
-#else
-  build_string(text_buffer, "%s%s\nError code %d\n", enter_string, message, errno);
-#endif /* UNIX */
   (void) write(STD_OUT, text_buffer, length_of(text_buffer));
 
   if (loading == FALSE)
@@ -1123,11 +1065,7 @@ void panic(register char *message)
   	(void) unlink(yank_file);
   raw_mode(OFF);
 
-#ifdef UNIX
   abort();
-#else
-  exit(1);
-#endif /* UNIX */
 }
 
 char *alloc(int bytes)
@@ -1197,16 +1135,7 @@ char file_name[LINE_LEN];	/* Name of file in use */
 char text_buffer[MAX_CHARS];	/* Buffer for modifying text */
 
 /* Escape sequences. */
-#ifdef UNIX
 char *CE, *VS, *SO, *SE, *CL, *AL, *CM;
-#else
-char   *enter_string = "\033[H\033[J";	/* String printed on entering mined */
-char   *pos_string = "\033[%d;%dH";	/* Absolute cursor position */
-char   *rev_scroll = "\033M";		/* String for reverse scrolling */
-char   *rev_video = "\033[7m";		/* String for starting reverse video */
-char   *normal_video = "\033[m";	/* String for leaving reverse video */
-char   *blank_line = "\033[K";		/* Clear line to end */
-#endif /* UNIX */
 
 /*
  * Yank variables.
@@ -1385,13 +1314,9 @@ int main(int argc, char *argv[])
   register int index;		/* Index in key table */
   struct winsize winsize;
 
-#ifdef UNIX
   get_term();
-  tputs(VS, 0, _putchar);
-  tputs(CL, 0, _putchar);
-#else
-  string_print(enter_string);			/* Hello world */
-#endif /* UNIX */
+  tputs(VS, 0, _putch);
+  tputs(CL, 0, _putch);
   if (ioctl(STD_OUT, TIOCGWINSZ, &winsize) == 0 && winsize.ws_row != 0) {
 	ymax = winsize.ws_row - 1;
 	screenmax = ymax - 1;
@@ -1423,7 +1348,7 @@ int main(int argc, char *argv[])
 
  /* Main loop of the editor. */
   for (;;) {
-  	index = getchar();
+  	index = getch();
   	if (stat_visible == TRUE)
   		clear_status();
   	if (quit == TRUE)
@@ -1448,23 +1373,15 @@ int main(int argc, char *argv[])
 void RD(void)
 {
 /* Clear screen */
-#ifdef UNIX
-  tputs(VS, 0, _putchar);
-  tputs(CL, 0, _putchar);
-#else
-  string_print(enter_string);
-#endif /* UNIX */
+  tputs(VS, 0, _putch);
+  tputs(CL, 0, _putch);
 
 /* Print first page */
   display(0, 0, top_line, last_y);
 
 /* Clear last line */
   set_cursor(0, ymax);
-#ifdef UNIX
-  tputs(CE, 0, _putchar);
-#else
-  string_print(blank_line);
-#endif /* UNIX */
+  tputs(CE, 0, _putch);
   move_to(x, y);
 }
 
@@ -1485,7 +1402,7 @@ void XT(void)
 
   raw_mode(OFF);
   set_cursor(0, ymax);
-  putchar('\n');
+  putch('\n');
   flush();
   (void) unlink(yank_file);		/* Might not be necessary */
   exit(0);
@@ -1495,13 +1412,13 @@ void (*escfunc(int c))(void)
 {
   if (c == '[') {
 	/* Start of ASCII escape sequence. */
-	c = getchar();
+	c = getch();
 	switch (c) {
 	case 'H': return(HO);
-	case 'A': return(UP);
-	case 'B': return(DN);
-	case 'C': return(RT);
-	case 'D': return(LF);
+	case 'A': return(UP1);
+	case 'B': return(DN1);
+	case 'C': return(RT1);
+	case 'D': return(LF1);
 	case '@': return(MA);
 	case 'G': return(FS);
 	case 'S': return(SR);
@@ -1526,11 +1443,11 @@ void ESC(void)
   register void (*func)();
   int index;
 
-  index = getchar();
+  index = getch();
   while (index >= '0' && index <= '9' && quit == FALSE) {
   	count *= 10;
   	count += index - '0';
-  	index = getchar();
+  	index = getch();
   }
   if (count == 0) {
 	count = 1;
@@ -1538,7 +1455,7 @@ void ESC(void)
   } else {
 	func = key_map[index];
 	if (func == ESC)
-		func = escfunc(getchar());
+		func = escfunc(getch());
   }
 
   if (func == I) {	/* Function assigned? */
@@ -1567,7 +1484,7 @@ int ask_save(void)
   status_line(file_name[0] ? basename(file_name) : "[buffer]" ,
 					     " has been modified. Save? (y/n)");
 
-  while((c = getchar()) != 'y' && c != 'n' && quit == FALSE) {
+  while((c = getch()) != 'y' && c != 'n' && quit == FALSE) {
   	ring_bell();
   	flush();
   }
@@ -1723,7 +1640,7 @@ int get_number(char *message, int *result)
 
   status_line(message, NULL);
 
-  index = getchar();
+  index = getch();
   if (quit == FALSE && (index < '0' || index > '9')) {
   	error("Bad count", NULL);
   	return ERRORS;
@@ -1733,7 +1650,7 @@ int get_number(char *message, int *result)
   while (index >= '0' && index <= '9' && quit == FALSE) {
   	count *= 10;
   	count += index - '0';
-  	index = getchar();
+  	index = getch();
   }
 
   if (quit == TRUE) {
@@ -1759,24 +1676,16 @@ int input(char *inbuf, FLAG clearfl)
   *ptr = '\0';
   while (quit == FALSE) {
   	flush();
-  	switch (c = getchar()) {
+  	switch (c = getch()) {
   		case '\b' :		/* Erase previous char */
   			if (ptr > inbuf) {
   				ptr--;
-#ifdef UNIX
-  				tputs(SE, 0, _putchar);
-#else
-  				string_print(normal_video);
-#endif /* UNIX */
+  				tputs(SE, 0, _putch);
   				if (is_tab(*ptr))
   					string_print(" \b\b\b  \b\b");
   				else
   					string_print(" \b\b \b");
-#ifdef UNIX
-  				tputs(SO, 0, _putchar);
-#else
-  				string_print(rev_video);
-#endif /* UNIX */
+  				tputs(SO, 0, _putch);
   				string_print(" \b");
   				*ptr = '\0';
   			}
@@ -1793,7 +1702,7 @@ int input(char *inbuf, FLAG clearfl)
   				if (c == '\t')
   					string_print("^I");
   				else
-  					putchar(c);
+  					putch(c);
   				string_print(" \b");
   			}
   			else
@@ -1824,10 +1733,7 @@ int get_file(char *message, char *file)
  *				UNIX I/O Routines			      *
  *  ========================================================================  */
 
-#ifdef UNIX
-#undef putchar
-
-int _getchar(void)
+int _getch(void)
 {
   char c;
 
@@ -1841,9 +1747,12 @@ void _flush(void)
   (void) fflush(stdout);
 }
 
-void _putchar(char c)
+int _putch(int c)
 {
-  (void) write_char(STD_OUT, c);
+  if (write_char(STD_OUT, c) == FINE)
+	return c;
+  else
+	return EOF;
 }
 
 void get_term(void)
@@ -1873,4 +1782,3 @@ void get_term(void)
   	exit(1);
   }
 }
-#endif /* UNIX */
