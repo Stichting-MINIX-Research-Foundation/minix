@@ -151,7 +151,7 @@ extern long chars_saved;		/* Nr of chars saved in buffer */
 /*
  * Ring bell on terminal
  */
-#define ring_bell()			putch('\07')
+#define ring_bell()			putch('\a')
 
 /*
  * Print string on terminal
