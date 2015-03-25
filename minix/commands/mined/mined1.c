@@ -411,11 +411,7 @@
 #include <errno.h>
 #include <sys/wait.h>
 #include <sys/ioctl.h>
-#if __STDC__
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 
 extern int errno;
 int ymax = YMAX;
@@ -1557,21 +1553,12 @@ void file_status(char *message, register long count, char *file, int lines,
  * Build_string() prints the arguments as described in fmt, into the buffer.
  * %s indicates an argument string, %d indicated an argument number.
  */
-#if __STDC__
 void build_string(char *buf, char *fmt, ...)
 {
-#else
-void build_string(char *buf, char *fmt, va_dcl va_alist)
-{
-#endif
   va_list argptr;
   char *scanp;
 
-#if __STDC__
   va_start(argptr, fmt);
-#else
-  va_start(argptr);
-#endif
 
   while (*fmt) {
   	if (*fmt == '%') {

@@ -258,11 +258,7 @@ int ask_save(void);
 int line_number(void);
 void file_status(char *message, long count, char *file, int lines, FLAG
 	writefl, FLAG changed );
-#if __STDC__
 void build_string(char *buf, char *fmt, ...);
-#else
-void build_string();
-#endif
 char *num_out(long number );
 int get_number(char *message, int *result );
 int input(char *inbuf, FLAG clearfl );
