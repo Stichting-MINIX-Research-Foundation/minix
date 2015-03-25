@@ -15,7 +15,6 @@ SUBDIR=	add_route arp at backup btrace \
 	intr ipcrm ipcs irdpd isoread \
 	loadkeys loadramdisk logger look lp \
 	lpd lspci mail MAKEDEV \
-	mined \
 	mount mt netconf \
 	nonamed \
 	postinstall prep printroot \
