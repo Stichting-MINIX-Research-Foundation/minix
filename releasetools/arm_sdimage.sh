@@ -20,7 +20,8 @@ then
 fi
 
 : ${ARCH=evbearm-el}
-: ${OBJ=../obj.${ARCH}}
+: ${INSTALL=..}
+: ${OBJ=${INSTALL}/obj.${ARCH}}
 : ${CROSS_TOOLS=${OBJ}/"tooldir.`uname -s`-`uname -r`-`uname -m`"/bin}
 : ${CROSS_PREFIX=${CROSS_TOOLS}/arm-elf32-minix-}
 : ${JOBS=1}
