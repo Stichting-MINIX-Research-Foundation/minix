@@ -178,9 +178,9 @@ static void lmfs_alloc_block(struct buf *bp)
 /*===========================================================================*
  *				lmfs_get_block				     *
  *===========================================================================*/
-struct buf *lmfs_get_block(dev_t dev, block64_t block, int only_search)
+struct buf *lmfs_get_block(dev_t dev, block64_t block, int how)
 {
-	return lmfs_get_block_ino(dev, block, only_search, VMC_NO_INODE, 0);
+	return lmfs_get_block_ino(dev, block, how, VMC_NO_INODE, 0);
 }
 
 static void munmap_t(void *a, int len)
@@ -263,24 +263,24 @@ static struct buf *find_block(dev_t dev, block64_t block)
 /*===========================================================================*
  *				lmfs_get_block_ino			     *
  *===========================================================================*/
-struct buf *lmfs_get_block_ino(dev_t dev, block64_t block, int only_search,
-	ino_t ino, u64_t ino_off)
+struct buf *lmfs_get_block_ino(dev_t dev, block64_t block, int how, ino_t ino,
+	u64_t ino_off)
 {
 /* Check to see if the requested block is in the block cache.  If so, return
  * a pointer to it.  If not, evict some other block and fetch it (unless
- * 'only_search' is 1).  All the blocks in the cache that are not in use
- * are linked together in a chain, with 'front' pointing to the least recently
- * used block and 'rear' to the most recently used block.  If 'only_search' is
- * 1, the block being requested will be overwritten in its entirety, so it is
- * only necessary to see if it is in the cache; if it is not, any free buffer
- * will do.  It is not necessary to actually read the block in from disk.
- * If 'only_search' is PREFETCH, the block need not be read from the disk,
- * and the device is not to be marked on the block, so callers can tell if
- * the block returned is valid.
+ * 'how' is NO_READ).  All the blocks in the cache that are not in use are
+ * linked together in a chain, with 'front' pointing to the least recently used
+ * block and 'rear' to the most recently used block.  If 'how' is NO_READ, the
+ * block being requested will be overwritten in its entirety, so it is only
+ * necessary to see if it is in the cache; if it is not, any free buffer will
+ * do.  It is not necessary to actually read the block in from disk.  If 'how'
+ * is PREFETCH, the block need not be read from the disk, and the device is not
+ * to be marked on the block (i.e., set to NO_DEV), so callers can tell if the
+ * block returned is valid.  If 'how' is PEEK, the function returns the block
+ * if it is in the cache or could be obtained from VM, and NULL otherwise.
  * In addition to the LRU chain, there is also a hash chain to link together
  * blocks whose block numbers end with the same bit strings, for fast lookup.
  */
-
   int b;
   static struct buf *bp;
   uint64_t dev_off;
@@ -406,21 +406,34 @@ struct buf *lmfs_get_block_ino(dev_t dev, block64_t block, int only_search,
   }
   bp->data = NULL;
 
+  /* The block is not in the cache, and VM does not know about it. If we were
+   * requested to search for the block only, we can now return failure to the
+   * caller. Return the block to the pool without allocating data pages, since
+   * these would be freed upon recycling the block anyway.
+   */
+  if (how == PEEK) {
+	bp->lmfs_dev = NO_DEV;
+
+	lmfs_put_block(bp, ONE_SHOT);
+
+	return NULL;
+  }
+
   /* Not in the cache; reserve memory for its contents. */
 
   lmfs_alloc_block(bp);
 
   assert(bp->data);
 
-  if(only_search == PREFETCH) {
+  if(how == PREFETCH) {
 	/* PREFETCH: don't do i/o. */
 	bp->lmfs_dev = NO_DEV;
-  } else if (only_search == NORMAL) {
+  } else if (how == NORMAL) {
 	read_block(bp);
-  } else if(only_search == NO_READ) {
+  } else if(how == NO_READ) {
   	/* This block will be overwritten by new contents. */
   } else
-	panic("unexpected only_search value: %d", only_search);
+	panic("unexpected 'how' value: %d", how);
 
   assert(bp->data);
 
@@ -485,8 +498,10 @@ void lmfs_put_block(
   assert(bp->lmfs_flags & VMMC_BLOCK_LOCKED);
   bp->lmfs_flags &= ~VMMC_BLOCK_LOCKED;
 
-  /* block has sensible content - if necesary, identify it to VM */
+  /* block has sensible content - if necessary, identify it to VM */
   if(vmcache && bp->lmfs_needsetcache && dev != NO_DEV) {
+	assert(bp->data);
+
 	setflags = (block_type & ONE_SHOT) ? VMSF_ONCE : 0;
 	if ((r = vm_set_cacheblock(bp->data, dev, dev_off, bp->lmfs_inode,
 	    bp->lmfs_inode_offset, &bp->lmfs_flags, fs_block_size,
@@ -688,6 +703,8 @@ void lmfs_invalidate(
 /* Remove all the blocks belonging to some device from the cache. */
 
   register struct buf *bp;
+
+  assert(device != NO_DEV);
 
   for (bp = &buf[0]; bp < &buf[nr_bufs]; bp++) {
 	if (bp->lmfs_dev == device) {

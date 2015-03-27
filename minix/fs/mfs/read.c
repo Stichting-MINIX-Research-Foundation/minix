@@ -228,9 +228,9 @@ int opportunistic;		/* if nonzero, only use cache for metadata */
   unsigned int dzones, nr_indirects;
   block_t b;
   unsigned long excess, zone, block_pos;
-  int iomode = NORMAL;
+  int iomode;
 
-  if(opportunistic) iomode = PREFETCH;
+  iomode = opportunistic ? PEEK : NORMAL;
 
   scale = rip->i_sp->s_log_zone_size;	/* for block-zone conversion */
   block_pos = position/rip->i_sp->s_block_size;	/* relative blk # in file */
@@ -264,10 +264,8 @@ int opportunistic;		/* if nonzero, only use cache for metadata */
 	if ((unsigned int) index > rip->i_nindirs)
 		return(NO_BLOCK);	/* Can't go beyond double indirects */
 	bp = get_block(rip->i_dev, b, iomode); /* get double indirect block */
-	if(opportunistic && lmfs_dev(bp) == NO_DEV) {
-		put_block(bp, INDIRECT_BLOCK);
-		return NO_BLOCK;
-	}
+	if (bp == NULL)
+		return NO_BLOCK;		/* peeking failed */
 	ASSERT(lmfs_dev(bp) != NO_DEV);
 	ASSERT(lmfs_dev(bp) == rip->i_dev);
 	z = rd_indir(bp, index);		/* z= zone for single*/
@@ -279,10 +277,8 @@ int opportunistic;		/* if nonzero, only use cache for metadata */
   if (z == NO_ZONE) return(NO_BLOCK);
   b = (block_t) z << scale;			/* b is blk # for single ind */
   bp = get_block(rip->i_dev, b, iomode);	/* get single indirect block */
-  if(opportunistic && lmfs_dev(bp) == NO_DEV) {
-	put_block(bp, INDIRECT_BLOCK);
-	return NO_BLOCK;
-  }
+  if (bp == NULL)
+	return NO_BLOCK;			/* peeking failed */
   z = rd_indir(bp, (int) excess);		/* get block pointed to */
   put_block(bp, INDIRECT_BLOCK);		/* release single indir blk */
   if (z == NO_ZONE) return(NO_BLOCK);

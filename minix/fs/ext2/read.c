@@ -222,9 +222,9 @@ int opportunistic;
   static long doub_ind_s;
   static long triple_ind_s;
   static long out_range_s;
-  int iomode = NORMAL;
+  int iomode;
  
-  if(opportunistic) iomode = PREFETCH;
+  iomode = opportunistic ? PEEK : NORMAL;
 
   if (first_time) {
 	addr_in_block = rip->i_sp->s_block_size / BLOCK_ADDRESS_BYTES;
@@ -267,10 +267,8 @@ int opportunistic;
 	}
 	if (b == NO_BLOCK) return(NO_BLOCK);
 	bp = get_block(rip->i_dev, b, iomode); /* get double indirect block */
-	if(opportunistic && lmfs_dev(bp) == NO_DEV) {
-		put_block(bp, INDIRECT_BLOCK);
-		return NO_BLOCK;
-	}
+	if (bp == NULL)
+		return NO_BLOCK;		/* peeking failed */
 	ASSERT(lmfs_dev(bp) != NO_DEV);
 	ASSERT(lmfs_dev(bp) == rip->i_dev);
 	mindex = excess / addr_in_block;
@@ -280,10 +278,8 @@ int opportunistic;
   }
   if (b == NO_BLOCK) return(NO_BLOCK);
   bp = get_block(rip->i_dev, b, iomode);       /* get single indirect block */
-  if(opportunistic && lmfs_dev(bp) == NO_DEV) {
-       put_block(bp, INDIRECT_BLOCK);
-       return NO_BLOCK;
-  }
+  if (bp == NULL)
+	return NO_BLOCK;			/* peeking failed */
 
   ASSERT(lmfs_dev(bp) != NO_DEV);
   ASSERT(lmfs_dev(bp) == rip->i_dev);

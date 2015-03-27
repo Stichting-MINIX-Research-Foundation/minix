@@ -42,9 +42,9 @@ void lmfs_set_blocksize(int blocksize, int major);
 void lmfs_reset_rdwt_err(void); 
 int lmfs_rdwt_err(void); 
 void lmfs_buf_pool(int new_nr_bufs);
-struct buf *lmfs_get_block(dev_t dev, block64_t block,int only_search);
-struct buf *lmfs_get_block_ino(dev_t dev, block64_t block,int only_search,
-	ino_t ino, u64_t off);
+struct buf *lmfs_get_block(dev_t dev, block64_t block, int how);
+struct buf *lmfs_get_block_ino(dev_t dev, block64_t block, int how, ino_t ino,
+	u64_t off);
 void lmfs_put_block(struct buf *bp, int block_type);
 void lmfs_free_block(dev_t dev, block64_t block);
 void lmfs_zero_block_ino(dev_t dev, ino_t ino, u64_t off);
@@ -61,6 +61,7 @@ void fs_blockstats(u64_t *blocks, u64_t *free, u64_t *used);
 #define NORMAL             0    /* forces get_block to do disk read */
 #define NO_READ            1    /* prevents get_block from doing disk read */
 #define PREFETCH           2    /* tells get_block not to read or mark dev */
+#define PEEK               3    /* returns NULL if not in cache or VM cache */
 
 /* When a block is released, the type of usage is passed to put_block(). */
 #define ONE_SHOT      0200 /* set if block not likely to be needed soon */
