@@ -66,7 +66,7 @@ block_prefetch(dev_t dev, block64_t block, unsigned int nblocks)
 		assert(bp != NULL);
 
 		if (lmfs_dev(bp) != NO_DEV) {
-			lmfs_put_block(bp, FULL_DATA_BLOCK);
+			lmfs_put_block(bp);
 
 			break;
 		}
@@ -175,7 +175,7 @@ lmfs_bio(dev_t dev, struct fsdriver_data * data, size_t bytes, off_t pos,
 				    (char *)bp->data + block_off, chunk);
 		}
 
-		lmfs_put_block(bp, FULL_DATA_BLOCK);
+		lmfs_put_block(bp);
 
 		if (r != OK)
 			break;

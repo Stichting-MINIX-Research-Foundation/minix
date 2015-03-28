@@ -181,7 +181,7 @@ int is_dir;			/* inode will be a directory if it is TRUE */
   }
 
   lmfs_markdirty(bp);
-  put_block(bp, MAP_BLOCK);
+  put_block(bp);
 
   gd->free_inodes_count--;
   sp->s_free_inodes_count--;
@@ -233,7 +233,7 @@ static void free_inode_bit(struct super_block *sp, bit_t bit_returned,
 	panic("Tried to free unused inode %d", bit_returned);
 
   lmfs_markdirty(bp);
-  put_block(bp, MAP_BLOCK);
+  put_block(bp);
 
   gd->free_inodes_count++;
   sp->s_free_inodes_count++;

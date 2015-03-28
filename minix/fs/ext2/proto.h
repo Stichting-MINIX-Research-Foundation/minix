@@ -2,7 +2,7 @@
 #define EXT2_PROTO_H
 
 #define get_block(d, n, t) lmfs_get_block(d, n, t)
-#define put_block(n, t) lmfs_put_block(n, t)
+#define put_block(n) lmfs_put_block(n)
 
 /* Function prototypes. */
 

@@ -44,7 +44,7 @@ ssize_t fs_read(ino_t ino_nr, struct fsdriver_data *data, size_t bytes,
 
 		r = fsdriver_copyout(data, cum_io, b_data(bp)+off, chunk);
 
-		lmfs_put_block(bp, FULL_DATA_BLOCK);
+		lmfs_put_block(bp);
 
 		if (r != OK)
 			break;  /* EOF reached. */

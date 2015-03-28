@@ -6,6 +6,7 @@
 #include "inode.h"
 #include "super.h"
 #include <sys/param.h>
+#include <sys/dirent.h>
 #include <assert.h>
 
 
@@ -203,8 +204,7 @@ int *completed;			/* number of bytes copied */
 	MARKDIRTY(bp);
   }
   
-  n = (off + chunk == block_size ? FULL_DATA_BLOCK : PARTIAL_DATA_BLOCK);
-  put_block(bp, n);
+  put_block(bp);
 
   return(r);
 }
@@ -269,7 +269,7 @@ int opportunistic;		/* if nonzero, only use cache for metadata */
 	ASSERT(lmfs_dev(bp) != NO_DEV);
 	ASSERT(lmfs_dev(bp) == rip->i_dev);
 	z = rd_indir(bp, index);		/* z= zone for single*/
-	put_block(bp, INDIRECT_BLOCK);		/* release double ind block */
+	put_block(bp);				/* release double ind block */
 	excess = excess % nr_indirects;		/* index into single ind blk */
   }
 
@@ -280,7 +280,7 @@ int opportunistic;		/* if nonzero, only use cache for metadata */
   if (bp == NULL)
 	return NO_BLOCK;			/* peeking failed */
   z = rd_indir(bp, (int) excess);		/* get block pointed to */
-  put_block(bp, INDIRECT_BLOCK);		/* release single indir blk */
+  put_block(bp);				/* release single indir blk */
   if (z == NO_ZONE) return(NO_BLOCK);
   b = (block_t) ((z << scale) + boff);
   return(b);
@@ -452,7 +452,7 @@ unsigned bytes_ahead;		/* bytes beyond position for immediate use */
 	assert(bp->lmfs_count > 0);
 	if (lmfs_dev(bp) != NO_DEV) {
 		/* Oops, block already in the cache, get out. */
-		put_block(bp, FULL_DATA_BLOCK);
+		put_block(bp);
 		break;
 	}
   }
@@ -554,7 +554,7 @@ ssize_t fs_getdents(ino_t ino_nr, struct fsdriver_data *data, size_t bytes,
 		}
 	}
 
-	put_block(bp, DIRECTORY_BLOCK);
+	put_block(bp);
 	if (done)
 		break;
   }

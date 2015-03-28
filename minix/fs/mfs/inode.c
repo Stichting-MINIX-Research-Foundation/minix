@@ -405,7 +405,7 @@ int rw_flag;			/* READING or WRITING */
   assert(sp->s_version == V3);
   new_icopy(rip, dip2, rw_flag, sp->s_native);
   
-  put_block(bp, INODE_BLOCK);
+  put_block(bp);
   IN_MARKCLEAN(rip);
 }
 

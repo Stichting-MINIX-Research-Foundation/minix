@@ -3,7 +3,7 @@
 
 /* Some shortcuts to functions in -lminixfs */
 #define get_block(d, b, t) lmfs_get_block(d, b, t)
-#define put_block(b, t) lmfs_put_block(b, t)
+#define put_block(b) lmfs_put_block(b)
 
 /* Function prototypes. */
 

@@ -131,7 +131,7 @@ int op;				/* special actions */
 	/* Create the double indirect block. */
 		if ( (b2 = alloc_block(rip, rip->i_bsearch) ) == NO_BLOCK) {
 			/* Release triple ind blk. */
-			put_block(bp_tindir, INDIRECT_BLOCK);
+			put_block(bp_tindir);
 			ext2_debug("failed to allocate dblock near %d\n", rip->i_block[0]);
 			return(ENOSPC);
 		}
@@ -174,8 +174,8 @@ int op;				/* special actions */
   if (b1 == NO_BLOCK && !(op & WMAP_FREE)) {
 	if ( (b1 = alloc_block(rip, rip->i_bsearch) ) == NO_BLOCK) {
 		/* Release dbl and triple indirect blks. */
-		put_block(bp_dindir, INDIRECT_BLOCK);
-		put_block(bp_tindir, INDIRECT_BLOCK);
+		put_block(bp_dindir);
+		put_block(bp_tindir);
 		ext2_debug("failed to allocate dblock near %d\n", rip->i_block[0]);
 		return(ENOSPC);
 	}
@@ -228,7 +228,7 @@ int op;				/* special actions */
 	/* b1 equals NO_BLOCK only when we are freeing up the indirect block. */
 	if(b1 != NO_BLOCK)
 		lmfs_markdirty(bp);
-	put_block(bp, INDIRECT_BLOCK);
+	put_block(bp);
   }
 
   /* If the single indirect block isn't there (or was just freed),
@@ -256,8 +256,8 @@ int op;				/* special actions */
 	rip->i_block[EXT2_TIND_BLOCK] = NO_BLOCK;
   }
 
-  put_block(bp_dindir, INDIRECT_BLOCK);	/* release double indirect blk */
-  put_block(bp_tindir, INDIRECT_BLOCK);	/* release triple indirect blk */
+  put_block(bp_dindir);			/* release double indirect blk */
+  put_block(bp_tindir);			/* release triple indirect blk */
 
   return(OK);
 }
@@ -368,8 +368,7 @@ void zero_block(bp)
 register struct buf *bp;	/* pointer to buffer to zero */
 {
 /* Zero a block. */
-  ASSERT(lmfs_bytes(bp) > 0);
   ASSERT(bp->data);
-  memset(b_data(bp), 0, (size_t) lmfs_bytes(bp));
+  memset(b_data(bp), 0, lmfs_fs_block_size());
   lmfs_markdirty(bp);
 }

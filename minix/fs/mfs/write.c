@@ -125,7 +125,7 @@ int op;				/* special actions */
 	if (bp_dindir != NULL) MARKDIRTY(bp_dindir);
 	if (z1 == NO_ZONE) {
 		/* Release dbl indirect blk. */
-		put_block(bp_dindir, INDIRECT_BLOCK);
+		put_block(bp_dindir);
 		return(err_code);	/* couldn't create single ind */
 	}
   }
@@ -166,7 +166,7 @@ int op;				/* special actions */
 	}
 	/* z1 equals NO_ZONE only when we are freeing up the indirect block. */
 	if(z1 != NO_ZONE) MARKDIRTY(bp);
-	put_block(bp, INDIRECT_BLOCK);
+	put_block(bp);
   }
 
   /* If the single indirect block isn't there (or was just freed),
@@ -179,7 +179,7 @@ int op;				/* special actions */
 	rip->i_zone[zones+1] = NO_ZONE;
   }
 
-  put_block(bp_dindir, INDIRECT_BLOCK);	/* release double indirect blk */
+  put_block(bp_dindir);			/* release double indirect blk */
 
   return(OK);
 }
@@ -311,9 +311,8 @@ void zero_block(bp)
 register struct buf *bp;	/* pointer to buffer to zero */
 {
 /* Zero a block. */
-  ASSERT(lmfs_bytes(bp) > 0);
   ASSERT(bp->data);
-  memset(b_data(bp), 0, (size_t) lmfs_bytes(bp));
+  memset(b_data(bp), 0, lmfs_fs_block_size());
   MARKDIRTY(bp);
 }
 

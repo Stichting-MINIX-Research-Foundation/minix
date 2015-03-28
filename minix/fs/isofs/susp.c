@@ -50,7 +50,7 @@ int parse_susp(struct rrii_dir_record *dir, char *buffer)
 		}
 
 		parse_susp_buffer(dir, b_data(ca_bp) + ca_offset, ca_length);
-		lmfs_put_block(ca_bp, FULL_DATA_BLOCK);
+		lmfs_put_block(ca_bp);
 
 		return OK;
 	}
