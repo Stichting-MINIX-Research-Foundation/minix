@@ -18,6 +18,22 @@
 #include <minix/u64.h>
 #include <minix/bdev.h>
 
+/* Buffer (block) cache.  To acquire a block, a routine calls lmfs_get_block(),
+ * telling which block it wants.  The block is then regarded as "in use" and
+ * has its reference count incremented.  All the blocks that are not in use are
+ * chained together in an LRU list, with 'front' pointing to the least recently
+ * used block, and 'rear' to the most recently used block.  A reverse chain is
+ * also maintained.  Usage for LRU is measured by the time the put_block() is
+ * done.  The second parameter to put_block() can violate the LRU order and put
+ * a block on the front of the list, if it will probably not be needed again.
+ * This is used internally only; the lmfs_put_block() API call has no second
+ * parameter.  If a block is modified, the modifying routine must mark the
+ * block as dirty, so the block will eventually be rewritten to the disk.
+ */
+
+/* Flags to put_block(). */
+#define ONE_SHOT      0x1	/* set if block will not be needed again */
+
 #define BUFHASH(b) ((unsigned int)((b) % nr_bufs))
 #define MARKCLEAN  lmfs_markclean
 
@@ -30,7 +46,8 @@ static unsigned int bufs_in_use;/* # bufs currently in use (not on free list)*/
 static void rm_lru(struct buf *bp);
 static void read_block(struct buf *);
 static void freeblock(struct buf *bp);
-static void cache_heuristic_check(int major);
+static void cache_heuristic_check(void);
+static void put_block(struct buf *bp, int put_flags);
 
 static int vmcache = 0; /* are we using vm's secondary cache? (initially not) */
 
@@ -48,7 +65,7 @@ static int quiet = 0;
 void lmfs_setquiet(int q) { quiet = q; }
 
 static u32_t fs_bufs_heuristic(int minbufs, u32_t btotal, u64_t bfree, 
-         int blocksize, dev_t majordev)
+         int blocksize)
 {
   struct vm_stats_info vsi;
   int bufs;
@@ -96,7 +113,7 @@ static u32_t fs_bufs_heuristic(int minbufs, u32_t btotal, u64_t bfree,
   return bufs;
 }
 
-void lmfs_blockschange(dev_t dev, int delta)
+void lmfs_blockschange(int delta)
 {
         /* Change the number of allocated blocks by 'delta.'
          * Also accumulate the delta since the last cache re-evaluation.
@@ -108,7 +125,7 @@ void lmfs_blockschange(dev_t dev, int delta)
 #define BANDKB (10*1024)	/* recheck cache every 10MB change */
         if(bitdelta*(int)fs_block_size/1024 > BANDKB ||
 	   bitdelta*(int)fs_block_size/1024 < -BANDKB) {
-                lmfs_cache_reevaluate(dev);
+                lmfs_cache_reevaluate();
                 bitdelta = 0;
         }
 }
@@ -131,11 +148,6 @@ int lmfs_isclean(struct buf *bp)
 dev_t lmfs_dev(struct buf *bp)
 {
 	return bp->lmfs_dev;
-}
-
-int lmfs_bytes(struct buf *bp)
-{
-	return bp->lmfs_bytes;
 }
 
 static void free_unused_blocks(void)
@@ -414,7 +426,7 @@ struct buf *lmfs_get_block_ino(dev_t dev, block64_t block, int how, ino_t ino,
   if (how == PEEK) {
 	bp->lmfs_dev = NO_DEV;
 
-	lmfs_put_block(bp, ONE_SHOT);
+	put_block(bp, ONE_SHOT);
 
 	return NULL;
   }
@@ -441,26 +453,20 @@ struct buf *lmfs_get_block_ino(dev_t dev, block64_t block, int how, ino_t ino,
 }
 
 /*===========================================================================*
- *				lmfs_put_block				     *
+ *				put_block				     *
  *===========================================================================*/
-void lmfs_put_block(
-  struct buf *bp,	/* pointer to the buffer to be released */
-  int block_type 	/* INODE_BLOCK, DIRECTORY_BLOCK, or whatever */
-)
+static void put_block(struct buf *bp, int put_flags)
 {
-/* Return a block to the list of available blocks.   Depending on 'block_type'
+/* Return a block to the list of available blocks.   Depending on 'put_flags'
  * it may be put on the front or rear of the LRU chain.  Blocks that are
- * expected to be needed again shortly (e.g., partially full data blocks)
- * go on the rear; blocks that are unlikely to be needed again shortly
- * (e.g., full data blocks) go on the front.  Blocks whose loss can hurt
- * the integrity of the file system (e.g., inode blocks) are written to
- * disk immediately if they are dirty.
+ * expected to be needed again at some point go on the rear; blocks that are
+ * unlikely to be needed again at all go on the front.
  */
   dev_t dev;
   uint64_t dev_off;
   int r, setflags;
 
-  if (bp == NULL) return;	/* it is easier to check here than in caller */
+  assert(bp != NULL);
 
   dev = bp->lmfs_dev;
 
@@ -470,8 +476,8 @@ void lmfs_put_block(
   if (bp->lmfs_count != 0) return;	/* block is still in use */
 
   /* Put this block back on the LRU chain.  */
-  if (dev == NO_DEV || dev == DEV_RAM || (block_type & ONE_SHOT)) {
-	/* Block probably won't be needed quickly. Put it on front of chain.
+  if (dev == NO_DEV || dev == DEV_RAM || (put_flags & ONE_SHOT)) {
+	/* Block will not be needed again. Put it on front of chain.
   	 * It will be the next block to be evicted from the cache.
   	 */
 	bp->lmfs_prev = NULL;
@@ -483,7 +489,7 @@ void lmfs_put_block(
 	front = bp;
   } 
   else {
-	/* Block probably will be needed quickly.  Put it on rear of chain.
+	/* Block may be needed again.  Put it on rear of chain.
   	 * It will not be evicted from the cache for a long time.
   	 */
 	bp->lmfs_prev = rear;
@@ -502,7 +508,7 @@ void lmfs_put_block(
   if(vmcache && bp->lmfs_needsetcache && dev != NO_DEV) {
 	assert(bp->data);
 
-	setflags = (block_type & ONE_SHOT) ? VMSF_ONCE : 0;
+	setflags = (put_flags & ONE_SHOT) ? VMSF_ONCE : 0;
 	if ((r = vm_set_cacheblock(bp->data, dev, dev_off, bp->lmfs_inode,
 	    bp->lmfs_inode_offset, &bp->lmfs_flags, fs_block_size,
 	    setflags)) != OK) {
@@ -522,8 +528,20 @@ void lmfs_put_block(
    * after, which could be a problem if VM already forgot the block and we are
    * expected to pass it to VM again, which then wouldn't happen.
    */
-  if (block_type & ONE_SHOT)
+  if (put_flags & ONE_SHOT)
 	bp->lmfs_dev = NO_DEV;
+}
+
+/*===========================================================================*
+ *				lmfs_put_block				     *
+ *===========================================================================*/
+void lmfs_put_block(struct buf *bp)
+{
+/* User interface to put_block(). */
+
+  if (bp == NULL) return;	/* for poorly written file systems */
+
+  put_block(bp, 0);
 }
 
 /*===========================================================================*
@@ -621,14 +639,14 @@ void lmfs_zero_block_ino(dev_t dev, ino_t ino, u64_t ino_off)
    * TODO: tell VM that it is an all-zeroes block, so that VM can deduplicate
    * all such pages in its cache.
    */
-  lmfs_put_block(bp, ONE_SHOT);
+  put_block(bp, ONE_SHOT);
 }
 
-void lmfs_cache_reevaluate(dev_t dev)
+void lmfs_cache_reevaluate(void)
 {
-  if(bufs_in_use == 0 && dev != NO_DEV) {
+  if (bufs_in_use == 0) {
 	/* if the cache isn't in use any more, we could resize it. */
-	cache_heuristic_check(major(dev));
+	cache_heuristic_check();
   }
 }
 
@@ -876,7 +894,7 @@ void lmfs_rw_scattered(
 		}
 		if (rw_flag == READING) {
 			bp->lmfs_dev = dev;	/* validate block */
-			lmfs_put_block(bp, PARTIAL_DATA_BLOCK);
+			lmfs_put_block(bp);
 		} else {
 			MARKCLEAN(bp);
 		}
@@ -891,7 +909,7 @@ void lmfs_rw_scattered(
 		 * give at this time.  Don't forget to release those extras.
 		 */
 		while (bufqsize > 0) {
-			lmfs_put_block(*bufq++, PARTIAL_DATA_BLOCK);
+			lmfs_put_block(*bufq++);
 			bufqsize--;
 		}
 	}
@@ -952,15 +970,14 @@ static void cache_resize(unsigned int blocksize, unsigned int bufs)
   fs_block_size = blocksize;
 }
 
-static void cache_heuristic_check(int major)
+static void cache_heuristic_check(void)
 {
   int bufs, d;
-  u64_t btotal, bfree, bused;
+  u64_t btotal, bfree;
 
-  fs_blockstats(&btotal, &bfree, &bused);
+  fs_blockstats(&btotal, &bfree);
 
-  bufs = fs_bufs_heuristic(10, btotal, bfree,
-        fs_block_size, major);
+  bufs = fs_bufs_heuristic(10, btotal, bfree, fs_block_size);
 
   /* set the cache to the new heuristic size if the new one
    * is more than 10% off from the current one.
@@ -975,16 +992,14 @@ static void cache_heuristic_check(int major)
 /*===========================================================================*
  *			lmfs_set_blocksize				     *
  *===========================================================================*/
-void lmfs_set_blocksize(int new_block_size, int major)
+void lmfs_set_blocksize(int new_block_size)
 {
   cache_resize(new_block_size, MINBUFS);
-  cache_heuristic_check(major);
+  cache_heuristic_check();
   
   /* Decide whether to use seconday cache or not.
-   * Only do this if
-   *	- it's available, and
-   *	- use of it hasn't been disabled for this fs, and
-   *	- our main FS device isn't a memory device
+   * Only do this if the block size is a multiple of the page size, and using
+   * the VM cache has been enabled for this FS.
    */
 
   vmcache = 0;

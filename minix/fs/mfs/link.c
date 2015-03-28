@@ -168,7 +168,7 @@ ssize_t fs_rdlink(ino_t ino_nr, struct fsdriver_data *data, size_t bytes)
 	if (bytes > rip->i_size)
 		bytes = rip->i_size;
 	r = fsdriver_copyout(data, 0, b_data(bp), bytes);
-	put_block(bp, DIRECTORY_BLOCK);
+	put_block(bp);
 	if (r == OK)
 		r = bytes;
   }
@@ -629,7 +629,7 @@ off_t len;
 		bytes = len;
 	memset(b_data(bp) + offset, 0, bytes);
 	MARKDIRTY(bp);
-	put_block(bp, FULL_DATA_BLOCK);
+	put_block(bp);
 
 	pos += bytes;
 	len -= bytes;

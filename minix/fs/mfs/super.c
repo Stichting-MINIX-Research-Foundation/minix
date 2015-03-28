@@ -93,14 +93,14 @@ bit_t origin;			/* number of bit to start searching at */
 		k |= 1 << i;
 		*wptr = (bitchunk_t) conv4(sp->s_native, (int) k);
 		MARKDIRTY(bp);
-		put_block(bp, MAP_BLOCK);
+		put_block(bp);
 		if(map == ZMAP) {
 			used_blocks++;
-			lmfs_blockschange(sp->s_dev, 1);
+			lmfs_blockschange(1);
 		}
 		return(b);
 	}
-	put_block(bp, MAP_BLOCK);
+	put_block(bp);
 	if (++block >= (unsigned int) bit_blocks) /* last block, wrap around */
 		block = 0;
 	word = 0;
@@ -150,11 +150,11 @@ bit_t bit_returned;		/* number of bit to insert into the map */
   b_bitmap(bp)[word] = (bitchunk_t) conv4(sp->s_native, (int) k);
   MARKDIRTY(bp);
 
-  put_block(bp, MAP_BLOCK);
+  put_block(bp);
 
   if(map == ZMAP) {
 	used_blocks--;
-	lmfs_blockschange(sp->s_dev, -1);
+	lmfs_blockschange(-1);
   }
 }
 
@@ -238,7 +238,7 @@ static int rw_super(struct super_block *sp, int writing)
   	sp->s_dev = save_dev;
   }
 
-  put_block(bp, FULL_DATA_BLOCK);
+  put_block(bp);
   lmfs_flushall();
 
   return OK;

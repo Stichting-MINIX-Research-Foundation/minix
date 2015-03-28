@@ -170,7 +170,7 @@ int fs_slink(ino_t dir_nr, char *name, uid_t uid, gid_t gid,
 		}
 	}
 	  
-	put_block(bp, DIRECTORY_BLOCK); /* put_block() accepts NULL. */
+	put_block(bp); /* put_block() accepts NULL. */
   
 	if(r != OK) {
 		sip->i_nlinks = NO_LINK;

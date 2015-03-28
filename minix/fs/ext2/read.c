@@ -10,6 +10,7 @@
 #include "inode.h"
 #include "super.h"
 #include <sys/param.h>
+#include <sys/dirent.h>
 #include <assert.h>
 
 
@@ -193,8 +194,7 @@ int *completed;                 /* number of bytes copied */
 	lmfs_markdirty(bp);
   }
 
-  n = (off + chunk == block_size ? FULL_DATA_BLOCK : PARTIAL_DATA_BLOCK);
-  put_block(bp, n);
+  put_block(bp);
 
   return(r);
 }
@@ -262,7 +262,7 @@ int opportunistic;
 		excess = block_pos - triple_ind_s;
 		mindex = excess / addr_in_block2;
 		b = rd_indir(bp, mindex);	/* num of double ind block */
-		put_block(bp, INDIRECT_BLOCK);	/* release triple ind block */
+		put_block(bp);			/* release triple ind block */
 		excess = excess % addr_in_block2;
 	}
 	if (b == NO_BLOCK) return(NO_BLOCK);
@@ -273,7 +273,7 @@ int opportunistic;
 	ASSERT(lmfs_dev(bp) == rip->i_dev);
 	mindex = excess / addr_in_block;
 	b = rd_indir(bp, mindex);	/* num of single ind block */
-	put_block(bp, INDIRECT_BLOCK);	/* release double ind block */
+	put_block(bp);				/* release double ind block */
 	mindex = excess % addr_in_block;	/* index into single ind blk */
   }
   if (b == NO_BLOCK) return(NO_BLOCK);
@@ -284,7 +284,7 @@ int opportunistic;
   ASSERT(lmfs_dev(bp) != NO_DEV);
   ASSERT(lmfs_dev(bp) == rip->i_dev);
   b = rd_indir(bp, mindex);
-  put_block(bp, INDIRECT_BLOCK);	/* release single ind block */
+  put_block(bp);				/* release single ind block */
 
   return(b);
 }
@@ -439,7 +439,7 @@ unsigned bytes_ahead;           /* bytes beyond position for immediate use */
 	}
 	if (lmfs_dev(bp) != NO_DEV) {
 		/* Oops, block already in the cache, get out. */
-		put_block(bp, FULL_DATA_BLOCK);
+		put_block(bp);
 		break;
 	}
   }
@@ -558,7 +558,7 @@ ssize_t fs_getdents(ino_t ino_nr, struct fsdriver_data *data, size_t bytes,
 		}
 	}
 
-	put_block(bp, DIRECTORY_BLOCK);
+	put_block(bp);
 	if (done)
 		break;
   }

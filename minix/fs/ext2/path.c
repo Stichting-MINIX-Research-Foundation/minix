@@ -216,7 +216,7 @@ int ftype;			 /* used when ENTER and INCOMPAT_FILETYPE */
 				*numb = (ino_t) conv4(le_CPU, dp->d_ino);
 			}
 			assert(lmfs_dev(bp) != NO_DEV);
-			put_block(bp, DIRECTORY_BLOCK);
+			put_block(bp);
 			return(r);
 		}
 
@@ -252,7 +252,7 @@ int ftype;			 /* used when ENTER and INCOMPAT_FILETYPE */
 	/* The whole block has been searched or ENTER has a free slot. */
 	assert(lmfs_dev(bp) != NO_DEV);
 	if (e_hit) break;	/* e_hit set if ENTER can be performed now */
-	put_block(bp, DIRECTORY_BLOCK); /* otherwise, continue searching dir */
+	put_block(bp);		 /* otherwise, continue searching dir */
   }
 
   /* The whole directory has now been searched. */
@@ -302,7 +302,7 @@ int ftype;			 /* used when ENTER and INCOMPAT_FILETYPE */
 		dp->d_file_type = EXT2_FT_UNKNOWN;
   }
   lmfs_markdirty(bp);
-  put_block(bp, DIRECTORY_BLOCK);
+  put_block(bp);
   ldir_ptr->i_update |= CTIME | MTIME;	/* mark mtime for update later */
   ldir_ptr->i_dirt = IN_DIRTY;
 

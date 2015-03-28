@@ -53,7 +53,7 @@ dowriteblock(int b, int blocksize, u32_t seed, char *data)
 
 	lmfs_markdirty(bp);
 
-	lmfs_put_block(bp, FULL_DATA_BLOCK);
+	lmfs_put_block(bp);
 
 	return blocksize;
 }
@@ -72,7 +72,7 @@ readblock(int b, int blocksize, u32_t seed, char *data)
 
 	memcpy(data, bp->data, blocksize);
 
-	lmfs_put_block(bp, FULL_DATA_BLOCK);
+	lmfs_put_block(bp);
 
 	return blocksize;
 }
@@ -91,9 +91,9 @@ void testend(void)
 /* Fake some libminixfs client functions */
 
 void
-fs_blockstats(u64_t *total, u64_t *free, u64_t *used)
+fs_blockstats(u64_t *total, u64_t *free)
 {
-	*total = *free = *used = 0;
+	*total = *free = 0;
 }
 
 static void allocate(int b)
@@ -269,7 +269,7 @@ main(int argc, char *argv[])
 	for(p = 1; p <= 3; p++) {
 		/* Do not update curblocksize until the cache is flushed. */
 		newblocksize = PAGE_SIZE*p;
-		lmfs_set_blocksize(newblocksize, MYMAJOR);
+		lmfs_set_blocksize(newblocksize);
 		curblocksize = newblocksize;	/* now it's safe to update */
 		lmfs_buf_pool(BLOCKS);
 		if(dotest(curblocksize, BLOCKS, ITER)) e(n);
@@ -282,7 +282,7 @@ main(int argc, char *argv[])
 	for(wss = 2; wss <= 3; wss++) {
 		int wsblocks = 10*wss*wss*wss*wss*wss;
 		for(cs = wsblocks/4; cs <= wsblocks*3; cs *= 1.5) {
-			lmfs_set_blocksize(PAGE_SIZE, MYMAJOR);
+			lmfs_set_blocksize(PAGE_SIZE);
 			curblocksize = PAGE_SIZE;	/* same as above */
 			lmfs_buf_pool(cs);
 		        if(dotest(curblocksize, wsblocks, ITER)) e(n);

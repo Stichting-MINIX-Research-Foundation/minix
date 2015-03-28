@@ -88,7 +88,7 @@ int fs_mount(dev_t dev, unsigned int flags, struct fsdriver_node *root_node,
 	return(EINVAL);
   }
 
-  lmfs_set_blocksize(superblock->s_block_size, major(fs_dev));
+  lmfs_set_blocksize(superblock->s_block_size);
 
   /* Get the root inode of the mounted file system. */
   if ( (root_ip = get_inode(fs_dev, ROOT_INODE)) == NULL)  {

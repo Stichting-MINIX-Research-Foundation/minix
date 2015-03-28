@@ -186,7 +186,7 @@ int flag;			 /* LOOK_UP, ENTER, DELETE or IS_EMPTY */
 						      (int) dp->mfs_d_ino);
 			}
 			assert(lmfs_dev(bp) != NO_DEV);
-			put_block(bp, DIRECTORY_BLOCK);
+			put_block(bp);
 			return(r);
 		}
 
@@ -200,7 +200,7 @@ int flag;			 /* LOOK_UP, ENTER, DELETE or IS_EMPTY */
 	/* The whole block has been searched or ENTER has a free slot. */
 	if (e_hit) break;	/* e_hit set if ENTER can be performed now */
 	assert(lmfs_dev(bp) != NO_DEV);
-	put_block(bp, DIRECTORY_BLOCK);	/* otherwise, continue searching dir */
+	put_block(bp);		/* otherwise, continue searching dir */
   }
 
   /* The whole directory has now been searched. */
@@ -231,7 +231,7 @@ int flag;			 /* LOOK_UP, ENTER, DELETE or IS_EMPTY */
   sp = ldir_ptr->i_sp; 
   dp->mfs_d_ino = conv4(sp->s_native, (int) *numb);
   MARKDIRTY(bp);
-  put_block(bp, DIRECTORY_BLOCK);
+  put_block(bp);
   ldir_ptr->i_update |= CTIME | MTIME;	/* mark mtime for update later */
   IN_MARKDIRTY(ldir_ptr);
   if (new_slots > old_slots) {

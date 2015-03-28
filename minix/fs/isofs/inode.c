@@ -155,7 +155,7 @@ static struct buf* fetch_inode(struct dir_extent *extent, size_t *offset)
 			break;
 		}
 
-		lmfs_put_block(bp, FULL_DATA_BLOCK);
+		lmfs_put_block(bp);
 		bp = read_extent_block(extent, *offset /
 		    v_pri.logical_block_size_l);
 	}
@@ -180,7 +180,7 @@ int read_inode(struct inode *i_node, struct dir_extent *extent, size_t offset,
 	/* Parse basic ISO 9660 specs. */
 	if (check_dir_record(dir_rec,
 	    offset % v_pri.logical_block_size_l) != OK) {
-		lmfs_put_block(bp, FULL_DATA_BLOCK);
+		lmfs_put_block(bp);
 		return EINVAL;
 	}
 
@@ -199,7 +199,7 @@ int read_inode(struct inode *i_node, struct dir_extent *extent, size_t offset,
 	offset += dir_rec->length;
 	read_inode_extents(i_node, dir_rec, extent, &offset);
 
-	lmfs_put_block(bp, FULL_DATA_BLOCK);
+	lmfs_put_block(bp);
 	if (new_offset != NULL)
 		*new_offset = offset;
 	return OK;
@@ -291,7 +291,7 @@ void read_inode_extents(struct inode *i,
 
 		if (check_dir_record(dir_rec,
 		    *offset % v_pri.logical_block_size_l) != OK) {
-			lmfs_put_block(bp, FULL_DATA_BLOCK);
+			lmfs_put_block(bp);
 			return;
 		}
 
@@ -322,7 +322,7 @@ void read_inode_extents(struct inode *i,
 		if ((dir_rec->file_flags & D_NOT_LAST_EXTENT) == 0)
 			done = TRUE;
 
-		lmfs_put_block(bp, FULL_DATA_BLOCK);
+		lmfs_put_block(bp);
 	}
 }
 

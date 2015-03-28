@@ -341,7 +341,7 @@ void rw_inode(
 
   icopy(rip, dip, rw_flag, TRUE);
 
-  put_block(bp, INODE_BLOCK);
+  put_block(bp);
   rip->i_dirt = IN_CLEAN;
 }
 
