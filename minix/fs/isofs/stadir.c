@@ -25,9 +25,3 @@ int fs_statvfs(struct statvfs *st)
 
 	return OK;
 }
-
-void fs_blockstats(u64_t *blocks, u64_t *free)
-{
-	*blocks = v_pri.volume_space_size_l;
-	*free = 0;
-}

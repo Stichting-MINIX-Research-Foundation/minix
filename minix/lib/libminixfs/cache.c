@@ -58,22 +58,21 @@ static int may_use_vmcache;
 
 static size_t fs_block_size = PAGE_SIZE;	/* raw i/o block size */
 
+static fsblkcnt_t fs_btotal = 0, fs_bused = 0;
+
 static int rdwt_err;
 
 static int quiet = 0;
 
 void lmfs_setquiet(int q) { quiet = q; }
 
-static u32_t fs_bufs_heuristic(int minbufs, u32_t btotal, u64_t bfree, 
-         int blocksize)
+static int fs_bufs_heuristic(int minbufs, fsblkcnt_t btotal,
+	fsblkcnt_t bused, int blocksize)
 {
   struct vm_stats_info vsi;
   int bufs;
   u32_t kbytes_used_fs, kbytes_total_fs, kbcache, kb_fsmax;
   u32_t kbytes_remain_mem;
-  u64_t bused;
-
-  bused = btotal-bfree;
 
   /* set a reasonable cache size; cache at most a certain
    * portion of the used FS, and at most a certain %age of remaining
@@ -113,21 +112,49 @@ static u32_t fs_bufs_heuristic(int minbufs, u32_t btotal, u64_t bfree,
   return bufs;
 }
 
-void lmfs_blockschange(int delta)
+void lmfs_change_blockusage(int delta)
 {
         /* Change the number of allocated blocks by 'delta.'
          * Also accumulate the delta since the last cache re-evaluation.
          * If it is outside a certain band, ask the cache library to
          * re-evaluate the cache size.
          */
-        static int bitdelta = 0;
-        bitdelta += delta;
-#define BANDKB (10*1024)	/* recheck cache every 10MB change */
-        if(bitdelta*(int)fs_block_size/1024 > BANDKB ||
-	   bitdelta*(int)fs_block_size/1024 < -BANDKB) {
-                lmfs_cache_reevaluate();
-                bitdelta = 0;
-        }
+        static int bitdelta = 0, warn_low = TRUE, warn_high = TRUE;
+
+	/* Adjust the file system block usage counter accordingly. Do bounds
+	 * checking, and report file system misbehavior.
+	 */
+	if (delta > 0 && (fsblkcnt_t)delta > fs_btotal - fs_bused) {
+		if (warn_high) {
+			printf("libminixfs: block usage overflow\n");
+			warn_high = FALSE;
+		}
+		delta = (int)(fs_btotal - fs_bused);
+	} else if (delta < 0 && (fsblkcnt_t)-delta > fs_bused) {
+		if (warn_low) {
+			printf("libminixfs: block usage underflow\n");
+			warn_low = FALSE;
+		}
+		delta = -(int)fs_bused;
+	}
+	fs_bused += delta;
+
+	bitdelta += delta;
+
+#define BAND_KB (10*1024)	/* recheck cache every 10MB change */
+
+	/* If the accumulated delta exceeds the configured threshold, resize
+	 * the cache, but only if the cache isn't in use any more. In order to
+	 * avoid that the latter case blocks a resize forever, we also call
+	 * this function from lmfs_flushall(). Since lmfs_buf_pool() may call
+	 * lmfs_flushall(), reset 'bitdelta' before doing the heuristics check.
+	 */
+	if (bufs_in_use == 0 &&
+	    (bitdelta*(int)fs_block_size/1024 > BAND_KB ||
+	    bitdelta*(int)fs_block_size/1024 < -BAND_KB)) {
+		bitdelta = 0;
+		cache_heuristic_check();
+	}
 }
 
 void lmfs_markdirty(struct buf *bp)
@@ -642,12 +669,16 @@ void lmfs_zero_block_ino(dev_t dev, ino_t ino, u64_t ino_off)
   put_block(bp, ONE_SHOT);
 }
 
-void lmfs_cache_reevaluate(void)
+void lmfs_set_blockusage(fsblkcnt_t btotal, fsblkcnt_t bused)
 {
-  if (bufs_in_use == 0) {
-	/* if the cache isn't in use any more, we could resize it. */
+
+  assert(bused <= btotal);
+  fs_btotal = btotal;
+  fs_bused = bused;
+
+  /* if the cache isn't in use, we could resize it. */
+  if (bufs_in_use == 0)
 	cache_heuristic_check();
-  }
 }
 
 /*===========================================================================*
@@ -955,7 +986,7 @@ static void rm_lru(struct buf *bp)
 /*===========================================================================*
  *				cache_resize				     *
  *===========================================================================*/
-static void cache_resize(unsigned int blocksize, unsigned int bufs)
+static void cache_resize(size_t blocksize, unsigned int bufs)
 {
   struct buf *bp;
 
@@ -973,11 +1004,8 @@ static void cache_resize(unsigned int blocksize, unsigned int bufs)
 static void cache_heuristic_check(void)
 {
   int bufs, d;
-  u64_t btotal, bfree;
 
-  fs_blockstats(&btotal, &bfree);
-
-  bufs = fs_bufs_heuristic(10, btotal, bfree, fs_block_size);
+  bufs = fs_bufs_heuristic(MINBUFS, fs_btotal, fs_bused, fs_block_size);
 
   /* set the cache to the new heuristic size if the new one
    * is more than 10% off from the current one.
@@ -992,7 +1020,7 @@ static void cache_heuristic_check(void)
 /*===========================================================================*
  *			lmfs_set_blocksize				     *
  *===========================================================================*/
-void lmfs_set_blocksize(int new_block_size)
+void lmfs_set_blocksize(size_t new_block_size)
 {
   cache_resize(new_block_size, MINBUFS);
   cache_heuristic_check();
@@ -1077,9 +1105,19 @@ void lmfs_flushall(void)
 	for(bp = &buf[0]; bp < &buf[nr_bufs]; bp++)
 		if(bp->lmfs_dev != NO_DEV && !lmfs_isclean(bp)) 
 			lmfs_flushdev(bp->lmfs_dev);
+
+	/* This is the moment where it is least likely (although certainly not
+	 * impossible!) that there are buffers in use, since buffers should not
+	 * be held across file system syncs. See if we already intended to
+	 * resize the buffer cache, but couldn't. Be aware that we may be
+	 * called indirectly from within lmfs_change_blockusage(), so care must
+	 * be taken not to recurse infinitely. TODO: see if it is better to
+	 * resize the cache from here *only*, thus guaranteeing a clean cache.
+	 */
+	lmfs_change_blockusage(0);
 }
 
-int lmfs_fs_block_size(void)
+size_t lmfs_fs_block_size(void)
 {
 	return fs_block_size;
 }

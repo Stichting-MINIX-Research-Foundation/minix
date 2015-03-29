@@ -232,7 +232,7 @@ struct inode *rip;		/* used for preallocation */
 
 			gd->free_blocks_count -= EXT2_PREALLOC_BLOCKS;
 			sp->s_free_blocks_count -= EXT2_PREALLOC_BLOCKS;
-			lmfs_blockschange(-EXT2_PREALLOC_BLOCKS);
+			lmfs_change_blockusage(EXT2_PREALLOC_BLOCKS);
 			group_descriptors_dirty = 1;
 			return block;
 		}
@@ -257,7 +257,7 @@ struct inode *rip;		/* used for preallocation */
 
 	gd->free_blocks_count--;
 	sp->s_free_blocks_count--;
-	lmfs_blockschange(-1);
+	lmfs_change_blockusage(1);
 	group_descriptors_dirty = 1;
 
 	if (update_bsearch && block != -1 && block != NO_BLOCK) {
@@ -323,7 +323,7 @@ void free_block(struct super_block *sp, bit_t bit_returned)
 
   gd->free_blocks_count++;
   sp->s_free_blocks_count++;
-  lmfs_blockschange(1);
+  lmfs_change_blockusage(-1);
 
   group_descriptors_dirty = 1;
 

@@ -24,8 +24,6 @@
 #include "super.h"
 #include "const.h"
 
-static u32_t used_blocks = 0;
-
 /*===========================================================================*
  *				alloc_bit				     *
  *===========================================================================*/
@@ -95,8 +93,8 @@ bit_t origin;			/* number of bit to start searching at */
 		MARKDIRTY(bp);
 		put_block(bp);
 		if(map == ZMAP) {
-			used_blocks++;
-			lmfs_blockschange(1);
+			used_zones++;
+			lmfs_change_blockusage(1);
 		}
 		return(b);
 	}
@@ -153,8 +151,8 @@ bit_t bit_returned;		/* number of bit to insert into the map */
   put_block(bp);
 
   if(map == ZMAP) {
-	used_blocks--;
-	lmfs_blockschange(-1);
+	used_zones--;
+	lmfs_change_blockusage(-1);
   }
 }
 
@@ -281,6 +279,14 @@ int read_super(struct super_block *sp)
   sp->s_max_size =          (off_t) conv4(native, sp->s_max_size);
   sp->s_zones =             (zone_t)conv4(native, sp->s_zones);
 
+  /* Zones consisting of multiple blocks are longer supported, so fail as early
+   * as possible. There is still a lot of code cleanup to do here, though.
+   */
+  if (sp->s_log_zone_size != 0) {
+	printf("MFS: block and zone sizes are different\n");
+	return EINVAL;
+  }
+
   /* Calculate some other numbers that depend on the version here too, to
    * hide some of the differences.
    */
@@ -363,16 +369,4 @@ int write_super(struct super_block *sp)
   if(sp->s_rd_only)
   	panic("can't write superblock of readonly filesystem");
   return rw_super(sp, 1);
-}
-
-static int blocks_known = 0;
-
-u32_t get_used_blocks(struct super_block *sp)
-{
-	if(!blocks_known)  {
-		/* how many blocks are in use? */
-		used_blocks = sp->s_zones - count_free_bits(sp, ZMAP);
-		blocks_known = 1;
-	}
-	return used_blocks;
 }

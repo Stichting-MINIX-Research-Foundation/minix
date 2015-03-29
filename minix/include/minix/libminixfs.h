@@ -35,9 +35,9 @@ int lmfs_bufs_in_use(void);
 int lmfs_nr_bufs(void);
 void lmfs_flushall(void);
 void lmfs_flushdev(dev_t dev);
-int lmfs_fs_block_size(void);
+size_t lmfs_fs_block_size(void);
 void lmfs_may_use_vmcache(int);
-void lmfs_set_blocksize(int blocksize);
+void lmfs_set_blocksize(size_t blocksize);
 void lmfs_reset_rdwt_err(void);
 int lmfs_rdwt_err(void);
 void lmfs_buf_pool(int new_nr_bufs);
@@ -50,11 +50,8 @@ void lmfs_zero_block_ino(dev_t dev, ino_t ino, u64_t off);
 void lmfs_invalidate(dev_t device);
 void lmfs_rw_scattered(dev_t, struct buf **, int, int);
 void lmfs_setquiet(int q);
-void lmfs_cache_reevaluate(void);
-void lmfs_blockschange(int delta);
-
-/* calls that libminixfs does into fs */
-void fs_blockstats(u64_t *blocks, u64_t *free);
+void lmfs_set_blockusage(fsblkcnt_t btotal, fsblkcnt_t bused);
+void lmfs_change_blockusage(int delta);
 
 /* get_block arguments */
 #define NORMAL             0    /* forces get_block to do disk read */

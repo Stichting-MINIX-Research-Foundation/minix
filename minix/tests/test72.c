@@ -90,12 +90,6 @@ void testend(void)
 
 /* Fake some libminixfs client functions */
 
-void
-fs_blockstats(u64_t *total, u64_t *free)
-{
-	*total = *free = 0;
-}
-
 static void allocate(int b)
 {
 	assert(curblocksize > 0);

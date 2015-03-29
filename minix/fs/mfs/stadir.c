@@ -89,7 +89,8 @@ int fs_statvfs(struct statvfs *st)
 
   scale = sp->s_log_zone_size;
 
-  fs_blockstats(&st->f_blocks, &st->f_bfree);
+  st->f_blocks = sp->s_zones;
+  st->f_bfree = sp->s_zones - used_zones;
   st->f_bavail = st->f_bfree;
 
   st->f_bsize = sp->s_block_size << scale;
