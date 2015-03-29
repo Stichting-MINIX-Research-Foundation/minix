@@ -259,8 +259,7 @@ off_t position;			/* file pointer */
  * allocating a complete zone, and then returning the initial block.
  * On the other hand, the current zone may still have some unused blocks.
  */
-
-  register struct buf *bp;
+  struct buf *bp;
   block_t b, base_block;
   zone_t z;
   zone_t zone_size;
@@ -297,8 +296,10 @@ off_t position;			/* file pointer */
 	b = base_block + (block_t)((position % zone_size)/rip->i_sp->s_block_size);
   }
 
-  bp = lmfs_get_block_ino(rip->i_dev, b, NO_READ, rip->i_num,
+  r = lmfs_get_block_ino(&bp, rip->i_dev, b, NO_READ, rip->i_num,
   	rounddown(position, rip->i_sp->s_block_size));
+  if (r != OK)
+	panic("MFS: error getting block (%llu,%u): %d", rip->i_dev, b, r);
   zero_block(bp);
   return(bp);
 }

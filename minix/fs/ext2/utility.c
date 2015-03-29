@@ -9,6 +9,28 @@
 
 
 /*===========================================================================*
+ *				get_block				     *
+ *===========================================================================*/
+struct buf *get_block(dev_t dev, block_t block, int how)
+{
+/* Wrapper routine for lmfs_get_block(). This ext2 implementation does not deal
+ * well with block read errors pretty much anywhere. To prevent corruption due
+ * to unchecked error conditions, we panic upon an I/O failure here.
+ */
+  struct buf *bp;
+  int r;
+
+  if ((r = lmfs_get_block(&bp, dev, block, how)) != OK && r != ENOENT)
+	panic("ext2: error getting block (%llu,%u): %d", dev, block, r);
+
+  assert(r == OK || how == PEEK);
+
+  return (r == OK) ? bp : NULL;
+}
+
+
+
+/*===========================================================================*
  *				conv2					     *
  *===========================================================================*/
 unsigned conv2(norm, w)

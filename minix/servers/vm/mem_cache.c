@@ -122,7 +122,8 @@ do_mapcache(message *msg)
 		assert(offset < vr->length);
 
 		if(!(hb = find_cached_page_bydev(dev, dev_off + offset,
-			msg->m_vmmcp.ino, ino_off + offset, 1))) {
+		    msg->m_vmmcp.ino, ino_off + offset, 1)) ||
+		    (hb->flags & VMSF_ONCE)) {
 			map_unmap_region(caller, vr, 0, bytes);
 			return ENOENT;
 		}

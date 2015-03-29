@@ -1,7 +1,6 @@
 #ifndef EXT2_PROTO_H
 #define EXT2_PROTO_H
 
-#define get_block(d, n, t) lmfs_get_block(d, n, t)
 #define put_block(n) lmfs_put_block(n)
 
 /* Function prototypes. */
@@ -95,6 +94,7 @@ struct group_desc* get_group_desc(unsigned int bnum);
 int fs_utime(ino_t ino, struct timespec *atime, struct timespec *mtime);
 
 /* utility.c */
+struct buf *get_block(dev_t dev, block_t block, int how);
 unsigned conv2(int norm, int w);
 long conv4(int norm, long x);
 int ansi_strcmp(register const char* ansi_s, register const char *s2,

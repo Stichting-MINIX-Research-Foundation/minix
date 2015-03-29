@@ -48,8 +48,6 @@ ssize_t fs_readwrite(ino_t ino_nr, struct fsdriver_data *data, size_t nrbytes,
   f_size = rip->i_size;
   if (f_size < 0) f_size = MAX_FILE_POS;
 
-  lmfs_reset_rdwt_err();
-
   if (call == FSC_WRITE) {
 	/* Check in advance to see if file will grow too big. */
 	if (position > (off_t) (rip->i_sp->s_max_size - nrbytes))
@@ -74,8 +72,7 @@ ssize_t fs_readwrite(ino_t ino_nr, struct fsdriver_data *data, size_t nrbytes,
 	r = rw_chunk(rip, ((u64_t)((unsigned long)position)), off, chunk,
 		nrbytes, call, data, cum_io, block_size, &completed);
 
-	if (r != OK) break;   /* EOF reached */
-	if (lmfs_rdwt_err() < 0) break;
+	if (r != OK) break;
 
 	/* Update counters and pointers. */
 	nrbytes -= chunk;     /* bytes yet to be read */
@@ -91,9 +88,6 @@ ssize_t fs_readwrite(ino_t ino_nr, struct fsdriver_data *data, size_t nrbytes,
   }
 
   rip->i_seek = NO_SEEK;
-
-  if (lmfs_rdwt_err() != OK) r = lmfs_rdwt_err(); /* check for disk error */
-  if (lmfs_rdwt_err() == END_OF_FILE) r = OK;
 
   if (r != OK)
 	return r;
@@ -124,7 +118,7 @@ int *completed;                 /* number of bytes copied */
 {
 /* Read or write (part of) a block. */
 
-  register struct buf *bp = NULL;
+  struct buf *bp = NULL;
   register int r = OK;
   int n;
   block_t b;
@@ -173,7 +167,8 @@ int *completed;                 /* number of bytes copied */
 		n = NO_READ;
 	assert(ino != VMC_NO_INODE);
 	assert(!(ino_off % block_size));
-	bp = lmfs_get_block_ino(dev, b, n, ino, ino_off);
+	if ((r = lmfs_get_block_ino(&bp, dev, b, n, ino, ino_off)) != OK)
+		panic("ext2: error getting block (%llu,%u): %d", dev, b, r);
   }
 
   /* In all cases, bp now points to a valid buffer. */
@@ -291,13 +286,19 @@ int opportunistic;
 
 struct buf *get_block_map(register struct inode *rip, u64_t position)
 {
+	struct buf *bp;
+	int r, block_size;
 	block_t b = read_map(rip, position, 0);	/* get block number */
-	int block_size = get_block_size(rip->i_dev);
 	if(b == NO_BLOCK)
 		return NULL;
+	block_size = get_block_size(rip->i_dev);
 	position = rounddown(position, block_size);
 	assert(rip->i_num != VMC_NO_INODE);
-	return lmfs_get_block_ino(rip->i_dev, b, NORMAL, rip->i_num, position);
+	if ((r = lmfs_get_block_ino(&bp, rip->i_dev, b, NORMAL, rip->i_num,
+	    position)) != OK)
+		panic("ext2: error getting block (%llu,%u): %d",
+		    rip->i_dev, b, r);
+	return bp;
 }
 
 /*===========================================================================*
@@ -333,7 +334,7 @@ unsigned bytes_ahead;           /* bytes beyond position for immediate use */
 /* Minimum number of blocks to prefetch. */
 # define BLOCKS_MINIMUM		(nr_bufs < 50 ? 18 : 32)
   int nr_bufs = lmfs_nr_bufs();
-  int read_q_size;
+  int r, read_q_size;
   unsigned int blocks_ahead, fragment, block_size;
   block_t block, blocks_left;
   off_t ind1_pos;
@@ -371,7 +372,9 @@ unsigned bytes_ahead;           /* bytes beyond position for immediate use */
   bytes_ahead += fragment;
   blocks_ahead = (bytes_ahead + block_size - 1) / block_size;
 
-  bp = lmfs_get_block_ino(dev, block, PREFETCH, rip->i_num, position);
+  r = lmfs_get_block_ino(&bp, dev, block, PREFETCH, rip->i_num, position);
+  if (r != OK)
+	panic("ext2: error getting block (%llu,%u): %d", dev, block, r);
   assert(bp != NULL);
   if (lmfs_dev(bp) != NO_DEV) return(bp);
 
@@ -432,8 +435,11 @@ unsigned bytes_ahead;           /* bytes beyond position for immediate use */
 
 	thisblock = read_map(rip, (off_t) ex64lo(position_running), 1);
 	if (thisblock != NO_BLOCK) {
-		bp = lmfs_get_block_ino(dev, thisblock, PREFETCH, rip->i_num,
-			position_running);
+		r = lmfs_get_block_ino(&bp, dev, thisblock, PREFETCH,
+		    rip->i_num, position_running);
+		if (r != OK)
+			panic("ext2: error getting block (%llu,%u): %d",
+			    dev, thisblock, r);
 	} else {
 		bp = get_block(dev, block, PREFETCH);
 	}
@@ -445,7 +451,10 @@ unsigned bytes_ahead;           /* bytes beyond position for immediate use */
   }
   lmfs_rw_scattered(dev, read_q, read_q_size, READING);
 
-  return(lmfs_get_block_ino(dev, baseblock, NORMAL, rip->i_num, position));
+  r = lmfs_get_block_ino(&bp, dev, baseblock, NORMAL, rip->i_num, position);
+  if (r != OK)
+	panic("ext2: error getting block (%llu,%u): %d", dev, baseblock, r);
+  return bp;
 }
 
 

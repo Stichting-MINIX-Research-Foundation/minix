@@ -17,6 +17,7 @@
 #include <lib.h>
 #include <limits.h>
 #include <errno.h>
+#include <assert.h>
 
 #include <minix/syslib.h>
 #include <minix/sysutil.h>

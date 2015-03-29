@@ -307,7 +307,7 @@ register struct inode *rip;	/* pointer to inode */
 off_t position;			/* file pointer */
 {
 /* Acquire a new block and return a pointer to it. */
-  register struct buf *bp;
+  struct buf *bp;
   int r;
   block_t b;
 
@@ -355,8 +355,10 @@ off_t position;			/* file pointer */
 	}
   }
 
-  bp = lmfs_get_block_ino(rip->i_dev, b, NO_READ, rip->i_num,
-  	rounddown(position, rip->i_sp->s_block_size));
+  r = lmfs_get_block_ino(&bp, rip->i_dev, b, NO_READ, rip->i_num,
+	rounddown(position, rip->i_sp->s_block_size));
+  if (r != OK)
+	panic("ext2: error getting block (%llu,%u): %d", rip->i_dev, b, r);
   zero_block(bp);
   return(bp);
 }

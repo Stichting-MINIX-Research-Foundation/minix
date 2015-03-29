@@ -2,6 +2,7 @@
 #define _SYSTEM
 
 #include <assert.h>
+#include <string.h>
 #include <errno.h>
 #include <math.h>
 #include <stdlib.h>
@@ -17,6 +18,8 @@
 #include <minix/sysutil.h>
 #include <minix/u64.h>
 #include <minix/bdev.h>
+
+#include "inc.h"
 
 /* Buffer (block) cache.  To acquire a block, a routine calls lmfs_get_block(),
  * telling which block it wants.  The block is then regarded as "in use" and
@@ -44,7 +47,7 @@ static struct buf *rear;        /* points to most recently used free block */
 static unsigned int bufs_in_use;/* # bufs currently in use (not on free list)*/
 
 static void rm_lru(struct buf *bp);
-static void read_block(struct buf *);
+static int read_block(struct buf *bp, size_t size);
 static void freeblock(struct buf *bp);
 static void cache_heuristic_check(void);
 static void put_block(struct buf *bp, int put_flags);
@@ -59,8 +62,6 @@ static int may_use_vmcache;
 static size_t fs_block_size = PAGE_SIZE;	/* raw i/o block size */
 
 static fsblkcnt_t fs_btotal = 0, fs_bused = 0;
-
-static int rdwt_err;
 
 static int quiet = 0;
 
@@ -193,33 +194,33 @@ static void free_unused_blocks(void)
 	printf("libminixfs: freeing; %d blocks, %d bytes\n", freed, bytes);
 }
 
-static void lmfs_alloc_block(struct buf *bp)
+static void lmfs_alloc_block(struct buf *bp, size_t block_size)
 {
   int len;
   ASSERT(!bp->data);
   ASSERT(bp->lmfs_bytes == 0);
 
-  len = roundup(fs_block_size, PAGE_SIZE);
+  len = roundup(block_size, PAGE_SIZE);
 
-  if((bp->data = mmap(0, fs_block_size,
-     PROT_READ|PROT_WRITE, MAP_PREALLOC|MAP_ANON, -1, 0)) == MAP_FAILED) {
+  if((bp->data = mmap(0, block_size, PROT_READ|PROT_WRITE,
+      MAP_PREALLOC|MAP_ANON, -1, 0)) == MAP_FAILED) {
 	free_unused_blocks();
-	if((bp->data = mmap(0, fs_block_size, PROT_READ|PROT_WRITE,
+	if((bp->data = mmap(0, block_size, PROT_READ|PROT_WRITE,
 		MAP_PREALLOC|MAP_ANON, -1, 0)) == MAP_FAILED) {
 		panic("libminixfs: could not allocate block");
 	}
   }
   assert(bp->data);
-  bp->lmfs_bytes = fs_block_size;
+  bp->lmfs_bytes = block_size;
   bp->lmfs_needsetcache = 1;
 }
 
 /*===========================================================================*
  *				lmfs_get_block				     *
  *===========================================================================*/
-struct buf *lmfs_get_block(dev_t dev, block64_t block, int how)
+int lmfs_get_block(struct buf **bpp, dev_t dev, block64_t block, int how)
 {
-	return lmfs_get_block_ino(dev, block, how, VMC_NO_INODE, 0);
+	return lmfs_get_block_ino(bpp, dev, block, how, VMC_NO_INODE, 0);
 }
 
 static void munmap_t(void *a, int len)
@@ -264,7 +265,7 @@ static void freeblock(struct buf *bp)
    */
   if (bp->lmfs_dev != NO_DEV) {
 	if (!lmfs_isclean(bp)) lmfs_flushdev(bp->lmfs_dev);
-	assert(bp->lmfs_bytes == fs_block_size);
+	assert(bp->lmfs_bytes > 0);
 	bp->lmfs_dev = NO_DEV;
   }
 
@@ -300,27 +301,32 @@ static struct buf *find_block(dev_t dev, block64_t block)
 }
 
 /*===========================================================================*
- *				lmfs_get_block_ino			     *
+ *				get_block_ino				     *
  *===========================================================================*/
-struct buf *lmfs_get_block_ino(dev_t dev, block64_t block, int how, ino_t ino,
-	u64_t ino_off)
+static int get_block_ino(struct buf **bpp, dev_t dev, block64_t block, int how,
+	ino_t ino, u64_t ino_off, size_t block_size)
 {
-/* Check to see if the requested block is in the block cache.  If so, return
- * a pointer to it.  If not, evict some other block and fetch it (unless
- * 'how' is NO_READ).  All the blocks in the cache that are not in use are
- * linked together in a chain, with 'front' pointing to the least recently used
- * block and 'rear' to the most recently used block.  If 'how' is NO_READ, the
- * block being requested will be overwritten in its entirety, so it is only
- * necessary to see if it is in the cache; if it is not, any free buffer will
- * do.  It is not necessary to actually read the block in from disk.  If 'how'
+/* Check to see if the requested block is in the block cache.  The requested
+ * block is identified by the block number in 'block' on device 'dev', counted
+ * in the file system block size.  The amount of data requested for this block
+ * is given in 'block_size', which may be less than the file system block size
+ * iff the requested block is the last (partial) block on a device.  Note that
+ * the given block size does *not* affect the conversion of 'block' to a byte
+ * offset!  Either way, if the block could be obtained, either from the cache
+ * or by reading from the device, return OK, with a pointer to the buffer
+ * structure stored in 'bpp'.  If not, return a negative error code (and no
+ * buffer).  If necessary, evict some other block and fetch the contents from
+ * disk (if 'how' is NORMAL).  If 'how' is NO_READ, the caller intends to
+ * overwrite the requested block in its entirety, so it is only necessary to
+ * see if it is in the cache; if it is not, any free buffer will do.  If 'how'
  * is PREFETCH, the block need not be read from the disk, and the device is not
  * to be marked on the block (i.e., set to NO_DEV), so callers can tell if the
  * block returned is valid.  If 'how' is PEEK, the function returns the block
- * if it is in the cache or could be obtained from VM, and NULL otherwise.
+ * if it is in the cache or the VM cache, and an ENOENT error code otherwise.
  * In addition to the LRU chain, there is also a hash chain to link together
  * blocks whose block numbers end with the same bit strings, for fast lookup.
  */
-  int b;
+  int b, r;
   static struct buf *bp;
   uint64_t dev_off;
   struct buf *prev_ptr;
@@ -347,6 +353,13 @@ struct buf *lmfs_get_block_ino(dev_t dev, block64_t block, int how, ino_t ino,
   /* See if the block is in the cache. If so, we can return it right away. */
   bp = find_block(dev, block);
   if (bp != NULL && !(bp->lmfs_flags & VMMC_EVICTED)) {
+	ASSERT(bp->lmfs_dev == dev);
+	ASSERT(bp->lmfs_dev != NO_DEV);
+
+	/* The block must have exactly the requested number of bytes. */
+	if (bp->lmfs_bytes != block_size)
+		return EIO;
+
 	/* Block needed has been found. */
 	if (bp->lmfs_count == 0) {
 		rm_lru(bp);
@@ -356,9 +369,6 @@ struct buf *lmfs_get_block_ino(dev_t dev, block64_t block, int how, ino_t ino,
 		bp->lmfs_flags |= VMMC_BLOCK_LOCKED;
 	}
 	raisecount(bp);
-	ASSERT(bp->lmfs_bytes == fs_block_size);
-	ASSERT(bp->lmfs_dev == dev);
-	ASSERT(bp->lmfs_dev != NO_DEV);
 	ASSERT(bp->lmfs_flags & VMMC_BLOCK_LOCKED);
 	ASSERT(bp->data);
 
@@ -372,7 +382,8 @@ struct buf *lmfs_get_block_ino(dev_t dev, block64_t block, int how, ino_t ino,
 		}
 	}
 
-	return(bp);
+	*bpp = bp;
+	return OK;
   }
 
   /* We had the block in the cache but VM evicted it; invalidate it. */
@@ -437,10 +448,11 @@ struct buf *lmfs_get_block_ino(dev_t dev, block64_t block, int how, ino_t ino,
   assert(!bp->lmfs_bytes);
   if(vmcache) {
 	if((bp->data = vm_map_cacheblock(dev, dev_off, ino, ino_off,
-		&bp->lmfs_flags, fs_block_size)) != MAP_FAILED) {
-		bp->lmfs_bytes = fs_block_size;
+	    &bp->lmfs_flags, roundup(block_size, PAGE_SIZE))) != MAP_FAILED) {
+		bp->lmfs_bytes = block_size;
 		ASSERT(!bp->lmfs_needsetcache);
-		return bp;
+		*bpp = bp;
+		return OK;
 	}
   }
   bp->data = NULL;
@@ -455,12 +467,12 @@ struct buf *lmfs_get_block_ino(dev_t dev, block64_t block, int how, ino_t ino,
 
 	put_block(bp, ONE_SHOT);
 
-	return NULL;
+	return ENOENT;
   }
 
   /* Not in the cache; reserve memory for its contents. */
 
-  lmfs_alloc_block(bp);
+  lmfs_alloc_block(bp, block_size);
 
   assert(bp->data);
 
@@ -468,7 +480,12 @@ struct buf *lmfs_get_block_ino(dev_t dev, block64_t block, int how, ino_t ino,
 	/* PREFETCH: don't do i/o. */
 	bp->lmfs_dev = NO_DEV;
   } else if (how == NORMAL) {
-	read_block(bp);
+	/* Try to read the block. Return an error code on failure. */
+	if ((r = read_block(bp, block_size)) != OK) {
+		put_block(bp, 0);
+
+		return r;
+	}
   } else if(how == NO_READ) {
   	/* This block will be overwritten by new contents. */
   } else
@@ -476,7 +493,26 @@ struct buf *lmfs_get_block_ino(dev_t dev, block64_t block, int how, ino_t ino,
 
   assert(bp->data);
 
-  return(bp);			/* return the newly acquired block */
+  *bpp = bp;			/* return the newly acquired block */
+  return OK;
+}
+
+/*===========================================================================*
+ *				lmfs_get_block_ino			     *
+ *===========================================================================*/
+int lmfs_get_block_ino(struct buf **bpp, dev_t dev, block64_t block, int how,
+	ino_t ino, u64_t ino_off)
+{
+  return get_block_ino(bpp, dev, block, how, ino, ino_off, fs_block_size);
+}
+
+/*===========================================================================*
+ *				lmfs_get_partial_block			     *
+ *===========================================================================*/
+int lmfs_get_partial_block(struct buf **bpp, dev_t dev, block64_t block,
+	int how, size_t block_size)
+{
+  return get_block_ino(bpp, dev, block, how, VMC_NO_INODE, 0, block_size);
 }
 
 /*===========================================================================*
@@ -536,12 +572,21 @@ static void put_block(struct buf *bp, int put_flags)
 	assert(bp->data);
 
 	setflags = (put_flags & ONE_SHOT) ? VMSF_ONCE : 0;
+
 	if ((r = vm_set_cacheblock(bp->data, dev, dev_off, bp->lmfs_inode,
-	    bp->lmfs_inode_offset, &bp->lmfs_flags, fs_block_size,
-	    setflags)) != OK) {
+	    bp->lmfs_inode_offset, &bp->lmfs_flags,
+	    roundup(bp->lmfs_bytes, PAGE_SIZE), setflags)) != OK) {
 		if(r == ENOSYS) {
 			printf("libminixfs: ENOSYS, disabling VM calls\n");
 			vmcache = 0;
+		} else if (r == ENOMEM) {
+			/* Do not panic in this case. Running out of memory is
+			 * bad, especially since it may lead to applications
+			 * crashing when trying to access memory-mapped pages
+			 * we haven't been able to pass off to the VM cache,
+			 * but the entire file system crashing is always worse.
+			 */
+			printf("libminixfs: no memory for cache block!\n");
 		} else {
 			panic("libminixfs: setblock of %p dev 0x%llx off "
 				"0x%llx failed\n", bp->data, dev, dev_off);
@@ -634,6 +679,7 @@ void lmfs_zero_block_ino(dev_t dev, ino_t ino, u64_t ino_off)
  */
   struct buf *bp;
   static block64_t fake_block = 0;
+  int r;
 
   if (!vmcache)
 	return;
@@ -650,7 +696,9 @@ void lmfs_zero_block_ino(dev_t dev, ino_t ino, u64_t ino_off)
 	fake_block = ((uint64_t)INT64_MAX + 1) / fs_block_size;
 
   /* Obtain a block. */
-  bp = lmfs_get_block_ino(dev, fake_block, NO_READ, ino, ino_off);
+  if ((r = lmfs_get_block_ino(&bp, dev, fake_block, NO_READ, ino,
+      ino_off)) != OK)
+	panic("libminixfs: getting a NO_READ block failed: %d", r);
   assert(bp != NULL);
   assert(bp->lmfs_dev != NO_DEV);
 
@@ -684,33 +732,28 @@ void lmfs_set_blockusage(fsblkcnt_t btotal, fsblkcnt_t bused)
 /*===========================================================================*
  *				read_block				     *
  *===========================================================================*/
-static void read_block(
-  struct buf *bp	/* buffer pointer */
-)
+static int read_block(struct buf *bp, size_t block_size)
 {
-/* Read or write a disk block. This is the only routine in which actual disk
- * I/O is invoked. If an error occurs, a message is printed here, but the error
- * is not reported to the caller.  If the error occurred while purging a block
- * from the cache, it is not clear what the caller could do about it anyway.
+/* Read a disk block of 'size' bytes.  The given size is always the FS block
+ * size, except for the last block of a device.  If an I/O error occurs,
+ * invalidate the block and return an error code.
  */
-  int r, op_failed;
+  ssize_t r;
   off_t pos;
   dev_t dev = bp->lmfs_dev;
 
-  op_failed = 0;
-
   assert(dev != NO_DEV);
 
-  ASSERT(bp->lmfs_bytes == fs_block_size);
+  ASSERT(bp->lmfs_bytes == block_size);
   ASSERT(fs_block_size > 0);
 
   pos = (off_t)bp->lmfs_blocknr * fs_block_size;
-  if(fs_block_size > PAGE_SIZE) {
+  if (block_size > PAGE_SIZE) {
 #define MAXPAGES 20
 	vir_bytes blockrem, vaddr = (vir_bytes) bp->data;
 	int p = 0;
   	static iovec_t iovec[MAXPAGES];
-	blockrem = fs_block_size;
+	blockrem = block_size;
 	while(blockrem > 0) {
 		vir_bytes chunk = blockrem >= PAGE_SIZE ? PAGE_SIZE : blockrem;
 		iovec[p].iov_addr = vaddr;
@@ -721,25 +764,20 @@ static void read_block(
 	}
   	r = bdev_gather(dev, pos, iovec, p, BDEV_NOFLAGS);
   } else {
-  	r = bdev_read(dev, pos, bp->data, fs_block_size,
-  		BDEV_NOFLAGS);
+	r = bdev_read(dev, pos, bp->data, block_size, BDEV_NOFLAGS);
   }
-  if (r < 0) {
-	printf("fs cache: I/O error on device %d/%d, block %"PRIu64"\n",
-	    major(dev), minor(dev), bp->lmfs_blocknr);
-  	op_failed = 1;
-  } else if (r != (ssize_t) fs_block_size) {
-  	r = END_OF_FILE;
-  	op_failed = 1;
-  }
+  if (r != (ssize_t)block_size) {
+	printf("fs cache: I/O error on device %d/%d, block %"PRIu64" (%zd)\n",
+	    major(dev), minor(dev), bp->lmfs_blocknr, r);
+	if (r >= 0)
+		r = EIO; /* TODO: retry retrieving (just) the remaining part */
 
-  if (op_failed) {
-  	bp->lmfs_dev = NO_DEV;	/* invalidate block */
+	bp->lmfs_dev = NO_DEV;	/* invalidate block */
 
-  	/* Report read errors to interested parties. */
-  	rdwt_err = r;
+	return r;
   }
 
+  return OK;
 }
 
 /*===========================================================================*
@@ -842,13 +880,12 @@ void lmfs_rw_scattered(
   	}
 
   	/* therefore they are all 'in use' and must be at least this many */
-	  assert(start_in_use >= start_bufqsize);
+	assert(start_in_use >= start_bufqsize);
   }
 
   assert(dev != NO_DEV);
   assert(fs_block_size > 0);
-  iov_per_block = roundup(fs_block_size, PAGE_SIZE) / PAGE_SIZE;
-  assert(iov_per_block < NR_IOREQS);
+  assert(howmany(fs_block_size, PAGE_SIZE) <= NR_IOREQS);
   
   /* (Shell) sort buffers on lmfs_blocknr. */
   gap = 1;
@@ -881,11 +918,13 @@ void lmfs_rw_scattered(
 		bp = bufq[nblocks];
 		if (bp->lmfs_blocknr != bufq[0]->lmfs_blocknr + nblocks)
 			break;
+		blockrem = bp->lmfs_bytes;
+		iov_per_block = howmany(blockrem, PAGE_SIZE);
 		if(niovecs >= NR_IOREQS-iov_per_block) break;
 		vdata = (vir_bytes) bp->data;
-		blockrem = fs_block_size;
 		for(p = 0; p < iov_per_block; p++) {
-			vir_bytes chunk = blockrem < PAGE_SIZE ? blockrem : PAGE_SIZE;
+			vir_bytes chunk =
+			    blockrem < PAGE_SIZE ? blockrem : PAGE_SIZE;
 			iop->iov_addr = vdata;
 			iop->iov_size = chunk;
 			vdata += PAGE_SIZE;
@@ -916,7 +955,7 @@ void lmfs_rw_scattered(
 	}
 	for (i = 0; i < nblocks; i++) {
 		bp = bufq[i];
-		if (r < (ssize_t) fs_block_size) {
+		if (r < (ssize_t)bp->lmfs_bytes) {
 			/* Transfer failed. */
 			if (i == 0) {
 				bp->lmfs_dev = NO_DEV;	/* Invalidate block */
@@ -929,7 +968,7 @@ void lmfs_rw_scattered(
 		} else {
 			MARKCLEAN(bp);
 		}
-		r -= fs_block_size;
+		r -= bp->lmfs_bytes;
 	}
 
 	bufq += i;
@@ -1125,14 +1164,4 @@ size_t lmfs_fs_block_size(void)
 void lmfs_may_use_vmcache(int ok)
 {
 	may_use_vmcache = ok;
-}
-
-void lmfs_reset_rdwt_err(void)
-{
-	rdwt_err = OK;
-}
-
-int lmfs_rdwt_err(void)
-{
-	return rdwt_err;
 }
