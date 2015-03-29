@@ -26,7 +26,6 @@ ssize_t fs_read(ino_t ino_nr, struct fsdriver_data *data, size_t bytes,
 	block_size = v_pri.logical_block_size_l;
 	cum_io = 0;
 
-	lmfs_reset_rdwt_err();
 	r = OK;
 
 	/* Split the transfer into chunks that don't span two blocks. */
@@ -47,8 +46,6 @@ ssize_t fs_read(ino_t ino_nr, struct fsdriver_data *data, size_t bytes,
 		lmfs_put_block(bp);
 
 		if (r != OK)
-			break;  /* EOF reached. */
-		if (lmfs_rdwt_err() < 0)
 			break;
 
 		/* Update counters and pointers. */
@@ -56,11 +53,6 @@ ssize_t fs_read(ino_t ino_nr, struct fsdriver_data *data, size_t bytes,
 		cum_io += chunk;	/* Bytes read so far. */
 		pos += chunk;		/* Position within the file. */
 	}
-
-	if (lmfs_rdwt_err() != OK)
-		r = lmfs_rdwt_err();	/* Check for disk error. */
-	if (lmfs_rdwt_err() == END_OF_FILE)
-		r = OK;
 
 	return (r == OK) ? cum_io : r;
 }

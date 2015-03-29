@@ -12,11 +12,11 @@ int parse_susp(struct rrii_dir_record *dir, char *buffer)
 	char susp_signature[2];
 	u8_t susp_length;
 	u8_t susp_version;
-
 	u32_t ca_block_nr;
 	u32_t ca_offset;
 	u32_t ca_length;
 	struct buf *ca_bp;
+	int r;
 
 	susp_signature[0] = buffer[0];
 	susp_signature[1] = buffer[1];
@@ -44,10 +44,9 @@ int parse_susp(struct rrii_dir_record *dir, char *buffer)
 			ca_length = v_pri.logical_block_size_l - ca_offset;
 		}
 
-		ca_bp = lmfs_get_block(fs_dev, ca_block_nr, NORMAL);
-		if (ca_bp == NULL) {
-			return EINVAL;
-		}
+		r = lmfs_get_block(&ca_bp, fs_dev, ca_block_nr, NORMAL);
+		if (r != OK)
+			return r;
 
 		parse_susp_buffer(dir, b_data(ca_bp) + ca_offset, ca_length);
 		lmfs_put_block(ca_bp);

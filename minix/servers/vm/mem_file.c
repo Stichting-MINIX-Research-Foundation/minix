@@ -140,8 +140,8 @@ static int mappedfile_pagefault(struct vmproc *vmp, struct vir_region *region,
 		if(!cb) {
 #if 0
 			printf("VM: mem_file: no callback, returning EFAULT\n");
-#endif
 			sys_diagctl_stacktrace(vmp->vm_endpoint);
+#endif
 			return EFAULT;
 		}
 

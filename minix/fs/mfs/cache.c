@@ -1,17 +1,7 @@
 /* The file system maintains a buffer cache to reduce the number of disk
  * accesses needed.  Whenever a read or write to the disk is done, a check is
- * first made to see if the block is in the cache.  This file manages the
- * cache.
- *
- * The entry points into this file are:
- *   get_block:	  request to fetch a block for reading or writing from cache
- *   put_block:	  return a block previously requested with get_block
- *   alloc_zone:  allocate a new zone (to increase the length of a file)
- *   free_zone:	  release a zone (when a file is removed)
- *   invalidate:  remove all the cache blocks on some device
- *
- * Private functions:
- *   read_block:    read or write a block from the disk itself
+ * first made to see if the block is in the cache.  This file contains some
+ * related routines, but the cache is now in libminixfs.
  */
 
 #include "fs.h"
@@ -25,6 +15,26 @@
 #include "buf.h"
 #include "super.h"
 #include "inode.h"
+
+/*===========================================================================*
+ *				get_block				     *
+ *===========================================================================*/
+struct buf *get_block(dev_t dev, block_t block, int how)
+{
+/* Wrapper routine for lmfs_get_block(). This MFS implementation does not deal
+ * well with block read errors pretty much anywhere. To prevent corruption due
+ * to unchecked error conditions, we panic upon an I/O failure here.
+ */
+  struct buf *bp;
+  int r;
+
+  if ((r = lmfs_get_block(&bp, dev, block, how)) != OK && r != ENOENT)
+	panic("MFS: error getting block (%llu,%u): %d", dev, block, r);
+
+  assert(r == OK || how == PEEK);
+
+  return (r == OK) ? bp : NULL;
+}
 
 /*===========================================================================*
  *				alloc_zone				     *

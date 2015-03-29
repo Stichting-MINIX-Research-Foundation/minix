@@ -36,12 +36,21 @@ void free_extent(struct dir_extent *e)
 
 struct buf* read_extent_block(struct dir_extent *e, size_t block)
 {
-	size_t block_id = get_extent_absolute_block_id(e, block);
+	struct buf *bp;
+	size_t block_id;
+	int r;
+
+	block_id = get_extent_absolute_block_id(e, block);
 
 	if (block_id == 0 || block_id >= v_pri.volume_space_size_l)
 		return NULL;
 
-	return lmfs_get_block(fs_dev, block_id, NORMAL);
+	/* Not all callers deal well with failure, so panic on I/O error. */
+	if ((r = lmfs_get_block(&bp, fs_dev, block_id, NORMAL)) != OK)
+		panic("ISOFS: error getting block (%llu,%zu): %d",
+		    fs_dev, block_id, r);
+
+	return bp;
 }
 
 size_t get_extent_absolute_block_id(struct dir_extent *e, size_t block)

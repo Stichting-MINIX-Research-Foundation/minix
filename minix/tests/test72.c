@@ -41,10 +41,11 @@ int
 dowriteblock(int b, int blocksize, u32_t seed, char *data)
 {
 	struct buf *bp;
+	int r;
 
 	assert(blocksize == curblocksize);
 
-	if(!(bp = lmfs_get_block(MYDEV, b, NORMAL))) {
+	if ((r = lmfs_get_block(&bp, MYDEV, b, NORMAL)) != 0) {
 		e(30);
 		return 0;
 	}
@@ -62,10 +63,11 @@ int
 readblock(int b, int blocksize, u32_t seed, char *data)
 {
 	struct buf *bp;
+	int r;
 
 	assert(blocksize == curblocksize);
 
-	if(!(bp = lmfs_get_block(MYDEV, b, NORMAL))) {
+	if ((r = lmfs_get_block(&bp, MYDEV, b, NORMAL)) != 0) {
 		e(30);
 		return 0;
 	}
