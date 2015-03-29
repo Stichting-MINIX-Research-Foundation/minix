@@ -732,7 +732,7 @@ void lmfs_flushdev(dev_t dev)
 /* Flush all dirty blocks for one device. */
 
   register struct buf *bp;
-  static struct buf **dirty;	/* static so it isn't on stack */
+  static struct buf **dirty;
   static unsigned int dirtylistsize = 0;
   int ndirty;
 
@@ -747,9 +747,13 @@ void lmfs_flushdev(dev_t dev)
   }
 
   for (bp = &buf[0], ndirty = 0; bp < &buf[nr_bufs]; bp++) {
-       if (!lmfs_isclean(bp) && bp->lmfs_dev == dev) {
-               dirty[ndirty++] = bp;
-       }
+	/* Do not flush dirty blocks that are in use (lmfs_count>0): the file
+	 * system may mark the block as dirty before changing its contents, in
+	 * which case the new contents could end up being lost.
+	 */
+	if (!lmfs_isclean(bp) && bp->lmfs_dev == dev && bp->lmfs_count == 0) {
+		dirty[ndirty++] = bp;
+	}
   }
 
   lmfs_rw_scattered(dev, dirty, ndirty, WRITING);
