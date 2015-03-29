@@ -48,8 +48,16 @@ int fs_mount(dev_t dev, unsigned int flags, struct fsdriver_node *root_node,
   	}
 	printf("MFS: WARNING: FS 0x%llx unclean, mounting readonly\n", fs_dev);
   }
-  
+
   lmfs_set_blocksize(superblock.s_block_size);
+
+  /* Compute the current number of used zones, and report it to libminixfs.
+   * Note that libminixfs really wants numbers of *blocks*, but this MFS
+   * implementation dropped support for differing zone/block sizes a while ago.
+   */
+  used_zones = superblock.s_zones - count_free_bits(&superblock, ZMAP);
+
+  lmfs_set_blockusage(superblock.s_zones, used_zones);
   
   /* Get the root inode of the mounted file system. */
   if( (root_ip = get_inode(fs_dev, ROOT_INODE)) == NULL)  {

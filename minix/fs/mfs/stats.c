@@ -87,22 +87,3 @@ int map;			/* IMAP (inode map) or ZMAP (zone map) */
   } while (--bcount > 0);
   return free_bits;
 }
-
-
-/*===========================================================================*
- *				blockstats				     *
- *===========================================================================*/
-void fs_blockstats(u64_t *blocks, u64_t *free)
-{
-  struct super_block *sp;
-
-  sp = get_super(fs_dev);
-
-  assert(sp);
-  assert(!sp->s_log_zone_size);
-
-  *blocks = sp->s_zones;
-  *free = *blocks - get_used_blocks(sp);
-
-  return;
-}

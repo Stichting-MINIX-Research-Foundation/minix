@@ -87,7 +87,6 @@ unsigned int get_block_size(dev_t dev);
 struct super_block *get_super(dev_t dev);
 int read_super(struct super_block *sp);
 int write_super(struct super_block *sp);
-u32_t get_used_blocks(struct super_block *sp);
 
 /* stats.c */
 bit_t count_free_bits(struct super_block *sp, int map);

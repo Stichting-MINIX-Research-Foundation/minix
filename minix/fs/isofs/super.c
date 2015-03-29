@@ -46,6 +46,8 @@ static int create_vol_pri_desc(struct iso9660_vol_pri_desc *vol_pri, char *buf,
 		return EINVAL;
 
 	lmfs_set_blocksize(vol_pri->logical_block_size_l);
+	lmfs_set_blockusage(vol_pri->volume_space_size_l,
+	    vol_pri->volume_space_size_l);
 
 	/* Read root directory record. */
 	root_record = (struct iso9660_dir_record *)vol_pri->root_directory;

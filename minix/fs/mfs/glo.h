@@ -15,6 +15,8 @@ EXTERN int cch[NR_INODES];
 EXTERN dev_t fs_dev;    	/* The device that is handled by this FS proc.
 				 */
 
+EXTERN zone_t used_zones;
+
 extern struct fsdriver mfs_table;
 
 #endif

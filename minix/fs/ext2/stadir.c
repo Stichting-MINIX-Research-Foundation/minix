@@ -71,15 +71,3 @@ int fs_statvfs(struct statvfs *st)
 
   return(OK);
 }
-
-/*===========================================================================*
- *                              blockstats                                   *
- *===========================================================================*/
-void fs_blockstats(u64_t *blocks, u64_t *free)
-{
-        struct super_block *sp = get_super(fs_dev);
-
-	*blocks = sp->s_blocks_count;
-	*free = sp->s_free_blocks_count;
-}
-
