@@ -534,7 +534,8 @@ static void print_list(int indent, config_t *cfg)
 {
     while (cfg != nil) {
 	if (!config_issub(cfg)) {
-	    fprintf(stderr, "Cell at \"%s\", line %u is not a sublist\n");
+	    fprintf(stderr, "Cell at \"%s\", line %u is not a sublist\n",
+		c_file, c_line);
 	    break;
 	}
 	printf("%*s", indent, "");
