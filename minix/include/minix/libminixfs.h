@@ -13,8 +13,8 @@ struct buf {
   struct buf *lmfs_next;       /* used to link all free bufs in a chain */
   struct buf *lmfs_prev;       /* used to link all free bufs the other way */
   struct buf *lmfs_hash;       /* used to link bufs on hash chains */
-  block_t lmfs_blocknr;        /* block number of its (minor) device */
   dev_t lmfs_dev;              /* major | minor device where block resides */
+  block64_t lmfs_blocknr;      /* block number of its (minor) device */
   char lmfs_count;             /* number of users of this buffer */
   char lmfs_needsetcache;      /* to be identified to VM */
   unsigned int lmfs_bytes;     /* Number of bytes allocated in bp */
@@ -42,8 +42,8 @@ void lmfs_set_blocksize(int blocksize, int major);
 void lmfs_reset_rdwt_err(void); 
 int lmfs_rdwt_err(void); 
 void lmfs_buf_pool(int new_nr_bufs);
-struct buf *lmfs_get_block(dev_t dev, block_t block,int only_search);
-struct buf *lmfs_get_block_ino(dev_t dev, block_t block,int only_search,
+struct buf *lmfs_get_block(dev_t dev, block64_t block,int only_search);
+struct buf *lmfs_get_block_ino(dev_t dev, block64_t block,int only_search,
 	ino_t ino, u64_t off);
 void lmfs_invalidate(dev_t device);
 void lmfs_put_block(struct buf *bp, int block_type);

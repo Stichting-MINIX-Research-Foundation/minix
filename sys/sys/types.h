@@ -118,6 +118,7 @@ typedef int64_t		i64_t;
 /* some Minix specific types that do not conflict with posix */
 typedef uint32_t zone_t;      /* zone number */
 typedef uint32_t block_t;     /* block number */
+typedef uint64_t block64_t;   /* block number, 64-bit */
 typedef uint32_t bit_t;       /* bit number in a bit map */
 typedef uint16_t zone1_t;     /* zone number for V1 file systems */
 typedef uint32_t bitchunk_t; /* collection of bits in a bitmap */

@@ -18,7 +18,7 @@
 #include <minix/u64.h>
 #include <minix/bdev.h>
 
-#define BUFHASH(b) ((b) % nr_bufs)
+#define BUFHASH(b) ((unsigned int)((b) % nr_bufs))
 #define MARKCLEAN  lmfs_markclean
 
 #define MINBUFS 6 	/* minimal no of bufs for sanity check */
@@ -178,8 +178,7 @@ static void lmfs_alloc_block(struct buf *bp)
 /*===========================================================================*
  *				lmfs_get_block				     *
  *===========================================================================*/
-struct buf *lmfs_get_block(register dev_t dev, register block_t block,
-	int only_search)
+struct buf *lmfs_get_block(dev_t dev, block64_t block, int only_search)
 {
 	return lmfs_get_block_ino(dev, block, only_search, VMC_NO_INODE, 0);
 }
@@ -243,7 +242,7 @@ static void freeblock(struct buf *bp)
 /*===========================================================================*
  *				lmfs_get_block_ino			     *
  *===========================================================================*/
-struct buf *lmfs_get_block_ino(dev_t dev, block_t block, int only_search,
+struct buf *lmfs_get_block_ino(dev_t dev, block64_t block, int only_search,
 	ino_t ino, u64_t ino_off)
 {
 /* Check to see if the requested block is in the block cache.  If so, return
@@ -263,7 +262,7 @@ struct buf *lmfs_get_block_ino(dev_t dev, block_t block, int only_search,
 
   int b;
   static struct buf *bp;
-  u64_t dev_off = (u64_t) block * fs_block_size;
+  uint64_t dev_off;
   struct buf *prev_ptr;
 
   assert(buf_hash);
@@ -273,6 +272,10 @@ struct buf *lmfs_get_block_ino(dev_t dev, block_t block, int only_search,
   ASSERT(fs_block_size > 0);
 
   assert(dev != NO_DEV);
+
+  assert(block <= UINT64_MAX / fs_block_size);
+
+  dev_off = block * fs_block_size;
 
   if((ino_off % fs_block_size)) {
 
@@ -424,14 +427,14 @@ void lmfs_put_block(
  * disk immediately if they are dirty.
  */
   dev_t dev;
-  off_t dev_off;
+  uint64_t dev_off;
   int r;
 
   if (bp == NULL) return;	/* it is easier to check here than in caller */
 
   dev = bp->lmfs_dev;
 
-  dev_off = (off_t) bp->lmfs_blocknr * fs_block_size;
+  dev_off = bp->lmfs_blocknr * fs_block_size;
 
   lowercount(bp);
   if (bp->lmfs_count != 0) return;	/* block is still in use */
@@ -535,8 +538,8 @@ static void read_block(
   		BDEV_NOFLAGS);
   }
   if (r < 0) {
-  	printf("fs cache: I/O error on device %d/%d, block %u\n",
-  	major(dev), minor(dev), bp->lmfs_blocknr);
+	printf("fs cache: I/O error on device %d/%d, block %"PRIu64"\n",
+	    major(dev), minor(dev), bp->lmfs_blocknr);
   	op_failed = 1;
   } else if (r != (ssize_t) fs_block_size) {
   	r = END_OF_FILE;
@@ -679,7 +682,7 @@ void lmfs_rw_scattered(
 		int p;
 		vir_bytes vdata, blockrem;
 		bp = bufq[nblocks];
-		if (bp->lmfs_blocknr != (block_t) bufq[0]->lmfs_blocknr + nblocks)
+		if (bp->lmfs_blocknr != bufq[0]->lmfs_blocknr + nblocks)
 			break;
 		if(niovecs >= NR_IOREQS-iov_per_block) break;
 		vdata = (vir_bytes) bp->data;
@@ -710,8 +713,9 @@ void lmfs_rw_scattered(
 	 * may have done less than what we asked for.
 	 */
 	if (r < 0) {
-		printf("fs cache: I/O error %d on device %d/%d, block %u\n",
-			r, major(dev), minor(dev), bufq[0]->lmfs_blocknr);
+		printf("fs cache: I/O error %d on device %d/%d, "
+		    "block %"PRIu64"\n",
+		    r, major(dev), minor(dev), bufq[0]->lmfs_blocknr);
 	}
 	for (i = 0; i < nblocks; i++) {
 		bp = bufq[i];

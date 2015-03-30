@@ -56,7 +56,7 @@ lmfs_driver(dev_t dev, char *label)
  * TODO: limit according to the number of available buffers.
  */
 static void
-block_prefetch(dev_t dev, block_t block, block_t nblocks)
+block_prefetch(dev_t dev, block64_t block, unsigned int nblocks)
 {
 	struct buf *bp, *bufs[NR_IOREQS];
 	unsigned int count;
@@ -103,8 +103,9 @@ ssize_t
 lmfs_bio(dev_t dev, struct fsdriver_data * data, size_t bytes, off_t pos,
 	int call)
 {
-	block_t block, blocks_left;
+	block64_t block;
 	size_t block_size, off, block_off, chunk;
+	unsigned int blocks_left;
 	struct buf *bp;
 	int r, write, how;
 
@@ -116,8 +117,10 @@ lmfs_bio(dev_t dev, struct fsdriver_data * data, size_t bytes, off_t pos,
 
 	assert(block_size > 0);
 
-	/* FIXME: block_t is 32-bit, so we have to impose a limit here. */
-	if (pos < 0 || pos / block_size > UINT32_MAX || bytes > SSIZE_MAX)
+	if (bytes == 0)
+		return 0; /* just in case */
+
+	if (pos < 0 || bytes > SSIZE_MAX || pos > INT64_MAX - bytes + 1)
 		return EINVAL;
 
 	off = 0;
