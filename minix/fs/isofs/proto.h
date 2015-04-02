@@ -6,27 +6,20 @@ struct rrii_dir_record;
 struct iso9660_dir_record;
 struct iso9660_vol_pri_desc;
 struct inode;
+struct inode_dir_entry;
 
 /* inode.c */
 int fs_putnode(ino_t ino_nr, unsigned int count);
 
-struct inode* alloc_inode(void);
-struct inode* find_inode(ino_t i);
+struct inode* get_inode(ino_t ino_nr);
+struct inode* open_inode(ino_t ino_nr);
 void put_inode(struct inode *i);
 void dup_inode(struct inode *i_node);
-struct inode* get_inode(ino_t i);
 
-int read_inode(struct inode *i_node, struct dir_extent *extent, size_t offset,
-	size_t *new_offset);
-void read_inode_iso9660(struct inode *i,
-	const struct iso9660_dir_record *dir_rec);
-void read_inode_extents(struct inode *i,
-	const struct iso9660_dir_record *dir_rec, struct dir_extent *extent,
-	size_t *offset);
-void read_inode_susp(struct inode *i, const struct iso9660_dir_record *dir_rec,
-	struct buf *bp, size_t offset);
+int read_directory(struct inode *dir);
 
-int check_dir_record(const struct iso9660_dir_record *d, size_t offset);
+int read_inode(struct inode_dir_entry *dir_entry, struct dir_extent *extent,
+    size_t *offset);
 
 int check_inodes(void);
 
@@ -73,3 +66,4 @@ struct buf* read_extent_block(struct dir_extent *e, size_t block);
 size_t get_extent_absolute_block_id(struct dir_extent *e, size_t block);
 
 time_t date7_to_time_t(const u8_t *date);
+void* alloc_mem(size_t s);

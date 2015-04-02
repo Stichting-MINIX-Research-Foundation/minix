@@ -116,10 +116,6 @@ autoboot|start)
     # We are not shutting down.
     rm -f /etc/nologin
 
-    # Initialize files.
-    >/var/run/utmp				# /etc/utmp keeps track of logins
-    >/var/run/utmpx				# /etc/utmpx keeps track of logins
-
     # Use MFS binary only from kernel image?
     if [ "`sysenv bin_img`" = 1 ]
     then
@@ -129,16 +125,11 @@ autoboot|start)
     # Are we booting from CD?
     bootcd="`/bin/sysenv bootcd`"
 
-    # If booting from CD, mounting is a special case.
-    # We know what to do - only /usr is mounted and it's readonly.
-    if [ "$bootcd" = 1 ]
-    then	usrdev="$cddev"p2
-    		echo "/usr on cd is $usrdev"
-		mount -r $usrdev /usr
-    else	
-    # If we're not booting from CD, fsck + mount using /etc/fstab.
-		fsck -x / $fflag $fsckopts
-		mount -a
+    if [ -z "$bootcd" ]
+    then
+	# If we're not booting from CD, fsck + mount using /etc/fstab.
+	fsck -x / $fflag $fsckopts
+	mount -a
     fi
 
     # Unmount and free now defunct ramdisk
