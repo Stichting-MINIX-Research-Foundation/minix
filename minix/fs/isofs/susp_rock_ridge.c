@@ -6,6 +6,8 @@
 #include "inc.h"
 #include <sys/stat.h>
 
+#ifdef ISO9660_OPTION_ROCKRIDGE
+
 void parse_susp_rock_ridge_sl(struct rrii_dir_record *dir, char *buffer, int length)
 {
 	/* Parse a Rock Ridge SUSP symbolic link entry (SL). */
@@ -115,26 +117,7 @@ int parse_susp_rock_ridge(struct rrii_dir_record *dir, char *buffer)
 	if ((susp_signature[0] == 'P') && (susp_signature[1] == 'X') &&
 	    (susp_length >= 36) && (susp_version >= 1)) {
 		/* POSIX file mode, UID and GID. */
-		rrii_px_posix_mode = *((u32_t*)(buffer + 4));
-
-		/* Check if file mode is supported by isofs. */
-		switch (rrii_px_posix_mode & _S_IFMT) {
-			case S_IFCHR:
-			case S_IFBLK:
-			case S_IFREG:
-			case S_IFDIR:
-			case S_IFLNK: {
-				dir->d_mode = rrii_px_posix_mode & _S_IFMT;
-				break;
-			}
-			default: {
-				/* Fall back to what ISO 9660 said. */
-				dir->d_mode &= _S_IFMT;
-				break;
-			}
-		}
-
-		dir->d_mode |= rrii_px_posix_mode & 07777;
+		dir->d_mode = *((u32_t*)(buffer + 4));
 		dir->uid = *((u32_t*)(buffer + 20));
 		dir->gid = *((u32_t*)(buffer + 28));
 
@@ -143,9 +126,18 @@ int parse_susp_rock_ridge(struct rrii_dir_record *dir, char *buffer)
 	else if ((susp_signature[0] == 'P') && (susp_signature[1] == 'N') &&
 	         (susp_length >= 20) && (susp_version >= 1)) {
 		/* Device ID (for character or block special inode). */
+
+		/* 
+		 * XXX: Specific to how Minix ISO is generated, will have to
+		 * investigate why makefs does that later.
+		 */
+#if 0
 		rrii_pn_rdev_major = *((u32_t*)(buffer + 4));
 		rrii_pn_rdev_minor = *((u32_t*)(buffer + 12));
-
+#else
+		rrii_pn_rdev_major = *((u32_t*)(buffer + 12)) >> 8;
+		rrii_pn_rdev_minor = *((u32_t*)(buffer + 12)) & 0xFF;
+#endif
 		dir->rdev = makedev(rrii_pn_rdev_major, rrii_pn_rdev_minor);
 
 		return OK;
@@ -246,3 +238,4 @@ int parse_susp_rock_ridge(struct rrii_dir_record *dir, char *buffer)
 	return EINVAL;
 }
 
+#endif

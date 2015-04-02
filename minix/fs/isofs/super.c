@@ -29,8 +29,9 @@ static int create_vol_pri_desc(struct iso9660_vol_pri_desc *vol_pri, char *buf,
 	 * information contained in the buffer.
 	 */
 	struct iso9660_dir_record *root_record;
-	struct inode *root;
-	struct dir_extent *extent;
+	struct inode_dir_entry dir_entry;
+	struct dir_extent extent;
+	size_t dummy_offset = 0;
 
 	if (vol_pri->i_count > 0)
 		release_vol_pri_desc(vol_pri);
@@ -49,24 +50,24 @@ static int create_vol_pri_desc(struct iso9660_vol_pri_desc *vol_pri, char *buf,
 
 	/* Read root directory record. */
 	root_record = (struct iso9660_dir_record *)vol_pri->root_directory;
-	root = alloc_inode();
-	extent = alloc_extent();
 
-	extent->location =
+	extent.location =
 	    root_record->loc_extent_l + root_record->ext_attr_rec_length;
-	extent->length =
+	extent.length =
 	    root_record->data_length_l / vol_pri->logical_block_size_l;
-	if (root_record->data_length_l % vol_pri->logical_block_size_l)
-		extent->length++;
+	extent.next = NULL;
 
-	if (read_inode(root, extent, 0, NULL) != OK) {
-		free_extent(extent);
-		put_inode(root);
+	if (root_record->data_length_l % vol_pri->logical_block_size_l)
+		extent.length++;
+
+	memset(&dir_entry, 0, sizeof(struct inode_dir_entry));
+	if (read_inode(&dir_entry, &extent, &dummy_offset) != OK) {
 		return EINVAL;
 	}
 
-	free_extent(extent);
-	vol_pri->inode_root = root;
+	dir_entry.i_node->i_count = 1;
+
+	vol_pri->inode_root = dir_entry.i_node;
 	vol_pri->i_count = 1;
 
 	return OK;
