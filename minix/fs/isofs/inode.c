@@ -16,9 +16,6 @@ struct inode_cache {
 
 struct inode_cache *icache = NULL;
 
-struct inode* inode_cache_get(ino_t ino_nr);
-void inode_cache_add(ino_t ino_nr, struct inode *i_node);
-
 void read_inode_iso9660(struct inode_dir_entry *i,
 	const struct iso9660_dir_record *dir_rec, struct dir_extent *extent,
 	size_t offset, int name_only);
@@ -117,6 +114,7 @@ int read_directory(struct inode *dir) {
 		if (cur_entry >= MAX_DIRECTORY_LENGTH)
 			break;
 
+read_next_inode:
 		memset(&entries[cur_entry], 0, sizeof(struct inode_dir_entry));
 		status = read_inode(&entries[cur_entry], dir->extent, &pos);
 		if (status != OK)
@@ -363,6 +361,7 @@ void read_inode_susp(struct inode_dir_entry *i,
 	rrii_data.rdev   = NO_DEV;
 	rrii_data.file_id_rrip[0] = '\0';
 	rrii_data.slink_rrip[0]   = '\0';
+	rrii_data.reparented_inode = NULL;
 
 	parse_susp_buffer(&rrii_data, b_data(bp)+offset+susp_offset, susp_size);
 
@@ -378,6 +377,15 @@ void read_inode_susp(struct inode_dir_entry *i,
 		i->i_node->s_name = alloc_mem(name_length + 1);
 		memcpy(i->i_node->s_name, rrii_data.slink_rrip, name_length);
 	}
+
+	if (rrii_data.reparented_inode) {
+		i->i_node = rrii_data.reparented_inode;
+		return;
+	}
+
+	/* XXX: not the correct way to detect reparented directory holder... */
+	if (strcmp(rrii_data.file_id_rrip, ".rr_moved") == 0)
+		i->i_node->skip = 1;
 
 	if (name_only == TRUE)
 		return;

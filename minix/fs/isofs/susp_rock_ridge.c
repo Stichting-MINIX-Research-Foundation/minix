@@ -8,6 +8,42 @@
 
 #ifdef ISO9660_OPTION_ROCKRIDGE
 
+void parse_susp_rock_ridge_plcl(struct rrii_dir_record *dir, u32_t block) {
+	struct inode *rep_inode;
+	struct buf *bp;
+	struct iso9660_dir_record *dir_rec;
+	struct dir_extent extent;
+	struct inode_dir_entry dummy_dir_entry;
+	size_t dummy_offset = 0;
+
+	/* Check if inode wasn't already parsed. */
+	rep_inode = inode_cache_get(block);
+	if (rep_inode != NULL) {
+		rep_inode->i_refcount++;
+		dir->reparented_inode = rep_inode;
+		return;
+	}
+
+	/* Peek ahead to build extent for read_inode. */
+	bp = lmfs_get_block(fs_dev, block, NORMAL);
+	if (!bp)
+		return;
+
+	dir_rec = (struct iso9660_dir_record*)b_data(bp);
+
+	extent.location = block;
+	extent.length = dir_rec->data_length_l / v_pri.logical_block_size_l;
+	if (dir_rec->data_length_l % v_pri.logical_block_size_l)
+		extent.length++;
+	extent.next = NULL;
+	lmfs_put_block(bp, FULL_DATA_BLOCK);
+
+	memset(&dummy_dir_entry, 0, sizeof(struct inode_dir_entry));
+	read_inode(&dummy_dir_entry, &extent, &dummy_offset);
+	free(dummy_dir_entry.r_name);
+	dir->reparented_inode = dummy_dir_entry.i_node;
+}
+
 void parse_susp_rock_ridge_sl(struct rrii_dir_record *dir, char *buffer, int length)
 {
 	/* Parse a Rock Ridge SUSP symbolic link entry (SL). */
@@ -108,6 +144,7 @@ int parse_susp_rock_ridge(struct rrii_dir_record *dir, char *buffer)
 	u32_t rrii_pn_rdev_major;
 	u32_t rrii_pn_rdev_minor;
 	mode_t rrii_px_posix_mode;
+	u32_t rrii_pcl_block;
 
 	susp_signature[0] = buffer[0];
 	susp_signature[1] = buffer[1];
@@ -166,16 +203,25 @@ int parse_susp_rock_ridge(struct rrii_dir_record *dir, char *buffer)
 
 		return OK;
 	}
-	else if ((susp_signature[0] == 'C') && (susp_signature[1] == 'L')) {
-		/* Ignored, skip. */
+	else if ((susp_signature[0] == 'P') && (susp_signature[1] == 'L') &&
+	         (susp_length >= 12) && (susp_version >= 1)) {
+		/* Reparenting ".." directory entry. */
+		rrii_pcl_block = *((u32_t*)(buffer + 4));
+		parse_susp_rock_ridge_plcl(dir, rrii_pcl_block);
+
 		return OK;
 	}
-	else if ((susp_signature[0] == 'P') && (susp_signature[1] == 'L')) {
-		/* Ignored, skip. */
+	else if ((susp_signature[0] == 'C') && (susp_signature[1] == 'L') &&
+	         (susp_length >= 12) && (susp_version >= 1)) {
+		/* Reorganize deep directory entry. */
+		rrii_pcl_block = *((u32_t*)(buffer + 4));
+		parse_susp_rock_ridge_plcl(dir, rrii_pcl_block);
+
 		return OK;
 	}
 	else if ((susp_signature[0] == 'R') && (susp_signature[1] == 'E')) {
 		/* Ignored, skip. */
+
 		return OK;
 	}
 	else if ((susp_signature[0] == 'T') && (susp_signature[1] == 'F') &&

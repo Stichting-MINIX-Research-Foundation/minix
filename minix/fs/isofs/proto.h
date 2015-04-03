@@ -21,6 +21,9 @@ int read_directory(struct inode *dir);
 int read_inode(struct inode_dir_entry *dir_entry, struct dir_extent *extent,
     size_t *offset);
 
+struct inode* inode_cache_get(ino_t ino_nr);
+void inode_cache_add(ino_t ino_nr, struct inode *i_node);
+
 int check_inodes(void);
 
 /* link.c */
