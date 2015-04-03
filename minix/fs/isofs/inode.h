@@ -36,6 +36,8 @@ struct rrii_dir_record {
 
 	char file_id_rrip[ISO9660_RRIP_MAX_FILE_ID_LEN];        /* file name */
 	char slink_rrip[ISO9660_RRIP_MAX_FILE_ID_LEN];          /* symbolic link */
+
+	struct inode *reparented_inode;
 } ;
 
 struct dir_extent {
@@ -63,6 +65,7 @@ struct inode {
 	struct inode_dir_entry *dir_contents;	/* contents of directory */
 	size_t dir_size;                /* number of inodes in this directory */
 	char *s_name;                   /* Rock Ridge symbolic link */
+	int skip;                       /* skip inode because of reparenting */
 } ;
 
 struct opt {
