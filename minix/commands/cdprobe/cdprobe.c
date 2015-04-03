@@ -85,52 +85,9 @@ int main(void)
 		   	continue;
 		}
 
-		/* 3. Both cXdYp1 and p2 should have a superblock. */
-		found= 1;	/* Assume everything is okay */
-		for (minor = 1; minor <= 2; minor++) {
-			name2[8]= '0' + probelist[disk];
-			name2[10]= '0' + minor;
-
-			fd = open(name2, O_RDONLY);
-			if (fd < 0)
-			{
-				if (errno != ENXIO)
-				{
-					fprintf(stderr,
-						"open '%s' failed: %s\n",
-						name2, strerror(errno));
-				}
-				found= 0;
-				break;
-			}
-			r = read(fd, pvd, sizeof(pvd));
-			if (r != sizeof(pvd))
-			{
-				fprintf(stderr,
-				"error reading super block from '%s': %s\n",
-					name2, strerror(errno));
-				close(fd);
-				found= 0;
-				break;
-			}
-			close(fd);
-
-			magicp= (u16_t *)&pvd[SUPER_OFF+MAGIC_OFF];
-			if (*magicp != SUPER_V3)
-			{
-				fprintf(stderr, "bad super block on %s\n",
-					name2);
-				found= 0;
-				break;
-			}
-		}
-
-		if (found)
-		{
-			fprintf(stderr, "\nFound.\n");
-			printf("%s\n", name1);
-			exit(0);
-		}
+		fprintf(stderr, "\nFound.\n");
+		printf("%s\n", name1);
+		exit(0);
 	   }
 	}
 	fprintf(stderr, "\nNot found.\n");

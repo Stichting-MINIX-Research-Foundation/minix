@@ -467,7 +467,7 @@ OBSOLETE.dir=		${.OBJDIR}/obsolete.dir
 .if !defined(__MINIX)
 OBSOLETE.files=		base comp etc games man misc text
 .else
-OBSOLETE.files=		minix
+OBSOLETE.files=		minix-base minix-comp minix-tests
 .endif # !defined(__MINIX)
 .if ${MKDEBUG} != "no"
 OBSOLETE.files+=	debug
