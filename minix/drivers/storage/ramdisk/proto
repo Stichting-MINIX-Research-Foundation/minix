@@ -30,6 +30,7 @@ d--755 0 0
 		mmc ---755 0 0 mmc
 #endif
 		mfs ---755 0 0 mfs
+		isofs ---755 0 0 isofs
 		procfs ---755 0 0 procfs
 		input ---755 0 0 input
 #ifdef __i386__

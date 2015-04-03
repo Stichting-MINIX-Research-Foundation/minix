@@ -46,9 +46,9 @@ MODDIR=${DESTDIR}/boot/minix/.temp
 while getopts "i" c
 do
 	case "$c" in
-		i)	: ${IMG=minix_x86.iso}
-			ISOMODE=1
-			;;
+		i)	echo "This method of generating the ISO installation media is obsolete."
+			echo "Run ./releasetools/x86_cdimage.sh instead."
+			exit 1;;
 	esac
 done
 
@@ -92,6 +92,10 @@ fi
 # Artifacts from this script are stored in the IMG_DIR
 #
 rm -rf ${IMG_DIR} ${IMG}
+
+# Artifacts from CD creation
+rm -f ${DESTDIR}/minixboot ${DESTDIR}/boot.cfg
+
 mkdir -p ${IMG_DIR} ${CDFILES}
 
 if [ ${CREATE_IMAGE_ONLY} -eq 0 ]
