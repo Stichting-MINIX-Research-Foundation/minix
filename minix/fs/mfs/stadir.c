@@ -85,7 +85,7 @@ int fs_statvfs(struct statvfs *st)
   struct super_block *sp;
   int scale;
 
-  sp = get_super(fs_dev);
+  sp = &superblock;
 
   scale = sp->s_log_zone_size;
 

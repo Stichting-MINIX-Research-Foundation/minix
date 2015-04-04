@@ -57,7 +57,7 @@ zone_t alloc_zone(
    *     z = b + sp->s_firstdatazone - 1
    * Alloc_bit() never returns 0, since this is used for NO_BIT (failure).
    */
-  sp = get_super(dev);
+  sp = &superblock;
 
   /* If z is 0, skip initial part of the map known to be fully in use. */
   if (z == sp->s_firstdatazone) {
@@ -93,7 +93,7 @@ void free_zone(
   bit_t bit;
 
   /* Locate the appropriate super_block and return bit. */
-  sp = get_super(dev);
+  sp = &superblock;
   if (numb < sp->s_firstdatazone || numb >= sp->s_zones) return;
   bit = (bit_t) (numb - (zone_t) (sp->s_firstdatazone - 1));
   free_bit(sp, ZMAP, bit);

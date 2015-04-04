@@ -19,8 +19,6 @@ void fs_sync(void)
  */
   struct inode *rip;
 
-  assert(lmfs_nr_bufs() > 0);
-
   if (superblock->s_rd_only)
 	return; /* nothing to sync */
 

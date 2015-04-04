@@ -5,6 +5,9 @@
 
 #include <minix/fsdriver.h>
 
+/* Maximum number of blocks that will be considered by lmfs_prefetch() */
+#define LMFS_MAX_PREFETCH	NR_IOREQS
+
 struct buf {
   /* Data portion of the buffer. */
   void *data;
@@ -30,9 +33,6 @@ struct buf {
 void lmfs_markdirty(struct buf *bp);
 void lmfs_markclean(struct buf *bp);
 int lmfs_isclean(struct buf *bp);
-dev_t lmfs_dev(struct buf *bp);
-int lmfs_bufs_in_use(void);
-int lmfs_nr_bufs(void);
 void lmfs_flushall(void);
 void lmfs_flushdev(dev_t dev);
 size_t lmfs_fs_block_size(void);
@@ -46,7 +46,7 @@ void lmfs_put_block(struct buf *bp);
 void lmfs_free_block(dev_t dev, block64_t block);
 void lmfs_zero_block_ino(dev_t dev, ino_t ino, u64_t off);
 void lmfs_invalidate(dev_t device);
-void lmfs_rw_scattered(dev_t, struct buf **, int, int);
+void lmfs_prefetch(dev_t dev, const block64_t *blockset, unsigned int nblocks);
 void lmfs_setquiet(int q);
 void lmfs_set_blockusage(fsblkcnt_t btotal, fsblkcnt_t bused);
 void lmfs_change_blockusage(int delta);
@@ -54,8 +54,7 @@ void lmfs_change_blockusage(int delta);
 /* get_block arguments */
 #define NORMAL             0    /* forces get_block to do disk read */
 #define NO_READ            1    /* prevents get_block from doing disk read */
-#define PREFETCH           2    /* tells get_block not to read or mark dev */
-#define PEEK               3    /* returns ENOENT if not in cache */
+#define PEEK               2    /* returns ENOENT if not in cache */
 
 /* Block I/O helper functions. */
 void lmfs_driver(dev_t dev, char *label);

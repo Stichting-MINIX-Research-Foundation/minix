@@ -84,7 +84,6 @@ int fs_statvfs(struct statvfs *st);
 bit_t alloc_bit(struct super_block *sp, int map, bit_t origin);
 void free_bit(struct super_block *sp, int map, bit_t bit_returned);
 unsigned int get_block_size(dev_t dev);
-struct super_block *get_super(dev_t dev);
 int read_super(struct super_block *sp);
 int write_super(struct super_block *sp);
 

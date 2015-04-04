@@ -140,7 +140,6 @@ int flag;			 /* LOOK_UP, ENTER, DELETE or IS_EMPTY */
 
 	assert(ldir_ptr->i_dev != NO_DEV);
 	assert(bp != NULL);
-	assert(lmfs_dev(bp) != NO_DEV);
 
 	/* Search a directory block. */
 	for (dp = &b_dir(bp)[0];
@@ -185,7 +184,6 @@ int flag;			 /* LOOK_UP, ENTER, DELETE or IS_EMPTY */
 				*numb = (ino_t) conv4(sp->s_native,
 						      (int) dp->mfs_d_ino);
 			}
-			assert(lmfs_dev(bp) != NO_DEV);
 			put_block(bp);
 			return(r);
 		}
@@ -199,7 +197,6 @@ int flag;			 /* LOOK_UP, ENTER, DELETE or IS_EMPTY */
 
 	/* The whole block has been searched or ENTER has a free slot. */
 	if (e_hit) break;	/* e_hit set if ENTER can be performed now */
-	assert(lmfs_dev(bp) != NO_DEV);
 	put_block(bp);		/* otherwise, continue searching dir */
   }
 

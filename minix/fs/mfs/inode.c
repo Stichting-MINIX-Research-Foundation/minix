@@ -258,7 +258,7 @@ struct inode *alloc_inode(dev_t dev, mode_t bits, uid_t uid, gid_t gid)
   int major, minor, inumb;
   bit_t b;
 
-  sp = get_super(dev);	/* get pointer to super_block */
+  sp = &superblock;
   if (sp->s_rd_only) {	/* can't allocate an inode on a read only device. */
 	err_code = EROFS;
 	return(NULL);
@@ -335,8 +335,7 @@ static void free_inode(
   register struct super_block *sp;
   bit_t b;
 
-  /* Locate the appropriate super_block. */
-  sp = get_super(dev);
+  sp = &superblock;
   if (inumb == NO_ENTRY || inumb > sp->s_ninodes) return;
   b = (bit_t) inumb;
   free_bit(sp, IMAP, b);
@@ -385,7 +384,7 @@ int rw_flag;			/* READING or WRITING */
   block_t b, offset;
 
   /* Get the block where the inode resides. */
-  sp = get_super(rip->i_dev);	/* get pointer to super block */
+  sp = &superblock;
   rip->i_sp = sp;		/* inode must contain super block pointer */
   offset = START_BLOCK + sp->s_imap_blocks + sp->s_zmap_blocks;
   b = (block_t) (rip->i_num - 1)/sp->s_inodes_per_block + offset;
