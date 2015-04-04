@@ -544,7 +544,7 @@ static enum dev_type determine_type (char *path)
 		return DEV_TYPE_UNKOWN;
 	}
 
-	res = fscanf(fd , "%256s\n", buf);
+	res = fscanf(fd , "%255s\n", buf);
 	fclose(fd);
 
 	if (res != 1) {
