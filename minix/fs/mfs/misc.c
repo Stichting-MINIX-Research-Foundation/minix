@@ -15,8 +15,6 @@ void fs_sync(void)
  */
   struct inode *rip;
 
-  assert(lmfs_nr_bufs() > 0);
-
   /* Write all the dirty inodes to the disk. */
   for(rip = &inode[0]; rip < &inode[NR_INODES]; rip++)
 	  if(rip->i_count > 0 && IN_ISDIRTY(rip)) rw_inode(rip, WRITING);

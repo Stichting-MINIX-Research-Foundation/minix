@@ -6,7 +6,6 @@
  * The entry points into this file are
  *   alloc_bit:       somebody wants to allocate a zone or inode; find one
  *   free_bit:        indicate that a zone or inode is available for allocation
- *   get_super:       search the 'superblock' table for a device
  *   mounted:         tells if file inode is on mounted (or ROOT) file system
  *   read_super:      read a superblock
  */
@@ -155,23 +154,6 @@ bit_t bit_returned;		/* number of bit to insert into the map */
 	lmfs_change_blockusage(-1);
   }
 }
-
-/*===========================================================================*
- *				get_super				     *
- *===========================================================================*/
-struct super_block *get_super(
-  dev_t dev			/* device number whose super_block is sought */
-)
-{
-  if (dev == NO_DEV)
-  	panic("request for super_block of NO_DEV");
-
-  if(superblock.s_dev != dev)
-  	panic("wrong superblock: 0x%x", (int) dev);
-
-  return(&superblock);
-}
-
 
 /*===========================================================================*
  *				get_block_size				     *

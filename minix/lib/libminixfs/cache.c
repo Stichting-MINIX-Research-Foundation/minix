@@ -18,6 +18,7 @@
 #include <minix/sysutil.h>
 #include <minix/u64.h>
 #include <minix/bdev.h>
+#include <minix/bitmap.h>
 
 #include "inc.h"
 
@@ -173,11 +174,6 @@ int lmfs_isclean(struct buf *bp)
 	return !(bp->lmfs_flags & VMMC_DIRTY);
 }
 
-dev_t lmfs_dev(struct buf *bp)
-{
-	return bp->lmfs_dev;
-}
-
 static void free_unused_blocks(void)
 {
 	struct buf *bp;
@@ -319,10 +315,8 @@ static int get_block_ino(struct buf **bpp, dev_t dev, block64_t block, int how,
  * disk (if 'how' is NORMAL).  If 'how' is NO_READ, the caller intends to
  * overwrite the requested block in its entirety, so it is only necessary to
  * see if it is in the cache; if it is not, any free buffer will do.  If 'how'
- * is PREFETCH, the block need not be read from the disk, and the device is not
- * to be marked on the block (i.e., set to NO_DEV), so callers can tell if the
- * block returned is valid.  If 'how' is PEEK, the function returns the block
- * if it is in the cache or the VM cache, and an ENOENT error code otherwise.
+ * is PEEK, the function returns the block if it is in the cache or the VM
+ * cache, and an ENOENT error code otherwise.
  * In addition to the LRU chain, there is also a hash chain to link together
  * blocks whose block numbers end with the same bit strings, for fast lookup.
  */
@@ -441,12 +435,16 @@ static int get_block_ino(struct buf **bpp, dev_t dev, block64_t block, int how,
 
   assert(dev != NO_DEV);
 
-  /* Block is not found in our cache, but we do want it
-   * if it's in the vm cache.
+  /* The block is not found in our cache, but we do want it if it's in the VM
+   * cache. The exception is NO_READ, purely for context switching performance
+   * reasons. NO_READ is used for 1) newly allocated blocks, 2) blocks being
+   * prefetched, and 3) blocks about to be fully overwritten. In the first two
+   * cases, VM will not have the block in its cache anyway, and for the third
+   * we save on one VM call only if the block is in the VM cache.
    */
   assert(!bp->data);
   assert(!bp->lmfs_bytes);
-  if(vmcache) {
+  if (how != NO_READ && vmcache) {
 	if((bp->data = vm_map_cacheblock(dev, dev_off, ino, ino_off,
 	    &bp->lmfs_flags, roundup(block_size, PAGE_SIZE))) != MAP_FAILED) {
 		bp->lmfs_bytes = block_size;
@@ -476,10 +474,7 @@ static int get_block_ino(struct buf **bpp, dev_t dev, block64_t block, int how,
 
   assert(bp->data);
 
-  if(how == PREFETCH) {
-	/* PREFETCH: don't do i/o. */
-	bp->lmfs_dev = NO_DEV;
-  } else if (how == NORMAL) {
+  if (how == NORMAL) {
 	/* Try to read the block. Return an error code on failure. */
 	if ((r = read_block(bp, block_size)) != OK) {
 		put_block(bp, 0);
@@ -812,68 +807,59 @@ void lmfs_invalidate(
 }
 
 /*===========================================================================*
- *				lmfs_flushdev				     *
+ *				sort_blocks				     *
  *===========================================================================*/
-void lmfs_flushdev(dev_t dev)
+static void sort_blocks(struct buf **bufq, unsigned int bufqsize)
 {
-/* Flush all dirty blocks for one device. */
+  struct buf *bp;
+  int i, j, gap;
 
-  register struct buf *bp;
-  static struct buf **dirty;
-  static unsigned int dirtylistsize = 0;
-  int ndirty;
+  gap = 1;
+  do
+	gap = 3 * gap + 1;
+  while ((unsigned int)gap <= bufqsize);
 
-  if(dirtylistsize != nr_bufs) {
-	if(dirtylistsize > 0) {
-		assert(dirty != NULL);
-		free(dirty);
-	}
-	if(!(dirty = malloc(sizeof(dirty[0])*nr_bufs)))
-		panic("couldn't allocate dirty buf list");
-	dirtylistsize = nr_bufs;
-  }
-
-  for (bp = &buf[0], ndirty = 0; bp < &buf[nr_bufs]; bp++) {
-	/* Do not flush dirty blocks that are in use (lmfs_count>0): the file
-	 * system may mark the block as dirty before changing its contents, in
-	 * which case the new contents could end up being lost.
-	 */
-	if (!lmfs_isclean(bp) && bp->lmfs_dev == dev && bp->lmfs_count == 0) {
-		dirty[ndirty++] = bp;
+  while (gap != 1) {
+	gap /= 3;
+	for (j = gap; (unsigned int)j < bufqsize; j++) {
+		for (i = j - gap; i >= 0 &&
+		    bufq[i]->lmfs_blocknr > bufq[i + gap]->lmfs_blocknr;
+		    i -= gap) {
+			bp = bufq[i];
+			bufq[i] = bufq[i + gap];
+			bufq[i + gap] = bp;
+		}
 	}
   }
-
-  lmfs_rw_scattered(dev, dirty, ndirty, WRITING);
 }
 
 /*===========================================================================*
- *				lmfs_rw_scattered			     *
+ *				rw_scattered				     *
  *===========================================================================*/
-void lmfs_rw_scattered(
+static void rw_scattered(
   dev_t dev,			/* major-minor device number */
   struct buf **bufq,		/* pointer to array of buffers */
-  int bufqsize,			/* number of buffers */
+  unsigned int bufqsize,	/* number of buffers */
   int rw_flag			/* READING or WRITING */
 )
 {
 /* Read or write scattered data from a device. */
 
   register struct buf *bp;
-  int gap;
-  register int i;
   register iovec_t *iop;
   static iovec_t iovec[NR_IOREQS];
   off_t pos;
-  int iov_per_block;
+  unsigned int i, iov_per_block;
   unsigned int start_in_use = bufs_in_use, start_bufqsize = bufqsize;
 
-  assert(bufqsize >= 0);
   if(bufqsize == 0) return;
 
   /* for READING, check all buffers on the list are obtained and held
    * (count > 0)
    */
   if (rw_flag == READING) {
+	assert(bufqsize <= LMFS_MAX_PREFETCH);
+
 	for(i = 0; i < bufqsize; i++) {
 		assert(bufq[i] != NULL);
 		assert(bufq[i]->lmfs_count > 0);
@@ -887,40 +873,26 @@ void lmfs_rw_scattered(
   assert(fs_block_size > 0);
   assert(howmany(fs_block_size, PAGE_SIZE) <= NR_IOREQS);
   
-  /* (Shell) sort buffers on lmfs_blocknr. */
-  gap = 1;
-  do
-	gap = 3 * gap + 1;
-  while (gap <= bufqsize);
-  while (gap != 1) {
-  	int j;
-	gap /= 3;
-	for (j = gap; j < bufqsize; j++) {
-		for (i = j - gap;
-		     i >= 0 && bufq[i]->lmfs_blocknr > bufq[i + gap]->lmfs_blocknr;
-		     i -= gap) {
-			bp = bufq[i];
-			bufq[i] = bufq[i + gap];
-			bufq[i + gap] = bp;
-		}
-	}
-  }
+  /* For WRITING, (Shell) sort buffers on lmfs_blocknr.
+   * For READING, the buffers are already sorted.
+   */
+  if (rw_flag == WRITING)
+	sort_blocks(bufq, bufqsize);
 
   /* Set up I/O vector and do I/O.  The result of bdev I/O is OK if everything
    * went fine, otherwise the error code for the first failed transfer.
    */
   while (bufqsize > 0) {
-  	int nblocks = 0, niovecs = 0;
+	unsigned int p, nblocks = 0, niovecs = 0;
 	int r;
 	for (iop = iovec; nblocks < bufqsize; nblocks++) {
-		int p;
 		vir_bytes vdata, blockrem;
 		bp = bufq[nblocks];
 		if (bp->lmfs_blocknr != bufq[0]->lmfs_blocknr + nblocks)
 			break;
 		blockrem = bp->lmfs_bytes;
 		iov_per_block = howmany(blockrem, PAGE_SIZE);
-		if(niovecs >= NR_IOREQS-iov_per_block) break;
+		if (niovecs > NR_IOREQS - iov_per_block) break;
 		vdata = (vir_bytes) bp->data;
 		for(p = 0; p < iov_per_block; p++) {
 			vir_bytes chunk =
@@ -937,7 +909,7 @@ void lmfs_rw_scattered(
 	}
 
 	assert(nblocks > 0);
-	assert(niovecs > 0);
+	assert(niovecs > 0 && niovecs <= NR_IOREQS);
 
 	pos = (off_t)bufq[0]->lmfs_blocknr * fs_block_size;
 	if (rw_flag == READING)
@@ -963,7 +935,6 @@ void lmfs_rw_scattered(
 			break;
 		}
 		if (rw_flag == READING) {
-			bp->lmfs_dev = dev;	/* validate block */
 			lmfs_put_block(bp);
 		} else {
 			MARKCLEAN(bp);
@@ -979,7 +950,9 @@ void lmfs_rw_scattered(
 		 * give at this time.  Don't forget to release those extras.
 		 */
 		while (bufqsize > 0) {
-			lmfs_put_block(*bufq++);
+			bp = *bufq++;
+			bp->lmfs_dev = NO_DEV;	/* invalidate block */
+			lmfs_put_block(bp);
 			bufqsize--;
 		}
 	}
@@ -999,6 +972,190 @@ void lmfs_rw_scattered(
 	/* READING callers assume all bufs are released. */
 	assert(start_in_use - start_bufqsize == bufs_in_use);
   }
+}
+
+/*===========================================================================*
+ *				lmfs_readahead				     *
+ *===========================================================================*/
+void lmfs_readahead(dev_t dev, block64_t base_block, unsigned int nblocks,
+	size_t last_size)
+{
+/* Read ahead 'nblocks' blocks starting from the block 'base_block' on device
+ * 'dev'. The number of blocks must be between 1 and LMFS_MAX_PREFETCH,
+ * inclusive. All blocks have the file system's block size, possibly except the
+ * last block in the range, which is of size 'last_size'. The caller must
+ * ensure that none of the blocks in the range are already in the cache.
+ * However, the caller must also not rely on all or even any of the blocks to
+ * be present in the cache afterwards--failures are (deliberately!) ignored.
+ */
+  static struct buf *bufq[LMFS_MAX_PREFETCH]; /* static because of size only */
+  struct buf *bp;
+  unsigned int count;
+  int r;
+
+  assert(nblocks >= 1 && nblocks <= LMFS_MAX_PREFETCH);
+
+  for (count = 0; count < nblocks; count++) {
+	if (count == nblocks - 1)
+		r = lmfs_get_partial_block(&bp, dev, base_block + count,
+		    NO_READ, last_size);
+	else
+		r = lmfs_get_block(&bp, dev, base_block + count, NO_READ);
+
+	if (r != OK)
+		break;
+
+	/* We could add a flag that makes the get_block() calls fail if the
+	 * block is already in the cache, but it is not a major concern if it
+	 * is: we just perform a useless read in that case. However, if the
+	 * block is cached *and* dirty, we are about to lose its new contents.
+	 */
+	assert(lmfs_isclean(bp));
+
+	bufq[count] = bp;
+  }
+
+  rw_scattered(dev, bufq, count, READING);
+}
+
+/*===========================================================================*
+ *				lmfs_prefetch				     *
+ *===========================================================================*/
+unsigned int lmfs_readahead_limit(void)
+{
+/* Return the maximum number of blocks that should be read ahead at once. The
+ * return value is guaranteed to be between 1 and LMFS_MAX_PREFETCH, inclusive.
+ */
+  unsigned int max_transfer, max_bufs;
+
+  /* The returned value is the minimum of two factors: the maximum number of
+   * blocks that can be transferred in a single I/O gather request (see how
+   * rw_scattered() generates I/O requests), and a policy limit on the number
+   * of buffers that any read-ahead operation may use (that is, thrash).
+   */
+  max_transfer = NR_IOREQS / MAX(fs_block_size / PAGE_SIZE, 1);
+
+  /* The constants have been imported from MFS as is, and may need tuning. */
+  if (nr_bufs < 50)
+	max_bufs = 18;
+  else
+	max_bufs = nr_bufs - 4;
+
+  return MIN(max_transfer, max_bufs);
+}
+
+/*===========================================================================*
+ *				lmfs_prefetch				     *
+ *===========================================================================*/
+void lmfs_prefetch(dev_t dev, const block64_t *blockset, unsigned int nblocks)
+{
+/* The given set of blocks is expected to be needed soon, so prefetch a
+ * convenient subset. The blocks are expected to be sorted by likelihood of
+ * being accessed soon, making the first block of the set the most important
+ * block to prefetch right now. The caller must have made sure that the blocks
+ * are not in the cache already. The array may have duplicate block numbers.
+ */
+  bitchunk_t blocks_before[BITMAP_CHUNKS(LMFS_MAX_PREFETCH)];
+  bitchunk_t blocks_after[BITMAP_CHUNKS(LMFS_MAX_PREFETCH)];
+  block64_t block, base_block;
+  unsigned int i, bit, nr_before, nr_after, span, limit, nr_blocks;
+
+  if (nblocks == 0)
+	return;
+
+  /* Here is the deal. We are going to prefetch one range only, because seeking
+   * is too expensive for just prefetching. The range we select should at least
+   * include the first ("base") block of the given set, since that is the block
+   * the caller is primarily interested in. Thus, the rest of the range is
+   * going to have to be directly around this base block. We first check which
+   * blocks from the set fall just before and after the base block, which then
+   * allows us to construct a contiguous range of desired blocks directly
+   * around the base block, in O(n) time. As a natural part of this, we ignore
+   * duplicate blocks in the given set. We then read from the beginning of this
+   * range, in order to maximize the chance that a next prefetch request will
+   * continue from the last disk position without requiring a seek. However, we
+   * do correct for the maximum number of blocks we can (or should) read in at
+   * once, such that we will still end up reading the base block.
+   */
+  base_block = blockset[0];
+
+  memset(blocks_before, 0, sizeof(blocks_before));
+  memset(blocks_after, 0, sizeof(blocks_after));
+
+  for (i = 1; i < nblocks; i++) {
+	block = blockset[i];
+
+	if (block < base_block && block + LMFS_MAX_PREFETCH >= base_block) {
+		bit = base_block - block - 1;
+		assert(bit < LMFS_MAX_PREFETCH);
+		SET_BIT(blocks_before, bit);
+	} else if (block > base_block &&
+	    block - LMFS_MAX_PREFETCH <= base_block) {
+		bit = block - base_block - 1;
+		assert(bit < LMFS_MAX_PREFETCH);
+		SET_BIT(blocks_after, bit);
+	}
+  }
+
+  for (nr_before = 0; nr_before < LMFS_MAX_PREFETCH; nr_before++)
+	if (!GET_BIT(blocks_before, nr_before))
+		break;
+
+  for (nr_after = 0; nr_after < LMFS_MAX_PREFETCH; nr_after++)
+	if (!GET_BIT(blocks_after, nr_after))
+		break;
+
+  /* The number of blocks to prefetch is the minimum of two factors: the number
+   * of blocks in the range around the base block, and the maximum number of
+   * blocks that should be read ahead at once at all.
+   */
+  span = nr_before + 1 + nr_after;
+  limit = lmfs_readahead_limit();
+
+  nr_blocks = MIN(span, limit);
+  assert(nr_blocks >= 1 && nr_blocks <= LMFS_MAX_PREFETCH);
+
+  /* Start prefetching from the lowest block within the contiguous range, but
+   * make sure that we read at least the original base block itself, too.
+   */
+  base_block -= MIN(nr_before, nr_blocks - 1);
+
+  lmfs_readahead(dev, base_block, nr_blocks, fs_block_size);
+}
+
+/*===========================================================================*
+ *				lmfs_flushdev				     *
+ *===========================================================================*/
+void lmfs_flushdev(dev_t dev)
+{
+/* Flush all dirty blocks for one device. */
+
+  register struct buf *bp;
+  static struct buf **dirty;
+  static unsigned int dirtylistsize = 0;
+  unsigned int ndirty;
+
+  if(dirtylistsize != nr_bufs) {
+	if(dirtylistsize > 0) {
+		assert(dirty != NULL);
+		free(dirty);
+	}
+	if(!(dirty = malloc(sizeof(dirty[0])*nr_bufs)))
+		panic("couldn't allocate dirty buf list");
+	dirtylistsize = nr_bufs;
+  }
+
+  for (bp = &buf[0], ndirty = 0; bp < &buf[nr_bufs]; bp++) {
+	/* Do not flush dirty blocks that are in use (lmfs_count>0): the file
+	 * system may mark the block as dirty before changing its contents, in
+	 * which case the new contents could end up being lost.
+	 */
+	if (!lmfs_isclean(bp) && bp->lmfs_dev == dev && bp->lmfs_count == 0) {
+		dirty[ndirty++] = bp;
+	}
+  }
+
+  rw_scattered(dev, dirty, ndirty, WRITING);
 }
 
 /*===========================================================================*
@@ -1126,16 +1283,6 @@ void lmfs_buf_pool(int new_nr_bufs)
 
   for (bp = &buf[0]; bp < &buf[nr_bufs]; bp++) bp->lmfs_hash = bp->lmfs_next;
   buf_hash[0] = front;
-}
-
-int lmfs_bufs_in_use(void)
-{
-	return bufs_in_use;
-}
-
-int lmfs_nr_bufs(void)
-{
-	return nr_bufs;
 }
 
 void lmfs_flushall(void)

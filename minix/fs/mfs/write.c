@@ -200,7 +200,7 @@ zone_t zone;			/* zone to write */
   if(bp == NULL)
 	panic("wr_indir() on NULL");
 
-  sp = get_super(lmfs_dev(bp));	/* need super block to find file sys type */
+  sp = &superblock;
 
   /* write a zone into an indirect block */
   assert(sp->s_version == V3);

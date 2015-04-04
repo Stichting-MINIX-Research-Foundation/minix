@@ -252,8 +252,6 @@ int opportunistic;
 		b = rip->i_block[EXT2_TIND_BLOCK];
 		if (b == NO_BLOCK) return(NO_BLOCK);
 		bp = get_block(rip->i_dev, b, NORMAL); /* get triple ind block */
-		ASSERT(lmfs_dev(bp) != NO_DEV);
-		ASSERT(lmfs_dev(bp) == rip->i_dev);
 		excess = block_pos - triple_ind_s;
 		mindex = excess / addr_in_block2;
 		b = rd_indir(bp, mindex);	/* num of double ind block */
@@ -264,8 +262,6 @@ int opportunistic;
 	bp = get_block(rip->i_dev, b, iomode); /* get double indirect block */
 	if (bp == NULL)
 		return NO_BLOCK;		/* peeking failed */
-	ASSERT(lmfs_dev(bp) != NO_DEV);
-	ASSERT(lmfs_dev(bp) == rip->i_dev);
 	mindex = excess / addr_in_block;
 	b = rd_indir(bp, mindex);	/* num of single ind block */
 	put_block(bp);				/* release double ind block */
@@ -276,8 +272,6 @@ int opportunistic;
   if (bp == NULL)
 	return NO_BLOCK;			/* peeking failed */
 
-  ASSERT(lmfs_dev(bp) != NO_DEV);
-  ASSERT(lmfs_dev(bp) == rip->i_dev);
   b = rd_indir(bp, mindex);
   put_block(bp);				/* release single ind block */
 
@@ -332,33 +326,15 @@ unsigned bytes_ahead;           /* bytes beyond position for immediate use */
  * flag on all reads to allow this.
  */
 /* Minimum number of blocks to prefetch. */
-# define BLOCKS_MINIMUM		(nr_bufs < 50 ? 18 : 32)
-  int nr_bufs = lmfs_nr_bufs();
+# define BLOCKS_MINIMUM		32
   int r, read_q_size;
   unsigned int blocks_ahead, fragment, block_size;
   block_t block, blocks_left;
   off_t ind1_pos;
   dev_t dev;
   struct buf *bp = NULL;
-  static unsigned int readqsize = 0;
-  static struct buf **read_q = NULL;
+  static block64_t read_q[LMFS_MAX_PREFETCH];
   u64_t position_running;
-
-  if(readqsize != nr_bufs) {
-	if(readqsize > 0) {
-		assert(read_q != NULL);
-		free(read_q);
-		read_q = NULL;
-		readqsize = 0;
-	} 
-
-	assert(readqsize == 0);
-	assert(read_q == NULL);
-
-	if(!(read_q = malloc(sizeof(read_q[0])*nr_bufs)))
-		panic("couldn't allocate read_q");
-	readqsize = nr_bufs;
-  }
 
   dev = rip->i_dev;
   assert(dev != NO_DEV);
@@ -372,11 +348,11 @@ unsigned bytes_ahead;           /* bytes beyond position for immediate use */
   bytes_ahead += fragment;
   blocks_ahead = (bytes_ahead + block_size - 1) / block_size;
 
-  r = lmfs_get_block_ino(&bp, dev, block, PREFETCH, rip->i_num, position);
-  if (r != OK)
+  r = lmfs_get_block_ino(&bp, dev, block, PEEK, rip->i_num, position);
+  if (r == OK)
+	return(bp);
+  if (r != ENOENT)
 	panic("ext2: error getting block (%llu,%u): %d", dev, block, r);
-  assert(bp != NULL);
-  if (lmfs_dev(bp) != NO_DEV) return(bp);
 
   /* The best guess for the number of blocks to prefetch:  A lot.
    * It is impossible to tell what the device looks like, so we don't even
@@ -408,9 +384,6 @@ unsigned bytes_ahead;           /* bytes beyond position for immediate use */
 	blocks_left++;
   }
 
-  /* No more than the maximum request. */
-  if (blocks_ahead > NR_IOREQS) blocks_ahead = NR_IOREQS;
-
   /* Read at least the minimum number of blocks, but not after a seek. */
   if (blocks_ahead < BLOCKS_MINIMUM && rip->i_seek == NO_SEEK)
 	blocks_ahead = BLOCKS_MINIMUM;
@@ -418,38 +391,39 @@ unsigned bytes_ahead;           /* bytes beyond position for immediate use */
   /* Can't go past end of file. */
   if (blocks_ahead > blocks_left) blocks_ahead = blocks_left;
 
+  /* No more than the maximum request. */
+  if (blocks_ahead > LMFS_MAX_PREFETCH) blocks_ahead = LMFS_MAX_PREFETCH;
+
   read_q_size = 0;
 
   /* Acquire block buffers. */
   for (;;) {
   	block_t thisblock;
-	read_q[read_q_size++] = bp;
+	read_q[read_q_size++] = block;
 
 	if (--blocks_ahead == 0) break;
-
-	/* Don't trash the cache, leave 4 free. */
-	if (lmfs_bufs_in_use() >= nr_bufs - 4) break;
 
 	block++;
 	position_running += block_size;
 
 	thisblock = read_map(rip, (off_t) ex64lo(position_running), 1);
 	if (thisblock != NO_BLOCK) {
-		r = lmfs_get_block_ino(&bp, dev, thisblock, PREFETCH,
-		    rip->i_num, position_running);
-		if (r != OK)
-			panic("ext2: error getting block (%llu,%u): %d",
-			    dev, thisblock, r);
-	} else {
-		bp = get_block(dev, block, PREFETCH);
-	}
-	if (lmfs_dev(bp) != NO_DEV) {
+		r = lmfs_get_block_ino(&bp, dev, thisblock, PEEK, rip->i_num,
+		    position_running);
+		block = thisblock;
+	} else
+		r = lmfs_get_block(&bp, dev, block, PEEK);
+
+	if (r == OK) {
 		/* Oops, block already in the cache, get out. */
 		put_block(bp);
 		break;
 	}
+	if (r != ENOENT)
+		panic("ext2: error getting block (%llu,%u): %d", dev, block,
+		    r);
   }
-  lmfs_rw_scattered(dev, read_q, read_q_size, READING);
+  lmfs_prefetch(dev, read_q, read_q_size);
 
   r = lmfs_get_block_ino(&bp, dev, baseblock, NORMAL, rip->i_num, position);
   if (r != OK)

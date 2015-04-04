@@ -10,7 +10,8 @@
  *   o  it must initialize this library in order to set up a buffer pool for
  *      use by these functions, using the lmfs_buf_pool function; the
  *      recommended number of blocks for *non*-disk-backed file systems is
- *      NR_IOREQS buffers (disk-backed file systems typically use many more);
+ *      LMFS_MAX_PREFETCH buffers (disk-backed file systems typically use many
+ *      more);
  *   o  it must enable VM caching in order to support memory mapping of block
  *      devices, using the lmfs_may_use_vmcache function;
  *   o  it must either use lmfs_flushall as implementation for the fdr_sync
@@ -64,12 +65,15 @@ static void
 block_prefetch(dev_t dev, block64_t block, unsigned int nblocks,
 	size_t block_size, size_t last_size)
 {
-	struct buf *bp, *bufs[NR_IOREQS];
-	unsigned int count;
+	struct buf *bp;
+	unsigned int count, limit;
 	int r;
 
-	if (nblocks > NR_IOREQS) {
-		nblocks = NR_IOREQS;
+	limit = lmfs_readahead_limit();
+	assert(limit >= 1 && limit <= LMFS_MAX_PREFETCH);
+
+	if (nblocks > limit) {
+		nblocks = limit;
 
 		last_size = block_size;
 	}
@@ -77,24 +81,21 @@ block_prefetch(dev_t dev, block64_t block, unsigned int nblocks,
 	for (count = 0; count < nblocks; count++) {
 		if (count == nblocks - 1 && last_size < block_size)
 			r = lmfs_get_partial_block(&bp, dev, block + count,
-			    PREFETCH, last_size);
+			    PEEK, last_size);
 		else
-			r = lmfs_get_block(&bp, dev, block + count, PREFETCH);
+			r = lmfs_get_block(&bp, dev, block + count, PEEK);
 
-		if (r != OK)
-			panic("libminixfs: get_block PREFETCH error: %d\n", r);
-
-		if (lmfs_dev(bp) != NO_DEV) {
+		if (r == OK) {
 			lmfs_put_block(bp);
+
+			last_size = block_size;
 
 			break;
 		}
-
-		bufs[count] = bp;
 	}
 
 	if (count > 0)
-		lmfs_rw_scattered(dev, bufs, count, READING);
+		lmfs_readahead(dev, block, count, last_size);
 }
 
 /*
@@ -206,8 +207,6 @@ lmfs_bio(dev_t dev, struct fsdriver_data * data, size_t bytes, off_t pos,
 
 		/* Perform the actual copy. */
 		if (r == OK && data != NULL) {
-			assert(lmfs_dev(bp) != NO_DEV);
-
 			if (write) {
 				r = fsdriver_copyin(data, off,
 				    (char *)bp->data + block_off, chunk);
