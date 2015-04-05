@@ -17,6 +17,7 @@
 ./bin/cp				minix-sys
 ./bin/cpio				minix-sys
 ./bin/date				minix-sys
+./bin/dd				minix-sys
 ./bin/df				minix-sys
 ./bin/echo				minix-sys
 ./bin/ed				minix-sys
@@ -326,7 +327,7 @@
 ./usr/bin/ctags				minix-sys
 ./usr/bin/cut				minix-sys
 ./usr/bin/datasizes			minix-sys	obsolete
-./usr/bin/dd				minix-sys
+./usr/bin/dd				minix-sys	obsolete
 ./usr/bin/decomp16			minix-sys
 ./usr/bin/del_route			minix-sys
 ./usr/bin/deroff			minix-sys

@@ -6,7 +6,7 @@ SUBDIR=	add_route arp at backup btrace \
 	cawf cdprobe \
 	ci cleantmp cmp co \
 	compress crc cron crontab \
-	dd decomp16 DESCRIBE devmand devsize dhcpd \
+	decomp16 DESCRIBE devmand devsize dhcpd \
 	dhrystone diff diskctl \
 	eject fbdctl \
 	find fix format fsck.mfs \
