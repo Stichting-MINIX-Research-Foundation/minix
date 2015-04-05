@@ -1,0 +1,80 @@
+.\"	$NetBSD: banner.6,v 1.18 2012/02/26 21:06:59 wiz Exp $
+.\"
+.\" Copyright (c) 1980, 1993, 1995
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"	@(#)banner.6	8.2 (Berkeley) 4/29/95
+.\"
+.Dd February 26, 2012
+.Dt BANNER 6
+.Os
+.Sh NAME
+.Nm banner
+.Nd print large banners
+.Sh SYNOPSIS
+.Nm
+.Op Fl w Ar width
+.Op Ar message
+.Sh DESCRIPTION
+.Nm
+prints a large, high quality banner on standard output.
+If
+.Ar message
+is omitted, one line of standard input is read for it.
+A prompt is written to standard error in case standard input is
+connected to a terminal.
+.Pp
+If
+.Fl w
+is given, the output is scrunched down from a width of 132 (the default) to
+.Ar width ,
+suitable for a narrow terminal.
+.Pp
+The output should be printed on paper of the appropriate width,
+with no breaks between the pages.
+.Sh EXIT STATUS
+.Ex -std
+.Sh EXAMPLES
+The following command will print the current date as a banner on
+standard output, using a width of 80:
+.Pp
+.Dl "/usr/games/banner -w 80 `date`"
+.Sh SEE ALSO
+.Xr banner 1 ,
+.Xr lpr 1
+.Sh AUTHORS
+.An Mark Horton
+.Sh BUGS
+Several ASCII characters are not defined, notably \*[Lt], \*[Gt], [, ], \e,
+^, _, {, }, |, and ~.  Also, the characters ", ', and \*[Am] are funny
+looking (but in a useful way.)
+.Pp
+The
+.Fl w
+option is implemented by skipping some rows and columns.
+The smaller it gets, the grainier the output.
+Sometimes it runs letters together.

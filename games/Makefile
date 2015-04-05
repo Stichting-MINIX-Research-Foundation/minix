@@ -8,7 +8,7 @@
 .include <bsd.own.mk>
 
 SUBDIR=	adventure arithmetic \
-	bcd \
+	banner bcd \
 	colorbars \
 	factor fish fortune \
 	monop morse number \
