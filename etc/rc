@@ -1,5 +1,8 @@
 # /etc/rc - System startup script run by init before going multiuser.
 
+# Are we booting from CD?
+bootcd="`/bin/sysenv bootcd`"
+
 exec >/dev/log
 exec 2>/dev/log
 exec </dev/null
@@ -116,9 +119,8 @@ autoboot|start)
     # We are not shutting down.
     rm -f /etc/nologin
 
-    # Initialize files.
-    >/var/run/utmp				# /etc/utmp keeps track of logins
-    >/var/run/utmpx				# /etc/utmpx keeps track of logins
+    # Are we booting from CD?
+    bootcd="`/bin/sysenv cdproberoot`"
 
     # Use MFS binary only from kernel image?
     if [ "`sysenv bin_img`" = 1 ]
@@ -126,24 +128,43 @@ autoboot|start)
         bin_img="-i "
     fi
 
-    # Are we booting from CD?
-    bootcd="`/bin/sysenv bootcd`"
-
-    # If booting from CD, mounting is a special case.
-    # We know what to do - only /usr is mounted and it's readonly.
-    if [ "$bootcd" = 1 ]
-    then	usrdev="$cddev"p2
-    		echo "/usr on cd is $usrdev"
-		mount -r $usrdev /usr
-    else	
+    if [ -z "$bootcd" ]
+    then
     # If we're not booting from CD, fsck + mount using /etc/fstab.
 		fsck -x / $fflag $fsckopts
 		mount -a
+		
+    # Initialize files.
+		>/var/run/utmp		# /etc/utmp keeps track of logins
     fi
 
     # Unmount and free now defunct ramdisk
     umount /dev/imgrd > /dev/null || echo "Failed to unmount boot ramdisk"
     ramdisk 0 /dev/imgrd || echo "Failed to free boot ramdisk"
+
+    # If booting from CD, we want some directories to be ramdisks
+    if [ ! -z "$bootcd" ]
+    then
+	echo "Creating ramdisks..."
+	RAMDISK_VAR_SIZE=512
+	RAMDISK_TMP_SIZE=512
+
+	# Create /var ramdisk
+	dirs_var=$(find /var -type d | sed '1d')
+	ramdisk $RAMDISK_VAR_SIZE /dev/ram0
+	mkfs.mfs /dev/ram0
+	mount /dev/ram0 /var
+	for i in $dirs_var; do mkdir $i; done
+
+	# Create /tmp ramdisk
+	ramdisk $RAMDISK_VAR_SIZE /dev/ram1
+	mkfs.mfs /dev/ram1
+	mount /dev/ram1 /tmp
+    fi
+
+    # Initialize files.
+    >/var/run/utmp				# /etc/utmp keeps track of logins
+    >/var/run/utmpx				# /etc/utmpx keeps track of logins
 
     # Edit settings for boot system services
     if [ "`sysenv skip_boot_config`" != 1 ]

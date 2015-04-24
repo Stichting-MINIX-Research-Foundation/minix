@@ -3,8 +3,9 @@
 
 #define ISO9660_STANDARD_ID     "CD001" /* Standard code for ISO9660 FS */
 
-#define NR_INODE_RECORDS        64
-#define NR_DIR_EXTENT_RECORDS   NR_INODE_RECORDS * 16
+/* Filesystem options support */
+#define ISO9660_OPTION_ROCKRIDGE
+/*#define ISO9660_OPTION_MODE3*/
 
 #define NO_ADDRESS (-1)         /* Error constants */
 #define NO_FREE_INODES (-1)

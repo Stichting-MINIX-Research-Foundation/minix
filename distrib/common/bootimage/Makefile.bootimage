@@ -193,9 +193,13 @@ SWAPCYLINDERS!=	expr ${SWAPSECTORS} / \( ${HEADS} \* ${SECTORS} \) || true
 #
 # definitions to create root fs
 #
+.if !defined(__MINIX)
 SETS_DEFAULT=	modules base etc comp games man misc tests text
 .if ${MKX11} != "no"
 SETS_DEFAULT+=	xbase xcomp xetc xfont xserver
+.endif
+.else
+SETS_DEFAULT=	minix-base
 .endif
 
 KERN_SET?=	kern-GENERIC
