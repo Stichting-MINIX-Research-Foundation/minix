@@ -72,10 +72,7 @@ OPTFLAGS?=	-disable-opt \
 		-disable-internalize -disable-inlining \
 		-load ${WEAKALIASOVERRIDEPASS} -weak-alias-module-override
 
-# Whitout -Wl,--no-ctors-in-init-array, golds moves the constructors out of
-# .ctors into .init_array, which is bad on intel.
 BITCODE_LD_FLAGS_1ST?= \
-		-Wl,--no-ctors-in-init-array \
 		-Wl,-plugin=${GOLD_PLUGIN} \
 		-Wl,-plugin-opt=-disable-opt \
 		-Wl,-plugin-opt=-disable-inlining
@@ -980,10 +977,15 @@ MACHINE_GNU_PLATFORM:=${MACHINE_GNU_ARCH}-elf32-minix
    _HAVE_GOLD!= (exec 2>&1; ${LD} --version || echo "")
    _GOLD_MATCH:=${_HAVE_GOLD:Mgold}
    _HAVE_GOLD:= ${_HAVE_GOLD:M[0-9]\.[0-9][0-9]}
+
 .  if ${_GOLD_MATCH} != "" && ${_HAVE_GOLD} != ""
       HAVE_GOLD?= ${_HAVE_GOLD}
 #     CFLAGS+= -DHAVE_GOLD=${_HAVE_GOLD}
 #     AFLAGS+= -DHAVE_GOLD=${_HAVE_GOLD}
+
+# Without -Wl,--no-ctors-in-init-array, gold moves the constructors out of
+# .ctors into .init_array, which is bad on intel.
+      LDFLAGS+= -Wl,--no-ctors-in-init-array
 .  else
       USE_BITCODE:=no
 .  endif
