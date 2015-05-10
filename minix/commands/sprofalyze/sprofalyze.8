@@ -1,0 +1,21 @@
+.TH man 8 "9 May 2015" "1.0" "sprofalyze man page"
+.SH NAME
+sprofalyze \- analyze sprofile traces
+.SH SYNOPSIS
+sprofalyze [-d] [-p percentage] [-s src-tree-path] [-b binary]... file...
+.SH DESCRIPTION
+sprofalyze aggregates one or more sprofile traces and reports where time was spent.
+.SH OPTIONS
+.IP -d
+Generates output that can be compared using
+.BR sprofdiff(8)
+.IP -p
+Specifies the cut-off percentage below which binaries and functions will not be displayed.
+.IP -s
+Specifies the root of the source tree where sprofalyze should search for unstripped binaries to extract symbols from.
+.IP -b
+specifies an additional system binary in the trace that is not in the source tree; may be specified multiple times.
+.SH SEE ALSO
+.B sprofdiff(8)
+.SH AUTHOR
+Manpage written by Jacob Adams <tookmund@gmail.com>

@@ -5284,6 +5284,7 @@
 ./usr/man/man8/setup.8				minix-sys
 ./usr/man/man8/shutdown.8			minix-sys
 ./usr/man/man8/slip.8				minix-sys
+./usr/man/man8/sprofalyze.8			minix-sys
 ./usr/man/man8/srccrc.8				minix-sys
 ./usr/man/man8/strfile.8			minix-sys
 ./usr/man/man8/sync.8				minix-sys
