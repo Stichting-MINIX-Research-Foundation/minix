@@ -1020,7 +1020,7 @@ static void usage(const char *argv0) {
 		"[-b binary]... file...\n", argv0);
 	printf("\n");
 	printf("sprofalyze aggregates one or more sprofile traces and");
-	printf("reports where time was spent.\n");
+	printf(" reports where time was spent.\n");
 	printf("\n");
 	printf("arguments:\n");
 	printf("-d generates output that can be compared using sprofdiff\n");
