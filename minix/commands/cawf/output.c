@@ -36,12 +36,12 @@
  *		       interpolation
  */
 
-LenprtHF(s, p, t)
-	unsigned char *s;		/* header/footer string */
-	int p;				/* page number */
-	int t;				/* type: 0 = get interpolated length
-					 *	 1 = print */
-{
+int LenprtHF(unsigned char *s, int p, int t) {
+/* header/footer string s
+ * page number p
+ * type t: 0 = get interpolated length
+ *	 1 = print
+ */
 	unsigned char buf[10];		/* buffer for page number */
 	int len;			/* line length */
 	unsigned char *s1;		/* temporary string pointer */
@@ -74,10 +74,8 @@ LenprtHF(s, p, t)
  * Charput(s) - put a character to output, subject to diversion
  */
 
-void
-Charput(c)
-	int c;			/* character to put */
-{
+void Charput(int c) {
+/* character to put c */
 	if (Divert == 0)
 		putchar((unsigned char)c);
 }
@@ -87,10 +85,8 @@ Charput(c)
  * Stringput(s) - put a string to output, subject to diversion
  */
 
-void
-Stringput(s)
-	unsigned char *s;	/* string to put */
-{
+void Stringput(unsigned char *s) {
+/* string to put s */
 	if (Divert == 0)
 		fputs((char *)s, stdout);
 }

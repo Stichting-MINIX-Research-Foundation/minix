@@ -54,10 +54,7 @@ int Ulx = 0;				/* underline buffer index */
 
 void Putchar(int ch);
 
-main(argc, argv)
-	int argc;
-	char *argv[];
-{
+int main(int argc, char *argv[]) {
 	int ax = 1;			/* argument index */
 	unsigned char c;		/* character buffer */
 	FILE *fs;			/* file stream */
@@ -165,10 +162,7 @@ main(argc, argv)
  * Putchar(ch) - put a character with possible underlining
  */
 
-void
-Putchar(ch)
-	int ch;
-{
+void Putchar(int ch) {
 	int i;					/* temporary index */
 
 	if ((unsigned char)ch == '\n') {

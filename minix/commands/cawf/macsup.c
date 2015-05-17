@@ -35,9 +35,8 @@
  * Delmacro(mx) - delete macro
  */
 
-Delmacro(mx)
-	int mx;				/* macro index */
-{
+int Delmacro(int mx) {
+/* macro index mx */
 	unsigned char buf[MAXLINE];	/* error message buffer */
 	int i, j;			/* temporary indexes */
 
@@ -59,12 +58,11 @@ Delmacro(mx)
  * Field(n, p, c) - skip to field n in p and optionally return a copy
  */
 
-unsigned char *
-Field(n, p, c)
-	int n;				/* field number */
-	unsigned char *p;		/* pointer to line containing fields */
-	int c;				/* 1: make a copy of the field */
-{
+unsigned char *Field(int n, unsigned char *p, int c) {
+/* field number n
+ * pointer to line containing fields p
+ * c = 1: make a copy of the field
+ */
 	unsigned char *fs, *fe, *s;
 
 	if (c)
@@ -101,11 +99,11 @@ Field(n, p, c)
  */
 
 
-Findmacro(p, e)
-	unsigned char *p;	/* pointer to 2 character macro name  */
-	int e;			/* 0 = find, don't enter
-				 * 1 = enter, don't find */
-{
+int Findmacro(unsigned char *p, int e) {
+/* pointer to 2 character macro name p
+ * e = 0 = find, don't enter
+ * e = 1 = enter, don't find
+ */
 	unsigned char c[3];
 	int cmp, hi, low, mid;
 
@@ -153,10 +151,7 @@ new_macro:
 	return(mid);
 }
 
-void
-Free(p)
-	unsigned char **p;
-{
+void Free(unsigned char **p) {
 	if (*p != NULL) {
 		(void) free(*p);
 		*p = NULL;
@@ -167,10 +162,7 @@ Free(p)
  * Newstr(s) - allocate space for string
  */
 
-unsigned char *
-Newstr(s)
-	unsigned char *s;
-{
+unsigned char *Newstr(unsigned char *s) {
 	unsigned char *ns;
 
 	if ((ns = (unsigned char *)malloc((size_t)(strlen((char *)s) + 1)))

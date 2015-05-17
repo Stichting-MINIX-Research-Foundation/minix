@@ -36,11 +36,10 @@
  *		   definition  - e. .g, "\\nPO"
  */
 
-unsigned char *
-Asmcode(s, c)
-	unsigned char **s;		/* pointer to character after '\\' */
-	unsigned char *c;		/* code destination (c[3]) */
-{
+unsigned char *Asmcode(unsigned char **s, unsigned char *c) {
+/* pointer to character after '\\' s
+ * code destination (c[3]) c
+ */
 	unsigned char *s1;
 
 	s1 = *s + 1;
@@ -60,10 +59,9 @@ Asmcode(s, c)
  * Delnum(nx) - delete number
  */
 
-void
-Delnum(nx)
-	int nx;				/* number index */
-{
+void Delnum(int nx) {
+/* number index nx */
+
 	unsigned char buf[MAXLINE];	/* message buffer */
 
 	if (nx >= Nnr) {
@@ -82,12 +80,12 @@ Delnum(nx)
  * Findnum(n, v, e) - find or optionally enter number value
  */
 
-Findnum(n, v, e)
-	unsigned char *n;		/* register name */
-	int v;				/* value */
-	int e;				/* 0 = find, don't enter
-					 * 1 = enter, don't find */
-{
+int Findnum(unsigned char *n, int v, int e) {
+/* register name n
+ * value v
+ * e = 0 = find, don't enter
+ * e = 1 = enter, don't find
+ */
 	int cmp, low, hi, mid;		/* binary search controls */
 	unsigned char c[3];		/* name buffer */
 
@@ -130,9 +128,8 @@ Findnum(n, v, e)
  * Findparms(n) - find parameter registers
  */
 
-Findparms(n)
-	unsigned char *n;		/* parameter name */
-{
+int Findparms(unsigned char *n) {
+/* parameter name n */
 	unsigned char c[3];		/* character buffer */
 	int i;				/* temporary index */
 
@@ -151,12 +148,12 @@ Findparms(n)
  * Findscale(n, v, e) - find and optionally enter scaling factor value
  */
 
-Findscale(n, v, e)
-	int n;				/* scaling factor name */
-	double v;			/* value */
-	int e;				/* 0 = find, don't enter
-					 * 1 = enter, don't find */
-{
+int Findscale(int n, double v, int e) {
+/* scaling factor name n
+ * value v
+ * e = 0 = find, don't enter
+ * e = 1 = enter, don't find
+ */
 	int i;
 	double *pval;
 

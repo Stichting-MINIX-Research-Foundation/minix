@@ -36,10 +36,7 @@
  *		 text into words for pass 3
  */
 
-void
-Pass2(line)
-	unsigned char *line;
-{
+void Pass2(unsigned char *line) {
 	int brk;			/* request break status */
 	unsigned char buf[MAXLINE];	/* working buffer */
 	unsigned char c;		/* character buffer */

@@ -45,10 +45,7 @@ static char Version[] = "4.0";
 #endif
 
 
-main(argc, argv)
-	int     argc;
-	char    *argv[];
-{
+int main(int argc, char *argv[]) {
 	char *ep;               	/* environment pointer */
 	int fff = 0;			/* final form feed status */
 	char **files;			/* file names */
@@ -361,10 +358,7 @@ main(argc, argv)
  *		pass non-macros and macros alike to pass 2
  */
 
-void
-Macro(inp)
-	unsigned char *inp;		/* possible macro statement pointer */
-{
+void Macro(unsigned char *inp) { /* possible macro statement pointer */
 	unsigned char c[2];		/* characters */
 	int endm;			/* end of macro status */
 	FILE *fs;			/* temporary file stream */

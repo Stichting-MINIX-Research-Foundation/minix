@@ -198,10 +198,7 @@ STATIC int strcspn(unsigned char *s1, unsigned char *s2 );
  * Beware that the optimization-preparation code in here knows about some
  * of the structure of the compiled regexp.
  */
-regexp *
-regcomp(exp)
-char *exp;
-{
+regexp *regcomp(char *exp) {
 	register regexp *r;
 	register unsigned char *scan;
 	register unsigned char *longest;
@@ -286,11 +283,8 @@ char *exp;
  * is a trifle forced, but the need to tie the tails of the branches to what
  * follows makes it hard to avoid.
  */
-STATIC unsigned char *
-reg(paren, flagp)
-int paren;			/* Parenthesized? */
-int *flagp;
-{
+STATIC unsigned char *reg(int paren, int *flagp) {
+/* Parenthesized? paren */
 	register unsigned char *ret;
 	register unsigned char *br;
 	register unsigned char *ender;
@@ -358,10 +352,7 @@ int *flagp;
  *
  * Implements the concatenation operator.
  */
-STATIC unsigned char *
-regbranch(flagp)
-int *flagp;
-{
+STATIC unsigned char *regbranch(int *flagp) {
 	register unsigned char *ret;
 	register unsigned char *chain;
 	register unsigned char *latest;
@@ -397,10 +388,7 @@ int *flagp;
  * It might seem that this node could be dispensed with entirely, but the
  * endmarker role is not redundant.
  */
-STATIC unsigned char *
-regpiece(flagp)
-int *flagp;
-{
+STATIC unsigned char *regpiece(int *flagp) {
 	register unsigned char *ret;
 	register unsigned char op;
 	register unsigned char *next;
@@ -461,10 +449,7 @@ int *flagp;
  * faster to run.  Backslashed characters are exceptions, each becoming a
  * separate node; the code is simpler that way and it's not worth fixing.
  */
-STATIC unsigned char *
-regatom(flagp)
-int *flagp;
-{
+STATIC unsigned char *regatom(int *flagp) {
 	register unsigned char *ret;
 	int flags;
 
@@ -574,10 +559,8 @@ int *flagp;
 /*
  - regnode - emit a node
  */
-STATIC unsigned char *			/* Location. */
-regnode(iop)
-int iop;
-{
+STATIC unsigned char *regnode(int iop) {
+/* Return value is location */
 	register unsigned char *ret;
 	register unsigned char *ptr;
 	unsigned char op;
@@ -601,10 +584,7 @@ int iop;
 /*
  - regc - emit (if appropriate) a byte of code
  */
-STATIC void
-regc(ib)
-int ib;
-{
+STATIC void regc(int ib) {
 	unsigned char b;
 
 	b = (unsigned char) ib;
@@ -619,11 +599,7 @@ int ib;
  *
  * Means relocating the operand.
  */
-STATIC void
-reginsert(iop, opnd)
-int iop;
-unsigned char *opnd;
-{
+STATIC void reginsert(int iop, unsigned char *opnd) {
 	register unsigned char *src;
 	register unsigned char *dst;
 	register unsigned char *place;
@@ -650,11 +626,7 @@ unsigned char *opnd;
 /*
  - regtail - set the next-pointer at the end of a node chain
  */
-STATIC void
-regtail(p, val)
-unsigned char *p;
-unsigned char *val;
-{
+STATIC void regtail(unsigned char *p, unsigned char *val) {
 	register unsigned char *scan;
 	register unsigned char *temp;
 	register int offset;
@@ -682,11 +654,7 @@ unsigned char *val;
 /*
  - regoptail - regtail on operand of first argument; nop if operandless
  */
-STATIC void
-regoptail(p, val)
-unsigned char *p;
-unsigned char *val;
-{
+STATIC void regoptail(unsigned char *p, unsigned char *val) {
 	/* "Operandless" and "op != BRANCH" are synonymous in practice. */
 	if (p == NULL || p == &regdummy || OP(p) != BRANCH)
 		return;
@@ -707,18 +675,15 @@ STATIC unsigned char **regendp;		/* Ditto for endp. */
 
 #ifdef DEBUG
 int regnarrate = 0;
-void regdump();
-STATIC unsigned char *regprop();
+void regdump(void);
+STATIC unsigned char *regprop(void);
 #endif
 
 /*
  - regexec - match a regexp against a string
  */
 int
-regexec(prog, string)
-register regexp *prog;
-register unsigned char *string;
-{
+regexec(register regexp *prog, register unsigned char *string) {
 	register unsigned char *s;
 #ifndef	STDLIB
 	extern char *strchr();
@@ -782,11 +747,8 @@ register unsigned char *string;
 /*
  - regtry - try match at specific point
  */
-STATIC int			/* 0 failure, 1 success */
-regtry(prog, string)
-regexp *prog;
-unsigned char *string;
-{
+STATIC int regtry(regexp *prog, unsigned char *string) {
+/* Return value 0 failure, 1 success */
 	register int i;
 	register unsigned char **sp;
 	register unsigned char **ep;
@@ -819,10 +781,8 @@ unsigned char *string;
  * need to know whether the rest of the match failed) by a loop instead of
  * by recursion.
  */
-STATIC int			/* 0 failure, 1 success */
-regmatch(prog)
-unsigned char *prog;
-{
+STATIC int regmatch( unsigned char *prog) {
+/* Return value 0 failure 1 success */
 	register unsigned char *scan;	/* Current node. */
 	unsigned char *next;		/* Next node. */
 #ifndef	STDLIB
@@ -1013,10 +973,7 @@ unsigned char *prog;
 /*
  - regrepeat - repeatedly match something simple, report how many
  */
-STATIC int
-regrepeat(p)
-unsigned char *p;
-{
+STATIC int regrepeat(unsigned char *p) {
 	register int count = 0;
 	register unsigned char *scan;
 	register unsigned char *opnd;
@@ -1059,10 +1016,7 @@ unsigned char *p;
 /*
  - regnext - dig the "next" pointer out of a node
  */
-STATIC unsigned char *
-regnext(p)
-register unsigned char *p;
-{
+STATIC unsigned char *regnext(register unsigned char *p) {
 	register int offset;
 
 	if (p == &regdummy)
@@ -1080,15 +1034,12 @@ register unsigned char *p;
 
 #ifdef DEBUG
 
-STATIC unsigned char *regprop();
+STATIC unsigned char *regprop(void);
 
 /*
  - regdump - dump a regexp onto stdout in vaguely comprehensible form
  */
-void
-regdump(r)
-regexp *r;
-{
+void regdump(regexp r) {
 	register unsigned char *s;
 	register unsigned char op = EXACTLY;	/* Arbitrary non-END op. */
 	register unsigned char *next;
@@ -1130,10 +1081,8 @@ regexp *r;
  - regprop - printable representation of opcode
  */
 STATIC unsigned char regprop_buf[50];
-STATIC unsigned char *
-regprop(op)
-unsigned char *op;
-{
+
+STATIC unsigned char *regprop(unsigned char *op) {
 	register unsigned char *p;
 
 	(void) strcpy(regprop_buf, ":");
@@ -1221,11 +1170,7 @@ unsigned char *op;
  * of characters not from s2
  */
 
-STATIC int
-strcspn(s1, s2)
-unsigned char *s1;
-unsigned char *s2;
-{
+STATIC int strcspn(unsigned char *s1, unsigned char *s2) {
 	register unsigned char *scan1;
 	register unsigned char *scan2;
 	register int count;
