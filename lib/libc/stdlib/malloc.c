@@ -337,7 +337,7 @@ wrtmessage(const char *p1, const char *p2, const char *p3, const char *p4)
 void (*_malloc_message)(const char *p1, const char *p2, const char *p3,
 	    const char *p4) = wrtmessage;
 static void
-wrterror(const char *p)
+wrterror(const char *p) __attribute__ ((noreturn))
 {
 
     suicide = 1;
