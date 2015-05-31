@@ -1,8 +1,13 @@
 #!/bin/sh
 cd ../..
-mv minix releasetools/netbsd2minix/netbsd
+SRC=releasetools/netbsd/src
 
-rm releasetools/netbsd2minix/netbsd/build.sh
-mv build.sh releasetools/netbsd2minix/netbsd
+cp minix $SRC
 
-rm -r
+rm $SRC/build.sh
+cp build.sh $SRC
+
+rm -r $SRC/distrib
+cp distrib $SRC
+
+
