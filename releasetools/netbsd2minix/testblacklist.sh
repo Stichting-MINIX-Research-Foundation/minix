@@ -2,7 +2,7 @@
 
 echo "Testing blacklist..."
 cd netbsd
-SRC=`pwd`
+SRC=`pwd`/src
 while read bl
 do
 	echo $bl
