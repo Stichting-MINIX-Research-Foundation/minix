@@ -1,6 +1,6 @@
 #!/bin/sh
 cd ../..
-SRC=releasetools/netbsd/src
+SRC=releasetools/netbsd2minix/src
 
 cp minix $SRC
 
@@ -10,4 +10,4 @@ cp build.sh $SRC
 rm -r $SRC/distrib
 cp distrib $SRC
 
-
+cd $SRC/..

@@ -9,3 +9,4 @@ do
 	cd $SRC/$bl
 	make	
 done
+cd ..

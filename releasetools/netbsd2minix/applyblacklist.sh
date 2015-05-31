@@ -7,3 +7,4 @@ do
 	echo $bl
 	rm -r $bl
 done
+cd ..
