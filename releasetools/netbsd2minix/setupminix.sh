@@ -12,4 +12,5 @@ cp -r distrib $SRC
 rm $SRC/Makefile
 cp Makefile $SRC
 
+cp -r releasetools $SRC
 cd $SRC/..
