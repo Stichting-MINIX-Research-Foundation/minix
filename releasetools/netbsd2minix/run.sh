@@ -1,6 +1,6 @@
 #!/bin/sh
-./applyblacklist.sh < blacklist.txt
 ./setupnetbsd.sh
+./applyblacklist.sh < blacklist.txt
 ./setupminix.sh
 cd src
 make build
