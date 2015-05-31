@@ -1,7 +1,7 @@
 #!/bin/sh
 
 echo "Applying blacklist..."
-cd netbsd
+cd src
 while read bl
 do
 	echo $bl
