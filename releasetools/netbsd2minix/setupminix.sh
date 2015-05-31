@@ -2,12 +2,12 @@
 cd ../..
 SRC=releasetools/netbsd2minix/src
 
-cp minix $SRC
+cp -r minix $SRC
 
 rm $SRC/build.sh
 cp build.sh $SRC
 
 rm -r $SRC/distrib
-cp distrib $SRC
+cp -rdistrib $SRC
 
 cd $SRC/..
