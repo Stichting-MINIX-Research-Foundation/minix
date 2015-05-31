@@ -9,4 +9,7 @@ cp build.sh $SRC
 
 cp -r distrib $SRC
 
+rm $SRC/Makefile
+cp Makefile $SRC
+
 cd $SRC/..
