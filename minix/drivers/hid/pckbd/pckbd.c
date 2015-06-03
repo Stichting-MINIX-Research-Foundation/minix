@@ -250,7 +250,7 @@ kbc_read(void)
 /*
  * Initialize the keyboard hardware.
  */
-static void
+static int
 kb_init(void)
 {
 	int r, ccb;
@@ -272,8 +272,10 @@ kb_init(void)
 	/* Execute Controller Self Test. */
 	kbc_cmd0(0xAA);
 	r = kbc_read();
-	if (r != 0x55)
-		panic("PCKBD: Controller self-test failed.\n");
+	if (r != 0x55){
+		printf("PCKBD: Controller self-test failed.\n");
+		return EGENERIC;
+	}
 
 	/* Set interrupt handler and enable keyboard IRQ. */
 	irq_hook_id = KEYBOARD_IRQ;	/* id to be returned on interrupt */
@@ -316,6 +318,7 @@ kb_init(void)
 	kb_wait();
 
 	set_leds(0);
+	return OK;
 }
 
 /*
@@ -466,7 +469,10 @@ pckbd_init(int UNUSED(type), sef_init_info_t *UNUSED(info))
 	init_timer(&tmr_kbd_wd);
 
 	/* Initialize the keyboard. */
-	kb_init();
+	int r;
+	if((r = kb_init())!=OK){
+		return r;
+	}
 
 	/* Announce the driver's presence. */
 	if (aux_available != 0)
