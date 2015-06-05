@@ -251,7 +251,7 @@ int read_write(struct fproc *rfp, int rw_flag, struct filp *f,
 
   if (r == EPIPE && rw_flag == WRITING) {
 	/* Process is writing, but there is no reader. Tell the kernel to
-	 * generate s SIGPIPE signal.
+	 * generate a SIGPIPE signal.
 	 */
 	if (!(f->filp_flags & O_NOSIGPIPE)) {
 		sys_kill(rfp->fp_endpoint, SIGPIPE);
@@ -326,12 +326,23 @@ size_t req_size;
 
   assert(rw_flag == READING || rw_flag == WRITING);
 
-  /* fp->fp_cum_io_partial is only nonzero when doing partial writes */
+  /* fp->fp_cum_io_partial is only nonzero when doing partial writes.
+   * We clear the field immediately here because we expect completion or error;
+   * its value must be (re)assigned if we end up suspending the write (again).
+   */
   cum_io = fp->fp_cum_io_partial;
+  fp->fp_cum_io_partial = 0;
 
   r = pipe_check(f, rw_flag, oflags, req_size, 0);
   if (r <= 0) {
-	if (r == SUSPEND) pipe_suspend(f, buf, req_size);
+	if (r == SUSPEND) {
+		fp->fp_cum_io_partial = cum_io;
+		pipe_suspend(f, buf, req_size);
+	}
+	/* If pipe_check returns an error instead of suspending the call, we
+	 * return that error, even if we are resuming a partially completed
+	 * operation (ie, a large blocking write), to match NetBSD's behavior.
+	 */
 	return(r);
   }
 
@@ -350,6 +361,7 @@ size_t req_size;
 		    buf, size, &new_pos, &cum_io_incr);
 
   if (r != OK) {
+	assert(r != SUSPEND);
 	return(r);
   }
 
@@ -366,7 +378,7 @@ size_t req_size;
 	/* partial write on pipe with */
 	/* O_NONBLOCK, return write count */
 	if (!(oflags & O_NONBLOCK)) {
-		/* partial write on pipe with req_size > PIPE_SIZE,
+		/* partial write on pipe with req_size > PIPE_BUF,
 		 * non-atomic
 		 */
 		fp->fp_cum_io_partial = cum_io;
@@ -375,7 +387,7 @@ size_t req_size;
 	}
   }
 
-  fp->fp_cum_io_partial = 0;
+  assert(fp->fp_cum_io_partial == 0);
 
   return(cum_io);
 }

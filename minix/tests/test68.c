@@ -288,6 +288,74 @@ test_pipe_flag_setting()
 	if (close(pipes[1]) != 0) e(22);
 }
 
+/*
+ * Test the behavior of a large pipe write that achieves partial progress
+ * before the reader end is closed.  The write call is expected to return EPIPE
+ * and generate a SIGPIPE signal, and otherwise leave the system in good order.
+ */
+static void
+test_pipe_partial_write(void)
+{
+	char buf[PIPE_BUF + 2];
+	int pfd[2], status;
+
+	signal(SIGPIPE, pipe_handler);
+
+	if (pipe(pfd) < 0) e(1);
+
+	switch (fork()) {
+	case 0:
+		close(pfd[1]);
+
+		sleep(1); /* let the parent block on the write(2) */
+
+		/*
+		 * This one-byte read raises the question whether the write
+		 * should return partial progress or not, since consumption of
+		 * part of its data is now clearly visible.  NetBSD chooses
+		 * *not* to return partial progress, and MINIX3 follows suit.
+		 */
+		if (read(pfd[0], buf, 1) != 1) e(2);
+
+		sleep(1); /* let VFS retry satisfying the write(2) */
+
+		exit(errct); /* close the reader side of the pipe */
+
+	case -1:
+		e(3);
+
+	default:
+		break;
+	}
+
+	close(pfd[0]);
+
+	seen_pipe_signal = 0;
+
+	/*
+	 * The following large write should block until the child exits, as
+	 * that is when the read end closes, thus making eventual completion of
+	 * the write impossible.
+	 */
+	if (write(pfd[1], buf, sizeof(buf)) != -1) e(4);
+	if (errno != EPIPE) e(5);
+	if (seen_pipe_signal != 1) e(6);
+
+	seen_pipe_signal = 0;
+
+	/* A subsequent write used to cause a system crash. */
+	if (write(pfd[1], buf, 1) != -1) e(7);
+	if (errno != EPIPE) e(8);
+	if (seen_pipe_signal != 1) e(9);
+
+	/* Clean up. */
+	close(pfd[1]);
+
+	if (wait(&status) <= 0) e(10);
+	if (!WIFEXITED(status)) e(11);
+	errct += WEXITSTATUS(status);
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -298,6 +366,7 @@ main(int argc, char *argv[])
 	test_pipe_cloexec();
 	test_pipe_nonblock();
 	test_pipe_nosigpipe();
+	test_pipe_partial_write();
 	quit();
 	return(-1);	/* Unreachable */
 }

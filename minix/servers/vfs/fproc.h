@@ -27,7 +27,7 @@ EXTERN struct fproc {
 
   int fp_blocked_on;		/* what is it blocked on */
   int fp_block_callnr;		/* blocked call if rd/wr can't finish */
-  int  fp_cum_io_partial;	/* partial byte count if rd/wr can't finish */
+  size_t fp_cum_io_partial;	/* partial byte count if write can't finish */
   endpoint_t fp_task;		/* which task is proc suspended on */
   cp_grant_id_t fp_grant;	/* revoke this grant on unsuspend if > -1 */
 

@@ -217,8 +217,17 @@ static void do_pending_pipe(void)
 
   r = rw_pipe(op, who_e, f, scratch(fp).io.io_buffer, scratch(fp).io.io_nbytes);
 
-  if (r != SUSPEND)  /* Do we have results to report? */
+  if (r != SUSPEND) { /* Do we have results to report? */
+	/* Process is writing, but there is no reader. Send a SIGPIPE signal.
+	 * This should match the corresponding code in read_write().
+	 */
+	if (r == EPIPE && op == WRITING) {
+		if (!(f->filp_flags & O_NOSIGPIPE))
+			sys_kill(fp->fp_endpoint, SIGPIPE);
+	}
+
 	replycode(fp->fp_endpoint, r);
+  }
 
   unlock_filp(f);
 }
