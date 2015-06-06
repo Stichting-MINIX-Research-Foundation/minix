@@ -14,7 +14,6 @@ EXTERN struct fproc *fp;	/* pointer to caller's fproc struct */
 EXTERN int susp_count;		/* number of procs suspended on pipe */
 EXTERN int nr_locks;		/* number of locks currently in place */
 EXTERN int reviving;		/* number of pipe processes to be revived */
-EXTERN int pending;
 EXTERN int sending;
 EXTERN int verbose;
 

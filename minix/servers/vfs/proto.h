@@ -336,6 +336,7 @@ void select_unsuspend_by_endpt(endpoint_t proc);
 /* worker.c */
 void worker_init(void);
 int worker_available(void);
+void worker_allow(int allow);
 struct worker_thread *worker_get(thread_t worker_tid);
 void worker_signal(struct worker_thread *worker);
 int worker_can_start(struct fproc *rfp);

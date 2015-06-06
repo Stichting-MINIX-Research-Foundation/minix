@@ -48,7 +48,6 @@ static int unblock(struct fproc *rfp);
 /* SEF functions and variables. */
 static void sef_local_startup(void);
 static int sef_cb_init_fresh(int type, sef_init_info_t *info);
-static endpoint_t receive_from;
 
 /*===========================================================================*
  *				main					     *
@@ -298,7 +297,6 @@ static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *info)
   message mess;
   struct rprocpub rprocpub[NR_BOOT_PROCS];
 
-  receive_from = NONE;
   self = NULL;
   verbose = 0;
 
@@ -404,14 +402,13 @@ static void do_init_root(void)
   char *mount_type, *mount_label;
   int r;
 
-  /* Mount the pipe file server. */
-  receive_from = PFS_PROC_NR;
+  /* Disallow requests from e.g. init(8) while doing the initial mounting. */
+  worker_allow(FALSE);
 
+  /* Mount the pipe file server. */
   mount_pfs();
 
   /* Mount the root file system. */
-  receive_from = MFS_PROC_NR;
-
   mount_type = "mfs";       /* FIXME: use boot image process name instead */
   mount_label = "fs_imgrd"; /* FIXME: obtain this from RS */
 
@@ -419,7 +416,9 @@ static void do_init_root(void)
 	mount_label);
   if (r != OK)
 	panic("Failed to initialize root");
-  receive_from = ANY;
+
+  /* All done with mounting, allow requests now. */
+  worker_allow(TRUE);
 }
 
 /*===========================================================================*
@@ -502,10 +501,8 @@ static void get_work()
   }
 
   for(;;) {
-	assert(receive_from != NONE);
-
 	/* Normal case.  No one to revive. Get a useful request. */
-	if ((r = sef_receive(receive_from, &m_in)) != OK) {
+	if ((r = sef_receive(ANY, &m_in)) != OK) {
 		panic("VFS: sef_receive error: %d", r);
 	}
 
