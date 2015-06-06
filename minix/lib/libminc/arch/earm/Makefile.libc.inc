@@ -24,7 +24,9 @@ OBJS+=	${f}
 CLEANFILES+= ${f}
 .endfor
 
-CPPFLAGS.byte_swap_4.S+= -D_STANDALONE
+# 20150607 dcvmoole: commented out as this causes inet to fail linking on a
+# missing __bswap32 symbol
+#CPPFLAGS.byte_swap_4.S+= -D_STANDALONE
 
 .for f in \
 	__aeabi_idiv0.o __aeabi_ldiv0.o

@@ -19,9 +19,6 @@ NOCLANGERROR=yes
 DPADD+=	${LIBCHARDRIVER} ${LIBSYS}
 LDADD+=	-lchardriver -lsys
 
-DPADD+= ${LIBC}
-LDADD+= -lc
-
 CPPFLAGS+=  -I${.CURDIR} -D'ARGS(a)=a'
 
 .include <minix.service.mk>
