@@ -161,7 +161,6 @@ static int sef_cb_init_fresh(int type, sef_init_info_t *info)
 	int timerand, fd;
 	u8_t randbits[32];
 	struct timeval tv;
-	struct passwd *pw;
 
 #if DEBUG
 	printf("Starting inet...\n");
@@ -236,13 +235,9 @@ static int sef_cb_init_fresh(int type, sef_init_info_t *info)
 		ip_panic(("inet: can't subscribe to driver events"));
 	}
 
-	/* Drop root privileges */
-	if ((pw = getpwnam(SERVICE_LOGIN)) == NULL) {
-		printf("inet: unable to retrieve uid of SERVICE_LOGIN, "
-			"still running as root");
-	} else if (setuid(pw->pw_uid) != 0) {
-		ip_panic(("inet: unable to drop privileges"));
-	}
+	/* Drop privileges. */
+	if (setuid(SERVICE_UID) != 0)
+		printf("inet: warning, unable to drop privileges\n");
 
 	/* Announce we are up. INET announces its presence to VFS just like
 	 * any other character driver.

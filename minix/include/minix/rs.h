@@ -12,6 +12,12 @@ Interface to the reincarnation server
 
 #define SERVICE_LOGIN	"service"	/* passwd file entry for services */
 
+/* The following definition should be kept in sync with the actual /etc/passwd
+ * value for SERVICE_LOGIN for now, and removed altogether once we are able to
+ * obtain its value dynamically everywhere.
+ */
+#define SERVICE_UID		12		/* user ID for services */
+
 /* RSS definitions. */
 #define RSS_NR_IRQ		16
 #define RSS_NR_IO		16
