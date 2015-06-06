@@ -1,0 +1,12 @@
+chown
+fsck
+fsck_ext2fs
+init
+Makefile
+Makefile.inc
+mknod
+newfs_ext2fs
+nologin
+ping
+reboot
+shutdown
