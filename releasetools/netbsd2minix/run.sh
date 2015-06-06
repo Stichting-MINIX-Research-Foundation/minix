@@ -5,7 +5,7 @@ MINIX=`pwd`
 # NetBSD2Minix folder
 N2M=$MINIX/releasetools/netbsd2minix
 # NetBSD source tree
-NETBSD=$N2M/netbsd
+NETBSD=$MINIX/../netbsd
 # New source tree
 SRC=$MINIX/../newsrc
 
