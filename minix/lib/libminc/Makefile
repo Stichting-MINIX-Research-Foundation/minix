@@ -211,7 +211,7 @@ CPPFLAGS.tolower_.c+= -I${LIBCDIR}/locale
 CPPFLAGS.toupper_.c+= -I${LIBCDIR}/locale
 
 .for f in \
-	waitpid.o read_tsc_64.o fslib.o itoa.o
+	waitpid.o read_tsc_64.o fslib.o itoa.o oneC_sum.o
 ${f} ${f:C/\.o/.bc/}:	${LIBMINIXCDIR}/gen/${f:C/\.o/.c/}
 OBJS+=	${f}
 CLEANFILES+= ${f}
