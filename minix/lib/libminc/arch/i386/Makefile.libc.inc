@@ -28,8 +28,6 @@ CLEANFILES+= ${f:C/\.o/.bc/}
 .endif # ${USE_BITCODE:Uno} == "yes"
 .endfor
 
-CPPFLAGS.byte_swap_4.S+= -D_STANDALONE
-
 .for f in \
 	memchr.o memcmp.o memcpy.o memmove.o memset.o \
 	strcat.o strchr.o strcmp.o strcpy.o strlen.o \

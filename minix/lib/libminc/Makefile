@@ -108,7 +108,6 @@ CLEANFILES+= ${f:C/\.o/.bc/}
 .endif # ${USE_BITCODE:Uno} == "yes"
 .endfor
 
-CPPFLAGS.bswap64.c+=	-D_STANDALONE
 CPPFLAGS.rb.c+=		-D_LIBC
 
 .for f in \
@@ -123,7 +122,6 @@ CLEANFILES+= ${f:C/\.o/.bc/}
 .endif # ${USE_BITCODE:Uno} == "yes"
 .endfor
 
-CPPFLAGS.sha2.c+=	-D_STANDALONE
 CPPFLAGS.sha2.c+=	-I${NETBSDSRCDIR}/sys
 
 .for f in \
@@ -211,7 +209,7 @@ CPPFLAGS.tolower_.c+= -I${LIBCDIR}/locale
 CPPFLAGS.toupper_.c+= -I${LIBCDIR}/locale
 
 .for f in \
-	waitpid.o read_tsc_64.o fslib.o itoa.o
+	waitpid.o read_tsc_64.o fslib.o itoa.o oneC_sum.o
 ${f} ${f:C/\.o/.bc/}:	${LIBMINIXCDIR}/gen/${f:C/\.o/.c/}
 OBJS+=	${f}
 CLEANFILES+= ${f}

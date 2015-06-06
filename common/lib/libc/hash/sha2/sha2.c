@@ -57,6 +57,10 @@ __RCSID("$NetBSD: sha2.c,v 1.24 2013/06/09 19:46:56 christos Exp $");
 #include "namespace.h"
 #include <string.h>
 
+#if defined(__minix) && defined(_LIBMINC)
+#include <stdint.h> /* for uintptr_t */
+#endif /* defined(__minix) && defined(_LIBMINC) */
+
 #endif
 
 #include <sys/types.h>
