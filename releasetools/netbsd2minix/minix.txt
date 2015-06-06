@@ -1,0 +1,16 @@
+minix
+build.sh
+distrib
+Makefile
+releasetools
+regress
+.gitignore
+.gitreview
+external/Makefile
+bin/Makefile
+games/Makefile
+gnu/Makefile
+libexec/Makefile
+sbin/Makefile
+usr.bin/Makefile
+usr.sbin/Makefile
