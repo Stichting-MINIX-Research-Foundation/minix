@@ -1706,6 +1706,7 @@ timesub(const timezone_t sp, const time_t *const timep,
 	return tmp;
 }
 
+#if !defined(__minix) || !defined(_LIBMINC)
 char *
 ctime(const time_t *const timep)
 {
@@ -1742,6 +1743,7 @@ ctime_rz(const timezone_t sp, const time_t * timep, char *buf)
 		return NULL;
 	return asctime_r(rtm, buf);
 }
+#endif /* !defined(__minix) || !defined(_LIBMINC) */
 
 /*
 ** Adapted from code provided by Robert Elz, who writes:
