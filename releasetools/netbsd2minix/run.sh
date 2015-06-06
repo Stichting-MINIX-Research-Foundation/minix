@@ -11,11 +11,15 @@ SRC=$N2M/src
 
 export MINIX N2M NETBSD SRC
 
-
+echo "Setup NetBSD"
 $N2M/setupnetbsd.sh
+
+echo "Clear new src tree"
 mkdir -p $SRC
 rm -rf $SRC/*
-$N2M/whitelists.sh
-cd $SRC
 
-./build.sh -m i386 build
+echo "Apply whitelists"
+$N2M/whitelists.sh
+
+echo "Apply special-cases"
+$N2M/special.sh

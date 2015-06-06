@@ -4,4 +4,3 @@ Makefile.inc
 misc
 mk
 terminfo
-zoneinfo

@@ -19,7 +19,6 @@ llvm-clang
 llvm-clang-tblgen
 llvm-include
 llvm-lib
-llvm-librt
 llvm-lld
 llvm-mcld
 llvm-tblgen
@@ -35,16 +34,13 @@ Makefile.nbincludes
 makewhatis
 mandoc
 mkdep
-mkfs.mfs
 mkheaderlist.sh
 mknod
-mkproto
 mktemp
 mpc
 mpfr
 mtree
 nbperf
-partition
 pax
 pwd_mkdb
 sed
@@ -52,8 +48,6 @@ stat
 strfile
 texinfo
 tic
-toproto
 tsort
-writeisofs
 yacc
 zic
