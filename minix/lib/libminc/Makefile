@@ -248,7 +248,7 @@ CLEANFILES+= ${f:C/\.o/.bc/}
 
 .for f in \
 	abort.o atexit.o _env.o exit.o getenv.o \
-	ldiv.o malloc.o \
+	ldiv.o malloc.o setenv.o \
 	_rand48.o lrand48.o srand48.o
 ${f} ${f:C/\.o/.bc/}:	${LIBCDIR}/stdlib/${f:C/\.o/.c/}
 OBJS+=	${f}
@@ -299,6 +299,18 @@ CPPFLAGS.malloc.c+= -D_LIBSYS
 .for f in \
 	brksize.o _do_kernel_call_intr.o get_minix_kerninfo.o _ipc.o ucontext.o
 ${f} ${f:C/\.o/.bc/}:	${LIBMINIXCARCHDIR}/sys/${f:C/\.o/.S/}
+OBJS+=	${f}
+CLEANFILES+= ${f}
+
+.if ${USE_BITCODE:Uno} == "yes"
+OBJS+=	${f:C/\.o/.bc/}
+CLEANFILES+= ${f:C/\.o/.bc/}
+.endif # ${USE_BITCODE:Uno} == "yes"
+.endfor
+
+.for f in \
+	localtime.o
+${f} ${f:C/\.o/.bc/}:	${LIBCDIR}/time/${f:C/\.o/.c/}
 OBJS+=	${f}
 CLEANFILES+= ${f}
 
