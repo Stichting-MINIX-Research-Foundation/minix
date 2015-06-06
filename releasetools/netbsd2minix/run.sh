@@ -7,7 +7,7 @@ N2M=$MINIX/releasetools/netbsd2minix
 # NetBSD source tree
 NETBSD=$N2M/netbsd
 # New source tree
-SRC=$N2M/src
+SRC=$MINIX/../src
 
 export MINIX N2M NETBSD SRC
 
