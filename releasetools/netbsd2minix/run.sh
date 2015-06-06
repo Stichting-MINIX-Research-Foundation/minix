@@ -1,11 +1,21 @@
 #!/bin/sh
-. releasetools/netbsd2minix/common.sh
+
+# Current source tree
+MINIX=`pwd`
+# NetBSD2Minix folder
+N2M=$MINIX/releasetools/netbsd2minix
+# NetBSD source tree
+NETBSD=$N2M/netbsd
+# New source tree
+SRC=$N2M/src
+
+export MINIX N2M NETBSD SRC
+
+
 $N2M/setupnetbsd.sh
+mkdir -p $SRC
+rm -rf $SRC/*
 $N2M/whitelists.sh
-$N2M/setupminix.sh
 cd $SRC
-if [ `uname` -eq Minix ]
-then
-	make build
-else
-	./build.sh -m i386 build
+
+./build.sh -m i386 build

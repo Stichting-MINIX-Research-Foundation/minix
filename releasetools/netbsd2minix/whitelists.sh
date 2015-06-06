@@ -1,11 +1,10 @@
-#!/bin/sh
-. releasetools/netbsd2minix/common.sh
-
 cd $N2M/whitelist
-for $item in `ls`
+for item in `ls`
 do
-	$N2M/applywhitelist.sh $item < $item
+	$N2M/applywhitelist.sh $NETBSD/$item < $item
+	echo "$item moved"
 done
 
-cd ..
-./applywhitelist $MINIX < minix.txt
+$N2M/applywhitelist.sh $MINIX < $N2M/minix.txt
+
+cd $MINIX
