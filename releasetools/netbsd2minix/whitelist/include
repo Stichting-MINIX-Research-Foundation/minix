@@ -6,7 +6,6 @@ assert.h
 atomic.h
 bitstring.h
 bm.h
-cdbr.h
 cdbw.h
 complex.h
 cpio.h
