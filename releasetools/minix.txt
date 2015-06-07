@@ -1,6 +1,8 @@
 minix
 build.sh
 distrib
+docs
+etc
 Makefile
 releasetools
 regress

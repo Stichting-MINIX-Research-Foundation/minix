@@ -1,15 +1,15 @@
 #!/bin/sh
 
 # Current source tree
-MINIX=`pwd`
-# NetBSD2Minix folder
-N2M=$MINIX/releasetools/netbsd2minix
+: ${MINIX=`pwd`}
+# releasetools folder
+: ${RT=$MINIX/releasetools}
 # NetBSD source tree
-NETBSD=$MINIX/../netbsd
+: ${NETBSD=$MINIX/../netbsd}
 # New source tree
-SRC=$MINIX/../newsrc
+: {SRC=$MINIX/../newsrc}
 
-export MINIX N2M NETBSD SRC
+export MINIX NETBSD SRC
 
 echo "Setup NetBSD"
 cd $NETBSD || (git clone --depth 1 git://github.com/jsonn/src $NETBSD && cd $NETBSD)
@@ -21,14 +21,14 @@ rm -rf $SRC/*
 
 echo "Apply whitelists"
 
-cd $N2M/whitelist
+cd $RT/whitelist
 for item in `ls`
 do
-	$N2M/applywhitelist.sh $NETBSD/$item $item < $item
+	$RT/applywhitelist.sh $NETBSD/$item $item < $item
 	echo "$item moved"
 done
 
-$N2M/applywhitelist.sh $MINIX . < $N2M/minix.txt
+$N2M/applywhitelist.sh $MINIX . < $RT/minix.txt
 
 echo "Apply special-cases"
 
