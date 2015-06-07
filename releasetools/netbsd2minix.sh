@@ -7,7 +7,7 @@
 # NetBSD source tree
 : ${NETBSD=$MINIX/../netbsd}
 # New source tree
-: {SRC=$MINIX/../newsrc}
+: ${SRC=$MINIX/../newsrc}
 
 export MINIX NETBSD SRC
 
