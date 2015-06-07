@@ -28,7 +28,7 @@ do
 	echo "$item moved"
 done
 
-$N2M/applywhitelist.sh $MINIX . < $RT/minix.txt
+$RT/applywhitelist.sh $MINIX . < $RT/minix.txt
 
 echo "Apply special-cases"
 
