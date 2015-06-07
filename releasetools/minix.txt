@@ -5,6 +5,5 @@ docs
 etc
 Makefile
 releasetools
-regress
 .gitignore
 .gitreview

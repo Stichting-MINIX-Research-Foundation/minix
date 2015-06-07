@@ -14,7 +14,7 @@ export MINIX NETBSD SRC
 echo "Setup NetBSD"
 cd $NETBSD || (git clone --depth 1 git://github.com/jsonn/src $NETBSD && cd $NETBSD)
 git pull
-
+git reset --hard
 echo "Clear new src tree"
 mkdir -p $SRC
 rm -rf $SRC/*
@@ -36,7 +36,7 @@ cd $MINIX
 
 for dir in "external bin games gnu libexec sbin tools usr.bin usr.sbin"
 do
-	cp -f $MINIX/$dir/Makefile $SRC/$dir
+	cp -f $MINIX/$dir/Makefile $SRC/$dir/Makefile
 done
 
 cp -r $MINIX/include/cdbr.h $SRC/include/cdbr.h
