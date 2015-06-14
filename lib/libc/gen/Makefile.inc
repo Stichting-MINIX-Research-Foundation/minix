@@ -42,7 +42,8 @@ SRCS+= 	_errno.c alarm.c alphasort.c arc4random.c assert.c basename.c clock.c \
 	getusershell.c glob.c humanize_number.c initdir.c initgroups.c \
 	isascii.c isatty.c isctype.c lockf.c nftw.c \
 	nice.c \
-	opendir.c pause.c popen.c \
+	opendir.c pause.c popen.c posix_spawn_sched.c \
+	posix_spawn_fileactions.c posix_spawnp.c \
 	psignal.c \
 	ptree.c pwcache.c pw_scan.c raise.c randomid.c rb.c readdir.c \
 	rewinddir.c scandir.c seekdir.c \
