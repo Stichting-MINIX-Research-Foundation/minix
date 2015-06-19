@@ -41,7 +41,7 @@ static void do_init_root(void);
 static void handle_work(void (*func)(void));
 static void reply(message *m_out, endpoint_t whom, int result);
 
-static void get_work(void);
+static int get_work(void);
 static void service_pm(void);
 static int unblock(struct fproc *rfp);
 
@@ -74,7 +74,12 @@ int main(void)
 	yield_all();	/* let other threads run */
 	self = NULL;
 	send_work();
-	get_work();
+
+	/* The get_work() function returns TRUE if we have a new message to
+	 * process. It returns FALSE if it spawned other thread activities.
+	 */
+	if (!get_work())
+		continue;
 
 	transid = TRNS_GET_ID(m_in.m_type);
 	if (IS_VFS_FS_TRANSID(transid)) {
@@ -476,28 +481,23 @@ void thread_cleanup(void)
 /*===========================================================================*
  *				get_work				     *
  *===========================================================================*/
-static void get_work()
+static int get_work(void)
 {
-  /* Normally wait for new input.  However, if 'reviving' is
-   * nonzero, a suspended process must be awakened.
+  /* Normally wait for new input.  However, if 'reviving' is nonzero, a
+   * suspended process must be awakened.  Return TRUE if there is a message to
+   * process (usually newly received, but possibly a resumed request), or FALSE
+   * if a thread for other activities has been spawned instead.
    */
-  int r, found_one, proc_p;
+  int r, proc_p;
   register struct fproc *rp;
 
-  while (reviving != 0) {
-	found_one = FALSE;
-
+  if (reviving != 0) {
 	/* Find a suspended process. */
 	for (rp = &fproc[0]; rp < &fproc[NR_PROCS]; rp++)
-		if (rp->fp_pid != PID_FREE && (rp->fp_flags & FP_REVIVED)) {
-			found_one = TRUE; /* Found a suspended process */
-			if (unblock(rp))
-				return;	/* So main loop can process job */
-			send_work();
-		}
+		if (rp->fp_pid != PID_FREE && (rp->fp_flags & FP_REVIVED))
+			return unblock(rp); /* So main loop can process job */
 
-	if (!found_one)	/* Consistency error */
-		panic("VFS: get_work couldn't revive anyone");
+	panic("VFS: get_work couldn't revive anyone");
   }
 
   for(;;) {
@@ -509,11 +509,6 @@ static void get_work()
 	proc_p = _ENDPOINT_P(m_in.m_source);
 	if (proc_p < 0 || proc_p >= NR_PROCS) fp = NULL;
 	else fp = &fproc[proc_p];
-
-	if (m_in.m_type == EDEADSRCDST) {
-		printf("VFS: failed ipc_sendrec\n");
-		return;	/* Failed 'ipc_sendrec' */
-	}
 
 	/* Negative who_p is never used to access the fproc array. Negative
 	 * numbers (kernel tasks) are treated in a special way.
@@ -536,8 +531,9 @@ static void get_work()
 			fproc[who_p].fp_endpoint, who_e);
 	}
 
-	return;
+	return TRUE;
   }
+  /* NOTREACHED */
 }
 
 /*===========================================================================*
