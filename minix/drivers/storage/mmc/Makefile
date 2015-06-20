@@ -1,9 +1,10 @@
 # Makefile for the mmc driver.
-PROG=	mmc
-SRCS=	mmcblk.c mmchost_dummy.c sdhcreg.h sdmmcreg.h
+PROG=      mmc emmc
+SRCS.mmc=  mmcblk.c mmchost_dummy.c sdhcreg.h sdmmcreg.h
+SRCS.emmc= emmc.c mmcblk.c
 
 .if ${MACHINE_ARCH} == "earm"
-SRCS += mmchost_mmchs.c 
+SRCS.mmc += mmchost_mmchs.c 
 .endif
 
 DPADD+=	${LIBBLOCKDRIVER} ${LIBSYS}

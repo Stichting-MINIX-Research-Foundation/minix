@@ -184,6 +184,7 @@
 ./service				minix-sys
 ./service/devman			minix-sys
 ./service/ds				minix-sys
+./service/emmc				minix-sys
 ./service/ext2				minix-sys
 ./service/hello				minix-sys
 ./service/inet				minix-sys

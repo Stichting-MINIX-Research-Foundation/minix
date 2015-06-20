@@ -132,6 +132,9 @@ static struct omap_mmchs_registers regs_v0 = {
 #define MMCHS_SD_CON_INIT         (0x1 << 1) /* Send initialization stream (all cards) */
 #define MMCHS_SD_CON_INIT_NOINIT  (0x0 << 1) /* Do nothing */
 #define MMCHS_SD_CON_INIT_INIT    (0x1 << 1) /* Send initialization stream */
+#define MMCHS_SD_CON_OD           (0x1 << 0) /* Card open drain mode (MMC cards only) */
+#define MMCHS_SD_CON_OD_PP        (0x0 << 0) /* No open drain (push-pull). */
+#define MMCHS_SD_CON_OD_OD        (0x1 << 0) /* Open drain */
 
 #define MMCHS_SD_BLK_NBLK             (0xffffu << 16) /* Block count for the current transfer */
 #define MMCHS_SD_BLK_BLEN             (0xfff << 0)     /* Transfer block size */
@@ -182,12 +185,14 @@ static struct omap_mmchs_registers regs_v0 = {
 
 #define MMCHS_SD_PSTATE_CI           (0x1 << 16) /* Card Inserted */
 #define MMCHS_SD_PSTATE_CI_INSERTED  (0x1 << 16) /* Card Inserted  is inserted*/
-#define MMCHS_SD_PSTATE_BRE          (0x0 << 11) /* Buffer read enable */
+#define MMCHS_SD_PSTATE_BRE          (0x1 << 11) /* Buffer read enable */
 #define MMCHS_SD_PSTATE_BRE_DIS      (0x0 << 11) /* Read BLEN bytes disabled*/
 #define MMCHS_SD_PSTATE_BRE_EN       (0x1 << 11) /* Read BLEN bytes enabled*/
-#define MMCHS_SD_PSTATE_BWE          (0x0 << 10) /* Buffer Write enable */
+#define MMCHS_SD_PSTATE_BWE          (0x1 << 10) /* Buffer Write enable */
 #define MMCHS_SD_PSTATE_BWE_DIS      (0x0 << 10) /* There is no room left in the buffer to write BLEN bytes of data */
 #define MMCHS_SD_PSTATE_BWE_EN       (0x1 << 10) /* There is enough space in the buffer to write BLEN bytes of data*/
+#define MMCHS_SD_PSTATE_DATI         (0x1 <<  1) /* Command inhibit (mmc_dat) */
+#define MMCHS_SD_PSTATE_CMDI         (0x1 <<  0) /* Command inhibit (mmc_cmd) */
 
 #define MMCHS_SD_HCTL_DTW            (0x1 << 1) /*Data transfer width.(must be set after a successful ACMD6) */
 #define MMCHS_SD_HCTL_DTW_1BIT       (0x0 << 1) /*1 bit transfer with */
@@ -221,10 +226,21 @@ static struct omap_mmchs_registers regs_v0 = {
 #define MMCHS_SD_SYSCTL_DTO          (0xf << 16) /* Data timeout counter  */
 #define MMCHS_SD_SYSCTL_DTO_2POW13   (0x0 << 16) /* TCF x 2^13  */
 #define MMCHS_SD_SYSCTL_DTO_2POW14   (0x1 << 16) /* TCF x 2^14  */
+#define MMCHS_SD_SYSCTL_DTO_2POW20   (0x7 << 16) /* TCF x 2^20  */
 #define MMCHS_SD_SYSCTL_DTO_2POW27   (0xe << 16) /* TCF x 2^27  */
 
+#define MMCHS_SD_STAT_CERR            (0x1 << 28) /* card error */
+#define MMCHS_SD_STAT_DEB             (0x1 << 22) /* data end bit error */
+#define MMCHS_SD_STAT_DCRC            (0x1 << 21) /* data CRC error */
+#define MMCHS_SD_STAT_DTO             (0x1 << 20) /* data timeout error */
+#define MMCHS_SD_STAT_CIE             (0x1 << 19) /* command index error */
+#define MMCHS_SD_STAT_CEB             (0x1 << 18) /* command end bit error */
+#define MMCHS_SD_STAT_CCRC            (0x1 << 17) /* command CRC error */
+#define MMCHS_SD_STAT_CTO             (0x1 << 16) /* command timeout error */
 #define MMCHS_SD_STAT_ERRI            (0x01 << 15) /* Error interrupt */
-#define MMCHS_SD_STAT_ERROR_MASK     (0xff << 15 | 0x3 << 24 | 0x03 << 28)
+#define MMCHS_SD_STAT_ERROR_MASK      (0xff << 15 | 0x3 << 24 | 0x03 << 28)
+#define MMCHS_SD_STAT_BRR             (0x1 << 5) /* Buffer Read ready */
+#define MMCHS_SD_STAT_BWR             (0x1 << 4) /* Buffer Write ready */
 #define MMCHS_SD_STAT_CC              (0x1 << 0) /* Command complete status */
 #define MMCHS_SD_STAT_CC_UNRAISED     (0x0 << 0) /* Command not completed */
 #define MMCHS_SD_STAT_CC_RAISED       (0x1 << 0) /* Command completed */

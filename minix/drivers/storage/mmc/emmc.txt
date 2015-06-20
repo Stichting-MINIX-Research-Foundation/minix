@@ -1,0 +1,22 @@
+The eMMC driver was designed to be linked to the existing MMC/SD block device driver (mmcblk.c).
+
+* Mini how-to
+On the BeagleBone Black, the block device files /dev/c1d* (major = 8) are free. The driver can use /dev/c1d0.
+# service up /service/emmc -dev /dev/c1d0
+
+* 4-bit mode (data bus width)
+On the BeagleBone Black, the eMMC data lines are connected to the AM335x GPMC_AD[0-7] pins. After PoR, these pins are multiplexed to signals GPIO1_[0-7], and U-Boot only multiplexes pins GPMC_AD[0-3] to signals MMC1_DAT[0-3]. Consequently, 8-bit mode (signals MMC1_DAT[4-7]) can not be used.
+
+* Programmed Input/Output
+The driver does not have support for DMA.
+
+* High capacity cards
+Data address for media =< 2GB is byte address, and data address for media > 2GB is sector (512B) address. The driver was designed to handle both address modes, but it was tested on a 2GB card.
+
+* References
+BeagleBone Black System Reference Manual, Revision A5.6.
+AM335x Sitara Processors Technical Reference Manual. Literature number: SPRUH73L
+Embedded MultiMediaCard Product Standard (MMCA, 4.41). Document number: JESD84-A441
+AM335x Sitara Processors Datasheet. Literature number: SPRS717F
+OMAP35x Applications Processor Technical Reference Manual. Literature number: SPRUF98X
+MINIX 3 MMC/SD source code.
