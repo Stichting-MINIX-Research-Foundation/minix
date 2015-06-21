@@ -56,7 +56,6 @@ int do_stat(ino_t ino_nr, struct stat *stat)
   if ((r = verify_inode(ino, path, &attr)) != OK)
 	return r;
 
-  stat->st_ino = ino_nr;
   stat->st_mode = get_mode(ino, attr.a_mode);
   stat->st_uid = sffs_params->p_uid;
   stat->st_gid = sffs_params->p_gid;

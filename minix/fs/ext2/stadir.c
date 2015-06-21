@@ -31,8 +31,6 @@ int fs_stat(ino_t ino_nr, struct stat *statbuf)
   /* true iff special */
   s = (mo == I_CHAR_SPECIAL || mo == I_BLOCK_SPECIAL);
 
-  statbuf->st_dev = rip->i_dev;
-  statbuf->st_ino = rip->i_num;
   statbuf->st_mode = rip->i_mode;
   statbuf->st_nlink = rip->i_links_count;
   statbuf->st_uid = rip->i_uid;

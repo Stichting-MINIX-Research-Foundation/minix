@@ -17,7 +17,6 @@ fs_stat(ino_t ino_nr, struct stat * buf)
 		return EINVAL;
 
 	/* Fill in the basic info. */
-	buf->st_ino = get_inode_number(node);
 	buf->st_mode = node->i_stat.mode;
 	buf->st_nlink = !is_inode_deleted(node);
 	buf->st_uid = node->i_stat.uid;

@@ -338,7 +338,6 @@ pfs_stat(ino_t ino_nr, struct stat * statbuf)
 
 	/* Fill the stat buffer. */
 	statbuf->st_dev = rip->i_rdev;	/* workaround for old socketpair bug */
-	statbuf->st_ino = rip->i_num;
 	statbuf->st_mode = rip->i_mode;
 	statbuf->st_nlink = 0;
 	statbuf->st_uid = rip->i_uid;

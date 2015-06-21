@@ -726,6 +726,7 @@ fsdriver_stat(const struct fsdriver * __restrict fdp,
 
 	memset(&buf, 0, sizeof(buf));
 	buf.st_dev = fsdriver_device;
+	buf.st_ino = ino_nr;
 
 	if ((r = fdp->fdr_stat(ino_nr, &buf)) == OK)
 		r = sys_safecopyto(m_in->m_source, grant, 0, (vir_bytes)&buf,
