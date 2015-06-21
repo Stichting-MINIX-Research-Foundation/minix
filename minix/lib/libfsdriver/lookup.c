@@ -259,7 +259,8 @@ fsdriver_lookup(const struct fsdriver * __restrict fdp,
 			else
 				r = ELOOP;
 
-			fdp->fdr_putnode(next_node.fn_ino_nr, 1);
+			if (fdp->fdr_putnode != NULL)
+				fdp->fdr_putnode(next_node.fn_ino_nr, 1);
 
 			if (r != OK)
 				break;
@@ -276,7 +277,8 @@ fsdriver_lookup(const struct fsdriver * __restrict fdp,
 		}
 
 		/* We have found a new node.  Continue from this node. */
-		fdp->fdr_putnode(cur_node.fn_ino_nr, 1);
+		if (fdp->fdr_putnode != NULL)
+			fdp->fdr_putnode(cur_node.fn_ino_nr, 1);
 
 		cur_node = next_node;
 
@@ -324,7 +326,7 @@ fsdriver_lookup(const struct fsdriver * __restrict fdp,
 		m_out->m_fs_vfs_lookup.uid = cur_node.fn_uid;
 		m_out->m_fs_vfs_lookup.gid = cur_node.fn_gid;
 		m_out->m_fs_vfs_lookup.device = cur_node.fn_dev;
-	} else
+	} else if (fdp->fdr_putnode != NULL)
 		fdp->fdr_putnode(cur_node.fn_ino_nr, 1);
 
 	return r;

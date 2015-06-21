@@ -99,15 +99,15 @@ fsdriver_putnode(const struct fsdriver * __restrict fdp,
 	ino_nr = m_in->m_vfs_fs_putnode.inode;
 	count = m_in->m_vfs_fs_putnode.count;
 
-	if (fdp->fdr_putnode == NULL)
-		return ENOSYS;
-
 	if (count == 0 || count > INT_MAX) {
 		printf("fsdriver: invalid reference count\n");
 		return EINVAL;
 	}
 
-	return fdp->fdr_putnode(ino_nr, count);
+	if (fdp->fdr_putnode != NULL)
+		return fdp->fdr_putnode(ino_nr, count);
+	else
+		return OK;
 }
 
 /*
