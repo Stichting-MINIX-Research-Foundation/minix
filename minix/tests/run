@@ -21,7 +21,7 @@ badones=			# list of tests that failed
 
 # Programs that require setuid
 setuids="test11 test33 test43 test44 test46 test56 test60 test61 test65 \
-	 test69 test76 test73 test74 test77 test78"
+	 test69 test73 test74 test78"
 # Scripts that require to be run as root
 rootscripts="testisofs testvnd testrelpol"
 

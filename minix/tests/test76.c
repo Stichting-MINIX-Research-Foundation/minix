@@ -1,5 +1,4 @@
 /* Tests for interrupting VFS calls - by D.C. van Moolenbroek */
-/* This test needs to be run as root; otherwise, openpty() won't work. */
 #include <stdio.h>
 #include <sys/time.h>
 #include <sys/wait.h>

@@ -17,6 +17,7 @@
 ./boot/minix
 ./boot/minix_default
 ./dev
+./dev/pts
 ./etc
 ./etc/X11
 ./etc/X11/fs

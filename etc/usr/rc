@@ -196,7 +196,8 @@ start|autoboot)
 	up inet -script /etc/rs.inet -dev /dev/ip
     fi
 
-    up pty -dev /dev/ptyp0
+    # pty needs to know the "tty" group ID
+    up pty -dev /dev/ptmx -args "gid=`stat -f '%g' /dev/ptmx`"
 
     up uds -dev /dev/uds
 

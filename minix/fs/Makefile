@@ -7,6 +7,7 @@ SUBDIR+=	pfs
 SUBDIR+=	ext2
 SUBDIR+=	isofs
 SUBDIR+=	procfs
+SUBDIR+=	ptyfs
 
 .  if ${MACHINE_ARCH} == "i386"
 SUBDIR+=	hgfs

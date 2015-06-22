@@ -4,14 +4,13 @@
 # stdlib sources
 .PATH: ${ARCHDIR}/stdlib ${.CURDIR}/stdlib
 
-#LSC: MINIX: pty.c not compiled
 SRCS+=	_env.c _rand48.c \
 	a64l.c abort.c atexit.c atof.c atoi.c atol.c atoll.c \
 	bsearch.c drand48.c exit.c \
 	getenv.c getopt.c getopt_long.c getsubopt.c \
 	hcreate.c heapsort.c imaxdiv.c insque.c jrand48.c l64a.c lldiv.c \
 	lcong48.c lrand48.c lsearch.c merge.c mi_vector_hash.c mrand48.c \
-	nrand48.c putenv.c qabs.c qdiv.c qsort.c posix_openpt.c \
+	nrand48.c putenv.c qabs.c qdiv.c qsort.c posix_openpt.c pty.c \
 	quick_exit.c radixsort.c rand.c rand_r.c random.c remque.c \
 	seed48.c setenv.c srand48.c strsuftoll.c \
 	strtoimax.c strtol.c strtoll.c strtoq.c strtoul.c strtoull.c \

@@ -112,6 +112,7 @@ service_get_policies(struct policies * pol, index_t slot)
                 { .label = "mfs", .policy_str = "" },
                 { .label = "pfs", .policy_str = "" },
                 { .label = "procfs", .policy_str = "" },
+		{ .label = "ptyfs", .policy_str = "" },
                 { .label = "vbfs", .policy_str = "" },
 		/* net */
                 { .label = "inet", .policy_str = "reset" },

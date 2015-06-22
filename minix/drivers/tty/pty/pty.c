@@ -14,14 +14,37 @@
  * Be careful when reading this code, the terms "reading" and "writing" are
  * used both for the tty (slave) and the pty (master) end of the pseudo tty.
  * Writes to one end are to be read at the other end and vice-versa.
+ *
+ * In addition to the above, PTY service now also supports Unix98 pseudo-
+ * terminal pairs, thereby allowing non-root users to allocate pseudoterminals.
+ * It requires the presence for PTYFS for this, and supports only old-style
+ * ptys when PTYFS is not running. For Unix98 ptys, the general idea is that a
+ * userland program opens a pty master by opening /dev/ptmx through the use of
+ * posxix_openpt(3). A slave node is allocated on PTYFS when the program calls
+ * grantpt(3) on the master. The program can then obtain the path name for the
+ * slave end through ptsname(3), and open the slave end using this path.
+ *
+ * Implementation-wise, the Unix98 and non-Unix98 pseudoterminals share the
+ * same pool of data structures, but use different ranges of minor numbers.
+ * Access to the two types may not be mixed, and thus, some parts of the code
+ * have checks to make sure a traditional slave is not opened for a master
+ * allocated through /dev/ptmx, etcetera.
  */
 
 #include <minix/drivers.h>
+#include <paths.h>
 #include <termios.h>
 #include <assert.h>
 #include <sys/termios.h>
 #include <signal.h>
 #include "tty.h"
+#include "ptyfs.h"
+
+/* Device node attributes used for Unix98 slave nodes. */
+#define UNIX98_MODE		(S_IFCHR | 0620)	/* crw--w---- */
+
+#define UNIX98_MASTER(index)	(UNIX98_MINOR + (index) * 2)
+#define UNIX98_SLAVE(index)	(UNIX98_MINOR + (index) * 2 + 1)
 
 /* PTY bookkeeping structure, one per pty/tty pair. */
 typedef struct pty {
@@ -51,12 +74,14 @@ typedef struct pty {
   /* select() data. */
   unsigned int	select_ops;	/* Which operations do we want to know about? */
   endpoint_t	select_proc;	/* Who wants to know about it? */
+  devminor_t	select_minor;	/* Which minor was being selected on? */
 } pty_t;
 
 #define TTY_ACTIVE	0x01	/* tty is open/active */
 #define PTY_ACTIVE	0x02	/* pty is open/active */
 #define TTY_CLOSED	0x04	/* tty side has closed down */
 #define PTY_CLOSED	0x08	/* pty side has closed down */
+#define PTY_UNIX98	0x10	/* pty pair is Unix98 */
 
 static pty_t pty_table[NR_PTYS];	/* PTY bookkeeping */
 
@@ -72,6 +97,9 @@ static ssize_t pty_master_read(devminor_t minor, u64_t position,
 static ssize_t pty_master_write(devminor_t minor, u64_t position,
 	endpoint_t endpt, cp_grant_id_t grant, size_t size, int flags,
 	cdev_id_t id);
+static int pty_master_ioctl(devminor_t minor, unsigned long request,
+	endpoint_t endpt, cp_grant_id_t grant, int flags,
+	endpoint_t user_endpt, cdev_id_t id);
 static int pty_master_cancel(devminor_t minor, endpoint_t endpt, cdev_id_t id);
 static int pty_master_select(devminor_t minor, unsigned int ops,
 	endpoint_t endpt);
@@ -81,9 +109,29 @@ static struct chardriver pty_master_tab = {
   .cdr_close	= pty_master_close,
   .cdr_read	= pty_master_read,
   .cdr_write	= pty_master_write,
+  .cdr_ioctl	= pty_master_ioctl,
   .cdr_cancel	= pty_master_cancel,
   .cdr_select	= pty_master_select
 };
+
+/*===========================================================================*
+ *				get_free_pty				     *
+ *===========================================================================*/
+static tty_t *get_free_pty(void)
+{
+/* Return a pointer to a free tty structure, or NULL if no tty is free. */
+  tty_t *tp;
+  pty_t *pp;
+
+  for (tp = &tty_table[0]; tp < &tty_table[NR_PTYS]; tp++) {
+	pp = tp->tty_priv;
+
+	if (!(pp->state & (PTY_ACTIVE | TTY_ACTIVE)))
+		return tp;
+  }
+
+  return NULL;
+}
 
 /*===========================================================================*
  *				pty_master_open				     *
@@ -93,21 +141,80 @@ static int pty_master_open(devminor_t minor, int UNUSED(access),
 {
   tty_t *tp;
   pty_t *pp;
+  int r;
 
-  assert(minor >= PTYPX_MINOR && minor < PTYPX_MINOR + NR_PTYS);
+  if (minor == PTMX_MINOR) {
+	/* /dev/ptmx acts as a cloning device. We return a free PTY master and
+	 * mark it as a UNIX98 type.
+	 */
+	if ((tp = get_free_pty()) == NULL)
+		return EAGAIN; /* POSIX says this is the right error code */
 
-  if ((tp = line2tty(minor)) == NULL)
-	return ENXIO;
-  pp = tp->tty_priv;
+	/* The following call has two purposes. First, we check right here
+	 * whether PTYFS is running at all; if not, the PTMX device cannot be
+	 * opened at all and userland can fall back to other allocation
+	 * methods right away. Second, in the exceptional case that the PTY
+	 * service is restarted while PTYFS keeps running, PTYFS may expose
+	 * stale slave nodes, which are a security hole if not removed as soon
+	 * as a new PTY pair is allocated.
+	 */
+	if (ptyfs_clear(tp->tty_index) != OK)
+		return EAGAIN;
 
-  if (pp->state & PTY_ACTIVE)
-	return EIO;
+	pp = tp->tty_priv;
+	pp->state |= PTY_UNIX98;
+
+	minor = UNIX98_MASTER(tp->tty_index);
+
+	r = CDEV_CLONED | minor;
+  } else {
+	/* There is no way to open Unix98 masters directly, except by messing
+	 * with mknod. We disallow such tricks altogether, and thus, the rest
+	 * of the code deals with opening a non-Unix98 master only.
+	 */
+	if (minor < PTYPX_MINOR || minor >= PTYPX_MINOR + NR_PTYS)
+		return EIO;
+
+	if ((tp = line2tty(minor)) == NULL)
+		return ENXIO;
+	pp = tp->tty_priv;
+
+	/* For non-Unix98 PTYs, we allow the slave to be opened before the
+	 * master, but the master may be opened only once. This is how userland
+	 * is able to find a free non-Unix98 PTY pair.
+	 */
+	if (pp->state & PTY_ACTIVE)
+		return EIO;
+	assert(!(pp->state & PTY_UNIX98));
+
+	r = OK;
+  }
 
   pp->state |= PTY_ACTIVE;
+
   pp->rdcum = 0;
   pp->wrcum = 0;
 
-  return OK;
+  return r;
+}
+
+/*===========================================================================*
+ *				pty_reset				     *
+ *===========================================================================*/
+static void pty_reset(tty_t *tp)
+{
+/* Both sides of a PTY pair have been closed. Clean up its state. */
+  pty_t *pp;
+
+  pp = tp->tty_priv;
+
+  /* For Unix98 pairs, clean up the Unix98 slave node. It may never have been
+   * allocated, but we don't care. Ignore failures altogether.
+   */
+  if (pp->state & PTY_UNIX98)
+	(void)ptyfs_clear(tp->tty_index);
+
+  pp->state = 0;
 }
 
 /*===========================================================================*
@@ -123,7 +230,7 @@ static int pty_master_close(devminor_t minor)
   pp = tp->tty_priv;
 
   if ((pp->state & (TTY_ACTIVE | TTY_CLOSED)) != TTY_ACTIVE) {
-	pp->state = 0;
+	pty_reset(tp);
   } else {
 	pp->state |= PTY_CLOSED;
 	tp->tty_termios.c_ospeed = B0; /* cause EOF on slave side */
@@ -229,6 +336,66 @@ static ssize_t pty_master_write(devminor_t minor, u64_t UNUSED(position),
 }
 
 /*===========================================================================*
+ *				pty_master_ioctl			     *
+ *===========================================================================*/
+static int pty_master_ioctl(devminor_t minor, unsigned long request,
+	endpoint_t endpt, cp_grant_id_t grant, int flags,
+	endpoint_t user_endpt, cdev_id_t id)
+{
+  tty_t *tp;
+  pty_t *pp;
+  uid_t uid;
+  struct ptmget pm;
+  size_t len;
+
+  if ((tp = line2tty(minor)) == NULL)
+	return ENXIO;
+  pp = tp->tty_priv;
+
+  /* Some IOCTLs are for the master side only. */
+  switch (request) {
+  case TIOCGRANTPT:	/* grantpt(3) */
+	if (!(pp->state & PTY_UNIX98))
+		break;
+
+	if ((int)(uid = getnuid(user_endpt)) == -1)
+		return EACCES;
+	if (tty_gid == -1) {
+		printf("PTY: no tty group ID given at startup\n");
+		return EACCES;
+	}
+
+	/* Create or update the slave node. */
+	if (ptyfs_set(tp->tty_index, UNIX98_MODE, uid, tty_gid,
+	    makedev(PTY_MAJOR, UNIX98_SLAVE(tp->tty_index))) != OK)
+		return EACCES;
+
+	return OK;
+
+  case TIOCPTSNAME:	/* ptsname(3) */
+	if (!(pp->state & PTY_UNIX98))
+		break;
+
+	/* Since pm.sn is 16 bytes, we can have up to a million slaves. */
+	memset(&pm, 0, sizeof(pm));
+
+	strlcpy(pm.sn, _PATH_DEV_PTS, sizeof(pm.sn));
+	len = strlen(pm.sn);
+
+	if (ptyfs_name(tp->tty_index, &pm.sn[len], sizeof(pm.sn) - len) != OK)
+		return EINVAL;
+
+	return sys_safecopyto(endpt, grant, 0, (vir_bytes)&pm, sizeof(pm));
+  }
+
+  /* TODO: historically, all IOCTLs on the master are processed as if issued on
+   * the slave end. Make sure that this can not cause problems, in particular
+   * with blocking IOCTLs.
+   */
+  return tty_ioctl(minor, request, endpt, grant, flags, user_endpt, id);
+}
+
+/*===========================================================================*
  *				pty_master_cancel			     *
  *===========================================================================*/
 static int pty_master_cancel(devminor_t minor, endpoint_t endpt, cdev_id_t id)
@@ -292,13 +459,11 @@ static int select_try_pty(tty_t *tp, int ops)
 void select_retry_pty(tty_t *tp)
 {
   pty_t *pp = tp->tty_priv;
-  devminor_t minor;
   int r;
 
   /* See if the pty side of a pty is ready to return a select. */
   if (pp->select_ops && (r = select_try_pty(tp, pp->select_ops))) {
-	minor = PTYPX_MINOR + (int) (pp - pty_table);
-	chardriver_reply_select(pp->select_proc, minor, r);
+	chardriver_reply_select(pp->select_proc, pp->select_minor, r);
 	pp->select_ops &= ~r;
   }
 }
@@ -326,6 +491,7 @@ static int pty_master_select(devminor_t minor, unsigned int ops,
   if (ops && watch) {
 	pp->select_ops |= ops;
 	pp->select_proc = endpt;
+	pp->select_minor = minor;
   }
 
   return ready_ops;
@@ -535,14 +701,33 @@ static int pty_slave_read(tty_t *tp, int try)
 }
 
 /*===========================================================================*
+ *				pty_slave_mayopen			     *
+ *===========================================================================*/
+static int pty_slave_mayopen(tty_t *tp, devminor_t line)
+{
+/* Check if the user is not mixing Unix98 and non-Unix98 terminal ends. */
+  pty_t *pp;
+  int unix98_line, unix98_pty;
+
+  pp = tp->tty_priv;
+
+  /* A non-Unix98 slave may be opened even if the corresponding master is not
+   * opened yet, but PTY_UNIX98 is always clear for free ptys.  A Unix98 slave
+   * may not be opened before its master, but this should not occur anyway.
+   */
+  unix98_line = (line >= UNIX98_MINOR && line < UNIX98_MINOR + NR_PTYS * 2);
+  unix98_pty = !!(pp->state & PTY_UNIX98);
+
+  return (unix98_line == unix98_pty);
+}
+
+/*===========================================================================*
  *				pty_slave_open				     *
  *===========================================================================*/
 static int pty_slave_open(tty_t *tp, int UNUSED(try))
 {
 /* The tty side has been opened. */
   pty_t *pp = tp->tty_priv;
-
-  assert(tp->tty_minor >= TTYPX_MINOR && tp->tty_minor < TTYPX_MINOR + NR_PTYS);
 
   /* TTY_ACTIVE may already be set, which would indicate that the slave is
    * reopened after being fully closed while the master is still open. In that
@@ -576,7 +761,7 @@ static int pty_slave_close(tty_t *tp, int UNUSED(try))
 	pp->wrcaller = NONE;
   }
 
-  if (pp->state & PTY_CLOSED) pp->state = 0;
+  if (pp->state & PTY_CLOSED) pty_reset(tp);
   else pp->state |= TTY_CLOSED;
 
   return 0;
@@ -638,6 +823,7 @@ void pty_init(tty_t *tp)
   tp->tty_echo = pty_slave_echo;
   tp->tty_icancel = pty_slave_icancel;
   tp->tty_ocancel = pty_slave_ocancel;
+  tp->tty_mayopen = pty_slave_mayopen;
   tp->tty_open = pty_slave_open;
   tp->tty_close = pty_slave_close;
   tp->tty_select_ops = 0;

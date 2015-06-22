@@ -713,10 +713,11 @@ ln -s /usr/log /mnt/var/log
 
 # CD remnants that aren't for the installed system
 rm /mnt/etc/issue /mnt/CD /mnt/.* 2>/dev/null
-echo >/mnt/etc/fstab "/dev/$root	/	mfs	rw			0	1
-/dev/$usr	/usr	$FSTYPE	rw			0	2
+echo >/mnt/etc/fstab "/dev/$root	/		mfs	rw			0	1
+/dev/$usr	/usr		$FSTYPE	rw			0	2
 $fshome
-none		/sys	devman	rw,rslabel=devman	0	0"
+none		/sys		devman	rw,rslabel=devman	0	0
+none		/dev/pts	ptyfs	rw,rslabel=ptyfs	0	0"
 
 					# National keyboard map.
 test -n "$keymap" && cp -p "/usr/lib/keymaps/$keymap.map" /mnt/etc/keymap
