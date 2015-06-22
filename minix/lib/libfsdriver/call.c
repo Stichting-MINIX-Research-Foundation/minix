@@ -3,6 +3,8 @@
 #include <minix/ds.h>
 #include <sys/mman.h>
 
+static int fsdriver_vmcache;	/* have we used the VM cache? */
+
 /*
  * Process a READSUPER request from VFS.
  */
@@ -59,6 +61,7 @@ fsdriver_readsuper(const struct fsdriver * __restrict fdp,
 		fsdriver_mounted = TRUE;
 		fsdriver_device = dev;
 		fsdriver_root = root_node.fn_ino_nr;
+		fsdriver_vmcache = FALSE;
 	}
 
 	return r;
@@ -77,7 +80,7 @@ fsdriver_unmount(const struct fsdriver * __restrict fdp,
 		fdp->fdr_unmount();
 
 	/* If we used mmap emulation, clear any cached blocks from VM. */
-	if (fdp->fdr_peek == NULL && major(fsdriver_device) == NONE_MAJOR)
+	if (fsdriver_vmcache)
 		vm_clear_cache(fsdriver_device);
 
 	/* Update library-local state. */
@@ -256,6 +259,8 @@ builtin_peek(const struct fsdriver * __restrict fdp, ino_t ino_nr,
 		    pos, &flags, nbytes, VMSF_ONCE);
 
 		if (r == OK) {
+			fsdriver_vmcache = TRUE;
+
 			dev_off += nbytes;
 
 			r = nbytes;
