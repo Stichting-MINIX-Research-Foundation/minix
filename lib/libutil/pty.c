@@ -42,6 +42,9 @@ __RCSID("$NetBSD: pty.c,v 1.31 2009/02/20 16:44:06 christos Exp $");
 #include <sys/ioctl.h>
 #include <sys/stat.h>
 
+#ifdef __minix
+#include <stdlib.h>
+#endif /* __minix */
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -89,7 +92,19 @@ openpty(int *amaster, int *aslave, char *name, struct termios *term,
 		}
 		(void)close(master);
 	}
-#endif /* !defined(__minix) */
+#else /* defined(__minix) */
+	/*
+	 * On MINIX3, we implement non-root openpty(3) using Unix98 PTYs.
+	 * If this fails, the fallback code below works for root only.
+	 */
+	if ((master = posix_openpt(O_RDWR | O_NOCTTY)) != -1) {
+		if (grantpt(master) != -1 && unlockpt(master) != -1 &&
+		    (linep = ptsname(master)) != NULL &&
+		    (slave = open(linep, O_RDWR | O_NOCTTY)) != -1)
+			goto gotit;
+		(void)close(master);
+	}
+#endif /* defined(__minix) */
 
 	(void)getgrnam_r("tty", &grs, grbuf, sizeof(grbuf), &grp);
 	if (grp != NULL) {
@@ -129,9 +144,7 @@ openpty(int *amaster, int *aslave, char *name, struct termios *term,
 #else
 			    (slave = open(line, O_RDWR, 0)) != -1) {
 #endif
-#if !defined(__minix)
 gotit:
-#endif /* !defined(__minix) */
 				*amaster = master;
 				*aslave = slave;
 				if (name)

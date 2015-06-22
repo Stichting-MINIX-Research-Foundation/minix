@@ -4,8 +4,10 @@
 #include <minix/timers.h>
 
 /* First minor numbers for the various classes of TTY devices. */
+#define PTMX_MINOR	   0	/* minor of the Unix98 clone device */
 #define TTYPX_MINOR	 128
 #define PTYPX_MINOR	 192
+#define UNIX98_MINOR	 256	/* start of Unix98 pairs */
 
 #define TTY_IN_BYTES     256	/* tty input queue size */
 #define TTY_OUT_BYTES   2048	/* tty output queue size */
@@ -15,13 +17,13 @@
 #define ESC             '\33'	/* escape */
 
 struct tty;
-typedef int(*devfun_t) (struct tty *tp, int try_only);
-typedef void(*devfunarg_t) (struct tty *tp, int c);
+typedef int (*devfun_t)(struct tty *tp, int try_only);
+typedef void (*devfunarg_t)(struct tty *tp, int c);
+typedef int (*devfunline_t)(struct tty *tp, devminor_t line);
 
 typedef struct tty {
   int tty_events;		/* set when TTY should inspect this line */
   int tty_index;		/* index into TTY table */
-  devminor_t tty_minor;		/* device minor number */
 
   /* Input queue.  Typed characters are stored here until read by a program. */
   u16_t *tty_inhead;		/* pointer to place where next char goes */
@@ -70,7 +72,7 @@ typedef struct tty {
   devminor_t tty_select_minor;	/* minor used to start select query */
 
   /* Miscellaneous. */
-  devfun_t tty_ioctl;		/* set line speed, etc. at the device level */
+  devfunline_t tty_mayopen;	/* check whether this tty may be opened */
   devfun_t tty_open;		/* tell the device that the tty is opened */ 
   devfun_t tty_close;		/* tell the device that the tty is closed */
   void *tty_priv;		/* pointer to per device private data */
@@ -84,6 +86,7 @@ typedef struct tty {
 /* Memory allocated in tty.c, so extern here. */
 extern tty_t tty_table[NR_PTYS];
 extern u32_t system_hz;		/* system clock frequency */
+extern int tty_gid;		/* group ID of the "tty" group */
 
 /* Values for the fields. */
 #define NOT_ESCAPED        0	/* previous character is not LNEXT (^V) */
@@ -115,6 +118,8 @@ void out_process(struct tty *tp, char *bstart, char *bpos, char *bend,
 void tty_wakeup(clock_t now);
 int select_try(struct tty *tp, int ops);
 int select_retry(struct tty *tp);
+int tty_ioctl(devminor_t minor, unsigned long request, endpoint_t endpt,
+	cp_grant_id_t grant, int flags, endpoint_t user_endpt, cdev_id_t id);
 
 /* pty.c */
 void do_pty(message *m_ptr, int ipc_status);

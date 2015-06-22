@@ -1559,6 +1559,24 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_pm_sched_scheduling_set_nice);
 
 typedef struct {
+	dev_t dev;
+	mode_t mode;
+	uid_t uid;
+	gid_t gid;
+	uint32_t index;
+
+	uint8_t padding[32];
+} mess_pty_ptyfs_req;
+_ASSERT_MSG_SIZE(mess_pty_ptyfs_req);
+
+typedef struct {
+	char name[20];
+
+	uint8_t padding[36];
+} mess_ptyfs_pty_name;
+_ASSERT_MSG_SIZE(mess_ptyfs_pty_name);
+
+typedef struct {
 	int status;
 
 	uint8_t padding[52];
@@ -2176,6 +2194,8 @@ typedef struct {
 		mess_pm_lsys_getprocnr	m_pm_lsys_getprocnr;
 		mess_pm_lsys_sigs_signal m_pm_lsys_sigs_signal;
 		mess_pm_sched_scheduling_set_nice m_pm_sched_scheduling_set_nice;
+		mess_pty_ptyfs_req	m_pty_ptyfs_req;
+		mess_ptyfs_pty_name	m_ptyfs_pty_name;
 		mess_readclock_lc_rtcdev m_readclock_lc_rtcdev;
 		mess_rs_init		m_rs_init;
 		mess_rs_pm_exec_restart	m_rs_pm_exec_restart;

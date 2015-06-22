@@ -28,6 +28,7 @@
  *   0x1400 - 0x14FF	Real Time Clock requests and responses
  *   0x1500 - 0x15FF	Input server messages
  *   0x1600 - 0x16FF	VirtualBox (VBOX) requests (see vboxif.h)
+ *   0x1700 - 0x17FF	PTYFS requests
  *
  * Zero and negative values are widely used for OK and error responses.
  */
@@ -847,6 +848,16 @@
 #define INPUT_SETLEDS		(INPUT_RQ_BASE + 1)	/* set keyboard LEDs */
 
 #define INPUT_EVENT		(INPUT_RS_BASE + 0)	/* send input event */
+
+/*===========================================================================*
+ *			Messages for PTYFS				     *
+ *===========================================================================*/
+
+#define PTYFS_BASE 0x1700
+
+#define PTYFS_SET		(PTYFS_BASE + 0)	/* add/update node */
+#define PTYFS_CLEAR		(PTYFS_BASE + 1)	/* delete node */
+#define PTYFS_NAME		(PTYFS_BASE + 2)	/* get node name */
 
 /*===========================================================================*
  *			VFS-FS TRANSACTION IDs				     *

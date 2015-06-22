@@ -1,3 +1,9 @@
+20150623:
+	In order to use the new Unix98 PTYs, and to ensure that the test set
+	continues to pass, please add the following line to your /etc/fstab:
+
+	"none	/dev/pts	ptyfs	rw,rslabel=ptyfs	0	0"
+
 20140801:
 	As the ABI went under heavy changes it is not possible to do a source
 	upgrade (make build) between:

@@ -159,6 +159,9 @@ do
 	    fi
 	esac
 	;;
+    9,0)
+	des="unix98 pseudoterminal master" dev=ptmx
+	;;
     9,12[89]|9,1[3-8]?|9,19[01])
 	p=`expr \\( $minor - 128 \\) / 16 | tr '0123' 'pqrs'`
 	n=`expr $minor % 16`

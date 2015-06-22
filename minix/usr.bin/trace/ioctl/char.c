@@ -273,6 +273,7 @@ char_ioctl_arg(struct trace_proc * proc, unsigned long req, void * ptr,
 	struct volume_level *level;
 	struct inout_ctrl *inout;
 	struct termios *tc;
+	struct ptmget *pm;
 	struct winsize *ws;
 	struct kio_bell *bell;
 	struct kio_leds *leds;
@@ -281,7 +282,6 @@ char_ioctl_arg(struct trace_proc * proc, unsigned long req, void * ptr,
 	struct pciio_businfo *pci_businfo;
 	struct pciio_map *pci_iomap;
 	struct pciio_acl *pci_acl;
-
 
 	switch (req) {
 	case MINIX_I2C_IOCTL_EXEC:
@@ -450,6 +450,14 @@ char_ioctl_arg(struct trace_proc * proc, unsigned long req, void * ptr,
 			return dir;
 
 		put_value(proc, NULL, "%d", *(int *)ptr);
+		return IF_ALL;
+
+	case TIOCPTSNAME:
+		if ((pm = (struct ptmget *)ptr) == NULL)
+			return IF_IN;
+
+		put_buf(proc, "sn", PF_LOCADDR | PF_STRING, (vir_bytes)pm->sn,
+		    sizeof(pm->sn));
 		return IF_ALL;
 
 	case TIOCSTI:
