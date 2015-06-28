@@ -128,7 +128,7 @@ static void sef_local_startup()
 /*===========================================================================*
  *		            sef_cb_init_fresh                                *
  *===========================================================================*/
-static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
+static int sef_cb_init_fresh(int type, sef_init_info_t *UNUSED(info))
 {
 /* Initialize the memory driver. */
   int i;
@@ -162,6 +162,9 @@ static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
   m_geom[MEM_DEV].dv_size = 0xffffffffULL;
 
   m_vaddrs[MEM_DEV] = (vir_bytes) MAP_FAILED; /* we are not mapping this in. */
+
+  chardriver_announce();
+  blockdriver_announce(type);
 
   return(OK);
 }
