@@ -255,6 +255,7 @@ struct proc {
 				    because of VM modifying the sender's address
 				    space*/
 #define MF_STEP		 0x40000 /* Single-step process */
+#define MF_MSGFAILED	 0x80000
 
 /* Magic process table addresses. */
 #define BEG_PROC_ADDR (&proc[0])

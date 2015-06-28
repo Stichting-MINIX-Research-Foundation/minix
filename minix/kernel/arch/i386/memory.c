@@ -422,37 +422,6 @@ size_t vm_lookup_range(const struct proc *proc, vir_bytes vir_addr,
 }
 
 /*===========================================================================*
- *                              vm_suspend                                *
- *===========================================================================*/
-static void vm_suspend(struct proc *caller, const struct proc *target,
-	const vir_bytes linaddr, const vir_bytes len, const int type,
-	const int writeflag)
-{
-	/* This range is not OK for this process. Set parameters  
-	 * of the request and notify VM about the pending request. 
-	 */								
-	assert(!RTS_ISSET(caller, RTS_VMREQUEST));
-	assert(!RTS_ISSET(target, RTS_VMREQUEST));
-
-	RTS_SET(caller, RTS_VMREQUEST);
-
-	assert(caller->p_endpoint != VM_PROC_NR);
-
-	caller->p_vmrequest.req_type = VMPTYPE_CHECK;
-	caller->p_vmrequest.target = target->p_endpoint;
-	caller->p_vmrequest.params.check.start = linaddr;
-	caller->p_vmrequest.params.check.length = len;
-	caller->p_vmrequest.params.check.writeflag = writeflag;
-	caller->p_vmrequest.type = type;
-							
-	/* Connect caller on vmrequest wait queue. */	
-	if(!(caller->p_vmrequest.nextrequestor = vmrequest))
-		if(OK != send_sig(VM_PROC_NR, SIGKMEM))
-			panic("send_sig failed");
-	vmrequest = caller;
-}
-
-/*===========================================================================*
  *				vm_check_range				     *
  *===========================================================================*/
 int vm_check_range(struct proc *caller, struct proc *target,
@@ -476,36 +445,6 @@ int vm_check_range(struct proc *caller, struct proc *target,
 		writeflag);
 
 	return VMSUSPEND;
-}
-
-/*===========================================================================*
- *                              delivermsg                                *
- *===========================================================================*/
-void delivermsg(struct proc *rp)
-{
-	int r = OK;
-
-	assert(rp->p_misc_flags & MF_DELIVERMSG);
-	assert(rp->p_delivermsg.m_source != NONE);
-
-	if (copy_msg_to_user(&rp->p_delivermsg,
-				(message *) rp->p_delivermsg_vir)) {
-		printf("WARNING wrong user pointer 0x%08lx from "
-				"process %s / %d\n",
-				rp->p_delivermsg_vir,
-				rp->p_name,
-				rp->p_endpoint);
-		cause_sig(rp->p_nr, SIGSEGV);
-		r = EFAULT;
-	}
-
-	/* Indicate message has been delivered; address is 'used'. */
-	rp->p_delivermsg.m_source = NONE;
-	rp->p_misc_flags &= ~MF_DELIVERMSG;
-
-	if(!(rp->p_misc_flags & MF_CONTEXT_SET)) {
-		rp->p_reg.retreg = r;
-	}
 }
 
 #if 0

@@ -232,6 +232,71 @@ static void idle(void)
 }
 
 /*===========================================================================*
+ *                              vm_suspend                                *
+ *===========================================================================*/
+void vm_suspend(struct proc *caller, const struct proc *target,
+        const vir_bytes linaddr, const vir_bytes len, const int type,
+        const int writeflag)
+{
+        /* This range is not OK for this process. Set parameters
+         * of the request and notify VM about the pending request.
+         */
+        assert(!RTS_ISSET(caller, RTS_VMREQUEST));
+        assert(!RTS_ISSET(target, RTS_VMREQUEST));
+
+        RTS_SET(caller, RTS_VMREQUEST);
+
+        caller->p_vmrequest.req_type = VMPTYPE_CHECK;
+        caller->p_vmrequest.target = target->p_endpoint;
+        caller->p_vmrequest.params.check.start = linaddr;
+        caller->p_vmrequest.params.check.length = len;
+        caller->p_vmrequest.params.check.writeflag = writeflag;
+        caller->p_vmrequest.type = type;
+
+        /* Connect caller on vmrequest wait queue. */
+        if(!(caller->p_vmrequest.nextrequestor = vmrequest))
+                if(OK != send_sig(VM_PROC_NR, SIGKMEM))
+                        panic("send_sig failed");
+        vmrequest = caller;
+}
+
+/*===========================================================================*
+ *                              delivermsg                                *
+ *===========================================================================*/
+static void delivermsg(struct proc *rp)
+{
+        assert(!RTS_ISSET(rp, RTS_VMREQUEST));
+        assert(rp->p_misc_flags & MF_DELIVERMSG);
+        assert(rp->p_delivermsg.m_source != NONE);
+
+        if (copy_msg_to_user(&rp->p_delivermsg,
+                                (message *) rp->p_delivermsg_vir)) {
+                if(rp->p_misc_flags & MF_MSGFAILED) {
+                        /* 2nd consecutive failure means this won't succeed */
+                        printf("WARNING wrong user pointer 0x%08lx from "
+                                "process %s / %d\n",
+                                rp->p_delivermsg_vir,
+                                rp->p_name,
+                                rp->p_endpoint);
+                        cause_sig(rp->p_nr, SIGSEGV);
+                } else {
+                        /* 1st failure means we have to ask VM to handle it */
+                        vm_suspend(rp, rp, rp->p_delivermsg_vir,
+                                sizeof(message), VMSTYPE_DELIVERMSG, 1);
+                        rp->p_misc_flags |= MF_MSGFAILED;
+                }
+        } else {
+                /* Indicate message has been delivered; address is 'used'. */
+                rp->p_delivermsg.m_source = NONE;
+                rp->p_misc_flags &= ~(MF_DELIVERMSG|MF_MSGFAILED);
+
+                if(!(rp->p_misc_flags & MF_CONTEXT_SET)) {
+                        rp->p_reg.retreg = OK;
+                }
+        }
+}
+
+/*===========================================================================*
  *				switch_to_user				     * 
  *===========================================================================*/
 void switch_to_user(void)

@@ -59,6 +59,9 @@ int has_pending_notify(struct proc * caller, int src_p);
 int has_pending_asend(struct proc * caller, int src_p);
 void unset_notify_pending(struct proc * caller, int src_p);
 int mini_notify(const struct proc *src, endpoint_t dst);
+void vm_suspend(struct proc *caller, const struct proc *target,
+        const vir_bytes linaddr, const vir_bytes len, const int type,
+        const int writeflag);
 void enqueue(struct proc *rp);
 void dequeue(struct proc *rp);
 void switch_to_user(void);
@@ -215,7 +218,6 @@ int vm_lookup(const struct proc *proc, vir_bytes virtual, phys_bytes
 	*result, u32_t *ptent);
 size_t vm_lookup_range(const struct proc *proc,
        vir_bytes vir_addr, phys_bytes *phys_addr, size_t bytes);
-void delivermsg(struct proc *target);
 void arch_do_syscall(struct proc *proc);
 int arch_phys_map(int index, phys_bytes *addr, phys_bytes *len, int
 	*flags);
