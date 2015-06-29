@@ -2,8 +2,8 @@
 #ifndef _PASS_H
 #define _PASS_H
 
-#import <set>
-#import <map>
+#include <set>
+#include <map>
 
 #include <llvm/Pass.h>
 #include <llvm/Support/raw_ostream.h>
