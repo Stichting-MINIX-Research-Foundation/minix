@@ -1,0 +1,11 @@
+
+MODULE = magic_st
+
+OBJS = magic_st.o
+
+USE_SECTIONIFY=YES
+SECTIONIFY_DATA_SECTION_MAP=.*/magic_data_st 
+SECTIONIFY_FUNCTION_SECTION_MAP=.*/magic_functions_st 
+
+include Makefile.inc
+
