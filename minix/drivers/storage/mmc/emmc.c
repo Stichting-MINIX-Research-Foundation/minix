@@ -48,11 +48,21 @@
 /* The card sector size is 512B. */
 #define SEC_SIZE 512
 
+/*
+ * AM335x Control Module registers CONF_GPMC_ADn.
+ * Configuration do multiplex CONF_GPMC_ADn to signals MMC1_DATn (Mode 1).
+ */
+#define CONF_GPMC_AD(N)  (0x800 + 4*(N))
+#define CONF_GPMC_AD_MASK 0x7F
+#define CONF_GPMC_AD_VAL  0x31
+
 /* AM335x MMC1 memory map (physical start address and size). */
 #define AM335X_MMC1_BASE_ADDR 0x481D8000
 #define AM335X_MMC1_SIZE (4 << 10)
 /* AM335x MMC1 interrupt number. */
 #define AM335X_MMCSD1INT 28
+
+static uint32_t bus_width;
 
 /* AM335x MMCHS registers virtual addresses: virtual base + offset. */
 static struct omap_mmchs_registers *reg;
@@ -439,8 +449,8 @@ read_busy(void)
 {
 	uint32_t stat;
 	/*
-	 * The busy signal is optional, but the host controller will assert 
-	 * SD_STAT[1] TC even if the card does not send it. 
+	 * The busy signal is optional, but the host controller will assert
+	 * SD_STAT[1] TC even if the card does not send it.
 	 */
 	if (irq_wait() < 0)
 		return -1;
@@ -620,6 +630,24 @@ minix_init(void)
 }
 
 /*
+ * Configure the Control Module registers CONF_GPMC_AD4-7.
+ * Multiplex pins GPMC_AD4-7 to signals MMC1_DAT4-7 (Mode 1).
+ * Return 0 on success, a negative integer on error.
+ */
+static int
+conf_gpmc_ad(void)
+{
+	uint32_t i;
+
+	for (i=4; i<8; i++) {
+		if (sys_padconf(CONF_GPMC_AD(i), CONF_GPMC_AD_MASK,
+			CONF_GPMC_AD_VAL) != OK)
+			return -1;
+	}
+	return 0;
+}
+
+/*
  * Interface to the MINIX block device driver.
  * Host controller initialization.
  * Return 0 on success, a negative integer on error.
@@ -637,6 +665,16 @@ emmc_host_init(struct mmc_host *host)
 	/* Initialize the driver and kernel structures. */
 	if (minix_init() < 0)
 		return -1;
+
+	/*
+	 * Multiplex pins GPMC_AD4-7 to signals MMC1_DAT4-7 (Mode 1), in order
+	 * to allow the use of 8-bit mode.
+	 * U-Boot multiplexes only pins GPMC_AD0-3 to signals MMC1_DAT0-3.
+	 */
+	if (conf_gpmc_ad() < 0)
+		bus_width = EXT_CSD_BUS_WIDTH_4;
+	else
+		bus_width = EXT_CSD_BUS_WIDTH_8;
 
 	/* Reset the host controller. */
 	set32(reg->SYSCONFIG, MMCHS_SD_SYSCONFIG_SOFTRESET,
@@ -676,7 +714,7 @@ emmc_host_init(struct mmc_host *host)
 
 	/* Enable the bus clock. */
 	set32(reg->SYSCTL, MMCHS_SD_SYSCTL_CEN, MMCHS_SD_SYSCTL_CEN_EN);
-	
+
 	/*
 	 * Set the internal clock gating strategy to automatic, and enable
 	 * Smart Idle mode. The host controller does not implement wake-up
@@ -810,7 +848,7 @@ emmc_card_initialize(struct sd_slot *slot)
 	/* Card capacity for densities greater than 2GB. */
 	if (MMC_EXT_CSD_SEC_COUNT > 0)
 		card_size = (uint64_t)MMC_EXT_CSD_SEC_COUNT * SEC_SIZE;
-	
+
 	/* CMD6. Switch to high-speed mode: EXT_CSD[185] HS_TIMING = 1. */
 	if (mmc_switch(MMC_SWITCH_MODE_WRITE_BYTE, EXT_CSD_HS_TIMING, 1) < 0)
 		return NULL;
@@ -832,9 +870,9 @@ emmc_card_initialize(struct sd_slot *slot)
 	/* Set data and busy time-out: ~ 2,8s @ 48MHz.*/
 	set32(reg->SYSCTL, MMCHS_SD_SYSCTL_DTO, MMCHS_SD_SYSCTL_DTO_2POW27);
 
-	/* CMD6. Set data bus width to 4. */
+	/* CMD6. Set data bus width. */
 	if (mmc_switch(MMC_SWITCH_MODE_WRITE_BYTE, EXT_CSD_BUS_WIDTH,
-		EXT_CSD_BUS_WIDTH_4) < 0)
+		bus_width) < 0)
 		return NULL;
 	/* Wait for the (optional) busy signal. */
 	if (read_busy() < 0)
@@ -843,8 +881,11 @@ emmc_card_initialize(struct sd_slot *slot)
 	if (send_status() < 0)
 		return NULL;
 
-	/* Host controller: set 4-bit data bus width. */
-	set32(reg->HCTL, MMCHS_SD_HCTL_DTW, MMCHS_SD_HCTL_DTW_4BIT);
+	/* Host controller: set data bus width. */
+	if (bus_width == EXT_CSD_BUS_WIDTH_4)
+		set32(reg->HCTL, MMCHS_SD_HCTL_DTW, MMCHS_SD_HCTL_DTW_4BIT);
+	else
+		set32(reg->CON, MMCHS_SD_CON_DW8, MMCHS_SD_CON_DW8_8BITS);
 
 	/* CMD16. Set block length to sector size (512B). */
 	if (set_blocklen() < 0)
