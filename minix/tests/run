@@ -16,6 +16,7 @@ failed=`expr 0`			# count number of tests that failed
 skipped=`expr 0`		# count number of tests that were skipped
 total=`expr 0`			# total number of tests tried
 badones=			# list of tests that failed
+export USENETWORK		# set to "yes" for test48 to use the network
 
 # In the lists below, shell scripts should be listed without ".sh" suffix
 

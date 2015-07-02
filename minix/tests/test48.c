@@ -577,17 +577,18 @@ static void test_getnameinfo_all(void)
 
 static int can_use_network(void)
 {
-	int status;
+	const char *usenet;
 
-	/* try to ping minix3.org */
-	status = system("ping -w 5 www.minix3.org > /dev/null 2>&1");
-	if (status == 127)
-	{
-		printf("cannot execute ping\n");
-		err();
-	}
+	/* set $USENETWORK to "yes" or "no" to indicate whether
+	 * an internet connection is to be expected; defaults to "no"
+	 */
+	usenet = getenv("USENETWORK");
+	if (!usenet || !*usenet) return 0; /* default: disable network */
+	if (strcmp(usenet, "yes") == 0) return 1; /* network enabled */
+	if (strcmp(usenet, "no") == 0) return 0; /* network disabled */
 
-	return status == 0;
+	fprintf(stderr, "warning: invalid $USENETWORK value: %s\n", usenet);
+	return 0;
 }
 
 int main(void)
@@ -597,8 +598,6 @@ int main(void)
 	start(48);
 
 	use_network = can_use_network();
-	if (!use_network)
-		printf("Warning: no network\n");
 	test_getaddrinfo_all(use_network);
 	test_getnameinfo_all();
 
