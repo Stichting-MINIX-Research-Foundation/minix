@@ -1,4 +1,5 @@
 
+include ../Makefile.common.inc
 include ../Makefile.settings
 
 MODULE_NAME=$(MODULE).bcc

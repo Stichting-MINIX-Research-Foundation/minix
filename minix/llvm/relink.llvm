@@ -50,6 +50,17 @@ function check_current_dir()
    MINIX_LLVM_DIR="${MINIX_ROOT}/minix/llvm"
 }
 
+# Copied from configure.llvm.inc
+function build_llvm_libs()
+{
+	local LIBS=""
+	for a in $*
+	do
+		LIBS="$LIBS `find $INSTALL_DIR -maxdepth 1 -name ${a}\*.bcc | xargs`"
+	done
+	echo $LIBS
+}
+
 function find_static_libs()
 {
 	local stat_libs_llvmapps=
@@ -77,12 +88,8 @@ if [ "$1" == "--help" ] || [ "$1" == "-h" ]; then
         exit 1
 fi
 
-# set up the bridge to llvm-apps repository and initialize
 . ${MINIX_LLVM_DIR}/minix.inc
-. ${ROOT}/apps/scripts/include/configure.llvm.inc
 
-echo "LLVM root directory is set to :"
-echo "	${ROOT}"
 echo ".so and .bcc binaries of LLVM passes set to be picked up from:"
 echo "	${INSTALL_DIR}"
 echo " 	     and"

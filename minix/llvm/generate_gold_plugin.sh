@@ -65,3 +65,9 @@ make install
 
 cd ${NETBSDSRCDIR}/minix/llvm/passes/hello
 make install
+
+cd ${NETBSDSRCDIR}/minix/llvm/passes/sectionify
+make install
+
+cd ${NETBSDSRCDIR}/minix/llvm/passes/magic
+make install
