@@ -1,11 +1,8 @@
 ***** Minix 3 Audio drivers *****
 
 Directories:
-common/            Generic driver framework
 es1370/            ES1370 driver
 es1371/            ES1371 driver
-
-Needs updating:
 sb16/              SB16 ISA driver
 
 Running the drivers:
