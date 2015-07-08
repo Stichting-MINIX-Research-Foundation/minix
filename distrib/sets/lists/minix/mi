@@ -6329,6 +6329,8 @@
 ./usr/tests/minix-posix/test78		minix-sys
 ./usr/tests/minix-posix/test79		minix-sys
 ./usr/tests/minix-posix/test8		minix-sys
+./usr/tests/minix-posix/test80		minix-sys
+./usr/tests/minix-posix/test81		minix-sys
 ./usr/tests/minix-posix/test9		minix-sys
 ./usr/tests/minix-posix/testinterp	minix-sys
 ./usr/tests/minix-posix/testisofs	minix-sys
