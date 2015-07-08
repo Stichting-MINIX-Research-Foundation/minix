@@ -170,9 +170,9 @@ printprogress(char *msg, int i, int max)
         prev_time = now;
 }
 
-void getmem(u32_t *total, u32_t *free, u32_t *cached)
+void getmem(uint32_t *total, uint32_t *free, uint32_t *cached)
 {
-        u32_t pagesize, largest;
+        uint32_t pagesize, largest;
         FILE *f = fopen("/proc/meminfo", "r");
         if(!f) return;
         if(fscanf(f, "%u %u %u %u %u", &pagesize, total, free,
