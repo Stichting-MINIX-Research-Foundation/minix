@@ -23,5 +23,6 @@ void rm_rf_dir(int test_nr);
 void rm_rf_ppdir(int test_nr);
 void start(int test_nr);
 void getmem(uint32_t *total, uint32_t *free, uint32_t *cached);
+int get_setting_use_network(void);
 
 extern int common_test_nr, errct, subtest;

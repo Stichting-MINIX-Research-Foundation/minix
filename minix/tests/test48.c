@@ -575,29 +575,13 @@ static void test_getnameinfo_all(void)
 	}
 }
 
-static int can_use_network(void)
-{
-	const char *usenet;
-
-	/* set $USENETWORK to "yes" or "no" to indicate whether
-	 * an internet connection is to be expected; defaults to "no"
-	 */
-	usenet = getenv("USENETWORK");
-	if (!usenet || !*usenet) return 0; /* default: disable network */
-	if (strcmp(usenet, "yes") == 0) return 1; /* network enabled */
-	if (strcmp(usenet, "no") == 0) return 0; /* network disabled */
-
-	fprintf(stderr, "warning: invalid $USENETWORK value: %s\n", usenet);
-	return 0;
-}
-
 int main(void)
 {
 	int use_network;
 
 	start(48);
 
-	use_network = can_use_network();
+	use_network = get_setting_use_network();
 	test_getaddrinfo_all(use_network);
 	test_getnameinfo_all();
 

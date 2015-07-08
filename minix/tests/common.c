@@ -183,3 +183,23 @@ void getmem(uint32_t *total, uint32_t *free, uint32_t *cached)
         fclose(f);
 }
 
+static int get_setting(const char *name, int def)
+{
+	const char *value;
+
+	value = getenv(name);
+	if (!value || !*value) return def;
+	if (strcmp(value, "yes") == 0) return 1;
+	if (strcmp(value, "no") == 0) return 0;
+
+	fprintf(stderr, "warning: invalid $%s value: %s\n", name, value);
+	return 0;
+}
+
+int get_setting_use_network(void)
+{
+	/* set $USENETWORK to "yes" or "no" to indicate whether
+	 * an internet connection is to be expected; defaults to "no"
+	 */
+	return get_setting("USENETWORK", 0);
+}
