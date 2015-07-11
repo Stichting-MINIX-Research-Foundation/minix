@@ -17,7 +17,7 @@ SRCS+= dhcp_gettag.c dhcp_settag.c fsversion.c gcov.c gcov_flush.c itoa.c \
 .if defined(__MINIX)
 # Unsupported by Minix.
 # 	closefrom.c confstr.c extattr.c getdevmajor.c \
-#	pthread_atfork.c setdomainname.c \
+#	pthread_atfork.c \
 #	sysctlbyname.c sysctlgetmibinfo.c sysctlnametomib.c
 #	wait3.c
 
@@ -46,7 +46,7 @@ SRCS+= 	_errno.c alarm.c alphasort.c arc4random.c assert.c basename.c clock.c \
 	posix_spawn_fileactions.c posix_spawnp.c \
 	psignal.c \
 	ptree.c pwcache.c pw_scan.c raise.c randomid.c rb.c readdir.c \
-	rewinddir.c scandir.c seekdir.c \
+	rewinddir.c scandir.c seekdir.c setdomainname.c \
 	sethostname.c setjmperr.c setmode.c setproctitle.c setprogname.c \
 	shquote.c shquotev.c sighold.c sigignore.c siginterrupt.c \
 	siglist.c signal.c signame.c sigrelse.c \

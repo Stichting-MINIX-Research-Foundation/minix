@@ -19,6 +19,7 @@
 ./bin/date				minix-sys
 ./bin/dd				minix-sys
 ./bin/df				minix-sys
+./bin/domainname			minix-sys
 ./bin/echo				minix-sys
 ./bin/ed				minix-sys
 ./bin/expr				minix-sys
@@ -2367,6 +2368,7 @@
 ./usr/man/man1/dhrystone.1		minix-sys
 ./usr/man/man1/diff.1			minix-sys
 ./usr/man/man1/dirname.1		minix-sys
+./usr/man/man1/domainname.1		minix-sys
 ./usr/man/man1/dosdir.1			minix-sys
 ./usr/man/man1/dosread.1		minix-sys
 ./usr/man/man1/doswrite.1		minix-sys
