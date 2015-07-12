@@ -219,6 +219,36 @@ int swap_proc_slot(struct vmproc *src_vmp, struct vmproc *dst_vmp)
 	return OK;
 }
 
+/*
+ * Transfer memory mapped regions, using CoW sharing, from 'src_vmp' to
+ * 'dst_vmp', for the source process's address range of 'start_addr'
+ * (inclusive) to 'end_addr' (exclusive).  Return OK or an error code.
+ */
+static int
+transfer_mmap_regions(struct vmproc *dst_vmp, struct vmproc *src_vmp,
+	vir_bytes start_addr, vir_bytes end_addr)
+{
+	struct vir_region *start_vr, *end_vr;
+
+	start_vr = region_search(&src_vmp->vm_regions_avl, start_addr,
+	    AVL_GREATER_EQUAL);
+
+	if (start_vr == NULL || start_vr->vaddr >= end_addr)
+		return OK; /* nothing to do */
+
+	end_vr = region_search(&src_vmp->vm_regions_avl, end_addr, AVL_LESS);
+	assert(end_vr != NULL);
+	assert(start_vr->vaddr <= end_vr->vaddr);
+
+#if LU_DEBUG
+	printf("VM: transfer_mmap_regions: transferring memory mapped regions "
+	    "from %d to %d (0x%lx to 0x%lx)\n", src_vmp->vm_endpoint,
+	    dst_vmp->vm_endpoint, start_vr->vaddr, end_vr->vaddr);
+#endif
+
+	return map_proc_copy_range(dst_vmp, src_vmp, start_vr, end_vr);
+}
+
 /*===========================================================================*
  *			      swap_proc_dyn_data	     		     *
  *===========================================================================*/
@@ -227,7 +257,6 @@ int swap_proc_dyn_data(struct vmproc *src_vmp, struct vmproc *dst_vmp,
 {
 	int is_vm;
 	int r;
-	struct vir_region *start_vr, *end_vr;
 
 	is_vm = (dst_vmp->vm_endpoint == VM_PROC_NR);
 
@@ -270,45 +299,20 @@ int swap_proc_dyn_data(struct vmproc *src_vmp, struct vmproc *dst_vmp,
 
 	/* Transfer memory mapped regions now. To sandbox the new instance and
 	 * prevent state corruption on rollback, we share all the regions
-	 * between the two instances as COW.
+	 * between the two instances as COW. Source and destination are
+	 * intentionally swapped in these calls!
 	 */
-	start_vr = region_search(&dst_vmp->vm_regions_avl, VM_MMAPBASE, AVL_GREATER_EQUAL);
-	end_vr = region_search(&dst_vmp->vm_regions_avl, VM_MMAPTOP, AVL_LESS);
-	if(start_vr) {
-#if LU_DEBUG
-		printf("VM: swap_proc_dyn_data: tranferring memory mapped regions from %d to %d\n",
-			dst_vmp->vm_endpoint, src_vmp->vm_endpoint);
-#endif
-		assert(end_vr);
-		r = map_proc_copy_range(src_vmp, dst_vmp, start_vr, end_vr);
-		if(r != OK) {
-			return r;
-		}
-	}
+	r = transfer_mmap_regions(src_vmp, dst_vmp, VM_MMAPBASE, VM_MMAPTOP);
 
 	/* If the stack is not mapped at the VM_DATATOP, there might be some
 	 * more regions hiding above the stack.  We also have to transfer
 	 * those.
 	 */
-	if (VM_STACKTOP == VM_DATATOP)
-		return OK;
+	if (r == OK && VM_STACKTOP < VM_DATATOP)
+		r = transfer_mmap_regions(src_vmp, dst_vmp, VM_STACKTOP,
+		    VM_DATATOP);
 
-	start_vr = region_search(&dst_vmp->vm_regions_avl, VM_STACKTOP, AVL_GREATER_EQUAL);
-	end_vr = region_search(&dst_vmp->vm_regions_avl, VM_DATATOP, AVL_LESS);
-
-	if(start_vr) {
-#if LU_DEBUG
-		printf("VM: swap_proc_dyn_data: tranferring memory mapped regions from %d to %d\n",
-			dst_vmp->vm_endpoint, src_vmp->vm_endpoint);
-#endif
-		assert(end_vr);
-		r = map_proc_copy_range(src_vmp, dst_vmp, start_vr, end_vr);
-		if(r != OK) {
-			return r;
-		}
-	}
-
-	return OK;
+	return r;
 }
 
 void *mmap(void *addr, size_t len, int f, int f2, int f3, off_t o)
