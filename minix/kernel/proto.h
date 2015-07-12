@@ -110,6 +110,7 @@ void clear_ipc_filters(struct proc *rp);
 int check_ipc_filter(struct ipc_filter_s *ipcf, int fill_flags);
 int allow_ipc_filtered_msg(struct proc *rp, endpoint_t src_e,
     vir_bytes m_src_v, message *m_src_p);
+int allow_ipc_filtered_memreq(struct proc *src_rp, struct proc *dst_rp);
 int priv_add_irq(struct proc *rp, int irq);
 int priv_add_io(struct proc *rp, struct io_range *ior);
 int priv_add_mem(struct proc *rp, struct minix_mem_range *memr);

@@ -30,6 +30,7 @@ static void adjust_priv_slot(struct priv *privp, struct priv
 static void adjust_asyn_table(struct priv *src_privp, struct priv *dst_privp);
 static void swap_proc_slot_pointer(struct proc **rpp, struct proc
 	*src_rp, struct proc *dst_rp);
+static void swap_memreq(struct proc *src_rp, struct proc *dst_rp);
 
 /*===========================================================================*
  *				do_update				     *
@@ -142,6 +143,9 @@ int do_update(struct proc * caller, message * m_ptr)
 
   /* Swap global process slot addresses. */
   swap_proc_slot_pointer(get_cpulocal_var_ptr(ptproc), src_rp, dst_rp);
+
+  /* Swap VM request entries. */
+  swap_memreq(src_rp, dst_rp);
 
 #if DEBUG
   printf("do_update: updated %d (%s, %d, %d) into %d (%s, %d, %d)\n",
@@ -300,6 +304,35 @@ static void swap_proc_slot_pointer(struct proc **rpp, struct proc *src_rp,
   }
   else if(*rpp == dst_rp) {
       *rpp = src_rp;
+  }
+}
+
+/*===========================================================================*
+ *				swap_memreq				     *
+ *===========================================================================*/
+static void swap_memreq(struct proc *src_rp, struct proc *dst_rp)
+{
+/* If either the source or the destination process is part of the VM request
+ * chain, but not both, then swap the process pointers in the chain.
+ */
+  struct proc **rpp;
+
+  if (RTS_ISSET(src_rp, RTS_VMREQUEST) == RTS_ISSET(dst_rp, RTS_VMREQUEST))
+	return; /* nothing to do */
+
+  for (rpp = &vmrequest; *rpp != NULL;
+     rpp = &(*rpp)->p_vmrequest.nextrequestor) {
+	if (*rpp == src_rp) {
+		dst_rp->p_vmrequest.nextrequestor =
+		    src_rp->p_vmrequest.nextrequestor;
+		*rpp = dst_rp;
+		break;
+	} else if (*rpp == dst_rp) {
+		src_rp->p_vmrequest.nextrequestor =
+		    dst_rp->p_vmrequest.nextrequestor;
+		*rpp = src_rp;
+		break;
+	}
   }
 }
 

@@ -487,6 +487,27 @@ void send_diag_sig(void)
 }
 
 /*===========================================================================*
+ *			         clear_memreq				     *
+ *===========================================================================*/
+static void clear_memreq(struct proc *rp)
+{
+  struct proc **rpp;
+
+  if (!RTS_ISSET(rp, RTS_VMREQUEST))
+	return; /* nothing to do */
+
+  for (rpp = &vmrequest; *rpp != NULL;
+     rpp = &(*rpp)->p_vmrequest.nextrequestor) {
+	if (*rpp == rp) {
+		*rpp = rp->p_vmrequest.nextrequestor;
+		break;
+	}
+  }
+
+  RTS_UNSET(rp, RTS_VMREQUEST);
+}
+
+/*===========================================================================*
  *			         clear_ipc				     *
  *===========================================================================*/
 static void clear_ipc(
@@ -548,6 +569,10 @@ register struct proc *rc;		/* slot of process to clean up */
    */
   clear_ipc_refs(rc, EDEADSRCDST);
 
+  /* Finally, if the process was blocked on a VM request, remove it from the
+   * queue of processes waiting to be processed by VM.
+   */
+  clear_memreq(rc);
 }
 
 /*===========================================================================*
@@ -736,6 +761,14 @@ void clear_ipc_filters(struct proc *rp)
 	}
 
 	priv(rp)->s_ipcf = NULL;
+
+	/* VM is a special case here: since the cleared IPC filter may have
+	 * blocked memory handling requests, we may now have to tell VM that
+	 * there are "new" requests pending.
+	 */
+	if (rp->p_endpoint == VM_PROC_NR && vmrequest != NULL)
+		if (send_sig(VM_PROC_NR, SIGKMEM) != OK)
+			panic("send_sig failed");
 }
 
 /*===========================================================================*
@@ -839,6 +872,46 @@ int allow_ipc_filtered_msg(struct proc *rp, endpoint_t src_e,
 #endif
 
 	return allow;
+}
+
+/*===========================================================================*
+ *			  allow_ipc_filtered_memreq			     *
+ *===========================================================================*/
+int allow_ipc_filtered_memreq(struct proc *src_rp, struct proc *dst_rp)
+{
+	/* Determine whether VM should receive a request to handle memory
+	 * that is the result of process 'src_rp' trying to access currently
+	 * unavailable memory in process 'dst_rp'. Return TRUE if VM should
+	 * be given the request, FALSE otherwise.
+	 */
+
+	struct proc *vmp;
+	message m_buf;
+	int allow_src, allow_dst;
+
+	vmp = proc_addr(VM_PROC_NR);
+
+	/* If VM has no filter in place, all requests should go through. */
+	if (priv(vmp)->s_ipcf == NULL)
+		return TRUE;
+
+	/* VM obtains memory requests in response to a SIGKMEM signal, which
+	 * is a notification sent from SYSTEM. Thus, if VM blocks such
+	 * notifications, it also should not get any memory requests. Of
+	 * course, VM should not be asking for requests in that case either,
+	 * but the extra check doesn't hurt.
+	 */
+	m_buf.m_type = NOTIFY_MESSAGE;
+	if (!allow_ipc_filtered_msg(vmp, SYSTEM, 0, &m_buf))
+		return FALSE;
+
+	/* A more refined policy may be implemented here, for example to
+	 * ensure that both the source and the destination (if different)
+	 * are in the group of processes that VM wants to talk to. Since VM
+	 * is basically not able to handle any memory requests during an
+	 * update, we will not get here, and none of that is needed.
+	 */
+	return TRUE;
 }
 
 /*===========================================================================*
