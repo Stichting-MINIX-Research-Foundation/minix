@@ -1098,16 +1098,6 @@ int mini_notify(
 	"(%d/%zu, tab 0x%lx)\n",__FILE__,__LINE__,	\
 field, caller->p_name, entry, priv(caller)->s_asynsize, priv(caller)->s_asyntab)
 
-#define A_RETR_FLD(entry, field)	\
-  if(data_copy(caller_ptr->p_endpoint,	\
-	 table_v + (entry)*sizeof(asynmsg_t) + offsetof(struct asynmsg,field),\
-		KERNEL, (vir_bytes) &tabent.field,	\
-			sizeof(tabent.field)) != OK) {\
-		ASCOMPLAIN(caller_ptr, entry, #field);	\
-		r = EFAULT; \
-	        goto asyn_error; \
-	}
-
 #define A_RETR(entry) do {			\
   if (data_copy(				\
   		caller_ptr->p_endpoint, table_v + (entry)*sizeof(asynmsg_t),\
@@ -1119,23 +1109,12 @@ field, caller->p_name, entry, priv(caller)->s_asynsize, priv(caller)->s_asyntab)
   }						\
   			 } while(0)
 
-#define A_INSRT_FLD(entry, field)	\
-  if(data_copy(KERNEL, (vir_bytes) &tabent.field, \
-	caller_ptr->p_endpoint,	\
- 	table_v + (entry)*sizeof(asynmsg_t) + offsetof(struct asynmsg,field),\
-		sizeof(tabent.field)) != OK) {\
-		ASCOMPLAIN(caller_ptr, entry, #field);	\
-		r = EFAULT; \
-	        goto asyn_error; \
-	}
-
 #define A_INSRT(entry) do {			\
   if (data_copy(KERNEL, (vir_bytes) &tabent,	\
   		caller_ptr->p_endpoint, table_v + (entry)*sizeof(asynmsg_t),\
   		sizeof(tabent)) != OK) {	\
   			ASCOMPLAIN(caller_ptr, entry, "message entry");	\
-  			r = EFAULT;		\
-	                goto asyn_error; \
+			/* Do NOT set r or goto asyn_error here! */ \
   }						\
   			  } while(0)	
 
@@ -1246,7 +1225,7 @@ int try_deliver_senda(struct proc *caller_ptr,
 		do_notify = TRUE;
 	else if (r != OK && (flags & AMF_NOTIFY_ERR))
 		do_notify = TRUE;
-	A_INSRT(i);	/* Copy results to caller */
+	A_INSRT(i);	/* Copy results to caller; ignore errors */
 	continue;
 
 asyn_error:
@@ -1411,12 +1390,15 @@ static int try_one(struct proc *src_ptr, struct proc *dst_ptr)
 #endif
 
 store_result:
-	/* Store results for sender */
+	/* Store results for sender. We may just have started delivering a
+	 * message, so we must not return an error to the caller in the case
+	 * that storing the results triggers an error!
+	 */
 	tabent.result = r;
 	tabent.flags = flags | AMF_DONE;
 	if (flags & AMF_NOTIFY) do_notify = TRUE;
 	else if (r != OK && (flags & AMF_NOTIFY_ERR)) do_notify = TRUE;
-	A_INSRT(i);	/* Copy results to sender */
+	A_INSRT(i);	/* Copy results to sender; ignore errors */
 
 	break;
   }
@@ -1505,7 +1487,7 @@ int cancel_async(struct proc *src_ptr, struct proc *dst_ptr)
 	tabent.flags = flags | AMF_DONE;
 	if (flags & AMF_NOTIFY) do_notify = TRUE;
 	else if (r != OK && (flags & AMF_NOTIFY_ERR)) do_notify = TRUE;
-	A_INSRT(i);	/* Copy results to sender */
+	A_INSRT(i);	/* Copy results to sender; ignore errors */
   }
 
   if (do_notify) 
