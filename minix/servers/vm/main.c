@@ -194,6 +194,29 @@ int main(void)
   return(OK);
 }
 
+static void sef_cb_lu_state_changed(int old_state, int state)
+{
+/* Called whenever the live-update state changes. We need to restore certain
+ * state in the old VM instance after a live update has failed, because some
+ * but not all memory is shared between the two VM instances.
+ */
+  struct vmproc *vmp;
+
+  if (state == SEF_LU_STATE_NULL) {
+	/* Undo some of the changes that may have been made by the new VM
+	 * instance.  If the new VM instance is us, nothing happens.
+	 */
+	vmp = &vmproc[VM_PROC_NR];
+
+	/* Rebind page tables. */
+	pt_bind(&vmp->vm_pt, vmp);
+	pt_clearmapcache();
+
+	/* Readjust process references. */
+	adjust_proc_refs();
+  }
+}
+
 static void sef_local_startup(void)
 {
 	/* Register init callbacks. */
@@ -205,6 +228,9 @@ static void sef_local_startup(void)
 	 */
 	if (__vm_init_fresh)
 		sef_setcb_init_response(sef_cb_init_response_rs_asyn_once);
+
+	/* Register live update callbacks. */
+	sef_setcb_lu_state_changed(sef_cb_lu_state_changed);
 
 	/* Register signal callbacks. */
 	sef_setcb_signal_handler(sef_cb_signal_handler);
