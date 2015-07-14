@@ -667,10 +667,6 @@ int do_update(message *m_ptr)
           printf("RS: the specified process is already part of the currently scheduled update\n");
           return EINVAL;
       }
-      if(rupdate.last_rpupd->rp->r_pub->endpoint == RS_PROC_NR) {
-          printf("RS: RS should always be the last service to update in a multi-component update\n");
-          return EINVAL;
-      }
   }
 
   /* Prepare-only update for VM, PM, and VFS is only supported with an unreachable state. */

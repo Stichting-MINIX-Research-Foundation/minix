@@ -23,35 +23,62 @@ void rupdate_clear_upds()
 void rupdate_add_upd(struct rprocupd* rpupd)
 {
   /* Add an update descriptor to the update chain. */
-  struct rprocupd* prev_rpupd;
+  struct rprocupd *prev_rpupd, *walk_rpupd;
+  endpoint_t ep;
   int lu_flags;
 
-  rpupd->prev_rpupd = rupdate.last_rpupd;
-  if(rupdate.num_rpupds == 0) {
-      rupdate.first_rpupd = rpupd;
-      rupdate.curr_rpupd = rpupd;
+  /* In order to allow multicomponent-with-VM live updates to be processed
+   * correctly, we perform partial sorting on the chain: RS is to be last (if
+   * present), VM is to be right before it (if present), and all the other
+   * processes are to be at the start of the chain.
+   */
+
+  ep = rpupd->rp->r_pub->endpoint;
+
+  assert(rpupd->next_rpupd == NULL);
+  assert(rpupd->prev_rpupd == NULL);
+
+  /* Determine what element to insert after, if not at the head. */
+  prev_rpupd = rupdate.last_rpupd;
+  if (prev_rpupd != NULL && ep != RS_PROC_NR &&
+    prev_rpupd->rp->r_pub->endpoint == RS_PROC_NR)
+      prev_rpupd = prev_rpupd->prev_rpupd;
+  if (prev_rpupd != NULL && ep != RS_PROC_NR && ep != VM_PROC_NR &&
+    prev_rpupd->rp->r_pub->endpoint == VM_PROC_NR)
+      prev_rpupd = prev_rpupd->prev_rpupd;
+
+  /* Perform the insertion. */
+  if (prev_rpupd == NULL) {
+      rpupd->next_rpupd = rupdate.first_rpupd;
+      rupdate.first_rpupd = rupdate.curr_rpupd = rpupd;
+  } else {
+      rpupd->next_rpupd = prev_rpupd->next_rpupd;
+      rpupd->prev_rpupd = prev_rpupd;
+      prev_rpupd->next_rpupd = rpupd;
   }
-  else {
-      rupdate.last_rpupd->next_rpupd = rpupd;
-  }
-  rupdate.last_rpupd = rpupd;
+
+  if (rpupd->next_rpupd != NULL)
+      rpupd->next_rpupd->prev_rpupd = rpupd;
+  else
+      rupdate.last_rpupd = rpupd;
+
   rupdate.num_rpupds++;
 
   /* Propagate relevant flags from the new descriptor. */
   lu_flags = rpupd->lu_flags & (SEF_LU_INCLUDES_VM|SEF_LU_INCLUDES_RS|SEF_LU_UNSAFE|SEF_LU_MULTI);
   if(lu_flags) {
-      RUPDATE_ITER(rupdate.first_rpupd, prev_rpupd, rpupd,
-          rpupd->lu_flags |= lu_flags;
-          rpupd->init_flags |= lu_flags;
+      RUPDATE_ITER(rupdate.first_rpupd, prev_rpupd, walk_rpupd,
+          walk_rpupd->lu_flags |= lu_flags;
+          walk_rpupd->init_flags |= lu_flags;
       );
   }
 
   /* Set VM/RS update descriptor pointers. */
   if(!rupdate.vm_rpupd && (lu_flags & SEF_LU_INCLUDES_VM)) {
-      rupdate.vm_rpupd = rupdate.last_rpupd;
+      rupdate.vm_rpupd = rpupd;
   }
   else if(!rupdate.rs_rpupd && (lu_flags & SEF_LU_INCLUDES_RS)) {
-      rupdate.rs_rpupd = rupdate.last_rpupd;
+      rupdate.rs_rpupd = rpupd;
   }
 }
 
@@ -419,14 +446,6 @@ int start_update_prepare(int allow_retries)
                   if(rpupd->lu_flags & SEF_LU_NOMMAP) {
                       rp->r_pub->sys_flags |= SF_VM_NOMMAP;
                   }
-                  if(!(rpupd->lu_flags & SEF_LU_UNSAFE)) {
-                      if(rs_verbose)
-                          printf("RS: %s pinning memory\n", srv_to_string(rp));
-                      vm_memctl(rp->r_pub->new_endpoint, VM_RS_MEM_PIN, 0, 0);
-                      if(rs_verbose)
-                          printf("RS: %s pinning memory\n", srv_to_string(new_rp));
-                      vm_memctl(new_rp->r_pub->endpoint, VM_RS_MEM_PIN, 0, 0);
-                  }
               }
           }
       );
@@ -448,7 +467,9 @@ int start_update_prepare(int allow_retries)
 struct rprocupd* start_update_prepare_next()
 {
   /* Request the next service in the update chain to prepare for the update. */
-  struct rprocupd *rpupd = NULL;
+  struct rprocupd *rpupd, *prev_rpupd, *walk_rpupd;
+  struct rproc *rp, *new_rp;
+
   if(!RUPDATE_IS_UPDATING()) {
       rpupd = rupdate.first_rpupd;
   }
@@ -458,6 +479,34 @@ struct rprocupd* start_update_prepare_next()
   if(!rpupd) {
       return NULL;
   }
+
+  if (RUPDATE_IS_UPD_VM_MULTI() && rpupd == rupdate.vm_rpupd) {
+      /* We are doing a multicomponent live update that includes VM, and all
+       * services are now ready (and thereby stopped) except VM and possibly
+       * RS. This is the last point in time, and therefore also the best, that
+       * we can ask the (old) VM instance to do stuff for us, before we ask it
+       * to get ready as well: preallocate and pin memory, and copy over
+       * memory-mapped regions. Do this now, for all services except VM
+       * itself. In particular, also do it for RS, as we know that RS (yes,
+       * this service) is not going to create problems from here on.
+       */
+      RUPDATE_ITER(rupdate.first_rpupd, prev_rpupd, walk_rpupd,
+          if (UPD_IS_PREPARING_ONLY(walk_rpupd))
+              continue; /* skip prepare-only processes */
+          if (walk_rpupd == rupdate.vm_rpupd)
+              continue; /* skip VM */
+          rp = walk_rpupd->rp;
+          new_rp = rp->r_new_rp;
+          assert(rp && new_rp);
+          if (rs_verbose)
+              printf("RS: preparing VM for %s -> %s\n", srv_to_string(rp),
+                srv_to_string(new_rp));
+          /* Ask VM to prepare the new instance based on the old instance. */
+          vm_prepare(rp->r_pub->new_endpoint, new_rp->r_pub->endpoint,
+            rp->r_pub->sys_flags);
+      );
+  }
+
   rupdate.flags |= RS_UPDATING;
 
   while(1) {

@@ -554,6 +554,7 @@ void init_vm(void)
 
 	/* Calls from RS */
 	CALLMAP(VM_RS_SET_PRIV, do_rs_set_priv);
+	CALLMAP(VM_RS_PREPARE, do_rs_prepare);
 	CALLMAP(VM_RS_UPDATE, do_rs_update);
 	CALLMAP(VM_RS_MEMCTL, do_rs_memctl);
 

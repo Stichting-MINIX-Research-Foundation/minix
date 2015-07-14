@@ -67,6 +67,85 @@ int do_rs_set_priv(message *m)
 }
 
 /*===========================================================================*
+ *				do_rs_prepare	     			     *
+ *===========================================================================*/
+int do_rs_prepare(message *m_ptr)
+{
+	/* Prepare a new instance of a service for an upcoming live-update
+	 * switch, based on the old instance of this service.  This call is
+	 * used only by RS and only for a multicomponent live update which
+	 * includes VM.  In this case, all processes need to be prepared such
+	 * that they don't require the new VM instance to perform actions
+	 * during live update that cannot be undone in the case of a rollback.
+	 */
+	endpoint_t src_e, dst_e;
+	int src_p, dst_p;
+	struct vmproc *src_vmp, *dst_vmp;
+	struct vir_region *src_data_vr, *dst_data_vr;
+	vir_bytes src_addr, dst_addr;
+	int sys_upd_flags;
+
+	src_e = m_ptr->m_lsys_vm_update.src;
+	dst_e = m_ptr->m_lsys_vm_update.dst;
+        sys_upd_flags = m_ptr->m_lsys_vm_update.flags;
+
+	/* Lookup slots for source and destination process. */
+	if(vm_isokendpt(src_e, &src_p) != OK) {
+		printf("VM: do_rs_prepare: bad src endpoint %d\n", src_e);
+		return EINVAL;
+	}
+	src_vmp = &vmproc[src_p];
+	if(vm_isokendpt(dst_e, &dst_p) != OK) {
+		printf("VM: do_rs_prepare: bad dst endpoint %d\n", dst_e);
+		return EINVAL;
+	}
+	dst_vmp = &vmproc[dst_p];
+
+	/* Pin memory for the source process. */
+	map_pin_memory(src_vmp);
+
+	/* See if the source process has a larger heap than the destination
+	 * process.  If so, extend the heap of the destination process to
+	 * match the source's.  While this may end up wasting quite some
+	 * memory, it is absolutely essential that the destination process
+	 * does not run out of heap memory during the live update window,
+	 * and since most processes will be doing an identity transfer, they
+	 * are likely to require as much heap as their previous instances.
+	 * Better safe than sorry.  TODO: prevent wasting memory somehow;
+	 * this seems particularly relevant for RS.
+	 */
+	src_data_vr = region_search(&src_vmp->vm_regions_avl, VM_MMAPBASE,
+	    AVL_LESS);
+	assert(src_data_vr);
+	dst_data_vr = region_search(&dst_vmp->vm_regions_avl, VM_MMAPBASE,
+	    AVL_LESS);
+	assert(dst_data_vr);
+
+	src_addr = src_data_vr->vaddr + src_data_vr->length;
+	dst_addr = dst_data_vr->vaddr + dst_data_vr->length;
+	if (src_addr > dst_addr)
+		real_brk(dst_vmp, src_addr);
+
+	/* Now also pin memory for the destination process. */
+	map_pin_memory(dst_vmp);
+
+	/* Finally, map the source process's memory-mapped regions into the
+	 * destination process.  This needs to happen now, because VM may not
+	 * allocate any objects during the live update window, since this
+	 * would prevent successful rollback of VM afterwards.  The
+	 * destination may not actually touch these regions during the live
+	 * update window either, because they are mapped copy-on-write and a
+	 * pagefault would also cause object allocation.  Objects are pages,
+	 * slab objects, anything in the new VM instance to which changes are
+	 * visible in the old VM basically.
+	 */
+	if (!(sys_upd_flags & SF_VM_NOMMAP))
+		map_proc_dyn_data(src_vmp, dst_vmp);
+
+	return OK;
+}
+
+/*===========================================================================*
  *				do_rs_update	     			     *
  *===========================================================================*/
 int do_rs_update(message *m_ptr)

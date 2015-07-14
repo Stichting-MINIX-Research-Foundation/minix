@@ -19,6 +19,7 @@ int vm_notify_sig(endpoint_t ep, endpoint_t ipc_ep);
 int vm_set_priv(endpoint_t ep, void *buf, int sys_proc);
 int vm_update(endpoint_t src_e, endpoint_t dst_e, int flags);
 int vm_memctl(endpoint_t ep, int req, void** addr, size_t *len);
+int vm_prepare(endpoint_t src_e, endpoint_t dst_e, int flags);
 int vm_query_exit(endpoint_t *endpt);
 int vm_watch_exit(endpoint_t ep);
 int minix_vfs_mmap(endpoint_t who, off_t offset, size_t len,

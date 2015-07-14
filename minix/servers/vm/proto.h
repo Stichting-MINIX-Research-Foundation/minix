@@ -49,6 +49,7 @@ int do_info(message *);
 int swap_proc_slot(struct vmproc *src_vmp, struct vmproc *dst_vmp);
 int swap_proc_dyn_data(struct vmproc *src_vmp, struct vmproc *dst_vmp,
     int sys_upd_flags);
+int map_proc_dyn_data(struct vmproc *src_vmp, struct vmproc *dst_vmp);
 void adjust_proc_refs(void);
 int do_getrusage(message *m);
 
@@ -192,6 +193,7 @@ void map_sanitycheck(const char *file, int line);
 
 /* rs.c */
 int do_rs_set_priv(message *m);
+int do_rs_prepare(message *m);
 int do_rs_update(message *m);
 int do_rs_memctl(message *m);
 

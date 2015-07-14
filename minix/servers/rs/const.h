@@ -87,21 +87,18 @@
 #define RUPDATE_INIT() memset(&rupdate, 0, sizeof(rupdate))
 #define RUPDATE_CLEAR() RUPDATE_INIT()
 
+/* Note that we have 'B' last in order to allow 'continue' statements */
 #define RUPDATE_ITER(HEAD, RPUPD_PREV, RPUPD, B) do { \
-        RPUPD = HEAD; \
-        RPUPD_PREV = NULL; \
-        while(RPUPD) { \
+        for(RPUPD = HEAD, RPUPD_PREV = NULL; RPUPD != NULL; \
+          RPUPD_PREV = RPUPD, RPUPD = RPUPD->next_rpupd) { \
             B \
-            RPUPD_PREV = RPUPD; \
-            RPUPD = RPUPD->next_rpupd; \
         } \
      } while(0)
 #define RUPDATE_REV_ITER(TAIL, RPUPD_PREV, RPUPD, B) do { \
         RPUPD = TAIL; \
-        while(RPUPD) { \
+        for(RPUPD = TAIL; RPUPD != NULL; RPUPD = RPUPD->prev_rpupd) { \
             RPUPD_PREV = RPUPD->prev_rpupd; \
             B \
-            RPUPD = RPUPD->prev_rpupd; \
         } \
      } while(0)
 

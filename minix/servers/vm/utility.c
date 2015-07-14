@@ -223,18 +223,44 @@ int swap_proc_slot(struct vmproc *src_vmp, struct vmproc *dst_vmp)
  * Transfer memory mapped regions, using CoW sharing, from 'src_vmp' to
  * 'dst_vmp', for the source process's address range of 'start_addr'
  * (inclusive) to 'end_addr' (exclusive).  Return OK or an error code.
+ * If the regions seem to have been transferred already, do nothing.
  */
 static int
-transfer_mmap_regions(struct vmproc *dst_vmp, struct vmproc *src_vmp,
+transfer_mmap_regions(struct vmproc *src_vmp, struct vmproc *dst_vmp,
 	vir_bytes start_addr, vir_bytes end_addr)
 {
-	struct vir_region *start_vr, *end_vr;
+	struct vir_region *start_vr, *check_vr, *end_vr;
 
 	start_vr = region_search(&src_vmp->vm_regions_avl, start_addr,
 	    AVL_GREATER_EQUAL);
 
 	if (start_vr == NULL || start_vr->vaddr >= end_addr)
 		return OK; /* nothing to do */
+
+	/* In the case of multicomponent live update that includes VM, this
+	 * function may be called for the same process more than once, for the
+	 * sake of keeping code paths as little divergent as possible while at
+	 * the same time ensuring that the regions are copied early enough.
+	 *
+	 * To compensate for these multiple calls, we perform a very simple
+	 * check here to see if the region to transfer is already present in
+	 * the target process.  If so, we can safely skip copying the regions
+	 * again, because there is no other possible explanation for the
+	 * region being present already.  Things would go horribly wrong if we
+	 * tried copying anyway, but this check is not good enough to detect
+	 * all such problems, since we do a check on the base address only.
+	 */
+	check_vr = region_search(&dst_vmp->vm_regions_avl, start_vr->vaddr,
+	    AVL_EQUAL);
+	if (check_vr != NULL) {
+#if LU_DEBUG
+		printf("VM: transfer_mmap_regions: skipping transfer from "
+		    "%d to %d (0x%lx already present)\n",
+		    src_vmp->vm_endpoint, dst_vmp->vm_endpoint,
+		    start_vr->vaddr);
+#endif
+		return OK;
+	}
 
 	end_vr = region_search(&src_vmp->vm_regions_avl, end_addr, AVL_LESS);
 	assert(end_vr != NULL);
@@ -247,6 +273,38 @@ transfer_mmap_regions(struct vmproc *dst_vmp, struct vmproc *src_vmp,
 #endif
 
 	return map_proc_copy_range(dst_vmp, src_vmp, start_vr, end_vr);
+}
+
+/*
+ * Create copy-on-write mappings in process 'dst_vmp' for all memory-mapped
+ * regions present in 'src_vmp'.  Return OK on success, or an error otherwise.
+ * In the case of failure, successfully created mappings are not undone.
+ */
+int
+map_proc_dyn_data(struct vmproc *src_vmp, struct vmproc *dst_vmp)
+{
+	int r;
+
+#if LU_DEBUG
+	printf("VM: mapping dynamic data from %d to %d\n",
+	    src_vmp->vm_endpoint, dst_vmp->vm_endpoint);
+#endif
+
+	/* Transfer memory mapped regions now. To sandbox the new instance and
+	 * prevent state corruption on rollback, we share all the regions
+	 * between the two instances as COW.
+	 */
+	r = transfer_mmap_regions(src_vmp, dst_vmp, VM_MMAPBASE, VM_MMAPTOP);
+
+	/* If the stack is not mapped at the VM_DATATOP, there might be some
+	 * more regions hiding above the stack.  We also have to transfer
+	 * those.
+	 */
+	if (r == OK && VM_STACKTOP < VM_DATATOP)
+		r = transfer_mmap_regions(src_vmp, dst_vmp, VM_STACKTOP,
+		    VM_DATATOP);
+
+	return r;
 }
 
 /*===========================================================================*
@@ -297,22 +355,8 @@ int swap_proc_dyn_data(struct vmproc *src_vmp, struct vmproc *dst_vmp,
 	/* Make sure regions are consistent. */
 	assert(region_search_root(&src_vmp->vm_regions_avl) && region_search_root(&dst_vmp->vm_regions_avl));
 
-	/* Transfer memory mapped regions now. To sandbox the new instance and
-	 * prevent state corruption on rollback, we share all the regions
-	 * between the two instances as COW. Source and destination are
-	 * intentionally swapped in these calls!
-	 */
-	r = transfer_mmap_regions(src_vmp, dst_vmp, VM_MMAPBASE, VM_MMAPTOP);
-
-	/* If the stack is not mapped at the VM_DATATOP, there might be some
-	 * more regions hiding above the stack.  We also have to transfer
-	 * those.
-	 */
-	if (r == OK && VM_STACKTOP < VM_DATATOP)
-		r = transfer_mmap_regions(src_vmp, dst_vmp, VM_STACKTOP,
-		    VM_DATATOP);
-
-	return r;
+	/* Source and destination are intentionally swapped here! */
+	return map_proc_dyn_data(dst_vmp, src_vmp);
 }
 
 void *mmap(void *addr, size_t len, int f, int f2, int f3, off_t o)
