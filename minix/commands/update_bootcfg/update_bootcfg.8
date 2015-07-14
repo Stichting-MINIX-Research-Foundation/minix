@@ -1,18 +1,54 @@
-.TH man 8 "14 November 2014" "1.0" "update_bootcfg  man page"
+.TH man 8 "14 July  2015" "2.0" "update_bootcfg  man page"
 .SH NAME
-update_bootcfg \- Update /boot.cfg
+update_bootcfg \- Update the configuration for the boot monitor
 
 .SH SYNOPSIS
 update_bootcfg
 
 .SH DESCRIPTION
-Updates /boot.cfg from /etc/boot.cfg.default and /etc/boot.cfg.local
+Updates /boot.cfg, the configuration file used by the MINIX boot monitor. The default values are stored in /etc/boot.cfg.default.
+/etc/boot.cfg.local stores any local modifications. These templates obey the syntax of boot.cfg(5). The /etc/boot.cfg.default template 
+expects the system images to reside in the /boot/minix directory and that /boot/minix_latest points to last image, selected by the default= command. Besides the directory to which points /boot/minix_latest, all the directory entries within /boot/minix are expected to be alternative system releases, and are given additional menu= entries, with the basic parameters $rootdevname and $args. Template menu= entries for inexistant directories, or directories without kernel file, are skipped; the default= option is adjusted to point to the
+same relative menu entry.
+
+Within the templates, some variables can be used and will be substituted by update_bootcfg at run time. They are preceded by the dollar 
+sign. $rootdevname is replaced with the name of the device holding the (current) root file system; $args, which is intended to be at the 
+end of the menu lines, is replaced by the system environement values.
+
+Finally, the update_bootcfg command updates the root file system.
 
 .SH EXAMPLES
 update_bootcfg
 
+.SH FILES
+.TP
+.I /boot.cfg
+Location of the configuration file
+.TP
+.I /boot/minix/*
+Directories with the various releases
+.TP
+.I /boot/minix_default
+Directory with the base release of MINIX, installed at setup(8) time
+.TP
+.I /boot/minix_latest
+Symbolic link to the directory with the latest release, usually taken by default
+.TP
+.I /etc/boot.cfg.default
+Default template
+.TP
+.I /etc/boot.cfg.local
+Locally-defined additional boot commands
+
+.SH BUGS
+The previous content of /boot.cfg is lost. Do not change that file directly!
+The presence of /boot/minix_latest as a menu= entry is not checked; it is assumed than one or several entries refer to it.
+
+The naming conventions, particularly the use of default, are not consistent.
+
 .SH SEE ALSO
-boot.cfg(5)
+boot(8), boot.cfg(5), setup(8), sysenv(1)
 
 .SH AUTHOR
-Manpage written by Jacob Adams <tookmund@gmail.com>
+Manpage written by Jacob Adams <tookmund@gmail.com>.
+This manpage borrows liberally from Antoine Leca's manual page.
