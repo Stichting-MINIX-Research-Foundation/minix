@@ -411,7 +411,7 @@ char *path;
       while (iso_711(dir_ptr->length) > 0 && offset < BLOCK_SIZE)
       {
         if (iso_cmp(name, dir_ptr,
-            (Read_Dir || (!Read_Dir && !last_in_path))) == 0) 
+            (Read_Dir || !last_in_path)) == 0)
         {
           found = 1;
           break;
