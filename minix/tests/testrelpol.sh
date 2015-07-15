@@ -197,19 +197,16 @@ lu_test() {
 	fi
 
 	# Test live update initialization crash
-	if ! echo "vm" | grep -q ${label}
-	then
-		lu_opts="-x" lu_test_one ${label} self 200 || return
-	fi
+	lu_opts="-x" lu_test_one ${label} self 200 || return
 
 	# Test live update initialization failure
-	if ! echo "rs vm" | grep -q ${label}
+	if ! echo "rs" | grep -q ${label}
 	then
 		lu_opts="-y" lu_test_one ${label} self 78 || return
 	fi
 
 	# Test live update initialization timeout
-	if ! echo "rs vm" | grep -q ${label}
+	if ! echo "rs" | grep -q ${label}
 	then
 		lu_maxtime="1HZ" lu_opts="-z" lu_test_one ${label} self 4 || return
 	fi
@@ -248,14 +245,6 @@ multi_lu_test_one() {
 	for label in ${labels}
 	do
 		index=`expr $index + 1`
-
-		if [ "x$label" = "xvm" ]
-		then
-			if echo "${lu_opts_once}" | grep -q -E -- '-(x|y|z)'
-			then
-				continue
-			fi
-		fi
 
 		if [ $index -eq $once_index ]
 		then
