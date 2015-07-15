@@ -578,9 +578,6 @@ int do_update(message *m_ptr)
   if(rs_start.rss_flags & RSS_ASR_LU) {
       lu_flags |= SEF_LU_ASR;
   }
-  if(rs_start.rss_flags & RSS_UNSAFE_LU) {
-      lu_flags |= SEF_LU_UNSAFE;
-  }
   if(!prepare_only && (rs_start.rss_flags & RSS_DETACH)) {
       lu_flags |= SEF_LU_DETACHED;
   }

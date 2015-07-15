@@ -617,10 +617,6 @@ static int sef_cb_init_vm_multi_lu(int type, sef_init_info_t *info)
 	num_elements = 0;
 	ipc_filter[num_elements].flags = IPCF_MATCH_M_SOURCE;
 	ipc_filter[num_elements++].m_source = RS_PROC_NR;
-	if(info->flags & SEF_LU_UNSAFE) {
-	    ipc_filter[num_elements].flags = IPCF_MATCH_M_SOURCE;
-	    ipc_filter[num_elements++].m_source = ANY_TSK;
-	}
 	if((r = sys_safecopyfrom(RS_PROC_NR, info->rproctab_gid, 0,
 	    (vir_bytes) rprocpub, NR_SYS_PROCS*sizeof(struct rprocpub))) != OK) {
 	    panic("sys_safecopyfrom failed: %d", r);
@@ -635,28 +631,18 @@ static int sef_cb_init_vm_multi_lu(int type, sef_init_info_t *info)
                      * are blocked intentionally, as handling these would
                      * prevent VM from being able to roll back.
                      */
-	            ipc_filter[num_elements].flags = IPCF_MATCH_M_SOURCE;
+	            ipc_filter[num_elements].flags = IPCF_MATCH_M_SOURCE | IPCF_MATCH_M_TYPE;
 	            ipc_filter[num_elements].m_source = rprocpub[i].old_endpoint;
-	            if(!(info->flags & SEF_LU_UNSAFE)) {
-	                ipc_filter[num_elements].flags |= IPCF_MATCH_M_TYPE;
-	                ipc_filter[num_elements].m_type = VM_BRK;
-	            }
-	            num_elements++;
-	            ipc_filter[num_elements].flags = IPCF_MATCH_M_SOURCE;
+	            ipc_filter[num_elements++].m_type = VM_BRK;
+	            ipc_filter[num_elements].flags = IPCF_MATCH_M_SOURCE | IPCF_MATCH_M_TYPE;
 	            ipc_filter[num_elements].m_source = rprocpub[i].new_endpoint;
-	            if(!(info->flags & SEF_LU_UNSAFE)) {
-	                ipc_filter[num_elements].flags |= IPCF_MATCH_M_TYPE;
-	                ipc_filter[num_elements].m_type = VM_BRK;
-	            }
-	            num_elements++;
-	            if(!(info->flags & SEF_LU_UNSAFE)) {
-	                ipc_filter[num_elements].flags = IPCF_MATCH_M_SOURCE | IPCF_MATCH_M_TYPE;
-	                ipc_filter[num_elements].m_source = rprocpub[i].old_endpoint;
-	                ipc_filter[num_elements++].m_type = VM_INFO;
-	                ipc_filter[num_elements].flags = IPCF_MATCH_M_SOURCE | IPCF_MATCH_M_TYPE;
-	                ipc_filter[num_elements].m_source = rprocpub[i].new_endpoint;
-	                ipc_filter[num_elements++].m_type = VM_INFO;
-	            }
+	            ipc_filter[num_elements++].m_type = VM_BRK;
+	            ipc_filter[num_elements].flags = IPCF_MATCH_M_SOURCE | IPCF_MATCH_M_TYPE;
+	            ipc_filter[num_elements].m_source = rprocpub[i].old_endpoint;
+	            ipc_filter[num_elements++].m_type = VM_INFO;
+	            ipc_filter[num_elements].flags = IPCF_MATCH_M_SOURCE | IPCF_MATCH_M_TYPE;
+	            ipc_filter[num_elements].m_source = rprocpub[i].new_endpoint;
+	            ipc_filter[num_elements++].m_type = VM_INFO;
 	            /* Make sure we can talk to any RS instance. */
 	            if(rprocpub[i].old_endpoint == RS_PROC_NR) {
 	                ipc_filter[num_elements].flags = IPCF_MATCH_M_SOURCE;

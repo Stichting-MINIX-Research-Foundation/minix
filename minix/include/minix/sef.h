@@ -237,9 +237,8 @@ int sef_cb_lu_response_rs_reply(message *m_ptr);
 #define SEF_LU_INCLUDES_VM     	      0x0800    /* the update includes VM */
 #define SEF_LU_INCLUDES_RS     	      0x1000    /* the update includes RS */
 #define SEF_LU_PREPARE_ONLY           0x2000    /* prepare only, no actual update taking place */
-#define SEF_LU_UNSAFE                 0x4000    /* unsafe update, rollback may not be possible */
-#define SEF_LU_NOMMAP	      	      0x8000    /* update doesn't inherit mmapped regions */
-#define SEF_LU_DETACHED      	     0x10000    /* update detaches the old instance */
+#define SEF_LU_NOMMAP	      	      0x4000    /* update doesn't inherit mmapped regions */
+#define SEF_LU_DETACHED      	      0x8000    /* update detaches the old instance */
 
 #define SEF_LU_IS_IDENTITY_UPDATE(F) (((F) & (SEF_LU_SELF|SEF_LU_NOMMAP|SEF_LU_ASR|SEF_INIT_ST)) == SEF_LU_SELF)
 

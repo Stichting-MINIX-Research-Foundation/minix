@@ -43,12 +43,11 @@ Interface to the reincarnation server
 #define RSS_FORCE_INIT_DEFCB    0x2000  /* force default cb at initialization time (for debugging) */
 #define RSS_SYS_BASIC_CALLS	0x4000	/* include basic kernel calls */
 #define RSS_VM_BASIC_CALLS	0x8000	/* include basic vm calls */
-#define RSS_UNSAFE_LU          0x10000  /* allow unsafe update */
-#define RSS_NOMMAP_LU          0x20000  /* don't inherit mmapped regions */
-#define RSS_DETACH             0x40000  /* detach on update/restart */
-#define RSS_NORESTART          0x80000  /* don't restart */
-#define RSS_FORCE_INIT_ST     0x100000  /* force state transfer at initialization time */
-#define RSS_NO_BIN_EXP        0x200000  /* suppress binary exponential offset */
+#define RSS_NOMMAP_LU          0x10000  /* don't inherit mmapped regions */
+#define RSS_DETACH             0x20000  /* detach on update/restart */
+#define RSS_NORESTART          0x40000  /* don't restart */
+#define RSS_FORCE_INIT_ST      0x80000  /* force state transfer at initialization time */
+#define RSS_NO_BIN_EXP        0x100000  /* suppress binary exponential offset */
 
 /* Common definitions. */
 #define RS_NR_CONTROL		 8

@@ -237,7 +237,6 @@ multi_lu_test_one() {
 	local ret=0
 	local index=0
 	local once_index=2
-	local force_unsafe=""
 
 	lu_opts=${lu_opts:-}
 	lu_maxtime=${lu_maxtime:-3HZ}
@@ -249,13 +248,9 @@ multi_lu_test_one() {
 	for label in ${labels}
 	do
 		index=`expr $index + 1`
-		force_unsafe=""
 
 		if [ "x$label" = "xvm" ]
 		then
-			# VM doesn't support safe LU, nor rollbacks for now
-			force_unsafe="-u"
-
 			if echo "${lu_opts_once}" | grep -q -E -- '-(x|y|z)'
 			then
 				continue
@@ -264,9 +259,9 @@ multi_lu_test_one() {
 
 		if [ $index -eq $once_index ]
 		then
-			service ${lu_opts_once} ${force_unsafe} -q update self -label ${label} -maxtime ${lu_maxtime_once} -state ${lu_state_once} || ret=1
+			service ${lu_opts_once} -q update self -label ${label} -maxtime ${lu_maxtime_once} -state ${lu_state_once} || ret=1
 		else
-			service ${lu_opts} ${force_unsafe} -q update self -label ${label} -maxtime ${lu_maxtime} -state ${lu_state} || ret=1
+			service ${lu_opts} -q update self -label ${label} -maxtime ${lu_maxtime} -state ${lu_state} || ret=1
 		fi
 	done
 	service sysctl upd_run

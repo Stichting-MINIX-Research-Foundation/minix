@@ -95,7 +95,6 @@ static int known_request_types[] = {
 #define OPT_FORCE_INIT_FAIL    "-y"	/* force init failure (for debugging) */
 #define OPT_FORCE_INIT_TIMEOUT "-z"	/* force init timeout (for debugging) */
 #define OPT_FORCE_INIT_DEFCB   "-d"	/* force init default callback */
-#define OPT_UNSAFE_LU          "-u"     /* allow unsafe update */
 #define OPT_NOMMAP_LU          "-m"     /* don't inherit mmaped regions */
 #define OPT_DETACH             "-e"     /* detach on update/restart */
 #define OPT_NORESTART          "-f"     /* don't restart */
@@ -176,11 +175,11 @@ static void print_usage(char *app_name, char *problem)
   fprintf(stderr, "Warning, %s\n", problem);
   fprintf(stderr, "Usage:\n");
   fprintf(stderr,
-      "    %s [%s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s] (up|run|edit|update) <binary|%s> [%s <args>] [%s <special>] [%s <major_nr>] [%s <dev_id>] [%s <ticks>] [%s <path>] [%s <name>] [%s <path>] [%s <state value|eval_expression>] [%s <time>] [%s <bytes>] [%s <bytes>] [%s <name>] [(%s|%s <src_label1,src_type1:src_label2,:,src_type3:...>)*] [%s <restarts>]\n",
+      "    %s [%s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s] (up|run|edit|update) <binary|%s> [%s <args>] [%s <special>] [%s <major_nr>] [%s <dev_id>] [%s <ticks>] [%s <path>] [%s <name>] [%s <path>] [%s <state value|eval_expression>] [%s <time>] [%s <bytes>] [%s <bytes>] [%s <name>] [(%s|%s <src_label1,src_type1:src_label2,:,src_type3:...>)*] [%s <restarts>]\n",
 	app_name, OPT_COPY, OPT_REUSE, OPT_NOBLOCK, OPT_REPLICA, OPT_NO_BIN_EXP,
 	OPT_BATCH, OPT_ASR_LU, OPT_PREPARE_ONLY_LU, OPT_FORCE_SELF_LU,
 	OPT_FORCE_INIT_CRASH, OPT_FORCE_INIT_FAIL, OPT_FORCE_INIT_TIMEOUT,
-	OPT_FORCE_INIT_DEFCB, OPT_UNSAFE_LU, OPT_NOMMAP_LU, OPT_DETACH,
+	OPT_FORCE_INIT_DEFCB, OPT_NOMMAP_LU, OPT_DETACH,
 	OPT_NORESTART, OPT_FORCE_INIT_ST, SELF_BINARY,
 	ARG_ARGS, ARG_DEV, ARG_MAJOR, ARG_DEVMANID, ARG_PERIOD,
 	ARG_SCRIPT, ARG_LABELNAME, ARG_CONFIG, ARG_LU_STATE, ARG_LU_MAXTIME,
@@ -207,7 +206,6 @@ static void print_usage(char *app_name, char *problem)
   fprintf(stderr, "      %s: force init failure (for debugging)\n", OPT_FORCE_INIT_FAIL);
   fprintf(stderr, "      %s: force init timeout (for debugging)\n", OPT_FORCE_INIT_TIMEOUT);
   fprintf(stderr, "      %s: force init default callback       \n", OPT_FORCE_INIT_DEFCB);
-  fprintf(stderr, "      %s: allow unsafe update               \n", OPT_UNSAFE_LU);
   fprintf(stderr, "      %s: don't inherit mmaped regions      \n", OPT_NOMMAP_LU);
   fprintf(stderr, "      %s: detach on update/restart          \n", OPT_DETACH);
   fprintf(stderr, "      %s: don't restart                     \n", OPT_NORESTART);
@@ -453,9 +451,6 @@ static int parse_arguments(int argc, char **argv, u32_t *rss_flags)
 
       if(d_flag)
           *rss_flags |= RSS_FORCE_INIT_DEFCB;
-
-      if(u_flag)
-          *rss_flags |= RSS_UNSAFE_LU;
 
       if(m_flag)
           *rss_flags |= RSS_NOMMAP_LU;

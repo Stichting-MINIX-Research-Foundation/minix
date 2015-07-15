@@ -65,7 +65,7 @@ void rupdate_add_upd(struct rprocupd* rpupd)
   rupdate.num_rpupds++;
 
   /* Propagate relevant flags from the new descriptor. */
-  lu_flags = rpupd->lu_flags & (SEF_LU_INCLUDES_VM|SEF_LU_INCLUDES_RS|SEF_LU_UNSAFE|SEF_LU_MULTI);
+  lu_flags = rpupd->lu_flags & (SEF_LU_INCLUDES_VM|SEF_LU_INCLUDES_RS|SEF_LU_MULTI);
   if(lu_flags) {
       RUPDATE_ITER(rupdate.first_rpupd, prev_rpupd, walk_rpupd,
           walk_rpupd->lu_flags |= lu_flags;
@@ -95,7 +95,7 @@ void rupdate_set_new_upd_flags(struct rprocupd* rpupd)
 
   /* Propagate relevant flags from last service under update (if any). */
   if(rupdate.last_rpupd) {
-      int lu_flags = rupdate.last_rpupd->lu_flags & (SEF_LU_INCLUDES_VM|SEF_LU_INCLUDES_RS|SEF_LU_UNSAFE);
+      int lu_flags = rupdate.last_rpupd->lu_flags & (SEF_LU_INCLUDES_VM|SEF_LU_INCLUDES_RS);
       rpupd->lu_flags |= lu_flags;
       rpupd->init_flags |= lu_flags;
   }
@@ -884,16 +884,6 @@ void end_update_debug(char *file, int line,
       if(rs_verbose)
           printf("RS: update failed, new RS instance will now exit\n");
       exit(1);
-  }
-
-  /* If VM is updated as part of a multi-component live update and something
-   * goes wrong after VM has completed initialization, rollback is only
-   * supported in a best-effort way in unsafe mode. The new VM instance might
-   * have important state changes that won't be reflected in the old version
-   * once we rollback.
-   */
-  if(result != OK && RUPDATE_IS_UPD_VM_MULTI() && RUPDATE_IS_VM_INIT_DONE() && (rupdate.vm_rpupd->lu_flags & SEF_LU_UNSAFE)) {
-      printf("RS: Warning rollbacking in unsafe multi-component update including VM!\n");
   }
 
   /* Handle prepare-only services first: simply cancel the update. */

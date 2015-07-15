@@ -189,11 +189,11 @@ char* srv_upd_to_string(struct rprocupd *rpupd)
 #define srv_upd_luflag_c(F) (rpupd->lu_flags & F ? '1' : '0')
 #define srv_upd_iflag_c(F) (rpupd->init_flags & F ? '1' : '0')
 
-   sprintf(srv_upd_string, "update (lu_flags(SAMPUNDRV)=%c%c%c%c%c%c%c%c%c, init_flags=(FCTD)=%c%c%c%c, state %d (%s), tm %lu, maxtime %lu, endpoint %d, state_data_gid %d, prev_ep %d, next_ep %d)",
+   sprintf(srv_upd_string, "update (lu_flags(SAMPNDRV)=%c%c%c%c%c%c%c%c, init_flags=(FCTD)=%c%c%c%c, state %d (%s), tm %lu, maxtime %lu, endpoint %d, state_data_gid %d, prev_ep %d, next_ep %d)",
        srv_upd_luflag_c(SEF_LU_SELF), srv_upd_luflag_c(SEF_LU_ASR),
        srv_upd_luflag_c(SEF_LU_MULTI), srv_upd_luflag_c(SEF_LU_PREPARE_ONLY),
-       srv_upd_luflag_c(SEF_LU_UNSAFE), srv_upd_luflag_c(SEF_LU_NOMMAP),
-       srv_upd_luflag_c(SEF_LU_DETACHED), srv_upd_luflag_c(SEF_LU_INCLUDES_RS),
+       srv_upd_luflag_c(SEF_LU_NOMMAP), srv_upd_luflag_c(SEF_LU_DETACHED),
+       srv_upd_luflag_c(SEF_LU_INCLUDES_RS),
        srv_upd_luflag_c(SEF_LU_INCLUDES_VM), srv_upd_iflag_c(SEF_INIT_FAIL),
        srv_upd_iflag_c(SEF_INIT_CRASH), srv_upd_iflag_c(SEF_INIT_TIMEOUT),
        srv_upd_iflag_c(SEF_INIT_DEFCB), rpupd->prepare_state, 
