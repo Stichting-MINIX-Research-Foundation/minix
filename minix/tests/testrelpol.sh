@@ -43,19 +43,26 @@
 POLICIES=""
 MAX_RETRY=7 # so that a single test takes at most 10 seconds
 
-# get_value(key, filename)
+# get_value(key, filename, noerror)
 get_value() {
-	if test -f $2
-	then
-		grep $1 $2 | cut -d: -f2
+	local value
+	local result
+
+	value=$(grep $1 $2 2>/dev/null)
+	result=$?
+
+	if test $result -ne 2
+        then
+		echo $value | cut -d: -f2
 	else
-		echo "Error: service $2 down"
+		test -z "$3" && echo "Error: service $2 down" >&2
 	fi
 }
 
 # wait_for_service(filename)
 wait_for_service() {
 	local retry
+	local value
 	retry=0
 
 	# Arbitrary timeout, found by counting the number of mice crossing
@@ -65,8 +72,11 @@ wait_for_service() {
 	do
 		sleep 1
 		retry=$((${retry} + 1))
-		test -f $1 && test $(get_value restarts $1) -ne $2 && break
+		# The service might momentarily disappear from the list.
+		value=$(get_value restarts $1 noerror)
+		test -n "$value" && test $value -ne $2 && return 0
 	done
+	return 1
 }
 
 #######################################################################
@@ -110,7 +120,11 @@ pol_restart() {
 	endpoint_pre=$(get_value endpoint ${service})
 
 	service fi ${label}
-	wait_for_service ${service} ${restarts_pre}
+	if ! wait_for_service ${service} ${restarts_pre}
+	then
+		echo not ok
+		return
+	fi
 
 	restarts_post=$(get_value restarts ${service})
 	endpoint_post=$(get_value endpoint ${service})
@@ -140,7 +154,11 @@ pol_reset() {
 	endpoint_pre=$(get_value endpoint ${service})
 
 	service fi ${label}
-	wait_for_service ${service} ${restarts_pre}
+	if ! wait_for_service ${service} ${restarts_pre}
+	then
+		echo not ok
+		return
+	fi
 
 	restarts_post=$(get_value restarts ${service})
 	endpoint_post=$(get_value endpoint ${service})
