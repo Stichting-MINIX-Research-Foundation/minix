@@ -126,6 +126,7 @@ int fl;
   fl |= AMF_VALID;	/* Mark in use */
   msgtable[next_slot].dst = dst;
   msgtable[next_slot].msg = *mp;
+  __insn_barrier();
   msgtable[next_slot].flags = fl;		/* Has to be last. The kernel 
 					 	 * scans this table while we
 						 * are sleeping.
