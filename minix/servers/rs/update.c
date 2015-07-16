@@ -296,6 +296,7 @@ int sys_upd_flags;
 void rollback_service(struct rproc **new_rpp, struct rproc **old_rpp)
 {
   /* Rollback an updated service. */
+  struct rproc *rp;
   int r = OK;
 
   /* RS is special, we may only need to swap the slots to rollback. */
@@ -311,6 +312,10 @@ void rollback_service(struct rproc **new_rpp, struct rproc **old_rpp)
           if(rs_verbose)
               printf("RS: %s performed rollback\n", srv_to_string(*new_rpp));
       }
+      /* Since we may now have missed heartbeat replies, resend requests. */
+      for (rp = BEG_RPROC_ADDR; rp < END_RPROC_ADDR; rp++)
+          if (rp->r_flags & RS_ACTIVE)
+              rp->r_check_tm = 0;
   }
   else {
       int swap_flag = ((*new_rpp)->r_flags & RS_INIT_PENDING ? RS_DONTSWAP : RS_SWAP);
