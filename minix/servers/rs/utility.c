@@ -219,10 +219,62 @@ int rs_asynsend(struct rproc *rp, message *m_ptr, int no_reply)
  *			     rs_receive_ticks				     *
  *===========================================================================*/
 int rs_receive_ticks(endpoint_t src, message *m_ptr,
-    int *status_ptr, int ticks)
+    int *status_ptr, clock_t ticks)
 {
-  printf("RS: rs_receive_ticks not implemented\n");
-  return ENOSYS;
+/* IPC receive with timeout.  Implemented with IPC filters.  The timer
+ * management logic comes from the tickdelay(3) implementation.
+ */
+  ipc_filter_el_t ipc_filter[2];
+  clock_t time_left, uptime;
+  int r, s, status;
+
+  /* Use IPC filters to receive from the provided source and CLOCK only.
+   * We make the hard assumption that RS did not already have IPC filters set.
+   */
+  memset(ipc_filter, 0, sizeof(ipc_filter));
+  ipc_filter[0].flags = IPCF_MATCH_M_SOURCE;
+  ipc_filter[0].m_source = CLOCK;
+  ipc_filter[1].flags = IPCF_MATCH_M_SOURCE;
+  ipc_filter[1].m_source = src;
+
+  if ((s = sys_statectl(SYS_STATE_ADD_IPC_WL_FILTER, ipc_filter,
+    sizeof(ipc_filter))) != OK)
+      panic("RS: rs_receive_ticks: setting IPC filter failed: %d", s);
+
+  /* Set a new alarm, and get information about the previous alarm. */
+  if ((s = sys_setalarm2(ticks, FALSE, &time_left, &uptime)) != OK)
+      panic("RS: rs_receive_ticks: setting alarm failed: %d", s);
+
+  /* Receive a message from either the provided source or CLOCK. */
+  while ((r = ipc_receive(ANY, m_ptr, &status)) == OK &&
+    m_ptr->m_source == CLOCK) {
+      /* Ignore early clock notifications. */
+      if (m_ptr->m_type == NOTIFY_MESSAGE &&
+        m_ptr->m_notify.timestamp >= uptime + ticks)
+          break;
+  }
+
+  /* Reinstate the previous alarm, if any. Do this in any case. */
+  if (time_left != TMR_NEVER) {
+      if (time_left > ticks)
+          time_left -= ticks;
+      else
+          time_left = 1; /* force an alarm */
+
+      (void)sys_setalarm(time_left, FALSE);
+  }
+
+  /* Clear the IPC filters. */
+  if ((s = sys_statectl(SYS_STATE_CLEAR_IPC_FILTERS, NULL, 0)) != OK)
+      panic("RS: rs_receive_ticks: setting IPC filter failed: %d", s);
+
+  /* If the last received message was from CLOCK, we timed out. */
+  if (r == OK && m_ptr->m_source == CLOCK)
+      return ENOTREADY;
+
+  if (status_ptr != NULL)
+      *status_ptr = status;
+  return r;
 }
 
 /*===========================================================================*
