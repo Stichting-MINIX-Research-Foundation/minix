@@ -131,7 +131,7 @@ char* srv_to_string_gen(struct rproc *rp, int is_verbose);
 char* srv_upd_to_string(struct rprocupd *rpupd);
 int rs_asynsend(struct rproc *rp, message *m_ptr, int no_reply);
 int rs_receive_ticks(endpoint_t src, message *m_ptr,
-    int *status_ptr, int ticks);
+    int *status_ptr, clock_t ticks);
 void reply(endpoint_t who, struct rproc *rp, message *m_ptr);
 void late_reply(struct rproc *rp, int code);
 int rs_isokendpt(endpoint_t endpoint, int *proc);
