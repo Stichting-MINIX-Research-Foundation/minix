@@ -177,13 +177,8 @@ acc_t *pack;
 
 void eth_rec(message *m)
 {
-	int i, r, m_type, flags;
+	int i, r, flags;
 	eth_port_t *loc_port, *vlan_port;
-
-	m_type= m->m_type;
-
-	assert(m_type == DL_CONF_REPLY || m_type == DL_TASK_REPLY ||
-		m_type == DL_STAT_REPLY);
 
 	for (i=0, loc_port= eth_port_table; i<eth_conf_nr; i++, loc_port++)
 	{
@@ -193,28 +188,16 @@ void eth_rec(message *m)
 	if (i >= eth_conf_nr)
 	{
 		printf("eth_rec: message 0x%x from unknown driver %d\n",
-			m_type, m->m_source);
+			m->m_type, m->m_source);
 		return;
 	}
 
-	if (loc_port->etp_osdep.etp_state == OEPS_CONF_SENT)
-	{
-		if (m_type == DL_TASK_REPLY)
-		{
-			flags= m->m_netdrv_net_dl_task.flags;
-
-			if (flags & DL_PACK_SEND)
-				write_int(loc_port);
-			if (flags & DL_PACK_RECV)
-				read_int(loc_port, m->m_netdrv_net_dl_task.count);
-			return;
-		}
-
-		if (m_type != DL_CONF_REPLY)
-		{
-			printf(
-	"eth_rec: got bad message type 0x%x from %d in CONF state\n",
-				m_type, m->m_source);
+	switch (m->m_type) {
+	case DL_CONF_REPLY:
+		if (loc_port->etp_osdep.etp_state != OEPS_CONF_SENT) {
+			printf("eth_rec: got DL_CONF_REPLY from %d while in "
+			    "state %d (ignoring)\n", m->m_source,
+			    loc_port->etp_osdep.etp_state);
 			return;
 		}
 
@@ -257,44 +240,17 @@ void eth_rec(message *m)
 				eth_restart_ioctl(vlan_port);
 			}
 		}
+
 		if (!(loc_port->etp_flags & EPF_READ_IP))
-			setup_read (loc_port);
+			loc_port->etp_osdep.etp_flags |= OEPF_NEED_RECV;
 
-#if 0
-		if (loc_port->etp_osdep.etp_flags & OEPF_NEED_SEND)
-		{
-			printf("eth_rec(conf): OEPF_NEED_SEND is set\n");
-		}
-		if (loc_port->etp_osdep.etp_flags & OEPF_NEED_RECV)
-		{
-			printf("eth_rec(conf): OEPF_NEED_RECV is set\n");
-		}
-		if (loc_port->etp_osdep.etp_flags & OEPF_NEED_STAT)
-		{
-			printf("eth_rec(conf): OEPF_NEED_STAT is set\n");
-		}
-#endif
+		break;
 
-		return;
-	}
-	if (loc_port->etp_osdep.etp_state == OEPS_GETSTAT_SENT)
-	{
-		if (m_type == DL_TASK_REPLY)
-		{
-			flags= m->m_netdrv_net_dl_task.flags;
-
-			if (flags & DL_PACK_SEND)
-				write_int(loc_port);
-			if (flags & DL_PACK_RECV)
-				read_int(loc_port, m->m_netdrv_net_dl_task.count);
-			return;
-		}
-
-		if (m_type != DL_STAT_REPLY)
-		{
-			printf(
-	"eth_rec: got bad message type 0x%x from %d in GETSTAT state\n",
-				m_type, m->m_source);
+	case DL_STAT_REPLY:
+		if (loc_port->etp_osdep.etp_state != OEPS_GETSTAT_SENT) {
+			printf("eth_rec: got DL_STAT_REPLY from %d while in "
+			    "state %d (ignoring)\n", m->m_source,
+			    loc_port->etp_osdep.etp_state);
 			return;
 		}
 
@@ -310,43 +266,25 @@ void eth_rec(message *m)
 		assert(loc_port->etp_flags & EPF_GOT_ADDR);
 		eth_restart_ioctl(loc_port);
 
-#if 0
-		if (loc_port->etp_osdep.etp_flags & OEPF_NEED_SEND)
-		{
-			printf("eth_rec(stat): OEPF_NEED_SEND is set\n");
-		}
-		if (loc_port->etp_osdep.etp_flags & OEPF_NEED_RECV)
-		{
-			printf("eth_rec(stat): OEPF_NEED_RECV is set\n");
-		}
-		if (loc_port->etp_osdep.etp_flags & OEPF_NEED_CONF)
-		{
-			printf("eth_rec(stat): OEPF_NEED_CONF is set\n");
-		}
-#endif
+		break;
 
-#if 0
-		if (loc_port->etp_osdep.etp_state == OEPS_IDLE &&
-			(loc_port->etp_osdep.etp_flags & OEPF_NEED_CONF))
-		{
-			eth_set_rec_conf(loc_port,
-				loc_port->etp_osdep.etp_recvconf);
-		}
-#endif
-		return;
+	case DL_TASK_REPLY:
+		if (loc_port->etp_osdep.etp_state == OEPS_RECV_SENT ||
+		    loc_port->etp_osdep.etp_state == OEPS_SEND_SENT)
+			loc_port->etp_osdep.etp_state= OEPS_IDLE;
+
+		flags= m->m_netdrv_net_dl_task.flags;
+
+		if (flags & DL_PACK_SEND)
+			write_int(loc_port);
+		if (flags & DL_PACK_RECV)
+			read_int(loc_port, m->m_netdrv_net_dl_task.count);
+
+		break;
+
+	default:
+		panic("invalid ethernet reply %d", m->m_type);
 	}
-	assert(loc_port->etp_osdep.etp_state == OEPS_IDLE  ||
-		loc_port->etp_osdep.etp_state == OEPS_RECV_SENT ||
-		loc_port->etp_osdep.etp_state == OEPS_SEND_SENT ||
-		(printf("etp_state = %d\n", loc_port->etp_osdep.etp_state), 0));
-	loc_port->etp_osdep.etp_state= OEPS_IDLE;
-
-	flags= m->m_netdrv_net_dl_task.flags;
-
-	if (flags & DL_PACK_SEND)
-		write_int(loc_port);
-	if (flags & DL_PACK_RECV)
-		read_int(loc_port, m->m_netdrv_net_dl_task.count);
 
 	if (loc_port->etp_osdep.etp_state == OEPS_IDLE &&
 		loc_port->etp_osdep.etp_flags & OEPF_NEED_SEND)
@@ -362,11 +300,11 @@ void eth_rec(message *m)
 		if (!(loc_port->etp_flags & EPF_READ_IP))
 			setup_read (loc_port);
 	}
-	if (loc_port->etp_osdep.etp_flags & OEPF_NEED_CONF)
+	if (loc_port->etp_osdep.etp_state == OEPS_IDLE &&
+		(loc_port->etp_osdep.etp_flags & OEPF_NEED_CONF))
 	{
-#if 0
-		printf("eth_rec: OEPF_NEED_CONF is set\n");
-#endif
+		eth_set_rec_conf(loc_port,
+			loc_port->etp_osdep.etp_recvconf);
 	}
 	if (loc_port->etp_osdep.etp_state == OEPS_IDLE &&
 		(loc_port->etp_osdep.etp_flags & OEPF_NEED_STAT))
