@@ -853,7 +853,6 @@ PUBLIC void magic_destroy_dsentry(struct _magic_dsentry *dsentry,
  *===========================================================================*/
 PUBLIC int magic_destroy_obdsentry_by_addr(void *data_ptr)
 {
-    struct _magic_dsentry _magic_dsentry_buff;
     struct _magic_sentry *sentry;
     struct _magic_dsentry *dsentry;
     struct _magic_obdsentry *obdsentry;
@@ -862,7 +861,7 @@ PUBLIC int magic_destroy_obdsentry_by_addr(void *data_ptr)
     MAGIC_MEM_WRAPPER_LBEGIN();
 
     /* Lookup the obdsentry. */
-    sentry = magic_sentry_lookup_by_addr(data_ptr, &_magic_dsentry_buff);
+    sentry = magic_sentry_lookup_by_addr(data_ptr, NULL);
     if(!sentry || ((sentry->flags & obflags) != obflags)) {
         MAGIC_MEM_WRAPPER_LEND();
         return MAGIC_EINVAL;
