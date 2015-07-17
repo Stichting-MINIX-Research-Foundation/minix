@@ -42,6 +42,7 @@
 #######################################################################
 POLICIES=""
 MAX_RETRY=7 # so that a single test takes at most 10 seconds
+MAX_MULTI_LU_RETRY=3 # how many times should we retry after bad luck?
 
 # get_value(key, filename, noerror)
 get_value() {
@@ -246,12 +247,13 @@ lu_test() {
 }
 
 multi_lu_test_one() {
-	local result=$1
-	shift
+	local expected=$1
+	local once_index=$2
+	shift 2
 	local labels="$*"
-	local ret=0
-	local index=0
-	local once_index=2
+	local ret=1
+	local retry=0
+	local index result
 
 	lu_opts=${lu_opts:-}
 	lu_maxtime=${lu_maxtime:-3HZ}
@@ -260,39 +262,87 @@ multi_lu_test_one() {
 	lu_maxtime_once=${lu_maxtime_once:-$lu_maxtime}
 	lu_state_once=${lu_state_once:-$lu_state}
 
-	for label in ${labels}
+	while [ $ret -eq 1 -a $retry -lt ${MAX_MULTI_LU_RETRY} ]
 	do
-		index=`expr $index + 1`
+		index=0
+		for label in ${labels}
+		do
+			index=`expr $index + 1`
 
-		if [ $index -eq $once_index ]
+			if [ $index -eq $once_index ]
+			then
+				service ${lu_opts_once} -q update self \
+					-label ${label} \
+					-maxtime ${lu_maxtime_once} \
+					-state ${lu_state_once} || ret=2
+			else
+				service ${lu_opts} -q update self \
+					-label ${label} \
+					-maxtime ${lu_maxtime} \
+					-state ${lu_state} || ret=2
+			fi
+		done
+		service sysctl upd_run
+		result=$?
+
+		# We may experience transient failures as a result of services
+		# trying to talk to each other while being prepared for the
+		# live update.  In that case we get result code 4.  If that is
+		# not the result code we expected, try again for a limited
+		# number of times.
+		if [ $result -eq $expected ]
 		then
-			service ${lu_opts_once} -q update self -label ${label} -maxtime ${lu_maxtime_once} -state ${lu_state_once} || ret=1
-		else
-			service ${lu_opts} -q update self -label ${label} -maxtime ${lu_maxtime} -state ${lu_state} || ret=1
+			ret=0
+		elif [ $result -ne 4 ]
+		then
+			break
 		fi
+		retry=`expr $retry + 1`
 	done
-	service sysctl upd_run
-	if [ $? -ne $result ]
-	then
-		ret=1
-	fi
-	if [ $ret -eq 1 ]
-	then
-		echo not ok
-	fi
+
 	return $ret
 }
 
 multi_lu_test() {
+	local y_result z_result
+	local have_rs=0
 	local labels="$*"
 
-	multi_lu_test_one 0 ${labels} || return
-	lu_opts_once="-x" multi_lu_test_one 200 ${labels} || return
-	lu_opts_once="-y" multi_lu_test_one 200 ${labels} || return
-	lu_maxtime_once="1HZ" lu_opts_once="-z" multi_lu_test_one 200 ${labels} || return
-	lu_maxtime_once="1HZ" lu_state_once="5" multi_lu_test_one 4 ${labels} || return
+	# Some of the results depend on whether RS is part of the live update.
+	for label in ${labels}
+	do
+		if [ "x$label" = "xrs" ]
+		then
+			have_rs=1
+		fi
+	done
 
-	echo ok
+	if [ $have_rs -eq 1 ]
+	then
+		y_result=200
+		z_result=200
+	else
+		y_result=78
+		z_result=4
+	fi
+
+	multi_lu_test_one 0 0 ${labels} || return 1
+	lu_opts_once="-x" multi_lu_test_one 200 2 ${labels} || return 1
+	lu_opts_once="-y" multi_lu_test_one ${y_result} 3 ${labels} || return 1
+	lu_maxtime_once="1HZ" lu_opts_once="-z" multi_lu_test_one ${z_result} 2 ${labels} || return 1
+	lu_maxtime_once="1HZ" lu_state_once="5" multi_lu_test_one 4 3 ${labels} || return 1
+
+	return 0
+}
+
+multi_lu_test_wrapper() {
+	echo "# testing $@ :: multicomponent live update+rollback"
+	if ! multi_lu_test "$@"
+	then
+		echo "not ok # failed multicomponent live update+rollback"
+		return 1
+	fi
+	return 0
 }
 
 #######################################################################
@@ -361,7 +411,7 @@ main() {
 				echo "not ok # failed ${label}, live update+rollback"
 				exit 1
 			fi
-			if [ "x${label}" = "xrs" ]
+			if [ "x${label}" = "xrs" -o "x${label}" = "xvm" ]
 			then
 				continue
 			fi
@@ -372,14 +422,11 @@ main() {
 			fi
 		fi
 	done
-	multi_lu_labels="${multi_lu_labels} rs"
-	echo "# testing ${multi_lu_labels} :: whole-OS live update+rollback"
-	result=$(multi_lu_test $multi_lu_labels)
-	if [ "x${result}" != "xok" ]
-	then
-		echo "not ok # failed whole-OS live update+rollback"
-		exit 1
-	fi
+
+	multi_lu_test_wrapper ${multi_lu_labels} || exit 1
+	multi_lu_test_wrapper ${multi_lu_labels} vm || exit 1
+	multi_lu_test_wrapper ${multi_lu_labels} rs || exit 1
+	multi_lu_test_wrapper ${multi_lu_labels} vm rs || exit 1
 
 	echo ok
 	exit 0
