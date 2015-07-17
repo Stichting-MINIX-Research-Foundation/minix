@@ -49,20 +49,20 @@ SRCS+= smp.c
 
 .if ${USE_WATCHDOG} != "no"
 SRCS+= watchdog.c
-CPPFLAGS+= -DUSE_WATCHDOG
+CPPFLAGS+= -DUSE_WATCHDOG=1
 .endif
 
 # Extra debugging routines
 .if ${USE_SYSDEBUG} != "no"
 SRCS+= 	debug.c
-CPPFLAGS+= -DUSE_SYSDEBUG
+CPPFLAGS+= -DUSE_SYSDEBUG=1
 .endif
 
 # These come last, so the profiling buffer is at the end of the data segment
 SRCS+= profile.c do_sprofile.c
 
 .if ${USE_LIVEUPDATE} != "no"
-CPPFLAGS+= -DUSE_UPDATE
+CPPFLAGS+= -DUSE_UPDATE=1
 .endif
 
 CLEANFILES+=extracted-errno.h extracted-mfield.h extracted-mtype.h procoffsets.h
