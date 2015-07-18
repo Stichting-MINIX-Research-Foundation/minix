@@ -154,6 +154,17 @@ int sef_llvm_del_special_mem_region_by_addr(void *addr)
 }
 
 /*===========================================================================*
+ *				sef_llvm_ds_st_init			     *
+ *===========================================================================*/
+void sef_llvm_ds_st_init(void)
+{
+    extern void __attribute__((weak)) _magic_ds_st_init(void);
+    if (!_magic_ds_st_init)
+        return;
+    _magic_ds_st_init();
+}
+
+/*===========================================================================*
  *				sef_llvm_ac_mmap			     *
  *===========================================================================*/
 void* sef_llvm_ac_mmap(void *buf, size_t len, int prot, int flags, int fd,
