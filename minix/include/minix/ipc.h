@@ -1129,9 +1129,10 @@ _ASSERT_MSG_SIZE(mess_lsys_krn_sys_sdevio);
 typedef struct {
 	clock_t exp_time;
 	clock_t time_left;
+	clock_t uptime;
 	int abs_time;
 
-	uint8_t padding[44];
+	uint8_t padding[40];
 } mess_lsys_krn_sys_setalarm;
 _ASSERT_MSG_SIZE(mess_lsys_krn_sys_setalarm);
 

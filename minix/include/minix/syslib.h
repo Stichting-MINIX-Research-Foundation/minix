@@ -107,7 +107,11 @@ int free_contig(void *addr, size_t len);
  */
 int sys_times(endpoint_t proc_ep, clock_t *user_time, clock_t *sys_time,
 	clock_t *uptime, time_t *boottime);
-int sys_setalarm(clock_t exp_time, int abs_time);
+
+#define sys_setalarm(exp, abs) sys_setalarm2(exp, abs, NULL, NULL)
+int sys_setalarm2(clock_t exp_time, int abs_time, clock_t *time_left,
+	clock_t *uptime);
+
 int sys_vtimer(endpoint_t proc_nr, int which, clock_t *newval, clock_t
 	*oldval);
 

@@ -1,17 +1,26 @@
 #include "syslib.h"
 
-/*===========================================================================*
- *                               sys_setalarm		     	     	     *
- *===========================================================================*/
-int sys_setalarm(exp_time, abs_time)
-clock_t exp_time;	/* expiration time for the alarm */
-int abs_time;		/* use absolute or relative expiration time */
-{
-/* Ask the SYSTEM schedule a synchronous alarm for the caller. The process
- * number can be SELF if the caller doesn't know its process number.
+/*
+ * Ask the kernel to schedule a synchronous alarm for the caller, using either
+ * an absolute or a relative number of clock ticks.  Optionally return the time
+ * left on the previous timer (TMR_NEVER if none was set) and the current time.
  */
-    message m;
-    m.m_lsys_krn_sys_setalarm.exp_time = exp_time; /* the expiration time */
-    m.m_lsys_krn_sys_setalarm.abs_time = abs_time; /* time is absolute? */
-    return _kernel_call(SYS_SETALARM, &m);
+int
+sys_setalarm2(clock_t exp_time, int abs_time, clock_t * time_left,
+	clock_t * uptime)
+{
+	message m;
+	int r;
+
+	m.m_lsys_krn_sys_setalarm.exp_time = exp_time; /* expiration time */
+	m.m_lsys_krn_sys_setalarm.abs_time = abs_time; /* time is absolute? */
+
+	if ((r = _kernel_call(SYS_SETALARM, &m)) != OK)
+		return r;
+
+	if (time_left != NULL)
+		*time_left = m.m_lsys_krn_sys_setalarm.time_left;
+	if (uptime != NULL)
+		*uptime = m.m_lsys_krn_sys_setalarm.uptime;
+	return OK;
 }

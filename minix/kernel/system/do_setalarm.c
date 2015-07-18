@@ -39,11 +39,16 @@ int do_setalarm(struct proc * caller, message * m_ptr)
 
   /* Return the ticks left on the previous alarm. */
   uptime = get_monotonic(); 
-  if ((tp->tmr_exp_time != TMR_NEVER) && (uptime < tp->tmr_exp_time) ) {
+  if (tp->tmr_exp_time == TMR_NEVER) {
+      m_ptr->m_lsys_krn_sys_setalarm.time_left = TMR_NEVER;
+  } else if (uptime < tp->tmr_exp_time) {
       m_ptr->m_lsys_krn_sys_setalarm.time_left = (tp->tmr_exp_time - uptime);
   } else {
       m_ptr->m_lsys_krn_sys_setalarm.time_left = 0;
   }
+
+  /* For the caller's convenience, also return the current time. */
+  m_ptr->m_lsys_krn_sys_setalarm.uptime = uptime;
 
   /* Finally, (re)set the timer depending on the expiration time. */
   if (exp_time == 0) {

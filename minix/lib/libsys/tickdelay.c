@@ -8,33 +8,41 @@ int tickdelay(clock_t ticks)
 {
 /* This function uses the synchronous alarm to delay for a while. This works
  * even if a previous synchronous alarm was scheduled, because the remaining
- * tick of the previous alarm are returned so that it can be rescheduled.
- * Note however that a long tick_delay (longer than the remaining time of the
+ * ticks of the previous alarm are returned so that it can be rescheduled.
+ * Note however that a long tick delay (longer than the remaining time of the
  * previous) alarm will also delay the previous alarm.
  */
-    message m, m_alarm;
-    int s;
+    clock_t time_left, uptime;
+    message m;
+    int r, status;
 
     if (ticks <= 0) return OK;		/* check for robustness */
 
-    m.m_lsys_krn_sys_setalarm.exp_time = ticks;	/* request message after ticks */
-    m.m_lsys_krn_sys_setalarm.abs_time = 0;	/* ticks are relative to now */
-    s = _kernel_call(SYS_SETALARM, &m);
-    if (s != OK) return(s);
+    /* Set the new alarm while getting the time left on the previous alarm. */
+    if ((r = sys_setalarm2(ticks, FALSE, &time_left, &uptime)) != OK)
+	return r;
 
-    sef_receive(CLOCK,&m_alarm);		/* await synchronous alarm */
-
-    /* Check if we must reschedule the current alarm. */
-    if (m.m_lsys_krn_sys_setalarm.time_left > 0 &&
-		m.m_lsys_krn_sys_setalarm.time_left != TMR_NEVER) {
-
-	m.m_lsys_krn_sys_setalarm.exp_time =
-		m.m_lsys_krn_sys_setalarm.time_left - ticks;
-
-	if (m.m_lsys_krn_sys_setalarm.exp_time <= 0)
-		m.m_lsys_krn_sys_setalarm.exp_time = 1;
-    	s = _kernel_call(SYS_SETALARM, &m);
+    /* Await synchronous alarm.  Since an alarm notification may already have
+     * been dispatched by the time that we set the new alarm, we keep going
+     * until we actually receive an alarm with a timestamp no earlier than the
+     * alarm time we expect.
+     */
+    while ((r = ipc_receive(CLOCK, &m, &status)) == OK) {
+	if (m.m_type == NOTIFY_MESSAGE &&
+	    m.m_notify.timestamp >= uptime + ticks)
+		break;
     }
 
-    return(s);
+    /* Check if we must reschedule the previous alarm. */
+    if (time_left != TMR_NEVER) {
+	if (time_left > ticks)
+		time_left -= ticks;
+	else
+		time_left = 1; /* force an alarm */
+
+	/* There's no point in returning an error from here.. */
+	(void)sys_setalarm(time_left, FALSE);
+    }
+
+    return r;
 }
