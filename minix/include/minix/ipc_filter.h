@@ -12,7 +12,7 @@
 #define ANY_TSK		_ENDPOINT(3, _ENDPOINT_P(ANY))
 
 /* IPC filter constants. */
-#define IPCF_MAX_ELEMENTS       NR_SYS_PROCS
+#define IPCF_MAX_ELEMENTS       (NR_SYS_PROCS * 2)
 
 /* IPC filter flags. */
 #define IPCF_MATCH_M_SOURCE    0x1

@@ -337,7 +337,7 @@ void sef_setcb_gcov(sef_cb_gcov_t cb);
 int sef_copy_state_region_ctl(sef_init_info_t *info,
     vir_bytes *src_address, vir_bytes *dst_address);
 int sef_copy_state_region(sef_init_info_t *info,
-    vir_bytes address, size_t size, vir_bytes dst_address);
+    vir_bytes address, size_t size, vir_bytes dst_address, int may_have_holes);
 int sef_st_state_transfer(sef_init_info_t *info);
 
 /* Callback prototypes to be passed to the State Transfer framwork. */

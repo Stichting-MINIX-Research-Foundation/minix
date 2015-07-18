@@ -1,9 +1,12 @@
-#include "syslib.h"
 #include <assert.h>
 #include <unistd.h>
-#include <minix/sysutil.h>
 #include <string.h>
 
+#include <machine/vmparam.h>
+
+#include <minix/sysutil.h>
+
+#include "syslib.h"
 /* SEF Init callbacks. */
 static struct sef_init_cbs {
     sef_cb_init_t                       sef_cb_init_fresh;
@@ -356,11 +359,11 @@ int sef_cb_init_identity_state_transfer(int type, sef_init_info_t *info)
 
   /* Transfer data. */
   size = (size_t)(_brksize - data_start);
-  r = sef_copy_state_region(info, data_start, size, data_start);
-  if(r != OK) {
-      printf("sef_cb_init_identity_state_transfer: data transfer failed\n");
+
+  r = sef_copy_state_region(info, data_start, size, data_start,
+    TRUE /*may_have_holes*/);
+  if (r != OK)
       return r;
-  }
 
   new_brksize = _brksize;
 
@@ -384,7 +387,7 @@ int sef_cb_init_identity_state_transfer(int type, sef_init_info_t *info)
       assert(_brksize == new_brksize);
       size = (size_t)(_brksize - old_brksize);
       r = sef_copy_state_region(info, (vir_bytes) old_brksize, size,
-          (vir_bytes) old_brksize);
+          (vir_bytes) old_brksize, FALSE /*may_have_holes*/);
       if(r != OK) {
           printf("sef_cb_init_identity_state_transfer: extended heap transfer failed\n");
           return r;

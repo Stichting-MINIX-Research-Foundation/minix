@@ -601,7 +601,13 @@ static int sef_cb_init_vm_multi_lu(int type, sef_init_info_t *info)
 	m.m_source = VM_PROC_NR;
 	for(i=0;i < NR_SYS_PROCS;i++) {
 	    if(rprocpub[i].in_use && rprocpub[i].old_endpoint != NONE) {
-	        if(num_elements <= IPCF_MAX_ELEMENTS-3) {
+	        if(num_elements <= IPCF_MAX_ELEMENTS-5) {
+                    /* VM_BRK is needed for normal operation during the live
+                     * update.  VM_INFO is needed for state transfer in the
+                     * light of holes.  Pagefaults and handle-memory requests
+                     * are blocked intentionally, as handling these would
+                     * prevent VM from being able to roll back.
+                     */
 	            ipc_filter[num_elements].flags = IPCF_MATCH_M_SOURCE;
 	            ipc_filter[num_elements].m_source = rprocpub[i].old_endpoint;
 	            if(!(info->flags & SEF_LU_UNSAFE)) {
@@ -616,6 +622,14 @@ static int sef_cb_init_vm_multi_lu(int type, sef_init_info_t *info)
 	                ipc_filter[num_elements].m_type = VM_BRK;
 	            }
 	            num_elements++;
+	            if(!(info->flags & SEF_LU_UNSAFE)) {
+	                ipc_filter[num_elements].flags = IPCF_MATCH_M_SOURCE | IPCF_MATCH_M_TYPE;
+	                ipc_filter[num_elements].m_source = rprocpub[i].old_endpoint;
+	                ipc_filter[num_elements++].m_type = VM_INFO;
+	                ipc_filter[num_elements].flags = IPCF_MATCH_M_SOURCE | IPCF_MATCH_M_TYPE;
+	                ipc_filter[num_elements].m_source = rprocpub[i].new_endpoint;
+	                ipc_filter[num_elements++].m_type = VM_INFO;
+	            }
 	            /* Make sure we can talk to any RS instance. */
 	            if(rprocpub[i].old_endpoint == RS_PROC_NR) {
 	                ipc_filter[num_elements].flags = IPCF_MATCH_M_SOURCE;
