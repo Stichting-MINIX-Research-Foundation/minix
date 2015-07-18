@@ -22,8 +22,6 @@
 #include <netif/etharp.h>
 #include <lwip/tcp_impl.h>
 
-endpoint_t lwip_ep;
-
 static minix_timer_t tcp_ftmr, tcp_stmr, arp_tmr;
 static int arp_ticks, tcp_fticks, tcp_sticks;
 
@@ -59,13 +57,6 @@ static int sef_cb_init_fresh(__unused int type, __unused sef_init_info_t *info)
 {
 	int err;
 	unsigned int hz;
-
-	char my_name[16];
-	int my_priv;
-
-	err = sys_whoami(&lwip_ep, my_name, sizeof(my_name), &my_priv);
-	if (err != OK)
-		panic("Cannot get own endpoint");
 
 	nic_init_all();
 	inet_read_conf();

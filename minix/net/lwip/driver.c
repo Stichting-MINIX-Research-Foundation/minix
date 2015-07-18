@@ -37,7 +37,6 @@
 static struct nic devices[MAX_DEVS];
 
 static ip_addr_t ip_addr_none = { IPADDR_NONE };
-extern endpoint_t lwip_ep;
 
 void nic_assign_driver(const char * dev_type,
 			unsigned int dev_num,

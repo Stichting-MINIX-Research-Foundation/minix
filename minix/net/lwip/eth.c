@@ -62,8 +62,6 @@
 #include "proto.h"
 #include "driver.h"
 
-extern endpoint_t lwip_ep;
-
 static err_t low_level_output(__unused struct netif *netif, struct pbuf *pbuf)
 {
 	struct nic * nic;
