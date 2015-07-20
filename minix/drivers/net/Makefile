@@ -9,7 +9,6 @@ SUBDIR+=	dpeth
 SUBDIR+=	e1000
 SUBDIR+=	fxp
 SUBDIR+=	lance
-SUBDIR+=	orinoco
 SUBDIR+=	rtl8139
 SUBDIR+=	rtl8169
 SUBDIR+=	virtio_net

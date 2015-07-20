@@ -25,7 +25,7 @@
 ./service/fxp				minix-sys
 ./service/hgfs				minix-sys
 ./service/lance				minix-sys
-./service/orinoco			minix-sys
+./service/orinoco			minix-sys	obsolete
 ./service/pci				minix-sys
 ./service/pckbd				minix-sys
 ./service/printer			minix-sys

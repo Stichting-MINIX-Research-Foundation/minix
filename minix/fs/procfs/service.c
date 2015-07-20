@@ -67,7 +67,6 @@ service_get_policies(struct policies * pol, index_t slot)
                 { .label = "fxp", .policy_str = "restart" },
                 { .label = "lance", .policy_str = "restart" },
                 { .label = "lan8710a", .policy_str = "restart" },
-                { .label = "orinoco", .policy_str = "restart" },
                 { .label = "rtl8139", .policy_str = "restart" },
                 { .label = "rtl8169", .policy_str = "restart" },
                 { .label = "uds", .policy_str = "reset" },
