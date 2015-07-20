@@ -14,8 +14,6 @@
 #include <minix/minlib.h>
 #include <minix/partition.h>
 #include <sys/ioctl.h>
-#elif defined(__linux__)
-#include <mntent.h>
 #endif
 
 #include <assert.h>
@@ -1305,112 +1303,6 @@ check_mtab(const char *device)		/* /dev/hd1 or whatever */
 		errx(1, "%s is mounted on %s", device, mount_point);
 	}
   }
-#elif defined(__linux__)
-/* XXX: this code is copyright Theodore T'so and distributed under the GPLv2. Rewrite.
- */
-	struct mntent 	*mnt;
-	struct stat	st_buf;
-	dev_t		file_dev=0, file_rdev=0;
-	ino_t		file_ino=0;
-	FILE 		*f;
-	int		fd;
-	char 		*mtab_file = "/proc/mounts";
-
-	if ((f = setmntent (mtab_file, "r")) == NULL)
-		goto error;
-
-	if (stat(device, &st_buf) == 0) {
-		if (S_ISBLK(st_buf.st_mode)) {
-			file_rdev = st_buf.st_rdev;
-		} else {
-			file_dev = st_buf.st_dev;
-			file_ino = st_buf.st_ino;
-		}
-	}
-	
-	while ((mnt = getmntent (f)) != NULL) {
-		if (strcmp(device, mnt->mnt_fsname) == 0)
-			break;
-		if (stat(mnt->mnt_fsname, &st_buf) == 0) {
-			if (S_ISBLK(st_buf.st_mode)) {
-				if (file_rdev && (file_rdev == st_buf.st_rdev))
-					break;
-			} else {
-				if (file_dev && ((file_dev == st_buf.st_dev) &&
-						 (file_ino == st_buf.st_ino)))
-					break;
-			}
-		}
-	}
-
-	if (mnt == NULL) {
-		/*
-		 * Do an extra check to see if this is the root device.  We
-		 * can't trust /etc/mtab, and /proc/mounts will only list
-		 * /dev/root for the root filesystem.  Argh.  Instead we
-		 * check if the given device has the same major/minor number
-		 * as the device that the root directory is on.
-		 */
-		if (file_rdev && stat("/", &st_buf) == 0) {
-			if (st_buf.st_dev == file_rdev) {
-				goto is_root;
-			}
-		}
-		goto test_busy;
-	}
-	/* Validate the entry in case /etc/mtab is out of date */
-	/* 
-	 * We need to be paranoid, because some broken distributions
-	 * (read: Slackware) don't initialize /etc/mtab before checking
-	 * all of the non-root filesystems on the disk.
-	 */
-	if (stat(mnt->mnt_dir, &st_buf) < 0) {
-		if (errno == ENOENT) {
-			goto test_busy;
-		}
-		goto error;
-	}
-	if (file_rdev && (st_buf.st_dev != file_rdev)) {
-		goto error;
-	}
-
-	fprintf(stderr, "Device %s is mounted, exiting\n", device);
-	exit(-1);
-
-	/*
-	 * Check to see if we're referring to the root filesystem.
-	 * If so, do a manual check to see if we can open /etc/mtab
-	 * read/write, since if the root is mounted read/only, the
-	 * contents of /etc/mtab may not be accurate.
-	 */
-	if (!strcmp(mnt->mnt_dir, "/")) {
-is_root:
-		fprintf(stderr, "Device %s is mounted as root file system!\n",
-				device);
-		exit(-1);
-	}
-	
-test_busy:
-
-	endmntent (f);
-	if ((stat(device, &st_buf) != 0) ||
-			!S_ISBLK(st_buf.st_mode))
-		return;
-	fd = open(device, O_RDONLY | O_EXCL);
-	if (fd < 0) {
-		if (errno == EBUSY) {
-			fprintf(stderr, "Device %s is used by the system\n", device);
-			exit(-1);
-		}
-	} else
-		close(fd);
-
-	return;
-
-error:
-	endmntent (f);
-	fprintf(stderr, "Error while checking if device %s is mounted\n", device);
-	exit(-1);
 #else
 	(void) device;	/* shut up warnings about unused variable... */
 #endif
