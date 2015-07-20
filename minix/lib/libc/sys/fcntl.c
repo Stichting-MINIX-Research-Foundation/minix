@@ -21,6 +21,7 @@ int fcntl(int fd, int cmd, ...)
   /* Adjust for the stupid cases. */
   switch(cmd) {
      case F_DUPFD:
+     case F_DUPFD_CLOEXEC:
      case F_SETFD:
      case F_SETFL:
      case F_SETNOSIGPIPE:

@@ -603,6 +603,7 @@ vfs_fcntl_out(struct trace_proc * proc, const message * m_out)
 
 	switch (m_out->m_lc_vfs_fcntl.cmd) {
 	case F_DUPFD:
+	case F_DUPFD_CLOEXEC:
 		put_fd(proc, "fd2", m_out->m_lc_vfs_fcntl.arg_int);
 		break;
 	case F_SETFD:

@@ -213,8 +213,8 @@ void test7c()
 {
 /* Test fcntl(). */
 
-  int fd, m, s, newfd, newfd2;
-  struct stat stat1, stat2, stat3;
+  int fd, m, s, newfd, newfd2, newfd3, newfd4;
+  struct stat stat1, stat2, stat3, stat4, stat5;
 
   subtest = 3;
   errno = -100;
@@ -264,20 +264,42 @@ void test7c()
   if (fcntl(newfd2, F_GETFL) != (O_APPEND | m)) e(30);	/* O_APPEND set */
   if (fcntl(fd, F_SETFD, 0) != 0) e(31);/* turn FD_CLOEXEC off */
 
-  /* Check if newfd and newfd2 are the same inode. */
+  /* Also test F_DUPFD_CLOEXEC. */
+  if ( (newfd3 = fcntl(fd, F_DUPFD_CLOEXEC, 0)) != 4) e(0);
+  if (fcntl(newfd3, F_GETFD) != FD_CLOEXEC) e(0); /* FD_CLOEXEC must be set */
+  if (close(newfd3) != 0) e(0);
+  if ( (newfd3 = fcntl(fd, F_DUPFD_CLOEXEC, 12)) != 12) e(0);
+  if (fcntl(newfd3, F_GETFD) != FD_CLOEXEC) e(0); /* FD_CLOEXEC must be set */
+  if ( (newfd4 = fcntl(newfd3, F_DUPFD, 0)) != 4) e(0);
+  if (fcntl(newfd4, F_GETFD) != 0) e(0);	/* FD_CLOEXEC must be unset */
+  if (close(newfd4) != 0) e(0);
+  if ( (newfd4 = fcntl(newfd3, F_DUPFD_CLOEXEC, 15)) != 15) e(0);
+  if (fcntl(newfd4, F_GETFD) != FD_CLOEXEC) e(0); /* FD_CLOEXEC must be set */
+  if (fcntl(newfd4, F_SETFD, 0) != 0) e(0);	/* turn FD_CLOEXEC off */
+  if (fcntl(newfd4, F_GETFD) != 0) e(0);	/* FD_CLOEXEC must be unset */
+
+  /* Check if all file descriptors are for the same inode. */
   if (fstat(fd, &stat1) != 0) e(32);
-  if (fstat(fd, &stat2) != 0) e(33);
-  if (fstat(fd, &stat3) != 0) e(34);
+  if (fstat(newfd, &stat2) != 0) e(33);
+  if (fstat(newfd2, &stat3) != 0) e(34);
+  if (fstat(newfd3, &stat4) != 0) e(0);
+  if (fstat(newfd4, &stat5) != 0) e(0);
   if (stat1.st_dev != stat2.st_dev) e(35);
   if (stat1.st_dev != stat3.st_dev) e(36);
+  if (stat1.st_dev != stat4.st_dev) e(0);
+  if (stat1.st_dev != stat5.st_dev) e(0);
   if (stat1.st_ino != stat2.st_ino) e(37);
   if (stat1.st_ino != stat3.st_ino) e(38);
+  if (stat1.st_ino != stat4.st_ino) e(0);
+  if (stat1.st_ino != stat5.st_ino) e(0);
 
   /* Now check on the FD_CLOEXEC flag.  Set it for fd (3) and newfd2 (10) */
-  if (fd != 3 || newfd2 != 10 || newfd != 6) e(39);
+  if (fd != 3 || newfd2 != 10 || newfd3 != 12 || newfd4 != 15 || newfd != 6)
+	e(39);
   if (fcntl(fd, F_SETFD, FD_CLOEXEC) != 0) e(40);	/* close 3 on exec */
   if (fcntl(newfd2, F_SETFD, FD_CLOEXEC) != 0) e(41);	/* close 10 on exec */
   if (fcntl(newfd, F_SETFD, 0) != 0) e(42);		/* don't close 6 */
+  /* leave 12 and 15 as is */
   if (fork()) {
 	wait(&s);		/* parent just waits */
 	if (WEXITSTATUS(s) != 0) e(43);
@@ -630,12 +652,14 @@ void cloexec_test()
  * closed upon exec, we have to exec something.  The test is carried
  * out by forking, and then having the child exec test7 itself, but
  * with argument 0.  This is detected, and control comes here.
- * File descriptors 3 and 10 should be closed here, and 10 open.
+ * File descriptors 3, 10, and 12 should be closed here, and 6 and 15 open.
  */
 
   if (close(3) == 0) e(1001);	/* close should fail; it was closed on exec */
   if (close(6) != 0) e(1002);	/* close should succeed */
   if (close(10) == 0) e(1003);	/* close should fail */
+  if (close(12) == 0) e(1004);	/* close should fail */
+  if (close(15) != 0) e(1005);	/* close should succeed */
   fflush(stdout);
   exit(0);
 }

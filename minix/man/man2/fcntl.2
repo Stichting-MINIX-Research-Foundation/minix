@@ -37,6 +37,13 @@ or equal to
 .IR fd2 .
 .RE
 .SP
+.BI "fcntl(" fd ", F_DUPFD_CLOEXEC, int " fd2 ")"
+.RS
+As
+.BR F_DUPFD ,
+but the "close on exec" flag is set on the returned file descriptor.
+.RE
+.SP
 .BI "fcntl(" fd ", F_GETFD)"
 .RS
 Returns the file descriptor flags associated with file descriptor

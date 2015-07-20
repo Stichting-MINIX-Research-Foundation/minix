@@ -116,11 +116,15 @@ int do_fcntl(void)
 
   switch (fcntl_req) {
     case F_DUPFD:
+    case F_DUPFD_CLOEXEC:
 	/* This replaces the old dup() system call. */
 	if (fcntl_argx < 0 || fcntl_argx >= OPEN_MAX) r = EINVAL;
 	else if ((r = get_fd(fp, fcntl_argx, 0, &new_fd, NULL)) == OK) {
 		f->filp_count++;
 		fp->fp_filp[new_fd] = f;
+		assert(!FD_ISSET(new_fd, &fp->fp_cloexec_set));
+		if (fcntl_req == F_DUPFD_CLOEXEC)
+			FD_SET(new_fd, &fp->fp_cloexec_set);
 		r = new_fd;
 	}
 	break;
