@@ -1,6 +1,5 @@
 
 SUBDIR+=	include .WAIT
-SUBDIR+=	benchmarks
 SUBDIR+=	bin
 SUBDIR+=	commands
 SUBDIR+=	fs

@@ -54,12 +54,6 @@
 ./usr/adm/old
 ./usr/bin
 ./usr/etc
-./usr/benchmarks
-./usr/benchmarks/unixbench
-./usr/benchmarks/unixbench/pgms
-./usr/benchmarks/unixbench/tmp
-./usr/benchmarks/unixbench/testdir
-./usr/benchmarks/unixbench/results
 ./usr/games
 ./usr/games/hide	gname=games mode=0750
 ./usr/include
