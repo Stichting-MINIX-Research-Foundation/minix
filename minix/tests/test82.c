@@ -29,9 +29,8 @@
 
 #include "common.h"
 
-#define FAIL(...) fail(__FILE__, __FUNCTION__, __LINE__, __VA_ARGS__)
-#define CLOSE(fd) do { assert(fd >= 0); if (close((fd)) != 0) FAIL("close failed"); } while (0);
-#define REALLOC(p, size) do { p = realloc(p, size); if (!p) FAIL("realloc of %zu bytes failed", size); } while (0);
+#define CLOSE(fd) do { assert(fd >= 0); if (close((fd)) != 0) efmt("close failed"); } while (0);
+#define REALLOC(p, size) do { p = realloc(p, size); if (!p) efmt("realloc of %zu bytes failed", size); } while (0);
 
 #define HOST "test82.minix3.org"
 #define PORT 80
@@ -56,31 +55,6 @@ static const struct url urls[URL_COUNT] = {
 	{ HOST, PORT, PATH2, callback_verify_path2 },
 };
 
-static void fail(const char *file, const char *func, int line,
-	const char *fmt, ...) __attribute__ ((format(printf, 4, 5)));
-
-static void fail(const char *file, const char *func, int line,
-	const char *fmt, ...) {
-	va_list ap;
-	char buf[1024];
-	size_t len;
-
-	assert(file);
-	assert(func);
-	assert(fmt);
-
-	len = snprintf(buf, sizeof(buf), "[%s:%s:%d] ", file, func, line);
-
-	va_start(ap, fmt);
-	len += vsnprintf(buf + len, sizeof(buf) - len, fmt, ap);
-	va_end(ap);
-
-	snprintf(buf + len, sizeof(buf) - len, " errno=%d error=%s",
-		errno, strerror(errno));
-
-	em(line, buf);
-}
-
 static int http_connect(const char *host, int port) {
 	struct addrinfo *addr = NULL;
 	int fd = -1;
@@ -96,18 +70,18 @@ static int http_connect(const char *host, int port) {
 
 	errno = 0;
 	if (getaddrinfo(host, serv, &hints, &addr) != 0 || !addr) {
-		FAIL("host %s not found", host);
+		efmt("host %s not found", host);
 		goto failure;
 	}
 
 	fd = socket(AF_INET, SOCK_STREAM, 0);
 	if (fd < 0) {
-		FAIL("cannot create socket");
+		efmt("cannot create socket");
 		goto failure;
 	}
 
 	if (connect(fd, addr->ai_addr, addr->ai_addrlen) != 0) {
-		FAIL("cannot connect to %s:%d", host, port);
+		efmt("cannot connect to %s:%d", host, port);
 		goto failure;
 	}
 
@@ -140,7 +114,7 @@ static void write_chunked(
 		r = write(fd, data, s);
 		if (r <= 0 || (size_t) r > s) {
 			errno = 0;
-			FAIL("write of %zu bytes failed with result %zd", s, r);
+			efmt("write of %zu bytes failed with result %zd", s, r);
 			break;
 		}
 
@@ -270,7 +244,7 @@ static int http_get_status_line(
 		if (index >= len) goto notfound;
 		if (!is_numeric(data[index])) {
 			errno = 0;
-			FAIL("HTTP error: bad status line: \"%.*s\"",
+			efmt("HTTP error: bad status line: \"%.*s\"",
 				(int) (index - *index_p), data + *index_p);
 			*error_p = 1;
 			goto notfound;
@@ -350,7 +324,7 @@ static int http_parse_int_header(
 
 	if (index < index_end) {
 		errno = 0;
-		FAIL("HTTP error: bad numeric header value: \"%.*s\"",
+		efmt("HTTP error: bad numeric header value: \"%.*s\"",
 			(int) (index_end - index), data + index);
 		*error_p = 1;
 		return 0;
@@ -402,7 +376,7 @@ static int http_response_complete(
 	/* do we know how long the response will be? */
 	if (content_length < 0) {
 		errno = 0;
-		FAIL("HTTP error: missing Content-Length header "
+		efmt("HTTP error: missing Content-Length header "
 			"(maybe Transfer-Encoding is specified instead "
 			"but this is currently unsupported)");
 		goto error;
@@ -411,7 +385,7 @@ static int http_response_complete(
 	/* check whether the amount of data is correct */
 	if (len > index + content_length) {
 		errno = 0;
-		FAIL("HTTP error: more data received than expected");
+		efmt("HTTP error: more data received than expected");
 		goto error;
 	}
 
@@ -452,7 +426,7 @@ static void http_recv_response(
 		errno = 0;
 		r = read(fd, data + datalen, chunksize);
 		if (r < 0 || (size_t) r > chunksize) {
-			FAIL("read of %zu bytes failed with result %zd",
+			efmt("read of %zu bytes failed with result %zd",
 				chunksize, r);
 			goto cleanup;
 		}
@@ -468,7 +442,7 @@ static void http_recv_response(
 		/* check for premature disconnection */
 		if (r == 0) {
 			errno = 0;
-			FAIL("server disconnected even though the response "
+			efmt("server disconnected even though the response "
 				"seems to be incomplete");
 			goto cleanup;
 		}
@@ -481,7 +455,7 @@ static void http_recv_response(
 		callback_verify(data + index_body, datalen - index_body);
 	} else {
 		errno = 0;
-		FAIL("unexpected HTTP status code %d", code);
+		efmt("unexpected HTTP status code %d", code);
 	}
 
 cleanup:
@@ -511,7 +485,7 @@ static void http_test(
 
 	errno = 0;
 	if (withshutdown && shutdown(fd, SHUT_WR) != 0) {
-		FAIL("shutdown failed");
+		efmt("shutdown failed");
 	}
 
 	if (delay) sleep(1);
@@ -539,7 +513,7 @@ static void http_test_fork(
 	errno = 0;
 	pid = fork();
 	if (pid < 0) {
-		FAIL("fork failed");
+		efmt("fork failed");
 		return;
 	}
 
@@ -567,7 +541,7 @@ static void wait_all(void) {
 		errno = 0;
 		pid = waitpid(-1, &status, 0);
 		if (pid <= 0) {
-			FAIL("waitpid failed");
+			efmt("waitpid failed");
 			return;
 		}
 		if (WIFEXITED(status)) {
@@ -577,24 +551,24 @@ static void wait_all(void) {
 			if (exitcode >= 0) {
 				errct += exitcode;
 			} else {
-				FAIL("child has negative exit code %d",
+				efmt("child has negative exit code %d",
 					exitcode);
 			}
 		} else if (WIFSIGNALED(status)) {
 			dbgprintf("child %d killed by signal %d\n",
 				(int) pid, WTERMSIG(status));
-			FAIL("child killed by signal %d", WTERMSIG(status));
+			efmt("child killed by signal %d", WTERMSIG(status));
 		} else {
 			dbgprintf("child %d gone with status 0x%x\n",
 				(int) pid, status);
-			FAIL("child gone, but neither exit nor signal");
+			efmt("child gone, but neither exit nor signal");
 		}
 		child_count--;
 	}
 
 	errno = 0;
 	if (waitpid(-1, &status, 0) != -1 || errno != ECHILD) {
-		FAIL("waitpid should have returned ECHILD");
+		efmt("waitpid should have returned ECHILD");
 	}
 }
 
@@ -644,12 +618,12 @@ static void verify_data(
 
 	if (httpsize != refsize) {
 		errno = 0;
-		FAIL("download from http://%s:%d%s returned wrong number "
+		efmt("download from http://%s:%d%s returned wrong number "
 			"of bytes: %zd (expected %zd)",
 			HOST, PORT, path, httpsize, refsize);
 	} else if (memcmp(httpdata, refdata, refsize) != 0) {
 		errno = 0;
-		FAIL("download from http://%s:%d%s returned wrong data",
+		efmt("download from http://%s:%d%s returned wrong data",
 			HOST, PORT, path);
 	}
 }

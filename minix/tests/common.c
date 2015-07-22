@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <sys/statvfs.h>
 #include <sys/syslimits.h>
@@ -124,6 +125,24 @@ void e_f(char *file, int line, int n)
 void cleanup()
 {
   if (chdir("..") == 0 && common_test_nr != -1) rm_rf_dir(common_test_nr);
+}
+
+void fail_printf(const char *file, const char *func, int line,
+	const char *fmt, ...) {
+	va_list ap;
+	char buf[1024];
+	size_t len;
+
+	len = snprintf(buf, sizeof(buf), "[%s:%s:%d] ", file, func, line);
+
+	va_start(ap, fmt);
+	len += vsnprintf(buf + len, sizeof(buf) - len, fmt, ap);
+	va_end(ap);
+
+	snprintf(buf + len, sizeof(buf) - len, " errno=%d error=%s",
+		errno, strerror(errno));
+
+	em(line, buf);
 }
 
 void quit()
