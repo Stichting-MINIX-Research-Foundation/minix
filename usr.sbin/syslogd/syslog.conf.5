@@ -1,0 +1,652 @@
+.\"	$NetBSD: syslog.conf.5,v 1.21 2013/11/10 00:13:50 wiz Exp $
+.\"
+.\" Copyright (c) 1990, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"     from: @(#)syslog.conf.5	8.1 (Berkeley) 6/9/93
+.\"
+.Dd November 9, 2013
+.Dt SYSLOG.CONF 5
+.Os
+.Sh NAME
+.Nm syslog.conf
+.Nd
+.Xr syslogd 8
+configuration file
+.Sh DESCRIPTION
+The
+.Nm
+file is the configuration file for the
+.Xr syslogd 8
+program.
+It consists of extended options (lines with one key="value" assignment)
+and blocks of lines separated by
+.Em program
+and
+.Em hostname
+specifications, with each line containing two fields: the
+.Em selector
+field which specifies the types of messages and priorities to which the
+line applies, and an
+.Em action
+field which specifies the action to be taken if a message
+.Xr syslogd 8
+receives matches the selection criteria.
+The
+.Em selector
+field is separated from the
+.Em action
+field by one or more tab characters.
+.Pp
+The
+.Em Selectors
+function
+are encoded as a
+.Em facility ,
+a period
+.Pq Sq \&. ,
+an optional set of comparison flags
+.Pq Bo ! Bc Bq \*[Lt]=\*[Gt] ,
+and a
+.Em level ,
+with no intervening white-space.
+Both the
+.Em facility
+and the
+.Em level
+are case insensitive.
+.Pp
+The
+.Em facility
+describes the part of the system generating the message, and is one of
+the following keywords: auth, authpriv, cron, ftp, daemon, kern, lpr,
+mail, mark, news, syslog, user, uucp and local0 through local7.
+These keywords (with the exception of mark) correspond to the
+similar
+.Dq Dv LOG_
+values specified to the
+.Xr openlog 3
+and
+.Xr syslog 3
+library routines.
+.Pp
+The
+.Em comparison flags
+may be used to specify exactly what levels are logged.
+If unspecified, the default comparison is
+.Sq \*[Gt]=
+.Pq greater than or equal to ,
+or, if the
+.Fl U
+option is passed to
+.Xr syslogd 8 ,
+.Sq =
+.Pq equal to .
+Comparison flags beginning with
+.So ! Sc
+will have their logical sense inverted.
+Thus,
+.Sq !=info
+means all levels except info and
+.Sq !notice
+has the same meaning as
+.Sq \*[Lt]notice .
+.Pp
+The
+.Em level
+describes the severity of the message, and is a keyword from the
+following ordered list (higher to lower): emerg, alert, crit, err,
+warning, notice, info and debug.
+These keywords correspond to the
+similar
+.Pq Dv LOG_
+values specified to the
+.Xr syslog 3
+library routine.
+.Pp
+Each block of lines is separated from the previous block by a
+.Em program
+or
+.Em hostname
+specification.
+A block will only log messages corresponding to the most recent
+.Em program
+and
+.Em hostname
+specifications given.
+Consider the case of a block that selects
+.Ql pppd
+as the
+.Em program ,
+directly followed by a block that selects messages from the
+.Em hostname
+.Ql dialhost .
+The second block will log only messages from the
+.Xr pppd 8
+program from the host
+.Sq dialhost .
+.Pp
+A
+.Em program
+specification of the form
+.Ql #!+prog1,prog2
+or
+.Ql !+prog1,prog2
+will cause subsequent blocks to be applied to messages logged by the
+specified programs.
+A
+.Em program
+specification of the form
+.Ql #!-prog1,prog2
+or
+.Ql !-prog1,prog2
+will cause subsequent blocks to be applied to messages logged by programs
+other than the ones specified.
+A
+.Em program
+specification of the form
+.Ql #!prog1,prog2
+or
+.Ql !prog1,prog2
+is equivalent to
+.Ql !+prog1,prog2 .
+Program selectors may also match kernel-generated messages.
+For example, a program specification of
+.Ql !+subsys
+will match kernel-generated messages of the form
+.Ql subsys: here is a message .
+The special specification
+.Ql !*
+will cause subsequent blocks to apply to all programs.
+.Pp
+A
+.Em hostname
+specification of the form
+.Ql #+host1,host2
+or
+.Ql +host1,host2
+will cause subsequent blocks to be applied to messages received from
+the specified hosts.
+A
+.Em hostname
+specification of the form
+.Ql #-host1,host2
+or
+.Ql -host1,host2
+will cause subsequent blocks to be applied to messages from hosts other
+than the ones specified.
+If the hostname is given as
+.Ql @ ,
+the local hostname will be used.
+The special specification
+.Ql +*
+will cause subsequent blocks to apply to all hosts.
+.Pp
+See
+.Xr syslog 3
+for a further descriptions of both the
+.Em facility
+and
+.Em level
+keywords and their significance.
+It is preferred that selections be made based on
+.Em facility
+rather than
+.Em program ,
+since the latter can vary in a networked environment.
+However, there are cases where a
+.Em facility
+may be too broadly defined.
+.Pp
+If a received message matches the specified
+.Em facility ,
+and the specified
+.Em level
+comparison is true,
+and the first word in the message after the date matches the
+.Em program ,
+the action specified in the
+.Em action
+field will be taken.
+.Pp
+Multiple
+.Em selectors
+may be specified for a single
+.Em action
+by separating them with semicolon
+.Pq Sq \&;
+characters.
+It is important to note, however, that each
+.Em selector
+can modify the ones preceding it.
+.Pp
+Multiple
+.Em facilities
+may be specified for a single
+.Em level
+by separating them with comma
+.Pq Sq \&,
+characters.
+.Pp
+An asterisk
+.Pq Sq \&*
+can be used to specify all
+.Em facilities
+or all
+.Em levels .
+.Pp
+The special
+.Em facility
+.Dq mark
+receives a message at priority
+.Dq info
+every 20 minutes
+(see
+.Xr syslogd 8 ) .
+This is not enabled by a
+.Em facility
+field containing an asterisk.
+.Pp
+The special
+.Em level
+.Dq none
+disables a particular
+.Em facility .
+.Pp
+The
+.Em action
+field of each line specifies the action to be taken when the
+.Em selector
+field selects a message.
+There are five forms:
+.Bl -bullet
+.It
+A pathname (beginning with a leading slash).
+Selected messages are appended to the file, unless
+pathname points to an existing FIFO special file.
+.Xr syslogd 8
+treats FIFO specially by opening them in non-blocking mode and
+discarding messages sent when no reader is listening on the other side.
+.Pp
+To ensure that kernel messages are written to disk promptly,
+.Xr syslogd 8
+calls
+.Xr fsync 2
+after writing messages from the kernel.
+Other messages are not synced explcitly.
+You may disable syncing of files specified to receive kernel messages
+by prefixing the pathname with a minus sign
+.Ql - .
+Note that use of this option may cause the loss of log information in
+the event of a system crash immediately following the write attempt.
+However, using this option may prove to be useful if your system's
+kernel is logging many messages.
+.Pp
+Normally the priority and version is not written to file.
+In order to use syslog-sign you may prefix a pathname with the plus sign
+.Ql + .
+If both switches are used the order has to be
+.Ql +- .
+.It
+A hostname (preceded by an at
+.Pq Sq @
+sign).
+Selected messages are forwarded to the
+.Xr syslogd 8
+program on the named host with UDP.
+.It
+A hostname preceded by an at
+.Pq Sq @
+sign and enclosed in brackets
+.Pq Sq []
+.
+Selected messages are forwarded with TLS to the
+.Xr syslogd 8
+program on the named host.
+After the closing bracket a colon
+.Pq Sq \&:
+and a port or service name may be appended.
+Additional options are configured in parantheses in the form of key="value".
+Recognized keywords are
+.Ar subject ,
+.Ar fingerprint ,
+.Ar cert ,
+and
+.Ar verify .
+.It
+A comma separated list of users.
+Selected messages are written to those users
+if they are logged in.
+.It
+An asterisk.
+Selected messages are written to all logged-in users.
+.It
+A vertical bar
+.Pq Sq |
+followed by a command to which to pipe the selected messages.
+The command string is passed to
+.Pa /bin/sh
+for evaluation, so the usual shell metacharacters or input/output
+redirection can occur.
+(Note that redirecting
+.Xr stdio 3
+buffered output from the invoked command can cause additional delays,
+or even lost output data in case a logging subprocess exits with a
+signal.)
+The command itself runs with
+.Em stdout
+and
+.Em stderr
+redirected to
+.Pa /dev/null .
+Upon receipt of a
+.Dv SIGHUP ,
+.Xr syslogd 8
+will close the pipe to the process.
+If the process does not exit voluntarily, it will be sent a
+.Dv SIGTERM
+signal after a grace period of up to 60 seconds.
+.Pp
+The command will only be started once data arrives that should be
+piped to it.
+If the command exits, it will be restarted as necessary.
+.Pp
+If it is desired that the subprocess should receive exactly one line of
+input, this can be achieved by exiting after reading and processing the
+single line.
+A wrapper script can be used to achieve this effect, if necessary.
+Note that this method can be very resource-intensive if many log messages
+are being piped through the filter.
+.Pp
+Unless the command is a full pipeline, it may be useful to
+start the command with
+.Em exec
+so that the invoking shell process does not wait for the command to
+complete.
+Note that the command is started with the UID of the
+.Xr syslogd 8
+process, normally the superuser.
+.Pp
+Just like with files a plus sign
+.Ql +
+will leave the priority and version information intact.
+.El
+.Pp
+Blank lines and lines whose first non-blank character is a hash
+.Pq Sq #
+character are ignored.
+.Sh "TLS OPTIONS"
+Additional options are used for TLS configuration:
+.Bl -ohang
+.It Em tls_server
+Enables TLS server mode.
+.It Em tls_bindport
+Service name or port number to bind to.
+Default is
+.Sq syslog .
+.Em As long as no official port is assigned this option is required
+.Em for TLS servers.
+.It Em tls_bindhost
+Hostname or IP to bind to.
+.It Em tls_gen_cert
+Automatically generate a private key and certificate.
+.It Em tls_key
+File with private key.
+Default is
+.Sq /etc/openssl/default.key
+.It Em tls_cert
+File with certificate to use.
+Default is
+.Sq /etc/openssl/default.crt
+.It Em tls_ca
+File with CA certificate to use.
+.It Em tls_cadir
+Directory containing CA certificates.
+.It Em tls_verify
+If set to
+.Sq off
+then certificate authentication is skipped.
+.It Em tls_allow_fingerprints
+List of fingerprints of trusted client certificates.
+.It Em tls_allow_clientcerts
+List of filenames with trusted client certificates.
+.El
+.Sh "TLS AUTHENTICATION"
+One function of TLS is mutual authentication of client and server.
+Unless authentication is disabled by setting
+.Sq tls_verify=off
+the following rules are used:
+.Ss "As client:"
+A client can be configured not to check a server's certificate by setting the
+parameter
+.Ar verify
+to
+.Sq off .
+If the server's certificate is signed by a trusted CA then it is checked
+if its hostname or IP is given in its certificate (as a CommonName, as a
+DNS SubjectAltName, or as an IP SubjectAltName).
+If any match is found then the server is authenticated.
+If a
+.Ar subject
+parameter is given then it is can satisfy this test as well.
+This allows DNS-independent configurations using the server's IP address in the
+destination and adding its hostname as
+.Ar subject
+to authenticate the TLS connection without having to add the IP to the X.509
+certificate.
+.Pp
+If no CA is used or no trust path between CA and server certificate exists, then
+hash value of the server's certificate is compared with the hash given in
+.Ar fingerprint
+and the hash of the certificate in
+.Ar cert .
+If the hashes are equal then the server is authenticated.
+.Ss "As server:"
+If using a CA and the client's certificate is signed by it then the client is
+authenticated.
+Otherwise the hash of the client's certificate is compared with the hashes given
+in
+.Ar tls_allow_fingerprints
+and the hashes of the certificates given in
+.Ar tls_allow_clientcerts .
+On any match the client is authenticated.
+.Sh BUFFERING
+.Xr syslogd 8
+is able to buffer temporary not writeable messages in memory.
+To limit the memory consumed for this buffering the following optons may be
+given:
+.Bl -ohang
+.It Em file_queue_length
+.It Em pipe_queue_length
+.It Em tls_queue_length
+The maximum number of messages buffered for one destination of type tls, file,
+or pipe respectively.
+Defaults are
+.Sq 1024 ,
+.Sq 1024 ,
+and
+.Sq -1
+(no limit).
+.It Em file_queue_size
+.It Em pipe_queue_size
+.It Em tls_queue_size
+The maximum memory usage in bytes of messages buffered for one destination.
+Defaults are
+.Sq 1M ,
+.Sq 1M ,
+and
+.Sq 16M .
+.El
+.Sh SIGNING
+.Xr syslogd 8
+is able to digitally sign all processed messages.
+The used protocol is defined by RFC 5848 (syslog-sign):
+at the start of a session the signing sender sends so called certificate
+blocks containing its public key; after that it periodically sends a signed
+message containing hashes of previous messages.
+.Pp
+To detect later manipulation one has to keep a copy of the key used for
+signing (otherwise an attacker could alter the logs and sign them with his
+his own key).
+If TLS is used with a DSA key then the same key will be used for signing.
+This is the recommended setup because it makes it easy to have copies of
+the certificate (with the public key) in backups.
+Otherwise new keys are generated on every restart and for certain verification
+it is necessary to have copies of all used keys.
+So logging only to a local file is not secure; at least the used keys should
+be logged to another host.
+.Bl -ohang
+.It Em sign_sg
+Enables signing.
+Set this option to enable syslog-sign and select how to assign
+messages to signature groups (subsets of messages that are signed together).
+To enable later signature verification and detection of lost messages the
+assignment should be chosen such that all messages of one signature group
+are written to the same file.
+Four possible values for this option are:
+.Bl -hang -offset indent
+.It Em 0
+Use one global signature group for all messages.
+.It Em 1
+Use one signature group per priority.
+.It Em 2
+Use signature groups for ranges of priorities.
+.It Em 3
+Use one signature group per destination.
+This is a custom strategy not defined by the standard.
+With this setting one signature group is set up for
+every file and network action.
+.El
+.It Em sign_delim_sg2
+This option is only evaluated with
+.Sq sign_sg=2
+and allows to configure the priority ranges for signature groups.
+The parameters are numerical values used as the maximum priority for one group.
+The default is to use one signature groups per facility, which is equal to
+setting
+.Sq sign_delim_sg2=7 15 23 31 39 ... .
+.El
+.Sh FILES
+.Bl -tag -width /etc/syslog.conf -compact
+.It Pa /etc/syslog.conf
+The
+.Xr syslogd 8
+configuration file.
+.It Pa /usr/share/examples/syslogd/verify.pl
+Example script to verify message signatures.
+(Requires Perl and modules not part of NetBSD.)
+.El
+.Sh EXAMPLES
+A configuration file might appear as follows:
+.Bd -literal
+# Log all kernel messages, authentication messages of
+# level notice or higher and anything of level err or
+# higher to the console.
+# Don't log private authentication messages!
+*.err;kern.*;auth.notice;authpriv.none	/dev/console
+
+# Log anything (except mail) of level info or higher.
+# Don't log private authentication messages!
+*.info;mail.none;authpriv.none		/var/log/messages
+
+# Log daemon messages at debug level only
+daemon.=debug				/var/log/daemon.debug
+
+# The authpriv file has restricted access.
+# Write logs with priority for later verification with syslog-sign.
+authpriv.*				+/var/log/secure
+
+# Log all the mail messages in one place.
+mail.*					/var/log/maillog
+
+# Everybody gets emergency messages, plus log them on another
+# machine.
+*.emerg					*
+*.emerg					@arpa.berkeley.edu
+
+# Log all messages of level info or higher to another
+# machine using TLS with an alternative portname and a
+# fingerprint for athentication
+*.info			@[logserver]:1234(fingerprint="SHA1:01:02:...")
+
+# Root and Eric get alert and higher messages.
+*.alert					root,eric
+
+# Save mail and news errors of level err and higher in a
+# special file.
+mail,news.err				/var/log/spoolerr
+
+# Pipe all authentication messages to a filter.
+auth.*					|exec /usr/local/sbin/authfilter
+
+# Log kernel messages to a separate file without syncing each message.
+kern.*					-/var/log/kernlog
+
+# Save ftpd transactions along with mail and news.
+!ftpd
+*.*					/var/log/spoolerr
+
+# Send all error messages from a RAID array through a filter.
+!raid0
+kern.err				|exec /usr/local/sbin/raidfilter
+
+# Save pppd messages from dialhost to a separate file.
+!pppd
++dialhost
+*.*					/var/log/dialhost-pppd
+
+# Save non-local log messages from all programs to a separate file.
+!*
+-@
+*.*					/var/log/foreign
+
+# Generate digital signatures for all messages
+# to each file or network destination.
+sign_sg=3
+.Ed
+.Sh SEE ALSO
+.Xr syslog 3 ,
+.Xr syslogd 8
+.Sh HISTORY
+The
+.Nm
+file appeared in
+.Bx 4.3 ,
+along with
+.Xr syslogd 8 .
+.Sh BUGS
+The effects of multiple selectors are sometimes not intuitive.
+For example
+.Dq mail.crit;*.err
+will select
+.Dq mail
+facility messages at
+the level of
+.Dq err
+or higher, not at the level of
+.Dq crit
+or higher.

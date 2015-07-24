@@ -24,7 +24,7 @@ SUBDIR=	add_route arp at backup btrace \
 	rotate rsh rshd service setup \
 	slip spell sprofalyze sprofdiff srccrc \
 	svclog svrctl swifi synctree sysenv \
-	syslogd tcpd tcpdp tcpstat telnet \
+	tcpd tcpdp tcpstat telnet \
 	telnetd term termcap tget time \
 	truncate udpstat umount \
 	update version vol \
