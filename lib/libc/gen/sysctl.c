@@ -74,7 +74,8 @@ int __sysctl(const int *name, unsigned int namelen,
 	void *oldp, size_t *oldlenp,
 	const void *newp, size_t newlen)
 {
-	return ENOENT;
+	errno = ENOENT;
+	return -1;
 }
 #endif /* defined(__minix) */
 
