@@ -1,0 +1,272 @@
+.\"	$NetBSD: syslogd.8,v 1.54 2013/01/14 03:05:41 dholland Exp $
+.\"
+.\" Copyright (c) 1983, 1986, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"     from: @(#)syslogd.8	8.1 (Berkeley) 6/6/93
+.\"
+.Dd March 28, 2012
+.Dt SYSLOGD 8
+.Os
+.Sh NAME
+.Nm syslogd
+.Nd log systems messages
+.Sh SYNOPSIS
+.Nm
+.Op Fl dnrSsTUv
+.Op Fl b Ar bind_address
+.Op Fl f Ar config_file
+.Op Fl g Ar group
+.Op Fl m Ar mark_interval
+.Op Fl o Ar output_format
+.Op Fl P Ar file_list
+.Oo
+.Fl p Ar log_socket
+.Op Fl p Ar log_socket2 ...
+.Oc
+.Op Fl t Ar chroot_dir
+.Op Fl u Ar user
+.Sh DESCRIPTION
+.Nm
+reads and logs messages to the system console, log files, other
+machines and/or users as specified by its configuration file.
+The options are as follows:
+.Bl -tag -width 15n
+.It Fl b Ar bind_address
+Specify one specific IP address or hostname to bind to.
+If a hostname is specified, the IPv4 or IPv6 address
+which corresponds to it is used.
+.It Fl d
+Enable debugging to the standard output,
+and do not disassociate from the controlling terminal.
+.It Fl f Ar config_file
+Specify the pathname of an alternative configuration file;
+the default is
+.Pa /etc/syslog.conf .
+.It Fl g Ar group
+Set GID to
+.Ar group
+after the sockets and log files have been opened.
+.It Fl m Ar mark_interval
+Select the number of minutes between ``mark'' messages;
+the default is 20 minutes.
+.It Fl n
+Do not perform hostname lookups; report only numeric addresses.
+.It Fl o Ar output_format
+Select output message format.
+.Bl -hang
+.It Em bsd , rfc3164
+traditional BSD Syslog format (default)
+.It Em syslog , rfc5424
+new syslog-protocol format
+.El
+.It Fl P
+Specify the pathname of a file containing a list of sockets to be
+created.
+The format of the file is simply one socket per line.
+.It Fl p Ar log_socket
+Specify the pathname of a log socket.
+Multiple
+.Fl p
+options create multiple log sockets.
+If no
+.Fl p
+arguments are given, the default socket of
+.Pa /var/run/log
+is used.
+.It Fl r
+Disable the compression of repeated instances of the same line
+into a single line of the form
+.Dq last message repeated N times .
+.It Fl S
+Sync kernel messages to disk immediately.
+.It Fl s
+Select
+.Dq secure
+mode, in which
+.Nm
+does not listen on a UDP socket but only communicates over a
+.Ux
+domain socket.
+This is valuable when the machine on
+which
+.Nm
+runs is subject to attack over the network and it is desired
+that the machine be protected from attempts to remotely fill logs
+and similar attacks.
+.It Fl t Ar chroot_dir
+.Xr chroot 2
+to
+.Ar chroot_dir
+after the sockets and log files have been opened.
+.It Fl T
+Always use the local time and date for messages received from the
+network, instead of the timestamp field supplied in the message
+by the remote host.
+This is useful if some of the originating hosts can't keep time
+properly or are unable to generate a correct timestamp.
+.It Fl u Ar user
+Set UID to
+.Ar user
+after the sockets and log files have been opened.
+.It Fl U
+Unique priority logging.
+Only log messages at the priority specified by the selector in the
+configuration file.
+Without this option, messages at the specified priority or higher are
+logged.
+This option changes the default priority comparison from
+.Sq \*[Gt]=
+to
+.Sq = .
+.It Fl v
+Verbose logging.
+If specified once, the numeric facility and priority are logged with
+each locally-written message.
+If specified more than once, the names of the facility and priority are
+logged with each locally-written message.
+.El
+.Pp
+.Nm
+reads its configuration file when it starts up and whenever it
+receives a hangup signal.
+For information on the format of the configuration file,
+see
+.Xr syslog.conf 5 .
+.Pp
+.Nm
+reads messages from the
+.Ux
+domain socket
+.Pa /var/run/log ,
+from an Internet domain socket specified in
+.Pa /etc/services ,
+and from the special device
+.Pa /dev/klog
+(to read kernel messages).
+.Pp
+.Nm
+creates the file
+.Pa /var/run/syslogd.pid ,
+and stores its process
+id there.
+This can be used to kill or reconfigure
+.Nm .
+.Pp
+By using multiple
+.Fl p
+options, one can set up many chroot environments by passing the pathname
+to the log socket
+.Pa ( /var/run/log )
+in each chroot area to
+.Nm .
+For example:
+.Dl syslogd -p /var/run/log -p /web/var/run/log -p /ftp/var/run/log
+.Pp
+Note: the normal log socket must now also be passed to
+.Nm .
+.Pp
+The logged message includes the date, time, and hostname (or pathname of
+the log socket).
+Commonly, the program name and the process id is included.
+.Pp
+The date and time are taken from the received message.
+If the format of the timestamp field is incorrect, time obtained from
+the local host is used instead.
+This can be overridden by the
+.Fl T
+flag.
+.Pp
+Accesses from UDP socket can be filtered by libwrap configuration files, like
+.Pa /etc/hosts.deny .
+Specify
+.Dq Li syslogd
+in
+.Ar daemon_list
+portion of the configuration files.
+Refer to
+.Xr hosts_access 5
+for details.
+.Ss SYSLOG PROTOCOL NOTES
+.Nm
+accepts messages in traditional BSD Syslog or in newer Syslog Protocol
+format.
+See RFC 3164 (BSD Syslog) and RFC 5424 (Syslog Protocol) for detailed
+description of the message format.
+Messages from the local kernel that are not tagged with a priority code
+receive the default facility
+.Dv LOG_KERN
+and priority
+.Dv LOG_NOTICE .
+All other untagged messages receive the default facility
+.Dv LOG_USER
+and priority
+.Dv LOG_NOTICE .
+.Sh FILES
+.Bl -tag -width /var/run/syslogd.pid -compact
+.It Pa /etc/syslog.conf
+The configuration file.
+.It Pa /var/run/syslogd.pid
+The process id of current
+.Nm .
+.It Pa /var/run/log
+Name of the
+.Ux
+domain datagram log socket.
+.It Pa /dev/klog
+The kernel log device.
+.El
+.Sh SEE ALSO
+.Xr logger 1 ,
+.Xr syslog 3 ,
+.Xr services 5 ,
+.Xr syslog.conf 5 ,
+.Xr newsyslog 8
+.Rs
+.%R RFC
+.%N 3164
+.%D August 2001
+.%T The BSD syslog Protocol
+.Re
+.Rs
+.%R RFC
+.%N 5424
+.%D March 2009
+.%T The Syslog Protocol
+.Re
+.Sh HISTORY
+The
+.Nm
+command appeared in
+.Bx 4.3 .
+Support for multiple log sockets appeared in
+.Nx 1.4 .
+libwrap support appeared in
+.Nx 1.6 .
+Support for RFC 5424, TLS encryption and authentication, signed messages
+appeared in
+.Nx 6.0 .

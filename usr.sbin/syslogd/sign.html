@@ -1,0 +1,146 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/1999/REC-html401-19991224/loose.dtd">
+<html>
+<head>
+<title>NetBSD &amp; Google's Summer of Code: Martin Schuette - Improve syslogd (syslogd)</title>
+</head>
+<body>
+
+<h1>syslog-sign</h1>
+<p><a href="http://tools.ietf.org/html/draft-ietf-syslog-sign">syslog-sign</a> defines digital signatures for logfiles. This provides end-to-end authentication for network transports, enables the detection of lost UDP messages, and also makes it possible to check a log archive for later modifications (assuming the private key was kept safe).</p>
+
+<h2>Signature Groups</h2>
+<p>A basic concept of syslog-sign is the signature group which describes a set of messages that are grouped and signed together. Their purpose becomes clear with an example: assume you split your messages to two logservers <em>serverA</em> and <em>serverB</em>. Now if all messages were singed as one stream, then a) where do the signatures go to? and b) how could <em>serverA</em>, having only hashes and signatures, decide which message are missing and which are on <em>serverB</em>?<br>
+Thus the messages are selected into two signature groups containing all signatures for messages to <em>serverA</em> and <em>serverB</em> respectively. Then every server has its own messages and its own signatures to verify them.</p>
+<p>There are three predefined and one custom signature groups:</p>
+<ol start="0">
+  <li>one global signature group, useful if all messages go to one central logserver anyway</li>
+  <li>every syslog priority (=combination of facility and severity) gets its own group, i.e. 192 of them, useful if there are lots of different destinations which all receive messages with different priorities</li>
+  <li>take the priorities and split them into intervals, useful to define bigger subsets, e.g. one signature group for the mail facility and two for everything else</li>
+  <li>not defined and reserved for custom strategy. I use this to have one signature group for every configured destination. In this case the selector in syslog.conf will determine which messages go into one group; it is also the only strategy that allows a message to be in multiple groups.</li>
+</ol>
+<p>Every signature group has several attributes and only the combination of several values determines one signature group unambiguously. Currently the key to identify a signature group is the tuple (hostname, reboot session ID, SG value, SPRI value). <!-- In a later draft the program name or process ID might be added to allow multiple syslog-sign senders per host.--></p>
+
+<h2>Configuration/Activation</h2>
+<p>syslog-sign is enabled with the option "sign_sg" in syslog.conf. The value selects the signature group strategy, so for example the line "sign_sg=0" enables syslog-sign with one signature group.</p>
+<p>The SG="2" strategy is the only one that might require additional configuration. When selected (with "sign_sg=2") the default is to use one signature group per facility (kernel, user, mail, ...). To allow custom configuration there is an additional option "sign_sg2_delim" to specify the numerical SPRI values, i.e. the boundaries betwen the signature groups.<br>
+Example: With "sign_sg2_delim = 15 31" syslogd will set up three signature groups: one for all priorities x &le; 15 (kernel.*,user.*), one for priorities 15 &lt; x &le; 31 (mail.*), and one for all priorities x &gt; 31.</p>
+
+<h2>Key, Signature, and Hash Types</h2>
+<p>The current internet draft defines two values for the VERsion field for using either SHA-1 or SHA-256 hashes. Both versions mandate DSA keys and signatures.<br>
+There are several alternatives for sending the public key in the initial Certificate Block. If a X.509 certificate is available (for TLS connections) then syslogd will use key type 'C' (PKIX) and send the certificate in DER encoding. Otherwise it generates a new DSA key and uses key type 'K' (public key) to send the public key in DER encoding.</p>
+
+<h2>Redundancy</h2>
+<p>As mentioned above one design target of syslog-sign is the detection of lost messages, e.g. due to UDP datagram loss. So one has to take extra precaution to prevent lost signature messages and send them multiple times.<br>
+This implementation sends the first Certificate block only on demand, just before the first Signature Block. After that it is resent <em>n</em> times with several seconds delay. The Signature Blocks are not repeated but use a sliding window so that every message hash is included in <em>m</em> sequential Signature Blocks.</p>
+
+<h2>Verification</h2>
+<p>Sending signatures is only half of the job, -- they have to be verified as well. I used Perl to write an <a href="verify-sign/verify.pl">offline verification</a> tool that reads a complete logfile and prints all messages in their correct order. See the example below for a sample usage and output.</p>
+
+<h2>Example</h2>
+<p>Here is an example of a signed message sequence. I let syslogd generate me a DSA key for a self-signed X.509 certificate and use that for signing. I also changed one message so you can see the resulting verification output below.</p>
+
+<pre>
+$ cat test.log
+<15>1 2008-08-02T02:09:27+02:00 host.example.org test 6255 - - msg0
+<15>1 2008-08-02T02:09:27+02:00 host.example.org test 6255 - - msg1
+<15>1 2008-08-02T02:09:27+02:00 host.example.org test 6255 - - msg2
+<15>1 2008-08-02T02:09:27+02:00 host.example.org test 6255 - - msg3
+<15>1 2008-08-02T02:09:27+02:00 host.example.org test 6255 - - msg4
+<15>1 2008-08-02T02:09:27+02:00 host.example.org test 6255 - - msg5
+<15>1 2008-08-02T02:09:27+02:00 host.example.org test 6255 - - msg6
+<15>1 2008-08-02T02:09:27+02:00 host.example.org test 6255 - - msg7
+<15>1 2008-08-02T02:09:27+02:00 host.example.org test 6255 - - msg8
+<15>1 2008-08-02T02:09:27+02:00 host.example.org test 6255 - - msg9
+<15>1 2008-08-02T02:09:27+02:00 host.example.org test 6255 - - msg10
+<15>1 2008-08-02T02:09:27+02:00 host.example.org test 6255 - - msg11
+<15>1 2008-08-02T02:09:27+02:00 host.example.org test 6255 - - modified msg12
+<15>1 2008-08-02T02:09:27+02:00 host.example.org test 6255 - - msg13
+<15>1 2008-08-02T02:09:27+02:00 host.example.org test 6255 - - msg14
+<110>1 2008-08-02T01:09:27.773505+02:00 host.example.org syslogd - - [ssign-cert VER="0111" RSID="1217632162" SG="3" SPRI="0" TBPL="1059" INDEX="1" FLEN="1059" FRAG="2008-08-02T01:09:27.773464+02:00 C MIIC+jCCArmgAwIBAwIBATAJBgcqhkjOOAQDMCIxIDAeBgNVBAMTF2NvcmRlbGlhLm1zY2h1ZXR0ZS5uYW1lMB4XDTA4MDczMDIyMDYyMloXDTA5MDczMDIyMDYyMlowIjEgMB4GA1UEAxMXY29yZGVsaWEubXNjaHVldHRlLm5hbWUwggG3MIIBKwYHKoZIzjgEATCCAR4CgYEA92S335Kxy2TTMfdg9Vi/CJvyDCHMHpPYxWwEkEI26xEdKybzLghTfbG/RZw/nnFuhRTH4Xe6GVvlFi2zIzySSClXr+zyXg/D9uHyiVL5TEsu8uQT2IREmGOB8pu70FukL9nQGOr82YxuRFQzZ1p6KltIggivi5ffR4B33+1xoSkCFQDYe5GJKM9Cw6nkLngHkzFGRmcXIQKBgDbHeOLBKYLkRZyRpXd0aTNU2igcKTWyWlUTySJuv/iTAeB09p9WyTIPyAhtqN77CIwX8Ui2jGu6NYT6TWEYJVvL+C/TvddAvAMyefv+w+HPNF2L77IVrjNVRCneERoNKlWc6IzjKH3otl/Lh2D7NAWRid55vxF6Z0oO459+4vpRA4GFAAKBgQCzcJVR343IRntcQs8aENs/QMxoxHN6JVdpSLB9moY5/RC9ooxz32fkakSL0s8zLITLt/y+yzf0F/9JhmTC1XeD8gvPBesE6dc0ZzPCos0hg8WpKUWR0YqXFDOC//uBwIa94DncC8xZ0mCwavno6gtkz57S7ywSwnmrdjhmpdAZuqOBgDB+MBEGCWCGSAGG+EIBAQQEAwIGQDAzBglghkgBhvhCAQ0EJhYkYXV0by1nZW5lcmF0ZWQgYnkgdGhlIE5ldEJTRCBzeXNsb2dkMCYGCWCGSAGG+EIBDAQZFhdjb3JkZWxpYS5tc2NodWV0dGUubmFtZTAMBgNVHRMBAf8EAjAAMAkGByqGSM44BAMDMAAwLQIUZcsHdrbuyx9lR3tyyeiJvClj0B8CFQC+5+NlulgCd/yoSlLPZgsTHYmCYA==" SIGN="MC0CFFEHx8UX391lbmhbisJNS0zLGD/WAhUAuMfCO0BWtARt2vEWHbM2mAe2k+o="]
+<110>1 2008-08-02T01:09:27.778347+02:00 host.example.org syslogd - - [ssign VER="0111" RSID="1217632162" SG="3" SPRI="0" GBC="1" FMN="1" CNT="15" HB="siUJM358eYFHOS2K0MTlveWeH/U= zTxfthW8WqmtFhOG4k/+ZxkirTA= j9dubU1GNVp7qWShwph/w32nD08= XQDLZ/NuwirmLdMORtm84r9kIW4= RNDFNCo7hiCsK/EKumsPBbFHNZA= ANiE3KbY948J6cEB640fAtWXuO4= e2M/OqjHDfxLVUSPt1CsNJHm9wU= Y+racQst7F1gR8eEUh8O7o+M53s= JAMULRxjMPbOO5EhhKbsUkAwbl0= pd+N5kmlnyQ0BoItELd/KWQrcMg= dsMQSzPHIS6S3Vaa23/t7U8JAJ4= i4rE3x7N4qyQGTkmaWHsWDFP9SY= qgTqV4EgfUFd3uZXNPvJ25erzBI= XW0YrME5kQEh+fxhg1fetnWxfIc= 7YPcRHsDwXWnQuGRWaJtFWw9hus=" SIGN="MCwCFF5hS5GTLxLDwsDCUmOnHhzkmWzbAhRJ0io+LBKM6Ux/cM7eqZ6eRAI11Q=="]
+<15>1 2008-08-02T02:09:27+02:00 host.example.org test 6255 - - msg15
+<15>1 2008-08-02T02:09:27+02:00 host.example.org test 6255 - - msg16
+<15>1 2008-08-02T02:09:27+02:00 host.example.org test 6255 - - msg17
+<15>1 2008-08-02T02:09:27+02:00 host.example.org test 6255 - - msg18
+<15>1 2008-08-02T02:09:27+02:00 host.example.org test 6255 - - msg19
+<110>1 2008-08-02T01:09:32.399406+02:00 host.example.org syslogd - - [ssign VER="0111" RSID="1217632162" SG="3" SPRI="0" GBC="4" FMN="1" CNT="20" HB="siUJM358eYFHOS2K0MTlveWeH/U= zTxfthW8WqmtFhOG4k/+ZxkirTA= j9dubU1GNVp7qWShwph/w32nD08= XQDLZ/NuwirmLdMORtm84r9kIW4= RNDFNCo7hiCsK/EKumsPBbFHNZA= ANiE3KbY948J6cEB640fAtWXuO4= e2M/OqjHDfxLVUSPt1CsNJHm9wU= Y+racQst7F1gR8eEUh8O7o+M53s= JAMULRxjMPbOO5EhhKbsUkAwbl0= pd+N5kmlnyQ0BoItELd/KWQrcMg= dsMQSzPHIS6S3Vaa23/t7U8JAJ4= i4rE3x7N4qyQGTkmaWHsWDFP9SY= qgTqV4EgfUFd3uZXNPvJ25erzBI= XW0YrME5kQEh+fxhg1fetnWxfIc= 7YPcRHsDwXWnQuGRWaJtFWw9hus= PIvLm0mh+he5+PDihG1p7sQlx8k= lPzUvx0I1VwSGWV7yKF9W//Yb2U= X+PWYcx5AXnsDVSNAHLZUGk5ioY= okXY88MGG4QybrYMf8HJN23WO1Y= HcaPyHfQ2s1SuSciTKw4woYWuMg=" SIGN="MCwCFFr0i6taT1vWowR7yc5bEQxFfY7/AhQBCK+rBNPgzR0vUgxPeARvD24kIQ=="]
+</pre>
+<p>Just in case you wonder about the different timestamps: The messages were send with a normal syslog(3), so the syslogd received them in BSD Syslog format without subsecond resolution.</p>
+<hr>
+<pre>
+$ perl verify.pl --help
+
+syslog-sign verifier
+reads logfile and verifies message signatures
+
+Notes:
+- By default uses only SHA-1 hashes. Use option "--sha256" to use only
+  SHA-256 and "--sha1 --sha256"to use both types.
+- Some status messages are printed to stderr.
+  Use option "--quiet" to disable them.
+- All verified messages are printed with their identifying signature group.
+  Every line starts with a comma-separated tuple: hostname, reboot session ID,
+  SG value, SPRI value, and message number.
+- If only one hash is used then all messages not signed are printed as well.
+
+Limitations: handles only key types 'C' (PKIX) and 'K' (public key)
+  with DSA keys and signatures
+
+Command Line Options:
+  -i  --in         input file (default: stdin)
+  -o  --out        output file for verified messages (default: stdout)
+  -u  --unsigned   output file for unsigned messages (default: stdout)
+      --sha1       use SHA-1 hashes (default)
+      --sha256     use SHA-256 hashes
+  -v  --verbose    shows some internals (every CB,SB,hash,...)
+  -q  --quiet      no status messages to stderr
+  -h  --help       this help
+
+$ perl verify.pl -i test.log
+reading input...
+processing CBs...
+decoding SGs...
+got PKIX DSA key
+verifying CBs...
+verified CB and got key for SG: (host.example.org,1217632162,0111,3,0), start: 2008-08-02T01:09:27.773464+02:00
+now process SBs
+signed messages:
+host.example.org,1217632162,0111,3,0,1  <15>1 2008-08-02T02:09:27+02:00 host.example.org test 6255 - - msg0
+host.example.org,1217632162,0111,3,0,2  <15>1 2008-08-02T02:09:27+02:00 host.example.org test 6255 - - msg1
+host.example.org,1217632162,0111,3,0,3  <15>1 2008-08-02T02:09:27+02:00 host.example.org test 6255 - - msg2
+host.example.org,1217632162,0111,3,0,4  <15>1 2008-08-02T02:09:27+02:00 host.example.org test 6255 - - msg3
+host.example.org,1217632162,0111,3,0,5  <15>1 2008-08-02T02:09:27+02:00 host.example.org test 6255 - - msg4
+host.example.org,1217632162,0111,3,0,6  <15>1 2008-08-02T02:09:27+02:00 host.example.org test 6255 - - msg5
+host.example.org,1217632162,0111,3,0,7  <15>1 2008-08-02T02:09:27+02:00 host.example.org test 6255 - - msg6
+host.example.org,1217632162,0111,3,0,8  <15>1 2008-08-02T02:09:27+02:00 host.example.org test 6255 - - msg7
+host.example.org,1217632162,0111,3,0,9  <15>1 2008-08-02T02:09:27+02:00 host.example.org test 6255 - - msg8
+host.example.org,1217632162,0111,3,0,10 <15>1 2008-08-02T02:09:27+02:00 host.example.org test 6255 - - msg9
+host.example.org,1217632162,0111,3,0,11 <15>1 2008-08-02T02:09:27+02:00 host.example.org test 6255 - - msg10
+host.example.org,1217632162,0111,3,0,12 <15>1 2008-08-02T02:09:27+02:00 host.example.org test 6255 - - msg11
+host.example.org,1217632162,0111,3,0,13 **** msg lost
+host.example.org,1217632162,0111,3,0,14 <15>1 2008-08-02T02:09:27+02:00 host.example.org test 6255 - - msg13
+host.example.org,1217632162,0111,3,0,15 <15>1 2008-08-02T02:09:27+02:00 host.example.org test 6255 - - msg14
+host.example.org,1217632162,0111,3,0,16 <15>1 2008-08-02T02:09:27+02:00 host.example.org test 6255 - - msg15
+host.example.org,1217632162,0111,3,0,17 <15>1 2008-08-02T02:09:27+02:00 host.example.org test 6255 - - msg16
+host.example.org,1217632162,0111,3,0,18 <15>1 2008-08-02T02:09:27+02:00 host.example.org test 6255 - - msg17
+host.example.org,1217632162,0111,3,0,19 <15>1 2008-08-02T02:09:27+02:00 host.example.org test 6255 - - msg18
+host.example.org,1217632162,0111,3,0,20 <15>1 2008-08-02T02:09:27+02:00 host.example.org test 6255 - - msg19
+messages without signature:
+<15>1 2008-08-02T02:09:27+02:00 host.example.org test 6255 - - modified msg12
+</pre>
+
+<hr>
+<table border=0>
+<tr>
+<td>
+<a href="http://sourceforge.net"><img align="top" src="http://sourceforge.net/sflogo.php?group_id=141771&amp;type=2" width="125" height="37" border="0" alt="SourceForge.net Logo"></a>
+<td>
+  <table>
+  <tr> <td> Martin Sch&uuml;tte &lt;<tt>info@mschuette.name</tt>&gt; </td> </tr>
+  <tr> <td> $Id: sign.html,v 1.1 2008/10/31 16:12:19 christos Exp $ </td> </tr>
+  </table>
+</tr>
+</table>
+
+</body>
+</html>

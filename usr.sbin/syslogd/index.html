@@ -1,0 +1,161 @@
+<html>
+<head>
+<title>NetBSD &amp; Google's Summer of Code: Martin Schuette - Improve syslogd (syslogd)</title>
+</head>
+<body>
+
+<center>
+<table>
+<tr>
+        <td><a href="http://www.NetBSD.org/"><img border=0 valign="top" src="../../NetBSD.png" alt="[NetBSD logo]" /></a></td>
+        <td><font size="+5">&nbsp;&nbsp;&nbsp;&amp;&nbsp;&nbsp;&nbsp;</font></td>
+        <td><a href="http://www.google.com/"><img border=0 valign="bottom" src="http://www.google.com/intl/en/images/logo.gif" alt="[Google logo]" /></a></td>
+</tr>
+</table>
+</center>
+
+<h1>NetBSD-SoC: Improve syslogd</h1>
+
+<h2>What is it?</h2>
+
+<p>The syslog daemon handles most log messages of a unixoid system. It receives messages from shell-scripts, applications, daemons, the kernel, or by network and then writes them into logfiles, on user's consoles or forwards them to some other logserver -- all depending on its configuration and the message properties.</p>
+
+<p>implemented the upcoming <a class="ext-link" href="http://tools.ietf.org/wg/syslog/">IETF
+standards</a> for <a class="ext-link" href="http://www.netbsd.org/">NetBSD</a>'s syslog(3)
+and syslogd(8):
+</p>
+<ul><li><a class="ext-link"
+		href="http://tools.ietf.org/html/draft-ietf-syslog-transport-tls"><span
+			class="icon">transport-tls</span></a> defines the network protocol to send
+	syslog data over TLS (instead of UDP), thus providing a reliable and
+	authenticated transport.
+	</li><li><a class="ext-link"
+	href="http://tools.ietf.org/html/draft-ietf-syslog-protocol"><span
+		class="icon">syslog-protocol</span></a> defines a new layout for syslog
+lines; the most important additions are full timestamps (with year and timezone)
+and structured data with name=value pairs. This enables all programs to declare
+semantic content (uid, client IP, return codes, etc), making automatic
+log-monitoring (or at least parsing) much easier.
+</li><li><a class="ext-link"
+href="http://tools.ietf.org/html/draft-ietf-syslog-sign"><span
+	class="icon">syslog-sign</span></a> defines signature messages to assert
+	authentication, integrity and correct sequencing of syslog messages.
+</li></ul><p>
+	To my knowledge this is one of the first implementations of these
+	protocols. It will provide NetBSD (and hopefully the other BSDs as well) with
+	an advanced, reliable, and secure syslogd; thus saving admins the time and
+	effort to install custom logging solutions just to get secure transport to
+	their central logserver.
+</p>
+
+<h2>Current Status</h2>
+<h3>Functions</h3>
+<h4>TLS</h4>
+<p>The TLS support is now working (tested with RSA and DSA keys).
+It will read its configuration from syslog.conf, accept incoming TLS connections
+to receive messages, establish connections to other TLS servers.</p>
+<p>If a TLS server is temporarily not available then its messages will be buffered
+and sent after reconnection.</p>
+
+<h4>syslog-protocol</h4>
+<p>A command line option determines whether syslogd output is in BSD Syslog or in syslog-protocol format. All received messages are converted accordingly.</p>
+<p>I also modified syslog(3) in libc to send syslog-protocol messages.</p>
+<p>While syslog(3) can only use the message field, a new syslogp(3) call is provided to add a MSGID and structured data to a message.</p>
+
+<h4>syslog-sign</h4>
+<p>syslogd(8) is now able to <a href="sign.html">digitally sign messages with syslog-sign.</a></p>
+
+<h3>syslog.conf</h3>
+<p>I extended the traditional configuration file format to support additionally fields for TLS.
+A syslog.conf for TLS currently looks like this:</p>
+<pre>
+# TLS options
+tls_ca="/etc/my.cacert"
+tls_cert="/etc/localhost.crt"
+tls_key="/etc/localhost.key"
+tls_verify="off"
+tls_bindhost="127.0.0.1"
+tls_bindport="13245"
+tls_server=on
+
+# file destination
+*.*      /home/mschuett/test.log
+# UDP destination
+*.*      @192.168.178.5
+# TLS destination
+*.*      @[127.0.0.1]:5555(fingerprint="SHA1:E4:E1:A6:1C:D4:31:D7:D4:9B:B8:DC:DF:DD:CE:30:71:46:00:92:C9")
+</pre>
+
+<h3>Source Code</h3>
+<p>To try syslogd fetch the latest <a href="http://mschuette.name/files/syslogd_080818.tar.gz">.tar.gz archive (2008-08-18)</a> (older versions: <a href="http://mschuette.name/files/syslogd_080805.tar.gz">2008-08-05</a>, <a href="http://mschuette.name/files/syslogd-tls.tar.gz">2008-08-05</a>).</p>
+
+<p>The sources for <a href="http://netbsd-soc.cvs.sourceforge.net/netbsd-soc/syslogd/src/">syslogd</a>, the <a href="http://netbsd-soc.cvs.sourceforge.net/netbsd-soc/syslogd/src-libc_gen/">libc functions</a>, <a href="http://netbsd-soc.cvs.sourceforge.net/netbsd-soc/syslogd/src-newsyslog/">newsyslog</a>, and <a href="http://netbsd-soc.cvs.sourceforge.net/netbsd-soc/syslogd/src-logger/">logger</a> are also available from the <a href="http://netbsd-soc.cvs.sourceforge.net/netbsd-soc/syslogd/">CVS on sourceforge</a>.</p>
+
+<p>For development I used an own <a href="https://anonymous:anonymous@barney.cs.uni-potsdam.de/svn/syslogd/trunk/src/">SVN</a>; a detailed timeline of code changes is available in the <a href="https://barney.cs.uni-potsdam.de/trac/syslogd/timeline">on my Trac</a>.</p>
+
+<p>The syslogd code needs <a href="http://www.openssl.org/ OpenSSL"></a> and <a href="http://www.monkey.org/~provos/libevent/">libevent</a>. The only system-dependent function is wallmsg() to write messages to users's terminals.<br/>
+It was developed and tested on NetBSD and FreeBSD. I heard it does not compile on OpenBSD (I do not know about DragonflyBSD), probably due to different files under /usr/include. I would be interested if someone tried to compile on Linux; this will be some more work, because one will also need additional functions from BSDs libc that are not in glibc (most notably strlcat()).</p>
+
+<h2>Deliverables</h2>
+<p>
+I got all my <b>mandatory components</b>:
+</p>
+<ul>
+	<li>Implement transport-tls in syslogd(8)</li>
+	<li>Implement syslog-protocol in syslogd(8)</li>
+	<li>Implement syslog-protocol in syslog(3)</li>
+	<li>Implement syslog-sign in syslogd(8)</li>
+</ul>
+<p>
+...and parts of my <b>optional components</b>:
+</p>
+<ul>
+	<li>interoperability with other implementations: so far I could only test TLS-transport with rsyslog</li>
+	<li>Extended API to use new functions: with syslogp() I wrote a new API; but it is not really the extended API I had in mind here.</li>
+</ul>
+
+<h2>Documentation</h2>
+
+<p>New manpages and description:</p>
+<ul>
+	<li>my <a href="./doc/syslogd.8.html">syslogd(8)</a></li>
+	<li>my <a href="./doc/syslog.conf.5.html">syslog.conf(5)</a></li>
+	<li>my <a href="./doc/syslog.3.html">syslog(3)/syslogp(3)</a></li>
+	<li><a href="howto.html">How-To configure a TLS transport</a></li>
+	<li><a href="sign.html">Overview of syslog-sign and its usage</a></li>
+</ul>
+
+<p>Existing specifications and man-pages:</p>
+<ul>
+	<li><a href="http://tools.ietf.org/html/rfc3164">RFC3164: The BSD syslog Protocol</a></li>
+	<li><a href="http://netbsd.gw.com/cgi-bin/man-cgi?syslogd++NetBSD-current">syslogd(8)</a></li>
+	<li><a href="http://netbsd.gw.com/cgi-bin/man-cgi?syslog.conf+5+NetBSD-current">syslog.conf(5)</a></li>
+	<li><a href="http://netbsd.gw.com/cgi-bin/man-cgi?syslog+3+NetBSD-current">syslog(3)</a></li>
+	<li><a href="http://www.opengroup.org/onlinepubs/009695399/basedefs/syslog.h.html">SUS on syslog.h</a></li>
+	<li><a href="http://www.opengroup.org/onlinepubs/009695399/functions/syslog.html">SUS on syslog()</a></li>
+</ul>
+
+<p>IETF documents:</p>
+<ul>
+	<li><a href="http://tools.ietf.org/html/draft-ietf-syslog-transport-udp">Transmission of syslog messages over UDP (draft-ietf-syslog-transport-udp)</a></li>
+	<li><a href="http://tools.ietf.org/html/draft-ietf-syslog-transport-tls">TLS Transport Mapping for Syslog (draft-ietf-syslog-transport-tls)</a></li>
+	<li><a href="http://tools.ietf.org/html/draft-ietf-syslog-protocol">The syslog Protocol (draft-ietf-syslog-protocol)</a></li>
+	<li><a href="http://tools.ietf.org/html/draft-ietf-syslog-sign">Signed syslog Messages (draft-ietf-syslog-sign)</a></li>
+</ul>
+
+<hr>
+
+<table border=0>
+<tr>
+<td>
+<a href="http://sourceforge.net"><img align="top" src="http://sourceforge.net/sflogo.php?group_id=141771&amp;type=2" width="125" height="37" border="0" alt="SourceForge.net Logo" /></a>
+<td>
+  <table>
+  <tr> <td> Martin Sch&uuml;tte &lt;<tt>info@mschuette.name</tt>&gt; </td> </tr>
+  <tr> <td> $Id: index.html,v 1.1 2008/10/31 16:12:19 christos Exp $ </td> </tr>
+  </table>
+</tr>
+</table>
+
+</body>
+</html>

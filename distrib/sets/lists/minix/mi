@@ -499,7 +499,7 @@
 ./usr/bin/svrctl			minix-sys
 ./usr/bin/swifi				minix-sys
 ./usr/bin/synctree			minix-sys
-./usr/bin/syslogd			minix-sys
+./usr/bin/syslogd			minix-sys	obsolete
 ./usr/bin/sz				minix-sys
 ./usr/bin/tail				minix-sys
 ./usr/bin/tar				minix-sys
@@ -5310,6 +5310,7 @@
 ./usr/sbin/postinstall			minix-sys
 ./usr/sbin/pwd_mkdb			minix-sys
 ./usr/sbin/rdate			minix-sys
+./usr/sbin/syslogd			minix-sys
 ./usr/sbin/traceroute			minix-sys
 ./usr/sbin/unlink			minix-sys
 ./usr/sbin/user				minix-sys

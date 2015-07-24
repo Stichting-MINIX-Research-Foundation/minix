@@ -1,0 +1,89 @@
+<html>
+<head>
+<title>NetBSD &amp; Google's Summer of Code: Martin Schuette - Improve syslogd (syslogd)</title>
+</head>
+<body>
+
+<h1>Testing syslogd</h1>
+<h2>Compiling</h2>
+<p>A (hopefully) stable version for testing is available by <a href="http://netbsd-soc.cvs.sourceforge.net/netbsd-soc/syslogd/src/">CVS</a> and as a <a href="syslogd-tls.tar.gz">.tar.gz archive</a>. It contains syslogd itself and all necessary files to build on NetBSD and FreeBSD.</p>
+
+<p>To build just type <span style="font-family: monospace;">make</span>. Unless you have a complete NetBSD source tree -- then you can extract the files to <span style="font-family: monospace;">/usr/src/usr.sbin/syslogd</span> and replace the <span style="font-family: monospace;">Makefile</span> with <span style="font-family: monospace;">Makefile.NetBSD</span> and then type <span style="font-family: monospace;">make</span>.
+
+<h3>Note on other BSDs</h3>
+<p>I also tested syslogd on FreeBSD. There are just a few issues/differences:</p>
+<ul>
+   <li>You have to install libevent first</li>
+   <li>No pidfile is written</li>
+   <li>The code for wallmsg() is only copied, not tested</li>
+</ul>
+<p>I assume the same holds for other BSDs but I have no live system to test them.</p>
+
+
+<h2>Command line options</h2>
+<p>syslogd has to be run as root (because it uses chroot()). You should start it with option "-u username" to drop privileges.</p>
+
+<p>By default messages are written in syslog Protocol format. To get the BSD Syslog output like from previous versions use the "-o" option.</p>
+
+<h2>syslog.conf</h2>
+
+<p>To use TLS some additional configuration is required.</p>
+
+<h3>X.509 certificates</h3>
+<p>Every syslogd using TLS needs an X.509 certificate.
+The files containing the private key, certificate, and CA are configured with:</p>
+<pre>
+tls_key="/etc/openssl/default.key"
+tls_cert="/etc/openssl/default.crt"
+tls_ca="/some/where/my.cacert"
+</pre>
+
+<p>If you do not already have a X.509 certificate then you can tell syslogd to generate one for you with</p>
+<pre>
+tls_gen_cert=on
+</pre>
+
+<h3>TLS client</h3>
+<p>To send messages with configure a TLS destination. Here are three examples with different additional options required for authentication</p>
+<pre>
+# with CA
+*.*      @[logserver.example.org]:13245
+*.*      @[127.0.0.1]:13245(subject="logserver.example.org")
+# without CA
+*.*      @[127.0.0.1]:13245(fingerprint="SHA1:E4:E1:A6:1C:D4:31:D7:D4:9B:B8:DC:DF:DD:CE:30:71:46:00:92:C9")
+</pre>
+
+<p>If using a CA then it is checked whether the server's certificate matches the hostname or a given subject. Assuming the logserver's certificate has "logserver.example.org" as its commonName or as a subjectAltName/dnsName the first line is sufficient. (Once a standard portnumber has been assigned the port becomes optional.) If we do not want to rely on DNS and configure the destination with "127.0.0.1" then the subject comparison will fail. The alternatives are either to configure the subject as an option (as in the example above) or to generate a new certificate with the server's IP as a commonName or subjectAltName/ipAddress.</p>
+
+<p>Without a CA the easiest way to authenticate the peer's certificate is its fingerprint as in the last line in the example. syslogd logs the fingerprints of all certificates it loads or tries to connect with, but it can also be read from the shell with "openssl x509 -in /etc/openssl/default.crt -noout -fingerprint".</p>
+
+<h3>TLS server</h3>
+<p>To enable TLS server mode use these lines.</p>
+<pre>
+tls_server="on"
+tls_bindhost="127.0.0.1"
+tls_bindport="13245"
+</pre>
+<p>The bindhost is optional. The bindport is currently required (as long as there is no tcp port defined for the syslog service).</p>
+
+<p>With a CA that is all -- there is no additional hostname check for clients.
+Without a CA the server needs to be told which certificates to trust:</p>
+<pre>
+tls_allow_fingerprints = MD5:00:A2:A7:02:CA:A0:0E:00:DC:F1:91:BE:6A:AA:FF:27 "SHA1:E4:E1:A6:1C:D4:31:D7:D4:9B:B8:DC:DF:DD:CE:30:71:46:00:92:C9"
+</pre>
+
+<hr>
+<table border=0>
+<tr>
+<td>
+<a href="http://sourceforge.net"><img align="top" src="http://sourceforge.net/sflogo.php?group_id=141771&amp;type=2" width="125" height="37" border="0" alt="SourceForge.net Logo" /></a>
+<td>
+  <table>
+  <tr> <td> Martin Sch&uuml;tte &lt;<tt>info@mschuette.name</tt>&gt; </td> </tr>
+  <tr> <td> $Id: howto.html,v 1.1 2008/10/31 16:12:19 christos Exp $ </td> </tr>
+  </table>
+</tr>
+</table>
+
+</body>
+</html>

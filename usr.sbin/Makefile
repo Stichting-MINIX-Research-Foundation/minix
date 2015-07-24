@@ -24,9 +24,9 @@ SUBDIR= \
 	\
 	rdate \
 	\
+	\
+	syslogd \
 	traceroute \
-	\
-	\
 	unlink user \
 	vipw vnconfig \
 	\
