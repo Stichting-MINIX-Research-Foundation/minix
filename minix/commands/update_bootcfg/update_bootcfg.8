@@ -21,27 +21,32 @@ Finally, the update_bootcfg command updates the root file system.
 update_bootcfg
 
 .SH FILES
-FILES
-/boot.cfg
+.TP
+.I /boot.cfg
 Location of the configuration file
-/boot/minix/*
+.TP
+.I /boot/minix/*
 Directories with the various releases
-/boot/minix_default
+.TP
+.I /boot/minix_default
 Directory with the base release of MINIX, installed at setup(8) time
-/boot/minix_latest
+.TP
+.I /boot/minix_latest
 Symbolic link to the directory with the latest release, usually taken by default
-/etc/boot.cfg.default
+.TP
+.I /etc/boot.cfg.default
 Default template
-/etc/boot.cfg.local
+.TP
+.I /etc/boot.cfg.local
 Locally-defined additional boot commands
 
-BUGS
+.SH BUGS
 The previous content of /boot.cfg is lost. Do not change that file directly!
 The presence of /boot/minix_latest as a menu= entry is not checked; it is assumed than one or several entries refer to it.
 
 The naming conventions, particularly the use of default, is not consistent.
 
-SEE ALSO
+.SH SEE ALSO
 boot(8), boot.cfg(5), setup(8), sysenv(1)
 
 .SH AUTHOR
