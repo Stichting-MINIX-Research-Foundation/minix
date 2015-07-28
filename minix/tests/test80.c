@@ -50,7 +50,6 @@ static void callback_cleanup(void) {
 
 int main(int argc, char *argv[])
 {
-	int i;
 	struct sockaddr_in clientaddr = {
 		.sin_family = AF_INET,
 		.sin_port = htons(PORT1),

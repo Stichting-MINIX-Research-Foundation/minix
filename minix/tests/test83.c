@@ -170,8 +170,8 @@ static char *sigstr_itoa(char *p, unsigned long n) {
 	return p;
 }
 
+#if 0
 static void dbgprintdata(const void *data, size_t size) {
-#if DEBUG
 	size_t addr;
 	const unsigned char *p = data;
 
@@ -184,8 +184,8 @@ static void dbgprintdata(const void *data, size_t size) {
 	}
 	fprintf(stderr, "\n");
 	fflush(stderr);
-#endif
 }
+#endif
 
 static void dbgprint_sig(const char *name) {
 #if DEBUG
