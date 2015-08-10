@@ -2292,6 +2292,8 @@
 ./usr/libexec/makewhatis		minix-sys
 ./usr/libexec/virecover			minix-sys
 ./usr/log				minix-sys
+./usr/log/messages			minix-sys
+./usr/log/syslog			minix-sys
 ./usr/Makefile				minix-sys
 ./usr/man				minix-sys
 ./usr/man/man1				minix-sys

@@ -355,7 +355,11 @@ install-etc-files-safe: .PHONY .MAKE check_DESTDIR MAKEDEV
 	${ETC_INSTALL_OBJ_FILE} -o ${BINOWN} -g ${BINGRP} -m 555 \
 	    MAKEDEV ${DESTDIR}/dev
 .else
+# As /var/log is a symlink to /usr/log, we need to use /usr/log for files
+# in /var/log here.  The same applies to the distrib list entries.
 .for owner group mode file in \
+		${BINOWN} ${BINGRP}	644	/usr/log/messages \
+		${BINOWN} ${BINGRP}	644	/usr/log/syslog \
 		games games		664	/var/games/tetris.scores
 	${_MKMSG_INSTALL} ${DESTDIR}${file}
 	if [ ! -e ${DESTDIR}${file} -o -s ${DESTDIR}${file} ]; then \
