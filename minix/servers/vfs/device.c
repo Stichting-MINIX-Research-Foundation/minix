@@ -445,7 +445,7 @@ static int cdev_opcl(
   worker_wait();
 
   self->w_task = NONE;
-  self->w_drv_sendrec = NULL;
+  assert(self->w_drv_sendrec == NULL);
 
   /* Process the reply. */
   r = dev_mess.m_lchardriver_vfs_reply.status;
@@ -613,7 +613,7 @@ int cdev_cancel(dev_t dev)
   worker_wait();
 
   self->w_task = NONE;
-  self->w_drv_sendrec = NULL;
+  assert(self->w_drv_sendrec == NULL);
 
   /* Clean up and return the result (note: the request may have completed). */
   if (GRANT_VALID(fp->fp_grant)) {
@@ -765,9 +765,10 @@ static void cdev_generic_reply(message *m_ptr)
   }
   rfp = &fproc[slot];
   wp = rfp->fp_worker;
-  if (wp != NULL && wp->w_task == who_e) {
+  if (wp != NULL && wp->w_task == who_e && wp->w_drv_sendrec != NULL) {
 	assert(!fp_is_blocked(rfp));
 	*wp->w_drv_sendrec = *m_ptr;
+	wp->w_drv_sendrec = NULL;
 	worker_signal(wp);	/* Continue open/close/cancel */
   } else if (rfp->fp_blocked_on != FP_BLOCKED_ON_OTHER ||
 		rfp->fp_task != m_ptr->m_source) {
@@ -840,12 +841,11 @@ void bdev_reply(void)
   }
 
   wp = worker_get(dp->dmap_servicing);
-  if (wp == NULL || wp->w_task != who_e) {
+  if (wp == NULL || wp->w_task != who_e || wp->w_drv_sendrec == NULL) {
 	printf("VFS: no worker thread waiting for a reply from %d\n", who_e);
 	return;
   }
 
-  assert(wp->w_drv_sendrec != NULL);
   *wp->w_drv_sendrec = m_in;
   wp->w_drv_sendrec = NULL;
   worker_signal(wp);

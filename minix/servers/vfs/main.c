@@ -194,8 +194,17 @@ static void do_reply(struct worker_thread *wp)
   if (wp->w_task != who_e) {
 	printf("VFS: tid %d: expected %d to reply, not %d\n",
 		wp->w_tid, wp->w_task, who_e);
+	return;
+  }
+  /* It should be impossible to trigger the following case, but it is here for
+   * consistency reasons: worker_stop() resets w_sendrec but not w_task.
+   */
+  if (wp->w_sendrec == NULL) {
+	printf("VFS: tid %d: late reply from %d ignored\n", wp->w_tid, who_e);
+	return;
   }
   *wp->w_sendrec = m_in;
+  wp->w_sendrec = NULL;
   wp->w_task = NONE;
   if(vmp) vmp->m_comm.c_cur_reqs--; /* We've got our reply, make room for others */
   worker_signal(wp); /* Continue this thread */

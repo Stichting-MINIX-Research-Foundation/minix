@@ -469,8 +469,10 @@ void worker_stop(struct worker_thread *worker)
 	/* This thread is communicating with a driver or file server */
 	if (worker->w_drv_sendrec != NULL) {			/* Driver */
 		worker->w_drv_sendrec->m_type = EIO;
+		worker->w_drv_sendrec = NULL;
 	} else if (worker->w_sendrec != NULL) {		/* FS */
 		worker->w_sendrec->m_type = EIO;
+		worker->w_sendrec = NULL;
 	} else {
 		panic("reply storage consistency error");	/* Oh dear */
 	}
