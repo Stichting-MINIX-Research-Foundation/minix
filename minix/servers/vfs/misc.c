@@ -33,7 +33,6 @@
 #include <sys/svrctl.h>
 #include <sys/resource.h>
 #include "file.h"
-#include "scratchpad.h"
 #include <minix/vfsif.h>
 #include "vnode.h"
 #include "vmnt.h"
@@ -103,15 +102,15 @@ int do_fcntl(void)
   int new_fd, fl, r = OK, fcntl_req, fcntl_argx;
   tll_access_t locktype;
 
-  scratch(fp).file.fd_nr = job_m_in.m_lc_vfs_fcntl.fd;
-  scratch(fp).io.io_buffer = job_m_in.m_lc_vfs_fcntl.arg_ptr;
-  scratch(fp).io.io_nbytes = job_m_in.m_lc_vfs_fcntl.cmd;
+  fp->fp_fd = job_m_in.m_lc_vfs_fcntl.fd;
+  fp->fp_io_buffer = job_m_in.m_lc_vfs_fcntl.arg_ptr;
+  fp->fp_io_nbytes = job_m_in.m_lc_vfs_fcntl.cmd;
   fcntl_req = job_m_in.m_lc_vfs_fcntl.cmd;
   fcntl_argx = job_m_in.m_lc_vfs_fcntl.arg_int;
 
   /* Is the file descriptor valid? */
   locktype = (fcntl_req == F_FREESP) ? VNODE_WRITE : VNODE_READ;
-  if ((f = get_filp(scratch(fp).file.fd_nr, locktype)) == NULL)
+  if ((f = get_filp(fp->fp_fd, locktype)) == NULL)
 	return(err_code);
 
   switch (fcntl_req) {
@@ -132,16 +131,16 @@ int do_fcntl(void)
     case F_GETFD:
 	/* Get close-on-exec flag (FD_CLOEXEC in POSIX Table 6-2). */
 	r = 0;
-	if (FD_ISSET(scratch(fp).file.fd_nr, &fp->fp_cloexec_set))
+	if (FD_ISSET(fp->fp_fd, &fp->fp_cloexec_set))
 		r = FD_CLOEXEC;
 	break;
 
     case F_SETFD:
 	/* Set close-on-exec flag (FD_CLOEXEC in POSIX Table 6-2). */
 	if (fcntl_argx & FD_CLOEXEC)
-		FD_SET(scratch(fp).file.fd_nr, &fp->fp_cloexec_set);
+		FD_SET(fp->fp_fd, &fp->fp_cloexec_set);
 	else
-		FD_CLR(scratch(fp).file.fd_nr, &fp->fp_cloexec_set);
+		FD_CLR(fp->fp_fd, &fp->fp_cloexec_set);
 	break;
 
     case F_GETFL:
@@ -174,7 +173,7 @@ int do_fcntl(void)
 	else if (!(f->filp_mode & W_BIT)) r = EBADF;
 	else {
 		/* Copy flock data from userspace. */
-		r = sys_datacopy_wrapper(who_e, scratch(fp).io.io_buffer,
+		r = sys_datacopy_wrapper(who_e, fp->fp_io_buffer,
 			SELF, (vir_bytes) &flock_arg, sizeof(flock_arg));
 	}
 
@@ -284,9 +283,9 @@ int do_fsync(void)
   dev_t dev;
   int r = OK;
 
-  scratch(fp).file.fd_nr = job_m_in.m_lc_vfs_fsync.fd;
+  fp->fp_fd = job_m_in.m_lc_vfs_fsync.fd;
 
-  if ((rfilp = get_filp(scratch(fp).file.fd_nr, VNODE_READ)) == NULL)
+  if ((rfilp = get_filp(fp->fp_fd, VNODE_READ)) == NULL)
 	return(err_code);
 
   dev = rfilp->filp_vno->v_dev;
@@ -885,8 +884,8 @@ int pm_dumpcore(int csig, vir_bytes exe_name)
   char core_path[PATH_MAX];
   char proc_name[PROC_NAME_LEN];
 
-  /* if a process is blocked, scratch(fp).file.fd_nr holds the fd it's blocked
-   * on. free it up for use by common_open().
+  /* if a process is blocked, fp->fp_fd holds the fd it's blocked on.
+   * free it up for use by common_open().
    */
   if (fp_is_blocked(fp))
           unpause();

@@ -26,7 +26,6 @@
 #include <minix/debug.h>
 #include <minix/vfsif.h>
 #include "file.h"
-#include "scratchpad.h"
 #include "vmnt.h"
 #include "vnode.h"
 
@@ -211,15 +210,14 @@ static void do_pending_pipe(void)
   struct filp *f;
   tll_access_t locktype;
 
-  f = scratch(fp).file.filp;
+  f = fp->fp_filp[fp->fp_fd];
   assert(f != NULL);
-  scratch(fp).file.filp = NULL;
 
   locktype = (job_call_nr == VFS_READ) ? VNODE_READ : VNODE_WRITE;
   op = (job_call_nr == VFS_READ) ? READING : WRITING;
   lock_filp(f, locktype);
 
-  r = rw_pipe(op, who_e, f, scratch(fp).io.io_buffer, scratch(fp).io.io_nbytes);
+  r = rw_pipe(op, who_e, f, fp->fp_io_buffer, fp->fp_io_nbytes);
 
   if (r != SUSPEND) { /* Do we have results to report? */
 	/* Process is writing, but there is no reader. Send a SIGPIPE signal.
@@ -834,15 +832,15 @@ struct fproc *rfp;
   case VFS_READ:
   case VFS_WRITE:
 	assert(blocked_on == FP_BLOCKED_ON_PIPE);
-	m_in.m_lc_vfs_readwrite.fd = scratch(rfp).file.fd_nr;
-	m_in.m_lc_vfs_readwrite.buf = scratch(rfp).io.io_buffer;
-	m_in.m_lc_vfs_readwrite.len = scratch(rfp).io.io_nbytes;
+	m_in.m_lc_vfs_readwrite.fd = rfp->fp_fd;
+	m_in.m_lc_vfs_readwrite.buf = rfp->fp_io_buffer;
+	m_in.m_lc_vfs_readwrite.len = rfp->fp_io_nbytes;
 	break;
   case VFS_FCNTL:
 	assert(blocked_on == FP_BLOCKED_ON_LOCK);
-	m_in.m_lc_vfs_fcntl.fd = scratch(rfp).file.fd_nr;
-	m_in.m_lc_vfs_fcntl.cmd = scratch(rfp).io.io_nbytes;
-	m_in.m_lc_vfs_fcntl.arg_ptr = scratch(rfp).io.io_buffer;
+	m_in.m_lc_vfs_fcntl.fd = rfp->fp_fd;
+	m_in.m_lc_vfs_fcntl.cmd = rfp->fp_io_nbytes;
+	m_in.m_lc_vfs_fcntl.arg_ptr = rfp->fp_io_buffer;
 	assert(m_in.m_lc_vfs_fcntl.cmd == F_SETLKW);
 	break;
   default:

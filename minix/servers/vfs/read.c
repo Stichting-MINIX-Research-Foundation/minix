@@ -20,7 +20,6 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include "file.h"
-#include "scratchpad.h"
 #include "vnode.h"
 #include "vmnt.h"
 
@@ -92,12 +91,12 @@ int actual_read_write_peek(struct fproc *rfp, int rw_flag, int io_fd,
 
   if(rw_flag == WRITING) ro = 0;
 
-  scratch(rfp).file.fd_nr = io_fd;
-  scratch(rfp).io.io_buffer = io_buf;
-  scratch(rfp).io.io_nbytes = io_nbytes;
+  rfp->fp_fd = io_fd;
+  rfp->fp_io_buffer = io_buf;
+  rfp->fp_io_nbytes = io_nbytes;
 
   locktype = rw_flag == WRITING ? VNODE_WRITE : VNODE_READ;
-  if ((f = get_filp2(rfp, scratch(rfp).file.fd_nr, locktype)) == NULL)
+  if ((f = get_filp2(rfp, rfp->fp_fd, locktype)) == NULL)
 	return(err_code);
 
   assert(f->filp_count > 0);
@@ -106,13 +105,12 @@ int actual_read_write_peek(struct fproc *rfp, int rw_flag, int io_fd,
 	unlock_filp(f);
 	return(EBADF);
   }
-  if (scratch(rfp).io.io_nbytes == 0) {
+  if (rfp->fp_io_nbytes == 0) {
 	unlock_filp(f);
 	return(0);	/* so char special files need not check for 0*/
   }
 
-  r = read_write(rfp, rw_flag, f, scratch(rfp).io.io_buffer,
-	scratch(rfp).io.io_nbytes, who_e);
+  r = read_write(rfp, rw_flag, f, rfp->fp_io_buffer, rfp->fp_io_nbytes, who_e);
 
   unlock_filp(f);
   return(r);
@@ -274,12 +272,12 @@ int do_getdents(void)
   off_t new_pos;
   register struct filp *rfilp;
 
-  scratch(fp).file.fd_nr = job_m_in.m_lc_vfs_readwrite.fd;
-  scratch(fp).io.io_buffer = job_m_in.m_lc_vfs_readwrite.buf;
-  scratch(fp).io.io_nbytes = job_m_in.m_lc_vfs_readwrite.len;
+  fp->fp_fd = job_m_in.m_lc_vfs_readwrite.fd;
+  fp->fp_io_buffer = job_m_in.m_lc_vfs_readwrite.buf;
+  fp->fp_io_nbytes = job_m_in.m_lc_vfs_readwrite.len;
 
   /* Is the file descriptor valid? */
-  if ( (rfilp = get_filp(scratch(fp).file.fd_nr, VNODE_READ)) == NULL)
+  if ( (rfilp = get_filp(fp->fp_fd, VNODE_READ)) == NULL)
 	return(err_code);
 
   if (!(rfilp->filp_mode & R_BIT))
@@ -289,8 +287,8 @@ int do_getdents(void)
 
   if (r == OK) {
 	r = req_getdents(rfilp->filp_vno->v_fs_e, rfilp->filp_vno->v_inode_nr,
-			 rfilp->filp_pos, scratch(fp).io.io_buffer,
-			 scratch(fp).io.io_nbytes, &new_pos, 0);
+			 rfilp->filp_pos, fp->fp_io_buffer, fp->fp_io_nbytes,
+			 &new_pos, 0);
 
 	if (r > 0) rfilp->filp_pos = new_pos;
   }

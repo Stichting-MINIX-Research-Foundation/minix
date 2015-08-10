@@ -22,7 +22,6 @@
 #include "file.h"
 #include "path.h"
 #include "vnode.h"
-#include "scratchpad.h"
 
 /*===========================================================================*
  *				do_link					     *
@@ -333,13 +332,13 @@ int do_ftruncate(void)
   int r;
   off_t length;
 
-  scratch(fp).file.fd_nr = job_m_in.m_lc_vfs_truncate.fd;
+  fp->fp_fd = job_m_in.m_lc_vfs_truncate.fd;
 
   length = job_m_in.m_lc_vfs_truncate.offset;
   if (length < 0) return(EINVAL);
 
   /* File is already opened; get a vnode pointer from filp */
-  if ((rfilp = get_filp(scratch(fp).file.fd_nr, VNODE_WRITE)) == NULL)
+  if ((rfilp = get_filp(fp->fp_fd, VNODE_WRITE)) == NULL)
 	return(err_code);
 
   vp = rfilp->filp_vno;

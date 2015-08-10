@@ -31,6 +31,10 @@ EXTERN struct fproc {
   endpoint_t fp_task;		/* which task is proc suspended on */
   cp_grant_id_t fp_grant;	/* revoke this grant on unsuspend if > -1 */
 
+  int fp_fd;			/* file descriptor for blocking call */
+  vir_bytes fp_io_buffer;	/* user buffer address for ongoing I/O */
+  size_t fp_io_nbytes;		/* number of bytes left for ongoing I/O */
+
   uid_t fp_realuid;		/* real user id */
   uid_t fp_effuid;		/* effective user id */
   gid_t fp_realgid;		/* real group id */

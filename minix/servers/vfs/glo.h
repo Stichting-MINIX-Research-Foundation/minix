@@ -31,7 +31,6 @@ EXTERN message m_in;		/* the input message itself */
 # define job_m_out	(self->w_m_out)
 # define job_call_nr	(job_m_in.m_type)
 # define super_user	(fp->fp_effuid == SU_UID ? 1 : 0)
-# define scratch(p)		(scratchpad[((int) ((p) - fproc))])
 EXTERN struct worker_thread *self;
 EXTERN int deadlock_resolving;
 EXTERN mutex_t bsf_lock;/* Global lock for access to block special files */

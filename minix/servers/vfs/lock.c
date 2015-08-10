@@ -11,7 +11,6 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include "file.h"
-#include "scratchpad.h"
 #include "lock.h"
 #include "vnode.h"
 
@@ -31,7 +30,7 @@ int req;			/* either F_SETLK or F_SETLKW */
   struct file_lock *flp, *flp2, *empty;
 
   /* Fetch the flock structure from user space. */
-  r = sys_datacopy_wrapper(who_e, scratch(fp).io.io_buffer, VFS_PROC_NR,
+  r = sys_datacopy_wrapper(who_e, fp->fp_io_buffer, VFS_PROC_NR,
 		   (vir_bytes) &flock, sizeof(flock));
   if (r != OK) return(EINVAL);
 
@@ -142,7 +141,7 @@ int req;			/* either F_SETLK or F_SETLKW */
 
 	/* Copy the flock structure back to the caller. */
 	r = sys_datacopy_wrapper(VFS_PROC_NR, (vir_bytes) &flock, who_e,
-		scratch(fp).io.io_buffer, sizeof(flock));
+		fp->fp_io_buffer, sizeof(flock));
 	return(r);
   }
 

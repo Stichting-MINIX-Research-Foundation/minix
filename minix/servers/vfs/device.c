@@ -27,7 +27,6 @@
 #include <minix/ioctl.h>
 #include <minix/u64.h>
 #include "file.h"
-#include "scratchpad.h"
 #include "dmap.h"
 #include <minix/vfsif.h>
 #include "vnode.h"
@@ -357,9 +356,9 @@ static int cdev_clone(dev_t dev, devminor_t new_minor)
   }
   lock_vnode(vp, VNODE_OPCL);
 
-  assert(fp->fp_filp[scratch(fp).file.fd_nr] != NULL);
-  unlock_vnode(fp->fp_filp[scratch(fp).file.fd_nr]->filp_vno);
-  put_vnode(fp->fp_filp[scratch(fp).file.fd_nr]->filp_vno);
+  assert(fp->fp_filp[fp->fp_fd] != NULL);
+  unlock_vnode(fp->fp_filp[fp->fp_fd]->filp_vno);
+  put_vnode(fp->fp_filp[fp->fp_fd]->filp_vno);
 
   vp->v_fs_e = res.fs_e;
   vp->v_vmnt = NULL;
@@ -370,7 +369,7 @@ static int cdev_clone(dev_t dev, devminor_t new_minor)
   vp->v_sdev = dev;
   vp->v_fs_count = 1;
   vp->v_ref_count = 1;
-  fp->fp_filp[scratch(fp).file.fd_nr]->filp_vno = vp;
+  fp->fp_filp[fp->fp_fd]->filp_vno = vp;
 
   return OK;
 }
@@ -513,11 +512,11 @@ int do_ioctl(void)
   dev_t dev;
   vir_bytes argx;
 
-  scratch(fp).file.fd_nr = job_m_in.m_lc_vfs_ioctl.fd;
+  fp->fp_fd = job_m_in.m_lc_vfs_ioctl.fd;
   ioctlrequest = job_m_in.m_lc_vfs_ioctl.req;
   argx = (vir_bytes)job_m_in.m_lc_vfs_ioctl.arg;
 
-  if ((f = get_filp(scratch(fp).file.fd_nr, VNODE_READ)) == NULL)
+  if ((f = get_filp(fp->fp_fd, VNODE_READ)) == NULL)
 	return(err_code);
   vp = f->filp_vno;		/* get vnode pointer */
   if (!S_ISCHR(vp->v_mode) && !S_ISBLK(vp->v_mode)) {

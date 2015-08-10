@@ -9,7 +9,6 @@
 #include <minix/com.h>
 #include "file.h"
 #include "lock.h"
-#include "scratchpad.h"
 #include "vnode.h"
 #include "vmnt.h"
 
