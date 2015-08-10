@@ -630,6 +630,11 @@ PRIVATE INLINE int transfer_ptr_sel_cb(_magic_selement_t *selement, _magic_sel_a
             return MAGIC_SENTRY_ANALYZE_SKIP_PATH;
         }
     }
+#ifdef __MINIX
+#define IS_KERNEL_PTR(p) (((intptr_t)(p) & 0xf0000000) == 0xf0000000) /* TODO: make this more dynamic */
+    else if (IS_KERNEL_PTR(sel_analyzed->u.ptr.value))
+        return MAGIC_SENTRY_ANALYZE_SKIP_PATH; /* Kernel-mapped pointer */
+#endif
 
     /* Pointer with violations found */
     ST_CB_PRINT(ST_CB_ERR, "uncaught ptr with violations", selement, sel_analyzed, sel_stats, cb_info);
