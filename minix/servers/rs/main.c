@@ -53,9 +53,6 @@ int main(void)
   if (OK != (s=sys_getmachine(&machine)))
 	  panic("couldn't get machine info: %d", s);
 
-  if (OK != (s=sys_getkinfo(&kinfo)))
-	  panic("couldn't get kernel kinfo: %d", s);
-
   /* Main loop - get work and do it, forever. */         
   while (TRUE) {              
       /* Perform sensitive background operations when RS is idle. */

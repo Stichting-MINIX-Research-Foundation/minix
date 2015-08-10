@@ -1,3 +1,5 @@
+#ifndef _VM_GLO_H
+#define _VM_GLO_H
 
 #include <minix/sys_config.h>
 #include <minix/type.h>
@@ -19,7 +21,8 @@ EXTERN struct vmproc vmproc[VMP_NR];
 
 long enable_filemap;
 
-EXTERN kinfo_t kernel_boot_info;
+typedef kinfo_t ixfer_kinfo_t;
+EXTERN ixfer_kinfo_t kernel_boot_info;
 
 #if SANITYCHECKS
 EXTERN int nocheck;
@@ -41,3 +44,5 @@ EXTERN  mem_type_t mem_type_anon,       /* anonymous memory */
 /* total number of memory pages */
 EXTERN int total_pages;
 EXTERN int num_vm_instances;
+
+#endif /* !_VM_GLO_H */

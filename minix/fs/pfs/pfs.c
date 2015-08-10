@@ -198,8 +198,10 @@ pfs_putnode(ino_t ino_nr, unsigned int count)
 		return EINVAL;
 
 	/* For pipes, free the inode data buffer. */
-	if (rip->i_data != NULL)
+	if (rip->i_data != NULL) {
 		free(rip->i_data);
+		rip->i_data = NULL;
+	}
 
 	/* Return the inode to the free list. */
 	rip->i_free = TRUE;

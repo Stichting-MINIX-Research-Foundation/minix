@@ -13,6 +13,8 @@
 /* Needs to be included here, for 'ps' etc */
 #include "const.h"
 
+typedef struct sigaction ixfer_sigaction;
+
 EXTERN struct mproc {
   char mp_exitstatus;		/* storage for status when process exits */
   char mp_sigstatus;		/* storage for signal # for killed procs */
@@ -45,7 +47,7 @@ EXTERN struct mproc {
   sigset_t mp_sigpending;	/* pending signals to be handled */
   sigset_t mp_ksigpending;	/* bitmap for pending signals from the kernel */
   sigset_t mp_sigtrace;		/* signals to hand to tracer first */
-  struct sigaction mp_sigact[_NSIG]; /* as in sigaction(2) */
+  ixfer_sigaction mp_sigact[_NSIG]; /* as in sigaction(2) */
 #ifdef __ACK__
   char mp_padding[60];		/* align structure with new libc */
 #endif

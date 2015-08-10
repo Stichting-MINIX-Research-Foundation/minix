@@ -262,7 +262,7 @@ static int sef_cb_init_fresh(int type, sef_init_info_t *info)
 
 static struct vmproc *init_proc(endpoint_t ep_nr)
 {
-	static struct boot_image *ip;
+	struct boot_image *ip;
 
 	for (ip = &kernel_boot_info.boot_procs[0];
 		ip < &kernel_boot_info.boot_procs[NR_BOOT_PROCS]; ip++) {
@@ -429,7 +429,7 @@ void init_vm(void)
 {
 	int s, i;
 	static struct memory mem_chunks[NR_MEMS];
-	static struct boot_image *ip;
+	struct boot_image *ip;
 	extern void __minix_init(void);
 	multiboot_module_t *mod;
 	vir_bytes kern_dyn, kern_static;

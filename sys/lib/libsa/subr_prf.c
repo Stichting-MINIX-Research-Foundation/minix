@@ -174,6 +174,9 @@ vsnprintf(char *buf, size_t size, const char *fmt, va_list ap)
 	if (sbuf){ /* handle case where sbuf == NULL */
 		*sbuf = '\0';
 	}
+#if defined(_MINIX_MAGIC)
+	sbuf = ebuf = NULL; /* leave no dangling pointers */
+#endif
 	return scount;
 #else /* __minix is not defined */
 	*sbuf = '\0';

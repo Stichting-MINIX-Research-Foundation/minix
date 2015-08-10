@@ -66,6 +66,8 @@ static fsblkcnt_t fs_btotal = 0, fs_bused = 0;
 
 static int quiet = 0;
 
+typedef struct buf *noxfer_buf_ptr_t; /* annotation for temporary buf ptrs */
+
 void lmfs_setquiet(int q) { quiet = q; }
 
 static int fs_bufs_heuristic(int minbufs, fsblkcnt_t btotal,
@@ -988,7 +990,7 @@ void lmfs_readahead(dev_t dev, block64_t base_block, unsigned int nblocks,
  * However, the caller must also not rely on all or even any of the blocks to
  * be present in the cache afterwards--failures are (deliberately!) ignored.
  */
-  static struct buf *bufq[LMFS_MAX_PREFETCH]; /* static because of size only */
+  static noxfer_buf_ptr_t bufq[LMFS_MAX_PREFETCH]; /* static for size only */
   struct buf *bp;
   unsigned int count;
   int r;
@@ -1131,7 +1133,7 @@ void lmfs_flushdev(dev_t dev)
 /* Flush all dirty blocks for one device. */
 
   register struct buf *bp;
-  static struct buf **dirty;
+  static noxfer_buf_ptr_t *dirty;
   static unsigned int dirtylistsize = 0;
   unsigned int ndirty;
 

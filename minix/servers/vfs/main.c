@@ -65,9 +65,6 @@ int main(void)
 
   printf("Started VFS: %d worker thread(s)\n", NR_WTHREADS);
 
-  if (OK != (sys_getkinfo(&kinfo)))
-	panic("couldn't get kernel kinfo");
-
   /* This is the main loop that gets work, processes it, and sends replies. */
   while (TRUE) {
 	yield_all();	/* let other threads run */

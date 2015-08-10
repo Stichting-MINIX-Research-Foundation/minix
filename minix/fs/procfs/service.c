@@ -19,10 +19,11 @@ struct policies {
 	enum policy supported;
 };
 
-static struct {
+typedef struct {
 	struct rproc proc[NR_SYS_PROCS];
 	struct rprocpub pub[NR_SYS_PROCS];
-} rproc;
+} ixfer_rproc_t;
+static ixfer_rproc_t rproc;
 
 static struct policies policies[NR_SYS_PROCS];
 
