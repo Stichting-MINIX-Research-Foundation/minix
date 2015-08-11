@@ -71,3 +71,6 @@ make install
 
 cd ${NETBSDSRCDIR}/minix/llvm/passes/magic
 make install
+
+cd ${NETBSDSRCDIR}/minix/llvm/passes/asr
+make install
