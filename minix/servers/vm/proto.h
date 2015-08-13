@@ -221,6 +221,7 @@ void shared_setsource(struct vir_region *vr, endpoint_t ep, struct vir_region *s
 /* mem_cache.c */
 int do_mapcache(message *m);
 int do_setcache(message *m);
+int do_forgetcache(message *m);
 int do_clearcache(message *m);
 
 /* cache.c */

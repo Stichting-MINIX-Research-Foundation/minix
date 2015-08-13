@@ -88,6 +88,12 @@ void free_zone(
   bit = (bit_t) (numb - (zone_t) (sp->s_firstdatazone - 1));
   free_bit(sp, ZMAP, bit);
   if (bit < sp->s_zsearch) sp->s_zsearch = bit;
+
+  /* Also tell libminixfs, so that 1) if it has a block for this bit, it can
+   * mark it as clean, thus reducing useless writes, and 2) it can tell VM that
+   * any previous inode association is to be broken for this block, so that the
+   * block will not be mapped in erroneously later on.
+   */
+  assert(sp->s_log_zone_size == 0); /* otherwise we need a loop here.. */
+  lmfs_free_block(dev, (block_t)numb);
 }
-
-

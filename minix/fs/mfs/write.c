@@ -165,7 +165,7 @@ int op;				/* special actions */
 		wr_indir(bp, ex, new_zone);
 	}
 	/* z1 equals NO_ZONE only when we are freeing up the indirect block. */
-	if(z1 == NO_ZONE) { MARKCLEAN(bp); } else { MARKDIRTY(bp); }
+	if(z1 != NO_ZONE) MARKDIRTY(bp);
 	put_block(bp, INDIRECT_BLOCK);
   }
 
@@ -175,7 +175,6 @@ int op;				/* special actions */
    */
   if(z1 == NO_ZONE && !single && z2 != NO_ZONE &&
      empty_indir(bp_dindir, rip->i_sp)) {
-     	MARKCLEAN(bp_dindir);
 	free_zone(rip->i_dev, z2);
 	rip->i_zone[zones+1] = NO_ZONE;
   }

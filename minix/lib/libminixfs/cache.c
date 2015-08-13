@@ -240,6 +240,27 @@ static void freeblock(struct buf *bp)
 }
 
 /*===========================================================================*
+ *				find_block				     *
+ *===========================================================================*/
+static struct buf *find_block(dev_t dev, block64_t block)
+{
+/* Search the hash chain for (dev, block). Return the buffer structure if
+ * found, or NULL otherwise.
+ */
+  struct buf *bp;
+  int b;
+
+  assert(dev != NO_DEV);
+
+  b = BUFHASH(block);
+  for (bp = buf_hash[b]; bp != NULL; bp = bp->lmfs_hash)
+	if (bp->lmfs_blocknr == block && bp->lmfs_dev == dev)
+		return bp;
+
+  return NULL;
+}
+
+/*===========================================================================*
  *				lmfs_get_block_ino			     *
  *===========================================================================*/
 struct buf *lmfs_get_block_ino(dev_t dev, block64_t block, int only_search,
@@ -284,50 +305,46 @@ struct buf *lmfs_get_block_ino(dev_t dev, block64_t block, int only_search,
   	util_stacktrace();
   }
 
-  /* Search the hash chain for (dev, block). */
-  b = BUFHASH(block);
-  bp = buf_hash[b];
-  while (bp != NULL) {
-  	if (bp->lmfs_blocknr == block && bp->lmfs_dev == dev) {
-  		if(bp->lmfs_flags & VMMC_EVICTED) {
-  			/* We had it but VM evicted it; invalidate it. */
-  			ASSERT(bp->lmfs_count == 0);
-  			ASSERT(!(bp->lmfs_flags & VMMC_BLOCK_LOCKED));
-  			ASSERT(!(bp->lmfs_flags & VMMC_DIRTY));
-  			bp->lmfs_dev = NO_DEV;
-  			bp->lmfs_bytes = 0;
-  			bp->data = NULL;
-  			break;
-  		}
-  		/* Block needed has been found. */
-  		if (bp->lmfs_count == 0) {
-			rm_lru(bp);
-			ASSERT(bp->lmfs_needsetcache == 0);
-  			ASSERT(!(bp->lmfs_flags & VMMC_BLOCK_LOCKED));
-			bp->lmfs_flags |= VMMC_BLOCK_LOCKED;
-		}
-		raisecount(bp);
-  		ASSERT(bp->lmfs_bytes == fs_block_size);
-  		ASSERT(bp->lmfs_dev == dev);
-  		ASSERT(bp->lmfs_dev != NO_DEV);
- 		ASSERT(bp->lmfs_flags & VMMC_BLOCK_LOCKED);
-  		ASSERT(bp->data);
+  /* See if the block is in the cache. If so, we can return it right away. */
+  bp = find_block(dev, block);
+  if (bp != NULL && !(bp->lmfs_flags & VMMC_EVICTED)) {
+	/* Block needed has been found. */
+	if (bp->lmfs_count == 0) {
+		rm_lru(bp);
+		ASSERT(bp->lmfs_needsetcache == 0);
+		ASSERT(!(bp->lmfs_flags & VMMC_BLOCK_LOCKED));
+		/* FIXME: race condition against the VMMC_EVICTED check */
+		bp->lmfs_flags |= VMMC_BLOCK_LOCKED;
+	}
+	raisecount(bp);
+	ASSERT(bp->lmfs_bytes == fs_block_size);
+	ASSERT(bp->lmfs_dev == dev);
+	ASSERT(bp->lmfs_dev != NO_DEV);
+	ASSERT(bp->lmfs_flags & VMMC_BLOCK_LOCKED);
+	ASSERT(bp->data);
 
-		if(ino != VMC_NO_INODE) {
-			if(bp->lmfs_inode == VMC_NO_INODE
-			|| bp->lmfs_inode != ino
-			|| bp->lmfs_inode_offset != ino_off) {
-				bp->lmfs_inode = ino;
-				bp->lmfs_inode_offset = ino_off;
-				bp->lmfs_needsetcache = 1;
-			}
+	if(ino != VMC_NO_INODE) {
+		if(bp->lmfs_inode == VMC_NO_INODE
+		|| bp->lmfs_inode != ino
+		|| bp->lmfs_inode_offset != ino_off) {
+			bp->lmfs_inode = ino;
+			bp->lmfs_inode_offset = ino_off;
+			bp->lmfs_needsetcache = 1;
 		}
+	}
 
-  		return(bp);
-  	} else {
-  		/* This block is not the one sought. */
-  		bp = bp->lmfs_hash; /* move to next block on hash chain */
-  	}
+	return(bp);
+  }
+
+  /* We had the block in the cache but VM evicted it; invalidate it. */
+  if (bp != NULL) {
+	assert(bp->lmfs_flags & VMMC_EVICTED);
+	ASSERT(bp->lmfs_count == 0);
+	ASSERT(!(bp->lmfs_flags & VMMC_BLOCK_LOCKED));
+	ASSERT(!(bp->lmfs_flags & VMMC_DIRTY));
+	bp->lmfs_dev = NO_DEV;
+	bp->lmfs_bytes = 0;
+	bp->data = NULL;
   }
 
   /* Desired block is not on available chain. Find a free block to use. */
@@ -440,7 +457,7 @@ void lmfs_put_block(
   if (bp->lmfs_count != 0) return;	/* block is still in use */
 
   /* Put this block back on the LRU chain.  */
-  if (dev == DEV_RAM || (block_type & ONE_SHOT)) {
+  if (dev == NO_DEV || dev == DEV_RAM || (block_type & ONE_SHOT)) {
 	/* Block probably won't be needed quickly. Put it on front of chain.
   	 * It will be the next block to be evicted from the cache.
   	 */
@@ -483,7 +500,48 @@ void lmfs_put_block(
 	}
   }
   bp->lmfs_needsetcache = 0;
+}
 
+/*===========================================================================*
+ *				lmfs_free_block				     *
+ *===========================================================================*/
+void lmfs_free_block(dev_t dev, block64_t block)
+{
+/* The file system has just freed the given block. The block may previously
+ * have been in use as data block for an inode. Therefore, we now need to tell
+ * VM that the block is no longer associated with an inode. If we fail to do so
+ * and the inode now has a hole at this location, mapping in the hole would
+ * yield the old block contents rather than a zeroed page. In addition, if the
+ * block is in the cache, it will be removed, even if it was dirty.
+ */
+  struct buf *bp;
+  int r;
+
+  /* Tell VM to forget about the block. The primary purpose of this call is to
+   * break the inode association, but since the block is part of a mounted file
+   * system, it is not expected to be accessed directly anyway. So, save some
+   * cache memory by throwing it out of the VM cache altogether.
+   */
+  if (vmcache) {
+	if ((r = vm_forget_cacheblock(dev, block * fs_block_size,
+	    fs_block_size)) != OK)
+		printf("libminixfs: vm_forget_cacheblock failed (%d)\n", r);
+  }
+
+  if ((bp = find_block(dev, block)) != NULL) {
+	lmfs_markclean(bp);
+
+	/* Invalidate the block. The block may or may not be in use right now,
+	 * so don't be smart about freeing memory or repositioning in the LRU.
+	 */
+	bp->lmfs_dev = NO_DEV;
+  }
+
+  /* Note that this is *not* the right place to implement TRIM support. Even
+   * though the block is freed, on the device it may still be part of a
+   * previous checkpoint or snapshot of some sort. Only the file system can
+   * be trusted to decide which blocks can be reused on the device!
+   */
 }
 
 void lmfs_cache_reevaluate(dev_t dev)
@@ -577,6 +635,10 @@ void lmfs_invalidate(
 	}
   }
 
+  /* Clear the cache even if VM caching is disabled for the file system:
+   * caching may be disabled as side effect of an error, leaving blocks behind
+   * in the actual VM cache.
+   */
   vm_clear_cache(device);
 }
 

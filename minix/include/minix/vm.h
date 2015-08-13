@@ -21,8 +21,6 @@ int vm_update(endpoint_t src_e, endpoint_t dst_e);
 int vm_memctl(endpoint_t ep, int req);
 int vm_query_exit(endpoint_t *endpt);
 int vm_watch_exit(endpoint_t ep);
-int vm_forgetblock(u64_t id);
-void vm_forgetblocks(void);
 int minix_vfs_mmap(endpoint_t who, off_t offset, size_t len,
         dev_t dev, ino_t ino, int fd, u32_t vaddr, u16_t clearend, u16_t
 	flags);
@@ -73,10 +71,9 @@ int vm_procctl_handlemem(endpoint_t ep, vir_bytes m1, vir_bytes m2, int wr);
 int vm_set_cacheblock(void *block, dev_t dev, off_t dev_offset,
         ino_t ino, off_t ino_offset, u32_t *flags, int blocksize,
         int setflags);
-
 void *vm_map_cacheblock(dev_t dev, off_t dev_offset,
         ino_t ino, off_t ino_offset, u32_t *flags, int blocksize);
-
+int vm_forget_cacheblock(dev_t dev, off_t dev_offset, int blocksize);
 int vm_clear_cache(dev_t dev);
 
 /* flags for vm cache functions */

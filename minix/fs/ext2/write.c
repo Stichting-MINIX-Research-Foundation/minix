@@ -226,20 +226,16 @@ int op;				/* special actions */
 		rip->i_blocks += rip->i_sp->s_sectors_in_block;
 	}
 	/* b1 equals NO_BLOCK only when we are freeing up the indirect block. */
-	if(b1 == NO_BLOCK)
-		lmfs_markclean(bp);
-	else
+	if(b1 != NO_BLOCK)
 		lmfs_markdirty(bp);
 	put_block(bp, INDIRECT_BLOCK);
   }
 
   /* If the single indirect block isn't there (or was just freed),
    * see if we have to keep the double indirect block, if any.
-   * If we don't have to keep it, don't bother writing it out.
    */
   if (b1 == NO_BLOCK && !single && b2 != NO_BLOCK &&
      empty_indir(bp_dindir, rip->i_sp)) {
-	lmfs_markclean(bp_dindir);
 	free_block(rip->i_sp, b2);
 	rip->i_blocks -= rip->i_sp->s_sectors_in_block;
 	b2 = NO_BLOCK;
@@ -252,11 +248,9 @@ int op;				/* special actions */
   }
   /* If the double indirect block isn't there (or was just freed),
    * see if we have to keep the triple indirect block, if any.
-   * If we don't have to keep it, don't bother writing it out.
    */
   if (b2 == NO_BLOCK && triple && b3 != NO_BLOCK &&
      empty_indir(bp_tindir, rip->i_sp)) {
-	lmfs_markclean(bp_tindir);
 	free_block(rip->i_sp, b3);
 	rip->i_blocks -= rip->i_sp->s_sectors_in_block;
 	rip->i_block[EXT2_TIND_BLOCK] = NO_BLOCK;

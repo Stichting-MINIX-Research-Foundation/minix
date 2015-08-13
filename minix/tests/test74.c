@@ -532,16 +532,182 @@ nonedev_regression(void)
 	close(fd);
 }
 
+/*
+ * Regression test for a nasty memory-mapped file corruption bug, which is not
+ * easy to reproduce but, before being solved, did occur in practice every once
+ * in a while.  The executive summary is that through stale inode associations,
+ * VM could end up using an old block to satisfy a memory mapping.
+ *
+ * This subtest relies on a number of assumptions regarding allocation and
+ * reuse of inode numbers and blocks.  These assumptions hold for MFS but
+ * possibly no other file system.  However, if the subtest's assumptions are
+ * not met, it will simply succeed.
+ */
+static void
+corruption_regression(void)
+{
+	char *ptr, *buf;
+	struct statvfs sf;
+	struct stat st;
+	size_t block_size;
+	off_t size;
+	int fd, fd2;
+
+	subtest = 1;
+
+	if (statvfs(".", &sf) != 0) e(0);
+	block_size = sf.f_bsize;
+
+	if ((buf = malloc(block_size * 2)) == NULL) e(0);
+
+	/*
+	 * We first need a file that is just large enough that it requires the
+	 * allocation of a metadata block - an indirect block - when more data
+	 * is written to it.  This is fileA.  We keep it open throughout the
+	 * test so we can unlink it immediately.
+	 */
+	if ((fd = open("fileA", O_CREAT | O_TRUNC | O_WRONLY, 0600)) == -1)
+		e(0);
+	if (unlink("fileA") != 0) e(0);
+
+	/*
+	 * Write to fileA until its next block requires the allocation of an
+	 * additional metadata block - an indirect block.
+	 */
+	size = 0;
+	memset(buf, 'A', block_size);
+	do {
+		/*
+		 * Repeatedly write an extra block, until the file consists of
+		 * more blocks than just the file data.
+		 */
+		if (write(fd, buf, block_size) != block_size) e(0);
+		size += block_size;
+		if (size >= block_size * 64) {
+			/*
+			 * It doesn't look like this is going to work.
+			 * Skip this subtest altogether.
+			 */
+			if (close(fd) != 0) e(0);
+			free(buf);
+
+			return;
+		}
+		if (fstat(fd, &st) != 0) e(0);
+	} while (st.st_blocks * 512 == size);
+
+	/* Once we get there, go one step back by truncating by one block. */
+	size -= block_size; /* for MFS, size will end up being 7*block_size */
+	if (ftruncate(fd, size) != 0) e(0);
+
+	/*
+	 * Create a first file, fileB, and write two blocks to it.  FileB's
+	 * blocks are going to end up in the secondary VM cache, associated to
+	 * fileB's inode number (and two different offsets within the file).
+	 * The block cache does not know about files getting deleted, so we can
+	 * unlink fileB immediately after creating it.  So far so good.
+	 */
+	if ((fd2 = open("fileB", O_CREAT | O_TRUNC | O_WRONLY, 0600)) == -1)
+		e(0);
+	if (unlink("fileB") != 0) e(0);
+	memset(buf, 'B', block_size * 2);
+	if (write(fd2, buf, block_size * 2) != block_size * 2) e(0);
+	if (close(fd2) != 0) e(0);
+
+	/*
+	 * Write one extra block to fileA, hoping that this causes allocation
+	 * of a metadata block as well.  This is why we tried to get fileA to
+	 * the point that one more block would also require the allocation of a
+	 * metadata block.  Our intent is to recycle the blocks that we just
+	 * allocated and freed for fileB.  As of writing, for the metadata
+	 * block, this will *not* break the association with fileB's inode,
+	 * which by itself is not a problem, yet crucial to reproducing
+	 * the actual problem a bit later.  Note that the test does not rely on
+	 * whether the file system allocates the data block or the metadata
+	 * block first, although it does need reverse deallocation (see below).
+	 */
+	memset(buf, 'A', block_size);
+	if (write(fd, buf, block_size) != block_size) e(0);
+
+	/*
+	 * Create a new file, fileC, which recycles the inode number of fileB,
+	 * but uses two new blocks to store its data.  These new blocks will
+	 * get associated to the fileB inode number, and one of them will
+	 * thereby eclipse (but not remove) the association of fileA's metadata
+	 * block to the inode of fileB.
+	 */
+	if ((fd2 = open("fileC", O_CREAT | O_TRUNC | O_WRONLY, 0600)) == -1)
+		e(0);
+	if (unlink("fileC") != 0) e(0);
+	memset(buf, 'C', block_size * 2);
+	if (write(fd2, buf, block_size * 2) != block_size * 2) e(0);
+	if (close(fd2) != 0) e(0);
+
+	/*
+	 * Free up the extra fileA blocks for reallocation, in particular
+	 * including the metadata block.  Again, this will not affect the
+	 * contents of the VM cache in any way.  FileA's metadata block remains
+	 * cached in VM, with the inode association for fileB's block.
+	 */
+	if (ftruncate(fd, size) != 0) e(0);
+
+	/*
+	 * Now create yet one more file, fileD, which also recycles the inode
+	 * number of fileB and fileC.  Write two blocks to it; these blocks
+	 * should recycle the blocks we just freed.  One of these is fileA's
+	 * just-freed metadata block, for which the new inode association will
+	 * be equal to the inode association it had already (as long as blocks
+	 * are freed in reverse order of their allocation, which happens to be
+	 * the case for MFS).  As a result, the block is not updated in the VM
+	 * cache, and VM will therefore continue to see the inode association
+	 * for the corresponding block of fileC which is still in the VM cache.
+	 */
+	if ((fd2 = open("fileD", O_CREAT | O_TRUNC | O_RDWR, 0600)) == -1)
+		e(0);
+	memset(buf, 'D', block_size * 2);
+	if (write(fd2, buf, block_size * 2) != block_size * 2) e(0);
+
+	ptr = mmap(NULL, block_size * 2, PROT_READ, MAP_FILE, fd2, 0);
+	if (ptr == MAP_FAILED) e(0);
+
+	/*
+	 * Finally, we can test the issue.  Since fileC's block is still the
+	 * block for which VM has the corresponding inode association, VM will
+	 * now find and map in fileC's block, instead of fileD's block.  The
+	 * result is that we get a memory-mapped area with stale contents,
+	 * different from those of the underlying file.
+	 */
+	if (memcmp(buf, ptr, block_size * 2)) e(0);
+
+	/* Clean up. */
+	if (munmap(ptr, block_size * 2) != 0) e(0);
+
+	if (close(fd2) != 0) e(0);
+	if (unlink("fileD") != 0) e(0);
+
+	if (close(fd) != 0) e(0);
+
+	free(buf);
+}
+
 int
 main(int argc, char *argv[])
 {
-	int iter = 2;
+	int i, iter = 2;
 
 	start(74);
 
 	basic_regression();
 
 	nonedev_regression();
+
+	/*
+	 * Any inode or block allocation happening concurrently with this
+	 * subtest will make the subtest succeed without testing the actual
+	 * issue.  Thus, repeat the subtest a fair number of times.
+	 */
+	for (i = 0; i < 10; i++)
+		corruption_regression();
 
 	test_memory_types_vs_operations();
 

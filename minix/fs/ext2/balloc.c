@@ -329,6 +329,13 @@ void free_block(struct super_block *sp, bit_t bit_returned)
 
   if (bit_returned < sp->s_bsearch)
 	sp->s_bsearch = bit_returned;
+
+  /* Also tell libminixfs, so that 1) if it has this block in its cache, it can
+   * mark it as clean, thus reducing useless writes, and 2) it can tell VM that
+   * any previous inode association is to be broken for this block, so that the
+   * block will not be mapped in erroneously later on.
+   */
+  lmfs_free_block(sp->s_dev, (block_t)bit_returned);
 }
 
 

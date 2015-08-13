@@ -88,7 +88,7 @@ int
 do_mapcache(message *msg)
 {
 	dev_t dev = msg->m_vmmcp.dev;
-	off_t dev_off = msg->m_vmmcp.dev_offset;
+	uint64_t dev_off = msg->m_vmmcp.dev_offset;
 	off_t ino_off = msg->m_vmmcp.ino_offset;
 	int n;
 	phys_bytes bytes = msg->m_vmmcp.pages * VM_PAGE_SIZE;
@@ -173,7 +173,7 @@ do_setcache(message *msg)
 {
 	int r;
 	dev_t dev = msg->m_vmmcp.dev;
-	off_t dev_off = msg->m_vmmcp.dev_offset;
+	uint64_t dev_off = msg->m_vmmcp.dev_offset;
 	off_t ino_off = msg->m_vmmcp.ino_offset;
 	int flags = msg->m_vmmcp.flags;
 	int n;
@@ -248,6 +248,38 @@ do_setcache(message *msg)
 #if CACHE_SANITY
 	cache_sanitycheck_internal();
 #endif
+
+	return OK;
+}
+
+/*
+ * Forget all pages associated to a particular block in the cache.
+ */
+int
+do_forgetcache(message *msg)
+{
+	struct cached_page *hb;
+	dev_t dev;
+	uint64_t dev_off;
+	phys_bytes bytes, offset;
+
+	dev = msg->m_vmmcp.dev;
+	dev_off = msg->m_vmmcp.dev_offset;
+	bytes = msg->m_vmmcp.pages * VM_PAGE_SIZE;
+
+	if (bytes < VM_PAGE_SIZE)
+		return EINVAL;
+
+	if (dev_off % PAGE_SIZE) {
+		printf("VM: unaligned cache operation\n");
+		return EFAULT;
+	}
+
+	for (offset = 0; offset < bytes; offset += VM_PAGE_SIZE) {
+		if ((hb = find_cached_page_bydev(dev, dev_off + offset,
+		    VMC_NO_INODE, 0 /*ino_off*/, 0 /*touchlru*/)) != NULL)
+			rmcache(hb);
+	}
 
 	return OK;
 }

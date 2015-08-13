@@ -507,6 +507,7 @@ void init_vm(void)
 	/* Cache blocks. */
 	CALLMAP(VM_MAPCACHEPAGE, do_mapcache);
 	CALLMAP(VM_SETCACHEPAGE, do_setcache);
+	CALLMAP(VM_FORGETCACHEPAGE, do_forgetcache);
 	CALLMAP(VM_CLEARCACHE, do_clearcache);
 
 	/* getrusage */

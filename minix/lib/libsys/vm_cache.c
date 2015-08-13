@@ -65,6 +65,14 @@ int vm_set_cacheblock(void *block, dev_t dev, off_t dev_offset,
 		ino, ino_offset, flags, blocksize, setflags);
 }
 
+int vm_forget_cacheblock(dev_t dev, off_t dev_offset, int blocksize)
+{
+	message m;
+
+	return vm_cachecall(&m, VM_FORGETCACHEPAGE, NULL, dev, dev_offset,
+		VMC_NO_INODE, 0, 0, blocksize, 0);
+}
+
 int
 vm_clear_cache(dev_t dev)
 {
