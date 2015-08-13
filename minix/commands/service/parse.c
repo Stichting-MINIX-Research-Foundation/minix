@@ -23,13 +23,13 @@
 #include <minix/paths.h>
 #include <minix/sef.h>
 #include <minix/dmap.h>
+#include <minix/priv.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <configfile.h>
 
 #include <machine/archtypes.h>
 #include <minix/timers.h>
-#include "kernel/proc.h"
 
 #include "config.h"
 #include "proto.h"

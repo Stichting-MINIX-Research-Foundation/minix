@@ -34,7 +34,6 @@
 #include <machine/archtypes.h>
 #include <minix/timers.h>
 #include <err.h>
-#include "kernel/proc.h"
 
 #include "config.h"
 #include "proto.h"
