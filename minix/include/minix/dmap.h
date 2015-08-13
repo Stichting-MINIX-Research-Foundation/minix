@@ -9,7 +9,16 @@
  *===========================================================================*/
 
 /* Major device numbers. */
-#define NONE_MAJOR		   0	/*  0 = not used                      */
+
+/* Note that NO_DEV is major 0, minor 0, and means "no device".  In contrast,
+ * NONE_MAJOR is used for file systems that do not have backing device (but are
+ * mounted on device 'none').  For administrative purposes, these file systems
+ * need to be assigned a pseudo device, and such pseudo devices are allocated
+ * with major number NONE_MAJOR.  Because of NO_DEV, the NONE_MAJOR devices
+ * start from minor number 1.  Otherwise, NONE_MAJOR is completely independent
+ * from NO_DEV, and it should be possible to set NONE_MAJOR to a nonzero value!
+ */
+#define NONE_MAJOR		   0	/*  0 = pseudo device for 'none' FSes */
 #define MEMORY_MAJOR  		   1	/*  1 = /dev/mem    (memory devices)  */
 #define FLOPPY_MAJOR	           2	/*  2 = /dev/fd0    (floppy disks)    */
                                         /*  3 = /dev/c0                       */
