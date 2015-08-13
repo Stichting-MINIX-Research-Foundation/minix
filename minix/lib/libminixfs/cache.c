@@ -445,7 +445,7 @@ void lmfs_put_block(
  */
   dev_t dev;
   uint64_t dev_off;
-  int r;
+  int r, setflags;
 
   if (bp == NULL) return;	/* it is easier to check here than in caller */
 
@@ -487,9 +487,10 @@ void lmfs_put_block(
 
   /* block has sensible content - if necesary, identify it to VM */
   if(vmcache && bp->lmfs_needsetcache && dev != NO_DEV) {
-  	if((r=vm_set_cacheblock(bp->data, dev, dev_off,
-	bp->lmfs_inode, bp->lmfs_inode_offset,
-	&bp->lmfs_flags, fs_block_size, 0)) != OK) {
+	setflags = (block_type & ONE_SHOT) ? VMSF_ONCE : 0;
+	if ((r = vm_set_cacheblock(bp->data, dev, dev_off, bp->lmfs_inode,
+	    bp->lmfs_inode_offset, &bp->lmfs_flags, fs_block_size,
+	    setflags)) != OK) {
 		if(r == ENOSYS) {
 			printf("libminixfs: ENOSYS, disabling VM calls\n");
 			vmcache = 0;
@@ -500,6 +501,14 @@ void lmfs_put_block(
 	}
   }
   bp->lmfs_needsetcache = 0;
+
+  /* Now that we (may) have given the block to VM, invalidate the block if it
+   * is a one-shot block.  Otherwise, it may still be reobtained immediately
+   * after, which could be a problem if VM already forgot the block and we are
+   * expected to pass it to VM again, which then wouldn't happen.
+   */
+  if (block_type & ONE_SHOT)
+	bp->lmfs_dev = NO_DEV;
 }
 
 /*===========================================================================*
@@ -542,6 +551,62 @@ void lmfs_free_block(dev_t dev, block64_t block)
    * previous checkpoint or snapshot of some sort. Only the file system can
    * be trusted to decide which blocks can be reused on the device!
    */
+}
+
+/*===========================================================================*
+ *				lmfs_zero_block_ino			     *
+ *===========================================================================*/
+void lmfs_zero_block_ino(dev_t dev, ino_t ino, u64_t ino_off)
+{
+/* Files may have holes. From an application perspective, these are just file
+ * regions filled with zeroes. From a file system perspective however, holes
+ * may represent unallocated regions on disk. Thus, these holes do not have
+ * corresponding blocks on the disk, and therefore also no block number.
+ * Therefore, we cannot simply use lmfs_get_block_ino() for them. For reads,
+ * this is not a problem, since the file system can just zero out the target
+ * application buffer instead. For mapped pages however, this *is* a problem,
+ * since the VM cache needs to be told about the corresponding block, and VM
+ * does not accept blocks without a device offset. The role of this function is
+ * therefore to tell VM about the hole using a fake device offset. The device
+ * offsets are picked so that the VM cache will see a block memory-mapped for
+ * the hole in the file, while the same block is not visible when
+ * memory-mapping the block device.
+ */
+  struct buf *bp;
+  static block64_t fake_block = 0;
+
+  if (!vmcache)
+	return;
+
+  assert(fs_block_size > 0);
+
+  /* Pick a block number which is above the threshold of what can possibly be
+   * mapped in by mmap'ing the device, since off_t is signed, and it is safe to
+   * say that it will take a while before we have 8-exabyte devices. Pick a
+   * different block number each time to avoid possible concurrency issues.
+   * FIXME: it does not seem like VM actually verifies mmap offsets though..
+   */
+  if (fake_block == 0 || ++fake_block >= UINT64_MAX / fs_block_size)
+	fake_block = ((uint64_t)INT64_MAX + 1) / fs_block_size;
+
+  /* Obtain a block. */
+  bp = lmfs_get_block_ino(dev, fake_block, NO_READ, ino, ino_off);
+  assert(bp != NULL);
+  assert(bp->lmfs_dev != NO_DEV);
+
+  /* The block is already zeroed, as it has just been allocated with mmap. File
+   * systems do not rely on this assumption yet, so if VM ever gets changed to
+   * not clear the blocks we allocate (e.g., by recycling pages in the VM cache
+   * for the same process, which would be safe), we need to add a memset here.
+   */
+
+  /* Release the block. We don't expect it to be accessed ever again. Moreover,
+   * if we keep the block around in the VM cache, it may erroneously be mapped
+   * in beyond the file end later. Hence, use VMSF_ONCE when passing it to VM.
+   * TODO: tell VM that it is an all-zeroes block, so that VM can deduplicate
+   * all such pages in its cache.
+   */
+  lmfs_put_block(bp, ONE_SHOT);
 }
 
 void lmfs_cache_reevaluate(dev_t dev)

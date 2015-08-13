@@ -148,8 +148,12 @@ int *completed;                 /* number of bytes copied */
 			printf("ext2fs: fsdriver_zero failed\n");
 		}
 		return r;
+	} else if (call == FSC_PEEK) {
+		/* Peeking a nonexistent block. Report to VM. */
+		lmfs_zero_block_ino(dev, ino, ino_off);
+		return OK;
 	} else {
-               /* Writing to or peeking a nonexistent block.
+               /* Writing to a nonexistent block.
                 * Create and enter in inode.
                 */
 		if ((bp = new_block(rip, (off_t) ex64lo(position))) == NULL)

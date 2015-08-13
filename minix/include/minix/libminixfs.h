@@ -47,6 +47,7 @@ struct buf *lmfs_get_block_ino(dev_t dev, block64_t block,int only_search,
 	ino_t ino, u64_t off);
 void lmfs_put_block(struct buf *bp, int block_type);
 void lmfs_free_block(dev_t dev, block64_t block);
+void lmfs_zero_block_ino(dev_t dev, ino_t ino, u64_t off);
 void lmfs_invalidate(dev_t device);
 void lmfs_rw_scattered(dev_t, struct buf **, int, int);
 void lmfs_setquiet(int q);

@@ -690,6 +690,107 @@ corruption_regression(void)
 	free(buf);
 }
 
+/*
+ * Test mmap on file holes.  Holes are a tricky case with the current VM
+ * implementation.  There are two main issues.  First, whenever a file data
+ * block is freed, VM has to know about this, or it will later blindly map in
+ * the old data.  This, file systems explicitly tell VM (through libminixfs)
+ * whenever a block is freed, upon which VM cache forgets the block.  Second,
+ * blocks are accessed primarily by a <dev,dev_off> pair and only additionally
+ * by a <ino,ino_off> pair.  Holes have no meaningful value for the first pair,
+ * but do need to be registered in VM with the second pair, or accessing them
+ * will generate a segmentation fault.  Thus, file systems explicitly tell VM
+ * (through libminixfs) when a hole is being peeked; libminixfs currently fakes
+ * a device offset to make this work.
+ */
+static void
+hole_regression(void)
+{
+	struct statvfs st;
+	size_t block_size;
+	char *buf;
+	int fd;
+
+	if (statvfs(".", &st) < 0) e(1);
+
+	block_size = st.f_bsize;
+
+	if ((buf = malloc(block_size)) == NULL) e(2);
+
+	if ((fd = open("testfile", O_CREAT | O_TRUNC | O_RDWR)) < 0) e(3);
+
+	if (unlink("testfile") != 0) e(4);
+
+	/*
+	 * We perform the test twice, in a not-so-perfect attempt to test the
+	 * two aspects independently.  The first part immediately creates a
+	 * hole, and is supposed to fail only if reporting holes to VM does not
+	 * work.  However, it may also fail if a page for a previous file with
+	 * the same inode number as "testfile" is still in the VM cache.
+	 */
+	memset(buf, 12, block_size);
+
+	if (write(fd, buf, block_size) != block_size) e(5);
+
+	if (lseek(fd, block_size * 2, SEEK_CUR) != block_size * 3) e(6);
+
+	memset(buf, 78, block_size);
+
+	if (write(fd, buf, block_size) != block_size) e(7);
+
+	free(buf);
+
+	if ((buf = mmap(NULL, 4 * block_size, PROT_READ, MAP_SHARED | MAP_FILE,
+	    fd, 0)) == MAP_FAILED) e(8);
+
+	if (buf[0 * block_size] != 12 || buf[1 * block_size - 1] != 12) e(9);
+	if (buf[1 * block_size] !=  0 || buf[2 * block_size - 1] !=  0) e(10);
+	if (buf[2 * block_size] !=  0 || buf[3 * block_size - 1] !=  0) e(11);
+	if (buf[3 * block_size] != 78 || buf[4 * block_size - 1] != 78) e(12);
+
+	if (munmap(buf, 4 * block_size) != 0) e(13);
+
+	/*
+	 * The second part first creates file content and only turns part of it
+	 * into a file hole, thus ensuring that VM has previously cached pages
+	 * for the blocks that are freed.  The test will fail if VM keeps the
+	 * pages around in its cache.
+	 */
+	if ((buf = malloc(block_size)) == NULL) e(14);
+
+	if (lseek(fd, block_size, SEEK_SET) != block_size) e(15);
+
+	memset(buf, 34, block_size);
+
+	if (write(fd, buf, block_size) != block_size) e(16);
+
+	memset(buf, 56, block_size);
+
+	if (write(fd, buf, block_size) != block_size) e(17);
+
+	if (ftruncate(fd, block_size) != 0) e(18);
+
+	if (lseek(fd, block_size * 3, SEEK_SET) != block_size * 3) e(19);
+
+	memset(buf, 78, block_size);
+
+	if (write(fd, buf, block_size) != block_size) e(20);
+
+	free(buf);
+
+	if ((buf = mmap(NULL, 4 * block_size, PROT_READ, MAP_SHARED | MAP_FILE,
+	    fd, 0)) == MAP_FAILED) e(21);
+
+	if (buf[0 * block_size] != 12 || buf[1 * block_size - 1] != 12) e(22);
+	if (buf[1 * block_size] !=  0 || buf[2 * block_size - 1] !=  0) e(23);
+	if (buf[2 * block_size] !=  0 || buf[3 * block_size - 1] !=  0) e(24);
+	if (buf[3 * block_size] != 78 || buf[4 * block_size - 1] != 78) e(25);
+
+	if (munmap(buf, 4 * block_size) != 0) e(26);
+
+	close(fd);
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -708,6 +809,8 @@ main(int argc, char *argv[])
 	 */
 	for (i = 0; i < 10; i++)
 		corruption_regression();
+
+	hole_regression();
 
 	test_memory_types_vs_operations();
 
