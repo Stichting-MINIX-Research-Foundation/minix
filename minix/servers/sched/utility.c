@@ -10,7 +10,6 @@
 #include "sched.h"
 #include <machine/archtypes.h>
 #include <sys/resource.h> /* for PRIO_MAX & PRIO_MIN */
-#include "kernel/proc.h" /* for queue constants */
 #include "schedproc.h"
 
 /*===========================================================================*

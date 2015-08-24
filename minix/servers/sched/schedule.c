@@ -12,15 +12,12 @@
 #include <assert.h>
 #include <minix/com.h>
 #include <machine/archtypes.h>
-#include "kernel/proc.h" /* for queue constants */
 
-static minix_timer_t sched_timer;
 static unsigned balance_timeout;
 
 #define BALANCE_TIMEOUT	5 /* how often to balance queues in seconds */
 
 static int schedule_process(struct schedproc * rmp, unsigned flags);
-static void balance_queues(minix_timer_t *tp);
 
 #define SCHEDULE_CHANGE_PRIO	0x1
 #define SCHEDULE_CHANGE_QUANTUM	0x2
@@ -330,29 +327,31 @@ static int schedule_process(struct schedproc * rmp, unsigned flags)
 
 
 /*===========================================================================*
- *				start_scheduling			     *
+ *				init_scheduling				     *
  *===========================================================================*/
-
 void init_scheduling(void)
 {
+	int r;
+
 	balance_timeout = BALANCE_TIMEOUT * sys_hz();
-	init_timer(&sched_timer);
-	set_timer(&sched_timer, balance_timeout, balance_queues, 0);
+
+	if ((r = sys_setalarm(balance_timeout, 0)) != OK)
+		panic("sys_setalarm failed: %d", r);
 }
 
 /*===========================================================================*
  *				balance_queues				     *
  *===========================================================================*/
 
-/* This function in called every 100 ticks to rebalance the queues. The current
+/* This function in called every N ticks to rebalance the queues. The current
  * scheduler bumps processes down one priority when ever they run out of
  * quantum. This function will find all proccesses that have been bumped down,
  * and pulls them back up. This default policy will soon be changed.
  */
-static void balance_queues(minix_timer_t *tp)
+void balance_queues(void)
 {
 	struct schedproc *rmp;
-	int proc_nr;
+	int r, proc_nr;
 
 	for (proc_nr=0, rmp=schedproc; proc_nr < NR_PROCS; proc_nr++, rmp++) {
 		if (rmp->flags & IN_USE) {
@@ -363,5 +362,6 @@ static void balance_queues(minix_timer_t *tp)
 		}
 	}
 
-	set_timer(&sched_timer, balance_timeout, balance_queues, 0);
+	if ((r = sys_setalarm(balance_timeout, 0)) != OK)
+		panic("sys_setalarm failed: %d", r);
 }

@@ -49,14 +49,14 @@ int main(void)
 		/* Check for system notifications first. Special cases. */
 		if (is_ipc_notify(ipc_status)) {
 			switch(who_e) {
-				case CLOCK:
-					expire_timers(m_in.m_notify.timestamp);
-					continue;	/* don't reply */
-				default :
-					result = ENOSYS;
+			case CLOCK:
+				balance_queues();
+				break;
+			default :
+				break;
 			}
 
-			goto sendreply;
+			continue; /* Don't reply. */
 		}
 
 		switch(call_nr) {
@@ -91,7 +91,6 @@ int main(void)
 			result = no_sys(who_e, call_nr);
 		}
 
-sendreply:
 		/* Send reply. */
 		if (result != SUSPEND) {
 			m_in.m_type = result;  		/* build reply message */
