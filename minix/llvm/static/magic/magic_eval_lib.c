@@ -12,6 +12,42 @@
 #include <math.h>
 #endif
 
+#ifdef __MINIX
+/* FIXME: due to the current linker command line ordering, parts of lib(min)c
+ * that are used exclusively by libmagic end up not being instrumented, which
+ * then causes problems transferring pointers such as _ctype_tab_ and
+ * _tolower_tab_. As a temporary workaround, we redefine the macros that use
+ * those pointers. This code is currently never triggered so it is not
+ * performance critical; obviously there are a million better ways to do this.
+ */
+#undef isalpha
+#define isalpha(c) ((unsigned)(((c) & ~0x20) - 'A') <= ('Z' - 'A'))
+#undef isupper
+#define isupper(c) ((unsigned)((c) - 'A') <= ('Z' - 'A'))
+#undef islower
+#define islower(c) ((unsigned)((c) - 'a') <= ('z' - 'a'))
+#undef isdigit
+#define isdigit(c) ((unsigned)((c) - '0') <= ('9' - '0'))
+static inline int __isxdigit(c) {
+    return isdigit(c) || (c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f');
+}
+#undef isxdigit
+#define isxdigit(c) (__isxdigit(c))
+static inline int __isspace(c) {
+    switch (c) {
+    case ' ': case '\t': case '\n': case '\v': case '\f': case '\r': return 1;
+    default: return 0;
+    }
+}
+#undef isspace
+#define isspace(c) (__isspace(c))
+static inline int __tolower(c) {
+    return isupper(c) ? (c | 0x20) : c;
+}
+#undef tolower
+#define tolower(c) (__tolower(c))
+#endif /* __MINIX */
+
 /* a token structure */
 struct tok {
     struct tok *next;
