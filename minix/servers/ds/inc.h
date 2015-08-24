@@ -27,6 +27,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <signal.h>
+#include <assert.h>
 
 #include "proto.h"
 #endif

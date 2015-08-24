@@ -26,7 +26,7 @@ static struct data_store *alloc_data_slot(void)
  *===========================================================================*/
 static struct subscription *alloc_sub_slot(void)
 {
-/* Allocate a new subscription slot. */
+/* Return a free subscription slot. */
   int i;
 
   for (i = 0; i < NR_DS_SUBS; i++) {
@@ -35,6 +35,20 @@ static struct subscription *alloc_sub_slot(void)
   }
 
   return NULL;
+}
+
+/*===========================================================================*
+ *				free_sub_slot				     *
+ *===========================================================================*/
+static void free_sub_slot(struct subscription *subp)
+{
+/* Clean up a previously successfully) allocated subscription slot. */
+  assert(subp->flags & DSF_IN_USE);
+
+  regfree(&subp->regex);
+  memset(&subp->regex, 0, sizeof(subp->regex));
+
+  subp->flags = 0;
 }
 
 /*===========================================================================*
@@ -454,14 +468,17 @@ int do_subscribe(message *m_ptr)
 	  return ESRCH;
 
   /* See if the owner already has an existing subscription. */
-  if((subp = lookup_sub(owner)) == NULL) {
-	/* The subscription doesn't exist, allocate a new one. */
-	if((subp = alloc_sub_slot()) == NULL)
-		return EAGAIN;
-  } else if(!(m_ptr->m_ds_req.flags & DSF_OVERWRITE)) {
-	/* The subscription exists but we can't overwrite, return error. */
-	return EEXIST;
+  if ((subp = lookup_sub(owner)) != NULL) {
+	/* If a subscription exists but we can't overwrite, return error. */
+	if (!(m_ptr->m_ds_req.flags & DSF_OVERWRITE))
+		return EEXIST;
+	/* Otherwise just free the old one. */
+	free_sub_slot(subp);
   }
+
+  /* Find a free subscription slot. */
+  if ((subp = alloc_sub_slot()) == NULL)
+	return EAGAIN;
 
   /* Copy key name from the caller. Anchor the subscription with "^regexp$" so
    * substrings don't match. The caller will probably not expect this,
@@ -476,6 +493,7 @@ int do_subscribe(message *m_ptr)
   if((e=regcomp(&subp->regex, regex, REG_EXTENDED)) != 0) {
 	regerror(e, &subp->regex, errbuf, sizeof(errbuf));
 	printf("DS: subscribe: regerror: %s\n", errbuf);
+	memset(&subp->regex, 0, sizeof(subp->regex));
 	return EINVAL;
   }
 
@@ -598,7 +616,7 @@ int do_delete(message *m_ptr)
 	for (i = 0; i < NR_DS_SUBS; i++) {
 		if ((ds_subs[i].flags & DSF_IN_USE)
 			&& !strcmp(ds_subs[i].owner, label)) {
-			ds_subs[i].flags = 0;
+			free_sub_slot(&ds_subs[i]);
 		}
 	}
 
