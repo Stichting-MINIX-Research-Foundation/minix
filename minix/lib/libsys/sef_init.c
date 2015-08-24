@@ -207,6 +207,7 @@ int do_sef_init_request(message *m_ptr)
   info.init_buff_start = (void*) m_ptr->m_rs_init.buff_addr;
   info.init_buff_cleanup_start = info.init_buff_start;
   info.init_buff_len = m_ptr->m_rs_init.buff_len;
+  info.prepare_state = m_ptr->m_rs_init.prepare_state;
 
   /* Peform initialization. */
   r = process_init(type, &info);

@@ -49,6 +49,7 @@ typedef struct {
     void* init_buff_cleanup_start;
     size_t init_buff_len;
     int copy_flags;
+    int prepare_state;
 } sef_init_info_t;
 
 /* Callback type definitions. */

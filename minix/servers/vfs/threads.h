@@ -7,9 +7,6 @@
 #define cond_t		mthread_cond_t
 #define attr_t		mthread_attr_t
 
-#define yield		mthread_yield
-#define yield_all	mthread_yield_all
-
 #define mutex_init	mthread_mutex_init
 #define mutex_destroy	mthread_mutex_destroy
 #define mutex_lock	mthread_mutex_lock

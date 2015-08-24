@@ -1598,7 +1598,8 @@ typedef struct {
 	int		flags;
 	vir_bytes	buff_addr;
 	size_t		buff_len;
-	uint8_t padding[24];
+	int		prepare_state;
+	uint8_t padding[20];
 } mess_rs_init;
 _ASSERT_MSG_SIZE(mess_rs_init);
 

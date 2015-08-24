@@ -47,6 +47,7 @@ static int unblock(struct fproc *rfp);
 /* SEF functions and variables. */
 static void sef_local_startup(void);
 static int sef_cb_init_fresh(int type, sef_init_info_t *info);
+static int sef_cb_init_lu(int type, sef_init_info_t *info);
 
 /*===========================================================================*
  *				main					     *
@@ -67,8 +68,8 @@ int main(void)
 
   /* This is the main loop that gets work, processes it, and sends replies. */
   while (TRUE) {
-	yield_all();	/* let other threads run */
-	self = NULL;
+	worker_yield();	/* let other threads run */
+
 	send_work();
 
 	/* The get_work() function returns TRUE if we have a new message to
@@ -281,13 +282,90 @@ static void do_work(void)
 }
 
 /*===========================================================================*
+ *				sef_cb_lu_prepare			     *
+ *===========================================================================*/
+static int sef_cb_lu_prepare(int state)
+{
+/* This function is called to decide whether we can enter the given live
+ * update state, and to prepare for such an update. If we are requested to
+ * update to a request-free or protocol-free state, make sure there is no work
+ * pending or being processed, and shut down all worker threads.
+ */
+
+  switch (state) {
+  case SEF_LU_STATE_REQUEST_FREE:
+  case SEF_LU_STATE_PROTOCOL_FREE:
+	if (!worker_idle()) {
+		printf("VFS: worker threads not idle, blocking update\n");
+		break;
+	}
+
+	worker_cleanup();
+
+	return OK;
+  }
+
+  return ENOTREADY;
+}
+
+/*===========================================================================*
+ *			       sef_cb_lu_state_changed			     *
+ *===========================================================================*/
+static void sef_cb_lu_state_changed(int old_state, int state)
+{
+/* Worker threads (especially their stacks) pose a serious problem for state
+ * transfer during live update, and therefore, we shut down all worker threads
+ * during live update and restart them afterwards. This function is called in
+ * the old VFS instance when the state changed. We use it to restart worker
+ * threads after a failed live update.
+ */
+
+  if (state != SEF_LU_STATE_NULL)
+	return;
+
+  switch (old_state) {
+  case SEF_LU_STATE_REQUEST_FREE:
+  case SEF_LU_STATE_PROTOCOL_FREE:
+	worker_init();
+  }
+}
+
+/*===========================================================================*
+ *				sef_cb_init_lu				     *
+ *===========================================================================*/
+static int sef_cb_init_lu(int type, sef_init_info_t *info)
+{
+/* This function is called in the new VFS instance during a live update. */
+  int r;
+
+  /* Perform regular state transfer. */
+  if ((r = SEF_CB_INIT_LU_DEFAULT(type, info)) != OK)
+	return r;
+
+  /* Recreate worker threads, if necessary. */
+  switch (info->prepare_state) {
+  case SEF_LU_STATE_REQUEST_FREE:
+  case SEF_LU_STATE_PROTOCOL_FREE:
+	worker_init();
+  }
+
+  return OK;
+}
+
+/*===========================================================================*
  *			       sef_local_startup			     *
  *===========================================================================*/
-static void sef_local_startup()
+static void sef_local_startup(void)
 {
   /* Register init callbacks. */
   sef_setcb_init_fresh(sef_cb_init_fresh);
   sef_setcb_init_restart(SEF_CB_INIT_RESTART_STATEFUL);
+
+  /* Register live update callbacks. */
+  sef_setcb_init_lu(sef_cb_init_lu);
+  sef_setcb_lu_prepare(sef_cb_lu_prepare);
+  sef_setcb_lu_state_changed(sef_cb_lu_state_changed);
+  sef_setcb_lu_state_isvalid(sef_cb_lu_state_isvalid_standard);
 
   /* Let SEF perform startup. */
   sef_startup();

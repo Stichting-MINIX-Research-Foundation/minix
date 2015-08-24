@@ -17,7 +17,7 @@
  *===========================================================================*/
 int init_service(struct rproc *rp, int type, int flags)
 {
-  int r;
+  int r, prepare_state;
   message m;
   endpoint_t old_endpoint;
 
@@ -32,8 +32,10 @@ int init_service(struct rproc *rp, int type, int flags)
 
   /* Determine the old endpoint if this is a new instance. */
   old_endpoint = NONE;
+  prepare_state = SEF_LU_STATE_NULL;
   if(rp->r_old_rp) {
       old_endpoint = rp->r_upd.state_endpoint;
+      prepare_state = rp->r_upd.prepare_state;
   }
   else if(rp->r_prev_rp) {
       old_endpoint = rp->r_prev_rp->r_pub->endpoint;
@@ -53,6 +55,7 @@ int init_service(struct rproc *rp, int type, int flags)
   m.m_rs_init.restarts = (short) rp->r_restarts+1;
   m.m_rs_init.buff_addr = rp->r_map_prealloc_addr;
   m.m_rs_init.buff_len  = rp->r_map_prealloc_len;
+  m.m_rs_init.prepare_state = prepare_state;
   rp->r_map_prealloc_addr = 0;
   rp->r_map_prealloc_len = 0;
   r = rs_asynsend(rp, &m, 0);
