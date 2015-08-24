@@ -2546,9 +2546,151 @@ Function* MagicPass::findWrapper(Module &M, std::string *magicMemPrefixes, Funct
     return w;
 }
 
+#if MAGIC_INDEX_BIT_CAST
+static void processBitCast(Module &M, std::map<TYPECONST Type*, std::set<TYPECONST Type*> > &bitCastMap, TYPECONST Type* srcType, TYPECONST Type* dstType);
+
+static void processFunctionBitCast(Module &M, std::map<TYPECONST Type*, std::set<TYPECONST Type*> > &bitCastMap, TYPECONST Type* srcType, TYPECONST Type* dstType) {
+    // The rough intuition: we are casting one function to another, so we expect these functions to be
+    // compatible, so their respective parameters must also be compatible, if they are different at all.
+    // We limit ourselves to pointer parameters because we are only interested in pointer compatibility.
+    // This routine basically aims to mark two structure pointers as compatible when one structure has
+    // an opaque pointer and the other one does not.
+    TYPECONST FunctionType* srcF = dyn_cast<TYPECONST FunctionType>(srcType);
+    TYPECONST FunctionType* dstF = dyn_cast<TYPECONST FunctionType>(dstType);
+
+    // Both functions must have the same number of parameters.
+    unsigned int numParams = srcF->getNumParams();
+
+    if (numParams != dstF->getNumParams()) return;
+
+    TYPECONST Type* voidPtrType = PointerType::get(IntegerType::get(M.getContext(), 8), 0);
+
+    // If any of the parameters are pointers for different types, these types must be compatible.
+    for (unsigned int i = 0; i < numParams; i++) {
+        TYPECONST Type* spType = srcF->getParamType(i);
+        TYPECONST Type* dpType = dstF->getParamType(i);
+
+        // The parameters must have different types, but they must both be pointers.
+        if (spType == dpType) continue;
+
+        if (!spType->isPointerTy() || !dpType->isPointerTy()) continue;
+
+        // We ignore certain types, depending on our configuration.
+        TYPECONST Type* dpElType = TypeUtil::getRecursiveElementType(dpType);
+
+        if (!((MAGIC_INDEX_FUN_PTR_BIT_CAST && dpElType->isFunctionTy()) ||
+            (MAGIC_INDEX_STR_PTR_BIT_CAST && dpElType->isStructTy()) ||
+            MAGIC_INDEX_OTH_PTR_BIT_CAST)) continue;
+
+        // TODO: this needs configuration testing as well.
+        if (spType == voidPtrType || dpType == voidPtrType) continue;
+
+#if DEBUG_CASTS
+        errs() << "Compatible function parameter " << i << ": " << TypeUtil::getDescription(spType) <<
+            " -> " << TypeUtil::getDescription(dpType) << "\n";
+#endif
+
+        // The two pointers should be compatible, so mark them as such.
+        // TODO: prevent infinite recursion
+	processBitCast(M, bitCastMap, spType, dpType);
+    }
+}
+
+#if 0
+static void processStructBitCast(Module &M, std::map<TYPECONST Type*, std::set<TYPECONST Type*> > &bitCastMap, TYPECONST Type* srcType, TYPECONST Type* dstType) {
+    // The rough intuition: the given structure types are subject to pointer casting. This does not
+    // mean they are compatible by itself (struct sockaddr..). HOWEVER, if they differ only by
+    // elements which are different only (recursively) by opaque pointers in one of them, and
+    // non-opaque pointer in the other, then those pointers are highly likely to be compatible.
+    TYPECONST StructType* srcS = dyn_cast<TYPECONST StructType>(srcType);
+    TYPECONST StructType* dstS = dyn_cast<TYPECONST StructType>(dstType);
+
+    // The structures must be similar..
+    if (srcS->isPacked() != dstS->isPacked()) return false;
+
+    unsigned int numElements = srcS->getNumElements();
+
+    if (numElements != dstS->getNumElements()) return false;
+
+    // ..but not the same.
+    if (srcS->isLayoutIdentical(dstS)) return false;
+
+    // Pass 1: see if the structures differ only by opaque (sub)elements.
+    for (unsigned int i = 0; i < numElements; i++) {
+        TYPECONST Type* seType = srcS->getElementType(i);
+        TYPECONST Type* deType = dstS->getElementType(i);
+
+        if (seType != deType) {
+            if (seType->isPointerTy() && deType->isPointerTy()) {
+                TYPECONST PointerType* sePtrType = dyn_cast<PointerType>(seType);
+                TYPECONST PointerType* dePtrType = dyn_cast<PointerType>(deType);
+
+                // ..TODO..
+                // this may involve recursive testing!
+            }
+
+            // ..TODO..
+        }
+    }
+
+    // Pass 2: register all pointers to compatible elements.
+    // ..TODO..
+    // this may involve recursive registration!
+}
+#endif
+
+static void processBitCast(Module &M, std::map<TYPECONST Type*, std::set<TYPECONST Type*> > &bitCastMap, TYPECONST Type* srcType, TYPECONST Type* dstType) {
+    std::map<TYPECONST Type*, std::set<TYPECONST Type*> >::iterator bitCastMapIt;
+    unsigned int dstDepth, srcDepth;
+    TYPECONST PointerType* ptrType;
+
+    // The pointers are compatible, so add them to the bitcast map.
+    bitCastMapIt = bitCastMap.find(dstType);
+    if(bitCastMapIt == bitCastMap.end()) {
+        std::set<TYPECONST Type*> typeSet;
+        typeSet.insert(srcType);
+        bitCastMap.insert(std::pair<TYPECONST Type*, std::set<TYPECONST Type*> >(dstType, typeSet));
+    }
+    else {
+        std::set<TYPECONST Type*> *typeSet = &(bitCastMapIt->second);
+        typeSet->insert(srcType);
+    }
+
+    // Unfortunately, this is not the whole story. The compiler may pull crazy stunts like storing
+    // a well-defined pointer in a structure, and then bitcast that structure to an almost-equivalent
+    // structure which has the pointer marked as opaque. Worse yet, it may bitcast between functions
+    // with such structures as parameters.  In those case, we never see a cast of the actual pointer,
+    // even though they are compatible. Failing to mark them as such could cause runtime failures.
+    // The code below is a first attempt to deal with a subset of cases that we have actually run
+    // into in practice. A better approach would be a separate pass that eliminates opaque pointers
+    // whenever possible altogether, but that would be even more work. TODO! Note that in general,
+    // it seems that there is no way to get to know which pointers the linker decided are equivalent,
+    // so this procedure is inherently going to involve guessing, with false positives and negatives.
+
+    // Follow the pointers to see what they actually point to.
+    // The caller may already have done so, but without getting the depth.
+    for (dstDepth = 0; (ptrType = dyn_cast<PointerType>(dstType)); dstDepth++)
+        dstType = ptrType->getElementType();
+
+    for (srcDepth = 0; (ptrType = dyn_cast<PointerType>(srcType)); srcDepth++)
+        srcType = ptrType->getElementType();
+
+    // The pointers' indirection levels must be the same.
+    if (srcDepth != dstDepth) return;
+
+    // Do more processing for certain types.
+    if (dstType->isFunctionTy() && srcType->isFunctionTy())
+        processFunctionBitCast(M, bitCastMap, srcType, dstType);
+    // TODO: add support for structures and their elements
+#if 0
+    else if (dstType->isStructTy() && srcType->isStructTy())
+        processStructBitCast(M, bitCastMap, srcType, dstType);
+#endif
+}
+#endif /* MAGIC_INDEX_BIT_CAST */
+
 void MagicPass::indexCasts(Module &M, User *U, std::vector<TYPECONST Type*> &intCastTypes, std::vector<int> &intCastValues, std::map<TYPECONST Type*, std::set<TYPECONST Type*> > &bitCastMap) {
     unsigned i;
-    std::map<TYPECONST Type*, std::set<TYPECONST Type*> >::iterator bitCastMapIt;
     TYPECONST Type* voidPtrType = PointerType::get(IntegerType::get(M.getContext(), 8), 0);
 
     //look at instructions first
@@ -2580,16 +2722,7 @@ void MagicPass::indexCasts(Module &M, User *U, std::vector<TYPECONST Type*> &int
 #if DEBUG_CASTS
                     CI->print(errs()); errs() << "\n";
 #endif
-                    bitCastMapIt = bitCastMap.find(type);
-                    if(bitCastMapIt == bitCastMap.end()) {
-                        std::set<TYPECONST Type*> typeSet;
-                        typeSet.insert(srcType);
-                        bitCastMap.insert(std::pair<TYPECONST Type*, std::set<TYPECONST Type*> >(type, typeSet));
-                    }
-                    else {
-                        std::set<TYPECONST Type*> *typeSet = &(bitCastMapIt->second);
-                        typeSet->insert(srcType);
-                    }
+                    processBitCast(M, bitCastMap, srcType, type);
                 }
             }
         }
@@ -2632,16 +2765,7 @@ void MagicPass::indexCasts(Module &M, User *U, std::vector<TYPECONST Type*> &int
 #if DEBUG_CASTS
                         CE->print(errs()); errs() << "\n";
 #endif
-                        bitCastMapIt = bitCastMap.find(type);
-                        if(bitCastMapIt == bitCastMap.end()) {
-                            std::set<TYPECONST Type*> typeSet;
-                            typeSet.insert(srcType);
-                            bitCastMap.insert(std::pair<TYPECONST Type*, std::set<TYPECONST Type*> >(type, typeSet));
-                        }
-                        else {
-                            std::set<TYPECONST Type*> *typeSet = &(bitCastMapIt->second);
-                            typeSet->insert(srcType);
-                        }
+                        processBitCast(M, bitCastMap, srcType, type);
                     }
                 }
             }
