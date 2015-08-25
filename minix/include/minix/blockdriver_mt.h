@@ -13,4 +13,6 @@ void blockdriver_mt_terminate(void);
 void blockdriver_mt_set_workers(device_id_t id, unsigned int workers);
 thread_id_t blockdriver_mt_get_tid(void);
 
+void blockdriver_mt_support_lu(void);
+
 #endif /* _MINIX_BLOCKDRIVER_MT_H */

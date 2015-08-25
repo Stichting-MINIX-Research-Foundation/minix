@@ -733,6 +733,9 @@ sef_local_startup(void)
 	sef_setcb_init_fresh(sef_cb_init_fresh);
 	sef_setcb_signal_handler(sef_cb_signal_handler);
 
+	/* Enable suppor for live update. */
+	blockdriver_mt_support_lu();
+
 	sef_startup();
 }
 

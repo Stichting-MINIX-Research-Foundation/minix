@@ -17,6 +17,7 @@
 
 #include "const.h"
 #include "driver.h"
+#include "driver_mt.h"
 #include "mq.h"
 
 /* A thread ID is composed of a device ID and a per-device worker thread ID.
@@ -272,6 +273,20 @@ static void master_handle_exits(void)
 }
 
 /*===========================================================================*
+ *				master_yield				     *
+ *===========================================================================*/
+static void master_yield(void)
+{
+/* Let worker threads run, and clean up any exited threads.
+ */
+
+  mthread_yield_all();
+
+  if (num_exited > 0)
+	master_handle_exits();
+}
+
+/*===========================================================================*
  *				master_handle_message			     *
  *===========================================================================*/
 static void master_handle_message(message *m_ptr, int ipc_status)
@@ -421,12 +436,8 @@ void blockdriver_mt_task(struct blockdriver *driver_tab)
 	/* Dispatch the message. */
 	master_handle_message(&mess, ipc_status);
 
-	/* Let other threads run. */
-	mthread_yield_all();
-
-	/* Clean up any exited threads. */
-	if (num_exited > 0)
-		master_handle_exits();
+	/* Let worker threads run. */
+	master_yield();
   }
 
   /* Free up resources. */
@@ -507,4 +518,64 @@ void blockdriver_mt_set_workers(device_id_t id, unsigned int workers)
 	mthread_event_fire_all(&dp->queue_event);
 
   dp->workers = workers;
+}
+
+/*===========================================================================*
+ *				blockdriver_mt_is_idle			     *
+ *===========================================================================*/
+int blockdriver_mt_is_idle(void)
+{
+/* Return whether the block driver is idle. This means that it has no enqueued
+ * requests and no busy worker threads. Used for live update functionality.
+ */
+  unsigned int did, wid;
+
+  for (did = 0; did < MAX_DEVICES; did++) {
+	if (!mq_isempty(did))
+		return FALSE;
+
+	for (wid = 0; wid < device[did].workers; wid++)
+		if (device[did].worker[wid].state == STATE_BUSY)
+			return FALSE;
+  }
+
+  return TRUE;
+}
+
+/*===========================================================================*
+ *				blockdriver_mt_suspend			     *
+ *===========================================================================*/
+void blockdriver_mt_suspend(void)
+{
+/* Suspend the driver operation in order to facilitate a live update.
+ * Suspension involves shutting down all worker threads, because transferring
+ * thread stacks is currently not supported by the state transfer framework.
+ */
+  unsigned int did;
+
+  assert(running);
+  assert(blockdriver_mt_is_idle());
+
+  /* We terminate the worker threads by simulating a driver shutdown. */
+  running = FALSE;
+
+  for (did = 0; did < MAX_DEVICES; did++)
+	mthread_event_fire_all(&device[did].queue_event);
+
+  master_yield();
+}
+
+/*===========================================================================*
+ *				blockdriver_mt_resume			     *
+ *===========================================================================*/
+void blockdriver_mt_resume(void)
+{
+/* Resume regular operation after a (successful or failed) live update. We do
+ * not recreate worker threads; instead, they are recreated lazily as new
+ * requests come in.
+ */
+
+  assert(!running);
+
+  running = TRUE;
 }

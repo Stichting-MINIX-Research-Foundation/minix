@@ -2378,6 +2378,9 @@ static void sef_local_startup(void)
 	/* Register signal callbacks. */
 	sef_setcb_signal_handler(sef_cb_signal_handler);
 
+	/* Enable support for live update. */
+	blockdriver_mt_support_lu();
+
 	/* Let SEF perform startup. */
 	sef_startup();
 }
