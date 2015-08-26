@@ -55,6 +55,8 @@
 #define MAGIC_HIDDEN_ARRAY_PREFIX           ".arr.magic"
 #define MAGIC_HIDDEN_STR_PREFIX             ".str.magic"
 
+#define MAGIC_MALLOC_VARS_SECTION_PREFIX    "magic_malloc_data"
+
 /* Magic configuration. */
 #ifndef MAGIC_OUTPUT_CTL
 #define MAGIC_OUTPUT_CTL                    0

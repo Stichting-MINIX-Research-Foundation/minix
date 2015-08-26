@@ -68,7 +68,7 @@ MMAPCtlFunction("magic-mmap-ctlfunc",
 static cl::opt<std::string>
 MagicDataSections("magic-data-sections",
     cl::desc("Specify all the colon-separated magic data section regexes not to instrument"),
-    cl::init("^" MAGIC_STATIC_VARS_SECTION_PREFIX ".*$:^" UNBL_SECTION_PREFIX ".*$"), cl::NotHidden, cl::ValueRequired);
+    cl::init("^" MAGIC_STATIC_VARS_SECTION_PREFIX ".*$:^" UNBL_SECTION_PREFIX ".*$:^" MAGIC_MALLOC_VARS_SECTION_PREFIX ".*$"), cl::NotHidden, cl::ValueRequired);
 
 static cl::opt<std::string>
 MagicFunctionSections("magic-function-sections",

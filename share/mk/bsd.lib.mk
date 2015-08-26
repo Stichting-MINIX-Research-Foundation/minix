@@ -207,12 +207,17 @@ SHLIB_SHFLAGS+= -L ${DESTDIR}/usr/lib
 SHLIB_SHFLAGS+= -Wl,-plugin=${GOLD_PLUGIN} \
 		-Wl,-plugin-opt=-disable-opt
 
+SECTIONIFYPASS?=${NETBSDSRCDIR}/minix/llvm/bin/sectionify.so
+
 .S.bc: ${.TARGET:.bc=.o}
 	rm -f ${.TARGET}
 	ln ${.TARGET:.bc=.o} ${.TARGET}
 .c.bc:
 	${_MKTARGET_COMPILE}
 	${COMPILE.c} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC} -o ${.TARGET} -flto
+	if [ -n '${SECTIONIFY.${.IMPSRC:T}}' ]; then \
+		${OPT} -load ${SECTIONIFYPASS} -sectionify ${SECTIONIFY.${.IMPSRC:T}} -o ${.TARGET}.tmp ${.TARGET} && mv -f ${.TARGET}.tmp ${.TARGET}; \
+	fi
 
 .cc.bc .cxx.bc .cpp.bc:
 	${_MKTARGET_COMPILE}

@@ -263,6 +263,13 @@ CLEANFILES+= ${f:C/\.o/.bc/}
 CPPFLAGS.${i}+=	-I${LIBCDIR}/stdlib
 .endfor
 
+CPPFLAGS.malloc.c+= -D_LIBSYS
+# Avoid magic instrumentation of the malloc data variables, since the heap is
+# reconstructed upon state transfer. We do need to instrument the malloc
+# functions, since we need to hook their mmap/munmap calls.
+SECTIONIFY.malloc.c+= -sectionify-no-override \
+	-sectionify-data-section-map=.*/magic_malloc_data
+
 .for f in \
 	strcspn.o
 ${f} ${f:C/\.o/.bc/}:	${LIBCDIR}/string/${f:C/\.o/.c/}
@@ -293,8 +300,6 @@ OBJS+=	${f:C/\.o/.bc/}
 CLEANFILES+= ${f:C/\.o/.bc/}
 .endif # ${USE_BITCODE:Uno} == "yes"
 .endfor
-
-CPPFLAGS.malloc.c+= -D_LIBSYS
 
 .for f in \
 	brksize.o _do_kernel_call_intr.o get_minix_kerninfo.o _ipc.o ucontext.o
