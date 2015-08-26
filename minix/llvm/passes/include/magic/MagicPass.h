@@ -90,6 +90,8 @@ class MagicPass : public ModulePass {
       unsigned getMaxRecursiveSequenceLength(TYPECONST TypeInfo *aTypeInfo);
       FunctionType* getFunctionType(TYPECONST FunctionType *baseType, std::vector<unsigned> selectedArgs);
       bool isCompatibleMagicMemFuncType(TYPECONST FunctionType *type, TYPECONST FunctionType* magicType);
+      Function* findWrapper(Module &M, std::string *magicMemPrefixes, Function *f, std::string fName);
+
       void indexCasts(Module &M, User *U, std::vector<TYPECONST Type*> &intCastTypes, std::vector<int> &intCastValues, std::map<TYPECONST Type*, std::set<TYPECONST Type*> > &bitcastMap);
 
       void fillStackInstrumentedFunctions(std::vector<Function*> &stackIntrumentedFuncs, Function *deepestLLFunction);

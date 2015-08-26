@@ -916,6 +916,11 @@ EXTERN void* __stop_magic_functions_st;
 #define _magic_first_stack_dsentry (_magic_vars->first_stack_dsentry)
 #define _magic_last_stack_dsentry (_magic_vars->last_stack_dsentry)
 
+/* Magic unmap-memory variables. */
+#ifdef __MINIX
+#define _magic_unmap_mem (_magic_vars->unmap_mem)
+#endif
+
 /* Magic default stubs. */
 EXTERN struct _magic_type magic_default_type;
 EXTERN struct _magic_dsentry magic_default_dsentry;

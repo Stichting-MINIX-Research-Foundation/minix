@@ -419,6 +419,7 @@ bool MagicPass::runOnModule(Module &M) {
     #define __X(P) #P
     std::string magicMemFuncNames[] = { MAGIC_MEM_FUNC_NAMES };
     std::string magicMemDeallocFuncNames[] = { MAGIC_MEMD_FUNC_NAMES };
+    std::string magicMemNestedFuncNames[] = { MAGIC_MEMN_FUNC_NAMES };
     #undef __X
     int magicMemFuncAllocFlags[] = { MAGIC_MEM_FUNC_ALLOC_FLAGS };
     std::string magicMemPrefixes[] = { MAGIC_MEM_PREFIX_STRS };
@@ -433,7 +434,8 @@ bool MagicPass::runOnModule(Module &M) {
     for(i=0;magicMemFuncNames[i].compare("");i++) {
         int allocFlags = magicMemFuncAllocFlags[i];
         for(unsigned j=0;j<llvmCallPrefixes.size();j++) {
-            Function *f = M.getFunction(llvmCallPrefixes[j] + magicMemFuncNames[i]);
+            std::string fName = magicMemFuncNames[i];
+            Function *f = M.getFunction(llvmCallPrefixes[j] + fName);
             if(!f) {
                 continue;
             }
@@ -442,44 +444,35 @@ bool MagicPass::runOnModule(Module &M) {
                 //missing function prototype, i.e. no realistic caller. Skip.
                 continue;
             }
-            if(!magicMemFuncNames[i].compare("brk")) {
+            if(!fName.compare("brk")) {
                 brkFunctions.insert(f);
             }
-            if(!magicMemFuncNames[i].compare("sbrk")) {
+            if(!fName.compare("sbrk")) {
                 sbrkFunctions.insert(f);
             }
-            std::string wName, wName2;
-            Function *w = NULL, *w2 = NULL;
-            for(unsigned k=0;magicMemPrefixes[k].compare("");k++) {
-                wName = magicMemPrefixes[k] + magicMemFuncNames[i];
-                w = M.getFunction(wName);
-                if(w) {
-                    wName2 = wName + "_";
-                    break;
-                }
-            }
-            if(!w) {
-                magicPassErr("Error: no wrapper function found for " << magicMemFuncNames[i] << "()");
-                exit(1);
-            }
-            while(!isCompatibleMagicMemFuncType(f->getFunctionType(), w->getFunctionType()) && (w2 = M.getFunction(wName2))) {
-                w = w2;
-                wName2.append("_");
-            }
-            if(!isCompatibleMagicMemFuncType(f->getFunctionType(), w->getFunctionType())) {
-                magicPassErr("Error: wrapper function with incompatible type " << wName << "() found");
-                magicPassErr(TypeUtil::getDescription(f->getFunctionType(), MAGIC_TYPE_STR_PRINT_MAX, MAGIC_TYPE_STR_PRINT_MAX_LEVEL) << " != " << TypeUtil::getDescription(w->getFunctionType(), MAGIC_TYPE_STR_PRINT_MAX, MAGIC_TYPE_STR_PRINT_MAX_LEVEL));
-                exit(1);
-            }
             bool isDeallocFunction = false;
-            for(unsigned j=0;magicMemDeallocFuncNames[j].compare("");j++) {
-                if(!magicMemDeallocFuncNames[j].compare(magicMemFuncNames[i])) {
+            for(unsigned k=0;magicMemDeallocFuncNames[k].compare("");k++) {
+                if(!magicMemDeallocFuncNames[k].compare(fName)) {
                     isDeallocFunction = true;
                     break;
                 }
             }
-            MagicMemFunction memFunction(M, f, w, isDeallocFunction, allocFlags);
+            bool makeNestedFunction = false;
+            for(unsigned k=0;magicMemNestedFuncNames[k].compare("");k++) {
+                if (!magicMemNestedFuncNames[k].compare(fName)) {
+                    makeNestedFunction = true;
+                    break;
+                }
+            }
+
+            Function* w = findWrapper(M, magicMemPrefixes, f, fName);
+            MagicMemFunction memFunction(M, f, w, isDeallocFunction, false, allocFlags);
             magicMemFunctions.push_back(memFunction);
+            if (makeNestedFunction) {
+                w = findWrapper(M, magicMemPrefixes, f, MAGIC_NESTED_PREFIX_STR + fName);
+                MagicMemFunction memFunction(M, f, w, isDeallocFunction, true, allocFlags);
+                magicMemFunctions.push_back(memFunction);
+            }
             originalMagicMemFunctions.insert(f);
 
 #if DEBUG_ALLOC_LEVEL >= 1
@@ -536,7 +529,7 @@ bool MagicPass::runOnModule(Module &M) {
 		Function *allocWrapper = MagicMemFunction::getCustomWrapper(allocFunction, stdAllocFunc, stdAllocWrapperFunc, allocArgMapping, false);
 
 		// register the wrapper
-		MagicMemFunction memFunctionAlloc(M, allocFunction, allocWrapper, false, stdAllocFlags);
+		MagicMemFunction memFunctionAlloc(M, allocFunction, allocWrapper, false, false, stdAllocFlags);
 		magicMemFunctions.push_back(memFunctionAlloc);
 		originalMagicMemFunctions.insert(allocFunction);
 #if DEBUG_ALLOC_LEVEL >= 1
@@ -618,7 +611,7 @@ bool MagicPass::runOnModule(Module &M) {
 				exit(1);
 			}
 			Function *blockAllocWrapper = MagicMemFunction::getCustomWrapper(blockAllocFunc, mempoolBlockAllocTemplate, mempoolBlockAllocTemplateWrapper, argMapping, false);
-			MagicMemFunction memFunctionBlockAlloc(M, blockAllocFunc, blockAllocWrapper, false, mempoolAllocFlags);
+			MagicMemFunction memFunctionBlockAlloc(M, blockAllocFunc, blockAllocWrapper, false, false, mempoolAllocFlags);
 			mempoolMagicMemFunctions.push_back(memFunctionBlockAlloc);
 		}
 		if (!mempoolMagicMemFunctions.empty()) { // only if the block allocation functions have been successfully processed
@@ -981,12 +974,15 @@ bool MagicPass::runOnModule(Module &M) {
                            CS.getCalledValue()) != EqPointers.end())) {
               bool isDeallocFunction = magicMemFunction.isDeallocFunction();
               bool wrapParent = false;
+              bool isNested = false;
               TypeInfo *typeInfo = magicVoidTypeInfo;
               std::string allocName = "";
               std::string allocParentName = "";
               //check if we have to skip
-              if(extendedMagicMemFunctions.find(CS.getInstruction()->getParent()->getParent()) != extendedMagicMemFunctions.end()) {
-                  //this call site is only called from some predefined mem function. skip.
+              //if this call site is only called from some predefined mem function, it is nested
+              //some function wrappers are for such nested calls, some are not. this must match.
+              isNested = (extendedMagicMemFunctions.find(CS.getInstruction()->getParent()->getParent()) != extendedMagicMemFunctions.end());
+              if (isNested != magicMemFunction.isNestedFunction()) {
                   continue;
               }
               if(sbrkFunctions.find(MagicUtil::getCalledFunctionFromCS(CS)) != sbrkFunctions.end()) {
@@ -1012,7 +1008,7 @@ bool MagicPass::runOnModule(Module &M) {
                   continue;
               }
               //figure out the type and the names
-              if(!isDeallocFunction) {
+              if(!isDeallocFunction && !isNested) {
               	  int allocCounter = 1;
               	  int ret;
               	  std::map< std::pair<std::string,std::string>, int>::iterator namesMapIt;
@@ -1104,7 +1100,8 @@ bool MagicPass::runOnModule(Module &M) {
               }
               if(!magicMemParent && wrapParent) {
                   //if there is no existing parent but we have to wrap the parent, create a parent now and add it to the function queue
-                  MagicMemFunction newMagicMemFunction(M, instructionParent, NULL, false, 0);
+                  assert(!isNested);
+                  MagicMemFunction newMagicMemFunction(M, instructionParent, NULL, false, false, 0);
                   magicMemFunctions.push_back(newMagicMemFunction);
                   magicMemParent = &magicMemFunctions[magicMemFunctions.size()-1];
               }
@@ -2491,6 +2488,34 @@ bool MagicPass::isCompatibleMagicMemFuncType(TYPECONST FunctionType *type, TYPEC
         }
     }
     return true;
+}
+
+Function* MagicPass::findWrapper(Module &M, std::string *magicMemPrefixes, Function *f, std::string fName)
+{
+    std::string wName, wName2;
+    Function *w = NULL, *w2 = NULL;
+    for(unsigned k=0;magicMemPrefixes[k].compare("");k++) {
+        wName = magicMemPrefixes[k] + fName;
+        w = M.getFunction(wName);
+        if(w) {
+            wName2 = wName + "_";
+            break;
+        }
+    }
+    if(!w) {
+        magicPassErr("Error: no wrapper function found for " << fName << "()");
+        exit(1);
+    }
+    while(!isCompatibleMagicMemFuncType(f->getFunctionType(), w->getFunctionType()) && (w2 = M.getFunction(wName2))) {
+        w = w2;
+        wName2.append("_");
+    }
+    if(!isCompatibleMagicMemFuncType(f->getFunctionType(), w->getFunctionType())) {
+        magicPassErr("Error: wrapper function with incompatible type " << wName << "() found");
+        magicPassErr(TypeUtil::getDescription(f->getFunctionType(), MAGIC_TYPE_STR_PRINT_MAX, MAGIC_TYPE_STR_PRINT_MAX_LEVEL) << " != " << TypeUtil::getDescription(w->getFunctionType(), MAGIC_TYPE_STR_PRINT_MAX, MAGIC_TYPE_STR_PRINT_MAX_LEVEL));
+        exit(1);
+    }
+    return w;
 }
 
 void MagicPass::indexCasts(Module &M, User *U, std::vector<TYPECONST Type*> &intCastTypes, std::vector<int> &intCastValues, std::map<TYPECONST Type*, std::set<TYPECONST Type*> > &bitCastMap) {

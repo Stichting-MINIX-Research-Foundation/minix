@@ -12,11 +12,12 @@ namespace llvm {
 
 class MagicMemFunction {
 public:
-	MagicMemFunction(Module &M, Function *function, Function *wrapper, bool isDealloc, int allocFlags);
+	MagicMemFunction(Module &M, Function *function, Function *wrapper, bool isDealloc, bool isNested, int allocFlags);
 
 	Function* getFunction() const;
 	Function* getWrapper() const;
 	bool isDeallocFunction() const;
+	bool isNestedFunction() const;
 	int getAllocFlags() const;
 	Instruction* getInstruction() const;
 	Function* getInstructionParent() const;
@@ -45,6 +46,7 @@ private:
 	Function *function;
 	Function *wrapper;
 	bool isDealloc;
+	bool isNested;
 	int allocFlags;
 	Instruction *instruction;
 	TypeInfo* aTypeInfo;
@@ -81,6 +83,8 @@ inline void MagicMemFunction::printDescription(raw_ostream &OS) const {
 		OS << "NULL";
 	OS << ", isDeallocFunction = ";
 	OS << isDealloc;
+	OS << ", isNestedFunction = ";
+	OS << isNested;
 	OS << ", instruction = ";
 	if (instruction)
 		instruction->print(OS);
@@ -128,11 +132,12 @@ inline const std::string MagicMemFunction::getDescription() const {
 	return string;
 }
 
-inline MagicMemFunction::MagicMemFunction(Module &M, Function *function, Function *wrapper, bool isDealloc, int allocFlags) {
+inline MagicMemFunction::MagicMemFunction(Module &M, Function *function, Function *wrapper, bool isDealloc, bool isNested, int allocFlags) {
 	this->module = &M;
 	this->function = function;
 	this->wrapper = wrapper;
 	this->isDealloc = isDealloc;
+	this->isNested = isNested;
 	this->allocFlags = allocFlags;
 	this->instruction = NULL;
 	this->aTypeInfo = NULL;
@@ -142,7 +147,7 @@ inline MagicMemFunction::MagicMemFunction(Module &M, Function *function, Functio
 	this->allocNameValue = NULL;
 	this->allocParentNameValue = NULL;
 	assert(function);
-	if (wrapper && !isDealloc) {
+	if (wrapper && !isDealloc && !isNested) {
 		lastAllocWrapper = wrapper;
 	}
 	if (isDealloc) {
@@ -160,6 +165,10 @@ inline Function* MagicMemFunction::getWrapper() const {
 
 inline bool MagicMemFunction::isDeallocFunction() const {
 	return isDealloc;
+}
+
+inline bool MagicMemFunction::isNestedFunction() const {
+	return isNested;
 }
 
 inline int MagicMemFunction::getAllocFlags() const {
@@ -227,7 +236,7 @@ inline void MagicMemFunction::replaceInstruction(std::map<TypeInfo*, Constant*> 
 		buildWrapper(magicArrayTypePtrMap, voidPtrTypeInfo);
 	}
 	//inject magic args
-	if (!isDeallocFunction()) {
+	if (!isDeallocFunction() && !isNestedFunction()) {
 		std::map<TypeInfo*, Constant*>::iterator it;
 		if (!typeValue) {
 			assert(aTypeInfo);
@@ -293,6 +302,7 @@ inline int MagicMemFunction::getMemFunctionPointerParam(Function* function, std:
 
 inline void MagicMemFunction::buildWrapper(std::map<TypeInfo*, Constant*> &magicArrayTypePtrMap, TypeInfo *voidPtrTypeInfo) {
 	assert(!isDeallocFunction());
+	assert(!isNestedFunction());
 	assert(lastAllocWrapper);
 	std::vector<TYPECONST Type*> ArgTypes;
 	VALUE_TO_VALUE_MAP_TY VMap;

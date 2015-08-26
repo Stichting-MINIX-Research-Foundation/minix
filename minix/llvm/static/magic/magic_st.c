@@ -1340,6 +1340,27 @@ PRIVATE void st_vars_clear_ptrs(struct _magic_vars_t *magic_vars)
         *((void **)(((char *)magic_vars) + offset_list[i])) = NULL;
 }
 
+
+#ifdef __MINIX
+PRIVATE void st_unmap_mem(struct _magic_vars_t *magic_vars)
+{
+    int i, r;
+
+    for (i = 0; i < MAGIC_UNMAP_MEM_ENTRIES; i++) {
+        if (magic_vars->unmap_mem[i].length != 0) {
+#if ST_DEBUG_LEVEL > 0
+            printf("st_unmap_mem: unmapping (%p, %zu)\n",
+                magic_vars->unmap_mem[i].start,
+                magic_vars->unmap_mem[i].length);
+#endif
+            r = munmap(magic_vars->unmap_mem[i].start,
+                magic_vars->unmap_mem[i].length);
+            assert(r == 0);
+        }
+    }
+}
+#endif
+
 PUBLIC int st_init(st_init_info_t *info)
 {
     int r, max_buff_sz = 0, dsentries_num;
@@ -1433,6 +1454,11 @@ PUBLIC int st_init(st_init_info_t *info)
 #if MAGIC_LOOKUP_FUNCTION_ALLOW_ADDR_HASH
     st_init_function_hash(info, &st_cached_magic_vars);
     st_init_function_hash(info, _magic_vars);
+#endif
+
+#ifdef __MINIX
+    /* Unmap any memory ranges that are not needed in the new process. */
+    st_unmap_mem(&st_cached_magic_vars);
 #endif
 
     /* Pair metadata entities */

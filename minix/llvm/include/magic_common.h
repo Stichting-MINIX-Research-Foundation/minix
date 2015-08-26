@@ -6,6 +6,7 @@
 #define MAGIC_PREFIX_STR                    "magic_"
 #define MAGIC_ASR_PREFIX                    magic_asr_
 #define MAGIC_ASR_PREFIX_STR                "magic_asr_"
+#define MAGIC_NESTED_PREFIX_STR             "nested_"
 #define MAGIC_EVAL_FUNC_PREFIX              "me_"
 #define MAGIC_ANON_MEMBER_PREFIX            "magic.anon"
 #define MAGIC_STRINGREF_HAS_MAGIC_HIDDEN_PREFIX(S)                             \
@@ -533,11 +534,24 @@ volatile int _magic_var_annotation_ ## V = A
 #define MAGIC_MEM_FUNC_ALLOC_FLAGS                                             \
     MAGIC_MEMA_FUNC_ALLOC_FLAGS MAGIC_MEMA_EXTRA_FUNC_ALLOC_FLAGS, MAGIC_MEMD_FUNC_ALLOC_FLAGS
 
+#ifdef __MINIX
+/* Nested allocation functions to hook. That is, functions that are being
+ * called as part of allocation functions - in particular, malloc - and need to
+ * be intercepted for tracking purposes - in particular, so that mmap'ed malloc
+ * page directories can be unmapped in order to avoid memory leaks. MINIX3 only.
+ */
+#define MAGIC_MEMN_FUNCS                                                       \
+    __X(mmap), __X(munmap)
+#else
+#define MAGIC_MEMN_FUNCS ""
+#endif
+
 #define MAGIC_DL_FUNCS                                                         \
    __X(dlopen), __X(dlclose)
 
 #define MAGIC_MEMA_FUNC_NAMES               MAGIC_MEMA_FUNCS MAGIC_MEMA_EXTRA_FUNCS, ""
 #define MAGIC_MEMD_FUNC_NAMES               MAGIC_MEMD_FUNCS, ""
+#define MAGIC_MEMN_FUNC_NAMES               MAGIC_MEMN_FUNCS, ""
 #define MAGIC_MEM_FUNC_NAMES                MAGIC_MEM_FUNCS, ""
 #define MAGIC_DL_FUNC_NAMES                 MAGIC_DL_FUNCS, ""
 

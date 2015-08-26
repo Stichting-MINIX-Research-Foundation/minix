@@ -2103,5 +2103,67 @@ PUBLIC void *magic_vm_map_cacheblock(__MA_ARGS__ dev_t dev, off_t dev_offset,
 
     return data_ptr;
 }
+
+/*===========================================================================*
+ *				magic_nested_mmap			     *
+ *===========================================================================*/
+void *
+magic_nested_mmap(void *start, size_t length, int prot, int flags,
+	int fd, off_t offset)
+{
+	void *ptr;
+	int i;
+
+	ptr = mmap(start, length, prot, flags, fd, offset);
+
+	if (ptr != MAP_FAILED) {
+		MAGIC_MEM_PRINTF("MAGIC: nested mmap (%p, %zu)\n", ptr,
+		    length);
+
+		/*
+		 * Find a free entry.  We do not expect the malloc code to have
+		 * more than two areas mapped at any time.
+		 */
+		for (i = 0; i < MAGIC_UNMAP_MEM_ENTRIES; i++)
+			if (_magic_unmap_mem[i].length == 0)
+				break;
+		assert(i < MAGIC_UNMAP_MEM_ENTRIES);
+
+		/* Store the mapping in this entry. */
+		_magic_unmap_mem[i].start = ptr;
+		_magic_unmap_mem[i].length = length;
+	}
+
+	return ptr;
+}
+
+/*===========================================================================*
+ *				magic_nested_munmap			     *
+ *===========================================================================*/
+int
+magic_nested_munmap(void *start, size_t length)
+{
+	int i, r;
+
+	r = munmap(start, length);
+
+	if (r == 0) {
+		MAGIC_MEM_PRINTF("MAGIC: nested munmap (%p, %zu)\n", start,
+		    length);
+
+		/* Find the corresponding entry.  This must always succeed. */
+		for (i = 0; i < MAGIC_UNMAP_MEM_ENTRIES; i++)
+			if (_magic_unmap_mem[i].start == start &&
+			    _magic_unmap_mem[i].length == length)
+				break;
+		assert(i < MAGIC_UNMAP_MEM_ENTRIES);
+
+		/* Clear the entry. */
+		_magic_unmap_mem[i].start = NULL;
+		_magic_unmap_mem[i].length = 0;
+	}
+
+	return r;
+}
 #endif
 

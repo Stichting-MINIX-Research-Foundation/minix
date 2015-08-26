@@ -207,6 +207,22 @@ struct _magic_dsodesc {
     struct _magic_dsodesc *next;
 };
 
+/* The following constant is specific to MINIX3; on other platforms, this
+ * functionality is unused altogether. On MINIX3, the libc malloc code uses
+ * mmap to create page directories. Since malloc state is discarded upon state
+ * transfer, we must not instrument its mmap calls in the regular way. On the
+ * other hand, since mmap'ed regions are transferred to new instances, we end
+ * up with a memory leak if we do not unmap those mmap'ed regions. Therefore,
+ * we specifically track the mmap/munmap calls made from the malloc code, and
+ * explicitly unmap its regions during state transfer. The following constant
+ * defines how many ranges can be mmap'ed at once. The malloc code uses only
+ * one page directory, but it may enlarge it by first allocating a new area
+ * and then unmapping the old one. Therefore, we need two entries.
+ */
+#ifdef __MINIX
+#define MAGIC_UNMAP_MEM_ENTRIES	2
+#endif
+
 /* Magic vars. */
 struct _magic_vars_t {
 
@@ -282,6 +298,14 @@ struct _magic_vars_t {
     void *heap_end;
     int update_dsentry_ranges;
     int update_dfunction_ranges;
+
+#ifdef __MINIX
+    /* Memory to unmap after state transfer (MINIX3 only) */
+    struct {
+         void *start;
+         size_t length;
+    } unmap_mem[MAGIC_UNMAP_MEM_ENTRIES];
+#endif
 
     /* Range lookup index */
     void *sentry_rl_buff;

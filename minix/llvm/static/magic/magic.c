@@ -123,6 +123,10 @@ MAGIC_VAR struct _magic_vars_t _magic_vars_buff = {
     1,     /* update_dsentry_ranges */
     1,     /* update_dfunction_ranges */
 
+#ifdef __MINIX
+    { { NULL, 0 } }, /* unmap_mem */
+#endif
+
     NULL,  /* sentry_rl_buff */
     0,     /* sentry_rl_buff_offset */
     0,     /* sentry_rl_buff_size */
