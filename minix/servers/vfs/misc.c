@@ -879,36 +879,41 @@ int do_svrctl(void)
  *===========================================================================*/
 int pm_dumpcore(int csig, vir_bytes exe_name)
 {
-  int r = OK, core_fd;
+  int r, core_fd;
   struct filp *f;
   char core_path[PATH_MAX];
   char proc_name[PROC_NAME_LEN];
 
-  /* if a process is blocked, fp->fp_fd holds the fd it's blocked on.
-   * free it up for use by common_open().
+  /* If a process is blocked, fp->fp_fd holds the fd it's blocked on. Free it
+   * up for use by common_open(). This step is the reason we cannot use this
+   * function to generate a core dump of a process while it is still running
+   * (i.e., without terminating it), as it changes the state of the process.
    */
   if (fp_is_blocked(fp))
           unpause();
 
   /* open core file */
   snprintf(core_path, PATH_MAX, "%s.%d", CORE_NAME, fp->fp_pid);
-  core_fd = common_open(core_path, O_WRONLY | O_CREAT | O_TRUNC, CORE_MODE);
-  if (core_fd < 0) { r = core_fd; goto core_exit; }
+  r = core_fd = common_open(core_path, O_WRONLY | O_CREAT | O_TRUNC,
+	CORE_MODE);
+  if (r < 0) goto core_exit;
 
-  /* get process' name */
-  r = sys_datacopy_wrapper(PM_PROC_NR, exe_name, VFS_PROC_NR, (vir_bytes) proc_name,
-			PROC_NAME_LEN);
+  /* get process name */
+  r = sys_datacopy_wrapper(PM_PROC_NR, exe_name, VFS_PROC_NR,
+	(vir_bytes) proc_name, PROC_NAME_LEN);
   if (r != OK) goto core_exit;
   proc_name[PROC_NAME_LEN - 1] = '\0';
 
-  if ((f = get_filp(core_fd, VNODE_WRITE)) == NULL) { r=EBADF; goto core_exit; }
+  /* write the core dump */
+  f = get_filp(core_fd, VNODE_WRITE);
+  assert(f != NULL);
   write_elf_core_file(f, csig, proc_name);
   unlock_filp(f);
-  (void) close_fd(fp, core_fd);	        /* ignore failure, we're exiting anyway */
 
 core_exit:
-  if(csig)
-	  free_proc(FP_EXITING);
+  /* The core file descriptor will be closed as part of the process exit. */
+  free_proc(FP_EXITING);
+
   return(r);
 }
 

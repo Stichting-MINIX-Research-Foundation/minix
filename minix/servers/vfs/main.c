@@ -620,6 +620,14 @@ void service_pm_postponed(void)
 	term_signal = job_m_in.VFS_PM_TERM_SIG;
 	core_path = (vir_bytes) job_m_in.VFS_PM_PATH;
 
+	/* A zero signal used to indicate that a coredump should be generated
+	 * without terminating the target process, but this was broken in so
+	 * many ways that we no longer support this. Userland should implement
+	 * this functionality itself, for example through ptrace(2).
+	 */
+	if (term_signal == 0)
+		panic("no termination signal given for coredump!");
+
 	assert(proc_e == fp->fp_endpoint);
 
 	r = pm_dumpcore(term_signal, core_path);
