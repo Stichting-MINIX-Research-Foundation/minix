@@ -138,7 +138,7 @@ void unmount_all(int force);
 /* open.c */
 int do_close(void);
 int close_fd(struct fproc *rfp, int fd_nr);
-int common_open(char path[PATH_MAX], int oflags, mode_t omode);
+int common_open(char path[PATH_MAX], int oflags, mode_t omode, int for_exec);
 int do_creat(void);
 int do_lseek(void);
 int do_mknod(void);

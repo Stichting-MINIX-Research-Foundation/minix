@@ -895,7 +895,7 @@ int pm_dumpcore(int csig, vir_bytes exe_name)
   /* open core file */
   snprintf(core_path, PATH_MAX, "%s.%d", CORE_NAME, fp->fp_pid);
   r = core_fd = common_open(core_path, O_WRONLY | O_CREAT | O_TRUNC,
-	CORE_MODE);
+	CORE_MODE, FALSE /*for_exec*/);
   if (r < 0) goto core_exit;
 
   /* get process name */

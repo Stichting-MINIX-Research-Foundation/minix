@@ -49,7 +49,7 @@ int do_open(void)
   if (copy_path(fullpath, sizeof(fullpath)) != OK)
 	return(err_code);
 
-  return common_open(fullpath, open_flags, 0 /*omode*/);
+  return common_open(fullpath, open_flags, 0 /*omode*/, FALSE /*for_exec*/);
 }
 
 /*===========================================================================*
@@ -74,13 +74,13 @@ int do_creat(void)
   if (fetch_name(vname, vname_length, fullpath) != OK)
 	return(err_code);
 
-  return common_open(fullpath, open_flags, create_mode);
+  return common_open(fullpath, open_flags, create_mode, FALSE /*for_exec*/);
 }
 
 /*===========================================================================*
  *				common_open				     *
  *===========================================================================*/
-int common_open(char path[PATH_MAX], int oflags, mode_t omode)
+int common_open(char path[PATH_MAX], int oflags, mode_t omode, int for_exec)
 {
 /* Common code from do_creat and do_open. */
   int b, r, exist = TRUE;
@@ -139,8 +139,11 @@ int common_open(char path[PATH_MAX], int oflags, mode_t omode)
 
   /* Only do the normal open code if we didn't just create the file. */
   if (exist) {
-	/* Check protections. */
-	if ((r = forbidden(fp, vp, bits)) == OK) {
+	/* Check permissions based on the given open flags, except when we are
+	 * opening an executable for the purpose of passing a file descriptor
+	 * to its interpreter for execution, in which case we check the X bit.
+	 */
+	if ((r = forbidden(fp, vp, for_exec ? X_BIT : bits)) == OK) {
 		/* Opening reg. files, directories, and special files differ */
 		switch (vp->v_mode & S_IFMT) {
 		   case S_IFREG:

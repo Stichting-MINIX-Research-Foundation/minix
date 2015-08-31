@@ -285,7 +285,8 @@ int pm_exec(vir_bytes path, size_t path_len, vir_bytes frame, size_t frame_len,
 	/* The interpreter (loader) needs an fd to the main program,
 	 * which is currently in finalexec
 	 */
-	if((r = execi.elf_main_fd = common_open(finalexec, O_RDONLY, 0)) < 0) {
+	if ((r = execi.elf_main_fd =
+	    common_open(finalexec, O_RDONLY, 0, TRUE /*for_exec*/)) < 0) {
 		printf("VFS: exec: dynamic: open main exec failed %s (%d)\n",
 			fullpath, r);
 		FAILCHECK(r);
