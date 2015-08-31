@@ -324,10 +324,7 @@ void wait_for(endpoint_t who)
 /*===========================================================================*
  *				pipe_suspend				     *
  *===========================================================================*/
-void pipe_suspend(filp, buf, size)
-struct filp *filp;
-vir_bytes buf;
-size_t size;
+void pipe_suspend(struct filp * __unused filp, vir_bytes buf, size_t size)
 {
 /* Take measures to suspend the processing of the present system call.
  * Store the parameters to be used upon resuming in the process table.
