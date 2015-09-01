@@ -33,25 +33,25 @@ static cl::opt<std::string>
 MMFuncPair("magic-mmfunc-pair",
     cl::desc("Specify all the colon-separated pairs of malloc/free style memory management functions "
         "used in custom memory management implementations. Each function is to be listed together "
-    	"with a number indicating which of the input parameters is the one corresponding to its "
-    	"malloc(size)/free(pointer) counterpart. Example: "
-    	"\"my_smart_alloc/3;my_smart_free/3:my_custom_alloc/2;my_custom_free/1\". "
-    	"The counter for arguments starts from 1."),
+	"with a number indicating which of the input parameters is the one corresponding to its "
+	"malloc(size)/free(pointer) counterpart. Example: "
+	"\"my_smart_alloc/3;my_smart_free/3:my_custom_alloc/2;my_custom_free/1\". "
+	"The counter for arguments starts from 1."),
     cl::init(""), cl::NotHidden, cl::ValueRequired);
 
 static cl::opt<std::string>
 MMPoolFunc("magic-mm-poolfunc",
     cl::desc("Specify a pool memory management set of functions for creating pools, destroying pools, "
-    		"managing the pool buffers, reseting (reusing) pools and allocating memory blocks from the pool. "
-    		"All the functions are to be listed together with a number indicating which of the input parameters"
-    		"(numbering starts at 1) corresponds to the pool object. For the creation function, the pool object "
-    		"can be the return value (specify 0 for return value). The block allocation function additionally "
-    		"requires the number of the parameter denoting the size. Separate sets of functions using ':' and "
-    		"separate multiple functions of the same type using ';'. "
-    		"Example: \"my_pool_block_alloc/1/2:my_pool_create/0:my_pool_destroy/1:my_pool_alloc/1;"
-    		"another_pool_alloc/1;my_pool_free/1:my_pool_reset/1\"."
-    		"If there are no additional management functions, skip them. "
-    		"Example: \"pool_block_alloc/1/2:pool_create:pool_destroy/1\"."),
+		"managing the pool buffers, reseting (reusing) pools and allocating memory blocks from the pool. "
+		"All the functions are to be listed together with a number indicating which of the input parameters"
+		"(numbering starts at 1) corresponds to the pool object. For the creation function, the pool object "
+		"can be the return value (specify 0 for return value). The block allocation function additionally "
+		"requires the number of the parameter denoting the size. Separate sets of functions using ':' and "
+		"separate multiple functions of the same type using ';'. "
+		"Example: \"my_pool_block_alloc/1/2:my_pool_create/0:my_pool_destroy/1:my_pool_alloc/1;"
+		"another_pool_alloc/1;my_pool_free/1:my_pool_reset/1\"."
+		"If there are no additional management functions, skip them. "
+		"Example: \"pool_block_alloc/1/2:pool_create:pool_destroy/1\"."),
     cl::init(""), cl::NotHidden, cl::ValueRequired);
 
 static cl::opt<bool>
@@ -68,7 +68,7 @@ MMAPCtlFunction("magic-mmap-ctlfunc",
 static cl::opt<std::string>
 MagicDataSections("magic-data-sections",
     cl::desc("Specify all the colon-separated magic data section regexes not to instrument"),
-    cl::init("^" MAGIC_STATIC_VARS_SECTION_PREFIX ".*$:^" UNBL_SECTION_PREFIX ".*$:^" MAGIC_MALLOC_VARS_SECTION_PREFIX ".*$"), cl::NotHidden, cl::ValueRequired);
+    cl::init("^" MAGIC_STATIC_VARS_SECTION_PREFIX ".*$:^" UNBL_SECTION_PREFIX ".*$"), cl::NotHidden, cl::ValueRequired);
 
 static cl::opt<std::string>
 MagicFunctionSections("magic-function-sections",
@@ -88,6 +88,16 @@ baseBuildDir("magic-base-build-dir",
 static cl::opt<bool>
 EnableShadowing("magic-enable-shadowing",
     cl::desc("Enable state shadowing"),
+    cl::init(false), cl::NotHidden);
+
+static cl::opt<bool>
+DisableMemFunctions("magic-disable-mem-functions",
+    cl::desc("Disable hooking of memory functions"),
+    cl::init(false), cl::NotHidden);
+
+static cl::opt<bool>
+DisableMallocSkip("magic-disable-malloc-skip",
+    cl::desc("Disable ignoring malloc data variables"),
     cl::init(false), cl::NotHidden);
 
 static cl::opt<bool>
@@ -143,7 +153,7 @@ bool MagicPass::runOnModule(Module &M) {
     unsigned i;
 
     if (SkipAll) {
-    	return false;
+	return false;
     }
 
     magicPassLog("Running...");
@@ -355,7 +365,10 @@ bool MagicPass::runOnModule(Module &M) {
     PassUtil::parseStringListOpt(mmapCtlFunctions, MMAPCtlFunction);
 
     //determine magic data section regexes
-    PassUtil::parseRegexListOpt(magicDataSectionRegexes, MagicDataSections);
+    std::string DataSections = MagicDataSections;
+    if (!DisableMallocSkip)
+        DataSections += ":^" MAGIC_MALLOC_VARS_SECTION_PREFIX ".*$";
+    PassUtil::parseRegexListOpt(magicDataSectionRegexes, DataSections);
 
     //determine magic function section regexes
     PassUtil::parseRegexListOpt(magicFunctionSectionRegexes, MagicFunctionSections);
@@ -415,273 +428,275 @@ bool MagicPass::runOnModule(Module &M) {
     TypeInfo::setBitCastTypes(bitCastMap);
 
 #if MAGIC_INSTRUMENT_MEM_FUNCS
-    //look up magic memory functions and corresponding wrappers
-    #define __X(P) #P
-    std::string magicMemFuncNames[] = { MAGIC_MEM_FUNC_NAMES };
-    std::string magicMemDeallocFuncNames[] = { MAGIC_MEMD_FUNC_NAMES };
-    std::string magicMemNestedFuncNames[] = { MAGIC_MEMN_FUNC_NAMES };
-    #undef __X
-    int magicMemFuncAllocFlags[] = { MAGIC_MEM_FUNC_ALLOC_FLAGS };
-    std::string magicMemPrefixes[] = { MAGIC_MEM_PREFIX_STRS };
-    std::vector<std::string> llvmCallPrefixes;
-    for (std::vector<std::string>::iterator it = mmFuncPrefixes.begin(); it != mmFuncPrefixes.end(); ++it) {
-        llvmCallPrefixes.push_back(*it);
-    }
-    llvmCallPrefixes.push_back("");
-    llvmCallPrefixes.push_back("\01"); //llvm uses odd prefixes for some functions, sometimes (e.g. mmap64)
     std::vector<MagicMemFunction> magicMemFunctions;
     std::set<Function*> originalMagicMemFunctions;
-    for(i=0;magicMemFuncNames[i].compare("");i++) {
-        int allocFlags = magicMemFuncAllocFlags[i];
-        for(unsigned j=0;j<llvmCallPrefixes.size();j++) {
-            std::string fName = magicMemFuncNames[i];
-            Function *f = M.getFunction(llvmCallPrefixes[j] + fName);
-            if(!f) {
-                continue;
-            }
-            TYPECONST FunctionType *fType = f->getFunctionType();
-            if(fType->getNumParams() == 0 && fType->isVarArg()) {
-                //missing function prototype, i.e. no realistic caller. Skip.
-                continue;
-            }
-            if(!fName.compare("brk")) {
-                brkFunctions.insert(f);
-            }
-            if(!fName.compare("sbrk")) {
-                sbrkFunctions.insert(f);
-            }
-            bool isDeallocFunction = false;
-            for(unsigned k=0;magicMemDeallocFuncNames[k].compare("");k++) {
-                if(!magicMemDeallocFuncNames[k].compare(fName)) {
-                    isDeallocFunction = true;
-                    break;
-                }
-            }
-            bool makeNestedFunction = false;
-            for(unsigned k=0;magicMemNestedFuncNames[k].compare("");k++) {
-                if (!magicMemNestedFuncNames[k].compare(fName)) {
-                    makeNestedFunction = true;
-                    break;
-                }
-            }
-
-            Function* w = findWrapper(M, magicMemPrefixes, f, fName);
-            MagicMemFunction memFunction(M, f, w, isDeallocFunction, false, allocFlags);
-            magicMemFunctions.push_back(memFunction);
-            if (makeNestedFunction) {
-                w = findWrapper(M, magicMemPrefixes, f, MAGIC_NESTED_PREFIX_STR + fName);
-                MagicMemFunction memFunction(M, f, w, isDeallocFunction, true, allocFlags);
-                magicMemFunctions.push_back(memFunction);
-            }
-            originalMagicMemFunctions.insert(f);
-
-#if DEBUG_ALLOC_LEVEL >= 1
-            magicPassErr("Memory management function/wrapper found: " << f->getName() << "()/" << w->getName() << "()");
-#endif
-        }
-    }
-
-    //look up custom memory management functions and build the corresponding wrappers
-    int stdAllocFlags = 0;
-    Function *stdAllocFunc, *stdAllocWrapperFunc;
-    stdAllocFunc = M.getFunction(MAGIC_MALLOC_FUNC_NAME);
-    assert(stdAllocFunc && "Could not find the standard allocation function.");
-    for(i=0;magicMemFuncNames[i].compare("");i++) {
-    	if (!magicMemFuncNames[i].compare(MAGIC_MALLOC_FUNC_NAME)) {
-    		stdAllocFlags = magicMemFuncAllocFlags[i];
-    		break;
-    	}
-    }
-    assert(magicMemFuncNames[i].compare("") && "Could not find the flags for the standard allocation function.");
-    std::string wName;
-    for(i=0;magicMemPrefixes[i].compare("");i++) {
-    	wName = magicMemPrefixes[i] + MAGIC_MALLOC_FUNC_NAME;
-    	stdAllocWrapperFunc = M.getFunction(wName);
-    	if (stdAllocWrapperFunc) {
-    		break;
-    	}
-    }
-    assert(stdAllocWrapperFunc && "Could not find a wrapper for the standard allocation function.");
-    for (std::set<std::pair<std::string, std::string> >::iterator it = mmFuncPairs.begin(); it != mmFuncPairs.end(); ++it) {
-    	std::vector<std::string> allocTokens;
-    	PassUtil::parseStringListOpt(allocTokens, (*it).first, "/");
-		assert((allocTokens.size() == stdAllocFunc->getFunctionType()->getNumParams() + 1) && "Bad option format, format is: customFuncName/stdFuncArg1Mapping/.../stdFuncArgNMapping");
-
-		// build custom wrapper for the allocation function
-		Function *allocFunction = MagicUtil::getFunction(M, allocTokens[0]);
-		if (!allocFunction) {
-			continue;
-		}
-		std::vector<unsigned> allocArgMapping;
-		int param;
-		for (unsigned i = 0; i < stdAllocFunc->getFunctionType()->getNumParams(); i++) {
-			int ret = StringRef(allocTokens[i + 1]).getAsInteger(10, param);
-			assert(!ret && "Bad option format, format is: customFuncName/stdFuncArg1Mapping/.../stdFuncArgNMapping");
-			assert(param > 0 && "The numbering of function parameters starts from 1.");
-			allocArgMapping.push_back(param);
-		}
-		FunctionType *allocFuncType = getFunctionType(allocFunction->getFunctionType(), allocArgMapping);
-		if(!isCompatibleMagicMemFuncType(allocFuncType, stdAllocWrapperFunc->getFunctionType())) {
-			magicPassErr("Error: standard wrapper function " << stdAllocWrapperFunc->getName() << " has incompatible type.");
-			magicPassErr(TypeUtil::getDescription(allocFuncType, MAGIC_TYPE_STR_PRINT_MAX, MAGIC_TYPE_STR_PRINT_MAX_LEVEL) << " != " << TypeUtil::getDescription(stdAllocWrapperFunc->getFunctionType(), MAGIC_TYPE_STR_PRINT_MAX, MAGIC_TYPE_STR_PRINT_MAX_LEVEL));
-			exit(1);
-		}
-		Function *allocWrapper = MagicMemFunction::getCustomWrapper(allocFunction, stdAllocFunc, stdAllocWrapperFunc, allocArgMapping, false);
-
-		// register the wrapper
-		MagicMemFunction memFunctionAlloc(M, allocFunction, allocWrapper, false, false, stdAllocFlags);
-		magicMemFunctions.push_back(memFunctionAlloc);
-		originalMagicMemFunctions.insert(allocFunction);
-#if DEBUG_ALLOC_LEVEL >= 1
-        magicPassErr("Allocation function/custom wrapper added: " << allocFunction->getName() << "()/" << allocWrapper->getName() << "()");
-#endif
-    }
-
-    //lookup memory pool management functions and add the corresponding wrapper calls
-    int mempoolAllocFlags = MAGIC_STATE_HEAP;
-	Function *mempoolBlockAllocTemplate, *mempoolBlockAllocTemplateWrapper;
-	mempoolBlockAllocTemplate = MagicUtil::getFunction(M,  MAGIC_MEMPOOL_BLOCK_ALLOC_TEMPLATE_FUNC_NAME);
-	assert(mempoolBlockAllocTemplate && "Could not find the pool block allocation template function.");
-	for(i = 0; magicMemPrefixes[i].compare(""); i++) {
-		wName = magicMemPrefixes[i] + MAGIC_MEMPOOL_BLOCK_ALLOC_TEMPLATE_FUNC_NAME;
-		mempoolBlockAllocTemplateWrapper = MagicUtil::getFunction(M, wName);
-		if (mempoolBlockAllocTemplateWrapper) {
-			break;
-		}
-	}
-	assert(mempoolBlockAllocTemplateWrapper && "Could not find a wrapper for the pool block allocation template function.");
-#define __X(P) #P
-	// C++11 Initializer Lists are not yet supported as of Clang 3.0 ...
-    std::pair<std::string, std::string> magicMempoolFuncNames[] = {
-    		std::pair<std::string, std::string>(MAGIC_MEMPOOL_CREATE_FUNCS),
-    		std::pair<std::string, std::string>(MAGIC_MEMPOOL_DESTROY_FUNCS),
-    		std::pair<std::string, std::string>(MAGIC_MEMPOOL_MGMT_FUNCS),
-    		std::pair<std::string, std::string>(MAGIC_MEMPOOL_RESET_FUNCS)
-    };
-#undef __X
-    int magicMempoolFuncFlags[] = { MAGIC_MEMPOOL_FUNC_FLAGS };
-    unsigned numMagicMempoolFuncPairs = sizeof(magicMempoolFuncNames) / sizeof(magicMempoolFuncNames[0]);
-    std::vector<std::pair<Function*, Function*> > magicMempoolFuncs(numMagicMempoolFuncPairs, std::pair<Function*, Function*>());
-    for (i = 0; i < numMagicMempoolFuncPairs; i++) {
-    	magicMempoolFuncs[i].first = MagicUtil::getFunction(M, magicMempoolFuncNames[i].first);
-    	if (!magicMempoolFuncs[i].first) {
-			magicPassErr("Could not find one of the memory pool wrapper functions: " + magicMempoolFuncNames[i].first);
-			exit(1);
-		}
-    	magicMempoolFuncs[i].second = MagicUtil::getFunction(M, magicMempoolFuncNames[i].second);
-    	if (!magicMempoolFuncs[i].second) {
-			magicPassErr("Could not find one of the memory pool wrapper functions: " + magicMempoolFuncNames[i].second);
-			exit(1);
-		}
-    }
-
     std::vector<MagicDebugFunction> magicDebugFunctions;
-    if (mmPoolFunctions.size()) {
-		assert(mmPoolFunctions.size() >= 3 && mmPoolFunctions.size() <= 5 &&
-						"Specify at least 3 and at most 5 of the pool management types of functions: block alloc,pool create,pool destroy,pool management functions,pool reset functions.");
-		std::vector<std::string>::iterator mmPoolFuncsIt = mmPoolFunctions.begin();
-		std::vector<MagicMemFunction> mempoolMagicMemFunctions;
-
-		// memory pool block allocation functions
-		std::vector<std::string> mempoolBlockAllocFuncs;
-		PassUtil::parseStringListOpt(mempoolBlockAllocFuncs, *(mmPoolFuncsIt++), ";");
-
-		for (std::vector<std::string>::iterator funcIt = mempoolBlockAllocFuncs.begin(); funcIt != mempoolBlockAllocFuncs.end(); ++funcIt) {
-			std::vector<std::string> funcTokens;
-			PassUtil::parseStringListOpt(funcTokens, *funcIt, "/");
-			assert(funcTokens.size() == 3 && "Bad option format, format is: block_alloc_func/pool_ptr_arg_number/size_arg_number");
-			Function* blockAllocFunc = MagicUtil::getFunction(M, funcTokens[0]);
-			if (!blockAllocFunc) {
-			    magicPassErr("Memory pool block allocation function not found - " + funcTokens[0] + ". Skipping instrumentation!");
-			    mempoolMagicMemFunctions.clear();
-			    break;
-			}
-			std::vector<unsigned> argMapping;
-			unsigned param;
-			for (unsigned i = 1; i < funcTokens.size(); i++) {
-				assert(!StringRef(funcTokens[i]).getAsInteger(10, param) && "Bad option format, format is: block_alloc_func/pool_ptr_arg_number/size_arg_number");
-				assert(param > 0 && param <= blockAllocFunc->getFunctionType()->getNumParams()
-						&& "Bad option format. The function parameter number is not valid.");
-				argMapping.push_back(param);
-			}
-			FunctionType *blockAllocFuncType = getFunctionType(mempoolBlockAllocTemplate->getFunctionType(), argMapping);
-			if(!isCompatibleMagicMemFuncType(blockAllocFuncType, mempoolBlockAllocTemplateWrapper->getFunctionType())) {
-				magicPassErr("Error: standard wrapper function " << mempoolBlockAllocTemplateWrapper->getName() << " has incompatible type.");
-				magicPassErr(TypeUtil::getDescription(blockAllocFuncType, MAGIC_TYPE_STR_PRINT_MAX, MAGIC_TYPE_STR_PRINT_MAX_LEVEL) << " != " << TypeUtil::getDescription(mempoolBlockAllocTemplateWrapper->getFunctionType(), MAGIC_TYPE_STR_PRINT_MAX, MAGIC_TYPE_STR_PRINT_MAX_LEVEL));
-				exit(1);
-			}
-			Function *blockAllocWrapper = MagicMemFunction::getCustomWrapper(blockAllocFunc, mempoolBlockAllocTemplate, mempoolBlockAllocTemplateWrapper, argMapping, false);
-			MagicMemFunction memFunctionBlockAlloc(M, blockAllocFunc, blockAllocWrapper, false, false, mempoolAllocFlags);
-			mempoolMagicMemFunctions.push_back(memFunctionBlockAlloc);
-		}
-		if (!mempoolMagicMemFunctions.empty()) { // only if the block allocation functions have been successfully processed
-			// continue with the rest of the memory pool management functions, which do not require a magic wrapper
-			std::vector<std::vector<Function*> >::iterator magicMempoolFuncIt;
-			std::vector<std::vector<int> >::iterator magicMempoolFuncFlagsIt;
-			for (unsigned magicMempoolFuncIndex = 1; mmPoolFuncsIt != mmPoolFunctions.end(); ++mmPoolFuncsIt, ++magicMempoolFuncIndex) {
-				std::vector<std::string> mempoolMgmtFuncs;
-				PassUtil::parseStringListOpt(mempoolMgmtFuncs, *mmPoolFuncsIt, ";");
-				for (std::vector<std::string>::iterator funcIt = mempoolMgmtFuncs.begin(); funcIt != mempoolMgmtFuncs.end(); ++funcIt) {
-					std::vector<std::string> funcTokens;
-					PassUtil::parseStringListOpt(funcTokens, *funcIt, "/");
-					assert(funcTokens.size() == 2 && "Bad option format, format is: mempool_mgmt_func/pool_ptr_arg_number");
-					Function* mempoolMgmtFunc = MagicUtil::getFunction(M, funcTokens[0]);
-					assert(mempoolMgmtFunc && "Bad memory pool configuration, instrumentation aborted!");
-					std::vector<unsigned> argMapping;
-					unsigned param;
-					for (unsigned i = 1; i < funcTokens.size(); i++) {
-						assert(!StringRef(funcTokens[i]).getAsInteger(10, param) && "Bad option format, format is: mempool_mgmt_func/pool_ptr_arg_number");
-						assert(param <= mempoolMgmtFunc->getFunctionType()->getNumParams() &&
-								"Bad option format. The function parameter number is not valid.");
-						argMapping.push_back(param);
-					}
-					std::vector<Value*> trailingArgs;
-					if (magicMempoolFuncIndex == 1) { // pool create funcs
-						TYPECONST Type* poolType = mempoolMgmtFunc->getFunctionType()->getContainedType(argMapping[0]);
-						int level = MagicUtil::getPointerIndirectionLevel(poolType);
-						trailingArgs.push_back(ConstantInt::get(Type::getInt32Ty(M.getContext()), (level > 1)));
-					} else if (magicMempoolFuncIndex == 2) { // pool destroy funcs
-						trailingArgs.push_back(ConstantInt::get(Type::getInt32Ty(M.getContext()), (EnablePoolMemReuse ? 1 : 0)));
-					}
-					if (magicMempoolFuncFlags[magicMempoolFuncIndex - 1] & MAGIC_HOOK_DEBUG_MASK) {
-						MagicDebugFunction magicDebugFunction(mempoolMgmtFunc);
-						magicDebugFunction.addHooks(magicMempoolFuncs[magicMempoolFuncIndex - 1], magicMempoolFuncFlags[magicMempoolFuncIndex - 1], argMapping, trailingArgs);
-						magicDebugFunctions.push_back(magicDebugFunction);
-					} else {
-						bool ret = MagicDebugFunction::inlineHookCalls(mempoolMgmtFunc,
-								magicMempoolFuncs[magicMempoolFuncIndex - 1], magicMempoolFuncFlags[magicMempoolFuncIndex - 1], argMapping, trailingArgs);
-						if (!ret) {
-							magicPassErr("Unable to inline wrapper function calls for " + funcTokens[0]);
-							exit(1);
-						}
-					}
-				}
-			}
-			for (std::vector<MagicMemFunction>::iterator magicIt = mempoolMagicMemFunctions.begin(); magicIt != mempoolMagicMemFunctions.end(); ++magicIt) {
-				magicMemFunctions.push_back(*magicIt);
-				originalMagicMemFunctions.insert(magicIt->getFunction());
-			}
-		}
-    }
-
-    //lookup mmap ctl functions whose call arguments need to be fixed
     std::vector<MagicMmapCtlFunction> magicMmapCtlFunctions;
-    for (std::vector<std::string>::iterator it = mmapCtlFunctions.begin(); it != mmapCtlFunctions.end(); ++it) {
-        std::vector<std::string> tokens;
-        tokens.clear();
-        PassUtil::parseStringListOpt(tokens, *it, "/");
-        assert(tokens.size() == 3 && "Bad option format, format is: function/[ptr_arg_name]/[len_arg_name]");
-
-        Function *function = M.getFunction(tokens[0]);
-        if(!function) {
-            continue;
+    if (!DisableMemFunctions) {
+        //look up magic memory functions and corresponding wrappers
+        #define __X(P) #P
+        std::string magicMemFuncNames[] = { MAGIC_MEM_FUNC_NAMES };
+        std::string magicMemDeallocFuncNames[] = { MAGIC_MEMD_FUNC_NAMES };
+        std::string magicMemNestedFuncNames[] = { MAGIC_MEMN_FUNC_NAMES };
+        #undef __X
+        int magicMemFuncAllocFlags[] = { MAGIC_MEM_FUNC_ALLOC_FLAGS };
+        std::string magicMemPrefixes[] = { MAGIC_MEM_PREFIX_STRS };
+        std::vector<std::string> llvmCallPrefixes;
+        for (std::vector<std::string>::iterator it = mmFuncPrefixes.begin(); it != mmFuncPrefixes.end(); ++it) {
+            llvmCallPrefixes.push_back(*it);
         }
-        std::string &ptrArgName = tokens[1];
-        std::string &lenArgName = tokens[2];
-        MagicMmapCtlFunction magicMmapCtlFunction(function, PointerType::get(IntegerType::get(M.getContext(), 8), 0), ptrArgName, lenArgName);
-        magicMmapCtlFunctions.push_back(magicMmapCtlFunction);
-    }
+        llvmCallPrefixes.push_back("");
+        llvmCallPrefixes.push_back("\01"); //llvm uses odd prefixes for some functions, sometimes (e.g. mmap64)
+        for(i=0;magicMemFuncNames[i].compare("");i++) {
+            int allocFlags = magicMemFuncAllocFlags[i];
+            for(unsigned j=0;j<llvmCallPrefixes.size();j++) {
+                std::string fName = magicMemFuncNames[i];
+                Function *f = M.getFunction(llvmCallPrefixes[j] + fName);
+                if(!f) {
+                    continue;
+                }
+                TYPECONST FunctionType *fType = f->getFunctionType();
+                if(fType->getNumParams() == 0 && fType->isVarArg()) {
+                    //missing function prototype, i.e. no realistic caller. Skip.
+                    continue;
+                }
+                if(!fName.compare("brk")) {
+                    brkFunctions.insert(f);
+                }
+                if(!fName.compare("sbrk")) {
+                    sbrkFunctions.insert(f);
+                }
+                bool isDeallocFunction = false;
+                for(unsigned k=0;magicMemDeallocFuncNames[k].compare("");k++) {
+                    if(!magicMemDeallocFuncNames[k].compare(fName)) {
+                        isDeallocFunction = true;
+                        break;
+                    }
+                }
+                bool makeNestedFunction = false;
+                for(unsigned k=0;magicMemNestedFuncNames[k].compare("");k++) {
+                    if (!magicMemNestedFuncNames[k].compare(fName)) {
+                        makeNestedFunction = true;
+                        break;
+                    }
+                }
+
+                Function* w = findWrapper(M, magicMemPrefixes, f, fName);
+                MagicMemFunction memFunction(M, f, w, isDeallocFunction, false, allocFlags);
+                magicMemFunctions.push_back(memFunction);
+                if (makeNestedFunction) {
+                    w = findWrapper(M, magicMemPrefixes, f, MAGIC_NESTED_PREFIX_STR + fName);
+                    MagicMemFunction memFunction(M, f, w, isDeallocFunction, true, allocFlags);
+                    magicMemFunctions.push_back(memFunction);
+                }
+                originalMagicMemFunctions.insert(f);
+
+#if DEBUG_ALLOC_LEVEL >= 1
+                magicPassErr("Memory management function/wrapper found: " << f->getName() << "()/" << w->getName() << "()");
 #endif
+            }
+        }
+
+        //look up custom memory management functions and build the corresponding wrappers
+        int stdAllocFlags = 0;
+        Function *stdAllocFunc, *stdAllocWrapperFunc;
+        stdAllocFunc = M.getFunction(MAGIC_MALLOC_FUNC_NAME);
+        assert(stdAllocFunc && "Could not find the standard allocation function.");
+        for(i=0;magicMemFuncNames[i].compare("");i++) {
+            if (!magicMemFuncNames[i].compare(MAGIC_MALLOC_FUNC_NAME)) {
+                stdAllocFlags = magicMemFuncAllocFlags[i];
+                break;
+            }
+        }
+        assert(magicMemFuncNames[i].compare("") && "Could not find the flags for the standard allocation function.");
+        std::string wName;
+        for(i=0;magicMemPrefixes[i].compare("");i++) {
+            wName = magicMemPrefixes[i] + MAGIC_MALLOC_FUNC_NAME;
+            stdAllocWrapperFunc = M.getFunction(wName);
+            if (stdAllocWrapperFunc) {
+                break;
+            }
+        }
+        assert(stdAllocWrapperFunc && "Could not find a wrapper for the standard allocation function.");
+        for (std::set<std::pair<std::string, std::string> >::iterator it = mmFuncPairs.begin(); it != mmFuncPairs.end(); ++it) {
+	    std::vector<std::string> allocTokens;
+	    PassUtil::parseStringListOpt(allocTokens, (*it).first, "/");
+		    assert((allocTokens.size() == stdAllocFunc->getFunctionType()->getNumParams() + 1) && "Bad option format, format is: customFuncName/stdFuncArg1Mapping/.../stdFuncArgNMapping");
+
+		    // build custom wrapper for the allocation function
+		    Function *allocFunction = MagicUtil::getFunction(M, allocTokens[0]);
+		    if (!allocFunction) {
+			    continue;
+		    }
+		    std::vector<unsigned> allocArgMapping;
+		    int param;
+		    for (unsigned i = 0; i < stdAllocFunc->getFunctionType()->getNumParams(); i++) {
+			    int ret = StringRef(allocTokens[i + 1]).getAsInteger(10, param);
+			    assert(!ret && "Bad option format, format is: customFuncName/stdFuncArg1Mapping/.../stdFuncArgNMapping");
+			    assert(param > 0 && "The numbering of function parameters starts from 1.");
+			    allocArgMapping.push_back(param);
+		    }
+		    FunctionType *allocFuncType = getFunctionType(allocFunction->getFunctionType(), allocArgMapping);
+		    if(!isCompatibleMagicMemFuncType(allocFuncType, stdAllocWrapperFunc->getFunctionType())) {
+			    magicPassErr("Error: standard wrapper function " << stdAllocWrapperFunc->getName() << " has incompatible type.");
+			    magicPassErr(TypeUtil::getDescription(allocFuncType, MAGIC_TYPE_STR_PRINT_MAX, MAGIC_TYPE_STR_PRINT_MAX_LEVEL) << " != " << TypeUtil::getDescription(stdAllocWrapperFunc->getFunctionType(), MAGIC_TYPE_STR_PRINT_MAX, MAGIC_TYPE_STR_PRINT_MAX_LEVEL));
+			    exit(1);
+		    }
+		    Function *allocWrapper = MagicMemFunction::getCustomWrapper(allocFunction, stdAllocFunc, stdAllocWrapperFunc, allocArgMapping, false);
+
+		    // register the wrapper
+		    MagicMemFunction memFunctionAlloc(M, allocFunction, allocWrapper, false, false, stdAllocFlags);
+		    magicMemFunctions.push_back(memFunctionAlloc);
+		    originalMagicMemFunctions.insert(allocFunction);
+#if DEBUG_ALLOC_LEVEL >= 1
+            magicPassErr("Allocation function/custom wrapper added: " << allocFunction->getName() << "()/" << allocWrapper->getName() << "()");
+#endif
+        }
+
+        //lookup memory pool management functions and add the corresponding wrapper calls
+        int mempoolAllocFlags = MAGIC_STATE_HEAP;
+	    Function *mempoolBlockAllocTemplate, *mempoolBlockAllocTemplateWrapper;
+	    mempoolBlockAllocTemplate = MagicUtil::getFunction(M,  MAGIC_MEMPOOL_BLOCK_ALLOC_TEMPLATE_FUNC_NAME);
+	    assert(mempoolBlockAllocTemplate && "Could not find the pool block allocation template function.");
+	    for(i = 0; magicMemPrefixes[i].compare(""); i++) {
+		    wName = magicMemPrefixes[i] + MAGIC_MEMPOOL_BLOCK_ALLOC_TEMPLATE_FUNC_NAME;
+		    mempoolBlockAllocTemplateWrapper = MagicUtil::getFunction(M, wName);
+		    if (mempoolBlockAllocTemplateWrapper) {
+			    break;
+		    }
+	    }
+	    assert(mempoolBlockAllocTemplateWrapper && "Could not find a wrapper for the pool block allocation template function.");
+#define __X(P) #P
+        // C++11 Initializer Lists are not yet supported as of Clang 3.0 ...
+        std::pair<std::string, std::string> magicMempoolFuncNames[] = {
+		    std::pair<std::string, std::string>(MAGIC_MEMPOOL_CREATE_FUNCS),
+		    std::pair<std::string, std::string>(MAGIC_MEMPOOL_DESTROY_FUNCS),
+		    std::pair<std::string, std::string>(MAGIC_MEMPOOL_MGMT_FUNCS),
+		    std::pair<std::string, std::string>(MAGIC_MEMPOOL_RESET_FUNCS)
+        };
+#undef __X
+        int magicMempoolFuncFlags[] = { MAGIC_MEMPOOL_FUNC_FLAGS };
+        unsigned numMagicMempoolFuncPairs = sizeof(magicMempoolFuncNames) / sizeof(magicMempoolFuncNames[0]);
+        std::vector<std::pair<Function*, Function*> > magicMempoolFuncs(numMagicMempoolFuncPairs, std::pair<Function*, Function*>());
+        for (i = 0; i < numMagicMempoolFuncPairs; i++) {
+	    magicMempoolFuncs[i].first = MagicUtil::getFunction(M, magicMempoolFuncNames[i].first);
+	    if (!magicMempoolFuncs[i].first) {
+			    magicPassErr("Could not find one of the memory pool wrapper functions: " + magicMempoolFuncNames[i].first);
+			    exit(1);
+		    }
+	    magicMempoolFuncs[i].second = MagicUtil::getFunction(M, magicMempoolFuncNames[i].second);
+	    if (!magicMempoolFuncs[i].second) {
+			    magicPassErr("Could not find one of the memory pool wrapper functions: " + magicMempoolFuncNames[i].second);
+			    exit(1);
+		    }
+        }
+
+        if (mmPoolFunctions.size()) {
+		    assert(mmPoolFunctions.size() >= 3 && mmPoolFunctions.size() <= 5 &&
+						    "Specify at least 3 and at most 5 of the pool management types of functions: block alloc,pool create,pool destroy,pool management functions,pool reset functions.");
+		    std::vector<std::string>::iterator mmPoolFuncsIt = mmPoolFunctions.begin();
+		    std::vector<MagicMemFunction> mempoolMagicMemFunctions;
+
+		    // memory pool block allocation functions
+		    std::vector<std::string> mempoolBlockAllocFuncs;
+		    PassUtil::parseStringListOpt(mempoolBlockAllocFuncs, *(mmPoolFuncsIt++), ";");
+
+		    for (std::vector<std::string>::iterator funcIt = mempoolBlockAllocFuncs.begin(); funcIt != mempoolBlockAllocFuncs.end(); ++funcIt) {
+			    std::vector<std::string> funcTokens;
+			    PassUtil::parseStringListOpt(funcTokens, *funcIt, "/");
+			    assert(funcTokens.size() == 3 && "Bad option format, format is: block_alloc_func/pool_ptr_arg_number/size_arg_number");
+			    Function* blockAllocFunc = MagicUtil::getFunction(M, funcTokens[0]);
+			    if (!blockAllocFunc) {
+			        magicPassErr("Memory pool block allocation function not found - " + funcTokens[0] + ". Skipping instrumentation!");
+			        mempoolMagicMemFunctions.clear();
+			        break;
+			    }
+			    std::vector<unsigned> argMapping;
+			    unsigned param;
+			    for (unsigned i = 1; i < funcTokens.size(); i++) {
+				    assert(!StringRef(funcTokens[i]).getAsInteger(10, param) && "Bad option format, format is: block_alloc_func/pool_ptr_arg_number/size_arg_number");
+				    assert(param > 0 && param <= blockAllocFunc->getFunctionType()->getNumParams()
+						    && "Bad option format. The function parameter number is not valid.");
+				    argMapping.push_back(param);
+			    }
+			    FunctionType *blockAllocFuncType = getFunctionType(mempoolBlockAllocTemplate->getFunctionType(), argMapping);
+			    if(!isCompatibleMagicMemFuncType(blockAllocFuncType, mempoolBlockAllocTemplateWrapper->getFunctionType())) {
+				    magicPassErr("Error: standard wrapper function " << mempoolBlockAllocTemplateWrapper->getName() << " has incompatible type.");
+				    magicPassErr(TypeUtil::getDescription(blockAllocFuncType, MAGIC_TYPE_STR_PRINT_MAX, MAGIC_TYPE_STR_PRINT_MAX_LEVEL) << " != " << TypeUtil::getDescription(mempoolBlockAllocTemplateWrapper->getFunctionType(), MAGIC_TYPE_STR_PRINT_MAX, MAGIC_TYPE_STR_PRINT_MAX_LEVEL));
+				    exit(1);
+			    }
+			    Function *blockAllocWrapper = MagicMemFunction::getCustomWrapper(blockAllocFunc, mempoolBlockAllocTemplate, mempoolBlockAllocTemplateWrapper, argMapping, false);
+			    MagicMemFunction memFunctionBlockAlloc(M, blockAllocFunc, blockAllocWrapper, false, false, mempoolAllocFlags);
+			    mempoolMagicMemFunctions.push_back(memFunctionBlockAlloc);
+		    }
+		    if (!mempoolMagicMemFunctions.empty()) { // only if the block allocation functions have been successfully processed
+			    // continue with the rest of the memory pool management functions, which do not require a magic wrapper
+			    std::vector<std::vector<Function*> >::iterator magicMempoolFuncIt;
+			    std::vector<std::vector<int> >::iterator magicMempoolFuncFlagsIt;
+			    for (unsigned magicMempoolFuncIndex = 1; mmPoolFuncsIt != mmPoolFunctions.end(); ++mmPoolFuncsIt, ++magicMempoolFuncIndex) {
+				    std::vector<std::string> mempoolMgmtFuncs;
+				    PassUtil::parseStringListOpt(mempoolMgmtFuncs, *mmPoolFuncsIt, ";");
+				    for (std::vector<std::string>::iterator funcIt = mempoolMgmtFuncs.begin(); funcIt != mempoolMgmtFuncs.end(); ++funcIt) {
+					    std::vector<std::string> funcTokens;
+					    PassUtil::parseStringListOpt(funcTokens, *funcIt, "/");
+					    assert(funcTokens.size() == 2 && "Bad option format, format is: mempool_mgmt_func/pool_ptr_arg_number");
+					    Function* mempoolMgmtFunc = MagicUtil::getFunction(M, funcTokens[0]);
+					    assert(mempoolMgmtFunc && "Bad memory pool configuration, instrumentation aborted!");
+					    std::vector<unsigned> argMapping;
+					    unsigned param;
+					    for (unsigned i = 1; i < funcTokens.size(); i++) {
+						    assert(!StringRef(funcTokens[i]).getAsInteger(10, param) && "Bad option format, format is: mempool_mgmt_func/pool_ptr_arg_number");
+						    assert(param <= mempoolMgmtFunc->getFunctionType()->getNumParams() &&
+								    "Bad option format. The function parameter number is not valid.");
+						    argMapping.push_back(param);
+					    }
+					    std::vector<Value*> trailingArgs;
+					    if (magicMempoolFuncIndex == 1) { // pool create funcs
+						    TYPECONST Type* poolType = mempoolMgmtFunc->getFunctionType()->getContainedType(argMapping[0]);
+						    int level = MagicUtil::getPointerIndirectionLevel(poolType);
+						    trailingArgs.push_back(ConstantInt::get(Type::getInt32Ty(M.getContext()), (level > 1)));
+					    } else if (magicMempoolFuncIndex == 2) { // pool destroy funcs
+						    trailingArgs.push_back(ConstantInt::get(Type::getInt32Ty(M.getContext()), (EnablePoolMemReuse ? 1 : 0)));
+					    }
+					    if (magicMempoolFuncFlags[magicMempoolFuncIndex - 1] & MAGIC_HOOK_DEBUG_MASK) {
+						    MagicDebugFunction magicDebugFunction(mempoolMgmtFunc);
+						    magicDebugFunction.addHooks(magicMempoolFuncs[magicMempoolFuncIndex - 1], magicMempoolFuncFlags[magicMempoolFuncIndex - 1], argMapping, trailingArgs);
+						    magicDebugFunctions.push_back(magicDebugFunction);
+					    } else {
+						    bool ret = MagicDebugFunction::inlineHookCalls(mempoolMgmtFunc,
+								    magicMempoolFuncs[magicMempoolFuncIndex - 1], magicMempoolFuncFlags[magicMempoolFuncIndex - 1], argMapping, trailingArgs);
+						    if (!ret) {
+							    magicPassErr("Unable to inline wrapper function calls for " + funcTokens[0]);
+							    exit(1);
+						    }
+					    }
+				    }
+			    }
+			    for (std::vector<MagicMemFunction>::iterator magicIt = mempoolMagicMemFunctions.begin(); magicIt != mempoolMagicMemFunctions.end(); ++magicIt) {
+				    magicMemFunctions.push_back(*magicIt);
+				    originalMagicMemFunctions.insert(magicIt->getFunction());
+			    }
+		    }
+        }
+
+        //lookup mmap ctl functions whose call arguments need to be fixed
+        for (std::vector<std::string>::iterator it = mmapCtlFunctions.begin(); it != mmapCtlFunctions.end(); ++it) {
+            std::vector<std::string> tokens;
+            tokens.clear();
+            PassUtil::parseStringListOpt(tokens, *it, "/");
+            assert(tokens.size() == 3 && "Bad option format, format is: function/[ptr_arg_name]/[len_arg_name]");
+
+            Function *function = M.getFunction(tokens[0]);
+            if(!function) {
+                continue;
+            }
+            std::string &ptrArgName = tokens[1];
+            std::string &lenArgName = tokens[2];
+            MagicMmapCtlFunction magicMmapCtlFunction(function, PointerType::get(IntegerType::get(M.getContext(), 8), 0), ptrArgName, lenArgName);
+            magicMmapCtlFunctions.push_back(magicMmapCtlFunction);
+        }
+    }
+#endif /*MAGIC_INSTRUMENT_MEM_FUNCS*/
 
     //everything as expected, set magic enabled variable to TRUE
     magicEnabled->setInitializer(ConstantInt::get(M.getContext(), APInt(32, 1)));
@@ -943,191 +958,192 @@ bool MagicPass::runOnModule(Module &M) {
     std::vector<int> magicDsindexFlagsList;
 
 #if MAGIC_INSTRUMENT_MEM_FUNCS
-    //gather magic memory function calls to replace and figure out the type (adding more (local) types if needed)
     std::vector<MagicMemFunction> magicMemFunctionCalls;
-    std::map< std::pair<std::string,std::string>, int> namesMap;
-    int allocFlags;
-    std::set<Function*> extendedMagicMemFunctions;
-    for (std::set<Function*>::iterator it = originalMagicMemFunctions.begin(); it != originalMagicMemFunctions.end(); ++it) {
-        PassUtil::getFunctionsInDirectBUCallgraph(*it, extendedMagicMemFunctions);
-    }
-    while(!magicMemFunctions.empty()) {
-        MagicMemFunction magicMemFunction = magicMemFunctions.front();
-        magicMemFunctions.erase(magicMemFunctions.begin());
-        std::vector<User*> Users(magicMemFunction.getFunction()->use_begin(), magicMemFunction.getFunction()->use_end());
-        std::vector<Value*> EqPointers;
-        while (!Users.empty()) {
-          int annotation;
-          User *U = Users.back();
-          Users.pop_back();
-        
-          if (Instruction *I = dyn_cast<Instruction>(U)) {
-            Function *parent = I->getParent()->getParent();
-            if (isMagicFunction(M, parent) || MagicMemFunction::isCustomWrapper(parent)) {
-                continue;
-            }
-            CallSite CS = MagicUtil::getCallSiteFromInstruction(I);
-            if (CS.getInstruction() &&
-                (!CS.arg_empty() || magicMemFunction.getWrapper() == NULL) &&
-                (MagicUtil::getCalledFunctionFromCS(CS) == magicMemFunction.getFunction() ||
-                 std::find(EqPointers.begin(), EqPointers.end(),
-                           CS.getCalledValue()) != EqPointers.end())) {
-              bool isDeallocFunction = magicMemFunction.isDeallocFunction();
-              bool wrapParent = false;
-              bool isNested = false;
-              TypeInfo *typeInfo = magicVoidTypeInfo;
-              std::string allocName = "";
-              std::string allocParentName = "";
-              //check if we have to skip
-              //if this call site is only called from some predefined mem function, it is nested
-              //some function wrappers are for such nested calls, some are not. this must match.
-              isNested = (extendedMagicMemFunctions.find(CS.getInstruction()->getParent()->getParent()) != extendedMagicMemFunctions.end());
-              if (isNested != magicMemFunction.isNestedFunction()) {
-                  continue;
-              }
-              if(sbrkFunctions.find(MagicUtil::getCalledFunctionFromCS(CS)) != sbrkFunctions.end()) {
-                  ConstantInt *arg = dyn_cast<ConstantInt>(CS.getArgument(0));
-                  if(arg && arg->getZExtValue() == 0) {
-                      //ignore sbrk(0) calls. This does not skip calls with a variable argument (when arg == NULL)
+    if (!DisableMemFunctions) {
+        //gather magic memory function calls to replace and figure out the type (adding more (local) types if needed)
+        std::map< std::pair<std::string,std::string>, int> namesMap;
+        int allocFlags;
+        std::set<Function*> extendedMagicMemFunctions;
+        for (std::set<Function*>::iterator it = originalMagicMemFunctions.begin(); it != originalMagicMemFunctions.end(); ++it) {
+            PassUtil::getFunctionsInDirectBUCallgraph(*it, extendedMagicMemFunctions);
+        }
+        while(!magicMemFunctions.empty()) {
+            MagicMemFunction magicMemFunction = magicMemFunctions.front();
+            magicMemFunctions.erase(magicMemFunctions.begin());
+            std::vector<User*> Users(magicMemFunction.getFunction()->use_begin(), magicMemFunction.getFunction()->use_end());
+            std::vector<Value*> EqPointers;
+            while (!Users.empty()) {
+              int annotation;
+              User *U = Users.back();
+              Users.pop_back();
+
+              if (Instruction *I = dyn_cast<Instruction>(U)) {
+                Function *parent = I->getParent()->getParent();
+                if (isMagicFunction(M, parent) || MagicMemFunction::isCustomWrapper(parent)) {
+                    continue;
+                }
+                CallSite CS = MagicUtil::getCallSiteFromInstruction(I);
+                if (CS.getInstruction() &&
+                    (!CS.arg_empty() || magicMemFunction.getWrapper() == NULL) &&
+                    (MagicUtil::getCalledFunctionFromCS(CS) == magicMemFunction.getFunction() ||
+                     std::find(EqPointers.begin(), EqPointers.end(),
+                               CS.getCalledValue()) != EqPointers.end())) {
+                  bool isDeallocFunction = magicMemFunction.isDeallocFunction();
+                  bool wrapParent = false;
+                  bool isNested = false;
+                  TypeInfo *typeInfo = magicVoidTypeInfo;
+                  std::string allocName = "";
+                  std::string allocParentName = "";
+                  //check if we have to skip
+                  //if this call site is only called from some predefined mem function, it is nested
+                  //some function wrappers are for such nested calls, some are not. this must match.
+                  isNested = (extendedMagicMemFunctions.find(CS.getInstruction()->getParent()->getParent()) != extendedMagicMemFunctions.end());
+                  if (isNested != magicMemFunction.isNestedFunction()) {
+                      continue;
+                  }
+                  if(sbrkFunctions.find(MagicUtil::getCalledFunctionFromCS(CS)) != sbrkFunctions.end()) {
+                      ConstantInt *arg = dyn_cast<ConstantInt>(CS.getArgument(0));
+                      if(arg && arg->getZExtValue() == 0) {
+                          //ignore sbrk(0) calls. This does not skip calls with a variable argument (when arg == NULL)
 #if DEBUG_ALLOC_LEVEL >= 1
-                      magicPassErr("Skipping instrumentation of sbrk(0) MM call found in " << parent->getName() << "():");
+                          magicPassErr("Skipping instrumentation of sbrk(0) MM call found in " << parent->getName() << "():");
+                          I->print(errs());
+                          errs() << "\n";
+#endif
+                          continue;
+                      }
+                  }
+                  else if(MagicUtil::getCallAnnotation(M, CS, &annotation)
+                      && annotation == MAGIC_CALL_MEM_SKIP_INSTRUMENTATION) {
+                      //ignore calls we are supposed to skip
+#if DEBUG_ALLOC_LEVEL >= 1
+                      magicPassErr("Skipping instrumentation of annotated MM call found in " << parent->getName() << "():");
                       I->print(errs());
                       errs() << "\n";
 #endif
                       continue;
                   }
-              }
-              else if(MagicUtil::getCallAnnotation(M, CS, &annotation)
-                  && annotation == MAGIC_CALL_MEM_SKIP_INSTRUMENTATION) {
-                  //ignore calls we are supposed to skip
-#if DEBUG_ALLOC_LEVEL >= 1
-                  magicPassErr("Skipping instrumentation of annotated MM call found in " << parent->getName() << "():");
-                  I->print(errs());
-                  errs() << "\n";
-#endif
-                  continue;
-              }
-              //figure out the type and the names
-              if(!isDeallocFunction && !isNested) {
-              	  int allocCounter = 1;
-              	  int ret;
-              	  std::map< std::pair<std::string,std::string>, int>::iterator namesMapIt;
-              	  //get alloc types and names
-              	  TypeInfo *allocTypeInfo = getAllocTypeInfo(M, magicVoidPtrTypeInfo, CS, allocName, allocParentName);
+                  //figure out the type and the names
+                  if(!isDeallocFunction && !isNested) {
+                      int allocCounter = 1;
+                      int ret;
+                      std::map< std::pair<std::string,std::string>, int>::iterator namesMapIt;
+                      //get alloc types and names
+                      TypeInfo *allocTypeInfo = getAllocTypeInfo(M, magicVoidPtrTypeInfo, CS, allocName, allocParentName);
 #if !MAGIC_INSTRUMENT_MEM_CUSTOM_WRAPPERS
-                  if(!allocTypeInfo) {
-                      allocTypeInfo = voidTypeInfo;
-                  }
+                      if(!allocTypeInfo) {
+                          allocTypeInfo = voidTypeInfo;
+                      }
 #endif
-                  if(allocTypeInfo) {
-                      typeInfo = allocTypeInfo;
-                  }
-                  else {
-                      int pointerParam = MagicMemFunction::getMemFunctionPointerParam(I->getParent()->getParent(), brkFunctions, magicVoidPtrTypeInfo);
-                      if(pointerParam >= 0 /* && !I->getParent()->getParent()->hasAddressTaken() */) {
-                          //the parent is a valid magic mem function to wrap
-                          wrapParent = true;
+                      if(allocTypeInfo) {
+                          typeInfo = allocTypeInfo;
                       }
-                  }
-                  if(!wrapParent) {
-                      assert(allocParentName.compare("") && "Empty parent name!");
-                      if(!allocName.compare("")) {
-                         allocName = MAGIC_ALLOC_NONAME;
+                      else {
+                          int pointerParam = MagicMemFunction::getMemFunctionPointerParam(I->getParent()->getParent(), brkFunctions, magicVoidPtrTypeInfo);
+                          if(pointerParam >= 0 /* && !I->getParent()->getParent()->hasAddressTaken() */) {
+                              //the parent is a valid magic mem function to wrap
+                              wrapParent = true;
+                          }
                       }
+                      if(!wrapParent) {
+                          assert(allocParentName.compare("") && "Empty parent name!");
+                          if(!allocName.compare("")) {
+                             allocName = MAGIC_ALLOC_NONAME;
+                          }
 
 #if (MAGIC_NAMED_ALLOC_USE_DBG_INFO || (MAGIC_MEM_USAGE_OUTPUT_CTL == 1))
-                      //extend names with debug information when requested
-                      if (MDNode *N = I->getMetadata("dbg")) {
-                         DILocation Loc(N);
-                         std::string string;
-                         raw_string_ostream ostream(string);
-                         ostream << allocName << MAGIC_ALLOC_NAME_SEP << Loc.getFilename() << MAGIC_ALLOC_NAME_SEP << Loc.getLineNumber();
-                         ostream.flush();
-                         allocName = string;
-                      }
+                          //extend names with debug information when requested
+                          if (MDNode *N = I->getMetadata("dbg")) {
+                             DILocation Loc(N);
+                             std::string string;
+                             raw_string_ostream ostream(string);
+                             ostream << allocName << MAGIC_ALLOC_NAME_SEP << Loc.getFilename() << MAGIC_ALLOC_NAME_SEP << Loc.getLineNumber();
+                             ostream.flush();
+                             allocName = string;
+                          }
 #endif
 
 #if MAGIC_FORCE_ALLOC_EXT_NAMES
-                      if (isExtLibrary(parent, NULL)) {
-                         allocName = MAGIC_ALLOC_EXT_NAME;
-                         allocName = MAGIC_ALLOC_EXT_PARENT_NAME;
-                      }
-#endif
+                          if (isExtLibrary(parent, NULL)) {
+                             allocName = MAGIC_ALLOC_EXT_NAME;
+                             allocName = MAGIC_ALLOC_EXT_PARENT_NAME;
+                          }
+    #endif
 
-                      //avoid duplicates
-              	      namesMapIt = namesMap.find(std::pair<std::string, std::string>(allocParentName, allocName));
-              	      if(namesMapIt != namesMap.end()) {
-                         allocCounter = namesMapIt->second + 1;
-              	         ret = namesMap.erase(std::pair<std::string, std::string>(allocParentName, allocName));
-              	         assert(ret == 1);
-                         namesMap.insert(std::pair<std::pair<std::string, std::string>, int>(std::pair<std::string, std::string>(allocParentName, allocName), allocCounter));
-                         std::string string;
-                         raw_string_ostream ostream(string);
-                         ostream << allocName << MAGIC_ALLOC_NAME_SUFFIX << allocCounter;
-                         ostream.flush();
-                         allocName = string;
-              	      }
-              	      else {
-              	      	 namesMap.insert(std::pair<std::pair<std::string, std::string>, int>(std::pair<std::string, std::string>(allocParentName, allocName), allocCounter));
-                         allocName += MAGIC_ALLOC_NAME_SUFFIX;
-              	      }
-              	      magicMemFunction.setInstructionTypeInfo(typeInfo, allocName, allocParentName);
-                      //add dsindex entries
-                      magicDsindexTypeInfoList.push_back(typeInfo);
-                      magicDsindexNamesList.push_back(std::pair<std::string, std::string>(allocParentName, allocName));
-                      allocFlags = magicMemFunction.getAllocFlags();
-                      assert(allocFlags);
-                      magicDsindexFlagsList.push_back(allocFlags);
+                          //avoid duplicates
+                          namesMapIt = namesMap.find(std::pair<std::string, std::string>(allocParentName, allocName));
+                          if(namesMapIt != namesMap.end()) {
+                             allocCounter = namesMapIt->second + 1;
+                             ret = namesMap.erase(std::pair<std::string, std::string>(allocParentName, allocName));
+                             assert(ret == 1);
+                             namesMap.insert(std::pair<std::pair<std::string, std::string>, int>(std::pair<std::string, std::string>(allocParentName, allocName), allocCounter));
+                             std::string string;
+                             raw_string_ostream ostream(string);
+                             ostream << allocName << MAGIC_ALLOC_NAME_SUFFIX << allocCounter;
+                             ostream.flush();
+                             allocName = string;
+                          }
+                          else {
+                             namesMap.insert(std::pair<std::pair<std::string, std::string>, int>(std::pair<std::string, std::string>(allocParentName, allocName), allocCounter));
+                             allocName += MAGIC_ALLOC_NAME_SUFFIX;
+                          }
+                          magicMemFunction.setInstructionTypeInfo(typeInfo, allocName, allocParentName);
+                          //add dsindex entries
+                          magicDsindexTypeInfoList.push_back(typeInfo);
+                          magicDsindexNamesList.push_back(std::pair<std::string, std::string>(allocParentName, allocName));
+                          allocFlags = magicMemFunction.getAllocFlags();
+                          assert(allocFlags);
+                          magicDsindexFlagsList.push_back(allocFlags);
+                      }
                   }
-              }
-              magicMemFunction.setInstruction(I);
-              Function *instructionParent = I->getParent()->getParent();
-              //see if we can find the parent in our lists
-              MagicMemFunction *magicMemParent = NULL;
-              for(unsigned k=0;k<magicMemFunctions.size();k++) {
-                  if(magicMemFunctions[k].getFunction() == instructionParent) {
-                      magicMemParent = &magicMemFunctions[k];
-                      break;
-                  }
-              }
-              if(!magicMemParent) {
-                  for(unsigned k=0;k<magicMemFunctionCalls.size();k++) {
-                      if(magicMemFunctionCalls[k].getFunction() == instructionParent) {
-                          magicMemParent = &magicMemFunctionCalls[k];
+                  magicMemFunction.setInstruction(I);
+                  Function *instructionParent = I->getParent()->getParent();
+                  //see if we can find the parent in our lists
+                  MagicMemFunction *magicMemParent = NULL;
+                  for(unsigned k=0;k<magicMemFunctions.size();k++) {
+                      if(magicMemFunctions[k].getFunction() == instructionParent) {
+                          magicMemParent = &magicMemFunctions[k];
                           break;
                       }
                   }
-              }
-              if(!magicMemParent && wrapParent) {
-                  //if there is no existing parent but we have to wrap the parent, create a parent now and add it to the function queue
-                  assert(!isNested);
-                  MagicMemFunction newMagicMemFunction(M, instructionParent, NULL, false, false, 0);
-                  magicMemFunctions.push_back(newMagicMemFunction);
-                  magicMemParent = &magicMemFunctions[magicMemFunctions.size()-1];
-              }
-              if(magicMemParent) {
-                  //if we have a parent, add a dependency
-                  magicMemParent->addInstructionDep(magicMemFunction);
-                  assert(magicMemParent->getAllocFlags());
-
-              }
-              else {
-                  //if there is no parent, add it to the call queue
-                  magicMemFunctionCalls.push_back(magicMemFunction);
+                  if(!magicMemParent) {
+                      for(unsigned k=0;k<magicMemFunctionCalls.size();k++) {
+                          if(magicMemFunctionCalls[k].getFunction() == instructionParent) {
+                              magicMemParent = &magicMemFunctionCalls[k];
+                              break;
+                          }
+                      }
+                  }
+                  if(!magicMemParent && wrapParent) {
+                      //if there is no existing parent but we have to wrap the parent, create a parent now and add it to the function queue
+                      assert(!isNested);
+                      MagicMemFunction newMagicMemFunction(M, instructionParent, NULL, false, false, 0);
+                      magicMemFunctions.push_back(newMagicMemFunction);
+                      magicMemParent = &magicMemFunctions[magicMemFunctions.size()-1];
+                  }
+                  if(magicMemParent) {
+                      //if we have a parent, add a dependency
+                      magicMemParent->addInstructionDep(magicMemFunction);
+                      assert(magicMemParent->getAllocFlags());
+                  }
+                  else {
+                      //if there is no parent, add it to the call queue
+                      magicMemFunctionCalls.push_back(magicMemFunction);
+                  }
+                }
+              } else if (GlobalValue *GV = dyn_cast<GlobalValue>(U)) {
+                Users.insert(Users.end(), GV->use_begin(), GV->use_end());
+                EqPointers.push_back(GV);
+              } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(U)) {
+                if (CE->isCast()) {
+                  Users.insert(Users.end(), CE->use_begin(), CE->use_end());
+                  EqPointers.push_back(CE);
+                }
               }
             }
-          } else if (GlobalValue *GV = dyn_cast<GlobalValue>(U)) {
-            Users.insert(Users.end(), GV->use_begin(), GV->use_end());
-            EqPointers.push_back(GV);
-          } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(U)) {
-            if (CE->isCast()) {
-              Users.insert(Users.end(), CE->use_begin(), CE->use_end());
-              EqPointers.push_back(CE);
-            }
-          }
         }
     }
-#endif
+#endif /*MAGIC_INSTRUMENT_MEM_FUNCS*/
 
 #if MAGIC_INSTRUMENT_STACK
     std::vector<std::map<AllocaInst*, std::pair<TypeInfo*, std::string> > > localTypeInfoMaps;
@@ -1438,7 +1454,7 @@ bool MagicPass::runOnModule(Module &M) {
             else {
                 magicArrayTypePtrMapIt = magicArrayTypePtrMap.find(castType);
                 assert(magicArrayTypePtrMapIt != magicArrayTypePtrMap.end());
-    
+
                 castTypePtrs.push_back(magicArrayTypePtrMapIt->second);
             }
         }
@@ -1601,24 +1617,26 @@ bool MagicPass::runOnModule(Module &M) {
     }
 
 #if MAGIC_INSTRUMENT_MEM_FUNCS
-    //replace magic memory function calls with their wrappers
-    for(i=0;i<magicMemFunctionCalls.size();i++) {
-        MagicMemFunction *magicMemFunctionCall = &magicMemFunctionCalls[i];
-        magicMemFunctionCall->replaceInstruction(magicArrayTypePtrMap, magicVoidPtrTypeInfo);
-    }
+    if (!DisableMemFunctions) {
+        //replace magic memory function calls with their wrappers
+        for(i=0;i<magicMemFunctionCalls.size();i++) {
+            MagicMemFunction *magicMemFunctionCall = &magicMemFunctionCalls[i];
+            magicMemFunctionCall->replaceInstruction(magicArrayTypePtrMap, magicVoidPtrTypeInfo);
+        }
 
-    //fix debug function calls and their arguments
-    for (i=0;i<magicDebugFunctions.size();i++) {
-		MagicDebugFunction *magicDebugFunction = &magicDebugFunctions[i];
-		magicDebugFunction->fixCalls(M, baseBuildDir);
-	}
+        //fix debug function calls and their arguments
+        for (i=0;i<magicDebugFunctions.size();i++) {
+            MagicDebugFunction *magicDebugFunction = &magicDebugFunctions[i];
+            magicDebugFunction->fixCalls(M, baseBuildDir);
+        }
 
-    //fix mmap ctl function calls and their arguments
-    for (i=0;i<magicMmapCtlFunctions.size();i++) {
-        MagicMmapCtlFunction *magicMmapCtlFunction = &magicMmapCtlFunctions[i];
-        magicMmapCtlFunction->fixCalls(M, magicGetPageSizeFunc);
+        //fix mmap ctl function calls and their arguments
+        for (i=0;i<magicMmapCtlFunctions.size();i++) {
+            MagicMmapCtlFunction *magicMmapCtlFunction = &magicMmapCtlFunctions[i];
+            magicMmapCtlFunction->fixCalls(M, magicGetPageSizeFunc);
+        }
     }
-#endif
+#endif /*MAGIC_INSTRUMENT_MEM_FUNCS*/
 
 #if MAGIC_INSTRUMENT_STACK
     //instrument the stack for the relevant set of functions and add dsindex entries
@@ -2776,8 +2794,8 @@ bool MagicPass::isExtLibrary(GlobalValue *GV, DIDescriptor *DID)
         regexesInitialized = true;
     }
     if (DID) {
-    	std::string relPath;
-    	PassUtil::getDbgLocationInfo(*DID, baseBuildDir, NULL, NULL, &relPath);
+	std::string relPath;
+	PassUtil::getDbgLocationInfo(*DID, baseBuildDir, NULL, NULL, &relPath);
         for(unsigned i=0;i<regexes.size();i++) {
             if(regexes[i]->match(relPath, NULL)) {
                 return true;
@@ -2793,7 +2811,7 @@ bool MagicPass::isMagicGV(Module &M, GlobalVariable *GV)
         return true;
     }
     if (!GV->getSection().compare(MAGIC_LLVM_METADATA_SECTION)) {
-    	return true;
+	return true;
     }
     if (GV->getName().startswith("__start") || GV->getName().startswith("__stop") || GV->getName().startswith("llvm.")) {
         return true;

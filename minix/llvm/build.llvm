@@ -153,7 +153,7 @@ do
 	fi
 	clean_module $n $m
 
-	( ${TOOLDIR}/nbmake-${ARCH} -C $m all install MKBITCODE=yes OPTFLAGS.$n="${OPTFLAGS}" \
+	( ${TOOLDIR}/nbmake-${ARCH} -C $m all install MKBITCODE=yes OPTFLAGS="${OPTFLAGS}" \
 	    && echo "INFO: $m successfully instrumented."
 	)
 	echo
