@@ -288,8 +288,9 @@ int cdev_io(
   /* Handle TIOCSCTTY ioctl: set controlling tty.
    * TODO: cleaner implementation work in progress.
    */
-  if (op == CDEV_IOCTL && bytes == TIOCSCTTY && major(dev) == TTY_MAJOR) {
-       fp->fp_tty = dev;
+  if (op == CDEV_IOCTL && bytes == TIOCSCTTY &&
+     (major(dev) == TTY_MAJOR || major(dev) == PTY_MAJOR)) {
+	fp->fp_tty = dev;
   }
 
   /* Create a grant for the buffer provided by the user process. */
