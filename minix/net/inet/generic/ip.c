@@ -206,7 +206,7 @@ unsigned operations;
 	}
 	if (operations & SR_SELECT_EXCEPTION)
 	{
-		printf("ip_select: not implemented for exceptions\n");
+		/* Nothing */
 	}
 	return resops;
 }

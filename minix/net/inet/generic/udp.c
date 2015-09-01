@@ -316,12 +316,10 @@ unsigned operations;
 		/* Should handle special case when the interface is down */
 		resops |= SR_SELECT_WRITE;
 	}
-#if DEBUG == 1
 	if (operations & SR_SELECT_EXCEPTION)
 	{
-		printf("udp_select: not implemented for exceptions\n");
+		/* Nothing */
 	}
-#endif
 	return resops;
 }
 
