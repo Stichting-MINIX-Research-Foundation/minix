@@ -43,6 +43,7 @@ function generate_modules_map()
 	blacklist="$blacklist -e ^gpio="
 	blacklist="$blacklist -e ^i2c="
 	blacklist="$blacklist -e ^lan8710a="
+	blacklist="$blacklist -e ^mmcemmc="
 	blacklist="$blacklist -e ^sht21="
 	blacklist="$blacklist -e ^tda19988="
 	blacklist="$blacklist -e ^tps65217="
