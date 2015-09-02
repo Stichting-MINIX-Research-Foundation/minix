@@ -715,7 +715,6 @@ sef_local_startup(void)
 	 * Register init callbacks. Use the same function for all event types
 	 */
 	sef_setcb_init_fresh(sef_cb_init);
-	sef_setcb_init_lu(sef_cb_init);
 	sef_setcb_init_restart(sef_cb_init);
 
 	/* Let SEF perform startup. */

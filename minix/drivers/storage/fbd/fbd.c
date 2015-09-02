@@ -113,7 +113,6 @@ static void sef_local_startup(void)
 	/* Register init callbacks. */
 	sef_setcb_init_fresh(sef_cb_init_fresh);
 	sef_setcb_init_restart(sef_cb_init_fresh);
-	sef_setcb_init_lu(sef_cb_init_fresh);
 
 	/* Register signal callback. */
 	sef_setcb_signal_handler(sef_cb_signal_handler);

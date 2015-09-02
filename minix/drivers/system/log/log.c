@@ -68,7 +68,6 @@ static void sef_local_startup()
 {
   /* Register init callbacks. */
   sef_setcb_init_fresh(sef_cb_init_fresh);
-  sef_setcb_init_lu(sef_cb_init_fresh);
 
   /* Register live update callbacks. */
   sef_setcb_lu_prepare(sef_cb_lu_prepare);
