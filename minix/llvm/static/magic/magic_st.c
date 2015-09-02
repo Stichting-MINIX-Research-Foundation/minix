@@ -18,7 +18,7 @@ EXTERN endpoint_t sef_self_endpoint;
 #define DO_SKIP_UNPAIRED_PTR_TARGETS 1
 #endif
 
-#define DO_SKIP_INVARIANTS_VIOLATIONS 1
+#define DO_SKIP_INVARIANTS_VIOLATIONS 0
 
 PRIVATE st_alloc_pages *st_alloc_pages_current = NULL;
 PRIVATE int st_alloc_buff_available = 0;

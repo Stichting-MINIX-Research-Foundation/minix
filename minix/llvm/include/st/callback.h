@@ -114,7 +114,7 @@ PUBLIC void st_cb_map_selement_generic(_magic_selement_t *cached_selement, _magi
 #define ST_CB_PRINT_DBG     0x02
 #define ST_CB_PRINT_ERR     0x04
 #define ST_CB_FORCE_IXFER   0x08
-#define ST_CB_DEFAULT_FLAGS (ST_CB_PRINT_DBG|ST_CB_PRINT_ERR)
+#define ST_CB_DEFAULT_FLAGS (ST_CB_PRINT_ERR)
 #define ST_CB_FLAG(F) (cb_info->st_cb_flags & F)
 
 #define ST_CB_DBG ST_CB_PRINT_DBG
