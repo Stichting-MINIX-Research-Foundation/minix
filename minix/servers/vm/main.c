@@ -333,7 +333,8 @@ static void exec_bootproc(struct vmproc *vmp, struct boot_image *ip)
 {
 	struct vm_exec_info vmexeci;
 	struct exec_info *execi = &vmexeci.execi;
-	char hdr[VM_PAGE_SIZE];
+	/* libexec need proper alignment for casting to structures */
+	char hdr[VM_PAGE_SIZE] __aligned(8);
 
 	size_t frame_size = 0;	/* Size of the new initial stack. */
 	int argc = 0;		/* Argument count. */

@@ -740,7 +740,12 @@ static int map_header(struct vfs_exec_info *execi)
   int r;
   size_t cum_io;
   off_t pos, new_pos;
-  static char hdr[PAGE_SIZE]; /* Assume that header is not larger than a page */
+  /* Assume that header is not larger than a page. Align the buffer reasonably
+   * well, because libexec casts it to a structure directly and therefore
+   * expects it to be aligned appropriately. From here we can only guess the
+   * proper alignment, but 64 bits should work for all versions of ELF..
+   */
+  static char hdr[PAGE_SIZE] __aligned(8);
 
   pos = 0;	/* Read from the start of the file */
 
