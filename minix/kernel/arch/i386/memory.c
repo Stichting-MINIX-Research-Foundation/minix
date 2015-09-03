@@ -192,6 +192,10 @@ static int lin_lin_copy(struct proc *srcproc, vir_bytes srclinaddr,
 		if(changed)
 			reload_cr3(); 
 
+		/* Check for overflow. */
+		if (srcptr + chunk < srcptr) return EFAULT_SRC;
+		if (dstptr + chunk < dstptr) return EFAULT_DST;
+
 		/* Copy pages. */
 		PHYS_COPY_CATCH(srcptr, dstptr, chunk, addr);
 

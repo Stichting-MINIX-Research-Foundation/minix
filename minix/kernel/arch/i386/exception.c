@@ -314,7 +314,7 @@ static void proc_stacktrace_execute(struct proc *whichproc, reg_t v_bp, reg_t pc
 		}
 		printf("0x%lx ", (unsigned long) v_pc);
 		if(v_hbp != 0 && v_hbp <= v_bp) {
-			printf("(hbp %lx ?)", v_hbp);
+			printf("(hbp 0x%lx ?)", v_hbp);
 			break;
 		}
 		v_bp = v_hbp;
@@ -335,7 +335,7 @@ void proc_stacktrace(struct proc *whichproc)
 	u32_t use_bp;
 
 	if(whichproc->p_seg.p_kern_trap_style == KTS_NONE) {
-		printf("WARNING: stacktrace of running proecss\n");
+		printf("WARNING: stacktrace of running process\n");
 	}
 
 	switch(whichproc->p_seg.p_kern_trap_style) {
