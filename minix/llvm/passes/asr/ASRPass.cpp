@@ -562,6 +562,14 @@ bool ASRPass::runOnModule(Module &M) {
                         if (Instruction *I = dyn_cast<Instruction>(U)) {
                             Function *parent = I->getParent()->getParent();
                             /* XXX Skipping MAGIC_ENTRY_POINT shouldn't be necessary. Check why. */
+                            /* ..the reason is that main() typically contains the message loop, which loops
+                             * forever making calls. These calls are getting padded, and AllocaInst causes a
+                             * stack pointer adjustment every time a call is made. This stack memory is never
+                             * released, since the function never returns. The result is that we eventually
+                             * run out of stack. Since MINIX3 also uses user-level threads these days, the
+                             * problem is not limited to main(), and for this reason I have disabled caller
+                             * padding by default. -dcvmoole
+                             */
                             if(MAGIC_IS_MAGIC_FUNC(M, parent) || parent->getName().equals(MAGIC_ENTRY_POINT)) {
                                 continue;
                             }
