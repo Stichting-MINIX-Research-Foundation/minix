@@ -434,3 +434,19 @@ int sef_cb_init_response_rs_reply(message *m_ptr)
   return r;
 }
 
+/*===========================================================================*
+ *                       sef_cb_init_response_rs_asyn_once		     *
+ *===========================================================================*/
+int sef_cb_init_response_rs_asyn_once(message *m_ptr)
+{
+/* This response function is used by VM to avoid a boot-time deadlock. */
+  int r;
+
+  /* Inform RS that we completed initialization, asynchronously. */
+  r = asynsend3(RS_PROC_NR, m_ptr, AMF_NOREPLY);
+
+  /* Use a blocking reply call next time. */
+  sef_setcb_init_response(SEF_CB_INIT_RESPONSE_DEFAULT);
+
+  return r;
+}

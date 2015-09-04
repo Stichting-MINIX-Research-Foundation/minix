@@ -807,9 +807,13 @@ endpoint_t endpoint;
       panic("unable to complete init for service: %d", m.m_source);
   }
 
-  /* Send a reply to unblock the service. */
-  m.m_type = OK;
-  reply(m.m_source, rp, &m);
+  /* Send a reply to unblock the service, except to VM, which sent the reply
+   * asynchronously.  Synchronous replies could lead to deadlocks there.
+   */
+  if (m.m_source != VM_PROC_NR) {
+      m.m_type = OK;
+      reply(m.m_source, rp, &m);
+  }
 
   /* Mark the slot as no longer initializing. */
   rp->r_flags &= ~RS_INITIALIZING;

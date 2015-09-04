@@ -73,6 +73,7 @@ int sef_cb_init_identity_state_transfer(int type, sef_init_info_t *info);
 int sef_cb_init_lu_identity_as_restart(int type, sef_init_info_t *info);
 int sef_cb_init_lu_generic(int type, sef_init_info_t *info);
 int sef_cb_init_response_rs_reply(message *m_ptr);
+int sef_cb_init_response_rs_asyn_once(message *m_ptr);
 
 /* Macros for predefined callback implementations. */
 #define SEF_CB_INIT_FRESH_NULL          sef_cb_init_null

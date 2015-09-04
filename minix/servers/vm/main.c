@@ -200,6 +200,11 @@ static void sef_local_startup(void)
 	sef_setcb_init_fresh(sef_cb_init_fresh);
 	sef_setcb_init_lu(sef_cb_init_lu_restart);
 	sef_setcb_init_restart(sef_cb_init_lu_restart);
+	/* In order to avoid a deadlock at boot time, send the first RS_INIT
+	 * reply to RS asynchronously. After that, use sendrec as usual.
+	 */
+	if (__vm_init_fresh)
+		sef_setcb_init_response(sef_cb_init_response_rs_asyn_once);
 
 	/* Register signal callbacks. */
 	sef_setcb_signal_handler(sef_cb_signal_handler);
