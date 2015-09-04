@@ -346,7 +346,7 @@ static void exec_bootproc(struct vmproc *vmp, struct boot_image *ip)
 	char *argv[] = { ip->proc_name, NULL };
 	char *envp[] = { NULL };
 	char *path = ip->proc_name;
-	char frame[VM_PAGE_SIZE];
+	char frame[VM_PAGE_SIZE] __aligned(sizeof(void *));
 
 	memset(&vmexeci, 0, sizeof(vmexeci));
 
