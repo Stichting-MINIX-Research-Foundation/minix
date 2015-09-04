@@ -3374,7 +3374,7 @@ PRIVATE int allocate_pair_metadata_dsentries(st_init_info_t *info,
              * in order to free the preceding page, containing the dsentry struct, too.
              */
             MAGIC_MEM_WRAPPER_BLOCK(
-                res = munmap((char *)sentry->address - magic_get_sys_pagesize() - padding, size + magic_get_sys_pagesize() + padding);
+                res = munmap((char *)sentry->address - magic_get_sys_pagesize(), size + magic_get_sys_pagesize() + padding);
             );
             if (res != 0) {
                 printf("ERROR, munmap returned NULL.\n");

@@ -695,7 +695,7 @@ PRIVATE int magic_free_dsentry(struct _magic_dsentry *dsentry)
             if (!MAGIC_STATE_FLAG(sentry, MAGIC_STATE_DETACHED)) {
                 size_t padding_size = (size_t) dsentry->ext;
                 MAGIC_MEM_DEBUG_FREE(ptr);
-                ret = munmap(((char *)aligned_ptr) - padding_size, page_size + size + padding_size);
+                ret = munmap((char *)aligned_ptr, page_size + size + padding_size);
             }
             else {
 #ifndef __MINIX
@@ -1708,7 +1708,7 @@ PUBLIC void *magic_mmap_positioned(__MA_ARGS__ void *start, size_t length, int p
                 new_start = ((char *)ptr) + page_size;
                 new_ptr = mmap(new_start, length, prot, flags | MAP_FIXED, fd, offset);
                 if (new_ptr == MAP_FAILED) {
-                    munmap(ptr, page_size + alloc_length);
+                    munmap(ptr, page_size + alloc_length + padding_size);
                     ptr = MAP_FAILED;
                 }
             }
@@ -1716,7 +1716,7 @@ PUBLIC void *magic_mmap_positioned(__MA_ARGS__ void *start, size_t length, int p
         aligned_ptr = ptr;
         MAGIC_MEM_PRINTF("magic_mmap: ptr = mmap(start, length, prot, flags, fd, offset) <-> 0x%08x = mmap(0x%08x, %d, 0x%08x, 0x%08x, %d, %d)\n", (unsigned) aligned_ptr, aligned_start, page_size + length, prot, flags, fd, offset);
         if (ptr != MAP_FAILED) {
-            ptr = ((char *)ptr) + padding_size + page_size - MAGIC_SIZE_TO_REAL(0);
+            ptr = ((char *)ptr) + page_size - MAGIC_SIZE_TO_REAL(0);
         }
         else {
             ptr = NULL;
@@ -1725,14 +1725,14 @@ PUBLIC void *magic_mmap_positioned(__MA_ARGS__ void *start, size_t length, int p
             dsentry_flags |= MAGIC_STATE_SHM;
         data_ptr = magic_alloc(__MA_VALUES__ ptr, alloc_length, dsentry_flags);
         if (data_ptr == MAGIC_MEM_FAILED) {
-            munmap(aligned_ptr, page_size + length);
+            munmap(aligned_ptr, page_size + alloc_length + padding_size);
             data_ptr = NULL;
-            errno = ENOMEM;
         }
         if (!data_ptr) {
             errno = ENOMEM;
             data_ptr = MAP_FAILED;
         } else {
+            assert(data_ptr == (char *)aligned_ptr + page_size);
             MAGIC_PTR_TO_DSENTRY(MAGIC_PTR_FROM_DATA(data_ptr))->alloc_mmap_flags = flags;
             MAGIC_PTR_TO_DSENTRY(MAGIC_PTR_FROM_DATA(data_ptr))->alloc_mmap_prot = prot;
             MAGIC_PTR_TO_DSENTRY(MAGIC_PTR_FROM_DATA(data_ptr))->ext = (void *) padding_size;
