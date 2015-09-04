@@ -43,6 +43,10 @@ acl_check(struct vmproc *vmp, int call)
 
 	/* If the process has no ACL, all calls are allowed.. for now. */
 	if (vmp->vm_acl == NO_ACL) {
+		/* RS instrumented with ASR may call VM_BRK at startup. */
+		if (vmp->vm_endpoint == RS_PROC_NR)
+			return OK;
+
 		printf("VM: calling process %u has no ACL!\n",
 		    vmp->vm_endpoint);
 
