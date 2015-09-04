@@ -11,7 +11,9 @@ static unsigned int pending;
 static unsigned int busy;
 static int block_all;
 
-#ifdef MKCOVERAGE
+#if defined(_MINIX_MAGIC)
+# define TH_STACKSIZE (64 * 1024)
+#elif defined(MKCOVERAGE)
 # define TH_STACKSIZE (40 * 1024)
 #else
 # define TH_STACKSIZE (28 * 1024)

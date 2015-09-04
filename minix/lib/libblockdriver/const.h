@@ -2,7 +2,11 @@
 #define _BLOCKDRIVER_CONST_H
 
 /* Thread stack size. */
+#ifdef _MINIX_MAGIC
+#define STACK_SIZE	32768
+#else
 #define STACK_SIZE	8192
+#endif
 
 /* Maximum number of devices supported. */
 #define MAX_DEVICES	BLOCKDRIVER_MAX_DEVICES
