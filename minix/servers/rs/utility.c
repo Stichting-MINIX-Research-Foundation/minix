@@ -421,7 +421,10 @@ void rs_idle_period()
   int r;
 
   /* Not much to do when RS is not idle. */
-  if(!rs_is_idle()) {
+  /* However, to avoid deadlocks it is absolutely necessary that during system
+   * shutdown, dead services are actually cleaned up. Override the idle check.
+   */
+  if(!shutting_down && !rs_is_idle()) {
       return;
   }
 
@@ -431,6 +434,8 @@ void rs_idle_period()
           cleanup_service(rp);
       }
   }
+
+  if (shutting_down) return;
 
   /* Create missing replicas when necessary. */
   for (rp=BEG_RPROC_ADDR; rp<END_RPROC_ADDR; rp++) {
