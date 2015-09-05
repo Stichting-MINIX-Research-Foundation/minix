@@ -163,8 +163,13 @@ static int
 service_active(index_t slot)
 {
 
+	/*
+	 * Init is in RS's process tables as the representation of user
+	 * processes.  It is not a system service.
+	 */
 	return ((rproc.proc[slot].r_flags & (RS_IN_USE | RS_ACTIVE)) ==
-	    (RS_IN_USE | RS_ACTIVE));
+	    (RS_IN_USE | RS_ACTIVE) &&
+	   rproc.pub[slot].endpoint != INIT_PROC_NR);
 }
 
 /*
