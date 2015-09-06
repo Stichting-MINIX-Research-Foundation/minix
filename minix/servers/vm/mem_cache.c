@@ -121,10 +121,13 @@ do_mapcache(message *msg)
 	 * in case instrumentation needs to allocate in-band metadata later.
 	 * This does effectively halve the usable part of the caller's address
 	 * space, though, so only do this if we are instrumenting at all.
+	 * Also make sure it falls within the mmap range, so that it is
+	 * transferred upon live update.  This again cuts the usable part of
+	 * the address space for caching purposes in half.
 	 */
 	alloc_bytes += VM_PAGE_SIZE;
 #endif
-	if (!(vr = map_page_region(caller, VM_PAGE_SIZE, VM_DATATOP,
+	if (!(vr = map_page_region(caller, VM_MMAPBASE, VM_MMAPTOP,
 	    alloc_bytes, VR_ANON | VR_WRITABLE, 0, &mem_type_cache))) {
 		printf("VM: map_page_region failed\n");
 		return ENOMEM;
