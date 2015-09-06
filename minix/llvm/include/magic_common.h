@@ -179,6 +179,7 @@
 #define MAGIC_RSTRUCT_FIELD_ASR_HEAP_MAX_PADDING      "asr_heap_max_padding"
 #define MAGIC_RSTRUCT_FIELD_ASR_MAP_MAX_OFFSET_PAGES  "asr_map_max_offset_pages"
 #define MAGIC_RSTRUCT_FIELD_ASR_MAP_MAX_PADDING_PAGES "asr_map_max_padding_pages"
+#define MAGIC_RSTRUCT_FIELD_NO_MEM_INST         "no_mem_inst"
 #define MAGIC_RSTRUCT_FIELD_TYPES               "types"
 #define MAGIC_RSTRUCT_FIELD_TYPES_NUM           "types_num"
 #define MAGIC_RSTRUCT_FIELD_TYPES_NEXT_ID       "types_next_id"
@@ -199,6 +200,7 @@
         MAGIC_RSTRUCT_FIELD_ASR_HEAP_MAX_PADDING,                              \
         MAGIC_RSTRUCT_FIELD_ASR_MAP_MAX_OFFSET_PAGES,                          \
         MAGIC_RSTRUCT_FIELD_ASR_MAP_MAX_PADDING_PAGES,                         \
+        MAGIC_RSTRUCT_FIELD_NO_MEM_INST,                                       \
         MAGIC_RSTRUCT_FIELD_TYPES,                                             \
         MAGIC_RSTRUCT_FIELD_TYPES_NUM,                                         \
         MAGIC_RSTRUCT_FIELD_TYPES_NEXT_ID,                                     \

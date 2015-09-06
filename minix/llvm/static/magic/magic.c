@@ -57,6 +57,9 @@ MAGIC_VAR struct _magic_vars_t _magic_vars_buff = {
     0, /* asr_map_max_offset_pages */
     0, /* asr_map_max_padding_pages */
 
+    /* Runtime flags. */
+    0,    /* no_mem_inst */
+
     /* Magic type array. */
     NULL, /* types */
     0,    /* types_num */

@@ -41,11 +41,12 @@
     ST_DECLARE_STD_PTRINT_TYPEDEFS(pxfer_);
 #define ST_TYPENAME_STRUCT_TRANSFER_NAMES       "sxfer_*"
 #ifdef __MINIX
-#define ST_SENTRYNAME_NO_TRANSFER_NAMES         "noxfer_*", "sef_*", "st_*", "_brksize", "etext"
+#define ST_SENTRYNAME_NO_TRANSFER_NAMES         "noxfer_*", "sef_*", "st_*", "etext"
 #else
-#define ST_SENTRYNAME_NO_TRANSFER_NAMES         "noxfer_*", "st_*", "_brksize", "etext", "allocatedDescs*", "ep.*" /* nginx specific */
+#define ST_SENTRYNAME_NO_TRANSFER_NAMES         "noxfer_*", "st_*", "etext", "allocatedDescs*", "ep.*" /* nginx specific */
 #define ST_DSENTRYLIB_NO_TRANSFER_NAMES         "*/libst.so", "*/libcommon.so", "*/libtaskctl.so"
 #endif
+#define ST_SENTRYNAME_NO_TRANSFER_MEM_NAMES     "_brksize"
 #define ST_SENTRYNAME_IDENTITY_TRANSFER_NAMES   "ixfer_*"
 #define ST_SENTRYNAME_CIDENTITY_TRANSFER_NAMES  "cixfer_*"
 #define ST_SENTRYNAME_PTR_TRANSFER_NAMES        "pxfer_*"

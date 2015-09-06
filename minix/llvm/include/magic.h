@@ -869,6 +869,9 @@ EXTERN void* __stop_magic_functions_st;
 #define _magic_asr_map_max_padding_pages (                                     \
     _magic_vars->asr_map_max_padding_pages)
 
+/* Runtime flags. */
+#define _magic_no_mem_inst              (_magic_vars->no_mem_inst)
+
 /* Magic type array. */
 #define _magic_types                    (_magic_vars->types)
 #define _magic_types_num                (_magic_vars->types_num)

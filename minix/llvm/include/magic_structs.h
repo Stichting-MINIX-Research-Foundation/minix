@@ -234,6 +234,9 @@ struct _magic_vars_t {
     int asr_map_max_offset_pages;
     int asr_map_max_padding_pages;
 
+    /* Runtime flags. */
+    int no_mem_inst;
+
     /* Magic type array. */
     struct _magic_type *types;
     int types_num;

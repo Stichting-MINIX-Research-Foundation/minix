@@ -214,6 +214,7 @@ char *st_sentryname_noxfers[] = {
 #endif
 #undef __X
     NULL };
+char *st_sentryname_noxfers_mem[] = { ST_SENTRYNAME_NO_TRANSFER_MEM_NAMES, NULL };
 
 /* Exclude the data segments of certain libs from state transfer. */
 char *st_dsentry_lib_noxfer[] = {
@@ -726,6 +727,14 @@ PUBLIC int st_cb_transfer_sentry_default(_magic_selement_t *selement, _magic_sel
     }
 
     if (ST_SENTRY_NAME_MATCH_ANY(st_sentryname_noxfers, sentry_name)) {
+        ST_CB_PRINT(ST_CB_DBG, "sentry name matches noxfer", selement, sel_analyzed, sel_stats, cb_info);
+        return MAGIC_SENTRY_ANALYZE_SKIP_PATH;
+    }
+
+    /* Skip memory management related sentries only when memory functions have
+     * been instrumented (which is *not* the case for the MINIX3 VM service).
+     */
+    if (_magic_no_mem_inst == 0 && ST_SENTRY_NAME_MATCH_ANY(st_sentryname_noxfers_mem, sentry_name)) {
         ST_CB_PRINT(ST_CB_DBG, "sentry name matches noxfer", selement, sel_analyzed, sel_stats, cb_info);
         return MAGIC_SENTRY_ANALYZE_SKIP_PATH;
     }

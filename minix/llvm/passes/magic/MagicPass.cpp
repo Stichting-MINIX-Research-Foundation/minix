@@ -193,6 +193,13 @@ bool MagicPass::runOnModule(Module &M) {
     }
     Instruction *magicArrayBuildFuncInst = magicDataInitFunc->back().getTerminator();
 
+    //look up pointer to magic memory instrumentation flag
+    Value* magicNoMemInst = MagicUtil::getMagicRStructFieldPtr(M, magicArrayBuildFuncInst, magicRootVar, MAGIC_RSTRUCT_FIELD_NO_MEM_INST);
+    if(!magicNoMemInst) {
+        magicPassErr("Error: no " << MAGIC_RSTRUCT_FIELD_NO_MEM_INST << " field found");
+        exit(1);
+    }
+
     //look up pointer to magic array and magic struct type
     Value* magicArrayPtr = MagicUtil::getMagicRStructFieldPtr(M, magicArrayBuildFuncInst, magicRootVar, MAGIC_RSTRUCT_FIELD_SENTRIES);
     if(!magicArrayPtr) {
@@ -1683,6 +1690,9 @@ bool MagicPass::runOnModule(Module &M) {
 
     //set pointer to magic type array in build function
     new StoreInst(MagicUtil::getArrayPtr(M, magicTypeArray), magicTypeArrayPtr, false, magicArrayBuildFuncInst);
+
+    // set runtime flags
+    new StoreInst(ConstantInt::get(M.getContext(), APInt(32, DisableMemFunctions ? 1 : 0)), magicNoMemInst, false, magicArrayBuildFuncInst);
 
     //set magic type array size in build function
     new StoreInst(ConstantInt::get(M.getContext(), APInt(32, globalTypeInfos.size())), magicTypeArraySize, false, magicArrayBuildFuncInst);
