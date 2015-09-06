@@ -136,6 +136,7 @@ static int known_request_types[] = {
 #define ARG_TRG_LABELNAME "-trg-label"	/* target label name */
 #define ARG_LU_IPC_BL	"-ipc_bl"       /* IPC blacklist filter */
 #define ARG_LU_IPC_WL	"-ipc_wl"       /* IPC whitelist filter */
+#define ARG_ASR_COUNT	"-asr-count"    /* number of ASR live updates */
 #define ARG_RESTARTS	"-restarts"    /* number of restarts */
 
 /* The function parse_arguments() verifies and parses the command line 
@@ -158,6 +159,7 @@ static int custom_config_file = 0;
 static int req_lu_state = DEFAULT_LU_STATE;
 static int req_lu_maxtime = DEFAULT_LU_MAXTIME;
 static int req_restarts = 0;
+static int req_asr_count = -1;
 static long req_heap_prealloc = 0;
 static long req_map_prealloc = 0;
 static int req_sysctl_type = 0;
@@ -175,7 +177,7 @@ static void print_usage(char *app_name, char *problem)
   fprintf(stderr, "Warning, %s\n", problem);
   fprintf(stderr, "Usage:\n");
   fprintf(stderr,
-      "    %s [%s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s] (up|run|edit|update) <binary|%s> [%s <args>] [%s <special>] [%s <major_nr>] [%s <dev_id>] [%s <ticks>] [%s <path>] [%s <name>] [%s <path>] [%s <state value|eval_expression>] [%s <time>] [%s <bytes>] [%s <bytes>] [%s <name>] [(%s|%s <src_label1,src_type1:src_label2,:,src_type3:...>)*] [%s <restarts>]\n",
+      "    %s [%s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s] (up|run|edit|update) <binary|%s> [%s <args>] [%s <special>] [%s <major_nr>] [%s <dev_id>] [%s <ticks>] [%s <path>] [%s <name>] [%s <path>] [%s <state value|eval_expression>] [%s <time>] [%s <bytes>] [%s <bytes>] [%s <name>] [(%s|%s <src_label1,src_type1:src_label2,:,src_type3:...>)*] [%s <count>] [%s <restarts>]\n",
 	app_name, OPT_COPY, OPT_REUSE, OPT_NOBLOCK, OPT_REPLICA, OPT_NO_BIN_EXP,
 	OPT_BATCH, OPT_ASR_LU, OPT_PREPARE_ONLY_LU, OPT_FORCE_SELF_LU,
 	OPT_FORCE_INIT_CRASH, OPT_FORCE_INIT_FAIL, OPT_FORCE_INIT_TIMEOUT,
@@ -184,7 +186,7 @@ static void print_usage(char *app_name, char *problem)
 	ARG_ARGS, ARG_DEV, ARG_MAJOR, ARG_DEVMANID, ARG_PERIOD,
 	ARG_SCRIPT, ARG_LABELNAME, ARG_CONFIG, ARG_LU_STATE, ARG_LU_MAXTIME,
 	ARG_HEAP_PREALLOC, ARG_MAP_PREALLOC, ARG_TRG_LABELNAME, ARG_LU_IPC_BL, ARG_LU_IPC_WL,
-	ARG_RESTARTS);
+	ARG_ASR_COUNT, ARG_RESTARTS);
   fprintf(stderr, "    %s down <label>\n", app_name);
   fprintf(stderr, "    %s refresh <label>\n", app_name);
   fprintf(stderr, "    %s restart <label>\n", app_name);
@@ -629,6 +631,14 @@ static int parse_arguments(int argc, char **argv, u32_t *rss_flags)
                   exit(r);
               }
           }
+          else if (strcmp(argv[i], ARG_ASR_COUNT)==0) {
+              errno=0;
+              req_asr_count = strtol(argv[i+1], &buff, 10);
+              if(errno || strcmp(buff, "") || req_asr_count<0) {
+                  print_usage(argv[ARG_NAME], "bad ASR count");
+                  exit(EINVAL);
+              }
+          }
           else if (strcmp(argv[i], ARG_RESTARTS)==0) {
               errno=0;
               req_restarts = strtol(argv[i+1], &buff, 10);
@@ -746,6 +756,7 @@ int main(int argc, char **argv)
       config.rs_start.rss_major= req_major;
       config.rs_start.rss_period= req_period;
       config.rs_start.rss_script= req_script;
+      config.rs_start.rss_asr_count= req_asr_count;
       config.rs_start.rss_restarts= req_restarts;
       config.rs_start.devman_id= devman_id;
       config.rs_start.rss_heap_prealloc_bytes= req_heap_prealloc;

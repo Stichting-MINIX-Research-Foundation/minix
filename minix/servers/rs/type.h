@@ -62,6 +62,7 @@ struct rproc {
   struct rprocupd r_upd;        /* update descriptor */
   pid_t r_pid;			/* process id, -1 if the process is not there */
 
+  int r_asr_count;		/* number of live updates with ASR */
   int r_restarts;		/* number of restarts (initially zero) */
   long r_backoff;		/* number of periods to wait before revive */
   unsigned r_flags; 		/* status and policy flags */

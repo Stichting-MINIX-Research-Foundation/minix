@@ -371,6 +371,52 @@ function minix_bisect {
     cd -
 }
 
+# Usage: [C=set] ./clientctl buildasr [num]
+#
+# Build 'num' sets of ASR-randomized service binaries for the 'set' set of
+# services.  Defaults to one set (in addition to the set used to boot) for
+# all services.  To be used after building the full system.
+#
+# The MINIX3 counterpart of the generation taking place here is the
+# update_asr(8) command, which cycles through the generated binaries.
+#
+function minix_buildasr {
+    MINIXLLVMDIR=$ROOT/minix/llvm
+    ASRDIR=/usr/service/asr
+
+    . $MINIXLLVMDIR/common.inc		# get DESTDIR
+    DESTDIR="$DESTDIR/destdir.i386"	# correct DESTDIR
+
+    ASRDESTDIR="$DESTDIR$ASRDIR"
+    COUNT=${1:-1}	# take count from command line, default to 1
+    C=${C:-"servers,fs,net,drivers"}
+
+    # start by relinking everything against the magic library
+    C=$C $MINIXLLVMDIR/relink.llvm magic
+
+    # we are replacing any previously made ASR binaries
+    rm -rf $ASRDESTDIR/*
+
+    # generate $COUNT number of sets of ASR-randomized service binaries
+    # TODO: do not use current time as random seed
+    N=1
+    while [ $N -le $COUNT ]; do
+        mkdir $ASRDESTDIR/$N
+        export BINDIR=$ASRDIR/$N
+        C=$C $MINIXLLVMDIR/build.llvm magic asr
+        sleep 1 # just to make sure they're guaranteed to be different
+        N=$(($N + 1))
+    done
+
+    # generate the initial set of service binaries, different as well
+    unset BINDIR
+    C=$C $MINIXLLVMDIR/build.llvm magic asr
+
+    # finally generate the image
+    # x86_hdimage will automatically add the binaries to the image set
+    $MINIXLLVMDIR/clientctl buildimage
+}
+
 case "$mode" in
   'buildimage')
     (cd $ROOT && CREATE_IMAGE_ONLY=1 releasetools/x86_hdimage.sh -b)
@@ -408,6 +454,9 @@ case "$mode" in
     ;;
   'bisect')
     minix_bisect
+    ;;
+  'buildasr')
+    minix_buildasr $*
     ;;
   *)
     echo "Invalid action: $mode"

@@ -160,6 +160,11 @@ fi
 # add fstab
 echo "./etc/fstab type=file uid=0 gid=0 mode=0755 size=747 time=1365060731.000000000" >> ${IMG_DIR}/input
 
+# add any generated ASR-randomized service binaries (but not their root directory, which is already there)
+# TODO: apply stricter file permissions for both these and the base /service binaries, against local attacks
+(cd ${DESTDIR} && find ./usr/service/asr -type d | sed '1d;s/$/ type=dir uid=0 gid=0 mode=0755/') >> ${IMG_DIR}/input
+(cd ${DESTDIR} && find ./usr/service/asr -type f | sed 's/$/ type=file uid=0 gid=0 mode=0755/') >> ${IMG_DIR}/input
+
 # fill root.img (skipping /usr entries while keeping the /usr directory)
 cat ${IMG_DIR}/input  | grep -v "^./usr/" | ${CROSS_TOOLS}/nbtoproto -b ${DESTDIR} -o ${IMG_DIR}/root.proto
 

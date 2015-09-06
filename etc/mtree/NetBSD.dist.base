@@ -120,6 +120,8 @@
 ./usr/preserve
 ./usr/run
 ./usr/sbin
+./usr/service
+./usr/service/asr
 ./usr/share
 ./usr/share/calendar
 ./usr/share/doc

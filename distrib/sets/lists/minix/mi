@@ -184,6 +184,7 @@
 ./sbin/reboot				minix-sys
 ./sbin/shutdown				minix-sys
 ./service				minix-sys
+./service/asr				minix-sys
 ./service/devman			minix-sys
 ./service/ds				minix-sys
 ./service/emmc				minix-sys
@@ -5269,6 +5270,7 @@
 ./usr/man/man8/unstr.8				minix-sys
 ./usr/man/man8/update.8				minix-sys
 ./usr/man/man8/updateboot.8		minix-sys
+./usr/man/man8/update_asr.8			minix-sys
 ./usr/man/man8/update_bootcfg.8		minix-sys
 ./usr/man/man8/usage.8				minix-sys
 ./usr/man/man8/user.8				minix-sys
@@ -5318,6 +5320,7 @@
 ./usr/sbin/syslogd			minix-sys
 ./usr/sbin/traceroute			minix-sys
 ./usr/sbin/unlink			minix-sys
+./usr/sbin/update_asr			minix-sys
 ./usr/sbin/user				minix-sys
 ./usr/sbin/useradd			minix-sys
 ./usr/sbin/userdel			minix-sys
@@ -5327,6 +5330,8 @@
 ./usr/sbin/vnconfig			minix-sys
 ./usr/sbin/vndconfig			minix-sys
 ./usr/sbin/zic				minix-sys
+./usr/service				minix-sys
+./usr/service/asr			minix-sys
 ./usr/share				minix-sys
 ./usr/share/atf				minix-sys	atf
 ./usr/share/atf/atf-run.hooks		minix-sys	atf,!kyua

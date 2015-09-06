@@ -331,6 +331,7 @@ static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
       rp->r_check_tm = 0;                      /* not checked yet */
       getticks(&rp->r_alive_tm);               /* currently alive */
       rp->r_stop_tm = 0;                       /* not exiting yet */
+      rp->r_asr_count = 0;                     /* no ASR updates yet */
       rp->r_restarts = 0;                      /* no restarts so far */
       rp->r_period = 0;                        /* no period yet */
       rp->r_exec = NULL;                       /* no in-memory copy yet */

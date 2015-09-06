@@ -275,7 +275,8 @@ CONFIGSYMLINKS+=	${TZDIR}/${LOCALTIME}	/etc/localtime \
 CONFIGSYMLINKS+=	\
 			/usr/log		/var/log \
 			/usr/tmp		/var/tmp \
-			/proc/mounts		/etc/mtab
+			/proc/mounts		/etc/mtab \
+			/usr/service/asr	/service/asr
 
 .endif # !defined(__MINIX)
 

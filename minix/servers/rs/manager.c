@@ -1690,6 +1690,11 @@ endpoint_t source;
       rp->r_restarts = rs_start->rss_restarts;
   }
 
+  /* Update number of ASR live updates. */
+  if(rs_start->rss_asr_count >= 0) {
+      rp->r_asr_count = rs_start->rss_asr_count;
+  }
+
   /* (Re)initialize privilege settings. */
   init_privs(rp, &rp->r_priv);
 
@@ -1760,6 +1765,7 @@ endpoint_t source;
   }
   
   /* Initialize some fields. */
+  rp->r_asr_count = 0;				/* no ASR updates yet */
   rp->r_restarts = 0; 				/* no restarts yet */
   rp->r_old_rp = NULL;			        /* no old version yet */
   rp->r_new_rp = NULL;			        /* no new version yet */

@@ -338,4 +338,5 @@ service_read(struct inode * node)
 	buf_printf("restarts: %d\n", rp->r_restarts);
 	buf_printf("flags:    %s\n", service_get_flags(slot));
 	buf_printf("policies: %s\n", service_get_policies(policies, slot));
+	buf_printf("ASRcount: %u\n", rp->r_asr_count);
 }

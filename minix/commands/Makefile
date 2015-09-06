@@ -30,7 +30,7 @@ SUBDIR=	add_route arp at backup btrace \
 	update version vol \
 	writeisofs fetch \
 	zdump zmodem pkgin_cd pkgin_all pkgin_sets \
-	worldstone updateboot update_bootcfg \
+	worldstone updateboot update_asr update_bootcfg \
 	atnormalize dosread fdisk loadfont \
 	autopart part partition playwave  \
 	recwave repartition screendump

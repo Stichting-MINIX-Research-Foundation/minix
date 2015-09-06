@@ -113,6 +113,7 @@ struct rs_start
 	long rss_period;
 	char *rss_script;
 	size_t rss_scriptlen;
+	long rss_asr_count;
 	long rss_restarts;
 	long rss_heap_prealloc_bytes;
 	long rss_map_prealloc_bytes;
