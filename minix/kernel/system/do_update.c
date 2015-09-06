@@ -286,6 +286,7 @@ static void adjust_priv_slot(struct priv *privp, struct priv *from_privp)
 {
   /* Preserve privilege ids and non-privilege stuff in the priv structure. */
   privp->s_id = from_privp->s_id;
+  privp->s_asyn_pending = from_privp->s_asyn_pending;
   privp->s_notify_pending = from_privp->s_notify_pending;
   privp->s_int_pending = from_privp->s_int_pending;
   privp->s_sig_pending = from_privp->s_sig_pending;

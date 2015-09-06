@@ -196,6 +196,37 @@ static void sef_lu_ready(int result)
    * Restore things back to normal and continue executing.
    */
   sef_lu_state_change(SEF_LU_STATE_NULL, 0);
+
+  /* Transfer of asynsend tables during live update is messy at best. The
+   * general idea is that the asynsend table is preserved during live update,
+   * so that messages never get lost. That means that 1) the new instance
+   * takes over the table from the old instance upon live update, and 2) the
+   * old instance takes over the table on rollback. Case 1 is not atomic:
+   * the new instance starts with no asynsend table, and after swapping slots,
+   * the old instance's table will no longer be looked at by the kernel. The
+   * new instance copies over the table from the old instance, and then calls
+   * senda_reload() to tell the kernel about the new location of the otherwise
+   * preserved table. Case 2 is different: the old instance cannot copy the
+   * table from the new instance, and so the kernel does that part, based on
+   * the table provided through the new instance's senda_reload(). However, if
+   * the new instance never got to the senda_reload() call, then the kernel
+   * also would not have been able to deliver any messages, and so the old
+   * instance's table can still be used as is. Now the problem. Because case 1
+   * is not atomic, there is a small window during which other processes may
+   * attempt to receive a message, based on the fact that their s_asyn_pending
+   * mask in the kernel has a bit set for the process being updated. Failing
+   * to find a matching message in the yet-missing table of the new process,
+   * the kernel will unset the s_asyn_pending bit. Now, normally the bit would
+   * be set again through the new instance's senda_reload() call. However, if
+   * the new instance rolls back instead, the old instance will have a message
+   * for the other process, but its s_asyn_pending bit will not be set. Thus,
+   * the message will never be delivered unless we call senda_reload() here.
+   * XXX TODO: the story is even more complicated, because based on the above
+   * story, copying back the table should never be necessary and never happen.
+   * My logs show it does happen for at least RS, which may indicate RS sends
+   * asynchronous messages in its initialization code.. -dcvmoole
+   */
+  senda_reload();
 }
 
 /*===========================================================================*

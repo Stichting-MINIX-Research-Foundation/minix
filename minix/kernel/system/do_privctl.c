@@ -120,6 +120,8 @@ int do_privctl(struct proc * caller, message * m_ptr)
 	priv(rp)->s_proc_nr = proc_nr;		/* reassociate process nr */
 
 	for (i=0; i< NR_SYS_CHUNKS; i++)		/* remove pending: */
+	      priv(rp)->s_asyn_pending.chunk[i] = 0;	/* - incoming asyn */
+	for (i=0; i< NR_SYS_CHUNKS; i++)		/*   messages */
 	      priv(rp)->s_notify_pending.chunk[i] = 0;	/* - notifications */
 	priv(rp)->s_int_pending = 0;			/* - interrupts */
 	(void) sigemptyset(&priv(rp)->s_sig_pending);	/* - signals */
