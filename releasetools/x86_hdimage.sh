@@ -190,7 +190,9 @@ _HOME_SIZE=$((`${CROSS_TOOLS}/nbmkfs.mfs -d ${HOMESIZEARG} -I $((${HOME_START}*5
 # minix partition utility
 #
 ${CROSS_TOOLS}/nbpartition -m ${IMG} 0 81:${ISO_SIZE} \
-	81:${_ROOT_SIZE} 81:${_USR_SIZE} 81:${_HOME_SIZE}
+	81:${_ROOT_SIZE}* 81:${_USR_SIZE} 81:${_HOME_SIZE}
+
+dd if=${DESTDIR}/usr/mdec/mbr of=${IMG} conv=notrunc bs=446 count=1
 
 mods="`( cd ${MODDIR}; echo mod* | tr ' ' ',' )`"
 if [ "x${ISOMODE}" = "x1" ]
