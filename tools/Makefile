@@ -121,7 +121,7 @@ SUBDIR += .WAIT texinfo \
 		.WAIT \
 		.WAIT \
 		.WAIT \
-		.WAIT \
+		.WAIT installboot \
 		pwd_mkdb stat strfile zic
 .endif
 .if defined(__MINIX)
