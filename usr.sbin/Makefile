@@ -15,7 +15,7 @@ SUBDIR= \
 	\
 	\
 	link \
-	\
+	makefs \
 	mtree \
 	\
 	\

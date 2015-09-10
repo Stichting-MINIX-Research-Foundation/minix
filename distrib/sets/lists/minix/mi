@@ -181,6 +181,9 @@
 ./sbin/mkfs.mfs				minix-sys
 ./sbin/mknod				minix-sys
 ./sbin/newfs_ext2fs			minix-sys
+./sbin/newfs_msdos			minix-sys
+./sbin/newfs_udf			minix-sys
+./sbin/newfs_v7fs			minix-sys
 ./sbin/nologin				minix-sys
 ./sbin/ping				minix-sys
 ./sbin/poweroff				minix-sys
@@ -906,6 +909,12 @@
 ./usr/include/fs			minix-sys
 ./usr/include/fs/puffs			minix-sys
 ./usr/include/fs/puffs/puffs_msgif.h	minix-sys
+./usr/include/fs/udf			minix-sys
+./usr/include/fs/udf/ecma167-udf.h	minix-sys
+./usr/include/fs/udf/udf_mount.h	minix-sys
+./usr/include/fs/v7fs			minix-sys
+./usr/include/fs/v7fs/v7fs_args.h	minix-sys
+./usr/include/fs/v7fs/v7fs.h		minix-sys
 ./usr/include/fstab.h			minix-sys
 ./usr/include/fts.h			minix-sys
 ./usr/include/ftw.h			minix-sys
@@ -5251,11 +5260,15 @@
 ./usr/man/man8/link.8				minix-sys
 ./usr/man/man8/loadramdisk.8			minix-sys
 ./usr/man/man8/MAKEDEV.8			minix-sys
+./usr/man/man8/makefs.8			minix-sys
 ./usr/man/man8/makewhatis.8			minix-sys
 ./usr/man/man8/mknod.8				minix-sys
 ./usr/man/man8/mtree.8				minix-sys
 ./usr/man/man8/netconf.8			minix-sys
 ./usr/man/man8/newfs_ext2fs.8			minix-sys
+./usr/man/man8/newfs_msdos.8			minix-sys
+./usr/man/man8/newfs_udf.8			minix-sys
+./usr/man/man8/newfs_v7fs.8			minix-sys
 ./usr/man/man8/newroot.8			minix-sys	obsolete
 ./usr/man/man8/nologin.8			minix-sys
 ./usr/man/man8/nonamed.8			minix-sys
@@ -5340,6 +5353,7 @@
 ./usr/sbin/installboot_nbsd		minix-sys
 ./usr/sbin/kernel			minix-sys
 ./usr/sbin/link				minix-sys
+./usr/sbin/makefs			minix-sys
 ./usr/sbin/mkfs.mfsv3			minix-sys
 ./usr/sbin/mkproto			minix-sys
 ./usr/sbin/mtree			minix-sys
