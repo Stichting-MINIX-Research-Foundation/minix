@@ -25,13 +25,17 @@ SRCS+=	efun.c \
 
 MAN=	efun.3 \
 	getmntopts.3 \
-	getfsspecname.3 \
+	getmaxpartitions.3 getfsspecname.3 \
 	login.3 login_cap.3 loginx.3 \
 	opendisk.3 openpty.3 parsedate.3 pidfile.3 pidlock.3 \
 	pw_getconf.3 pw_init.3 pw_lock.3 secure_path.3 \
 	raise_default_signal.3 \
 	snprintb.3 sockaddr_snprintf.3 stat_flags.3 strpct.3 ttyaction.3 \
 	ttymsg.3 util.3
+
+.if defined(__MINIX)
+.include "${NETBSDSRCDIR}/minix/lib/libutil/Makefile.inc"
+.endif
 
 YPREFIX=__pd
 .PATH:	${NETBSDSRCDIR}/lib/libc/gen

@@ -3718,6 +3718,7 @@
 ./usr/man/man3/getlastlogx.3				minix-sys
 ./usr/man/man3/getline.3				minix-sys
 ./usr/man/man3/getloadavg.3				minix-sys
+./usr/man/man3/getmaxpartitions.3			minix-sys
 ./usr/man/man3/getmaxx.3				minix-sys
 ./usr/man/man3/getmaxy.3				minix-sys
 ./usr/man/man3/getmaxyx.3				minix-sys
