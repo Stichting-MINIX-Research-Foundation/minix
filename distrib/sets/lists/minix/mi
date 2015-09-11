@@ -2340,6 +2340,7 @@
 ./usr/man/man1/basename.1		minix-sys
 ./usr/man/man1/bdes.1			minix-sys
 ./usr/man/man1/bg.1			minix-sys
+./usr/man/man1/bpm.1			minix-sys
 ./usr/man/man1/break.1			minix-sys	obsolete
 ./usr/man/man1/bsdtar.1			minix-sys
 ./usr/man/man1/bsfilt.1			minix-sys
@@ -2557,6 +2558,11 @@
 ./usr/man/man1/pathchk.1		minix-sys
 ./usr/man/man1/pax.1			minix-sys
 ./usr/man/man1/ping.1                   minix-sys	obsolete
+./usr/man/man1/pkg_add.1		minix-sys
+./usr/man/man1/pkg_admin.1		minix-sys
+./usr/man/man1/pkg_create.1		minix-sys
+./usr/man/man1/pkg_delete.1		minix-sys
+./usr/man/man1/pkg_info.1		minix-sys
 ./usr/man/man1/pkg_view.1		minix-sys	obsolete
 ./usr/man/man1/playwave.1		minix-sys
 ./usr/man/man1/popd.1			minix-sys
@@ -5339,10 +5345,13 @@
 ./usr/preserve				minix-sys
 ./usr/run				minix-sys
 ./usr/sbin				minix-sys
+./usr/sbin/audit-packages		minix-sys
+./usr/sbin/bpm				minix-sys
 ./usr/sbin/btrace			minix-sys
 ./usr/sbin/chown			minix-sys
 ./usr/sbin/chroot			minix-sys
 ./usr/sbin/diskctl			minix-sys
+./usr/sbin/download-vulnerability-list	minix-sys
 ./usr/sbin/fbdctl			minix-sys
 ./usr/sbin/group			minix-sys
 ./usr/sbin/groupadd			minix-sys
@@ -5358,6 +5367,11 @@
 ./usr/sbin/mkproto			minix-sys
 ./usr/sbin/mtree			minix-sys
 ./usr/sbin/newfs_mfs			minix-sys
+./usr/sbin/pkg_add			minix-sys
+./usr/sbin/pkg_admin			minix-sys
+./usr/sbin/pkg_create			minix-sys
+./usr/sbin/pkg_delete			minix-sys
+./usr/sbin/pkg_info			minix-sys
 ./usr/sbin/postinstall			minix-sys
 ./usr/sbin/pwd_mkdb			minix-sys
 ./usr/sbin/rdate			minix-sys
