@@ -1,5 +1,8 @@
 # /etc/rc - System startup script run by init before going multiuser.
 
+# Are we booting from CD?
+bootcd="`/bin/sysenv bootcd`"
+
 exec >/dev/log
 exec 2>/dev/log
 exec </dev/null
@@ -64,7 +67,7 @@ edit()
     if [ ! -x $binlocation ]
     then	binlocation=/sbin/$service
     fi
-    service $opt edit $binlocation -label $service "$@" 
+    service $opt edit $binlocation -label $service "$@"
 }
 
 while getopts 'saf' opt
@@ -87,6 +90,11 @@ esac
 
 case $action in
 autoboot|start)
+    # If booting from CD, we want some directories to be ramdisks
+    if [ ! -z "$bootcd" ]
+    then
+	. /etc/rc.cd
+    fi
 
     # National keyboard?
     test -f /etc/keymap && loadkeys /etc/keymap
@@ -106,7 +114,8 @@ autoboot|start)
     # Set timezone.
     export TZ=GMT0
     if [ -f "$RC_TZ" ]
-    then . "$RC_TZ"
+    then
+         . "$RC_TZ"
     fi
 
     # Start real time clock driver & set system time, otherwise default date.
@@ -114,11 +123,10 @@ autoboot|start)
     readclock -q || date 201301010000
 
     # We are not shutting down.
-    rm -f /etc/nologin
-
-    # Initialize files.
-    >/var/run/utmp				# /etc/utmp keeps track of logins
-    >/var/run/utmpx				# /etc/utmpx keeps track of logins
+    if [ -f /etc/nologin ]
+    then
+        rm -f /etc/nologin
+    fi
 
     # Use MFS binary only from kernel image?
     if [ "`sysenv bin_img`" = 1 ]
@@ -126,24 +134,17 @@ autoboot|start)
         bin_img="-i "
     fi
 
-    # Are we booting from CD?
-    bootcd="`/bin/sysenv bootcd`"
-
-    # If booting from CD, mounting is a special case.
-    # We know what to do - only /usr is mounted and it's readonly.
-    if [ "$bootcd" = 1 ]
-    then	usrdev="$cddev"p2
-    		echo "/usr on cd is $usrdev"
-		mount -r $usrdev /usr
-    else	
-    # If we're not booting from CD, fsck + mount using /etc/fstab.
-		fsck -x / $fflag $fsckopts
-		mount -a
-    fi
+    # fsck + mount using /etc/fstab.
+    fsck -x / $fflag $fsckopts
+    mount -a
 
     # Unmount and free now defunct ramdisk
     umount /dev/imgrd > /dev/null || echo "Failed to unmount boot ramdisk"
     ramdisk 0 /dev/imgrd || echo "Failed to free boot ramdisk"
+
+    # Initialize files.
+    >/var/run/utmp				# /etc/utmp keeps track of logins
+    >/var/run/utmpx				# /etc/utmpx keeps track of logins
 
     # Edit settings for boot system services
     if [ "`sysenv skip_boot_config`" != 1 ]
@@ -197,18 +198,18 @@ down|stop)
     if [ -f /var/run/devmand.pid ]
     then
 	kill -INT `cat /var/run/devmand.pid`
-	# without this delay the following will 
+	# without this delay the following will
 	# be printed in the console
 	# RS: devman not running?
 	sleep 1
     fi
     #
-    # usbd needs to be stopped exactly 
+    # usbd needs to be stopped exactly
     # at this stage(before stopping devman
     # and after stopping the services
     # stated by devmand)
     if [ -x /usr/pkg/etc/rc.d/usbd ]
-    then 
+    then
 	/usr/pkg/etc/rc.d/usbd stop
     fi
 

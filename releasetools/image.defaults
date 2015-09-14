@@ -1,0 +1,19 @@
+: ${OBJ=../obj.${ARCH}}
+: ${CROSS_TOOLS=${OBJ}/"tooldir.`uname -s`-`uname -r`-`uname -m`"/bin}
+: ${CROSS_PREFIX=${CROSS_TOOLS}/${TOOLCHAIN_TRIPLET}}
+: ${JOBS=1}
+: ${DESTDIR=${OBJ}/destdir.$ARCH}
+: ${RELEASEDIR=${OBJ}/releasedir/$ARCH/binary}
+: ${RELEASETOOLSDIR=./releasetools/}
+: ${BUILDVARS=}
+: ${CREATE_IMAGE_ONLY=0}
+: ${RELEASE_VERSION=$(sh sys/conf/osrelease.sh)}
+
+: ${WORK_DIR=${OBJ}/work}
+: ${SETS_DIR=${OBJ}/releasedir/${ARCH}/binary/sets}
+
+: ${PACKAGE_DIR=}
+: ${PKG_INFO=pkg_info}
+: ${BUNDLE_PACKAGES=}
+
+: ${ASR_HACK=0}

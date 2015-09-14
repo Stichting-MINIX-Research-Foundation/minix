@@ -70,12 +70,13 @@ char *argv[];
 	v = fsversion(device, "mount");
 	switch (v) {
 		case FSVERSION_MFS1:
-		case FSVERSION_MFS2: 
-		case FSVERSION_MFS3: type = MINIX_FS_TYPE; break;		
+		case FSVERSION_MFS2:
+		case FSVERSION_MFS3: type = MINIX_FS_TYPE; break;
 		case FSVERSION_EXT2: type = "ext2"; break;
+		case FSVERSION_ISO9660: type = "isofs"; break;
 	}
   }
-  
+
   if (minix_mount(device, argv[2], mountflags, srvflags, type, args) < 0) {
 	err = strerror(errno);
 	fprintf(stderr, "mount: Can't mount %s on %s: %s\n",
@@ -146,11 +147,11 @@ mount_all()
 		}
 
 		device = fs->fs_spec;
-		/* passing a null string for block special device means don't 
-		 * use a device at all and this is what we need to do for 
+		/* passing a null string for block special device means don't
+		 * use a device at all and this is what we need to do for
 		 * entries starting with "none"
 		 */
-		if (!strcmp(device, "none")) 
+		if (!strcmp(device, "none"))
 			device = NULL;
 
 		if (minix_mount(device, mountpoint, mountflags, 0, fs->fs_vfstype,

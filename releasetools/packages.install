@@ -19,7 +19,6 @@ p5-MailTools-
 p5-Error-
 p5-Email-Valid-1
 p5-Authen-SASL-2
-expat-
 curl-
 python27-
 libxml2-
@@ -43,7 +42,6 @@ tegaki-zinnia-japanese-kyoiku-
 ucon64-
 unzoo-
 zoo-
-wwwcount-
 z80-asm-
 zombies-
 bootstrap-mk-files-
@@ -54,7 +52,6 @@ zsh-
 zsync-
 zzuf-
 buffer-
-p5-XML-Parser-2
 intltool-
 readline-
 libtool-base-
