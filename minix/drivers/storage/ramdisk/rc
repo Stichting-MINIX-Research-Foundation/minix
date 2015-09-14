@@ -54,8 +54,11 @@ fi
 
 if /bin/sysenv rootdevname >/dev/null
 then	rootdevname=/dev/`/bin/sysenv rootdevname`
-else	echo "rootdevname not set"
-	exit 1
+else
+	if ! sysenv cdproberoot >/dev/null
+	then	echo "rootdevname not set"
+		exit 1
+	fi
 fi
 
 if [ "`sysenv bin_img`" = 1 ]
@@ -65,14 +68,12 @@ fi
 
 if sysenv cdproberoot >/dev/null
 then
-	echo 
+	echo
 	echo 'Looking for boot CD. This may take a minute.'
 	echo 'Please ignore any error messages.'
 	echo
-	cddev=`cdprobe` || { echo 'No CD found'; exit 1; }
-	export cddev
-	echo "Loading ramdisk from ${cddev}p1"
-	loadramdisk "$cddev"p1
+	rootdevname=$(cdprobe) || { echo 'No CD found'; exit 1; }
+	export rootdevname
 elif [ "$rootdevname" = "/dev/ram" ]
 then
 	ramimagename=/dev/`/bin/sysenv ramimagename`
@@ -81,8 +82,12 @@ then
 fi
 
 echo "Root device name is $rootdevname"
-if [ -e $FSCK ]
-then	$FSCK -p $rootdevname
+
+if ! sysenv cdproberoot >/dev/null
+then
+	if [ -e $FSCK ]
+	then	$FSCK -p $rootdevname
+	fi
 fi
 
 # Change root from temporary boot ramdisk to the configure

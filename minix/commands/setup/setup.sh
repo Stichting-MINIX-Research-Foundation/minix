@@ -15,8 +15,7 @@ ROOTSECTS="`expr $ROOTMB '*' 1024 '*' 2`"
 BOOTXXSECTS=32
 USRKB="`du -sxk /usr | awk '{ print $1 }'`"
 TOTALMB="`expr 3 + $USRKB / 1024 + $ROOTMB`"
-ROOTFILES="`find -x / | wc -l`"
-USRFILES="`find -x /usr | wc -l`"
+TOTALFILES="`find -x / | wc -l`"
 
 # /usr/install isn't copied onto the new system; compensate
 INSTALLDIR=/usr/install
@@ -691,25 +690,35 @@ echo ""
 echo "All files will now be copied to your hard disk. This may take a while."
 echo ""
 
-mount /dev/$usr /mnt >/dev/null || exit		# Mount the intended /usr.
-
-(cd /usr || exit 1
- list="`ls | fgrep -v install`"
-	pax -rw -pe -v $list /mnt 2>&1
-) | progressbar "$USRFILES" || exit	# Copy the usr floppy.
-
-umount /dev/$usr >/dev/null || exit		# Unmount the intended /usr.
 mount /dev/$root /mnt >/dev/null || exit
+mkdir -p /mnt/usr
+mount /dev/$usr /mnt/usr >/dev/null || exit		# Mount the intended /usr.
+if [ "$nohome" = 0 ]; then
+	mkdir -p /mnt/home
+	mount /dev/$home /mnt/home >/dev/null || exit		# Mount the intended /home
+fi
 
 # Running from the installation CD.
-pax -rw -pe -vX / /mnt 2>&1 | progressbar "$ROOTFILES" || exit
-chmod o-w /mnt/usr
+for set in /i386/binary/sets/*.tgz; do
+	echo "Extracting $(basename "$set")..."
+	COUNT_FILES=$(cat $(echo "$set" | sed -e "s/\.tgz/\.count/"))
+	(cd /mnt; pax -rz -f $set -v -pe 2>&1 | progressbar "$COUNT_FILES" || exit)
+done;
+
+echo "Creating device nodes..."
+(cd /mnt/dev; MAKEDEV -s all)
+
+# Fix permissions
+chmod $(stat -f %Lp /usr) /mnt/usr
+chown $(stat -f %u /usr) /mnt/usr
+chgrp $(stat -f %g /usr) /mnt/usr
+if [ "$nohome" = 0 ]; then
+	chmod $(stat -f %Lp /home) /mnt/home
+	chown $(stat -f %u /home) /mnt/home
+	chgrp $(stat -f %g /home) /mnt/home
+fi
+
 cp /mnt/etc/motd.install /mnt/etc/motd
-
-
-# Fix /var/log
-rm /mnt/var/log
-ln -s /usr/log /mnt/var/log
 
 # CD remnants that aren't for the installed system
 rm /mnt/etc/issue /mnt/CD /mnt/.* 2>/dev/null
@@ -722,8 +731,6 @@ none		/dev/pts	ptyfs	rw,rslabel=ptyfs	0	0"
 					# National keyboard map.
 test -n "$keymap" && cp -p "/usr/lib/keymaps/$keymap.map" /mnt/etc/keymap
 
-# Make bootable.
-mount /dev/$usr /mnt/usr >/dev/null || exit
 # XXX we have to use "-f" here, because installboot worries about BPB, which
 # we don't have...
 installboot_nbsd -f /dev/$primary /usr/mdec/bootxx_minixfs3 >/dev/null || exit
@@ -755,12 +762,37 @@ echo ""
 
 /bin/netconf -p /mnt || echo FAILED TO CONFIGURE NETWORK
 
+PACKAGES_DIR="/usr/packages/$(uname -v | cut -f2 -d' ')/$(uname -p)/All"
+if [ -e "$PACKAGES_DIR" ]
+then
+	echo "Installing pkgin..."
+
+	sh -c "cp $PACKAGES_DIR/pkgin-* $PACKAGES_DIR/pkg_install-* $PACKAGES_DIR/openssl-* /mnt/tmp &&
+	 chroot /mnt pkg_add /tmp/openssl-* /tmp/pkg_install-* /tmp/pkgin-*"
+	rm -f /mnt/tmp/*
+
+	if [ -f "$PACKAGES_DIR/pkg_summary.bz2" ]
+	then
+		echo ""
+		echo "Packages are bundled on this installation media."
+		echo "They are available under the directory $PACKAGES_DIR"
+		echo "To install them after rebooting, mount this CD, set PKG_PATH to this directory"
+		echo "and use pkg_add."
+		echo "If you mount the CD at /mnt, PKG_PATH should be:"
+		echo "/mnt$PACKAGES_DIR"
+		echo ""
+	fi
+fi
+
 umount /dev/$usr && echo Unmounted $usr
 umount /dev/$root && echo Unmounted $root
+if [ "$nohome" = 0 ]; then
+	umount /dev/$home && echo Unmounted $home
+fi
 
 echo "
-Please type 'reboot' to exit MINIX 3 and reboot. To boot into your new
-system, you might have to remove installation media.
+Please type 'shutdown -r now' to exit MINIX 3 and reboot. To boot into
+your new system, you might have to remove the installation media.
 
 This ends the MINIX 3 setup script.  You may want to take care of post
 installation steps, such as local testing and configuration.

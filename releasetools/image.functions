@@ -1,0 +1,349 @@
+
+#
+# spec file handling
+#
+
+#
+# Add a directory to a spec file
+#
+# $1 : directory to add
+# $2 : spec file
+add_dir_spec() {
+	echo "./$1 type=dir uid=0 gid=0 mode=0755" >> ${WORK_DIR}/$2
+}
+
+#
+# Add a file to a spec file
+#
+# $1 : file to add
+# $2 : spec file
+add_file_spec() {
+	echo "./$1 type=file uid=0 gid=0 mode=0755 size=$(wc -c < ${ROOT_DIR}/${1})" >> ${WORK_DIR}/$2
+}
+
+#
+# Add a symbolic link to a spec file
+#
+# $1 : symlink to add
+# $2 : link to
+# $3 : spec file
+add_link_spec() {
+	echo "./$1 type=link uid=0 gid=0 mode=0755 link=$2" >> ${WORK_DIR}/$3
+}
+
+#
+# workdir handling
+#
+
+#
+# Create the workdir (a directory where Minix is built using sets)
+# spec files are put in WORK_DIR, the file system created in ROOT_DIR
+#
+# $1 : sets to extract
+build_workdir() {
+	# Extract sets
+	mkdir ${ROOT_DIR}
+	for set in $1; do
+		if [ ! -e ${SETS_DIR}/${set}.tgz ]; then
+			echo "Missing ${SETS_DIR}/${set}.tgz, aborting"
+			echo "Are the release sets tarballs created?"
+			exit 1
+		fi
+		echo " * Extracting $set..."
+		(cd ${ROOT_DIR}; ${CROSS_TOOLS}/nbpax -rnz -f ${SETS_DIR}/${set}.tgz .)
+	done
+
+	# Build login/password files
+	${CROSS_TOOLS}/nbpwd_mkdb -V 0 -p -d ${ROOT_DIR} ${ROOT_DIR}/etc/master.passwd
+
+	# Build specifications files
+	cp ${ROOT_DIR}/etc/mtree/set* ${WORK_DIR}
+	${ROOT_DIR}/usr/bin/MAKEDEV -s -m all >> ${WORK_DIR}/extra.dev
+}
+
+#
+# Add tarball sets to the workdir (for installation CD)
+#
+workdir_add_sets() {
+	# Add sets to the root
+	mkdir ${ROOT_DIR}/${ARCH}; add_dir_spec "${ARCH}" extra.sets
+	mkdir ${ROOT_DIR}/${ARCH}/binary; add_dir_spec "${ARCH}/binary" extra.sets
+	mkdir ${ROOT_DIR}/${ARCH}/binary/sets; add_dir_spec "${ARCH}/binary/sets" extra.sets
+
+	DEST_SETS_DIR="${ARCH}/binary/sets"
+	for set in ${SETS_DIR}/*.tgz; do
+		# Copy set itself
+		cp ${set} ${ROOT_DIR}/${DEST_SETS_DIR}
+		add_file_spec "${DEST_SETS_DIR}/$(basename ${set})" extra.sets
+
+		# Add file count
+		COUNT_SRC=$(echo $(basename ${set}) | sed -e "s/\(.*\)\.tgz/\set.\1/")
+		COUNT_NAME=$(echo $(basename ${set}) | sed -e "s/\.tgz/\.count/")
+		if [ -e "${DESTDIR}/etc/mtree/${COUNT_SRC}" ]
+		then
+			wc -l < ${DESTDIR}/etc/mtree/${COUNT_SRC} > ${ROOT_DIR}/${DEST_SETS_DIR}/${COUNT_NAME}
+		else
+			# Can't find mtree file, set bogus number
+			echo 1 > ${ROOT_DIR}/${DEST_SETS_DIR}/${COUNT_NAME}
+		fi
+		add_file_spec "${DEST_SETS_DIR}/${COUNT_NAME}" extra.sets
+	done
+
+	# Add checksums
+	cp ${SETS_DIR}/MD5 ${ROOT_DIR}/${DEST_SETS_DIR}
+	add_file_spec "${DEST_SETS_DIR}/MD5" extra.sets
+	cp ${SETS_DIR}/SHA512 ${ROOT_DIR}/${DEST_SETS_DIR}
+	add_file_spec "${DEST_SETS_DIR}/SHA512" extra.sets
+}
+
+#
+# Add CD boot files to the workdir
+#
+workdir_add_cdfiles() {
+	# Add boot monitor
+	cp ${DESTDIR}/usr/mdec/boot_monitor ${ROOT_DIR}/minixboot
+	add_file_spec "minixboot" extra.cdfiles
+
+	# Add README
+	cp releasetools/release/cd/README.TXT ${ROOT_DIR}/README.TXT
+	add_file_spec "README.TXT" extra.cdfiles
+}
+
+#
+# Extract kernel to designated directory
+#
+# $1: Directory where to extract
+workdir_add_kernel()
+{
+	(cd ${ROOT_DIR}; ${CROSS_TOOLS}/nbpax -rnz -f ${SETS_DIR}/minix-kernel.tgz .)
+
+	# Move kernel files to the correct directory
+	if [ ! -d ${ROOT_DIR}/boot/$1 ]
+	then
+		mkdir ${ROOT_DIR}/boot/$1
+		add_dir_spec "boot/$1" extra.kernel
+	fi
+
+	mv ${ROOT_DIR}/boot/minix/.temp/* ${ROOT_DIR}/boot/$1
+	rm -rf ${ROOT_DIR}/boot/minix/.temp
+	for i in $(cd ${ROOT_DIR}/boot/$1 && echo *)
+	do
+		add_file_spec "boot/$1/$i" extra.kernel
+	done
+}
+
+#
+# Read METALOG and use mtree to convert the user and group names into uid and gids.
+# Used as the reference mtree for building file systems.
+#
+create_input_spec()
+{
+	cat ${WORK_DIR}/set* ${WORK_DIR}/extra* | ${CROSS_TOOLS}/nbmtree -N ${ROOT_DIR}/etc -C -K device > ${WORK_DIR}/input
+
+	if [ ${ASR_HACK} -eq 1 ]
+	then
+		# Hacky workaround for ASR-randomized service binaries since they don't get nicely packaged in a tarball
+		# add any generated ASR-randomized service binaries (but not their root directory, which is already there)
+		# TODO: apply stricter file permissions for both these and the base /service binaries, against local attacks
+		(cd ${DESTDIR} && find ./usr/service/asr -type d | sed '1d;s/$/ type=dir uid=0 gid=0 mode=0755/') >> ${WORK_DIR}/input
+		(cd ${DESTDIR} && find ./usr/service/asr -type f | sed 's/$/ type=file uid=0 gid=0 mode=0755/') >> ${WORK_DIR}/input
+		cp -r ${DESTDIR}/usr/service/asr ${ROOT_DIR}/usr/service
+	fi
+}
+
+#
+# Split mtree into partitions and create proto files for nbmkfs.mfs
+#
+# $1 : partitions to create (example: usr home)
+create_protos()
+{
+	# build filter
+	FILTER_COMMAND="cat ${WORK_DIR}/input"
+	for i in $1
+	do
+		FILTER_COMMAND="$FILTER_COMMAND | grep -v \"^./$i/\" "
+	done
+
+	# fill root.img (skipping entries inside partitions while keeping partition mount points)
+	eval $FILTER_COMMAND | ${CROSS_TOOLS}/nbtoproto -b ${ROOT_DIR} -o ${WORK_DIR}/proto.root
+
+	# create proto files for partitions using toproto
+	for i in $1
+	do
+		cat ${WORK_DIR}/input | grep  "^\./$i/\|^. " | sed "s,\./$i,\.,g" | ${CROSS_TOOLS}/nbtoproto -b ${ROOT_DIR}/$i -o ${WORK_DIR}/proto.$i
+	done
+}
+
+#
+# Bundle packages (won't preinstall them)
+#
+# $1 : packages to bundle
+bundle_packages()
+{
+	if [ -z "$1" ]
+	then
+		return
+	fi
+
+	if [ -z $PACKAGE_DIR ]
+	then
+		echo "Error: PACKAGE_DIR is not set while trying to bundle packages."
+		echo "Please fetch binary packages to bundle and set PACKAGE_DIR to continue."
+		exit 1
+	fi
+
+	DESTPACKAGES="usr/packages/$RELEASE_VERSION/$ARCH/All"
+	RELEASEPACKAGE="${ROOT_DIR}/$DESTPACKAGES"
+	index=pkg_summary
+
+	# create directories
+	mkdir -p $RELEASEPACKAGE
+	add_dir_spec "usr/packages" extra.pkgsrc
+	add_dir_spec "usr/packages/$RELEASE_VERSION" extra.pkgsrc
+	add_dir_spec "usr/packages/$RELEASE_VERSION/$ARCH" extra.pkgsrc
+	add_dir_spec "usr/packages/$RELEASE_VERSION/$ARCH/All" extra.pkgsrc
+	add_link_spec "packages" "usr/packages" extra.pkgsrc
+	for pkgprefix in $1
+	do
+		realfn=$(echo $PACKAGE_DIR/${pkgprefix}*.tgz | cut -d' ' -f1)
+		if [ -f "$realfn" ]
+		then
+			# Copy package
+			p="$(basename $realfn)"
+			echo " * Bundling $p..."
+			cp "$realfn" "$RELEASEPACKAGE/$p"
+			add_file_spec "$DESTPACKAGES/$p" extra.pkgsrc
+		else
+			echo "Error: Can't find $pkgprefix in directory $PACKAGE_DIR for bundling package."
+			exit 1
+		fi
+	done
+
+	if [ -x "$(which $PKG_INFO)" ]
+	then
+		# Create packages index
+		echo " * Generating package index..."
+		indexname=$indexpath/$p.$index
+		$PKG_INFO -X $RELEASEPACKAGE/*.tgz >> $RELEASEPACKAGE/$index
+
+		# Compress index
+		echo " * Compressing index..."
+		bzip2 -f $RELEASEPACKAGE/$index
+		add_file_spec "$DESTPACKAGES/$index.bz2" extra.pkgsrc
+	else
+		echo " * Skipping package index generation."
+		echo "   PKG_INFO ("$(which $PKG_INFO)") not executable."
+	fi
+}
+
+#
+# stuff executed automatically to set up environment
+#
+
+usage() {
+	echo "Usage: $0 [options]"
+	echo "  -X xsrc       Build with X11 located in \"xsrc\" and extract its sets for image"
+	echo "                (do not automatically extract for installation CD)"
+	echo "  -b            Add ASR service binaries to the image"
+	echo "                (said binaries must be built beforehand)"
+	echo ""
+	echo "Environment variables:"
+	echo "  CREATE_IMAGE_ONLY     If set to 1, skip invocation of build.sh (default: 0)"
+	echo "  JOBS                  Number of CPUs to use for build.sh to use (default: 1)"
+	echo "  SETS                  Sets to extract for image (default: depends on script)"
+	echo "  BUILDVARS             Extra options passed to build.sh (default: none)"
+	echo ""
+	echo "  PACKAGE_DIR           Path to packages to bundle (default: none)"
+	echo "  BUNDLE_PACKAGES       List of packages to bundle (default: none)"
+	echo "  PKG_INFO              Path to 'pkg_info' for bundling (default: pkg_info)"
+}
+
+# parse options
+while getopts "iX:bh" c
+do
+	case "$c" in
+		i)	echo "This method of generating the ISO installation media is obsolete."
+			echo "Run ./releasetools/x86_cdimage.sh instead."
+			exit 1;;
+
+		X)	# we don't want to extract X sets by default for the installation CD
+			if [ $0 != "releasetools/x86_cdimage.sh" ]
+			then
+				SETS="$SETS xbase xcomp xetc xfont xserver"
+			fi
+			MKX11=yes
+			export MKX11
+			BUILDVARS="$BUILDVARS -X $OPTARG";;
+
+		b)      # bitcode build: increase partition sizes
+			ROOT_SIZE="$((${ROOT_SIZE} + 192*(2**20) / 512))"
+			USR_SIZE="$((${USR_SIZE} + 256*(2**20) / 512))"
+			ASR_HACK=1;;
+
+		h)	usage
+			exit 0;;
+
+		:)	usage
+			exit 2;;
+
+		\?)
+			usage
+			exit 2;;
+	esac
+done
+
+#
+# Are we going to build the minix sources?
+#
+
+if [ ${CREATE_IMAGE_ONLY} -eq 1 ]
+then
+	if [ ! -d ${DESTDIR} ]
+	then
+		echo "Minix source code doesn't appear to have been built."
+		echo "Please try with \$CREATE_IMAGE_ONLY set to 0."
+		exit 1
+	fi
+	if [ ! -d ${RELEASEDIR} ]
+	then
+		echo "Minix release tarball sets don't appear to have been created."
+		echo "Please try with \$CREATE_IMAGE_ONLY set to 0."
+		exit 1
+	fi
+	# FIXME: this won't change anything for tarballs
+	#${CROSS_TOOLS}/nbmake-i386 -C releasetools do-hdboot
+else
+	echo "Going to build Minix source code..."
+	#
+	# Remove the generated files to allow us call build.sh without '-V SLOPPY_FLIST=yes'.
+	#
+	rm -f ${FSTAB}
+
+	#
+	# Now start the build.
+	#
+	sh ${BUILDSH} -j ${JOBS} -m ${ARCH} -O ${OBJ} -D ${DESTDIR} ${BUILDVARS} -U -u release
+
+fi
+
+# sanity check
+if [ -d "${WORK_DIR}/.git" ]
+then
+	echo "WORK_DIR directory has a Git repository in it, abort!"
+	exit 1
+fi
+
+# clean working directory
+if [ -e "${WORK_DIR}" ]
+then
+	rm -rf "${WORK_DIR}"
+fi
+mkdir -p ${WORK_DIR}
+
+# get absolute paths to those directories
+CROSS_TOOLS=$(cd ${CROSS_TOOLS} && pwd)
+DESTDIR=$(cd ${DESTDIR} && pwd)
+OBJ=$(cd ${OBJ} && pwd)
+SETS_DIR=$(cd ${SETS_DIR} && pwd)
+WORK_DIR=$(cd ${WORK_DIR} && pwd)
+ROOT_DIR=${WORK_DIR}/fs

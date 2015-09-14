@@ -178,6 +178,11 @@ start|autoboot)
     	cat < $RANDOM_FILE >/dev/random
     	# overwrite $RANDOM_FILE. We don't want to use this data again
     	dd if=/dev/random of=$RANDOM_FILE bs=1024 count=1 2> /dev/null
+    else
+	# We couldn't find the old state to restart from, so use a binary
+	# file and the current date instead, even if this is less than ideal.
+	cat /bin/sh >> /dev/urandom
+	date >> /dev/urandom
     fi
 
     # start network driver instances for all configured ethernet devices

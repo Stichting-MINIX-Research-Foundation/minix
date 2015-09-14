@@ -1,4 +1,4 @@
-boot 
+boot
 0 0
 d--755 0 0
 	bin d--755 0 0
@@ -25,6 +25,7 @@ d--755 0 0
 #if RAMDISK_SMALL == 1
 		ext2 ---755 0 0 ext2
 #endif
+		isofs ---755 0 0 isofs
 #endif
 #ifdef __arm__
 		mmc ---755 0 0 mmc
