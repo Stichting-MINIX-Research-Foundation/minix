@@ -38,7 +38,7 @@ main(int argc, char *argv[])
 		return 1;
 	}
 
-	fprintf(stderr, "size on %s set to %ldkB\n", d, size/KFACTOR);
+	fprintf(stdout, "size on %s set to %ldkB\n", d, size/KFACTOR);
 
 	return 0;
 }
