@@ -331,6 +331,7 @@
 ./usr/bin/fix				minix-sys
 ./usr/bin/flex++			minix-sys
 ./usr/bin/flex				minix-sys
+./usr/bin/flock				minix-sys
 ./usr/bin/fold				minix-sys
 ./usr/bin/format			minix-sys
 ./usr/bin/fpr				minix-sys
@@ -2405,6 +2406,7 @@
 ./usr/man/man1/finger.1			minix-sys
 ./usr/man/man1/flex.1			minix-sys
 ./usr/man/man1/flexdoc.1		minix-sys
+./usr/man/man1/flock.1			minix-sys
 ./usr/man/man1/fold.1			minix-sys
 ./usr/man/man1/for.1			minix-sys	obsolete
 ./usr/man/man1/format.1			minix-sys
