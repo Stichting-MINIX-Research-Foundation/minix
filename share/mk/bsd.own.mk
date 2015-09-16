@@ -119,11 +119,16 @@ USETOOLS?=	never
        MACHINE:= i386
 .    endif
 # LSC FIXME: On a native ARM system MACHINE_ARCH is earmv7 instead of earm...
-.    if !empty(${MACHINE_ARCH:Mearm*})
+.    if !empty(MACHINE_ARCH:Mearm*)
        MACHINE_ARCH:= earm
 .    endif
 .  endif # !defined(HOSTPROG) && !defined(HOSTLIB)
 .endif # __uname_s == "Minix"
+
+# LSC FIXME: RELEASEMACHINEDIR is set to evbarm, instead of evbearm-el
+.if !empty(MACHINE:Mevbarm*)
+RELEASEMACHINEDIR:= evbearm-el
+.endif
 
 .if ${HAVE_GCC:Dyes} == "yes" || \
     (${MKGCCCMDS:Uno} == "yes" && ${MKLLVM:Uyes} == "no")
