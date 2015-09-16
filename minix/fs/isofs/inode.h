@@ -32,30 +32,40 @@ struct rrii_dir_record {
 	mode_t d_mode;          /* file mode */
 	uid_t uid;              /* user ID of the file's owner */
 	gid_t gid;              /* group ID of the file's group */
-	dev_t rdev;             /* device ID */
+	dev_t rdev;             /* device major/minor */
 
 	char file_id_rrip[ISO9660_RRIP_MAX_FILE_ID_LEN];        /* file name */
 	char slink_rrip[ISO9660_RRIP_MAX_FILE_ID_LEN];          /* symbolic link */
+
+	struct inode *reparented_inode;
 } ;
 
 struct dir_extent {
 	/*
 	 * Extent (contiguous array of logical sectors).
 	 */
-	char in_use;
 	u32_t location;
 	u32_t length;
 	struct dir_extent *next;
 } ;
 
+struct inode_dir_entry {
+	struct inode *i_node;
+	char *name;                     /* Pointer to real name */
+	char i_name[ISO9660_MAX_FILE_ID_LEN+1]; /* ISO 9660 name */
+	char *r_name;                   /* Rock Ridge name */
+} ;
+
 struct inode {
 	int i_count;                    /* usage counter of this inode */
+	int i_refcount;                 /* reference counter of this inode */
 	int i_mountpoint;               /* flag for inode being used as a mount point */
-	int ea_length;	                /* total size of extended attributes in bytes */
 	struct stat i_stat;             /* inode properties */
-	struct dir_extent *extent;      /* first extent of file */
-	char i_name[NAME_MAX];          /* inode name */
-	char s_link[NAME_MAX];          /* symbolic link target */
+	struct dir_extent extent;      /* first extent of file */
+	struct inode_dir_entry *dir_contents;	/* contents of directory */
+	size_t dir_size;                /* number of inodes in this directory */
+	char *s_name;                   /* Rock Ridge symbolic link */
+	int skip;                       /* skip inode because of reparenting */
 } ;
 
 struct opt {

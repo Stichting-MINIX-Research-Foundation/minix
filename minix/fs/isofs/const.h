@@ -3,14 +3,10 @@
 
 #define ISO9660_STANDARD_ID     "CD001" /* Standard code for ISO9660 FS */
 
-#define NR_INODE_RECORDS        64
-#define NR_DIR_EXTENT_RECORDS   NR_INODE_RECORDS * 16
-
-#define NO_ADDRESS (-1)         /* Error constants */
-#define NO_FREE_INODES (-1)
-
-#define PATH_PENULTIMATE 001    /* parse_path stops at last but one name */
-#define PATH_NONSYMBOLIC 004    /* parse_path scans final name if symbolic */
+/* Filesystem options support */
+#define ISO9660_OPTION_ROCKRIDGE
+/* TODO: Make MODE3 working. */
+/*#define ISO9660_OPTION_MODE3*/
 
 /* Below there are constant of the ISO9660 fs */
 #define ISO9660_SUPER_BLOCK_POSITION    32768
