@@ -1,0 +1,75 @@
+#
+# Sorted using sort_set.pl in releasetools.
+# to add an entry simply add it at the end of the
+# file and run
+# ../../../../releasetools/sort_set.pl < mi > out
+# mv out mi
+#
+.                                                       minix-games
+./etc                                                   minix-games
+./etc/mtree                                             minix-games
+./etc/mtree/set.minix-games                             minix-games
+./usr                                                   minix-games
+./usr/games                                             minix-games
+./usr/games/adventure                                   minix-games
+./usr/games/arithmetic                                  minix-games
+./usr/games/banner                                      minix-games
+./usr/games/bcd                                         minix-games
+./usr/games/caesar                                      minix-games
+./usr/games/colorbars                                   minix-games
+./usr/games/factor                                      minix-games
+./usr/games/fish                                        minix-games
+./usr/games/fortune                                     minix-games
+./usr/games/hide                                        minix-games
+./usr/games/monop                                       minix-games
+./usr/games/morse                                       minix-games
+./usr/games/number                                      minix-games
+./usr/games/pig                                         minix-games
+./usr/games/ppt                                         minix-games
+./usr/games/primes                                      minix-games
+./usr/games/rain                                        minix-games
+./usr/games/random                                      minix-games
+./usr/games/rogue                                       minix-games
+./usr/games/rot13                                       minix-games
+./usr/games/snake                                       minix-games
+./usr/games/snscore                                     minix-games
+./usr/games/strfile                                     minix-games
+./usr/games/tetris                                      minix-games
+./usr/games/unstr                                       minix-games
+./usr/games/wargames                                    minix-games
+./usr/share                                             minix-games
+./usr/share/games                                       minix-games
+./usr/share/games/fish.instr                            minix-games
+./usr/share/games/fortune                               minix-games
+./usr/share/games/fortune/farber                        minix-games
+./usr/share/games/fortune/farber.dat                    minix-games
+./usr/share/games/fortune/fortunes-o                    minix-games
+./usr/share/games/fortune/fortunes-o.dat                minix-games
+./usr/share/games/fortune/fortunes                      minix-games
+./usr/share/games/fortune/fortunes.dat                  minix-games
+./usr/share/games/fortune/fortunes2-o                   minix-games
+./usr/share/games/fortune/fortunes2-o.dat               minix-games
+./usr/share/games/fortune/fortunes2                     minix-games
+./usr/share/games/fortune/fortunes2.dat                 minix-games
+./usr/share/games/fortune/limerick-o                    minix-games
+./usr/share/games/fortune/limerick-o.dat                minix-games
+./usr/share/games/fortune/limerick                      minix-games
+./usr/share/games/fortune/limerick.dat                  minix-games
+./usr/share/games/fortune/netbsd-o                      minix-games
+./usr/share/games/fortune/netbsd-o.dat                  minix-games
+./usr/share/games/fortune/netbsd-tips                   minix-games
+./usr/share/games/fortune/netbsd-tips.dat               minix-games
+./usr/share/games/fortune/netbsd                        minix-games
+./usr/share/games/fortune/netbsd.dat                    minix-games
+./usr/share/games/fortune/startrek                      minix-games
+./usr/share/games/fortune/startrek.dat                  minix-games
+./usr/share/games/fortune/unamerican-o                  minix-games
+./usr/share/games/fortune/unamerican-o.dat              minix-games
+./usr/share/games/fortune/zippy                         minix-games
+./usr/share/games/fortune/zippy.dat                     minix-games
+./var                                                   minix-games
+./var/db                                                minix-games
+./var/db/obsolete                                       minix-games
+./var/db/obsolete/minix-games                           minix-games
+./var/games                                             minix-games
+./var/games/tetris.scores                               minix-games

@@ -14,7 +14,8 @@ set -e
 : ${OBJ=../obj.${ARCH}}
 : ${TOOLCHAIN_TRIPLET=i586-elf32-minix-}
 : ${BUILDSH=build.sh}
-: ${SETS="minix tests"}
+
+: ${SETS="minix-base minix-comp minix-games minix-man minix-tests tests"}
 : ${IMG=minix_x86.img}
 
 if [ ! -f ${BUILDSH} ]
@@ -59,16 +60,22 @@ add_file_spec "etc/fstab" extra.fstab
 cp ${DESTDIR}/usr/mdec/boot_monitor ${ROOT_DIR}/boot_monitor
 add_file_spec "boot_monitor" extra.boot
 
-# add_link_spec "boot/minix_latest" "minix_default" extra.kernel
-# workdir_add_kernel minix_default
-# workdir_add_kernel minix/$RELEASE_VERSION
+add_link_spec "boot/minix_latest" "minix_default" extra.kernel
+workdir_add_kernel minix_default
+workdir_add_kernel minix/$RELEASE_VERSION
 
 # add boot.cfg
 cat >${ROOT_DIR}/boot.cfg <<END_BOOT_CFG
 clear=1
 timeout=5
 default=2
-menu=Start MINIX 3:load_mods /boot/minix/.temp/mod*; multiboot /boot/minix/.temp/kernel rootdevname=c0d0p0
+menu=Start MINIX 3:load_mods /boot/minix_default/mod*; multiboot /boot/minix_default/kernel rootdevname=c0d0p0
+menu=Start latest MINIX 3:load_mods /boot/minix_latest/mod*; multiboot /boot/minix_latest/kernel rootdevname=c0d0p0
+menu=Start latest MINIX 3 in single user mode:load_mods /boot/minix_latest/mod*; multiboot /boot/minix_latest/kernel rootdevname=c0d0p0 bootopts=-s
+menu=Edit menu option:edit
+menu=Drop to boot prompt:prompt
+default=2
+menu=Start MINIX 3 ($RELEASE_VERSION):load_mods /boot/minix/$RELEASE_VERSION/mod*; multiboot /boot/minix/$RELEASE_VERSION/kernel rootdevname=c0d0p0
 END_BOOT_CFG
 add_file_spec "boot.cfg" extra.boot
 
@@ -79,11 +86,16 @@ echo "Creating specification files..."
 create_input_spec
 create_protos "usr home"
 
+# Clean image
+if [ -f ${IMG} ]	# IMG might be a block device
+then
+	rm -f ${IMG}
+fi
+
 #
 # Generate /root, /usr and /home partition images.
 #
 echo "Writing disk image..."
-rm -f "$IMG"
 ROOT_START=${BOOTXX_SECS}
 echo " * ROOT"
 _ROOT_SIZE=$(${CROSS_TOOLS}/nbmkfs.mfs -d ${ROOTSIZEARG} -I $((${ROOT_START}*512)) ${IMG} ${WORK_DIR}/proto.root)

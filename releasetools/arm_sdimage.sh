@@ -3,7 +3,7 @@ set -e
 
 #
 # This script creates a bootable image and should at some point in the future
-# be replaced by makefs.
+# be replaced by the proper NetBSD infrastructure.
 #
 
 #
@@ -21,28 +21,17 @@ fi
 
 : ${ARCH=evbearm-el}
 : ${OBJ=../obj.${ARCH}}
-: ${CROSS_TOOLS=${OBJ}/"tooldir.`uname -s`-`uname -r`-`uname -m`"/bin}
-: ${CROSS_PREFIX=${CROSS_TOOLS}/arm-elf32-minix-}
-: ${JOBS=1}
-: ${DESTDIR=${OBJ}/destdir.$ARCH}
-: ${RELEASETOOLSDIR=./releasetools/}
-: ${FSTAB=${DESTDIR}/etc/fstab}
+: ${TOOLCHAIN_TRIPLET=arm-elf32-minix-}
+: ${BUILDSH=build.sh}
+
+: ${SETS="minix-base minix-comp minix-games minix-man minix-tests tests"}
+: ${IMG=minix_arm_sd.img}
+
+# ARM definitions:
 : ${BUILDVARS=-V MKGCCCMDS=yes -V MKLLVM=no}
 # These BUILDVARS are for building with LLVM:
 #: ${BUILDVARS=-V MKLIBCXX=no -V MKKYUA=no -V MKATF=no -V MKLLVMCMDS=no}
-: ${BUILDSH=build.sh}
-: ${CREATE_IMAGE_ONLY=0}
-: ${RC=minix_x86.rc}
-
-# Where the kernel & boot modules will be
-MODDIR=${DESTDIR}/boot/minix/.temp
-
-#
-# Directory where to store temporary file system images
-#
-: ${IMG_DIR=${OBJ}/img}
-: ${MLO=MLO}
-: ${UBOOT=u-boot.img}
+: ${FAT_SIZE=$((    10*(2**20) / 512))} # This is in sectors
 
 # Beagleboard-xm
 : ${U_BOOT_BIN_DIR=build/omap3_beagle/}
@@ -55,28 +44,25 @@ MODDIR=${DESTDIR}/boot/minix/.temp
 #
 # We host u-boot binaries.
 #
+: ${MLO=MLO}
+: ${UBOOT=u-boot.img}
 U_BOOT_GIT_VERSION=cb5178f12787c690cb1c888d88733137e5a47b15
 
-#
-# All sized are written in 512 byte blocks
-#
-# we create a disk image of about 2 gig's
-# for alignment reasons, prefer sizes which are multiples of 4096 bytes
-#
-: ${IMG_SIZE=$((     2*(2**30) / 512))}
-: ${FAT_SIZE=$((    10*(2**20) / 512))}
-: ${ROOT_SIZE=$((   64*(2**20) / 512))}
-: ${HOME_SIZE=$((  128*(2**20) / 512))}
-: ${USR_SIZE=$((  1792*(2**20) / 512))}
+if [ ! -f ${BUILDSH} ]
+then
+	echo "Please invoke me from the root source dir, where ${BUILDSH} is."
+	exit 1
+fi
 
-#
-# Do some math to determine the start addresses of the partitions.
-# Don't leave holes so the 'partition' invocation later is easy.
-#
-FAT_START=2048
-ROOT_START=$(($FAT_START + $FAT_SIZE))
-USR_START=$(($ROOT_START + $ROOT_SIZE))
-HOME_START=$(($USR_START + $USR_SIZE))
+if [ -n "$BASE_URL" ]
+then
+	#we no longer download u-boot but do a checkout
+	#BASE_URL used to be the base url for u-boot
+	#Downloads
+	echo "Warning:** Setting BASE_URL (u-boot) is no longer possible use U_BOOT_BIN_DIR"
+	echo "Look in ${RELEASETOOLSDIR}/arm_sdimage.sh for suggested values"
+	exit 1
+fi
 
 case $(uname -s) in
 Darwin)
@@ -93,22 +79,6 @@ FreeBSD)
 ;;
 esac
 
-if [ -n "$BASE_URL" ]
-then
-	#we no longer download u-boot but do a checkout
-	#BASE_URL used to be the base url for u-boot
-	#Downloads
-	echo "Warning:** Setting BASE_URL (u-boot) is no longer possible use U_BOOT_BIN_DIR"
-	echo "Look in ${RELEASETOOLSDIR}/arm_sdimage.sh for suggested values"
-	exit 1
-fi
-
-if [ ! -f ${BUILDSH} ]
-then
-	echo "Please invoke me from the root source dir, where ${BUILDSH} is."
-	exit 1
-fi
-
 export PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:${PATH}
 
 for needed in mcopy dd ${MKFS_VFAT_CMD} git
@@ -120,113 +90,63 @@ do
 	fi
 done
 
-: ${IMG=minix_arm_sd.img}
+# we create a disk image of about 2 gig's
+# for alignment reasons, prefer sizes which are multiples of 4096 bytes
+: ${IMG_SIZE=$((     2*(2**30) ))}
+: ${ROOT_SIZE=$((   64*(2**20) ))}
+: ${HOME_SIZE=$((  128*(2**20) ))}
+: ${USR_SIZE=$((  1792*(2**20) ))}
 
-#
-# Are we going to build the minix sources?
-#
+# set up disk creation environment
+. releasetools/image.defaults
+. releasetools/image.functions
 
-if [ ${CREATE_IMAGE_ONLY} -eq 1 ]
-then
-	if [ ! -d ${DESTDIR} ]
-	then
-		echo "Minix source code does'nt appear to have been built."
-		echo "Please try with \$CREATE_IMAGE_ONLY set to 0."
-		exit 1
-	fi
-fi
+# all sizes are written in 512 byte blocks
+ROOTSIZEARG="-b $((${ROOT_SIZE} / 512 / 8))"
+USRSIZEARG="-b $((${USR_SIZE} / 512 / 8))"
+HOMESIZEARG="-b $((${HOME_SIZE} / 512 / 8))"
 
-#
-# Artifacts from this script are stored in the IMG_DIR
-#
-rm -rf ${IMG_DIR}
+# where the kernel & boot modules will be
+MODDIR=${DESTDIR}/boot/minix/.temp
 
-if [ -f ${IMG} ]	# IMG might be a block device
-then	rm -f ${IMG}
-fi
+echo "Building work directory..."
+build_workdir "$SETS"
 
-mkdir -p ${IMG_DIR}
+echo "Adding extra files..."
 
-#
-# Download the stage 1 bootloader  and u-boot
-#
-${RELEASETOOLSDIR}/fetch_u-boot.sh -o ${RELEASETOOLSDIR}/u-boot -n $U_BOOT_GIT_VERSION
-cp ${RELEASETOOLSDIR}/u-boot/${U_BOOT_BIN_DIR}/u-boot.img ${IMG_DIR}/
-cp ${RELEASETOOLSDIR}/u-boot/${U_BOOT_BIN_DIR}/MLO ${IMG_DIR}/
-
-if [ ${CREATE_IMAGE_ONLY} -eq 0 ]
-then
-	echo "Going to build Minix source code..."
-	#
-	# Remove the generated files to allow us call build.sh without '-V SLOPPY_FLIST=yes'.
-	#
-	rm -f ${FSTAB}
-
-	#
-	# Now start the build.
-	#
-	sh ${BUILDSH} -j ${JOBS} -m ${ARCH} -O ${OBJ} -D ${DESTDIR} ${BUILDVARS} -U -u distribution
-
-fi
-
-#
-# create a fstab entry in /etc this is normally done during the
-# setup phase on x86
-#
-cat >${FSTAB} <<END_FSTAB
+# create a fstab entry in /etc
+cat >${ROOT_DIR}/etc/fstab <<END_FSTAB
 /dev/c0d0p2	/usr		mfs	rw			0	2
 /dev/c0d0p3	/home		mfs	rw			0	2
 none		/sys		devman	rw,rslabel=devman	0	0
 none		/dev/pts	ptyfs	rw,rslabel=ptyfs	0	0
 END_FSTAB
+add_file_spec "etc/fstab" extra.fstab
 
-rm -f ${DESTDIR}/SETS.*
+echo "Bundling packages..."
+bundle_packages "$BUNDLE_PACKAGES"
 
-${CROSS_TOOLS}/nbpwd_mkdb -V 0 -p -d ${DESTDIR} ${DESTDIR}/etc/master.passwd
-
-#
-# make the different file system. this part is *also* hacky. We first convert
-# the METALOG.sanitised using mtree into a input METALOG containing uids and
-# gids.
-# After that we do some magic processing to add device nodes (also missing from METALOG)
-# and convert the METALOG into a proto file that can be used by mkfs.mfs
-#
-echo "Creating the file systems"
-
-#
-# read METALOG and use mtree to convert the user and group names into uid and gids
-# FIX put "input somewhere clean"
-#
-cat ${DESTDIR}/METALOG.sanitised | ${CROSS_TOOLS}/nbmtree -N ${DESTDIR}/etc -C -K device > ${IMG_DIR}/input
-
-# add rc (if any)
-if [ -f ${RC} ]; then
-    cp ${RC} ${DESTDIR}/usr/etc/rc.local
-    echo "./usr/etc/rc.local type=file uid=0 gid=0 mode=0644" >> ${IMG_DIR}/input
-fi
-
-# add fstab
-echo "./etc/fstab type=file uid=0 gid=0 mode=0755 size=747 time=1365060731.000000000" >> ${IMG_DIR}/input
-
-# fill root.img (skipping /usr entries while keeping the /usr directory)
-cat ${IMG_DIR}/input  | grep -v "^./usr/" | ${CROSS_TOOLS}/nbtoproto -b ${DESTDIR} -o ${IMG_DIR}/root.proto
-
-#
-# Create proto files for /usr and /home using toproto.
-#
-cat ${IMG_DIR}/input  | grep  "^\./usr/\|^. "  | sed "s,\./usr,\.,g" | ${CROSS_TOOLS}/nbtoproto -b ${DESTDIR}/usr -o ${IMG_DIR}/usr.proto
-cat ${IMG_DIR}/input  | grep  "^\./home/\|^. "  | sed "s,\./home,\.,g" | ${CROSS_TOOLS}/nbtoproto -b ${DESTDIR}/home -o ${IMG_DIR}/home.proto
+echo "Creating specification files..."
+create_input_spec
+create_protos "usr home"
 
 #
 # Create the FAT partition, which contains the bootloader files, kernel and modules
 #
-dd if=/dev/zero of=${IMG_DIR}/fat.img bs=512 count=1 seek=$(($FAT_SIZE -1)) 2>/dev/null
+dd if=/dev/zero of=${WORK_DIR}/fat.img bs=512 count=1 seek=$(($FAT_SIZE -1)) 2>/dev/null
 
 #
 # Format the fat partition and put the bootloaders
 # uEnv and the kernel command line in the FAT partition
 #
-${MKFS_VFAT_CMD} ${MKFS_VFAT_OPTS} ${IMG_DIR}/fat.img
+${MKFS_VFAT_CMD} ${MKFS_VFAT_OPTS} ${WORK_DIR}/fat.img
+
+#
+# Download the stage 1 bootloader and u-boot
+#
+${RELEASETOOLSDIR}/fetch_u-boot.sh -o ${RELEASETOOLSDIR}/u-boot -n $U_BOOT_GIT_VERSION
+cp ${RELEASETOOLSDIR}/u-boot/${U_BOOT_BIN_DIR}/MLO ${WORK_DIR}/
+cp ${RELEASETOOLSDIR}/u-boot/${U_BOOT_BIN_DIR}/u-boot.img ${WORK_DIR}/
 
 #
 # Create a uEnv.txt file
@@ -234,21 +154,20 @@ ${MKFS_VFAT_CMD} ${MKFS_VFAT_OPTS} ${IMG_DIR}/fat.img
 # -p add a prefix to the network booted files (e.g. xm/"
 # -c set console e.g. tty02 or tty00
 # -v set verbosity e.g. 0 to 3
-#${RELEASETOOLSDIR}/gen_uEnv.txt.sh -c ${CONSOLE} -n -p bb/ > ${IMG_DIR}/uEnv.txt
-${RELEASETOOLSDIR}/gen_uEnv.txt.sh -c ${CONSOLE}  > ${IMG_DIR}/uEnv.txt
+#${RELEASETOOLSDIR}/gen_uEnv.txt.sh -c ${CONSOLE} -n -p bb/ > ${WORK_DIR}/uEnv.txt
+${RELEASETOOLSDIR}/gen_uEnv.txt.sh -c ${CONSOLE}  > ${WORK_DIR}/uEnv.txt
 
 echo "Copying configuration kernel and boot modules"
-mcopy -bsp -i ${IMG_DIR}/fat.img  ${IMG_DIR}/$MLO ::MLO
-mcopy -bsp -i ${IMG_DIR}/fat.img ${IMG_DIR}/$UBOOT ::u-boot.img
-mcopy -bsp -i ${IMG_DIR}/fat.img ${IMG_DIR}/uEnv.txt ::uEnv.txt
+mcopy -bsp -i ${WORK_DIR}/fat.img ${WORK_DIR}/$MLO ::MLO
+mcopy -bsp -i ${WORK_DIR}/fat.img ${WORK_DIR}/$UBOOT ::u-boot.img
+mcopy -bsp -i ${WORK_DIR}/fat.img ${WORK_DIR}/uEnv.txt ::uEnv.txt
 
 #
 # Do some last processing of the kernel and servers and then put them on the FAT
 # partition.
 #
 ${CROSS_PREFIX}objcopy ${OBJ}/minix/kernel/kernel -O binary ${OBJ}/kernel.bin
-
-mcopy -bsp -i ${IMG_DIR}/fat.img ${OBJ}/kernel.bin ::kernel.bin
+mcopy -bsp -i ${WORK_DIR}/fat.img ${OBJ}/kernel.bin ::kernel.bin
 
 for f in servers/vm/vm servers/rs/rs servers/pm/pm servers/sched/sched \
 	servers/vfs/vfs servers/ds/ds fs/mfs/mfs fs/pfs/pfs \
@@ -257,7 +176,7 @@ do
     fn=`basename $f`.elf
     cp ${OBJ}/minix/${f} ${OBJ}/${fn}
     ${CROSS_PREFIX}strip -s ${OBJ}/${fn}
-    mcopy -bsp -i ${IMG_DIR}/fat.img  ${OBJ}/${fn} ::${fn}
+    mcopy -bsp -i ${WORK_DIR}/fat.img  ${OBJ}/${fn} ::${fn}
 done
 
 for f in tty/tty/tty storage/memory/memory
@@ -265,42 +184,57 @@ do
     fn=`basename $f`.elf
     cp ${OBJ}/minix/drivers/${f} ${OBJ}/${fn}
     ${CROSS_PREFIX}strip -s ${OBJ}/${fn}
-    mcopy -bsp -i ${IMG_DIR}/fat.img  ${OBJ}/${fn} ::${fn}
+    mcopy -bsp -i ${WORK_DIR}/fat.img  ${OBJ}/${fn} ::${fn}
 done
 
 #
 # For tftp booting
 #
-cp ${IMG_DIR}/uEnv.txt ${OBJ}/
+cp ${WORK_DIR}/uEnv.txt ${OBJ}/
+
+# Clean image
+if [ -f ${IMG} ]	# IMG might be a block device
+then
+	rm -f ${IMG}
+fi
 
 #
 # Create the empty image where we later will put the partitions in.
 # Make sure it is at least 2GB, otherwise the SD card will not be detected
 # correctly in qemu / HW.
 #
-dd if=/dev/zero of=${IMG} bs=512 count=1 seek=$(($IMG_SIZE -1))
-
+dd if=/dev/zero of=${IMG} bs=512 count=1 seek=$((($IMG_SIZE / 512) -1))
 
 #
 # Generate /root, /usr and /home partition images.
 #
-echo "Writing Minix filesystem images"
-echo " - ROOT"
-_ROOT_SIZE=$((`${CROSS_TOOLS}/nbmkfs.mfs -I $((${ROOT_START} * 512)) -b $((${ROOT_SIZE} / 8)) ${IMG} ${IMG_DIR}/root.proto`/512))
-echo " - USR"
-_USR_SIZE=$((`${CROSS_TOOLS}/nbmkfs.mfs -I $((${USR_START} * 512)) -b $((${USR_SIZE} / 8))  ${IMG}  ${IMG_DIR}/usr.proto`/512))
-echo " - HOME"
-_HOME_SIZE=$((`${CROSS_TOOLS}/nbmkfs.mfs -I $((${HOME_START} * 512)) -b $((${HOME_SIZE} / 8)) ${IMG} ${IMG_DIR}/home.proto`/512))
+echo "Writing disk image..."
+FAT_START=2048 # those are sectors
+ROOT_START=$(($FAT_START + $FAT_SIZE))
+echo " * ROOT"
+_ROOT_SIZE=$(${CROSS_TOOLS}/nbmkfs.mfs -d ${ROOTSIZEARG} -I $((${ROOT_START}*512)) ${IMG} ${WORK_DIR}/proto.root)
+_ROOT_SIZE=$(($_ROOT_SIZE / 512))
+USR_START=$((${ROOT_START} + ${_ROOT_SIZE}))
+echo " * USR"
+_USR_SIZE=$(${CROSS_TOOLS}/nbmkfs.mfs  -d ${USRSIZEARG}  -I $((${USR_START}*512))  ${IMG} ${WORK_DIR}/proto.usr)
+_USR_SIZE=$(($_USR_SIZE / 512))
+HOME_START=$((${USR_START} + ${_USR_SIZE}))
+echo " * HOME"
+_HOME_SIZE=$(${CROSS_TOOLS}/nbmkfs.mfs -d ${HOMESIZEARG} -I $((${HOME_START}*512)) ${IMG} ${WORK_DIR}/proto.home)
+_HOME_SIZE=$(($_HOME_SIZE / 512))
 
 #
 # Write the partition table using the natively compiled
 # minix partition utility
 #
-${CROSS_TOOLS}/nbpartition -f -m ${IMG} ${FAT_START} "c:${FAT_SIZE}*" \
-	81:${_ROOT_SIZE} 81:${_USR_SIZE} 81:${_HOME_SIZE}
+${CROSS_TOOLS}/nbpartition -f -m ${IMG} ${FAT_START} "c:${FAT_SIZE}*" 81:${_ROOT_SIZE} 81:${_USR_SIZE} 81:${_HOME_SIZE}
 
 #
 # Merge the partitions into a single image.
 #
 echo "Merging file systems"
-dd if=${IMG_DIR}/fat.img of=${IMG} seek=$FAT_START conv=notrunc
+dd if=${WORK_DIR}/fat.img of=${IMG} seek=$FAT_START conv=notrunc
+
+echo "Disk image at `pwd`/${IMG}"
+echo "To boot this image on kvm:"
+echo "qemu-system-arm -M beaglexm -serial stdio -drive if=sd,cache=writeback,file=`pwd`/${IMG}"

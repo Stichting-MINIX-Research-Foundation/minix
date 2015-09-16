@@ -42,7 +42,7 @@ add_link_spec() {
 # $1 : sets to extract
 build_workdir() {
 	# Extract sets
-	mkdir ${ROOT_DIR}
+	mkdir -p ${ROOT_DIR}
 	for set in $1; do
 		if [ ! -e ${SETS_DIR}/${set}.tgz ]; then
 			echo "Missing ${SETS_DIR}/${set}.tgz, aborting"
@@ -52,6 +52,11 @@ build_workdir() {
 		echo " * Extracting $set..."
 		(cd ${ROOT_DIR}; ${CROSS_TOOLS}/nbpax -rnz -f ${SETS_DIR}/${set}.tgz .)
 	done
+
+	# add rc (if any)
+	if [ -f ${RC} ]; then
+		cp ${RC} ${ROOT_DIR}/usr/etc/rc.local
+	fi
 
 	# Build login/password files
 	${CROSS_TOOLS}/nbpwd_mkdb -V 0 -p -d ${ROOT_DIR} ${ROOT_DIR}/etc/master.passwd
@@ -66,9 +71,10 @@ build_workdir() {
 #
 workdir_add_sets() {
 	# Add sets to the root
-	mkdir ${ROOT_DIR}/${ARCH}; add_dir_spec "${ARCH}" extra.sets
-	mkdir ${ROOT_DIR}/${ARCH}/binary; add_dir_spec "${ARCH}/binary" extra.sets
-	mkdir ${ROOT_DIR}/${ARCH}/binary/sets; add_dir_spec "${ARCH}/binary/sets" extra.sets
+	mkdir -p ${ROOT_DIR}/${ARCH}/binary/sets;
+	add_dir_spec "${ARCH}" extra.sets
+	add_dir_spec "${ARCH}/binary" extra.sets
+	add_dir_spec "${ARCH}/binary/sets" extra.sets
 
 	DEST_SETS_DIR="${ARCH}/binary/sets"
 	for set in ${SETS_DIR}/*.tgz; do
@@ -120,7 +126,7 @@ workdir_add_kernel()
 	# Move kernel files to the correct directory
 	if [ ! -d ${ROOT_DIR}/boot/$1 ]
 	then
-		mkdir ${ROOT_DIR}/boot/$1
+		mkdir -p ${ROOT_DIR}/boot/$1
 		add_dir_spec "boot/$1" extra.kernel
 	fi
 

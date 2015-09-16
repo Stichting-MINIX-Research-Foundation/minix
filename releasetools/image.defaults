@@ -16,4 +16,5 @@
 : ${PKG_INFO=pkg_info}
 : ${BUNDLE_PACKAGES=}
 
+: ${RC=../local/rc.${ARCH}}
 : ${ASR_HACK=0}
