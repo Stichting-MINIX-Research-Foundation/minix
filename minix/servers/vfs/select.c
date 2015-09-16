@@ -755,8 +755,10 @@ void select_timeout_check(minix_timer_t *timer)
   if (se->requestor == NULL) return;
   if (se->expiry <= 0) return;	/* Strange, did we even ask for a timeout? */
   se->expiry = 0;
-  if (is_deferred(se)) return;	/* Wait for initial replies to CDEV_SELECT */
-  select_return(se);
+  if (!is_deferred(se))
+	select_return(se);
+  else
+	se->block = 0;	/* timer triggered "too soon", treat as nonblocking */
 }
 
 
