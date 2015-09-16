@@ -1,0 +1,70 @@
+#
+# Sorted using sort_set.pl in releasetools.
+# to add an entry simply add it at the end of the
+# file and run
+# ../../../../releasetools/sort_set.pl < mi > out
+# mv out mi
+#
+./etc/system.conf.d/3c90x                               minix-base
+./etc/system.conf.d/atl2                                minix-base
+./etc/system.conf.d/dec21140A                           minix-base
+./etc/system.conf.d/e1000                               minix-base
+./etc/system.conf.d/fxp                                 minix-base
+./etc/system.conf.d/lance                               minix-base
+./etc/system.conf.d/rtl8139                             minix-base
+./etc/system.conf.d/rtl8169                             minix-base
+./etc/system.conf.d/virtio_net                          minix-base
+./service/3c90x                                         minix-base
+./service/acpi                                          minix-base
+./service/ahci                                          minix-base
+./service/amddev                                        minix-base
+./service/at_wini                                       minix-base
+./service/atl2                                          minix-base
+./service/dec21140A                                     minix-base
+./service/dp8390                                        minix-base
+./service/dpeth                                         minix-base
+./service/e1000                                         minix-base
+./service/es1370                                        minix-base
+./service/es1371                                        minix-base
+./service/fbd                                           minix-base
+./service/filter                                        minix-base
+./service/floppy                                        minix-base
+./service/fxp                                           minix-base
+./service/hgfs                                          minix-base
+./service/lance                                         minix-base
+./service/pci                                           minix-base
+./service/pckbd                                         minix-base
+./service/printer                                       minix-base
+./service/random                                        minix-base
+./service/rtl8139                                       minix-base
+./service/rtl8169                                       minix-base
+./service/sb16                                          minix-base
+./service/ti1225                                        minix-base
+./service/vbfs                                          minix-base
+./service/vbox                                          minix-base
+./service/virtio_blk                                    minix-base
+./service/virtio_net                                    minix-base
+./usr/lib/libhgfs.a                                     minix-base
+./usr/lib/libhgfs_pic.a                                 minix-base
+./usr/lib/libm387.a                                     minix-base
+./usr/lib/libm387.so                                    minix-base
+./usr/lib/libm387.so.0                                  minix-base
+./usr/lib/libm387.so.0.1                                minix-base
+./usr/lib/libm387_pic.a                                 minix-base
+./usr/lib/libvassert.a                                  minix-base
+./usr/lib/libvboxfs.a                                   minix-base
+./usr/lib/libvboxfs_pic.a                               minix-base
+./usr/lib/libvirtio.a                                   minix-base
+./usr/lib/libvirtio_pic.a                               minix-base
+./usr/mdec                                              minix-base
+./usr/mdec/boot_monitor                                 minix-base
+./usr/mdec/bootxx_cd9660                                minix-base
+./usr/mdec/bootxx_ext2fs                                minix-base
+./usr/mdec/bootxx_ffsv1                                 minix-base
+./usr/mdec/bootxx_minixfs3                              minix-base
+./usr/mdec/gptmbr.bin                                   minix-base
+./usr/mdec/mbr                                          minix-base
+./usr/mdec/mbr_bootsel                                  minix-base
+./usr/mdec/mbr_com0                                     minix-base
+./usr/mdec/mbr_com0_9600                                minix-base
+./usr/mdec/mbr_ext                                      minix-base

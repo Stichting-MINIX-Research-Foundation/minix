@@ -1,0 +1,50 @@
+#
+# Sorted using sort_set.pl in releasetools.
+# to add an entry simply add it at the end of the
+# file and run
+# ../../../../releasetools/sort_set.pl < mi > out
+# mv out mi
+#
+./etc/rc.capes                                          minix-base
+./etc/rc.capes/BB-BONE-WTHR-01                          minix-base
+./etc/system.conf.d/lan8710a                            minix-base
+./etc/system.conf.d/usbd                                minix-base
+./service/bmp085                                        minix-base
+./service/cat24c256                                     minix-base
+./service/fb                                            minix-base
+./service/gpio                                          minix-base
+./service/i2c                                           minix-base
+./service/lan8710a                                      minix-base
+./service/random                                        minix-base
+./service/sht21                                         minix-base
+./service/tda19988                                      minix-base
+./service/tps65217                                      minix-base
+./service/tps65950                                      minix-base
+./service/tsl2550                                       minix-base
+./service/usbd                                          minix-base
+./usr/bin/eepromread                                    minix-base
+./usr/lib/libc_vfp.a                                    minix-base      obsolete
+./usr/lib/libc_vfp.so.0.0                               minix-base      obsolete
+./usr/lib/libc_vfp.so.0                                 minix-base      obsolete
+./usr/lib/libc_vfp.so                                   minix-base      obsolete
+./usr/lib/libc_vfp_pic.a                                minix-base      obsolete
+./usr/lib/libclkconf.a                                  minix-base
+./usr/lib/libclkconf_pic.a                              minix-base
+./usr/lib/libgcc_eh.a                                   minix-base      gcccmds
+./usr/lib/libgpio.a                                     minix-base
+./usr/lib/libgpio_pic.a                                 minix-base
+./usr/lib/libi2cdriver.a                                minix-base
+./usr/lib/libi2cdriver_pic.a                            minix-base
+./usr/man/man1/eepromread.1                             minix-base
+./usr/mdec                                              minix-base
+./usr/share/beaglebone                                  minix-base
+./usr/share/beaglebone/weather                          minix-base
+./usr/share/beaglebone/weather/LICENSE                  minix-base
+./usr/share/beaglebone/weather/README.txt               minix-base
+./usr/share/beaglebone/weather/index.html               minix-base
+./usr/share/beaglebone/weather/jquery.js                minix-base
+./usr/share/beaglebone/weather/processing.js            minix-base
+./usr/share/beaglebone/weather/spin.js                  minix-base
+./usr/share/beaglebone/weather/style.css                minix-base
+./usr/share/beaglebone/weather/weatherstation.js        minix-base
+./usr/share/beaglebone/weather/weatherstation.lua       minix-base

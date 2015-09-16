@@ -13,7 +13,7 @@
 #	stlib			static library format (a.out, elf)
 #
 # The following <bsd.own.mk> variables are exported to the environment:
-#	MACHINE	
+#	MACHINE
 #	MACHINE_ARCH
 #	MACHINE_CPU
 #	HAVE_BINUTILS
@@ -163,7 +163,7 @@ if [ "${MKPIC}" = "no" ]; then
 	shlib=no
 fi
 # LSC for Minix
-nlists="minix $testset"
+nlists="minix-base minix-comp minix-games minix-kernel minix-man minix-tests $testset"
 #nlists="base comp $debugset etc games man misc $modset $testset text"
 xlists="xbase xcomp $xdebugset xetc xfont xserver"
 extlists="extbase extcomp extetc"
@@ -176,7 +176,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 
 #
 # list_set_files setfile [...]
-# 
+#
 # Produce a packing list for setfile(s).
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
@@ -198,7 +198,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 # control if a record is printed; every keyword listed must be enabled
 # for the record to be printed.  The following keywords are available:
 #	dummy			dummy entry (ignored)
-#	obsolete		file is obsolete, and only printed if 
+#	obsolete		file is obsolete, and only printed if
 #				${obsolete} != 0
 #
 #	atf			${MKATF} != no
@@ -293,7 +293,7 @@ list_set_files()
 		BEGIN {
 			if (obsolete)
 				wanted["obsolete"] = 1
-		
+
 			split("'"${MKVARS}"'", needvars)
 			for (vi in needvars) {
 				nv = needvars[vi]
@@ -302,7 +302,7 @@ list_set_files()
 				sub(/^have_/, "", kw)
 				sub(/^target_endianness/, "endian", kw)
 				if (nv != "HAVE_GCC" && ENVIRON[nv] != "no")
-					wanted[kw] = 1 
+					wanted[kw] = 1
 			}
 
 			if ("'"${TOOLCHAIN_MISSING}"'" != "yes") {
@@ -330,7 +330,7 @@ list_set_files()
 			delete list [substr($1, 2)];
 			next;
 		}
-				
+
 
 		NF > 2 && $3 != "-" {
 			if (notwanted[$1] != "")
@@ -378,7 +378,7 @@ list_set_files()
 
 #
 # list_set_lists setname
-# 
+#
 # Print to stdout a list of files, one filename per line, which
 # concatenate to create the packing list for setname. E.g.,
 #

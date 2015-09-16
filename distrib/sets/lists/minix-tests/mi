@@ -1,0 +1,346 @@
+#
+# Sorted using sort_set.pl in releasetools.
+# to add an entry simply add it at the end of the
+# file and run
+# ../../../../releasetools/sort_set.pl < mi > out
+# mv out mi
+#
+.                                                       minix-tests
+./etc                                                   minix-tests
+./etc/atf                                               minix-tests     atf
+./etc/mtree                                             minix-tests
+./etc/mtree/set.minix-tests                             minix-tests
+./usr                                                   minix-tests
+./usr/bin                                               minix-tests     atf,kyua
+./usr/bin/atf-config                                    minix-tests     atf,!kyua
+./usr/bin/atf-report                                    minix-tests     atf
+./usr/bin/atf-run                                       minix-tests     atf
+./usr/bin/atf-sh                                        minix-tests     atf
+./usr/bin/atf-version                                   minix-tests     atf,!kyua
+./usr/bin/atf2kyua                                      minix-tests     kyua
+./usr/bin/kyua                                          minix-tests     kyua
+./usr/lib                                               minix-tests     atf,kyua
+./usr/lib/bc                                            minix-tests     bitcode,atf
+./usr/lib/bc/libatf-c++.a                               minix-tests     bitcode,atf
+./usr/lib/bc/libatf-c.a                                 minix-tests     bitcode,atf
+./usr/lib/bc/liblutok.a                                 minix-tests     bitcode,atf
+./usr/lib/libatf-c++.a                                  minix-tests     atf
+./usr/lib/libatf-c++.so.0.0                             minix-tests     atf
+./usr/lib/libatf-c++.so.0                               minix-tests     atf
+./usr/lib/libatf-c++.so                                 minix-tests     atf
+./usr/lib/libatf-c++_pic.a                              minix-tests     atf
+./usr/lib/libatf-c.a                                    minix-tests     atf
+./usr/lib/libatf-c.so.0.0                               minix-tests     atf
+./usr/lib/libatf-c.so.0                                 minix-tests     atf
+./usr/lib/libatf-c.so                                   minix-tests     atf
+./usr/lib/libatf-c_pic.a                                minix-tests     atf
+./usr/lib/liblutok.a                                    minix-tests     kyua
+./usr/lib/liblutok.so.2.0                               minix-tests     kyua
+./usr/lib/liblutok.so.2                                 minix-tests     kyua
+./usr/lib/liblutok.so                                   minix-tests     kyua
+./usr/lib/liblutok_pic.a                                minix-tests     kyua
+./usr/lib/pkgconfig                                     minix-tests     atf,kyua
+./usr/lib/pkgconfig/atf-c++.pc                          minix-tests     atf
+./usr/lib/pkgconfig/atf-c.pc                            minix-tests     atf
+./usr/lib/pkgconfig/atf-sh.pc                           minix-tests     atf
+./usr/lib/pkgconfig/kyua-testers.pc                     minix-tests     kyua
+./usr/lib/pkgconfig/lutok.pc                            minix-tests     kyua
+./usr/libdata                                           minix-tests     atf
+./usr/libdata/debug                                     minix-tests     atf
+./usr/libdata/debug/usr                                 minix-tests     atf
+./usr/libdata/debug/usr/tests/lib/libpthread/dlopen     minix-tests     atf
+./usr/libexec/atf-check                                 minix-tests     atf
+./usr/libexec/kyua-atf-tester                           minix-tests     kyua
+./usr/libexec/kyua-plain-tester                         minix-tests     kyua
+./usr/man                                               minix-tests     atf,kyua
+./usr/man/man1                                          minix-tests     atf,kyua
+./usr/man/man1/atf-check.1                              minix-tests     atf
+./usr/man/man1/atf-config.1                             minix-tests     atf,!kyua
+./usr/man/man1/atf-report.1                             minix-tests     atf
+./usr/man/man1/atf-run.1                                minix-tests     atf
+./usr/man/man1/atf-sh.1                                 minix-tests     atf
+./usr/man/man1/atf-test-program.1                       minix-tests     atf
+./usr/man/man1/atf-version.1                            minix-tests     atf,!kyua
+./usr/man/man1/atf2kyua.1                               minix-tests     kyua
+./usr/man/man1/kyua-about.1                             minix-tests     kyua
+./usr/man/man1/kyua-atf-tester.1                        minix-tests     kyua
+./usr/man/man1/kyua-config.1                            minix-tests     kyua
+./usr/man/man1/kyua-db-exec.1                           minix-tests     kyua
+./usr/man/man1/kyua-db-migrate.1                        minix-tests     kyua
+./usr/man/man1/kyua-debug.1                             minix-tests     kyua
+./usr/man/man1/kyua-help.1                              minix-tests     kyua
+./usr/man/man1/kyua-list.1                              minix-tests     kyua
+./usr/man/man1/kyua-plain-tester.1                      minix-tests     kyua
+./usr/man/man1/kyua-report-html.1                       minix-tests     kyua
+./usr/man/man1/kyua-report.1                            minix-tests     kyua
+./usr/man/man1/kyua-test.1                              minix-tests     kyua
+./usr/man/man1/kyua-tester.1                            minix-tests     kyua
+./usr/man/man1/kyua.1                                   minix-tests     kyua
+./usr/man/man3                                          minix-tests     atf,kyua
+./usr/man/man3/atf-c++-api.3                            minix-tests     atf
+./usr/man/man3/atf-c-api.3                              minix-tests     atf
+./usr/man/man3/atf-sh-api.3                             minix-tests     atf
+./usr/man/man3/pthread_atfork.3                         minix-tests
+./usr/man/man4                                          minix-tests     atf
+./usr/man/man4/atf-test-case.4                          minix-tests     atf
+./usr/man/man5                                          minix-tests     atf,kyua
+./usr/man/man5/atf-formats.5                            minix-tests     atf
+./usr/man/man5/kyua-tester-list.5                       minix-tests     kyua
+./usr/man/man5/kyua-tester-result.5                     minix-tests     kyua
+./usr/man/man5/kyua.conf.5                              minix-tests     kyua
+./usr/man/man5/kyuafile.5                               minix-tests     kyua
+./usr/man/man7                                          minix-tests     atf,kyua
+./usr/man/man7/atf.7                                    minix-tests     atf
+./usr/man/man7/kyua-atf-interface.7                     minix-tests     kyua
+./usr/man/man7/kyua-build-root.7                        minix-tests     kyua
+./usr/man/man7/kyua-plain-interface.7                   minix-tests     kyua
+./usr/man/man7/kyua-test-filters.7                      minix-tests     kyua
+./usr/share                                             minix-tests     atf,kyua
+./usr/share/atf                                         minix-tests     atf
+./usr/share/atf/atf-run.hooks                           minix-tests     atf,!kyua
+./usr/share/atf/libatf-sh.subr                          minix-tests     atf
+./usr/share/doc                                         minix-tests     atf,kyua
+./usr/share/doc/atf                                     minix-tests     atf
+./usr/share/doc/atf/AUTHORS                             minix-tests     atf
+./usr/share/doc/atf/COPYING                             minix-tests     atf
+./usr/share/doc/atf/NEWS                                minix-tests     atf
+./usr/share/doc/atf/README                              minix-tests     atf
+./usr/share/doc/kyua-atf-compat                         minix-tests     atf
+./usr/share/doc/kyua-atf-compat/AUTHORS                 minix-tests     kyua
+./usr/share/doc/kyua-atf-compat/COPYING                 minix-tests     kyua
+./usr/share/doc/kyua-atf-compat/NEWS                    minix-tests     kyua
+./usr/share/doc/kyua-atf-compat/README                  minix-tests     kyua
+./usr/share/doc/kyua-cli                                minix-tests     atf
+./usr/share/doc/kyua-cli/AUTHORS                        minix-tests     kyua
+./usr/share/doc/kyua-cli/COPYING                        minix-tests     kyua
+./usr/share/doc/kyua-cli/NEWS                           minix-tests     kyua
+./usr/share/doc/kyua-cli/README                         minix-tests     kyua
+./usr/share/doc/kyua-testers                            minix-tests     atf
+./usr/share/doc/kyua-testers/AUTHORS                    minix-tests     kyua
+./usr/share/doc/kyua-testers/COPYING                    minix-tests     kyua
+./usr/share/doc/kyua-testers/NEWS                       minix-tests     kyua
+./usr/share/doc/kyua-testers/README                     minix-tests     kyua
+./usr/share/examples                                    minix-tests     atf,kyua
+./usr/share/examples/atf                                minix-tests     atf
+./usr/share/examples/atf/atf-run.hooks                  minix-tests     atf,!kyua
+./usr/share/examples/atf/tests-results.css              minix-tests     atf,!kyua
+./usr/share/examples/kyua-cli                           minix-tests     atf
+./usr/share/examples/kyua-cli/Kyuafile.top              minix-tests     kyua
+./usr/share/examples/kyua-cli/kyua.conf                 minix-tests     kyua
+./usr/share/examples/lutok                              minix-tests     atf
+./usr/share/examples/lutok/bindings.cpp                 minix-tests     kyua
+./usr/share/examples/lutok/hello.cpp                    minix-tests     kyua
+./usr/share/examples/lutok/interpreter.cpp              minix-tests     kyua
+./usr/share/examples/lutok/raii.cpp                     minix-tests     kyua
+./usr/share/kyua-atf-compat                             minix-tests     atf
+./usr/share/kyua-atf-compat/lib.subr                    minix-tests     kyua
+./usr/share/kyua-atf-compat/tests_lib.subr              minix-tests     kyua
+./usr/share/kyua-cli                                    minix-tests     atf
+./usr/share/kyua-cli/misc                               minix-tests     atf
+./usr/share/kyua-cli/misc/context.html                  minix-tests     kyua
+./usr/share/kyua-cli/misc/index.html                    minix-tests     kyua
+./usr/share/kyua-cli/misc/report.css                    minix-tests     kyua
+./usr/share/kyua-cli/misc/test_result.html              minix-tests     kyua
+./usr/share/kyua-cli/store                              minix-tests     atf
+./usr/share/kyua-cli/store/migrate_v1_v2.sql            minix-tests     kyua
+./usr/share/kyua-cli/store/schema_v2.sql                minix-tests     kyua
+./usr/share/xml                                         minix-tests     atf
+./usr/share/xml/atf                                     minix-tests     atf
+./usr/share/xml/atf/tests-results.dtd                   minix-tests     atf,!kyua
+./usr/share/xsl                                         minix-tests     atf
+./usr/share/xsl/atf                                     minix-tests     atf
+./usr/share/xsl/atf/tests-results.xsl                   minix-tests     atf,!kyua
+./usr/tests                                             minix-tests
+./usr/tests/atf/atf-c++/detail/auto_array_test          minix-tests     atf
+./usr/tests/crypto/Atffile                              minix-tests     crypto
+./usr/tests/crypto/Kyuafile                             minix-tests     crypto
+./usr/tests/lib                                         minix-tests     bitcode
+./usr/tests/lib/csu                                     minix-tests     bitcode
+./usr/tests/lib/csu/bc                                  minix-tests     bitcode
+./usr/tests/lib/csu/bc/h_initfini3_dso.a                minix-tests     bitcode,atf
+./usr/tests/lib/libc                                    minix-tests     bitcode
+./usr/tests/lib/libc/stdio/t_mktemp                     minix-tests     atf
+./usr/tests/lib/libc/stdio/t_printf                     minix-tests     atf
+./usr/tests/lib/libc/tls                                minix-tests     bitcode
+./usr/tests/lib/libc/tls/bc                             minix-tests     bitcode
+./usr/tests/lib/libc/tls/bc/libh_tls_dynamic.a          minix-tests     bitcode,atf
+./usr/tests/lib/libcurses/director                      minix-tests     atf
+./usr/tests/lib/libpthread/dlopen                       minix-tests     atf
+./usr/tests/libexec/Atffile                             minix-tests     atf
+./usr/tests/minix-posix                                 minix-tests
+./usr/tests/minix-posix/blocktest                       minix-tests
+./usr/tests/minix-posix/blocktest/README                minix-tests
+./usr/tests/minix-posix/blocktest/blocktest             minix-tests
+./usr/tests/minix-posix/blocktest/support.sh            minix-tests
+./usr/tests/minix-posix/blocktest/system.conf           minix-tests
+./usr/tests/minix-posix/blocktest/test.sh               minix-tests
+./usr/tests/minix-posix/check-install                   minix-tests
+./usr/tests/minix-posix/ddekit                          minix-tests
+./usr/tests/minix-posix/ddekit/ddekittest               minix-tests
+./usr/tests/minix-posix/ddekit/ddekittest_driver        minix-tests
+./usr/tests/minix-posix/ddekit/system.conf              minix-tests
+./usr/tests/minix-posix/mod                             minix-tests     pic
+./usr/tests/minix-posix/run                             minix-tests
+./usr/tests/minix-posix/t10a                            minix-tests
+./usr/tests/minix-posix/t11a                            minix-tests
+./usr/tests/minix-posix/t11b                            minix-tests
+./usr/tests/minix-posix/t40a                            minix-tests
+./usr/tests/minix-posix/t40b                            minix-tests
+./usr/tests/minix-posix/t40c                            minix-tests
+./usr/tests/minix-posix/t40d                            minix-tests
+./usr/tests/minix-posix/t40e                            minix-tests
+./usr/tests/minix-posix/t40f                            minix-tests
+./usr/tests/minix-posix/t40g                            minix-tests
+./usr/tests/minix-posix/t60a                            minix-tests
+./usr/tests/minix-posix/t60b                            minix-tests
+./usr/tests/minix-posix/t67a                            minix-tests
+./usr/tests/minix-posix/t67b                            minix-tests
+./usr/tests/minix-posix/t68a                            minix-tests
+./usr/tests/minix-posix/t68b                            minix-tests
+./usr/tests/minix-posix/t84_h_nonexec.sh                minix-tests
+./usr/tests/minix-posix/t84_h_spawn                     minix-tests
+./usr/tests/minix-posix/t84_h_spawnattr                 minix-tests
+./usr/tests/minix-posix/test1                           minix-tests
+./usr/tests/minix-posix/test1.c                         minix-tests
+./usr/tests/minix-posix/test10                          minix-tests
+./usr/tests/minix-posix/test11                          minix-tests
+./usr/tests/minix-posix/test12                          minix-tests
+./usr/tests/minix-posix/test13                          minix-tests
+./usr/tests/minix-posix/test14                          minix-tests
+./usr/tests/minix-posix/test15                          minix-tests
+./usr/tests/minix-posix/test16                          minix-tests
+./usr/tests/minix-posix/test17                          minix-tests
+./usr/tests/minix-posix/test18                          minix-tests
+./usr/tests/minix-posix/test19                          minix-tests
+./usr/tests/minix-posix/test2                           minix-tests
+./usr/tests/minix-posix/test20                          minix-tests
+./usr/tests/minix-posix/test21                          minix-tests
+./usr/tests/minix-posix/test22                          minix-tests
+./usr/tests/minix-posix/test23                          minix-tests
+./usr/tests/minix-posix/test24                          minix-tests
+./usr/tests/minix-posix/test25                          minix-tests
+./usr/tests/minix-posix/test26                          minix-tests
+./usr/tests/minix-posix/test27                          minix-tests
+./usr/tests/minix-posix/test28                          minix-tests
+./usr/tests/minix-posix/test29                          minix-tests
+./usr/tests/minix-posix/test3                           minix-tests
+./usr/tests/minix-posix/test30                          minix-tests
+./usr/tests/minix-posix/test31                          minix-tests
+./usr/tests/minix-posix/test32                          minix-tests
+./usr/tests/minix-posix/test33                          minix-tests
+./usr/tests/minix-posix/test34                          minix-tests
+./usr/tests/minix-posix/test35                          minix-tests
+./usr/tests/minix-posix/test36                          minix-tests
+./usr/tests/minix-posix/test37                          minix-tests
+./usr/tests/minix-posix/test38                          minix-tests
+./usr/tests/minix-posix/test39                          minix-tests
+./usr/tests/minix-posix/test4                           minix-tests
+./usr/tests/minix-posix/test40                          minix-tests
+./usr/tests/minix-posix/test41                          minix-tests
+./usr/tests/minix-posix/test42                          minix-tests
+./usr/tests/minix-posix/test43                          minix-tests
+./usr/tests/minix-posix/test44                          minix-tests
+./usr/tests/minix-posix/test45                          minix-tests
+./usr/tests/minix-posix/test46                          minix-tests
+./usr/tests/minix-posix/test48                          minix-tests
+./usr/tests/minix-posix/test49                          minix-tests
+./usr/tests/minix-posix/test5                           minix-tests
+./usr/tests/minix-posix/test50                          minix-tests
+./usr/tests/minix-posix/test52                          minix-tests
+./usr/tests/minix-posix/test53                          minix-tests
+./usr/tests/minix-posix/test54                          minix-tests
+./usr/tests/minix-posix/test55                          minix-tests
+./usr/tests/minix-posix/test56                          minix-tests
+./usr/tests/minix-posix/test58                          minix-tests
+./usr/tests/minix-posix/test59                          minix-tests
+./usr/tests/minix-posix/test6                           minix-tests
+./usr/tests/minix-posix/test60                          minix-tests
+./usr/tests/minix-posix/test61                          minix-tests
+./usr/tests/minix-posix/test63                          minix-tests     pic
+./usr/tests/minix-posix/test64                          minix-tests
+./usr/tests/minix-posix/test65                          minix-tests
+./usr/tests/minix-posix/test66                          minix-tests
+./usr/tests/minix-posix/test67                          minix-tests
+./usr/tests/minix-posix/test68                          minix-tests
+./usr/tests/minix-posix/test69                          minix-tests
+./usr/tests/minix-posix/test7                           minix-tests
+./usr/tests/minix-posix/test70                          minix-tests
+./usr/tests/minix-posix/test71                          minix-tests
+./usr/tests/minix-posix/test72                          minix-tests
+./usr/tests/minix-posix/test73                          minix-tests
+./usr/tests/minix-posix/test74                          minix-tests
+./usr/tests/minix-posix/test75                          minix-tests
+./usr/tests/minix-posix/test76                          minix-tests
+./usr/tests/minix-posix/test77                          minix-tests
+./usr/tests/minix-posix/test78                          minix-tests
+./usr/tests/minix-posix/test79                          minix-tests
+./usr/tests/minix-posix/test8                           minix-tests
+./usr/tests/minix-posix/test80                          minix-tests
+./usr/tests/minix-posix/test81                          minix-tests
+./usr/tests/minix-posix/test82                          minix-tests
+./usr/tests/minix-posix/test83                          minix-tests
+./usr/tests/minix-posix/test84                          minix-tests
+./usr/tests/minix-posix/test85                          minix-tests
+./usr/tests/minix-posix/test86                          minix-tests
+./usr/tests/minix-posix/test9                           minix-tests
+./usr/tests/minix-posix/testinterp                      minix-tests
+./usr/tests/minix-posix/testisofs                       minix-tests
+./usr/tests/minix-posix/testkyua                        minix-tests
+./usr/tests/minix-posix/testmfs                         minix-tests
+./usr/tests/minix-posix/testrelpol                      minix-tests
+./usr/tests/minix-posix/testsh1                         minix-tests
+./usr/tests/minix-posix/testsh2                         minix-tests
+./usr/tests/minix-posix/testvm                          minix-tests
+./usr/tests/minix-posix/testvm.conf                     minix-tests
+./usr/tests/minix-posix/testvnd                         minix-tests
+./usr/tests/minix-posix/tvnd                            minix-tests
+./usr/tests/usr.bin/jot/Atffile                         minix-tests     atf
+./usr/tests/usr.bin/jot/d_basic.out                     minix-tests     atf
+./usr/tests/usr.bin/jot/t_jot                           minix-tests     atf
+./usr/tests/usr.bin/xlint/Atffile                       minix-tests     atf
+./usr/tests/usr.bin/xlint/lint1/Atffile                 minix-tests     atf
+./usr/tests/usr.bin/xlint/lint1/Kyuafile                minix-tests     kyua
+./usr/tests/usr.bin/xlint/lint1/d_alignof.c             minix-tests     atf
+./usr/tests/usr.bin/xlint/lint1/d_c99_complex_num.c     minix-tests     atf
+./usr/tests/usr.bin/xlint/lint1/d_c99_decls_after_stmt.c minix-tests     atf
+./usr/tests/usr.bin/xlint/lint1/d_c99_decls_after_stmt2.c minix-tests     atf
+./usr/tests/usr.bin/xlint/lint1/d_c99_for_loops.c       minix-tests     atf
+./usr/tests/usr.bin/xlint/lint1/d_c99_func.c            minix-tests     atf
+./usr/tests/usr.bin/xlint/lint1/d_c99_recursive_init.c  minix-tests     atf
+./usr/tests/usr.bin/xlint/lint1/d_c99_struct_init.c     minix-tests     atf
+./usr/tests/usr.bin/xlint/lint1/d_c99_union_init1.c     minix-tests     atf
+./usr/tests/usr.bin/xlint/lint1/d_c99_union_init2.c     minix-tests     atf
+./usr/tests/usr.bin/xlint/lint1/d_c99_union_init3.c     minix-tests     atf
+./usr/tests/usr.bin/xlint/lint1/d_c9x_array_init.c      minix-tests     atf
+./usr/tests/usr.bin/xlint/lint1/d_c9x_recursive_init.c  minix-tests     atf
+./usr/tests/usr.bin/xlint/lint1/d_cast_init.c           minix-tests     atf
+./usr/tests/usr.bin/xlint/lint1/d_cast_init2.c          minix-tests     atf
+./usr/tests/usr.bin/xlint/lint1/d_cast_lhs.c            minix-tests     atf
+./usr/tests/usr.bin/xlint/lint1/d_compound_literals1.c  minix-tests     atf
+./usr/tests/usr.bin/xlint/lint1/d_compound_literals2.c  minix-tests     atf
+./usr/tests/usr.bin/xlint/lint1/d_constant_conv1.c      minix-tests     atf
+./usr/tests/usr.bin/xlint/lint1/d_constant_conv2.c      minix-tests     atf
+./usr/tests/usr.bin/xlint/lint1/d_cvt_in_ternary.c      minix-tests     atf
+./usr/tests/usr.bin/xlint/lint1/d_ellipsis_in_switch.c  minix-tests     atf
+./usr/tests/usr.bin/xlint/lint1/d_gcc_compound_statements1.c minix-tests     atf
+./usr/tests/usr.bin/xlint/lint1/d_gcc_compound_statements2.c minix-tests     atf
+./usr/tests/usr.bin/xlint/lint1/d_gcc_compound_statements3.c minix-tests     atf
+./usr/tests/usr.bin/xlint/lint1/d_gcc_func.c            minix-tests     atf
+./usr/tests/usr.bin/xlint/lint1/d_gcc_variable_array_init.c minix-tests     atf
+./usr/tests/usr.bin/xlint/lint1/d_incorrect_array_size.c minix-tests     atf
+./usr/tests/usr.bin/xlint/lint1/d_long_double_int.c     minix-tests     atf
+./usr/tests/usr.bin/xlint/lint1/d_nested_structs.c      minix-tests     atf
+./usr/tests/usr.bin/xlint/lint1/d_nolimit_init.c        minix-tests     atf
+./usr/tests/usr.bin/xlint/lint1/d_packed_structs.c      minix-tests     atf
+./usr/tests/usr.bin/xlint/lint1/d_shift_to_narrower_type.c minix-tests     atf
+./usr/tests/usr.bin/xlint/lint1/d_type_conv1.c          minix-tests     atf
+./usr/tests/usr.bin/xlint/lint1/d_type_conv2.c          minix-tests     atf
+./usr/tests/usr.bin/xlint/lint1/d_type_conv3.c          minix-tests     atf
+./usr/tests/usr.bin/xlint/lint1/d_typename_as_var.c     minix-tests     atf
+./usr/tests/usr.bin/xlint/lint1/d_zero_sized_arrays.c   minix-tests     atf
+./usr/tests/usr.bin/xlint/lint1/t_integration           minix-tests     atf
+./var                                                   minix-tests
+./var/db                                                minix-tests
+./var/db/obsolete                                       minix-tests
+./var/db/obsolete/minix-tests                           minix-tests
+./var/db/obsolete/tests                                 minix-tests     kyua,atf
