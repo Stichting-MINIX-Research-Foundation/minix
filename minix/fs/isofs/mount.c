@@ -40,7 +40,7 @@ int fs_mountpt(ino_t ino_nr)
 	 */
 	struct inode *rip;
 
-	if ((rip = find_inode(ino_nr)) == NULL)
+	if ((rip = get_inode(ino_nr)) == NULL)
 		return EINVAL;
 
 	if (rip->i_mountpoint)
@@ -62,5 +62,5 @@ void fs_unmount(void)
 	bdev_close(fs_dev);
 
 	if (check_inodes() == FALSE)
-		printf("ISOFS: unmounting with in-use inodes!\n");
+		puts("ISOFS: unmounting with in-use inodes!\n");
 }

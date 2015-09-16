@@ -6,6 +6,43 @@
 #include "inc.h"
 #include <sys/stat.h>
 
+#ifdef ISO9660_OPTION_ROCKRIDGE
+
+void parse_susp_rock_ridge_plcl(struct rrii_dir_record *dir, u32_t block) {
+	struct inode *rep_inode;
+	struct buf *bp;
+	struct iso9660_dir_record *dir_rec;
+	struct dir_extent extent;
+	struct inode_dir_entry dummy_dir_entry;
+	size_t dummy_offset = 0;
+
+	/* Check if inode wasn't already parsed. */
+	rep_inode = inode_cache_get(block);
+	if (rep_inode != NULL) {
+		rep_inode->i_refcount++;
+		dir->reparented_inode = rep_inode;
+		return;
+	}
+
+	/* Peek ahead to build extent for read_inode. */
+	if (lmfs_get_block(&bp, fs_dev, block, NORMAL) != OK)
+		return;
+
+	dir_rec = (struct iso9660_dir_record*)b_data(bp);
+
+	extent.location = block;
+	extent.length = dir_rec->data_length_l / v_pri.logical_block_size_l;
+	if (dir_rec->data_length_l % v_pri.logical_block_size_l)
+		extent.length++;
+	extent.next = NULL;
+	lmfs_put_block(bp);
+
+	memset(&dummy_dir_entry, 0, sizeof(struct inode_dir_entry));
+	read_inode(&dummy_dir_entry, &extent, &dummy_offset);
+	free(dummy_dir_entry.r_name);
+	dir->reparented_inode = dummy_dir_entry.i_node;
+}
+
 void parse_susp_rock_ridge_sl(struct rrii_dir_record *dir, char *buffer, int length)
 {
 	/* Parse a Rock Ridge SUSP symbolic link entry (SL). */
@@ -18,13 +55,14 @@ void parse_susp_rock_ridge_sl(struct rrii_dir_record *dir, char *buffer, int len
 		component_length = *((u8_t*)(buffer + offset + 1));
 
 		/* Add directory separator if necessary. */
-		if (dir->slink_rrip[0] != '\0') {
+		if (strcmp(dir->slink_rrip, "") != 0 &&
+		    strcmp(dir->slink_rrip, "/") != 0) {
 			slink_size = strlen(dir->slink_rrip);
 			if (slink_size + 2 >= ISO9660_RRIP_MAX_FILE_ID_LEN)
 				return;
 
-			dir->slink_rrip[slink_size] = '/';
-			slink_size++;
+			dir->slink_rrip[slink_size++] = '/';
+			dir->slink_rrip[slink_size] = '\0';
 		}
 		else
 			slink_size = strlen(dir->slink_rrip);
@@ -43,8 +81,9 @@ void parse_susp_rock_ridge_sl(struct rrii_dir_record *dir, char *buffer, int len
 					return;
 				}
 
-				strlcpy(dir->slink_rrip + slink_size,
-				    buffer + offset + 2, component_length+1);
+				strlcat(&dir->slink_rrip[slink_size],
+				        buffer + offset + 2,
+				        component_length + 1);
 
 				break;
 			}
@@ -55,7 +94,7 @@ void parse_susp_rock_ridge_sl(struct rrii_dir_record *dir, char *buffer, int len
 					return;
 				}
 
-				strcat(dir->slink_rrip + slink_size, ".");
+				strcat(&dir->slink_rrip[slink_size], ".");
 
 				break;
 			}
@@ -66,7 +105,7 @@ void parse_susp_rock_ridge_sl(struct rrii_dir_record *dir, char *buffer, int len
 					return;
 				}
 
-				strcat(dir->slink_rrip + slink_size, "..");
+				strcat(&dir->slink_rrip[slink_size], "..");
 
 				break;
 			}
@@ -78,7 +117,7 @@ void parse_susp_rock_ridge_sl(struct rrii_dir_record *dir, char *buffer, int len
 					return;
 				}
 
-				strcat(dir->slink_rrip + slink_size, "/");
+				strcat(&dir->slink_rrip[slink_size], "/");
 
 				break;
 			}
@@ -106,6 +145,7 @@ int parse_susp_rock_ridge(struct rrii_dir_record *dir, char *buffer)
 	u32_t rrii_pn_rdev_major;
 	u32_t rrii_pn_rdev_minor;
 	mode_t rrii_px_posix_mode;
+	u32_t rrii_pcl_block;
 
 	susp_signature[0] = buffer[0];
 	susp_signature[1] = buffer[1];
@@ -115,26 +155,7 @@ int parse_susp_rock_ridge(struct rrii_dir_record *dir, char *buffer)
 	if ((susp_signature[0] == 'P') && (susp_signature[1] == 'X') &&
 	    (susp_length >= 36) && (susp_version >= 1)) {
 		/* POSIX file mode, UID and GID. */
-		rrii_px_posix_mode = *((u32_t*)(buffer + 4));
-
-		/* Check if file mode is supported by isofs. */
-		switch (rrii_px_posix_mode & _S_IFMT) {
-			case S_IFCHR:
-			case S_IFBLK:
-			case S_IFREG:
-			case S_IFDIR:
-			case S_IFLNK: {
-				dir->d_mode = rrii_px_posix_mode & _S_IFMT;
-				break;
-			}
-			default: {
-				/* Fall back to what ISO 9660 said. */
-				dir->d_mode &= _S_IFMT;
-				break;
-			}
-		}
-
-		dir->d_mode |= rrii_px_posix_mode & 07777;
+		dir->d_mode = *((u32_t*)(buffer + 4));
 		dir->uid = *((u32_t*)(buffer + 20));
 		dir->gid = *((u32_t*)(buffer + 28));
 
@@ -143,9 +164,18 @@ int parse_susp_rock_ridge(struct rrii_dir_record *dir, char *buffer)
 	else if ((susp_signature[0] == 'P') && (susp_signature[1] == 'N') &&
 	         (susp_length >= 20) && (susp_version >= 1)) {
 		/* Device ID (for character or block special inode). */
+
+		/*
+		 * XXX: Specific to how Minix ISO is generated, will have to
+		 * investigate why makefs does that later.
+		 */
+#if 0
 		rrii_pn_rdev_major = *((u32_t*)(buffer + 4));
 		rrii_pn_rdev_minor = *((u32_t*)(buffer + 12));
-
+#else
+		rrii_pn_rdev_major = *((u32_t*)(buffer + 12)) >> 8;
+		rrii_pn_rdev_minor = *((u32_t*)(buffer + 12)) & 0xFF;
+#endif
 		dir->rdev = makedev(rrii_pn_rdev_major, rrii_pn_rdev_minor);
 
 		return OK;
@@ -174,16 +204,25 @@ int parse_susp_rock_ridge(struct rrii_dir_record *dir, char *buffer)
 
 		return OK;
 	}
-	else if ((susp_signature[0] == 'C') && (susp_signature[1] == 'L')) {
-		/* Ignored, skip. */
+	else if ((susp_signature[0] == 'P') && (susp_signature[1] == 'L') &&
+	         (susp_length >= 12) && (susp_version >= 1)) {
+		/* Reparenting ".." directory entry. */
+		rrii_pcl_block = *((u32_t*)(buffer + 4));
+		parse_susp_rock_ridge_plcl(dir, rrii_pcl_block);
+
 		return OK;
 	}
-	else if ((susp_signature[0] == 'P') && (susp_signature[1] == 'L')) {
-		/* Ignored, skip. */
+	else if ((susp_signature[0] == 'C') && (susp_signature[1] == 'L') &&
+	         (susp_length >= 12) && (susp_version >= 1)) {
+		/* Reorganize deep directory entry. */
+		rrii_pcl_block = *((u32_t*)(buffer + 4));
+		parse_susp_rock_ridge_plcl(dir, rrii_pcl_block);
+
 		return OK;
 	}
 	else if ((susp_signature[0] == 'R') && (susp_signature[1] == 'E')) {
 		/* Ignored, skip. */
+
 		return OK;
 	}
 	else if ((susp_signature[0] == 'T') && (susp_signature[1] == 'F') &&
@@ -246,3 +285,4 @@ int parse_susp_rock_ridge(struct rrii_dir_record *dir, char *buffer)
 	return EINVAL;
 }
 
+#endif
