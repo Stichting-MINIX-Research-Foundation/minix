@@ -286,7 +286,7 @@ CPPFLAGS.strcspn.c+=	-D_LIBC
 .for f in \
 	access.o brk.o close.o environ.o execve.o fork.o fsync.o \
 	getgid.o getpid.o geteuid.o getuid.o gettimeofday.o getvfsstat.o \
-	init.o link.o loadname.o lseek.o _mcontext.o mknod.o \
+	init.o kernel_utils.o link.o loadname.o lseek.o _mcontext.o mknod.o \
 	mmap.o nanosleep.o open.o pread.o pwrite.o read.o sbrk.o \
 	select.o setuid.o sigprocmask.o stack_utils.o stat.o stime.o \
 	syscall.o _ucontext.o umask.o unlink.o write.o \
@@ -302,7 +302,7 @@ CLEANFILES+= ${f:C/\.o/.bc/}
 .endfor
 
 .for f in \
-	brksize.o _do_kernel_call_intr.o get_minix_kerninfo.o _ipc.o ucontext.o
+	brksize.o _do_kernel_call_intr.o ipc_minix_kerninfo.o _ipc.o ucontext.o
 ${f} ${f:C/\.o/.bc/}:	${LIBMINIXCARCHDIR}/sys/${f:C/\.o/.S/}
 OBJS+=	${f}
 CLEANFILES+= ${f}

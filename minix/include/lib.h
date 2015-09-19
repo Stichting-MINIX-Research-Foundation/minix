@@ -21,10 +21,13 @@
 #include <minix/endpoint.h>
 #include <minix/ipc.h>
 
+struct minix_kerninfo *get_minix_kerninfo(void);
+
 struct ps_strings; /* forward declaration for minix_stack_fill. */
 
-void minix_stack_params(const char *path, char * const *argv, char * const *envp,
-	size_t *stack_size,  char *overflow, int *argc, int *envc);
+void minix_stack_params(const char *path, char * const *argv,
+	char * const *envp, size_t *stack_size, char *overflow, int *argc,
+	int *envc);
 void minix_stack_fill(const char *path, int argc, char * const *argv,
 	int envc, char * const *envp, size_t stack_size, char *frame,
 	int *vsp, struct ps_strings **psp);

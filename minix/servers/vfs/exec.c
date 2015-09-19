@@ -21,6 +21,7 @@
 #include <minix/endpoint.h>
 #include <minix/com.h>
 #include <minix/u64.h>
+#include <lib.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <string.h>
@@ -81,8 +82,6 @@ static const struct exec_loaders exec_loaders[] = {
 
 #define lock_exec() lock_proc(fproc_addr(VM_PROC_NR))
 #define unlock_exec() unlock_proc(fproc_addr(VM_PROC_NR))
-
-extern struct minix_kerninfo *_minix_kerninfo;
 
 /*===========================================================================*
  *				get_read_vp				     *
@@ -215,7 +214,7 @@ int pm_exec(vir_bytes path, size_t path_len, vir_bytes frame, size_t frame_len,
 
   /* passed from exec() libc code */
   execi.userflags = 0;
-  execi.args.stack_high = _minix_kerninfo->kinfo->user_sp;
+  execi.args.stack_high = get_minix_kerninfo()->kinfo->user_sp;
   execi.args.stack_size = DEFAULT_STACK_LIMIT;
 
   fp->text_size = 0;

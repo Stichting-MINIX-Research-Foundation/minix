@@ -183,7 +183,6 @@ root_dmap(void)
 static void
 root_ipcvecs(void)
 {
-	extern struct minix_kerninfo *_minix_kerninfo;
 	extern struct minix_ipcvecs _minix_ipcvecs;
 
 	/*
@@ -191,8 +190,7 @@ root_ipcvecs(void)
 	 * will be using their own in-libc vectors that are normal symbols in
 	 * the binary.
 	 */
-	if (!_minix_kerninfo ||
-	    !(_minix_kerninfo->ki_flags & MINIX_KIF_IPCVECS))
+	if (!(get_minix_kerninfo()->ki_flags & MINIX_KIF_IPCVECS))
 		return;
 
 	/*

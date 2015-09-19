@@ -1,6 +1,7 @@
 /* Debugging dump procedures for the kernel. */
 
 #include "inc.h"
+#include <lib.h>
 #include <minix/timers.h>
 #include <assert.h>
 #include <machine/interrupt.h>
@@ -55,8 +56,6 @@ struct proc proc[NR_TASKS + NR_PROCS];
 struct priv priv[NR_SYS_PROCS];
 struct boot_image image[NR_BOOT_PROCS];
 
-extern struct minix_kerninfo *_minix_kerninfo;
-
 /*===========================================================================*
  *				kmessages_dmp				     *
  *===========================================================================*/
@@ -68,8 +67,7 @@ void kmessages_dmp()
   int r;
   int size;
 
-  assert(_minix_kerninfo);
-  kmess = _minix_kerninfo->kmessages;
+  kmess = get_minix_kerninfo()->kmessages;
 
   /* Try to print the kernel messages. First determine start and copy the
    * buffer into a print-buffer. This is done because the messages in the

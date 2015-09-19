@@ -23,10 +23,8 @@
 #if defined(__i386__)
 #include "kernel/arch/i386/include/archconst.h" /* for the KTS_ constants */
 #endif
-
+#include <lib.h>
 #include <minix/param.h>
-
-extern struct minix_kerninfo *_minix_kerninfo;
 
 /*
  * Working area.  By obtaining values from the kernel into these local process
@@ -156,7 +154,7 @@ vir_bytes
 kernel_get_stacktop(void)
 {
 
-	return _minix_kerninfo->kinfo->user_sp;
+	return get_minix_kerninfo()->kinfo->user_sp;
 }
 
 /*

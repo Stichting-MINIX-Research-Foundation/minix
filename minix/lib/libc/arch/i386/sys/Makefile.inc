@@ -14,7 +14,7 @@ SRCS+=   \
 	_do_kernel_call_intr.S \
 	_ipc.S \
 	brksize.S \
-	get_minix_kerninfo.S \
+	ipc_minix_kerninfo.S \
 	ucontext.S
 
 ucontextoffsets.h: ${CF} 

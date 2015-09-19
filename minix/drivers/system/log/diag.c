@@ -11,8 +11,6 @@
 
 #include <assert.h>
 
-extern struct minix_kerninfo *_minix_kerninfo;
-
 /*==========================================================================*
  *				do_new_kmess				    *
  *==========================================================================*/
@@ -24,8 +22,7 @@ void do_new_kmess(void)
   int i, r, next, bytes;
   static int prev_next = 0;
 
-  assert(_minix_kerninfo);
-  kmess = _minix_kerninfo->kmessages;
+  kmess = get_minix_kerninfo()->kmessages;
 
   /* Print only the new part. Determine how many new bytes there are with 
    * help of the current and previous 'next' index. Note that the kernel

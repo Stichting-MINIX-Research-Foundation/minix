@@ -1,7 +1,7 @@
 #include <minix/ipcconst.h>
 #include <machine/asm.h>
 
-ENTRY(get_minix_kerninfo)
+ENTRY(ipc_minix_kerninfo)
 	push	%ebp
 	movl	%esp, %ebp
 	push	%ebx

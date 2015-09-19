@@ -2357,7 +2357,7 @@ int _ipc_senda_intr(asynmsg_t *table, size_t count);
 
 int _do_kernel_call_intr(message *m_ptr);
 
-int get_minix_kerninfo(struct minix_kerninfo **);
+int ipc_minix_kerninfo(struct minix_kerninfo **);
 
 /* Hide names to avoid name space pollution. */
 #define ipc_notify	_ipc_notify

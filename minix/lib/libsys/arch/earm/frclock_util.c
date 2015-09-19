@@ -5,9 +5,9 @@
 
 #include <minix/minlib.h>
 #include <minix/sysutil.h>
-#include <minix/type.h>
 #include <sys/errno.h>
 #include <sys/types.h>
+#include <lib.h>
 #include <assert.h>
 
 #define MICROHZ         1000000ULL	/* number of micros per second */
@@ -15,19 +15,19 @@
 
 static u64_t Hz;
 
-extern struct minix_kerninfo *_minix_kerninfo;
-
 int
 micro_delay(u32_t micros)
 {
+	struct minix_kerninfo *minix_kerninfo;
         u64_t start, delta, delta_end;
 
 	Hz = sys_hz();
+	minix_kerninfo = get_minix_kerninfo();
 
         /* Start of delay. */
         read_frclock_64(&start);
-	assert(_minix_kerninfo->minix_arm_frclock_hz);
-	delta_end = (_minix_kerninfo->minix_arm_frclock_hz * micros) / MICROHZ;
+	assert(minix_kerninfo->minix_arm_frclock_hz);
+	delta_end = (minix_kerninfo->minix_arm_frclock_hz * micros) / MICROHZ;
 
         /* If we have to wait for at least one HZ tick, use the regular
          * tickdelay first. Round downwards on purpose, so the average
@@ -49,16 +49,20 @@ micro_delay(u32_t micros)
 
 u32_t frclock_64_to_micros(u64_t tsc)
 {
-        return (u32_t) (tsc / (_minix_kerninfo->minix_arm_frclock_hz / MICROHZ));
+        return (u32_t)
+            (tsc / (get_minix_kerninfo()->minix_arm_frclock_hz / MICROHZ));
 }
 
 void
 read_frclock(u32_t *frclk)
 {
+	struct minix_kerninfo *minix_kerninfo = get_minix_kerninfo();
+
 	assert(frclk);
-	assert(_minix_kerninfo->minix_frclock_tcrr);
-	assert(_minix_kerninfo->minix_arm_frclock_hz);
-	*frclk = *(volatile u32_t *)((u8_t *) _minix_kerninfo->minix_frclock_tcrr);
+	assert(minix_kerninfo->minix_frclock_tcrr);
+	assert(minix_kerninfo->minix_arm_frclock_hz);
+	*frclk = *(volatile u32_t *)((u8_t *)
+	    minix_kerninfo->minix_frclock_tcrr);
 }
 
 u32_t
