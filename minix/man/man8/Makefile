@@ -1,4 +1,4 @@
-MAN=	add_route.8 backup.8 boot.8 btrace.8 \
+MAN=	add_route.8 backup.8 boot.8 \
 	cdprobe.8 cleantmp.8 config.8 cron.8 \
 	dhcpd.8 diskctl.8 fbdctl.8 fdisk.8 \
 	getty.8 halt.8 hgfs.8 httpd.8 ifconfig.8 inet.8 init.8 \
