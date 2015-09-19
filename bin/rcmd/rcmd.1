@@ -1,0 +1,199 @@
+.\"	$NetBSD: rcmd.1,v 1.21 2011/05/31 11:31:10 wiz Exp $
+.\"
+.\" Copyright (c) 1997 Matthew R. Green.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+.\" BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+.\" LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+.\" AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+.\" OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\" Copyright (c) 1983, 1990 The Regents of the University of California.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"	from: @(#)rsh.1	6.10 (Berkeley) 7/24/91
+.\"	from: NetBSD: rsh.1,v 1.3 1997/01/09 20:21:14 tls Exp
+.\"
+.Dd May 31, 2011
+.Dt RCMD 1
+.Os
+.Sh NAME
+.Nm rcmd
+.Nd backend driver for
+.Xr rcmd 3
+.Sh SYNOPSIS
+.Nm
+.Op Fl 46dn
+.Op Fl l Ar username
+.Op Fl p Ar port
+.Op Fl u Ar localusername
+.Ar host
+.Ar command
+.Sh DESCRIPTION
+.Nm
+executes
+.Ar command
+on
+.Ar host .
+.Pp
+.Nm
+copies its standard input to the remote command, the standard
+output of the remote command to its standard output, and the
+standard error of the remote command to its standard error.
+Interrupt, quit and terminate signals are propagated to the remote
+command;
+.Nm
+normally terminates when the remote command does.
+The options are as follows:
+.Bl -tag -width flag
+.It Fl 4
+Use IPv4 addresses only.
+.It Fl 6
+Use IPv6 addresses only.
+.It Fl d
+The
+.Fl d
+option turns on socket debugging (using
+.Xr setsockopt 2 )
+on the
+.Tn TCP
+sockets used for communication with the remote host.
+.It Fl l
+By default, the remote username is the same as the local username.
+The
+.Fl l
+option allows the remote name to be specified.
+Another possible way to specify the remote username
+is the notation
+.Ar user@host .
+.It Fl n
+The
+.Fl n
+option redirects input from the special device
+.Pa /dev/null
+(see the
+.Sx BUGS
+section of this manual page).
+.It Fl p Ar port
+Uses the given
+.Pa port
+instead of the one assigned to the service
+.Dq shell .
+May be given either as symbolic name or as number.
+.It Fl u
+The
+.Fl u
+option allows the local username to be specified.
+Only the superuser is allowed to use this option.
+.El
+.Pp
+Shell metacharacters which are not quoted are interpreted on local machine,
+while quoted metacharacters are interpreted on the remote machine.
+For example, the command
+.Pp
+.Dl rcmd otherhost cat remotefile \*[Gt]\*[Gt] localfile
+.Pp
+appends the remote file
+.Ar remotefile
+to the local file
+.Ar localfile ,
+while
+.Pp
+.Dl rcmd otherhost cat remotefile \&"\*[Gt]\*[Gt]\&" other_remotefile
+.Pp
+appends
+.Ar remotefile
+to
+.Ar other_remotefile .
+.Sh FILES
+.Bl -tag -width /etc/hosts -compact
+.It Pa /etc/hosts
+.El
+.Sh SEE ALSO
+.Xr rsh 1 ,
+.Xr rcmd 3 ,
+.Xr environ 7
+.Sh HISTORY
+The
+.Nm
+command appeared in
+.Nx 1.3
+and is primarily derived from
+.Xr rsh 1 .
+Its purpose was to create a backend driver for
+.Xr rcmd 3
+that would allow the users of
+.Xr rcmd 3
+to no longer require super-user privileges.
+.Sh BUGS
+If you are using
+.Xr csh 1
+and put a
+.Nm
+in the background without redirecting its input away from the terminal,
+it will block even if no reads are posted by the remote command.
+If no input is desired you should redirect the input of
+.Nm
+to
+.Pa /dev/null
+using the
+.Fl n
+option.
+.Pp
+You cannot use
+.Nm rcmd
+to run an interactive command (like
+.Xr rogue 6
+or
+.Xr vi 1 ) .
+Use
+.Xr rlogin 1
+instead.
+.Pp
+The stop signal,
+.Dv SIGSTOP ,
+will stop the local
+.Nm
+process only.
+This is arguably wrong, but currently hard to fix for reasons
+too complicated to explain here.

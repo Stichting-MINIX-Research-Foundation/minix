@@ -39,6 +39,8 @@
 ./bin/printconfig			minix-sys
 ./bin/printroot				minix-sys
 ./bin/pwd				minix-sys
+./bin/rcmd				minix-sys
+./bin/rcp				minix-sys
 ./bin/read				minix-sys	obsolete
 ./bin/readclock				minix-sys
 ./bin/rm				minix-sys
@@ -360,7 +362,7 @@
 ./usr/bin/info				minix-sys
 ./usr/bin/infocmp			minix-sys
 ./usr/bin/infokey			minix-sys
-./usr/bin/in.rshd			minix-sys
+./usr/bin/in.rshd			minix-sys	obsolete
 ./usr/bin/install			minix-sys
 ./usr/bin/install-info			minix-sys
 ./usr/bin/in.telnetd			minix-sys
@@ -458,7 +460,7 @@
 ./usr/bin/ranlib			minix-sys	binutils
 ./usr/bin/rarpd				minix-sys
 ./usr/bin/rawspeed			minix-sys
-./usr/bin/rcp				minix-sys
+./usr/bin/rcp				minix-sys	obsolete
 ./usr/bin/readelf			minix-sys	binutils
 ./usr/bin/readlink			minix-sys
 ./usr/bin/recwave			minix-sys
@@ -2292,6 +2294,7 @@
 ./usr/libexec/kyua-plain-tester		minix-sys	kyua
 ./usr/libexec/ld.elf_so			minix-sys
 ./usr/libexec/makewhatis		minix-sys
+./usr/libexec/rshd			minix-sys
 ./usr/libexec/virecover			minix-sys
 ./usr/log				minix-sys
 ./usr/log/messages			minix-sys
@@ -2542,6 +2545,7 @@
 ./usr/man/man1/pwhash.1			minix-sys
 ./usr/man/man1/ranlib.1			minix-sys	binutils
 ./usr/man/man1/rcp.1			minix-sys
+./usr/man/man1/rcmd.1			minix-sys
 ./usr/man/man1/read.1			minix-sys	obsolete
 ./usr/man/man1/readelf.1		minix-sys	binutils
 ./usr/man/man1/readlink.1		minix-sys

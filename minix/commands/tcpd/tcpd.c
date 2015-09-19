@@ -242,6 +242,7 @@ int main(int argc, char **argv)
 		sigprocmask(SIG_SETMASK, &oldmask, NULL);
 		dup2(client_fd, 0);
 		dup2(client_fd, 1);
+		dup2(client_fd, 2);
 		close(client_fd);
 		execvp(progv[0], progv);
 		report(progv[0]);
