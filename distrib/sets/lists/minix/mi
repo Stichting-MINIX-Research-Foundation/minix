@@ -309,7 +309,7 @@
 ./usr/bin/dhrystone			minix-sys
 ./usr/bin/diff				minix-sys
 ./usr/bin/dirname			minix-sys
-./usr/bin/diskctl			minix-sys
+./usr/bin/diskctl			minix-sys	obsolete
 ./usr/bin/dosdir			minix-sys
 ./usr/bin/dosread			minix-sys
 ./usr/bin/doswrite			minix-sys
@@ -5311,6 +5311,7 @@
 ./usr/sbin/btrace			minix-sys
 ./usr/sbin/chown			minix-sys
 ./usr/sbin/chroot			minix-sys
+./usr/sbin/diskctl			minix-sys
 ./usr/sbin/group			minix-sys
 ./usr/sbin/groupadd			minix-sys
 ./usr/sbin/groupdel			minix-sys
