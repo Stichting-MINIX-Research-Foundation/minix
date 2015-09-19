@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.28 2008/07/21 14:19:22 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.31 2013/01/24 17:50:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -33,6 +33,15 @@
  */
 
 #include <sys/cdefs.h>
+#ifndef lint
+#if 0
+static char sccsid[] = "@(#)main.c	8.4 (Berkeley) 5/4/95";
+#else
+__COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\
+ The Regents of the University of California.  All rights reserved.");
+__RCSID("$NetBSD: main.c,v 1.31 2013/01/24 17:50:08 christos Exp $");
+#endif
+#endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -41,7 +50,6 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <fts.h>
-#include <signal.h>
 #include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -61,25 +69,16 @@ int issort;			/* sort directory entries */
 int isxargs;			/* don't permit xargs delimiting chars */
 int regcomp_flags = REG_BASIC;	/* regex compilation flags */
 
-int main(int, char **);
-static void usage(void);
+__dead static void usage(void);
 
 int
 main(int argc, char *argv[])
 {
-	struct sigaction sa;
 	char **p, **start;
 	int ch;
 
 	(void)time(&now);	/* initialize the time-of-day */
 	(void)setlocale(LC_ALL, "");
-
-	memset(&sa, 0, sizeof(sa));
-	sa.sa_flags = SA_RESTART;
-	sa.sa_handler = show_path;
-#ifdef SIGINFO
-	sigaction(SIGINFO, &sa, NULL);
-#endif
 
 	/* array to hold dir list.  at most (argc - 1) elements. */
 	p = start = malloc(argc * sizeof (char *));
@@ -149,8 +148,7 @@ main(int argc, char *argv[])
 
 	*p = NULL;
 
-	if ((dotfd = open(".", O_RDONLY, 0)) == -1 ||
-	    fcntl(dotfd, F_SETFD, FD_CLOEXEC) == -1)
+	if ((dotfd = open(".", O_RDONLY | O_CLOEXEC, 0)) == -1)
 		err(1, ".");
 
 	exit(find_execute(find_formplan(argv), start));
@@ -160,7 +158,7 @@ static void
 usage(void)
 {
 
-	(void)fprintf(stderr,
-"usage: find [-H | -L | -P] [-dEhsXx] [-f file] file [file ...] [expression]\n");
+	(void)fprintf(stderr, "Usage: %s [-H | -L | -P] [-dEhsXx] [-f file] "
+	    "file [file ...] [expression]\n", getprogname());
 	exit(1);
 }

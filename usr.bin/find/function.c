@@ -1,4 +1,4 @@
-/*	$NetBSD: function.c,v 1.64 2007/07/19 07:49:30 daniel Exp $	*/
+/*	$NetBSD: function.c,v 1.72 2013/05/04 06:29:32 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -33,6 +33,13 @@
  */
 
 #include <sys/cdefs.h>
+#ifndef lint
+#if 0
+static char sccsid[] = "from: @(#)function.c	8.10 (Berkeley) 5/4/95";
+#else
+__RCSID("$NetBSD: function.c,v 1.72 2013/05/04 06:29:32 uebayasi Exp $");
+#endif
+#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -48,20 +55,15 @@
 #include <inttypes.h>
 #include <limits.h>
 #include <pwd.h>
-#include <grp.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <tzfile.h>
 #include <unistd.h>
 #include <util.h>
-#include <pwd.h>
 
 #include "find.h"
-
-typedef int bool;
-#define false 0
-#define true 1
 
 #define	COMPARE(a, b) {							\
 	switch (plan->flags) {						\
@@ -76,7 +78,7 @@ typedef int bool;
 	}								\
 }
 
-static	int32_t	find_parsenum(PLAN *, const char *, const char *, char *);
+static	int64_t	find_parsenum(PLAN *, const char *, const char *, char *);
 static	void	run_f_exec(PLAN *);
 	int	f_always_true(PLAN *, FTSENT *);
 	int	f_amin(PLAN *, FTSENT *);
@@ -129,10 +131,10 @@ extern time_t now;
  * find_parsenum --
  *	Parse a string of the form [+-]# and return the value.
  */
-static int32_t
+static int64_t
 find_parsenum(PLAN *plan, const char *option, const char *vp, char *endch)
 {
-	int32_t value;
+	int64_t value;
 	const char *str;
 	char *endchar; /* Pointer to character ending conversion. */
 
@@ -157,7 +159,7 @@ find_parsenum(PLAN *plan, const char *option, const char *vp, char *endch)
 	 * and endchar points to the beginning of the string we know we have
 	 * a syntax error.
 	 */
-	value = strtol(str, &endchar, 10);
+	value = strtoq(str, &endchar, 10);
 	if (value == 0 && endchar == str)
 		errx(1, "%s: %s: illegal numeric value", option, vp);
 	if (endchar[0] && (endch == NULL || endchar[0] != *endch))
@@ -213,12 +215,10 @@ c_amin(char ***argvp, int isok)
  *	file.
  */
 int
-f_anewer(plan, entry)
-	PLAN *plan;
-	FTSENT *entry;
+f_anewer(PLAN *plan, FTSENT *entry)
 {
 
-	return (entry->fts_statp->st_atime > plan->t_data);
+	return timespeccmp(&entry->fts_statp->st_atim, &plan->ts_data, >);
 }
 
 PLAN *
@@ -234,7 +234,7 @@ c_anewer(char ***argvp, int isok)
 	if (stat(filename, &sb))
 		err(1, "%s", filename);
 	new = palloc(N_ANEWER, f_anewer);
-	new->t_data = sb.st_atime;
+	new->ts_data = sb.st_atim;
 	return (new);
 }
 
@@ -265,6 +265,7 @@ c_atime(char ***argvp, int isok)
 	TIME_CORRECT(new, N_ATIME);
 	return (new);
 }
+
 /*
  * -cmin n functions --
  *
@@ -304,7 +305,7 @@ int
 f_cnewer(PLAN *plan, FTSENT *entry)
 {
 
-	return (entry->fts_statp->st_ctime > plan->t_data);
+	return timespeccmp(&entry->fts_statp->st_ctim, &plan->ts_data, >);
 }
 
 PLAN *
@@ -320,7 +321,7 @@ c_cnewer(char ***argvp, int isok)
 	if (stat(filename, &sb))
 		err(1, "%s", filename);
 	new = palloc(N_CNEWER, f_cnewer);
-	new->t_data = sb.st_ctime;
+	new->ts_data = sb.st_ctim;
 	return (new);
 }
 
@@ -355,7 +356,7 @@ c_ctime(char ***argvp, int isok)
 /*
  * -delete functions --
  *
- *	True always.  Makes its best shot and continues on regardless.
+ *	Always true.  Makes its best shot and continues on regardless.
  */
 int
 f_delete(PLAN *plan __unused, FTSENT *entry)
@@ -377,14 +378,14 @@ f_delete(PLAN *plan __unused, FTSENT *entry)
 		errx(1, "-delete: %s: relative path potentially not safe",
 			entry->fts_accpath);
 
-#if !defined(__minix)
+#ifndef __minix
 	/* Turn off user immutable bits if running as root */
 	if ((entry->fts_statp->st_flags & (UF_APPEND|UF_IMMUTABLE)) &&
 	    !(entry->fts_statp->st_flags & (SF_APPEND|SF_IMMUTABLE)) &&
 	    geteuid() == 0)
 		chflags(entry->fts_accpath,
 		       entry->fts_statp->st_flags &= ~(UF_APPEND|UF_IMMUTABLE));
-#endif
+#endif /* !__minix */
 
 	/* rmdir directories, unlink everything else */
 	if (S_ISDIR(entry->fts_statp->st_mode)) {
@@ -453,7 +454,7 @@ f_empty(PLAN *plan, FTSENT *entry)
 		empty = 1;
 		dir = opendir(entry->fts_accpath);
 		if (dir == NULL)
-			err(1, "%s", entry->fts_accpath);
+			return (0);
 		for (dp = readdir(dir); dp; dp = readdir(dir))
 			if (dp->d_name[0] != '.' ||
 			    (dp->d_name[1] != '\0' &&
@@ -499,7 +500,8 @@ c_empty(char ***argvp, int isok)
 int
 f_exec(PLAN *plan, FTSENT *entry)
 {
-	int cnt, l;
+	size_t cnt;
+	int l;
 	pid_t pid;
 	int status;
 
@@ -545,9 +547,9 @@ f_exec(PLAN *plan, FTSENT *entry)
 		fflush(stdout);
 		fflush(stderr);
 
-		switch (pid = fork()) {
+		switch (pid = vfork()) {
 		case -1:
-			err(1, "fork");
+			err(1, "vfork");
 			/* NOTREACHED */
 		case 0:
 			if (fchdir(dotfd)) {
@@ -577,9 +579,9 @@ run_f_exec(PLAN *plan)
 	fflush(stdout);
 	fflush(stderr);
 
-	switch (pid = fork()) {
+	switch (pid = vfork()) {
 	case -1:
-		err(1, "fork");
+		err(1, "vfork");
 		/* NOTREACHED */
 	case 0:
 		if (fchdir(dotfd)) {
@@ -627,7 +629,8 @@ PLAN *
 c_exec(char ***argvp, int isok)
 {
 	PLAN *new;			/* node returned */
-	int cnt, brace, lastbrace;
+	size_t cnt;
+	int brace, lastbrace;
 	char **argv, **ap, *p;
 
 	isoutput = 1;
@@ -637,8 +640,8 @@ c_exec(char ***argvp, int isok)
 		new->flags |= F_NEEDOK;
 
 	/*
-	 * Terminate if we encounter an arg exacty equal to ";", or an
-	 * arg exacty equal to "+" following an arg exacty equal to
+	 * Terminate if we encounter an arg exactly equal to ";", or an
+	 * arg exactly equal to "+" following an arg exactly equal to
 	 * "{}".
 	 */
 	for (ap = argv = *argvp, brace = 0;; ++ap) {
@@ -646,6 +649,7 @@ c_exec(char ***argvp, int isok)
 			errx(1, "%s: no terminating \";\" or \"+\"",
 			    isok ? "-ok" : "-exec");
 		lastbrace = brace;
+		brace = 0;
 		if (strcmp(*ap, "{}") == 0)
 			brace = 1;
 		if (strcmp(*ap, ";") == 0)
@@ -664,12 +668,12 @@ c_exec(char ***argvp, int isok)
 		errx(1, "-ok: terminating \"+\" not permitted.");
 
 	if (new->flags & F_PLUSSET) {
-		u_int c, bufsize;
+		size_t c, bufsize;
 
 		cnt = ap - *argvp - 1;			/* units are words */
 		new->ep_maxargs = 5000;
-		new->e_argv = (char **)emalloc((u_int)(cnt + new->ep_maxargs)
-						* sizeof(char **));
+		new->e_argv = emalloc((cnt + new->ep_maxargs)
+		    * sizeof(*new->e_argv));
 
 		/* We start stuffing arguments after the user's last one. */
 		new->ep_bxp = &new->e_argv[cnt];
@@ -679,34 +683,36 @@ c_exec(char ***argvp, int isok)
 		 * Count up the space of the user's arguments, and
 		 * subtract that from what we allocate.
 		 */
+#define MAXARG (ARG_MAX - 4 * 1024)
 		for (argv = *argvp, c = 0, cnt = 0;
 		     argv < ap;
 		     ++argv, ++cnt) {
 			c += strlen(*argv) + 1;
+			if (c >= MAXARG)
+				errx(1, "Arguments too long");
 			new->e_argv[cnt] = *argv;
 		}
-		bufsize = ARG_MAX - 4 * 1024 - c;
-
+		bufsize = MAXARG - c;
 
 		/*
 		 * Allocate, and then initialize current, base, and
 		 * end pointers.
 		 */
-		new->ep_p = new->ep_bbp = malloc(bufsize + 1);
+		new->ep_p = new->ep_bbp = emalloc(bufsize + 1);
 		new->ep_ebp = new->ep_bbp + bufsize - 1;
 		new->ep_rval = 0;
 	} else { /* !F_PLUSSET */
 		cnt = ap - *argvp + 1;
-		new->e_argv = (char **)emalloc((u_int)cnt * sizeof(char *));
-		new->e_orig = (char **)emalloc((u_int)cnt * sizeof(char *));
-		new->e_len = (int *)emalloc((u_int)cnt * sizeof(int));
+		new->e_argv = emalloc(cnt * sizeof(*new->e_argv));
+		new->e_orig = emalloc(cnt * sizeof(*new->e_orig));
+		new->e_len = emalloc(cnt * sizeof(*new->e_len));
 
 		for (argv = *argvp, cnt = 0; argv < ap; ++argv, ++cnt) {
 			new->e_orig[cnt] = *argv;
 			for (p = *argv; *p; ++p)
 				if (p[0] == '{' && p[1] == '}') {
 					new->e_argv[cnt] =
-						emalloc((u_int)MAXPATHLEN);
+						emalloc(MAXPATHLEN);
 					new->e_len[cnt] = MAXPATHLEN;
 					break;
 				}
@@ -735,7 +741,7 @@ c_exec(char ***argvp, int isok)
 int
 f_execdir(PLAN *plan, FTSENT *entry)
 {
-	int cnt;
+	size_t cnt;
 	pid_t pid;
 	int status;
 	char *file;
@@ -755,7 +761,7 @@ f_execdir(PLAN *plan, FTSENT *entry)
 	fflush(stdout);
 	fflush(stderr);
 
-	switch (pid = fork()) {
+	switch (pid = vfork()) {
 	case -1:
 		err(1, "fork");
 		/* NOTREACHED */
@@ -779,7 +785,7 @@ PLAN *
 c_execdir(char ***argvp, int isok)
 {
 	PLAN *new;			/* node returned */
-	int cnt;
+	size_t cnt;
 	char **argv, **ap, *p;
 
 	ftsoptions &= ~FTS_NOSTAT;
@@ -796,15 +802,15 @@ c_execdir(char ***argvp, int isok)
 	}
 
 	cnt = ap - *argvp + 1;
-	new->e_argv = (char **)emalloc((u_int)cnt * sizeof(char *));
-	new->e_orig = (char **)emalloc((u_int)cnt * sizeof(char *));
-	new->e_len = (int *)emalloc((u_int)cnt * sizeof(int));
+	new->e_argv = emalloc(cnt * sizeof(*new->e_argv));
+	new->e_orig = emalloc(cnt * sizeof(*new->e_orig));
+	new->e_len = emalloc(cnt * sizeof(*new->e_len));
 
 	for (argv = *argvp, cnt = 0; argv < ap; ++argv, ++cnt) {
 		new->e_orig[cnt] = *argv;
 		for (p = *argv; *p; ++p)
 			if (p[0] == '{' && p[1] == '}') {
-				new->e_argv[cnt] = emalloc((u_int)MAXPATHLEN);
+				new->e_argv[cnt] = emalloc(MAXPATHLEN);
 				new->e_len[cnt] = MAXPATHLEN;
 				break;
 			}
@@ -857,7 +863,6 @@ c_false(char ***argvp, int isok)
 }
 
 
-#if !defined(__minix)
 /*
  * -flags [-]flags functions --
  */
@@ -871,8 +876,6 @@ f_flags(PLAN *plan, FTSENT *entry)
 		return ((plan->f_data | flags) == flags);
 	else
 		return (flags == plan->f_data);
-	/* MINIX has no file flags. */
-	return 0;
 	/* NOTREACHED */
 }
 
@@ -900,7 +903,6 @@ c_flags(char ***argvp, int isok)
 	new->f_data = flagset;
 	return (new);
 }
-#endif
 
 /*
  * -follow functions --
@@ -955,7 +957,6 @@ c_fprint(char ***argvp, int isok)
  *
  *	True if the file is of a certain type.
  */
-#if !defined(__minix)
 int
 f_fstype(PLAN *plan, FTSENT *entry)
 {
@@ -1049,7 +1050,6 @@ c_fstype(char ***argvp, int isok)
 	new->c_data = arg;
 	return (new);
 }
-#endif
 
 /*
  * -group gname functions --
@@ -1215,6 +1215,7 @@ c_mindepth(char ***argvp, int isok)
 	new->min_data = atoi(arg);
 	return (new);
 }
+
 /*
  * -mmin n functions --
  *
@@ -1242,6 +1243,7 @@ c_mmin(char ***argvp, int isok)
 	TIME_CORRECT(new, N_MMIN);
 	return (new);
 }
+
 /*
  * -mtime n functions --
  *
@@ -1330,7 +1332,7 @@ int
 f_newer(PLAN *plan, FTSENT *entry)
 {
 
-	return (entry->fts_statp->st_mtime > plan->t_data);
+	return timespeccmp(&entry->fts_statp->st_mtim, &plan->ts_data, >);
 }
 
 PLAN *
@@ -1346,7 +1348,7 @@ c_newer(char ***argvp, int isok)
 	if (stat(filename, &sb))
 		err(1, "%s", filename);
 	new = palloc(N_NEWER, f_newer);
-	new->t_data = sb.st_mtime;
+	new->ts_data = sb.st_mtim;
 	return (new);
 }
 
@@ -1430,15 +1432,9 @@ f_perm(PLAN *plan, FTSENT *entry)
 	mode_t mode;
 
 	mode = entry->fts_statp->st_mode &
-	    (S_ISUID|S_ISGID
-#ifdef S_ISTXT
-	    |S_ISTXT
-#endif
-	    |S_IRWXU|S_IRWXG|S_IRWXO);
+	    (S_ISUID|S_ISGID|S_ISTXT|S_IRWXU|S_IRWXG|S_IRWXO);
 	if (plan->flags == F_ATLEAST)
 		return ((plan->m_data | mode) == mode);
-	else if (plan->flags == F_ANY)
-		return ((plan->m_data & mode) != 0);
 	else
 		return (mode == plan->m_data);
 	/* NOTREACHED */
@@ -1458,9 +1454,6 @@ c_perm(char ***argvp, int isok)
 
 	if (*perm == '-') {
 		new->flags = F_ATLEAST;
-		++perm;
-	} else if (*perm == '+') {
-		new->flags = F_ANY;
 		++perm;
 	}
 
@@ -1577,7 +1570,7 @@ f_regex(PLAN *plan, FTSENT *entry)
 static PLAN *
 c_regex_common(char ***argvp, int isok, enum ntype type, bool icase)
 {
-	char errbuf[100];
+	char errbuf[LINE_MAX];
 	regex_t reg;
 	char *regexp = **argvp;
 	char *lineregexp;
@@ -1702,11 +1695,9 @@ c_type(char ***argvp, int isok)
 	case 'p':
 		mask = S_IFIFO;
 		break;
-#ifdef S_IFSOCK
 	case 's':
 		mask = S_IFSOCK;
 		break;
-#endif
 #ifdef S_IFWHT
 	case 'W':
 	case 'w':
