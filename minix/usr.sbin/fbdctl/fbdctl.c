@@ -2,40 +2,44 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <minix/ioctl.h>
 #include <minix/u64.h>
-#include <sys/ioc_fbd.h>
+#include <sys/ioctl.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
 
-static int usage(char *name)
-{
-	printf("usage:\n");
-	printf("  %s list\n", name);
-	printf("  %s add [-a start[-end]] [-s skip] [-c count] [-rw] "
-		"<action> [params]\n", name);
-	printf("  %s del N\n", name);
-	printf("\n");
-	printf("actions and params:\n");
-	printf("  corrupt [zero|persist|random]\n");
-	printf("  error [OK|EIO]\n");
-	printf("  misdir <start>-<end> <align>\n");
-	printf("  lost\n");
-	printf("  torn <lead>\n");
-	printf("use %s -d <device> to specify a device other than /dev/fbd\n",
-		name);
+#define PATH_DEV_FBD	"/dev/fbd"
 
-	return EXIT_FAILURE;
+static void __dead
+usage(void)
+{
+
+	fprintf(stderr, "usage:\n");
+	fprintf(stderr, "  %s list\n", getprogname());
+	fprintf(stderr, "  %s add [-a start[-end]] [-s skip] [-c count] [-rw] "
+	    "<action> [params]\n", getprogname());
+	fprintf(stderr, "  %s del N\n", getprogname());
+	fprintf(stderr, "\n");
+	fprintf(stderr, "actions and params:\n");
+	fprintf(stderr, "  corrupt [zero|persist|random]\n");
+	fprintf(stderr, "  error [OK|EIO]\n");
+	fprintf(stderr, "  misdir <start>-<end> <align>\n");
+	fprintf(stderr, "  lost\n");
+	fprintf(stderr, "  torn <lead>\n");
+	fprintf(stderr, "use %s -d <device> to specify a device other than "
+	    "%s\n", getprogname(), PATH_DEV_FBD);
+
+	exit(EXIT_FAILURE);
 }
 
-static void print_rule(struct fbd_rule *rule)
+static void
+print_rule(struct fbd_rule * rule)
 {
 	printf("%-2d %04lX%08lX-%04lX%08lX %-4d %-5d %c%c ",
-		rule->num, ex64hi(rule->start), ex64lo(rule->start),
-		ex64hi(rule->end), ex64lo(rule->end), rule->skip,
-		rule->count, (rule->flags & FBD_FLAG_READ) ? 'r' : ' ',
-		(rule->flags & FBD_FLAG_WRITE) ? 'w' : ' ');
+	    rule->num, ex64hi(rule->start), ex64lo(rule->start),
+	    ex64hi(rule->end), ex64lo(rule->end), rule->skip,
+	    rule->count, (rule->flags & FBD_FLAG_READ) ? 'r' : ' ',
+	    (rule->flags & FBD_FLAG_WRITE) ? 'w' : ' ');
 
 	switch (rule->action) {
 	case FBD_ACTION_CORRUPT:
@@ -67,17 +71,16 @@ static void print_rule(struct fbd_rule *rule)
 
 	case FBD_ACTION_MISDIR:
 		printf("%-7s %04lX%08lX-%04lX%08lX %u",
-			"misdir", ex64hi(rule->params.misdir.start),
-			ex64lo(rule->params.misdir.start),
-			ex64hi(rule->params.misdir.end),
-			ex64lo(rule->params.misdir.end),
-			rule->params.misdir.align);
+		    "misdir", ex64hi(rule->params.misdir.start),
+		    ex64lo(rule->params.misdir.start),
+		    ex64hi(rule->params.misdir.end),
+		    ex64lo(rule->params.misdir.end),
+		    rule->params.misdir.align);
 		break;
 
 	case FBD_ACTION_LOSTTORN:
 		if (rule->params.losttorn.lead > 0)
-			printf("%-7s %u", "torn",
-				rule->params.losttorn.lead);
+			printf("%-7s %u", "torn", rule->params.losttorn.lead);
 		else
 			printf("%-7s", "lost");
 	}
@@ -85,7 +88,8 @@ static void print_rule(struct fbd_rule *rule)
 	printf("\n");
 }
 
-static int do_list(int fd)
+static int
+do_list(int fd)
 {
 	struct fbd_rule rule;
 	int i;
@@ -107,7 +111,8 @@ static int do_list(int fd)
 	return EXIT_SUCCESS;
 }
 
-static int scan_hex64(char *input, u64_t *val)
+static int
+scan_hex64(char * input, u64_t * val)
 {
 	u32_t lo, hi;
 	char buf[9];
@@ -133,7 +138,8 @@ static int scan_hex64(char *input, u64_t *val)
 	return 1;
 }
 
-static int scan_range(char *input, u64_t *start, u64_t *end, int need_end)
+static int
+scan_range(char * input, u64_t * start, u64_t * end, int need_end)
 {
 	char *p;
 
@@ -147,7 +153,8 @@ static int scan_range(char *input, u64_t *start, u64_t *end, int need_end)
 	return scan_hex64(input, start);
 }
 
-static int do_add(int fd, int argc, char **argv, int off)
+static int
+do_add(int fd, int argc, char ** argv, int off)
 {
 	struct fbd_rule rule;
 	int c, r;
@@ -158,7 +165,7 @@ static int do_add(int fd, int argc, char **argv, int off)
 		switch (c) {
 		case 'a':
 			if (!scan_range(optarg, &rule.start, &rule.end, 0))
-				return usage(argv[0]);
+				usage();
 			break;
 		case 's':
 			rule.skip = atoi(optarg);
@@ -173,19 +180,19 @@ static int do_add(int fd, int argc, char **argv, int off)
 			rule.flags |= FBD_FLAG_WRITE;
 			break;
 		default:
-			return usage(argv[0]);
+			usage();
 		}
 	}
 
 	optind += off; /* compensate for the shifted argc/argv */
 
-	if (optind >= argc) return usage(argv[0]);
+	if (optind >= argc) usage();
 
 	/* default to reads and writes */
 	if (!rule.flags) rule.flags = FBD_FLAG_READ | FBD_FLAG_WRITE;
 
 	if (!strcmp(argv[optind], "corrupt")) {
-		if (optind+1 >= argc) return usage(argv[0]);
+		if (optind+1 >= argc) usage();
 
 		rule.action = FBD_ACTION_CORRUPT;
 
@@ -195,10 +202,10 @@ static int do_add(int fd, int argc, char **argv, int off)
 			rule.params.corrupt.type = FBD_CORRUPT_PERSIST;
 		else if (!strcmp(argv[optind+1], "random"))
 			rule.params.corrupt.type = FBD_CORRUPT_RANDOM;
-		else return usage(argv[0]);
+		else usage();
 	}
 	else if (!strcmp(argv[optind], "error")) {
-		if (optind+1 >= argc) return usage(argv[0]);
+		if (optind+1 >= argc) usage();
 
 		rule.action = FBD_ACTION_ERROR;
 
@@ -210,21 +217,21 @@ static int do_add(int fd, int argc, char **argv, int off)
 			else
 				rule.params.error.code = EIO;
 		}
-		else return usage(argv[0]);
+		else usage();
 	}
 	else if (!strcmp(argv[optind], "misdir")) {
-		if (optind+2 >= argc) return usage(argv[0]);
+		if (optind+2 >= argc) usage();
 
 		rule.action = FBD_ACTION_MISDIR;
 
 		if (!scan_range(argv[optind+1], &rule.params.misdir.start,
-				&rule.params.misdir.end, 1))
-			return usage(argv[0]);
+		    &rule.params.misdir.end, 1))
+			usage();
 
 		rule.params.misdir.align = atoi(argv[optind+2]);
 
-		if ((int) rule.params.misdir.align <= 0)
-			return usage(argv[0]);
+		if ((int)rule.params.misdir.align <= 0)
+			usage();
 	}
 	else if (!strcmp(argv[optind], "lost")) {
 		rule.action = FBD_ACTION_LOSTTORN;
@@ -232,16 +239,16 @@ static int do_add(int fd, int argc, char **argv, int off)
 		rule.params.losttorn.lead = 0;
 	}
 	else if (!strcmp(argv[optind], "torn")) {
-		if (optind+1 >= argc) return usage(argv[0]);
+		if (optind+1 >= argc) usage();
 
 		rule.action = FBD_ACTION_LOSTTORN;
 
 		rule.params.losttorn.lead = atoi(argv[optind+1]);
 
-		if ((int) rule.params.losttorn.lead <= 0)
-			return usage(argv[0]);
+		if ((int)rule.params.losttorn.lead <= 0)
+			usage();
 	}
-	else return usage(argv[0]);
+	else usage();
 
 #if DEBUG
 	print_rule(&rule);
@@ -260,12 +267,13 @@ static int do_add(int fd, int argc, char **argv, int off)
 	return EXIT_SUCCESS;
 }
 
-static int do_del(int fd, int argc, char **argv, int off)
+static int
+do_del(int fd, int argc, char ** argv, int off)
 {
 	fbd_rulenum_t num;
 
 	if (argc < off + 2)
-		return usage(argv[0]);
+		usage();
 
 	num = atoi(argv[off + 1]);
 
@@ -280,17 +288,20 @@ static int do_del(int fd, int argc, char **argv, int off)
 	return EXIT_SUCCESS;
 }
 
-int main(int argc, char **argv)
+int
+main(int argc, char ** argv)
 {
 	int r, fd, off = 1;
-	char *dev = "/dev/fbd";
+	const char *dev = PATH_DEV_FBD;
+
+	setprogname(argv[0]);
 
 	if (argc < 2)
-		return usage(argv[0]);
+		usage();
 
 	if (!strcmp(argv[1], "-d")) {
 		if (argc < 4)
-			return usage(argv[0]);
+			usage();
 
 		dev = argv[2];
 
@@ -304,14 +315,14 @@ int main(int argc, char **argv)
 		return EXIT_FAILURE;
 	}
 
-	else if (!strcmp(argv[off], "list"))
+	if (!strcmp(argv[off], "list"))
 		r = do_list(fd);
 	else if (!strcmp(argv[off], "add"))
 		r = do_add(fd, argc, argv, off);
 	else if (!strcmp(argv[off], "del"))
 		r = do_del(fd, argc, argv, off);
 	else
-		r = usage(argv[0]);
+		usage();
 
 	close(fd);
 

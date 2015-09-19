@@ -1,4 +1,4 @@
 PROG=	fbdctl
-MAN=
+MAN=	fbdctl.8
 
 .include <bsd.prog.mk>

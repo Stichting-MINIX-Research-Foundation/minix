@@ -321,7 +321,7 @@
 ./usr/bin/ex				minix-sys
 ./usr/bin/expand			minix-sys
 ./usr/bin/false				minix-sys
-./usr/bin/fbdctl			minix-sys
+./usr/bin/fbdctl			minix-sys	obsolete
 ./usr/bin/fdisk				minix-sys
 ./usr/bin/fetch				minix-sys
 ./usr/bin/fgrep				minix-sys
@@ -5312,6 +5312,7 @@
 ./usr/sbin/chown			minix-sys
 ./usr/sbin/chroot			minix-sys
 ./usr/sbin/diskctl			minix-sys
+./usr/sbin/fbdctl			minix-sys
 ./usr/sbin/group			minix-sys
 ./usr/sbin/groupadd			minix-sys
 ./usr/sbin/groupdel			minix-sys
