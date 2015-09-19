@@ -1,4 +1,4 @@
 PROG=	btrace
-MAN=
+MAN=	btrace.8
 
 .include <bsd.prog.mk>

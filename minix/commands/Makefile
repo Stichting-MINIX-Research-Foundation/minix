@@ -2,7 +2,7 @@
 
 .include <bsd.own.mk>
 
-SUBDIR=	add_route arp at backup btrace \
+SUBDIR=	add_route arp at backup \
 	cawf cdprobe \
 	ci cleantmp co \
 	compress crc cron crontab \

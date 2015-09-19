@@ -249,7 +249,7 @@
 ./usr/bin/bdes				minix-sys
 ./usr/bin/bsdtar			minix-sys
 ./usr/bin/bsfilt			minix-sys
-./usr/bin/btrace			minix-sys
+./usr/bin/btrace			minix-sys	obsolete
 ./usr/bin/bunzip2			minix-sys
 ./usr/bin/bzcat				minix-sys
 ./usr/bin/bzip2				minix-sys
@@ -5308,6 +5308,7 @@
 ./usr/preserve				minix-sys
 ./usr/run				minix-sys
 ./usr/sbin				minix-sys
+./usr/sbin/btrace			minix-sys
 ./usr/sbin/chown			minix-sys
 ./usr/sbin/chroot			minix-sys
 ./usr/sbin/group			minix-sys
