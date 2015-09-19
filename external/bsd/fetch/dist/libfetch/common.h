@@ -1,4 +1,4 @@
-/*	$NetBSD: common.h,v 1.16 2010/03/21 16:48:43 joerg Exp $	*/
+/*	$NetBSD: common.h,v 1.1.1.7 2010/03/24 20:51:42 joerg Exp $	*/
 /*-
  * Copyright (c) 1998-2004 Dag-Erling Coïdan Smørgrav
  * All rights reserved.
@@ -32,8 +32,6 @@
 #ifndef _COMMON_H_INCLUDED
 #define _COMMON_H_INCLUDED
 
-#include <fetch.h>
-
 #define FTP_DEFAULT_PORT	21
 #define HTTP_DEFAULT_PORT	80
 #define FTP_DEFAULT_PROXY_PORT	21
@@ -49,7 +47,7 @@
 
 #if !defined(__sun) && !defined(__hpux) && !defined(__INTERIX) && \
     !defined(__digital__) && !defined(__linux) && !defined(__MINT__) && \
-    !defined(__sgi) && !defined(__minix)
+    !defined(__sgi)
 #define HAVE_SA_LEN
 #endif
 
@@ -92,8 +90,7 @@ struct fetcherr {
 
 void		 fetch_seterr(struct fetcherr *, int);
 void		 fetch_syserr(void);
-void		 fetch_info(const char *, ...)
-			__attribute__((__format__(__printf__, 1, 2)));
+void		 fetch_info(const char *, ...);
 int		 fetch_default_port(const char *);
 int		 fetch_default_proxy_port(const char *);
 int		 fetch_bind(int, int, const char *);

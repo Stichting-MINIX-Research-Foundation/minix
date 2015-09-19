@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.19 2009/08/11 20:48:06 joerg Exp $	*/
+/*	$NetBSD: fetch.c,v 1.1.1.8 2009/08/21 15:12:27 joerg Exp $	*/
 /*-
  * Copyright (c) 1998-2004 Dag-Erling Coïdan Smørgrav
  * Copyright (c) 2008 Joerg Sonnenberger <joerg@NetBSD.org>
@@ -33,7 +33,7 @@
 #if HAVE_CONFIG_H
 #include "config.h"
 #endif
-#if !defined(NETBSD) && !defined(__minix)
+#ifndef NETBSD
 #include <nbcompat.h>
 #endif
 
@@ -43,6 +43,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "fetch.h"
 #include "common.h"
 
 auth_t	 fetchAuthMethod;

@@ -40,7 +40,6 @@ SUBDIR+=	../minix/lib/libasyn \
 		../minix/lib/libddekit \
 		../minix/lib/libdevman \
 		../minix/lib/libexec \
-		../minix/lib/libfetch \
 		../minix/lib/libfsdriver \
 		../minix/lib/libinputdriver \
 		../minix/lib/libminc \
@@ -248,7 +247,7 @@ SUBDIR+=	../crypto/external/bsd/netpgp/lib  # depends on libcrypto, ...
 .endif
 
 SUBDIR+=	../external/bsd/libevent/lib	# depends on libcrypto
-#SUBDIR+=	../external/bsd/fetch/lib	# depends on libssl
+SUBDIR+=	../external/bsd/fetch/lib	# depends on libssl
 
 .if (${MKLDAP} != "no")
 SUBDIR+=	../external/bsd/openldap/lib	# depends on libcrypto, ...

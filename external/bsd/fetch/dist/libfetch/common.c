@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.27 2010/06/13 21:38:09 joerg Exp $	*/
+/*	$NetBSD: common.c,v 1.2 2011/06/25 20:27:01 christos Exp $	*/
 /*-
  * Copyright (c) 1998-2004 Dag-Erling Coïdan Smørgrav
  * Copyright (c) 2008, 2010 Joerg Sonnenberger <joerg@NetBSD.org>
@@ -33,7 +33,7 @@
 #if HAVE_CONFIG_H
 #include "config.h"
 #endif
-#if !defined(NETBSD) && !defined(__minix)
+#ifndef NETBSD
 #include <nbcompat.h>
 #endif
 
@@ -50,7 +50,7 @@
 #if defined(HAVE_INTTYPES_H) || defined(NETBSD)
 #include <inttypes.h>
 #endif
-#if !defined(NETBSD) && !defined(__minix)
+#ifndef NETBSD
 #include <nbcompat/netdb.h>
 #else
 #include <netdb.h>
@@ -66,6 +66,7 @@
 #include <signal.h>
 #endif
 
+#include "fetch.h"
 #include "common.h"
 
 /*** Local data **************************************************************/
@@ -149,15 +150,11 @@ fetch_syserr(void)
 	case EADDRNOTAVAIL:
 	case ENETDOWN:
 	case ENETUNREACH:
-#if defined(ENETRESET)
 	case ENETRESET:
-#endif
 	case EHOSTUNREACH:
 		fetchLastErrCode = FETCH_NETWORK;
 		break;
-#if defined(ECONNABORTED)
 	case ECONNABORTED:
-#endif
 	case ECONNRESET:
 		fetchLastErrCode = FETCH_ABORT;
 		break;
@@ -165,9 +162,7 @@ fetch_syserr(void)
 		fetchLastErrCode = FETCH_TIMEOUT;
 		break;
 	case ECONNREFUSED:
-#if defined(EHOSTDOWN)
 	case EHOSTDOWN:
-#endif
 		fetchLastErrCode = FETCH_DOWN;
 		break;
 default:
@@ -321,7 +316,6 @@ fetch_connect(struct url *url, int af, int verbose)
 	if ((conn = fetch_reopen(sd)) == NULL) {
 		fetch_syserr();
 		close(sd);
-		return (NULL);
 	}
 	conn->cache_url = fetchCopyURL(url);
 	conn->cache_af = af;
@@ -545,7 +539,7 @@ fetch_read(conn_t *conn, char *buf, size_t len)
 		}
 #ifdef WITH_SSL
 		if (conn->ssl != NULL)
-			rlen = SSL_read(conn->ssl, buf, len);
+			rlen = SSL_read(conn->ssl, buf, (int)len);
 		else
 #endif
 			rlen = read(conn->sd, buf, len);
@@ -594,7 +588,7 @@ fetch_getln(conn_t *conn)
 			return (-1);
 		if (len == 0)
 			break;
-		next = memchr(conn->buf + conn->buflen, '\n', len);
+		next = memchr(conn->buf + conn->buflen, '\n', (size_t)len);
 		conn->buflen += len;
 		if (conn->buflen == conn->bufsize && next == NULL) {
 			tmp = conn->buf;
@@ -680,7 +674,7 @@ fetch_write(conn_t *conn, const void *buf, size_t len)
 		errno = 0;
 #ifdef WITH_SSL
 		if (conn->ssl != NULL)
-			wlen = SSL_write(conn->ssl, buf, len);
+			wlen = SSL_write(conn->ssl, buf, (int)len);
 		else
 #endif
 #ifndef MSG_NOSIGNAL
