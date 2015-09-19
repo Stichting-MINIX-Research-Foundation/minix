@@ -1,4 +1,4 @@
 PROG=	diskctl
-MAN=
+MAN=	diskctl.8
 
 .include <bsd.prog.mk>
