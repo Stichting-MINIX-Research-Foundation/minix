@@ -9,7 +9,7 @@ SUBDIR=	add_route arp at backup btrace \
 	decomp16 DESCRIBE devmand devsize dhcpd \
 	dhrystone diff diskctl \
 	eject fbdctl \
-	find fix format fsck.mfs \
+	fix format fsck.mfs \
 	gcov-pull host \
 	hostaddr ifconfig ifdef \
 	intr ipcrm ipcs irdpd isoread \

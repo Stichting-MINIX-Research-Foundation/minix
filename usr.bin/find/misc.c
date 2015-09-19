@@ -33,6 +33,13 @@
  */
 
 #include <sys/cdefs.h>
+#ifndef lint
+#if 0
+static char sccsid[] = "from: @(#)misc.c	8.2 (Berkeley) 4/1/94";
+#else
+__RCSID("$NetBSD: misc.c,v 1.14 2006/10/11 19:51:10 apb Exp $");
+#endif
+#endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>

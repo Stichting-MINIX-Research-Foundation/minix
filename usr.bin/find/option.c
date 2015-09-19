@@ -33,6 +33,13 @@
  */
 
 #include <sys/cdefs.h>
+#ifndef lint
+#if 0
+static char sccsid[] = "from: @(#)option.c	8.2 (Berkeley) 4/16/94";
+#else
+__RCSID("$NetBSD: option.c,v 1.26 2007/02/06 15:33:22 perry Exp $");
+#endif
+#endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -68,12 +75,10 @@ static OPTION const options[] = {
 	{ "-execdir",	N_EXECDIR,	c_execdir,	1 },
 	{ "-exit",	N_EXIT,		c_exit,		0 },
 	{ "-false",	N_FALSE,	c_false,	0 },
+	{ "-flags",	N_FLAGS,	c_flags,	1 },
 	{ "-follow",	N_FOLLOW,	c_follow,	0 },
 	{ "-fprint",	N_FPRINT,	c_fprint,	1 },
-#if !defined(__minix)
-	{ "-flags",	N_FLAGS,	c_flags,	1 },
 	{ "-fstype",	N_FSTYPE,	c_fstype,	1 },
-#endif
 	{ "-group",	N_GROUP,	c_group,	1 },
 	{ "-iname",	N_INAME,	c_iname,	1 },
 	{ "-inum",	N_INUM,		c_inum,		1 },

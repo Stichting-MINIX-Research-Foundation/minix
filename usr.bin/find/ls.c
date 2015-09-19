@@ -1,4 +1,4 @@
-/*	$NetBSD: ls.c,v 1.19 2006/10/11 19:51:10 apb Exp $	*/
+/*	$NetBSD: ls.c,v 1.21 2011/08/31 16:24:57 plunky Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -30,6 +30,13 @@
  */
 
 #include <sys/cdefs.h>
+#ifndef lint
+#if 0
+static char sccsid[] = "from: @(#)ls.c	8.1 (Berkeley) 6/6/93";
+#else
+__RCSID("$NetBSD: ls.c,v 1.21 2011/08/31 16:24:57 plunky Exp $");
+#endif
+#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -45,10 +52,6 @@
 #include <time.h>
 #include <tzfile.h>
 #include <unistd.h>
-#include <fcntl.h>
-#include <fcntl.h>
-#include <pwd.h>
-#include <sys/statfs.h>
 
 #include "find.h"
 
@@ -63,40 +66,20 @@ printlong(char *name,			/* filename to print */
 	struct stat *sb)		/* stat buffer */
 {
 	char modep[15];
-	static dev_t dev;
-	static int blocksize = 0;
-	long blocks = -1;
 
-	if(!blocksize || sb->st_dev != dev) {
-		int fd;
-		struct statfs fs;
-		blocksize = 0;
-		if((fd = open(name, O_RDONLY)) >= 0) {
-			if(fstatfs(fd, &fs) >= 0) {
-				blocksize = fs.f_bsize;
-			}
-			close(fd);
-		}
-	}
-
-	if(blocksize > 0)
-		blocks = ((long)sb->st_size+blocksize-1)/blocksize;
-
-	(void)printf("%7lu ", (u_long)sb->st_ino);
-	if(blocks >= 0)
-		(void)printf("%6ld ", blocks);
-	else
-		(void)printf("? ");
+	(void)printf("%7lu %6lld ", (u_long)sb->st_ino,
+	    (long long)sb->st_blocks);
 	(void)strmode(sb->st_mode, modep);
-	(void)printf("%s %3lu %-10s %-10s ", modep, (unsigned long)sb->st_nlink,
-	    user_from_uid(sb->st_uid, 0),
+	(void)printf("%s %3lu %-*s %-*s ", modep, (unsigned long)sb->st_nlink,
+	    LOGIN_NAME_MAX, user_from_uid(sb->st_uid, 0), LOGIN_NAME_MAX,
 	    group_from_gid(sb->st_gid, 0));
 
 	if (S_ISCHR(sb->st_mode) || S_ISBLK(sb->st_mode))
-		(void)printf("%3d,%5d ", major(sb->st_rdev),
-		    minor(sb->st_rdev));
+		(void)printf("%3llu,%5llu ",
+		    (unsigned long long)major(sb->st_rdev),
+		    (unsigned long long)minor(sb->st_rdev));
 	else
-		(void)printf("%9ld ", (long)sb->st_size);
+		(void)printf("%9lld ", (long long)sb->st_size);
 	printtime(sb->st_mtime);
 	(void)printf("%s", name);
 	if (S_ISLNK(sb->st_mode))
@@ -115,7 +98,7 @@ printtime(time_t ftime)
 		(void)putchar(longstring[i]);
 
 #define	SIXMONTHS	((DAYSPERNYEAR / 2) * SECSPERDAY)
-	if (ftime + SIXMONTHS > time((time_t *)NULL))
+	if (ftime + SIXMONTHS > time(NULL))
 		for (i = 11; i < 16; ++i)
 			(void)putchar(longstring[i]);
 	else {
