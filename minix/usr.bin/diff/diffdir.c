@@ -176,7 +176,11 @@ getdiffdirentries(int fd, char *buf, int nbytes)
 	if(!(read_de = malloc(readlen)))
 		errx(1, "getdiffdirentries: can't malloc");
 
+#ifndef __minix
 	dentsbytes_actual = getdents(fd, (struct dirent *) read_de, readlen);
+#else /* __minix */
+	dentsbytes_actual = getdents(fd, read_de, readlen);
+#endif /* __minix */
 
 	if(dentsbytes_actual <= 0)
 		return dentsbytes_actual;
