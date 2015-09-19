@@ -7,7 +7,7 @@ SUBDIR=	add_route arp at backup btrace \
 	ci cleantmp co \
 	compress crc cron crontab \
 	decomp16 DESCRIBE devmand devsize dhcpd \
-	dhrystone diff diskctl \
+	dhrystone diskctl \
 	eject fbdctl \
 	fix format fsck.mfs \
 	gcov-pull host \
