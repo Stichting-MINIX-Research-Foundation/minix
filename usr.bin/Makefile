@@ -21,7 +21,7 @@ SUBDIR= asa \
 	nbperf newgrp nice nl nohup \
 	passwd paste patch pathchk pr \
 	printenv printf pwhash \
-	renice rev \
+	renice rev rsh \
 	\
 	sdiff sed seq shar shlock \
 	shuffle  sort split stat su \

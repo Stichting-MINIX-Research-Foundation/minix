@@ -19,9 +19,9 @@ SUBDIR=	add_route arp at backup btrace \
 	nonamed \
 	postinstall prep printroot \
 	profile progressbar pr_routes ps pwdauth \
-	ramdisk rarpd rawspeed rcp readclock \
+	ramdisk rarpd rawspeed readclock \
 	remsync rget rlogin \
-	rotate rsh rshd service setup \
+	rotate service setup \
 	slip spell sprofalyze sprofdiff srccrc \
 	svclog svrctl swifi synctree sysenv \
 	tcpd tcpdp tcpstat telnet \
