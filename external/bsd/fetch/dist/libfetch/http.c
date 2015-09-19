@@ -1,4 +1,4 @@
-/*	$NetBSD: http.c,v 1.29 2010/01/24 19:10:35 joerg Exp $	*/
+/*	$NetBSD: http.c,v 1.2 2011/06/25 20:27:01 christos Exp $	*/
 /*-
  * Copyright (c) 2000-2004 Dag-Erling Coïdan Smørgrav
  * Copyright (c) 2003 Thomas Klausner <wiz@NetBSD.org>
@@ -68,15 +68,13 @@
 #define _GNU_SOURCE
 #endif
 
-#ifndef __minix
 /* Needed for gmtime_r on Interix */
 #define _REENTRANT
-#endif
 
 #if HAVE_CONFIG_H
 #include "config.h"
 #endif
-#if !defined(NETBSD) && !defined(__minix)
+#ifndef NETBSD
 #include <nbcompat.h>
 #endif
 
@@ -87,7 +85,7 @@
 #include <errno.h>
 #include <locale.h>
 #include <stdarg.h>
-#if !defined(NETBSD) && !defined(__minix)
+#ifndef NETBSD
 #include <nbcompat/stdio.h>
 #else
 #include <stdio.h>
@@ -100,7 +98,7 @@
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 
-#if !defined(NETBSD) && !defined(__minix)
+#ifndef NETBSD
 #include <nbcompat/netdb.h>
 #else
 #include <netdb.h>
@@ -108,6 +106,7 @@
 
 #include <arpa/inet.h>
 
+#include "fetch.h"
 #include "common.h"
 #include "httperr.h"
 
@@ -134,7 +133,6 @@
 
 #define HTTP_ERROR(xyz) ((xyz) > 400 && (xyz) < 599)
 
-#define MINBUFSIZE 4096
 
 /*****************************************************************************
  * I/O functions for decoding chunked streams
@@ -148,7 +146,7 @@ struct httpio
 	char		*buf;		/* chunk buffer */
 	size_t		 bufsize;	/* size of chunk buffer */
 	ssize_t		 buflen;	/* amount of data currently in buffer */
-	int		 bufpos;	/* current read offset in buffer */
+	size_t		 bufpos;	/* current read offset in buffer */
 	int		 eof;		/* end-of-file flag */
 	int		 error;		/* error flag */
 	size_t		 chunksize;	/* remaining size of current chunk */
@@ -158,7 +156,7 @@ struct httpio
 /*
  * Get next chunk header
  */
-static int
+static ssize_t
 http_new_chunk(struct httpio *io)
 {
 	char *p;
@@ -207,7 +205,7 @@ http_growbuf(struct httpio *io, size_t len)
 /*
  * Fill the input buffer, do chunk decoding on the fly
  */
-static int
+static ssize_t
 http_fillbuf(struct httpio *io, size_t len)
 {
 	if (io->error)
@@ -288,7 +286,7 @@ http_readfn(void *v, void *buf, size_t len)
 
 	for (pos = 0; len > 0; pos += l, len -= l) {
 		/* empty buffer */
-		if (!io->buf || io->bufpos == io->buflen)
+		if (!io->buf || (ssize_t)io->bufpos == io->buflen)
 			if (http_fillbuf(io, len) < 1)
 				break;
 		l = io->buflen - io->bufpos;
@@ -327,7 +325,7 @@ http_closefn(void *v)
 
 		val = 0;
 		setsockopt(io->conn->sd, IPPROTO_TCP, TCP_NODELAY, &val,
-			   sizeof(val));
+			   (socklen_t)sizeof(val));
 			  fetch_cache_put(io->conn, fetch_close);
 #ifdef TCP_NOPUSH
 		val = 1;
@@ -406,17 +404,13 @@ static struct {
 /*
  * Send a formatted line; optionally echo to terminal
  */
-static int http_cmd(conn_t *conn, const char *fmt, ...)
-	__attribute__((__format__(__printf__, 2, 3)));
-
-#ifndef __minix
 static int
 http_cmd(conn_t *conn, const char *fmt, ...)
 {
 	va_list ap;
 	size_t len;
 	char *msg;
-	int r;
+	ssize_t r;
 
 	va_start(ap, fmt);
 	len = vasprintf(&msg, fmt, ap);
@@ -438,35 +432,7 @@ http_cmd(conn_t *conn, const char *fmt, ...)
 
 	return (0);
 }
-#else
-static int
-http_cmd(conn_t *conn, const char *fmt, ...)
-{
-	va_list ap;
-	size_t len;
-	char msg[MINBUFSIZE];
-	int r;
 
-	va_start(ap, fmt);
-	len = vsnprintf(&msg[0], MINBUFSIZE, fmt, ap);
-	va_end(ap);
-
-	if (len >= MINBUFSIZE) {
-		errno = ENOMEM;
-		fetch_syserr();
-		return (-1);
-	}
-
-	r = fetch_write(conn, &msg[0], len);
-
-	if (r == -1) {
-		fetch_syserr();
-		return (-1);
-	}
-
-	return (0);
-}
-#endif
 /*
  * Get and parse status line
  */
@@ -638,7 +604,7 @@ http_base64(const char *src)
 	    "0123456789+/";
 	char *str, *dst;
 	size_t l;
-	int t, r;
+	unsigned int t, r;
 
 	l = strlen(src);
 	if ((str = malloc(((l + 2) / 3) * 4 + 1)) == NULL)
@@ -685,7 +651,6 @@ http_base64(const char *src)
 /*
  * Encode username and password
  */
-#ifndef __minix
 static int
 http_basic_auth(conn_t *conn, const char *hdr, const char *usr, const char *pwd)
 {
@@ -702,24 +667,7 @@ http_basic_auth(conn_t *conn, const char *hdr, const char *usr, const char *pwd)
 	free(auth);
 	return (r);
 }
-#else
-static int
-http_basic_auth(conn_t *conn, const char *hdr, const char *usr, const char *pwd)
-{
-	char upw[MINBUFSIZE], *auth;
-	int len, r;
 
-	len = snprintf(&upw[0], MINBUFSIZE, "%s:%s", usr, pwd);
-	if (len >= MINBUFSIZE)
-		return -1;
-	auth = http_base64(&upw[0]);
-	if (auth == NULL)
-		return (-1);
-	r = http_cmd(conn, "%s: Basic %s\r\n", hdr, auth);
-	free(auth);
-	return (r);
-}
-#endif
 /*
  * Send an authorization header
  */
@@ -996,13 +944,8 @@ http_request(struct url *URL, const char *op, struct url_stat *us,
 			http_cmd(conn, "User-Agent: %s\r\n", p);
 		else
 			http_cmd(conn, "User-Agent: %s\r\n", _LIBFETCH_VER);
-#ifndef __minix
 		if (url->offset > 0)
 			http_cmd(conn, "Range: bytes=%lld-\r\n", (long long)url->offset);
-#else
-		if (url->offset > 0)
-			http_cmd(conn, "Range: bytes=%ld-\r\n", (long)url->offset);
-#endif
 		http_cmd(conn, "\r\n");
 
 		/*
@@ -1019,7 +962,7 @@ http_request(struct url *URL, const char *op, struct url_stat *us,
 #endif
 		val = 1;
 		setsockopt(conn->sd, IPPROTO_TCP, TCP_NODELAY, &val,
-			   sizeof(val));
+		    (socklen_t)sizeof(val));
 
 		/* get reply */
 		switch (http_get_reply(conn)) {
@@ -1295,7 +1238,8 @@ fetchGetHTTP(struct url *URL, const char *flags)
  * Store a file by HTTP
  */
 fetchIO *
-fetchPutHTTP(struct url *URL, const char *flags)
+/*ARGSUSED*/
+fetchPutHTTP(struct url *URL __unused, const char *flags __unused)
 {
 	fprintf(stderr, "fetchPutHTTP(): not implemented\n");
 	return (NULL);
@@ -1487,7 +1431,8 @@ static struct http_index_cache *index_cache;
  * List a directory
  */
 int
-fetchListHTTP(struct url_list *ue, struct url *url, const char *pattern, const char *flags)
+/*ARGSUSED*/
+fetchListHTTP(struct url_list *ue, struct url *url, const char *pattern __unused, const char *flags)
 {
 	fetchIO *f;
 	char buf[2 * PATH_MAX];

@@ -2122,6 +2122,10 @@
 ./usr/lib/libexpat.so.2			minix-sys
 ./usr/lib/libexpat.so.2.1		minix-sys
 ./usr/lib/libfetch.a			minix-sys
+./usr/lib/libfetch_pic.a		minix-sys
+./usr/lib/libfetch.so			minix-sys
+./usr/lib/libfetch.so.3			minix-sys
+./usr/lib/libfetch.so.3.0		minix-sys
 ./usr/lib/libfl.a			minix-sys
 ./usr/lib/libform.a			minix-sys
 ./usr/lib/libform_pic.a			minix-sys
@@ -3474,6 +3478,7 @@
 ./usr/man/man3/fesetenv.3				minix-sys
 ./usr/man/man3/fesetexceptflag.3			minix-sys
 ./usr/man/man3/fesetround.3				minix-sys
+./usr/man/man3/fetch.3					minix-sys
 ./usr/man/man3/fetestexcept.3				minix-sys
 ./usr/man/man3/feupdateenv.3				minix-sys
 ./usr/man/man3/fflush.3					minix-sys

@@ -12,7 +12,6 @@ SUBDIR+=	libchardriver
 SUBDIR+=	libddekit
 SUBDIR+=	libdevman
 SUBDIR+=	libexec
-SUBDIR+=	libfetch
 SUBDIR+=	libfsdriver
 SUBDIR+=	libinputdriver
 SUBDIR+=	libminc

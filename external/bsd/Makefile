@@ -2,7 +2,7 @@
 
 .include <bsd.own.mk>
 
-SUBDIR= byacc file flex less \
+SUBDIR= byacc fetch file flex less \
 	libarchive libevent mdocml \
 	tmux
 
