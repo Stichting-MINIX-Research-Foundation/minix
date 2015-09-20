@@ -14,7 +14,7 @@ MAN=	at.1 \
 	playwave.1 prep.1 \
 	profile.1 ps.1 recwave.1 \
 	remsync.1 rget.1 rlogin.1 rz.1 \
-	spell.1 svc.1 svrctl.1 \
+	spell.1 svrctl.1 \
 	synctree.1 sysenv.1 sz.1 telnet.1 template.1 \
 	term.1 termcap.1 tget.1 time.1 \
 	truncate.1 umount.1 \
@@ -22,7 +22,5 @@ MAN=	at.1 \
 	yap.1 linkfarm.1 pkg_view.1
 
 MLINKS += compress.1 uncompress.1
-MLINKS += svc.1 ci.1
-MLINKS += svc.1 co.1
 
 .include <bsd.man.mk>
