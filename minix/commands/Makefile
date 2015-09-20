@@ -4,7 +4,7 @@
 
 SUBDIR=	add_route arp at backup \
 	cawf cdprobe \
-	ci cleantmp co \
+	cleantmp \
 	compress crc cron crontab \
 	decomp16 DESCRIBE devmand devsize dhcpd \
 	dhrystone \
@@ -23,7 +23,7 @@ SUBDIR=	add_route arp at backup \
 	remsync rget rlogin \
 	rotate service setup \
 	slip spell sprofalyze sprofdiff srccrc \
-	svclog svrctl swifi synctree sysenv \
+	svrctl swifi synctree sysenv \
 	tcpd tcpdp tcpstat telnet \
 	telnetd term termcap tget time \
 	truncate udpstat umount \

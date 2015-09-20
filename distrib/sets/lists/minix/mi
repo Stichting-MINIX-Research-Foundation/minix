@@ -271,7 +271,7 @@
 ./usr/bin/chgrp				minix-sys
 ./usr/bin/chpass			minix-sys
 ./usr/bin/chsh				minix-sys
-./usr/bin/ci				minix-sys
+./usr/bin/ci				minix-sys	obsolete
 ./usr/bin/cksum				minix-sys
 ./usr/bin/clang++			minix-sys	llvm,llvmcmds
 ./usr/bin/clang				minix-sys	llvm,llvmcmds
@@ -280,7 +280,7 @@
 ./usr/bin/cleantmp			minix-sys
 ./usr/bin/clear				minix-sys
 ./usr/bin/cmp				minix-sys
-./usr/bin/co				minix-sys
+./usr/bin/co				minix-sys	obsolete
 ./usr/bin/col				minix-sys
 ./usr/bin/colcrt			minix-sys
 ./usr/bin/colrm				minix-sys
@@ -499,7 +499,7 @@
 ./usr/bin/strip				minix-sys	binutils
 ./usr/bin/su				minix-sys
 ./usr/bin/sum				minix-sys
-./usr/bin/svclog			minix-sys
+./usr/bin/svclog			minix-sys	obsolete
 ./usr/bin/svrctl			minix-sys
 ./usr/bin/swifi				minix-sys
 ./usr/bin/synctree			minix-sys
@@ -2350,11 +2350,11 @@
 ./usr/man/man1/chmod.1			minix-sys
 ./usr/man/man1/chpass.1			minix-sys
 ./usr/man/man1/chsh.1			minix-sys
-./usr/man/man1/ci.1			minix-sys
+./usr/man/man1/ci.1			minix-sys	obsolete
 ./usr/man/man1/cksum.1			minix-sys
 ./usr/man/man1/clear.1			minix-sys
 ./usr/man/man1/cmp.1			minix-sys
-./usr/man/man1/co.1			minix-sys
+./usr/man/man1/co.1			minix-sys	obsolete
 ./usr/man/man1/col.1			minix-sys
 ./usr/man/man1/colcrt.1			minix-sys
 ./usr/man/man1/colrm.1			minix-sys
@@ -2589,7 +2589,7 @@
 ./usr/man/man1/stty.1			minix-sys
 ./usr/man/man1/su.1			minix-sys
 ./usr/man/man1/sum.1			minix-sys
-./usr/man/man1/svc.1			minix-sys
+./usr/man/man1/svc.1			minix-sys	obsolete
 ./usr/man/man1/svrctl.1			minix-sys
 ./usr/man/man1/synctree.1		minix-sys
 ./usr/man/man1/sysenv.1			minix-sys
