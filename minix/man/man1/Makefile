@@ -1,6 +1,6 @@
 MAN=	at.1 \
 	bsfilt.1 cawf.1 chgrp.1 \
-	cmp.1 compress.1 \
+	compress.1 \
 	crc.1 crontab.1 \
 	dhrystone.1 dosdir.1 dosread.1 doswrite.1 \
 	eject.1 \

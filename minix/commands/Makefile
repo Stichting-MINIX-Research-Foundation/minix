@@ -4,7 +4,7 @@
 
 SUBDIR=	add_route arp at backup btrace \
 	cawf cdprobe \
-	ci cleantmp cmp co \
+	ci cleantmp co \
 	compress crc cron crontab \
 	decomp16 DESCRIBE devmand devsize dhcpd \
 	dhrystone diff diskctl \
