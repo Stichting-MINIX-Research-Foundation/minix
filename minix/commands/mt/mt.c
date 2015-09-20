@@ -199,8 +199,8 @@ SCSI tape drive %s:\n\
 				(long) mtget.mt_fileno,
 				(long) mtget.mt_blkno,
 				(long) mtget.mt_resid);
-			printf(mtget.mt_blksiz == 0 ? "variable\n" : "%d\n",
-				mtget.mt_blksiz);
+			if (mtget.mt_blksiz == 0) printf("variable\n");
+			else printf("%d\n", mtget.mt_blksiz);
 		}
 	}
 	if (r < 0) {

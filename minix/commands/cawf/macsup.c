@@ -35,7 +35,7 @@
  * Delmacro(mx) - delete macro
  */
 
-int Delmacro(int mx) {
+void Delmacro(int mx) {
 /* macro index mx */
 	unsigned char buf[MAXLINE];	/* error message buffer */
 	int i, j;			/* temporary indexes */

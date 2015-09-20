@@ -80,7 +80,7 @@ char *malloc(unsigned size);
 unsigned char *Asmcode(unsigned char **s, unsigned char *c);
 int Asmname(unsigned char *s, unsigned char *c);
 void Charput(int c);
-int Delmacro(int mx);
+void Delmacro(int mx);
 int Defdev();
 void Delstr(int sx);
 void Error(int t, int l, char *s1, char *s2);

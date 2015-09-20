@@ -630,7 +630,7 @@ int wctxpn(char *name)
 	while (q < (txbuf + 1024))
 		*q++ = 0;
 	if (!Ascii && (in!=stdin) && *name && fstat(fileno(in), &f)!= -1)
-		sprintf(p, "%llu %o %o 0 %d %ld", f.st_size, f.st_mtime,
+		sprintf(p, "%llu %llo %o 0 %d %ld", f.st_size, f.st_mtime,
 		  f.st_mode, Filesleft, Totalleft);
 	Totalleft -= f.st_size;
 	if (--Filesleft <= 0)
@@ -1010,7 +1010,7 @@ void canit()
 	raw_wbuf(strlen(canistr), canistr);
 	purgeline();
 #else
-	printf(canistr);
+	printf("%s", canistr);
 	fflush(stdout);
 #endif
 }
@@ -1379,7 +1379,7 @@ gotack:
 	if (Test) {
 		if ( --tleft)
 			while (tcount < 20000) {
-				printf(qbf); fflush(stdout);
+				printf("%s", qbf); fflush(stdout);
 				tcount += strlen(qbf);
 #ifdef READCHECK
 				while (rdchk(iofd)) {

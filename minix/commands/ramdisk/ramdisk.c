@@ -1,7 +1,7 @@
 
 #include <minix/paths.h>
 
-#include <sys/ioc_memory.h>
+#include <sys/ioctl.h>
 #include <stdio.h>
 #include <fcntl.h>
 #include <stdlib.h>

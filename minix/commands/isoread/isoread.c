@@ -374,9 +374,10 @@ char *path;
     dir_ptr = (struct dir_entry *) Hs_Vol_Desc->root_dir_entry;  
 
   /* If we look for the root we already have the right entry */
-  if (path[0] == '/')
+  if (path[0] == '/') {
     if (strlen(path) == 1) return dir_ptr;
     else name_index = 1; /* first name in path */
+  }
 
   /* Keep searching for the path elements until all are found */
   while (!last_in_path)

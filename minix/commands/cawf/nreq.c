@@ -690,7 +690,7 @@ static void nr_Uc(unsigned char *line, int brk) {
 		if (*s4)
 			s4++;
 	}
-	while (*s1++ = *s4++)
+	while ((*s1++ = *s4++))
 		;
 	if (*s2 == 'h' && *(s2+1) == 'y')
 		(void) Findhy(buf, i, 1);

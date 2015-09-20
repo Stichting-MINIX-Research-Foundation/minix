@@ -28,7 +28,7 @@ int main(int argc, char **argv, char **envp)
   int i, c, mask, ltim, year, lday = NODAY;
   char buf[64], job[30], pastjob[35], *dp, *sp;
   struct tm *p;
-  long clk;
+  time_t clk;
   FILE *fp;
   char pwd[PATH_MAX+1];
 

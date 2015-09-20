@@ -152,7 +152,7 @@ unsigned char text_read_ub(void *addr)
 
 	vaddr= (unsigned long)addr;
 	vaddr &= ~TRAP_BIT;
-	v= ptrace(T_READB_INS, victim_pid, vaddr, 0);
+	v= ptrace(T_READB_INS, victim_pid, (void *)vaddr, 0);
 	if (v < 0)
 	{
 		fprintf(stderr,
@@ -180,7 +180,7 @@ void text_write_ub(void *addr, unsigned char value)
 
 	vaddr= (unsigned long)addr;
 	vaddr &= ~TRAP_BIT;
-	v= ptrace(T_WRITEB_INS, victim_pid, vaddr, value);
+	v= ptrace(T_WRITEB_INS, victim_pid, (void *)vaddr, value);
 	if (v < 0)
 	{
 		fprintf(stderr,

@@ -30,6 +30,8 @@ Manipulate ARP table
 
 #include <net/gen/arp_io.h>
 
+#include <arpa/inet.h>
+
 char *progname;
 static int ipfd= -1;
 static int do_setuid= 0;
@@ -256,9 +258,10 @@ static void print_one(ipaddr_t ipaddr, nwio_arp_t *arpp, int do_num)
 	else
 		he= NULL;
 	if (he)
-		printf("%s (%s)", he->h_name, inet_ntoa(ipaddr));
+		printf("%s (%s)", he->h_name,
+		    inet_ntoa(*(struct in_addr *)&ipaddr));
 	else
-		printf("%s", inet_ntoa(ipaddr));
+		printf("%s", inet_ntoa(*(struct in_addr *)&ipaddr));
 	if (!arpp)
 	{
 		printf(" -- no entry\n");
@@ -328,7 +331,8 @@ static void delete_all(void)
 			continue;
 		}
 		fatal("unable to delete host %s: %s",
-			inet_ntoa(arptab[i].nwa_ipaddr), strerror(errno));
+			inet_ntoa(*(struct in_addr *)&arptab[i].nwa_ipaddr),
+			strerror(errno));
 	}
 }
 
@@ -348,7 +352,8 @@ static void delete(char *hostname)
 		print_one(ipaddr, NULL, 0);
 		exit(1);
 	}
-	fatal("unable to delete host %s: %s", inet_ntoa(ipaddr),
+	fatal("unable to delete host %s: %s",
+		inet_ntoa(*(struct in_addr *)&ipaddr),
 		errno == EINVAL ? "entry is incomplete" : strerror(errno));
 }
 
@@ -389,7 +394,7 @@ static void do_set(char *hostname, char *ethername, int temp, int pub,
 		if (r == -1 && errno != ENOENT)
 		{
 			fatal("unable to delete entry for host %s: %s",
-				inet_ntoa(ipaddr),
+				inet_ntoa(*(struct in_addr *)&ipaddr),
 				errno == EINVAL ? "incomplete entry" :
 				strerror(errno));
 		}
@@ -415,7 +420,7 @@ static ipaddr_t nametoipaddr(char *hostname)
 	ipaddr_t ipaddr;
 	struct hostent *he;
 
-	if (inet_aton(hostname, &ipaddr) == 0)
+	if (inet_aton(hostname, (struct in_addr *)&ipaddr) == 0)
 	{
 		he= gethostbyname(hostname);
 		if (!he)

@@ -36,6 +36,7 @@ static char Version[] = "4.0";
 #include "cawf.h"
 
 #include <sys/stat.h>
+#include <unistd.h>
 #ifndef	UNIX
 #include <io.h>
 #include <process.h>
