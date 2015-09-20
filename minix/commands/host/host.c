@@ -16,6 +16,7 @@
  * that copyright notice.
  */
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <sys/types.h>
 #include <arpa/nameser.h>
@@ -30,12 +31,14 @@
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <unistd.h>
 #include <sys/ioctl.h>
 #include <sys/ioc_net.h>
 #include <net/netlib.h>
 #include <net/gen/in.h>
 #include <net/gen/tcp.h>
 #include <net/gen/tcp_io.h>
+#include <arpa/inet.h>
 
 extern int h_errno;
 
@@ -387,7 +390,7 @@ gethostinfo(name)
 			cp[-1] = '.';
 		return (hp);
 	}
-	if (n == 0 && (cp = __hostalias(name))) {
+	if (n == 0 && (cp = (char *)__hostalias(name))) {
 	        if (verbose)
 		    printf("Aliased to \"%s\"\n", cp);
 		_res.options |= RES_DEFNAMES;	  
@@ -432,6 +435,7 @@ getdomaininfo(name, domain)
 static int
 getinfo(name, domain, type)
 	char *name, *domain;
+	int type;
 {
 
 	HEADER *hp;
@@ -605,13 +609,14 @@ pr_rr(cp, msg, file, filter)
 	else
 	  doprint = 0;
 
-	if (doprint)
+	if (doprint) {
 	  if (verbose)
 	    fprintf(file,"%s\t%d%s\t%s",
 		    name, ttl, pr_class(class), pr_type(type));
 	  else {
 	    fprintf(file,"%s%s %s",name, pr_class(class), pr_type(type));
 	  }
+	}
 	if (verbose)
 	  punc = '\t';
 	else
@@ -742,14 +747,14 @@ pr_rr(cp, msg, file, filter)
 		cp += sizeof(u_long);
 		proto = *cp++;
 		protop = getprotobynumber(proto);
-		if (doprint)
+		if (doprint) {
 		  if (protop)
 		    fprintf(file,"%c%s %s", punc,
 			    inet_ntoa(inaddr), protop->p_name);
 		  else
 		    fprintf(file,"%c%s %d", punc,
 			    inet_ntoa(inaddr), proto);
-
+		}
 		n = 0;
 		while (cp < cp1 + dlen) {
 			c = *cp++;
@@ -759,11 +764,12 @@ pr_rr(cp, msg, file, filter)
 				  if (protop)
 				    servp = getservbyport (htons(n),
 							   protop->p_name);
-				  if (doprint)
+				  if (doprint) {
 				    if (servp)
 				      fprintf(file, " %s", servp->s_name);
 				    else
 				      fprintf(file, " %d", n);
+				  }
 				}
  				c <<= 1;
 			} while (++n & 07);
@@ -776,7 +782,7 @@ pr_rr(cp, msg, file, filter)
 		cp += dlen;
 	}
 	if (cp != cp1 + dlen)
-		fprintf(file,"packet size error (%#x != %#x)\n", cp, cp1+dlen);
+		fprintf(file,"packet size error (%p != %p)\n", cp, cp1+dlen);
 	if (doprint)
 	  fprintf(file,"\n");
 	return (cp);
@@ -985,7 +991,7 @@ ListHosts(namePtr, queryType)
  */
 
 	msglen = res_mkquery(QUERY, namePtr, C_IN, T_NS,
-				(char *)0, 0, (struct rrec *)0, 
+				(char *)0, 0, 0,
 				(char *)&buf, sizeof(buf));
 
 	if (msglen < 0) {
@@ -1133,7 +1139,7 @@ again:
 	 *
 	 */
 	msglen = res_mkquery(QUERY, namePtr, getclass, T_AXFR,
-				(char *)0, 0, (struct rrec *)0, 
+				(char *)0, 0, 0,
 				(char *) &buf, sizeof(buf));
 	if (msglen < 0) {
 	    if (_res.options & RES_DEBUG) {
@@ -1172,7 +1178,8 @@ again:
 			return ERROR;
 		}
 		if (_res.options & RES_DEBUG || verbose)
-			printf("Trying %s\n", inet_ntoa(tcpconf.nwtc_remaddr));
+			printf("Trying %s\n", inet_ntoa(*(struct in_addr *)
+			    &tcpconf.nwtc_remaddr));
 		clopt.nwtcl_flags= 0;
 		result= ioctl(tcp_fd, NWIOTCPCONN, &clopt);
 		if (result == 0)

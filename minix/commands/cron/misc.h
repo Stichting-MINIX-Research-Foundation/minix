@@ -33,7 +33,7 @@ enum log_dummy { LOG_ERR, LOG_CRIT, LOG_ALERT };
 
 enum logto { SYSLOG, STDERR };
 void selectlog(enum logto where);
-void log(int level, const char *fmt, ...);
+void cronlog(int level, const char *fmt, ...);
 
 #endif /* MISC__H */
 

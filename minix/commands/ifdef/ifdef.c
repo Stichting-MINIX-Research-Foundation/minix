@@ -331,7 +331,7 @@ void parse()
 			/* Scan through the file looking for starting lines */
 	if ((ch = fgetc(zin)) == EOF)
 		stop();		/* Get first char on the line */
-	if (ch != '#')
+	if (ch != '#') {
 		if (proc) {	/* If not # and  we're processing */
 			(void)putchar(ch); /* then print the line */
 			Print;
@@ -340,6 +340,7 @@ void parse()
 			Goto;	/* else just skip the line  */
 			continue;
 		}
+	}
 
 	ch = fgetarg(zin, word);	/* Get the word after the # */
 

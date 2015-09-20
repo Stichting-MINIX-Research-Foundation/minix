@@ -28,6 +28,7 @@
 #include <net/gen/udp.h>
 #include <net/gen/udp_hdr.h>
 #include <net/gen/dhcp.h>
+#include <arpa/inet.h>
 #include "dhcpd.h"
 
 #define doff(field)		offsetof(dhcp_t, field)
@@ -59,7 +60,7 @@ static int name2ip(ipaddr_t *pip, const char *name, ipaddr_t ifip)
     char *hn;
 
     /* Already an IP address? */
-    if (inet_aton(name, pip)) return 1;
+    if (inet_aton(name, (struct in_addr *)pip)) return 1;
 
     /* In the hosts file? */
     while ((he= _gethostent()) != nil) {
@@ -130,7 +131,7 @@ static int cidr_aton(const char *cidr, ipaddr_t *addr, ipaddr_t *mask)
     if ((slash= strchr(cidr, '/')) == nil) return 0;
 
     *slash++= 0;
-    ok= inet_aton(cidr, &a);
+    ok= inet_aton(cidr, (struct in_addr *)&a);
 
     len= strtoul(slash, &check, 10);
     if (check == slash || *check != 0 || len > 32) ok= 0;
@@ -153,8 +154,9 @@ char *cidr_ntoa(ipaddr_t addr, ipaddr_t mask)
 	testmask= (testmask << 1) & 0xFFFFFFFFUL;
     }
 
-    sprintf(result, "%s/%-2d", inet_ntoa(addr), n);
-    if (n == -1) strcpy(strchr(result, '/')+1, inet_ntoa(mask));
+    sprintf(result, "%s/%-2d", inet_ntoa(*(struct in_addr *)&addr), n);
+    if (n == -1) strcpy(strchr(result, '/')+1,
+	inet_ntoa(*(struct in_addr *)&mask));
     return result;
 }
 
@@ -576,7 +578,7 @@ int makedhcp(dhcp_t *dp, u8_t *class, size_t calen, u8_t *client, size_t cilen,
 		) {
 		    config_t *atname= cmd->next->next;
 		    if (ifno != -1) atname= atname->next;
-		    name= atname->word;
+		    name= (char *)atname->word;
 
 		    if (name2ip(&hip, name, ifip) && (ip == 0 || ip == hip)) {
 			d= ntohl(hip) ^ ntohl(ifip);
@@ -897,7 +899,7 @@ void printdhcp(dhcp_t *dp)
 	    case TT_IP: {
 		ipaddr_t ip;
 		memcpy(&ip, data+i, sizeof(ip));
-		printf(" %s", inet_ntoa(ip));
+		printf(" %s", inet_ntoa(*(struct in_addr *)&ip));
 		i += sizeof(ip);
 		break;}
 	    case TT_NUMBER: {

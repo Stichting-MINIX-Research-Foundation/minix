@@ -1,3 +1,4 @@
+#ifndef __minix
 /*
 Newsgroups: mod.std.unix
 Subject: public domain AT&T getopt source
@@ -71,3 +72,4 @@ int getopt(int argc, char **argv, char **opts) {
 	}
 	return(c);
 }
+#endif /* !__minix */

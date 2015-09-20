@@ -150,7 +150,7 @@ void tab_reschedule(cronjob_t *job)
 		nodst_rtime= job->rtime= mktime(&tmptm);
 		if (job->rtime == -1) {
 			/* This should not happen. */
-			log(LOG_ERR,
+			cronlog(LOG_ERR,
 			"mktime failed for %04d-%02d-%02d %02d:%02d:%02d",
 				1900+nexttm.tm_year, nexttm.tm_mon+1,
 				nexttm.tm_mday, nexttm.tm_hour,
@@ -175,7 +175,7 @@ void tab_reschedule(cronjob_t *job)
 			dst_rtime= job->rtime= mktime(&tmptm);
 			if (job->rtime == -1) {
 				/* This should not happen. */
-				log(LOG_ERR,
+				cronlog(LOG_ERR,
 			"mktime failed for %04d-%02d-%02d %02d:%02d:%02d\n",
 					1900+nexttm.tm_year, nexttm.tm_mon+1,
 					nexttm.tm_mday, nexttm.tm_hour,
@@ -309,7 +309,7 @@ static int range_parse(char *file, char *data, bitmap_t map,
 	p= data;
 
 	if (*p == 0) {
-		log(LOG_ERR, "%s: not enough time fields\n", file);
+		cronlog(LOG_ERR, "%s: not enough time fields\n", file);
 		return 0;
 	}
 
@@ -371,11 +371,12 @@ static int range_parse(char *file, char *data, bitmap_t map,
 	*p= end;
 	return 1;
   syntax:
-	log(LOG_ERR, "%s: field '%s': bad syntax for a %d-%d time field\n",
+	cronlog(LOG_ERR, "%s: field '%s': bad syntax for a %d-%d time field\n",
 		file, data, min, max);
 	return 0;
   range:
-	log(LOG_ERR, "%s: field '%s': values out of the %d-%d allowed range\n",
+	cronlog(LOG_ERR,
+		"%s: field '%s': values out of the %d-%d allowed range\n",
 		file, data, min, max);
 	return 0;
 }
@@ -401,7 +402,7 @@ void tab_parse(char *file, char *user)
 	/* Try to open the file. */
 	if ((fd= open(file, O_RDONLY)) < 0 || fstat(fd, &st) < 0) {
 		if (errno != ENOENT) {
-			log(LOG_ERR, "%s: %s\n", file, strerror(errno));
+			cronlog(LOG_ERR, "%s: %s\n", file, strerror(errno));
 		}
 		if (fd != -1) close(fd);
 		return;
@@ -409,7 +410,7 @@ void tab_parse(char *file, char *user)
 
 	/* Forget it if the file is awfully big. */
 	if (st.st_size > TAB_MAX) {
-		log(LOG_ERR, "%s: %lu bytes is bigger than my %lu limit\n",
+		cronlog(LOG_ERR, "%s: %lu bytes is bigger than my %lu limit\n",
 			file,
 			(unsigned long) st.st_size,
 			(unsigned long) TAB_MAX);
@@ -443,7 +444,7 @@ void tab_parse(char *file, char *user)
 	n= 0;
 	while (n < st.st_size) {
 		if ((r = read(fd, tab->data + n, st.st_size - n)) < 0) {
-			log(LOG_CRIT, "%s: %s", file, strerror(errno));
+			cronlog(LOG_CRIT, "%s: %s", file, strerror(errno));
 			close(fd);
 			return;
 		}
@@ -453,7 +454,7 @@ void tab_parse(char *file, char *user)
 	close(fd);
 	tab->data[n]= 0;
 	if (strlen(tab->data) < n) {
-		log(LOG_ERR, "%s contains a null character\n", file);
+		cronlog(LOG_ERR, "%s contains a null character\n", file);
 		return;
 	}
 
@@ -539,7 +540,7 @@ void tab_parse(char *file, char *user)
 				break;
 			default:
 			usage:
-				log(LOG_ERR,
+				cronlog(LOG_ERR,
 			"%s: bad option -%c, good options are: -u username\n",
 					file, q[-1]);
 				ok= 0;
@@ -558,7 +559,8 @@ void tab_parse(char *file, char *user)
 			 */
 			while (*p != 0 && *p++ != '\n') {}
 			if (*p++ != '\t') {
-				log(LOG_ERR, "%s: contains an empty command\n",
+				cronlog(LOG_ERR,
+					"%s: contains an empty command\n",
 					file);
 				ok= 0;
 				goto endtab;

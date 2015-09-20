@@ -1042,7 +1042,7 @@ void canit()
 	raw_wbuf(strlen(canistr), canistr);
 	purgeline();
 #else
-	printf(canistr);
+	printf("%s", canistr);
 	Lleft=0;	/* Do read next time ... */
 	fflush(stdout);
 #endif

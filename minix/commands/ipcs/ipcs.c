@@ -32,6 +32,7 @@
 #include <sys/ipc.h>
 #include <sys/shm.h>
 #include <sys/sem.h>
+#include <err.h>
 
 /* remove _() stuff */
 #define _(a) a
@@ -343,7 +344,7 @@ void do_shm (char format)
 			break;
 
 		default:
-		        printf("0x%08x ",ipcp->KEY );
+		        printf("0x%08lx ",ipcp->KEY );
 			if (pw)
 				printf ("%-10d %-10.10s", shmid, pw->pw_name);
 			else
@@ -450,7 +451,7 @@ void do_sem (char format)
 			break;
 
 		default:
-		        printf("0x%08x ", ipcp->KEY);
+		        printf("0x%08lx ", ipcp->KEY);
 			if (pw)
 				printf ("%-10d %-10.10s", semid, pw->pw_name);
 			else

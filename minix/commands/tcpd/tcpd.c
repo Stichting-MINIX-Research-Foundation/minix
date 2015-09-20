@@ -22,6 +22,8 @@ tcpd.c
 #include <netdb.h>
 #include <net/gen/tcp.h>
 #include <net/gen/tcp_io.h>
+#include <arpa/inet.h>
+#include <minix/minlib.h>
 
 /* This program can be compiled to be paranoid, i.e. check incoming connection
  * according to an access file, or to trust anyone.  The much smaller "trust
@@ -285,7 +287,7 @@ int main(int argc, char **argv)
 	if (debug && ioctl(client_fd, NWIOGTCPCONF, &tcpconf) == 0) {
 	    fprintf(stderr, "%s %s: Connection from %s:%u\n",
 		arg0, service,
-		inet_ntoa(tcpconf.nwtc_remaddr),
+		inet_ntoa(*(struct in_addr *)&tcpconf.nwtc_remaddr),
 		ntohs(tcpconf.nwtc_remport));
 	}
 	/* All is well, no need to stall. */

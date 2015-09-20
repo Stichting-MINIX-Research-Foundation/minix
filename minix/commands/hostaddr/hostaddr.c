@@ -29,6 +29,7 @@ Created:	Jan 27, 1992 by Philip Homburg
 #include <netdb.h>
 #include <net/gen/socket.h>
 
+#include <arpa/inet.h>
 #include <arpa/nameser.h>
 #include <resolv.h>
 #include <net/gen/dhcp.h>
@@ -181,7 +182,7 @@ char *argv[];
 	if (do_ip)
 	{
 		printf("%s%s", first_print ? "" : " ",
-					inet_ntoa(nwio_ipconf.nwic_ipaddr));
+		    inet_ntoa(*(struct in_addr *)&nwio_ipconf.nwic_ipaddr));
 		first_print= 0;
 	}
 	if (do_asc_ip || do_hostname)
@@ -256,7 +257,8 @@ char *argv[];
 		else
 		{
 			/* No host name anywhere.  Use the IP address. */
-			hostname= inet_ntoa(nwio_ipconf.nwic_ipaddr);
+			hostname= inet_ntoa(*(struct in_addr *)
+			    &nwio_ipconf.nwic_ipaddr);
 			domain= NULL;
 		}
 

@@ -28,6 +28,7 @@
  *	4. This notice may not be removed or altered.
  */
 
+#include <stdlib.h>
 #include <stdio.h>
 
 #ifdef UNIX
