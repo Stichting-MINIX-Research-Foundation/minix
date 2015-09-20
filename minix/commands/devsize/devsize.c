@@ -7,7 +7,7 @@
 #include <sys/stat.h>
 #include <machine/partition.h>
 #include <minix/partition.h>
-#include <sys/ioc_disk.h>
+#include <sys/ioctl.h>
 #include <stdio.h>
 #include <errno.h>
 #include <fcntl.h>

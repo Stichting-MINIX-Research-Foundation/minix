@@ -30,6 +30,7 @@ Created:	March 2001 by Philip Homburg <philip@f-mnx.phicoh.com>
 #include <inet/generic/event.h>
 #include <inet/generic/type.h>
 #include <inet/generic/udp_int.h>
+#include <arpa/inet.h>
 
 char *prog_name;
 udp_fd_t udp_fd_table[UDP_FD_NR];
@@ -265,7 +266,8 @@ void print_fd(int i, clock_t now)
 			locaddr_str= hostent->h_name;
 		}
 		else
-			locaddr_str= inet_ntoa(udp_port->up_ipaddr);
+			locaddr_str=
+			    inet_ntoa(*(struct in_addr *)&udp_port->up_ipaddr);
 	}
 	else if (nwuo_flags & NWUO_EN_BROAD)
 		locaddr_str= "255.255.255.255";
@@ -298,7 +300,8 @@ void print_fd(int i, clock_t now)
 		remaddr_str= hostent->h_name;
 	}
 	else
-		remaddr_str= inet_ntoa(uf_udpopt.nwuo_remaddr);
+		remaddr_str=
+		    inet_ntoa(*(struct in_addr *)&uf_udpopt.nwuo_remaddr);
 	printf("%s:", remaddr_str);
 
 	if (!(nwuo_flags & NWUO_RP_SET))

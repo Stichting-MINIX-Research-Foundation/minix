@@ -98,7 +98,7 @@ void closefd(fd_t *fdp)
 static void timeout(int signum)
 {
     /* nothing to do, ioctl will be aborted automatically */
-    if (alarm(1) < 0) fatal("alarm(1)");
+    if (alarm(1) == (unsigned int)-1) fatal("alarm(1)");
 }
 
 int opendev(network_t *np, fdtype_t fdtype, int compete)
@@ -219,13 +219,13 @@ int opendev(network_t *np, fdtype_t fdtype, int compete)
 	 * in case the driver isn't ready yet.
 	 */
 	if (signal(SIGALRM, timeout) == SIG_ERR) fatal("signal(SIGALRM)");
-	if (alarm(1) < 0) fatal("alarm(1)");
+	if (alarm(1) == (unsigned int)-1) fatal("alarm(1)");
 	if (ioctl(np->fdp->fd, NWIOGETHSTAT, &ethstat) < 0) {
 	    /* Not an Ethernet. */
 	    close(fdp->fd);
 	    return 0;
 	}
-	if (alarm(0) < 0) fatal("alarm(0)");
+	if (alarm(0) == (unsigned int)-1) fatal("alarm(0)");
 	np->eth= ethstat.nwes_addr;
 	ethopt.nweo_flags= NWEO_COPY | NWEO_EN_LOC | NWEO_EN_BROAD
 			| NWEO_REMANY | NWEO_TYPEANY | NWEO_RWDATALL;

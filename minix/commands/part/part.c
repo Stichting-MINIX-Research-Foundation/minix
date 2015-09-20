@@ -1806,7 +1806,7 @@ void m_dump(int ev, object_t *op)
 			pe->sysind,
 			chs[0], chs[1], chs[2]);
 		dos2chs(&pe->last_head, chs);
-		printf("%6d%5d%4d%10lu%10ld%9lu",
+		printf("%6d%5d%4d%10u%10u%9u",
 			chs[0], chs[1], chs[2],
 			pe->lowsec,
 			howend == SIZE ? pe->size : pe->size + pe->lowsec - 1,

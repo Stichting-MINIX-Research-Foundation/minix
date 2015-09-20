@@ -191,7 +191,7 @@ void show_part(struct part_entry *p)
 	printf("%3d ", (n-1) / 2);
 	show_chs(p->lowsec);
 	show_chs(p->lowsec + p->size - 1);
-	printf("  %8lu  %8lu  %7lu\n", p->lowsec, p->size, p->size / 2);
+	printf("  %8u  %8u  %7u\n", p->lowsec, p->size, p->size / 2);
 }
 
 void usage(void)
@@ -373,7 +373,7 @@ void distribute(void)
 			if (pe->bootind & EXIST_FLAG) {
 				if (base > pe->lowsec) {
 					fprintf(stderr,
-	"%s: fixed partition %ld is preceded by too big partitions/holes\n",
+	"%s: fixed partition %u is preceded by too big partitions/holes\n",
 						arg0, ((pe - table) - 1) / 2);
 					exit(1);
 				}

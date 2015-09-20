@@ -605,7 +605,7 @@ void change_partition(struct part_entry *entry)
   }
   sec_to_hst(low, &entry->start_head, &entry->start_sec, &entry->start_cyl);
   sec_to_hst(high, &entry->last_head, &entry->last_sec, &entry->last_cyl);
-  printf("Base of partition changed to %ld, size changed to %ld\n",
+  printf("Base of partition changed to %u, size changed to %u\n",
 	 entry->lowsec, entry->size);
 
   /* Accept the MINIX partition type.  Usually ignore foreign types, so this
@@ -755,17 +755,17 @@ void adj_base(struct part_entry *pe)
 		return;
 	if (pe->lowsec + adj < 1)
 		printf(
-    "\t\tThat would make the base %lu and too small\n", pe->lowsec + adj);
+    "\t\tThat would make the base %u and too small\n", pe->lowsec + adj);
 	else if (pe->size - adj < 1)
 		printf(
-    "\t\tThat would make the size %lu and too small\n", pe->size - adj);
+    "\t\tThat would make the size %u and too small\n", pe->size - adj);
 	else
 		break;
   }
   pe->lowsec += adj; 
   pe->size -= adj;
   sec_to_hst(pe->lowsec, &pe->start_head, &pe->start_sec, &pe->start_cyl);
-  printf("Base of partition adjusted to %ld, size adjusted to %ld\n",
+  printf("Base of partition adjusted to %u, size adjusted to %u\n",
 	 pe->lowsec, pe->size);
 }
 
@@ -780,13 +780,13 @@ void adj_size(struct part_entry *pe)
 	if (!get_an_int("\tEnter adjustment to size (an integer): ", &adj))
 		return;
 	if (pe->size + adj >= 1) break;
-	printf("\t\tThat would make the size %lu and too small \n",
+	printf("\t\tThat would make the size %u and too small \n",
 		pe->size + adj);
   }
   pe->size += adj;
   sec_to_hst(pe->lowsec + pe->size - 1,
 	     &pe->last_head, &pe->last_sec, &pe->last_cyl);
-  printf("Size of partition adjusted to %ld\n", pe->size);
+  printf("Size of partition adjusted to %u\n", pe->size);
 }
 
 struct part_entry *ask_partition()

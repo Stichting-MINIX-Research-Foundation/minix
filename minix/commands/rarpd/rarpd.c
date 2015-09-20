@@ -36,6 +36,7 @@ Changed:	Dec 11, 2000 by Kees J. Bot
 #include <net/gen/if_ether.h>
 #include <net/gen/ip_io.h>
 #include <arpa/nameser.h>
+#include <arpa/inet.h>
 
 #define MAX_RARP_RETRIES	5
 #define RARP_TIMEOUT		5
@@ -143,7 +144,8 @@ static void rarp_reply(ethernet_t *ep, char *hostname, ipaddr_t ip_addr,
 
     if (debug >= 1) {
 	printf("%s: Replying %s (%s) to %s\n",
-	    ethdev(ep->n), inet_ntoa(ip_addr), hostname, ether_ntoa(&eth_addr));
+	    ethdev(ep->n), inet_ntoa(*(struct in_addr *)&ip_addr), hostname,
+	    ether_ntoa(&eth_addr));
     }
     (void) write(ep->eth_fd, &rarp46, sizeof(rarp46));
 }
@@ -290,8 +292,8 @@ int main(int argc, char **argv)
 	close(fd);
 	if (debug >= 1) {
 	    printf("%s: IP address is %s / ",
-		ipdev(ep->n), inet_ntoa(ep->ip_addr));
-	    printf("%s\n", inet_ntoa(ep->ip_mask));
+		ipdev(ep->n), inet_ntoa(*(struct in_addr *)&ep->ip_addr));
+	    printf("%s\n", inet_ntoa(*(struct in_addr *)&ep->ip_mask));
 	}
     }
 

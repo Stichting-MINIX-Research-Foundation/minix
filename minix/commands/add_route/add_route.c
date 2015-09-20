@@ -21,6 +21,7 @@ Created August 7, 1991 by Philip Homburg
 #include <net/gen/route.h>
 #include <net/gen/socket.h>
 #include <net/gen/ip_io.h>
+#include <arpa/inet.h>
 
 static char *prog_name;
 static enum { ADD, DEL } action;
@@ -165,7 +166,8 @@ int main(int argc, char *argv[])
 	{
 		if (parse_cidr(destination_str, &destination, &netmask))
 			cidr= 1;
-		else if (inet_aton(destination_str, &destination))
+		else if (inet_aton(destination_str,
+		    (struct in_addr *)&destination))
 			;
 		else if ((netent= getnetbyname(destination_str)) != NULL)
 			destination= netent->n_net;
@@ -194,7 +196,8 @@ int main(int argc, char *argv[])
 		else				/* class D is multicast ... */
 		{
 			fprintf(stderr, "%s: Warning: Martian address '%s'\n",
-				prog_name, inet_ntoa(destination));
+				prog_name,
+				inet_ntoa(*(struct in_addr *)&destination));
 			defaultmask= htonl(0xffffffff);
 		}
 		if (destination & ~defaultmask)
@@ -210,7 +213,7 @@ int main(int argc, char *argv[])
 	{
 		if (cidr)
 			usage();
-		if (inet_aton(netmask_str, &netmask) == 0)
+		if (inet_aton(netmask_str, (struct in_addr *)&netmask) == 0)
 		{
 			fprintf(stderr, "%s: illegal netmask'%s'\n", prog_name,
 				netmask_str);
@@ -248,9 +251,11 @@ int main(int argc, char *argv[])
 		printf("%s %s route to %s ",
 			action == ADD ? "adding" : "deleting",
 			itab ? "input" : "output",
-			inet_ntoa(destination));
-		printf("with netmask %s ", inet_ntoa(netmask));
-		printf("using gateway %s", inet_ntoa(gateway));
+			inet_ntoa(*(struct in_addr *)&destination));
+		printf("with netmask %s ",
+		    inet_ntoa(*(struct in_addr *)&netmask));
+		printf("using gateway %s",
+		    inet_ntoa(*(struct in_addr *)&gateway));
 		if (itab && action == ADD)
 			printf(" at distance %d", metric);
 		printf("\n");
@@ -305,7 +310,7 @@ static int name_to_ip(const char *name, ipaddr_t *addr)
 	 */
 	struct hostent *hostent;
 
-	if (!inet_aton(name, addr)) {
+	if (!inet_aton(name, (struct in_addr *)addr)) {
 		if ((hostent= gethostbyname(name)) == NULL) return 0;
 		if (hostent->h_addrtype != AF_INET) return 0;
 		if (hostent->h_length != sizeof(*addr)) return 0;
@@ -327,7 +332,7 @@ static int parse_cidr(const char *cidr, ipaddr_t *addr, ipaddr_t *mask)
 	*slash++= 0;
 	ok= 1;
 
-	if (!inet_aton(cidr, &a))
+	if (!inet_aton(cidr, (struct in_addr *)&a))
 		ok= 0;
 
 	len= strtoul(slash, &check, 10);

@@ -42,6 +42,7 @@ static const char version[] = "2.7";
 #include <net/gen/udp_hdr.h>
 #include <net/gen/udp_io.h>
 #include <net/gen/dhcp.h>
+#include <arpa/inet.h>
 
 #include <paths.h>
 #include <minix/paths.h>
@@ -131,6 +132,11 @@ static char *timegmt(time_t t)
 static char *nowgmt(void)
 {
     return timegmt(now);
+}
+
+static char *my_ntoa(ipaddr_t addr)
+{
+    return inet_ntoa(*(struct in_addr *)&addr);
 }
 
 #define PC(n)	((void) sizeof(char [sizeof(*(n)) == 1]), (char *) (n))
@@ -306,7 +312,7 @@ static int print_qrr(dns_t *dp, size_t size, u8_t *cp0, int q)
 	switch (*ep++) {
 	case 'i':
 	    if (cp + sizeof(u32_t) > rlim) return -1;
-	    printf(" %s", inet_ntoa(upack32(cp)));
+	    printf(" %s", my_ntoa(upack32(cp)));
 	    cp += sizeof(u32_t);
 	    break;
 	case 'l':
@@ -820,7 +826,7 @@ static void init_config(ipaddr_t ifip)
 
     if (debug >= 2) {
 	printf("%s: I am nonamed %s at %s:%u\n",
-	    nowgmt(), version, inet_ntoa(my_ip), ntohs(my_port));
+	    nowgmt(), version, my_ntoa(my_ip), ntohs(my_port));
     }
 
     httl= HTONL(HTTL);
@@ -1090,7 +1096,7 @@ static int query_chaos(u8_t *qname, unsigned type, dns_t *dp, size_t *pdlen)
     /* pack16(cp, htonl(RDLENGTH)) */
     cp += sizeof(u16_t);
     sprintf((char *) cp + 1, "nonamed %s at %s:%u",
-	    version, inet_ntoa(my_ip), ntohs(my_port));
+	    version, my_ntoa(my_ip), ntohs(my_port));
     r= strlen((char *) cp + 1) + 1;
     pack16(cp - sizeof(u16_t), htons(r));
     *cp= r-1;
@@ -1347,7 +1353,7 @@ static void refresh_cache(void)
 
     if (debug >= 1) {
 	printf("Refresh to %s:%u:\n",
-	    inet_ntoa(current_named()), ntohs(named_port));
+	    my_ntoa(current_named()), ntohs(named_port));
 	dns_tell(0, &udp.dns, dlen);
     }
     ulen= offsetof(udp_dns_t, dns) + dlen;
@@ -1389,7 +1395,7 @@ static int job_read_udp(void *data, int expired)
     if (ulen < (ssize_t) (sizeof(udp_io_hdr_t) + sizeof(HEADER))) return 1;
 
     if (debug >= 1) {
-	printf("%s:%u UDP ", inet_ntoa(udp.hdr.uih_src_addr),
+	printf("%s:%u UDP ", my_ntoa(udp.hdr.uih_src_addr),
 				ntohs(udp.hdr.uih_src_port));
 	dns_tell(0, &udp.dns, dlen);
     }
@@ -1414,7 +1420,7 @@ static int job_read_udp(void *data, int expired)
 			i_named= i;
 			if (debug >= 1) {
 			    printf("Current named = %s\n",
-				inet_ntoa(current_named()));
+				my_ntoa(current_named()));
 			}
 			stop_searching();
 			force_expire(job_find_named);
@@ -1442,7 +1448,7 @@ static int job_read_udp(void *data, int expired)
 	udp.dns.hdr.id= id;
 	udp.hdr.uih_dst_addr= ip;
 	udp.hdr.uih_dst_port= port;
-	if (debug >= 1) printf("To client %s:%u\n", inet_ntoa(ip), ntohs(port));
+	if (debug >= 1) printf("To client %s:%u\n", my_ntoa(ip), ntohs(port));
     } else {
 	/* A query. */
 	if (udp.dns.hdr.qdcount != HTONS(1)) return 1;
@@ -1450,8 +1456,8 @@ static int job_read_udp(void *data, int expired)
 	if(localonly) {
 		/* Check if it's a local query. */
 		if(ntohl(udp.hdr.uih_src_addr) != LOCALHOST) {
-		   	syslog(LOG_WARNING, "nonamed: dropped query from %s",
-		   		inet_ntoa(udp.hdr.uih_src_addr));
+			syslog(LOG_WARNING, "nonamed: dropped query from %s",
+				my_ntoa(udp.hdr.uih_src_addr));
 		   	return 1;
 		}
 	}
@@ -1466,7 +1472,7 @@ static int job_read_udp(void *data, int expired)
 
 	    /* Send an UDP DNS reply. */
 	    if (debug >= 1) {
-		printf("%s:%u UDP ", inet_ntoa(udp.hdr.uih_dst_addr),
+		printf("%s:%u UDP ", my_ntoa(udp.hdr.uih_dst_addr),
 					    ntohs(udp.hdr.uih_dst_port));
 		dns_tell(0, &udp.dns, dlen);
 	    }
@@ -1482,7 +1488,7 @@ static int job_read_udp(void *data, int expired)
 	    }
 	    if (debug >= 1) {
 		printf("To named %s:%u\n",
-		    inet_ntoa(current_named()), ntohs(named_port));
+		    my_ntoa(current_named()), ntohs(named_port));
 	    }
 	}
     }
@@ -1703,7 +1709,7 @@ static void tcp_dns_tell(int fd, u8_t *buf)
     if (ioctl(fd, NWIOGTCPCONF, &tcpconf) < 0) {
 	printf("??\?:?? TCP ");
     } else {
-	printf("%s:%u TCP ", inet_ntoa(tcpconf.nwtc_remaddr),
+	printf("%s:%u TCP ", my_ntoa(tcpconf.nwtc_remaddr),
 				ntohs(tcpconf.nwtc_remport));
     }
     dns_tell(0, oct2dns(buf + sizeof(u16_t)), ntohs(upack16(buf)));
@@ -1975,7 +1981,7 @@ static void named_probe(ipaddr_t ip)
     pack16(udp.dns.data+1, HTONS(T_NS));
     pack16(udp.dns.data+3, HTONS(C_IN));
     if (debug >= 1) {
-	printf("PROBE %s ", inet_ntoa(ip));
+	printf("PROBE %s ", my_ntoa(ip));
 	dns_tell(0, &udp.dns, dlen);
     }
 
