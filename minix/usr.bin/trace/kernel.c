@@ -24,7 +24,6 @@
 #include "kernel/arch/i386/include/archconst.h" /* for the KTS_ constants */
 #endif
 #include <lib.h>
-#include <minix/param.h>
 
 /*
  * Working area.  By obtaining values from the kernel into these local process
@@ -154,7 +153,7 @@ vir_bytes
 kernel_get_stacktop(void)
 {
 
-	return get_minix_kerninfo()->kinfo->user_sp;
+	return minix_get_user_sp();
 }
 
 /*

@@ -19,10 +19,11 @@
 #include "debug.h"
 
 /* Kernel information structures. This groups vital kernel information. */
-extern struct kinfo kinfo;		  /* kernel information for users */
-extern struct machine machine;		  /* machine information for users */
+extern struct kinfo kinfo;		  /* kernel information for services */
+extern struct machine machine;		  /* machine info for services */
 extern struct kmessages kmessages;  	  /* diagnostic messages in kernel */
 extern struct loadinfo loadinfo;	  /* status of load average */
+extern struct kuserinfo kuserinfo;	  /* kernel information for users */
 extern struct arm_frclock arm_frclock;	  /* ARM free-running timer info */
 extern struct kclockinfo kclockinfo;	  /* clock information */
 extern struct minix_kerninfo minix_kerninfo;

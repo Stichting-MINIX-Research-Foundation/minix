@@ -13,6 +13,7 @@
 #include <sys/sigtypes.h>
 
 #include <stdint.h>
+#include <stddef.h>
 
 /* Type definitions. */
 typedef unsigned int vir_clicks; 	/*  virtual addr/length in clicks */
@@ -190,10 +191,32 @@ struct arm_frclock {
 	u32_t tcrr;		/* tcrr address */
 };
 
+/* The userland ABI portion of general information exposed by the kernel.
+ * This structure may only ever be extended with new fields!
+ */
+struct kuserinfo {
+	size_t kui_size;	/* size of this structure, for ABI testing */
+	vir_bytes kui_user_sp;	/* initial stack pointer for exec'd process */
+};
+
+/* If MINIX_KIF_USERINFO is set, use this to check for a particular field. */
+#define KUSERINFO_HAS_FIELD(kui,f) \
+	(kui->kui_size >= offsetof(struct kuserinfo, f) + sizeof(kui->f))
+
 struct minix_kerninfo {
-	/* Binaries will depend on the offsets etc. in this
-	 * structure, so it can't be changed willy-nilly. In
-	 * other words, it is ABI-restricted.
+	/* Binaries will depend on the offsets etc. in this structure, so it
+	 * can't be changed willy-nilly. In other words, it is ABI-restricted.
+	 * However, various fields are to be used by services only, and are not
+	 * to be used by userland directly. For pointers to non-userland-ABI
+	 * structures, these structures themselves may be changed without
+	 * breaking the userland ABI.
+	 *
+	 * There is currently one important legacy exception: the 'kinfo'
+	 * structure should not be part of the userland ABI, but one of its
+	 * fields, "user_sp" at offset 2440, is used by legacy user binaries.
+	 * This field has since been moved into the 'kuserinfo' structure, but
+	 * it will take another major release before we can start changing the
+	 * layout of the 'kinfo' structure.
 	 */
 #define KERNINFO_MAGIC 0xfc3b84bf
 	u32_t kerninfo_magic;
@@ -202,17 +225,17 @@ struct minix_kerninfo {
 	u32_t flags_unused2;
 	u32_t flags_unused3;
 	u32_t flags_unused4;
-	struct kinfo		*kinfo;
+	struct kinfo		*kinfo;			/* see note above! */
 	struct machine		*machine;		/* NOT userland ABI */
 	struct kmessages	*kmessages;		/* NOT userland ABI */
 	struct loadinfo		*loadinfo;		/* NOT userland ABI */
-	struct minix_ipcvecs	*minix_ipcvecs;
-	u32_t reserved;
+	struct minix_ipcvecs	*minix_ipcvecs;		/* userland ABI */
+	struct kuserinfo	*kuserinfo;		/* userland ABI */
 	struct arm_frclock	*arm_frclock;		/* NOT userland ABI */
 	volatile struct kclockinfo	*kclockinfo;	/* NOT userland ABI */
-} __packed;
+};
 
-#define MINIX_KIF_IPCVECS	(1L << 0)
+#define MINIX_KIF_IPCVECS	(1L << 0)	/* minix_ipcvecs is valid */
+#define MINIX_KIF_USERINFO	(1L << 1)	/* kuserinfo is valid */
 
 #endif /* _TYPE_H */
-

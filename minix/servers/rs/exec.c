@@ -2,7 +2,6 @@
 #include <assert.h>
 #include <sys/exec.h>
 #include <libexec.h>
-#include <minix/param.h>
 #include <machine/vmparam.h>
 
 static int do_exec(int proc_e, char *exec, size_t exec_len, char *progname,
@@ -73,7 +72,7 @@ static int do_exec(int proc_e, char *exec, size_t exec_len, char *progname,
 
 	memset(&execi, 0, sizeof(execi));
 
-	execi.stack_high = get_minix_kerninfo()->kinfo->user_sp;
+	execi.stack_high = minix_get_user_sp();
 	execi.stack_size = DEFAULT_STACK_LIMIT;
 	execi.proc_e = proc_e;
 	execi.hdr = exec;

@@ -23,6 +23,8 @@
 
 struct minix_kerninfo *get_minix_kerninfo(void);
 
+vir_bytes minix_get_user_sp(void);
+
 struct ps_strings; /* forward declaration for minix_stack_fill. */
 
 void minix_stack_params(const char *path, char * const *argv,

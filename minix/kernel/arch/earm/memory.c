@@ -714,6 +714,7 @@ int arch_phys_map_reply(const int index, const vir_bytes addr)
 		ASSIGN(machine);
 		ASSIGN(kmessages);
 		ASSIGN(loadinfo);
+		ASSIGN(kuserinfo);
 		ASSIGN(arm_frclock);
 		ASSIGN(kclockinfo);
 
@@ -723,6 +724,9 @@ int arch_phys_map_reply(const int index, const vir_bytes addr)
 		minix_kerninfo.kerninfo_magic = KERNINFO_MAGIC;
 		minix_kerninfo.minix_feature_flags = minix_feature_flags;
 		minix_kerninfo_user = (vir_bytes) FIXEDPTR(&minix_kerninfo);
+
+		minix_kerninfo.ki_flags |= MINIX_KIF_USERINFO;
+
 		return OK;
 	}
 

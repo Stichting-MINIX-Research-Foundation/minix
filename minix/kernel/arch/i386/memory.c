@@ -879,6 +879,7 @@ int arch_phys_map_reply(const int index, const vir_bytes addr)
 		ASSIGN(machine);
 		ASSIGN(kmessages);
 		ASSIGN(loadinfo);
+		ASSIGN(kuserinfo);
 		ASSIGN(arm_frclock); /* eh, why not. */
 		ASSIGN(kclockinfo);
 
@@ -919,6 +920,8 @@ int arch_phys_map_reply(const int index, const vir_bytes addr)
 		} else {
 			minix_kerninfo.ki_flags |= MINIX_KIF_IPCVECS;
 		}
+
+		minix_kerninfo.ki_flags |= MINIX_KIF_USERINFO;
 
 		return OK;
 	}

@@ -439,6 +439,10 @@ void cstart()
   /* Initialize various user-mapped structures. */
   memset(&arm_frclock, 0, sizeof(arm_frclock));
 
+  memset(&kuserinfo, 0, sizeof(kuserinfo));
+  kuserinfo.kui_size = sizeof(kuserinfo);
+  kuserinfo.kui_user_sp = kinfo.user_sp;
+
 #ifdef USE_APIC
   value = env_get("no_apic");
   if(value)
