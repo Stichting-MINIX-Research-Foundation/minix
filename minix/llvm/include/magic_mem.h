@@ -27,7 +27,7 @@ PUBLIC int magic_create_dsentry(struct _magic_dsentry *dsentry,
     char *name, char *parent_name);
 PUBLIC struct _magic_obdsentry* magic_create_obdsentry(void *data_ptr,
     struct _magic_type *type, size_t size, int flags,
-    char *name, char *parent_name);
+    const char *name, char *parent_name);
 PUBLIC int magic_update_dsentry_state(struct _magic_dsentry *dsentry,
     unsigned long mstate);
 PUBLIC void magic_free_dead_dsentries();

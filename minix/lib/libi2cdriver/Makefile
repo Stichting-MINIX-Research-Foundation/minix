@@ -1,7 +1,5 @@
 # Makefile for libi2cdriver
 
-NOGCCERROR=yes
-
 CPPFLAGS+=-D_MINIX_SYSTEM
 
 LIB=	i2cdriver

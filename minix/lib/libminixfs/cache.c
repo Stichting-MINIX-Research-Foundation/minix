@@ -239,8 +239,7 @@ static void munmap_t(void *a, int len)
 
 static void raisecount(struct buf *bp)
 {
-  assert(bufs_in_use >= 0);
-  ASSERT(bp->lmfs_count >= 0);
+  ASSERT(bp->lmfs_count < CHAR_MAX);
   bp->lmfs_count++;
   if(bp->lmfs_count == 1) bufs_in_use++;
   assert(bufs_in_use > 0);
@@ -252,7 +251,6 @@ static void lowercount(struct buf *bp)
   ASSERT(bp->lmfs_count > 0);
   bp->lmfs_count--;
   if(bp->lmfs_count == 0) bufs_in_use--;
-  assert(bufs_in_use >= 0);
 }
 
 static void freeblock(struct buf *bp)

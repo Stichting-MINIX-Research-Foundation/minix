@@ -172,7 +172,7 @@ void timed_test_func(const char *s, void (* func)(void))
 }
 
 pid_t traced_fork(c)
-void(*c) (void);
+void (*c)(void);
 {
   pid_t pid;
   int r, status;
@@ -333,6 +333,9 @@ void(*c) (void);
 	detach_running(ppid);
 
 	break;
+
+  default:
+	abort();
   }
 
   return pid;

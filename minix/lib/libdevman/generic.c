@@ -106,6 +106,9 @@ int devman_add_device(struct devman_dev *dev)
 	size_t grant_size;
 	void *buf = serialize_dev(dev, &grant_size);
 
+	if (buf == NULL)
+		panic("out of memory");
+
 	cp_grant_id_t gid = 
 	    cpf_grant_direct(devman_ep,(vir_bytes) buf,
 		    grant_size, CPF_READ);

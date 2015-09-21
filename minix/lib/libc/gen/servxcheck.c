@@ -275,12 +275,12 @@ int servxcheck(unsigned long peer, const char *service,
     return state == PASS;
 }
 
-char *servxfile(const char *file)
+const char *servxfile(const char *file)
 /* Specify a file to use for the access checks other than the default.  Return
  * the old path.
  */
 {
     const char *oldpath= path_servacces;
     path_servacces= file;
-    return (char *) oldpath;	/* (avoid const poisoning) */
+    return oldpath;
 }

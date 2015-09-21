@@ -75,32 +75,32 @@ int bdev_minor_reopen(dev_t dev)
   return OK;
 }
 
-void bdev_minor_add(dev_t dev, int access)
+void bdev_minor_add(dev_t dev, int bits)
 {
 /* Increase the reference count of the given minor device.
  */
-  int i, free = -1;
+  int i, ifree = -1;
 
   for (i = 0; i < NR_OPEN_DEVS; i++) {
 	if (open_dev[i].dev == dev) {
 		open_dev[i].count++;
-		open_dev[i].access |= access;
+		open_dev[i].access |= bits;
 
 		return;
 	}
 
-	if (free < 0 && open_dev[i].dev == NO_DEV)
-		free = i;
+	if (ifree < 0 && open_dev[i].dev == NO_DEV)
+		ifree = i;
   }
 
-  if (free < 0) {
+  if (ifree < 0) {
 	printf("bdev: too many open devices, increase NR_OPEN_DEVS\n");
 	return;
   }
 
-  open_dev[free].dev = dev;
-  open_dev[free].count = 1;
-  open_dev[free].access = access;
+  open_dev[ifree].dev = dev;
+  open_dev[ifree].count = 1;
+  open_dev[ifree].access = bits;
 }
 
 void bdev_minor_del(dev_t dev)

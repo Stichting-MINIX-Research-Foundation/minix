@@ -13,6 +13,7 @@
 #include <sys/ioctl.h>
 #include <limits.h>
 #include <stdint.h>
+#include <inttypes.h>
 #include <assert.h>
 
 #ifdef __minix
@@ -191,7 +192,8 @@ void show_part(struct part_entry *p)
 	printf("%3d ", (n-1) / 2);
 	show_chs(p->lowsec);
 	show_chs(p->lowsec + p->size - 1);
-	printf("  %8u  %8u  %7u\n", p->lowsec, p->size, p->size / 2);
+	printf("  %8"PRIu32"  %8"PRIu32"  %7"PRIu32"\n",
+	    p->lowsec, p->size, p->size / 2);
 }
 
 void usage(void)

@@ -36,10 +36,10 @@ init_server(int __unused type, sef_init_info_t * __unused info)
  * We received a signal.
  */
 static void
-got_signal(int signal)
+got_signal(int sig)
 {
 
-	if (signal != SIGTERM)
+	if (sig != SIGTERM)
 		return;
 
 	fsdriver_terminate();
@@ -86,7 +86,7 @@ fs_other(const message * m_ptr, int ipc_status)
  */
 void
 run_vtreefs(struct fs_hooks * hooks, unsigned int nr_inodes,
-	size_t inode_extra, struct inode_stat * stat,
+	size_t inode_extra, struct inode_stat * istat,
 	index_t nr_indexed_entries, size_t bufsize)
 {
 
@@ -97,7 +97,7 @@ run_vtreefs(struct fs_hooks * hooks, unsigned int nr_inodes,
 	vtreefs_hooks = hooks;
 	inodes = nr_inodes;
 	extra_size = inode_extra;
-	root_stat = stat;
+	root_stat = istat;
 	root_entries = nr_indexed_entries;
 	buf_size = bufsize;
 

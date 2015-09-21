@@ -323,14 +323,14 @@ netdriver_send(void)
  */
 static void
 do_readwrite(const struct netdriver * __restrict ndp, endpoint_t endpt,
-	cp_grant_id_t grant, unsigned int count, int write)
+	cp_grant_id_t grant, unsigned int count, int do_write)
 {
 	struct netdriver_data *data;
 	unsigned int i;
 	int r;
 
 	/* Copy in the I/O vector. */
-	data = (write) ? &pending_send : &pending_recv;
+	data = (do_write) ? &pending_send : &pending_recv;
 
 	if (data->size != 0)
 		panic("netdriver: multiple concurrent requests");
@@ -349,7 +349,7 @@ do_readwrite(const struct netdriver * __restrict ndp, endpoint_t endpt,
 		data->size += data->iovec[i].iov_size;
 
 	if (data->size < ETH_MIN_PACK_SIZE ||
-	    (!write && data->size < ETH_MAX_PACK_SIZE_TAGGED))
+	    (!do_write && data->size < ETH_MAX_PACK_SIZE_TAGGED))
 		panic("netdriver: invalid I/O vector size: %zu\n", data->size);
 
 	/* Save the endpoint to which we should reply. */
@@ -360,7 +360,7 @@ do_readwrite(const struct netdriver * __restrict ndp, endpoint_t endpt,
 	/* Resume sending or receiving. */
 	defer_replies();
 
-	if (write)
+	if (do_write)
 		netdriver_send();
 	else
 		netdriver_recv();
@@ -400,17 +400,17 @@ do_getstat(const struct netdriver * __restrict ndp,
 	const message * __restrict m_ptr)
 {
 	message m_reply;
-	eth_stat_t stat;
+	eth_stat_t st;
 	int r;
 
-	memset(&stat, 0, sizeof(stat));
+	memset(&st, 0, sizeof(st));
 
 	if (ndp->ndr_stat != NULL)
-		ndp->ndr_stat(&stat);
+		ndp->ndr_stat(&st);
 
 	if ((r = sys_safecopyto(m_ptr->m_source,
-	    m_ptr->m_net_netdrv_dl_getstat_s.grant, 0, (vir_bytes)&stat,
-	    sizeof(stat))) != OK)
+	    m_ptr->m_net_netdrv_dl_getstat_s.grant, 0, (vir_bytes)&st,
+	    sizeof(st))) != OK)
 		panic("netdriver: unable to copy out statistics: %d", r);
 
 	memset(&m_reply, 0, sizeof(m_reply));
@@ -485,13 +485,13 @@ netdriver_process(const struct netdriver * __restrict ndp,
 	case DL_READV_S:
 		do_readwrite(ndp, m_ptr->m_source,
 		    m_ptr->m_net_netdrv_dl_readv_s.grant,
-		    m_ptr->m_net_netdrv_dl_readv_s.count, FALSE /*write*/);
+		    m_ptr->m_net_netdrv_dl_readv_s.count, FALSE /*do_write*/);
 		break;
 
 	case DL_WRITEV_S:
 		do_readwrite(ndp, m_ptr->m_source,
 		    m_ptr->m_net_netdrv_dl_writev_s.grant,
-		    m_ptr->m_net_netdrv_dl_writev_s.count, TRUE /*write*/);
+		    m_ptr->m_net_netdrv_dl_writev_s.count, TRUE /*do_write*/);
 		break;
 
 	default:

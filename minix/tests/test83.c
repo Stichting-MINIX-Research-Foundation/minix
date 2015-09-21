@@ -733,6 +733,8 @@ static void send_packet_ip(
 		fragsize = payloadsize;
 		fragstep = 0;
 		break;
+	default:
+		abort();
 	}
 
 	while (fragcount > 0) {

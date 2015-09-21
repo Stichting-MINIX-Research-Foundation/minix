@@ -47,8 +47,10 @@ static int init_buffers(sub_dev_t *sub_dev_ptr);
 static int get_started(sub_dev_t *sub_dev_ptr);
 static int io_ctl_length(int io_request);
 static special_file_t* get_special_file(int minor_dev_nr);
+#if defined(__i386__)
 static void tell_dev(vir_bytes buf, size_t size, int pci_bus,
 	int pci_dev, int pci_func);
+#endif
 
 static char io_ctl_buf[IOCPARM_MASK];
 static int irq_hook_id = 0;	/* id of irq hook at the kernel */
@@ -822,6 +824,7 @@ static special_file_t* get_special_file(int minor_dev_nr) {
 	return NULL;
 }
 
+#if defined(__i386__)
 static void tell_dev(vir_bytes buf, size_t size, int pci_bus,
                      int pci_dev, int pci_func)
 {
@@ -858,3 +861,4 @@ static void tell_dev(vir_bytes buf, size_t size, int pci_bus,
 		return;
 	}
 }
+#endif

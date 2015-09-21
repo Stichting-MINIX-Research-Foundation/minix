@@ -488,7 +488,7 @@ void blockdriver_mt_wakeup(thread_id_t id)
   worker_id = TID_WORKER(id);
 
   assert(device_id >= 0 && device_id < MAX_DEVICES);
-  assert(worker_id >= 0 && worker_id < MAX_WORKERS);
+  assert(worker_id < MAX_WORKERS);
 
   wp = &device[device_id].worker[worker_id];
 

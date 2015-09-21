@@ -37,7 +37,7 @@ mode_t get_mode(struct inode *ino, int mode)
 /*===========================================================================*
  *				do_stat					     *
  *===========================================================================*/
-int do_stat(ino_t ino_nr, struct stat *stat)
+int do_stat(ino_t ino_nr, struct stat *st)
 {
 /* Retrieve inode status.
  */
@@ -56,31 +56,31 @@ int do_stat(ino_t ino_nr, struct stat *stat)
   if ((r = verify_inode(ino, path, &attr)) != OK)
 	return r;
 
-  stat->st_mode = get_mode(ino, attr.a_mode);
-  stat->st_uid = sffs_params->p_uid;
-  stat->st_gid = sffs_params->p_gid;
-  stat->st_rdev = NO_DEV;
-  stat->st_size = attr.a_size;
-  stat->st_atimespec = attr.a_atime;
-  stat->st_mtimespec = attr.a_mtime;
-  stat->st_ctimespec = attr.a_ctime;
-  stat->st_birthtimespec = attr.a_crtime;
+  st->st_mode = get_mode(ino, attr.a_mode);
+  st->st_uid = sffs_params->p_uid;
+  st->st_gid = sffs_params->p_gid;
+  st->st_rdev = NO_DEV;
+  st->st_size = attr.a_size;
+  st->st_atimespec = attr.a_atime;
+  st->st_mtimespec = attr.a_mtime;
+  st->st_ctimespec = attr.a_ctime;
+  st->st_birthtimespec = attr.a_crtime;
 
-  stat->st_blocks = stat->st_size / S_BLKSIZE;
-  if (stat->st_size % S_BLKSIZE != 0)
-	stat->st_blocks += 1;
+  st->st_blocks = st->st_size / S_BLKSIZE;
+  if (st->st_size % S_BLKSIZE != 0)
+	st->st_blocks += 1;
 
-  stat->st_blksize = BLOCK_SIZE;
+  st->st_blksize = BLOCK_SIZE;
 
   /* We could make this more accurate by iterating over directory inodes'
    * children, counting how many of those are directories as well.
    * It's just not worth it.
    */
-  stat->st_nlink = 0;
-  if (ino->i_parent != NULL) stat->st_nlink++;
+  st->st_nlink = 0;
+  if (ino->i_parent != NULL) st->st_nlink++;
   if (IS_DIR(ino)) {
-	stat->st_nlink++;
-	if (HAS_CHILDREN(ino)) stat->st_nlink++;
+	st->st_nlink++;
+	if (HAS_CHILDREN(ino)) st->st_nlink++;
   }
 
   return OK;

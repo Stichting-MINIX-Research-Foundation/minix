@@ -526,7 +526,7 @@ connectlog_r(struct syslog_data *data)
 	}
 	if (!data->log_connected) {
 #if defined(__minix)
-		if(ioctl(data->log_file, NWIOSUDSTADDR, (void *) &sun) < 0)
+		if(ioctl(data->log_file, NWIOSUDSTADDR, __UNCONST(&sun)) < 0)
 
 #else
 		if (connect(data->log_file,

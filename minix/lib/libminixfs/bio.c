@@ -122,13 +122,13 @@ lmfs_bio(dev_t dev, struct fsdriver_data * data, size_t bytes, off_t pos,
 	size_t block_size, off, block_off, last_size, size, chunk;
 	unsigned int blocks_left;
 	struct buf *bp;
-	int r, write, how;
+	int r, do_write, how;
 
 	if (dev == NO_DEV)
 		return EINVAL;
 
 	block_size = lmfs_fs_block_size();
-	write = (call == FSC_WRITE);
+	do_write = (call == FSC_WRITE);
 
 	assert(block_size > 0);
 
@@ -183,7 +183,7 @@ lmfs_bio(dev_t dev, struct fsdriver_data * data, size_t bytes, off_t pos,
 		 * For read requests, help the block driver form larger I/O
 		 * requests.
 		 */
-		if (!write)
+		if (!do_write)
 			block_prefetch(dev, block, blocks_left, block_size,
 			    last_size);
 
@@ -191,7 +191,7 @@ lmfs_bio(dev_t dev, struct fsdriver_data * data, size_t bytes, off_t pos,
 		 * Do not read the block from disk if we will end up
 		 * overwriting all of its contents.
 		 */
-		how = (write && chunk == size) ? NO_READ : NORMAL;
+		how = (do_write && chunk == size) ? NO_READ : NORMAL;
 
 		if (size < block_size)
 			r = lmfs_get_partial_block(&bp, dev, block, how, size);
@@ -207,7 +207,7 @@ lmfs_bio(dev_t dev, struct fsdriver_data * data, size_t bytes, off_t pos,
 
 		/* Perform the actual copy. */
 		if (r == OK && data != NULL) {
-			if (write) {
+			if (do_write) {
 				r = fsdriver_copyin(data, off,
 				    (char *)bp->data + block_off, chunk);
 

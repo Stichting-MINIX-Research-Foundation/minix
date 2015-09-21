@@ -49,7 +49,7 @@ int
 fs_chmod(ino_t ino_nr, mode_t * mode)
 {
 	struct inode *node;
-	struct inode_stat stat;
+	struct inode_stat istat;
 	int r;
 
 	if ((node = find_inode(ino_nr)) == NULL)
@@ -58,18 +58,18 @@ fs_chmod(ino_t ino_nr, mode_t * mode)
 	if (vtreefs_hooks->chstat_hook == NULL)
 		return ENOSYS;
 
-	get_inode_stat(node, &stat);
+	get_inode_stat(node, &istat);
 
-	stat.mode = (stat.mode & ~ALL_MODES) | (*mode & ALL_MODES);
+	istat.mode = (istat.mode & ~ALL_MODES) | (*mode & ALL_MODES);
 
-	r = vtreefs_hooks->chstat_hook(node, &stat, get_inode_cbdata(node));
+	r = vtreefs_hooks->chstat_hook(node, &istat, get_inode_cbdata(node));
 
 	if (r != OK)
 		return r;
 
-	get_inode_stat(node, &stat);
+	get_inode_stat(node, &istat);
 
-	*mode = stat.mode;
+	*mode = istat.mode;
 
 	return OK;
 }
@@ -81,7 +81,7 @@ int
 fs_chown(ino_t ino_nr, uid_t uid, gid_t gid, mode_t * mode)
 {
 	struct inode *node;
-	struct inode_stat stat;
+	struct inode_stat istat;
 	int r;
 
 	if ((node = find_inode(ino_nr)) == NULL)
@@ -90,20 +90,20 @@ fs_chown(ino_t ino_nr, uid_t uid, gid_t gid, mode_t * mode)
 	if (vtreefs_hooks->chstat_hook == NULL)
 		return ENOSYS;
 
-	get_inode_stat(node, &stat);
+	get_inode_stat(node, &istat);
 
-	stat.uid = uid;
-	stat.gid = gid;
-	stat.mode &= ~(S_ISUID | S_ISGID);
+	istat.uid = uid;
+	istat.gid = gid;
+	istat.mode &= ~(S_ISUID | S_ISGID);
 
-	r = vtreefs_hooks->chstat_hook(node, &stat, get_inode_cbdata(node));
+	r = vtreefs_hooks->chstat_hook(node, &istat, get_inode_cbdata(node));
 
 	if (r != OK)
 		return r;
 
-	get_inode_stat(node, &stat);
+	get_inode_stat(node, &istat);
 
-	*mode = stat.mode;
+	*mode = istat.mode;
 
 	return OK;
 }

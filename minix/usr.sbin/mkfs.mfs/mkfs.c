@@ -430,7 +430,7 @@ main(int argc, char *argv[])
 		    (int)next_inode-1, next_zone);
   }
 
-  if(insertmode) printf("%llu\n", written_fs_size);
+  if(insertmode) printf("%"PRIu64"\n", written_fs_size);
 
   return(0);
 

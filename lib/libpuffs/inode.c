@@ -82,7 +82,7 @@ int fs_putnode(ino_t ino_nr, unsigned int count)
 			lpuffs_debug("%"PRIu64": %d %s %u %u\n",
 				ino,
 				pn_cur->pn_count,
-				pn_cur->pn_po.po_path,
+				(char *)pn_cur->pn_po.po_path,
 				pn_cur->pn_po.po_len,
 				pn_cur->pn_po.po_hash);
 		}

@@ -759,7 +759,7 @@ static void test_xfer_server(const struct socket_test_info *info, pid_t pid)
 		return;
 	}
 
-	if (rc < strlen(buf)) {
+	if (rc < strlen((char *)buf)) {
 		test_fail("[server] write didn't write all the bytes");
 	}
 
@@ -787,7 +787,7 @@ static void test_xfer_server(const struct socket_test_info *info, pid_t pid)
 		return;
 	}
 
-	if (rc < strlen(buf)) {
+	if (rc < strlen((char *)buf)) {
 		test_fail("[server] write didn't write all the bytes");
 	}
 
@@ -815,7 +815,7 @@ static void test_xfer_server(const struct socket_test_info *info, pid_t pid)
 		return;
 	}
 
-	if (rc < strlen(buf)) {
+	if (rc < strlen((char *)buf)) {
 		test_fail("[server] write didn't write all the bytes");
 	}
 

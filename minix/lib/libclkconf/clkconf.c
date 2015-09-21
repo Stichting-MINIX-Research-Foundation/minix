@@ -20,7 +20,7 @@
 #include <assert.h>
 
 /* used for logging */
-static struct log log = {
+static struct log clk_log = {
 	.name = "omap_clkconf",
 	.log_level = LEVEL_INFO,
 	.log_func = default_log
@@ -44,7 +44,7 @@ clkconf_init()
 	if (base != 0) {
 		/* when used in a library we can't guaranty we only call this
 		 * method once */
-		log_trace(&log, "Called %d times\n", use_count);
+		log_trace(&clk_log, "Called %d times\n", use_count);
 		return OK;
 	}
 
@@ -58,14 +58,15 @@ clkconf_init()
 	mr.mr_limit = cm_base + 0x1000;
 
 	if (sys_privctl(SELF, SYS_PRIV_ADD_MEM, &mr) != 0) {
-		log_warn(&log, "Unable to request permission to map memory\n");
+		log_warn(&clk_log,
+		    "Unable to request permission to map memory\n");
 		return EPERM;
 	}
 
 	base = (uint32_t) vm_map_phys(SELF, (void *) cm_base, 0x1000);
 
 	if (base == (uint32_t) MAP_FAILED) {
-		log_warn(&log, "Unable to map GPIO memory\n");
+		log_warn(&clk_log, "Unable to map GPIO memory\n");
 		return EPERM;
 	}
 	return OK;

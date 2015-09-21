@@ -25,13 +25,13 @@ int subtest = 1;
 
 int main(void);
 void quit(void);
-static void test_clock_getres();
-static void test_clock_gettime();
-static void test_clock_settime();
-static void test_adjtime();
+static void test_clock_getres(void);
+static void test_clock_gettime(void);
+static void test_clock_settime(void);
+static void test_adjtime(void);
 static void show_timespec(char *msg, struct timespec *ts);
 
-static void test_clock_getres()
+static void test_clock_getres(void)
 {
   struct timespec res;
 
@@ -47,7 +47,7 @@ static void test_clock_getres()
   if (clock_getres(-1, &res) == 0) e(14);
 }
 
-static void test_clock_gettime()
+static void test_clock_gettime(void)
 {
   struct timespec ts, ts2;
 
@@ -148,7 +148,7 @@ static void show_timespec(char *msg, struct timespec *ts)
 #endif /* DEBUG == 1 */
 }
 
-int main()
+int main(void)
 {
   start(69);
   struct timespec starttime, endtime;

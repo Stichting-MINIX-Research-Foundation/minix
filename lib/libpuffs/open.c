@@ -258,7 +258,8 @@ int fs_slink(ino_t dir_nr, char *name, uid_t uid, gid_t gid,
 
   /* Copy the link name's last component */
   pcn.pcn_namelen = strlen(name);
-  if (pcn.pcn_namelen <= NAME_MAX);
+  if (pcn.pcn_namelen > NAME_MAX)
+	return(ENAMETOOLONG);
   strcpy(pcn.pcn_name, name);
 
   if (bytes >= PATH_MAX)

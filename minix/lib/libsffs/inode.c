@@ -30,7 +30,7 @@ struct inode *init_inode(void)
 /* Initialize inode table. Return the root inode.
  */
   struct inode *ino;
-  unsigned int index;
+  unsigned int i;
 
   TAILQ_INIT(&free_list);
 
@@ -38,11 +38,11 @@ struct inode *init_inode(void)
 	sffs_name, NUM_INODES, sizeof(struct inode), sizeof(inodes)));
 
   /* Mark all inodes except the root inode as free. */
-  for (index = 1; index < NUM_INODES; index++) {
-	ino = &inodes[index];
+  for (i = 1; i < NUM_INODES; i++) {
+	ino = &inodes[i];
 	ino->i_parent = NULL;
 	LIST_INIT(&ino->i_child);
-	ino->i_num = index + 1;
+	ino->i_num = i + 1;
 	ino->i_gen = (unsigned short)-1; /* aesthetics */
 	ino->i_ref = 0;
 	ino->i_flags = 0;
@@ -70,19 +70,19 @@ struct inode *find_inode(ino_t ino_nr)
 /* Get an inode based on its inode number. Do not increase its reference count.
  */
   struct inode *ino;
-  int index;
+  int i;
 
   /* Inode 0 (= index -1) is not a valid inode number. */
-  index = INODE_INDEX(ino_nr);
-  if (index < 0) {
+  i = INODE_INDEX(ino_nr);
+  if (i < 0) {
 	printf("%s: VFS passed invalid inode number!\n", sffs_name);
 
 	return NULL;
   }
 
-  assert(index < NUM_INODES);
+  assert(i < NUM_INODES);
 
-  ino = &inodes[index];
+  ino = &inodes[i];
 
   /* Make sure the generation number matches. */
   if (INODE_GEN(ino_nr) != ino->i_gen) {
@@ -261,10 +261,10 @@ int have_used_inode(void)
 /* Check whether any inodes are still in use, that is, any of the inodes have
  * a reference count larger than zero.
  */
-  unsigned int index;
+  unsigned int i;
 
-  for (index = 0; index < NUM_INODES; index++)
-	if (inodes[index].i_ref > 0)
+  for (i = 0; i < NUM_INODES; i++)
+	if (inodes[i].i_ref > 0)
 		return TRUE;
 
   return FALSE;

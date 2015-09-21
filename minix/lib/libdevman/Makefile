@@ -1,5 +1,3 @@
-NOGCCERROR=yes
-
 CPPFLAGS+= -D_MINIX_SYSTEM
 
 LIB = devman

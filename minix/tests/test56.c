@@ -1224,7 +1224,7 @@ static void test_fd_passing(void) {
 	}
 }
 
-static void test_select()
+static void test_select(void)
 {
 	int nfds = -1;
 	int socks[2];
@@ -1344,7 +1344,7 @@ static void test_select_close(void)
 	close(socks[0]);
 }
 
-static void test_fchmod()
+static void test_fchmod(void)
 {
 	int socks[2];
 	struct stat st1, st2;

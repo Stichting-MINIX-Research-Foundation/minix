@@ -12,10 +12,6 @@ SRCS=	buf.c clock.c inet.c inet_config.c \
 
 .PATH:	${.CURDIR}/generic
 
-WARNS=
-
-NOCLANGERROR=yes
-
 DPADD+=	${LIBCHARDRIVER} ${LIBSYS}
 LDADD+=	-lchardriver -lsys
 

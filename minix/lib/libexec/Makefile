@@ -1,8 +1,5 @@
 # Makefile for libexec
 
-# LSC For now
-NOGCCERROR:= yes 
-
 LIB=	exec
 INCS=	libexec.h
 SRCS=	exec_elf.c exec_general.c

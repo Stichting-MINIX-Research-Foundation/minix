@@ -161,7 +161,7 @@ ssize_t fs_rdlink(ino_t ino_nr, struct fsdriver_data *data, size_t bytes)
 
   r = fsdriver_copyout(data, 0, path, bytes);
 
-  return (r == OK) ? bytes : r;
+  return (r == OK) ? (ssize_t)bytes : r;
 }
 
 

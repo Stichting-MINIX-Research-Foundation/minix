@@ -68,7 +68,7 @@ void
 netdriver_portinw(struct netdriver_data * data, size_t off, long port,
 	size_t size)
 {
-	uint8_t buf[2];
+	uint16_t buf;
 	uint32_t value;
 	size_t chunk;
 	unsigned int i;
@@ -85,8 +85,8 @@ netdriver_portinw(struct netdriver_data * data, size_t off, long port,
 
 		if (odd_byte) {
 			if ((r = sys_safecopyto(data->endpt,
-			    data->iovec[i].iov_grant, off, (vir_bytes)&buf[1],
-			    1)) != OK)
+			    data->iovec[i].iov_grant, off,
+			    (vir_bytes)&((char *)&buf)[1], 1)) != OK)
 				panic("netdriver: unable to copy data: %d", r);
 
 			off++;
@@ -109,11 +109,11 @@ netdriver_portinw(struct netdriver_data * data, size_t off, long port,
 		if (odd_byte) {
 			if ((r = sys_inw(port, &value)) != OK)
 				panic("netdriver: port input failed: %d", r);
-			*(uint16_t *)buf = (uint16_t)value;
+			buf = (uint16_t)value;
 
 			if ((r = sys_safecopyto(data->endpt,
-			    data->iovec[i].iov_grant, off, (vir_bytes)&buf[0],
-			    1)) != OK)
+			    data->iovec[i].iov_grant, off,
+			    (vir_bytes)&((char *)&buf)[0], 1)) != OK)
 				panic("netdriver: unable to copy data: %d", r);
 
 			size--;
@@ -131,7 +131,7 @@ void
 netdriver_portoutw(struct netdriver_data * data, size_t off, long port,
 	size_t size)
 {
-	uint8_t buf[2];
+	uint16_t buf;
 	size_t chunk;
 	unsigned int i;
 	int r, odd_byte;
@@ -147,11 +147,11 @@ netdriver_portoutw(struct netdriver_data * data, size_t off, long port,
 
 		if (odd_byte) {
 			if ((r = sys_safecopyfrom(data->endpt,
-			    data->iovec[i].iov_grant, off, (vir_bytes)&buf[1],
-			    1)) != OK)
+			    data->iovec[i].iov_grant, off,
+			    (vir_bytes)&((char *)&buf)[1], 1)) != OK)
 				panic("netdriver: unable to copy data: %d", r);
 
-			if ((r = sys_outw(port, *(uint16_t *)buf)) != OK)
+			if ((r = sys_outw(port, buf)) != OK)
 				panic("netdriver: port output failed: %d", r);
 
 			off++;
@@ -173,8 +173,8 @@ netdriver_portoutw(struct netdriver_data * data, size_t off, long port,
 
 		if (odd_byte) {
 			if ((r = sys_safecopyfrom(data->endpt,
-			    data->iovec[i].iov_grant, off, (vir_bytes)&buf[0],
-			    1)) != OK)
+			    data->iovec[i].iov_grant, off,
+			    (vir_bytes)&((char *)&buf)[0], 1)) != OK)
 				panic("netdriver: unable to copy data: %d", r);
 
 			size--;
@@ -185,9 +185,9 @@ netdriver_portoutw(struct netdriver_data * data, size_t off, long port,
 	}
 
 	if (odd_byte) {
-		buf[1] = 0;
+		((char *)&buf)[1] = 0;
 
-		if ((r = sys_outw(port, *(uint16_t *)buf)) != OK)
+		if ((r = sys_outw(port, buf)) != OK)
 			panic("netdriver: port output failed: %d", r);
 	}
 }

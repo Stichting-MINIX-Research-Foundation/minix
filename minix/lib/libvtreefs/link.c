@@ -48,7 +48,7 @@ fs_slink(ino_t dir_nr, char * name, uid_t uid, gid_t gid,
 {
 	char path[PATH_MAX];
 	struct inode *node;
-	struct inode_stat stat;
+	struct inode_stat istat;
 	int r;
 
 	if ((node = find_inode(dir_nr)) == NULL)
@@ -67,14 +67,14 @@ fs_slink(ino_t dir_nr, char * name, uid_t uid, gid_t gid,
 		return r;
 	path[bytes] = 0;
 
-	memset(&stat, 0, sizeof(stat));
-	stat.mode = S_IFLNK | RWX_MODES;
-	stat.uid = uid;
-	stat.gid = gid;
-	stat.size = strlen(path);
-	stat.dev = 0;
+	memset(&istat, 0, sizeof(istat));
+	istat.mode = S_IFLNK | RWX_MODES;
+	istat.uid = uid;
+	istat.gid = gid;
+	istat.size = strlen(path);
+	istat.dev = 0;
 
-	return vtreefs_hooks->slink_hook(node, name, &stat, path,
+	return vtreefs_hooks->slink_hook(node, name, &istat, path,
 	    get_inode_cbdata(node));
 }
 
@@ -86,7 +86,7 @@ fs_mknod(ino_t dir_nr, char * name, mode_t mode, uid_t uid, gid_t gid,
 	dev_t rdev)
 {
 	struct inode *node;
-	struct inode_stat stat;
+	struct inode_stat istat;
 
 	if ((node = find_inode(dir_nr)) == NULL)
 		return EINVAL;
@@ -97,14 +97,14 @@ fs_mknod(ino_t dir_nr, char * name, mode_t mode, uid_t uid, gid_t gid,
 	if (vtreefs_hooks->mknod_hook == NULL)
 		return ENOSYS;
 
-	memset(&stat, 0, sizeof(stat));
-	stat.mode = mode;
-	stat.uid = uid;
-	stat.gid = gid;
-	stat.size = 0;
-	stat.dev = rdev;
+	memset(&istat, 0, sizeof(istat));
+	istat.mode = mode;
+	istat.uid = uid;
+	istat.gid = gid;
+	istat.size = 0;
+	istat.dev = rdev;
 
-	return vtreefs_hooks->mknod_hook(node, name, &stat,
+	return vtreefs_hooks->mknod_hook(node, name, &istat,
 	    get_inode_cbdata(node));
 }
 

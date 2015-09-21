@@ -187,7 +187,7 @@ static void do_readlink2(void *buf, int fd, int writable)
 		((char *) buf)[rl] = '\0';
 		if(strcmp(buf, TARGETNAME)) {
 			fprintf(stderr, "readlink: expected %s, got %s\n",
-				TARGETNAME, buf);
+				TARGETNAME, (char *)buf);
 			e(3);
 		}
 		return;

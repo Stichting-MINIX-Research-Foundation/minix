@@ -281,7 +281,7 @@ static int do_open(struct chardriver *cdp, message *m_ptr)
 /* Open a minor device. */
   endpoint_t user_endpt;
   devminor_t minor;
-  int r, access;
+  int r, bits;
 
   /* Default action if no open hook is in place. */
   if (cdp->cdr_open == NULL)
@@ -289,10 +289,10 @@ static int do_open(struct chardriver *cdp, message *m_ptr)
 
   /* Call the open hook. */
   minor = m_ptr->m_vfs_lchardriver_openclose.minor;
-  access = m_ptr->m_vfs_lchardriver_openclose.access;
+  bits = m_ptr->m_vfs_lchardriver_openclose.access;
   user_endpt = m_ptr->m_vfs_lchardriver_openclose.user;
 
-  r = cdp->cdr_open(minor, access, user_endpt);
+  r = cdp->cdr_open(minor, bits, user_endpt);
 
   /* If the device has been cloned, mark the new minor as open too. */
   if (r >= 0 && (r & CDEV_CLONED)) {

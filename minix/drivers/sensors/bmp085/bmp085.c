@@ -113,7 +113,7 @@ struct calibration
 #define CAL_COEF_FIRST AC1_MSB_REG
 #define CAL_COEF_LAST MD_LSB_REG
 
-#define CAL_COEF_IS_VALID(x) (x != 0x0000 && x != 0xffff)
+#define CAL_COEF_IS_VALID(x) (x != 0x0000 && (uint16_t)x != 0xffff)
 
 #define SENSOR_VAL_MSB_REG 0xf6
 #define SENSOR_VAL_LSB_REG 0xf7

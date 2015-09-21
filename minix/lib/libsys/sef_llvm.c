@@ -15,9 +15,9 @@ extern int env_argc;
 /*===========================================================================*
  *      	              sef_llvm_magic_enabled                         *
  *===========================================================================*/
-int sef_llvm_magic_enabled()
+int sef_llvm_magic_enabled(void)
 {
-    extern void __attribute__((weak)) magic_init();
+    extern void __attribute__((weak)) magic_init(void);
     if (!magic_init)
         return 0;
     return 1;
@@ -37,7 +37,7 @@ int sef_llvm_real_brk(char *newbrk)
 /*===========================================================================*
  *      	              sef_llvm_state_cleanup                         *
  *===========================================================================*/
-int sef_llvm_state_cleanup()
+int sef_llvm_state_cleanup(void)
 {
     return OK;
 }
@@ -67,7 +67,7 @@ int sef_llvm_eval_bool(char *expr, char *result)
 /*===========================================================================*
  *      	            sef_llvm_state_table_addr                        *
  *===========================================================================*/
-void *sef_llvm_state_table_addr()
+void *sef_llvm_state_table_addr(void)
 {
     extern void* __attribute__((weak)) _magic_vars_addr(void);
     if (!_magic_vars_addr)
@@ -78,7 +78,7 @@ void *sef_llvm_state_table_addr()
 /*===========================================================================*
  *      	            sef_llvm_state_table_size                        *
  *===========================================================================*/
-size_t sef_llvm_state_table_size()
+size_t sef_llvm_state_table_size(void)
 {
     extern size_t __attribute__((weak)) _magic_vars_size(void);
     if (!_magic_vars_size)
@@ -135,10 +135,10 @@ int sef_llvm_state_transfer(sef_init_info_t *info)
 int sef_llvm_add_special_mem_region(void *addr, size_t len, const char* name)
 {
     extern int __attribute__((weak)) st_add_special_mmapped_region(void *addr,
-        size_t len, char* name);
+        size_t len, const char* name);
     if (!st_add_special_mmapped_region)
         return 0;
-    return st_add_special_mmapped_region(addr, len, (char*) name);
+    return st_add_special_mmapped_region(addr, len, name);
 }
 
 /*===========================================================================*
@@ -207,7 +207,7 @@ int sef_llvm_ac_munmap(void *buf, size_t len)
 /*===========================================================================*
  *      	             sef_llvm_ltckpt_enabled                         *
  *===========================================================================*/
-int sef_llvm_ltckpt_enabled()
+int sef_llvm_ltckpt_enabled(void)
 {
     extern int __attribute__((weak)) ltckpt_mechanism_enabled(void);
     if (!sef_llvm_get_ltckpt_offset() || !ltckpt_mechanism_enabled())
@@ -218,9 +218,9 @@ int sef_llvm_ltckpt_enabled()
 /*===========================================================================*
  *      	            sef_llvm_ltckpt_get_offset                       *
  *===========================================================================*/
-int sef_llvm_get_ltckpt_offset()
+int sef_llvm_get_ltckpt_offset(void)
 {
-    extern int __attribute__((weak)) ltckpt_get_offset();
+    extern int __attribute__((weak)) ltckpt_get_offset(void);
     if (!ltckpt_get_offset)
         return 0;
     return ltckpt_get_offset();
@@ -239,4 +239,3 @@ int sef_llvm_ltckpt_restart(int type, sef_init_info_t *info)
     assert(ltckpt_restart);
     return ltckpt_restart(info);
 }
-

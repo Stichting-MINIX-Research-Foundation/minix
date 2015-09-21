@@ -1,5 +1,3 @@
-# LSC For now
-NOGCCERROR:= yes
 PROG=	cleantmp
 MAN=
 

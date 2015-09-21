@@ -28,7 +28,7 @@ static LIST_HEAD(index_head, inode) *parent_index_head;
  * Initialize the inode-related state.
  */
 int
-init_inodes(unsigned int inodes, struct inode_stat * stat,
+init_inodes(unsigned int inodes, struct inode_stat * istat,
 	index_t nr_indexed_entries)
 {
 	struct inode *node;
@@ -91,7 +91,7 @@ init_inodes(unsigned int inodes, struct inode_stat * stat,
 	TAILQ_INIT(&node->i_children);
 	node->i_flags = 0;
 	node->i_index = NO_INDEX;
-	set_inode_stat(node, stat);
+	set_inode_stat(node, istat);
 	node->i_indexed = nr_indexed_entries;
 	node->i_cbdata = NULL;
 
@@ -130,10 +130,10 @@ parent_name_hash(const struct inode * parent, const char *name)
  * Return the hash value of a <parent,index> tuple.
  */
 static int
-parent_index_hash(const struct inode * parent, index_t index)
+parent_index_hash(const struct inode * parent, index_t idx)
 {
 
-	return (parent->i_num ^ index) % nr_inodes;
+	return (parent->i_num ^ idx) % nr_inodes;
 }
 
 /*
@@ -182,8 +182,8 @@ purge_inode(struct inode * parent)
  * Add an inode.
  */
 struct inode *
-add_inode(struct inode * parent, const char * name, index_t index,
-	const struct inode_stat * stat, index_t nr_indexed_entries,
+add_inode(struct inode * parent, const char * name, index_t idx,
+	const struct inode_stat * istat, index_t nr_indexed_entries,
 	cbdata_t cbdata)
 {
 	struct inode *newnode;
@@ -194,8 +194,8 @@ add_inode(struct inode * parent, const char * name, index_t index,
 	assert(S_ISDIR(parent->i_stat.mode));
 	assert(!(parent->i_flags & I_DELETED));
 	assert(strlen(name) <= NAME_MAX);
-	assert(index >= 0 || index == NO_INDEX);
-	assert(stat != NULL);
+	assert(idx >= 0 || idx == NO_INDEX);
+	assert(istat != NULL);
 	assert(nr_indexed_entries >= 0);
 	assert(get_inode_by_name(parent, name) == NULL);
 
@@ -223,8 +223,8 @@ add_inode(struct inode * parent, const char * name, index_t index,
 	newnode->i_parent = parent;
 	newnode->i_name = newname;
 	newnode->i_flags = 0;
-	newnode->i_index = index;
-	newnode->i_stat = *stat;
+	newnode->i_index = idx;
+	newnode->i_stat = *istat;
 	newnode->i_indexed = nr_indexed_entries;
 	newnode->i_cbdata = cbdata;
 	strcpy(newnode->i_name, name);
@@ -240,8 +240,8 @@ add_inode(struct inode * parent, const char * name, index_t index,
 	LIST_INSERT_HEAD(&parent_name_head[slot], newnode, i_hname);
 
 	/* Add the inode to the <parent,index> hash table. */
-	if (index != NO_INDEX) {
-		slot = parent_index_hash(parent, index);
+	if (idx != NO_INDEX) {
+		slot = parent_index_hash(parent, idx);
 		LIST_INSERT_HEAD(&parent_index_head[slot], newnode, i_hindex);
 	}
 
@@ -378,24 +378,24 @@ get_inode_number(const struct inode * node)
  * Retrieve an inode's status.
  */
 void
-get_inode_stat(const struct inode * node, struct inode_stat * stat)
+get_inode_stat(const struct inode * node, struct inode_stat * istat)
 {
 
 	CHECK_INODE(node);
 
-	*stat = node->i_stat;
+	*istat = node->i_stat;
 }
 
 /*
  * Set an inode's status.
  */
 void
-set_inode_stat(struct inode * node, struct inode_stat * stat)
+set_inode_stat(struct inode * node, struct inode_stat * istat)
 {
 
 	CHECK_INODE(node);
 
-	node->i_stat = *stat;
+	node->i_stat = *istat;
 }
 
 /*
@@ -425,22 +425,22 @@ get_inode_by_name(const struct inode * parent, const char * name)
  * Look up an inode using a <parent,index> tuple.
  */
 struct inode *
-get_inode_by_index(const struct inode * parent, index_t index)
+get_inode_by_index(const struct inode * parent, index_t idx)
 {
 	struct inode *node;
 	int slot;
 
 	CHECK_INODE(parent);
 	assert(S_ISDIR(parent->i_stat.mode));
-	assert(index >= 0);
+	assert(idx >= 0);
 
-	if (index >= parent->i_indexed)
+	if (idx >= parent->i_indexed)
 		return NULL;
 
 	/* Get the hash value, and search for the inode. */
-	slot = parent_index_hash(parent, index);
+	slot = parent_index_hash(parent, idx);
 	LIST_FOREACH(node, &parent_index_head[slot], i_hindex) {
-		if (parent == node->i_parent && index == node->i_index)
+		if (parent == node->i_parent && idx == node->i_index)
 			return node;	/* found */
 	}
 

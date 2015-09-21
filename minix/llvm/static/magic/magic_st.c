@@ -437,7 +437,7 @@ PUBLIC void st_stack_refs_save_restore(char* stack_buff, int is_save)
 
 /* Metadata management. */
 PUBLIC int st_add_special_mmapped_region(void *address, size_t size,
-    char* name)
+    const char* name)
 {
     struct _magic_obdsentry* obdsentry;
     char addr_name[24];

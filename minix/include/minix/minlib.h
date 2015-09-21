@@ -17,7 +17,7 @@ int get_mtab_entry(char dev[PATH_MAX], char mount_point[PATH_MAX],
 			char type[MNTNAMELEN], char flags[MNTFLAGLEN]);
 int servxcheck(unsigned long peer, const char *service,
 	void (*logf)(int pass, const char *name));
-char *servxfile(const char *file);
+const char *servxfile(const char *file);
 
 /* read_tsc() and friends */
 void read_tsc(u32_t *hi, u32_t *lo);

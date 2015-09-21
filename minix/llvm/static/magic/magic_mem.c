@@ -540,7 +540,7 @@ PUBLIC int magic_create_dsentry(struct _magic_dsentry *dsentry,
  *===========================================================================*/
 PUBLIC struct _magic_obdsentry* magic_create_obdsentry(void *data_ptr,
     struct _magic_type *type, size_t size, int flags,
-    char *name, char *parent_name)
+    const char *name, char *parent_name)
 {
     struct _magic_obdsentry *obdsentry = NULL;
     int i, ret;

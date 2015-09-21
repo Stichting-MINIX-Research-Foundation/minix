@@ -1,5 +1,3 @@
-# LSC For Now...
-NOGCCERROR:= yes
 PROG=	compress
 MAN=
 
