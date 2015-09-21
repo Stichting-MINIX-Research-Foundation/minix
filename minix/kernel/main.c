@@ -436,6 +436,9 @@ void cstart()
   strlcpy(kinfo.release, OS_RELEASE, sizeof(kinfo.release));
   strlcpy(kinfo.version, OS_VERSION, sizeof(kinfo.version));
 
+  /* Initialize various user-mapped structures. */
+  memset(&arm_frclock, 0, sizeof(arm_frclock));
+
 #ifdef USE_APIC
   value = env_get("no_apic");
   if(value)

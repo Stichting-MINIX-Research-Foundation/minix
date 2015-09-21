@@ -160,12 +160,11 @@ kern_phys_fr_user_mapped(vir_bytes id, phys_bytes address)
 	/* the only thing we need to do at this stage is to set the address */
 	/* in the kerninfo struct */
 	if (BOARD_IS_BBXM(machine.board_id)) {
-		minix_kerninfo.minix_frclock_tcrr = address + OMAP3_TIMER_TCRR;
-		minix_kerninfo.minix_arm_frclock_hz = 1625000;
+		arm_frclock.tcrr = address + OMAP3_TIMER_TCRR;
+		arm_frclock.hz = 1625000;
 	} else if (BOARD_IS_BB(machine.board_id)) {
-		minix_kerninfo.minix_frclock_tcrr =
-		    address + AM335X_TIMER_TCRR;
-		minix_kerninfo.minix_arm_frclock_hz = 1500000;
+		arm_frclock.tcrr = address + AM335X_TIMER_TCRR;
+		arm_frclock.hz = 1500000;
 	}
 	return 0;
 }

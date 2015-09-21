@@ -879,6 +879,7 @@ int arch_phys_map_reply(const int index, const vir_bytes addr)
 		ASSIGN(machine);
 		ASSIGN(kmessages);
 		ASSIGN(loadinfo);
+		ASSIGN(arm_frclock); /* eh, why not. */
 		ASSIGN(kclockinfo);
 
 		/* select the right set of IPC routines to map into processes */

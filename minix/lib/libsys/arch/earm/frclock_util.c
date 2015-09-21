@@ -26,8 +26,9 @@ micro_delay(u32_t micros)
 
         /* Start of delay. */
         read_frclock_64(&start);
-	assert(minix_kerninfo->minix_arm_frclock_hz);
-	delta_end = (minix_kerninfo->minix_arm_frclock_hz * micros) / MICROHZ;
+	assert(minix_kerninfo->arm_frclock);
+	assert(minix_kerninfo->arm_frclock->hz);
+	delta_end = (minix_kerninfo->arm_frclock->hz * micros) / MICROHZ;
 
         /* If we have to wait for at least one HZ tick, use the regular
          * tickdelay first. Round downwards on purpose, so the average
@@ -50,7 +51,7 @@ micro_delay(u32_t micros)
 u32_t frclock_64_to_micros(u64_t tsc)
 {
         return (u32_t)
-            (tsc / (get_minix_kerninfo()->minix_arm_frclock_hz / MICROHZ));
+            (tsc / (get_minix_kerninfo()->arm_frclock->hz / MICROHZ));
 }
 
 void
@@ -59,10 +60,10 @@ read_frclock(u32_t *frclk)
 	struct minix_kerninfo *minix_kerninfo = get_minix_kerninfo();
 
 	assert(frclk);
-	assert(minix_kerninfo->minix_frclock_tcrr);
-	assert(minix_kerninfo->minix_arm_frclock_hz);
+	assert(minix_kerninfo->arm_frclock);
+	assert(minix_kerninfo->arm_frclock->tcrr);
 	*frclk = *(volatile u32_t *)((u8_t *)
-	    minix_kerninfo->minix_frclock_tcrr);
+	    minix_kerninfo->arm_frclock->tcrr);
 }
 
 u32_t

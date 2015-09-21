@@ -184,6 +184,12 @@ struct k_randomness {
   } bin[RANDOM_SOURCES];
 };
 
+/* ARM free-running timer information. */
+struct arm_frclock {
+	u64_t hz;		/* tcrr frequency */
+	u32_t tcrr;		/* tcrr address */
+};
+
 struct minix_kerninfo {
 	/* Binaries will depend on the offsets etc. in this
 	 * structure, so it can't be changed willy-nilly. In
@@ -193,7 +199,7 @@ struct minix_kerninfo {
 	u32_t kerninfo_magic;
 	u32_t minix_feature_flags;	/* features in minix kernel */
 	u32_t ki_flags;			/* what is present in this struct */
-	u32_t minix_frclock_tcrr;			/* NOT userland ABI */
+	u32_t flags_unused2;
 	u32_t flags_unused3;
 	u32_t flags_unused4;
 	struct kinfo		*kinfo;
@@ -201,7 +207,8 @@ struct minix_kerninfo {
 	struct kmessages	*kmessages;		/* NOT userland ABI */
 	struct loadinfo		*loadinfo;		/* NOT userland ABI */
 	struct minix_ipcvecs	*minix_ipcvecs;
-	u64_t minix_arm_frclock_hz;	/* minix_frclock_tcrr frequency !ABI */
+	u32_t reserved;
+	struct arm_frclock	*arm_frclock;		/* NOT userland ABI */
 	volatile struct kclockinfo	*kclockinfo;	/* NOT userland ABI */
 } __packed;
 
