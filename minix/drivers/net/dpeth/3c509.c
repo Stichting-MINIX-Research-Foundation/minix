@@ -194,7 +194,7 @@ static int el3_send(dpeth_t *dep, struct netdriver_data *data, size_t size)
   short int TxStatus;
   size_t padding;
 
-  getticks(&now);
+  now = getticks();
   if ((dep->de_flags & DEF_XMIT_BUSY) &&
       (now - dep->de_xmit_start) > 4) {
 
@@ -217,7 +217,7 @@ static int el3_send(dpeth_t *dep, struct netdriver_data *data, size_t size)
   padding = size;
   while ((padding++ % sizeof(long)) != 0) outb(dep->de_data_port, 0x00);
 
-  getticks(&dep->de_xmit_start);
+  dep->de_xmit_start = getticks();
   dep->de_flags |= DEF_XMIT_BUSY;
   if (inw_el3(dep, REG_TxFree) > ETH_MAX_PACK_SIZE) {
 	/* Tx has enough room for a packet of maximum size */

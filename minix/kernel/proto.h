@@ -16,10 +16,13 @@ struct proc;
 struct ipc_filter_s;
 
 /* clock.c */
+void init_clock(void);
 clock_t get_realtime(void);
 void set_realtime(clock_t);
 void set_adjtime_delta(int32_t);
 clock_t get_monotonic(void);
+void set_boottime(time_t);
+time_t get_boottime(void);
 void set_kernel_timer(minix_timer_t *tp, clock_t t, tmr_func_t f);
 void reset_kernel_timer(minix_timer_t *tp);
 void ser_dump_proc(void);

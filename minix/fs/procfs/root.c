@@ -74,12 +74,9 @@ root_loadavg(void)
 static void
 root_uptime(void)
 {
-	clock_t ticks;
 	ldiv_t division;
 
-	if (getticks(&ticks) != OK)
-		return;
-	division = ldiv(100L * ticks / sys_hz(), 100L);
+	division = ldiv(100L * getticks() / sys_hz(), 100L);
 
 	buf_printf("%ld.%0.2ld\n", division.quot, division.rem);
 }

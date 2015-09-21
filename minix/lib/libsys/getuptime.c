@@ -1,21 +1,21 @@
 #include "sysutil.h"
 
-/*===========================================================================*
- *                               getuptime			    	     *
- *===========================================================================*/
-int getuptime(ticks, realtime, boottime)
-clock_t *ticks;					/* monotonic time in ticks */
-clock_t *realtime;				/* wall time in ticks */
-time_t *boottime;
+/*
+ * Retrieve the system's uptime (number of clock ticks since system boot),
+ * real time (corrected number of clock ticks since system boot), and
+ * boot time (in number of seconds since the UNIX epoch).
+ */
+int
+getuptime(clock_t * uptime, clock_t * realtime, time_t * boottime)
 {
-    message m;
-    int s;
+	struct minix_kerninfo *minix_kerninfo;
 
-    m.m_type = SYS_TIMES;			/* request time information */
-    m.m_lsys_krn_sys_times.endpt = NONE;	/* ignore process times */
-    s = _kernel_call(SYS_TIMES, &m);
-    *ticks = m.m_krn_lsys_sys_times.boot_ticks;
-    *realtime = m.m_krn_lsys_sys_times.real_ticks;
-    *boottime = m.m_krn_lsys_sys_times.boot_time;
-    return(s);
+	minix_kerninfo = get_minix_kerninfo();
+
+	/* We assume atomic 32-bit field retrieval.  TODO: 64-bit support. */
+	*uptime = minix_kerninfo->kclockinfo->uptime;
+	*realtime = minix_kerninfo->kclockinfo->realtime;
+	*boottime = minix_kerninfo->kclockinfo->boottime;
+
+	return OK;
 }

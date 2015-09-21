@@ -714,6 +714,7 @@ int arch_phys_map_reply(const int index, const vir_bytes addr)
 		ASSIGN(machine);
 		ASSIGN(kmessages);
 		ASSIGN(loadinfo);
+		ASSIGN(kclockinfo);
 
 		/* adjust the pointers of the functions and the struct
 		 * itself to the user-accessible mapping

@@ -2674,8 +2674,6 @@ static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 {
 	/* Initialize.
 	 */
-	int r;
-	clock_t now;
 
 	if (env_argc > 1)
 		optset_parse(optset_table, env_argv[1]);
@@ -2689,10 +2687,7 @@ static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 	if (driver_minor > 255)
 		panic("invalid or no driver minor given");
 
-	if ((r = getticks(&now)) != OK)
-		panic("unable to get uptime: %d", r);
-
-	srand48(now);
+	srand48(getticks());
 
 	output("BLOCKTEST: driver label '%s' (endpt %d), minor %d\n",
 		driver_label, driver_endpt, driver_minor);

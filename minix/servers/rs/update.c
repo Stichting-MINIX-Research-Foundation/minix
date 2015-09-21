@@ -194,7 +194,7 @@ void request_prepare_update_service_debug(char *file, int line,
 
   if(state != SEF_LU_STATE_NULL) {
       struct rprocupd *rpupd = &rp->r_upd;
-      getticks(&rpupd->prepare_tm);
+      rpupd->prepare_tm = getticks();
       if(!UPD_IS_PREPARING_ONLY(rpupd)) {
           assert(rp->r_new_rp);
           rp->r_flags |= RS_UPDATING;
@@ -965,7 +965,7 @@ void end_srv_update(struct rprocupd *rpupd, int result, int reply_flag)
   exiting_rp =   (result == OK ? old_rp : new_rp);
   surviving_rp->r_flags &= ~RS_INITIALIZING;
   surviving_rp->r_check_tm = 0;
-  getticks(&surviving_rp->r_alive_tm);
+  surviving_rp->r_alive_tm = getticks();
 
   /* Keep track of the surviving process in the update descriptor from now on. */
   rpupd->rp = surviving_rp;

@@ -35,9 +35,8 @@ time_t get_time()
 {
 	if (!curr_time)
 	{
-		if (getticks(&curr_time) != OK)
-			ip_panic(("can't read clock"));
-		assert(curr_time >= prev_time);
+		curr_time = getticks();
+		assert(curr_time >= prev_time); /* XXX */
 	}
 	return curr_time;
 }

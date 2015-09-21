@@ -879,6 +879,7 @@ int arch_phys_map_reply(const int index, const vir_bytes addr)
 		ASSIGN(machine);
 		ASSIGN(kmessages);
 		ASSIGN(loadinfo);
+		ASSIGN(kclockinfo);
 
 		/* select the right set of IPC routines to map into processes */
 		if(minix_feature_flags & MKF_I386_INTEL_SYSENTER) {

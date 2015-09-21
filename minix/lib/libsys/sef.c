@@ -302,9 +302,7 @@ void sef_cancel(void)
  *===========================================================================*/
 int sef_getrndseed(void)
 {
-    clock_t uptime;
-    sys_times(SELF, NULL, NULL, &uptime, NULL);
-    return (int) uptime;
+    return (int)getticks();
 }
 
 /*===========================================================================*
