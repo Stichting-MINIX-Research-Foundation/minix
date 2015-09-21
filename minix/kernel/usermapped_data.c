@@ -8,4 +8,4 @@ struct kinfo kinfo __section(".usermapped");		/* kernel information for users */
 struct machine machine __section(".usermapped");	/* machine information for users */
 struct kmessages kmessages __section(".usermapped");	/* diagnostic messages in kernel */
 struct loadinfo loadinfo __section(".usermapped");	/* status of load average */
-
+struct kclockinfo kclockinfo __section(".usermapped");	/* clock information */

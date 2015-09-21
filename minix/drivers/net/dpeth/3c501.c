@@ -133,7 +133,7 @@ static int el1_send(dpeth_t *dep, struct netdriver_data *data, size_t size)
   clock_t now;
 
   if (dep->de_flags & DEF_XMIT_BUSY) {
-	getticks(&now);
+	now = getticks();
 	if ((now - dep->de_xmit_start) > 4) {
 		/* Transmitter timed out */
 		DEBUG(printf("3c501: transmitter timed out ... \n"));
@@ -171,7 +171,7 @@ static int el1_send(dpeth_t *dep, struct netdriver_data *data, size_t size)
   outw_el1(dep, EL1_XMITPTR, (EL1_BFRSIZ - size));
   outb_el1(dep, EL1_CSR, ECSR_RIDE | ECSR_XMIT);	/* There it goes... */
 
-  getticks(&dep->de_xmit_start);
+  dep->de_xmit_start = getticks();
 
   return OK;
 }

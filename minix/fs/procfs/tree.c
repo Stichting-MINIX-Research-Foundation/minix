@@ -426,14 +426,12 @@ lookup_hook(struct inode * parent, char * name, cbdata_t __unused cbdata)
 {
 	static clock_t last_update = 0;
 	clock_t now;
-	int r;
 
 	/*
 	 * Update lazily for lookups, as this gets too expensive otherwise.
 	 * Alternative: pull in only PM's table?
 	 */
-	if ((r = getticks(&now)) != OK)
-		panic("unable to get uptime: %d", r);
+	now = getticks();
 
 	if (last_update != now) {
 		update_tables();

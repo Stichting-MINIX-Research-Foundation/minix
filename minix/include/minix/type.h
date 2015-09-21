@@ -2,6 +2,7 @@
 #define _TYPE_H
 
 #include <sys/types.h>
+#include <sys/endian.h>
 
 #include <machine/multiboot.h>
 
@@ -91,6 +92,24 @@ struct loadinfo {
   clock_t last_clock;
 };
 
+struct kclockinfo {
+  time_t boottime;		/* number of seconds since UNIX epoch */
+#if BYTE_ORDER == LITTLE_ENDIAN
+  clock_t uptime;		/* number of clock ticks since system boot */
+  uint32_t _rsvd1;		/* reserved for 64-bit uptime */
+  clock_t realtime;		/* real time in clock ticks since boot */
+  uint32_t _rsvd2;		/* reserved for 64-bit real time */
+#elif BYTE_ORDER == BIG_ENDIAN
+  uint32_t _rsvd1;		/* reserved for 64-bit uptime */
+  clock_t uptime;		/* number of clock ticks since system boot */
+  uint32_t _rsvd2;		/* reserved for 64-bit real time */
+  clock_t realtime;		/* real time in clock ticks since boot */
+#else
+#error "unknown endianness"
+#endif
+  uint32_t hz;			/* clock frequency in ticks per second */
+};
+
 struct machine {
   unsigned processors_count;	/* how many cpus are available */
   unsigned bsp_id;		/* id of the bootstrap cpu */
@@ -174,15 +193,16 @@ struct minix_kerninfo {
 	u32_t kerninfo_magic;
 	u32_t minix_feature_flags;	/* features in minix kernel */
 	u32_t ki_flags;			/* what is present in this struct */
-	u32_t minix_frclock_tcrr;
+	u32_t minix_frclock_tcrr;			/* NOT userland ABI */
 	u32_t flags_unused3;
 	u32_t flags_unused4;
 	struct kinfo		*kinfo;
-	struct machine		*machine;
-	struct kmessages	*kmessages;
-	struct loadinfo		*loadinfo;
+	struct machine		*machine;		/* NOT userland ABI */
+	struct kmessages	*kmessages;		/* NOT userland ABI */
+	struct loadinfo		*loadinfo;		/* NOT userland ABI */
 	struct minix_ipcvecs	*minix_ipcvecs;
-	u64_t minix_arm_frclock_hz;	/* minix_frclock_tcrr frequency */
+	u64_t minix_arm_frclock_hz;	/* minix_frclock_tcrr frequency !ABI */
+	volatile struct kclockinfo	*kclockinfo;	/* NOT userland ABI */
 } __packed;
 
 #define MINIX_KIF_IPCVECS	(1L << 0)

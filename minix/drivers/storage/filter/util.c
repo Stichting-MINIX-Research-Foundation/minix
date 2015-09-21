@@ -60,9 +60,7 @@ clock_t flt_alarm(clock_t dt)
 	} else {
 		if(next_alarm)
 			panic("overwriting alarm: %d", r);
-		if ((r = getticks(&next_alarm)) != OK)
-			panic("getuptime failed: %d", r);
-		next_alarm += dt;
+		next_alarm = getticks() + dt;
 	}
 
 	return next_alarm;

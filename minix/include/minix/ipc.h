@@ -305,11 +305,11 @@ _ASSERT_MSG_SIZE(mess_krn_lsys_sys_irqctl);
 typedef struct {
 	clock_t real_ticks;
 	clock_t boot_ticks;
-	clock_t boot_time;
 	clock_t user_time;
 	clock_t system_time;
+	time_t boot_time;
 
-	uint8_t padding[36];
+	uint8_t padding[32];
 } mess_krn_lsys_sys_times;
 _ASSERT_MSG_SIZE(mess_krn_lsys_sys_times);
 

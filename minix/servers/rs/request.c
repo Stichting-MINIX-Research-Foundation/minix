@@ -508,7 +508,7 @@ int do_init_ready(message *m_ptr)
       /* Mark the slot as no longer initializing. */
       rp->r_flags &= ~RS_INITIALIZING;
       rp->r_check_tm = 0;
-      getticks(&rp->r_alive_tm);
+      rp->r_alive_tm = getticks();
     
       /* Reply and unblock the service before doing anything else. */
       m.m_type = OK;
@@ -842,7 +842,7 @@ int do_update(message *m_ptr)
   /* Fill the new update descriptor and add it to the update chain. */
   rpupd->prepare_state = prepare_state;
   rpupd->state_endpoint = state_endpoint;
-  getticks(&rpupd->prepare_tm);
+  rpupd->prepare_tm = getticks();
   rpupd->prepare_maxtime = prepare_maxtime;
   rupdate_add_upd(rpupd);
 

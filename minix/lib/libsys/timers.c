@@ -31,15 +31,12 @@ void init_timer(minix_timer_t *tp)
  *===========================================================================*/
 void set_timer(minix_timer_t *tp, int ticks, tmr_func_t watchdog, int arg)
 {
-        int r;
-        clock_t now, prev_time = 0, next_time;
-
-        if ((r = getticks(&now)) != OK)
-                panic("set_timer: couldn't get uptime");
+        clock_t prev_time = 0, next_time;
 
         /* Set timer argument and add timer to the list. */
         tmr_arg(tp)->ta_int = arg;
-        prev_time = tmrs_settimer(&timers, tp, now+ticks, watchdog, &next_time);
+        prev_time = tmrs_settimer(&timers, tp, getticks() + ticks, watchdog,
+            &next_time);
 
         /* Reschedule our synchronous alarm if necessary. */
         if (expiring == 0 && (! prev_time || prev_time > next_time)) {

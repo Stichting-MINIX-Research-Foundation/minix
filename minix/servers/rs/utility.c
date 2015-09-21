@@ -22,7 +22,7 @@ int init_service(struct rproc *rp, int type, int flags)
   endpoint_t old_endpoint;
 
   rp->r_flags |= RS_INITIALIZING;              /* now initializing */
-  getticks(&rp->r_alive_tm);
+  rp->r_alive_tm = getticks();
   rp->r_check_tm = rp->r_alive_tm + 1;         /* expect reply within period */
 
   /* In case of RS initialization, we are done. */

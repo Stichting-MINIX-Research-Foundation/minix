@@ -410,7 +410,6 @@ void cstart()
  * determined with help of the environment strings passed by MINIX' loader.
  */
   register char *value;				/* value in key=value pair */
-  int h;
 
   /* low-level initialization */
   prot_init();
@@ -419,12 +418,8 @@ void cstart()
   if ((value = env_get(VERBOSEBOOTVARNAME)))
 	  verboseboot = atoi(value);
 
-  /* Get clock tick frequency. */
-  value = env_get("hz");
-  if(value)
-	system_hz = atoi(value);
-  if(!value || system_hz < 2 || system_hz > 50000)	/* sanity check */
-	system_hz = DEFAULT_HZ;
+  /* Initialize clock variables. */
+  init_clock();
 
   /* Get memory parameters. */
   value = env_get("ac_layout");
@@ -440,11 +435,6 @@ void cstart()
   kinfo.nr_tasks = NR_TASKS;
   strlcpy(kinfo.release, OS_RELEASE, sizeof(kinfo.release));
   strlcpy(kinfo.version, OS_VERSION, sizeof(kinfo.version));
-
-  /* Load average data initialization. */
-  kloadinfo.proc_last_slot = 0;
-  for(h = 0; h < _LOAD_HISTORY; h++)
-	kloadinfo.proc_load_history[h] = 0;
 
 #ifdef USE_APIC
   value = env_get("no_apic");

@@ -50,8 +50,6 @@ static struct optset optset_table[] = {
  *===========================================================================*/
 static int sef_cb_init_fresh(int type, sef_init_info_t *UNUSED(info))
 {
-	clock_t uptime;
-	int r;
 
 	/* Parse the given parameters. */
 	if (env_argc > 1)
@@ -74,12 +72,10 @@ static int sef_cb_init_fresh(int type, sef_init_info_t *UNUSED(info))
 	/* Initialize resources. */
 	fbd_buf = alloc_contig(BUF_SIZE, 0, NULL);
 
-	assert(fbd_buf != NULL);
+	if (fbd_buf == NULL)
+		panic("unable to allocate buffer");
 
-	if ((r = getticks(&uptime)) != OK)
-		panic("getuptime failed (%d)\n", r);
-
-	srand48(uptime);
+	srand48(getticks());
 
 	/* Announce we are up! */
 	blockdriver_announce(type);

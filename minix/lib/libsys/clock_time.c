@@ -12,15 +12,17 @@
 time_t
 clock_time(struct timespec *tv)
 {
+	struct minix_kerninfo *minix_kerninfo;
 	uint32_t system_hz;
-	clock_t uptime, realtime;
+	clock_t realtime;
 	time_t boottime, sec;
-	int r;
 
-	if ((r = getuptime(&uptime, &realtime, &boottime)) != OK)
-		panic("clock_time: getuptime failed: %d", r);
+	minix_kerninfo = get_minix_kerninfo();
 
-	system_hz = sys_hz();	/* sys_hz() caches its return value */
+	/* We assume atomic 32-bit field retrieval.  TODO: 64-bit support. */
+	boottime = minix_kerninfo->kclockinfo->boottime;
+	realtime = minix_kerninfo->kclockinfo->realtime;
+	system_hz = minix_kerninfo->kclockinfo->hz;
 
 	sec = boottime + realtime / system_hz;
 

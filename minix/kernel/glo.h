@@ -23,6 +23,7 @@ extern struct kinfo kinfo;		  /* kernel information for users */
 extern struct machine machine;		  /* machine information for users */
 extern struct kmessages kmessages;  	  /* diagnostic messages in kernel */
 extern struct loadinfo loadinfo;	  /* status of load average */
+extern struct kclockinfo kclockinfo;	  /* clock information */
 extern struct minix_kerninfo minix_kerninfo;
 
 EXTERN struct k_randomness krandom; 	/* gather kernel random information */
@@ -31,6 +32,8 @@ EXTERN vir_bytes minix_kerninfo_user;
 
 #define kmess kmessages
 #define kloadinfo loadinfo
+
+#define system_hz (kclockinfo.hz)		/* HZ value (alias) */
 
 /* Process scheduling information and the kernel reentry count. */
 EXTERN struct proc *vmrequest;  /* first process on vmrequest queue */
@@ -43,10 +46,8 @@ EXTERN struct proc *kbill_ipc; /* process that invoked ipc */
 EXTERN irq_hook_t irq_hooks[NR_IRQ_HOOKS];	/* hooks for general use */
 EXTERN int irq_actids[NR_IRQ_VECTORS];		/* IRQ ID bits active */
 EXTERN int irq_use;				/* map of all in-use irq's */
-EXTERN u32_t system_hz;				/* HZ value */
 
 /* Miscellaneous. */
-EXTERN time_t boottime;
 EXTERN int verboseboot;			/* verbose boot, init'ed in cstart */
 
 #if DEBUG_TRACE

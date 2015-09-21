@@ -6,12 +6,7 @@
 
 u32_t sys_jiffies(void)
 {
-	clock_t ticks;
-
-	if (getticks(&ticks) == OK)
-		return  ticks;
-	else
-		panic("getuptime() failed\n");
+	return getticks();
 }
 
 u32_t sys_now(void)
