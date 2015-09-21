@@ -12,7 +12,6 @@
 #include <unistd.h>
 #include <string.h>
 #include <stddef.h>
-#include <minix/param.h>
 #include <sys/exec_elf.h>
 #include <sys/exec.h>
 
@@ -131,7 +130,7 @@ void minix_stack_fill(const char *path, int argc, char * const *argv,
 	size_t const min_size = STACK_MIN_SZ;
 
 	/* Virtual address of the stack pointer, in new memory space. */
-	*vsp = get_minix_kerninfo()->kinfo->user_sp - stack_size;
+	*vsp = minix_get_user_sp() - stack_size;
 
 	/* Fill in the frame now. */
 	fpw = (char **) frame;
