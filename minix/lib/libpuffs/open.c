@@ -3,12 +3,6 @@
  */
 
 #include "fs.h"
-#include <string.h>
-#include <assert.h>
-
-#include "puffs.h"
-#include "puffs_priv.h"
-
 
 /*===========================================================================*
  *				fs_create				     *
@@ -27,7 +21,7 @@ int fs_create(ino_t dir_nr, char *name, mode_t mode, uid_t uid, gid_t gid,
   struct timespec cur_time;
 
   if (global_pu->pu_ops.puffs_node_create == NULL) {
-  	lpuffs_debug("No puffs_node_create");
+	lpuffs_debug("No puffs_node_create");
 	return(ENFILE);
   }
 
@@ -37,14 +31,14 @@ int fs_create(ino_t dir_nr, char *name, mode_t mode, uid_t uid, gid_t gid,
   strcpy(pcn.pcn_name, name);
 
   /* Get last directory pnode (i.e., directory that will hold the new pnode) */
-  if ((pn_dir = puffs_pn_nodewalk(global_pu, 0, &dir_nr)) == NULL)
+  if ((pn_dir = puffs_pn_nodewalk(global_pu, find_inode_cb, &dir_nr)) == NULL)
 	return(ENOENT);
 
   memset(&pni, 0, sizeof(pni));
   pni.pni_cookie = (void** )&pn;
 
   (void)clock_time(&cur_time);
-  
+
   memset(&va, 0, sizeof(va));
   va.va_type = VREG;
   va.va_mode = mode;
@@ -111,7 +105,7 @@ int fs_mknod(ino_t dir_nr, char *name, mode_t mode, uid_t uid, gid_t gid,
   struct timespec cur_time;
 
   if (global_pu->pu_ops.puffs_node_mknod == NULL) {
-  	lpuffs_debug("No puffs_node_mknod");
+	lpuffs_debug("No puffs_node_mknod");
 	return(ENFILE);
   }
 
@@ -121,7 +115,7 @@ int fs_mknod(ino_t dir_nr, char *name, mode_t mode, uid_t uid, gid_t gid,
   strcpy(pcn.pcn_name, name);
 
   /* Get last directory pnode */
-  if ((pn_dir = puffs_pn_nodewalk(global_pu, 0, &dir_nr)) == NULL)
+  if ((pn_dir = puffs_pn_nodewalk(global_pu, find_inode_cb, &dir_nr)) == NULL)
 	return(ENOENT);
 
   memset(&pni, 0, sizeof(pni));
@@ -183,7 +177,7 @@ int fs_mkdir(ino_t dir_nr, char *name, mode_t mode, uid_t uid, gid_t gid)
   struct timespec cur_time;
 
   if (global_pu->pu_ops.puffs_node_mkdir == NULL) {
-  	lpuffs_debug("No puffs_node_mkdir");
+	lpuffs_debug("No puffs_node_mkdir");
 	return(ENFILE);
   }
 
@@ -193,9 +187,9 @@ int fs_mkdir(ino_t dir_nr, char *name, mode_t mode, uid_t uid, gid_t gid)
   strcpy(pcn.pcn_name, name);
 
   /* Get last directory pnode */
-  if ((pn_dir = puffs_pn_nodewalk(global_pu, 0, &dir_nr)) == NULL)
+  if ((pn_dir = puffs_pn_nodewalk(global_pu, find_inode_cb, &dir_nr)) == NULL)
 	return(ENOENT);
-  
+
   (void)clock_time(&cur_time);
 
   memset(&pni, 0, sizeof(pni));
@@ -283,7 +277,7 @@ int fs_slink(ino_t dir_nr, char *name, uid_t uid, gid_t gid,
 	return(ENAMETOOLONG);
   }
 
-  if ((pn_dir = puffs_pn_nodewalk(global_pu, 0, &dir_nr)) == NULL)
+  if ((pn_dir = puffs_pn_nodewalk(global_pu, find_inode_cb, &dir_nr)) == NULL)
 	return(EINVAL);
 
   memset(&pni, 0, sizeof(pni));

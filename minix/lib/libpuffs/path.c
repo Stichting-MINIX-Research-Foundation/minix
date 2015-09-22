@@ -12,16 +12,6 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-#include <assert.h>
-#include <errno.h>
-#include <puffs.h>
-#include <stdlib.h>
-#include <string.h>
-
-#include "puffs.h"
-#include "puffs_priv.h"
-
-
 /*===========================================================================*
  *				fs_lookup				     *
  *===========================================================================*/
@@ -31,7 +21,7 @@ int fs_lookup(ino_t dir_nr, char *name, struct fsdriver_node *node,
   struct puffs_node *pn, *pn_dir;
 
   /* Find the pnode of the directory node. */
-  if ((pn_dir = puffs_pn_nodewalk(global_pu, 0, &dir_nr)) == NULL) {
+  if ((pn_dir = puffs_pn_nodewalk(global_pu, find_inode_cb, &dir_nr)) == NULL) {
 	lpuffs_debug("nodewalk failed\n");
 	return(EINVAL);
   }

@@ -4,12 +4,6 @@
  */
 
 #include "fs.h"
-#include <string.h>
-#include <assert.h>
-
-#include "puffs.h"
-#include "puffs_priv.h"
-
 
 void release_node(struct puffs_usermount *pu, struct puffs_node *pn)
 {
@@ -37,7 +31,7 @@ int fs_putnode(ino_t ino_nr, unsigned int count)
  */
   struct puffs_node *pn;
 
-  if ((pn = puffs_pn_nodewalk(global_pu, 0, &ino_nr)) == NULL) {
+  if ((pn = puffs_pn_nodewalk(global_pu, find_inode_cb, &ino_nr)) == NULL) {
 	/* XXX Probably removed from the list, see puffs_pn_remove() */
 	struct puffs_node *pn_cur, *pn_next;
 	pn_cur = LIST_FIRST(&global_pu->pu_pnode_removed_lst);

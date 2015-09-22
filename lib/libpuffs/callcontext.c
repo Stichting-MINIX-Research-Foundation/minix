@@ -188,17 +188,28 @@ slowccalloc(struct puffs_usermount *pu)
 	struct puffs_cc *volatile pcc;
 	void *sp;
 	size_t stacksize = 1<<pu->pu_cc_stackshift;
+#ifndef __minix
+	const long psize = sysconf(_SC_PAGESIZE);
+#endif /* !__minix */
 
 	if (puffs_fakecc)
 		return &fakecc;
 
 	sp = mmap(NULL, stacksize, PROT_READ|PROT_WRITE,
-	    MAP_ANON|MAP_PRIVATE, -1, 0);
+	    MAP_ANON|MAP_PRIVATE|MAP_ALIGNED(pu->pu_cc_stackshift), -1, 0);
 	if (sp == MAP_FAILED)
 		return NULL;
 
 	pcc = sp;
 	memset(pcc, 0, sizeof(struct puffs_cc));
+
+#ifndef __minix
+#ifndef __MACHINE_STACK_GROWS_UP
+	mprotect((uint8_t *)sp + psize, (size_t)psize, PROT_NONE);
+#else
+	mprotect((uint8_t *)sp + stacksize - psize, (size_t)psize, PROT_NONE);
+#endif
+#endif /* !__minix */
 
 	/* initialize both ucontext's */
 	if (getcontext(&pcc->pcc_uc) == -1) {
@@ -242,6 +253,8 @@ puffs__cc_create(struct puffs_usermount *pu, puffs_ccfunc func,
 		pcc->pcc_func = func;
 		pcc->pcc_farg = pcc;
 	} else {
+		const long psize = sysconf(_SC_PAGESIZE);
+
 		/* link context */
 		pcc->pcc_uc.uc_link = &pcc->pcc_uc_ret;
 
@@ -251,8 +264,8 @@ puffs__cc_create(struct puffs_usermount *pu, puffs_ccfunc func,
 		 * swapcontext().  However, it gets lost.  So reinit it.
 		 */
 		st = &pcc->pcc_uc.uc_stack;
-		st->ss_sp = pcc;
-		st->ss_size = stacksize;
+		st->ss_sp = ((uint8_t *)(void *)pcc) + psize;
+		st->ss_size = stacksize - psize;
 		st->ss_flags = 0;
 
 		/*

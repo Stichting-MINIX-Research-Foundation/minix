@@ -4,12 +4,21 @@
 
 #include "fs.h"
 
-#include <assert.h>
 #include <stdarg.h>
 
-#include "puffs.h"
-#include "puffs_priv.h"
+/*
+ * Match by inode number in a puffs_pn_nodewalk call.  This should not exist.
+ */
+void *
+find_inode_cb(struct puffs_usermount * __unused pu, struct puffs_node * pn,
+	void * arg)
+{
 
+	if (pn->pn_va.va_fileid == *(ino_t *)arg)
+		return pn;
+	else
+		return NULL;
+}
 
 /*===========================================================================*
  *				update_timens				     *
@@ -31,7 +40,7 @@ int update_timens(struct puffs_node *pn, int flags, struct timespec *t)
 	new_time = *t;
   else
 	(void)clock_time(&new_time);
-  
+
   puffs_vattr_null(&va);
   /* librefuse modifies atime and mtime together,
    * so set old values to avoid setting either one
@@ -57,7 +66,7 @@ int update_timens(struct puffs_node *pn, int flags, struct timespec *t)
  *				lpuffs_debug				     *
  *===========================================================================*/
 void lpuffs_debug(const char *format, ...)
-{   
+{
   char buffer[256];
   va_list args;
   va_start (args, format);

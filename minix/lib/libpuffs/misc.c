@@ -3,10 +3,6 @@
  */
 
 #include "fs.h"
-#include <assert.h>
-
-#include "puffs.h"
-#include "puffs_priv.h"
 
 /*===========================================================================*
  *				fs_sync					     *

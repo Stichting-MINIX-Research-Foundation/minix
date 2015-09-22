@@ -61,8 +61,8 @@ int fs_statvfs(struct statvfs *st);
 int fs_utime(ino_t ino_nr, struct timespec *atime, struct timespec *mtime);
 
 /* utility.c */
+void *find_inode_cb(struct puffs_usermount *pu, struct puffs_node *pn,
+	void *arg);
 int update_timens(struct puffs_node *pn, int fl, struct timespec *);
-void lpuffs_debug(const char *format, ...)
-	__attribute__((__format__(__printf__, 1, 2)));
 
 #endif /* PUFFS_PROTO_H */

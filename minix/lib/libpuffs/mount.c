@@ -4,10 +4,7 @@
 
 #include "fs.h"
 #include <fcntl.h>
-#include <string.h>
 #include <minix/vfsif.h>
-
-#include "puffs_priv.h"
 
 /*===========================================================================*
  *				fs_mount				     *
@@ -51,7 +48,7 @@ int fs_mountpt(ino_t ino_nr)
   struct puffs_node *pn;
   mode_t bits;
 
-  if ((pn = puffs_pn_nodewalk(global_pu, 0, &ino_nr)) == NULL)
+  if ((pn = puffs_pn_nodewalk(global_pu, find_inode_cb, &ino_nr)) == NULL)
 	return(EINVAL);
 
   if (pn->pn_mountpoint) r = EBUSY;
@@ -77,10 +74,10 @@ void fs_unmount(void)
   /* Always force unmounting, as VFS will not tolerate failure. */
   error = global_pu->pu_ops.puffs_fs_unmount(global_pu, MNT_FORCE);
   if (error) {
-  	lpuffs_debug("user handler failed to unmount filesystem!\
+	lpuffs_debug("user handler failed to unmount filesystem!\
 		Force unmount!\n");
-  } 
-  
+  }
+
   fs_sync();
 
   /* Finish off the unmount. */

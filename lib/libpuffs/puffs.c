@@ -37,16 +37,15 @@ __RCSID("$NetBSD: puffs.c,v 1.117 2011/11/14 01:27:42 chs Exp $");
 #include <sys/param.h>
 #include <sys/mount.h>
 
-#if defined(__minix)
-#include "fs.h"
-#endif /* defined(__minix) */
-
 #include <assert.h>
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <mntopts.h>
 #include <paths.h>
+#ifndef __minix
+#include <pthread.h>
+#endif /* !__minix */
 #include <puffs.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -62,77 +61,10 @@ const struct mntopt puffsmopts[] = {
 	PUFFSMOPT_STD,
 	MOPT_NULL,
 };
-#ifdef PUFFS_WITH_THREADS
-#include <pthread.h>
+
+#ifndef __minix
 pthread_mutex_t pu_lock = PTHREAD_MUTEX_INITIALIZER;
-#endif
-
-#if defined(__minix)
-static message fs_msg;
-static int fs_ipc_status;
-#endif
-
-/* Declare some local functions. */
-static int get_work(message *msg, int *ipc_status);
-
-/* SEF functions and variables. */
-static void sef_local_startup(void);
-static int sef_cb_init_fresh(int type, sef_init_info_t *info);
-static void sef_cb_signal_handler(int signo);
-
-EXTERN int env_argc;
-EXTERN char **env_argv;
-
-
-#define PUFFS_MAX_ARGS 20
-
-int __real_main(int argc, char* argv[]);
-int __wrap_main(int argc, char* argv[]);
-
-int __wrap_main(int argc, char *argv[])
-{
-  int i;
-  int new_argc = 0;
-  static char* new_argv[PUFFS_MAX_ARGS];
-  char *name;
-
-  /* SEF local startup. */
-  env_setargs(argc, argv);
-  sef_local_startup();
-
-  global_kcred.pkcr_type = PUFFCRED_TYPE_INTERNAL;
-
-  if (argc < 3) {
-	panic("Unexpected arguments, use:\
-		mount -t fs /dev/ /dir [-o option1,option2]\n");
-  }
-
-  name = argv[0] + strlen(argv[0]);
-  while (*name != '/' && name != argv[0])
-	  name--;
-  if (name != argv[0])
-	  name++;
-  strcpy(fs_name, name);
-
-  new_argv[new_argc] = argv[0];
-  new_argc++;
-  
-  for (i = 1; i < argc; i++) {
-	if (new_argc >= PUFFS_MAX_ARGS) {
-		panic("Too many arguments, change PUFFS_MAX_ARGS");
-	}
-	new_argv[new_argc] = argv[i];
-	new_argc++;
-  }
-
-  assert(new_argc > 0);
-
-  /* Get the mount request from VFS, so we can deal with it later. */
-  (void)get_work(&fs_msg, &fs_ipc_status);
-
-  return __real_main(new_argc, new_argv);
-}
-
+#endif /* !__minix */
 
 #define FILLOP(lower, upper)						\
 do {									\
@@ -170,22 +102,106 @@ fillvnopmask(struct puffs_ops *pops, struct puffs_kargs *pa)
 	FILLOP(print,    PRINT);
 	FILLOP(read,     READ);
 	FILLOP(write,    WRITE);
+	FILLOP(advlock,  ADVLOCK);
 	FILLOP(abortop,  ABORTOP);
+	FILLOP(pathconf, PATHCONF);
+
+	FILLOP(getextattr,  GETEXTATTR);
+	FILLOP(setextattr,  SETEXTATTR);
+	FILLOP(listextattr, LISTEXTATTR);
+	FILLOP(deleteextattr, DELETEEXTATTR);
 }
 #undef FILLOP
 
+/*
+ * Go over all framev entries and write everything we can.  This is
+ * mostly for the benefit of delivering "unmount" to the kernel.
+ */
+static void
+finalpush(struct puffs_usermount *pu)
+{
+#ifndef __minix
+	struct puffs_fctrl_io *fio;
+
+	LIST_FOREACH(fio, &pu->pu_ios, fio_entries) {
+		if (fio->stat & FIO_WRGONE)
+			continue;
+
+		puffs__framev_output(pu, fio->fctrl, fio);
+	}
+#endif /* !__minix */
+}
 
 /*ARGSUSED*/
-__dead static void
-puffs_defaulterror(struct puffs_usermount *pu, uint8_t type,
+void
+puffs_kernerr_abort(struct puffs_usermount *pu, uint8_t type,
 	int error, const char *str, puffs_cookie_t cookie)
 {
 
+#ifndef __minix
+	fprintf(stderr, "abort: type %d, error %d, cookie %p (%s)\n",
+#else /* __minix */
 	lpuffs_debug("abort: type %d, error %d, cookie %p (%s)\n",
+#endif /* __minix */
 	    type, error, cookie, str);
 	abort();
 }
 
+/*ARGSUSED*/
+void
+puffs_kernerr_log(struct puffs_usermount *pu, uint8_t type,
+	int error, const char *str, puffs_cookie_t cookie)
+{
+
+	syslog(LOG_WARNING, "kernel: type %d, error %d, cookie %p (%s)\n",
+	    type, error, cookie, str);
+}
+
+#ifndef __minix
+int
+puffs_getselectable(struct puffs_usermount *pu)
+{
+
+	return pu->pu_fd;
+}
+
+uint64_t
+puffs__nextreq(struct puffs_usermount *pu)
+{
+	uint64_t rv;
+
+	PU_LOCK();
+	rv = pu->pu_nextreq++ | (uint64_t)1<<63;
+	PU_UNLOCK();
+
+	return rv;
+}
+
+int
+puffs_setblockingmode(struct puffs_usermount *pu, int mode)
+{
+	int rv, x;
+
+	assert(puffs_getstate(pu) == PUFFS_STATE_RUNNING);
+
+	if (mode != PUFFSDEV_BLOCK && mode != PUFFSDEV_NONBLOCK) {
+		errno = EINVAL;
+		return -1;
+	}
+
+	x = mode;
+	rv = ioctl(pu->pu_fd, FIONBIO, &x);
+
+	if (rv == 0) {
+		if (mode == PUFFSDEV_BLOCK)
+			pu->pu_state &= ~PU_ASYNCFD;
+		else
+			pu->pu_state |= PU_ASYNCFD;
+	}
+
+	return rv;
+}
+#endif /* !__minix */
 
 int
 puffs_getstate(struct puffs_usermount *pu)
@@ -207,8 +223,10 @@ puffs_setstacksize(struct puffs_usermount *pu, size_t ss)
 	minsize = 4*psize;
 	if (ss < (size_t)minsize || ss == PUFFS_STACKSIZE_MIN) {
 		if (ss != PUFFS_STACKSIZE_MIN)
-			lpuffs_debug("puffs_setstacksize: adjusting "
+#ifndef __minix
+			fprintf(stderr, "puffs_setstacksize: adjusting "
 			    "stacksize to minimum %ld\n", minsize);
+#endif /* !__minix */
 		ss = 4*psize;
 	}
  
@@ -222,8 +240,10 @@ puffs_setstacksize(struct puffs_usermount *pu, size_t ss)
 	}
 	if (bonus > 1) {
 		stackshift++;
-		lpuffs_debug("puffs_setstacksize: using next power of two: "
+#ifndef __minix
+		fprintf(stderr, "puffs_setstacksize: using next power of two: "
 		    "%d\n", 1<<stackshift);
+#endif /* !__minix */
 	}
 
 	pu->pu_cc_stackshift = stackshift;
@@ -416,30 +436,223 @@ puffs_set_prepost(struct puffs_usermount *pu,
 	pu->pu_oppost = pst;
 }
 
+#ifndef __minix
+void
+puffs_setback(struct puffs_cc *pcc, int whatback)
+{
+	struct puffs_req *preq = puffs__framebuf_getdataptr(pcc->pcc_pb);
+
+	assert(PUFFSOP_OPCLASS(preq->preq_opclass) == PUFFSOP_VN && (
+	    preq->preq_optype == PUFFS_VN_OPEN ||
+	    preq->preq_optype == PUFFS_VN_MMAP ||
+	    preq->preq_optype == PUFFS_VN_REMOVE ||
+	    preq->preq_optype == PUFFS_VN_RMDIR ||
+	    preq->preq_optype == PUFFS_VN_INACTIVE));
+
+	preq->preq_setbacks |= whatback & PUFFS_SETBACK_MASK;
+}
+
+int
+puffs_daemon(struct puffs_usermount *pu, int nochdir, int noclose)
+{
+	long int n;
+	int parent, value, fd;
+
+	if (pipe(pu->pu_dpipe) == -1)
+		return -1;
+
+	switch (fork()) {
+	case -1:
+		return -1;
+	case 0:
+		parent = 0;
+		break;
+	default:
+		parent = 1;
+		break;
+	}
+	pu->pu_state |= PU_PUFFSDAEMON;
+
+	if (parent) {
+		close(pu->pu_dpipe[1]);
+		n = read(pu->pu_dpipe[0], &value, sizeof(int));
+		if (n == -1)
+			err(1, "puffs_daemon");
+		if (n != sizeof(value))
+			errx(1, "puffs_daemon got %ld bytes", n);
+		if (value) {
+			errno = value;
+			err(1, "puffs_daemon");
+		}
+		exit(0);
+	} else {
+		if (setsid() == -1)
+			goto fail;
+
+		if (!nochdir)
+			chdir("/");
+
+		if (!noclose) {
+			fd = open(_PATH_DEVNULL, O_RDWR, 0);
+			if (fd == -1)
+				goto fail;
+			dup2(fd, STDIN_FILENO);
+			dup2(fd, STDOUT_FILENO);
+			dup2(fd, STDERR_FILENO);
+			if (fd > STDERR_FILENO)
+				close(fd);
+		}
+		return 0;
+	}
+
+ fail:
+	n = write(pu->pu_dpipe[1], &errno, sizeof(int));
+	assert(n == 4);
+	return -1;
+}
+#endif /* !__minix */
+
+static void
+shutdaemon(struct puffs_usermount *pu, int error)
+{
+#ifndef __minix
+	ssize_t n;
+
+	n = write(pu->pu_dpipe[1], &error, sizeof(int));
+	assert(n == 4);
+	close(pu->pu_dpipe[0]);
+	close(pu->pu_dpipe[1]);
+#endif /* !__minix */
+	pu->pu_state &= ~PU_PUFFSDAEMON;
+}
+
 int
 puffs_mount(struct puffs_usermount *pu, const char *dir, int mntflags,
 	puffs_cookie_t cookie)
 {
-#if defined(__minix)
+#ifndef __minix
+	int rv, fd, sverrno;
+	char *comfd;
+#endif /* !__minix */
+
 	pu->pu_kargp->pa_root_cookie = cookie;
 
-	/* Process the already-received mount request. */
-	fsdriver_process(&puffs_table, &fs_msg, fs_ipc_status, FALSE);
+#ifndef __minix
+	/* XXXkludgehere */
+	/* kauth doesn't provide this service any longer */
+	if (geteuid() != 0)
+		mntflags |= MNT_NOSUID | MNT_NODEV;
 
-	if (!mounted) {
-		/* This should never happen, unless VFS misbehaves.. */
+	/*
+	 * Undocumented...  Well, documented only here.
+	 *
+	 * This is used for imaginative purposes.  If the env variable is
+	 * set, puffs_mount() doesn't do the regular mount procedure.
+	 * Rather, it crams the mount data down the comfd and sets comfd as
+	 * the puffs descriptor.
+	 *
+	 * This shouldn't be used unless you can read my mind ( ... or write
+	 * it, not to mention execute it, but that's starting to get silly).
+	 */
+	if ((comfd = getenv("PUFFS_COMFD")) != NULL) {
+		size_t len;
+
+		if (sscanf(comfd, "%d", &pu->pu_fd) != 1) {
+			errno = EINVAL;
+			rv = -1;
+			goto out;
+		}
+		/* check that what we got at least resembles an fd */
+		if (fcntl(pu->pu_fd, F_GETFL) == -1) {
+			rv = -1;
+			goto out;
+		}
+
+#define allwrite(buf, len)						\
+do {									\
+	ssize_t al_rv;							\
+	al_rv = write(pu->pu_fd, buf, len);				\
+	if ((size_t)al_rv != len) {					\
+		if (al_rv != -1)					\
+			errno = EIO;					\
+		rv = -1;						\
+		goto out;						\
+	}								\
+} while (/*CONSTCOND*/0)
+		len = strlen(dir)+1;
+		allwrite(&len, sizeof(len));
+		allwrite(dir, len);
+		len = strlen(pu->pu_kargp->pa_mntfromname)+1;
+		allwrite(&len, sizeof(len));
+		allwrite(pu->pu_kargp->pa_mntfromname, len);
+		allwrite(&mntflags, sizeof(mntflags));
+		len = sizeof(*pu->pu_kargp);
+		allwrite(&len, sizeof(len));
+		allwrite(pu->pu_kargp, sizeof(*pu->pu_kargp));
+		allwrite(&pu->pu_flags, sizeof(pu->pu_flags));
+#undef allwrite
+
+		rv = 0;
+	} else {
+		char rp[MAXPATHLEN];
+
+		if (realpath(dir, rp) == NULL) {
+			rv = -1;
+			goto out;
+		}
+
+		if (strcmp(dir, rp) != 0) {
+			warnx("puffs_mount: \"%s\" is a relative path.", dir);
+			warnx("puffs_mount: using \"%s\" instead.", rp);
+		}
+
+		fd = open(_PATH_PUFFS, O_RDWR);
+		if (fd == -1) {
+			warnx("puffs_mount: cannot open %s", _PATH_PUFFS);
+			rv = -1;
+			goto out;
+		}
+		if (fd <= 2)
+			warnx("puffs_mount: device fd %d (<= 2), sure this is "
+			    "what you want?", fd);
+
+		pu->pu_kargp->pa_fd = pu->pu_fd = fd;
+		if ((rv = mount(MOUNT_PUFFS, rp, mntflags,
+		    pu->pu_kargp, sizeof(struct puffs_kargs))) == -1)
+			goto out;
+	}
+#else /* __minix */
+	/* Process the already-received mount request. */
+	if (!lpuffs_pump()) {
+		/* Not mounted?  This should never happen.. */
 		free(pu->pu_kargp);
 		pu->pu_kargp = NULL;
-		errno = -EINVAL;
+		errno = EINVAL;
 		return -1;
 	}
+#endif /* __minix */
 
 	PU_SETSTATE(pu, PUFFS_STATE_RUNNING);
+
+#ifndef __minix
+ out:
+	if (rv != 0)
+		sverrno = errno;
+	else
+		sverrno = 0;
+	free(pu->pu_kargp);
+	pu->pu_kargp = NULL;
+
+	if (pu->pu_state & PU_PUFFSDAEMON)
+		shutdaemon(pu, sverrno);
+
+	errno = sverrno;
+	return rv;
+#else /* __minix */
 	return 0;
-#endif /* defined(__minix) */
+#endif /* __minix */
 }
 
-/*ARGSUSED*/
 struct puffs_usermount *
 puffs_init(struct puffs_ops *pops, const char *mntfromname,
 	const char *puffsname, void *priv, uint32_t pflags)
@@ -482,18 +695,24 @@ puffs_init(struct puffs_ops *pops, const char *mntfromname,
 		pargs->pa_time32 = 0;
 
 	pu->pu_flags = pflags;
-	buildpath = pu->pu_flags & PUFFS_FLAG_BUILDPATH; /* XXX */
 	pu->pu_ops = *pops;
 	free(pops); /* XXX */
 
 	pu->pu_privdata = priv;
 	pu->pu_cc_stackshift = PUFFS_CC_STACKSHIFT_DEFAULT;
 	LIST_INIT(&pu->pu_pnodelst);
-	LIST_INIT(&pu->pu_pnode_removed_lst);
 	LIST_INIT(&pu->pu_ios);
 	LIST_INIT(&pu->pu_ios_rmlist);
 	LIST_INIT(&pu->pu_ccmagazin);
 	TAILQ_INIT(&pu->pu_sched);
+
+#ifndef __minix
+	pu->pu_framectrl[PU_FRAMECTRL_FS].rfb = puffs__fsframe_read;
+	pu->pu_framectrl[PU_FRAMECTRL_FS].wfb = puffs__fsframe_write;
+	pu->pu_framectrl[PU_FRAMECTRL_FS].cmpfb = puffs__fsframe_cmp;
+	pu->pu_framectrl[PU_FRAMECTRL_FS].gotfb = puffs__fsframe_gotframe;
+	pu->pu_framectrl[PU_FRAMECTRL_FS].fdnotfn = puffs_framev_unmountonclose;
+#endif /* !__minix */
 
 	/* defaults for some user-settable translation functions */
 	pu->pu_cmap = NULL; /* identity translation */
@@ -504,11 +723,14 @@ puffs_init(struct puffs_ops *pops, const char *mntfromname,
 	pu->pu_pathtransform = NULL;
 	pu->pu_namemod = NULL;
 
-        pu->pu_errnotify = puffs_defaulterror;
+	pu->pu_errnotify = puffs_kernerr_log;
 
 	PU_SETSTATE(pu, PUFFS_STATE_BEFOREMOUNT);
 
-	global_pu = pu;
+#ifdef __minix
+	/* Do the MINIX3-specific side of the initialization. */
+	lpuffs_init(pu);
+#endif /* __minix */
 
 	return pu;
 
@@ -525,16 +747,45 @@ puffs_cancel(struct puffs_usermount *pu, int error)
 {
 
 	assert(puffs_getstate(pu) < PUFFS_STATE_RUNNING);
+	shutdaemon(pu, error);
 	free(pu);
 }
 
 /*ARGSUSED1*/
 int
-puffs_exit(struct puffs_usermount *pu, int force)
+puffs_exit(struct puffs_usermount *pu, int unused /* strict compat */)
 {
+#ifndef __minix
+	struct puffs_framebuf *pb;
+	struct puffs_req *preq;
+	void *winp;
+	size_t winlen;
+	int sverrno;
+
+	pb = puffs_framebuf_make();
+	if (pb == NULL) {
+		errno = ENOMEM;
+		return -1;
+	}
+
+	winlen = sizeof(struct puffs_req);
+	if (puffs_framebuf_getwindow(pb, 0, &winp, &winlen) == -1) {
+		sverrno = errno;
+		puffs_framebuf_destroy(pb);
+		errno = sverrno;
+		return -1;
+	}
+	preq = winp;
+
+	preq->preq_buflen = sizeof(struct puffs_req);
+	preq->preq_opclass = PUFFSOP_UNMOUNT;
+	preq->preq_id = puffs__nextreq(pu);
+
+	puffs_framev_enqueue_justsend(pu, puffs_getselectable(pu), pb, 1, 0);
+#else /* __minix */
 	struct puffs_node *pn;
-        
-        lpuffs_debug("puffs_exit\n");
+
+	lpuffs_debug("puffs_exit\n");
 
 	while ((pn = LIST_FIRST(&pu->pu_pnodelst)) != NULL)
 		puffs_pn_put(pn);
@@ -546,9 +797,35 @@ puffs_exit(struct puffs_usermount *pu, int force)
 	if (pu->pu_state & PU_HASKQ)
 		close(pu->pu_kq);
 	free(pu);
+#endif /* __minix */
 
-	return 0; /* always succesful for now, WILL CHANGE */
+	return 0;
 }
+
+#ifndef __minix
+/* no sigset_t static intializer */
+static int sigs[NSIG] = { 0, };
+static int sigcatch = 0;
+
+int
+puffs_unmountonsignal(int sig, bool sigignore)
+{
+
+	if (sig < 0 || sig >= (int)NSIG) {
+		errno = EINVAL;
+		return -1;
+	}
+	if (sigignore)
+		if (signal(sig, SIG_IGN) == SIG_ERR)
+			return -1;
+
+	if (!sigs[sig])
+		sigcatch++;
+	sigs[sig] = 1;
+
+	return 0;
+}
+#endif /* !__minix */
 
 /*
  * Actual mainloop.  This is called from a context which can block.
@@ -559,46 +836,235 @@ void
 puffs__theloop(struct puffs_cc *pcc)
 {
 	struct puffs_usermount *pu = pcc->pcc_pu;
+#ifndef __minix
+	struct puffs_framectrl *pfctrl;
+	struct puffs_fctrl_io *fio;
+	struct kevent *curev;
+	size_t nchanges;
+	int ndone;
+#endif /* !__minix */
 
-	while (mounted || !exitsignaled) {
+#ifndef __minix
+	while (puffs_getstate(pu) != PUFFS_STATE_UNMOUNTED) {
+#else /* __minix */
+	do {
+#endif /* __minix */
+
 		/*
 		 * Schedule existing requests.
 		 */
 		while ((pcc = TAILQ_FIRST(&pu->pu_sched)) != NULL) {
-			lpuffs_debug("scheduling existing tasks\n");
 			TAILQ_REMOVE(&pu->pu_sched, pcc, pcc_schedent);
 			puffs__goto(pcc);
 		}
 
-		if (pu->pu_ml_lfn) {
-                        lpuffs_debug("Calling user mainloop handler\n");
+		if (pu->pu_ml_lfn)
 			pu->pu_ml_lfn(pu);
+
+#ifndef __minix
+		/* XXX: can we still do these optimizations? */
+#if 0
+		/*
+		 * Do this here, because:
+		 *  a) loopfunc might generate some results
+		 *  b) it's still "after" event handling (except for round 1)
+		 */
+		if (puffs_req_putput(ppr) == -1)
+			goto out;
+		puffs_req_resetput(ppr);
+
+		/* micro optimization: skip kevent syscall if possible */
+		if (pu->pu_nfds == 1 && pu->pu_ml_timep == NULL
+		    && (pu->pu_state & PU_ASYNCFD) == 0) {
+			pfctrl = XXX->fctrl;
+			puffs_framev_input(pu, pfctrl, XXX);
+			continue;
+		}
+#endif
+
+		/* else: do full processing */
+		/* Don't bother worrying about O(n) for now */
+		LIST_FOREACH(fio, &pu->pu_ios, fio_entries) {
+			if (fio->stat & FIO_WRGONE)
+				continue;
+
+			pfctrl = fio->fctrl;
+
+			/*
+			 * Try to write out everything to avoid the
+			 * need for enabling EVFILT_WRITE.  The likely
+			 * case is that we can fit everything into the
+			 * socket buffer.
+			 */
+			puffs__framev_output(pu, pfctrl, fio);
 		}
 
-		/* Wait for request message. */
-		if (get_work(&fs_msg, &fs_ipc_status) != OK)
-			continue; /* recheck loop conditions */
+		/*
+		 * Build list of which to enable/disable in writecheck.
+		 */
+		nchanges = 0;
+		LIST_FOREACH(fio, &pu->pu_ios, fio_entries) {
+			if (fio->stat & FIO_WRGONE)
+				continue;
 
-		/* Process it, and send a reply. */
-		fsdriver_process(&puffs_table, &fs_msg, fs_ipc_status, FALSE);
+			/* en/disable write checks for kqueue as needed */
+			assert((FIO_EN_WRITE(fio) && FIO_RM_WRITE(fio)) == 0);
+			if (FIO_EN_WRITE(fio)) {
+				EV_SET(&pu->pu_evs[nchanges], fio->io_fd,
+				    EVFILT_WRITE, EV_ENABLE, 0, 0,
+				    (uintptr_t)fio);
+				fio->stat |= FIO_WR;
+				nchanges++;
+			}
+			if (FIO_RM_WRITE(fio)) {
+				EV_SET(&pu->pu_evs[nchanges], fio->io_fd,
+				    EVFILT_WRITE, EV_DISABLE, 0, 0,
+				    (uintptr_t)fio);
+				fio->stat &= ~FIO_WR;
+				nchanges++;
+			}
+		}
+
+		ndone = kevent(pu->pu_kq, pu->pu_evs, nchanges,
+		    pu->pu_evs, pu->pu_nevs, pu->pu_ml_timep);
+
+		if (ndone == -1) {
+			if (errno != EINTR)
+				break;
+			else
+				continue;
+		}
+
+		/* uoptimize */
+		if (ndone == 0)
+			continue;
+
+		/* iterate over the results */
+		for (curev = pu->pu_evs; ndone--; curev++) {
+			int what;
+
+#if 0
+			/* get & possibly dispatch events from kernel */
+			if (curev->ident == puffsfd) {
+				if (puffs_req_handle(pgr, ppr, 0) == -1)
+					goto out;
+				continue;
+			}
+#endif
+
+			fio = (void *)curev->udata;
+			if (__predict_true(fio))
+				pfctrl = fio->fctrl;
+			else
+				pfctrl = NULL;
+			if (curev->flags & EV_ERROR) {
+				assert(curev->filter == EVFILT_WRITE);
+				fio->stat &= ~FIO_WR;
+
+				/* XXX: how to know if it's a transient error */
+				puffs__framev_writeclose(pu, fio,
+				    (int)curev->data);
+				puffs__framev_notify(fio, PUFFS_FBIO_ERROR);
+				continue;
+			}
+
+			what = 0;
+			if (curev->filter == EVFILT_READ) {
+				puffs__framev_input(pu, pfctrl, fio);
+				what |= PUFFS_FBIO_READ;
+			}
+
+			else if (curev->filter == EVFILT_WRITE) {
+				puffs__framev_output(pu, pfctrl, fio);
+				what |= PUFFS_FBIO_WRITE;
+			}
+
+			else if (__predict_false(curev->filter==EVFILT_SIGNAL)){
+				if ((pu->pu_state & PU_DONEXIT) == 0) {
+					PU_SETSFLAG(pu, PU_DONEXIT);
+					puffs_exit(pu, 0);
+				}
+			}
+			if (what)
+				puffs__framev_notify(fio, what);
+		}
+
+		/*
+		 * Really free fd's now that we don't have references
+		 * to them.
+		 */
+		while ((fio = LIST_FIRST(&pu->pu_ios_rmlist)) != NULL) {
+			LIST_REMOVE(fio, fio_entries);
+			free(fio);
+		}
+#endif /* !__minix */
 	}
+#ifdef __minix
+		while (lpuffs_pump());
+#endif /* __minix */
 
 	if (puffs__cc_restoremain(pu) == -1)
 		warn("cannot restore main context.  impending doom");
-
-	/* May get here, if puffs_fakecc is set to 1. Currently librefuse sets it.
-	 * Now we just return to the caller.
-	 */
 }
 int
 puffs_mainloop(struct puffs_usermount *pu)
 {
+#ifndef __minix
+	struct puffs_fctrl_io *fio;
+#endif /* !__minix */
 	struct puffs_cc *pcc;
+#ifndef __minix
+	struct kevent *curev;
+	size_t nevs;
+	int sverrno, i;
+#else /* __minix */
 	int sverrno;
+#endif /* !__minix */
 
 	assert(puffs_getstate(pu) >= PUFFS_STATE_RUNNING);
 
-	pu->pu_state |= PU_HASKQ | PU_INLOOP;
+#ifndef __minix
+	pu->pu_kq = kqueue();
+	if (pu->pu_kq == -1)
+		goto out;
+#endif /* !__minix */
+	pu->pu_state |= PU_HASKQ;
+
+#ifndef __minix
+	puffs_setblockingmode(pu, PUFFSDEV_NONBLOCK);
+	if (puffs__framev_addfd_ctrl(pu, puffs_getselectable(pu),
+	    PUFFS_FBIO_READ | PUFFS_FBIO_WRITE,
+	    &pu->pu_framectrl[PU_FRAMECTRL_FS]) == -1)
+		goto out;
+
+	nevs = pu->pu_nevs + sigcatch;
+	curev = realloc(pu->pu_evs, nevs * sizeof(struct kevent));
+	if (curev == NULL)
+		goto out;
+	pu->pu_evs = curev;
+	pu->pu_nevs = nevs;
+
+	LIST_FOREACH(fio, &pu->pu_ios, fio_entries) {
+		EV_SET(curev, fio->io_fd, EVFILT_READ, EV_ADD,
+		    0, 0, (uintptr_t)fio);
+		curev++;
+		EV_SET(curev, fio->io_fd, EVFILT_WRITE, EV_ADD | EV_DISABLE,
+		    0, 0, (uintptr_t)fio);
+		curev++;
+	}
+	for (i = 0; i < NSIG; i++) {
+		if (sigs[i]) {
+			EV_SET(curev, i, EVFILT_SIGNAL, EV_ADD | EV_ENABLE,
+			    0, 0, 0);
+			curev++;
+		}
+	}
+	assert(curev - pu->pu_evs == (ssize_t)pu->pu_nevs);
+	if (kevent(pu->pu_kq, pu->pu_evs, pu->pu_nevs, NULL, 0, NULL) == -1)
+		goto out;
+#endif /* !__minix */
+
+	pu->pu_state |= PU_INLOOP;
 
 	/*
 	 * Create alternate execution context and jump to it.  Note
@@ -611,12 +1077,34 @@ puffs_mainloop(struct puffs_usermount *pu)
 	if (puffs__cc_create(pu, puffs__theloop, &pcc) == -1) {
 		goto out;
 	}
+
+#if 0
 	if (puffs__cc_savemain(pu) == -1) {
 		goto out;
 	}
+#else
+	/*
+	 * XXX
+	 * puffs__cc_savemain() uses getcontext() and then returns.
+	 * the caller (this function) may overwrite the stack frame
+	 * of puffs__cc_savemain(), so when we call setcontext() later and
+	 * return from puffs__cc_savemain() again, the return address or
+	 * saved stack pointer can be garbage.
+	 * avoid this by calling getcontext() directly here.
+	 */
+	extern int puffs_fakecc;
+	if (!puffs_fakecc) {
+		PU_CLRSFLAG(pu, PU_MAINRESTORE);
+		if (getcontext(&pu->pu_mainctx) == -1) {
+			goto out;
+		}
+	}
+#endif
+
 	if ((pu->pu_state & PU_MAINRESTORE) == 0)
 		puffs_cc_continue(pcc);
 
+	finalpush(pu);
 	errno = 0;
 
  out:
@@ -629,64 +1117,3 @@ puffs_mainloop(struct puffs_usermount *pu)
 	else
 		return 0;
 }
-
-#if defined(__minix)
-/*===========================================================================*
- *			       sef_local_startup			     *
- *===========================================================================*/
-static void sef_local_startup(void)
-{
-  /* Register init callbacks. */
-  sef_setcb_init_fresh(sef_cb_init_fresh);
-
-  /* Register signal callbacks. */
-  sef_setcb_signal_handler(sef_cb_signal_handler);
-
-  /* Let SEF perform startup. */
-  sef_startup();
-}
-
-/*===========================================================================*
- *		            sef_cb_init_fresh                                *
- *===========================================================================*/
-static int sef_cb_init_fresh(int type, sef_init_info_t *info)
-{
-/* Initialize the Minix file server. */
-  return(OK);
-}
-
-/*===========================================================================*
- *		           sef_cb_signal_handler                             *
- *===========================================================================*/
-static void sef_cb_signal_handler(int signo)
-{
-  /* Only check for termination signal, ignore anything else. */
-  if (signo != SIGTERM) return;
-
-  exitsignaled = 1;
-  fs_sync();
-
-  sef_cancel();
-}
-
-/*===========================================================================*
- *				get_work				     *
- *===========================================================================*/
-static int get_work(message *msg, int *ipc_status)
-{
-  int r;
-
-  for (;;) {
-	if ((r = sef_receive_status(ANY, msg, ipc_status)) != OK) {
-		if (r == EINTR) /* sef_cancel from signal handler? */
-			break; /* see if we can exit the main loop */
-		panic("sef_receive failed: %d", r);
-	}
-	if (msg->m_source == VFS_PROC_NR)
-		break;
-	lpuffs_debug("libpuffs: unexpected source %d\n", msg->m_source);
-  }
-
-  return r;
-}
-#endif /* defined(__minix) */

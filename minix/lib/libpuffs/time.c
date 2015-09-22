@@ -3,8 +3,6 @@
  */
 
 #include "fs.h"
-#include "puffs.h"
-#include "puffs_priv.h"
 
 
 /*===========================================================================*
@@ -19,7 +17,7 @@ int fs_utime(ino_t ino_nr, struct timespec *atime, struct timespec *mtime)
   if (global_pu->pu_ops.puffs_node_setattr == NULL)
 	return(EINVAL);
 
-  if( (pn = puffs_pn_nodewalk(global_pu, 0, &ino_nr)) == NULL)
+  if( (pn = puffs_pn_nodewalk(global_pu, find_inode_cb, &ino_nr)) == NULL)
         return(EINVAL);
 
   puffs_vattr_null(&va);

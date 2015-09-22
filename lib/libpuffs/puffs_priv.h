@@ -37,19 +37,11 @@
 #include <puffs.h>
 #include <ucontext.h>
 
-#if defined(__minix)
-
-/* XXX: MINIX */
-#define ATIME            002    /* set if atime field needs updating */
-#define CTIME            004    /* set if ctime field needs updating */
-#define MTIME            010    /* set if mtime field needs updating */
-
-#else
+#if !defined(__minix)
 extern pthread_mutex_t pu_lock;
 #define PU_LOCK() pthread_mutex_lock(&pu_lock)
 #define PU_UNLOCK() pthread_mutex_unlock(&pu_lock)
-#endif /* defined(__minix) */
-#if defined(__minix)
+#else /* defined(__minix) */
 #define PU_LOCK() /* nothing */
 #define PU_UNLOCK()  /* nothing */
 #endif /* defined(__minix) */
@@ -135,7 +127,7 @@ struct puffs_usermount {
 	struct puffs_node	*pu_pn_root;
 
 	LIST_HEAD(, puffs_node)	pu_pnodelst;
-#if defined(__minix) // LSC TO KEEP??
+#if defined(__minix)
 	LIST_HEAD(, puffs_node)	pu_pnode_removed_lst;
 #endif /* defined(__minix) */
 
@@ -271,6 +263,15 @@ int	puffs__fsframe_cmp(struct puffs_usermount *, struct puffs_framebuf *,
 			   struct puffs_framebuf *, int *);
 void	puffs__fsframe_gotframe(struct puffs_usermount *,
 			        struct puffs_framebuf *);
+
+uint64_t	puffs__nextreq(struct puffs_usermount *pu);
+
+#ifdef __minix
+int lpuffs_pump(void);
+void lpuffs_init(struct puffs_usermount *);
+void lpuffs_debug(const char *format, ...)
+	__attribute__((__format__(__printf__, 1, 2)));
+#endif /* __minix */
 
 __END_DECLS
 

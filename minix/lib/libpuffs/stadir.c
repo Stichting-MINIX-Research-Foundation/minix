@@ -3,12 +3,6 @@
  */
 
 #include "fs.h"
-#include <sys/stat.h>
-#include <sys/statvfs.h>
-
-#include "puffs.h"
-#include "puffs_priv.h"
-
 
 /*===========================================================================*
  *                             fs_stat					     *
@@ -26,8 +20,8 @@ int fs_stat(ino_t ino_nr, struct stat *statbuf)
 	return(EINVAL);
   }
 
-  if ((pn = puffs_pn_nodewalk(global_pu, 0, &ino_nr)) == NULL) {
-  	lpuffs_debug("walk failed...\n");
+  if ((pn = puffs_pn_nodewalk(global_pu, find_inode_cb, &ino_nr)) == NULL) {
+	lpuffs_debug("walk failed...\n");
         return(EINVAL);
   }
 

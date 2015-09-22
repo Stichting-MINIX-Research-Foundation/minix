@@ -68,12 +68,14 @@ puffs_pn_new(struct puffs_usermount *pu, void *privdata)
 void
 puffs_pn_remove(struct puffs_node *pn)
 {
-	struct puffs_usermount *pu = pn->pn_mnt;
-	assert(pu != NULL);
 
 	LIST_REMOVE(pn, pn_entries);
 	pn->pn_flags |= PUFFS_NODE_REMOVED;
+#ifdef __minix
 	if (pn->pn_count != 0) {
+		struct puffs_usermount *pu = pn->pn_mnt;
+		assert(pu != NULL);
+
 		/* XXX FS removes this pn from the list to prevent further
 		 * lookups from finding node after remove/rm/rename op.
 		 * But VFS still uses it, i.e. pnode is still open, and
@@ -82,6 +84,7 @@ puffs_pn_remove(struct puffs_node *pn)
 		 */
 		LIST_INSERT_HEAD(&pu->pu_pnode_removed_lst, pn, pn_entries);
 	}
+#endif /* __minix */
 }
 
 void
@@ -95,10 +98,7 @@ puffs_pn_put(struct puffs_node *pn)
 	free(pn);
 }
 
-/* walk list, rv can be used either to halt or to return a value
- * XXX (MINIX note): if fn is 0, then arg is ino_t and we search
- * node with ino_t. TODO: modify docs.
- */
+/* walk list, rv can be used either to halt or to return a value */
 void *
 puffs_pn_nodewalk(struct puffs_usermount *pu, puffs_nodewalk_fn fn, void *arg)
 {
@@ -108,14 +108,9 @@ puffs_pn_nodewalk(struct puffs_usermount *pu, puffs_nodewalk_fn fn, void *arg)
 	pn_cur = LIST_FIRST(&pu->pu_pnodelst);
 	while (pn_cur) {
 		pn_next = LIST_NEXT(pn_cur, pn_entries);
-		if (fn) {
-			rv = fn(pu, pn_cur, arg);
-			if (rv)
-				return rv;
-		} else {
-			if (pn_cur->pn_va.va_fileid == *((ino_t*) arg))
-				return pn_cur;
-		}
+		rv = fn(pu, pn_cur, arg);
+		if (rv)
+			return rv;
 		pn_cur = pn_next;
 	}
 

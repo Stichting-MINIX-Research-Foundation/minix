@@ -21,9 +21,9 @@ int fs_chmod(ino_t ino_nr, mode_t *mode)
   if (global_pu->pu_ops.puffs_node_setattr == NULL)
 	return(EINVAL);
 
-  if ((pn = puffs_pn_nodewalk(global_pu, 0, &ino_nr)) == NULL)
+  if ((pn = puffs_pn_nodewalk(global_pu, find_inode_cb, &ino_nr)) == NULL)
 	return(EINVAL);
-   
+
   puffs_vattr_null(&va);
   /* Clear setgid bit if file is not in caller's grp */
   va.va_mode = (pn->pn_va.va_mode & ~ALL_MODES) | (*mode & ALL_MODES);
@@ -48,7 +48,7 @@ int fs_chown(ino_t ino_nr, uid_t uid, gid_t gid, mode_t *mode)
   struct vattr va;
   PUFFS_MAKECRED(pcr, &global_kcred);
 
-  if ((pn = puffs_pn_nodewalk(global_pu, 0, &ino_nr)) == NULL)
+  if ((pn = puffs_pn_nodewalk(global_pu, find_inode_cb, &ino_nr)) == NULL)
 	return(EINVAL);
 
   puffs_vattr_null(&va);

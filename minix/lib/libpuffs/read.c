@@ -4,14 +4,8 @@
 
 #include "fs.h"
 #include <stddef.h>
-#include <string.h>
-#include <stdlib.h>
 #include <dirent.h>
-#include <assert.h>
 #include <sys/param.h>
-
-#include "puffs.h"
-#include "puffs_priv.h"
 
 
 #define GETDENTS_BUFSIZ  4096
@@ -32,7 +26,7 @@ ssize_t fs_read(ino_t ino_nr, struct fsdriver_data *data, size_t bytes,
   struct puffs_node *pn;
   PUFFS_MAKECRED(pcr, &global_kcred);
 
-  if ((pn = puffs_pn_nodewalk(global_pu, 0, &ino_nr)) == NULL) {
+  if ((pn = puffs_pn_nodewalk(global_pu, find_inode_cb, &ino_nr)) == NULL) {
 	lpuffs_debug("walk failed...\n");
         return(EINVAL);
   }
@@ -76,7 +70,7 @@ ssize_t fs_write(ino_t ino_nr, struct fsdriver_data *data, size_t bytes,
   struct timespec cur_time;
   PUFFS_MAKECRED(pcr, &global_kcred);
 
-  if ((pn = puffs_pn_nodewalk(global_pu, 0, &ino_nr)) == NULL) {
+  if ((pn = puffs_pn_nodewalk(global_pu, find_inode_cb, &ino_nr)) == NULL) {
 	lpuffs_debug("walk failed...\n");
         return(EINVAL);
   }
@@ -127,7 +121,7 @@ ssize_t fs_getdents(ino_t ino_nr, struct fsdriver_data *data, size_t bytes,
   int eofflag = 0;
   PUFFS_MAKECRED(pcr, &global_kcred);
 
-  if ((pn = puffs_pn_nodewalk(global_pu, 0, &ino_nr)) == NULL) {
+  if ((pn = puffs_pn_nodewalk(global_pu, find_inode_cb, &ino_nr)) == NULL) {
 	lpuffs_debug("walk failed...\n");
         return(EINVAL);
   }

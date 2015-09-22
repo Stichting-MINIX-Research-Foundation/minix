@@ -24,6 +24,14 @@
 
 #include <minix/fsdriver.h>
 
+#include <stdlib.h>
+#include <string.h>
+#include <assert.h>
+
+#include "puffs.h"
+#include "puffs_priv.h"
+
+#include "const.h"
 #include "proto.h"
 #include "glo.h"
 

@@ -1,12 +1,5 @@
 #include "fs.h"
 
-#include <stdlib.h>
-#include <assert.h>
-
-#include "puffs.h"
-#include "puffs_priv.h"
-
-
 /*===========================================================================*
  *				fs_trunc				     *
  *===========================================================================*/
@@ -16,7 +9,7 @@ int fs_trunc(ino_t ino_nr, off_t start, off_t end)
   struct puffs_node *pn;
   PUFFS_MAKECRED(pcr, &global_kcred);
 
-  if ((pn = puffs_pn_nodewalk(global_pu, 0, &ino_nr)) == NULL)
+  if ((pn = puffs_pn_nodewalk(global_pu, find_inode_cb, &ino_nr)) == NULL)
           return(EINVAL);
 
   if (end == 0) {
@@ -27,7 +20,7 @@ int fs_trunc(ino_t ino_nr, off_t start, off_t end)
 
 	if (global_pu->pu_ops.puffs_node_setattr == NULL)
 		return(EINVAL);
-	
+
 	puffs_vattr_null(&va);
 	va.va_size = start;
 
@@ -74,9 +67,9 @@ int fs_link(ino_t dir_nr, char *name, ino_t ino_nr)
   struct puffs_cn pcn = {&pkcnp, (struct puffs_cred *) __UNCONST(pcr), {0,0,0}};
 
   if (global_pu->pu_ops.puffs_node_link == NULL)
-  	return(OK);
+	return(OK);
 
-  if ((pn = puffs_pn_nodewalk(global_pu, 0, &ino_nr)) == NULL)
+  if ((pn = puffs_pn_nodewalk(global_pu, find_inode_cb, &ino_nr)) == NULL)
 	return(EINVAL);
 
   /* Check to see if the file has maximum number of links already. */
@@ -87,7 +80,7 @@ int fs_link(ino_t dir_nr, char *name, ino_t ino_nr)
   if (S_ISDIR(pn->pn_va.va_mode))
 	return(EPERM);
 
-  if ((pn_dir = puffs_pn_nodewalk(global_pu, 0, &dir_nr)) == NULL)
+  if ((pn_dir = puffs_pn_nodewalk(global_pu, find_inode_cb, &dir_nr)) == NULL)
         return(EINVAL);
 
   if (pn_dir->pn_va.va_nlink == NO_LINK) {
@@ -120,7 +113,7 @@ int fs_link(ino_t dir_nr, char *name, ino_t ino_nr)
 
   if (buildpath)
 	global_pu->pu_pathfree(global_pu, &pcn.pcn_po_full);
-  
+
   if (r != OK) return(EINVAL);
 
   (void)clock_time(&cur_time);
@@ -143,8 +136,8 @@ ssize_t fs_rdlink(ino_t ino_nr, struct fsdriver_data *data, size_t bytes)
 
   if (bytes > sizeof(path))
 	bytes = sizeof(path);
-  
-  if ((pn = puffs_pn_nodewalk(global_pu, 0, &ino_nr)) == NULL)
+
+  if ((pn = puffs_pn_nodewalk(global_pu, find_inode_cb, &ino_nr)) == NULL)
 	return(EINVAL);
 
   if (!S_ISLNK(pn->pn_va.va_mode))
@@ -199,7 +192,8 @@ int fs_rename(ino_t old_dir_nr, char *old_name, ino_t new_dir_nr,
   strcpy(pcn_targ.pcn_name, new_name);
 
   /* Get old dir pnode */
-  if ((old_dirp = puffs_pn_nodewalk(global_pu, 0, &old_dir_nr)) == NULL)
+  if ((old_dirp = puffs_pn_nodewalk(global_pu, find_inode_cb,
+    &old_dir_nr)) == NULL)
         return(ENOENT);
 
   old_ip = advance(old_dirp, pcn_src.pcn_name);
@@ -210,7 +204,8 @@ int fs_rename(ino_t old_dir_nr, char *old_name, ino_t new_dir_nr,
 	return(EBUSY);
 
   /* Get new dir pnode */
-  if ((new_dirp = puffs_pn_nodewalk(global_pu, 0, &new_dir_nr)) == NULL) {
+  if ((new_dirp = puffs_pn_nodewalk(global_pu, find_inode_cb,
+    &new_dir_nr)) == NULL) {
         return(ENOENT);
   } else {
         if (new_dirp->pn_va.va_nlink == NO_LINK) {
@@ -345,7 +340,7 @@ int fs_unlink(ino_t dir_nr, char *name, int call)
   assert(pcn.pcn_namelen <= NAME_MAX);
   strcpy(pcn.pcn_name, name);
 
-  if ((pn_dir = puffs_pn_nodewalk(global_pu, 0, &dir_nr)) == NULL)
+  if ((pn_dir = puffs_pn_nodewalk(global_pu, find_inode_cb, &dir_nr)) == NULL)
 	return(EINVAL);
 
   /* The last directory exists. Does the file also exist? */
@@ -388,12 +383,12 @@ int fs_unlink(ino_t dir_nr, char *name, int call)
  *===========================================================================*/
 static int remove_dir(
 	struct puffs_node *pn_dir,	/* parent directory */
-	struct puffs_node *pn,    	/* directory to be removed */
-	struct puffs_cn *pcn      	/* Name, creads of directory */
+	struct puffs_node *pn,		/* directory to be removed */
+	struct puffs_cn *pcn		/* Name, creads of directory */
 )
 {
   /* A directory file has to be removed. Five conditions have to met:
-   * 	- The file must be a directory
+   *	- The file must be a directory
    *	- The directory must be empty (except for . and ..)
    *	- The final component of the path must not be . or ..
    *	- The directory must not be the root of a mounted file system (VFS)
@@ -423,7 +418,7 @@ static int remove_dir(
 
   if (pn->pn_va.va_fileid == global_pu->pu_pn_root->pn_va.va_fileid)
 	return(EBUSY); /* can't remove 'root' */
-  
+
   if (buildpath) {
 	r = puffs_path_pcnbuild(global_pu, pcn, pn_dir);
 	if (r) return(EINVAL);
@@ -444,8 +439,8 @@ static int remove_dir(
  *===========================================================================*/
 static int unlink_file(
 	struct puffs_node *dirp,	/* parent directory of file */
-	struct puffs_node *pn,  	/* pnode of file, may be NULL too. */
-	struct puffs_cn *pcn    	/* Name, creads of file */
+	struct puffs_node *pn,		/* pnode of file, may be NULL too. */
+	struct puffs_cn *pcn		/* Name, creads of file */
 )
 {
 /* Unlink 'file_name'; pn must be the pnode of 'file_name' */
@@ -454,7 +449,7 @@ static int unlink_file(
   assert(pn != NULL);
 
   if (global_pu->pu_ops.puffs_node_remove == NULL)
-  	return(EINVAL);
+	return(EINVAL);
 
   if (S_ISDIR(pn->pn_va.va_mode))
 	return(EPERM);

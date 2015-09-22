@@ -39,9 +39,7 @@ __RCSID("$NetBSD: dispatcher.c,v 1.46 2013/11/06 19:56:38 christos Exp $");
 
 #include <assert.h>
 #include <errno.h>
-#if !defined(__minix)
 #include <pthread.h>
-#endif /* !defined(__minix) */
 #include <puffs.h>
 #include <puffsdump.h>
 #include <stdio.h>
