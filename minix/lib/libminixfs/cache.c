@@ -223,11 +223,10 @@ int lmfs_get_block(struct buf **bpp, dev_t dev, block64_t block, int how)
 
 static void munmap_t(void *a, int len)
 {
-	vir_bytes av = (vir_bytes) a;
 	assert(a);
 	assert(a != MAP_FAILED);
+	assert(!((vir_bytes)a % PAGE_SIZE));
 	assert(len > 0);
-	assert(!(av % PAGE_SIZE));
 
 	len = roundup(len, PAGE_SIZE);
 
@@ -850,10 +849,13 @@ static void rw_scattered(
   static iovec_t iovec[NR_IOREQS];
   off_t pos;
   unsigned int i, iov_per_block;
+#if !defined(NDEBUG)
   unsigned int start_in_use = bufs_in_use, start_bufqsize = bufqsize;
+#endif /* !defined(NDEBUG) */
 
   if(bufqsize == 0) return;
 
+#if !defined(NDEBUG)
   /* for READING, check all buffers on the list are obtained and held
    * (count > 0)
    */
@@ -872,7 +874,8 @@ static void rw_scattered(
   assert(dev != NO_DEV);
   assert(fs_block_size > 0);
   assert(howmany(fs_block_size, PAGE_SIZE) <= NR_IOREQS);
-  
+#endif /* !defined(NDEBUG) */
+
   /* For WRITING, (Shell) sort buffers on lmfs_blocknr.
    * For READING, the buffers are already sorted.
    */
@@ -966,12 +969,14 @@ static void rw_scattered(
 	}
   }
 
+#if !defined(NDEBUG)
   if(rw_flag == READING) {
   	assert(start_in_use >= start_bufqsize);
 
 	/* READING callers assume all bufs are released. */
 	assert(start_in_use - start_bufqsize == bufs_in_use);
   }
+#endif /* !defined(NDEBUG) */
 }
 
 /*===========================================================================*
