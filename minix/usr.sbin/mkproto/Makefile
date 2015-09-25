@@ -1,4 +1,4 @@
 PROG=	mkproto
-MAN=
+MAN=	mkproto.1
 
 .include <bsd.prog.mk>

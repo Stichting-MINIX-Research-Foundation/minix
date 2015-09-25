@@ -1,4 +1,4 @@
-MAN=	console.4 controller.4 dev.4 fd.4 ip.4 lp.4 mtio.4 tty.4 uds.4
+MAN=	console.4 controller.4 dev.4 fd.4 ip.4 lp.4 mtio.4 tty.4
 
 MLINKS += console.4 keyboard.4
 MLINKS += controller.4 disk.4

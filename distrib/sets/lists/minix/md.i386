@@ -167,6 +167,8 @@
 ./usr/lib/libvirtio.a			minix-sys
 ./usr/lib/libvirtio_pic.a		minix-sys
 ./usr/mdec				minix-sys
+./usr/man/man8/hgfs.8			minix-sys
+./usr/man/man8/vbfs.8			minix-sys
 ./usr/mdec/boot_monitor			minix-sys
 ./usr/mdec/bootxx_cd9660		minix-sys
 ./usr/mdec/bootxx_ext2fs		minix-sys

@@ -3,6 +3,6 @@ PROG=	fsck_mfs
 SRCS=	fsck.c
 CPPFLAGS+= -I${NETBSDSRCDIR}/minix/fs -I${FSCK}
 BINDIR=	/sbin
-MAN=
+MAN=	fsck.mfs.1
 
 .include <bsd.prog.mk>
