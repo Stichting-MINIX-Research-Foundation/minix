@@ -1,4 +1,4 @@
 PROG=	cleantmp
-MAN=
+MAN=	cleantmp.8
 
 .include <bsd.prog.mk>

@@ -1,4 +1,4 @@
 SCRIPTS= lspci.sh
-MAN=
+MAN= lspci.1
 
 .include <bsd.prog.mk>

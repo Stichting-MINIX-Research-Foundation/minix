@@ -1,4 +1,4 @@
 PROG=	pr_routes
-MAN=
+MAN=	pr_routes.8
 
 .include <bsd.prog.mk>

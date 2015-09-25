@@ -1,4 +1,4 @@
 PROG=	fdisk
-MAN=
+MAN=	fdisk.8
 
 .include <bsd.prog.mk>

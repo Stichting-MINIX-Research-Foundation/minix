@@ -1,7 +1,7 @@
 PROG=	pwdauth
 BINDIR=	/usr/lib
 BINMODE= 4755
-MAN=
+MAN=	pwdauth.8
 
 LDADD+=-lcrypt
 
