@@ -1,5 +1,5 @@
 PROG=	backup
-MAN=
+MAN=	backup.8
 
 LINKS+=	${BINDIR}/backup ${BINDIR}/restore
 

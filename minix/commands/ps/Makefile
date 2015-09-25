@@ -2,6 +2,5 @@
 #
 
 PROG=	ps
-MAN=
 
 .include <bsd.prog.mk>
