@@ -1,4 +1,4 @@
 PROG=	ifconfig
-MAN=
+MAN=	ifconfig.8
 
 .include <bsd.prog.mk>
