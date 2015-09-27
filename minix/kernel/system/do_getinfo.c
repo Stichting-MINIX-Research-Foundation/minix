@@ -211,7 +211,6 @@ int do_getinfo(struct proc * caller, message * m_ptr)
 	usec = target->p_sys_time * 1000000 / system_hz;
 	r_usage.ru_stime.tv_sec = usec / 1000000;
 	r_usage.ru_stime.tv_usec = usec % 1000000;
-	r_usage.ru_nsignals = target->p_signal_received;
 	src_vir = (vir_bytes) &r_usage;
 	break;
     }

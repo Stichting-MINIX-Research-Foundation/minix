@@ -1240,8 +1240,6 @@ pm_getrusage_in(struct trace_proc * proc, const message * m_out,
 		put_struct_timeval(proc, "ru_stime", PF_LOCADDR,
 		    (vir_bytes)&buf.ru_stime);
 
-		if (verbose > 0)
-			put_value(proc, "ru_nsignals", "%ld", buf.ru_nsignals);
 		put_close_struct(proc, verbose > 0);
 	}
 	put_equals(proc);
