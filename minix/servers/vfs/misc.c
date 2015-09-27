@@ -975,9 +975,6 @@ int do_getrusage(void)
 
 	r_usage.ru_inblock = 0;
 	r_usage.ru_oublock = 0;
-	r_usage.ru_ixrss = fp->text_size;
-	r_usage.ru_idrss = fp->data_size;
-	r_usage.ru_isrss = DEFAULT_STACK_LIMIT;
 
 	return sys_datacopy_wrapper(SELF, (vir_bytes) &r_usage, who_e,
 		m_in.m_lc_vfs_rusage.addr, (phys_bytes) sizeof(r_usage));

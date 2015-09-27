@@ -217,9 +217,6 @@ int pm_exec(vir_bytes path, size_t path_len, vir_bytes frame, size_t frame_len,
   execi.args.stack_high = minix_get_user_sp();
   execi.args.stack_size = DEFAULT_STACK_LIMIT;
 
-  fp->text_size = 0;
-  fp->data_size = 0;
-
   lookup_init(&resolve, fullpath, PATH_NOFLAGS, &execi.vmp, &execi.vp);
 
   resolve.l_vmnt_lock = VMNT_READ;
@@ -381,8 +378,6 @@ int pm_exec(vir_bytes path, size_t path_len, vir_bytes frame, size_t frame_len,
 
   /* Remember the new name of the process */
   strlcpy(fp->fp_name, execi.args.progname, PROC_NAME_LEN);
-  fp->text_size = execi.args.text_size;
-  fp->data_size = execi.args.data_size;
 
 pm_execfinal:
   if(newfilp) unlock_filp(newfilp);

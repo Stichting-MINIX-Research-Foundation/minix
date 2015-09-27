@@ -68,20 +68,11 @@ main(int argc, char *argv[])
 	}
 	CHECK_NOT_ZERO_FIELD(r_usage1, ru_utime.tv_sec);
 	CHECK_NOT_ZERO_FIELD(r_usage1, ru_maxrss);
-	CHECK_NOT_ZERO_FIELD(r_usage1, ru_ixrss);
-	CHECK_NOT_ZERO_FIELD(r_usage1, ru_idrss);
-	CHECK_NOT_ZERO_FIELD(r_usage1, ru_isrss);
 	if (getrusage(RUSAGE_CHILDREN, &r_usage2) != 0) {
 		e(1);
 		exit(1);
 	}
 	CHECK_NOT_ZERO_FIELD(r_usage2, ru_maxrss);
-	CHECK_NOT_ZERO_FIELD(r_usage2, ru_ixrss);
-	CHECK_NOT_ZERO_FIELD(r_usage2, ru_idrss);
-	CHECK_NOT_ZERO_FIELD(r_usage2, ru_isrss);
-	CHECK_EQUAL_FIELD(r_usage1, r_usage2, ru_ixrss);
-	CHECK_EQUAL_FIELD(r_usage1, r_usage2, ru_idrss);
-	CHECK_EQUAL_FIELD(r_usage1, r_usage2, ru_isrss);
 	if ((child = fork()) == 0) {
 		/*
 		 * We cannot do this part of the test in the parent, since
@@ -110,12 +101,6 @@ main(int argc, char *argv[])
 		}
 		CHECK_NOT_ZERO_FIELD(r_usage3, ru_utime.tv_sec);
 		CHECK_NOT_ZERO_FIELD(r_usage3, ru_maxrss);
-		CHECK_NOT_ZERO_FIELD(r_usage3, ru_ixrss);
-		CHECK_NOT_ZERO_FIELD(r_usage3, ru_idrss);
-		CHECK_NOT_ZERO_FIELD(r_usage3, ru_isrss);
-		CHECK_EQUAL_FIELD(r_usage1, r_usage3, ru_ixrss);
-		CHECK_EQUAL_FIELD(r_usage1, r_usage3, ru_idrss);
-		CHECK_EQUAL_FIELD(r_usage1, r_usage3, ru_isrss);
 	}
 	quit();
 

@@ -1349,11 +1349,6 @@ vfs_getrusage_in(struct trace_proc * proc, const message * m_out,
 			put_value(proc, "ru_inblock", "%ld", buf.ru_inblock);
 			put_value(proc, "ru_oublock", "%ld", buf.ru_oublock);
 		}
-		if (verbose > 0) {
-			put_value(proc, "ru_ixrss", "%ld", buf.ru_ixrss);
-			put_value(proc, "ru_idrss", "%ld", buf.ru_idrss);
-			put_value(proc, "ru_isrss", "%ld", buf.ru_isrss);
-		}
 
 		put_close_struct(proc, verbose > 1);
 	}
