@@ -261,7 +261,6 @@ int dump_core;			/* flag indicating whether to dump core */
   register int proc_nr, proc_nr_e;
   int r;
   pid_t procgrp;
-  struct mproc *p_mp;
   clock_t user_time, sys_time;
   message m;
 
@@ -284,13 +283,13 @@ int dump_core;			/* flag indicating whether to dump core */
   /* If the exited process has a timer pending, kill it. */
   if (rmp->mp_flags & ALARM_ON) set_alarm(rmp, (clock_t) 0);
 
-  /* Do accounting: fetch usage times and accumulate at parent. */
+  /* Do accounting: fetch usage times and save with dead child process.
+   * POSIX forbids accumulation at parent until child has been waited for.
+   */
   if((r=sys_times(proc_nr_e, &user_time, &sys_time, NULL, NULL)) != OK)
   	panic("exit_proc: sys_times failed: %d", r);
-
-  p_mp = &mproc[rmp->mp_parent];			/* process' parent */
-  p_mp->mp_child_utime += user_time + rmp->mp_child_utime; /* add user time */
-  p_mp->mp_child_stime += sys_time + rmp->mp_child_stime; /* add system time */
+  rmp->mp_child_utime += user_time;		/* add user time */
+  rmp->mp_child_stime += sys_time;		/* add system time */
 
   /* Tell the kernel the process is no longer runnable to prevent it from 
    * being scheduled in between the following steps. Then tell VFS that it 
@@ -654,6 +653,12 @@ register struct mproc *child;	/* tells which process is exiting */
   parent->mp_flags &= ~WAITING;		/* parent no longer waiting */
   child->mp_flags &= ~ZOMBIE;		/* child no longer a zombie */
   child->mp_flags |= TOLD_PARENT;	/* avoid informing parent twice */
+
+  /* Now that the child has been waited for, accumulate the times of the
+   * terminated child process at the parent.
+   */
+  parent->mp_child_utime += child->mp_child_utime;
+  parent->mp_child_stime += child->mp_child_stime;
 }
 
 /*===========================================================================*
