@@ -94,6 +94,7 @@ SRCS+=  \
 	vm_cache.c \
 	vm_exit.c \
 	vm_fork.c \
+	vm_getrusage.c \
 	vm_info.c \
 	vm_map_phys.c \
 	vm_memctl.c \

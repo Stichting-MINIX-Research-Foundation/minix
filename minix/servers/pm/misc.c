@@ -7,6 +7,7 @@
  *   do_getepinfo: get the pid/uid/gid of a process given its endpoint
  *   do_getsetpriority: get/set process priority
  *   do_svrctl: process manager control
+ *   do_getrusage: obtain process resource usage information
  */
 
 #include "pm.h"
@@ -404,28 +405,57 @@ int do_svrctl(void)
 /*===========================================================================*
  *				do_getrusage				     *
  *===========================================================================*/
-int do_getrusage()
+int
+do_getrusage(void)
 {
-	int res = 0;
-	clock_t user_time = 0;
-	clock_t sys_time = 0;
+	clock_t user_time, sys_time;
 	struct rusage r_usage;
 	u64_t usec;
-	if (m_in.m_lc_pm_rusage.who != RUSAGE_SELF &&
-		m_in.m_lc_pm_rusage.who != RUSAGE_CHILDREN)
-		return EINVAL;
-	if ((res = sys_getrusage(&r_usage, who_e)) < 0)
-		return res;
+	int r, children;
 
-	if (m_in.m_lc_pm_rusage.who == RUSAGE_CHILDREN) {
-		usec = mp->mp_child_utime * 1000000 / sys_hz();
-		r_usage.ru_utime.tv_sec = usec / 1000000;
-		r_usage.ru_utime.tv_usec = usec % 1000000;
-		usec = mp->mp_child_stime * 1000000 / sys_hz();
-		r_usage.ru_stime.tv_sec = usec / 1000000;
-		r_usage.ru_stime.tv_usec = usec % 1000000;
+	if (m_in.m_lc_pm_rusage.who != RUSAGE_SELF &&
+	    m_in.m_lc_pm_rusage.who != RUSAGE_CHILDREN)
+		return EINVAL;
+
+	/*
+	 * TODO: first relay the call to VFS.  As is, VFS does not have any
+	 * fields it can fill with meaningful values, but this may change in
+	 * the future.  In that case, PM would first have to use the tell_vfs()
+	 * system to get those values from VFS, and do the rest here upon
+	 * getting the response.
+	 */
+
+	memset(&r_usage, 0, sizeof(r_usage));
+
+	children = (m_in.m_lc_pm_rusage.who == RUSAGE_CHILDREN);
+
+	/*
+	 * Get system times.  For RUSAGE_SELF, get the times for the calling
+	 * process from the kernel.  For RUSAGE_CHILDREN, we already have the
+	 * values we should return right here.
+	 */
+	if (!children) {
+		if ((r = sys_times(who_e, &user_time, &sys_time, NULL,
+		    NULL)) != OK)
+			return r;
+	} else {
+		user_time = mp->mp_child_utime;
+		sys_time = mp->mp_child_stime;
 	}
 
+	/* In both cases, convert from clock ticks to microseconds. */
+	usec = user_time * 1000000 / sys_hz();
+	r_usage.ru_utime.tv_sec = usec / 1000000;
+	r_usage.ru_utime.tv_usec = usec % 1000000;
+	usec = sys_time * 1000000 / sys_hz();
+	r_usage.ru_stime.tv_sec = usec / 1000000;
+	r_usage.ru_stime.tv_usec = usec % 1000000;
+
+	/* Get additional fields from VM. */
+	if ((r = vm_getrusage(who_e, &r_usage, children)) != OK)
+		return r;
+
+	/* Finally copy the structure to the caller. */
 	return sys_datacopy(SELF, (vir_bytes)&r_usage, who_e,
-		m_in.m_lc_pm_rusage.addr, (vir_bytes) sizeof(r_usage));
+	    m_in.m_lc_pm_rusage.addr, (vir_bytes)sizeof(r_usage));
 }

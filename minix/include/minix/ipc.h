@@ -775,13 +775,6 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_lc_vfs_readwrite);
 
 typedef struct {
-	vir_bytes addr;
-
-	uint8_t padding[52];
-} mess_lc_vfs_rusage;
-_ASSERT_MSG_SIZE(mess_lc_vfs_rusage);
-
-typedef struct {
 	uint32_t nfds;
 	fd_set *readfds;
 	fd_set *writefds;
@@ -853,13 +846,6 @@ typedef struct {
 	uint8_t		padding[44];
 } mess_lc_vm_getphys;
 _ASSERT_MSG_SIZE(mess_lc_vm_getphys);
-
-typedef struct {
-	vir_bytes addr;
-
-	uint8_t padding[52];
-} mess_lc_vm_rusage;
-_ASSERT_MSG_SIZE(mess_lc_vm_rusage);
 
 typedef struct {
 	endpoint_t	forwhom;
@@ -1367,6 +1353,15 @@ typedef struct {
 	uint8_t		padding[48];
 } mess_lsys_vm_query_exit;
 _ASSERT_MSG_SIZE(mess_lsys_vm_query_exit);
+
+typedef struct {
+	endpoint_t	endpt;
+	vir_bytes	addr;
+	int		children;
+
+	uint8_t		padding[44];
+} mess_lsys_vm_rusage;
+_ASSERT_MSG_SIZE(mess_lsys_vm_rusage);
 
 typedef struct {
 	endpoint_t	ep;
@@ -2117,7 +2112,6 @@ typedef struct noxfer_message {
 		mess_lc_vfs_pipe2	m_lc_vfs_pipe2;
 		mess_lc_vfs_readlink	m_lc_vfs_readlink;
 		mess_lc_vfs_readwrite	m_lc_vfs_readwrite;
-		mess_lc_vfs_rusage	m_lc_vfs_rusage;
 		mess_lc_vfs_select	m_lc_vfs_select;
 		mess_lc_vfs_stat	m_lc_vfs_stat;
 		mess_lc_vfs_statvfs1	m_lc_vfs_statvfs1;
@@ -2126,7 +2120,6 @@ typedef struct noxfer_message {
 		mess_lc_vfs_umount	m_lc_vfs_umount;
 		mess_lc_vm_brk		m_lc_vm_brk;
 		mess_lc_vm_getphys	m_lc_vm_getphys;
-		mess_lc_vm_rusage	m_lc_vm_rusage;
 		mess_lc_vm_shm_unmap	m_lc_vm_shm_unmap;
 		mess_lchardriver_vfs_reply m_lchardriver_vfs_reply;
 		mess_lchardriver_vfs_sel1 m_lchardriver_vfs_sel1;
@@ -2183,6 +2176,7 @@ typedef struct noxfer_message {
 		mess_lsys_vm_info	m_lsys_vm_info;
 		mess_lsys_vm_map_phys	m_lsys_vm_map_phys;
 		mess_lsys_vm_query_exit	m_lsys_vm_query_exit;
+		mess_lsys_vm_rusage	m_lsys_vm_rusage;
 		mess_lsys_vm_unmap_phys	m_lsys_vm_unmap_phys;
 		mess_lsys_vm_update	m_lsys_vm_update;
 		mess_lsys_vm_vmremap	m_lsys_vm_vmremap;

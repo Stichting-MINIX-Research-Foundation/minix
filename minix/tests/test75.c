@@ -72,7 +72,6 @@ main(int argc, char *argv[])
 		e(1);
 		exit(1);
 	}
-	CHECK_NOT_ZERO_FIELD(r_usage2, ru_maxrss);
 	if ((child = fork()) == 0) {
 		/*
 		 * We cannot do this part of the test in the parent, since
@@ -100,7 +99,6 @@ main(int argc, char *argv[])
 			exit(1);
 		}
 		CHECK_NOT_ZERO_FIELD(r_usage3, ru_utime.tv_sec);
-		CHECK_NOT_ZERO_FIELD(r_usage3, ru_maxrss);
 	}
 	quit();
 

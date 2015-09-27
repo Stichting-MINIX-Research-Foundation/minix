@@ -966,16 +966,10 @@ void panic_hook(void)
  *===========================================================================*/
 int do_getrusage(void)
 {
-	int res;
-	struct rusage r_usage;
-
-	if ((res = sys_datacopy_wrapper(who_e, m_in.m_lc_vfs_rusage.addr, SELF,
-		(vir_bytes) &r_usage, (vir_bytes) sizeof(r_usage))) < 0)
-		return res;
-
-	r_usage.ru_inblock = 0;
-	r_usage.ru_oublock = 0;
-
-	return sys_datacopy_wrapper(SELF, (vir_bytes) &r_usage, who_e,
-		m_in.m_lc_vfs_rusage.addr, (phys_bytes) sizeof(r_usage));
+	/* Obsolete vfs_getrusage(2) call from userland. The getrusage call is
+	 * now fully handled by PM, and for any future fields that should be
+	 * supplied by VFS, VFS should be queried by PM rather than by the user
+	 * program directly.  TODO: remove this call after the next release.
+	 */
+	return OK;
 }

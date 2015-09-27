@@ -429,21 +429,47 @@ int do_getrusage(message *m)
 	int res, slot;
 	struct vmproc *vmp;
 	struct rusage r_usage;
-	if ((res = vm_isokendpt(m->m_source, &slot)) != OK)
+
+	/* If the request is not from PM, it is coming directly from userland.
+	 * This is an obsolete construction. In the future, userland programs
+	 * should no longer be allowed to call vm_getrusage(2) directly at all.
+	 * For backward compatibility, we simply return success for now.
+	 */
+	if (m->m_source != PM_PROC_NR)
+		return OK;
+
+	/* Get the process for which resource usage is requested. */
+	if ((res = vm_isokendpt(m->m_lsys_vm_rusage.endpt, &slot)) != OK)
 		return ESRCH;
 
 	vmp = &vmproc[slot];
 
-	if ((res = sys_datacopy(m->m_source, m->m_lc_vm_rusage.addr,
+	/* We are going to change only a few fields, so copy in the rusage
+	 * structure first. The structure is still in PM's address space at
+	 * this point, so use the message source.
+	 */
+	if ((res = sys_datacopy(m->m_source, m->m_lsys_vm_rusage.addr,
 		SELF, (vir_bytes) &r_usage, (vir_bytes) sizeof(r_usage))) < 0)
 		return res;
 
-	r_usage.ru_maxrss = vmp->vm_total_max;
-	r_usage.ru_minflt = vmp->vm_minor_page_fault;
-	r_usage.ru_majflt = vmp->vm_major_page_fault;
+	if (!m->m_lsys_vm_rusage.children) {
+		r_usage.ru_maxrss = vmp->vm_total_max / 1024L; /* unit is KB */
+		r_usage.ru_minflt = vmp->vm_minor_page_fault;
+		r_usage.ru_majflt = vmp->vm_major_page_fault;
+	} else {
+		/* XXX TODO: return the fields for terminated, waited-for
+		 * children of the given process. We currently do not have this
+		 * information! In the future, rather than teaching VM about
+		 * the process hierarchy, PM should probably tell VM at process
+		 * exit time which other process should inherit its resource
+		 * usage fields. For now, we assume PM clears the fields before
+		 * making this call, so we don't zero the fields explicitly.
+		 */
+	}
 
+	/* Copy out the resulting structure back to PM. */
 	return sys_datacopy(SELF, (vir_bytes) &r_usage, m->m_source,
-		m->m_lc_vm_rusage.addr, (vir_bytes) sizeof(r_usage));
+		m->m_lsys_vm_rusage.addr, (vir_bytes) sizeof(r_usage));
 }
 
 /*===========================================================================*

@@ -111,7 +111,7 @@
 #define VFS_GETVFSSTAT		(VFS_BASE + 39)
 #define VFS_STATVFS1 	 	(VFS_BASE + 40)
 #define VFS_FSTATVFS1		(VFS_BASE + 41)
-#define VFS_GETRUSAGE		(VFS_BASE + 42)
+#define VFS_GETRUSAGE		(VFS_BASE + 42)		/* obsolete */
 #define VFS_SVRCTL		(VFS_BASE + 43)
 #define VFS_GCOV_FLUSH		(VFS_BASE + 44)
 #define VFS_MAPDRIVER		(VFS_BASE + 45)
