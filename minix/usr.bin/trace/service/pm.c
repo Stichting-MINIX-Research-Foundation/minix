@@ -18,7 +18,7 @@ pm_exit_out(struct trace_proc * proc, const message * m_out)
 	return CT_NORETURN;
 }
 
-static const struct flags waitpid_options[] = {
+static const struct flags wait4_options[] = {
 	FLAG(WNOHANG),
 	FLAG(WUNTRACED),
 	FLAG(WALTSIG),
@@ -29,7 +29,7 @@ static const struct flags waitpid_options[] = {
 };
 
 static void
-put_waitpid_status(struct trace_proc * proc, const char * name, int status)
+put_wait4_status(struct trace_proc * proc, const char * name, int status)
 {
 	const char *signame;
 	int sig;
@@ -85,16 +85,39 @@ put_waitpid_status(struct trace_proc * proc, const char * name, int status)
 }
 
 static int
-pm_waitpid_out(struct trace_proc * proc, const message * m_out)
+pm_wait4_out(struct trace_proc * proc, const message * m_out)
 {
 
-	put_value(proc, "pid", "%d", m_out->m_lc_pm_waitpid.pid);
+	put_value(proc, "pid", "%d", m_out->m_lc_pm_wait4.pid);
 
 	return CT_NOTDONE;
 }
 
 static void
-pm_waitpid_in(struct trace_proc * proc, const message * m_out,
+put_struct_rusage(struct trace_proc * proc, const char * name, int flags,
+	vir_bytes addr)
+{
+	struct rusage ru;
+
+	if (!put_open_struct(proc, name, flags, addr, &ru, sizeof(ru)))
+		return;
+
+	put_struct_timeval(proc, "ru_utime", PF_LOCADDR,
+	    (vir_bytes)&ru.ru_utime);
+	put_struct_timeval(proc, "ru_stime", PF_LOCADDR,
+	    (vir_bytes)&ru.ru_stime);
+
+	if (verbose > 0) {
+		put_value(proc, "ru_maxrss", "%ld", ru.ru_maxrss);
+		put_value(proc, "ru_minflt", "%ld", ru.ru_minflt);
+		put_value(proc, "ru_majflt", "%ld", ru.ru_majflt);
+	}
+
+	put_close_struct(proc, verbose > 0);
+}
+
+static void
+pm_wait4_in(struct trace_proc * proc, const message * m_out,
 	const message * m_in, int failed)
 {
 
@@ -105,12 +128,12 @@ pm_waitpid_in(struct trace_proc * proc, const message * m_out,
 	 * unknown pointer.
 	 */
 	if (!failed && m_in->m_type > 0)
-		put_waitpid_status(proc, "status",
-		    m_in->m_pm_lc_waitpid.status);
+		put_wait4_status(proc, "status", m_in->m_pm_lc_wait4.status);
 	else
 		put_field(proc, "status", "&..");
-	put_flags(proc, "options", waitpid_options, COUNT(waitpid_options),
-	    "0x%x", m_out->m_lc_pm_waitpid.options);
+	put_flags(proc, "options", wait4_options, COUNT(wait4_options),
+	    "0x%x", m_out->m_lc_pm_wait4.options);
+	put_struct_rusage(proc, "rusage", failed, m_out->m_lc_pm_wait4.addr);
 	put_equals(proc);
 	put_result(proc);
 }
@@ -1230,24 +1253,8 @@ static void
 pm_getrusage_in(struct trace_proc * proc, const message * m_out,
 	const message * __unused m_in, int failed)
 {
-	struct rusage buf;
 
-	/* Inline; we will certainly not be reusing this anywhere else. */
-	if (put_open_struct(proc, "rusage", failed, m_out->m_lc_pm_rusage.addr,
-	    &buf, sizeof(buf))) {
-		put_struct_timeval(proc, "ru_utime", PF_LOCADDR,
-		    (vir_bytes)&buf.ru_utime);
-		put_struct_timeval(proc, "ru_stime", PF_LOCADDR,
-		    (vir_bytes)&buf.ru_stime);
-
-		if (verbose > 0) {
-			put_value(proc, "ru_maxrss", "%ld", buf.ru_maxrss);
-			put_value(proc, "ru_minflt", "%ld", buf.ru_minflt);
-			put_value(proc, "ru_majflt", "%ld", buf.ru_majflt);
-		}
-
-		put_close_struct(proc, verbose > 0);
-	}
+	put_struct_rusage(proc, "rusage", failed, m_out->m_lc_pm_rusage.addr);
 	put_equals(proc);
 	put_result(proc);
 }
@@ -1335,7 +1342,7 @@ pm_sprof_out(struct trace_proc * proc, const message * m_out)
 static const struct call_handler pm_map[] = {
 	PM_CALL(EXIT) = HANDLER("exit", pm_exit_out, default_in),
 	PM_CALL(FORK) = HANDLER("fork", default_out, default_in),
-	PM_CALL(WAITPID) = HANDLER("waitpid", pm_waitpid_out, pm_waitpid_in),
+	PM_CALL(WAIT4) = HANDLER("wait4", pm_wait4_out, pm_wait4_in),
 	PM_CALL(GETPID) = HANDLER("getpid", default_out, pm_getpid_in),
 	PM_CALL(SETUID) = HANDLER("setuid", pm_setuid_out, default_in),
 	PM_CALL(GETUID) = HANDLER("getuid", default_out, pm_getuid_in),
@@ -1385,7 +1392,7 @@ static const struct call_handler pm_map[] = {
 	    pm_clock_gettime_in),
 	PM_CALL(CLOCK_SETTIME) = HANDLER_NAME(pm_clock_settime_name,
 	    pm_clock_settime_out, default_in),
-	PM_CALL(GETRUSAGE) = HANDLER("pm_getrusage", pm_getrusage_out,
+	PM_CALL(GETRUSAGE) = HANDLER("getrusage", pm_getrusage_out,
 	    pm_getrusage_in),
 	PM_CALL(REBOOT) = HANDLER("reboot", pm_reboot_out, default_in),
 	PM_CALL(SVRCTL) = HANDLER("pm_svrctl", pm_svrctl_out, pm_svrctl_in),

@@ -573,10 +573,11 @@ _ASSERT_MSG_SIZE(mess_lc_pm_time);
 typedef struct {
 	pid_t pid;
 	int options;
+	vir_bytes addr;			/* struct rusage * */
 
-	uint8_t padding[48];
-} mess_lc_pm_waitpid;
-_ASSERT_MSG_SIZE(mess_lc_pm_waitpid);
+	uint8_t padding[44];
+} mess_lc_pm_wait4;
+_ASSERT_MSG_SIZE(mess_lc_pm_wait4);
 
 typedef struct {
 	cp_grant_id_t grant;
@@ -1519,8 +1520,8 @@ typedef struct {
 	int status;
 
 	uint8_t padding[52];
-} mess_pm_lc_waitpid;
-_ASSERT_MSG_SIZE(mess_pm_lc_waitpid);
+} mess_pm_lc_wait4;
+_ASSERT_MSG_SIZE(mess_pm_lc_wait4);
 
 typedef struct {
 	int suid;
@@ -2090,7 +2091,7 @@ typedef struct noxfer_message {
 		mess_lc_pm_sprof	m_lc_pm_sprof;
 		mess_lc_pm_sysuname	m_lc_pm_sysuname;
 		mess_lc_pm_time		m_lc_pm_time;
-		mess_lc_pm_waitpid	m_lc_pm_waitpid;
+		mess_lc_pm_wait4	m_lc_pm_wait4;
 		mess_lc_readclock_rtcdev m_lc_readclock_rtcdev;
 		mess_lc_svrctl		m_lc_svrctl;
 		mess_lc_vfs_chown	m_lc_vfs_chown;
@@ -2196,7 +2197,7 @@ typedef struct noxfer_message {
 		mess_pm_lc_ptrace	m_pm_lc_ptrace;
 		mess_pm_lc_sigset	m_pm_lc_sigset;
 		mess_pm_lc_time		m_pm_lc_time;
-		mess_pm_lc_waitpid	m_pm_lc_waitpid;
+		mess_pm_lc_wait4	m_pm_lc_wait4;
 		mess_pm_lexec_exec_new	m_pm_lexec_exec_new;
 		mess_pm_lsys_getepinfo	m_pm_lsys_getepinfo;
 		mess_pm_lsys_getprocnr	m_pm_lsys_getprocnr;

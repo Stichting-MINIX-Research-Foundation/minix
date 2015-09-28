@@ -265,10 +265,12 @@ int signo;
  
   rmp->mp_flags |= TRACE_STOPPED;
   if (wait_test(rpmp, rmp)) {
+	/* TODO: rusage support */
+
 	sigdelset(&rmp->mp_sigtrace, signo);
 
 	rpmp->mp_flags &= ~WAITING;	/* parent is no longer waiting */
-	rpmp->mp_reply.m_pm_lc_waitpid.status = W_STOPCODE(signo);
+	rpmp->mp_reply.m_pm_lc_wait4.status = W_STOPCODE(signo);
 	reply(rmp->mp_tracer, rmp->mp_pid);
   }
 }
