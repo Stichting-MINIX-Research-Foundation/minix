@@ -25,7 +25,7 @@ SUBDIR= asa \
 	\
 	sdiff sed seq shar shlock \
 	shuffle  sort split stat su \
-	tail tee tic touch tput \
+	tail tee tic time touch tput \
 	tr true tsort tty ul uname unexpand unifdef \
 	uniq units unvis unzip users \
 	uudecode uuencode uuidgen vis \
