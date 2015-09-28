@@ -25,7 +25,7 @@ SUBDIR=	add_route arp at backup \
 	slip spell sprofalyze sprofdiff srccrc \
 	svrctl swifi synctree sysenv \
 	tcpd tcpdp tcpstat telnet \
-	telnetd term termcap tget time \
+	telnetd term termcap tget \
 	truncate udpstat umount \
 	update version vol \
 	writeisofs fetch \
