@@ -410,7 +410,6 @@ do_getrusage(void)
 {
 	clock_t user_time, sys_time;
 	struct rusage r_usage;
-	u64_t usec;
 	int r, children;
 
 	if (m_in.m_lc_pm_rusage.who != RUSAGE_SELF &&
@@ -444,12 +443,7 @@ do_getrusage(void)
 	}
 
 	/* In both cases, convert from clock ticks to microseconds. */
-	usec = user_time * 1000000 / sys_hz();
-	r_usage.ru_utime.tv_sec = usec / 1000000;
-	r_usage.ru_utime.tv_usec = usec % 1000000;
-	usec = sys_time * 1000000 / sys_hz();
-	r_usage.ru_stime.tv_sec = usec / 1000000;
-	r_usage.ru_stime.tv_usec = usec % 1000000;
+	set_rusage_times(&r_usage, user_time, sys_time);
 
 	/* Get additional fields from VM. */
 	if ((r = vm_getrusage(who_e, &r_usage, children)) != OK)

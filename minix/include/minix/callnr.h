@@ -13,7 +13,7 @@
 /* Message type 0 is traditionally reserved. */
 #define PM_EXIT			(PM_BASE + 1)
 #define PM_FORK			(PM_BASE + 2)
-#define PM_WAITPID		(PM_BASE + 3)
+#define PM_WAIT4		(PM_BASE + 3)
 #define PM_GETPID		(PM_BASE + 4)
 #define PM_SETUID		(PM_BASE + 5)
 #define PM_GETUID		(PM_BASE + 6)

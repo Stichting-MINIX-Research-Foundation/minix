@@ -7,6 +7,7 @@
  *   nice_to_priority	convert nice level to priority queue
  *   pm_isokendpt:	check the validity of an endpoint
  *   tell_vfs:		send a request to VFS on behalf of a process
+ *   set_rusage_times:	store user and system times in rusage structure
  */
 
 #include "pm.h"
@@ -135,4 +136,21 @@ message *m_ptr;
   	panic("unable to send to VFS: %d", r);
 
   rmp->mp_flags |= VFS_CALL;
+}
+
+/*===========================================================================*
+ *				set_rusage_times		 	     *
+ *===========================================================================*/
+void
+set_rusage_times(struct rusage * r_usage, clock_t user_time, clock_t sys_time)
+{
+	u64_t usec;
+
+	usec = user_time * 1000000 / sys_hz();
+	r_usage->ru_utime.tv_sec = usec / 1000000;
+	r_usage->ru_utime.tv_usec = usec % 1000000;
+
+	usec = sys_time * 1000000 / sys_hz();
+	r_usage->ru_stime.tv_sec = usec / 1000000;
+	r_usage->ru_stime.tv_usec = usec % 1000000;
 }

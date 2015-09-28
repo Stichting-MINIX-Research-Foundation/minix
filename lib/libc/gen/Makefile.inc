@@ -19,7 +19,6 @@ SRCS+= dhcp_gettag.c dhcp_settag.c fsversion.c gcov.c gcov_flush.c itoa.c \
 # 	closefrom.c confstr.c extattr.c getdevmajor.c \
 #	pthread_atfork.c \
 #	sysctlbyname.c sysctlgetmibinfo.c sysctlnametomib.c
-#	wait3.c
 
 # To be ported
 # nlist.c nlist_aout.c nlist_coff.c nlist_ecoff.c nlist_elf32.c nlist_elf64.c
@@ -55,7 +54,7 @@ SRCS+= 	_errno.c alarm.c alphasort.c arc4random.c assert.c basename.c clock.c \
 	syslog.c telldir.c time.c \
 	times.c toascii.c tolower_.c ttyname.c ttyslot.c toupper_.c ualarm.c \
 	ulimit.c uname.c unvis.c usleep.c utime.c utimens.c utmp.c \
-	utmpx.c valloc.c vis.c wait.c waitpid.c warn.c warnx.c \
+	utmpx.c valloc.c vis.c wait.c wait3.c waitpid.c warn.c warnx.c \
 	vwarn.c vwarnx.c verr.c verrx.c wordexp.c
 .endif
 

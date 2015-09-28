@@ -19,7 +19,8 @@ SRCS+= 	accept.c access.c adjtime.c bind.c brk.c sbrk.c m_closefrom.c getsid.c \
 	vectorio.c shutdown.c sigaction.c sigpending.c sigreturn.c sigsuspend.c\
 	sigprocmask.c socket.c socketpair.c stat.c statvfs.c svrctl.c \
 	symlink.c \
-	sync.c syscall.c sysuname.c truncate.c umask.c unlink.c write.c \
+	sync.c syscall.c sysuname.c truncate.c umask.c unlink.c \
+	wait4.c write.c \
 	utimensat.c utimes.c futimes.c lutimes.c futimens.c \
 	_exit.c _ucontext.c environ.c __getcwd.c vfork.c sizeup.c init.c \
 	getrusage.c setrlimit.c setpgid.c

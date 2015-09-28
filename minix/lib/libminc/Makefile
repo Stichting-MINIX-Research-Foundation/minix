@@ -192,7 +192,7 @@ CLEANFILES+=	errlist.c
 .for f in \
 	_errno.o \
 	getprogname.o setprogname.o execle.o sleep.o time.o \
-	ctype_.o tolower_.o toupper_.o usleep.o sigsetops.o 
+	ctype_.o tolower_.o toupper_.o usleep.o waitpid.o sigsetops.o
 ${f} ${f:C/\.o/.bc/}:	${LIBCDIR}/gen/${f:C/\.o/.c/}
 OBJS+=	${f}
 CLEANFILES+= ${f}
@@ -209,7 +209,7 @@ CPPFLAGS.tolower_.c+= -I${LIBCDIR}/locale
 CPPFLAGS.toupper_.c+= -I${LIBCDIR}/locale
 
 .for f in \
-	waitpid.o read_tsc_64.o fslib.o itoa.o oneC_sum.o
+	read_tsc_64.o fslib.o itoa.o oneC_sum.o
 ${f} ${f:C/\.o/.bc/}:	${LIBMINIXCDIR}/gen/${f:C/\.o/.c/}
 OBJS+=	${f}
 CLEANFILES+= ${f}
@@ -289,7 +289,7 @@ CPPFLAGS.strcspn.c+=	-D_LIBC
 	init.o kernel_utils.o link.o loadname.o lseek.o _mcontext.o mknod.o \
 	mmap.o nanosleep.o open.o pread.o pwrite.o read.o sbrk.o \
 	select.o setuid.o sigprocmask.o stack_utils.o stat.o stime.o \
-	syscall.o _ucontext.o umask.o unlink.o write.o \
+	syscall.o _ucontext.o umask.o unlink.o wait4.o write.o \
 	kill.o
 ${f} ${f:C/\.o/.bc/}:	${LIBMINIXCDIR}/sys/${f:C/\.o/.c/}
 OBJS+=	${f}
