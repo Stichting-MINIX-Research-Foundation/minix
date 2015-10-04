@@ -107,7 +107,7 @@ int do_lookup(ino_t dir_nr, char *name, struct fsdriver_node *node,
 {
 /* Resolve a path string to an inode.
  */
-  struct inode *dir_ino, *ino;
+  struct inode *dir_ino, *ino = NULL;
   struct sffs_attr attr;
   char path[PATH_MAX];
   int r;
