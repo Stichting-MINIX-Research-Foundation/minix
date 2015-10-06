@@ -1,0 +1,8 @@
+
+Welcome to MINIX.
+
+The system is now running and many commands work normally.  To use MINIX
+in a serious way, you need to install it to your hard disk.
+
+Type "root" at the login prompt, and hit enter.
+Note: the setup script can't be used when booting over the network.

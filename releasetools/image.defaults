@@ -18,3 +18,5 @@
 
 : ${RC=../local/rc.${ARCH}}
 : ${ASR_HACK=0}
+
+: ${SYSLINUX_GIT_VERSION=d00acec90ccc5e05e5b80bfd96d17c4dc4a7d36e}
