@@ -45,7 +45,7 @@ CD CONTENTS:
 This CD contains:
 
    - README.TXT              This file
-   - i386/                   Base system distribution files, for
+   - usr/i386/               Base system distribution files, for
                              installation
    - usr/packages/           Extra packages, if bundled with this CD
    - Everything else         MINIX 3 files

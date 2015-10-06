@@ -5,10 +5,6 @@ set -e
 # This script creates a bootable image and should at some point in the future
 # be replaced by the proper NetBSD infrastructure.
 #
-# Supported command line switches:
-#   -i   build iso image instead of qemu imaeg
-#   -b   bitcode build, increase partition sizes as necessary
-#
 
 : ${ARCH=i386}
 : ${OBJ=../obj.${ARCH}}
@@ -35,46 +31,27 @@ fi
 . releasetools/image.defaults
 . releasetools/image.functions
 
-# all sizes are written in 512 byte blocks
-ROOTSIZEARG="-b $((${ROOT_SIZE} / 512 / 8))"
-USRSIZEARG="-b $((${USR_SIZE} / 512 / 8))"
-HOMESIZEARG="-b $((${HOME_SIZE} / 512 / 8))"
-
-# where the kernel & boot modules will be
-MODDIR=${DESTDIR}/boot/minix/.temp
-
 echo "Building work directory..."
 build_workdir "$SETS"
 
 echo "Adding extra files..."
+workdir_add_hdd_files
 
-# create a fstab entry in /etc
-cat >${ROOT_DIR}/etc/fstab <<END_FSTAB
-/dev/c0d0p1	/usr		mfs	rw			0	2
-/dev/c0d0p2	/home		mfs	rw			0	2
-none		/sys		devman	rw,rslabel=devman	0	0
-none		/dev/pts	ptyfs	rw,rslabel=ptyfs	0	0
-END_FSTAB
-add_file_spec "etc/fstab" extra.fstab
-
-cp ${DESTDIR}/usr/mdec/boot_monitor ${ROOT_DIR}/boot_monitor
-add_file_spec "boot_monitor" extra.boot
-
+# add kernels
 add_link_spec "boot/minix_latest" "minix_default" extra.kernel
 workdir_add_kernel minix_default
 workdir_add_kernel minix/$RELEASE_VERSION
 
 # add boot.cfg
 cat >${ROOT_DIR}/boot.cfg <<END_BOOT_CFG
-clear=1
-timeout=5
-default=2
 menu=Start MINIX 3:load_mods /boot/minix_default/mod*; multiboot /boot/minix_default/kernel rootdevname=c0d0p0
 menu=Start latest MINIX 3:load_mods /boot/minix_latest/mod*; multiboot /boot/minix_latest/kernel rootdevname=c0d0p0
 menu=Start latest MINIX 3 in single user mode:load_mods /boot/minix_latest/mod*; multiboot /boot/minix_latest/kernel rootdevname=c0d0p0 bootopts=-s
 menu=Start MINIX 3 ALIX:load_mods /boot/minix_default/mod*;multiboot /boot/minix_default/kernel rootdevname=c0d0p0 console=tty00 consdev=com0 ata_no_dma=1
 menu=Edit menu option:edit
 menu=Drop to boot prompt:prompt
+clear=1
+timeout=5
 default=2
 menu=Start MINIX 3 ($RELEASE_VERSION):load_mods /boot/minix/$RELEASE_VERSION/mod*; multiboot /boot/minix/$RELEASE_VERSION/kernel rootdevname=c0d0p0
 END_BOOT_CFG
@@ -97,6 +74,12 @@ fi
 # Generate /root, /usr and /home partition images.
 #
 echo "Writing disk image..."
+
+# all sizes are written in 512 byte blocks
+ROOTSIZEARG="-b $((${ROOT_SIZE} / 512 / 8))"
+USRSIZEARG="-b $((${USR_SIZE} / 512 / 8))"
+HOMESIZEARG="-b $((${HOME_SIZE} / 512 / 8))"
+
 ROOT_START=${BOOTXX_SECS}
 echo " * ROOT"
 _ROOT_SIZE=$(${CROSS_TOOLS}/nbmkfs.mfs -d ${ROOTSIZEARG} -I $((${ROOT_START}*512)) ${IMG} ${WORK_DIR}/proto.root)
@@ -117,8 +100,11 @@ _HOME_SIZE=$(($_HOME_SIZE / 512))
 ${CROSS_TOOLS}/nbpartition -m ${IMG} ${BOOTXX_SECS} 81:${_ROOT_SIZE} 81:${_USR_SIZE} 81:${_HOME_SIZE}
 ${CROSS_TOOLS}/nbinstallboot -f -m ${ARCH} ${IMG} ${DESTDIR}/usr/mdec/bootxx_minixfs3
 
-
-mods="`( cd ${MODDIR}; echo mod* | tr ' ' ',' )`"
+echo ""
 echo "Disk image at `pwd`/${IMG}"
+echo ""
+echo "To boot this image on kvm using the bootloader:"
+echo "qemu-system-i386 --enable-kvm -m 256 -hda `pwd`/${IMG}"
+echo ""
 echo "To boot this image on kvm:"
-echo "cd ${MODDIR} && qemu-system-i386 --enable-kvm -m 256 -kernel kernel -append \"rootdevname=c0d0p0\" -initrd \"${mods}\" -hda `pwd`/${IMG}"
+echo "cd ${MODDIR} && qemu-system-i386 --enable-kvm -m 256M -kernel kernel -append \"rootdevname=c0d0p0\" -initrd \"${mods}\" -hda `pwd`/${IMG}"

@@ -1,0 +1,7 @@
+
+Welcome to MINIX.
+
+This is a boot-to-ramdisk system, self-contained in RAM.  You may remove
+the boot media from the computer as it will not be used from now on.
+
+Type "root" at the login prompt, and hit enter.
