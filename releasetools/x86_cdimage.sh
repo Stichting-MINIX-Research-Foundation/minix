@@ -13,6 +13,7 @@ set -e
 
 : ${SETS="minix-base"}
 : ${IMG=minix_x86.iso}
+: ${BUNDLE_SETS=1}
 
 if [ ! -f ${BUILDSH} ]
 then
@@ -24,23 +25,13 @@ fi
 . releasetools/image.defaults
 . releasetools/image.functions
 
-# where the kernel & boot modules will be
-MODDIR=${DESTDIR}/boot/minix/.temp
-
 echo "Building work directory..."
 build_workdir "$SETS"
 
 echo "Adding extra files..."
-workdir_add_sets
-workdir_add_cdfiles
+workdir_add_cd_files
 
-# create a fstab entry in /etc
-cat >${ROOT_DIR}/etc/fstab <<END_FSTAB
-none		/sys		devman	rw,rslabel=devman	0	0
-none		/dev/pts	ptyfs	rw,rslabel=ptyfs	0	0
-END_FSTAB
-add_file_spec "etc/fstab" extra.fstab
-
+# add kernel
 workdir_add_kernel minix_default
 
 # add boot.cfg
@@ -70,10 +61,6 @@ load=/boot/minix_default/mod12_init
 END_BOOT_CFG
 add_file_spec "boot.cfg" extra.cdfiles
 
-# add README.TXT
-cp releasetools/release/cd/README.TXT ${ROOT_DIR}/README.TXT
-add_file_spec "README.TXT" extra.cdfiles
-
 # set correct message of the day (log in and install tip)
 cp releasetools/release/cd/etc/issue ${ROOT_DIR}/etc/issue
 add_file_spec "etc/issue" extra.cdfiles
@@ -94,9 +81,11 @@ fi
 echo "Writing ISO..."
 ${CROSS_TOOLS}/nbmakefs -t cd9660 -F ${WORK_DIR}/input -o "rockridge,bootimage=i386;${DESTDIR}/usr/mdec/bootxx_cd9660,label=MINIX" ${IMG} ${ROOT_DIR}
 
-#mods=$(cd ${MODDIR}; echo mod* | tr ' ' ',')
-
+echo ""
 echo "ISO image at `pwd`/${IMG}"
-echo "To boot this image on kvm:"
-#echo "cd ${MODDIR} && qemu-system-i386 --enable-kvm -kernel kernel -append \"bootcd=1 cdproberoot=1 disable=inet\" -initrd \"${mods}\" -cdrom `pwd`/${IMG}"
+echo ""
+echo "To boot this image on kvm using the bootloader:"
 echo "qemu-system-i386 --enable-kvm -cdrom `pwd`/${IMG}"
+echo ""
+echo "To boot this image on kvm:"
+echo "cd ${MODDIR} && qemu-system-i386 --enable-kvm -kernel kernel -append \"bootcd=1 cdproberoot=1 disable=inet\" -initrd \"${mods}\" -cdrom `pwd`/${IMG}"

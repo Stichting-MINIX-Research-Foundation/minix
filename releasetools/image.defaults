@@ -16,5 +16,10 @@
 : ${PKG_INFO=pkg_info}
 : ${BUNDLE_PACKAGES=}
 
+: ${BUNDLE_SETS=0}
+
 : ${RC=../local/rc.${ARCH}}
 : ${ASR_HACK=0}
+
+# where the kernel & boot modules will be
+MODDIR=${DESTDIR}/boot/minix/.temp
