@@ -55,7 +55,7 @@ fi
 if /bin/sysenv rootdevname >/dev/null
 then	rootdevname=/dev/`/bin/sysenv rootdevname`
 else
-	if ! sysenv cdproberoot >/dev/null
+	if (! sysenv cdproberoot) && (! sysenv bootramdisk) >/dev/null
 	then	echo "rootdevname not set"
 		exit 1
 	fi
@@ -81,6 +81,11 @@ then
 	loadramdisk "$ramimagename" || echo "WARNING: loadramdisk failed"
 fi
 
+if sysenv bootramdisk >/dev/null
+then
+	rootdevname=imgrd
+fi
+
 echo "Root device name is $rootdevname"
 
 if ! sysenv cdproberoot >/dev/null
@@ -92,8 +97,14 @@ fi
 
 # Change root from temporary boot ramdisk to the configure
 # root device
-/bin/mount -n $bin_img"$rootdevname" /
+if ! sysenv bootramdisk >/dev/null
+then
+	/bin/mount -n $bin_img"$rootdevname" /
+fi
 
 /bin/mount -e -n -t procfs none /proc || echo "WARNING: couldn't mount procfs"
 
-exec /bin/sh /etc/rc `sysenv bootopts` "$@"
+if ! sysenv bootramdisk >/dev/null
+then
+	exec /bin/sh /etc/rc `sysenv bootopts` "$@"
+fi

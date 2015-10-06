@@ -8,7 +8,8 @@
 #
 # $1 : directory to add
 # $2 : spec file
-add_dir_spec() {
+add_dir_spec()
+{
 	echo "./$1 type=dir uid=0 gid=0 mode=0755" >> ${WORK_DIR}/$2
 }
 
@@ -17,7 +18,8 @@ add_dir_spec() {
 #
 # $1 : file to add
 # $2 : spec file
-add_file_spec() {
+add_file_spec()
+{
 	echo "./$1 type=file uid=0 gid=0 mode=0755 size=$(wc -c < ${ROOT_DIR}/${1})" >> ${WORK_DIR}/$2
 }
 
@@ -27,7 +29,8 @@ add_file_spec() {
 # $1 : symlink to add
 # $2 : link to
 # $3 : spec file
-add_link_spec() {
+add_link_spec()
+{
 	echo "./$1 type=link uid=0 gid=0 mode=0755 link=$2" >> ${WORK_DIR}/$3
 }
 
@@ -40,7 +43,8 @@ add_link_spec() {
 # spec files are put in WORK_DIR, the file system created in ROOT_DIR
 #
 # $1 : sets to extract
-build_workdir() {
+build_workdir()
+{
 	# Extract sets
 	mkdir -p ${ROOT_DIR}
 	for set in $1; do
@@ -64,19 +68,28 @@ build_workdir() {
 	# Build specifications files
 	cp ${ROOT_DIR}/etc/mtree/set* ${WORK_DIR}
 	${ROOT_DIR}/usr/bin/MAKEDEV -s -m all >> ${WORK_DIR}/extra.dev
+
+	if [ ${BUNDLE_SETS} -eq 1 ]
+	then
+		echo " * Bundling sets..."
+		workdir_add_sets
+	fi
 }
 
 #
 # Add tarball sets to the workdir (for installation CD)
 #
-workdir_add_sets() {
+workdir_add_sets()
+{
 	# Add sets to the root
-	mkdir -p ${ROOT_DIR}/${ARCH}/binary/sets;
-	add_dir_spec "${ARCH}" extra.sets
-	add_dir_spec "${ARCH}/binary" extra.sets
-	add_dir_spec "${ARCH}/binary/sets" extra.sets
+	mkdir -p ${ROOT_DIR}/usr/${ARCH}/binary/sets;
+	add_dir_spec "usr/${ARCH}" extra.sets
+	add_dir_spec "usr/${ARCH}/binary" extra.sets
+	add_dir_spec "usr/${ARCH}/binary/sets" extra.sets
 
-	DEST_SETS_DIR="${ARCH}/binary/sets"
+	add_link_spec "${ARCH}" "usr/${ARCH}" extra.sets
+
+	DEST_SETS_DIR="usr/${ARCH}/binary/sets"
 	for set in ${SETS_DIR}/*.tgz; do
 		# Copy set itself
 		cp ${set} ${ROOT_DIR}/${DEST_SETS_DIR}
@@ -108,12 +121,60 @@ workdir_add_sets() {
 }
 
 #
+# Add HDD files to the workdir
+#
+workdir_add_hdd_files()
+{
+	# create a fstab entry in /etc
+	cat >${ROOT_DIR}/etc/fstab <<END_FSTAB
+/dev/c0d0p1	/usr		mfs	rw			0	2
+/dev/c0d0p2	/home		mfs	rw			0	2
+none		/sys		devman	rw,rslabel=devman	0	0
+none		/dev/pts	ptyfs	rw,rslabel=ptyfs	0	0
+END_FSTAB
+	add_file_spec "etc/fstab" extra.fstab
+
+	# Add boot monitor
+	cp ${DESTDIR}/usr/mdec/boot_monitor ${ROOT_DIR}/boot_monitor
+	add_file_spec "boot_monitor" extra.boot
+}
+
+#
 # Add CD boot files to the workdir
 #
-workdir_add_cdfiles() {
+workdir_add_cd_files()
+{
+	# create a fstab entry in /etc
+	cat >${ROOT_DIR}/etc/fstab <<END_FSTAB
+none		/sys		devman	rw,rslabel=devman	0	0
+none		/dev/pts	ptyfs	rw,rslabel=ptyfs	0	0
+END_FSTAB
+	add_file_spec "etc/fstab" extra.fstab
+
 	# Add boot monitor
 	cp ${DESTDIR}/usr/mdec/boot_monitor ${ROOT_DIR}/minixboot
 	add_file_spec "minixboot" extra.cdfiles
+
+	# Add README
+	cp releasetools/release/cd/README.TXT ${ROOT_DIR}/README.TXT
+	add_file_spec "README.TXT" extra.cdfiles
+}
+
+#
+# Add ramdisk files to the workdir
+#
+workdir_add_ramdisk_files()
+{
+	# create a fstab entry in /etc
+	cat >${ROOT_DIR}/etc/fstab <<END_FSTAB
+none		/sys		devman	rw,rslabel=devman	0	0
+none		/dev/pts	ptyfs	rw,rslabel=ptyfs	0	0
+END_FSTAB
+	add_file_spec "etc/fstab" extra.fstab
+
+	# add early boot rc script
+	cp minix/drivers/storage/ramdisk/rc ${ROOT_DIR}/etc/rc.ramdisk
+	add_file_spec "etc/rc.ramdisk" extra.fstab
 
 	# Add README
 	cp releasetools/release/cd/README.TXT ${ROOT_DIR}/README.TXT
@@ -185,6 +246,26 @@ create_protos()
 }
 
 #
+# Create ramdisk image from root directory
+#
+# $1 : size of ramdisk (optional)
+create_ramdisk_image()
+{
+	PATH=$(cd ${CROSS_TOOLS}; pwd):$PATH
+	if [ -z $1 ]
+	then
+		RAMSIZE="-x 5"
+	else
+		RAMSIZE="-b $(( $1 / 512 / 8))"
+	fi
+
+	# Build image
+	_RAMDISKSIZE=$(${CROSS_TOOLS}/nbmkfs.mfs -d ${RAMSIZE} -I 0 ${WORK_DIR}/imgrd.mfs ${WORK_DIR}/proto.root)
+	(cd ${WORK_DIR}; ${TOOLCHAIN_TRIPLET}objcopy -Ibinary -Bi386 -Oi586-elf32-minix imgrd.mfs imgrd.o)
+	${TOOLCHAIN_TRIPLET}clang --sysroot=${DESTDIR} -L ${DESTDIR}/usr/lib -static -o ${WORK_DIR}/mod06_memory ${OBJ}/minix/drivers/storage/memory/memory.o ${WORK_DIR}/imgrd.o -nodefaultlibs -lblockdriver -lchardriver -lsys -lminc
+}
+
+#
 # Bundle packages (won't preinstall them)
 #
 # $1 : packages to bundle
@@ -250,10 +331,11 @@ bundle_packages()
 # stuff executed automatically to set up environment
 #
 
-usage() {
+usage()
+{
 	echo "Usage: $0 [options]"
-	echo "  -X xsrc       Build with X11 located in \"xsrc\" and extract its sets for image"
-	echo "                (do not automatically extract for installation CD)"
+	echo "  -X xsrc       Build with X11 located in \"xsrc\""
+	echo "  -x            Add X11 sets to extraction list"
 	echo "  -b            Add ASR service binaries to the image"
 	echo "                (said binaries must be built beforehand)"
 	echo ""
@@ -266,22 +348,21 @@ usage() {
 	echo "  PACKAGE_DIR           Path to packages to bundle (default: none)"
 	echo "  BUNDLE_PACKAGES       List of packages to bundle (default: none)"
 	echo "  PKG_INFO              Path to 'pkg_info' for bundling (default: pkg_info)"
+	echo ""
+	echo "  BUNDLE_SETS           If set to 1, bundle sets for setup (default: only for CD)"
 }
 
 # parse options
-while getopts "iX:bh" c
+while getopts "ixX:bh" c
 do
 	case "$c" in
 		i)	echo "This method of generating the ISO installation media is obsolete."
 			echo "Run ./releasetools/x86_cdimage.sh instead."
 			exit 1;;
 
-		X)	# we don't want to extract X sets by default for the installation CD
-			if ! echo "$0" | grep -q cdimage
-			then
-				SETS="$SETS xbase xcomp xetc xfont xserver"
-			fi
-			MKX11=yes
+		x)	SETS="$SETS xbase xcomp xetc xfont xserver";;
+
+		X)	MKX11=yes
 			export MKX11
 			BUILDVARS="$BUILDVARS -X $OPTARG";;
 
@@ -353,7 +434,11 @@ mkdir -p ${WORK_DIR}
 # get absolute paths to those directories
 CROSS_TOOLS=$(cd ${CROSS_TOOLS} && pwd)
 DESTDIR=$(cd ${DESTDIR} && pwd)
+MODDIR=$(cd ${MODDIR} && pwd)
 OBJ=$(cd ${OBJ} && pwd)
 SETS_DIR=$(cd ${SETS_DIR} && pwd)
 WORK_DIR=$(cd ${WORK_DIR} && pwd)
 ROOT_DIR=${WORK_DIR}/fs
+
+# get list of mods
+mods="`( cd ${MODDIR}; echo mod* | tr ' ' ',' )`"
