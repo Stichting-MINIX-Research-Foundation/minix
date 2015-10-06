@@ -883,6 +883,7 @@
 ./usr/sbin/btrace                                       minix-base
 ./usr/sbin/chown                                        minix-base
 ./usr/sbin/chroot                                       minix-base
+./usr/sbin/dev_mkdb                                     minix-base
 ./usr/sbin/diskctl                                      minix-base
 ./usr/sbin/download-vulnerability-list                  minix-base      crypto
 ./usr/sbin/fbdctl                                       minix-base

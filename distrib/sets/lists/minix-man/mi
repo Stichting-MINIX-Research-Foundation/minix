@@ -3358,6 +3358,7 @@
 ./usr/man/man8/cleantmp.8                               minix-man
 ./usr/man/man8/config.8                                 minix-man
 ./usr/man/man8/cron.8                                   minix-man
+./usr/man/man8/dev_mkdb.8                               minix-man
 ./usr/man/man8/devsize.8                                minix-man
 ./usr/man/man8/dhcpd.8                                  minix-man
 ./usr/man/man8/diskctl.8                                minix-man

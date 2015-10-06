@@ -6,7 +6,7 @@
 SUBDIR= \
 	\
 	chroot \
-	\
+	dev_mkdb \
 	\
 	\
 	\
