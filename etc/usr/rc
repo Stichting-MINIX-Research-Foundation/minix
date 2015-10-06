@@ -393,6 +393,15 @@ start|autoboot)
 	fi
     fi
 
+    # Now that all device files should be created, see if we need to update the
+    # device file database.  This code is butchered from NetBSD etc/rc.d/sysdb.
+    DEVDIR=/dev
+    DEVDB=/var/run/dev.cdb
+    if [ ! -f "$DEVDB" -o "$DEVDIR" -nt "$DEVDB" ]
+    then
+	dev_mkdb
+    fi
+
     if [ "$net" ]
     then
 	# Get the nodename from the DNS and set it.

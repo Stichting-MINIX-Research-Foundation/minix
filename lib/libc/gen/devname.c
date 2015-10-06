@@ -45,11 +45,14 @@ __RCSID("$NetBSD: devname.c,v 1.22 2012/06/03 21:42:46 joerg Exp $");
 #include <string.h>
 #include <stdlib.h>
 
+#ifdef __minix
+#include <minix/dmap.h>		/* for UNIX98_MINOR */
+#endif /* __minix */
+
 #ifdef __weak_alias
 __weak_alias(devname_r,_devname_r)
 #endif
 
-#if !defined(__minix)
 static once_t db_opened = ONCE_INITIALIZER;
 static struct cdbr *db;
 static devmajor_t pts;
@@ -95,14 +98,25 @@ devname_ptslookup(dev_t dev, mode_t type, char *path, size_t len)
 
 	if (type != S_IFCHR || pts == NODEVMAJOR || major(dev) != pts)
 		return ENOENT;
+#ifdef __minix
+	/*
+	 * MINIX3 does not use an identity mapping for /dev/pts, because the
+	 * same major number is also used for PTY masters and legacy PTYs.
+	 */
+	if (minor(dev) < UNIX98_MINOR || !(minor(dev) & 1))
+		return ENOENT;
+#endif /* __minix */
 
 	rv = snprintf(path, len, "%s%d", _PATH_DEV_PTS + sizeof(_PATH_DEV) - 1,
+#ifndef __minix
 	    minor(dev));
+#else /* __minix */
+	    (minor(dev) - UNIX98_MINOR) >> 1);
+#endif /* __minix */
 	if (rv < 0 || (size_t)rv >= len)
 		return ERANGE;
 	return 0;
 }
-#endif /* !defined(__minix) */
 
 static int
 devname_fts(dev_t dev, mode_t type, char *path, size_t len)
@@ -142,7 +156,6 @@ devname_r(dev_t dev, mode_t type, char *path, size_t len)
 {
 	int rv;
 
-#if !defined(__minix)
 	thr_once(&db_opened, devname_dbopen);
 
 	if (db != NULL) {
@@ -157,7 +170,6 @@ devname_r(dev_t dev, mode_t type, char *path, size_t len)
 
 	if (db != NULL)
 		return ENOENT;
-#endif /* !defined(__minix) */
 	rv = devname_fts(dev, type, path, len);
 	return rv;
 }

@@ -7,7 +7,7 @@
 #define PTMX_MINOR	   0	/* minor of the Unix98 clone device */
 #define TTYPX_MINOR	 128
 #define PTYPX_MINOR	 192
-#define UNIX98_MINOR	 256	/* start of Unix98 pairs */
+/* UNIX98_MINOR is defined in minix/dmap.h */
 
 #define TTY_IN_BYTES     256	/* tty input queue size */
 #define TTY_OUT_BYTES   2048	/* tty output queue size */
