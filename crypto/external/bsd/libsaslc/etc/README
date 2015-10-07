@@ -1,0 +1,22 @@
+$NetBSD: README,v 1.1 2011/02/20 02:12:31 christos Exp $
+
+These are example configuration files that are supposed to be installed
+in /etc/saslc.d/ and are used to configure saslc globally as well as its
+different authentication mechanisms.
+
+The tree hierarchy looks like:
+
+Default and global configuration files:
+
+    /etc/saslc.d/saslc/saslc.conf
+    /etc/saslc.d/saslc/mechs/{ANONYMOUS,CRAM-MD5,DIGEST-MD5}.conf
+    /etc/saslc.d/saslc/mechs/{EXTERNAL,GSSAPI,LOGIN,PLAIN}.conf
+
+Custom configuration files for <program> (for example postfix):
+
+    /etc/saslc.d/<program>/saslc.conf
+    /etc/saslc.d/<program>/mechs/{ANONYMOUS,CRAM-MD5,DIGEST-MD5}.conf
+    /etc/saslc.d/<program>/mechs/{EXTERNAL,GSSAPI,LOGIN,PLAIN}.conf
+
+Remember that some of the files contain sensitive information and should
+be installed with the proper permissions (0600).

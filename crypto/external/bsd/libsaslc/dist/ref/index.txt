@@ -1,0 +1,17 @@
+RFC info from the gsasl README (with newer RFCs added).
+
+Implemented:
+  ANONYMOUS (RFC 2245, RFC 4505)
+  CRAM-MD5 (RFC 2195)
+  DIGEST-MD5 (RFC 2831)
+  EXTERNAL (RFC 2222, RFC 4422)
+  GSSAPI (RFC 2222, RFC 4752, requires GSS, Heimdal or MIT Kerberos)
+  LOGIN (non-standard)
+  PLAIN (RFC 2595, RFC 4616)
+
+Not implemented:
+  GS2-KRB5 (RFC 5801, no CB, requires GSS, Heimdal, or MIT Kerberos)
+  KERBEROS_V5 (experimental, requires Shishi)
+  NTLM (non-standard, client only, requires Libntlm)
+  SCRAM-SHA-1 and SCRAM-SHA-1-PLUS (RFC 5802)
+  SECURID (RFC 2808)

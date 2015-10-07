@@ -37,7 +37,7 @@ SUBDIR= asa \
 SUBDIR+= ../external/zlib/pigz/bin/pigz
 .else
 # LSC FIXME For now we compile those unconditionnaly
-SUBDIR+= apropos whatis bdes soelim 
+SUBDIR+= apropos whatis soelim 
 .endif # defined(__MINIX)
 
 .if (${MKGROFF} == "no")
@@ -76,7 +76,7 @@ SUBDIR+= ypcat ypmatch ypwhich
 
 .if (${MKCRYPTO} != "no")
 SUBDIR+= bdes
-SUBDIR+= nbsvtool
+#SUBDIR+= nbsvtool
 .endif
 
 .include <bsd.subdir.mk>

@@ -242,7 +242,7 @@ SUBDIR+=	../crypto/external/bsd/heimdal/lib	# depends on libcrypto
 .endif
 
 .if (${MKCRYPTO} != "no")
-SUBDIR+=	../crypto/external/bsd/openssh/lib # depends on libcrypto, libz
+#SUBDIR+=	../crypto/external/bsd/openssh/lib # depends on libcrypto, libz
 SUBDIR+=	../crypto/external/bsd/netpgp/lib  # depends on libcrypto, ...
 .endif
 

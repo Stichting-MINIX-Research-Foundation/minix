@@ -10,7 +10,7 @@ SUBDIR= byacc fetch file flex less \
 SUBDIR+= atf
 .endif
 .if (${MKCRYPTO} != "no")
-SUBDIR+= pkg_install
+#SUBDIR+= pkg_install
 .endif
 # IP Filter
 .if (${MKIPFILTER} != "no")

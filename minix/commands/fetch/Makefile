@@ -13,7 +13,14 @@ CPPFLAGS+= -DHAVE_SYS_PARAM_H \
 		   -DHAVE_SYSEXITS_H \
 		   -DHAVE_UTIME_H
 
-DPADD+= ${LIBFETCH}
+.include <bsd.own.mk>
+
+DPADD+=	${LIBFETCH}
 LDADD+=	-lfetch
+
+.if ${MKCRYPTO} == "yes"
+DPADD+=	${LIBSSL} ${LIBCRYPTO}
+LDADD+=	-lssl -lcrypto
+.endif
 
 .include <bsd.prog.mk>

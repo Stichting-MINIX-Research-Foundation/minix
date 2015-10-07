@@ -1,0 +1,131 @@
+#!/bin/sh
+
+size .libs/libasn1.dylib
+size .libs/libasn1base.a | awk '{sum += $1} END {print sum}' | sed 's/^/TEXT baselib: /'
+size .libs/asn1_*.o | awk '{sum += $1} END {print sum}' | sed 's/^/generated code stubs: /'
+size *_asn1-template.o | awk '{sum += $1} END {print sum}' | sed 's/^/TEXT stubs: /'
+
+exit 0
+
+Notes about the template parser:
+
+- assumption: code is large, tables smaller
+
+- how to generate template based stubs:
+
+	make check asn1_compile_FLAGS=--template > log
+
+- pretty much the same as the generate code, except uses tables instead of code
+
+TODO:
+	- Make hdb work
+
+	- Fuzzing tests
+
+	- Performance testing
+
+	- ASN1_MALLOC_ENCODE() as a function, replaces encode_ and length_
+
+	- Fix SIZE constraits
+
+	- Compact types that only contain on entry to not having a header.
+
+
+SIZE - Futher down is later generations of the template parser
+
+	code:
+	==================
+	__TEXT	__DATA	__OBJC	others	dec	hex
+	462848	12288	0	323584	798720	c3000 (O2)
+
+	trivial types:
+	==================
+	__TEXT	__DATA	__OBJC	others	dec	hex
+	446464	12288	0	323584	782336	bf000 (O2)
+
+	OPTIONAL
+	==================
+	__TEXT	__DATA	__OBJC	others	dec	hex
+	425984	16384	0	323584	765952	bb000 (O2)
+
+	SEQ OF
+	==================
+	__TEXT	__DATA	__OBJC	others	dec	hex
+	368640	32768	0	327680	729088	b2000 (O2)
+	348160	32768	0	327680	708608	ad000 (Os)
+
+	BOOLEAN
+	==================
+	339968	32768	0	327680	700416	ab000 (Os)
+
+	TYPE_EXTERNAL:
+	==================
+	331776	32768	0	327680	692224	a9000 (Os)
+
+	SET OF
+	==================
+	327680	32768	0	327680	688128	a8000 (Os)
+
+	TYPE_EXTERNAL everywhere
+	==================
+	__TEXT	__DATA	__OBJC	others	dec	hex
+	167936	69632	0	327680	565248	8a000 (Os)
+
+	TAG uses ->ptr (header and trailer)
+	==================
+	229376	102400	0	421888	753664	b8000 (O0)
+
+	TAG uses ->ptr (header only)
+	==================
+	221184	77824	0	421888	720896	b0000 (O0)
+
+	BER support for octet string (not working)
+	==================
+	180224	73728	0	417792	671744	a4000 (O2)
+
+	CHOICE and BIT STRING missign
+	==================
+	__TEXT	__DATA	__OBJC	others	dec	hex
+	172032	73728	0	417792	663552	a2000 (Os)
+
+	No accessor functions to global variable
+	==================
+	__TEXT	__DATA	__OBJC	others	dec	hex
+	159744	73728	0	393216	626688	99000 (Os)
+
+	All types tables (except choice) (id still objects)
+	==================
+	__TEXT	__DATA	__OBJC	others	dec	hex
+	167936	77824	0	421888	667648	a3000
+	base lib: 22820
+
+	__TEXT	__DATA	__OBJC	others	dec	hex
+	==================
+	167936	77824	0	421888	667648	a3000 (Os)
+	baselib: 22820
+	generated code stubs: 41472
+	TEXT stubs: 112560
+
+	All types, id still objects
+	==================
+	__TEXT	__DATA	__OBJC	others	dec	hex
+	155648	81920	0	430080	667648	a3000 (Os)
+	TEXT baselib: 23166
+	generated code stubs: 20796
+	TEXT stubs: 119891
+
+	All types, id still objects, dup compression
+	==================
+	__TEXT	__DATA	__OBJC	others	dec	hex
+	143360	65536	0	376832	585728	8f000 (Os)
+	TEXT baselib: 23166
+	generated code stubs: 20796
+	TEXT stubs: 107147
+
+	All types, dup compression, id vars
+	==================
+	__TEXT	__DATA	__OBJC	others	dec	hex
+	131072	65536	0	352256	548864	86000
+	TEXT baselib: 23166
+	generated code stubs: 7536
+	TEXT stubs: 107147

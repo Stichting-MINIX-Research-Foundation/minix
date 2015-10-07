@@ -1,0 +1,15 @@
+# $NetBSD: detached.at,v 1.6 2009/06/11 06:45:11 agc Exp $
+
+AT_SETUP([detached signature and verification])
+
+AT_CHECK([cp ${TOPSRCDIR}/configure file2], [0], [ignore], [ignore])
+
+# Detached signature
+AT_CHECK([netpgp --homedir $testhomedir --sign --detached file2],
+    [0], [ignore], [ignore])
+
+# Verify detached sig file
+AT_CHECK([netpgp --homedir $testhomedir --verify file2.sig],
+    [0], [ignore], [ignore])
+
+AT_CLEANUP

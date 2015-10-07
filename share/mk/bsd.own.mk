@@ -38,7 +38,6 @@ MKCOVERAGE?=	no
 # LSC MINIX does not support these features ATM.
 USE_FORT:=	no
 USE_SSP:=	no
-MKCRYPTO:=	no
 MKGDB:=		no
 MKGROFF:=	no
 MKHESIOD:=	no

@@ -813,10 +813,8 @@
 ./usr/tests/crypto/libcrypto			tests-crypto-tests
 ./usr/tests/crypto/libcrypto/Atffile		tests-crypto-tests	crypto
 ./usr/tests/crypto/libcrypto/Kyuafile		tests-crypto-tests	crypto,kyua
-./usr/tests/crypto/libcrypto/d_client.pem	tests-crypto-tests	crypto
 ./usr/tests/crypto/libcrypto/d_conf.out		tests-crypto-tests	crypto
 ./usr/tests/crypto/libcrypto/d_conf_ssleay.cnf	tests-crypto-tests	crypto
-./usr/tests/crypto/libcrypto/d_server.pem	tests-crypto-tests	crypto
 ./usr/tests/crypto/libcrypto/evptests.txt	tests-crypto-tests	crypto
 ./usr/tests/crypto/libcrypto/h_bftest		tests-crypto-tests	crypto
 ./usr/tests/crypto/libcrypto/h_bntest		tests-crypto-tests	crypto
@@ -848,7 +846,6 @@
 ./usr/tests/crypto/libcrypto/h_sha1test		tests-crypto-tests	crypto
 ./usr/tests/crypto/libcrypto/h_shatest		tests-crypto-tests	crypto
 ./usr/tests/crypto/libcrypto/h_srptest		tests-crypto-tests	crypto
-./usr/tests/crypto/libcrypto/h_threadstest	tests-crypto-tests	crypto
 ./usr/tests/crypto/libcrypto/h_x509v3test	tests-crypto-tests	crypto
 ./usr/tests/crypto/libcrypto/t_certs		tests-crypto-tests	crypto
 ./usr/tests/crypto/libcrypto/t_ciphers		tests-crypto-tests	crypto

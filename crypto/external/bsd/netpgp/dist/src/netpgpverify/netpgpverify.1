@@ -1,0 +1,178 @@
+.\" $NetBSD: netpgpverify.1,v 1.6 2013/07/20 21:39:56 wiz Exp $
+.\"
+.\" Copyright (c) 2009 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This manual page is derived from software contributed to
+.\" The NetBSD Foundation by Alistair Crooks (agc@NetBSD.org).
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd November 10, 2010
+.Dt NETPGPVERIFY 1
+.Os
+.Sh NAME
+.Nm netpgpverify
+.Nd standalone program for digital signature verification
+.Sh SYNOPSIS
+.Nm
+.Fl Fl verify
+.Op Fl Fl output Ns = Ns Ar filename
+.Op options
+.Ar file ...
+.Pp
+where the options for all commands are:
+.Pp
+.Op Fl Fl coredumps
+.br
+.Op Fl Fl homedir Ns = Ns Ar home-directory
+.br
+.Op Fl Fl keyring Ns = Ns Ar keyring
+.br
+.Op Fl Fl userid Ns = Ns Ar userid
+.br
+.Op Fl Fl verbose
+.Sh DESCRIPTION
+The
+.Nm
+complements the
+.Xr netpgp 1
+program, and duplicates its verification functionality in
+a single standalone program.
+The reason for this duplication is simply because verification
+of digital signatures
+is such a common operation that a single, much smaller,
+standalone program can be used.
+.Pp
+The following commands are used to verify signatures:
+.Bl -tag -width Ar
+.It Fl Fl coredumps
+In normal processing,
+if an error occurs, the contents of memory are saved to disk, and can
+be read using tools to analyse behaviour.
+Unfortunately this can disclose information to people viewing
+the core dump, such as secret keys, and passphrases protecting
+those keys.
+In normal operation,
+.Nm
+will turn off the ability to save core dumps on persistent storage,
+but selecting this option will allow core dumps to be written to disk.
+This option should be used wisely, and any core dumps should
+be deleted in a secure manner when no longer needed.
+.It Fl Fl homedir Ar home-directory
+Keyrings are normally located, for historical reasons, within
+the user's home directory in a subdirectory called
+.Dq Pa .gnupg
+and this option specifies an alternative location in which to
+find that sub-directory.
+.It Fl Fl keyring Ar keyring
+This option specifies an alternative keyring to be used.
+All keyring operations will be relative to this alternative keyring.
+.It Fl Fl output
+specifies a filename to which verified output from a signed file
+may be redirected.
+The default is to send the verified output to stdout,
+and this may also be specified using the
+.Dq \-
+value.
+.It Fl Fl verbose
+This option can be used to view information during
+the process of the
+.Nm
+requests.
+.El
+.Sh SIGNING AND VERIFICATION
+Verification of a file's signature is best viewed using the following example:
+.Bd -literal
+% netpgp --sign --userid=agc@netbsd.org a
+signature  2048/RSA (Encrypt or Sign) 1b68dcfcc0596823 2004-01-12
+Key fingerprint: d415 9deb 336d e4cc cdfa 00cd 1b68 dcfc c059 6823
+uid              Alistair Crooks \*[Lt]alistair@hockley-crooks.com\*[Gt]
+uid              Alistair Crooks \*[Lt]agc@pkgsrc.org\*[Gt]
+uid              Alistair Crooks \*[Lt]agc@netbsd.org\*[Gt]
+uid              Alistair Crooks \*[Lt]agc@alistaircrooks.com\*[Gt]
+uid              Alistair Crooks (Yahoo!) \*[Lt]agcrooks@yahoo-inc.com\*[Gt]
+encryption 2048/RSA (Encrypt or Sign) 79deb61e488eee74 2004-01-12
+netpgp passphrase:
+% netpgpverify a.gpg
+Good signature for a.gpg made Thu Jan 29 03:06:00 2009
+using RSA (Encrypt or Sign) key 1B68DCFCC0596823
+signature  2048/RSA (Encrypt or Sign) 1b68dcfcc0596823 2004-01-12
+Key fingerprint: d415 9deb 336d e4cc cdfa 00cd 1b68 dcfc c059 6823
+uid              Alistair Crooks \*[Lt]alistair@hockley-crooks.com\*[Gt]
+uid              Alistair Crooks \*[Lt]agc@pkgsrc.org\*[Gt]
+uid              Alistair Crooks \*[Lt]agc@netbsd.org\*[Gt]
+uid              Alistair Crooks \*[Lt]agc@alistaircrooks.com\*[Gt]
+uid              Alistair Crooks (Yahoo!) \*[Lt]agcrooks@yahoo-inc.com\*[Gt]
+encryption 2048/RSA (Encrypt or Sign) 79deb61e488eee74 2004-01-12
+%
+.Ed
+.Pp
+In the example above, a signature is made on a single file called
+.Dq Pa a
+using a user identity corresponding to
+.Dq agc@netbsd.org
+and using the
+.Xr netpgp 1
+program.
+The key located for the user identity is displayed, and
+the user is prompted to type in their passphrase.
+The resulting file, called
+.Dq Pa a.gpg
+is placed in the same directory.
+The second part of the example shows a verification
+using
+.Nm
+of the signed file
+taking place.
+The time and user identity of the signatory is displayed, followed
+by a fuller description of the public key of the signatory.
+In both cases, the exit value from the utility was a successful one.
+.Sh EXIT STATUS
+The
+.Nm
+utility will return 0 for success,
+1 if the file's signature does not match what was expected,
+or 2 if any other error occurs.
+.Sh SEE ALSO
+.Xr netpgp 1 ,
+.\" .Xr libbz2 3 ,
+.Xr libnetpgp 3 ,
+.Xr ssl 3 ,
+.Xr zlib 3
+.Sh STANDARDS
+The
+.Nm
+utility is designed to conform to IETF RFC 4880.
+.Sh HISTORY
+The
+.Nm
+command first appeared in
+.Nx 6.0 .
+.Sh AUTHORS
+.An -nosplit
+.An Ben Laurie ,
+.An Rachel Willmer ,
+and was overhauled and rewritten by
+.An Alistair Crooks Aq Mt agc@NetBSD.org .
+This manual page was written by
+.An Alistair Crooks .

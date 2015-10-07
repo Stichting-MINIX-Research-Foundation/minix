@@ -5,7 +5,7 @@
 .if ${MKCRYPTO} != "no"
 
 SUBDIR+=bf bn cast conf des dh dsa ec ecdh ecdsa engine evp hmac lhash \
-	md2 md4 md5 rand rc2 rc4 ripemd rsa sha sha1 srp threads x509v3
+	md2 md4 md5 rand rc2 rc4 ripemd rsa sha sha1 srp x509v3
 
 SUBDIR+=idea mdc2
 

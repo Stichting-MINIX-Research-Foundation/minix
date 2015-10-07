@@ -1,0 +1,25 @@
+#! /bin/sh
+
+host=localhost
+
+while [ $# -gt 0 ]; do
+	case $1 in
+	-h)
+		host=$2
+		shift
+		;;
+	*)
+		break
+		;;
+	esac
+	shift
+done
+
+./hkpclient.lua -s ${host} agc@netbsd.org
+./hkpclient.lua -s ${host} --mr 0xc0596823
+./hkpclient.lua -s ${host} 0xc0596823
+./hkpclient.lua --op index -s ${host} 0xc0596823
+./hkpclient.lua -o index -s ${host} --mr 0xc0596823
+./hkpclient.lua -o index -s ${host} --mr 0xc0596823
+./hkpclient.lua -o vindex -s ${host} --mr agc@
+./hkpclient.lua -o index -s ${host} dhklsbcldshjkcdlsjhcvdsljhvcdsljhcvdjlshvcdsc

@@ -1,0 +1,53 @@
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number: 9 (0x9)
+        Signature Algorithm: sha1WithRSAEncryption
+        Issuer: CN=hx509 Test Root CA, C=SE
+        Validity
+            Not Before: Apr 26 20:29:41 2009 GMT
+            Not After : Apr 24 20:29:41 2019 GMT
+        Subject: C=SE, CN=www.test.h5l.se
+        Subject Public Key Info:
+            Public Key Algorithm: rsaEncryption
+                Public-Key: (1024 bit)
+                Modulus:
+                    00:c6:f4:94:25:2b:d5:fa:e9:3d:00:a9:46:24:f1:
+                    bf:fe:61:df:bd:cc:da:74:b7:f9:36:c1:ce:51:d2:
+                    01:6f:79:ba:b3:4a:d5:a4:43:5a:c7:ad:e4:e0:50:
+                    e2:a6:bf:54:73:ad:a5:86:0a:bd:56:c4:4f:b5:f5:
+                    7f:7e:fe:10:78:17:e2:35:4c:bb:cc:4b:74:35:d0:
+                    ab:63:b1:02:72:94:a7:9a:dc:10:ef:28:82:a9:6c:
+                    dc:19:8d:b8:3e:5b:21:52:1f:88:51:a6:5a:f8:67:
+                    cd:cb:48:6f:f5:8b:71:7c:4d:52:da:bb:f9:26:8a:
+                    27:9c:7e:8a:d1:99:54:35:7f
+                Exponent: 65537 (0x10001)
+        X509v3 extensions:
+            X509v3 Basic Constraints: 
+                CA:FALSE
+            X509v3 Key Usage: 
+                Digital Signature, Non Repudiation, Key Encipherment
+            X509v3 Subject Key Identifier: 
+                8A:BB:2D:06:4B:BD:DE:9A:BA:7C:5A:35:D0:E2:19:37:48:29:0E:9C
+    Signature Algorithm: sha1WithRSAEncryption
+        90:35:ec:8c:f2:62:14:76:8a:29:52:99:44:c1:d7:c8:9e:74:
+        ef:90:4f:e7:ea:4d:cf:8f:c1:73:0c:d9:49:06:93:30:b0:19:
+        5e:de:9c:11:93:66:02:4d:8f:e9:8c:52:fc:26:26:9e:09:69:
+        a5:a7:63:d2:2d:40:de:e5:d8:d5:51:c3:32:60:6a:2f:26:13:
+        91:69:36:f6:67:e4:b0:54:9e:77:68:22:5f:51:b8:3c:42:bd:
+        e3:09:dc:11:9b:ed:db:63:df:90:57:38:00:90:be:89:e7:ea:
+        8e:d8:21:cd:96:68:69:4b:a3:15:50:ce:63:80:2a:99:4b:ff:
+        dd:1c
+-----BEGIN CERTIFICATE-----
+MIICADCCAWmgAwIBAgIBCTANBgkqhkiG9w0BAQUFADAqMRswGQYDVQQDDBJoeDUw
+OSBUZXN0IFJvb3QgQ0ExCzAJBgNVBAYTAlNFMB4XDTA5MDQyNjIwMjk0MVoXDTE5
+MDQyNDIwMjk0MVowJzELMAkGA1UEBhMCU0UxGDAWBgNVBAMMD3d3dy50ZXN0Lmg1
+bC5zZTCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEAxvSUJSvV+uk9AKlGJPG/
+/mHfvczadLf5NsHOUdIBb3m6s0rVpENax63k4FDipr9Uc62lhgq9VsRPtfV/fv4Q
+eBfiNUy7zEt0NdCrY7ECcpSnmtwQ7yiCqWzcGY24PlshUh+IUaZa+GfNy0hv9Ytx
+fE1S2rv5JoonnH6K0ZlUNX8CAwEAAaM5MDcwCQYDVR0TBAIwADALBgNVHQ8EBAMC
+BeAwHQYDVR0OBBYEFIq7LQZLvd6aunxaNdDiGTdIKQ6cMA0GCSqGSIb3DQEBBQUA
+A4GBAJA17IzyYhR2iilSmUTB18iedO+QT+fqTc+PwXMM2UkGkzCwGV7enBGTZgJN
+j+mMUvwmJp4JaaWnY9ItQN7l2NVRwzJgai8mE5FpNvZn5LBUnndoIl9RuDxCveMJ
+3BGb7dtj35BXOACQvonn6o7YIc2WaGlLoxVQzmOAKplL/90c
+-----END CERTIFICATE-----

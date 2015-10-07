@@ -1,0 +1,23 @@
+# $NetBSD: cat.at,v 1.6 2009/06/11 06:45:11 agc Exp $
+
+AT_SETUP([attached signature and verification])
+
+AT_CHECK([cp $abs_top_builddir/libtool file3], [0], [ignore], [ignore])
+
+# Make signature
+AT_CHECK([netpgp --homedir $testhomedir --sign file3],
+    [0], [ignore], [ignore])
+
+# Verify sig file
+AT_CHECK([netpgp --homedir $testhomedir --cat --output=file3.copy file3.gpg],
+    [0], [ignore], [ignore])
+AT_CHECK([diff file3 file3.copy])
+
+# Verify sig to stdout
+AT_CHECK([netpgp --homedir $testhomedir --cat file3.gpg],
+    [0], [stdout], [ignore])
+AT_CHECK([diff file3 stdout])
+
+# XXXTODO: deliberately corrupt file3.gpg and attempt to verify
+
+AT_CLEANUP

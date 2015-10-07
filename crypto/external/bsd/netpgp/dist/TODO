@@ -1,0 +1,109 @@
+To Do
+=====
+check pkt size during read
+list sigs on a per-user basis
+2^n sized packets - regions?
+json for verification in netpgp
+show attributes on key listings
+agent
+agentctl
+convert to and from ascii armored sigs
+gpgme compat lib
+get rid of public key free as part of seckey
+is get_passphrase_cb needed?
+error logging
+separate from libcrypto?
+default compression when signing?
+
+Done
+====
+autoconf
+libtool
+name change
+content_ naming scheme
+Brief test script
+get rid of C global
+put all readers and writers together in one file
+Add mmapped method
+merge mmap'ed and fd reads - if mmap fails, fall back to read
+Make sure all openpgpsdk changes are brought forward
+look at header file fun
+new version number in autoconf
+Make decrypt work with files > 8192 bytes
+dynamically size literal_data_body before decompressing?
+restore ops_export_key functionality
+match keyids using case insensitive matching - (c0596823 == C0596823)
+use PRIsize appropriately
+make a high-level interface
+get rid of multiple local headers
+get rid of long identifier names - all done internally now
+Finish name change for everything
+work out what's exported and what's not
+finish off main header file
+init(&netpgp, userid, pubring, secring)
+__ops
+real naming scheme
+get rid of malloc() instances -> calloc()
+change include directory
+Install man pages
+WARNS=4 (again)
+detached sig
+get rid of assert()s
+disable core dumps
+add a --help option
+sha256 digests
+print out size of key in --list-keys
+decryption - print encrypted key info
+get rid of local files
+hash algorithm selection
+detached verification
+RCS Ids
+Look at inefficiencies - read() etc
+cat command to display a verified file without signature
+get rid of ops_memory after used literal_data_body
+new package for 1.99.4
+separate verify program
+Add --passwd-fd n argument
+bring forward netpgpverify mods to netpgp
+move directory locations in package and cvs repo
+fix up tests for new directory locations
+separate key management program
+C++ guards in header file
+modify sets lists for netpgpverify
+don't require passphrase for keys without one
+failure to run if no userid in gpg.conf (even if --userid specified)
+don't complain if no .gnupg dir (even when using --homedir)
+make it work with ssh host keys
+regex matching for names and signatures
+in memory encryption and decryption
+ssss
+make netpgp work from stdin/to stdout
+signature duration and expiry
+multisign
+settable from time
+unarmoured static in packet-print.c and skipping in crypto.c
+display expiry properly
+unarmoured static in packet-print.c and skipping in crypto.c
+duration -> expiry
+print signing key info properly when prompting for passphrase
+print decryption key info properly when prompting for passphrase
+hkpd
+hkpclient
+netbsd/pkgsrc pr 42922
+add expiry information to public key display
+trust subpackets
+add revocation information to public key display
+--list-sigs - these come out in __ops_check_subkey_sig()
+hkp to include sigs too
+make netpgpkeys work - add, import, commit, update, sign, passphrase
+fix ssh fingerprints not matching netpgp
+json/yaml output
+return userids from successful verify, and then print id out if required
+convert between pgp and ssh key formats
+PEM ssh keys and passphrases
+camellia addition
+fix calloc return values in symmetric.c/ops_crypt_t
+prog to convert from pgp sec to ssh sec
+add user-specifiable ciphers for encryption
+elgamal enc/decryption?
+thresholds - see sharedkey, ssss, threshold etc

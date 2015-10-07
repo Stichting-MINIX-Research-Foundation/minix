@@ -1,0 +1,417 @@
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA1
+
+DRAFT VERSION 0.4.2
+
+
+Oliver Vaughn Gould <ver@olix0r.net>
+July 2010
+
+
+  PubKey Access Authentication Scheme, Version 1
+  ----------------------------------------------
+
+  0  Introduction
+  --------------
+
+  0.1  Status of this Memo
+  ------------------------
+
+This document specifies a DRAFT protocol for the Internet community.
+
+
+  0.2  Copyright Notice
+  ---------------------
+
+Copyright (C) Yahoo!, Inc. (2010).  All rights reseved.
+
+
+  0.3  Abstract
+  -------------
+
+HTTP services are a core Internet technology, yet the Digest authentication
+scheme provided by RFC 2617 only describes authentication by way of
+shared-secrets (i.e. passwords).
+
+The PubKey Access Authentication scheme aims to enhance security on the
+World Wide Web by bringing an equivalent of SSH's "publickey" authentication
+method to challenge-based HTTP client authentication.
+
+
+  0.4  Table of Contents
+  ----------------------
+
+  1  PubKey Access Authentication Scheme, Version 1
+  1.1  Introduction
+  1.1.1  Purpose
+  1.1.2  Overall Operation
+  1.2  Specification of PubKey.v1 Headers
+  1.2.1  The WWW-Authenticate Response Header
+  1.2.2  The Authorize Request Header
+  1.3  Example
+  1.4  Proxy-Authentication and Proxy-Authorization
+  1.5  Operational Considerations
+  1.5.1  Replay Attacks
+  1.5.2  Man-in-the-Middle Attacks
+  1.5.3  Brute Force Attacks
+  1.5.4  Spoofing by Counterfeit Servers
+  2  References
+  A  Appendices
+  A.1  Challenge Generation
+
+
+  1  PubKey Access Authentication Scheme, Version 1
+  -------------------------------------------------
+
+  1.1  Introduction
+  -----------------
+
+  1.1.1  Purpose
+  --------------
+
+HTTP services are a core Internet technology, yet the Digest authentication
+scheme provided by RFC 2617 only describes authentication by way of
+shared-secrets (i.e. passwords).  This model has operational drawbacks, as
+authenticating services are required to have access to a user's secret (or
+a hash thereof), or retrograde technologies, such as cookies, are employed.
+
+Similarly to SSH's "publickey" authentication method [RFC 4252], the PubKey
+Access Authentication scheme allows an HTTP server to authenticate clients using
+public key credentials.
+
+
+  1.1.2  Overall Operation
+  ------------------------
+
+Like the Digest Access Authentication Scheme [RFC 2617], the PubKey.v1
+scheme is based on a simple challenge-response paradigm.  The PubKey scheme
+responds to unauthorized clients with a challenge value; and a valid
+response contains a cryptographic signature of client's id, the authentication
+realm, and the server's challenge.
+
+The client's secret never leaves the client.  The server verifies the
+client's signed authorization request with the client's published public
+keys.  
+
+
+  1.2  Specification of PubKey.v1 Headers
+  ---------------------------------------
+
+  1.2.1  The WWW-Authenticate Response Header
+  -------------------------------------------
+
+If a server receives a request for an access-protected object, and an
+acceptable Authorization header is not sent, the server responds with a
+"401 Unauthorized" status code, and a WWW-Authenticate header as per the
+framework defined above, which for the digest scheme is utilized as
+follows:
+
+    challenge         = "PubKey.v1" pubkey-challenge
+
+    pubkey-challenge  = 1#( realm | [domain] | challenge )
+
+    realm             = "realm" "=" quoted-string
+    domain            = "domain" "=" <"> URI ( 1*SP URI ) <">
+    URI               = absoluteURI | abs_path
+    challenge         = "challenge" "=" quoted-string
+
+The meanings of the values of the directives used above are as follows:
+
+    realm
+      A string to be displayed to clients so they know which username and
+      public key to use.  This string should contain at least the name of
+      the host performing the authentication and might additionally
+      indicate the collection of users who might have access.  An example
+      might be "admin@svc.domain.tld".
+
+    domain
+      An optional quoted, space-separated list of URIs that define the
+      protection space.  If a URI is an abs_path, it is relative to the
+      canonical root URL of the server being accessed.  An absoluteURI in this
+      list may refer to a different server than the one being accessed.  The
+      client can use this list to determine the set of URIs for which the same
+      authentication information may be sent: any URI that has a URI in this
+      list as a prefix (after both have been made absolute) may be assumed to be
+      in the same protection space.  If this directive is omitted or its value
+      is empty, the client should assume that the protection space consists of
+      all URIs on the responding server.
+
+      This directive is not meaningful in Proxy-Authenticate headers, for
+      which the protection space is always the entire proxy; if present it
+      should be ignored.
+
+    challenge
+      A quoted string of data, specified by the server, which should be returned
+      by the client unchanged in the Authorization header of subsequent
+      requests with URIs in the same protection space.  It is recommended
+      that this string be base 64 or hexadecimal data.
+
+
+  1.2.2  The Authorization Request Header
+  -------------------------------------
+
+The client is expected to retry the request, passing an Authorization
+header line, which is defined according to the framework above, utilized as
+follows.
+
+    credentials          = "PubKey.v1" privkey-credentials
+
+    privkey-credentials  = 1#( identifier | realm | challenge | signature )
+
+    identifier           = "id" "=" identifier-value
+    identifier-value     = quoted-string
+    challenge            = "challenge" "=" challenge-value
+    challenge-value      = quoted-string
+    signature            = "signature" "=" signature-value
+    signature-value      = quoted-string
+
+The values of the challenge and realm fields must be those supplied in the
+WWW-Authenticate response header for the entity being requested.
+
+    identifier
+      The client identifier in the specified realm.  I.e. the client's username.
+
+    signature
+      A quoted base 64 encoded string representation of a signature generated
+      with the client's private key as follows.
+
+          signature = BASE64( D^M( authorization ))
+          authorization = identifier-value ";" realm-value ";" challenge-value
+
+If a directive or its value is improper, or required directives are
+missing, the proper response is 400 Bad Request.  If the signature is
+invalid, then a login failure should be logged, since repeated login
+failures from a single client may indicate malfeasance.
+
+The client should be able to reuse this Authorization until a 401
+Unauthorized is reached, or an Authentication-Info header provides a new
+challenge.
+
+
+  1.2.3  Authentication-Info Header
+  ---------------------------------
+
+The optional Authentication-Info header may be used by the server to
+communicate some information regarding the successful authentication in the
+response.  Specifically, this header can be used to send a new challenge to
+an authorized client.
+
+    AuthenticationInfo = "Authentication-Info" ":" auth-info
+    auth-info          =  1#( next-challenge  )
+    next-challenge     =  "challenge" "=" challenge-value
+
+The meanings of the values used above are as follows:
+
+    next-challenge
+      The following request on this domain should contain an authorization
+      on this challenge value.  It should be expected that reissuing the
+      used Authorization header will result in a 401 Unauthorized response.
+
+
+  1.3  Example
+  ------------
+
+The following example assumes that an access-protected resource is being
+requested from the server via a GET request.  The URI of the document is
+"http://svc.domain.tld/object".  Both client and server know the public key
+for the user identified as "McFly" in the realm "users@svc.domain.tld".
+
+The first time the client requests the document, no Authorization header is
+sent, so the server responds with:
+
+    401 Unauthorized
+    WWW-Authenticate: PubKey.v1
+        challenge="aKMpP2pkd3qiDnOUAHJ+pB1VdphaR2tFSF4J7wLWODk=;dXNlcnNAc3ZjLmRvbWFpbi50bGQ7MTI3ODExMjc5OTsxMjcuMC4wLjE7bThvK3JUa29rRVFPMFFLRUh2L280dz09",
+        realm="users@svc.domain.tld"
+
+The client's user agent determines the client's identifier and private key
+to use for the realm.  The user agent then uses this private key to sign
+the server's challenge, prompting the user as neccessary.  Finally, the
+client sends a new request including the Authorization header:
+
+    Authorization: PubKey.v1
+        id="McFly",
+        challenge="aKMpP2pkd3qiDnOUAHJ+pB1VdphaR2tFSF4J7wLWODk=;dXNlcnNAc3ZjLmRvbWFpbi50bGQ7MTI3ODExMjc5OTsxMjcuMC4wLjE7bThvK3JUa29rRVFPMFFLRUh2L280dz09",
+        realm="users@svc.domain.tld",
+        signature="AAAAB3NzaC1yc2EAAAEAWARe6cScN5t0aFy0lBA1EbC/JoyRxsEuPsWtFZ3qw12lXYcmTXuq1v/0lwqcgZQgutQdiavR6O6157uyk0dkfuDXiuOjsngkmgp0oN/kwYxKPVrXMze1tFr8tFBUQU+JeCbvVd+o6LeD7pO29onXqf776N21nX1sRaeT+wX6qNMNEgJ7S3TzwTgMJ4Ub5dMCxXYCX7AW15YzLie213fvU3YiBh1ZHy//ubDb29d/2t941/gAdipjRQiabWK5lpfkmLJWJddlZq3IyFqiXMM1vpaGmiiM5w2fMpuzO8enyRTDtQQwLAxrffxY/n6RbGvUiEU4YzSGLlPE6KUU36dKOw=="
+
+The server verifies the client's signature on the following authorization
+string:
+
+   McFly;users@svc.domain.tld;aKMpP2pkd3qiDnOUAHJ+pB1VdphaR2tFSF4J7wLWODk=;dXNlcnNAc3ZjLmRvbWFpbi50bGQ7MTI3ODExMjc5OTsxMjcuMC4wLjE7bThvK3JUa29rRVFPMFFLRUh2L280dz09
+
+Assuming that the challenge generation algorithm described in section A.1
+is used, the server then verfies its own signature of the challenge by
+decoding the challenge thusly:
+
+    b64-server-signature = "aKMpP2pkd3qiDnOUAHJ+pB1VdphaR2tFSF4J7wLWODk="
+    b64-challenge = "dXNlcnNAc3ZjLmRvbWFpbi50bGQ7MTI3ODExMjc5OTsxMjcuMC4wLjE7bThvK3JUa29rRVFPMFFLRUh2L280dz09"
+    challenge = "users@svc.domain.tld;1278112799;127.0.0.1;m8o+rTkokEQO0QKEHv/o4w=="
+
+After the server's signature is verified, it checks the realm, expiration, and
+source IP encoded in the challenge to authorize the request.  
+
+
+  1.4  Proxy-Authentication and Proxy-Authorization
+  -------------------------------------------------
+
+The PubKey.v1 authentication scheme may also be used for authenticating
+clients to proxies, proxies to proxies, or proxies to origin servers by use
+of the Proxy-Authenticate and Proxy-Authorization headers.  These headers
+are instances of the Proxy-Authenticate and Proxy-Authorization headers
+specified in sections 10.33 and 10.34 of the HTTP/1.1 specification [RFC
+2616] and their behavior is subject to restrictions described there.  The
+transactions for proxy authentication are very similar to those already
+described.  Upon receiving a request which requires authentication, the
+proxy/server must issue the "407 Proxy Authentication Required" response
+with a "Proxy-Authenticate" header.  The pubkey-challenge used in the
+Proxy-Authenticate header is the same as that for the WWW-Authenticate
+header as defined above in section 1.2.1.
+
+The client/proxy must then re-issue the request with a Proxy-Authorization
+header, with directives as specified for the Authorization header in
+section 1.2.2 above.
+
+Note that in principle a client could be asked to authenticate itself to
+both a proxy and an end-server, but never in the same response.
+
+
+  1.5  Operational Considerations
+  -------------------------------
+
+  1.5.1  Replay Attacks
+  ---------------------
+
+The challenge generation scheme described in section A.1 includes a
+server-signed time, client IP address, and random seed; after verifying its own
+signature, the server verifies that the authorized request is from the expected
+source and within the allowed session time.
+
+The server may preempt the need for an expired transaction by sending a new
+challenge in an AuthorizationInfo header.
+
+
+  1.5.2  Man-in-the-Middle Attacks
+  --------------------------------
+
+In principal, it is not possible to distinguish untrusted intermediaries
+from trustworthy (e.g. HTTP or SOCKS) proxy servers.  Therefore, the
+PubKey.v1 scheme does not attempt to implement any form of server
+authentication or endpoint confidentiality.  A client's Authorization token
+may be stolen by intermediary servers.  
+
+Some form of socket-or-application-layer cryptography should be utilized to
+establish confidentiality between endpoints.
+
+
+  1.5.3  Brute Force Attacks
+  --------------------------
+
+Brute force attacks against strong cryptographic keys (currently, RSA 2048
+or stronger) are particularly ineffective, which is a major advantage of this
+authentication scheme over, for instance, the Digest scheme.
+
+The challenge generation algorithm described in section A.1 uses a secret
+value and digest algorithm to verify the returned, signed challenge.  If an
+authorized attacker gains access to this value and determine the digest
+algorithm, it can override values encoded in the server's challenge.  Note
+that such an attack can only be exploited by sending a manipulated challenge
+value with a valid signature from a client authorized to the given realm.
+
+The randomized seed value in the challenge helps to mitigate cryptanalytic
+attacks on the server's secret by introducing entropy into the signature.
+
+
+  1.5.4  Spoofing by Counterfeit Servers
+  --------------------------------------
+
+The PubKey.v1 authentication scheme does not provide any means for a client
+to validate a server.
+
+Some form of socket-or-application-layer cryptography should be utilized to
+establish confidentiality between endpoints.
+
+
+  2 References
+  ------------
+
+[RFC 2222]  Simple Authentication and Security Layer (SASL)
+[RFC 2616]  Hypertext Transfer Protocol -- HTTP/1.1
+[RFC 2617]  HTTP Authentication: Basic and Digest Access Authentication
+[RFC 2818]  HTTP Over TLS
+[RFC 2743]  Generic Security Service Application Program Interface
+            Version 2, Update 1
+[RFC 4251]  The Secure Shell (SSH) Protocol Architecture
+[RFC 4252]  The Secure Shell (SSH) Authentication Protocol
+
+
+Portions of this document were based directly on these references:
+  Copyright (C) The Internet Society (1999, 2006).  All Rights Reserved.
+
+
+  A  Appendices
+  -------------
+
+  A.1  Challenge Generation
+  -------------------------
+
+- From a client's perspective, the challenge value is an opaque blob of data
+to be signed.  However, the server can encode data into its challenge value
+in order to authenticate clients without maintaining state for all such
+requests.  One possible challenge generation scheme is discussed below, but
+it can be replaced with no impact on the protocol.
+
+    challenge-value = server-signature ";" encoded-challenge
+
+    server-signature = BASE64( DIGEST( raw-server-signature ) )
+    raw-server-signature = raw-challenge ";" server-secret-value
+
+    encoded-challenge = BASE64( raw-challenge )
+
+    raw-challenge = realm-value ";" ip-address ";" epoch-time ";" seed-value 
+
+    epoch-time = integer
+    ip-address = <IPv4 or IPv6 address>
+    seed-value = token [RFC 2616]
+    server-secret-value = token [RFC 2616]
+
+The meanings of the values used above are as follows:
+
+    DIGEST
+      A digest algorithm such as SHA256.
+
+    epoch-time
+      The time at which the challenge was generated.  The server may reference
+      this field to determine whether the authorization has expired.
+
+    ip-address
+      The IP address of the client-side of the connection on which the request
+      is being made.
+
+    realm-value
+      The realm-value specified in the WWW-Authenticate.
+
+    seed-value
+      A random value generated by the server to introduce entropy into the
+      server's signatures.
+
+    server-secret-value
+      A secret value that only the server may access.  This is used to
+      'sign' a challenge.  The client's Authorization is validated by
+      reconstructing the challenge with this secret.
+
+      It would also be possible for a server to use a private key instead
+      of a server-secret-value.
+
+Depending on the server's resources, it may be desirable to use a cipher
+algorithm instead of a digest algorithm.
+
+
+DRAFT VERSION 0.4.2
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2.0.14 (GNU/Linux)
+
+iEYEARECAAYFAkxJEZ0ACgkQkPEZLwKUCCVZeQCfb7zuztnPcEjCBF5CPtwaLJTd
+xrgAoJ4etR3erN/PstMEOJc1mjRR7OXr
+=R8Im
+-----END PGP SIGNATURE-----

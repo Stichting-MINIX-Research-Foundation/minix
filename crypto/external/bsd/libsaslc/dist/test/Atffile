@@ -1,0 +1,10 @@
+Content-Type: application/X-atf-atffile; version="1"
+
+prop: test-suite = saslc
+
+tp: t_crypto
+tp: t_dict
+tp: t_error
+tp: t_parser
+tp: t_session
+tp: t_saslc

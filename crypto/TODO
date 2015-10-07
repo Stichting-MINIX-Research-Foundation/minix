@@ -1,0 +1,11 @@
+$NetBSD: TODO,v 1.8 2006/03/23 19:58:03 wiz Exp $
+
+- Make the Heimdal Kerberos V API much more like the MIT API.  The
+  current situation means that basically no krb5-aware programs can
+  work with Heimdal without significant modification.  This includes
+  making compatibility links for e.g. libk5crypto -> libcrypto, etc.
+
+  Currently known-broken Kerberos-aware packages:
+  - ssh and ssh6
+
+- Make rcp, rlogin, ftpd, and ftp work with Kerberos again.

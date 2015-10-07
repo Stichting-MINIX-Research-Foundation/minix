@@ -852,6 +852,7 @@ socksetup_tls(const int af, const char *bindhostname, const char *port)
 			continue;
 		}
 		s->af = r->ai_family;
+#if defined(__minix) && defined(INET6)
 		if (r->ai_family == AF_INET6
 		 && setsockopt(s->fd, IPPROTO_IPV6, IPV6_V6ONLY,
 			&on, sizeof(on)) == -1) {
@@ -860,6 +861,7 @@ socksetup_tls(const int af, const char *bindhostname, const char *port)
 			close(s->fd);
 			continue;
 		}
+#endif /* defined(__minix) && defined(INET6) */
 		if (setsockopt(s->fd, SOL_SOCKET, SO_REUSEADDR,
 			&on, sizeof(on)) == -1) {
 			DPRINTF(D_NET, "Unable to setsockopt(): %s\n",

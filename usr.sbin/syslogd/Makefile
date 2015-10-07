@@ -19,11 +19,11 @@ SYMLINKS=	/var/run/log /dev/log
 .PATH.c: ${NETBSDSRCDIR}/usr.bin/who
 CPPFLAGS+=-I${NETBSDSRCDIR}/usr.bin/who -DSUPPORT_UTMPX -DSUPPORT_UTMP -Wredundant-decls
 
+.if !defined(__MINIX)
 .if (${USE_INET6} != "no")
 CPPFLAGS+=-DINET6
 .endif
 
-.if !defined(__MINIX)
 CPPFLAGS+=-DLIBWRAP
 LDADD+=	-lwrap
 DPADD+=	${LIBWRAP}

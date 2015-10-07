@@ -1,0 +1,78 @@
+$NetBSD: README,v 1.3 2012/01/28 01:30:42 christos Exp $
+
+Organization of Sources:
+
+This directory hierarchy is using an organization that separates
+crypto source for programs that we have obtained from external third
+parties (where NetBSD is not the primary maintainer) from the system
+source.
+
+This README file is derived from the README file in src/external.
+
+The hierarchy is grouped by license, and then package per license,
+and is organized as follows:
+
+	crypto/external/
+
+	    Makefile
+			Descend into the license sub-directories.
+
+	    <license>/
+			Per-license sub-directories.
+
+		Makefile
+			Descend into the package sub-directories.
+
+		<package>/
+			Per-package sub-directories.
+
+		    Makefile
+			Build the package.
+			
+		    dist/
+			The third-party source for a given package.
+
+		    bin/
+		    lib/
+		    sbin/
+			BSD makefiles "reach over" from these into
+			"../dist/".
+
+This arrangement allows for packages to be easily disabled or
+excised as necessary, either on a per-license or per-package basis.
+
+The licenses currently used are:
+
+	bsd		BSD (or equivalent) licensed software, possibly with
+			the "advertising clause".
+	cpl		Common Public License
+			http://www.opensource.org/licenses/cpl1.0
+
+If a package has components covered by different licenses
+(for example, GPL2 and the LGPL), use the <license> subdirectory
+for the more restrictive license.
+
+If a package allows the choice of a license to use, we'll
+generally use the less restrictive license.
+
+If in doubt about where a package should be located, please
+contact <core@NetBSD.org> for advice.
+
+
+Migration Strategy:
+
+
+Eventually src/dist (and associated framework in other base source
+directories) and src/gnu will be migrated to this hierarchy.
+
+
+Maintenance Strategy:
+
+The sources under src/crypto/external/<license>/<package>/dist/ are
+generally a combination of a published distribution plus changes
+that we submit to the maintainers and that are not yet published
+by them.
+
+Make sure all changes made to the external sources are submitted
+to the appropriate maintainer, but only after coordinating with
+the NetBSD maintainers.

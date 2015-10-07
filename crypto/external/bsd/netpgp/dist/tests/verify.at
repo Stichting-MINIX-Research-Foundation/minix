@@ -1,0 +1,28 @@
+# $NetBSD: verify.at,v 1.10 2009/06/11 06:45:11 agc Exp $
+
+AT_SETUP([simple signature and verification])
+
+AT_CHECK([cp ${TOPSRCDIR}/configure file1], [0], [ignore], [ignore])
+
+# Sign the file
+AT_CHECK([netpgp --homedir $testhomedir --sign file1],
+    [0], [ignore], [ignore])
+
+# Verify the signed file
+AT_CHECK([netpgp --homedir $testhomedir --verify file1.gpg],
+    [0], [ignore], [ignore])
+
+# Fail to verify an unsigned file
+AT_CHECK([netpgp --homedir $testhomedir --verify file1],
+    [1], [ignore], [stderr])
+AT_CHECK([grep 'No signatures found - is this a signed file?' stderr],
+    [0], [ignore], [ignore])
+
+# Deliberately corrupt file2.gpg and attempt to verify
+sed -e 's|1|2|' file1.gpg > file2.gpg
+AT_CHECK([netpgp --homedir $testhomedir --verify file2.gpg],
+    [1], [ignore], [stderr])
+AT_CHECK([grep 'verification failure: 1 invalid signature' stderr],
+    [0], [ignore], [ignore])
+
+AT_CLEANUP

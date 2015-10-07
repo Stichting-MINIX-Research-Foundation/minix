@@ -1,0 +1,210 @@
+SASL client library - draft
+---------------------------
+
+Version: $NetBSD: library.txt,v 1.3 2011/02/11 23:44:42 christos Exp $
+
+1. Typedefs
+
+Moved to src/*.h
+
+2. Public API
+
+saslc_t *saslc_init(const char *appname); - Function takes appname as an
+argument, function allocates and initializes new saslc_t structure, parses
+configuration files if available (/etc/saslc/appname.d/sasl.conf and then
+/etc/saslc/appname.d/mechanism.conf for machanisms which are listed in 
+sasl.conf) Function returns pointer to the saslc_t on success and NULL on
+failure.
+
+const char *saslc_strerror(saslc_t *saslc); - function maps last error
+number in saslc to the message string. Returns pointer to the message string
+on success and pointer to the "unknown error" string on failure.
+
+int saslc_end(saslc_t *saslc); - function destroys SASL library context and
+deallocates any resources used. If any sessions are assigned to the context
+then function closes them. It returns 0 on success and -1 on failure.
+
+saslc_sess_t *saslc_sess_init(saslc_t *saslc, const char *mechs); - Function
+creates a new sasl session. If saslc is NULL then default configuration
+settings are used. Mechs is the string which consists of a comma separated
+list of mechanism names. Mechanism used for the authentication is selected
+basing on the configuration. Function allocates saslc_sess_t and performs
+initialization of saslc_sess_t, pointer to it is returned on success and NULL
+is returned on failure. In case of a failure saslc errno is set.
+
+int saslc_sess_setprop(saslc_sess_t *sess, const char *name,
+    const char *value); - Functions sets a property in the session. This
+function is used for setting i.e. callbacks.  It returns 0 on success and -1
+on failure. In case of a failure sess errno is set.
+
+NOTE: Property is added to the sess->prop dictionary.
+NOTE: All properties' names should match to [A-Za-z0-9_]+.
+
+const char  *saslc_sess_getprop(saslc_sess_t *sess, const char *name); -
+Function gets property from the session. It return pointer to the property
+value on success and NULL on failure. In case of a failure sess errno is
+set.
+
+NOTE: Property is taken from the sess->prop dictionary, if property not exist
+then sess->context->prop is used with added sess->mech->name."-" prefix.
+
+int saslc_sess_cont(saslc_sess_t *sess, const char *in, size_t inlen, 
+    char **out, size_t *outlen); - Function performs one step of the SASL
+authentication. Input data of length inlen is passed in the "in" argument.
+Function stores output of length outlen in the out argument and returns 0 on
+success, 1 if more steps of the SASL authentication is needed and -1 on
+failure. In case of a failure sess errno is set.
+
+NOTE: user is responsible for deallocate the output data.
+IMPLEMENTATION: sess->mech->cont(sess, in, inlen, out, outlen)
+
+const char *saslc_sess_strerror(saslc_sess_t *sess); - function maps last 
+error number in sess to message string. Returns pointer to the message string
+on success and pointer to the "unknown error" string on failure.
+
+const char *saslc_sess_strmech(saslc_sess_t *sess); - function returns pointer 
+to the string contains name of the mechanism used in session. On failure
+function returns pointer to "unknown".
+
+int saslc_sess_encode(saslc_sess_t *sess, const char *in, size_t inlen,
+    char **out, size_t *outlen); - function encodes data using security layer
+negotiated during the authentication. Returns 0 on success, -1 on failure. In
+case of a failure sess errno is set.
+IMPLEMENTATION: sess->mech->encode(sess, in, inlen, out, outlen)
+
+int saslc_sess_decode(saslc_sess_t *sess, const char *in, size_t inlen,
+    char **out, size_t *outlen); - function decodes data using security layer
+negotiated during the authentication. Returns 0 on success, -1 on failure. In
+case of a failure sess errno is set.
+IMPLEMENTATION: sess->mech->decode(sess, in, inlen, out, outlen)
+
+void saslc_sess_end(saslc_sess_t *sess); - function destroys SASL session and
+deallocates any resources used.
+
+3. Mechanisms
+
+3.1. Global mechanisms table
+
+saslc_mech_list_t *mechanisms;
+
+List of mechanisms, initialized during first call of saslc_start(...);
+
+3.3. Mechanisms implementation
+
+Each mechanism will provide const saslc_mech_t structure describing its
+implementation. Mechanisms state is described by saslc_mech_sess_t, using this
+type by mechanism is not mandatory and different struct can be defined by a
+mechanism if necessary. This structure is used only for representing internal
+state of the mechanism session, and wouldn't be used outside of mechanism
+implementation.
+
+3.2. Mechanisms which are going to be implemented
+
+ * ANONYMOUS (create, destroy, cont)
+ * EXTERNAL (create, destroy, cont)
+ * PLAIN (create, destroy, cont)
+ * LOGIN (create, destroy, cont)
+ * CRAM-MD5 (create, destroy, cont)
+ * DIGEST-MD5 (create, destroy, cont, encode, decode)
+ * GSSAPI (create, destroy, cont, encode, decode)
+
+3.3. Example
+
+ Consider ANONYMOUS mechanism as example, its pseudo implementation looks as
+follows:
+
+generic_create(...) {
+        // create mech_sess structure
+        // mech_sess->status = AUTHENTICATION
+}
+
+anon_cont(...) {
+        char *token;
+
+        if ( mech_sess->status != AUTHENTICATION ) {
+                // error handler
+        }
+
+        // get token from session if present, if not use default from
+        // configuration
+
+        // output = token, outlen = lenght(token)
+        // mech_sess->status = AUTHENTICATED...
+        // return 0;
+}
+
+generic_destroy(...) {
+        // destroy mech_sess structure
+        // return
+}
+
+saslc_mech_t anon_mech = {
+        "ANONYMOUS", // const char *name;
+        FLAG_ANONYMOUS, /* mechanism flags */
+        mech_generic_create; /* create function - creates mechanism 
+                                instance */
+        mech_anonymous_cont; /* step function - performs one step of 
+                                authentication */
+        NULL; /* encoding function - encodes input
+                 according to negotiated security layer */
+        NULL; /* decoding function - decodes input
+                 according to negotiated security layer */
+        mech_generic_destroy; /* destroy function - destroys mechanism
+                            instance */
+} mech_anonymous;
+
+
+4. Expected usage
+
+Below is presented example and expected usage of the library.
+
+/* creating context */
+...
+ctx = saslc_init("example");
+
+if ( ctx == NULL ) {
+        //error handler
+}
+...
+
+
+/* session */
+sess = saslc_sess_init(ctx, "PLAIN,ANONYMOUS");
+
+if ( sess == NULL ) {
+        //error handler
+}
+
+if ( strcmp(saslc_sess_strmech(sess),"PLAIN") == 0 ) {
+        saslc_sess_setprop(sess, "USERID", "foo");
+        saslc_sess_setprop(sess, "PASSWORD", "bar");
+} else if ( strcmp(saslc_sess_strmech(sess),"ANONYMOUS") == 0 ) {
+        saslc_sess_setprop(sess, "TOKEN", "foo@bar.com");
+}
+
+// sending auth
+// proto read
+// parse
+
+while ( (last = sasl_sess_cont(sess, in, inlen, out, outlen)) >= 0 ) {
+        // proto send
+        // proto read
+        // parse
+
+        if ( last == 0 )
+                break;
+}
+
+if ( last == 0 ) {
+        // yay!
+} else {
+        // error handler
+}
+
+...
+/* destroying session and context */
+saslc_sess_end(sess);
+saslc_end(ctx);
+...
+
+vim:tw=79:spell:spelllang=en

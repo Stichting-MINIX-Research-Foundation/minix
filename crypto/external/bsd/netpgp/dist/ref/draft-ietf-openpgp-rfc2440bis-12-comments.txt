@@ -1,0 +1,78 @@
+3.2 (MPI) doesn't specify what the unused bits should be set
+  to. This may be deliberate but I think it should either say they MUST
+  be zero (which I prefer) or that their content is unspecified.
+
+4.2 refers to Content Tags, but 4.3 calls them Packet Tags.
+
+5.5.2 doesn't mention V2 keys.
+
+In section 9.1, Schneier is given as the reference for DSA - why not refer to FIPS 186-2, which is freely available? Or, indeed, HAC 11.5.1, available here: http://www.cacr.math.uwaterloo.ca/hac/about/chap11.pdf.
+
+Similarly 9.2, TripleDES (which, presumably is EDE 3DES - it'd be good
+to be specific) is on some FIPS document which I forget or in HAC
+chapter 7 (7.32 in 7.2.3 and 7.4.2).
+
+----
+
+In 5.2.1:
+
+"0x10: Generic certification of a User ID and Public Key packet."
+
+Does this mean that the signature is over the User ID packet and the Public Key packet, concatenated, in that order? Or what?
+
+Also, what on earth does:
+
+       Note that all PGP "key signatures" are this type of
+       certification.
+
+mean?
+
+In 5.2.2:
+
+   "The data being signed is hashed, and then the signature type and
+   creation time from the signature packet are hashed (5 additional
+   octets)."
+
+is unclear, suggest:
+
+"The concatenation of the data to be signed, the signature type and
+creation time from the signature packet (5 additional octets) is hashed."
+
+In 5.9:
+
+   " - File name as a string (one-octet length, followed by file name),
+       if the encrypted data should be saved as a file."
+
+but no mention of what if it shouldn't be saved as a file. 0 length,
+perhaps?
+
+Then:
+
+   " - A four-octet number that indicates the modification date of the
+       file, or the creation time of the packet, or a zero that
+       indicates the present time."
+
+I would _guess_ that it means modification date of the file if there's
+a filename, the creation time if there isn't. I have no idea what zero
+is supposed to mean. Nothing, would be the obvious interpretation -
+"the present time" is nonsensical.
+
+Once more, when I know what its supposed to mean, I'll suggest
+wording.
+
+------
+
+5.2.3.5 Issuer
+
+should be:
+
+5.2.3.5 Issuer key ID
+
+A tiny point, I know, but it made it hard to find.
+
+Key algorithms ... these are used in various contexts, and there's a
+list in 9.1 - some of these are clearly unsuitable in some contexts -
+for example, one would not expect to see RSA Ecnrpyt-Only (3) in a
+signature. But I can't find any language saying anything about
+this. Are there any rules?
+

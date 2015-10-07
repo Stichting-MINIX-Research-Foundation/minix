@@ -1,0 +1,412 @@
+# Swedish translations for Heimdal package
+# Svenska översättningar för paket Heimdal.
+# This file is put in the public domain.
+# Love Hornquist Astrand <>, 2008.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Heimdal 1.2.99\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2008-09-14 11:28+0100\n"
+"PO-Revision-Date: 2008-09-14 12:22+0100\n"
+"Last-Translator: Love Hörnquist Åstrand <lha@kth.se>\n"
+"Language-Team: Swedish\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: kuser/kgetcred.c:52
+msgid "credential cache to use"
+msgstr ""
+
+#: kuser/kgetcred.c:54
+msgid "credential cache to store credential in"
+msgstr ""
+
+#: kuser/kgetcred.c:56
+msgid "where to find the ticket use for delegation"
+msgstr ""
+
+#: kuser/kgetcred.c:58
+msgid "canonicalize the principal"
+msgstr ""
+
+#: kuser/kgetcred.c:60
+msgid "forwardable ticket requested"
+msgstr ""
+
+#: kuser/kgetcred.c:63
+msgid "encryption type to use"
+msgstr ""
+
+#: kuser/kgetcred.c:65
+msgid "client to impersonate"
+msgstr ""
+
+#: kuser/kgetcred.c:135
+#, c-format
+msgid "unrecognized enctype: %s"
+msgstr ""
+
+#: kuser/kinit.c:87
+msgid "obtain version 4 TGT"
+msgstr ""
+
+#: kuser/kinit.c:90
+msgid "only convert ticket to version 4"
+msgstr ""
+
+#: kuser/kinit.c:93
+msgid "obtain afs tokens"
+msgstr ""
+
+#: kuser/kinit.c:96
+msgid "credentials cache"
+msgstr ""
+
+#: kuser/kinit.c:99
+msgid "get forwardable tickets"
+msgstr ""
+
+#: kuser/kinit.c:102
+msgid "keytab to use"
+msgstr ""
+
+#: kuser/kinit.c:105
+msgid "lifetime of tickets"
+msgstr ""
+
+#: kuser/kinit.c:108
+msgid "get proxiable tickets"
+msgstr ""
+
+#: kuser/kinit.c:111
+msgid "renew TGT"
+msgstr ""
+
+#: kuser/kinit.c:114
+msgid "get renewable tickets"
+msgstr "Begär förbybara biljetter"
+
+#: kuser/kinit.c:117
+msgid "renewable lifetime of tickets"
+msgstr ""
+
+#: kuser/kinit.c:120
+msgid "server to get ticket for"
+msgstr ""
+
+#: kuser/kinit.c:123
+msgid "when ticket gets valid"
+msgstr ""
+
+#: kuser/kinit.c:126
+msgid "get key from keytab"
+msgstr ""
+
+#: kuser/kinit.c:129
+msgid "validate TGT"
+msgstr ""
+
+#: kuser/kinit.c:132
+msgid "encryption types to use"
+msgstr "Nyckel typ att använda"
+
+#: kuser/kinit.c:135
+msgid "file cache version to create"
+msgstr ""
+
+#: kuser/kinit.c:138
+msgid "request a ticket with no addresses"
+msgstr "Efterfråga en biljett utan adresser"
+
+#: kuser/kinit.c:141
+msgid "include these extra addresses"
+msgstr "Inkludera extra addresser"
+
+#: kuser/kinit.c:144
+msgid "request an anonymous ticket"
+msgstr "Efterfråga en anonym biljett"
+
+#: kuser/kinit.c:147
+msgid "request a Windows PAC"
+msgstr "Efterfråga en Windows PAC"
+
+#: kuser/kinit.c:150
+msgid "read the password from a file"
+msgstr ""
+
+#: kuser/kinit.c:153
+msgid "canonicalize client principal"
+msgstr ""
+
+#: kuser/kinit.c:156
+msgid "principal's public/private/certificate identifier"
+msgstr ""
+
+#: kuser/kinit.c:159
+msgid "directory with CA certificates"
+msgstr "Katalog med CA certififikat"
+
+#: kuser/kinit.c:162
+msgid "Use RSA encrypted reply (instead of DH)"
+msgstr ""
+
+#: kuser/kinit.c:165
+msgid "NTLM domain"
+msgstr ""
+
+#: kuser/kinit.c:168
+msgid "honor ok-as-delegate on tickets"
+msgstr "Används ok-as-delegate på biljetter"
+
+#: kuser/kinit.c:171
+msgid "only use referrals, no dns canalisation"
+msgstr "Använd bara referenser, inte DNS"
+
+#: kuser/kinit.c:174
+msgid "get windows behavior"
+msgstr ""
+
+#: kuser/kinit.c:185 kuser/klist.c:583
+msgid "Usage: "
+msgstr "Användning: "
+
+#: kuser/kinit.c:401
+#, c-format
+msgid "Failed to read password from file %s"
+msgstr "Kan inte läsa lösenordet från file %s"
+
+#: kuser/kinit.c:466 kuser/kinit.c:806
+#, c-format
+msgid "unparsable time: %s"
+msgstr "kan inte tolka tiden: %s"
+
+#: kuser/kinit.c:524
+#, c-format
+msgid "%s's Password: "
+msgstr "%ss lösenord"
+
+#: kuser/kinit.c:558
+msgid "Password incorrect"
+msgstr "Felaktigt lösenord"
+
+#: kuser/kinit.c:561
+msgid "Looks like a Kerberos 4 reply"
+msgstr "Fick tillbaks ett Kerberos 4 svar"
+
+#: kuser/kinit.c:572
+#, c-format
+msgid "NOTICE: ticket lifetime is %s"
+msgstr ""
+
+#: kuser/kinit.c:581
+#, c-format
+msgid "NOTICE: ticket renewable lifetime is %s"
+msgstr ""
+
+#: kuser/kinit.c:798
+msgid "resolving credentials cache"
+msgstr ""
+
+#: kuser/kinit.c:813
+msgid "specifying both extra addresses and no addresses makes no sense"
+msgstr ""
+
+#: kuser/kinit.c:859
+#, c-format
+msgid "permission denied: %s"
+msgstr ""
+
+#: kuser/kinit.c:861
+#, c-format
+msgid "command not found: %s"
+msgstr ""
+
+#: kuser/klist.c:58
+msgid "  Issued"
+msgstr "  Utfärdad"
+
+#: kuser/klist.c:59
+msgid "  Expires"
+msgstr "  Går ut"
+
+#: kuser/klist.c:60
+msgid "Flags"
+msgstr "Flaggor"
+
+#: kuser/klist.c:61
+msgid "  Principal"
+msgstr ""
+
+#: kuser/klist.c:62
+msgid "  Principal (kvno)"
+msgstr ""
+
+#: kuser/klist.c:63
+msgid "  Cache name"
+msgstr "   Cachenamn"
+
+#: kuser/klist.c:86
+msgid ">>>Expired<<<"
+msgstr ">>>Utgången<<<"
+
+#: kuser/klist.c:134
+#, c-format
+msgid "Server: %s\n"
+msgstr ""
+
+#: kuser/klist.c:140
+#, c-format
+msgid "Client: %s\n"
+msgstr ""
+
+#: kuser/klist.c:150
+msgid "Ticket etype: "
+msgstr "Biljettens nyckeltyp: "
+
+#: kuser/klist.c:155
+#, c-format
+msgid "unknown-enctype(%d)"
+msgstr "okänd nyckeltyp(%d)"
+
+#: kuser/klist.c:158
+#, c-format
+msgid ", kvno %d"
+msgstr ""
+
+#: kuser/klist.c:165
+#, c-format
+msgid "Session key: %s\n"
+msgstr ""
+
+#: kuser/klist.c:170
+#, c-format
+msgid "Ticket length: %lu\n"
+msgstr ""
+
+#: kuser/klist.c:173
+#, c-format
+msgid "Auth time:  %s\n"
+msgstr ""
+
+#: kuser/klist.c:176
+#, c-format
+msgid "Start time: %s\n"
+msgstr ""
+
+#: kuser/klist.c:178
+#, c-format
+msgid "End time:   %s"
+msgstr "Sluttid:   %s"
+
+#: kuser/klist.c:181
+msgid " (expired)"
+msgstr " (utgången)"
+
+#: kuser/klist.c:184
+#, c-format
+msgid "Renew till: %s\n"
+msgstr ""
+
+#: kuser/klist.c:191
+#, c-format
+msgid "Ticket flags: %s\n"
+msgstr ""
+
+#: kuser/klist.c:193
+msgid "Addresses: "
+msgstr ""
+
+#: kuser/klist.c:206
+msgid "addressless"
+msgstr "utan address"
+
+#: kuser/klist.c:236
+msgid "Credentials cache"
+msgstr ""
+
+#: kuser/klist.c:239
+msgid "Principal"
+msgstr ""
+
+#: kuser/klist.c:243
+msgid "Cache version"
+msgstr ""
+
+#: kuser/klist.c:262
+msgid "KDC time offset"
+msgstr ""
+
+#: kuser/klist.c:409 kuser/klist.c:521
+msgid ">>> Expired <<<"
+msgstr ">>> Utgången <<<"
+
+#: kuser/klist.c:414
+#, c-format
+msgid "User's (AFS ID %d) tokens for %s"
+msgstr ""
+
+#: kuser/klist.c:416
+#, c-format
+msgid "Tokens for %s"
+msgstr ""
+
+#: kuser/klist.c:455
+#, c-format
+msgid "No ticket file: %s"
+msgstr "Inte någon biljett fil: %s"
+
+#: kuser/klist.c:556
+msgid "credentials cache to list"
+msgstr ""
+
+#: kuser/klist.c:558
+msgid "test for having tickets"
+msgstr ""
+
+#: kuser/klist.c:561
+msgid "display AFS tokens"
+msgstr "Visa AFS biljetter"
+
+#: kuser/klist.c:563
+msgid "display v5 cred cache"
+msgstr "Visa version 5 biljetter"
+
+#: kuser/klist.c:565 kuser/klist.c:567
+msgid "verbose output"
+msgstr ""
+
+#: kuser/klist.c:569
+msgid "display hidden credentials"
+msgstr ""
+
+#: kuser/klist.c:573 kuser/kswitch.c:56
+msgid "print version"
+msgstr ""
+
+#: kuser/kswitch.c:50
+msgid "type of credential cache"
+msgstr ""
+
+#: kuser/kswitch.c:52
+msgid "name of credential cache"
+msgstr ""
+
+#: kuser/kswitch.c:54
+msgid "name of principal"
+msgstr ""
+
+#: kuser/kswitch.c:102
+msgid "Both --cache and --principal given, choose one"
+msgstr ""
+
+#: kuser/kswitch.c:114
+#, c-format
+msgid "Did not find principal: %s"
+msgstr ""
+
+#: kuser/kswitch.c:128
+msgid "out of memory"
+msgstr ""

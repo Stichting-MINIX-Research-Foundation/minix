@@ -1,0 +1,6 @@
+--preserve-binary=TBSCertificate
+--preserve-binary=TBSCRLCertList
+--preserve-binary=Name
+--sequence=GeneralNames
+--sequence=Extensions
+--sequence=CRLDistributionPoints
