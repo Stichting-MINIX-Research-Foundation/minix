@@ -954,66 +954,6 @@ pm_sigreturn_in(struct trace_proc * proc, const message * __unused m_out,
 }
 
 static void
-put_sysuname_field(struct trace_proc * proc, const char * name, int field)
-{
-	const char *text = NULL;
-
-	if (!valuesonly) {
-		switch (field) {
-		TEXT(_UTS_ARCH);
-		TEXT(_UTS_KERNEL);
-		TEXT(_UTS_MACHINE);
-		TEXT(_UTS_HOSTNAME);
-		TEXT(_UTS_NODENAME);
-		TEXT(_UTS_RELEASE);
-		TEXT(_UTS_VERSION);
-		TEXT(_UTS_SYSNAME);
-		TEXT(_UTS_BUS);
-		}
-	}
-
-	if (text != NULL)
-		put_field(proc, name, text);
-	else
-		put_value(proc, name, "%d", field);
-}
-
-static int
-pm_sysuname_out(struct trace_proc * proc, const message * m_out)
-{
-
-	if (!valuesonly && m_out->m_lc_pm_sysuname.req == _UTS_GET)
-		put_field(proc, "req", "_UTS_GET");
-	else if (!valuesonly && m_out->m_lc_pm_sysuname.req == _UTS_SET)
-		put_field(proc, "req", "_UTS_SET");
-	else
-		put_value(proc, "req", "%d", m_out->m_lc_pm_sysuname.req);
-	put_sysuname_field(proc, "field", m_out->m_lc_pm_sysuname.field);
-
-	if (m_out->m_lc_pm_sysuname.req == _UTS_GET)
-		return CT_NOTDONE;
-
-	put_buf(proc, "value", PF_STRING, m_out->m_lc_pm_sysuname.value,
-	    m_out->m_lc_pm_sysuname.len);
-	put_value(proc, "len", "%zu", m_out->m_lc_pm_sysuname.len);
-	return CT_DONE;
-}
-
-static void
-pm_sysuname_in(struct trace_proc * proc, const message * m_out,
-	const message * m_in, int failed)
-{
-
-	if (m_out->m_lc_pm_sysuname.req == _UTS_GET) {
-		put_buf(proc, "value", failed | PF_STRING,
-		    m_out->m_lc_pm_sysuname.value, m_in->m_type);
-		put_value(proc, "len", "%zu", m_out->m_lc_pm_sysuname.len);
-		put_equals(proc);
-	}
-	put_result(proc);
-}
-
-static void
 put_priority_which(struct trace_proc * proc, const char * name, int which)
 {
 	const char *text = NULL;
@@ -1374,8 +1314,6 @@ static const struct call_handler pm_map[] = {
 	    pm_sigprocmask_in),
 	PM_CALL(SIGRETURN) = HANDLER("sigreturn", pm_sigreturn_out,
 	    pm_sigreturn_in),
-	PM_CALL(SYSUNAME) = HANDLER("sysuname", pm_sysuname_out,
-	    pm_sysuname_in),
 	PM_CALL(GETPRIORITY) = HANDLER("getpriority", pm_getpriority_out,
 	    pm_getpriority_in),
 	PM_CALL(SETPRIORITY) = HANDLER("setpriority", pm_setpriority_out,
