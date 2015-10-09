@@ -49,9 +49,11 @@ struct vm_stats_info {
 };
 
 struct vm_usage_info {
-  vir_bytes vui_total;		/* total amount of process memory */
+  vir_bytes vui_total;		/* total amount of mapped process memory */
   vir_bytes vui_common;		/* part of memory mapped in more than once */
   vir_bytes vui_shared;		/* shared (non-COW) part of common memory */
+  vir_bytes vui_virtual;	/* total size of virtual address space */
+  vir_bytes vui_mvirtual;	/* idem but minus unmapped stack pages */
 };
 
 struct vm_region_info {
