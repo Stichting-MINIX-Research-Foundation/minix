@@ -276,23 +276,6 @@ char *argv[];
 	}
 	if (do_hostname)
 	{
-#if __minix_vmd
-		if (sysuname(_UTS_SET, _UTS_NODENAME,
-					nodename, strlen(nodename)+1) == -1)
-		{
-			fprintf(stderr, "%s: Unable to set nodename: %s\n",
-				prog_name, strerror(errno));
-			exit(1);
-		}
-
-		if (sysuname(_UTS_SET, _UTS_HOSTNAME,
-					hostname, strlen(hostname)+1) == -1)
-		{
-			fprintf(stderr, "%s: Unable to set hostname: %s\n",
-				prog_name, strerror(errno));
-			exit(1);
-		}
-#else
 		FILE *fp;
 
 		if ((fp= fopen("/etc/hostname.file", "w")) == NULL
@@ -303,7 +286,6 @@ char *argv[];
 				prog_name, strerror(errno));
 			exit(1);
 		}
-#endif
 	}
 	if (!first_print) printf("\n");
 	exit(0);

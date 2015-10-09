@@ -35,7 +35,7 @@
 #define PM_SIGPENDING		(PM_BASE + 22)
 #define PM_SIGPROCMASK		(PM_BASE + 23)
 #define PM_SIGRETURN		(PM_BASE + 24)
-#define PM_SYSUNAME		(PM_BASE + 25)
+#define PM_SYSUNAME		(PM_BASE + 25)		/* obsolete */
 #define PM_GETPRIORITY		(PM_BASE + 26)
 #define PM_SETPRIORITY		(PM_BASE + 27)
 #define PM_GETTIMEOFDAY		(PM_BASE + 28)
