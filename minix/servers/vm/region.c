@@ -1359,6 +1359,8 @@ void get_usage_info_kernel(struct vm_usage_info *vui)
 	memset(vui, 0, sizeof(*vui));
 	vui->vui_total = kernel_boot_info.kernel_allocated_bytes +
 		kernel_boot_info.kernel_allocated_bytes_dynamic;
+	/* All of the kernel's pages are actually mapped in. */
+	vui->vui_virtual = vui->vui_mvirtual = vui->vui_total;
 }
 
 static void get_usage_info_vm(struct vm_usage_info *vui)
@@ -1366,6 +1368,25 @@ static void get_usage_info_vm(struct vm_usage_info *vui)
 	memset(vui, 0, sizeof(*vui));
 	vui->vui_total = kernel_boot_info.vm_allocated_bytes +
 		get_vm_self_pages() * VM_PAGE_SIZE;
+	/* All of VM's pages are actually mapped in. */
+	vui->vui_virtual = vui->vui_mvirtual = vui->vui_total;
+}
+
+/*
+ * Return whether the given region is for the associated process's stack.
+ * Unfortunately, we do not actually have this information: in most cases, VM
+ * is not responsible for actually setting up the stack in the first place.
+ * Fortunately, this is only for statistical purposes, so we can get away with
+ * guess work.  However, it is certainly not accurate in the light of userspace
+ * thread stacks, or if the process is messing with its stack in any way, or if
+ * (currently) VFS decides to put the stack elsewhere, etcetera.
+ */
+static int
+is_stack_region(struct vir_region * vr)
+{
+
+	return (vr->vaddr == VM_STACKTOP - DEFAULT_STACK_LIMIT &&
+	    vr->length == DEFAULT_STACK_LIMIT);
 }
 
 /*========================================================================*
@@ -1392,8 +1413,15 @@ void get_usage_info(struct vmproc *vmp, struct vm_usage_info *vui)
 	}
 
 	while((vr = region_get_iter(&v_iter))) {
+		vui->vui_virtual += vr->length;
+		vui->vui_mvirtual += vr->length;
 		for(voffset = 0; voffset < vr->length; voffset += VM_PAGE_SIZE) {
-			if(!(ph = physblock_get(vr, voffset))) continue;
+			if(!(ph = physblock_get(vr, voffset))) {
+				/* mvirtual: discount unmapped stack pages. */
+				if (is_stack_region(vr))
+					vui->vui_mvirtual -= VM_PAGE_SIZE;
+				continue;
+			}
 			/* All present pages are counted towards the total. */
 			vui->vui_total += VM_PAGE_SIZE;
 
