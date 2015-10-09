@@ -86,11 +86,6 @@ __RCSID("$NetBSD: w.c,v 1.82 2014/12/22 15:24:14 dennis Exp $");
 
 #include "extern.h"
 
-#if defined(__minix)
-/* MINIX3 note: please see this header for information about the port. */
-#include "minix_proc.h"
-#endif /* defined(__minix) */
-
 struct timeval	boottime;
 struct winsize	ws;
 kvm_t	       *kd;
@@ -124,10 +119,8 @@ struct	entry {
 
 static void	pr_args(struct kinfo_proc2 *);
 static void	pr_header(time_t *, int);
-#if !defined(__minix)
 static int	proc_compare_wrapper(const struct kinfo_proc2 *,
     const struct kinfo_proc2 *);
-#endif /* !defined(__minix) */
 #if defined(SUPPORT_UTMP) || defined(SUPPORT_UTMPX)
 static int	ttystat(const char *, struct stat *);
 static void	process(struct entry *);
@@ -152,9 +145,7 @@ main(int argc, char **argv)
 	struct utmpx *utx;
 #endif
 	const char *progname;
-#if !defined(__minix)
 	char errbuf[_POSIX2_LINE_MAX];
-#endif /* !defined(__minix) */
 
 	setprogname(argv[0]);
 
@@ -201,15 +192,9 @@ main(int argc, char **argv)
 
 	use_sysctl = (memf == NULL && nlistf == NULL);
 
-#if !defined(__minix)
 	if ((kd = kvm_openfiles(nlistf, memf, NULL,
 	    memf == NULL ? KVM_NO_FILES : O_RDONLY, errbuf)) == NULL)
 		errx(1, "%s", errbuf);
-#else
-	if (!use_sysctl)
-		errx(1, "The -M and -N flags are not supported on MINIX3.");
-	kd = NULL;
-#endif /* !defined(__minix) */
 
 	(void)time(&now);
 
@@ -615,7 +600,6 @@ process(struct entry *ep)
 }
 #endif
 
-#if !defined(__minix)
 static int
 proc_compare_wrapper(const struct kinfo_proc2 *p1,
     const struct kinfo_proc2 *p2)
@@ -636,7 +620,6 @@ proc_compare_wrapper(const struct kinfo_proc2 *p1,
 
 	return proc_compare(p1, l1, p2, l2);
 }
-#endif /* !defined(__minix) */
 
 static void
 fixhost(struct entry *ep)
