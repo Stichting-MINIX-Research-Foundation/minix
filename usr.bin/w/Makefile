@@ -6,14 +6,8 @@
 PROG=	w
 SRCS=	fmt.c pr_time.c w.c
 MAN=	w.1 uptime.1
-.if defined(__MINIX)
-.PATH:	${NETBSDSRCDIR}/minix/usr.bin/w
-SRCS+=	minix_proc.c
-CPPFLAGS+= -I${NETBSDSRCDIR}/minix/usr.bin/w
-.else
 DPADD=	${LIBKVM} ${LIBUTIL}
 LDADD=	-lkvm -lutil
-.endif
 LINKS=	${BINDIR}/w ${BINDIR}/uptime
 CPPFLAGS+= -DSUPPORT_UTMP -DSUPPORT_UTMPX
 

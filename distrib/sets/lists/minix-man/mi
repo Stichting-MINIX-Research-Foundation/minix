@@ -2411,6 +2411,7 @@
 ./usr/man/man3/prefresh.3                               minix-man
 ./usr/man/man3/printf.3                                 minix-man
 ./usr/man/man3/printw.3                                 minix-man
+./usr/man/man3/proc_compare.3                           minix-man
 ./usr/man/man3/prop_array.3                             minix-man
 ./usr/man/man3/prop_array_add.3                         minix-man
 ./usr/man/man3/prop_array_capacity.3                    minix-man
