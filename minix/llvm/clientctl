@@ -297,7 +297,7 @@ function run {
         fi
     fi
     opts="-m 256 -hda $IMAGE"
-    append="$APPEND rootdevname=c0d0p1"
+    append="$APPEND rootdevname=c0d0p0"
     [ ! -f $DISK ] || opts="$opts -hdb $DISK"
     if [ "$OUT" == "F" ]; then
         opts="$opts -curses -serial file:$MYPWD/serial.out"
