@@ -170,7 +170,7 @@ ${CROSS_PREFIX}objcopy ${OBJ}/minix/kernel/kernel -O binary ${OBJ}/kernel.bin
 mcopy -bsp -i ${WORK_DIR}/fat.img ${OBJ}/kernel.bin ::kernel.bin
 
 for f in servers/vm/vm servers/rs/rs servers/pm/pm servers/sched/sched \
-	servers/vfs/vfs servers/ds/ds fs/mfs/mfs fs/pfs/pfs \
+	servers/vfs/vfs servers/ds/ds servers/mib/mib fs/pfs/pfs fs/mfs/mfs \
 	../sbin/init/init
 do
     fn=`basename $f`.elf

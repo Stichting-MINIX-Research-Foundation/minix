@@ -12,6 +12,7 @@
  *==========================================================================*/ 
 
 #define M_PATH_STRING_MAX  40
+#define CTL_SHORTNAME 8 /* max sysctl(2) name length that fits in message */
 
 typedef struct {
 	uint8_t data[56];
@@ -419,6 +420,17 @@ typedef struct {
 	uint8_t		padding[40];
 } mess_lc_ipc_shmget;
 _ASSERT_MSG_SIZE(mess_lc_ipc_shmget);
+
+typedef struct {
+	vir_bytes	oldp;
+	size_t		oldlen;
+	vir_bytes	newp;
+	size_t		newlen;
+	unsigned int	namelen;
+	vir_bytes	namep;
+	int		name[CTL_SHORTNAME];
+} mess_lc_mib_sysctl;
+_ASSERT_MSG_SIZE(mess_lc_mib_sysctl);
 
 typedef struct {
 	vir_bytes name;
@@ -1397,6 +1409,12 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_lsys_vm_watch_exit);
 
 typedef struct {
+	size_t		oldlen;
+	uint8_t		padding[52];
+} mess_mib_lc_sysctl;
+_ASSERT_MSG_SIZE(mess_mib_lc_sysctl);
+
+typedef struct {
 	off_t offset;
 	void *addr;
 	size_t len;
@@ -2074,6 +2092,7 @@ typedef struct noxfer_message {
 		mess_lc_ipc_shmctl	m_lc_ipc_shmctl;
 		mess_lc_ipc_shmdt	m_lc_ipc_shmdt;
 		mess_lc_ipc_shmget	m_lc_ipc_shmget;
+		mess_lc_mib_sysctl	m_lc_mib_sysctl;
 		mess_lc_pm_exec		m_lc_pm_exec;
 		mess_lc_pm_exit		m_lc_pm_exit;
 		mess_lc_pm_getsid	m_lc_pm_getsid;
@@ -2182,6 +2201,7 @@ typedef struct noxfer_message {
 		mess_lsys_vm_update	m_lsys_vm_update;
 		mess_lsys_vm_vmremap	m_lsys_vm_vmremap;
 		mess_lsys_vm_watch_exit	m_lsys_vm_watch_exit;
+		mess_mib_lc_sysctl	m_mib_lc_sysctl;
 		mess_mmap		m_mmap;
 		mess_net_netdrv_dl_conf m_net_netdrv_dl_conf;
 		mess_net_netdrv_dl_getstat_s m_net_netdrv_dl_getstat_s;

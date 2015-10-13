@@ -4,7 +4,7 @@ PROG=	trace
 SRCS=	call.o error.o escape.o format.o ioctl.o kernel.o mem.o output.o \
 	proc.o signal.o trace.o
 .PATH:	${.CURDIR}/service
-SRCS+=	pm.o vfs.o rs.o vm.o ipc.o
+SRCS+=	pm.o vfs.o rs.o mib.o vm.o ipc.o
 .PATH:	${.CURDIR}/ioctl
 SRCS+=	block.o char.o net.o svrctl.o
 

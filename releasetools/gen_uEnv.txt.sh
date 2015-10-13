@@ -9,10 +9,11 @@ list="0x80200000 kernel.bin
 0x84000000 vfs.elf
 0x84800000 memory.elf
 0x85000000 tty.elf
-0x85800000 mfs.elf
+0x85800000 mib.elf
 0x86000000 vm.elf
 0x86800000 pfs.elf
-0x87000000 init.elf"
+0x87000000 mfs.elf
+0x87800000 init.elf"
 
 #
 # PREFIX for loading file over tftp to allow hosting multiple

@@ -270,6 +270,17 @@ CPPFLAGS.malloc.c+= -D_LIBSYS
 SECTIONIFY.malloc.c+= -sectionify-no-override \
 	-sectionify-data-section-map=.*/magic_malloc_data
 
+.for f in \
+	strdup.o
+${f} ${f:C/\.o/.bc/}:	${LIBCDIR}/string/${f:C/\.o/.c/}
+OBJS+=	${f}
+CLEANFILES+= ${f}
+
+.if ${USE_BITCODE:Uno} == "yes"
+OBJS+=	${f:C/\.o/.bc/}
+CLEANFILES+= ${f:C/\.o/.bc/}
+.endif # ${USE_BITCODE:Uno} == "yes"
+.endfor
 
 .for f in \
 	access.o brk.o close.o environ.o execve.o fork.o fsync.o \

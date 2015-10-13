@@ -29,6 +29,7 @@
  *   0x1500 - 0x15FF	Input server messages
  *   0x1600 - 0x16FF	VirtualBox (VBOX) requests (see vboxif.h)
  *   0x1700 - 0x17FF	PTYFS requests
+ *   0x1800 - 0x18FF	Management Information Base (MIB) requests
  *
  * Zero and negative values are widely used for OK and error responses.
  */
@@ -60,10 +61,11 @@
 #define SCHED_PROC_NR ((endpoint_t) 4)	/* scheduler */
 #define TTY_PROC_NR  ((endpoint_t) 5)	/* terminal (TTY) driver */
 #define DS_PROC_NR   ((endpoint_t) 6)   /* data store server */
-#define MFS_PROC_NR  ((endpoint_t) 7)   /* minix root filesystem */
+#define MIB_PROC_NR  ((endpoint_t) 7)	/* management info base service */
 #define VM_PROC_NR   ((endpoint_t) 8)   /* memory server */
 #define PFS_PROC_NR  ((endpoint_t) 9)  /* pipe filesystem */
-#define LAST_SPECIAL_PROC_NR	10	/* An untyped version for
+#define MFS_PROC_NR  ((endpoint_t) 10)  /* minix root filesystem */
+#define LAST_SPECIAL_PROC_NR	11	/* An untyped version for
                                            computation in macros.*/
 #define INIT_PROC_NR ((endpoint_t) LAST_SPECIAL_PROC_NR)  /* init
                                                         -- goes multiuser */
@@ -1001,6 +1003,18 @@
 #define RTCDEV_NOFLAGS	0x00	/* no flags are set */
 #define RTCDEV_Y2KBUG	0x01	/* Interpret 1980 as 2000 for RTC w/Y2K bug */
 #define RTCDEV_CMOSREG	0x02	/* Also set the CMOS clock register bits. */
+
+/*===========================================================================*
+ *				Calls to MIB				     *
+ *===========================================================================*/
+
+#define MIB_BASE		0x1800
+
+#define IS_MIB_CALL(type)	(((type) & ~0xff) == MIB_BASE)
+
+#define MIB_SYSCTL		(MIB_BASE + 0)		/* sysctl(2) */
+
+#define NR_MIB_CALLS		1	/* highest number from base plus one */
 
 /*===========================================================================*
  *		Internal codes used by several services			     *

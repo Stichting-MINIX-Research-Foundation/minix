@@ -127,6 +127,7 @@ service_get_policies(struct policies * pol, index_t slot)
 		{ .label = "input", .policy_str = "reset" },
 		{ .label = "ipc", .policy_str = "restart" },
 		{ .label = "is", .policy_str = "restart" },
+		{ .label = "mib", .policy_str = "restart" },
 		{ .label = "pm", .policy_str = "restart" },
 		{ .label = "rs", .policy_str = "restart" },
 		{ .label = "sched", .policy_str = "restart" },
