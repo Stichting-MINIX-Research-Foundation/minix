@@ -206,6 +206,7 @@
 ./service/lwip                                          minix-base
 ./service/memory                                        minix-base
 ./service/mfs                                           minix-base
+./service/mib                                           minix-base
 ./service/pfs                                           minix-base
 ./service/pm                                            minix-base
 ./service/procfs                                        minix-base

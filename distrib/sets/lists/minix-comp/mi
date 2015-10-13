@@ -1237,6 +1237,7 @@
 ./usr/include/minix/sound.h                             minix-comp
 ./usr/include/minix/spin.h                              minix-comp
 ./usr/include/minix/sys_config.h                        minix-comp
+./usr/include/minix/sysctl.h                            minix-comp
 ./usr/include/minix/sysinfo.h                           minix-comp
 ./usr/include/minix/syslib.h                            minix-comp
 ./usr/include/minix/sysutil.h                           minix-comp

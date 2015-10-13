@@ -1341,16 +1341,16 @@ typedef void *sysctlfn;
 
 __BEGIN_DECLS
 int	sysctl(const int *, u_int, void *, size_t *, const void *, size_t);
-#if !defined(__minix)
 int	sysctlbyname(const char *, void *, size_t *, const void *, size_t);
 int	sysctlgetmibinfo(const char *, int *, u_int *,
 			 char *, size_t *, struct sysctlnode **, int);
 int	sysctlnametomib(const char *, int *, size_t *);
+#if !defined(__minix)
 int	proc_compare(const struct kinfo_proc2 *, const struct kinfo_lwp *,
     const struct kinfo_proc2 *, const struct kinfo_lwp *);
+#endif /* !defined(__minix) */
 void	*asysctl(const int *, size_t, size_t *);
 void	*asysctlbyname(const char *, size_t *);
-#endif /* !defined(__minix) */
 __END_DECLS
 
 #endif	/* !_KERNEL */

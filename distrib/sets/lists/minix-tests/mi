@@ -186,6 +186,7 @@
 ./usr/tests/minix-posix/test84                          minix-tests
 ./usr/tests/minix-posix/test85                          minix-tests
 ./usr/tests/minix-posix/test86                          minix-tests
+./usr/tests/minix-posix/test87                          minix-tests
 ./usr/tests/minix-posix/test9                           minix-tests
 ./usr/tests/minix-posix/testinterp                      minix-tests
 ./usr/tests/minix-posix/testisofs                       minix-tests

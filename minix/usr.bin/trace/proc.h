@@ -53,6 +53,13 @@ struct trace_proc {
 	/* ioctl state (ioctl.c) */
 	int ioctl_index;
 	unsigned int ioctl_flags;
+
+	/* sysctl state (service/mib.c) */
+	uint32_t sctl_flags;
+	size_t sctl_size;
+	int (*sctl_proc)(struct trace_proc *, const char *, int, const void *,
+	    vir_bytes, size_t);
+	int sctl_arg;
 };
 
 /* Trace flags. */
@@ -97,3 +104,8 @@ struct trace_proc {
 #define IF_OUT		0x1	/* call to print outgoing (written) data */
 #define IF_IN		0x2	/* call to print incoming (read) data */
 #define IF_ALL		0x4	/* all fields printed (not really a bit) */
+
+/* Sysctl processing types, determining what the callback function is to do. */
+#define ST_NAME		0	/* print the rest of the name */
+#define ST_OLDP		1	/* print the data pointed to by oldp */
+#define ST_NEWP		2	/* print the data pointed to by newp */

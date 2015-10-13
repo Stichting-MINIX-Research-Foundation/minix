@@ -21,8 +21,7 @@ SRCS+=	_errno.c
 .if defined(__MINIX)
 # Unsupported by Minix.
 # 	closefrom.c confstr.c extattr.c getdevmajor.c \
-#	pthread_atfork.c \
-#	sysctlbyname.c sysctlgetmibinfo.c sysctlnametomib.c
+#	pthread_atfork.c
 #
 # To be ported
 # nlist.c nlist_aout.c nlist_coff.c nlist_ecoff.c nlist_elf32.c nlist_elf64.c
@@ -30,7 +29,7 @@ SRCS+=	_errno.c
 # Not useful but portable
 #	disklabel.c
 
-SRCS+=	alarm.c alphasort.c arc4random.c assert.c \
+SRCS+=	alarm.c alphasort.c arc4random.c assert.c asysctl.c \
 	basename.c clock.c closedir.c \
 	ctermid.c ctype_.c daemon.c \
 	dehumanize_number.c devname.c dirname.c err.c errx.c \
@@ -53,8 +52,8 @@ SRCS+=	alarm.c alphasort.c arc4random.c assert.c \
 	shquote.c shquotev.c sighold.c sigignore.c siginterrupt.c \
 	siglist.c signal.c signame.c sigrelse.c \
 	sigset.c sigsetops.c sleep.c \
-	stringlist.c sysconf.c sysctl.c \
-	syslog.c telldir.c time.c \
+	stringlist.c sysconf.c sysctl.c sysctlbyname.c sysctlgetmibinfo.c \
+	sysctlnametomib.c syslog.c telldir.c time.c \
 	times.c toascii.c tolower_.c ttyname.c ttyslot.c toupper_.c ualarm.c \
 	ulimit.c uname.c unvis.c usleep.c utime.c utimens.c utmp.c \
 	utmpx.c valloc.c vis.c wait.c wait3.c waitpid.c warn.c warnx.c \

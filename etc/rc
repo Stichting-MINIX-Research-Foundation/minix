@@ -157,6 +157,7 @@ autoboot|start)
 	edit ds
 	edit tty
 	edit memory
+	edit mib
 	edit pfs
 	edit init
 	#

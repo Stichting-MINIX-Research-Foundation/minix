@@ -9,6 +9,7 @@ static const struct calls *call_table[] = {
 	&pm_calls,
 	&vfs_calls,
 	&rs_calls,
+	&mib_calls,
 	&vm_calls,
 	&ipc_calls,
 };
@@ -66,6 +67,7 @@ put_endpoint(struct trace_proc * proc, const char * name, endpoint_t endpt)
 		TEXT(SCHED_PROC_NR);
 		TEXT(TTY_PROC_NR);
 		TEXT(DS_PROC_NR);
+		TEXT(MIB_PROC_NR);
 		TEXT(VM_PROC_NR);
 		TEXT(PFS_PROC_NR);
 		TEXT(ANY);
@@ -683,4 +685,23 @@ call_name(struct trace_proc * proc)
 	assert(proc->call_name != NULL);
 
 	return proc->call_name;
+}
+
+/*
+ * Return whether the current call failed due to an error at the system call
+ * level, and if so, return the error code as well.  May be called during the
+ * leave phase of a call only.
+ */
+int
+call_errno(struct trace_proc * proc, int * err)
+{
+
+	if (proc->call_flags & (CF_REG_ERR | CF_MSG_ERR | CF_IPC_ERR))
+		return FALSE;
+
+	if (proc->call_result >= 0)
+		return FALSE;
+
+	*err = -proc->call_result;
+	return TRUE;
 }
