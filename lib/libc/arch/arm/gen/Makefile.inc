@@ -1,7 +1,7 @@
-# $NetBSD: Makefile.inc,v 1.25 2013/08/21 03:09:39 matt Exp $
+# $NetBSD: Makefile.inc,v 1.28 2014/01/29 23:37:18 joerg Exp $
 
 SRCS+=	alloca.S byte_swap_2.S byte_swap_4.S bswap64.c \
-	fabs.c flt_rounds.c 
+	fabs_ieee754.c flt_rounds.c
 
 CPUFLAGS.divide.S+=		-marm
 
@@ -17,6 +17,9 @@ SRCS+=	signbitf_ieee754.c signbitd_ieee754.c
 SRCS+=	__aeabi_fcmpun.c __aeabi_dcmpun.c
 SRCS+=	__aeabi_idiv0.c __aeabi_ldiv0.c
 .endif
+
+AFLAGS._setjmp.S=	-mfpu=vfp
+AFLAGS.setjmp.S=	-mfpu=vfp
 
 SRCS+=	nanf.c
 

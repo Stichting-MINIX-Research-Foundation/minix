@@ -1,4 +1,4 @@
-/* $NetBSD: udf_create.c,v 1.24 2013/10/19 01:09:59 christos Exp $ */
+/* $NetBSD: udf_create.c,v 1.25 2015/06/16 23:18:55 christos Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -30,7 +30,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: udf_create.c,v 1.24 2013/10/19 01:09:59 christos Exp $");
+__RCSID("$NetBSD: udf_create.c,v 1.25 2015/06/16 23:18:55 christos Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -1579,7 +1579,7 @@ udf_fidsize(struct fileid_desc *fid)
 	uint32_t size;
 
 	if (udf_rw16(fid->tag.id) != TAGID_FID)
-		errx(EINVAL, "got udf_fidsize on non FID\n");
+		errx(EINVAL, "got udf_fidsize on non FID");
 
 	size = UDF_FID_SIZE + fid->l_fi + udf_rw16(fid->l_iu);
 	size = (size + 3) & ~3;

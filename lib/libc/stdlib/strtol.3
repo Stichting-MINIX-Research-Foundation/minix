@@ -1,4 +1,4 @@
-.\"	$NetBSD: strtol.3,v 1.26 2009/07/23 13:38:57 wiz Exp $
+.\"	$NetBSD: strtol.3,v 1.32 2015/05/01 14:17:56 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     from: @(#)strtol.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd July 23, 2009
+.Dd April 30, 2015
 .Dt STRTOL 3
 .Os
 .Sh NAME
@@ -94,6 +94,7 @@ converts the string in
 to a
 .Ft quad_t
 value.
+.Pp
 The conversion is done according to the given
 .Fa base ,
 which must be between 2 and 36 inclusive,
@@ -119,11 +120,9 @@ is taken as 10 (decimal) unless the next character is
 .Ql 0 ,
 in which case it is taken as 8 (octal).
 .Pp
-The remainder of the string is converted to a
-.Em long
-value in the obvious manner,
-stopping at the first character which is not a valid digit
-in the given base.
+The remainder of the string is converted to an appropriate value
+in the obvious manner,
+stopping at the first character which is not a valid digit in the given base.
 (In bases above 10, the letter
 .Ql A
 in either upper or lower case
@@ -135,13 +134,10 @@ representing 35.)
 .Pp
 If
 .Fa endptr
-is non-nil,
-.Fn strtol
-stores the address of the first invalid character in
+is non-nil, the functions store the address of the first invalid character in
 .Fa *endptr .
 If there were no digits at all, however,
-.Fn strtol
-stores the original value of
+the functions store the original value of
 .Fa nptr
 in
 .Fa *endptr .
@@ -275,6 +271,7 @@ The given string was out of range; the value converted has been clamped.
 .Xr atol 3 ,
 .Xr atoll 3 ,
 .Xr strtod 3 ,
+.Xr strtou 3 ,
 .Xr strtoul 3 ,
 .Xr strtoull 3 ,
 .Xr strtoumax 3
@@ -290,5 +287,13 @@ and
 .Fn strtoimax
 functions conform to
 .St -isoC-99 .
+.Pp
+The
+.Fn strtoq
+function is a
+.Bx
+legacy function equivalent to
+.Fn strtoll
+and should not be used in a new code.
 .Sh BUGS
 Ignores the current locale.

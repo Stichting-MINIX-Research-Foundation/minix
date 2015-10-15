@@ -1,4 +1,4 @@
-/*	$NetBSD: test_hmac.c,v 1.1.1.1 2011/04/13 18:14:51 elric Exp $	*/
+/*	$NetBSD: test_hmac.c,v 1.1.1.2 2014/04/24 12:45:30 pettai Exp $	*/
 
 /*
  * Copyright (c) 2006 Kungliga Tekniska Högskolan
@@ -73,6 +73,6 @@ main(int argc, char **argv)
 	printf("wrong answer\n");
 	return 1;
     }
-	
+
     return 0;
 }

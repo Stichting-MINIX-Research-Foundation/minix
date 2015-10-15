@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2013/06/05 07:26:36 mrg Exp $
+#	$NetBSD: Makefile,v 1.7 2015/07/22 09:49:51 mrg Exp $
 
 WARNS?=		2
 
@@ -8,9 +8,8 @@ DRIVER_NAME=	mouse_drv
 SRCS=		mouse.c pnp.c bsd_mouse.c
 MAN=		mousedrv.4
 
-CPPFLAGS+=	-DHAVE_CONFIG_H \
-		-I${X11SRCDIR.${DRIVER}}/include \
-		-I${X11SRCDIR.${DRIVER}}/../include
+CPPFLAGS+=	-DHAVE_XORG_CONFIG_H -DHAVE_ASPRINTF
+CPPFLAGS+=	-I${X11SRCDIR.${DRIVER}}/include
 
 INCSDIR=	${X11INCDIR}/xorg
 INCS=		xf86-mouse-properties.h
@@ -22,3 +21,6 @@ PKGDIST.xorg-mouse=	${X11SRCDIR.${DRIVER}}
 
 .PATH:  ${X11SRCDIR.${DRIVER}}/include
 .PATH:  ${X11SRCDIR.${DRIVER}}
+
+XORG_PKG_VER_PROG=	${DRIVER}
+.include "../../../xorg-pkg-ver.mk"

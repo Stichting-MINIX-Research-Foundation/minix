@@ -1,4 +1,4 @@
-/*	$NetBSD: n_cabs.S,v 1.6 2008/03/20 16:41:26 mhitch Exp $	*/
+/*	$NetBSD: n_cabs.S,v 1.7 2014/10/10 20:58:09 martin Exp $	*/
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -55,6 +55,8 @@ ENTRY(_hypotf, 0)
 
 #ifdef WEAK_ALIAS
 WEAK_ALIAS(hypot, _hypot)
+WEAK_ALIAS(hypotl, _hypot)
+WEAK_ALIAS(_hypotl, _hypot)
 #endif
 
 ALTENTRY(cabs)

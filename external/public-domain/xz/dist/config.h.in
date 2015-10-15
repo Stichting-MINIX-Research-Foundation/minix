@@ -22,6 +22,12 @@
 /* Define to 1 if you have the <byteswap.h> header file. */
 #undef HAVE_BYTESWAP_H
 
+/* Define to 1 if the system has the type `CC_SHA256_CTX'. */
+#undef HAVE_CC_SHA256_CTX
+
+/* Define to 1 if you have the `CC_SHA256_Init' function. */
+#undef HAVE_CC_SHA256_INIT
+
 /* Define to 1 if you have the MacOS X function CFLocaleCopyCurrent in the
    CoreFoundation framework. */
 #undef HAVE_CFLOCALECOPYCURRENT
@@ -39,9 +45,19 @@
 /* Define to 1 if sha256 integrity check is enabled. */
 #undef HAVE_CHECK_SHA256
 
+/* Define to 1 if you have the `clock_gettime' function. */
+#undef HAVE_CLOCK_GETTIME
+
+/* Define to 1 if you have the <CommonCrypto/CommonDigest.h> header file. */
+#undef HAVE_COMMONCRYPTO_COMMONDIGEST_H
+
 /* Define if the GNU dcgettext() function is already present or preinstalled.
    */
 #undef HAVE_DCGETTEXT
+
+/* Define to 1 if you have the declaration of `CLOCK_MONOTONIC', and to 0 if
+   you don't. */
+#undef HAVE_DECL_CLOCK_MONOTONIC
 
 /* Define to 1 if you have the declaration of `program_invocation_name', and
    to 0 if you don't. */
@@ -125,8 +141,11 @@
 /* Define if the GNU gettext() function is already present or preinstalled. */
 #undef HAVE_GETTEXT
 
-/* Define if you have the iconv() function. */
+/* Define if you have the iconv() function and it works. */
 #undef HAVE_ICONV
+
+/* Define to 1 if you have the <immintrin.h> header file. */
+#undef HAVE_IMMINTRIN_H
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
@@ -155,11 +174,41 @@
 /* Define to 1 to enable hc4 match finder. */
 #undef HAVE_MF_HC4
 
+/* Define to 1 if you have the <minix/sha2.h> header file. */
+#undef HAVE_MINIX_SHA2_H
+
 /* Define to 1 if getopt.h declares extern int optreset. */
 #undef HAVE_OPTRESET
 
-/* Define if you have POSIX threads libraries and header files. */
-#undef HAVE_PTHREAD
+/* Define to 1 if you have the `pipe2' function. */
+#undef HAVE_PIPE2
+
+/* Define to 1 if you have the `posix_fadvise' function. */
+#undef HAVE_POSIX_FADVISE
+
+/* Define to 1 if you have the `pthread_condattr_setclock' function. */
+#undef HAVE_PTHREAD_CONDATTR_SETCLOCK
+
+/* Have PTHREAD_PRIO_INHERIT. */
+#undef HAVE_PTHREAD_PRIO_INHERIT
+
+/* Define to 1 if you have the `SHA256Init' function. */
+#undef HAVE_SHA256INIT
+
+/* Define to 1 if the system has the type `SHA256_CTX'. */
+#undef HAVE_SHA256_CTX
+
+/* Define to 1 if you have the <sha256.h> header file. */
+#undef HAVE_SHA256_H
+
+/* Define to 1 if you have the `SHA256_Init' function. */
+#undef HAVE_SHA256_INIT
+
+/* Define to 1 if the system has the type `SHA2_CTX'. */
+#undef HAVE_SHA2_CTX
+
+/* Define to 1 if you have the <sha2.h> header file. */
+#undef HAVE_SHA2_H
 
 /* Define to 1 if optimizing for size. */
 #undef HAVE_SMALL
@@ -234,15 +283,25 @@
 /* Define to 1 if the system has the type `_Bool'. */
 #undef HAVE__BOOL
 
-/* Define to the sub-directory in which libtool stores uninstalled libraries.
-   */
+/* Define to 1 if _mm_movemask_epi8 is available. */
+#undef HAVE__MM_MOVEMASK_EPI8
+
+/* Define to the sub-directory where libtool stores uninstalled libraries. */
 #undef LT_OBJDIR
+
+/* Define to 1 when using POSIX threads (pthreads). */
+#undef MYTHREAD_POSIX
+
+/* Define to 1 when using Windows Vista compatible threads. This uses features
+   that are not available on Windows XP. */
+#undef MYTHREAD_VISTA
+
+/* Define to 1 when using Windows 95 (and thus XP) compatible threads. This
+   avoids use of features that were added in Windows Vista. */
+#undef MYTHREAD_WIN95
 
 /* Define to 1 to disable debugging code. */
 #undef NDEBUG
-
-/* Define to 1 if your C compiler doesn't accept -c and -o together. */
-#undef NO_MINUS_C_MINUS_O
 
 /* Name of package */
 #undef PACKAGE
@@ -274,6 +333,10 @@
 
 /* Define to 1 if you have the ANSI C header files. */
 #undef STDC_HEADERS
+
+/* Define to 1 if the number of available CPU cores can be detected with
+   cpuset(2). */
+#undef TUKLIB_CPUCORES_CPUSET
 
 /* Define to 1 if the number of available CPU cores can be detected with
    pstat_getdynamic(). */
@@ -354,6 +417,11 @@
 # ifndef WORDS_BIGENDIAN
 #  undef WORDS_BIGENDIAN
 # endif
+#endif
+
+/* Enable large inode numbers on Mac OS X 10.5.  */
+#ifndef _DARWIN_USE_64_BIT_INODE
+# define _DARWIN_USE_64_BIT_INODE 1
 #endif
 
 /* Number of bits in a file offset, on hosts where this is settable. */

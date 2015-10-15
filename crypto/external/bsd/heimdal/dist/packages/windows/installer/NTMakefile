@@ -110,9 +110,11 @@ CRTNAME=CRT
 CRTNAME=DebugCRT
 !endif
 
+!if "$(MMDIR)"==""
 MMDIR=$(ProgramFiles)\Common Files\Merge Modules
 !if !exist($(MMDIR))
 MMDIR=$(SystemDrive)\Program Files (x86)\Common Files\Merge Modules
+!endif
 !endif
 
 !if exist("$(MMDIR)")
@@ -151,8 +153,10 @@ CANDLEOPTS=$(CANDLEOPTS) -dTarget64	\
 
 !ifdef MULTIPLATFORM_INSTALLER
 CANDLEOPTS=$(CANDLEOPTS) -dTarget32
+TYPEOPT=-full
 !else
 !  message Excluding 32-bit components from installer
+TYPEOPT=
 !endif
 
 INSTDEPS=$(INSTDIR32)\Heimdal.msm \
@@ -185,16 +189,17 @@ THIRDPARTYOBJS=$(THIRDPARTYOBJS) $(INSTDIR32)\MKShim.wixlib
 !endif
 !endif
 
-INSTALLER=$(INSTDIR)\Heimdal-$(CPU)$(DEBUGOPT)-$(VERSIOND).msi
+INSTALLER=$(INSTDIR)\Heimdal-$(CPU)$(DEBUGOPT)$(TYPEOPT)-$(VERSIOND).msi
+WIXOBJ=$(OBJ)\heimdal-installer$(TYPEOPT).wixobj
 
-$(INSTALLER): $(OBJ)\heimdal-installer.wixobj $(THIRDPARTYOBJS) $(INSTDEPS) lang\en-us.wxl
-	$(LIGHT) -out $@ $(OBJ)\heimdal-installer.wixobj $(THIRDPARTYOBJS)	\
+$(INSTALLER): $(WIXOBJ) $(THIRDPARTYOBJS) $(INSTDEPS) lang\en-us.wxl
+	$(LIGHT) -out $@ $(WIXOBJ) $(THIRDPARTYOBJS)	\
 		-sval -cultures:en-us -loc lang\en-us.wxl	\
 		-dWixUILicenseRtf=lang\license-en-us.rtf	\
 		-ext WixUIExtension
 	$(_CODESIGN)
 
-$(OBJ)\heimdal-installer.wixobj: heimdal-installer.wxs
+$(WIXOBJ): heimdal-installer.wxs
 	$(CANDLE) -arch $(PLATFORM) -o $@ heimdal-installer.wxs \
 		$(CANDLEOPTS) $(THIRDPARTYOPTS)
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: t_unpriv.c,v 1.10 2013/03/16 05:45:37 jmmv Exp $	*/
+/*	$NetBSD: t_unpriv.c,v 1.12 2015/04/09 19:51:13 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -31,6 +31,7 @@
 
 #include <atf-c.h>
 #include <libgen.h>
+#include <limits.h>
 #include <unistd.h>
 
 #include <rump/rump_syscalls.h>
@@ -54,8 +55,6 @@ owner(const atf_tc_t *tc, const char *mp)
 	rump_pub_lwproc_rfork(RUMP_RFCFDG);
 	if (rump_sys_setuid(1) == -1)
 		atf_tc_fail_errno("setuid");
-	if (FSTYPE_ZFS(tc))
-		atf_tc_expect_fail("PR kern/47656: Test known to be broken");
         if (rump_sys_chown(".", 1, -1) != -1 || errno != EPERM)
 		atf_tc_fail_errno("chown");
         if (rump_sys_chmod(".", 0000) != -1 || errno != EPERM) 
@@ -127,7 +126,13 @@ times(const atf_tc_t *tc, const char *mp)
 {
 	const char *name = "file.test";
 	int fd;
+	unsigned int i, j;
 	struct timeval tmv[2];
+	static struct timeval tmvs[] = {
+		{ QUAD_MIN, 0 },
+		{ 0, 0 },
+		{ QUAD_MAX, 999999 }
+	};
 
 	FSTEST_ENTER();
 
@@ -148,15 +153,21 @@ times(const atf_tc_t *tc, const char *mp)
 	if (rump_sys_utimes(name, NULL) == -1)
 		atf_tc_fail_errno("utimes");
 
-	rump_pub_lwproc_rfork(RUMP_RFCFDG);
-	if (rump_sys_setuid(1) == -1)
-		atf_tc_fail_errno("setuid");
-	if (rump_sys_utimes(name, tmv) != -1 || errno != EPERM)
-		atf_tc_fail_errno("utimes");
-	rump_pub_lwproc_releaselwp();
+	for (i = 0; i < sizeof(tmvs) / sizeof(tmvs[0]); i++) {
+		for (j = 0; j < sizeof(tmvs) / sizeof(tmvs[0]); j++) {
+			tmv[0] = tmvs[i];
+			tmv[1] = tmvs[j];
+			rump_pub_lwproc_rfork(RUMP_RFCFDG);
+			if (rump_sys_setuid(1) == -1)
+				atf_tc_fail_errno("setuid");
+			if (rump_sys_utimes(name, tmv) != -1 || errno != EPERM)
+				atf_tc_fail_errno("utimes");
+			rump_pub_lwproc_releaselwp();
 
-	if (rump_sys_utimes(name, tmv) == -1)
-		atf_tc_fail_errno("utimes");
+			if (rump_sys_utimes(name, tmv) == -1)
+				atf_tc_fail_errno("utimes");
+		}
+	}
 
 	if (rump_sys_unlink(name) == -1)
 		atf_tc_fail_errno("unlink");

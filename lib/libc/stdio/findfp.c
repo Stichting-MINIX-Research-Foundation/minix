@@ -110,12 +110,12 @@ int	__sdidinit;
 
 #endif /* !defined(_LIBMINC) && !defined(__kernel__) */
 
-#if !defined(__kernel__)
+#if !defined(__kernel__) && defined(__minix)
 				/* the usual - (stdin + stdout + stderr) */
 static FILE usual[FOPEN_MAX - 3];
 static struct __sfileext usualext[FOPEN_MAX - 3];
 static struct glue uglue = { 0, FOPEN_MAX - 3, usual };
-#endif /* !defined(__kernel__) */
+#endif /* !defined(__kernel__) && defined(__minix) */
 
 #if defined(_REENTRANT) && !defined(__lint__) /* XXX lint is busted */
 #define	STDEXT { ._lock = MUTEX_INITIALIZER, ._lockcond = COND_INITIALIZER }
@@ -230,7 +230,7 @@ f_prealloc(void)
 		continue;
 	if (n > 0)
 		g->next = moreglue(n);
-#endif /* !defined(_LIBMINC) */
+#endif /* !defined(_LIBMINC) && defined(__minix) */
 }
 
 /*
@@ -246,7 +246,7 @@ _cleanup(void)
 #if !defined(_LIBMINC) && defined(__minix)
 	/* (void) _fwalk(fclose); */
 	(void) fflush(NULL);			/* `cheating' */
-#endif /* !defined(_LIBMINC) */
+#endif /* !defined(_LIBMINC) && defined(__minix) */
 }
 
 /*
@@ -264,4 +264,4 @@ __sinit(void)
 	__cleanup = _cleanup;		/* conservative */
 	__sdidinit = 1;
 }
-#endif /* !defined(__kernel__) */
+#endif /* !defined(__kernel__) && defined(__minix) */

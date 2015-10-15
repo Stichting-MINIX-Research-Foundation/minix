@@ -1,4 +1,4 @@
-/*	$NetBSD: swapcontext.S,v 1.5 2013/09/12 15:36:16 joerg Exp $	*/
+/*	$NetBSD: swapcontext.S,v 1.6 2014/05/22 15:01:56 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: swapcontext.S,v 1.5 2013/09/12 15:36:16 joerg Exp $")
+	RCSID("$NetBSD: swapcontext.S,v 1.6 2014/05/22 15:01:56 uebayasi Exp $")
 #endif /* LIBC_SCCS && !lint */
 
 /*
@@ -71,3 +71,4 @@ ENTRY(swapcontext)
 #endif
 2:
 	ret
+END(swapcontext)

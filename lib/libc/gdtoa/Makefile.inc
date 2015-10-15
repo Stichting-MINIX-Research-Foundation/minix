@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.9 2013/04/19 20:18:33 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.10 2014/01/16 20:31:42 christos Exp $
 
 # gdtoa sources
 .PATH: ${.CURDIR}/gdtoa
@@ -37,10 +37,6 @@ SRCS+=	dmisc.c \
 	misc.c \
 	smisc.c strtodg.c sum.c \
 	ulp.c
-
-# wrappers
-SRCS+=	_strtof.c _strtold.c
-#SRCS+=	_hdtoa.c _ldtoa.c
 
 # XXX no hexadecimal floating-point string conversion for VAX FP yet
 .if ${MACHINE_ARCH} != "vax"

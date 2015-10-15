@@ -1,4 +1,4 @@
-/*	$NetBSD: swapcontext.S,v 1.4 2012/09/12 02:00:52 manu Exp $	*/
+/*	$NetBSD: swapcontext.S,v 1.5 2014/08/13 15:41:21 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -33,14 +33,14 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	.text
-	.asciz "$NetBSD: swapcontext.S,v 1.4 2012/09/12 02:00:52 manu Exp $"
+	.asciz "$NetBSD: swapcontext.S,v 1.5 2014/08/13 15:41:21 joerg Exp $"
 #endif /* LIBC_SCCS && !lint */
 
 ENTRY(swapcontext)
 	mc_off	= 56				# offset of uc_mcontext
 	stdu	%r1,-SF_SZ(%r1)			# set up new stack frame
 	mflr	%r0
-	std	%r0,[SF_SZ+SF_LR](%r1)		# save link register
+	std	%r0,(SF_SZ+SF_LR)(%r1)		# save link register
 	std	%r3,SF_PARAM(%r1)		# must save oucp (was 8)
 	std	%r4,SF_PARAM+8(%r1)		# must save ucp (was 12)
 	bl	._getcontext			# getcontext(oucp)

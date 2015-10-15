@@ -1,4 +1,4 @@
-/*	$NetBSD: minixfs3.c,v 1.6 2013/11/03 00:44:34 christos Exp $	*/
+/*	$NetBSD: minixfs3.c,v 1.7 2014/03/20 03:13:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 2012
@@ -168,20 +168,6 @@ struct file {
 	size_t		f_buf_size;	/* size of data block */
 	daddr_t		f_buf_blkno;	/* block number of data block */
 };
-
-#if defined(LIBSA_ENABLE_LS_OP)
-
-#define NELEM(x) (sizeof (x) / sizeof(*x))
-
-typedef struct entry_t entry_t;
-struct entry_t {
-	entry_t	*e_next;
-	ino32_t	e_ino;
-	char	e_name[1];
-};
-
-#endif /* LIBSA_ENABLE_LS_OP */
-
 
 static int read_inode(ino32_t, struct open_file *);
 static int block_map(struct open_file *, block_t, block_t *);
@@ -833,16 +819,41 @@ minixfs3_stat(struct open_file *f, struct stat *sb)
 }
 
 #if defined(LIBSA_ENABLE_LS_OP)
+#include "ls.h"
+#if defined(__minix) && !defined(LIBSA_ENABLE_LOAD_MODS_OP)
 __compactcall void
-minixfs3_ls(struct open_file *f, const char *pattern,
-		void (*funcp)(char* arg), char* path)
+minixfs3_ls(struct open_file *f, const char *pattern)
+#else
+__compactcall lsentry_t *
+minixfs3_list(struct open_file *f, const char *pattern);
+
+__compactcall void
+minixfs3_ls(struct open_file *f, const char *pattern)
+{
+	lsentry_t *names = minixfs3_list(f, pattern);
+	lsprint(names);
+	lsfree(names);
+}
+
+__compactcall void
+minixfs3_load_mods(struct open_file *f, const char *pattern,
+	void (*funcp)(char *), char *path)
+{
+	lsentry_t *names = minixfs3_list(f, pattern);
+	lsapply(names, pattern, funcp, path);
+	lsfree(names);
+}
+
+__compactcall lsentry_t *
+minixfs3_list(struct open_file *f, const char *pattern)
+#endif /* defined(__minix) && defined(LIBSA_ENABLE_LOAD_MODS_OP) */
 {
 	struct file *fp = (struct file *)f->f_fsdata;
 	struct mfs_sblock *fs = fp->f_fs;
 	struct mfs_direct *dp;
 	struct mfs_direct *dbuf;
 	size_t buf_size;
-	entry_t	*names = 0, *n, **np;
+	lsentry_t *names = 0;
 
 	fp->f_seekp = 0;
 	while (fp->f_seekp < (off_t)fp->f_di.mdi_size) {
@@ -865,9 +876,6 @@ minixfs3_ls(struct open_file *f, const char *pattern,
 			if (fs2h32(dp->mfsd_ino) == 0)
 				continue;
 
-			if (pattern && !fnmatch(dp->mfsd_name, pattern))
-				continue;
-
 			/* Compute the length of the name,
 			 * We don't use strlen and strcpy, because original MFS
 			 * code doesn't.
@@ -878,61 +886,18 @@ minixfs3_ls(struct open_file *f, const char *pattern,
 			else
 				namlen = cp - (dp->mfsd_name);
 
-			n = alloc(sizeof *n + namlen);
-			if (!n) {
-				printf("%d: %s\n",
-					fs2h32(dp->mfsd_ino), dp->mfsd_name);
-				continue;
-			}
-			n->e_ino = fs2h32(dp->mfsd_ino);
-			strncpy(n->e_name, dp->mfsd_name, namlen);
-			n->e_name[namlen] = '\0';
-			for (np = &names; *np; np = &(*np)->e_next) {
-				if (strcmp(n->e_name, (*np)->e_name) < 0)
-					break;
-			}
-			n->e_next = *np;
-			*np = n;
+			lsadd(&names, pattern, dp->mfsd_name, namlen, 
+			    fs2h32(dp->mfsd_ino), "?");
 		}
 		fp->f_seekp += buf_size;
 	}
 
-	if (names) {
-		entry_t *p_names = names;
-		do {
-			n = p_names;
-			if (funcp) {
-				/* Call handler for each file instead of
-				 * printing. Used by load_mods command.
-				 */
-				char namebuf[MAXPATHLEN+1];
-				namebuf[0] = '\0';
-				if (path != pattern) {
-					strcpy(namebuf, path);
-					namebuf[strlen(path)] = '/';
-					namebuf[strlen(path) + 1] = '\0';
-				}
-				strcat(namebuf, n->e_name);
-
-				funcp(namebuf);
-			} else {
-				printf("%d: %s\n",
-					n->e_ino, n->e_name);
-			}
-			p_names = n->e_next;
-		} while (p_names);
-	} else {
-		printf("not found\n");
-	}
-out:
-	if (names) {
-		do {
-			n = names;
-			names = n->e_next;
-			dealloc(n, 0);
-		} while (names);
-	}
-	return;
+#if defined(__minix) && defined(LIBSA_ENABLE_LOAD_MODS_OP)
+out:	return names;
+#else
+	lsprint(names);
+out:	lsfree(names);
+#endif /* defined(__minix) && defined(LIBSA_ENABLE_LOAD_MODS_OP) */
 }
 #endif
 

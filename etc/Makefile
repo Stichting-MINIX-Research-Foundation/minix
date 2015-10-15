@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.410 2013/08/19 16:34:29 matt Exp $
+#	$NetBSD: Makefile,v 1.424 2015/08/31 06:08:07 uebayasi Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -47,6 +47,8 @@ LOCALTIME?=	UTC
 CKSUM?=		${TOOL_CKSUM}
 MAKESUMS=	MAKE=${MAKE:Q} CKSUM=${CKSUM:Q} ${HOST_SH} ${NETBSDSRCDIR}/distrib/sets/makesums
 DISTRIBVER!=	${HOST_SH} ${NETBSDSRCDIR}/sys/conf/osrelease.sh
+
+GZIP_FLAGS= -9 ${GZIP_N_FLAG}
 
 # Flags for creating ISO CDROM image
 # mkisofs is expected to be in $PATH, install via pkgsrc/sysutils/cdrtools
@@ -158,11 +160,7 @@ distribution: .PHONY .MAKE check_DESTDIR distrib-dirs
 .endif	# !INSTALL_DONE
 	${MAKEDIRTARGET} . install-etc-files
 . if ${MKX11} != "no"
-.  if ${X11FLAVOUR} == "Xorg"
 	${MAKEDIRTARGET} ${NETBSDSRCDIR}/external/mit/xorg distribution
-.  else
-	${MAKEDIRTARGET} ${NETBSDSRCDIR}/x11 distribution
-.  endif
 . endif
 . if ${MKEXTSRC} != "no"
 	${MAKEDIRTARGET} ${NETBSDSRCDIR}/extsrc distribution
@@ -193,10 +191,11 @@ motd: ${.CURDIR}/${MOTD_SOURCE} ${_NETBSD_VERSION_DEPENDS}
 
 CLEANFILES+=	MAKEDEV
 .if !defined(__MINIX)
+MAKEDEV_MACHINE=${"${MACHINE_CPU}" == "aarch64":?${MACHINE_CPU}:${MACHINE}}
 MAKEDEV: ${.CURDIR}/MAKEDEV.awk ${.CURDIR}/MAKEDEV.tmpl \
-    ${.CURDIR}/etc.${MACHINE}/MAKEDEV.conf
+    ${.CURDIR}/etc.${MAKEDEV_MACHINE}/MAKEDEV.conf
 	${_MKTARGET_CREATE}
-	MACHINE=${MACHINE:Q} MACHINE_ARCH=${MACHINE_ARCH:Q} \
+	MACHINE=${MAKEDEV_MACHINE:Q} MACHINE_ARCH=${MACHINE_ARCH:Q} \
 	    NETBSDSRCDIR=${NETBSDSRCDIR:Q} \
 	    ${TOOL_AWK} -f ${.CURDIR}/MAKEDEV.awk ${.CURDIR}/MAKEDEV.tmpl \
 	    > ${.TARGET}
@@ -217,9 +216,20 @@ etc-release: .EXEC .MAKE
 		echo ; \
 		cat ${NETBSDSRCDIR}/sys/conf/copyright; \
 		echo ; \
-		echo "Build settings:"; \
-		printf "%20s   %s\n"  "Build date" "$$(date -u)"; \
+		echo "Build information:"; \
+		printf "%20s   %s\n" "Build date" "$$(date -u)"; \
 		printf "%20s   %s\n"  "Built by" "$${USER-root}@$$(hostname)"; \
+		if [ -n "${BUILDID}" ]; then \
+		    printf "%20s   %s\n"  "Build ID" "${BUILDID}" ; \
+		fi ; \
+		if [ -n "${BUILDINFO}" ]; then \
+		    echo ; \
+		    info="$$(printf "%b" ${BUILDINFO:Q})" ; \
+		    printf "%s\n" "$${info}" \
+		    | ${TOOL_SED} -e 's/^/        /' ; \
+		fi ; \
+		echo ; \
+		echo "Build settings:"; \
 		echo ; \
 		${PRINT_PARAMS} ; \
 	) >${.OBJDIR}/${.TARGET}
@@ -340,8 +350,13 @@ install-etc-files-safe: .PHONY .MAKE check_DESTDIR MAKEDEV
 .endif # defined(__MINIX)
 	${_MKMSG_INSTALL} ${DESTDIR}/etc/ttys
 .if !defined(__MINIX)
+.if exists(${.CURDIR}/etc.${MACHINE}/ttys)
 	${ETC_INSTALL_OBJ_FILE} -o ${BINOWN} -g ${BINGRP} -m 644 \
 	    ${.CURDIR}/etc.${MACHINE}/ttys ${DESTDIR}/etc
+.else
+	${ETC_INSTALL_OBJ_FILE} -o ${BINOWN} -g ${BINGRP} -m 644 \
+	    ${.CURDIR}/etc.${MACHINE_CPU}/ttys ${DESTDIR}/etc
+.endif
 .else
 	${ETC_INSTALL_OBJ_FILE} -o ${BINOWN} -g ${BINGRP} -m 644 \
 	    ${.CURDIR}/ttys ${DESTDIR}/etc
@@ -369,10 +384,11 @@ install-etc-files-safe: .PHONY .MAKE check_DESTDIR MAKEDEV
 	else true; fi
 .endfor
 .endif # !defined(__MINIX)
-# TAC as software is imported, move the files from the .for block below
+# TAC as software is imported, copy the files from the .for block below
 # TAC to the .for block above.
 .if !defined(__MINIX)
 .for owner group mode file in \
+		${BINOWN} operator	664	/etc/ttys  \
 		${BINOWN} operator	664	/etc/dumpdates  \
 		${BINOWN} operator	600	/etc/skeykeys \
 		root wheel		600	/var/at/at.deny \
@@ -405,6 +421,7 @@ install-etc-files-safe: .PHONY .MAKE check_DESTDIR MAKEDEV
 		games games		664	/var/games/saillog \
 		games games		664	/var/games/snakerawscores \
 		games games		664	/var/games/snake.log \
+		games games		664	/var/games/tetris.scores
 	${_MKMSG_INSTALL} ${DESTDIR}${file}
 	if [ ! -e ${DESTDIR}${file} -o -s ${DESTDIR}${file} ]; then \
 		${ETC_INSTALL_FILE} -o ${owner} -g ${group} -m ${mode} \
@@ -472,7 +489,7 @@ OBSOLETE.dir=		${.OBJDIR}/obsolete.dir
 .if !defined(__MINIX)
 OBSOLETE.files=		base comp etc games man misc text
 .else
-OBSOLETE.files=		minix-base minix-comp minix-games minix-kernel minix-man minix-tests
+OBSOLETE.files=		minix-base minix-comp minix-games minix-kernel minix-man
 .endif # !defined(__MINIX)
 .if ${MKDEBUG} != "no"
 OBSOLETE.files+=	debug
@@ -481,7 +498,7 @@ OBSOLETE.files+=	debug
 OBSOLETE.files+=	modules
 .endif
 .if ${MKATF} != "no"
-OBSOLETE.files+=	tests
+OBSOLETE.files+=	minix-tests tests
 .endif
 .if ${MKX11} != "no"
 OBSOLETE.files+=	xbase xcomp xetc xfont xserver
@@ -533,7 +550,7 @@ release snapshot: .PHONY .MAKE check_DESTDIR check_RELEASEDIR snap_md_post
 #	Note: At least mkisofs 2.0 should be used.
 #
 CDROM_NAME_ADD?=
-CDROM_IMAGE?=${RELEASEDIR}/iso/NetBSD-${DISTRIBVER}-${MACHINE}.iso
+CDROM_IMAGE?=${RELEASEDIR}/images/NetBSD-${DISTRIBVER}-${MACHINE}.iso
 CDROM.dir=	${.OBJDIR}/cdrom.dir
 CDROM.pathlist=	${.OBJDIR}/cdrom.pathlist
 
@@ -541,7 +558,7 @@ iso-image:
 
 .if ${MKISOFS} != true
 do-iso-image: .PHONY check_DESTDIR check_RELEASEDIR iso-image-md-post
-	${MAKESUMS} -t ${RELEASEDIR}/iso/ '*.iso'
+	${MAKESUMS} -t ${RELEASEDIR}/images/ '*.iso'
 	@echo "iso-image created as: ${CDROM_IMAGE}"
 .else
 do-iso-image:
@@ -557,12 +574,14 @@ iso-image-setup: .PHONY check_RELEASEDIR
 .endfor
 	echo "${MACHINE}/=${RELEASEDIR}/${RELEASEMACHINEDIR}/" >> ${CDROM.pathlist}
 	mkdir -p ${CDROM.dir}
-	mkdir -p ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/cdrom
+
+check_imagedir:
+	mkdir -p ${RELEASEDIR}/images
 
 # iso-image-mi --
 #	Create the image after the MD operations have completed.
 #
-iso-image-mi: .PHONY check_DESTDIR check_RELEASEDIR iso-image-md-pre
+iso-image-mi: .PHONY check_DESTDIR check_RELEASEDIR iso-image-md-pre check_imagedir
 	@if ! ${MKISOFS} --version; then \
 		echo "install pkgsrc/sysutils/cdrtools and run 'make iso-image'." ; \
 		false; \
@@ -686,11 +705,11 @@ build_kernels: .PHONY
 # (e.g. Linux) when building on NFS.
 #
 .if !defined(KERNELS_DONE)						# {
-.for configfile in ${ALL_KERNELS}					# {
+.for configfile in ${ALL_KERNELS:O:u}					# {
 build_kernels: kern-${configfile}
 kern-${configfile}: .PHONY .MAKE
-	cd ${KERNCONFDIR} && ${TOOL_CONFIG} -s ${KERNSRCDIR} \
-	    -b ${KERNOBJDIR}/${configfile:C/.*\///} ${configfile}
+	cd ${KERNCONFDIR} && ${TOOL_CONFIG} ${CONFIGOPTS} -s ${KERNSRCDIR} \
+	    -U DEBUG -b ${KERNOBJDIR}/${configfile:C/.*\///} ${configfile}
 .if ${MKUPDATE} == "no"
 	cd ${KERNOBJDIR}/${configfile:C/.*\///} && ${MAKE} distclean
 .endif
@@ -703,8 +722,8 @@ build_kernelsets: .PHONY
 #	Create kernel sets from ${KERNEL_SETS} into
 #	${RELEASEDIR}/${RELEASEMACHINEDIR}/binary/sets
 #
-.for configfile in ${KERNEL_SETS}					# {
-.for configsel in ${ALL_KERNELS}
+.for configfile in ${KERNEL_SETS:O:u}					# {
+.for configsel in ${ALL_KERNELS:O:u}
 .if ${configfile} == ${configsel}
 build_kernelsets: kernset-${configfile}
 kernset-${configfile}: .PHONY build_kernels snap_pre
@@ -712,7 +731,7 @@ kernset-${configfile}: .PHONY build_kernels snap_pre
 	kerndir=${KERNOBJDIR}/${configfile:C/.*\///}; \
 	kernsuffixes="${KERNEL_SUFFIXES:S/^/./}"; \
 	kern_tgz=${RELEASEDIR}/${RELEASEMACHINEDIR}/binary/sets/kern-${configfile}.tgz; \
-	pax_cmd="COMPRESS_PROGRAM=${TOOL_GZIP:Q} GZIP=-9 ${TOOL_PAX} -O -zw -M -N ${NETBSDSRCDIR}/etc -f $${kern_tgz}"; \
+	pax_cmd="GZIP=${GZIP_FLAGS:Q} ${TOOL_PAX} --use-compress-program ${TOOL_GZIP:Q} -O -w -M -N ${NETBSDSRCDIR}/etc -f $${kern_tgz}"; \
 	cd $${kerndir} && { \
 		kernels=; newest=; \
 		for kernel in $${kernlist}; do \
@@ -741,8 +760,8 @@ build_releasekernels: .PHONY
 #	Build kernel.gz from ${KERNEL_SETS} ${EXTRA_KERNELS} into
 #	${RELEASEDIR}/${RELEASEMACHINEDIR}/binary/kernel
 #
-.for configfile in ${KERNEL_SETS} ${EXTRA_KERNELS}			# {
-.for configsel in ${ALL_KERNELS}
+.for configfile in ${KERNEL_SETS:O:u} ${EXTRA_KERNELS:O:u}		# {
+.for configsel in ${ALL_KERNELS:O:u}
 .if ${configfile} == ${configsel}
 build_releasekernels: releasekern-${configfile}
 releasekern-${configfile}: .PHONY build_kernels snap_pre
@@ -757,8 +776,8 @@ releasekern-${configfile}: .PHONY build_kernels snap_pre
 				knl_gz="${RELEASEDIR}/${RELEASEMACHINEDIR}/binary/kernel/$${kernel}-${configfile:C/.*\///}$${s}.gz"; \
 				[ $${knl_gz} -nt $${ks} ] && continue; \
 				rm -f $${knl_gz}; \
-				echo "${TOOL_GZIP} -c -9 < $${kerndir}/$${ks} > $${knl_gz}"; \
-				${TOOL_GZIP} -c -9 < $${ks} > $${knl_gz}; \
+				echo "${TOOL_GZIP} ${GZIP_FLAGS} -c < $${kerndir}/$${ks} > $${knl_gz}"; \
+				${TOOL_GZIP} ${GZIP_FLAGS} -c < $${ks} > $${knl_gz}; \
 			done; \
 		done; \
 	}

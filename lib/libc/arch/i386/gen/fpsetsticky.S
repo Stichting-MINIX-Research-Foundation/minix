@@ -1,4 +1,4 @@
-/*	$NetBSD: fpsetsticky.S,v 1.6 2002/01/13 21:45:43 thorpej Exp $	*/
+/*	$NetBSD: fpsetsticky.S,v 1.7 2014/05/23 02:34:19 uebayasi Exp $	*/
 
 /*
  * Written by Charles M. Hannum, Apr 9, 1995
@@ -30,3 +30,8 @@ ENTRY(fpsetsticky)
 
 	addl $28,%esp
 	ret
+#ifdef WEAK_ALIAS
+END(_fpsetsticky)
+#else
+END(fpsetsticky)
+#endif

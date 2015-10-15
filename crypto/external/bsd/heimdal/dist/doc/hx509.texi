@@ -1,5 +1,5 @@
 \input texinfo @c -*- texinfo -*-
-@c $NetBSD: hx509.texi,v 1.1.1.2 2011/04/14 14:08:08 elric Exp $
+@c $NetBSD: hx509.texi,v 1.1.1.3 2014/04/24 12:45:26 pettai Exp $
 @c %**start of header
 @c Id
 @setfilename hx509.info
@@ -35,9 +35,18 @@
 @subtitle 2008
 @author Love Hörnquist Åstrand
 
+@iftex
 @def@copynext{@vskip 20pt plus 1fil}
 @def@copyrightstart{}
 @def@copyrightend{}
+@end iftex
+@macro copynext
+@end macro
+@macro copyrightstart
+@end macro
+@macro copyrightend
+@end macro
+
 @page
 @copyrightstart
 Copyright (c) 1994-2008 Kungliga Tekniska Högskolan
@@ -184,6 +193,13 @@ This manual is for version @value{VERSION} of hx509.
 * CMS signing and encryption::
 * Certificate matching::
 * Software PKCS 11 module::
+* Creating a CA certificate::
+* Issuing certificates::
+* Issuing CRLs::
+* Application requirements::
+* CMS background::
+* Matching syntax::
+* How to use the PKCS11 module::
 
 @detailmenu
  --- The Detailed Node Listing ---

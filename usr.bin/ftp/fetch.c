@@ -1,7 +1,7 @@
-/*	$NetBSD: fetch.c,v 1.205 2013/11/07 02:06:51 christos Exp $	*/
+/*	$NetBSD: fetch.c,v 1.207 2015/09/12 19:38:42 wiz Exp $	*/
 
 /*-
- * Copyright (c) 1997-2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997-2015 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -9,6 +9,9 @@
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Scott Aaron Bamford.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Thomas Klausner.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -34,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.205 2013/11/07 02:06:51 christos Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.207 2015/09/12 19:38:42 wiz Exp $");
 #endif /* not lint */
 
 /*
@@ -571,7 +574,7 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 	url_decode(decodedpath);
 
 	if (outfile)
-		savefile = ftp_strdup(outfile);
+		savefile = outfile;
 	else {
 		cp = strrchr(decodedpath, '/');		/* find savefile */
 		if (cp != NULL)
@@ -595,8 +598,7 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 	rangestart = rangeend = entitylen = -1;
 	mtime = -1;
 	if (restartautofetch) {
-		if (strcmp(savefile, "-") != 0 && *savefile != '|' &&
-		    stat(savefile, &sb) == 0)
+		if (stat(savefile, &sb) == 0)
 			restart_point = sb.st_size;
 	}
 	if (urltype == FILE_URL_T) {		/* file:// URLs */
@@ -783,7 +785,7 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 
 #ifdef WITH_SSL
 			if (urltype == HTTPS_URL_T) {
-				if ((ssl = fetch_start_ssl(s)) == NULL) {
+				if ((ssl = fetch_start_ssl(s, host)) == NULL) {
 					close(s);
 					s = -1;
 					continue;
@@ -1150,18 +1152,26 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 		}
 	}		/* end of ftp:// or http:// specific setup */
 
-			/* Open the output file. */
-	if (strcmp(savefile, "-") == 0) {
-		fout = stdout;
-	} else if (*savefile == '|') {
-		oldpipe = xsignal(SIGPIPE, SIG_IGN);
-		fout = popen(savefile + 1, "w");
-		if (fout == NULL) {
-			warn("Can't execute `%s'", savefile + 1);
-			goto cleanup_fetch_url;
+	/* Open the output file. */
+
+	/*
+	 * Only trust filenames with special meaning if they came from
+	 * the command line
+	 */
+	if (outfile == savefile) {
+		if (strcmp(savefile, "-") == 0) {
+			fout = stdout;
+		} else if (*savefile == '|') {
+			oldpipe = xsignal(SIGPIPE, SIG_IGN);
+			fout = popen(savefile + 1, "w");
+			if (fout == NULL) {
+				warn("Can't execute `%s'", savefile + 1);
+				goto cleanup_fetch_url;
+			}
+			closefunc = pclose;
 		}
-		closefunc = pclose;
-	} else {
+	}
+	if (fout == NULL) {
 		if ((rangeend != -1 && rangeend <= restart_point) ||
 		    (rangestart == -1 && filesize != -1 && filesize <= restart_point)) {
 			/* already done */
@@ -1379,7 +1389,8 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 		(*closefunc)(fout);
 	if (res0)
 		freeaddrinfo(res0);
-	FREEPTR(savefile);
+	if (savefile != outfile)
+		FREEPTR(savefile);
 	FREEPTR(uuser);
 	if (pass != NULL)
 		memset(pass, 0, strlen(pass));

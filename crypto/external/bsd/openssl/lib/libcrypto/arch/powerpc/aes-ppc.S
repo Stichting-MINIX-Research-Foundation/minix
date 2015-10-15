@@ -4,7 +4,7 @@
 .align	7
 .LAES_Te:
 	mflr	0
-	bcl	20,31,.+4
+	bcl	20,31,$+4
 	mflr	3
 	addi	3,3,120
 	mtlr	0
@@ -14,7 +14,7 @@
 .space	28
 .LAES_Td:
 	mflr	0
-	bcl	20,31,.+4
+	bcl	20,31,$+4
 	mflr	3
 	addi	3,3,2360
 	mtlr	0

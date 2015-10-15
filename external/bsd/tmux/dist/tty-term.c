@@ -1,4 +1,4 @@
-/* $Id: tty-term.c,v 1.4 2011/08/17 19:28:36 jmmv Exp $ */
+/* Id */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -41,15 +41,13 @@ const struct tty_term_code_entry tty_term_codes[NTTYCODE] = {
 	{ TTYC_BEL, TTYCODE_STRING, "bel" },
 	{ TTYC_BLINK, TTYCODE_STRING, "blink" },
 	{ TTYC_BOLD, TTYCODE_STRING, "bold" },
-	{ TTYC_CC, TTYCODE_STRING, "Cc" },
 	{ TTYC_CIVIS, TTYCODE_STRING, "civis" },
 	{ TTYC_CLEAR, TTYCODE_STRING, "clear" },
 	{ TTYC_CNORM, TTYCODE_STRING, "cnorm" },
 	{ TTYC_COLORS, TTYCODE_NUMBER, "colors" },
 	{ TTYC_CR, TTYCODE_STRING, "Cr" },
-	{ TTYC_CS1, TTYCODE_STRING, "Cs" },
+	{ TTYC_CS, TTYCODE_STRING, "Cs" },
 	{ TTYC_CSR, TTYCODE_STRING, "csr" },
-	{ TTYC_CSR1, TTYCODE_STRING, "Csr" },
 	{ TTYC_CUB, TTYCODE_STRING, "cub" },
 	{ TTYC_CUB1, TTYCODE_STRING, "cub1" },
 	{ TTYC_CUD, TTYCODE_STRING, "cud" },
@@ -64,6 +62,8 @@ const struct tty_term_code_entry tty_term_codes[NTTYCODE] = {
 	{ TTYC_DIM, TTYCODE_STRING, "dim" },
 	{ TTYC_DL, TTYCODE_STRING, "dl" },
 	{ TTYC_DL1, TTYCODE_STRING, "dl1" },
+	{ TTYC_E3, TTYCODE_STRING, "E3" },
+	{ TTYC_ECH, TTYCODE_STRING, "ech" },
 	{ TTYC_EL, TTYCODE_STRING, "el" },
 	{ TTYC_EL1, TTYCODE_STRING, "el1" },
 	{ TTYC_ENACS, TTYCODE_STRING, "enacs" },
@@ -176,18 +176,18 @@ const struct tty_term_code_entry tty_term_codes[NTTYCODE] = {
 	{ TTYC_RI, TTYCODE_STRING, "ri" },
 	{ TTYC_RMACS, TTYCODE_STRING, "rmacs" },
 	{ TTYC_RMCUP, TTYCODE_STRING, "rmcup" },
-	{ TTYC_RMIR, TTYCODE_STRING, "rmir" },
 	{ TTYC_RMKX, TTYCODE_STRING, "rmkx" },
+	{ TTYC_SE, TTYCODE_STRING, "Se" },
 	{ TTYC_SETAB, TTYCODE_STRING, "setab" },
 	{ TTYC_SETAF, TTYCODE_STRING, "setaf" },
 	{ TTYC_SGR0, TTYCODE_STRING, "sgr0" },
 	{ TTYC_SITM, TTYCODE_STRING, "sitm" },
 	{ TTYC_SMACS, TTYCODE_STRING, "smacs" },
 	{ TTYC_SMCUP, TTYCODE_STRING, "smcup" },
-	{ TTYC_SMIR, TTYCODE_STRING, "smir" },
 	{ TTYC_SMKX, TTYCODE_STRING, "smkx" },
 	{ TTYC_SMSO, TTYCODE_STRING, "smso" },
 	{ TTYC_SMUL, TTYCODE_STRING, "smul" },
+	{ TTYC_SS, TTYCODE_STRING, "Ss" },
 	{ TTYC_TSL, TTYCODE_STRING, "tsl" },
 	{ TTYC_VPA, TTYCODE_STRING, "vpa" },
 	{ TTYC_XENL, TTYCODE_FLAG, "xenl" },
@@ -256,7 +256,7 @@ tty_term_override(struct tty_term *term, const char *overrides)
 				*ptr++ = '\0';
 				val = xstrdup(ptr);
 				if (strunvis(val, ptr) == -1) {
-					xfree(val);
+					free(val);
 					val = xstrdup(ptr);
 				}
 			} else if (entstr[strlen(entstr) - 1] == '@') {
@@ -265,6 +265,8 @@ tty_term_override(struct tty_term *term, const char *overrides)
 			} else
 				val = xstrdup("");
 
+			log_debug("%s override: %s %s",
+			    term->name, entstr, removeflag ? "@" : val);
 			for (i = 0; i < NTTYCODE; i++) {
 				ent = &tty_term_codes[i];
 				if (strcmp(entstr, ent->name) != 0)
@@ -280,7 +282,7 @@ tty_term_override(struct tty_term *term, const char *overrides)
 					break;
 				case TTYCODE_STRING:
 					if (code->type == TTYCODE_STRING)
-						xfree(code->value.string);
+						free(code->value.string);
 					code->value.string = xstrdup(val);
 					code->type = ent->type;
 					break;
@@ -298,12 +300,11 @@ tty_term_override(struct tty_term *term, const char *overrides)
 				}
 			}
 
-			if (val != NULL)
-				xfree(val);
+			free(val);
 		}
 	}
 
-	xfree(s);
+	free(s);
 }
 
 struct tty_term *
@@ -388,7 +389,8 @@ tty_term_find(char *name, int fd, const char *overrides, char **cause)
 	tty_term_override(term, overrides);
 
 	/* Delete curses data. */
-#if !defined(__FreeBSD_version) || __FreeBSD_version >= 700000
+#if !defined(NCURSES_VERSION_MAJOR) || NCURSES_VERSION_MAJOR > 5 || \
+    (NCURSES_VERSION_MAJOR == 5 && NCURSES_VERSION_MINOR > 6)
 	del_curterm(cur_term);
 #endif
 
@@ -408,11 +410,9 @@ tty_term_find(char *name, int fd, const char *overrides, char **cause)
 		goto error;
 	}
 
-	/* Figure out if we have 256 or 88 colours. */
+	/* Figure out if we have 256. */
 	if (tty_term_number(term, TTYC_COLORS) == 256)
 		term->flags |= TERM_256COLOURS;
-	if (tty_term_number(term, TTYC_COLORS) == 88)
-		term->flags |= TERM_88COLOURS;
 
 	/*
 	 * Terminals without xenl (eat newline glitch) wrap at at $COLUMNS - 1
@@ -467,10 +467,10 @@ tty_term_free(struct tty_term *term)
 
 	for (i = 0; i < NTTYCODE; i++) {
 		if (term->codes[i].type == TTYCODE_STRING)
-			xfree(term->codes[i].value.string);
+			free(term->codes[i].value.string);
 	}
-	xfree(term->name);
-	xfree(term);
+	free(term->name);
+	free(term);
 }
 
 int
@@ -505,13 +505,13 @@ tty_term_string2(struct tty_term *term, enum tty_code_code code, int a, int b)
 const char *
 tty_term_ptr1(struct tty_term *term, enum tty_code_code code, const void *a)
 {
-	return (tparm(tty_term_string(term, code), (long)a, 0, 0, 0, 0, 0, 0, 0, 0));
+	return (tparm(tty_term_string(term, code), (intptr_t)a, 0, 0, 0, 0, 0, 0, 0, 0));
 }
 
 const char *
 tty_term_ptr2(struct tty_term *term, enum tty_code_code code, const void *a, const void *b)
 {
-	return (tparm(tty_term_string(term, code), (long)a, (long)b, 0, 0, 0, 0, 0, 0, 0));
+	return (tparm(tty_term_string(term, code), (intptr_t)a, (intptr_t)b, 0, 0, 0, 0, 0, 0, 0));
 }
 
 int

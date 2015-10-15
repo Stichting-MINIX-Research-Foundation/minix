@@ -1,4 +1,4 @@
-/*	$NetBSD: queue.h,v 1.64 2013/11/27 12:24:56 joerg Exp $	*/
+/*	$NetBSD: queue.h,v 1.68 2014/11/19 08:10:01 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -89,6 +89,15 @@
  */
 #if defined(__NetBSD__) || defined(__minix)
 #include <sys/null.h>
+#endif
+
+#if defined(QUEUEDEBUG)
+# if defined(_KERNEL)
+#  define QUEUEDEBUG_ABORT(...) panic(__VA_ARGS__)
+# else
+#  include <err.h>
+#  define QUEUEDEBUG_ABORT(...) err(1, __VA_ARGS__)
+# endif
 #endif
 
 /*
@@ -202,21 +211,32 @@ struct {								\
 	    ((tvar) = LIST_NEXT((var), field), 1);			\
 	    (var) = (tvar))
 
+#define	LIST_MOVE(head1, head2) do {					\
+	LIST_INIT((head2));						\
+	if (!LIST_EMPTY((head1))) {					\
+		(head2)->lh_first = (head1)->lh_first;			\
+		LIST_INIT((head1));					\
+	}								\
+} while (/*CONSTCOND*/0)
+
 /*
  * List functions.
  */
-#if defined(_KERNEL) && defined(QUEUEDEBUG)
+#if defined(QUEUEDEBUG)
 #define	QUEUEDEBUG_LIST_INSERT_HEAD(head, elm, field)			\
 	if ((head)->lh_first &&						\
 	    (head)->lh_first->field.le_prev != &(head)->lh_first)	\
-		panic("LIST_INSERT_HEAD %p %s:%d", (head), __FILE__, __LINE__);
+		QUEUEDEBUG_ABORT("LIST_INSERT_HEAD %p %s:%d", (head),	\
+		    __FILE__, __LINE__);
 #define	QUEUEDEBUG_LIST_OP(elm, field)					\
 	if ((elm)->field.le_next &&					\
 	    (elm)->field.le_next->field.le_prev !=			\
 	    &(elm)->field.le_next)					\
-		panic("LIST_* forw %p %s:%d", (elm), __FILE__, __LINE__);\
+		QUEUEDEBUG_ABORT("LIST_* forw %p %s:%d", (elm),		\
+		    __FILE__, __LINE__);				\
 	if (*(elm)->field.le_prev != (elm))				\
-		panic("LIST_* back %p %s:%d", (elm), __FILE__, __LINE__);
+		QUEUEDEBUG_ABORT("LIST_* back %p %s:%d", (elm),		\
+		    __FILE__, __LINE__);
 #define	QUEUEDEBUG_LIST_POSTREMOVE(elm, field)				\
 	(elm)->field.le_next = (void *)1L;				\
 	(elm)->field.le_prev = (void *)1L;
@@ -430,26 +450,30 @@ struct {								\
 /*
  * Tail queue functions.
  */
-#if defined(_KERNEL) && defined(QUEUEDEBUG)
+#if defined(QUEUEDEBUG)
 #define	QUEUEDEBUG_TAILQ_INSERT_HEAD(head, elm, field)			\
 	if ((head)->tqh_first &&					\
 	    (head)->tqh_first->field.tqe_prev != &(head)->tqh_first)	\
-		panic("TAILQ_INSERT_HEAD %p %s:%d", (head), __FILE__, __LINE__);
+		QUEUEDEBUG_ABORT("TAILQ_INSERT_HEAD %p %s:%d", (head),	\
+		    __FILE__, __LINE__);
 #define	QUEUEDEBUG_TAILQ_INSERT_TAIL(head, elm, field)			\
 	if (*(head)->tqh_last != NULL)					\
-		panic("TAILQ_INSERT_TAIL %p %s:%d", (head), __FILE__, __LINE__);
+		QUEUEDEBUG_ABORT("TAILQ_INSERT_TAIL %p %s:%d", (head),	\
+		    __FILE__, __LINE__);
 #define	QUEUEDEBUG_TAILQ_OP(elm, field)					\
 	if ((elm)->field.tqe_next &&					\
 	    (elm)->field.tqe_next->field.tqe_prev !=			\
 	    &(elm)->field.tqe_next)					\
-		panic("TAILQ_* forw %p %s:%d", (elm), __FILE__, __LINE__);\
+		QUEUEDEBUG_ABORT("TAILQ_* forw %p %s:%d", (elm),	\
+		    __FILE__, __LINE__);				\
 	if (*(elm)->field.tqe_prev != (elm))				\
-		panic("TAILQ_* back %p %s:%d", (elm), __FILE__, __LINE__);
+		QUEUEDEBUG_ABORT("TAILQ_* back %p %s:%d", (elm),	\
+		    __FILE__, __LINE__);
 #define	QUEUEDEBUG_TAILQ_PREREMOVE(head, elm, field)			\
 	if ((elm)->field.tqe_next == NULL &&				\
 	    (head)->tqh_last != &(elm)->field.tqe_next)			\
-		panic("TAILQ_PREREMOVE head %p elm %p %s:%d",		\
-		      (head), (elm), __FILE__, __LINE__);
+		QUEUEDEBUG_ABORT("TAILQ_PREREMOVE head %p elm %p %s:%d",\
+		    (head), (elm), __FILE__, __LINE__);
 #define	QUEUEDEBUG_TAILQ_POSTREMOVE(elm, field)				\
 	(elm)->field.tqe_next = (void *)1L;				\
 	(elm)->field.tqe_prev = (void *)1L;
@@ -517,15 +541,15 @@ struct {								\
 	QUEUEDEBUG_TAILQ_POSTREMOVE((elm), field);			\
 } while (/*CONSTCOND*/0)
 
-#define TAILQ_REPLACE(head, elm, elm2, field) do {                      \
+#define TAILQ_REPLACE(head, elm, elm2, field) do {			\
         if (((elm2)->field.tqe_next = (elm)->field.tqe_next) != 	\
 	    TAILQ_END(head))   						\
-                (elm2)->field.tqe_next->field.tqe_prev =                \
-                    &(elm2)->field.tqe_next;                            \
-        else                                                            \
-                (head)->tqh_last = &(elm2)->field.tqe_next;             \
-        (elm2)->field.tqe_prev = (elm)->field.tqe_prev;                 \
-        *(elm2)->field.tqe_prev = (elm2);                               \
+                (elm2)->field.tqe_next->field.tqe_prev =		\
+                    &(elm2)->field.tqe_next;				\
+        else								\
+                (head)->tqh_last = &(elm2)->field.tqe_next;		\
+        (elm2)->field.tqe_prev = (elm)->field.tqe_prev;			\
+        *(elm2)->field.tqe_prev = (elm2);				\
 	QUEUEDEBUG_TAILQ_POSTREMOVE((elm), field);			\
 } while (/*CONSTCOND*/0)
 
@@ -662,34 +686,34 @@ __launder_type(const void *__x)
 	return __x;
 }
 
-#if defined(_KERNEL) && defined(QUEUEDEBUG)
+#if defined(QUEUEDEBUG)
 #define QUEUEDEBUG_CIRCLEQ_HEAD(head, field)				\
 	if ((head)->cqh_first != CIRCLEQ_ENDC(head) &&			\
 	    (head)->cqh_first->field.cqe_prev != CIRCLEQ_ENDC(head))	\
-		panic("CIRCLEQ head forw %p %s:%d", (head),		\
+		QUEUEDEBUG_ABORT("CIRCLEQ head forw %p %s:%d", (head),	\
 		      __FILE__, __LINE__);				\
 	if ((head)->cqh_last != CIRCLEQ_ENDC(head) &&			\
 	    (head)->cqh_last->field.cqe_next != CIRCLEQ_ENDC(head))	\
-		panic("CIRCLEQ head back %p %s:%d", (head),		\
+		QUEUEDEBUG_ABORT("CIRCLEQ head back %p %s:%d", (head),	\
 		      __FILE__, __LINE__);
 #define QUEUEDEBUG_CIRCLEQ_ELM(head, elm, field)			\
 	if ((elm)->field.cqe_next == CIRCLEQ_ENDC(head)) {		\
 		if ((head)->cqh_last != (elm))				\
-			panic("CIRCLEQ elm last %p %s:%d", (elm),	\
-			      __FILE__, __LINE__);			\
+			QUEUEDEBUG_ABORT("CIRCLEQ elm last %p %s:%d",	\
+			    (elm), __FILE__, __LINE__);			\
 	} else {							\
 		if ((elm)->field.cqe_next->field.cqe_prev != (elm))	\
-			panic("CIRCLEQ elm forw %p %s:%d", (elm),	\
-			      __FILE__, __LINE__);			\
+			QUEUEDEBUG_ABORT("CIRCLEQ elm forw %p %s:%d",	\
+			    (elm), __FILE__, __LINE__);			\
 	}								\
 	if ((elm)->field.cqe_prev == CIRCLEQ_ENDC(head)) {		\
 		if ((head)->cqh_first != (elm))				\
-			panic("CIRCLEQ elm first %p %s:%d", (elm),	\
-			      __FILE__, __LINE__);			\
+			QUEUEDEBUG_ABORT("CIRCLEQ elm first %p %s:%d",	\
+			    (elm), __FILE__, __LINE__);			\
 	} else {							\
 		if ((elm)->field.cqe_prev->field.cqe_next != (elm))	\
-			panic("CIRCLEQ elm prev %p %s:%d", (elm),	\
-			      __FILE__, __LINE__);			\
+			QUEUEDEBUG_ABORT("CIRCLEQ elm prev %p %s:%d",	\
+			    (elm), __FILE__, __LINE__);			\
 	}
 #define QUEUEDEBUG_CIRCLEQ_POSTREMOVE(elm, field)			\
 	(elm)->field.cqe_next = (void *)1L;				\

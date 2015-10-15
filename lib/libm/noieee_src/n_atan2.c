@@ -1,4 +1,4 @@
-/*      $NetBSD: n_atan2.c,v 1.6 2003/08/07 16:44:50 agc Exp $        */
+/*      $NetBSD: n_atan2.c,v 1.7 2014/10/10 20:58:09 martin Exp $        */
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -168,6 +168,10 @@ ic(a11,    1.6438029044759730479E-2  ,  -6,  1.0D52174A1BB54)
 #define	a10	vccast(a10)
 #define	a11	vccast(a11)
 #define	a12	vccast(a12)
+#endif
+
+#ifdef __weak_alias
+__weak_alias(_atan2l, atan2);
 #endif
 
 double

@@ -261,6 +261,13 @@ namespace DefaultedMethods {
 
 namespace Constexpr {
   constexpr auto f1(int n) { return n; }
+  template<typename T> struct X { constexpr auto f() {} }; // PR18746
+  template<typename T> struct Y { constexpr T f() {} }; // expected-note {{control reached end of constexpr function}}
+  void f() {
+    X<int>().f();
+    Y<void>().f();
+    constexpr int q = Y<int>().f(); // expected-error {{must be initialized by a constant expression}} expected-note {{in call to '&Y<int>()->f()'}}
+  }
   struct NonLiteral { ~NonLiteral(); } nl; // expected-note {{user-provided destructor}}
   constexpr auto f2(int n) { return nl; } // expected-error {{return type 'Constexpr::NonLiteral' is not a literal type}}
 }
@@ -476,3 +483,16 @@ namespace OverloadedOperators {
     int g = a - a;
   }
 }
+
+namespace TrailingReturnTypeForConversionOperator {
+  struct X {
+    operator auto() -> int { return 0; } // expected-error {{cannot specify any part of a return type in the declaration of a conversion function; put the complete type after 'operator'}}
+  } x;
+  int k = x.operator auto();
+
+  struct Y {
+    operator auto() -> int & { // expected-error {{cannot specify}}
+      return 0; // expected-error {{cannot bind to}}
+    }
+  };
+};

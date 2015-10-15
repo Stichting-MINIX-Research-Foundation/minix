@@ -1,4 +1,4 @@
-/*	$NetBSD: gssapi_mech.h,v 1.1.1.1 2011/04/13 18:14:43 elric Exp $	*/
+/*	$NetBSD: gssapi_mech.h,v 1.1.1.2 2014/04/24 12:45:29 pettai Exp $	*/
 
 /*-
  * Copyright (c) 2005 Doug Rabson
@@ -357,14 +357,14 @@ _gss_import_cred_t(OM_uint32 * minor_status,
 
 
 typedef OM_uint32 GSSAPI_CALLCONV
-_gss_acquire_cred_ex_t(void * /* status */,
-		       const gss_name_t /* desired_name */,
-		       OM_uint32 /* flags */,
-		       OM_uint32 /* time_req */,
-		       gss_cred_usage_t /* cred_usage */,
-		       void * /* identity */,
-		       void * /* ctx */,
-		       void (* /*complete */)(void *, OM_uint32, void *, gss_cred_id_t, OM_uint32));
+_gss_acquire_cred_ext_t(OM_uint32 * /*minor_status */,
+		        const gss_name_t /* desired_name */,
+		        gss_const_OID /* credential_type */,
+		        const void * /* credential_data */,
+		        OM_uint32 /* time_req */,
+		        gss_const_OID /* desired_mech */,
+		        gss_cred_usage_t /* cred_usage */,
+		        gss_cred_id_t * /* output_cred_handle */);
 
 typedef void GSSAPI_CALLCONV
 _gss_iter_creds_t(OM_uint32 /* flags */,
@@ -462,12 +462,27 @@ struct gss_mo_desc_struct {
     int (*set)(gss_const_OID, gss_mo_desc *, int, gss_buffer_t);
 };
 
+typedef OM_uint32 GSSAPI_CALLCONV _gss_pname_to_uid_t (
+	       OM_uint32 *,		/* minor_status */
+	       const gss_name_t,	/* name */
+	       const gss_OID,		/* mech_type */
+	       uid_t *			/* uidOut */
+	      );
+
+typedef OM_uint32 GSSAPI_CALLCONV _gss_authorize_localname_t (
+	       OM_uint32 *,		/* minor_status */
+	       const gss_name_t,	/* name */
+	       gss_const_buffer_t,	/* user */
+	       gss_const_OID		/* user_name_type */
+	      );
+
+/* mechglue internal */
+struct gss_mech_compat_desc_struct;
 
 #define GMI_VERSION 5
 
 /* gm_flags */
 #define GM_USE_MG_CRED      	1	/* uses mech glue credentials */
-
 
 typedef struct gssapi_mech_interface_desc {
 	unsigned			gm_version;
@@ -514,7 +529,7 @@ typedef struct gssapi_mech_interface_desc {
 	_gss_store_cred_t		*gm_store_cred;
 	_gss_export_cred_t		*gm_export_cred;
 	_gss_import_cred_t		*gm_import_cred;
-	_gss_acquire_cred_ex_t		*gm_acquire_cred_ex;
+	_gss_acquire_cred_ext_t		*gm_acquire_cred_ext;
 	_gss_iter_creds_t		*gm_iter_creds;
 	_gss_destroy_cred_t		*gm_destroy_cred;
 	_gss_cred_hold_t		*gm_cred_hold;
@@ -523,12 +538,15 @@ typedef struct gssapi_mech_interface_desc {
 	_gss_cred_label_set_t		*gm_cred_label_set;
         gss_mo_desc			*gm_mo;
         size_t				 gm_mo_num;
+        _gss_pname_to_uid_t             *gm_pname_to_uid;
+        _gss_authorize_localname_t      *gm_authorize_localname;
         _gss_display_name_ext_t         *gm_display_name_ext;
         _gss_inquire_name_t             *gm_inquire_name;
         _gss_get_name_attribute_t       *gm_get_name_attribute;
         _gss_set_name_attribute_t       *gm_set_name_attribute;
         _gss_delete_name_attribute_t    *gm_delete_name_attribute;
         _gss_export_name_composite_t    *gm_export_name_composite;
+        struct gss_mech_compat_desc_struct  *gm_compat;
 } gssapi_mech_interface_desc, *gssapi_mech_interface;
 
 gssapi_mech_interface
@@ -553,5 +571,26 @@ struct _gss_oid_name_table {
 
 extern struct _gss_oid_name_table _gss_ont_mech[];
 extern struct _gss_oid_name_table _gss_ont_ma[];
+
+/*
+ * Extended credentials acqusition API, not to be exported until
+ * it or something equivalent has been standardised.
+ */
+extern gss_OID_desc GSSAPI_LIB_VARIABLE __gss_c_cred_password_oid_desc;
+#define GSS_C_CRED_PASSWORD (&__gss_c_cred_password_oid_desc)
+
+extern gss_OID_desc GSSAPI_LIB_VARIABLE __gss_c_cred_certificate_oid_desc;
+#define GSS_C_CRED_CERTIFICATE (&__gss_c_cred_certificate_oid_desc)
+
+OM_uint32 _gss_acquire_cred_ext
+           (OM_uint32 * /*minor_status*/,
+            const gss_name_t /*desired_name*/,
+            gss_const_OID /*credential_type*/,
+            const void * /*credential_data*/,
+            OM_uint32 /*time_req*/,
+            gss_const_OID /*desired_mech*/,
+            gss_cred_usage_t /*cred_usage*/,
+            gss_cred_id_t * /*output_cred_handle*/
+           );
 
 #endif /* GSSAPI_MECH_H */

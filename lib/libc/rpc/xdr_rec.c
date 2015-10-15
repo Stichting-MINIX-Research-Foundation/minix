@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr_rec.c,v 1.35 2013/03/11 20:19:30 tron Exp $	*/
+/*	$NetBSD: xdr_rec.c,v 1.36 2015/03/26 11:31:57 justin Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -37,7 +37,7 @@
 static char *sccsid = "@(#)xdr_rec.c 1.21 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)xdr_rec.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: xdr_rec.c,v 1.35 2013/03/11 20:19:30 tron Exp $");
+__RCSID("$NetBSD: xdr_rec.c,v 1.36 2015/03/26 11:31:57 justin Exp $");
 #endif
 #endif
 
@@ -507,7 +507,7 @@ xdrrec_eof(XDR *xdrs)
  * pipelined procedure calls.)  TRUE => immmediate flush to tcp connection.
  */
 bool_t
-xdrrec_endofrecord(XDR *xdrs, bool_t sendnow)
+xdrrec_endofrecord(XDR *xdrs, int sendnow)
 {
 	RECSTREAM *rstrm = (RECSTREAM *)(xdrs->x_private);
 	u_long len;  /* fragment length */

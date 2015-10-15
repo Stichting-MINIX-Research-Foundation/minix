@@ -1,4 +1,4 @@
-.\"	$NetBSD: terminfo.5.in,v 1.19 2013/07/20 21:39:56 wiz Exp $
+.\"	$NetBSD: terminfo.5.in,v 1.20 2014/03/18 18:20:38 riastradh Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011, 2013 The NetBSD Foundation, Inc.
 .\" All rights reserved.

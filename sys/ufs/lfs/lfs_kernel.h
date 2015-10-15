@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_kernel.h,v 1.1 2013/07/28 01:05:52 dholland Exp $	*/
+/*	$NetBSD: lfs_kernel.h,v 1.2 2015/08/12 18:24:14 dholland Exp $	*/
 
 /*  from NetBSD: lfs.h,v 1.157 2013/06/28 16:14:06 matt Exp  */
 
@@ -100,6 +100,11 @@ struct lbnentry {
  */
 #include <compat/sys/time_types.h>
 
+struct lfs_fcntl_markv_70 {
+	BLOCK_INFO_70 *blkiov;	/* blocks to relocate */
+	int blkcnt;		/* number of blocks (limited to 65536) */
+};
+
 #define LFCNSEGWAITALL_COMPAT	 _FCNW_FSPRIV('L', 0, struct timeval50)
 #define LFCNSEGWAIT_COMPAT	 _FCNW_FSPRIV('L', 1, struct timeval50)
 #define LFCNIFILEFH_COMPAT	 _FCNW_FSPRIV('L', 5, struct lfs_fhandle)
@@ -108,6 +113,8 @@ struct lbnentry {
 #define LFCNWRAPGO_COMPAT	 _FCNO_FSPRIV('L', 10)
 #define LFCNSEGWAITALL_COMPAT_50 _FCNR_FSPRIV('L', 0, struct timeval50)
 #define LFCNSEGWAIT_COMPAT_50	 _FCNR_FSPRIV('L', 1, struct timeval50)
+#define LFCNBMAPV_COMPAT_70	_FCNRW_FSPRIV('L', 2, struct lfs_fcntl_markv_70)
+#define LFCNMARKV_COMPAT_70	_FCNRW_FSPRIV('L', 3, struct lfs_fcntl_markv_70)
 
 
 #endif /* _UFS_LFS_LFS_KERNEL_H_ */

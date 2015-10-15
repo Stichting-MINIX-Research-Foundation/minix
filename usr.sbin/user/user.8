@@ -1,4 +1,4 @@
-.\" $NetBSD: user.8,v 1.23 2005/11/25 08:00:18 agc Exp $ */
+.\" $NetBSD: user.8,v 1.24 2014/09/19 16:02:59 wiz Exp $ */
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
 .\"
@@ -73,8 +73,6 @@ The utilities by default are built with
 This allows for further functionality.
 .Pp
 For a full explanation of the options available, please see the relevant manual page.
-.Sh EXIT STATUS
-.Ex -std user
 .Sh FILES
 .Bl -tag -width /usr/share/examples/usermgmt -compact
 .It Pa /etc/skel/.[A-z]*
@@ -90,6 +88,8 @@ and the backend commands mentioned above.
 .\" and
 .\" .Xr group 8 .
 .El
+.Sh EXIT STATUS
+.Ex -std user
 .Sh SEE ALSO
 .Xr chpass 1 ,
 .Xr group 5 ,

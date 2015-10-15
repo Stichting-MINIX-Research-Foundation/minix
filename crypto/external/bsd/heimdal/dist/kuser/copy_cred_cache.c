@@ -1,4 +1,4 @@
-/*	$NetBSD: copy_cred_cache.c,v 1.1.1.1 2011/04/13 18:14:38 elric Exp $	*/
+/*	$NetBSD: copy_cred_cache.c,v 1.1.1.2 2014/04/24 12:45:28 pettai Exp $	*/
 
 /*
  * Copyright (c) 2004 Kungliga Tekniska Högskolan
@@ -62,7 +62,7 @@ parse_ticket_flags(krb5_context context,
 
     memset(&ff, 0, sizeof(ff));
     ff.proxy = 1;
-    if (parse_flags("proxy", asn1_TicketFlags_units(), 0) == TicketFlags2int(ff))
+    if ((size_t)parse_flags("proxy", asn1_TicketFlags_units(), 0) == TicketFlags2int(ff))
 	ret_flags->i = flags;
     else
 	ret_flags->i = bitswap32(flags);

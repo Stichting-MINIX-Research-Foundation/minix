@@ -1,4 +1,4 @@
-/*	$NetBSD: check-der.c,v 1.1.1.1 2011/04/13 18:14:40 elric Exp $	*/
+/*	$NetBSD: check-der.c,v 1.1.1.2 2014/04/24 12:45:28 pettai Exp $	*/
 
 /*
  * Copyright (c) 1999 - 2007 Kungliga Tekniska Högskolan
@@ -45,7 +45,7 @@
 
 #include "check-common.h"
 
-__RCSID("$NetBSD: check-der.c,v 1.1.1.1 2011/04/13 18:14:40 elric Exp $");
+__RCSID("NetBSD");
 
 static int
 cmp_integer (void *a, void *b)

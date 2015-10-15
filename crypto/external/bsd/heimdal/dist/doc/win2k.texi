@@ -1,5 +1,5 @@
 @c Id
-@c $NetBSD: win2k.texi,v 1.1.1.2 2011/04/14 14:08:09 elric Exp $
+@c $NetBSD: win2k.texi,v 1.1.1.3 2014/04/24 12:45:27 pettai Exp $
 
 
 @node Windows compatibility, Programming with Kerberos, Kerberos 4 issues, Top
@@ -312,4 +312,5 @@ Other useful programs include these:
 
 @itemize @bullet
 @item pwdump2
-@uref{http://www.bindview.com/Support/RAZOR/Utilities/Windows/pwdump2_readme.cfm}@end itemize
+@uref{http://www.bindview.com/Support/RAZOR/Utilities/Windows/pwdump2_readme.cfm}
+@end itemize

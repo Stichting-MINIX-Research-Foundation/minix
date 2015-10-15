@@ -1,4 +1,4 @@
-/*	$NetBSD: sanamespace.h,v 1.1 1998/05/15 17:07:16 drochner Exp $	*/
+/*	$NetBSD: sanamespace.h,v 1.2 2014/03/26 17:58:57 christos Exp $	*/
 
 /* take back the namespace mangling done by "Makefile.satest" */
 
@@ -12,7 +12,6 @@
 #undef ioctl
 #undef lseek
 #undef printf
-#undef sprintf
 #undef vprintf
 #undef putchar
 #undef gets

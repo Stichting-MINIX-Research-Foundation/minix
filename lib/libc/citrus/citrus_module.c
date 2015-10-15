@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_module.c,v 1.11 2013/09/19 21:19:13 christos Exp $	*/
+/*	$NetBSD: citrus_module.c,v 1.12 2015/08/28 11:45:02 joerg Exp $	*/
 
 /*-
  * Copyright (c)1999, 2000, 2001, 2002 Citrus Project,
@@ -89,7 +89,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_module.c,v 1.11 2013/09/19 21:19:13 christos Exp $");
+__RCSID("$NetBSD: citrus_module.c,v 1.12 2015/08/28 11:45:02 joerg Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -306,7 +306,7 @@ _citrus_load_module(_citrus_module_t *rhandle, const char *encname)
 			_pathI18nModule = _PATH_I18NMODULE;
 #ifdef MLIBDIR
 			p = strrchr(_pathI18nModule, '/');
-			if (p != NULL && MLIBDIR[0]) {
+			if (p != NULL) {
 				snprintf(path, sizeof(path), "%.*s/%s/%s",
 				    (int)(p - _pathI18nModule),
 				    _pathI18nModule, MLIBDIR, p + 1);

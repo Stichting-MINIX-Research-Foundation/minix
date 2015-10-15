@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.1.1.1 2011/04/13 18:14:41 elric Exp $	*/
+/*	$NetBSD: common.c,v 1.1.1.2 2014/04/24 12:45:28 pettai Exp $	*/
 
 /*
  * Copyright (c) 1997-2002 Kungliga Tekniska Högskolan
@@ -39,7 +39,7 @@ int
 hdb_principal2key(krb5_context context, krb5_const_principal p, krb5_data *key)
 {
     Principal new;
-    size_t len;
+    size_t len = 0;
     int ret;
 
     ret = copy_Principal(p, &new);
@@ -63,7 +63,7 @@ hdb_key2principal(krb5_context context, krb5_data *key, krb5_principal p)
 int
 hdb_entry2value(krb5_context context, const hdb_entry *ent, krb5_data *value)
 {
-    size_t len;
+    size_t len = 0;
     int ret;
 
     ASN1_MALLOC_ENCODE(hdb_entry, value->data, value->length, ent, &len, ret);
@@ -83,7 +83,7 @@ hdb_entry_alias2value(krb5_context context,
 		      const hdb_entry_alias *alias,
 		      krb5_data *value)
 {
-    size_t len;
+    size_t len = 0;
     int ret;
 
     ASN1_MALLOC_ENCODE(hdb_entry_alias, value->data, value->length,
@@ -173,14 +173,14 @@ hdb_remove_aliases(krb5_context context, HDB *db, krb5_data *key)
     krb5_error_code code;
     hdb_entry oldentry;
     krb5_data value;
-    int i;
+    size_t i;
 
     code = db->hdb__get(context, db, *key, &value);
     if (code == HDB_ERR_NOENTRY)
 	return 0;
     else if (code)
 	return code;
-	
+
     code = hdb_value2entry(context, &value, &oldentry);
     krb5_data_free(&value);
     if (code)
@@ -213,7 +213,7 @@ hdb_add_aliases(krb5_context context, HDB *db,
     const HDB_Ext_Aliases *aliases;
     krb5_error_code code;
     krb5_data key, value;
-    int i;
+    size_t i;
 
     code = hdb_entry_get_aliases(&entry->entry, &aliases);
     if (code || aliases == NULL)
@@ -222,7 +222,7 @@ hdb_add_aliases(krb5_context context, HDB *db,
     for (i = 0; i < aliases->aliases.len; i++) {
 	hdb_entry_alias entryalias;
 	entryalias.principal = entry->entry.principal;
-	
+
 	hdb_principal2key(context, &aliases->aliases.val[i], &key);
 	code = hdb_entry_alias2value(context, &entryalias, &value);
 	if (code) {
@@ -242,7 +242,8 @@ static krb5_error_code
 hdb_check_aliases(krb5_context context, HDB *db, hdb_entry_ex *entry)
 {
     const HDB_Ext_Aliases *aliases;
-    int code, i;
+    int code;
+    size_t i;
 
     /* check if new aliases already is used */
 

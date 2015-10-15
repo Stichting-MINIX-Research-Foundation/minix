@@ -74,7 +74,6 @@ generate_wait_exitstatus(const int exitstatus)
 static int
 generate_wait_termsig(const int signo)
 {
-#if !defined(__minix)
     // Explicitly disable core files to avoid inconsistent behaviors across
     // operating systems.  Some of the signal numbers passed to this function
     // may have a meaning or not depending on the system, and this might mean
@@ -85,7 +84,6 @@ generate_wait_termsig(const int signo)
     rl.rlim_max = RLIM_INFINITY;
     if (setrlimit(RLIMIT_CORE, &rl) == -1)
         atf_tc_skip("Failed to lower the core size limit");
-#endif /* !defined(__minix) */
 
     const pid_t pid = fork();
     ATF_REQUIRE(pid != -1);

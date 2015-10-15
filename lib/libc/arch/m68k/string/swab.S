@@ -1,4 +1,4 @@
-/*	$NetBSD: swab.S,v 1.10 2013/07/18 21:37:47 matt Exp $	*/
+/*	$NetBSD: swab.S,v 1.11 2014/03/18 18:20:37 riastradh Exp $	*/
 
 #include <machine/asm.h>
 

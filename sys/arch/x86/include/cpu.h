@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.58 2013/12/01 01:05:16 christos Exp $	*/
+/*	$NetBSD: cpu.h,v 1.66 2014/02/23 22:38:40 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,6 +40,7 @@
 #if defined(_KERNEL) || defined(_STANDALONE)
 #include <sys/types.h>
 #else
+#include <stdint.h>
 #include <stdbool.h>
 #endif /* _KERNEL || _STANDALONE */
 
@@ -101,8 +102,7 @@ struct cpu_info {
 	struct cpu_info *ci_next;	/* next cpu */
 	struct lwp *ci_curlwp;		/* current owner of the processor */
 	struct lwp *ci_fpcurlwp;	/* current owner of the FPU */
-	int	ci_fpsaving;		/* save in progress */
-	int	ci_fpused;		/* XEN: FPU was used by curlwp */
+	int	_unused1[2];
 	cpuid_t ci_cpuid;		/* our CPU ID */
 	int	_unused;
 	uint32_t ci_acpiid;		/* our ACPI/MADT ID */
@@ -150,18 +150,20 @@ struct cpu_info {
 	uint32_t ci_ipis;		/* interprocessor interrupts pending */
 	uint32_t sc_apic_version;	/* local APIC version */
 
-	uint32_t	ci_signature;	 /* X86 cpuid type */
+	uint32_t	ci_signature;	 /* X86 cpuid type (cpuid.1.%eax) */
 	uint32_t	ci_vendor[4];	 /* vendor string */
-	uint32_t	ci_cpu_serial[3]; /* PIII serial number */
+	uint32_t	_unused2;
+	uint32_t	ci_max_cpuid;	/* cpuid.0:%eax */
+	uint32_t	ci_max_ext_cpuid; /* cpuid.80000000:%eax */
 	volatile uint32_t	ci_lapic_counter;
 
-	uint32_t	ci_feat_val[5]; /* X86 CPUID feature bits
-					 *	[0] basic features %edx
-					 *	[1] basic features %ecx
-					 *	[2] extended features %edx
-					 *	[3] extended features %ecx
-					 *	[4] VIA padlock features
-					 */
+	uint32_t	ci_feat_val[5]; /* X86 CPUID feature bits */
+			/* [0] basic features cpuid.1:%edx
+			 * [1] basic features cpuid.1:%ecx (CPUID2_xxx bits)
+			 * [2] extended features cpuid:80000001:%edx
+			 * [3] extended features cpuid:80000001:%ecx
+			 * [4] VIA padlock features
+			 */
 	
 	const struct cpu_functions *ci_func;  /* start/stop functions */
 	struct trapframe *ci_ddb_regs;
@@ -365,9 +367,28 @@ extern int cpu_class;
 extern char cpu_brand_string[];
 extern int use_pae;
 
+#ifdef __i386__
+extern int i386_fpu_present;
+int npx586bug1(int, int);
+extern int i386_fpu_fdivbug;
 extern int i386_use_fxsave;
 extern int i386_has_sse;
 extern int i386_has_sse2;
+#else
+#define	i386_fpu_present	1
+#define	i386_fpu_fdivbug	0
+#define	i386_use_fxsave		1
+#define	i386_has_sse		1
+#define	i386_has_sse2		1
+#endif
+
+extern int x86_fpu_save;
+#define	FPU_SAVE_FSAVE		0
+#define	FPU_SAVE_FXSAVE		1
+#define	FPU_SAVE_XSAVE		2
+#define	FPU_SAVE_XSAVEOPT	3
+extern unsigned int x86_fpu_save_size;
+extern uint64_t x86_xsave_features;
 
 extern void (*x86_cpu_idle)(void);
 #define	cpu_idle() (*x86_cpu_idle)()
@@ -424,10 +445,6 @@ void	i8254_initclocks(void);
 /* cpu.c */
 
 void	cpu_probe_features(struct cpu_info *);
-
-/* npx.c */
-void	npxsave_lwp(struct lwp *, bool);
-void	npxsave_cpu(bool);
 
 /* vm_machdep.c */
 paddr_t	kvtop(void *);

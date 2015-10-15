@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile,v 1.2 2011/08/03 02:57:23 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 2014/07/12 20:31:04 nakayama Exp $
 
 .include <bsd.own.mk>
 
 PROG=	xset
 
 CPPFLAGS+=${X11FLAGS.EXTENSION} -DXKB
+CPPFLAGS+=	-DPACKAGE_STRING="\"xset 1.2.3\""
 
 LDADD+=	-lXmuu -lXt -lSM -lICE -lXxf86misc -lXfontcache -lXext -lX11
 DPADD+= ${LIBXMUU} ${LIBXT} ${LIBSM} ${LIBICE} ${LIBXXF86MISC} ${LIBXFONTCACHE}

@@ -1,15 +1,16 @@
 # flex-2.5.2 Korean po file
-# Copyright (C) 1997 Free Software Foundation, Inc.
+# Copyright (C) 1996 The Flex Project
 # Choi Jun Ho <junker@jazz.snu.ac.kr>, 1997.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: flex 2.5.2\n"
 "Report-Msgid-Bugs-To: flex-devel@lists.sourceforge.net\n"
-"POT-Creation-Date: 2012-07-22 20:48-0400\n"
+"POT-Creation-Date: 2014-03-26 15:00-0400\n"
 "PO-Revision-Date: 1997-02-05 20:30\n"
 "Last-Translator: Choi Jun Ho <junker@jazz.snu.ac.kr>\n"
 "Language-Team: Korean <ko@li.org>\n"
+"Language: ko\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=EUC-KR\n"
 "Content-Transfer-Encoding: 8-bit\n"
@@ -176,362 +177,362 @@ msgstr "%s를 만들 수 없습니다"
 msgid "Could not write yynultrans_tbl"
 msgstr ""
 
-#: main.c:189
+#: main.c:191
 msgid "rule cannot be matched"
 msgstr "맞는 규칙을 찾을 수 없습니다"
 
-#: main.c:194
+#: main.c:196
 msgid "-s option given but default rule can be matched"
 msgstr "-s 옵션이 주어졌지만 기본 규칙이 적용될 수 있습니다"
 
-#: main.c:234
+#: main.c:236
 msgid "Can't use -+ with -l option"
 msgstr "-l옵션에는 -+옵션을 같이 쓸 수 없습니다"
 
-#: main.c:237
+#: main.c:239
 msgid "Can't use -f or -F with -l option"
 msgstr "-l옵션에 -f나 -F옵션을 쓸 수 없습니다"
 
-#: main.c:241
+#: main.c:243
 #, fuzzy
 msgid "Can't use --reentrant or --bison-bridge with -l option"
 msgstr "-l옵션에 -f나 -F옵션을 쓸 수 없습니다"
 
-#: main.c:278
+#: main.c:275
 msgid "-Cf/-CF and -Cm don't make sense together"
 msgstr "-Cf/-CF는 -Cm와 같이 쓰면 의미가 없습니다"
 
-#: main.c:281
+#: main.c:278
 msgid "-Cf/-CF and -I are incompatible"
 msgstr "-Cf/-CF와 -I는 같이 쓸 수 없습니다"
 
-#: main.c:285
+#: main.c:282
 msgid "-Cf/-CF are incompatible with lex-compatibility mode"
 msgstr "-Cf/-CF 는 lex호환 모드와는 같이 쓸 수 없습니다"
 
-#: main.c:290
+#: main.c:287
 msgid "-Cf and -CF are mutually exclusive"
 msgstr "-Cf와 -CF는 같이 쓸 수 없습니다"
 
-#: main.c:294
+#: main.c:291
 msgid "Can't use -+ with -CF option"
 msgstr "-CF옵션에 -+옵션을 같이 쓸 수 없습니다"
 
-#: main.c:297
+#: main.c:294
 #, c-format
 msgid "%array incompatible with -+ option"
 msgstr "%array는 -+옵션과 같이 쓸 수 없습니다"
 
-#: main.c:302
+#: main.c:299
 #, fuzzy
 msgid "Options -+ and --reentrant are mutually exclusive."
 msgstr "-Cf와 -CF는 같이 쓸 수 없습니다"
 
-#: main.c:305
+#: main.c:302
 msgid "bison bridge not supported for the C++ scanner."
 msgstr ""
 
-#: main.c:360 main.c:406
+#: main.c:357 main.c:403
 #, c-format
 msgid "could not create %s"
 msgstr "%s를 만들 수 없습니다"
 
-#: main.c:419
+#: main.c:416
 #, fuzzy
 msgid "could not write tables header"
 msgstr "%s를 만들 수 없습니다"
 
-#: main.c:423
+#: main.c:420
 #, c-format
 msgid "can't open skeleton file %s"
 msgstr "스켈레톤 파일 %s를 열 수 없습니다"
 
-#: main.c:459
+#: main.c:456
 msgid "allocation of macro definition failed"
 msgstr ""
 
-#: main.c:507
+#: main.c:504
 #, c-format
 msgid "input error reading skeleton file %s"
 msgstr "스켈레톤 파일 %s를 읽는 도중 오류가 발생했습니다"
 
-#: main.c:511
+#: main.c:508
 #, c-format
 msgid "error closing skeleton file %s"
 msgstr "스켈레톤 파일 %s를 닫는데 오류가 발생했습니다"
 
-#: main.c:696
+#: main.c:693
 #, fuzzy, c-format
 msgid "error creating header file %s"
 msgstr "백업 파일 %s를 쓰는데 오류가 발생했습니다"
 
-#: main.c:704
+#: main.c:701
 #, c-format
 msgid "error writing output file %s"
 msgstr "출력파일 %s를 쓰는 데 오류가 발생했습니다"
 
-#: main.c:708
+#: main.c:705
 #, c-format
 msgid "error closing output file %s"
 msgstr "출력파일 %s를 닫는데 오류가 발생했습니다"
 
-#: main.c:712
+#: main.c:709
 #, c-format
 msgid "error deleting output file %s"
 msgstr "출력파일 %s를 지우는 데 오류가 발생했습니다"
 
-#: main.c:719
+#: main.c:716
 #, c-format
 msgid "No backing up.\n"
 msgstr "되돌림이 없습니다.\n"
 
-#: main.c:723
+#: main.c:720
 #, c-format
 msgid "%d backing up (non-accepting) states.\n"
 msgstr "%d개의 되돌림(받아들이지 않는) 상태.\n"
 
-#: main.c:727
+#: main.c:724
 #, c-format
 msgid "Compressed tables always back up.\n"
 msgstr " 압축된 테이블은 항상 백업합니다.\n"
 
-#: main.c:730
+#: main.c:727
 #, c-format
 msgid "error writing backup file %s"
 msgstr "백업 파일 %s를 쓰는데 오류가 발생했습니다"
 
-#: main.c:734
+#: main.c:731
 #, c-format
 msgid "error closing backup file %s"
 msgstr "백업 파일 %s를 닫는데 오류가 발생했습니다"
 
-#: main.c:739
+#: main.c:736
 #, c-format
 msgid "%s version %s usage statistics:\n"
 msgstr "%s 버전 %s 사용 통계:\n"
 
-#: main.c:742
+#: main.c:739
 #, c-format
 msgid "  scanner options: -"
 msgstr "  스캐너 옵션: -"
 
-#: main.c:821
+#: main.c:818
 #, c-format
 msgid "  %d/%d NFA states\n"
 msgstr "  %d/%d개의 NFA 상태\n"
 
-#: main.c:823
+#: main.c:820
 #, c-format
 msgid "  %d/%d DFA states (%d words)\n"
 msgstr "  %d/%d개의 DFA 상태 (%d 단어)\n"
 
-#: main.c:825
+#: main.c:822
 #, c-format
 msgid "  %d rules\n"
 msgstr "  %d개의 규칙\n"
 
-#: main.c:830
+#: main.c:827
 #, c-format
 msgid "  No backing up\n"
 msgstr "  되돌림이 없습니다\n"
 
-#: main.c:834
+#: main.c:831
 #, c-format
 msgid "  %d backing-up (non-accepting) states\n"
 msgstr "  %d개의 되돌림(받아들이지 않는) 상태\n"
 
-#: main.c:839
+#: main.c:836
 #, c-format
 msgid "  Compressed tables always back-up\n"
 msgstr " 압축된 테이블은 항상 백업합니다\n"
 
-#: main.c:843
+#: main.c:840
 #, c-format
 msgid "  Beginning-of-line patterns used\n"
 msgstr "  행 시작(beginning-of-line) 유형을 사용하였습니다\n"
 
-#: main.c:845
+#: main.c:842
 #, c-format
 msgid "  %d/%d start conditions\n"
 msgstr "  %d/%d개의 시작조건\n"
 
-#: main.c:849
+#: main.c:846
 #, c-format
 msgid "  %d epsilon states, %d double epsilon states\n"
 msgstr "  %d개의 엡실론 상태, %d개의 이중 엡실론 상태\n"
 
-#: main.c:853
+#: main.c:850
 #, c-format
 msgid "  no character classes\n"
 msgstr "  문자류가 없습니다\n"
 
-#: main.c:857
+#: main.c:854
 #, c-format
 msgid "  %d/%d character classes needed %d/%d words of storage, %d reused\n"
 msgstr ""
 "  %d/%d 문자 집합에 %d/%d개의 저장용 문자가 필요했고, %d개는 재사용되었습니"
 "다.\n"
 
-#: main.c:862
+#: main.c:859
 #, c-format
 msgid "  %d state/nextstate pairs created\n"
 msgstr "  %d개의 상태/다음 상태 쌍이 만들어졌습니다\n"
 
-#: main.c:865
+#: main.c:862
 #, c-format
 msgid "  %d/%d unique/duplicate transitions\n"
 msgstr "  %d/%d개의 유일한/중복되는 전이\n"
 
-#: main.c:870
+#: main.c:867
 #, c-format
 msgid "  %d table entries\n"
 msgstr "  %d개의 테이블 엔트리\n"
 
-#: main.c:878
+#: main.c:875
 #, c-format
 msgid "  %d/%d base-def entries created\n"
 msgstr "  %d/%d base-def 엔트리가 만들어졌습니다\n"
 
-#: main.c:882
+#: main.c:879
 #, c-format
 msgid "  %d/%d (peak %d) nxt-chk entries created\n"
 msgstr "  %d/%d (최대 %d) nxt-chk 엔트리가 만들어졌습니다\n"
 
-#: main.c:886
+#: main.c:883
 #, c-format
 msgid "  %d/%d (peak %d) template nxt-chk entries created\n"
 msgstr "  %d/%d (최대 %d) 템플리트 nxt-chk 엔트리가 만들어졌습니다\n"
 
-#: main.c:890
+#: main.c:887
 #, c-format
 msgid "  %d empty table entries\n"
 msgstr "  %d개의 빈 테이블 엔트리\n"
 
-#: main.c:892
+#: main.c:889
 #, c-format
 msgid "  %d protos created\n"
 msgstr "  %d개의 원형이 만들어졌습니다\n"
 
-#: main.c:895
+#: main.c:892
 #, c-format
 msgid "  %d templates created, %d uses\n"
 msgstr "  %d개의 템플리트가 만들어지고, %d개를 씁니다\n"
 
-#: main.c:903
+#: main.c:900
 #, c-format
 msgid "  %d/%d equivalence classes created\n"
 msgstr "  %d/%d개의 동치류가 만들어졌습니다\n"
 
-#: main.c:911
+#: main.c:908
 #, c-format
 msgid "  %d/%d meta-equivalence classes created\n"
 msgstr "  %d/%d 메타 동치류가 만들어졌습니다\n"
 
-#: main.c:917
+#: main.c:914
 #, c-format
 msgid "  %d (%d saved) hash collisions, %d DFAs equal\n"
 msgstr "  %d(%d 저장됨)개의 해싱 충돌로 %d개의 DFA가 같게 처리됩니다\n"
 
-#: main.c:919
+#: main.c:916
 #, c-format
 msgid "  %d sets of reallocations needed\n"
 msgstr "  %d개의 재할당 집합이 필요합니다\n"
 
-#: main.c:921
+#: main.c:918
 #, c-format
 msgid "  %d total table entries needed\n"
 msgstr "  총 %d개의 테이블 엔트리가 필요합니다\n"
 
-#: main.c:998
+#: main.c:995
 #, c-format
 msgid "Internal error. flexopts are malformed.\n"
 msgstr ""
 
-#: main.c:1008
+#: main.c:1005
 #, c-format
 msgid "Try `%s --help' for more information.\n"
 msgstr ""
 
-#: main.c:1065
+#: main.c:1062
 #, c-format
 msgid "unknown -C option '%c'"
 msgstr "알 수 없는 -C 옵션 '%c'"
 
-#: main.c:1194
+#: main.c:1191
 #, fuzzy, c-format
 msgid "%s %s\n"
 msgstr "%s 버전 %s\n"
 
-#: main.c:1469
+#: main.c:1466
 msgid "fatal parse error"
 msgstr "치명적인 파싱 에러"
 
-#: main.c:1501
+#: main.c:1498
 #, c-format
 msgid "could not create backing-up info file %s"
 msgstr "되돌림 정보 파일 %s를 만들 수 없었습니다"
 
-#: main.c:1522
+#: main.c:1519
 #, c-format
 msgid "-l AT&T lex compatibility option entails a large performance penalty\n"
 msgstr "-l AT&T lex 호환 옵션은 큰 성능 저하를 일으킵니다\n"
 
-#: main.c:1525
+#: main.c:1522
 #, c-format
 msgid " and may be the actual source of other reported performance penalties\n"
 msgstr " 그리고 아마도 다른 보고된 성능 저하의 실제 원인일 것입니다\n"
 
-#: main.c:1531
+#: main.c:1528
 #, fuzzy, c-format
 msgid ""
 "%%option yylineno entails a performance penalty ONLY on rules that can match "
 "newline characters\n"
 msgstr "%%option yylineno는 큰 성능저하를 일으킵니다\n"
 
-#: main.c:1538
+#: main.c:1535
 #, c-format
 msgid "-I (interactive) entails a minor performance penalty\n"
 msgstr "-I (대화형) 은 소규모의 성능저하를 일으킵니다\n"
 
-#: main.c:1543
+#: main.c:1540
 #, c-format
 msgid "yymore() entails a minor performance penalty\n"
 msgstr "yymore()는 소규모의 성능저하를 일으킵니다\n"
 
-#: main.c:1549
+#: main.c:1546
 #, c-format
 msgid "REJECT entails a large performance penalty\n"
 msgstr "REJECT는 큰 성능저하를 일으킵니다\n"
 
-#: main.c:1554
+#: main.c:1551
 #, c-format
 msgid "Variable trailing context rules entail a large performance penalty\n"
 msgstr "가변 추적 문맥 규칙은 큰 성능저하를 일으킵니다\n"
 
-#: main.c:1566
+#: main.c:1563
 msgid "REJECT cannot be used with -f or -F"
 msgstr "REJECT는 -f나 -F옵션과 같이 쓸 수 없습니다"
 
-#: main.c:1569
+#: main.c:1566
 #, fuzzy, c-format
 msgid "%option yylineno cannot be used with REJECT"
 msgstr "%option yylineno은 -f나 -F옵션과 같이 쓸 수 없습니다"
 
-#: main.c:1572
+#: main.c:1569
 msgid "variable trailing context rules cannot be used with -f or -F"
 msgstr "가변 추적 문맥 규칙은 -f나 -F옵션과 같이 쓸 수 없습니다"
 
-#: main.c:1695
+#: main.c:1692
 #, c-format
 msgid "%option yyclass only meaningful for C++ scanners"
 msgstr "%option yyclass는 C++스캐너에게만 의미가 있습니다"
 
-#: main.c:1802
+#: main.c:1799
 #, c-format
 msgid "Usage: %s [OPTIONS] [FILE]...\n"
 msgstr ""
 
-#: main.c:1805
+#: main.c:1802
 #, c-format
 msgid ""
 "Generates programs that perform pattern-matching on text.\n"
@@ -671,20 +672,20 @@ msgstr "dupmachine()에서의 빈 머신"
 msgid "Variable trailing context rule at line %d\n"
 msgstr "%d행에서 가변 추적 문맥 규칙\n"
 
-#: nfa.c:353
+#: nfa.c:364
 msgid "bad state type in mark_beginning_as_normal()"
 msgstr "mark_beginning_as_normal()에서 잘못된 상태형"
 
-#: nfa.c:598
+#: nfa.c:609
 #, c-format
 msgid "input rules are too complicated (>= %d NFA states)"
 msgstr "입력 규칙이 너무 복잡합니다(>= NFA상태 %d개)"
 
-#: nfa.c:677
+#: nfa.c:688
 msgid "found too many transitions in mkxtion()"
 msgstr "mkxtion()에 전이가 너무 많습니다"
 
-#: nfa.c:703
+#: nfa.c:714
 #, c-format
 msgid "too many rules (> %d)!"
 msgstr "규칙이 너무 많습니다 (> %d)!"
@@ -883,9 +884,6 @@ msgstr "종료 표시\n"
 msgid "*Something Weird* - tok: %d val: %d\n"
 msgstr "*무언가 이상합니다* - tok: %d val: %d\n"
 
-#~ msgid "consistency check failed in symfollowset"
-#~ msgstr "symfollowset에서 일관성 검사가 실패했습니다"
-
 #~ msgid ""
 #~ "%s: unknown flag '%c'.  For usage, try\n"
 #~ "\t%s --help\n"
@@ -904,6 +902,9 @@ msgstr "*무언가 이상합니다* - tok: %d val: %d\n"
 
 #~ msgid "-C flag must be given separately"
 #~ msgstr "-C 플래그는 따로 주어야 합니다"
+
+#~ msgid "consistency check failed in symfollowset"
+#~ msgstr "symfollowset에서 일관성 검사가 실패했습니다"
 
 #~ msgid "-Cf/-CF and %option yylineno are incompatible"
 #~ msgstr "-Cf/-CF와 %option yylineno 는 같이 쓸 수 없습니다"

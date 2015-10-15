@@ -1,4 +1,4 @@
-/*	$NetBSD: crtbegin.S,v 1.6 2013/07/10 23:30:45 matt Exp $	*/
+/*	$NetBSD: crtbegin.S,v 1.7 2014/03/16 11:41:30 joerg Exp $	*/
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <vax/asm.h>
 
-RCSID("$NetBSD: crtbegin.S,v 1.6 2013/07/10 23:30:45 matt Exp $")
+RCSID("$NetBSD: crtbegin.S,v 1.7 2014/03/16 11:41:30 joerg Exp $")
 
 	.section	.ctors, "aw", @progbits
 	.p2align 2
@@ -80,6 +80,8 @@ __dso_handle:
  * needed.
  */
 
+	.hidden __do_global_dtors_aux
+
 _ENTRY(__do_global_dtors_aux, 0x0100)		/* save r8 */
 	tstb	__finished			/* done this already? */
 	bneq	4f
@@ -127,6 +129,8 @@ END(__do_global_dtors_aux)
 
 	.weak	__register_frame_info
 	.weak	_Jv_RegisterClasses
+
+	.hidden __do_global_ctors_aux
 
 _ENTRY(__do_global_ctors_aux, 0x0800)
 	tstb	__initialized

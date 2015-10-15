@@ -1679,12 +1679,12 @@ AES_cbc_encrypt:
 	lea	.LAES_Td(%rip),$sbox
 .Lcbc_picked_te:
 
-	mov	OPENSSL_ia32cap_P(%rip),%r10d
+	mov	OPENSSL_ia32cap_P(%rip),%r10
 	cmp	\$$speed_limit,%rdx
 	jb	.Lcbc_slow_prologue
 	test	\$15,%rdx
 	jnz	.Lcbc_slow_prologue
-	bt	\$28,%r10d
+	bt	\$28,(%r10)
 	jc	.Lcbc_slow_prologue
 
 	# allocate aligned stack frame...

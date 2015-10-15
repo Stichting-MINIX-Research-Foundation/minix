@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2013/09/29 12:12:00 joerg Exp $
+#	$NetBSD: Makefile,v 1.4 2015/01/29 20:41:38 joerg Exp $
 
 LIB=	lldbHostCommon
 
@@ -8,13 +8,23 @@ LIB=	lldbHostCommon
 
 SRCS+=	Condition.cpp \
 	DynamicLibrary.cpp \
+	Editline.cpp \
 	File.cpp \
 	FileSpec.cpp \
 	Host.cpp \
+	IOObject.cpp \
+	MonitoringProcessLauncher.cpp \
 	Mutex.cpp \
+	NativeBreakpoint.cpp \
+	NativeBreakpointList.cpp \
+	NativeProcessProtocol.cpp \
+	NativeThreadProtocol.cpp \
 	OptionParser.cpp \
+	PipeBase.cpp \
 	ProcessRunLock.cpp \
+	Socket.cpp \
 	SocketAddress.cpp \
+	SoftwareBreakpoint.cpp \
 	Symbols.cpp \
 	Terminal.cpp \
 	TimeValue.cpp

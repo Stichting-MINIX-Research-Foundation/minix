@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.273 2013/08/30 10:29:06 pooka Exp $
+#	$NetBSD: build.sh,v 1.308 2015/06/27 06:00:28 matt Exp $
 #
 # Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -204,7 +204,7 @@ fi
 if test -n "$errmsg"; then
     if $re_exec_allowed; then
 	for othershell in \
-	    "${HOST_SH}" /usr/xpg4/bin/sh ksh ksh88 mksh pdksh bash dash
+	    "${HOST_SH}" /usr/xpg4/bin/sh ksh ksh88 mksh pdksh dash bash
 	    # NOTE: some shells known not to work are:
 	    # any shell using csh syntax;
 	    # Solaris /bin/sh (missing many modern features);
@@ -278,6 +278,51 @@ ERRORMESSAGE
 	exit 1
 }
 
+# Quote args to make them safe in the shell.
+# Usage: quotedlist="$(shell_quote args...)"
+#
+# After building up a quoted list, use it by evaling it inside
+# double quotes, like this:
+#    eval "set -- $quotedlist"
+# or like this:
+#    eval "\$command $quotedlist \$filename"
+#
+shell_quote()
+{(
+	local result=''
+	local arg qarg
+	LC_COLLATE=C ; export LC_COLLATE # so [a-zA-Z0-9] works in ASCII
+	for arg in "$@" ; do
+		case "${arg}" in
+		'')
+			qarg="''"
+			;;
+		*[!-./a-zA-Z0-9]*)
+			# Convert each embedded ' to '\'',
+			# then insert ' at the beginning of the first line,
+			# and append ' at the end of the last line.
+			# Finally, elide unnecessary '' pairs at the
+			# beginning and end of the result and as part of
+			# '\'''\'' sequences that result from multiple
+			# adjacent quotes in he input.
+			qarg="$(printf "%s\n" "$arg" | \
+			    ${SED:-sed} -e "s/'/'\\\\''/g" \
+				-e "1s/^/'/" -e "\$s/\$/'/" \
+				-e "1s/^''//" -e "\$s/''\$//" \
+				-e "s/'''/'/g"
+				)"
+			;;
+		*)
+			# Arg is not the empty string, and does not contain
+			# any unsafe characters.  Leave it unchanged for
+			# readability.
+			qarg="${arg}"
+			;;
+		esac
+		result="${result}${result:+ }${qarg}"
+	done
+	printf "%s\n" "$result"
+)}
 
 statusmsg()
 {
@@ -498,6 +543,7 @@ initdefaults()
 	do_release=false
 	do_kernel=false
 	do_releasekernel=false
+	do_kernels=false
 	do_modules=false
 	do_installmodules=false
 	do_install=false
@@ -579,17 +625,17 @@ MACHINE=arc		MACHINE_ARCH=mips64el	ALIAS=arc64
 MACHINE=arc		MACHINE_ARCH=mipsel	DEFAULT
 MACHINE=atari		MACHINE_ARCH=m68k
 MACHINE=bebox		MACHINE_ARCH=powerpc
-MACHINE=cats		MACHINE_ARCH=arm	DEFAULT
-MACHINE=cats		MACHINE_ARCH=earmv4	ALIAS=ecats
+MACHINE=cats		MACHINE_ARCH=arm	ALIAS=ocats
+MACHINE=cats		MACHINE_ARCH=earmv4	ALIAS=ecats DEFAULT
 MACHINE=cesfic		MACHINE_ARCH=m68k
 MACHINE=cobalt		MACHINE_ARCH=mips64el	ALIAS=cobalt64
 MACHINE=cobalt		MACHINE_ARCH=mipsel	DEFAULT
 MACHINE=dreamcast	MACHINE_ARCH=sh3el
 MACHINE=emips		MACHINE_ARCH=mipseb
 MACHINE=epoc32		MACHINE_ARCH=arm
-MACHINE=evbarm		MACHINE_ARCH=arm	ALIAS=evbarm-el	DEFAULT
-MACHINE=evbarm		MACHINE_ARCH=armeb	ALIAS=evbarm-eb
-MACHINE=evbarm		MACHINE_ARCH=earm	ALIAS=evbearm-el
+MACHINE=evbarm		MACHINE_ARCH=arm	ALIAS=evboarm-el
+MACHINE=evbarm		MACHINE_ARCH=armeb	ALIAS=evboarm-eb
+MACHINE=evbarm		MACHINE_ARCH=earm	ALIAS=evbearm-el DEFAULT
 MACHINE=evbarm		MACHINE_ARCH=earmeb	ALIAS=evbearm-eb
 MACHINE=evbarm		MACHINE_ARCH=earmhf	ALIAS=evbearmhf-el
 MACHINE=evbarm		MACHINE_ARCH=earmhfeb	ALIAS=evbearmhf-eb
@@ -605,6 +651,8 @@ MACHINE=evbarm		MACHINE_ARCH=earmv7	ALIAS=evbearmv7-el
 MACHINE=evbarm		MACHINE_ARCH=earmv7eb	ALIAS=evbearmv7-eb
 MACHINE=evbarm		MACHINE_ARCH=earmv7hf	ALIAS=evbearmv7hf-el
 MACHINE=evbarm		MACHINE_ARCH=earmv7hfeb	ALIAS=evbearmv7hf-eb
+MACHINE=evbarm64	MACHINE_ARCH=aarch64	ALIAS=evbarm64-el DEFAULT
+MACHINE=evbarm64	MACHINE_ARCH=aarch64eb	ALIAS=evbarm64-eb
 MACHINE=evbcf		MACHINE_ARCH=coldfire
 MACHINE=evbmips		MACHINE_ARCH=		NO_DEFAULT
 MACHINE=evbmips		MACHINE_ARCH=mips64eb	ALIAS=evbmips64-eb
@@ -618,16 +666,16 @@ MACHINE=evbsh3		MACHINE_ARCH=sh3eb	ALIAS=evbsh3-eb
 MACHINE=evbsh3		MACHINE_ARCH=sh3el	ALIAS=evbsh3-el
 MACHINE=ews4800mips	MACHINE_ARCH=mipseb
 MACHINE=hp300		MACHINE_ARCH=m68k
-MACHINE=hp700		MACHINE_ARCH=hppa
-MACHINE=hpcarm		MACHINE_ARCH=arm	DEFAULT
-MACHINE=hpcarm		MACHINE_ARCH=earm	ALIAS=hpcearm
+MACHINE=hppa		MACHINE_ARCH=hppa
+MACHINE=hpcarm		MACHINE_ARCH=arm	ALIAS=hpcoarm
+MACHINE=hpcarm		MACHINE_ARCH=earmv4	ALIAS=hpcearm DEFAULT
 MACHINE=hpcmips		MACHINE_ARCH=mipsel
 MACHINE=hpcsh		MACHINE_ARCH=sh3el
 MACHINE=i386		MACHINE_ARCH=i386
 MACHINE=ia64		MACHINE_ARCH=ia64
 MACHINE=ibmnws		MACHINE_ARCH=powerpc
-MACHINE=iyonix		MACHINE_ARCH=arm	DEFAULT
-MACHINE=iyonix		MACHINE_ARCH=earm	ALIAS=eiyonix
+MACHINE=iyonix		MACHINE_ARCH=arm	ALIAS=oiyonix
+MACHINE=iyonix		MACHINE_ARCH=earm	ALIAS=eiyonix DEFAULT
 MACHINE=landisk		MACHINE_ARCH=sh3el
 MACHINE=luna68k		MACHINE_ARCH=m68k
 MACHINE=mac68k		MACHINE_ARCH=m68k
@@ -637,16 +685,20 @@ MACHINE=mipsco		MACHINE_ARCH=mipseb
 MACHINE=mmeye		MACHINE_ARCH=sh3eb
 MACHINE=mvme68k		MACHINE_ARCH=m68k
 MACHINE=mvmeppc		MACHINE_ARCH=powerpc
-MACHINE=netwinder	MACHINE_ARCH=arm	DEFAULT
-MACHINE=netwinder	MACHINE_ARCH=earmv4	ALIAS=enetwinder
+MACHINE=netwinder	MACHINE_ARCH=arm	ALIAS=onetwinder
+MACHINE=netwinder	MACHINE_ARCH=earmv4	ALIAS=enetwinder DEFAULT
 MACHINE=news68k		MACHINE_ARCH=m68k
 MACHINE=newsmips	MACHINE_ARCH=mipseb
 MACHINE=next68k		MACHINE_ARCH=m68k
 MACHINE=ofppc		MACHINE_ARCH=powerpc	DEFAULT
 MACHINE=ofppc		MACHINE_ARCH=powerpc64	ALIAS=ofppc64
+MACHINE=or1k		MACHINE_ARCH=or1k
+MACHINE=playstation2	MACHINE_ARCH=mipsel
 MACHINE=pmax		MACHINE_ARCH=mips64el	ALIAS=pmax64
 MACHINE=pmax		MACHINE_ARCH=mipsel	DEFAULT
 MACHINE=prep		MACHINE_ARCH=powerpc
+MACHINE=riscv		MACHINE_ARCH=riscv64	ALIAS=riscv64 DEFAULT
+MACHINE=riscv		MACHINE_ARCH=riscv32	ALIAS=riscv32
 MACHINE=rs6000		MACHINE_ARCH=powerpc
 MACHINE=sandpoint	MACHINE_ARCH=powerpc
 MACHINE=sbmips		MACHINE_ARCH=		NO_DEFAULT
@@ -656,22 +708,23 @@ MACHINE=sbmips		MACHINE_ARCH=mipseb	ALIAS=sbmips-eb
 MACHINE=sbmips		MACHINE_ARCH=mipsel	ALIAS=sbmips-el
 MACHINE=sgimips		MACHINE_ARCH=mips64eb	ALIAS=sgimips64
 MACHINE=sgimips		MACHINE_ARCH=mipseb	DEFAULT
-MACHINE=shark		MACHINE_ARCH=arm	DEFAULT
-MACHINE=shark		MACHINE_ARCH=earmv4	ALIAS=eshark
+MACHINE=shark		MACHINE_ARCH=arm	ALIAS=oshark
+MACHINE=shark		MACHINE_ARCH=earmv4	ALIAS=eshark DEFAULT
 MACHINE=sparc		MACHINE_ARCH=sparc
 MACHINE=sparc64		MACHINE_ARCH=sparc64
 MACHINE=sun2		MACHINE_ARCH=m68000
 MACHINE=sun3		MACHINE_ARCH=m68k
 MACHINE=vax		MACHINE_ARCH=vax
 MACHINE=x68k		MACHINE_ARCH=m68k
-MACHINE=zaurus		MACHINE_ARCH=arm	DEFAULT
-MACHINE=zaurus		MACHINE_ARCH=earm	ALIAS=ezaurus
+MACHINE=zaurus		MACHINE_ARCH=arm	ALIAS=ozaurus
+MACHINE=zaurus		MACHINE_ARCH=earm	ALIAS=ezaurus DEFAULT
 '
 
 # getarch -- find the default MACHINE_ARCH for a MACHINE,
 # or convert an alias to a MACHINE/MACHINE_ARCH pair.
 #
-# Saves MACHINE in makewrappermachine before possibly modifying MACHINE.
+# Saves the original value of MACHINE in makewrappermachine before
+# alias processing.
 #
 # Sets MACHINE and MACHINE_ARCH if the input MACHINE value is
 # recognised as an alias, or recognised as a machine that has a default
@@ -694,7 +747,7 @@ getarch()
 		line="${line%%#*}" # ignore comments
 		line="$( IFS=" ${tab}" ; echo $line )" # normalise white space
 		case "${line} " in
-		"")
+		" ")
 			# skip blank lines or comment lines
 			continue
 			;;
@@ -720,7 +773,7 @@ getarch()
 			# remember that there was more than one match.
 			case "$found" in
 			'')	found="$line" ;;
-			*)	found="MULTIPLE_MATCHES" ; break ;;
+			*)	found="MULTIPLE_MATCHES" ;;
 			esac
 			;;
 		esac
@@ -769,7 +822,7 @@ validatearch()
 		line="${line%%#*}" # ignore comments
 		line="$( IFS=" ${tab}" ; echo $line )" # normalise white space
 		case "${line} " in
-		"")
+		" ")
 			# skip blank lines or comment lines
 			continue
 			;;
@@ -799,6 +852,57 @@ validatearch()
 		bomb "MACHINE_ARCH '${MACHINE_ARCH}' does not support MACHINE '${MACHINE}'"
 		;;
 	esac
+}
+
+# listarch -- list valid MACHINE/MACHINE_ARCH/ALIAS values,
+# optionally restricted to those where the MACHINE and/or MACHINE_ARCH
+# match specifed glob patterns.
+#
+listarch()
+{
+	local machglob="$1" archglob="$2"
+	local IFS
+	local wildcard="*"
+	local line xline frag
+	local line_matches_machine line_matches_arch
+	local found=false
+
+	# Empty machglob or archglob should match anything
+	: "${machglob:=${wildcard}}"
+	: "${archglob:=${wildcard}}"
+
+	IFS="${nl}"
+	for line in ${valid_MACHINE_ARCH}; do
+		line="${line%%#*}" # ignore comments
+		xline="$( IFS=" ${tab}" ; echo $line )" # normalise white space
+		[ -z "${xline}" ] && continue # skip blank or comment lines
+
+		line_matches_machine=false
+		line_matches_arch=false
+
+		IFS=" "
+		for frag in ${xline}; do
+			case "${frag}" in
+			MACHINE=${machglob})
+				line_matches_machine=true ;;
+			ALIAS=${machglob})
+				line_matches_machine=true ;;
+			MACHINE_ARCH=${archglob})
+				line_matches_arch=true ;;
+			esac
+		done
+
+		if $line_matches_machine && $line_matches_arch; then
+			found=true
+			echo "$line"
+		fi
+	done
+	if ! $found; then
+		echo >&2 "No match for" \
+		    "MACHINE=${machglob} MACHINE_ARCH=${archglob}"
+		return 1
+	fi
+	return 0
 }
 
 # nobomb_getmakevar --
@@ -923,7 +1027,10 @@ Usage: ${progname} [-EhnorUuxy] [-a arch] [-B buildid] [-C cdextras]
     install=idir        Run "make installworld" to \`idir' to install all sets
                         except \`etc'.  Useful after "distribution" or "release"
     kernel=conf         Build kernel with config file \`conf'
+    kernel.gdb=conf     Build kernel (including netbsd.gdb) with config
+                        file \`conf'
     releasekernel=conf  Install kernel built by kernel=conf to RELEASEDIR.
+    kernels             Build all kernels
     installmodules=idir Run "make installmodules" to \`idir' to install all
                         kernel modules.
     modules             Build kernel modules.
@@ -934,15 +1041,18 @@ Usage: ${progname} [-EhnorUuxy] [-a arch] [-B buildid] [-C cdextras]
     sourcesets          Create source sets in RELEASEDIR/source/sets.
     syspkgs             Create syspkgs in
                         RELEASEDIR/RELEASEMACHINEDIR/binary/syspkgs.
-    iso-image           Create CD-ROM image in RELEASEDIR/iso.
-    iso-image-source    Create CD-ROM image with source in RELEASEDIR/iso.
+    iso-image           Create CD-ROM image in RELEASEDIR/images.
+    iso-image-source    Create CD-ROM image with source in RELEASEDIR/images.
     live-image          Create bootable live image in
                         RELEASEDIR/RELEASEMACHINEDIR/installation/liveimage.
     install-image       Create bootable installation image in
                         RELEASEDIR/RELEASEMACHINEDIR/installation/installimage.
-    disk-image=target	Creae bootable disk image in
-			RELEASEDIR/RELEASEMACHINEDIR/binary/gzimg/target.img.gz.
-    show-params         Display various make(1) parameters.
+    disk-image=target   Create bootable disk image in
+                        RELEASEDIR/RELEASEMACHINEDIR/binary/gzimg/target.img.gz.
+    params              Display various make(1) parameters.
+    list-arch           Display a list of valid MACHINE/MACHINE_ARCH values,
+                        and exit.  The list may be narrowed by passing glob
+                        patterns or exact values in MACHINE or MACHINE_ARCH.
 
  Options:
     -a arch        Set MACHINE_ARCH to arch.  [Default: deduced from MACHINE]
@@ -955,7 +1065,10 @@ Usage: ${progname} [-EhnorUuxy] [-a arch] [-B buildid] [-C cdextras]
     -j njob        Run up to njob jobs in parallel; see make(1) -j.
     -M obj         Set obj root directory to obj; sets MAKEOBJDIRPREFIX.
                    Unsets MAKEOBJDIR.
-    -m mach        Set MACHINE to mach; not required if NetBSD native.
+    -m mach        Set MACHINE to mach.  Some mach values are actually
+                   aliases that set MACHINE/MACHINE_ARCH pairs.
+                   [Default: deduced from the host system if the host
+                   OS is NetBSD]
     -N noisy       Set the noisyness (MAKEVERBOSE) level of the build:
                        0   Minimal output ("quiet")
                        1   Describe what is occurring
@@ -993,7 +1106,8 @@ _usage_
 parseoptions()
 {
 	opts='a:B:C:D:Ehj:M:m:N:nO:oR:rS:T:UuV:w:X:xY:yZ:'
-	opt_a=no
+	opt_a=false
+	opt_m=false
 
 	if type getopts >/dev/null 2>&1; then
 		# Use POSIX getopts.
@@ -1024,7 +1138,7 @@ parseoptions()
 		-a)
 			eval ${optargcmd}
 			MACHINE_ARCH=${OPTARG}
-			opt_a=yes
+			opt_a=true
 			;;
 
 		-B)
@@ -1071,7 +1185,7 @@ parseoptions()
 		-m)
 			eval ${optargcmd}
 			MACHINE="${OPTARG}"
-			[ "${opt_a}" != "yes" ] && getarch
+			opt_m=true
 			;;
 
 		-N)
@@ -1202,30 +1316,16 @@ parseoptions()
 			usage
 			;;
 
-		makewrapper|cleandir|obj|tools|build|distribution|release|sets|sourcesets|syspkgs)
+		list-arch)
+			listarch "${MACHINE}" "${MACHINE_ARCH}"
+			exit $?
 			;;
 
 		show-params)
 			op=show_params	# used as part of a variable name
 			;;
 
-		iso-image)
-			op=iso_image	# used as part of a variable name
-			;;
-
-		iso-image-source)
-			op=iso_image_source   # used as part of a variable name
-			;;
-
-		live-image)
-			op=live_image	# used as part of a variable name
-			;;
-
-		install-image)
-			op=install_image # used as part of a variable name
-			;;
-
-		kernel=*|releasekernel=*)
+		kernel=*|releasekernel=*|kernel.gdb=*)
 			arg=${op#*=}
 			op=${op%%=*}
 			[ -n "${arg}" ] ||
@@ -1240,10 +1340,6 @@ parseoptions()
 
 			;;
 
-		modules)
-			op=modules
-			;;
-
 		install=*|installmodules=*)
 			arg=${op#*=}
 			op=${op%%=*}
@@ -1251,8 +1347,25 @@ parseoptions()
 			    bomb "Must supply a directory with \`install=...'"
 			;;
 
-		rump|rumptest)
-			op=${op}
+		build|\
+		cleandir|\
+		distribution|\
+		install-image|\
+		iso-image-source|\
+		iso-image|\
+		kernels|\
+		live-image|\
+		makewrapper|\
+		modules|\
+		obj|\
+		params|\
+		release|\
+		rump|\
+		rumptest|\
+		sets|\
+		sourcesets|\
+		syspkgs|\
+		tools)
 			;;
 
 		*)
@@ -1260,6 +1373,9 @@ parseoptions()
 			;;
 
 		esac
+		# ${op} may contain chars that are not allowed in variable
+		# names.  Replace them with '_' before setting do_${op}.
+		op="$( echo "$op" | tr -s '.-' '__')"
 		eval do_${op}=true
 	done
 	[ -n "${operations}" ] || usage "Missing operation to perform."
@@ -1271,6 +1387,11 @@ parseoptions()
 		    bomb "MACHINE must be set, or -m must be used, for cross builds."
 		MACHINE=${uname_m}
 	fi
+	if $opt_m && ! $opt_a; then
+		# Settings implied by the command line -m option
+		# override MACHINE_ARCH from the environment (if any).
+		getarch
+	fi
 	[ -n "${MACHINE_ARCH}" ] || getarch
 	validatearch
 
@@ -1278,9 +1399,12 @@ parseoptions()
 	#
 	makeenv="${makeenv} TOOLDIR MACHINE MACHINE_ARCH MAKEFLAGS"
 	[ -z "${BUILDID}" ] || makeenv="${makeenv} BUILDID"
+	[ -z "${BUILDINFO}" ] || makeenv="${makeenv} BUILDINFO"
 	MAKEFLAGS="-de -m ${TOP}/share/mk ${MAKEFLAGS}"
 	MAKEFLAGS="${MAKEFLAGS} MKOBJDIRS=${MKOBJDIRS-yes}"
 	export MAKEFLAGS MACHINE MACHINE_ARCH
+	setmakeenv USETOOLS "yes"
+	setmakeenv MAKEWRAPPERMACHINE "${makewrappermachine:-${MACHINE}}"
 }
 
 # sanitycheck --
@@ -1288,14 +1412,6 @@ parseoptions()
 #
 sanitycheck()
 {
-	# Non-root should always use either the -U or -E flag.
-	#
-	if ! ${do_expertmode} && \
-	    [ "$id_u" -ne 0 ] && \
-	    [ "${MKUNPRIVED}" = "no" ] ; then
-		bomb "-U or -E must be set for build as an unprivileged user."
-	fi
-
 	# Install as non-root is a bad idea.
 	#
 	if ${do_install} && [ "$id_u" -ne 0 ] ; then
@@ -1521,6 +1637,22 @@ validatemakeparams()
 		statusmsg2 "MAKECONF file:" "${MAKECONF} (File not found)"
 	fi
 
+	# Normalise MKOBJDIRS, MKUNPRIVED, and MKUPDATE.
+	# These may be set as build.sh options or in "mk.conf".
+	# Don't export them as they're only used for tests in build.sh.
+	#
+	MKOBJDIRS=$(getmakevar MKOBJDIRS)
+	MKUNPRIVED=$(getmakevar MKUNPRIVED)
+	MKUPDATE=$(getmakevar MKUPDATE)
+
+	# Non-root should always use either the -U or -E flag.
+	#
+	if ! ${do_expertmode} && \
+	    [ "$id_u" -ne 0 ] && \
+	    [ "${MKUNPRIVED}" = "no" ] ; then
+		bomb "-U or -E must be set for build as an unprivileged user."
+	fi
+
 	if [ "${runcmd}" = "echo" ]; then
 		TOOLCHAIN_MISSING=no
 		EXTERNAL_TOOLCHAIN=""
@@ -1541,14 +1673,6 @@ validatemakeparams()
 		${runcmd} echo "	${progname} $*"
 		exit 1
 	fi
-
-	# Normalise MKOBJDIRS, MKUNPRIVED, and MKUPDATE
-	# These may be set as build.sh options or in "mk.conf".
-	# Don't export them as they're only used for tests in build.sh.
-	#
-	MKOBJDIRS=$(getmakevar MKOBJDIRS)
-	MKUNPRIVED=$(getmakevar MKUNPRIVED)
-	MKUPDATE=$(getmakevar MKUPDATE)
 
 	if [ "${MKOBJDIRS}" != "no" ]; then
 		# Create the top-level object directory.
@@ -1751,17 +1875,22 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.273 2013/08/30 10:29:06 pooka Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.308 2015/06/27 06:00:28 matt Exp $
 # with these arguments: ${_args}
 #
 
 EOF
 	{
-		for f in ${makeenv}; do
-			if eval "[ -z \"\${$f}\" -a \"\${${f}-X}\" = \"X\" ]"; then
-				eval echo "unset ${f}"
+		sorted_vars="$(for var in ${makeenv}; do echo "${var}" ; done \
+			| sort -u )"
+		for var in ${sorted_vars}; do
+			eval val=\"\${${var}}\"
+			eval is_set=\"\${${var}+set}\"
+			if [ -z "${is_set}" ]; then
+				echo "unset ${var}"
 			else
-				eval echo "${f}=\'\$$(echo ${f})\'\;\ export\ ${f}"
+				qval="$(shell_quote "${val}")"
+				echo "${var}=${qval}; export ${var}"
 			fi
 		done
 
@@ -1867,8 +1996,10 @@ buildkernel()
 	fi
 	[ -x "${TOOLDIR}/bin/${toolprefix}config" ] \
 	|| bomb "${TOOLDIR}/bin/${toolprefix}config does not exist. You need to \"$0 tools\" first."
-	${runcmd} "${TOOLDIR}/bin/${toolprefix}config" -b "${kernelbuildpath}" \
-		-s "${TOP}/sys" "${kernelconfpath}" ||
+	CONFIGOPTS=$(getmakevar CONFIGOPTS)
+	${runcmd} "${TOOLDIR}/bin/${toolprefix}config" ${CONFIGOPTS} \
+		-b "${kernelbuildpath}" -s "${TOP}/sys" ${configopts} \
+		"${kernelconfpath}" ||
 	    bomb "${toolprefix}config failed for ${kernelconf}"
 	make_in_dir "${kernelbuildpath}" depend
 	make_in_dir "${kernelbuildpath}" all
@@ -1899,6 +2030,14 @@ releasekernel()
 		else
 			gzip -c -9 < "${builtkern}" > "${releasekern}"
 		fi
+	done
+}
+
+buildkernels()
+{
+	allkernels=$( runcmd= make_in_dir etc '-V ${ALL_KERNELS}' )
+	for k in $allkernels; do
+		buildkernel "${k}"
 	done
 }
 
@@ -2053,6 +2192,16 @@ main()
 	statusmsg2 "MACHINE_ARCH:"     "${MACHINE_ARCH}"
 	statusmsg2 "Build platform:"   "${uname_s} ${uname_r} ${uname_m}"
 	statusmsg2 "HOST_SH:"          "${HOST_SH}"
+	if [ -n "${BUILDID}" ]; then
+		statusmsg2 "BUILDID:"  "${BUILDID}"
+	fi
+	if [ -n "${BUILDINFO}" ]; then
+		printf "%b\n" "${BUILDINFO}" | \
+		while read -r line ; do
+			[ -s "${line}" ] && continue
+			statusmsg2 "BUILDINFO:"  "${line}"
+		done
+	fi
 
 	rebuildmake
 	validatemakeparams
@@ -2107,10 +2256,18 @@ main()
 			arg=${op#*=}
 			buildkernel "${arg}"
 			;;
-
+		kernel.gdb=*)
+			arg=${op#*=}
+			configopts="-D DEBUG=-g"
+			buildkernel "${arg}"
+			;;
 		releasekernel=*)
 			arg=${op#*=}
 			releasekernel "${arg}"
+			;;
+
+		kernels)
+			buildkernels
 			;;
 
 		disk-image=*)

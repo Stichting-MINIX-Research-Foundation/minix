@@ -1,4 +1,4 @@
-/*	$NetBSD: ts.c,v 1.1.1.1 2011/04/13 18:15:28 elric Exp $	*/
+/*	$NetBSD: ts.c,v 1.1.1.2 2014/04/24 12:45:48 pettai Exp $	*/
 
 /*
  * Copyright (c) 2009 Kungliga Tekniska Högskolan
@@ -83,10 +83,10 @@ main(int argc, char **argv)
 
     if (getarg(args, num_args, argc, argv, &optidx))
 	usage(1);
-	
+
     if (help_flag)
 	usage(0);
-    
+
     if (version_flag) {
 	print_version(NULL);
 	exit(0);

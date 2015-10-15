@@ -26,7 +26,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)su.1	8.2 (Berkeley) 4/18/94
-.\"	$NetBSD: su.1,v 1.50 2012/11/21 19:30:53 pgoyette Exp $
+.\"	$NetBSD: su.1,v 1.51 2014/09/19 16:02:58 wiz Exp $
 .\"
 .Dd November 20, 2012
 .Dt SU 1
@@ -312,10 +312,6 @@ and
 groups are treated as indirect groups.
 The group members of those two groups are treated as groups themselves.
 .El
-.Sh EXIT STATUS
-.Nm
-returns the exit status of the executed subshell, or 1 if any error
-occurred while switching privileges.
 .Sh ENVIRONMENT
 Environment variables used by
 .Nm :
@@ -337,6 +333,10 @@ The user ID is always the effective ID (the target user ID) after an
 .Nm
 unless the user ID is 0 (root).
 .El
+.Sh EXIT STATUS
+.Nm
+returns the exit status of the executed subshell, or 1 if any error
+occurred while switching privileges.
 .Sh EXAMPLES
 To become user username and use the same environment as in original shell, execute:
 .Bd -literal -offset indent

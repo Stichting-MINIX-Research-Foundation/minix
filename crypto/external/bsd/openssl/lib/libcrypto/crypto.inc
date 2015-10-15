@@ -1,4 +1,4 @@
-#	$NetBSD: crypto.inc,v 1.3 2011/07/05 10:42:54 spz Exp $
+#	$NetBSD: crypto.inc,v 1.4 2014/04/15 10:02:21 joerg Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -20,5 +20,5 @@ CRYPTOCPPFLAGS=-DOPENSSL_CPUID_OBJ
 .endif
 
 .for cryptosrc in ${CRYPTO_SRCS}
-CPPFLAGS.${cryptosrc} = -I${OPENSSLSRC}/crypto/crypto ${CRYPTOCPPFLAGS}
+CPPFLAGS.${cryptosrc} += -I${OPENSSLSRC}/crypto/crypto ${CRYPTOCPPFLAGS}
 .endfor

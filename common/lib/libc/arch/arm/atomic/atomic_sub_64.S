@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_sub_64.S,v 1.1 2013/11/08 22:42:52 matt Exp $	*/
+/*	$NetBSD: atomic_sub_64.S,v 1.2 2014/03/04 16:15:28 matt Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -58,6 +58,6 @@ END(_atomic_sub_64_nv)
 STRONG_ALIAS(_atomic_sub_64,_atomic_sub_64_nv)
 ATOMIC_OP_ALIAS(atomic_sub_64_nv,_atomic_sub_64_nv)
 ATOMIC_OP_ALIAS(atomic_sub_64,_atomic_sub_64)
-STRONG_ALIAS(__sync_sub_and_fetch_8,_atomic_sub_64_nv)
+CRT_ALIAS(__sync_sub_and_fetch_8,_atomic_sub_64_nv)
 
 #endif /* _ARM_ARCH_6 */

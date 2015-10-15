@@ -1,4 +1,4 @@
-/*	$NetBSD: scores.c,v 1.21 2013/10/19 17:23:08 christos Exp $	*/
+/*	$NetBSD: scores.c,v 1.22 2014/03/22 19:05:30 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -383,6 +383,7 @@ getscores(int *fdp)
 	mode_t mask;
 	const char *human;
 	int doflip;
+	int serrno;
 	ssize_t result;
 
 #ifdef ALLOW_SCORE_UPDATES
@@ -400,6 +401,7 @@ getscores(int *fdp)
 	setegid(egid);
 	mask = umask(S_IWOTH);
 	sd = open(_PATH_SCOREFILE, mint, 0666);
+	serrno = errno;
 	(void)umask(mask);
 	setegid(gid);
 	if (sd < 0) {
@@ -410,6 +412,7 @@ getscores(int *fdp)
 		 * trying to write it, don't fail -- we can still show
 		 * the player the score they got.
 		 */
+		errno = serrno;
 		if (fdp != NULL || errno != ENOENT) {
 			warn("Cannot open %s for %s", _PATH_SCOREFILE, human);
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: accept_sec_context.c,v 1.1.1.1 2011/04/13 18:14:47 elric Exp $	*/
+/*	$NetBSD: accept_sec_context.c,v 1.1.1.2 2014/04/24 12:45:29 pettai Exp $	*/
 
 /*
  * Copyright (c) 2006 Kungliga Tekniska Högskolan
@@ -44,13 +44,13 @@ _gss_ntlm_allocate_ctx(OM_uint32 *minor_status, ntlm_ctx *ctx)
 {
     OM_uint32 maj_stat;
     struct ntlm_server_interface *ns_interface = NULL;
-    
+
 #ifdef DIGEST
     ns_interface = &ntlmsspi_kdc_digest;
 #endif
     if (ns_interface == NULL)
 	return GSS_S_FAILURE;
-    
+
     *ctx = calloc(1, sizeof(**ctx));
 
     (*ctx)->server = ns_interface;
@@ -93,7 +93,7 @@ _gss_ntlm_accept_sec_context
 
     if (context_handle == NULL)
 	return GSS_S_FAILURE;
-	
+
     if (input_token_buffer == GSS_C_NO_BUFFER)
 	return GSS_S_FAILURE;
 
@@ -118,7 +118,7 @@ _gss_ntlm_accept_sec_context
 	if (major_status)
 	    return major_status;
 	*context_handle = (gss_ctx_id_t)ctx;
-	
+
 	/* check if the mechs is allowed by remote service */
 	major_status = (*ctx->server->nsi_probe)(minor_status, ctx->ictx, NULL);
 	if (major_status) {
@@ -128,7 +128,7 @@ _gss_ntlm_accept_sec_context
 
 	data.data = input_token_buffer->value;
 	data.length = input_token_buffer->length;
-	
+
 	ret = heim_ntlm_decode_type1(&data, &type1);
 	if (ret) {
 	    _gss_ntlm_delete_sec_context(minor_status, context_handle, NULL);
@@ -157,15 +157,15 @@ _gss_ntlm_accept_sec_context
 						 &out);
 	heim_ntlm_free_type1(&type1);
 	if (major_status != GSS_S_COMPLETE) {
-	    OM_uint32 junk;
-	    _gss_ntlm_delete_sec_context(&junk, context_handle, NULL);
+	    OM_uint32 gunk;
+	    _gss_ntlm_delete_sec_context(&gunk, context_handle, NULL);
 	    return major_status;
 	}
 
 	output_token->value = malloc(out.length);
 	if (output_token->value == NULL && out.length != 0) {
-	    OM_uint32 junk;
-	    _gss_ntlm_delete_sec_context(&junk, context_handle, NULL);
+	    OM_uint32 gunk;
+	    _gss_ntlm_delete_sec_context(&gunk, context_handle, NULL);
 	    *minor_status = ENOMEM;
 	    return GSS_S_FAILURE;
 	}
@@ -217,20 +217,20 @@ _gss_ntlm_accept_sec_context
 		return maj_stat;
 	    }
 	    *src_name = (gss_name_t)n;
-	}	
+	}
 
 	heim_ntlm_free_type3(&type3);
 
 	ret = krb5_data_copy(&ctx->sessionkey,
 			     session.data, session.length);
-	if (ret) {	
+	if (ret) {
 	    if (src_name)
 		_gss_ntlm_release_name(&junk, src_name);
 	    _gss_ntlm_delete_sec_context(minor_status, context_handle, NULL);
 	    *minor_status = ret;
 	    return GSS_S_FAILURE;
 	}
-	
+
 	if (session.length != 0) {
 
 	    ctx->status |= STATUS_SESSIONKEY;

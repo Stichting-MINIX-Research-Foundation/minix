@@ -1,11 +1,71 @@
 
 #------------------------------------------------------------------------------
-# $File: riff,v 1.23 2013/02/06 14:18:52 christos Exp $
+# $File: riff,v 1.30 2014/09/23 17:02:12 christos Exp $
 # riff:  file(1) magic for RIFF format
 # See
 #
 #	http://www.seanet.com/users/matts/riffmci/riffmci.htm
 #
+
+# audio format tag. Assume limits: max 1024 bit, 128 channels, 1 MHz
+0   name    riff-wave
+>0	leshort		1		\b, Microsoft PCM
+>>14	leshort		>0
+>>>14	leshort		<1024	\b, %d bit
+>0	leshort		2		\b, Microsoft ADPCM
+>0	leshort		6		\b, ITU G.711 A-law
+>0	leshort		7		\b, ITU G.711 mu-law
+>0	leshort		8		\b, Microsoft DTS
+>0	leshort		17		\b, IMA ADPCM
+>0	leshort		20		\b, ITU G.723 ADPCM (Yamaha)
+>0	leshort		49		\b, GSM 6.10
+>0	leshort		64		\b, ITU G.721 ADPCM
+>0	leshort		80		\b, MPEG
+>0	leshort		85		\b, MPEG Layer 3
+>0	leshort		0x2001		\b, DTS
+>2	leshort		=1		\b, mono
+>2	leshort		=2		\b, stereo
+>2	leshort		>2
+>>2	leshort		<128	\b, %d channels
+>4	lelong		>0
+>>4	lelong		<1000000	%d Hz
+
+# try to find "fmt "
+0   name    riff-walk
+>0  string  fmt\x20
+>>4 lelong  <0x80
+>>>8 use    riff-wave
+>0  string  LIST
+>>&(4.l+4)  use riff-walk
+>0  string  DISP
+>>&(4.l+4)  use riff-walk
+>0  string  bext
+>>&(4.l+4)  use riff-walk
+>0  string  Fake
+>>&(4.l+4)  use riff-walk
+>0  string  fact
+>>&(4.l+4)  use riff-walk
+>0  string  VP8
+>>11		byte		0x9d
+>>>12		byte		0x01
+>>>>13		byte		0x2a	\b, VP8 encoding
+>>>>>14		leshort&0x3fff	x	\b, %d
+>>>>>16		leshort&0x3fff	x	\bx%d, Scaling:
+>>>>>14		leshort&0xc000	0x0000	\b [none]
+>>>>>14		leshort&0xc000	0x1000	\b [5/4]
+>>>>>14		leshort&0xc000	0x2000	\b [5/3]
+>>>>>14		leshort&0xc000	0x3000	\b [2]
+>>>>>14		leshort&0xc000	0x0000	\bx[none]
+>>>>>14		leshort&0xc000	0x1000	\bx[5/4]
+>>>>>14		leshort&0xc000	0x2000	\bx[5/3]
+>>>>>14		leshort&0xc000	0x3000	\bx[2]
+>>>>>15		byte&0x80	=0x00	\b, YUV color
+>>>>>15		byte&0x80	=0x80	\b, bad color specification
+>>>>>15		byte&0x40	=0x40	\b, no clamping required
+>>>>>15		byte&0x40	=0x00	\b, decoders should clamp
+#>0  string  x		we got %s
+#>>&(4.l+4)  use riff-walk
+
 # AVI section extended by Patrik Radman <patrik+file-magic@iki.fi>
 #
 0	string		RIFF		RIFF (little-endian) data
@@ -35,33 +95,21 @@
 # Microsoft WAVE format (*.wav)
 >8	string		WAVE		\b, WAVE audio
 !:mime	audio/x-wav
->>20	leshort		1		\b, Microsoft PCM
->>>34	leshort		>0		\b, %d bit
->>20	leshort		2		\b, Microsoft ADPCM
->>20	leshort		6		\b, ITU G.711 A-law
->>20	leshort		7		\b, ITU G.711 mu-law
->>20	leshort		8		\b, Microsoft DTS
->>20	leshort		17		\b, IMA ADPCM
->>20	leshort		20		\b, ITU G.723 ADPCM (Yamaha)
->>20	leshort		49		\b, GSM 6.10
->>20	leshort		64		\b, ITU G.721 ADPCM
->>20	leshort		80		\b, MPEG
->>20	leshort		85		\b, MPEG Layer 3
->>20	leshort		0x2001		\b, DTS
->>22	leshort		=1		\b, mono
->>22	leshort		=2		\b, stereo
->>22	leshort		>2		\b, %d channels
->>24	lelong		>0		%d Hz
+>>12    string  >\0
+>>>12   use     riff-walk
 # Corel Draw Picture
 >8	string		CDRA		\b, Corel Draw Picture
 !:mime	image/x-coreldraw
+>8	string		CDR6		\b, Corel Draw Picture, version 6
+!:mime	image/x-coreldraw
+>8	string		NUNDROOT	\b, Steinberg CuBase
 # AVI == Audio Video Interleave
 >8	string		AVI\040		\b, AVI
 !:mime	video/x-msvideo
 >>12    string          LIST
 >>>20   string          hdrlavih
->>>>&36 lelong          x               \b, %lu x
->>>>&40 lelong          x               %lu,
+>>>>&36 lelong          x               \b, %u x
+>>>>&40 lelong          x               %u,
 >>>>&4  lelong          >1000000        <1 fps,
 >>>>&4  lelong          1000000         1.00 fps,
 >>>>&4  lelong          500000          2.00 fps,
@@ -181,6 +229,8 @@
 >8	string		4XMV		\b, 4X Movie file 
 # AMV-type AVI file: http://wiki.multimedia.cx/index.php?title=AMV
 >8	string		AMV\040		\b, AMV 
+>8      string          WEBP            \b, Web/P image
+>>12	use		riff-walk
 
 #
 # XXX - some of the below may only appear in little-endian form.
@@ -220,6 +270,7 @@
 >>24	belong		>0		%d Hz
 # Corel Draw Picture
 >8	string		CDRA		\b, Corel Draw Picture
+>8	string		CDR6		\b, Corel Draw Picture, version 6
 # AVI == Audio Video Interleave
 >8	string		AVI\040		\b, AVI
 # Animated Cursor format
@@ -255,4 +306,3 @@
 >>&6	leshort		=2		\b, stereo
 >>&6	leshort		>2		\b, %d channels
 >>&8	lelong		>0		%d Hz
-

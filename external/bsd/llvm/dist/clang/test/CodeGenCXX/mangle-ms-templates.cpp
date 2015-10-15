@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -std=c++11 -emit-llvm %s -o - -cxx-abi microsoft -fms-extensions -fdelayed-template-parsing -triple=i386-pc-win32 | FileCheck %s
-// RUN: %clang_cc1 -std=c++11 -emit-llvm %s -o - -cxx-abi microsoft -fms-extensions -fdelayed-template-parsing -triple=x86_64-pc-win32 | FileCheck -check-prefix X64 %s
+// RUN: %clang_cc1 -std=c++11 -emit-llvm %s -o - -fms-extensions -fdelayed-template-parsing -triple=i386-pc-win32 | FileCheck %s
+// RUN: %clang_cc1 -std=c++11 -emit-llvm %s -o - -fms-extensions -fdelayed-template-parsing -triple=x86_64-pc-win32 | FileCheck -check-prefix X64 %s
 
 template<typename T>
 class Class {
@@ -22,6 +22,24 @@ template<int param>
 class IntTemplate {
  public:
   IntTemplate() {}
+};
+
+template<unsigned param>
+class UnsignedIntTemplate {
+public:
+  UnsignedIntTemplate() {}
+};
+
+template<long long param>
+class LongLongTemplate {
+ public:
+  LongLongTemplate() {}
+};
+
+template<unsigned long long param>
+class UnsignedLongLongTemplate {
+ public:
+  UnsignedLongLongTemplate() {}
 };
 
 template<>
@@ -108,6 +126,36 @@ void template_mangling() {
   IntTemplate<65535> ffff;
 // CHECK: call {{.*}} @"\01??0?$IntTemplate@$0PPPP@@@QAE@XZ"
 // X64: call {{.*}} @"\01??0?$IntTemplate@$0PPPP@@@QEAA@XZ"
+
+  IntTemplate<-1>  neg_1;
+// CHECK: call {{.*}} @"\01??0?$IntTemplate@$0?0@@QAE@XZ"
+// X64: call {{.*}} @"\01??0?$IntTemplate@$0?0@@QEAA@XZ"
+  IntTemplate<-9>  neg_9;
+// CHECK: call {{.*}} @"\01??0?$IntTemplate@$0?8@@QAE@XZ"
+// X64: call {{.*}} @"\01??0?$IntTemplate@$0?8@@QEAA@XZ"
+  IntTemplate<-10> neg_10;
+// CHECK: call {{.*}} @"\01??0?$IntTemplate@$0?9@@QAE@XZ"
+// X64: call {{.*}} @"\01??0?$IntTemplate@$0?9@@QEAA@XZ"
+  IntTemplate<-11> neg_11;
+// CHECK: call {{.*}} @"\01??0?$IntTemplate@$0?L@@@QAE@XZ"
+// X64: call {{.*}} @"\01??0?$IntTemplate@$0?L@@@QEAA@XZ"
+  
+  UnsignedIntTemplate<4294967295> ffffffff;
+// CHECK: call {{.*}} @"\01??0?$UnsignedIntTemplate@$0PPPPPPPP@@@QAE@XZ"
+// X64: call {{.*}} @"\01??0?$UnsignedIntTemplate@$0PPPPPPPP@@@QEAA@XZ"
+
+  LongLongTemplate<-9223372036854775807LL-1LL> int64_min;
+// CHECK: call {{.*}} @"\01??0?$LongLongTemplate@$0?IAAAAAAAAAAAAAAA@@@QAE@XZ"
+// X64: call {{.*}} @"\01??0?$LongLongTemplate@$0?IAAAAAAAAAAAAAAA@@@QEAA@XZ"
+  LongLongTemplate<9223372036854775807LL>      int64_max;
+// CHECK: call {{.*}} @"\01??0?$LongLongTemplate@$0HPPPPPPPPPPPPPPP@@@QAE@XZ"
+// X64: call {{.*}} @"\01??0?$LongLongTemplate@$0HPPPPPPPPPPPPPPP@@@QEAA@XZ"
+  UnsignedLongLongTemplate<18446744073709551615ULL> uint64_max;
+// CHECK: call {{.*}} @"\01??0?$UnsignedLongLongTemplate@$0?0@@QAE@XZ"
+// X64: call {{.*}} @"\01??0?$UnsignedLongLongTemplate@$0?0@@QEAA@XZ"
+  UnsignedLongLongTemplate<(unsigned long long)-1>  uint64_neg_1;
+// CHECK: call {{.*}} @"\01??0?$UnsignedLongLongTemplate@$0?0@@QAE@XZ"
+// X64: call {{.*}} @"\01??0?$UnsignedLongLongTemplate@$0?0@@QEAA@XZ"
 }
 
 namespace space {
@@ -224,3 +272,17 @@ void CallFunctionDefinedWithInjectedName() {
   FunctionDefinedWithInjectedName(TypeWithFriendDefinition<int>());
 }
 // CHECK: @"\01?FunctionDefinedWithInjectedName@@YAXU?$TypeWithFriendDefinition@H@@@Z"
+
+// We need to be able to feed GUIDs through a couple rounds of template
+// substitution.
+template <const _GUID *G>
+struct UUIDType3 {
+  void foo() {}
+};
+template <const _GUID *G>
+struct UUIDType4 : UUIDType3<G> {
+  void bar() { UUIDType4::foo(); }
+};
+template struct UUIDType4<&__uuidof(uuid)>;
+// CHECK: "\01?bar@?$UUIDType4@$1?_GUID_12345678_1234_1234_1234_1234567890ab@@3U__s_GUID@@B@@QAEXXZ"
+// CHECK: "\01?foo@?$UUIDType3@$1?_GUID_12345678_1234_1234_1234_1234567890ab@@3U__s_GUID@@B@@QAEXXZ"

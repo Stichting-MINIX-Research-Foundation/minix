@@ -127,7 +127,6 @@ echo "Getting client baz"; > messages.log
 ${kinit} --password-file=${objdir}/foopassword 'baz\@realm.foo@'${R} || \
 	{ ec=1 ; eval "${testfailed}"; }
 echo "checking that we got back right principal"
-${klist}
 ${klist} | grep 'Principal: baz' > /dev/null || \
 	{ ec=1 ; eval "${testfailed}"; }
 ${kdestroy}

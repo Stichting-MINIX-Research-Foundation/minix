@@ -1,8 +1,8 @@
 # Make prototypes from .c files
 # Id
 
-##use Getopt::Std;
-require 'getopts.pl';
+use Getopt::Std;
+use File::Compare;
 
 my $comment = 0;
 my $if_0 = 0;
@@ -11,8 +11,9 @@ my $line = "";
 my $debug = 0;
 my $oproto = 1;
 my $private_func_re = "^_";
+my %depfunction = ();
 
-Getopts('x:m:o:p:dqE:R:P:') || die "foo";
+getopts('x:m:o:p:dqE:R:P:') || die "foo";
 
 if($opt_d) {
     $debug = 1;
@@ -25,7 +26,7 @@ if($opt_q) {
 if($opt_R) {
     $private_func_re = $opt_R;
 }
-%flags = (
+my %flags = (
 	  'multiline-proto' => 1,
 	  'header' => 1,
 	  'function-blocking' => 0,
@@ -100,16 +101,21 @@ while(<>) {
 	s/^\s*//;
 	s/\s*$//;
 	s/\s+/ /g;
-	if($_ =~ /\)$/ or $_ =~ /DEPRECATED$/){
+	if($_ =~ /\)$/){
 	    if(!/^static/ && !/^PRIVATE/){
 		$attr = "";
 		if(m/(.*)(__attribute__\s?\(.*\))/) {
 		    $attr .= " $2";
 		    $_ = $1;
 		}
-		if(m/(.*)\s(\w+DEPRECATED)/) {
+		if(m/(.*)\s(\w+DEPRECATED_FUNCTION)\s?(\(.*\))(.*)/) {
+		    $depfunction{$2} = 1;
+		    $attr .= " $2$3";
+		    $_ = "$1 $4";
+		}
+		if(m/(.*)\s(\w+DEPRECATED)(.*)/) {
 		    $attr .= " $2";
-		    $_ = $1;
+		    $_ = "$1 $3";
 		}
 		# remove outer ()
 		s/\s*\(/</;
@@ -186,14 +192,14 @@ sub foo {
 }
 
 if($opt_o) {
-    open(OUT, ">$opt_o");
+    open(OUT, ">${opt_o}.new");
     $block = &foo($opt_o);
 } else {
     $block = "__public_h__";
 }
 
 if($opt_p) {
-    open(PRIV, ">$opt_p");
+    open(PRIV, ">${opt_p}.new");
     $private = &foo($opt_p);
 } else {
     $private = "__private_h__";
@@ -302,17 +308,54 @@ if($flags{"gnuc-attribute"}) {
 ";
     }
 }
+
+my $depstr = "";
+my $undepstr = "";
+foreach (keys %depfunction) {
+    $depstr .= "#ifndef $_
+#ifndef __has_extension
+#define __has_extension(x) 0
+#define ${_}has_extension 1
+#endif
+#if __has_extension(attribute_deprecated_with_message)
+#define $_(x) __attribute__((__deprecated__(x)))
+#elif defined(__GNUC__) && ((__GNUC__ > 3) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 1 )))
+#define $_(X) __attribute__((__deprecated__))
+#else
+#define $_(X)
+#endif
+#ifdef ${_}has_extension
+#undef __has_extension
+#undef ${_}has_extension
+#endif
+#endif /* $_ */
+
+
+";
+    $public_h_trailer .= "#undef $_
+
+";
+    $private_h_trailer .= "#undef $_
+#define $_(X)
+
+";
+}
+
+$public_h_header .= $depstr;
+$private_h_header .= $depstr;
+
+
 if($flags{"cxx"}) {
     $public_h_header .= "#ifdef __cplusplus
 extern \"C\" {
 #endif
 
 ";
-    $public_h_trailer .= "#ifdef __cplusplus
+    $public_h_trailer = "#ifdef __cplusplus
 }
 #endif
 
-";
+" . $public_h_trailer;
 
 }
 if ($opt_E) {
@@ -348,6 +391,9 @@ if ($opt_E) {
 ";
 }
     
+$public_h_trailer .= $undepstr;
+$private_h_trailer .= $undepstr;
+
 if ($public_h ne "" && $flags{"header"}) {
     $public_h = $public_h_header . $public_h . 
 	$public_h_trailer . "#endif /* $block */\n";
@@ -366,3 +412,22 @@ if($opt_p) {
 
 close OUT;
 close PRIV;
+
+if ($opt_o) {
+
+    if (compare("${opt_o}.new", ${opt_o}) != 0) {
+	printf("updating ${opt_o}\n");
+	rename("${opt_o}.new", ${opt_o});
+    } else {
+	unlink("${opt_o}.new");
+    }
+}
+	
+if ($opt_p) {
+    if (compare("${opt_p}.new", ${opt_p}) != 0) {
+	printf("updating ${opt_p}\n");
+	rename("${opt_p}.new", ${opt_p});
+    } else {
+	unlink("${opt_p}.new");
+    }
+}

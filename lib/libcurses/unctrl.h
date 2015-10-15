@@ -1,4 +1,4 @@
-/*	$NetBSD: unctrl.h,v 1.4 2007/05/28 15:01:58 blymn Exp $	*/
+/*	$NetBSD: unctrl.h,v 1.5 2015/05/28 06:28:37 wiz Exp $	*/
 
 /*
  * Copyright (c) 1982, 1993
@@ -53,6 +53,6 @@ __END_DECLS
 #define	unctrllen(c)	__unctrllen[((unsigned char)c) & 0xff]
 
 #ifdef HAVE_WCHAR
-#define	wunctrl(wc)		__wunctrl[( int )(wc->vals[ 0 ]) & 0xff]
+#define	wunctrl(wc)		__wunctrl[( int )((wc)->vals[ 0 ]) & 0xff]
 #endif /* HAVE_WCHAR */
 #endif /* _UNCTRL_H_ */

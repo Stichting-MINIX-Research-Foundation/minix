@@ -1,4 +1,4 @@
-/*	$NetBSD: context_time.c,v 1.1.1.1 2011/04/13 18:14:44 elric Exp $	*/
+/*	$NetBSD: context_time.c,v 1.1.1.2 2014/04/24 12:45:29 pettai Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2003 Kungliga Tekniska Högskolan
@@ -90,6 +90,6 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_context_time
 
     if (*time_rec == 0)
 	return GSS_S_CONTEXT_EXPIRED;
-	
+
     return GSS_S_COMPLETE;
 }

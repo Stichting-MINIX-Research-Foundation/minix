@@ -1,4 +1,4 @@
-.TH "event2/bufferevent_ssl.h" 3 "Wed Apr 10 2013" "libevent" \" -*- nroff -*-
+.TH "event2/bufferevent_ssl.h" 3 "Tue Jan 27 2015" "libevent" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -59,10 +59,12 @@ OpenSSL support for bufferevents\&.
 
 .PP
 Return the most recent OpenSSL error reported on an SSL bufferevent\&. 
-.SS "struct \fBbufferevent\fP* bufferevent_openssl_filter_new (struct \fBevent_base\fP *base, struct \fBbufferevent\fP *underlying, struct ssl_st *ssl, enum \fBbufferevent_ssl_state\fPstate, intoptions)\fC [read]\fP"
+.SS "struct \fBbufferevent\fP* bufferevent_openssl_filter_new (struct \fBevent_base\fP *base, struct \fBbufferevent\fP *underlying, struct ssl_st *ssl, enum \fBbufferevent_ssl_state\fPstate, intoptions)"
 
 .PP
-Create a new SSL bufferevent to send its data over another bufferevent\&. \fBParameters:\fP
+Create a new SSL bufferevent to send its data over another bufferevent\&. 
+.PP
+\fBParameters:\fP
 .RS 4
 \fIbase\fP An \fBevent_base\fP to use to detect reading and writing\&. It must also be the base for the underlying bufferevent\&. 
 .br
@@ -81,14 +83,16 @@ A new bufferevent on success, or NULL on failure
 .RE
 .PP
 
-.SS "struct ssl_st* bufferevent_openssl_get_ssl (struct \fBbufferevent\fP *bufev)\fC [read]\fP"
+.SS "struct ssl_st* bufferevent_openssl_get_ssl (struct \fBbufferevent\fP *bufev)"
 
 .PP
 Return the underlying openssl SSL * object for an SSL bufferevent\&. 
-.SS "struct \fBbufferevent\fP* bufferevent_openssl_socket_new (struct \fBevent_base\fP *base, \fBevutil_socket_t\fPfd, struct ssl_st *ssl, enum \fBbufferevent_ssl_state\fPstate, intoptions)\fC [read]\fP"
+.SS "struct \fBbufferevent\fP* bufferevent_openssl_socket_new (struct \fBevent_base\fP *base, \fBevutil_socket_t\fPfd, struct ssl_st *ssl, enum \fBbufferevent_ssl_state\fPstate, intoptions)"
 
 .PP
-Create a new SSL bufferevent to send its data over an SSL * on a socket\&. \fBParameters:\fP
+Create a new SSL bufferevent to send its data over an SSL * on a socket\&. 
+.PP
+\fBParameters:\fP
 .RS 4
 \fIbase\fP An \fBevent_base\fP to use to detect reading and writing 
 .br

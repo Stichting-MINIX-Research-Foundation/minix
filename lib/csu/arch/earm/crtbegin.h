@@ -1,4 +1,4 @@
-/* $NetBSD: crtbegin.h,v 1.1 2013/06/27 21:24:39 matt Exp $ */
+/* $NetBSD: crtbegin.h,v 1.2 2014/05/06 16:02:10 joerg Exp $ */
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,7 +33,7 @@ static void __do_global_ctors_aux(void) __attribute__((__constructor__)) __used;
 static void __do_global_dtors_aux(void) __attribute__((__destructor__)) __used;
 #endif
 
-#ifndef SHARED
+#if !defined(SHARED) && !defined(__ARM_DWARF_EH__)
 static const void *find_exidx(void *, int *) __used;
 
 static const void *
@@ -47,4 +47,4 @@ find_exidx(void * pc, int * pcount)
 }
 
 __weak_alias(__gnu_Uwind_find_exidx,find_exidx)
-#endif /* !SHARED */
+#endif /* !SHARED && !__ARM_DWARF_EH__ */

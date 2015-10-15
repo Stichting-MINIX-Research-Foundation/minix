@@ -44,16 +44,13 @@ int subtest = -1, errorct = 0;
 
 int main(int argc, char *argv[])
 {
-  int superuser;
   start(46);
 
-  superuser = (geteuid() == 0);
+  setuid(geteuid());
 
-  if(!superuser) {
-  	if(!(setuid(0) || seteuid(0))) {
-		printf("Test 46 has to be run as root; test aborted\n");
-		exit(1);
-	}
+  if(getuid() != 0) {
+	printf("Test 46 has to be run as root; test aborted\n");
+	exit(1);
   }
 
   limit_test();	/* Perform some tests on POSIX limits */

@@ -1,4 +1,4 @@
-/*	$NetBSD: chpass_s.c,v 1.1.1.1 2011/04/13 18:15:29 elric Exp $	*/
+/*	$NetBSD: chpass_s.c,v 1.1.1.2 2014/04/24 12:45:48 pettai Exp $	*/
 
 /*
  * Copyright (c) 1997-2006 Kungliga Tekniska Högskolan
@@ -35,7 +35,7 @@
 
 #include "kadm5_locl.h"
 
-__RCSID("$NetBSD: chpass_s.c,v 1.1.1.1 2011/04/13 18:15:29 elric Exp $");
+__RCSID("NetBSD");
 
 static kadm5_ret_t
 change(void *server_handle,
@@ -69,22 +69,22 @@ change(void *server_handle,
 
 	num_keys = ent.entry.keys.len;
 	keys     = ent.entry.keys.val;
-	
+
 	ent.entry.keys.len = 0;
 	ent.entry.keys.val = NULL;
-	
+
 	ret = _kadm5_set_keys(context, &ent.entry, password);
 	if(ret) {
 	    _kadm5_free_keys (context->context, num_keys, keys);
 	    goto out2;
 	}
-	
+
 	if (cond)
 	    existsp = _kadm5_exists_keys (ent.entry.keys.val,
 					  ent.entry.keys.len,
 					  keys, num_keys);
 	_kadm5_free_keys (context->context, num_keys, keys);
-	
+
 	if (existsp) {
 	    ret = KADM5_PASS_REUSE;
 	    krb5_set_error_message(context->context, ret,

@@ -1,4 +1,4 @@
-/*	$NetBSD: list.c,v 1.1.1.1 2011/04/13 18:14:32 elric Exp $	*/
+/*	$NetBSD: list.c,v 1.1.1.2 2014/04/24 12:45:26 pettai Exp $	*/
 
 /*
  * Copyright (c) 1997-2004 Kungliga Tekniska Högskolan
@@ -36,7 +36,7 @@
 #include "ktutil_locl.h"
 #include <krb5/rtbl.h>
 
-__RCSID("$NetBSD: list.c,v 1.1.1.1 2011/04/13 18:14:32 elric Exp $");
+__RCSID("NetBSD");
 
 static int
 do_list(struct list_options *opt, const char *keytab_str)
@@ -78,7 +78,7 @@ do_list(struct list_options *opt, const char *keytab_str)
     }
 
     printf ("%s:\n\n", keytab_str);
-	
+
     table = rtbl_create();
     rtbl_add_column_by_id(table, 0, "Vno", RTBL_ALIGN_RIGHT);
     rtbl_add_column_by_id(table, 1, "Type", 0);
@@ -115,7 +115,7 @@ do_list(struct list_options *opt, const char *keytab_str)
 	    rtbl_add_column_entry_by_id(table, 3, buf);
 	}
 	if(opt->keys_flag) {
-	    int i;
+	    size_t i;
 	    s = malloc(2 * entry.keyblock.keyvalue.length + 1);
 	    if (s == NULL) {
 		krb5_warnx(context, "malloc failed");
@@ -131,12 +131,12 @@ do_list(struct list_options *opt, const char *keytab_str)
 	if (entry.aliases) {
 	    unsigned int i;
 	    struct rk_strpool *p = NULL;
-	    
+
 	    for (i = 0; i< entry.aliases->len; i++) {
 		krb5_unparse_name_fixed(context, entry.principal, buf, sizeof(buf));
 		rk_strpoolprintf(p, "%s%s", buf,
 				 i + 1 < entry.aliases->len ? ", " : "");
-		
+
 	    }
 	    rtbl_add_column_entry_by_id(table, 5, rk_strpoolcollect(p));
 	}

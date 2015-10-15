@@ -1,4 +1,4 @@
-/*	$NetBSD: bn_error.c,v 1.1.1.1 2011/04/13 18:14:52 elric Exp $	*/
+/*	$NetBSD: bn_error.c,v 1.1.1.2 2014/04/24 12:45:30 pettai Exp $	*/
 
 #include <tommath.h>
 #ifdef BN_ERROR_C
@@ -44,6 +44,6 @@ char *mp_error_to_string(int code)
 
 #endif
 
-/* Source: /cvs/libtom/libtommath/bn_error.c,v */
-/* Revision: 1.4 */
-/* Date: 2006/12/28 01:25:13 */
+/* Source: /cvs/libtom/libtommath/bn_error.c,v  */
+/* Revision: 1.4  */
+/* Date: 2006/12/28 01:25:13  */

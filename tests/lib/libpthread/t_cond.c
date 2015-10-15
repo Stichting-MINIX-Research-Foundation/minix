@@ -1,4 +1,4 @@
-/* $NetBSD: t_cond.c,v 1.5 2013/10/19 17:45:01 christos Exp $ */
+/* $NetBSD: t_cond.c,v 1.6 2014/09/03 16:23:24 gson Exp $ */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_cond.c,v 1.5 2013/10/19 17:45:01 christos Exp $");
+__RCSID("$NetBSD: t_cond.c,v 1.6 2014/09/03 16:23:24 gson Exp $");
 
 #include <sys/time.h>
 
@@ -343,25 +343,17 @@ ATF_TC_HEAD(cond_timedwait_race, tc)
 ATF_TC_BODY(cond_timedwait_race, tc)
 {
 	pthread_t tid[64];
-	size_t i, j;
+	size_t i;
 
-	atf_tc_expect_fail("PR lib/44756");
-	/* This outer loop is to ensure that a false positive of this race
-	 * test does not report the test as broken (due to the test not
-	 * triggering the expected failure).  However, we want to make this
-	 * fail consistently when the race is resolved, and this approach
-	 * will have the desired effect. */
-	for (j = 0; j < 10; j++ ) {
-		for (i = 0; i < __arraycount(tid); i++) {
+	for (i = 0; i < __arraycount(tid); i++) {
 
-			PTHREAD_REQUIRE(pthread_create(&tid[i], NULL,
-			    pthread_cond_timedwait_func, NULL));
-		}
+		PTHREAD_REQUIRE(pthread_create(&tid[i], NULL,
+		    pthread_cond_timedwait_func, NULL));
+	}
 
-		for (i = 0; i < __arraycount(tid); i++) {
+	for (i = 0; i < __arraycount(tid); i++) {
 
-			PTHREAD_REQUIRE(pthread_join(tid[i], NULL));
-		}
+		PTHREAD_REQUIRE(pthread_join(tid[i], NULL));
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: klist.c,v 1.2 2011/04/14 18:21:32 elric Exp $	*/
+/*	$NetBSD: klist.c,v 1.3 2014/04/24 13:45:34 pettai Exp $	*/
 
 /*
  * Copyright (c) 1997-2008 Kungliga Tekniska Högskolan
@@ -134,7 +134,7 @@ print_cred(krb5_context context, krb5_creds *cred, rtbl_t ct, int do_flags)
 static void
 print_cred_verbose(krb5_context context, krb5_creds *cred)
 {
-    int j;
+    size_t j;
     char *str;
     krb5_error_code ret;
     krb5_timestamp sec;
@@ -146,18 +146,18 @@ print_cred_verbose(krb5_context context, krb5_creds *cred)
 	exit(1);
     printf(N_("Server: %s\n", ""), str);
     free (str);
-    
+
     ret = krb5_unparse_name(context, cred->client, &str);
     if(ret)
 	exit(1);
     printf(N_("Client: %s\n", ""), str);
     free (str);
-    
+
     {
 	Ticket t;
 	size_t len;
 	char *s;
-	
+
 	decode_Ticket(cred->ticket.data, cred->ticket.length, &t, &len);
 	ret = krb5_enctype_to_string(context, t.enc_part.etype, &s);
 	printf(N_("Ticket etype: ", ""));
@@ -198,7 +198,7 @@ print_cred_verbose(krb5_context context, krb5_creds *cred)
 	       printable_time_long(cred->times.renew_till));
     {
 	char flags[1024];
-	unparse_flags(TicketFlags2int(cred->flags.b), 
+	unparse_flags(TicketFlags2int(cred->flags.b),
 		      asn1_TicketFlags_units(),
 		      flags, sizeof(flags));
 	printf(N_("Ticket flags: %s\n", ""), flags);
@@ -211,7 +211,7 @@ print_cred_verbose(krb5_context context, krb5_creds *cred)
 	    if(j) printf(", ");
 	    ret = krb5_print_address(&cred->addresses.val[j],
 				     buf, sizeof(buf), &len);
-	
+
 	    if(ret == 0)
 		printf("%s", buf);
 	}
@@ -279,7 +279,7 @@ print_tickets (krb5_context context,
 	    sig = -1;
 	    val = -val;
 	}
-	
+
 	unparse_time (val, buf, sizeof(buf));
 
 	printf ("%17s: %s%s\n", N_("KDC time offset", ""),
@@ -578,7 +578,7 @@ klist(struct klist_options *opt, int argc, char **argv)
 
     int do_verbose =
 	opt->verbose_flag ||
-	opt->a_flag || 
+	opt->a_flag ||
 	opt->n_flag;
     int do_test =
 	opt->test_flag ||

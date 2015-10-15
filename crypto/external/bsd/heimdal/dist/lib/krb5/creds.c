@@ -1,4 +1,4 @@
-/*	$NetBSD: creds.c,v 1.1.1.1 2011/04/13 18:15:32 elric Exp $	*/
+/*	$NetBSD: creds.c,v 1.1.1.2 2014/04/24 12:45:49 pettai Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2005 Kungliga Tekniska Högskolan
@@ -230,7 +230,7 @@ krb5_compare_creds(krb5_context context, krb5_flags whichfields,
 	    match = krb5_principal_compare (context, mcreds->client,
 					    creds->client);
     }
-	
+
     if (match && (whichfields & KRB5_TC_MATCH_KEYTYPE))
         match = mcreds->session.keytype == creds->session.keytype;
 

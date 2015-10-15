@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_setjmp.S,v 1.2 2013/07/17 21:29:01 matt Exp $	*/
+/*	$NetBSD: compat_setjmp.S,v 1.3 2014/03/04 06:27:00 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
 #if 0
 	RCSID("from: @(#)setjmp.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: compat_setjmp.S,v 1.2 2013/07/17 21:29:01 matt Exp $")
+	RCSID("$NetBSD: compat_setjmp.S,v 1.3 2014/03/04 06:27:00 matt Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -88,8 +88,8 @@ ENTRY(longjmp)
 	moveq	#1,%d0		/* else make non-zero */
 ok:
 	moveml	28(%a0),#0x3CFC /* restore non-scratch regs */
-	movl	%a0,-(%sp)	 /* let sigreturn */
-	jbsr	PIC_PLT(_C_LABEL(sigreturn)) /*  finish for us */
+	movl	%a0,-(%sp)	/* let sigreturn */
+	trap	#1		/* finish via compat_13_sigreturn13() */
 
 botch:
 	jbsr	PIC_PLT(_C_LABEL(longjmperror))

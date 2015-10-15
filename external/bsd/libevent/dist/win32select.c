@@ -1,4 +1,4 @@
-/*	$NetBSD: win32select.c,v 1.1.1.1 2013/04/11 16:43:19 christos Exp $	*/
+/*	$NetBSD: win32select.c,v 1.1.1.2 2015/01/29 06:37:53 spz Exp $	*/
 /*
  * Copyright 2007-2012 Niels Provos and Nick Mathewson
  * Copyright 2000-2007 Niels Provos <provos@citi.umich.edu>
@@ -41,7 +41,7 @@
 #include "event2/util.h"
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: win32select.c,v 1.1.1.1 2013/04/11 16:43:19 christos Exp $");
+__RCSID("$NetBSD: win32select.c,v 1.1.1.2 2015/01/29 06:37:53 spz Exp $");
 #include "util-internal.h"
 #include "log-internal.h"
 #include "event2/event.h"
@@ -375,6 +375,6 @@ win32_dealloc(struct event_base *_base)
 		mm_free(win32op->exset_out);
 	/* XXXXX free the tree. */
 
-	memset(win32op, 0, sizeof(win32op));
+	memset(win32op, 0, sizeof(*win32op));
 	mm_free(win32op);
 }

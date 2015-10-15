@@ -7,7 +7,7 @@
 %struct.__jmp_buf_tag = type { [3 x i32], i32, %0 }
 
 @jenv = common unnamed_addr global %struct.jmpbuf_env* null
-@.cst = linker_private unnamed_addr constant [30 x i8] c"in bar with jmp_buf's id: %d\0A\00", align 64
+@.cst = private unnamed_addr constant [30 x i8] c"in bar with jmp_buf's id: %d\0A\00", align 64
 
 ; CHECK-LABEL: foo
 ; CHECK-DAG:   st {{.+}}, [%i0]
@@ -65,8 +65,8 @@ attributes #0 = { nounwind }
 attributes #1 = { noreturn nounwind }
 attributes #2 = { nounwind returns_twice }
 
-!0 = metadata !{metadata !"alias set 6: struct.jmpbuf_env*", metadata !1}
-!1 = metadata !{metadata !1}
-!2 = metadata !{metadata !"alias set 3: int", metadata !1}
-!3 = metadata !{metadata !0, metadata !0, i64 0}
-!4 = metadata !{metadata !2, metadata !2, i64 0}
+!0 = !{!"alias set 6: struct.jmpbuf_env*", !1}
+!1 = !{!1}
+!2 = !{!"alias set 3: int", !1}
+!3 = !{!0, !0, i64 0}
+!4 = !{!2, !2, i64 0}

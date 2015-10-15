@@ -161,6 +161,7 @@ for arg in \
     NTLM_ACCEPTOR_CCACHE="${cacheds}-no"
     ${context} --mech-type=spnego \
         $arg \
+	--client-name=user1@TEST.H5L.SE \
         --name-type=hostbased-service \
         --ret-mech-type=krb5  \
         host@host.test.h5l.se || \
@@ -171,6 +172,7 @@ for arg in \
     NTLM_USER_FILE="${srcdir}/ntlm-user-file.txt-no"
     ${context} --mech-type=spnego \
         $arg \
+	--client-name=user1@TEST.H5L.SE \
         --name-type=hostbased-service \
         --ret-mech-type=krb5 \
         host@host.test.h5l.se || \
@@ -181,6 +183,7 @@ for arg in \
     KRB5_KTNAME="${keytab}-no"
     ${context} --mech-type=spnego \
         $arg \
+	--client-name=user1@TEST.H5L.SE \
 	--server-no-delegate \
         --name-type=hostbased-service \
         --ret-mech-type=ntlm \
@@ -192,6 +195,7 @@ for arg in \
     KRB5CCNAME="${cache}-no"
     ${context} --mech-type=spnego \
         $arg \
+	--client-name=user1@TEST.H5L.SE \
 	--server-no-delegate \
         --name-type=hostbased-service \
         --ret-mech-type=ntlm \

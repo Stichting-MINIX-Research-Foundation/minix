@@ -1,4 +1,4 @@
-/*	$NetBSD: get_host_realm.c,v 1.1.1.1 2011/04/13 18:15:34 elric Exp $	*/
+/*	$NetBSD: get_host_realm.c,v 1.1.1.2 2014/04/24 12:45:50 pettai Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2005 Kungliga Tekniska Högskolan
@@ -111,7 +111,7 @@ dns_find_realm(krb5_context context,
 	domain++;
     for (i = 0; labels[i] != NULL; i++) {
 	ret = snprintf(dom, sizeof(dom), "%s.%s.", labels[i], domain);
-	if(ret < 0 || ret >= sizeof(dom)) {
+	if(ret < 0 || (size_t)ret >= sizeof(dom)) {
 	    if (config_labels)
 		krb5_config_free_strings(config_labels);
 	    return -1;

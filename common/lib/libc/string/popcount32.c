@@ -1,4 +1,4 @@
-/*	$NetBSD: popcount32.c,v 1.4 2011/08/21 21:25:04 dholland Exp $	*/
+/*	$NetBSD: popcount32.c,v 1.5 2015/05/29 19:39:41 matt Exp $	*/
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: popcount32.c,v 1.4 2011/08/21 21:25:04 dholland Exp $");
+__RCSID("$NetBSD: popcount32.c,v 1.5 2015/05/29 19:39:41 matt Exp $");
 
 #if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <limits.h>
@@ -42,6 +42,8 @@ __RCSID("$NetBSD: popcount32.c,v 1.4 2011/08/21 21:25:04 dholland Exp $");
 #include <lib/libkern/libkern.h>
 #include <machine/limits.h>
 #endif
+
+#ifndef popcount32	// might be a builtin
 
 /*
  * This a hybrid algorithm for bit counting between parallel counting and
@@ -76,3 +78,5 @@ __strong_alias(popcount, popcount32)
 #if ULONG_MAX == 0xffffffffU
 __strong_alias(popcountl, popcount32)
 #endif
+
+#endif	/* !popcount32 */

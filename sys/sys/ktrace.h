@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.h,v 1.59 2012/02/19 21:06:58 rmind Exp $	*/
+/*	$NetBSD: ktrace.h,v 1.61 2013/12/09 17:43:58 pooka Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -35,6 +35,7 @@
 #define _SYS_KTRACE_H_
 
 #include <sys/mutex.h>
+#include <sys/lwp.h>
 
 /*
  * operations to ktrace system call  (KTROP(op))
@@ -297,6 +298,25 @@ void ktr_mib(const int *a , u_int b);
 void ktr_execarg(const void *, size_t);
 void ktr_execenv(const void *, size_t);
 void ktr_execfd(int, u_int);
+
+int  ktrace_common(lwp_t *, int, int, int, file_t **);
+
+static inline int
+ktrenter(lwp_t *l)
+{
+
+	if ((l->l_pflag & LP_KTRACTIVE) != 0)
+		return 1;
+	l->l_pflag |= LP_KTRACTIVE;
+	return 0;
+}
+
+static inline void
+ktrexit(lwp_t *l)
+{
+
+	l->l_pflag &= ~LP_KTRACTIVE;
+}
 
 static inline bool
 ktrpoint(int fac)

@@ -8,6 +8,25 @@
 #define __attribute__(x)
 #endif
 
+#ifndef KRB5_DEPRECATED_FUNCTION
+#ifndef __has_extension
+#define __has_extension(x) 0
+#define KRB5_DEPRECATED_FUNCTIONhas_extension 1
+#endif
+#if __has_extension(attribute_deprecated_with_message)
+#define KRB5_DEPRECATED_FUNCTION(x) __attribute__((__deprecated__(x)))
+#elif defined(__GNUC__) && ((__GNUC__ > 3) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 1 )))
+#define KRB5_DEPRECATED_FUNCTION(X) __attribute__((__deprecated__))
+#else
+#define KRB5_DEPRECATED_FUNCTION(X)
+#endif
+#ifdef KRB5_DEPRECATED_FUNCTIONhas_extension
+#undef __has_extension
+#undef KRB5_DEPRECATED_FUNCTIONhas_extension
+#endif
+#endif /* KRB5_DEPRECATED_FUNCTION */
+
+
 void
 _heim_krb5_ipc_client_clear_target (void);
 
@@ -119,6 +138,9 @@ _krb5_debug (
 	...)
      __attribute__((format (printf, 3, 4)));
 
+void
+_krb5_debug_backtrace (krb5_context /*context*/);
+
 krb5_error_code
 _krb5_derive_key (
 	krb5_context /*context*/,
@@ -154,6 +176,12 @@ _krb5_dh_group_ok (
 	heim_integer */*q*/,
 	struct krb5_dh_moduli **/*moduli*/,
 	char **/*name*/);
+
+krb5_error_code
+_krb5_einval (
+	krb5_context /*context*/,
+	const char */*func*/,
+	unsigned long /*argn*/);
 
 krb5_error_code
 _krb5_erase_file (
@@ -247,7 +275,7 @@ _krb5_get_cred_kdc_any (
 	krb5_creds ***/*ret_tgts*/);
 
 char *
-_krb5_get_default_cc_name_from_registry (void);
+_krb5_get_default_cc_name_from_registry (krb5_context /*context*/);
 
 char *
 _krb5_get_default_config_config_files_from_registry (void);
@@ -288,6 +316,14 @@ _krb5_have_debug (
 krb5_boolean
 _krb5_homedir_access (krb5_context /*context*/);
 
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
+_krb5_init_etype (
+	krb5_context /*context*/,
+	krb5_pdu /*pdu_type*/,
+	unsigned */*len*/,
+	krb5_enctype **/*val*/,
+	const krb5_enctype */*etypes*/);
+
 krb5_error_code
 _krb5_internal_hmac (
 	krb5_context /*context*/,
@@ -298,14 +334,14 @@ _krb5_internal_hmac (
 	struct _krb5_key_data */*keyblock*/,
 	Checksum */*result*/);
 
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _krb5_kcm_get_initial_ticket (
 	krb5_context /*context*/,
 	krb5_ccache /*id*/,
 	krb5_principal /*server*/,
 	krb5_keyblock */*key*/);
 
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _krb5_kcm_get_ticket (
 	krb5_context /*context*/,
 	krb5_ccache /*id*/,
@@ -313,10 +349,10 @@ _krb5_kcm_get_ticket (
 	krb5_enctype /*enctype*/,
 	krb5_principal /*server*/);
 
-krb5_boolean
+KRB5_LIB_FUNCTION krb5_boolean KRB5_LIB_CALL
 _krb5_kcm_is_running (krb5_context /*context*/);
 
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _krb5_kcm_noop (
 	krb5_context /*context*/,
 	krb5_ccache /*id*/);
@@ -529,6 +565,11 @@ _krb5_send_and_recv_tcp (
 	const krb5_data */*req*/,
 	krb5_data */*rep*/);
 
+int
+_krb5_set_default_cc_name_to_registry (
+	krb5_context /*context*/,
+	krb5_ccache /*id*/);
+
 void
 _krb5_unload_plugins (
 	krb5_context /*context*/,
@@ -555,5 +596,8 @@ int
 _krb5_xunlock (
 	krb5_context /*context*/,
 	int /*fd*/);
+
+#undef KRB5_DEPRECATED_FUNCTION
+#define KRB5_DEPRECATED_FUNCTION(X)
 
 #endif /* __krb5_private_h__ */

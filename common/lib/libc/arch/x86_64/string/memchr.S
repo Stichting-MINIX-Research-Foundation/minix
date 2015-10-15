@@ -1,4 +1,4 @@
-/*	$NetBSD: memchr.S,v 1.5 2009/08/01 20:47:02 dsl Exp $	*/
+/*	$NetBSD: memchr.S,v 1.6 2014/03/22 19:16:34 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: memchr.S,v 1.5 2009/08/01 20:47:02 dsl Exp $")
+	RCSID("$NetBSD: memchr.S,v 1.6 2014/03/22 19:16:34 jakllsch Exp $")
 #endif
 
 /*
@@ -106,3 +106,4 @@ ENTRY(memchr)
 /* Not found */
 30:	xorq	%rax,%rax
 	ret
+END(memchr)

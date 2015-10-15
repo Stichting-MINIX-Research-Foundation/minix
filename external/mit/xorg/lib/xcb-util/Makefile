@@ -1,6 +1,7 @@
 #	$NetBSD: Makefile,v 1.3 2012/01/07 02:07:58 mrg Exp $
 
-SUBDIR= reply keysyms render-util \
+#__MINIX: reply, render-util requires pthreads
+SUBDIR=  keysyms  \
 	atom event aux .WAIT property .WAIT \
 	image icccm
 

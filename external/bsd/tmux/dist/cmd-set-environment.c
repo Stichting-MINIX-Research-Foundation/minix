@@ -1,4 +1,4 @@
-/* $Id: cmd-set-environment.c,v 1.1.1.2 2011/08/17 18:40:04 jmmv Exp $ */
+/* Id */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -27,7 +27,7 @@
  * Set an environment variable.
  */
 
-int	cmd_set_environment_exec(struct cmd *, struct cmd_ctx *);
+enum cmd_retval	 cmd_set_environment_exec(struct cmd *, struct cmd_q *);
 
 const struct cmd_entry cmd_set_environment_entry = {
 	"set-environment", "setenv",
@@ -35,12 +35,11 @@ const struct cmd_entry cmd_set_environment_entry = {
 	"[-gru] " CMD_TARGET_SESSION_USAGE " name [value]",
 	0,
 	NULL,
-	NULL,
 	cmd_set_environment_exec
 };
 
-int
-cmd_set_environment_exec(struct cmd *self, struct cmd_ctx *ctx)
+enum cmd_retval
+cmd_set_environment_exec(struct cmd *self, struct cmd_q *cmdq)
 {
 	struct args	*args = self->args;
 	struct session	*s;
@@ -49,15 +48,15 @@ cmd_set_environment_exec(struct cmd *self, struct cmd_ctx *ctx)
 
 	name = args->argv[0];
 	if (*name == '\0') {
-		ctx->error(ctx, "empty variable name");
-		return (-1);
+		cmdq_error(cmdq, "empty variable name");
+		return (CMD_RETURN_ERROR);
 	}
 	if (strchr(name, '=') != NULL) {
-		ctx->error(ctx, "variable name contains =");
-		return (-1);
+		cmdq_error(cmdq, "variable name contains =");
+		return (CMD_RETURN_ERROR);
 	}
 
-	if (args->argc < 1)
+	if (args->argc < 2)
 		value = NULL;
 	else
 		value = args->argv[1];
@@ -65,30 +64,30 @@ cmd_set_environment_exec(struct cmd *self, struct cmd_ctx *ctx)
 	if (args_has(self->args, 'g'))
 		env = &global_environ;
 	else {
-		if ((s = cmd_find_session(ctx, args_get(args, 't'), 0)) == NULL)
-			return (-1);
+		if ((s = cmd_find_session(cmdq, args_get(args, 't'), 0)) == NULL)
+			return (CMD_RETURN_ERROR);
 		env = &s->environ;
 	}
 
 	if (args_has(self->args, 'u')) {
 		if (value != NULL) {
-			ctx->error(ctx, "can't specify a value with -u");
-			return (-1);
+			cmdq_error(cmdq, "can't specify a value with -u");
+			return (CMD_RETURN_ERROR);
 		}
 		environ_unset(env, name);
 	} else if (args_has(self->args, 'r')) {
 		if (value != NULL) {
-			ctx->error(ctx, "can't specify a value with -r");
-			return (-1);
+			cmdq_error(cmdq, "can't specify a value with -r");
+			return (CMD_RETURN_ERROR);
 		}
 		environ_set(env, name, NULL);
 	} else {
 		if (value == NULL) {
-			ctx->error(ctx, "no value specified");
-			return (-1);
+			cmdq_error(cmdq, "no value specified");
+			return (CMD_RETURN_ERROR);
 		}
 		environ_set(env, name, value);
 	}
 
-	return (0);
+	return (CMD_RETURN_NORMAL);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: forward.c,v 1.32 2013/10/18 20:47:07 christos Exp $	*/
+/*	$NetBSD: forward.c,v 1.33 2015/10/09 17:51:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)forward.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: forward.c,v 1.32 2013/10/18 20:47:07 christos Exp $");
+__RCSID("$NetBSD: forward.c,v 1.33 2015/10/09 17:51:26 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -87,16 +87,16 @@ static int rlines(FILE *, off_t, struct stat *);
 void
 forward(FILE *fp, enum STYLE style, off_t off, struct stat *sbp)
 {
-#ifndef __minix
+#if !defined(__minix)
 	int ch, n;
 #else
 	int ch;
-#endif
+#endif /* !defined(__minix) */
 	int kq=-1, action=USE_SLEEP;
 	struct stat statbuf;
-#ifndef __minix
+#if !defined(__minix)
 	struct kevent ev[2];
-#endif
+#endif /* !defined(__minix) */
 
 	switch(style) {
 	case FBYTES:
@@ -178,14 +178,14 @@ forward(FILE *fp, enum STYLE style, off_t off, struct stat *sbp)
 	}
 
 	if (fflag) {
-#ifndef __minix
+#if !defined(__minix)
 		kq = kqueue();
 		if (kq < 0)
 			xerr(1, "kqueue");
 		action = ADD_EVENTS;
 #else
         action = USE_SLEEP;
-#endif
+#endif /* !defined(__minix) */
 	}
 
 	for (;;) {
@@ -204,12 +204,12 @@ forward(FILE *fp, enum STYLE style, off_t off, struct stat *sbp)
 		clearerr(fp);
 
 		switch (action) {
-#ifndef __minix
+#if !defined(__minix)
 		case ADD_EVENTS:
 			n = 0;
 
 			memset(ev, 0, sizeof(ev));
-			if (fflag == 2 && fileno(fp) != STDIN_FILENO) {
+			if (fflag == 2 && fp != stdin) {
 				EV_SET(&ev[n], fileno(fp), EVFILT_VNODE,
 				    EV_ADD | EV_ENABLE | EV_CLEAR,
 				    NOTE_DELETE | NOTE_RENAME, 0, 0);
@@ -243,7 +243,7 @@ forward(FILE *fp, enum STYLE style, off_t off, struct stat *sbp)
 				}
 			}
 			break;
-#endif
+#endif /* !defined(__minix) */
 
 		case USE_SLEEP:
 			/*
@@ -252,7 +252,7 @@ forward(FILE *fp, enum STYLE style, off_t off, struct stat *sbp)
 			 */
                 	(void) sleep(1);
 
-			if (fflag == 2 && fileno(fp) != STDIN_FILENO &&
+			if (fflag == 2 && fp != stdin &&
 			    stat(fname, &statbuf) != -1) {
 				if (statbuf.st_ino != sbp->st_ino ||
 				    statbuf.st_dev != sbp->st_dev ||

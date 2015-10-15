@@ -1,4 +1,4 @@
-.\" $NetBSD: mktemp.1,v 1.21 2012/11/04 10:10:03 apb Exp $
+.\" $NetBSD: mktemp.1,v 1.22 2014/11/10 07:33:31 snj Exp $
 .\" From: $FreeBSD: src/usr.bin/mktemp/mktemp.1,v 1.5 1999/08/28 01:04:13 peter Exp $
 .\" From: $OpenBSD: mktemp.1,v 1.8 1998/03/19 06:13:37 millert Exp $
 .\"
@@ -203,12 +203,12 @@ allows an attacker to subvert the program by
 creating a different file, directory, or symbolic link
 under the same name.
 A safer, though still inferior, approach
-is to make a temporary directory using the same naming schem
+is to make a temporary directory using the same naming scheme
 While this does allow one to guarantee that a temporary file will
 not be subverted, it still allows a simple denial of service attack.
 For these reasons it is recommended that
 .Nm
-should be used instead of simpler schemes.
+be used instead of simpler schemes.
 .Pp
 Care should be taken to ensure that it is appropriate to use an
 environment variable potentially supplied by the user.
@@ -252,7 +252,7 @@ The
 .Nm
 utility appeared in
 .Nx 1.5 .
-It has been imported from
+It was imported from
 .Fx ,
-the idea and the manual page were taken from
+and the idea and the manual page were taken from
 .Ox .

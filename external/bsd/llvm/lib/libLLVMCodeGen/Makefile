@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2013/11/11 23:51:36 joerg Exp $
+#	$NetBSD: Makefile,v 1.30 2015/01/29 20:41:35 joerg Exp $
 
 LIB=	LLVMCodeGen
 
@@ -9,11 +9,13 @@ LIB=	LLVMCodeGen
 SRCS+=	AggressiveAntiDepBreaker.cpp \
 	AllocationOrder.cpp \
 	Analysis.cpp \
+	AtomicExpandPass.cpp \
 	BasicTargetTransformInfo.cpp \
 	BranchFolding.cpp \
 	CalcSpillWeights.cpp \
 	CallingConvLower.cpp \
 	CodeGen.cpp \
+	CodeGenPrepare.cpp \
 	CriticalAntiDepBreaker.cpp \
 	DFAPacketizer.cpp \
 	DeadMachineInstructionElim.cpp \
@@ -24,14 +26,16 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	ExecutionDepsFix.cpp \
 	ExpandISelPseudos.cpp \
 	ExpandPostRAPseudos.cpp \
+	ForwardControlFlowIntegrity.cpp \
 	GCMetadata.cpp \
 	GCMetadataPrinter.cpp \
 	GCStrategy.cpp \
+	GlobalMerge.cpp \
 	IfConversion.cpp \
 	InlineSpiller.cpp \
 	InterferenceCache.cpp \
 	IntrinsicLowering.cpp \
-	JITCodeEmitter.cpp \
+	JumpInstrTables.cpp \
 	LLVMTargetMachine.cpp \
 	LatencyPriorityQueue.cpp \
 	LexicalScopes.cpp \
@@ -39,10 +43,10 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	LiveInterval.cpp \
 	LiveIntervalAnalysis.cpp \
 	LiveIntervalUnion.cpp \
+	LivePhysRegs.cpp \
 	LiveRangeCalc.cpp \
 	LiveRangeEdit.cpp \
 	LiveRegMatrix.cpp \
-	LiveRegUnits.cpp \
 	LiveStackAnalysis.cpp \
 	LiveVariables.cpp \
 	LocalStackSlotAllocation.cpp \
@@ -50,9 +54,10 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	MachineBranchProbabilityInfo.cpp \
 	MachineBlockFrequencyInfo.cpp \
 	MachineBlockPlacement.cpp \
-	MachineCodeEmitter.cpp \
 	MachineCopyPropagation.cpp \
 	MachineCSE.cpp \
+	MachineCombiner.cpp \
+	MachineDominanceFrontier.cpp \
 	MachineDominators.cpp \
 	MachineFunction.cpp \
 	MachineFunctionAnalysis.cpp \
@@ -66,6 +71,7 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	MachineModuleInfoImpls.cpp \
 	MachinePassRegistry.cpp \
 	MachinePostDominators.cpp \
+	MachineRegionInfo.cpp \
 	MachineRegisterInfo.cpp \
 	MachineSSAUpdater.cpp \
 	MachineScheduler.cpp \
@@ -98,13 +104,14 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	ShadowStackGC.cpp \
 	SjLjEHPrepare.cpp \
 	SlotIndexes.cpp \
-	Spiller.cpp \
 	SpillPlacement.cpp \
 	SplitKit.cpp \
 	StackColoring.cpp \
+	StackMapLivenessAnalysis.cpp \
 	StackMaps.cpp \
 	StackProtector.cpp \
 	StackSlotColoring.cpp \
+	StatepointExampleGC.cpp \
 	TailDuplication.cpp \
 	TargetFrameLoweringImpl.cpp \
 	TargetInstrInfo.cpp \

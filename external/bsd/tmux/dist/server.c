@@ -1,4 +1,4 @@
-/* $Id: server.c,v 1.1.1.2 2011/08/17 18:40:05 jmmv Exp $ */
+/* Id */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -88,7 +88,7 @@ server_create_socket(void)
 	if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 #else
 	if ((fd = socket(AF_UNIX, SOCK_SEQPACKET, 0)) == -1)
-#endif
+#endif /* !defined(__minix) */
 		fatal("socket failed");
 
 	mask = umask(S_IXUSR|S_IXGRP|S_IRWXO);
@@ -107,20 +107,18 @@ server_create_socket(void)
 
 /* Fork new server. */
 int
-server_start(void)
+server_start(int lockfd, char *lockfile)
 {
-	struct window_pane	*wp;
-	int	 		 pair[2];
-	char			*cause;
-	struct timeval		 tv;
-	u_int			 i;
+	int	 	 pair[2];
+	struct timeval	 tv;
+	char		*cause;
 
 	/* The first client is special and gets a socketpair; create it. */
 #ifndef __minix
 	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, pair) != 0)
 #else
 	if (socketpair(AF_UNIX, SOCK_SEQPACKET, PF_UNSPEC, pair) != 0)
-#endif
+#endif /* !defined(__minix) */
 		fatal("socketpair failed");
 
 	switch (fork()) {
@@ -170,35 +168,37 @@ server_start(void)
 	server_fd = server_create_socket();
 	server_client_create(pair[1]);
 
-	if (access(SYSTEM_CFG, R_OK) == 0)
-		load_cfg(SYSTEM_CFG, NULL, &cfg_causes);
-	else if (errno != ENOENT) {
-		cfg_add_cause(
-		    &cfg_causes, "%s: %s", strerror(errno), SYSTEM_CFG);
-	}
-	if (cfg_file != NULL)
-		load_cfg(cfg_file, NULL, &cfg_causes);
+	unlink(lockfile);
+	free(lockfile);
+	close(lockfd);
 
-	/*
-	 * If there is a session already, put the current window and pane into
-	 * more mode.
-	 */
-	if (!RB_EMPTY(&sessions) && !ARRAY_EMPTY(&cfg_causes)) {
-		wp = RB_MIN(sessions, &sessions)->curw->window->active;
-		window_pane_set_mode(wp, &window_copy_mode);
-		window_copy_init_for_output(wp);
-		for (i = 0; i < ARRAY_LENGTH(&cfg_causes); i++) {
-			cause = ARRAY_ITEM(&cfg_causes, i);
-			window_copy_add(wp, "%s", cause);
-			xfree(cause);
+	cfg_cmd_q = cmdq_new(NULL);
+	cfg_cmd_q->emptyfn = cfg_default_done;
+	cfg_finished = 0;
+	cfg_references = 1;
+	ARRAY_INIT(&cfg_causes);
+	cfg_client = ARRAY_FIRST(&clients);
+	if (cfg_client != NULL)
+		cfg_client->references++;
+
+	if (access(TMUX_CONF, R_OK) == 0) {
+		if (load_cfg(TMUX_CONF, cfg_cmd_q, &cause) == -1) {
+			xasprintf(&cause, "%s: %s", TMUX_CONF, cause);
+			ARRAY_ADD(&cfg_causes, cause);
 		}
-		ARRAY_FREE(&cfg_causes);
+	} else if (errno != ENOENT) {
+		xasprintf(&cause, "%s: %s", TMUX_CONF, strerror(errno));
+		ARRAY_ADD(&cfg_causes, cause);
 	}
-	cfg_finished = 1;
+	if (cfg_file != NULL) {
+		if (load_cfg(cfg_file, cfg_cmd_q, &cause) == -1) {
+			xasprintf(&cause, "%s: %s", cfg_file, cause);
+			ARRAY_ADD(&cfg_causes, cause);
+		}
+	}
+	cmdq_continue(cfg_cmd_q);
 
-	event_set(&server_ev_accept,
-	    server_fd, EV_READ|EV_PERSIST, server_accept_callback, NULL);
-	event_add(&server_ev_accept, NULL);
+	server_add_accept(0);
 
 	memset(&tv, 0, sizeof tv);
 	tv.tv_sec = 1;
@@ -282,8 +282,8 @@ server_clean_dead(void)
 		next_s = RB_NEXT(sessions, &dead_sessions, s);
 		if (s->references == 0) {
 			RB_REMOVE(sessions, &dead_sessions, s);
-			xfree(s->name);
-			xfree(s);
+			free(s->name);
+			free(s);
 		}
 		s = next_s;
 	}
@@ -293,7 +293,7 @@ server_clean_dead(void)
 		if (c == NULL || c->references != 0)
 			continue;
 		ARRAY_SET(&dead_clients, i, NULL);
-		xfree(c);
+		free(c);
 	}
 }
 
@@ -334,7 +334,6 @@ server_update_socket(void)
 }
 
 /* Callback for server socket. */
-/* ARGSUSED */
 void
 server_accept_callback(int fd, short events, unused void *data)
 {
@@ -342,6 +341,7 @@ server_accept_callback(int fd, short events, unused void *data)
 	socklen_t		slen = sizeof sa;
 	int			newfd;
 
+	server_add_accept(0);
 	if (!(events & EV_READ))
 		return;
 
@@ -349,6 +349,11 @@ server_accept_callback(int fd, short events, unused void *data)
 	if (newfd == -1) {
 		if (errno == EAGAIN || errno == EINTR || errno == ECONNABORTED)
 			return;
+		if (errno == ENFILE || errno == EMFILE) {
+			/* Delete and don't try again for 1 second. */
+			server_add_accept(1);
+			return;
+		}
 		fatal("accept failed");
 	}
 	if (server_shutdown) {
@@ -358,8 +363,30 @@ server_accept_callback(int fd, short events, unused void *data)
 	server_client_create(newfd);
 }
 
+/*
+ * Add accept event. If timeout is nonzero, add as a timeout instead of a read
+ * event - used to backoff when running out of file descriptors.
+ */
+void
+server_add_accept(int timeout)
+{
+	struct timeval tv = { timeout, 0 };
+
+	if (event_initialized(&server_ev_accept))
+		event_del(&server_ev_accept);
+
+	if (timeout == 0) {
+		event_set(&server_ev_accept,
+		    server_fd, EV_READ, server_accept_callback, NULL);
+		event_add(&server_ev_accept, NULL);
+	} else {
+		event_set(&server_ev_accept,
+		    server_fd, EV_TIMEOUT, server_accept_callback, NULL);
+		event_add(&server_ev_accept, &tv);
+	}
+}
+
 /* Signal handler. */
-/* ARGSUSED */
 void
 server_signal_callback(int sig, unused short events, unused void *data)
 {
@@ -375,9 +402,7 @@ server_signal_callback(int sig, unused short events, unused void *data)
 		event_del(&server_ev_accept);
 		close(server_fd);
 		server_fd = server_create_socket();
-		event_set(&server_ev_accept, server_fd,
-		    EV_READ|EV_PERSIST, server_accept_callback, NULL);
-		event_add(&server_ev_accept, NULL);
+		server_add_accept(0);
 		break;
 	}
 }
@@ -457,7 +482,6 @@ server_child_stopped(pid_t pid, int status)
 }
 
 /* Handle once-per-second timer events. */
-/* ARGSUSED */
 void
 server_second_callback(unused int fd, unused short events, unused void *arg)
 {

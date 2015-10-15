@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_simple.c,v 1.32 2013/03/11 20:19:29 tron Exp $	*/
+/*	$NetBSD: clnt_simple.c,v 1.33 2015/01/20 18:31:25 christos Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)clnt_simple.c 1.49 89/01/31 Copyr 1984 Sun Micro";
 #else
-__RCSID("$NetBSD: clnt_simple.c,v 1.32 2013/03/11 20:19:29 tron Exp $");
+__RCSID("$NetBSD: clnt_simple.c,v 1.33 2015/01/20 18:31:25 christos Exp $");
 #endif
 #endif
 
@@ -141,15 +141,12 @@ rpc_call(
 	/* XXX: nettype may be NULL ??? */
 
 #ifdef _REENTRANT
-	if (__isthreaded == 0) {
-		rcp = rpc_call_private_main;
-	} else {
+	if (__isthreaded) {
 		thr_once(&rpc_call_once, rpc_call_setup);
 		rcp = thr_getspecific(rpc_call_key);
-	}
-#else
-	rcp = rpc_call_private_main;
+	} else
 #endif
+		rcp = rpc_call_private_main;
 	if (rcp == NULL) {
 		rcp = malloc(sizeof (*rcp));
 		if (rcp == NULL) {
@@ -157,10 +154,12 @@ rpc_call(
 			rpc_createerr.cf_error.re_errno = errno;
 			return (rpc_createerr.cf_stat);
 		}
-		if (__isthreaded == 0)
-			rpc_call_private_main = rcp;
-		else
+#ifdef _REENTRANT
+		if (__isthreaded)
 			thr_setspecific(rpc_call_key, (void *) rcp);
+		else
+#endif
+			rpc_call_private_main = rcp;
 		rcp->valid = 0;
 		rcp->client = NULL;
 	}

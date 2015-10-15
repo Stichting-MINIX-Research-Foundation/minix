@@ -1,4 +1,4 @@
-/*	$NetBSD: yperr_string.c,v 1.8 2012/06/25 22:32:46 abs Exp $	 */
+/*	$NetBSD: yperr_string.c,v 1.9 2015/06/17 00:15:26 christos Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: yperr_string.c,v 1.8 2012/06/25 22:32:46 abs Exp $");
+__RCSID("$NetBSD: yperr_string.c,v 1.9 2015/06/17 00:15:26 christos Exp $");
 #endif
 
 #include "namespace.h"
@@ -85,6 +85,6 @@ yperr_string(int incode)
 	case YPERR_BUSY:
 		return __UNCONST("Database is busy");
 	}
-	(void) snprintf(err, sizeof(err), "YP unknown error %d\n", incode);
+	(void) snprintf(err, sizeof(err), "YP unknown error %d", incode);
 	return err;
 }

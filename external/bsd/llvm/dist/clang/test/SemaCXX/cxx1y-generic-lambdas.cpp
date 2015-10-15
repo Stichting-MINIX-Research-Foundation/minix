@@ -3,6 +3,17 @@
 // RUN: %clang_cc1 -std=c++1y -verify -fsyntax-only -fblocks -fms-extensions %s -DMS_EXTENSIONS
 // RUN: %clang_cc1 -std=c++1y -verify -fsyntax-only -fblocks -fdelayed-template-parsing -fms-extensions %s -DMS_EXTENSIONS -DDELAYED_TEMPLATE_PARSING
 
+template<class F, class ...Rest> struct first_impl { typedef F type; };
+template<class ...Args> using first = typename first_impl<Args...>::type;
+
+namespace simple_explicit_capture {
+  void test() {
+    int i;
+    auto L = [i](auto a) { return i + a; };
+    L(3.14);
+  }
+}
+
 namespace explicit_call {
 int test() {
   auto L = [](auto a) { return a; };
@@ -489,8 +500,6 @@ int run = fooT('a') + fooT(3.14);
 
 template<class ... Ts> void print(Ts ... ts) { }
 
-template<class F, class ... Rest> using first = F;
-
 template<class ... Ts> auto fooV(Ts ... ts) {
   auto L = [](auto ... a) { 
     auto M = [](decltype(a) ... b) {  
@@ -560,7 +569,6 @@ int (*np2)(const char*, int, const char*, double, const char*, int) = O; // expe
 namespace variadic_tests_1 {
 template<class ... Ts> void print(Ts ... ts) { }
 
-template<class F, class ... Rest> using FirstType = F;
 template<class F, class ... Rest> F& FirstArg(F& f, Rest...) { return f; }
  
 template<class ... Ts> int fooV(Ts ... ts) {
@@ -574,7 +582,7 @@ template<class ... Ts> int fooV(Ts ... ts) {
       };  
       N('a');
       N(N);
-      N(FirstType<Ts...>{});
+      N(first<Ts...>{});
     };
     M(a...);
     print("a = ", a..., "\n");    
@@ -599,7 +607,7 @@ template<class ... Ts> int fooV(Ts ... ts) {
       };  
       N('a');
       N(N);
-      N(FirstType<Ts...>{});
+      N(first<Ts...>{});
     };
     M(a...);
     return M;
@@ -619,7 +627,7 @@ template<class ... Ts> int fooV(Ts ... ts) {
         };  
         N('a');
         N(N);
-        N(FirstType<Ts...>{});
+        N(first<Ts...>{});
         return N;
       };
       M(a...);
@@ -763,7 +771,6 @@ int run = test();
 
 
 namespace fptr_with_decltype_return_type {
-template<class F, class ... Ts> using FirstType = F;
 template<class F, class ... Rest> F& FirstArg(F& f, Rest& ... r) { return f; };
 template<class ... Ts> auto vfun(Ts&& ... ts) {
   print(ts...);
@@ -774,7 +781,7 @@ int test()
  {
    auto L = [](auto ... As) {
     return [](auto b) ->decltype(b) {   
-      vfun([](decltype(As) a) -> decltype(a) { return a; } ...)(FirstType<decltype(As)...>{});
+      vfun([](decltype(As) a) -> decltype(a) { return a; } ...)(first<decltype(As)...>{});
       return decltype(b){};
     };
    };
@@ -844,5 +851,83 @@ void Do() {
   [=] { v.size(); };
 }
 
+}
 
+namespace inclass_lambdas_within_nested_classes {
+namespace ns1 {
+
+struct X1 {  
+  struct X2 {
+    enum { E = [](auto i) { return i; }(3) }; //expected-error{{inside of a constant expression}}\
+                                          //expected-error{{not an integral constant}}\
+                                          //expected-note{{non-literal type}}
+    int L = ([] (int i) { return i; })(2);
+    void foo(int i = ([] (int i) { return i; })(2)) { }
+    int B : ([](int i) { return i; })(3); //expected-error{{inside of a constant expression}}\
+                                          //expected-error{{not an integral constant}}\
+                                          //expected-note{{non-literal type}}
+    int arr[([](int i) { return i; })(3)]; //expected-error{{inside of a constant expression}}\
+                                           //expected-error{{must have a constant size}}
+    int (*fp)(int) = [](int i) { return i; };
+    void fooptr(int (*fp)(char) = [](char c) { return 0; }) { }
+    int L2 = ([](auto i) { return i; })(2);
+    void fooG(int i = ([] (auto i) { return i; })(2)) { }
+    int BG : ([](auto i) { return i; })(3); //expected-error{{inside of a constant expression}}  \
+                                            //expected-error{{not an integral constant}}\
+                                            //expected-note{{non-literal type}}
+    int arrG[([](auto i) { return i; })(3)]; //expected-error{{inside of a constant expression}}\
+                                             //expected-error{{must have a constant size}}
+    int (*fpG)(int) = [](auto i) { return i; };
+    void fooptrG(int (*fp)(char) = [](auto c) { return 0; }) { }
+  };
+};
+} //end ns
+
+namespace ns2 {
+struct X1 {  
+  template<class T>
+  struct X2 {
+    int L = ([] (T i) { return i; })(2);
+    void foo(int i = ([] (int i) { return i; })(2)) { }
+    int B : ([](T i) { return i; })(3); //expected-error{{inside of a constant expression}}\
+                                        //expected-error{{not an integral constant}}\
+                                        //expected-note{{non-literal type}}
+    int arr[([](T i) { return i; })(3)]; //expected-error{{inside of a constant expression}}\
+                                         //expected-error{{must have a constant size}}
+    int (*fp)(T) = [](T i) { return i; };
+    void fooptr(T (*fp)(char) = [](char c) { return 0; }) { }
+    int L2 = ([](auto i) { return i; })(2);
+    void fooG(T i = ([] (auto i) { return i; })(2)) { }
+    int BG : ([](auto i) { return i; })(3); //expected-error{{not an integral constant}}\
+                                            //expected-note{{non-literal type}}
+    int arrG[([](auto i) { return i; })(3)]; //expected-error{{must have a constant size}}
+    int (*fpG)(T) = [](auto i) { return i; };
+    void fooptrG(T (*fp)(char) = [](auto c) { return 0; }) { }
+    template<class U = char> int fooG2(T (*fp)(U) = [](auto a) { return 0; }) { return 0; }
+    template<class U = char> int fooG3(T (*fp)(U) = [](auto a) { return 0; });
+  };
+};
+template<class T> 
+template<class U>
+int X1::X2<T>::fooG3(T (*fp)(U)) { return 0; } 
+X1::X2<int> x2; //expected-note 3{{in instantiation of}}
+int run1 = x2.fooG2();
+int run2 = x2.fooG3();
+} // end ns
+
+
+
+} //end ns inclass_lambdas_within_nested_classes
+
+namespace pr21684_disambiguate_auto_followed_by_ellipsis_no_id {
+int a = [](auto ...) { return 0; }();
+}
+
+namespace PR22117 {
+  int x = [](auto) {
+    return [](auto... run_args) {
+      using T = int(decltype(run_args)...);
+      return 0;
+    };
+  }(0)(0);
 }

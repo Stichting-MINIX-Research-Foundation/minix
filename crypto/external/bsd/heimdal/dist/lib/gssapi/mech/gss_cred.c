@@ -1,4 +1,4 @@
-/*	$NetBSD: gss_cred.c,v 1.1.1.1 2011/04/13 18:14:46 elric Exp $	*/
+/*	$NetBSD: gss_cred.c,v 1.1.1.2 2014/04/24 12:45:29 pettai Exp $	*/
 
 /*
  * Copyright (c) 2009 Kungliga Tekniska Högskolan
@@ -87,7 +87,7 @@ gss_export_cred(OM_uint32 * minor_status,
 	}
 
 	ret = krb5_storage_write(sp, buffer.value, buffer.length);
-	if (ret != buffer.length) {
+	if (ret < 0 || (size_t)ret != buffer.length) {
 	    gss_release_buffer(minor_status, &buffer);
 	    krb5_storage_free(sp);
 	    *minor_status = EINVAL;
@@ -185,7 +185,7 @@ gss_import_cred(OM_uint32 * minor_status,
 	buffer.value = data.data;
 	buffer.length = data.length;
 
-	major = m->gm_import_cred(minor_status, 
+	major = m->gm_import_cred(minor_status,
 				  &buffer, &mcred);
 	krb5_data_free(&data);
 	if (major) {

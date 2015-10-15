@@ -41,6 +41,10 @@ oid	base	GSS_C_MA_SASL_MECH_NAME			1.2.752.43.13.100
 oid	base	GSS_C_MA_MECH_NAME			1.2.752.43.13.101
 oid	base	GSS_C_MA_MECH_DESCRIPTION		1.2.752.43.13.102
 
+# /* credential types */
+oid	base	GSS_C_CRED_PASSWORD			1.2.752.43.13.200
+oid	base	GSS_C_CRED_CERTIFICATE			1.2.752.43.13.201
+
 #/* Heimdal mechanisms - 1.2.752.43.14 */
 
 oid	base	GSS_SASL_DIGEST_MD5_MECHANISM		1.2.752.43.14.1

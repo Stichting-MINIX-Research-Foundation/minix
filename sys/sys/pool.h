@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.h,v 1.75 2012/06/05 22:51:47 jym Exp $	*/
+/*	$NetBSD: pool.h,v 1.79 2015/07/29 00:10:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2007 The NetBSD Foundation, Inc.
@@ -33,6 +33,41 @@
 #ifndef _SYS_POOL_H_
 #define _SYS_POOL_H_
 
+#include <sys/stdbool.h>
+#include <sys/stdint.h>
+
+struct pool_sysctl {
+	char pr_wchan[16];
+	uint64_t pr_flags;
+	uint64_t pr_size;
+	uint64_t pr_pagesize;
+	uint64_t pr_itemsperpage;
+	uint64_t pr_nitems;
+	uint64_t pr_nout;
+	uint64_t pr_hardlimit;
+	uint64_t pr_npages;
+	uint64_t pr_minpages;
+	uint64_t pr_maxpages;
+
+	uint64_t pr_nget;
+	uint64_t pr_nfail;
+	uint64_t pr_nput;
+	uint64_t pr_npagealloc;
+	uint64_t pr_npagefree;
+	uint64_t pr_hiwat;
+	uint64_t pr_nidle;
+
+	uint64_t pr_cache_meta_size;
+	uint64_t pr_cache_nfull;
+	uint64_t pr_cache_npartial;
+	uint64_t pr_cache_nempty;
+	uint64_t pr_cache_ncontended;
+	uint64_t pr_cache_nmiss_global;
+	uint64_t pr_cache_nhit_global;
+	uint64_t pr_cache_nmiss_pcpu;
+	uint64_t pr_cache_nhit_pcpu;
+};
+
 #ifdef _KERNEL
 #define	__POOL_EXPOSE
 #endif
@@ -64,6 +99,7 @@ struct pool_allocator {
 };
 
 LIST_HEAD(pool_pagelist,pool_item_header);
+SPLAY_HEAD(phtree, pool_item_header);
 
 struct pool {
 	TAILQ_ENTRY(pool)
@@ -125,7 +161,7 @@ struct pool {
 	kcondvar_t	pr_cv;
 	int		pr_ipl;
 
-	SPLAY_HEAD(phtree, pool_item_header) pr_phtree;
+	struct phtree	pr_phtree;
 
 	int		pr_maxcolor;	/* Cache colouring */
 	int		pr_curcolor;
@@ -155,6 +191,8 @@ struct pool {
 	 */
 	void		*pr_freecheck;
 	void		*pr_qcache;
+	bool		pr_redzone;
+	size_t		pr_reqsize;
 };
 
 /*
@@ -219,7 +257,11 @@ struct pool_cache {
 	unsigned int	pc_nfull;	/* full groups in cache */
 	unsigned int	pc_npart;	/* partial groups in cache */
 	unsigned int	pc_refcnt;	/* ref count for pagedaemon, etc */
+
+	/* Diagnostic aides. */
 	void		*pc_freecheck;
+	bool		pc_redzone;
+	size_t		pc_reqsize;
 
 	/* CPU layer. */
 	pool_cache_cpu_t pc_cpu0 __aligned(CACHE_LINE_SIZE);

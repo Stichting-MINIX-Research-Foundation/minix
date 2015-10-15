@@ -1,4 +1,4 @@
-/* $NetBSD: t_sigqueue.c,v 1.4 2011/07/07 16:31:11 jruoho Exp $ */
+/* $NetBSD: t_sigqueue.c,v 1.5 2015/06/06 13:14:06 joerg Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_sigqueue.c,v 1.4 2011/07/07 16:31:11 jruoho Exp $");
+__RCSID("$NetBSD: t_sigqueue.c,v 1.5 2015/06/06 13:14:06 joerg Exp $");
 
 
 #include <atf-c.h>
@@ -87,7 +87,7 @@ ATF_TC_HEAD(sigqueue_err, tc)
 
 ATF_TC_BODY(sigqueue_err, tc)
 {
-	union sigval sv;
+	static union sigval sv;
 
 	errno = 0;
 	ATF_REQUIRE_ERRNO(EINVAL, sigqueue(getpid(), -1, sv) == -1);

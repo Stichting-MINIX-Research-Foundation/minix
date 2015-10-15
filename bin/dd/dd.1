@@ -1,4 +1,4 @@
-.\"	$NetBSD: dd.1,v 1.25 2012/06/20 17:54:16 wiz Exp $
+.\"	$NetBSD: dd.1,v 1.27 2015/03/18 13:30:13 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	@(#)dd.1	8.2 (Berkeley) 1/13/94
 .\"
-.Dd November 6, 2011
+.Dd March 18, 2015
 .Dt DD 1
 .Os
 .Sh NAME
@@ -91,6 +91,21 @@ bytes instead of the default 512.
 Read input from
 .Ar file
 instead of the standard input.
+.It Cm iflag= Ns Ar flags
+Use comma-separated
+.Ar flags
+when calling
+.Xr open 2
+for the input file.
+The possible values are
+.Va O_
+flags documented in
+.Xr open 2 ,
+specified as lowercase and with the leading
+.Va O_
+removed.
+Default value is
+.Va rdonly .
 .It Cm iseek= Ns Ar n
 Seek on the input file
 .Ar n
@@ -180,6 +195,32 @@ If an initial portion of the output file is skipped (see the
 .Cm seek
 operand)
 the output file is truncated at that point.
+.It Cm oflag= Ns Ar flags
+Same as
+.Cm iflag
+but for the call to
+.Xr open 2
+on the output file.
+The default value is
+.Va creat ,
+which should be explicitly added in
+.Cm oflag
+in order to output to a nonexistent file.
+The default or specified value is or'ed with
+.Va rdwr
+for a first
+.Xt open 2
+attempt, then on failure with
+.Va wronly
+on a second attempt.
+In both cases,
+.Va trunc
+is automatically added if none of
+.Cm oseek ,
+.Cm seek ,
+or
+.Cm conv=notrunc
+operands are used,
 .It Cm oseek= Ns Ar n
 Seek on the output file
 .Ar n

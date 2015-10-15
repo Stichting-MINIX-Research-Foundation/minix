@@ -1,4 +1,4 @@
-/* $Id: cmd-save-buffer.c,v 1.1.1.2 2011/08/17 18:40:04 jmmv Exp $ */
+/* Id */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -20,83 +20,147 @@
 #include <sys/stat.h>
 
 #include <errno.h>
+#include <fcntl.h>
+#include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "tmux.h"
 
 /*
- * Saves a session paste buffer to a file.
+ * Saves a paste buffer to a file.
  */
 
-int	cmd_save_buffer_exec(struct cmd *, struct cmd_ctx *);
+enum cmd_retval	 cmd_save_buffer_exec(struct cmd *, struct cmd_q *);
 
 const struct cmd_entry cmd_save_buffer_entry = {
 	"save-buffer", "saveb",
 	"ab:", 1, 1,
-	"[-a] " CMD_BUFFER_USAGE,
+	"[-a] " CMD_BUFFER_USAGE " path",
 	0,
-	NULL,
 	NULL,
 	cmd_save_buffer_exec
 };
 
-int
-cmd_save_buffer_exec(struct cmd *self, struct cmd_ctx *ctx)
+const struct cmd_entry cmd_show_buffer_entry = {
+	"show-buffer", "showb",
+	"b:", 0, 0,
+	CMD_BUFFER_USAGE,
+	0,
+	NULL,
+	cmd_save_buffer_exec
+};
+
+enum cmd_retval
+cmd_save_buffer_exec(struct cmd *self, struct cmd_q *cmdq)
 {
 	struct args		*args = self->args;
-	struct client		*c = ctx->cmdclient;
+	struct client		*c = cmdq->client;
+	struct session          *s;
 	struct paste_buffer	*pb;
 	const char		*path;
-	char			*cause;
-	int			 buffer;
-	mode_t			 mask;
+	char			*cause, *start, *end, *msg;
+	size_t			 size, used, msglen;
+	int			 cwd, fd, buffer;
 	FILE			*f;
 
 	if (!args_has(args, 'b')) {
 		if ((pb = paste_get_top(&global_buffers)) == NULL) {
-			ctx->error(ctx, "no buffers");
-			return (-1);
+			cmdq_error(cmdq, "no buffers");
+			return (CMD_RETURN_ERROR);
 		}
 	} else {
 		buffer = args_strtonum(args, 'b', 0, INT_MAX, &cause);
 		if (cause != NULL) {
-			ctx->error(ctx, "buffer %s", cause);
-			xfree(cause);
-			return (-1);
+			cmdq_error(cmdq, "buffer %s", cause);
+			free(cause);
+			return (CMD_RETURN_ERROR);
 		}
 
 		pb = paste_get_index(&global_buffers, buffer);
 		if (pb == NULL) {
-			ctx->error(ctx, "no buffer %d", buffer);
-			return (-1);
+			cmdq_error(cmdq, "no buffer %d", buffer);
+			return (CMD_RETURN_ERROR);
 		}
 	}
 
-	path = args->argv[0];
+	if (self->entry == &cmd_show_buffer_entry)
+		path = "-";
+	else
+		path = args->argv[0];
 	if (strcmp(path, "-") == 0) {
 		if (c == NULL) {
-			ctx->error(ctx, "%s: can't write to stdout", path);
-			return (-1);
+			cmdq_error(cmdq, "can't write to stdout");
+			return (CMD_RETURN_ERROR);
 		}
-		bufferevent_write(c->stdout_event, pb->data, pb->size);
-	} else {
-		mask = umask(S_IRWXG | S_IRWXO);
-		if (args_has(self->args, 'a'))
-			f = fopen(path, "ab");
-		else
-			f = fopen(path, "wb");
-		umask(mask);
-		if (f == NULL) {
-			ctx->error(ctx, "%s: %s", path, strerror(errno));
-			return (-1);
-		}
-		if (fwrite(pb->data, 1, pb->size, f) != pb->size) {
-			ctx->error(ctx, "%s: fwrite error", path);
-			fclose(f);
-			return (-1);
-		}
-		fclose(f);
+		if (c->session == NULL || (c->flags & CLIENT_CONTROL))
+			goto do_stdout;
+		goto do_print;
 	}
 
-	return (0);
+	if (c != NULL && c->session == NULL)
+		cwd = c->cwd;
+	else if ((s = cmd_current_session(cmdq, 0)) != NULL)
+		cwd = s->cwd;
+	else
+		cwd = AT_FDCWD;
+
+	f = NULL;
+	if (args_has(self->args, 'a')) {
+		fd = openat(cwd, path, O_CREAT|O_RDWR|O_APPEND, 0600);
+		if (fd != -1)
+			f = fdopen(fd, "ab");
+	} else {
+		fd = openat(cwd, path, O_CREAT|O_RDWR, 0600);
+		if (fd != -1)
+			f = fdopen(fd, "wb");
+	}
+	if (f == NULL) {
+		if (fd != -1)
+			close(fd);
+		cmdq_error(cmdq, "%s: %s", path, strerror(errno));
+		return (CMD_RETURN_ERROR);
+	}
+	if (fwrite(pb->data, 1, pb->size, f) != pb->size) {
+		cmdq_error(cmdq, "%s: fwrite error", path);
+		fclose(f);
+		return (CMD_RETURN_ERROR);
+	}
+	fclose(f);
+
+	return (CMD_RETURN_NORMAL);
+
+do_stdout:
+	evbuffer_add(c->stdout_data, pb->data, pb->size);
+	server_push_stdout(c);
+	return (CMD_RETURN_NORMAL);
+
+do_print:
+	if (pb->size > (INT_MAX / 4) - 1) {
+		cmdq_error(cmdq, "buffer too big");
+		return (CMD_RETURN_ERROR);
+	}
+	msg = NULL;
+	msglen = 0;
+
+	used = 0;
+	while (used != pb->size) {
+		start = pb->data + used;
+		end = memchr(start, '\n', pb->size - used);
+		if (end != NULL)
+			size = end - start;
+		else
+			size = pb->size - used;
+
+		msglen = size * 4 + 1;
+		msg = xrealloc(msg, 1, msglen);
+
+		strvisx(msg, start, size, VIS_OCTAL|VIS_TAB);
+		cmdq_print(cmdq, "%s", msg);
+
+		used += size + (end != NULL);
+	}
+
+	free(msg);
+	return (CMD_RETURN_NORMAL);
 }

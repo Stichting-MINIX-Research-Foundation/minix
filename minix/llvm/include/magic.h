@@ -163,7 +163,7 @@
         (T)->contained_types = NULL;                                           \
         (T)->bit_width = (S)*8;                                                \
         (T)->name = N;                                                         \
-        sprintf(B, "i%d", (T)->bit_width);                                     \
+        snprintf(B, sizeof(B), "i%d", (T)->bit_width);                         \
         (T)->type_str = B;                                                     \
     } while(0)
 

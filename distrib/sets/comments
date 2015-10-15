@@ -1,4 +1,9 @@
-minix-sys Minix Complete system
+minix-base Minix base system
+minix-comp Minix compilation tools
+minix-games Minix BSD games
+minix-kernel Minix kernel and modules
+minix-man Minix manuals
+minix-tests Minix tests suites
 base-adosfs-root Root file system support for Amiga DOS file system support
 base-amd-bin auto-mounter daemon
 base-amd-examples example configuration files for the auto-mounter daemon and utilities

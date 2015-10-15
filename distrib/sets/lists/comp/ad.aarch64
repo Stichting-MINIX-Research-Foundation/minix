@@ -1,0 +1,143 @@
+# $NetBSD: ad.aarch64,v 1.11 2015/08/10 03:21:44 mrg Exp $
+./usr/include/aarch64				comp-c-include
+./usr/include/aarch64/ansi.h			comp-c-include
+./usr/include/aarch64/aout_machdep.h		comp-c-include
+./usr/include/aarch64/armreg.h			comp-c-include
+./usr/include/aarch64/asm.h			comp-c-include
+./usr/include/aarch64/bswap.h			comp-c-include
+./usr/include/aarch64/byte_swap.h		comp-c-include
+./usr/include/aarch64/cdefs.h			comp-c-include
+./usr/include/aarch64/cpu.h			comp-c-include
+./usr/include/aarch64/disklabel.h		comp-c-include
+./usr/include/aarch64/elf_machdep.h		comp-c-include
+./usr/include/aarch64/endian.h			comp-c-include
+./usr/include/aarch64/endian_machdep.h		comp-c-include
+./usr/include/aarch64/fenv.h			comp-c-include
+./usr/include/aarch64/float.h			comp-c-include
+./usr/include/aarch64/frame.h			comp-c-include
+./usr/include/aarch64/ieee.h			comp-c-include
+./usr/include/aarch64/ieeefp.h			comp-c-include
+./usr/include/aarch64/int_const.h		comp-c-include
+./usr/include/aarch64/int_fmtio.h		comp-c-include
+./usr/include/aarch64/int_limits.h		comp-c-include
+./usr/include/aarch64/int_mwgwtypes.h		comp-c-include
+./usr/include/aarch64/int_types.h		comp-c-include
+./usr/include/aarch64/intr.h			comp-c-include
+./usr/include/aarch64/kcore.h			comp-c-include
+./usr/include/aarch64/limits.h			comp-c-include
+./usr/include/aarch64/lock.h			comp-c-include
+./usr/include/aarch64/math.h			comp-c-include
+./usr/include/aarch64/mcontext.h		comp-c-include
+./usr/include/aarch64/mutex.h			comp-c-include
+./usr/include/aarch64/param.h			comp-c-include
+./usr/include/aarch64/pcb.h			comp-c-include
+./usr/include/aarch64/pmap.h			comp-c-include
+./usr/include/aarch64/pmc.h			comp-c-include
+./usr/include/aarch64/proc.h			comp-c-include
+./usr/include/aarch64/profile.h			comp-c-include
+./usr/include/aarch64/psl.h			comp-c-include
+./usr/include/aarch64/pte.h			comp-c-include
+./usr/include/aarch64/ptrace.h			comp-c-include
+./usr/include/aarch64/reg.h			comp-c-include
+./usr/include/aarch64/rwlock.h			comp-c-include
+./usr/include/aarch64/setjmp.h			comp-c-include
+./usr/include/aarch64/signal.h			comp-c-include
+./usr/include/aarch64/sysarch.h			comp-c-include
+./usr/include/aarch64/trap.h			comp-c-include
+./usr/include/aarch64/types.h			comp-c-include
+./usr/include/aarch64/vmparam.h			comp-c-include
+./usr/include/aarch64/wchar_limits.h		comp-c-include
+./usr/include/arm				comp-c-include
+./usr/include/arm/aeabi.h			comp-c-include
+./usr/include/arm/ansi.h			comp-c-include
+./usr/include/arm/aout_machdep.h		comp-c-include
+./usr/include/arm/apmvar.h			comp-c-include
+./usr/include/arm/arm26				comp-c-include
+./usr/include/arm/arm26/types.h			comp-c-include
+./usr/include/arm/arm32				comp-c-include
+./usr/include/arm/arm32/frame.h			comp-c-include
+./usr/include/arm/arm32/katelib.h		comp-c-include		obsolete
+./usr/include/arm/arm32/param.h			comp-c-include
+./usr/include/arm/arm32/pmap.h			comp-c-include
+./usr/include/arm/arm32/psl.h			comp-c-include
+./usr/include/arm/arm32/pte.h			comp-c-include
+./usr/include/arm/arm32/rtc.h			comp-c-include
+./usr/include/arm/arm32/types.h			comp-c-include
+./usr/include/arm/arm32/vmparam.h		comp-c-include
+./usr/include/arm/armreg.h			comp-c-include
+./usr/include/arm/asm.h				comp-c-include
+./usr/include/arm/atomic.h			comp-c-include
+./usr/include/arm/bswap.h			comp-c-include
+./usr/include/arm/byte_swap.h			comp-c-include
+./usr/include/arm/cdefs.h			comp-c-include
+./usr/include/arm/cpu.h				comp-c-include
+./usr/include/arm/cpuconf.h			comp-c-include
+./usr/include/arm/disklabel.h			comp-c-include
+./usr/include/arm/elf_machdep.h			comp-c-include
+./usr/include/arm/endian.h			comp-c-include
+./usr/include/arm/endian_machdep.h		comp-c-include
+./usr/include/arm/fenv.h			comp-c-include
+./usr/include/arm/float.h			comp-c-include
+./usr/include/arm/footbridge			comp-c-include
+./usr/include/arm/footbridge/footbridge_intr.h	comp-c-include
+./usr/include/arm/frame.h			comp-c-include
+./usr/include/arm/ieee.h			comp-c-include
+./usr/include/arm/ieeefp.h			comp-c-include
+./usr/include/arm/int_const.h			comp-c-include
+./usr/include/arm/int_fmtio.h			comp-c-include
+./usr/include/arm/int_limits.h			comp-c-include
+./usr/include/arm/int_mwgwtypes.h		comp-c-include
+./usr/include/arm/int_types.h			comp-c-include
+./usr/include/arm/joystick.h			comp-c-include
+./usr/include/arm/kcore.h			comp-c-include
+./usr/include/arm/limits.h			comp-c-include
+./usr/include/arm/lock.h			comp-c-include
+./usr/include/arm/math.h			comp-c-include
+./usr/include/arm/mcontext.h			comp-c-include
+./usr/include/arm/mutex.h			comp-c-include
+./usr/include/arm/param.h			comp-c-include
+./usr/include/arm/pcb.h				comp-c-include
+./usr/include/arm/pmc.h				comp-c-include
+./usr/include/arm/proc.h			comp-c-include
+./usr/include/arm/profile.h			comp-c-include
+./usr/include/arm/ptrace.h			comp-c-include
+./usr/include/arm/reg.h				comp-c-include
+./usr/include/arm/rwlock.h			comp-c-include
+./usr/include/arm/setjmp.h			comp-c-include
+./usr/include/arm/signal.h			comp-c-include
+./usr/include/arm/sljit_machdep.h		comp-c-include
+./usr/include/arm/swi.h				comp-c-include
+./usr/include/arm/sysarch.h			comp-c-include
+./usr/include/arm/trap.h			comp-c-include
+./usr/include/arm/types.h			comp-c-include
+./usr/include/arm/vfpreg.h			comp-c-include
+./usr/include/arm/vmparam.h			comp-c-include
+./usr/include/arm/wchar_limits.h		comp-c-include
+./usr/include/evbarm64				comp-c-include
+./usr/include/evbarm64/disklabel.h		comp-c-include
+./usr/include/evbarm64/intr.h			comp-c-include
+./usr/include/gcc-4.8/arm_neon.h		comp-c-include		gcccmds,gcc
+./usr/include/gcc-4.8/mmintrin.h		comp-c-include		gcccmds,gcc
+./usr/include/gcc-4.8/tgmath.h			comp-c-include		gcccmds,gcc
+./usr/include/gcc-4.8/unwind-arm-common.h	comp-c-include		gcccmds,gcc,eabi
+./usr/include/ieeefp.h				comp-c-include
+./usr/lib/eabi/libarm.a				comp-c-lib		compat
+./usr/lib/eabi/libarm.so			base-sys-shlib		compat,pic
+./usr/lib/eabi/libarm_p.a			comp-c-proflib		compat,profile
+./usr/lib/eabi/libarm_pic.a			comp-c-piclib		compat,pic,picinstall
+./usr/lib/eabi/libc_vfp.a			comp-c-lib		compat
+./usr/lib/eabi/libc_vfp.so			base-sys-shlib		compat,pic
+./usr/lib/eabi/libc_vfp_p.a			comp-c-proflib		compat,profile
+./usr/lib/eabi/libc_vfp_pic.a			comp-c-piclib		compat,pic,picinstall
+./usr/lib/eabihf/libarm.a				comp-c-lib		compat
+./usr/lib/eabihf/libarm.so			base-sys-shlib		compat,pic
+./usr/lib/eabihf/libarm_p.a			comp-c-proflib		compat,profile
+./usr/lib/eabihf/libarm_pic.a			comp-c-piclib		compat,pic,picinstall
+./usr/lib/oabi/libarm.a				comp-c-lib		compat
+./usr/lib/oabi/libarm.so			base-sys-shlib		compat,pic
+./usr/lib/oabi/libarm_p.a			comp-c-proflib		compat,profile
+./usr/lib/oabi/libarm_pic.a			comp-c-piclib		compat,pic,picinstall
+./usr/lib/oabi/libc_vfp.a			comp-c-lib		compat
+./usr/lib/oabi/libc_vfp.so			base-sys-shlib		compat,pic
+./usr/lib/oabi/libc_vfp_p.a			comp-c-proflib		compat,profile
+./usr/lib/oabi/libc_vfp_pic.a			comp-c-piclib		compat,pic,picinstall

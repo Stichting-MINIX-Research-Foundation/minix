@@ -44,6 +44,7 @@ CLEANFILES= $(TESTS) *.tmp *.cf \
 	test_can
 
 EXTRA_DIST = \
+	NTMakefile \
 	apple-10.4.kadm \
 	apple-10.4.req \
 	check-can.in \

@@ -1,4 +1,4 @@
-/*	$NetBSD: bn_mp_init_multi.c,v 1.1.1.1 2011/04/13 18:14:54 elric Exp $	*/
+/*	$NetBSD: bn_mp_init_multi.c,v 1.1.1.2 2014/04/24 12:45:31 pettai Exp $	*/
 
 #include <tommath.h>
 #ifdef BN_MP_INIT_MULTI_C
@@ -18,7 +18,7 @@
  */
 #include <stdarg.h>
 
-int mp_init_multi(mp_int *mp, ...) 
+int mp_init_multi(mp_int *mp, ...)
 {
     mp_err res = MP_OKAY;      /* Assume ok until proven otherwise */
     int n = 0;                 /* Number of ok inits */
@@ -32,11 +32,11 @@ int mp_init_multi(mp_int *mp, ...)
                succeeded in init-ing, then return error.
             */
             va_list clean_args;
-            
+
             /* end the current list */
             va_end(args);
-            
-            /* now start cleaning up */            
+
+            /* now start cleaning up */
             cur_arg = mp;
             va_start(clean_args, mp);
             while (n--) {
@@ -56,6 +56,6 @@ int mp_init_multi(mp_int *mp, ...)
 
 #endif
 
-/* Source: /cvs/libtom/libtommath/bn_mp_init_multi.c,v */
-/* Revision: 1.4 */
-/* Date: 2006/12/28 01:25:13 */
+/* Source: /cvs/libtom/libtommath/bn_mp_init_multi.c,v  */
+/* Revision: 1.4  */
+/* Date: 2006/12/28 01:25:13  */

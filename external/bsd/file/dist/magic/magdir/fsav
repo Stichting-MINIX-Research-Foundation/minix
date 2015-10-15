@@ -1,6 +1,6 @@
 
 #------------------------------------------------------------------------------
-# $File: fsav,v 1.11 2009/09/19 16:28:09 christos Exp $
+# $File: fsav,v 1.13 2013/03/25 17:18:47 christos Exp $
 # fsav:  file(1) magic for datafellows fsav virus definition files
 # Anthon van der Neut (anthon@mnt.org)
 
@@ -61,3 +61,6 @@
 # Type: Grisoft AVG AntiVirus
 # From: David Newgas <david@newgas.net>
 0	string	AVG7_ANTIVIRUS_VAULT_FILE	AVG 7 Antivirus vault file data
+
+0	string	X5O!P%@AP[4\\PZX54(P^)7CC)7}$EICAR
+>33	string	-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*	EICAR virus test files

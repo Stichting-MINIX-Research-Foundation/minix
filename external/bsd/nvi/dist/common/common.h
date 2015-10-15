@@ -1,4 +1,4 @@
-/*	$NetBSD: common.h,v 1.2 2013/11/22 15:52:05 christos Exp $ */
+/*	$NetBSD: common.h,v 1.3 2014/01/07 02:14:02 joerg Exp $ */
 /*-
  * Copyright (c) 1991, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -56,6 +56,8 @@ typedef struct _tagf		TAGF;
 typedef struct _tagq		TAGQ;
 typedef struct _text		TEXT;
 typedef struct _win		WIN;
+
+int ex_printf(SCR *, const char *, ...) __printflike(2, 3);
 
 /* Autoindent state. */
 typedef enum { C_NOTSET, C_CARATSET, C_ZEROSET } carat_t;

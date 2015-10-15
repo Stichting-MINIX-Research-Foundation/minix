@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_overflow.c,v 1.19 2013/12/01 00:22:48 christos Exp $	*/
+/*	$NetBSD: bt_overflow.c,v 1.20 2013/12/14 18:04:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bt_overflow.c,v 1.19 2013/12/01 00:22:48 christos Exp $");
+__RCSID("$NetBSD: bt_overflow.c,v 1.20 2013/12/14 18:04:56 christos Exp $");
 
 #include "namespace.h"
 #include <sys/param.h>
@@ -97,9 +97,10 @@ __ovfl_get(BTREE *t, void *p, size_t *ssz, void **buf, size_t *bufsz)
 #endif
 	/* Make the buffer bigger as necessary. */
 	if (*bufsz < sz) {
-		*buf = *buf == NULL ? malloc(sz) : realloc(*buf, sz);
-		if (*buf == NULL)
+		void *nbuf = realloc(*buf, sz);
+		if (nbuf == NULL)
 			return (RET_ERROR);
+		*buf = nbuf;
 		*bufsz = sz;
 	}
 

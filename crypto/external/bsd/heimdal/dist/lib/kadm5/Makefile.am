@@ -113,6 +113,9 @@ nodist_libkadm5srv_la_SOURCES = 		\
 	kadm5_err.c				\
 	kadm5_err.h
 
+libkadm5srv_la_DEPENDENCIES =			\
+	version-script.map
+
 dist_iprop_log_SOURCES = iprop-log.c
 nodist_iprop_log_SOURCES = iprop-commands.c
 
@@ -179,6 +182,12 @@ $(srcdir)/kadm5-private.h:
 		|| rm -f kadm5-private.h
 
 EXTRA_DIST = \
+	NTMakefile \
+	iprop-log-version.rc \
+	ipropd-master-version.rc \
+	ipropd-slave-version.rc \
+	libkadm5srv-version.rc \
+	libkadm5srv-exports.def \
 	kadm5_err.et \
 	iprop-commands.in \
 	$(man_MANS) \

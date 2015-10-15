@@ -11,6 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define _UNWIND_GCC_EXTENSIONS
+
 #include <unwind.h>
 
 #include "UnwindCursor.hpp"
@@ -327,6 +329,23 @@ void *_Unwind_FindEnclosingFunction(void *pc) {
 
   cursor.getInfo(&info);
   return info.end_ip ? (void *)info.start_ip : NULL;
+}
+
+void *_Unwind_Find_FDE(void *pc, struct dwarf_eh_bases *bases) {
+  NativeUnwindRegisters registers;
+  ThisUnwindCursor cursor(registers, sThisAddressSpace);
+
+  unw_proc_info_t info;
+  cursor.setIP((uintptr_t)pc);
+  cursor.setInfoBasedOnIPRegister();
+
+  cursor.getInfo(&info);
+  if (info.end_ip == 0)
+    return NULL;
+  bases->tbase = 0; /* Not supported */
+  bases->dbase = (void *)info.data_base;
+  bases->func = (void *)info.start_ip;
+  return (void *)info.unwind_info;
 }
 
 uintptr_t _Unwind_GetDataRelBase(struct _Unwind_Context *context) {

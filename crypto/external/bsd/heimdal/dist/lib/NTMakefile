@@ -1,6 +1,6 @@
 ########################################################################
 #
-# Copyright (c) 2009, Secure Endpoints Inc.
+# Copyright (c) 2009,2011, Secure Endpoints Inc.
 # All rights reserved.
 # 
 # Redistribution and use in source and binary forms, with or without
@@ -43,7 +43,7 @@ dir_dce = kdfs
 dir_hcrypto = hcrypto
 !endif
 
-SUBDIRS = vers editline com_err sl wind asn1 sqlite \
+SUBDIRS = vers com_err sl wind asn1 sqlite \
 	$(dir_hcrypto) hx509 krb5 heimdal ntlm kafs gssapi hdb \
 	kadm5 $(dir_45) $(dir_otp) $(dir_dce) ..\packages\windows\assembly
 

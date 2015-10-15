@@ -1,4 +1,4 @@
-/*	$NetBSD: memset.c,v 1.9 2011/11/08 16:52:11 joerg Exp $	*/
+/*	$NetBSD: memset.c,v 1.10 2013/12/02 21:21:33 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)memset.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: memset.c,v 1.9 2011/11/08 16:52:11 joerg Exp $");
+__RCSID("$NetBSD: memset.c,v 1.10 2013/12/02 21:21:33 joerg Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -75,6 +75,26 @@ bzero(void *dst0, size_t length)
 #define	RETURN	return (dst0)
 #define	VAL	c0
 #define	WIDEVAL	c
+
+#if defined(__ARM_EABI__)
+void __aeabi_memset(void *, size_t, int);
+void __aeabi_memclr(void *, size_t);
+
+__strong_alias(__aeabi_memset4, __aebi_memset)
+__strong_alias(__aeabi_memset8, __aebi_memset)
+
+void
+__aeabi_memset(void *dst0, size_t length, int c)
+{
+	memset(dst0, c, length);
+}
+
+void
+__aeabi_memclr(void *dst0, size_t length)
+{
+	memset(dst0, 0, length);
+}
+#endif
 
 void *
 memset(void *dst0, int c0, size_t length)

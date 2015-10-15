@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.22 2011/11/07 22:24:23 jym Exp $	*/
+/*	$NetBSD: extern.h,v 1.23 2015/03/18 13:23:49 manu Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -72,6 +72,10 @@ extern void		(*cfunc)(void);
 extern uint64_t		cpy_cnt;
 extern uint64_t		cbsz;
 extern u_int		ddflags;
+#ifndef NO_IOFLAG
+extern u_int		iflag;
+extern u_int		oflag;
+#endif /* NO_IOFLAG */
 extern u_int		files_cnt;
 extern uint64_t		progress;
 extern const u_char	*ctab;

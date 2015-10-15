@@ -39,5 +39,6 @@ CLEANFILES= \
 	messages.log
 
 EXTRA_DIST = \
+	NTMakefile \
 	check-pac.in \
 	krb5.conf.in

@@ -41,3 +41,5 @@ SUBDIRS = \
 	kadm5 \
 	$(dir_otp) \
 	$(dir_dce)
+
+EXTRA_DIST = NTMakefile heimdal

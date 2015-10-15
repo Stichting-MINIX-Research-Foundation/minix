@@ -61,13 +61,10 @@ ttyname_r(int fd, char *buf, size_t len)
 {
 	struct stat sb;
 	struct termios ttyb;
-#if !defined(__minix)
 	struct ptmget ptm;
-#endif /* !defined(__minix) */
 
 	_DIAGASSERT(fd != -1);
 
-#if !defined(__minix)
 	/* If it is a pty, deal with it quickly */
 	if (ioctl(fd, TIOCPTSNAME, &ptm) != -1) {
 		if (strlcpy(buf, ptm.sn, len) >= len) {
@@ -75,7 +72,6 @@ ttyname_r(int fd, char *buf, size_t len)
 		}
 		return 0;
 	}
-#endif /* !defined(__minix) */
 
 	/* Must be a terminal. */
 	if (tcgetattr(fd, &ttyb) == -1)

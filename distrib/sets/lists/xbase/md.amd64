@@ -1,17 +1,17 @@
-# $NetBSD: md.amd64,v 1.11 2013/08/11 22:29:03 joerg Exp $
-./usr/X11R7/lib/libI810XvMC.so			-unknown-		xorg
-./usr/X11R7/lib/libI810XvMC.so.1		-unknown-		xorg
-./usr/X11R7/lib/libI810XvMC.so.1.0		-unknown-		xorg
-./usr/X11R7/lib/libIntelXvMC.so			-unknown-		xorg
-./usr/X11R7/lib/libIntelXvMC.so.1		-unknown-		xorg
-./usr/X11R7/lib/libIntelXvMC.so.1.0		-unknown-		xorg
-./usr/X11R7/lib/libchromeXvMC.so		-unknown-		xorg
-./usr/X11R7/lib/libchromeXvMC.so.1		-unknown-		xorg
-./usr/X11R7/lib/libchromeXvMC.so.1.0		-unknown-		xorg
-./usr/X11R7/lib/libchromeXvMCPro.so		-unknown-		xorg
-./usr/X11R7/lib/libchromeXvMCPro.so.1		-unknown-		xorg
-./usr/X11R7/lib/libchromeXvMCPro.so.1.0		-unknown-		xorg
-./usr/X11R7/lib/libdrm_intel.so			-unknown-		xorg
-./usr/X11R7/lib/libdrm_intel.so.0		-unknown-		xorg
-./usr/X11R7/lib/libdrm_intel.so.0.0		-unknown-		xorg
+# $NetBSD: md.amd64,v 1.14 2015/07/20 02:52:57 mrg Exp $
+./usr/X11R7/lib/libI810XvMC.so			-unknown-		xorg,compatx11file
+./usr/X11R7/lib/libI810XvMC.so.1		-unknown-		xorg,compatx11file
+./usr/X11R7/lib/libI810XvMC.so.1.0		-unknown-		xorg,compatx11file
+./usr/X11R7/lib/libIntelXvMC.so			-unknown-		xorg,compatx11file
+./usr/X11R7/lib/libIntelXvMC.so.1		-unknown-		xorg,compatx11file
+./usr/X11R7/lib/libIntelXvMC.so.1.0		-unknown-		xorg,compatx11file
+./usr/X11R7/lib/libchromeXvMC.so		-unknown-		xorg,compatx11file
+./usr/X11R7/lib/libchromeXvMC.so.1		-unknown-		xorg,compatx11file
+./usr/X11R7/lib/libchromeXvMC.so.1.0		-unknown-		xorg,compatx11file
+./usr/X11R7/lib/libchromeXvMCPro.so		-unknown-		xorg,compatx11file
+./usr/X11R7/lib/libchromeXvMCPro.so.1		-unknown-		xorg,compatx11file
+./usr/X11R7/lib/libchromeXvMCPro.so.1.0		-unknown-		xorg,compatx11file
+./usr/X11R7/lib/libdrm_intel.so			-unknown-		xorg,compatx11file
+./usr/X11R7/lib/libdrm_intel.so.0		-unknown-		xorg,compatx11file
+./usr/X11R7/lib/libdrm_intel.so.0.1		-unknown-		xorg,compatx11file
 ./usr/X11R7/share/pciids/pci.ids		-unknown-		obsolete

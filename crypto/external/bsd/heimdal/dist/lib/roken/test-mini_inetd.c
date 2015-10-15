@@ -1,21 +1,21 @@
-/*	$NetBSD: test-mini_inetd.c,v 1.1.1.1 2011/04/13 18:15:43 elric Exp $	*/
+/*	$NetBSD: test-mini_inetd.c,v 1.1.1.2 2014/04/24 12:45:52 pettai Exp $	*/
 
 /***********************************************************************
  * Copyright (c) 2009, Secure Endpoints Inc.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
- * 
+ *
  * - Redistributions of source code must retain the above copyright
  *   notice, this list of conditions and the following disclaimer.
- * 
+ *
  * - Redistributions in binary form must reproduce the above copyright
  *   notice, this list of conditions and the following disclaimer in
  *   the documentation and/or other materials provided with the
  *   distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
@@ -28,7 +28,7 @@
  * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
  * OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  **********************************************************************/
 
 #include <config.h>
@@ -111,11 +111,11 @@ test_simple_echo_client(void)
     int rv;
     char buf[81];
     int i;
-    
+
     fprintf(stderr, "[%s] Getting connected socket...", getprogname());
     rv = get_connected_socket(&s);
     if (rv) {
-	fprintf(stderr, "\n[%s] get_connected_socket() failed (%s)\n", 
+	fprintf(stderr, "\n[%s] get_connected_socket() failed (%s)\n",
 		getprogname(), strerror(rk_SOCK_ERRNO));
 	return 1;
     }
@@ -125,7 +125,7 @@ test_simple_echo_client(void)
     for (i=0; i < sizeof(test_strings)/sizeof(test_strings[0]); i++) {
 	rv = send(s, test_strings[i], strlen(test_strings[i]), 0);
 	if (rk_IS_SOCKET_ERROR(rv)) {
-	    fprintf(stderr, "[%s] send() failure (%s)\n", 
+	    fprintf(stderr, "[%s] send() failure (%s)\n",
 		    getprogname(), strerror(rk_SOCK_ERRNO));
 	    rk_closesocket(s);
 	    return 1;
@@ -190,10 +190,10 @@ test_simple_echo_socket(void)
 		srv = send(s, buf, rv, 0);
 		if (srv != rv) {
 		    if (rk_IS_SOCKET_ERROR(srv))
-			fprintf(stderr, "[%s] send() error [%s]\n", 
+			fprintf(stderr, "[%s] send() error [%s]\n",
 				getprogname(), strerror(rk_SOCK_ERRNO));
 		    else
-			fprintf(stderr, "[%s] send() size mismatch %d != %d", 
+			fprintf(stderr, "[%s] send() size mismatch %d != %d",
 				getprogname(), srv, rv);
 		}
 

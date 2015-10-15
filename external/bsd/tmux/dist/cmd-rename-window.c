@@ -1,4 +1,4 @@
-/* $Id: cmd-rename-window.c,v 1.1.1.2 2011/08/17 18:40:04 jmmv Exp $ */
+/* Id */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -26,7 +26,7 @@
  * Rename a window.
  */
 
-int	cmd_rename_window_exec(struct cmd *, struct cmd_ctx *);
+enum cmd_retval	 cmd_rename_window_exec(struct cmd *, struct cmd_q *);
 
 const struct cmd_entry cmd_rename_window_entry = {
 	"rename-window", "renamew",
@@ -34,25 +34,23 @@ const struct cmd_entry cmd_rename_window_entry = {
 	CMD_TARGET_WINDOW_USAGE " new-name",
 	0,
 	NULL,
-	NULL,
 	cmd_rename_window_exec
 };
 
-int
-cmd_rename_window_exec(struct cmd *self, struct cmd_ctx *ctx)
+enum cmd_retval
+cmd_rename_window_exec(struct cmd *self, struct cmd_q *cmdq)
 {
 	struct args	*args = self->args;
 	struct session	*s;
 	struct winlink	*wl;
 
-	if ((wl = cmd_find_window(ctx, args_get(args, 't'), &s)) == NULL)
-		return (-1);
+	if ((wl = cmd_find_window(cmdq, args_get(args, 't'), &s)) == NULL)
+		return (CMD_RETURN_ERROR);
 
-	xfree(wl->window->name);
-	wl->window->name = xstrdup(args->argv[0]);
+	window_set_name(wl->window, args->argv[0]);
 	options_set_number(&wl->window->options, "automatic-rename", 0);
 
 	server_status_window(wl->window);
 
-	return (0);
+	return (CMD_RETURN_NORMAL);
 }

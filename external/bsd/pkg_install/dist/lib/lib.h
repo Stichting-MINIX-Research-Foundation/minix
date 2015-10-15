@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.6 2010/06/26 00:17:13 joerg Exp $ */
+/* $NetBSD: lib.h,v 1.7 2014/01/07 02:15:27 joerg Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -421,7 +421,7 @@ char *xstrdup(const char *);
 void *xrealloc(void *, size_t);
 void *xcalloc(size_t, size_t);
 void *xmalloc(size_t);
-char *xasprintf(const char *, ...);
+char *xasprintf(const char *, ...) __printflike(1, 2);
 
 /* Externs */
 extern Boolean Verbose;

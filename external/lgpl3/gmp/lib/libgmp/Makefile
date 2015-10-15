@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2013/12/01 09:29:37 martin Exp $
+#	$NetBSD: Makefile,v 1.24 2013/12/19 01:07:03 gdt Exp $
 
 .include <bsd.init.mk>
 
@@ -147,11 +147,13 @@ CLEANFILES+=	${_dir}_${_srcfile}
 
 .endfor
 
-CPPFLAGS+=	-I. -I${DIST} -I${.CURDIR}/arch/${GMP_MACHINE_ARCH} -D__GMP_WITHIN_GMP -DHAVE_CONFIG_H
+CPPFLAGS+=	-I. -I${DIST} -I${.CURDIR}/arch/${GMP_MACHINE_ARCH} \
+		-D__GMP_WITHIN_GMP -DHAVE_CONFIG_H
 
 WITHOUT_MAN=	yes
 
-DPSRCS= fac_table.h fib_table.h fib_table.c jacobitab.h mp_bases.h mp_bases.c perfsqr.h
+DPSRCS= fac_table.h fib_table.h fib_table.c jacobitab.h mp_bases.h \
+	mp_bases.c perfsqr.h trialdivtab.h
 
 gen-fac: gen-fac.c
 	${HOST_CC} -o ${.OBJDIR}/gen-fac ${.ALLSRC}
@@ -187,23 +189,38 @@ perfsqr.h: gen-psqr.c
 	${HOST_CC} -o ${.OBJDIR}/gen-psqr ${.ALLSRC}
 	${.OBJDIR}/gen-psqr ${GMP_LIMB_BITS} 0 > ${.OBJDIR}/perfsqr.h
 
-CLEANFILES+=	${DPSRCS} gen-fac gen-fib gen-bases gen-jacobitab gen-psqr gen-trialdivtab
+gen-trialdivtab: gen-trialdivtab.c
+	${HOST_CC} -o ${.OBJDIR}/gen-trialdivtab ${.ALLSRC} -lm
 
+trialdiv.c: trialdivtab.h
+trialdivtab.h: gen-trialdivtab Makefile
+	${.OBJDIR}/gen-trialdivtab $(GMP_LIMB_BITS) 8000 > ${.OBJDIR}/trialdivtab.h
+
+CLEANFILES+=	${DPSRCS} gen-fac gen-fib gen-bases gen-jacobitab \
+		gen-psqr gen-trialdivtab
 
 .include "${.CURDIR}/arch/${GMP_MACHINE_ARCH}/Makefile.inc"
+
+# Makefile.inc must define GMP_LIMB_BITS.
+.if !defined(GMP_LIMB_BITS)
+.BEGIN:
+	@echo "GMP_LIMB_BITS not defined!"
+	false
+.endif
 
 # XXX stuff looks for "../config.m4"
 dummy:
 	mkdir dummy
 ${.OBJDIR}/config.m4: ${.CURDIR}/arch/${GMP_MACHINE_ARCH}/config.m4
-	cp ${.CURDIR}/arch/${GMP_MACHINE_ARCH}/config.m4 ${.OBJDIR}/config.m4
+	rm -f ${.OBJDIR}/config.m4 && cp ${.CURDIR}/arch/${GMP_MACHINE_ARCH}/config.m4 ${.OBJDIR}/config.m4
 
 CLEANFILES+=	config.m4
 clean: cleandummy
 cleandummy: .PHONY
 	-rmdir dummy
 
-BUILD_S_INCS=	-I${.CURDIR} -I${.OBJDIR}/dummy -I${DIST}/ -I${DIST}/mpn -I${.OBJDIR}
+BUILD_S_INCS=	-I${.CURDIR} -I${.OBJDIR}/dummy -I${DIST}/ -I${DIST}/mpn \
+		-I${.OBJDIR}
 
 .for _build _src in ${ASM_SRCS_LIST}
 ${_build:R}.s: Makefile dummy ${.OBJDIR}/config.m4 ${DIST}/${_src}

@@ -1,7 +1,7 @@
-.\"	$NetBSD: ptrace.2,v 1.35 2011/08/31 23:04:33 jmcneill Exp $
+.\"	$NetBSD: ptrace.2,v 1.37 2015/07/02 03:50:21 christos Exp $
 .\"
 .\" This file is in the public domain.
-.Dd August 31, 2011
+.Dd July 1, 2015
 .Dt PTRACE 2
 .Os
 .Sh NAME
@@ -110,7 +110,7 @@ argument supplies the value to be written.
 .\" .Fa addr
 .\" argument specifies the location of the int relative to the base of the
 .\" user structure; it will usually be an integer value cast to
-.\" .Li caddr_t
+.\" .Li void *
 .\" either explicitly or via the presence of a prototype for
 .\" .Eo \&
 .\" .Fn ptrace
@@ -145,7 +145,7 @@ The traced process continues execution.
 .Fa addr
 is an address specifying the place where execution is to be resumed (a
 new value for the program counter), or
-.Li (caddr_t)1
+.Li (void *)1
 to indicate that execution is to pick up where it left off.
 .Fa data
 provides a signal number to be delivered to the traced process as it
@@ -224,11 +224,15 @@ Possible values are:
 .It Dv PIOD_WRITE_D
 .It Dv PIOD_READ_I
 .It Dv PIOD_WRITE_I
+.It Dv PIOD_READ_AUXV
 .El
 .Pp
 See the description of
 .Dv PT_READ_I
 for the difference between I and D spaces.
+The
+.Dv PIOD_READ_AUXV
+operation can be used to read from the ELF auxiliary vector.
 A pointer to the I/O descriptor is passed in the
 .Fa addr
 argument to
@@ -588,7 +592,7 @@ Using
 and
 .Dv PT_SETREGS
 to modify the PC, passing
-.Li (caddr_t)1
+.Li (void *)1
 to
 .Eo \&
 .Fn ptrace

@@ -1,4 +1,4 @@
-/* $Id: cmd-run-shell.c,v 1.1.1.2 2011/08/17 18:40:04 jmmv Exp $ */
+/* Id */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -20,6 +20,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
+#include <stdlib.h>
 #include <string.h>
 
 #include "tmux.h"
@@ -28,66 +29,114 @@
  * Runs a command without a window.
  */
 
-int	cmd_run_shell_exec(struct cmd *, struct cmd_ctx *);
+enum cmd_retval	 cmd_run_shell_exec(struct cmd *, struct cmd_q *);
 
 void	cmd_run_shell_callback(struct job *);
 void	cmd_run_shell_free(void *);
+void	cmd_run_shell_print(struct job *, const char *);
 
 const struct cmd_entry cmd_run_shell_entry = {
 	"run-shell", "run",
-	"", 1, 1,
-	"command",
+	"bt:", 1, 1,
+	"[-b] " CMD_TARGET_PANE_USAGE " shell-command",
 	0,
-	NULL,
 	NULL,
 	cmd_run_shell_exec
 };
 
 struct cmd_run_shell_data {
 	char		*cmd;
-	struct cmd_ctx	 ctx;
+	struct cmd_q	*cmdq;
+	int		 bflag;
+	int		 wp_id;
 };
 
-int
-cmd_run_shell_exec(struct cmd *self, struct cmd_ctx *ctx)
+void
+cmd_run_shell_print(struct job *job, const char *msg)
+{
+	struct cmd_run_shell_data	*cdata = job->data;
+	struct window_pane		*wp = NULL;
+
+	if (cdata->wp_id != -1)
+		wp = window_pane_find_by_id(cdata->wp_id);
+	if (wp == NULL) {
+		cmdq_print(cdata->cmdq, "%s", msg);
+		return;
+	}
+
+	if (window_pane_set_mode(wp, &window_copy_mode) == 0)
+		window_copy_init_for_output(wp);
+	if (wp->mode == &window_copy_mode)
+		window_copy_add(wp, "%s", msg);
+}
+
+enum cmd_retval
+cmd_run_shell_exec(struct cmd *self, struct cmd_q *cmdq)
 {
 	struct args			*args = self->args;
 	struct cmd_run_shell_data	*cdata;
-	const char			*shellcmd = args->argv[0];
+	char				*shellcmd;
+	struct client			*c;
+	struct session			*s = NULL;
+	struct winlink			*wl = NULL;
+	struct window_pane		*wp = NULL;
+	struct format_tree		*ft;
+
+	if (args_has(args, 't'))
+		wl = cmd_find_pane(cmdq, args_get(args, 't'), &s, &wp);
+	else {
+		c = cmd_find_client(cmdq, NULL, 1);
+		if (c != NULL && c->session != NULL) {
+			s = c->session;
+			wl = s->curw;
+			wp = wl->window->active;
+		}
+	}
+
+	ft = format_create();
+	if (s != NULL)
+		format_session(ft, s);
+	if (s != NULL && wl != NULL)
+		format_winlink(ft, s, wl);
+	if (wp != NULL)
+		format_window_pane(ft, wp);
+	shellcmd = format_expand(ft, args->argv[0]);
+	format_free(ft);
 
 	cdata = xmalloc(sizeof *cdata);
-	cdata->cmd = xstrdup(args->argv[0]);
-	memcpy(&cdata->ctx, ctx, sizeof cdata->ctx);
+	cdata->cmd = shellcmd;
+	cdata->bflag = args_has(args, 'b');
+	cdata->wp_id = wp != NULL ? (int) wp->id : -1;
 
-	if (ctx->cmdclient != NULL)
-		ctx->cmdclient->references++;
-	if (ctx->curclient != NULL)
-		ctx->curclient->references++;
+	cdata->cmdq = cmdq;
+	cmdq->references++;
 
-	job_run(shellcmd, cmd_run_shell_callback, cmd_run_shell_free, cdata);
+	job_run(shellcmd, s, cmd_run_shell_callback, cmd_run_shell_free, cdata);
 
-	return (1);	/* don't let client exit */
+	if (cdata->bflag)
+		return (CMD_RETURN_NORMAL);
+	return (CMD_RETURN_WAIT);
 }
 
 void
 cmd_run_shell_callback(struct job *job)
 {
 	struct cmd_run_shell_data	*cdata = job->data;
-	struct cmd_ctx			*ctx = &cdata->ctx;
+	struct cmd_q			*cmdq = cdata->cmdq;
 	char				*cmd, *msg, *line;
 	size_t				 size;
 	int				 retcode;
 	u_int				 lines;
 
-	if (ctx->cmdclient != NULL && ctx->cmdclient->flags & CLIENT_DEAD)
+	if (cmdq->dead)
 		return;
-	if (ctx->curclient != NULL && ctx->curclient->flags & CLIENT_DEAD)
-		return;
+	cmd = cdata->cmd;
 
 	lines = 0;
 	do {
 		if ((line = evbuffer_readline(job->event->input)) != NULL) {
-			ctx->print(ctx, "%s", line);
+			cmd_run_shell_print(job, line);
+			free(line);
 			lines++;
 		}
 	} while (line != NULL);
@@ -98,13 +147,11 @@ cmd_run_shell_callback(struct job *job)
 		memcpy(line, EVBUFFER_DATA(job->event->input), size);
 		line[size] = '\0';
 
-		ctx->print(ctx, "%s", line);
+		cmd_run_shell_print(job, line);
 		lines++;
 
-		xfree(line);
+		free(line);
 	}
-
-	cmd = cdata->cmd;
 
 	msg = NULL;
 	if (WIFEXITED(job->status)) {
@@ -115,11 +162,11 @@ cmd_run_shell_callback(struct job *job)
 		xasprintf(&msg, "'%s' terminated by signal %d", cmd, retcode);
 	}
 	if (msg != NULL) {
-		if (lines != 0)
-			ctx->print(ctx, "%s", msg);
+		if (lines == 0)
+			cmdq_info(cmdq, "%s", msg);
 		else
-			ctx->info(ctx, "%s", msg);
-		xfree(msg);
+			cmd_run_shell_print(job, msg);
+		free(msg);
 	}
 }
 
@@ -127,15 +174,11 @@ void
 cmd_run_shell_free(void *data)
 {
 	struct cmd_run_shell_data	*cdata = data;
-	struct cmd_ctx			*ctx = &cdata->ctx;
+	struct cmd_q			*cmdq = cdata->cmdq;
 
-	if (ctx->cmdclient != NULL) {
-		ctx->cmdclient->references--;
-		ctx->cmdclient->flags |= CLIENT_EXIT;
-	}
-	if (ctx->curclient != NULL)
-		ctx->curclient->references--;
+	if (!cmdq_free(cmdq) && !cdata->bflag)
+		cmdq_continue(cmdq);
 
-	xfree(cdata->cmd);
-	xfree(cdata);
+	free(cdata->cmd);
+	free(cdata);
 }

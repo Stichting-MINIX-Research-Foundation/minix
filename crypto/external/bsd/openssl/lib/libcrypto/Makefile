@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2013/01/18 18:09:56 christos Exp $
+#	$NetBSD: Makefile,v 1.10 2015/03/22 20:29:04 martin Exp $
 
 # RCSid:
 #	Id: Makefile,v 1.33 1998/11/11 11:53:53 sjg Exp
@@ -23,7 +23,6 @@ USE_FIPS=	no
 
 .include <bsd.own.mk>
 .include <bsd.shlib.mk>
-.include <bsd.sys.mk>		# for HOST_SH
 
 # XXX There's a bit of work to do before we can enable warnings.
 WARNS=0
@@ -38,7 +37,6 @@ CRYPTODIST=	${NETBSDSRCDIR}/crypto
 .PATH: ${OPENSSLSRC}
 
 .include "srcs.inc"
-
 
 AFLAGS+=-DELF
 LIBDPLIBS+= crypt ${NETBSDSRCDIR}/lib/libcrypt

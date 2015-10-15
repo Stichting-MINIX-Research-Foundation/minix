@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs_v7fs.c,v 1.3 2011/08/10 12:13:20 wiz Exp $ */
+/*	$NetBSD: newfs_v7fs.c,v 1.4 2015/06/16 23:18:55 christos Exp $ */
 
 /*-
  * Copyright (c) 2004, 2011 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: newfs_v7fs.c,v 1.3 2011/08/10 12:13:20 wiz Exp $");
+__RCSID("$NetBSD: newfs_v7fs.c,v 1.4 2015/06/16 23:18:55 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -131,7 +131,7 @@ main(int argc, char **argv)
 			goto err_exit;
 		}
 		if (!S_ISCHR(st.st_mode)) {
-			warnx("not a raw device.\n");
+			warnx("not a raw device");
 		}
 
 		part = DISKPART(st.st_rdev);
@@ -146,7 +146,7 @@ main(int argc, char **argv)
 			    p->p_fstype, d.d_secsize);
 		}
 		if (p->p_fstype != FS_V7) {
-			warnx("not a Version 7 partition.");
+			warnx("not a Version 7 partition");
 			goto err_exit;
 		}
 		partsize = p->p_size;

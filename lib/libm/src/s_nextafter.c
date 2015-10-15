@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_nextafter.c,v 1.13 2013/07/18 22:32:53 matt Exp $");
+__RCSID("$NetBSD: s_nextafter.c,v 1.14 2014/03/18 18:20:37 riastradh Exp $");
 #endif
 
 /* IEEE functions

@@ -1,4 +1,4 @@
-/*	$NetBSD: v7fs_io_kern.c,v 1.2 2013/11/20 23:44:23 rmind Exp $	*/
+/*	$NetBSD: v7fs_io_kern.c,v 1.3 2015/03/28 19:24:05 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2011 The NetBSD Foundation, Inc.
@@ -30,13 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: v7fs_io_kern.c,v 1.2 2013/11/20 23:44:23 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: v7fs_io_kern.c,v 1.3 2015/03/28 19:24:05 maxv Exp $");
 #if defined _KERNEL_OPT
 #include "opt_v7fs.h"
 #endif
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: v7fs_io_kern.c,v 1.2 2013/11/20 23:44:23 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: v7fs_io_kern.c,v 1.3 2015/03/28 19:24:05 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -176,7 +176,7 @@ v7fs_os_read(void *self, uint8_t *buf, daddr_t block)
 	struct local_io *bio = (struct local_io *)self;
 	struct buf *bp = NULL;
 
-	if (bread(bio->vp, block, DEV_BSIZE, bio->cred, 0, &bp) != 0)
+	if (bread(bio->vp, block, DEV_BSIZE, 0, &bp) != 0)
 		goto error_exit;
 	memcpy(buf, bp->b_data, DEV_BSIZE);
 	brelse(bp, 0);

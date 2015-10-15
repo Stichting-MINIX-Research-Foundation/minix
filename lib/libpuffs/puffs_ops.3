@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs_ops.3,v 1.36 2012/08/16 11:28:38 wiz Exp $
+.\"	$NetBSD: puffs_ops.3,v 1.42 2015/02/16 10:48:56 wiz Exp $
 .\"
 .\" Copyright (c) 2007 Antti Kantee.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd August 16, 2012
+.Dd October 31, 2014
 .Dt PUFFS_OPS 3
 .Os
 .Sh NAME
@@ -81,6 +81,11 @@
 .Fo puffs_node_open
 .Fa "struct puffs_usermount *pu" "puffs_cookie_t opc" "int mode"
 .Fa "const struct puffs_cred *pcr"
+.Fc
+.Ft int
+.Fo puffs_node_open2
+.Fa "struct puffs_usermount *pu" "puffs_cookie_t opc" "int modep"
+.Fa "const struct puffs_cred *pcr" "int *oflags"
 .Fc
 .Ft int
 .Fo puffs_node_close
@@ -222,7 +227,17 @@
 .Fa "const struct puffs_cred *pcr"
 .Fc
 .Ft int
-.Fn puffs_node_print "struct puffs_usermount *pu" "puffs_cookie_t opc"
+.Fo puffs_node_fallocate
+.Fa "struct puffs_usermount *pu" "puffs_cookie_t opc" "off_t pos" "off_t len"
+.Fc
+.Ft int
+.Fo puffs_node_fdiscard
+.Fa "struct puffs_usermount *pu" "puffs_cookie_t opc" "off_t pos" "off_t len"
+.Fc
+.Ft int
+.Fo puffs_node_print
+.Fa "struct puffs_usermount *pu" "puffs_cookie_t opc"
+.Fc
 .Ft int
 .Fo puffs_node_reclaim
 .Fa "struct puffs_usermount *pu" "puffs_cookie_t opc"
@@ -481,6 +496,7 @@ file, directory and device special file, respectively.
 In case of mknod, the device identifier can be found in
 .Fa va-\*[Gt]va_rdev .
 .It Fn puffs_node_open "pu" "opc" "mode" "pcr"
+.It Fn puffs_node_open2 "pu" "opc" "mode" "pcr" "oflags"
 Open the node denoted by the cookie
 .Fa opc .
 The parameter
@@ -491,6 +507,12 @@ was called with, e.g.
 .Dv O_APPEND
 and
 .Dv O_NONBLOCK .
+.Fn puffs_node_open2
+allows the file system to pass back information for the file in
+.Fa oflags .
+The only implemented flag for now is
+.Dv PUFFS_OPEN_IO_DIRECT
+that cause file read/write to bypass the page cache.
 .It Fn puffs_node_close "pu" "opc" "flags" "pcr"
 Close a node.
 The parameter
@@ -557,7 +579,7 @@ bitmask and return.
 .Pp
 In case this function returns an error,
 .Dv POLLERR
-(or it's
+(or its
 .Xr select 2
 equivalent) will be delivered to the calling process.
 .Pp
@@ -788,6 +810,20 @@ with an additional
 in which
 .Dv PUFFS_WRITE_FAF
 is set for Fire-And-Forget operations.
+.It Fn puffs_node_fallocate "pu" "opc" "pos" "len"
+Allocate
+.Fa len
+bytes of backing store at offset
+.Fa pos
+for the node referenced by the cookie
+.Fa opc .
+.It Fn puffs_node_fdiscard "pu" "opc" "pos" "len"
+Free
+.Fa len
+bytes of backing store (creating a hole) at offset
+.Fa pos
+for the node referenced by the cookie
+.Fa opc .
 .It Fn puffs_node_print "pu" "opc"
 Print information about node.
 This is used only for kernel-initiated diagnostic purposes.
@@ -802,13 +838,13 @@ Same as
 .Fn puffs_node_reclaim
 with an addditional argument for the number of lookups that have been done
 on the node (Node creation is counted as a lookup). This can be used by the
-filesystem to avoid a race condition, where the kernel sends a reclaim
+file system to avoid a race condition, where the kernel sends a reclaim
 while it does not have received the reply for a lookup.
-If the filesystem tracks lookup count, and compares to
+If the file system tracks lookup count, and compares to
 .Fa nlookup
 it can detect this situation and ignore the reclaim.
 .Pp
-If the filesystem maps cookies to
+If the file system maps cookies to
 .Vt struct puffs_node
 then the framework will do that work, and
 .Fn puffs_node_reclaim

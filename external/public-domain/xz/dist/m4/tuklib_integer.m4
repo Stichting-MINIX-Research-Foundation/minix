@@ -46,7 +46,7 @@ main(void)
 fi
 
 AC_MSG_CHECKING([if unaligned memory access should be used])
-AC_ARG_ENABLE([unaligned-access], AC_HELP_STRING([--enable-unaligned-access],
+AC_ARG_ENABLE([unaligned-access], AS_HELP_STRING([--enable-unaligned-access],
 		[Enable if the system supports *fast* unaligned memory access
 		with 16-bit and 32-bit integers. By default, this is enabled
 		only on x86, x86_64, and big endian PowerPC.]),

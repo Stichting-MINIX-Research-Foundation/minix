@@ -1,4 +1,4 @@
-/* $NetBSD: lfsv1.c,v 1.9 2013/06/23 07:28:36 dholland Exp $ */
+/* $NetBSD: lfsv1.c,v 1.14 2015/08/12 18:28:01 dholland Exp $ */
 
 #define	LIBSA_LFS
 #define	REQUIRED_LFS_VERSION	1
@@ -11,12 +11,14 @@
 #define	ufs_stat		lfsv1_stat
 #if defined(LIBSA_ENABLE_LS_OP)
 #define	ufs_ls			lfsv1_ls
+#if defined(__minix) && defined(LIBSA_ENABLE_LOAD_MODS_OP)
+#define ufs_load_mods		lfsv1_load_mods
+#endif /* defined(__minix) && defined(LIBSA_ENABLE_LOAD_MODS_OP) */
 #endif
 
-#define ufs_dinode		ulfs1_dinode
+#define ufs_dinode		lfs32_dinode
 
-#define	fs_bsize		lfs_ibsize
-#define	IFILE_Vx		IFILE_V1
+#define	fs_bsize		lfs_dlfs_u.u_32.dlfs_ibsize
 
 #define	INOPBx(fs) LFS_INOPB(fs)
 
@@ -27,6 +29,5 @@
 #define	FSBTODB(fs, daddr)	(daddr)		/* LFSv1 uses sectors for addresses */
 
 #define	FSMOD			"lfs"
-#define	FSMOD2			"ffs"
 
 #include "lib/libsa/ufs.c"

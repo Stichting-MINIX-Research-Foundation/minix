@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_run.c,v 1.6 2013/11/27 18:06:28 christos Exp $	*/
+/*	$NetBSD: ip_run.c,v 1.7 2014/01/26 21:43:45 christos Exp $	*/
 /*-
  * Copyright (c) 1996
  *	Rob Zimmermann.  All rights reserved.
@@ -10,9 +10,14 @@
 
 #include "config.h"
 
+#include <sys/cdefs.h>
+#if 0
 #ifndef lint
 static const char sccsid[] = "Id: ip_run.c,v 8.17 2000/07/04 21:48:54 skimo Exp  (Berkeley) Date: 2000/07/04 21:48:54 ";
 #endif /* not lint */
+#else
+__RCSID("$NetBSD: ip_run.c,v 1.7 2014/01/26 21:43:45 christos Exp $");
+#endif
 
 #include <sys/types.h>
 #include <sys/queue.h>

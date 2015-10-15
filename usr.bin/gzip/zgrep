@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: zgrep,v 1.8 2013/07/25 12:25:23 pgoyette Exp $
+# $NetBSD: zgrep,v 1.9 2015/07/06 12:05:40 nakayama Exp $
 #
 # Copyright (c) 2003 Thomas Klausner.
 #
@@ -113,7 +113,7 @@ then
     ${zcat} -fq - | ${grep} ${grep_args} -- "${pattern}" -
 else
     # ... on all files given on the command line
-    if [ ${silent} -lt 1 ]; then
+    if [ ${silent} -lt 1 -a $# -gt 1 ]; then
 	grep_args="-H ${grep_args}"
     fi
     while [ $# -gt 0 ]

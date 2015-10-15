@@ -1,4 +1,4 @@
-/*	$NetBSD: gss_inquire_name.c,v 1.1.1.1 2011/04/13 18:14:46 elric Exp $	*/
+/*	$NetBSD: gss_inquire_name.c,v 1.1.1.2 2014/04/24 12:45:29 pettai Exp $	*/
 
 /*
  * Copyright (c) 2010, PADL Software Pty Ltd.
@@ -34,7 +34,7 @@
 
 #include "mech_locl.h"
 
-OM_uint32
+GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_inquire_name(OM_uint32 *minor_status,
 		 gss_name_t input_name,
 		 int *name_is_MN,
@@ -44,11 +44,14 @@ gss_inquire_name(OM_uint32 *minor_status,
     OM_uint32 major_status = GSS_S_UNAVAILABLE;
     struct _gss_name *name = (struct _gss_name *) input_name;
     struct _gss_mechanism_name *mn;
-        
+
     *minor_status = 0;
-    *name_is_MN = 0;
-    *MN_mech = GSS_C_NO_OID;
-    *attrs = GSS_C_NO_BUFFER_SET;
+    if (name_is_MN != NULL)
+        *name_is_MN = 0;
+    if (MN_mech != NULL)
+        *MN_mech = GSS_C_NO_OID;
+    if (attrs != NULL)
+        *attrs = GSS_C_NO_BUFFER_SET;
 
     if (input_name == GSS_C_NO_NAME)
         return GSS_S_BAD_NAME;
@@ -65,11 +68,10 @@ gss_inquire_name(OM_uint32 *minor_status,
                                           MN_mech,
                                           attrs);
         if (major_status == GSS_S_COMPLETE) {
-            *name_is_MN = 1;
-#if 0
-            if (*MN_mech == GSS_C_NO_OID)
+            if (name_is_MN != NULL)
+                *name_is_MN = 1;
+            if (MN_mech != NULL && *MN_mech == GSS_C_NO_OID)
                 *MN_mech = &m->gm_mech_oid;
-#endif
             break;
         }
         _gss_mg_error(m, major_status, *minor_status);

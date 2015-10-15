@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.1.1.1 2011/04/13 18:14:47 elric Exp $	*/
+/*	$NetBSD: crypto.c,v 1.1.1.2 2014/04/24 12:45:29 pettai Exp $	*/
 
 /*
  * Copyright (c) 2006 Kungliga Tekniska Högskolan
@@ -497,7 +497,7 @@ _gss_ntlm_wrap
 
 	RC4(&ctx->u.v1.crypto_send.key, input_message_buffer->length,
 	    input_message_buffer->value, output_message_buffer->value);
-	
+
 	ret = _gss_ntlm_get_mic(minor_status, context_handle,
 				0, input_message_buffer,
 				&trailer);
@@ -569,10 +569,10 @@ _gss_ntlm_unwrap
 	    output_message_buffer->length = 0;
 	    return GSS_S_FAILURE;
 	}
-	
+
 	RC4(&ctx->u.v1.crypto_recv.key, output_message_buffer->length,
 	    input_message_buffer->value, output_message_buffer->value);
-	
+
 	trailer.value = ((unsigned char *)input_message_buffer->value) +
 	    output_message_buffer->length;
 	trailer.length = 16;

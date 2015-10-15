@@ -1,4 +1,4 @@
-/*	$NetBSD: fixdfsi.S,v 1.6 2003/08/07 16:42:07 agc Exp $	*/
+/*	$NetBSD: fixdfsi.S,v 1.7 2014/05/23 02:34:19 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -36,7 +36,7 @@
 
 #include <machine/asm.h>
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: fixdfsi.S,v 1.6 2003/08/07 16:42:07 agc Exp $")
+	RCSID("$NetBSD: fixdfsi.S,v 1.7 2014/05/23 02:34:19 uebayasi Exp $")
 #endif
 
 ENTRY(__fixdfsi)
@@ -44,3 +44,4 @@ ENTRY(__fixdfsi)
 	fistpl	4(%esp)
 	movl	4(%esp),%eax
 	ret
+END(__fixdfsi)

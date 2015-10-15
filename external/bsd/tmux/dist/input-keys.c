@@ -1,4 +1,4 @@
-/* $Id: input-keys.c,v 1.2 2011/08/17 19:28:36 jmmv Exp $ */
+/* Id */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -163,7 +163,7 @@ input_key(struct window_pane *wp, int key)
 	if (options_get_number(&wp->window->options, "xterm-keys")) {
 		if ((out = xterm_keys_lookup(key)) != NULL) {
 			bufferevent_write(wp->event, out, strlen(out));
-			xfree(out);
+			free(out);
 			return;
 		}
 	}
@@ -199,35 +199,57 @@ input_key(struct window_pane *wp, int key)
 
 /* Translate mouse and output. */
 void
-input_mouse(struct window_pane *wp, struct mouse_event *m)
+input_mouse(struct window_pane *wp, struct session *s, struct mouse_event *m)
 {
-	char	buf[10];
-	size_t	len;
+	char			 buf[40];
+	size_t			 len;
+	struct paste_buffer	*pb;
 
 	if (wp->screen->mode & ALL_MOUSE_MODES) {
-		if (wp->screen->mode & MODE_MOUSE_UTF8) {
+		/*
+		 * Use the SGR (1006) extension only if the application
+		 * requested it and the underlying terminal also sent the event
+		 * in this format (this is because an old style mouse release
+		 * event cannot be converted into the new SGR format, since the
+		 * released button is unknown). Otherwise pretend that tmux
+		 * doesn't speak this extension, and fall back to the UTF-8
+		 * (1005) extension if the application requested, or to the
+		 * legacy format.
+		 */
+		if (m->sgr && (wp->screen->mode & MODE_MOUSE_SGR)) {
+			len = xsnprintf(buf, sizeof buf, "\033[<%d;%d;%d%c",
+			    m->sgr_xb, m->x + 1, m->y + 1,
+			    m->sgr_rel ? 'm' : 'M');
+		} else if (wp->screen->mode & MODE_MOUSE_UTF8) {
 			len = xsnprintf(buf, sizeof buf, "\033[M");
-			len += utf8_split2(m->b + 32,
-			    (unsigned char *)&buf[len]);
-			len += utf8_split2(m->x + 33,
-			    (unsigned char *)&buf[len]);
-			len += utf8_split2(m->y + 33,
-			    (unsigned char *)&buf[len]);
+			len += utf8_split2(m->xb + 32, (u_char *)&buf[len]);
+			len += utf8_split2(m->x + 33, (u_char *)&buf[len]);
+			len += utf8_split2(m->y + 33, (u_char *)&buf[len]);
 		} else {
-			if (m->b > 223 || m->x >= 222 || m->y > 222)
+			if (m->xb > 223)
 				return;
 			len = xsnprintf(buf, sizeof buf, "\033[M");
-			buf[len++] = m->b + 32;
+			buf[len++] = m->xb + 32;
 			buf[len++] = m->x + 33;
 			buf[len++] = m->y + 33;
 		}
 		bufferevent_write(wp->event, buf, len);
-	} else if ((m->b & MOUSE_BUTTON) != MOUSE_2) {
-		if (options_get_number(&wp->window->options, "mode-mouse") &&
-		    window_pane_set_mode(wp, &window_copy_mode) == 0) {
+		return;
+	}
+
+	if (m->button == 1 && (m->event & MOUSE_EVENT_CLICK) &&
+	    options_get_number(&wp->window->options, "mode-mouse") == 1) {
+		pb = paste_get_top(&global_buffers);
+		if (pb != NULL) {
+			paste_send_pane(pb, wp, "\r",
+			    wp->screen->mode & MODE_BRACKETPASTE);
+		}
+	} else if ((m->xb & 3) != 1 &&
+	    options_get_number(&wp->window->options, "mode-mouse") == 1) {
+		if (window_pane_set_mode(wp, &window_copy_mode) == 0) {
 			window_copy_init_from_pane(wp);
 			if (wp->mode->mouse != NULL)
-				wp->mode->mouse(wp, NULL, m);
+				wp->mode->mouse(wp, s, m);
 		}
 	}
 }

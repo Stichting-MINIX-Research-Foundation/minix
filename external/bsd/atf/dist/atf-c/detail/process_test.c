@@ -664,14 +664,12 @@ ATF_TC_HEAD(status_coredump, tc)
 }
 ATF_TC_BODY(status_coredump, tc)
 {
-#if !defined(__minix)
     struct rlimit rl;
     rl.rlim_cur = RLIM_INFINITY;
     rl.rlim_max = RLIM_INFINITY;
     if (setrlimit(RLIMIT_CORE, &rl) == -1)
         atf_tc_skip("Cannot unlimit the core file size; check limits "
                     "manually");
-#endif
 
     const int rawstatus = fork_and_wait_child(child_sigquit);
     atf_process_status_t s;

@@ -1,4 +1,4 @@
-/*	$NetBSD: syslog.c,v 1.53 2012/10/11 17:09:55 christos Exp $	*/
+/*	$NetBSD: syslog.c,v 1.54 2014/09/18 13:58:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)syslog.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: syslog.c,v 1.53 2012/10/11 17:09:55 christos Exp $");
+__RCSID("$NetBSD: syslog.c,v 1.54 2014/09/18 13:58:20 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -471,7 +471,8 @@ vsyslogp_r(int pri, struct syslog_data *data, const char *msgid,
 	 * Make sure the error reported is the one from the syslogd failure.
 	 */
 	if (tries == MAXTRIES && (data->log_stat & LOG_CONS) &&
-	    (fd = open(_PATH_CONSOLE, O_WRONLY|O_NONBLOCK, 0)) >= 0) {
+	    (fd = open(_PATH_CONSOLE,
+		O_WRONLY | O_NONBLOCK | O_CLOEXEC, 0)) >= 0) {
 		iov[iovcnt].iov_base = __UNCONST(CRLF);
 		iov[iovcnt].iov_len = 2;
 		(void)writev(fd, iov, iovcnt + 1);

@@ -1,0 +1,50 @@
+# $NetBSD: ad.riscv,v 1.6 2015/08/10 03:21:44 mrg Exp $
+./usr/include/g++/bits/riscv32			comp-c-include		arch64
+./usr/include/g++/bits/riscv32/c++config.h	comp-c-include		arch64,gcc
+./usr/include/g++/bits/riscv64			comp-c-include		arch64
+./usr/include/g++/bits/riscv64/c++config.h	comp-c-include		arch64,gcc
+./usr/include/gcc-4.8/tgmath.h			comp-c-include		gcccmds,gcc
+./usr/include/ieeefp.h				comp-c-include
+./usr/include/riscv				comp-c-include
+./usr/include/riscv/ansi.h			comp-c-include
+./usr/include/riscv/aout_machdep.h		comp-c-include
+./usr/include/riscv/asm.h			comp-c-include
+./usr/include/riscv/bswap.h			comp-c-include
+./usr/include/riscv/byte_swap.h			comp-c-include
+./usr/include/riscv/cdefs.h			comp-c-include
+./usr/include/riscv/cpu.h			comp-c-include
+./usr/include/riscv/disklabel.h			comp-c-include
+./usr/include/riscv/elf_machdep.h		comp-c-include
+./usr/include/riscv/endian.h			comp-c-include
+./usr/include/riscv/endian_machdep.h		comp-c-include
+./usr/include/riscv/fenv.h			comp-c-include
+./usr/include/riscv/float.h			comp-c-include
+./usr/include/riscv/ieee.h			comp-c-include
+./usr/include/riscv/ieeefp.h			comp-c-include
+./usr/include/riscv/int_const.h			comp-c-include
+./usr/include/riscv/int_fmtio.h			comp-c-include
+./usr/include/riscv/int_limits.h		comp-c-include
+./usr/include/riscv/int_mwgwtypes.h		comp-c-include
+./usr/include/riscv/int_types.h			comp-c-include
+./usr/include/riscv/kcore.h			comp-c-include
+./usr/include/riscv/limits.h			comp-c-include
+./usr/include/riscv/lock.h			comp-c-include
+./usr/include/riscv/math.h			comp-c-include
+./usr/include/riscv/mcontext.h			comp-c-include
+./usr/include/riscv/mutex.h			comp-c-include
+./usr/include/riscv/param.h			comp-c-include
+./usr/include/riscv/pcb.h			comp-c-include
+./usr/include/riscv/pmap.h			comp-c-include
+./usr/include/riscv/pmc.h			comp-c-include
+./usr/include/riscv/proc.h			comp-c-include
+./usr/include/riscv/profile.h			comp-c-include
+./usr/include/riscv/ptrace.h			comp-c-include
+./usr/include/riscv/reg.h			comp-c-include
+./usr/include/riscv/rwlock.h			comp-c-include
+./usr/include/riscv/setjmp.h			comp-c-include
+./usr/include/riscv/signal.h			comp-c-include
+./usr/include/riscv/sysarch.h			comp-c-include
+./usr/include/riscv/sysreg.h			comp-c-include
+./usr/include/riscv/types.h			comp-c-include
+./usr/include/riscv/vmparam.h			comp-c-include
+./usr/include/riscv/wchar_limits.h		comp-c-include

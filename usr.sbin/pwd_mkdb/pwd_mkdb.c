@@ -1,4 +1,4 @@
-/*	$NetBSD: pwd_mkdb.c,v 1.56 2012/11/26 20:13:54 pooka Exp $	*/
+/*	$NetBSD: pwd_mkdb.c,v 1.57 2014/01/26 01:57:04 christos Exp $	*/
 
 /*
  * Copyright (c) 2000, 2009 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@ __COPYRIGHT("@(#) Copyright (c) 2000, 2009\
  The NetBSD Foundation, Inc.  All rights reserved.\
   Copyright (c) 1991, 1993, 1994\
  The Regents of the University of California.  All rights reserved.");
-__RCSID("$NetBSD: pwd_mkdb.c,v 1.56 2012/11/26 20:13:54 pooka Exp $");
+__RCSID("$NetBSD: pwd_mkdb.c,v 1.57 2014/01/26 01:57:04 christos Exp $");
 #endif /* not lint */
 
 #if HAVE_NBTOOL_CONFIG_H
@@ -741,7 +741,7 @@ getversion(const char *fname)
 	db = dbopen(fname, O_RDONLY, PERM_INSECURE, DB_HASH, NULL);
 	if (db == NULL) {
 		/* If we are building on a separate root, assume version 1 */
-		if ((errno == EACCES || errno == ENOENT) && prefix[0])
+		if ((errno == EACCES && prefix[0]) || errno == ENOENT)
 			return 1;
 		mkpw_warning("Cannot open database `%s'", fname);
 		bailout();

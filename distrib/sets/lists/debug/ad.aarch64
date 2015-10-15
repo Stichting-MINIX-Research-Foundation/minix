@@ -1,0 +1,15 @@
+# $NetBSD: ad.aarch64,v 1.24 2015/07/08 01:06:40 matt Exp $
+./usr/libdata/debug/libexec/ld.elf_so-eabi.debug		comp-sys-debug	debug,compat
+./usr/libdata/debug/libexec/ld.elf_so-eabihf.debug		comp-sys-debug	debug,compat
+./usr/libdata/debug/libexec/ld.elf_so-oabi.debug		comp-sys-debug	debug,compat
+./usr/lib/eabi/libarm_g.a					comp-sys-debug	debuglib,compat
+./usr/lib/eabihf/libarm_g.a					comp-sys-debug	debuglib,compat
+./usr/lib/oabi/libarm_g.a					comp-sys-debug	debuglib,compat
+./usr/libdata/debug/usr/lib/eabi/libarm.so.0.0.debug		comp-sys-debug	debug,compat,pic
+./usr/libdata/debug/usr/lib/eabi/libc_vfp.so.0.0.debug		comp-sys-debug	debug,compat,pic
+./usr/libdata/debug/usr/lib/eabihf/libarm.so.0.0.debug		comp-sys-debug	debug,compat,pic
+./usr/libdata/debug/usr/lib/oabi/libarm.so.0.0.debug		comp-sys-debug	debug,compat,pic
+./usr/libdata/debug/usr/lib/oabi/libc_vfp.so.0.0.debug		comp-sys-debug	debug,compat,pic
+./usr/libdata/debug/usr/libexec/ld.elf_so-eabi.debug		comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/libexec/ld.elf_so-eabihf.debug		comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/libexec/ld.elf_so-oabi.debug		comp-sys-debug	debug,compat

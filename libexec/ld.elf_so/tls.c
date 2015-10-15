@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.c,v 1.9 2013/10/21 19:14:15 joerg Exp $	*/
+/*	$NetBSD: tls.c,v 1.10 2014/12/14 23:49:17 chs Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tls.c,v 1.9 2013/10/21 19:14:15 joerg Exp $");
+__RCSID("$NetBSD: tls.c,v 1.10 2014/12/14 23:49:17 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/ucontext.h>
@@ -106,13 +106,6 @@ _rtld_tls_initial_allocation(void)
 	tcb = _rtld_tls_allocate_locked();
 #ifdef __HAVE___LWP_SETTCB
 	__lwp_settcb(tcb);
-#ifdef __powerpc__
-	/*
-	 * Save the tcb pointer so that libc can retrieve it.  Older
-	 * crt0 will obliterate r2 so there is code in libc to restore it.
-	 */
-	_lwp_setprivate(tcb);
-#endif
 #else
 	_lwp_setprivate(tcb);
 #endif

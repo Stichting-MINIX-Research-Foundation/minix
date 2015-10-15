@@ -24,25 +24,21 @@ while [ $# -gt 0 ]; do
 	shift
 done
 
-env USETOOLS=no MAKEOBJDIRPREFIX=/usr/obj/i386 sh -c 'cd ../libmj && \
+env USETOOLS=no MAKEOBJDIRPREFIX=/usr/build/amd64 sh -c 'cd ../libmj && \
 	make cleandir ; \
 	su root -c "make includes"; \
 	make ; \
 	su root -c "make install"'
-env USETOOLS=no MAKEOBJDIRPREFIX=/usr/obj/i386 sh -c 'cd ../lib && \
+env USETOOLS=no MAKEOBJDIRPREFIX=/usr/build/amd64 sh -c 'cd ../lib && \
 	make cleandir ; \
 	su root -c "make includes"; \
 	make ; \
 	su root -c "make install"'
-env USETOOLS=no MAKEOBJDIRPREFIX=/usr/obj/i386 sh -c 'cd ../netpgp && \
+env USETOOLS=no MAKEOBJDIRPREFIX=/usr/build/amd64 sh -c 'cd ../netpgp && \
 	make cleandir ; \
 	make ; \
 	su root -c "make install"'
-env USETOOLS=no MAKEOBJDIRPREFIX=/usr/obj/i386 sh -c 'cd ../netpgpkeys && \
-	make cleandir ; \
-	make ; \
-	su root -c "make install"'
-env USETOOLS=no MAKEOBJDIRPREFIX=/usr/obj/i386 sh -c 'cd ../netpgpverify && \
+env USETOOLS=no MAKEOBJDIRPREFIX=/usr/build/amd64 sh -c 'cd ../netpgpkeys && \
 	make cleandir ; \
 	make ; \
 	su root -c "make install"'
@@ -100,24 +96,24 @@ echo "======> version information"
 /usr/bin/netpgp --version && good=10
 marktest 10 $good
 echo "======> netpgpverify file"
-/usr/bin/netpgpverify a.gpg && good=11
+/usr/bin/netpgp -v < a.gpg && good=11
 marktest 11 $good
 echo "======> attempt to verify an unsigned file"
-/usr/bin/netpgpverify a || good=12
+/usr/bin/netpgp -v < a || good=12
 marktest 12 $good
 echo "======> sign/verify detached signature file"
 ls -l f f.sig
-/usr/bin/netpgpverify f.sig && good=13
+/usr/bin/netpgp -v f.sig && good=13
 marktest 13 $good
 echo "======> another verify signature - verified cat command"
-/usr/bin/netpgpverify --output=a3 a.gpg
+/usr/bin/netpgp -v --output=a3 < a.gpg
 diff a a3 && good=14
 marktest 14 $good
 echo "======> list keys"
 /usr/bin/netpgpkeys --list-keys && good=15
 marktest 15 $good
 echo "======> version information"
-/usr/bin/netpgpverify --version && good=16
+/usr/bin/netpgp -v --version && good=16
 marktest 16 $good
 echo "======> find specific key information"
 /usr/bin/netpgpkeys --get-key c0596823 agc@netbsd.org && good=17

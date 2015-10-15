@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_utils.c,v 1.15 2013/12/01 00:22:48 christos Exp $	*/
+/*	$NetBSD: bt_utils.c,v 1.16 2013/12/14 18:04:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bt_utils.c,v 1.15 2013/12/01 00:22:48 christos Exp $");
+__RCSID("$NetBSD: bt_utils.c,v 1.16 2013/12/14 18:04:56 christos Exp $");
 
 #include <sys/param.h>
 
@@ -88,8 +88,7 @@ __bt_ret(BTREE *t, EPG *e, DBT *key, DBT *rkey, DBT *data, DBT *rdata, int copy)
 		key->data = rkey->data;
 	} else if (copy || F_ISSET(t, B_DB_LOCK)) {
 		if (bl->ksize > rkey->size) {
-			p = rkey->data == NULL ?
-			    malloc(bl->ksize) : realloc(rkey->data, bl->ksize);
+			p = realloc(rkey->data, bl->ksize);
 			if (p == NULL)
 				return (RET_ERROR);
 			rkey->data = p;
@@ -115,9 +114,7 @@ dataonly:
 	} else if (copy || F_ISSET(t, B_DB_LOCK)) {
 		/* Use +1 in case the first record retrieved is 0 length. */
 		if (bl->dsize + 1 > rdata->size) {
-			p = rdata->data == NULL ?
-			    malloc(bl->dsize + 1) :
-			    realloc(rdata->data, bl->dsize + 1);
+			p = realloc(rdata->data, bl->dsize + 1);
 			if (p == NULL)
 				return (RET_ERROR);
 			rdata->data = p;

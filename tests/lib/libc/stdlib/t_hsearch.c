@@ -1,4 +1,4 @@
-/* $NetBSD: t_hsearch.c,v 1.3 2011/09/15 14:51:06 christos Exp $ */
+/* $NetBSD: t_hsearch.c,v 1.4 2014/07/20 20:17:21 christos Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,12 +63,13 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_hsearch.c,v 1.3 2011/09/15 14:51:06 christos Exp $");
+__RCSID("$NetBSD: t_hsearch.c,v 1.4 2014/07/20 20:17:21 christos Exp $");
 
 #include <errno.h>
 #include <search.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include <atf-c.h>
 
@@ -97,13 +98,13 @@ ATF_TC_BODY(hsearch_basic, tc)
 		ch[0] = 'a' + i;
 		e.key = strdup(ch);	/* ptr to provided key is kept! */
 		ATF_REQUIRE(e.key != NULL);
-		e.data = (void *)(long)i;
+		e.data = (void *)(intptr_t)i;
 
 		ep = hsearch(e, ENTER);
 
 		ATF_REQUIRE(ep != NULL);
 		ATF_REQUIRE_STREQ(ep->key, ch);
-		ATF_REQUIRE_EQ((long)ep->data, i);
+		ATF_REQUIRE_EQ((intptr_t)ep->data, i);
 	}
 
 	/* e.key should be constant from here on down. */
@@ -117,10 +118,10 @@ ATF_TC_BODY(hsearch_basic, tc)
 
 		ATF_REQUIRE(ep != NULL);
 		ATF_REQUIRE_STREQ(ep->key, ch);
-		ATF_REQUIRE_EQ((long)ep->data, i);
+		ATF_REQUIRE_EQ((intptr_t)ep->data, i);
 	}
 
-	hdestroy();
+	hdestroy1(free, NULL);
 }
 
 ATF_TC(hsearch_duplicate);
@@ -137,24 +138,23 @@ ATF_TC_BODY(hsearch_duplicate, tc)
 
 	REQUIRE_ERRNO(hcreate(16));
 
-	e.key = strdup("a");
-	ATF_REQUIRE(e.key != NULL);
-	e.data = (void *)(long) 0;
+	e.key = __UNCONST("a");
+	e.data = (void *)(intptr_t) 0;
 
 	ep = hsearch(e, ENTER);
 
 	ATF_REQUIRE(ep != NULL);
 	ATF_REQUIRE_STREQ(ep->key, "a");
-	ATF_REQUIRE_EQ((long)ep->data, 0);
+	ATF_REQUIRE_EQ((intptr_t)ep->data, 0);
 
-	e.data = (void *)(long)12345;
+	e.data = (void *)(intptr_t)12345;
 
 	ep = hsearch(e, ENTER);
 	ep = hsearch(e, FIND);
 
 	ATF_REQUIRE(ep != NULL);
 	ATF_REQUIRE_STREQ(ep->key, "a");
-	ATF_REQUIRE_EQ((long)ep->data, 0);
+	ATF_REQUIRE_EQ((intptr_t)ep->data, 0);
 
 	hdestroy();
 }
@@ -173,7 +173,7 @@ ATF_TC_BODY(hsearch_nonexistent, tc)
 
 	REQUIRE_ERRNO(hcreate(16));
 
-	e.key = strdup("A");
+	e.key = __UNCONST("A");
 	ep = hsearch(e, FIND);
 	ATF_REQUIRE_EQ(ep, NULL);
 
@@ -191,44 +191,40 @@ ATF_TC_HEAD(hsearch_two, tc)
 ATF_TC_BODY(hsearch_two, tc)
 {
 	ENTRY e, *ep, *ep2;
-	char *sa, *sb;
-
-	ATF_REQUIRE((sa = strdup("a")) != NULL);
-	ATF_REQUIRE((sb = strdup("b")) != NULL);
 
 	REQUIRE_ERRNO(hcreate(16));
 
-	e.key = sa;
-	e.data = (void*)(long)0;
+	e.key = __UNCONST("a");
+	e.data = (void*)(intptr_t)0;
 
 	ep = hsearch(e, ENTER);
 
 	ATF_REQUIRE(ep != NULL);
 	ATF_REQUIRE_STREQ(ep->key, "a");
-	ATF_REQUIRE_EQ((long)ep->data, 0);
+	ATF_REQUIRE_EQ((intptr_t)ep->data, 0);
 
-	e.key = sb;
-	e.data = (void*)(long)1;
+	e.key = __UNCONST("b");
+	e.data = (void*)(intptr_t)1;
 
 	ep = hsearch(e, ENTER);
 
 	ATF_REQUIRE(ep != NULL);
 	ATF_REQUIRE_STREQ(ep->key, "b");
-	ATF_REQUIRE_EQ((long)ep->data, 1);
+	ATF_REQUIRE_EQ((intptr_t)ep->data, 1);
 
-	e.key = sa;
+	e.key = __UNCONST("a");
 	ep = hsearch(e, FIND);
 
-	e.key = sb;
+	e.key = __UNCONST("b");
 	ep2 = hsearch(e, FIND);
 
 	ATF_REQUIRE(ep != NULL);
 	ATF_REQUIRE_STREQ(ep->key, "a");
-	ATF_REQUIRE_EQ((long)ep->data, 0);
+	ATF_REQUIRE_EQ((intptr_t)ep->data, 0);
 
 	ATF_REQUIRE(ep2 != NULL);
 	ATF_REQUIRE_STREQ(ep2->key, "b");
-	ATF_REQUIRE_EQ((long)ep2->data, 1);
+	ATF_REQUIRE_EQ((intptr_t)ep2->data, 1);
 
 	hdestroy();
 }
@@ -257,12 +253,12 @@ ATF_TC_BODY(hsearch_r_basic, tc)
 		ch[0] = 'a' + i;
 		e.key = strdup(ch);	/* ptr to provided key is kept! */
 		ATF_REQUIRE(e.key != NULL);
-		e.data = (void *)(long)i;
+		e.data = (void *)(intptr_t)i;
 
 		ATF_REQUIRE(hsearch_r(e, ENTER, &ep, &t) == 1);
 		ATF_REQUIRE(ep != NULL);
 		ATF_REQUIRE_STREQ(ep->key, ch);
-		ATF_REQUIRE_EQ((long)ep->data, i);
+		ATF_REQUIRE_EQ((intptr_t)ep->data, i);
 	}
 
 	/* e.key should be constant from here on down. */
@@ -275,10 +271,10 @@ ATF_TC_BODY(hsearch_r_basic, tc)
 		ATF_REQUIRE(hsearch_r(e, FIND, &ep, &t) == 1);
 		ATF_REQUIRE(ep != NULL);
 		ATF_REQUIRE_STREQ(ep->key, ch);
-		ATF_REQUIRE_EQ((long)ep->data, i);
+		ATF_REQUIRE_EQ((intptr_t)ep->data, i);
 	}
 
-	hdestroy_r(&t);
+	hdestroy1_r(&t, free, NULL);
 }
 
 ATF_TC(hsearch_r_duplicate);
@@ -296,23 +292,22 @@ ATF_TC_BODY(hsearch_r_duplicate, tc)
 
 	REQUIRE_ERRNO(hcreate_r(16, &t));
 
-	e.key = strdup("a");
-	ATF_REQUIRE(e.key != NULL);
-	e.data = (void *)(long) 0;
+	e.key = __UNCONST("a");
+	e.data = (void *)(intptr_t) 0;
 
 	ATF_REQUIRE(hsearch_r(e, ENTER, &ep, &t) == 1);
 	ATF_REQUIRE(ep != NULL);
 	ATF_REQUIRE_STREQ(ep->key, "a");
-	ATF_REQUIRE_EQ((long)ep->data, 0);
+	ATF_REQUIRE_EQ((intptr_t)ep->data, 0);
 
-	e.data = (void *)(long)12345;
+	e.data = (void *)(intptr_t)12345;
 
 	ATF_REQUIRE(hsearch_r(e, ENTER, &ep, &t) == 1);
 	ATF_REQUIRE(hsearch_r(e, FIND, &ep, &t) == 1);
 
 	ATF_REQUIRE(ep != NULL);
 	ATF_REQUIRE_STREQ(ep->key, "a");
-	ATF_REQUIRE_EQ((long)ep->data, 0);
+	ATF_REQUIRE_EQ((intptr_t)ep->data, 0);
 
 	hdestroy_r(&t);
 }
@@ -332,7 +327,7 @@ ATF_TC_BODY(hsearch_r_nonexistent, tc)
 
 	REQUIRE_ERRNO(hcreate_r(16, &t));
 
-	e.key = strdup("A");
+	e.key = __UNCONST("A");
 	ATF_REQUIRE(hsearch_r(e, FIND, &ep, &t) == 1);
 	ATF_REQUIRE_EQ(ep, NULL);
 
@@ -350,43 +345,39 @@ ATF_TC_HEAD(hsearch_r_two, tc)
 ATF_TC_BODY(hsearch_r_two, tc)
 {
 	ENTRY e, *ep, *ep2;
-	char *sa, *sb;
 	struct hsearch_data t;
-
-	ATF_REQUIRE((sa = strdup("a")) != NULL);
-	ATF_REQUIRE((sb = strdup("b")) != NULL);
 
 	REQUIRE_ERRNO(hcreate_r(16, &t));
 
-	e.key = sa;
-	e.data = (void*)(long)0;
+	e.key = __UNCONST("a");
+	e.data = (void*)(intptr_t)0;
 
 	ATF_REQUIRE(hsearch_r(e, ENTER, &ep, &t) == 1);
 	ATF_REQUIRE(ep != NULL);
 	ATF_REQUIRE_STREQ(ep->key, "a");
-	ATF_REQUIRE_EQ((long)ep->data, 0);
+	ATF_REQUIRE_EQ((intptr_t)ep->data, 0);
 
-	e.key = sb;
-	e.data = (void*)(long)1;
+	e.key = __UNCONST("b");
+	e.data = (void*)(intptr_t)1;
 
 	ATF_REQUIRE(hsearch_r(e, ENTER, &ep, &t) == 1);
 	ATF_REQUIRE(ep != NULL);
 	ATF_REQUIRE_STREQ(ep->key, "b");
-	ATF_REQUIRE_EQ((long)ep->data, 1);
+	ATF_REQUIRE_EQ((intptr_t)ep->data, 1);
 
-	e.key = sa;
+	e.key = __UNCONST("a");
 	ATF_REQUIRE(hsearch_r(e, FIND, &ep, &t) == 1);
 
-	e.key = sb;
+	e.key = __UNCONST("b");
 	ATF_REQUIRE(hsearch_r(e, FIND, &ep2, &t) == 1);
 
 	ATF_REQUIRE(ep != NULL);
 	ATF_REQUIRE_STREQ(ep->key, "a");
-	ATF_REQUIRE_EQ((long)ep->data, 0);
+	ATF_REQUIRE_EQ((intptr_t)ep->data, 0);
 
 	ATF_REQUIRE(ep2 != NULL);
 	ATF_REQUIRE_STREQ(ep2->key, "b");
-	ATF_REQUIRE_EQ((long)ep2->data, 1);
+	ATF_REQUIRE_EQ((intptr_t)ep2->data, 1);
 
 	hdestroy_r(&t);
 }

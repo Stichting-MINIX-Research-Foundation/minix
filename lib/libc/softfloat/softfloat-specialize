@@ -1,4 +1,4 @@
-/*	$NetBSD: softfloat-specialize,v 1.8 2013/01/10 08:16:10 matt Exp $	*/
+/*	$NetBSD: softfloat-specialize,v 1.9 2014/08/10 05:57:31 matt Exp $	*/
 
 /* This is a derivative work. */
 
@@ -140,8 +140,10 @@ Returns 1 if the single-precision floating-point value `a' is a signaling
 NaN; otherwise returns 0.
 -------------------------------------------------------------------------------
 */
-#if defined(SOFTFLOAT_FOR_GCC) && !defined(SOFTFLOATSPARC64_FOR_GCC) && \
-    !defined(SOFTFLOAT_M68K_FOR_GCC)
+#if defined(SOFTFLOAT_FOR_GCC) \
+    && !defined(SOFTFLOATAARCH64_FOR_GCC) \
+    && !defined(SOFTFLOATSPARC64_FOR_GCC) \
+    && !defined(SOFTFLOATM68K_FOR_GCC)
 static
 #endif
 flag float32_is_signaling_nan( float32 a )
@@ -240,8 +242,10 @@ Returns 1 if the double-precision floating-point value `a' is a signaling
 NaN; otherwise returns 0.
 -------------------------------------------------------------------------------
 */
-#if defined(SOFTFLOAT_FOR_GCC) && !defined(SOFTFLOATSPARC64_FOR_GCC) && \
-    !defined(SOFTFLOATM68K_FOR_GCC)
+#if defined(SOFTFLOAT_FOR_GCC) \
+    && !defined(SOFTFLOATAARCH64_FOR_GCC) \
+    && !defined(SOFTFLOATSPARC64_FOR_GCC) \
+    && !defined(SOFTFLOATM68K_FOR_GCC)
 static
 #endif
 flag float64_is_signaling_nan( float64 a )

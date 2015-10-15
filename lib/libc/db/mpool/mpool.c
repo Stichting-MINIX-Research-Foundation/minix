@@ -1,4 +1,4 @@
-/*	$NetBSD: mpool.c,v 1.20 2013/11/22 16:25:51 christos Exp $	*/
+/*	$NetBSD: mpool.c,v 1.21 2013/12/14 18:04:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mpool.c,v 1.20 2013/11/22 16:25:51 christos Exp $");
+__RCSID("$NetBSD: mpool.c,v 1.21 2013/12/14 18:04:00 christos Exp $");
 
 #include "namespace.h"
 #include <sys/queue.h>
@@ -84,14 +84,14 @@ mpool_open(void *key, int fd, pgno_t pagesize, pgno_t maxcache)
 	 * We don't currently handle pipes, although we should.
 	 */
 	if (fstat(fd, &sb))
-		return (NULL);
+		return NULL;
 	if (!S_ISREG(sb.st_mode)) {
 		errno = ESPIPE;
-		return (NULL);
+		return NULL;
 	}
 
 	/* Allocate and initialize the MPOOL cookie. */
-	if ((mp = (MPOOL *)calloc(1, sizeof(MPOOL))) == NULL)
+	if ((mp = calloc(1, sizeof(*mp))) == NULL)
 		return (NULL);
 	TAILQ_INIT(&mp->lqh);
 	for (entry = 0; entry < HASHSIZE; ++entry)
@@ -100,7 +100,7 @@ mpool_open(void *key, int fd, pgno_t pagesize, pgno_t maxcache)
 	mp->npages = (pgno_t)(sb.st_size / pagesize);
 	mp->pagesize = pagesize;
 	mp->fd = fd;
-	return (mp);
+	return mp;
 }
 
 /*
@@ -139,14 +139,14 @@ mpool_new( MPOOL *mp, pgno_t *pgnoaddr)
 	 * and return.
 	 */
 	if ((bp = mpool_bkt(mp)) == NULL)
-		return (NULL);
+		return NULL;
 	*pgnoaddr = bp->pgno = mp->npages++;
 	bp->flags = MPOOL_PINNED;
 
 	head = &mp->hqh[HASHKEY(bp->pgno)];
 	TAILQ_INSERT_HEAD(head, bp, hq);
 	TAILQ_INSERT_TAIL(&mp->lqh, bp, q);
-	return (bp->page);
+	return bp->page;
 }
 
 /*
@@ -165,7 +165,7 @@ mpool_get(MPOOL *mp, pgno_t pgno, u_int flags)
 	/* Check for attempt to retrieve a non-existent page. */
 	if (pgno >= mp->npages) {
 		errno = EINVAL;
-		return (NULL);
+		return NULL;
 	}
 
 #ifdef STATISTICS
@@ -193,12 +193,12 @@ mpool_get(MPOOL *mp, pgno_t pgno, u_int flags)
 
 		/* Return a pinned page. */
 		bp->flags |= MPOOL_PINNED;
-		return (bp->page);
+		return bp->page;
 	}
 
 	/* Get a page from the cache. */
 	if ((bp = mpool_bkt(mp)) == NULL)
-		return (NULL);
+		return NULL;
 
 	/* Read in the contents. */
 #ifdef STATISTICS
@@ -208,7 +208,7 @@ mpool_get(MPOOL *mp, pgno_t pgno, u_int flags)
 	if ((nr = pread(mp->fd, bp->page, (size_t)mp->pagesize, off)) != (int)mp->pagesize) {
 		if (nr >= 0)
 			errno = EFTYPE;
-		return (NULL);
+		return NULL;
 	}
 
 	/* Set the page number, pin the page. */
@@ -227,7 +227,7 @@ mpool_get(MPOOL *mp, pgno_t pgno, u_int flags)
 	if (mp->pgin != NULL)
 		(mp->pgin)(mp->pgcookie, bp->pgno, bp->page);
 
-	return (bp->page);
+	return bp->page;
 }
 
 /*
@@ -243,7 +243,7 @@ mpool_put(MPOOL *mp, void *page, u_int flags)
 #ifdef STATISTICS
 	++mp->pageput;
 #endif
-	bp = (BKT *)(void *)((char *)page - sizeof(BKT));
+	bp = (void *)((intptr_t)page - sizeof(BKT));
 #ifdef DEBUG
 	if (!(bp->flags & MPOOL_PINNED)) {
 		(void)fprintf(stderr,
@@ -274,7 +274,7 @@ mpool_close(MPOOL *mp)
 
 	/* Free the MPOOL cookie. */
 	free(mp);
-	return (RET_SUCCESS);
+	return RET_SUCCESS;
 }
 
 /*
@@ -290,10 +290,10 @@ mpool_sync(MPOOL *mp)
 	TAILQ_FOREACH(bp, &mp->lqh, q)
 		if (bp->flags & MPOOL_DIRTY &&
 		    mpool_write(mp, bp) == RET_ERROR)
-			return (RET_ERROR);
+			return RET_ERROR;
 
 	/* Sync the file descriptor. */
-	return (fsync(mp->fd) ? RET_ERROR : RET_SUCCESS);
+	return fsync(mp->fd) ? RET_ERROR : RET_SUCCESS;
 }
 
 /*
@@ -321,7 +321,7 @@ mpool_bkt(MPOOL *mp)
 			/* Flush if dirty. */
 			if (bp->flags & MPOOL_DIRTY &&
 			    mpool_write(mp, bp) == RET_ERROR)
-				return (NULL);
+				return NULL;
 #ifdef STATISTICS
 			++mp->pageflush;
 #endif
@@ -337,20 +337,20 @@ mpool_bkt(MPOOL *mp)
 				bp->page = spage;
 			}
 #endif
-			return (bp);
+			return bp;
 		}
 
 new:	if ((bp = calloc(1, (size_t)(sizeof(BKT) + mp->pagesize))) == NULL)
-		return (NULL);
+		return NULL;
 #ifdef STATISTICS
 	++mp->pagealloc;
 #endif
 #if defined(DEBUG) || defined(PURIFY)
 	(void)memset(bp, 0xff, (size_t)(sizeof(BKT) + mp->pagesize));
 #endif
-	bp->page = (char *)(void *)bp + sizeof(BKT);
+	bp->page = (void *)((intptr_t)bp + sizeof(BKT));
 	++mp->curcache;
-	return (bp);
+	return bp;
 }
 
 /*
@@ -371,8 +371,9 @@ mpool_write(MPOOL *mp, BKT *bp)
 		(mp->pgout)(mp->pgcookie, bp->pgno, bp->page);
 
 	off = mp->pagesize * bp->pgno;
-	if (pwrite(mp->fd, bp->page, (size_t)mp->pagesize, off) != (int)mp->pagesize)
-		return (RET_ERROR);
+	if (pwrite(mp->fd, bp->page, (size_t)mp->pagesize, off) !=
+	    (ssize_t)mp->pagesize)
+		return RET_ERROR;
 
 	/*
 	 * Re-run through the input filter since this page may soon be
@@ -384,7 +385,7 @@ mpool_write(MPOOL *mp, BKT *bp)
 		(mp->pgin)(mp->pgcookie, bp->pgno, bp->page);
 
 	bp->flags &= ~MPOOL_DIRTY;
-	return (RET_SUCCESS);
+	return RET_SUCCESS;
 }
 
 /*
@@ -403,12 +404,12 @@ mpool_look(MPOOL *mp, pgno_t pgno)
 #ifdef STATISTICS
 			++mp->cachehit;
 #endif
-			return (bp);
+			return bp;
 		}
 #ifdef STATISTICS
 	++mp->cachemiss;
 #endif
-	return (NULL);
+	return NULL;
 }
 
 #ifdef STATISTICS

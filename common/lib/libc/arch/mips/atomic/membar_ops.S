@@ -1,4 +1,4 @@
-/*	$NetBSD: membar_ops.S,v 1.5 2012/08/03 06:06:44 matt Exp $	*/
+/*	$NetBSD: membar_ops.S,v 1.8 2015/06/23 20:56:17 matt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -31,22 +31,11 @@
 
 #include "atomic_op_asm.h"
 
-#if defined(_KERNEL)
-
-#ifdef _KERNEL_OPT
-#include "opt_cputype.h"
-#include "opt_lockdebug.h"
-#include "opt_multiprocessor.h"
-#endif
-
-
-#include <machine/cpu.h>
-
-#if (MIPS_HAS_LLSC != 0 && defined(MULTIPROCESSOR)) || !defined(__mips_o32)
-#define	SYNC		sync
-#endif
-#elif !defined(__mips_o32)
-#define	SYNC		sync
+// If we are on building for MIPS III or later, put in SYNCs
+#if __mips >= 3 || !defined(__mips_o32)
+# define SYNC		sync
+#else
+# define SYNC		nop
 #endif
 
 	.text
@@ -54,25 +43,38 @@
 
 LEAF(_membar_sync)
 	j	ra
-#ifdef SYNC
 	 SYNC
-#else
-	 nop
-#endif
 END(_membar_sync)
+
+#ifdef __OCTEON__
+LEAF(_membar_producer)
+	j	ra
+	 syncw
+END(_membar_producer)
+#endif
 
 #ifdef _KERNEL
 STRONG_ALIAS(mb_read, _membar_sync)
+#ifdef __OCTEON__
+STRONG_ALIAS(mb_write, _membar_producer)
+#else
 STRONG_ALIAS(mb_write, _membar_sync)
+#endif
 STRONG_ALIAS(mb_memory, _membar_sync)
 #endif
 
 ATOMIC_OP_ALIAS(membar_sync,_membar_sync)
 ATOMIC_OP_ALIAS(membar_enter,_membar_sync)
 STRONG_ALIAS(_membar_enter,_membar_sync)
+#ifdef __OCTEON__
+ATOMIC_OP_ALIAS(membar_exit,_membar_producer)
+STRONG_ALIAS(_membar_exit,_membar_producer)
+STRONG_ALIAS(membar_producer,_membar_producer)
+#else
 ATOMIC_OP_ALIAS(membar_exit,_membar_sync)
 STRONG_ALIAS(_membar_exit,_membar_sync)
 ATOMIC_OP_ALIAS(membar_producer,_membar_sync)
 STRONG_ALIAS(_membar_producer,_membar_sync)
+#endif
 ATOMIC_OP_ALIAS(membar_consumer,_membar_sync)
 STRONG_ALIAS(_membar_consumer,_membar_sync)

@@ -1,4 +1,4 @@
-/* $NetBSD: parser.c,v 1.4 2011/02/12 23:21:32 christos Exp $ */
+/* $NetBSD: parser.c,v 1.5 2015/08/08 12:34:33 shm Exp $ */
 
 /* Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: parser.c,v 1.4 2011/02/12 23:21:32 christos Exp $");
+__RCSID("$NetBSD: parser.c,v 1.5 2015/08/08 12:34:33 shm Exp $");
 
 #include <sys/stat.h>
 #include <sys/syslimits.h>	/* for PATH_MAX */
@@ -186,8 +186,10 @@ saslc__parse_line(char *line, saslc__dict_t *dict)
 
 	key = NULL;
 	while ((t = saslc__parse_get_token(&line)) != NULL) {
-		if (t->type == TOKEN_COMMENT)
+		if (t->type == TOKEN_COMMENT) {
+			free(t);
 			break;
+		}
 
 		if (key == NULL) {  /* get the key */
 			if (t->type != TOKEN_KEY)

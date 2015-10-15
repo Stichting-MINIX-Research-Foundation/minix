@@ -71,7 +71,7 @@ puffs_pn_remove(struct puffs_node *pn)
 
 	LIST_REMOVE(pn, pn_entries);
 	pn->pn_flags |= PUFFS_NODE_REMOVED;
-#ifdef __minix
+#if defined(__minix)
 	if (pn->pn_count != 0) {
 		struct puffs_usermount *pu = pn->pn_mnt;
 		assert(pu != NULL);
@@ -84,7 +84,7 @@ puffs_pn_remove(struct puffs_node *pn)
 		 */
 		LIST_INSERT_HEAD(&pu->pu_pnode_removed_lst, pn, pn_entries);
 	}
-#endif /* __minix */
+#endif /* defined(__minix) */
 }
 
 void

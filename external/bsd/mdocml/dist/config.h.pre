@@ -5,4 +5,5 @@
 # define _GNU_SOURCE /* strptime(), getsubopt() */
 #endif
 
+#include <sys/types.h>
 #include <stdio.h>

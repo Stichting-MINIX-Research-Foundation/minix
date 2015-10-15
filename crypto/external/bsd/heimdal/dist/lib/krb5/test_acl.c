@@ -1,4 +1,4 @@
-/*	$NetBSD: test_acl.c,v 1.1.1.1 2011/04/13 18:15:38 elric Exp $	*/
+/*	$NetBSD: test_acl.c,v 1.1.1.2 2014/04/24 12:45:51 pettai Exp $	*/
 
 /*
  * Copyright (c) 2004 Kungliga Tekniska Högskolan
@@ -72,10 +72,10 @@ test_match_string(krb5_context context)
     RETVAL(context, ret, 0, "liternal fnmatch");
     ret = krb5_acl_match_string(context, "foo/bar", "f", "foo/*");
     RETVAL(context, ret, 0, "foo/*");
-    ret = krb5_acl_match_string(context, "foo/bar.example.org", "f", 
+    ret = krb5_acl_match_string(context, "foo/bar.example.org", "f",
 				"foo/*.example.org");
     RETVAL(context, ret, 0, "foo/*.example.org");
-    ret = krb5_acl_match_string(context, "foo/bar.example.com", "f", 
+    ret = krb5_acl_match_string(context, "foo/bar.example.com", "f",
 				"foo/*.example.org");
     RETVAL(context, ret, EACCES, "foo/*.example.com");
 

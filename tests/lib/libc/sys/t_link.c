@@ -1,4 +1,4 @@
-/* $NetBSD: t_link.c,v 1.1 2011/07/07 06:57:53 jruoho Exp $ */
+/* $NetBSD: t_link.c,v 1.2 2014/04/21 14:39:36 martin Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_link.c,v 1.1 2011/07/07 06:57:53 jruoho Exp $");
+__RCSID("$NetBSD: t_link.c,v 1.2 2014/04/21 14:39:36 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -160,9 +160,13 @@ ATF_TC_HEAD(link_perm, tc)
 
 ATF_TC_BODY(link_perm, tc)
 {
+	int rv;
 
-	errno =0;
-	ATF_REQUIRE_ERRNO(EACCES, link("/root", "/root.link") == -1);
+	errno = 0;
+	rv = link("/root", "/root.link");
+	ATF_REQUIRE_MSG(rv == -1 && (errno == EACCES || errno == EPERM),
+	    "link to a directory did not fail with EPERM or EACCESS; link() "
+	    "returned %d, errno %d", rv, errno);
 
 	errno = 0;
 	ATF_REQUIRE_ERRNO(EACCES,

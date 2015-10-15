@@ -1,4 +1,4 @@
-/*	$NetBSD: vax.c,v 1.17 2013/06/16 19:05:00 martin Exp $	*/
+/*	$NetBSD: vax.c,v 1.18 2014/11/13 16:02:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: vax.c,v 1.17 2013/06/16 19:05:00 martin Exp $");
+__RCSID("$NetBSD: vax.c,v 1.18 2014/11/13 16:02:25 christos Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -87,6 +87,8 @@ __RCSID("$NetBSD: vax.c,v 1.17 2013/06/16 19:05:00 martin Exp $");
 #include <unistd.h>
 
 #include "installboot.h"
+
+#define	VAX_LABELOFFSET		64
 
 #ifndef __CTASSERT
 #define	__CTASSERT(X)
@@ -210,12 +212,12 @@ vax_setboot(ib_params *params)
 
 	/*
 	 * Copy disklabel from old boot block to new.
-	 * Assume everything between LABELOFFSET and the start of
+	 * Assume everything between VAX_LABELOFFSET and the start of
 	 * the param block is scratch area and can be copied over.
 	 */
-	memcpy(bootstrapbuf+LABELOFFSET,
-	    oldbb+LABELOFFSET,
-	    offsetof(struct vax_boot_block,bb_magic1)-LABELOFFSET);
+	memcpy(bootstrapbuf + VAX_LABELOFFSET,
+	    oldbb + VAX_LABELOFFSET,
+	    offsetof(struct vax_boot_block,bb_magic1) - VAX_LABELOFFSET);
 
 	/* point to bootblock at begining of bootstrap */
 	bb = (struct vax_boot_block*)bootstrapbuf;

@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $NetBSD: t_netpgpverify.sh,v 1.1 2012/11/20 07:55:54 agc Exp $
+# $NetBSD: t_netpgpverify.sh,v 1.2 2014/11/23 01:56:35 agc Exp $
 
 # Copyright (c) 2012 Alistair Crooks <agc@NetBSD.org>
 # All rights reserved.
@@ -8420,14 +8420,12 @@ AP1CJKn36vgtcny/R9KueIw/50Hok2rrFrDqzC8mMq5j3Pletm/4equmVu27e+uc
 EOF
 	cat > expected16 << EOF
 Good signature for b.gpg made Mon Sep 10 00:15:38 2012
-signature  2048/RSA (Encrypt or Sign) 1b68dcfcc0596823 2004-01-12
-fingerprint:  d415 9deb 336d e4cc cdfa 00cd 1b68 dcfc c059 6823 
-uid              Alistair Crooks <agc@alistaircrooks.com>
-uid              Alistair Crooks <agc@pkgsrc.org>
-uid              Alistair Crooks <agc@netbsd.org>
-uid              Alistair Crooks <agc@netflix.com>
-encryption 2048/RSA (Encrypt or Sign) 79deb61e488eee74 2004-01-12
-fingerprint:  57c0 c1e6 bf71 8845 416b 9522 79de b61e 488e ee74 
+signature     2048/RSA (Encrypt or Sign) 1b68dcfcc0596823 2004-01-12
+fingerprint   d415 9deb 336d e4cc cdfa 00cd 1b68 dcfc c059 6823 
+uid           Alistair Crooks <agc@alistaircrooks.com>
+uid           Alistair Crooks <agc@pkgsrc.org>
+uid           Alistair Crooks <agc@netbsd.org>
+uid           Alistair Crooks <agc@netflix.com>
 
 EOF
 	cat >expected17 <<EOF
@@ -8497,14 +8495,12 @@ fingerprint:  57c0 c1e6 bf71 8845 416b 9522 79de b61e 488e ee74
 EOF
 	cat >expected22 <<EOF
 Good signature for [stdin] made Sun Sep 30 10:50:20 2012
-signature  2048/RSA (Encrypt or Sign) 1b68dcfcc0596823 2004-01-12
-fingerprint:  d415 9deb 336d e4cc cdfa 00cd 1b68 dcfc c059 6823 
-uid              Alistair Crooks <agc@alistaircrooks.com>
-uid              Alistair Crooks <agc@pkgsrc.org>
-uid              Alistair Crooks <agc@netbsd.org>
-uid              Alistair Crooks <agc@netflix.com>
-encryption 2048/RSA (Encrypt or Sign) 79deb61e488eee74 2004-01-12
-fingerprint:  57c0 c1e6 bf71 8845 416b 9522 79de b61e 488e ee74 
+signature     2048/RSA (Encrypt or Sign) 1b68dcfcc0596823 2004-01-12
+fingerprint   d415 9deb 336d e4cc cdfa 00cd 1b68 dcfc c059 6823 
+uid           Alistair Crooks <agc@alistaircrooks.com>
+uid           Alistair Crooks <agc@pkgsrc.org>
+uid           Alistair Crooks <agc@netbsd.org>
+uid           Alistair Crooks <agc@netflix.com>
 
 EOF
 	cat >expected23 <<EOF
@@ -8518,14 +8514,12 @@ fingerprint:  1915 0801 fbd8 f45d 89f2 0205 9ff2 c24f df2c e620
 EOF
 	cat >expected24 <<EOF
 Good signature for [stdin] made Mon Sep 10 00:15:38 2012
-signature  2048/RSA (Encrypt or Sign) 1b68dcfcc0596823 2004-01-12
-fingerprint:  d415 9deb 336d e4cc cdfa 00cd 1b68 dcfc c059 6823 
-uid              Alistair Crooks <agc@alistaircrooks.com>
-uid              Alistair Crooks <agc@pkgsrc.org>
-uid              Alistair Crooks <agc@netbsd.org>
-uid              Alistair Crooks <agc@netflix.com>
-encryption 2048/RSA (Encrypt or Sign) 79deb61e488eee74 2004-01-12
-fingerprint:  57c0 c1e6 bf71 8845 416b 9522 79de b61e 488e ee74 
+signature     2048/RSA (Encrypt or Sign) 1b68dcfcc0596823 2004-01-12
+fingerprint   d415 9deb 336d e4cc cdfa 00cd 1b68 dcfc c059 6823 
+uid           Alistair Crooks <agc@alistaircrooks.com>
+uid           Alistair Crooks <agc@pkgsrc.org>
+uid           Alistair Crooks <agc@netbsd.org>
+uid           Alistair Crooks <agc@netflix.com>
 
 EOF
 	cat >expected25 <<EOF
@@ -8548,20 +8542,16 @@ fingerprint:  1915 0801 fbd8 f45d 89f2 0205 9ff2 c24f df2c e620
 EOF
 	cat >expected27 <<EOF
 Good signature for [stdin] made Mon Oct 15 09:28:54 2012
-signature  4096/RSA (Encrypt or Sign) 064973ac4c4a706e 2009-06-23
-fingerprint:  ddee 2bdb 9c98 a0d1 d4fb dbf7 0649 73ac 4c4a 706e 
-uid              NetBSD Security Officer <security-officer@NetBSD.org>
-encryption 4096/RSA (Encrypt or Sign) 9ff2c24fdf2ce620 2009-06-23 [Expiry 2019-06-21]
-fingerprint:  1915 0801 fbd8 f45d 89f2 0205 9ff2 c24f df2c e620 
+signature     4096/RSA (Encrypt or Sign) 064973ac4c4a706e 2009-06-23
+fingerprint   ddee 2bdb 9c98 a0d1 d4fb dbf7 0649 73ac 4c4a 706e 
+uid           NetBSD Security Officer <security-officer@NetBSD.org>
 
 EOF
 	cat >expected28 <<EOF
 Good signature for NetBSD-6.0_hashes.asc made Mon Oct 15 09:28:54 2012
-signature  4096/RSA (Encrypt or Sign) 064973ac4c4a706e 2009-06-23
-fingerprint:  ddee 2bdb 9c98 a0d1 d4fb dbf7 0649 73ac 4c4a 706e 
-uid              NetBSD Security Officer <security-officer@NetBSD.org>
-encryption 4096/RSA (Encrypt or Sign) 9ff2c24fdf2ce620 2009-06-23 [Expiry 2019-06-21]
-fingerprint:  1915 0801 fbd8 f45d 89f2 0205 9ff2 c24f df2c e620 
+signature     4096/RSA (Encrypt or Sign) 064973ac4c4a706e 2009-06-23
+fingerprint   ddee 2bdb 9c98 a0d1 d4fb dbf7 0649 73ac 4c4a 706e 
+uid           NetBSD Security Officer <security-officer@NetBSD.org>
 
 EOF
 	cat >expected29 <<EOF
@@ -8597,34 +8587,28 @@ cGdzaWduZWQtYS5ncGcK
 EOF
 	cat >expected32 <<EOF
 Good signature for b.gpg made Mon Sep 10 00:15:38 2012
-signature  2048/RSA (Encrypt or Sign) 1b68dcfcc0596823 2004-01-12
-fingerprint:  d415 9deb 336d e4cc cdfa 00cd 1b68 dcfc c059 6823 
-uid              Alistair Crooks <agc@alistaircrooks.com>
-uid              Alistair Crooks <agc@pkgsrc.org>
-uid              Alistair Crooks <agc@netbsd.org>
-uid              Alistair Crooks <agc@netflix.com>
-encryption 2048/RSA (Encrypt or Sign) 79deb61e488eee74 2004-01-12
-fingerprint:  57c0 c1e6 bf71 8845 416b 9522 79de b61e 488e ee74 
+signature     2048/RSA (Encrypt or Sign) 1b68dcfcc0596823 2004-01-12
+fingerprint   d415 9deb 336d e4cc cdfa 00cd 1b68 dcfc c059 6823 
+uid           Alistair Crooks <agc@alistaircrooks.com>
+uid           Alistair Crooks <agc@pkgsrc.org>
+uid           Alistair Crooks <agc@netbsd.org>
+uid           Alistair Crooks <agc@netflix.com>
 
 Good signature for b.gpg made Mon Sep 10 00:15:38 2012
-signature  2048/RSA (Encrypt or Sign) 1b68dcfcc0596823 2004-01-12
-fingerprint:  d415 9deb 336d e4cc cdfa 00cd 1b68 dcfc c059 6823 
-uid              Alistair Crooks <agc@alistaircrooks.com>
-uid              Alistair Crooks <agc@pkgsrc.org>
-uid              Alistair Crooks <agc@netbsd.org>
-uid              Alistair Crooks <agc@netflix.com>
-encryption 2048/RSA (Encrypt or Sign) 79deb61e488eee74 2004-01-12
-fingerprint:  57c0 c1e6 bf71 8845 416b 9522 79de b61e 488e ee74 
+signature     2048/RSA (Encrypt or Sign) 1b68dcfcc0596823 2004-01-12
+fingerprint   d415 9deb 336d e4cc cdfa 00cd 1b68 dcfc c059 6823 
+uid           Alistair Crooks <agc@alistaircrooks.com>
+uid           Alistair Crooks <agc@pkgsrc.org>
+uid           Alistair Crooks <agc@netbsd.org>
+uid           Alistair Crooks <agc@netflix.com>
 
 Good signature for b.gpg made Mon Sep 10 00:15:38 2012
-signature  2048/RSA (Encrypt or Sign) 1b68dcfcc0596823 2004-01-12
-fingerprint:  d415 9deb 336d e4cc cdfa 00cd 1b68 dcfc c059 6823 
-uid              Alistair Crooks <agc@alistaircrooks.com>
-uid              Alistair Crooks <agc@pkgsrc.org>
-uid              Alistair Crooks <agc@netbsd.org>
-uid              Alistair Crooks <agc@netflix.com>
-encryption 2048/RSA (Encrypt or Sign) 79deb61e488eee74 2004-01-12
-fingerprint:  57c0 c1e6 bf71 8845 416b 9522 79de b61e 488e ee74 
+signature     2048/RSA (Encrypt or Sign) 1b68dcfcc0596823 2004-01-12
+fingerprint   d415 9deb 336d e4cc cdfa 00cd 1b68 dcfc c059 6823 
+uid           Alistair Crooks <agc@alistaircrooks.com>
+uid           Alistair Crooks <agc@pkgsrc.org>
+uid           Alistair Crooks <agc@netbsd.org>
+uid           Alistair Crooks <agc@netflix.com>
 
 EOF
 	uudecode <<EOF
@@ -8643,14 +8627,12 @@ T0d9IGdwZ3NpZ25lZC1hLmdwZwo=
 EOF
 	cat >expected34 <<EOF
 Good signature for det.sig made Thu Oct 18 02:12:33 2012
-signature  2048/RSA (Encrypt or Sign) 1b68dcfcc0596823 2004-01-12
-fingerprint:  d415 9deb 336d e4cc cdfa 00cd 1b68 dcfc c059 6823 
-uid              Alistair Crooks <agc@alistaircrooks.com>
-uid              Alistair Crooks <agc@pkgsrc.org>
-uid              Alistair Crooks <agc@netbsd.org>
-uid              Alistair Crooks <agc@netflix.com>
-encryption 2048/RSA (Encrypt or Sign) 79deb61e488eee74 2004-01-12
-fingerprint:  57c0 c1e6 bf71 8845 416b 9522 79de b61e 488e ee74 
+signature     2048/RSA (Encrypt or Sign) 1b68dcfcc0596823 2004-01-12
+fingerprint   d415 9deb 336d e4cc cdfa 00cd 1b68 dcfc c059 6823 
+uid           Alistair Crooks <agc@alistaircrooks.com>
+uid           Alistair Crooks <agc@pkgsrc.org>
+uid           Alistair Crooks <agc@netbsd.org>
+uid           Alistair Crooks <agc@netflix.com>
 
 EOF
 	cat >expected35 <<EOF
@@ -8795,38 +8777,30 @@ qEZbcbXjkCxlk+m/PHUA/2Whlc0t5ZtmI221LQy5inTnzpu1U75E5lJvw0YMTdXJ
 EOF
 	cat > expected36 << EOF
 Good signature for in1.gpg made Mon Oct 22 04:45:41 2012
-signature  2048/DSA 263fe78562e2fc7e 2012-10-21
-fingerprint:  d2e5 07b6 5d59 33d3 9c8d a618 263f e785 62e2 fc7e 
-uid              David Armstrong (Test DSA key - do not use) <dsa@dsa.com>
-encryption 2048/Elgamal (Encrypt Only) 53d1f21240f293c6 2012-10-21 [Expiry 2014-10-21]
-fingerprint:  6a83 d4aa 791f d8af a967 5e44 53d1 f212 40f2 93c6 
+signature     2048/DSA 263fe78562e2fc7e 2012-10-21
+fingerprint   d2e5 07b6 5d59 33d3 9c8d a618 263f e785 62e2 fc7e 
+uid           David Armstrong (Test DSA key - do not use) <dsa@dsa.com>
 
 EOF
 	cat >expected37 <<EOF
 Good signature for [stdin] made Mon Oct 22 04:45:41 2012
-signature  2048/DSA 263fe78562e2fc7e 2012-10-21
-fingerprint:  d2e5 07b6 5d59 33d3 9c8d a618 263f e785 62e2 fc7e 
-uid              David Armstrong (Test DSA key - do not use) <dsa@dsa.com>
-encryption 2048/Elgamal (Encrypt Only) 53d1f21240f293c6 2012-10-21 [Expiry 2014-10-21]
-fingerprint:  6a83 d4aa 791f d8af a967 5e44 53d1 f212 40f2 93c6 
+signature     2048/DSA 263fe78562e2fc7e 2012-10-21
+fingerprint   d2e5 07b6 5d59 33d3 9c8d a618 263f e785 62e2 fc7e 
+uid           David Armstrong (Test DSA key - do not use) <dsa@dsa.com>
 
 EOF
 	cat >expected38 <<EOF
 Good signature for in1.asc made Mon Oct 22 04:45:26 2012
-signature  2048/DSA 263fe78562e2fc7e 2012-10-21
-fingerprint:  d2e5 07b6 5d59 33d3 9c8d a618 263f e785 62e2 fc7e 
-uid              David Armstrong (Test DSA key - do not use) <dsa@dsa.com>
-encryption 2048/Elgamal (Encrypt Only) 53d1f21240f293c6 2012-10-21 [Expiry 2014-10-21]
-fingerprint:  6a83 d4aa 791f d8af a967 5e44 53d1 f212 40f2 93c6 
+signature     2048/DSA 263fe78562e2fc7e 2012-10-21
+fingerprint   d2e5 07b6 5d59 33d3 9c8d a618 263f e785 62e2 fc7e 
+uid           David Armstrong (Test DSA key - do not use) <dsa@dsa.com>
 
 EOF
 	cat >expected39 <<EOF
 Good signature for [stdin] made Mon Oct 22 04:45:26 2012
-signature  2048/DSA 263fe78562e2fc7e 2012-10-21
-fingerprint:  d2e5 07b6 5d59 33d3 9c8d a618 263f e785 62e2 fc7e 
-uid              David Armstrong (Test DSA key - do not use) <dsa@dsa.com>
-encryption 2048/Elgamal (Encrypt Only) 53d1f21240f293c6 2012-10-21 [Expiry 2014-10-21]
-fingerprint:  6a83 d4aa 791f d8af a967 5e44 53d1 f212 40f2 93c6 
+signature     2048/DSA 263fe78562e2fc7e 2012-10-21
+fingerprint   d2e5 07b6 5d59 33d3 9c8d a618 263f e785 62e2 fc7e 
+uid           David Armstrong (Test DSA key - do not use) <dsa@dsa.com>
 
 EOF
 	cat >expected40 <<EOF
@@ -8863,20 +8837,16 @@ SUBDIR+=	bin
 EOF
 	cat >expected44 <<EOF
 Good signature for in2.gpg made Mon Oct 22 06:24:09 2012
-signature  2048/DSA 263fe78562e2fc7e 2012-10-21
-fingerprint:  d2e5 07b6 5d59 33d3 9c8d a618 263f e785 62e2 fc7e 
-uid              David Armstrong (Test DSA key - do not use) <dsa@dsa.com>
-encryption 2048/Elgamal (Encrypt Only) 53d1f21240f293c6 2012-10-21 [Expiry 2014-10-21]
-fingerprint:  6a83 d4aa 791f d8af a967 5e44 53d1 f212 40f2 93c6 
+signature     2048/DSA 263fe78562e2fc7e 2012-10-21
+fingerprint   d2e5 07b6 5d59 33d3 9c8d a618 263f e785 62e2 fc7e 
+uid           David Armstrong (Test DSA key - do not use) <dsa@dsa.com>
 
 EOF
 	cat >expected45 <<EOF
 Good signature for in2.asc made Mon Oct 22 06:24:26 2012
-signature  2048/DSA 263fe78562e2fc7e 2012-10-21
-fingerprint:  d2e5 07b6 5d59 33d3 9c8d a618 263f e785 62e2 fc7e 
-uid              David Armstrong (Test DSA key - do not use) <dsa@dsa.com>
-encryption 2048/Elgamal (Encrypt Only) 53d1f21240f293c6 2012-10-21 [Expiry 2014-10-21]
-fingerprint:  6a83 d4aa 791f d8af a967 5e44 53d1 f212 40f2 93c6 
+signature     2048/DSA 263fe78562e2fc7e 2012-10-21
+fingerprint   d2e5 07b6 5d59 33d3 9c8d a618 263f e785 62e2 fc7e 
+uid           David Armstrong (Test DSA key - do not use) <dsa@dsa.com>
 
 EOF
 	cat >expected46 <<EOF

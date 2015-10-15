@@ -132,4 +132,7 @@ TESTBitString ::= BIT STRING {
 	      thirtyone(31)
 }
 
+TESTMechType::= OBJECT IDENTIFIER
+TESTMechTypeList ::= SEQUENCE OF TESTMechType
+
 END

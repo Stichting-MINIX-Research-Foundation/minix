@@ -1,4 +1,4 @@
-.\" $NetBSD: libmj.3,v 1.6 2013/07/20 21:39:55 wiz Exp $
+.\" $NetBSD: libmj.3,v 1.7 2014/02/17 07:23:18 agc Exp $
 .\"
 .\" Copyright (c) 2010 Alistair Crooks <agc@NetBSD.org>
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 22, 2011
+.Dd February 16, 2014
 .Dt LIBMJ 3
 .Os
 .Sh NAME
@@ -98,7 +98,7 @@ JSON object output functions:
 .Nm
 is a small library interface to allow JSON text to be created and parsed.
 JSON is the Java Script Object Notation,
-a lightweight data-interchange format, standardised in the ECMA standard.
+a lightweight data-interchange format, standardised by the ECMA.
 The library name
 .Nm
 is derived from a further acronym of
@@ -115,7 +115,7 @@ rebuilt to produce the original structure of the data.
 .Pp
 JSON contains basic units called atoms, the two
 basic atoms being strings and numbers.
-Three other useful atomic values are provided,
+Three other useful atomic values are provided:
 .Dq null ,
 .Dq false ,
 and
@@ -127,7 +127,7 @@ and as individual, ordered atoms, in an
 .Pp
 To create a new object, the
 .Fn mj_create
-is used.
+function is used.
 It can be deleted using the
 .Fn mj_delete
 function.
@@ -154,7 +154,7 @@ and the JSON serialised text is copied into it.
 This memory can later be de-allocated using
 .Xr free 3 .
 For formatted output to a
-.Dv FILE *
+.Vt FILE *
 stream, the
 .Fn mj_pretty
 function is used.
@@ -220,17 +220,17 @@ A value of
 .Dv \-1
 may be used if the string length is not known.
 .Sh EXAMPLES
-The follow code fragment will make a JSON object
+The following code fragment will make a JSON object
 out of the string
 .Dq Hello <USERNAME>\en
 in the
 buffer called
-.Dq buf
+.Va buf
 where
 .Dq USERNAME
 is the name of the user taken from the runtime environment.
 The encoded text will be in an allocated buffer called
-.Dq s
+.Va s
 .Bd -literal -offset indent
 mj_t atom;
 char buf[BUFSIZ];
@@ -243,9 +243,9 @@ mj_create(\*[Am]atom, "string", buf, cc);
 cc = mj_asprint(\*[Am]s, \*[Am]atom, MJ_JSON_ENCODE);
 .Ed
 .Pp
-and the following example will take the (binary) text which has been encoded into
+Next, the following example will take the (binary) text which has been encoded into
 JSON and is in the buffer
-.Dq buf ,
+.Va buf ,
 such as in the previous example, and re-create the original text:
 .Bd -literal -offset indent
 int from, to, tok, cc;
@@ -260,7 +260,7 @@ printf("%.*s", cc, s);
 .Ed
 .Pp
 The
-.Dv s
+.Va s
 pointer points to allocated storage with the original NUL-terminated string
 in it.
 .Sh SEE ALSO

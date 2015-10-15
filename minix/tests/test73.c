@@ -45,6 +45,13 @@ main(int argc, char *argv[])
 
 	start(73);
 
+	setuid(geteuid());
+
+	if(getuid() != 0) {
+		printf("Test 73 has to be run as root; test aborted\n");
+		exit(1);
+	}
+
 	unlink(pipefn);
 
 	/* 'big' as a substring indicates to testvm that it's ok to

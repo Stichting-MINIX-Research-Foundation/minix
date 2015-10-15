@@ -1,4 +1,4 @@
-/*	$NetBSD: test_commonauth.c,v 1.1.1.1 2011/04/13 18:15:39 elric Exp $	*/
+/*	$NetBSD: test_commonauth.c,v 1.1.1.2 2014/04/24 12:45:51 pettai Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2008 Kungliga Tekniska Högskolan
@@ -55,14 +55,14 @@ test_sasl_digest_md5(void)
 	abort();
     if (heim_digest_parse_response(ctx, "charset=utf-8,username=\"chris\",realm=\"elwood.innosoft.com\",nonce=\"OA6MG9tEQGm2hh\",nc=00000001,cnonce=\"OA6MHXh6VqTrRk\",digest-uri=\"imap/elwood.innosoft.com\",response=d388dad90d4bbd760a152321f2143af7,qop=auth"))
 	abort();
-    
+
     if ((user = heim_digest_get_key(ctx, "username")) == NULL)
 	abort();
     if (strcmp(user, "chris") != 0)
 	abort();
 
     heim_digest_set_key(ctx, "password", "secret");
-    
+
     if (heim_digest_verify(ctx, &r))
 	abort();
 
@@ -97,14 +97,14 @@ test_http_digest_md5(void)
 				   "response=\"1949323746fe6a43ef61f9606e7febea\","
 				   "opaque=\"5ccc069c403ebaf9f0171e9517f40e41\""))
 	abort();
-    
+
     if ((user = heim_digest_get_key(ctx, "username")) == NULL)
 	abort();
     if (strcmp(user, "Mufasa") != 0)
 	abort();
 
     heim_digest_set_key(ctx, "password", "CircleOfLife");
-    
+
     if (heim_digest_verify(ctx, NULL))
 	abort();
 
@@ -160,7 +160,7 @@ test_cram_md5(void)
 	abort();
 
     heim_cram_md5_export(secret, &state);
-    
+
     /* here you can store the memcpy-ed version of state somewhere else */
 
     ctx = heim_cram_md5_import(&state, sizeof(state));
@@ -185,7 +185,7 @@ test_apop(void)
     const char *resp = "c4c9334bac560ecc979e58001b3e22fb";
     char *t;
 
-    
+
     t = heim_apop_create(chal, secret);
     if (t == NULL)
 	abort();

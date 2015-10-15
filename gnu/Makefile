@@ -1,6 +1,7 @@
 #	$NetBSD: Makefile,v 1.17 2010/12/03 21:38:47 plunky Exp $
 
 .if defined(__MINIX)
+#LSC: Trigger fetch.sh script
 SUBDIR+= dist .WAIT
 .endif # defined(__MINIX)
 SUBDIR+= usr.bin

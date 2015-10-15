@@ -70,6 +70,7 @@ CLEANFILES= \
 	check-context.tmp
 
 EXTRA_DIST = \
+	NTMakefile \
 	check-basic.in \
 	check-gss.in \
 	check-gssmask.in \

@@ -1,4 +1,4 @@
-/* $Id: xmalloc.c,v 1.1.1.2 2011/08/17 18:40:05 jmmv Exp $ */
+/* Id */
 
 /*
  * Copyright (c) 2004 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -80,14 +80,6 @@ xrealloc(void *oldptr, size_t nmemb, size_t size)
 		fatal("xrealloc failed");
 
 	return (newptr);
-}
-
-void
-xfree(void *ptr)
-{
-	if (ptr == NULL)
-		fatalx("null pointer");
-	free(ptr);
 }
 
 int printflike2

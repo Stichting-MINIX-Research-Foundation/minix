@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.132 2013/11/05 14:26:19 martin Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.149 2015/07/30 15:28:18 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -46,6 +46,11 @@
 #include <inttypes.h>
 #endif /* _KERNEL || _STANDALONE */
 
+#ifdef   _BSD_SIZE_T_
+typedef  _BSD_SIZE_T_    size_t;
+#undef   _BSD_SIZE_T_
+#endif
+
 #if HAVE_NBTOOL_CONFIG_H
 #include <nbinclude/machine/elf_machdep.h>
 #else
@@ -73,8 +78,6 @@ typedef uint64_t	Elf64_Addr;
 typedef uint64_t	Elf64_Off;
 typedef int64_t		Elf64_SOff;
 #define ELF64_FSZ_OFF	8
-typedef int32_t		Elf64_Shalf;
-#define ELF64_FSZ_SHALF 4
 
 typedef int32_t		Elf64_Sword;
 #define ELF64_FSZ_SWORD 4
@@ -282,7 +285,8 @@ typedef struct {
 #define EM_MN10300	89	/* Matsushita MN10300 */
 #define EM_MN10200	90	/* Matsushita MN10200 */
 #define EM_PJ		91	/* picoJava */
-#define EM_OPENRISC	92	/* OpenRISC 32-bit embedded processor */
+#define EM_OR1K		92	/* OpenRISC 32-bit embedded processor */
+#define EM_OPENRISC	EM_OR1K
 #define EM_ARC_A5	93	/* ARC Cores Tangent-A5 */
 #define EM_XTENSA	94	/* Tensilica Xtensa Architecture */
 #define EM_VIDEOCORE	95	/* Alphamosaic VideoCore processor */
@@ -301,10 +305,17 @@ typedef struct {
 #define EM_SEP		108	/* Sharp embedded microprocessor */
 #define EM_ARCA		109	/* Arca RISC microprocessor */
 #define EM_UNICORE	110	/* UNICORE from PKU-Unity Ltd. and MPRC Peking University */
+#define EM_ALTERA_NIOS2	113	/* Altera Nios II soft-core processor */
 #define EM_AARCH64	183	/* AArch64 64-bit ARM microprocessor */
+#define EM_AVR32	185	/* Atmel Corporation 32-bit microprocessor family*/
+#define EM_TILE64	187	/* Tilera TILE64 multicore architecture family */
+#define EM_TILEPRO	188	/* Tilera TILEPro multicore architecture family */
+#define EM_MICROBLAZE	189	/* Xilinx MicroBlaze 32-bit RISC soft processor core */
+#define EM_TILEGX	192	/* Tilera TILE-GX multicore architecture family */
+#define EM_Z80		220	/* Zilog Z80 */
+#define EM_RISCV	243	/* RISC-V */
 
 /* Unofficial machine types follow */
-#define EM_AVR32	6317	/* used by NetBSD/avr32 */
 #define EM_ALPHA_EXP	36902	/* used by NetBSD/alpha; obsolete */
 #define EM_NUM		36903
 
@@ -418,8 +429,16 @@ typedef struct {
 #define SHT_NUM		     19
 
 #define SHT_LOOS	     0x60000000 /* Operating system specific range */
+#define SHT_GNU_INCREMENTAL_INPUTS 0x6fff4700   /* GNU incremental build data */
+#define	SHT_LOSUNW	     0x6ffffff4
+#define	SHT_SUNW_dof	     0x6ffffff4
+#define	SHT_GNU_ATTRIBUTES   0x6ffffff5	/* GNU object attributes */
+#define	SHT_SUNW_cap	     0x6ffffff5
+#define	SHT_SUNW_SIGNATURE   0x6ffffff6
 #define SHT_GNU_HASH	     0x6ffffff6 /* GNU style symbol hash table */
+#define SHT_GNU_LIBLIST	     0x6ffffff7 /* GNU list of prelink dependencies */
 #define SHT_SUNW_move	     0x6ffffffa
+#define	SHT_SUNW_COMDAT	     0x6ffffffb
 #define SHT_SUNW_syminfo     0x6ffffffc
 #define SHT_SUNW_verdef	     0x6ffffffd /* Versions defined by file */
 #define SHT_GNU_verdef	     SHT_SUNW_verdef
@@ -427,6 +446,7 @@ typedef struct {
 #define SHT_GNU_verneed	     SHT_SUNW_verneed
 #define SHT_SUNW_versym	     0x6fffffff /* Symbol versions */
 #define SHT_GNU_versym	     SHT_SUNW_versym
+#define	SHT_HISUNW	     0x6fffffff
 #define SHT_HIOS	     0x6fffffff
 #define SHT_LOPROC	     0x70000000 /* Processor-specific range */
 #define SHT_AMD64_UNWIND     0x70000001 /* unwind information */
@@ -437,6 +457,9 @@ typedef struct {
 					 * attributes */
 #define SHT_ARM_DEBUGOVERLAY 0x70000004 /* See DBGOVL for details */
 #define SHT_ARM_OVERLAYSECTION 0x70000005
+#define	SHT_MIPS_REGINFO     0x70000006
+#define	SHT_MIPS_OPTIONS     0x7000000d
+#define	SHT_MIPS_DWARF	     0x7000001e	/* MIPS gcc uses MIPS_DWARF */
 #define SHT_HIPROC	     0x7fffffff
 #define SHT_LOUSER	     0x80000000 /* Application-specific range */
 #define SHT_HIUSER	     0xffffffff
@@ -505,6 +528,7 @@ typedef struct {
 #define STT_NUM			7
 
 #define STT_LOOS		10	/* Operating system specific range */
+#define STT_GNU_IFUNC		10	/* GNU extension: indirect function */
 #define STT_HIOS		12
 #define STT_LOPROC		13	/* Processor-specific range */
 #define STT_HIPROC		15
@@ -699,7 +723,7 @@ typedef struct {
 #define DF_SYMBOLIC	0x00000002	/* */
 #define DF_TEXTREL	0x00000004	/* */
 #define DF_BIND_NOW	0x00000008	/* */
-#define DF_STATICT_LS	0x00000010	/* */
+#define DF_STATIC_TLS	0x00000010	/* */
 
 /* Flag values for DT_FLAGS_1 (incomplete) */
 #define DF_1_BIND_NOW	0x00000001	/* Same as DF_BIND_NOW */
@@ -760,6 +784,16 @@ typedef struct {
 #define AT_SUN_EMUL_EXECFD 2013 /* coff file descriptor */
 	/* Executable's fully resolved name */
 #define AT_SUN_EXECNAME 2014
+
+/*
+ * The header for GNU-style hash sections.
+ */
+typedef struct {
+	uint32_t	gh_nbuckets;	/* Number of hash buckets. */
+	uint32_t	gh_symndx;	/* First visible symbol in .dynsym. */
+	uint32_t	gh_maskwords;	/* #maskwords used in bloom filter. */
+	uint32_t	gh_shift2;	/* Bloom filter shift count. */
+} Elf_GNU_Hash_Header;
 
 /*
  * Note Headers
@@ -915,7 +949,7 @@ typedef struct {
 #define ELF_NOTE_PAX_MPROTECT		0x01	/* Force enable Mprotect */
 #define ELF_NOTE_PAX_NOMPROTECT		0x02	/* Force disable Mprotect */
 #define ELF_NOTE_PAX_GUARD		0x04	/* Force enable Segvguard */
-#define ELF_NOTE_PAX_NOGUARD		0x08	/* Force disable Servguard */
+#define ELF_NOTE_PAX_NOGUARD		0x08	/* Force disable Segvguard */
 #define ELF_NOTE_PAX_ASLR		0x10	/* Force enable ASLR */
 #define ELF_NOTE_PAX_NOASLR		0x20	/* Force disable ASLR */
 #define ELF_NOTE_PAX_NAMESZ		4
@@ -1213,6 +1247,13 @@ typedef Elf32_Versym	Elf64_Versym;
 
 #ifdef _KERNEL
 
+/*
+ * Arbitrary limits to avoid DoS for excessive memory allocation.
+ */
+#define ELF_MAXPHNUM	128
+#define ELF_MAXSHNUM	32768
+#define ELF_MAXNOTESIZE	1024
+
 #define ELF_AUX_ENTRIES 15	/* Max size of aux array passed to loader */
 #define ELF32_NO_ADDR	(~(Elf32_Addr)0) /* Indicates addr. not yet filled in */
 #define ELF32_LINK_ADDR ((Elf32_Addr)-2) /* advises to use link address */
@@ -1256,17 +1297,20 @@ struct elf_args {
 #endif
 
 struct ps_strings;
+struct coredump_iostate;
+struct note_state;
+struct exec_package;
 
 #ifdef EXEC_ELF32
 int	exec_elf32_makecmds(struct lwp *, struct exec_package *);
 int	elf32_copyargs(struct lwp *, struct exec_package *,
     struct ps_strings *, char **, void *);
 
-int	coredump_elf32(struct lwp *, void *);
-int	coredump_writenote_elf32(struct proc *, void *, Elf32_Nhdr *,
-    const char *, void *);
+int	coredump_elf32(struct lwp *, struct coredump_iostate *);
+void	coredump_savenote_elf32(struct note_state *, unsigned int,
+	    const char *, void *, size_t);
 
-int	elf32_check_header(Elf32_Ehdr *, int);
+int	elf32_check_header(Elf32_Ehdr *);
 #endif
 
 #ifdef EXEC_ELF64
@@ -1274,11 +1318,11 @@ int	exec_elf64_makecmds(struct lwp *, struct exec_package *);
 int	elf64_copyargs(struct lwp *, struct exec_package *,
     struct ps_strings *, char **, void *);
 
-int	coredump_elf64(struct lwp *, void *);
-int	coredump_writenote_elf64(struct proc *, void *, Elf64_Nhdr *,
-    const char *, void *);
+int	coredump_elf64(struct lwp *, struct coredump_iostate *);
+void	coredump_savenote_elf64(struct note_state *, unsigned int,
+	    const char *, void *, size_t);
 
-int	elf64_check_header(Elf64_Ehdr *, int);
+int	elf64_check_header(Elf64_Ehdr *);
 #endif
 
 #endif /* _KERNEL */

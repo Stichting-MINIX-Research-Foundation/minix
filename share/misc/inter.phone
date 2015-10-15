@@ -1,5 +1,5 @@
 # Country Code : City Code : City : Country
-#	$NetBSD: inter.phone,v 1.27 2012/03/06 17:11:15 mbalmer Exp $
+#	$NetBSD: inter.phone,v 1.29 2014/05/06 14:31:21 zafer Exp $
 #	@(#)inter.phone	8.1 (Berkeley) 6/9/93
 20:2:Cairo:Egypt, Arab Rep. of
 20:3:Alexandria:Egypt, Arab Rep. of
@@ -303,8 +303,14 @@
 86:20:Ghuangzhou:China, People's Rep. of
 86:21:Shanghai:China, People's Rep. of
 86:591:Fuzhou:China, People's Rep. of
-90:1:Istanbul:Turkey
-90:4:Ankara:Turkey
+90:212:Istanbul:Turkey
+90:312:Ankara:Turkey
+90:232:Izmir:Turkey
+90:224:Bursa:Turkey
+90:322:Adana:Turkey
+90:342:Gaziantep:Turkey
+90:332:Konya:Turkey
+90:242:Antalya:Turkey
 91:11:New Delhi:India
 91:22:Bombay:India
 91:33:Calcutta:India
@@ -389,6 +395,9 @@
 358:18:Ahvenanmaa:Finland
 358:19:Uusimaa:Finland
 359:2:Sofia:Bulgaria
+370:::Lithuania
+371:::Latvia
+372:::Estonia
 420:2:Prague:Czech Republic
 421:2:Bratislava:Slovak Republic
 421:31:Dunajska Streda:Slovak Republic

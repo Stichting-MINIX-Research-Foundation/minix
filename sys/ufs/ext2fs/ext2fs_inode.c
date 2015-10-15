@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.81 2013/06/23 07:28:37 dholland Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.82 2015/03/28 19:24:04 maxv Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.81 2013/06/23 07:28:37 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.82 2015/03/28 19:24:04 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -262,7 +262,7 @@ ext2fs_update(struct vnode *vp, const struct timespec *acc,
 
 	error = bread(ip->i_devvp,
 			  EXT2_FSBTODB(fs, ino_to_fsba(fs, ip->i_number)),
-			  (int)fs->e2fs_bsize, NOCRED, B_MODIFY, &bp);
+			  (int)fs->e2fs_bsize, B_MODIFY, &bp);
 	if (error) {
 		return (error);
 	}

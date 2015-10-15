@@ -20,20 +20,19 @@
 #include "clang/Driver/Options.h"
 #include "clang/Frontend/ASTConsumers.h"
 #include "clang/Frontend/CompilerInstance.h"
-#include "clang/StaticAnalyzer/Frontend/FrontendActions.h"
 #include "clang/Rewrite/Frontend/FixItRewriter.h"
 #include "clang/Rewrite/Frontend/FrontendActions.h"
+#include "clang/StaticAnalyzer/Frontend/FrontendActions.h"
 #include "clang/Tooling/CommonOptionsParser.h"
 #include "clang/Tooling/Tooling.h"
-#include "llvm/Support/CommandLine.h"
+#include "llvm/ADT/STLExtras.h"
+#include "llvm/Option/OptTable.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/Signals.h"
-#include "llvm/Option/OptTable.h"
 
 using namespace clang::driver;
 using namespace clang::tooling;
 using namespace llvm;
-using namespace llvm::opt;
 
 static cl::extrahelp CommonHelp(CommonOptionsParser::HelpMessage);
 static cl::extrahelp MoreHelp(
@@ -51,34 +50,33 @@ static cl::extrahelp MoreHelp(
     "\n"
 );
 
-static OwningPtr<OptTable> Options(createDriverOptTable());
-static cl::opt<bool> ASTDump(
-    "ast-dump",
-    cl::desc(Options->getOptionHelpText(options::OPT_ast_dump)));
-static cl::opt<bool> ASTList(
-    "ast-list",
-    cl::desc(Options->getOptionHelpText(options::OPT_ast_list)));
-static cl::opt<bool> ASTPrint(
-    "ast-print",
-    cl::desc(Options->getOptionHelpText(options::OPT_ast_print)));
+static cl::OptionCategory ClangCheckCategory("clang-check options");
+static std::unique_ptr<opt::OptTable> Options(createDriverOptTable());
+static cl::opt<bool>
+ASTDump("ast-dump", cl::desc(Options->getOptionHelpText(options::OPT_ast_dump)),
+        cl::cat(ClangCheckCategory));
+static cl::opt<bool>
+ASTList("ast-list", cl::desc(Options->getOptionHelpText(options::OPT_ast_list)),
+        cl::cat(ClangCheckCategory));
+static cl::opt<bool>
+ASTPrint("ast-print",
+         cl::desc(Options->getOptionHelpText(options::OPT_ast_print)),
+         cl::cat(ClangCheckCategory));
 static cl::opt<std::string> ASTDumpFilter(
     "ast-dump-filter",
-    cl::desc(Options->getOptionHelpText(options::OPT_ast_dump_filter)));
-static cl::opt<bool> Analyze(
-    "analyze",
-    cl::desc(Options->getOptionHelpText(options::OPT_analyze)));
+    cl::desc(Options->getOptionHelpText(options::OPT_ast_dump_filter)),
+    cl::cat(ClangCheckCategory));
+static cl::opt<bool>
+Analyze("analyze", cl::desc(Options->getOptionHelpText(options::OPT_analyze)),
+        cl::cat(ClangCheckCategory));
 
-static cl::opt<bool> Fixit(
-    "fixit",
-    cl::desc(Options->getOptionHelpText(options::OPT_fixit)));
+static cl::opt<bool>
+Fixit("fixit", cl::desc(Options->getOptionHelpText(options::OPT_fixit)),
+      cl::cat(ClangCheckCategory));
 static cl::opt<bool> FixWhatYouCan(
     "fix-what-you-can",
-    cl::desc(Options->getOptionHelpText(options::OPT_fix_what_you_can)));
-
-static cl::list<std::string> ArgsAfter("extra-arg",
-    cl::desc("Additional argument to append to the compiler command line"));
-static cl::list<std::string> ArgsBefore("extra-arg-before",
-    cl::desc("Additional argument to prepend to the compiler command line"));
+    cl::desc(Options->getOptionHelpText(options::OPT_fix_what_you_can)),
+    cl::cat(ClangCheckCategory));
 
 namespace {
 
@@ -90,7 +88,7 @@ public:
     FixWhatYouCan = ::FixWhatYouCan;
   }
 
-  std::string RewriteFilename(const std::string& filename, int &fd) {
+  std::string RewriteFilename(const std::string& filename, int &fd) override {
     assert(llvm::sys::path::is_absolute(filename) &&
            "clang-fixit expects absolute paths only.");
 
@@ -117,15 +115,15 @@ public:
       : clang::FixItRewriter(Diags, SourceMgr, LangOpts, FixItOpts) {
   }
 
-  virtual bool IncludeInDiagnosticCounts() const { return false; }
+  bool IncludeInDiagnosticCounts() const override { return false; }
 };
 
 /// \brief Subclasses \c clang::FixItAction so that we can install the custom
 /// \c FixItRewriter.
 class FixItAction : public clang::FixItAction {
 public:
-  virtual bool BeginSourceFileAction(clang::CompilerInstance& CI,
-                                     StringRef Filename) {
+  bool BeginSourceFileAction(clang::CompilerInstance& CI,
+                             StringRef Filename) override {
     FixItOpts.reset(new FixItOptions);
     Rewriter.reset(new FixItRewriter(CI.getDiagnostics(), CI.getSourceManager(),
                                      CI.getLangOpts(), FixItOpts.get()));
@@ -133,83 +131,39 @@ public:
   }
 };
 
-class InsertAdjuster: public clang::tooling::ArgumentsAdjuster {
+class ClangCheckActionFactory {
 public:
-  enum Position { BEGIN, END };
-
-  InsertAdjuster(const CommandLineArguments &Extra, Position Pos)
-    : Extra(Extra), Pos(Pos) {
+  std::unique_ptr<clang::ASTConsumer> newASTConsumer() {
+    if (ASTList)
+      return clang::CreateASTDeclNodeLister();
+    if (ASTDump)
+      return clang::CreateASTDumper(ASTDumpFilter, /*DumpDecls=*/true,
+                                    /*DumpLookups=*/false);
+    if (ASTPrint)
+      return clang::CreateASTPrinter(&llvm::outs(), ASTDumpFilter);
+    return llvm::make_unique<clang::ASTConsumer>();
   }
-
-  InsertAdjuster(const char *Extra, Position Pos)
-    : Extra(1, std::string(Extra)), Pos(Pos) {
-  }
-
-  virtual CommandLineArguments
-  Adjust(const CommandLineArguments &Args) LLVM_OVERRIDE {
-    CommandLineArguments Return(Args);
-
-    CommandLineArguments::iterator I;
-    if (Pos == END) {
-      I = Return.end();
-    } else {
-      I = Return.begin();
-      ++I; // To leave the program name in place
-    }
-
-    Return.insert(I, Extra.begin(), Extra.end());
-    return Return;
-  }
-
-private:
-  const CommandLineArguments Extra;
-  const Position Pos;
 };
 
 } // namespace
 
-// Anonymous namespace here causes problems with gcc <= 4.4 on MacOS 10.6.
-// "Non-global symbol: ... can't be a weak_definition"
-namespace clang_check {
-class ClangCheckActionFactory {
-public:
-  clang::ASTConsumer *newASTConsumer() {
-    if (ASTList)
-      return clang::CreateASTDeclNodeLister();
-    if (ASTDump)
-      return clang::CreateASTDumper(ASTDumpFilter);
-    if (ASTPrint)
-      return clang::CreateASTPrinter(&llvm::outs(), ASTDumpFilter);
-    return new clang::ASTConsumer();
-  }
-};
-}
-
 int main(int argc, const char **argv) {
   llvm::sys::PrintStackTraceOnErrorSignal();
-  CommonOptionsParser OptionsParser(argc, argv);
+  CommonOptionsParser OptionsParser(argc, argv, ClangCheckCategory);
   ClangTool Tool(OptionsParser.getCompilations(),
                  OptionsParser.getSourcePathList());
 
   // Clear adjusters because -fsyntax-only is inserted by the default chain.
   Tool.clearArgumentsAdjusters();
-  Tool.appendArgumentsAdjuster(new ClangStripOutputAdjuster());
-  if (ArgsAfter.size() > 0) {
-    Tool.appendArgumentsAdjuster(new InsertAdjuster(ArgsAfter,
-          InsertAdjuster::END));
-  }
-  if (ArgsBefore.size() > 0) {
-    Tool.appendArgumentsAdjuster(new InsertAdjuster(ArgsBefore,
-          InsertAdjuster::BEGIN));
-  }
+  Tool.appendArgumentsAdjuster(getClangStripOutputAdjuster());
 
   // Running the analyzer requires --analyze. Other modes can work with the
   // -fsyntax-only option.
-  Tool.appendArgumentsAdjuster(new InsertAdjuster(
-        Analyze ? "--analyze" : "-fsyntax-only", InsertAdjuster::BEGIN));
+  Tool.appendArgumentsAdjuster(getInsertArgumentAdjuster(
+      Analyze ? "--analyze" : "-fsyntax-only", ArgumentInsertPosition::BEGIN));
 
-  clang_check::ClangCheckActionFactory CheckFactory;
-  FrontendActionFactory *FrontendFactory;
+  ClangCheckActionFactory CheckFactory;
+  std::unique_ptr<FrontendActionFactory> FrontendFactory;
 
   // Choose the correct factory based on the selected mode.
   if (Analyze)
@@ -219,5 +173,5 @@ int main(int argc, const char **argv) {
   else
     FrontendFactory = newFrontendActionFactory(&CheckFactory);
 
-  return Tool.run(FrontendFactory);
+  return Tool.run(FrontendFactory.get());
 }

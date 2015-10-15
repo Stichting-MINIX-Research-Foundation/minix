@@ -77,7 +77,7 @@ _gss_ntlm_delete_sec_context (
 	gss_ctx_id_t * /*context_handle*/,
 	gss_buffer_t output_token );
 
-OM_uint32
+OM_uint32 GSSAPI_CALLCONV
 _gss_ntlm_destroy_cred (
 	OM_uint32 */*minor_status*/,
 	gss_cred_id_t */*cred_handle*/);
@@ -175,7 +175,7 @@ _gss_ntlm_inquire_context (
 	int * /*locally_initiated*/,
 	int * open_context );
 
-OM_uint32
+OM_uint32 GSSAPI_CALLCONV
 _gss_ntlm_inquire_cred (
 	OM_uint32 * /*minor_status*/,
 	const gss_cred_id_t /*cred_handle*/,
@@ -206,14 +206,14 @@ _gss_ntlm_inquire_names_for_mech (
 	const gss_OID /*mechanism*/,
 	gss_OID_set * name_types );
 
-OM_uint32
+OM_uint32 GSSAPI_CALLCONV
 _gss_ntlm_inquire_sec_context_by_oid (
 	OM_uint32 */*minor_status*/,
 	const gss_ctx_id_t /*context_handle*/,
 	const gss_OID /*desired_object*/,
 	gss_buffer_set_t */*data_set*/);
 
-void
+void GSSAPI_CALLCONV
 _gss_ntlm_iter_creds_f (
 	OM_uint32 /*flags*/,
 	void *userctx ,

@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_kern.c,v 1.17 2011/09/30 22:08:18 jym Exp $	*/
+/*	$NetBSD: prop_kern.c,v 1.19 2015/05/11 16:48:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2009 The NetBSD Foundation, Inc.
@@ -380,7 +380,7 @@ prop_dictionary_sendrecv_ioctl(prop_dictionary_t dict, int fd,
 #include <sys/resource.h>
 #include <sys/pool.h>
 
-#include <uvm/uvm.h>
+#include <uvm/uvm_extern.h>
 
 #include "prop_object_impl.h"
 
@@ -406,6 +406,9 @@ _prop_object_copyin(const struct plistref *pref, const prop_type_t type,
 	prop_object_t obj = NULL;
 	char *buf;
 	int error;
+
+	if (pref->pref_len >= prop_object_copyin_limit)
+		return EINVAL;
 
 	/*
 	 * Allocate an extra byte so we can guarantee NUL-termination.
@@ -507,9 +510,9 @@ _prop_object_copyout(struct plistref *pref, prop_object_t obj)
 	struct lwp *l = curlwp;		/* XXX */
 	struct proc *p = l->l_proc;
 	char *buf;
+	void *uaddr;
 	size_t len, rlen;
 	int error = 0;
-	vaddr_t uaddr;
 
 	switch (prop_object_type(obj)) {
 	case PROP_TYPE_ARRAY:
@@ -526,26 +529,12 @@ _prop_object_copyout(struct plistref *pref, prop_object_t obj)
 
 	len = strlen(buf) + 1;
 	rlen = round_page(len);
-
-	/*
-	 * See sys_mmap() in sys/uvm/uvm_mmap.c.
-	 * Let's act as if we were calling mmap(0, ...)
-	 */
-	uaddr = p->p_emul->e_vm_default_addr(p,
-	    (vaddr_t)p->p_vmspace->vm_daddr, rlen);
-
-	error = uvm_mmap(&p->p_vmspace->vm_map,
-			 &uaddr, rlen,
-			 VM_PROT_READ|VM_PROT_WRITE,
-			 VM_PROT_READ|VM_PROT_WRITE,
-			 MAP_PRIVATE|MAP_ANON,
-			 NULL, 0,
-			 p->p_rlimit[RLIMIT_MEMLOCK].rlim_cur);
-	
+	uaddr = NULL;
+	error = uvm_mmap_anon(p, &uaddr, rlen);
 	if (error == 0) {
-		error = copyout(buf, (char *)uaddr, len);
+		error = copyout(buf, uaddr, len);
 		if (error == 0) {
-			pref->pref_plist = (char *)uaddr;
+			pref->pref_plist = uaddr;
 			pref->pref_len   = len;
 		}
 	}

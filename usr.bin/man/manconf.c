@@ -1,4 +1,4 @@
-/*	$NetBSD: manconf.c,v 1.7 2013/07/18 15:39:08 christos Exp $	*/
+/*	$NetBSD: manconf.c,v 1.8 2014/02/17 02:53:48 uwe Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -45,7 +45,7 @@
 #if 0
 static char sccsid[] = "@(#)config.c	8.8 (Berkeley) 1/31/95";
 #else
-__RCSID("$NetBSD: manconf.c,v 1.7 2013/07/18 15:39:08 christos Exp $");
+__RCSID("$NetBSD: manconf.c,v 1.8 2014/02/17 02:53:48 uwe Exp $");
 #endif
 #endif /* not lint */
 
@@ -147,6 +147,8 @@ config(const char *fname)
 			 * rest of the line as a single entry.
 			 */
 			if (!strcmp(p, "_build") || !strcmp(p, "_crunch")) {
+				const char *u;
+
 				/*
 				 * The reason we're not just using
 				 * strtok(3) for all of the parsing is
@@ -154,6 +156,19 @@ config(const char *fname)
 				 * has only a single token on it.
 				 */
 				while (*++t && isspace((unsigned char)*t));
+#ifndef HAVE_NBTOOL_CONFIG_H
+				/* pre-verify user-supplied command format */
+				u = t;
+				while (*u && !isspace((unsigned char)*u))
+					++u;
+				while (*u && isspace((unsigned char)*u))
+					++u;
+				if (fmtcheck(u, "%s") != u) {
+					warnx("%s:%d: invalid %s command ignored",
+					      fname, lcnt, p);
+					continue;
+				}
+#endif	/* !HAVE_NBTOOL_CONFIG_H */
 				if (addentry(tp, t, 0) == -1)
 					errx(EXIT_FAILURE,
 					    "addentry: malloc failed");

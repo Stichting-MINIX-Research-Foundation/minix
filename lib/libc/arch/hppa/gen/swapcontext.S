@@ -1,4 +1,4 @@
-/*	$NetBSD: swapcontext.S,v 1.5 2012/09/12 02:00:52 manu Exp $	*/
+/*	$NetBSD: swapcontext.S,v 1.6 2014/02/19 13:01:51 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,10 +30,12 @@
  */
 
 #include "SYS.h"
+#include "assym.h"
+
 #include <machine/mcontext.h>
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: swapcontext.S,v 1.5 2012/09/12 02:00:52 manu Exp $")
+	RCSID("$NetBSD: swapcontext.S,v 1.6 2014/02/19 13:01:51 skrll Exp $")
 #endif /* SYSLIBC_SCCS && !lint */
 
 LEAF_ENTRY(swapcontext)

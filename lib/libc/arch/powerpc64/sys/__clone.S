@@ -1,4 +1,4 @@
-/*	$NetBSD: __clone.S,v 1.1 2006/07/01 16:37:20 ross Exp $	*/
+/*	$NetBSD: __clone.S,v 1.2 2014/08/23 02:24:22 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.  All rights reserved.
@@ -40,18 +40,17 @@ ENTRY(__clone)
 	/*
 	 * Sanity checks: func and stack may not be NULL.
 	 */
-	cmpdi	%r3,0
+	cmpptri	%r3,0
 	beq	1f
-	cmpdi	%r4,0
+	cmpptri	%r4,0
 	beq	1f
 
 	mr	%r7,%r3		/* Save fn in r7. */
 	mr	%r3,%r5
-	li	%r0,SYS___clone	/* (flags, stack) */
-	sc
+	_DOSYSCALL(__clone)	/* (flags, stack) */
 	bso	2f		/* error... */
 
-	cmpdi	%r3,0
+	cmpptri	%r3,0
 	bnelr			/* We're the parent, just return. */
 
 	mtlr	%r7		/* fn */
@@ -59,8 +58,10 @@ ENTRY(__clone)
 	blrl			/* Call the clone's entry point. */
 
 	bl	PIC_PLT(_C_LABEL(_exit))
+	nop
 
 1:
 	li	%r3,EINVAL
 2:
-	b	PIC_PLT(_C_LABEL(__cerror))
+	BRANCH_TO_CERROR()
+END(__clone)

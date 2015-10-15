@@ -2,10 +2,11 @@
 
 INCSDIR= /usr/include/netinet6
 
+#__MINIX: 
 INCS=	in6.h \
 	\
 	\
 	
-INCS+=	
+INCS+=
 
 .include <bsd.kinc.mk>

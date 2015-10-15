@@ -1,4 +1,4 @@
-/*	$NetBSD: connect.c,v 1.1.1.1 2011/04/13 18:14:36 elric Exp $	*/
+/*	$NetBSD: connect.c,v 1.1.1.2 2014/04/24 12:45:27 pettai Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Kungliga Tekniska Högskolan
@@ -62,7 +62,7 @@ struct port_desc{
 /* the current ones */
 
 static struct port_desc *ports;
-static int num_ports;
+static size_t num_ports;
 
 /*
  * add `family, port, protocol' to the list with duplicate suppresion.
@@ -73,7 +73,7 @@ add_port(krb5_context context,
 	 int family, int port, const char *protocol)
 {
     int type;
-    int i;
+    size_t i;
 
     if(strcmp(protocol, "udp") == 0)
 	type = SOCK_DGRAM;
@@ -140,7 +140,7 @@ add_port_string (krb5_context context,
  */
 
 static void
-add_standard_ports (krb5_context context, 		
+add_standard_ports (krb5_context context,
 		    krb5_kdc_configuration *config,
 		    int family)
 {
@@ -150,16 +150,6 @@ add_standard_ports (krb5_context context,
     add_port_service(context, family, "kerberos-sec", 88, "tcp");
     if(enable_http)
 	add_port_service(context, family, "http", 80, "tcp");
-    if(config->enable_524) {
-	add_port_service(context, family, "krb524", 4444, "udp");
-	add_port_service(context, family, "krb524", 4444, "tcp");
-    }
-    if(config->enable_v4) {
-	add_port_service(context, family, "kerberos-iv", 750, "udp");
-	add_port_service(context, family, "kerberos-iv", 750, "tcp");
-    }
-    if (config->enable_kaserver)
-	add_port_service(context, family, "afs3-kaserver", 7004, "udp");
     if(config->enable_kx509) {
 	add_port_service(context, family, "kca_service", 9878, "udp");
 	add_port_service(context, family, "kca_service", 9878, "tcp");
@@ -174,7 +164,7 @@ add_standard_ports (krb5_context context,
  */
 
 static void
-parse_ports(krb5_context context, 		
+parse_ports(krb5_context context,
 	    krb5_kdc_configuration *config,
 	    const char *str)
 {
@@ -206,7 +196,7 @@ parse_ports(krb5_context context,
 		add_port_string(context, AF_INET, p, "tcp");
 	    }
 	}
-	
+
 	p = strtok_r(NULL, " \t", &pos);
     }
     free (str_copy);
@@ -326,7 +316,7 @@ init_sockets(krb5_context context,
 	     struct descr **desc)
 {
     krb5_error_code ret;
-    int i, j;
+    size_t i, j;
     struct descr *d;
     int num = 0;
     krb5_addresses addresses;
@@ -389,7 +379,7 @@ descr_type(struct descr *d)
 }
 
 static void
-addr_to_string(krb5_context context, 		
+addr_to_string(krb5_context context,
 	       struct sockaddr *addr, size_t addr_len, char *str, size_t len)
 {
     krb5_address a;
@@ -480,7 +470,7 @@ handle_udp(krb5_context context,
 	   struct descr *d)
 {
     unsigned char *buf;
-    int n;
+    ssize_t n;
 
     buf = malloc(max_request_udp);
     if(buf == NULL){
@@ -495,7 +485,7 @@ handle_udp(krb5_context context,
     else {
 	addr_to_string (context, d->sa, d->sock_len,
 			d->addr_string, sizeof(d->addr_string));
-	if (n == max_request_udp) {
+	if ((size_t)n == max_request_udp) {
 	    krb5_data data;
 	    krb5_warn(context, errno,
 		      "recvfrom: truncated packet from %s, asking for TCP",
@@ -756,7 +746,7 @@ handle_http_tcp (krb5_context context,
 	    return -1;
 	}
     }
-    if (len > d->len)
+    if ((size_t)len > d->len)
         len = d->len;
     memcpy(d->buf, data, len);
     d->len = len;
@@ -850,6 +840,48 @@ handle_tcp(krb5_context context,
     }
 }
 
+krb5_boolean
+realloc_descrs(struct descr **d, unsigned int *ndescr)
+{
+    struct descr *tmp;
+    size_t i;
+
+    tmp = realloc(*d, (*ndescr + 4) * sizeof(**d));
+    if(tmp == NULL)
+        return FALSE;
+
+    *d = tmp;
+    reinit_descrs (*d, *ndescr);
+    memset(*d + *ndescr, 0, 4 * sizeof(**d));
+    for(i = *ndescr; i < *ndescr + 4; i++)
+        init_descr (*d + i);
+
+    *ndescr += 4;
+
+    return TRUE;
+}
+
+int
+next_min_free(krb5_context context, struct descr **d, unsigned int *ndescr)
+{
+    size_t i;
+    int min_free;
+
+    for(i = 0; i < *ndescr; i++) {
+        int s = (*d + i)->s;
+        if(rk_IS_BAD_SOCKET(s))
+            return i;
+    }
+
+    min_free = *ndescr;
+    if(!realloc_descrs(d, ndescr)) {
+        min_free = -1;
+        krb5_warnx(context, "No memory");
+    }
+
+    return min_free;
+}
+
 void
 loop(krb5_context context,
      krb5_kdc_configuration *config)
@@ -866,7 +898,7 @@ loop(krb5_context context,
 	fd_set fds;
 	int min_free = -1;
 	int max_fd = 0;
-	int i;
+	size_t i;
 
 	FD_ZERO(&fds);
 	for(i = 0; i < ndescr; i++) {
@@ -888,22 +920,6 @@ loop(krb5_context context,
 #endif
 #endif
 		FD_SET(d[i].s, &fds);
-	    } else if(min_free < 0 || i < min_free)
-		min_free = i;
-	}
-	if(min_free == -1){
-	    struct descr *tmp;
-	    tmp = realloc(d, (ndescr + 4) * sizeof(*d));
-	    if(tmp == NULL)
-		krb5_warnx(context, "No memory");
-	    else {
-		d = tmp;
-		reinit_descrs (d, ndescr);
-		memset(d + ndescr, 0, 4 * sizeof(*d));
-		for(i = ndescr; i < ndescr + 4; i++)
-		    init_descr (&d[i]);
-		min_free = ndescr;
-		ndescr += 4;
 	    }
 	}
 
@@ -919,10 +935,12 @@ loop(krb5_context context,
 	default:
 	    for(i = 0; i < ndescr; i++)
 		if(!rk_IS_BAD_SOCKET(d[i].s) && FD_ISSET(d[i].s, &fds)) {
-		    if(d[i].type == SOCK_DGRAM)
-			handle_udp(context, config, &d[i]);
-		    else if(d[i].type == SOCK_STREAM)
-			handle_tcp(context, config, d, i, min_free);
+            min_free = next_min_free(context, &d, &ndescr);
+
+            if(d[i].type == SOCK_DGRAM)
+                handle_udp(context, config, &d[i]);
+            else if(d[i].type == SOCK_STREAM)
+                handle_tcp(context, config, d, i, min_free);
 		}
 	}
     }

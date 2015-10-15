@@ -7,6 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+// REQUIRES: locale.cs_CZ.ISO8859-2
+
 // <regex>
 
 // template <class BidirectionalIterator, class Allocator, class charT, class traits>
@@ -607,6 +609,18 @@ int main()
         assert(m.length(0) == std::char_traits<char>::length(s));
         assert(m.position(0) == 0);
         assert(m.str(0) == s);
+    }
+    {
+        std::cmatch m;
+        const char s[] = "foobar";
+        assert(std::regex_match(s, m, std::regex("[^\\0]*")));
+        assert(m.size() == 1);
+    }
+    {
+        std::cmatch m;
+        const char s[] = "foo\0bar";
+        assert(std::regex_match(s, s+7, m, std::regex("[abfor\\0]*")));
+        assert(m.size() == 1);
     }
     std::locale::global(std::locale("C"));
     {

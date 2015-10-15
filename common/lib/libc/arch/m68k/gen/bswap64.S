@@ -1,4 +1,4 @@
-/*	$NetBSD: bswap64.S,v 1.4 2013/07/18 22:42:50 matt Exp $	*/
+/*	$NetBSD: bswap64.S,v 1.5 2014/03/18 18:20:35 riastradh Exp $	*/
 
 /*
  * Copyright (C) 1996 Scott Reynolds.  All rights reserved.

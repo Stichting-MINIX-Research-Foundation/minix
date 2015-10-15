@@ -1,4 +1,4 @@
-/*	$NetBSD: kdigest.c,v 1.1.1.1 2011/04/13 18:14:38 elric Exp $	*/
+/*	$NetBSD: kdigest.c,v 1.1.1.2 2014/04/24 12:45:28 pettai Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2007 Kungliga Tekniska Högskolan
@@ -296,7 +296,7 @@ client_mschapv2(const void *server_nonce, size_t snoncelen,
     for (i = 0; i < len; i++) {
 	EVP_DigestUpdate(hctx, &password[i], 1);
 	EVP_DigestUpdate(hctx, &password[len], 1);
-    }	
+    }
     EVP_DigestFinal_ex(hctx, hmd, NULL);
 
 
@@ -386,7 +386,7 @@ digest_client_request(struct digest_client_request_options *opt,
 	client_nonce = malloc(cnoncelen);
 	if (client_nonce == NULL)
 	    errx(1, "client_nonce");
-	
+
 	cnoncelen = hex_decode(opt->client_nonce_string,
 			       client_nonce, cnoncelen);
 	if (cnoncelen <= 0)
@@ -438,6 +438,7 @@ ntlm_server_init(struct ntlm_server_init_options *opt,
     krb5_data challenge, opaque;
     struct ntlm_buf data;
     char *s;
+    static char zero2[] = "\x00\x00";
 
     memset(&type2, 0, sizeof(type2));
 
@@ -473,15 +474,15 @@ ntlm_server_init(struct ntlm_server_init_options *opt,
 	krb5_err(context, 1, ret, "krb5_ntlm_init_get_flags");
 
     krb5_ntlm_init_get_targetname(context, ntlm, &type2.targetname);
-    type2.targetinfo.data = "\x00\x00";
+    type2.targetinfo.data = zero2;
     type2.targetinfo.length = 2;
-	
+
     ret = heim_ntlm_encode_type2(&type2, &data);
     if (ret)
 	krb5_errx(context, 1, "heim_ntlm_encode_type2");
 
     free(type2.targetname);
-	
+
     /*
      *
      */

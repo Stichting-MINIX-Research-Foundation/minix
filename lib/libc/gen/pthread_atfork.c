@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_atfork.c,v 1.9 2012/03/20 16:36:05 matt Exp $	*/
+/*	$NetBSD: pthread_atfork.c,v 1.10 2015/01/20 18:31:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: pthread_atfork.c,v 1.9 2012/03/20 16:36:05 matt Exp $");
+__RCSID("$NetBSD: pthread_atfork.c,v 1.10 2015/01/20 18:31:25 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -61,7 +61,9 @@ struct atfork_callback {
  * across the fork, forking is going to be serialized anyway.
  */
 static struct atfork_callback atfork_builtin;
+#ifdef _REENTRANT
 static mutex_t atfork_lock = MUTEX_INITIALIZER;
+#endif
 SIMPLEQ_HEAD(atfork_callback_q, atfork_callback);
 
 static struct atfork_callback_q prepareq = SIMPLEQ_HEAD_INITIALIZER(prepareq);

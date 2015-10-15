@@ -1,4 +1,4 @@
-/*	$NetBSD: baselocl.h,v 1.2 2011/04/16 17:45:44 martin Exp $	*/
+/*	$NetBSD: baselocl.h,v 1.3 2014/04/24 13:45:33 pettai Exp $	*/
 
 /*
  * Copyright (c) 2010 Kungliga Tekniska Högskolan
@@ -36,6 +36,13 @@
  */
 
 #include "config.h"
+
+#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_SELECT_H
+#include <sys/select.h>
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>

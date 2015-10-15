@@ -1,4 +1,4 @@
-/*	$NetBSD: mit_dump.c,v 1.1.1.1 2011/04/13 18:14:37 elric Exp $	*/
+/*	$NetBSD: mit_dump.c,v 1.1.1.2 2014/04/24 12:45:27 pettai Exp $	*/
 
 /*
  * Copyright (c) 2000 Kungliga Tekniska Högskolan
@@ -79,7 +79,7 @@ unless no extra data
 static int
 hex_to_octet_string(const char *ptr, krb5_data *data)
 {
-    int i;
+    size_t i;
     unsigned int v;
     for(i = 0; i < data->length; i++) {
 	if(sscanf(ptr + 2 * i, "%02x", &v) != 1)
@@ -167,9 +167,9 @@ fix_salt(krb5_context context, hdb_entry *ent, int key_num)
     case KRB5_KDB_SALTTYPE_NOREALM:
     {
 	size_t len;
-	int i;
+	size_t i;
 	char *p;
-	
+
 	len = 0;
 	for (i = 0; i < ent->principal->name.name_string.len; ++i)
 	    len += strlen(ent->principal->name.name_string.val[i]);
@@ -383,7 +383,7 @@ mit_prop_dump(void *arg, const char *file)
 	    high_kvno = kvno;
 	    ALLOC(ent.entry.keys.val[i].mkvno);
 	    *ent.entry.keys.val[i].mkvno = 1;
-	
+
 	    /* key version 0 -- actual key */
 	    ent.entry.keys.val[i].key.keytype = getint(&p); /* key type */
 	    tmp = getint(&p); /* key length */

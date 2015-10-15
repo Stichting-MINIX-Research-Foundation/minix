@@ -1,4 +1,4 @@
-/*	$NetBSD: dd.c,v 1.49 2012/02/21 01:49:01 matt Exp $	*/
+/*	$NetBSD: dd.c,v 1.50 2015/03/18 13:23:49 manu Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)dd.c	8.5 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: dd.c,v 1.49 2012/02/21 01:49:01 matt Exp $");
+__RCSID("$NetBSD: dd.c,v 1.50 2015/03/18 13:23:49 manu Exp $");
 #endif
 #endif /* not lint */
 
@@ -81,6 +81,13 @@ void		(*cfunc)(void);		/* conversion function */
 uint64_t	cpy_cnt;		/* # of blocks to copy */
 static off_t	pending = 0;		/* pending seek if sparse */
 u_int		ddflags;		/* conversion options */
+#ifdef NO_IOFLAG
+#define		iflag	O_RDONLY
+#define		oflag	O_CREAT
+#else
+u_int		iflag = O_RDONLY;	/* open(2) flags for input file */
+u_int		oflag = O_CREAT;	/* open(2) flags for output file */
+#endif /* NO_IOFLAG */
 uint64_t	cbsz;			/* conversion block size */
 u_int		files_cnt = 1;		/* # of files to copy */
 uint64_t	progress = 0;		/* display sign of life */
@@ -160,7 +167,7 @@ setup(void)
 		in.ops = &ddfops_stdfd;
 	} else {
 		in.ops = prog_ops;
-		in.fd = ddop_open(in, in.name, O_RDONLY, 0);
+		in.fd = ddop_open(in, in.name, iflag, 0);
 		if (in.fd < 0)
 			err(EXIT_FAILURE, "%s", in.name);
 			/* NOTREACHED */
@@ -183,8 +190,21 @@ setup(void)
 		out.ops = &ddfops_stdfd;
 	} else {
 		out.ops = prog_ops;
+
+#ifndef NO_IOFLAG
+		if ((oflag & O_TRUNC) && (ddflags & C_SEEK)) {
+			errx(EXIT_FAILURE, "oflag=trunc is incompatible "
+			     "with seek or oseek operands, giving up.");
+			/* NOTREACHED */
+		}
+		if ((oflag & O_TRUNC) && (ddflags & C_NOTRUNC)) {
+			errx(EXIT_FAILURE, "oflag=trunc is incompatible "
+			     "with conv=notrunc operand, giving up.");
+			/* NOTREACHED */
+		}
+#endif /* NO_IOFLAG */
 #define	OFLAGS \
-    (O_CREAT | (ddflags & (C_SEEK | C_NOTRUNC) ? 0 : O_TRUNC))
+    (oflag | (ddflags & (C_SEEK | C_NOTRUNC) ? 0 : O_TRUNC))
 		out.fd = ddop_open(out, out.name, O_RDWR | OFLAGS, DEFFILEMODE);
 		/*
 		 * May not have read access, so try again with write only.

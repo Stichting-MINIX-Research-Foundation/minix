@@ -1,4 +1,4 @@
-# $NetBSD: md.mipsco,v 1.22 2013/01/16 16:01:06 christos Exp $
+# $NetBSD: md.mipsco,v 1.23 2014/07/19 14:35:10 alnsn Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/mipsco				comp-c-include
 ./usr/include/mipsco/_G_config.h		comp-obsolete		obsolete
@@ -54,7 +54,7 @@
 ./usr/include/mipsco/rwlock.h			comp-c-include
 ./usr/include/mipsco/setjmp.h			comp-c-include
 ./usr/include/mipsco/signal.h			comp-c-include
-./usr/include/mipsco/sljitarch.h		comp-c-include
+./usr/include/mipsco/sljitarch.h		comp-obsolete		obsolete
 ./usr/include/mipsco/stdarg.h			comp-obsolete		obsolete
 ./usr/include/mipsco/sysconf.h			comp-c-include
 ./usr/include/mipsco/trap.h			comp-c-include

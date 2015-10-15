@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.35 2011/06/18 21:18:46 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.37 2015/08/22 12:12:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)trap.c	8.5 (Berkeley) 6/5/95";
 #else
-__RCSID("$NetBSD: trap.c,v 1.35 2011/06/18 21:18:46 christos Exp $");
+__RCSID("$NetBSD: trap.c,v 1.37 2015/08/22 12:12:47 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -77,8 +77,8 @@ __RCSID("$NetBSD: trap.c,v 1.35 2011/06/18 21:18:46 christos Exp $");
 
 char *trap[NSIG+1];		/* trap handler commands */
 MKINIT char sigmode[NSIG];	/* current value of signal */
-volatile char gotsig[NSIG];	/* indicates specified signal received */
-int pendingsigs;		/* indicates some signal received */
+static volatile char gotsig[NSIG];/* indicates specified signal received */
+volatile int pendingsigs;	/* indicates some signal received */
 
 static int getsigaction(int, sig_t *);
 
@@ -421,7 +421,16 @@ done:
 	pendingsigs = 0;
 }
 
+int
+lastsig(void)
+{
+	int i;
 
+	for (i = NSIG; i > 0; i--)
+		if (gotsig[i - 1])
+			return i;
+	return SIGINT;	/* XXX */
+}
 
 /*
  * Controls whether the shell is interactive or not.

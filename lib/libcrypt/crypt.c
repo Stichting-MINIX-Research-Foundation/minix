@@ -1,4 +1,4 @@
-/*	$NetBSD: crypt.c,v 1.33 2011/12/28 03:13:09 christos Exp $	*/
+/*	$NetBSD: crypt.c,v 1.34 2015/06/17 00:15:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)crypt.c	8.1.1.1 (Berkeley) 8/18/93";
 #else
-__RCSID("$NetBSD: crypt.c,v 1.33 2011/12/28 03:13:09 christos Exp $");
+__RCSID("$NetBSD: crypt.c,v 1.34 2015/06/17 00:15:26 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1013,10 +1013,12 @@ prtab(const char *s, unsigned char *t, int num_rows)
 int
 main(int argc, char *argv[])
 {
-    if (argc < 2)
-	errx(1, "Usage: %s password [salt]\n", argv[0]);
+	if (argc < 2) {
+		fprintf(stderr, "Usage: %s password [salt]\n", getprogname());
+		return EXIT_FAILURE;
+	}
 
-    printf("%s\n", crypt(argv[1], (argc > 2) ? argv[2] : argv[1]));
-    exit(0);
+	printf("%s\n", crypt(argv[1], (argc > 2) ? argv[2] : argv[1]));
+	return EXIT_SUCCESS;
 }
 #endif

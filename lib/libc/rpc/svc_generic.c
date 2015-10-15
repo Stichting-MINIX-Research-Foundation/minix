@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_generic.c,v 1.15 2013/03/11 20:19:29 tron Exp $	*/
+/*	$NetBSD: svc_generic.c,v 1.17 2014/05/29 12:35:45 christos Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)svc_generic.c 1.21 89/02/28 Copyr 1988 Sun Micro";
 #else
-__RCSID("$NetBSD: svc_generic.c,v 1.15 2013/03/11 20:19:29 tron Exp $");
+__RCSID("$NetBSD: svc_generic.c,v 1.17 2014/05/29 12:35:45 christos Exp $");
 #endif
 #endif
 
@@ -251,7 +251,12 @@ svc_tli_create(
 					goto freedata;
 				}
 			}
-			listen(fd, SOMAXCONN);
+			if (si.si_socktype != SOCK_DGRAM &&
+			    listen(fd, SOMAXCONN) == -1) {
+				warnx("%s: could not listen at anonymous port",
+				    __func__);
+				goto freedata;
+			}
 		} else {
 			if (bind(fd,
 			    (struct sockaddr *)bindaddr->addr.buf,
@@ -260,9 +265,13 @@ svc_tli_create(
 				    __func__);
 				goto freedata;
 			}
-			listen(fd, (int)bindaddr->qlen);
+			if (si.si_socktype != SOCK_DGRAM &&
+			    listen(fd, (int)bindaddr->qlen) == -1) {
+				warnx("%s: could not listen at requested "
+				    "address", __func__);
+				goto freedata;
+			}
 		}
-			
 	}
 	/*
 	 * call transport specific function.

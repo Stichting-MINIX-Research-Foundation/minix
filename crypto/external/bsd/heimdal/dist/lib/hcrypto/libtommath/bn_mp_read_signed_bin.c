@@ -1,4 +1,4 @@
-/*	$NetBSD: bn_mp_read_signed_bin.c,v 1.1.1.1 2011/04/13 18:14:54 elric Exp $	*/
+/*	$NetBSD: bn_mp_read_signed_bin.c,v 1.1.1.2 2014/04/24 12:45:31 pettai Exp $	*/
 
 #include <tommath.h>
 #ifdef BN_MP_READ_SIGNED_BIN_C
@@ -38,6 +38,6 @@ int mp_read_signed_bin (mp_int * a, const unsigned char *b, int c)
 }
 #endif
 
-/* Source: /cvs/libtom/libtommath/bn_mp_read_signed_bin.c,v */
-/* Revision: 1.5 */
-/* Date: 2006/12/28 01:25:13 */
+/* Source: /cvs/libtom/libtommath/bn_mp_read_signed_bin.c,v  */
+/* Revision: 1.5  */
+/* Date: 2006/12/28 01:25:13  */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.13 2012/09/11 15:28:14 matt Exp $	*/
+/*	$NetBSD: pte.h,v 1.19 2014/10/29 10:59:48 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -137,6 +137,7 @@ typedef uint32_t	pt_entry_t;	/* L2 table entry */
  * keep the old L2_TABLE_SIZE define lying around. Converted ports
  * should use L2_TABLE_SIZE_REAL until then.
  */
+#define	L1_TABLE_SIZE_REAL	0x4000	/* 16K */
 #define	L2_TABLE_SIZE_REAL	0x400	/* 1K */
 
 /*
@@ -201,13 +202,13 @@ typedef uint32_t	pt_entry_t;	/* L2 table entry */
 #define	L2_TYPE_T	0x03		/* Tiny Page (not armv7) */
 #define	L2_TYPE_MASK	0x03		/* mask of type bits */
 
-	/*
-	 * This L2 Descriptor type is available on XScale processors
-	 * when using a Coarse L1 Descriptor.  The Extended Small
-	 * Descriptor has the same format as the XScale Tiny Descriptor,
-	 * but describes a 4K page, rather than a 1K page.
-	 * For V6 MMU, this is used when XP bit is cleared.
-	 */
+/*
+ * This L2 Descriptor type is available on XScale processors
+ * when using a Coarse L1 Descriptor.  The Extended Small
+ * Descriptor has the same format as the XScale Tiny Descriptor,
+ * but describes a 4K page, rather than a 1K page.
+ * For V6 MMU, this is used when XP bit is cleared.
+ */
 #define	L2_TYPE_XS	0x03		/* XScale/ARMv6 Extended Small Page */
 
 #define	L2_B		0x00000004	/* Bufferable page */
@@ -226,6 +227,7 @@ typedef uint32_t	pt_entry_t;	/* L2 table entry */
 #define	L2_XS_nG	0x00000800	/* ARMv6 Not-Global */
 #define	L2_V6_L_TEX	L2_XS_L_TEX
 #define	L2_V6_XS_TEX	L2_XS_T_TEX
+#define	L2_XS_L_XN	0x00008000	/* ARMv6 eXecute Never */
 
 
 /*
@@ -238,7 +240,7 @@ typedef uint32_t	pt_entry_t;	/* L2 table entry */
  * Access Permissions for L1 and L2 of ARMv6 with XP=1 and ARMv7
  */
 #define	AP_R		0x01		/* readable */
-#define	AP_RO		0x20		/* read-only */
+#define	AP_RO		0x20		/* read-only (L2_XS_APX >> 4) */
 
 /*
  * Short-hand for common AP_* constants.
@@ -248,8 +250,8 @@ typedef uint32_t	pt_entry_t;	/* L2 table entry */
  */
 #define	AP_KR		0x00		/* kernel read */
 #define	AP_KRW		0x01		/* kernel read/write */
-#define	AP_KRWUR	0x02		/* kernel read/write usr read */
-#define	AP_KRWURW	0x03		/* kernel read/write usr read/write */
+#define	AP_KRWUR	0x02		/* kernel read/write user read */
+#define	AP_KRWURW	0x03		/* kernel read/write user read/write */
 
 /*
  * Note: These values assume the S (System) and the R (ROM) bits are clear and
@@ -267,9 +269,9 @@ typedef uint32_t	pt_entry_t;	/* L2 table entry */
  * Also used for ARMv6 with XP bit set.
  */
 #define	AP7_KR		0x21		/* kernel read */
-#define	AP7_KRUR	0x23		/* kernel read usr read */
+#define	AP7_KRUR	0x23		/* kernel read user read */
 #define	AP7_KRW		0x01		/* kernel read/write */
-#define	AP7_KRWURW	0x03		/* kernel read/write usr read/write */
+#define	AP7_KRWURW	0x03		/* kernel read/write user read/write */
 
 /*
  * Domain Types for the Domain Access Control Register.
@@ -302,34 +304,32 @@ typedef uint32_t	pt_entry_t;	/* L2 table entry */
 /*
  * Type Extension bits for ARM V6 and V7 MMU
  *
- * TEX C B                                    Shared
- * 000 0 0  Strong order                      yes
- * 000 0 1  Shared device                     yes
- * 000 1 0  write through, no write alloc     S-bit
- * 000 1 1  write back, no write alloc        S-bit
- * 001 0 0  non-cacheable                     S-bit
+ * TEX C B                                                    Shared
+ * 000 0 0  Strong order                                      yes
+ * 000 0 1  Shared device                                     yes
+ * 000 1 0  Outer and Inner write through, no write alloc     S-bit
+ * 000 1 1  Outer and Inner write back, no write alloc        S-bit
+ * 001 0 0  Outer and Inner non-cacheable                     S-bit
  * 001 0 1  reserved
  * 001 1 0  reserved
- * 001 1 1  write back, write alloc           S-bit
- * 010 0 0  Non-shared device                 no
+ * 001 1 1  Outer and Inner write back, write alloc           S-bit
+ * 010 0 0  Non-shared device                                 no
  * 010 0 1  reserved
  * 010 1 X  reserved
  * 011 X X  reserved
- * 1BB A A  BB for internal, AA for external  S-bit
+ * 1BB A A  BB for inner, AA for outer                        S-bit
  *
- *    BB    internal cache
- *    0 0   Non-cacheable non-buffered
- *    0 1   Write back, write alloc, buffered
- *    1 0   Write through, no write alloc, buffered
- *          (non-cacheable for MPCore)
- *    1 1   Write back, no write alloc, buffered
- *          (write back, write alloc for MPCore)
- *    
- *    AA    external cache 
- *    0 0   Non-cacheable non-buffered
- *    0 1   Write back, write alloc, buffered
- *    1 0   Write through, no write alloc, buffered
- *    1 1   Write back, no write alloc, buffered
+ *    BB    inner cache
+ *    0 0   Non-cacheable
+ *    0 1   Write back, write alloc
+ *    1 0   Write through, no write alloc
+ *    1 1   Write back, no write alloc
+ *
+ *    AA    outer cache
+ *    0 0   Non-cacheable
+ *    0 1   Write back, write alloc
+ *    1 0   Write through, no write alloc
+ *    1 1   Write back, no write alloc
  */
 
 #define	TEX_ARMV6_TEX	0x07		/* 3 bits in TEX */

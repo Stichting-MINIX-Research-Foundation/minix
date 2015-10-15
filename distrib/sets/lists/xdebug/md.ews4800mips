@@ -1,16 +1,16 @@
-# $NetBSD: md.ews4800mips,v 1.2 2013/08/11 22:29:03 joerg Exp $
-./usr/X11R7/lib/modules/extensions/libdbe_g.a		-unknown-	debuglib,xorg
-./usr/X11R7/lib/modules/extensions/libdri2_g.a		-unknown-	debuglib,xorg
-./usr/X11R7/lib/modules/extensions/libdri_g.a		-unknown-	debuglib,xorg
-./usr/X11R7/lib/modules/extensions/libextmod_g.a	-unknown-	debuglib,xorg
-./usr/X11R7/lib/modules/extensions/librecord_g.a	-unknown-	debuglib,xorg
-./usr/X11R7/lib/modules/extensions/libshadow_g.a	-unknown-	debuglib,xorg
-./usr/X11R7/lib/modules/libfb_g.a			-unknown-	debuglib,xorg
-./usr/X11R7/lib/modules/libi2c_g.a			-unknown-	debuglib,xorg
-./usr/X11R7/lib/modules/libshadowfb_g.a			-unknown-	debuglib,xorg
-./usr/X11R7/lib/modules/libvbe_g.a			-unknown-	debuglib,xorg
-./usr/X11R7/lib/modules/libvgahw_g.a			-unknown-	debuglib,xorg
-./usr/X11R7/lib/modules/libxaa_g.a			-unknown-	debuglib,xorg
+# $NetBSD: md.ews4800mips,v 1.3 2015/07/18 08:56:06 mrg Exp $
+./usr/X11R7/lib/modules/extensions/libdbe_g.a		-unknown-	debuglib,xorg,obsolete
+./usr/X11R7/lib/modules/extensions/libdri2_g.a		-unknown-	debuglib,xorg,obsolete
+./usr/X11R7/lib/modules/extensions/libdri_g.a		-unknown-	debuglib,xorg,obsolete
+./usr/X11R7/lib/modules/extensions/libextmod_g.a	-unknown-	debuglib,xorg,obsolete
+./usr/X11R7/lib/modules/extensions/librecord_g.a	-unknown-	debuglib,xorg,obsolete
+./usr/X11R7/lib/modules/extensions/libshadow_g.a	-unknown-	debuglib,xorg,obsolete
+./usr/X11R7/lib/modules/libfb_g.a			-unknown-	debuglib,xorg,obsolete
+./usr/X11R7/lib/modules/libi2c_g.a			-unknown-	debuglib,xorg,obsolete
+./usr/X11R7/lib/modules/libshadowfb_g.a			-unknown-	debuglib,xorg,obsolete
+./usr/X11R7/lib/modules/libvbe_g.a			-unknown-	debuglib,xorg,obsolete
+./usr/X11R7/lib/modules/libvgahw_g.a			-unknown-	debuglib,xorg,obsolete
+./usr/X11R7/lib/modules/libxaa_g.a			-unknown-	debuglib,xorg,obsolete
 ./usr/X11R7/lib/modules/libxf8_16bpp_g.a		-unknown-	obsolete
 ./usr/libdata/debug/usr/X11R6/bin/Xews4800mips.debug	-unknown-	debug,x11
 ./usr/libdata/debug/usr/X11R6/bin/Xvfb.debug		-unknown-	debug,x11
@@ -29,7 +29,7 @@
 ./usr/libdata/debug/usr/X11R7/lib/modules/extensions/libshadow.so.0.debug	-unknown-	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/libexa.so.0.debug	-unknown-	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/libfb.so.0.debug	-unknown-	xorg,debug
-./usr/libdata/debug/usr/X11R7/lib/modules/libi2c.so.0.debug	-unknown-	xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/libi2c.so.0.debug	-unknown-	xorg,debug,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/libshadowfb.so.0.debug	-unknown-	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/libvbe.so.0.debug	-unknown-	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/libvgahw.so.0.debug	-unknown-	xorg,debug

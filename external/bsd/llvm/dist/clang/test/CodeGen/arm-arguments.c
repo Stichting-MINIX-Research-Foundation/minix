@@ -176,21 +176,16 @@ void f32(struct s32 s) { }
 // PR13350
 struct s33 { char buf[32*32]; };
 void f33(struct s33 s) { }
-// APCS-GNU-LABEL: define void @f33(%struct.s33* byval %s)
-// AAPCS-LABEL: define arm_aapcscc void @f33(%struct.s33* byval %s)
+// APCS-GNU-LABEL: define void @f33(%struct.s33* byval align 1 %s)
+// AAPCS-LABEL: define arm_aapcscc void @f33(%struct.s33* byval align 1 %s)
 
 // PR14048
 struct s34 { char c; };
 void f34(struct s34 s);
 void g34(struct s34 *s) { f34(*s); }
-// APCS-GNU: @g34(%struct.s34* %s)
-// APCS-GNU: %[[a:.*]] = alloca { [1 x i32] }
-// APCS-GNU: %[[gep:.*]] = getelementptr { [1 x i32] }* %[[a]], i32 0, i32 0
-// APCS-GNU: load [1 x i32]* %[[gep]]
 // AAPCS: @g34(%struct.s34* %s)
-// AAPCS: %[[a:.*]] = alloca { [1 x i32] }
-// AAPCS: %[[gep:.*]] = getelementptr { [1 x i32] }* %[[a]], i32 0, i32 0
-// AAPCS: load [1 x i32]* %[[gep]]
+// AAPCS: %[[a:.*]] = alloca [1 x i32]
+// AAPCS: load [1 x i32]* %[[a]]
 
 // rdar://12596507
 struct s35
@@ -209,14 +204,14 @@ float32x4_t f35(int i, s35_with_align s1, s35_with_align s2) {
                             *(float32x4_t *)&s2);
   return v;
 }
-// APCS-GNU-LABEL: define <4 x float> @f35(i32 %i, %struct.s35* byval, %struct.s35* byval)
+// APCS-GNU-LABEL: define <4 x float> @f35(i32 %i, %struct.s35* byval align 16, %struct.s35* byval align 16)
 // APCS-GNU: %[[a:.*]] = alloca %struct.s35, align 16
 // APCS-GNU: %[[b:.*]] = bitcast %struct.s35* %[[a]] to i8*
 // APCS-GNU: %[[c:.*]] = bitcast %struct.s35* %0 to i8*
 // APCS-GNU: call void @llvm.memcpy.p0i8.p0i8.i32(i8* %[[b]], i8* %[[c]]
 // APCS-GNU: %[[d:.*]] = bitcast %struct.s35* %[[a]] to <4 x float>*
 // APCS-GNU: load <4 x float>* %[[d]], align 16
-// AAPCS-LABEL: define arm_aapcscc <4 x float> @f35(i32 %i, %struct.s35* byval, %struct.s35* byval)
+// AAPCS-LABEL: define arm_aapcscc <4 x float> @f35(i32 %i, %struct.s35* byval align 16, %struct.s35* byval align 16)
 // AAPCS: %[[a:.*]] = alloca %struct.s35, align 16
 // AAPCS: %[[b:.*]] = bitcast %struct.s35* %[[a]] to i8*
 // AAPCS: %[[c:.*]] = bitcast %struct.s35* %0 to i8*

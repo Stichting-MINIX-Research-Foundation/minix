@@ -1,8 +1,11 @@
-/*	$NetBSD: brk.S,v 1.4 2011/10/29 16:03:33 christos Exp $	*/
+/*	$NetBSD: brk.S,v 1.5 2014/08/23 02:24:22 matt Exp $	*/
 
 #include "SYS.h"
 
+
+	.hidden	_C_LABEL(__curbrk)
 	.globl	_C_LABEL(__curbrk)
+	.hidden	_C_LABEL(__minbrk)
 	.globl	_C_LABEL(__minbrk)
 	.globl	_C_LABEL(_end)
 
@@ -10,32 +13,30 @@
 WEAK_ALIAS(brk, _brk)
 #endif
 
-	.macro  LdAddr  r,sym
-	.pushsection    ".toc","aw"
-100:	.tc \sym[TC],\sym
-	.popsection
-	ld      \r,100b@toc(2)
-	.endm
-
-        .data
+	.data
+	.p2align 3
 _C_LABEL(__minbrk):
-	.long   _C_LABEL(_end)      
-	.text
+	.quad	_C_LABEL(_end)
+_C_LABEL(__curbrk):
+	.quad	_C_LABEL(_end)
 
 ENTRY(_brk)
-	LdAddr	%r5,_end
-	cmpld	%r5,%r3			# if (&_end <= r3)
+	addis	%r9,%r2,_C_LABEL(__minbrk)@toc@ha
+	ldptru	%r5,_C_LABEL(__minbrk)@toc@l(%r9)
+	cmpptrl	%r5,%r3			# if (__minbrk <= r3)
+#ifdef __PPC_ISEL__
+	iselgt	%r3,%r5,%r3
+#else
 	bgt	0f
 	mr	%r5,%r3			# r5 = r3
 0:
 	mr	%r3,%r5			# new break value
-	li	%r0,SYS_break
-	sc				# assume, that r5 is kept
+#endif
+	_DOSYSCALL(break)		# assume that r5 is preserved
 	bso	1f
-	LdAddr	%r6,__curbrk
-	std	%r5,0(%r6)
+	stptr	%r5,__SIZEOF_POINTER__(%r9)
 	blr				# return 0
 
 1:
-	b	PIC_PLT(_C_LABEL(__cerror))
-
+	BRANCH_TO_CERROR()
+END(_brk)

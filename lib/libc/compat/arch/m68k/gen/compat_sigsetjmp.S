@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_sigsetjmp.S,v 1.2 2013/07/17 21:29:01 matt Exp $	*/
+/*	$NetBSD: compat_sigsetjmp.S,v 1.3 2014/03/18 18:20:37 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
 #if 0
 	RCSID("from: @(#)_setjmp.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: compat_sigsetjmp.S,v 1.2 2013/07/17 21:29:01 matt Exp $")
+	RCSID("$NetBSD: compat_sigsetjmp.S,v 1.3 2014/03/18 18:20:37 riastradh Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 

@@ -1,3 +1,24 @@
-# $NetBSD: md.mac68k,v 1.1 2013/01/16 21:11:16 christos Exp $
-./usr/libdata/debug/usr/X11R6/bin/Xmac68k.debug		-unknown-	x11,debug
-./usr/libdata/debug/usr/X11R6/bin/Xvfb.debug		-unknown-	x11,debug
+# $NetBSD: md.mac68k,v 1.2 2015/10/05 11:14:32 rjs Exp $
+./usr/libdata/debug/usr/X11R6/bin/Xmac68k.debug		-unknown-	obsolete
+./usr/libdata/debug/usr/X11R6/bin/Xvfb.debug		-unknown-	obsolete
+./usr/libdata/debug/usr/X11R7/bin/Xorg.debug	-unknown-	debug,xorg
+./usr/libdata/debug/usr/X11R7/bin/cvt.debug	-unknown-	debug,xorg
+./usr/libdata/debug/usr/X11R7/bin/gtf.debug	-unknown-	debug,xorg
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/kbd_drv.so.1.debug	-unknown-	debug,xorg
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/mouse_drv.so.1.debug	-unknown-	debug,xorg
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ws_drv.so.1.debug	-unknown-	debug,xorg
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/wsfb_drv.so.0.debug	-unknown-	debug,xorg
+./usr/libdata/debug/usr/X11R7/lib/modules/extensions/libdbe.so.0.debug	-unknown-	debug,xorg
+./usr/libdata/debug/usr/X11R7/lib/modules/extensions/libdri.so.0.debug	-unknown-	debug,xorg
+./usr/libdata/debug/usr/X11R7/lib/modules/extensions/libdri2.so.0.debug	-unknown-	debug,xorg
+./usr/libdata/debug/usr/X11R7/lib/modules/extensions/libextmod.so.0.debug	-unknown-	debug,xorg
+./usr/libdata/debug/usr/X11R7/lib/modules/extensions/libglx.so.0.debug	-unknown-	debug,xorg
+./usr/libdata/debug/usr/X11R7/lib/modules/extensions/librecord.so.0.debug	-unknown-	debug,xorg
+./usr/libdata/debug/usr/X11R7/lib/modules/extensions/libshadow.so.0.debug	-unknown-	debug,xorg
+./usr/libdata/debug/usr/X11R7/lib/modules/libexa.so.0.debug	-unknown-	debug,xorg
+./usr/libdata/debug/usr/X11R7/lib/modules/libfb.so.0.debug	-unknown-	debug,xorg
+./usr/libdata/debug/usr/X11R7/lib/modules/libshadowfb.so.0.debug	-unknown-	debug,xorg
+./usr/libdata/debug/usr/X11R7/lib/modules/libvbe.so.0.debug	-unknown-	debug,xorg
+./usr/libdata/debug/usr/X11R7/lib/modules/libvgahw.so.0.debug	-unknown-	debug,xorg
+./usr/libdata/debug/usr/X11R7/lib/modules/libxaa.so.0.debug	-unknown-	debug,xorg
+

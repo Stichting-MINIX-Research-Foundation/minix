@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_extattr.c,v 1.6 2013/06/08 22:23:52 dholland Exp $	*/
+/*	$NetBSD: ulfs_extattr.c,v 1.7 2014/02/07 15:29:23 hannken Exp $	*/
 /*  from NetBSD: ufs_extattr.c,v 1.41 2012/12/08 13:42:36 manu Exp  */
 
 /*-
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_extattr.c,v 1.6 2013/06/08 22:23:52 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_extattr.c,v 1.7 2014/02/07 15:29:23 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_lfs.h"
@@ -437,7 +437,7 @@ static int
 ulfs_extattr_lookup(struct vnode *start_dvp, int lockparent, const char *dirname,
     struct vnode **vp, struct lwp *l)
 {
-	struct vop_lookup_args vargs;
+	struct vop_lookup_v2_args vargs;
 	struct componentname cnp;
 	struct vnode *target_vp;
 	char *pnbuf;
@@ -479,8 +479,15 @@ ulfs_extattr_lookup(struct vnode *start_dvp, int lockparent, const char *dirname
 		panic("ulfs_extattr_lookup: target_vp == start_dvp");
 #endif
 
-	if ((target_vp != start_dvp) && (lockparent == 0))
-		 VOP_UNLOCK(start_dvp);
+	if (target_vp != start_dvp) {
+		error = vn_lock(target_vp, LK_EXCLUSIVE);
+		if (lockparent == 0)
+			VOP_UNLOCK(start_dvp);
+		if (error) {
+			vrele(target_vp);
+			return error;
+		}
+	}
 
 	KASSERT(VOP_ISLOCKED(target_vp) == LK_EXCLUSIVE);
 	*vp = target_vp;

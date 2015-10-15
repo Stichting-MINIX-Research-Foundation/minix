@@ -102,7 +102,7 @@ while read result cert other ; do
 	args="$args crl:FILE:$a"
     done
 
-    cmd="${hxtool} verify $args"
+    cmd="${hxtool} verify --time=2008-05-20 $args"
     eval ${cmd} > /dev/null
     res=$?
 

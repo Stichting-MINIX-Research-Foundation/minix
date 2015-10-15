@@ -256,7 +256,7 @@ parse_test_case(FILE* input, FILE* output, char* name)
     while (!kyua_error_is_set(error) &&
            fgets_no_newline(line, sizeof(line), input) != NULL &&
            strcmp(line, "") != 0) {
-        char* key = NULL; char* value = NULL; /* LSC: needed when compiling in -O3 */
+        char* key; char* value;
         error = parse_property(line, &key, &value);
         if (!kyua_error_is_set(error)) {
             const char* out_key = rewrite_property(key);
@@ -300,7 +300,7 @@ parse_tests(FILE* input, FILE* output)
     kyua_error_t error;
 
     do {
-        char* key = NULL; char* value = NULL; /* LSC: needed when compiling in -O3 */
+        char* key; char* value;
         error = parse_property(line, &key, &value);
         if (kyua_error_is_set(error))
             break;

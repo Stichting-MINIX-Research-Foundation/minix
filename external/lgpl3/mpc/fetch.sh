@@ -5,7 +5,7 @@ echo $0
 cd `dirname $0`
 
 # Configure fetch method
-URL="http://www.minix3.org/pkgsrc/distfiles/minix/3.3.0/mpc-1.0.1.tar.gz"
+URL="http://www.minix3.org/pkgsrc/distfiles/minix/3.4.0/mpc-1.0.1.tar.gz"
 BACKUP_URL="http://www.multiprecision.org/mpc/download/mpc-1.0.1.tar.gz"
 FETCH=ftp
 which curl >/dev/null

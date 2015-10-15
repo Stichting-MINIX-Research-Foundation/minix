@@ -13,20 +13,20 @@ EXPORTS
 	_hx509_generate_private_key_is_ca
 	_hx509_map_file_os
 	_hx509_name_from_Name
-	_hx509_private_key2SPKI
-	_hx509_private_key_free
+	hx509_private_key2SPKI
+	hx509_private_key_free
 	_hx509_private_key_ref
 	_hx509_request_add_dns_name
 	_hx509_request_add_email
-	_hx509_request_free
-	_hx509_request_get_SubjectPublicKeyInfo
-	_hx509_request_get_name
-	_hx509_request_init
+	hx509_request_free
+	hx509_request_get_SubjectPublicKeyInfo
+	hx509_request_get_name
+	hx509_request_init
 	_hx509_request_parse
 	_hx509_request_print
-	_hx509_request_set_SubjectPublicKeyInfo
+	hx509_request_set_SubjectPublicKeyInfo
 ;	_hx509_request_set_email
-	_hx509_request_set_name
+	hx509_request_set_name
 	_hx509_request_to_pkcs10
 	_hx509_request_to_pkcs10
 	_hx509_unmap_file_os

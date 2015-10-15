@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.108 2013/01/31 14:30:47 joerg Exp $	*/
+/*	$NetBSD: socket.h,v 1.117 2015/04/03 20:01:08 rtr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -107,6 +107,8 @@ typedef	_BSD_SSIZE_T_	ssize_t;
 #define	SOCK_RAW	3		/* raw-protocol interface */
 #define	SOCK_RDM	4		/* reliably-delivered message */
 #define	SOCK_SEQPACKET	5		/* sequenced packet stream */
+#define	SOCK_CONN_DGRAM	6		/* connection-orientated datagram */
+#define	SOCK_DCCP	SOCK_CONN_DGRAM
 
 #define	SOCK_CLOEXEC	0x10000000	/* set close on exec on socket */
 #define	SOCK_NONBLOCK	0x20000000	/* set non blocking i/o socket */
@@ -136,7 +138,6 @@ typedef	_BSD_SSIZE_T_	ssize_t;
 #define SO_PASSCRED    0x100000
 #define SO_PEERCRED    0x200000
 #endif /* defined(__minix) */
-
 
 /*
  * Additional options, not kept in so_options.
@@ -246,6 +247,24 @@ struct sockproto {
 	u_short	sp_family;		/* address family */
 	u_short	sp_protocol;		/* protocol */
 };
+
+/*
+ * we make the entire struct at least UCHAR_MAX + 1 in size since existing
+ * use of sockaddr_un permits a path up to 253 bytes + '\0'.
+ * sizeof(sb_len) + sizeof(sb_family) + 253 + '\0'
+ */
+#define _SB_DATASIZE	254
+struct sockaddr_big {
+    union {
+	struct {
+	    __uint8_t	sb_len;
+	    sa_family_t	sb_family;
+	    char	sb_data[_SB_DATASIZE];
+	};
+	uint64_t dummy; /* solicit natural alignment */
+    };
+};
+
 #endif /* _KERNEL */
 
 #if 1
@@ -347,7 +366,8 @@ struct sockcred {
  * Compute size of a sockcred structure with groups.
  */
 #define	SOCKCREDSIZE(ngrps) \
-	(sizeof(struct sockcred) + (sizeof(gid_t) * ((ngrps) - 1)))
+	(/*CONSTCOND*/sizeof(struct sockcred) + (sizeof(gid_t) * \
+	    ((ngrps) ? ((ngrps) - 1) : 0)))
 #endif /* _NETBSD_SOURCE */
 
 
@@ -434,6 +454,8 @@ struct kinfo_pcb {
 
 #define ki_src ki_s._kis_src
 #define ki_dst ki_d._kid_dst
+#define ki_spad ki_s._kis_pad
+#define ki_dpad ki_d._kid_pad
 
 #define PCB_SLOP		20
 #define PCB_ALL			0
@@ -473,6 +495,8 @@ struct kinfo_pcb {
 #define	SOMAXCONN	128
 #endif
 
+#include <sys/cdefs.h>
+
 /*
  * Message header for recvmsg and sendmsg calls.
  * Used value-result for recvmsg, value only for sendmsg.
@@ -497,9 +521,9 @@ struct msghdr {
 #define	MSG_DONTWAIT	0x0080		/* this message should be nonblocking */
 #define	MSG_BCAST	0x0100		/* this message was rcvd using link-level brdcst */
 #define	MSG_MCAST	0x0200		/* this message was rcvd using link-level mcast */
-#ifndef __minix
+#if !defined(__minix)
 #define	MSG_NOSIGNAL	0x0400		/* do not generate SIGPIPE on EOF */
-#endif
+#endif /* !defined(__minix) */
 #if defined(_NETBSD_SOURCE)
 #define	MSG_CMSG_CLOEXEC 0x0800		/* close on exec receiving fd */
 #define	MSG_NBIO	0x1000		/* use non-blocking I/O */
@@ -531,13 +555,6 @@ struct cmsghdr {
 /* followed by	u_char  cmsg_data[]; */
 };
 
-/* given pointer to struct cmsghdr, return pointer to data */
-#define	CMSG_DATA(cmsg) \
-	((u_char *)(void *)(cmsg) + __CMSG_ALIGN(sizeof(struct cmsghdr)))
-#define	CCMSG_DATA(cmsg) \
-	((const u_char *)(const void *)(cmsg) + \
-	__CMSG_ALIGN(sizeof(struct cmsghdr)))
-
 /*
  * Alignment requirement for CMSG struct manipulation.
  * This basically behaves the same as ALIGN() ARCH/include/param.h.
@@ -548,30 +565,38 @@ struct cmsghdr {
  * changes in ALIGNBYTES.
  */
 #define __CMSG_ALIGN(n)	(((n) + __ALIGNBYTES) & ~__ALIGNBYTES)
+
 #ifdef _KERNEL
 #define CMSG_ALIGN(n)	__CMSG_ALIGN(n)
 #endif
 
+#define __CMSG_ASIZE	__CMSG_ALIGN(sizeof(struct cmsghdr))
+#define __CMSG_MSGNEXT(cmsg) \
+    (__CASTV(char *, cmsg) + __CMSG_ALIGN((cmsg)->cmsg_len))
+#define __CMSG_MSGEND(mhdr) \
+    (__CASTV(char *, (mhdr)->msg_control) + (mhdr)->msg_controllen)
+
+/* given pointer to struct cmsghdr, return pointer to data */
+#define	CMSG_DATA(cmsg) (__CASTV(u_char *, cmsg) + __CMSG_ASIZE)
+#define	CCMSG_DATA(cmsg) (__CASTCV(const u_char *, cmsg) + __CMSG_ASIZE)
+
 /* given pointer to struct cmsghdr, return pointer to next cmsghdr */
 #define	CMSG_NXTHDR(mhdr, cmsg)	\
-	(((char *)(cmsg) + __CMSG_ALIGN((cmsg)->cmsg_len) + \
-			    __CMSG_ALIGN(sizeof(struct cmsghdr)) > \
-	    (((char *)(mhdr)->msg_control) + (mhdr)->msg_controllen)) ? \
-	    (struct cmsghdr *)0 : \
-	    (struct cmsghdr *)(void *)((char *)(cmsg) + \
-	        __CMSG_ALIGN((cmsg)->cmsg_len)))
+    __CASTV(struct cmsghdr *,  \
+	__CMSG_MSGNEXT(cmsg) + __CMSG_ASIZE > __CMSG_MSGEND(mhdr) ? 0 : \
+	__CMSG_MSGNEXT(cmsg))
 
 /*
  * RFC 2292 requires to check msg_controllen, in case that the kernel returns
  * an empty list for some reasons.
  */
 #define	CMSG_FIRSTHDR(mhdr) \
-	((mhdr)->msg_controllen >= sizeof(struct cmsghdr) ? \
-	 (struct cmsghdr *)(mhdr)->msg_control : \
-	 (struct cmsghdr *)0)
+    __CASTV(struct cmsghdr *, \
+	(mhdr)->msg_controllen < sizeof(struct cmsghdr) ? 0 : \
+	(mhdr)->msg_control)
 
-#define CMSG_SPACE(l)	(__CMSG_ALIGN(sizeof(struct cmsghdr)) + __CMSG_ALIGN(l))
-#define CMSG_LEN(l)	(__CMSG_ALIGN(sizeof(struct cmsghdr)) + (l))
+#define CMSG_SPACE(l)	(__CMSG_ASIZE + __CMSG_ALIGN(l))
+#define CMSG_LEN(l)	(__CMSG_ASIZE + (l))
 
 /* "Socket"-level control message types: */
 #define	SCM_RIGHTS	0x01		/* access rights (array of int) */
@@ -587,8 +612,6 @@ struct cmsghdr {
 #define	SHUT_RD		0		/* Disallow further receives. */
 #define	SHUT_WR		1		/* Disallow further sends. */
 #define	SHUT_RDWR	2		/* Disallow further sends/receives. */
-
-#include <sys/cdefs.h>
 
 #ifdef	_KERNEL
 static inline socklen_t
@@ -610,7 +633,7 @@ const struct sockaddr *sockaddr_any_by_family(int);
 const void *sockaddr_anyaddr(const struct sockaddr *, socklen_t *);
 int sockaddr_cmp(const struct sockaddr *, const struct sockaddr *);
 struct sockaddr *sockaddr_dup(const struct sockaddr *, int);
-void sockaddr_format(const struct sockaddr *, char *, size_t);
+int sockaddr_format(const struct sockaddr *, char *, size_t);
 void sockaddr_free(struct sockaddr *);
 __END_DECLS
 #endif /* _KERNEL */

@@ -1,4 +1,4 @@
-/*	$NetBSD: gsstool.c,v 1.1.1.1 2011/04/13 18:14:43 elric Exp $	*/
+/*	$NetBSD: gsstool.c,v 1.1.1.2 2014/04/24 12:45:28 pettai Exp $	*/
 
 /*
  * Copyright (c) 2006 Kungliga Tekniska Högskolan
@@ -134,7 +134,7 @@ supported_mechanisms(void *argptr, int argc, char **argv)
     return 0;
 }
 
-void static 
+static void
 print_mech_attr(const char *mechname, gss_const_OID mech, gss_OID_set set)
 {
     gss_buffer_desc name, desc;
@@ -156,14 +156,14 @@ print_mech_attr(const char *mechname, gss_const_OID mech, gss_OID_set set)
 	major = gss_display_mech_attr(&minor, &set->elements[n], &name, &desc, NULL);
 	if (major)
 	    continue;
-	
+
 	rtbl_add_column_entryv(ct, COL_OID, "%.*s",
 			       (int)name.length, (char *)name.value);
 	rtbl_add_column_entryv(ct, COL_DESC, "%.*s",
 			       (int)desc.length, (char *)desc.value);
 	if (mech) {
 	    gss_buffer_desc value;
-	    
+
 	    if (gss_mo_get(mech, &set->elements[n], &value) != 0)
 		value.length = 0;
 

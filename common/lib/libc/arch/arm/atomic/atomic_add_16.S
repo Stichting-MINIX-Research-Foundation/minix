@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_add_16.S,v 1.1 2013/11/08 22:42:52 matt Exp $	*/
+/*	$NetBSD: atomic_add_16.S,v 1.3 2014/06/23 21:53:45 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -55,14 +55,16 @@ END(_atomic_sub_16)
 ATOMIC_OP_ALIAS(atomic_add_16,_atomic_add_16)
 ATOMIC_OP_ALIAS(atomic_add_short,_atomic_add_16)
 ATOMIC_OP_ALIAS(atomic_add_ushort,_atomic_add_16)
-STRONG_ALIAS(__sync_fetch_and_add_2,_atomic_add_16)
+CRT_ALIAS(__sync_fetch_and_add_2,_atomic_add_16)
+CRT_ALIAS(__atomic_fetch_add_2,_atomic_add_16)
 STRONG_ALIAS(_atomic_add_short,_atomic_add_16)
 STRONG_ALIAS(_atomic_add_ushort,_atomic_add_16)
 
 ATOMIC_OP_ALIAS(atomic_sub_16,_atomic_sub_16)
 ATOMIC_OP_ALIAS(atomic_sub_short,_atomic_sub_16)
 ATOMIC_OP_ALIAS(atomic_sub_ushort,_atomic_sub_16)
-STRONG_ALIAS(__sync_fetch_and_sub_2,_atomic_sub_16)
+CRT_ALIAS(__sync_fetch_and_sub_2,_atomic_sub_16)
+CRT_ALIAS(__atomic_fetch_sub_2,_atomic_sub_16)
 STRONG_ALIAS(_atomic_sub_short,_atomic_sub_16)
 STRONG_ALIAS(_atomic_sub_ushort,_atomic_sub_16)
 
@@ -87,14 +89,14 @@ END(_atomic_sub_16_nv)
 ATOMIC_OP_ALIAS(atomic_add_16_nv,_atomic_add_16_nv)
 ATOMIC_OP_ALIAS(atomic_add_short_nv,_atomic_add_16_nv)
 ATOMIC_OP_ALIAS(atomic_add_ushort_nv,_atomic_add_16_nv)
-STRONG_ALIAS(__sync_add_and_fetch_2,_atomic_add_16_nv)
+CRT_ALIAS(__sync_add_and_fetch_2,_atomic_add_16_nv)
 STRONG_ALIAS(_atomic_add_short_nv,_atomic_add_16_nv)
 STRONG_ALIAS(_atomic_add_ushort_nv,_atomic_add_16_nv)
 
 ATOMIC_OP_ALIAS(atomic_sub_16_nv,_atomic_sub_16_nv)
 ATOMIC_OP_ALIAS(atomic_sub_short_nv,_atomic_sub_16_nv)
 ATOMIC_OP_ALIAS(atomic_sub_ushort_nv,_atomic_sub_16_nv)
-STRONG_ALIAS(__sync_sub_and_fetch_2,_atomic_sub_16_nv)
+CRT_ALIAS(__sync_sub_and_fetch_2,_atomic_sub_16_nv)
 STRONG_ALIAS(_atomic_sub_short_nv,_atomic_sub_16_nv)
 STRONG_ALIAS(_atomic_sub_ushort_nv,_atomic_sub_16_nv)
 #endif /* _ARM_ARCH_6 */

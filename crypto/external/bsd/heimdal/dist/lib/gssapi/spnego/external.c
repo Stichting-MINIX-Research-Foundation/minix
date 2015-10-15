@@ -1,4 +1,4 @@
-/*	$NetBSD: external.c,v 1.1.1.1 2011/04/13 18:14:48 elric Exp $	*/
+/*	$NetBSD: external.c,v 1.1.1.2 2014/04/24 12:45:29 pettai Exp $	*/
 
 /*
  * Copyright (c) 2004, PADL Software Pty Ltd.
@@ -41,13 +41,12 @@
  *  negotiation token is identified by the Object Identifier
  *  iso.org.dod.internet.security.mechanism.snego (1.3.6.1.5.5.2).
  */
-
 static gss_mo_desc spnego_mo[] = {
     {
 	GSS_C_MA_SASL_MECH_NAME,
 	GSS_MO_MA,
 	"SASL mech name",
-	"SPNEGO",
+	rk_UNCONST("SPNEGO"),
 	_gss_mo_get_ctx_as_string,
 	NULL
     },
@@ -55,7 +54,7 @@ static gss_mo_desc spnego_mo[] = {
 	GSS_C_MA_MECH_NAME,
 	GSS_MO_MA,
 	"Mechanism name",
-	"SPNEGO",
+	rk_UNCONST("SPNEGO"),
 	_gss_mo_get_ctx_as_string,
 	NULL
     },
@@ -63,7 +62,7 @@ static gss_mo_desc spnego_mo[] = {
 	GSS_C_MA_MECH_DESCRIPTION,
 	GSS_MO_MA,
 	"Mechanism description",
-	"Heimdal SPNEGO Mechanism",
+	rk_UNCONST("Heimdal SPNEGO Mechanism"),
 	_gss_mo_get_ctx_as_string,
 	NULL
     },
@@ -80,14 +79,14 @@ static gss_mo_desc spnego_mo[] = {
 static gssapi_mech_interface_desc spnego_mech = {
     GMI_VERSION,
     "spnego",
-    {6, (void *)"\x2b\x06\x01\x05\x05\x02"},
+    {6, rk_UNCONST("\x2b\x06\x01\x05\x05\x02") },
     0,
     _gss_spnego_acquire_cred,
     _gss_spnego_release_cred,
     _gss_spnego_init_sec_context,
     _gss_spnego_accept_sec_context,
     _gss_spnego_process_context_token,
-    _gss_spnego_internal_delete_sec_context,
+    _gss_spnego_delete_sec_context,
     _gss_spnego_context_time,
     _gss_spnego_get_mic,
     _gss_spnego_verify_mic,
@@ -130,7 +129,13 @@ static gssapi_mech_interface_desc spnego_mech = {
     NULL,
     NULL,
     spnego_mo,
-    sizeof(spnego_mo) / sizeof(spnego_mo[0])
+    sizeof(spnego_mo) / sizeof(spnego_mo[0]),
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
 };
 
 gssapi_mech_interface

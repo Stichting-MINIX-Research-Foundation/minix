@@ -1,4 +1,1 @@
-LDSTATIC= -dynamic
-
-LDADD+= -lmthread
-DPADD+= ${LIBMTHREAD}
+LDSTATIC:=-dynamic

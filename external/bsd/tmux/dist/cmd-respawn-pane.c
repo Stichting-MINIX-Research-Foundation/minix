@@ -1,4 +1,4 @@
-/* $Id: cmd-respawn-pane.c,v 1.1.1.1 2011/08/17 18:40:04 jmmv Exp $ */
+/* Id */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -19,6 +19,7 @@
 
 #include <sys/types.h>
 
+#include <stdlib.h>
 #include <unistd.h>
 
 #include "tmux.h"
@@ -27,7 +28,7 @@
  * Respawn a pane (restart the command). Kill existing if -k given.
  */
 
-int	cmd_respawn_pane_exec(struct cmd *, struct cmd_ctx *);
+enum cmd_retval	 cmd_respawn_pane_exec(struct cmd *, struct cmd_q *);
 
 const struct cmd_entry cmd_respawn_pane_entry = {
 	"respawn-pane", "respawnp",
@@ -35,12 +36,11 @@ const struct cmd_entry cmd_respawn_pane_entry = {
 	"[-k] " CMD_TARGET_PANE_USAGE " [command]",
 	0,
 	NULL,
-	NULL,
 	cmd_respawn_pane_exec
 };
 
-int
-cmd_respawn_pane_exec(struct cmd *self, struct cmd_ctx *ctx)
+enum cmd_retval
+cmd_respawn_pane_exec(struct cmd *self, struct cmd_q *cmdq)
 {
 	struct args		*args = self->args;
 	struct winlink		*wl;
@@ -49,16 +49,19 @@ cmd_respawn_pane_exec(struct cmd *self, struct cmd_ctx *ctx)
 	struct session		*s;
 	struct environ		 env;
 	const char		*cmd;
-	char		 	*cause;
+	char			*cause;
+	u_int			 idx;
 
-	if ((wl = cmd_find_pane(ctx, args_get(args, 't'), &s, &wp)) == NULL)
-		return (-1);
+	if ((wl = cmd_find_pane(cmdq, args_get(args, 't'), &s, &wp)) == NULL)
+		return (CMD_RETURN_ERROR);
 	w = wl->window;
 
 	if (!args_has(self->args, 'k') && wp->fd != -1) {
-		ctx->error(ctx, "pane still active: %s:%u.%u",
-		    s->name, wl->idx, window_pane_index(w, wp));
-		return (-1);
+		if (window_pane_index(wp, &idx) != 0)
+			fatalx("index not found");
+		cmdq_error(cmdq, "pane still active: %s:%u.%u",
+		    s->name, wl->idx, idx);
+		return (CMD_RETURN_ERROR);
 	}
 
 	environ_init(&env);
@@ -74,15 +77,15 @@ cmd_respawn_pane_exec(struct cmd *self, struct cmd_ctx *ctx)
 		cmd = args->argv[0];
 	else
 		cmd = NULL;
-	if (window_pane_spawn(wp, cmd, NULL, NULL, &env, s->tio, &cause) != 0) {
-		ctx->error(ctx, "respawn pane failed: %s", cause);
-		xfree(cause);
+	if (window_pane_spawn(wp, cmd, NULL, -1, &env, s->tio, &cause) != 0) {
+		cmdq_error(cmdq, "respawn pane failed: %s", cause);
+		free(cause);
 		environ_free(&env);
-		return (-1);
+		return (CMD_RETURN_ERROR);
 	}
 	wp->flags |= PANE_REDRAW;
 	server_status_window(w);
 
 	environ_free(&env);
-	return (0);
+	return (CMD_RETURN_NORMAL);
 }

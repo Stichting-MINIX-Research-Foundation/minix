@@ -1,4 +1,4 @@
-/*	$NetBSD: memcpy_xscale.S,v 1.4 2013/08/19 01:08:53 matt Exp $	*/
+/*	$NetBSD: memcpy_xscale.S,v 1.5 2013/12/17 01:27:21 joerg Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -83,52 +83,52 @@ ENTRY(memcpy)
 	ldr	r7, [r1], #0x04		/* LD:0c-0f */
 	ldr	r8, [r1], #0x04		/* LD:10-13 */
 	ldr	r9, [r1], #0x04		/* LD:14-17 */
-	strd	r4, [r3], #0x08		/* ST:00-07 */
+	strd	r4, r5, [r3], #0x08	/* ST:00-07 */
 	ldr	r4, [r1], #0x04		/* LD:18-1b */
 	ldr	r5, [r1], #0x04		/* LD:1c-1f */
-	strd	r6, [r3], #0x08		/* ST:08-0f */
+	strd	r6, r7, [r3], #0x08	/* ST:08-0f */
 	ldr	r6, [r1], #0x04		/* LD:20-23 */
 	ldr	r7, [r1], #0x04		/* LD:24-27 */
 	pld	[r1, #0x18]		/* Prefetch 0x40 */
-	strd	r8, [r3], #0x08		/* ST:10-17 */
+	strd	r8, r9, [r3], #0x08	/* ST:10-17 */
 	ldr	r8, [r1], #0x04		/* LD:28-2b */
 	ldr	r9, [r1], #0x04		/* LD:2c-2f */
-	strd	r4, [r3], #0x08		/* ST:18-1f */
+	strd	r4, r5, [r3], #0x08	/* ST:18-1f */
 	ldr	r4, [r1], #0x04		/* LD:30-33 */
 	ldr	r5, [r1], #0x04		/* LD:34-37 */
-	strd	r6, [r3], #0x08		/* ST:20-27 */
+	strd	r6, r7, [r3], #0x08	/* ST:20-27 */
 	ldr	r6, [r1], #0x04		/* LD:38-3b */
 	ldr	r7, [r1], #0x04		/* LD:3c-3f */
-	strd	r8, [r3], #0x08		/* ST:28-2f */
+	strd	r8, r9, [r3], #0x08	/* ST:28-2f */
 	ldr	r8, [r1], #0x04		/* LD:40-43 */
 	ldr	r9, [r1], #0x04		/* LD:44-47 */
 	pld	[r1, #0x18]		/* Prefetch 0x60 */
-	strd	r4, [r3], #0x08		/* ST:30-37 */
+	strd	r4, r5, [r3], #0x08	/* ST:30-37 */
 	ldr	r4, [r1], #0x04		/* LD:48-4b */
 	ldr	r5, [r1], #0x04		/* LD:4c-4f */
-	strd	r6, [r3], #0x08		/* ST:38-3f */
+	strd	r6, r7, [r3], #0x08	/* ST:38-3f */
 	ldr	r6, [r1], #0x04		/* LD:50-53 */
 	ldr	r7, [r1], #0x04		/* LD:54-57 */
-	strd	r8, [r3], #0x08		/* ST:40-47 */
+	strd	r8, r9, [r3], #0x08	/* ST:40-47 */
 	ldr	r8, [r1], #0x04		/* LD:58-5b */
 	ldr	r9, [r1], #0x04		/* LD:5c-5f */
-	strd	r4, [r3], #0x08		/* ST:48-4f */
+	strd	r4, r5, [r3], #0x08	/* ST:48-4f */
 	ldr	r4, [r1], #0x04		/* LD:60-63 */
 	ldr	r5, [r1], #0x04		/* LD:64-67 */
 	pld	[r1, #0x18]		/* Prefetch 0x80 */
-	strd	r6, [r3], #0x08		/* ST:50-57 */
+	strd	r6, r7, [r3], #0x08	/* ST:50-57 */
 	ldr	r6, [r1], #0x04		/* LD:68-6b */
 	ldr	r7, [r1], #0x04		/* LD:6c-6f */
-	strd	r8, [r3], #0x08		/* ST:58-5f */
+	strd	r8, r9, [r3], #0x08	/* ST:58-5f */
 	ldr	r8, [r1], #0x04		/* LD:70-73 */
 	ldr	r9, [r1], #0x04		/* LD:74-77 */
-	strd	r4, [r3], #0x08		/* ST:60-67 */
+	strd	r4, r5, [r3], #0x08	/* ST:60-67 */
 	ldr	r4, [r1], #0x04		/* LD:78-7b */
 	ldr	r5, [r1], #0x04		/* LD:7c-7f */
-	strd	r6, [r3], #0x08		/* ST:68-6f */
-	strd	r8, [r3], #0x08		/* ST:70-77 */
+	strd	r6, r7, [r3], #0x08	/* ST:68-6f */
+	strd	r8, r9, [r3], #0x08	/* ST:70-77 */
 	subs	r2, r2, #0x80
-	strd	r4, [r3], #0x08		/* ST:78-7f */
+	strd	r4, r5, [r3], #0x08	/* ST:78-7f */
 	bge	.Lmemcpy_w_loop128
 
 .Lmemcpy_w_lessthan128:
@@ -147,13 +147,13 @@ ENTRY(memcpy)
 	ldr	r7, [r1], #0x04
 	ldr	r8, [r1], #0x04
 	ldr	r9, [r1], #0x04
-	strd	r4, [r3], #0x08
+	strd	r4, r5, [r3], #0x08
 	ldr	r4, [r1], #0x04
 	ldr	r5, [r1], #0x04
-	strd	r6, [r3], #0x08
-	strd	r8, [r3], #0x08
+	strd	r6, r7, [r3], #0x08
+	strd	r8, r9, [r3], #0x08
 	subs	r2, r2, #0x20
-	strd	r4, [r3], #0x08
+	strd	r4, r5, [r3], #0x08
 	bge	.Lmemcpy_w_loop32
 
 .Lmemcpy_w_lessthan32:
@@ -170,19 +170,19 @@ ENTRY(memcpy)
 	ldr	r4, [r1], #0x04
 	ldr	r5, [r1], #0x04
 	sub	r2, r2, #0x08
-	strd	r4, [r3], #0x08
+	strd	r4, r5, [r3], #0x08
 
 	/* At least 16 bytes remaining */
 	ldr	r4, [r1], #0x04
 	ldr	r5, [r1], #0x04
 	sub	r2, r2, #0x08
-	strd	r4, [r3], #0x08
+	strd	r4, r5, [r3], #0x08
 
 	/* At least 8 bytes remaining */
 	ldr	r4, [r1], #0x04
 	ldr	r5, [r1], #0x04
 	subs	r2, r2, #0x08
-	strd	r4, [r3], #0x08
+	strd	r4, r5, [r3], #0x08
 
 	/* Less than 8 bytes remaining */
 	pop	{r4-r9}

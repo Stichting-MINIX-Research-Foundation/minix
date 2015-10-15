@@ -116,7 +116,9 @@ PROCOFFSETSCF=procoffsets.cf
 procoffsets.h: ${PROCOFFSETSCF} kernel.h proc.h stackframe.h archtypes.h
 	${_MKTARGET_CREATE}
 	${TOOL_CAT} ${HERE}/${PROCOFFSETSCF} | \
-	  ${TOOL_GENASSYM} -- ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} ${${USE_BITCODE:Uno} == "yes":? -fno-lto:} >$@.tmp && \
+		${TOOL_GENASSYM} -- ${CC} ${CFLAGS:N-Wa,*} \
+		${CPPFLAGS} ${PROF} ${${USE_BITCODE:Uno} == "yes":? -fno-lto:} \
+		${GENASSYM_CPPFLAGS} >$@.tmp && \
 	  mv -f $@.tmp $@ 
 
 sconst.h: procoffsets.h

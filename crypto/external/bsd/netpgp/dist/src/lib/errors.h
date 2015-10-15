@@ -55,6 +55,10 @@
 
 #include <errno.h>
 
+#ifndef __printflike
+#define __printflike(n, m)	__attribute__((format(printf,n,m)))
+#endif
+
 /** error codes */
 /* Remember to add names to map in errors.c */
 typedef enum {
@@ -135,7 +139,7 @@ const char     *pgp_errcode(const pgp_errcode_t);
 void 
 pgp_push_error(pgp_error_t **, pgp_errcode_t,
 		int,
-		const char *, int, const char *,...);
+		const char *, int, const char *,...) __printflike(6, 7);
 void pgp_print_error(pgp_error_t *);
 void pgp_print_errors(pgp_error_t *);
 void pgp_free_errors(pgp_error_t *);

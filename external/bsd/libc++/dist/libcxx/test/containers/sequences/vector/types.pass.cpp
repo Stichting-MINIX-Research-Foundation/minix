@@ -33,9 +33,9 @@
 #include <iterator>
 #include <type_traits>
 
-#include "../../test_allocator.h"
+#include "test_allocator.h"
 #include "../../Copyable.h"
-#include "../../min_allocator.h"
+#include "min_allocator.h"
 
 template <class T, class Allocator>
 void

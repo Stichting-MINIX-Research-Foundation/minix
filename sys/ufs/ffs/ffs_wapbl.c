@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_wapbl.c,v 1.25 2013/10/25 11:35:55 martin Exp $	*/
+/*	$NetBSD: ffs_wapbl.c,v 1.30 2015/03/28 19:24:04 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2003,2006,2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.25 2013/10/25 11:35:55 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.30 2015/03/28 19:24:04 maxv Exp $");
 
 #define WAPBL_INTERNAL
 
@@ -147,9 +147,16 @@ ffs_wapbl_replay_finish(struct mount *mp)
 		 * initialized in ufs_makeinode.  If so, just dallocate them.
 		 */
 		if (ip->i_mode == 0) {
-			UFS_WAPBL_BEGIN(mp);
-			ffs_vfree(vp, ip->i_number, wr->wr_inodes[i].wr_imode);
-			UFS_WAPBL_END(mp);
+			error = UFS_WAPBL_BEGIN(mp);
+			if (error) {
+				printf("ffs_wapbl_replay_finish: "
+				    "unable to cleanup inode %" PRIu32 "\n",
+				    wr->wr_inodes[i].wr_inumber);
+			} else {
+				ffs_vfree(vp, ip->i_number,
+				    wr->wr_inodes[i].wr_imode);
+				UFS_WAPBL_END(mp);
+			}
 		}
 		vput(vp);
 	}
@@ -344,20 +351,18 @@ ffs_wapbl_start(struct mount *mp)
 #endif
 
 			if ((fs->fs_flags & FS_DOWAPBL) == 0) {
-				UFS_WAPBL_BEGIN(mp);
 				fs->fs_flags |= FS_DOWAPBL;
+				if ((error = UFS_WAPBL_BEGIN(mp)) != 0)
+					goto out;
 				error = ffs_sbupdate(ump, MNT_WAIT);
 				if (error) {
 					UFS_WAPBL_END(mp);
-					ffs_wapbl_stop(mp, MNT_FORCE);
-					return error;
+					goto out;
 				}
 				UFS_WAPBL_END(mp);
 				error = wapbl_flush(mp->mnt_wapbl, 1);
-				if (error) {
-					ffs_wapbl_stop(mp, MNT_FORCE);
-					return error;
-				}
+				if (error)
+					goto out;
 			}
 		} else if (fs->fs_flags & FS_DOWAPBL) {
 			fs->fs_fmod = 1;
@@ -384,6 +389,9 @@ ffs_wapbl_start(struct mount *mp)
 	}
 
 	return 0;
+out:
+	ffs_wapbl_stop(mp, MNT_FORCE);
+	return error;
 }
 
 int
@@ -602,31 +610,34 @@ wapbl_create_infs_log(struct mount *mp, struct fs *fs, struct vnode *devvp,
     daddr_t *startp, size_t *countp, uint64_t *extradatap)
 {
 	struct vnode *vp, *rvp;
+	struct vattr va;
 	struct inode *ip;
 	int error;
 
 	if ((error = VFS_ROOT(mp, &rvp)) != 0)
 		return error;
 
-	error = UFS_VALLOC(rvp, 0 | S_IFREG, NOCRED, &vp);
-	if (mp->mnt_flag & MNT_UPDATE) {
-		vput(rvp);
-	} else {
-		VOP_UNLOCK(rvp);
-		vgone(rvp);
-	}
-	if (error != 0)
+	vattr_null(&va);
+	va.va_type = VREG;
+	va.va_mode = 0;
+
+	error = vcache_new(mp, rvp, &va, NOCRED, &vp);
+	vput(rvp);
+	if (error)
 		return error;
 
-	vp->v_type = VREG;
+	error = vn_lock(vp, LK_EXCLUSIVE);
+	if (error) {
+		vrele(vp);
+		return error;
+	}
+
 	ip = VTOI(vp);
-	ip->i_flag |= IN_ACCESS | IN_CHANGE | IN_UPDATE;
-	ip->i_mode = 0 | IFREG;
-	DIP_ASSIGN(ip, mode, ip->i_mode);
 	ip->i_flags = SF_LOG;
 	DIP_ASSIGN(ip, flags, ip->i_flags);
 	ip->i_nlink = 1;
 	DIP_ASSIGN(ip, nlink, 1);
+	ip->i_flag |= IN_ACCESS | IN_CHANGE | IN_UPDATE;
 	ffs_update(vp, NULL, NULL, UPDATE_WAIT);
 
 	if ((error = wapbl_allocate_log_file(mp, vp,
@@ -818,7 +829,7 @@ wapbl_find_log_start(struct mount *mp, struct vnode *vp, off_t logsize,
 	    s++, n = -n, cg += n * s) {
 		DPRINTF("check cg %d of %d\n", cg, fs->fs_ncg);
 		error = bread(devvp, FFS_FSBTODB(fs, cgtod(fs, cg)),
-		    fs->fs_cgsize, FSCRED, 0, &bp);
+		    fs->fs_cgsize, 0, &bp);
 		if (error) {
 			continue;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: regress_buffer.c,v 1.2 2013/04/11 16:56:42 christos Exp $	*/
+/*	$NetBSD: regress_buffer.c,v 1.5 2015/08/28 13:04:48 joerg Exp $	*/
 /*
  * Copyright (c) 2003-2007 Niels Provos <provos@citi.umich.edu>
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson
@@ -33,7 +33,7 @@
 
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: regress_buffer.c,v 1.2 2013/04/11 16:56:42 christos Exp $");
+__RCSID("$NetBSD: regress_buffer.c,v 1.5 2015/08/28 13:04:48 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -199,7 +199,7 @@ test_evbuffer(void *ptr)
 
 	tt_assert(evbuffer_get_length(evb_two) == 0);
 	tt_assert(evbuffer_get_length(evb) == 7);
-	tt_assert(!memcmp((char*)EVBUFFER_DATA(evb), "1/hello", 7) != 0);
+	tt_assert(memcmp((char*)EVBUFFER_DATA(evb), "1/hello", 7) == 0);
 
 	memset(buffer, 0, sizeof(buffer));
 	evbuffer_add(evb, buffer, sizeof(buffer));
@@ -247,7 +247,7 @@ test_evbuffer(void *ptr)
 	if (memcmp(evbuffer_pullup(
 			   evb, -1), buffer, sizeof(buffer) / 2) != 0 ||
 	    memcmp(evbuffer_pullup(
-			   evb_two, -1), buffer, sizeof(buffer) != 0))
+			   evb_two, -1), buffer, sizeof(buffer)) != 0)
 		tt_abort_msg("Pullup did not preserve content");
 
 	evbuffer_validate(evb);
@@ -992,7 +992,9 @@ test_evbuffer_iterative(void *ptr)
 	n = 0;
 	for (i = 0; i < 1000; ++i) {
 		for (j = 1; j < strlen(abc); ++j) {
-			evbuffer_add_printf(buf, "%*.*s", j, j, abc);
+			char format[32];
+			evutil_snprintf(format, sizeof(format), "%%%u.%us", j, j);
+			evbuffer_add_printf(buf, fmtcheck(format, "%s"), abc);
 
 			/* Only check for rep violations every so often.
 			   Walking over the whole list of chains can get

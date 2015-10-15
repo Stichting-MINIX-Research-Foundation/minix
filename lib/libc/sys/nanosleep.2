@@ -1,4 +1,4 @@
-.\"	$NetBSD: nanosleep.2,v 1.13 2012/10/08 18:08:40 njoly Exp $
+.\"	$NetBSD: nanosleep.2,v 1.17 2015/10/02 19:52:49 christos Exp $
 .\"
 .\" Copyright (c) 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)sleep.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd October 1, 2012
+.Dd October 2, 2015
 .Dt NANOSLEEP 2
 .Os
 .Sh NAME
@@ -111,8 +111,11 @@ If the
 .Fn clock_nanosleep
 or the
 .Fn nanosleep
-functions return due to the delivery of a signal, the value returned
-will be the \-1, and the global variable
+functions return due to the delivery of a signal, then
+.Fn clock_nanosleep
+will return directly the error number, and
+.Fn nanosleep
+will return \-1, and the global variable
 .Va errno
 will be set to indicate the interruption.
 If
@@ -123,10 +126,12 @@ the timespec structure it references is updated to contain the
 unslept amount (the request time minus the time actually slept).
 .Sh ERRORS
 If any of the following conditions occur, the
-.Nm
+.Fn nanosleep
 function shall return \-1 and set
 .Va errno
-to the corresponding value.
+to the corresponding value, and the
+.Fn clock_nanosleep
+function shall return the errnor number directly.
 .Bl -tag -width Er
 .It Bq Er EFAULT
 Either
@@ -163,3 +168,17 @@ The
 .Fn clock_nanosleep
 function conforms to
 .St -p1003.1j-2000 .
+.Sh BUGS
+The
+.Nx
+kernel is not tickless, so the maximum sleep resolution is determined
+by the value of
+.Dv HZ
+which is by default
+.Dv 100
+in most architectures.
+This means that a request to sleep for less than
+.Dv 10ms
+(1 /
+.Dv HZ
+seconds), is rounded up to that.

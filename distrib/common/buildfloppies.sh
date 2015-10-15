@@ -106,7 +106,7 @@ dd if=/dev/zero of=${floppy} bs=8k count=1 2>/dev/null
 (
 	echo ". type=dir optional"
 	for f in ${files}; do
-		echo "./$f type=file uname=root gname=operator mode=0444"
+		echo "./$f type=file uname=root gname=wheel mode=0444"
 	done
 ) | \
 ${PAX} -O -w -b8k -M -N "${etcdir}" -s,^./,, >> ${floppy} || exit 1

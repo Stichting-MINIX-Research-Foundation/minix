@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap_4.S,v 1.3 2007/11/28 17:03:35 ad Exp $	*/
+/*	$NetBSD: byte_swap_4.S,v 1.4 2014/05/23 03:17:31 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,7 +36,7 @@
 
 #include <machine/asm.h>
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: byte_swap_4.S,v 1.3 2007/11/28 17:03:35 ad Exp $")
+	RCSID("$NetBSD: byte_swap_4.S,v 1.4 2014/05/23 03:17:31 uebayasi Exp $")
 #endif
 
 #if defined(_KERNEL) || defined(_STANDALONE)
@@ -50,3 +50,10 @@ _PROF_PROLOGUE
 	movl	4(%esp),%eax
 	bswap	%eax
 	ret
+#if defined(_KERNEL) || defined(_STANDALONE)
+END(_C_LABEL(bswap32))
+#else /* defined(_KERNEL) || defined(_STANDALONE) */
+END(_C_LABEL(__bswap32))
+#endif /* defined(_KERNEL) || defined(_STANDALONE) */
+END(_C_LABEL(ntohl))
+END(_C_LABEL(htonl))

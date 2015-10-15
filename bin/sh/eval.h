@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.h,v 1.15 2008/02/15 17:26:06 matt Exp $	*/
+/*	$NetBSD: eval.h,v 1.16 2014/05/31 14:42:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -53,12 +53,21 @@ void evaltree(union node *, int);
 void evalbackcmd(union node *, struct backcmd *);
 
 /* in_function returns nonzero if we are currently evaluating a function */
-#define in_function()	funcnest
-extern int funcnest;
-extern int evalskip;
+int in_function(void);		/* return non-zero, if evaluating a function */
 
 /* reasons for skipping commands (see comment on breakcmd routine) */
-#define SKIPBREAK	1
-#define SKIPCONT	2
-#define SKIPFUNC	3
-#define SKIPFILE	4
+enum skipstate {
+      SKIPNONE  = 0,	/* not skipping */
+      SKIPBREAK,	/* break */
+      SKIPCONT,		/* continue */
+      SKIPFUNC,		/* return in a function */
+      SKIPFILE		/* return in a dot command */
+};
+
+enum skipstate current_skipstate(void);
+void stop_skipping(void);	/* reset internal skipping state to SKIPNONE */
+
+/*
+ * Only for use by reset() in init.c!
+ */
+void reset_eval(void);

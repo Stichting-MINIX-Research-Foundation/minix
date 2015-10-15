@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_and_8.S,v 1.1 2013/11/08 22:42:52 matt Exp $	*/
+/*	$NetBSD: atomic_and_8.S,v 1.3 2014/06/23 21:53:45 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -50,7 +50,8 @@ END(_atomic_and_8)
 
 ATOMIC_OP_ALIAS(atomic_and_8,_atomic_and_8)
 ATOMIC_OP_ALIAS(atomic_and_uchar,_atomic_and_8)
-STRONG_ALIAS(__sync_fetch_and_and_1,_atomic_and_8)
+CRT_ALIAS(__sync_fetch_and_and_1,_atomic_and_8)
+CRT_ALIAS(__atomic_fetch_and_1,_atomic_and_8)
 STRONG_ALIAS(_atomic_and_uchar,_atomic_and_8)
 
 ENTRY_NP(_atomic_and_8_nv)
@@ -70,7 +71,7 @@ END(_atomic_and_8_nv)
 
 ATOMIC_OP_ALIAS(atomic_and_8_nv,_atomic_and_8_nv)
 ATOMIC_OP_ALIAS(atomic_and_uchar_nv,_atomic_and_8_nv)
-STRONG_ALIAS(__sync_and_and_fetch_1,_atomic_and_8_nv)
+CRT_ALIAS(__sync_and_and_fetch_1,_atomic_and_8_nv)
 STRONG_ALIAS(_atomic_and_uchar_nv,_atomic_and_8_nv)
 
 #endif /* _ARM_ARCH_6 */

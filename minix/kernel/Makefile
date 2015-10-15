@@ -82,6 +82,13 @@ extracted-mtype.h: extract-mtype.sh ../include/minix/com.h
 	cd ${.CURDIR} ; ${HOST_SH} extract-mtype.sh > ${.OBJDIR}/extracted-mtype.h
 
 .if ${USE_BITCODE:Uno} == "yes"
+# dcvmoole: this is a copy of the "${_P}: ${_P}.bcl.o" block from bsd.prog.mk,
+# with two changes: 1) ${OBJS} is added so as to link in objects that have not
+# been compiled with bitcode, and 2) we are directly loading the gold plugin
+# rather than through ${BITCODE_LD_FLAGS_2ND.kernel}, because LLVMgold will
+# not load libLTO when no LTO can be performed (due to the non- bitcode
+# objects), causing it to fail on unrecognized -disable-opt/-disable-inlining
+# options.  At least I think that's what's going on?  I'm no expert here..
 kernel: kernel.bcl.o
 	${_MKTARGET_LINK}
 	${_CCLINK.kernel} \
@@ -89,7 +96,7 @@ kernel: kernel.bcl.o
 		-L${DESTDIR}/usr/lib \
 		${_LDSTATIC.kernel} -o ${.TARGET} \
 		${.TARGET}.bcl.o ${OBJS} ${_PROGLDOPTS} ${_LDADD.kernel} \
-		${BITCODE_LD_FLAGS_2ND.kernel} \
+		-Wl,-plugin=${GOLD_PLUGIN} \
 		-Wl,--allow-multiple-definition
 .endif
 

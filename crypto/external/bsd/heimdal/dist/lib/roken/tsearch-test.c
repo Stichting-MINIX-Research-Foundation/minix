@@ -1,4 +1,4 @@
-/*	$NetBSD: tsearch-test.c,v 1.1.1.1 2011/04/13 18:15:44 elric Exp $	*/
+/*	$NetBSD: tsearch-test.c,v 1.1.1.2 2014/04/24 12:45:52 pettai Exp $	*/
 
 /*
  * Tree search generalized from Knuth (6.2.2) Algorithm T just like
@@ -21,7 +21,7 @@ struct node {
     int order;
 };
 
-extern void *rk_tdelete(const void * __restrict, void ** __restrict,
+extern void *rk_tdelete(const void *, void **,
 		 int (*)(const void *, const void *));
 extern void *rk_tfind(const void *, void * const *,
 	       int (*)(const void *, const void *));
@@ -75,53 +75,53 @@ main(int argc, char **argv)
 	{ "=", 1 },
 	{ NULL }
     };
-    
+
     for(t = tests; t->string; t++) {
 	/* Better not be there */
 	p = (struct node *)rk_tfind((void *)t, (void **)&rootnode,
 				    node_compare);
-	
+
 	if (p) {
 	    warnx("erroneous list: found %d\n", p->order);
 	    numerr++;
 	}
-	
+
 	/* Put node into the tree. */
 	p = (struct node *) rk_tsearch((void *)t, (void **)&rootnode,
 				       node_compare);
-	
+
 	if (!p) {
 	    warnx("erroneous list: missing %d\n", t->order);
 	    numerr++;
 	}
     }
-    
+
     rk_twalk(rootnode, list_node);
-    
+
     for(t = tests; t->string; t++) {
 	/* Better be there */
 	p =  (struct node *) rk_tfind((void *)t, (void **)&rootnode,
 				      node_compare);
-	
+
 	if (!p) {
 	    warnx("erroneous list: missing %d\n", t->order);
 	    numerr++;
 	}
-	
+
 	/* pull out node */
 	(void) rk_tdelete((void *)t, (void **)&rootnode,
 			  node_compare);
-	
+
 	/* Better not be there */
 	p =  (struct node *) rk_tfind((void *)t, (void **)&rootnode,
 				      node_compare);
-	
+
 	if (p) {
 	    warnx("erroneous list: found %d\n", p->order);
 	    numerr++;
 	}
-	
+
     }
-    
+
     return numerr;
 }

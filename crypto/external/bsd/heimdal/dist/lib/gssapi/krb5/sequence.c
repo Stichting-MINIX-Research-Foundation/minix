@@ -1,4 +1,4 @@
-/*	$NetBSD: sequence.c,v 1.1.1.1 2011/04/13 18:14:45 elric Exp $	*/
+/*	$NetBSD: sequence.c,v 1.1.1.2 2014/04/24 12:45:29 pettai Exp $	*/
 
 /*
  * Copyright (c) 2003 - 2006 Kungliga Tekniska Högskolan
@@ -66,7 +66,7 @@ msg_order_alloc(OM_uint32 *minor_status,
     if (*o == NULL) {
 	*minor_status = ENOMEM;
 	return GSS_S_FAILURE;
-    }	
+    }
 
     *minor_status = 0;
     return GSS_S_COMPLETE;
@@ -143,7 +143,7 @@ OM_uint32
 _gssapi_msg_order_check(struct gss_msg_order *o, OM_uint32 seq_num)
 {
     OM_uint32 r;
-    int i;
+    size_t i;
 
     if (o == NULL)
 	return GSS_S_COMPLETE;

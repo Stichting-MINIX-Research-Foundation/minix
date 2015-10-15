@@ -1,4 +1,5 @@
-/*	$NetBSD: dns.h,v 1.1.1.1 2013/04/11 16:43:35 christos Exp $	*/
+/*	$NetBSD: dns.h,v 1.1.1.2 2015/01/29 06:38:28 spz Exp $	*/
+/*	$NetBSD: dns.h,v 1.1.1.2 2015/01/29 06:38:28 spz Exp $	*/
 /*
  * Copyright (c) 2006-2007 Niels Provos <provos@citi.umich.edu>
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson
@@ -421,7 +422,7 @@ int evdns_base_set_option(struct evdns_base *base, const char *option, const cha
 
   @param base the evdns_base to which to apply this operation
   @param flags any of DNS_OPTION_NAMESERVERS|DNS_OPTION_SEARCH|DNS_OPTION_MISC|
-    DNS_OPTIONS_HOSTSFILE|DNS_OPTIONS_ALL
+    DNS_OPTION_HOSTSFILE|DNS_OPTIONS_ALL
   @param filename the path to the resolv.conf file
   @return 0 if successful, or various positive error codes if an error
     occurred (see above)

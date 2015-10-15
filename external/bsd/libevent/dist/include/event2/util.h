@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.2 2013/04/11 16:56:42 christos Exp $	*/
+/*	$NetBSD: util.h,v 1.3 2015/01/29 07:26:02 spz Exp $	*/
 /*
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson
  *
@@ -216,18 +216,18 @@ extern "C" {
 
    @{
 */
-#define EV_UINT64_MAX UINT64_MAX
-#define EV_INT64_MAX  INT64_MAX
-#define EV_INT64_MIN  INT64_MIN
-#define EV_UINT32_MAX UINT32_MAX
-#define EV_INT32_MAX  INT32_MAX
-#define EV_INT32_MIN  INT32_MIN
-#define EV_UINT16_MAX UINT16_MAX
-#define EV_INT16_MAX  INT16_MAX
-#define EV_INT16_MIN  INT16_MIN
-#define EV_UINT8_MAX  UINT8_MAX
-#define EV_INT8_MAX   INT8_MAX
-#define EV_INT8_MIN   INT8_MIN
+#define EV_UINT64_MAX ((((ev_uint64_t)0xffffffffUL) << 32) | 0xffffffffUL)
+#define EV_INT64_MAX  ((((ev_int64_t) 0x7fffffffL) << 32) | 0xffffffffL)
+#define EV_INT64_MIN  ((-EV_INT64_MAX) - 1)
+#define EV_UINT32_MAX ((ev_uint32_t)0xffffffffUL)
+#define EV_INT32_MAX  ((ev_int32_t) 0x7fffffffL)
+#define EV_INT32_MIN  ((-EV_INT32_MAX) - 1)
+#define EV_UINT16_MAX ((ev_uint16_t)0xffffUL)
+#define EV_INT16_MAX  ((ev_int16_t) 0x7fffL)
+#define EV_INT16_MIN  ((-EV_INT16_MAX) - 1)
+#define EV_UINT8_MAX  255
+#define EV_INT8_MAX   127
+#define EV_INT8_MIN   ((-EV_INT8_MAX) - 1)
 /** @} */
 
 /**
@@ -235,9 +235,20 @@ extern "C" {
 
    @{
 */
-#define EV_SIZE_MAX SIZE_MAX
-#define EV_SSIZE_MAX SSIZE_MAX
-#define EV_SSIZE_MIN SSIZE_MIN
+#if _EVENT_SIZEOF_SIZE_T == 8
+#define EV_SIZE_MAX EV_UINT64_MAX
+#define EV_SSIZE_MAX EV_INT64_MAX
+#elif _EVENT_SIZEOF_SIZE_T == 4
+#define EV_SIZE_MAX EV_UINT32_MAX
+#define EV_SSIZE_MAX EV_INT32_MAX
+#elif defined(_EVENT_IN_DOXYGEN)
+#define EV_SIZE_MAX ...
+#define EV_SSIZE_MAX ...
+#else
+#error "No way to define SIZE_MAX"
+#endif
+
+#define EV_SSIZE_MIN ((-EV_SSIZE_MAX) - 1)
 /**@}*/
 
 #ifdef WIN32
@@ -319,7 +330,7 @@ int evutil_closesocket(evutil_socket_t sock);
 #define EVUTIL_SOCKET_ERROR() WSAGetLastError()
 /** Replace the most recent socket error with errcode */
 #define EVUTIL_SET_SOCKET_ERROR(errcode)		\
-	do { WSASetLastError(errcode); } while (/*CONSTCOND*/0)
+	do { WSASetLastError(errcode); } while (0)
 /** Return the most recent socket error to occur on sock. */
 int evutil_socket_geterror(evutil_socket_t sock);
 /** Convert a socket error to a string. */
@@ -351,7 +362,7 @@ const char *evutil_socket_error_to_string(int errcode);
 #else
 #define EVUTIL_SOCKET_ERROR() (errno)
 #define EVUTIL_SET_SOCKET_ERROR(errcode)		\
-		do { errno = (errcode); } while (/*CONSTCOND*/0)
+		do { errno = (errcode); } while (0)
 #define evutil_socket_geterror(sock) (errno)
 #define evutil_socket_error_to_string(errcode) (strerror(errcode))
 #endif
@@ -377,7 +388,7 @@ const char *evutil_socket_error_to_string(int errcode);
 			(vvp)->tv_sec++;				\
 			(vvp)->tv_usec -= 1000000;			\
 		}							\
-	} while (/*CONSTCOND*/0)
+	} while (0)
 #define	evutil_timersub(tvp, uvp, vvp)					\
 	do {								\
 		(vvp)->tv_sec = (tvp)->tv_sec - (uvp)->tv_sec;		\
@@ -386,7 +397,7 @@ const char *evutil_socket_error_to_string(int errcode);
 			(vvp)->tv_sec--;				\
 			(vvp)->tv_usec += 1000000;			\
 		}							\
-	} while (/*CONSTCOND*/0)
+	} while (0)
 #endif /* !_EVENT_HAVE_HAVE_TIMERADD */
 
 #ifdef _EVENT_HAVE_TIMERCLEAR
@@ -638,9 +649,12 @@ const char *evutil_gai_strerror(int err);
 
 /** Generate n bytes of secure pseudorandom data, and store them in buf.
  *
- * By default, Libevent uses an ARC4-based random number generator, seeded
- * using the platform's entropy source (/dev/urandom on Unix-like systems;
- * CryptGenRandom on Windows).
+ * Current versions of Libevent use an ARC4-based random number generator,
+ * seeded using the platform's entropy source (/dev/urandom on Unix-like
+ * systems; CryptGenRandom on Windows).  This is not actually as secure as it
+ * should be: ARC4 is a pretty lousy cipher, and the current implementation
+ * provides only rudimentary prediction- and backtracking-resistance.  Don't
+ * use this for serious cryptographic applications.
  */
 void evutil_secure_rng_get_bytes(void *buf, size_t n);
 
@@ -661,6 +675,21 @@ void evutil_secure_rng_get_bytes(void *buf, size_t n);
  * program loses the ability to do it.
  */
 int evutil_secure_rng_init(void);
+
+/**
+ * Set a filename to use in place of /dev/urandom for seeding the secure
+ * PRNG. Return 0 on success, -1 on failure.
+ *
+ * Call this function BEFORE calling any other initialization or RNG
+ * functions.
+ *
+ * (This string will _NOT_ be copied internally. Do not free it while any
+ * user of the secure RNG might be running. Don't pass anything other than a
+ * real /dev/...random device file here, or you might lose security.)
+ *
+ * This API is unstable, and might change in a future libevent version.
+ */
+int evutil_secure_rng_set_urandom_device_file(char *fname);
 
 /** Seed the random number generator with extra random bytes.
 

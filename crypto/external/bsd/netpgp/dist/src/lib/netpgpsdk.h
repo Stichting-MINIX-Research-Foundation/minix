@@ -34,6 +34,10 @@
 #include "signature.h"
 #include "packet-show.h"
 
+#ifndef __printflike
+#define __printflike(n, m)		__attribute__((format(printf,n,m)))
+#endif
+
 typedef struct pgp_validation_t {
 	unsigned		 validc;
 	pgp_sig_info_t	*valid_sigs;
@@ -63,9 +67,9 @@ unsigned   pgp_check_sig(const uint8_t *,
 
 const char     *pgp_get_info(const char *type);
 
-int pgp_asprintf(char **, const char *, ...);
+int pgp_asprintf(char **, const char *, ...) __printflike(2, 3);
 
-void netpgp_log(const char *, ...);
+void netpgp_log(const char *, ...) __printflike(1, 2);
 
 int netpgp_strcasecmp(const char *, const char *);
 char *netpgp_strdup(const char *);

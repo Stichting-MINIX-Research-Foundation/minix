@@ -1,4 +1,4 @@
-/*	$NetBSD: sync_fetch_and_add_8.S,v 1.2 2013/11/30 21:09:11 joerg Exp $	*/
+/*	$NetBSD: sync_fetch_and_add_8.S,v 1.5 2015/05/17 22:08:24 justin Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "atomic_op_asm.h"
 
-#ifdef _ARM_ARCH_6
+#if defined(_ARM_ARCH_6)
 
 ENTRY_NP(__sync_fetch_and_add_8)
 	push	{r4-r7}
@@ -54,5 +54,7 @@ ENTRY_NP(__sync_fetch_and_add_8)
 	pop	{r4-r7}
 	RET				/* return old value */
 END(__sync_fetch_and_add_8)
+
+CRT_ALIAS(__atomic_fetch_add_8,__sync_fetch_and_add_8)
 
 #endif /* _ARM_ARCH_6 */

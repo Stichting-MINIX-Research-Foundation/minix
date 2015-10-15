@@ -1,4 +1,4 @@
-/*	$NetBSD: heimbase.c,v 1.1.1.1 2011/04/13 18:14:32 elric Exp $	*/
+/*	$NetBSD: heimbase.c,v 1.1.1.2 2014/04/24 12:45:26 pettai Exp $	*/
 
 /*
  * Copyright (c) 2010 Kungliga Tekniska Högskolan
@@ -371,7 +371,7 @@ void
 heim_abortv(const char *fmt, va_list ap)
 {
     static char str[1024];
-    
+
     vsnprintf(str, sizeof(str), fmt, ap);
     syslog(LOG_ERR, "heim_abort: %s", str);
     abort();

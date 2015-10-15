@@ -1,4 +1,4 @@
-/*	$NetBSD: server.c,v 1.1.1.1 2011/04/13 18:15:28 elric Exp $	*/
+/*	$NetBSD: server.c,v 1.1.1.2 2014/04/24 12:45:48 pettai Exp $	*/
 
 /*
  * Copyright (c) 2009 Kungliga Tekniska Högskolan
@@ -75,14 +75,14 @@ set_timer(void)
     dispatch_source_set_timer(timer,
 			      dispatch_time(DISPATCH_TIME_NOW,
 					    timeoutvalue * NSEC_PER_SEC),
-			      timeoutvalue * NSEC_PER_SEC, 1000000); 
+			      timeoutvalue * NSEC_PER_SEC, 1000000);
 }
 
 static void
 init_globals(void)
 {
     static dispatch_once_t once;
-    dispatch_once(&once, ^{ 
+    dispatch_once(&once, ^{
 	timerq = dispatch_queue_create("hiem-sipc-timer-q", NULL);
         timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, timerq);
 	dispatch_source_set_event_handler(timer, ^{ timer_ev(); } );
@@ -140,7 +140,7 @@ mach_complete_sync(heim_sipc_call ctx, int returnvalue, heim_idata *reply)
 	kr = KERN_SUCCESS;
     } else {
 	replyinCnt = 0;
-	kr = vm_read(mach_task_self(), 
+	kr = vm_read(mach_task_self(),
 		     (vm_address_t)reply->data, reply->length,
 		     (vm_address_t *)&replyout, &replyoutCnt);
     }
@@ -177,7 +177,7 @@ mach_complete_async(heim_sipc_call ctx, int returnvalue, heim_idata *reply)
 	kr = KERN_SUCCESS;
     } else {
 	replyinCnt = 0;
-	kr = vm_read(mach_task_self(), 
+	kr = vm_read(mach_task_self(),
 		     (vm_address_t)reply->data, reply->length,
 		     (vm_address_t *)&replyout, &replyoutCnt);
     }
@@ -221,19 +221,19 @@ mheim_do_call(mach_port_t server_port,
     s = malloc(sizeof(*s));
     if (s == NULL)
 	return KERN_MEMORY_FAILURE; /* XXX */
-    
+
     s->reply_port = reply_port;
-    
+
     audit_token_to_au32(client_creds, NULL, &uid, &gid, NULL, NULL, &pid, &session, NULL);
-    
+
     kr = _heim_ipc_create_cred(uid, gid, pid, session, &s->cred);
     if (kr) {
 	free(s);
 	return kr;
     }
-    
+
     suspend_timer();
-    
+
     if (requestinCnt) {
 	s->req.data = malloc(requestinCnt);
 	memcpy(s->req.data, requestin, requestinCnt);
@@ -243,7 +243,7 @@ mheim_do_call(mach_port_t server_port,
 	memcpy(s->req.data, requestout, requestoutCnt);
 	s->req.length = requestoutCnt;
     }
-    
+
     dispatch_async(workq, ^{
 	(ctx->callback)(ctx->userctx, &s->req, s->cred,
 			mach_complete_sync, (heim_sipc_call)s);
@@ -268,23 +268,23 @@ mheim_do_call_request(mach_port_t server_port,
     gid_t gid;
     pid_t pid;
     au_asid_t session;
-    
+
     s = malloc(sizeof(*s));
     if (s == NULL)
 	return KERN_MEMORY_FAILURE; /* XXX */
-    
+
     s->reply_port = reply_port;
-    
+
     audit_token_to_au32(client_creds, NULL, &uid, &gid, NULL, NULL, &pid, &session, NULL);
-    
+
     kr = _heim_ipc_create_cred(uid, gid, pid, session, &s->cred);
     if (kr) {
 	free(s);
 	return kr;
     }
-    
+
     suspend_timer();
-    
+
     if (requestinCnt) {
 	s->req.data = malloc(requestinCnt);
 	memcpy(s->req.data, requestin, requestinCnt);
@@ -294,12 +294,12 @@ mheim_do_call_request(mach_port_t server_port,
 	memcpy(s->req.data, requestout, requestoutCnt);
 	s->req.length = requestoutCnt;
     }
-    
+
     dispatch_async(workq, ^{
 	(ctx->callback)(ctx->userctx, &s->req, s->cred,
 			mach_complete_async, (heim_sipc_call)s);
     });
-    
+
     return KERN_SUCCESS;
 }
 
@@ -321,7 +321,7 @@ mach_init(const char *service, mach_port_t sport, heim_sipc ctx)
     free(name);
     s->sport = sport;
 
-    s->source = dispatch_source_create(DISPATCH_SOURCE_TYPE_MACH_RECV, 
+    s->source = dispatch_source_create(DISPATCH_SOURCE_TYPE_MACH_RECV,
 				       s->sport, 0, s->queue);
     if (s->source == NULL) {
 	dispatch_release(s->queue);
@@ -340,7 +340,7 @@ mach_init(const char *service, mach_port_t sport, heim_sipc ctx)
     dispatch_source_set_cancel_handler(s->source, ^{
 	    heim_sipc ctx = dispatch_get_context(dispatch_get_current_queue());
 	    struct mach_service *st = ctx->mech;
-	    mach_port_mod_refs(mach_task_self(), st->sport, 
+	    mach_port_mod_refs(mach_task_self(), st->sport,
 			       MACH_PORT_RIGHT_RECEIVE, -1);
 	    dispatch_release(st->queue);
 	    dispatch_release(st->source);
@@ -378,7 +378,7 @@ mach_checkin_or_register(const char *service)
     if (kr != KERN_SUCCESS)
 	return MACH_PORT_NULL;
 
-    kr = mach_port_insert_right(mach_task_self(), mp, mp, 
+    kr = mach_port_insert_right(mach_task_self(), mp, mp,
 				MACH_MSG_TYPE_MAKE_SEND);
     if (kr != KERN_SUCCESS) {
 	mach_port_destroy(mach_task_self(), mp);
@@ -427,7 +427,7 @@ heim_sipc_launchd_mach_init(const char *service,
     c->release = mach_release;
     c->userctx = user;
     c->callback = callback;
-		 
+
     ret = mach_init(service, sport, c);
     if (ret)
 	goto error;
@@ -438,7 +438,7 @@ heim_sipc_launchd_mach_init(const char *service,
     if (c)
 	free(c);
     if (sport != MACH_PORT_NULL)
-	mach_port_mod_refs(mach_task_self(), sport, 
+	mach_port_mod_refs(mach_task_self(), sport,
 			   MACH_PORT_RIGHT_RECEIVE, -1);
     return ret;
 #else /* !(__APPLE__ && HAVE_GCD) */
@@ -503,7 +503,7 @@ update_client_creds(struct client *c)
     /* Solaris 10 */
     {
 	ucred_t *peercred;
-	
+
 	if (getpeerucred(c->fd, &peercred) != 0) {
 	    c->unixrights.uid = ucred_geteuid(peercred);
 	    c->unixrights.gid = ucred_getegid(peercred);
@@ -527,7 +527,7 @@ update_client_creds(struct client *c)
 	}
     }
 #endif
-#ifdef SO_PEERCRED
+#if defined(SO_PEERCRED) && defined(__linux__)
     /* Linux */
     {
 	struct ucred pc;
@@ -559,13 +559,13 @@ update_client_creds(struct client *c)
 #endif
 #if defined(SOCKCREDSIZE) && defined(SCM_CREDS)
     /* NetBSD */
-    if (c->unixrights.uid == -1) {
+    if (c->unixrights.uid == (uid_t)-1) {
 	struct msghdr msg;
 	socklen_t crmsgsize;
 	void *crmsg;
 	struct cmsghdr *cmp;
 	struct sockcred *sc;
-	
+
 	memset(&msg, 0, sizeof(msg));
 	crmsgsize = CMSG_SPACE(SOCKCREDSIZE(NGROUPS));
 	if (crmsgsize == 0)
@@ -576,32 +576,32 @@ update_client_creds(struct client *c)
 	    goto failed_scm_creds;
 
 	memset(crmsg, 0, crmsgsize);
-	
+
 	msg.msg_control = crmsg;
 	msg.msg_controllen = crmsgsize;
-	
+
 	if (recvmsg(c->fd, &msg, 0) < 0) {
 	    free(crmsg);
 	    goto failed_scm_creds;
-	}	
-	
+	}
+
 	if (msg.msg_controllen == 0 || (msg.msg_flags & MSG_CTRUNC) != 0) {
 	    free(crmsg);
 	    goto failed_scm_creds;
-	}	
-	
+	}
+
 	cmp = CMSG_FIRSTHDR(&msg);
 	if (cmp->cmsg_level != SOL_SOCKET || cmp->cmsg_type != SCM_CREDS) {
 	    free(crmsg);
 	    goto failed_scm_creds;
-	}	
-	
+	}
+
 	sc = (struct sockcred *)(void *)CMSG_DATA(cmp);
-	
+
 	c->unixrights.uid = sc->sc_euid;
 	c->unixrights.gid = sc->sc_egid;
 	c->unixrights.pid = 0;
-	
+
 	free(crmsg);
 	return 1;
     } else {
@@ -626,7 +626,7 @@ add_new_socket(int fd,
     c = calloc(1, sizeof(*c));
     if (c == NULL)
 	return NULL;
-	
+
     if (flags & LISTEN_SOCKET) {
 	c->fd = fd;
     } else {
@@ -646,13 +646,13 @@ add_new_socket(int fd,
 
 #ifdef HAVE_GCD
     init_globals();
-	
-    c->in = dispatch_source_create(DISPATCH_SOURCE_TYPE_READ, 
+
+    c->in = dispatch_source_create(DISPATCH_SOURCE_TYPE_READ,
 				   c->fd, 0, eventq);
     c->out = dispatch_source_create(DISPATCH_SOURCE_TYPE_WRITE,
 				    c->fd, 0, eventq);
-    
-    dispatch_source_set_event_handler(c->in, ^{ 
+
+    dispatch_source_set_event_handler(c->in, ^{
 	    int rw = (c->flags & WAITING_WRITE);
 	    handle_read(c);
 	    if (rw == 0 && (c->flags & WAITING_WRITE))
@@ -668,7 +668,7 @@ add_new_socket(int fd,
 	    }
 	    maybe_close(c);
 	});
-    
+
     dispatch_resume(c->in);
 #else
     clients = erealloc(clients, sizeof(clients[0]) * (num_clients + 1));
@@ -884,7 +884,7 @@ handle_read(struct client *c)
 			    c->len + 1024);
 	c->len += 1024;
     }
-    
+
     len = read(c->fd, c->inmsg + c->ptr, c->len - c->ptr);
     if (len <= 0) {
 	c->flags |= WAITING_CLOSE;
@@ -894,10 +894,10 @@ handle_read(struct client *c)
     c->ptr += len;
     if (c->ptr > c->len)
 	abort();
-    
+
     while (c->ptr >= sizeof(dlen)) {
 	struct socket_call *cs;
-	
+
 	if((c->flags & ALLOW_HTTP) && c->ptr >= 4 &&
 	   strncmp((char *)c->inmsg, "GET ", 4) == 0 &&
 	   strncmp((char *)c->inmsg + c->ptr - 4, "\r\n\r\n", 4) == 0) {
@@ -925,24 +925,24 @@ handle_read(struct client *c)
 	    if (dlen > c->ptr - sizeof(dlen)) {
 		break;
 	    }
-	
+
 	    cs = emalloc(sizeof(*cs));
 	    cs->c = c;
 	    cs->in.data = emalloc(dlen);
 	    memcpy(cs->in.data, c->inmsg + sizeof(dlen), dlen);
 	    cs->in.length = dlen;
-	
+
 	    c->ptr -= sizeof(dlen) + dlen;
 	    memmove(c->inmsg,
 		    c->inmsg + sizeof(dlen) + dlen,
 		    c->ptr);
 	}
-	
+
 	c->calls++;
 
 	if ((c->flags & UNIX_SOCKET) != 0) {
 	    if (update_client_creds(c))
-		_heim_ipc_create_cred(c->unixrights.uid, c->unixrights.gid, 
+		_heim_ipc_create_cred(c->unixrights.uid, c->unixrights.gid,
 				      c->unixrights.pid, -1, &cs->cred);
 	}
 
@@ -961,7 +961,7 @@ handle_write(struct client *c)
     if (len <= 0) {
 	c->flags |= WAITING_CLOSE;
 	c->flags &= ~(WAITING_WRITE);
-    } else if (c->olen != len) {
+    } else if (c->olen != (size_t)len) {
 	memmove(&c->outmsg[0], &c->outmsg[len], c->olen - len);
 	c->olen -= len;
     } else {
@@ -997,7 +997,7 @@ process_loop(void)
 		fds[n].events |= POLLIN;
 	    if (clients[n]->flags & WAITING_WRITE)
 		fds[n].events |= POLLOUT;
-	    
+
 	    fds[n].revents = 0;
 	}
 

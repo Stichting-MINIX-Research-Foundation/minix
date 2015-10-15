@@ -63,7 +63,8 @@ static atf_error_t copy_contents(const atf_fs_path_t *, char **);
 static mode_t current_umask(void);
 static atf_error_t do_mkdtemp(char *);
 static atf_error_t normalize(atf_dynstr_t *, char *);
-static atf_error_t normalize_ap(atf_dynstr_t *, const char *, va_list);
+static atf_error_t normalize_ap(atf_dynstr_t *, const char *, va_list)
+    ATF_DEFS_ATTRIBUTE_FORMAT_PRINTF(2, 0);
 static void replace_contents(atf_fs_path_t *, const char *);
 static const char *stat_type_to_string(const int);
 

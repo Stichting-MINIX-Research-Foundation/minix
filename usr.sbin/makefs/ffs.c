@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.c,v 1.63 2013/06/23 02:06:06 dholland Exp $	*/
+/*	$NetBSD: ffs.c,v 1.64 2015/01/12 19:50:25 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ffs.c,v 1.63 2013/06/23 02:06:06 dholland Exp $");
+__RCSID("$NetBSD: ffs.c,v 1.64 2015/01/12 19:50:25 christos Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -164,7 +164,7 @@ ffs_prep_opts(fsinfo_t *fsopts)
 	      1, INT_MAX, "bytes per inode" },
 	    { 'm', "minfree", &ffs_opts->minfree, OPT_INT32,
 	      0, 99, "minfree" },
-	    { 'M', "maxbpf", &ffs_opts->maxbpg, OPT_INT32,
+	    { 'M', "maxbpg", &ffs_opts->maxbpg, OPT_INT32,
 	      1, INT_MAX, "max blocks per file in a cg" },
 	    { 'a', "avgfilesize", &ffs_opts->avgfilesize, OPT_INT32,
 	      1, INT_MAX, "expected average file size" },

@@ -1,6 +1,7 @@
-/*	$Vendor-Id: libmandoc.h,v 1.29 2011/12/02 01:37:14 schwarze Exp $ */
+/*	Id: libmandoc.h,v 1.37 2014/01/05 19:10:56 joerg Exp  */
 /*
- * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2009, 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2013 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -29,11 +30,6 @@ enum	rofferr {
 	ROFF_ERR /* badness: puke and stop */
 };
 
-enum	regs {
-	REG_nS = 0, /* nS register */
-	REG__MAX
-};
-
 __BEGIN_DECLS
 
 struct	roff;
@@ -42,17 +38,19 @@ struct	man;
 
 void		 mandoc_msg(enum mandocerr, struct mparse *, 
 			int, int, const char *);
+#if __GNUC__ - 0 >= 4
+__attribute__((__format__ (__printf__, 5, 6)))
+#endif
 void		 mandoc_vmsg(enum mandocerr, struct mparse *, 
 			int, int, const char *, ...);
 char		*mandoc_getarg(struct mparse *, char **, int, int *);
 char		*mandoc_normdate(struct mparse *, char *, int, int);
-int		 mandoc_eos(const char *, size_t, int);
-int		 mandoc_getcontrol(const char *, int *);
+int		 mandoc_eos(const char *, size_t);
 int		 mandoc_strntoi(const char *, size_t, int);
 const char	*mandoc_a2msec(const char*);
 
 void	 	 mdoc_free(struct mdoc *);
-struct	mdoc	*mdoc_alloc(struct roff *, struct mparse *);
+struct	mdoc	*mdoc_alloc(struct roff *, struct mparse *, char *);
 void		 mdoc_reset(struct mdoc *);
 int	 	 mdoc_parseln(struct mdoc *, int, char *, int);
 int		 mdoc_endparse(struct mdoc *);
@@ -68,17 +66,16 @@ int		 man_addspan(struct man *, const struct tbl_span *);
 int		 man_addeqn(struct man *, const struct eqn *);
 
 void	 	 roff_free(struct roff *);
-struct roff	*roff_alloc(struct mparse *);
+struct roff	*roff_alloc(enum mparset, struct mparse *);
 void		 roff_reset(struct roff *);
 enum rofferr	 roff_parseln(struct roff *, int, 
 			char **, size_t *, int, int *);
 void		 roff_endparse(struct roff *);
-void		 roff_expand_nr(struct roff *, const char *, int *, size_t,
-		    char **, int *, size_t *);
-int		 roff_regisset(const struct roff *, enum regs);
-unsigned int	 roff_regget(const struct roff *, enum regs);
-void		 roff_regunset(struct roff *, enum regs);
+void		 roff_setreg(struct roff *, const char *, int, char sign);
+int		 roff_getreg(const struct roff *, const char *);
 char		*roff_strdup(const struct roff *, const char *);
+int		 roff_getcontrol(const struct roff *, 
+			const char *, int *);
 #if 0
 char		 roff_eqndelim(const struct roff *);
 void		 roff_openeqn(struct roff *, const char *, 

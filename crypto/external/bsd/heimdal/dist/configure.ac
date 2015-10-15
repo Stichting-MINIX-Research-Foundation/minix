@@ -1,8 +1,8 @@
 dnl Process this file with autoconf to produce a configure script.
-AC_REVISION($Revision: 1.1.1.1 $)
+AC_REVISION(Revision)
 AC_PREREQ(2.62)
 test -z "$CFLAGS" && CFLAGS="-g"
-AC_INIT([Heimdal],[1.5pre1],[heimdal-bugs@h5l.org])
+AC_INIT([Heimdal],[1.5.3],[heimdal-bugs@h5l.org])
 AC_CONFIG_SRCDIR([kuser/kinit.c])
 AC_CONFIG_HEADERS(include/config.h)
 AC_CONFIG_MACRO_DIR([cf])
@@ -88,6 +88,9 @@ else
 
    ASN1_COMPILE_DEP=
    SLC_DEP=
+
+   ac_cv_prog_COMPILE_ET=${with_cross_tools}compile_et
+
 fi
 
 AC_SUBST([ASN1_COMPILE])
@@ -171,6 +174,8 @@ if test "X$with_sqlite3" != Xyes ; then
    LIB_sqlite3="\$(top_builddir)/lib/sqlite/libheimsqlite.la"
 fi
 AM_CONDITIONAL(SQLITE3,  test "X$with_sqlite3" = Xyes)
+
+AC_DEFINE(HAVE_SQLITE3, 1, [Define if you want support for sqlite in Heimdal.])
 
 AC_ARG_ENABLE(sqlite-cache, 
 	AS_HELP_STRING([--disable-sqlite-cache],[if you want support for cache in sqlite]))
@@ -329,6 +334,7 @@ AC_CHECK_HEADERS([\
 	bsdsetjmp.h				\
 	curses.h				\
 	dlfcn.h					\
+	execinfo.h				\
 	fnmatch.h				\
 	inttypes.h				\
 	io.h					\
@@ -456,6 +462,7 @@ AC_CHECK_FUNCS([				\
 	_getpty					\
 	_scrsize				\
 	arc4random				\
+	backtrace				\
 	fcntl					\
 	getpeereid				\
 	getpeerucred				\
@@ -487,7 +494,7 @@ AC_CHECK_FUNCS([				\
 
 AC_MSG_CHECKING([checking for __sync_add_and_fetch])
 AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <sys/types.h>]],
-	[[unsigned int foo; __sync_add_and_fetch(&foo, 1);]])],
+	[[unsigned int foo, bar; bar = __sync_add_and_fetch(&foo, 1);]])],
 	[ac_rk_have___sync_add_and_fetch=yes], [ac_rk_have___sync_add_and_fetch=no])
 if test "$ac_rk_have___sync_add_and_fetch" = "yes" ; then
 	AC_DEFINE_UNQUOTED(HAVE___SYNC_ADD_AND_FETCH, 1, [have __sync_add_and_fetch])
@@ -593,6 +600,11 @@ AH_BOTTOM([#ifdef __APPLE__
 AH_BOTTOM([#ifdef ROKEN_RENAME
 #include "roken_rename.h"
 #endif])
+
+AC_ARG_ENABLE(heimdal-documentation,
+	AS_HELP_STRING([--disable-heimdal-documentation],
+		[if you want disable to heimdal documentation]))
+AM_CONDITIONAL(HEIMDAL_DOCUMENTATION, test "$enable_heimdal_documentation" != no)
 
 AC_CONFIG_FILES(Makefile 		\
 	etc/Makefile			\

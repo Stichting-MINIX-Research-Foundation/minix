@@ -1,4 +1,4 @@
-/*	$NetBSD: test_dh.c,v 1.1.1.1 2011/04/13 18:14:51 elric Exp $	*/
+/*	$NetBSD: test_dh.c,v 1.1.1.2 2014/04/24 12:45:30 pettai Exp $	*/
 
 /*
 * Copyright (c) 2007, Novell, Inc.
@@ -308,12 +308,12 @@ static void set_prime(BIGNUM *p, char *str)
     prime = (unsigned char *)str2val(str, 16, &len);
     if (prime == NULL)
 	errx(1, "failed to parse %s", str);
-    BN_bin2bn(prime, len, p);	
+    BN_bin2bn(prime, len, p);
 }
 
 static void set_generator(BIGNUM *g)
 {
-    BN_set_word(g, 2);	
+    BN_set_word(g, 2);
 }
 
 static void print_secret(unsigned char *sec, size_t len)
@@ -464,13 +464,13 @@ main(int argc, char **argv)
 
     {
 	struct prime *p = primes;
-	
+
 	for (; p->name; ++p)
 	    if (check_prime(engine, p))
 		printf("%s: shared secret OK\n", p->name);
 	    else
 		printf("%s: shared secret FAILURE\n", p->name);
-	
+
 	return 0;
     }
 

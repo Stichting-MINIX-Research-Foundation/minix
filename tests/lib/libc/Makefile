@@ -1,9 +1,10 @@
-# $NetBSD: Makefile,v 1.46 2013/01/27 02:32:39 christos Exp $
+# $NetBSD: Makefile,v 1.47 2014/02/17 10:10:41 martin Exp $
 
 .include "Makefile.inc"
 .include <bsd.own.mk>
 
-SUBDIR+=	tls_dso .WAIT
+# LSC: Unsupported on MINIX
+SUBDIR+=	tls_dso .WAIT # sync
 
 # LSC: Unsupported on MINIX
 # c063 gen rpc setjmp 

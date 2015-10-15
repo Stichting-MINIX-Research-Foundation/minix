@@ -1,4 +1,4 @@
-/*	$NetBSD: event_tagging.c,v 1.2 2013/04/11 16:56:41 christos Exp $	*/
+/*	$NetBSD: event_tagging.c,v 1.3 2015/01/29 07:26:02 spz Exp $	*/
 /*
  * Copyright (c) 2003-2009 Niels Provos <provos@citi.umich.edu>
  * Copyright (c) 2009-2012 Niels Provos and Nick Mathewson
@@ -28,7 +28,7 @@
 
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: event_tagging.c,v 1.2 2013/04/11 16:56:41 christos Exp $");
+__RCSID("$NetBSD: event_tagging.c,v 1.3 2015/01/29 07:26:02 spz Exp $");
 
 #ifdef _EVENT_HAVE_SYS_TYPES_H
 #include <sys/types.h>
@@ -209,6 +209,8 @@ decode_tag_internal(ev_uint32_t *ptag, struct evbuffer *evbuf, int dodrain)
 	 */
 	data = evbuffer_pullup(
 		evbuf, len < sizeof(number) + 1 ? len : sizeof(number) + 1);
+	if (!data)
+		return (-1);
 
 	while (count++ < len) {
 		ev_uint8_t lower = *data++;
@@ -315,6 +317,8 @@ do {									\
 									\
 	/* XXX(niels): faster? */					\
 	data = evbuffer_pullup(evbuf, offset + 1) + offset;		\
+	if (!data)							\
+		return (-1);						\
 									\
 	nibbles = ((data[0] & 0xf0) >> 4) + 1;				\
 	if (nibbles > maxnibbles || (nibbles >> 1) + 1 > len)		\
@@ -322,6 +326,8 @@ do {									\
 	len = (nibbles >> 1) + 1;					\
 									\
 	data = evbuffer_pullup(evbuf, offset + len) + offset;		\
+	if (!data)							\
+		return (-1);						\
 									\
 	while (nibbles > 0) {						\
 		number <<= 4;						\

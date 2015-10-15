@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2013/09/02 14:34:57 joerg Exp $
+#	$NetBSD: Makefile,v 1.4 2015/01/29 20:41:37 joerg Exp $
 
 LIB=	lldReaderWriterPECOFF
 
@@ -6,9 +6,15 @@ LIB=	lldReaderWriterPECOFF
 
 .PATH: ${LLD_SRCDIR}/lib/ReaderWriter/PECOFF
 
-SRCS+=	PECOFFLinkingContext.cpp \
+SRCS+=	EdataPass.cpp \
+	IdataPass.cpp \
+	LinkerGeneratedSymbolFile.cpp \
+	LoadConfigPass.cpp \
+	PECOFFLinkingContext.cpp \
+	Pass.cpp \
 	ReaderCOFF.cpp \
 	ReaderImportHeader.cpp \
+	WriterImportLibrary.cpp \
 	WriterPECOFF.cpp
 
 .if defined(HOSTLIB)

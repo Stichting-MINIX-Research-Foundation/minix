@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetconfig.c,v 1.21 2013/03/11 20:19:29 tron Exp $	*/
+/*	$NetBSD: getnetconfig.c,v 1.22 2014/09/18 13:58:20 christos Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -36,7 +36,7 @@
 #if 0
 static        char sccsid[] = "@(#)getnetconfig.c	1.12 91/12/19 SMI";
 #else
-__RCSID("$NetBSD: getnetconfig.c,v 1.21 2013/03/11 20:19:29 tron Exp $");
+__RCSID("$NetBSD: getnetconfig.c,v 1.22 2014/09/18 13:58:20 christos Exp $");
 #endif
 #endif
 
@@ -449,7 +449,7 @@ getnetconfigent(const char *netid)
 			return(NULL);
 	}
 
-	if ((file = fopen(NETCONFIG, "r")) == NULL)
+	if ((file = fopen(NETCONFIG, "re")) == NULL)
 	    return (NULL);
 
 	if ((linep = malloc(MAXNETCONFIGLINE)) == NULL) {

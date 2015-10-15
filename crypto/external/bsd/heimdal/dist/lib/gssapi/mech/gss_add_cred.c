@@ -1,4 +1,4 @@
-/*	$NetBSD: gss_add_cred.c,v 1.1.1.1 2011/04/13 18:14:46 elric Exp $	*/
+/*	$NetBSD: gss_add_cred.c,v 1.1.1.2 2014/04/24 12:45:29 pettai Exp $	*/
 
 /*-
  * Copyright (c) 2005 Doug Rabson
@@ -30,7 +30,7 @@
 
 #include "mech_locl.h"
 
-static struct _gss_mechanism_cred *
+struct _gss_mechanism_cred *
 _gss_copy_cred(struct _gss_mechanism_cred *mc)
 {
 	struct _gss_mechanism_cred *new_mc;

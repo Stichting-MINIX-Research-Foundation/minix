@@ -1,4 +1,4 @@
-/*	$NetBSD: get_s.c,v 1.1.1.1 2011/04/13 18:15:29 elric Exp $	*/
+/*	$NetBSD: get_s.c,v 1.1.1.2 2014/04/24 12:45:48 pettai Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2006 Kungliga Tekniska Högskolan
@@ -35,7 +35,7 @@
 
 #include "kadm5_locl.h"
 
-__RCSID("$NetBSD: get_s.c,v 1.1.1.1 2011/04/13 18:15:29 elric Exp $");
+__RCSID("NetBSD");
 
 static kadm5_ret_t
 add_tl_data(kadm5_principal_ent_t ent, int16_t type,
@@ -144,7 +144,7 @@ kadm5_s_get_principal(void *server_handle,
     if(mask & KADM5_KVNO)
 	out->kvno = ent.entry.kvno;
     if(mask & KADM5_MKVNO) {
-	int n;
+	size_t n;
 	out->mkvno = 0; /* XXX */
 	for(n = 0; n < ent.entry.keys.len; n++)
 	    if(ent.entry.keys.val[n].mkvno) {
@@ -154,7 +154,7 @@ kadm5_s_get_principal(void *server_handle,
     }
 #if 0 /* XXX implement */
     if(mask & KADM5_AUX_ATTRIBUTES)
-	;	
+	;
     if(mask & KADM5_LAST_SUCCESS)
 	;
     if(mask & KADM5_LAST_FAILED)
@@ -171,7 +171,7 @@ kadm5_s_get_principal(void *server_handle,
 	    out->max_renewable_life = INT_MAX;
     }
     if(mask & KADM5_KEY_DATA){
-	int i;
+	size_t i;
 	Key *key;
 	krb5_key_data *kd;
 	krb5_salt salt;

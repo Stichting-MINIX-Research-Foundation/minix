@@ -1,4 +1,4 @@
-/*	$NetBSD: gss_encapsulate_token.c,v 1.1.1.1 2011/04/13 18:14:46 elric Exp $	*/
+/*	$NetBSD: gss_encapsulate_token.c,v 1.1.1.2 2014/04/24 12:45:29 pettai Exp $	*/
 
 /*
  * Copyright (c) 2006 Kungliga Tekniska Högskolan
@@ -60,7 +60,7 @@ gss_encapsulate_token(gss_const_buffer_t input_token,
     if (ret) {
 	_mg_buffer_zero(output_token);
 	return GSS_S_FAILURE;
-    }	
+    }
     if (output_token->length != size)
 	abort();
 

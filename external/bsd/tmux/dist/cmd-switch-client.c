@@ -1,4 +1,4 @@
-/* $Id: cmd-switch-client.c,v 1.1.1.2 2011/08/17 18:40:04 jmmv Exp $ */
+/* Id */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -27,16 +27,15 @@
  * Switch client to a different session.
  */
 
-void	cmd_switch_client_key_binding(struct cmd *, int);
-int	cmd_switch_client_exec(struct cmd *, struct cmd_ctx *);
+void		 cmd_switch_client_key_binding(struct cmd *, int);
+enum cmd_retval	 cmd_switch_client_exec(struct cmd *, struct cmd_q *);
 
 const struct cmd_entry cmd_switch_client_entry = {
 	"switch-client", "switchc",
-	"lc:npt:", 0, 0,
-	"[-lnp] [-c target-client] [-t target-session]",
-	0,
+	"lc:npt:r", 0, 0,
+	"[-lnpr] [-c target-client] [-t target-session]",
+	CMD_READONLY,
 	cmd_switch_client_key_binding,
-	NULL,
 	cmd_switch_client_exec
 };
 
@@ -57,38 +56,75 @@ cmd_switch_client_key_binding(struct cmd *self, int key)
 	}
 }
 
-int
-cmd_switch_client_exec(struct cmd *self, struct cmd_ctx *ctx)
+enum cmd_retval
+cmd_switch_client_exec(struct cmd *self, struct cmd_q *cmdq)
 {
-	struct args	*args = self->args;
-	struct client	*c;
-	struct session	*s;
+	struct args		*args = self->args;
+	struct client		*c;
+	struct session		*s = NULL;
+	struct winlink		*wl = NULL;
+	struct window 		*w = NULL;
+	struct window_pane	*wp = NULL;
+	const char		*tflag;
 
-	if ((c = cmd_find_client(ctx, args_get(args, 'c'))) == NULL)
-		return (-1);
+	if ((c = cmd_find_client(cmdq, args_get(args, 'c'), 0)) == NULL)
+		return (CMD_RETURN_ERROR);
 
-	s = NULL;
+	if (args_has(args, 'r')) {
+		if (c->flags & CLIENT_READONLY) {
+			c->flags &= ~CLIENT_READONLY;
+			cmdq_info(cmdq, "made client writable");
+		} else {
+			c->flags |= CLIENT_READONLY;
+			cmdq_info(cmdq, "made client read-only");
+		}
+	}
+
+	tflag = args_get(args, 't');
 	if (args_has(args, 'n')) {
 		if ((s = session_next_session(c->session)) == NULL) {
-			ctx->error(ctx, "can't find next session");
-			return (-1);
+			cmdq_error(cmdq, "can't find next session");
+			return (CMD_RETURN_ERROR);
 		}
 	} else if (args_has(args, 'p')) {
 		if ((s = session_previous_session(c->session)) == NULL) {
-			ctx->error(ctx, "can't find previous session");
-			return (-1);
+			cmdq_error(cmdq, "can't find previous session");
+			return (CMD_RETURN_ERROR);
 		}
 	} else if (args_has(args, 'l')) {
 		if (c->last_session != NULL && session_alive(c->last_session))
 			s = c->last_session;
 		if (s == NULL) {
-			ctx->error(ctx, "can't find last session");
-			return (-1);
+			cmdq_error(cmdq, "can't find last session");
+			return (CMD_RETURN_ERROR);
 		}
-	} else
-		s = cmd_find_session(ctx, args_get(args, 't'), 0);
-	if (s == NULL)
-		return (-1);
+	} else {
+		if (tflag == NULL) {
+			if ((s = cmd_find_session(cmdq, tflag, 1)) == NULL)
+				return (CMD_RETURN_ERROR);
+		} else if (tflag[strcspn(tflag, ":.")] != '\0') {
+			if ((wl = cmd_find_pane(cmdq, tflag, &s, &wp)) == NULL)
+				return (CMD_RETURN_ERROR);
+		} else {
+			if ((s = cmd_find_session(cmdq, tflag, 1)) == NULL)
+				return (CMD_RETURN_ERROR);
+			w = cmd_lookup_windowid(tflag);
+			if (w == NULL &&
+			    (wp = cmd_lookup_paneid(tflag)) != NULL)
+				w = wp->window;
+			if (w != NULL)
+				wl = winlink_find_by_window(&s->windows, w);
+		}
+
+		if (cmdq->client == NULL)
+			return (CMD_RETURN_NORMAL);
+
+		if (wl != NULL) {
+			if (wp != NULL)
+				window_set_active_pane(wp->window, wp);
+			session_set_current(s, wl);
+		}
+	}
 
 	if (c->session != NULL)
 		c->last_session = c->session;
@@ -98,6 +134,7 @@ cmd_switch_client_exec(struct cmd *self, struct cmd_ctx *ctx)
 	recalculate_sizes();
 	server_check_unattached();
 	server_redraw_client(c);
+	s->curw->flags &= ~WINLINK_ALERTFLAGS;
 
-	return (0);
+	return (CMD_RETURN_NORMAL);
 }

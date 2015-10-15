@@ -1,4 +1,4 @@
-/*	$NetBSD: mdtest.c,v 1.1.1.1 2011/04/13 18:14:50 elric Exp $	*/
+/*	$NetBSD: mdtest.c,v 1.1.1.2 2014/04/24 12:45:30 pettai Exp $	*/
 
 /*
  * Copyright (c) 1995 - 2002 Kungliga Tekniska Högskolan
@@ -281,7 +281,7 @@ hash_test (struct hash_foo *hash, struct test *tests)
 
 	ectx = EVP_MD_CTX_create();
 	EVP_DigestInit_ex(ectx, hash->evp(), NULL);
-	
+
 	(*hash->init)(ctx);
 	if(strcmp(t->str, ONE_MILLION_A) == 0) {
 	    int i;
@@ -315,7 +315,7 @@ hash_test (struct hash_foo *hash, struct test *tests)
 	    printf("\n");
 	    return 1;
 	}
-	
+
 	EVP_DigestFinal_ex(ectx, res, &esize);
 	EVP_MD_CTX_destroy(ectx);
 
@@ -323,7 +323,7 @@ hash_test (struct hash_foo *hash, struct test *tests)
 	    printf("EVP %s returned wrong hash size\n", hash->name);
 	    return 1;
 	}
-	
+
 	if (memcmp (res, t->hash, hash->hsize) != 0) {
 	    printf("EVP %s failed here old function where successful!\n",
 		   hash->name);

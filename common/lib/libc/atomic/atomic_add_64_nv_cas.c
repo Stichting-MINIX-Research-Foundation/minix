@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_add_64_nv_cas.c,v 1.5 2008/04/28 20:22:52 martin Exp $	*/
+/*	$NetBSD: atomic_add_64_nv_cas.c,v 1.7 2014/02/22 17:08:30 martin Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -50,6 +50,7 @@ atomic_add_64_nv(volatile uint64_t *addr, int64_t val)
 
 #undef atomic_add_64_nv
 atomic_op_alias(atomic_add_64_nv,_atomic_add_64_nv)
+crt_alias(__sync_add_and_fetch_8,_atomic_add_64_nv)
 
 #if defined(_LP64)
 #undef atomic_add_long_nv

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2013/06/05 08:42:56 mrg Exp $
+#	$NetBSD: Makefile,v 1.16 2015/07/20 04:10:40 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -9,9 +9,9 @@ FREETYPE=	${X11SRCDIR.${LIB}}
 SUBDIR=	freetype
 
 .PATH:	${FREETYPE}/src/base
-SRCS=	ftapi.c ftbase.c ftbbox.c ftbdf.c ftdebug.c ftfstype.c ftglyph.c \
-	ftinit.c ftlcdfil.c ftmm.c ftpfr.c ftstroke.c ftsynth.c \
-	ftsystem.c fttype1.c ftwinfnt.c ftxf86.c ftbitmap.c ftcid.c \
+SRCS=	ftapi.c ftbase.c ftbbox.c ftbdf.c ftdebug.c ftfntfmt.c ftfstype.c \
+	ftglyph.c ftinit.c ftlcdfil.c ftmm.c ftpfr.c ftstroke.c ftsynth.c \
+	ftsystem.c fttype1.c ftwinfnt.c ftbitmap.c ftcid.c \
 	ftgasp.c ftgxval.c ftotval.c ftpatent.c ftpfr.c
 
 .PATH:	${FREETYPE}/src/autofit
@@ -77,17 +77,13 @@ SRCS+=	type42.c
 .PATH:	${FREETYPE}/src/winfonts
 SRCS+=	winfnt.c
 
-.PATH:	${FREETYPE}/include
-INCS=	ft2build.h
-INCSDIR=${X11INCDIR}
-
 CPPFLAGS+=	${X11FLAGS.THREADLIB}
 CPPFLAGS+=	-DFT_CONFIG_OPTION_SYSTEM_ZLIB \
 		-DFT_CONFIG_CONFIG_H="<ftconfig.h>" \
 		-DFT2_BUILD_LIBRARY \
 		-DFT_CONFIG_MODULES_H="<ftmodule.h>"
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/freetype2 \
-		-I${DESTDIR}${X11INCDIR}/freetype2/freetype/config \
+		-I${DESTDIR}${X11INCDIR}/freetype2/config \
 		-I${X11SRCDIR.${LIB}}/include
 
 .if !defined(MKSUBPIXEL) || ${MKSUBPIXEL} != "no"
@@ -100,7 +96,7 @@ LIBDPLIBS= \
 
 PKGCONFIG=	freetype2
 PKGDIST.freetype2=	${.CURDIR}
-PKGCONFIG_VERSION.freetype2=	9.20.3
+PKGCONFIG_VERSION.freetype2=	${SHLIB_MAJOR}.${SHLIB_MINOR}.${SHLIB_TEENY}
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>

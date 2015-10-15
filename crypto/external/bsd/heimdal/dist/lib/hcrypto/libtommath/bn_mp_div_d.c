@@ -1,4 +1,4 @@
-/*	$NetBSD: bn_mp_div_d.c,v 1.1.1.1 2011/04/13 18:14:54 elric Exp $	*/
+/*	$NetBSD: bn_mp_div_d.c,v 1.1.1.2 2014/04/24 12:45:31 pettai Exp $	*/
 
 #include <tommath.h>
 #ifdef BN_MP_DIV_D_C
@@ -81,13 +81,13 @@ int mp_div_d (mp_int * a, mp_digit b, mp_int * c, mp_digit * d)
   if ((res = mp_init_size(&q, a->used)) != MP_OKAY) {
      return res;
   }
-  
+
   q.used = a->used;
   q.sign = a->sign;
   w = 0;
   for (ix = a->used - 1; ix >= 0; ix--) {
      w = (w << ((mp_word)DIGIT_BIT)) | ((mp_word)a->dp[ix]);
-     
+
      if (w >= b) {
         t = (mp_digit)(w / b);
         w -= ((mp_word)t) * ((mp_word)b);
@@ -96,22 +96,22 @@ int mp_div_d (mp_int * a, mp_digit b, mp_int * c, mp_digit * d)
       }
       q.dp[ix] = (mp_digit)t;
   }
-  
+
   if (d != NULL) {
      *d = (mp_digit)w;
   }
-  
+
   if (c != NULL) {
      mp_clamp(&q);
      mp_exch(&q, c);
   }
   mp_clear(&q);
-  
+
   return res;
 }
 
 #endif
 
-/* Source: /cvs/libtom/libtommath/bn_mp_div_d.c,v */
-/* Revision: 1.5 */
-/* Date: 2007/01/09 04:44:32 */
+/* Source: /cvs/libtom/libtommath/bn_mp_div_d.c,v  */
+/* Revision: 1.5  */
+/* Date: 2007/01/09 04:44:32  */

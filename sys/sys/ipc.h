@@ -1,4 +1,4 @@
-/*	$NetBSD: ipc.h,v 1.33 2012/03/13 18:41:02 elad Exp $	*/
+/*	$NetBSD: ipc.h,v 1.36 2015/05/19 12:17:53 joerg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -111,13 +111,17 @@ struct ipc_perm_sysctl {
 #endif
 
 #ifdef _KERNEL
+#include <sys/sysctl.h>
 #define	IPCID_TO_IX(id)		((id) & 0xffff)
 #define	IPCID_TO_SEQ(id)	(((id) >> 16) & 0xffff)
 
 struct kauth_cred;
+__BEGIN_DECLS
 int	ipcperm(struct kauth_cred *, struct ipc_perm *, int);
 
 void	sysvipcinit(void);
+void	sysvipcfini(void);
+__END_DECLS
 
 /*
  * sysctl helper routine for kern.ipc.sysvipc_info subtree.
@@ -133,11 +137,15 @@ void	sysvipcinit(void);
 	(dst)._seq = (src)._seq; \
 } while (/*CONSTCOND*/ 0);
 
-#endif /* _KERNEL */
+/*
+ * Set-up the sysctl routine for COMPAT_50
+ */
 
-#ifndef _KERNEL
-#include <sys/cdefs.h>
+__BEGIN_DECLS
+void sysvipc50_set_compat_sysctl(int (*)(SYSCTLFN_PROTO));
+__END_DECLS
 
+#else /* _KERNEL */
 __BEGIN_DECLS
 key_t	ftok(const char *, int);
 __END_DECLS

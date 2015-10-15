@@ -15,9 +15,11 @@
 /* Name of host specific core header file to include in elf.c. */
 /* #undef CORE_HEADER */
 
+#if !defined(__minix)
 /* Define to 1 if translation of program messages to the user's native
    language is requested. */
-/* #undef ENABLE_NLS */
+#define ENABLE_NLS 1
+#endif /* !defined(__minix) */
 
 /* Define to 1 if you have the <alloca.h> header file. */
 /* #undef HAVE_ALLOCA_H */
@@ -138,8 +140,10 @@
 /* Define if <sys/procfs.h> has lwpxstatus_t. */
 /* #undef HAVE_LWPXSTATUS_T */
 
+#if !defined(__minix)
 /* Define to 1 if you have the `madvise' function. */
-/* #undef HAVE_MADVISE */
+#define HAVE_MADVISE 1
+#endif /* !defined(__minix) */
 
 /* Define to 1 if you have the <memory.h> header file. */
 #define HAVE_MEMORY_H 1
@@ -147,8 +151,10 @@
 /* Define to 1 if you have a working `mmap' system call. */
 #define HAVE_MMAP 1
 
+#if !defined(__minix)
 /* Define to 1 if you have the `mprotect' function. */
-/* #undef HAVE_MPROTECT */
+#define HAVE_MPROTECT 1
+#endif /* !defined(__minix) */
 
 /* Define to 1 if you have the <ndir.h> header file, and it defines `DIR'. */
 /* #undef HAVE_NDIR_H */
@@ -368,11 +374,11 @@
 /* #undef _LARGE_FILES */
 
 /* Define to 1 if on MINIX. */
-#define _MINIX 1
+/* #undef _MINIX */
 
 /* Define to 2 if the system does not provide POSIX.1 features except with
    this defined. */
-#define _POSIX_1_SOURCE 2
+/* #undef _POSIX_1_SOURCE */
 
 /* Define to 1 if you need to in order for `stat' and other things to work. */
-#define _POSIX_SOURCE 1
+/* #undef _POSIX_SOURCE */

@@ -1,4 +1,4 @@
-/*	$NetBSD: logtab.h,v 1.1.1.1 2011/04/13 18:15:07 elric Exp $	*/
+/*	$NetBSD: logtab.h,v 1.1.1.2 2014/04/24 12:45:39 pettai Exp $	*/
 
 const float s_logv_2[] = {
    0.000000000, 0.000000000, 1.000000000, 0.630929754, 	/*  0  1  2  3 */
@@ -21,6 +21,6 @@ const float s_logv_2[] = {
 };
 
 
-/* Source: /cvs/libtom/libtommath/mtest/logtab.h,v */
-/* Revision: 1.2 */
-/* Date: 2005/05/05 14:38:47 */
+/* Source: /cvs/libtom/libtommath/mtest/logtab.h,v  */
+/* Revision: 1.2  */
+/* Date: 2005/05/05 14:38:47  */

@@ -1,4 +1,4 @@
-/*	$NetBSD: udivsi3.S,v 1.6 2003/08/07 16:42:07 agc Exp $	*/
+/*	$NetBSD: udivsi3.S,v 1.7 2014/05/23 02:34:19 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,7 +36,7 @@
 
 #include <machine/asm.h>
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: udivsi3.S,v 1.6 2003/08/07 16:42:07 agc Exp $")
+	RCSID("$NetBSD: udivsi3.S,v 1.7 2014/05/23 02:34:19 uebayasi Exp $")
 #endif
 
 ENTRY(__udivsi3)
@@ -44,3 +44,4 @@ ENTRY(__udivsi3)
 	xorl %edx,%edx
 	divl 8(%esp)
 	ret
+END(__udivsi3)

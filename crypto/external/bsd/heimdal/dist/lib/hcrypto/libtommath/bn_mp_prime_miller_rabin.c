@@ -1,4 +1,4 @@
-/*	$NetBSD: bn_mp_prime_miller_rabin.c,v 1.1.1.1 2011/04/13 18:14:54 elric Exp $	*/
+/*	$NetBSD: bn_mp_prime_miller_rabin.c,v 1.1.1.2 2014/04/24 12:45:31 pettai Exp $	*/
 
 #include <tommath.h>
 #ifdef BN_MP_PRIME_MILLER_RABIN_C
@@ -17,11 +17,11 @@
  * Tom St Denis, tomstdenis@gmail.com, http://libtom.org
  */
 
-/* Miller-Rabin test of "a" to the base of "b" as described in 
+/* Miller-Rabin test of "a" to the base of "b" as described in
  * HAC pp. 139 Algorithm 4.24
  *
  * Sets result to 0 if definitely composite or 1 if probably prime.
- * Randomly the chance of error is no more than 1/4 and often 
+ * Randomly the chance of error is no more than 1/4 and often
  * very much lower.
  */
 int mp_prime_miller_rabin (mp_int * a, mp_int * b, int *result)
@@ -35,7 +35,7 @@ int mp_prime_miller_rabin (mp_int * a, mp_int * b, int *result)
   /* ensure b > 1 */
   if (mp_cmp_d(b, 1) != MP_GT) {
      return MP_VAL;
-  }     
+  }
 
   /* get n1 = a - 1 */
   if ((err = mp_init_copy (&n1, a)) != MP_OKAY) {
@@ -100,6 +100,6 @@ LBL_N1:mp_clear (&n1);
 }
 #endif
 
-/* Source: /cvs/libtom/libtommath/bn_mp_prime_miller_rabin.c,v */
-/* Revision: 1.4 */
-/* Date: 2006/12/28 01:25:13 */
+/* Source: /cvs/libtom/libtommath/bn_mp_prime_miller_rabin.c,v  */
+/* Revision: 1.4  */
+/* Date: 2006/12/28 01:25:13  */

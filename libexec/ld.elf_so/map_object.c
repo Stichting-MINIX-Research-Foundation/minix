@@ -1,4 +1,4 @@
-/*	$NetBSD: map_object.c,v 1.52 2013/08/03 13:17:05 skrll Exp $	 */
+/*	$NetBSD: map_object.c,v 1.53 2014/10/30 07:53:41 martin Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: map_object.c,v 1.52 2013/08/03 13:17:05 skrll Exp $");
+__RCSID("$NetBSD: map_object.c,v 1.53 2014/10/30 07:53:41 martin Exp $");
 #endif /* not lint */
 
 #include <errno.h>
@@ -104,10 +104,10 @@ _rtld_map_object(const char *path, int fd, const struct stat *sb)
 #endif
 	Elf_Addr	 phdr_vaddr;
 	size_t		 phdr_memsz;
-#if defined(__HAVE_TLS_VARIANT_I) || defined(__HAVE_TLS_VARIANT_II)
+#if defined(__minix) && (defined(__HAVE_TLS_VARIANT_I) || defined(__HAVE_TLS_VARIANT_II))
 	caddr_t		 gap_addr;
 	size_t		 gap_size;
-#endif
+#endif /* defined(__minix) */
 	int i;
 #ifdef RTLD_LOADER
 	Elf_Addr	 clear_vaddr;
@@ -140,7 +140,7 @@ _rtld_map_object(const char *path, int fd, const struct stat *sb)
 #else
 		_rtld_error("%s: read error: %s", path, xstrerror(errno));
 		goto bad;
-#endif
+#endif /* defined(__minix) */
 	}
 	/* Make sure the file is valid */
 	if (memcmp(ELFMAG, ehdr->e_ident, SELFMAG) != 0) {
@@ -468,10 +468,10 @@ _rtld_obj_free(Obj_Entry *obj)
 	}
 	if (!obj->phdr_loaded)
 		xfree((void *)(uintptr_t)obj->phdr);
-	xfree(obj);
 #ifdef COMBRELOC
 	_rtld_combreloc_reset(obj);
 #endif
+	xfree(obj);
 }
 
 Obj_Entry *

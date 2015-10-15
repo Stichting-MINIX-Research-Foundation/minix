@@ -1,4 +1,4 @@
-/*      $NetBSD: n_floor.c,v 1.7 2010/12/09 22:52:59 abs Exp $ */
+/*      $NetBSD: n_floor.c,v 1.8 2014/03/16 09:51:39 martin Exp $ */
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -43,6 +43,12 @@ ic(L, 4503599627370496.0E0, 52, 1.0)			  /* 2**52 */
 
 #ifdef vccast
 #define	L	vccast(L)
+#endif
+
+#ifdef __weak_alias
+__weak_alias(ceill, ceil);
+__weak_alias(floorl, floor);
+__weak_alias(truncl, trunc);
 #endif
 
 /*
@@ -215,4 +221,16 @@ llrintf(float x)
 	s = copysign(L,x);
 	t = x + s;				/* x+s rounded to integer */
 	return (t - s);
+}
+
+double
+trunc(double x)
+{
+	return x < 0 ? ceil(x) : floor(x);
+}
+
+float
+truncf(float x)
+{
+	return x < 0 ? ceilf(x) : floorf(x);
 }

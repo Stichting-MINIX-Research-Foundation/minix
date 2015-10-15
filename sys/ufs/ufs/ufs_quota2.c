@@ -1,4 +1,4 @@
-/* $NetBSD: ufs_quota2.c,v 1.36 2013/10/20 00:29:10 htodd Exp $ */
+/* $NetBSD: ufs_quota2.c,v 1.40 2015/03/28 19:24:05 maxv Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -26,7 +26,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.36 2013/10/20 00:29:10 htodd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.40 2015/03/28 19:24:05 maxv Exp $");
 
 #include <sys/buf.h>
 #include <sys/param.h>
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.36 2013/10/20 00:29:10 htodd Exp $"
 #include <sys/wapbl.h>
 #include <sys/quota.h>
 #include <sys/quotactl.h>
+#include <sys/timevar.h>
 
 #include <ufs/ufs/quota2.h>
 #include <ufs/ufs/inode.h>
@@ -145,7 +146,7 @@ getq2h(struct ufsmount *ump, int type,
 
 	KASSERT(mutex_owned(&dqlock));
 	error = bread(ump->um_quotas[type], 0, ump->umq2_bsize,
-	    ump->um_cred[type], flags, &bp);
+	    flags, &bp);
 	if (error)
 		return error;
 	if (bp->b_resid != 0) 
@@ -172,7 +173,7 @@ getq2e(struct ufsmount *ump, int type, daddr_t lblkno, int blkoffset,
 		    quotatypes[type]);
 	}
 	error = bread(ump->um_quotas[type], lblkno, ump->umq2_bsize,
-	    ump->um_cred[type], flags, &bp);
+	    flags, &bp);
 	if (error)
 		return error;
 	if (bp->b_resid != 0) {
@@ -212,8 +213,7 @@ quota2_walk_list(struct ufsmount *ump, struct buf *hbp, int type,
 			bp = obp;
 		} else {
 			ret = bread(ump->um_quotas[type], lblkno, 
-			    ump->umq2_bsize,
-			    ump->um_cred[type], flags, &bp);
+			    ump->umq2_bsize, flags, &bp);
 			if (ret)
 				return ret;
 			if (bp->b_resid != 0) {
@@ -627,6 +627,15 @@ quota2_handle_cmd_put(struct ufsmount *ump, const struct quotakey *key,
 		goto out_il;
 	
 	quota2_ufs_rwq2e(q2ep, &q2e, needswap);
+	/*
+	 * Reset time limit if previously had no soft limit or were
+	 * under it, but now have a soft limit and are over it.
+	 */
+	if (val->qv_softlimit &&
+	    q2e.q2e_val[key->qk_objtype].q2v_cur >= val->qv_softlimit &&
+	    (q2e.q2e_val[key->qk_objtype].q2v_softlimit == 0 ||
+	     q2e.q2e_val[key->qk_objtype].q2v_cur < q2e.q2e_val[key->qk_objtype].q2v_softlimit))
+		q2e.q2e_val[key->qk_objtype].q2v_time = time_second + val->qv_grace;
 	quota2_dict_update_q2e_limits(key->qk_objtype, val, &q2e);
 	quota2_ufs_rwq2e(&q2e, q2ep, needswap);
 	quota2_bwrite(ump->um_mountp, bp);
@@ -668,7 +677,7 @@ dq2clear_callback(struct ufsmount *ump, uint64_t *offp, struct quota2_entry *q2e
 	return 0;
 }
 int
-quota2_handle_cmd_delete(struct ufsmount *ump, const struct quotakey *qk)
+quota2_handle_cmd_del(struct ufsmount *ump, const struct quotakey *qk)
 {
 	int idtype;
 	id_t id;
@@ -1270,7 +1279,7 @@ quota2_handle_cmd_cursorget(struct ufsmount *ump, struct quotakcursor *qkc,
 	struct q2cursor_state state;
 	struct quota2_entry default_q2e;
 	int idtype;
-	int quota2_hash_size;
+	int quota2_hash_size = 0; /* XXX: sh3 gcc 4.8 -Wuninitialized */
 
 	/*
 	 * Convert and validate the cursor.

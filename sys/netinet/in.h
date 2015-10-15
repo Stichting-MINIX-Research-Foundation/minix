@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.89 2013/06/27 19:38:16 christos Exp $	*/
+/*	$NetBSD: in.h,v 1.97 2015/05/02 14:41:32 roy Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -85,6 +85,7 @@ typedef __sa_family_t	sa_family_t;
 #define	IPPROTO_UDP		17		/* user datagram protocol */
 #define	IPPROTO_IDP		22		/* xns idp */
 #define	IPPROTO_TP		29 		/* tp-4 w/ class negotiation */
+#define	IPPROTO_DCCP		33		/* DCCP */
 #define	IPPROTO_IPV6		41		/* IP6 header */
 #define	IPPROTO_ROUTING		43		/* IP6 routing header */
 #define	IPPROTO_FRAGMENT	44		/* IP6 fragmentation header */
@@ -276,15 +277,14 @@ struct ip_opts {
 #define	IP_MULTICAST_IF		9    /* in_addr; set/get IP multicast i/f  */
 #define	IP_MULTICAST_TTL	10   /* u_char; set/get IP multicast ttl */
 #define	IP_MULTICAST_LOOP	11   /* u_char; set/get IP multicast loopback */
+/* The add and drop membership option numbers need to match with the v6 ones */
 #define	IP_ADD_MEMBERSHIP	12   /* ip_mreq; add an IP group membership */
 #define	IP_DROP_MEMBERSHIP	13   /* ip_mreq; drop an IP group membership */
 #define	IP_PORTALGO		18   /* int; port selection algo (rfc6056) */
 #define	IP_PORTRANGE		19   /* int; range to use for ephemeral port */
 #define	IP_RECVIF		20   /* bool; receive reception if w/dgram */
 #define	IP_ERRORMTU		21   /* int; get MTU of last xmit = EMSGSIZE */
-#if 1 /*IPSEC*/
-#define	IP_IPSEC_POLICY		22 /* struct; get/set security policy */
-#endif
+#define	IP_IPSEC_POLICY		22   /* struct; get/set security policy */
 #define	IP_RECVTTL		23   /* bool; receive IP TTL w/dgram */
 #define	IP_MINTTL		24   /* minimum TTL for packet or drop */
 #define	IP_PKTINFO		25   /* int; send interface and src addr */
@@ -463,11 +463,12 @@ struct ip_mreq {
 #define	IPCTL_MAXFRAGPACKETS   18	/* max packets reassembly queue */
 #define	IPCTL_GRE_TTL          19	/* default TTL for gre encap packet */
 #define	IPCTL_CHECKINTERFACE   20	/* drop pkts in from 'wrong' iface */
-#define	IPCTL_IFQ	       21	/* ipintrq node */
+#define	IPCTL_IFQ	       21	/* IP packet input queue */
 #define	IPCTL_RANDOMID	       22	/* use random IP ids (if configured) */
 #define	IPCTL_LOOPBACKCKSUM    23	/* do IP checksum on loopback */
 #define	IPCTL_STATS		24	/* IP statistics */
-#define	IPCTL_MAXID	       25
+#define	IPCTL_DAD_COUNT        25	/* DAD packets to send */
+#define	IPCTL_MAXID	       26
 
 #define	IPCTL_NAMES { \
 	{ 0, 0 }, \
@@ -495,6 +496,7 @@ struct ip_mreq {
 	{ "random_id", CTLTYPE_INT }, \
 	{ "do_loopback_cksum", CTLTYPE_INT }, \
 	{ "stats", CTLTYPE_STRUCT }, \
+	{ "dad_count", CTLTYPE_INT }, \
 }
 #endif /* _NETBSD_SOURCE */
 
@@ -564,6 +566,18 @@ void	in_delayed_cksum(struct mbuf *);
 int	in_localaddr(struct in_addr);
 void	in_socktrim(struct sockaddr_in *);
 
+void	in_if_link_up(struct ifnet *);
+void	in_if_link_down(struct ifnet *);
+void	in_if_up(struct ifnet *);
+void	in_if_down(struct ifnet *);
+void	in_if_link_state_change(struct ifnet *, int);
+
+struct route;
+struct ip_moptions;
+
+struct sockaddr_in *in_selectsrc(struct sockaddr_in *,
+	struct route *, int, struct ip_moptions *, int *);
+
 #define	in_hosteq(s,t)	((s).s_addr == (t).s_addr)
 #define	in_nullhost(x)	((x).s_addr == INADDR_ANY)
 
@@ -610,5 +624,11 @@ sockaddr_in_alloc(const struct in_addr *addr, in_port_t port, int flags)
 	return sa;
 }
 #endif /* _KERNEL */
+
+#if defined(_KERNEL) || defined(_TEST)
+int	in_print(char *, size_t, const struct in_addr *);
+#define IN_PRINT(b, a)	(in_print((b), sizeof(b), a), (b))
+int	sin_print(char *, size_t, const void *);
+#endif
 
 #endif /* !_NETINET_IN_H_ */

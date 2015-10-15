@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.20 2011/08/31 16:24:55 plunky Exp $	*/
+/*	$NetBSD: init.c,v 1.21 2014/03/22 20:07:05 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)init.c	8.1 (Berkeley) 6/2/93";
 #else
-__RCSID("$NetBSD: init.c,v 1.20 2011/08/31 16:24:55 plunky Exp $");
+__RCSID("$NetBSD: init.c,v 1.21 2014/03/22 20:07:05 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -137,7 +137,7 @@ init(void)
 	poof();
 }
 
-char *
+__noinline char *
 decr(int a, int b, int c, int d, int e)
 {
 	static char buf[6];

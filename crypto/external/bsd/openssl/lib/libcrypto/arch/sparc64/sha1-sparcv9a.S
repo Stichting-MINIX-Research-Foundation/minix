@@ -13,8 +13,8 @@ vis_const:
 
 .globl	sha1_block_data_order
 sha1_block_data_order:
-	save	%sp,-112,%sp
-	add	%fp,0-256,%g1
+	save	%sp,-192,%sp
+	add	%fp,2047-256,%g1
 
 1:	call	.+8
 	add	%o7,vis_const-1b,%i3
@@ -28,7 +28,7 @@ sha1_block_data_order:
 	ld	[%i0+0],%o0
 	and	%g1,-256,%g1
 	ld	[%i0+4],%o1
-	sub	%g1,0+112,%sp
+	sub	%g1,2047+192,%sp
 	ld	[%i0+8],%o2
 	and	%i1,7,%g4
 	ld	[%i0+12],%o3
@@ -1312,7 +1312,7 @@ sha1_block_data_order:
 	or		%i5,%l2,%l2
 	add		%o7,%l0,%l0
 	tst		%i2
-	bz,pn		%icc,.Ltail
+	bz,pn		%xcc,.Ltail
 	nop
 	sll		%l0,5,%i3			!! 70
 	ld		[%o5+24],%o7

@@ -1,4 +1,9 @@
-/* $NetBSD: consttime_memequal.c,v 1.4 2013/08/28 19:31:14 riastradh Exp $ */
+/* $NetBSD: consttime_memequal.c,v 1.6 2015/03/18 20:11:35 riastradh Exp $ */
+
+/*
+ * Written by Matthias Drochner <drochner@NetBSD.org>.
+ * Public domain.
+ */
 
 #if !defined(_KERNEL) && !defined(_STANDALONE)
 #include "namespace.h"
@@ -13,20 +18,20 @@ __weak_alias(consttime_memequal,_consttime_memequal)
 int
 consttime_memequal(const void *b1, const void *b2, size_t len)
 {
-	const char *c1 = b1, *c2 = b2;
-	int res = 0;
+	const unsigned char *c1 = b1, *c2 = b2;
+	unsigned int res = 0;
 
-	while (len --)
+	while (len--)
 		res |= *c1++ ^ *c2++;
 
 	/*
-	 * If the compiler for your favourite architecture generates a
-	 * conditional branch for `!res', it will be a data-dependent
-	 * branch, in which case this should be replaced by
+	 * Map 0 to 1 and [1, 256) to 0 using only constant-time
+	 * arithmetic.
 	 *
-	 *	return (1 - (1 & ((res - 1) >> 8)));
-	 *
-	 * or rewritten in assembly.
+	 * This is not simply `!res' because although many CPUs support
+	 * branchless conditional moves and many compilers will take
+	 * advantage of them, certain compilers generate branches on
+	 * certain CPUs for `!res'.
 	 */
-	return !res;
+	return (1 & ((res - 1) >> 8));
 }

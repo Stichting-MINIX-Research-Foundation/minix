@@ -1,4 +1,4 @@
-/*	$NetBSD: regcomp.c,v 1.33 2012/03/13 21:13:43 christos Exp $	*/
+/*	$NetBSD: regcomp.c,v 1.36 2015/09/12 19:08:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -76,7 +76,7 @@
 #if 0
 static char sccsid[] = "@(#)regcomp.c	8.5 (Berkeley) 3/20/94";
 #else
-__RCSID("$NetBSD: regcomp.c,v 1.33 2012/03/13 21:13:43 christos Exp $");
+__RCSID("$NetBSD: regcomp.c,v 1.36 2015/09/12 19:08:47 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -262,12 +262,11 @@ regcomp(
 		len = strlen(pattern);
 
 	/* do the mallocs early so failure handling is easy */
-	g = (struct re_guts *)malloc(sizeof(struct re_guts) +
-							(NC-1)*sizeof(cat_t));
+	g = malloc(sizeof(struct re_guts) + (NC - 1) * sizeof(cat_t));
 	if (g == NULL)
 		return(REG_ESPACE);
 	p->ssize = len/(size_t)2*(size_t)3 + (size_t)1;	/* ugh */
-	p->strip = malloc(p->ssize * sizeof(sop));
+	p->strip = calloc(p->ssize, sizeof(sop));
 	p->slen = 0;
 	if (p->strip == NULL) {
 		free(g);
@@ -1075,19 +1074,19 @@ ordinary(
     int ch)
 {
 	cat_t *cap;
+	unsigned char uc = (unsigned char)ch;
 
 	_DIAGASSERT(p != NULL);
 
 	cap = p->g->categories;
-	if ((p->g->cflags&REG_ICASE) && isalpha((unsigned char) ch)
-	    && othercase((unsigned char) ch) != (unsigned char) ch)
-		bothcases(p, (unsigned char) ch);
+	if ((p->g->cflags & REG_ICASE) && isalpha(uc) && othercase(uc) != uc)
+		bothcases(p, uc);
 	else {
-		EMIT(OCHAR, (sopno)(unsigned char)ch);
-		if (cap[ch] == 0) {
+		EMIT(OCHAR, (sopno)uc);
+		if (cap[uc] == 0) {
 			_DIAGASSERT(__type_fit(unsigned char,
 			    p->g->ncategories + 1));
-			cap[ch] = (unsigned char)p->g->ncategories++;
+			cap[uc] = (unsigned char)p->g->ncategories++;
 		}
 	}
 }
@@ -1236,6 +1235,7 @@ allocset(
 	cset *cs;
 	size_t css;
 	size_t i;
+	void *old_ptr;
 
 	_DIAGASSERT(p != NULL);
 
@@ -1248,28 +1248,18 @@ allocset(
 		nbytes = nc / CHAR_BIT * css;
 		if (MEMSIZE(p) > MEMLIMIT)
 			goto oomem;
-		if (p->g->sets == NULL)
-			p->g->sets = malloc(nc * sizeof(cset));
-		else
-			p->g->sets = realloc(p->g->sets, nc * sizeof(cset));
-		if (p->g->setbits == NULL)
-			p->g->setbits = malloc(nbytes);
-		else {
-			p->g->setbits = realloc(p->g->setbits, nbytes);
-			/* xxx this isn't right if setbits is now NULL */
+		if (reallocarr(&p->g->sets, nc, sizeof(cset)))
+			goto oomem;
+		old_ptr = p->g->setbits;
+		if (reallocarr(&p->g->setbits, nc / CHAR_BIT, css)) {
+			free(old_ptr);
+			goto oomem;
+		}
+		if (old_ptr != p->g->setbits) {
 			for (i = 0; i < no; i++)
 				p->g->sets[i].ptr = p->g->setbits + css*(i/CHAR_BIT);
 		}
-		if (p->g->sets != NULL && p->g->setbits != NULL)
-			(void) memset((char *)p->g->setbits + (nbytes - css),
-								0, css);
-		else {
-oomem:
-			no = 0;
-			SETERROR(REG_ESPACE);
-			/* caller's responsibility not to do set ops */
-			return NULL;
-		}
+		(void) memset((char *)p->g->setbits + (nbytes - css), 0, css);
 	}
 
 	cs = &p->g->sets[no];
@@ -1280,6 +1270,11 @@ oomem:
 	cs->multis = NULL;
 
 	return(cs);
+
+oomem:
+	SETERROR(REG_ESPACE);
+	/* caller's responsibility not to do set ops */
+	return NULL;
 }
 
 /*
@@ -1763,30 +1758,18 @@ dofwd(
  == static void enlarge(struct parse *p, sopno size);
  */
 static int
-enlarge(
-    struct parse *p,
-    sopno size)
+enlarge(struct parse *p, sopno size)
 {
-	sop *sp;
-	sopno osize;
-
 	_DIAGASSERT(p != NULL);
 
 	if (p->ssize >= size)
 		return 1;
 
-	osize = p->ssize;
-	p->ssize = size;
-	if (MEMSIZE(p) > MEMLIMIT)
-		goto oomem;
-	sp = realloc(p->strip, p->ssize * sizeof(sop));
-	if (sp == NULL) {
-oomem:
-		p->ssize = osize;
+	if (MEMSIZE(p) > MEMLIMIT || reallocarr(&p->strip, size, sizeof(sop))) {
 		SETERROR(REG_ESPACE);
 		return 0;
 	}
-	p->strip = sp;
+	p->ssize = size;
 	return 1;
 }
 
@@ -1804,11 +1787,9 @@ stripsnug(
 	_DIAGASSERT(g != NULL);
 
 	g->nstates = p->slen;
-	g->strip = realloc(p->strip, p->slen * sizeof(sop));
-	if (g->strip == NULL) {
-		SETERROR(REG_ESPACE);
-		g->strip = p->strip;
-	}
+	g->strip = p->strip;
+	reallocarr(&g->strip, p->slen, sizeof(sop));
+	/* Ignore error as tries to free memory only. */
 }
 
 /*

@@ -1,4 +1,4 @@
-/* $Id: cmd-display-message.c,v 1.2 2011/08/19 09:06:05 christos Exp $ */
+/* Id */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -18,6 +18,7 @@
 
 #include <sys/types.h>
 
+#include <stdlib.h>
 #include <time.h>
 
 #include "tmux.h"
@@ -26,20 +27,20 @@
  * Displays a message in the status line.
  */
 
-int	cmd_display_message_exec(struct cmd *, struct cmd_ctx *);
+enum cmd_retval	 cmd_display_message_exec(struct cmd *, struct cmd_q *);
 
 const struct cmd_entry cmd_display_message_entry = {
 	"display-message", "display",
-	"c:pt:", 0, 1,
-	"[-p] [-c target-client] [-t target-pane] [message]",
+	"c:pt:F:", 0, 1,
+	"[-p] [-c target-client] [-F format] " CMD_TARGET_PANE_USAGE
+	" [message]",
 	0,
-	NULL,
 	NULL,
 	cmd_display_message_exec
 };
 
-int
-cmd_display_message_exec(struct cmd *self, struct cmd_ctx *ctx)
+enum cmd_retval
+cmd_display_message_exec(struct cmd *self, struct cmd_q *cmdq)
 {
 	struct args		*args = self->args;
 	struct client		*c;
@@ -48,31 +49,62 @@ cmd_display_message_exec(struct cmd *self, struct cmd_ctx *ctx)
 	struct window_pane	*wp;
 	const char		*template;
 	char			*msg;
+	struct format_tree	*ft;
+	char			 out[BUFSIZ];
+	time_t			 t;
+	size_t			 len;
 
-	if ((c = cmd_find_client(ctx, args_get(args, 'c'))) == NULL)
-		return (-1);
-
-	if (args_has(args, 't') != 0) {
-		wl = cmd_find_pane(ctx, args_get(args, 't'), &s, &wp);
+	if (args_has(args, 't')) {
+		wl = cmd_find_pane(cmdq, args_get(args, 't'), &s, &wp);
 		if (wl == NULL)
-			return (-1);
+			return (CMD_RETURN_ERROR);
 	} else {
-		s = NULL;
-		wl = NULL;
-		wp = NULL;
+		wl = cmd_find_pane(cmdq, NULL, &s, &wp);
+		if (wl == NULL)
+			return (CMD_RETURN_ERROR);
 	}
 
-	if (args->argc == 0)
-		template = "[#S] #I:#W, current pane #P - (%H:%M %d-%b-%Y)";
-	else
-		template = args->argv[0];
+	if (args_has(args, 'F') && args->argc != 0) {
+		cmdq_error(cmdq, "only one of -F or argument must be given");
+		return (CMD_RETURN_ERROR);
+	}
 
-	msg = status_replace(c, s, wl, wp, template, time(NULL), 0);
+	if (args_has(args, 'c')) {
+		c = cmd_find_client(cmdq, args_get(args, 'c'), 0);
+		if (c == NULL)
+			return (CMD_RETURN_ERROR);
+	} else {
+		c = cmd_current_client(cmdq);
+		if (c == NULL && !args_has(self->args, 'p')) {
+			cmdq_error(cmdq, "no client available");
+			return (CMD_RETURN_ERROR);
+		}
+	}
+
+	template = args_get(args, 'F');
+	if (args->argc != 0)
+		template = args->argv[0];
+	if (template == NULL)
+		template = DISPLAY_MESSAGE_TEMPLATE;
+
+	ft = format_create();
+	if (c != NULL)
+		format_client(ft, c);
+	format_session(ft, s);
+	format_winlink(ft, s, wl);
+	format_window_pane(ft, wp);
+
+	t = time(NULL);
+	len = strftime(out, sizeof out, template, localtime(&t));
+	out[len] = '\0';
+
+	msg = format_expand(ft, out);
 	if (args_has(self->args, 'p'))
-		ctx->print(ctx, "%s", msg);
+		cmdq_print(cmdq, "%s", msg);
 	else
 		status_message_set(c, "%s", msg);
-	xfree(msg);
+	free(msg);
+	format_free(ft);
 
-	return (0);
+	return (CMD_RETURN_NORMAL);
 }

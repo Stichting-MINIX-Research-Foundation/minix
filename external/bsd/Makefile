@@ -1,8 +1,10 @@
-#	$NetBSD: Makefile,v 1.45 2013/11/28 22:34:17 christos Exp $
+#	$NetBSD: Makefile,v 1.54 2015/09/28 17:12:46 christos Exp $
 
 .include <bsd.own.mk>
 
-SUBDIR= byacc fetch file flex less \
+#MINIX:
+SUBDIR=	byacc \
+	fetch file flex less \
 	libarchive libevent mdocml \
 	tmux
 
@@ -29,14 +31,19 @@ SUBDIR+= openldap
 SUBDIR+= libc++
 .endif
 .if (${MKLLVM} != "no")
-.if (${MKLLVMCMDS} != "no")
+.if (${MKLLVMCMDS} != "no") && defined(__MINIX)
 SUBDIR+= llvm
-.endif # (${MKLLVMCMDS} != "no")
+.endif # (${MKLLVMCMDS} != "no") && defined(__MINIX)
 .endif
 .if (${MKPCC} != "no")
 SUBDIR+= pcc
 .endif
+.if (${MKDTRACE} != "no")
+SUBDIR+= libproc
+SUBDIR+= librtld_db
+.endif
 
-SUBDIR+= nvi
+#MINIX:
+SUBDIR+= blacklist nvi
 
 .include <bsd.subdir.mk>

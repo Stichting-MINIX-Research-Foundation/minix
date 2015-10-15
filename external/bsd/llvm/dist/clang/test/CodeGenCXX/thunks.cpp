@@ -1,5 +1,5 @@
 // RUN: %clang_cc1 %s -triple=x86_64-pc-linux-gnu -munwind-tables -emit-llvm -o - | FileCheck %s
-// RUN: %clang_cc1 %s -triple=x86_64-pc-linux-gnu -munwind-tables -fhidden-weak-vtables -emit-llvm -o - | FileCheck -check-prefix=CHECK-HIDDEN %s
+// RUN: %clang_cc1 %s -triple=x86_64-pc-linux-gnu -munwind-tables -emit-llvm -o - -O1 -disable-llvm-optzns | FileCheck %s
 
 namespace Test1 {
 
@@ -250,9 +250,7 @@ namespace Test10 {
   struct B { virtual void foo(); };
   struct C : A, B { void foo() {} };
 
-  // CHECK-HIDDEN-LABEL: define linkonce_odr void @_ZN6Test101C3fooEv
-  // CHECK-HIDDEN-LABEL: define linkonce_odr hidden void @_ZThn8_N6Test101C3fooEv
-
+  // Test later.
   void test() {
     C c;
   }
@@ -342,7 +340,32 @@ namespace Test14 {
   // CHECK: define void @_ZThn8_N6Test141C1fEv({{.*}}) unnamed_addr [[NUW:#[0-9]+]]
 }
 
+// Varargs non-covariant thunk test.
+// PR18098
+namespace Test15 {
+  struct A {
+    virtual ~A();
+  };
+  struct B {
+    virtual void f(int x, ...);
+  };
+  struct C : A, B {
+    virtual void c();
+    virtual void f(int x, ...);
+  };
+  void C::c() {}
+
+  // C::c
+  // CHECK: declare void @_ZN6Test151C1fEiz
+  // non-virtual thunk to C::f
+  // CHECK: declare void @_ZThn8_N6Test151C1fEiz
+}
+
 /**** The following has to go at the end of the file ****/
+
+// This is from Test10:
+// CHECK-LABEL: define linkonce_odr void @_ZN6Test101C3fooEv
+// CHECK-LABEL: define linkonce_odr void @_ZThn8_N6Test101C3fooEv
 
 // This is from Test5:
 // CHECK-LABEL: define linkonce_odr void @_ZTv0_n24_N5Test51B1fEv

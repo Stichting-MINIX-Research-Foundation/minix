@@ -1,4 +1,4 @@
-/*	$NetBSD: kx509.c,v 1.1.1.1 2011/04/13 18:14:37 elric Exp $	*/
+/*	$NetBSD: kx509.c,v 1.1.1.2 2014/04/24 12:45:27 pettai Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2007 Kungliga Tekniska Högskolan
@@ -261,7 +261,7 @@ build_certificate(krb5_context context,
     hx509_cert_free(cert);
     if (ret)
 	goto out;
-		
+
     return 0;
 out:
     if (env)
@@ -357,7 +357,7 @@ _kdc_do_kx509(krb5_context context,
 		krb5_xfree(expected);
 		goto out;
 	    }
-	    
+
 	    ret = KRB5KDC_ERR_SERVER_NOMATCH;
 	    krb5_set_error_message(context, ret,
 				   "User %s used wrong Kx509 service "

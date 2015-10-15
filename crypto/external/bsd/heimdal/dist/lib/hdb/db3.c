@@ -1,4 +1,4 @@
-/*	$NetBSD: db3.c,v 1.1.1.1 2011/04/13 18:14:41 elric Exp $	*/
+/*	$NetBSD: db3.c,v 1.1.1.2 2014/04/24 12:45:28 pettai Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2006 Kungliga Tekniska Högskolan
@@ -278,7 +278,7 @@ DB_open(krb5_context context, HDB *db, int flags, mode_t mode)
     }
     db->hdb_db = d;
 
-#if (DB_VERSION_MAJOR >= 4) && (DB_VERSION_MINOR >= 1)
+#if (DB_VERSION_MAJOR > 4) || ((DB_VERSION_MAJOR == 4) && (DB_VERSION_MINOR >= 1))
     ret = (*d->open)(db->hdb_db, NULL, fn, NULL, DB_BTREE, myflags, mode);
 #else
     ret = (*d->open)(db->hdb_db, fn, NULL, DB_BTREE, myflags, mode);
@@ -286,7 +286,7 @@ DB_open(krb5_context context, HDB *db, int flags, mode_t mode)
 
     if (ret == ENOENT) {
 	/* try to open without .db extension */
-#if (DB_VERSION_MAJOR >= 4) && (DB_VERSION_MINOR >= 1)
+#if (DB_VERSION_MAJOR > 4) || ((DB_VERSION_MAJOR == 4) && (DB_VERSION_MINOR >= 1))
 	ret = (*d->open)(db->hdb_db, NULL, db->hdb_name, NULL, DB_BTREE,
 			 myflags, mode);
 #else

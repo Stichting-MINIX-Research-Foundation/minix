@@ -11,7 +11,7 @@
 
 /*
  * from: @(#)fdlibm.h 5.1 93/09/24
- * $NetBSD: math_private.h,v 1.20 2013/11/19 19:24:34 joerg Exp $
+ * $NetBSD: math_private.h,v 1.22 2015/03/26 11:59:38 justin Exp $
  */
 
 #ifndef _MATH_PRIVATE_H_
@@ -185,7 +185,7 @@ do {								\
 #define	STRICT_ASSIGN(type, lval, rval) do {	\
 	volatile type __lval;			\
 						\
-	if (sizeof(type) >= sizeof(double))	\
+	if (sizeof(type) >= sizeof(long double))	\
 		(lval) = (rval);		\
 	else {					\
 		__lval = (rval);		\
@@ -252,7 +252,7 @@ extern double __ieee754_y1 __P((double));
 extern double __ieee754_jn __P((int,double));
 extern double __ieee754_yn __P((int,double));
 extern double __ieee754_remainder __P((double,double));
-extern int    __ieee754_rem_pio2 __P((double,double*));
+extern int32_t __ieee754_rem_pio2 __P((double,double*));
 extern double __ieee754_scalb __P((double,double));
 
 /* fdlibm kernel function */
@@ -260,7 +260,7 @@ extern double __kernel_standard __P((double,double,int));
 extern double __kernel_sin __P((double,double,int));
 extern double __kernel_cos __P((double,double));
 extern double __kernel_tan __P((double,double,int));
-extern int    __kernel_rem_pio2 __P((double*,double*,int,int,int,const int*));
+extern int    __kernel_rem_pio2 __P((double*,double*,int,int,int,const int32_t*));
 
 
 /* ieee style elementary float functions */
@@ -290,14 +290,14 @@ extern float __ieee754_y1f __P((float));
 extern float __ieee754_jnf __P((int,float));
 extern float __ieee754_ynf __P((int,float));
 extern float __ieee754_remainderf __P((float,float));
-extern int   __ieee754_rem_pio2f __P((float,float*));
+extern int32_t __ieee754_rem_pio2f __P((float,float*));
 extern float __ieee754_scalbf __P((float,float));
 
 /* float versions of fdlibm kernel functions */
 extern float __kernel_sinf __P((float,float,int));
 extern float __kernel_cosf __P((float,float));
 extern float __kernel_tanf __P((float,float,int));
-extern int   __kernel_rem_pio2f __P((float*,float*,int,int,int,const int*));
+extern int   __kernel_rem_pio2f __P((float*,float*,int,int,int,const int32_t*));
 
 /* ieee style elementary long double functions */
 extern long double __ieee754_fmodl(long double, long double);

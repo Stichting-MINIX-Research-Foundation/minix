@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.c,v 1.1.1.1 2011/04/13 18:15:11 elric Exp $	*/
+/*	$NetBSD: lock.c,v 1.1.1.2 2014/04/24 12:45:42 pettai Exp $	*/
 
 /*
  * Copyright (c) 2005 - 2006 Kungliga Tekniska Högskolan
@@ -123,7 +123,7 @@ _hx509_lock_unlock_certs(hx509_lock lock)
 void
 hx509_lock_reset_passwords(hx509_lock lock)
 {
-    int i;
+    size_t i;
     for (i = 0; i < lock->password.len; i++)
 	free(lock->password.val[i]);
     free(lock->password.val);

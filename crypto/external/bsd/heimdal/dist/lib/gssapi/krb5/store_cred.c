@@ -1,4 +1,4 @@
-/*	$NetBSD: store_cred.c,v 1.1.1.1 2011/04/13 18:14:45 elric Exp $	*/
+/*	$NetBSD: store_cred.c,v 1.1.1.2 2014/04/24 12:45:29 pettai Exp $	*/
 
 /*
  * Copyright (c) 2003 Kungliga Tekniska Högskolan
@@ -105,7 +105,7 @@ _gsskrb5_store_cred(OM_uint32         *minor_status,
 	*minor_status = ret;
 	return(GSS_S_FAILURE);
     }
-	
+
     if (default_cred)
 	krb5_cc_switch(context, id);
 

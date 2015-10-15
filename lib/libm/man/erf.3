@@ -26,16 +26,18 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)erf.3	6.4 (Berkeley) 4/20/91
-.\"	$NetBSD: erf.3,v 1.12 2003/08/07 16:44:47 agc Exp $
+.\"	$NetBSD: erf.3,v 1.13 2014/11/17 16:53:23 christos Exp $
 .\"
-.Dd April 20, 1991
+.Dd November 17, 2014
 .Dt ERF 3
 .Os
 .Sh NAME
 .Nm erf ,
 .Nm erff ,
+.Nm erfl ,
 .Nm erfc ,
-.Nm erfcf
+.Nm erfcf ,
+.Nm erfcl
 .Nd error function operators
 .Sh LIBRARY
 .Lb libm
@@ -45,10 +47,14 @@
 .Fn erf "double x"
 .Ft float
 .Fn erff "float x"
+.Ft long double
+.Fn erff "long double x"
 .Ft double
 .Fn erfc "double x"
 .Ft float
 .Fn erfcf "float x"
+.Ft long double
+.Fn erfcl "long double x"
 .Sh DESCRIPTION
 These functions calculate the error function of
 .Fa x .

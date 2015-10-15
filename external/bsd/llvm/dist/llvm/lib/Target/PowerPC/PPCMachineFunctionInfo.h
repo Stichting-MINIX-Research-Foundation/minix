@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef PPC_MACHINE_FUNCTION_INFO_H
-#define PPC_MACHINE_FUNCTION_INFO_H
+#ifndef LLVM_LIB_TARGET_POWERPC_PPCMACHINEFUNCTIONINFO_H
+#define LLVM_LIB_TARGET_POWERPC_PPCMACHINEFUNCTIONINFO_H
 
 #include "llvm/CodeGen/MachineFunction.h"
 
@@ -34,6 +34,9 @@ class PPCFunctionInfo : public MachineFunctionInfo {
 
   /// Frame index where the old base pointer is stored.
   int BasePointerSaveIndex;
+
+  /// Frame index where the old PIC base pointer is stored.
+  int PICBasePointerSaveIndex;
 
   /// MustSaveLR - Indicates whether LR is defined (or clobbered) in the current
   /// function.  This is only valid after the initial scan of the function by
@@ -92,11 +95,18 @@ class PPCFunctionInfo : public MachineFunctionInfo {
   /// 64-bit SVR4 ABI.
   SmallVector<unsigned, 3> MustSaveCRs;
 
+  /// Hold onto our MachineFunction context.
+  MachineFunction &MF;
+
+  /// Whether this uses the PIC Base register or not.
+  bool UsesPICBase;
+
 public:
   explicit PPCFunctionInfo(MachineFunction &MF) 
     : FramePointerSaveIndex(0),
       ReturnAddrSaveIndex(0),
       BasePointerSaveIndex(0),
+      PICBasePointerSaveIndex(0),
       HasSpills(false),
       HasNonRISpills(false),
       SpillsCR(false),
@@ -109,7 +119,9 @@ public:
       VarArgsStackOffset(0),
       VarArgsNumGPR(0),
       VarArgsNumFPR(0),
-      CRSpillFrameIndex(0) {}
+      CRSpillFrameIndex(0),
+      MF(MF),
+      UsesPICBase(0) {}
 
   int getFramePointerSaveIndex() const { return FramePointerSaveIndex; }
   void setFramePointerSaveIndex(int Idx) { FramePointerSaveIndex = Idx; }
@@ -119,6 +131,9 @@ public:
 
   int getBasePointerSaveIndex() const { return BasePointerSaveIndex; }
   void setBasePointerSaveIndex(int Idx) { BasePointerSaveIndex = Idx; }
+
+  int getPICBasePointerSaveIndex() const { return PICBasePointerSaveIndex; }
+  void setPICBasePointerSaveIndex(int Idx) { PICBasePointerSaveIndex = Idx; }
 
   unsigned getMinReservedArea() const { return MinReservedArea; }
   void setMinReservedArea(unsigned size) { MinReservedArea = size; }
@@ -170,6 +185,11 @@ public:
   const SmallVectorImpl<unsigned> &
     getMustSaveCRs() const { return MustSaveCRs; }
   void addMustSaveCR(unsigned Reg) { MustSaveCRs.push_back(Reg); }
+
+  void setUsesPICBase(bool uses) { UsesPICBase = uses; }
+  bool usesPICBase() const { return UsesPICBase; }
+
+  MCSymbol *getPICOffsetSymbol() const;
 };
 
 } // end of namespace llvm

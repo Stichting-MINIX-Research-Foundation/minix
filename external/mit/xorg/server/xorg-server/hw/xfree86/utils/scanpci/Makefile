@@ -20,6 +20,7 @@ LDADD=	-L${SCANPCIOBJDIR} -lscanpci \
 
 DPADD=	${LIBSCANPCI} ${LIBXORGOS} ${LIBM}
 
+.if !defined(__MINIX)
 .if ${MACHINE_ARCH} == "i386"
 LDADD+=	-li386
 DPADD+=	${LIBI386}
@@ -30,6 +31,7 @@ DPADD+=	${LIBX86_64}
 LDADD+=	-lalpha
 DPADD+=	${LIBALPHA}
 .endif
+.endif # !defined(__MINIX)
 
 .PATH: ${X11SRCDIR.xorg-server}/hw/xfree86/utils/${PROG}
 

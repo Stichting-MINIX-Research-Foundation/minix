@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.5 2013/11/28 13:47:29 joerg Exp $
+#	$NetBSD: Makefile,v 1.7 2015/08/20 10:06:21 joerg Exp $
 
 .include <bsd.init.mk>
 
 .PATH: ${LIBCXX_SRCDIR}/include
-.PATH: ${LIBCXX_SRCDIR}/include/experimental
-.PATH: ${LIBCXX_SRCDIR}/include/ext
+
+INCSDIR=	/usr/include/c++
 
 INCS=	__bit_reference \
 	__config \
@@ -20,7 +20,7 @@ INCS=	__bit_reference \
 	__std_stream \
 	__tree \
 	__tuple \
-	__tuple_03 \
+	__undef___deallocate \
 	__undef_min_max \
 	algorithm \
 	array \
@@ -56,7 +56,6 @@ INCS=	__bit_reference \
 	cwchar \
 	cwctype \
 	deque \
-	dynarray \
 	exception \
 	forward_list \
 	fstream \
@@ -77,7 +76,6 @@ INCS=	__bit_reference \
 	mutex \
 	new \
 	numeric \
-	optional \
 	ostream \
 	queue \
 	random \
@@ -103,21 +101,24 @@ INCS=	__bit_reference \
 	unordered_set \
 	utility \
 	valarray \
-	vector \
-	__hash \
-	hash_map \
-	hash_set
+	vector
 
 INCS+=		cxxabi.h
 
-INCSDIR=	/usr/include/c++
-.for f in __hash hash_map hash_set
-INCSDIR_${f}=	/usr/include/c++/ext
-.endfor
-
-.for f in dynarray optional
-INCSDIR_${f}=	/usr/include/c++/experimental
-.endfor
+INCS+=	ext/__hash \
+	ext/hash_map \
+	ext/hash_set
+INCS+=	experimental/__config \
+	experimental/algorithm \
+	experimental/chrono \
+	experimental/dynarray \
+	experimental/optional \
+	experimental/ratio \
+	experimental/string_view \
+	experimental/system_error \
+	experimental/tuple \
+	experimental/type_traits \
+	experimental/utility
 
 cxxabi.h: ${LIBCXXRT_SRCDIR}/src/cxxabi.h
 	cp ${LIBCXXRT_SRCDIR}/src/cxxabi.h .

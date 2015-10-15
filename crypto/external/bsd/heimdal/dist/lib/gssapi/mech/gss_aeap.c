@@ -1,8 +1,8 @@
-/*	$NetBSD: gss_aeap.c,v 1.1.1.1 2011/04/13 18:14:46 elric Exp $	*/
+/*	$NetBSD: gss_aeap.c,v 1.1.1.2 2014/04/24 12:45:29 pettai Exp $	*/
 
 /*
  * AEAD support
- */ 
+ */
 
 #include "mech_locl.h"
 
@@ -92,7 +92,7 @@ gss_unwrap_iov(OM_uint32 *minor_status,
 	       int iov_count)
 {
 	struct _gss_context *ctx = (struct _gss_context *) context_handle;
-	gssapi_mech_interface m;	  
+	gssapi_mech_interface m;
 
 	if (minor_status)
 	    *minor_status = 0;
@@ -170,7 +170,7 @@ gss_release_iov_buffer(OM_uint32 *minor_status,
 		       int iov_count)
 {
     OM_uint32 junk;
-    size_t i;
+    int i;
 
     if (minor_status)
 	*minor_status = 0;

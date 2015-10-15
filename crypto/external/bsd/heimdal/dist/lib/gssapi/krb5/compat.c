@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.1.1.1 2011/04/13 18:14:44 elric Exp $	*/
+/*	$NetBSD: compat.c,v 1.1.1.2 2014/04/24 12:45:29 pettai Exp $	*/
 
 /*
  * Copyright (c) 2003 - 2005 Kungliga Tekniska Högskolan
@@ -61,7 +61,7 @@ check_compat(OM_uint32 *minor_status,
 	    *compat = match_val;
 	    break;
 	}
-	
+
 	krb5_free_principal(context, match);
 	match = NULL;
     }

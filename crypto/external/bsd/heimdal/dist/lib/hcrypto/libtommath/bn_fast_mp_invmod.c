@@ -1,4 +1,4 @@
-/*	$NetBSD: bn_fast_mp_invmod.c,v 1.1.1.1 2011/04/13 18:14:54 elric Exp $	*/
+/*	$NetBSD: bn_fast_mp_invmod.c,v 1.1.1.2 2014/04/24 12:45:31 pettai Exp $	*/
 
 #include <tommath.h>
 #ifdef BN_FAST_MP_INVMOD_C
@@ -17,10 +17,10 @@
  * Tom St Denis, tomstdenis@gmail.com, http://libtom.org
  */
 
-/* computes the modular inverse via binary extended euclidean algorithm, 
- * that is c = 1/a mod b 
+/* computes the modular inverse via binary extended euclidean algorithm,
+ * that is c = 1/a mod b
  *
- * Based on slow invmod except this is optimized for the case where b is 
+ * Based on slow invmod except this is optimized for the case where b is
  * odd as per HAC Note 14.64 on pp. 610
  */
 int fast_mp_invmod (mp_int * a, mp_int * b, mp_int * c)
@@ -145,6 +145,6 @@ LBL_ERR:mp_clear_multi (&x, &y, &u, &v, &B, &D, NULL);
 }
 #endif
 
-/* Source: /cvs/libtom/libtommath/bn_fast_mp_invmod.c,v */
-/* Revision: 1.4 */
-/* Date: 2006/12/28 01:25:13 */
+/* Source: /cvs/libtom/libtommath/bn_fast_mp_invmod.c,v  */
+/* Revision: 1.4  */
+/* Date: 2006/12/28 01:25:13  */

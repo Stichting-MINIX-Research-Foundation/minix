@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.h,v 1.65 2013/09/03 02:24:01 dholland Exp $	*/
+/*	$NetBSD: fs.h,v 1.66 2015/02/14 09:06:11 maxv Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -72,7 +72,7 @@
  *
  * Unfortunately the UFS2/FFSv2 change was done without adequate consideration
  * of backward compatibility.  In particular 'newfs' for a FFSv2 partition
- * must overwrite any old FFSv1 superblock at 8k, and preferrably as many
+ * must overwrite any old FFSv1 superblock at 8k, and preferably as many
  * of the alternates as it can find - otherwise attempting to mount on a
  * system that only supports FFSv1 is likely to succeed!.
  * For a small FFSv1 filesystem, an old FFSv2 superblock can be left on
@@ -210,7 +210,7 @@
  * is run at between 95% and 100% full; thus the minimum default
  * value of fs_minfree is 5%. However, to get good clustering
  * performance, 10% is a better choice. This value is used only
- * when creating a file system and can be overriden from the
+ * when creating a file system and can be overridden from the
  * command line. By default we choose to optimize for time.
  */
 #define	MINFREE		5

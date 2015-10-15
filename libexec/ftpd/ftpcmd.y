@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpcmd.y,v 1.93 2011/09/16 16:13:17 plunky Exp $	*/
+/*	$NetBSD: ftpcmd.y,v 1.94 2015/08/10 07:45:50 shm Exp $	*/
 
 /*-
  * Copyright (c) 1997-2009 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: ftpcmd.y,v 1.93 2011/09/16 16:13:17 plunky Exp $");
+__RCSID("$NetBSD: ftpcmd.y,v 1.94 2015/08/10 07:45:50 shm Exp $");
 #endif
 #endif /* not lint */
 
@@ -193,7 +193,7 @@ cmd
 	| PASS SP password CRLF
 		{
 			pass($3);
-			memset($3, 0, strlen($3));
+			explicit_memset($3, 0, strlen($3));
 			free($3);
 		}
 

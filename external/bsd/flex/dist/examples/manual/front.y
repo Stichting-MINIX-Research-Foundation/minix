@@ -1,5 +1,3 @@
-/*	$NetBSD: front.y,v 1.1.1.1 2009/10/26 00:28:33 christos Exp $	*/
-
 /* C code supplied at the beginning of the file.  */
 
 %{

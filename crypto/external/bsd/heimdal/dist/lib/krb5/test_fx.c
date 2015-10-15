@@ -1,4 +1,4 @@
-/*	$NetBSD: test_fx.c,v 1.1.1.1 2011/04/13 18:15:38 elric Exp $	*/
+/*	$NetBSD: test_fx.c,v 1.1.1.2 2014/04/24 12:45:51 pettai Exp $	*/
 
 /*
  * Copyright (c) 2009 Kungliga Tekniska Högskolan
@@ -101,7 +101,7 @@ test_cf2(krb5_context context)
     for (i = 0; i < sizeof(cf2)/sizeof(cf2[0]); i++) {
 	pw.data = cf2[i].p1;
 	pw.length = strlen(cf2[i].p1);
-	salt.salttype = KRB5_PADATA_PW_SALT;
+	salt.salttype = (krb5_salttype)KRB5_PADATA_PW_SALT;
 	salt.saltvalue.data = cf2[i].p1;
 	salt.saltvalue.length = strlen(cf2[i].p1);
 
@@ -129,7 +129,7 @@ test_cf2(krb5_context context)
 					   &k2);
 	if (ret)
 	    krb5_err(context, 1, ret, "krb5_string_to_key_data_salt");
-	    
+
 	ret = krb5_crypto_init(context, &k2, 0, &c2);
 	if (ret)
 	    krb5_err(context, 1, ret, "krb5_crypto_init");

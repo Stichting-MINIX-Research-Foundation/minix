@@ -1,4 +1,4 @@
-/*	$NetBSD: rec_utils.c,v 1.13 2013/12/01 00:22:48 christos Exp $	*/
+/*	$NetBSD: rec_utils.c,v 1.14 2013/12/14 18:04:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rec_utils.c,v 1.13 2013/12/01 00:22:48 christos Exp $");
+__RCSID("$NetBSD: rec_utils.c,v 1.14 2013/12/14 18:04:56 christos Exp $");
 
 #include <sys/param.h>
 
@@ -71,9 +71,7 @@ __rec_ret(BTREE *t, EPG *e, recno_t nrec, DBT *key, DBT *data)
 
 	/* We have to copy the key, it's not on the page. */
 	if (sizeof(nrec) > t->bt_rkey.size) {
-		p = t->bt_rkey.data == NULL ?
-		    malloc(sizeof(nrec)) :
-		    realloc(t->bt_rkey.data, sizeof(nrec));
+		p = realloc(t->bt_rkey.data, sizeof(nrec));
 		if (p == NULL)
 			return (RET_ERROR);
 		t->bt_rkey.data = p;
@@ -101,9 +99,7 @@ dataonly:
 	} else if (F_ISSET(t, B_DB_LOCK)) {
 		/* Use +1 in case the first record retrieved is 0 length. */
 		if (rl->dsize + 1 > t->bt_rdata.size) {
-			p = t->bt_rdata.data == NULL ?
-			    malloc(rl->dsize + 1) :
-			    realloc(t->bt_rdata.data, rl->dsize + 1);
+			p = realloc(t->bt_rdata.data, rl->dsize + 1);
 			if (p == NULL)
 				return (RET_ERROR);
 			t->bt_rdata.data = p;

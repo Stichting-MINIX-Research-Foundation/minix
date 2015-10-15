@@ -1,4 +1,4 @@
-/* $NetBSD: atomic_cas_16.S,v 1.1 2013/11/08 22:42:52 matt Exp $ */
+/* $NetBSD: atomic_cas_16.S,v 1.2 2014/03/04 16:15:28 matt Exp $ */
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -59,6 +59,6 @@ END(_atomic_cas_16)
 ATOMIC_OP_ALIAS(atomic_cas_16,_atomic_cas_16)
 STRONG_ALIAS(_atomic_cas_short,_atomic_cas_16)
 STRONG_ALIAS(_atomic_cas_ushort,_atomic_cas_16)
-STRONG_ALIAS(__sync_val_compare_and_swap_2,_atomic_cas_16)
+CRT_ALIAS(__sync_val_compare_and_swap_2,_atomic_cas_16)
 
 #endif /* _ARM_ARCH_6 */

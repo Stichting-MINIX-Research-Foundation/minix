@@ -458,7 +458,6 @@ compatflags(long flags)
 		CLR(cflag, HUPCL);
 	else
 		SET(cflag, HUPCL);
-
 #if !defined(__minix)
 	if (ISSET(flags, CRTKIL))
 		SET(lflag, ECHOKE);

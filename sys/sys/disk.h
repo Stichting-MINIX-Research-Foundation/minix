@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.h,v 1.59 2013/05/29 15:22:19 martin Exp $	*/
+/*	$NetBSD: disk.h,v 1.65 2015/08/16 18:00:03 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2004 The NetBSD Foundation, Inc.
@@ -248,6 +248,17 @@ __link_set_add_data(dkwedge_methods, name ## _ddm)
 #define	DKW_PTYPE_MINIXFS3	"minixfs3"
 
 /*
+ * Ensure each symbol used in FSTYPE_DEFN in <sys/disklabel.h>
+ * has a corresponding DKW_PTYPE_* definition.
+ */
+#define	DKW_PTYPE_MSDOS		DKW_PTYPE_FAT
+#define	DKW_PTYPE_BSDFFS	DKW_PTYPE_FFS
+#define	DKW_PTYPE_BSDLFS	DKW_PTYPE_LFS
+#define	DKW_PTYPE_ADOS		DKW_PTYPE_AMIGADOS
+#define	DKW_PTYPE_EX2FS		DKW_PTYPE_EXT2FS
+#define	DKW_PTYPE_RAID		DKW_PTYPE_RAIDFRAME
+
+/*
  * Disk geometry dictionary.
  *
  * NOTE: Not all geometry information is relevant for every kind of disk.
@@ -459,18 +470,19 @@ struct disk {
 	struct cpu_disklabel *dk_cpulabel;
 };
 
+#ifdef _KERNEL
 struct dkdriver {
 	void	(*d_strategy)(struct buf *);
 	void	(*d_minphys)(struct buf *);
-#ifdef notyet
-	int	(*d_open)(dev_t, int, int, struct proc *);
-	int	(*d_close)(dev_t, int, int, struct proc *);
-	int	(*d_ioctl)(dev_t, u_long, void *, int, struct proc *);
-	int	(*d_dump)(dev_t);
-	void	(*d_start)(struct buf *, daddr_t);
-	int	(*d_mklabel)(struct disk *);
-#endif
+	int	(*d_open)(dev_t, int, int, struct lwp *);
+	int	(*d_close)(dev_t, int, int, struct lwp *);
+	int	(*d_diskstart)(device_t, struct buf *);
+	void	(*d_iosize)(device_t, int *);
+	int	(*d_dumpblocks)(device_t, void *, daddr_t, int);
+	int	(*d_lastclose)(device_t);
+	int	(*d_discard)(device_t, off_t, off_t);
 };
+#endif
 
 /* states */
 #define	DK_CLOSED	0		/* drive is closed */
@@ -521,9 +533,8 @@ void	disk_destroy(struct disk *);
 void	disk_busy(struct disk *);
 void	disk_unbusy(struct disk *, long, int);
 bool	disk_isbusy(struct disk *);
-void	disk_blocksize(struct disk *, int);
 struct disk *disk_find(const char *);
-int	disk_ioctl(struct disk *, u_long, void *, int, struct lwp *);
+int	disk_ioctl(struct disk *, dev_t, u_long, void *, int, struct lwp *);
 void	disk_set_info(device_t, struct disk *, const char *);
 
 void	dkwedge_init(void);
@@ -534,6 +545,7 @@ int	dkwedge_list(struct disk *, struct dkwedge_list *, struct lwp *);
 void	dkwedge_discover(struct disk *);
 int	dkwedge_read(struct disk *, struct vnode *, daddr_t, void *, size_t);
 device_t dkwedge_find_by_wname(const char *);
+const char *dkwedge_get_parent_name(dev_t);
 void	dkwedge_print_wnames(void);
 device_t dkwedge_find_partition(device_t, daddr_t, uint64_t);
 #endif

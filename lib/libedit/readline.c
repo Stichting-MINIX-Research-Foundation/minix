@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.109 2013/08/28 08:05:21 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.117 2015/06/02 15:35:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.109 2013/08/28 08:05:21 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.117 2015/06/02 15:35:31 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -78,7 +78,7 @@ FILE *rl_outstream = NULL;
 int rl_point = 0;
 int rl_end = 0;
 char *rl_line_buffer = NULL;
-VCPFunction *rl_linefunc = NULL;
+rl_vcpfunc_t *rl_linefunc = NULL;
 int rl_done = 0;
 VFunction *rl_event_hook = NULL;
 KEYMAP_ENTRY_ARRAY emacs_standard_keymap,
@@ -107,9 +107,9 @@ int rl_attempted_completion_over = 0;
 char *rl_basic_word_break_characters = break_chars;
 char *rl_completer_word_break_characters = NULL;
 char *rl_completer_quote_characters = NULL;
-Function *rl_completion_entry_function = NULL;
+rl_compentry_func_t *rl_completion_entry_function = NULL;
 char *(*rl_completion_word_break_hook)(void) = NULL;
-CPPFunction *rl_attempted_completion_function = NULL;
+rl_completion_func_t *rl_attempted_completion_function = NULL;
 Function *rl_pre_input_hook = NULL;
 Function *rl_startup1_hook = NULL;
 int (*rl_getc_function)(FILE *) = NULL;
@@ -160,7 +160,7 @@ int rl_completion_append_character = ' ';
 
 static History *h = NULL;
 static EditLine *e = NULL;
-static Function *map[256];
+static rl_command_func_t *map[256];
 static jmp_buf topbuf;
 
 /* internal functions */
@@ -338,7 +338,7 @@ rl_initialize(void)
 	el_set(e, EL_SIGNAL, rl_catch_signals);
 
 	/* set default mode to "emacs"-style and read setting afterwards */
-	/* so this can be overriden */
+	/* so this can be overridden */
 	el_set(e, EL_EDITOR, "emacs");
 	if (rl_terminal_name != NULL)
 		el_set(e, EL_TERMINAL, rl_terminal_name);
@@ -362,6 +362,37 @@ rl_initialize(void)
 	    _el_rl_tstp);
 	el_set(e, EL_BIND, "^Z", "rl_tstp", NULL);
 		
+	/*
+	 * Set some readline compatible key-bindings.
+	 */
+	el_set(e, EL_BIND, "^R", "em-inc-search-prev", NULL);
+
+	/*
+	 * Allow the use of Home/End keys.
+	 */
+	el_set(e, EL_BIND, "\\e[1~", "ed-move-to-beg", NULL);
+	el_set(e, EL_BIND, "\\e[4~", "ed-move-to-end", NULL);
+	el_set(e, EL_BIND, "\\e[7~", "ed-move-to-beg", NULL);
+	el_set(e, EL_BIND, "\\e[8~", "ed-move-to-end", NULL);
+	el_set(e, EL_BIND, "\\e[H", "ed-move-to-beg", NULL);
+	el_set(e, EL_BIND, "\\e[F", "ed-move-to-end", NULL);
+
+	/*
+	 * Allow the use of the Delete/Insert keys.
+	 */
+	el_set(e, EL_BIND, "\\e[3~", "ed-delete-next-char", NULL);
+	el_set(e, EL_BIND, "\\e[2~", "ed-quoted-insert", NULL);
+
+	/*
+	 * Ctrl-left-arrow and Ctrl-right-arrow for word moving.
+	 */
+	el_set(e, EL_BIND, "\\e[1;5C", "em-next-word", NULL);
+	el_set(e, EL_BIND, "\\e[1;5D", "ed-prev-word", NULL);
+	el_set(e, EL_BIND, "\\e[5C", "em-next-word", NULL);
+	el_set(e, EL_BIND, "\\e[5D", "ed-prev-word", NULL);
+	el_set(e, EL_BIND, "\\e\\e[C", "em-next-word", NULL);
+	el_set(e, EL_BIND, "\\e\\e[D", "ed-prev-word", NULL);
+
 	/* read settings from configuration file */
 	el_source(e, NULL);
 
@@ -634,7 +665,7 @@ get_history_event(const char *cmd, int *cindex, int qchar)
  * returns 0 if data was not modified, 1 if it was and 2 if the string
  * should be only printed and not executed; in case of error,
  * returns -1 and *result points to NULL
- * it's callers responsibility to free() string returned in *result
+ * it's the caller's responsibility to free() the string returned in *result
  */
 static int
 _history_expand_command(const char *command, size_t offs, size_t cmdlen,
@@ -948,7 +979,8 @@ loop:
 		for (; str[j]; j++) {
 			if (str[j] == '\\' &&
 			    str[j + 1] == history_expansion_char) {
-				(void)strcpy(&str[j], &str[j + 1]);
+				len = strlen(&str[j + 1]) + 1;
+				memmove(&str[j], &str[j + 1], len);
 				continue;
 			}
 			if (!loop_again) {
@@ -1482,6 +1514,9 @@ clear_history(void)
 {
 	HistEvent ev;
 
+	if (h == NULL || e == NULL)
+		rl_initialize();
+
 	(void)history(h, &ev, H_CLEAR);
 	history_length = 0;
 }
@@ -1691,7 +1726,7 @@ filename_completion_function(const char *name, int state)
  * which starts with supplied text
  * text contains a partial username preceded by random character
  * (usually '~'); state resets search from start (??? should we do that anyway)
- * it's callers responsibility to free returned value
+ * it's the caller's responsibility to free the returned value
  */
 char *
 username_completion_function(const char *text, int state)
@@ -1792,9 +1827,11 @@ rl_complete(int ignore __attribute__((__unused__)), int invoking_key)
 	else
 		breakchars = rl_basic_word_break_characters;
 
+	_rl_update_pos();
+
 	/* Just look at how many global variables modify this operation! */
 	return fn_complete(e,
-	    (CPFunction *)rl_completion_entry_function,
+	    (rl_compentry_func_t *)rl_completion_entry_function,
 	    rl_attempted_completion_function,
 	    ct_decode_string(rl_basic_word_break_characters, &wbreak_conv),
 	    ct_decode_string(breakchars, &sprefix_conv),
@@ -1923,7 +1960,7 @@ rl_bind_wrapper(EditLine *el __attribute__((__unused__)), unsigned char c)
 
 	_rl_update_pos();
 
-	(*map[c])(NULL, c);
+	(*map[c])(1, c);
 
 	/* If rl_done was set by the above call, deal with it here */
 	if (rl_done)
@@ -1933,7 +1970,7 @@ rl_bind_wrapper(EditLine *el __attribute__((__unused__)), unsigned char c)
 }
 
 int
-rl_add_defun(const char *name, Function *fun, int c)
+rl_add_defun(const char *name, rl_command_func_t *fun, int c)
 {
 	char dest[8];
 	if ((size_t)c >= sizeof(map) / sizeof(map[0]) || c < 0)
@@ -1967,12 +2004,12 @@ rl_callback_read_char(void)
 		} else
 			wbuf = NULL;
 		(*(void (*)(const char *))rl_linefunc)(wbuf);
-		//el_set(e, EL_UNBUFFERED, 1);
+		el_set(e, EL_UNBUFFERED, 1);
 	}
 }
 
 void 
-rl_callback_handler_install(const char *prompt, VCPFunction *linefunc)
+rl_callback_handler_install(const char *prompt, rl_vcpfunc_t *linefunc)
 {
 	if (e == NULL) {
 		rl_initialize();

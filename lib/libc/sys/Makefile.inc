@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.221 2013/11/09 13:05:59 njoly Exp $
+#	$NetBSD: Makefile.inc,v 1.227 2015/01/31 23:10:56 christos Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 .if defined(__MINIX)
@@ -7,14 +7,18 @@
 # sys sources
 .PATH: ${ARCHDIR}/sys ${.CURDIR}/sys
 
+# other sources shared with the kernel, used in syscalls
+SRCS+=	cpuset.c
+# glue to offer userland wrappers for some syscalls
+SRCS+=	posix_fadvise.c posix_madvise.c sched.c sigqueue.c sigtimedwait.c \
+	sigwait.c sigwaitinfo.c statvfs.c swapon.c semctl.c 
+
+.if ${RUMPRUN} != "yes"
 # modules with non-default implementations on at least one architecture:
 SRCS+=	__clone.S __vfork14.S brk.S exect.S fork.S pipe.S \
 	getcontext.S \
 	ptrace.S sbrk.S shmat.S \
 	syscall.S __syscall.S __clone.S cerror.S
-
-# other sources shared with the kernel, used in syscalls
-SRCS+=	cpuset.c
 
 _LSRC+=	Lint___clone.c Lint___vfork14.c Lint_brk.c Lint_clone.c \
 	Lint_getcontext.c Lint_exect.c Lint_pipe.c Lint_ptrace.c \
@@ -27,15 +31,12 @@ DPSRCS+=	${_LSRC:MLintSys*.c}
 CLEANFILES+=	${_LSRC:MLintSys*.c}
 .endif
 
-# glue to offer userland wrappers for some syscalls
-SRCS+=	posix_fadvise.c posix_madvise.c sched.c sigqueue.c sigtimedwait.c \
-	sigwait.c sigwaitinfo.c statvfs.c swapon.c semctl.c 
-
 # glue to provide compatibility between GCC 1.X and 2.X and for compat
 # with old syscall interfaces.
-GLUE+= ftruncate.c lseek.c mmap.c pread.c preadv.c pwrite.c \
-	pwritev.c truncate.c ntp_adjtime.c mknodat.c
-
+GLUE+= fdiscard.c ftruncate.c lseek.c mmap.c \
+	pread.c preadv.c pwrite.c pwritev.c truncate.c ntp_adjtime.c \
+	mknodat.c
+GLUENOERR+= posix_fallocate.c
 GLUE50+= adjtime.c clock_settime.c settimeofday.c
 
 # 'glue' files might .c or .S depending on the architecture
@@ -56,6 +57,23 @@ ASM_GLUE+= tmp_${glue:.c=.S}
 .endfor
 
 # 'glue' files might .c or .S depending on the architecture
+.for glue in ${GLUENOERR}
+. if exists(${glue:.c=.S})
+# Build the ASM glue file
+SRCS+=${glue:.c=.S}
+. else
+.  if exists(__${glue:.c=.S})
+SRCS+=__${glue:.c=.S} ${glue}
+.  else
+# Build the C glue file
+SRCS+= ${glue}
+# and an asm entry for __<syscall>
+ASM_GLUENOERR+= tmp_${glue:.c=.S}
+.  endif
+. endif
+.endfor
+
+# 'glue' files might .c or .S depending on the architecture
 .for glue in ${GLUE50}
 . if exists(${glue:.c=.S})
 # Build the ASM glue file
@@ -71,9 +89,6 @@ ASM_GLUE+= tmp___${glue:.c=}50.S
 .  endif
 . endif
 .endfor
-
-# namespace purity wrappers
-SRCS+=	_brk.c _fork.c _getcontext.c _pipe.c _sbrk.c
 
 # modules with default implementations on all architectures:
 ASM=	access.S acct.S \
@@ -106,7 +121,7 @@ ASM=	access.S acct.S \
 	lchflags.S lchmod.S lchown.S lfs_bmapv.S lfs_markv.S lfs_segclean.S \
 		__lfs_segwait50.S link.S linkat.S listen.S __lstat50.S \
 		__lutimes50.S _lwp_create.S _lwp_exit.S _lwp_kill.S \
-		_lwp_self.S _lwp_wait.S _lwp_unpark.S \
+		___lwp_park60.S _lwp_self.S _lwp_wait.S _lwp_unpark.S \
 		_lwp_unpark_all.S _lwp_suspend.S _lwp_continue.S \
 		_lwp_wakeup.S _lwp_detach.S _lwp_setprivate.S \
 		_lwp_setname.S _lwp_getname.S _lwp_ctl.S \
@@ -153,7 +168,8 @@ ASM_MD=	_lwp_getprivate.S mremap.S
 .endfor
 
 WEAKASM= accept.S __aio_suspend50.S close.S connect.S execve.S \
-	fcntl.S fdatasync.S fsync.S fsync_range.S __kevent50.S \
+	fcntl.S fdatasync.S fsync.S \
+	fsync_range.S __kevent50.S \
 	kill.S mq_receive.S mq_send.S __mq_timedreceive50.S __mq_timedsend50.S \
 	msgrcv.S msgsnd.S __msync13.S  __nanosleep50.S open.S poll.S \
 	__pollts50.S __pselect50.S read.S readlink.S \
@@ -167,13 +183,17 @@ NOERR=	getegid.S geteuid.S getgid.S getpid.S getppid.S getuid.S \
 
 PSEUDONOERR=	_exit.S
 
-SRCS+=		${ASM} ${WEAKASM} ${NOERR} ${PSEUDONOERR} ${ASM_GLUE}
-CLEANFILES+=	${ASM} ${WEAKASM} ${NOERR} ${PSEUDONOERR} ${ASM_GLUE}
+_GENFILES=	${ASM} ${WEAKASM} ${NOERR} ${PSEUDONOERR} \
+	${ASM_GLUE} ${ASM_GLUENOERR}
+
+SRCS+=		${_GENFILES}
+CLEANFILES+=	${_GENFILES}
 
 ASMDEPS=	${.CURDIR}/sys/Makefile.inc ${ARCHDIR}/SYS.h \
 		${DESTDIR}/usr/include/sys/syscall.h
 
 _LINTASM=	${ASM:Nsa_*.S} ${WEAKASM:Nsa_*.S}
+.endif # RUMPRUN != yes
 
 ${ASM}: ${ASMDEPS}
 	${_MKTARGET_CREATE}
@@ -182,6 +202,10 @@ ${ASM}: ${ASMDEPS}
 ${ASM_GLUE}: ${ASMDEPS}
 	${_MKTARGET_CREATE}
 	printf '#include "SYS.h"\nPSEUDO(${.PREFIX:S/tmp_/__/},${.PREFIX:S/tmp_//})\n' >${.TARGET}
+
+${ASM_GLUENOERR}: ${ASMDEPS}
+	${_MKTARGET_CREATE}
+	printf '#include "SYS.h"\nPSEUDO_NOERROR(${.PREFIX:S/tmp_/__/},${.PREFIX:S/tmp_//})\n' >${.TARGET}
 
 ${WEAKASM}: ${ASMDEPS}
 	${_MKTARGET_CREATE}
@@ -224,7 +248,7 @@ LintSysPseudoNoerr.c: ${LIBCDIR}/sys/makelintstub \
 MAN+=	accept.2 access.2 acct.2 adjtime.2 bind.2 brk.2 chdir.2 \
 	chflags.2 chmod.2 chown.2 chroot.2 clock_settime.2 clone.2 close.2 \
 	connect.2 dup.2 execve.2 _exit.2 extattr_get_file.2 \
-	fcntl.2 fdatasync.2 fhopen.2 \
+	fcntl.2 fdatasync.2 fdiscard.2 fhopen.2 \
 	flock.2 fork.2 fsync.2 getcontext.2 getdents.2 \
 	getfh.2 getvfsstat.2 getgid.2 getgroups.2 \
 	getitimer.2 getlogin.2 getpeername.2 getpgrp.2 getpid.2 \
@@ -247,7 +271,8 @@ MAN+=	accept.2 access.2 acct.2 adjtime.2 bind.2 brk.2 chdir.2 \
 MAN+=	adjtime.2 clock_settime.2 getvfsstat.2 pipe.2 getrusage.2 reboot.2
 .endif # !defined(__MINIX)
 .if !defined(__MINIX)
-MAN+=	pmc_control.2 poll.2 posix_fadvise.2 profil.2 ptrace.2 __quotactl.2 \
+MAN+=	pmc_control.2 poll.2 posix_fadvise.2 \
+	profil.2 ptrace.2 __quotactl.2 \
 	rasctl.2 read.2 readlink.2 \
 	reboot.2 recv.2 rename.2 revoke.2 rmdir.2 \
 	select.2 semctl.2 \
@@ -290,6 +315,7 @@ MLINKS+=extattr_get_file.2 extattr_set_file.2 \
 MLINKS+=access.2 faccessat.2
 MLINKS+=chmod.2 fchmodat.2
 MLINKS+=chown.2 fchownat.2
+MLINKS+=fdiscard.2 posix_fallocate.2 
 MLINKS+=fhopen.2 fhstat.2 fhopen.2 fhstatvfs.2 fhopen.2 fhstatvfs1.2
 MLINKS+=stat.2 fstatat.2
 MLINKS+=fsync.2 fsync_range.2

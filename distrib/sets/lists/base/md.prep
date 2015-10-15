@@ -1,4 +1,4 @@
-# $NetBSD: md.prep,v 1.16 2013/08/11 22:29:02 joerg Exp $
+# $NetBSD: md.prep,v 1.18 2014/08/06 12:15:01 martin Exp $
 ./usr/mdec/boot					base-sysutil-bin
 ./usr/mdec/boot_com0				base-sysutil-bin
 ./usr/mdec/boot_com0_vreset				base-sysutil-bin

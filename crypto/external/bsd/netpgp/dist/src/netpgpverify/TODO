@@ -1,0 +1,12 @@
+To Do
+=====
+licenses
+
+Done
+====
+fix man page
+move bzlib to source
+fix memmem
+zlib on freebsd - time was wrong
+move zlib to source
+warn/err

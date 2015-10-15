@@ -71,7 +71,7 @@ nodist_libkafs_la_SOURCES = $(ROKEN_SRCS)
 
 EXTRA_libkafs_la_SOURCES = afskrb5.c afslib.c
 
-EXTRA_DIST = afsl.exp afslib.exp $(man_MANS)
+EXTRA_DIST = NTMakefile afsl.exp afslib.exp $(man_MANS)
 
 man_MANS = kafs.3
 

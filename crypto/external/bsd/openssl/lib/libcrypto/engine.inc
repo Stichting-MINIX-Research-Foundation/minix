@@ -1,4 +1,4 @@
-#	$NetBSD: engine.inc,v 1.7 2012/07/27 18:10:40 christos Exp $
+#	$NetBSD: engine.inc,v 1.9 2015/05/16 22:24:41 joerg Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -9,7 +9,7 @@
     ${OPENSSLSRC}/engines/ccgost
 
 
-ENGINE_SRCS = eng_err.c eng_lib.c eng_list.c eng_init.c eng_ctrl.c \
+ENGINE_SRCS += eng_err.c eng_lib.c eng_list.c eng_init.c eng_ctrl.c \
 	eng_table.c eng_pkey.c eng_fat.c eng_all.c tb_asnmth.c \
 	tb_rsa.c tb_dsa.c tb_dh.c tb_rand.c tb_cipher.c tb_digest.c \
 	eng_openssl.c eng_dyn.c eng_cnf.c eng_rdrand.c eng_rsax.c \
@@ -25,12 +25,6 @@ ENGINE_SRCS = eng_err.c eng_lib.c eng_list.c eng_init.c eng_ctrl.c \
 	e_ubsec.c e_ubsec_err.c   \
 	e_padlock.c e_seed.c
 
-.if defined(AESNI)
-ENGINE_SRCS+=  eng_aesni.c
-.else
-CRYPTOCPPFLAGS+=-DOPENSSL_NO_HW_AESNI
-.endif
-
 ENGINE_SRCS += gost2001.c gost2001_keyx.c gost89.c gost94_keyx.c gost_ameth.c \
 	gost_asn1.c gost_crypt.c gost_ctl.c gost_eng.c gosthash.c \
 	gost_keywrap.c gost_md.c gost_params.c gost_pmeth.c gost_sign.c \
@@ -43,5 +37,5 @@ CRYPTOCPPFLAGS+=-DNEED_CPUID_SETUP
 .endif
 
 .for cryptosrc in ${ENGINE_SRCS}
-CPPFLAGS.${cryptosrc} = -I${OPENSSLSRC}/crypto/engine ${CRYPTOCPPFLAGS} # -DHAVE_CRYPTODEV
+CPPFLAGS.${cryptosrc} = -I${OPENSSLSRC}/crypto/engine ${CRYPTOCPPFLAGS} #__MINIX: -DHAVE_CRYPTODEV
 .endfor

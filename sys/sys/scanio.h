@@ -1,4 +1,4 @@
-/*	$NetBSD: scanio.h,v 1.2 1998/02/10 00:25:44 perry Exp $	*/
+/*	$NetBSD: scanio.h,v 1.3 2015/09/06 06:01:02 dholland Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -35,6 +35,8 @@
 
 #ifndef _SYS_SCANIO_H_
 #define _SYS_SCANIO_H_
+
+#include <sys/ioccom.h>
 
 /*
  * XXX scancap make this sort of obsolete:

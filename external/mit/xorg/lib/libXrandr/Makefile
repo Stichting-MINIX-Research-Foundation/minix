@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2013/06/01 08:03:26 mrg Exp $
+#	$NetBSD: Makefile,v 1.6 2015/07/20 03:13:56 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -8,7 +8,8 @@ LIB=	Xrandr
 .PATH:	${X11SRCDIR.${LIB}}/man
 
 SRCS=	Xrandr.c XrrConfig.c XrrCrtc.c XrrMode.c XrrOutput.c \
-	XrrProperty.c XrrScreen.c XrrProvider.c XrrProviderProperty.c
+	XrrProperty.c XrrScreen.c XrrProvider.c XrrProviderProperty.c \
+	XrrMonitor.c
 
 INCS=	Xrandr.h
 INCSDIR=${X11INCDIR}/X11/extensions

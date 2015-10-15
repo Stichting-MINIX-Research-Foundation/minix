@@ -1,4 +1,4 @@
-/*	$NetBSD: log1.c,v 1.3 2013/11/29 16:36:11 christos Exp $	*/
+/*	$NetBSD: log1.c,v 1.4 2014/01/26 21:43:45 christos Exp $	*/
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -10,9 +10,14 @@
 
 #include "config.h"
 
+#include <sys/cdefs.h>
+#if 0
 #ifndef lint
 static const char sccsid[] = "Id: log.c,v 10.26 2002/03/02 23:12:13 skimo Exp  (Berkeley) Date: 2002/03/02 23:12:13 ";
 #endif /* not lint */
+#else
+__RCSID("$NetBSD: log1.c,v 1.4 2014/01/26 21:43:45 christos Exp $");
+#endif
 
 #include <sys/types.h>
 #include <sys/queue.h>

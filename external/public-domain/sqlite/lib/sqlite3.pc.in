@@ -1,0 +1,4 @@
+Name: SQLite
+Description: SQL database engine
+Version: @VERSION@
+Libs: -lsqlite3

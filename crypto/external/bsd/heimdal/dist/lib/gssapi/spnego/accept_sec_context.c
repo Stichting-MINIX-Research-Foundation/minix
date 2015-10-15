@@ -1,4 +1,4 @@
-/*	$NetBSD: accept_sec_context.c,v 1.1.1.1 2011/04/13 18:14:48 elric Exp $	*/
+/*	$NetBSD: accept_sec_context.c,v 1.1.1.2 2014/04/24 12:45:29 pettai Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2006 Kungliga Tekniska Högskolan
@@ -92,7 +92,7 @@ send_supported_mechs (OM_uint32 *minor_status,
 		      gss_buffer_t output_token)
 {
     NegotiationTokenWin nt;
-    size_t buf_len;
+    size_t buf_len = 0;
     gss_buffer_desc data;
     OM_uint32 ret;
 
@@ -134,8 +134,10 @@ send_supported_mechs (OM_uint32 *minor_status,
 	*minor_status = ret;
 	return GSS_S_FAILURE;
     }
-    if (data.length != buf_len)
+    if (data.length != buf_len) {
 	abort();
+        UNREACHABLE(return GSS_S_FAILURE);
+    }
 
     ret = gss_encapsulate_token(&data, GSS_SPNEGO_MECHANISM, output_token);
 
@@ -318,7 +320,7 @@ select_mech(OM_uint32 *minor_status, MechType *mechType, int verify_p,
     gss_OID_desc oid;
     gss_OID oidp;
     gss_OID_set mechs;
-    int i;
+    size_t i;
     OM_uint32 ret, junk;
 
     ret = der_put_oid ((unsigned char *)mechbuf + sizeof(mechbuf) - 1,
@@ -370,12 +372,13 @@ select_mech(OM_uint32 *minor_status, MechType *mechType, int verify_p,
 
 	host = getenv("GSSAPI_SPNEGO_NAME");
 	if (host == NULL || issuid()) {
+	    int rv;
 	    if (gethostname(hostname, sizeof(hostname)) != 0) {
 		*minor_status = errno;
 		return GSS_S_FAILURE;
 	    }
-	    i = asprintf(&str, "host@%s", hostname);
-	    if (i < 0 || str == NULL) {
+	    rv = asprintf(&str, "host@%s", hostname);
+	    if (rv < 0 || str == NULL) {
 		*minor_status = ENOMEM;
 		return GSS_S_FAILURE;
 	    }
@@ -412,10 +415,6 @@ acceptor_complete(OM_uint32 * minor_status,
 {
     OM_uint32 ret;
     int require_mic, verify_mic;
-    gss_buffer_desc buf;
-
-    buf.length = 0;
-    buf.value = NULL;
 
     ret = _gss_spnego_require_mechlist_mic(minor_status, ctx, &require_mic);
     if (ret)
@@ -437,11 +436,11 @@ acceptor_complete(OM_uint32 * minor_status,
 	    verify_mic = 0;
 	    *get_mic = 1;
 	}
-	
+
 	if (verify_mic || *get_mic) {
 	    int eret;
-	    size_t buf_len;
-	
+	    size_t buf_len = 0;
+
 	    ASN1_MALLOC_ENCODE(MechTypeList,
 			       mech_buf->value, mech_buf->length,
 			       &ctx->initiator_mech_types, &buf_len, eret);
@@ -449,24 +448,19 @@ acceptor_complete(OM_uint32 * minor_status,
 		*minor_status = eret;
 		return GSS_S_FAILURE;
 	    }
-	    if (buf.length != buf_len)
-		abort();
+	    heim_assert(mech_buf->length == buf_len, "Internal ASN.1 error");
+	    UNREACHABLE(return GSS_S_FAILURE);
 	}
-	
+
 	if (verify_mic) {
 	    ret = verify_mechlist_mic(minor_status, ctx, mech_buf, mic);
 	    if (ret) {
 		if (*get_mic)
 		    send_reject (minor_status, output_token);
-		if (buf.value)
-		    free(buf.value);
 		return ret;
 	    }
 	    ctx->verified_mic = 1;
 	}
-	if (buf.value)
-	    free(buf.value);
-
     } else
 	*get_mic = 0;
 
@@ -493,7 +487,6 @@ acceptor_start
     NegotiationToken nt;
     size_t nt_len;
     NegTokenInit *ni;
-    int i;
     gss_buffer_desc data;
     gss_buffer_t mech_input_token = GSS_C_NO_BUFFER;
     gss_buffer_desc mech_output_token;
@@ -509,7 +502,7 @@ acceptor_start
 
     if (input_token_buffer->length == 0)
 	return send_supported_mechs (minor_status, output_token);
-	
+
     ret = _gss_spnego_alloc_sec_context(minor_status, context_handle);
     if (ret != GSS_S_COMPLETE)
 	return ret;
@@ -575,7 +568,7 @@ acceptor_start
 
 	if (ctx->mech_src_name != GSS_C_NO_NAME)
 	    gss_release_name(&junk, &ctx->mech_src_name);
-	
+
 	ret = gss_accept_sec_context(minor_status,
 				     &ctx->negotiated_ctx_id,
 				     acceptor_cred_handle,
@@ -615,13 +608,14 @@ acceptor_start
      */
 
     if (!first_ok && ni->mechToken != NULL) {
+	size_t j;
 
 	preferred_mech_type = GSS_C_NO_OID;
 
 	/* Call glue layer to find first mech we support */
-	for (i = 1; i < ni->mechTypes.len; ++i) {
+	for (j = 1; j < ni->mechTypes.len; ++j) {
 	    ret = select_mech(minor_status,
-			      &ni->mechTypes.val[i],
+			      &ni->mechTypes.val[j],
 			      1,
 			      &preferred_mech_type);
 	    if (ret == 0)

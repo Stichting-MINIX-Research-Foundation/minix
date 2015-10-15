@@ -1,4 +1,4 @@
-/*	$NetBSD: ustarfs.c,v 1.34 2011/12/25 06:09:08 tsutsui Exp $	*/
+/*	$NetBSD: ustarfs.c,v 1.35 2014/03/20 03:13:18 christos Exp $	*/
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -539,13 +539,21 @@ ustarfs_stat(struct open_file *f, struct stat *sb)
 
 
 #if defined(LIBSA_ENABLE_LS_OP)
+#include "ls.h"
 __compactcall void
-ustarfs_ls(struct open_file *f, const char *pattern,
-		void (*funcp)(char* arg), char* path)
+ustarfs_ls(struct open_file *f, const char *pattern)
 {
-	printf("Currently ls command is unsupported by ustarfs\n");
+	lsunsup("ustarfs");
 	return;
 }
+#if defined(__minix) && defined(LIBSA_ENABLE_LOAD_MODS_OP)
+__compactcall void
+ustarfs_load_mods(struct open_file *f, const char *pattern,
+	void (*funcp)(char *), char *path)
+{
+	load_modsunsup("ustarfs");
+}
+#endif /* defined(__minix) && defined(LIBSA_ENABLE_LOAD_MODS_OP) */
 #endif
 
 #ifndef LIBSA_NO_FS_CLOSE

@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s 
+// RUN: %clang_cc1 -fsyntax-only -Wbind-to-temporary-copy -verify %s 
 class X { 
 public:
   operator bool();
@@ -26,6 +26,9 @@ class Y {
 public:
   void operator bool(int, ...) const; // expected-error{{conversion function cannot have a return type}} \
   // expected-error{{conversion function cannot have any parameters}}
+
+  operator bool(int a = 4, int b = 6) const; // expected-error{{conversion function cannot have any parameters}}
+  
   
   operator float(...) const;  // expected-error{{conversion function cannot be variadic}}
   
@@ -169,12 +172,10 @@ namespace source_locations {
 
 namespace crazy_declarators {
   struct A {
-    (&operator bool())(); // expected-error {{must use a typedef to declare a conversion to 'bool (&)()'}}
-
-    // FIXME: This diagnostic is misleading (the correct spelling
-    // would be 'operator int*'), but it's a corner case of a
-    // rarely-used syntax extension.
-    *operator int();  // expected-error {{must use a typedef to declare a conversion to 'int *'}}
+    (&operator bool())(); // expected-error {{use a typedef to declare a conversion to 'bool (&)()'}}
+    *operator int();  // expected-error {{put the complete type after 'operator'}}
+    // No suggestion of using a typedef here; that's not possible.
+    template<typename T> (&operator T())(); // expected-error-re {{cannot specify any part of a return type in the declaration of a conversion function{{$}}}}
   };
 }
 
@@ -404,4 +405,15 @@ namespace PR12712 {
   struct C : B {};
 
   A f(const C c) { return c; }
+}
+
+namespace PR18234 {
+  struct A {
+    operator enum E { e } (); // expected-error {{'PR18234::A::E' cannot be defined in a type specifier}}
+    operator struct S { int n; } (); // expected-error {{'PR18234::A::S' cannot be defined in a type specifier}}
+  } a;
+  A::S s = a;
+  A::E e = a; // expected-note {{here}}
+  bool k1 = e == A::e; // expected-error {{no member named 'e'}}
+  bool k2 = e.n == 0;
 }

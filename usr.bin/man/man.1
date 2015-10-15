@@ -1,4 +1,4 @@
-.\"	$NetBSD: man.1,v 1.26 2013/07/18 03:40:31 uwe Exp $
+.\"	$NetBSD: man.1,v 1.28 2014/08/14 15:44:47 apb Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)man.1	8.2 (Berkeley) 1/2/94
 .\"
-.Dd October 7, 2011
+.Dd August 14, 2014
 .Dt MAN 1
 .Os
 .Sh NAME
@@ -175,7 +175,13 @@ option.
 .Pp
 If
 .Ar name
-is given with a full or relative path then
+is given with a full path (beginning with
+.Ql Pa \&/ )
+or a relative path that begins with
+.Ql Pa .\&/
+or
+.Ql Pa .\&./ ,
+then
 .Nm
 interprets it as a file specification, so that you can do
 .Nm
@@ -183,6 +189,14 @@ interprets it as a file specification, so that you can do
 or even
 .Nm
 .Cm /cd/foo/bar.1.gz .
+If
+.Ar name
+contains
+.Ql Pa /
+but does not match one of the above cases, then the
+search path is used; this allows you to request
+machine-specific man pages, such as
+.Nm Cm vax/boot .
 .Sh ENVIRONMENT
 .Bl -tag -width MANPATHX
 .It Ev MACHINE
@@ -196,6 +210,10 @@ The current machine type may be overridden by setting the environment
 variable
 .Ev MACHINE
 to the name of a specific architecture.
+Machine-specific man pages may also be requested by
+prepending the relevant subdirectory name to the page name,
+separated by
+.Ql Pa \&/ .
 .It Ev MANPATH
 The standard search path used by
 .Nm

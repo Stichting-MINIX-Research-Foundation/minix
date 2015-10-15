@@ -1,4 +1,4 @@
-/* $NetBSD: utils.c,v 1.41 2012/01/04 15:58:37 christos Exp $ */
+/* $NetBSD: utils.c,v 1.44 2015/03/03 00:20:38 enami Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)utils.c	8.3 (Berkeley) 4/1/94";
 #else
-__RCSID("$NetBSD: utils.c,v 1.41 2012/01/04 15:58:37 christos Exp $");
+__RCSID("$NetBSD: utils.c,v 1.44 2015/03/03 00:20:38 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,13 +62,13 @@ __RCSID("$NetBSD: utils.c,v 1.41 2012/01/04 15:58:37 christos Exp $");
 int
 set_utimes(const char *file, struct stat *fs)
 {
-    static struct timeval tv[2];
+    struct timespec ts[2];
 
-    TIMESPEC_TO_TIMEVAL(&tv[0], &fs->st_atimespec);
-    TIMESPEC_TO_TIMEVAL(&tv[1], &fs->st_mtimespec);
+    ts[0] = fs->st_atimespec;
+    ts[1] = fs->st_mtimespec;
 
-    if (lutimes(file, tv)) {
-	warn("lutimes: %s", file);
+    if (lutimens(file, ts)) {
+	warn("lutimens: %s", file);
 	return (1);
     }
     return (0);
@@ -364,10 +364,12 @@ copy_special(struct stat *from_stat, int exists)
 int
 setfile(struct stat *fs, int fd)
 {
-	int rval, islink;
+	int rval/* MINIX:, islink*/;
 
 	rval = 0;
+#if !defined(__minix)
 	islink = S_ISLNK(fs->st_mode);
+#endif /* !defined(__minix) */
 	fs->st_mode &= S_ISUID | S_ISGID | S_IRWXU | S_IRWXG | S_IRWXO;
 
 	/*

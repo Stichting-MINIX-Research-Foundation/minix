@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2012/10/03 21:50:14 gsutre Exp $
+#	$NetBSD: Makefile,v 1.7 2015/07/23 08:03:25 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -11,7 +11,6 @@ BINMODE=	4711
 SRCS=		xorg.c libxorg.c
 
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11 \
-		-I${X11SRCDIR.xc}/include/fonts \
 		-I${X11SRCDIR.xorg-server}/fb \
 		-I${X11SRCDIR.xorg-server}/mi \
 		-I${X11SRCDIR.xorg-server}/include \
@@ -63,9 +62,7 @@ LDADD+=	${LDADD.hw/xfree86/dixmods/fb}
 LDADD+=	${LDADD.hw/xfree86/dixmods/xorgxkb}
 LDADD+=	-lpixman-1 -lXfont -lfreetype -lXau -lfontenc -lXdmcp
 LDADD+=	-lpciaccess -ldrm
-.if !defined(__MINIX)
 LDADD+=	-lcrypto
-.endif # !defined(__MINIX)
 LDADD+=	-Wl,--no-whole-archive
 
 .if !defined(__MINIX)
@@ -78,6 +75,12 @@ DPADD+=	${LIBX86_64}
 .elif ${MACHINE_ARCH} == "alpha"
 LDADD+=	-lalpha
 DPADD+=	${LIBALPHA}
+.endif
+
+.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
+# Needed by current xf86-video-intel for SNA.
+LDADD+=	-lpthread
+DPADD+=	${LIBPTHREAD}
 .endif
 .endif # !defined(__MINIX)
 
@@ -119,8 +122,7 @@ DPADD+=	${DPADD.dix} \
 	${LIBCWRAPPER} \
 	${LIBXFONT} ${LIBFREETYPE} ${LIBXAU} ${LIBFONTENC} \
 	${LIBPIXMAN1} ${LIBXDMCP} ${LIBZ} ${LIBM} ${LIBPCIACCESS} \
-	# LSC: For MINIX
-	#${LIBCRYPTO}
+	${LIBCRYPTO}
 
 SYMLINKS=	${X11BINDIR}/Xorg ${X11BINDIR}/X
 

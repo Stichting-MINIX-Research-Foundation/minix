@@ -1,4 +1,4 @@
-/*	$NetBSD: gmon.c,v 1.34 2012/03/13 21:13:37 christos Exp $	*/
+/*	$NetBSD: gmon.c,v 1.35 2014/09/18 13:58:20 christos Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Wasabi Systems, Inc.
@@ -69,7 +69,7 @@
 #if 0
 static char sccsid[] = "@(#)gmon.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: gmon.c,v 1.34 2012/03/13 21:13:37 christos Exp $");
+__RCSID("$NetBSD: gmon.c,v 1.35 2014/09/18 13:58:20 christos Exp $");
 #endif
 #endif
 
@@ -438,13 +438,14 @@ _mcleanup(void)
 		proffile = "gmon.out";
 	}
 
-	fd = open(proffile , O_CREAT|O_TRUNC|O_WRONLY, 0666);
+#define OPEN_FLAGS (O_CREAT | O_TRUNC | O_WRONLY | O_CLOEXEC)
+	fd = open(proffile, OPEN_FLAGS, 0666);
 	if (fd < 0) {
 		warn("%s: Cannot open `%s'", __func__, proffile);
 		return;
 	}
 #ifdef DEBUG
-	logfd = open("gmon.log", O_CREAT|O_TRUNC|O_WRONLY, 0664);
+	logfd = open("gmon.log", OPEN_FLAGS, 0664);
 	if (logfd < 0) {
 		warn("%s: Cannot open `%s'", __func__, "gmon.log");
 		(void)close(fd);

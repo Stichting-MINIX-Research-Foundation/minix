@@ -239,7 +239,7 @@ ValidationParms ::= SEQUENCE {
 DomainParameters ::= SEQUENCE {
 	p		INTEGER, -- odd prime, p=jq +1
 	g		INTEGER, -- generator, g
-	q		INTEGER, -- factor of p-1
+	q		INTEGER OPTIONAL, -- factor of p-1
 	j		INTEGER OPTIONAL, -- subgroup factor
 	validationParms	ValidationParms OPTIONAL -- ValidationParms
 }

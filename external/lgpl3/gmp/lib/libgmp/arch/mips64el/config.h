@@ -221,9 +221,13 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
 
 /* Define to 1 each of the following for which a native (ie. CPU specific)
     implementation of the corresponding routine exists.  */
+#ifdef _LP64
 #define HAVE_NATIVE_mpn_add_n 1
+#endif
 /* #undef HAVE_NATIVE_mpn_add_n_sub_n */
+#ifdef _LP64
 #define HAVE_NATIVE_mpn_add_nc 1
+#endif
 /* #undef HAVE_NATIVE_mpn_addaddmul_1msb0 */
 /* #undef HAVE_NATIVE_mpn_addcnd_n */
 /* #undef HAVE_NATIVE_mpn_addlsh1_n */
@@ -272,7 +276,9 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
 /* #undef HAVE_NATIVE_mpn_invert_limb */
 /* #undef HAVE_NATIVE_mpn_ior_n */
 /* #undef HAVE_NATIVE_mpn_iorn_n */
+#ifdef _LP64
 #define HAVE_NATIVE_mpn_lshift 1
+#endif
 /* #undef HAVE_NATIVE_mpn_lshiftc */
 /* #undef HAVE_NATIVE_mpn_lshsub_n */
 /* #undef HAVE_NATIVE_mpn_mod_1 */
@@ -283,7 +289,9 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
 /* #undef HAVE_NATIVE_mpn_mod_34lsub1 */
 /* #undef HAVE_NATIVE_mpn_modexact_1_odd */
 /* #undef HAVE_NATIVE_mpn_modexact_1c_odd */
+#ifdef _LP64
 #define HAVE_NATIVE_mpn_mul_1 1
+#endif
 /* #undef HAVE_NATIVE_mpn_mul_1c */
 /* #undef HAVE_NATIVE_mpn_mul_2 */
 /* #undef HAVE_NATIVE_mpn_mul_3 */
@@ -308,12 +316,20 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
 /* #undef HAVE_NATIVE_mpn_rsh1add_nc */
 /* #undef HAVE_NATIVE_mpn_rsh1sub_n */
 /* #undef HAVE_NATIVE_mpn_rsh1sub_nc */
+#ifdef _LP64
 #define HAVE_NATIVE_mpn_rshift 1
+#endif
 /* #undef HAVE_NATIVE_mpn_sqr_basecase */
+#ifdef _LP64
 #define HAVE_NATIVE_mpn_sqr_diagonal 1
+#endif
 /* #undef HAVE_NATIVE_mpn_sqr_diag_addlsh1 */
+#ifdef _LP64
 #define HAVE_NATIVE_mpn_sub_n 1
+#endif
+#ifdef _LP64
 #define HAVE_NATIVE_mpn_sub_nc 1
+#endif
 /* #undef HAVE_NATIVE_mpn_subcnd_n */
 /* #undef HAVE_NATIVE_mpn_sublsh1_n */
 /* #undef HAVE_NATIVE_mpn_sublsh2_n */
@@ -331,7 +347,9 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
 /* #undef HAVE_NATIVE_mpn_tabselect */
 /* #undef HAVE_NATIVE_mpn_udiv_qrnnd */
 /* #undef HAVE_NATIVE_mpn_udiv_qrnnd_r */
+#ifdef _LP64
 #define HAVE_NATIVE_mpn_umul_ppmm 1
+#endif
 /* #undef HAVE_NATIVE_mpn_umul_ppmm_r */
 /* #undef HAVE_NATIVE_mpn_xor_n */
 /* #undef HAVE_NATIVE_mpn_xnor_n */

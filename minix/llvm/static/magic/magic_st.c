@@ -445,7 +445,8 @@ PUBLIC int st_add_special_mmapped_region(void *address, size_t size,
     if (!_magic_enabled) return OK;
 
     if (!name) {
-        sprintf(addr_name, "%%MMAP_0x%08x", (unsigned int) address);
+        snprintf(addr_name, sizeof(addr_name), "%%MMAP_0x%08x",
+          (unsigned int) address);
         name = addr_name;
     }
     obdsentry = magic_create_obdsentry(address, MAGIC_VOID_TYPE,

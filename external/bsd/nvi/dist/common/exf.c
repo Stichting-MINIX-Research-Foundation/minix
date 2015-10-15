@@ -1,4 +1,4 @@
-/*	$NetBSD: exf.c,v 1.7 2013/12/01 02:34:54 christos Exp $ */
+/*	$NetBSD: exf.c,v 1.8 2014/01/26 21:43:45 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -10,9 +10,14 @@
 
 #include "config.h"
 
+#include <sys/cdefs.h>
+#if 0
 #ifndef lint
 static const char sccsid[] = "Id: exf.c,v 10.72 2003/08/10 09:44:01 skimo Exp  (Berkeley) Date: 2003/08/10 09:44:01 ";
 #endif /* not lint */
+#else
+__RCSID("$NetBSD: exf.c,v 1.8 2014/01/26 21:43:45 christos Exp $");
+#endif
 
 #include <sys/param.h>
 #include <sys/types.h>		/* XXX: param.h may not have included types.h */

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2013/01/23 15:02:55 joerg Exp $
+#	$NetBSD: Makefile,v 1.4 2015/01/29 20:41:34 joerg Exp $
 
 PROG_CXX=	llvm-cov
 NOMAN=		yes
@@ -7,9 +7,19 @@ NOMAN=		yes
 
 .PATH: ${LLVM_SRCDIR}/tools/llvm-cov
 
-SRCS=	llvm-cov.cpp
+SRCS=	gcov.cpp \
+	llvm-cov.cpp \
+	CodeCoverage.cpp \
+	CoverageFilters.cpp \
+	CoverageReport.cpp \
+	CoverageSummary.cpp \
+	CoverageSummaryInfo.cpp \
+	SourceCoverageView.cpp \
+	TestingSupport.cpp
 
 LLVM_LIBS+= \
+	ProfileData \
+	Object \
 	IR \
 	Support
 

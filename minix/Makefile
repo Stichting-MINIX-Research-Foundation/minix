@@ -1,3 +1,4 @@
+.include <bsd.own.mk>
 
 SUBDIR+=	include .WAIT
 SUBDIR+=	bin
@@ -11,7 +12,9 @@ SUBDIR+=	net
 SUBDIR+=	sbin
 SUBDIR+=	servers
 SUBDIR+=	share
+.if ${MKATF} == "yes"
 SUBDIR+=	tests
+.endif
 SUBDIR+=	usr.bin
 SUBDIR+=	usr.sbin
 

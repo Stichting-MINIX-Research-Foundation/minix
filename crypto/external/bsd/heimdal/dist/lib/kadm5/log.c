@@ -1,4 +1,4 @@
-/*	$NetBSD: log.c,v 1.1.1.1 2011/04/13 18:15:30 elric Exp $	*/
+/*	$NetBSD: log.c,v 1.1.1.2 2014/04/24 12:45:49 pettai Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2007 Kungliga Tekniska Högskolan
@@ -36,7 +36,7 @@
 #include "kadm5_locl.h"
 #include "heim_threads.h"
 
-__RCSID("$NetBSD: log.c,v 1.1.1.1 2011/04/13 18:15:30 elric Exp $");
+__RCSID("NetBSD");
 
 /*
  * A log record consists of:
@@ -195,12 +195,12 @@ kadm5_log_flush (kadm5_log_context *log_context,
 {
     krb5_data data;
     size_t len;
-    int ret;
+    ssize_t ret;
 
     krb5_storage_to_data(sp, &data);
     len = data.length;
     ret = write (log_context->log_fd, data.data, len);
-    if (ret != len) {
+    if (ret < 0 || (size_t)ret != len) {
 	krb5_data_free(&data);
 	return errno;
     }
@@ -621,7 +621,7 @@ kadm5_log_replay_modify (kadm5_server_context *context,
 	}
     }
     if (mask & KADM5_LAST_PWD_CHANGE) {
-	abort ();		/* XXX */
+        krb5_warnx (context->context, "Unimplemented mask KADM5_LAST_PWD_CHANGE");
     }
     if (mask & KADM5_ATTRIBUTES) {
 	ent.entry.flags = log_ent.entry.flags;
@@ -661,16 +661,16 @@ kadm5_log_replay_modify (kadm5_server_context *context,
 	ent.entry.kvno = log_ent.entry.kvno;
     }
     if (mask & KADM5_MKVNO) {
-	abort ();		/* XXX */
+        krb5_warnx (context->context, "Unimplemented mask KADM5_KVNO");
     }
     if (mask & KADM5_AUX_ATTRIBUTES) {
-	abort ();		/* XXX */
+        krb5_warnx (context->context, "Unimplemented mask KADM5_AUX_ATTRIBUTES");
     }
     if (mask & KADM5_POLICY) {
-	abort ();		/* XXX */
+        krb5_warnx (context->context, "Unimplemented mask KADM5_POLICY");
     }
     if (mask & KADM5_POLICY_CLR) {
-	abort ();		/* XXX */
+        krb5_warnx (context->context, "Unimplemented mask KADM5_POLICY_CLR");
     }
     if (mask & KADM5_MAX_RLIFE) {
 	if (log_ent.entry.max_renew == NULL) {
@@ -688,17 +688,17 @@ kadm5_log_replay_modify (kadm5_server_context *context,
 	}
     }
     if (mask & KADM5_LAST_SUCCESS) {
-	abort ();		/* XXX */
+        krb5_warnx (context->context, "Unimplemented mask KADM5_LAST_SUCCESS");
     }
     if (mask & KADM5_LAST_FAILED) {
-	abort ();		/* XXX */
+        krb5_warnx (context->context, "Unimplemented mask KADM5_LAST_FAILED");
     }
     if (mask & KADM5_FAIL_AUTH_COUNT) {
-	abort ();		/* XXX */
+        krb5_warnx (context->context, "Unimplemented mask KADM5_FAIL_AUTH_COUNT");
     }
     if (mask & KADM5_KEY_DATA) {
 	size_t num;
-	int i;
+	size_t i;
 
 	for (i = 0; i < ent.entry.keys.len; ++i)
 	    free_Key(&ent.entry.keys.val[i]);
@@ -882,7 +882,7 @@ kadm5_log_previous (krb5_context context,
     ret = krb5_ret_int32 (sp, &tmp);
     if (ret)
 	goto end_of_storage;
-    if (tmp != *ver) {
+    if ((uint32_t)tmp != *ver) {
 	krb5_storage_seek(sp, oldoff, SEEK_SET);
 	krb5_set_error_message(context, KADM5_BAD_DB,
 			       "kadm5_log_previous: log entry "
@@ -903,7 +903,7 @@ kadm5_log_previous (krb5_context context,
     ret = krb5_ret_int32 (sp, &tmp);
     if (ret)
 	goto end_of_storage;
-    if (tmp != *len) {
+    if ((uint32_t)tmp != *len) {
 	krb5_storage_seek(sp, oldoff, SEEK_SET);
 	krb5_set_error_message(context, KADM5_BAD_DB,
 			       "kadm5_log_previous: log entry "

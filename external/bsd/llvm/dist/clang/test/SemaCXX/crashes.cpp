@@ -218,3 +218,22 @@ namespace pr12791 {
   template class basic_stringbuf<char>;
 }
 
+namespace pr16989 {
+  class C {
+    template <class T>
+    C tpl_mem(T *) { return }    // expected-error{{expected expression}}
+    void mem(int *p) {
+      tpl_mem(p);
+    }
+  };
+  class C2 {
+    void f();
+  };
+  void C2::f() {}
+}
+
+namespace pr20660 {
+ appendList(int[]...);     // expected-error {{C++ requires a type specifier for all declarations}}
+ appendList(int[]...) { }  // expected-error {{C++ requires a type specifier for all declarations}}
+}
+

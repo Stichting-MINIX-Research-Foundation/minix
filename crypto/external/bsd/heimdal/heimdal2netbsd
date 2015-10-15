@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: heimdal2netbsd,v 1.4 2011/10/08 19:30:02 christos Exp $
+#	$NetBSD: heimdal2netbsd,v 1.6 2014/04/22 14:07:31 pettai Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -36,10 +36,11 @@
 #	$ export SRCDIR=/usr/src
 #	$ export HEIMDAL_SRCDIR=src/crypto/external/bsd/heimdal
 #	$ cd /some/where/temporary
-#	$ git clone git://svn.h5l.org/heimdal.git
-#	$ sh $SRCDIR/$HEIMDAL_SRCDIR/heimdal2netbsd heimdal `pwd`
+#	$ git clone git@github.com:heimdal/heimdal.git
+#	$ sh $SRCDIR/../$HEIMDAL_SRCDIR/heimdal2netbsd heimdal `pwd`
 #	$ cd $HEIMDAL_SRCDIR/dist
 #       $ cvs -d ... import $HEIMDAL_SRCDIR/dist HEIMDAL head-20110317
+#	>>> if any conflicts, merge, fix and commit them.
 #	$ cd /some/where/temporary/heimdal
 #	$ autoreconf -f -i
 #	$ ./configure

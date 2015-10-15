@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.68 2012/04/21 14:39:35 roy Exp $
+#	$NetBSD: Makefile,v 1.71 2014/07/05 22:31:32 dholland Exp $
 #	@(#)Makefile	8.2 (Berkeley) 1/2/94
 
 .include <bsd.own.mk>
@@ -181,9 +181,9 @@ MLINKS+= curses_addch.3 addch.3 curses_addchstr.3 addchnstr.3 \
 	 curses_touch.3 wtouchln.3 curses_underscore.3 wunderend.3 \
 	 curses_underscore.3 wunderscore.3 curses_line.3 wvline.3
 
-.if make(install)
+.if !defined(__MINIX)
 SUBDIR+= PSD.doc
-.endif
+.endif # !defined(__MINIX)
 
 fileio.h: shlib_version genfileioh.awk
 	${TOOL_AWK} -f ${.CURDIR}/genfileioh.awk < ${.CURDIR}/shlib_version > ${.CURDIR}/fileio.h

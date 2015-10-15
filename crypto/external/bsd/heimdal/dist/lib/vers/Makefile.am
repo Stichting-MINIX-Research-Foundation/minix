@@ -10,4 +10,4 @@ CHECK_LOCAL		= no-check-local
 
 libvers_la_SOURCES      = print_version.c
 
-EXTRA_DIST = $(build_HEADERZ)
+EXTRA_DIST = NTMakefile $(build_HEADERZ)

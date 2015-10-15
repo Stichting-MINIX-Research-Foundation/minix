@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.43 2013/04/21 17:54:56 joerg Exp $	*/
+/*	$NetBSD: time.h,v 1.44 2014/10/07 21:50:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -198,22 +198,25 @@ struct tm *offtime(const time_t *, long) __RENAME(__offtime50);
 void tzsetwall(void) __RENAME(__tzsetwall50);
 
 struct tm *offtime_r(const time_t *, long, struct tm *) __RENAME(__offtime_r50);
-struct tm *localtime_rz(const timezone_t, const time_t * __restrict,
+struct tm *localtime_rz(timezone_t __restrict, const time_t * __restrict,
     struct tm * __restrict) __RENAME(__localtime_rz50);
-char *ctime_rz(const timezone_t, const time_t *, char *) __RENAME(__ctime_rz50);
-time_t mktime_z(const timezone_t, struct tm *) __RENAME(__mktime_z50);
-time_t timelocal_z(const timezone_t, struct tm *) __RENAME(__timelocal_z50);
-time_t time2posix_z(const timezone_t, time_t) __RENAME(__time2posix_z50);
-time_t posix2time_z(const timezone_t, time_t) __RENAME(__posix2time_z50);
+char *ctime_rz(timezone_t __restrict, const time_t *, char *)
+    __RENAME(__ctime_rz50);
+time_t mktime_z(timezone_t __restrict, struct tm * __restrict)
+    __RENAME(__mktime_z50);
+time_t timelocal_z(timezone_t __restrict, struct tm *)
+    __RENAME(__timelocal_z50);
+time_t time2posix_z(timezone_t __restrict, time_t) __RENAME(__time2posix_z50);
+time_t posix2time_z(timezone_t __restrict, time_t) __RENAME(__posix2time_z50);
 timezone_t tzalloc(const char *) __RENAME(__tzalloc50);
-void tzfree(const timezone_t) __RENAME(__tzfree50);
-const char *tzgetname(const timezone_t, int) __RENAME(__tzgetname50);
+void tzfree(timezone_t __restrict) __RENAME(__tzfree50);
+const char *tzgetname(timezone_t __restrict, int) __RENAME(__tzgetname50);
 #endif
 
-size_t strftime_lz(const timezone_t, char * __restrict, size_t,
+size_t strftime_lz(timezone_t __restrict, char * __restrict, size_t,
     const char * __restrict, const struct tm * __restrict, locale_t)
     __attribute__((__format__(__strftime__, 4, 0)));
-size_t strftime_z(const timezone_t, char * __restrict, size_t,
+size_t strftime_z(timezone_t __restrict, char * __restrict, size_t,
     const char * __restrict, const struct tm * __restrict)
     __attribute__((__format__(__strftime__, 4, 0)));
 char *strptime_l(const char * __restrict, const char * __restrict,

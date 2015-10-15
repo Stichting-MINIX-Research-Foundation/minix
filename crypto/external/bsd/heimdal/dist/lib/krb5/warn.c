@@ -1,4 +1,4 @@
-/*	$NetBSD: warn.c,v 1.1.1.1 2011/04/13 18:15:39 elric Exp $	*/
+/*	$NetBSD: warn.c,v 1.1.1.2 2014/04/24 12:45:51 pettai Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
@@ -39,7 +39,7 @@
 static krb5_error_code _warnerr(krb5_context context, int do_errtext,
 	 krb5_error_code code, int level, const char *fmt, va_list ap)
 	__attribute__((__format__(__printf__, 5, 0)));
-	
+
 static krb5_error_code
 _warnerr(krb5_context context, int do_errtext,
 	 krb5_error_code code, int level, const char *fmt, va_list ap)
@@ -71,7 +71,7 @@ _warnerr(krb5_context context, int do_errtext,
 	    *arg= "<unknown error>";
 	}
     }
-	
+
     if(context && context->warn_dest)
 	krb5_log(context, context->warn_dest, level, xfmt, args[0], args[1]);
     else

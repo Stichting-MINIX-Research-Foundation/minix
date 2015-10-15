@@ -1,9 +1,13 @@
-#	$NetBSD: Makefile,v 1.14 2012/06/12 12:26:42 rjs Exp $
+#	$NetBSD: Makefile,v 1.19 2015/05/28 14:36:45 rjs Exp $
 
 .include <bsd.own.mk>
 
 DRIVER=		xf86-video-ati
+.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
+DRIVER_NAME=	radeon_drv_old
+.else
 DRIVER_NAME=	radeon_drv
+.endif
 
 .PATH:  ${X11SRCDIR.${DRIVER}}/src/AtomBios
 SRCS.ATOMBIOS= \
@@ -16,7 +20,14 @@ SRCS.DRI=	radeon_dri.c
 CPPFLAGS+=	${X11FLAGS.DRI}
 .endif
 
-#RADEON_KMS_SRCS=radeon_dri2.c radeon_kms.c drmmode_display.c radeon_vbo.c
+.if ${X11DRI} != "no"
+# XXX
+. if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
+SRCS.KMS=	radeon_dri2.c radeon_kms.c drmmode_display.c radeon_vbo.c
+CPPFLAGS+=	-DXF86DRM_MODE
+LIBDPLIBS+=	drm_radeon ${.CURDIR}/../../../lib/libdrm_radeon
+. endif
+.endif
 
 SRCS.EXA=	radeon_exa.c r600_exa.c r6xx_accel.c \
 		r600_textured_videofuncs.c r600_shader.c \
@@ -32,7 +43,8 @@ SRCS=	radeon_accel.c radeon_cursor.c \
 	radeon_crtc.c radeon_output.c radeon_modes.c radeon_tv.c \
 	radeon_legacy_memory.c radeon_pm.c radeon_xvmc.c \
 	$(SRCS.ATOMBIOS) radeon_atombios.c radeon_atomwrapper.c \
-	$(SRCS.DRI) $(SRCS.EXA) atombios_output.c atombios_crtc.c
+	$(SRCS.DRI) $(SRCS.EXA) atombios_output.c atombios_crtc.c \
+	$(SRCS.KMS)
 MAN=	radeon.4
 
 CPPFLAGS+=	-DDISABLE_EASF -DENABLE_ALL_SERVICE_FUNCTIONS \

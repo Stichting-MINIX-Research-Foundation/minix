@@ -1,4 +1,4 @@
-/*	$NetBSD: operator.c,v 1.9 2006/10/11 19:51:10 apb Exp $	*/
+/*	$NetBSD: operator.c,v 1.10 2014/10/18 08:33:30 snj Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)operator.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: operator.c,v 1.9 2006/10/11 19:51:10 apb Exp $");
+__RCSID("$NetBSD: operator.c,v 1.10 2014/10/18 08:33:30 snj Exp $");
 #endif
 #endif /* not lint */
 
@@ -138,7 +138,7 @@ paren_squish(PLAN *plan)	/* plan with ( ) nodes */
 
 	/*
 	 * the basic idea is to have yankexpr do all our work and just
-	 * collect it's results together.
+	 * collect its results together.
 	 */
 	while ((expr = yankexpr(&plan)) != NULL) {
 		/*

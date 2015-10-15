@@ -226,7 +226,7 @@ void print_conn(int i, clock_t now)
 	case TCS_CLOSED:	printf("CLOSED");
 				if (tcp_conn->tc_senddis >= now)
 				{
-					printf("(time wait %lu s)",
+					printf("(time wait %u s)",
 					(tcp_conn->tc_senddis-now)/system_hz);
 				}
 				no_verbose= 1;

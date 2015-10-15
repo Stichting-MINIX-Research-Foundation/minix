@@ -1,4 +1,4 @@
-/*	$NetBSD: fpgetround.c,v 1.6 2012/03/19 22:23:10 matt Exp $	*/
+/*	$NetBSD: fpgetround.c,v 1.7 2014/09/17 11:02:55 joerg Exp $	*/
 
 /*
  * Written by J.T. Conklin, Apr 11, 1995
@@ -7,7 +7,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fpgetround.c,v 1.6 2012/03/19 22:23:10 matt Exp $");
+__RCSID("$NetBSD: fpgetround.c,v 1.7 2014/09/17 11:02:55 joerg Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -23,6 +23,6 @@ fpgetround(void)
 {
 	fp_rnd x;
 
-	__asm("cfc1 %0,$31" : "=r" (x));
+	__asm(".set push; .set noat; cfc1 %0,$31; .set pop" : "=r" (x));
 	return x & 0x03;
 }

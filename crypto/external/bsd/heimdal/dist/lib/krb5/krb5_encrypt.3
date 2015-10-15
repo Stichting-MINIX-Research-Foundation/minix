@@ -1,4 +1,4 @@
-.\"	$NetBSD: krb5_encrypt.3,v 1.1.1.2 2011/04/14 14:09:23 elric Exp $
+.\"	$NetBSD: krb5_encrypt.3,v 1.1.1.3 2014/04/24 12:45:50 pettai Exp $
 .\"
 .\" Copyright (c) 1999 - 2004 Kungliga Tekniska Högskolan
 .\" (Royal Institute of Technology, Stockholm, Sweden).
@@ -201,7 +201,7 @@ should be the appropriate key-usage.
 .Fa ivec
 is a pointer to a initial IV, it is modified to the end IV at the end of
 the round.
-Ivec should be the size of 
+Ivec should be the size of
 If
 .Dv NULL
 is passed in, the default IV is used.
@@ -231,7 +231,7 @@ and
 works similarly.
 .Pp
 .Fn krb5_decrypt_ticket
-decrypts the encrypted part of 
+decrypts the encrypted part of
 .Fa ticket
 with
 .Fa key .

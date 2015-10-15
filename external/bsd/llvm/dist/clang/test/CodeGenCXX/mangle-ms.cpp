@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -fblocks -emit-llvm %s -o - -cxx-abi microsoft -triple=i386-pc-win32 -std=c++11 | FileCheck %s
-// RUN: %clang_cc1 -fblocks -emit-llvm %s -o - -cxx-abi microsoft -triple=x86_64-pc-win32 -std=c++11| FileCheck -check-prefix X64 %s
+// RUN: %clang_cc1 -fblocks -emit-llvm %s -o - -triple=i386-pc-win32 -std=c++98 | FileCheck %s
+// RUN: %clang_cc1 -fblocks -emit-llvm %s -o - -triple=x86_64-pc-win32 -std=c++98| FileCheck -check-prefix X64 %s
 
 int a;
 // CHECK-DAG: @"\01?a@@3HA"
@@ -95,9 +95,17 @@ extern int * const h1 = &a;
 // CHECK-DAG: @"\01?h1@@3QAHA"
 extern const int * const h2 = &a;
 // CHECK-DAG: @"\01?h2@@3QBHB"
+extern int * const __restrict h3 = &a;
+// CHECK-DAG: @"\01?h3@@3QIAHIA"
+// X64-DAG: @"\01?h3@@3QEIAHEIA"
 
 int i[10][20];
 // CHECK-DAG: @"\01?i@@3PAY0BE@HA"
+
+typedef int (*FunT)(int, int);
+FunT FunArr[10][20];
+// CHECK-DAG: @"\01?FunArr@@3PAY0BE@P6AHHH@ZA"
+// X64-DAG: @"\01?FunArr@@3PAY0BE@P6AHHH@ZA"
 
 int (__stdcall *j)(signed char, unsigned char);
 // CHECK-DAG: @"\01?j@@3P6GHCE@ZA"
@@ -108,6 +116,19 @@ const volatile char foo2::*k;
 
 int (foo2::*l)(int);
 // CHECK-DAG: @"\01?l@@3P8foo@@AEHH@ZQ1@"
+
+// Ensure typedef CV qualifiers are mangled correctly
+typedef const int cInt;
+typedef volatile int vInt;
+typedef const volatile int cvInt;
+
+extern cInt g_cInt = 1;
+vInt g_vInt = 2;
+cvInt g_cvInt = 3;
+
+// CHECK-DAG: @"\01?g_cInt@@3HB"
+// CHECK-DAG: @"\01?g_vInt@@3HC"
+// CHECK-DAG: @"\01?g_cvInt@@3HD"
 
 // Static functions are mangled, too.
 // Also make sure calling conventions, arglists, and throw specs work.
@@ -357,10 +378,5 @@ void TypedefNewDelete::operator delete[](void *) { }
 // CHECK-DAG: ??3TypedefNewDelete@@SAXPAX@Z
 // CHECK-DAG: ??_VTypedefNewDelete@@SAXPAX@Z
 
-namespace PR18022 {
-
-struct { } a;
-decltype(a) fun(decltype(a) x, decltype(a)) { return x; }
-// CHECK-DAG: ?fun@PR18022@@YA?AU<unnamed-type-a>@1@U21@0@Z
-
-}
+void __vectorcall vector_func() { }
+// CHECK-DAG: @"\01?vector_func@@YQXXZ"

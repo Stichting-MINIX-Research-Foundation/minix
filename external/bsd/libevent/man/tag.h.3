@@ -1,4 +1,4 @@
-.TH "event2/tag.h" 3 "Wed Apr 10 2013" "libevent" \" -*- nroff -*-
+.TH "event2/tag.h" 3 "Tue Jan 27 2015" "libevent" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -103,7 +103,9 @@ Encode an integer and store it in an evbuffer\&. We encode integers by nybbles; 
 .SS "int evtag_unmarshal_header (struct \fBevbuffer\fP *evbuf, ev_uint32_t *ptag)"
 
 .PP
-Unmarshals the header and returns the length of the payload\&. \fBParameters:\fP
+Unmarshals the header and returns the length of the payload\&. 
+.PP
+\fBParameters:\fP
 .RS 4
 \fIevbuf\fP the buffer from which to unmarshal data 
 .br

@@ -1,4 +1,4 @@
-/*	$NetBSD: bn_mp_fwrite.c,v 1.1.1.1 2011/04/13 18:14:54 elric Exp $	*/
+/*	$NetBSD: bn_mp_fwrite.c,v 1.1.1.2 2014/04/24 12:45:31 pettai Exp $	*/
 
 #include <tommath.h>
 #ifdef BN_MP_FWRITE_C
@@ -21,7 +21,7 @@ int mp_fwrite(mp_int *a, int radix, FILE *stream)
 {
    char *buf;
    int err, len, x;
-   
+
    if ((err = mp_radix_size(a, radix, &len)) != MP_OKAY) {
       return err;
    }
@@ -30,25 +30,25 @@ int mp_fwrite(mp_int *a, int radix, FILE *stream)
    if (buf == NULL) {
       return MP_MEM;
    }
-   
+
    if ((err = mp_toradix(a, buf, radix)) != MP_OKAY) {
       XFREE (buf);
       return err;
    }
-   
+
    for (x = 0; x < len; x++) {
        if (fputc(buf[x], stream) == EOF) {
           XFREE (buf);
           return MP_VAL;
        }
    }
-   
+
    XFREE (buf);
    return MP_OKAY;
 }
 
 #endif
 
-/* Source: /cvs/libtom/libtommath/bn_mp_fwrite.c,v */
-/* Revision: 1.4 */
-/* Date: 2006/12/28 01:25:13 */
+/* Source: /cvs/libtom/libtommath/bn_mp_fwrite.c,v  */
+/* Revision: 1.4  */
+/* Date: 2006/12/28 01:25:13  */

@@ -115,6 +115,7 @@ heimdal_TEXINFOS = \
 	win2k.texi
 
 EXTRA_DIST = \
+	NTMakefile \
 	doxyout \
 	footer.html \
 	gssapi.din \

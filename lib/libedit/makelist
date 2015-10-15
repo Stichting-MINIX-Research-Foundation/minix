@@ -201,12 +201,11 @@ _EOF
 
 #	generate editline.c from various .c files
 #
-#	LSC: Needed by MINIX's ASH, so do not hide those
 -e)
 	echo "$FILES" | tr ' ' '\012' | $AWK '
 	BEGIN {
 	    printf("/* Automatically generated file, do not edit */\n");
-	    printf("#define protected /* LSC: see makelist static*/\n");
+	    printf("#define protected static\n");
 	    printf("#define SCCSID\n");
 	}
 	{

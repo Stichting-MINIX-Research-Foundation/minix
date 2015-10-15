@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: genassym.sh,v 1.7 2011/07/05 05:19:02 matt Exp $
+#	$NetBSD: genassym.sh,v 1.8 2014/01/06 22:43:15 christos Exp $
 #
 # Copyright (c) 1997 Matthias Pfaller.
 # All rights reserved.
@@ -25,7 +25,7 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-progname=${0}
+progname="$(basename "${0}")"
 : ${AWK:=awk}
 
 ccode=0		# generate temporary C file, compile it, execute result
@@ -36,6 +36,8 @@ usage()
 
 	echo "usage: ${progname} [-c | -f] -- compiler command" >&2
 }
+
+set -e
 
 while getopts cf i
 do
@@ -48,7 +50,7 @@ do
 		;;
 	esac
 done
-shift $(($OPTIND - 1))
+shift "$(($OPTIND - 1))"
 if [ $# -eq 0 ]; then
 	usage
 	exit 1
@@ -56,7 +58,7 @@ fi
 
 # Deal with any leading environment settings..
 
-while [ "$1" ]
+while [ -n "$1" ]
 do
 	case "$1" in
 	*=*)
@@ -69,9 +71,10 @@ do
 	esac
 done
 
-genassym_temp=/tmp/genassym.$$
+genassym_temp="$(mktemp -d "${TMPDIR-/tmp}/genassym.XXXXXX")"
 
-if ! mkdir $genassym_temp; then
+
+if [ ! -d $genassym_temp ]; then
 	echo "${progname}: unable to create temporary directory" >&2
 	exit 1
 fi
@@ -191,21 +194,21 @@ END {
 		printf("return(0); }\n");
 	}
 }
-' ccode=$ccode fcode=$fcode > ${genassym_temp}/assym.c || exit 1
+' ccode="$ccode" fcode="$fcode" > "${genassym_temp}/assym.c" || exit 1
 
-if [ $ccode = 1 ] ; then
-	"$@" ${genassym_temp}/assym.c -o ${genassym_temp}/genassym && \
-	    ${genassym_temp}/genassym
-elif [ $fcode = 1 ]; then
+if [ "$ccode" = 1 ]; then
+	"$@" "${genassym_temp}/assym.c" -o "${genassym_temp}/genassym" && \
+	    "${genassym_temp}/genassym"
+elif [ "$fcode" = 1 ]; then
 	# Kill all of the "#" and "$" modifiers; locore.s already
 	# prepends the correct "constant" modifier.
-	"$@" -S ${genassym_temp}/assym.c -o - | sed -e 's/\$//g' | \
+	"$@" -S "${genassym_temp}/assym.c" -o - | sed -e 's/\$//g' | \
 	    sed -n 's/.*XYZZY//gp'
 else
 	# Kill all of the "#" and "$" modifiers; locore.s already
 	# prepends the correct "constant" modifier.
-	"$@" -S ${genassym_temp}/assym.c -o - > \
-	    ${genassym_temp}/genassym.out && \
-	    sed -e 's/#//g' -e 's/\$//g' < ${genassym_temp}/genassym.out | \
+	"$@" -S "${genassym_temp}/assym.c" -o - > \
+	    "${genassym_temp}/genassym.out" && \
+	    sed -e 's/#//g' -e 's/\$//g' < "${genassym_temp}/genassym.out" | \
 	    sed -n 's/.*XYZZY/#define/gp'
 fi

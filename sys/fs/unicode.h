@@ -1,4 +1,4 @@
-/* $NetBSD: unicode.h,v 1.6 2008/04/28 20:24:02 martin Exp $ */
+/* $NetBSD: unicode.h,v 1.7 2014/04/06 19:25:22 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ static int wput_utf8(char *, size_t, u_int16_t) __unused;
 static u_int16_t
 wget_utf8(const char **str, size_t *sz)
 {
-	int c;
+	size_t c;
 	u_int16_t rune = 0;
 	const char *s = *str;
 	static const int _utf_count[16] = {

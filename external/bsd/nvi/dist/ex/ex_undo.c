@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_undo.c,v 1.2 2013/11/22 15:52:05 christos Exp $	*/
+/*	$NetBSD: ex_undo.c,v 1.3 2014/01/26 21:43:45 christos Exp $	*/
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -10,9 +10,14 @@
 
 #include "config.h"
 
+#include <sys/cdefs.h>
+#if 0
 #ifndef lint
 static const char sccsid[] = "Id: ex_undo.c,v 10.7 2001/06/25 15:19:21 skimo Exp  (Berkeley) Date: 2001/06/25 15:19:21 ";
 #endif /* not lint */
+#else
+__RCSID("$NetBSD: ex_undo.c,v 1.3 2014/01/26 21:43:45 christos Exp $");
+#endif
 
 #include <sys/types.h>
 #include <sys/queue.h>

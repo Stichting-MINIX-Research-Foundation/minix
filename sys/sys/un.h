@@ -1,4 +1,4 @@
-/*	$NetBSD: un.h,v 1.46 2011/06/26 16:43:12 christos Exp $	*/
+/*	$NetBSD: un.h,v 1.56 2015/05/02 17:18:04 rtr Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -71,33 +71,25 @@ struct unpcbid {
 };
 
 #ifdef _KERNEL
+
 struct unpcb;
 struct socket;
 struct sockopt;
+struct sockaddr;
 
-int	uipc_usrreq(struct socket *, int, struct mbuf *,
-	    struct mbuf *, struct mbuf *, struct lwp *);
+extern const struct pr_usrreqs unp_usrreqs;
+
 int	uipc_ctloutput(int, struct socket *, struct sockopt *);
-void	uipc_init (void);
-kmutex_t *uipc_dgramlock (void);
-kmutex_t *uipc_streamlock (void);
-kmutex_t *uipc_rawlock (void);
+void	uipc_init(void);
+kmutex_t *uipc_dgramlock(void);
+kmutex_t *uipc_streamlock(void);
+kmutex_t *uipc_rawlock(void);
 
-int	unp_attach (struct socket *);
-int	unp_bind (struct socket *, struct mbuf *, struct lwp *);
-int	unp_connect (struct socket *, struct mbuf *, struct lwp *);
-int	unp_connect2 (struct socket *, struct socket *, int);
-void	unp_detach (struct unpcb *);
-void	unp_discard (struct file *);
-void	unp_disconnect (struct unpcb *);
-bool	unp_drop (struct unpcb *, int);
-void	unp_shutdown (struct unpcb *);
-int 	unp_externalize (struct mbuf *, struct lwp *, int);
-int	unp_internalize (struct mbuf **);
-void 	unp_dispose (struct mbuf *);
-int	unp_output (struct mbuf *, struct mbuf *, struct unpcb *,
-	    struct lwp *);
-void	unp_setaddr (struct socket *, struct mbuf *, bool);
+int	unp_connect(struct socket *, struct sockaddr *, struct lwp *);
+int	unp_connect2(struct socket *, struct socket *);
+void 	unp_dispose(struct mbuf *);
+int 	unp_externalize(struct mbuf *, struct lwp *, int);
+
 #else /* !_KERNEL */
 
 /* actual length of an initialized sockaddr_un */

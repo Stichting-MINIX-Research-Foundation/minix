@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.11 2011/02/23 07:53:29 mrg Exp $
+#	$NetBSD: Makefile,v 1.13 2015/07/19 08:18:32 mrg Exp $
 
 .include <bsd.own.mk>
 
 SUBDIR=		dynamic .WAIT libX11-xcb static \
-		ximcp xlcDef xlcUTF8Load xlibi18n xlocale xomGeneric
+		ximcp xlcDef xlcUTF8Load xlibi18n xomGeneric
 
 INCS=		ImUtil.h XKBlib.h Xcms.h Xlib-xcb.h Xlib.h XlibConf.h \
 		Xlibint.h Xlocale.h Xregion.h Xresource.h Xutil.h \
@@ -97,13 +97,12 @@ FILESDIR=	${X11LIBDIR}
 XlibConf.h: XlibConf.h.in
 	${_MKTARGET_CREATE}
 .if !defined(__MINIX)
-	${TOOL_SED} 's/#undef XTHREADS/#define XTHREADS 1/; \
-		    s/#undef XUSE_MTSAFE_API/#define XUSE_MTSAFE_API 1/ ' \
+	${TOOL_SED} -e 's/#undef XTHREADS/#define XTHREADS 1/' \
+		    -e 's/#undef XUSE_MTSAFE_API/#define XUSE_MTSAFE_API 1/' \
 		< ${.ALLSRC} > ${.TARGET}
 .else
-	${TOOL_SED} 's/#undef XTHREADS/#define XTHREADS 1/;' \
-		${.ALLSRC} > ${.TARGET}
-.endif
+	${TOOL_CAT} ${.ALLSRC} > ${.TARGET}
+.endif # !defined(__MINIX)
 
 CLEANFILES+=	XlibConf.h
 

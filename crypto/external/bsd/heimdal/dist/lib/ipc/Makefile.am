@@ -19,6 +19,7 @@ include_HEADERS = heim-ipc.h
 #endif
 
 libheim_ipcc_la_LIBADD = \
+	$(LIB_heimbase) \
 	$(LIB_roken) \
 	$(PTHREAD_LIBADD)
 

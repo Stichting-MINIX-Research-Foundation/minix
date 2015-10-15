@@ -1,4 +1,4 @@
-/*	$NetBSD: rand-w32.c,v 1.1.1.1 2011/04/13 18:14:50 elric Exp $	*/
+/*	$NetBSD: rand-w32.c,v 1.1.1.2 2014/04/24 12:45:30 pettai Exp $	*/
 
 /*
  * Copyright (c) 2006 Kungliga Tekniska Högskolan
@@ -58,13 +58,30 @@ _hc_CryptProvider(void)
 
     rv = CryptAcquireContext(&cryptprovider, NULL,
 			      MS_ENHANCED_PROV, PROV_RSA_FULL,
-			      0);
+			      CRYPT_VERIFYCONTEXT);
 
     if (GetLastError() == NTE_BAD_KEYSET) {
-        if(!rv)
+        rv = CryptAcquireContext(&cryptprovider, NULL,
+                                 MS_ENHANCED_PROV, PROV_RSA_FULL,
+                                 CRYPT_NEWKEYSET);
+    }
+
+    if (rv) {
+        /* try the default provider */
+        rv = CryptAcquireContext(&cryptprovider, NULL, 0, PROV_RSA_FULL,
+                                 CRYPT_VERIFYCONTEXT);
+
+        if (GetLastError() == NTE_BAD_KEYSET) {
             rv = CryptAcquireContext(&cryptprovider, NULL,
-                                      MS_ENHANCED_PROV, PROV_RSA_FULL,
-                                      CRYPT_NEWKEYSET);
+                                     MS_ENHANCED_PROV, PROV_RSA_FULL,
+                                     CRYPT_NEWKEYSET);
+        }
+    }
+
+    if (rv) {
+        /* try just a default random number generator */
+        rv = CryptAcquireContext(&cryptprovider, NULL, 0, PROV_RNG,
+                                 CRYPT_VERIFYCONTEXT);
     }
 
     if (rv &&
@@ -100,6 +117,12 @@ w32crypto_bytes(unsigned char *outdata, int size)
 static void
 w32crypto_cleanup(void)
 {
+    HCRYPTPROV cryptprovider;
+
+    if (InterlockedCompareExchangePointer((PVOID *) &cryptprovider,
+					  0, (PVOID) g_cryptprovider) == 0) {
+        CryptReleaseContext(cryptprovider, 0);
+    }
 }
 
 static void

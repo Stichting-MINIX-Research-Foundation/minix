@@ -1,4 +1,4 @@
-/* $NetBSD: t_cbrt.c,v 1.2 2013/11/19 19:24:33 joerg Exp $ */
+/* $NetBSD: t_cbrt.c,v 1.3 2014/03/03 10:39:08 martin Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_cbrt.c,v 1.2 2013/11/19 19:24:33 joerg Exp $");
+__RCSID("$NetBSD: t_cbrt.c,v 1.3 2014/03/03 10:39:08 martin Exp $");
 
 #include <atf-c.h>
 #include <math.h>
@@ -46,12 +46,10 @@ ATF_TC_HEAD(cbrt_nan, tc)
 
 ATF_TC_BODY(cbrt_nan, tc)
 {
-#ifndef __vax__
 	const double x = 0.0L / 0.0L;
 
 	ATF_CHECK(isnan(x) != 0);
 	ATF_CHECK(isnan(cbrt(x)) != 0);
-#endif
 }
 
 ATF_TC(cbrt_pow);
@@ -62,7 +60,6 @@ ATF_TC_HEAD(cbrt_pow, tc)
 
 ATF_TC_BODY(cbrt_pow, tc)
 {
-#ifndef __vax__
 	const double x[] = { 0.0, 0.005, 1.0, 99.0, 123.123, 9999.0 };
 	const double eps = 1.0e-14;
 	double y, z;
@@ -77,7 +74,6 @@ ATF_TC_BODY(cbrt_pow, tc)
 			atf_tc_fail_nonfatal("cbrt(%0.03f) != "
 			    "pow(%0.03f, 1/3)\n", x[i], x[i]);
 	}
-#endif
 }
 
 ATF_TC(cbrt_inf_neg);
@@ -88,13 +84,11 @@ ATF_TC_HEAD(cbrt_inf_neg, tc)
 
 ATF_TC_BODY(cbrt_inf_neg, tc)
 {
-#ifndef __vax__
 	const double x = -1.0L / 0.0L;
 	double y = cbrt(x);
 
 	ATF_CHECK(isinf(y) != 0);
 	ATF_CHECK(signbit(y) != 0);
-#endif
 }
 
 ATF_TC(cbrt_inf_pos);
@@ -105,13 +99,11 @@ ATF_TC_HEAD(cbrt_inf_pos, tc)
 
 ATF_TC_BODY(cbrt_inf_pos, tc)
 {
-#ifndef __vax__
 	const double x = 1.0L / 0.0L;
 	double y = cbrt(x);
 
 	ATF_CHECK(isinf(y) != 0);
 	ATF_CHECK(signbit(y) == 0);
-#endif
 }
 
 ATF_TC(cbrt_zero_neg);
@@ -122,13 +114,11 @@ ATF_TC_HEAD(cbrt_zero_neg, tc)
 
 ATF_TC_BODY(cbrt_zero_neg, tc)
 {
-#ifndef __vax__
 	const double x = -0.0L;
 	double y = cbrt(x);
 
 	if (fabs(y) > 0.0 || signbit(y) == 0)
 		atf_tc_fail_nonfatal("cbrt(-0.0) != -0.0");
-#endif
 }
 
 ATF_TC(cbrt_zero_pos);
@@ -139,13 +129,11 @@ ATF_TC_HEAD(cbrt_zero_pos, tc)
 
 ATF_TC_BODY(cbrt_zero_pos, tc)
 {
-#ifndef __vax__
 	const double x = 0.0L;
 	double y = cbrt(x);
 
 	if (fabs(y) > 0.0 || signbit(y) != 0)
 		atf_tc_fail_nonfatal("cbrt(+0.0) != +0.0");
-#endif
 }
 
 /*
@@ -159,12 +147,10 @@ ATF_TC_HEAD(cbrtf_nan, tc)
 
 ATF_TC_BODY(cbrtf_nan, tc)
 {
-#ifndef __vax__
 	const float x = 0.0L / 0.0L;
 
 	ATF_CHECK(isnan(x) != 0);
 	ATF_CHECK(isnan(cbrtf(x)) != 0);
-#endif
 }
 
 ATF_TC(cbrtf_powf);
@@ -175,7 +161,6 @@ ATF_TC_HEAD(cbrtf_powf, tc)
 
 ATF_TC_BODY(cbrtf_powf, tc)
 {
-#ifndef __vax__
 	const float x[] = { 0.0, 0.005, 1.0, 99.0, 123.123, 9999.0 };
 	const float eps = 1.0e-5;
 	float y, z;
@@ -190,7 +175,6 @@ ATF_TC_BODY(cbrtf_powf, tc)
 			atf_tc_fail_nonfatal("cbrtf(%0.03f) != "
 			    "powf(%0.03f, 1/3)\n", x[i], x[i]);
 	}
-#endif
 }
 
 ATF_TC(cbrtf_inf_neg);
@@ -201,13 +185,11 @@ ATF_TC_HEAD(cbrtf_inf_neg, tc)
 
 ATF_TC_BODY(cbrtf_inf_neg, tc)
 {
-#ifndef __vax__
 	const float x = -1.0L / 0.0L;
 	float y = cbrtf(x);
 
 	ATF_CHECK(isinf(y) != 0);
 	ATF_CHECK(signbit(y) != 0);
-#endif
 }
 
 ATF_TC(cbrtf_inf_pos);
@@ -218,13 +200,11 @@ ATF_TC_HEAD(cbrtf_inf_pos, tc)
 
 ATF_TC_BODY(cbrtf_inf_pos, tc)
 {
-#ifndef __vax__
 	const float x = 1.0L / 0.0L;
 	float y = cbrtf(x);
 
 	ATF_CHECK(isinf(y) != 0);
 	ATF_CHECK(signbit(y) == 0);
-#endif
 }
 
 ATF_TC(cbrtf_zero_neg);
@@ -235,13 +215,11 @@ ATF_TC_HEAD(cbrtf_zero_neg, tc)
 
 ATF_TC_BODY(cbrtf_zero_neg, tc)
 {
-#ifndef __vax__
 	const float x = -0.0L;
 	float y = cbrtf(x);
 
 	if (fabsf(y) > 0.0 || signbit(y) == 0)
 		atf_tc_fail_nonfatal("cbrtf(-0.0) != -0.0");
-#endif
 }
 
 ATF_TC(cbrtf_zero_pos);
@@ -252,13 +230,11 @@ ATF_TC_HEAD(cbrtf_zero_pos, tc)
 
 ATF_TC_BODY(cbrtf_zero_pos, tc)
 {
-#ifndef __vax__
 	const float x = 0.0L;
 	float y = cbrtf(x);
 
 	if (fabsf(y) > 0.0 || signbit(y) != 0)
 		atf_tc_fail_nonfatal("cbrtf(+0.0) != +0.0");
-#endif
 }
 
 /*
@@ -272,12 +248,10 @@ ATF_TC_HEAD(cbrtl_nan, tc)
 
 ATF_TC_BODY(cbrtl_nan, tc)
 {
-#ifndef __vax__
 	const long double x = 0.0L / 0.0L;
 
 	ATF_CHECK(isnan(x) != 0);
 	ATF_CHECK(isnan(cbrtl(x)) != 0);
-#endif
 }
 
 ATF_TC(cbrtl_powl);
@@ -288,7 +262,6 @@ ATF_TC_HEAD(cbrtl_powl, tc)
 
 ATF_TC_BODY(cbrtl_powl, tc)
 {
-#ifndef __vax__
 	const long double x[] = { 0.0, 0.005, 1.0, 99.0, 123.123, 9999.0 };
 	const long double eps = 1.0e-15;
 	long double y, z;
@@ -303,7 +276,6 @@ ATF_TC_BODY(cbrtl_powl, tc)
 			atf_tc_fail_nonfatal("cbrtl(%0.03Lf) != "
 			    "powl(%0.03Lf, 1/3)\n", x[i], x[i]);
 	}
-#endif
 }
 
 ATF_TC(cbrtl_inf_neg);
@@ -314,13 +286,11 @@ ATF_TC_HEAD(cbrtl_inf_neg, tc)
 
 ATF_TC_BODY(cbrtl_inf_neg, tc)
 {
-#ifndef __vax__
 	const long double x = -1.0L / 0.0L;
 	long double y = cbrtl(x);
 
 	ATF_CHECK(isinf(y) != 0);
 	ATF_CHECK(signbit(y) != 0);
-#endif
 }
 
 ATF_TC(cbrtl_inf_pos);
@@ -331,13 +301,11 @@ ATF_TC_HEAD(cbrtl_inf_pos, tc)
 
 ATF_TC_BODY(cbrtl_inf_pos, tc)
 {
-#ifndef __vax__
 	const long double x = 1.0L / 0.0L;
 	long double y = cbrtl(x);
 
 	ATF_CHECK(isinf(y) != 0);
 	ATF_CHECK(signbit(y) == 0);
-#endif
 }
 
 ATF_TC(cbrtl_zero_neg);
@@ -348,13 +316,11 @@ ATF_TC_HEAD(cbrtl_zero_neg, tc)
 
 ATF_TC_BODY(cbrtl_zero_neg, tc)
 {
-#ifndef __vax__
 	const long double x = -0.0L;
 	long double y = cbrtl(x);
 
 	if (fabsl(y) > 0.0 || signbit(y) == 0)
 		atf_tc_fail_nonfatal("cbrtl(-0.0) != -0.0");
-#endif
 }
 
 ATF_TC(cbrtl_zero_pos);
@@ -365,13 +331,11 @@ ATF_TC_HEAD(cbrtl_zero_pos, tc)
 
 ATF_TC_BODY(cbrtl_zero_pos, tc)
 {
-#ifndef __vax__
 	const long double x = 0.0L;
 	long double y = cbrtl(x);
 
 	if (fabsl(y) > 0.0 || signbit(y) != 0)
 		atf_tc_fail_nonfatal("cbrtl(+0.0) != +0.0");
-#endif
 }
 
 ATF_TP_ADD_TCS(tp)

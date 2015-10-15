@@ -1,4 +1,4 @@
-/*	$NetBSD: bootblock.h,v 1.55 2013/04/04 12:53:00 martin Exp $	*/
+/*	$NetBSD: bootblock.h,v 1.57 2014/09/14 17:39:06 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2002-2004 The NetBSD Foundation, Inc.
@@ -815,7 +815,7 @@ struct apple_drvr_descriptor {
 	uint32_t	descBlock;	/* first block of driver */
 	uint16_t	descSize;	/* driver size in blocks */
 	uint16_t	descType;	/* system type */
-};
+} __packed;
 
 /*
  *	system types; Apple reserves 0-15
@@ -988,14 +988,14 @@ struct hp300_load {
 
 
 /* ------------------------------------------
- * hp700
+ * hppa
  *
  */
 
 /*
  * volume header for "LIF" format volumes
  */
-struct	hp700_lifvol {
+struct	hppa_lifvol {
 	uint16_t	vol_id;
 	uint8_t		vol_label[6];
 	uint32_t	vol_addr;
@@ -1019,7 +1019,7 @@ struct	hp700_lifvol {
 	uint32_t	vol_dummy2;
 };
 
-struct	hp700_lifdir {
+struct	hppa_lifdir {
 	uint8_t		dir_name[10];
 	uint16_t	dir_type;
 	uint32_t	dir_addr;
@@ -1029,37 +1029,37 @@ struct	hp700_lifdir {
 	uint32_t	dir_implement;
 };
 
-struct hp700_lifload {
+struct hppa_lifload {
 	int address;
 	int count;
 };
 
-#define	HP700_LIF_VOL_ID	0x8000
-#define	HP700_LIF_VOL_OCT	0x1000
-#define	HP700_LIF_DIR_SWAP	0x5243
-#define	HP700_LIF_DIR_FS	0xcd38
-#define	HP700_LIF_DIR_IOMAP	0xcd60
-#define	HP700_LIF_DIR_HPUX	0xcd80
-#define	HP700_LIF_DIR_ISL	0xce00
-#define	HP700_LIF_DIR_PAD	0xcffe
-#define	HP700_LIF_DIR_AUTO	0xcfff
-#define	HP700_LIF_DIR_EST	0xd001
-#define	HP700_LIF_DIR_TYPE	0xe942
+#define	HPPA_LIF_VOL_ID	0x8000
+#define	HPPA_LIF_VOL_OCT	0x1000
+#define	HPPA_LIF_DIR_SWAP	0x5243
+#define	HPPA_LIF_DIR_FS	0xcd38
+#define	HPPA_LIF_DIR_IOMAP	0xcd60
+#define	HPPA_LIF_DIR_HPUX	0xcd80
+#define	HPPA_LIF_DIR_ISL	0xce00
+#define	HPPA_LIF_DIR_PAD	0xcffe
+#define	HPPA_LIF_DIR_AUTO	0xcfff
+#define	HPPA_LIF_DIR_EST	0xd001
+#define	HPPA_LIF_DIR_TYPE	0xe942
 
-#define	HP700_LIF_DIR_FLAG	0x8001	/* dont ask me! */
-#define	HP700_LIF_SECTSIZE	256
+#define	HPPA_LIF_DIR_FLAG	0x8001	/* dont ask me! */
+#define	HPPA_LIF_SECTSIZE	256
 
-#define	HP700_LIF_NUMDIR	8
+#define	HPPA_LIF_NUMDIR	8
 
-#define	HP700_LIF_VOLSTART	0
-#define	HP700_LIF_VOLSIZE	sizeof(struct hp700_lifvol)
-#define	HP700_LIF_DIRSTART	2048
-#define	HP700_LIF_DIRSIZE	(HP700_LIF_NUMDIR * sizeof(struct hp700_lifdir))
-#define	HP700_LIF_FILESTART	4096
+#define	HPPA_LIF_VOLSTART	0
+#define	HPPA_LIF_VOLSIZE	sizeof(struct hppa_lifvol)
+#define	HPPA_LIF_DIRSTART	2048
+#define	HPPA_LIF_DIRSIZE	(HPPA_LIF_NUMDIR * sizeof(struct hppa_lifdir))
+#define	HPPA_LIF_FILESTART	4096
 
-#define	hp700_btolifs(b)	(((b) + (HP700_LIF_SECTSIZE - 1)) / HP700_LIF_SECTSIZE)
-#define	hp700_lifstob(s)	((s) * HP700_LIF_SECTSIZE)
-#define	hp700_lifstodb(s)	((s) * HP700_LIF_SECTSIZE / DEV_BSIZE)
+#define	hppa_btolifs(b)	(((b) + (HPPA_LIF_SECTSIZE - 1)) / HPPA_LIF_SECTSIZE)
+#define	hppa_lifstob(s)	((s) * HPPA_LIF_SECTSIZE)
+#define	hppa_lifstodb(s)	((s) * HPPA_LIF_SECTSIZE / DEV_BSIZE)
 
 
 /* ------------------------------------------

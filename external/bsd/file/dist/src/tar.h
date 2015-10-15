@@ -1,4 +1,4 @@
-/*	$NetBSD: tar.h,v 1.1.1.2 2011/05/12 20:46:54 christos Exp $	*/
+/*	$NetBSD: tar.h,v 1.1.1.4 2015/01/02 20:34:27 christos Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.

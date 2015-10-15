@@ -335,9 +335,7 @@ unlimit_core_size(void)
 static void
 setup_child(const kyua_run_params_t* run_params)
 {
-#if !defined(__minix)
     setpgid(getpid(), getpid());
-#endif /* !defined(__minix) */
 
     if (chdir(run_params->work_directory) == -1)
         err(exit_setup_child, "chdir(%s) failed", run_params->work_directory);

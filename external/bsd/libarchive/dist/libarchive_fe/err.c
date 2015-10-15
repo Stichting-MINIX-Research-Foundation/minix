@@ -42,7 +42,7 @@ __FBSDID("$FreeBSD$");
 
 const char *lafe_progname;
 
-static void
+static __printflike(2, 0) void
 lafe_vwarnc(int code, const char *fmt, va_list ap)
 {
 	fprintf(stderr, "%s: ", lafe_progname);

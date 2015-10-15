@@ -1,4 +1,4 @@
-/*	$NetBSD: bits.c,v 1.1.1.2 2011/04/14 14:08:09 elric Exp $	*/
+/*	$NetBSD: bits.c,v 1.1.1.3 2014/04/24 12:45:27 pettai Exp $	*/
 
 /*
  * Copyright (c) 1997-2002 Kungliga Tekniska Högskolan
@@ -37,7 +37,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-__RCSID("$NetBSD: bits.c,v 1.1.1.2 2011/04/14 14:08:09 elric Exp $");
+__RCSID("NetBSD");
 #endif
 #include <stdio.h>
 #include <string.h>
@@ -280,6 +280,14 @@ int main(int argc, char **argv)
     fprintf(f, "#define HEIMDAL_NORETURN_ATTRIBUTE __attribute__((noreturn))\n");
     fprintf(f, "#else\n");
     fprintf(f, "#define HEIMDAL_NORETURN_ATTRIBUTE\n");
+    fprintf(f, "#endif\n");
+    fprintf(f, "#endif\n");
+
+    fprintf(f, "#ifndef HEIMDAL_UNUSED_ATTRIBUTE\n");
+    fprintf(f, "#if defined(__GNUC__) && ((__GNUC__ > 3) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 1 )))\n");
+    fprintf(f, "#define HEIMDAL_UNUSED_ATTRIBUTE __attribute__((unused))\n");
+    fprintf(f, "#else\n");
+    fprintf(f, "#define HEIMDAL_UNUSED_ATTRIBUTE\n");
     fprintf(f, "#endif\n");
     fprintf(f, "#endif\n");
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.142 2013/11/14 12:07:11 martin Exp $	*/
+/*	$NetBSD: exec.h,v 1.149 2015/10/10 10:51:15 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -143,6 +143,7 @@ struct lwp;
 struct proc;
 struct exec_package;
 struct vnode;
+struct coredump_iostate;
 
 typedef int (*exec_makecmds_fcn)(struct lwp *, struct exec_package *);
 
@@ -153,7 +154,6 @@ struct execsw {
 		int (*elf_probe_func)(struct lwp *,
 			struct exec_package *, void *, char *, vaddr_t *);
 		int (*ecoff_probe_func)(struct lwp *, struct exec_package *);
-		int (*mach_probe_func)(const char **);
 	} u;
 	struct  emul *es_emul;		/* os emulation */
 	int	es_prio;		/* entry priority */
@@ -164,7 +164,7 @@ struct execsw {
 					/* Set registers before execution */
 	void	(*es_setregs)(struct lwp *, struct exec_package *, vaddr_t);
 					/* Dump core */
-	int	(*es_coredump)(struct lwp *, void *);
+	int	(*es_coredump)(struct lwp *, struct coredump_iostate *);
 	int	(*es_setup_stack)(struct lwp *, struct exec_package *);
 };
 
@@ -180,9 +180,12 @@ struct exec_vmcmd_set {
 };
 
 #define	EXEC_DEFAULT_VMCMD_SETSIZE	9	/* # of cmds in set to start */
+struct exec_fakearg {
+	char *fa_arg;
+	size_t fa_len;
+};
 
 struct exec_package {
-	const char *ep_name;		/* file's name */
 	const char *ep_kname;		/* kernel-side copy of file's name */
 	char *ep_resolvedname;		/* fully resolved path from namei */
 	void	*ep_hdr;		/* file's exec header */
@@ -199,14 +202,12 @@ struct exec_package {
 	vaddr_t	ep_minsaddr;		/* proc's min stack addr ("bottom") */
 	vsize_t	ep_ssize;		/* size of process's stack */
 	vaddr_t	ep_entry;		/* process's entry point */
+	vaddr_t	ep_entryoffset;		/* offset to entry point */
 	vaddr_t	ep_vm_minaddr;		/* bottom of process address space */
 	vaddr_t	ep_vm_maxaddr;		/* top of process address space */
 	u_int	ep_flags;		/* flags; see below. */
 	size_t	ep_fa_len;		/* byte size of ep_fa */
-	struct exec_fakearg {
-		char *fa_arg;
-		size_t fa_len;
-	} *ep_fa;			/* a fake args vector for scripts */
+	struct exec_fakearg *ep_fa;	/* a fake args vector for scripts */
 	int	ep_fd;			/* a file descriptor we're holding */
 	void	*ep_emul_arg;		/* emulation argument */
 	const struct	execsw *ep_esch;/* execsw entry */
@@ -227,6 +228,7 @@ struct exec_package {
 #define	EXEC_32		0x0020		/* 32-bit binary emulation */
 #define	EXEC_FORCEAUX	0x0040		/* always use ELF AUX vector */
 #define	EXEC_TOPDOWN_VM	0x0080		/* may use top-down VM layout */
+#define	EXEC_FROM32	0x0100		/* exec'ed from 32-bit binary */
 
 struct exec_vmcmd {
 	int	(*ev_proc)(struct lwp *, struct exec_vmcmd *);
@@ -272,7 +274,9 @@ int	exec_read_from		(struct lwp *, struct vnode *, u_long off,
 				    void *, size_t);
 int	exec_setup_stack	(struct lwp *, struct exec_package *);
 
-int	coredump_write		(void *, enum uio_seg, const void *, size_t);
+int	coredump_write		(struct coredump_iostate *, enum uio_seg,
+				    const void *, size_t);
+off_t	coredump_offset		(struct coredump_iostate *);
 
 void	exec_free_emul_arg	(struct exec_package *);
 
@@ -282,8 +286,8 @@ void	exec_free_emul_arg	(struct exec_package *);
  */
 struct core;
 struct core32;
-int	cpu_coredump(struct lwp *, void *, struct core *);
-int	cpu_coredump32(struct lwp *, void *, struct core32 *);
+int	cpu_coredump(struct lwp *, struct coredump_iostate *, struct core *);
+int	cpu_coredump32(struct lwp *, struct coredump_iostate *, struct core32 *);
 
 int	exec_add(struct execsw *, int);
 int	exec_remove(struct execsw *, int);

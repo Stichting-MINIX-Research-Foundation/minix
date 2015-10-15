@@ -1,4 +1,4 @@
-/*	$NetBSD: windc_plugin.h,v 1.1.1.2 2011/04/14 14:08:18 elric Exp $	*/
+/*	$NetBSD: windc_plugin.h,v 1.1.1.3 2014/04/24 12:45:27 pettai Exp $	*/
 
 /*
  * Copyright (c) 2006 Kungliga Tekniska Högskolan
@@ -59,23 +59,24 @@ typedef krb5_error_code
 
 typedef krb5_error_code
 (*krb5plugin_windc_pac_verify)(void *, krb5_context,
-			       const krb5_principal,
-			       struct hdb_entry_ex *,
-			       struct hdb_entry_ex *,
-			       struct hdb_entry_ex *,
+			       const krb5_principal, /* new ticket client */
+			       const krb5_principal, /* delegation proxy */
+			       struct hdb_entry_ex *,/* client */
+			       struct hdb_entry_ex *,/* server */
+			       struct hdb_entry_ex *,/* krbtgt */
 			       krb5_pac *);
 
 typedef krb5_error_code
 (*krb5plugin_windc_client_access)(
-	void *, krb5_context, 
+	void *, krb5_context,
 	krb5_kdc_configuration *config,
-	hdb_entry_ex *, const char *, 
-	hdb_entry_ex *, const char *, 
+	hdb_entry_ex *, const char *,
+	hdb_entry_ex *, const char *,
 	KDC_REQ *, krb5_data *);
 
 
-#define KRB5_WINDC_PLUGING_MINOR		4
-#define KRB5_WINDC_PLUGIN_MINOR			4
+#define KRB5_WINDC_PLUGIN_MINOR			6
+#define KRB5_WINDC_PLUGING_MINOR KRB5_WINDC_PLUGIN_MINOR
 
 typedef struct krb5plugin_windc_ftable {
     int			minor_version;

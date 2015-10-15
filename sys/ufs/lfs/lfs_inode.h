@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.h,v 1.5 2013/06/18 08:01:00 dholland Exp $	*/
+/*	$NetBSD: lfs_inode.h,v 1.11 2015/09/01 06:08:37 dholland Exp $	*/
 /*  from NetBSD: ulfs_inode.h,v 1.5 2013/06/06 00:51:50 dholland Exp  */
 /*  from NetBSD: inode.h,v 1.64 2012/11/19 00:36:21 jakllsch Exp  */
 
@@ -152,53 +152,8 @@ struct inode {
 	/*
 	 * The on-disk dinode itself.
 	 */
-	union {
-		struct	ulfs1_dinode *ffs1_din;	/* 128 bytes of the on-disk dinode. */
-		struct	ulfs2_dinode *ffs2_din;
-	} i_din;
+	union lfs_dinode *i_din;
 };
-
-#define	i_ffs1_atime		i_din.ffs1_din->di_atime
-#define	i_ffs1_atimensec	i_din.ffs1_din->di_atimensec
-#define	i_ffs1_blocks		i_din.ffs1_din->di_blocks
-#define	i_ffs1_ctime		i_din.ffs1_din->di_ctime
-#define	i_ffs1_ctimensec	i_din.ffs1_din->di_ctimensec
-#define	i_ffs1_db		i_din.ffs1_din->di_db
-#define	i_ffs1_flags		i_din.ffs1_din->di_flags
-#define	i_ffs1_gen		i_din.ffs1_din->di_gen
-#define	i_ffs1_gid		i_din.ffs1_din->di_gid
-#define	i_ffs1_ib		i_din.ffs1_din->di_ib
-#define	i_ffs1_mode		i_din.ffs1_din->di_mode
-#define	i_ffs1_mtime		i_din.ffs1_din->di_mtime
-#define	i_ffs1_mtimensec	i_din.ffs1_din->di_mtimensec
-#define	i_ffs1_nlink		i_din.ffs1_din->di_nlink
-#define	i_ffs1_rdev		i_din.ffs1_din->di_rdev
-#define	i_ffs1_size		i_din.ffs1_din->di_size
-#define	i_ffs1_uid		i_din.ffs1_din->di_uid
-
-#define	i_ffs2_atime		i_din.ffs2_din->di_atime
-#define	i_ffs2_atimensec	i_din.ffs2_din->di_atimensec
-#define	i_ffs2_birthtime	i_din.ffs2_din->di_birthtime
-#define	i_ffs2_birthnsec	i_din.ffs2_din->di_birthnsec
-#define	i_ffs2_blocks		i_din.ffs2_din->di_blocks
-#define	i_ffs2_blksize		i_din.ffs2_din->di_blksize
-#define	i_ffs2_ctime		i_din.ffs2_din->di_ctime
-#define	i_ffs2_ctimensec	i_din.ffs2_din->di_ctimensec
-#define	i_ffs2_db		i_din.ffs2_din->di_db
-#define	i_ffs2_flags		i_din.ffs2_din->di_flags
-#define	i_ffs2_gen		i_din.ffs2_din->di_gen
-#define	i_ffs2_gid		i_din.ffs2_din->di_gid
-#define	i_ffs2_ib		i_din.ffs2_din->di_ib
-#define	i_ffs2_mode		i_din.ffs2_din->di_mode
-#define	i_ffs2_mtime		i_din.ffs2_din->di_mtime
-#define	i_ffs2_mtimensec	i_din.ffs2_din->di_mtimensec
-#define	i_ffs2_nlink		i_din.ffs2_din->di_nlink
-#define	i_ffs2_rdev		i_din.ffs2_din->di_rdev
-#define	i_ffs2_size		i_din.ffs2_din->di_size
-#define	i_ffs2_uid		i_din.ffs2_din->di_uid
-#define	i_ffs2_kernflags	i_din.ffs2_din->di_kernflags
-#define	i_ffs2_extsize		i_din.ffs2_din->di_extsize
-#define	i_ffs2_extb		i_din.ffs2_din->di_extb
 
 /* These flags are kept in i_flag. */
 #define	IN_ACCESS	0x0001		/* Access time update request. */
@@ -207,12 +162,12 @@ struct inode {
 #define	IN_MODIFY	0x2000		/* Modification time update request. */
 #define	IN_MODIFIED	0x0008		/* Inode has been modified. */
 #define	IN_ACCESSED	0x0010		/* Inode has been accessed. */
-/* #define	IN_UNUSED	0x0020 */	/* unused, was IN_RENAME */
+/* 	   unused	0x0020 */	/* was IN_RENAME */
 #define	IN_SHLOCK	0x0040		/* File has shared lock. */
 #define	IN_EXLOCK	0x0080		/* File has exclusive lock. */
 #define	IN_CLEANING	0x0100		/* LFS: file is being cleaned */
 #define	IN_ADIROP	0x0200		/* LFS: dirop in progress */
-#define	IN_SPACECOUNTED	0x0400		/* Blocks to be freed in free count. */
+/* 	   unused	0x0400 */	/* was FFS-only IN_SPACECOUNTED */
 #define	IN_PAGING       0x1000		/* LFS: file is on paging queue */
 #define IN_CDIROP       0x4000          /* LFS: dirop completed pending i/o */
 
@@ -221,7 +176,7 @@ struct inode {
  */
 struct lfs_inode_ext {
 	off_t	  lfs_osize;		/* size of file on disk */
-	u_int32_t lfs_effnblocks;  /* number of blocks when i/o completes */
+	u_int64_t lfs_effnblocks;  /* number of blocks when i/o completes */
 	size_t	  lfs_fragsize[ULFS_NDADDR]; /* size of on-disk direct blocks */
 	TAILQ_ENTRY(inode) lfs_dchain;  /* Dirop chain. */
 	TAILQ_ENTRY(inode) lfs_pchain;  /* Paging chain. */

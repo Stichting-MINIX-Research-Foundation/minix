@@ -1,4 +1,4 @@
-/*	$NetBSD: test_engine_dso.c,v 1.1.1.1 2011/04/13 18:14:51 elric Exp $	*/
+/*	$NetBSD: test_engine_dso.c,v 1.1.1.2 2014/04/24 12:45:30 pettai Exp $	*/
 
 /*
  * Copyright (c) 2006 Kungliga Tekniska Högskolan
@@ -200,23 +200,23 @@ main(int argc, char **argv)
 	int keylen;
 	RSA *rsa;
 	FILE *f;
-	
+
 	f = fopen(rsa_flag, "rb");
 	if (f == NULL)
 	    err(1, "could not open file %s", rsa_flag);
-	
+
 	size = fread(buf, 1, sizeof(buf), f);
 	if (size == 0)
 	    err(1, "failed to read file %s", rsa_flag);
 	if (size == sizeof(buf))
 	    err(1, "key too long in file %s!", rsa_flag);
 	fclose(f);
-	
+
 	p = buf;
 	rsa = d2i_RSAPrivateKey(NULL, &p, size);
 	if (rsa == NULL)
 	    err(1, "failed to parse key in file %s", rsa_flag);
-	
+
 	RSA_set_method(rsa, ENGINE_get_RSA(engine));
 
 	/*
@@ -276,7 +276,7 @@ main(int argc, char **argv)
 	    "EE386BFB" "5A899FA5" "AE9F2411" "7C4B1FE6" "49286651" "ECE65381"
 	    "FFFFFFFF" "FFFFFFFF";
 	const char *g = "02";
-	
+
 	/*
 	 * Try generated keys
 	 */
@@ -308,19 +308,19 @@ main(int argc, char **argv)
 
 	    server = DH_new_method(engine);
 	    client = DH_new_method(engine);
-	
+
 	    BN_hex2bn(&server->p, p);
 	    BN_hex2bn(&client->p, p);
 	    BN_hex2bn(&server->g, g);
 	    BN_hex2bn(&client->g, g);
-	
+
 	    BN_hex2bn(&client->priv_key, dhtests[i].cpriv);
 	    BN_hex2bn(&client->pub_key, dhtests[i].cpub);
 	    BN_hex2bn(&server->priv_key, dhtests[i].spriv);
 	    BN_hex2bn(&server->pub_key, dhtests[i].spub);
 
 	    dh_test(server, client);
-	
+
 	    DH_free(server);
 	    DH_free(client);
 	}

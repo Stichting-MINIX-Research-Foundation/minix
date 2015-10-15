@@ -1,4 +1,4 @@
-/*	$NetBSD: sym.c,v 1.1.1.1 2009/10/26 00:27:03 christos Exp $	*/
+/*	$NetBSD: sym.c,v 1.3 2014/10/30 18:44:05 christos Exp $	*/
 
 /* sym - symbol table routines */
 
@@ -32,8 +32,9 @@
 /*  IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED */
 /*  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR */
 /*  PURPOSE. */
-
 #include "flexdef.h"
+__RCSID("$NetBSD: sym.c,v 1.3 2014/10/30 18:44:05 christos Exp $");
+
 
 /* Variables for symbol tables:
  * sctbl - start-condition symbol table

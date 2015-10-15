@@ -1,4 +1,4 @@
-/*	$NetBSD: http.c,v 1.2 2011/06/25 20:27:01 christos Exp $	*/
+/*	$NetBSD: http.c,v 1.3 2014/01/07 02:13:00 joerg Exp $	*/
 /*-
  * Copyright (c) 2000-2004 Dag-Erling Coïdan Smørgrav
  * Copyright (c) 2003 Thomas Klausner <wiz@NetBSD.org>
@@ -404,6 +404,7 @@ static struct {
 /*
  * Send a formatted line; optionally echo to terminal
  */
+__printflike(2, 3)
 static int
 http_cmd(conn_t *conn, const char *fmt, ...)
 {

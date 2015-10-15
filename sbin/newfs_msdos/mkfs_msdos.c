@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs_msdos.c,v 1.8 2013/10/19 01:09:59 christos Exp $	*/
+/*	$NetBSD: mkfs_msdos.c,v 1.9 2014/01/05 12:52:39 martin Exp $	*/
 
 /*
  * Copyright (c) 1998 Robert Nordier
@@ -37,7 +37,7 @@
 static const char rcsid[] =
   "$FreeBSD: src/sbin/newfs_msdos/newfs_msdos.c,v 1.15 2000/10/10 01:49:37 wollman Exp $";
 #else
-__RCSID("$NetBSD: mkfs_msdos.c,v 1.8 2013/10/19 01:09:59 christos Exp $");
+__RCSID("$NetBSD: mkfs_msdos.c,v 1.9 2014/01/05 12:52:39 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -709,7 +709,7 @@ mkfs_msdos(const char *fname, const char *dtype, const struct msdos_options *op)
 		mk4(img, 0x41615252);
 		mk4(img + MINBPS - 28, 0x61417272);
 		mk4(img + MINBPS - 24, 0xffffffff);
-		mk4(img + MINBPS - 20, bpb.rdcl);
+		mk4(img + MINBPS - 20, 0xffffffff);
 		mk2(img + MINBPS - 2, DOSMAGIC);
 	    } else if (lsn >= bpb.res && lsn < dir &&
 		       !((lsn - bpb.res) %

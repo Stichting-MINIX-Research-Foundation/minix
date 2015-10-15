@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.144 2012/10/27 17:18:40 chs Exp $	*/
+/*	$NetBSD: conf.h,v 1.145 2014/07/25 07:56:14 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -74,6 +74,7 @@ struct bdevsw {
 	int		(*d_ioctl)(dev_t, u_long, void *, int, struct lwp *);
 	int		(*d_dump)(dev_t, daddr_t, void *, size_t);
 	int		(*d_psize)(dev_t);
+	int		(*d_discard)(dev_t, off_t, off_t);
 	int		d_flag;
 };
 
@@ -91,6 +92,7 @@ struct cdevsw {
 	int		(*d_poll)(dev_t, int, struct lwp *);
 	paddr_t		(*d_mmap)(dev_t, off_t, int);
 	int		(*d_kqfilter)(dev_t, struct knote *);
+	int		(*d_discard)(dev_t, off_t, off_t);
 	int		d_flag;
 };
 
@@ -121,6 +123,7 @@ devmajor_t cdevsw_lookup_major(const struct cdevsw *);
 #define	dev_type_dump(n)	int n (dev_t, daddr_t, void *, size_t)
 #define	dev_type_size(n)	int n (dev_t)
 #define	dev_type_kqfilter(n)	int n (dev_t, struct knote *)
+#define dev_type_discard(n)	int n (dev_t, off_t, off_t)
 
 #define	noopen		((dev_type_open((*)))enodev)
 #define	noclose		((dev_type_close((*)))enodev)
@@ -134,6 +137,7 @@ devmajor_t cdevsw_lookup_major(const struct cdevsw *);
 #define	nodump		((dev_type_dump((*)))enodev)
 #define	nosize		NULL
 #define	nokqfilter	seltrue_kqfilter
+#define nodiscard	((dev_type_discard((*)))enodev)
 
 #define	nullopen	((dev_type_open((*)))nullop)
 #define	nullclose	((dev_type_close((*)))nullop)
@@ -145,6 +149,7 @@ devmajor_t cdevsw_lookup_major(const struct cdevsw *);
 #define	nullmmap	((dev_type_mmap((*)))nullop)
 #define	nulldump	((dev_type_dump((*)))nullop)
 #define	nullkqfilter	((dev_type_kqfilter((*)))eopnotsupp)
+#define nulldiscard	((dev_type_discard((*)))nullop)
 
 /* device access wrappers. */
 
@@ -154,6 +159,7 @@ dev_type_strategy(bdev_strategy);
 dev_type_ioctl(bdev_ioctl);
 dev_type_dump(bdev_dump);
 dev_type_size(bdev_size);
+dev_type_discard(bdev_discard);
 
 dev_type_open(cdev_open);
 dev_type_close(cdev_close);
@@ -165,6 +171,7 @@ dev_type_tty(cdev_tty);
 dev_type_poll(cdev_poll);
 dev_type_mmap(cdev_mmap);
 dev_type_kqfilter(cdev_kqfilter);
+dev_type_discard(cdev_discard);
 
 int	cdev_type(dev_t);
 int	bdev_type(dev_t);

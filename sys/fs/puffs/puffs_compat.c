@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_compat.c,v 1.2 2010/07/11 11:17:27 pooka Exp $	*/
+/*	$NetBSD: puffs_compat.c,v 1.4 2015/04/22 17:07:24 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -32,14 +32,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_compat.c,v 1.2 2010/07/11 11:17:27 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_compat.c,v 1.4 2015/04/22 17:07:24 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
 #include <sys/kmem.h>
 #include <sys/kthread.h>
 #include <sys/lock.h>
-#include <sys/malloc.h>
 #include <sys/mount.h>
 #include <sys/namei.h>
 #include <sys/proc.h>
@@ -158,6 +157,7 @@ struct puffs50_vnmsg_symlink {
  * vattr translation routines
  */
 
+#ifdef COMPAT_50
 static void
 vattr_to_50(const struct vattr *va, struct vattr50 *va50)
 {
@@ -207,6 +207,7 @@ vattr_from_50(const struct vattr50 *va50, struct vattr *va)
 	va->va_filerev = va50->va_filerev;
 	va->va_vaflags = va50->va_flags;
 }
+#endif /* COMPAT_50 */
 
 /*
  * XXX: cannot assert that sleeping is possible
@@ -226,9 +227,10 @@ bool
 puffs_compat_outgoing(struct puffs_req *oreq,
 	struct puffs_req **creqp, ssize_t *deltap)
 {
+	bool rv = false;
+#ifdef COMPAT_50
 	struct puffs_req *creq = NULL;
 	ssize_t delta = 0;
-	bool rv = false;
 
 	if (PUFFSOP_OPCLASS(oreq->preq_opclass) == PUFFSOP_VFS
 	    && oreq->preq_optype == PUFFS_VFS_FHTOVP) {
@@ -331,6 +333,7 @@ puffs_compat_outgoing(struct puffs_req *oreq,
 		*deltap = delta;
 		rv = true;
 	}
+#endif
 
 	return rv;
 }
@@ -347,6 +350,7 @@ void
 puffs_compat_incoming(struct puffs_req *preq, struct puffs_req *creq)
 {
 
+#ifdef COMPAT_50
 	if (PUFFSOP_OPCLASS(preq->preq_opclass) == PUFFSOP_VFS
 	    && preq->preq_optype == PUFFS_VFS_FHTOVP) {
 		INIT(vfsmsg_fhtonode);
@@ -434,4 +438,5 @@ puffs_compat_incoming(struct puffs_req *preq, struct puffs_req *creq)
 			panic("puffs compat ops come in pairs");
 		}
 	}
+#endif /* COMPAT_50 */
 }

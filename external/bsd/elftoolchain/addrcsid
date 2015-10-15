@@ -1,0 +1,36 @@
+#!/bin/sh
+# $NetBSD: addrcsid,v 1.1 2014/03/09 16:58:03 christos Exp $
+
+# This is meant to be run after import to add rcsids to new files.
+
+set -e
+
+echo "Adding RCS tags .."
+for f in $(grep -RL '\$NetBSD.*\$' $1 | grep -v CVS); do
+    case $f in
+    *.[ch] | *.m4)
+	sed -e '/^\/\*-/ {
+i\
+/*	\$NetBSD\$	*/\
+
+
+}' -e '/^ELFTC_VCSID/ {
+i\
+__RCSID("\$NetBSD\$");
+
+}' < ${f} > tmp$$ && mv tmp$$ ${f}
+	;;
+    *.[0-9])
+	cat - ${f} > ${f}_tmp <<- EOF
+		.\"	\$NetBSD\$
+		.\"
+	EOF
+	mv ${f}_tmp ${f}
+	;;
+    *)
+	echo "No RCS tag added to ${f}"
+	;;
+    esac
+done
+
+echo "prepare-import done"

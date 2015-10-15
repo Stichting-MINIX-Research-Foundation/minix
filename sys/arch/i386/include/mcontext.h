@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.10 2011/02/25 14:07:13 joerg Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.12 2014/02/15 22:20:42 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -80,19 +80,15 @@ typedef struct {
 	union {
 		struct {
 			int	__fp_state[27];	/* Environment and registers */
-			int	__fp_status;	/* Software status word */
-		} __fpchip_state;
-		struct {
-			char	__fp_emul[246];
-			char	__fp_epad[2];
-		} __fp_emul_space;
+		} __fpchip_state;	/* x87 regs in fsave format */
 		struct {
 			char	__fp_xmm[512];
-		} __fp_xmm_state;
+		} __fp_xmm_state;	/* x87 and xmm regs in fxsave format */
 		int	__fp_fpregs[128];
 	} __fp_reg_set;
-	long	__fp_wregs[33];			/* Weitek? */
+	int 	__fp_pad[33];			/* Historic padding */
 } __fpregset_t;
+__CTASSERT(sizeof (__fpregset_t) == 512 + 33 * 4);
 
 typedef struct {
 	__gregset_t	__gregs;

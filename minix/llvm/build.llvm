@@ -110,7 +110,7 @@ if [ "${GENERATE_MAP}" != "" ] && [[ ${GENERATE_MAP} =~ [yY][eE][sS] ]]; then
         generate_modules_map
 fi
 
-: ${OPTFLAGS="-disable-opt -disable-internalize -disable-inlining -load ${MINIX_LLVM_DIR}/bin/weak-alias-module-override.so -weak-alias-module-override"}
+: ${OPTFLAGS="-disable-opt -disable-inlining -load ${MINIX_LLVM_DIR}/bin/weak-alias-module-override.so -weak-alias-module-override"}
 
 # If we are really instrumenting with some pass...
 if [ "${LLVMPASS_PATHS}" != "" ]; then

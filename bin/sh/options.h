@@ -1,4 +1,4 @@
-/*	$NetBSD: options.h,v 1.20 2011/06/18 21:18:46 christos Exp $	*/
+/*	$NetBSD: options.h,v 1.22 2015/05/26 21:35:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -99,9 +99,13 @@ DEF_OPT( "cdprint",	0 )	/* always print result of cd */
 #define	cdprint optlist[17].val
 DEF_OPT( "tabcomplete",	0 )	/* <tab> causes filename expansion */
 #define	tabcomplete optlist[18].val
+DEF_OPT( "fork",	'F' )	/* use fork(2) instead of vfork(2) */
+#define	usefork optlist[19].val
+DEF_OPT( "nopriv",	'p' )	/* preserve privs even if set{u,g}id */
+#define pflag optlist[20].val
 #ifdef DEBUG
 DEF_OPT( "debug",	0 )	/* enable debug prints */
-#define	debug optlist[19].val
+#define	debug optlist[21].val
 #endif
 
 #ifdef DEFINE_OPTIONS

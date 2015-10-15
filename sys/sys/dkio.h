@@ -1,4 +1,4 @@
-/*	$NetBSD: dkio.h,v 1.18 2012/10/19 17:09:07 drochner Exp $	*/
+/*	$NetBSD: dkio.h,v 1.21 2014/12/29 18:41:20 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -109,15 +109,14 @@
 
 #define	DIOCTUR		_IOR('d', 128, int)	/* test unit ready */
 
-struct disk_discard_params {
-	long maxsize; /* in DEV_BSIZE units */
-};
-#define DIOCGDISCARDPARAMS _IOR('d', 129, struct disk_discard_params)
+/* 129 was DIOCGDISCARDPARAMS during 6.99 */
+/* 130 was DIOCDISCARD during 6.99 */
 
-struct disk_discard_range {
-	daddr_t bno;
-	long size;
-};
-#define DIOCDISCARD	_IOW('d', 130, struct disk_discard_range)
+		/* trigger wedge auto discover */
+#define	DIOCMWEDGES	_IOR('d', 131, int)	/* make wedges */
+
+		/* query disk geometry */
+#define	DIOCGSECTORSIZE	_IOR('d', 133, u_int)	/* sector size in bytes */
+#define	DIOCGMEDIASIZE	_IOR('d', 132, off_t)	/* media size in bytes */
 
 #endif /* _SYS_DKIO_H_ */

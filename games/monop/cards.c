@@ -1,4 +1,4 @@
-/*	$NetBSD: cards.c,v 1.25 2012/06/19 05:35:32 dholland Exp $	*/
+/*	$NetBSD: cards.c,v 1.27 2014/12/29 10:38:52 jnemeth Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cards.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: cards.c,v 1.25 2012/06/19 05:35:32 dholland Exp $");
+__RCSID("$NetBSD: cards.c,v 1.27 2014/12/29 10:38:52 jnemeth Exp $");
 #endif
 #endif /* not lint */
 
@@ -132,7 +132,7 @@ static const struct cardinfo ch_cards[] = {
 	{ "MU",
 		"Advance to the nearest Utility.\n"
 		"If unowned, you may buy it from the bank.\n"
-		"If owned, throw dice and pay oner a total of ten times\n"
+		"If owned, throw dice and pay owner a total of ten times\n"
 		"the amount thrown.\n"
 	},
 	{ "MB3",

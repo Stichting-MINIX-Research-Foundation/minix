@@ -1,4 +1,4 @@
-/*	$NetBSD: iprop-log.c,v 1.1.1.1 2011/04/13 18:15:29 elric Exp $	*/
+/*	$NetBSD: iprop-log.c,v 1.1.1.2 2014/04/24 12:45:48 pettai Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2005 Kungliga Tekniska Högskolan
@@ -38,7 +38,7 @@
 #include <krb5/parse_time.h>
 #include "iprop-commands.h"
 
-__RCSID("$NetBSD: iprop-log.c,v 1.1.1.1 2011/04/13 18:15:29 elric Exp $");
+__RCSID("NetBSD");
 
 static krb5_context context;
 
@@ -126,7 +126,7 @@ print_entry(kadm5_server_context *server_context,
 
     strftime(t, sizeof(t), "%Y-%m-%d %H:%M:%S", localtime(&timestamp));
 
-    if(op < kadm_get || op > kadm_nop) {
+    if((int)op < (int)kadm_get || (int)op > (int)kadm_nop) {
 	printf("unknown op: %d\n", op);
 	krb5_storage_seek(sp, end, SEEK_SET);
 	return;
@@ -352,8 +352,8 @@ apply_entry(kadm5_server_context *server_context,
     struct replay_options *opt = ctx;
     krb5_error_code ret;
 
-    if((opt->start_version_integer != -1 && ver < opt->start_version_integer) ||
-       (opt->end_version_integer != -1 && ver > opt->end_version_integer)) {
+    if((opt->start_version_integer != -1 && ver < (uint32_t)opt->start_version_integer) ||
+       (opt->end_version_integer != -1 && ver > (uint32_t)opt->end_version_integer)) {
 	/* XXX skip this entry */
 	krb5_storage_seek(sp, len, SEEK_CUR);
 	return;
@@ -428,8 +428,11 @@ help(void *opt, int argc, char **argv)
 		     argv[0]);
 	} else {
 	    if(c->func) {
-		char *fake[] = { NULL, "--help", NULL };
+		static char shelp[] = "--help";
+		char *fake[3];
 		fake[0] = argv[0];
+		fake[1] = shelp;
+		fake[2] = NULL;
 		(*c->func)(2, fake);
 		fprintf(stderr, "\n");
 	    }

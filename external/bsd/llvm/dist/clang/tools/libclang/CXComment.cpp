@@ -15,6 +15,7 @@
 #include "CXComment.h"
 #include "CXCursor.h"
 #include "CXString.h"
+#include "clang-c/Documentation.h"
 #include "clang/AST/Decl.h"
 #include "clang/Index/CommentToXML.h"
 #include "llvm/ADT/StringExtras.h"
@@ -27,6 +28,19 @@ using namespace clang::comments;
 using namespace clang::cxcomment;
 
 extern "C" {
+
+CXComment clang_Cursor_getParsedComment(CXCursor C) {
+  using namespace clang::cxcursor;
+
+  if (!clang_isDeclaration(C.kind))
+    return createCXComment(nullptr, nullptr);
+
+  const Decl *D = getCursorDecl(C);
+  const ASTContext &Context = getCursorContext(C);
+  const FullComment *FC = Context.getCommentForDecl(D, /*PP=*/nullptr);
+
+  return createCXComment(FC, getCursorTU(C));
+}
 
 enum CXCommentKind clang_Comment_getKind(CXComment CXC) {
   const Comment *C = getASTNode(CXC);
@@ -87,7 +101,7 @@ unsigned clang_Comment_getNumChildren(CXComment CXC) {
 CXComment clang_Comment_getChild(CXComment CXC, unsigned ChildIdx) {
   const Comment *C = getASTNode(CXC);
   if (!C || ChildIdx >= C->child_count())
-    return createCXComment(NULL, NULL);
+    return createCXComment(nullptr, nullptr);
 
   return createCXComment(*(C->child_begin() + ChildIdx), CXC.TranslationUnit);
 }
@@ -239,7 +253,7 @@ CXString clang_BlockCommandComment_getArgText(CXComment CXC,
 CXComment clang_BlockCommandComment_getParagraph(CXComment CXC) {
   const BlockCommandComment *BCC = getASTNodeAs<BlockCommandComment>(CXC);
   if (!BCC)
-    return createCXComment(NULL, NULL);
+    return createCXComment(nullptr, nullptr);
 
   return createCXComment(BCC->getParagraph(), CXC.TranslationUnit);
 }

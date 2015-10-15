@@ -188,6 +188,10 @@
 
     bad-1-block_header-5.xz has zero as Compressed Size in Block Header.
 
+    bad-1-block_header-6.xz has corrupt Block Header which may crash
+    xz -lvv in XZ Utils 5.0.3 and earlier. It was fixed in the commit
+    c0297445064951807803457dca1611b3c47e7f0f.
+
     bad-2-index-1.xz has wrong Unpadded Sizes in Index.
 
     bad-2-index-2.xz has wrong Uncompressed Sizes in Index.

@@ -1,4 +1,4 @@
-/*	$NetBSD: _env.c,v 1.8 2013/09/09 10:21:28 tron Exp $ */
+/*	$NetBSD: _env.c,v 1.9 2015/01/20 18:31:25 christos Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: _env.c,v 1.8 2013/09/09 10:21:28 tron Exp $");
+__RCSID("$NetBSD: _env.c,v 1.9 2015/01/20 18:31:25 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -46,7 +46,6 @@ __RCSID("$NetBSD: _env.c,v 1.8 2013/09/09 10:21:28 tron Exp $");
 #include <string.h>
 
 #include "env.h"
-#include "reentrant.h"
 #include "local.h"
 
 /*

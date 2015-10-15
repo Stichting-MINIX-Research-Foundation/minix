@@ -144,7 +144,9 @@ char* srv_to_string_gen(struct rproc *rp, int is_verbose)
   struct rprocpub *rpub;
   int slot_nr;
   char *srv_string;
-  static char srv_string_pool[3][RS_MAX_LABEL_LEN + 256];
+/* LSC: Workaround broken GCC which complains that a const variable is not constant... */
+#define max_len (RS_MAX_LABEL_LEN + 256)
+  static char srv_string_pool[3][max_len];
   static int srv_string_pool_index = 0;
 
   rpub = rp->r_pub;
@@ -158,14 +160,17 @@ char* srv_to_string_gen(struct rproc *rp, int is_verbose)
     ((rp)->r_old_rp || (rp)->r_prev_rp ? "+" : " "))
 
   if(is_verbose) {
-      sprintf(srv_string, "service '%s'%s%s(slot %d, ep %d, pid %d, cmd %s, script %s, proc %s, major %d, flags 0x%03x, sys_flags 0x%02x)",
-          rpub->label, srv_active_str(rp), srv_version_str(rp),
-          slot_nr, rpub->endpoint, rp->r_pid, srv_str(rp->r_cmd),
-          srv_str(rp->r_script), srv_str(rpub->proc_name), rpub->dev_nr,
-          rp->r_flags, rpub->sys_flags);
+      snprintf(srv_string, max_len, "service '%s'%s%s"
+		"(slot %d, ep %d, pid %d, cmd %s,"
+		" script %s, proc %s, major %d,"
+		" flags 0x%03x, sys_flags 0x%02x)",
+		rpub->label, srv_active_str(rp), srv_version_str(rp),
+		slot_nr, rpub->endpoint, rp->r_pid, srv_str(rp->r_cmd),
+		srv_str(rp->r_script), srv_str(rpub->proc_name), rpub->dev_nr,
+		rp->r_flags, rpub->sys_flags);
   }
   else {
-      sprintf(srv_string, "service '%s'%s%s(slot %d, ep %d, pid %d)",
+      snprintf(srv_string, max_len, "service '%s'%s%s(slot %d, ep %d, pid %d)",
           rpub->label, srv_active_str(rp), srv_version_str(rp),
           slot_nr, rpub->endpoint, rp->r_pid);
   }
@@ -173,6 +178,7 @@ char* srv_to_string_gen(struct rproc *rp, int is_verbose)
 #undef srv_str
 #undef srv_active_str
 #undef srv_version_str
+#undef max_len
 
   return srv_string;
 }
@@ -192,17 +198,21 @@ char* srv_upd_to_string(struct rprocupd *rpupd)
 #define srv_upd_luflag_c(F) (rpupd->lu_flags & F ? '1' : '0')
 #define srv_upd_iflag_c(F) (rpupd->init_flags & F ? '1' : '0')
 
-   sprintf(srv_upd_string, "update (lu_flags(SAMPNDRV)=%c%c%c%c%c%c%c%c, init_flags=(FCTD)=%c%c%c%c, state %d (%s), tm %lu, maxtime %lu, endpoint %d, state_data_gid %d, prev_ep %d, next_ep %d)",
-       srv_upd_luflag_c(SEF_LU_SELF), srv_upd_luflag_c(SEF_LU_ASR),
-       srv_upd_luflag_c(SEF_LU_MULTI), srv_upd_luflag_c(SEF_LU_PREPARE_ONLY),
-       srv_upd_luflag_c(SEF_LU_NOMMAP), srv_upd_luflag_c(SEF_LU_DETACHED),
-       srv_upd_luflag_c(SEF_LU_INCLUDES_RS),
-       srv_upd_luflag_c(SEF_LU_INCLUDES_VM), srv_upd_iflag_c(SEF_INIT_FAIL),
-       srv_upd_iflag_c(SEF_INIT_CRASH), srv_upd_iflag_c(SEF_INIT_TIMEOUT),
-       srv_upd_iflag_c(SEF_INIT_DEFCB), rpupd->prepare_state, 
-       rpupd->prepare_state_data.eval_addr ? rpupd->prepare_state_data.eval_addr : "", rpupd->prepare_tm,
-       rpupd->prepare_maxtime, srv_ep(rpub), rpupd->prepare_state_data_gid,
-       srv_ep(prev_rpub), srv_ep(next_rpub));
+   snprintf(srv_upd_string, sizeof(srv_upd_string), "update (lu_flags(SAMPNDRV)="
+		"%c%c%c%c%c%c%c%c,"
+		" init_flags=(FCTD)=%c%c%c%c, state %d (%s),"
+		" tm %u, maxtime %u, endpoint %d,"
+		" state_data_gid %d, prev_ep %d, next_ep %d)",
+		srv_upd_luflag_c(SEF_LU_SELF), srv_upd_luflag_c(SEF_LU_ASR),
+		srv_upd_luflag_c(SEF_LU_MULTI), srv_upd_luflag_c(SEF_LU_PREPARE_ONLY),
+		srv_upd_luflag_c(SEF_LU_NOMMAP), srv_upd_luflag_c(SEF_LU_DETACHED),
+		srv_upd_luflag_c(SEF_LU_INCLUDES_RS),
+		srv_upd_luflag_c(SEF_LU_INCLUDES_VM), srv_upd_iflag_c(SEF_INIT_FAIL),
+		srv_upd_iflag_c(SEF_INIT_CRASH), srv_upd_iflag_c(SEF_INIT_TIMEOUT),
+		srv_upd_iflag_c(SEF_INIT_DEFCB), rpupd->prepare_state,
+		rpupd->prepare_state_data.eval_addr ? rpupd->prepare_state_data.eval_addr : "",
+		rpupd->prepare_tm, rpupd->prepare_maxtime, srv_ep(rpub),
+		rpupd->prepare_state_data_gid, srv_ep(prev_rpub), srv_ep(next_rpub));
 
    return srv_upd_string;
 }

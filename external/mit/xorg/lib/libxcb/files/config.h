@@ -28,6 +28,9 @@
 /* Define to 1 if you have the <memory.h> header file. */
 #define HAVE_MEMORY_H 1
 
+/* Define if your platform supports sendmsg */
+#define HAVE_SENDMSG 1
+
 /* Have the sockaddr_un.sun_len member. */
 #define HAVE_SOCKADDR_SUN_LEN 1
 
@@ -72,7 +75,7 @@
 #define PACKAGE_NAME "libxcb"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "libxcb 1.9"
+#define PACKAGE_STRING "libxcb 1.10"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "libxcb"
@@ -81,7 +84,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "1.9"
+#define PACKAGE_VERSION "1.10"
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
@@ -114,7 +117,7 @@
 
 
 /* Version number of package */
-#define VERSION "1.9"
+#define VERSION "1.10"
 
 /* XCB buffer queue size */
 #define XCB_QUEUE_BUFFER_SIZE 16384
@@ -128,3 +131,6 @@
 
 /* Define to 1 if you need to in order for `stat' and other things to work. */
 /* #undef _POSIX_SOURCE */
+
+/* Defined if needed to expose struct msghdr.msg_control */
+/* #undef _XOPEN_SOURCE */

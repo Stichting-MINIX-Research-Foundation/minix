@@ -1,21 +1,21 @@
-/*	$NetBSD: simple_exec_w32.c,v 1.1.1.1 2011/04/13 18:15:43 elric Exp $	*/
+/*	$NetBSD: simple_exec_w32.c,v 1.1.1.2 2014/04/24 12:45:52 pettai Exp $	*/
 
 /***********************************************************************
  * Copyright (c) 2009, Secure Endpoints Inc.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
- * 
+ *
  * - Redistributions of source code must retain the above copyright
  *   notice, this list of conditions and the following disclaimer.
- * 
+ *
  * - Redistributions in binary form must reproduce the above copyright
  *   notice, this list of conditions and the following disclaimer in
  *   the documentation and/or other materials provided with the
  *   distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
@@ -28,7 +28,7 @@
  * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
  * OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  **********************************************************************/
 
 #include <config.h>
@@ -68,7 +68,7 @@
  * @retval 128- The signal that killed the subprocess +128.
  */
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
-wait_for_process_timed(pid_t pid, time_t (*func)(void *), 
+wait_for_process_timed(pid_t pid, time_t (*func)(void *),
 		       void *ptr, time_t timeout)
 {
     HANDLE hProcess;
@@ -207,7 +207,7 @@ collect_commandline(const char * fn, va_list * ap)
 }
 
 ROKEN_LIB_FUNCTION pid_t ROKEN_LIB_CALL
-pipe_execv(FILE **stdin_fd, FILE **stdout_fd, FILE **stderr_fd, 
+pipe_execv(FILE **stdin_fd, FILE **stdout_fd, FILE **stderr_fd,
 	   const char *file, ...)
 {
     HANDLE  hOut_r = NULL;
@@ -337,7 +337,7 @@ pipe_execv(FILE **stdin_fd, FILE **stdout_fd, FILE **stderr_fd,
 
 
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
-simple_execvp_timed(const char *file, char *const args[], 
+simple_execvp_timed(const char *file, char *const args[],
 		    time_t (*func)(void *), void *ptr, time_t timeout)
 {
     intptr_t hp;

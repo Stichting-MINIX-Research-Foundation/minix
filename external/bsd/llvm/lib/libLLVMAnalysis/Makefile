@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2013/11/28 14:19:59 joerg Exp $
+#	$NetBSD: Makefile,v 1.20 2015/01/29 20:41:35 joerg Exp $
 
 LIB=	LLVMAnalysis
 
@@ -12,11 +12,15 @@ SRCS+=	AliasAnalysis.cpp \
 	AliasDebugger.cpp \
 	AliasSetTracker.cpp \
 	Analysis.cpp \
+	AssumptionCache.cpp \
 	BasicAliasAnalysis.cpp \
 	BlockFrequencyInfo.cpp \
+	BlockFrequencyInfoImpl.cpp \
 	BranchProbabilityInfo.cpp \
 	CFG.cpp \
 	CFGPrinter.cpp \
+	CFLAliasAnalysis.cpp \
+	CGSCCPassManager.cpp \
 	CaptureTracking.cpp \
 	CodeMetrics.cpp \
 	ConstantFolding.cpp \
@@ -25,11 +29,14 @@ SRCS+=	AliasAnalysis.cpp \
 	DependenceAnalysis.cpp \
 	DomPrinter.cpp \
 	DominanceFrontier.cpp \
+	FunctionTargetTransformInfo.cpp \
 	IVUsers.cpp \
 	InstCount.cpp \
 	InstructionSimplify.cpp \
 	Interval.cpp \
 	IntervalPartition.cpp \
+	JumpInstrTableInfo.cpp \
+	LazyCallGraph.cpp \
 	LazyValueInfo.cpp \
 	LibCallAliasAnalysis.cpp \
 	LibCallSemantics.cpp \
@@ -52,6 +59,7 @@ SRCS+=	AliasAnalysis.cpp \
 	ScalarEvolutionAliasAnalysis.cpp \
 	ScalarEvolutionExpander.cpp \
 	ScalarEvolutionNormalization.cpp \
+	ScopedNoAliasAA.cpp \
 	SparsePropagation.cpp \
 	TargetTransformInfo.cpp \
 	Trace.cpp \

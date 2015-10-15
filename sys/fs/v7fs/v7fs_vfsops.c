@@ -1,4 +1,4 @@
-/*	$NetBSD: v7fs_vfsops.c,v 1.9 2013/11/23 13:35:36 christos Exp $	*/
+/*	$NetBSD: v7fs_vfsops.c,v 1.12 2014/12/29 15:29:38 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: v7fs_vfsops.c,v 1.9 2013/11/23 13:35:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: v7fs_vfsops.c,v 1.12 2014/12/29 15:29:38 hannken Exp $");
 #if defined _KERNEL_OPT
 #include "opt_v7fs.h"
 #endif
@@ -74,7 +74,6 @@ static int v7fs_openfs(struct vnode *, struct mount *, struct lwp *);
 static void v7fs_closefs(struct vnode *, struct mount *);
 static int is_v7fs_partition(struct vnode *);
 static enum vtype v7fs_mode_to_vtype(v7fs_mode_t mode);
-int v7fs_vnode_reload(struct mount *, struct vnode *);
 
 int
 v7fs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
@@ -88,6 +87,8 @@ v7fs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 
 	DPRINTF("mnt_flag=%x %s\n", mp->mnt_flag, update ? "update" : "");
 
+	if (args == NULL)
+		return EINVAL;
 	if (*data_len < sizeof(*args))
 		return EINVAL;
 
@@ -272,8 +273,6 @@ v7fs_mountfs(struct vnode *devvp, struct mount *mp, int endian)
 		goto err_exit;
 	}
 
-	LIST_INIT(&v7fsmount->v7fs_node_head);
-
 	mp->mnt_data = v7fsmount;
 	mp->mnt_stat.f_fsidx.__fsid_val[0] = (long)devvp->v_rdev;
 	mp->mnt_stat.f_fsidx.__fsid_val[1] = makefstype(MOUNT_V7FS);
@@ -367,47 +366,46 @@ v7fs_statvfs(struct mount *mp, struct statvfs *f)
 	return 0;
 }
 
+static bool
+v7fs_sync_selector(void *cl, struct vnode *vp)
+{
+	struct v7fs_node *v7fs_node = vp->v_data;
+
+	if (v7fs_node == NULL)
+		return false;
+	if (!v7fs_inode_allocated(&v7fs_node->inode))
+		return false;
+
+	return true;
+}
+
 int
 v7fs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 {
 	struct v7fs_mount *v7fsmount = mp->mnt_data;
 	struct v7fs_self *fs = v7fsmount->core;
-	struct v7fs_node *v7fs_node;
-	struct v7fs_inode *inode;
-	struct vnode *v;
+	struct vnode_iterator *marker;
+	struct vnode *vp;
 	int err, error;
-	int retry_cnt;
 
 	DPRINTF("\n");
 
 	v7fs_superblock_writeback(fs);
-	for (retry_cnt = 0; retry_cnt < 2; retry_cnt++) {
-		error = 0;
-
-		mutex_enter(&mntvnode_lock);
-		for (v7fs_node = LIST_FIRST(&v7fsmount->v7fs_node_head);
-		    v7fs_node != NULL; v7fs_node = LIST_NEXT(v7fs_node, link)) {
-			inode = &v7fs_node->inode;
-			if (!v7fs_inode_allocated(inode)) {
-				continue;
-			}
-			v = v7fs_node->vnode;
-			mutex_enter(v->v_interlock);
-			mutex_exit(&mntvnode_lock);
-			err = vget(v, LK_EXCLUSIVE | LK_NOWAIT);
-			if (err == 0) {
-				err = VOP_FSYNC(v, cred, FSYNC_WAIT, 0, 0);
-				vput(v);
-			}
-			if (err != 0)
-				error = err;
-			mutex_enter(&mntvnode_lock);
+	error = 0;
+	vfs_vnode_iterator_init(mp, &marker);
+	while ((vp = vfs_vnode_iterator_next(marker,
+	    v7fs_sync_selector, NULL)) != NULL) {
+		err = vn_lock(vp, LK_EXCLUSIVE);
+		if (err) {
+			vrele(vp);
+			continue;
 		}
-		mutex_exit(&mntvnode_lock);
-
-		if (error == 0)
-			break;
+		err = VOP_FSYNC(vp, cred, FSYNC_WAIT, 0, 0);
+		vput(vp);
+		if (err != 0)
+			error = err;
 	}
+	vfs_vnode_iterator_destroy(marker);
 
 	return error;
 }
@@ -424,55 +422,33 @@ v7fs_mode_to_vtype (v7fs_mode_t mode)
 }
 
 int
-v7fs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
+v7fs_loadvnode(struct mount *mp, struct vnode *vp,
+    const void *key, size_t key_len, const void **new_key)
 {
-	struct v7fs_mount *v7fsmount = mp->mnt_data;
-	struct v7fs_self *fs = v7fsmount->core;
-	struct vnode *vp;
+	struct v7fs_mount *v7fsmount;
+	struct v7fs_self *fs;
 	struct v7fs_node *v7fs_node;
 	struct v7fs_inode inode;
+	v7fs_ino_t number;
 	int error;
 
+	KASSERT(key_len == sizeof(number));
+	memcpy(&number, key, key_len);
+
+	v7fsmount = mp->mnt_data;
+	fs = v7fsmount->core;
+
 	/* Lookup requested i-node */
-	if ((error = v7fs_inode_load(fs, &inode, ino))) {
+	if ((error = v7fs_inode_load(fs, &inode, number))) {
 		DPRINTF("v7fs_inode_load failed.\n");
 		return error;
 	}
 
-retry:
-	mutex_enter(&mntvnode_lock);
-	for (v7fs_node = LIST_FIRST(&v7fsmount->v7fs_node_head);
-	    v7fs_node != NULL; v7fs_node = LIST_NEXT(v7fs_node, link)) {
-		if (v7fs_node->inode.inode_number == ino) {
-			vp = v7fs_node->vnode;
-			mutex_enter(vp->v_interlock);
-			mutex_exit(&mntvnode_lock);
-			if (vget(vp, LK_EXCLUSIVE) == 0) {
-				*vpp = vp;
-				return 0;
-			} else {
-				DPRINTF("retry!\n");
-				goto retry;
-			}
-		}
-	}
-	mutex_exit(&mntvnode_lock);
+	v7fs_node = pool_get(&v7fs_node_pool, PR_WAITOK);
+	memset(v7fs_node, 0, sizeof(*v7fs_node));
 
-	/* Allocate v-node. */
-	if ((error = getnewvnode(VT_V7FS, mp, v7fs_vnodeop_p, NULL, &vp))) {
-		DPRINTF("getnewvnode error.\n");
-		return error;
-	}
-	/* Lock vnode here */
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-
-	/* Allocate i-node */
-	vp->v_data = pool_get(&v7fs_node_pool, PR_WAITOK);
-	memset(vp->v_data, 0, sizeof(*v7fs_node));
-	v7fs_node = vp->v_data;
-	mutex_enter(&mntvnode_lock);
-	LIST_INSERT_HEAD(&v7fsmount->v7fs_node_head, v7fs_node, link);
-	mutex_exit(&mntvnode_lock);
+	vp->v_tag = VT_V7FS;
+	vp->v_data = v7fs_node;
 	v7fs_node->vnode = vp;
 	v7fs_node->v7fsmount = v7fsmount;
 	v7fs_node->inode = inode;/*structure copy */
@@ -481,9 +457,10 @@ retry:
 	genfs_node_init(vp, &v7fs_genfsops);
 	uvm_vnp_setsize(vp, v7fs_inode_filesize(&inode));
 
-	if (ino == V7FS_ROOT_INODE) {
+	if (number == V7FS_ROOT_INODE) {
 		vp->v_type = VDIR;
 		vp->v_vflag |= VV_ROOT;
+		vp->v_op = v7fs_vnodeop_p;
 	} else {
 		vp->v_type = v7fs_mode_to_vtype(inode.mode);
 
@@ -493,14 +470,40 @@ retry:
 			spec_node_init(vp, rdev);
 		} else if (vp->v_type == VFIFO) {
 			vp->v_op = v7fs_fifoop_p;
+		} else {
+			vp->v_op = v7fs_vnodeop_p;
 		}
+	}
+
+	*new_key = &v7fs_node->inode.inode_number;
+
+	return 0;
+}
+
+
+int
+v7fs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
+{
+	int error;
+	v7fs_ino_t number;
+	struct vnode *vp;
+
+	KASSERT(ino <= UINT16_MAX);
+	number = ino;
+
+	error = vcache_get(mp, &number, sizeof(number), &vp);
+	if (error)
+		return error;
+	error = vn_lock(vp, LK_EXCLUSIVE);
+	if (error) {
+		vrele(vp);
+		return error;
 	}
 
 	*vpp = vp;
 
 	return 0;
 }
-
 
 int
 v7fs_fhtovp(struct mount *mp, struct fid *fid, struct vnode **vpp)
@@ -583,35 +586,4 @@ v7fs_mountroot(void)
 	vfs_unbusy(mp, false, NULL);
 
 	return 0;
-}
-
-/* Reload disk inode information */
-int
-v7fs_vnode_reload(struct mount *mp, struct vnode *vp)
-{
-	struct v7fs_mount *v7fsmount = mp->mnt_data;
-	struct v7fs_self *fs = v7fsmount->core;
-	struct v7fs_node *v7fs_node;
-	struct v7fs_inode *inode = &((struct v7fs_node *)vp->v_data)->inode;
-	int target_ino = inode->inode_number;
-	int error = 0;
-
-	DPRINTF("#%d\n", target_ino);
-	mutex_enter(&mntvnode_lock);
-	for (v7fs_node = LIST_FIRST(&v7fsmount->v7fs_node_head);
-	     v7fs_node != NULL; v7fs_node = LIST_NEXT(v7fs_node, link)) {
-		inode = &v7fs_node->inode;
-		if (!v7fs_inode_allocated(inode)) {
-			continue;
-		}
-		if (inode->inode_number == target_ino) {
-			error = v7fs_inode_load(fs, &v7fs_node->inode,
-			    target_ino);
-			DPRINTF("sync #%d error=%d\n", target_ino, error);
-			break;
-		}
-	}
-	mutex_exit(&mntvnode_lock);
-
-	return error;
 }

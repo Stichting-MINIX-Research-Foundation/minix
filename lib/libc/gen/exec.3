@@ -1,4 +1,4 @@
-.\"	$NetBSD: exec.3,v 1.22 2012/11/22 16:19:49 abs Exp $
+.\"	$NetBSD: exec.3,v 1.26 2014/09/27 16:42:07 wiz Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)exec.3	8.3 (Berkeley) 1/24/94
 .\"
-.Dd May 6, 2005
+.Dd September 26, 2014
 .Dt EXEC 3
 .Os
 .Sh NAME
@@ -50,6 +50,8 @@
 .Ft int
 .Fn execlp "const char *file" "const char *arg" ...
 .Ft int
+.Fn execlpe "const char *path" "const char *arg" ... "char *const envp[]"
+.Ft int
 .Fn execle "const char *path" "const char *arg" ... "char *const envp[]"
 .Ft int
 .Fn exect "const char *path" "char *const argv[]"  "char *const envp[]"
@@ -57,6 +59,8 @@
 .Fn execv "const char *path" "char *const argv[]"
 .Ft int
 .Fn execvp "const char *file" "char *const argv[]"
+.Ft int
+.Fn execvpe "const char *file" "char *const argv[]" "char *const envp[]"
 .Sh DESCRIPTION
 The
 .Fn exec
@@ -80,6 +84,7 @@ The
 and subsequent ellipses in the
 .Fn execl ,
 .Fn execlp ,
+.Fn execlpe ,
 and
 .Fn execle
 functions can be thought of as
@@ -87,7 +92,7 @@ functions can be thought of as
 .Em arg1 ,
 \&...,
 .Em argn .
-Together they describe a list of one or more pointers to null-terminated
+Together they describe a list of one or more pointers to NUL-terminated
 strings that represent the argument list available to the executed program.
 The first argument, by convention, should point to the file name associated
 with the file being executed.
@@ -100,9 +105,10 @@ pointer.
 The
 .Fn exect ,
 .Fn execv ,
+.Fn execvp ,
 and
-.Fn execvp
-functions provide an array of pointers to null-terminated strings that
+.Fn execvpe
+functions provide an array of pointers to NUL-terminated strings that
 represent the argument list available to the new program.
 The first argument, by convention, should point to the file name associated
 with the file being executed.
@@ -113,15 +119,17 @@ be terminated by a
 pointer.
 .Pp
 The
-.Fn execle
+.Fn execle ,
+.Fn execlpe ,
+.Fn exect ,
 and
-.Fn exect
+.Fn execvpe
 functions also specify the environment of the executed process by following
 the
 .Dv NULL
 pointer that terminates the list of arguments in the parameter list
 or the pointer to the argv array with an additional parameter.
-This additional parameter is an array of pointers to null-terminated strings
+This additional parameter is an array of pointers to NUL-terminated strings
 and
 .Em must
 be terminated by a
@@ -135,9 +143,11 @@ in the current process.
 Some of these functions have special semantics.
 .Pp
 The functions
-.Fn execlp
+.Fn execlp ,
+.Fn execlpe ,
+.Fn execvp ,
 and
-.Fn execvp
+.Fn execvpe
 will duplicate the actions of the shell in searching for an executable file
 if the specified file name does not contain a slash
 .Dq Li \&/
@@ -198,16 +208,20 @@ The shell.
 .Sh COMPATIBILITY
 Historically, the default path for the
 .Fn execlp
+.Fn execlpe ,
+.Fn execvp ,
 and
-.Fn execvp
+.Fn execvpe
 functions was
 .Dq Pa :/bin:/usr/bin .
 This was changed to improve security and behaviour.
 .Pp
 The behavior of
-.Fn execlp
+.Fn execlp ,
+.Fn execlpe ,
+.Fn execvp ,
 and
-.Fn execvp
+.Fn execvpe
 when errors occur while attempting to execute the file is historic
 practice, but has not traditionally been documented and is not specified
 by the
@@ -215,9 +229,11 @@ by the
 standard.
 .Pp
 Traditionally, the functions
-.Fn execlp
+.Fn execlp ,
+.Fn execlpe ,
+.Fn execvp ,
 and
-.Fn execvp
+.Fn execvpe
 ignored all errors except for the ones described above and
 .Er ENOMEM
 and
@@ -227,9 +243,11 @@ They now return if any error other than the ones described above occurs.
 .Sh ERRORS
 .Fn execl ,
 .Fn execle ,
-.Fn execlp
+.Fn execlp ,
+.Fn execlpe ,
+.Fn execvp ,
 and
-.Fn execvp
+.Fn execvpe
 may fail and set
 .Va errno
 for any of the errors specified for the library functions
@@ -255,8 +273,16 @@ for any of the errors specified for the library function
 .Fn execl ,
 .Fn execv ,
 .Fn execle ,
-.Fn execlp
+.Fn execlp ,
 and
 .Fn execvp
 conform to
 .St -p1003.1-90 .
+.Pp
+The
+.Fn execlpe
+function appeared first in QNX and the
+.Fn execvpe
+function exists on both
+.Lx
+and QNX.

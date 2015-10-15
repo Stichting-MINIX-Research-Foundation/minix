@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vfsops.c,v 1.64 2013/09/30 18:58:00 hannken Exp $ */
+/* $NetBSD: udf_vfsops.c,v 1.71 2015/08/24 08:31:56 hannken Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.64 2013/09/30 18:58:00 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.71 2015/08/24 08:31:56 hannken Exp $");
 #endif /* not lint */
 
 
@@ -79,9 +79,6 @@ MALLOC_JUSTDEFINE(M_UDFVOLD,  "UDF volspace",	"UDF volume space descriptors");
 MALLOC_JUSTDEFINE(M_UDFTEMP,  "UDF temp",	"UDF scrap space");
 struct pool udf_node_pool;
 
-/* supported functions predefined */
-VFS_PROTOS(udf);
-
 static struct sysctllog *udf_sysctl_log;
 
 /* internal functions */
@@ -101,31 +98,31 @@ const struct vnodeopv_desc * const udf_vnodeopv_descs[] = {
 
 /* vfsops descriptor linked in as anchor point for the filingsystem */
 struct vfsops udf_vfsops = {
-	MOUNT_UDF,			/* vfs_name */
-	sizeof (struct udf_args),
-	udf_mount,
-	udf_start,
-	udf_unmount,
-	udf_root,
-	(void *)eopnotsupp,		/* vfs_quotactl */
-	udf_statvfs,
-	udf_sync,
-	udf_vget,
-	udf_fhtovp,
-	udf_vptofh,
-	udf_init,
-	udf_reinit,
-	udf_done,
-	udf_mountroot,
-	udf_snapshot,
-	vfs_stdextattrctl,
-	(void *)eopnotsupp,		/* vfs_suspendctl */
-	genfs_renamelock_enter,
-	genfs_renamelock_exit,
-	(void *)eopnotsupp,
-	udf_vnodeopv_descs,
-	0, /* int vfs_refcount   */
-	{ NULL, NULL, }, /* LIST_ENTRY(vfsops) */
+	.vfs_name = MOUNT_UDF,
+	.vfs_min_mount_data = sizeof (struct udf_args),
+	.vfs_mount = udf_mount,
+	.vfs_start = udf_start,
+	.vfs_unmount = udf_unmount,
+	.vfs_root = udf_root,
+	.vfs_quotactl = (void *)eopnotsupp,
+	.vfs_statvfs = udf_statvfs,
+	.vfs_sync = udf_sync,
+	.vfs_vget = udf_vget,
+	.vfs_loadvnode = udf_loadvnode,
+	.vfs_newvnode = udf_newvnode,
+	.vfs_fhtovp = udf_fhtovp,
+	.vfs_vptofh = udf_vptofh,
+	.vfs_init = udf_init,
+	.vfs_reinit = udf_reinit,
+	.vfs_done = udf_done,
+	.vfs_mountroot = udf_mountroot,
+	.vfs_snapshot = udf_snapshot,
+	.vfs_extattrctl = vfs_stdextattrctl,
+	.vfs_suspendctl = (void *)eopnotsupp,
+	.vfs_renamelock_enter = genfs_renamelock_enter,
+	.vfs_renamelock_exit = genfs_renamelock_exit,
+	.vfs_fsync = (void *)eopnotsupp,
+	.vfs_opv_descs = udf_vnodeopv_descs
 };
 
 /* --------------------------------------------------------------------- */
@@ -188,11 +185,6 @@ udf_modcmd(modcmd_t cmd, void *arg)
 		 * more instance of the "number to vfs" mapping problem, but
 		 * "24" is the order as taken from sys/mount.h
 		 */
-		sysctl_createv(&udf_sysctl_log, 0, NULL, NULL,
-			       CTLFLAG_PERMANENT,
-			       CTLTYPE_NODE, "vfs", NULL,
-			       NULL, 0, NULL, 0,
-			       CTL_VFS, CTL_EOL);
 		sysctl_createv(&udf_sysctl_log, 0, NULL, &node,
 			       CTLFLAG_PERMANENT,
 			       CTLTYPE_NODE, "udf",
@@ -267,11 +259,9 @@ free_udf_mountinfo(struct mount *mp)
 		MPFREE(ump->la_pmapping,    M_TEMP);
 		MPFREE(ump->la_lmapping,    M_TEMP);
 
-		mutex_destroy(&ump->ihash_lock);
-		mutex_destroy(&ump->get_node_lock);
 		mutex_destroy(&ump->logvol_mutex);
 		mutex_destroy(&ump->allocate_mutex);
-		cv_destroy(&ump->dirtynodes_cv);
+		mutex_destroy(&ump->sync_lock);
 
 		MPFREE(ump->vat_table, M_UDFVOLD);
 
@@ -323,6 +313,8 @@ udf_mount(struct mount *mp, const char *path,
 
 	DPRINTF(CALL, ("udf_mount called\n"));
 
+	if (args == NULL)
+		return EINVAL;
 	if (*data_len < sizeof *args)
 		return EINVAL;
 
@@ -446,20 +438,28 @@ udf_mount(struct mount *mp, const char *path,
 /* --------------------------------------------------------------------- */
 
 #ifdef DEBUG
+static bool
+udf_sanity_selector(void *cl, struct vnode *vp)
+{
+
+	vprint("", vp);
+	if (VOP_ISLOCKED(vp) == LK_EXCLUSIVE) {
+		printf("  is locked\n");
+	}
+	if (vp->v_usecount > 1)
+		printf("  more than one usecount %d\n", vp->v_usecount);
+	return false;
+}
+
 static void
 udf_unmount_sanity_check(struct mount *mp)
 {
-	struct vnode *vp;
+	struct vnode_iterator *marker;
 
 	printf("On unmount, i found the following nodes:\n");
-	TAILQ_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
-		vprint("", vp);
-		if (VOP_ISLOCKED(vp) == LK_EXCLUSIVE) {
-			printf("  is locked\n");
-		}
-		if (vp->v_usecount > 1)
-			printf("  more than one usecount %d\n", vp->v_usecount);
-	}
+	vfs_vnode_iterator_init(mp, &marker);
+	vfs_vnode_iterator_next(marker, udf_sanity_selector, NULL);
+	vfs_vnode_iterator_destroy(marker);
 }
 #endif
 
@@ -588,10 +588,8 @@ udf_mountfs(struct vnode *devvp, struct mount *mp,
 
 	/* init locks */
 	mutex_init(&ump->logvol_mutex, MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&ump->ihash_lock, MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&ump->get_node_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&ump->allocate_mutex, MUTEX_DEFAULT, IPL_NONE);
-	cv_init(&ump->dirtynodes_cv, "udfsync2");
+	mutex_init(&ump->sync_lock, MUTEX_DEFAULT, IPL_NONE);
 
 	/* init rbtree for nodes, ordered by their icb address (long_ad) */
 	udf_init_nodes_tree(ump);

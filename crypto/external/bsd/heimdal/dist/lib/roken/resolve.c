@@ -1,4 +1,4 @@
-/*	$NetBSD: resolve.c,v 1.1.1.1 2011/04/13 18:15:42 elric Exp $	*/
+/*	$NetBSD: resolve.c,v 1.4 2014/04/24 14:49:43 pettai Exp $	*/
 
 /*
  * Copyright (c) 1995 - 2006 Kungliga Tekniska Högskolan
@@ -196,7 +196,7 @@ parse_record(const unsigned char *data, const unsigned char *end_data,
 	    dns_free_rr(rr);
 	    return -1;
 	}
-	if (status + 2 > size) {
+	if ((size_t)status + 2 > size) {
 	    dns_free_rr(rr);
 	    return -1;
 	}
@@ -219,7 +219,7 @@ parse_record(const unsigned char *data, const unsigned char *end_data,
 	    dns_free_rr(rr);
 	    return -1;
 	}
-	if (status + 6 > size) {
+	if ((size_t)status + 6 > size) {
 	    dns_free_rr(rr);
 	    return -1;
 	}
@@ -239,7 +239,7 @@ parse_record(const unsigned char *data, const unsigned char *end_data,
 	break;
     }
     case rk_ns_t_txt:{
-	if(size == 0 || size < *p + 1) {
+	if(size == 0 || size < (unsigned)(*p + 1)) {
 	    dns_free_rr(rr);
 	    return -1;
 	}
@@ -286,7 +286,7 @@ parse_record(const unsigned char *data, const unsigned char *end_data,
 	    dns_free_rr(rr);
 	    return -1;
 	}
-	if (status + 18 > size) {
+	if ((size_t)status + 18 > size) {
 	    dns_free_rr(rr);
 	    return -1;
 	}
@@ -411,7 +411,7 @@ parse_reply(const unsigned char *data, size_t len)
 {
     const unsigned char *p;
     int status;
-    int i;
+    size_t i;
     char host[MAXDNAME];
     const unsigned char *end_data = data + len;
     struct rk_dns_reply *r;
@@ -530,7 +530,7 @@ dns_lookup_int(const char *domain, int rr_class, int rr_type)
     struct sockaddr_storage from;
     uint32_t fromsize = sizeof(from);
     dns_handle_t handle;
-    
+
     handle = dns_open(NULL);
     if (handle == NULL)
 	return NULL;
@@ -591,6 +591,9 @@ dns_lookup_int(const char *domain, int rr_class, int rr_type)
     len = min(len, size);
     r = parse_reply(reply, len);
     free(reply);
+
+    resolve_free_handle(handle);
+
     return r;
 }
 
@@ -629,11 +632,6 @@ rk_dns_srv_order(struct rk_dns_reply *r)
     struct rk_resource_record *rr;
     int num_srv = 0;
 
-#if defined(HAVE_INITSTATE) && defined(HAVE_SETSTATE)
-    int state[256 / sizeof(int)];
-    char *oldstate;
-#endif
-
     rk_random_init();
 
     for(rr = r->head; rr; rr = rr->next)
@@ -660,10 +658,6 @@ rk_dns_srv_order(struct rk_dns_reply *r)
 
     /* sort them by priority and weight */
     qsort(srvs, num_srv, sizeof(*srvs), compare_srv);
-
-#if defined(HAVE_INITSTATE) && defined(HAVE_SETSTATE)
-    oldstate = initstate(time(NULL), (char*)state, sizeof(state));
-#endif
 
     headp = &r->head;
 
@@ -705,9 +699,6 @@ rk_dns_srv_order(struct rk_dns_reply *r)
 	}
     }
 
-#if defined(HAVE_INITSTATE) && defined(HAVE_SETSTATE)
-    setstate(oldstate);
-#endif
     free(srvs);
     return;
 }

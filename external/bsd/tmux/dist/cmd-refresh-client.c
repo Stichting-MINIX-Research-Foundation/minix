@@ -1,4 +1,4 @@
-/* $Id: cmd-refresh-client.c,v 1.1.1.2 2011/08/17 18:40:04 jmmv Exp $ */
+/* Id */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -24,28 +24,53 @@
  * Refresh client.
  */
 
-int	cmd_refresh_client_exec(struct cmd *, struct cmd_ctx *);
+enum cmd_retval	 cmd_refresh_client_exec(struct cmd *, struct cmd_q *);
 
 const struct cmd_entry cmd_refresh_client_entry = {
 	"refresh-client", "refresh",
-	"t:", 0, 0,
-	CMD_TARGET_CLIENT_USAGE,
+	"C:St:", 0, 0,
+	"[-S] [-C size] " CMD_TARGET_CLIENT_USAGE,
 	0,
-	NULL,
 	NULL,
 	cmd_refresh_client_exec
 };
 
-int
-cmd_refresh_client_exec(struct cmd *self, struct cmd_ctx *ctx)
+enum cmd_retval
+cmd_refresh_client_exec(struct cmd *self, struct cmd_q *cmdq)
 {
 	struct args	*args = self->args;
 	struct client	*c;
+	const char	*size;
+	u_int		 w, h;
 
-	if ((c = cmd_find_client(ctx, args_get(args, 't'))) == NULL)
-		return (-1);
+	if ((c = cmd_find_client(cmdq, args_get(args, 't'), 0)) == NULL)
+		return (CMD_RETURN_ERROR);
 
-	server_redraw_client(c);
+	if (args_has(args, 'C')) {
+		if ((size = args_get(args, 'C')) == NULL) {
+			cmdq_error(cmdq, "missing size");
+			return (CMD_RETURN_ERROR);
+		}
+		if (sscanf(size, "%u,%u", &w, &h) != 2) {
+			cmdq_error(cmdq, "bad size argument");
+			return (CMD_RETURN_ERROR);
+		}
+		if (w < PANE_MINIMUM || w > 5000 ||
+		    h < PANE_MINIMUM || h > 5000) {
+			cmdq_error(cmdq, "size too small or too big");
+			return (CMD_RETURN_ERROR);
+		}
+		if (!(c->flags & CLIENT_CONTROL)) {
+			cmdq_error(cmdq, "not a control client");
+			return (CMD_RETURN_ERROR);
+		}
+		if (tty_set_size(&c->tty, w, h))
+			recalculate_sizes();
+	} else if (args_has(args, 'S')) {
+		status_update_jobs(c);
+		server_status_client(c);
+	} else
+		server_redraw_client(c);
 
-	return (0);
+	return (CMD_RETURN_NORMAL);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ks_file.c,v 1.1.1.1 2011/04/13 18:15:11 elric Exp $	*/
+/*	$NetBSD: ks_file.c,v 1.1.1.2 2014/04/24 12:45:41 pettai Exp $	*/
 
 /*
  * Copyright (c) 2005 - 2007 Kungliga Tekniska Högskolan
@@ -114,7 +114,7 @@ try_decrypt(hx509_context context,
 	EVP_CipherInit_ex(&ctx, c, NULL, key, ivdata, 0);
 	EVP_Cipher(&ctx, clear.data, cipher, len);
 	EVP_CIPHER_CTX_cleanup(&ctx);
-    }	
+    }
 
     ret = _hx509_collector_private_key_add(context,
 					   collector,
@@ -140,7 +140,7 @@ parse_pkcs8_private_key(hx509_context context, const char *fn,
 {
     PKCS8PrivateKeyInfo ki;
     heim_octet_string keydata;
-   
+
     int ret;
 
     ret = decode_PKCS8PrivateKeyInfo(data, length, &ki, NULL);
@@ -179,7 +179,8 @@ parse_pem_private_key(hx509_context context, const char *fn,
 	const EVP_CIPHER *cipher;
 	const struct _hx509_password *pw;
 	hx509_lock lock;
-	int i, decrypted = 0;
+	int decrypted = 0;
+	size_t i;
 
 	lock = _hx509_collector_get_lock(c);
 	if (lock == NULL) {
@@ -254,7 +255,7 @@ parse_pem_private_key(hx509_context context, const char *fn,
 				   "private key file");
 	    return HX509_PARSING_KEY_FAILED;
 	}
-	
+
 	pw = _hx509_lock_get_passwords(lock);
 	if (pw != NULL) {
 	    const void *password;
@@ -263,8 +264,8 @@ parse_pem_private_key(hx509_context context, const char *fn,
 	    for (i = 0; i < pw->len; i++) {
 		password = pw->val[i];
 		passwordlen = strlen(password);
-		
-		ret = try_decrypt(context, c, ai, cipher, ivdata, 
+
+		ret = try_decrypt(context, c, ai, cipher, ivdata,
 				  password, passwordlen, data, len);
 		if (ret == 0) {
 		    decrypted = 1;
@@ -285,7 +286,7 @@ parse_pem_private_key(hx509_context context, const char *fn,
 
 	    ret = hx509_lock_prompt(lock, &prompt);
 	    if (ret == 0)
-		ret = try_decrypt(context, c, ai, cipher, ivdata, password, 
+		ret = try_decrypt(context, c, ai, cipher, ivdata, password,
 				  strlen(password), data, len);
 	    /* XXX add password to lock password collection ? */
 	    memset(password, 0, sizeof(password));
@@ -331,7 +332,8 @@ pem_func(hx509_context context, const char *type,
 	 const void *data, size_t len, void *ctx)
 {
     struct pem_ctx *pem_ctx = (struct pem_ctx*)ctx;
-    int ret = 0, j;
+    int ret = 0;
+    size_t j;
 
     for (j = 0; j < sizeof(formats)/sizeof(formats[0]); j++) {
 	const char *q = formats[j].name;
@@ -340,7 +342,7 @@ pem_func(hx509_context context, const char *type,
 	    if (formats[j].ai != NULL)
 		ai = (*formats[j].ai)();
 
-	    ret = (*formats[j].func)(context, NULL, pem_ctx->c, 
+	    ret = (*formats[j].func)(context, NULL, pem_ctx->c,
 				     header, data, len, ai);
 	    if (ret && (pem_ctx->flags & HX509_CERTS_UNPROTECT_ALL)) {
 		hx509_set_error_string(context, HX509_ERROR_APPEND, ret,
@@ -420,7 +422,7 @@ file_init_common(hx509_context context,
 	pnext = strchr(p, ',');
 	if (pnext)
 	    *pnext++ = '\0';
-	
+
 
 	if ((f = fopen(p, "r")) == NULL) {
 	    ret = ENOENT;
@@ -432,13 +434,13 @@ file_init_common(hx509_context context,
 	rk_cloexec_file(f);
 
 	ret = hx509_pem_read(context, f, pem_func, &pem_ctx);
-	fclose(f);		
+	fclose(f);
 	if (ret != 0 && ret != HX509_PARSING_KEY_FAILED)
 	    goto out;
 	else if (ret == HX509_PARSING_KEY_FAILED) {
 	    size_t length;
 	    void *ptr;
-	    int i;
+	    size_t i;
 
 	    ret = rk_undumpdata(p, &ptr, &length);
 	    if (ret) {

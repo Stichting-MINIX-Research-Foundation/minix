@@ -1,0 +1,9 @@
+#	$NetBSD: Makefile.includes,v 1.1 2014/03/01 10:00:47 mrg Exp $
+
+#
+# Always install in INCSDIR regardless of any path in filename
+#
+.for f in ${INCS}
+INCSDIR_${f:C,/,_,g}=	${INCSDIR}
+INCSNAME_${f:C,/,_,g}=	${f:T}
+.endfor

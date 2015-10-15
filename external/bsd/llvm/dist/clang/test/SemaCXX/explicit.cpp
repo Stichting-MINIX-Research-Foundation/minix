@@ -86,7 +86,7 @@ namespace Conversion {
     // Y is an aggregate, so aggregate-initialization is performed and the
     // conversion function is not considered.
     const Y y10{z}; // expected-error {{excess elements}}
-    const Y& y11{z}; // expected-error {{no viable conversion from 'Z' to 'const Y'}}
+    const Y& y11{z}; // expected-error {{excess elements}} expected-note {{in initialization of temporary of type 'const Y'}}
     const int& y12{z};
 
     // X is not an aggregate, so constructors are considered.
@@ -245,4 +245,9 @@ namespace pr8264 {
   struct Test {
   explicit explicit Test(int x);  // expected-warning{{duplicate 'explicit' declaration specifier}}
   };
+}
+
+namespace PR18777 {
+  struct S { explicit operator bool() const; } s;
+  int *p = new int(s); // expected-error {{no viable conversion}}
 }

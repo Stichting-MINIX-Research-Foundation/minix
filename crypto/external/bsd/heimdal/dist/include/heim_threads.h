@@ -1,4 +1,4 @@
-/*	$NetBSD: heim_threads.h,v 1.1.1.2 2011/04/14 14:08:09 elric Exp $	*/
+/*	$NetBSD: heim_threads.h,v 1.1.1.3 2014/04/24 12:45:27 pettai Exp $	*/
 
 /*
  * Copyright (c) 2003 Kungliga Tekniska Högskolan
@@ -69,13 +69,13 @@
 
 #define HEIMDAL_RWLOCK rwlock_t
 #define HEIMDAL_RWLOCK_INITIALIZER RWLOCK_INITIALIZER
-#define	HEIMDAL_RWLOCK_init(l) rwlock_init(l, NULL)	
-#define	HEIMDAL_RWLOCK_rdlock(l) rwlock_rdlock(l)	
-#define	HEIMDAL_RWLOCK_wrlock(l) rwlock_wrlock(l)	
-#define	HEIMDAL_RWLOCK_tryrdlock(l) rwlock_tryrdlock(l)	
-#define	HEIMDAL_RWLOCK_trywrlock(l) rwlock_trywrlock(l)	
-#define	HEIMDAL_RWLOCK_unlock(l) rwlock_unlock(l)	
-#define	HEIMDAL_RWLOCK_destroy(l) rwlock_destroy(l)	
+#define	HEIMDAL_RWLOCK_init(l) rwlock_init(l, NULL)
+#define	HEIMDAL_RWLOCK_rdlock(l) rwlock_rdlock(l)
+#define	HEIMDAL_RWLOCK_wrlock(l) rwlock_wrlock(l)
+#define	HEIMDAL_RWLOCK_tryrdlock(l) rwlock_tryrdlock(l)
+#define	HEIMDAL_RWLOCK_trywrlock(l) rwlock_trywrlock(l)
+#define	HEIMDAL_RWLOCK_unlock(l) rwlock_unlock(l)
+#define	HEIMDAL_RWLOCK_destroy(l) rwlock_destroy(l)
 
 #define HEIMDAL_thread_key thread_key_t
 #define HEIMDAL_key_create(k,d,r) do { r = thr_keycreate(k,d); } while(0)
@@ -96,13 +96,13 @@
 
 #define HEIMDAL_RWLOCK rwlock_t
 #define HEIMDAL_RWLOCK_INITIALIZER RWLOCK_INITIALIZER
-#define	HEIMDAL_RWLOCK_init(l) pthread_rwlock_init(l, NULL)	
-#define	HEIMDAL_RWLOCK_rdlock(l) pthread_rwlock_rdlock(l)	
-#define	HEIMDAL_RWLOCK_wrlock(l) pthread_rwlock_wrlock(l)	
-#define	HEIMDAL_RWLOCK_tryrdlock(l) pthread_rwlock_tryrdlock(l)	
-#define	HEIMDAL_RWLOCK_trywrlock(l) pthread_rwlock_trywrlock(l)	
-#define	HEIMDAL_RWLOCK_unlock(l) pthread_rwlock_unlock(l)	
-#define	HEIMDAL_RWLOCK_destroy(l) pthread_rwlock_destroy(l)	
+#define	HEIMDAL_RWLOCK_init(l) pthread_rwlock_init(l, NULL)
+#define	HEIMDAL_RWLOCK_rdlock(l) pthread_rwlock_rdlock(l)
+#define	HEIMDAL_RWLOCK_wrlock(l) pthread_rwlock_wrlock(l)
+#define	HEIMDAL_RWLOCK_tryrdlock(l) pthread_rwlock_tryrdlock(l)
+#define	HEIMDAL_RWLOCK_trywrlock(l) pthread_rwlock_trywrlock(l)
+#define	HEIMDAL_RWLOCK_unlock(l) pthread_rwlock_unlock(l)
+#define	HEIMDAL_RWLOCK_destroy(l) pthread_rwlock_destroy(l)
 
 #define HEIMDAL_thread_key pthread_key_t
 #define HEIMDAL_key_create(k,d,r) do { r = pthread_key_create(k,d); } while(0)

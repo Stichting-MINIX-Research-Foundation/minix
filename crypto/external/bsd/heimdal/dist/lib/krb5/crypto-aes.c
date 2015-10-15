@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto-aes.c,v 1.1.1.1 2011/04/13 18:15:32 elric Exp $	*/
+/*	$NetBSD: crypto-aes.c,v 1.1.1.2 2014/04/24 12:45:49 pettai Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2008 Kungliga Tekniska Högskolan
@@ -40,7 +40,7 @@
  */
 
 static struct _krb5_key_type keytype_aes128 = {
-    KEYTYPE_AES128,
+    ENCTYPE_AES128_CTS_HMAC_SHA1_96,
     "aes-128",
     128,
     16,
@@ -54,7 +54,7 @@ static struct _krb5_key_type keytype_aes128 = {
 };
 
 static struct _krb5_key_type keytype_aes256 = {
-    KEYTYPE_AES256,
+    ENCTYPE_AES256_CTS_HMAC_SHA1_96,
     "aes-256",
     256,
     32,

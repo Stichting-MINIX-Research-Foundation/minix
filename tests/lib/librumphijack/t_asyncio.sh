@@ -1,4 +1,4 @@
-#       $NetBSD: t_asyncio.sh,v 1.3 2011/02/20 23:45:46 pooka Exp $
+#       $NetBSD: t_asyncio.sh,v 1.4 2014/08/27 13:32:16 gson Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -70,7 +70,7 @@ atf_test_case invafd cleanup
 invafd_head()
 {
         atf_set "descr" "poll on invalid rump fd"
-	atf_set "timeout" "4"
+	atf_set "timeout" "10"
 }
 
 invafd_body()

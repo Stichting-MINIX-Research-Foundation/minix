@@ -35,7 +35,8 @@
 
 extern const char *lafe_progname;
 
-void	lafe_warnc(int code, const char *fmt, ...);
-void	lafe_errc(int eval, int code, const char *fmt, ...) __LA_DEAD;
+void	lafe_warnc(int code, const char *fmt, ...) __printflike(2, 3);
+void	lafe_errc(int eval, int code, const char *fmt, ...)
+    __LA_DEAD __printflike(3, 4);
 
 #endif

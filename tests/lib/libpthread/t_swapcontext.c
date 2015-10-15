@@ -1,4 +1,4 @@
-/* $NetBSD: t_swapcontext.c,v 1.1 2012/09/12 02:00:55 manu Exp $ */
+/* $NetBSD: t_swapcontext.c,v 1.2 2014/08/25 16:31:15 bouyer Exp $ */
 
 /*
  * Copyright (c) 2012 Emmanuel Dreyfus. All rights reserved.
@@ -59,6 +59,8 @@ swapfunc(void *arg)
 
 	ATF_REQUIRE_EQ(oself, nself);
 	printf("Test succeeded\n");
+	/* Go back in main */
+	ATF_REQUIRE(swapcontext(&nctx, &octx));
 
 	/* NOTREACHED */
 	return;
@@ -99,8 +101,7 @@ ATF_TC_BODY(swapcontext1, tc)
 
 	PTHREAD_REQUIRE(getcontext(&nctx));
 	PTHREAD_REQUIRE(pthread_create(&thread, NULL, threadfunc, NULL));
-	
-	return;
+	PTHREAD_REQUIRE(pthread_join(thread, NULL));
 }
 
 ATF_TP_ADD_TCS(tp)

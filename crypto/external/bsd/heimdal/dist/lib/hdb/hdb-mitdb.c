@@ -1,4 +1,4 @@
-/*	$NetBSD: hdb-mitdb.c,v 1.1.1.1 2011/04/13 18:14:42 elric Exp $	*/
+/*	$NetBSD: hdb-mitdb.c,v 1.1.1.2 2014/04/24 12:45:28 pettai Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
@@ -146,9 +146,9 @@ fix_salt(krb5_context context, hdb_entry *ent, int key_num)
     case KRB5_KDB_SALTTYPE_NOREALM:
     {
 	size_t len;
-	int i;
+	size_t i;
 	char *p;
-	
+
 	len = 0;
 	for (i = 0; i < ent->principal->name.name_string.len; ++i)
 	    len += strlen(ent->principal->name.name_string.val[i]);
@@ -214,7 +214,7 @@ mdb_value2entry(krb5_context context, krb5_data *data, krb5_kvno kvno, hdb_entry
 	krb5_set_error_message(context, ENOMEM, "out of memory");
 	return ENOMEM;
     }
-    
+
     krb5_storage_set_byteorder(sp, KRB5_STORAGE_BYTEORDER_LE);
 
     /*
@@ -424,7 +424,7 @@ mdb_value2entry(krb5_context context, krb5_data *data, krb5_kvno kvno, hdb_entry
 			}
 			k->salt->salt.length = u16;
 			krb5_storage_read(sp, k->salt->salt.data, k->salt->salt.length);
-		    }			
+		    }
 		    fix_salt(context, entry, entry->keys.len - 1);
 		} else {
 		    /*

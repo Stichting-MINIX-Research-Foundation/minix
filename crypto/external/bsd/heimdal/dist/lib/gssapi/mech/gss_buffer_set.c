@@ -1,4 +1,4 @@
-/*	$NetBSD: gss_buffer_set.c,v 1.1.1.1 2011/04/13 18:14:46 elric Exp $	*/
+/*	$NetBSD: gss_buffer_set.c,v 1.1.1.2 2014/04/24 12:45:29 pettai Exp $	*/
 
 /*
  * Copyright (c) 2004, PADL Software Pty Ltd.
@@ -102,7 +102,7 @@ GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_release_buffer_set(OM_uint32 * minor_status,
 		       gss_buffer_set_t *buffer_set)
 {
-    int i;
+    size_t i;
     OM_uint32 minor;
 
     *minor_status = 0;

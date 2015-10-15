@@ -1,4 +1,4 @@
-/*	$NetBSD: v7fs_extern.h,v 1.1 2011/06/27 11:52:24 uch Exp $	*/
+/*	$NetBSD: v7fs_extern.h,v 1.2 2014/12/29 15:29:38 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2011 The NetBSD Foundation, Inc.
@@ -46,7 +46,6 @@ struct v7fs_mount {
 	struct mount *mountp;
 	struct vnode *devvp;		/* block device mounted vnode */
 	struct v7fs_self *core;		/* filesystem dependent implementation*/
-	LIST_HEAD(, v7fs_node) v7fs_node_head;
 };
 
 struct v7fs_node {
@@ -59,8 +58,6 @@ struct v7fs_node {
 	int update_ctime;
 	int update_atime;
 	int update_mtime;
-
-	LIST_ENTRY(v7fs_node) link;
 };
 
 #define	VFSTOV7FS(mp)	((struct v7fs_mount *)((mp)->mnt_data))

@@ -1,4 +1,4 @@
-/*	$NetBSD: keytab_file.c,v 1.1.1.1 2011/04/13 18:15:34 elric Exp $	*/
+/*	$NetBSD: keytab_file.c,v 1.1.1.2 2014/04/24 12:45:50 pettai Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2008 Kungliga Tekniska Högskolan
@@ -103,7 +103,7 @@ krb5_kt_store_data(krb5_context context,
     if(ret < 0)
 	return ret;
     ret = krb5_storage_write(sp, data.data, data.length);
-    if(ret != data.length){
+    if(ret != (int)data.length){
 	if(ret < 0)
 	    return errno;
 	return KRB5_KT_END;
@@ -121,7 +121,7 @@ krb5_kt_store_string(krb5_storage *sp,
     if(ret < 0)
 	return ret;
     ret = krb5_storage_write(sp, data, len);
-    if(ret != len){
+    if(ret != (int)len){
 	if(ret < 0)
 	    return errno;
 	return KRB5_KT_END;
@@ -184,7 +184,7 @@ krb5_kt_ret_principal(krb5_context context,
 		      krb5_storage *sp,
 		      krb5_principal *princ)
 {
-    int i;
+    size_t i;
     int ret;
     krb5_principal p;
     int16_t len;
@@ -264,7 +264,7 @@ krb5_kt_store_principal(krb5_context context,
 			krb5_storage *sp,
 			krb5_principal p)
 {
-    int i;
+    size_t i;
     int ret;
 
     if(krb5_storage_is_flags(sp, KRB5_STORAGE_PRINCIPAL_WRONG_NUM_COMPONENTS))
@@ -538,7 +538,7 @@ fkt_setup_keytab(krb5_context context,
 	id->version = KRB5_KT_VNO;
     return krb5_store_int8 (sp, id->version);
 }
-		
+
 static krb5_error_code KRB5_CALLCONV
 fkt_add_entry(krb5_context context,
 	      krb5_keytab id,
@@ -701,7 +701,7 @@ fkt_add_entry(krb5_context context,
 	}
 	if(len < 0) {
 	    len = -len;
-	    if(len >= keytab.length) {
+	    if(len >= (int)keytab.length) {
 		krb5_storage_seek(sp, -4, SEEK_CUR);
 		break;
 	    }
@@ -751,8 +751,9 @@ fkt_remove_entry(krb5_context context,
 	    krb5_store_int32(cursor.sp, -len);
 	    memset(buf, 0, sizeof(buf));
 	    while(len > 0) {
-		krb5_storage_write(cursor.sp, buf, min(len, sizeof(buf)));
-		len -= min(len, sizeof(buf));
+		krb5_storage_write(cursor.sp, buf,
+		    min((size_t)len, sizeof(buf)));
+		len -= min((size_t)len, sizeof(buf));
 	    }
 	}
 	krb5_kt_free_entry(context, &e);

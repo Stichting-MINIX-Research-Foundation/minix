@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_op_asm.h,v 1.4 2013/11/08 22:42:52 matt Exp $	*/
+/*	$NetBSD: atomic_op_asm.h,v 1.7 2015/05/17 20:57:11 justin Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,13 +41,16 @@
 
 #include <machine/asm.h>
 
-#if defined(_KERNEL)
+#if defined(_KERNEL) || defined(_STANDALONE)
 
 #define	ATOMIC_OP_ALIAS(a,s)	STRONG_ALIAS(a,s)
 
 #else /* _KERNEL */
 
 #define	ATOMIC_OP_ALIAS(a,s)	WEAK_ALIAS(a,s)
+#ifdef _LIBC
+#define	CRT_ALIAS(a,s)		STRONG_ALIAS(a,s)
+#endif
 
 #endif /* _KERNEL */
 
@@ -65,6 +68,10 @@
 #define	NHI	r3
 #define	TLO	r4
 #define	THI	r5
+#endif
+
+#ifndef CRT_ALIAS
+#define	CRT_ALIAS(a,s)
 #endif
 
 #endif /* _ATOMIC_OP_ASM_H_ */

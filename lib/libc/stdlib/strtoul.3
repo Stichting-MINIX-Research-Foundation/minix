@@ -1,4 +1,4 @@
-.\"	$NetBSD: strtoul.3,v 1.25 2009/12/02 12:50:27 pooka Exp $
+.\"	$NetBSD: strtoul.3,v 1.31 2015/05/03 12:29:28 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     from: @(#)strtoul.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd December 2, 2009
+.Dd April 30, 2015
 .Dt STRTOUL 3
 .Os
 .Sh NAME
@@ -94,6 +94,7 @@ converts the string in
 to a
 .Ft u_quad_t
 value.
+.Pp
 The conversion is done according to the given
 .Fa base ,
 which must be between 2 and 36 inclusive,
@@ -119,8 +120,7 @@ is taken as 10 (decimal) unless the next character is
 .Ql 0 ,
 in which case it is taken as 8 (octal).
 .Pp
-The remainder of the string is converted to an
-.Em unsigned long
+The remainder of the string is converted to an appropriate
 value in the obvious manner,
 stopping at the end of the string
 or at the first character that does not produce a valid digit
@@ -136,13 +136,10 @@ representing 35.)
 .Pp
 If
 .Fa endptr
-is non-nil,
-.Fn strtoul
-stores the address of the first invalid character in
+is non-nil, the functions store the address of the first invalid character in
 .Fa *endptr .
 If there were no digits at all, however,
-.Fn strtoul
-stores the original value of
+the functions store the original value of
 .Fa nptr
 in
 .Fa *endptr .
@@ -244,9 +241,16 @@ is not between 2 and 36 and does not contain the special value 0.
 The given string was out of range; the value converted has been clamped.
 .El
 .Sh SEE ALSO
+.Xr atof 3 ,
+.Xr atoi 3 ,
+.Xr atol 3 ,
+.Xr atoll 3 ,
+.Xr strtod 3 ,
+.Xr strtoi 3 ,
 .Xr strtoimax 3 ,
 .Xr strtol 3 ,
-.Xr strtoll 3
+.Xr strtoll 3 ,
+.Xr strtou 3
 .Sh STANDARDS
 The
 .Fn strtoul
@@ -259,5 +263,13 @@ and
 .Fn strtoumax
 functions conform to
 .St -isoC-99 .
+.Pp
+The
+.Fn strtouq
+function is a
+.Bx
+legacy function equivalent to
+.Fn strtoull
+and should not be used in a new code.
 .Sh BUGS
 Ignores the current locale.

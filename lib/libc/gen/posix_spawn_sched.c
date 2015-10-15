@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: posix_spawn_sched.c,v 1.1 2012/02/11 23:31:24 martin Exp $");
+__RCSID("$NetBSD: posix_spawn_sched.c,v 1.2 2014/02/02 14:54:39 martin Exp $");
 
 #include "namespace.h"
 
@@ -49,7 +49,7 @@ posix_spawnattr_init(posix_spawnattr_t *ret)
 		return -1;
 	
 	memset(ret, 0, sizeof(posix_spawnattr_t));
-	return (0);
+	return 0;
 }
 
 int
@@ -58,7 +58,7 @@ posix_spawnattr_destroy(posix_spawnattr_t *sa)
 	if (sa == NULL)
 		return -1;
 
-	return (0);
+	return 0;
 }
 
 int
@@ -66,7 +66,7 @@ posix_spawnattr_getflags(const posix_spawnattr_t * __restrict sa,
     short * __restrict flags)
 {
 	*flags = sa->sa_flags;
-	return (0);
+	return 0;
 }
 
 int
@@ -74,7 +74,7 @@ posix_spawnattr_getpgroup(const posix_spawnattr_t * __restrict sa,
     pid_t * __restrict pgroup)
 {
 	*pgroup = sa->sa_pgroup;
-	return (0);
+	return 0;
 }
 
 int
@@ -82,7 +82,7 @@ posix_spawnattr_getschedparam(const posix_spawnattr_t * __restrict sa,
     struct sched_param * __restrict schedparam)
 {
 	*schedparam = sa->sa_schedparam;
-	return (0);
+	return 0;
 }
 
 int
@@ -90,7 +90,7 @@ posix_spawnattr_getschedpolicy(const posix_spawnattr_t * __restrict sa,
     int * __restrict schedpolicy)
 {
 	*schedpolicy = sa->sa_schedpolicy;
-	return (0);
+	return 0;
 }
 
 int
@@ -98,7 +98,7 @@ posix_spawnattr_getsigdefault(const posix_spawnattr_t * __restrict sa,
     sigset_t * __restrict sigdefault)
 {
 	*sigdefault = sa->sa_sigdefault;
-	return (0);
+	return 0;
 }
 
 int
@@ -106,21 +106,21 @@ posix_spawnattr_getsigmask(const posix_spawnattr_t * __restrict sa,
     sigset_t * __restrict sigmask)
 {
 	*sigmask = sa->sa_sigmask;
-	return (0);
+	return 0;
 }
 
 int
 posix_spawnattr_setflags(posix_spawnattr_t *sa, short flags)
 {
 	sa->sa_flags = flags;
-	return (0);
+	return 0;
 }
 
 int
 posix_spawnattr_setpgroup(posix_spawnattr_t *sa, pid_t pgroup)
 {
 	sa->sa_pgroup = pgroup;
-	return (0);
+	return 0;
 }
 
 int
@@ -128,14 +128,14 @@ posix_spawnattr_setschedparam(posix_spawnattr_t * __restrict sa,
     const struct sched_param * __restrict schedparam)
 {
 	sa->sa_schedparam = *schedparam;
-	return (0);
+	return 0;
 }
 
 int
 posix_spawnattr_setschedpolicy(posix_spawnattr_t *sa, int schedpolicy)
 {
 	sa->sa_schedpolicy = schedpolicy;
-	return (0);
+	return 0;
 }
 
 int
@@ -143,7 +143,7 @@ posix_spawnattr_setsigdefault(posix_spawnattr_t * __restrict sa,
     const sigset_t * __restrict sigdefault)
 {
 	sa->sa_sigdefault = *sigdefault;
-	return (0);
+	return 0;
 }
 
 int
@@ -151,5 +151,5 @@ posix_spawnattr_setsigmask(posix_spawnattr_t * __restrict sa,
     const sigset_t * __restrict sigmask)
 {
 	sa->sa_sigmask = *sigmask;
-	return (0);
+	return 0;
 }

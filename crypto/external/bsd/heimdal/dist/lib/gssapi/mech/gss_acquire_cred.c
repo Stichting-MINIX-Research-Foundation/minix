@@ -1,4 +1,4 @@
-/*	$NetBSD: gss_acquire_cred.c,v 1.1.1.1 2011/04/13 18:14:46 elric Exp $	*/
+/*	$NetBSD: gss_acquire_cred.c,v 1.1.1.2 2014/04/24 12:45:29 pettai Exp $	*/
 
 /*-
  * Copyright (c) 2005 Doug Rabson
@@ -48,7 +48,7 @@ gss_acquire_cred(OM_uint32 *minor_status,
 	struct _gss_cred *cred;
 	struct _gss_mechanism_cred *mc;
 	OM_uint32 min_time, cred_time;
-	int i;
+	size_t i;
 
 	*minor_status = 0;
 	if (output_cred_handle == NULL)

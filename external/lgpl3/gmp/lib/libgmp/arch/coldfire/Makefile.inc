@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.2 2013/11/29 08:03:41 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.3 2013/12/04 00:49:17 mrg Exp $
 
 SRCS+= \
 	random.c \
@@ -181,13 +181,4 @@ C_SRCS_LIST= \
 	sbpi1_div_r_sec.c	mpn/generic/sbpi1_div_sec.c \
 	andn_n.c		mpn/generic/logops_n.c \
 
-gen-trialdivtab: gen-trialdivtab.c
-	${HOST_CC} -o ${.OBJDIR}/gen-trialdivtab ${.ALLSRC} -lm
-
 GMP_LIMB_BITS=32
-
-trialdiv.c: trialdivtab.h
-trialdivtab.h: gen-trialdivtab
-	${.OBJDIR}/gen-trialdivtab $(GMP_LIMB_BITS) 8000 > ${.OBJDIR}/trialdivtab.h
-
-CLEANFILES+=	trialdivtab.h

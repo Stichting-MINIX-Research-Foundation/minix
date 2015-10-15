@@ -1,4 +1,4 @@
-/*	$NetBSD: t_etfs.c,v 1.9 2010/11/30 18:19:47 pooka Exp $	*/
+/*	$NetBSD: t_etfs.c,v 1.10 2014/05/12 15:33:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -103,6 +103,8 @@ ATF_TC_BODY(reregister_reg, tc)
 	ATF_REQUIRE_EQ(lseek(localfd, 0, SEEK_SET), 0);
 	ATF_REQUIRE(read(localfd, buf, sizeof(buf)) > 0);
 	ATF_REQUIRE_STREQ(buf, TESTSTR2);
+	close(etcfd);
+	close(localfd);
 }
 
 ATF_TC(reregister_blk);

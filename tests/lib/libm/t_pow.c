@@ -1,4 +1,4 @@
-/* $NetBSD: t_pow.c,v 1.2 2011/09/23 13:48:28 jruoho Exp $ */
+/* $NetBSD: t_pow.c,v 1.4 2015/09/08 05:24:27 dholland Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_pow.c,v 1.2 2011/09/23 13:48:28 jruoho Exp $");
+__RCSID("$NetBSD: t_pow.c,v 1.4 2015/09/08 05:24:27 dholland Exp $");
 
 #include <atf-c.h>
 #include <math.h>
@@ -45,11 +45,9 @@ ATF_TC_HEAD(pow_nan_x, tc)
 
 ATF_TC_BODY(pow_nan_x, tc)
 {
-#ifndef __vax__
 	const double x = 0.0L / 0.0L;
 
 	ATF_CHECK(isnan(pow(x, 2.0)) != 0);
-#endif
 }
 
 ATF_TC(pow_nan_y);
@@ -60,11 +58,9 @@ ATF_TC_HEAD(pow_nan_y, tc)
 
 ATF_TC_BODY(pow_nan_y, tc)
 {
-#ifndef __vax__
 	const double y = 0.0L / 0.0L;
 
 	ATF_CHECK(isnan(pow(2.0, y)) != 0);
-#endif
 }
 
 ATF_TC(pow_inf_neg_x);
@@ -75,7 +71,6 @@ ATF_TC_HEAD(pow_inf_neg_x, tc)
 
 ATF_TC_BODY(pow_inf_neg_x, tc)
 {
-#ifndef __vax__
 	const double x = -1.0L / 0.0L;
 	double z;
 
@@ -106,7 +101,6 @@ ATF_TC_BODY(pow_inf_neg_x, tc)
 
 	if (fabs(z) > 0.0 || signbit(z) != 0)
 		atf_tc_fail_nonfatal("pow(-Inf -4.0) != +0.0");
-#endif
 }
 
 ATF_TC(pow_inf_neg_y);
@@ -117,7 +111,6 @@ ATF_TC_HEAD(pow_inf_neg_y, tc)
 
 ATF_TC_BODY(pow_inf_neg_y, tc)
 {
-#ifndef __vax__
 	const double y = -1.0L / 0.0L;
 	double z;
 
@@ -134,7 +127,6 @@ ATF_TC_BODY(pow_inf_neg_y, tc)
 
 	if (fabs(z) > 0.0 || signbit(z) != 0)
 		atf_tc_fail_nonfatal("pow(1.1, -Inf) != +0.0");
-#endif
 }
 
 ATF_TC(pow_inf_pos_x);
@@ -145,7 +137,6 @@ ATF_TC_HEAD(pow_inf_pos_x, tc)
 
 ATF_TC_BODY(pow_inf_pos_x, tc)
 {
-#ifndef __vax__
 	const double x = 1.0L / 0.0L;
 	double z;
 
@@ -162,7 +153,6 @@ ATF_TC_BODY(pow_inf_pos_x, tc)
 
 	if (isinf(z) == 0 || signbit(z) != 0)
 		atf_tc_fail_nonfatal("pow(+Inf, 2.0) != +Inf");
-#endif
 }
 
 ATF_TC(pow_inf_pos_y);
@@ -173,7 +163,6 @@ ATF_TC_HEAD(pow_inf_pos_y, tc)
 
 ATF_TC_BODY(pow_inf_pos_y, tc)
 {
-#ifndef __vax__
 	const double y = 1.0L / 0.0L;
 	double z;
 
@@ -190,7 +179,6 @@ ATF_TC_BODY(pow_inf_pos_y, tc)
 
 	if (isinf(z) == 0 || signbit(z) != 0)
 		atf_tc_fail_nonfatal("pow(1.1, +Inf) != +Inf");
-#endif
 }
 
 ATF_TC(pow_one_neg_x);
@@ -201,7 +189,6 @@ ATF_TC_HEAD(pow_one_neg_x, tc)
 
 ATF_TC_BODY(pow_one_neg_x, tc)
 {
-#ifndef __vax__
 	const double infp = 1.0L / 0.0L;
 	const double infn = -1.0L / 0.0L;
 
@@ -220,7 +207,6 @@ ATF_TC_BODY(pow_one_neg_x, tc)
 		atf_tc_expect_fail("PR lib/45372");
 		atf_tc_fail_nonfatal("pow(-1.0, -Inf) != 1.0");
 	}
-#endif
 }
 
 ATF_TC(pow_one_pos_x);
@@ -231,7 +217,6 @@ ATF_TC_HEAD(pow_one_pos_x, tc)
 
 ATF_TC_BODY(pow_one_pos_x, tc)
 {
-#ifndef __vax__
 	const double y[] = { 0.0, 0.1, 2.0, -3.0, 99.0, 99.99, 9999999.9 };
 	const double z = 0.0L / 0.0L;
 	size_t i;
@@ -248,7 +233,6 @@ ATF_TC_BODY(pow_one_pos_x, tc)
 		if (pow(1.0, y[i]) != 1.0)
 			atf_tc_fail_nonfatal("pow(1.0, %0.01f) != 1.0", y[i]);
 	}
-#endif
 }
 
 ATF_TC(pow_zero_x);
@@ -259,7 +243,6 @@ ATF_TC_HEAD(pow_zero_x, tc)
 
 ATF_TC_BODY(pow_zero_x, tc)
 {
-#ifndef __vax__
 	double z;
 
 	/*
@@ -297,21 +280,18 @@ ATF_TC_BODY(pow_zero_x, tc)
 	z = pow(+0.0, -4.0);
 
 	if (z != HUGE_VAL) {
-		atf_tc_expect_fail("PR port-amd64/45391");
 		atf_tc_fail_nonfatal("pow(+0.0, -4.0) != HUGE_VAL");
 	}
 
 	z = pow(-0.0, -4.0);
 
 	if (z != HUGE_VAL) {
-		atf_tc_expect_fail("PR port-amd64/45391");
 		atf_tc_fail_nonfatal("pow(-0.0, -4.0) != HUGE_VAL");
 	}
 
 	z = pow(+0.0, -5.0);
 
 	if (z != HUGE_VAL) {
-		atf_tc_expect_fail("PR port-amd64/45391");
 		atf_tc_fail_nonfatal("pow(+0.0, -5.0) != HUGE_VAL");
 	}
 
@@ -319,7 +299,6 @@ ATF_TC_BODY(pow_zero_x, tc)
 
 	if (z != -HUGE_VAL)
 		atf_tc_fail_nonfatal("pow(-0.0, -5.0) != -HUGE_VAL");
-#endif
 }
 
 ATF_TC(pow_zero_y);
@@ -330,7 +309,6 @@ ATF_TC_HEAD(pow_zero_y, tc)
 
 ATF_TC_BODY(pow_zero_y, tc)
 {
-#ifndef __vax__
 	const double x[] =  { 0.1, -3.0, 77.0, 99.99, 101.0000001 };
 	const double z = 0.0L / 0.0L;
 	size_t i;
@@ -353,7 +331,6 @@ ATF_TC_BODY(pow_zero_y, tc)
 		if (pow(x[i], -0.0) != 1.0)
 			atf_tc_fail_nonfatal("pow(%0.01f, -0.0) != 1.0", x[i]);
 	}
-#endif
 }
 
 /*
@@ -367,11 +344,9 @@ ATF_TC_HEAD(powf_nan_x, tc)
 
 ATF_TC_BODY(powf_nan_x, tc)
 {
-#ifndef __vax__
 	const float x = 0.0L / 0.0L;
 
 	ATF_CHECK(isnanf(powf(x, 2.0)) != 0);
-#endif
 }
 
 ATF_TC(powf_nan_y);
@@ -382,11 +357,9 @@ ATF_TC_HEAD(powf_nan_y, tc)
 
 ATF_TC_BODY(powf_nan_y, tc)
 {
-#ifndef __vax__
 	const float y = 0.0L / 0.0L;
 
 	ATF_CHECK(isnanf(powf(2.0, y)) != 0);
-#endif
 }
 
 ATF_TC(powf_inf_neg_x);
@@ -397,7 +370,6 @@ ATF_TC_HEAD(powf_inf_neg_x, tc)
 
 ATF_TC_BODY(powf_inf_neg_x, tc)
 {
-#ifndef __vax__
 	const float x = -1.0L / 0.0L;
 	float z;
 
@@ -430,7 +402,6 @@ ATF_TC_BODY(powf_inf_neg_x, tc)
 
 	if (fabsf(z) > 0.0 || signbit(z) != 0)
 		atf_tc_fail_nonfatal("powf(-Inf -4.0) != +0.0");
-#endif
 }
 
 ATF_TC(powf_inf_neg_y);
@@ -441,7 +412,6 @@ ATF_TC_HEAD(powf_inf_neg_y, tc)
 
 ATF_TC_BODY(powf_inf_neg_y, tc)
 {
-#ifndef __vax__
 	const float y = -1.0L / 0.0L;
 	float z;
 
@@ -458,7 +428,6 @@ ATF_TC_BODY(powf_inf_neg_y, tc)
 
 	if (fabsf(z) > 0.0 || signbit(z) != 0)
 		atf_tc_fail_nonfatal("powf(1.1, -Inf) != +0.0");
-#endif
 }
 
 ATF_TC(powf_inf_pos_x);
@@ -469,7 +438,6 @@ ATF_TC_HEAD(powf_inf_pos_x, tc)
 
 ATF_TC_BODY(powf_inf_pos_x, tc)
 {
-#ifndef __vax__
 	const float x = 1.0L / 0.0L;
 	float z;
 
@@ -486,7 +454,6 @@ ATF_TC_BODY(powf_inf_pos_x, tc)
 
 	if (isinff(z) == 0 || signbit(z) != 0)
 		atf_tc_fail_nonfatal("powf(+Inf, 2.0) != +Inf");
-#endif
 }
 
 ATF_TC(powf_inf_pos_y);
@@ -497,7 +464,6 @@ ATF_TC_HEAD(powf_inf_pos_y, tc)
 
 ATF_TC_BODY(powf_inf_pos_y, tc)
 {
-#ifndef __vax__
 	const float y = 1.0L / 0.0L;
 	float z;
 
@@ -514,7 +480,6 @@ ATF_TC_BODY(powf_inf_pos_y, tc)
 
 	if (isinff(z) == 0 || signbit(z) != 0)
 		atf_tc_fail_nonfatal("powf(1.1, +Inf) != +Inf");
-#endif
 }
 
 ATF_TC(powf_one_neg_x);
@@ -525,7 +490,6 @@ ATF_TC_HEAD(powf_one_neg_x, tc)
 
 ATF_TC_BODY(powf_one_neg_x, tc)
 {
-#ifndef __vax__
 	const float infp = 1.0L / 0.0L;
 	const float infn = -1.0L / 0.0L;
 
@@ -544,7 +508,6 @@ ATF_TC_BODY(powf_one_neg_x, tc)
 		atf_tc_expect_fail("PR lib/45372");
 		atf_tc_fail_nonfatal("powf(-1.0, -Inf) != 1.0");
 	}
-#endif
 }
 
 ATF_TC(powf_one_pos_x);
@@ -555,7 +518,6 @@ ATF_TC_HEAD(powf_one_pos_x, tc)
 
 ATF_TC_BODY(powf_one_pos_x, tc)
 {
-#ifndef __vax__
 	const float y[] = { 0.0, 0.1, 2.0, -3.0, 99.0, 99.99, 9999999.9 };
 	const float z = 0.0L / 0.0L;
 	size_t i;
@@ -572,7 +534,6 @@ ATF_TC_BODY(powf_one_pos_x, tc)
 		if (powf(1.0, y[i]) != 1.0)
 			atf_tc_fail_nonfatal("powf(1.0, %0.01f) != 1.0", y[i]);
 	}
-#endif
 }
 
 ATF_TC(powf_zero_x);
@@ -583,7 +544,6 @@ ATF_TC_HEAD(powf_zero_x, tc)
 
 ATF_TC_BODY(powf_zero_x, tc)
 {
-#ifndef __vax__
 	float z;
 
 	/*
@@ -643,7 +603,6 @@ ATF_TC_BODY(powf_zero_x, tc)
 
 	if (z != -HUGE_VALF)
 		atf_tc_fail_nonfatal("powf(-0.0, -5.0) != -HUGE_VALF");
-#endif
 }
 
 ATF_TC(powf_zero_y);
@@ -654,7 +613,6 @@ ATF_TC_HEAD(powf_zero_y, tc)
 
 ATF_TC_BODY(powf_zero_y, tc)
 {
-#ifndef __vax__
 	const float x[] =  { 0.1, -3.0, 77.0, 99.99, 101.0000001 };
 	const float z = 0.0L / 0.0L;
 	size_t i;
@@ -677,7 +635,6 @@ ATF_TC_BODY(powf_zero_y, tc)
 		if (powf(x[i], -0.0) != 1.0)
 			atf_tc_fail_nonfatal("powf(%0.01f, -0.0) != 1.0",x[i]);
 	}
-#endif
 }
 
 ATF_TP_ADD_TCS(tp)

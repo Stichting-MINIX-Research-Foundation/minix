@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_create.1,v 1.1.1.8 2010/04/23 20:54:08 joerg Exp $
+.\" $NetBSD: pkg_create.1,v 1.2 2015/10/10 10:08:12 mbalmer Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -24,7 +24,7 @@
 .\" [jkh] Took John's changes back and made some additional extensions for
 .\" better integration with FreeBSD's new ports collection.
 .\"
-.Dd January 20, 2010
+.Dd October 10, 2015
 .Dt PKG_CREATE 1
 .Os
 .Sh NAME
@@ -494,11 +494,12 @@ command first appeared in
 .Sh AUTHORS
 .Bl -tag -width indent -compact
 .It Jordan Hubbard
-most of the work
+did most of the work.
 .It John Kohl
 refined it for
-.Nx
+.Nx .
 .It Hubert Feyrer
+added
 .Nx
 wildcard dependency processing, pkgdb, pkg size recording etc.
 .El

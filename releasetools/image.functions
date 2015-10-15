@@ -93,6 +93,11 @@ workdir_add_sets() {
 			echo 1 > ${ROOT_DIR}/${DEST_SETS_DIR}/${COUNT_NAME}
 		fi
 		add_file_spec "${DEST_SETS_DIR}/${COUNT_NAME}" extra.sets
+
+		# Add file sizes
+		SIZE_NAME=$(echo $(basename ${set}) | sed -e "s/\.tgz/\.size/")
+		${CROSS_TOOLS}/nbpax -zvf ${set} . |grep -v 'bytes written in 1 secs [(]' | ${CROSS_TOOLS}/nbawk '{s+=$5} END{print s}' > ${ROOT_DIR}/${DEST_SETS_DIR}/${SIZE_NAME}
+		add_file_spec "${DEST_SETS_DIR}/${SIZE_NAME}" extra.sets
 	done
 
 	# Add checksums
@@ -273,7 +278,7 @@ do
 			exit 1;;
 
 		X)	# we don't want to extract X sets by default for the installation CD
-			if [ $0 != "releasetools/x86_cdimage.sh" ]
+			if ! echo "$0" | grep -q cdimage
 			then
 				SETS="$SETS xbase xcomp xetc xfont xserver"
 			fi

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.47 2012/08/10 12:10:28 joerg Exp $
+#	$NetBSD: Makefile,v 1.50 2015/06/06 15:45:47 joerg Exp $
 #
 
 .include <bsd.own.mk>
@@ -17,7 +17,7 @@ ARCH_XLAT= amd64-i386.c
 
 .if !defined(SMALLPROG) && !defined(ARCH_FILES)
 .if !defined(__MINIX)
-ARCH_FILES=  alpha.c amiga.c emips.c ews4800mips.c hp300.c hp700.c i386.c
+ARCH_FILES=  alpha.c amiga.c emips.c ews4800mips.c hp300.c hppa.c i386.c
 ARCH_FILES+= landisk.c macppc.c news.c next68k.c pmax.c
 ARCH_FILES+= sparc.c sparc64.c sun68k.c vax.c x68k.c
 .else
@@ -62,6 +62,9 @@ CPPFLAGS+=	-I${.CURDIR} -I.
 .for f in i386 macppc
 COPTS.${f}.c+=  -Wno-pointer-sign
 .endfor
+
+LDADD+= -lutil
+DPADD+= ${LIBUTIL}
 .endif
 
 .include <bsd.prog.mk>

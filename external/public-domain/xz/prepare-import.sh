@@ -1,11 +1,11 @@
 #!/bin/sh
-# $NetBSD: prepare-import.sh,v 1.3 2012/05/28 17:28:53 jdc Exp $
+# $NetBSD: prepare-import.sh,v 1.4 2015/04/17 18:49:23 christos Exp $
 
 set -e
 
 rm -rf dist tmp
-tar xzf xz-5.0.3.tar.gz
-mv xz-5.0.3 dist
+tar xzf xz-5.2.1.tar.gz
+mv xz-5.2.1 dist
 
 cd dist
 # Binary files derived from distribution files

@@ -1,4 +1,4 @@
-/*	$NetBSD: ppc_reloc.c,v 1.49 2011/03/25 18:07:06 joerg Exp $	*/
+/*	$NetBSD: ppc_reloc.c,v 1.53 2014/08/25 20:40:52 joerg Exp $	*/
 
 /*-
  * Copyright (C) 1998	Tsubai Masanari
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ppc_reloc.c,v 1.49 2011/03/25 18:07:06 joerg Exp $");
+__RCSID("$NetBSD: ppc_reloc.c,v 1.53 2014/08/25 20:40:52 joerg Exp $");
 #endif /* not lint */
 
 #include <stdarg.h>
@@ -46,19 +46,37 @@ __RCSID("$NetBSD: ppc_reloc.c,v 1.49 2011/03/25 18:07:06 joerg Exp $");
 void _rtld_powerpc_pltcall(Elf_Word);
 void _rtld_powerpc_pltresolve(Elf_Word, Elf_Word);
 
-#define ha(x) ((((u_int32_t)(x) & 0x8000) ? \
-			((u_int32_t)(x) + 0x10000) : (u_int32_t)(x)) >> 16)
-#define l(x) ((u_int32_t)(x) & 0xffff)
+#define __u64(x)	((uint64_t)(x))
+#define __u32(x)	((uint32_t)(x))
+#define __ha48		__u64(0xffffffff8000)
+#define __ha32		__u64(0xffff8000)
+#define __ha16		__u32(0x8000)
+#define __ha(x,n) ((((x) >> (n)) + (((x) & __ha##n) == __ha##n)) & 0xffff)
+#define __hi(x,n) (((x) >> (n)) & 0xffff)
+#ifdef __LP64
+#define highesta(x)	__ha(__u64(x), 48)
+#define highest(x)	__hi(__u64(x), 48)
+#define higher(x)	__ha(__u64(x), 32)
+#define higher(x)	__hi(__u64(x), 32)
+#endif
+#define ha(x)		__ha(__u32(x), 16)
+#define hi(x)		__hi(__u32(x), 16)
+#define lo(x)		(__u32(x) & 0xffff)
 
+#ifdef _LP64
+/* function descriptor for _rtld_bind_start */
+extern const uint64_t _rtld_bind_start[3];
+#else
 void _rtld_bind_bssplt_start(void);
 void _rtld_bind_secureplt_start(void);
+#endif
+Elf_Addr _rtld_bind(const Obj_Entry *, Elf_Word);
 void _rtld_relocate_nonplt_self(Elf_Dyn *, Elf_Addr);
-caddr_t _rtld_bind(const Obj_Entry *, Elf_Word);
 static int _rtld_relocate_plt_object(const Obj_Entry *,
     const Elf_Rela *, int, Elf_Addr *);
 
 /*
- * The PPC PLT format consists of three sections:
+ * The PPC32 PLT format consists of three sections:
  * (1) The "pltcall" and "pltresolve" glue code.  This is always 18 words.
  * (2) The code part of the PLT entries.  There are 2 words per entry for
  *     up to 8192 entries, then 4 words per entry for any additional entries.
@@ -67,15 +85,19 @@ static int _rtld_relocate_plt_object(const Obj_Entry *,
  *     per entry).
  */
 
-/*
- * Setup the plt glue routines (for bss-plt).
- */
-#define PLTCALL_SIZE	20
-#define PLTRESOLVE_SIZE	24
-
 void
 _rtld_setup_pltgot(const Obj_Entry *obj)
 {
+#ifdef _LP64
+	/*
+	 * For powerpc64, just copy the function descriptor to pltgot[0].
+	 */
+	if (obj->pltgot != NULL) {
+		obj->pltgot[0] = (Elf_Addr) _rtld_bind_start[0];
+		obj->pltgot[1] = (Elf_Addr) _rtld_bind_start[1];
+		obj->pltgot[2] = (Elf_Addr) obj;
+	}
+#else
 	/*
 	 * Secure-PLT is much more sane.
 	 */
@@ -86,6 +108,12 @@ _rtld_setup_pltgot(const Obj_Entry *obj)
 		    obj->path, obj->gotptr,
 		    (void *) obj->gotptr[1], (void *) obj->gotptr[2]));
 	} else {
+/*
+ * Setup the plt glue routines (for bss-plt).
+ */
+#define BSSPLTCALL_SIZE		20
+#define BSSPLTRESOLVE_SIZE	24
+
 		Elf_Word *pltcall, *pltresolve;
 		Elf_Word *jmptab;
 		int N = obj->pltrelalim - obj->pltrela;
@@ -101,17 +129,17 @@ _rtld_setup_pltgot(const Obj_Entry *obj)
 		pltcall = obj->pltgot;
 		jmptab = pltcall + 18 + N * 2;
 
-		memcpy(pltcall, _rtld_powerpc_pltcall, PLTCALL_SIZE);
+		memcpy(pltcall, _rtld_powerpc_pltcall, BSSPLTCALL_SIZE);
 		pltcall[1] |= ha(jmptab);
-		pltcall[2] |= l(jmptab);
+		pltcall[2] |= lo(jmptab);
 
 		pltresolve = obj->pltgot + 8;
 
-		memcpy(pltresolve, _rtld_powerpc_pltresolve, PLTRESOLVE_SIZE);
+		memcpy(pltresolve, _rtld_powerpc_pltresolve, BSSPLTRESOLVE_SIZE);
 		pltresolve[0] |= ha(_rtld_bind_bssplt_start);
-		pltresolve[1] |= l(_rtld_bind_bssplt_start);
+		pltresolve[1] |= lo(_rtld_bind_bssplt_start);
 		pltresolve[3] |= ha(obj);
-		pltresolve[4] |= l(obj);
+		pltresolve[4] |= lo(obj);
 
 		/*
 		 * Invalidate the icache for only the code part of the PLT
@@ -119,6 +147,7 @@ _rtld_setup_pltgot(const Obj_Entry *obj)
 		 */
 		__syncicache(pltcall, (char *)jmptab - (char *)pltcall);
 	}
+#endif
 }
 
 void
@@ -167,8 +196,12 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 		case R_TYPE(NONE):
 			break;
 
-		case R_TYPE(32):	/* word32 S + A */
-		case R_TYPE(GLOB_DAT):	/* word32 S + A */
+#ifdef _LP64
+		case R_TYPE(ADDR64):	/* <address> S + A */
+#else
+		case R_TYPE(ADDR32):	/* <address> S + A */
+#endif
+		case R_TYPE(GLOB_DAT):	/* <address> S + A */
 			def = _rtld_find_symdef(symnum, obj, &defobj, false);
 			if (def == NULL)
 				return -1;
@@ -182,7 +215,7 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 			    obj->path, (void *)*where, defobj->path));
 			break;
 
-		case R_TYPE(RELATIVE):	/* word32 B + A */
+		case R_TYPE(RELATIVE):	/* <address> B + A */
 			*where = (Elf_Addr)(obj->relocbase + rela->r_addend);
 			rdbg(("RELATIVE in %s --> %p", obj->path,
 			    (void *)*where));
@@ -204,7 +237,7 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 			rdbg(("COPY (avoid in main)"));
 			break;
 
-		case R_TYPE(DTPMOD32):
+		case R_TYPE(DTPMOD):
 			def = _rtld_find_symdef(symnum, obj, &defobj, false);
 			if (def == NULL)
 				return -1;
@@ -215,7 +248,7 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 			    obj->path, (void *)*where, defobj->path));
 			break;
 
-		case R_TYPE(DTPREL32):
+		case R_TYPE(DTPREL):
 			def = _rtld_find_symdef(symnum, obj, &defobj, false);
 			if (def == NULL)
 				return -1;
@@ -230,7 +263,7 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 			    obj->path, (void *)*where, defobj->path));
 			break;
 
-		case R_TYPE(TPREL32):
+		case R_TYPE(TPREL):
 			def = _rtld_find_symdef(symnum, obj, &defobj, false);
 			if (def == NULL)
 				return -1;
@@ -264,6 +297,12 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 int
 _rtld_relocate_plt_lazy(const Obj_Entry *obj)
 {
+#ifdef _LP64
+	/*
+	 * For PowerPC64, the plt stubs handle an empty function descriptor
+	 * so there's nothing to do.
+	 */
+#else
 	Elf_Addr * const pltresolve = obj->pltgot + 8;
 	const Elf_Rela *rela;
 	int reloff;
@@ -288,9 +327,9 @@ _rtld_relocate_plt_lazy(const Obj_Entry *obj)
 				*where++ = 0x39600000 | reloff;
 			} else {
 				/* lis  r11,ha(reloff) */
-				/* addi	r11,l(reloff) */
+				/* addi	r11,lo(reloff) */
 				*where++ = 0x3d600000 | ha(reloff);
-				*where++ = 0x396b0000 | l(reloff);
+				*where++ = 0x396b0000 | lo(reloff);
 			}
 			/* b	pltresolve */
 			distance = (Elf_Addr)pltresolve - (Elf_Addr)where;
@@ -305,6 +344,7 @@ _rtld_relocate_plt_lazy(const Obj_Entry *obj)
 			/* __syncicache(where - 3, 12); */
 		}
 	}
+#endif /* !_LP64 */
 
 	return 0;
 }
@@ -316,7 +356,6 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela, int reloff
 	Elf_Addr value;
 	const Elf_Sym *def;
 	const Obj_Entry *defobj;
-	int distance;
 	unsigned long info = rela->r_info;
 
 	assert(ELF_R_TYPE(info) == R_TYPE(JMP_SLOT));
@@ -327,20 +366,38 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela, int reloff
 	if (__predict_false(def == &_rtld_sym_zero))
 		return 0;
 
-	value = (Elf_Addr)(defobj->relocbase + def->st_value);
-	distance = value - (Elf_Addr)where;
+	if (ELF_ST_TYPE(def->st_info) == STT_GNU_IFUNC) {
+		if (tp == NULL)
+			return 0;
+		value = _rtld_resolve_ifunc(defobj, def);
+	} else {
+		value = (Elf_Addr)(defobj->relocbase + def->st_value);
+	}
 	rdbg(("bind now/fixup in %s --> new=%p", 
 	    defobj->strtab + def->st_name, (void *)value));
 
+#ifdef _LP64
+	/*
+	 * For PowerPC64 we simply replace the function descriptor in the
+	 * PLTGOT with the one from source object.
+	 */
+	assert(where >= (Elf_Word *)obj->pltgot);
+	assert(where < (Elf_Word *)obj->pltgot + (obj->pltrelalim - obj->pltrela));
+	const Elf_Addr * const fdesc = (Elf_Addr *) value;
+	where[0] = fdesc[0];
+	where[1] = fdesc[1];
+	where[2] = fdesc[2];
+#else
+	ptrdiff_t distance = value - (Elf_Addr)where;
 	if (obj->gotptr != NULL) {
 		/*
-		 * For Secure-PLT we simply replace the entry in GOT with the address
-		 * of the routine.
+		 * For Secure-PLT we simply replace the entry in GOT with the
+		 * address of the routine.
 		 */
 		assert(where >= (Elf_Word *)obj->pltgot);
 		assert(where < (Elf_Word *)obj->pltgot + (obj->pltrelalim - obj->pltrela));
 		*where = value;
-	} else if (abs(distance) < 32*1024*1024) {	/* inside 32MB? */
+	} else if (labs(distance) < 32*1024*1024) {	/* inside 32MB? */
 		/* b	value	# branch directly */
 		*where = 0x48000000 | (distance & 0x03fffffc);
 		__syncicache(where, 4);
@@ -363,18 +420,18 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela, int reloff
 		} else {
 #ifdef notyet
 			/* lis  r11,ha(value) */
-			/* addi	r11,l(value) */
+			/* addi	r11,lo(value) */
 			/* mtctr r11 */
 			/* bctr */
 			*where++ = 0x3d600000 | ha(value);
-			*where++ = 0x396b0000 | l(value);
+			*where++ = 0x396b0000 | lo(value);
 			*where++ = 0x7d6903a6;
 			*where++ = 0x4e800420;
 #else
 			/* lis  r11,ha(reloff) */
-			/* addi	r11,l(reloff) */
+			/* addi	r11,lo(reloff) */
 			*where++ = 0x3d600000 | ha(reloff);
-			*where++ = 0x396b0000 | l(reloff);
+			*where++ = 0x396b0000 | lo(reloff);
 #endif
 		}
 		/* b	pltcall	*/
@@ -382,13 +439,14 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela, int reloff
 		*where++ = 0x48000000 | (distance & 0x03fffffc);
 		__syncicache(where - 3, 12);
 	}
+#endif /* _LP64 */
 
 	if (tp)
 		*tp = value;
 	return 0;
 }
 
-caddr_t
+Elf_Addr
 _rtld_bind(const Obj_Entry *obj, Elf_Word reloff)
 {
 	const Elf_Rela *rela = obj->pltrela + reloff;
@@ -403,7 +461,11 @@ _rtld_bind(const Obj_Entry *obj, Elf_Word reloff)
 		_rtld_die();
 	_rtld_shared_exit();
 
-	return (caddr_t)new_value;
+#ifdef _LP64
+	return obj->glink;
+#else
+	return new_value;
+#endif
 }
 
 int

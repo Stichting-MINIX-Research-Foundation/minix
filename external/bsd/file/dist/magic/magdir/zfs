@@ -37,14 +37,14 @@
 
 # Big-endian values
 8	string	\000\000\000\002\365\272\313\254 ZFS shapshot (big-endian machine),
->20	belong	x	version %lu,
+>20	belong	x	version %u,
 >32	belong	0	type: NONE,
 >32	belong	1	type: META,
 >32	belong	2	type: ZFS,
 >32	belong	3	type: ZVOL,
 >32	belong	4	type: OTHER,
 >32	belong	5	type: ANY,
->32	belong	>5	type: UNKNOWN (%lu),
+>32	belong	>5	type: UNKNOWN (%u),
 >40	byte	x	destination GUID: %02X
 >41	byte	x	%02X
 >42	byte	x	%02X
@@ -67,14 +67,14 @@
 
 # Little-endian values
 8	string	\254\313\272\365\002\000\000\000	ZFS shapshot (little-endian machine),
->16	lelong	x	version %lu,
+>16	lelong	x	version %u,
 >32	lelong	0	type: NONE,
 >32	lelong	1	type: META,
 >32	lelong	2	type: ZFS,
 >32	lelong	3	type: ZVOL,
 >32	lelong	4	type: OTHER,
 >32	lelong	5	type: ANY,
->32	lelong	>5	type: UNKNOWN (%lu),
+>32	lelong	>5	type: UNKNOWN (%u),
 >47	byte	x	destination GUID: %02X
 >46	byte	x	%02X
 >45	byte	x	%02X

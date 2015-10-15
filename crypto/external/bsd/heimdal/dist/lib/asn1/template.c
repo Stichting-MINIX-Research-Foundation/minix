@@ -1,4 +1,4 @@
-/*	$NetBSD: template.c,v 1.1.1.1 2011/04/13 18:14:41 elric Exp $	*/
+/*	$NetBSD: template.c,v 1.1.1.2 2014/04/24 12:45:28 pettai Exp $	*/
 
 /*
  * Copyright (c) 2009 Kungliga Tekniska Högskolan
@@ -226,7 +226,7 @@ _asn1_decode(const struct asn1_template *t, unsigned flags,
 	     * Only allow indefinite encoding for OCTET STRING and BER
 	     * for now. Should handle BIT STRING too.
 	     */
- 
+
 	    if (dertype != A1_TAG_TYPE(t->tt) && (flags & A1_PF_ALLOW_BER)) {
 		const struct asn1_template *subtype = t->ptr;
 		subtype++; /* skip header */
@@ -295,7 +295,7 @@ _asn1_decode(const struct asn1_template *t, unsigned flags,
 	    size_t newsize;
 	    void *el = DPO(data, t->offset);
 
-	    /* 
+	    /*
 	     * INDEFINITE primitive types are one element after the
 	     * same type but non-INDEFINITE version.
 	    */
@@ -379,7 +379,7 @@ _asn1_decode(const struct asn1_template *t, unsigned flags,
 	    unsigned int *element = DPO(data, choice->offset);
 	    size_t datalen;
 	    unsigned int i;
-	   
+
 	    for (i = 1; i < A1_HEADER_LEN(choice) + 1; i++) {
 		/* should match first tag instead, store it in choice.tt */
 		ret = _asn1_decode(choice[i].ptr, 0, p, len,
@@ -397,7 +397,7 @@ _asn1_decode(const struct asn1_template *t, unsigned flags,
 		    return ASN1_BAD_ID;
 
 		*element = 0;
-		ret = der_get_octet_string(p, len, 
+		ret = der_get_octet_string(p, len,
 					   DPO(data, choice->tt), &datalen);
 		if (ret)
 		    return ret;
@@ -422,7 +422,7 @@ _asn1_decode(const struct asn1_template *t, unsigned flags,
     if (size)
 	*size = oldlen;
 
-    /* 
+    /*
      * saved the raw bits if asked for it, useful for signature
      * verification.
      */
@@ -600,7 +600,7 @@ _asn1_encode(const struct asn1_template *t, unsigned char *p, size_t len, const 
 		break;
 
 	    elptr += ellen * (el->len - 1);
-	   
+
 	    for (i = 0; i < el->len; i++) {
 		ret = _asn1_encode(t->ptr, p, len,
 				   elptr,
@@ -647,7 +647,7 @@ _asn1_encode(const struct asn1_template *t, unsigned char *p, size_t len, const 
 		    return ASN1_OVERFLOW;
 		*p-- = c; len--;
 	    }
-	   
+
 	    if (len < 1)
 		return ASN1_OVERFLOW;
 	    if (rfc1510 || bitset == 0)
@@ -679,7 +679,7 @@ _asn1_encode(const struct asn1_template *t, unsigned char *p, size_t len, const 
 		ret = _asn1_encode(choice->ptr, p, len, el, &datalen);
 		if (ret)
 		    return ret;
-	    }	   
+	    }
 	    len -= datalen; p -= datalen;
 
 	    break;
@@ -1065,7 +1065,7 @@ _asn1_copy(const struct asn1_template *t, const void *from, void *to)
 	    const struct asn1_template *choice = t->ptr;
 	    const unsigned int *felement = DPOC(from, choice->offset);
 	    unsigned int *telement = DPO(to, choice->offset);
-	   
+
 	    if (*felement > A1_HEADER_LEN(choice))
 		return ASN1_PARSE_ERROR;
 

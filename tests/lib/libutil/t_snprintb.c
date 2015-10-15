@@ -1,4 +1,4 @@
-/* $NetBSD: t_snprintb.c,v 1.3 2013/08/08 05:10:07 pgoyette Exp $ */
+/* $NetBSD: t_snprintb.c,v 1.4 2014/06/06 06:59:21 shm Exp $ */
 
 /*
  * Copyright (c) 2002, 2004, 2008, 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008, 2010\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_snprintb.c,v 1.3 2013/08/08 05:10:07 pgoyette Exp $");
+__RCSID("$NetBSD: t_snprintb.c,v 1.4 2014/06/06 06:59:21 shm Exp $");
 
 #include <string.h>
 #include <util.h>
@@ -59,6 +59,7 @@ ATF_TC_HEAD(snprintb, tc)
 ATF_TC_BODY(snprintb, tc)
 {
 	h_snprintb("\10\2BITTWO\1BITONE", 3, "03<BITTWO,BITONE>");
+	h_snprintb("\177\20b\0A\0\0", 0, "0x0");
    
 	h_snprintb("\177\20b\05NOTBOOT\0b\06FPP\0b\013SDVMA\0b\015VIDEO\0"
 		"b\020LORES\0b\021FPA\0b\022DIAG\0b\016CACHE\0"

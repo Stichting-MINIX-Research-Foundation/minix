@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.6 2013/10/19 22:58:40 mrg Exp $	*/
+/*	$NetBSD: ftp.c,v 1.7 2014/01/07 02:13:00 joerg Exp $	*/
 /*-
  * Copyright (c) 1998-2004 Dag-Erling Coïdan Smørgrav
  * Copyright (c) 2008, 2009, 2010 Joerg Sonnenberger <joerg@NetBSD.org>
@@ -198,6 +198,7 @@ ftp_chkerr(conn_t *conn)
 /*
  * Send a command and check reply
  */
+__printflike(2, 3)
 static int
 ftp_cmd(conn_t *conn, const char *fmt, ...)
 {
@@ -391,7 +392,7 @@ ftp_cwd(conn_t *conn, const char *path, int subdir)
 			++beg, ++i;
 		for (++i; dst + i < end && dst[i] != '/'; ++i)
 			/* nothing */ ;
-		e = ftp_cmd(conn, "CWD %.*s\r\n", dst + i - beg, beg);
+		e = ftp_cmd(conn, "CWD %.*s\r\n", (int)(dst + i - beg), beg);
 		if (e != FTP_FILE_ACTION_OK) {
 			free(dst);
 			ftp_seterr(e);
@@ -489,7 +490,7 @@ ftp_stat(conn_t *conn, const char *file, struct url_stat *us)
 		return (-1);
 	}
 
-	e = ftp_cmd(conn, "SIZE %.*s\r\n", filenamelen, filename);
+	e = ftp_cmd(conn, "SIZE %.*s\r\n", (int)filenamelen, filename);
 	if (e != FTP_FILE_STATUS) {
 		ftp_seterr(e);
 		return (-1);
@@ -506,7 +507,7 @@ ftp_stat(conn_t *conn, const char *file, struct url_stat *us)
 	if (us->size == 0)
 		us->size = -1;
 
-	e = ftp_cmd(conn, "MDTM %.*s\r\n", filenamelen, filename);
+	e = ftp_cmd(conn, "MDTM %.*s\r\n", (int)filenamelen, filename);
 	if (e != FTP_FILE_STATUS) {
 		ftp_seterr(e);
 		return (-1);
@@ -851,7 +852,7 @@ retry_mode:
 			e = ftp_cmd(conn, "%s%s%s\r\n", oper, *op_arg ? " " : "", op_arg);
 		else
 			e = ftp_cmd(conn, "%s %.*s\r\n", oper,
-			    filenamelen, filename);
+			    (int)filenamelen, filename);
 		if (e != FTP_CONNECTION_ALREADY_OPEN && e != FTP_OPEN_DATA_CONNECTION)
 			goto ouch;
 
@@ -948,7 +949,7 @@ retry_mode:
 			e = ftp_cmd(conn, "%s%s%s\r\n", oper, *op_arg ? " " : "", op_arg);
 		else
 			e = ftp_cmd(conn, "%s %.*s\r\n", oper,
-			    filenamelen, filename);
+			    (int)filenamelen, filename);
 		if (e != FTP_CONNECTION_ALREADY_OPEN && e != FTP_OPEN_DATA_CONNECTION)
 			goto ouch;
 

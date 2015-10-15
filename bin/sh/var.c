@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.43 2013/11/01 16:49:02 christos Exp $	*/
+/*	$NetBSD: var.c,v 1.44 2015/05/26 21:35:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: var.c,v 1.43 2013/11/01 16:49:02 christos Exp $");
+__RCSID("$NetBSD: var.c,v 1.44 2015/05/26 21:35:15 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -190,9 +190,17 @@ initvar(void)
 	if (find_var("PS1", &vpp, &vps1.name_len) == NULL) {
 		vps1.next = *vpp;
 		*vpp = &vps1;
-		vps1.text = strdup(geteuid() ? "PS1=$ " : "PS1=# ");
 		vps1.flags = VSTRFIXED|VTEXTFIXED;
+		vps1.text = NULL;
+		choose_ps1();
 	}
+}
+
+void
+choose_ps1(void)
+{
+	free(vps1.text);
+	vps1.text = strdup(geteuid() ? "PS1=$ " : "PS1=# ");
 }
 
 /*
@@ -575,11 +583,11 @@ exportcmd(int argc, char **argv)
 	char *name;
 	const char *p;
 	int flag = argv[0][0] == 'r'? VREADONLY : VEXPORT;
-	int pflag;
+	int pflg;
 
-	pflag = nextopt("p") == 'p' ? 3 : 0;
-	if (argc <= 1 || pflag) {
-		showvars( pflag ? argv[0] : 0, flag, pflag );
+	pflg = nextopt("p") == 'p' ? 3 : 0;
+	if (argc <= 1 || pflg) {
+		showvars( pflg ? argv[0] : 0, flag, pflg );
 		return 0;
 	}
 

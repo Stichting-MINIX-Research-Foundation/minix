@@ -1,4 +1,4 @@
-/*	$NetBSD: engine.c,v 1.1.1.1 2011/04/13 18:14:49 elric Exp $	*/
+/*	$NetBSD: engine.c,v 1.3 2014/04/24 13:45:34 pettai Exp $	*/
 
 /*
  * Copyright (c) 2006 Kungliga Tekniska Högskolan
@@ -90,7 +90,7 @@ ENGINE_finish(ENGINE *engine)
     if(engine->destroy)
 	(*engine->destroy)(engine);
 
-    memset(engine, 0, sizeof(engine));
+    memset(engine, 0, sizeof(*engine));
     engine->references = -1;
 
 
@@ -341,7 +341,7 @@ ENGINE_by_dso(const char *path, const char *id)
 	    dlclose(handle);
 	    free(engine);
 	    return NULL;
-	}	
+	}
     }
 
     {
@@ -359,7 +359,7 @@ ENGINE_by_dso(const char *path, const char *id)
 	    dlclose(handle);
 	    free(engine);
 	    return NULL;
-	}	
+	}
     }
 
     ENGINE_up_ref(engine);

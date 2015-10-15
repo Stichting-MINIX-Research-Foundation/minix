@@ -1,4 +1,4 @@
-/*	$NetBSD: replay.c,v 1.1.1.1 2011/04/13 18:15:37 elric Exp $	*/
+/*	$NetBSD: replay.c,v 1.1.1.2 2014/04/24 12:45:51 pettai Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 Kungliga Tekniska Högskolan
@@ -284,14 +284,14 @@ krb5_rc_get_name(krb5_context context,
 {
     return id->name;
 }
-		
+
 KRB5_LIB_FUNCTION const char* KRB5_LIB_CALL
 krb5_rc_get_type(krb5_context context,
 		 krb5_rcache id)
 {
     return "FILE";
 }
-		
+
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_get_server_rcache(krb5_context context,
 		       const krb5_data *piece,

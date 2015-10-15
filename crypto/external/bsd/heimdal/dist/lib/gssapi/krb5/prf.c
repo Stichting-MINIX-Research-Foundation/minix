@@ -1,4 +1,4 @@
-/*	$NetBSD: prf.c,v 1.1.1.1 2011/04/13 18:14:45 elric Exp $	*/
+/*	$NetBSD: prf.c,v 1.1.1.2 2014/04/24 12:45:29 pettai Exp $	*/
 
 /*
  * Copyright (c) 2007 Kungliga Tekniska Högskolan
@@ -49,18 +49,21 @@ _gsskrb5_pseudo_random(OM_uint32 *minor_status,
     krb5_crypto crypto;
     krb5_data input, output;
     uint32_t num;
+    OM_uint32 junk;
     unsigned char *p;
     krb5_keyblock *key = NULL;
+    size_t dol;
 
     if (ctx == NULL) {
 	*minor_status = 0;
 	return GSS_S_NO_CONTEXT;
     }
 
-    if (desired_output_len <= 0) {
+    if (desired_output_len <= 0 || prf_in->length + 4 < prf_in->length) {
 	*minor_status = 0;
 	return GSS_S_FAILURE;
     }
+    dol = desired_output_len;
 
     GSSAPI_KRB5_INIT (&context);
 
@@ -90,21 +93,20 @@ _gsskrb5_pseudo_random(OM_uint32 *minor_status,
 	return GSS_S_FAILURE;
     }
 
-    prf_out->value = malloc(desired_output_len);
+    prf_out->value = malloc(dol);
     if (prf_out->value == NULL) {
 	_gsskrb5_set_status(GSS_KRB5_S_KG_INPUT_TOO_LONG, "Out of memory");
 	*minor_status = GSS_KRB5_S_KG_INPUT_TOO_LONG;
 	krb5_crypto_destroy(context, crypto);
 	return GSS_S_FAILURE;
     }
-    prf_out->length = desired_output_len;
+    prf_out->length = dol;
 
     HEIMDAL_MUTEX_lock(&ctx->ctx_id_mutex);
 
     input.length = prf_in->length + 4;
     input.data = malloc(prf_in->length + 4);
     if (input.data == NULL) {
-	OM_uint32 junk;
 	_gsskrb5_set_status(GSS_KRB5_S_KG_INPUT_TOO_LONG, "Out of memory");
 	*minor_status = GSS_KRB5_S_KG_INPUT_TOO_LONG;
 	gss_release_buffer(&junk, prf_out);
@@ -112,15 +114,17 @@ _gsskrb5_pseudo_random(OM_uint32 *minor_status,
 	HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
 	return GSS_S_FAILURE;
     }
-    memcpy(((unsigned char *)input.data) + 4, prf_in->value, prf_in->length);
+    memcpy(((uint8_t *)input.data) + 4, prf_in->value, prf_in->length);
 
     num = 0;
     p = prf_out->value;
-    while(desired_output_len > 0) {
-	_gsskrb5_encode_om_uint32(num, input.data);
+    while(dol > 0) {
+	size_t tsize;
+
+	_gsskrb5_encode_be_om_uint32(num, input.data);
+
 	ret = krb5_crypto_prf(context, crypto, &input, &output);
 	if (ret) {
-	    OM_uint32 junk;
 	    *minor_status = ret;
 	    free(input.data);
 	    gss_release_buffer(&junk, prf_out);
@@ -128,9 +132,11 @@ _gsskrb5_pseudo_random(OM_uint32 *minor_status,
 	    HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
 	    return GSS_S_FAILURE;
 	}
-	memcpy(p, output.data, min(desired_output_len, output.length));
-	p += output.length;
-	desired_output_len -= output.length;
+
+	tsize = min(dol, output.length);
+	memcpy(p, output.data, tsize);
+	p += tsize;
+	dol -= tsize;
 	krb5_data_free(&output);
 	num++;
     }

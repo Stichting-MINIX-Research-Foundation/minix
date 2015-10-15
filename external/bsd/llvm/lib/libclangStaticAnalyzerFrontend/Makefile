@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2011/02/17 18:35:36 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2015/01/29 20:41:37 joerg Exp $
 
 LIB=	clangStaticAnalyzerFrontend
 
@@ -8,7 +8,9 @@ LIB=	clangStaticAnalyzerFrontend
 
 SRCS+=	AnalysisConsumer.cpp \
 	CheckerRegistration.cpp \
-	FrontendActions.cpp
+	FrontendActions.cpp \
+	ModelConsumer.cpp \
+	ModelInjector.cpp
 
 CHECKERS_OBJDIR!=	cd ${.CURDIR}/../libclangStaticAnalyzerCheckers && ${PRINTOBJDIR}
 CPPFLAGS+=	-I${CHECKERS_OBJDIR}

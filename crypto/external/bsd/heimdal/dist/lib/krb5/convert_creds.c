@@ -1,4 +1,4 @@
-/*	$NetBSD: convert_creds.c,v 1.1.1.1 2011/04/13 18:15:32 elric Exp $	*/
+/*	$NetBSD: convert_creds.c,v 1.1.1.2 2014/04/24 12:45:49 pettai Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2004 Kungliga Tekniska Högskolan
@@ -33,8 +33,6 @@
  * SUCH DAMAGE.
  */
 
-#define KRB5_DEPRECATED
-
 #include "krb5_locl.h"
 #include <krb5/krb5-v4compat.h>
 
@@ -56,11 +54,11 @@
  * @ingroup krb5_v4compat
  */
 
-KRB5_DEPRECATED
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb524_convert_creds_kdc(krb5_context context,
 			 krb5_creds *in_cred,
 			 struct credentials *v4creds)
+    KRB5_DEPRECATED_FUNCTION("Use X instead")
 {
     memset(v4creds, 0, sizeof(*v4creds));
     krb5_set_error_message(context, EINVAL,
@@ -83,12 +81,12 @@ krb524_convert_creds_kdc(krb5_context context,
  * @ingroup krb5_v4compat
  */
 
-KRB5_DEPRECATED
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb524_convert_creds_kdc_ccache(krb5_context context,
 				krb5_ccache ccache,
 				krb5_creds *in_cred,
 				struct credentials *v4creds)
+    KRB5_DEPRECATED_FUNCTION("Use X instead")
 {
     memset(v4creds, 0, sizeof(*v4creds));
     krb5_set_error_message(context, EINVAL,

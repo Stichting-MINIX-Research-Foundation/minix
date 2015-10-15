@@ -1,6 +1,6 @@
 
 #-----------------------------------------------------------------------------
-# $File: misctools,v 1.13 2013/01/16 13:53:10 christos Exp $
+# $File: misctools,v 1.14 2014/03/06 16:08:58 christos Exp $
 # misctools:  file(1) magic for miscellaneous UNIX tools.
 #
 0	search/1	%%!!			X-Post-It-Note text
@@ -21,3 +21,8 @@
 
 # From: Daniel Novotny <dnovotny@redhat.com>
 0	string		MDMP\x93\xA7				MDMP crash report data
+
+# Summary: abook addressbook file
+# Submitted by: Mark Schreiber <mark7@alumni.cmu.edu>
+0	string	#\x20abook\x20addressbook\x20file abook address book
+!:mime application/x-abook-addressbook

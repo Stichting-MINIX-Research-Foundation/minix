@@ -35,12 +35,12 @@ scanner.c: $(srcdir)/scanner.l
 	$(FLEX) $(LFLAGS) $<
 
 $(testname)$(EXEEXT): $(OBJS)
-	$(CC) -o $@ $(LDFLAGS) $(OBJS) $(LOADLIBES)
+	$(CC) $(CFLAGS) -o $@ $(LDFLAGS) $(OBJS) $(LOADLIBES)
 
 test: $(testname)$(EXEEXT)
 	grep TEST_XXX < $(srcdir)/scanner.l | sed 's/^ *//' > l.out
 	grep TEST_XXX < scanner.c | sed 's/^ *//' > c.out
-	diff -q l.out c.out
+	cmp -s l.out c.out
 	./$(testname)$(EXEEXT) < $(srcdir)/test.input
 
 .c.o:

@@ -22,9 +22,10 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#include "config.h"
+
 #include <sys/types.h>
 
-#include <err.h>
 #include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -33,8 +34,6 @@
 #include <unistd.h>
 
 #include "verify.h"
-
-#include "array.h"
 
 /* print the time nicely */
 static void
@@ -48,11 +47,11 @@ ptime(int64_t secs)
 
 /* print entry n */
 static void
-pentry(pgpv_t *pgp, int n)
+pentry(pgpv_t *pgp, int n, const char *modifiers)
 {
 	char	*s;
 
-	pgpv_get_entry(pgp, (unsigned)n, &s);
+	pgpv_get_entry(pgp, (unsigned)n, &s, modifiers);
 	printf("%s", s);
 	free(s);
 }
@@ -90,28 +89,38 @@ static int
 verify_data(pgpv_t *pgp, const char *cmd, const char *inname, char *in, ssize_t cc)
 {
 	pgpv_cursor_t	 cursor;
+	const char	*modifiers;
 	size_t		 size;
 	size_t		 cookie;
 	char		*data;
+	int		 el;
 
 	memset(&cursor, 0x0, sizeof(cursor));
 	if (strcasecmp(cmd, "cat") == 0) {
 		if ((cookie = pgpv_verify(&cursor, pgp, in, cc)) != 0) {
 			if ((size = pgpv_get_verified(&cursor, cookie, &data)) > 0) {
-				printf("%.*s", (int)size, data);
+				write(STDOUT_FILENO, data, size);
 			}
 			return 1;
 		}
-	} else if (strcasecmp(cmd, "verify") == 0) {
+	} else if (strcasecmp(cmd, "dump") == 0) {
+		if ((cookie = pgpv_verify(&cursor, pgp, in, cc)) != 0) {
+			size = pgpv_dump(pgp, &data);
+			write(STDOUT_FILENO, data, size);
+			return 1;
+		}
+	} else if (strcasecmp(cmd, "verify") == 0 || strcasecmp(cmd, "trust") == 0) {
+		modifiers = (strcasecmp(cmd, "trust") == 0) ? "trust" : NULL;
 		if (pgpv_verify(&cursor, pgp, in, cc)) {
 			printf("Good signature for %s made ", inname);
 			ptime(cursor.sigtime);
-			pentry(pgp, ARRAY_ELEMENT(cursor.found, 0));
+			el = pgpv_get_cursor_element(&cursor, 0);
+			pentry(pgp, el, modifiers);
 			return 1;
 		}
-		warnx("Signature did not match contents -- %s", cursor.why);
+		fprintf(stderr, "Signature did not match contents -- %s\n", cursor.why);
 	} else {
-		warnx("unrecognised command \"%s\"", cmd);
+		fprintf(stderr, "unrecognised command \"%s\"\n", cmd);
 	}
 	return 0;
 }
@@ -125,30 +134,42 @@ main(int argc, char **argv)
 	size_t		 size;
 	pgpv_t		 pgp;
 	char		*in;
+	int		 ssh;
 	int		 ok;
 	int		 i;
 
 	memset(&pgp, 0x0, sizeof(pgp));
-	cmd = NULL;
 	keyring = NULL;
+	ssh = 0;
 	ok = 1;
-	while ((i = getopt(argc, argv, "c:k:")) != -1) {
+	cmd = "verify";
+	while ((i = getopt(argc, argv, "S:c:k:v")) != -1) {
 		switch(i) {
+		case 'S':
+			ssh = 1;
+			keyring = optarg;
+			break;
 		case 'c':
 			cmd = optarg;
 			break;
 		case 'k':
 			keyring = optarg;
 			break;
+		case 'v':
+			printf("%s\n", NETPGPVERIFY_VERSION);
+			exit(EXIT_SUCCESS);
 		default:
 			break;
 		}
 	}
-	if (cmd == NULL) {
-		cmd = "verify";
-	}
-	if (!pgpv_read_pubring(&pgp, keyring, -1)) {
-		errx(EXIT_FAILURE, "can't read keyring");
+	if (ssh) {
+		if (!pgpv_read_ssh_pubkeys(&pgp, keyring, -1)) {
+			fprintf(stderr, "can't read ssh keyring\n");
+			exit(EXIT_FAILURE);
+		}
+	} else if (!pgpv_read_pubring(&pgp, keyring, -1)) {
+		fprintf(stderr, "can't read keyring\n");
+		exit(EXIT_FAILURE);
 	}
 	if (optind == argc) {
 		in = getstdin(&cc, &size);

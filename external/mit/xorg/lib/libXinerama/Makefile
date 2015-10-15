@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2009/11/09 03:27:05 mrg Exp $
+#	$NetBSD: Makefile,v 1.6 2015/07/22 02:23:20 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -10,6 +10,7 @@ LIB=	Xinerama
 SRCS=	Xinerama.c
 
 CPPFLAGS+=	${X11FLAGS.THREADLIB}
+CPPFLAGS+=	-DHAVE__XEATDATAWORDS
 
 MAN=	Xinerama.3
 MLINKS=	Xinerama.3 XineramaQueryExtension.3 \

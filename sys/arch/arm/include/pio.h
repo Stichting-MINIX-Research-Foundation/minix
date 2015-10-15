@@ -1,4 +1,4 @@
-/*	$NetBSD: pio.h,v 1.2 2011/07/01 21:20:33 dyoung Exp $	*/
+/*	$NetBSD: pio.h,v 1.3 2014/01/29 00:42:15 matt Exp $	*/
 
 /*
  * Copyright 1997
@@ -33,8 +33,8 @@
  *    even if advised of the possibility of such damage.
  */
 
-#ifndef _ARM32_PIO_H_
-#define _ARM32_PIO_H_
+#ifndef _ARM_PIO_H_
+#define _ARM_PIO_H_
 
 #include <sys/bus.h>
 
@@ -43,4 +43,4 @@ extern struct bus_space isa_io_bs_tag;
 #define	inb(port)	 bus_space_read_1( &isa_io_bs_tag, (bus_space_handle_t)isa_io_bs_tag.bs_cookie, (port))
 #define	outb(port, byte) bus_space_write_1(&isa_io_bs_tag, (bus_space_handle_t)isa_io_bs_tag.bs_cookie, (port), (byte))
 
-#endif /* _ARM32_PIO_H_ */
+#endif /* _ARM_PIO_H_ */

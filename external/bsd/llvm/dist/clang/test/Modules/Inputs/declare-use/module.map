@@ -9,21 +9,25 @@ module XB {
 module XC {
   header "c.h"
   use XA
+  // Intentionally doesn't use XB to show that -fdecl-use isn't transitive.
 }
 
 module XD {
   header "d.h"
   use XA
+  // Intentionally doesn't use XB to show that -fdecl-use isn't transitive.
 }
 
 module XE {
   header "e.h"
+  header "unavailable.h"
   use XA
   use XB
 }
 
 module XF {
   header "f.h"
+  header "unavailable.h"
   use XA
   use XB
 }
@@ -33,11 +37,34 @@ module XG {
   header "g1.h"
   use XC
   use XE
+  use XJ
+  use XK
 }
 
 module XH {
   header "h.h"
   header "h1.h"
+  header "s.h"
   use XC
   use XE
+}
+
+module XJ {
+  header "j.h"
+}
+
+module XK {
+  textual header "k.h"
+}
+
+module XL {
+  textual header "l.h"
+}
+
+module XM {
+  private textual header "m.h"
+  textual header "m2.h"
+}
+
+module XS {
 }

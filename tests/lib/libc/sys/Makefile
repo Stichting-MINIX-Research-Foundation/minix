@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.34 2013/07/24 11:45:48 skrll Exp $
+# $NetBSD: Makefile,v 1.39 2015/06/22 00:05:23 matt Exp $
 
 MKMAN=	no
 
@@ -9,6 +9,7 @@ MKMAN=	no
 TESTSDIR=		${TESTSBASE}/lib/libc/sys
 
 TESTS_C+=		t_access
+TESTS_C+=		t_bind
 TESTS_C+=		t_chroot
 TESTS_C+=		t_clock_gettime
 TESTS_C+=		t_clone
@@ -30,6 +31,7 @@ TESTS_C+=		t_link
 TESTS_C+=		t_listen
 TESTS_C+=		t_lwp_ctl
 TESTS_C+=		t_lwp_create
+TESTS_C+=		t_minherit
 TESTS_C+=		t_mincore
 TESTS_C+=		t_mkdir
 TESTS_C+=		t_mkfifo
@@ -46,6 +48,7 @@ TESTS_C+=		t_nanosleep
 TESTS_C+=		t_pipe
 TESTS_C+=		t_pipe2
 TESTS_C+=		t_poll
+TESTS_C+=		t_posix_fallocate
 TESTS_C+=		t_recvmmsg
 TESTS_C+=		t_revoke
 TESTS_C+=		t_select
@@ -68,9 +71,9 @@ SRCS.t_mprotect=	t_mprotect.c ${SRCS_EXEC_PROT}
 
 LDADD.t_getpid+=        -lpthread
 
-.if (${MKRUMP} != "no")
+.if (${MKRUMP} != "no") && !defined(BSD_MK_COMPAT_FILE)
 TESTS_C+=		t_posix_fadvise
-LDADD.t_posix_fadvise+= -lrumpvfs -lrump -lrumpuser -lpthread
+LDADD.t_posix_fadvise+= -lrumpvfs -lrump -lrumpuser -lrump -lpthread
 .endif
 
 WARNS=			4

@@ -1,4 +1,4 @@
-/*	$NetBSD: getifaddrs.c,v 1.1.1.1 2011/04/13 18:15:41 elric Exp $	*/
+/*	$NetBSD: getifaddrs.c,v 1.1.1.2 2014/04/24 12:45:52 pettai Exp $	*/
 
 /*
  * Copyright (c) 2000 - 2002, 2005 Kungliga Tekniska Högskolan
@@ -634,7 +634,7 @@ rk_getifaddrs(struct ifaddrs **ifap)
 	default:
 	  continue;
 	}
-	
+
 	if (!build){
 	  if (max_ifindex < nlm_index)
 	    max_ifindex = nlm_index;
@@ -995,7 +995,7 @@ getifaddrs2(struct ifaddrs **ifap,
 	(*end)->ifa_data = NULL;
 
 	end = &(*end)->ifa_next;
-	
+
     }
     *ifap = start;
     close(fd);
@@ -1141,7 +1141,7 @@ getlifaddrs2(struct ifaddrs **ifap,
 	(*end)->ifa_data = NULL;
 
 	end = &(*end)->ifa_next;
-	
+
     }
     *ifap = start;
     close(fd);

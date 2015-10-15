@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.h,v 1.3 2013/07/22 03:39:55 matt Exp $	*/
+/*	$NetBSD: pmap_tlb.h,v 1.8 2015/04/02 06:17:52 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -74,10 +74,15 @@
 #ifndef	_COMMON_PMAP_TLB_H_
 #define	_COMMON_PMAP_TLB_H_
 
+#include <sys/evcnt.h>
 #include <sys/kcpuset.h>
 
-#if defined(MULTIPROCESSOR) && !defined(PMAP_TLB_MAX)
-#define PMAP_TLB_MAX		MAXCPUS
+#if !defined(PMAP_TLB_MAX)
+# if defined(MULTIPROCESSOR)
+#  define PMAP_TLB_MAX		MAXCPUS
+# else
+#  define PMAP_TLB_MAX		1
+# endif
 #endif
 
 /*
@@ -122,7 +127,7 @@ struct pmap_tlb_info {
 	enum tlb_invalidate_op ti_tlbinvop;
 #define tlbinfo_index(ti)	((ti)->ti_index)
 #else
-#define tlbinfo_index(ti)	(0)
+#define tlbinfo_index(ti)	((void)(ti), 0)
 #endif
 	struct evcnt ti_evcnt_synci_asts;
 	struct evcnt ti_evcnt_synci_all;
@@ -131,7 +136,7 @@ struct pmap_tlb_info {
 	struct evcnt ti_evcnt_synci_desired;
 	struct evcnt ti_evcnt_synci_duplicate;
 #else
-#define tlbinfo_index(ti)	(0)
+#define tlbinfo_index(ti)	((void)(ti), 0)
 #endif
 	struct evcnt ti_evcnt_asid_reinits;
 	u_long ti_asid_bitmap[256 / (sizeof(u_long) * 8)];
@@ -140,19 +145,19 @@ struct pmap_tlb_info {
 #ifdef	_KERNEL
 extern struct pmap_tlb_info pmap_tlb0_info;
 #ifdef MULTIPROCESSOR
-extern struct pmap_tlb_info *pmap_tlbs[MAXCPUS];
+extern struct pmap_tlb_info *pmap_tlbs[PMAP_TLB_MAX];
 extern u_int pmap_ntlbs;
 #endif
 
 #ifndef cpu_set_tlb_info
-#define	cpu_set_tlb_info(ci, ti)	((void)((ci)->ci_tlb_info = (ti)))
+# define cpu_set_tlb_info(ci, ti)	((void)((ci)->ci_tlb_info = (ti)))
 #endif
 #ifndef cpu_tlb_info
-#ifdef MULTIPROCESSOR
-#define	cpu_tlb_info(ci)		((ci)->ci_tlb_info)
-#else
-#define	cpu_tlb_info(ci)		(&pmap_tlb0_info)
-#endif
+# if PMAP_TLB_MAX > 1
+#  define cpu_tlb_info(ci)		((ci)->ci_tlb_info)
+# else
+#  define cpu_tlb_info(ci)		(&pmap_tlb0_info)
+# endif
 #endif
 
 #ifdef MULTIPROCESSOR

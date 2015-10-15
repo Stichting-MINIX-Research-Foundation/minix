@@ -1,4 +1,4 @@
-/* $NetBSD: ctype_inline.h,v 1.3 2013/04/13 10:21:21 joerg Exp $ */
+/* $NetBSD: ctype_inline.h,v 1.4 2015/02/24 13:17:27 joerg Exp $ */
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -66,7 +66,7 @@
 #define _toupper(c)	((c) - 'a' + 'A')
 #endif
 
-#if defined(_ISO_C99_SOURCE) || (_POSIX_C_SOURCE - 0) > 200112L || \
+#if defined(_ISOC99_SOURCE) || (_POSIX_C_SOURCE - 0) > 200112L || \
     (_XOPEN_SOURCE - 0) > 600 || defined(_NETBSD_SOURCE)
 #define	isblank(c)	((int)((_ctype_tab_ + 1)[(c)] & _CTYPE_BL))
 #endif

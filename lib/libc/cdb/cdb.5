@@ -1,4 +1,4 @@
-.\"	$NetBSD: cdb.5,v 1.4 2013/07/20 21:39:56 wiz Exp $
+.\"	$NetBSD: cdb.5,v 1.6 2015/02/08 19:09:56 wiz Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -73,7 +73,7 @@ The index records are followed by the start offsets of the entries,
 followed by
 .Va data_size .
 The offsets are relative to the end of the offset record table and are
-monotically increasing.
+monotonically increasing.
 The size of each offset record is the logarithm of
 .Va data_size
 to base 256, rounded up.

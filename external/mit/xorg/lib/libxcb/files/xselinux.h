@@ -21,7 +21,7 @@ extern "C" {
 
 #define XCB_SELINUX_MAJOR_VERSION 1
 #define XCB_SELINUX_MINOR_VERSION 0
-  
+
 extern xcb_extension_t xcb_selinux_id;
 
 /**
@@ -648,20 +648,8 @@ typedef struct xcb_selinux_get_client_context_reply_t {
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_selinux_query_version_cookie_t xcb_selinux_query_version
- ** 
- ** @param xcb_connection_t *c
- ** @param uint8_t           client_major
- ** @param uint8_t           client_minor
- ** @returns xcb_selinux_query_version_cookie_t
- **
- *****************************************************************************/
- 
 xcb_selinux_query_version_cookie_t
 xcb_selinux_query_version (xcb_connection_t *c  /**< */,
                            uint8_t           client_major  /**< */,
@@ -673,23 +661,11 @@ xcb_selinux_query_version (xcb_connection_t *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_selinux_query_version_cookie_t xcb_selinux_query_version_unchecked
- ** 
- ** @param xcb_connection_t *c
- ** @param uint8_t           client_major
- ** @param uint8_t           client_minor
- ** @returns xcb_selinux_query_version_cookie_t
- **
- *****************************************************************************/
- 
 xcb_selinux_query_version_cookie_t
 xcb_selinux_query_version_unchecked (xcb_connection_t *c  /**< */,
                                      uint8_t           client_major  /**< */,
@@ -702,25 +678,13 @@ xcb_selinux_query_version_unchecked (xcb_connection_t *c  /**< */,
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_selinux_query_version_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_selinux_query_version_reply_t * xcb_selinux_query_version_reply
- ** 
- ** @param xcb_connection_t                    *c
- ** @param xcb_selinux_query_version_cookie_t   cookie
- ** @param xcb_generic_error_t                **e
- ** @returns xcb_selinux_query_version_reply_t *
- **
- *****************************************************************************/
- 
 xcb_selinux_query_version_reply_t *
 xcb_selinux_query_version_reply (xcb_connection_t                    *c  /**< */,
                                  xcb_selinux_query_version_cookie_t   cookie  /**< */,
@@ -735,23 +699,11 @@ xcb_selinux_set_device_create_context_sizeof (const void  *_buffer  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will not cause
  * a reply to be generated. Any returned error will be
  * saved for handling by xcb_request_check().
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_selinux_set_device_create_context_checked
- ** 
- ** @param xcb_connection_t *c
- ** @param uint32_t          context_len
- ** @param const char       *context
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_selinux_set_device_create_context_checked (xcb_connection_t *c  /**< */,
                                                uint32_t          context_len  /**< */,
@@ -763,20 +715,8 @@ xcb_selinux_set_device_create_context_checked (xcb_connection_t *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_selinux_set_device_create_context
- ** 
- ** @param xcb_connection_t *c
- ** @param uint32_t          context_len
- ** @param const char       *context
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_selinux_set_device_create_context (xcb_connection_t *c  /**< */,
                                        uint32_t          context_len  /**< */,
@@ -791,18 +731,8 @@ xcb_selinux_get_device_create_context_sizeof (const void  *_buffer  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_selinux_get_device_create_context_cookie_t xcb_selinux_get_device_create_context
- ** 
- ** @param xcb_connection_t *c
- ** @returns xcb_selinux_get_device_create_context_cookie_t
- **
- *****************************************************************************/
- 
 xcb_selinux_get_device_create_context_cookie_t
 xcb_selinux_get_device_create_context (xcb_connection_t *c  /**< */);
 
@@ -812,60 +742,20 @@ xcb_selinux_get_device_create_context (xcb_connection_t *c  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_selinux_get_device_create_context_cookie_t xcb_selinux_get_device_create_context_unchecked
- ** 
- ** @param xcb_connection_t *c
- ** @returns xcb_selinux_get_device_create_context_cookie_t
- **
- *****************************************************************************/
- 
 xcb_selinux_get_device_create_context_cookie_t
 xcb_selinux_get_device_create_context_unchecked (xcb_connection_t *c  /**< */);
 
-
-/*****************************************************************************
- **
- ** char * xcb_selinux_get_device_create_context_context
- ** 
- ** @param const xcb_selinux_get_device_create_context_reply_t *R
- ** @returns char *
- **
- *****************************************************************************/
- 
 char *
 xcb_selinux_get_device_create_context_context (const xcb_selinux_get_device_create_context_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_selinux_get_device_create_context_context_length
- ** 
- ** @param const xcb_selinux_get_device_create_context_reply_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_selinux_get_device_create_context_context_length (const xcb_selinux_get_device_create_context_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_selinux_get_device_create_context_context_end
- ** 
- ** @param const xcb_selinux_get_device_create_context_reply_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_selinux_get_device_create_context_context_end (const xcb_selinux_get_device_create_context_reply_t *R  /**< */);
 
@@ -876,25 +766,13 @@ xcb_selinux_get_device_create_context_context_end (const xcb_selinux_get_device_
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_selinux_get_device_create_context_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_selinux_get_device_create_context_reply_t * xcb_selinux_get_device_create_context_reply
- ** 
- ** @param xcb_connection_t                                *c
- ** @param xcb_selinux_get_device_create_context_cookie_t   cookie
- ** @param xcb_generic_error_t                            **e
- ** @returns xcb_selinux_get_device_create_context_reply_t *
- **
- *****************************************************************************/
- 
 xcb_selinux_get_device_create_context_reply_t *
 xcb_selinux_get_device_create_context_reply (xcb_connection_t                                *c  /**< */,
                                              xcb_selinux_get_device_create_context_cookie_t   cookie  /**< */,
@@ -909,24 +787,11 @@ xcb_selinux_set_device_context_sizeof (const void  *_buffer  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will not cause
  * a reply to be generated. Any returned error will be
  * saved for handling by xcb_request_check().
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_selinux_set_device_context_checked
- ** 
- ** @param xcb_connection_t *c
- ** @param uint32_t          device
- ** @param uint32_t          context_len
- ** @param const char       *context
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_selinux_set_device_context_checked (xcb_connection_t *c  /**< */,
                                         uint32_t          device  /**< */,
@@ -939,21 +804,8 @@ xcb_selinux_set_device_context_checked (xcb_connection_t *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_selinux_set_device_context
- ** 
- ** @param xcb_connection_t *c
- ** @param uint32_t          device
- ** @param uint32_t          context_len
- ** @param const char       *context
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_selinux_set_device_context (xcb_connection_t *c  /**< */,
                                 uint32_t          device  /**< */,
@@ -969,19 +821,8 @@ xcb_selinux_get_device_context_sizeof (const void  *_buffer  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_selinux_get_device_context_cookie_t xcb_selinux_get_device_context
- ** 
- ** @param xcb_connection_t *c
- ** @param uint32_t          device
- ** @returns xcb_selinux_get_device_context_cookie_t
- **
- *****************************************************************************/
- 
 xcb_selinux_get_device_context_cookie_t
 xcb_selinux_get_device_context (xcb_connection_t *c  /**< */,
                                 uint32_t          device  /**< */);
@@ -992,62 +833,21 @@ xcb_selinux_get_device_context (xcb_connection_t *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_selinux_get_device_context_cookie_t xcb_selinux_get_device_context_unchecked
- ** 
- ** @param xcb_connection_t *c
- ** @param uint32_t          device
- ** @returns xcb_selinux_get_device_context_cookie_t
- **
- *****************************************************************************/
- 
 xcb_selinux_get_device_context_cookie_t
 xcb_selinux_get_device_context_unchecked (xcb_connection_t *c  /**< */,
                                           uint32_t          device  /**< */);
 
-
-/*****************************************************************************
- **
- ** char * xcb_selinux_get_device_context_context
- ** 
- ** @param const xcb_selinux_get_device_context_reply_t *R
- ** @returns char *
- **
- *****************************************************************************/
- 
 char *
 xcb_selinux_get_device_context_context (const xcb_selinux_get_device_context_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_selinux_get_device_context_context_length
- ** 
- ** @param const xcb_selinux_get_device_context_reply_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_selinux_get_device_context_context_length (const xcb_selinux_get_device_context_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_selinux_get_device_context_context_end
- ** 
- ** @param const xcb_selinux_get_device_context_reply_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_selinux_get_device_context_context_end (const xcb_selinux_get_device_context_reply_t *R  /**< */);
 
@@ -1058,25 +858,13 @@ xcb_selinux_get_device_context_context_end (const xcb_selinux_get_device_context
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_selinux_get_device_context_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_selinux_get_device_context_reply_t * xcb_selinux_get_device_context_reply
- ** 
- ** @param xcb_connection_t                         *c
- ** @param xcb_selinux_get_device_context_cookie_t   cookie
- ** @param xcb_generic_error_t                     **e
- ** @returns xcb_selinux_get_device_context_reply_t *
- **
- *****************************************************************************/
- 
 xcb_selinux_get_device_context_reply_t *
 xcb_selinux_get_device_context_reply (xcb_connection_t                         *c  /**< */,
                                       xcb_selinux_get_device_context_cookie_t   cookie  /**< */,
@@ -1091,23 +879,11 @@ xcb_selinux_set_window_create_context_sizeof (const void  *_buffer  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will not cause
  * a reply to be generated. Any returned error will be
  * saved for handling by xcb_request_check().
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_selinux_set_window_create_context_checked
- ** 
- ** @param xcb_connection_t *c
- ** @param uint32_t          context_len
- ** @param const char       *context
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_selinux_set_window_create_context_checked (xcb_connection_t *c  /**< */,
                                                uint32_t          context_len  /**< */,
@@ -1119,20 +895,8 @@ xcb_selinux_set_window_create_context_checked (xcb_connection_t *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_selinux_set_window_create_context
- ** 
- ** @param xcb_connection_t *c
- ** @param uint32_t          context_len
- ** @param const char       *context
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_selinux_set_window_create_context (xcb_connection_t *c  /**< */,
                                        uint32_t          context_len  /**< */,
@@ -1147,18 +911,8 @@ xcb_selinux_get_window_create_context_sizeof (const void  *_buffer  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_selinux_get_window_create_context_cookie_t xcb_selinux_get_window_create_context
- ** 
- ** @param xcb_connection_t *c
- ** @returns xcb_selinux_get_window_create_context_cookie_t
- **
- *****************************************************************************/
- 
 xcb_selinux_get_window_create_context_cookie_t
 xcb_selinux_get_window_create_context (xcb_connection_t *c  /**< */);
 
@@ -1168,60 +922,20 @@ xcb_selinux_get_window_create_context (xcb_connection_t *c  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_selinux_get_window_create_context_cookie_t xcb_selinux_get_window_create_context_unchecked
- ** 
- ** @param xcb_connection_t *c
- ** @returns xcb_selinux_get_window_create_context_cookie_t
- **
- *****************************************************************************/
- 
 xcb_selinux_get_window_create_context_cookie_t
 xcb_selinux_get_window_create_context_unchecked (xcb_connection_t *c  /**< */);
 
-
-/*****************************************************************************
- **
- ** char * xcb_selinux_get_window_create_context_context
- ** 
- ** @param const xcb_selinux_get_window_create_context_reply_t *R
- ** @returns char *
- **
- *****************************************************************************/
- 
 char *
 xcb_selinux_get_window_create_context_context (const xcb_selinux_get_window_create_context_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_selinux_get_window_create_context_context_length
- ** 
- ** @param const xcb_selinux_get_window_create_context_reply_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_selinux_get_window_create_context_context_length (const xcb_selinux_get_window_create_context_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_selinux_get_window_create_context_context_end
- ** 
- ** @param const xcb_selinux_get_window_create_context_reply_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_selinux_get_window_create_context_context_end (const xcb_selinux_get_window_create_context_reply_t *R  /**< */);
 
@@ -1232,25 +946,13 @@ xcb_selinux_get_window_create_context_context_end (const xcb_selinux_get_window_
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_selinux_get_window_create_context_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_selinux_get_window_create_context_reply_t * xcb_selinux_get_window_create_context_reply
- ** 
- ** @param xcb_connection_t                                *c
- ** @param xcb_selinux_get_window_create_context_cookie_t   cookie
- ** @param xcb_generic_error_t                            **e
- ** @returns xcb_selinux_get_window_create_context_reply_t *
- **
- *****************************************************************************/
- 
 xcb_selinux_get_window_create_context_reply_t *
 xcb_selinux_get_window_create_context_reply (xcb_connection_t                                *c  /**< */,
                                              xcb_selinux_get_window_create_context_cookie_t   cookie  /**< */,
@@ -1265,19 +967,8 @@ xcb_selinux_get_window_context_sizeof (const void  *_buffer  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_selinux_get_window_context_cookie_t xcb_selinux_get_window_context
- ** 
- ** @param xcb_connection_t *c
- ** @param xcb_window_t      window
- ** @returns xcb_selinux_get_window_context_cookie_t
- **
- *****************************************************************************/
- 
 xcb_selinux_get_window_context_cookie_t
 xcb_selinux_get_window_context (xcb_connection_t *c  /**< */,
                                 xcb_window_t      window  /**< */);
@@ -1288,62 +979,21 @@ xcb_selinux_get_window_context (xcb_connection_t *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_selinux_get_window_context_cookie_t xcb_selinux_get_window_context_unchecked
- ** 
- ** @param xcb_connection_t *c
- ** @param xcb_window_t      window
- ** @returns xcb_selinux_get_window_context_cookie_t
- **
- *****************************************************************************/
- 
 xcb_selinux_get_window_context_cookie_t
 xcb_selinux_get_window_context_unchecked (xcb_connection_t *c  /**< */,
                                           xcb_window_t      window  /**< */);
 
-
-/*****************************************************************************
- **
- ** char * xcb_selinux_get_window_context_context
- ** 
- ** @param const xcb_selinux_get_window_context_reply_t *R
- ** @returns char *
- **
- *****************************************************************************/
- 
 char *
 xcb_selinux_get_window_context_context (const xcb_selinux_get_window_context_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_selinux_get_window_context_context_length
- ** 
- ** @param const xcb_selinux_get_window_context_reply_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_selinux_get_window_context_context_length (const xcb_selinux_get_window_context_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_selinux_get_window_context_context_end
- ** 
- ** @param const xcb_selinux_get_window_context_reply_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_selinux_get_window_context_context_end (const xcb_selinux_get_window_context_reply_t *R  /**< */);
 
@@ -1354,25 +1004,13 @@ xcb_selinux_get_window_context_context_end (const xcb_selinux_get_window_context
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_selinux_get_window_context_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_selinux_get_window_context_reply_t * xcb_selinux_get_window_context_reply
- ** 
- ** @param xcb_connection_t                         *c
- ** @param xcb_selinux_get_window_context_cookie_t   cookie
- ** @param xcb_generic_error_t                     **e
- ** @returns xcb_selinux_get_window_context_reply_t *
- **
- *****************************************************************************/
- 
 xcb_selinux_get_window_context_reply_t *
 xcb_selinux_get_window_context_reply (xcb_connection_t                         *c  /**< */,
                                       xcb_selinux_get_window_context_cookie_t   cookie  /**< */,
@@ -1381,81 +1019,21 @@ xcb_selinux_get_window_context_reply (xcb_connection_t                         *
 int
 xcb_selinux_list_item_sizeof (const void  *_buffer  /**< */);
 
-
-/*****************************************************************************
- **
- ** char * xcb_selinux_list_item_object_context
- ** 
- ** @param const xcb_selinux_list_item_t *R
- ** @returns char *
- **
- *****************************************************************************/
- 
 char *
 xcb_selinux_list_item_object_context (const xcb_selinux_list_item_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_selinux_list_item_object_context_length
- ** 
- ** @param const xcb_selinux_list_item_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_selinux_list_item_object_context_length (const xcb_selinux_list_item_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_selinux_list_item_object_context_end
- ** 
- ** @param const xcb_selinux_list_item_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_selinux_list_item_object_context_end (const xcb_selinux_list_item_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** char * xcb_selinux_list_item_data_context
- ** 
- ** @param const xcb_selinux_list_item_t *R
- ** @returns char *
- **
- *****************************************************************************/
- 
 char *
 xcb_selinux_list_item_data_context (const xcb_selinux_list_item_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_selinux_list_item_data_context_length
- ** 
- ** @param const xcb_selinux_list_item_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_selinux_list_item_data_context_length (const xcb_selinux_list_item_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_selinux_list_item_data_context_end
- ** 
- ** @param const xcb_selinux_list_item_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_selinux_list_item_data_context_end (const xcb_selinux_list_item_t *R  /**< */);
 
@@ -1467,16 +1045,6 @@ xcb_selinux_list_item_data_context_end (const xcb_selinux_list_item_t *R  /**< *
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_selinux_list_item_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_selinux_list_item_next
- ** 
- ** @param xcb_selinux_list_item_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_selinux_list_item_next (xcb_selinux_list_item_iterator_t *i  /**< */);
 
@@ -1489,16 +1057,6 @@ xcb_selinux_list_item_next (xcb_selinux_list_item_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_selinux_list_item_end
- ** 
- ** @param xcb_selinux_list_item_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_selinux_list_item_end (xcb_selinux_list_item_iterator_t i  /**< */);
 
@@ -1511,23 +1069,11 @@ xcb_selinux_set_property_create_context_sizeof (const void  *_buffer  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will not cause
  * a reply to be generated. Any returned error will be
  * saved for handling by xcb_request_check().
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_selinux_set_property_create_context_checked
- ** 
- ** @param xcb_connection_t *c
- ** @param uint32_t          context_len
- ** @param const char       *context
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_selinux_set_property_create_context_checked (xcb_connection_t *c  /**< */,
                                                  uint32_t          context_len  /**< */,
@@ -1539,20 +1085,8 @@ xcb_selinux_set_property_create_context_checked (xcb_connection_t *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_selinux_set_property_create_context
- ** 
- ** @param xcb_connection_t *c
- ** @param uint32_t          context_len
- ** @param const char       *context
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_selinux_set_property_create_context (xcb_connection_t *c  /**< */,
                                          uint32_t          context_len  /**< */,
@@ -1567,18 +1101,8 @@ xcb_selinux_get_property_create_context_sizeof (const void  *_buffer  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_selinux_get_property_create_context_cookie_t xcb_selinux_get_property_create_context
- ** 
- ** @param xcb_connection_t *c
- ** @returns xcb_selinux_get_property_create_context_cookie_t
- **
- *****************************************************************************/
- 
 xcb_selinux_get_property_create_context_cookie_t
 xcb_selinux_get_property_create_context (xcb_connection_t *c  /**< */);
 
@@ -1588,60 +1112,20 @@ xcb_selinux_get_property_create_context (xcb_connection_t *c  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_selinux_get_property_create_context_cookie_t xcb_selinux_get_property_create_context_unchecked
- ** 
- ** @param xcb_connection_t *c
- ** @returns xcb_selinux_get_property_create_context_cookie_t
- **
- *****************************************************************************/
- 
 xcb_selinux_get_property_create_context_cookie_t
 xcb_selinux_get_property_create_context_unchecked (xcb_connection_t *c  /**< */);
 
-
-/*****************************************************************************
- **
- ** char * xcb_selinux_get_property_create_context_context
- ** 
- ** @param const xcb_selinux_get_property_create_context_reply_t *R
- ** @returns char *
- **
- *****************************************************************************/
- 
 char *
 xcb_selinux_get_property_create_context_context (const xcb_selinux_get_property_create_context_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_selinux_get_property_create_context_context_length
- ** 
- ** @param const xcb_selinux_get_property_create_context_reply_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_selinux_get_property_create_context_context_length (const xcb_selinux_get_property_create_context_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_selinux_get_property_create_context_context_end
- ** 
- ** @param const xcb_selinux_get_property_create_context_reply_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_selinux_get_property_create_context_context_end (const xcb_selinux_get_property_create_context_reply_t *R  /**< */);
 
@@ -1652,25 +1136,13 @@ xcb_selinux_get_property_create_context_context_end (const xcb_selinux_get_prope
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_selinux_get_property_create_context_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_selinux_get_property_create_context_reply_t * xcb_selinux_get_property_create_context_reply
- ** 
- ** @param xcb_connection_t                                  *c
- ** @param xcb_selinux_get_property_create_context_cookie_t   cookie
- ** @param xcb_generic_error_t                              **e
- ** @returns xcb_selinux_get_property_create_context_reply_t *
- **
- *****************************************************************************/
- 
 xcb_selinux_get_property_create_context_reply_t *
 xcb_selinux_get_property_create_context_reply (xcb_connection_t                                  *c  /**< */,
                                                xcb_selinux_get_property_create_context_cookie_t   cookie  /**< */,
@@ -1685,23 +1157,11 @@ xcb_selinux_set_property_use_context_sizeof (const void  *_buffer  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will not cause
  * a reply to be generated. Any returned error will be
  * saved for handling by xcb_request_check().
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_selinux_set_property_use_context_checked
- ** 
- ** @param xcb_connection_t *c
- ** @param uint32_t          context_len
- ** @param const char       *context
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_selinux_set_property_use_context_checked (xcb_connection_t *c  /**< */,
                                               uint32_t          context_len  /**< */,
@@ -1713,20 +1173,8 @@ xcb_selinux_set_property_use_context_checked (xcb_connection_t *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_selinux_set_property_use_context
- ** 
- ** @param xcb_connection_t *c
- ** @param uint32_t          context_len
- ** @param const char       *context
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_selinux_set_property_use_context (xcb_connection_t *c  /**< */,
                                       uint32_t          context_len  /**< */,
@@ -1741,18 +1189,8 @@ xcb_selinux_get_property_use_context_sizeof (const void  *_buffer  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_selinux_get_property_use_context_cookie_t xcb_selinux_get_property_use_context
- ** 
- ** @param xcb_connection_t *c
- ** @returns xcb_selinux_get_property_use_context_cookie_t
- **
- *****************************************************************************/
- 
 xcb_selinux_get_property_use_context_cookie_t
 xcb_selinux_get_property_use_context (xcb_connection_t *c  /**< */);
 
@@ -1762,60 +1200,20 @@ xcb_selinux_get_property_use_context (xcb_connection_t *c  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_selinux_get_property_use_context_cookie_t xcb_selinux_get_property_use_context_unchecked
- ** 
- ** @param xcb_connection_t *c
- ** @returns xcb_selinux_get_property_use_context_cookie_t
- **
- *****************************************************************************/
- 
 xcb_selinux_get_property_use_context_cookie_t
 xcb_selinux_get_property_use_context_unchecked (xcb_connection_t *c  /**< */);
 
-
-/*****************************************************************************
- **
- ** char * xcb_selinux_get_property_use_context_context
- ** 
- ** @param const xcb_selinux_get_property_use_context_reply_t *R
- ** @returns char *
- **
- *****************************************************************************/
- 
 char *
 xcb_selinux_get_property_use_context_context (const xcb_selinux_get_property_use_context_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_selinux_get_property_use_context_context_length
- ** 
- ** @param const xcb_selinux_get_property_use_context_reply_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_selinux_get_property_use_context_context_length (const xcb_selinux_get_property_use_context_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_selinux_get_property_use_context_context_end
- ** 
- ** @param const xcb_selinux_get_property_use_context_reply_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_selinux_get_property_use_context_context_end (const xcb_selinux_get_property_use_context_reply_t *R  /**< */);
 
@@ -1826,25 +1224,13 @@ xcb_selinux_get_property_use_context_context_end (const xcb_selinux_get_property
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_selinux_get_property_use_context_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_selinux_get_property_use_context_reply_t * xcb_selinux_get_property_use_context_reply
- ** 
- ** @param xcb_connection_t                               *c
- ** @param xcb_selinux_get_property_use_context_cookie_t   cookie
- ** @param xcb_generic_error_t                           **e
- ** @returns xcb_selinux_get_property_use_context_reply_t *
- **
- *****************************************************************************/
- 
 xcb_selinux_get_property_use_context_reply_t *
 xcb_selinux_get_property_use_context_reply (xcb_connection_t                               *c  /**< */,
                                             xcb_selinux_get_property_use_context_cookie_t   cookie  /**< */,
@@ -1859,20 +1245,8 @@ xcb_selinux_get_property_context_sizeof (const void  *_buffer  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_selinux_get_property_context_cookie_t xcb_selinux_get_property_context
- ** 
- ** @param xcb_connection_t *c
- ** @param xcb_window_t      window
- ** @param xcb_atom_t        property
- ** @returns xcb_selinux_get_property_context_cookie_t
- **
- *****************************************************************************/
- 
 xcb_selinux_get_property_context_cookie_t
 xcb_selinux_get_property_context (xcb_connection_t *c  /**< */,
                                   xcb_window_t      window  /**< */,
@@ -1884,64 +1258,22 @@ xcb_selinux_get_property_context (xcb_connection_t *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_selinux_get_property_context_cookie_t xcb_selinux_get_property_context_unchecked
- ** 
- ** @param xcb_connection_t *c
- ** @param xcb_window_t      window
- ** @param xcb_atom_t        property
- ** @returns xcb_selinux_get_property_context_cookie_t
- **
- *****************************************************************************/
- 
 xcb_selinux_get_property_context_cookie_t
 xcb_selinux_get_property_context_unchecked (xcb_connection_t *c  /**< */,
                                             xcb_window_t      window  /**< */,
                                             xcb_atom_t        property  /**< */);
 
-
-/*****************************************************************************
- **
- ** char * xcb_selinux_get_property_context_context
- ** 
- ** @param const xcb_selinux_get_property_context_reply_t *R
- ** @returns char *
- **
- *****************************************************************************/
- 
 char *
 xcb_selinux_get_property_context_context (const xcb_selinux_get_property_context_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_selinux_get_property_context_context_length
- ** 
- ** @param const xcb_selinux_get_property_context_reply_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_selinux_get_property_context_context_length (const xcb_selinux_get_property_context_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_selinux_get_property_context_context_end
- ** 
- ** @param const xcb_selinux_get_property_context_reply_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_selinux_get_property_context_context_end (const xcb_selinux_get_property_context_reply_t *R  /**< */);
 
@@ -1952,25 +1284,13 @@ xcb_selinux_get_property_context_context_end (const xcb_selinux_get_property_con
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_selinux_get_property_context_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_selinux_get_property_context_reply_t * xcb_selinux_get_property_context_reply
- ** 
- ** @param xcb_connection_t                           *c
- ** @param xcb_selinux_get_property_context_cookie_t   cookie
- ** @param xcb_generic_error_t                       **e
- ** @returns xcb_selinux_get_property_context_reply_t *
- **
- *****************************************************************************/
- 
 xcb_selinux_get_property_context_reply_t *
 xcb_selinux_get_property_context_reply (xcb_connection_t                           *c  /**< */,
                                         xcb_selinux_get_property_context_cookie_t   cookie  /**< */,
@@ -1985,20 +1305,8 @@ xcb_selinux_get_property_data_context_sizeof (const void  *_buffer  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_selinux_get_property_data_context_cookie_t xcb_selinux_get_property_data_context
- ** 
- ** @param xcb_connection_t *c
- ** @param xcb_window_t      window
- ** @param xcb_atom_t        property
- ** @returns xcb_selinux_get_property_data_context_cookie_t
- **
- *****************************************************************************/
- 
 xcb_selinux_get_property_data_context_cookie_t
 xcb_selinux_get_property_data_context (xcb_connection_t *c  /**< */,
                                        xcb_window_t      window  /**< */,
@@ -2010,64 +1318,22 @@ xcb_selinux_get_property_data_context (xcb_connection_t *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_selinux_get_property_data_context_cookie_t xcb_selinux_get_property_data_context_unchecked
- ** 
- ** @param xcb_connection_t *c
- ** @param xcb_window_t      window
- ** @param xcb_atom_t        property
- ** @returns xcb_selinux_get_property_data_context_cookie_t
- **
- *****************************************************************************/
- 
 xcb_selinux_get_property_data_context_cookie_t
 xcb_selinux_get_property_data_context_unchecked (xcb_connection_t *c  /**< */,
                                                  xcb_window_t      window  /**< */,
                                                  xcb_atom_t        property  /**< */);
 
-
-/*****************************************************************************
- **
- ** char * xcb_selinux_get_property_data_context_context
- ** 
- ** @param const xcb_selinux_get_property_data_context_reply_t *R
- ** @returns char *
- **
- *****************************************************************************/
- 
 char *
 xcb_selinux_get_property_data_context_context (const xcb_selinux_get_property_data_context_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_selinux_get_property_data_context_context_length
- ** 
- ** @param const xcb_selinux_get_property_data_context_reply_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_selinux_get_property_data_context_context_length (const xcb_selinux_get_property_data_context_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_selinux_get_property_data_context_context_end
- ** 
- ** @param const xcb_selinux_get_property_data_context_reply_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_selinux_get_property_data_context_context_end (const xcb_selinux_get_property_data_context_reply_t *R  /**< */);
 
@@ -2078,25 +1344,13 @@ xcb_selinux_get_property_data_context_context_end (const xcb_selinux_get_propert
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_selinux_get_property_data_context_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_selinux_get_property_data_context_reply_t * xcb_selinux_get_property_data_context_reply
- ** 
- ** @param xcb_connection_t                                *c
- ** @param xcb_selinux_get_property_data_context_cookie_t   cookie
- ** @param xcb_generic_error_t                            **e
- ** @returns xcb_selinux_get_property_data_context_reply_t *
- **
- *****************************************************************************/
- 
 xcb_selinux_get_property_data_context_reply_t *
 xcb_selinux_get_property_data_context_reply (xcb_connection_t                                *c  /**< */,
                                              xcb_selinux_get_property_data_context_cookie_t   cookie  /**< */,
@@ -2111,19 +1365,8 @@ xcb_selinux_list_properties_sizeof (const void  *_buffer  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_selinux_list_properties_cookie_t xcb_selinux_list_properties
- ** 
- ** @param xcb_connection_t *c
- ** @param xcb_window_t      window
- ** @returns xcb_selinux_list_properties_cookie_t
- **
- *****************************************************************************/
- 
 xcb_selinux_list_properties_cookie_t
 xcb_selinux_list_properties (xcb_connection_t *c  /**< */,
                              xcb_window_t      window  /**< */);
@@ -2134,49 +1377,18 @@ xcb_selinux_list_properties (xcb_connection_t *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_selinux_list_properties_cookie_t xcb_selinux_list_properties_unchecked
- ** 
- ** @param xcb_connection_t *c
- ** @param xcb_window_t      window
- ** @returns xcb_selinux_list_properties_cookie_t
- **
- *****************************************************************************/
- 
 xcb_selinux_list_properties_cookie_t
 xcb_selinux_list_properties_unchecked (xcb_connection_t *c  /**< */,
                                        xcb_window_t      window  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_selinux_list_properties_properties_length
- ** 
- ** @param const xcb_selinux_list_properties_reply_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_selinux_list_properties_properties_length (const xcb_selinux_list_properties_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_selinux_list_item_iterator_t xcb_selinux_list_properties_properties_iterator
- ** 
- ** @param const xcb_selinux_list_properties_reply_t *R
- ** @returns xcb_selinux_list_item_iterator_t
- **
- *****************************************************************************/
- 
 xcb_selinux_list_item_iterator_t
 xcb_selinux_list_properties_properties_iterator (const xcb_selinux_list_properties_reply_t *R  /**< */);
 
@@ -2187,25 +1399,13 @@ xcb_selinux_list_properties_properties_iterator (const xcb_selinux_list_properti
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_selinux_list_properties_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_selinux_list_properties_reply_t * xcb_selinux_list_properties_reply
- ** 
- ** @param xcb_connection_t                      *c
- ** @param xcb_selinux_list_properties_cookie_t   cookie
- ** @param xcb_generic_error_t                  **e
- ** @returns xcb_selinux_list_properties_reply_t *
- **
- *****************************************************************************/
- 
 xcb_selinux_list_properties_reply_t *
 xcb_selinux_list_properties_reply (xcb_connection_t                      *c  /**< */,
                                    xcb_selinux_list_properties_cookie_t   cookie  /**< */,
@@ -2220,23 +1420,11 @@ xcb_selinux_set_selection_create_context_sizeof (const void  *_buffer  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will not cause
  * a reply to be generated. Any returned error will be
  * saved for handling by xcb_request_check().
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_selinux_set_selection_create_context_checked
- ** 
- ** @param xcb_connection_t *c
- ** @param uint32_t          context_len
- ** @param const char       *context
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_selinux_set_selection_create_context_checked (xcb_connection_t *c  /**< */,
                                                   uint32_t          context_len  /**< */,
@@ -2248,20 +1436,8 @@ xcb_selinux_set_selection_create_context_checked (xcb_connection_t *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_selinux_set_selection_create_context
- ** 
- ** @param xcb_connection_t *c
- ** @param uint32_t          context_len
- ** @param const char       *context
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_selinux_set_selection_create_context (xcb_connection_t *c  /**< */,
                                           uint32_t          context_len  /**< */,
@@ -2276,18 +1452,8 @@ xcb_selinux_get_selection_create_context_sizeof (const void  *_buffer  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_selinux_get_selection_create_context_cookie_t xcb_selinux_get_selection_create_context
- ** 
- ** @param xcb_connection_t *c
- ** @returns xcb_selinux_get_selection_create_context_cookie_t
- **
- *****************************************************************************/
- 
 xcb_selinux_get_selection_create_context_cookie_t
 xcb_selinux_get_selection_create_context (xcb_connection_t *c  /**< */);
 
@@ -2297,60 +1463,20 @@ xcb_selinux_get_selection_create_context (xcb_connection_t *c  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_selinux_get_selection_create_context_cookie_t xcb_selinux_get_selection_create_context_unchecked
- ** 
- ** @param xcb_connection_t *c
- ** @returns xcb_selinux_get_selection_create_context_cookie_t
- **
- *****************************************************************************/
- 
 xcb_selinux_get_selection_create_context_cookie_t
 xcb_selinux_get_selection_create_context_unchecked (xcb_connection_t *c  /**< */);
 
-
-/*****************************************************************************
- **
- ** char * xcb_selinux_get_selection_create_context_context
- ** 
- ** @param const xcb_selinux_get_selection_create_context_reply_t *R
- ** @returns char *
- **
- *****************************************************************************/
- 
 char *
 xcb_selinux_get_selection_create_context_context (const xcb_selinux_get_selection_create_context_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_selinux_get_selection_create_context_context_length
- ** 
- ** @param const xcb_selinux_get_selection_create_context_reply_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_selinux_get_selection_create_context_context_length (const xcb_selinux_get_selection_create_context_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_selinux_get_selection_create_context_context_end
- ** 
- ** @param const xcb_selinux_get_selection_create_context_reply_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_selinux_get_selection_create_context_context_end (const xcb_selinux_get_selection_create_context_reply_t *R  /**< */);
 
@@ -2361,25 +1487,13 @@ xcb_selinux_get_selection_create_context_context_end (const xcb_selinux_get_sele
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_selinux_get_selection_create_context_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_selinux_get_selection_create_context_reply_t * xcb_selinux_get_selection_create_context_reply
- ** 
- ** @param xcb_connection_t                                   *c
- ** @param xcb_selinux_get_selection_create_context_cookie_t   cookie
- ** @param xcb_generic_error_t                               **e
- ** @returns xcb_selinux_get_selection_create_context_reply_t *
- **
- *****************************************************************************/
- 
 xcb_selinux_get_selection_create_context_reply_t *
 xcb_selinux_get_selection_create_context_reply (xcb_connection_t                                   *c  /**< */,
                                                 xcb_selinux_get_selection_create_context_cookie_t   cookie  /**< */,
@@ -2394,23 +1508,11 @@ xcb_selinux_set_selection_use_context_sizeof (const void  *_buffer  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will not cause
  * a reply to be generated. Any returned error will be
  * saved for handling by xcb_request_check().
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_selinux_set_selection_use_context_checked
- ** 
- ** @param xcb_connection_t *c
- ** @param uint32_t          context_len
- ** @param const char       *context
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_selinux_set_selection_use_context_checked (xcb_connection_t *c  /**< */,
                                                uint32_t          context_len  /**< */,
@@ -2422,20 +1524,8 @@ xcb_selinux_set_selection_use_context_checked (xcb_connection_t *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_selinux_set_selection_use_context
- ** 
- ** @param xcb_connection_t *c
- ** @param uint32_t          context_len
- ** @param const char       *context
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_selinux_set_selection_use_context (xcb_connection_t *c  /**< */,
                                        uint32_t          context_len  /**< */,
@@ -2450,18 +1540,8 @@ xcb_selinux_get_selection_use_context_sizeof (const void  *_buffer  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_selinux_get_selection_use_context_cookie_t xcb_selinux_get_selection_use_context
- ** 
- ** @param xcb_connection_t *c
- ** @returns xcb_selinux_get_selection_use_context_cookie_t
- **
- *****************************************************************************/
- 
 xcb_selinux_get_selection_use_context_cookie_t
 xcb_selinux_get_selection_use_context (xcb_connection_t *c  /**< */);
 
@@ -2471,60 +1551,20 @@ xcb_selinux_get_selection_use_context (xcb_connection_t *c  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_selinux_get_selection_use_context_cookie_t xcb_selinux_get_selection_use_context_unchecked
- ** 
- ** @param xcb_connection_t *c
- ** @returns xcb_selinux_get_selection_use_context_cookie_t
- **
- *****************************************************************************/
- 
 xcb_selinux_get_selection_use_context_cookie_t
 xcb_selinux_get_selection_use_context_unchecked (xcb_connection_t *c  /**< */);
 
-
-/*****************************************************************************
- **
- ** char * xcb_selinux_get_selection_use_context_context
- ** 
- ** @param const xcb_selinux_get_selection_use_context_reply_t *R
- ** @returns char *
- **
- *****************************************************************************/
- 
 char *
 xcb_selinux_get_selection_use_context_context (const xcb_selinux_get_selection_use_context_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_selinux_get_selection_use_context_context_length
- ** 
- ** @param const xcb_selinux_get_selection_use_context_reply_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_selinux_get_selection_use_context_context_length (const xcb_selinux_get_selection_use_context_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_selinux_get_selection_use_context_context_end
- ** 
- ** @param const xcb_selinux_get_selection_use_context_reply_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_selinux_get_selection_use_context_context_end (const xcb_selinux_get_selection_use_context_reply_t *R  /**< */);
 
@@ -2535,25 +1575,13 @@ xcb_selinux_get_selection_use_context_context_end (const xcb_selinux_get_selecti
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_selinux_get_selection_use_context_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_selinux_get_selection_use_context_reply_t * xcb_selinux_get_selection_use_context_reply
- ** 
- ** @param xcb_connection_t                                *c
- ** @param xcb_selinux_get_selection_use_context_cookie_t   cookie
- ** @param xcb_generic_error_t                            **e
- ** @returns xcb_selinux_get_selection_use_context_reply_t *
- **
- *****************************************************************************/
- 
 xcb_selinux_get_selection_use_context_reply_t *
 xcb_selinux_get_selection_use_context_reply (xcb_connection_t                                *c  /**< */,
                                              xcb_selinux_get_selection_use_context_cookie_t   cookie  /**< */,
@@ -2568,19 +1596,8 @@ xcb_selinux_get_selection_context_sizeof (const void  *_buffer  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_selinux_get_selection_context_cookie_t xcb_selinux_get_selection_context
- ** 
- ** @param xcb_connection_t *c
- ** @param xcb_atom_t        selection
- ** @returns xcb_selinux_get_selection_context_cookie_t
- **
- *****************************************************************************/
- 
 xcb_selinux_get_selection_context_cookie_t
 xcb_selinux_get_selection_context (xcb_connection_t *c  /**< */,
                                    xcb_atom_t        selection  /**< */);
@@ -2591,62 +1608,21 @@ xcb_selinux_get_selection_context (xcb_connection_t *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_selinux_get_selection_context_cookie_t xcb_selinux_get_selection_context_unchecked
- ** 
- ** @param xcb_connection_t *c
- ** @param xcb_atom_t        selection
- ** @returns xcb_selinux_get_selection_context_cookie_t
- **
- *****************************************************************************/
- 
 xcb_selinux_get_selection_context_cookie_t
 xcb_selinux_get_selection_context_unchecked (xcb_connection_t *c  /**< */,
                                              xcb_atom_t        selection  /**< */);
 
-
-/*****************************************************************************
- **
- ** char * xcb_selinux_get_selection_context_context
- ** 
- ** @param const xcb_selinux_get_selection_context_reply_t *R
- ** @returns char *
- **
- *****************************************************************************/
- 
 char *
 xcb_selinux_get_selection_context_context (const xcb_selinux_get_selection_context_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_selinux_get_selection_context_context_length
- ** 
- ** @param const xcb_selinux_get_selection_context_reply_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_selinux_get_selection_context_context_length (const xcb_selinux_get_selection_context_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_selinux_get_selection_context_context_end
- ** 
- ** @param const xcb_selinux_get_selection_context_reply_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_selinux_get_selection_context_context_end (const xcb_selinux_get_selection_context_reply_t *R  /**< */);
 
@@ -2657,25 +1633,13 @@ xcb_selinux_get_selection_context_context_end (const xcb_selinux_get_selection_c
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_selinux_get_selection_context_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_selinux_get_selection_context_reply_t * xcb_selinux_get_selection_context_reply
- ** 
- ** @param xcb_connection_t                            *c
- ** @param xcb_selinux_get_selection_context_cookie_t   cookie
- ** @param xcb_generic_error_t                        **e
- ** @returns xcb_selinux_get_selection_context_reply_t *
- **
- *****************************************************************************/
- 
 xcb_selinux_get_selection_context_reply_t *
 xcb_selinux_get_selection_context_reply (xcb_connection_t                            *c  /**< */,
                                          xcb_selinux_get_selection_context_cookie_t   cookie  /**< */,
@@ -2690,19 +1654,8 @@ xcb_selinux_get_selection_data_context_sizeof (const void  *_buffer  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_selinux_get_selection_data_context_cookie_t xcb_selinux_get_selection_data_context
- ** 
- ** @param xcb_connection_t *c
- ** @param xcb_atom_t        selection
- ** @returns xcb_selinux_get_selection_data_context_cookie_t
- **
- *****************************************************************************/
- 
 xcb_selinux_get_selection_data_context_cookie_t
 xcb_selinux_get_selection_data_context (xcb_connection_t *c  /**< */,
                                         xcb_atom_t        selection  /**< */);
@@ -2713,62 +1666,21 @@ xcb_selinux_get_selection_data_context (xcb_connection_t *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_selinux_get_selection_data_context_cookie_t xcb_selinux_get_selection_data_context_unchecked
- ** 
- ** @param xcb_connection_t *c
- ** @param xcb_atom_t        selection
- ** @returns xcb_selinux_get_selection_data_context_cookie_t
- **
- *****************************************************************************/
- 
 xcb_selinux_get_selection_data_context_cookie_t
 xcb_selinux_get_selection_data_context_unchecked (xcb_connection_t *c  /**< */,
                                                   xcb_atom_t        selection  /**< */);
 
-
-/*****************************************************************************
- **
- ** char * xcb_selinux_get_selection_data_context_context
- ** 
- ** @param const xcb_selinux_get_selection_data_context_reply_t *R
- ** @returns char *
- **
- *****************************************************************************/
- 
 char *
 xcb_selinux_get_selection_data_context_context (const xcb_selinux_get_selection_data_context_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_selinux_get_selection_data_context_context_length
- ** 
- ** @param const xcb_selinux_get_selection_data_context_reply_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_selinux_get_selection_data_context_context_length (const xcb_selinux_get_selection_data_context_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_selinux_get_selection_data_context_context_end
- ** 
- ** @param const xcb_selinux_get_selection_data_context_reply_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_selinux_get_selection_data_context_context_end (const xcb_selinux_get_selection_data_context_reply_t *R  /**< */);
 
@@ -2779,25 +1691,13 @@ xcb_selinux_get_selection_data_context_context_end (const xcb_selinux_get_select
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_selinux_get_selection_data_context_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_selinux_get_selection_data_context_reply_t * xcb_selinux_get_selection_data_context_reply
- ** 
- ** @param xcb_connection_t                                 *c
- ** @param xcb_selinux_get_selection_data_context_cookie_t   cookie
- ** @param xcb_generic_error_t                             **e
- ** @returns xcb_selinux_get_selection_data_context_reply_t *
- **
- *****************************************************************************/
- 
 xcb_selinux_get_selection_data_context_reply_t *
 xcb_selinux_get_selection_data_context_reply (xcb_connection_t                                 *c  /**< */,
                                               xcb_selinux_get_selection_data_context_cookie_t   cookie  /**< */,
@@ -2812,18 +1712,8 @@ xcb_selinux_list_selections_sizeof (const void  *_buffer  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_selinux_list_selections_cookie_t xcb_selinux_list_selections
- ** 
- ** @param xcb_connection_t *c
- ** @returns xcb_selinux_list_selections_cookie_t
- **
- *****************************************************************************/
- 
 xcb_selinux_list_selections_cookie_t
 xcb_selinux_list_selections (xcb_connection_t *c  /**< */);
 
@@ -2833,47 +1723,17 @@ xcb_selinux_list_selections (xcb_connection_t *c  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_selinux_list_selections_cookie_t xcb_selinux_list_selections_unchecked
- ** 
- ** @param xcb_connection_t *c
- ** @returns xcb_selinux_list_selections_cookie_t
- **
- *****************************************************************************/
- 
 xcb_selinux_list_selections_cookie_t
 xcb_selinux_list_selections_unchecked (xcb_connection_t *c  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_selinux_list_selections_selections_length
- ** 
- ** @param const xcb_selinux_list_selections_reply_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_selinux_list_selections_selections_length (const xcb_selinux_list_selections_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_selinux_list_item_iterator_t xcb_selinux_list_selections_selections_iterator
- ** 
- ** @param const xcb_selinux_list_selections_reply_t *R
- ** @returns xcb_selinux_list_item_iterator_t
- **
- *****************************************************************************/
- 
 xcb_selinux_list_item_iterator_t
 xcb_selinux_list_selections_selections_iterator (const xcb_selinux_list_selections_reply_t *R  /**< */);
 
@@ -2884,25 +1744,13 @@ xcb_selinux_list_selections_selections_iterator (const xcb_selinux_list_selectio
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_selinux_list_selections_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_selinux_list_selections_reply_t * xcb_selinux_list_selections_reply
- ** 
- ** @param xcb_connection_t                      *c
- ** @param xcb_selinux_list_selections_cookie_t   cookie
- ** @param xcb_generic_error_t                  **e
- ** @returns xcb_selinux_list_selections_reply_t *
- **
- *****************************************************************************/
- 
 xcb_selinux_list_selections_reply_t *
 xcb_selinux_list_selections_reply (xcb_connection_t                      *c  /**< */,
                                    xcb_selinux_list_selections_cookie_t   cookie  /**< */,
@@ -2917,19 +1765,8 @@ xcb_selinux_get_client_context_sizeof (const void  *_buffer  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_selinux_get_client_context_cookie_t xcb_selinux_get_client_context
- ** 
- ** @param xcb_connection_t *c
- ** @param uint32_t          resource
- ** @returns xcb_selinux_get_client_context_cookie_t
- **
- *****************************************************************************/
- 
 xcb_selinux_get_client_context_cookie_t
 xcb_selinux_get_client_context (xcb_connection_t *c  /**< */,
                                 uint32_t          resource  /**< */);
@@ -2940,62 +1777,21 @@ xcb_selinux_get_client_context (xcb_connection_t *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_selinux_get_client_context_cookie_t xcb_selinux_get_client_context_unchecked
- ** 
- ** @param xcb_connection_t *c
- ** @param uint32_t          resource
- ** @returns xcb_selinux_get_client_context_cookie_t
- **
- *****************************************************************************/
- 
 xcb_selinux_get_client_context_cookie_t
 xcb_selinux_get_client_context_unchecked (xcb_connection_t *c  /**< */,
                                           uint32_t          resource  /**< */);
 
-
-/*****************************************************************************
- **
- ** char * xcb_selinux_get_client_context_context
- ** 
- ** @param const xcb_selinux_get_client_context_reply_t *R
- ** @returns char *
- **
- *****************************************************************************/
- 
 char *
 xcb_selinux_get_client_context_context (const xcb_selinux_get_client_context_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_selinux_get_client_context_context_length
- ** 
- ** @param const xcb_selinux_get_client_context_reply_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_selinux_get_client_context_context_length (const xcb_selinux_get_client_context_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_selinux_get_client_context_context_end
- ** 
- ** @param const xcb_selinux_get_client_context_reply_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_selinux_get_client_context_context_end (const xcb_selinux_get_client_context_reply_t *R  /**< */);
 
@@ -3006,25 +1802,13 @@ xcb_selinux_get_client_context_context_end (const xcb_selinux_get_client_context
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_selinux_get_client_context_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_selinux_get_client_context_reply_t * xcb_selinux_get_client_context_reply
- ** 
- ** @param xcb_connection_t                         *c
- ** @param xcb_selinux_get_client_context_cookie_t   cookie
- ** @param xcb_generic_error_t                     **e
- ** @returns xcb_selinux_get_client_context_reply_t *
- **
- *****************************************************************************/
- 
 xcb_selinux_get_client_context_reply_t *
 xcb_selinux_get_client_context_reply (xcb_connection_t                         *c  /**< */,
                                       xcb_selinux_get_client_context_cookie_t   cookie  /**< */,

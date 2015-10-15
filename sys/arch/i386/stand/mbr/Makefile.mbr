@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile.mbr,v 1.18 2011/05/20 15:05:02 joerg Exp $
+#	$NetBSD: Makefile.mbr,v 1.19 2014/01/12 15:26:29 tsutsui Exp $
 
 S=		${.CURDIR}/../../../../..
 
 NOMAN=		# defined
 
 LIBCRT0=	# nothing
+LIBCRTI=	# nothing
 LIBCRTBEGIN=	# nothing
 LIBCRTEND=	# nothing
 LIBC=		# nothing
@@ -12,6 +13,10 @@ LIBC=		# nothing
 PIE_CFLAGS=
 PIE_LDFLAGS=
 PIE_AFLAGS=
+
+.if defined(__MINIX)
+USE_BITCODE=no
+.endif # defined(__MINIX)
 
 .include <bsd.own.mk>
 
@@ -46,7 +51,9 @@ AFLAGS.gpt.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 
 .if defined(__MINIX)
 CPPFLAGS+= -DLOADADDR=${LOADADDR}
-AFLAGS.mbr.S+=	-Wa,--divide
+
+# LSC: Still required by our old binutils
+AFLAGS.mbr.S+= -Wa,--divide
 
 BUILDSYMLINKS+= \
 	${NETBSDSRCDIR}/minix/include/arch/i386/include/stackframe.h machine/stackframe.h \
@@ -61,7 +68,7 @@ ${PROG}: ${OBJS}
 	${CC} -o ${PROG}.tmp ${LDFLAGS} -Wl,--section-start=.text=${LOADADDR} ${OBJS}
 .else
 	${CC} -o ${PROG}.tmp ${LDFLAGS} -Wl,-Ttext,${LOADADDR} ${OBJS}
-.endif
+.endif # defined(__MINIX)
 	@ set -- $$( ${NM} -t d ${PROG}.tmp | grep '\<mbr_space\>' \
 		    | ${TOOL_SED} 's/^0*//'  ); \
 		echo "#### There are $$1 free bytes in ${PROG}"

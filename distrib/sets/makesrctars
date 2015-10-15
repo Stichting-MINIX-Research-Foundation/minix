@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: makesrctars,v 1.38 2009/11/30 16:13:23 uebayasi Exp $
+#	$NetBSD: makesrctars,v 1.40 2015/02/05 07:52:49 snj Exp $
 #
 # makesrctars srcdir setdir
 #	Create source tarballs in setdir from the source under srcdir.
@@ -97,7 +97,7 @@ makeset()
 			-e 's:type=dir:& mode=0775:' \
 			-e 's:$: uname=root gname=wsrc:' \
 			-e '/\/move-if-change /s:\(mode\)=[0-9]*:\1=0775:' \
-			-e '/^\.\/build.sh /s:\(mode\)=[0-9]*:\1=0775:' | \
+			-e '/^\.\/.*[.-]sh /s:\(mode\)=[0-9]*:\1=0775:' | \
 		${PAX} -M -N "${PASSWD}" -w -d -s'|^\.|'"${srcprefix}"'|' | \
 		${GZIP_CMD} > "${setdir}/${set}"
 	rm -f "${intmp}"
@@ -115,9 +115,9 @@ fi
 srcprefix=usr/src
 export setdir MTREE PAX CKSUM GZIP PASSWD srcprefix
 
-makeset src . -v '^\.\/gnu|^\.\/share|^\.\/sys|^\.\/usr\.bin\/config|^\.\/common'
+makeset src . -v '^\.\/common|^\.\/external\/gpl2|^\.\/external\/gpl3|^\.\/gnu|^\.\/share|^\.\/sys|^\.\/usr\.bin\/config'
 
-makeset gnusrc gnu
+makeset gnusrc . -e '^\..type=dir|^\.\/gnu|^\.\/external.type=dir|^\.\/external\/gpl2|^\.\/external\/gpl3'
 
 makeset syssrc . -e '^\..type=dir|^\.\/sys|^\.\/usr\.bin.type=dir|^\.\/usr\.bin\/config|^\.\/common'
 

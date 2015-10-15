@@ -1,4 +1,4 @@
-/*	$NetBSD: test_cred.c,v 1.1.1.1 2011/04/13 18:14:46 elric Exp $	*/
+/*	$NetBSD: test_cred.c,v 1.1.1.2 2014/04/24 12:45:29 pettai Exp $	*/
 
 /*
  * Copyright (c) 2003-2004 Kungliga Tekniska Högskolan
@@ -88,7 +88,7 @@ acquire_release_loop(gss_name_t name, int counter, gss_cred_usage_t usage)
 	if (maj_stat != GSS_S_COMPLETE)
 	    gss_err(1, min_stat, "aquire %d %d != GSS_S_COMPLETE",
 		    i, (int)maj_stat);
-				
+
 	maj_stat = gss_release_cred(&min_stat, &cred);
 	if (maj_stat != GSS_S_COMPLETE)
 	    gss_err(1, min_stat, "release %d %d != GSS_S_COMPLETE",
@@ -124,7 +124,7 @@ acquire_add_release_add(gss_name_t name, gss_cred_usage_t usage)
 			    NULL,
 			    NULL,
 			    NULL);
-			
+
     if (maj_stat != GSS_S_COMPLETE)
 	gss_err(1, min_stat, "add_cred %d != GSS_S_COMPLETE", (int)maj_stat);
 

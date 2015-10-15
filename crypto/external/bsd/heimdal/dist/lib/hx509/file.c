@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.1.1.1 2011/04/13 18:15:11 elric Exp $	*/
+/*	$NetBSD: file.c,v 1.1.1.2 2014/04/24 12:45:41 pettai Exp $	*/
 
 /*
  * Copyright (c) 2005 - 2006 Kungliga Tekniska Högskolan
@@ -95,11 +95,11 @@ hx509_pem_write(hx509_context context, const char *type,
 
     while (size > 0) {
 	ssize_t l;
-	
+
 	length = size;
 	if (length > ENCODE_LINE_LENGTH)
 	    length = ENCODE_LINE_LENGTH;
-	
+
 	l = base64_encode(p, length, &line);
 	if (l < 0) {
 	    hx509_set_error_string(context, 0, ENOMEM,
@@ -213,7 +213,7 @@ hx509_pem_read(hx509_context context,
 	    if (i > 0)
 		i--;
 	}
-	
+
 	switch (where) {
 	case BEFORE:
 	    if (strncmp("-----BEGIN ", buf, 11) == 0) {
@@ -262,7 +262,7 @@ hx509_pem_read(hx509_context context,
 		free(p);
 		goto out;
 	    }
-	
+
 	    data = erealloc(data, len + i);
 	    memcpy(((char *)data) + len, p, i);
 	    free(p);

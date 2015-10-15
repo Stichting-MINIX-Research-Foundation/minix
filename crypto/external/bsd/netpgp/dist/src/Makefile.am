@@ -1,3 +1,3 @@
-## $NetBSD: Makefile.am,v 1.5 2010/08/07 04:16:40 agc Exp $
+## $NetBSD: Makefile.am,v 1.7 2014/03/09 00:15:45 agc Exp $
 
-SUBDIRS = libmj lib netpgp netpgpkeys netpgpverify
+SUBDIRS = libmj libtransit lib netpgp netpgpkeys

@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.71 2012/12/31 14:10:15 dsl Exp $	*/
+/*	$NetBSD: jobs.c,v 1.75 2015/08/22 12:12:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.71 2012/12/31 14:10:15 dsl Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.75 2015/08/22 12:12:47 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -572,12 +572,18 @@ showjobs(struct output *out, int mode)
 {
 	int jobno;
 	struct job *jp;
+#if JOBS /* MINIX: gotpid. */
 	int silent = 0, gotpid;
+#else
+	int silent = 0;
+#endif
 
 	TRACE(("showjobs(%x) called\n", mode));
 
 	/* If not even one one job changed, there is nothing to do */
+#if JOBS /* MINIX: gotpid. */
 	gotpid = dowait(0, NULL);
+#endif
 	while (dowait(0, NULL) > 0)
 		continue;
 #if JOBS /* MINIX: #ifdef fails when JOBS = 0 */
@@ -659,7 +665,7 @@ waitcmd(int argc, char **argv)
 				continue;
 			}
 			if (dowait(WBLOCK, NULL) == -1)
-			       return 128 + SIGINT;
+			       return 128 + lastsig();
 			jp = jobtab;
 		}
 	}
@@ -674,9 +680,9 @@ waitcmd(int argc, char **argv)
 		/* loop until process terminated or stopped */
 		while (job->state == JOBRUNNING) {
 			if (dowait(WBLOCK|WNOFREE, job) == -1)
-			       return 128 + SIGINT;
+			       return 128 + lastsig();
 		}
-		status = job->ps[job->nprocs - 1].status;
+		status = job->ps[job->nprocs ? job->nprocs - 1 : 0].status;
 		if (WIFEXITED(status))
 			retval = WEXITSTATUS(status);
 #if JOBS
@@ -885,14 +891,16 @@ makejob(union node *node, int nprocs)
 int
 forkshell(struct job *jp, union node *n, int mode)
 {
-	int pid;
+	pid_t pid;
+	int serrno;
 
 	TRACE(("forkshell(%%%d, %p, %d) called\n", jp - jobtab, n, mode));
 	switch ((pid = fork())) {
 	case -1:
-		TRACE(("Fork failed, errno=%d\n", errno));
+		serrno = errno;
+		TRACE(("Fork failed, errno=%d\n", serrno));
 		INTON;
-		error("Cannot fork");
+		error("Cannot fork (%s)", strerror(serrno));
 		break;
 	case 0:
 		forkchild(jp, n, mode, 0);
@@ -912,10 +920,8 @@ forkparent(struct job *jp, union node *n, int mode, pid_t pid)
 			pgrp = pid;
 		else
 			pgrp = jp->ps[0].pid;
-#if JOBS /* LSC: not available under MINIX. */
 		/* This can fail because we are doing it in the child also */
 		(void)setpgid(pid, pgrp);
-#endif
 	}
 	if (mode == FORK_BG)
 		backgndpid = pid;		/* set $! */
@@ -1087,13 +1093,12 @@ dowait(int flags, struct job *job)
 	struct job *thisjob;
 	int done;
 	int stopped;
-	extern volatile char gotsig[];
 
 	TRACE(("dowait(%x) called\n", flags));
 	do {
 		pid = waitproc(flags & WBLOCK, job, &status);
 		TRACE(("wait returns pid %d, status %d\n", pid, status));
-	} while (pid == -1 && errno == EINTR && gotsig[SIGINT - 1] == 0);
+	} while (pid == -1 && errno == EINTR && pendingsigs == 0);
 	if (pid <= 0)
 		return pid;
 	INTOFF;

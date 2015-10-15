@@ -1,4 +1,4 @@
-/*	$NetBSD: mont.c,v 1.1.1.1 2011/04/13 18:15:06 elric Exp $	*/
+/*	$NetBSD: mont.c,v 1.1.1.2 2014/04/24 12:45:39 pettai Exp $	*/
 
 /* tests the montgomery routines */
 #include <tommath.h>
@@ -15,21 +15,21 @@ int main(void)
    /* loop through various sizes */
    for (x = 4; x < 256; x++) {
        printf("DIGITS == %3ld...", x); fflush(stdout);
-       
+
        /* make up the odd modulus */
        mp_rand(&modulus, x);
        modulus.dp[0] |= 1;
-       
+
        /* now find the R value */
        mp_montgomery_calc_normalization(&R, &modulus);
        mp_montgomery_setup(&modulus, &mp);
-       
+
        /* now run through a bunch tests */
        for (y = 0; y < 1000; y++) {
            mp_rand(&p, x/2);        /* p = random */
            mp_mul(&p, &R, &pp);     /* pp = R * p */
            mp_montgomery_reduce(&pp, &modulus, mp);
-           
+
            /* should be equal to p */
            if (mp_cmp(&pp, &p) != MP_EQ) {
               printf("FAILURE!\n");
@@ -38,7 +38,7 @@ int main(void)
        }
        printf("PASSED\n");
     }
-    
+
     return 0;
 }
 
@@ -47,6 +47,6 @@ int main(void)
 
 
 
-/* Source: /cvs/libtom/libtommath/etc/mont.c,v */
-/* Revision: 1.2 */
-/* Date: 2005/05/05 14:38:47 */
+/* Source: /cvs/libtom/libtommath/etc/mont.c,v  */
+/* Revision: 1.2  */
+/* Date: 2005/05/05 14:38:47  */

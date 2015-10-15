@@ -1,4 +1,4 @@
-/*	$NetBSD: spawn.h,v 1.4 2013/04/27 21:35:25 joerg Exp $	*/
+/*	$NetBSD: spawn.h,v 1.5 2014/09/05 05:46:54 matt Exp $	*/
 
 /*-
  * Copyright (c) 2008 Ed Schouten <ed@FreeBSD.org>
@@ -47,8 +47,9 @@ struct posix_spawnattr {
 	sigset_t		sa_sigmask;
 };
 
+enum fae_action { FAE_OPEN, FAE_DUP2, FAE_CLOSE };
 typedef struct posix_spawn_file_actions_entry {
-	enum { FAE_OPEN, FAE_DUP2, FAE_CLOSE } fae_action;
+	enum fae_action fae_action;
 
 	int fae_fildes;
 	union {

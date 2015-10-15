@@ -31,13 +31,13 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)strstr.3	8.1 (Berkeley) 6/4/93
-.\"	$NetBSD: strstr.3,v 1.10 2006/10/16 08:48:45 wiz Exp $
+.\"	$NetBSD: strstr.3,v 1.12 2014/09/24 18:43:21 wiz Exp $
 .\"
-.Dd July 3, 2004
+.Dd September 24, 2014
 .Dt STRSTR 3
 .Os
 .Sh NAME
-.Nm strstr , strcasestr
+.Nm strstr , strcasestr , strnstr
 .Nd locate a substring in a string
 .Sh LIBRARY
 .Lb libc
@@ -47,6 +47,8 @@
 .Fn strstr "const char *big" "const char *little"
 .Ft char *
 .Fn strcasestr "const char *big" "const char *little"
+.Ft char *
+.Fn strnstr "const char *big" "const char *little" "size_t len"
 .Sh DESCRIPTION
 The
 .Fn strstr
@@ -61,6 +63,24 @@ The
 function is similar to
 .Fn strstr ,
 but ignores the case of both strings.
+The
+.Fn strnstr
+function
+locates the first occurrence of the NUL-terminated string
+.Fa little
+in the string
+.Fa big ,
+where not more than
+.Fa len
+characters are searched.
+Characters that appear after a
+.Ql \e0
+character are not searched.
+Since the
+.Fn strnstr
+function is a
+.Nx
+specific API, it should only be used when portability is not a concern.
 .Sh RETURN VALUES
 If
 .Fa little
@@ -107,3 +127,8 @@ The
 function
 conforms to
 .St -isoC .
+.Sh HISTORY
+The
+.Fn strnstr
+function originated in
+.Fx .

@@ -1,4 +1,4 @@
-/* $NetBSD: t_sleep.c,v 1.7 2013/04/12 17:13:55 christos Exp $ */
+/* $NetBSD: t_sleep.c,v 1.8 2014/07/15 14:56:34 gson Exp $ */
 
 /*-
  * Copyright (c) 2006 Frank Kardel
@@ -69,7 +69,7 @@
  * penultimate pass, and the KEVNT_TIMEOUT on the final pass.  We
  * set KEVNT_TIMEOUT just barely long enough to put it into the
  * last test pass, and set MAXSLEEP a couple seconds longer than
- * necessary,in order to avoid a QEMU bug which nearly doubles
+ * necessary, in order to avoid a QEMU bug which nearly doubles
  * some timers.
  */
 

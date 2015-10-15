@@ -1,4 +1,4 @@
-/*	$Vendor-Id: msec.c,v 1.10 2011/12/02 01:37:14 schwarze Exp $ */
+/*	Id: msec.c,v 1.10 2011/12/02 01:37:14 schwarze Exp  */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *

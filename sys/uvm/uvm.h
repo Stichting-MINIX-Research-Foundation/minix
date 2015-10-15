@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm.h,v 1.63 2012/02/02 19:43:08 tls Exp $	*/
+/*	$NetBSD: uvm.h,v 1.66 2015/04/13 22:04:44 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -59,9 +59,10 @@
 #include <uvm/uvm_pager.h>
 #include <uvm/uvm_pdaemon.h>
 #include <uvm/uvm_swap.h>
-#include <sys/rnd.h>
 
 #ifdef _KERNEL
+
+#include <sys/rndsource.h>
 
 /*
  * pull in VM_NFREELIST
@@ -83,9 +84,6 @@ struct uvm_cpu {
 	int pages[PGFL_NQUEUES];	/* total of pages in page_free */
 	u_int emap_gen;			/* emap generation number */
 
-	uintptr_t last_fltaddr;		/* last faulted address */
-	uintptr_t last_delta;		/* difference of last two flt addrs */
-	uintptr_t last_delta2;		/* difference of differences */
 	krndsource_t rs;		/* entropy source */
 };
 

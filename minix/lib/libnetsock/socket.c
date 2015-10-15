@@ -317,7 +317,7 @@ static int netsock_close(devminor_t minor)
 
 static int netsock_request(struct socket *sock, struct sock_req *req)
 {
-	const char *o;
+	const char *o __unused;
 
 	/*
 	 * If an operation is pending (blocking operation) or writing is

@@ -12,7 +12,7 @@ rem_4bit:
 .globl	gcm_ghash_4bit
 .align	32
 gcm_ghash_4bit:
-	save	%sp,-112,%sp
+	save	%sp,-192,%sp
 	ldub	[%i2+15],%l1
 	ldub	[%i0+15],%l2
 	ldub	[%i0+14],%l3
@@ -101,7 +101,7 @@ gcm_ghash_4bit:
 
 	add	%i2,16,%i2
 	cmp	%i2,%i3
-	be,pn	%icc,.Ldone
+	be,pn	%xcc,.Ldone
 	and	%o1,0xf,%l5
 
 	ldx	[%l6+%l0],%o3
@@ -147,7 +147,7 @@ gcm_ghash_4bit:
 .globl	gcm_gmult_4bit
 .align	32
 gcm_gmult_4bit:
-	save	%sp,-112,%sp
+	save	%sp,-192,%sp
 	ldub	[%i0+15],%l1
 	add	%i1,8,%l6
 

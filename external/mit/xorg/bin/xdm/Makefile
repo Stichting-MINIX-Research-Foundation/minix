@@ -42,7 +42,7 @@ LDADD+= -lpam ${PAM_STATIC_LDADD}
 DPADD+= ${LIBPAM} ${PAM_STATIC_DPADD}
 .endif
 
-SUBDIR+=	chooser config
+SUBDIR+=	 config
 TARGETS+=	configinstall
 
 .include "Makefile.xdm"

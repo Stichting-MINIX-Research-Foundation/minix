@@ -1,4 +1,4 @@
-.\"	$NetBSD: fopen.3,v 1.29 2012/11/15 03:50:36 christos Exp $
+.\"	$NetBSD: fopen.3,v 1.31 2015/07/15 19:08:43 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -120,8 +120,8 @@ extension.
 .It Sq x
 The letter
 .Sq x
-in the mode turns on exclusive open mode to the file (
-.Dv O_EXCL )
+in the mode turns on exclusive open mode to the file
+.Pq Dv O_EXCL
 which means that the file will not be created if it already exists.
 .El
 .Pp
@@ -196,6 +196,13 @@ standard text stream
 .Em stdin ,
 or
 .Em stdout ) .
+.Pp
+Input and output against the opened stream will be fully buffered, unless
+it refers to an interactive terminal device, or a different kind of buffering
+is specified in the environment.
+See
+.Xr setvbuf 3
+for additional details.
 .Sh RETURN VALUES
 Upon successful completion
 .Fn fopen ,

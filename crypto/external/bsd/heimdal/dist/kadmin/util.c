@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.2 2011/04/21 17:56:24 christos Exp $	*/
+/*	$NetBSD: util.c,v 1.3 2014/04/24 13:45:33 pettai Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2006 Kungliga Tekniska Högskolan
@@ -514,8 +514,8 @@ foreach_principal(const char *exp_str,
 		  const char *funcname,
 		  void *data)
 {
-    char **princs;
-    int num_princs;
+    char **princs = NULL;
+    int num_princs = 0;
     int i;
     krb5_error_code saved_ret = 0, ret = 0;
     krb5_principal princ_ent;

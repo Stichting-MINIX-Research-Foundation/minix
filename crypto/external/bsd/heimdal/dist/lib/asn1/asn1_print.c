@@ -1,4 +1,4 @@
-/*	$NetBSD: asn1_print.c,v 1.1.1.1 2011/04/13 18:14:39 elric Exp $	*/
+/*	$NetBSD: asn1_print.c,v 1.1.1.2 2014/04/24 12:45:28 pettai Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2005 Kungliga Tekniska Högskolan
@@ -43,9 +43,8 @@
 #include <err.h>
 #include <krb5/der.h>
 
-__RCSID("$NetBSD: asn1_print.c,v 1.1.1.1 2011/04/13 18:14:39 elric Exp $");
-
 static int indent_flag = 1;
+static int inner_flag = 0;
 
 static unsigned long indefinite_form_loop;
 static unsigned long indefinite_form_loop_max = 10000;
@@ -169,17 +168,39 @@ loop (unsigned char *buf, size_t len, int indent)
 	    }
 	    case UT_OctetString : {
 		heim_octet_string str;
-		int i;
-		unsigned char *uc;
+		size_t i;
 
 		ret = der_get_octet_string (buf, length, &str, NULL);
 		if (ret)
 		    errx (1, "der_get_octet_string: %s", error_message (ret));
 		printf ("(length %lu), ", (unsigned long)length);
-		uc = (unsigned char *)str.data;
-		for (i = 0; i < min(16,length); ++i)
-		    printf ("%02x", uc[i]);
-		printf ("\n");
+
+		if (inner_flag) {
+		    Der_class class;
+		    Der_type type;
+		    unsigned int tag;
+
+		    ret = der_get_tag(str.data, str.length,
+				      &class, &type, &tag, &sz);
+		    if (ret || sz > str.length ||
+			type != CONS || tag != UT_Sequence)
+			goto just_an_octet_string;
+
+		    printf("{\n");
+		    loop (str.data, str.length, indent + 2);
+		    for (i = 0; i < indent; ++i)
+			printf (" ");
+		    printf ("}\n");
+
+		} else {
+		    unsigned char *uc;
+
+		just_an_octet_string:
+		    uc = (unsigned char *)str.data;
+		    for (i = 0; i < min(16,length); ++i)
+			printf ("%02x", uc[i]);
+		    printf ("\n");
+		}
 		free (str.data);
 		break;
 	    }
@@ -243,7 +264,7 @@ loop (unsigned char *buf, size_t len, int indent)
 		ret = der_get_integer (buf, length, &num, NULL);
 		if (ret)
 		    errx (1, "der_get_enum: %s", error_message (ret));
-	
+
 		printf("%u\n", num);
 		break;
 	    }
@@ -297,6 +318,7 @@ static int version_flag;
 static int help_flag;
 struct getargs args[] = {
     { "indent", 0, arg_negative_flag, &indent_flag },
+    { "inner", 0, arg_flag, &inner_flag, "try to parse inner structures of OCTET STRING" },
     { "version", 0, arg_flag, &version_flag },
     { "help", 0, arg_flag, &help_flag }
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: salt.c,v 1.2 2011/04/14 18:00:30 elric Exp $	*/
+/*	$NetBSD: salt.c,v 1.3 2014/04/24 13:45:34 pettai Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2008 Kungliga Tekniska Högskolan
@@ -101,7 +101,7 @@ krb5_get_pw_salt(krb5_context context,
 		 krb5_salt *salt)
 {
     size_t len;
-    int i;
+    size_t i;
     krb5_error_code ret;
     char *p;
 

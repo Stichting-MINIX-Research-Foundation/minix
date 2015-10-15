@@ -1,4 +1,4 @@
-/*	$NetBSD: get_for_creds.c,v 1.1.1.1 2011/04/13 18:15:33 elric Exp $	*/
+/*	$NetBSD: get_for_creds.c,v 1.1.1.2 2014/04/24 12:45:50 pettai Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2004 Kungliga Tekniska Högskolan
@@ -227,7 +227,7 @@ krb5_get_forwarded_creds (krb5_context	    context,
 	if (!noaddr)
 	    paddrs = &addrs;
     }
-	
+
     /*
      * If tickets have addresses, get the address of the remote host.
      */
@@ -243,7 +243,7 @@ krb5_get_forwarded_creds (krb5_context	    context,
 				  hostname, gai_strerror(ret));
 	    return ret2;
 	}
-	
+
 	ret = add_addrs (context, &addrs, ai);
 	freeaddrinfo (ai);
 	if (ret)
@@ -289,9 +289,9 @@ krb5_get_forwarded_creds (krb5_context	    context,
     if (auth_context->flags & KRB5_AUTH_CONTEXT_DO_TIME) {
 	krb5_timestamp sec;
 	int32_t usec;
-	
+
 	krb5_us_timeofday (context, &sec, &usec);
-	
+
 	ALLOC(enc_krb_cred_part.timestamp, 1);
 	if (enc_krb_cred_part.timestamp == NULL) {
 	    ret = ENOMEM;
@@ -420,7 +420,7 @@ krb5_get_forwarded_creds (krb5_context	    context,
 	 * used. Heimdal 0.7.2 and newer have code to try both in the
 	 * receiving end.
 	 */
-	
+
 	ret = krb5_crypto_init(context, auth_context->keyblock, 0, &crypto);
 	if (ret) {
 	    free(buf);

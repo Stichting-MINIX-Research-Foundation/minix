@@ -1,4 +1,4 @@
-/*	$NetBSD: bn_mp_exptmod.c,v 1.1.1.1 2011/04/13 18:14:54 elric Exp $	*/
+/*	$NetBSD: bn_mp_exptmod.c,v 1.1.1.2 2014/04/24 12:45:31 pettai Exp $	*/
 
 #include <tommath.h>
 #ifdef BN_MP_EXPTMOD_C
@@ -61,7 +61,7 @@ int mp_exptmod (mp_int * G, mp_int * X, mp_int * P, mp_int * Y)
      err = mp_exptmod(&tmpG, &tmpX, P, Y);
      mp_clear_multi(&tmpG, &tmpX, NULL);
      return err;
-#else 
+#else
      /* no invmod */
      return MP_VAL;
 #endif
@@ -88,7 +88,7 @@ int mp_exptmod (mp_int * G, mp_int * X, mp_int * P, mp_int * Y)
      dr = mp_reduce_is_2k(P) << 1;
   }
 #endif
-    
+
   /* if the modulus is odd or dr != 0 use the montgomery method */
 #ifdef BN_MP_EXPTMOD_FAST_C
   if (mp_isodd (P) == 1 || dr !=  0) {
@@ -109,6 +109,6 @@ int mp_exptmod (mp_int * G, mp_int * X, mp_int * P, mp_int * Y)
 
 #endif
 
-/* Source: /cvs/libtom/libtommath/bn_mp_exptmod.c,v */
-/* Revision: 1.5 */
-/* Date: 2006/12/28 01:25:13 */
+/* Source: /cvs/libtom/libtommath/bn_mp_exptmod.c,v  */
+/* Revision: 1.5  */
+/* Date: 2006/12/28 01:25:13  */

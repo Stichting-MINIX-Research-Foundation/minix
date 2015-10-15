@@ -11,8 +11,7 @@ AC_CACHE_CHECK(how to format man pages,ac_cv_sys_man_format,
 .Dt CONFTEST 1
 .Sh NAME
 .Nm conftest
-.Nd
-foobar
+.Nd foobar
 END
 
 if test "$NROFF" ; then

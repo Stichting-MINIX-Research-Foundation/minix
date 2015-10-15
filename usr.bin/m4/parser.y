@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: parser.y,v 1.2 2009/10/26 21:11:28 christos Exp $ */
+/* $NetBSD: parser.y,v 1.3 2015/01/04 18:31:09 joerg Exp $ */
 /* $OpenBSD: parser.y,v 1.6 2008/08/21 21:00:14 espie Exp $ */
 /*
  * Copyright (c) 2004 Marc Espie <espie@cvs.openbsd.org>
@@ -19,7 +19,8 @@
 #if HAVE_NBTOOL_CONFIG_H
 #include "nbtool_config.h"
 #endif
-__RCSID("$NetBSD: parser.y,v 1.2 2009/10/26 21:11:28 christos Exp $");
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: parser.y,v 1.3 2015/01/04 18:31:09 joerg Exp $");
 #include <stdint.h>
 #define YYSTYPE	int32_t
 extern int32_t end_result;

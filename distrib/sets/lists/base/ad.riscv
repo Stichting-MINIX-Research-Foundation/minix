@@ -1,0 +1,3 @@
+# $NetBSD: ad.riscv,v 1.21 2015/07/03 16:43:50 matt Exp $
+./libexec/ld.elf_so-rv32			base-compat-shlib	compat,pic,arch64
+./usr/libexec/ld.elf_so-rv32			base-compat-shlib	compat,pic,arch64

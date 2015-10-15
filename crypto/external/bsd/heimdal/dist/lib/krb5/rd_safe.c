@@ -1,4 +1,4 @@
-/*	$NetBSD: rd_safe.c,v 1.1.1.1 2011/04/13 18:15:37 elric Exp $	*/
+/*	$NetBSD: rd_safe.c,v 1.1.1.2 2014/04/24 12:45:51 pettai Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2003 Kungliga Tekniska Högskolan
@@ -43,7 +43,7 @@ verify_checksum(krb5_context context,
     krb5_error_code ret;
     u_char *buf;
     size_t buf_size;
-    size_t len;
+    size_t len = 0;
     Checksum c;
     krb5_crypto crypto;
     krb5_keyblock *key;

@@ -1,6 +1,6 @@
 
 #------------------------------------------------------------------------------
-# $File: epoc,v 1.8 2012/06/16 14:43:36 christos Exp $
+# $File: epoc,v 1.9 2013/12/21 14:28:15 christos Exp $
 # EPOC : file(1) magic for EPOC documents [Psion Series 5/Osaris/Geofox 1]
 # Stefan Praszalowicz <hpicollo@worldnet.fr> and Peter Breitenlohner <peb@mppmu.mpg.de>
 # Useful information for improving this file can be found at:
@@ -30,8 +30,8 @@
 >4	lelong		0x10000074	OPL application
 !:mime application/x-epoc-app
 >4	lelong		0x1000008A	exported multi-bitmap image
->4	lelong		0x1000016D	
->>8	lelong		0x10000088	Comms names
+>4	lelong		0x1000016D
+>>8	lelong		0x10000087	Comms names
 
 0	lelong		0x10000041	Psion Series 5 ROM multi-bitmap image
 

@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc,v 1.81 2013/08/11 22:29:02 joerg Exp $
+# $NetBSD: md.sparc,v 1.83 2014/08/06 12:15:01 martin Exp $
 ./lib/libsparc_v8.so.0				base-sys-shlib		dynamicroot,pic
 ./lib/libsparc_v8.so.0.0			base-sys-shlib		dynamicroot,pic
 ./sbin/edlabel					base-sysutil-root	obsolete

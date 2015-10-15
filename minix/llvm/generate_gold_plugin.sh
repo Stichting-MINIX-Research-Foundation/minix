@@ -26,7 +26,7 @@ cd  ${OBJ_LLVM}
 
 ${LLVMSRCDIR}/llvm/configure \
     --enable-targets=x86 \
-    --with-c-include-dirs=/usr/include/clang-3.4:/usr/include \
+    --with-c-include-dirs=/usr/include/clang-3.6:/usr/include \
     --disable-timestamps \
     --prefix=/usr \
     --sysconfdir=/etc/llvm \

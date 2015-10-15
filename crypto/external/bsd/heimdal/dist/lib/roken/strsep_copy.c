@@ -1,4 +1,4 @@
-/*	$NetBSD: strsep_copy.c,v 1.1.1.1 2011/04/13 18:15:43 elric Exp $	*/
+/*	$NetBSD: strsep_copy.c,v 1.1.1.2 2014/04/24 12:45:52 pettai Exp $	*/
 
 /*
  * Copyright (c) 2000, 2002 Kungliga Tekniska Högskolan
@@ -51,7 +51,7 @@ strsep_copy(const char **stringp, const char *delim, char *buf, size_t len)
     if(save == NULL)
 	return -1;
     *stringp = *stringp + strcspn(*stringp, delim);
-    l = min(len, *stringp - save);
+    l = min(len, (size_t)(*stringp - save));
     if(len > 0) {
 	memcpy(buf, save, l);
 	buf[l] = '\0';

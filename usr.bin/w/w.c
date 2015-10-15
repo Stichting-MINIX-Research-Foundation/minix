@@ -1,4 +1,4 @@
-/*	$NetBSD: w.c,v 1.77 2013/09/09 19:20:38 christos Exp $	*/
+/*	$NetBSD: w.c,v 1.82 2014/12/22 15:24:14 dennis Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)w.c	8.6 (Berkeley) 6/30/94";
 #else
-__RCSID("$NetBSD: w.c,v 1.77 2013/09/09 19:20:38 christos Exp $");
+__RCSID("$NetBSD: w.c,v 1.82 2014/12/22 15:24:14 dennis Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,7 +55,6 @@ __RCSID("$NetBSD: w.c,v 1.77 2013/09/09 19:20:38 christos Exp $");
 #include <sys/stat.h>
 #include <sys/sysctl.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 
@@ -87,10 +86,10 @@ __RCSID("$NetBSD: w.c,v 1.77 2013/09/09 19:20:38 christos Exp $");
 
 #include "extern.h"
 
-#ifdef __minix
+#if defined(__minix)
 /* MINIX3 note: please see this header for information about the port. */
 #include "minix_proc.h"
-#endif /* __minix */
+#endif /* defined(__minix) */
 
 struct timeval	boottime;
 struct winsize	ws;
@@ -125,10 +124,10 @@ struct	entry {
 
 static void	pr_args(struct kinfo_proc2 *);
 static void	pr_header(time_t *, int);
-#ifndef __minix
+#if !defined(__minix)
 static int	proc_compare_wrapper(const struct kinfo_proc2 *,
     const struct kinfo_proc2 *);
-#endif /* !__minix */
+#endif /* !defined(__minix) */
 #if defined(SUPPORT_UTMP) || defined(SUPPORT_UTMPX)
 static int	ttystat(const char *, struct stat *);
 static void	process(struct entry *);
@@ -145,9 +144,9 @@ main(int argc, char **argv)
 	char *memf, *nlistf, *usrnp;
 	const char *options;
 	time_t then;
-#ifndef __minix
+#if !defined(__minix)
 	size_t len;
-#endif /* !__minix */
+#endif /* !defined(__minix) */
 #ifdef SUPPORT_UTMP
 	struct utmp *ut;
 #endif
@@ -155,9 +154,9 @@ main(int argc, char **argv)
 	struct utmpx *utx;
 #endif
 	const char *progname;
-#ifndef __minix
+#if !defined(__minix)
 	char errbuf[_POSIX2_LINE_MAX];
-#endif /* !__minix */
+#endif /* !defined(__minix) */
 
 	setprogname(argv[0]);
 
@@ -204,7 +203,7 @@ main(int argc, char **argv)
 
 	use_sysctl = (memf == NULL && nlistf == NULL);
 
-#ifndef __minix
+#if !defined(__minix)
 	if ((kd = kvm_openfiles(nlistf, memf, NULL,
 	    memf == NULL ? KVM_NO_FILES : O_RDONLY, errbuf)) == NULL)
 		errx(1, "%s", errbuf);
@@ -212,16 +211,16 @@ main(int argc, char **argv)
 	if (!use_sysctl)
 		errx(1, "The -M and -N flags are not supported on MINIX3.");
 	kd = NULL;
-#endif /* __minix */
+#endif /* !defined(__minix) */
 
 	(void)time(&now);
 
 	if (use_sysctl) {
-#ifndef __minix
+#if !defined(__minix)
 		len = sizeof(curtain);
 		if (sysctlbyname("security.curtain", &curtain, &len, 
 		    NULL, 0) == -1)
-#endif /* !__minix */
+#endif /* !defined(__minix) */
 			curtain = 0;
 	}
 
@@ -241,15 +240,27 @@ main(int argc, char **argv)
 		if (utx->ut_type != USER_PROCESS)
 			continue;
 		++nusers;
+
+#ifndef SUPPORT_UTMP
+		if (wcmd == 0)
+			continue;
+#endif	/* !SUPPORT_UTMP */
+
 		if (sel_user &&
 		    strncmp(utx->ut_name, sel_user, sizeof(utx->ut_name)) != 0)
 			continue;
 		if ((ep = calloc(1, sizeof(struct entry))) == NULL)
 			err(1, NULL);
-		(void)memcpy(ep->name, utx->ut_name, sizeof(utx->ut_name));
 		(void)memcpy(ep->line, utx->ut_line, sizeof(utx->ut_line));
-		ep->name[sizeof(utx->ut_name)] = '\0';
 		ep->line[sizeof(utx->ut_line)] = '\0';
+		*nextp = ep;
+		nextp = &(ep->next);
+
+		if (wcmd == 0)
+			continue;
+
+		(void)memcpy(ep->name, utx->ut_name, sizeof(utx->ut_name));
+		ep->name[sizeof(utx->ut_name)] = '\0';
 		if (!nflag || getnameinfo((struct sockaddr *)&utx->ut_ss,
 		    utx->ut_ss.ss_len, ep->host, sizeof(ep->host), NULL, 0,
 		    NI_NUMERICHOST) != 0) {
@@ -261,10 +272,7 @@ main(int argc, char **argv)
 		ep->type[0] = 'x';
 		ep->tv = utx->ut_tv;
 		ep->pid = utx->ut_pid;
-		*nextp = ep;
-		nextp = &(ep->next);
-		if (wcmd != 0)
-			process(ep);
+		process(ep);
 	}
 #endif
 
@@ -287,6 +295,10 @@ main(int argc, char **argv)
 			continue;
 
 		++nusers;
+
+		if (wcmd == 0)
+			continue;
+
 		if ((ep = calloc(1, sizeof(struct entry))) == NULL)
 			err(1, NULL);
 		(void)memcpy(ep->name, ut->ut_name, sizeof(ut->ut_name));
@@ -299,8 +311,7 @@ main(int argc, char **argv)
 		ep->tv.tv_sec = ut->ut_time;
 		*nextp = ep;
 		nextp = &(ep->next);
-		if (wcmd != 0)
-			process(ep);
+		process(ep);
 	}
 #endif
 
@@ -422,11 +433,11 @@ main(int argc, char **argv)
 				continue;
 			}
 		}
-#ifndef __minix
+#if !defined(__minix)
 		usrnp = (kp == NULL) ? ep->name : kp->p_login;
 #else
 		usrnp = ep->name; /* TODO: implement getlogin/setlogin */
-#endif /* __minix */
+#endif /* !defined(__minix) */
 		(void)printf("%-*s %-7.7s %-*.*s ",
 		    maxname, usrnp, ep->line,
 		    maxhost, maxhost, ep->host);
@@ -450,14 +461,10 @@ pr_args(struct kinfo_proc2 *kp)
 	left = argwidth;
 	argv = kvm_getargv2(kd, kp, (argwidth < 0) ? 0 : argwidth);
 	if (argv == 0) {
-		if (kp->p_comm == 0) {
-			goto nothing;
-		} else {
-			fmt_putc('(', &left);
-			fmt_puts((char *)kp->p_comm, &left);
-			fmt_putc(')', &left);
-			return;
-		}
+		fmt_putc('(', &left);
+		fmt_puts((char *)kp->p_comm, &left);
+		fmt_putc(')', &left);
+		return;
 	}
 	while (*argv) {
 		fmt_puts(*argv, &left);
@@ -475,12 +482,12 @@ pr_header(time_t *nowp, int nusers)
 	double avenrun[3];
 	time_t uptime;
 	int days, hrs, mins;
-#ifndef __minix
+#if !defined(__minix)
 	int mib[2];
 	size_t size, i;
 #else
 	size_t i;
-#endif /* __minix */
+#endif /* !defined(__minix) */
 	char buf[256];
 
 	/*
@@ -497,7 +504,7 @@ pr_header(time_t *nowp, int nusers)
 	 * Print how long system has been up.
 	 * (Found by looking getting "boottime" from the kernel)
 	 */
-#ifndef __minix
+#if !defined(__minix)
 	mib[0] = CTL_KERN;
 	mib[1] = KERN_BOOTTIME;
 	size = sizeof(boottime);
@@ -506,7 +513,7 @@ pr_header(time_t *nowp, int nusers)
 		uptime = now - boottime.tv_sec;
 #else
 	if (minix_getuptime(&uptime) != -1) {
-#endif /* __minix */
+#endif /* !defined(__minix) */
 		uptime += 30;
 		if (uptime > SECSPERMIN) {
 			days = uptime / SECSPERDAY;
@@ -620,7 +627,7 @@ process(struct entry *ep)
 }
 #endif
 
-#ifndef __minix
+#if !defined(__minix)
 static int
 proc_compare_wrapper(const struct kinfo_proc2 *p1,
     const struct kinfo_proc2 *p2)
@@ -641,7 +648,7 @@ proc_compare_wrapper(const struct kinfo_proc2 *p1,
 
 	return proc_compare(p1, l1, p2, l2);
 }
-#endif /* !__minix */
+#endif /* !defined(__minix) */
 
 static void
 fixhost(struct entry *ep)

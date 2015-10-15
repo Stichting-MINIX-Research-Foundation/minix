@@ -57,7 +57,7 @@ _kdc_db_fetch (
 	krb5_kdc_configuration */*config*/,
 	krb5_const_principal /*principal*/,
 	unsigned /*flags*/,
-	krb5int32 */*kvno_ptr*/,
+	krb5uint32 */*kvno_ptr*/,
 	HDB **/*db*/,
 	hdb_entry_ex **/*h*/);
 
@@ -98,9 +98,12 @@ _kdc_encode_reply (
 krb5_error_code
 _kdc_find_etype (
 	krb5_context /*context*/,
-	const hdb_entry_ex */*princ*/,
+	krb5_boolean /*use_strongest_session_key*/,
+	krb5_boolean /*is_preauth*/,
+	hdb_entry_ex */*princ*/,
 	krb5_enctype */*etypes*/,
 	unsigned /*len*/,
+	krb5_enctype */*ret_enctype*/,
 	Key **/*ret_key*/);
 
 const PA_DATA*
@@ -159,6 +162,7 @@ krb5_error_code
 _kdc_pac_verify (
 	krb5_context /*context*/,
 	const krb5_principal /*client_principal*/,
+	const krb5_principal /*delegated_proxy_principal*/,
 	hdb_entry_ex */*client*/,
 	hdb_entry_ex */*server*/,
 	hdb_entry_ex */*krbtgt*/,

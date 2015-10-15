@@ -1,5 +1,3 @@
-/*	$NetBSD: tables_shared.h,v 1.1.1.1 2009/10/26 00:27:05 christos Exp $	*/
-
 #ifdef FLEX_SCANNER
 /*
 dnl  tables_shared.h - tables serialization header

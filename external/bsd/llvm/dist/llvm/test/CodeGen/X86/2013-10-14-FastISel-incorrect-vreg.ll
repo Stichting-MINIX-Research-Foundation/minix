@@ -3,10 +3,10 @@
 ; During X86 fastisel, the address of indirect call was resolved
 ; through bitcast, ptrtoint, and inttoptr instructions. This is valid
 ; only if the related instructions are in that same basic block, otherwise
-; we may reference variables that were not live accross basic blocks
+; we may reference variables that were not live across basic blocks
 ; resulting in undefined virtual registers.
 ;
-; In this example, this is illustrated by a the spill/reload of the
+; In this example, this is illustrated by a spill/reload of the
 ; LOADED_PTR_SLOT.
 ;
 ; Before this patch, the compiler was accessing two different spill
@@ -25,7 +25,7 @@
 ; CHECK: movq [[ARG2_SLOT]], %rdi
 ; Load the second argument
 ; CHECK: movq [[ARG2_SLOT]], %rsi
-; Load the thrid argument
+; Load the third argument
 ; CHECK: movq [[ARG2_SLOT]], %rdx
 ; Load the function pointer.
 ; CHECK: movq [[LOADED_PTR_SLOT]], [[FCT_PTR:%[a-z]+]]
@@ -41,7 +41,7 @@ entry:
     i1 false, label %label_end
   ]
 default:
-  unreachable
+  br label %label_end
 
 label_true:
   br label %label_end
@@ -64,7 +64,7 @@ label_end:
 ; CHECK: movq [[ARG2_SLOT]], %rdi
 ; Load the second argument
 ; CHECK: movq [[ARG2_SLOT]], %rsi
-; Load the thrid argument
+; Load the third argument
 ; CHECK: movq [[ARG2_SLOT]], %rdx
 ; Load the function pointer.
 ; CHECK: movq [[LOADED_PTR_SLOT]], [[FCT_PTR:%[a-z]+]]
@@ -80,7 +80,7 @@ entry:
     i1 false, label %label_end
   ]
 default:
-  unreachable
+  br label %label_end
 
 label_true:
   br label %label_end
@@ -103,7 +103,7 @@ label_end:
 ; CHECK: movq [[ARG2_SLOT]], %rdi
 ; Load the second argument
 ; CHECK: movq [[ARG2_SLOT]], %rsi
-; Load the thrid argument
+; Load the third argument
 ; CHECK: movq [[ARG2_SLOT]], %rdx
 ; Load the function pointer.
 ; CHECK: movq [[LOADED_PTR_SLOT]], [[FCT_PTR:%[a-z]+]]
@@ -119,7 +119,7 @@ entry:
     i1 false, label %label_end
   ]
 default:
-  unreachable
+  br label %label_end
 
 label_true:
   br label %label_end

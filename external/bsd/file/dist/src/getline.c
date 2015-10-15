@@ -1,6 +1,6 @@
-/*	$NetBSD: getline.c,v 1.1.1.3 2013/03/23 15:49:15 christos Exp $	*/
+/*	$NetBSD: getline.c,v 1.1.1.6 2015/01/02 20:34:27 christos Exp $	*/
 
-/*	NetBSD: fgetln.c,v 1.9 2008/04/29 06:53:03 martin Exp 	*/
+/*	NetBSD: getline.c,v 1.2 2014/09/16 17:23:50 christos Exp 	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -54,10 +54,14 @@ getdelim(char **buf, size_t *bufsiz, int delimiter, FILE *fp)
 	for (ptr = *buf, eptr = *buf + *bufsiz;;) {
 		int c = fgetc(fp);
 		if (c == -1) {
-			if (feof(fp))
-				return ptr == *buf ? -1 : ptr - *buf;
-			else
-				return -1;
+			if (feof(fp)) {
+				ssize_t diff = (ssize_t)(ptr - *buf);
+				if (diff != 0) {
+					*ptr = '\0';
+					return diff;
+				}
+			}
+			return -1;
 		}
 		*ptr++ = c;
 		if (c == delimiter) {
@@ -78,7 +82,7 @@ getdelim(char **buf, size_t *bufsiz, int delimiter, FILE *fp)
 	}
 }
 
-ssize_t
+public ssize_t
 getline(char **buf, size_t *bufsiz, FILE *fp)
 {
 	return getdelim(buf, bufsiz, '\n', fp);
@@ -95,7 +99,7 @@ main(int argc, char *argv[])
 	size_t n = 0;
 
 	while ((len = getline(&p, &n, stdin)) != -1)
-		(void)printf("%zd %s", len, p);
+		(void)printf("%" SIZE_T_FORMAT "d %s", len, p);
 	free(p);
 	return 0;
 }

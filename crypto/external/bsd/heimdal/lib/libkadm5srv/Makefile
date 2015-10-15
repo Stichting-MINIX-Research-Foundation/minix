@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2013/09/11 23:04:09 joerg Exp $
+# $NetBSD: Makefile,v 1.3 2014/11/24 10:49:27 pettai Exp $
 
 USE_FORT?= yes	# network protocol library
 
@@ -47,6 +47,12 @@ SRCS =				\
 	set_modifier.c
 
 MAN= kadm5_pwcheck.3
+
+MLINKS= \
+        kadm5_pwcheck.3      kadm5_setup_passwd_quality_check.3        \
+        kadm5_pwcheck.3      kadm5_add_passwd_quality_verifier.3        \
+        kadm5_pwcheck.3      kadm5_check_password_quality.3        \
+        kadm5_pwcheck.3      krb5_pwcheck.3        \
 
 .include <${HEIMBASE}/Makefile.rules.inc>
 .include <bsd.lib.mk>

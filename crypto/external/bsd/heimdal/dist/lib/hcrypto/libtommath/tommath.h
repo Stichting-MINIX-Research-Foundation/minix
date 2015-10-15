@@ -1,4 +1,4 @@
-/*	$NetBSD: tommath.h,v 1.1.1.1 2011/04/13 18:14:57 elric Exp $	*/
+/*	$NetBSD: tommath.h,v 1.1.1.2 2014/04/24 12:45:31 pettai Exp $	*/
 
 /* LibTomMath, multiple-precision integer library -- Tom St Denis
  *
@@ -48,7 +48,7 @@ extern "C" {
 
 
 /* detect 64-bit mode if possible */
-#if defined(__x86_64__) 
+#if defined(__x86_64__)
    #if !(defined(MP_64BIT) && defined(MP_16BIT) && defined(MP_8BIT))
       #define MP_64BIT
    #endif
@@ -84,7 +84,7 @@ extern "C" {
 
    /* this is to make porting into LibTomCrypt easier :-) */
 #ifndef CRYPT
-   #if defined(_MSC_VER) || defined(__BORLANDC__) 
+   #if defined(_MSC_VER) || defined(__BORLANDC__)
       typedef unsigned __int64   ulong64;
       typedef signed __int64     long64;
    #else
@@ -96,20 +96,20 @@ extern "C" {
    typedef unsigned long      mp_digit;
    typedef ulong64            mp_word;
 
-#ifdef MP_31BIT   
+#ifdef MP_31BIT
    /* this is an extension that uses 31-bit digits */
    #define DIGIT_BIT          31
 #else
    /* default case is 28-bit digits, defines MP_28BIT as a handy macro to test */
    #define DIGIT_BIT          28
    #define MP_28BIT
-#endif   
+#endif
 #endif
 
 /* define heap macros */
 #ifndef CRYPT
    /* default to libc stuff */
-   #ifndef XMALLOC 
+   #ifndef XMALLOC
        #define XMALLOC  malloc
        #define XFREE    free
        #define XREALLOC realloc
@@ -171,7 +171,7 @@ extern int KARATSUBA_MUL_CUTOFF,
       #define MP_PREC                 32     /* default digits of precision */
    #else
       #define MP_PREC                 8      /* default digits of precision */
-   #endif   
+   #endif
 #endif
 
 /* size of comba arrays, should be at least 2 * 2**(BITS_PER_WORD - BITS_PER_DIGIT*2) */
@@ -475,7 +475,7 @@ int mp_prime_fermat(mp_int *a, mp_int *b, int *result);
 int mp_prime_miller_rabin(mp_int *a, mp_int *b, int *result);
 
 /* This gives [for a given bit size] the number of trials required
- * such that Miller-Rabin gives a prob of failure lower than 2^-96 
+ * such that Miller-Rabin gives a prob of failure lower than 2^-96
  */
 int mp_prime_rabin_miller_trials(int size);
 
@@ -496,7 +496,7 @@ int mp_prime_is_prime(mp_int *a, int t, int *result);
 int mp_prime_next_prime(mp_int *a, int t, int bbs_style);
 
 /* makes a truly random prime of a given size (bytes),
- * call with bbs = 1 if you want it to be congruent to 3 mod 4 
+ * call with bbs = 1 if you want it to be congruent to 3 mod 4
  *
  * You have to supply a callback which fills in a buffer with random bytes.  "dat" is a parameter you can
  * have passed to the callback (e.g. a state or something).  This function doesn't use "dat" itself
@@ -509,7 +509,7 @@ int mp_prime_next_prime(mp_int *a, int t, int bbs_style);
 /* makes a truly random prime of a given size (bits),
  *
  * Flags are as follows:
- * 
+ *
  *   LTM_PRIME_BBS      - make prime congruent to 3 mod 4
  *   LTM_PRIME_SAFE     - make sure (p-1)/2 is prime as well (implies LTM_PRIME_BBS)
  *   LTM_PRIME_2MSB_OFF - make the 2nd highest bit zero
@@ -589,6 +589,6 @@ extern const char *mp_s_rmap;
 #endif
 
 
-/* Source: /cvs/libtom/libtommath/tommath.h,v */
-/* Revision: 1.8 */
-/* Date: 2006/03/31 14:18:44 */
+/* Source: /cvs/libtom/libtommath/tommath.h,v  */
+/* Revision: 1.8  */
+/* Date: 2006/03/31 14:18:44  */

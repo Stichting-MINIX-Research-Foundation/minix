@@ -1,4 +1,4 @@
-/*	$NetBSD: n-fold.c,v 1.1.1.1 2011/04/13 18:15:36 elric Exp $	*/
+/*	$NetBSD: n-fold.c,v 1.1.1.2 2014/04/24 12:45:50 pettai Exp $	*/
 
 /*
  * Copyright (c) 1999 Kungliga Tekniska Högskolan
@@ -66,7 +66,7 @@ rr13(unsigned char *buf, size_t len)
 	    /* byte offset and shift count */
 	    b1 = bb / 8;
 	    s1 = bb % 8;
-	
+
 	    if(bb + 8 > bytes * 8)
 		/* watch for wraparound */
 		s2 = (len + 8 - s1) % 8;

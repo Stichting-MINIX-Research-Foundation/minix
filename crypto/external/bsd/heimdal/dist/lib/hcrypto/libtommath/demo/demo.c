@@ -1,4 +1,4 @@
-/*	$NetBSD: demo.c,v 1.1.1.1 2011/04/13 18:15:06 elric Exp $	*/
+/*	$NetBSD: demo.c,v 1.1.1.2 2014/04/24 12:45:39 pettai Exp $	*/
 
 #include <time.h>
 
@@ -71,7 +71,7 @@ int main(void)
    srand(time(NULL));
 
 #if 0
-   // test montgomery 
+   // test montgomery
    printf("Testing montgomery...\n");
    for (i = 1; i < 10; i++) {
       printf("Testing digit size: %d\n", i);
@@ -83,7 +83,7 @@ int main(void)
          mp_montgomery_calc_normalization(&b, &a);
          mp_montgomery_setup(&a, &mp);
 
-         // now test a random reduction 
+         // now test a random reduction
          for (ix = 0; ix < 100; ix++) {
              mp_rand(&c, 1 + abs(rand()) % (2*i));
              mp_copy(&c, &d);
@@ -93,7 +93,7 @@ int main(void)
              mp_montgomery_reduce(&c, &a, mp);
              mp_mulmod(&c, &b, &a, &c);
 
-             if (mp_cmp(&c, &d) != MP_EQ) { 
+             if (mp_cmp(&c, &d) != MP_EQ) {
 printf("d = e mod a, c = e MOD a\n");
 mp_todecimal(&a, buf); printf("a = %s\n", buf);
 mp_todecimal(&e, buf); printf("e = %s\n", buf);
@@ -737,6 +737,6 @@ printf("compare no compare!\n"); exit(EXIT_FAILURE); }
    return 0;
 }
 
-/* Source: /cvs/libtom/libtommath/demo/demo.c,v */
-/* Revision: 1.3 */
-/* Date: 2005/06/24 11:32:07 */
+/* Source: /cvs/libtom/libtommath/demo/demo.c,v  */
+/* Revision: 1.3  */
+/* Date: 2005/06/24 11:32:07  */

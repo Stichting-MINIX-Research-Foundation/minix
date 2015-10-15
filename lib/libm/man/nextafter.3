@@ -1,4 +1,4 @@
-.\" $NetBSD: nextafter.3,v 1.4 2011/09/18 05:33:14 jruoho Exp $
+.\" $NetBSD: nextafter.3,v 1.5 2015/09/13 10:58:30 he Exp $
 .\"
 .\" Copyright (c) 2011 Jukka Ruohonen <jruohonen@iki.fi>
 .\" All rights reserved.
@@ -24,18 +24,18 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 18, 2011
+.Dd September 13, 2015
 .Dt NEXTAFTER 3
 .Os
 .Sh NAME
 .Nm nextafter ,
 .Nm nextafterf ,
 .Nm nextafterl ,
-.Nm nexttoward
+.Nm nexttoward ,
+.Nm nexttowardf
 .\"
 .\" XXX: Not yet implemented.
 .\"
-.\" .Nm nexttowardf ,
 .\" .Nm nexttowardl
 .\"
 .Nd next representable floating-point number
@@ -51,6 +51,8 @@
 .Fn nextafterl "long double x" "long double y"
 .Ft double
 .Fn nexttoward "double x" "long double y"
+.Ft float
+.Fn nexttowardf "float x" "long double y"
 .Sh DESCRIPTION
 The
 .Fn nextafter ,
@@ -79,7 +81,9 @@ The three functions differ only in the type of the return value and
 .Pp
 The
 .Fn nexttoward
-function is equivalent to the
+and
+.Fn nexttowardf
+functions are equivalent to the
 .Fn nextafter
 family of functions with two exceptions:
 .Bl -enum -offset indent

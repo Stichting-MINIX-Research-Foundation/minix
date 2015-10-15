@@ -1,4 +1,4 @@
-.\"	$NetBSD: libsaslc.3,v 1.15 2013/05/14 15:33:21 elric Exp $
+.\"	$NetBSD: libsaslc.3,v 1.16 2015/07/13 13:57:44 shm Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 23, 2011
+.Dd May 3, 2015
 .Dt LIBSASLC 3
 .Os
 .Sh NAME
@@ -240,7 +240,7 @@ and
 functions are used to provide the integrity
 .Pq Qq auth-int
 and  confidentiality
-.Pq Qq auth-int
+.Pq Qq auth-conf
 layers for mechanisms that provide them.
 They encode and, respectively, decode
 .Ar inlen
@@ -322,7 +322,7 @@ files, while the session dictionary is loaded by the caller via
 .Pp
 The configuration file
 .Pa <cfgpath>/<appname>/saslc.conf
-is used for the configuration context.
+is used for the context configuration.
 The
 .Pa <cfgpath>/<appname>/mech/<mechanism>.conf
 file is used for the mechanism configuration.

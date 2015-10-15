@@ -1,4 +1,4 @@
-/* $NetBSD: dbsym.c,v 1.3 2012/03/19 09:14:15 wiz Exp $ */
+/* $NetBSD: dbsym.c,v 1.4 2014/08/17 19:12:59 joerg Exp $ */
 
 /*
  * Copyright (c) 2001 Simon Burge (for Wasabi Systems)
@@ -39,7 +39,7 @@
 __COPYRIGHT("@(#) Copyright (c) 1996 Christopher G. Demetriou.\
   Copyright 2001 Simon Burge.\
   All rights reserved.");
-__RCSID("$NetBSD: dbsym.c,v 1.3 2012/03/19 09:14:15 wiz Exp $");
+__RCSID("$NetBSD: dbsym.c,v 1.4 2014/08/17 19:12:59 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -76,6 +76,7 @@ int	load_symtab(bfd *, int fd, char **, u_int32_t *);
 
 int	verbose;
 int	printsize;
+int	printsize2;
 
 int
 main(int argc, char **argv)
@@ -91,7 +92,7 @@ main(int argc, char **argv)
 	setprogname(argv[0]);
 
 	bfdname = NULL;
-	while ((ch = getopt(argc, argv, "b:pv")) != -1)
+	while ((ch = getopt(argc, argv, "b:Ppv")) != -1)
 		switch (ch) {
 		case 'b':
 			bfdname = optarg;
@@ -101,6 +102,9 @@ main(int argc, char **argv)
 			break;
 		case 'p':
 			printsize = 1;
+			break;
+		case 'P':
+			printsize2 = 1;
 			break;
 		case '?':
 		default:
@@ -158,6 +162,10 @@ main(int argc, char **argv)
 		printf("%d %d\n", symtabsize, symtab_space);
 		goto done;
 	}
+	if (printsize2) {
+		printf("%d\n", symtabsize);
+		goto done;
+	}
 
 	if (symtabsize > symtab_space)
 		errx(1, "symbol table (%u bytes) too big for buffer (%u bytes)\n"
@@ -194,7 +202,7 @@ usage(void)
 	const char **list;
 
 	fprintf(stderr,
-	    "usage: %s [-pv] [-b bfdname] kernel\n",
+	    "usage: %s [-Ppv] [-b bfdname] kernel\n",
 	    getprogname());
 	fprintf(stderr, "supported targets:");
 	for (list = bfd_target_list(); *list != NULL; list++)

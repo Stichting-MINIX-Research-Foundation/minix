@@ -1,4 +1,4 @@
-/*	$NetBSD: connect.c,v 1.1.1.1 2011/04/13 18:14:36 elric Exp $	*/
+/*	$NetBSD: connect.c,v 1.1.1.2 2014/04/24 12:45:27 pettai Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Kungliga Tekniska Högskolan
@@ -76,7 +76,7 @@ kcm_service(void *ctx, const heim_idata *req,
 
     request.data = buf + 2;
     request.length = len - 2;
-    
+
     /* buf is now pointing at opcode */
 
     ret = kcm_dispatch(kcm_context, &peercred, &request, &rep);

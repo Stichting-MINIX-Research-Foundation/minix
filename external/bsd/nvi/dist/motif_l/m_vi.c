@@ -1,4 +1,4 @@
-/*	$NetBSD: m_vi.c,v 1.2 2013/11/22 15:52:06 christos Exp $ */
+/*	$NetBSD: m_vi.c,v 1.3 2014/01/26 21:43:45 christos Exp $ */
  * Copyright (c) 1996
  *	Rob Zimmermann.  All rights reserved.
  * Copyright (c) 1996
@@ -9,9 +9,14 @@
 
 #include "config.h"
 
+#include <sys/cdefs.h>
+#if 0
 #ifndef lint
 static const char sccsid[] = "Id: m_vi.c,v 8.41 2003/11/05 17:10:01 skimo Exp  (Berkeley) Date: 2003/11/05 17:10:01 ";
 #endif /* not lint */
+#else
+__RCSID("$NetBSD: m_vi.c,v 1.3 2014/01/26 21:43:45 christos Exp $");
+#endif
 
 #include <sys/types.h>
 #include <sys/queue.h>

@@ -1,5 +1,9 @@
-#	$NetBSD: Makefile,v 1.4 2012/11/20 05:26:25 agc Exp $
+#	$NetBSD: Makefile,v 1.7 2014/03/09 00:39:31 agc Exp $
 
+SUBDIR+=	netpgp
+SUBDIR+=	netpgpkeys
 SUBDIR+=	netpgpverify
+#SUBDIR+=	hkpc
+#SUBDIR+=	hkpd
 
 .include <bsd.subdir.mk>

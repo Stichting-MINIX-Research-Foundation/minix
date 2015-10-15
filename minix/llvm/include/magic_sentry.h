@@ -106,9 +106,9 @@
             && "Sentry key length too long!");                                 \
                                                                                \
         sentry_hash->key[0] = 0;                                               \
-        sprintf(sentry_hash->key, "%s%s%s" MAGIC_ID_FORMAT,                    \
-            MAGIC_DSENTRY_ABS_NAME_SEP, sentry->name,                          \
-            MAGIC_DSENTRY_ABS_NAME_SEP,                                        \
+        snprintf(sentry_hash->key, sizeof(sentry_hash->key),                   \
+            "%s%s%s" MAGIC_ID_FORMAT, MAGIC_DSENTRY_ABS_NAME_SEP,              \
+            sentry->name, MAGIC_DSENTRY_ABS_NAME_SEP,                          \
             (_magic_id_t) MAGIC_DSENTRY_SITE_ID_NULL);                         \
         sentry_list->sentry = sentry;                                          \
         sentry_hash->sentry_list = sentry_list;                                \
@@ -123,8 +123,9 @@
             && "Dsentry key length too long!");                                \
                                                                                \
         sentry_hash->key[0] = 0;                                               \
-        sprintf(sentry_hash->key, "%s%s%s%s" MAGIC_ID_FORMAT,                  \
-            dsentry->parent_name, MAGIC_DSENTRY_ABS_NAME_SEP, sentry->name,    \
+        snprintf(sentry_hash->key, sizeof(sentry_hash->key),                   \
+            "%s%s%s%s" MAGIC_ID_FORMAT, dsentry->parent_name,                  \
+            MAGIC_DSENTRY_ABS_NAME_SEP, sentry->name,                          \
             MAGIC_DSENTRY_ABS_NAME_SEP, dsentry->site_id);                     \
         sentry_list->sentry = sentry;                                          \
         sentry_hash->sentry_list = sentry_list;                                \

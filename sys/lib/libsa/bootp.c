@@ -1,4 +1,4 @@
-/*	$NetBSD: bootp.c,v 1.38 2011/05/11 16:23:40 zoltan Exp $	*/
+/*	$NetBSD: bootp.c,v 1.40 2015/07/25 07:06:11 isaki Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -106,7 +106,7 @@ bootp_addvend(u_char *area)
 	*area++ = TAG_SWAPSERVER;
 
 	/* Insert a NetBSD Vendor Class Identifier option. */
-	sprintf(vci, "NetBSD:%s:libsa", MACHINE);
+	snprintf(vci, sizeof(vci), "NetBSD:%s:libsa", MACHINE);
 	vcilen = strlen(vci);
 	*area++ = TAG_CLASSID;
 	*area++ = vcilen;
@@ -393,7 +393,7 @@ vend_rfc1048(u_char *cp, u_int len)
 			/* let it override bp_siaddr */
 			(void)memcpy(&rootip.s_addr, cp, sizeof(rootip.s_addr));
 		}
-	        if (tag == TAG_ROOTPATH && size < sizeof(rootpath)) {
+		if (tag == TAG_ROOTPATH && size < sizeof(rootpath)) {
 			strncpy(rootpath, (char *)cp, sizeof(rootpath));
 			rootpath[size] = '\0';
 		}

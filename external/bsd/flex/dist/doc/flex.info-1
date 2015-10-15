@@ -51,8 +51,8 @@ This manual describes `flex', a tool for generating programs that
 perform pattern-matching on text.  The manual includes both tutorial and
 reference sections.
 
-   This edition of `The flex Manual' documents `flex' version 2.5.37.
-It was last updated on 22 July 2012.
+   This edition of `The flex Manual' documents `flex' version 2.5.39.
+It was last updated on 6 December 2012.
 
    This manual was written by Vern Paxson, Will Estes and John Millaway.
 
@@ -5071,7 +5071,7 @@ Is there a way to make flex treat NULL like a regular character?
 ================================================================
 
 Yes, `\0' and `\x00' should both do the trick.  Perhaps you have an
-ancient version of `flex'.  The latest release is version 2.5.37.
+ancient version of `flex'.  The latest release is version 2.5.39.
 
 
 File: flex.info,  Node: Whenever flex can not match the input it says "flex scanner jammed".,  Next: Why doesn't flex have non-greedy operators like perl does?,  Prev: Is there a way to make flex treat NULL like a regular character?,  Up: FAQ

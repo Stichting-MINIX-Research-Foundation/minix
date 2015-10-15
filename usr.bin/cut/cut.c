@@ -1,4 +1,4 @@
-/*	$NetBSD: cut.c,v 1.28 2012/06/20 17:53:39 wiz Exp $	*/
+/*	$NetBSD: cut.c,v 1.29 2014/02/03 20:22:19 wiz Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)cut.c	8.3 (Berkeley) 5/4/95";
 #endif
-__RCSID("$NetBSD: cut.c,v 1.28 2012/06/20 17:53:39 wiz Exp $");
+__RCSID("$NetBSD: cut.c,v 1.29 2014/02/03 20:22:19 wiz Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -76,7 +76,7 @@ main(int argc, char *argv[])
 {
 	FILE *fp;
 	void (*fcn)(FILE *, const char *);
-	int ch;
+	int ch, rval;
 
 	fcn = NULL;
 	(void)setlocale(LC_ALL, "");
@@ -126,20 +126,24 @@ main(int argc, char *argv[])
 	else if (bflag && cflag)
 		usage();
 
+	rval = 0;
 	if (*argv)
 		for (; *argv; ++argv) {
 			if (strcmp(*argv, "-") == 0)
 				fcn(stdin, "stdin");
 			else {
-				if ((fp = fopen(*argv, "r")) == NULL)
-					err(1, "%s", *argv);
-				fcn(fp, *argv);
-				(void)fclose(fp);
+				if ((fp = fopen(*argv, "r"))) {
+					fcn(fp, *argv);
+					(void)fclose(fp);
+				} else {
+					rval = 1;
+					warn("%s", *argv);
+				}
 			}
 		}
 	else
 		fcn(stdin, "stdin");
-	return 0;
+	return(rval);
 }
 
 static size_t autostart, autostop, maxval;

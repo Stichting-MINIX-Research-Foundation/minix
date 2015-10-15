@@ -1,4 +1,4 @@
-/*	$NetBSD: ext.c,v 1.1.1.1 2011/04/13 18:14:41 elric Exp $	*/
+/*	$NetBSD: ext.c,v 1.1.1.2 2014/04/24 12:45:28 pettai Exp $	*/
 
 /*
  * Copyright (c) 2004 - 2005 Kungliga Tekniska Högskolan
@@ -39,7 +39,7 @@
 krb5_error_code
 hdb_entry_check_mandatory(krb5_context context, const hdb_entry *ent)
 {
-    int i;
+    size_t i;
 
     if (ent->extensions == NULL)
 	return 0;
@@ -65,13 +65,13 @@ hdb_entry_check_mandatory(krb5_context context, const hdb_entry *ent)
 HDB_extension *
 hdb_find_extension(const hdb_entry *entry, int type)
 {
-    int i;
+    size_t i;
 
     if (entry->extensions == NULL)
 	return NULL;
 
     for (i = 0; i < entry->extensions->len; i++)
-	if (entry->extensions->val[i].data.element == type)
+	if (entry->extensions->val[i].data.element == (unsigned)type)
 	    return &entry->extensions->val[i];
     return NULL;
 }
@@ -114,7 +114,7 @@ hdb_replace_extension(krb5_context context,
 	Der_type replace_type, list_type;
 	unsigned int replace_tag, list_tag;
 	size_t size;
-	int i;
+	size_t i;
 
 	ret = der_get_tag(ext->data.u.asn1_ellipsis.data,
 			  ext->data.u.asn1_ellipsis.length,
@@ -182,13 +182,13 @@ hdb_clear_extension(krb5_context context,
 		    hdb_entry *entry,
 		    int type)
 {
-    int i;
+    size_t i;
 
     if (entry->extensions == NULL)
 	return 0;
 
     for (i = 0; i < entry->extensions->len; i++) {
-	if (entry->extensions->val[i].data.element == type) {
+	if (entry->extensions->val[i].data.element == (unsigned)type) {
 	    free_HDB_extension(&entry->extensions->val[i]);
 	    memmove(&entry->extensions->val[i],
 		    &entry->extensions->val[i + 1],
@@ -288,7 +288,7 @@ hdb_entry_get_password(krb5_context context, HDB *db,
 
     ext = hdb_find_extension(entry, choice_HDB_extension_data_password);
     if (ext) {
-	heim_utf8_string str;
+	heim_utf8_string xstr;
 	heim_octet_string pw;
 
 	if (db->hdb_master_key_set && ext->data.u.password.mkvno) {
@@ -316,13 +316,13 @@ hdb_entry_get_password(krb5_context context, HDB *db,
 	    return ret;
 	}
 
-	str = pw.data;
-	if (str[pw.length - 1] != '\0') {
+	xstr = pw.data;
+	if (xstr[pw.length - 1] != '\0') {
 	    krb5_set_error_message(context, EINVAL, "malformed password");
 	    return EINVAL;
 	}
 
-	*p = strdup(str);
+	*p = strdup(xstr);
 
 	der_free_octet_string(&pw);
 	if (*p == NULL) {

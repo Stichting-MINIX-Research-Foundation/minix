@@ -175,9 +175,9 @@ int req_create(
   cp_grant_id_t grant_id;
   size_t len;
   message m;
-  struct vmnt *vmp;
+//  struct vmnt *vmp;
 
-  vmp = find_vmnt(fs_e);
+//  vmp = find_vmnt(fs_e);
 
   len = strlen(path) + 1;
   grant_id = cpf_grant_direct(fs_e, (vir_bytes) path, len, CPF_READ);
@@ -431,10 +431,10 @@ int req_lookup(
   vfs_ucred_t credentials;
   int r, flags;
   size_t len;
-  struct vmnt *vmp;
+//  struct vmnt *vmp;
   cp_grant_id_t grant_id=0, grant_id2=0;
 
-  vmp = find_vmnt(fs_e);
+//  vmp = find_vmnt(fs_e);
 
   grant_id = cpf_grant_direct(fs_e, (vir_bytes) resolve->l_path, PATH_MAX,
 			      CPF_READ | CPF_WRITE);
@@ -625,11 +625,11 @@ int req_newnode(
   struct node_details *res
 )
 {
-  struct vmnt *vmp;
+//  struct vmnt *vmp;
   int r;
   message m;
 
-  vmp = find_vmnt(fs_e);
+//  vmp = find_vmnt(fs_e);
 
   /* Fill in request message */
   m.m_type = REQ_NEWNODE;

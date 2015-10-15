@@ -1,17 +1,15 @@
-// RUN: %clang_cc1 -fsyntax-only -Wno-objc-root-class -verify %s
-// RUN: %clang_cc1 -x objective-c++ -fsyntax-only -Wno-objc-root-class -verify %s
+// RUN: %clang_cc1 -fsyntax-only -fobjc-arc -Wno-objc-root-class -Wreceiver-is-weak -Warc-repeated-use-of-weak -fobjc-runtime-has-weak -verify %s
+// RUN: %clang_cc1 -x objective-c++ -fsyntax-only -fobjc-arc -Wno-objc-root-class -Wreceiver-is-weak -Warc-repeated-use-of-weak -fobjc-runtime-has-weak -verify %s
 // rdar://11448209
 
 #define READONLY readonly
 
 @class NSView;
 
-#define IBOutlet __attribute__((iboutlet))
-
-@interface I
+IB_DESIGNABLE @interface I
 @property (getter = MyGetter, readonly, assign) IBOutlet NSView *myView; // expected-warning {{readonly IBOutlet property 'myView' when auto-synthesized may not work correctly with 'nib' loader}} expected-note {{property should be changed to be readwrite}}
 
-@property (readonly) IBOutlet NSView *myView1; // expected-warning {{readonly IBOutlet property 'myView1' when auto-synthesized may not work correctly with 'nib' loader}} expected-note {{property should be changed to be readwrite}}
+IBInspectable @property (readonly) IBOutlet NSView *myView1; // expected-warning {{readonly IBOutlet property 'myView1' when auto-synthesized may not work correctly with 'nib' loader}} expected-note {{property should be changed to be readwrite}}
 
 @property (getter = MyGetter, READONLY) IBOutlet NSView *myView2; // expected-warning {{readonly IBOutlet property 'myView2' when auto-synthesized may not work correctly with 'nib' loader}}
 
@@ -40,3 +38,15 @@
 @implementation RKTFHView
 @synthesize synthReadOnlyReadWrite=_synthReadOnlyReadWrite;
 @end
+
+// rdar://15885642
+@interface WeakOutlet 
+@property IBOutlet __weak WeakOutlet* WeakProp;
+@end
+
+WeakOutlet* func() {
+  __weak WeakOutlet* pwi;
+  pwi.WeakProp = (WeakOutlet*)0;
+  pwi.WeakProp = pwi.WeakProp;
+  return pwi.WeakProp;
+}

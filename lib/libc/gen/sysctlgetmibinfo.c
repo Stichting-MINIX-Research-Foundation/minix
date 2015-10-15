@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctlgetmibinfo.c,v 1.10 2012/03/13 21:13:37 christos Exp $ */
+/*	$NetBSD: sysctlgetmibinfo.c,v 1.11 2014/05/16 12:22:32 martin Exp $ */
 
 /*-
  * Copyright (c) 2003,2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: sysctlgetmibinfo.c,v 1.10 2012/03/13 21:13:37 christos Exp $");
+__RCSID("$NetBSD: sysctlgetmibinfo.c,v 1.11 2014/05/16 12:22:32 martin Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #ifndef RUMP_ACTION
@@ -71,7 +71,7 @@ static struct sysctlnode sysctl_mibroot = {
 	0
 #else /* !lint */
 	.sysctl_flags = SYSCTL_VERSION|CTLFLAG_ROOT|CTLTYPE_NODE,
-	sysc_init_field(_sysctl_size, sizeof(struct sysctlnode)),
+	.sysctl_size = sizeof(struct sysctlnode),
 	.sysctl_name = "(root)",
 #endif /* !lint */
 };

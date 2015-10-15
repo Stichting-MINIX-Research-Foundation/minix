@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: fenv.c,v 1.3 2013/05/01 04:04:54 matt Exp $");
+__RCSID("$NetBSD: fenv.c,v 1.6 2014/12/29 19:11:13 martin Exp $");
 
 #include <sys/types.h>
 #include <assert.h>
@@ -57,7 +57,7 @@ int
 feclearexcept(int excepts)
 {
 #ifndef lint
-	_DIAGASSERT((except & ~FE_EXCEPT_ALL) == 0);
+	_DIAGASSERT((except & ~FE_ALL_EXCEPT) == 0);
 #endif
 #ifdef __SOFTFP__
 	fpsetsticky(fpgetsticky() & ~excepts);
@@ -78,7 +78,7 @@ feclearexcept(int excepts)
 int
 fegetexceptflag(fexcept_t *flagp, int excepts)
 {
-	_DIAGASSERT((except & ~FE_EXCEPT_ALL) == 0);
+	_DIAGASSERT((except & ~FE_ALL_EXCEPT) == 0);
 #ifdef __SOFTFP__
 	*flagp = fpgetsticky() & excepts;
 #else
@@ -96,7 +96,7 @@ int
 feraiseexcept(int excepts)
 {
 #ifndef lint
-	_DIAGASSERT((except & ~FE_EXCEPT_ALL) == 0);
+	_DIAGASSERT((except & ~FE_ALL_EXCEPT) == 0);
 #endif
 #if !defined(__minix) /* LSC: No sigqueueinfo on Minix. */
 #ifdef __SOFTFP__
@@ -142,7 +142,7 @@ int
 fesetexceptflag(const fexcept_t *flagp, int excepts)
 {
 #ifndef lint
-	_DIAGASSERT((except & ~FE_EXCEPT_ALL) == 0);
+	_DIAGASSERT((except & ~FE_ALL_EXCEPT) == 0);
 #endif
 #ifdef __SOFTFP__
 	fpsetsticky((fpgetsticky() & ~excepts) | (excepts & *flagp));
@@ -155,6 +155,40 @@ fesetexceptflag(const fexcept_t *flagp, int excepts)
 	return 0;
 }
 
+int
+feenableexcept(int excepts)
+{
+#ifndef lint
+	_DIAGASSERT((except & ~FE_ALL_EXCEPT) == 0);
+#endif
+#ifdef __SOFTFP__
+	int old = fpgetmask();
+	fpsetmask(old | excepts);
+	return old;
+#else
+	int fpscr = armreg_fpscr_read();
+	armreg_fpscr_write(fpscr | __SHIFTIN((excepts), VFP_FPSCR_ESUM));
+	return __SHIFTOUT(fpscr, VFP_FPSCR_ESUM) & FE_ALL_EXCEPT;
+#endif
+}
+
+int
+fedisableexcept(int excepts)
+{
+#ifndef lint
+	_DIAGASSERT((except & ~FE_ALL_EXCEPT) == 0);
+#endif
+#ifdef __SOFTFP__
+	int old = fpgetmask();
+	fpsetmask(old & ~excepts);
+	return old;
+#else
+	int fpscr = armreg_fpscr_read();
+	armreg_fpscr_write(fpscr & ~__SHIFTIN((excepts), VFP_FPSCR_ESUM));
+	return __SHIFTOUT(fpscr, VFP_FPSCR_ESUM) & FE_ALL_EXCEPT;
+#endif
+}
+
 /*
  * The fetestexcept() function shall determine which of a specified subset of
  * the floating-point exception flags are currently set. The excepts argument
@@ -163,11 +197,21 @@ fesetexceptflag(const fexcept_t *flagp, int excepts)
 int
 fetestexcept(int excepts)
 {
-	_DIAGASSERT((except & ~FE_EXCEPT_ALL) == 0);
+	_DIAGASSERT((except & ~FE_ALL_EXCEPT) == 0);
 #ifdef __SOFTFP__
 	return fpgetsticky() & excepts;
 #else
 	return __SHIFTOUT(armreg_fpscr_read(), VFP_FPSCR_CSUM) & excepts;
+#endif
+}
+
+int     
+fegetexcept(void)
+{
+#ifdef __SOFTFP__
+	return fpgetmask();
+#else
+	return __SHIFTOUT(armreg_fpscr_read(), VFP_FPSCR_ESUM);
 #endif
 }
 

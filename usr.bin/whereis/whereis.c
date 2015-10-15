@@ -60,11 +60,11 @@ main(int argc, char *argv[])
 {
 	struct stat sb;
 	size_t len;
-#ifdef __minix
+#if defined(__minix)
 	int ch;
 #else
 	int ch, mib[2];
-#endif /* def __minix */
+#endif /* defined(__minix) */
 	char *p, *std, path[MAXPATHLEN];
 	const char *t;
 	int which = strcmp(getprogname(), "which") == 0;
@@ -102,7 +102,7 @@ main(int argc, char *argv[])
  			errx(1, "PATH environment variable is not set");
 	} else {
 		/* Retrieve the standard path. */
-#ifdef __minix
+#if defined(__minix)
 		/*
 			Note: This path is currently defined here and should probably be defined
 			here, in "ash" or in "sh".
@@ -124,7 +124,7 @@ main(int argc, char *argv[])
 			err(1, NULL);
 		if (sysctl(mib, 2, std, &len, NULL, 0) == -1)
 			err(1, "sysctl: user.cs_path");
-#endif /* def __minix */
+#endif /* defined(__minix) */
 	}
 
 	/* For each path, for each program... */

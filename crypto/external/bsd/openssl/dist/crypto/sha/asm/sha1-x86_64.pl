@@ -221,17 +221,14 @@ $code.=<<___;
 .type	sha1_block_data_order,\@function,3
 .align	16
 sha1_block_data_order:
-	mov	OPENSSL_ia32cap_P+0(%rip),%r9d
-	mov	OPENSSL_ia32cap_P+4(%rip),%r8d
-	test	\$`1<<9`,%r8d		# check SSSE3 bit
-	jz	.Lialu
+	mov	OPENSSL_ia32cap_P+0(%rip),%r8
+	mov	4(%r8),%r8d
+	bt	\$9,%r8d
+	jnc	.Lialu
 ___
 $code.=<<___ if ($avx);
-	and	\$`1<<28`,%r8d		# mask AVX bit
-	and	\$`1<<30`,%r9d		# mask "Intel CPU" bit
-	or	%r9d,%r8d
-	cmp	\$`1<<28|1<<30`,%r8d
-	je	_avx_shortcut
+	bt	\$28,%r8d
+	jc	_avx_shortcut
 ___
 $code.=<<___;
 	jmp	_ssse3_shortcut
@@ -745,7 +742,7 @@ $code.=<<___;
 	mov	%rdi,$ctx	# reassigned argument
 	mov	%rsi,$inp	# reassigned argument
 	mov	%rdx,$num	# reassigned argument
-	vzeroall
+	vzeroupper
 
 	shl	\$6,$num
 	add	$inp,$num
@@ -1038,7 +1035,7 @@ ___
 	&Xtail_avx(\&body_20_39);
 
 $code.=<<___;
-	vzeroall
+	vzeroupper
 
 	add	0($ctx),$A			# update context
 	add	4($ctx),@T[0]

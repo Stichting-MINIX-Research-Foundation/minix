@@ -1,7 +1,23 @@
+//===----------------------------------------------------------------------===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is dual licensed under the MIT and the University of Illinois Open
+// Source Licenses. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+
 #ifndef ITERATORS_H
 #define ITERATORS_H
 
 #include <iterator>
+#include <cassert>
+
+#ifndef _LIBCPP_HAS_NO_DELETED_FUNCTIONS
+#define DELETE_FUNCTION = delete
+#else
+#define DELETE_FUNCTION
+#endif
 
 template <class It>
 class output_iterator
@@ -28,6 +44,9 @@ public:
     output_iterator& operator++() {++it_; return *this;}
     output_iterator operator++(int)
         {output_iterator tmp(*this); ++(*this); return tmp;}
+
+    template <class T>
+    void operator,(T const &) DELETE_FUNCTION;
 };
 
 template <class It>
@@ -61,6 +80,9 @@ public:
         {return x.it_ == y.it_;}
     friend bool operator!=(const input_iterator& x, const input_iterator& y)
         {return !(x == y);}
+
+    template <class T>
+    void operator,(T const &) DELETE_FUNCTION;
 };
 
 template <class T, class U>
@@ -110,6 +132,9 @@ public:
         {return x.it_ == y.it_;}
     friend bool operator!=(const forward_iterator& x, const forward_iterator& y)
         {return !(x == y);}
+
+    template <class T>
+    void operator,(T const &) DELETE_FUNCTION;
 };
 
 template <class T, class U>
@@ -158,6 +183,9 @@ public:
     bidirectional_iterator& operator--() {--it_; return *this;}
     bidirectional_iterator operator--(int)
         {bidirectional_iterator tmp(*this); --(*this); return tmp;}
+
+    template <class T>
+    void operator,(T const &) DELETE_FUNCTION;
 };
 
 template <class T, class U>
@@ -217,6 +245,9 @@ public:
         {random_access_iterator tmp(*this); tmp -= n; return tmp;}
 
     reference operator[](difference_type n) const {return it_[n];}
+
+    template <class T>
+    void operator,(T const &) DELETE_FUNCTION;
 };
 
 template <class T, class U>
@@ -292,5 +323,7 @@ inline Iter base(random_access_iterator<Iter> i) { return i.base(); }
 
 template <class Iter>    // everything else
 inline Iter base(Iter i) { return i; }
+
+#undef DELETE_FUNCTION
 
 #endif  // ITERATORS_H

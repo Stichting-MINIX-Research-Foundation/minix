@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2013/11/28 14:20:00 joerg Exp $
+#	$NetBSD: Makefile,v 1.7 2015/01/29 20:41:37 joerg Exp $
 
 LIB=	lldDriver
 
@@ -9,9 +9,13 @@ LIB=	lldDriver
 SRCS+=	CoreDriver.cpp \
 	DarwinLdDriver.cpp \
 	Driver.cpp \
+	DarwinInputGraph.cpp \
 	GnuLdDriver.cpp \
+	GnuLdInputGraph.cpp \
 	UniversalDriver.cpp \
-	WinLinkDriver.cpp
+	WinLinkDriver.cpp \
+	WinLinkInputGraph.cpp \
+	WinLinkModuleDef.cpp
 
 TABLEGEN_SRC=	CoreOptions.td DarwinLdOptions.td GnuLdOptions.td \
 	UniversalDriverOptions.td WinLinkOptions.td

@@ -1,4 +1,4 @@
-/*	$NetBSD: bn_mp_n_root.c,v 1.1.1.1 2011/04/13 18:14:54 elric Exp $	*/
+/*	$NetBSD: bn_mp_n_root.c,v 1.1.1.2 2014/04/24 12:45:31 pettai Exp $	*/
 
 #include <tommath.h>
 #ifdef BN_MP_N_ROOT_C
@@ -17,14 +17,14 @@
  * Tom St Denis, tomstdenis@gmail.com, http://libtom.org
  */
 
-/* find the n'th root of an integer 
+/* find the n'th root of an integer
  *
- * Result found such that (c)**b <= a and (c+1)**b > a 
+ * Result found such that (c)**b <= a and (c+1)**b > a
  *
- * This algorithm uses Newton's approximation 
- * x[i+1] = x[i] - f(x[i])/f'(x[i]) 
- * which will find the root in log(N) time where 
- * each step involves a fair bit.  This is not meant to 
+ * This algorithm uses Newton's approximation
+ * x[i+1] = x[i] - f(x[i])/f'(x[i])
+ * which will find the root in log(N) time where
+ * each step involves a fair bit.  This is not meant to
  * find huge roots [square and cube, etc].
  */
 int mp_n_root (mp_int * a, mp_digit b, mp_int * c)
@@ -63,31 +63,31 @@ int mp_n_root (mp_int * a, mp_digit b, mp_int * c)
     }
 
     /* t2 = t1 - ((t1**b - a) / (b * t1**(b-1))) */
-    
+
     /* t3 = t1**(b-1) */
-    if ((res = mp_expt_d (&t1, b - 1, &t3)) != MP_OKAY) {   
+    if ((res = mp_expt_d (&t1, b - 1, &t3)) != MP_OKAY) {
       goto LBL_T3;
     }
 
     /* numerator */
     /* t2 = t1**b */
-    if ((res = mp_mul (&t3, &t1, &t2)) != MP_OKAY) {    
+    if ((res = mp_mul (&t3, &t1, &t2)) != MP_OKAY) {
       goto LBL_T3;
     }
 
     /* t2 = t1**b - a */
-    if ((res = mp_sub (&t2, a, &t2)) != MP_OKAY) {  
+    if ((res = mp_sub (&t2, a, &t2)) != MP_OKAY) {
       goto LBL_T3;
     }
 
     /* denominator */
     /* t3 = t1**(b-1) * b  */
-    if ((res = mp_mul_d (&t3, b, &t3)) != MP_OKAY) {    
+    if ((res = mp_mul_d (&t3, b, &t3)) != MP_OKAY) {
       goto LBL_T3;
     }
 
     /* t3 = (t1**b - a)/(b * t1**(b-1)) */
-    if ((res = mp_div (&t2, &t3, &t3, NULL)) != MP_OKAY) {  
+    if ((res = mp_div (&t2, &t3, &t3, NULL)) != MP_OKAY) {
       goto LBL_T3;
     }
 
@@ -129,6 +129,6 @@ LBL_T1:mp_clear (&t1);
 }
 #endif
 
-/* Source: /cvs/libtom/libtommath/bn_mp_n_root.c,v */
-/* Revision: 1.4 */
-/* Date: 2006/12/28 01:25:13 */
+/* Source: /cvs/libtom/libtommath/bn_mp_n_root.c,v  */
+/* Revision: 1.4  */
+/* Date: 2006/12/28 01:25:13  */

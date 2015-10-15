@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_node.h,v 1.14 2008/02/27 19:43:36 matt Exp $	*/
+/*	$NetBSD: cd9660_node.h,v 1.16 2014/06/16 09:55:49 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -63,7 +63,6 @@ typedef	struct	{
 
 struct iso_node {
 	struct	genfs_node i_gnode;
-	LIST_ENTRY(iso_node) i_hash;
 	struct	vnode *i_vnode;	/* vnode associated with this inode */
 	struct	vnode *i_devvp;	/* vnode for block I/O */
 	u_long	i_flag;		/* see below */
@@ -128,15 +127,8 @@ void	cd9660_defattr(struct iso_directory_record *,
 			struct iso_node *, struct buf *);
 void	cd9660_deftstamp(struct iso_directory_record *,
 			struct iso_node *, struct buf *);
-struct	vnode *cd9660_ihashget(dev_t, ino_t, int);
-void	cd9660_ihashins(struct iso_node *);
-void	cd9660_ihashrem(struct iso_node *);
 int	cd9660_tstamp_conv7(const u_char *, struct timespec *);
 int	cd9660_tstamp_conv17(const u_char *, struct timespec *);
-int	cd9660_vget_internal(struct mount *, ino_t, struct vnode **, int,
-			      struct iso_directory_record *);
-
-extern kmutex_t cd9660_hashlock;
 
 #endif /* _KERNEL */
 #endif /* _ISOFS_CD9660_CD9660_NODE_H_ */

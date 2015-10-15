@@ -1,4 +1,4 @@
-.\"	$NetBSD: kqueue.2,v 1.33 2012/11/24 15:16:52 christos Exp $
+.\"	$NetBSD: kqueue.2,v 1.34 2015/03/02 19:24:19 christos Exp $
 .\"
 .\" Copyright (c) 2000 Jonathan Lemon
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" $FreeBSD: src/lib/libc/sys/kqueue.2,v 1.22 2001/06/27 19:55:57 dd Exp $
 .\"
-.Dd November 24, 2012
+.Dd March 2, 2015
 .Dt KQUEUE 2
 .Os
 .Sh NAME
@@ -413,6 +413,8 @@ The events to monitor are:
 .Bl -tag -width XXNOTE_TRACKERR
 .It NOTE_EXIT
 The process has exited.
+The exit code of the process is stored in
+.Va data .
 .It NOTE_FORK
 The process has called
 .Fn fork .

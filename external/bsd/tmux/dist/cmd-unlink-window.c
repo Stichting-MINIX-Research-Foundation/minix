@@ -1,4 +1,4 @@
-/* $Id: cmd-unlink-window.c,v 1.1.1.2 2011/08/17 18:40:04 jmmv Exp $ */
+/* Id */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -24,7 +24,7 @@
  * Unlink a window, unless it would be destroyed by doing so (only one link).
  */
 
-int	cmd_unlink_window_exec(struct cmd *, struct cmd_ctx *);
+enum cmd_retval	 cmd_unlink_window_exec(struct cmd *, struct cmd_q *);
 
 const struct cmd_entry cmd_unlink_window_entry = {
 	"unlink-window", "unlinkw",
@@ -32,12 +32,11 @@ const struct cmd_entry cmd_unlink_window_entry = {
 	"[-k] " CMD_TARGET_WINDOW_USAGE,
 	0,
 	NULL,
-	NULL,
 	cmd_unlink_window_exec
 };
 
-int
-cmd_unlink_window_exec(struct cmd *self, struct cmd_ctx *ctx)
+enum cmd_retval
+cmd_unlink_window_exec(struct cmd *self, struct cmd_q *cmdq)
 {
 	struct args		*args = self->args;
 	struct winlink		*wl;
@@ -46,8 +45,8 @@ cmd_unlink_window_exec(struct cmd *self, struct cmd_ctx *ctx)
 	struct session_group	*sg;
 	u_int			 references;
 
-	if ((wl = cmd_find_window(ctx, args_get(args, 't'), &s)) == NULL)
-		return (-1);
+	if ((wl = cmd_find_window(cmdq, args_get(args, 't'), &s)) == NULL)
+		return (CMD_RETURN_ERROR);
 	w = wl->window;
 
 	sg = session_group_find(s);
@@ -59,12 +58,12 @@ cmd_unlink_window_exec(struct cmd *self, struct cmd_ctx *ctx)
 		references = 1;
 
 	if (!args_has(self->args, 'k') && w->references == references) {
-		ctx->error(ctx, "window is only linked to one session");
-		return (-1);
+		cmdq_error(cmdq, "window is only linked to one session");
+		return (CMD_RETURN_ERROR);
 	}
 
 	server_unlink_window(s, wl);
 	recalculate_sizes();
 
-	return (0);
+	return (CMD_RETURN_NORMAL);
 }

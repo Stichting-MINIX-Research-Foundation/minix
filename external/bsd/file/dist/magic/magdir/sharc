@@ -1,6 +1,6 @@
 
 #------------------------------------------------------------------------
-# $File: sharc,v 1.6 2009/09/19 16:28:12 christos Exp $
+# $File: sharc,v 1.7 2014/04/30 21:41:02 christos Exp $
 # file(1) magic for sharc files
 #
 # SHARC DSP, MIDI SysEx and RiscOS filetype definitions added by 
@@ -19,5 +19,5 @@
 0	string			.system		SHARC architecture file
 
 0	leshort			0x521C		SHARC COFF binary
->2	leshort			>1		, %hd sections
+>2	leshort			>1		, %d sections
 >>12	lelong			>0		, not stripped

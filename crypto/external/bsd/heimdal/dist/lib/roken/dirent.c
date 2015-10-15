@@ -1,21 +1,21 @@
-/*	$NetBSD: dirent.c,v 1.1.1.1 2011/04/13 18:15:40 elric Exp $	*/
+/*	$NetBSD: dirent.c,v 1.1.1.2 2014/04/24 12:45:52 pettai Exp $	*/
 
 /***********************************************************************
  * Copyright (c) 2009, Secure Endpoints Inc.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
- * 
+ *
  * - Redistributions of source code must retain the above copyright
  *   notice, this list of conditions and the following disclaimer.
- * 
+ *
  * - Redistributions in binary form must reproduce the above copyright
  *   notice, this list of conditions and the following disclaimer in
  *   the documentation and/or other materials provided with the
  *   distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
@@ -28,7 +28,7 @@
  * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
  * OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  **********************************************************************/
 
 #include<config.h>
@@ -66,6 +66,7 @@ filespec_from_dir_path(const char * path, char * buffer, size_t cch_buffer)
 {
     char *comp, *t;
     size_t pos;
+    int found_sep = 0;
 
     if (strcpy_s(buffer, cch_buffer, path) != 0)
         return NULL;
@@ -73,12 +74,17 @@ filespec_from_dir_path(const char * path, char * buffer, size_t cch_buffer)
     comp = strrchr(buffer, '\\');
     if (comp == NULL)
         comp = buffer;
+    else
+        found_sep = 1;
 
     t = strrchr(comp, '/');
-    if (t != NULL)
+    if (t != NULL) {
         comp = t;
+        found_sep = 1;
+    }
 
-    comp++;
+    if (found_sep)
+        comp++;
 
     pos = strcspn(comp, "*?");
     if (comp[pos] != '\0')

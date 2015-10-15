@@ -1,17 +1,17 @@
-#	$NetBSD: Makefile,v 1.2 2008/09/13 04:32:29 cube Exp $
+#	$NetBSD: Makefile,v 1.3 2014/08/24 16:39:21 christos Exp $
 
 .include <bsd.own.mk>
 
 .PATH:	${X11SRCDIR.xproto}
 
 Xfuncproto.h: Xfuncproto.h.in
-	${TOOL_SED} 's/#undef NARROWPROTO/#define NARROWPROTO/; \
-		     s/#undef FUNCPROTO/#define FUNCPROTO 15/' \
-		     < ${.ALLSRC} > ${.TARGET}
+	${TOOL_SED} -e 's/#undef NARROWPROTO/#define NARROWPROTO/'  \
+	    -e 's/#undef FUNCPROTO/#define FUNCPROTO 15/' \
+	    < ${.ALLSRC} > ${.TARGET}
 
 Xpoll.h: Xpoll.h.in
 	${TOOL_SED} 's/@USE_FDS_BITS@/fds_bits/' \
-		     < ${.ALLSRC} > ${.TARGET}
+	    < ${.ALLSRC} > ${.TARGET}
 
 INCS=	DECkeysym.h HPkeysym.h Sunkeysym.h X.h XF86keysym.h XWDFile.h \
 	Xalloca.h Xarch.h Xatom.h Xdefs.h Xfuncproto.h Xfuncs.h Xmd.h \

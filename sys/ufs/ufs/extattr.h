@@ -1,4 +1,4 @@
-/*	$NetBSD: extattr.h,v 1.10 2011/10/09 21:15:34 chs Exp $	*/
+/*	$NetBSD: extattr.h,v 1.11 2014/12/19 10:59:21 manu Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001 Robert N. M. Watson
@@ -43,7 +43,7 @@
 #define	UFS_EXTATTR_FSROOTSUBDIR	".attribute"
 #define	UFS_EXTATTR_SUBDIR_SYSTEM	"system"
 #define	UFS_EXTATTR_SUBDIR_USER		"user"
-#define	UFS_EXTATTR_MAXEXTATTRNAME	65	/* including null */
+#define	UFS_EXTATTR_MAXEXTATTRNAME	256	/* including null */
 
 #define	UFS_EXTATTR_ATTR_FLAG_INUSE	0x00000001	/* attr has been set */
 #define	UFS_EXTATTR_PERM_KERNEL		0x00000000

@@ -1,4 +1,4 @@
-/*	$NetBSD: default_keys.c,v 1.1.1.1 2011/04/13 18:15:29 elric Exp $	*/
+/*	$NetBSD: default_keys.c,v 1.1.1.2 2014/04/24 12:45:48 pettai Exp $	*/
 
 /*
  * Copyright (c) 2003 Kungliga Tekniska Högskolan
@@ -36,7 +36,7 @@
 #include "kadm5_locl.h"
 #include <err.h>
 
-__RCSID("$NetBSD: default_keys.c,v 1.1.1.1 2011/04/13 18:15:29 elric Exp $");
+__RCSID("NetBSD");
 
 static void
 print_keys(krb5_context context, Key *keys, size_t nkeys)
@@ -74,7 +74,7 @@ print_keys(krb5_context context, Key *keys, size_t nkeys)
 	    if (keys[i].salt->salt.length)
 		printf("%.*s", (int)keys[i].salt->salt.length,
 		       (char *)keys[i].salt->salt.data);
-	}	
+	}
 	printf("\n");
     }
     printf("end keys:\n");

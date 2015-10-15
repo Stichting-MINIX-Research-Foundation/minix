@@ -1,9 +1,11 @@
+.register	%g2,#scratch
+.register	%g3,#scratch
 .section	".text",#alloc,#execinstr
 
 .align	32
 .globl	sha1_block_data_order
 sha1_block_data_order:
-	save	%sp,-112,%sp
+	save	%sp,-192,%sp
 	sllx	%i2,6,%i2
 	add	%i1,%i2,%i2
 
@@ -1499,7 +1501,7 @@ sha1_block_data_order:
 	add	%l4,%o4,%l4
 	st	%l4,[%i0+16]
 
-	bne	%icc,.Lloop
+	bne	%xcc,.Lloop
 	andn	%i1,7,%i3
 
 	ret

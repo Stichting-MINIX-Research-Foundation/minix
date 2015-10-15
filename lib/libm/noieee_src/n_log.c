@@ -1,4 +1,4 @@
-/*      $NetBSD: n_log.c,v 1.7 2008/03/20 16:41:26 mhitch Exp $ */
+/*      $NetBSD: n_log.c,v 1.8 2014/10/10 20:58:09 martin Exp $ */
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -43,6 +43,7 @@ static char sccsid[] = "@(#)log.c	8.2 (Berkeley) 11/30/93";
 
 #ifdef __weak_alias
 __weak_alias(log, _log);
+__weak_alias(_logl, _log);
 __weak_alias(logf, _logf);
 #endif
 

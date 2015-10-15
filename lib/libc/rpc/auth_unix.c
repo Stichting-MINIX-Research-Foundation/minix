@@ -1,4 +1,4 @@
-/*	$NetBSD: auth_unix.c,v 1.25 2013/03/11 20:19:28 tron Exp $	*/
+/*	$NetBSD: auth_unix.c,v 1.26 2014/10/18 08:33:23 snj Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -37,7 +37,7 @@
 static char *sccsid = "@(#)auth_unix.c 1.19 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)auth_unix.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: auth_unix.c,v 1.25 2013/03/11 20:19:28 tron Exp $");
+__RCSID("$NetBSD: auth_unix.c,v 1.26 2014/10/18 08:33:23 snj Exp $");
 #endif
 #endif
 
@@ -46,7 +46,7 @@ __RCSID("$NetBSD: auth_unix.c,v 1.25 2013/03/11 20:19:28 tron Exp $");
  *  
  * Copyright (C) 1984, Sun Microsystems, Inc.
  *
- * The system is very weak.  The client uses no encryption for it's
+ * The system is very weak.  The client uses no encryption for its
  * credentials and only sends null verifiers.  The server sends backs
  * null verifiers or optionally a verifier that suggests a new short hand
  * for the credentials.

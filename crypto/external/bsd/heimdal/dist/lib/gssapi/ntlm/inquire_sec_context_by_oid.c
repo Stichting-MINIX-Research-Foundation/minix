@@ -1,4 +1,4 @@
-/*	$NetBSD: inquire_sec_context_by_oid.c,v 1.1.1.1 2011/04/13 18:14:48 elric Exp $	*/
+/*	$NetBSD: inquire_sec_context_by_oid.c,v 1.1.1.2 2014/04/24 12:45:29 pettai Exp $	*/
 
 /*
  * Copyright (c) 2006 Kungliga Tekniska Högskolan
@@ -37,7 +37,7 @@
 
 #include "ntlm.h"
 
-OM_uint32
+OM_uint32 GSSAPI_CALLCONV
 _gss_ntlm_inquire_sec_context_by_oid(OM_uint32 *minor_status,
 				     const gss_ctx_id_t context_handle,
 				     const gss_OID desired_object,

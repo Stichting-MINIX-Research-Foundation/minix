@@ -1,8 +1,14 @@
 set(LLVM_LINK_COMPONENTS
-  asmparser
-  bitreader
-  bitwriter
-  mcjit
+  Analysis
+  Core
+  ExecutionEngine
+  IPO
+  MC
+  MCJIT
+  RuntimeDyld
+  ScalarOpts
+  Support
+  Target
   nativecodegen
   )
 

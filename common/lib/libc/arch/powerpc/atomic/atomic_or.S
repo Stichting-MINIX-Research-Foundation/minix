@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_or.S,v 1.6 2011/01/15 07:31:11 matt Exp $	*/
+/*	$NetBSD: atomic_or.S,v 1.7 2014/03/07 07:17:54 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -31,36 +31,31 @@
 
 #include "atomic_op_asm.h"
 
-__RCSID("$NetBSD: atomic_or.S,v 1.6 2011/01/15 07:31:11 matt Exp $")
+__RCSID("$NetBSD: atomic_or.S,v 1.7 2014/03/07 07:17:54 matt Exp $")
 
 	.text
-ENTRY(_atomic_or_32)
-1:	lwarx	%r10,0,%r3
-	or	%r10,%r10,%r4
-	stwcx.	%r10,0,%r3
-	bne-	1b
-	blr
-END(_atomic_or_32)
-ATOMIC_OP_ALIAS(atomic_or_32,_atomic_or_32)
-ATOMIC_OP_ALIAS(atomic_or_uint,_atomic_or_32)
-STRONG_ALIAS(_atomic_or_uint,_atomic_or_32)
-#if !defined(_LP64)
-ATOMIC_OP_ALIAS(atomic_or_ulong,_atomic_or_32)
-STRONG_ALIAS(_atomic_or_ulong,_atomic_or_32)
-#endif
+ATOMIC_OP_32(or)
+ATOMIC_OP_32_NV(or)
 
-ENTRY(_atomic_or_32_nv)
-1:	lwarx	%r10,0,%r3
-	or	%r10,%r10,%r4
-	stwcx.	%r10,0,%r3
-	bne-	1b
-	mr	%r3,%r10
-	blr
-END(_atomic_or_32_nv)
-ATOMIC_OP_ALIAS(atomic_or_32_nv,_atomic_or_32_nv)
+ATOMIC_OP_ALIAS(atomic_or_uint,_atomic_or_32)
 ATOMIC_OP_ALIAS(atomic_or_uint_nv,_atomic_or_32_nv)
+
+STRONG_ALIAS(_atomic_or_uint,_atomic_or_32)
 STRONG_ALIAS(_atomic_or_uint_nv,_atomic_or_32_nv)
-#if !defined(_LP64)
+
+#if defined(_LP64)
+ATOMIC_OP_64(or)
+ATOMIC_OP_64_NV(or)
+
+ATOMIC_OP_ALIAS(atomic_or_ulong,_atomic_or_64)
+ATOMIC_OP_ALIAS(atomic_or_ulong_nv,_atomic_or_64_nv)
+
+STRONG_ALIAS(_atomic_or_ulong,_atomic_or_64)
+STRONG_ALIAS(_atomic_or_ulong_nv,_atomic_or_64_nv)
+#else
+ATOMIC_OP_ALIAS(atomic_or_ulong,_atomic_or_32)
 ATOMIC_OP_ALIAS(atomic_or_ulong_nv,_atomic_or_32_nv)
+
+STRONG_ALIAS(_atomic_or_ulong,_atomic_or_32)
 STRONG_ALIAS(_atomic_or_ulong_nv,_atomic_or_32_nv)
 #endif

@@ -97,7 +97,7 @@
 #define HAVE_DECL_VSNPRINTF 1
 
 /* Define to 1 if you have the `dup3' function. */
-/* #undef HAVE_DUP3 */
+#define HAVE_DUP3 1
 
 /* Define to 1 if you have the <fcntl.h> header file. */
 #define HAVE_FCNTL_H 1
@@ -118,7 +118,7 @@
 #define HAVE_GETRLIMIT 1
 
 /* Define to 1 if you have the `getrusage' function. */
-/* #undef HAVE_GETRUSAGE */
+#define HAVE_GETRUSAGE 1
 
 /* Define to 1 if you have the `getsysinfo' function. */
 /* #undef HAVE_GETSYSINFO */
@@ -211,13 +211,13 @@
 #define HAVE_SETENV 1
 
 /* Define to 1 if you have the `setproctitle' function. */
-/* #undef HAVE_SETPROCTITLE */
+#define HAVE_SETPROCTITLE 1
 
 /* Define to 1 if you have the `setrlimit' function. */
-/* #undef HAVE_SETRLIMIT */
+#define HAVE_SETRLIMIT 1
 
 /* Define to 1 if you have the `sigsetmask' function. */
-/* #undef HAVE_SIGSETMASK */
+#define HAVE_SIGSETMASK 1
 
 /* Define to 1 if you have the `snprintf' function. */
 #define HAVE_SNPRINTF 1
@@ -292,13 +292,13 @@
 #define HAVE_SYSCONF 1
 
 /* Define to 1 if you have the `sysctl' function. */
-/* #undef HAVE_SYSCTL */
+#define HAVE_SYSCTL 1
 
 /* Define to 1 if you have the `sysmp' function. */
 /* #undef HAVE_SYSMP */
 
 /* Define if you have the sys_errlist variable. */
-/* #undef HAVE_SYS_ERRLIST */
+#define HAVE_SYS_ERRLIST 1
 
 /* Define to 1 if you have the <sys/file.h> header file. */
 #define HAVE_SYS_FILE_H 1
@@ -307,7 +307,7 @@
 #define HAVE_SYS_MMAN_H 1
 
 /* Define if you have the sys_nerr variable. */
-/* #undef HAVE_SYS_NERR */
+#define HAVE_SYS_NERR 1
 
 /* Define to 1 if you have the <sys/param.h> header file. */
 #define HAVE_SYS_PARAM_H 1
@@ -322,7 +322,7 @@
 #define HAVE_SYS_RESOURCE_H 1
 
 /* Define if you have the sys_siglist variable. */
-/* #undef HAVE_SYS_SIGLIST */
+#define HAVE_SYS_SIGLIST 1
 
 /* Define to 1 if you have the <sys/stat.h> header file. */
 #define HAVE_SYS_STAT_H 1
@@ -388,10 +388,10 @@
 #define HAVE_VSPRINTF 1
 
 /* Define to 1 if you have the `wait3' function. */
-/* #undef HAVE_WAIT3 */
+#define HAVE_WAIT3 1
 
 /* Define to 1 if you have the `wait4' function. */
-/* #undef HAVE_WAIT4 */
+#define HAVE_WAIT4 1
 
 /* Define to 1 if you have the `waitpid' function. */
 #define HAVE_WAITPID 1

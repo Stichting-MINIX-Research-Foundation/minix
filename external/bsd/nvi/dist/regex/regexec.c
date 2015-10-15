@@ -1,4 +1,4 @@
-/*	$NetBSD: regexec.c,v 1.2 2013/11/22 15:52:06 christos Exp $ */
+/*	$NetBSD: regexec.c,v 1.5 2014/01/26 21:47:00 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
  * Copyright (c) 1992, 1993, 1994
@@ -38,9 +38,14 @@
  *	@(#)regexec.c	8.2 (Berkeley) 3/16/94
  */
 
+#include <sys/cdefs.h>
+#if 0
 #if defined(LIBC_SCCS) && !defined(lint)
 static char sccsid[] = "@(#)regexec.c	8.2 (Berkeley) 3/16/94";
 #endif /* LIBC_SCCS and not lint */
+#else
+__RCSID("$NetBSD: regexec.c,v 1.5 2014/01/26 21:47:00 christos Exp $");
+#endif
 
 /*
  * the outer shell of regexec()
@@ -158,7 +163,7 @@ static int nope = 0;		/* for use in asserts; shuts lint up */
 int				/* 0 success, REG_NOMATCH failure */
 regexec(const regex_t *preg, const RCHAR_T *string, size_t nmatch, regmatch_t *pmatch, int eflags)
 {
-	register struct re_guts *g = preg->re_g;
+	struct re_guts *g = preg->re_g;
 #ifdef REDEBUG
 #	define	GOODFLAGS(f)	(f)
 #else

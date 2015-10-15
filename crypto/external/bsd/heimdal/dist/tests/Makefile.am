@@ -9,3 +9,5 @@ if HAVE_DLOPEN
 SUBDIRS += plugin
 endif
 endif
+
+EXTRA_DIST = NTMakefile

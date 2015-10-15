@@ -1,4 +1,4 @@
-/*	$NetBSD: hdb.h,v 1.1.1.2 2011/04/14 14:08:23 elric Exp $	*/
+/*	$NetBSD: hdb.h,v 1.1.1.3 2014/04/24 12:45:28 pettai Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2007 Kungliga Tekniska Högskolan
@@ -59,6 +59,11 @@ enum hdb_lockop{ HDB_RLOCK, HDB_WLOCK };
 #define HDB_F_CANON		32	/* want canonicalition */
 #define HDB_F_ADMIN_DATA	64	/* want data that kdc don't use  */
 #define HDB_F_KVNO_SPECIFIED	128	/* we want a particular KVNO */
+#define HDB_F_CURRENT_KVNO	256	/* we want the current KVNO */
+/* 512, 1024, 2048 are reserved for kvno operations that is not part of the 1.5 branch */
+#define HDB_F_ALL_KVNOS		2048	/* we want all the keys, live or not */
+#define HDB_F_FOR_AS_REQ	4096	/* fetch is for a AS REQ */
+#define HDB_F_FOR_TGS_REQ	8192	/* fetch is for a TGS REQ */
 
 /* hdb_capability_flags */
 #define HDB_CAP_F_HANDLE_ENTERPRISE_PRINCIPAL 1
@@ -155,7 +160,7 @@ typedef struct HDB{
     /**
      * As part of iteration, fetch next entry
      */
-    krb5_error_code (*hdb_nextkey)(krb5_context, struct HDB*, 
+    krb5_error_code (*hdb_nextkey)(krb5_context, struct HDB*,
 				   unsigned, hdb_entry_ex*);
     /**
      * Lock database
@@ -223,7 +228,7 @@ typedef struct HDB{
      * ->hdb_store() into the database. The backend will still perform
      * all other operations, increasing the kvno, and update
      * modification timestamp.
-     * 
+     *
      * The backend needs to call _kadm5_set_keys() and perform password
      * quality checks.
      */

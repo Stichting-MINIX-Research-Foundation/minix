@@ -1,4 +1,4 @@
-/*	$NetBSD: callout.h,v 1.31 2008/04/28 20:24:10 martin Exp $	*/
+/*	$NetBSD: callout.h,v 1.32 2015/02/07 19:36:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -58,6 +58,13 @@ typedef struct callout {
 /* End-user flags. */
 #define	CALLOUT_MPSAFE		0x0100	/* does not need kernel_lock */
 #define	CALLOUT_FLAGMASK	0xff00
+
+#define CALLOUT_FMT	"\177\020\
+b\00BOUND\0\
+b\01PENDING\0\
+b\02FIRED\0\
+b\03INVOKING\0\
+b\10MPSAFE\0"
 
 #ifdef _CALLOUT_PRIVATE
 

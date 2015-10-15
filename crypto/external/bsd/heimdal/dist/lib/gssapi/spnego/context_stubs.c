@@ -1,4 +1,4 @@
-/*	$NetBSD: context_stubs.c,v 1.1.1.1 2011/04/13 18:14:48 elric Exp $	*/
+/*	$NetBSD: context_stubs.c,v 1.1.1.2 2014/04/24 12:45:29 pettai Exp $	*/
 
 /*
  * Copyright (c) 2004, PADL Software Pty Ltd.
@@ -39,7 +39,7 @@ spnego_supported_mechs(OM_uint32 *minor_status, gss_OID_set *mechs)
 {
     OM_uint32 ret, junk;
     gss_OID_set m;
-    int i;
+    size_t i;
 
     ret = gss_indicate_mechs(minor_status, &m);
     if (ret != GSS_S_COMPLETE)
@@ -567,7 +567,7 @@ OM_uint32 GSSAPI_CALLCONV _gss_spnego_inquire_names_for_mech (
 {
     gss_OID_set mechs, names, n;
     OM_uint32 ret, junk;
-    int i, j;
+    size_t i, j;
 
     *name_types = NULL;
 

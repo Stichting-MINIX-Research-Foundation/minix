@@ -226,6 +226,9 @@ test_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/test.asn1
 
 
 EXTRA_DIST =		\
+	NTMakefile	\
+	asn1_compile-version.rc \
+	libasn1-exports.def \
 	cms.asn1	\
 	cms.opt		\
 	asn1_err.et	\

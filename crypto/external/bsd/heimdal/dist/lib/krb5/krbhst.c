@@ -1,4 +1,4 @@
-/*	$NetBSD: krbhst.c,v 1.1.1.1 2011/04/13 18:15:36 elric Exp $	*/
+/*	$NetBSD: krbhst.c,v 1.1.1.2 2014/04/24 12:45:50 pettai Exp $	*/
 
 /*
  * Copyright (c) 2001 - 2003 Kungliga Tekniska Högskolan
@@ -125,7 +125,7 @@ srv_find_realm(krb5_context context, krb5_krbhst_info ***res, int *count,
 	    (*res)[num_srv++] = hi;
 
 	    hi->proto = proto_num;
-	
+
 	    hi->def_port = def_port;
 	    if (port != 0)
 		hi->port = port;
@@ -136,7 +136,7 @@ srv_find_realm(krb5_context context, krb5_krbhst_info ***res, int *count,
 	}
 
     *count = num_srv;
-	
+
     rk_dns_free_data(r);
     return 0;
 }
@@ -510,7 +510,7 @@ fallback_get_hosts(krb5_context context, struct krb5_krbhst_data *kd,
 	ret = asprintf(&host, "%s.%s.", serv_string, kd->realm);
     else
 	ret = asprintf(&host, "%s-%d.%s.",
-		       serv_string, kd->fallback_count, kd->realm);	
+		       serv_string, kd->fallback_count, kd->realm);
 
     if (ret < 0 || host == NULL)
 	return ENOMEM;
@@ -607,7 +607,7 @@ plugin_get_hosts(krb5_context context,
 	service = _krb5_plugin_get_symbol(e);
 	if (service->minor_version != 0)
 	    continue;
-	
+
 	(*service->init)(context, &ctx);
 	ret = (*service->lookup)(ctx, type, kd->realm, 0, 0, add_locate, kd);
 	(*service->fini)(ctx);

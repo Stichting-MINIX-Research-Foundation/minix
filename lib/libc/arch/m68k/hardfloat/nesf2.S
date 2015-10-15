@@ -1,4 +1,4 @@
-/*	$NetBSD: nesf2.S,v 1.1 2013/07/18 12:05:30 matt Exp $	*/
+/*	$NetBSD: nesf2.S,v 1.2 2014/03/18 18:20:37 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,7 +36,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-RCSID("$NetBSD: nesf2.S,v 1.1 2013/07/18 12:05:30 matt Exp $")
+RCSID("$NetBSD: nesf2.S,v 1.2 2014/03/18 18:20:37 riastradh Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 STRONG_ALIAS(__eqsf2,__nesf2)

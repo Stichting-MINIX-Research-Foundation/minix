@@ -1,4 +1,4 @@
-# $NetBSD: md.alpha,v 1.65 2013/11/01 07:48:31 mrg Exp $
+# $NetBSD: md.alpha,v 1.68 2015/08/10 03:21:44 mrg Exp $
 ./usr/include/alpha				comp-c-include
 ./usr/include/alpha/_G_config.h			comp-obsolete		obsolete
 ./usr/include/alpha/alpha_cpu.h			comp-c-include
@@ -69,11 +69,11 @@
 ./usr/include/alpha/wchar_limits.h		comp-c-include
 ./usr/include/alpha/wsconsio.h			comp-obsolete		obsolete
 ./usr/include/alpha/z8530var.h			comp-c-include
-./usr/include/gcc-4.5/tgmath.h			comp-c-include		gcccmds,gcc=45
-./usr/include/gcc-4.8/tgmath.h			comp-c-include		gcccmds,gcc=48
+./usr/include/gcc-4.5/tgmath.h			comp-c-include		obsolete
+./usr/include/gcc-4.8/tgmath.h			comp-c-include		gcccmds,gcc
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/lib/crtfm.o				comp-c-lib
 ./usr/lib/libalpha.a				comp-c-lib
 ./usr/lib/libalpha_p.a				comp-c-proflib		profile
-./usr/lib/libalpha_pic.a			comp-c-piclib
+./usr/lib/libalpha_pic.a			comp-c-piclib	picinstall
 ./usr/libdata/lint/llib-lalpha.ln		comp-c-lintlib		lint

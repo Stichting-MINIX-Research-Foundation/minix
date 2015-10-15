@@ -1,5 +1,6 @@
-#	$NetBSD: Makefile,v 1.35 2012/06/20 21:38:26 sjg Exp $
+#	$NetBSD: Makefile,v 1.37 2015/08/02 11:09:05 jmcneill Exp $
 
+#__MINIX: a lot not imported
 SUBDIR=	\
 	i2c \
 	pci \

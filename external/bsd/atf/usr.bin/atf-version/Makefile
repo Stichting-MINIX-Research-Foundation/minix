@@ -1,22 +1,24 @@
-# $NetBSD: Makefile,v 1.7 2011/02/20 20:18:57 jmmv Exp $
+# $NetBSD: Makefile,v 1.13 2014/03/02 22:50:13 jmmv Exp $
 
-.include <bsd.own.mk>
+USE_ATF_LIBTOOLS=	yes
 
-SRCDIR=		${NETBSDSRCDIR}/external/bsd/atf/dist
-.PATH:		${SRCDIR}/admin ${SRCDIR}/atf-version
+.include <bsd.init.mk>
+
+.PATH:		${SRCDIR}/tools
 
 BINDIR=		/usr/bin
 PROG_CXX=	atf-version
 SRCS=		atf-version.cpp
 MAN=		atf-version.1
 
-CPPFLAGS+=	-DHAVE_CONFIG_H
-CPPFLAGS+=	-I${SRCDIR}
-CPPFLAGS+=	-I${.CURDIR}/../../lib/libatf-c
-CPPFLAGS+=	-I${.CURDIR}
-LDADD+=		-latf-c++ -latf-c
-DPADD+=		${LIBATF_CXX} ${LIBATF_C}
+CPPFLAGS+=	-I${SRCDIR}/tools
+CPPFLAGS+=	-I.
 
 WARNS?=		2
+
+DPSRCS+=	version.hpp
+CLEANFILES+=	version.hpp
+version.hpp: Makefile atf-version.txt
+	echo "#define ATF_VERSION \"$$(cat atf-version.txt)\"" >version.hpp
 
 .include <bsd.prog.mk>

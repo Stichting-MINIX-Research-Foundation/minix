@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee754.h,v 1.9 2013/05/08 05:27:01 matt Exp $	*/
+/*	$NetBSD: ieee754.h,v 1.15 2014/02/01 16:39:52 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,7 +52,8 @@
 /*
  * <sys/ieee754.h> defines the layout of IEEE 754 floating point types.
  * Only single-precision and double-precision types are defined here;
- * extended types, if available, are defined in the machine-dependent
+ * 128-bit long doubles are define here IFF __HAVE_LONG_DOUBLE equals 128.
+ * Otherwise extended types, if available, are defined in the machine-dependent
  * header.
  */
 
@@ -118,6 +119,35 @@ struct ieee_double {
 #endif
 };
 
+#if __HAVE_LONG_DOUBLE + 0 == 128
+
+#define	EXT_EXPBITS	15
+#define EXT_FRACHBITS	48
+#define	EXT_FRACLBITS	64
+#define	EXT_FRACBITS	(EXT_FRACLBITS + EXT_FRACHBITS)
+
+#define	EXT_TO_ARRAY32(u, a) do {				\
+	(a)[0] = (uint32_t)((u).extu_ext.ext_fracl >>  0);	\
+	(a)[1] = (uint32_t)((u).extu_ext.ext_fracl >> 32);	\
+	(a)[2] = (uint32_t)((u).extu_ext.ext_frach >>  0);	\
+	(a)[3] = (uint32_t)((u).extu_ext.ext_frach >> 32);	\
+} while(/*CONSTCOND*/0)
+
+struct ieee_ext {
+#if _BYTE_ORDER == _BIG_ENDIAN
+	uint64_t ext_sign:1;
+	uint64_t ext_exp:EXT_EXPBITS;
+	uint64_t ext_frach:EXT_FRACHBITS;
+	uint64_t ext_fracl;
+#else
+	uint64_t ext_fracl;
+	uint64_t ext_frach:EXT_FRACHBITS;
+	uint64_t ext_exp:EXT_EXPBITS;
+	uint64_t ext_sign:1;
+#endif
+};
+#endif /* __HAVE_LONG_DOUBLE == 128 */
+
 /*
  * Floats whose exponent is in [1..INFNAN) (of whatever type) are
  * `normal'.  Floats whose exponent is INFNAN are either Inf or NaN.
@@ -130,12 +160,18 @@ struct ieee_double {
  */
 #define	SNG_EXP_INFNAN	255
 #define	DBL_EXP_INFNAN	2047
+#if __HAVE_LONG_DOUBLE + 0 == 128
+#define	EXT_EXP_INFNAN	0x7fff
+#endif
 
 /*
  * Exponent biases.
  */
 #define	SNG_EXP_BIAS	127
 #define	DBL_EXP_BIAS	1023
+#if __HAVE_LONG_DOUBLE + 0 == 128
+#define	EXT_EXP_BIAS	16383
+#endif
 
 /*
  * Convenience data structures.
@@ -160,5 +196,23 @@ union ieee_double_u {
 #define	dblu_frach	dblu_dbl.dbl_frach
 #define	dblu_fracl	dblu_dbl.dbl_fracl
 #define	DBLU_ZEROFRAC_P(u)	(((u).dblu_frach|(u).dblu_fracl) != 0)
+
+#if __HAVE_LONG_DOUBLE + 0 == 128
+union ieee_ext_u {
+	long double		extu_ld;
+	struct ieee_ext		extu_ext;
+};
+
+#define extu_exp	extu_ext.ext_exp
+#define extu_sign	extu_ext.ext_sign
+#define extu_fracl	extu_ext.ext_fracl
+#define extu_frach	extu_ext.ext_frach
+#define	EXTU_ZEROFRAC_P(u)	(((u).extu_frach|(u).extu_fracl) != 0)
+
+#ifndef LDBL_NBIT
+#define LDBL_IMPLICIT_NBIT	1	/* our NBIT is implicit */
+#endif
+
+#endif /* __HAVE_LONG_DOUBLE */
 
 #endif /* _SYS_IEEE754_H_ */

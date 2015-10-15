@@ -147,9 +147,9 @@ __dead static void	 usage(void);
 #define	OPTIONS	"aLln"
 extern int __check_rhosts_file;
 extern char *__rcmd_errstr;	/* syslog hook from libc/net/rcmd.c. */
-#ifdef USE_PAM
+#if defined(__minix) && defined(USE_PAM)
 static const char incorrect[] = "Login incorrect.";
-#endif
+#endif /* defined(__minix) && defined(USE_PAM) */
 
 int
 main(int argc, char *argv[])
@@ -578,10 +578,10 @@ doit(struct sockaddr *fromp, struct sockaddr *localp)
 
 			/* should set s nbio! */
 			do {
-#ifdef __minix
+#if defined(__minix)
 				if (set[0].events == 0 && set[1].events == 0)
 					break;
-#endif /* __minix */
+#endif /* defined(__minix) */
 				if (poll(set, 2, INFTIM) < 0)
 					break;
 				if (set[0].revents & POLLIN) {

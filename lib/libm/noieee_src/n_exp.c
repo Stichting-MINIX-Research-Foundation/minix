@@ -1,4 +1,4 @@
-/*      $NetBSD: n_exp.c,v 1.8 2008/03/20 16:41:26 mhitch Exp $ */
+/*      $NetBSD: n_exp.c,v 1.9 2014/10/10 20:58:09 martin Exp $ */
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -82,6 +82,7 @@ static char sccsid[] = "@(#)exp.c	8.1 (Berkeley) 6/4/93";
 
 #ifdef __weak_alias
 __weak_alias(exp, _exp);
+__weak_alias(_expl, _exp);
 __weak_alias(expf, _expf);
 #endif
 

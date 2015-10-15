@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_quota1.c,v 1.6 2013/07/28 01:10:49 dholland Exp $	*/
+/*	$NetBSD: ulfs_quota1.c,v 1.9 2015/07/26 08:33:53 hannken Exp $	*/
 /*  from NetBSD: ufs_quota1.c,v 1.18 2012/02/02 03:00:48 matt Exp  */
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_quota1.c,v 1.6 2013/07/28 01:10:49 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_quota1.c,v 1.9 2015/07/26 08:33:53 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -307,7 +307,8 @@ lfsquota1_handle_cmd_quotaon(struct lwp *l, struct ulfsmount *ump, int type,
 {
 	struct mount *mp = ump->um_mountp;
 	struct lfs *fs = ump->um_lfs;
-	struct vnode *vp, **vpp, *mvp;
+	struct vnode *vp, **vpp;
+	struct vnode_iterator *marker;
 	struct dquot *dq;
 	int error;
 	struct pathbuf *pb;
@@ -363,41 +364,33 @@ lfsquota1_handle_cmd_quotaon(struct lwp *l, struct ulfsmount *ump, int type,
 			ump->umq1_itime[type] = dq->dq_itime;
 		lfs_dqrele(NULLVP, dq);
 	}
-	/* Allocate a marker vnode. */
-	mvp = vnalloc(mp);
 	/*
 	 * Search vnodes associated with this mount point,
 	 * adding references to quota file being opened.
 	 * NB: only need to add dquot's for inodes being modified.
 	 */
-	mutex_enter(&mntvnode_lock);
-again:
-	for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = vunmark(mvp)) {
-		vmark(mvp, vp);
-		mutex_enter(vp->v_interlock);
-		if (VTOI(vp) == NULL || vp->v_mount != mp || vismarker(vp) ||
-		    vp->v_type == VNON || vp->v_writecount == 0 ||
-		    (vp->v_iflag & (VI_XLOCK | VI_CLEAN)) != 0) {
-			mutex_exit(vp->v_interlock);
+	vfs_vnode_iterator_init(mp, &marker);
+	while ((vp = vfs_vnode_iterator_next(marker, NULL, NULL))) {
+		error = vn_lock(vp, LK_EXCLUSIVE);
+		if (error) {
+			vrele(vp);
 			continue;
 		}
-		mutex_exit(&mntvnode_lock);
-		if (vget(vp, LK_EXCLUSIVE)) {
-			mutex_enter(&mntvnode_lock);
-			(void)vunmark(mvp);
-			goto again;
+		mutex_enter(vp->v_interlock);
+		if (VTOI(vp) == NULL || vp->v_type == VNON ||
+		    vp->v_writecount == 0) {
+			mutex_exit(vp->v_interlock);
+			vput(vp);
+			continue;
 		}
+		mutex_exit(vp->v_interlock);
 		if ((error = lfs_getinoquota(VTOI(vp))) != 0) {
 			vput(vp);
-			mutex_enter(&mntvnode_lock);
-			(void)vunmark(mvp);
 			break;
 		}
 		vput(vp);
-		mutex_enter(&mntvnode_lock);
 	}
-	mutex_exit(&mntvnode_lock);
-	vnfree(mvp);
+	vfs_vnode_iterator_destroy(marker);
 
 	mutex_enter(&lfs_dqlock);
 	ump->umq1_qflags[type] &= ~QTF_OPENING;
@@ -419,21 +412,18 @@ lfsquota1_handle_cmd_quotaoff(struct lwp *l, struct ulfsmount *ump, int type)
 	struct mount *mp = ump->um_mountp;
 	struct lfs *fs = ump->um_lfs;
 	struct vnode *vp;
-	struct vnode *qvp, *mvp;
+	struct vnode *qvp;
+	struct vnode_iterator *marker;
 	struct dquot *dq;
 	struct inode *ip;
 	kauth_cred_t cred;
 	int i, error;
-
-	/* Allocate a marker vnode. */
-	mvp = vnalloc(mp);
 
 	mutex_enter(&lfs_dqlock);
 	while ((ump->umq1_qflags[type] & (QTF_CLOSING | QTF_OPENING)) != 0)
 		cv_wait(&lfs_dqcv, &lfs_dqlock);
 	if ((qvp = ump->um_quotas[type]) == NULLVP) {
 		mutex_exit(&lfs_dqlock);
-		vnfree(mvp);
 		return (0);
 	}
 	ump->umq1_qflags[type] |= QTF_CLOSING;
@@ -443,31 +433,24 @@ lfsquota1_handle_cmd_quotaoff(struct lwp *l, struct ulfsmount *ump, int type)
 	 * Search vnodes associated with this mount point,
 	 * deleting any references to quota file being closed.
 	 */
-	mutex_enter(&mntvnode_lock);
-again:
-	for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = vunmark(mvp)) {
-		vmark(mvp, vp);
-		mutex_enter(vp->v_interlock);
-		if (VTOI(vp) == NULL || vp->v_mount != mp || vismarker(vp) ||
-		    vp->v_type == VNON ||
-		    (vp->v_iflag & (VI_XLOCK | VI_CLEAN)) != 0) {
-			mutex_exit(vp->v_interlock);
+	vfs_vnode_iterator_init(mp, &marker);
+	while ((vp = vfs_vnode_iterator_next(marker, NULL, NULL))) {
+		error = vn_lock(vp, LK_EXCLUSIVE);
+		if (error) {
+			vrele(vp);
 			continue;
 		}
-		mutex_exit(&mntvnode_lock);
-		if (vget(vp, LK_EXCLUSIVE)) {
-			mutex_enter(&mntvnode_lock);
-			(void)vunmark(mvp);
-			goto again;
-		}
 		ip = VTOI(vp);
+		if (ip == NULL || vp->v_type == VNON) {
+			vput(vp);
+			continue;
+		}
 		dq = ip->i_dquot[type];
 		ip->i_dquot[type] = NODQUOT;
 		lfs_dqrele(vp, dq);
 		vput(vp);
-		mutex_enter(&mntvnode_lock);
 	}
-	mutex_exit(&mntvnode_lock);
+	vfs_vnode_iterator_destroy(marker);
 #ifdef DIAGNOSTIC
 	lfs_dqflush(qvp);
 #endif
@@ -757,7 +740,8 @@ int
 lfs_q1sync(struct mount *mp)
 {
 	struct ulfsmount *ump = VFSTOULFS(mp);
-	struct vnode *vp, *mvp;
+	struct vnode *vp;
+	struct vnode_iterator *marker;
 	struct dquot *dq;
 	int i, error;
 
@@ -771,32 +755,19 @@ lfs_q1sync(struct mount *mp)
 	if (i == ULFS_MAXQUOTAS)
 		return (0);
 
-	/* Allocate a marker vnode. */
-	mvp = vnalloc(mp);
-
 	/*
 	 * Search vnodes associated with this mount point,
 	 * synchronizing any modified dquot structures.
 	 */
-	mutex_enter(&mntvnode_lock);
- again:
-	for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = vunmark(mvp)) {
-		vmark(mvp, vp);
-		mutex_enter(vp->v_interlock);
-		if (VTOI(vp) == NULL || vp->v_mount != mp || vismarker(vp) ||
-		    vp->v_type == VNON ||
-		    (vp->v_iflag & (VI_XLOCK | VI_CLEAN)) != 0) {
-			mutex_exit(vp->v_interlock);
+	vfs_vnode_iterator_init(mp, &marker);
+	while ((vp = vfs_vnode_iterator_next(marker, NULL, NULL))) {
+		error = vn_lock(vp, LK_EXCLUSIVE);
+		if (error) {
+			vrele(vp);
 			continue;
 		}
-		mutex_exit(&mntvnode_lock);
-		error = vget(vp, LK_EXCLUSIVE | LK_NOWAIT);
-		if (error) {
-			mutex_enter(&mntvnode_lock);
-			if (error == ENOENT) {
-				(void)vunmark(mvp);
-				goto again;
-			}
+		if (VTOI(vp) == NULL || vp->v_type == VNON) {
+			vput(vp);
 			continue;
 		}
 		for (i = 0; i < ULFS_MAXQUOTAS; i++) {
@@ -809,10 +780,8 @@ lfs_q1sync(struct mount *mp)
 			mutex_exit(&dq->dq_interlock);
 		}
 		vput(vp);
-		mutex_enter(&mntvnode_lock);
 	}
-	mutex_exit(&mntvnode_lock);
-	vnfree(mvp);
+	vfs_vnode_iterator_destroy(marker);
 	return (0);
 }
 

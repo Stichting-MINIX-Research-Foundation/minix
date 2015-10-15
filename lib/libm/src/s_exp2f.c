@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: s_exp2f.c,v 1.1 2010/01/11 16:28:39 christos Exp $");
+__RCSID("$NetBSD: s_exp2f.c,v 1.2 2014/03/16 22:30:43 dsl Exp $");
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: src/lib/msun/src/s_exp2f.c,v 1.9 2008/02/22 02:27:34 das Exp $");
 #endif
@@ -39,14 +39,35 @@ __FBSDID("$FreeBSD: src/lib/msun/src/s_exp2f.c,v 1.9 2008/02/22 02:27:34 das Exp
 #define	TBLSIZE	(1 << TBLBITS)
 
 static const float
-    huge    = 0x1p100f,
     redux   = 0x1.8p23f / TBLSIZE,
     P1	    = 0x1.62e430p-1f,
     P2	    = 0x1.ebfbe0p-3f,
     P3	    = 0x1.c6b348p-5f,
     P4	    = 0x1.3b2c9cp-7f;
 
-static volatile float twom100 = 0x1p-100f;
+/*
+ * For out of range values we need to generate the appropriate
+ * underflow or overflow trap as well as generating infinity or zero.
+ * This means we have to get the fpu to execute an instruction that
+ * will generate the trap (and not have the compiler optimise it away).
+ * This is normally done by calculating 'huge * huge' or 'tiny * tiny'.
+ *
+ * i386 is particularly problematic.
+ * The 'float' result is returned on the x87 stack, so is 'long double'.
+ * If we just multiply two 'float' values the caller will see 0x1p+/-200
+ * (not 0 or infinity). 
+ * If we use 'double' the compiler does a store-load which will convert the
+ * value and generate the required exception.
+ */
+#ifdef __i386__
+static volatile double overflow = 0x1p+1000;
+static volatile double underflow = 0x1p-1000;
+#else
+static volatile float huge = 0x1p+100;
+static volatile float tiny = 0x1p-100;
+#define overflow (huge * huge)
+#define underflow (tiny * tiny)
+#endif
 
 static const double exp2ft[TBLSIZE] = {
 	0x1.6a09e667f3bcdp-1,
@@ -112,9 +133,9 @@ exp2f(float x)
 				return (0.0);	/* x is -Inf */
 		}
 		if(x >= 0x1.0p7f)
-			return (huge * huge);	/* overflow */
+			return overflow;	/* +infinity with overflow */
 		if(x <= -0x1.2cp7f)
-			return (twom100 * twom100); /* underflow */
+			return underflow;	/* zero with underflow */
 	} else if (ix <= 0x33000000) {		/* |x| <= 0x1p-25 */
 		return (1.0f + x);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: heim-auth.h,v 1.1.1.1 2011/04/13 18:15:39 elric Exp $	*/
+/*	$NetBSD: heim-auth.h,v 1.1.1.2 2014/04/24 12:45:51 pettai Exp $	*/
 
 /*
  * Generate challange for APOP and CRAM-MD5
@@ -58,7 +58,7 @@ heim_cram_md5_free(heim_cram_md5 ctx);
  * response = read_from_client();
  *
  * heim_digest_parse_response(d, response);
- * 
+ *
  * const char *user = heim_digest_get_key(d, "username");
  * heim_digest_set_key(d, "password", "sommar17");
  *

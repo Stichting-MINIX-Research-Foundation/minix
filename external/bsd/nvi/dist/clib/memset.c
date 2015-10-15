@@ -39,6 +39,9 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 static const char sccsid[] = "@(#)memset.c	8.1 (Berkeley) 6/4/93";
 #endif /* LIBC_SCCS and not lint */
+#else
+__RCSID("$NetBSD: memset.c,v 1.2 2014/01/26 21:43:45 christos Exp $");
+#endif
 
 #include <sys/types.h>
 

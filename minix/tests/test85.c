@@ -493,6 +493,8 @@ main(void)
 
 	start(85);
 
+	setuid(geteuid());
+
 	signal(SIGINT, got_signal);
 	signal(SIGABRT, got_signal);
 	signal(SIGSEGV, got_signal);

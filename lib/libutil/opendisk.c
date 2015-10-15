@@ -1,4 +1,4 @@
-/*	$NetBSD: opendisk.c,v 1.12 2009/10/13 22:00:31 pooka Exp $	*/
+/*	$NetBSD: opendisk.c,v 1.13 2014/09/29 21:04:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -29,9 +29,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: opendisk.c,v 1.12 2009/10/13 22:00:31 pooka Exp $");
+__RCSID("$NetBSD: opendisk.c,v 1.13 2014/09/29 21:04:52 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -39,8 +43,12 @@ __RCSID("$NetBSD: opendisk.c,v 1.12 2009/10/13 22:00:31 pooka Exp $");
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
+#ifndef HAVE_NBTOOL_CONFIG_H
 #include <util.h>
 #include <paths.h>
+#else
+#include "opendisk.h"
+#endif
 #include <stdio.h>
 #include <string.h>
 

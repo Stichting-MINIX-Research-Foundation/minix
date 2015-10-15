@@ -1,4 +1,4 @@
-.\"	$NetBSD: tetris.6,v 1.11 2005/09/15 02:09:42 wiz Exp $
+.\"	$NetBSD: tetris.6,v 1.16 2015/02/19 08:51:14 wiz Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	@(#)tetris.6	8.1 (Berkeley) 5/31/93
 .\"
-.Dd May 31, 1993
+.Dd February 18, 2015
 .Dt TETRIS 6
 .Os
 .Sh NAME
@@ -40,7 +40,7 @@
 .Nd the game of tetris
 .Sh SYNOPSIS
 .Nm
-.Op Fl ps
+.Op Fl bps
 .Op Fl k Ar keys
 .Op Fl l Ar level
 .Sh DESCRIPTION
@@ -69,22 +69,29 @@ drop
 pause
 .It q
 quit
+.It n
+down
 .El
 .Pp
 The options are as follows:
 .Bl -tag -width indent
+.It Fl b
+By default, shapes are displayed colorfully if the user's CRT supports color.
+The
+.Fl b
+option can be used to restore the traditional black-and-white behavior.
 .It Fl k
 The default control keys can be changed using the
 .Fl k
 option.
 The
 .Ar keys
-argument must have the six keys in order, and, remember to quote any
+argument must have the seven keys in order, and, remember to quote any
 space or tab characters from the shell.
 For example:
-.sp
-.Dl "tetris -l 2 -k 'jkl pq'"
-.sp
+.Pp
+.Dl "tetris -l 2 -k 'jkl pqn'"
+.Pp
 will play the default games, i.e. level 2 and with the default
 control keys.
 The current key settings are displayed at the bottom of the screen
@@ -145,12 +152,19 @@ are marked with asterisks
 high score file
 .El
 .Sh AUTHORS
+.An -nosplit
 Adapted from a 1989 International Obfuscated C Code Contest winner by
-Chris Torek and Darren F. Provine.
+.An Chris Torek
+and
+.An Darren F. Provine .
 .Pp
-Manual adapted from the original entry written by Nancy L. Tinkham and
-Darren F. Provine.
+Manual adapted from the original entry written by
+.An Nancy L. Tinkham
+and
+.An Darren F. Provine .
 .Pp
-Code for previewing next shape added by Hubert Feyrer in 1999.
+Code for previewing next shape added by
+.An Hubert Feyrer
+in 1999.
 .Sh BUGS
 The higher levels are unplayable without a fast terminal connection.

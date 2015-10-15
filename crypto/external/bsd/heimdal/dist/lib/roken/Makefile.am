@@ -41,7 +41,7 @@ LDADD = libroken.la
 make_roken_LDADD = 
 
 noinst_LTLIBRARIES = libtest.la
-libtest_la_SOURCES = strftime.c strptime.c snprintf.c
+libtest_la_SOURCES = strftime.c strptime.c snprintf.c tsearch.c
 libtest_la_CFLAGS = -DTEST_SNPRINTF -DTEST_STRPFTIME
 
 parse_reply_test_SOURCES = parse_reply-test.c resolve.c
@@ -111,7 +111,6 @@ libroken_la_SOURCES =		\
 	strerror_r.c		\
 	strpool.c		\
 	timeval.c		\
-	tsearch.c		\
 	tm2time.c		\
 	unvis.c			\
 	verify.c		\
@@ -231,6 +230,7 @@ endif
 
 
 EXTRA_DIST = \
+	NTMakefile \
 	roken.awk roken.h.in \
 	$(man_MANS) \
 	test-mem.h \

@@ -31,7 +31,8 @@ $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 ( $xlate="${dir}../../perlasm/x86_64-xlate.pl" and -f $xlate) or
 die "can't locate x86_64-xlate.pl";
 
-open STDOUT,"| \"$^X\" $xlate $flavour $output";
+open OUT,"| \"$^X\" $xlate $flavour $output";
+*STDOUT=*OUT;
 
 ($lo,$hi)=("%rax","%rdx");	$a=$lo;
 ($i0,$i1)=("%rsi","%rdi");
@@ -167,7 +168,7 @@ $code.=<<___;
 .align	16
 bn_GF2m_mul_2x2:
 	mov	OPENSSL_ia32cap_P(%rip),%rax
-	bt	\$33,%rax
+	bt	\$1,4(%rax)
 	jnc	.Lvanilla_mul_2x2
 
 	movq		$a1,%xmm0

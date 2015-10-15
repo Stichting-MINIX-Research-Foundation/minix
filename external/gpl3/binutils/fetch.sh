@@ -5,7 +5,7 @@ echo $0
 cd `dirname $0`
 
 # Configure fetch method
-URL="http://www.minix3.org/pkgsrc/distfiles/minix/3.3.0/binutils-2.23.2.tar.bz2"
+URL="http://www.minix3.org/pkgsrc/distfiles/minix/3.4.0/binutils-2.23.2.tar.bz2"
 BACKUP_URL="http://ftp.gnu.org/gnu/binutils/binutils-2.23.2.tar.bz2"
 FETCH=ftp
 which curl >/dev/null

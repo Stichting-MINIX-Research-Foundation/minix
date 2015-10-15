@@ -184,13 +184,11 @@ AC_CHECK_FUNCS([				\
 	getprogname				\
 	getrlimit				\
 	getspnam				\
-	initstate				\
 	issetugid				\
 	on_exit					\
 	poll					\
 	random					\
 	setprogname				\
-	setstate				\
 	strsvis					\
 	strsvisx				\
 	strunvis				\
@@ -201,7 +199,6 @@ AC_CHECK_FUNCS([				\
 	sysctl					\
 	tdelete					\
 	tfind					\
-	tsearch					\
 	twalk					\
 	uname					\
 	unvis					\
@@ -375,6 +372,7 @@ AC_BROKEN([					\
 	strtok_r				\
 	strupr					\
 	swab					\
+	tsearch					\
 	timegm					\
 	unsetenv				\
 	verr					\

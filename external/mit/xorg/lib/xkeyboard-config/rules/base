@@ -40,6 +40,50 @@
 ! $azerty = be fr
 ! $qwertz = al cz de hr hu ro si sk 
 
+
+// all layouts with 3rd and 4th groups
+! $threelevellayouts = al az \
+              be br bt \
+              ca ch cs cz \
+              de dk \
+              ee es \
+              fi fo fr \
+              gb gr \
+              hu \
+              ie ir is it \
+              latam \
+              lk lt \
+              mn mt \
+              nl no \
+              pl pt \
+              ro \
+              se sk \
+              tr \
+              us \
+              vn \
+              za
+
+! $thinkpads = thinkpad thinkpad60 thinkpadz60
+
+! $sun = sun_type6_jp sun_type6_usb sun_type6_euro_usb \
+         sun_type6_jp_usb sun_type6_unix_usb sun_type7_jp_usb \
+         sun_type7_usb sun_type7_euro_usb sun_type7_unix_usb
+
+! $sun_jp = sun_type6_jp sun_type6_jp_usb sun_type7_jp_usb
+
+// Sun Type_6_7 keyboards with custom layouts
+! $sun_custom = ara be br ca ch cz de dk \
+                ee es fi fr gb gr it jp \
+                kr lt lv nl no pl pt ro \
+                ru se sk tr tw ua us
+
+! $sun_var =  sun_type6 sun_type6_suncompat sun_type6_de sun_type6_fr \
+              sun_type7 sun_type7_suncompat suncompat
+
+! $sun_compat = sun_type6 sun_type6_suncompat sun_type7_suncompat suncompat
+
+! $htcdreamlayouts = us it de
+
 ! $inetkbds = acer_c300 acer_ferrari4k acer_laptop \
               airkey \
               apple armada azonaRF2300 \
@@ -80,38 +124,20 @@
               toshiba_s3000 trust trustda \
               unitekkb1925 yahoo
 
-// all layouts with 3rd and 4th groups
-! $threelevellayouts = al az \
-              be br bt \
-              ca ch cs cz \
-              de dk \
-              ee es \
-              fi fo fr \
-              gb gr \
-              hu \
-              ie ir is it \
-              latam \
-              lk lt \
-              mn mt \
-              nl no \
-              pl pt \
-              ro \
-              se sk \
-              tr \
-              us \
-              vn \
-              za
-
-! $evdevkbds = ibm_spacesaver
-
-! $thinkpads = thinkpad thinkpad60 thinkpadz60
-
-! $sun_t6_custom = ara be br ca ch cz de dk \
-                   ee es fi fr gb gr it kr \
-                   lt lv nl no pl pt ro ru \
-                   se sk tr tw ua
-
-! $htcdreamlayouts = us it de
+! $inetmediakbds = acer_ferrari4k acer_laptop btc5090 btc9019u cherryblueb \
+		cherrybluea herrycyboard chicony042 compaqik13 compaqik18 \
+		armada presario dellm65 inspiron dellusbmm diamond \
+		ennyah_dkb1008 genius geniuscomfy2 hpi6 hpxe3gc hpxe3gf \
+		hpxt1000 hpzt11xx hpdv5 hpxe4xxx hp5xx thinkpad60 ogitech_base \
+		logidinovo logidinovoedge logitech_g15 mx1998 mx2500 mx2750 \
+		microsoft4000 microsoft7000 microsoftprooem microsoftmult \
+		propeller samsung4500 samsung4510 sk1300 sk2500 sk7100 \
+		toshiba_s3000 trust trustda cymotionlinux silvercrest \
+		emachines benqx unitekkb1925 creativedw7000 compalfl90 \
+		pc105 a4techKB21 a4techKBS8 a4_rfkb23 asus_laptop btc6301urf \
+		dexxa dtk2000 fscaa1667g geniuskb19e geniuscomfy latitude \
+		microsoftpro precision_m scorpius sp_inet targa_v811 thinkpad \
+		tm2030USB-102 tm2030USB-106 trust_slimline
 
 ! $dvoraklayouts = br ca de ee es fr gb no pl se us
 
@@ -119,10 +145,8 @@
   amiga		=	amiga(de)
   ataritt	=	ataritt(de)
   empty         =       empty
-  sun4		=	sun(type4_euro)
-  sun5		=	sun(type5_euro)
-  sun6		=	sun(type6_usb)
-  sun6euro	=	sun(type6tuv_usb)
+ $sun_jp	=	sun(type6_jp_usb)
+ $sun		=	sun(type6_usb)
   pc98		=	xfree98(pc98)
  $applealu	=	macintosh(alukbd)
   macintosh_hhk	=	macintosh(hhk)
@@ -173,6 +197,15 @@
   hhk		=	hhk(basic)
   kinesis	=	kinesis(model100)
  $nokiamodels	=	nokia(%m)
+  sun_type6_jp          =   sun(type6jp)
+  sun_type6_usb         =   sun(type6)
+  sun_type6_euro_usb    =   sun(type6tuv)
+  sun_type6_jp_usb      =   sun(type6jp)
+  sun_type6_unix_usb    =   sun(type6unix)
+  sun_type7_jp_usb      =   sun(type6jp)
+  sun_type7_usb         =   sun(type7)
+  sun_type7_euro_usb    =   sun(type7tuv)
+  sun_type7_unix_usb    =   sun(type7unix)
   *		=       pc(pc104)
 
 ! model		layout		variant		=	symbols
@@ -229,6 +262,7 @@
   classmate	us		alt-intl	=	pc+us(classmate-alt-intl)
   classmate	us		altgr-intl	=	pc+us(classmate-altgr-intl)
   nokiarx51	cz		qwerty		=	nokia_vndr/rx-51(cz_qwerty)
+  *			$sun_custom	$sun_var	=	pc+sun_vndr/%l%(v)
 
 ! model		layout				=	symbols
   *		ar			=	pc+ara
@@ -247,7 +281,6 @@
   *		lo			=	pc+la
   *		kan			=	pc+in(kan)
   *		mi			=	pc+mao
-  *		ml			=	pc+in(mal)
   *		ogham			=	pc+ie(ogam)
   *		ori			=	pc+ie(ori)
   *		sapmi			=	pc+no(smi)
@@ -314,18 +347,7 @@
   classmate	us			=	pc+%l(classmate)
   empty         *                       =       empty(basic)
   *             empty                   =       empty(basic)
-  sun4		$nonlatin		=	latin+sun_vndr/us(type4)+%l%(v):2
-  sun4		*			=	latin+sun_vndr/us(type4)+%l%(v)
-  sun5		$nonlatin		=	latin+sun_vndr/us(type5)+%l%(v):2
-  sun5		*			=	latin+sun_vndr/us(type5)+%l%(v)
-  sun6		us			=	pc+sun_vndr/us(type6)
-  sun6		en_US			=	pc+sun_vndr/us(type6)+iso9995-3(basic)
-  sun6		$sun_t6_custom		=	pc+sun_vndr/us(type6)+sun_vndr/%l%(v)
-  sun6		*			=	pc+sun_vndr/us(type6)+%l%(v)
-  sun6euro	us			=	pc+sun_vndr/us(type6)
-  sun6euro	en_US			=	pc+sun_vndr/us(type6)+iso9995-3(basic)
-  sun6euro	$sun_t6_custom		=	pc+sun_vndr/us(type6)+sun_vndr/%l%(v)
-  sun6euro	*			=	pc+sun_vndr/us(type6)+%l%(v)
+ $sun		$sun_custom		=	pc+sun_vndr/%l%(v)
   pc98		nec_vndr/jp		=	nec_vndr/jp(pc98)
   macintosh_old	us			=	macintosh_vndr/us(oldmac)
   macintosh_old	en_US			=	macintosh_vndr/us(oldmac)
@@ -344,6 +366,8 @@
   nokiasu8w	*			=	nokia_vndr/su-8w(%l)
   olpc		$olpclayouts		=	olpc+%l%(m)
   olpc		*			=	olpc+%l%(v)
+  olpcm		$olpclayouts		=	olpc+%l%(m)
+  olpcm		*			=	olpc+%l%(v)
  $thinkpads   	br			=	pc+br(thinkpad)
   sl-c3x00	*			=	pc+sharp_vndr/sl-c3x00(basic)
   ws003sh	*			=	pc+sharp_vndr/ws003sh(basic)
@@ -371,7 +395,6 @@
   *		lo			=	pc+la%(v[1])
   *		kan			=	pc+in(kan)
   *		mi			=	pc+mao%(v[1])
-  *		ml			=	pc+in(mal)
   *		ogham			=	pc+ie(ogam)
   *		ori			=	pc+ie(ori)
   *		sapmi			=	pc+no(smi)
@@ -433,8 +456,7 @@
   *		yu(unicodeyz)			=	pc+srp(latinunicodeyz)
   ataritt	*			=	xfree68_vndr/ataritt(us)+%l[1]%(v[1])
   amiga		*			=	xfree68_vndr/amiga(usa1)+%l[1]%(v[1])
-  sun4		*			=	latin+sun_vndr/us(type4)+%l[1]%(v[1])
-  sun5		*			=	latin+sun_vndr/us(type5)+%l[1]%(v[1])
+ $sun		$sun_custom	=	pc+sun_vndr/%l[1]%(v[1])
   macintosh_old	us			=	macintosh_vndr/us(oldmac)
   macintosh_old	$macvendorlayouts	=	macintosh_vndr/us(oldmac)+macintosh_vndr/%l[1]%(v[1])
   macintosh_old	*			=	macintosh_vndr/us(oldmac)+%l[1]%(v[1])
@@ -515,7 +537,6 @@
   *		lo		=	+la%(v[2]):2
   *		kan		=	+in(kan):2
   *		mi		=	+mao%(v[2]):2
-  *		ml		=	+in(mal):2
   *		ogham		=	+ie(ogam):2
   *		ori		=	+ie(ori):2
   *		sapmi		=	+no(smi):2
@@ -577,6 +598,7 @@
   *		yu(unicodeyz)	=	+srp(latinunicodeyz):2
   nokiarx51	cz(qwerty)	=	+nokia_vndr/rx-51(cz_qwerty):2
   nokiarx51	*		=	+nokia_vndr/rx-51(%l[2]%_v[2]):2
+ $sun	$sun_custom	=	+sun_vndr/%l[2]%(v[2]):2
   *		*		=	+%l[2]%(v[2]):2
 
 ! model		layout[3]	=	symbols
@@ -596,7 +618,6 @@
   *		lo		=	+la%(v[3]):3
   *		kan		=	+in(kan):3
   *		mi		=	+mao%(v[3]):3
-  *		ml		=	+in(mal):3
   *		ogham		=	+ie(ogam):3
   *		ori		=	+ie(ori):3
   *		sapmi		=	+no(smi):3
@@ -658,6 +679,7 @@
   *		yu(unicodeyz)	=	+srp(latinunicodeyz):3
   nokiarx51	cz(qwerty)	=	+nokia_vndr/rx-51(cz_qwerty):3
   nokiarx51	*		=	+nokia_vndr/rx-51(%l[3]%_v[3]):3
+ $sun	$sun_custom	=	+sun_vndr/%l[3]%(v[3]):3
   *		*		=	+%l[3]%(v[3]):3
 
 ! model		layout[4]	=	symbols
@@ -677,7 +699,6 @@
   *		lo		=	+la%(v[4]):4
   *		kan		=	+in(kan):4
   *		mi		=	+mao%(v[4]):4
-  *		ml		=	+in(mal):4
   *		ogham		=	+ie(ogam):4
   *		ori		=	+ie(ori):4
   *		sapmi		=	+no(smi):4
@@ -739,6 +760,7 @@
   *		yu(unicodeyz)	=	+srp(latinunicodeyz):4
   nokiarx51	cz(qwerty)	=	+nokia_vndr/rx-51(cz_qwerty):4
   nokiarx51	*		=	+nokia_vndr/rx-51(%l[4]%_v[4]):4
+ $sun	$sun_custom	=	+sun_vndr/%l[4]%(v[4]):4
   *		*		=	+%l[4]%(v[4]):4
 
 ! model		layout[2]	variant[2]	=	symbols
@@ -946,26 +968,42 @@
   $maclaptop    =       +inet(apple)+level3(enter_switch)
   $applealu     =       +inet(apple)
   $macs	        =       +inet(apple)
+  sun_type7_jp_usb	=	+sun_vndr/solaris(defaults_type7jp)
+  $sun			=		+sun_vndr/solaris(defaults)
+
+! model		layout		=	symbols
+ $inetmediakbds	jp	=	+jp(henkan)
 
 ! layout	variant		=	compat
   de		neo			=	+caps(caps_lock)+misc(assign_shift_left_action)+level5(level5_lock)
+  de		adnw			=	+caps(caps_lock)+misc(assign_shift_left_action)+level5(level5_lock)
+  jp        $sun_compat =   complete+japan(kana_lock)
 
 ! layout[1]	variant[1]	=	compat
   de		neo			=	+caps(caps_lock)+misc(assign_shift_left_action)+level5(level5_lock)
+  de		adnw			=	+caps(caps_lock)+misc(assign_shift_left_action)+level5(level5_lock)
+  jp       $sun_compat =   complete+japan(kana_lock)
 
 ! layout[2]	variant[2]	=	compat
   de		neo			=	+caps(caps_lock):2+misc(assign_shift_left_action):2+level5(level5_lock):2
+  de		adnw			=	+caps(caps_lock):2+misc(assign_shift_left_action):2+level5(level5_lock):2
+  jp       $sun_compat  =   +complete+japan(kana_lock):2
 
 ! layout[3]	variant[3]	=	compat
   de		neo			=	+caps(caps_lock):3+misc(assign_shift_left_action):3+level5(level5_lock):3
+  de		adnw			=	+caps(caps_lock):3+misc(assign_shift_left_action):3+level5(level5_lock):3
+  jp       $sun_compat  =   +complete+japan(kana_lock):3
 
 ! layout[4]	variant[4]	=	compat
   de		neo			=	+caps(caps_lock):4+misc(assign_shift_left_action):4+level5(level5_lock):4
+  de		adnw			=	+caps(caps_lock):4+misc(assign_shift_left_action):4+level5(level5_lock):4
+  jp       $sun_compat  =   +complete+japan(kana_lock):4
 
 ! model		layout		=	compat
   pc98		nec_vndr/jp	=	pc98(basic)
   *		jp		=	complete+japan
-  olpc         *               =       olpc
+  olpc          *               =       olpc
+  olpcm         *               =       olpc
   *		*		=	complete
 
 ! model		layout[1]	=	compat
@@ -1001,13 +1039,15 @@
   grp:shift_toggle	=	+group(shifts_toggle)
   altwin:menu		=	+altwin(menu)
   altwin:meta_alt	=	+altwin(meta_alt)
+  altwin:alt_win	=	+altwin(alt_win)
   altwin:ctrl_win	=	+altwin(ctrl_win)
   altwin:ctrl_alt_win	=	+altwin(ctrl_alt_win)
   altwin:meta_win	=	+altwin(meta_win)
   altwin:left_meta_win	=	+altwin(left_meta_win)
   altwin:hyper_win	=	+altwin(hyper_win)
   altwin:alt_super_win	=	+altwin(alt_super_win)
-  altwin:swap_lalt_lwin	=	+altwin(swap_lalt_lwin)
+  altwin:swap_alt_win	=	+altwin(swap_alt_win)
+  grab:debug		=	+srvr_ctrl(grab_debug)
   grp:switch		=	+group(switch)
   grp:lswitch		=	+group(lswitch)
   grp:win_switch	=	+group(win_switch)
@@ -1017,17 +1057,13 @@
   grp:shifts_toggle	=	+group(shifts_toggle)
   grp:ctrls_toggle	=	+group(ctrls_toggle)
   grp:alts_toggle	=	+group(alts_toggle)
-  grp:ctrl_shift_toggle	=	+group(ctrl_shift_toggle)
-  grp:lctrl_lshift_toggle	=	+group(lctrl_lshift_toggle)
-  grp:rctrl_rshift_toggle	=	+group(rctrl_rshift_toggle)
   grp:caps_toggle	=	+capslock(grouplock)
   grp:caps_switch       =       +capslock(groupshift)
   grp:shift_caps_toggle	=	+group(shift_caps_toggle)
   grp:shift_caps_switch	=	+group(shift_caps_switch)
+  grp:win_space_toggle	=	+group(win_space_toggle)
   grp:win_menu_switch	=	+group(win_menu_switch)
   grp:alt_caps_toggle   =       +group(alt_caps_toggle)
-  grp:ctrl_alt_toggle	=	+group(ctrl_alt_toggle)
-  grp:alt_shift_toggle	=	+group(alt_shift_toggle)
   grp:alt_space_toggle	=	+group(alt_space_toggle)
   grp:menu_toggle	=	+group(menu_toggle)
   grp:lwin_toggle	=	+group(lwin_toggle)
@@ -1041,6 +1077,18 @@
   grp:sclk_toggle	=	+group(sclk_toggle)
   grp:lctrl_rctrl_switch	=	+group(lctrl_rctrl_switch)
   grp:lctrl_lwin_rctrl_menu	=	+group(lctrl_lwin_rctrl_menu)
+  grp:lctrl_lalt_toggle	=	+group(lctrl_lalt_toggle)
+  grp:rctrl_ralt_toggle	=	+group(rctrl_ralt_toggle)
+  grp:ctrl_alt_toggle	=	+group(ctrl_alt_toggle)
+  grp:ctrl_alt_toggle_bidir	=	+group(ctrl_alt_toggle_bidir)
+  grp:lctrl_lshift_toggle	=	+group(lctrl_lshift_toggle)
+  grp:rctrl_rshift_toggle	=	+group(rctrl_rshift_toggle)
+  grp:ctrl_shift_toggle	=	+group(ctrl_shift_toggle)
+  grp:ctrl_shift_toggle_bidir	=	+group(ctrl_shift_toggle_bidir)
+  grp:lalt_lshift_toggle	=	+group(lalt_lshift_toggle)
+  grp:ralt_rshift_toggle	=	+group(ralt_rshift_toggle)
+  grp:alt_shift_toggle	=	+group(alt_shift_toggle)
+  grp:alt_shift_toggle_bidir	=	+group(alt_shift_toggle_bidir)
   lv3:switch		=	+level3(switch)
   lv3:ralt_switch	=	+level3(ralt_switch)
   lv3:ralt_switch_multikey	=	+level3(ralt_switch_multikey)
@@ -1065,18 +1113,30 @@
   ctrl:nocaps		=	+ctrl(nocaps)
   ctrl:lctrl_meta	=	+ctrl(lctrl_meta)
   ctrl:swapcaps		=	+ctrl(swapcaps)
-  ctrl:ctrl_ac		=	+ctrl(ctrl_ac)
-  ctrl:ctrl_aa		=	+ctrl(ctrl_aa)
-  ctrl:ctrl_ra		=	+ctrl(ctrl_ra)
-  ctrl:ctrl_menu	=	+ctrl(ctrl_menu)
+  ctrl:ac_ctrl		=	+ctrl(ac_ctrl)
+  ctrl:aa_ctrl		=	+ctrl(aa_ctrl)
+  ctrl:rctrl_ralt	=	+ctrl(rctrl_ralt)
+  ctrl:menu_rctrl	=	+ctrl(menu_rctrl)
+  ctrl:ralt_rctrl	=	+ctrl(ralt_rctrl)
+  ctrl:swap_lalt_lctl	=	+ctrl(swap_lalt_lctl)
+  ctrl:swap_lwin_lctl	=	+ctrl(swap_lwin_lctl)
+  ctrl:swap_rwin_rctl	=	+ctrl(swap_rwin_rctl)
+  ctrl:swap_lalt_lctl_lwin  =	+ctrl(swap_lalt_lctl_lwin)
   compose:ralt		=	+compose(ralt)
   compose:lwin		=	+compose(lwin)
+  compose:lwin-altgr	=	+compose(lwin-altgr)
   compose:rwin		=	+compose(rwin)
+  compose:rwin-altgr	=	+compose(rwin-altgr)
   compose:menu		=	+compose(menu)
+  compose:menu-altgr	=	+compose(menu-altgr)
   compose:lctrl		=	+compose(lctrl)
+  compose:lctrl-altgr	=	+compose(lctrl-altgr)
   compose:rctrl		=	+compose(rctrl)
+  compose:rctrl-altgr	=	+compose(rctrl-altgr)
   compose:caps		=	+compose(caps)
+  compose:caps-altgr	=	+compose(caps-altgr)
   compose:102		=	+compose(102)
+  compose:102-altgr	=	+compose(102-altgr)
   compose:paus		=	+compose(paus)
   compose:prsc		=	+compose(prsc)
   compose:sclk		=	+compose(sclk)
@@ -1103,6 +1163,9 @@
   nbsp:level4n          =	+nbsp(level4n)
   nbsp:level4nl         =	+nbsp(level4nl)
   japan:nicola_f_bs     =	+jp(nicola_f_bs)
+  japan:hztg_escape     =	+jp(hztg_escape)
+  korean:ralt_rctrl     =	+kr(ralt_hangul)+kr(rctrl_hanja)
+  korean:rctrl_ralt     =	+kr(rctrl_hangul)+kr(ralt_hanja)
   kpdl:dot              =	+kpdl(dot)
   kpdl:comma            =	+kpdl(comma)
   kpdl:dotoss           =	+kpdl(dotoss)
@@ -1114,6 +1177,7 @@
   shift:breaks_caps     =	+shift(breaks_caps)
   esperanto:qwerty      =	+epo(qwerty)
   esperanto:dvorak      =	+epo(dvorak)
+  esperanto:colemak     =	+epo(colemak)
   terminate:ctrl_alt_bksp =	+terminate(ctrl_alt_bksp)
   keypad:pointerkeys	=	+keypad(pointerkeys)
   apple:alupckeys	=	+macintosh_vndr/apple(alupckeys)
@@ -1126,6 +1190,7 @@
   shift:both_shiftlock               =       +shift(both_shiftlock)
   shift:lshift_both_shiftlock        =       +shift(lshift_both_shiftlock)
   shift:rshift_both_shiftlock        =       +shift(rshift_both_shiftlock)
+  solaris:sun_compat				 =		 +sun_vndr/solaris(sun_compat)
   lv3:caps_switch                    =       +level3(caps_switch)
   lv3:bksl_switch                    =       +level3(bksl_switch)
   lv3:lsgt_switch                    =       +level3(lsgt_switch)
@@ -1149,6 +1214,7 @@
   grp_led:scroll	=	+ledscroll(group_lock)
   japan:kana_lock	=	+japan(kana_lock)
   caps:shiftlock	=	+ledcaps(shift_lock)
+  grab:break_actions    =       +xfree86(grab_break)
 
 
 ! option	=	types

@@ -1,4 +1,4 @@
-/*	$NetBSD: cerror.S,v 1.6 2013/09/12 15:36:16 joerg Exp $	*/
+/*	$NetBSD: cerror.S,v 1.7 2014/05/22 15:01:57 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,7 +36,7 @@
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: cerror.S,v 1.6 2013/09/12 15:36:16 joerg Exp $")
+	RCSID("$NetBSD: cerror.S,v 1.7 2014/05/22 15:01:57 uebayasi Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -57,3 +57,4 @@ _ENTRY(CERROR)
 	movq	$-1,%rax
 	popq	%r12
 	ret
+END(CERROR)

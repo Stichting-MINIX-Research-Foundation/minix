@@ -1,4 +1,4 @@
-/*	$NetBSD: encoding.c,v 1.1.1.3 2012/02/22 17:48:23 christos Exp $	*/
+/*	$NetBSD: encoding.c,v 1.4 2015/01/02 21:15:32 christos Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -38,9 +38,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)$File: encoding.c,v 1.7 2012/01/24 19:02:02 christos Exp $")
+FILE_RCSID("@(#)$File: encoding.c,v 1.10 2014/09/11 12:08:52 christos Exp $")
 #else
-__RCSID("$NetBSD: encoding.c,v 1.1.1.3 2012/02/22 17:48:23 christos Exp $");
+__RCSID("$NetBSD: encoding.c,v 1.4 2015/01/02 21:15:32 christos Exp $");
 #endif
 #endif	/* lint */
 
@@ -78,13 +78,17 @@ file_encoding(struct magic_set *ms, const unsigned char *buf, size_t nbytes, uni
 	unsigned char *nbuf = NULL;
 
 	*type = "text";
-	mlen = (nbytes + 1) * sizeof(nbuf[0]);
-	if ((nbuf = CAST(unsigned char *, calloc((size_t)1, mlen))) == NULL) {
+	*ulen = 0;
+	*code = "unknown";
+	*code_mime = "binary";
+
+	mlen = (nbytes + 1) * sizeof((*ubuf)[0]);
+	if ((*ubuf = CAST(unichar *, calloc((size_t)1, mlen))) == NULL) {
 		file_oomem(ms, mlen);
 		goto done;
 	}
-	mlen = (nbytes + 1) * sizeof((*ubuf)[0]);
-	if ((*ubuf = CAST(unichar *, calloc((size_t)1, mlen))) == NULL) {
+	mlen = (nbytes + 1) * sizeof(nbuf[0]);
+	if ((nbuf = CAST(unsigned char *, calloc((size_t)1, mlen))) == NULL) {
 		file_oomem(ms, mlen);
 		goto done;
 	}
@@ -99,7 +103,6 @@ file_encoding(struct magic_set *ms, const unsigned char *buf, size_t nbytes, uni
 		*code_mime = "utf-8";
 	} else if (file_looks_utf8(buf, nbytes, *ubuf, ulen) > 1) {
 		DPRINTF(("utf8 %" SIZE_T_FORMAT "u\n", *ulen));
-		*code = "UTF-8 Unicode (with BOM)";
 		*code = "UTF-8 Unicode";
 		*code_mime = "utf-8";
 	} else if ((ucs_type = looks_ucs16(buf, nbytes, *ubuf, ulen)) != 0) {

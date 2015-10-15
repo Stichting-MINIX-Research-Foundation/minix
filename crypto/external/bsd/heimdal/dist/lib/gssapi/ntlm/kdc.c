@@ -1,4 +1,4 @@
-/*	$NetBSD: kdc.c,v 1.1.1.1 2011/04/13 18:14:48 elric Exp $	*/
+/*	$NetBSD: kdc.c,v 1.1.1.2 2014/04/24 12:45:29 pettai Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2007 Kungliga Tekniska Högskolan
@@ -324,7 +324,7 @@ kdc_type2(OM_uint32 *minor_status,
 
     type2.targetinfo.data = ti.data;
     type2.targetinfo.length = ti.length;
-	
+
     ret = heim_ntlm_encode_type2(&type2, &data);
     free(type2.targetname);
     krb5_data_free(&ti);
@@ -332,7 +332,7 @@ kdc_type2(OM_uint32 *minor_status,
 	*minor_status = ret;
 	return GSS_S_FAILURE;
     }
-	
+
     out->data = data.data;
     out->length = data.length;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: bios_disk.S,v 1.21 2011/06/16 13:27:59 joerg Exp $	*/
+/*	$NetBSD: bios_disk.S,v 1.22 2014/07/19 14:50:21 erh Exp $	*/
 
 /*
  * Ported to boot 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
@@ -133,6 +133,9 @@ ENTRY(biosdisk_read)
 	calll	_C_LABEL(real_to_prot) # back to protected mode
 	.code32
 
+	andl    $0x0000FFFF, %eax  # Some bioses set high bits in %eax
+	                           #  on success, interfering with our
+	                           #  return value.  Clear those out.
 	movl	%eax, 28(%esp)
 
 	popa

@@ -7,6 +7,10 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "__config"
+
+#ifndef _LIBCPP_HAS_NO_THREADS
+
 #include "condition_variable"
 #include "thread"
 #include "system_error"
@@ -32,7 +36,7 @@ condition_variable::notify_all() _NOEXCEPT
 }
 
 void
-condition_variable::wait(unique_lock<mutex>& lk)
+condition_variable::wait(unique_lock<mutex>& lk) _NOEXCEPT
 {
     if (!lk.owns_lock())
         __throw_system_error(EPERM,
@@ -44,9 +48,8 @@ condition_variable::wait(unique_lock<mutex>& lk)
 
 void
 condition_variable::__do_timed_wait(unique_lock<mutex>& lk,
-               chrono::time_point<chrono::system_clock, chrono::nanoseconds> tp)
+     chrono::time_point<chrono::system_clock, chrono::nanoseconds> tp) _NOEXCEPT
 {
-#if !defined(__minix) /* LSC: FIXME a loop with yield plus sleep? */
     using namespace chrono;
     if (!lk.owns_lock())
         __throw_system_error(EPERM,
@@ -70,9 +73,6 @@ condition_variable::__do_timed_wait(unique_lock<mutex>& lk,
     }
     int ec = pthread_cond_timedwait(&__cv_, lk.mutex()->native_handle(), &ts);
     if (ec != 0 && ec != ETIMEDOUT)
-#else
-    int ec = EINVAL;
-#endif /* !defined(__minix) */
         __throw_system_error(ec, "condition_variable timed_wait failed");
 }
 
@@ -83,3 +83,5 @@ notify_all_at_thread_exit(condition_variable& cond, unique_lock<mutex> lk)
 }
 
 _LIBCPP_END_NAMESPACE_STD
+
+#endif // !_LIBCPP_HAS_NO_THREADS

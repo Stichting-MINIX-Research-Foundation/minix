@@ -1,4 +1,4 @@
-/*	$NetBSD: gss_oid_equal.c,v 1.1.1.1 2011/04/13 18:14:46 elric Exp $	*/
+/*	$NetBSD: gss_oid_equal.c,v 1.1.1.2 2014/04/24 12:45:29 pettai Exp $	*/
 
 /*
  * Copyright (c) 2006 Kungliga Tekniska Högskolan
@@ -45,7 +45,7 @@
  *
  * @return non-zero when both oid are the same OID, zero when they are
  *         not the same.
- *         
+ *
  * @ingroup gssapi
  */
 

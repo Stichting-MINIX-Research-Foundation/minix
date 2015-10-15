@@ -1,4 +1,4 @@
-/*	$NetBSD: set_cred_option.c,v 1.1.1.1 2011/04/13 18:14:45 elric Exp $	*/
+/*	$NetBSD: set_cred_option.c,v 1.1.1.2 2014/04/24 12:45:29 pettai Exp $	*/
 
 /*
  * Copyright (c) 2004, PADL Software Pty Ltd.
@@ -211,7 +211,7 @@ no_ci_flags(OM_uint32 *minor_status,
 
     cred = (gsskrb5_cred)*cred_handle;
     cred->cred_flags |= GSS_CF_NO_CI_FLAGS;
-	
+
     *minor_status = 0;
     return GSS_S_COMPLETE;
 
@@ -243,7 +243,7 @@ _gsskrb5_set_cred_option
     if (gss_oid_equal(desired_object, GSS_KRB5_CRED_NO_CI_FLAGS_X)) {
 	return no_ci_flags(minor_status, context, cred_handle, value);
     }
-	
+
 
     *minor_status = EINVAL;
     return GSS_S_FAILURE;

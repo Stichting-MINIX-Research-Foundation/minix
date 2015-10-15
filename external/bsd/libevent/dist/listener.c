@@ -1,4 +1,4 @@
-/*	$NetBSD: listener.c,v 1.1.1.1 2013/04/11 16:43:26 christos Exp $	*/
+/*	$NetBSD: listener.c,v 1.1.1.2 2015/01/29 06:38:08 spz Exp $	*/
 /*
  * Copyright (c) 2009-2012 Niels Provos, Nick Mathewson
  *
@@ -29,7 +29,7 @@
 
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: listener.c,v 1.1.1.1 2013/04/11 16:43:26 christos Exp $");
+__RCSID("$NetBSD: listener.c,v 1.1.1.2 2015/01/29 06:38:08 spz Exp $");
 
 #ifdef WIN32
 #ifndef _WIN32_WINNT
@@ -410,6 +410,7 @@ listener_read_cb(evutil_socket_t fd, short what, void *p)
 			evutil_make_socket_nonblocking(new_fd);
 
 		if (lev->cb == NULL) {
+			evutil_closesocket(new_fd);
 			UNLOCK(lev);
 			return;
 		}

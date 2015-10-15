@@ -1,4 +1,4 @@
-.\"	$NetBSD: cp.1,v 1.42 2012/03/25 22:37:08 wiz Exp $
+.\"	$NetBSD: cp.1,v 1.44 2015/06/28 16:22:54 wiz Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -213,6 +213,9 @@ options are ignored unless the
 option is specified.
 In addition, these options override each other and the
 command's actions are determined by the last one specified.
+The default is as if the
+.Fl P
+option had been specified.
 .Sh EXIT STATUS
 .Ex -std cp
 .Sh COMPATIBILITY
@@ -222,8 +225,8 @@ utility had a
 .Fl r
 option.
 This implementation supports that option, however, its use is strongly
-discouraged, as it does not correctly copy special files, symbolic links
-or fifo's.
+discouraged, as it does not correctly copy special files, symbolic links,
+or FIFOs.
 .Sh SEE ALSO
 .Xr mv 1 ,
 .Xr pax 1 ,

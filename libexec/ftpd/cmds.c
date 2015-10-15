@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.33 2013/07/03 14:15:47 christos Exp $	*/
+/*	$NetBSD: cmds.c,v 1.34 2015/08/10 07:32:49 shm Exp $	*/
 
 /*
  * Copyright (c) 1999-2009 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cmds.c,v 1.33 2013/07/03 14:15:47 christos Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.34 2015/08/10 07:32:49 shm Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -249,8 +249,10 @@ mlsd(const char *path)
 		goto mlsdperror;
 
 	dout = dataconn("MLSD", (off_t)-1, "w");
-	if (dout == NULL)
+	if (dout == NULL) {
+		(void) closedir(dirp);
 		return;
+	}
 
 	memset(&f, 0, sizeof(f));
 	f.stat = &sb;

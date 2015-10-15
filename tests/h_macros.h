@@ -1,4 +1,4 @@
-/* $NetBSD: h_macros.h,v 1.9 2013/05/17 15:42:09 christos Exp $ */
+/* $NetBSD: h_macros.h,v 1.11 2015/01/14 22:57:27 christos Exp $ */
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@ tests_makegarbage(void *space, size_t len)
 	uint16_t randval;
 
 	while (len >= sizeof(randval)) {
-		*sb++ = (random() & 0xffff);
+		*sb++ = (uint16_t)random();
 		len -= sizeof(*sb);
 	}
 	randval = (uint16_t)random();

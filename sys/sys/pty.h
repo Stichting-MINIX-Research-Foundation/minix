@@ -1,4 +1,4 @@
-/*	$NetBSD: pty.h,v 1.8 2008/04/28 20:24:11 martin Exp $	*/
+/*	$NetBSD: pty.h,v 1.11 2014/10/15 15:00:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -36,25 +36,31 @@ int pty_check(int);
 
 #ifndef NO_DEV_PTM
 void ptmattach(int);
-int pty_fill_ptmget(struct lwp *, dev_t, int, int, void *);
-int pty_grant_slave(struct lwp *, dev_t);
+int pty_fill_ptmget(struct lwp *, dev_t, int, int, void *, struct mount *);
+int pty_grant_slave(struct lwp *, dev_t, struct mount *);
 dev_t pty_makedev(char, int);
-int pty_vn_open(struct vnode *, struct lwp *);
 struct ptm_pty *pty_sethandler(struct ptm_pty *);
-#endif
+int pty_getmp(struct lwp *, struct mount **);
 
+/*
+ * Ptm_pty is used for switch ptm{x} driver between BSDPTY, PTYFS.
+ * Functions' argument (struct mount *) is used only PTYFS,
+ * in the case BSDPTY can be NULL.
+ */
 struct ptm_pty {
-	int (*allocvp)(struct ptm_pty *, struct lwp *, struct vnode **, dev_t,
+	int (*allocvp)(struct mount *, struct lwp *, struct vnode **, dev_t,
 	    char);
-	int (*makename)(struct ptm_pty *, struct lwp *, char *, size_t, dev_t, char);
-	void (*getvattr)(struct ptm_pty *, struct lwp *, struct vattr *);
-	void *arg;
+	int (*makename)(struct mount *, struct lwp *, char *, size_t, dev_t, char);
+	void (*getvattr)(struct mount *, struct lwp *, struct vattr *);
+	int (*getmp)(struct lwp *, struct mount **);
 };
-
-extern int npty;
 
 #ifdef COMPAT_BSDPTY
 extern struct ptm_pty ptm_bsdpty;
 #endif
+
+#endif /* NO_DEV_PTM */
+
+extern int npty;
 
 #endif /* _SYS_PTY_H_ */

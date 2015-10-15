@@ -1,15 +1,8 @@
 
 #------------------------------------------------------------------------------
-# $File: cad,v 1.11 2011/12/08 12:12:46 rrt Exp $
+# $File: cad,v 1.13 2014/03/23 18:05:38 christos Exp $
 # autocad:  file(1) magic for cad files
 #
-
-# AutoCAD DWG versions R13/R14 (www.autodesk.com)
-# Written December 01, 2003 by Lester Hightower
-# Based on the DWG File Format Specifications at http://www.opendwg.org/
-0	string	       \101\103\061\060\061		   AutoCAD
->5	string	       \062\000\000\000\000		   DWG ver. R13
->5	string	       \064\000\000\000\000		   DWG ver. R14
 
 # Microstation DGN/CIT Files (www.bentley.com)
 # Last updated July 29, 2005 by Lester Hightower
@@ -49,19 +42,62 @@
 >4	string	\030\000\000			CITFile
 >4	string	\030\000\003			CITFile
 
+# AutoCAD 
+# Merge of the different contributions and updates from http://en.wikipedia.org/wiki/Dwg
+# and http://www.iana.org/assignments/media-types/image/vnd.dwg
+0	string	MC0.0	DWG AutoDesk AutoCAD Release 1.0
+!:mime image/vnd.dwg
+0	string	AC1.2	DWG AutoDesk AutoCAD Release 1.2
+!:mime image/vnd.dwg
+0	string	AC1.3	DWG AutoDesk AutoCAD Release 1.3
+!:mime image/vnd.dwg
+0	string	AC1.40	DWG AutoDesk AutoCAD Release 1.40
+!:mime image/vnd.dwg
+0	string	AC1.50	DWG AutoDesk AutoCAD Release 2.05
+!:mime image/vnd.dwg
+0	string	AC2.10	DWG AutoDesk AutoCAD Release 2.10
+!:mime image/vnd.dwg
+0	string	AC2.21	DWG AutoDesk AutoCAD Release 2.21
+!:mime image/vnd.dwg
+0	string	AC2.22	DWG AutoDesk AutoCAD Release 2.22
+!:mime image/vnd.dwg
+0	string	AC1001	DWG AutoDesk AutoCAD Release 2.22
+!:mime image/vnd.dwg
+0	string	AC1002	DWG AutoDesk AutoCAD Release 2.50
+!:mime image/vnd.dwg
+0	string	AC1003	DWG AutoDesk AutoCAD Release 2.60
+!:mime image/vnd.dwg
+0	string	AC1004	DWG AutoDesk AutoCAD Release 9
+!:mime image/vnd.dwg
+0	string	AC1006	DWG AutoDesk AutoCAD Release 10
+!:mime image/vnd.dwg
+0	string	AC1009	DWG AutoDesk AutoCAD Release 11/12
+!:mime image/vnd.dwg
+# AutoCAD DWG versions R13/R14 (www.autodesk.com)
+# Written December 01, 2003 by Lester Hightower
+# Based on the DWG File Format Specifications at http://www.opendwg.org/
 # AutoCad, from Nahuel Greco
 # AutoCAD DWG versions R12/R13/R14 (www.autodesk.com)
-0	string	AC1012		DWG AutoDesk AutoCad (release 12)
-0	string	AC1013		DWG AutoDesk AutoCad (release 13)
-0	string	AC1014		DWG AutoDesk AutoCad (release 14)
+0	string	AC1012	DWG AutoDesk AutoCAD Release 13
+!:mime image/vnd.dwg
+0	string	AC1014	DWG AutoDesk AutoCAD Release 14
+!:mime image/vnd.dwg
+0	string	AC1015	DWG AutoDesk AutoCAD 2000/2002
+!:mime image/vnd.dwg
+
 # A new version of AutoCAD DWG
 # Sergey Zaykov (mail_of_sergey@mail.ru, sergey_zaikov@rambler.ru,
 # ICQ 358572321)
 # From various sources like:
 # http://autodesk.blogs.com/between_the_lines/autocad-release-history.html
-0	string	AC1018 		DWG AutoDesk AutoCAD 2004/2005/2006
-0	string	AC1021 		DWG AutoDesk AutoCAD 2007/2008/2009
-0	string	AC1024 		DWG AutoDesk AutoCAD 2010/2011
+0	string	AC1018	DWG AutoDesk AutoCAD 2004/2005/2006
+!:mime image/vnd.dwg
+0	string	AC1021	DWG AutoDesk AutoCAD 2007/2008/2009
+!:mime image/vnd.dwg
+0	string	AC1024	DWG AutoDesk AutoCAD 2010/2011/2012
+!:mime image/vnd.dwg
+0	string	AC1027	DWG AutoDesk AutoCAD 2013/2014
+!:mime image/vnd.dwg
 
 # KOMPAS 2D drawing from ASCON 
 # This is KOMPAS 2D drawing or fragment of drawing but is not detailed nor
@@ -110,9 +146,11 @@
 0	beshort	0x0809		Bentley/Intergraph MicroStation
 >0x02	byte	0xfe
 >>0x04	beshort	0x1800		CIT raster CAD
-0	string	AC1012		AutoDesk AutoCAD R13
-0	string	AC1014		AutoDesk AutoCAD R14 
-0	string	AC1015		AutoDesk AutoCAD R2000
 
 # 3DS (3d Studio files) Conflicts with diff output 0x3d '='
 #16	beshort		0x3d3d		image/x-3ds
+
+# MegaCAD 2D/3D drawing (.prt)
+# http://megacad.de/
+# From: Markus Heidelberg <markus.heidelberg@web.de>
+0	string	MegaCad23\0	MegaCAD 2D/3D drawing

@@ -5,7 +5,7 @@
 
 # Tcl scripts
 0	search/1/w	#!\ /usr/bin/tcl	Tcl script text executable
-!:mime	text/x-lua
+!:mime	text/x-tcl
 0	search/1/w	#!\ /usr/local/bin/tcl	Tcl script text executable
 !:mime	text/x-tcl
 0	search/1	#!/usr/bin/env\ tcl	Tcl script text executable

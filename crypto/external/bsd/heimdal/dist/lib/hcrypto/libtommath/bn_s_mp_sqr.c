@@ -1,4 +1,4 @@
-/*	$NetBSD: bn_s_mp_sqr.c,v 1.1.1.1 2011/04/13 18:14:55 elric Exp $	*/
+/*	$NetBSD: bn_s_mp_sqr.c,v 1.1.1.2 2014/04/24 12:45:31 pettai Exp $	*/
 
 #include <tommath.h>
 #ifdef BN_S_MP_SQR_C
@@ -50,7 +50,7 @@ int s_mp_sqr (mp_int * a, mp_int * b)
 
     /* alias for where to store the results */
     tmpt        = t.dp + (2*ix + 1);
-    
+
     for (iy = ix + 1; iy < pa; iy++) {
       /* first calculate the product */
       r       = ((mp_word)tmpx) * ((mp_word)a->dp[iy]);
@@ -81,6 +81,6 @@ int s_mp_sqr (mp_int * a, mp_int * b)
 }
 #endif
 
-/* Source: /cvs/libtom/libtommath/bn_s_mp_sqr.c,v */
-/* Revision: 1.4 */
-/* Date: 2006/12/28 01:25:13 */
+/* Source: /cvs/libtom/libtommath/bn_s_mp_sqr.c,v  */
+/* Revision: 1.4  */
+/* Date: 2006/12/28 01:25:13  */

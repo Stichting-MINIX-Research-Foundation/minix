@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.h,v 1.6 2013/04/12 16:59:41 christos Exp $ */
+/* $NetBSD: machdep.h,v 1.7 2014/06/12 19:02:35 riastradh Exp $ */
 /*
  * Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -28,6 +28,8 @@
 #ifndef _X86_MACHDEP_H_
 #define _X86_MACHDEP_H_
 
+#include <sys/kcore.h>
+
 extern phys_ram_seg_t mem_clusters[];
 extern int mem_cluster_cnt;
 
@@ -42,6 +44,7 @@ void	x86_cpu_idle_set(void (*)(void), const char *, bool);
 int	initx86_parse_memmap(struct btinfo_memmap *, struct extent *);
 int	initx86_fake_memmap(struct extent *);
 int	initx86_load_memmap(paddr_t first_avail);
+int	x86_select_freelist(uint64_t);
 
 void	x86_startup(void);
 void	x86_sysctl_machdep_setup(struct sysctllog **);

@@ -1,4 +1,4 @@
-/*	$NetBSD: validate.c,v 1.1.1.1 2011/04/13 18:14:50 elric Exp $	*/
+/*	$NetBSD: validate.c,v 1.1.1.2 2014/04/24 12:45:30 pettai Exp $	*/
 
 /*
  * Copyright (c) 2010 Kungliga Tekniska Högskolan
@@ -58,7 +58,7 @@ struct tests {
     void *outiv;
 };
 
-struct tests tests[] = {
+static struct tests hc_tests[] = {
     {
 	EVP_aes_256_cbc,
 	"aes-256",
@@ -71,7 +71,7 @@ struct tests tests[] = {
 	"\xdc\x95\xc0\x78\xa2\x40\x89\x89\xad\x48\xa2\x14\x92\x84\x20\x87"
     },
 #if 0
-    { 
+    {
 	EVP_aes_128_cfb8,
 	"aes-cfb8-128",
 	"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00",
@@ -95,7 +95,7 @@ struct tests tests[] = {
 	"\x55\x95\x97\x76\xa9\x6c\x66\x40\x64\xc7\xf4\x1c\x21\xb7\x14\x1b"
     },
 #if 0
-    { 
+    {
 	EVP_camellia_128_cbc,
 	"camellia128",
 	"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00",
@@ -107,7 +107,7 @@ struct tests tests[] = {
 	NULL
     },
 #endif
-    { 
+    {
 	EVP_rc4,
 	"rc4 8",
 	"\x01\x23\x45\x67\x89\xAB\xCD\xEF",
@@ -302,8 +302,8 @@ hcrypto_validate(void)
 	return;
     validated++;
 
-    for (i = 0; i < sizeof(tests) / sizeof(tests[0]); i++)
-	test_cipher(&tests[i]);
+    for (i = 0; i < sizeof(hc_tests) / sizeof(hc_tests[0]); i++)
+	test_cipher(&hc_tests[i]);
 
     check_hmac();
 }

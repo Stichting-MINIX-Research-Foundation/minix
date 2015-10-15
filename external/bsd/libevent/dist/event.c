@@ -1,4 +1,4 @@
-/*	$NetBSD: event.c,v 1.2 2013/04/11 16:56:41 christos Exp $	*/
+/*	$NetBSD: event.c,v 1.3 2015/01/29 07:26:02 spz Exp $	*/
 /*
  * Copyright (c) 2000-2007 Niels Provos <provos@citi.umich.edu>
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson
@@ -27,7 +27,7 @@
  */
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: event.c,v 1.2 2013/04/11 16:56:41 christos Exp $");
+__RCSID("$NetBSD: event.c,v 1.3 2015/01/29 07:26:02 spz Exp $");
 
 #ifdef WIN32
 #include <winsock2.h>
@@ -1259,6 +1259,14 @@ done:
 static inline void
 event_persist_closure(struct event_base *base, struct event *ev)
 {
+	// Define our callback, we use this to store our callback before it's executed
+	void (*evcb_callback)(evutil_socket_t, short, void *);
+
+        // Other fields of *ev that must be stored before executing
+        evutil_socket_t evcb_fd;
+        short evcb_res;
+        void *evcb_arg;
+
 	/* reschedule the persistent event if we have a timeout. */
 	if (ev->ev_io_timeout.tv_sec || ev->ev_io_timeout.tv_usec) {
 		/* If there was a timeout, we want it to run at an interval of
@@ -1300,8 +1308,18 @@ event_persist_closure(struct event_base *base, struct event *ev)
 		run_at.tv_usec |= usec_mask;
 		event_add_internal(ev, &run_at, 1);
 	}
-	EVBASE_RELEASE_LOCK(base, th_base_lock);
-	(*ev->ev_callback)(ev->ev_fd, ev->ev_res, ev->ev_arg);
+
+	// Save our callback before we release the lock
+	evcb_callback = ev->ev_callback;
+        evcb_fd = ev->ev_fd;
+        evcb_res = ev->ev_res;
+        evcb_arg = ev->ev_arg;
+
+	// Release the lock
+ 	EVBASE_RELEASE_LOCK(base, th_base_lock);
+
+	// Execute the callback
+        (evcb_callback)(evcb_fd, evcb_res, evcb_arg);
 }
 
 /*

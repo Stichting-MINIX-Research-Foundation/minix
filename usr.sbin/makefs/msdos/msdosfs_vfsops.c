@@ -50,7 +50,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.7 2013/01/30 19:19:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.9 2015/03/29 05:52:59 agc Exp $");
 
 #include <sys/param.h>
 
@@ -96,7 +96,7 @@ msdosfs_mount(struct vnode *devvp, int flags)
 	unsigned secsize = 512;
 
 	DPRINTF(("%s(bread 0)\n", __func__));
-	if ((error = bread(devvp, 0, secsize, NULL, 0, &bp)) != 0)
+	if ((error = bread(devvp, 0, secsize, 0, &bp)) != 0)
 		goto error_exit;
 
 	bsp = (union bootsector *)bp->b_data;
@@ -336,7 +336,7 @@ msdosfs_mount(struct vnode *devvp, int flags)
 		DPRINTF(("%s(bread %lu)\n", __func__,
 		    (unsigned long)de_bn2kb(pmp, pmp->pm_fsinfo)));
 		if ((error = bread(devvp, de_bn2kb(pmp, pmp->pm_fsinfo),
-		    pmp->pm_BytesPerSec, NULL, 0, &bp)) != 0)
+		    pmp->pm_BytesPerSec, 0, &bp)) != 0)
 			goto error_exit;
 		fp = (struct fsinfo *)bp->b_data;
 		if (!memcmp(fp->fsisig1, "RRaA", 4)
@@ -407,7 +407,7 @@ error_exit:
 		free(pmp);
 	}
 	errno = error;
-	return pmp;
+	return NULL;
 }
 
 int

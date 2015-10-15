@@ -1,4 +1,8 @@
-# $NetBSD: md.amd64,v 1.38 2013/11/17 18:58:28 alnsn Exp $
+# $NetBSD: md.amd64,v 1.63 2015/06/22 06:02:02 matt Exp $
+#
+# NOTE that there are two sets of files here:
+# @MODULEDIR@ and amd64-xen
+#
 ./@MODULEDIR@/acpiacad				base-kernel-modules	kmod
 ./@MODULEDIR@/acpiacad/acpiacad.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/acpibat				base-kernel-modules	kmod
@@ -57,6 +61,16 @@
 ./@MODULEDIR@/cxdtv/cxdtv.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/drm				base-kernel-modules	kmod
 ./@MODULEDIR@/drm/drm.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/drmkms				base-kernel-modules	kmod
+./@MODULEDIR@/drmkms/drmkms.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/drmkms_linux			base-kernel-modules	kmod
+./@MODULEDIR@/drmkms_linux/drmkms_linux.kmod	base-kernel-modules	kmod
+./@MODULEDIR@/drmkms_pci			base-kernel-modules	kmod
+./@MODULEDIR@/drmkms_pci/drmkms_pci.kmod	base-kernel-modules	kmod
+./@MODULEDIR@/dtrace_syscall_linux32		base-kernel-modules	kmod,dtrace
+./@MODULEDIR@/dtrace_syscall_linux32/dtrace_syscall_linux32.kmod	base-kernel-modules	kmod,dtrace
+./@MODULEDIR@/dtrace_syscall_netbsd32		base-kernel-modules	kmod,dtrace
+./@MODULEDIR@/dtrace_syscall_netbsd32/dtrace_syscall_netbsd32.kmod	base-kernel-modules	kmod,dtrace
 ./@MODULEDIR@/emdtv				base-kernel-modules	kmod
 ./@MODULEDIR@/emdtv/emdtv.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/est				base-kernel-modules	kmod
@@ -75,6 +89,10 @@
 ./@MODULEDIR@/hdafg/hdafg.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/hdaudio				base-kernel-modules	kmod
 ./@MODULEDIR@/hdaudio/hdaudio.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/hdaudio_pci			base-kernel-modules	kmod
+./@MODULEDIR@/hdaudio_pci/hdaudio_pci.kmod	base-kernel-modules	kmod
+./@MODULEDIR@/hdaudioverbose			base-kernel-modules	kmod
+./@MODULEDIR@/hdaudioverbose/hdaudioverbose.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/hpacel				base-kernel-modules	kmod
 ./@MODULEDIR@/hpacel/hpacel.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/hpet				base-kernel-modules	kmod
@@ -83,6 +101,8 @@
 ./@MODULEDIR@/hpqlb/hpqlb.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/i915drm				base-kernel-modules	kmod
 ./@MODULEDIR@/i915drm/i915drm.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/i915drmkms			base-kernel-modules	kmod
+./@MODULEDIR@/i915drmkms/i915drmkms.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/itesio				base-kernel-modules	kmod
 ./@MODULEDIR@/itesio/itesio.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/lg3303				base-kernel-modules	kmod
@@ -109,8 +129,12 @@
 ./@MODULEDIR@/pwdog/pwdog.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/sljit				base-kernel-modules	kmod,sljit
 ./@MODULEDIR@/sljit/sljit.kmod			base-kernel-modules	kmod,sljit
+./@MODULEDIR@/spkr				base-kernel-modules	kmod
+./@MODULEDIR@/spkr/spkr.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/syscallemu			base-kernel-modules	kmod
 ./@MODULEDIR@/syscallemu/syscallemu.kmod	base-kernel-modules	kmod
+./@MODULEDIR@/tco				base-kernel-modules	kmod
+./@MODULEDIR@/tco/tco.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/thinkpad				base-kernel-modules	kmod
 ./@MODULEDIR@/thinkpad/thinkpad.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/tprof_amdpmi			base-kernel-modules	kmod
@@ -119,6 +143,8 @@
 ./@MODULEDIR@/tprof_pmi/tprof_pmi.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/tvpll				base-kernel-modules	kmod
 ./@MODULEDIR@/tvpll/tvpll.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/ubsec				base-kernel-modules	kmod
+./@MODULEDIR@/ubsec/ubsec.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/vmt				base-kernel-modules	kmod
 ./@MODULEDIR@/vmt/vmt.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/wbsio				base-kernel-modules	kmod

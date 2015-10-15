@@ -1,4 +1,4 @@
-/*	$NetBSD: afssys.c,v 1.1.1.1 2011/04/13 18:15:30 elric Exp $	*/
+/*	$NetBSD: afssys.c,v 1.1.1.2 2014/04/24 12:45:49 pettai Exp $	*/
 
 /*
  * Copyright (c) 1995 - 2000, 2002, 2004, 2005 Kungliga Tekniska Högskolan
@@ -105,7 +105,7 @@ try_aix(void)
 	strlcpy(path, p, sizeof(path));
     else
 	snprintf(path, sizeof(path), "%s/afslib.so", LIBDIR);
-	
+
     ptr = dlopen(path, RTLD_NOW);
     if(ptr == NULL) {
 	if(_kafs_debug) {
@@ -255,16 +255,16 @@ k_pioctl(char *a_path,
     case MACOS_DEV_POINT: {
 	struct devdata data = { AFSCALL_PIOCTL, 0, 0, 0, 0, 0, 0, 0 };
 	int ret;
-	
+
 	data.param1 = (unsigned long)a_path;
 	data.param2 = (unsigned long)o_opcode;
 	data.param3 = (unsigned long)a_paramsP;
 	data.param4 = (unsigned long)a_followSymlinks;
-	
+
 	ret = do_ioctl(&data);
 	if (ret)
 	    return ret;
-	
+
 	return data.retval;
     }
 #ifdef _AIX

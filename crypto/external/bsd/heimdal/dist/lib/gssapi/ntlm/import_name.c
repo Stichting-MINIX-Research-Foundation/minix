@@ -1,4 +1,4 @@
-/*	$NetBSD: import_name.c,v 1.1.1.1 2011/04/13 18:14:47 elric Exp $	*/
+/*	$NetBSD: import_name.c,v 1.1.1.2 2014/04/24 12:45:29 pettai Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2003 Kungliga Tekniska Högskolan
@@ -44,6 +44,8 @@ _gss_ntlm_import_name
            )
 {
     char *name, *p, *p2;
+    int is_hostnamed;
+    int is_username;
     ntlm_name n;
 
     *minor_status = 0;
@@ -53,7 +55,10 @@ _gss_ntlm_import_name
 
     *output_name = GSS_C_NO_NAME;
 
-    if (!gss_oid_equal(input_name_type, GSS_C_NT_HOSTBASED_SERVICE))
+    is_hostnamed = gss_oid_equal(input_name_type, GSS_C_NT_HOSTBASED_SERVICE);
+    is_username = gss_oid_equal(input_name_type, GSS_C_NT_USER_NAME);
+
+    if (!is_hostnamed && !is_username)
 	return GSS_S_BAD_NAMETYPE;
 
     name = malloc(input_name_buffer->length + 1);
@@ -74,8 +79,10 @@ _gss_ntlm_import_name
     p++;
     p2 = strchr(p, '.');
     if (p2 && p2[1] != '\0') {
-	p = p2 + 1;
-	p2 = strchr(p, '.');
+	if (is_hostnamed) {
+	    p = p2 + 1;
+	    p2 = strchr(p, '.');
+	}
 	if (p2)
 	    *p2 = '\0';
     }

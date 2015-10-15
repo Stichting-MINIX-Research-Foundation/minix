@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.5 2011/07/18 08:58:38 uch Exp $
+$NetBSD: README,v 1.7 2015/01/12 19:50:47 christos Exp $
 
 makefs - build a file system image from a directory tree
 
@@ -15,16 +15,21 @@ user overview:
 
 makefs creates a file system image from a given directory tree.
 the following file system types can be built:
-	ffs	BSD fast file system
+
 	cd9660	ISO 9660 file system
+	chfs	"Chip" file system, for flash devices
+	ffs	BSD fast file system
+	msdos	MS-DOS `FAT' file system (FAT12, FAT16, FAT32)
+	udf	Universal Disk Format file system
 	v7fs	7th edition(V7) file system
 
 Support for the following file systems maybe be added in the future
+
 	ext2fs	Linux EXT2 file system
-	fat	MS-DOS `FAT' file system (FAT12, FAT16, FAT32)
 
 Various file system independent parameters and contraints can be
 specified, such as:
+
 	- minimum file system size (in KB)
 	- maximum file system size (in KB)
 	- free inodes
@@ -38,6 +43,7 @@ specified, such as:
 File system specific parameters can be given as well, with a command
 line option such as "-o fsspeccific-options,comma-separated".
 For example, ffs would allow tuning of:
+
 	- block & fragment size
 	- cylinder groups
 	- number of blocks per inode
@@ -99,7 +105,7 @@ NOTE: All file system specific options are referenced via the fs_specific
 pointer from the fsinfo_t strucutre. It is up to the filesystem to allocate
 and free any data needed for this via the prepare and cleanup callbacks.
 
-Each fs-specific module will need to add it's routines to the dispatch array
+Each fs-specific module will need to add its routines to the dispatch array
 in makefs.c and add prototypes for these to makefs.h
 
 All other implementation details should not need to change any of the

@@ -1,4 +1,4 @@
-/*	$NetBSD: check-gen.c,v 1.1.1.1 2011/04/13 18:14:40 elric Exp $	*/
+/*	$NetBSD: check-gen.c,v 1.1.1.2 2014/04/24 12:45:28 pettai Exp $	*/
 
 /*
  * Copyright (c) 1999 - 2005 Kungliga Tekniska Högskolan
@@ -53,7 +53,7 @@
 
 #include "check-common.h"
 
-__RCSID("$NetBSD: check-gen.c,v 1.1.1.1 2011/04/13 18:14:40 elric Exp $");
+__RCSID("NetBSD");
 
 static char *lha_principal[] = { "lha" };
 static char *lharoot_princ[] = { "lha", "root" };
@@ -1251,6 +1251,33 @@ check_seq_of_size(void)
     return 0;
 }
 
+static int
+check_TESTMechTypeList(void)
+{
+    TESTMechTypeList tl;
+    unsigned oid1[] =  { 1, 2, 840, 48018, 1, 2, 2};
+    unsigned oid2[] =  { 1, 2, 840, 113554, 1, 2, 2};
+    unsigned oid3[] =   { 1, 3, 6, 1, 4, 1, 311, 2, 2, 30};
+    unsigned oid4[] =   { 1, 3, 6, 1, 4, 1, 311, 2, 2, 10};
+    TESTMechType array[] = {{ 7, oid1 },
+                            { 7, oid2 },
+                            { 10, oid3 },
+                            { 10, oid4 }};
+    size_t size, len;
+    void *ptr;
+    int ret;
+
+    tl.len = 4;
+    tl.val = array;
+
+    ASN1_MALLOC_ENCODE(TESTMechTypeList, ptr, len, &tl, &size, ret);
+    if (ret)
+	errx(1, "TESTMechTypeList: %d", ret);
+    if (len != size)
+	abort();
+    return 0;
+}
+
 int
 main(int argc, char **argv)
 {
@@ -1279,6 +1306,8 @@ main(int argc, char **argv)
 
     ret += check_seq();
     ret += check_seq_of_size();
+
+    ret += check_TESTMechTypeList();
 
     return ret;
 }

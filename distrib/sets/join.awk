@@ -1,4 +1,4 @@
-#	$NetBSD: join.awk,v 1.3 2008/04/30 13:10:49 martin Exp $
+#	$NetBSD: join.awk,v 1.6 2014/10/24 22:19:44 riz Exp $
 #
 # Copyright (c) 2002 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -32,16 +32,60 @@
 #	and outputs lines in F2 with a first word that is in F1.
 #	Neither file needs to be sorted
 
+function unvis(s) \
+{
+	# XXX: We don't handle the complete range of vis encodings
+	unvis_result = ""
+	while (length(s) > 0) {
+		unvis_pos = match(s, "\\\\.")
+		if (unvis_pos == 0) {
+			unvis_result = unvis_result "" s
+			s = ""
+			break
+		}
+		# copy the part before the next backslash
+		unvis_result = unvis_result "" substr(s, 1, unvis_pos - 1)
+		s = substr(s, unvis_pos)
+		# process the backslash and next few chars
+		if (substr(s, 1, 2) == "\\\\") {
+			# double backslash -> single backslash
+			unvis_result = unvis_result "\\"
+			s = substr(s, 3)
+		} else if (match(s, "\\\\[0-7][0-7][0-7]") == 1) {
+			# \ooo with three octal digits.
+			# XXX: use strnum() is that is available
+			unvis_result = unvis_result "" sprintf("%c", \
+				0+substr(s, 2, 1) * 64 + \
+				0+substr(s, 3, 1) * 8 + \
+				0+substr(s, 4, 1))
+			s = substr(s, 5)
+		} else {
+			# unrecognised escape: keep the literal backslash
+			printf "%s: %s:%s: unrecognised escape %s\n", \
+				ARGV[0], (FILENAME ? FILENAME : "stdin"), FNR, \
+				substr(s, 1, 2) \
+				>"/dev/stderr"
+			unvis_result = unvis_result "" substr(s, 1, 1)
+			s = substr(s, 2)
+		}
+	}
+	return unvis_result
+}
+
 BEGIN \
 {
 	if (ARGC != 3) {
 		printf("Usage: join file1 file2\n") >"/dev/stderr"
 		exit 1
 	}
-	while ( (getline < ARGV[1]) > 0)
+	while ( (getline < ARGV[1]) > 0) {
+		$1 = unvis($1)
 		words[$1] = $0
+	}
 	delete ARGV[1]
 }
+
+// { $1 = unvis($1) }
 
 $1 in words \
 {

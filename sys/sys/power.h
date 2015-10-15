@@ -1,4 +1,4 @@
-/*	$NetBSD: power.h,v 1.19 2013/03/30 19:05:20 christos Exp $	*/
+/*	$NetBSD: power.h,v 1.20 2015/01/06 15:39:54 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -83,6 +83,10 @@
  *				of switch has state.  We know if it is open
  *				or closed.
  *
+ *	Radio switch		This is e.g. the switch of the transmitter
+ * 				of a wifi interface. We know if it is
+ *				on or off.
+ *
  */
 
 #define	PSWITCH_TYPE_POWER	0	/* power button */
@@ -111,6 +115,7 @@
 #define		PSWITCH_HK_VOLUME_DOWN		"volume-down"
 #define		PSWITCH_HK_VOLUME_MUTE		"volume-mute"
 #endif /* THINKPAD_NORMAL_HOTKEYS */
+#define	PSWITCH_TYPE_RADIO	6	/* radio switch */
 
 #define	PSWITCH_EVENT_PRESSED	0	/* button pressed, lid closed, AC off */
 #define	PSWITCH_EVENT_RELEASED	1	/* button released, lid open, AC on */

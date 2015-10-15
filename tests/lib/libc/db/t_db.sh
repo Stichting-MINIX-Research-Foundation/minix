@@ -1,4 +1,4 @@
-# $NetBSD: t_db.sh,v 1.4 2013/07/29 10:43:15 skrll Exp $
+# $NetBSD: t_db.sh,v 1.5 2015/02/26 13:00:26 martin Exp $
 #
 # Copyright (c) 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -801,7 +801,7 @@ ffactor=$ffactor,nelem=25000,cachesize=65536" hash in
 atf_test_case bsize_ffactor
 bsize_ffactor_head()
 {
-	atf_set "timeout" "480"
+	atf_set "timeout" "1800"
 	atf_set "descr" "Checks hash database with various" \
 					"bucketsizes and fill factors"
 }

@@ -1,8 +1,10 @@
-; RUN: llc -march=r600 -mcpu=cypress < %s | FileCheck -check-prefix=EG %s
+; RUN: llc -march=r600 -mcpu=cypress < %s | FileCheck -check-prefix=EG -check-prefix=FUNC %s
+; RUN: llc -march=amdgcn -mcpu=SI -verify-machineinstrs< %s | FileCheck -check-prefix=SI -check-prefix=FUNC %s
+; RUN: llc -march=amdgcn -mcpu=tonga -verify-machineinstrs< %s | FileCheck -check-prefix=SI -check-prefix=FUNC %s
 
-; EG-LABEL: @anyext_load_i8:
+; FUNC-LABEL: {{^}}anyext_load_i8:
 ; EG: AND_INT
-; EG-NEXT: 255
+; EG: 255
 define void @anyext_load_i8(i8 addrspace(1)* nocapture noalias %out, i8 addrspace(1)* nocapture noalias %src) nounwind {
   %cast = bitcast i8 addrspace(1)* %src to i32 addrspace(1)*
   %load = load i32 addrspace(1)* %cast, align 1
@@ -12,10 +14,11 @@ define void @anyext_load_i8(i8 addrspace(1)* nocapture noalias %out, i8 addrspac
   ret void
 }
 
-; EG-LABEL: @anyext_load_i16:
+; FUNC-LABEL: {{^}}anyext_load_i16:
 ; EG: AND_INT
-; EG: LSHL
-; EG: 65535
+; EG: AND_INT
+; EG-DAG: 65535
+; EG-DAG: -65536
 define void @anyext_load_i16(i16 addrspace(1)* nocapture noalias %out, i16 addrspace(1)* nocapture noalias %src) nounwind {
   %cast = bitcast i16 addrspace(1)* %src to i32 addrspace(1)*
   %load = load i32 addrspace(1)* %cast, align 1
@@ -25,9 +28,9 @@ define void @anyext_load_i16(i16 addrspace(1)* nocapture noalias %out, i16 addrs
   ret void
 }
 
-; EG-LABEL: @anyext_load_lds_i8:
+; FUNC-LABEL: {{^}}anyext_load_lds_i8:
 ; EG: AND_INT
-; EG-NEXT: 255
+; EG: 255
 define void @anyext_load_lds_i8(i8 addrspace(3)* nocapture noalias %out, i8 addrspace(3)* nocapture noalias %src) nounwind {
   %cast = bitcast i8 addrspace(3)* %src to i32 addrspace(3)*
   %load = load i32 addrspace(3)* %cast, align 1
@@ -37,10 +40,11 @@ define void @anyext_load_lds_i8(i8 addrspace(3)* nocapture noalias %out, i8 addr
   ret void
 }
 
-; EG-LABEL: @anyext_load_lds_i16:
+; FUNC-LABEL: {{^}}anyext_load_lds_i16:
 ; EG: AND_INT
-; EG: LSHL
-; EG: 65535
+; EG: AND_INT
+; EG-DAG: 65535
+; EG-DAG: -65536
 define void @anyext_load_lds_i16(i16 addrspace(3)* nocapture noalias %out, i16 addrspace(3)* nocapture noalias %src) nounwind {
   %cast = bitcast i16 addrspace(3)* %src to i32 addrspace(3)*
   %load = load i32 addrspace(3)* %cast, align 1

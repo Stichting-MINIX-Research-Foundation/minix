@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.h,v 1.88 2013/05/04 18:30:14 christos Exp $	*/
+/*	$NetBSD: stdio.h,v 1.96 2015/03/24 07:44:52 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -242,9 +242,6 @@ long	 ftell(FILE *);
 size_t	 fwrite(const void * __restrict, size_t, size_t, FILE * __restrict);
 int	 getc(FILE *);
 int	 getchar(void);
-ssize_t	 getdelim(char ** __restrict, size_t * __restrict, int,
-	    FILE * __restrict);
-ssize_t	 getline(char ** __restrict, size_t * __restrict, FILE * __restrict);
 void	 perror(const char *);
 int	 printf(const char * __restrict, ...)
 		__printflike(1, 2);
@@ -333,6 +330,11 @@ int	 pclose(FILE *);
 FILE	*popen(const char *, const char *);
 __END_DECLS
 #endif
+#ifdef _NETBSD_SOURCE
+__BEGIN_DECLS
+FILE	*popenve(const char *, char *const *, char *const *, const char *);
+__END_DECLS
+#endif
 
 /*
  * Functions defined in ISO XPG4.2, ISO C99, POSIX 1003.1-2001 or later.
@@ -368,7 +370,7 @@ __END_DECLS
 /*
  * X/Open CAE Specification Issue 5 Version 2
  */
-#if (_XOPEN_SOURCE - 0) >= 500 || defined(_LARGEFILE_SOURCE) || \
+#if (_POSIX_C_SOURCE - 0) >= 200112L || (_XOPEN_SOURCE - 0) >= 500 || \
     defined(_NETBSD_SOURCE)
 #ifndef	off_t
 typedef	__off_t		off_t;
@@ -379,7 +381,7 @@ __BEGIN_DECLS
 int	 fseeko(FILE *, off_t, int);
 off_t	 ftello(FILE *);
 __END_DECLS
-#endif /* _XOPEN_SOURCE >= 500 || _LARGEFILE_SOURCE || _NETBSD_SOURCE */
+#endif /* (_POSIX_C_SOURCE - 0) >= 200112L || _XOPEN_SOURCE >= 500 || ... */
 
 /*
  * Functions defined in ISO C99.  Still put under _NETBSD_SOURCE due to
@@ -461,9 +463,9 @@ __END_DECLS
 #if defined(__GNUC__) && defined(__STDC__)
 static __inline int __sputc(int _c, FILE *_p) {
 	if (--_p->_w >= 0 || (_p->_w >= _p->_lbfsize && (char)_c != '\n'))
-		return (*_p->_p++ = _c);
+		return *_p->_p++ = (unsigned char)_c;
 	else
-		return (__swbuf(_c, _p));
+		return __swbuf(_c, _p);
 }
 #else
 /*
@@ -508,10 +510,12 @@ static __inline int __sputc(int _c, FILE *_p) {
 #endif /* !_ANSI_SOURCE && !__cplusplus*/
 
 #if (_POSIX_C_SOURCE - 0) >= 200809L || defined(_NETBSD_SOURCE)
+__BEGIN_DECLS
 int	 vdprintf(int, const char * __restrict, __va_list)
 		__printflike(2, 0);
 int	 dprintf(int, const char * __restrict, ...)
 		__printflike(2, 3);
+__END_DECLS
 #endif /* (_POSIX_C_SOURCE - 0) >= 200809L || defined(_NETBSD_SOURCE) */
 
 #if (_POSIX_C_SOURCE - 0) >= 199506L || (_XOPEN_SOURCE - 0) >= 500 || \
@@ -525,7 +529,13 @@ int	 dprintf(int, const char * __restrict, ...)
 
 #if (_POSIX_C_SOURCE - 0) >= 200809L || (_XOPEN_SOURCE - 0) >= 700 || \
     defined(_NETBSD_SOURCE)
+__BEGIN_DECLS
 FILE *fmemopen(void * __restrict, size_t, const char * __restrict);
+FILE *open_memstream(char **, size_t *);
+ssize_t	 getdelim(char ** __restrict, size_t * __restrict, int,
+	    FILE * __restrict);
+ssize_t	 getline(char ** __restrict, size_t * __restrict, FILE * __restrict);
+__END_DECLS
 #endif
 
 #if (_POSIX_C_SOURCE - 0) >= 200809L || defined(_NETBSD_SOURCE)
@@ -568,8 +578,6 @@ int	 scanf_l(locale_t, const char * __restrict, ...)
     __scanflike(2, 3);
 int	 sscanf_l(const char * __restrict, locale_t,
     const char * __restrict, ...) __scanflike(3, 4);
-int	 vscanf_l(locale_t, const char * __restrict, __va_list)
-    __scanflike(2, 0);
 int	 vscanf_l(locale_t, const char * __restrict, __va_list)
     __scanflike(2, 0);
 int	 vfscanf_l(FILE * __restrict, locale_t, const char * __restrict,

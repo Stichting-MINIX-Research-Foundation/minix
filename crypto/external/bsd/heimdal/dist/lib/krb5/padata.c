@@ -1,4 +1,4 @@
-/*	$NetBSD: padata.c,v 1.1.1.1 2011/04/13 18:15:36 elric Exp $	*/
+/*	$NetBSD: padata.c,v 1.1.1.2 2014/04/24 12:45:50 pettai Exp $	*/
 
 /*
  * Copyright (c) 1997 Kungliga Tekniska Högskolan
@@ -38,8 +38,8 @@
 KRB5_LIB_FUNCTION PA_DATA * KRB5_LIB_CALL
 krb5_find_padata(PA_DATA *val, unsigned len, int type, int *idx)
 {
-    for(; *idx < len; (*idx)++)
-	if(val[*idx].padata_type == type)
+    for(; *idx < (int)len; (*idx)++)
+	if(val[*idx].padata_type == (unsigned)type)
 	    return val + *idx;
     return NULL;
 }

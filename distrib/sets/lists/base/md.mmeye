@@ -1,4 +1,4 @@
-# $NetBSD: md.mmeye,v 1.9 2013/08/11 22:29:02 joerg Exp $
+# $NetBSD: md.mmeye,v 1.11 2014/08/06 12:15:01 martin Exp $
 ./usr/mdec/boot					base-sysutil-bin
 ./usr/mdec/bootelf				base-sysutil-bin
 ./usr/mdec/osloader				base-sysutil-bin

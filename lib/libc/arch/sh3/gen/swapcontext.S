@@ -1,4 +1,4 @@
-/*	$NetBSD: swapcontext.S,v 1.10 2013/09/12 15:36:15 joerg Exp $	*/
+/*	$NetBSD: swapcontext.S,v 1.12 2015/04/06 01:50:46 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: swapcontext.S,v 1.10 2013/09/12 15:36:15 joerg Exp $")
+	RCSID("$NetBSD: swapcontext.S,v 1.12 2015/04/06 01:50:46 uwe Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 /*
@@ -40,33 +40,33 @@
  */
 ENTRY(swapcontext)
 	PIC_PROLOGUE(.L_got)
-	mov.l	r5, @-sp
 	sts.l	pr, @-sp
 
 	mov.l	.L__getcontext, r0
-1:	CALL	r0			/* _getcontext(oucp) */
+	mov.l	r5, @-sp
+1:	CALL	r0			! _getcontext(oucp)
 	 mov.l	r4, @-sp
-	mov.l	@sp+, r1
-	tst	r0, r0
-	bf	3f			/* return error from getcontext */
+	!! getcontext captures oucp resuming here with r12 (when PIC),
+	!! pr, r5 and r4 pushed onto the stack
 
-	/* Note: getcontext does _UC_MACHINE_INTRV(oucp) = 0 for us */
-	mov.l	@sp, r0
-	mov.l	r0, @(36 + 1 * 4, r1)	/* _UC_MACHINE_SET_PC(oucp, pr) */
+	tst	r0, r0
+	bf.s	3f			! return error from getcontext
+	 mov.l	@sp, r1			! saved oucp
+
+	!! adjust oucp to resume after setcontext below
+	mova	3f, r0
+	mov.l	r0, @(36 + 1 * 4, r1)	! _UC_MACHINE_SET_PC(oucp, pr)
+
 	mov.l	.L_setcontext, r2
-2:	CALL	r2			/* setcontext(ucp) */
-	 mov.l	@(4, sp), r4
-	/* if we get here, return error from setcontext */
-3:
+2:	CALL	r2			! setcontext(ucp)
+	 mov.l	@(4, sp), r4		! saved ucp
+
+	.align	2
+3:	!! we get here on errors and when resuming oucp
+	add	#8, sp			! skip r4 and r5
 	lds.l	@sp+, pr
-#ifdef __PIC__
-	add	#4, sp
 	rts
-	 PIC_EPILOGUE
-#else
-	rts
-	 add	#4, sp
-#endif
+	 PIC_EPILOGUE_SLOT
 
 	.align	2
 .L_got:			PIC_GOT_DATUM

@@ -1,4 +1,4 @@
-/*	$NetBSD: inquire_cred.c,v 1.1.1.1 2011/04/13 18:14:45 elric Exp $	*/
+/*	$NetBSD: inquire_cred.c,v 1.1.1.2 2014/04/24 12:45:29 pettai Exp $	*/
 
 /*
  * Copyright (c) 1997, 2003 Kungliga Tekniska Högskolan
@@ -97,12 +97,12 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_inquire_cred
     if (output_name != NULL) {
 	if (icred && icred->principal != NULL) {
 	    gss_name_t name;
-	
+
 	    if (acred && acred->principal)
 		name = (gss_name_t)acred->principal;
 	    else
 		name = (gss_name_t)icred->principal;
-		
+
             ret = _gsskrb5_duplicate_name(minor_status, name, output_name);
             if (ret)
 		goto out;

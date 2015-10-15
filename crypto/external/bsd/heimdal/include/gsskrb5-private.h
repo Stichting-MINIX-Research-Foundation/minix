@@ -193,7 +193,7 @@ _gssapi_verify_mic_arcfour (
 	const gss_buffer_t /*token_buffer*/,
 	gss_qop_t * /*qop_state*/,
 	krb5_keyblock */*key*/,
-	char */*type*/);
+	const char */*type*/);
 
 OM_uint32
 _gssapi_verify_mic_cfx (
@@ -300,6 +300,17 @@ _gsskrb5_acquire_cred (
 	OM_uint32 * time_rec );
 
 OM_uint32 GSSAPI_CALLCONV
+_gsskrb5_acquire_cred_ext (
+	OM_uint32 * /*minor_status*/,
+	const gss_name_t /*desired_name*/,
+	gss_const_OID /*credential_type*/,
+	const void */*credential_data*/,
+	OM_uint32 /*time_req*/,
+	gss_const_OID /*desired_mech*/,
+	gss_cred_usage_t /*cred_usage*/,
+	gss_cred_id_t * output_cred_handle );
+
+OM_uint32 GSSAPI_CALLCONV
 _gsskrb5_add_cred (
 	 OM_uint32 */*minor_status*/,
 	const gss_cred_id_t /*input_cred_handle*/,
@@ -312,6 +323,13 @@ _gsskrb5_add_cred (
 	gss_OID_set */*actual_mechs*/,
 	OM_uint32 */*initiator_time_rec*/,
 	OM_uint32 */*acceptor_time_rec*/);
+
+OM_uint32 GSSAPI_CALLCONV
+_gsskrb5_authorize_localname (
+	OM_uint32 */*minor_status*/,
+	const gss_name_t /*input_name*/,
+	gss_const_buffer_t /*user_name*/,
+	gss_const_OID /*user_name_type*/);
 
 OM_uint32
 _gsskrb5_canon_name (
@@ -599,6 +617,13 @@ _gsskrb5_make_header (
 	const gss_OID /*mech*/);
 
 OM_uint32 GSSAPI_CALLCONV
+_gsskrb5_pname_to_uid (
+	OM_uint32 */*minor_status*/,
+	const gss_name_t /*pname*/,
+	const gss_OID /*mech_type*/,
+	uid_t */*uidp*/);
+
+OM_uint32 GSSAPI_CALLCONV
 _gsskrb5_process_context_token (
 	 OM_uint32 */*minor_status*/,
 	const gss_ctx_id_t /*context_handle*/,
@@ -614,7 +639,9 @@ _gsskrb5_pseudo_random (
 	gss_buffer_t /*prf_out*/);
 
 OM_uint32
-_gsskrb5_register_acceptor_identity (const char */*identity*/);
+_gsskrb5_register_acceptor_identity (
+	OM_uint32 */*min_stat*/,
+	const char */*identity*/);
 
 OM_uint32
 _gsskrb5_release_buffer (
@@ -702,7 +729,7 @@ _gsskrb5_verify_mic_internal (
 	const gss_buffer_t /*message_buffer*/,
 	const gss_buffer_t /*token_buffer*/,
 	gss_qop_t * /*qop_state*/,
-	char * type );
+	const char * type );
 
 OM_uint32 GSSAPI_CALLCONV
 _gsskrb5_wrap (

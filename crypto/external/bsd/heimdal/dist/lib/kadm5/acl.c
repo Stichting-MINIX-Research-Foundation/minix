@@ -1,4 +1,4 @@
-/*	$NetBSD: acl.c,v 1.1.1.1 2011/04/13 18:15:29 elric Exp $	*/
+/*	$NetBSD: acl.c,v 1.1.1.2 2014/04/24 12:45:48 pettai Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
@@ -35,7 +35,7 @@
 
 #include "kadm5_locl.h"
 
-__RCSID("$NetBSD: acl.c,v 1.1.1.1 2011/04/13 18:15:29 elric Exp $");
+__RCSID("NetBSD");
 
 static struct units acl_units[] = {
     { "all",		KADM5_PRIV_ALL },
@@ -46,7 +46,7 @@ static struct units acl_units[] = {
     { "modify",		KADM5_PRIV_MODIFY },
     { "add",		KADM5_PRIV_ADD },
     { "get", 		KADM5_PRIV_GET },
-    { NULL }
+    { NULL,		0 }
 };
 
 kadm5_ret_t

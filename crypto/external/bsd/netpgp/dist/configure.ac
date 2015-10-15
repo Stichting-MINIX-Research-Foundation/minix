@@ -1,10 +1,10 @@
-# $NetBSD: configure.ac,v 1.39 2010/11/06 00:14:35 agc Exp $
+# $NetBSD: configure.ac,v 1.42 2014/03/09 00:33:50 agc Exp $
 #
 # Process this file with autoconf to produce a configure script.
 
-AC_INIT([netpgp],[20101105],[Alistair Crooks <agc@netbsd.org> c0596823])
-AC_PREREQ(2.63)
-AC_REVISION([$Revision: 1.39 $])
+AC_INIT([netpgp],[20140220],[Alistair Crooks <agc@netbsd.org> c0596823])
+AC_PREREQ(2.69)
+AC_REVISION([$Revision: 1.42 $])
 
 AS_SHELL_SANITIZE
 
@@ -27,6 +27,16 @@ AC_PROG_CC
 AC_PROG_INSTALL
 AC_PROG_LIBTOOL
 AC_PROG_LN_S
+
+dnl based on AC_PROG_RANLIB from autoconf
+m4_ifndef([AC_PROG_AR],[dnl
+AN_MAKEVAR([AR], [AC_PROG_AR])
+AN_PROGRAM([ar], [AC_PROG_AR])
+AC_DEFUN([AC_PROG_AR],
+[AC_CHECK_TOOL(AR, ar, :)])
+])
+
+AC_PROG_AR
 
 # Compiler characteristics
 #
@@ -110,7 +120,6 @@ AC_CONFIG_FILES([
         src/lib/Makefile
         src/netpgp/Makefile
         src/netpgpkeys/Makefile
-        src/netpgpverify/Makefile
         tests/Makefile
         tests/atlocal
 ])

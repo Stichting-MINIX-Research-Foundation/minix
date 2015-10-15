@@ -1,4 +1,4 @@
-.\" $NetBSD: netpgpkeys.1,v 1.19 2013/07/20 21:39:56 wiz Exp $
+.\" $NetBSD: netpgpkeys.1,v 1.20 2014/02/17 07:23:18 agc Exp $
 .\"
 .\" Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -37,27 +37,27 @@
 .Nm
 .Fl Fl export\-key
 .Op options
-.Ar file ...
+.Ar
 .Nm
 .Fl Fl find\-key
 .Op options
-.Ar file ...
+.Ar
 .Nm
 .Fl Fl generate\-key
 .Op options
-.Ar file ...
+.Ar
 .Nm
 .Fl Fl import\-key
 .Op options
-.Ar file ...
+.Ar
 .Nm
 .Fl Fl list\-keys
 .Op options
-.Ar file ...
+.Ar
 .Nm
 .Fl Fl list\-sigs
 .Op options
-.Ar file ...
+.Ar
 .Nm
 .Fl Fl trusted\-keys
 .Op options
@@ -67,7 +67,7 @@
 .Nm
 .Op Fl Vgls
 .Op Fl olong-option Ns = Ns value
-.Ar file ...
+.Ar
 .Pp
 where the long options for all commands are:
 .Pp
@@ -108,7 +108,7 @@ keys from other identities.
 .Pp
 The
 .Xr netpgp 1
-utility should be used for file management and transformation - encryption,
+utility should be used for file management and transformation \(emencryption,
 decryption,
 signing and verification of files.
 .Pp
@@ -211,7 +211,8 @@ or options may be given.
 .Bl -tag -width Ar
 .It Fl Fl cipher Ar cipher\-algorithm
 Specify the cipher to be used for symmetric encryption.
-The default cipher is "CAST5".
+The default cipher is
+.Dq CAST5 .
 .It Fl Fl hash Ar hash\-algorithm
 Specify the hash algorithm which is used during fingerprint calculation.
 For reference, at the present time,
@@ -247,7 +248,7 @@ utility has no way of verifying that an email address is valid, or
 that a key belongs to a certain individual.
 The trust for a signed key is given by the other signers of that key.
 The 16 hexadecimal digit user identity should be used when specifying
-user identities - email addresses and names are provided as aliases.
+user identities \(ememail addresses and names are provided as aliases.
 .It Fl Fl pass\-fd Ns = Ns Ar fd
 This option is intended for the use of external programs which may
 like to use the
@@ -377,9 +378,16 @@ uid              RSA 2048-bit key \*[Lt]agc@localhost\*[Gt]
 .Xr ssl 3 ,
 .Xr zlib 3
 .Sh STANDARDS
-The
-.Nm
-utility is designed to conform to IETF RFC 4880.
+.Rs
+.%A J. Callas
+.%A L. Donnerhacke
+.%A H. Finney
+.%A D. Shaw
+.%A R. Thayer
+.%D November 2007
+.%R RFC 4880
+.%T OpenPGP Message Format
+.Re
 .Sh HISTORY
 The
 .Nm

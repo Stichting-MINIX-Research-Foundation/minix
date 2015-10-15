@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_counter.h,v 1.2 2012/08/29 18:45:40 matt Exp $	*/
+/*	$NetBSD: cpu_counter.h,v 1.3 2014/02/26 01:54:10 matt Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@ static __inline uint32_t
 cpu_counter32(void)
 {
 #if defined(CPU_CORTEX) && defined(CPU_ARM11)
-	const bool cortex_p = CPU_ID_CORTEX_P(curcpu()->ci_cpu_id);
+	const bool cortex_p = CPU_ID_CORTEX_P(curcpu()->ci_arm_cpuid);
 #elif defined(CPU_CORTEX)
 	const bool cortex_p = true;
 #elif defined(CPU_ARM11)

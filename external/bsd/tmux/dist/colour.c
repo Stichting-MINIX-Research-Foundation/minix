@@ -1,4 +1,4 @@
-/* $Id: colour.c,v 1.3 2011/08/22 09:19:51 he Exp $ */
+/* Id */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -89,7 +89,7 @@ colour_rgb_generate256(void)
 	}
 }
 
-/* Get a measure of colour RGB distance. */
+/* Get colour RGB distance. */
 u_int
 colour_rgb_distance(struct colour_rgb *rgb1, struct colour_rgb *rgb2)
 {
@@ -105,8 +105,7 @@ colour_rgb_distance(struct colour_rgb *rgb1, struct colour_rgb *rgb2)
 int
 colour_rgb_find(struct colour_rgb *rgb)
 {
-	u_int	distance, lowest;
-	u_int	colour, i;
+	u_int	distance, lowest, colour, i;
 
 	if (colour_rgb_256 == NULL)
 		colour_rgb_generate256();
@@ -171,6 +170,22 @@ colour_tostring(int c)
 		return ("white");
 	case 8:
 		return ("default");
+	case 90:
+		return ("brightblack");
+	case 91:
+		return ("brightred");
+	case 92:
+		return ("brightgreen");
+	case 93:
+		return ("brightyellow");
+	case 94:
+		return ("brightblue");
+	case 95:
+		return ("brightmagenta");
+	case 96:
+		return ("brightcyan");
+	case 97:
+		return ("brightwhite");
 	}
 	return (NULL);
 }
@@ -220,6 +235,30 @@ colour_fromstring(const char *s)
 		return (7);
 	if (strcasecmp(s, "default") == 0 || (s[0] == '8' && s[1] == '\0'))
 		return (8);
+	if (strcasecmp(s, "brightblack") == 0 ||
+	    (s[0] == '9' && s[1] == '0' && s[1] == '\0'))
+		return (90);
+	if (strcasecmp(s, "brightred") == 0 ||
+	    (s[0] == '9' && s[1] == '1' && s[1] == '\0'))
+		return (91);
+	if (strcasecmp(s, "brightgreen") == 0 ||
+	    (s[0] == '9' && s[1] == '2' && s[1] == '\0'))
+		return (92);
+	if (strcasecmp(s, "brightyellow") == 0 ||
+	    (s[0] == '9' && s[1] == '3' && s[1] == '\0'))
+		return (93);
+	if (strcasecmp(s, "brightblue") == 0 ||
+	    (s[0] == '9' && s[1] == '4' && s[1] == '\0'))
+		return (94);
+	if (strcasecmp(s, "brightmagenta") == 0 ||
+	    (s[0] == '9' && s[1] == '5' && s[1] == '\0'))
+		return (95);
+	if (strcasecmp(s, "brightcyan") == 0 ||
+	    (s[0] == '9' && s[1] == '6' && s[1] == '\0'))
+		return (96);
+	if (strcasecmp(s, "brightwhite") == 0 ||
+	    (s[0] == '9' && s[1] == '7' && s[1] == '\0'))
+		return (97);
 	return (-1);
 }
 
@@ -244,32 +283,6 @@ colour_256to16(u_char c)
 		 9,  9,  9,  9,  9, 13,  9,  9,  9,  9,  9, 13,  9,  9,  9,  9,
 		 9, 13, 11, 11, 11, 11, 11, 15,  0,  0,  0,  0,  0,  0,  8,  8,
 		 8,  8,  8,  8,  7,  7,  7,  7,  7,  7, 15, 15, 15, 15, 15, 15
-	};
-
-	return (table[c]);
-}
-
-/* Convert 256 colour palette to 88. */
-u_char
-colour_256to88(u_char c)
-{
-	static const u_char table[256] = {
-		 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15,
-		16, 17, 17, 18, 18, 19, 20, 21, 21, 22, 22, 23, 20, 21, 21, 22,
-		22, 23, 24, 25, 25, 26, 26, 27, 24, 25, 25, 26, 26, 27, 28, 29,
-		29, 30, 30, 31, 32, 33, 33, 34, 34, 35, 36, 37, 37, 38, 38, 39,
-		36, 37, 37, 38, 38, 39, 40, 41, 41, 42, 42, 43, 40, 41, 41, 42,
-		42, 43, 44, 45, 45, 46, 46, 47, 32, 33, 33, 34, 34, 35, 36, 37,
-		37, 38, 38, 39, 36, 37, 37, 38, 38, 39, 40, 41, 41, 42, 42, 43,
-		40, 41, 41, 42, 42, 43, 44, 45, 45, 46, 46, 47, 48, 49, 49, 50,
-		50, 51, 52, 53, 53, 54, 54, 55, 52, 53, 53, 54, 54, 55, 56, 57,
-		57, 58, 58, 59, 56, 57, 57, 58, 58, 59, 60, 61, 61, 62, 62, 63,
-		48, 49, 49, 50, 50, 51, 52, 53, 53, 54, 54, 55, 52, 53, 53, 54,
-		54, 55, 56, 57, 57, 58, 58, 59, 56, 57, 57, 58, 58, 59, 60, 61,
-		61, 62, 62, 63, 64, 65, 65, 66, 66, 67, 68, 69, 69, 70, 70, 71,
-		68, 69, 69, 70, 70, 71, 72, 73, 73, 74, 74, 75, 72, 73, 73, 74,
-		74, 75, 76, 77, 77, 78, 78, 79,  0,  0, 80, 80, 80, 81, 81, 81,
-		82, 82, 82, 83, 83, 83, 84, 84, 84, 85, 85, 85, 86, 86, 86, 87
 	};
 
 	return (table[c]);

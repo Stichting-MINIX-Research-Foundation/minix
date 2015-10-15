@@ -1,8 +1,6 @@
 Introduction
 
-This document covers the native NetBSD compiler runtime. The full support
-for the native runtime is enabled by setting USE_COMPILERCRTSTUFF to no
-in bsd.own.mk.
+This document covers the native NetBSD compiler runtime.
 
 Machine independent sources can be found in common. The crtbegin.c in
 that directory is a useful template for deriving compact assembler

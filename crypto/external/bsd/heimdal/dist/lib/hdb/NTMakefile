@@ -37,7 +37,7 @@ gen_files_hdb = $(OBJ)\asn1_hdb_asn1.x
 
 $(gen_files_hdb) $(OBJ)\hdb_asn1.hx $(OBJ)\hdb_asn1-priv.hx: $(BINDIR)\asn1_compile.exe hdb.asn1
 	cd $(OBJ)
-	$(BINDIR)\asn1_compile.exe --one-code-file $(SRCDIR)\hdb.asn1 hdb_asn1
+	$(BINDIR)\asn1_compile.exe --sequence=HDB-Ext-Keyset --sequence=Keys --one-code-file $(SRCDIR)\hdb.asn1 hdb_asn1
 	cd $(SRCDIR)
 
 $(gen_files_hdb:.x=.c): $$(@R).x

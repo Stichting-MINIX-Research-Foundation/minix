@@ -1,4 +1,4 @@
-/*	$NetBSD: aname_to_localname.c,v 1.1.1.1 2011/04/13 18:15:31 elric Exp $	*/
+/*	$NetBSD: aname_to_localname.c,v 1.1.1.2 2014/04/24 12:45:49 pettai Exp $	*/
 
 /*
  * Copyright (c) 1997 - 1999, 2002 - 2003 Kungliga Tekniska Högskolan
@@ -74,7 +74,7 @@ krb5_aname_to_localname (krb5_context context,
 	ret = krb5_copy_principal(context, aname, &rootprinc);
 	if (ret)
 	    return ret;
-	
+
 	userok = krb5_kuserok(context, rootprinc, res);
 	krb5_free_principal(context, rootprinc);
 	if (!userok)

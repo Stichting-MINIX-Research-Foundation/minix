@@ -21,7 +21,7 @@ extern "C" {
 
 #define XCB_XINERAMA_MAJOR_VERSION 1
 #define XCB_XINERAMA_MINOR_VERSION 1
-  
+
 extern xcb_extension_t xcb_xinerama_id;
 
 /**
@@ -242,16 +242,6 @@ typedef struct xcb_xinerama_query_screens_reply_t {
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_xinerama_screen_info_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_xinerama_screen_info_next
- ** 
- ** @param xcb_xinerama_screen_info_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xinerama_screen_info_next (xcb_xinerama_screen_info_iterator_t *i  /**< */);
 
@@ -264,16 +254,6 @@ xcb_xinerama_screen_info_next (xcb_xinerama_screen_info_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xinerama_screen_info_end
- ** 
- ** @param xcb_xinerama_screen_info_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xinerama_screen_info_end (xcb_xinerama_screen_info_iterator_t i  /**< */);
 
@@ -283,20 +263,8 @@ xcb_xinerama_screen_info_end (xcb_xinerama_screen_info_iterator_t i  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_xinerama_query_version_cookie_t xcb_xinerama_query_version
- ** 
- ** @param xcb_connection_t *c
- ** @param uint8_t           major
- ** @param uint8_t           minor
- ** @returns xcb_xinerama_query_version_cookie_t
- **
- *****************************************************************************/
- 
 xcb_xinerama_query_version_cookie_t
 xcb_xinerama_query_version (xcb_connection_t *c  /**< */,
                             uint8_t           major  /**< */,
@@ -308,23 +276,11 @@ xcb_xinerama_query_version (xcb_connection_t *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_xinerama_query_version_cookie_t xcb_xinerama_query_version_unchecked
- ** 
- ** @param xcb_connection_t *c
- ** @param uint8_t           major
- ** @param uint8_t           minor
- ** @returns xcb_xinerama_query_version_cookie_t
- **
- *****************************************************************************/
- 
 xcb_xinerama_query_version_cookie_t
 xcb_xinerama_query_version_unchecked (xcb_connection_t *c  /**< */,
                                       uint8_t           major  /**< */,
@@ -337,25 +293,13 @@ xcb_xinerama_query_version_unchecked (xcb_connection_t *c  /**< */,
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_xinerama_query_version_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_xinerama_query_version_reply_t * xcb_xinerama_query_version_reply
- ** 
- ** @param xcb_connection_t                     *c
- ** @param xcb_xinerama_query_version_cookie_t   cookie
- ** @param xcb_generic_error_t                 **e
- ** @returns xcb_xinerama_query_version_reply_t *
- **
- *****************************************************************************/
- 
 xcb_xinerama_query_version_reply_t *
 xcb_xinerama_query_version_reply (xcb_connection_t                     *c  /**< */,
                                   xcb_xinerama_query_version_cookie_t   cookie  /**< */,
@@ -367,19 +311,8 @@ xcb_xinerama_query_version_reply (xcb_connection_t                     *c  /**< 
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_xinerama_get_state_cookie_t xcb_xinerama_get_state
- ** 
- ** @param xcb_connection_t *c
- ** @param xcb_window_t      window
- ** @returns xcb_xinerama_get_state_cookie_t
- **
- *****************************************************************************/
- 
 xcb_xinerama_get_state_cookie_t
 xcb_xinerama_get_state (xcb_connection_t *c  /**< */,
                         xcb_window_t      window  /**< */);
@@ -390,22 +323,11 @@ xcb_xinerama_get_state (xcb_connection_t *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_xinerama_get_state_cookie_t xcb_xinerama_get_state_unchecked
- ** 
- ** @param xcb_connection_t *c
- ** @param xcb_window_t      window
- ** @returns xcb_xinerama_get_state_cookie_t
- **
- *****************************************************************************/
- 
 xcb_xinerama_get_state_cookie_t
 xcb_xinerama_get_state_unchecked (xcb_connection_t *c  /**< */,
                                   xcb_window_t      window  /**< */);
@@ -417,25 +339,13 @@ xcb_xinerama_get_state_unchecked (xcb_connection_t *c  /**< */,
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_xinerama_get_state_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_xinerama_get_state_reply_t * xcb_xinerama_get_state_reply
- ** 
- ** @param xcb_connection_t                 *c
- ** @param xcb_xinerama_get_state_cookie_t   cookie
- ** @param xcb_generic_error_t             **e
- ** @returns xcb_xinerama_get_state_reply_t *
- **
- *****************************************************************************/
- 
 xcb_xinerama_get_state_reply_t *
 xcb_xinerama_get_state_reply (xcb_connection_t                 *c  /**< */,
                               xcb_xinerama_get_state_cookie_t   cookie  /**< */,
@@ -447,19 +357,8 @@ xcb_xinerama_get_state_reply (xcb_connection_t                 *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_xinerama_get_screen_count_cookie_t xcb_xinerama_get_screen_count
- ** 
- ** @param xcb_connection_t *c
- ** @param xcb_window_t      window
- ** @returns xcb_xinerama_get_screen_count_cookie_t
- **
- *****************************************************************************/
- 
 xcb_xinerama_get_screen_count_cookie_t
 xcb_xinerama_get_screen_count (xcb_connection_t *c  /**< */,
                                xcb_window_t      window  /**< */);
@@ -470,22 +369,11 @@ xcb_xinerama_get_screen_count (xcb_connection_t *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_xinerama_get_screen_count_cookie_t xcb_xinerama_get_screen_count_unchecked
- ** 
- ** @param xcb_connection_t *c
- ** @param xcb_window_t      window
- ** @returns xcb_xinerama_get_screen_count_cookie_t
- **
- *****************************************************************************/
- 
 xcb_xinerama_get_screen_count_cookie_t
 xcb_xinerama_get_screen_count_unchecked (xcb_connection_t *c  /**< */,
                                          xcb_window_t      window  /**< */);
@@ -497,25 +385,13 @@ xcb_xinerama_get_screen_count_unchecked (xcb_connection_t *c  /**< */,
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_xinerama_get_screen_count_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_xinerama_get_screen_count_reply_t * xcb_xinerama_get_screen_count_reply
- ** 
- ** @param xcb_connection_t                        *c
- ** @param xcb_xinerama_get_screen_count_cookie_t   cookie
- ** @param xcb_generic_error_t                    **e
- ** @returns xcb_xinerama_get_screen_count_reply_t *
- **
- *****************************************************************************/
- 
 xcb_xinerama_get_screen_count_reply_t *
 xcb_xinerama_get_screen_count_reply (xcb_connection_t                        *c  /**< */,
                                      xcb_xinerama_get_screen_count_cookie_t   cookie  /**< */,
@@ -527,20 +403,8 @@ xcb_xinerama_get_screen_count_reply (xcb_connection_t                        *c 
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_xinerama_get_screen_size_cookie_t xcb_xinerama_get_screen_size
- ** 
- ** @param xcb_connection_t *c
- ** @param xcb_window_t      window
- ** @param uint32_t          screen
- ** @returns xcb_xinerama_get_screen_size_cookie_t
- **
- *****************************************************************************/
- 
 xcb_xinerama_get_screen_size_cookie_t
 xcb_xinerama_get_screen_size (xcb_connection_t *c  /**< */,
                               xcb_window_t      window  /**< */,
@@ -552,23 +416,11 @@ xcb_xinerama_get_screen_size (xcb_connection_t *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_xinerama_get_screen_size_cookie_t xcb_xinerama_get_screen_size_unchecked
- ** 
- ** @param xcb_connection_t *c
- ** @param xcb_window_t      window
- ** @param uint32_t          screen
- ** @returns xcb_xinerama_get_screen_size_cookie_t
- **
- *****************************************************************************/
- 
 xcb_xinerama_get_screen_size_cookie_t
 xcb_xinerama_get_screen_size_unchecked (xcb_connection_t *c  /**< */,
                                         xcb_window_t      window  /**< */,
@@ -581,25 +433,13 @@ xcb_xinerama_get_screen_size_unchecked (xcb_connection_t *c  /**< */,
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_xinerama_get_screen_size_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_xinerama_get_screen_size_reply_t * xcb_xinerama_get_screen_size_reply
- ** 
- ** @param xcb_connection_t                       *c
- ** @param xcb_xinerama_get_screen_size_cookie_t   cookie
- ** @param xcb_generic_error_t                   **e
- ** @returns xcb_xinerama_get_screen_size_reply_t *
- **
- *****************************************************************************/
- 
 xcb_xinerama_get_screen_size_reply_t *
 xcb_xinerama_get_screen_size_reply (xcb_connection_t                       *c  /**< */,
                                     xcb_xinerama_get_screen_size_cookie_t   cookie  /**< */,
@@ -611,18 +451,8 @@ xcb_xinerama_get_screen_size_reply (xcb_connection_t                       *c  /
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_xinerama_is_active_cookie_t xcb_xinerama_is_active
- ** 
- ** @param xcb_connection_t *c
- ** @returns xcb_xinerama_is_active_cookie_t
- **
- *****************************************************************************/
- 
 xcb_xinerama_is_active_cookie_t
 xcb_xinerama_is_active (xcb_connection_t *c  /**< */);
 
@@ -632,21 +462,11 @@ xcb_xinerama_is_active (xcb_connection_t *c  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_xinerama_is_active_cookie_t xcb_xinerama_is_active_unchecked
- ** 
- ** @param xcb_connection_t *c
- ** @returns xcb_xinerama_is_active_cookie_t
- **
- *****************************************************************************/
- 
 xcb_xinerama_is_active_cookie_t
 xcb_xinerama_is_active_unchecked (xcb_connection_t *c  /**< */);
 
@@ -657,25 +477,13 @@ xcb_xinerama_is_active_unchecked (xcb_connection_t *c  /**< */);
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_xinerama_is_active_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_xinerama_is_active_reply_t * xcb_xinerama_is_active_reply
- ** 
- ** @param xcb_connection_t                 *c
- ** @param xcb_xinerama_is_active_cookie_t   cookie
- ** @param xcb_generic_error_t             **e
- ** @returns xcb_xinerama_is_active_reply_t *
- **
- *****************************************************************************/
- 
 xcb_xinerama_is_active_reply_t *
 xcb_xinerama_is_active_reply (xcb_connection_t                 *c  /**< */,
                               xcb_xinerama_is_active_cookie_t   cookie  /**< */,
@@ -690,18 +498,8 @@ xcb_xinerama_query_screens_sizeof (const void  *_buffer  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_xinerama_query_screens_cookie_t xcb_xinerama_query_screens
- ** 
- ** @param xcb_connection_t *c
- ** @returns xcb_xinerama_query_screens_cookie_t
- **
- *****************************************************************************/
- 
 xcb_xinerama_query_screens_cookie_t
 xcb_xinerama_query_screens (xcb_connection_t *c  /**< */);
 
@@ -711,60 +509,20 @@ xcb_xinerama_query_screens (xcb_connection_t *c  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_xinerama_query_screens_cookie_t xcb_xinerama_query_screens_unchecked
- ** 
- ** @param xcb_connection_t *c
- ** @returns xcb_xinerama_query_screens_cookie_t
- **
- *****************************************************************************/
- 
 xcb_xinerama_query_screens_cookie_t
 xcb_xinerama_query_screens_unchecked (xcb_connection_t *c  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xinerama_screen_info_t * xcb_xinerama_query_screens_screen_info
- ** 
- ** @param const xcb_xinerama_query_screens_reply_t *R
- ** @returns xcb_xinerama_screen_info_t *
- **
- *****************************************************************************/
- 
 xcb_xinerama_screen_info_t *
 xcb_xinerama_query_screens_screen_info (const xcb_xinerama_query_screens_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xinerama_query_screens_screen_info_length
- ** 
- ** @param const xcb_xinerama_query_screens_reply_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xinerama_query_screens_screen_info_length (const xcb_xinerama_query_screens_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xinerama_screen_info_iterator_t xcb_xinerama_query_screens_screen_info_iterator
- ** 
- ** @param const xcb_xinerama_query_screens_reply_t *R
- ** @returns xcb_xinerama_screen_info_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xinerama_screen_info_iterator_t
 xcb_xinerama_query_screens_screen_info_iterator (const xcb_xinerama_query_screens_reply_t *R  /**< */);
 
@@ -775,25 +533,13 @@ xcb_xinerama_query_screens_screen_info_iterator (const xcb_xinerama_query_screen
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_xinerama_query_screens_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_xinerama_query_screens_reply_t * xcb_xinerama_query_screens_reply
- ** 
- ** @param xcb_connection_t                     *c
- ** @param xcb_xinerama_query_screens_cookie_t   cookie
- ** @param xcb_generic_error_t                 **e
- ** @returns xcb_xinerama_query_screens_reply_t *
- **
- *****************************************************************************/
- 
 xcb_xinerama_query_screens_reply_t *
 xcb_xinerama_query_screens_reply (xcb_connection_t                     *c  /**< */,
                                   xcb_xinerama_query_screens_cookie_t   cookie  /**< */,

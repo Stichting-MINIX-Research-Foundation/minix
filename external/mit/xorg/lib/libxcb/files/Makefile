@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2010/07/17 23:43:28 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2014/03/17 07:25:34 mrg Exp $
 
 # This makefile is used to generate the libxcb xml/python generated files.
 # For now it is broken, and these files were copied from a normal libxcb
@@ -7,8 +7,8 @@
 .include <bsd.own.mk>
 .include "Makefile.xmlsrcs"
 
-PYTHON?=	/usr/pkg/bin/python2.6
-PYTHONLIB?=	/usr/pkg/lib/python2.6
+PYTHON?=	/usr/pkg/bin/python2.7
+PYTHONLIB?=	/usr/pkg/lib/python2.7
 C_CLIENT?=	${X11SRCDIR.xcb}/src/c_client.py
 
 .SUFFIXES: .c .xml

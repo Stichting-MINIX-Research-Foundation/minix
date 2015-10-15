@@ -191,8 +191,8 @@
                  Guid='$(var.GuidKcc)'
                  Win64='$(var.Win64)'>
         <File Name='kcc.exe' KeyPath='yes'>
-          <CopyFile Id='klist.exe' DestinationName='klist.exe' />
-          <CopyFile Id='kswitch.exe' DestinationName='kswitch.exe' />
+          <CopyFile Id='klist.exe' DestinationName='klist.exe' DestinationProperty='$(var.ToolsBinDir)' />
+          <CopyFile Id='kswitch.exe' DestinationName='kswitch.exe' DestinationProperty='$(var.ToolsBinDir)' />
         </File>
         <File Name='kcc.pdb'>
           <CopyFile Id='klist.pdb' DestinationName='klist.pdb' />
@@ -217,7 +217,7 @@
       <Component Id='comp.Plugin.Reg.32' Feature='feature.Main'
                  Guid='4BC44234-70A4-4CC1-A5AF-4CA76E9F9487' Win64='no'>
         <RegistryKey Action='createAndRemoveOnUninstall' Root='HKLM'
-                     Key='Software\Kerberos'>
+                     Key='Software\Heimdal'>
           <RegistryValue Name='plugin_dir' Type='multiString' Action='append'
                          Value='"[PLUGINDIR32]"' KeyPath='yes' />
         </RegistryKey>
@@ -230,7 +230,7 @@
       <Component Id='comp.Plugin.Reg.64' Feature='feature.Main'
                  Guid='5A99A52E-A4CD-40F8-AFFD-AD61939FC547' Win64='yes'>
         <RegistryKey Action='createAndRemoveOnUninstall' Root='HKLM'
-                     Key='Software\Kerberos'>
+                     Key='Software\Heimdal'>
           <RegistryValue Name='plugin_dir' Type='multiString' Action='append'
                          Value='"[PLUGINDIR64]"' KeyPath='yes' />
         </RegistryKey>
@@ -354,7 +354,7 @@
 
     <Feature Id='feature.Main' ConfigurableDirectory='$(var.ConfigDir)'
              Title='!(loc.FeaMainTitle)'
-             Description='!(loc.FeaMainDesc)'
+             Description='!(loc.FeaMainDesc)' Display='expand'
              Level='1' TypicalDefault='install' InstallDefault='local'>
 
       <ComponentRef Id='comp.HX509.chm' />
@@ -373,42 +373,62 @@
       <ComponentRef Id='comp.kcc' />
 
       <?ifdef LsaCache ?>
-      <?ifdef Target32?>
-      <ComponentGroupRef Id='comps.LSACache.32' />
-      <?endif?>
       <?ifdef Target64?>
       <ComponentGroupRef Id='comps.LSACache.64' />
+      <?else?>
+      <ComponentGroupRef Id='comps.LSACache.32' />
       <?endif?>
       <?endif?>
 
       <?ifdef ApiCache ?>
-      <?ifdef Target32?>
-      <ComponentGroupRef Id='comps.APICache.32' />
-      <?endif?>
       <?ifdef Target64?>
       <ComponentGroupRef Id='comps.APICache.64' />
+      <?else?>
+      <ComponentGroupRef Id='comps.APICache.32' />
       <?endif?>
       <?endif?>
 
       <?ifdef MKShim ?>
-      <?ifdef Target32?>
-      <ComponentGroupRef Id='comp.Heimdal.MKShim.32' />
-      <?endif?>
       <?ifdef Target64?>
       <ComponentGroupRef Id='comp.Heimdal.MKShim.64' />
+      <?else?>
+      <ComponentGroupRef Id='comp.Heimdal.MKShim.32' />
       <?endif?>
-      <?endif?>
-
-      <?ifdef Target32?>
-      <MergeRef Id='Heimdal.Assemblies.32' />
-      <MergeRef Id='Heimdal.Policy.32' />
-      <MergeRef Id='Runtime.32' />
       <?endif?>
 
       <?ifdef Target64?>
       <MergeRef Id='Heimdal.Assemblies.64' />
       <MergeRef Id='Heimdal.Policy.64' />
       <MergeRef Id='Runtime.64' />
+      <?else?>
+      <MergeRef Id='Heimdal.Assemblies.32' />
+      <MergeRef Id='Heimdal.Policy.32' />
+      <MergeRef Id='Runtime.32' />
+      <?endif?>
+
+      <?ifdef Target32?>
+      <?ifdef Target64?>
+      <!-- If we are building the combined installer, the 32-bit
+           libraries go into a separate feature. -->
+      <Feature Id='feature.32BitLibraries'
+               ConfigurableDirectory='INSTALLDIR32'
+               Title='!(loc.Fea32BitTitle)'
+               Description='!(loc.Fea32BitDesc)'
+               Level='1' TypicalDefault='install' InstallDefault='local'>
+        <?ifdef LsaCache ?>
+        <ComponentGroupRef Id='comps.LSACache.32' />
+        <?endif?>
+        <?ifdef ApiCache ?>
+        <ComponentGroupRef Id='comps.APICache.32' />
+        <?endif?>
+        <?ifdef MKShim ?>
+        <ComponentGroupRef Id='comp.Heimdal.MKShim.32' />
+        <?endif?>
+        <MergeRef Id='Heimdal.Assemblies.32' />
+        <MergeRef Id='Heimdal.Policy.32' />
+        <MergeRef Id='Runtime.32' />
+      </Feature>
+      <?endif?>
       <?endif?>
 
     </Feature>
@@ -425,9 +445,7 @@
 
     <Property Id='ALLUSERS' Value='1' Secure='yes' />
 
-    <Property Id='WIXUI_INSTALLDIR' Value='$(var.ConfigDir)' />
-
-    <UIRef Id='WixUI_InstallDir' />
+    <UIRef Id='WixUI_FeatureTree' />
 
   </Product>
 </Wix>

@@ -276,7 +276,7 @@ pgp_ssh2pubkey(pgp_io_t *io, const char *f, pgp_key_t *key, pgp_hash_alg_t hasht
 	(void) memset(key, 0x0, sizeof(*key));
 	pubkey = &key->key.seckey.pubkey;
 	pubkey->version = PGP_V4;
-	pubkey->birthtime = st.st_mtime;
+	pubkey->birthtime = 0;
 	/* get key type */
 	ok = 1;
 	switch (pubkey->alg = findstr(pkatypes, buf)) {

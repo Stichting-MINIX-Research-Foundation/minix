@@ -1,4 +1,4 @@
-/* $Id: server-fn.c,v 1.3 2011/08/17 18:48:36 jmmv Exp $ */
+/* Id */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -18,6 +18,7 @@
 
 #include <sys/types.h>
 
+#include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
@@ -38,7 +39,7 @@ server_fill_environ(struct session *s, struct environ *env)
 		term = options_get_string(&s->options, "default-terminal");
 		environ_set(env, "TERM", term);
 
-		idx = s->idx;
+		idx = s->id;
 	} else
 		idx = -1;
 	pid = getpid();
@@ -47,21 +48,33 @@ server_fill_environ(struct session *s, struct environ *env)
 }
 
 void
-server_write_client(
-    struct client *c, enum msgtype type, const void *buf, size_t len)
+server_write_ready(struct client *c)
+{
+	if (c->flags & CLIENT_CONTROL)
+		return;
+	server_write_client(c, MSG_READY, NULL, 0);
+}
+
+int
+server_write_client(struct client *c, enum msgtype type, const void *buf,
+    size_t len)
 {
 	struct imsgbuf	*ibuf = &c->ibuf;
+	int              error;
 
 	if (c->flags & CLIENT_BAD)
-		return;
+		return (-1);
 	log_debug("writing %d to client %d", type, c->ibuf.fd);
-	imsg_compose(ibuf, type, PROTOCOL_VERSION, -1, -1, __UNCONST(buf), len);
-	server_update_event(c);
+	error = imsg_compose(ibuf, type, PROTOCOL_VERSION, -1, -1,
+	    __UNCONST(buf), len);
+	if (error == 1)
+		server_update_event(c);
+	return (error == 1 ? 0 : -1);
 }
 
 void
-server_write_session(
-    struct session *s, enum msgtype type, const void *buf, size_t len)
+server_write_session(struct session *s, enum msgtype type, const void *buf,
+    size_t len)
 {
 	struct client	*c;
 	u_int		 i;
@@ -181,7 +194,7 @@ server_status_window(struct window *w)
 
 	/*
 	 * This is slightly different. We want to redraw the status line of any
-	 * clients containing this window rather than any where it is the
+	 * clients containing this window rather than anywhere it is the
 	 * current window.
 	 */
 
@@ -222,31 +235,33 @@ server_lock_session(struct session *s)
 void
 server_lock_client(struct client *c)
 {
-	const char		*cmd;
-	size_t			 cmdlen;
-	struct msg_lock_data	 lockdata;
+	const char	*cmd;
+
+	if (c->flags & CLIENT_CONTROL)
+		return;
 
 	if (c->flags & CLIENT_SUSPENDED)
 		return;
 
 	cmd = options_get_string(&c->session->options, "lock-command");
-	cmdlen = strlcpy(lockdata.cmd, cmd, sizeof lockdata.cmd);
-	if (cmdlen >= sizeof lockdata.cmd)
+	if (strlen(cmd) + 1 > MAX_IMSGSIZE - IMSG_HEADER_SIZE)
 		return;
 
 	tty_stop_tty(&c->tty);
 	tty_raw(&c->tty, tty_term_string(c->tty.term, TTYC_SMCUP));
 	tty_raw(&c->tty, tty_term_string(c->tty.term, TTYC_CLEAR));
+	tty_raw(&c->tty, tty_term_string(c->tty.term, TTYC_E3));
 
 	c->flags |= CLIENT_SUSPENDED;
-	server_write_client(c, MSG_LOCK, &lockdata, sizeof lockdata);
+	server_write_client(c, MSG_LOCK, cmd, strlen(cmd) + 1);
 }
 
 void
 server_kill_window(struct window *w)
 {
-	struct session	*s, *next_s;
-	struct winlink	*wl;
+	struct session		*s, *next_s, *target_s;
+	struct session_group	*sg;
+	struct winlink		*wl;
 
 	next_s = RB_MIN(sessions, &sessions);
 	while (next_s != NULL) {
@@ -262,7 +277,16 @@ server_kill_window(struct window *w)
 			} else
 				server_redraw_session_group(s);
 		}
+
+		if (options_get_number(&s->options, "renumber-windows")) {
+			if ((sg = session_group_find(s)) != NULL) {
+				TAILQ_FOREACH(target_s, &sg->sessions, gentry)
+					session_renumber_windows(target_s);
+			} else
+				session_renumber_windows(s);
+		}
 	}
+	recalculate_sizes();
 }
 
 int
@@ -292,6 +316,7 @@ server_link_window(struct session *src, struct winlink *srcwl,
 			 * Can't use session_detach as it will destroy session
 			 * if this makes it empty.
 			 */
+			notify_window_unlinked(dst, dstwl->window);
 			dstwl->flags &= ~WINLINK_ALERTFLAGS;
 			winlink_stack_remove(&dst->lastw, dstwl);
 			winlink_remove(&dst->windows, dstwl);
@@ -329,17 +354,34 @@ server_unlink_window(struct session *s, struct winlink *wl)
 void
 server_destroy_pane(struct window_pane *wp)
 {
-	struct window	*w = wp->window;
+	struct window		*w = wp->window;
+	int			 old_fd;
+	struct screen_write_ctx	 ctx;
+	struct grid_cell	 gc;
 
+	old_fd = wp->fd;
 	if (wp->fd != -1) {
-		close(wp->fd);
 		bufferevent_free(wp->event);
+		close(wp->fd);
 		wp->fd = -1;
 	}
 
-	if (options_get_number(&w->options, "remain-on-exit"))
+	if (options_get_number(&w->options, "remain-on-exit")) {
+		if (old_fd == -1)
+			return;
+		screen_write_start(&ctx, wp, &wp->base);
+		screen_write_scrollregion(&ctx, 0, screen_size_y(ctx.s) - 1);
+		screen_write_cursormove(&ctx, 0, screen_size_y(ctx.s) - 1);
+		screen_write_linefeed(&ctx, 1);
+		memcpy(&gc, &grid_default_cell, sizeof gc);
+		gc.attr |= GRID_ATTR_BRIGHT;
+		screen_write_puts(&ctx, &gc, "Pane is dead");
+		screen_write_stop(&ctx);
+		wp->flags |= PANE_REDRAW;
 		return;
+	}
 
+	server_unzoom_window(w);
 	layout_close_pane(wp);
 	window_remove_pane(w, wp);
 
@@ -353,14 +395,15 @@ void
 server_destroy_session_group(struct session *s)
 {
 	struct session_group	*sg;
+	struct session		*s1;
 
 	if ((sg = session_group_find(s)) == NULL)
 		server_destroy_session(s);
 	else {
-		TAILQ_FOREACH(s, &sg->sessions, gentry)
+		TAILQ_FOREACH_SAFE(s, &sg->sessions, gentry, s1) {
 			server_destroy_session(s);
-		TAILQ_REMOVE(&session_groups, sg, entry);
-		xfree(sg);
+			session_destroy(s);
+		}
 	}
 }
 
@@ -402,6 +445,7 @@ server_destroy_session(struct session *s)
 		} else {
 			c->last_session = NULL;
 			c->session = s_new;
+			notify_attached_session_changed(c);
 			session_update_activity(s_new);
 			server_redraw_client(c);
 		}
@@ -410,7 +454,7 @@ server_destroy_session(struct session *s)
 }
 
 void
-server_check_unattached (void)
+server_check_unattached(void)
 {
 	struct session	*s;
 
@@ -436,7 +480,8 @@ server_set_identify(struct client *c)
 	tv.tv_sec = delay / 1000;
 	tv.tv_usec = (delay % 1000) * 1000L;
 
-	evtimer_del(&c->identify_timer);
+	if (event_initialized(&c->identify_timer))
+		evtimer_del(&c->identify_timer);
 	evtimer_set(&c->identify_timer, server_callback_identify, c);
 	evtimer_add(&c->identify_timer, &tv);
 
@@ -455,7 +500,6 @@ server_clear_identify(struct client *c)
 	}
 }
 
-/* ARGSUSED */
 void
 server_callback_identify(unused int fd, unused short events, void *data)
 {
@@ -474,7 +518,91 @@ server_update_event(struct client *c)
 		events |= EV_READ;
 	if (c->ibuf.w.queued > 0)
 		events |= EV_WRITE;
-	event_del(&c->event);
+	if (event_initialized(&c->event))
+		event_del(&c->event);
 	event_set(&c->event, c->ibuf.fd, events, server_client_callback, c);
 	event_add(&c->event, NULL);
+}
+
+/* Push stdout to client if possible. */
+void
+server_push_stdout(struct client *c)
+{
+	struct msg_stdout_data data;
+	size_t                 size;
+
+	size = EVBUFFER_LENGTH(c->stdout_data);
+	if (size == 0)
+		return;
+	if (size > sizeof data.data)
+		size = sizeof data.data;
+
+	memcpy(data.data, EVBUFFER_DATA(c->stdout_data), size);
+	data.size = size;
+
+	if (server_write_client(c, MSG_STDOUT, &data, sizeof data) == 0)
+		evbuffer_drain(c->stdout_data, size);
+}
+
+/* Push stderr to client if possible. */
+void
+server_push_stderr(struct client *c)
+{
+	struct msg_stderr_data data;
+	size_t                 size;
+
+	if (c->stderr_data == c->stdout_data) {
+		server_push_stdout(c);
+		return;
+	}
+	size = EVBUFFER_LENGTH(c->stderr_data);
+	if (size == 0)
+		return;
+	if (size > sizeof data.data)
+		size = sizeof data.data;
+
+	memcpy(data.data, EVBUFFER_DATA(c->stderr_data), size);
+	data.size = size;
+
+	if (server_write_client(c, MSG_STDERR, &data, sizeof data) == 0)
+		evbuffer_drain(c->stderr_data, size);
+}
+
+/* Set stdin callback. */
+int
+server_set_stdin_callback(struct client *c, void (*cb)(struct client *, int,
+    void *), void *cb_data, char **cause)
+{
+	if (c == NULL || c->session != NULL) {
+		*cause = xstrdup("no client with stdin");
+		return (-1);
+	}
+	if (c->flags & CLIENT_TERMINAL) {
+		*cause = xstrdup("stdin is a tty");
+		return (-1);
+	}
+	if (c->stdin_callback != NULL) {
+		*cause = xstrdup("stdin in use");
+		return (-1);
+	}
+
+	c->stdin_callback_data = cb_data;
+	c->stdin_callback = cb;
+
+	c->references++;
+
+	if (c->stdin_closed)
+		c->stdin_callback(c, 1, c->stdin_callback_data);
+
+	server_write_client(c, MSG_STDIN, NULL, 0);
+
+	return (0);
+}
+
+void
+server_unzoom_window(struct window *w)
+{
+	window_unzoom(w);
+	server_redraw_window(w);
+	server_status_window(w);
 }

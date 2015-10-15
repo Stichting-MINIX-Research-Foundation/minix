@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6 2012/07/22 16:22:41 darrenr Exp $
+# $NetBSD: Makefile,v 1.8 2014/07/12 14:37:49 darrenr Exp $
 
 TESTSDIR=	${TESTSBASE}/ipf
 ATFFILE=	no
@@ -62,15 +62,25 @@ i7 \
 i8 \
 i9 \
 in1 \
+in1_6 \
 in100 \
+in100_6 \
 in101 \
+in101_6 \
 in102 \
+in102_6 \
 in2 \
+in2_6 \
 in3 \
+in3_6 \
 in4 \
+in4_6 \
 in5 \
+in5_6 \
 in6 \
+in6_6 \
 in7 \
+in8_6 \
 ip1 \
 ip2 \
 ip3 \
@@ -104,7 +114,6 @@ n15_6 \
 n16 \
 n16_6 \
 n17 \
-n17_6 \
 n18 \
 n1_6 \
 n2 \

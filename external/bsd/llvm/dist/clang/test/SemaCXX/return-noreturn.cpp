@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 %s -fsyntax-only -verify -Wreturn-type -Wmissing-noreturn -Wno-unreachable-code -Wno-covered-switch-default
-// RUN: %clang_cc1 %s -fsyntax-only -std=c++11 -verify -Wreturn-type -Wmissing-noreturn -Wno-unreachable-code -Wno-covered-switch-default
+// RUN: %clang_cc1 %s -fsyntax-only -fcxx-exceptions -verify -Wreturn-type -Wmissing-noreturn -Wno-unreachable-code -Wno-covered-switch-default
+// RUN: %clang_cc1 %s -fsyntax-only -fcxx-exceptions -std=c++11 -verify -Wreturn-type -Wmissing-noreturn -Wno-unreachable-code -Wno-covered-switch-default
 
 // A destructor may be marked noreturn and should still influence the CFG.
 void pr6884_abort() __attribute__((noreturn));
@@ -39,6 +39,14 @@ namespace abort_struct_complex_cfgs {
   int f6(int x) {
     switch (x) default: L1: L2: case 4: { pr6884_abort_struct(); }
   }
+
+  // FIXME: detect noreturn destructors triggered by calls to delete.
+  int f7(int x) {
+    switch (x) default: L1: L2: case 4: {
+      pr6884_abort_struct *p = new pr6884_abort_struct();
+      delete p;
+    }
+  } // expected-warning {{control reaches end of non-void function}}
 
   // Test that these constructs work even when extraneous blocks are created
   // before and after the switch due to implicit destructors.
@@ -135,6 +143,122 @@ template <PR9412_MatchType type> int PR9412_t() {
 } // expected-warning {{control reaches end of non-void function}}
 
 void PR9412_f() {
-    PR9412_t<PR9412_Exact>(); // expected-note {{in instantiation of function template specialization 'PR9412_t<0>' requested here}}
+    PR9412_t<PR9412_Exact>(); // expected-note {{in instantiation of function template specialization 'PR9412_t<PR9412_MatchType::PR9412_Exact>' requested here}}
 }
 
+struct NoReturn {
+  ~NoReturn() __attribute__((noreturn));
+  operator bool() const;
+};
+struct Return {
+  ~Return();
+  operator bool() const;
+};
+
+int testTernaryUnconditionalNoreturn() {
+  true ? NoReturn() : NoReturn();
+}
+
+int testTernaryStaticallyConditionalNoretrunOnTrue() {
+  true ? NoReturn() : Return();
+}
+
+int testTernaryStaticallyConditionalRetrunOnTrue() {
+  true ? Return() : NoReturn();
+} // expected-warning {{control reaches end of non-void function}}
+
+int testTernaryStaticallyConditionalNoretrunOnFalse() {
+  false ? Return() : NoReturn();
+}
+
+int testTernaryStaticallyConditionalRetrunOnFalse() {
+  false ? NoReturn() : Return();
+} // expected-warning {{control reaches end of non-void function}}
+
+int testTernaryConditionalNoreturnTrueBranch(bool value) {
+  value ? (NoReturn() || NoReturn()) : Return();
+} // expected-warning {{control may reach end of non-void function}}
+
+int testTernaryConditionalNoreturnFalseBranch(bool value) {
+  value ? Return() : (NoReturn() || NoReturn());
+} // expected-warning {{control may reach end of non-void function}}
+
+int testConditionallyExecutedComplexTernaryTrueBranch(bool value) {
+  value || (true ? NoReturn() : true);
+} // expected-warning {{control may reach end of non-void function}}
+
+int testConditionallyExecutedComplexTernaryFalseBranch(bool value) {
+  value || (false ? true : NoReturn());
+} // expected-warning {{control may reach end of non-void function}}
+
+int testStaticallyExecutedLogicalOrBranch() {
+  false || NoReturn();
+}
+
+int testStaticallyExecutedLogicalAndBranch() {
+  true && NoReturn();
+}
+
+int testStaticallySkippedLogicalOrBranch() {
+  true || NoReturn();
+} // expected-warning {{control reaches end of non-void function}}
+
+int testStaticallySkppedLogicalAndBranch() {
+  false && NoReturn();
+} // expected-warning {{control reaches end of non-void function}}
+
+int testConditionallyExecutedComplexLogicalBranch(bool value) {
+  value || (true && NoReturn());
+} // expected-warning {{control may reach end of non-void function}}
+
+int testConditionallyExecutedComplexLogicalBranch2(bool value) {
+  (true && value) || (true && NoReturn());
+} // expected-warning {{control may reach end of non-void function}}
+
+int testConditionallyExecutedComplexLogicalBranch3(bool value) {
+  (false && (Return() || true)) || (true && NoReturn());
+}
+
+int testConditionallyExecutedComplexLogicalBranch4(bool value) {
+  false || ((Return() || true) && (true && NoReturn()));
+}
+
+#if __cplusplus >= 201103L
+namespace LambdaVsTemporaryDtor {
+  struct Y { ~Y(); };
+  struct X { template<typename T> X(T, Y = Y()) {} };
+
+  struct Fatal { ~Fatal() __attribute__((noreturn)); };
+  struct FatalCopy { FatalCopy(); FatalCopy(const FatalCopy&, Fatal F = Fatal()); };
+
+  void foo();
+
+  int bar() {
+    X work([](){ Fatal(); });
+    foo();
+  } // expected-warning {{control reaches end of non-void function}}
+
+  int baz() {
+    FatalCopy fc;
+    X work([fc](){});
+    foo();
+  } // ok, initialization of lambda does not return
+}
+#endif
+
+// Ensure that function-try-blocks also check for return values properly.
+int functionTryBlock1(int s) try {
+  return 0;
+} catch (...) {
+} // expected-warning {{control may reach end of non-void function}}
+
+int functionTryBlock2(int s) try {
+} catch (...) {
+  return 0;
+} // expected-warning {{control may reach end of non-void function}}
+
+int functionTryBlock3(int s) try {
+  return 0;
+} catch (...) {
+  return 0;
+} // ok, both paths return.

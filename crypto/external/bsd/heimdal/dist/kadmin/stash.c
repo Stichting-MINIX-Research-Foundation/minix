@@ -1,4 +1,4 @@
-/*	$NetBSD: stash.c,v 1.1.1.1 2011/04/13 18:14:35 elric Exp $	*/
+/*	$NetBSD: stash.c,v 1.1.1.2 2014/04/24 12:45:27 pettai Exp $	*/
 
 /*
  * Copyright (c) 2004 Kungliga Tekniska Högskolan
@@ -117,7 +117,7 @@ stash(struct stash_options *opt, int argc, char **argv)
 	    ret = ENOMEM;
 	    goto out;
 	}
-	
+
 	if(unlink(new) < 0 && errno != ENOENT) {
 	    ret = errno;
 	    goto out;

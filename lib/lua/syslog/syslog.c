@@ -1,4 +1,4 @@
-/*	$NetBSD: syslog.c,v 1.1 2013/11/12 14:32:03 mbalmer Exp $ */
+/*	$NetBSD: syslog.c,v 1.2 2015/02/02 14:03:05 lneto Exp $ */
 
 /*
  * Copyright (c) 2013 Marc Balmer <marc@msys.ch>
@@ -55,7 +55,7 @@ syslog_openlog(lua_State *L)
 static int
 syslog_syslog(lua_State *L)
 {
-	syslog(luaL_checkint(L, 1), "%s", luaL_checkstring(L, 2));
+	syslog((int) luaL_checkinteger(L, 1), "%s", luaL_checkstring(L, 2));
 	return 0;
 }
 
@@ -69,7 +69,7 @@ syslog_closelog(lua_State *L)
 static int
 syslog_setlogmask(lua_State *L)
 {
-	lua_pushinteger(L, setlogmask(luaL_checkint(L, 1)));
+	lua_pushinteger(L, setlogmask((int) luaL_checkinteger(L, 1)));
 	return 1;
 }
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.4 2013/11/29 08:10:04 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.6 2014/05/13 18:46:48 macallan Exp $
 
 SRCS+= \
 	random.c \
@@ -158,6 +158,8 @@ SRCS+= \
 	redc_n.c \
 	sub_err1_n.c \
 
+.if (defined(CPUFLAGS) && !empty(CPUFLAGS:M-mabi=64))
+GMP_LIMB_BITS=64
 C_SRCS_LIST= \
 	xor_n.c			mpn/generic/logops_n.c \
 	sb_div_r_sec.c		mpn/generic/sb_div_sec.c \
@@ -185,19 +187,33 @@ ASM_SRCS_LIST= \
 	addmul_1.asm		mpn/mips64/addmul_1.asm \
 	sub_n.asm		mpn/mips64/sub_n.asm \
 
-gen-trialdivtab: gen-trialdivtab.c
-	${HOST_CC} -o ${.OBJDIR}/gen-trialdivtab ${.ALLSRC} -lm
-
-.if (defined(CPUFLAGS) && !empty(CPUFLAGS:M-mabi=64))
-GMP_LIMB_BITS=64
 .else
 GMP_LIMB_BITS=32
+C_SRCS_LIST= \
+	xor_n.c			mpn/generic/logops_n.c \
+	sb_div_r_sec.c		mpn/generic/sb_div_sec.c \
+	nand_n.c		mpn/generic/logops_n.c \
+	nior_n.c		mpn/generic/logops_n.c \
+	hamdist.c		mpn/generic/popham.c \
+	popcount.c		mpn/generic/popham.c \
+	sbpi1_div_qr_sec.c	mpn/generic/sbpi1_div_sec.c \
+	and_n.c			mpn/generic/logops_n.c \
+	ior_n.c			mpn/generic/logops_n.c \
+	sb_div_qr_sec.c		mpn/generic/sb_div_sec.c \
+	xnor_n.c		mpn/generic/logops_n.c \
+	iorn_n.c		mpn/generic/logops_n.c \
+	sbpi1_div_r_sec.c	mpn/generic/sbpi1_div_sec.c \
+	andn_n.c		mpn/generic/logops_n.c \
+	addn_n.c		mpn/generic/add_n.c \
+	submul_1.c		mpn/generic/submul_1.c \
+	lshift.c		mpn/generic/lshift.c \
+	mul_1.c			mpn/generic/mul_1.c \
+	rshift.c		mpn/generic/rshift.c \
+	sub_n.c			mpn/generic/sub_n.c \
+	addmul_1.c		mpn/generic/addmul_1.c \
+
+ASM_SRCS_LIST= 
+
 .endif
-
-trialdiv.c: trialdivtab.h
-trialdivtab.h: gen-trialdivtab Makefile
-	${.OBJDIR}/gen-trialdivtab $(GMP_LIMB_BITS) 8000 > ${.OBJDIR}/trialdivtab.h
-
-CLEANFILES+=	trialdivtab.h
 
 COPTS+=		-Wno-error

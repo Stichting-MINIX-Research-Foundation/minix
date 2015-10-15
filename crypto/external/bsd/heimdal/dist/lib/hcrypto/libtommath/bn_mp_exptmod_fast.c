@@ -1,4 +1,4 @@
-/*	$NetBSD: bn_mp_exptmod_fast.c,v 1.1.1.1 2011/04/13 18:14:54 elric Exp $	*/
+/*	$NetBSD: bn_mp_exptmod_fast.c,v 1.1.1.2 2014/04/24 12:45:31 pettai Exp $	*/
 
 #include <tommath.h>
 #ifdef BN_MP_EXPTMOD_FAST_C
@@ -86,7 +86,7 @@ int mp_exptmod_fast (mp_int * G, mp_int * X, mp_int * P, mp_int * Y, int redmode
 
   /* determine and setup reduction code */
   if (redmode == 0) {
-#ifdef BN_MP_MONTGOMERY_SETUP_C     
+#ifdef BN_MP_MONTGOMERY_SETUP_C
      /* now setup montgomery  */
      if ((err = mp_montgomery_setup (P, &mp)) != MP_OKAY) {
         goto LBL_M;
@@ -101,7 +101,7 @@ int mp_exptmod_fast (mp_int * G, mp_int * X, mp_int * P, mp_int * Y, int redmode
      if (((P->used * 2 + 1) < MP_WARRAY) &&
           P->used < (1 << ((CHAR_BIT * sizeof (mp_word)) - (2 * DIGIT_BIT)))) {
         redux = fast_mp_montgomery_reduce;
-     } else 
+     } else
 #endif
      {
 #ifdef BN_MP_MONTGOMERY_REDUCE_C
@@ -152,7 +152,7 @@ int mp_exptmod_fast (mp_int * G, mp_int * X, mp_int * P, mp_int * Y, int redmode
      if ((err = mp_montgomery_calc_normalization (&res, P)) != MP_OKAY) {
        goto LBL_RES;
      }
-#else 
+#else
      err = MP_VAL;
      goto LBL_RES;
 #endif
@@ -318,6 +318,6 @@ LBL_M:
 #endif
 
 
-/* Source: /cvs/libtom/libtommath/bn_mp_exptmod_fast.c,v */
-/* Revision: 1.4 */
-/* Date: 2006/12/28 01:25:13 */
+/* Source: /cvs/libtom/libtommath/bn_mp_exptmod_fast.c,v  */
+/* Revision: 1.4  */
+/* Date: 2006/12/28 01:25:13  */

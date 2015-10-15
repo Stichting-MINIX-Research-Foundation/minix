@@ -1,19 +1,19 @@
 
 #------------------------------------------------------------------------------
-# $File: games,v 1.13 2012/02/13 22:50:50 christos Exp $
+# $File: games,v 1.14 2014/04/30 21:41:02 christos Exp $
 # games:  file(1) for games
 
 # Fabio Bonelli <fabiobonelli@libero.it>
 # Quake II - III data files
 0       string  IDP2        	Quake II 3D Model file,
->20     long    x               %lu skin(s),
->8      long    x               (%lu x
->12     long    x 		%lu),
->40     long    x               %lu frame(s),
->16     long    x               Frame size %lu bytes,
->24     long  	x               %lu vertices/frame,
->28     long    x            	%lu texture coordinates,
->32     long    x               %lu triangles/frame
+>20     long    x               %u skin(s),
+>8      long    x               (%u x
+>12     long    x 		%u),
+>40     long    x               %u frame(s),
+>16     long    x               Frame size %u bytes,
+>24     long  	x               %u vertices/frame,
+>28     long    x            	%u texture coordinates,
+>32     long    x               %u triangles/frame
 
 0       string  IBSP            Quake
 >4      long    0x26            II Map file (BSP)
@@ -146,7 +146,7 @@
 
 
 0	string	MComprHD	MAME CHD compressed hard disk image,
->12	belong	x		version %lu
+>12	belong	x		version %u
 
 # doom - submitted by Jon Dowland
 

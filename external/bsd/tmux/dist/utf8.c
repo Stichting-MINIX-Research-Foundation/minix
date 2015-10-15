@@ -1,4 +1,4 @@
-/* $Id: utf8.c,v 1.1.1.2 2011/08/17 18:40:05 jmmv Exp $ */
+/* Id */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -135,7 +135,9 @@ struct utf8_width_entry utf8_width_table[] = {
 	{ 0x0135f, 0x0135f, 0, NULL, NULL },
 	{ 0x01a17, 0x01a18, 0, NULL, NULL },
 	{ 0x006e7, 0x006e8, 0, NULL, NULL },
+#ifndef __APPLE__
 	{ 0x03099, 0x0309a, 0, NULL, NULL },
+#endif
 	{ 0x00b4d, 0x00b4d, 0, NULL, NULL },
 	{ 0x00ce2, 0x00ce3, 0, NULL, NULL },
 	{ 0x00bcd, 0x00bcd, 0, NULL, NULL },
@@ -171,7 +173,6 @@ struct utf8_width_entry utf8_width_table[] = {
 	{ 0x30000, 0x3fffd, 2, NULL, NULL },
 	{ 0x00711, 0x00711, 0, NULL, NULL },
 	{ 0x0fe00, 0x0fe0f, 0, NULL, NULL },
-	{ 0x01160, 0x011ff, 0, NULL, NULL },
 	{ 0x0180b, 0x0180d, 0, NULL, NULL },
 	{ 0x10a3f, 0x10a3f, 0, NULL, NULL },
 	{ 0x00981, 0x00981, 0, NULL, NULL },

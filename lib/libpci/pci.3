@@ -1,4 +1,4 @@
-.\"	$NetBSD: pci.3,v 1.7 2009/10/23 15:41:58 cegger Exp $
+.\"	$NetBSD: pci.3,v 1.10 2014/12/16 13:38:36 msaitoh Exp $
 .\"
 .\" Copyright 2001 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 24, 2004
+.Dd December 16, 2014
 .Dt PCI 3
 .Os
 .Sh NAME
@@ -56,9 +56,11 @@
 .Ft char *
 .Fn pci_findvendor "pcireg_t id_reg"
 .Ft void
-.Fn pci_devinfo "pcireg_t id_reg" "pcireg_t class_reg" "char *devinfo" "size_t len"
+.Fn pci_devinfo "pcireg_t id_reg" "pcireg_t class_reg" "int showclass" "char *devinfo" "size_t len"
 .Ft void
 .Fn pci_conf_print "int pcifd" "u_int bus" "u_int dev" "u_int func"
+.Ft int
+.Fn pci_drvname "int pcifd" "u_int dev" "u_int func" "char *drvname" "size_t len"
 .Sh DESCRIPTION
 The
 .Nm
@@ -126,6 +128,9 @@ The description is placed into the buffer pointed to by
 .Fa devinfo ;
 the size of that buffer is specified in
 .Fa len .
+If
+.Fa showclass
+is not 0, the class, subclass and interface are added into the buffer.
 .It Fn pci_conf_print
 Print the PCI configuration information for the device located
 at
@@ -134,20 +139,35 @@ at
 .Fa func .
 .Fa pcifd
 must be an open file descriptor to a PCI bus within the target PCI domain.
+.It Fn pci_drvname
+For the PCI bus opened on
+.Fa pcifd ,
+return the driver name for
+.Fa dev
+and
+.Fa func
+into
+.Fa drvname
+using
+.Fa len
+as the buffer length.
 .El
 .Sh RETURN VALUES
 The
 .Fn pcibus_conf_read ,
 .Fn pcibus_conf_write ,
 .Fn pcidev_conf_read ,
+.Fn pcidev_conf_write ,
+.Fn pci_devinfo ,
 and
-.Fn pcidev_conf_write
-functions return 0 on success and -1 on failure.
+.Fn pci_drvname
+functions return 0 on success and \-1 on failure.
 .Pp
 The
 .Fn pci_findvendor
-function returns NULL if the PCI vendor description cannot be
-found.
+function returns
+.Dv NULL
+if the PCI vendor description cannot be found.
 .Sh SEE ALSO
 .Xr pci 4
 .Sh HISTORY
@@ -162,3 +182,7 @@ and
 .Fn pci_conf_print
 functions first appeared in
 .Nx 1.6 .
+The
+.Fn pci_drvname
+function first appeared in
+.Nx 7.0 .

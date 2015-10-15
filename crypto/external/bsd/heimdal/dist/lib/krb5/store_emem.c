@@ -1,4 +1,4 @@
-/*	$NetBSD: store_emem.c,v 1.1.1.1 2011/04/13 18:15:38 elric Exp $	*/
+/*	$NetBSD: store_emem.c,v 1.1.1.2 2014/04/24 12:45:51 pettai Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2002 Kungliga Tekniska Högskolan
@@ -47,7 +47,7 @@ static ssize_t
 emem_fetch(krb5_storage *sp, void *data, size_t size)
 {
     emem_storage *s = (emem_storage*)sp->data;
-    if(s->base + s->len - s->ptr < size)
+    if((size_t)(s->base + s->len - s->ptr) < size)
 	size = s->base + s->len - s->ptr;
     memmove(data, s->ptr, size);
     sp->seek(sp, size, SEEK_CUR);
@@ -58,7 +58,7 @@ static ssize_t
 emem_store(krb5_storage *sp, const void *data, size_t size)
 {
     emem_storage *s = (emem_storage*)sp->data;
-    if(size > s->base + s->size - s->ptr){
+    if(size > (size_t)(s->base + s->size - s->ptr)){
 	void *base;
 	size_t sz, off;
 	off = s->ptr - s->base;
@@ -83,12 +83,12 @@ emem_seek(krb5_storage *sp, off_t offset, int whence)
     emem_storage *s = (emem_storage*)sp->data;
     switch(whence){
     case SEEK_SET:
-	if(offset > s->size)
+	if((size_t)offset > s->size)
 	    offset = s->size;
 	if(offset < 0)
 	    offset = 0;
 	s->ptr = s->base + offset;
-	if(offset > s->len)
+	if((size_t)offset > s->len)
 	    s->len = offset;
 	break;
     case SEEK_CUR:
@@ -117,14 +117,14 @@ emem_trunc(krb5_storage *sp, off_t offset)
 	s->size = 0;
 	s->base = NULL;
 	s->ptr = NULL;
-    } else if (offset > s->size || (s->size / 2) > offset) {
+    } else if ((size_t)offset > s->size || (s->size / 2) > (size_t)offset) {
 	void *base;
 	size_t off;
 	off = s->ptr - s->base;
 	base = realloc(s->base, offset);
 	if(base == NULL)
 	    return ENOMEM;
-	if (offset > s->size)
+	if ((size_t)offset > s->size)
 	    memset((char *)base + s->size, 0, offset - s->size);
 	s->size = offset;
 	s->base = base;
@@ -192,5 +192,6 @@ krb5_storage_emem(void)
     sp->seek = emem_seek;
     sp->trunc = emem_trunc;
     sp->free = emem_free;
+    sp->max_alloc = UINT_MAX/8;
     return sp;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.h,v 1.1.1.1 2011/04/13 18:15:33 elric Exp $	*/
+/*	$NetBSD: crypto.h,v 1.1.1.2 2014/04/24 12:45:49 pettai Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2008 Kungliga Tekniska Högskolan
@@ -71,7 +71,7 @@ struct salt_type {
 };
 
 struct _krb5_key_type {
-    krb5_keytype type; /* XXX */
+    krb5_enctype type;
     const char *name;
     size_t bits;
     size_t size;

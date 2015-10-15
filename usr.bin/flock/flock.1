@@ -1,4 +1,4 @@
-.\"	$NetBSD: flock.1,v 1.9 2013/09/21 15:01:14 khorben Exp $
+.\"	$NetBSD: flock.1,v 1.10 2014/08/18 09:45:52 christos Exp $
 .\"
 .\" Copyright (c) 2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd November 2, 2012
+.Dd August 18, 2014
 .Dt FLOCK 1
 .Os
 .Sh NAME
@@ -87,6 +87,7 @@ Fail if the lock could not be obtained after
 .Ar seconds .
 .It Fl x , Fl Fl exclusive
 Obtain an exclusive lock.
+This is the default.
 .El
 .Sh EXIT STATUS
 .Ex -std

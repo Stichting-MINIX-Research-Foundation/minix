@@ -1,4 +1,4 @@
-/*	$NetBSD: acquire_cred.c,v 1.1.1.1 2011/04/13 18:14:44 elric Exp $	*/
+/*	$NetBSD: acquire_cred.c,v 1.1.1.2 2014/04/24 12:45:29 pettai Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2005 Kungliga Tekniska Högskolan
@@ -48,7 +48,7 @@ __gsskrb5_ccache_lifetime(OM_uint32 *minor_status,
 
     memset(&in_cred, 0, sizeof(in_cred));
     in_cred.client = principal;
-	
+
     realm = krb5_principal_get_realm(context,  principal);
     if (realm == NULL) {
 	_gsskrb5_clear_status ();
@@ -106,13 +106,13 @@ get_keytab(krb5_context context, krb5_keytab *keytab)
 static OM_uint32 acquire_initiator_cred
 		  (OM_uint32 * minor_status,
 		   krb5_context context,
+		   gss_const_OID credential_type,
+		   const void *credential_data,
 		   const gss_name_t desired_name,
 		   OM_uint32 time_req,
-		   const gss_OID_set desired_mechs,
+		   gss_const_OID desired_mech,
 		   gss_cred_usage_t cred_usage,
-		   gsskrb5_cred handle,
-		   gss_OID_set * actual_mechs,
-		   OM_uint32 * time_rec
+		   gsskrb5_cred handle
 		  )
 {
     OM_uint32 ret;
@@ -134,6 +134,12 @@ static OM_uint32 acquire_initiator_cred
      * caches, otherwise, fall back to default cache, ignore all
      * errors while searching.
      */
+
+    if (credential_type != GSS_C_NO_OID &&
+	!gss_oid_equal(credential_type, GSS_C_CRED_PASSWORD)) {
+	kret = KRB5_NOCREDS_SUPPLIED; /* XXX */
+	goto end;
+    }
 
     if (handle->principal) {
 	kret = krb5_cc_cache_match (context,
@@ -177,14 +183,29 @@ static OM_uint32 acquire_initiator_cred
 	    if (kret)
 		goto end;
 	}
-	kret = get_keytab(context, &keytab);
-	if (kret)
-	    goto end;
 	kret = krb5_get_init_creds_opt_alloc(context, &opt);
 	if (kret)
 	    goto end;
-	kret = krb5_get_init_creds_keytab(context, &cred,
-	    handle->principal, keytab, 0, NULL, opt);
+	if (credential_type != GSS_C_NO_OID &&
+	    gss_oid_equal(credential_type, GSS_C_CRED_PASSWORD)) {
+	    gss_buffer_t password = (gss_buffer_t)credential_data;
+
+	    /* XXX are we requiring password to be NUL terminated? */
+
+	    kret = krb5_get_init_creds_password(context, &cred,
+						handle->principal,
+						password->value,
+						NULL, NULL, 0, NULL, opt);
+	} else {
+	    kret = get_keytab(context, &keytab);
+	    if (kret) {
+		krb5_get_init_creds_opt_free(context, opt);
+		goto end;
+	    }
+	    kret = krb5_get_init_creds_keytab(context, &cred,
+					      handle->principal, keytab,
+					      0, NULL, opt);
+	}
 	krb5_get_init_creds_opt_free(context, opt);
 	if (kret)
 	    goto end;
@@ -236,19 +257,25 @@ end:
 static OM_uint32 acquire_acceptor_cred
 		  (OM_uint32 * minor_status,
 		   krb5_context context,
+		   gss_const_OID credential_type,
+		   const void *credential_data,
 		   const gss_name_t desired_name,
 		   OM_uint32 time_req,
-		   const gss_OID_set desired_mechs,
+		   gss_const_OID desired_mech,
 		   gss_cred_usage_t cred_usage,
-		   gsskrb5_cred handle,
-		   gss_OID_set * actual_mechs,
-		   OM_uint32 * time_rec
+		   gsskrb5_cred handle
 		  )
 {
     OM_uint32 ret;
     krb5_error_code kret;
 
     ret = GSS_S_FAILURE;
+
+    if (credential_type != GSS_C_NO_OID) {
+	kret = EINVAL;
+	goto end;
+    }
+
     kret = get_keytab(context, &handle->keytab);
     if (kret)
 	goto end;
@@ -302,22 +329,7 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_acquire_cred
  OM_uint32 * time_rec
     )
 {
-    krb5_context context;
-    gsskrb5_cred handle;
     OM_uint32 ret;
-
-    if (cred_usage != GSS_C_ACCEPT && cred_usage != GSS_C_INITIATE && cred_usage != GSS_C_BOTH) {
-	*minor_status = GSS_KRB5_S_G_BAD_USAGE;
-	return GSS_S_FAILURE;
-    }
-
-    GSSAPI_KRB5_INIT(&context);
-
-    *output_cred_handle = NULL;
-    if (time_rec)
-	*time_rec = 0;
-    if (actual_mechs)
-	*actual_mechs = GSS_C_NO_OID_SET;
 
     if (desired_mechs) {
 	int present = 0;
@@ -332,6 +344,54 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_acquire_cred
 	}
     }
 
+    ret = _gsskrb5_acquire_cred_ext(minor_status,
+				    desired_name,
+				    GSS_C_NO_OID,
+				    NULL,
+				    time_req,
+				    GSS_KRB5_MECHANISM,
+				    cred_usage,
+				    output_cred_handle);
+    if (ret)
+	return ret;
+
+
+    ret = _gsskrb5_inquire_cred(minor_status, *output_cred_handle,
+				NULL, time_rec, NULL, actual_mechs);
+    if (ret) {
+	OM_uint32 tmp;
+	_gsskrb5_release_cred(&tmp, output_cred_handle);
+    }
+
+    return ret;
+}
+
+OM_uint32 GSSAPI_CALLCONV _gsskrb5_acquire_cred_ext
+(OM_uint32 * minor_status,
+ const gss_name_t desired_name,
+ gss_const_OID credential_type,
+ const void *credential_data,
+ OM_uint32 time_req,
+ gss_const_OID desired_mech,
+ gss_cred_usage_t cred_usage,
+ gss_cred_id_t * output_cred_handle
+    )
+{
+    krb5_context context;
+    gsskrb5_cred handle;
+    OM_uint32 ret;
+
+    cred_usage &= GSS_C_OPTION_MASK;
+
+    if (cred_usage != GSS_C_ACCEPT && cred_usage != GSS_C_INITIATE && cred_usage != GSS_C_BOTH) {
+	*minor_status = GSS_KRB5_S_G_BAD_USAGE;
+	return GSS_S_FAILURE;
+    }
+
+    GSSAPI_KRB5_INIT(&context);
+
+    *output_cred_handle = NULL;
+
     handle = calloc(1, sizeof(*handle));
     if (handle == NULL) {
 	*minor_status = ENOMEM;
@@ -341,7 +401,6 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_acquire_cred
     HEIMDAL_MUTEX_init(&handle->cred_id_mutex);
 
     if (desired_name != GSS_C_NO_NAME) {
-
 	ret = _gsskrb5_canon_name(minor_status, context, 1, NULL,
 				  desired_name, &handle->principal);
 	if (ret) {
@@ -352,9 +411,9 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_acquire_cred
     }
     if (cred_usage == GSS_C_INITIATE || cred_usage == GSS_C_BOTH) {
 	ret = acquire_initiator_cred(minor_status, context,
+				     credential_type, credential_data,
 				     desired_name, time_req,
-				     desired_mechs, cred_usage, handle,
-				     actual_mechs, time_rec);
+				     desired_mech, cred_usage, handle);
     	if (ret != GSS_S_COMPLETE) {
 	    HEIMDAL_MUTEX_destroy(&handle->cred_id_mutex);
 	    krb5_free_principal(context, handle->principal);
@@ -364,8 +423,9 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_acquire_cred
     }
     if (cred_usage == GSS_C_ACCEPT || cred_usage == GSS_C_BOTH) {
 	ret = acquire_acceptor_cred(minor_status, context,
+				    credential_type, credential_data,
 				    desired_name, time_req,
-				    desired_mechs, cred_usage, handle, actual_mechs, time_rec);
+				    desired_mech, cred_usage, handle);
 	if (ret != GSS_S_COMPLETE) {
 	    HEIMDAL_MUTEX_destroy(&handle->cred_id_mutex);
 	    krb5_free_principal(context, handle->principal);
@@ -377,9 +437,6 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_acquire_cred
     if (ret == GSS_S_COMPLETE)
     	ret = gss_add_oid_set_member(minor_status, GSS_KRB5_MECHANISM,
 				     &handle->mechanisms);
-    if (ret == GSS_S_COMPLETE)
-    	ret = _gsskrb5_inquire_cred(minor_status, (gss_cred_id_t)handle,
-				    NULL, time_rec, NULL, actual_mechs);
     if (ret != GSS_S_COMPLETE) {
 	if (handle->mechanisms != NULL)
 	    gss_release_oid_set(NULL, &handle->mechanisms);
@@ -388,17 +445,8 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_acquire_cred
 	free(handle);
 	return (ret);
     }
-    *minor_status = 0;
-    if (time_rec) {
-	ret = _gsskrb5_lifetime_left(minor_status,
-				     context,
-				     handle->lifetime,
-				     time_rec);
-
-	if (ret)
-	    return ret;
-    }
     handle->usage = cred_usage;
+    *minor_status = 0;
     *output_cred_handle = (gss_cred_id_t)handle;
     return (GSS_S_COMPLETE);
 }

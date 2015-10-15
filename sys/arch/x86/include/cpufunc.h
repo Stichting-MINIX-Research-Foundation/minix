@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.13 2011/09/24 10:32:52 jym Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.18 2014/02/25 22:16:52 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -76,25 +76,42 @@ void	breakpoint(void);
 void	x86_hlt(void);
 void	x86_stihlt(void);
 u_int	x86_getss(void);
-void	fldcw(void *);
+
+/* fpu save, restore etc */
+union savefpu;
+void	fldcw(const uint16_t *);
 void	fnclex(void);
 void	fninit(void);
-void	fnsave(void *);
-void	fnstcw(void *);
-void	fnstsw(void *);
-void	fp_divide_by_0(void);
-void	frstor(void *);
+void	fnsave(union savefpu *);
+void	fnstcw(uint16_t *);
+uint16_t fngetsw(void);
+void	fnstsw(uint16_t *);
+void	frstor(const union savefpu *);
 void	fwait(void);
 void	clts(void);
 void	stts(void);
-void	fldummy(const double *);
-void	fxsave(void *);
-void	fxrstor(void *);
+void	fxsave(union savefpu *);
+void	fxrstor(const union savefpu *);
+void	x86_ldmxcsr(const uint32_t *);
+void	x86_stmxcsr(uint32_t *);
+
+void	fldummy(void);
+void	fp_divide_by_0(void);
+
+/* Extended processor state functions (for AVX registers etc) */
+
+uint64_t rdxcr(uint32_t);		/* xgetbv */
+void	wrxcr(uint32_t, uint64_t);	/* xsetgv */
+
+void	xrstor(const union savefpu *, uint64_t);
+void	xsave(union savefpu *, uint64_t);
+void	xsaveopt(union savefpu *, uint64_t);
+
 void	x86_monitor(const void *, uint32_t, uint32_t);
 void	x86_mwait(uint32_t, uint32_t);
-void	x86_ldmxcsr(void *);
+/* x86_cpuid2() writes four 32bit values, %eax, %ebx, %ecx and %edx */
 #define	x86_cpuid(a,b)	x86_cpuid2((a),0,(b))
-void	x86_cpuid2(unsigned, unsigned, unsigned *);
+void	x86_cpuid2(uint32_t, uint32_t, uint32_t *);
 
 /* Use read_psl, write_psl when saving and restoring interrupt state. */
 void	x86_disable_intr(void);

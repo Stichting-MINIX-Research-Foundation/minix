@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.25 2013/08/18 04:31:08 matt Exp $	*/
+/*	$NetBSD: lock.h,v 1.32 2015/02/25 13:52:42 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -73,116 +73,115 @@ __cpu_simple_lock_set(__cpu_simple_lock_t *__ptr)
 #define	mb_memory	drain_writebuf		/* in cpufunc.h */
 #endif
 
-#if defined(_KERNEL)
-static __inline unsigned char
-__swp(__cpu_simple_lock_t __val, volatile __cpu_simple_lock_t *__ptr)
-{
 #ifdef _ARM_ARCH_6
-	uint32_t __rv, __tmp;
-	if (sizeof(*__ptr) == 1) {
-		__asm volatile(
-			"1:\t"
-			"ldrexb\t%[__rv], [%[__ptr]]"			"\n\t"
-			"cmp\t%[__rv],%[__val]"				"\n\t"
-#ifdef __thumb__
-			"itt\tne"					"\n\t"
-#endif
-			"strexbne\t%[__tmp], %[__val], [%[__ptr]]"	"\n\t"
-			"cmpne\t%[__tmp], #0"				"\n\t"
-			"bne\t1b"					"\n\t"
-#ifdef _ARM_ARCH_7
-			"dmb"
-#else
-			"mcr\tp15, 0, %[__tmp], c7, c10, 5"
-#endif
-		    : [__rv] "=&r" (__rv), [__tmp] "=&r"(__tmp)
-		    : [__val] "r" (__val), [__ptr] "r" (__ptr) : "cc", "memory");
+static __inline unsigned int
+__arm_load_exclusive(__cpu_simple_lock_t *__alp)
+{
+	unsigned int __rv;
+	if (/*CONSTCOND*/sizeof(*__alp) == 1) {
+		__asm __volatile("ldrexb\t%0,[%1]" : "=r"(__rv) : "r"(__alp));
 	} else {
-		__asm volatile(
-			"1:\t"
-			"ldrex\t%[__rv], [%[__ptr]]"			"\n\t"
-			"cmp\t%[__rv],%[__val]"				"\n\t"
-#ifdef __thumb__
-			"itt\tne"					"\n\t"
-#endif
-			"strexne\t%[__tmp], %[__val], [%[__ptr]]"	"\n\t"
-			"cmpne\t%[__tmp], #0"				"\n\t"
-			"bne\t1b"					"\n\t"
-#ifdef _ARM_ARCH_7
-			"nop"
-#else
-			"mcr\tp15, 0, %[__tmp], c7, c10, 5"
-#endif
-		    : [__rv] "=&r" (__rv), [__tmp] "=&r"(__tmp)
-		    : [__val] "r" (__val), [__ptr] "r" (__ptr) : "cc", "memory");
+		__asm __volatile("ldrex\t%0,[%1]" : "=r"(__rv) : "r"(__alp));
 	}
 	return __rv;
-#else
+}
+
+/* returns 0 on success and 1 on failure */
+static __inline unsigned int
+__arm_store_exclusive(__cpu_simple_lock_t *__alp, unsigned int __val)
+{
+	unsigned int __rv;
+	if (/*CONSTCOND*/sizeof(*__alp) == 1) {
+		__asm __volatile("strexb\t%0,%1,[%2]"
+		    : "=&r"(__rv) : "r"(__val), "r"(__alp) : "cc", "memory");
+	} else {
+		__asm __volatile("strex\t%0,%1,[%2]"
+		    : "=&r"(__rv) : "r"(__val), "r"(__alp) : "cc", "memory");
+	}
+	return __rv;
+}
+#elif defined(_KERNEL)
+static __inline unsigned char
+__swp(unsigned char __val, __cpu_simple_lock_t *__ptr)
+{
 	uint32_t __val32;
-	__asm volatile("swpb %0, %1, [%2]"
+	__asm volatile("swpb	%0, %1, [%2]"
 	    : "=&r" (__val32) : "r" (__val), "r" (__ptr) : "memory");
 	return __val32;
-#endif
 }
 #else
 /*
- * On Cortex-A9 (SMP), SWP no longer guarantees atomic results.  Thus we pad
- * out SWP so that when the A9 generates an undefined exception we can replace
+ * On MP Cortex, SWP no longer guarantees atomic results.  Thus we pad
+ * out SWP so that when the cpu generates an undefined exception we can replace
  * the SWP/MOV instructions with the right LDREX/STREX instructions.
  *
  * This is why we force the SWP into the template needed for LDREX/STREX
  * including the extra instructions and extra register for testing the result.
  */
 static __inline int
-__swp(int __val, volatile int *__ptr)
+__swp(int __val, __cpu_simple_lock_t *__ptr)
 {
-	int __rv, __tmp;
+	int __tmp, __rv;
 	__asm volatile(
-		"1:\t"
-#ifdef _ARM_ARCH_6
-		"ldrex\t%[__rv], [%[__ptr]]"			"\n\t"
-		"cmp\t%[__rv],%[__val]"				"\n\t"
-#ifdef __thumb__
-		"it\tne"					"\n\t"
-#endif
-		"strexne\t%[__tmp], %[__val], [%[__ptr]]"	"\n\t"
+#if 1
+	"1:\t"	"swp	%[__rv], %[__val], [%[__ptr]]"
+	"\n\t"	"b	2f"
 #else
-		"swp\t%[__rv], %[__val], [%[__ptr]]"		"\n\t"
-		"mov\t%[__tmp], #0"				"\n\t"
-		"cmp\t%[__rv],%[__val]"				"\n\t"
+	"1:\t"	"ldrex	%[__rv],[%[__ptr]]"
+	"\n\t"	"strex	%[__tmp],%[__val],[%[__ptr]]"
 #endif
-		"cmpne\t%[__tmp], #0"				"\n\t"
-		"bne\t1b"					"\n\t"
-#ifdef _ARM_ARCH_7
-		"dmb"
-#elif defined(_ARM_ARCH_6)
-		"mcr\tp15, 0, %[__tmp], c7, c10, 5"
-#else
-		"nop"
-#endif
-	    : [__rv] "=&r" (__rv), [__tmp] "=&r"(__tmp)
+	"\n\t"	"cmp	%[__tmp],#0"
+	"\n\t"	"bne	1b"
+	"\n"	"2:"
+	    : [__rv] "=&r" (__rv), [__tmp] "=&r" (__tmp)
 	    : [__val] "r" (__val), [__ptr] "r" (__ptr) : "cc", "memory");
 	return __rv;
 }
-#endif /* _KERNEL */
+#endif /* !_ARM_ARCH_6 */
+
+static __inline void
+__arm_membar_producer(void)
+{
+#ifdef _ARM_ARCH_7
+	__asm __volatile("dsb" ::: "memory");
+#elif defined(_ARM_ARCH_6)
+	__asm __volatile("mcr\tp15,0,%0,c7,c10,4" :: "r"(0) : "memory");
+#endif
+}
+
+static __inline void
+__arm_membar_consumer(void)
+{
+#ifdef _ARM_ARCH_7
+	__asm __volatile("dmb" ::: "memory");
+#elif defined(_ARM_ARCH_6)
+	__asm __volatile("mcr\tp15,0,%0,c7,c10,5" :: "r"(0) : "memory");
+#endif
+}
 
 static __inline void __unused
-__cpu_simple_lock_init(__cpu_simple_lock_t *alp)
+__cpu_simple_lock_init(__cpu_simple_lock_t *__alp)
 {
 
-	*alp = __SIMPLELOCK_UNLOCKED;
-#ifdef _ARM_ARCH_7
-	__asm __volatile("dsb");
-#endif
+	*__alp = __SIMPLELOCK_UNLOCKED;
+	__arm_membar_producer();
 }
 
 #if !defined(__thumb__) || defined(_ARM_ARCH_T2)
 static __inline void __unused
-__cpu_simple_lock(__cpu_simple_lock_t *alp)
+__cpu_simple_lock(__cpu_simple_lock_t *__alp)
 {
-
-	while (__swp(__SIMPLELOCK_LOCKED, alp) != __SIMPLELOCK_UNLOCKED)
+#ifdef _ARM_ARCH_6
+	__arm_membar_consumer();
+	do {
+		/* spin */
+	} while (__arm_load_exclusive(__alp) != __SIMPLELOCK_UNLOCKED
+		 || __arm_store_exclusive(__alp, __SIMPLELOCK_LOCKED));
+	__arm_membar_producer();
+#else
+	while (__swp(__SIMPLELOCK_LOCKED, __alp) != __SIMPLELOCK_UNLOCKED)
 		continue;
+#endif
 }
 #else
 void __cpu_simple_lock(__cpu_simple_lock_t *);
@@ -190,25 +189,41 @@ void __cpu_simple_lock(__cpu_simple_lock_t *);
 
 #if !defined(__thumb__) || defined(_ARM_ARCH_T2)
 static __inline int __unused
-__cpu_simple_lock_try(__cpu_simple_lock_t *alp)
+__cpu_simple_lock_try(__cpu_simple_lock_t *__alp)
 {
-
-	return (__swp(__SIMPLELOCK_LOCKED, alp) == __SIMPLELOCK_UNLOCKED);
+#ifdef _ARM_ARCH_6
+	__arm_membar_consumer();
+	do {
+		if (__arm_load_exclusive(__alp) != __SIMPLELOCK_UNLOCKED) {
+			return 0;
+		}
+	} while (__arm_store_exclusive(__alp, __SIMPLELOCK_LOCKED));
+	__arm_membar_producer();
+	return 1;
+#else
+	return (__swp(__SIMPLELOCK_LOCKED, __alp) == __SIMPLELOCK_UNLOCKED);
+#endif
 }
 #else
 int __cpu_simple_lock_try(__cpu_simple_lock_t *);
 #endif
 
 static __inline void __unused
-__cpu_simple_unlock(__cpu_simple_lock_t *alp)
+__cpu_simple_unlock(__cpu_simple_lock_t *__alp)
 {
 
-#ifdef _ARM_ARCH_7
-	__asm __volatile("dmb");
-#endif
-	*alp = __SIMPLELOCK_UNLOCKED;
-#ifdef _ARM_ARCH_7
-	__asm __volatile("dsb");
+#ifdef _ARM_ARCH_8
+	if (sizeof(*__alp) == 1) {
+		__asm __volatile("stlb\t%0, [%1]"
+		    :: "r"(__SIMPLELOCK_UNLOCKED), "r"(__alp) : "memory");
+	} else {
+		__asm __volatile("stl\t%0, [%1]"
+		    :: "r"(__SIMPLELOCK_UNLOCKED), "r"(__alp) : "memory");
+	}
+#else
+	__arm_membar_consumer();
+	*__alp = __SIMPLELOCK_UNLOCKED;
+	__arm_membar_producer();
 #endif
 }
 

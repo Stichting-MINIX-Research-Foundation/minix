@@ -1,4 +1,4 @@
-/*	$NetBSD: __vfork14.S,v 1.5 2008/04/28 20:22:56 martin Exp $	*/
+/*	$NetBSD: __vfork14.S,v 1.6 2014/03/06 19:02:58 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@ ENTRY(__vfork14, 0)
 
 	copy	%rp, %t4
 	ldil	L%SYSCALLGATE, %r1
-	ble	4(%sr7, %r1)
+	ble	4(%sr2, %r1)
 	ldi	SYS___vfork14, %t1
 	comb,<>	%r0, %t1, __cerror
 	copy	%t4, %rp

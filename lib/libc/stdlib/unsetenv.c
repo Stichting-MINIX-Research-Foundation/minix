@@ -1,4 +1,4 @@
-/*	$NetBSD: unsetenv.c,v 1.10 2010/11/14 18:11:43 tron Exp $	*/
+/*	$NetBSD: unsetenv.c,v 1.11 2015/01/20 18:31:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)setenv.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: unsetenv.c,v 1.10 2010/11/14 18:11:43 tron Exp $");
+__RCSID("$NetBSD: unsetenv.c,v 1.11 2015/01/20 18:31:25 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -47,7 +47,6 @@ __RCSID("$NetBSD: unsetenv.c,v 1.10 2010/11/14 18:11:43 tron Exp $");
 #include <bitstring.h>
 
 #include "env.h"
-#include "reentrant.h"
 #include "local.h"
 
 /*

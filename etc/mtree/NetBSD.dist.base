@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.103 2012/06/21 04:30:04 pgoyette Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.149 2015/09/03 22:24:02 youri Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -28,17 +28,30 @@
 ./etc/X11/rstart/commands/x11r6
 ./etc/X11/rstart/contexts
 ./etc/X11/twm
+./etc/X11/ctwm
 ./etc/X11/xdm
 ./etc/X11/xinit
 ./etc/X11/xserver
 ./etc/X11/xsm
+./etc/atf
 ./etc/defaults
 ./etc/devmand
 ./etc/devmand/scripts
 ./etc/fonts
 ./etc/fonts/conf.avail
 ./etc/fonts/conf.d
+./etc/kyua
 ./etc/mtree
+./etc/openssl
+./etc/openssl/certs
+./etc/openssl/misc
+./etc/openssl/private		mode=0700
+./etc/rc.d
+./etc/saslc.d
+./etc/saslc.d/postfix
+./etc/saslc.d/postfix/mech
+./etc/saslc.d/saslc
+./etc/saslc.d/saslc/mech
 ./etc/skel
 ./etc/system.conf.d
 ./home
@@ -49,18 +62,23 @@
 ./sbin
 ./service
 ./sys
+./tmp				mode=01777
 ./usr
 ./usr/adm
 ./usr/adm/old
 ./usr/bin
 ./usr/etc
 ./usr/games
-./usr/games/hide	gname=games mode=0750
+./usr/games/hide		gname=games mode=0750
 ./usr/include
 ./usr/include/arpa
-./usr/include/clang-3.4
-./usr/include/compat
-./usr/include/compat/machine
+./usr/include/atf-c
+./usr/include/atf-c++
+./usr/include/c++
+./usr/include/c++/experimental
+./usr/include/c++/ext
+./usr/include/clang-3.6
+./usr/include/crypto
 ./usr/include/ddekit
 ./usr/include/ddekit/minix
 ./usr/include/dev
@@ -68,7 +86,11 @@
 ./usr/include/event2
 ./usr/include/fs
 ./usr/include/g++
-./usr/include/i386
+./usr/include/gssapi
+./usr/include/isofs
+./usr/include/isofs/cd9660
+./usr/include/kadm5
+./usr/include/krb5
 ./usr/include/lutok
 ./usr/include/lzma
 ./usr/include/isofs
@@ -76,7 +98,6 @@
 ./usr/include/minix
 ./usr/include/msdosfs
 ./usr/include/net
-./usr/include/net/gen
 ./usr/include/netpgp
 ./usr/include/openssl
 ./usr/include/ppath
@@ -87,7 +108,6 @@
 ./usr/include/ssp
 ./usr/include/sys
 ./usr/include/ufs
-./usr/include/ufs/chfs
 ./usr/include/ufs/ext2fs
 ./usr/include/ufs/ffs
 ./usr/include/ufs/lfs
@@ -96,13 +116,24 @@
 ./usr/lib
 ./usr/lib/bc
 ./usr/lib/cawf
-./usr/lib/dict
-./usr/lib/flex
-./usr/lib/fonts
 ./usr/lib/keymaps
 ./usr/lib/lua
-./usr/lib/lua/5.1
+./usr/lib/lua/5.3
 ./usr/lib/pkgconfig
+./usr/lib/security
+./usr/libdata
+./usr/libdata/debug
+./usr/libdata/debug/bin
+./usr/libdata/debug/lib
+./usr/libdata/debug/libexec
+./usr/libdata/debug/sbin
+./usr/libdata/debug/usr
+./usr/libdata/debug/usr/bin
+./usr/libdata/debug/usr/games
+./usr/libdata/debug/usr/lib
+./usr/libdata/debug/usr/libexec
+./usr/libdata/debug/usr/mdec
+./usr/libdata/debug/usr/sbin
 ./usr/libexec
 ./usr/log
 ./usr/man
@@ -125,26 +156,42 @@
 ./usr/service
 ./usr/service/asr
 ./usr/share
+./usr/share/atf
 ./usr/share/calendar
 ./usr/share/doc
-./usr/share/doc/html
-./usr/share/doc/html/bzip2
 ./usr/share/doc/psd
-./usr/share/doc/psd/19.curses
+./usr/share/doc/reference
+./usr/share/doc/reference/ref1
+./usr/share/doc/reference/ref1/atf
+./usr/share/doc/reference/ref1/bzip2
+./usr/share/doc/reference/ref1/kyua
+./usr/share/doc/reference/ref1/kyua/kyua-atf-compat
+./usr/share/doc/reference/ref1/kyua/kyua-cli
+./usr/share/doc/reference/ref1/kyua/kyua-testers
 ./usr/share/doc/usd
-./usr/share/doc/usd/03.shell
-./usr/share/doc/usd/04.csh
-./usr/share/doc/usd/30.rogue
 ./usr/share/examples
+./usr/share/examples/atf
+./usr/share/examples/blacklist
+./usr/share/examples/ftpd
+./usr/share/examples/kyua-cli
 ./usr/share/examples/libsaslc
 ./usr/share/examples/libsaslc/mech
+./usr/share/examples/lua
+./usr/share/examples/lutok
 ./usr/share/examples/openssl
 ./usr/share/examples/tmux
-./usr/share/info
 ./usr/share/games
 ./usr/share/games/fortune
-./usr/share/misc
+./usr/share/info
+./usr/share/keymaps
+./usr/share/kyua-atf-compat
+./usr/share/kyua-cli
+./usr/share/kyua-cli/misc
+./usr/share/kyua-cli/store
 ./usr/share/legal
+./usr/share/lua
+./usr/share/lua/5.3
+./usr/share/misc
 ./usr/share/mk
 ./usr/share/nvi
 ./usr/share/nvi/catalog
@@ -168,7 +215,6 @@
 ./usr/share/zoneinfo/Europe
 ./usr/share/zoneinfo/Indian
 ./usr/share/zoneinfo/Mexico
-./usr/share/zoneinfo/Mideast
 ./usr/share/zoneinfo/Pacific
 ./usr/share/zoneinfo/US
 ./usr/spool
@@ -186,9 +232,17 @@
 ./var
 ./var/db
 ./var/db/obsolete
+./var/db/xdm
+./var/db/xkb
 ./var/games			uname=games gname=games mode=0775
-./var/mail
+./var/heimdal
+./var/mail			mode=1777
 ./var/run
+./var/spool
+./var/spool/ftp
+./var/spool/ftp/bin
+./var/spool/ftp/etc
+./var/spool/ftp/hidden		#breaks cd image generation with non-root users: mode=0111
 
 # Directories with special access rights
 /set type=dir uid=0 gid=0 mode=1777

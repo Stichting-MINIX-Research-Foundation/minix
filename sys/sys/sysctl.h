@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.209 2013/09/20 12:20:01 wiz Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.217 2015/09/26 20:28:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -59,10 +59,6 @@
 #else
 #include <stddef.h>
 #include <stdbool.h>
-#endif
-
-#ifdef SYSCTL_PRIVATE
-#include <sys/cprng.h>
 #endif
 
 /*
@@ -419,34 +415,36 @@ struct ki_ucred {
 
 #if defined(_KERNEL) || defined(_KMEMUSER)
 
+struct	eproc {
+	struct	proc *e_paddr;		/* address of proc */
+	struct	session *e_sess;	/* session pointer */
+	struct	ki_pcred e_pcred;	/* process credentials */
+	struct	ki_ucred e_ucred;	/* current credentials */
+	struct	vmspace e_vm;		/* address space */
+	pid_t	e_ppid;			/* parent process id */
+	pid_t	e_pgid;			/* process group id */
+	short	e_jobc;			/* job control counter */
+	uint32_t e_tdev;		/* XXX: controlling tty dev */
+	pid_t	e_tpgid;		/* tty process group id */
+	struct	session *e_tsess;	/* tty session pointer */
+#define	WMESGLEN	8
+	char	e_wmesg[WMESGLEN];	/* wchan message */
+	segsz_t e_xsize;		/* text size */
+	short	e_xrssize;		/* text rss */
+	short	e_xccount;		/* text references */
+	short	e_xswrss;
+	long	e_flag;			/* see p_eflag  below */
+	char	e_login[MAXLOGNAME];	/* setlogin() name */
+	pid_t	e_sid;			/* session id */
+	long	e_spare[3];
+};
+
 /*
  * KERN_PROC subtype ops return arrays of augmented proc structures:
  */
 struct kinfo_proc {
 	struct	proc kp_proc;			/* proc structure */
-	struct	eproc {
-		struct	proc *e_paddr;		/* address of proc */
-		struct	session *e_sess;	/* session pointer */
-		struct	ki_pcred e_pcred;	/* process credentials */
-		struct	ki_ucred e_ucred;	/* current credentials */
-		struct	vmspace e_vm;		/* address space */
-		pid_t	e_ppid;			/* parent process id */
-		pid_t	e_pgid;			/* process group id */
-		short	e_jobc;			/* job control counter */
-		uint32_t e_tdev;		/* XXX: controlling tty dev */
-		pid_t	e_tpgid;		/* tty process group id */
-		struct	session *e_tsess;	/* tty session pointer */
-#define	WMESGLEN	8
-		char	e_wmesg[WMESGLEN];	/* wchan message */
-		segsz_t e_xsize;		/* text size */
-		short	e_xrssize;		/* text rss */
-		short	e_xccount;		/* text references */
-		short	e_xswrss;
-		long	e_flag;			/* see p_eflag  below */
-		char	e_login[MAXLOGNAME];	/* setlogin() name */
-		pid_t	e_sid;			/* session id */
-		long	e_spare[3];
-	} kp_eproc;
+	struct	eproc kp_eproc;			/* eproc structure */
 };
 #endif /* defined(_KERNEL) || defined(_KMEMUSER) */
 
@@ -680,6 +678,7 @@ struct kinfo_lwp {
 #define	KERN_PROC_NARGV		2	/* number of strings in above */
 #define	KERN_PROC_ENV		3	/* environ */
 #define	KERN_PROC_NENV		4	/* number of strings in above */
+#define	KERN_PROC_PATHNAME 	5	/* path to executable */
 
 /*
  * KERN_SYSVIPC subtypes
@@ -828,6 +827,65 @@ struct evcnt_sysctl {
 
 #define	KERN_EVCNT_COUNT_ANY		0
 #define	KERN_EVCNT_COUNT_NONZERO	1
+
+/*
+ * CTL_VM identifiers in <uvm/uvm_param.h>
+ */
+
+/*
+ * The vm.proc.map sysctl allows a process to dump the VM layout of
+ * another process as a series of entries.
+ */
+#define	KVME_TYPE_NONE		0
+#define	KVME_TYPE_OBJECT	1
+#define	KVME_TYPE_VNODE		2
+#define	KVME_TYPE_KERN		3
+#define	KVME_TYPE_DEVICE	4
+#define	KVME_TYPE_ANON		5
+#define	KVME_TYPE_SUBMAP	6
+#define	KVME_TYPE_UNKNOWN	255
+
+#define	KVME_PROT_READ		0x00000001
+#define	KVME_PROT_WRITE		0x00000002
+#define	KVME_PROT_EXEC		0x00000004
+
+#define	KVME_FLAG_COW		0x00000001
+#define	KVME_FLAG_NEEDS_COPY	0x00000002
+#define	KVME_FLAG_NOCOREDUMP	0x00000004
+#define	KVME_FLAG_PAGEABLE	0x00000008
+#define	KVME_FLAG_GROWS_UP	0x00000010
+#define	KVME_FLAG_GROWS_DOWN	0x00000020
+
+struct kinfo_vmentry {
+	uint64_t kve_start;			/* Starting address. */
+	uint64_t kve_end;			/* Finishing address. */
+	uint64_t kve_offset;			/* Mapping offset in object */
+
+	uint32_t kve_type;			/* Type of map entry. */
+	uint32_t kve_flags;			/* Flags on map entry. */
+
+	uint32_t kve_count;			/* Number of pages/entries */
+	uint32_t kve_wired_count;		/* Number of wired pages */
+
+	uint32_t kve_advice;			/* Advice */
+	uint32_t kve_attributes;		/* Map attribute */
+
+	uint32_t kve_protection;		/* Protection bitmask. */
+	uint32_t kve_max_protection;		/* Max protection bitmask */
+
+	uint32_t kve_ref_count;			/* VM obj ref count. */
+	uint32_t kve_inheritance;		/* Inheritance */
+
+	uint64_t kve_vn_fileid;			/* inode number if vnode */
+	uint64_t kve_vn_size;			/* File size. */
+	uint64_t kve_vn_fsid;			/* dev_t of vnode location */
+	uint64_t kve_vn_rdev;			/* Device id if device. */
+
+	uint32_t kve_vn_type;			/* Vnode type. */
+	uint32_t kve_vn_mode;			/* File mode. */
+
+	char	 kve_path[PATH_MAX];		/* Path to VM obj, if any. */
+};
 
 /*
  * CTL_HW identifiers
@@ -1089,6 +1147,29 @@ extern struct ctldebug debug15, debug16, debug17, debug18, debug19;
 	oldlenp, newp, newlen, \
 	oname, l, node
 
+#ifdef RUMP_USE_CTOR
+struct sysctl_setup_chain {
+	void (*ssc_func)(struct sysctllog **);
+	LIST_ENTRY(sysctl_setup_chain) ssc_entries;
+};
+LIST_HEAD(sysctl_boot_chain, sysctl_setup_chain);
+#define _SYSCTL_REGISTER(name)						\
+static void sysctlctor_##name(void) __attribute__((constructor));	\
+static void sysctlctor_##name(void)					\
+{									\
+        static struct sysctl_setup_chain ssc = {			\
+		.ssc_func = name,					\
+        };								\
+        extern struct sysctl_boot_chain sysctl_boot_chain;		\
+        LIST_INSERT_HEAD(&sysctl_boot_chain, &ssc, ssc_entries);	\
+}
+
+#else /* RUMP_USE_CTOR */
+
+#define _SYSCTL_REGISTER(name) __link_set_add_text(sysctl_funcs, name);
+
+#endif /* RUMP_USE_CTOR */
+
 #ifdef _MODULE
 
 #define SYSCTL_SETUP_PROTO(name)				\
@@ -1100,12 +1181,12 @@ extern struct ctldebug debug15, debug16, debug17, debug18, debug19;
 	void name(struct sysctllog **clog) {			\
 		printf("%s\n", desc);				\
 		__CONCAT(___,name)(clog); }			\
-	__link_set_add_text(sysctl_funcs, name);		\
+	_SYSCTL_REGISTER(name);					\
 	static void __CONCAT(___,name)(struct sysctllog **clog)
 #else  /* !SYSCTL_DEBUG_SETUP */
 #define SYSCTL_SETUP(name, desc)				\
 	SYSCTL_SETUP_PROTO(name);				\
-	__link_set_add_text(sysctl_funcs, name);		\
+	_SYSCTL_REGISTER(name);					\
 	void name(struct sysctllog **clog)
 #endif /* !SYSCTL_DEBUG_SETUP */
 
@@ -1118,12 +1199,12 @@ extern struct ctldebug debug15, debug16, debug17, debug18, debug19;
 	static void name(struct sysctllog **clog) {		\
 		printf("%s\n", desc);				\
 		__CONCAT(___,name)(clog); }			\
-	__link_set_add_text(sysctl_funcs, name);		\
+	_SYSCTL_REGISTER(name);					\
 	static void __CONCAT(___,name)(struct sysctllog **clog)
 #else  /* !SYSCTL_DEBUG_SETUP */
 #define SYSCTL_SETUP(name, desc)				\
 	static void name(struct sysctllog **);			\
-	__link_set_add_text(sysctl_funcs, name);		\
+	_SYSCTL_REGISTER(name);					\
 	static void name(struct sysctllog **clog)
 #endif /* !SYSCTL_DEBUG_SETUP */
 
@@ -1147,11 +1228,13 @@ typedef int (*sysctlfn)(SYSCTLFN_PROTO);
  * used in more than just sysctl
  */
 void	fill_eproc(struct proc *, struct eproc *, bool);
+void	fill_kproc2(struct proc *, struct kinfo_proc2 *, bool);
 
 /*
  * subsystem setup
  */
 void	sysctl_init(void);
+void	sysctl_basenode_init(void);
 void	sysctl_finalize(void);
 
 /*
@@ -1251,10 +1334,6 @@ MALLOC_DECLARE(M_SYSCTLDATA);
 
 extern const u_int sysctl_lwpflagmap[];
 
-#ifdef SYSCTL_PRIVATE
-extern cprng_strong_t *sysctl_prng;
-#endif
-
 #else	/* !_KERNEL */
 #include <sys/cdefs.h>
 
@@ -1269,6 +1348,8 @@ int	sysctlgetmibinfo(const char *, int *, u_int *,
 int	sysctlnametomib(const char *, int *, size_t *);
 int	proc_compare(const struct kinfo_proc2 *, const struct kinfo_lwp *,
     const struct kinfo_proc2 *, const struct kinfo_lwp *);
+void	*asysctl(const int *, size_t, size_t *);
+void	*asysctlbyname(const char *, size_t *);
 #endif /* !defined(__minix) */
 __END_DECLS
 

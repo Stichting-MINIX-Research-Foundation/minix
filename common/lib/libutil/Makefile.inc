@@ -4,5 +4,5 @@
 SRCS+=	snprintb.c
 .else
 SRCS+=	snprintb.c proc_compare.c getfstypename.c
-.endif
+.endif # defined(__MINIX)
 COPTS.snprintb.c = -Wno-format-nonliteral

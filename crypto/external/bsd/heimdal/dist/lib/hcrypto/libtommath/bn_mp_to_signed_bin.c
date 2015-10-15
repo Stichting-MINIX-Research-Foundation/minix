@@ -1,4 +1,4 @@
-/*	$NetBSD: bn_mp_to_signed_bin.c,v 1.1.1.1 2011/04/13 18:14:54 elric Exp $	*/
+/*	$NetBSD: bn_mp_to_signed_bin.c,v 1.1.1.2 2014/04/24 12:45:31 pettai Exp $	*/
 
 #include <tommath.h>
 #ifdef BN_MP_TO_SIGNED_BIN_C
@@ -30,6 +30,6 @@ int mp_to_signed_bin (mp_int * a, unsigned char *b)
 }
 #endif
 
-/* Source: /cvs/libtom/libtommath/bn_mp_to_signed_bin.c,v */
-/* Revision: 1.4 */
-/* Date: 2006/12/28 01:25:13 */
+/* Source: /cvs/libtom/libtommath/bn_mp_to_signed_bin.c,v  */
+/* Revision: 1.4  */
+/* Date: 2006/12/28 01:25:13  */

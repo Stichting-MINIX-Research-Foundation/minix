@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.73 2013/11/20 17:50:39 msaitoh Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.83 2015/08/14 06:54:22 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -87,6 +87,35 @@
 #define CR4_PCIDE	0x00020000 /* enable Process Context IDentifiers */
 #define CR4_OSXSAVE	0x00040000 /* enable xsave and xrestore */
 #define CR4_SMEP	0x00100000 /* enable SMEP support */
+#define CR4_SMAP	0x00200000 /* enable SMAP support */
+
+/*
+ * Extended Control Register XCR0
+ */
+#define	XCR0_X87	0x00000001	/* x87 FPU/MMX state */
+#define	XCR0_SSE	0x00000002	/* SSE state */
+#define	XCR0_YMM_Hi128	0x00000004	/* AVX-256 (ymmn registers) */
+#define	XCR0_BNDREGS	0x00000008	/* Memory protection ext bounds */
+#define	XCR0_BNDCSR	0x00000010	/* Memory protection ext state */
+#define	XCR0_Opmask	0x00000020	/* AVX-512 Opmask */
+#define	XCR0_ZMM_Hi256	0x00000040	/* AVX-512 upper 256 bits low regs */
+#define	XCR0_Hi16_ZMM	0x00000080	/* AVX-512 512 bits upper registers */
+
+/*
+ * Known fpu bits - only these get enabled
+ * I think the XCR0_BNDREGS and XCR0_BNDCSR would need saving on
+ * every context switch.
+ * The save are is sized for all the fields below (max 2680 bytes).
+ */
+#define XCR0_FPU	(XCR0_X87 | XCR0_SSE | XCR0_YMM_Hi128 | \
+			XCR0_Opmask | XCR0_ZMM_Hi256 | XCR0_Hi16_ZMM)
+
+#define XCR0_BND	(XCR0_BNDREGS | XCR0_BNDCSR)
+
+#define XCR0_FLAGS1	"\20" \
+	"\1" "x87"	"\2" "SSE"	"\3" "AVX" \
+	"\4" "BNDREGS"	"\5" "BNDCSR" \
+	"\6" "Opmask"	"\7" "ZMM_Hi256" "\10" "Hi16_ZMM"
 
 
 /*
@@ -160,7 +189,7 @@
 #define	CPUID2_TM2	0x00000100	/* Thermal Monitor 2 */
 #define CPUID2_SSSE3	0x00000200	/* Supplemental SSE3 */
 #define	CPUID2_CID	0x00000400	/* Context ID */
-/* bit 11 unused	0x00000800 */
+#define	CPUID2_SDBG	0x00000800	/* Silicon Debug */
 #define	CPUID2_FMA	0x00001000	/* has Fused Multiply Add */
 #define	CPUID2_CX16	0x00002000	/* has CMPXCHG16B instruction */
 #define	CPUID2_xTPR	0x00004000	/* Task Priority Messages disabled? */
@@ -185,7 +214,7 @@
 #define CPUID2_FLAGS1	"\20" \
 	"\1" "SSE3"	"\2" "PCLMULQDQ" "\3" "DTES64"	"\4" "MONITOR" \
 	"\5" "DS-CPL"	"\6" "VMX"	"\7" "SMX"	"\10" "EST" \
-	"\11" "TM2"	"\12" "SSSE3"	"\13" "CID"	"\14" "B11" \
+	"\11" "TM2"	"\12" "SSSE3"	"\13" "CID"	"\14" "SDBG" \
 	"\15" "FMA"	"\16" "CX16"	"\17" "xTPR"	"\20" "PDCM" \
 	"\21" "B16"	"\22" "PCID"	"\23" "DCA"	"\24" "SSE41" \
 	"\25" "SSE42"	"\26" "X2APIC"	"\27" "MOVBE"	"\30" "POPCNT" \
@@ -250,29 +279,43 @@
  * Intel Digital Thermal Sensor and
  * Power Management, Fn0000_0006 - %eax.
  */
-#define CPUID_DSPM_DTS	0x00000001	/* Digital Thermal Sensor */
-#define CPUID_DSPM_IDA	0x00000002	/* Intel Dynamic Acceleration */
-#define CPUID_DSPM_ARAT	0x00000004	/* Always Running APIC Timer */
-#define CPUID_DSPM_PLN	0x00000010	/* Power Limit Notification */
-#define CPUID_DSPM_CME	0x00000020	/* Clock Modulation Extension */
-#define CPUID_DSPM_PLTM	0x00000040	/* Package Level Thermal Management */
+#define CPUID_DSPM_DTS	__BIT(0)	/* Digital Thermal Sensor */
+#define CPUID_DSPM_IDA	__BIT(1)	/* Intel Dynamic Acceleration */
+#define CPUID_DSPM_ARAT	__BIT(2)	/* Always Running APIC Timer */
+#define CPUID_DSPM_PLN	__BIT(4)	/* Power Limit Notification */
+#define CPUID_DSPM_ECMD	__BIT(5)	/* Clock Modulation Extension */
+#define CPUID_DSPM_PTM	__BIT(6)	/* Package Level Thermal Management */
+#define CPUID_DSPM_HWP	__BIT(7)	/* HWP */
+#define CPUID_DSPM_HWP_NOTIFY __BIT(8)	/* HWP Notification */
+#define CPUID_DSPM_HWP_ACTWIN  __BIT(9)	/* HWP Activity Window */
+#define CPUID_DSPM_HWP_EPP __BIT(10)	/* HWP Energy Performance Preference */
+#define CPUID_DSPM_HWP_PLR __BIT(11)	/* HWP Package Level Request */
+#define CPUID_DSPM_HDC	__BIT(13)	/* HDC */
 
 #define CPUID_DSPM_FLAGS	"\20" \
-	"\1" "DTS"	"\2" "IDA"	"\3" "ARAT" \
-	"\5" "PLN"	"\6" "CME"	"\7" "PLTM"
+	"\1" "DTS"	"\2" "IDA"	"\3" "ARAT" 			\
+	"\5" "PLN"	"\6" "ECMD"	"\7" "PTM"	"\10" "HWP"	\
+	"\11" "HWP_NOTIFY" "\12" "HWP_ACTWIN" "\13" "HWP_EPP" "\14" "HWP_PLR" \
+			"\16" "HDC"
 
 /*
  * Intel Digital Thermal Sensor and
  * Power Management, Fn0000_0006 - %ecx.
  */
 #define CPUID_DSPM_HWF	0x00000001	/* MSR_APERF/MSR_MPERF available */
+#define CPUID_DSPM_EPB	0x00000008	/* Energy Performance Bias */
 
-#define CPUID_DSPM_FLAGS1	"\20" "\1" "HWF"
+#define CPUID_DSPM_FLAGS1	"\20" "\1" "HWF" "\4" "EPB"
 
 /*
- * Intel Structured Extended Feature leaf
- * Fn0000_0007 main leaf - %ebx.
+ * Intel Structured Extended Feature leaf Fn0000_0007
+ * %eax == 0: Subleaf 0
+ *	%eax: The Maximun input value for supported subleaf.
+ *	%ebx: Feature bits.
+ *	%ecx: Feature bits.
  */
+
+/* %ebx */
 #define CPUID_SEF_FSGSBASE	__BIT(0)
 #define CPUID_SEF_TSC_ADJUST	__BIT(1)
 #define CPUID_SEF_BMI1		__BIT(3)
@@ -286,6 +329,7 @@
 #define CPUID_SEF_QM		__BIT(12)
 #define CPUID_SEF_FPUCSDS	__BIT(13)
 #define CPUID_SEF_MPX		__BIT(14)
+#define CPUID_SEF_PQE		__BIT(15)
 #define CPUID_SEF_AVX512F	__BIT(16)
 #define CPUID_SEF_RDSEED	__BIT(18)
 #define CPUID_SEF_ADX		__BIT(19)
@@ -300,45 +344,51 @@
 	"\1" "FSGSBASE"	"\2" "TSCADJUST"		"\4" "BMI1"	\
 	"\5" "HLE"	"\6" "AVX2"			"\10" "SMEP"	\
 	"\11" "BMI2"	"\12" "ERMS"	"\13" "INVPCID"	"\14" "RTM"	\
-	"\15" "QM"	"\16" "FPUCSDS"	"\17" "MPX"    			\
+	"\15" "QM"	"\16" "FPUCSDS"	"\17" "MPX"    	"\20" "PQE"	\
 	"\21" "AVX512F"			"\23" "RDSEED"	"\24" "ADX"	\
 	"\25" "SMAP"							\
 			"\32" "PT"	"\33" "AVX512PF""\34" "AVX512ER"\
 	"\35" "AVX512CD""\36" "SHA"
 
-/*
- * CPUID Processor extended state Enumeration Fn0000000d %eax
- *
- * Extended Control Register XCR0
- */
-#define	XCR0_X87	0x00000001	/* x87 FPU/MMX state */
-#define	XCR0_SSE	0x00000002	/* SSE state */
-#define	XCR0_AVX	0x00000004	/* AVX state (ymmn registers) */
+/* %ecx */
+#define CPUID_SEF_PREFETCHWT1	__BIT(0)
+#define CPUID_SEF_PKU		__BIT(3)
+#define CPUID_SEF_OSPKE		__BIT(4)
 
-#define XCR0_FLAGS1	"\20" \
-	"\1" "x87"	"\2" "SSE"	"\3" "AVX"	"\4" "B03"
+#define CPUID_SEF_FLAGS1	"\20" \
+	"\1" "PREFETCHWT1"				"\4" "PKU"	\
+	"\5" "OSPKE"
 
 /*
  * CPUID Processor extended state Enumeration Fn0000000d
  *
  * %ecx == 0: supported features info:
- *	%edx:%eax bits valid for XCR0
- *	%ebx Save area size for features enabled in XCR0
- *	%ecx Maximim save area size for all cpu features
+ *	%eax: Valid bits of lower 32bits of XCR0
+ *	%ebx: Maximum save area size for features enabled in XCR0
+ *	%ecx: Maximim save area size for all cpu features
+ *	%edx: Valid bits of upper 32bits of XCR0
  *
- * %ecx == 1: Bit 0 => xsaveopt instruction avalaible (sandy bridge onwards)
+ * %ecx == 1:
+ *	%eax: Bit 0 => xsaveopt instruction avalaible (sandy bridge onwards)
+ *	%ebx: Save area size for features enabled by XCR0 | IA32_XSS
+ *	%ecx: Valid bits of lower 32bits of IA32_XSS
+ *	%edx: Valid bits of upper 32bits of IA32_XSS
  *
  * %ecx >= 2: Save area details for XCR0 bit n
  *	%eax: size of save area for this feature
  *	%ebx: offset of save area for this feature
  *	%ecx, %edx: reserved
- *	All of %eax, %ebx, %ecx and %edx zero for unsupported features.
+ *	All of %eax, %ebx, %ecx and %edx are zero for unsupported features.
  */
 
+/* %ecx=1 %eax */
 #define	CPUID_PES1_XSAVEOPT	0x00000001	/* xsaveopt instruction */
+#define	CPUID_PES1_XSAVEC	0x00000002	/* xsavec & compacted XRSTOR */
+#define	CPUID_PES1_XGETBV	0x00000004	/* xgetbv with ECX = 1 */
+#define	CPUID_PES1_XSAVES	0x00000008	/* xsaves/xrstors, IA32_XSS */
 
 #define CPUID_PES1_FLAGS	"\20" \
-	"\1" "XSAVEOPT"
+	"\1" "XSAVEOPT"	"\2" "XSAVEC"	"\3" "XGETBV"	"\4" "XSAVES"
 
 /* Intel Fn80000001 extended features - %edx */
 #define CPUID_SYSCALL	0x00000800	/* SYSCALL/SYSRET */
@@ -482,6 +532,7 @@
 #define	MSR_CESR		0x011	/* P5 only (trap on P6) */
 #define	MSR_CTR0		0x012	/* P5 only (trap on P6) */
 #define	MSR_CTR1		0x013	/* P5 only (trap on P6) */
+#define MSR_IA32_PLATFORM_ID	0x017
 #define MSR_APICBASE		0x01b
 #define MSR_EBL_CR_POWERON	0x02a
 #define MSR_EBC_FREQUENCY_ID	0x02c	/* PIV only */

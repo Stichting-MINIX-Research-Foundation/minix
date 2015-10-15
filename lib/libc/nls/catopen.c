@@ -1,4 +1,4 @@
-/*	$NetBSD: catopen.c,v 1.32 2013/08/19 08:03:34 joerg Exp $	*/
+/*	$NetBSD: catopen.c,v 1.33 2014/09/16 01:30:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: catopen.c,v 1.32 2013/08/19 08:03:34 joerg Exp $");
+__RCSID("$NetBSD: catopen.c,v 1.33 2014/09/16 01:30:28 christos Exp $");
 
 #define _NLS_PRIVATE
 #define __SETLOCALE_SOURCE__
@@ -163,7 +163,7 @@ load_msgcat(const char *path)
 
 	_DIAGASSERT(path != NULL);
 
-	if ((fd = open(path, O_RDONLY)) == -1)
+	if ((fd = open(path, O_RDONLY|O_CLOEXEC)) == -1)
 		return (nl_catd)-1;
 
 	if (fstat(fd, &st) != 0) {

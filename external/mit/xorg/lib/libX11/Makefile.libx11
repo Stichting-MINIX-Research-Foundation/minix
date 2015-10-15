@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.libx11,v 1.12 2013/10/18 01:12:00 riz Exp $
+#	$NetBSD: Makefile.libx11,v 1.15 2015/07/23 08:03:25 mrg Exp $
 
 LIB=	X11
 .PATH:	${X11SRCDIR.${LIB}}/src
@@ -6,7 +6,7 @@ LIB=	X11
 .PATH:	${X11SRCDIR.${LIB}}/src/xcms
 .PATH:	${X11SRCDIR.${LIB}}/src/xlibi18n
 
-#MINIX: LSC Not sure bsd.own.mk is always sourced...
+#__MINIX: LSC Not sure bsd.own.mk is always sourced...
 NOCLANGERROR=	yes
 NOGCCERROR=	yes
 
@@ -417,13 +417,12 @@ EDB_DEFINES=		-DERRORDB=\"${X11LIBDIR}/XErrorDB\"
 KDB_DEFINES=		-DKEYSYMDB=\"${X11LIBDIR}/XKeysymDB\"
 LC_DYNDEFINES=		-DUSE_DYNAMIC_LC
 OPEN_DEFINES=		-I${DESTDIR}${X11INCDIR}/X11/extensions
-.if !defined(__MINIX)
-POLL_DEFINES=		-DUSE_POLL
-.endif # !defined(__MINIX)
+# MINIX: LSC Do not use poll for now
+#POLL_DEFINES=		-DUSE_POLL
 SETID_DEFINES=		-DHASSETUGID
 SHM_DEFINES=		-DHAS_SHM
 SOCK_DEFINES=		-DBSD44SOCKETS
-TRANS_INCLUDES=		-I${X11SRCDIR.xc}/lib/xtrans
+TRANS_INCLUDES=		-I${X11SRCDIR.xtrans}
 XCURSOR_DEFINES=	-DUSE_DYNAMIC_XCURSOR -DLIBXCURSOR=\"libXcursor.so.1\"
 XDMAUTHDEFS=		-DHASXDMAUTH
 XF86BIGFONT_DEFINES=	-DXF86BIGFONT
@@ -467,11 +466,7 @@ COPTS.lcUTF8.c+=	-Wno-error
 COPTS.Font.c+=		-Wno-error	# XXX xf86bigfstr.h
 COPTS.OpenDis.c+=	-Wno-error	# XXX xf86bigfstr.h
 COPTS.XlibInt.c+=	-Wno-error	# XXX xcmiscstr.h
-COPTS.XKBBind.c+=	-Wno-error	# uses XKeycodeToKeysym
-.if defined(HAVE_GCC) &&  ${HAVE_GCC} < 45
-COPTS.LiHosts.c+=	-Wno-error	# XXX: old gcc figures out that const
-					# cond because nHosts < max_hosts
-.endif
+COPTS.XKBBind.c+=	-Wno-deprecated-declarations	# uses XKeycodeToKeysym
 
 CWARNFLAGS.clang+=	-Wno-string-plus-int
 

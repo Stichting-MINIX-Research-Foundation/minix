@@ -1,4 +1,4 @@
-.\"	$NetBSD: extattr_get_file.2,v 1.5 2011/08/03 09:48:12 wiz Exp $
+.\"	$NetBSD: extattr_get_file.2,v 1.6 2014/11/11 08:10:02 njoly Exp $
 .\"
 .\" Copyright (c) 2001 Dima Dorfman <dima@unixfreak.org>
 .\" Copyright (c) 2003 Robert Watson <rwatson@FreeBSD.org>
@@ -231,8 +231,12 @@ calls may also fail due to the following errors:
 .It Bq Er EACCES
 Search permission is denied for a component of the path prefix.
 .It Bq Er ENAMETOOLONG
-A component of a pathname exceeded 255 characters,
-or an entire path name exceeded 1023 characters.
+A component of a pathname exceeded
+.Brq Dv NAME_MAX
+characters,
+or an entire path name exceeded
+.Brq Dv PATH_MAX
+characters.
 .It Bq Er ENOENT
 A component of the path name that must exist does not exist.
 .It Bq Er ENOTDIR

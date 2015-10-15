@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_soc.c,v 1.18 2013/03/11 20:19:29 tron Exp $	*/
+/*	$NetBSD: rpc_soc.c,v 1.19 2014/05/28 14:45:57 christos Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -45,7 +45,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_soc.c 1.41 89/05/02 Copyr 1988 Sun Micro";
 #else
-__RCSID("$NetBSD: rpc_soc.c,v 1.18 2013/03/11 20:19:29 tron Exp $");
+__RCSID("$NetBSD: rpc_soc.c,v 1.19 2014/05/28 14:45:57 christos Exp $");
 #endif
 #endif
 
@@ -156,7 +156,7 @@ clnt_com_create(struct sockaddr_in *raddr, rpcprog_t prog, rpcvers_t vers,
 	bindaddr.maxlen = bindaddr.len =  sizeof (struct sockaddr_in);
 	bindaddr.buf = raddr;
 
-	bindresvport(fd, NULL);
+	(void)bindresvport(fd, NULL);
 	cl = clnt_tli_create(fd, nconf, &bindaddr, prog, vers,
 				sendsz, recvsz);
 	if (cl) {
@@ -254,7 +254,7 @@ svc_com_create(int fd, u_int sendsize, u_int recvsize, const char *netid)
 
 	memset(&sccsin, 0, sizeof sccsin);
 	sccsin.sin_family = AF_INET;
-	bindresvport(fd, &sccsin);
+	(void)bindresvport(fd, &sccsin);
 	listen(fd, SOMAXCONN);
 	svc = svc_tli_create(fd, nconf, NULL, sendsize, recvsize);
 	(void) freenetconfigent(nconf);

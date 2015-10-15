@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_quota.c,v 1.10 2013/11/22 02:02:35 dholland Exp $	*/
+/*	$NetBSD: ulfs_quota.c,v 1.12 2014/06/28 22:27:51 dholland Exp $	*/
 /*  from NetBSD: ufs_quota.c,v 1.115 2013/11/16 17:04:53 dholland Exp  */
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_quota.c,v 1.10 2013/11/22 02:02:35 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_quota.c,v 1.12 2014/06/28 22:27:51 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -84,7 +84,7 @@ static int quota_handle_cmd_put(struct mount *, struct lwp *,
     struct quotactl_args *args);
 static int quota_handle_cmd_cursorget(struct mount *, struct lwp *,
     struct quotactl_args *args);
-static int quota_handle_cmd_delete(struct mount *, struct lwp *,
+static int quota_handle_cmd_del(struct mount *, struct lwp *,
     struct quotactl_args *args);
 static int quota_handle_cmd_quotaon(struct mount *, struct lwp *, 
     struct quotactl_args *args);
@@ -199,8 +199,8 @@ lfsquota_handle_cmd(struct mount *mp, struct lwp *l,
 	    case QUOTACTL_CURSORGET:
 		error = quota_handle_cmd_cursorget(mp, l, args);
 		break;
-	    case QUOTACTL_DELETE:
-		error = quota_handle_cmd_delete(mp, l, args);
+	    case QUOTACTL_DEL:
+		error = quota_handle_cmd_del(mp, l, args);
 		break;
 	    case QUOTACTL_CURSOROPEN:
 		error = quota_handle_cmd_cursoropen(mp, l, args);
@@ -433,7 +433,7 @@ quota_handle_cmd_put(struct mount *mp, struct lwp *l,
 }
 
 static int 
-quota_handle_cmd_delete(struct mount *mp, struct lwp *l, 
+quota_handle_cmd_del(struct mount *mp, struct lwp *l, 
     struct quotactl_args *args)
 {
 	struct ulfsmount *ump = VFSTOULFS(mp);
@@ -442,8 +442,8 @@ quota_handle_cmd_delete(struct mount *mp, struct lwp *l,
 	id_t kauth_id;
 	int error;
 
-	KASSERT(args->qc_op == QUOTACTL_DELETE);
-	qk = args->u.delete.qc_key;
+	KASSERT(args->qc_op == QUOTACTL_DEL);
+	qk = args->u.del.qc_key;
 
 	kauth_id = qk->qk_id;
 	if (kauth_id == QUOTA_DEFAULTID) {
@@ -462,7 +462,7 @@ quota_handle_cmd_delete(struct mount *mp, struct lwp *l,
 			goto err;
 #ifdef LFS_QUOTA2
 		if (fs->um_flags & ULFS_QUOTA2) {
-			error = lfsquota2_handle_cmd_delete(ump, qk);
+			error = lfsquota2_handle_cmd_del(ump, qk);
 		} else
 #endif
 			panic("quota_handle_cmd_get: no support ?");

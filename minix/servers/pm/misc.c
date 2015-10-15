@@ -37,8 +37,8 @@ struct utsname uts_val = {
   "i386",		/* machine (cpu) type */
   "i386",		/* architecture */
 #elif defined(__arm__)
-  "arm",		/* machine (cpu) type */
-  "arm",		/* architecture */
+  "earm",		/* machine (cpu) type */
+  "earm",		/* architecture */
 #else
 #error			/* oops, no 'uname -mk' */
 #endif

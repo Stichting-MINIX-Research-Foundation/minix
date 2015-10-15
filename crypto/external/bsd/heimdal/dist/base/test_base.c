@@ -1,4 +1,4 @@
-/*	$NetBSD: test_base.c,v 1.1.1.1 2011/04/13 18:14:32 elric Exp $	*/
+/*	$NetBSD: test_base.c,v 1.1.1.2 2014/04/24 12:45:26 pettai Exp $	*/
 
 /*
  * Copyright (c) 2010 Kungliga Tekniska Högskolan
@@ -129,9 +129,10 @@ test_string(void)
     s1 = heim_string_create(string);
     s2 = heim_string_create(string);
 
-    if (heim_cmp(s1, s2) != 0)
-	errx(1, "the same string is not the same");
-
+    if (heim_cmp(s1, s2) != 0) {
+	printf("the same string is not the same\n");
+	exit(1);
+    }
 
     heim_release(s1);
     heim_release(s2);
